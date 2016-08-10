@@ -1,7 +1,10 @@
 *.o
+*.a
+*.d
 *.o.d
 
 .build-debug
 .codelite
 /Debug
+
 

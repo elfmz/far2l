@@ -9,7 +9,7 @@ size_t WinPortSynch::sTryAcquireAll(WinPortSynch **synches, size_t count)
 {
 	size_t i;
 	for ( i = 0; (i < count && synches[i]->MayAcquire()); ++i);
-	if (i == count)
+	if (i < count)
 		return (size_t)-1;
 		
 	for ( i = 0; i < count; ++i) 

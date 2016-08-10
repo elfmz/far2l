@@ -1,5 +1,7 @@
 *.o
 *.o.d
-*.mk
+
+.build-debug
+.codelite
 /Debug
 

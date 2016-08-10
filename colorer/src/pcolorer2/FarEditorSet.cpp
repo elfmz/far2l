@@ -515,17 +515,17 @@ void FarEditorSet::configure(bool fromEditor)
 
     fdi[IDX_BOX].PtrData = GetMsg(mSetup);
     fdi[IDX_ENABLED].PtrData = GetMsg(mTurnOff);
-    //todo fdi[IDX_ENABLED].Selected = rEnabled;
+    fdi[IDX_ENABLED].Param.Selected = rEnabled;
     fdi[IDX_TRUEMOD].PtrData = GetMsg(mTrueMod);
-    //todo fdi[IDX_TRUEMOD].Selected = TrueModOn;
+    fdi[IDX_TRUEMOD].Param.Selected = TrueModOn;
     fdi[IDX_CROSS].PtrData = GetMsg(mCross);
-    //todo fdi[IDX_CROSS].Selected = drawCross;
+    fdi[IDX_CROSS].Param.Selected = drawCross;
     fdi[IDX_PAIRS].PtrData = GetMsg(mPairs);
-    //todo fdi[IDX_PAIRS].Selected = drawPairs;
+    fdi[IDX_PAIRS].Param.Selected = drawPairs;
     fdi[IDX_SYNTAX].PtrData = GetMsg(mSyntax);
-    //todo fdi[IDX_SYNTAX].Selected = drawSyntax;
+    fdi[IDX_SYNTAX].Param.Selected = drawSyntax;
     fdi[IDX_OLDOUTLINE].PtrData = GetMsg(mOldOutline);
-    //todo fdi[IDX_OLDOUTLINE].Selected = oldOutline;
+    fdi[IDX_OLDOUTLINE].Param.Selected = oldOutline;
     fdi[IDX_CATALOG].PtrData = GetMsg(mCatalogFile);
     fdi[IDX_CATALOG_EDIT].PtrData = sCatalogPath->getWChars();
     fdi[IDX_USERHRC].PtrData = GetMsg(mUserHrcFile);
@@ -547,7 +547,7 @@ void FarEditorSet::configure(bool fromEditor)
     fdi[IDX_HRD_TM].PtrData = GetMsg(mHRDNameTrueMod);
     fdi[IDX_HRD_SELECT_TM].PtrData = descr2->getWChars();
     fdi[IDX_CHANGE_BG].PtrData = GetMsg(mChangeBackgroundEditor);
-    //todo fdi[IDX_CHANGE_BG].Selected = ChangeBgEditor;
+    fdi[IDX_CHANGE_BG].Param.Selected = ChangeBgEditor;
     fdi[IDX_RELOAD_ALL].PtrData = GetMsg(mReloadAll);
     fdi[IDX_HRC_SETTING].PtrData = GetMsg(mUserHrcSetting);
     fdi[IDX_OK].PtrData = GetMsg(mOk);
@@ -593,13 +593,13 @@ void FarEditorSet::configure(bool fromEditor)
         k = true;
       }
 
-      //todo fdi[IDX_ENABLED].Selected = (int)Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_ENABLED, 0);
+      fdi[IDX_ENABLED].Param.Selected = (int)Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_ENABLED, 0);
       drawCross = (int)Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_CROSS, 0);
       drawPairs = !!Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_PAIRS, 0);
       drawSyntax = !!Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_SYNTAX, 0);
       oldOutline = !!Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_OLDOUTLINE, 0);
       ChangeBgEditor = !!Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_CHANGE_BG, 0);
-      //todo fdi[IDX_TRUEMOD].Selected = !!Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_TRUEMOD, 0);
+      fdi[IDX_TRUEMOD].Param.Selected = !!Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_TRUEMOD, 0);
       delete sHrdName;
       delete sHrdNameTm;
       delete sCatalogPath;
@@ -612,26 +612,26 @@ void FarEditorSet::configure(bool fromEditor)
       sUserHrcPath = new SString(DString(fdi[IDX_USERHRC_EDIT].PtrData));
 
       // if the plugin has been enable, and we will disable
-      if (rEnabled /*&& !fdi[IDX_ENABLED].Selected*/){
+      if (rEnabled && !fdi[IDX_ENABLED].Param.Selected){
         rEnabled = false;
-        //todo TrueModOn = !!(fdi[IDX_TRUEMOD].Selected);
+        TrueModOn = !!(fdi[IDX_TRUEMOD].Param.Selected);
         SaveSettings();
         disableColorer();
       }
       else{
-        if ((!rEnabled /*&& fdi[IDX_ENABLED].Selected*/) || k){
+        if ((!rEnabled && fdi[IDX_ENABLED].Param.Selected) || k){
           rEnabled = true;
-          //todo TrueModOn = !!(fdi[IDX_TRUEMOD].Selected);
+          TrueModOn = !!(fdi[IDX_TRUEMOD].Param.Selected);
           SaveSettings();
           enableColorer(fromEditor);
         }
         else{
-          /*if (TrueModOn !=!!fdi[IDX_TRUEMOD].Selected){
-            TrueModOn = !!(fdi[IDX_TRUEMOD].Selected);
+          if (TrueModOn !=!!fdi[IDX_TRUEMOD].Param.Selected){
+            TrueModOn = !!(fdi[IDX_TRUEMOD].Param.Selected);
             SaveSettings();
             ReloadBase();
           }
-          else*/{
+          else{
             SaveSettings();
             ApplySettingsToEditors();
             SetBgEditor();

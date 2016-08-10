@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC 
+	"-//Cail Lomecb//DTD Colorer HRC take5//EN" 
+	"http://colorer.sf.net/2003/hrc.dtd" 
+>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<annotation><documentation>
+	'auto' is a place for include
+	to colorer your own HRCs
+</documentation></annotation>
+</hrc>

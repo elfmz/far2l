@@ -1,0 +1,298 @@
+
+.def-Text
+{
+ color: #000000;
+ background-color: #ffffff;
+}
+
+.def-PairStart
+{
+ color: #800080;
+ background-color: #c0c0c0;
+}
+
+.def-PairEnd
+{
+ color: #800080;
+ background-color: #c0c0c0;
+}
+
+.def-PairStrongStart
+{
+ color: #000000;
+ background-color: #ffff00;
+}
+
+.def-PairStrongEnd
+{
+ color: #000000;
+ background-color: #ffff00;
+}
+
+.def-Number
+{
+ color: #800080;
+}
+
+.def-NumberSuffix
+{
+ color: #800080;
+}
+
+.def-String
+{
+ color: #800000;
+}
+
+.def-StringContent
+{
+ background-color: #ffff00;
+}
+
+.def-StringEdge
+{
+ color: #ff0000;
+}
+
+.def-Character
+{
+ color: #000080;
+}
+
+.def-CharacterContent
+{
+ color: #000080;
+}
+
+.def-Comment
+{
+ color: #008000;
+}
+
+.def-CommentContent
+{
+ color: #008000;
+}
+
+.def-CommentEdge
+{
+ color: #c0c0c0;
+}
+
+.def-CommentDoc
+{
+ color: #808080;
+}
+
+.def-CommentDocContent
+{
+ color: #808080;
+}
+
+.def-CommentDocEdge
+{
+ color: #c0c0c0;
+}
+
+.def-Symbol
+{
+ color: #0000ff;
+}
+
+.def-SymbolStrong
+{
+ color: #0000ff;
+}
+
+.def-Operator
+{
+ color: #0000ff;
+}
+
+.def-Prefix
+{
+ color: #000080;
+}
+
+.def-Keyword
+{
+ color: #0000ff;
+}
+
+.def-KeywordStrong
+{
+ color: #0000ff;
+ background-color: #c0c0c0;
+}
+
+.def-TypeKeyword
+{
+ color: #008080;
+}
+
+.def-Constant
+{
+ color: #808000;
+}
+
+.def-BooleanConstant
+{
+ color: #808000;
+}
+
+.def-Identifier
+{
+ color: #000000;
+}
+
+.def-Register
+{
+ color: #800000;
+}
+
+.def-Var
+{
+ color: #ff0000;
+}
+
+.def-VarStrong
+{
+ color: #ff00ff;
+}
+
+.def-Directive
+{
+ color: #0000ff;
+}
+
+.def-Parameter
+{
+ color: #008000;
+}
+
+.def-Tag
+{
+ color: #808080;
+}
+
+.def-OpenTag
+{
+ color: #c0c0c0;
+}
+
+.def-CloseTag
+{
+ color: #c0c0c0;
+}
+
+.def-Label
+{
+ color: #808000;
+}
+
+.def-LabelStrong
+{
+ color: #ffffff;
+ background-color: #c0c0c0;
+}
+
+.def-URI
+{
+ color: #0000ff;
+}
+
+.def-EMail
+{
+ color: #0000ff;
+}
+
+.def-Date
+{
+ color: #008080;
+}
+
+.def-Time
+{
+ color: #000080;
+}
+
+.def-Error
+{
+ color: #ffffff;
+ background-color: #800000;
+}
+
+.def-ErrorText
+{
+ color: #ff00ff;
+}
+
+.def-TODO
+{
+ color: #ffffff;
+ background-color: #008000;
+}
+
+.def-Debug
+{
+ color: #800000;
+ background-color: #c0c0c0;
+}
+
+.def-Insertion
+{
+ background-color: #ffff00;
+}
+
+.def-HorzCross
+{
+ background-color: #ffff00;
+}
+
+.def-VertCross
+{
+ background-color: #ffff00;
+}
+
+.diff-diffOrg
+{
+ color: #ff0000;
+}
+
+.diff-diffNew
+{
+ color: #008000;
+}
+
+.diff-diffModif
+{
+ color: #008080;
+}
+
+.c-PreprocInclude
+{
+ color: #800000;
+}
+
+.xml-CData
+{
+ color: #000080;
+}
+
+.powershell-LogStart
+{
+ color: #c0c0c0;
+ background-color: #c0c0c0;
+}
+
+.powershell-LogText
+{
+ color: #000000;
+ background-color: #c0c0c0;
+}
+
+.powershell-LogEnd
+{
+ color: #ffffff;
+ background-color: #ffffff;
+}

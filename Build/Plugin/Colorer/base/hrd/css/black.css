@@ -1,0 +1,281 @@
+
+.def-Text
+{
+ color: #d1d1d1;
+ background-color: #000000;
+}
+
+.def-HorzCross
+{
+ color: #000000;
+ background-color: #313b30;
+}
+
+.def-VertCross
+{
+ color: #000000;
+ background-color: #313b30;
+}
+
+.def-Number
+{
+ color: #00a800;
+}
+
+.def-NumberDec
+{
+ color: #008c00;
+}
+
+.def-NumHex
+{
+ color: #008000;
+}
+
+.def-NumberBin
+{
+ color: #007d00;
+}
+
+.def-NumberOct
+{
+ color: #008c00;
+}
+
+.def-NumberFloat
+{
+ color: #009f00;
+}
+
+.def-NumberSuffix
+{
+ color: #006600;
+}
+
+.def-String
+{
+ color: #00c4c4;
+}
+
+.def-StringContent
+{
+ color: #008080;
+}
+
+.def-StringEdge
+{
+ color: #02d045;
+}
+
+.def-CharacterContent
+{
+ color: #008080;
+}
+
+.def-Comment
+{
+ color: #9999a9;
+}
+
+.def-CommentContent
+{
+ color: #8695b8;
+ font-weight: bold; 
+}
+
+.def-CommentDoc
+{
+ color: #90b0e0;
+}
+
+.def-Symbol
+{
+ color: #d2cd86;
+}
+
+.def-SymbolStrong
+{
+ color: #b060b0;
+}
+
+.def-Prefix
+{
+ color: #00dddd;
+}
+
+.def-PrefixStrong
+{
+ color: #007997;
+}
+
+.def-Operator
+{
+ color: #00dddd;
+}
+
+.def-Keyword
+{
+ color: #e66170;
+ font-weight: bold; 
+}
+
+.def-KeywordStrong
+{
+ color: #904050;
+}
+
+.def-ClassKeyword
+{
+ color: #bb7977;
+ font-weight: bold; 
+}
+
+.def-TypeKeyword
+{
+ color: #bb7977;
+}
+
+.def-Function
+{
+}
+
+.def-Register
+{
+ color: #d0d09f;
+}
+
+.def-Constant
+{
+ color: #007d45;
+}
+
+.def-BooleanConstant
+{
+ color: #0f4d75;
+}
+
+.def-Var
+{
+}
+
+.def-VarStrong
+{
+ color: #007997;
+}
+
+.def-Identifier
+{
+ color: #005fd2;
+}
+
+.def-Directive
+{
+ color: #008073;
+}
+
+.def-Param
+{
+ color: #64810c;
+}
+
+.def-Tag
+{
+ color: #f6c1d0;
+}
+
+.def-OpenTag
+{
+ color: #ff8906;
+}
+
+.def-CloseTag
+{
+ color: #fb8400;
+}
+
+.def-Label
+{
+ color: #e34adc;
+}
+
+.def-LabelStrong
+{
+ color: #000000;
+ background-color: #a8a800;
+}
+
+.def-Insertion
+{
+ color: #ffffff;
+ background-color: #281800;
+}
+
+.def-InsertionStart
+{
+ color: #800000;
+ background-color: #ffffa4;
+}
+
+.def-InsertionEnd
+{
+ color: #800000;
+ background-color: #ffffa4;
+}
+
+.def-Error
+{
+ color: #ffffff;
+ background-color: #dd0000;
+}
+
+.def-ErrorText
+{
+ color: #ee00ee;
+}
+
+.def-TODO
+{
+ color: #ffffff;
+ background-color: #3c215f;
+}
+
+.def-Debug
+{
+ color: #011a47;
+ background-color: #007084;
+}
+
+.def-Path
+{
+ color: #40015a;
+}
+
+.def-URL
+{
+ color: #6070ec;
+}
+
+.def-EMail
+{
+ color: #a160f4;
+}
+
+.def-Date
+{
+ color: #009797;
+}
+
+.def-Time
+{
+ color: #8745a0;
+}
+
+.def-PairStart
+{
+ color: #aa4444;
+}
+
+.def-PairEnd
+{
+ color: #aa4444;
+}

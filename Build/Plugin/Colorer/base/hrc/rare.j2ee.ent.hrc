@@ -1,0 +1,183 @@
+<!--
+	
+	Java 2 Enterprise Edition configuration files
+	
+-->
+
+  <prototype name="application_1_2" group="rare.j2ee" description="J2EE Application 1.2" targetNamespace="http://java.sun.com/j2ee/dtds/application_1_2.dtd">
+    <location link="jar:common.jar!rare/j2ee/application_1_2.hrc"/>
+    <filename weight='2'>/application\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/j2ee\/dtds\/application_1_2\.dtd/</firstline>
+  </prototype>
+  <prototype name="application_1_3" group="rare.j2ee" description="J2EE Application 1.3" targetNamespace="http://java.sun.com/dtd/application_1_3.dtd">
+    <location link="jar:common.jar!rare/j2ee/application_1_3.hrc"/>
+    <filename weight='2'>/application\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/dtd\/application_1_3\.dtd/</firstline>
+  </prototype>
+  <prototype name="application_1_4" group="rare.j2ee" description="J2EE Application 1.4" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/application_1_4.hrc"/>
+    <filename weight='2'>/application\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/j2ee\/application_1_4\.xsd/</firstline>
+  </prototype>
+  <prototype name="application_5" group="rare.j2ee" description="J2EE Application 5.0" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/application_5.hrc"/>
+    <filename weight='2'>/application\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee\/application_5\.xsd/</firstline>
+  </prototype>
+  <prototype name="application-client_1_4" group="rare.j2ee" description="J2EE Application Client 1.4" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/application-client_1_4.hrc"/>
+    <filename weight='2'>/application-client\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/j2ee\/application-client_1_4.xsd/</firstline>
+  </prototype>
+  <prototype name="application-client_5" group="rare.j2ee" description="J2EE Application Client 5.0" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/application-client_5.hrc"/>
+    <filename weight='2'>/application-client\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee\/application-client_5\.xsd/</firstline>
+  </prototype>
+  <prototype name="connector_1_0" group="rare.j2ee" description="J2EE Connector 1.0" targetNamespace="http://java.sun.com/dtd/connector_1_0.dtd">
+    <location link="jar:common.jar!rare/j2ee/connector_1_0.hrc"/>
+    <filename weight='2'>/ra\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/dtd\/connector_1_0\.dtd/</firstline>
+  </prototype>
+  <prototype name="connector_1_5" group="rare.j2ee" description="J2EE Connector 1.5" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/connector_1_5.hrc"/>
+    <filename weight='2'>/ra\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/j2ee\/connector_1_5\.xsd/</firstline>
+  </prototype>
+  <prototype name="ejb-jar_1_1" group="rare.j2ee" description="EJB Application 1.1" targetNamespace="http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd">
+    <location link="jar:common.jar!rare/j2ee/ejb-jar_1_1.hrc"/>
+    <filename weight='2'>/ejb-jar\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/j2ee\/dtds\/ejb-jar_1_1\.dtd/</firstline>
+  </prototype>
+  <prototype name="ejb-jar_2_0" group="rare.j2ee" description="EJB Application 2.0" targetNamespace="http://java.sun.com/dtd/ejb-jar_2_0.dtd">
+    <location link="jar:common.jar!rare/j2ee/ejb-jar_2_0.hrc"/>
+    <filename weight='2'>/ejb-jar\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/dtd\/ejb-jar_2_0\.dtd/</firstline>
+  </prototype>
+  <prototype name="ejb-jar_2_1" group="rare.j2ee" description="EJB Application 2.1" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/ejb-jar_2_1.hrc"/>
+    <filename weight='2'>/ejb-jar\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/j2ee\/ejb-jar_2_1\.xsd/</firstline>
+  </prototype>
+  <prototype name="ejb-jar_3_0" group="rare.j2ee" description="EJB Application 3.0" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/ejb-jar_3_0.hrc"/>
+    <filename weight='2'>/ejb-jar\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee\/ejb-jar_3_0\.xsd/</firstline>
+  </prototype>
+  <prototype name="web-facesconfig_1_0" group="rare.j2ee" description="JSF Config 1.0" targetNamespace="http://java.sun.com/dtd/web-facesconfig_1_0.dtd">
+    <location link="jar:common.jar!rare/j2ee/web-facesconfig_1_0.hrc"/>
+    <filename weight='2'>/faces-config\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/dtd\/web-facesconfig_1_0\.dtd/</firstline>
+  </prototype>
+  <prototype name="web-facesconfig_1_1" group="rare.j2ee" description="JSF Config 1.1" targetNamespace="http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+    <location link="jar:common.jar!rare/j2ee/web-facesconfig_1_1.hrc"/>
+    <filename weight='2'>/faces-config\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/dtd\/web-facesconfig_1_1\.dtd/</firstline>
+  </prototype>
+  <prototype name="web-facesconfig_1_2" group="rare.j2ee" description="JSF Config 1.2" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/web-facesconfig_1_2.hrc"/>
+    <filename weight='2'>/faces-config\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee\/web-facesconfig_1_2\.xsd/</firstline>
+  </prototype>
+  <prototype name="javaee_web_services_metadata_handler_2_0" group="rare.j2ee" description="J2EE WebService Handlers 2.0" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/javaee_web_services_metadata_handler_2_0.hrc"/>
+    <filename weight='2'>/\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee\/javaee_web_services_metadata_handler_2_0\.xsd/</firstline>
+  </prototype>
+  <prototype name="j2ee_jaxrpc_mapping_1_1" group="rare.j2ee" description="J2EE WSDL Mapping 1.1" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/j2ee_jaxrpc_mapping_1_1.hrc"/>
+    <filename weight='2'>/\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/www\.ibm\.com\/webservices\/xsd\/j2ee_jaxrpc_mapping_1_1\.xsd/</firstline>
+  </prototype>
+  <prototype name="web-app_2_3" group="rare.j2ee" description="Web Application 2.3" targetNamespace="http://java.sun.com/dtd/web-app_2_3.dtd">
+    <location link="jar:common.jar!rare/j2ee/web-app_2_3.hrc"/>
+    <filename weight='2'>/web\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/dtd\/web-app_2_3\.dtd/</firstline>
+  </prototype>
+  <prototype name="web-app_2_4" group="rare.j2ee" description="Web Application 2.4" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/web-app_2_4.hrc"/>
+    <filename weight='2'>/web\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/j2ee\/web-app_2_4\.xsd/</firstline>
+  </prototype>
+  <prototype name="web-app_2_5" group="rare.j2ee" description="Web Application 2.5" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/web-app_2_5.hrc"/>
+    <filename weight='2'>/web\.xml$/ix</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee\/web-app_2_5\.xsd/</firstline>
+  </prototype>
+  <prototype name="web-jsptaglibrary_1_1" group="rare.j2ee" description="JSP Tag Library 1.1" targetNamespace="http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+    <location link="jar:common.jar!rare/j2ee/web-jsptaglibrary_1_1.hrc"/>
+    <filename>/\.tld$/i</filename>
+    <firstline weight='2'>/http:\/\/java\.sun\.com\/j2ee\/dtds\/web-jsptaglibrary_1_1\.dtd/</firstline>
+    <parameters>
+      <!-- firstline -->
+      <param name='firstlines'     value='10'   description="lines for 'firstline'"/>
+      <param name='firstlinebytes' value='2000' description="bytes for 'firstline'"/>
+    </parameters>
+  </prototype>
+  <prototype name="web-jsptaglibrary_1_2" group="rare.j2ee" description="JSP Tag Library 1.2" targetNamespace="http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd">
+    <location link="jar:common.jar!rare/j2ee/web-jsptaglibrary_1_2.hrc"/>
+    <filename>/\.tld$/i</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/dtd\/web-jsptaglibrary_1_2\.dtd/</firstline>
+  </prototype>
+  <prototype name="web-jsptaglibrary_2_0" group="rare.j2ee" description="JSP Tag Library 2.0" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/web-jsptaglibrary_2_0.hrc"/>
+    <filename>/\.tld$/i</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/j2ee(\/|\s+)web-jsptaglibrary_2_0\.xsd/</firstline>
+  </prototype>
+  <prototype name="web-jsptaglibrary_2_1" group="rare.j2ee" description="JSP Tag Library 2.1" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/web-jsptaglibrary_2_1.hrc"/>
+    <filename>/\.tld$/i</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee(\/|\s+)web-jsptaglibrary_2_1\.xsd/</firstline>
+  </prototype>
+  <prototype name="j2ee_web_services_1_0" group="rare.j2ee" description="J2EE WebServices 1.0" targetNamespace="http://www.ibm.com/webservices/dtd/j2ee_web_services_1_0.dtd">
+    <location link="jar:common.jar!rare/j2ee/j2ee_web_services_1_0.hrc"/>
+    <filename>/webservices\.xml$/i</filename>
+    <firstline weight='4'>/http:\/\/www\.ibm\.com\/webservices\/dtd\/j2ee_web_services_1_0\.dtd/</firstline>
+  </prototype>
+  <prototype name="j2ee_web_services_1_1" group="rare.j2ee" description="J2EE WebServices 1.1" targetNamespace="http://java.sun.com/xml/ns/j2ee">
+    <location link="jar:common.jar!rare/j2ee/j2ee_web_services_1_1.hrc"/>
+    <filename>/webservices\.xml$/i</filename>
+    <firstline weight='4'>/http:\/\/www.ibm.com\/webservices\/xsd\/j2ee_web_services_1_1\.xsd/</firstline>
+  </prototype>
+  <prototype name="javaee_web_services_1_2" group="rare.j2ee" description="J2EE WebServices 1.2" targetNamespace="http://java.sun.com/xml/ns/javaee">
+    <location link="jar:common.jar!rare/j2ee/javaee_web_services_1_2.hrc"/>
+    <filename>/webservices\.xml$/i</filename>
+    <firstline weight='4'>/http:\/\/java\.sun\.com\/xml\/ns\/javaee\/javaee_web_services_1_2\.xsd/</firstline>
+  </prototype>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  Kasatkin Konstantin <KVK@estylesoft.com>
+   -  Eugene Efremov <4mirror@mail.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

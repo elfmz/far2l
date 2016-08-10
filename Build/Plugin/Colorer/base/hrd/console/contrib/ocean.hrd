@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrd PUBLIC "-//Cail Lomecb//DTD Colorer HRD take5//EN"
+  "http://colorer.sf.net/2003/hrd.dtd">
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+
+  <assign name="def:Text" fore="#9" back="#B"/>
+  <assign name="def:HorzCross"  fore="#8" back="#E"/>
+  <assign name="def:VertCross" fore="#8" back="#E"/>
+  <assign name="def:Syntax"/>
+
+  <assign name="def:Number"    fore="#2"/>
+  <assign name="def:NumberSuffix" fore="#A"/>
+
+  <assign name="def:String" fore="#2"/>
+  <assign name="def:StringContent" fore="#3"/>
+  <assign name="def:StringEdge" fore="#1"/>
+  <assign name="def:CharacterContent" fore="#1"/>
+
+  <assign name="def:Comment" fore="#3"/>
+  <assign name="def:CommentContent" fore="#7"/>
+  <assign name="def:CommentEdge"    fore="#7"/>
+  <assign name="def:CommentDoc"     fore="#3"/>
+  <assign name="def:CommentDocEdge" fore="#7"/>
+
+  <assign name="def:Symbol" fore="#1"/>
+  <assign name="def:SymbolStrong" fore="#6"/>
+  <assign name="def:Prefix" fore="#1"/>
+  <assign name="def:PrefixStrong" fore="#6"/>
+
+  <assign name="def:Operator" fore="#1"/>
+
+  <assign name="def:Keyword"        fore="#0"/>
+  <assign name="def:FunctionKeyword" fore="#4"/>
+  <assign name="def:DeprecatedKeyword" fore="#8"/>
+  <assign name="def:InterfaceKeyword" fore="#7"/>
+  <assign name="def:ClassKeyword" fore="#7"/>
+  <assign name="def:StructKeyword" fore="#7"/>
+  <assign name="def:TypeKeyword" fore="#D"/>
+
+  <assign name="def:Function"/>
+  <assign name="def:Register" fore="#4"/>
+  <assign name="def:Constant" fore="#C"/>
+  <assign name="def:Var" fore="#0"/>
+  <assign name="def:VarStrong" fore="#5"/>
+  <assign name="def:Identifier" fore="#2"/>
+  <assign name="def:BooleanConstant" fore="#7"/>
+
+  <assign name="def:Directive" fore="#C"/>
+  <assign name="def:Parameter" fore="#1"/>
+
+  <assign name="def:Tag" fore="#8"/>
+  <assign name="def:OpenTag" fore="#7"/>
+  <assign name="def:CloseTag" fore="#7"/>
+
+  <assign name="def:Label" fore="#D"/>
+  <assign name="def:LabelStrong" fore="#F" back="#7"/>
+
+  <assign name="def:Insertion" fore="#8" back="#E"/>
+
+  <assign name="def:Error" fore="#F" back="#4"/>
+  <assign name="def:ErrorText" fore="#F" back="#4"/>
+
+  <assign name="def:TODO" fore="#C" back="#6"/>
+  <assign name="def:Debug" fore="#C" back="#6"/>
+
+  <assign name="def:URI" fore="#4"/>
+  <assign name="def:Path" fore="#4"/>
+  <assign name="def:URL" fore="#4"/>
+  <assign name="def:EMail" fore="#5"/>
+
+  <assign name="def:Date" fore="#3"/>
+  <assign name="def:Time" fore="#1"/>
+
+  <assign name="def:PairStart" fore="#b" back="#1"/>
+  <assign name="def:PairEnd" fore="#b" back="#1"/>
+  <assign name="def:PairStrongStart" fore="#0" back="#E"/>
+  <assign name="def:PairStrongEnd" fore="#0" back="#E"/>
+
+  <assign name="xml:element.defined.start.name" fore="#2"/>
+  <assign name="xml:element.defined.end.name"   fore="#2"/>
+  <assign name="xml:Enumeration"   fore="#2"/>
+
+</hrd>

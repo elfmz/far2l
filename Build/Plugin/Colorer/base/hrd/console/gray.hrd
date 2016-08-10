@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrd PUBLIC "-//Cail Lomecb//DTD Colorer HRD take5//EN"
+  "http://colorer.sf.net/2003/hrd.dtd">
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+
+  <assign name="def:Text" fore="#0" back="#7"/>
+
+  <assign name="def:CommentContent" fore="#8"/>
+  <assign name="def:CommentDoc"     fore="#8"/>
+
+  <assign name="def:Constant" fore="#8"/>
+  <assign name="def:BooleanConstant" fore="#8"/>
+
+  <assign name="def:OpenTag" fore="#8"/>
+  <assign name="def:CloseTag" fore="#8"/>
+
+  <assign name="def:LabelStrong" fore="#F" back="#8"/>
+
+  <assign name="def:TODO" fore="#4" back="#8"/>
+  <assign name="def:Debug" fore="#4" back="#8"/>
+
+  <assign name="def:PairStart" fore="#5" back='#8'/>
+  <assign name="def:PairEnd" fore="#5" back='#8'/>
+
+</hrd>

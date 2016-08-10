@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ NC-like console palette for colorer.take5.
+ (c) Written by Eugene Efromov <4mirror@mail.ru>
+--><!DOCTYPE hrd
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRD take5//EN" "http://colorer.sf.net/2003/hrd.dtd">
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+   <assign name="def:Text" fore="#7" back="#1"/>
+   <!--  
+  <assign name="def:HorzCross"/>  disabled 
+  <assign name="def:VertCross"/> <!- - disabled - ->
+  <assign name="def:Syntax"/>--><assign name="def:Number" fore="#A" back="#c"/>
+   <assign name="def:NumberSuffix" fore="#2" back="#c"/>
+   <assign name="def:NumberPrefix" fore="#2" back="#c"/>
+   <assign name="def:String" fore="#B"/>
+   <assign name="def:StringContent" fore="#9"/>
+   <assign name="def:StringEdge" fore="#C"/>
+   <assign name="def:CharacterContent" fore="#9"/>
+   <assign name="regexp:MetaSymb" fore="#F"/>
+   <assign name="regexp:Quote" fore="#E"/>
+   <assign name="def:Comment" fore="#0" back="#c"/>
+   <assign name="def:CommentContent" fore="#8" back="#c"/>
+   <assign name="def:CommentEdge" fore="#8" back="#c"/>
+   <assign name="def:CommentDoc" fore="#0" back="#e"/>
+   <assign name="def:CommentDocContent" fore="#3" back="#e"/>
+   <assign name="def:CommentDocEdge" fore="#3" back="#e"/>
+   <assign name="def:Symbol" fore="#E" back="#c"/>
+   <assign name="def:SymbolStrong" fore="#C" back="#c"/>
+   <assign name="def:Prefix" fore="#3"/>
+   <assign name="def:PrefixStrong" fore="#5"/>
+   <assign name="def:Operator" fore="#E"/>
+   <assign name="def:Keyword" fore="#F"/>
+   <assign name="def:KeywordStrong" fore="#3"/>
+   <assign name="def:TypeKeyword" fore="#F"/>
+   <assign name="def:FunctionKeyword" fore="#3"/>
+   <assign name="def:ClassKeyword" fore="#3"/>
+   <assign name="def:StructKeyword" fore="#3"/>
+   <assign name="def:DeprecatedKeyword" fore="#4"/>
+   <assign name="def:Constant" fore="#2" back="#c"/>
+   <assign name="def:Register" fore="#2" back="#c"/>
+   <assign name="def:BooleanConstant" fore="#E"/>
+   <assign name="def:Var" fore="#2"/>
+   <assign name="def:VarStrong" fore="#5"/>
+   <assign name="def:Identifier" fore="#2"/>
+   <assign name="def:Outlined"/>
+   <!-- fore="#d" --><assign name="def:Directive" fore="#A" back="#c"/>
+   <assign name="def:DirectiveContent" fore="#2" back="#c"/>
+   <assign name="def:DirectiveEdge" fore="#2" back="#c"/>
+   <assign name="def:Parameter" fore="#A" back="#e"/>
+   <assign name="def:ParameterStrong" fore="#D" back="#e"/>
+   <assign name="def:Tag" fore="#E"/>
+   <assign name="def:OpenTag" fore="#C" back="#c"/>
+   <assign name="def:CloseTag" fore="#C" back="#c"/>
+   <assign name="def:EmbeddedTag" fore="#4" back="#c"/>
+   <!--assign name="asp:Text" fore="#7" back="#1"/--><!-- labels --><assign name="def:Label" fore="#D" back="#c"/>
+   <assign name="def:LabelStrong" fore="#D" back="#F"/>
+   <!--assign name="def:Tabulator" fore="#D" back="#6" // move to other plugin --><assign name="def:Insertion" back="#8"/>
+   <!--  fore="#7"  --><assign name="def:InsertionEmbed" fore="#7" back="#1"/>
+   <assign name="def:Error" fore="#0" back="#4"/>
+   <assign name="def:ErrorText" fore="#4" back="#e"/>
+   <assign name="def:TODO" fore="#F" back="#9"/>
+   <assign name="def:Debug" fore="#0" back="#D"/>
+   <assign name="def:URI" fore="#9"/>
+   <assign name="def:EMail" fore="#9" back="#e"/>
+   <assign name="def:Path" fore="#9" back="#c"/>
+   <assign name="def:Date" fore="#a" back="#e"/>
+   <assign name="def:Time" fore="#a" back="#e"/>
+   <assign name="def:PairStart" fore="#c" back="#9"/>
+   <assign name="def:PairEnd" fore="#c" back="#9"/>
+   <assign name="def:PairStrongStart" fore="#c" back="#b"/>
+   <assign name="def:PairStrongEnd" fore="#c" back="#b"/>
+</hrd>

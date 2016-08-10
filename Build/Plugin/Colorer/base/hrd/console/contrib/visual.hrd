@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+
+<!--
+	White background color scheme by Roman Kuzmin
+	Distributed with ColorerPack: http://code.google.com/p/farnet
+
+	<hrd class="console" name="visual" description="Visual by Roman Kuzmin">
+	<location link="..."/>
+	</hrd>
+-->
+
+<assign fore="#00" back="#0F" name="def:Text"/>
+
+<assign fore="#05" back="#07" name="def:PairStart"/>
+<assign fore="#05" back="#07" name="def:PairEnd"/>
+<assign fore="#00" back="#0E" name="def:PairStrongStart"/>
+<assign fore="#00" back="#0E" name="def:PairStrongEnd" />
+
+<assign fore="#05" name="def:Number"/>
+<assign fore="#05" name="def:NumberSuffix"/>
+
+<assign fore="#04" name="def:String"/>
+<assign back="#0E" name="def:StringContent"/>
+<assign fore="#0C" name="def:StringEdge"/>
+<assign fore="#01" name="def:Character"/>
+<assign fore="#01" name="def:CharacterContent"/>
+
+<assign fore="#02" name="def:Comment"/>
+<assign fore="#02" name="def:CommentContent"/>
+<assign fore="#07" name="def:CommentEdge"/>
+<assign fore="#08" name="def:CommentDoc"/>
+<assign fore="#08" name="def:CommentDocContent"/>
+<assign fore="#07" name="def:CommentDocEdge"/>
+
+<assign fore="#09" name="def:Symbol"/>
+<assign fore="#09" name="def:SymbolStrong"/>
+<assign fore="#09" name="def:Operator"/>
+<assign fore="#01" name="def:Prefix"/>
+
+<assign fore="#09" name="def:Keyword"/>
+<assign fore="#09" back="#07" name="def:KeywordStrong"/>
+<assign fore="#03" name="def:TypeKeyword"/>
+
+<assign fore="#06" name="def:Constant"/>
+<assign fore="#06" name="def:BooleanConstant"/>
+<assign fore="#00" name="def:Identifier"/>
+
+<assign fore="#04" name="def:Register"/>
+<assign fore="#0C" name="def:Var"/>
+<assign fore="#0D" name="def:VarStrong"/>
+
+<assign fore="#09" name="def:Directive"/>
+
+<assign fore="#02" name="def:Parameter"/>
+
+<assign fore="#08" name="def:Tag"/>
+<assign fore="#07" name="def:OpenTag"/>
+<assign fore="#07" name="def:CloseTag"/>
+
+<assign fore="#06" name="def:Label"/>
+<assign fore="#0F" back="#07" name="def:LabelStrong"/>
+
+<assign fore="#09" name="def:URI"/>
+<assign fore="#09" name="def:EMail"/>
+<assign fore="#03" name="def:Date"/>
+<assign fore="#01" name="def:Time"/>
+
+<assign fore="#0F" back="#04" name="def:Error"/>
+<assign fore="#0D" name="def:ErrorText"/>
+
+<assign fore="#0F" back="#02" name="def:TODO"/>
+<assign fore="#04" back="#07" name="def:Debug"/>
+
+<assign back="#0E" name="def:Insertion"/>
+<assign back="#0E" name="def:HorzCross"/>
+<assign back="#0E" name="def:VertCross"/>
+
+<!--diff: git-->
+<assign fore="#0C" name="diff:diffOrg"/>
+<assign fore="#02" name="diff:diffNew"/>
+<assign fore="#03" name="diff:diffModif"/>
+
+<!--c: VS-->
+<assign fore="#04" name="c:PreprocInclude"/>
+
+<!--xml: CData != text-->
+<assign fore="#01" name="xml:CData"/>
+
+<!--powershell: console log-->
+<assign fore="#07" back="#07" name="powershell:LogStart"/>
+<assign fore="#00" back="#07" name="powershell:LogText"/>
+<assign fore="#0F" back="#0F" name="powershell:LogEnd"/>
+
+<!--hrd: standard console colors-->
+<assign fore="#00" name="hrd:fore.Black"/>
+<assign fore="#01" name="hrd:fore.DarkBlue"/>
+<assign fore="#02" name="hrd:fore.DarkGreen"/>
+<assign fore="#03" name="hrd:fore.DarkCyan"/>
+<assign fore="#04" name="hrd:fore.DarkRed"/>
+<assign fore="#05" name="hrd:fore.DarkMagenta"/>
+<assign fore="#06" name="hrd:fore.DarkYellow"/>
+<assign fore="#07" name="hrd:fore.Gray"/>
+<assign fore="#08" name="hrd:fore.DarkGray"/>
+<assign fore="#09" name="hrd:fore.Blue"/>
+<assign fore="#0A" name="hrd:fore.Green"/>
+<assign fore="#0B" name="hrd:fore.Cyan"/>
+<assign fore="#0C" name="hrd:fore.Red"/>
+<assign fore="#0D" name="hrd:fore.Magenta"/>
+<assign fore="#0E" name="hrd:fore.Yellow"/>
+<assign fore="#0F" name="hrd:fore.White"/>
+
+</hrd>

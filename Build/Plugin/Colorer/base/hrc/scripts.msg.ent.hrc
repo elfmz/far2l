@@ -1,0 +1,18 @@
+  <prototype name="ftn" group="messages" description="fido message">
+    <location link="jar:common.jar!scripts/msg/fidomsg.hrc"/>
+    <filename>/\.(msg|uue)$/i</filename>
+  </prototype>
+  <prototype name="email" group="messages" description="inet e-mail">
+    <location link="jar:common.jar!scripts/msg/email.hrc"/>
+    <filename>/\.(eml|msg|nws)$/i</filename>
+    <firstline>/^FROM/i</firstline>
+  </prototype>
+  <prototype name="pms" group="messages.far" description="PKTview message">
+    <location link="jar:common.jar!scripts/msg/pms.hrc"/>
+    <filename>/(\.pms)$/i</filename>
+  </prototype>
+  <prototype name="farmailmsg" group="messages.far" description="FarMail message">
+    <location link="jar:common.jar!scripts/msg/farmsg.hrc"/>
+    <filename>/\.(msg|eml|nsw)$/i</filename>
+    <firstline weight="2">/\%start\%/</firstline>
+  </prototype>

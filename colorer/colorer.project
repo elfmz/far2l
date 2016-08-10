@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="colorer" InternalType="Library">
+  <Plugins>
+    <Plugin Name="CMakePlugin">
+      <![CDATA[[{
+  "name": "Debug",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }]]]>
+    </Plugin>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
+  </Plugins>
+  <Description/>
+  <Dependencies/>
+  <VirtualDirectory Name="src">
+    <VirtualDirectory Name="zlib">
+      <VirtualDirectory Name="contrib">
+        <VirtualDirectory Name="minizip">
+          <File Name="src/zlib/contrib/minizip/iowin32.c"/>
+          <File Name="src/zlib/contrib/minizip/mztools.c"/>
+          <File Name="src/zlib/contrib/minizip/mztools.h"/>
+          <File Name="src/zlib/contrib/minizip/ioapi.h"/>
+          <File Name="src/zlib/contrib/minizip/unzip.h"/>
+          <File Name="src/zlib/contrib/minizip/minizip.c" ExcludeProjConfig="Debug"/>
+          <File Name="src/zlib/contrib/minizip/iowin32.h"/>
+          <File Name="src/zlib/contrib/minizip/zip.c"/>
+          <File Name="src/zlib/contrib/minizip/miniunz.c" ExcludeProjConfig="Debug"/>
+          <File Name="src/zlib/contrib/minizip/ioapi.c"/>
+          <File Name="src/zlib/contrib/minizip/zip.h"/>
+          <File Name="src/zlib/contrib/minizip/unzip.c"/>
+          <File Name="src/zlib/contrib/minizip/crypt.h"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <File Name="src/zlib/zutil.h"/>
+      <File Name="src/zlib/uncompr.c"/>
+      <File Name="src/zlib/trees.h"/>
+      <File Name="src/zlib/deflate.c"/>
+      <File Name="src/zlib/inftrees.h"/>
+      <File Name="src/zlib/inftrees.c"/>
+      <File Name="src/zlib/trees.c"/>
+      <File Name="src/zlib/zlib.h"/>
+      <File Name="src/zlib/inffast.h"/>
+      <File Name="src/zlib/crc32.h"/>
+      <File Name="src/zlib/gzwrite.c"/>
+      <File Name="src/zlib/gzguts.h"/>
+      <File Name="src/zlib/infback.c"/>
+      <File Name="src/zlib/crc32.c"/>
+      <File Name="src/zlib/inflate.h"/>
+      <File Name="src/zlib/gzclose.c"/>
+      <File Name="src/zlib/zutil.c"/>
+      <File Name="src/zlib/zconf.h"/>
+      <File Name="src/zlib/deflate.h"/>
+      <File Name="src/zlib/inflate.c"/>
+      <File Name="src/zlib/minigzip.c" ExcludeProjConfig="Debug"/>
+      <File Name="src/zlib/gzlib.c"/>
+      <File Name="src/zlib/inffixed.h"/>
+      <File Name="src/zlib/gzread.c"/>
+      <File Name="src/zlib/adler32.c"/>
+      <File Name="src/zlib/compress.c"/>
+      <File Name="src/zlib/inffast.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="shared">
+      <VirtualDirectory Name="common">
+        <VirtualDirectory Name="io">
+          <File Name="src/shared/common/io/SharedInputSource.h"/>
+          <File Name="src/shared/common/io/MemoryFile.h"/>
+          <File Name="src/shared/common/io/HTTPInputSource.h"/>
+          <File Name="src/shared/common/io/StreamWriter.h"/>
+          <File Name="src/shared/common/io/FileWriter.h"/>
+          <File Name="src/shared/common/io/Writer.cpp"/>
+          <File Name="src/shared/common/io/FileInputSource.cpp"/>
+          <File Name="src/shared/common/io/HTTPInputSource.cpp"/>
+          <File Name="src/shared/common/io/SharedInputSource.cpp"/>
+          <File Name="src/shared/common/io/FileWriter.cpp"/>
+          <File Name="src/shared/common/io/StreamWriter.cpp"/>
+          <File Name="src/shared/common/io/Writer.h"/>
+          <File Name="src/shared/common/io/JARInputSource.h"/>
+          <File Name="src/shared/common/io/FileInputSource.h"/>
+          <File Name="src/shared/common/io/InputSource.cpp"/>
+          <File Name="src/shared/common/io/JARInputSource.cpp"/>
+          <File Name="src/shared/common/io/InputSource.h"/>
+        </VirtualDirectory>
+        <File Name="src/shared/common/Logging.h"/>
+        <File Name="src/shared/common/Common.h"/>
+        <File Name="src/shared/common/MemoryOperator.h"/>
+        <File Name="src/shared/common/Exception.cpp"/>
+        <File Name="src/shared/common/Features.h"/>
+        <File Name="src/shared/common/Logging.cpp"/>
+        <File Name="src/shared/common/Exception.h"/>
+        <File Name="src/shared/common/HashtableCore.h"/>
+        <File Name="src/shared/common/Vector.h"/>
+        <File Name="src/shared/common/MemoryChunks.h"/>
+        <File Name="src/shared/common/MemoryChunks.cpp"/>
+        <File Name="src/shared/common/Hashtable.h"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="colorer">
+        <VirtualDirectory Name="parsers">
+          <VirtualDirectory Name="helpers">
+            <File Name="src/shared/colorer/parsers/helpers/HRCParserHelpers.h"/>
+            <File Name="src/shared/colorer/parsers/helpers/HRCParserHelpers.cpp"/>
+            <File Name="src/shared/colorer/parsers/helpers/FileTypeImpl.h"/>
+            <File Name="src/shared/colorer/parsers/helpers/TextParserHelpers.cpp"/>
+            <File Name="src/shared/colorer/parsers/helpers/TextParserHelpers.h"/>
+          </VirtualDirectory>
+          <File Name="src/shared/colorer/parsers/HRCParserImpl.cpp"/>
+          <File Name="src/shared/colorer/parsers/TextParserImpl.h"/>
+          <File Name="src/shared/colorer/parsers/HRCParserImpl.h"/>
+          <File Name="src/shared/colorer/parsers/TextParserImpl.cpp"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="viewer">
+          <File Name="src/shared/colorer/viewer/TextLinesStore.cpp"/>
+          <File Name="src/shared/colorer/viewer/TextConsoleViewer.cpp"/>
+          <File Name="src/shared/colorer/viewer/TextLinesStore.h"/>
+          <File Name="src/shared/colorer/viewer/ConsoleTools.h"/>
+          <File Name="src/shared/colorer/viewer/ConsoleTools.cpp"/>
+          <File Name="src/shared/colorer/viewer/TextConsoleViewer.h"/>
+          <File Name="src/shared/colorer/viewer/ParsedLineWriter.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="editor">
+          <File Name="src/shared/colorer/editor/EditorListener.h"/>
+          <File Name="src/shared/colorer/editor/BaseEditor.h"/>
+          <File Name="src/shared/colorer/editor/Outliner.cpp"/>
+          <File Name="src/shared/colorer/editor/BaseEditor.cpp"/>
+          <File Name="src/shared/colorer/editor/OutlineItem.h"/>
+          <File Name="src/shared/colorer/editor/PairMatch.h"/>
+          <File Name="src/shared/colorer/editor/Outliner.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="handlers">
+          <File Name="src/shared/colorer/handlers/FileErrorHandler.cpp"/>
+          <File Name="src/shared/colorer/handlers/LineRegionsSupport.h"/>
+          <File Name="src/shared/colorer/handlers/TextHRDMapper.cpp"/>
+          <File Name="src/shared/colorer/handlers/LineRegionsSupport.cpp"/>
+          <File Name="src/shared/colorer/handlers/TextHRDMapper.h"/>
+          <File Name="src/shared/colorer/handlers/StyledRegion.h"/>
+          <File Name="src/shared/colorer/handlers/StyledHRDMapper.cpp"/>
+          <File Name="src/shared/colorer/handlers/DefaultErrorHandler.h"/>
+          <File Name="src/shared/colorer/handlers/LineRegion.h"/>
+          <File Name="src/shared/colorer/handlers/LineRegionsCompactSupport.cpp"/>
+          <File Name="src/shared/colorer/handlers/TextRegion.h"/>
+          <File Name="src/shared/colorer/handlers/RegionMapperImpl.cpp"/>
+          <File Name="src/shared/colorer/handlers/ErrorHandlerWriter.cpp"/>
+          <File Name="src/shared/colorer/handlers/RegionMapperImpl.h"/>
+          <File Name="src/shared/colorer/handlers/RegionMapper.h"/>
+          <File Name="src/shared/colorer/handlers/ErrorHandlerWriter.h"/>
+          <File Name="src/shared/colorer/handlers/RegionDefine.h"/>
+          <File Name="src/shared/colorer/handlers/StyledHRDMapper.h"/>
+          <File Name="src/shared/colorer/handlers/LineRegionsCompactSupport.h"/>
+          <File Name="src/shared/colorer/handlers/FileErrorHandler.h"/>
+        </VirtualDirectory>
+        <File Name="src/shared/colorer/Region.h"/>
+        <File Name="src/shared/colorer/ParserFactory.h"/>
+        <File Name="src/shared/colorer/ParserFactoryException.h"/>
+        <File Name="src/shared/colorer/TextParser.h"/>
+        <File Name="src/shared/colorer/_template.h"/>
+        <File Name="src/shared/colorer/HRCParser.h"/>
+        <File Name="src/shared/colorer/LineSource.h"/>
+        <File Name="src/shared/colorer/RegionHandler.h"/>
+        <File Name="src/shared/colorer/ErrorHandler.h"/>
+        <File Name="src/shared/colorer/ParserFactory.cpp"/>
+        <File Name="src/shared/colorer/Scheme.h"/>
+        <File Name="src/shared/colorer/FileType.h"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="misc">
+        <File Name="src/shared/misc/malloc.c"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="unicode">
+        <File Name="src/shared/unicode/x_charcategory_names.h"/>
+        <File Name="src/shared/unicode/x_tables.h"/>
+        <File Name="src/shared/unicode/DString.h"/>
+        <File Name="src/shared/unicode/x_encodings.h"/>
+        <File Name="src/shared/unicode/BitArray.cpp"/>
+        <File Name="src/shared/unicode/CharacterClass.cpp"/>
+        <File Name="src/shared/unicode/SString.h"/>
+        <File Name="src/shared/unicode/DString.cpp"/>
+        <File Name="src/shared/unicode/x_charcategory.h"/>
+        <File Name="src/shared/unicode/UnicodeTools.h"/>
+        <File Name="src/shared/unicode/Encodings.cpp"/>
+        <File Name="src/shared/unicode/String.cpp"/>
+        <File Name="src/shared/unicode/String.h"/>
+        <File Name="src/shared/unicode/CharacterClass.h"/>
+        <File Name="src/shared/unicode/SString.cpp"/>
+        <File Name="src/shared/unicode/StringBuffer.h"/>
+        <File Name="src/shared/unicode/Character.h"/>
+        <File Name="src/shared/unicode/UnicodeTools.cpp"/>
+        <File Name="src/shared/unicode/x_charcategory2.h"/>
+        <File Name="src/shared/unicode/Character.cpp"/>
+        <File Name="src/shared/unicode/Encodings.h"/>
+        <File Name="src/shared/unicode/x_defines.h"/>
+        <File Name="src/shared/unicode/BitArray.h"/>
+        <File Name="src/shared/unicode/StringBuffer.cpp"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="cregexp">
+        <File Name="src/shared/cregexp/cregexp.cpp"/>
+        <File Name="src/shared/cregexp/cregexp.h"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="xml">
+        <File Name="src/shared/xml/xmldom.cpp"/>
+        <File Name="src/shared/xml/xmldom.h"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="pcolorer2">
+      <File Name="src/pcolorer2/FarEditor.cpp"/>
+      <File Name="src/pcolorer2/ChooseTypeMenu.cpp"/>
+      <File Name="src/pcolorer2/tools.cpp"/>
+      <File Name="src/pcolorer2/registry_wide.cpp"/>
+      <File Name="src/pcolorer2/tools.h"/>
+      <File Name="src/pcolorer2/FarEditorSet.h"/>
+      <File Name="src/pcolorer2/resource.h"/>
+      <File Name="src/pcolorer2/FarHrcSettings.cpp"/>
+      <File Name="src/pcolorer2/FarEditorSet.cpp"/>
+      <File Name="src/pcolorer2/registry_wide.h"/>
+      <File Name="src/pcolorer2/pcolorer.h"/>
+      <File Name="src/pcolorer2/FarHrcSettings.h"/>
+      <File Name="src/pcolorer2/ChooseTypeMenu.h"/>
+      <File Name="src/pcolorer2/pcolorer.cpp"/>
+      <File Name="src/pcolorer2/ConsoleAnnotation.h"/>
+      <File Name="src/pcolorer2/FarEditor.h"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="include"/>
+  <Settings Type="Dynamic Library">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="" Assembler="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g;-O1;-O;-O2;-std=c++11;-std=c99;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -fPIC" C_Options="-g;-O1;-O;-O2;-std=c++11;-std=c99;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -fPIC" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+        <IncludePath Value="src"/>
+        <IncludePath Value="src/zlib"/>
+        <IncludePath Value="src/pcolorer2"/>
+        <IncludePath Value="src/shared"/>
+        <IncludePath Value="src/shared/colorer"/>
+        <IncludePath Value="src/shared/common"/>
+        <IncludePath Value="src/shared/cregexp"/>
+        <IncludePath Value="src/shared/misc"/>
+        <IncludePath Value="src/shared/unicode"/>
+        <IncludePath Value="src/shared/xml"/>
+        <IncludePath Value="../far2l/"/>
+        <IncludePath Value="../far2l/Include"/>
+        <IncludePath Value="../WinPort"/>
+        <Preprocessor Value="_UNICODE"/>
+        <Preprocessor Value="UNICODE"/>
+        <Preprocessor Value="__unix__"/>
+      </Compiler>
+      <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes) -fPIC" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="../Build/Plugin/Colorer/bin/$(ProjectName).so" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+    <Configuration Name="Release" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-O2;$(shell wx-config --cxxflags --debug=no --unicode=yes)" C_Options="-O2;$(shell wx-config --cxxflags --debug=no --unicode=yes)" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="$(shell wx-config --debug=no --libs --unicode=yes);-s" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="$(IntermediateDirectory)/lib$(ProjectName).so" IntermediateDirectory="./Release" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
+</CodeLite_Project>

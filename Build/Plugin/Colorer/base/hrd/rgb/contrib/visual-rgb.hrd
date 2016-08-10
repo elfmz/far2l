@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+
+<!--
+	White background color scheme by Roman Kuzmin
+	Distributed with ColorerPack: http://code.google.com/p/farnet
+
+	<hrd class="rgb" name="visual" description="Visual by Roman Kuzmin">
+	<location link="..."/>
+	</hrd>
+-->
+
+<assign fore="#000000" back="#ffffff" name="def:Text"/>
+
+<assign fore="#800080" back="#c0c0c0" name="def:PairStart"/>
+<assign fore="#800080" back="#c0c0c0" name="def:PairEnd"/>
+<assign fore="#000000" back="#ffff00" name="def:PairStrongStart"/>
+<assign fore="#000000" back="#ffff00" name="def:PairStrongEnd" />
+
+<assign fore="#800080" name="def:Number"/>
+<assign fore="#800080" name="def:NumberSuffix"/>
+
+<assign fore="#800000" name="def:String"/>
+<assign back="#ffff00" name="def:StringContent"/>
+<assign fore="#ff0000" name="def:StringEdge"/>
+<assign fore="#000080" name="def:Character"/>
+<assign fore="#000080" name="def:CharacterContent"/>
+
+<assign fore="#008000" name="def:Comment"/>
+<assign fore="#008000" name="def:CommentContent"/>
+<assign fore="#c0c0c0" name="def:CommentEdge"/>
+<assign fore="#808080" name="def:CommentDoc"/>
+<assign fore="#808080" name="def:CommentDocContent"/>
+<assign fore="#c0c0c0" name="def:CommentDocEdge"/>
+
+<assign fore="#0000ff" name="def:Symbol"/>
+<assign fore="#0000ff" name="def:SymbolStrong"/>
+<assign fore="#0000ff" name="def:Operator"/>
+<assign fore="#000080" name="def:Prefix"/>
+
+<assign fore="#0000ff" name="def:Keyword"/>
+<assign fore="#0000ff" back="#c0c0c0" name="def:KeywordStrong"/>
+<assign fore="#008080" name="def:TypeKeyword"/>
+
+<assign fore="#808000" name="def:Constant"/>
+<assign fore="#808000" name="def:BooleanConstant"/>
+<assign fore="#000000" name="def:Identifier"/>
+
+<assign fore="#800000" name="def:Register"/>
+<assign fore="#ff0000" name="def:Var"/>
+<assign fore="#ff00ff" name="def:VarStrong"/>
+
+<assign fore="#0000ff" name="def:Directive"/>
+
+<assign fore="#008000" name="def:Parameter"/>
+
+<assign fore="#808080" name="def:Tag"/>
+<assign fore="#c0c0c0" name="def:OpenTag"/>
+<assign fore="#c0c0c0" name="def:CloseTag"/>
+
+<assign fore="#808000" name="def:Label"/>
+<assign fore="#ffffff" back="#c0c0c0" name="def:LabelStrong"/>
+
+<assign fore="#0000ff" name="def:URI"/>
+<assign fore="#0000ff" name="def:EMail"/>
+<assign fore="#008080" name="def:Date"/>
+<assign fore="#000080" name="def:Time"/>
+
+<assign fore="#ffffff" back="#800000" name="def:Error"/>
+<assign fore="#ff00ff" name="def:ErrorText"/>
+
+<assign fore="#ffffff" back="#008000" name="def:TODO"/>
+<assign fore="#800000" back="#c0c0c0" name="def:Debug"/>
+
+<assign back="#ffff00" name="def:Insertion"/>
+<assign back="#ffff00" name="def:HorzCross"/>
+<assign back="#ffff00" name="def:VertCross"/>
+
+<!--diff: git-->
+<assign fore="#ff0000" name="diff:diffOrg"/>
+<assign fore="#008000" name="diff:diffNew"/>
+<assign fore="#008080" name="diff:diffModif"/>
+
+<!--c: VS-->
+<assign fore="#800000" name="c:PreprocInclude"/>
+
+<!--xml: CData != text-->
+<assign fore="#000080" name="xml:CData"/>
+
+<!--powershell: console log-->
+<assign fore="#c0c0c0" back="#c0c0c0" name="powershell:LogStart"/>
+<assign fore="#000000" back="#c0c0c0" name="powershell:LogText"/>
+<assign fore="#ffffff" back="#ffffff" name="powershell:LogEnd"/>
+
+</hrd>

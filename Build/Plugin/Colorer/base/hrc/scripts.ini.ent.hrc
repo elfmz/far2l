@@ -1,0 +1,34 @@
+  <prototype name="bootini" group="scripts.ini" description="Boot.ini">
+    <location link="jar:common.jar!scripts/ini/bootini.hrc"/>
+    <filename>/^BOOT\.INI$/i</filename>
+    <firstline>/\[boot\sloader\]/</firstline>
+  </prototype>
+
+  <prototype name="msdossys" group="scripts.ini" description="MsDos.sys">
+    <location link="jar:common.jar!scripts/ini/msdossys.hrc"/>
+    <filename>/^msdos\.sys$/i</filename>
+  </prototype>
+  
+  <prototype name="configsys" group="scripts.ini" description="Config.sys">
+    <location link="jar:common.jar!scripts/ini/configsys.hrc"/>
+    <filename>/^config\.sys$/i</filename>
+  </prototype>
+  
+  <prototype name="reg" group="scripts.ini" description="Regedit">
+    <location link="jar:common.jar!scripts/ini/reg.hrc"/>
+    <filename>/\.(reg|key)$/i</filename>
+    <firstline>/^\s*(REGEDIT4|FARREG\d\d|Windows Registry Editor Version \d\.\d\d)\s*$/</firstline>
+  </prototype>
+
+  <!-- we will write scripts for generate it... 
+  prototype name="inf" group="scripts.ini" description="Windows INF">
+    <location link="jar:common.jar!scripts/ini/inf.hrc"/>
+    <filename>/\.inf$/i</filename>
+  </prototype-->
+  
+  <prototype name="ini" group="scripts.ini" description="Other INI">
+    <location link="jar:common.jar!scripts/ini/ini.hrc"/>
+    <filename>/\.in[if]$/i</filename>
+    <!--|conf[^\.]* (ctl|tpl|ini|cfg|inf|srg|types|tab|dof|dsk|lng) -->
+    <firstline>/^[;\[]/</firstline>
+  </prototype>

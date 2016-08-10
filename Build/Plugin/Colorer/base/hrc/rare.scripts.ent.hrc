@@ -1,0 +1,154 @@
+
+  <prototype name="aditor" group="rare.scripts" description="Aditor highlight">
+    <location link="jar:common.jar!rare/scripts/aditor.hrc"/>
+    <filename>/\.hgh$/i</filename>
+  </prototype>
+  <prototype name="pagemakerscript" group="rare.scripts" description="PageMaker Script">
+    <location link="jar:common.jar!rare/scripts/spt.hrc"/>
+    <filename>/\.spt$/i</filename>
+  </prototype>
+  <prototype name="lss" group="rare.scripts" description="LotusScript">
+    <location link="jar:common.jar!rare/scripts/lss.hrc"/>
+    <filename>/\.lss$/i</filename>
+  </prototype>
+  <prototype name="kixtart" group="rare.scripts" description="Kixtart">
+    <location link="jar:common.jar!rare/scripts/kixtart.hrc"/>
+    <filename>/\.(kix)+$/i</filename>
+  </prototype>
+  <prototype name="pvwave" group="rare.scripts" description="Pv-Wave">
+    <location link="jar:common.jar!rare/scripts/pvwave.hrc"/>
+    <filename>/\.pvw$/i</filename>
+  </prototype>
+  <prototype name="mntrackscript" group="rare.scripts" description="MNTrack Script">
+    <location link="jar:common.jar!rare/scripts/scn.hrc"/>
+    <filename>/\.scn$/i</filename>
+  </prototype>
+
+  <prototype name="sl" group="rare.scripts" description="Renderman Shading Language">
+    <location link="jar:common.jar!rare/scripts/sl.hrc"/>
+    <filename>/\.(sl|slim|sli|str|stree)$/i</filename>
+  </prototype>
+  <prototype name="rib" group="rare.scripts" description="Renderman RIB">
+    <location link="jar:common.jar!rare/scripts/rib.hrc"/>
+    <filename>/\.rib$/i</filename>
+  </prototype>
+  <prototype name="mel3dmax" group="rare.scripts" description="3D Max Script">
+    <location link="jar:common.jar!rare/scripts/mel.hrc"/>
+    <filename>/\.(mel|ms)$/i</filename>
+  </prototype>
+
+  <prototype name="ppWizard" group="rare.scripts" description="ppWizard">
+    <location link="jar:common.jar!rare/scripts/ppwizard.hrc"/>
+    <filename>/\.i[th]$/i</filename>
+  </prototype>
+
+  <prototype name="RSMac" group="rare.scripts" description="R-Style macrofile">
+    <location link="jar:common.jar!rare/scripts/rsmac.hrc"/>
+    <filename>/\.(rsl|mac)$/i</filename>
+  </prototype>
+
+  <prototype name="adm" group="rare.scripts" description="ADM - Policy Template">
+    <location link="jar:common.jar!rare/scripts/adm.hrc"/>
+    <filename>/\.adm$/i</filename>
+  </prototype>
+
+
+
+  <prototype name="gpss" group="rare.scripts" description="gpss">
+    <location link="jar:common.jar!rare/scripts/gpss.hrc"/>
+    <filename>/\.gps$/i</filename>
+  </prototype>
+
+  <prototype name="sdml" group="rare.scripts" description="sdml">
+    <location link="jar:common.jar!rare/scripts/sdml.hrc"/>
+    <filename>/\.sdml$/i</filename>
+  </prototype>
+
+  <prototype name="irclog" group="rare.scripts" description="irc logs">
+    <location link="jar:common.jar!rare/scripts/irclog.hrc"/>
+    <filename>/^\.irclog$/i</filename>
+  </prototype>
+  <prototype name="micqlog" group="rare.scripts" description="micq logs">
+    <location link="jar:common.jar!rare/scripts/micqlog.hrc"/>
+    <filename>/^[\._]log$/i</filename>
+    <firstline>/^&lt;$/i</firstline>
+  </prototype>
+
+  <prototype name="mancolorer" group="rare.scripts" description="man colorer">
+    <location link="jar:common.jar!rare/scripts/mancolor.hrc"/>
+    <filename weight='5'>/^man\s?colorer/i</filename>
+  </prototype>
+  <prototype name="urq" group="rare.scripts" description="URQ">
+    <location link="jar:common.jar!rare/scripts/urq.hrc"/>
+    <filename>/\.qst$/i</filename>
+  </prototype>
+  <prototype name="vismod" group="rare.scripts" description="Visual Modeler">
+    <location link="jar:common.jar!rare/scripts/vismod.hrc"/>
+    <filename>/\.mdl$/i</filename>
+  </prototype>
+
+  <prototype name="edif" group="rare.scripts" description="EDIF">
+    <location link="jar:common.jar!rare/scripts/edif.hrc"/>
+    <filename>/\.ed(i?f|n|o)$/i</filename>
+  </prototype>
+
+  
+  <prototype name="vim" group="rare.scripts" description="VIM">
+    <location link="jar:common.jar!rare/scripts/vim.hrc"/>
+    <filename>/\.vim$/i</filename>
+  </prototype>
+  
+  <prototype name="litestep_steprc" group="rare.scripts" description="Litestep .steprc">
+    <location link="jar:common.jar!rare/scripts/litestep.hrc"/>
+    <filename>/step\.rc$/i</filename>
+  </prototype>
+  
+  
+  <prototype name="csql" group="rare.database" description="EmbeddedSQL for C">
+    <filename>/\.sc$/i</filename>
+    <location link="jar:common.jar!rare/scripts/csql.hrc"/>
+  </prototype>
+  <prototype name="cppsql" group="rare.database" description="EmbeddedSQL for C++">
+    <filename>/\.ecpp$/i</filename>
+    <location link="jar:common.jar!rare/scripts/cppsql.hrc"/>
+  </prototype>
+  <prototype name="cobolsql" group="rare.database" description="EmbeddedSQL for COBOL">
+    <filename>/\.sco$/i</filename>
+    <location link="jar:common.jar!rare/scripts/cobolsql.hrc"/>
+  </prototype>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

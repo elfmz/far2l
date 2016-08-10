@@ -1,0 +1,31 @@
+<prototype name="ent.hrc" group="scripts.colorer" description="Entities for HRC">
+  <location link="jar:common.jar!scripts/colorer/ent.hrc.hrc"/>
+  <filename>/\.ent\.hrc$/i</filename>
+  <filename>/\bentity\..*?\.hrc$/i</filename>
+</prototype>
+<prototype name="hrc" group="scripts.colorer" description="Colorer HRC" targetNamespace="http://colorer.sf.net/2003/hrc">
+  <location link="jar:common.jar!scripts/colorer/hrc.hrc"/>
+  <filename>/\.hrc(\.far)?$/i</filename>
+  <parameters>
+    <param name="show-cross" value="both"/>
+  </parameters>
+</prototype>
+<prototype name="hrd" group="scripts.colorer" description="Colorer HRD" targetNamespace="http://colorer.sf.net/2003/hrd">
+  <location link="jar:common.jar!scripts/colorer/hrd.hrc"/>
+  <filename>/\.hrd$/i</filename>
+</prototype>
+<prototype name="bkt" group="scripts.colorer" description="bkt" targetNamespace="uri:bkt">
+  <location link="jar:common.jar!scripts/colorer/bkt.hrc"/>
+  <filename>/\.bkt$/i</filename>
+</prototype>
+<prototype name="colorer5catalog" group="scripts.colorer" description="Colorer-take5 catalog.xml" targetNamespace="http://colorer.sf.net/2003/catalog">
+  <location link="jar:common.jar!scripts/colorer/colorer5catalog.hrc"/>
+  <filename>/\bcatalog\.xml$/ix</filename>
+  <firstline weight='5'>/DTD Colorer CATALOG/s</firstline>
+</prototype>
+<prototype name="xsd2hrc.custom" group="scripts.colorer" description="xsd2hrc.custom" targetNamespace="uri:colorer:custom">
+  <location link="jar:common.jar!scripts/colorer/xsd2hrc.custom.hrc"/>
+  <filename weight='2'>/\bcustom\..*?\.xml$/ix</filename>
+  <firstline weight='5'>/uri:colorer:custom/s</firstline>
+  <firstline weight='3'>/&lt;!DOCTYPE custom\b/s</firstline>
+</prototype>

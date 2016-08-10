@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding='UTF-8'?>
+<hrc-settings>
+	<prototype name="default">
+		<param name="show-cross" value="none"  description="Visibility of the cross (horizontal, vertical, both, none)"/>
+		<param name="cross-zorder" value="bottom" description="Position of the cross, which points out cursor position"/>
+		<param name="maxlinelength" value="5000" description="Maximum parsed length of line of the text"/>
+		<param name="backparse" value="6000" description="Number of lines, after which parser stops continous analysis. Infinite, if zero."/>
+		<param name="fullback" value="yes" description="If yes, draws background in inlined languages till end of the screen"/>
+		<param name="default-fore" value="" description="User-defined foreground color for this particular type"/>
+		<param name="default-back" value="" description="User-defined foreground color for this particular type"/>
+		<param name="hotkey" value="" description="Key is assigned in the menu select the file type, for this type"/>
+		<param name="favorite" value="false" description="If true then the prototype is displayed in a group of favorites"/>
+	</prototype>
+</hrc-settings>

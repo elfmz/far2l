@@ -1,0 +1,127 @@
+
+/** 
+    By Ralf Bokelberg
+   **/
+
+.def-Text
+{
+ color: #000000;
+ background-color: #ffffff;
+}
+
+.def-HorzCross
+{
+ color: #000000;
+ background-color: #e1ebe0;
+}
+
+.def-VertCross
+{
+ color: #000000;
+ background-color: #e1ebe0;
+}
+
+.def-String
+{
+ color: #0000ff;
+}
+
+.def-Comment
+{
+ color: #808080;
+}
+
+.def-CommentContent
+{
+ color: #808080;
+ font-weight: bold; 
+}
+
+.def-CommentDoc
+{
+ color: #808080;
+}
+
+.def-Keyword
+{
+ color: #000084;
+ font-weight: bold; 
+}
+
+.def-Directive
+{
+ color: #000084;
+}
+
+.def-Tag
+{
+ color: #7F0055;
+}
+
+.def-OpenTag
+{
+ color: #7F0055;
+}
+
+.def-CloseTag
+{
+ color: #7F0055;
+}
+
+.def-Insertion
+{
+ color: #000000;
+ background-color: #ffffe8;
+}
+
+.def-InsertionStart
+{
+ color: #800000;
+ background-color: #ffffa4;
+}
+
+.def-InsertionEnd
+{
+ color: #800000;
+ background-color: #ffffa4;
+}
+
+.def-Error
+{
+ color: #ffffff;
+ background-color: #dd0000;
+ font-weight: bold; 
+ font-style: italic; 
+}
+
+.def-ErrorText
+{
+ color: #ee00ee;
+}
+
+.def-TODO
+{
+ color: #ffffff;
+ background-color: #808000;
+}
+
+.def-Debug
+{
+ color: #80abfd;
+ background-color: #007084;
+}
+
+.def-URI
+{
+ color: #3f3fbf;
+}
+
+.def-PairStart
+{
+ color: #a0a0a0;
+}
+
+.def-PairEnd
+{
+ color: #a0a0a0;
+}

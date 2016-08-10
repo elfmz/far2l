@@ -1,0 +1,27 @@
+<prototype name="ie.baf" group="rare.ie" description="Infinity Engine: BAF">
+	<location link="jar:common.jar!rare/ie-weidu/baf.hrc"/>
+	<filename>/\.baf$/i</filename>
+</prototype>
+
+<prototype name="ie.d" group="rare.ie" description="Infinity Engine: dialogs">
+	<location link="jar:common.jar!rare/ie-weidu/dialog.hrc"/>
+	<filename>/\.d$/i</filename>
+	<firstline weight='4'>/^\/\/.+[\w_#]{1,8}\.DLG/i</firstline>
+	<!-- <firstline weight='5'>/^%ie.d:action;/m</firstline>  - NOT WORK, DUPLICATE :-(  -->
+	<firstline weight='2'>/^\s*(BEGIN|APPEND|CHAIN|INTERJECT|EXTEND|ADD|REPLACE|ALTER|SET_WEIGHT|[RA]_[ST]_T|R_A_T|I_C)(\b|_[A-Z]+)/</firstline>
+</prototype>
+
+<prototype name="ie.tra" group="rare.ie" description="WeiDU translations">
+	<location link="jar:common.jar!rare/ie-weidu/tra.hrc"/>
+	<filename>/\.tra$/i</filename>
+</prototype>
+
+<prototype name="ie.tp2" group="rare.ie" description="WeiDU TP2 script">
+	<location link="jar:common.jar!rare/ie-weidu/tp2.hrc"/>
+	<filename weight='6'>/\.tp2$/i</filename> <!-- highest than dialog  -->
+</prototype>
+
+<prototype name="ie.tph" group="rare.ie" description="WeiDU TP2 component">
+	<location link="jar:common.jar!rare/ie-weidu/tp2h.hrc"/>
+	<filename weight='6'>/\.tp[ahp]$/i</filename>
+</prototype>

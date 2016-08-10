@@ -1,0 +1,282 @@
+﻿.Language=English,English
+.PluginContents=FarColorer
+
+@contents
+$^#FarColorer
+
+    ~Plugin setup.~@config@
+
+    ~Schemes settings.~@confighrc@
+
+    ~Command line support.~@cmdline@
+
+    ~Plugin's menus.~@menu@
+
+    ~Using a plugin in macros.~@MacroCallPlugin@
+
+    ~Plugin Guids.~@PluginGuids
+
+    ~About authors.~@author@
+
+@config
+$^#FarColorer's settings.#
+
+  #Enabled#
+     Enable/Disable FarColorer.
+
+  #Cross#
+     [ ] Do not show ever
+     [?] Show if included in the scheme. 
+     [x] Always Show.
+
+  #Cross style#
+     Cross style shown when "[x] Cross"
+
+  #Pairs#
+     Allocate or not paired language elements (brackets, quotes)
+
+  #Syntax#
+     Turns on display of syntax
+
+  #Classic outline style#
+     In classic style displays only the name of the function. Otherwise show
+     the beginning of the line number, then the first letter in the function 
+     and the function name itself.
+
+  #Change background editor#
+     In the set condition, FarColorer set in System Preferences color of 
+     "Plain Text" color group "editor" such as and the default color for 
+     the color scheme FarColorer.
+     The effect is visible on the files, the number of rows in less than window height
+     editor.
+
+  #Color style:#
+     Choose a color style, which will be used for coloring text. 
+     The choice does not work if the plugin is disabled.
+
+  #catalog.xml file:#
+     Full file path sets default catalog file for FarColorer.
+     If this field is empty FarColorer trying to find the file automatically
+     in a subfolder of "base" parent directory plugin.
+
+  #Users file of schemes#
+     Full file path sets the users file of schemes
+
+  #Users file of color styles#
+     Full file path sets the users file of color styles
+
+  #Log file#
+     Full path in this field specifies the file that will store diagnostic messages
+
+  #--------------------------TrueMod Settings------------------------#
+  #Enabled#
+     Enable/Disable TrueMod in plugin.
+
+  #Color style:#
+     Choose a color style, which will be used for coloring text in TrueMod. 
+     The choice does not work if the plugin is disabled.
+  #------------------------------------------------------------------#
+
+  #[ Test schema library ]#
+     Tests ability to load all the language of schemes, taking the path to
+     catalog.xml from the settings window.
+
+  #[ Schemes settings ]#
+    Open dialog for shemes settings. The dialog does not work if the plugin is disabled.
+
+  #[ Ok ]#
+     Closes dialog and save settings.
+
+@confighrc
+$^#Schemes settings#
+    For each of the selected schemes, a list of parameters that affect the mapping
+coloring.
+    Parameter value - the value set for this parameter.
+Values of the form <default-znach.> shows that the parameter is "znach." It is set
+in the system (non-user) settings of the scheme or scheme is taken from default.
+    Save all the changes occurs after clicking "OK" button.
+
+@cmdline
+$# Command line support
+    You can use the plugin from FAR's command line with prefix 'clr:'
+to view files with syntax highlighting in FarColorer's internal viewer.
+To view file you have to specify file name after the 'clr:' prefix
+in FAR's command line. This function is equal to #colorer.exe# program
+features, but doesn't load HRC database each time, so it works faster.
+
+@add
+$# Outliner
+    Here you can see a list of all functions or syntax errors found.
+Choose any item to go to corresponding line in text.
+    
+    You can use keyboard filter to quickly search for required items:
+
+    #Ctrl-Left/Right#
+      Expand-Collapse level of Outliner
+
+    #Ctrl-Up/Down#
+      Move to next/previous item both in outliner and in source code
+
+    #Ctrl-Enter#
+      Close the outliner and insert current item into the cursor position
+    
+    #Enter#
+      Close the outliner and jump to the selected item
+
+    #Tab#
+      Complementing filter symbols, written after '?' in the field of display filter
+
+    #Symbol keys [0-9a-z;:-_]#
+      Filter out the outliner items against entered filter
+
+@menu
+$#FarColorer operation
+
+  #1 List types#          ~Alt-L~
+    Lists all supported file types. You can choose any of them to use
+with current editor.
+
+  #2 Match pair#          ~Alt-[~
+    Searches paired bracket (or any other pair structure) of the
+current region under cursor and jumps there.
+
+  #3 Select block#        ~Alt-]~
+    Moves cursor to start of block and selects it all. You can call this
+function as on block limits as inside it. In second case FarColorer will find
+start and end of nearest block automatically.
+
+  #4 Select pair#         ~Alt-P~
+    Selects pair block - but don't selects pair structures at start and end.
+
+  #5 Outliner List#      ~Alt-;~
+    Shows all outlined regions in current file.
+There you can choose and jump into any of them, also you can use there any
+alphabetic symbols to create filters.
+
+  #6 Errors List#         ~Alt-'~
+    As previous - but shows all errors in the text.
+
+  #7 Select region#       ~Alt-K~
+    Selects region under cursor.
+
+  #Region info#
+    Displays the name of the region and the scheme under the cursor.
+
+  #*# All these features are depend on the content of language scheme.
+All information is taken from syntax regions analysis.
+
+  #8 Find function#       ~Alt-O~
+    Searches function name under cursor in outliner view, and jumps there.
+
+  #9 Update highlight#
+    Updates syntax highlighting in current editor. Use it, if
+some problems occurs in current syntax.
+
+  #R Reload schema library#
+    Reload the configuration plugin and library schemes.
+
+  #C Configuration#
+    Calls FarColorer ~configuration menu~@config@.
+
+@PluginGuids
+$# Plugin Guids
+   Plugin Guid - {D2F36B62-A470-418d-83A3-ED7A3710E5B5}
+
+   #Dialog#
+    Settings - {87C92249-430D-4334-AC33-05E7423286E9}
+    Scheme settings - {0497F43A-A8B9-4af1-A3A4-FA568F455707}
+    Define hot key - {C6BE56D8-A80A-4f7d-A331-A711435F2665}
+
+   #Menu#
+    Main menu in editor - {45453CAC-499D-4b37-82B8-0A77F7BD087C}
+    Syntax choose - {0ABEE4C9-BDC6-4c35-BAB7-963D91E3858A}
+    Colore styles - {18A6F7DF-375D-4d3d-8137-DC50AC52B71E}
+    Outliner/error list - {A8A298BA-AD5A-4094-8E24-F65BF38E6C1F}
+
+   #Message#
+    Error - {0C954AC8-2B69-4c74-94C8-7AB10324A005}
+    Reload base - {DEE3B49D-4A55-48a8-9DC8-D11DA04CBF37}
+    Nothing found - {AB214DCE-450B-4389-9E3B-533C7A6D786C}
+    Region name - {70656884-B7BD-4440-A8FF-6CE781C7DC6A}
+
+@MacroCallPlugin
+$# Using a plugin in macros
+    The plugin can be called from a macro using the macro function callplugin.
+    Call format:
+
+       #callplugin("D2F36B62-A470-418d-83A3-ED7A3710E5B5",<Param>)#
+
+    Here:
+       #D2F36B62-A470-418d-83A3-ED7A3710E5B5#
+          ~Guid of the plugin~@PluginGuids@
+
+       #<Param>#
+          A numeric value corresponding to the menu item number:
+
+          1 - List types
+          2 - Match pair
+          3 - Select block
+          4 - Select pair
+          5 - Outliner List
+          6 - Errors List
+          7 - Select region
+          8 - Region info
+          9 - Find function
+          11 - Update highlight
+          12 - Reload schema library
+          13 - Configuration
+
+          If the <Param> not a number - plugin exits.
+          If the <Param> outside the above range - the plugin exits.
+          If the <Param> is not specified, will see action menu.
+
+    For example, list the types available:
+
+       callplugin("0E92FC81-4888-4297-A85D-31C79E0E0CEE",0)
+
+@hrd
+$# Color style selection
+    List of all available color schemes. You can choose what you need.
+
+@exception
+$# Exception occured
+    Exception happened while FarColorer work.
+All further processing would be disabled. You can re-enable
+FarColorer from it's settings menu after locating and removing
+exception cause. All extended information in FarColorer logging
+file (colorer.log by default)
+
+@filetypechoose
+$# List types
+    The list contains all of the supported file types. By choosing any, you force 
+the type of coloring the current file.
+   
+    #Automatic detection# - select the type of file produced plugin built rules.
+    #Favorites# - The list of chosen types. Add to "Favorites" is produced by 
+pressing the Ins, delete - Delete.
+    #Hot keys# - to assign a hot key to the file type you need to press F4, and 
+in the dialog box to specify the key.
+
+    Hot keys and being in the group "Favorites" can also be customized through the
+~Schemes settings.~@confighrc@ These are the parameters 'hotkey' and 'favorite' for 
+any of the schemes.
+ 
+@keyassign
+$# Define key
+    Keys 0-9, A-Z
+
+@author
+$^#FarColorer is a syntax highlighting plugin for FAR Manager.
+    #Plugin home site#
+           http://colorer.sf.net
+
+    #Igor Ruskih# (Cail Lomecb) Copyright (c) 1999-2009
+           email  : irusskih at gmail dot com
+           web    : http://cail.nm.ru
+
+    #Eugene Efremov#
+           email  : 4mirror at mail dot ru
+
+    #Sonar# (Dobrunov Aleksey)
+           email  : ctapmex at gmail dot com
+           web    : http://dobrih.net

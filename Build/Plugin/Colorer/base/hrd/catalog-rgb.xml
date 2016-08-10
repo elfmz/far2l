@@ -1,0 +1,39 @@
+    <hrd class="rgb" name="default" description="White (crimsoned)">
+      <location link="&hrd;/rgb/white.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="blue" description="Blue (far-truemod)">
+      <location link="&hrd;/rgb/blue.hrd"/>
+    </hrd>    
+    <hrd class="rgb" name="navy" description="Navy (seashore)">
+      <location link="&hrd;/rgb/navy.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="eclipse" description="A'la Eclipse (minimal)">
+      <location link="&hrd;/rgb/eclipse.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="neo" description="Neo (and Morpheus)">
+      <location link="&hrd;/rgb/neo.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="black"  description="Black (scarlet)">
+      <location link="&hrd;/rgb/black.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="grayscale" description="Grayscale (colour neutral)">
+      <location link="&hrd;/rgb/grayscale.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="mirror" description="Blue a'la NC">
+      <location link="&hrd;/rgb/mirror.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="mirice" description="Ice Mirror">
+      <location link="&hrd;/rgb/mirice.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="fmx" description="FMX">
+      <location link="&hrd;/rgb/contrib/fmx.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="hs" description="A'la HomeSite">
+      <location link="&hrd;/rgb/hs.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="bred3" description="Bred3 colors">
+      <location link="&hrd;/rgb/contrib/bred3.hrd"/>
+    </hrd>
+    <hrd class="rgb" name="visual" description="Visual by Roman Kuzmin">
+      <location link="&hrd;/rgb/contrib/visual-rgb.hrd"/>
+    </hrd>

@@ -1,0 +1,60 @@
+    <hrd class="console" name="default" description="Aqua on blue">
+      <location link="&hrd;/console/default.hrd"/>
+    </hrd>
+    <hrd class="console" name="blue" description="Blue colors">
+      <location link="&hrd;/console/blue.hrd"/>
+    </hrd>
+    <hrd class="console" name="nc"  description="NC colors">
+      <location link="&hrd;/console/nc.hrd"/>
+    </hrd>
+    <hrd class="console" name="white" description="White colors">
+      <location link="&hrd;/console/white.hrd"/>
+    </hrd>
+    <hrd class="console" name="black"   description="Black colors">
+      <location link="&hrd;/console/black.hrd"/>
+    </hrd>
+    <hrd class="console" name="hack"  description="Matrix/Hack">
+      <location link="&hrd;/console/hack.hrd"/>
+    </hrd>
+    <hrd class="console" name="dnlike"  description="Gray a'la DN">
+      <location link="&hrd;/console/dnlike.hrd"/>
+    </hrd>
+    <hrd class="console" name="gray"   description="Light gray">
+      <location link="&hrd;/console/white.hrd"/>
+      <location link="&hrd;/console/gray.hrd"/>
+    </hrd>
+    <hrd class="console" name="xmastree" description="Xmas tree">
+      <location link="&hrd;/console/xmastree.hrd"/>
+    </hrd>
+    <hrd class="console" name="mirror" description="Extended NC-like colors">
+      <location link="&hrd;/console/mirror.hrd"/>
+    </hrd>
+
+    <hrd class="console" name="ocean" description="Ocean Vladimir Fonarev">
+      <location link="&hrd;/console/contrib/ocean.hrd"/>
+    </hrd>
+    <hrd class="console" name="black_ay" description="Black from Alex Yaroslavsky">
+      <location link="&hrd;/console/contrib/black_ay.hrd"/>
+    </hrd>
+    <hrd class="console" name="black_sezal" description="Black Sezal">
+      <location link="&hrd;/console/contrib/black_sezal.hrd"/>
+    </hrd>
+    <hrd class="console" name="graypult" description="Gray (pult)">
+      <location link="&hrd;/console/contrib/gray_pult.hrd"/>
+    </hrd>
+    <hrd class="console" name="classic" description="'Classic' by Tim Sobolev">
+      <location link="&hrd;/console/contrib/classic.hrd"/>
+    </hrd>
+    <hrd class="console" name="Cyberpunk" description="Cyberpunk black from 4ekucT">
+      <location link="&hrd;/console/contrib/cyberpunk.hrd"/>
+    </hrd>
+    <hrd class="console" name="visual" description="Visual by Roman Kuzmin">
+      <location link="&hrd;/console/contrib/visual.hrd"/>
+    </hrd>
+    <hrd class="console" name="take4" description="Classic take4 like by Sim">
+      <location link="&hrd;/console/contrib/take4.hrd"/>
+    </hrd>
+    
+    <hrd class="console" name="mirror-conemu" description="Support ConEmu extends">
+      <location link="&hrd;/console/emu/mirror.hrd"/>
+    </hrd>

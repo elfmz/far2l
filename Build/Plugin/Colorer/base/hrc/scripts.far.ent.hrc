@@ -1,0 +1,62 @@
+  <prototype name="farhelp" group="scripts.far" description="Far Help">
+    <location link="jar:common.jar!scripts/far/farhelp.hrc"/>
+    <filename>/\.hlf$/i</filename>
+    <firstline weight="2">/^\.Language/</firstline>
+  </prototype>
+
+  <prototype name="farlng" group="scripts.far" description="Far .lng">
+    <location link="jar:common.jar!scripts/far/farlng.hrc"/>
+    <filename>/\.lng$/i</filename>
+    <firstline weight="2">/^\.Language/</firstline>
+  </prototype>
+  
+  <prototype name="farmenu" group="scripts.far" description="FarMenu.Ini">
+    <location link="jar:common.jar!scripts/far/farmenu.hrc"/>
+    <filename weight="4">/FarMenu\.Ini$/i</filename>
+  </prototype>
+  
+  <prototype name="farmailscript" group="scripts.far" description="FARMail Script">
+    <location link="jar:common.jar!scripts/far/farmailscript.hrc"/>
+    <filename>/\.fms$/i</filename>
+  </prototype>
+
+  <prototype name="far.macro" group="scripts.far" description="Far macros">
+    <location link="jar:common.jar!scripts/far/macro.hrc"/>
+	<filename>/\.macro$/i</filename>
+    <filename>/\.mcr$/i</filename>
+    <filename>/\.fmm$/i</filename>
+    <filename>/^Sequence$/</filename>
+    <filename>/^\%\%\w+$/</filename>
+  </prototype>
+
+  <prototype name="far.macrolib" group="scripts.far" description="Far Macro Library">
+    <location link="jar:common.jar!scripts/far/macrolib.hrc"/> 
+    <filename>/\.fm[li]$/i</filename>
+  </prototype>
+  <prototype name="far.macroliblua" group="scripts.far" description="Far Macro Library (Lua)">
+    <location link="jar:common.jar!scripts/far/macroliblua.hrc"/> 
+    <filename>/\.fmlua$/i</filename>
+  </prototype>
+
+  <prototype name="calcset" group="scripts.far" description="calc's defines">
+    <location link="jar:common.jar!scripts/far/gen/calcset.hrc"/>
+    <filename>/calcset\.csr$/i</filename>
+  </prototype>
+
+
+  <prototype name="esc" group="scripts.far" description="Extended selection case">
+    <location link="jar:common.jar!scripts/far/gen/esc.hrc"/>
+    <filename weight='3'>/^esc(_\w+)?\.xml$/i</filename>
+  </prototype>
+ 
+  <!-- old -->
+  
+  <prototype name="tgs" group="scripts.far" description="TGS script">
+    <location link="jar:common.jar!scripts/far/tgs.hrc"/>
+    <filename>/\.tgs$/i</filename>
+  </prototype>
+
+  <prototype name="truemac" group="scripts.far" description="True Macro">
+    <location link="jar:common.jar!scripts/far/truemac.hrc"/>
+    <filename>/truemac\.ctl$/i</filename>
+  </prototype>

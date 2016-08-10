@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	This HRD file was generated automaticaly via con2rgb
+	Use highlighting console defines: ../../palette/mirror.xml
+-->
+
+<!DOCTYPE hrd
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRD take5//EN" "http://colorer.sf.net/2003/hrd.dtd">
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+   <assign name="def:Text" fore="#AAAAAA" back="#0000AA"/>
+   <assign name="def:Number" fore="#55FF55" style="1"/>
+   <assign name="def:NumberSuffix" fore="#00AA00" style="1"/>
+   <assign name="def:NumberPrefix" fore="#00AA00" style="1"/>
+   <assign name="def:String" fore="#55FFFF"/>
+   <assign name="def:StringContent" fore="#5555FF"/>
+   <assign name="def:StringEdge" fore="#FF5555"/>
+   <assign name="def:CharacterContent" fore="#5555FF"/>
+   <assign name="regexp:MetaSymb" fore="#FFFFFF"/>
+   <assign name="regexp:Quote" fore="#FFFF55"/>
+   <assign name="def:Comment" fore="#000000" style="3"/>
+   <assign name="def:CommentContent" fore="#777777" style="3"/>
+   <assign name="def:CommentEdge" fore="#777777" style="3"/>
+   <assign name="def:CommentDoc" fore="#000000" style="2"/>
+   <assign name="def:CommentDocContent" fore="#00AAAA" style="2"/>
+   <assign name="def:CommentDocEdge" fore="#00AAAA" style="2"/>
+   <assign name="def:Symbol" fore="#FFFF55" style="1"/>
+   <assign name="def:SymbolStrong" fore="#FF5555" style="1"/>
+   <assign name="def:Prefix" fore="#00AAAA"/>
+   <assign name="def:PrefixStrong" fore="#CC22AA"/>
+   <assign name="def:Operator" fore="#FFFF55"/>
+   <assign name="def:Keyword" fore="#FFFFFF"/>
+   <assign name="def:KeywordStrong" fore="#00AAAA"/>
+   <assign name="def:TypeKeyword" fore="#FFFFFF"/>
+   <assign name="def:FunctionKeyword" fore="#00AAAA"/>
+   <assign name="def:ClassKeyword" fore="#00AAAA"/>
+   <assign name="def:StructKeyword" fore="#00AAAA"/>
+   <assign name="def:DeprecatedKeyword" fore="#AA0000"/>
+   <assign name="def:Constant" fore="#00AA00" style="1"/>
+   <assign name="def:Register" fore="#00AA00" style="3"/>
+   <assign name="def:BooleanConstant" fore="#FFFF55"/>
+   <assign name="def:Var" fore="#00AA00"/>
+   <assign name="def:VarStrong" fore="#CC22AA"/>
+   <assign name="def:Identifier" fore="#00AA00"/>
+   <assign name="def:Outlined"/>
+   <assign name="def:Directive" fore="#55FF55" style="1"/>
+   <assign name="def:DirectiveContent" fore="#00AA00" style="1"/>
+   <assign name="def:DirectiveEdge" fore="#00AA00" style="1"/>
+   <assign name="def:Parameter" fore="#55FF55" style="2"/>
+   <assign name="def:ParameterStrong" fore="#FF55FF" style="2"/>
+   <assign name="def:Tag" fore="#FFFF55"/>
+   <assign name="def:OpenTag" fore="#FF5555" style="1"/>
+   <assign name="def:CloseTag" fore="#FF5555" style="1"/>
+   <assign name="def:EmbeddedTag" fore="#AA0000" style="1"/>
+   <assign name="def:Label" fore="#FF55FF" style="3"/>
+   <assign name="def:LabelStrong" fore="#FF55FF" back="#FFFFFF" style="5"/>
+   <assign name="def:Insertion" back="#777777"/>
+   <assign name="def:InsertionEmbed" fore="#AAAAAA" back="#0000AA"/>
+   <assign name="def:Error" fore="#000000" back="#AA0000" style="7"/>
+   <assign name="def:ErrorText" fore="#AA0000" style="2"/>
+   <assign name="def:TODO" fore="#FFFFFF" back="#5555FF"/>
+   <assign name="def:Debug" fore="#000000" back="#FF55FF"/>
+   <assign name="def:URI" fore="#5555FF" style="4"/>
+   <assign name="def:EMail" fore="#5555FF" style="6"/>
+   <assign name="def:Path" fore="#5555FF" style="1"/>
+   <assign name="def:Date" fore="#55FF55" style="2"/>
+   <assign name="def:Time" fore="#55FF55" style="2"/>
+   <assign name="def:PairStart" fore="#FF5555" back="#5555FF"/>
+   <assign name="def:PairEnd" fore="#FF5555" back="#5555FF"/>
+   <assign name="def:PairStrongStart" fore="#FF5555" back="#55FFFF"/>
+   <assign name="def:PairStrongEnd" fore="#FF5555" back="#55FFFF"/>
+</hrd>

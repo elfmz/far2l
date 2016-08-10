@@ -1,0 +1,7 @@
+    <hrd class="text" name="tags" description="HTML italic, underline indention">
+      <location link="&hrd;/text/tags.hrd"/>
+    </hrd>
+    <hrd class="text" name="htmlcss" description="HTML with CSS">
+      <location link="&hrd;/text/htmlcss.hrd"/>
+    </hrd>
+

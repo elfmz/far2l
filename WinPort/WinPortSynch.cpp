@@ -34,13 +34,13 @@ size_t WinPortSynch::sWait(size_t count, WinPortSynch **synches, bool wait_all, 
 {
 	std::unique_lock<std::mutex> lock(s_winport_synch_mutex);
 	for (;;) {
-		if (!msec)
-			return (size_t)-1;
-		
 		size_t r = wait_all ? sTryAcquireAll(synches, count) : sTryAcquireAny(synches, count);
 		if (r!=(size_t)-1)
 			return r;
-			
+
+		if (!msec)
+			return (size_t)-1;
+
 		if (msec!=INFINITE)  {
 			std::chrono::milliseconds ms_before = std::chrono::duration_cast< std::chrono::milliseconds >
 				(std::chrono::steady_clock::now().time_since_epoch());
@@ -48,13 +48,13 @@ size_t WinPortSynch::sWait(size_t count, WinPortSynch **synches, bool wait_all, 
 			std::chrono::milliseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >
 				(std::chrono::steady_clock::now().time_since_epoch());
 			ms-= ms_before;
-			
+
 			if (ms.count()  < msec)
 				msec-= ms.count();
-			else 
+			else
 				msec = 0;
-				
-		} else 
+
+		} else
 			s_winport_synch_cond.wait(lock);
 	}
 }

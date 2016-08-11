@@ -102,6 +102,7 @@ extern "C" {
 	
 	WINPORT_DECL(RegisterClipboardFormat, UINT, (LPCWSTR lpszFormat))
 	{		
+		std::lock_guard<std::mutex> lock(g_clipboard_mutex);
 		return g_custom_formats.Register(lpszFormat);
 	}
 

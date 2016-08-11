@@ -15,27 +15,48 @@ struct RegDescriptor
 {
 	std::string dir;
 };
+
 #ifdef _WIN32
-# define WINPORT_REGISTRY_ROOT	"D:\\WinPort"
+# define WINPORT_REGISTRY_SUBROOT	"\\WinPort"
 # define WINPORT_REG_DIV_KEY		"\\k-"
 # define WINPORT_REG_DIV_VALUE	"\\v-"
 #else
-# define WINPORT_REGISTRY_ROOT	"/home/user/.WinPort"
+# define WINPORT_REGISTRY_SUBROOT	"/.WinPort"
 # define WINPORT_REG_DIV_KEY		"/k-"
 # define WINPORT_REG_DIV_VALUE	"/v-"
 #endif
 
+static std::string GetRegistryRoot()
+{
+#ifdef _WIN32
+	std::string rv = "D:";
+#else
+	std::string rv = getenv("HOME");
+	if (rv.empty())
+		rv = "/tmp";
+#endif	
+	rv+= WINPORT_REGISTRY_SUBROOT;
+	return rv;	
+}
+
+static std::string GetRegistrySubroot(const char *sub)
+{
+	static std::string s_root = GetRegistryRoot();
+	std::string rv = s_root;
+	rv+= sub;
+	return rv;
+}
 
 struct RegDescriptors : std::set<RegDescriptor *>, std::mutex  {} g_reg_descriptors;
 static std::string HKDir(HKEY hKey)
 {
 	switch ((ULONG_PTR)hKey) {
-	case (ULONG_PTR)HKEY_CLASSES_ROOT: return WINPORT_REGISTRY_ROOT "/hklm/software/classes"; 
-	case (ULONG_PTR)HKEY_CURRENT_USER: return WINPORT_REGISTRY_ROOT "/hku/c"; 
-	case (ULONG_PTR)HKEY_LOCAL_MACHINE: return WINPORT_REGISTRY_ROOT "/hklm"; 
-	case (ULONG_PTR)HKEY_USERS: return WINPORT_REGISTRY_ROOT "/hku"; 
-	case (ULONG_PTR)HKEY_PERFORMANCE_DATA: return WINPORT_REGISTRY_ROOT "/pd"; 
-	case (ULONG_PTR)HKEY_PERFORMANCE_TEXT: return WINPORT_REGISTRY_ROOT "/pt"; 
+	case (ULONG_PTR)HKEY_CLASSES_ROOT: return GetRegistrySubroot("/hklm/software/classes"); 
+	case (ULONG_PTR)HKEY_CURRENT_USER: return GetRegistrySubroot("/hku/c"); 
+	case (ULONG_PTR)HKEY_LOCAL_MACHINE: return GetRegistrySubroot("/hklm"); 
+	case (ULONG_PTR)HKEY_USERS: return GetRegistrySubroot("/hku") ;
+	case (ULONG_PTR)HKEY_PERFORMANCE_DATA: return GetRegistrySubroot("/pd"); 
+	case (ULONG_PTR)HKEY_PERFORMANCE_TEXT: return GetRegistrySubroot("/pt"); 
 	}
 
 	std::string out;
@@ -216,7 +237,7 @@ extern "C" {
 		RegDescriptor *rd = reinterpret_cast<RegDescriptor *>(hKey);
 		std::lock_guard<std::mutex> lock(g_reg_descriptors);
 		if (g_reg_descriptors.find(rd)==g_reg_descriptors.end()) {
-			fprintf(stderr, "RegDeleteValue: bad handle - 0x%x, " WS_FMT "\n", hKey, lpValueName);
+			fprintf(stderr, "RegDeleteValue: bad handle - %p, " WS_FMT "\n", hKey, lpValueName);
 			return ERROR_INVALID_HANDLE;
 		}
 		std::string path = rd->dir; 
@@ -239,7 +260,7 @@ extern "C" {
 	{
 		const std::string &root = HKDir(hKey);
 		if (root.empty()) {
-			fprintf(stderr, "RegEnumKeyEx: bad handle - 0x%x\n", hKey);
+			fprintf(stderr, "RegEnumKeyEx: bad handle - %p\n", hKey);
 			return ERROR_INVALID_HANDLE;
 		}
 		std::string name = LookupIndexedRegItem(root, WINPORT_REG_DIV_VALUE,  dwIndex);
@@ -316,7 +337,7 @@ extern "C" {
 			*lpcbData = value.size()/2;
 		//if (!lpData) {while (!IsDebuggerPresent())Sleep(1000); DebugBreak();}
 		if (tip==REG_SZ || tip==REG_MULTI_SZ|| tip==REG_EXPAND_SZ)
-			fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u '%ls'\n", prefixed_name.c_str(), type.c_str(), value.c_str(),*lpcbData, lpData);
+			fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u '%ls'\n", prefixed_name.c_str(), type.c_str(), value.c_str(),*lpcbData, (WCHAR*)lpData);
 		else if (lpData)
 			fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u 0x%x\n", prefixed_name.c_str(), type.c_str(), value.c_str(), *lpcbData, *lpData);
 		else 
@@ -337,7 +358,7 @@ extern "C" {
 	{
 		const std::string &root = HKDir(hKey);
 		if (root.empty()) {
-			fprintf(stderr, "RegEnumValue: bad handle - 0x%x\n", hKey);
+			fprintf(stderr, "RegEnumValue: bad handle - %p\n", hKey);
 			return ERROR_INVALID_HANDLE;
 		}
 		std::string name = LookupIndexedRegItem(root, WINPORT_REG_DIV_VALUE,  dwIndex);
@@ -352,7 +373,7 @@ extern "C" {
 	{
 		const std::string &root = HKDir(hKey);
 		if (root.empty()) {
-			fprintf(stderr, "RegQueryValueEx: bad handle - 0x%x\n", hKey);
+			fprintf(stderr, "RegQueryValueEx: bad handle - %p\n", hKey);
 			return ERROR_INVALID_HANDLE;
 		}
 		
@@ -374,7 +395,7 @@ extern "C" {
 		RegDescriptor *rd = reinterpret_cast<RegDescriptor *>(hKey);
 		std::lock_guard<std::mutex> lock(g_reg_descriptors);
 		if (g_reg_descriptors.find(rd)==g_reg_descriptors.end()) {
-			fprintf(stderr, "RegSetValueEx: bad handle - 0x%x\n", hKey);
+			fprintf(stderr, "RegSetValueEx: bad handle - %p\n", hKey);
 			return ERROR_INVALID_HANDLE;
 		}
 		std::string path = rd->dir; 
@@ -401,8 +422,10 @@ extern "C" {
 
 	void WinPortInitRegistry()
 	{
-		int r = _mkdir( WINPORT_REGISTRY_ROOT) ;
-		fprintf(stderr, "WinPortInitRegistry: r=%d \n", r);
+		if (_mkdir( GetRegistrySubroot("") .c_str()) <0)
+			fprintf(stderr, "WinPortInitRegistry: errno=%d \n", errno);
+		else
+			fprintf(stderr, "WinPortInitRegistry: OK \n");
 		_mkdir(HKDir(HKEY_LOCAL_MACHINE).c_str());
 		_mkdir(HKDir(HKEY_USERS).c_str());
 		_mkdir(HKDir(HKEY_CURRENT_USER).c_str());

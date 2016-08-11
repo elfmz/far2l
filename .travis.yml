@@ -1,5 +1,10 @@
 # Continuous Integration with https://travis-ci.org/
 language: c
 
+addons:
+  apt:
+    packages:
+    - libwxgtk3.0-dev
+
 script:
 - make

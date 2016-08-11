@@ -1,2 +1,5 @@
 # Continuous Integration with https://travis-ci.org/
 language: c
+
+script:
+- make

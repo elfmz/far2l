@@ -59,6 +59,21 @@ WINPORT_DECL(GetSystemTime, VOID, (LPSYSTEMTIME lpSystemTime))
 	TM2Systemtime(lpSystemTime, gmtime(&now));
 }
 
+void UnixTimeToWin32FileTime(struct timespec ts, FILETIME *lpFileTime)
+{
+	if (!lpFileTime) return;
+	time_t tm = ts.tv_sec;
+	time_t add_ns = ts.tv_nsec / 1000000000;
+	if (add_ns) {
+		tm+= add_ns;
+		ts.tv_nsec-= add_ns * 1000000000;
+	}
+	
+	SYSTEMTIME sys_time;
+	TM2Systemtime(&sys_time, gmtime(&tm));
+	WINPORT(SystemTimeToFileTime)(&sys_time, lpFileTime);
+}
+
 WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILETIME lpFileTime))
 {
 	int month, year, cleaps, day;

@@ -14,6 +14,8 @@
 #include "WinPortHandle.h"
 #include "Utils.h"
 
+void UnixTimeToWin32FileTime(struct timespec ts, FILETIME *lpFileTime);
+
 extern "C"
 {
 	struct WinPortHandleFile : WinPortHandle
@@ -248,10 +250,13 @@ extern "C"
 		if (!wph) {
 			return FALSE;
 		}
-
-		if (lpCreationTime) memset(lpCreationTime, 0, sizeof(*lpCreationTime));
-		if (lpLastAccessTime) memset(lpLastAccessTime, 0, sizeof(*lpLastAccessTime));
-		if (lpLastWriteTime) memset(lpLastWriteTime, 0, sizeof(*lpLastWriteTime));
+		struct stat s = {0};
+		if (fstat(wph->fd, &s) < 0)
+			return FALSE;
+			
+		UnixTimeToWin32FileTime(s.st_mtim, lpLastWriteTime);
+		UnixTimeToWin32FileTime(s.st_ctim, lpCreationTime);
+		UnixTimeToWin32FileTime(s.st_atim, lpLastAccessTime);
 		return TRUE;
 	}
 
@@ -342,9 +347,9 @@ extern "C"
 	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData)
 	{
 		lpFindFileData->dwFileAttributes = AttributesByStat(s);
-		memset(&lpFindFileData->ftCreationTime, 0, sizeof(lpFindFileData->ftCreationTime));
-		memset(&lpFindFileData->ftLastAccessTime, 0, sizeof(lpFindFileData->ftLastAccessTime));
-		memset(&lpFindFileData->ftLastWriteTime, 0, sizeof(lpFindFileData->ftLastWriteTime));
+		UnixTimeToWin32FileTime(s.st_mtim, &lpFindFileData->ftLastWriteTime);
+		UnixTimeToWin32FileTime(s.st_ctim, &lpFindFileData->ftCreationTime);
+		UnixTimeToWin32FileTime(s.st_atim, &lpFindFileData->ftLastAccessTime);
 		lpFindFileData->nFileSizeHigh = (DWORD)(((uint64_t)s.st_size >> 32) & 0xffffffff);
 		lpFindFileData->nFileSizeLow = (DWORD)(s.st_size & 0xffffffff);
 		lpFindFileData->dwReserved0 = lpFindFileData->dwReserved1 = 0;

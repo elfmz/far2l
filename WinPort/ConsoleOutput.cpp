@@ -208,7 +208,7 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	COORD tmp_pos = {0, 0};
 	SMALL_RECT scr_rect = {0, 1, width - 1, height - 1};
 	_buf.Read(&tmp[0], tmp_size, tmp_pos, scr_rect);
-	if (scr_rect.Left!=0 || scr_rect.Top!=1 | scr_rect.Right!=(width-1) || scr_rect.Bottom!=(height-1)) {
+	if (scr_rect.Left!=0 || scr_rect.Top!=1 || scr_rect.Right!=(width-1) || scr_rect.Bottom!=(height-1)) {
 		fprintf(stderr, "ConsoleOutput::ScrollOutputOnOverflow: bug\n");
 		return;
 	}

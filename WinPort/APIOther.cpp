@@ -91,8 +91,9 @@ extern "C" {
 			tWINPORT_DllStartup pStart = (tWINPORT_DllStartup)dlsym(rv, "WINPORT_DllStartup");
 			if (pStart) pStart(path.c_str());
 			//return 0;
+			fprintf(stderr, "WINPORT: LoadLibraryEx(%ls):  %p\n", lpLibFileName, rv);
 		} else {
-			fprintf(stderr, "WINPORT: dlopen(%ls) error %s\n", lpLibFileName, dlerror());
+			fprintf(stderr, "WINPORT: LoadLibraryEx(%ls): dlopen error %s\n", lpLibFileName, dlerror());
 		}
 		return rv;
 #endif
@@ -110,11 +111,14 @@ extern "C" {
 
 	WINPORT_DECL(GetProcAddress, PVOID, (HMODULE hModule, LPCSTR lpProcName))
 	{
+		PVOID rv;
 #ifdef _WIN32
-		return GetProcAddress(hModule, lpProcName);
+		rv = GetProcAddress(hModule, lpProcName);
 #else
-		return (PVOID)dlsym((void *)hModule, lpProcName);
+		rv = (PVOID)dlsym((void *)hModule, lpProcName);
 #endif
+		if (!rv) fprintf(stderr, "GetProcAddress(%p, %s) - no such symbol\n", hModule, lpProcName);
+		return rv;
 	}
 
 	WINPORT_DECL(GetDoubleClickTime, DWORD, ())

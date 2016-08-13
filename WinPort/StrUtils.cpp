@@ -12,7 +12,7 @@
 #include "Utils.h"
 
 
-std::string UTF16to8(const wchar_t *src)
+SHAREDSYMBOL std::string UTF16to8(const wchar_t *src)
 {
 	size_t src_len = wcslen(src);
 	std::string dst;
@@ -34,7 +34,7 @@ std::string UTF16to8(const wchar_t *src)
 	return dst;
 }
 
-std::wstring UTF8to16(const char *src)
+SHAREDSYMBOL std::wstring UTF8to16(const char *src)
 {
 	size_t src_len = strlen(src);
 	std::wstring dst;
@@ -55,6 +55,10 @@ std::wstring UTF8to16(const char *src)
 	}
 	return dst;
 }
+
+
+SHAREDSYMBOL std::string SUTF16to8(const std::wstring &src) {return UTF16to8(src.c_str());}
+SHAREDSYMBOL std::wstring SUTF8to16(const std::string &src) {return UTF8to16(src.c_str());}
 
 ///////////////////
 

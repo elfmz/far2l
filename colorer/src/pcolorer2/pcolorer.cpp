@@ -7,7 +7,7 @@ PluginStartupInfo Info;
 FarStandardFunctions FSF;
 StringBuffer *PluginPath =NULL;
 
-extern "C" void WINPORT_DllStartup(const char *path)
+SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
 {
       DString module(path, 0);
       int pos = module.lastIndexOf('/');
@@ -53,7 +53,7 @@ const wchar_t *GetMsg(int msg)
 /**
   Plugin initialization and creation of editor set support class.
 */
-void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
+SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
 {
   Info = *fei;
   FSF = *fei->FSF;
@@ -63,7 +63,7 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
 /**
   Plugin strings in FAR interface.
 */
-void WINAPI GetPluginInfoW(struct PluginInfo *nInfo)
+SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *nInfo)
 {
   static wchar_t* PluginMenuStrings;
   memset(nInfo, 0, sizeof(*nInfo));
@@ -80,7 +80,7 @@ void WINAPI GetPluginInfoW(struct PluginInfo *nInfo)
 /**
   On FAR exit. Destroys all internal structures.
 */
-void WINAPI ExitFARW()
+SHAREDSYMBOL void WINAPI ExitFARW()
 {
   if (editorSet){
     delete editorSet;
@@ -90,7 +90,7 @@ void WINAPI ExitFARW()
 /**
   Open plugin configuration of actions dialog.
 */
-HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
+SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
   if (OpenFrom == OPEN_EDITOR){
     editorSet->openMenu();
@@ -117,7 +117,7 @@ HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 /**
   Configures plugin.
 */
-int WINAPI ConfigureW(int ItemNumber)
+SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 {
   if (!editorSet){
     editorSet = new FarEditorSet();
@@ -133,7 +133,7 @@ int WINAPI ConfigureW(int ItemNumber)
   Processes FAR editor events and
   makes text colorizing here.
 */
-int WINAPI ProcessEditorEventW(int Event, void *Param)
+SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param)
 {
   if (!editorSet){
     editorSet = new FarEditorSet();
@@ -141,7 +141,7 @@ int WINAPI ProcessEditorEventW(int Event, void *Param)
   return editorSet->editorEvent(Event, Param);
 };
 
-int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
+SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
 {
   return editorSet->editorInput(ir);
 }

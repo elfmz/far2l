@@ -128,7 +128,7 @@ static bool StringStartsWith(const char *str, const char *beginning)
 static std::string LookupIndexedRegItem(const std::string &root, const char *div,  DWORD index)
 {
 	std::string out;
-	fprintf(stderr, "LookupIndexedRegItem: %s %u\n", root.c_str(), index);
+	fprintf(stderr, "LookupIndexedRegItem: '%s' '%s' %u\n", root.c_str(), div, index);
 
 #ifdef _WIN32
 	std::string  path = root;
@@ -263,16 +263,16 @@ extern "C" {
 			fprintf(stderr, "RegEnumKeyEx: bad handle - %p\n", hKey);
 			return ERROR_INVALID_HANDLE;
 		}
-		std::string name = LookupIndexedRegItem(root, WINPORT_REG_DIV_VALUE,  dwIndex);
+		std::string name = LookupIndexedRegItem(root, WINPORT_REG_DIV_KEY,  dwIndex);
 		if (name.empty()) 
 			return ERROR_NO_MORE_ITEMS;
 
 		name.erase(0, strlen(WINPORT_REG_DIV_KEY)-1);
 
-		std::wstring name16 = UTF8to16(name);
+		std::wstring name16 = SUTF8to16(name);
 		if (lpcClass) *lpcClass = 0;
 		if (*lpcName <= name16.size()) {
-			*lpcName = name16.size();
+			*lpcName = name16.size() + 1;
 			return ERROR_MORE_DATA;
 		}
 		memcpy(lpName, name16.c_str(), (name16.size() + 1) * sizeof(*lpName));
@@ -311,7 +311,7 @@ extern "C" {
 		getline (is, value);
 		fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' %p\n", prefixed_name.c_str(), type.c_str(), value.c_str(), lpData);
 		if (lpValueName) {
-			const std::wstring &u16name = UTF8to16(name);
+			const std::wstring &u16name = SUTF8to16(name);
 			if (*lpcchValueName <= u16name.size())
 				return ERROR_MORE_DATA;
 			wcscpy(lpValueName, (const wchar_t *)u16name.c_str());
@@ -418,8 +418,29 @@ extern "C" {
 		os << std::endl;
 		return ERROR_SUCCESS;
 	}
+/*
 
+	LONG WINPORT(RegQueryValueExA) (HKEY hKey, LPCSTR lpValueName, 
+		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+	{
+		return WINPORT(RegQueryValueEx)(hKey, UTF8to16(lpValueName).c_str(), 
+			lpReserved, lpType, lpData, lpcbData);
+	}
 
+	LONG WINPORT(RegSetValueExA)(
+		             HKEY    hKey,
+		         LPCSTR lpValueName,
+		       DWORD   Reserved,
+		             DWORD   dwType,
+		       const BYTE    *lpData,
+		             DWORD   cbData
+		)
+	{
+		std::vector<WCHAR> tmp;
+		return WINPORT(RegSetValueEx)(hKey, UTF8to16(lpValueName).c_str(), 
+			lpReserved, lpType, lpData, lpcbData);
+	}
+*/
 	void WinPortInitRegistry()
 	{
 		if (_mkdir( GetRegistrySubroot("") .c_str()) <0)

@@ -26,8 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#define UnicodeToOEM(src,dst,lendst)    WideCharToMultiByte(CP_OEMCP,0,(src),-1,(dst),(int)(lendst),nullptr,nullptr)
-#define OEMToUnicode(src,dst,lendst)    MultiByteToWideChar(CP_OEMCP,0,(src),-1,(dst),(int)(lendst))
+#define UnicodeToOEM(src,dst,lendst)    WINPORT(WideCharToMultiByte)(CP_OEMCP,0,(src),-1,(dst),(int)(lendst),nullptr,nullptr)
+#define OEMToUnicode(src,dst,lendst)    WINPORT(MultiByteToWideChar)(CP_OEMCP,0,(src),-1,(dst),(int)(lendst))
 
 const char *FirstSlashA(const char *String)
 {
@@ -87,7 +87,7 @@ void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, i
 	if (lpszAnsiString && lpwszUnicodeString && nLength)
 	{
 		wmemset(lpwszUnicodeString, 0, nLength);
-		MultiByteToWideChar(CodePage,0,lpszAnsiString,nLength,lpwszUnicodeString,nLength);
+		WINPORT(MultiByteToWideChar)(CodePage,0,lpszAnsiString,nLength,lpwszUnicodeString,nLength);
 	}
 }
 
@@ -121,7 +121,7 @@ char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT Code
 
 	if (nLength)
 	{
-		WideCharToMultiByte(
+		WINPORT(WideCharToMultiByte)(
 		    CodePage,
 		    0,
 		    lpwszUnicodeString,
@@ -197,7 +197,7 @@ DWORD OldKeyToKey(DWORD dOldKey)
 		{
 			char OemChar=static_cast<char>(CleanKey);
 			wchar_t WideChar=0;
-			MultiByteToWideChar(CP_OEMCP,0,&OemChar,1,&WideChar,1);
+			WINPORT(MultiByteToWideChar)(CP_OEMCP,0,&OemChar,1,&WideChar,1);
 			dOldKey=(dOldKey^CleanKey)|WideChar;
 		}
 	}
@@ -223,7 +223,7 @@ DWORD KeyToOldKey(DWORD dKey)
 		{
 			wchar_t WideChar=static_cast<wchar_t>(CleanKey);
 			char OemChar=0;
-			WideCharToMultiByte(CP_OEMCP,0,&WideChar,1,&OemChar,1,0,nullptr);
+			WINPORT(WideCharToMultiByte)(CP_OEMCP,0,&WideChar,1,&OemChar,1,0,nullptr);
 			dKey=(dKey^CleanKey)|OemChar;
 		}
 	}
@@ -522,7 +522,7 @@ char* WINAPI RemoveTrailingSpacesA(char *Str)
 
 	for (ChPtr=Str+(I=strlen(Str))-1; I > 0; I--, ChPtr--)
 	{
-		if (IsSpaceA(*ChPtr) || IsEolA(*ChPtr))
+		if (IsSpace(*ChPtr) || IsEol(*ChPtr))
 			*ChPtr=0;
 		else
 			break;
@@ -557,7 +557,7 @@ int WINAPI FarAtoiA(const char *s)
 
 int64_t WINAPI FarAtoi64A(const char *s)
 {
-	return s?_atoi64(s):0;
+	return s ? atoll(s) : 0;
 }
 
 char* WINAPI PointToNameA(char *Path)
@@ -603,7 +603,7 @@ char* WINAPI RemoveLeadingSpacesA(char *Str)
 	if (!(ChPtr=Str))
 		return nullptr;
 
-	for (; IsSpaceA(*ChPtr); ChPtr++)
+	for (; IsSpace(*ChPtr); ChPtr++)
 		;
 
 	if (ChPtr!=Str)
@@ -888,13 +888,17 @@ int WINAPI FarMkLinkA(const char *Src,const char *Dest, DWORD Flags)
 
 	if (Flags&oldfar::FLINK_DONOTUPDATEPANEL) flg|=FLINK_DONOTUPDATEPANEL;
 
-	return FarMkLink(s, d, flg);
+	fprintf(stderr, "TODO: FarMkLinkA(%s, %s, 0x%x)\n", Src, Dest, Flags);
+	return 0;
+	//return FarMkLink(s, d, flg);
 }
 
 int WINAPI GetNumberOfLinksA(const char *Name)
 {
-	string n(Name);
-	return GetNumberOfLinks(n);
+	fprintf(stderr, "TODO: GetNumberOfLinksA(%s)\n", Name);
+	return 1;
+	//string n(Name);
+	//return GetNumberOfLinks(n);
 }
 
 int WINAPI ConvertNameToRealA(const char *Src,char *Dest,int DestSize)
@@ -912,7 +916,8 @@ int WINAPI ConvertNameToRealA(const char *Src,char *Dest,int DestSize)
 
 int WINAPI FarGetReparsePointInfoA(const char *Src,char *Dest,int DestSize)
 {
-	if (Src && *Src)
+	
+	/*if (Src && *Src)
 	{
 		string strSrc(Src);
 		string strDest;
@@ -922,7 +927,7 @@ int WINAPI FarGetReparsePointInfoA(const char *Src,char *Dest,int DestSize)
 			strDest.GetCharString(Dest,DestSize);
 
 		return Size;
-	}
+	}*/
 
 	return 0;
 }
@@ -1058,7 +1063,7 @@ const char * WINAPI FarGetMsgFnA(INT_PTR PluginHandle,int MsgId)
 	PluginA *pPlugin = (PluginA*)PluginHandle;
 	string strPath = pPlugin->GetModuleName();
 	CutToSlash(strPath);
-
+//	fprintf(stderr,"FarGetMsgFnA: strPath=%ls\n", strPath.CPtr());
 	if (pPlugin->InitLang(strPath))
 		return pPlugin->GetMsgA(MsgId);
 
@@ -3374,8 +3379,8 @@ UINT GetEditorCodePageA()
 	UINT CodePage=info.CodePage;
 	CPINFO cpi;
 
-	if (!GetCPInfo(CodePage, &cpi) || cpi.MaxCharSize>1)
-		CodePage=GetACP();
+	if (!WINPORT(GetCPInfo)(CodePage, &cpi) || cpi.MaxCharSize>1)
+		CodePage=WINPORT(GetACP)();
 
 	return CodePage;
 }
@@ -3387,11 +3392,11 @@ int GetEditorCodePageFavA()
 	string sTableName;
 	int result=-((int)CodePage+2);
 
-	if (GetOEMCP()==CodePage)
+	if (WINPORT(GetOEMCP)()==CodePage)
 	{
 		result=0;
 	}
-	else if (GetACP()==CodePage)
+	else if (WINPORT(GetACP)()==CodePage)
 	{
 		result=1;
 	}
@@ -3424,8 +3429,8 @@ void MultiByteRecode(UINT nCPin, UINT nCPout, char *szBuffer, int nLength)
 
 		if (wszTempTable)
 		{
-			MultiByteToWideChar(nCPin, 0, szBuffer, nLength, wszTempTable, nLength);
-			WideCharToMultiByte(nCPout, 0, wszTempTable, nLength, szBuffer, nLength, nullptr, nullptr);
+			WINPORT(MultiByteToWideChar)(nCPin, 0, szBuffer, nLength, wszTempTable, nLength);
+			WINPORT(WideCharToMultiByte)(nCPout, 0, wszTempTable, nLength, szBuffer, nLength, nullptr, nullptr);
 			xf_free(wszTempTable);
 		}
 	}
@@ -3444,8 +3449,8 @@ UINT ConvertCharTableToCodePage(int Command)
 	{
 		switch (Command)
 		{
-			case 0 /* OEM */: 	nCP = GetOEMCP();	break;
-			case 1 /* ANSI */:	nCP = GetACP(); 	break;
+			case 0 /* OEM */: 	nCP = WINPORT(GetOEMCP)();	break;
+			case 1 /* ANSI */:	nCP = WINPORT(GetACP)(); 	break;
 			default:
 			{
 				DWORD selectType,Index=0;
@@ -3633,7 +3638,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 					case FARMACRO_KEY_EVENT:
 					{
 						wchar_t res;
-						MultiByteToWideChar(
+						WINPORT(MultiByteToWideChar)(
 						    CP_OEMCP,
 						    0,
 						    &pIR->Event.KeyEvent.uChar.AsciiChar,
@@ -3666,7 +3671,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 					case FARMACRO_KEY_EVENT:
 					{
 						char res;
-						WideCharToMultiByte(
+						WINPORT(WideCharToMultiByte)(
 						    CP_OEMCP,
 						    0,
 						    &pIR->Event.KeyEvent.uChar.UnicodeChar,
@@ -3725,10 +3730,10 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 						switch (oldsp->Param.iParam)
 						{
 							case 1:
-								newsp.Param.iParam=GetOEMCP();
+								newsp.Param.iParam=WINPORT(GetOEMCP)();
 								break;
 							case 2:
-								newsp.Param.iParam=GetACP();
+								newsp.Param.iParam=WINPORT(GetACP)();
 								break;
 							default:
 								newsp.Param.iParam=oldsp->Param.iParam;
@@ -3885,7 +3890,7 @@ int WINAPI FarViewerControlA(int Command,void* Param)
 			viA->TabSize = viW.TabSize;
 			viA->CurMode.UseDecodeTable = 0;
 			viA->CurMode.TableNum       = 0;
-			viA->CurMode.AnsiMode       = viW.CurMode.CodePage == GetACP();
+			viA->CurMode.AnsiMode       = viW.CurMode.CodePage == WINPORT(GetACP)();
 			viA->CurMode.Unicode        = IsUnicodeCodePage(viW.CurMode.CodePage);
 			viA->CurMode.Wrap           = viW.CurMode.Wrap;
 			viA->CurMode.WordWrap       = viW.CurMode.WordWrap;
@@ -3986,8 +3991,8 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 		for (unsigned int i = 0; i < 256; ++i)
 		{
 			TableSet->EncodeTable[i] = TableSet->DecodeTable[i] = i;
-			TableSet->UpperTable[i] = LocalUpper(i);
-			TableSet->LowerTable[i] = LocalLower(i);
+			TableSet->UpperTable[i] = _toupper(i);
+			TableSet->LowerTable[i] = _tolower(i);
 		}
 
 		FormatString sTableName;
@@ -3995,30 +4000,29 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 
 		if (nCP==CP_AUTODETECT) return -1;
 
-		CPINFOEX cpiex;
-
-		if (!GetCPInfoEx(nCP, 0, &cpiex))
-		{
+		//CPINFOEX cpiex;
+		//if (!GetCPInfoEx(nCP, 0, &cpiex)) {
 			CPINFO cpi;
 
-			if (!GetCPInfo(nCP, &cpi))
+			if (!WINPORT(GetCPInfo)(nCP, &cpi))
 				return -1;
 
-			cpiex.MaxCharSize = cpi.MaxCharSize;
-			cpiex.CodePageName[0] = L'\0';
-		}
+			//cpiex.MaxCharSize = cpi.MaxCharSize;
+			//cpiex.CodePageName[0] = L'\0';
+		//}
 
-		if (cpiex.MaxCharSize != 1)
+		//if (cpiex.MaxCharSize != 1)
+		if (cpi.MaxCharSize != 1)
 			return -1;
 
-		wchar_t *codePageName = FormatCodePageName(nCP, cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t));
+		wchar_t *codePageName = L"";//FormatCodePageName(nCP, cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t));
 		sTableName<<fmt::Width(5)<<nCP<<BoxSymbols[BS_V1]<<L" "<<codePageName;
 		sTableName.strValue().GetCharString(TableSet->TableName, sizeof(TableSet->TableName) - 1, CP_OEMCP);
 		wchar_t *us=AnsiToUnicodeBin((char*)TableSet->DecodeTable, sizeof(TableSet->DecodeTable), nCP);
-		CharLowerBuff(us, sizeof(TableSet->DecodeTable));
-		WideCharToMultiByte(nCP, 0, us, sizeof(TableSet->DecodeTable), (char*)TableSet->LowerTable, sizeof(TableSet->DecodeTable), nullptr, nullptr);
-		CharUpperBuff(us, sizeof(TableSet->DecodeTable));
-		WideCharToMultiByte(nCP, 0, us, sizeof(TableSet->DecodeTable), (char*)TableSet->UpperTable, sizeof(TableSet->DecodeTable), nullptr, nullptr);
+		WINPORT(CharLowerBuff)(us, sizeof(TableSet->DecodeTable));
+		WINPORT(WideCharToMultiByte)(nCP, 0, us, sizeof(TableSet->DecodeTable), (char*)TableSet->LowerTable, sizeof(TableSet->DecodeTable), nullptr, nullptr);
+		WINPORT(CharUpperBuff)(us, sizeof(TableSet->DecodeTable));
+		WINPORT(WideCharToMultiByte)(nCP, 0, us, sizeof(TableSet->DecodeTable), (char*)TableSet->UpperTable, sizeof(TableSet->DecodeTable), nullptr, nullptr);
 		xf_free(us);
 		MultiByteRecode(nCP, CP_OEMCP, (char *) TableSet->DecodeTable, sizeof(TableSet->DecodeTable));
 		MultiByteRecode(CP_OEMCP, nCP, (char *) TableSet->EncodeTable, sizeof(TableSet->EncodeTable));

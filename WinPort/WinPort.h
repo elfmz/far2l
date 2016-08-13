@@ -6,7 +6,7 @@
 # include "WinCompat.h"
 #endif
 
-#define WINPORT_DECL(NAME, RV, ARGS) RV WINPORT_##NAME ARGS
+#define WINPORT_DECL(NAME, RV, ARGS) SHAREDSYMBOL RV WINPORT_##NAME ARGS
 #define WINPORT(NAME) WINPORT_##NAME
 
 #ifdef __cplusplus
@@ -153,6 +153,7 @@ extern "C" {
 	WINPORT_DECL(IsCharAlpha, BOOL, (WCHAR ch));
 	WINPORT_DECL(IsCharAlphaNumeric, BOOL, (WCHAR ch));
 	WINPORT_DECL(CompareString, int, ( LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2));
+	WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags, LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2));
 	WINPORT_DECL(IsTextUnicode, BOOL, (CONST VOID* lpv, int iSize, LPINT lpiResult));
 	WINPORT_DECL(WideCharToMultiByte, int, ( UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, 
 		int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar));
@@ -215,10 +216,10 @@ extern "C" {
 }
 
 #include <string>
-std::string UTF16to8(const wchar_t *src);
-std::wstring UTF8to16(const char *src);
-static inline std::string UTF16to8(const std::wstring &src) {return UTF16to8(src.c_str());}
-static inline std::wstring UTF8to16(const std::string &src) {return UTF8to16(src.c_str());}
+SHAREDSYMBOL std::string UTF16to8(const wchar_t *src);
+SHAREDSYMBOL std::wstring UTF8to16(const char *src);
+SHAREDSYMBOL std::string SUTF16to8(const std::wstring &src);
+SHAREDSYMBOL std::wstring SUTF8to16(const std::string &src);
 
 #endif
 

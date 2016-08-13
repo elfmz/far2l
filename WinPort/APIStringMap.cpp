@@ -186,6 +186,16 @@ INT WINAPI WINPORT(CompareStringEx)(LPCWSTR locale, DWORD flags, LPCWSTR str1, I
 	return CSTR_EQUAL;
 }
 
+WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags, 
+		LPCSTR lpString1, int cchCount1,  LPCSTR lpString2, int cchCount2))
+{
+	std::vector<WCHAR> wstr1(cchCount1 * 2 + 1);
+	std::vector<WCHAR> wstr2(cchCount1 * 2 + 1);
+	int l1 = WINPORT(MultiByteToWideChar)(CP_ACP, 0, lpString1, cchCount1, &wstr1[0], wstr1.size() - 1 );
+	int l2 = WINPORT(MultiByteToWideChar)(CP_ACP, 0, lpString2, cchCount2, &wstr2[0], wstr2.size() - 1);
+	return WINPORT(CompareString)( Locale, dwCmpFlags,  &wstr1[0], l1, &wstr2[0], l2);
+}
+
 static BOOL WINPORT(GetStringType)( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
 {
 	static const unsigned char type2_map[16] =

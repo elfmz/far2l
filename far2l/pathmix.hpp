@@ -55,6 +55,7 @@ class NTPath
 };
 
 inline int IsSlash(wchar_t x) { return x==GOOD_SLASH || x==BAD_SLASH; }
+inline int IsSlashA(char x) { return x==GOOD_SLASH || x==BAD_SLASH; }
 
 bool IsNetworkPath(const wchar_t *Path);
 bool IsNetworkServerPath(const wchar_t *Path);

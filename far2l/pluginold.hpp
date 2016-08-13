@@ -1562,20 +1562,7 @@ namespace oldfar
 		FARSTDSNPRINTF             snprintf;
 		// </C&C++>
 
-		DWORD_PTR                  Reserved[8];
-
-		FARSTDLOCALISLOWER         LIsLower;
-		FARSTDLOCALISUPPER         LIsUpper;
-		FARSTDLOCALISALPHA         LIsAlpha;
-		FARSTDLOCALISALPHANUM      LIsAlphanum;
-		FARSTDLOCALUPPER           LUpper;
-		FARSTDLOCALLOWER           LLower;
-		FARSTDLOCALUPPERBUF        LUpperBuf;
-		FARSTDLOCALLOWERBUF        LLowerBuf;
-		FARSTDLOCALSTRUPR          LStrupr;
-		FARSTDLOCALSTRLWR          LStrlwr;
-		FARSTDLOCALSTRICMP         LStricmp;
-		FARSTDLOCALSTRNICMP        LStrnicmp;
+		DWORD_PTR                  Reserved[20];
 
 		FARSTDUNQUOTE              Unquote;
 		FARSTDEXPANDENVIRONMENTSTR ExpandEnvironmentStr;

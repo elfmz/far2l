@@ -142,6 +142,8 @@
     <File Name="WinPortSynch.h"/>
     <File Name="WinPortSynch.cpp"/>
   </VirtualDirectory>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
   <Settings Type="Static Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -153,7 +155,7 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Static Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-O1;-O;-O0;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes)  -Wno-unused-function" C_Options="-g;-O1;-O;-O0;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+      <Compiler Options="-g;-O1;-O;-O0;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes)  -Wno-unused-function -fvisibility=hidden" C_Options="-g;-O1;-O;-O0;-O2;-std=c99;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
         <IncludePath Value="/usr/src/wxWidgets-3.0.2/lib/wx/include/gtk3-unicode-3.0"/>
       </Compiler>
@@ -231,6 +233,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug"/>
-  <Dependencies Name="Release"/>
 </CodeLite_Project>

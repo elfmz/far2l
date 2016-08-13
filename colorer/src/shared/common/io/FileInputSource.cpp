@@ -4,6 +4,7 @@
 #include<sys/timeb.h>
 #include<fcntl.h>
 #include<time.h>
+#include <windows.h>
 
 #if defined _WIN32
 #include<io.h>
@@ -64,8 +65,6 @@ const String *FileInputSource::getLocation() const{
 };
 
 #include <string>
-std::string UTF16to8(const wchar_t *src);
-std::wstring UTF8to16(const char *src);
 
 const byte *FileInputSource::openStream()
 {

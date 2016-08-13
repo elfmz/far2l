@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="FAR" Database="">
   <Project Name="WinPort" Path="WinPort/WinPort.project" Active="No"/>
-  <Project Name="far2l" Path="far2l/far2l.project" Active="Yes"/>
+  <Project Name="far2l" Path="far2l/far2l.project" Active="No"/>
   <Project Name="colorer" Path="colorer/colorer.project" Active="No"/>
+  <Project Name="farftp" Path="farftp/farftp.project" Active="Yes"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="WinPort" ConfigName="Debug"/>
       <Project Name="far2l" ConfigName="Debug"/>
       <Project Name="colorer" ConfigName="Debug"/>
+      <Project Name="farftp" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
       <Project Name="WinPort" ConfigName="Release"/>
       <Project Name="far2l" ConfigName="Release"/>
       <Project Name="colorer" ConfigName="Release"/>
+      <Project Name="farftp" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

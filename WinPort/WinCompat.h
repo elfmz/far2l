@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <wctype.h>
 
 #ifdef _WIN32
 # define GOOD_SLASH	'\\'
@@ -18,6 +19,11 @@ typedef unsigned __int64 uint64_t;
 #else
 # include <unistd.h>
 # include <wchar.h>
+# ifdef __cplusplus
+#  define SHAREDSYMBOL extern "C" __attribute__ ((visibility("default")))
+# else
+#  define SHAREDSYMBOL __attribute__ ((visibility("default")))
+# endif
 
 # define FAR
 # define FARPROC
@@ -73,6 +79,15 @@ static char * itoa(int i, char *a, int radix)
 	switch (radix) {
 		case 10: sprintf(a, "%d", i); break;
 		case 16: sprintf(a, "%x", i); break;
+	}
+	return a;
+}
+
+static char * _i64toa(int64_t i, char *a, int radix)
+{
+	switch (radix) {
+		case 10: sprintf(a, "%lld", (long long)i); break;
+		case 16: sprintf(a, "%llx", (long long)i); break;
 	}
 	return a;
 }
@@ -135,7 +150,7 @@ static const void *_lfind(
 
 	return NULL;
 }
-
+/*
 static char iswdigit(wchar_t w)
 {
 	return w>='0' && w<='9';
@@ -152,7 +167,7 @@ static char iswupper(wchar_t c) {return 0; }
 static char iswalpha(wchar_t c) {return ((c>='a' && c<='z') || (c>='A' && c<='Z')); }
 static char iswalnum(wchar_t c) {return iswalpha(c) || (c>='0' && c<='9'); }
 static wchar_t towupper(wchar_t c) {return c; }
-static wchar_t towlower(wchar_t c) {return c; }
+static wchar_t towlower(wchar_t c) {return c; }*/
 
 #endif
 
@@ -1045,6 +1060,9 @@ typedef void *HKL;
 
 #define WAIT_TIMEOUT                     258L    // dderror
 
+#define ERROR_BAD_NET_RESP               58L
+#define ERROR_BAD_DRIVER_LEVEL           119L
+#define ERROR_TIMEOUT                    1460L
 #define ERROR_NO_MORE_ITEMS              259L
 #define ERROR_MORE_DATA                  234L
 #define ERROR_SUCCESS                    0L
@@ -1432,11 +1450,11 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 #define DECLARE_INTERFACE(iface)    struct iface
 #define DECLARE_INTERFACE_(iface, baseiface)    struct iface : public baseiface
 
-#define WSAEWOULDBLOCK	EWOULDBLOCK
+#define IS_SOCKET_NONBLOCKING_ERR(err)	((err)==EINPROGRESS || (err)==EWOULDBLOCK) 
 
-//#ifndef SOCKET 
-//# define SOCKET		int
-//#endif
+#ifndef SOCKET 
+# define SOCKET		int
+#endif
 
 #define SOCKET_ERROR -1
 #define INVALID_SOCKET -1

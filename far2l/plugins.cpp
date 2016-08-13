@@ -152,13 +152,22 @@ DWORD ExportCRC32W[] =
 enum PluginType
 {
 	NOT_PLUGIN,
-	UNICODE_PLUGIN
+	UTF16_PLUGIN,
+	UTF8_PLUGIN
 };
 
 
 PluginType IsModulePlugin(const wchar_t *lpModuleName)
 {
-	return UNICODE_PLUGIN;
+	const wchar_t *ext = wcsrchr(lpModuleName, L'.');
+	if (ext) {
+		if (wcscmp(ext, L".far-plug-utf16")==0)
+			return UTF16_PLUGIN;
+		if (wcscmp(ext, L".far-plug-utf8")==0)
+			return UTF8_PLUGIN;	
+	}
+	
+	return NOT_PLUGIN;
 }
 
 
@@ -237,7 +246,8 @@ bool PluginManager::LoadPlugin(
 
 	switch (IsModulePlugin(lpwszModuleName))
 	{
-		case UNICODE_PLUGIN: pPlugin = new PluginW(this, lpwszModuleName); break;
+		case UTF16_PLUGIN: pPlugin = new PluginW(this, lpwszModuleName); break;
+		case UTF8_PLUGIN: pPlugin = new PluginA(this, lpwszModuleName); break;
 		default: return false;
 	}
 
@@ -437,7 +447,7 @@ void PluginManager::LoadPlugins()
 			// ...è ïðîéäåìñÿ ïî íåìó
 			while (ScTree.GetNextName(&FindData,strFullName))
 			{
-				if (CmpName(L"*.so",FindData.strFileName,false) && !(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				if (CmpName(L"*.far-plug-*",FindData.strFileName,false) && !(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				{
 					LoadPlugin(strFullName, FindData, false);
 				}

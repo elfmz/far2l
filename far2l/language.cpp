@@ -306,13 +306,14 @@ Language::Language():
 
 bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 {
-	fprintf(stderr, "Language::Init(" WS_FMT ", %u, %u)\n", Path, bUnicode, CountNeed);
+	//fprintf(stderr, "Language::Init(" WS_FMT ", %u, %u)\n", Path, bUnicode, CountNeed);
 	if (MsgList || MsgListA)
 		return true;
 	GuardLastError gle;
 	LastError = LERROR_SUCCESS;
 	m_bUnicode = bUnicode;
 	UINT nCodePage = CP_OEMCP;
+	//fprintf(stderr, "Opt.strLanguage=%ls\n", Opt.strLanguage.CPtr());
 	string strLangName=Opt.strLanguage;
 	FILE *LangFile=OpenLangFile(Path,LangFileMask,Opt.strLanguage,strMessageFile, nCodePage,FALSE, &strLangName);
 

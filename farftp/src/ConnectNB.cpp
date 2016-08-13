@@ -80,7 +80,7 @@ int Connection::nb_waitstate(SOCKET *peer, int state,DWORD tmW)
 
 //Select
 		// in windows nfds ignored
-		res = select(0/*ignored*/, readfds, writefds, excptfds, &timeout);
+		res = select( (*peer)+1, readfds, writefds, excptfds, &timeout);
 //Idle
 		static bool inIdle = false;
 		static DWORD idleB;

@@ -184,7 +184,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 		if(!Move)
 		{
 			isDestDir = TRUE;
-			AddEndSlash(ci.DestPath,'\\');
+			AddEndSlash(ci.DestPath,'/');
 			break;
 		}
 
@@ -218,7 +218,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 		}
 
 		//Path on server
-		if(ci.DestPath.Chr('\\') != -1 && ci.DestPath[i] == '/')
+		if(ci.DestPath[i] == '/')//ci.DestPath.Chr('\\') != -1 && 
 		{
 			isDestDir    = TRUE;
 			ci.FTPRename = TRUE;
@@ -227,7 +227,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 
 		//Path on local disk
 		isDestDir = TRUE;
-		AddEndSlash(ci.DestPath,'\\');
+		AddEndSlash(ci.DestPath,'/');
 	}
 	while(0);
 
@@ -241,7 +241,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 
 			if(i > 1)
 			{
-				for(i-=2; i && s[i] != '/' && s[i] != '\\'; i--);
+				for(i-=2; i && s[i] != '/'; i--);
 
 				s.SetLength(i+1);
 			}

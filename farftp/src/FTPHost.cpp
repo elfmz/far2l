@@ -176,7 +176,7 @@ void FTPHost::MkUrl(String& str,LPCSTR Path,LPCSTR nm,BOOL sPwd)
 	{
 		int len = str.Length()-1;
 
-		if(len >= 0 && str[len] != '/' && str[len] != '\\')
+		if(len >= 0 && str[len] != '/')
 			str.Add('/');
 
 		str.Add(nm);
@@ -195,16 +195,16 @@ char *FTPHost::MkINIFile(char *DestName,LPCSTR Path,LPCSTR DestPath)
 	{
 		while(*Path == '\\' || *Path == '/') Path++;
 
-		AddEndSlash(DestName,'\\',MAX_PATH);
+		AddEndSlash(DestName,'/',MAX_PATH);
 		// Add from "Hosts\Folder\Item0" "Folder\Item0" part
 		StrCat(DestName, RegKey + 6 /*the ARRAYSIZE("Hosts\\")*/ + strlen(Path), MAX_PATH);
 		// Remove trailing "\Item0"
-		m = strrchr(DestName,'\\');
+		m = strrchr(DestName,'/');
 
 		if(m) *m = 0;
 	}
 
-	AddEndSlash(DestName,'\\',MAX_PATH);
+	AddEndSlash(DestName,'/',MAX_PATH);
 	//Correct bad characters and add possible to DestName
 	BOOL  bad,
 	   curBad;
@@ -261,27 +261,27 @@ LPCSTR FTPHost::MkHost(LPCSTR Path,LPCSTR Name)
 		if(StrNCmpI(Path,"Hosts",5) == 0)
 			Path += 5;
 
-		while(*Path == '\\') Path++;
+		while(*Path == '/') Path++;
 
 		if(Path[0])
 		{
-			AddEndSlash(key, '\\',ARRAYSIZE(key));
+			AddEndSlash(key, '/',ARRAYSIZE(key));
 			StrCat(key, Path, ARRAYSIZE(key));
 		}
 	}
 
 	if(Name && Name[0])
 	{
-		while(*Name == '\\' || *Name == '/') Name++;
+		while(*Name == '/') Name++;
 
 		if(Name[0])
 		{
-			AddEndSlash(key, '\\',ARRAYSIZE(key));
+			AddEndSlash(key, '/',ARRAYSIZE(key));
 			StrCat(key, Name, ARRAYSIZE(key));
 		}
 	}
 
-	DelEndSlash(key,'\\');
+	DelEndSlash(key,'/');
 	Log(("rc=%s",key));
 	return key;
 }
@@ -383,14 +383,14 @@ void AddPath(char *buff,LPCSTR path)
 {
 	if(path && path[0])
 	{
-		AddEndSlash(buff,'\\',MAX_PATH);
+		AddEndSlash(buff,'/',MAX_PATH);
 
-		while(*path == '\\' || *path == '/') path++;
+		while(*path == '/') path++;
 
 		StrCat(buff,path,MAX_PATH);
 	}
 
-	DelEndSlash(buff,'\\');
+	DelEndSlash(buff,'/');
 }
 
 void FTPHost::MakeFreeKey(LPCSTR Hosts)
@@ -451,12 +451,12 @@ BOOL FTPHost::Read(LPCSTR nm)
 		Password[0]  = 0;
 		Home[0]      = 0;
 		FP_GetRegKey(RegKey,"Description", HostDescr, NULL,ARRAYSIZE(HostDescr));
-		strcpy(Host,strrchr(RegKey,'\\')+1);
+		strcpy(Host,strrchr(RegKey,'/')+1);
 		strcpy(HostName,Host);
 		return TRUE;
 	}
 
-	m = strrchr(RegKey,'\\');
+	m = strrchr(RegKey,'/');
 
 	if(!m) m = RegKey;
 	else m++;
@@ -718,12 +718,12 @@ BOOL FTPHost::WriteINI(LPCSTR nm)
 	char HexStr[MAX_PATH*2];
 	BOOL res;
 //CreateDirectory
-	char *m = (char*)strrchr(nm,'\\'); // BUGBUG
+	char *m = (char*)strrchr(nm,'/'); // BUGBUG
 
 	if(m)
 	{
 		StrCpy(HexStr,nm,ARRAYSIZE(HexStr));
-		m = strrchr(HexStr,'\\');
+		m = strrchr(HexStr,'/');
 		*m = 0;
 
 		if(!DoCreateDirectory(HexStr))

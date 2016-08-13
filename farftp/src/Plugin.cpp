@@ -31,7 +31,7 @@ WORD     FTPDirList::DetectDirStringType(FTPServerInfo * const Server,LPCSTR Lis
 }
 
 //------------------------------------------------------------------------
-static FTPInterface Interface;
+FTPInterface Interface;
 static BOOL         InterfaceInited = FALSE;
 
 //------------------------------------------------------------------------
@@ -127,11 +127,11 @@ void CreateFTPInterface(void)
 	Interface.GetHostOpt       = idGetHostOpt;
 }
 
-FTPPluginHolder* StdCreator(HMODULE m,FTPPluginInterface* Interface)
+FTPPluginHolder* StdCreator(FTPPluginInterface* Interface)
 {
 	FTPPluginHolder* p = new FTPPluginHolder;
 
-	if(!p->Assign(m,Interface))
+	if(!p->Assign(Interface))
 	{
 		delete p;
 		return NULL;
@@ -139,131 +139,42 @@ FTPPluginHolder* StdCreator(HMODULE m,FTPPluginInterface* Interface)
 
 	return p;
 }
-#if 0
+
+
+FTPPluginInterface* WINAPI FTPPluginGetInterface_Progress(void);
+FTPPluginInterface* WINAPI FTPPluginGetInterface_DirList(void);
+FTPPluginInterface* WINAPI FTPPluginGetInterface_Notify(void);
+
 struct FTPPluginsInfo
 {
 	DWORD            Magic;
+	FTPPluginInterface* interface;
 	FTPPluginHolder* Holder;
-	FTPPluginHolder*(*Creator)(HMODULE m,FTPPluginInterface* Interface);
-	LPCSTR         Name;
 	LPCSTR         Description;
 } StdPlugins[] =
 {
 
 	/*PLUGIN_xxx*/
-	/*PLUGIN_PROGRESS*/ { FTP_PROGRESS_MAGIC, NULL, StdCreator, "ftpProgress.fll", FMSG("Ftp plugin progress dialog") },
-	/*PLUGIN_DIRLIST*/  { FTP_DIRLIST_MAGIC,  NULL, StdCreator, "ftpDirList.fll",  FMSG("Ftp plugin directory listing parcer") },
-	/*PLUGIN_NOTIFY*/   { FTP_NOTIFY_MAGIC,   NULL, StdCreator, "ftpNotify.fll",   NULL },
+	/*PLUGIN_PROGRESS*/ { FTP_PROGRESS_MAGIC, FTPPluginGetInterface_Progress(), NULL, FMSG("Ftp plugin progress dialog") },
+	/*PLUGIN_DIRLIST*/  { FTP_DIRLIST_MAGIC,  FTPPluginGetInterface_DirList(), NULL, FMSG("Ftp plugin directory listing parcer") },
+	/*PLUGIN_NOTIFY*/   { FTP_NOTIFY_MAGIC,   FTPPluginGetInterface_Notify(), NULL, NULL },
 
 	{ 0,NULL,NULL,NULL }
 };
-#endif
+
 //------------------------------------------------------------------------
 BOOL InitPlugins(void)
 {
-#if 0
-	HMODULE m = NULL;
-	char    str[MAX_PATH],*tmp;
-	int     n;
-
-	if(InterfaceInited) return TRUE;
-
 	CreateFTPInterface();
-
-	for(n = 0; StdPlugins[n].Magic; n++)
+	for(int n = 0; StdPlugins[n].Magic; n++)
 	{
-		//FAR root
-		str[ GetModuleFileName(NULL,str,ARRAYSIZE(str))] = 0;
-		tmp = strrchr(str,'\\');
-
-		if(tmp) tmp[1] = 0;
-
-		StrCat(str, StdPlugins[n].Name, ARRAYSIZE(str));
-		m = LoadLibrary(str);
-
-		if(!m)
-		{
-			//System-wide
-			m = LoadLibrary(StdPlugins[n].Name);
-
-			if(!m)
-			{
-				//Plugin path
-				StrCpy(str, FP_PluginStartPath, ARRAYSIZE(str));
-				StrCat(str, "\\",               ARRAYSIZE(str));
-				StrCat(str, StdPlugins[n].Name, ARRAYSIZE(str));
-				m = LoadLibrary(str);
-
-				if(!m)
-				{
-					//Plugin lib path
-					StrCpy(str, FP_PluginStartPath, ARRAYSIZE(str));
-					StrCat(str, "\\Lib\\",          ARRAYSIZE(str));
-					StrCat(str, StdPlugins[n].Name, ARRAYSIZE(str));
-					m = LoadLibrary(str);
-
-					if(!m)
-					{
-						if(StdPlugins[n].Description)
-							break;
-						else
-							continue;
-					}
-				}
-			}
-		}
-
-		BOOL err = TRUE;
-
-		do
-		{
-			FTPQueryInterface_t p = (FTPQueryInterface_t)GetProcAddress(m,"FTPQueryInterface");
-
-			if(!p) break;
-
-			FTPPluginInterface* inf = p(&Interface);
-
-			if(!inf || inf->Magic != StdPlugins[n].Magic)
-				break;
-
-			StdPlugins[n].Holder = StdPlugins[n].Creator(m,inf);
-
-			if(!StdPlugins[n].Holder)
-				break;
-
-			err = FALSE;
-		}
-		while(0);
-
-		if(err && StdPlugins[n].Description)
-			break;
-	}/*for*/
-
-	if(StdPlugins[n].Magic)
-	{
-		if(m)
-			FreeLibrary(m);
-
-		_snprintf(str,ARRAYSIZE(str),
-		          "Error loading...\n"
-		          "FTP plugin: \"%s\"\n"
-		          " With name: \"%s\"\n"
-		          "    Plugin: %s.\n"
-		          "You can not use FTP plugin.",
-		          StdPlugins[n].Description, StdPlugins[n].Name,
-		          m ? "is not valid FTP plugin" : "can not be found");
-		FP_Info->Message(0, FMSG_WARNING | FMSG_DOWN | FMSG_LEFTALIGN | FMSG_MB_OK | FMSG_ALLINONE,
-		                 NULL, (LPCSTR  const *)str, 0, 0);
-		FreePlugins();
-		return FALSE;
+		StdPlugins[n].Holder = StdCreator(StdPlugins[n].interface);
 	}
-#endif
 	return TRUE;
 }
 
 void FreePlugins(void)
 {
-#if 0
 	if(InterfaceInited)
 	{
 		InterfaceInited = FALSE;
@@ -276,9 +187,9 @@ void FreePlugins(void)
 				StdPlugins[n].Holder = NULL;
 			}
 	}
-#endif
 }
-#if 0
+
+
 FTPPluginHolder* GetPluginHolder(WORD Number)
 {
 	Assert(Number < ARRAYSIZE(StdPlugins)-1);
@@ -290,30 +201,15 @@ BOOL PluginAvailable(WORD Number)
 	return Number < ARRAYSIZE(StdPlugins)-1 &&
 	       StdPlugins[Number].Holder;
 }
-#else
-FTPPluginHolder* GetPluginHolder(WORD Number)
-{
-	return NULL;
-}
 
-BOOL PluginAvailable(WORD Number)
-{
-	return FALSE;
-}
-#endif
 //------------------------------------------------------------------------
-BOOL FTPPluginHolder::Assign(HMODULE m,FTPPluginInterface* inf)
+BOOL FTPPluginHolder::Assign(FTPPluginInterface* inf)
 {
-	Module    = m;
 	Interface = inf;
 	return TRUE;
 }
 void FTPPluginHolder::Destroy(void)
 {
-	if(Module)
-		WINPORT(FreeLibrary)(Module);
-
-	Module    = NULL;
 	Interface = NULL;
 }
 //------------------------------------------------------------------------

@@ -73,6 +73,7 @@ BOOL Connection::hookup(char *host, int port)
 			break;
 
 //Local addr
+	
 		if(getsockname(sock,(sockaddr*)&myctladdr,&len) != 0)
 			break;
 
@@ -80,6 +81,7 @@ BOOL Connection::hookup(char *host, int port)
 		cin = cout = sock;
 		StrCpy(hostname, host, ARRAYSIZE(hostname));
 		portnum = port;
+		
 		ConnectMessage(MWaitingForResponse,NULL);
 		int repl = getreply(0);
 

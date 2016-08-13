@@ -110,7 +110,7 @@ BOOL FtpFindFirstFile(Connection *hConnect, LPCSTR lpszSearchFile,FTPFileInfo* l
 		Command = "dir";
 	else
 	{
-		if(*lpszSearchFile=='\\' || lpszSearchFile[0] && lpszSearchFile[1]==':')
+		if(*lpszSearchFile=='/')
 			lpszSearchFile = PointToName((char *)lpszSearchFile);
 
 		Command.printf("dir \x1%s\x1", lpszSearchFile);
@@ -308,7 +308,7 @@ BOOL FtpGetFile(Connection *Connect,LPCSTR lpszRemoteFile,LPCSTR lpszNewFile,BOO
 
 //Create directory
 	Command = lpszNewFile;
-	int m = Command.RChr('\\');
+	int m = Command.RChr('/');
 
 	if(m != -1)
 	{
@@ -388,7 +388,7 @@ BOOL FtpPutFile(Connection *Connect,LPCSTR loc,LPCSTR rem,BOOL Reput,int AsciiMo
 		Reput = FALSE;
 
 //Remote file
-	if(*rem=='\\' || (rem[0] && rem[1]==':'))
+	if(*rem=='/')
 		rem = PointToName((char *)rem);
 
 	if(Connect->Host.ServerType!=FTP_TYPE_MVS)

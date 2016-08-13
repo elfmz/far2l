@@ -116,9 +116,10 @@ BOOL CorrectTime(SYSTEMTIME& st,Time_t& dt, FILETIME *wdt)
 		FILETIME ttm, ltm, t1;
 		WINPORT(SystemTimeToFileTime)(&st, &ttm);
 		WINPORT(LocalFileTimeToFileTime)(&ttm, &ltm);
-
+#if 0 //todo: fix infinite loop
 		while(WINPORT(CompareFileTime)(wdt, &ltm) > 0)
 		{
+			fprintf(stderr, "*");
 			WINPORT(FileTimeToLocalFileTime)(wdt, &t1);
 			WINPORT(FileTimeToSystemTime)(&t1, &ftm);
 
@@ -130,6 +131,7 @@ BOOL CorrectTime(SYSTEMTIME& st,Time_t& dt, FILETIME *wdt)
 			WINPORT(SystemTimeToFileTime)(&ftm, &t1);
 			WINPORT(LocalFileTimeToFileTime)(&t1, wdt);
 		}
+#endif		
 	}
 
 	return TRUE;
@@ -157,8 +159,11 @@ BOOL ConvertEntry(NET_FileEntryInfo* inf, FTPFileInfo* p)
 
 	if(!CorrectTime(st, inf->date,     &p->FindData.ftLastWriteTime) ||
 	        !CorrectTime(st, inf->cr_date,  &p->FindData.ftCreationTime) ||
-	        !CorrectTime(st, inf->acc_date, &p->FindData.ftLastAccessTime))
-		return FALSE;
+	        !CorrectTime(st, inf->acc_date, &p->FindData.ftLastAccessTime)) {
+				fprintf(stderr, "-");
+		return FALSE;		
+			}
+	fprintf(stderr, "+");
 
 //Size
 	p->FindData.nFileSizeHigh = (DWORD)((inf->size >> 32) & MAX_DWORD);
@@ -320,7 +325,7 @@ FTPType* WINAPI idPRSTypeGet(WORD Index)
 // ------------------------------------------------------------------------
 // Exported interface
 // ------------------------------------------------------------------------
-FTPPluginInterface* WINAPI FTPPluginGetInterface(void)
+FTPPluginInterface* WINAPI FTPPluginGetInterface_DirList(void)
 {
 	static DirListInterface Interface;
 	Interface.Magic                     = FTP_DIRLIST_MAGIC;

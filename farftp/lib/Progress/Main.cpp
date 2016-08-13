@@ -5,26 +5,26 @@
 
 #define CH_OBJECT Assert( Object );
 
-void WINAPI Pg_ResumeFile(HANDLE Object, LPCSTR LocalFileName)                                   { CH_OBJECT((TrafficInformation*)Object)->Resume(LocalFileName); }
-void WINAPI Pg_Resume(HANDLE Object, int64_t size)                                               { CH_OBJECT((TrafficInformation*)Object)->Resume(size); }
-BOOL WINAPI Pg_Callback(HANDLE Object, int Size)                                                 { CH_OBJECT return ((TrafficInformation*)Object)->Callback(Size); }
-void WINAPI Pg_Init(HANDLE Object, HANDLE h,int tMsg,int OpMode,FP_SizeItemList* il)             { CH_OBJECT((TrafficInformation*)Object)->Init(h,tMsg,OpMode,il); }
-void WINAPI Pg_InitFile(HANDLE Object, int64_t sz, LPCSTR SrcName, LPCSTR DestName)            { CH_OBJECT((TrafficInformation*)Object)->InitFile(sz,SrcName,DestName); }
-void WINAPI Pg_Skip(HANDLE Object)                                                           { CH_OBJECT((TrafficInformation*)Object)->Skip(); }
-void WINAPI Pg_Waiting(HANDLE Object, time_t paused)                                            { CH_OBJECT((TrafficInformation*)Object)->Waiting(paused); }
-void WINAPI Pg_SetConn(HANDLE Object, HANDLE Connection)                                        { CH_OBJECT((TrafficInformation*)Object)->SetConnection(Connection); }
+static void WINAPI Pg_ResumeFile(HANDLE Object, LPCSTR LocalFileName)                                   { CH_OBJECT((TrafficInformation*)Object)->Resume(LocalFileName); }
+static void WINAPI Pg_Resume(HANDLE Object, int64_t size)                                               { CH_OBJECT((TrafficInformation*)Object)->Resume(size); }
+static BOOL WINAPI Pg_Callback(HANDLE Object, int Size)                                                 { CH_OBJECT return ((TrafficInformation*)Object)->Callback(Size); }
+static void WINAPI Pg_Init(HANDLE Object, HANDLE h,int tMsg,int OpMode,FP_SizeItemList* il)             { CH_OBJECT((TrafficInformation*)Object)->Init(h,tMsg,OpMode,il); }
+static void WINAPI Pg_InitFile(HANDLE Object, int64_t sz, LPCSTR SrcName, LPCSTR DestName)            { CH_OBJECT((TrafficInformation*)Object)->InitFile(sz,SrcName,DestName); }
+static void WINAPI Pg_Skip(HANDLE Object)                                                           { CH_OBJECT((TrafficInformation*)Object)->Skip(); }
+static void WINAPI Pg_Waiting(HANDLE Object, time_t paused)                                            { CH_OBJECT((TrafficInformation*)Object)->Waiting(paused); }
+static void WINAPI Pg_SetConn(HANDLE Object, HANDLE Connection)                                        { CH_OBJECT((TrafficInformation*)Object)->SetConnection(Connection); }
 
-HANDLE WINAPI Pg_CreateObject(void)
+static HANDLE WINAPI Pg_CreateObject(void)
 {
 	return new TrafficInformation;
 }
 
-void WINAPI Pg_DestroyObject(HANDLE Object)
+static void WINAPI Pg_DestroyObject(HANDLE Object)
 {
 	delete((TrafficInformation*)Object);
 }
 
-FTPPluginInterface* WINAPI FTPPluginGetInterface(void)
+FTPPluginInterface* WINAPI FTPPluginGetInterface_Progress(void)
 {
 	static ProgressInterface Interface;
 	Interface.Magic         = FTP_PROGRESS_MAGIC;

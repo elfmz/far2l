@@ -11,10 +11,9 @@
 //------------------------------------------------------------------------
 struct FTPPluginHolder
 {
-	HMODULE             Module;
 	FTPPluginInterface* Interface;
 
-	virtual BOOL Assign(HMODULE m,FTPPluginInterface* Interface);
+	virtual BOOL Assign(FTPPluginInterface* Interface);
 	virtual void Destroy(void);
 };
 

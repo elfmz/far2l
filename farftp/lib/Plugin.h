@@ -15,8 +15,8 @@ struct FTPPluginInterface;
 
 //After FTP call to QueryInterface function this variable is set to
 //  valid FTP interface object.
-extern FTPInterface* FTP_Info;
-extern HMODULE       FTP_Module;
+extern FTPInterface Interface;
+#define FTP_Info (&Interface)
 
 // Each plugin must declare this function and include "All.cpp" file
 extern FTPPluginInterface* WINAPI FTPPluginGetInterface(void);
@@ -197,7 +197,6 @@ struct FTPPluginInterface
 	DWORD          Magic;
 };
 
-typedef FTPPluginInterface*(WINAPI *FTPQueryInterface_t)(FTPInterface* FTPInfo);
 
 //------------------------------------------------------------------------
 #include "../lib/Progress.h"

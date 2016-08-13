@@ -151,7 +151,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 			//Up
 			if(StrCmp(Dir,"..") == 0)
 			{
-				if(!OldDir[0] || (OldDir[0] == '\\' && !OldDir[1]))
+				if(!OldDir[0] || (OldDir[0] == '/' && !OldDir[1]))
 				{
 					Log(("Close plugin"));
 					CurrentState = fcsClose;
@@ -159,7 +159,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 					return TRUE;
 				}
 
-				Slash = strrchr(HostsPath,'\\');
+				Slash = strrchr(HostsPath,'/');
 
 				if(Slash)
 					*Slash=0;
@@ -172,7 +172,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 			else
 
 				//Root
-				if(*Dir == 0 || (*Dir == '\\' && Dir[1] == 0))
+				if(*Dir == 0 || (*Dir == '/' && Dir[1] == 0))
 				{
 					HostsPath[0] = 0;
 					Log(("Set to root"));
@@ -183,7 +183,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 					//Directory
 					if(FTPHost::CheckHostFolder(HostsPath, Dir))
 					{
-						AddEndSlash(HostsPath,'\\',ARRAYSIZE(HostsPath));
+						AddEndSlash(HostsPath,'/',ARRAYSIZE(HostsPath));
 						StrCat(HostsPath, Dir, ARRAYSIZE(HostsPath));
 						Log(("InDir"));
 						break;
@@ -193,7 +193,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 
 		if(!HostsPath[0])
 		{
-			HostsPath[0] = '\\';
+			HostsPath[0] = '/';
 			HostsPath[1] = 0;
 		}
 

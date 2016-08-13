@@ -23,6 +23,35 @@
     <File Name="lib/Lang.h"/>
     <File Name="lib/Progress.h"/>
     <File Name="lib/DirList.h"/>
+    <VirtualDirectory Name="DirList">
+      <File Name="lib/DirList/pctcp.cpp"/>
+      <File Name="lib/DirList/vx.cpp"/>
+      <File Name="lib/DirList/Int.h"/>
+      <File Name="lib/DirList/os2.cpp"/>
+      <File Name="lib/DirList/vms.cpp"/>
+      <File Name="lib/DirList/unix.cpp"/>
+      <File Name="lib/DirList/os400.cpp"/>
+      <File Name="lib/DirList/dos.cpp"/>
+      <File Name="lib/DirList/netware.cpp"/>
+      <File Name="lib/DirList/skirdin.cpp"/>
+      <File Name="lib/DirList/eplf.cpp"/>
+      <File Name="lib/DirList/mvs.cpp"/>
+      <File Name="lib/DirList/Main.cpp"/>
+      <File Name="lib/DirList/tcpc.cpp"/>
+      <File Name="lib/DirList/cms.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="Notify">
+      <File Name="lib/Notify/Int.h"/>
+      <File Name="lib/Notify/Main.cpp"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="Progress">
+      <File Name="lib/Progress/Int.h"/>
+      <File Name="lib/Progress/cbFmt.cpp"/>
+      <File Name="lib/Progress/TraficCB.cpp"/>
+      <File Name="lib/Progress/Main.cpp"/>
+      <File Name="lib/Progress/Utils.cpp"/>
+    </VirtualDirectory>
+    <File Name="lib/All.cpp"/>
   </VirtualDirectory>
   <Description/>
   <Dependencies/>

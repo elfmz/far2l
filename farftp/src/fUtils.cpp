@@ -95,7 +95,7 @@ void FTP::FTP_FixPaths(LPCSTR base, PluginPanelItem *p, int cn, BOOL FromPlugin)
 		        StrCmp(CurName,".") == 0)
 			continue;
 
-		str.printf("%s%c%s", base, FromPlugin ? '/' : '\\', CurName);
+		str.printf("%s%c%s", base, '/', CurName);
 		StrCpy(p->FindData.cFileName, str.c_str(), ARRAYSIZE(p->FindData.cFileName));
 
 		if(str.Length() >= (int)ARRAYSIZE(p->FindData.cFileName))
@@ -323,7 +323,7 @@ int FTP::ExpandListINT(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL From
 //============
 //DIR
 		//Get name
-		m = strrchr(CurName, FromPlugin ? '/' : '\\');
+		m = strrchr(CurName, '/');
 
 		if(m) m = m+1;
 		else m = CurName;

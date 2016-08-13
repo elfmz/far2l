@@ -112,7 +112,7 @@ char *WINAPI FixFileNameChars(char *fnm,BOOL slashes)
 
 	if(slashes)
 		for(src = buff; *src; src++)
-			if(*src == '\\') *src = '_';
+			if(*src == '/') *src = '_';
 			else if(*src == ':')  *src = '!';
 
 	return buff;
@@ -359,7 +359,7 @@ LPCSTR WINAPI GetCmdLogFile(void)
 			strcpy(str, "/var/log");
 //			HMODULE m = GetModuleHandle(FP_GetPluginName());
 //			str[GetModuleFileName(m,str,ARRAYSIZE(str))] = 0;
-//			strrchr(str,'\\')[1] = 0;
+//			strrchr(str,'/')[1] = 0;
 			StrCat(str,Opt.CmdLogFile,ARRAYSIZE(str));
 			return str;
 		}

@@ -76,15 +76,9 @@ BOOL PreFill(FTPUrl* p)
 	if(!p->Host.Host[0])
 		return FALSE;
 
-	if(p->Download)
-	{
-		ch = '/';
-	}
-	else
-	{
+	if(!p->Download)
 		FixLocalSlash(p->SrcPath);
-		ch = '\\';
-	}
+	ch = '/';
 
 	if(strpbrk(p->FileName.cFileName, "\\/") != NULL)
 	{

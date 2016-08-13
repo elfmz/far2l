@@ -63,7 +63,7 @@ int FTP::GetHostFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move
 		else
 		{
 			StrCpy(CheckKey,HostsPath,sizeof(CheckKey));
-			char *m = strrchr(CheckKey,'\\');
+			char *m = strrchr(CheckKey,'/');
 
 			if(m) m[1] = 0;
 			else CheckKey[0] = 0;
@@ -75,18 +75,18 @@ int FTP::GetHostFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move
 	{
 		StrCpy(CheckKey, DestPath.c_str(), ARRAYSIZE(CheckKey));
 
-		if(strpbrk(DestPath.c_str(),":\\")==NULL && !FP_CheckRegKey(CheckKey))
+		if(strchr(DestPath.c_str(), '/')!=NULL && !FP_CheckRegKey(CheckKey))
 		{
 			Rename=TRUE;
 		}
 		else if(FP_GetRegKey(CheckKey,"Folder",0))
 		{
-			AddEndSlash(CheckKey,'\\',ARRAYSIZE(CheckKey));
+			AddEndSlash(CheckKey,'/',ARRAYSIZE(CheckKey));
 			Rename=TRUE;
 		}
 	}
 
-	AddEndSlash(DestPath, '\\');
+	AddEndSlash(DestPath, '/');
 
 //Rename
 	if(Rename)

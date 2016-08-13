@@ -100,7 +100,7 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 	else
 		Format.printf("//%s/",Host.Host);
 
-	Format.cat(pi->CurDir + (*pi->CurDir == '/' || *pi->CurDir == '\\'));
+	Format.cat(pi->CurDir + (*pi->CurDir == '/'));
 	pi->Format = Format.c_str();
 //---------------- INFO LINES
 	static struct InfoPanelLine InfoLines[7];

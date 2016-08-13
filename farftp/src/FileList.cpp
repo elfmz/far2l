@@ -51,7 +51,7 @@ LPCSTR GetOtherPath(char *path)
 	while(0);
 
 	StrCpy(path, pi.CurDir, MAX_PATH);
-	AddEndSlash(path,'\\',MAX_PATH);
+	AddEndSlash(path,'/',MAX_PATH);
 	return NULL;
 }
 

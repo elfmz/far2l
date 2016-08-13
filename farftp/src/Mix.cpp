@@ -26,8 +26,7 @@ void AddWait(time_t tm)
 //------------------------------------------------------------------------
 BOOL WINAPI IsAbsolutePath(LPCSTR path)
 {
-	return path[0] && path[1] && path[2] &&
-	       path[1] == ':' && path[2] == '\\';
+	return *path=='/';
 }
 //------------------------------------------------------------------------
 const char quotes[] = " \"%,;[]";
@@ -284,7 +283,7 @@ BOOL WINAPI DoCreateDirectory(char *directoryPath)
 
 	if(isUncPath)
 	{
-		directoriesPath = strchr(directoriesPath, '\\');
+		directoriesPath = strchr(directoriesPath, '/');
 
 		if(!directoriesPath)
 		{
@@ -292,7 +291,7 @@ BOOL WINAPI DoCreateDirectory(char *directoryPath)
 			return FALSE;
 		}
 
-		directoriesPath = strchr(++directoriesPath, '\\');
+		directoriesPath = strchr(++directoriesPath, '/');
 
 		if(!directoriesPath)
 		{
@@ -311,7 +310,7 @@ BOOL WINAPI DoCreateDirectory(char *directoryPath)
 
 	do
 	{
-		directoriesPath = strchr(++directoriesPath, '\\');
+		directoriesPath = strchr(++directoriesPath, '/');
 
 		if(directoriesPath)
 		{
@@ -539,7 +538,7 @@ void WINAPI AddEndSlash(String& p, char slash)
 	if(!p.Length()) return;
 
 	if(!slash)
-		slash = p.Chr('\\') ? '\\' : '/';
+		slash = '/';
 
 	if(p[p.Length()-1] != slash)
 		p.Add(slash);
@@ -556,7 +555,7 @@ void WINAPI AddEndSlash(char *Path,char slash, size_t ssz)
 	if(Length <= 0 || Length >= ssz) return;
 
 	if(!slash)
-		slash = strchr(Path,'\\') ? '\\' : '/';
+		slash = '/';
 
 	if(Path[Length] != slash)
 	{
@@ -677,5 +676,5 @@ void WINAPI FixLocalSlash(char *s)
 	if(!s) return;
 
 	for(; *s; s++)
-		if(*s == '/') *s = '\\';
+		if(*s == '\\') *s = '/';
 }

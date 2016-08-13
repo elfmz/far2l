@@ -76,7 +76,7 @@ extern "C"
 		case TRUNCATE_EXISTING: flags|= O_TRUNC; break;
 		}
 		std::string path = ConsumeWinPath(lpFileName);
-		int r = _open(path.c_str(), flags);		
+		int r = _open(path.c_str(), flags, 0777);		
 		fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s r=%d\n", 
 			lpFileName, dwDesiredAccess, flags, path.c_str(), r);
 		if (r==-1) {

@@ -356,7 +356,7 @@ void FTP::AddToQueque(FAR_FIND_DATA* FileName, LPCSTR Path, BOOL Download)
 	if(Download)
 		m = strrchr(FileName->cFileName, '/');
 	else
-		m = strrchr(FileName->cFileName, '\\');
+		m = strrchr(FileName->cFileName, '/');
 
 	if(m)
 	{
@@ -371,7 +371,7 @@ void FTP::AddToQueque(FAR_FIND_DATA* FileName, LPCSTR Path, BOOL Download)
 		AddEndSlash(p->SrcPath, '/');
 		str.printf("%s%s", p->SrcPath.c_str(), FileName->cFileName);
 		FixLocalSlash(p->DestPath);
-		AddEndSlash(p->DestPath, '\\');
+		AddEndSlash(p->DestPath, '/');
 		num = str.Chr('/');
 	}
 	else
@@ -379,11 +379,11 @@ void FTP::AddToQueque(FAR_FIND_DATA* FileName, LPCSTR Path, BOOL Download)
 		PanelInfo pi;
 		FP_Info->Control(this, FCTL_GETANOTHERPANELINFO, &pi);
 		p->SrcPath = pi.CurDir;
-		AddEndSlash(p->SrcPath, '\\');
+		AddEndSlash(p->SrcPath, '/');
 		str.printf("%s%s", p->SrcPath.c_str(), FileName->cFileName);
 		FixLocalSlash(str);
 		AddEndSlash(p->DestPath, '/');
-		num = str.Chr('\\');
+		num = str.Chr('/');
 	}
 
 	if(num != -1)
@@ -572,7 +572,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 			else
 				ci.DestPath = DefPath;
 
-			AddEndSlash(ci.DestPath, '\\');
+			AddEndSlash(ci.DestPath, '/');
 			ci.DestPath.cat(FixFileNameChars(p->FileName.cFileName,TRUE));
 			int64_t fsz = FtpFileSize(hConnect, ci.SrcPath.c_str());
 			hConnect->TrafficInfo->Init(hConnect, MStatusDownload, 0, NULL);
@@ -623,7 +623,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 			//UPLOAD -------------------------------------------------
 			ci.Download  = FALSE;
 			ci.SrcPath = p->SrcPath;
-			AddEndSlash(ci.SrcPath, '\\');
+			AddEndSlash(ci.SrcPath, '/');
 			ci.SrcPath.cat(PointToName(p->FileName.cFileName));
 
 			if(p->DestPath[0])

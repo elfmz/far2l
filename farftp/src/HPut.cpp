@@ -40,7 +40,7 @@ int FTP::PutHostsFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Mov
 	FTPHost         h;
 	FP_SizeItemList il;
 	DestPath = HostsPath;
-	AddEndSlash(DestPath,'\\');
+	AddEndSlash(DestPath,'/');
 
 	if(!ExpandList(PanelItem,ItemsNumber,&il,FALSE))
 		return 0;
@@ -75,7 +75,7 @@ int FTP::PutHostsFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Mov
 			SrcFile = CurName;
 			DestName = DestPath;
 			DestName.Add(CurName);
-			DestName.SetLength(DestName.RChr('\\'));
+			DestName.SetLength(DestName.RChr('/'));
 		}
 
 		if(!h.ReadINI(SrcFile.c_str()))

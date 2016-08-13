@@ -60,18 +60,22 @@ AS       := /usr/bin/as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/src_SetDir.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_cnInit.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Cfg.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_DeleteFile.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Key.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_HPut.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FTPConnect.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Mem.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FAR.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConnectNB.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/src_ConnectCmds.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_sock.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_fUtils.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FGet.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_EnumHost.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConnectMain.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_MakeDir.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Ftp.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Mix.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FPut.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/src_ConnectIO.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_GetOpenInfo.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Queque.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Url.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_cnUpload.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FileList.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Plugin.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Event.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FtpDlg.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Shortcut.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/src_ConnectSock.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FtpAPI.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FTPHost.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_CmdLine.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_cnDownload.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_JM.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FTPBlock.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_HGet.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_AskOver.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Connect.cpp$(ObjectSuffix) \
+Objects0=$(IntermediateDirectory)/lib_All.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SetDir.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_cnInit.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Cfg.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_DeleteFile.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Key.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_HPut.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FTPConnect.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Mem.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FAR.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/src_ConnectNB.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConnectCmds.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_sock.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_fUtils.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FGet.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_EnumHost.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConnectMain.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_MakeDir.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Ftp.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Mix.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/src_FPut.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConnectIO.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_GetOpenInfo.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Queque.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Url.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_cnUpload.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FileList.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Plugin.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Event.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FtpDlg.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/src_Shortcut.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConnectSock.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FtpAPI.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FTPHost.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_CmdLine.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_cnDownload.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_JM.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_FTPBlock.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_HGet.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_AskOver.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/src_Connect.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_pctcp.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_vx.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_os2.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_vms.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_unix.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_os400.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_dos.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_netware.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_skirdin.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/DirList_eplf.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_mvs.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_tcpc.cpp$(ObjectSuffix) $(IntermediateDirectory)/DirList_cms.cpp$(ObjectSuffix) $(IntermediateDirectory)/Notify_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Progress_cbFmt.cpp$(ObjectSuffix) $(IntermediateDirectory)/Progress_TraficCB.cpp$(ObjectSuffix) $(IntermediateDirectory)/Progress_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Progress_Utils.cpp$(ObjectSuffix) \
 	$(IntermediateDirectory)/FARStdlib_fstd_scr.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_stdlibCS.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_asrt.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_Patt.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_OEM.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_SText.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_exSCHC.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_Reg.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_plg.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_Con.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/FARStdlib_fstd_exSCPY.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_menu.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_exSCAT.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_log.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_mklog.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_String.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_err.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_mesg.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_SCol.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_Msg.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/FARStdlib_fstd_exSCPY.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_menu.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_exSCAT.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_log.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_mklog.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_String.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_err.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_mesg.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_SCol.cpp$(ObjectSuffix) 
+
+Objects1=$(IntermediateDirectory)/FARStdlib_fstd_Msg.cpp$(ObjectSuffix) \
 	$(IntermediateDirectory)/FARStdlib_fstd_exSCMP.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_exSPCH.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_crc32.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_exit.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_exSNCH.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_Dialog.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_per.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_Utils.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_ilist.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_Arg.cpp$(ObjectSuffix) \
 	$(IntermediateDirectory)/FARStdlib_fstd_FMsg.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_exSPS.cpp$(ObjectSuffix) $(IntermediateDirectory)/FARStdlib_fstd_FUtils.cpp$(ObjectSuffix) 
 
 
 
-Objects=$(Objects0) 
+Objects=$(Objects0) $(Objects1) 
 
 ##
 ## Main Build Targets 
@@ -83,6 +87,7 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	@$(MakeDirCommand) $(@D)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
+	@echo $(Objects1) >> $(ObjectsFileList)
 	$(SharedObjectLinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
 	@$(MakeDirCommand) "/home/user/projects/far2l/.build-debug"
 	@echo rebuilt > "/home/user/projects/far2l/.build-debug/farftp"
@@ -100,6 +105,14 @@ PreBuild:
 ##
 ## Objects
 ##
+$(IntermediateDirectory)/lib_All.cpp$(ObjectSuffix): lib/All.cpp $(IntermediateDirectory)/lib_All.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/All.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_All.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/lib_All.cpp$(DependSuffix): lib/All.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_All.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_All.cpp$(DependSuffix) -MM "lib/All.cpp"
+
+$(IntermediateDirectory)/lib_All.cpp$(PreprocessSuffix): lib/All.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_All.cpp$(PreprocessSuffix) "lib/All.cpp"
+
 $(IntermediateDirectory)/src_SetDir.cpp$(ObjectSuffix): src/SetDir.cpp $(IntermediateDirectory)/src_SetDir.cpp$(DependSuffix)
 	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/src/SetDir.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_SetDir.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_SetDir.cpp$(DependSuffix): src/SetDir.cpp
@@ -419,6 +432,158 @@ $(IntermediateDirectory)/src_Connect.cpp$(DependSuffix): src/Connect.cpp
 
 $(IntermediateDirectory)/src_Connect.cpp$(PreprocessSuffix): src/Connect.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_Connect.cpp$(PreprocessSuffix) "src/Connect.cpp"
+
+$(IntermediateDirectory)/DirList_pctcp.cpp$(ObjectSuffix): lib/DirList/pctcp.cpp $(IntermediateDirectory)/DirList_pctcp.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/pctcp.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_pctcp.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_pctcp.cpp$(DependSuffix): lib/DirList/pctcp.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_pctcp.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_pctcp.cpp$(DependSuffix) -MM "lib/DirList/pctcp.cpp"
+
+$(IntermediateDirectory)/DirList_pctcp.cpp$(PreprocessSuffix): lib/DirList/pctcp.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_pctcp.cpp$(PreprocessSuffix) "lib/DirList/pctcp.cpp"
+
+$(IntermediateDirectory)/DirList_vx.cpp$(ObjectSuffix): lib/DirList/vx.cpp $(IntermediateDirectory)/DirList_vx.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/vx.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_vx.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_vx.cpp$(DependSuffix): lib/DirList/vx.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_vx.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_vx.cpp$(DependSuffix) -MM "lib/DirList/vx.cpp"
+
+$(IntermediateDirectory)/DirList_vx.cpp$(PreprocessSuffix): lib/DirList/vx.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_vx.cpp$(PreprocessSuffix) "lib/DirList/vx.cpp"
+
+$(IntermediateDirectory)/DirList_os2.cpp$(ObjectSuffix): lib/DirList/os2.cpp $(IntermediateDirectory)/DirList_os2.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/os2.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_os2.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_os2.cpp$(DependSuffix): lib/DirList/os2.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_os2.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_os2.cpp$(DependSuffix) -MM "lib/DirList/os2.cpp"
+
+$(IntermediateDirectory)/DirList_os2.cpp$(PreprocessSuffix): lib/DirList/os2.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_os2.cpp$(PreprocessSuffix) "lib/DirList/os2.cpp"
+
+$(IntermediateDirectory)/DirList_vms.cpp$(ObjectSuffix): lib/DirList/vms.cpp $(IntermediateDirectory)/DirList_vms.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/vms.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_vms.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_vms.cpp$(DependSuffix): lib/DirList/vms.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_vms.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_vms.cpp$(DependSuffix) -MM "lib/DirList/vms.cpp"
+
+$(IntermediateDirectory)/DirList_vms.cpp$(PreprocessSuffix): lib/DirList/vms.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_vms.cpp$(PreprocessSuffix) "lib/DirList/vms.cpp"
+
+$(IntermediateDirectory)/DirList_unix.cpp$(ObjectSuffix): lib/DirList/unix.cpp $(IntermediateDirectory)/DirList_unix.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/unix.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_unix.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_unix.cpp$(DependSuffix): lib/DirList/unix.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_unix.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_unix.cpp$(DependSuffix) -MM "lib/DirList/unix.cpp"
+
+$(IntermediateDirectory)/DirList_unix.cpp$(PreprocessSuffix): lib/DirList/unix.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_unix.cpp$(PreprocessSuffix) "lib/DirList/unix.cpp"
+
+$(IntermediateDirectory)/DirList_os400.cpp$(ObjectSuffix): lib/DirList/os400.cpp $(IntermediateDirectory)/DirList_os400.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/os400.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_os400.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_os400.cpp$(DependSuffix): lib/DirList/os400.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_os400.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_os400.cpp$(DependSuffix) -MM "lib/DirList/os400.cpp"
+
+$(IntermediateDirectory)/DirList_os400.cpp$(PreprocessSuffix): lib/DirList/os400.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_os400.cpp$(PreprocessSuffix) "lib/DirList/os400.cpp"
+
+$(IntermediateDirectory)/DirList_dos.cpp$(ObjectSuffix): lib/DirList/dos.cpp $(IntermediateDirectory)/DirList_dos.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/dos.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_dos.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_dos.cpp$(DependSuffix): lib/DirList/dos.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_dos.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_dos.cpp$(DependSuffix) -MM "lib/DirList/dos.cpp"
+
+$(IntermediateDirectory)/DirList_dos.cpp$(PreprocessSuffix): lib/DirList/dos.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_dos.cpp$(PreprocessSuffix) "lib/DirList/dos.cpp"
+
+$(IntermediateDirectory)/DirList_netware.cpp$(ObjectSuffix): lib/DirList/netware.cpp $(IntermediateDirectory)/DirList_netware.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/netware.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_netware.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_netware.cpp$(DependSuffix): lib/DirList/netware.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_netware.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_netware.cpp$(DependSuffix) -MM "lib/DirList/netware.cpp"
+
+$(IntermediateDirectory)/DirList_netware.cpp$(PreprocessSuffix): lib/DirList/netware.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_netware.cpp$(PreprocessSuffix) "lib/DirList/netware.cpp"
+
+$(IntermediateDirectory)/DirList_skirdin.cpp$(ObjectSuffix): lib/DirList/skirdin.cpp $(IntermediateDirectory)/DirList_skirdin.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/skirdin.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_skirdin.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_skirdin.cpp$(DependSuffix): lib/DirList/skirdin.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_skirdin.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_skirdin.cpp$(DependSuffix) -MM "lib/DirList/skirdin.cpp"
+
+$(IntermediateDirectory)/DirList_skirdin.cpp$(PreprocessSuffix): lib/DirList/skirdin.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_skirdin.cpp$(PreprocessSuffix) "lib/DirList/skirdin.cpp"
+
+$(IntermediateDirectory)/DirList_eplf.cpp$(ObjectSuffix): lib/DirList/eplf.cpp $(IntermediateDirectory)/DirList_eplf.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/eplf.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_eplf.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_eplf.cpp$(DependSuffix): lib/DirList/eplf.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_eplf.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_eplf.cpp$(DependSuffix) -MM "lib/DirList/eplf.cpp"
+
+$(IntermediateDirectory)/DirList_eplf.cpp$(PreprocessSuffix): lib/DirList/eplf.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_eplf.cpp$(PreprocessSuffix) "lib/DirList/eplf.cpp"
+
+$(IntermediateDirectory)/DirList_mvs.cpp$(ObjectSuffix): lib/DirList/mvs.cpp $(IntermediateDirectory)/DirList_mvs.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/mvs.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_mvs.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_mvs.cpp$(DependSuffix): lib/DirList/mvs.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_mvs.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_mvs.cpp$(DependSuffix) -MM "lib/DirList/mvs.cpp"
+
+$(IntermediateDirectory)/DirList_mvs.cpp$(PreprocessSuffix): lib/DirList/mvs.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_mvs.cpp$(PreprocessSuffix) "lib/DirList/mvs.cpp"
+
+$(IntermediateDirectory)/DirList_Main.cpp$(ObjectSuffix): lib/DirList/Main.cpp $(IntermediateDirectory)/DirList_Main.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/Main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_Main.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_Main.cpp$(DependSuffix): lib/DirList/Main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_Main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_Main.cpp$(DependSuffix) -MM "lib/DirList/Main.cpp"
+
+$(IntermediateDirectory)/DirList_Main.cpp$(PreprocessSuffix): lib/DirList/Main.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_Main.cpp$(PreprocessSuffix) "lib/DirList/Main.cpp"
+
+$(IntermediateDirectory)/DirList_tcpc.cpp$(ObjectSuffix): lib/DirList/tcpc.cpp $(IntermediateDirectory)/DirList_tcpc.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/tcpc.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_tcpc.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_tcpc.cpp$(DependSuffix): lib/DirList/tcpc.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_tcpc.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_tcpc.cpp$(DependSuffix) -MM "lib/DirList/tcpc.cpp"
+
+$(IntermediateDirectory)/DirList_tcpc.cpp$(PreprocessSuffix): lib/DirList/tcpc.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_tcpc.cpp$(PreprocessSuffix) "lib/DirList/tcpc.cpp"
+
+$(IntermediateDirectory)/DirList_cms.cpp$(ObjectSuffix): lib/DirList/cms.cpp $(IntermediateDirectory)/DirList_cms.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/DirList/cms.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/DirList_cms.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/DirList_cms.cpp$(DependSuffix): lib/DirList/cms.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/DirList_cms.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/DirList_cms.cpp$(DependSuffix) -MM "lib/DirList/cms.cpp"
+
+$(IntermediateDirectory)/DirList_cms.cpp$(PreprocessSuffix): lib/DirList/cms.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/DirList_cms.cpp$(PreprocessSuffix) "lib/DirList/cms.cpp"
+
+$(IntermediateDirectory)/Notify_Main.cpp$(ObjectSuffix): lib/Notify/Main.cpp $(IntermediateDirectory)/Notify_Main.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/Notify/Main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Notify_Main.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Notify_Main.cpp$(DependSuffix): lib/Notify/Main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Notify_Main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Notify_Main.cpp$(DependSuffix) -MM "lib/Notify/Main.cpp"
+
+$(IntermediateDirectory)/Notify_Main.cpp$(PreprocessSuffix): lib/Notify/Main.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Notify_Main.cpp$(PreprocessSuffix) "lib/Notify/Main.cpp"
+
+$(IntermediateDirectory)/Progress_cbFmt.cpp$(ObjectSuffix): lib/Progress/cbFmt.cpp $(IntermediateDirectory)/Progress_cbFmt.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/Progress/cbFmt.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Progress_cbFmt.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Progress_cbFmt.cpp$(DependSuffix): lib/Progress/cbFmt.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Progress_cbFmt.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Progress_cbFmt.cpp$(DependSuffix) -MM "lib/Progress/cbFmt.cpp"
+
+$(IntermediateDirectory)/Progress_cbFmt.cpp$(PreprocessSuffix): lib/Progress/cbFmt.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Progress_cbFmt.cpp$(PreprocessSuffix) "lib/Progress/cbFmt.cpp"
+
+$(IntermediateDirectory)/Progress_TraficCB.cpp$(ObjectSuffix): lib/Progress/TraficCB.cpp $(IntermediateDirectory)/Progress_TraficCB.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/Progress/TraficCB.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Progress_TraficCB.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Progress_TraficCB.cpp$(DependSuffix): lib/Progress/TraficCB.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Progress_TraficCB.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Progress_TraficCB.cpp$(DependSuffix) -MM "lib/Progress/TraficCB.cpp"
+
+$(IntermediateDirectory)/Progress_TraficCB.cpp$(PreprocessSuffix): lib/Progress/TraficCB.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Progress_TraficCB.cpp$(PreprocessSuffix) "lib/Progress/TraficCB.cpp"
+
+$(IntermediateDirectory)/Progress_Main.cpp$(ObjectSuffix): lib/Progress/Main.cpp $(IntermediateDirectory)/Progress_Main.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/Progress/Main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Progress_Main.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Progress_Main.cpp$(DependSuffix): lib/Progress/Main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Progress_Main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Progress_Main.cpp$(DependSuffix) -MM "lib/Progress/Main.cpp"
+
+$(IntermediateDirectory)/Progress_Main.cpp$(PreprocessSuffix): lib/Progress/Main.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Progress_Main.cpp$(PreprocessSuffix) "lib/Progress/Main.cpp"
+
+$(IntermediateDirectory)/Progress_Utils.cpp$(ObjectSuffix): lib/Progress/Utils.cpp $(IntermediateDirectory)/Progress_Utils.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/lib/Progress/Utils.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Progress_Utils.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Progress_Utils.cpp$(DependSuffix): lib/Progress/Utils.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Progress_Utils.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Progress_Utils.cpp$(DependSuffix) -MM "lib/Progress/Utils.cpp"
+
+$(IntermediateDirectory)/Progress_Utils.cpp$(PreprocessSuffix): lib/Progress/Utils.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Progress_Utils.cpp$(PreprocessSuffix) "lib/Progress/Utils.cpp"
 
 $(IntermediateDirectory)/FARStdlib_fstd_scr.cpp$(ObjectSuffix): src/FStdLib/FARStdlib/fstd_scr.cpp $(IntermediateDirectory)/FARStdlib_fstd_scr.cpp$(DependSuffix)
 	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farftp/src/FStdLib/FARStdlib/fstd_scr.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/FARStdlib_fstd_scr.cpp$(ObjectSuffix) $(IncludePath)

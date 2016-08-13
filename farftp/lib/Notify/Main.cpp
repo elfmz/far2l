@@ -8,7 +8,7 @@
 FILE *File = NULL;
 /** Called each time FPT plugin starts or finish upload and download single file
 */
-void WINAPI idNotify(const FTNNotify* p)
+static void WINAPI idNotify(const FTNNotify* p)
 {
 	if(File == (FILE*)1)
 		return;
@@ -49,7 +49,7 @@ void WINAPI idNotify(const FTNNotify* p)
 // ------------------------------------------------------------------------
 // Exported interface
 // ------------------------------------------------------------------------
-FTPPluginInterface* WINAPI FTPPluginGetInterface(void)
+FTPPluginInterface* WINAPI FTPPluginGetInterface_Notify(void)
 {
 	static NotifyInterface Interface;
 	Interface.Magic  = FTP_NOTIFY_MAGIC;

@@ -225,6 +225,8 @@
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="include"/>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -236,7 +238,7 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-O1;-O;-O2;-std=c++11;-std=c99;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -fPIC -fvisibility=hidden" C_Options="-g;-O1;-O;-O2;-std=c99;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -fPIC -fvisibility=hidden" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+      <Compiler Options="-g;-O1;-O;-O2;-std=c++11;-std=c99;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -fPIC -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" C_Options="-g;-O1;-O;-O2;-std=c99;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -fPIC -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
         <IncludePath Value="src"/>
         <IncludePath Value="src/zlib"/>
@@ -328,6 +330,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug"/>
-  <Dependencies Name="Release"/>
 </CodeLite_Project>

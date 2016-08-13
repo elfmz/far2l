@@ -81,7 +81,7 @@ bool IsNetworkServerPath(const wchar_t *Path)
 
 bool IsLocalPath(const wchar_t *Path)
 {
-	return (Path && *Path == L'/');
+	return (Path && Path[0] == L'/' && Path[1] != L'/');
 }
 
 bool IsLocalRootPath(const wchar_t *Path)

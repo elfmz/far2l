@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=13/08/16
+Date                   :=14/08/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/D
 AR       := /usr/bin/ar rcu
 CXX      := /usr/bin/g++
 CC       := /usr/bin/gcc
-CXXFLAGS :=  -g -O1 -O -O0 -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --unicode=yes --debug=yes) -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden $(Preprocessors)
-CFLAGS   :=  -g -O1 -O -O0 -O2 -std=c99 $(shell wx-config --cxxflags --unicode=yes --debug=yes) -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden $(Preprocessors)
+CXXFLAGS :=  -g -O1 -O -O0 -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --unicode=yes --debug=yes) -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas $(Preprocessors)
+CFLAGS   :=  -g -O1 -O -O0 -O2 -std=c99 $(shell wx-config --cxxflags --unicode=yes --debug=yes) -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/as
 

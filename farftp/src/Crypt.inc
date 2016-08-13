@@ -5,12 +5,12 @@ void MakeCryptPassword(LPCSTR Src,BYTE Dest[FTP_PWD_LEN])
 	BYTE     XorMask;
 	int      Done;
 	//Log(( "MakeCryptPassword: [%s]",Src ));
-	memset(Dest,0,sizeof(Dest));
+	memset(Dest, 0, FTP_PWD_LEN);
 
 	if(!Src || !Src[0])
 		return;
 
-	for(int I=0; I < (int)sizeof(Dest); I++)
+	for(int I=0; I < (int)FTP_PWD_LEN; I++)
 	{
 		CurDest = Dest;
 		CurDest[0] = (BYTE)((Random+I)|0x80);

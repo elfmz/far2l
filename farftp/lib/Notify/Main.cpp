@@ -36,9 +36,9 @@ static void WINAPI idNotify(const FTNNotify* p)
 		        p->HostName, p->RemoteFile, (int)p->Port,
 		        p->LocalFile);
 	else
-		fprintf(File,"%s started from %I64u is %s\t[ftp://%s%s:%d]->[%s]\n",
+		fprintf(File,"%s started from %llu is %s\t[ftp://%s%s:%d]->[%s]\n",
 		        p->Upload ? "Upload" : "Download",
-		        p->RestartPoint,
+		        (long long unsigned int)p->RestartPoint,
 		        p->Success ? "successfully complete" : "fail",
 		        p->HostName, p->RemoteFile, (int)p->Port,
 		        p->LocalFile);

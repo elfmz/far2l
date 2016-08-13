@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="FAR" Database="">
   <Project Name="WinPort" Path="WinPort/WinPort.project" Active="No"/>
-  <Project Name="far2l" Path="far2l/far2l.project" Active="No"/>
+  <Project Name="far2l" Path="far2l/far2l.project" Active="Yes"/>
   <Project Name="colorer" Path="colorer/colorer.project" Active="No"/>
-  <Project Name="farftp" Path="farftp/farftp.project" Active="Yes"/>
+  <Project Name="farftp" Path="farftp/farftp.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>

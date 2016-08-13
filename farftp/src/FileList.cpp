@@ -152,7 +152,7 @@ void FTP::SaveList(FP_SizeItemList* il)
 					if(IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
 						fprintf(f,"<DIR>");
 					else
-						fprintf(f,"%10I64u", ((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow);
+						fprintf(f,"%10llu", (long long unsigned int)((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow);
 				}
 
 				fprintf(f,"\n");
@@ -189,9 +189,9 @@ void FTP::SaveList(FP_SizeItemList* il)
 					if(Opt.sli.Size)
 					{
 						level = Max(1, Opt.sli.RightBound - 10 - (int)strlen(m) - 1);
-						fprintf(f,"%*c%10I64u",
+						fprintf(f,"%*c%10llu",
 						        level,' ',
-						        ((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow);
+						        (long long unsigned int)((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow);
 					}
 
 					fprintf(f,"\n");

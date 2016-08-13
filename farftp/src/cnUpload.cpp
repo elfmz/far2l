@@ -200,7 +200,7 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 						if(fsz < osz) osz = (unsigned)fsz;
 
 						++osz;
-						setsockopt(dout, SOL_SOCKET, SO_SNDBUF, (char*)osz, sizeof(osz));
+						setsockopt(dout, SOL_SOCKET, SO_SNDBUF, (char*)&osz, sizeof(osz));
 					}
 				}
 

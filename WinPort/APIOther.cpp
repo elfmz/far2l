@@ -201,12 +201,12 @@ extern "C" {
 			} else if (perc==NULL)
 				result+= *tmp;
 		}
-		if (result.size() >= nSize)
-			return (DWORD)result.size() + 1;
-
-		wcscpy(lpDst, result.c_str());
+		if (result.size() < nSize) {
+			wcscpy(lpDst, result.c_str());
+		}
+		
 		fprintf(stderr, "TODO: ExpandEnvironmentStrings(" WS_FMT ") -> " WS_FMT "\n", lpSrc,  result.c_str());
-		return (DWORD)result.size();
+		return (DWORD)result.size() + 1;
 	}
 
 	BOOL WINPORT(CloseHandle)(HANDLE hObject)

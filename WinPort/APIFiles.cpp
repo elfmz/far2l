@@ -76,7 +76,7 @@ extern "C"
 		case TRUNCATE_EXISTING: flags|= O_TRUNC; break;
 		}
 		std::string path = ConsumeWinPath(lpFileName);
-		int r = _open(path.c_str(), flags, 0777);		
+		int r = _open(path.c_str(), flags	, 0777);		
 		fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s r=%d\n", 
 			lpFileName, dwDesiredAccess, flags, path.c_str(), r);
 		if (r==-1) {
@@ -370,17 +370,18 @@ extern "C"
 		}
 		UnixFindFile(const std::string &root, const std::string &mask) 
 		{
-#ifdef _WIN32
-			_h = INVALID_HANDLE_VALUE;
 			_root = root;
 			_mask = mask;
+#ifdef _WIN32
+			_h = INVALID_HANDLE_VALUE;
 #else
-			_d = opendir(root.c_str());
-			if (_d) {
-				_root = root;
-				_mask = mask;
-			} else 
-				fprintf(stderr, "opendir faield on %s\n", root.c_str());
+			if (!_root.empty() && _root[_root.size()-1]==GOOD_SLASH)
+				_root.resize(_root.size()-1);
+			_d = opendir(_root.c_str());
+			if (!_d) {
+				fprintf(stderr, "opendir faield on %s\n", _root.c_str());
+			} 
+				
 #endif
 		}
 

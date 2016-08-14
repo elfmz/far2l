@@ -85,7 +85,7 @@ void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir)
 			//  AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
 			//else
 			{
-				// Ñáðîñèì âðåìÿ îáíîâëåíèÿ ïàíåëè. Åñëè òàì åñòü íîòèôèêàöèÿ - îáíîâèòñÿ ñàìà.
+				// Ã‘Ã¡Ã°Ã®Ã±Ã¨Ã¬ Ã¢Ã°Ã¥Ã¬Ã¿ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­Ã¨Ã¿ Ã¯Ã Ã­Ã¥Ã«Ã¨. Ã…Ã±Ã«Ã¨ Ã²Ã Ã¬ Ã¥Ã±Ã²Ã¼ Ã­Ã®Ã²Ã¨Ã´Ã¨ÃªÃ Ã¶Ã¨Ã¿ - Ã®Ã¡Ã­Ã®Ã¢Ã¨Ã²Ã±Ã¿ Ã±Ã Ã¬Ã .
 				if (AnotherType==FILE_PANEL)
 					((FileList *)AnotherPanel)->ResetLastUpdateTime();
 
@@ -137,19 +137,19 @@ int _MakePath1(DWORD Key, string &strPathName, const wchar_t *Param2,int ShortNa
 
 	switch (Key)
 	{
-		case KEY_CTRLALTBRACKET:       // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLALTBACKBRACKET:   // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïðàâîé ïàíåëè
-		case KEY_ALTSHIFTBRACKET:      // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_ALTSHIFTBACKBRACKET:  // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïàññèâíîé ïàíåëè
+		case KEY_CTRLALTBRACKET:       // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã±Ã¥Ã²Ã¥Ã¢Ã®Ã¥ (UNC) Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã«Ã¥Ã¢Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_CTRLALTBACKBRACKET:   // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã±Ã¥Ã²Ã¥Ã¢Ã®Ã¥ (UNC) Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã¯Ã°Ã Ã¢Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_ALTSHIFTBRACKET:      // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã±Ã¥Ã²Ã¥Ã¢Ã®Ã¥ (UNC) Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã ÃªÃ²Ã¨Ã¢Ã­Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_ALTSHIFTBACKBRACKET:  // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã±Ã¥Ã²Ã¥Ã¢Ã®Ã¥ (UNC) Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã¯Ã Ã±Ã±Ã¨Ã¢Ã­Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
 			NeedRealName=TRUE;
-		case KEY_CTRLBRACKET:          // Âñòàâèòü ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLBACKBRACKET:      // Âñòàâèòü ïóòü èç ïðàâîé ïàíåëè
-		case KEY_CTRLSHIFTBRACKET:     // Âñòàâèòü ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_CTRLSHIFTBACKBRACKET: // Âñòàâèòü ïóòü èç ïàññèâíîé ïàíåëè
-		case KEY_CTRLSHIFTNUMENTER:    // Òåêóùèé ôàéë ñ ïàññ.ïàíåëè
-		case KEY_SHIFTNUMENTER:        // Òåêóùèé ôàéë ñ àêòèâ.ïàíåëè
-		case KEY_CTRLSHIFTENTER:       // Òåêóùèé ôàéë ñ ïàññ.ïàíåëè
-		case KEY_SHIFTENTER:           // Òåêóùèé ôàéë ñ àêòèâ.ïàíåëè
+		case KEY_CTRLBRACKET:          // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã«Ã¥Ã¢Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_CTRLBACKBRACKET:      // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã¯Ã°Ã Ã¢Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_CTRLSHIFTBRACKET:     // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã ÃªÃ²Ã¨Ã¢Ã­Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_CTRLSHIFTBACKBRACKET: // Ã‚Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ Ã¯Ã³Ã²Ã¼ Ã¨Ã§ Ã¯Ã Ã±Ã±Ã¨Ã¢Ã­Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_CTRLSHIFTNUMENTER:    // Ã’Ã¥ÃªÃ³Ã¹Ã¨Ã© Ã´Ã Ã©Ã« Ã± Ã¯Ã Ã±Ã±.Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_SHIFTNUMENTER:        // Ã’Ã¥ÃªÃ³Ã¹Ã¨Ã© Ã´Ã Ã©Ã« Ã± Ã ÃªÃ²Ã¨Ã¢.Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_CTRLSHIFTENTER:       // Ã’Ã¥ÃªÃ³Ã¹Ã¨Ã© Ã´Ã Ã©Ã« Ã± Ã¯Ã Ã±Ã±.Ã¯Ã Ã­Ã¥Ã«Ã¨
+		case KEY_SHIFTENTER:           // Ã’Ã¥ÃªÃ³Ã¹Ã¨Ã© Ã´Ã Ã©Ã« Ã± Ã ÃªÃ²Ã¨Ã¢.Ã¯Ã Ã­Ã¥Ã«Ã¨
 		{
 			Panel *SrcPanel=nullptr;
 			FilePanels *Cp=CtrlObject->Cp();
@@ -185,12 +185,12 @@ int _MakePath1(DWORD Key, string &strPathName, const wchar_t *Param2,int ShortNa
 					string strShortFileName;
 					SrcPanel->GetCurName(strPathName,strShortFileName);
 
-					if (SrcPanel->GetShowShortNamesMode()) // ó÷òåì êîðîòêîñòü èìåí :-)
+					if (SrcPanel->GetShowShortNamesMode()) // Ã³Ã·Ã²Ã¥Ã¬ ÃªÃ®Ã°Ã®Ã²ÃªÃ®Ã±Ã²Ã¼ Ã¨Ã¬Ã¥Ã­ :-)
 						strPathName = strShortFileName;
 				}
 				else
 				{
-					/* TODO: Çäåñü íóæíî ó÷åñòü, ÷òî ó TreeList òîæå åñòü ïóòü :-) */
+					/* TODO: Ã‡Ã¤Ã¥Ã±Ã¼ Ã­Ã³Ã¦Ã­Ã® Ã³Ã·Ã¥Ã±Ã²Ã¼, Ã·Ã²Ã® Ã³ TreeList Ã²Ã®Ã¦Ã¥ Ã¥Ã±Ã²Ã¼ Ã¯Ã³Ã²Ã¼ :-) */
 					if (!(SrcPanel->GetType()==FILE_PANEL || SrcPanel->GetType()==TREE_PANEL))
 						return FALSE;
 
@@ -622,6 +622,6 @@ const string FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSi
 		string strOutStr;
 		strResult<<FileSizeToStr(strOutStr,Packed?PackSize:Streams?StreamsSize:UnpSize,Width,Flags).CPtr();
 	}
-
+	
 	return strResult.strValue();
 }

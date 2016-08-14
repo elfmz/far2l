@@ -163,14 +163,14 @@ static int st_time(string &strDest,const tm *tmPtr,const wchar_t chr)
 
 	if (chr==L'v')
 	{
-		res=strDest.Format(L"%2d-%3.3s-%4d",range(1,tmPtr->tm_mday,31),AMonth[CurLang][range(0, tmPtr->tm_mon,11)].CPtr(),tmPtr->tm_year+1900);
+		res=strDest.Format(L"%2d-%3.3ls-%4d",range(1,tmPtr->tm_mday,31),AMonth[CurLang][range(0, tmPtr->tm_mon,11)].CPtr(),tmPtr->tm_year+1900);
 		strDest.Upper(3,3);
 	}
 	else
 		switch (GetDateFormat())
 		{
 			case 0:
-				res=strDest.Format(L"%02d%c%02d%c%4d",
+				res=strDest.Format(L"%02d%lc%02d%lc%4d",
 				                   tmPtr->tm_mon+1,
 				                   DateSeparator,
 				                   tmPtr->tm_mday,
@@ -178,7 +178,7 @@ static int st_time(string &strDest,const tm *tmPtr,const wchar_t chr)
 				                   tmPtr->tm_year+1900);
 				break;
 			case 1:
-				res=strDest.Format(L"%02d%c%02d%c%4d",
+				res=strDest.Format(L"%02d%lc%02d%lc%4d",
 				                   tmPtr->tm_mday,
 				                   DateSeparator,
 				                   tmPtr->tm_mon+1,
@@ -186,7 +186,7 @@ static int st_time(string &strDest,const tm *tmPtr,const wchar_t chr)
 				                   tmPtr->tm_year+1900);
 				break;
 			default:
-				res=strDest.Format(L"%4d%c%02d%c%02d",
+				res=strDest.Format(L"%4d%lc%02d%lc%02d",
 				                   tmPtr->tm_year+1900,
 				                   DateSeparator,
 				                   tmPtr->tm_mon+1,

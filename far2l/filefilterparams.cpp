@@ -1,7 +1,7 @@
 /*
 filefilterparams.cpp
 
-Параметры Файлового фильтра
+ГЏГ Г°Г Г¬ГҐГІГ°Г» Г”Г Г©Г«Г®ГўГ®ГЈГ® ГґГЁГ«ГјГІГ°Г 
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -87,11 +87,11 @@ void FileFilterParams::SetTitle(const wchar_t *Title)
 	m_strTitle = Title;
 }
 
-// Преобразование корявого формата PATHEXT в ФАРовский :-)
-// Функции передается нужные расширения, она лишь добавляет то, что есть
-// в %PATHEXT%
-// IS: Сравнений на совпадение очередной маски с тем, что имеется в Dest
-// IS: не делается, т.к. дубли сами уберутся при компиляции маски
+// ГЏГ°ГҐГ®ГЎГ°Г Г§Г®ГўГ Г­ГЁГҐ ГЄГ®Г°ГїГўГ®ГЈГ® ГґГ®Г°Г¬Г ГІГ  PATHEXT Гў Г”ГЂГђГ®ГўГ±ГЄГЁГ© :-)
+// Г”ГіГ­ГЄГ¶ГЁГЁ ГЇГҐГ°ГҐГ¤Г ГҐГІГ±Гї Г­ГіГ¦Г­Г»ГҐ Г°Г Г±ГёГЁГ°ГҐГ­ГЁГї, Г®Г­Г  Г«ГЁГёГј Г¤Г®ГЎГ ГўГ«ГїГҐГІ ГІГ®, Г·ГІГ® ГҐГ±ГІГј
+// Гў %PATHEXT%
+// IS: Г‘Г°Г ГўГ­ГҐГ­ГЁГ© Г­Г  Г±Г®ГўГЇГ Г¤ГҐГ­ГЁГҐ Г®Г·ГҐГ°ГҐГ¤Г­Г®Г© Г¬Г Г±ГЄГЁ Г± ГІГҐГ¬, Г·ГІГ® ГЁГ¬ГҐГҐГІГ±Гї Гў Dest
+// IS: Г­ГҐ Г¤ГҐГ«Г ГҐГІГ±Гї, ГІ.ГЄ. Г¤ГіГЎГ«ГЁ Г±Г Г¬ГЁ ГіГЎГҐГ°ГіГІГ±Гї ГЇГ°ГЁ ГЄГ®Г¬ГЇГЁГ«ГїГ¶ГЁГЁ Г¬Г Г±ГЄГЁ
 string &Add_PATHEXT(string &strDest)
 {
 	string strBuf;
@@ -100,7 +100,7 @@ string &Add_PATHEXT(string &strDest)
 
 	if (apiGetEnvironmentVariable(L"PATHEXT",strBuf) && MaskList.Set(strBuf))
 	{
-		/* $ 13.10.2002 IS проверка на '|' (маски исключения) */
+		/* $ 13.10.2002 IS ГЇГ°Г®ГўГҐГ°ГЄГ  Г­Г  '|' (Г¬Г Г±ГЄГЁ ГЁГ±ГЄГ«ГѕГ·ГҐГ­ГЁГї) */
 		if (!strDest.IsEmpty() && (strDest.At(curpos)!=L',' && strDest.At(curpos)!=L';') && strDest.At(curpos)!=L'|')
 			strDest += L",";
 
@@ -115,7 +115,7 @@ string &Add_PATHEXT(string &strDest)
 		}
 	}
 
-	// лишняя запятая - в морг!
+	// Г«ГЁГёГ­ГїГї Г§Г ГЇГїГІГ Гї - Гў Г¬Г®Г°ГЈ!
 	curpos=strDest.GetLength()-1;
 
 	if (strDest.At(curpos) == L',' || strDest.At(curpos)==L';')
@@ -128,17 +128,17 @@ void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
 {
 	FMask.Used = Used;
 	FMask.strMask = Mask;
-	/* Обработка %PATHEXT% */
+	/* ГЋГЎГ°Г ГЎГ®ГІГЄГ  %PATHEXT% */
 	string strMask = FMask.strMask;
 	size_t pos;
 
-	// проверим
+	// ГЇГ°Г®ГўГҐГ°ГЁГ¬
 	if (strMask.PosI(pos,L"%PATHEXT%"))
 	{
 		{
 			size_t IQ1=(strMask.At(pos+9) == L',' || strMask.At(pos+9) == L';')?10:9;
 			wchar_t *Ptr = strMask.GetBuffer();
-			// Если встречается %pathext%, то допишем в конец...
+			// Г…Г±Г«ГЁ ГўГ±ГІГ°ГҐГ·Г ГҐГІГ±Гї %pathext%, ГІГ® Г¤Г®ГЇГЁГёГҐГ¬ Гў ГЄГ®Г­ГҐГ¶...
 			wmemmove(Ptr+pos,Ptr+pos+IQ1,strMask.GetLength()-pos-IQ1+1);
 			strMask.ReleaseBuffer();
 		}
@@ -146,9 +146,9 @@ void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
 
 		if (strMask.Pos(posSeparator, EXCLUDEMASKSEPARATOR))
 		{
-			if (pos > posSeparator) // PATHEXT находится в масках исключения
+			if (pos > posSeparator) // PATHEXT Г­Г ГµГ®Г¤ГЁГІГ±Гї Гў Г¬Г Г±ГЄГ Гµ ГЁГ±ГЄГ«ГѕГ·ГҐГ­ГЁГї
 			{
-				Add_PATHEXT(strMask); // добавляем то, чего нету.
+				Add_PATHEXT(strMask); // Г¤Г®ГЎГ ГўГ«ГїГҐГ¬ ГІГ®, Г·ГҐГЈГ® Г­ГҐГІГі.
 			}
 			else
 			{
@@ -161,11 +161,11 @@ void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
 		}
 		else
 		{
-			Add_PATHEXT(strMask); // добавляем то, чего нету.
+			Add_PATHEXT(strMask); // Г¤Г®ГЎГ ГўГ«ГїГҐГ¬ ГІГ®, Г·ГҐГЈГ® Г­ГҐГІГі.
 		}
 	}
 
-	// Проверка на валидность текущих настроек фильтра
+	// ГЏГ°Г®ГўГҐГ°ГЄГ  Г­Г  ГўГ Г«ГЁГ¤Г­Г®Г±ГІГј ГІГҐГЄГіГ№ГЁГµ Г­Г Г±ГІГ°Г®ГҐГЄ ГґГЁГ«ГјГІГ°Г 
 	if (!FMask.FilterMask.Set(strMask,FMF_SILENT))
 	{
 		FMask.strMask = L"*";
@@ -294,38 +294,38 @@ bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTim
 
 bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime)
 {
-	// Режим проверки атрибутов файла включен?
+	// ГђГҐГ¦ГЁГ¬ ГЇГ°Г®ГўГҐГ°ГЄГЁ Г ГІГ°ГЁГЎГіГІГ®Гў ГґГ Г©Г«Г  ГўГЄГ«ГѕГ·ГҐГ­?
 	if (FAttr.Used)
 	{
-		// Проверка попадания файла по установленным атрибутам
+		// ГЏГ°Г®ГўГҐГ°ГЄГ  ГЇГ®ГЇГ Г¤Г Г­ГЁГї ГґГ Г©Г«Г  ГЇГ® ГіГ±ГІГ Г­Г®ГўГ«ГҐГ­Г­Г»Г¬ Г ГІГ°ГЁГЎГіГІГ Г¬
 		if ((fde.dwFileAttributes & FAttr.AttrSet) != FAttr.AttrSet)
 			return false;
 
-		// Проверка попадания файла по отсутствующим атрибутам
+		// ГЏГ°Г®ГўГҐГ°ГЄГ  ГЇГ®ГЇГ Г¤Г Г­ГЁГї ГґГ Г©Г«Г  ГЇГ® Г®ГІГ±ГіГІГ±ГІГўГіГѕГ№ГЁГ¬ Г ГІГ°ГЁГЎГіГІГ Г¬
 		if (fde.dwFileAttributes & FAttr.AttrClear)
 			return false;
 	}
 
-	// Режим проверки размера файла включен?
+	// ГђГҐГ¦ГЁГ¬ ГЇГ°Г®ГўГҐГ°ГЄГЁ Г°Г Г§Г¬ГҐГ°Г  ГґГ Г©Г«Г  ГўГЄГ«ГѕГ·ГҐГ­?
 	if (FSize.Used)
 	{
 		if (*FSize.SizeAbove)
 		{
-			if (fde.nFileSize < FSize.SizeAboveReal) // Размер файла меньше минимального разрешённого по фильтру?
-				return false;                          // Не пропускаем этот файл
+			if (fde.nFileSize < FSize.SizeAboveReal) // ГђГ Г§Г¬ГҐГ° ГґГ Г©Г«Г  Г¬ГҐГ­ГјГёГҐ Г¬ГЁГ­ГЁГ¬Г Г«ГјГ­Г®ГЈГ® Г°Г Г§Г°ГҐГёВёГ­Г­Г®ГЈГ® ГЇГ® ГґГЁГ«ГјГІГ°Гі?
+				return false;                          // ГЌГҐ ГЇГ°Г®ГЇГіГ±ГЄГ ГҐГ¬ ГЅГІГ®ГІ ГґГ Г©Г«
 		}
 
 		if (*FSize.SizeBelow)
 		{
-			if (fde.nFileSize > FSize.SizeBelowReal) // Размер файла больше максимального разрешённого по фильтру?
-				return false;                          // Не пропускаем этот файл
+			if (fde.nFileSize > FSize.SizeBelowReal) // ГђГ Г§Г¬ГҐГ° ГґГ Г©Г«Г  ГЎГ®Г«ГјГёГҐ Г¬Г ГЄГ±ГЁГ¬Г Г«ГјГ­Г®ГЈГ® Г°Г Г§Г°ГҐГёВёГ­Г­Г®ГЈГ® ГЇГ® ГґГЁГ«ГјГІГ°Гі?
+				return false;                          // ГЌГҐ ГЇГ°Г®ГЇГіГ±ГЄГ ГҐГ¬ ГЅГІГ®ГІ ГґГ Г©Г«
 		}
 	}
 
-	// Режим проверки времени файла включен?
+	// ГђГҐГ¦ГЁГ¬ ГЇГ°Г®ГўГҐГ°ГЄГЁ ГўГ°ГҐГ¬ГҐГ­ГЁ ГґГ Г©Г«Г  ГўГЄГ«ГѕГ·ГҐГ­?
 	if (FDate.Used)
 	{
-		// Преобразуем FILETIME в беззнаковый int64_t
+		// ГЏГ°ГҐГ®ГЎГ°Г Г§ГіГҐГ¬ FILETIME Гў ГЎГҐГ§Г§Г­Г ГЄГ®ГўГ»Г© int64_t
 		uint64_t after  = FDate.DateAfter.QuadPart;
 		uint64_t before = FDate.DateBefore.QuadPart;
 
@@ -361,36 +361,36 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t Curren
 					before = CurrentTime - before;
 			}
 
-			// Есть введённая пользователем начальная дата?
+			// Г…Г±ГІГј ГўГўГҐГ¤ВёГ­Г­Г Гї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«ГҐГ¬ Г­Г Г·Г Г«ГјГ­Г Гї Г¤Г ГІГ ?
 			if (after)
 			{
-				// Дата файла меньше начальной даты по фильтру?
+				// Г„Г ГІГ  ГґГ Г©Г«Г  Г¬ГҐГ­ГјГёГҐ Г­Г Г·Г Г«ГјГ­Г®Г© Г¤Г ГІГ» ГЇГ® ГґГЁГ«ГјГІГ°Гі?
 				if (ftime.QuadPart<after)
-					// Не пропускаем этот файл
+					// ГЌГҐ ГЇГ°Г®ГЇГіГ±ГЄГ ГҐГ¬ ГЅГІГ®ГІ ГґГ Г©Г«
 					return false;
 			}
 
-			// Есть введённая пользователем конечная дата?
+			// Г…Г±ГІГј ГўГўГҐГ¤ВёГ­Г­Г Гї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«ГҐГ¬ ГЄГ®Г­ГҐГ·Г­Г Гї Г¤Г ГІГ ?
 			if (before)
 			{
-				// Дата файла больше конечной даты по фильтру?
+				// Г„Г ГІГ  ГґГ Г©Г«Г  ГЎГ®Г«ГјГёГҐ ГЄГ®Г­ГҐГ·Г­Г®Г© Г¤Г ГІГ» ГЇГ® ГґГЁГ«ГјГІГ°Гі?
 				if (ftime.QuadPart>before)
 					return false;
 			}
 		}
 	}
 
-	// Режим проверки маски файла включен?
+	// ГђГҐГ¦ГЁГ¬ ГЇГ°Г®ГўГҐГ°ГЄГЁ Г¬Г Г±ГЄГЁ ГґГ Г©Г«Г  ГўГЄГ«ГѕГ·ГҐГ­?
 	if (FMask.Used)
 	{
-		// Файл не попадает под маску введённую в фильтре?
+		// Г”Г Г©Г« Г­ГҐ ГЇГ®ГЇГ Г¤Г ГҐГІ ГЇГ®Г¤ Г¬Г Г±ГЄГі ГўГўГҐГ¤ВёГ­Г­ГіГѕ Гў ГґГЁГ«ГјГІГ°ГҐ?
 		if (!FMask.FilterMask.Compare(fde.strFileName))
-			// Не пропускаем этот файл
+			// ГЌГҐ ГЇГ°Г®ГЇГіГ±ГЄГ ГҐГ¬ ГЅГІГ®ГІ ГґГ Г©Г«
 			return false;
 	}
 
-	// Да! Файл выдержал все испытания и будет допущен к использованию
-	// в вызвавшей эту функцию операции.
+	// Г„Г ! Г”Г Г©Г« ГўГ»Г¤ГҐГ°Г¦Г Г« ГўГ±ГҐ ГЁГ±ГЇГ»ГІГ Г­ГЁГї ГЁ ГЎГіГ¤ГҐГІ Г¤Г®ГЇГіГ№ГҐГ­ ГЄ ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГѕ
+	// Гў ГўГ»Г§ГўГ ГўГёГҐГ© ГЅГІГі ГґГіГ­ГЄГ¶ГЁГѕ Г®ГЇГҐГ°Г Г¶ГЁГЁ.
 	return true;
 }
 
@@ -401,7 +401,7 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTim
 	return FileInFilter(fde, CurrentTime);
 }
 
-//Централизованная функция для создания строк меню различных фильтров.
+//Г–ГҐГ­ГІГ°Г Г«ГЁГ§Г®ГўГ Г­Г­Г Гї ГґГіГ­ГЄГ¶ГЁГї Г¤Г«Гї Г±Г®Г§Г¤Г Г­ГЁГї Г±ГІГ°Г®ГЄ Г¬ГҐГ­Гѕ Г°Г Г§Г«ГЁГ·Г­Г»Гµ ГґГЁГ«ГјГІГ°Г®Гў.
 void MenuString(string &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType, const wchar_t *FMask, const wchar_t *Title)
 {
 	const wchar_t AttrC[] = L"RAHSDCEI$TLOV";
@@ -421,11 +421,11 @@ void MenuString(string &strDest, FileFilterParams *FF, bool bHighlightType, int 
 		FILE_ATTRIBUTE_OFFLINE,
 		FILE_ATTRIBUTE_VIRTUAL,
 	};
-	const wchar_t Format1a[] = L"%-21.21s %c %-26.26s %-2.2s %c %ls";
-	const wchar_t Format1b[] = L"%-22.22s %c %-26.26s %-2.2s %c %ls";
-	const wchar_t Format1c[] = L"&%c. %-18.18s %c %-26.26s %-2.2s %c %ls";
-	const wchar_t Format1d[] = L"   %-18.18s %c %-26.26s %-2.2s %c %ls";
-	const wchar_t Format2[]  = L"%-3.3s %c %-26.26s %-3.3s %c %ls";
+	const wchar_t Format1a[] = L"%-21.21ls %lc %-26.26ls %-2.2ls %lc %ls";
+	const wchar_t Format1b[] = L"%-22.22ls %lc %-26.26ls %-2.2ls %lc %ls";
+	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-26.26ls %-2.2ls %lc %ls";
+	const wchar_t Format1d[] = L"   %-18.18ls %lc %-26.26ls %-2.2ls %lc %ls";
+	const wchar_t Format2[]  = L"%-3.3ls %lc %-26.26ls %-3.3ls %lc %ls";
 	const wchar_t DownArrow=0x2193;
 	const wchar_t *Name, *Mask;
 	wchar_t MarkChar[]=L"\" \"";
@@ -674,7 +674,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 		}
 		case DN_BTNCLICK:
 		{
-			if (Param1==ID_FF_CURRENT || Param1==ID_FF_BLANK) //Current и Blank
+			if (Param1==ID_FF_CURRENT || Param1==ID_FF_BLANK) //Current ГЁ Blank
 			{
 				FILETIME ft;
 				string strDate, strTime;
@@ -771,7 +771,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 				FarDialogItem *ColorExample = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_HER_COLOREXAMPLE,0));
 				SendDlgMessage(hDlg,DM_GETDLGITEM,ID_HER_COLOREXAMPLE,(LONG_PTR)ColorExample);
 				wchar_t MarkChar[2];
-				//MarkChar это FIXEDIT размером в 1 символ так что проверять размер строки не надо
+				//MarkChar ГЅГІГ® FIXEDIT Г°Г Г§Г¬ГҐГ°Г®Г¬ Гў 1 Г±ГЁГ¬ГўГ®Г« ГІГ ГЄ Г·ГІГ® ГЇГ°Г®ГўГҐГ°ГїГІГј Г°Г Г§Г¬ГҐГ° Г±ГІГ°Г®ГЄГЁ Г­ГҐ Г­Г Г¤Г®
 				SendDlgMessage(hDlg,DM_GETTEXTPTR,ID_HER_MARKEDIT,(LONG_PTR)MarkChar);
 				EditData->MarkChar=*MarkChar;
 				HighlightDlgUpdateUserControl(ColorExample->Param.VBuf,*EditData);
@@ -789,7 +789,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 				FarDialogItem *ColorExample = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_HER_COLOREXAMPLE,0));
 				SendDlgMessage(hDlg,DM_GETDLGITEM,ID_HER_COLOREXAMPLE,(LONG_PTR)ColorExample);
 				wchar_t MarkChar[2];
-				//MarkChar это FIXEDIT размером в 1 символ так что проверять размер строки не надо
+				//MarkChar ГЅГІГ® FIXEDIT Г°Г Г§Г¬ГҐГ°Г®Г¬ Гў 1 Г±ГЁГ¬ГўГ®Г« ГІГ ГЄ Г·ГІГ® ГЇГ°Г®ГўГҐГ°ГїГІГј Г°Г Г§Г¬ГҐГ° Г±ГІГ°Г®ГЄГЁ Г­ГҐ Г­Г Г¤Г®
 				SendDlgMessage(hDlg,DM_GETTEXTPTR,ID_HER_MARKEDIT,(LONG_PTR)MarkChar);
 				EditData->MarkChar=*MarkChar;
 				HighlightDlgUpdateUserControl(ColorExample->Param.VBuf,*EditData);
@@ -829,17 +829,17 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 {
 	const wchar_t VerticalLine[] = {BoxSymbols[BS_T_H1V1],BoxSymbols[BS_V1],BoxSymbols[BS_V1],BoxSymbols[BS_V1],BoxSymbols[BS_B_H1V1],0};
-	// Временная маска.
+	// Г‚Г°ГҐГ¬ГҐГ­Г­Г Гї Г¬Г Г±ГЄГ .
 	CFileMask FileMask;
-	// История для маски файлов
+	// Г€Г±ГІГ®Г°ГЁГї Г¤Г«Гї Г¬Г Г±ГЄГЁ ГґГ Г©Г«Г®Гў
 	const wchar_t FilterMasksHistoryName[] = L"FilterMasks";
-	// История для имени фильтра
+	// Г€Г±ГІГ®Г°ГЁГї Г¤Г«Гї ГЁГ¬ГҐГ­ГЁ ГґГЁГ«ГјГІГ°Г 
 	const wchar_t FilterNameHistoryName[] = L"FilterName";
-	// Маски для диалога настройки
-	// Маска для ввода дней для относительной даты
+	// ГЊГ Г±ГЄГЁ Г¤Г«Гї Г¤ГЁГ Г«Г®ГЈГ  Г­Г Г±ГІГ°Г®Г©ГЄГЁ
+	// ГЊГ Г±ГЄГ  Г¤Г«Гї ГўГўГ®Г¤Г  Г¤Г­ГҐГ© Г¤Г«Гї Г®ГІГ­Г®Г±ГЁГІГҐГ«ГјГ­Г®Г© Г¤Г ГІГ»
 	const wchar_t DaysMask[] = L"9999";
 	string strDateMask, strTimeMask;
-	// Определение параметров даты и времени в системе.
+	// ГЋГЇГ°ГҐГ¤ГҐГ«ГҐГ­ГЁГҐ ГЇГ Г°Г Г¬ГҐГІГ°Г®Гў Г¤Г ГІГ» ГЁ ГўГ°ГҐГ¬ГҐГ­ГЁ Гў Г±ГЁГ±ГІГҐГ¬ГҐ.
 	int DateSeparator=GetDateSeparator();
 	int TimeSeparator=GetTimeSeparator();
 	wchar_t DecimalSeparator=GetDecimalSeparator();
@@ -848,20 +848,20 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	switch (DateFormat)
 	{
 		case 0:
-			// Маска даты для форматов DD.MM.YYYYY и MM.DD.YYYYY
+			// ГЊГ Г±ГЄГ  Г¤Г ГІГ» Г¤Г«Гї ГґГ®Г°Г¬Г ГІГ®Гў DD.MM.YYYYY ГЁ MM.DD.YYYYY
 			strDateMask.Format(L"99%c99%c99999",DateSeparator,DateSeparator);
 			break;
 		case 1:
-			// Маска даты для форматов DD.MM.YYYYY и MM.DD.YYYYY
+			// ГЊГ Г±ГЄГ  Г¤Г ГІГ» Г¤Г«Гї ГґГ®Г°Г¬Г ГІГ®Гў DD.MM.YYYYY ГЁ MM.DD.YYYYY
 			strDateMask.Format(L"99%c99%c99999",DateSeparator,DateSeparator);
 			break;
 		default:
-			// Маска даты для формата YYYYY.MM.DD
+			// ГЊГ Г±ГЄГ  Г¤Г ГІГ» Г¤Г«Гї ГґГ®Г°Г¬Г ГІГ  YYYYY.MM.DD
 			strDateMask.Format(L"99999%c99%c99",DateSeparator,DateSeparator);
 			break;
 	}
 
-	// Маска времени
+	// ГЊГ Г±ГЄГ  ГўГ°ГҐГ¬ГҐГ­ГЁ
 	strTimeMask.Format(L"99%c99%c99%c999",TimeSeparator,TimeSeparator,DecimalSeparator);
 	DialogDataEx FilterDlgData[]=
 	{
@@ -1007,10 +1007,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		for (int i=ID_FF_SIZEFROMSIGN; i <= ID_FF_SIZETOEDIT; i++)
 			FilterDlg[i].Flags|=DIF_DISABLE;
 
-	// Лист для комбобокса времени файла
+	// Г‹ГЁГ±ГІ Г¤Г«Гї ГЄГ®Г¬ГЎГ®ГЎГ®ГЄГ±Г  ГўГ°ГҐГ¬ГҐГ­ГЁ ГґГ Г©Г«Г 
 	FarList DateList;
 	FarListItem TableItemDate[FDATE_COUNT]={0};
-	// Настройка списка типов дат файла
+	// ГЌГ Г±ГІГ°Г®Г©ГЄГ  Г±ГЇГЁГ±ГЄГ  ГІГЁГЇГ®Гў Г¤Г ГІ ГґГ Г©Г«Г 
 	DateList.Items=TableItemDate;
 	DateList.ItemsNumber=FDATE_COUNT;
 
@@ -1104,7 +1104,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 
 		if (ExitCode==ID_FF_OK) // Ok
 		{
-			// Если введённая пользователем маска не корректна, тогда вернёмся в диалог
+			// Г…Г±Г«ГЁ ГўГўГҐГ¤ВёГ­Г­Г Гї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«ГҐГ¬ Г¬Г Г±ГЄГ  Г­ГҐ ГЄГ®Г°Г°ГҐГЄГІГ­Г , ГІГ®ГЈГ¤Г  ГўГҐГ°Г­ВёГ¬Г±Гї Гў Г¤ГЁГ Г«Г®ГЈ
 			if (FilterDlg[ID_FF_MATCHMASK].Selected && !FileMask.Set(FilterDlg[ID_FF_MASKEDIT].strData,0))
 				continue;
 

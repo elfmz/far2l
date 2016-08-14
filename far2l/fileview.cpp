@@ -477,7 +477,7 @@ void FileViewer::ShowStatus()
 		NameLength=20;
 
 	TruncPathStr(strName, NameLength);
-	const wchar_t *lpwszStatusFormat = L"%-*s %5u %13llu %7.7s %-4lld %ls%3d%%";
+	const wchar_t *lpwszStatusFormat = L"%-*ls %5u %13llu %7.7ls %-4lld %ls%3d%%";
 	strStatus.Format(
 	    lpwszStatusFormat,
 	    NameLength,

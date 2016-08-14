@@ -1,7 +1,7 @@
 /*
 filetype.cpp
 
-Ðàáîòà ñ àññîöèàöèÿìè ôàéëîâ
+ÃÃ Ã¡Ã®Ã²Ã  Ã± Ã Ã±Ã±Ã®Ã¶Ã¨Ã Ã¶Ã¨Ã¿Ã¬Ã¨ Ã´Ã Ã©Ã«Ã®Ã¢
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -75,9 +75,9 @@ const FileTypeStrings FTS=
 
 
 /* $ 25.04.2001 DJ
-   îáðàáîòêà @ â IF EXIST: ôóíêöèÿ, êîòîðàÿ èçâëåêàåò êîìàíäó èç ñòðîêè
-   ñ IF EXIST ñ ó÷åòîì @ è âîçâðàùàåò TRUE, åñëè óñëîâèå IF EXIST
-   âûïîëåíî, è FALSE â ïðîòèâíîì ñëó÷àå/
+   Ã®Ã¡Ã°Ã Ã¡Ã®Ã²ÃªÃ  @ Ã¢ IF EXIST: Ã´Ã³Ã­ÃªÃ¶Ã¨Ã¿, ÃªÃ®Ã²Ã®Ã°Ã Ã¿ Ã¨Ã§Ã¢Ã«Ã¥ÃªÃ Ã¥Ã² ÃªÃ®Ã¬Ã Ã­Ã¤Ã³ Ã¨Ã§ Ã±Ã²Ã°Ã®ÃªÃ¨
+   Ã± IF EXIST Ã± Ã³Ã·Ã¥Ã²Ã®Ã¬ @ Ã¨ Ã¢Ã®Ã§Ã¢Ã°Ã Ã¹Ã Ã¥Ã² TRUE, Ã¥Ã±Ã«Ã¨ Ã³Ã±Ã«Ã®Ã¢Ã¨Ã¥ IF EXIST
+   Ã¢Ã»Ã¯Ã®Ã«Ã¥Ã­Ã®, Ã¨ FALSE Ã¢ Ã¯Ã°Ã®Ã²Ã¨Ã¢Ã­Ã®Ã¬ Ã±Ã«Ã³Ã·Ã Ã¥/
 */
 
 bool ExtractIfExistCommand(string &strCommandText)
@@ -85,9 +85,9 @@ bool ExtractIfExistCommand(string &strCommandText)
 	bool Result=true;
 	const wchar_t *wPtrCmd=PrepareOSIfExist(strCommandText);
 
-	// Âî! Óñëîâèå íå âûïîëíåíî!!!
-	// (íàïðèìåð, ïîêà ðàññìàòðèâàëè ìåíþõó, â ýòî âðåìÿ)
-	// êàêîé-òî çëîáíûé ÷åáóðàøêà ñòåð ôàéë!
+	// Ã‚Ã®! Ã“Ã±Ã«Ã®Ã¢Ã¨Ã¥ Ã­Ã¥ Ã¢Ã»Ã¯Ã®Ã«Ã­Ã¥Ã­Ã®!!!
+	// (Ã­Ã Ã¯Ã°Ã¨Ã¬Ã¥Ã°, Ã¯Ã®ÃªÃ  Ã°Ã Ã±Ã±Ã¬Ã Ã²Ã°Ã¨Ã¢Ã Ã«Ã¨ Ã¬Ã¥Ã­Ã¾ÃµÃ³, Ã¢ Ã½Ã²Ã® Ã¢Ã°Ã¥Ã¬Ã¿)
+	// ÃªÃ ÃªÃ®Ã©-Ã²Ã® Ã§Ã«Ã®Ã¡Ã­Ã»Ã© Ã·Ã¥Ã¡Ã³Ã°Ã Ã¸ÃªÃ  Ã±Ã²Ã¥Ã° Ã´Ã Ã©Ã«!
 	if (wPtrCmd)
 	{
 		if (!*wPtrCmd)
@@ -99,7 +99,7 @@ bool ExtractIfExistCommand(string &strCommandText)
 			size_t offset = wPtrCmd-strCommandText.CPtr();
 			wchar_t *CommandText = strCommandText.GetBuffer();
 			wchar_t *PtrCmd = CommandText+offset;
-			// ïðîêèíåì "if exist"
+			// Ã¯Ã°Ã®ÃªÃ¨Ã­Ã¥Ã¬ "if exist"
 			wmemmove(CommandText+(*CommandText==L'@'?1:0),PtrCmd,StrLength(PtrCmd)+1);
 			strCommandText.ReleaseBuffer();
 		}
@@ -154,18 +154,18 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nul
 }
 
 /* $ 14.01.2001 SVS
-   Äîáàâèì èíòåëåêòóàëüíîñòè.
-   Åñëè âñòðå÷àåòñÿ "IF" è îíî âûïîëíÿåòñÿ, òî êîìàíäà
-   ïîìåùàåòñÿ â ñïèñîê
+   Ã„Ã®Ã¡Ã Ã¢Ã¨Ã¬ Ã¨Ã­Ã²Ã¥Ã«Ã¥ÃªÃ²Ã³Ã Ã«Ã¼Ã­Ã®Ã±Ã²Ã¨.
+   Ã…Ã±Ã«Ã¨ Ã¢Ã±Ã²Ã°Ã¥Ã·Ã Ã¥Ã²Ã±Ã¿ "IF" Ã¨ Ã®Ã­Ã® Ã¢Ã»Ã¯Ã®Ã«Ã­Ã¿Ã¥Ã²Ã±Ã¿, Ã²Ã® ÃªÃ®Ã¬Ã Ã­Ã¤Ã 
+   Ã¯Ã®Ã¬Ã¥Ã¹Ã Ã¥Ã²Ã±Ã¿ Ã¢ Ã±Ã¯Ã¨Ã±Ã®Ãª
 
-   Âûçûâàåòñÿ äëÿ F3, F4 - àññîöèàöèè
-   Enter â êîì ñòðîêå - àññîöèàöèè.
+   Ã‚Ã»Ã§Ã»Ã¢Ã Ã¥Ã²Ã±Ã¿ Ã¤Ã«Ã¿ F3, F4 - Ã Ã±Ã±Ã®Ã¶Ã¨Ã Ã¶Ã¨Ã¨
+   Enter Ã¢ ÃªÃ®Ã¬ Ã±Ã²Ã°Ã®ÃªÃ¥ - Ã Ã±Ã±Ã®Ã¶Ã¨Ã Ã¶Ã¨Ã¨.
 */
 /* $ 06.07.2001
-   + Èñïîëüçóåì CFileMask âìåñòî GetCommaWord, ýòèì ñàìûì äîáèâàåìñÿ òîãî, ÷òî
-     ìîæíî èñïîëüçîâàòü ìàñêè èñêëþ÷åíèÿ
-   - Óáðàë íåïîíÿòíûé ìíå çàïðåò íà èñïîëüçîâàíèå ìàñêè ôàéëîâ òèïà "*.*"
-     (áûë êîãäà-òî, âðîäå, òàêîé áàã-ðåïîðò)
+   + ÃˆÃ±Ã¯Ã®Ã«Ã¼Ã§Ã³Ã¥Ã¬ CFileMask Ã¢Ã¬Ã¥Ã±Ã²Ã® GetCommaWord, Ã½Ã²Ã¨Ã¬ Ã±Ã Ã¬Ã»Ã¬ Ã¤Ã®Ã¡Ã¨Ã¢Ã Ã¥Ã¬Ã±Ã¿ Ã²Ã®Ã£Ã®, Ã·Ã²Ã®
+     Ã¬Ã®Ã¦Ã­Ã® Ã¨Ã±Ã¯Ã®Ã«Ã¼Ã§Ã®Ã¢Ã Ã²Ã¼ Ã¬Ã Ã±ÃªÃ¨ Ã¨Ã±ÃªÃ«Ã¾Ã·Ã¥Ã­Ã¨Ã¿
+   - Ã“Ã¡Ã°Ã Ã« Ã­Ã¥Ã¯Ã®Ã­Ã¿Ã²Ã­Ã»Ã© Ã¬Ã­Ã¥ Ã§Ã Ã¯Ã°Ã¥Ã² Ã­Ã  Ã¨Ã±Ã¯Ã®Ã«Ã¼Ã§Ã®Ã¢Ã Ã­Ã¨Ã¥ Ã¬Ã Ã±ÃªÃ¨ Ã´Ã Ã©Ã«Ã®Ã¢ Ã²Ã¨Ã¯Ã  "*.*"
+     (Ã¡Ã»Ã« ÃªÃ®Ã£Ã¤Ã -Ã²Ã®, Ã¢Ã°Ã®Ã¤Ã¥, Ã²Ã ÃªÃ®Ã© Ã¡Ã Ã£-Ã°Ã¥Ã¯Ã®Ã°Ã²)
 */
 bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mode, bool AlwaysWaitFinish)
 {
@@ -176,8 +176,8 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	TypesMenu.SetFlags(VMENU_WRAPMODE);
 	TypesMenu.SetPosition(-1,-1,0,0);
 	int DizWidth=GetDescriptionWidth(Name, ShortName);
-	int ActualCmdCount=0; // îòîáðàæàåìûõ àññîöèàöèé â ìåíþ
-	CFileMask FMask; // äëÿ ðàáîòû ñ ìàñêàìè ôàéëîâ
+	int ActualCmdCount=0; // Ã®Ã²Ã®Ã¡Ã°Ã Ã¦Ã Ã¥Ã¬Ã»Ãµ Ã Ã±Ã±Ã®Ã¶Ã¨Ã Ã¶Ã¨Ã© Ã¢ Ã¬Ã¥Ã­Ã¾
+	CFileMask FMask; // Ã¤Ã«Ã¿ Ã°Ã Ã¡Ã®Ã²Ã» Ã± Ã¬Ã Ã±ÃªÃ Ã¬Ã¨ Ã´Ã Ã©Ã«Ã®Ã¢
 	string strCommand, strDescription;
 	int CommandCount=0;
 
@@ -242,7 +242,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 		string strCommandText = strCommand;
 		SubstFileName(strCommandText,Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
 
-		// âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
+		// Ã¢Ã±Ã¥ "Ã¯Ã®Ã¤Ã±Ã²Ã Ã¢Ã«Ã¥Ã­Ã®", Ã²Ã¥Ã¯Ã¥Ã°Ã¼ Ã¯Ã°Ã®Ã¢Ã¥Ã°Ã¨Ã¬ Ã³Ã±Ã«Ã®Ã¢Ã¨Ã¿ "if exist"
 		if (!ExtractIfExistCommand(strCommandText))
 			continue;
 
@@ -265,7 +265,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 			if (DizWidth+Ampersand>ScrX/2 && Ampersand && static_cast<int>(Pos)>DizWidth)
 				Ampersand=false;
 
-			strMenuText.Format(L"%-*.*s %c ",DizWidth+Ampersand,DizWidth+Ampersand,strTitle.CPtr(),BoxSymbols[BS_V1]);
+			strMenuText.Format(L"%-*.*ls %lc ",DizWidth+Ampersand,DizWidth+Ampersand,strTitle.CPtr(),BoxSymbols[BS_V1]);
 		}
 
 		TruncStr(strCommandText,ScrX-DizWidth-14);
@@ -301,7 +301,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	int PreserveLFN=SubstFileName(strCommand,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
 	bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
-	// Ñíîâà âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
+	// Ã‘Ã­Ã®Ã¢Ã  Ã¢Ã±Ã¥ "Ã¯Ã®Ã¤Ã±Ã²Ã Ã¢Ã«Ã¥Ã­Ã®", Ã²Ã¥Ã¯Ã¥Ã°Ã¼ Ã¯Ã°Ã®Ã¢Ã¥Ã°Ã¨Ã¬ Ã³Ã±Ã«Ã®Ã¢Ã¨Ã¿ "if exist"
 	if (ExtractIfExistCommand(strCommand))
 	{
 		PreserveLongName PreserveName(ShortName,PreserveLFN);
@@ -333,14 +333,14 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 				CtrlObject->Cp()->RightPanel->CloseFile();
 				Execute(strCommand,AlwaysWaitFinish, 0, 0, 0, ListFileUsed, true);
 #else
-				// çäåñü áûëà áàãà ñ ïðîðèñîâêîé (è... âûâîä äàííûõ
-				// íà êîìàíäó "@type !@!" ïðîïàäàë ñ ýêðàíà)
-				// ñäåëàåì ïî àíàëîãèè ñ CommandLine::CmdExecute()
+				// Ã§Ã¤Ã¥Ã±Ã¼ Ã¡Ã»Ã«Ã  Ã¡Ã Ã£Ã  Ã± Ã¯Ã°Ã®Ã°Ã¨Ã±Ã®Ã¢ÃªÃ®Ã© (Ã¨... Ã¢Ã»Ã¢Ã®Ã¤ Ã¤Ã Ã­Ã­Ã»Ãµ
+				// Ã­Ã  ÃªÃ®Ã¬Ã Ã­Ã¤Ã³ "@type !@!" Ã¯Ã°Ã®Ã¯Ã Ã¤Ã Ã« Ã± Ã½ÃªÃ°Ã Ã­Ã )
+				// Ã±Ã¤Ã¥Ã«Ã Ã¥Ã¬ Ã¯Ã® Ã Ã­Ã Ã«Ã®Ã£Ã¨Ã¨ Ã± CommandLine::CmdExecute()
 				{
 					RedrawDesktop RdrwDesktop(TRUE);
 					Execute(strCommand,AlwaysWaitFinish, 0, 0, 0, ListFileUsed);
-					ScrollScreen(1); // îáÿçàòåëüíî, èíà÷å äåñòðóêòîð RedrawDesktop
-					// ïðîðåäðàâèâ ýêðàí çàáüåò ïîñëåäíþþ ñòðîêó âûâîäà.
+					ScrollScreen(1); // Ã®Ã¡Ã¿Ã§Ã Ã²Ã¥Ã«Ã¼Ã­Ã®, Ã¨Ã­Ã Ã·Ã¥ Ã¤Ã¥Ã±Ã²Ã°Ã³ÃªÃ²Ã®Ã° RedrawDesktop
+					// Ã¯Ã°Ã®Ã°Ã¥Ã¤Ã°Ã Ã¢Ã¨Ã¢ Ã½ÃªÃ°Ã Ã­ Ã§Ã Ã¡Ã¼Ã¥Ã² Ã¯Ã®Ã±Ã«Ã¥Ã¤Ã­Ã¾Ã¾ Ã±Ã²Ã°Ã®ÃªÃ³ Ã¢Ã»Ã¢Ã®Ã¤Ã .
 				}
 				CtrlObject->Cp()->LeftPanel->UpdateIfChanged(UIC_UPDATE_FORCE);
 				CtrlObject->Cp()->RightPanel->UpdateIfChanged(UIC_UPDATE_FORCE);
@@ -383,7 +383,7 @@ void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool Run
 }
 
 /*
-  Èñïîëüçóåòñÿ äëÿ çàïóñêà âíåøíåãî ðåäàêòîðà è âüþâåðà
+  ÃˆÃ±Ã¯Ã®Ã«Ã¼Ã§Ã³Ã¥Ã²Ã±Ã¿ Ã¤Ã«Ã¿ Ã§Ã Ã¯Ã³Ã±ÃªÃ  Ã¢Ã­Ã¥Ã¸Ã­Ã¥Ã£Ã® Ã°Ã¥Ã¤Ã ÃªÃ²Ã®Ã°Ã  Ã¨ Ã¢Ã¼Ã¾Ã¢Ã¥Ã°Ã 
 */
 void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t *ShortName, bool AlwaysWaitFinish)
 {
@@ -396,7 +396,7 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t 
 		int PreserveLFN=SubstFileName(strExecStr,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
 		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
-		// Ñíîâà âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
+		// Ã‘Ã­Ã®Ã¢Ã  Ã¢Ã±Ã¥ "Ã¯Ã®Ã¤Ã±Ã²Ã Ã¢Ã«Ã¥Ã­Ã®", Ã²Ã¥Ã¯Ã¥Ã°Ã¼ Ã¯Ã°Ã®Ã¢Ã¥Ã°Ã¨Ã¬ Ã³Ã±Ã«Ã®Ã¢Ã¨Ã¿ "if exist"
 		if (!ExtractIfExistCommand(strExecStr))
 			return;
 
@@ -406,7 +406,7 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t 
 		//BUGBUGBUGBUGBUGBUG !!! Same ListNames!!!
 		SubstFileName(strFullExecStr,strFullName,strFullShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
 
-		// Ñíîâà âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
+		// Ã‘Ã­Ã®Ã¢Ã  Ã¢Ã±Ã¥ "Ã¯Ã®Ã¤Ã±Ã²Ã Ã¢Ã«Ã¥Ã­Ã®", Ã²Ã¥Ã¯Ã¥Ã°Ã¼ Ã¯Ã°Ã®Ã¢Ã¥Ã°Ã¨Ã¬ Ã³Ã±Ã«Ã®Ã¢Ã¨Ã¿ "if exist"
 		if (!ExtractIfExistCommand(strFullExecStr))
 			return;
 
@@ -468,7 +468,7 @@ static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)
 			if (DizWidth+Ampersand > ScrX/2 && Ampersand && static_cast<int>(Pos) > DizWidth)
 				Ampersand=false;
 
-			strMenuText.Format(L"%-*.*s %c ",DizWidth+Ampersand,DizWidth+Ampersand,strTitle.CPtr(),BoxSymbols[BS_V1]);
+			strMenuText.Format(L"%-*.*ls %lc ",DizWidth+Ampersand,DizWidth+Ampersand,strTitle.CPtr(),BoxSymbols[BS_V1]);
 		}
 
 		//TruncStr(strMask,ScrX-DizWidth-14);

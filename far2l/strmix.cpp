@@ -1,7 +1,7 @@
 /*
 strmix.cpp
 
-Куча разных вспомогательных функций по работе со строками
+ГЉГіГ·Г  Г°Г Г§Г­Г»Гµ ГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ ГґГіГ­ГЄГ¶ГЁГ© ГЇГ® Г°Г ГЎГ®ГІГҐ Г±Г® Г±ГІГ°Г®ГЄГ Г¬ГЁ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -55,8 +55,8 @@ string &FormatNumber(const wchar_t *Src, string &strDest, int NumDigits)
 	{
 		GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_STHOUSAND,ThousandSep,ARRAYSIZE(ThousandSep));
 		GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SDECIMAL,DecimalSep,ARRAYSIZE(DecimalSep));
-		DecimalSep[1]=0;  //В винде сепараторы цифр могут быть больше одного символа
-		ThousandSep[1]=0; //но для нас это будет не очень хорошо
+		DecimalSep[1]=0;  //Г‚ ГўГЁГ­Г¤ГҐ Г±ГҐГЇГ Г°Г ГІГ®Г°Г» Г¶ГЁГґГ° Г¬Г®ГЈГіГІ ГЎГ»ГІГј ГЎГ®Г«ГјГёГҐ Г®Г¤Г­Г®ГЈГ® Г±ГЁГ¬ГўГ®Г«Г 
+		ThousandSep[1]=0; //Г­Г® Г¤Г«Гї Г­Г Г± ГЅГІГ® ГЎГіГ¤ГҐГІ Г­ГҐ Г®Г·ГҐГ­Гј ГµГ®Г°Г®ГёГ®
 
 		if (LOWORD(Opt.FormatNumberSeparators))
 			*DecimalSep=LOWORD(Opt.FormatNumberSeparators);
@@ -133,7 +133,7 @@ wchar_t * WINAPI InsertRegexpQuote(wchar_t *Str)
 {
 	if (Str && *Str != L'/')
 		return InsertCustomQuote(Str,L'/');
-	else          //выражение вида /regexp/i не дополняем слэшем
+	else          //ГўГ»Г°Г Г¦ГҐГ­ГЁГҐ ГўГЁГ¤Г  /regexp/i Г­ГҐ Г¤Г®ГЇГ®Г«Г­ГїГҐГ¬ Г±Г«ГЅГёГҐГ¬
 		return Str;
 }
 
@@ -155,7 +155,7 @@ string& InsertRegexpQuote(string &strStr)
 {
 	if (strStr.IsEmpty() || strStr[0] != L'/')
 		return InsertCustomQuote(strStr,L'/');
-	else          //выражение вида /regexp/i не дополняем слэшем
+	else          //ГўГ»Г°Г Г¦ГҐГ­ГЁГҐ ГўГЁГ¤Г  /regexp/i Г­ГҐ Г¤Г®ГЇГ®Г«Г­ГїГҐГ¬ Г±Г«ГЅГёГҐГ¬
 		return strStr;
 }
 
@@ -376,7 +376,7 @@ string& WINAPI RemoveLeadingSpaces(string &strStr)
 }
 
 
-// удалить конечные пробелы
+// ГіГ¤Г Г«ГЁГІГј ГЄГ®Г­ГҐГ·Г­Г»ГҐ ГЇГ°Г®ГЎГҐГ«Г»
 wchar_t* WINAPI RemoveTrailingSpaces(wchar_t *Str)
 {
 	if (!Str)
@@ -425,8 +425,8 @@ string&  WINAPI RemoveExternalSpaces(string &strStr)
 
 
 /* $ 02.02.2001 IS
-   Заменяет пробелами непечатные символы в строке. В настоящий момент
-   обрабатываются только cr и lf.
+   Г‡Г Г¬ГҐГ­ГїГҐГІ ГЇГ°Г®ГЎГҐГ«Г Г¬ГЁ Г­ГҐГЇГҐГ·Г ГІГ­Г»ГҐ Г±ГЁГ¬ГўГ®Г«Г» Гў Г±ГІГ°Г®ГЄГҐ. Г‚ Г­Г Г±ГІГ®ГїГ№ГЁГ© Г¬Г®Г¬ГҐГ­ГІ
+   Г®ГЎГ°Г ГЎГ ГІГ»ГўГ ГѕГІГ±Гї ГІГ®Г«ГјГЄГ® cr ГЁ lf.
 */
 string& WINAPI RemoveUnprintableCharacters(string &strStr)
 {
@@ -445,7 +445,7 @@ string& WINAPI RemoveUnprintableCharacters(string &strStr)
 }
 
 
-// Удалить символ Target из строки Str (везде!)
+// Г“Г¤Г Г«ГЁГІГј Г±ГЁГ¬ГўГ®Г« Target ГЁГ§ Г±ГІГ°Г®ГЄГЁ Str (ГўГҐГ§Г¤ГҐ!)
 string &RemoveChar(string &strStr,wchar_t Target,BOOL Dup)
 {
 	wchar_t *Ptr = strStr.GetBuffer();
@@ -475,12 +475,12 @@ string &RemoveChar(string &strStr,wchar_t Target,BOOL Dup)
 string& CenterStr(const wchar_t *Src, string &strDest, int Length)
 {
 	int SrcLength=StrLength(Src);
-	string strTempStr = Src; //если Src == strDest, то надо копировать Src!
+	string strTempStr = Src; //ГҐГ±Г«ГЁ Src == strDest, ГІГ® Г­Г Г¤Г® ГЄГ®ГЇГЁГ°Г®ГўГ ГІГј Src!
 
 	if (SrcLength >= Length)
 	{
-		/* Здесь не надо отнимать 1 от длины, т.к. strlen не учитывает \0
-		   и мы получали обрезанные строки */
+		/* Г‡Г¤ГҐГ±Гј Г­ГҐ Г­Г Г¤Г® Г®ГІГ­ГЁГ¬Г ГІГј 1 Г®ГІ Г¤Г«ГЁГ­Г», ГІ.ГЄ. strlen Г­ГҐ ГіГ·ГЁГІГ»ГўГ ГҐГІ \0
+		   ГЁ Г¬Г» ГЇГ®Г«ГіГ·Г Г«ГЁ Г®ГЎГ°ГҐГ§Г Г­Г­Г»ГҐ Г±ГІГ°Г®ГЄГЁ */
 		strDest = strTempStr;
 		strDest.SetLength(Length);
 	}
@@ -613,7 +613,7 @@ void UnquoteExternal(string &strStr)
 
 
 /* FileSizeToStr()
-   Форматирование размера файла в удобочитаемый вид.
+   Г”Г®Г°Г¬Г ГІГЁГ°Г®ГўГ Г­ГЁГҐ Г°Г Г§Г¬ГҐГ°Г  ГґГ Г©Г«Г  Гў ГіГ¤Г®ГЎГ®Г·ГЁГІГ ГҐГ¬Г»Г© ГўГЁГ¤.
 */
 #define MAX_UNITSTR_SIZE 16
 
@@ -638,7 +638,7 @@ string & WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width, int 
 	uint64_t Divider;
 	int IndexDiv, IndexB;
 
-	// подготовительные мероприятия
+	// ГЇГ®Г¤ГЈГ®ГІГ®ГўГЁГІГҐГ«ГјГ­Г»ГҐ Г¬ГҐГ°Г®ГЇГ°ГЁГїГІГЁГї
 	if (!UnitStr[0][0][0])
 	{
 		PrepareUnitStr();
@@ -668,8 +668,8 @@ string & WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width, int 
 	{
 		uint64_t Divider64F = 1, Divider64F_mul = 1000, Divider64F2 = 1, Divider64F2_mul = Divider;
 
-		//выравнивание идёт по 1000 но само деление происходит на Divider
-		//например 999 bytes покажутся как 999 а вот 1000 bytes уже покажутся как 0.97 K
+		//ГўГ»Г°Г ГўГ­ГЁГўГ Г­ГЁГҐ ГЁГ¤ВёГІ ГЇГ® 1000 Г­Г® Г±Г Г¬Г® Г¤ГҐГ«ГҐГ­ГЁГҐ ГЇГ°Г®ГЁГ±ГµГ®Г¤ГЁГІ Г­Г  Divider
+		//Г­Г ГЇГ°ГЁГ¬ГҐГ° 999 bytes ГЇГ®ГЄГ Г¦ГіГІГ±Гї ГЄГ ГЄ 999 Г  ГўГ®ГІ 1000 bytes ГіГ¦ГҐ ГЇГ®ГЄГ Г¦ГіГІГ±Гї ГЄГ ГЄ 0.97 K
 		for (IndexB=0; IndexB<UNIT_COUNT-1; IndexB++)
 		{
 			if (Sz < Divider64F*Divider64F_mul)
@@ -705,12 +705,12 @@ string & WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width, int 
 				Width=0;
 
 			if (Economic)
-				strDestStr.Format(L"%*.*s%1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
+				strDestStr.Format(L"%*.*ls%1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
 			else
-				strDestStr.Format(L"%*.*s %1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
+				strDestStr.Format(L"%*.*ls %1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
 		}
 		else
-			strDestStr.Format(L"%*.*s",Width,Width,strStr.CPtr());
+			strDestStr.Format(L"%*.*ls",Width,Width,strStr.CPtr());
 
 		return strDestStr;
 	}
@@ -730,12 +730,12 @@ string & WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width, int 
 				Width=0;
 
 			if (Economic)
-				strDestStr.Format(L"%*.*s%1.1s",Width,Width,strStr.CPtr(),UnitStr[0][IndexDiv]);
+				strDestStr.Format(L"%*.*ls%1.1ls",Width,Width,strStr.CPtr(),UnitStr[0][IndexDiv]);
 			else
-				strDestStr.Format(L"%*.*s %1.1s",Width,Width,strStr.CPtr(),UnitStr[0][IndexDiv]);
+				strDestStr.Format(L"%*.*ls %1.1ls",Width,Width,strStr.CPtr(),UnitStr[0][IndexDiv]);
 		}
 		else
-			strDestStr.Format(L"%*.*s",Width,Width,strStr.CPtr());
+			strDestStr.Format(L"%*.*ls",Width,Width,strStr.CPtr());
 	}
 	else
 	{
@@ -760,9 +760,9 @@ string & WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width, int 
 		while ((UseMinSizeIndex && IndexB<MinSizeIndex) || strStr.GetLength() > static_cast<size_t>(Width));
 
 		if (Economic)
-			strDestStr.Format(L"%*.*s%1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
+			strDestStr.Format(L"%*.*ls%1.1ls",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
 		else
-			strDestStr.Format(L"%*.*s %1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
+			strDestStr.Format(L"%*.*ls %1.1ls",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
 	}
 
 	return strDestStr;
@@ -770,9 +770,9 @@ string & WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width, int 
 
 
 
-// вставить с позиции Pos в Str строку InsStr (размером InsSize байт)
-// если InsSize = 0, то... вставлять все строку InsStr
-// возвращает указатель на Str
+// ГўГ±ГІГ ГўГЁГІГј Г± ГЇГ®Г§ГЁГ¶ГЁГЁ Pos Гў Str Г±ГІГ°Г®ГЄГі InsStr (Г°Г Г§Г¬ГҐГ°Г®Г¬ InsSize ГЎГ Г©ГІ)
+// ГҐГ±Г«ГЁ InsSize = 0, ГІГ®... ГўГ±ГІГ ГўГ«ГїГІГј ГўГ±ГҐ Г±ГІГ°Г®ГЄГі InsStr
+// ГўГ®Г§ГўГ°Г Г№Г ГҐГІ ГіГЄГ Г§Г ГІГҐГ«Гј Г­Г  Str
 
 wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize)
 {
@@ -787,9 +787,9 @@ wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize)
 }
 
 
-// Заменить в строке Str Count вхождений подстроки FindStr на подстроку ReplStr
-// Если Count < 0 - заменять "до полной победы"
-// Return - количество замен
+// Г‡Г Г¬ГҐГ­ГЁГІГј Гў Г±ГІГ°Г®ГЄГҐ Str Count ГўГµГ®Г¦Г¤ГҐГ­ГЁГ© ГЇГ®Г¤Г±ГІГ°Г®ГЄГЁ FindStr Г­Г  ГЇГ®Г¤Г±ГІГ°Г®ГЄГі ReplStr
+// Г…Г±Г«ГЁ Count < 0 - Г§Г Г¬ГҐГ­ГїГІГј "Г¤Г® ГЇГ®Г«Г­Г®Г© ГЇГ®ГЎГҐГ¤Г»"
+// Return - ГЄГ®Г«ГЁГ·ГҐГ±ГІГўГ® Г§Г Г¬ГҐГ­
 int ReplaceStrings(string &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count,BOOL IgnoreCase)
 {
 	const int LenFindStr=StrLength(FindStr);
@@ -840,42 +840,42 @@ int ReplaceStrings(string &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,
 
 /*
 From PHP 4.x.x
-Форматирует исходный текст по заданной ширине, используя
-разделительную строку. Возвращает строку SrcText свёрнутую
-в колонке, заданной параметром Width. Строка рубится при
-помощи строки Break.
+Г”Г®Г°Г¬Г ГІГЁГ°ГіГҐГІ ГЁГ±ГµГ®Г¤Г­Г»Г© ГІГҐГЄГ±ГІ ГЇГ® Г§Г Г¤Г Г­Г­Г®Г© ГёГЁГ°ГЁГ­ГҐ, ГЁГ±ГЇГ®Г«ГјГ§ГіГї
+Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«ГјГ­ГіГѕ Г±ГІГ°Г®ГЄГі. Г‚Г®Г§ГўГ°Г Г№Г ГҐГІ Г±ГІГ°Г®ГЄГі SrcText Г±ГўВёГ°Г­ГіГІГіГѕ
+Гў ГЄГ®Г«Г®Г­ГЄГҐ, Г§Г Г¤Г Г­Г­Г®Г© ГЇГ Г°Г Г¬ГҐГІГ°Г®Г¬ Width. Г‘ГІГ°Г®ГЄГ  Г°ГіГЎГЁГІГ±Гї ГЇГ°ГЁ
+ГЇГ®Г¬Г®Г№ГЁ Г±ГІГ°Г®ГЄГЁ Break.
 
-Разбивает на строки с выравниваением влево.
+ГђГ Г§ГЎГЁГўГ ГҐГІ Г­Г  Г±ГІГ°Г®ГЄГЁ Г± ГўГ»Г°Г ГўГ­ГЁГўГ ГҐГ­ГЁГҐГ¬ ГўГ«ГҐГўГ®.
 
-Если параметр Flahs & FFTM_BREAKLONGWORD, то строка всегда
-сворачивается по заданной ширине. Так если у вас есть слово,
-которое больше заданной ширины, то оно будет разрезано на части.
+Г…Г±Г«ГЁ ГЇГ Г°Г Г¬ГҐГІГ° Flahs & FFTM_BREAKLONGWORD, ГІГ® Г±ГІГ°Г®ГЄГ  ГўГ±ГҐГЈГ¤Г 
+Г±ГўГ®Г°Г Г·ГЁГўГ ГҐГІГ±Гї ГЇГ® Г§Г Г¤Г Г­Г­Г®Г© ГёГЁГ°ГЁГ­ГҐ. Г’Г ГЄ ГҐГ±Г«ГЁ Гі ГўГ Г± ГҐГ±ГІГј Г±Г«Г®ГўГ®,
+ГЄГ®ГІГ®Г°Г®ГҐ ГЎГ®Г«ГјГёГҐ Г§Г Г¤Г Г­Г­Г®Г© ГёГЁГ°ГЁГ­Г», ГІГ® Г®Г­Г® ГЎГіГ¤ГҐГІ Г°Г Г§Г°ГҐГ§Г Г­Г® Г­Г  Г·Г Г±ГІГЁ.
 
 Example 1.
-FarFormatText("Пример строки, которая будет разбита на несколько строк по ширине в 20 символов.", 20 ,Dest, "\n", 0);
-Этот пример вернет:
+FarFormatText("ГЏГ°ГЁГ¬ГҐГ° Г±ГІГ°Г®ГЄГЁ, ГЄГ®ГІГ®Г°Г Гї ГЎГіГ¤ГҐГІ Г°Г Г§ГЎГЁГІГ  Г­Г  Г­ГҐГ±ГЄГ®Г«ГјГЄГ® Г±ГІГ°Г®ГЄ ГЇГ® ГёГЁГ°ГЁГ­ГҐ Гў 20 Г±ГЁГ¬ГўГ®Г«Г®Гў.", 20 ,Dest, "\n", 0);
+ГќГІГ®ГІ ГЇГ°ГЁГ¬ГҐГ° ГўГҐГ°Г­ГҐГІ:
 ---
-Пример строки,
-которая будет
-разбита на
-несколько строк по
-ширине в 20
-символов.
+ГЏГ°ГЁГ¬ГҐГ° Г±ГІГ°Г®ГЄГЁ,
+ГЄГ®ГІГ®Г°Г Гї ГЎГіГ¤ГҐГІ
+Г°Г Г§ГЎГЁГІГ  Г­Г 
+Г­ГҐГ±ГЄГ®Г«ГјГЄГ® Г±ГІГ°Г®ГЄ ГЇГ®
+ГёГЁГ°ГЁГ­ГҐ Гў 20
+Г±ГЁГ¬ГўГ®Г«Г®Гў.
 ---
 
 Example 2.
-FarFormatText( "Эта строка содержит оооооооооооооччччччччеееень длиное слово", 9, Dest, nullptr, FFTM_BREAKLONGWORD);
-Этот пример вернет:
+FarFormatText( "ГќГІГ  Г±ГІГ°Г®ГЄГ  Г±Г®Г¤ГҐГ°Г¦ГЁГІ Г®Г®Г®Г®Г®Г®Г®Г®Г®Г®Г®Г®Г®Г·Г·Г·Г·Г·Г·Г·Г·ГҐГҐГҐГҐГ­Гј Г¤Г«ГЁГ­Г®ГҐ Г±Г«Г®ГўГ®", 9, Dest, nullptr, FFTM_BREAKLONGWORD);
+ГќГІГ®ГІ ГЇГ°ГЁГ¬ГҐГ° ГўГҐГ°Г­ГҐГІ:
 
 ---
-Эта
-строка
-содержит
-ооооооооо
-ооооччччч
-чччеееень
-длиное
-слово
+ГќГІГ 
+Г±ГІГ°Г®ГЄГ 
+Г±Г®Г¤ГҐГ°Г¦ГЁГІ
+Г®Г®Г®Г®Г®Г®Г®Г®Г®
+Г®Г®Г®Г®Г·Г·Г·Г·Г·
+Г·Г·Г·ГҐГҐГҐГҐГ­Гј
+Г¤Г«ГЁГ­Г®ГҐ
+Г±Г«Г®ГўГ®
 ---
 
 */
@@ -885,11 +885,11 @@ enum FFTMODE
 	FFTM_BREAKLONGWORD = 0x00000001,
 };
 
-string& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
-                             int Width,               // заданная ширина
-                             string &strDestText,          // приемник
-                             const wchar_t* Break,       // брик, если = nullptr, то принимается '\n'
-                             DWORD Flags)             // один из FFTM_*
+string& WINAPI FarFormatText(const wchar_t *SrcText,     // ГЁГ±ГІГ®Г·Г­ГЁГЄ
+                             int Width,               // Г§Г Г¤Г Г­Г­Г Гї ГёГЁГ°ГЁГ­Г 
+                             string &strDestText,          // ГЇГ°ГЁГҐГ¬Г­ГЁГЄ
+                             const wchar_t* Break,       // ГЎГ°ГЁГЄ, ГҐГ±Г«ГЁ = nullptr, ГІГ® ГЇГ°ГЁГ­ГЁГ¬Г ГҐГІГ±Гї '\n'
+                             DWORD Flags)             // Г®Г¤ГЁГ­ ГЁГ§ FFTM_*
 {
 	const wchar_t *breakchar;
 	breakchar = Break?Break:L"\n";
@@ -1087,9 +1087,9 @@ string& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
   xstrncpy(Dest,Ptr,End-Start+1);
   Dest[End-Start+1]=0;
 
-// Параметры:
-//   WordDiv  - набор разделителей слова в кодировке OEM
-  возвращает указатель на начало слова
+// ГЏГ Г°Г Г¬ГҐГІГ°Г»:
+//   WordDiv  - Г­Г ГЎГ®Г° Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«ГҐГ© Г±Г«Г®ГўГ  Гў ГЄГ®Г¤ГЁГ°Г®ГўГЄГҐ OEM
+  ГўГ®Г§ГўГ°Г Г№Г ГҐГІ ГіГЄГ Г§Г ГІГҐГ«Гј Г­Г  Г­Г Г·Г Г«Г® Г±Г«Г®ГўГ 
 */
 const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End, const wchar_t *WordDiv0)
 {
@@ -1105,9 +1105,9 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 
 	if (IsWordDiv(strWordDiv,Str[CurPos]))
 	{
-		// вычисляем дистанцию - куда копать, где ближе слово - слева или справа
+		// ГўГ»Г·ГЁГ±Г«ГїГҐГ¬ Г¤ГЁГ±ГІГ Г­Г¶ГЁГѕ - ГЄГіГ¤Г  ГЄГ®ГЇГ ГІГј, ГЈГ¤ГҐ ГЎГ«ГЁГ¦ГҐ Г±Г«Г®ГўГ® - Г±Г«ГҐГўГ  ГЁГ«ГЁ Г±ГЇГ°Г ГўГ 
 		I=J=CurPos;
-		// копаем влево
+		// ГЄГ®ГЇГ ГҐГ¬ ГўГ«ГҐГўГ®
 		DistLeft=-1;
 
 		while (I >= 0 && IsWordDiv(strWordDiv,Str[I]))
@@ -1119,7 +1119,7 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 		if (I < 0)
 			DistLeft=-1;
 
-		// копаем вправо
+		// ГЄГ®ГЇГ ГҐГ¬ ГўГЇГ°Г ГўГ®
 		DistRight=-1;
 
 		while (J < StrSize && IsWordDiv(strWordDiv,Str[J]))
@@ -1136,7 +1136,7 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 		else
 			EndWPos=StartWPos=I;
 	}
-	else // здесь все оби, т.е. стоим на буковке
+	else // Г§Г¤ГҐГ±Гј ГўГ±ГҐ Г®ГЎГЁ, ГІ.ГҐ. Г±ГІГ®ГЁГ¬ Г­Г  ГЎГіГЄГ®ГўГЄГҐ
 		EndWPos=StartWPos=CurPos;
 
 	if (StartWPos < StrSize)
@@ -1174,7 +1174,7 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 
 bool CheckFileSizeStringFormat(const wchar_t *FileSizeStr)
 {
-//проверяет если формат строки такой: [0-9]+[BbKkMmGgTtPpEe]?
+//ГЇГ°Г®ГўГҐГ°ГїГҐГІ ГҐГ±Г«ГЁ ГґГ®Г°Г¬Г ГІ Г±ГІГ°Г®ГЄГЁ ГІГ ГЄГ®Г©: [0-9]+[BbKkMmGgTtPpEe]?
 	const wchar_t *p = FileSizeStr;
 
 	while (iswdigit(*p))
@@ -1232,7 +1232,7 @@ uint64_t ConvertFileSizeString(const wchar_t *FileSizeStr)
 }
 
 /* $ 21.09.2003 KM
-   Трансформация строки по заданному типу.
+   Г’Г°Г Г­Г±ГґГ®Г°Г¬Г Г¶ГЁГї Г±ГІГ°Г®ГЄГЁ ГЇГ® Г§Г Г¤Г Г­Г­Г®Г¬Гі ГІГЁГЇГі.
 */
 void Transform(string &strBuffer,const wchar_t *ConvStr,wchar_t TransformType)
 {

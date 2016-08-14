@@ -1109,7 +1109,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 						case PACKED_COLUMN:
 						case STREAMSSIZE_COLUMN:
 						{
-                            Text(FormatStr_Size(
+									Text(FormatStr_Size(
                             		ListData[ListPos]->UnpSize,
                             		ListData[ListPos]->PackSize,
                             		ListData[ListPos]->StreamsSize,

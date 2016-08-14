@@ -18,11 +18,12 @@ BOOTSTRAP = $(MYDIR)/bootstrap
 SCRIPTS = $(MYDIR)/scripts
 
 
-all: lng
+all: $(BUILD)/.lng
 
-lng: $(BOOTSTRAP)/farlang.templ $(BUILD)/FarEng.hlf $(BUILD)/FarRus.hlf $(BUILD)/FarHun.hlf $(BUILD)/File_id.diz $(BOOTSTRAP)/far.rc $(BOOTSTRAP)/copyright.inc $(BOOTSTRAP)/farversion.inc
+$(BUILD)/.lng: $(BOOTSTRAP)/farlang.templ $(BUILD)/FarEng.hlf $(BUILD)/FarRus.hlf $(BUILD)/FarHun.hlf $(BUILD)/File_id.diz $(BOOTSTRAP)/far.rc $(BOOTSTRAP)/copyright.inc $(BOOTSTRAP)/farversion.inc
 	mkdir -p $(BOOTSTRAP) $(BUILD); \
-	$(TOOLS)/farlng generator -nc -i $(BOOTSTRAP)/lang.ini -ol $(BUILD) $(BOOTSTRAP)/farlang.templ
+	$(TOOLS)/farlng generator -nc -i $(BOOTSTRAP)/lang.ini -ol $(BUILD) $(BOOTSTRAP)/farlang.templ && \
+	touch $(BUILD)/.lng;
 
 $(BOOTSTRAP)/Far.exe.manifest: Far.exe.manifest.m4 farversion.m4 tools.m4 vbuild.m4
 	mkdir -p $(BOOTSTRAP) $(BUILD); \

@@ -364,7 +364,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 			if (wcschr(strKeyName,L'~')) // корректировка размера
 				SizeKeyName++;
 
-			strOutTemp.Format(L" #%-*.*s# ",SizeKeyName,SizeKeyName,strKeyName.CPtr());
+			strOutTemp.Format(L" #%-*.*ls# ",SizeKeyName,SizeKeyName,strKeyName.CPtr());
 
 			if (!strDescription.IsEmpty())
 			{

@@ -1,8 +1,8 @@
 #include <all_far.h>
 #pragma hdrstop
-#include <glib.h>
-#include <mutex>
 #include "Int.h"
+#include <KeyFileHelper.h>
+
 
 #define FTPHOST_DVERSION                 (2740)
 #define FTPHOST_DVERSION_SERVERTYPE      (FTPHOST_DVERSION + sizeof(WORD))
@@ -556,81 +556,6 @@ BOOL FTPHost::Write(LPCSTR nm)
 	return rc;
 }
 //---------------------------------------------------------------------------------
-std::mutex g_key_file_helper_mutex;
-class KeyFileHelper
-{
-	GKeyFile *_kf;
-	std::string _filename;
-	bool _dirty;
-public:
-	KeyFileHelper(const char *filename, bool load = true) 
-		: _kf(g_key_file_new()),  _filename(filename), _dirty(!load)
-	{
-		GError *err = NULL;
-		g_key_file_helper_mutex.lock();
-		g_key_file_load_from_file(_kf, _filename.c_str(), G_KEY_FILE_NONE, &err);
-		fprintf(stderr, "KeyFileHelper(%s, %d) err=%p\n", _filename.c_str(), load, err);
-	}
-	
-	~KeyFileHelper()
-	{
-		if (_dirty) {
-			GError *err = NULL;
-			g_key_file_save_to_file(_kf, _filename.c_str(), &err);
-			fprintf(stderr, "~KeyFileHelper(%s) err=%p\n", _filename.c_str(),  err);
-		}
-		g_key_file_helper_mutex.unlock();
-	}
-	
-	std::string GetString(const char *section, const char *name, const char *def = "")
-	{
-		std::string rv;
-		char *v = g_key_file_get_string(_kf, "FarFTP", "Version", NULL);
-		if (v) {
-			rv.assign(v); 
-			free(v);
-		} else
-			rv.assign(def);		
-		return rv;		
-	}
-
-	void GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def = "")
-	{
-		std::string rv;
-		char *v = g_key_file_get_string(_kf, section, name, NULL);
-		if (v) {
-			strncpy(buffer, v, buf_size);
-			free(v);
-		} else
-			strncpy(buffer, def, buf_size);
-
-		buffer[buf_size - 1] = 0;
-	}
-		
-	int GetInt(const char *section, const char *name, int def = 0)
-	{
-		GError *err = NULL;
-		int rv = g_key_file_get_integer(_kf, section, name, &err);
-		if (rv==0 && err!=NULL) {
-			rv = def;
-			//TODO? Should I do free(err);  ?
-		}
-		return rv;
-	}
-	
-	///////////////////////////////////////////////
-	void PutString(const char *section, const char *name, const char *value)
-	{
-		_dirty = true;
-		g_key_file_set_string(_kf, section, name, value);
-	}
-
-	void PutInt(const char *section, const char *name, int value)
-	{
-		_dirty = true;
-		g_key_file_set_integer(_kf, section, name, value);
-	}
-};
 
 BOOL FTPHost::ReadINI(LPCSTR nm)
 {

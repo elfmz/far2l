@@ -332,9 +332,6 @@
     <File Name="UCD/prmem.h"/>
     <File Name="UCD/prtypes.h"/>
   </VirtualDirectory>
-  <Dependencies Name="Debug">
-    <Project Name="WinPort"/>
-  </Dependencies>
   <Dependencies Name="Release"/>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -354,6 +351,7 @@
         <LibraryPath Value="../WinPort/Debug"/>
         <Library Value="WinPort"/>
         <Library Value="dl"/>
+        <Library Value="glib-2.0"/>
       </Linker>
       <ResourceCompiler Options="$(shell wx-config --rcflags)" Required="no"/>
       <General OutputFile="../Build/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
@@ -427,4 +425,8 @@
       </Completion>
     </Configuration>
   </Settings>
+  <Dependencies Name="Debug">
+    <Project Name="WinPort"/>
+    <Project Name="farlng"/>
+  </Dependencies>
 </CodeLite_Project>

@@ -225,8 +225,6 @@
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="include"/>
-  <Dependencies Name="Debug"/>
-  <Dependencies Name="Release"/>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -330,4 +328,8 @@
       </Completion>
     </Configuration>
   </Settings>
+  <Dependencies Name="Release"/>
+  <Dependencies Name="Debug">
+    <Project Name="farlng"/>
+  </Dependencies>
 </CodeLite_Project>

@@ -5,6 +5,7 @@
 
 .build-debug
 .codelite
+/tools
 /Debug
 Build\/far2l
 *.far-plug-*

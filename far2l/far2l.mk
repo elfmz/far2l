@@ -39,8 +39,8 @@ LinkOptions            :=  $(shell wx-config --debug=yes --libs --unicode=yes) -
 IncludePath            :=  $(IncludeSwitch). 
 IncludePCH             := 
 RcIncludePath          := 
-Libs                   := $(LibrarySwitch)WinPort $(LibrarySwitch)dl 
-ArLibs                 :=  "WinPort" "dl" 
+Libs                   := $(LibrarySwitch)WinPort $(LibrarySwitch)dl $(LibrarySwitch)glib-2.0 
+ArLibs                 :=  "WinPort" "dl" "glib-2.0" 
 LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/Debug 
 
 ##
@@ -92,7 +92,7 @@ Objects=$(Objects0) $(Objects1) $(Objects2) $(Objects3)
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d $(Objects) 
 	@$(MakeDirCommand) $(@D)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
@@ -100,13 +100,6 @@ $(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" $(Objects)
 	@echo $(Objects2) >> $(ObjectsFileList)
 	@echo $(Objects3) >> $(ObjectsFileList)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
-
-"../.build-debug/WinPort":
-	@$(MakeDirCommand) "../.build-debug"
-	@echo stam > "../.build-debug/WinPort"
-
-
-
 
 MakeIntermediateDirs:
 	@test -d ./Debug || $(MakeDirCommand) ./Debug

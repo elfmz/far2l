@@ -243,13 +243,6 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_cursor_timer(NULL), _frame(frame), _white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH)
 {
 	InitializeFont(frame, _font);
-	//_font = wxGetFontFromUser(frame);
-	/*wxFontDialog *fd = new wxFontDialog(_font);
-	fd->GetFontData().SetInitialFont(_font);
-	if (fd->ShowModal()==wxID_OK) {
-		wxFontData &data = fd->GetFontData();
-		_font = data.GetInitialFont();
-	}*/
 	_white_rectangle.SelectObject(_white_bitmap);	
 	wxBrush* brush = wxTheBrushList->FindOrCreateBrush(wxColor(0xff, 0xff, 0xff));
 	_white_rectangle.SetBrush(*brush);

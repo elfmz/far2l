@@ -141,6 +141,8 @@
     </VirtualDirectory>
     <File Name="WinPortSynch.h"/>
     <File Name="WinPortSynch.cpp"/>
+    <File Name="KeyFileHelper.h"/>
+    <File Name="KeyFileHelper.cpp"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>
@@ -158,6 +160,8 @@
       <Compiler Options="-g;-O1;-O;-O0;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function" C_Options="-g;-O1;-O;-O0;-O2;-std=c99;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
         <IncludePath Value="/usr/src/wxWidgets-3.0.2/lib/wx/include/gtk3-unicode-3.0"/>
+        <IncludePath Value="/usr/include/glib-2.0"/>
+        <IncludePath Value="/usr/lib/x86_64-linux-gnu/glib-2.0/include/"/>
       </Compiler>
       <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes)" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>

@@ -408,10 +408,14 @@ struct MountedFS
 
 typedef std::vector<MountedFS>	MountedFilesystems;
 
-void EnumMountedFilesystems(MountedFilesystems &out)
+void EnumMountedFilesystems(MountedFilesystems &out, const WCHAR *another = NULL)
 {
 	bool has_root = false;
+	MountedFS mfs;
+
 	out.clear();
+
+	
 	FILE *f = popen("df -T", "r");
 	if (f) {
 		char buf[0x400];
@@ -421,9 +425,10 @@ void EnumMountedFilesystems(MountedFilesystems &out)
 			if (!first) {
 				buf[sizeof(buf)-1] = 0;
 				s = UTF8to16(buf);
-				MountedFS mfs;
+				
 				ExtractTilSpace(s);
 				mfs.fs = ExtractTilSpace(s);
+				mfs.root.clear();
 				for (;;) {
 					tmp = ExtractTilSpace(s);
 					if (tmp.empty()) break;
@@ -444,9 +449,18 @@ void EnumMountedFilesystems(MountedFilesystems &out)
 
 	if (!has_root) {
 		MountedFS mfs;
-		mfs.fs = L"WTF???";
+		mfs.fs = L"ROOT";
 		mfs.root = L"/";
 		out.insert(out.begin(), mfs);
+	}
+	
+	mfs.root = UTF8to16(getenv("HOME"));
+	mfs.fs = L"HOME";
+	out.insert(out.begin(), mfs);	
+	if (another && mfs.root!=another) {
+		mfs.root = another;
+		mfs.fs = L"";
+		out.insert(out.begin(), mfs);			
 	}
 }
 
@@ -484,8 +498,11 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	bool SetSelected=false;
 	DWORD NetworkMask = 0;
 
+	string curdir, another_curdir;
+	GetCurDir(curdir);
+	CtrlObject->Cp()->GetAnotherPanel(this)->GetCurDir(another_curdir);
 	MountedFilesystems filesystems;
-	EnumMountedFilesystems(filesystems);
+	EnumMountedFilesystems(filesystems, (another_curdir==curdir) ? NULL : another_curdir.CPtr());
 
 	PanelMenuItem Item, *mitem=0;
 	{ // ýòà ñêîáêà íàäî, ñì. M#605

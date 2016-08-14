@@ -375,7 +375,7 @@ extern "C"
 #ifdef _WIN32
 			_h = INVALID_HANDLE_VALUE;
 #else
-			if (!_root.empty() && _root[_root.size()-1]==GOOD_SLASH)
+			if (_root.size() > 1 && _root[_root.size()-1]==GOOD_SLASH)
 				_root.resize(_root.size()-1);
 			_d = opendir(_root.c_str());
 			if (!_d) {

@@ -89,6 +89,11 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	@$(MakeDirCommand) "../.build-debug"
 	@echo rebuilt > "../.build-debug/colorer"
 
+PostBuild:
+	@echo Executing Post Build commands ...
+	
+	@echo Done
+
 MakeIntermediateDirs:
 	@test -d ./Debug || $(MakeDirCommand) ./Debug
 
@@ -97,6 +102,10 @@ $(IntermediateDirectory)/.d:
 	@test -d ./Debug || $(MakeDirCommand) ./Debug
 
 PreBuild:
+	@echo Executing Pre Build commands ...
+	mkdir -p ../Build/Plugins/Colorer/
+	cp -R ./configs/* ../Build/Plugins/Colorer/
+	@echo Done
 
 
 ##

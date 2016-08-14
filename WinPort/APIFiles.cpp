@@ -222,6 +222,7 @@ extern "C"
 		default:
 			return INVALID_SET_FILE_POINTER;
 		}
+
 		off_t r = _lseek(wph->fd, liDistanceToMove.QuadPart, whence);
 		if (r==(off_t)-1)
 			return FALSE;
@@ -232,8 +233,13 @@ extern "C"
 	DWORD WINPORT(SetFilePointer)( HANDLE hFile, LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod)
 	{
 		LARGE_INTEGER liDistanceToMove, liNewFilePointer = {0};
-		liDistanceToMove.LowPart = lDistanceToMove;
-		liDistanceToMove.HighPart = lpDistanceToMoveHigh ? *lpDistanceToMoveHigh : 0;
+		if (lpDistanceToMoveHigh) {
+			liDistanceToMove.LowPart = lDistanceToMove;
+			liDistanceToMove.HighPart = lpDistanceToMoveHigh ? *lpDistanceToMoveHigh : 0;			
+		} else {
+			liDistanceToMove.LowPart = lDistanceToMove;
+			liDistanceToMove.HighPart = (lDistanceToMove < 0) ? -1 : 0;
+		}
 		if (!WINPORT(SetFilePointerEx)( hFile, liDistanceToMove, &liNewFilePointer, dwMoveMethod))
 			return INVALID_SET_FILE_POINTER;
 
@@ -563,7 +569,7 @@ extern "C"
 		p = buffer + path_len;
 
 		/* add a \, if there isn't one  */
-		if ((p == buffer) || (p[-1] != '\\')) *p++ = '\\';
+		if ((p == buffer) || (p[-1] !=GOOD_SLASH)) *p++ = GOOD_SLASH;
 
 		if (prefix)
 			for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
@@ -607,12 +613,12 @@ extern "C"
 		(LPCTSTR lpFileName,  DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart))
 	{
 		std::wstring full_name;
-		if (*lpFileName!='/') {
+		if (*lpFileName!=GOOD_SLASH) {
 			WCHAR cd[MAX_PATH+1] = {0};
 			WINPORT(GetCurrentDirectory)( MAX_PATH, cd);
 			full_name = cd;
 			if (*lpFileName!='.') {
-				full_name+='/';
+				full_name+=GOOD_SLASH;
 				full_name+= lpFileName;
 			} else
 				full_name+= lpFileName + 1;
@@ -623,7 +629,7 @@ extern "C"
 		
 		memcpy(lpBuffer, full_name.c_str(), (full_name.size() + 1) * sizeof(WCHAR));
 		if (lpFilePart) {
-			WCHAR *slash = wcsrchr(lpBuffer, '/');
+			WCHAR *slash = wcsrchr(lpBuffer, GOOD_SLASH);
 			*lpFilePart = slash ? slash + 1 : lpBuffer;
 		}
 		return full_name.size();

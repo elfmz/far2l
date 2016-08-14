@@ -270,8 +270,13 @@
         <PostConnectCommands/>
         <StartupCommands/>
       </Debugger>
-      <PreBuild/>
-      <PostBuild/>
+      <PreBuild>
+        <Command Enabled="yes">mkdir -p ../Build/Plugins/Colorer/</Command>
+        <Command Enabled="yes">cp -R ./configs/* ../Build/Plugins/Colorer/</Command>
+      </PreBuild>
+      <PostBuild>
+        <Command Enabled="yes"/>
+      </PostBuild>
       <CustomBuild Enabled="no">
         <RebuildCommand/>
         <CleanCommand/>

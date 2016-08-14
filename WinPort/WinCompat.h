@@ -176,7 +176,7 @@ static wchar_t towlower(wchar_t c) {return c; }*/
 typedef uint32_t ULONG;
 typedef unsigned int UINT;
 typedef unsigned short USHORT;
-typedef long LONG;
+typedef int LONG;
 typedef int INT, *PINT, *LPINT;
 typedef short SHORT;
 typedef long long LONGLONG;

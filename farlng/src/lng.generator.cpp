@@ -326,24 +326,23 @@ int main_generator (int argc, char** argv)
 			}
 			else
 
-			if ( !strcmp (argv[i],"-ol") == 0 && ++i < argc-1 )
+			if ( strcmp (argv[i],"-ol") == 0 && ++i < argc-1 )
 			{
-				lpLNGOutputPath = (char*)malloc (strlen (argv[i])+1);
-				strcpy (lpLNGOutputPath, argv[i]);
-
+				lpLNGOutputPath = strdup(argv[i]);
 				UnquoteIfNeeded (lpLNGOutputPath);
 			}
 			else
 
-			if ( !strcmp (argv[i],"-oh") == 0 && ++i < argc-1 )
+			if ( strcmp (argv[i],"-oh") == 0 && ++i < argc-1 )
 			{
-				lpHOutputPath = (char*)malloc (strlen(argv[i])+1);
-				strcpy (lpHOutputPath, argv[i]);
+				lpHOutputPath = strdup (argv[i]);
 
 				UnquoteIfNeeded (lpHOutputPath);
 			}
 		}
 	}
+
+				fprintf(stderr, "lpLNGOutputPath=%s\n", lpLNGOutputPath);
 
     char* lpFeedFileName = (char*)malloc (strlen(argv[argc-1])+1);
     strcpy (lpFeedFileName, argv[argc-1]);
@@ -415,7 +414,7 @@ int main_generator (int argc, char** argv)
 
 	if ( dwLangs )
 	{
-		sprintf (lpFullName, "%s\\%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
+		sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
 
 		dwHeaderCRC32 = 0;
 		dwHeaderOldCRC32 = (CheckExists(lpFullName) && key_file) ? key_file->GetInt( lpFullName, "CRC32")  : 0;
@@ -457,7 +456,7 @@ int main_generator (int argc, char** argv)
 					UnquoteIfNeeded (pLangEntries[i].lpLanguageDescription);
 					UnquoteIfNeeded (pLangEntries[i].lpLNGFileName);
 
-					sprintf (lpFullName, "%s\\%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
+					sprintf (lpFullName, "%s/%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
 
 					pLangEntries[i].cNeedUpdate = 0;
 
@@ -637,7 +636,7 @@ int main_generator (int argc, char** argv)
 				{
 					WINPORT(CloseHandle) (pLangEntries[i].hLNGFile);
 
-					sprintf (lpFullName, "%s\\%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
+					sprintf (lpFullName, "%s/%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
 
 					bUpdate = true;
 
@@ -673,7 +672,7 @@ int main_generator (int argc, char** argv)
 
 				WINPORT(CloseHandle) (hHFile);
 
-				sprintf (lpFullName, "%s\\%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
+				sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
 
 				bUpdate = true;
 

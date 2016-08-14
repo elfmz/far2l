@@ -189,8 +189,13 @@
         <PostConnectCommands/>
         <StartupCommands/>
       </Debugger>
-      <PreBuild/>
-      <PostBuild/>
+      <PreBuild>
+        <Command Enabled="yes">mkdir -p ../Build/Plugins/farftp/</Command>
+        <Command Enabled="yes">cp -R ./configs/* ../Build/Plugins/farftp/</Command>
+      </PreBuild>
+      <PostBuild>
+        <Command Enabled="yes"/>
+      </PostBuild>
       <CustomBuild Enabled="no">
         <RebuildCommand/>
         <CleanCommand/>

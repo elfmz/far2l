@@ -367,8 +367,12 @@
         <PostConnectCommands/>
         <StartupCommands/>
       </Debugger>
-      <PreBuild/>
-      <PostBuild/>
+      <PreBuild>
+        <Command Enabled="yes">make -f scripts.mk</Command>
+      </PreBuild>
+      <PostBuild>
+        <Command Enabled="yes"/>
+      </PostBuild>
       <CustomBuild Enabled="no">
         <RebuildCommand/>
         <CleanCommand/>

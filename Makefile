@@ -6,11 +6,11 @@ All:
 	@echo "----------Building project:[ farlng - Debug ]----------"
 	@cd "farlng" && "$(MAKE)" -f  "farlng.mk"
 	@echo "----------Building project:[ far2l - Debug ]----------"
-	@cd "far2l" && "$(MAKE)" -f  "far2l.mk"
+	@cd "far2l" && "$(MAKE)" -f  "far2l.mk" PreBuild && "$(MAKE)" -f  "far2l.mk" && "$(MAKE)" -f  "far2l.mk" PostBuild
 	@echo "----------Building project:[ colorer - Debug ]----------"
-	@cd "colorer" && "$(MAKE)" -f  "colorer.mk"
+	@cd "colorer" && "$(MAKE)" -f  "colorer.mk" PreBuild && "$(MAKE)" -f  "colorer.mk" && "$(MAKE)" -f  "colorer.mk" PostBuild
 	@echo "----------Building project:[ farftp - Debug ]----------"
-	@cd "farftp" && "$(MAKE)" -f  "farftp.mk"
+	@cd "farftp" && "$(MAKE)" -f  "farftp.mk" PreBuild && "$(MAKE)" -f  "farftp.mk" && "$(MAKE)" -f  "farftp.mk" PostBuild
 	@echo "----------Building project:[ _All - Debug ]----------"
 	@cd "_All" && "$(MAKE)" -f  "_All.mk"
 clean:

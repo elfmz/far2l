@@ -127,7 +127,7 @@ void RectifyPath(std::string &s)
 	}
 	//std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
 	s.swap(tmp);
-	if (s[0]!=GOOD_SLASH) {
+	if (s[0]!=GOOD_SLASH && (s[0]!='.' || s[1]!=GOOD_SLASH)) {
 		s.insert(s.begin(), GOOD_SLASH);
 		s.insert(s.begin(), '.');
 	}

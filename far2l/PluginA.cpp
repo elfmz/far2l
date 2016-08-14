@@ -780,8 +780,9 @@ int PluginA::ProcessEditorInput(
 		if (Ptr->EventType==KEY_EVENT)
 		{
 			OemRecord=*D;
-			WINPORT(WideCharToMultiByte)(CP_ACP, 0,  &D->Event.KeyEvent.uChar.UnicodeChar,
+			int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0,  &D->Event.KeyEvent.uChar.UnicodeChar,
 					1, &OemRecord.Event.KeyEvent.uChar.AsciiChar,1, NULL, NULL);
+			if (r<0) fprintf(stderr, "PluginA::ProcessEditorInput: convert failed\n");
 			//CharToOemBuff(&D->Event.KeyEvent.uChar.UnicodeChar,&OemRecord.Event.KeyEvent.uChar.AsciiChar,1);
 			Ptr=&OemRecord;
 		}
@@ -860,8 +861,8 @@ int PluginA::GetVirtualFindData(
 		es.bDefaultResult = FALSE;
 		pVFDPanelItemA = nullptr;
 		size_t Size=StrLength(Path)+1;
-		LPSTR PathA=new char[Size];
-		UnicodeToOEM(Path,PathA,Size);
+		LPSTR PathA=new char[Size * 4];
+		UnicodeToOEM(Path,PathA, Size * 4);
 		EXECUTE_FUNCTION_EX(pGetVirtualFindData(hPlugin, &pVFDPanelItemA, pItemsNumber, PathA), es);
 		bResult = es.bResult;
 		delete[] PathA;

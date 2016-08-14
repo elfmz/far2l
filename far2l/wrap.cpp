@@ -26,8 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#define UnicodeToOEM(src,dst,lendst)    WINPORT(WideCharToMultiByte)(CP_OEMCP,0,(src),-1,(dst),(int)(lendst),nullptr,nullptr)
-#define OEMToUnicode(src,dst,lendst)    WINPORT(MultiByteToWideChar)(CP_OEMCP,0,(src),-1,(dst),(int)(lendst))
+#define UnicodeToOEM(src,dst,lendst)    WINPORT(WideCharToMultiByte)(CP_UTF8,0,(src),-1,(dst),(int)(lendst),nullptr,nullptr)
+#define OEMToUnicode(src,dst,lendst)    WINPORT(MultiByteToWideChar)(CP_UTF8,0, (src),-1,(dst),(int)(lendst))
 
 const char *FirstSlashA(const char *String)
 {
@@ -82,23 +82,23 @@ bool LastSlashA(const char *String,size_t &pos)
 	return Ret;
 }
 
-void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_OEMCP)
+void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
 {
 	if (lpszAnsiString && lpwszUnicodeString && nLength)
 	{
 		wmemset(lpwszUnicodeString, 0, nLength);
-		WINPORT(MultiByteToWideChar)(CodePage,0,lpszAnsiString,nLength,lpwszUnicodeString,nLength);
+		int r = WINPORT(MultiByteToWideChar)(CodePage,0,lpszAnsiString,nLength,lpwszUnicodeString,nLength);
 	}
 }
 
-wchar_t *AnsiToUnicodeBin(const char *lpszAnsiString, int nLength, UINT CodePage=CP_OEMCP)
+wchar_t *AnsiToUnicodeBin(const char *lpszAnsiString, int nLength, UINT CodePage=CP_UTF8)
 {
 	wchar_t *lpResult = (wchar_t*)xf_malloc(nLength*sizeof(wchar_t));
 	AnsiToUnicodeBin(lpszAnsiString,lpResult,nLength,CodePage);
 	return lpResult;
 }
 
-wchar_t *AnsiToUnicode(const char *lpszAnsiString, UINT CodePage=CP_OEMCP)
+wchar_t *AnsiToUnicode(const char *lpszAnsiString, UINT CodePage=CP_UTF8)
 {
 	if (!lpszAnsiString)
 		return nullptr;
@@ -106,7 +106,7 @@ wchar_t *AnsiToUnicode(const char *lpszAnsiString, UINT CodePage=CP_OEMCP)
 	return AnsiToUnicodeBin(lpszAnsiString,(int)strlen(lpszAnsiString)+1,CodePage);
 }
 
-char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_OEMCP)
+char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
 {
 	/* $ 06.01.2008 TS
 		! Óâåëè÷èë ðàçìåð âûäåëÿåìîé ïîä ñòðîêó ïàìÿòè íà 1 áàéò äëÿ íîðìàëüíîé
@@ -136,7 +136,7 @@ char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT Code
 	return lpResult;
 }
 
-char *UnicodeToAnsi(const wchar_t *lpwszUnicodeString, UINT CodePage=CP_OEMCP)
+char *UnicodeToAnsi(const wchar_t *lpwszUnicodeString, UINT CodePage=CP_UTF8)
 {
 	if (!lpwszUnicodeString)
 		return nullptr;
@@ -197,7 +197,7 @@ DWORD OldKeyToKey(DWORD dOldKey)
 		{
 			char OemChar=static_cast<char>(CleanKey);
 			wchar_t WideChar=0;
-			WINPORT(MultiByteToWideChar)(CP_OEMCP,0,&OemChar,1,&WideChar,1);
+			WINPORT(MultiByteToWideChar)(CP_UTF8,0,&OemChar,1,&WideChar,1);
 			dOldKey=(dOldKey^CleanKey)|WideChar;
 		}
 	}
@@ -223,7 +223,7 @@ DWORD KeyToOldKey(DWORD dKey)
 		{
 			wchar_t WideChar=static_cast<wchar_t>(CleanKey);
 			char OemChar=0;
-			WINPORT(WideCharToMultiByte)(CP_OEMCP,0,&WideChar,1,&OemChar,1,0,nullptr);
+			WINPORT(WideCharToMultiByte)(CP_UTF8,0,&WideChar,1,&OemChar,1,0,nullptr);
 			dKey=(dKey^CleanKey)|OemChar;
 		}
 	}
@@ -1037,6 +1037,7 @@ int WINAPI FarMessageFnA(INT_PTR PluginNumber,DWORD Flags,const char *HelpTopic,
 
 	if (Flags&oldfar::FMSG_ALLINONE)
 	{
+		fprintf(stderr, "FMSG_ALLINONE\n");
 		p = (wchar_t **)AnsiToUnicode((const char *)Items);
 	}
 	else
@@ -1774,8 +1775,8 @@ oldfar::FarDialogItem* UnicodeDialogItemToAnsi(FarDialogItem &di,HANDLE hDlg,int
 	else if ((diA->Type==oldfar::DI_EDIT || diA->Type==oldfar::DI_COMBOBOX) && diA->Flags&oldfar::DIF_VAREDIT)
 	{
 		diA->Data.Ptr.PtrLength=StrLength(di.PtrData);
-		diA->Data.Ptr.PtrData=(char*)xf_malloc(diA->Data.Ptr.PtrLength+1);
-		UnicodeToOEM(di.PtrData,diA->Data.Ptr.PtrData,diA->Data.Ptr.PtrLength+1);
+		diA->Data.Ptr.PtrData=(char*)xf_malloc(4 * (diA->Data.Ptr.PtrLength+1));
+		UnicodeToOEM(di.PtrData,diA->Data.Ptr.PtrData, 4 *(diA->Data.Ptr.PtrLength+1));
 	}
 	else
 		UnicodeToOEM(di.PtrData,diA->Data.Data,sizeof(diA->Data.Data));
@@ -1968,13 +1969,13 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 		{
 			LONG_PTR length = FarSendDlgMessage(hDlg, DM_GETTEXTPTR, Param1, 0);
 
-			if (!Param2) return length;
+			//if (!Param2) return length;
 
 			wchar_t* text = (wchar_t *) xf_malloc((length +1)* sizeof(wchar_t));
 			length = FarSendDlgMessage(hDlg, DM_GETTEXTPTR, Param1, (LONG_PTR)text);
-			UnicodeToOEM(text, (char *)Param2, length+1);
+			length = UnicodeToOEM(text, (char *)Param2, Param2 ? length+1 : 0);
 			xf_free(text);
-			return length;
+			return length + 1;
 		}
 		case oldfar::DM_SETTEXTPTR:
 		{
@@ -3604,7 +3605,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 
 			oldfar::EditorConvertText *ect=(oldfar::EditorConvertText*) Param;
 			UINT CodePage=GetEditorCodePageA();
-			MultiByteRecode(Command==oldfar::ECTL_OEMTOEDITOR ? CP_OEMCP : CodePage, Command==oldfar::ECTL_OEMTOEDITOR ?  CodePage : CP_OEMCP, ect->Text, ect->TextLength);
+			MultiByteRecode(Command==oldfar::ECTL_OEMTOEDITOR ? CP_UTF8 : CodePage, Command==oldfar::ECTL_OEMTOEDITOR ?  CodePage : CP_OEMCP, ect->Text, ect->TextLength);
 			return TRUE;
 		}
 		case oldfar::ECTL_SAVEFILE:

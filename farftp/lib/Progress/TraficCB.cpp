@@ -419,8 +419,9 @@ BOOL TrafficInformation::Callback(int Size)
 	MsgItems[0] = str;
 	int n;
 
-	for(n = 0; n < LineCount; n++)
+	for(n = 0; n < LineCount; n++) {
 		MsgItems[n+1] = Lines[n];
+	}
 
 	FTP_Info->FMessage(FMSG_LEFTALIGN, NULL,
 	                   (LPCSTR *)MsgItems, LineCount+1, 0);

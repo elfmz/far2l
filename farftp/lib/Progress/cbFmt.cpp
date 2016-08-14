@@ -103,6 +103,8 @@ void TrafficInformation::DrawInfo(InfoItem* it,time_t tm)
 	struct tm *ltm;
 	int    len;
 
+
+
 	switch(it->Type)
 	{
 			//00 " " ---- Space

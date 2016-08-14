@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=14/08/16
+Date                   :=15/08/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -61,8 +61,8 @@ AS       := /usr/bin/as
 ##
 CodeLiteDir:=/usr/share/codelite
 Objects0=$(IntermediateDirectory)/APIClipboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIFiles.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIFSNotify.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIKeyboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIMemory.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIOther.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIRegistry.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIStringCodepages.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIStringMap.cpp$(ObjectSuffix) $(IntermediateDirectory)/APISynch.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/APITime.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleBuffer.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleInput.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleOutput.cpp$(ObjectSuffix) $(IntermediateDirectory)/Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/stdafx.cpp$(ObjectSuffix) $(IntermediateDirectory)/StrUtils.cpp$(ObjectSuffix) $(IntermediateDirectory)/WinPortConsole.cpp$(ObjectSuffix) $(IntermediateDirectory)/WinPortHandle.cpp$(ObjectSuffix) $(IntermediateDirectory)/wxWinTranslations.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/WinPortSynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/KeyFileHelper.cpp$(ObjectSuffix) $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_collation.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_compose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cpsymbol.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cptable.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_decompose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_locale.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_mbtowc.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/APITime.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleBuffer.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleInput.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleOutput.cpp$(ObjectSuffix) $(IntermediateDirectory)/Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/stdafx.cpp$(ObjectSuffix) $(IntermediateDirectory)/StrUtils.cpp$(ObjectSuffix) $(IntermediateDirectory)/WinPortHandle.cpp$(ObjectSuffix) $(IntermediateDirectory)/wxWinTranslations.cpp$(ObjectSuffix) $(IntermediateDirectory)/WinPortSynch.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/KeyFileHelper.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIConsole.cpp$(ObjectSuffix) $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_collation.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_compose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cpsymbol.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cptable.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_decompose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_locale.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_mbtowc.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/wineguts_sortkey.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_utf8.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctomb.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctype.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_037.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_424.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_437.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_500.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_737.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_775.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_850.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_852.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_855.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_856.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_857.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_860.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_861.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_862.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_863.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_864.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_865.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_869.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_874.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_875.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_878.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_932.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_936.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_949.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_950.c$(ObjectSuffix) \
@@ -242,14 +242,6 @@ $(IntermediateDirectory)/StrUtils.cpp$(DependSuffix): StrUtils.cpp
 $(IntermediateDirectory)/StrUtils.cpp$(PreprocessSuffix): StrUtils.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/StrUtils.cpp$(PreprocessSuffix) "StrUtils.cpp"
 
-$(IntermediateDirectory)/WinPortConsole.cpp$(ObjectSuffix): WinPortConsole.cpp $(IntermediateDirectory)/WinPortConsole.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./WinPortConsole.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/WinPortConsole.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/WinPortConsole.cpp$(DependSuffix): WinPortConsole.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/WinPortConsole.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/WinPortConsole.cpp$(DependSuffix) -MM "WinPortConsole.cpp"
-
-$(IntermediateDirectory)/WinPortConsole.cpp$(PreprocessSuffix): WinPortConsole.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/WinPortConsole.cpp$(PreprocessSuffix) "WinPortConsole.cpp"
-
 $(IntermediateDirectory)/WinPortHandle.cpp$(ObjectSuffix): WinPortHandle.cpp $(IntermediateDirectory)/WinPortHandle.cpp$(DependSuffix)
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./WinPortHandle.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/WinPortHandle.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/WinPortHandle.cpp$(DependSuffix): WinPortHandle.cpp
@@ -281,6 +273,14 @@ $(IntermediateDirectory)/KeyFileHelper.cpp$(DependSuffix): KeyFileHelper.cpp
 
 $(IntermediateDirectory)/KeyFileHelper.cpp$(PreprocessSuffix): KeyFileHelper.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/KeyFileHelper.cpp$(PreprocessSuffix) "KeyFileHelper.cpp"
+
+$(IntermediateDirectory)/APIConsole.cpp$(ObjectSuffix): APIConsole.cpp $(IntermediateDirectory)/APIConsole.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIConsole.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIConsole.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/APIConsole.cpp$(DependSuffix): APIConsole.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/APIConsole.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/APIConsole.cpp$(DependSuffix) -MM "APIConsole.cpp"
+
+$(IntermediateDirectory)/APIConsole.cpp$(PreprocessSuffix): APIConsole.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIConsole.cpp$(PreprocessSuffix) "APIConsole.cpp"
 
 $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix): wineguts/casemap.c $(IntermediateDirectory)/wineguts_casemap.c$(DependSuffix)
 	$(CC) $(SourceSwitch) "./wineguts/casemap.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IncludePath)

@@ -45,7 +45,6 @@
     <File Name="WinCompat.h"/>
     <File Name="wineguts.h"/>
     <File Name="WinPort.h"/>
-    <File Name="WinPortConsole.cpp"/>
     <File Name="WinPortHandle.cpp"/>
     <File Name="WinPortHandle.h"/>
     <File Name="wxWinTranslations.cpp"/>
@@ -143,6 +142,7 @@
     <File Name="WinPortSynch.cpp"/>
     <File Name="KeyFileHelper.h"/>
     <File Name="KeyFileHelper.cpp"/>
+    <File Name="APIConsole.cpp"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>

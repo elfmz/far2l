@@ -359,7 +359,10 @@ void WinPortPanel::OnResized( wxCommandEvent& event )
 	g_wx_con_out.GetSize(width, height);
 	width*= font_width;
 	height*= font_height;
-	_frame->SetPosition(wxPoint(0,0 ));
+	int prev_width = 0, prev_height = 0;
+	_frame->GetClientSize(&prev_width, &prev_height);
+	if (width > prev_width || height > prev_height)
+		_frame->SetPosition(wxPoint(0,0 ));
 	_frame->SetClientSize(width, height);
 	Refresh(false);
 	UpdateLargestScreenSize();

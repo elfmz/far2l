@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=14/08/16
+Date                   :=15/08/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -92,7 +92,7 @@ Objects=$(Objects0) $(Objects1) $(Objects2) $(Objects3)
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" "../.build-debug/farlng" $(Objects) 
 	@$(MakeDirCommand) $(@D)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
@@ -100,6 +100,18 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	@echo $(Objects2) >> $(ObjectsFileList)
 	@echo $(Objects3) >> $(ObjectsFileList)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
+
+"../.build-debug/WinPort":
+	@$(MakeDirCommand) "../.build-debug"
+	@echo stam > "../.build-debug/WinPort"
+
+
+"../.build-debug/farlng":
+	@$(MakeDirCommand) "../.build-debug"
+	@echo stam > "../.build-debug/farlng"
+
+
+
 
 PostBuild:
 	@echo Executing Post Build commands ...

@@ -45,6 +45,13 @@ class VTShell
 						ts.c_cc[VINTR] = 3;
 						tcsetattr( fds, TCSAFLUSH, &ts );
 					} 
+					CONSOLE_SCREEN_BUFFER_INFO csbi = {0};
+					if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )) {
+						struct winsize ws = {0};
+						ws.ws_row =csbi.dwSize.Y ? csbi.dwSize.Y : 1;
+						ws.ws_col = csbi.dwSize.X ? csbi.dwSize.X : 1;
+						ioctl( fdm, TIOCSWINSZ, &ws );						
+					}
 					fd_in[0] = fds;
 					fd_out[1] = dup(fds);
 					fd_in[1] = fdm;

@@ -449,13 +449,13 @@ void EnumMountedFilesystems(MountedFilesystems &out, const WCHAR *another = NULL
 
 	if (!has_root) {
 		MountedFS mfs;
-		mfs.fs = L"ROOT";
+		mfs.fs = L"/";
 		mfs.root = L"/";
 		out.insert(out.begin(), mfs);
 	}
 	
 	mfs.root = UTF8to16(getenv("HOME"));
-	mfs.fs = L"HOME";
+	mfs.fs = L"~";
 	out.insert(out.begin(), mfs);	
 	if (another && mfs.root!=another) {
 		mfs.root = another;

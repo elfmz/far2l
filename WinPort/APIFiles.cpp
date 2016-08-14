@@ -266,7 +266,7 @@ extern "C"
 		return TRUE;
 	}
 
-	static DWORD AttributesByStat(const struct stat &s)
+	static DWORD AttributesByStat(const struct stat &s, const WCHAR *name)
 	{
 		DWORD rv = 0;
 		switch (s.st_mode & S_IFMT) {
@@ -279,6 +279,13 @@ extern "C"
 #endif
 			default: rv = FILE_ATTRIBUTE_ARCHIVE;
 		}
+		if (name) {
+			const WCHAR *slash = wcsrchr(name, GOOD_SLASH);
+			const WCHAR *slash_bad = wcsrchr(name, BAD_SLASH);
+			if (!slash || (slash_bad && slash_bad < slash))  slash = slash_bad;
+			if ( (slash && slash[1]==L'.') || (!slash && name[0]=='.'))
+				rv|= FILE_ATTRIBUTE_HIDDEN;
+		}
 		return rv;
 	}
 
@@ -288,7 +295,7 @@ extern "C"
 		if (stat(ConsumeWinPath(lpFileName).c_str(), &s) < 0)
 			return INVALID_FILE_ATTRIBUTES;
 
-		return AttributesByStat(s);
+		return AttributesByStat(s, lpFileName);
 	}
 
 	DWORD WINPORT(SetFileAttributes)(LPCWSTR lpFileName, DWORD dwAttributes)
@@ -352,7 +359,7 @@ extern "C"
 	//////////////////////////////////
 	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData)
 	{
-		lpFindFileData->dwFileAttributes = AttributesByStat(s);
+		lpFindFileData->dwFileAttributes = AttributesByStat(s, name);
 		FileTime_UnixToWin32(s.st_mtim, &lpFindFileData->ftLastWriteTime);
 		FileTime_UnixToWin32(s.st_ctim, &lpFindFileData->ftCreationTime);
 		FileTime_UnixToWin32(s.st_atim, &lpFindFileData->ftLastAccessTime);

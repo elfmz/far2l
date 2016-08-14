@@ -285,7 +285,7 @@ static BOOL  fWrapped;
 // Writes the buffer to the console and empties it.
 //-----------------------------------------------------------------------------
 
-void FlushBuffer( void )
+static void FlushBuffer( void )
 {
 	DWORD nWritten;
 
@@ -1103,16 +1103,33 @@ BOOL ParseAndPrintString( HANDLE hDev,
 
 static std::mutex vt_ansi_mutex;
 
+
+static void ResetState()
+{
+	nCharInBuffer = 0;
+	memset(ChBuffer, 0, sizeof(ChBuffer));
+	memset(&ansiState, 0, sizeof(ansiState));
+	ChPrev = 0;
+	fWrapped = 0;
+	
+	state = 1;
+	prefix = 0;
+	prefix2 = 0;
+	suffix = 0;
+	suffix2 = 0;
+	es_argc = 0;
+	memset(es_argv, 0, sizeof(es_argv));
+	memset(Pt_arg, 0, sizeof(Pt_arg));
+	Pt_len = 0;
+	shifted = 0;
+	screen_top = -1;	
+}
+
 VTAnsi::VTAnsi()
 {
 	vt_ansi_mutex.lock();	
-	state = 1;
-	shifted = FALSE;
-	
-	nCharInBuffer = 0;
-	memset(ChBuffer, 0, sizeof(ChBuffer));
-	ChPrev = 0;
-	fWrapped = FALSE;
+	ResetState();
+
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )) {
@@ -1133,6 +1150,7 @@ VTAnsi::~VTAnsi()
 {
 	WINPORT(SetConsoleMode)( NULL, orgmode );
 	WINPORT(SetConsoleCursorInfo)( NULL, &orgcci );
+	WINPORT(SetConsoleTextAttribute)( NULL, orgattr );
 	vt_ansi_mutex.unlock();
 }
 

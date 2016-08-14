@@ -50,6 +50,7 @@ class VTShell
 						struct winsize ws = {0};
 						ws.ws_row =csbi.dwSize.Y ? csbi.dwSize.Y : 1;
 						ws.ws_col = csbi.dwSize.X ? csbi.dwSize.X : 1;
+						fprintf(stderr, "setting console size: %u x %u\n", ws.ws_col, ws.ws_row);
 						ioctl( fdm, TIOCSWINSZ, &ws );						
 					}
 					fd_in[0] = fds;

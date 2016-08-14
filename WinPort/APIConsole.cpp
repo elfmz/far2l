@@ -81,6 +81,7 @@ extern "C" {
 		unsigned int width = 0, height = 0;
 		g_wx_con_out.GetSize(width, height);
 		lpConsoleScreenBufferInfo->dwCursorPosition = g_wx_con_out.GetCursor();
+		lpConsoleScreenBufferInfo->wAttributes = g_wx_con_out.GetAttributes();
 		lpConsoleScreenBufferInfo->dwSize.X = width;
 		lpConsoleScreenBufferInfo->dwSize.Y = height;
 		lpConsoleScreenBufferInfo->srWindow.Left = 0;

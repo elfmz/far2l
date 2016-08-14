@@ -183,7 +183,7 @@ struct LanguageEntry {
 
 int main_convertor (int argc, char** argv)
 {
-	printf (".LNG Convertor "VERSION"\n");
+	printf (".LNG Convertor " VERSION "\n");
 	printf ("Copyright (C) 2005-2006 WARP ItSelf & Alex Yaroslavsky\n\n");
 
 	if ( argc < 5 )

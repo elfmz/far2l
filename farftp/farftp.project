@@ -152,6 +152,9 @@
     <File Name="src/Connect.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include"/>
+  <Dependencies Name="Debug">
+    <Project Name="farlng"/>
+  </Dependencies>
   <Dependencies Name="Release"/>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
@@ -164,7 +167,7 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-std=c++11;-fPIC -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" C_Options="-g;-std=c99;-fPIC -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+      <Compiler Options="-g;-O2;-std=c++11;-fPIC -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" C_Options="-g;-O2;-std=c99;-fPIC -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
         <IncludePath Value="./src"/>
         <IncludePath Value="./src/FStdLib"/>
@@ -248,7 +251,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug">
-    <Project Name="farlng"/>
-  </Dependencies>
 </CodeLite_Project>

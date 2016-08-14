@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="_all" InternalType="">
+<CodeLite_Project Name="_All" InternalType="">
   <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
     <Plugin Name="CMakePlugin">
       <![CDATA[[{
   "name": "Debug",
@@ -12,9 +15,6 @@
   "arguments": [],
   "parentProject": ""
  }]]]>
-    </Plugin>
-    <Plugin Name="qmake">
-      <![CDATA[00010001N0005Debug000000000000]]>
     </Plugin>
   </Plugins>
   <Description/>
@@ -72,9 +72,10 @@
     </Configuration>
   </Settings>
   <Dependencies Name="Debug">
+    <Project Name="WinPort"/>
+    <Project Name="farlng"/>
     <Project Name="far2l"/>
     <Project Name="colorer"/>
     <Project Name="farftp"/>
-    <Project Name="farlng"/>
   </Dependencies>
 </CodeLite_Project>

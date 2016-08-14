@@ -3085,8 +3085,8 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 	do
 	{
-		DWORD n=0,nbytes=0;
-		/*
+		/*DWORD n=0,nbytes=0;
+		
 		if (CopySparse)
 		{
 			SparseQueryResult=SrcFile.IoControl(FSCTL_QUERY_ALLOCATED_RANGES, &queryrange, sizeof(queryrange), ranges, sizeof(ranges), &nbytes);
@@ -3100,7 +3100,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		//for (DWORD i=0; i<(CopySparse?n:i+1); i++)
 		for (DWORD i=0; i<(i+1); i++)
 		{
-			INT64 Size=0;
+//			INT64 Size=0;
 
 			/*if (CopySparse)
 			{
@@ -3960,8 +3960,8 @@ bool ShellCopy::ShellSetAttr(const wchar_t *Dest,DWORD Attr)
 		}
 	}
 
-	DWORD FileSystemFlagsDst=0;
-	/*int GetInfoSuccess=apiGetVolumeInformation(strRoot,nullptr,nullptr,nullptr,&FileSystemFlagsDst,nullptr);
+	/*DWORD FileSystemFlagsDst=0;
+	int GetInfoSuccess=apiGetVolumeInformation(strRoot,nullptr,nullptr,nullptr,&FileSystemFlagsDst,nullptr);
 
 	if (GetInfoSuccess)
 	{

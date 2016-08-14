@@ -22,7 +22,6 @@ LPCSTR StdDialogLines[] =
 	"-[%27CurPg%]-[%27SkipPg%]-"
 };
 
-
 void TrafficInformation::FormatLine(int num,LPCSTR line,time_t tm)
 {
 	char     str[50];

@@ -3,7 +3,7 @@
 ## any manual changes will be erased      
 ##
 ## Debug
-ProjectName            :=_all
+ProjectName            :=_All
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
@@ -32,7 +32,7 @@ Preprocessors          :=
 ObjectSwitch           :=-o 
 ArchiveOutputSwitch    := 
 PreprocessOnlySwitch   :=-E
-ObjectsFileList        :="_all.txt"
+ObjectsFileList        :="_All.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  -O0
@@ -70,7 +70,7 @@ Objects=
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/far2l" "../.build-debug/colorer" "../.build-debug/farftp" "../.build-debug/farlng" $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" "../.build-debug/farlng" "../.build-debug/far2l" "../.build-debug/colorer" "../.build-debug/farftp" $(Objects) 
 
 MakeIntermediateDirs:
 	@test -d ./Debug || $(MakeDirCommand) ./Debug

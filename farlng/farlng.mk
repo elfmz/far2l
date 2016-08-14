@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/D
 AR       := /usr/bin/ar rcu
 CXX      := /usr/bin/g++
 CC       := /usr/bin/gcc
-CXXFLAGS :=  -g -O2 -std=c++11 -Wall $(Preprocessors)
-CFLAGS   :=  -g -O2 -std=c99 -Wall $(Preprocessors)
+CXXFLAGS :=  -g -O2 -std=c++11 -Wall -Wno-unused-function $(Preprocessors)
+CFLAGS   :=  -g -O2 -std=c99 -Wall -Wno-unused-function $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/as
 

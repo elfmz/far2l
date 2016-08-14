@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch).
 AR       := /usr/bin/ar rcu
 CXX      := /usr/bin/g++
 CC       := /usr/bin/gcc
-CXXFLAGS :=  -g -O1 -O -O0 -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
-CFLAGS   :=  -g -O1 -O -O0 -O2 -std=c99 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
+CXXFLAGS :=  -g -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
+CFLAGS   :=  -g -O2 -std=c99 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/as
 

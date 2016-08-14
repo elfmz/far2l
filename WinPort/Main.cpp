@@ -2,7 +2,8 @@
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "wxWinTranslations.h"
-
+#include <wx/fontdlg.h>
+#include <wx/textfile.h>
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
 enum
@@ -203,12 +204,52 @@ WinPortFrame::~WinPortFrame()
 
 
 ///////////////////////////
+void InitializeFont(wxFrame *frame, wxFont& font)
+{
+	std::string path = getenv("HOME");
+	path+= "/.WinPort";
+	mkdir(path.c_str(), 0666);
+	path+= "/font";
+	wxTextFile file(path);
+	if (file.Exists() && file.Open()) {
+		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
+			font.SetNativeFontInfo(str);
+			if (font.IsOk()) {
+				printf("InitializeFont: used %ls\n", (const wchar_t *)str);
+				return;				
+			}
+		}
+	} else 
+		file.Create(path);
+	
+	for (;;) {
+		font = wxFont(wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT));
+		wxFontDialog fd(frame);
+		fd.GetFontData().SetInitialFont(font);	
+		if (fd.ShowModal()==wxID_OK) {
+			wxFontData &data = fd.GetFontData();
+			font = data.GetChosenFont();
+			if (font.IsOk()) {
+				file.InsertLine(font.GetNativeFontInfoDesc(), 0);
+				file.Write();
+				return;
+			}
+		}		
+	}
+}
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), _cursor_state(false), 
-		_cursor_timer(NULL), _frame(frame), _white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH),
-		_font(wxSystemSettings::GetFont(wxSYS_OEM_FIXED_FONT))
+		_cursor_timer(NULL), _frame(frame), _white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH)
 {
+	InitializeFont(frame, _font);
+	//_font = wxGetFontFromUser(frame);
+	/*wxFontDialog *fd = new wxFontDialog(_font);
+	fd->GetFontData().SetInitialFont(_font);
+	if (fd->ShowModal()==wxID_OK) {
+		wxFontData &data = fd->GetFontData();
+		_font = data.GetInitialFont();
+	}*/
 	_white_rectangle.SelectObject(_white_bitmap);	
 	wxBrush* brush = wxTheBrushList->FindOrCreateBrush(wxColor(0xff, 0xff, 0xff));
 	_white_rectangle.SetBrush(*brush);
@@ -216,12 +257,15 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 	
 	
 	_white_rectangle.SetFont(_font);
+	fprintf(stderr, "Font: '%ls' %s\n", (const wchar_t *)_font.GetFaceName(), _font.IsFixedWidth() ? "monospaced" : "not monospaced");
+	
 	wchar_t test_char[2] = {0};
 	for(test_char[0] = L'A';  test_char[0]<=L'Z'; ++test_char[0]) {
 		wxSize char_size = _white_rectangle.GetTextExtent(test_char);
 		if (font_width < char_size.GetWidth()) font_width = char_size.GetWidth();
 		if (font_height < char_size.GetHeight()) font_height = char_size.GetHeight();
 	}
+	//font_height+= font_height/4;
 
 	
 	g_wx_con_out.SetListener(this);

@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmdline.hpp"
 #include "console.hpp"
 #include <string>
-
+#include <sys/stat.h>
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -295,9 +295,26 @@ int MainProcessSEH(string& strEditName,string& strViewName,string& DestName1,str
 	return Result;
 }
 
+void InitWellKnownEnv()
+{
+	if (!getenv("TEMP")) {
+		std::string env = "/var/tmp";
+		const char *home = getenv("HOME");
+		if (home && *home) {
+			env = home;
+			env+= "/.WinPort";
+			mkdir(env.c_str(), 0777);
+			env+= "/tmp";
+			mkdir(env.c_str(), 0777);
+		}
+		setenv("TEMP", env.c_str(), 1);
+	}
+}
+
 int FarAppMain(int argc, char **argv)
 {
 	InitCurrentDirectory();
+	InitWellKnownEnv();
 	//todo if (apiGetModuleFileName(nullptr, g_strFarModuleName)) todo
 	{
 		apiGetCurrentDirectory(g_strFarModuleName);

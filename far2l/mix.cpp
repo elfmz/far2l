@@ -1,7 +1,7 @@
 /*
 mix.cpp
 
-Куча разных вспомогательных функций
+ГЉГіГ·Г  Г°Г Г§Г­Г»Гµ ГўГ±ГЇГ®Г¬Г®ГЈГ ГІГҐГ«ГјГ­Г»Гµ ГґГіГ­ГЄГ¶ГЁГ©
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -75,12 +75,12 @@ int ToPercent64(uint64_t N1, uint64_t N2)
 }
 
 /* $ 30.07.2001 IS
-     1. Проверяем правильность параметров.
-     2. Теперь обработка каталогов не зависит от маски файлов
-     3. Маска может быть стандартного фаровского вида (со скобками,
-        перечислением и пр.). Может быть несколько масок файлов, разделенных
-        запятыми или точкой с запятой, можно указывать маски исключения,
-        можно заключать маски в кавычки. Короче, все как и должно быть :-)
+     1. ГЏГ°Г®ГўГҐГ°ГїГҐГ¬ ГЇГ°Г ГўГЁГ«ГјГ­Г®Г±ГІГј ГЇГ Г°Г Г¬ГҐГІГ°Г®Гў.
+     2. Г’ГҐГЇГҐГ°Гј Г®ГЎГ°Г ГЎГ®ГІГЄГ  ГЄГ ГІГ Г«Г®ГЈГ®Гў Г­ГҐ Г§Г ГўГЁГ±ГЁГІ Г®ГІ Г¬Г Г±ГЄГЁ ГґГ Г©Г«Г®Гў
+     3. ГЊГ Г±ГЄГ  Г¬Г®Г¦ГҐГІ ГЎГ»ГІГј Г±ГІГ Г­Г¤Г Г°ГІГ­Г®ГЈГ® ГґГ Г°Г®ГўГ±ГЄГ®ГЈГ® ГўГЁГ¤Г  (Г±Г® Г±ГЄГ®ГЎГЄГ Г¬ГЁ,
+        ГЇГҐГ°ГҐГ·ГЁГ±Г«ГҐГ­ГЁГҐГ¬ ГЁ ГЇГ°.). ГЊГ®Г¦ГҐГІ ГЎГ»ГІГј Г­ГҐГ±ГЄГ®Г«ГјГЄГ® Г¬Г Г±Г®ГЄ ГґГ Г©Г«Г®Гў, Г°Г Г§Г¤ГҐГ«ГҐГ­Г­Г»Гµ
+        Г§Г ГЇГїГІГ»Г¬ГЁ ГЁГ«ГЁ ГІГ®Г·ГЄГ®Г© Г± Г§Г ГЇГїГІГ®Г©, Г¬Г®Г¦Г­Г® ГіГЄГ Г§Г»ГўГ ГІГј Г¬Г Г±ГЄГЁ ГЁГ±ГЄГ«ГѕГ·ГҐГ­ГЁГї,
+        Г¬Г®Г¦Г­Г® Г§Г ГЄГ«ГѕГ·Г ГІГј Г¬Г Г±ГЄГЁ Гў ГЄГ ГўГ»Г·ГЄГЁ. ГЉГ®Г°Г®Г·ГҐ, ГўГ±ГҐ ГЄГ ГЄ ГЁ Г¤Г®Г«Г¦Г­Г® ГЎГ»ГІГј :-)
 */
 void WINAPI FarRecursiveSearch(const wchar_t *InitDir,const wchar_t *Mask,FRSUSERFUNC Func,DWORD Flags,void *Param)
 {
@@ -90,7 +90,7 @@ void WINAPI FarRecursiveSearch(const wchar_t *InitDir,const wchar_t *Mask,FRSUSE
 
 		if (!FMask.Set(Mask, FMF_SILENT)) return;
 
-		Flags=Flags&0x000000FF; // только младший байт!
+		Flags=Flags&0x000000FF; // ГІГ®Г«ГјГЄГ® Г¬Г«Г Г¤ГёГЁГ© ГЎГ Г©ГІ!
 		ScanTree ScTree(Flags & FRS_RETUPDIR,Flags & FRS_RECUR, Flags & FRS_SCANSYMLINK);
 		FAR_FIND_DATA_EX FindData;
 		string strFullName;
@@ -116,10 +116,10 @@ void WINAPI FarRecursiveSearch(const wchar_t *InitDir,const wchar_t *Mask,FRSUSE
 }
 
 /* $ 14.09.2000 SVS
- + Функция FarMkTemp - получение имени временного файла с полным путем.
-    Dest - приемник результата
-    Template - шаблон по правилам функции mktemp, например "FarTmpXXXXXX"
-    Вернет требуемый размер приемника.
+ + Г”ГіГ­ГЄГ¶ГЁГї FarMkTemp - ГЇГ®Г«ГіГ·ГҐГ­ГЁГҐ ГЁГ¬ГҐГ­ГЁ ГўГ°ГҐГ¬ГҐГ­Г­Г®ГЈГ® ГґГ Г©Г«Г  Г± ГЇГ®Г«Г­Г»Г¬ ГЇГіГІГҐГ¬.
+    Dest - ГЇГ°ГЁГҐГ¬Г­ГЁГЄ Г°ГҐГ§ГіГ«ГјГІГ ГІГ 
+    Template - ГёГ ГЎГ«Г®Г­ ГЇГ® ГЇГ°Г ГўГЁГ«Г Г¬ ГґГіГ­ГЄГ¶ГЁГЁ mktemp, Г­Г ГЇГ°ГЁГ¬ГҐГ° "FarTmpXXXXXX"
+    Г‚ГҐГ°Г­ГҐГІ ГІГ°ГҐГЎГіГҐГ¬Г»Г© Г°Г Г§Г¬ГҐГ° ГЇГ°ГЁГҐГ¬Г­ГЁГЄГ .
 */
 int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix)
 {
@@ -132,7 +132,7 @@ int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix)
 }
 
 /*
-             v - точка
+             v - ГІГ®Г·ГЄГ 
    prefXXX X X XXX
        \ / ^   ^^^\ PID + TID
         |  \------/
@@ -143,7 +143,6 @@ string& FarMkTempEx(string &strDest, const wchar_t *Prefix, BOOL WithTempPath, c
 {
 	if (!(Prefix && *Prefix))
 		Prefix=L"FTMP";
-
 	string strPath = L".";
 
 	if (WithTempPath)

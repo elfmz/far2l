@@ -3091,7 +3091,7 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 						int MenuKey=InputRecordToKey(&ir);
 
 						// ââîä
-						if((MenuKey>=L' ' && MenuKey<=WCHAR_MAX) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
+						if((MenuKey>=L' ' && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
 						{
 							string strPrev;
 							GetString(strPrev);

@@ -1,0 +1,18 @@
+# Continuous Integration with https://travis-ci.org/
+language: cpp
+dist: trusty
+
+before_install:
+- sudo apt-get update -qq
+- sudo apt-get install -y libwxgtk3.0-dev
+
+- sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+- sudo apt-get update -q
+- sudo apt-get install gcc-5 g++-5 -y
+
+install:
+- export CXX="g++-5"
+
+script:
+- g++ --version
+- make

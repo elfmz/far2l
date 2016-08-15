@@ -1,5 +1,9 @@
 # Continuous Integration with https://travis-ci.org/
 language: cpp
 
+# Use Ubuntu 14.04 - https://docs.travis-ci.com/user/trusty-ci-environment/
+sudo: required
+dist: trusty
+
 script:
 - make

@@ -3,6 +3,7 @@
 #include "ConsoleInput.h"
 #include "wxWinTranslations.h"
 #include <wx/fontdlg.h>
+#include <wx/fontenum.h>
 #include <wx/textfile.h>
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
@@ -204,6 +205,27 @@ WinPortFrame::~WinPortFrame()
 
 
 ///////////////////////////
+class FixedFontLookup : wxFontEnumerator
+{
+	wxString _result;
+	virtual bool OnFacename(const wxString &font)
+	{
+		_result = font;
+		return false;
+	}
+public:
+
+	wxString Query()
+	{
+		_result.clear();
+		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
+		fprintf(stderr, "FixedFontLookup: %ls\n", (const wchar_t *)_result);
+		return _result;
+	}
+	
+	
+};
+
 void InitializeFont(wxFrame *frame, wxFont& font)
 {
 	std::string path = getenv("HOME");
@@ -223,18 +245,19 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 		file.Create(path);
 	
 	for (;;) {
-		font = wxFont(wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT));
-		wxFontDialog fd(frame);
-		fd.GetFontData().SetInitialFont(font);	
-		if (fd.ShowModal()==wxID_OK) {
-			wxFontData &data = fd.GetFontData();
-			font = data.GetChosenFont();
-			if (font.IsOk()) {
-				file.InsertLine(font.GetNativeFontInfoDesc(), 0);
-				file.Write();
-				return;
-			}
-		}		
+		FixedFontLookup ffl;
+		wxString fixed_font = ffl.Query();
+		if (!fixed_font.empty()) {
+			font = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, fixed_font);
+		}
+		if (fixed_font.empty() || !font.IsOk())
+			font = wxFont(wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT));
+		font = wxGetFontFromUser(frame, font);
+		if (font.IsOk()) {
+			file.InsertLine(font.GetNativeFontInfoDesc(), 0);
+			file.Write();
+			return;
+		}
 	}
 }
 

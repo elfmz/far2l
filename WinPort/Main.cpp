@@ -230,7 +230,7 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 {
 	std::string path = getenv("HOME");
 	path+= "/.WinPort";
-	mkdir(path.c_str(), 0666);
+	mkdir(path.c_str(), 0777);
 	path+= "/font";
 	wxTextFile file(path);
 	if (file.Exists() && file.Open()) {

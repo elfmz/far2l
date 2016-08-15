@@ -1,0 +1,12 @@
+# Continuous Integration with https://travis-ci.org/
+language: cpp
+
+# Use Ubuntu 14.04 - https://docs.travis-ci.com/user/trusty-ci-environment/
+sudo: required
+dist: trusty
+
+install:
+- sudo apt-get -y install libwxgtk3.0-dev libglib2.0-dev
+
+script:
+- make

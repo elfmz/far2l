@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <codecvt> 
 #include <mutex>
 
 #include "WinCompat.h"

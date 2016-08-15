@@ -78,6 +78,7 @@ private:
 	bool _cursor_state;
 	wxKeyEvent _last_skipped_keydown;
 	wxFont _font;
+	bool _delayed_init_done;
 
 	void UpdateLargestScreenSize();
 };
@@ -134,7 +135,7 @@ class WinPortAppThread : public wxThread
 {
 public:
 	WinPortAppThread(int argc, char **argv, int(*appmain)(int argc, char **argv))
-		: _argv(argv), _argc(argc), _appmain(appmain), wxThread(wxTHREAD_DETACHED) {  }
+		: wxThread(wxTHREAD_DETACHED), _argv(argv), _argc(argc), _appmain(appmain)  {  }
 
 protected:
 	virtual ExitCode Entry()
@@ -145,9 +146,9 @@ protected:
 	}
 
 private:
-	int(*_appmain)(int argc, char **argv);
 	char **_argv;
 	int _argc;
+	int(*_appmain)(int argc, char **argv);
 	int _r;
 } *g_winport_app_thread = NULL;
 
@@ -170,7 +171,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 bool WinPortApp::OnInit()
 {
-	WinPortFrame *frame = new WinPortFrame("WinPortApp", wxPoint(0, 0), wxSize(100, 100) );
+	WinPortFrame *frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
     //WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(450, 340) );
     frame->Show( true );
 
@@ -193,7 +194,7 @@ bool WinPortApp::OnInit()
 WinPortFrame::WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
         : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
-	_panel = new WinPortPanel(this, wxPoint(0, 0), wxSize(0, 0));
+	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
 }
 
@@ -261,9 +262,11 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 	}
 }
 
+
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
-        : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), _cursor_state(false), 
-		_cursor_timer(NULL), _frame(frame), _white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH)
+        : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
+		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
+		_cursor_state(false), _delayed_init_done(false)
 {
 	InitializeFont(frame, _font);
 	_white_rectangle.SelectObject(_white_bitmap);	
@@ -288,7 +291,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 	_cursor_timer = new wxTimer(this, TIMER_ID_CURSOR);
 	_cursor_timer->Start(500);
 	OnConsoleOutputTitleChanged();
-	UpdateLargestScreenSize();
+	UpdateLargestScreenSize();	
 }
 
 WinPortPanel::~WinPortPanel()
@@ -296,6 +299,7 @@ WinPortPanel::~WinPortPanel()
 	delete _cursor_timer;
 	g_wx_con_out.SetListener(NULL);
 }
+
 
 void WinPortPanel::UpdateLargestScreenSize()
 {
@@ -311,6 +315,10 @@ void WinPortPanel::UpdateLargestScreenSize()
 
 void WinPortPanel::OnTimerCursor(wxTimerEvent& event)
 {
+	if (!_delayed_init_done) {
+		_delayed_init_done = true;
+		UpdateLargestScreenSize();
+	}
 	_cursor_state = !_cursor_state;
 	const COORD &pos = g_wx_con_out.GetCursor();
 	SMALL_RECT area = {pos.X, pos.Y, pos.X, pos.Y};

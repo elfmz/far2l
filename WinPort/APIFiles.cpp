@@ -300,6 +300,7 @@ extern "C"
 
 	DWORD WINPORT(SetFileAttributes)(LPCWSTR lpFileName, DWORD dwAttributes)
 	{
+		fprintf(stderr, "NOT SUPPORTED: SetFileAttributes('%ls', 0x%x)\n", lpFileName, dwAttributes);
 		return TRUE;
 	}
 
@@ -325,7 +326,7 @@ extern "C"
 		if (!wph) {
 			return FALSE;
 		}
-
+		//fsync(wph->fd);
 		return TRUE;
 	}
 

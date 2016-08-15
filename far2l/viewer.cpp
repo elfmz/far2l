@@ -2447,8 +2447,9 @@ void Viewer::Search(int Next,int FirstChar)
 				   Ñäåëàíà ñðàçó ïðîâåðêà íà Case sensitive è Hex
 				   è åñëè íåò, òîãäà Buf ïðèâîäèòñÿ ê âåðõíåìó ðåãèñòðó
 				*/
-				if (!Case && !SearchHex)
+				if (!Case && !SearchHex) {
 					WINPORT(CharUpperBuff)(Buf,ReadSize);
+				}
 
 				/* $ 01.08.2000 KM
 				   Óáðàí êóñîê òåêñòà ïîñëå ïðèâåäåíèÿ ïîèñêîâîé ñòðîêè
@@ -2724,10 +2725,15 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 			}
 		}
 
-		memcpy(Buf, TmpBuf, Count*2);
 		ReadSize+=(ReadSize & 1);
+		Count = ReadSize / 2;
+		for (int i = 0; i<Count; ++i) {
+			Buf[i] = (wchar_t)*(unsigned short *)&TmpBuf[i * 2];
+		}
+		//memcpy(Buf, TmpBuf, Count*2);
+		
 		xf_free(TmpBuf);
-		return(ReadSize/2);
+		return Count;
 	}
 	else
 	{

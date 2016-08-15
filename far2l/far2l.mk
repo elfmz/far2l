@@ -92,7 +92,7 @@ Objects=$(Objects0) $(Objects1) $(Objects2) $(Objects3)
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" "../.build-debug/farlng" $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d $(Objects) 
 	@$(MakeDirCommand) $(@D)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
@@ -100,18 +100,6 @@ $(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" "../.build-
 	@echo $(Objects2) >> $(ObjectsFileList)
 	@echo $(Objects3) >> $(ObjectsFileList)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
-
-"../.build-debug/WinPort":
-	@$(MakeDirCommand) "../.build-debug"
-	@echo stam > "../.build-debug/WinPort"
-
-
-"../.build-debug/farlng":
-	@$(MakeDirCommand) "../.build-debug"
-	@echo stam > "../.build-debug/farlng"
-
-
-
 
 PostBuild:
 	@echo Executing Post Build commands ...

@@ -11,3 +11,6 @@ FAR for Windows<br>
 Wine<br>
 ANSICON<br>
 
+Before building:
+apt-get install gawk libglib2.0-dev libwxbase3.0-dev wx3.0-headers libwxgtk3.0-dev
+..or similar according to your system 

@@ -1,10 +1,10 @@
 /*
 udlist.cpp
 
-Список чего-либо, перечисленного через символ-разделитель. Если нужно, чтобы
-элемент списка содержал разделитель, то этот элемент следует заключить в
-кавычки. Если кроме разделителя ничего больше в строке нет, то считается, что
-это не разделитель, а простой символ.
+Г‘ГЇГЁГ±Г®ГЄ Г·ГҐГЈГ®-Г«ГЁГЎГ®, ГЇГҐГ°ГҐГ·ГЁГ±Г«ГҐГ­Г­Г®ГЈГ® Г·ГҐГ°ГҐГ§ Г±ГЁГ¬ГўГ®Г«-Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«Гј. Г…Г±Г«ГЁ Г­ГіГ¦Г­Г®, Г·ГІГ®ГЎГ»
+ГЅГ«ГҐГ¬ГҐГ­ГІ Г±ГЇГЁГ±ГЄГ  Г±Г®Г¤ГҐГ°Г¦Г Г« Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«Гј, ГІГ® ГЅГІГ®ГІ ГЅГ«ГҐГ¬ГҐГ­ГІ Г±Г«ГҐГ¤ГіГҐГІ Г§Г ГЄГ«ГѕГ·ГЁГІГј Гў
+ГЄГ ГўГ»Г·ГЄГЁ. Г…Г±Г«ГЁ ГЄГ°Г®Г¬ГҐ Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«Гї Г­ГЁГ·ГҐГЈГ® ГЎГ®Г«ГјГёГҐ Гў Г±ГІГ°Г®ГЄГҐ Г­ГҐГІ, ГІГ® Г±Г·ГЁГІГ ГҐГІГ±Гї, Г·ГІГ®
+ГЅГІГ® Г­ГҐ Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«Гј, Г  ГЇГ°Г®Г±ГІГ®Г© Г±ГЁГ¬ГўГ®Г«.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -182,7 +182,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 {
 	if (AddToList)
 	{
-		if (List && !*List) // пусто, нечего добавлять
+		if (List && !*List) // ГЇГіГ±ГІГ®, Г­ГҐГ·ГҐГЈГ® Г¤Г®ГЎГ ГўГ«ГїГІГј
 			return true;
 	}
 	else
@@ -207,7 +207,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 			{
 				if (Length > 0)
 				{
-					if (PackAsterisks && 3==Length && 0==memcmp(CurList, L"*.*", 6))
+					if (PackAsterisks && 3==Length && 0==memcmp(CurList, L"*.*", 3 * sizeof(wchar_t)))
 					{
 						item=L"*";
 
@@ -248,7 +248,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 							{
 								Length=StrLength(item.Str);
 								/* $ 18.09.2002 DJ
-								   выделялось на 1 байт меньше, чем надо
+								   ГўГ»Г¤ГҐГ«ГїГ«Г®Г±Гј Г­Г  1 ГЎГ Г©ГІ Г¬ГҐГ­ГјГёГҐ, Г·ГҐГ¬ Г­Г Г¤Г®
 								*/
 								item.Str=static_cast<wchar_t*>(xf_realloc(item.Str, (Length+2)*sizeof(wchar_t)));
 
@@ -287,10 +287,10 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 			const wchar_t *End=List+1;
 
 			if ( IsTrim )
-				while (IsSpace(*End)) ++End; // пропустим мусор
+				while (IsSpace(*End)) ++End; // ГЇГ°Г®ГЇГіГ±ГІГЁГ¬ Г¬ГіГ±Г®Г°
 
-			if (!*End) // Если кроме разделителя ничего больше в строке нет,
-			{         // то считается, что это не разделитель, а простой символ
+			if (!*End) // Г…Г±Г«ГЁ ГЄГ°Г®Г¬ГҐ Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«Гї Г­ГЁГ·ГҐГЈГ® ГЎГ®Г«ГјГёГҐ Гў Г±ГІГ°Г®ГЄГҐ Г­ГҐГІ,
+			{         // ГІГ® Г±Г·ГЁГІГ ГҐГІГ±Гї, Г·ГІГ® ГЅГІГ® Г­ГҐ Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«Гј, Г  ГЇГ°Г®Г±ГІГ®Г© Г±ГЁГ¬ГўГ®Г«
 				item=L" ";
 
 				if (item.Str)
@@ -314,7 +314,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 
 		if (!Sort)
 			Array.Sort(reinterpret_cast<TARRAYCMPFUNC>(CmpItems));
-		else if (!Unique) // чтобы не сортировать уже отсортированное
+		else if (!Unique) // Г·ГІГ®ГЎГ» Г­ГҐ Г±Г®Г°ГІГЁГ°Г®ГўГ ГІГј ГіГ¦ГҐ Г®ГІГ±Г®Г°ГІГЁГ°Г®ГўГ Г­Г­Г®ГҐ
 			Array.Sort();
 
 		size_t i=0, maxI=Array.getSize();
@@ -361,8 +361,8 @@ const wchar_t *UserDefinedList::Skip(const wchar_t *Str, int &Length, int &RealL
 	const wchar_t *cur=Str;
 	bool InBrackets=false, InQoutes = (*cur==L'\"');
 
-	if (!InQoutes) // если мы в кавычках, то обработка будет позже и чуть сложнее
-		while (*cur) // важно! проверка *cur должна стоять первой
+	if (!InQoutes) // ГҐГ±Г«ГЁ Г¬Г» Гў ГЄГ ГўГ»Г·ГЄГ Гµ, ГІГ® Г®ГЎГ°Г ГЎГ®ГІГЄГ  ГЎГіГ¤ГҐГІ ГЇГ®Г§Г¦ГҐ ГЁ Г·ГіГІГј Г±Г«Г®Г¦Г­ГҐГҐ
+		while (*cur) // ГўГ Г¦Г­Г®! ГЇГ°Г®ГўГҐГ°ГЄГ  *cur Г¤Г®Г«Г¦Г­Г  Г±ГІГ®ГїГІГј ГЇГҐГ°ГўГ®Г©
 		{
 			if (ProcessBrackets)
 			{
@@ -396,7 +396,7 @@ const wchar_t *UserDefinedList::Skip(const wchar_t *Str, int &Length, int &RealL
 
 	if ( IsUnQuotes )
 	{
-		// мы в кавычках - захватим все отсюда и до следующих кавычек
+		// Г¬Г» Гў ГЄГ ГўГ»Г·ГЄГ Гµ - Г§Г ГµГўГ ГІГЁГ¬ ГўГ±ГҐ Г®ГІГ±ГѕГ¤Г  ГЁ Г¤Г® Г±Г«ГҐГ¤ГіГѕГ№ГЁГµ ГЄГ ГўГ»Г·ГҐГЄ
 		++cur;
 		const wchar_t *QuoteEnd=wcschr(cur, L'\"');
 

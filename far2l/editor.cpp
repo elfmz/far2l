@@ -116,7 +116,7 @@ Editor::Editor(ScreenObject *pOwner,bool DialogUsed):
 	   По умолчанию конец строки так или иначе равен \r\n, поэтому нечего
 	   пудрить мозги, пропишем его явно.
 	*/
-	wcscpy(GlobalEOL,DOS_EOL_fmt);
+	wcscpy(GlobalEOL, NATIVE_EOLW);
 	memset(&SavePos,0xff,sizeof(SavePos));
 	InsertString(nullptr, 0);
 }
@@ -3180,7 +3180,7 @@ void Editor::InsertString()
 	   у нас равен DOS_EOL_fmt и установим его явно.
 	*/
 	if (!*EndSeq)
-		CurLine->SetEOL(*GlobalEOL?GlobalEOL:DOS_EOL_fmt);
+		CurLine->SetEOL(*GlobalEOL?GlobalEOL:NATIVE_EOLW);
 
 	CurPos=CurLine->GetCurPos();
 	CurLine->GetSelection(SelStart,SelEnd);
@@ -4092,8 +4092,8 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 
 		if (EndSel == -1)
 		{
-			wcscpy(CopyData + DataSize, DOS_EOL_fmt);
-			DataSize += 2;
+			wcscpy(CopyData + DataSize, NATIVE_EOLW);
+			DataSize += wcslen(NATIVE_EOLW);
 		}
 	}
 
@@ -5061,8 +5061,8 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 		}
 
 		DataSize+=TBlockSizeX;
-		wcscpy(CopyData+DataSize,DOS_EOL_fmt);
-		DataSize+=2;
+		wcscpy(CopyData+DataSize, NATIVE_EOLW);
+		DataSize+= wcslen(NATIVE_EOLW);
 	}
 
 	return CopyData;

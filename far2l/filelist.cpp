@@ -2347,10 +2347,9 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 		ExtPtr=wcsrchr(strFileName,L'.');
 		int ExeType=FALSE,BatType=FALSE;
 
-		if (ExtPtr)
+		if (ExtPtr) 
 		{
-			ExeType=!StrCmpI(ExtPtr,L".exe") || !StrCmpI(ExtPtr,L".com");
-			BatType=IsBatchExtType(ExtPtr);
+			ExeType = (!StrCmpI(ExtPtr,L".sh") || !StrCmpI(ExtPtr,L".py") || !StrCmpI(ExtPtr,L".pl"));//TODO: detect executable bit
 		}
 
 		if (EnableExec && (ExeType || BatType))
@@ -3858,8 +3857,8 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 	{
 		if (DataSize>0)
 		{
-			wcscat(CopyData+DataSize,L"\r\n");
-			DataSize+=2;
+			wcscat(CopyData+DataSize, NATIVE_EOLW);
+			DataSize+= wcslen(NATIVE_EOLW);
 		}
 
 		strQuotedName = (ShowShortNames && !strSelShortName.IsEmpty()) ? strSelShortName:strSelName;

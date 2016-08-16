@@ -716,8 +716,8 @@ bool Panel::MakeListFile(string &strListFileName,bool ShortNames,const wchar_t *
 		if (ListFile.Open(strListFileName,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,CREATE_ALWAYS))
 		{
 			UINT CodePage=CP_OEMCP;
-			LPCVOID Eol="\r\n";
-			DWORD EolSize=2;
+			LPCVOID Eol = NATIVE_EOL;
+			DWORD EolSize = strlen(NATIVE_EOL);
 
 			if (Modifers && *Modifers)
 			{
@@ -735,8 +735,8 @@ bool Panel::MakeListFile(string &strListFileName,bool ShortNames,const wchar_t *
 						CodePage=CP_UNICODE;
 						Signature=SIGN_UNICODE;
 						SignatureSize=2;
-						Eol=DOS_EOL_fmt;
-						EolSize=2*sizeof(WCHAR);
+						Eol=NATIVE_EOLW;
+						EolSize=2*wcslen(NATIVE_EOLW);
 					}
 					else
 					{

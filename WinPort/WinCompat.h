@@ -1463,3 +1463,10 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 
 #endif
 
+#ifdef _WIN32
+# define NATIVE_EOL		"\r\n"
+# define NATIVE_EOLW		L"\r\n"
+#else
+# define NATIVE_EOL		"\n"
+# define NATIVE_EOLW		L"\n"
+#endif

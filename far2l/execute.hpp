@@ -35,8 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow = false, bool DirectRun = false, bool FolderRun = false, bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
 
-bool IsBatchExtType(const wchar_t *ExtPtr);
-
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 
 bool ProcessOSAliases(string &strStr);

@@ -1175,6 +1175,17 @@ typedef struct _cpinfo {
     BYTE    LeadByte[MAX_LEADBYTES];        // lead byte ranges
 } CPINFO, *LPCPINFO;
 
+typedef struct _cpinfoex {
+  UINT  MaxCharSize;
+  BYTE  DefaultChar[MAX_DEFAULTCHAR];
+  BYTE  LeadByte[MAX_LEADBYTES];
+  WCHAR UnicodeDefaultChar;
+  UINT  CodePage;
+  TCHAR CodePageName[MAX_PATH];
+} CPINFOEX, *LPCPINFOEX;
+
+typedef BOOL (*CODEPAGE_ENUMPROCW)(LPWSTR);
+
 
 #define ENABLE_PROCESSED_INPUT  0x0001
 #define ENABLE_LINE_INPUT       0x0002

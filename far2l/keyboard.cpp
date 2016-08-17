@@ -323,44 +323,6 @@ void InitKeysArray()
 	HKL Layout[10];
 	int LayoutNumber=WINPORT(GetKeyboardLayoutList)(ARRAYSIZE(Layout),Layout); // âîçâðàùàåò 0! â telnet
 
-	if (!LayoutNumber)
-	{
-		HKEY hk=nullptr;
-
-		if (WINPORT(RegOpenKeyEx)(HKEY_CURRENT_USER, L"Keyboard Layout/Preload", 0, KEY_READ, &hk)==ERROR_SUCCESS)
-		{
-			DWORD dwType, dwIndex, dwDataSize, dwValueSize, dwKeyb;
-			wchar_t SData[16], SValue[16];
-
-			for (dwIndex=0; dwIndex < (int)ARRAYSIZE(Layout); dwIndex++)
-			{
-				dwValueSize=16;
-				dwDataSize=16*sizeof(wchar_t);
-
-				if (ERROR_SUCCESS==WINPORT(RegEnumValue)(hk, dwIndex, SValue, &dwValueSize, nullptr, &dwType,(LPBYTE)SData, &dwDataSize))
-				{
-					if (dwType == REG_SZ && isdigit(SValue[0]) &&
-					        (isdigit(SData[0]) || (SData[0] >= L'a' && SData[0] <= L'f') || (SData[0] >= L'A' && SData[0] <= L'F')))
-					{
-						wchar_t *endptr=nullptr;
-						dwKeyb=wcstoul(SData, &endptr, 16); // SData=="00000419"
-
-						if (dwKeyb)
-						{
-							if (dwKeyb <= 0xFFFF)
-								dwKeyb |= (dwKeyb << 16);
-
-							Layout[LayoutNumber++] = (HKL)((DWORD_PTR)dwKeyb);
-						}
-					}
-				}
-				else
-					break;
-			}
-
-			WINPORT(RegCloseKey)(hk);
-		}
-	}
 
 #if 0
 	memset(KeyToVKey,0,sizeof(KeyToVKey));

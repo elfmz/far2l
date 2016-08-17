@@ -325,6 +325,7 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	}
 
 	if (_resize_pending) {
+		_resize_pending = false;
 		DWORD conmode = 0;
 		if (WINPORT(GetConsoleMode)(NULL, &conmode) && (conmode&ENABLE_WINDOW_INPUT)!=0) {
 			unsigned int prev_width = 0, prev_height = 0;
@@ -335,6 +336,7 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 			width/= font_width; 
 			height/= font_height;
 			if (width!=(int)prev_width || height!=(int)prev_height) {
+				fprintf(stderr, "Changing size: %u x %u\n", width, height);
 				g_wx_con_out.SetSize(width, height);
 				INPUT_RECORD ir = {0};
 				ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
@@ -344,7 +346,7 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 			}
 	
 			Refresh(false);
-			UpdateLargestScreenSize();		
+			UpdateLargestScreenSize();
 		}
 	}
 	
@@ -439,8 +441,9 @@ void WinPortPanel::OnTitleChanged( wxCommandEvent& event )
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
+	fprintf(stderr, "OnKeyDown: %x %x\n", event.GetUnicodeKey(), event.GetKeyCode());
 	if (event.GetKeyCode()==WXK_RETURN && event.AltDown() &&
-		!event.ShiftDown() && !event.ControlDown()) {
+		!event.ShiftDown() && !event.ControlDown() && !event.MetaDown()) {
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
 		event.Skip();
 		_resize_pending = true;
@@ -448,7 +451,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 	
 	wx2INPUT_RECORD ir(event, TRUE);
-	fprintf(stderr, "OnKeyDown: %x %x\n", event.GetUnicodeKey(), event.GetKeyCode());
 	if (event.GetUnicodeKey()==WXK_NONE&& event.GetKeyCode()!=WXK_DELETE)
 		g_wx_con_in.Enqueue(&ir, 1);
 	else 
@@ -572,7 +574,12 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 			ccc.SetBackgroundAttributes(attributes);
 			unsigned int x = cx * font_width;
 			unsigned int y = cy * font_height;
+			//int fill_x = x, fill_y = y, fill_width = font_width, fill_height = font_height;
+			//if (fill_x < font_width) { fill_width+= fill_x; fill_x = 0; }
+			//if (fill_y < font_height) { fill_height+= fill_y; fill_y = 0; };
+			
 			dc.DrawRectangle(x, y, font_width, font_height);
+			
 			WCHAR sz[2] = {line[cx].Char.UnicodeChar, 0};
 			if (sz[0] && sz[0]!=L' ') {
 				ccc.SetTextAttributes(attributes);

@@ -1650,7 +1650,7 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	FastShow();
-	//todo Sleep(1);
+	WINPORT(Sleep)(10);
 
 	return TRUE;
 }

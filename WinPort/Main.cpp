@@ -451,7 +451,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 	
 	wx2INPUT_RECORD ir(event, TRUE);
-	if (event.GetUnicodeKey()==WXK_NONE&& event.GetKeyCode()!=WXK_DELETE)
+	if (event.GetUnicodeKey()==WXK_NONE && event.GetKeyCode()!=WXK_DELETE)
 		g_wx_con_in.Enqueue(&ir, 1);
 	else 
 		_last_skipped_keydown = event;
@@ -477,7 +477,10 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		ir_down.Event.KeyEvent.uChar = 
 			ir_up.Event.KeyEvent.uChar = 
 				ir_char.Event.KeyEvent.uChar;
-//		fprintf(stderr, "OnChar: %wc\n", event.GetUnicodeKey());
+				
+		//workaround for non-english input
+		if ( ir_down.Event.KeyEvent.uChar.UnicodeChar > 0x7f)
+			ir_down.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 
 		g_wx_con_in.Enqueue(&ir_down, 1);
 		g_wx_con_in.Enqueue(&ir_up, 1);

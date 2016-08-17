@@ -1597,7 +1597,7 @@ int Edit::InsertKey(int Key)
 					return FALSE;
 
 				Str=NewStr;
-				swprintf(&Str[StrSize],CurPos+2,L"%*s",CurPos-StrSize,L"");
+				swprintf(&Str[StrSize],CurPos+2,L"%*ls",CurPos-StrSize,L"");
 				//memset(Str+StrSize,' ',CurPos-StrSize);Str[CurPos+1]=0;
 				StrSize=CurPos+1;
 			}
@@ -1972,7 +1972,7 @@ void Edit::InsertBinaryString(const wchar_t *Str,int Length)
 					return;
 
 				this->Str=NewStr;
-				swprintf(&this->Str[StrSize],CurPos+1,L"%*s",CurPos-StrSize,L"");
+				swprintf(&this->Str[StrSize],CurPos+1,L"%*ls",CurPos-StrSize,L"");
 				//memset(this->Str+StrSize,' ',CurPos-StrSize);this->Str[CurPos+1]=0;
 				StrSize=CurPos;
 			}

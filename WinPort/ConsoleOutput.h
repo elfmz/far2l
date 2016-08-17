@@ -43,6 +43,7 @@ class ConsoleOutput
 			WORD attr;
 		};
 	};
+	bool ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow();
 

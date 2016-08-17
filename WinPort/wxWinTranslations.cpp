@@ -158,10 +158,18 @@ int wxKeyCode2WinKeyCode(int code)
 	case L'\\': return VK_OEM_5;
 	case L']': return VK_OEM_6;
 	case L'\'': return VK_OEM_7;
+	case L'(': return '9';
+	case L')': return '0';
 	}
 	//fprintf(stderr, "not translated %u %lc", code, code);
 	return code;
 }
+
+/*int wxKeyIsEnhanced(int code)
+{
+	
+	return false;
+}*/
 
 wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 {
@@ -172,6 +180,10 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	Event.KeyEvent.wVirtualScanCode = 0;
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
+	
+//	if (wxKeyIsEnhanced(event.GetKeyCode()))
+//		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+		
 	if (event.ShiftDown())
 		Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
 

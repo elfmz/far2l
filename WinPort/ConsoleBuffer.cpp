@@ -97,6 +97,22 @@ void ConsoleBuffer::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos
 	}
 }
 
+bool ConsoleBuffer::Read(CHAR_INFO &ch, COORD screen_pos)
+{
+	if (screen_pos.X < 0 || screen_pos.Y < 0 || screen_pos.X >= _width)
+		return false;
+
+	size_t index = screen_pos.Y;
+	index*= _width;
+	index+= screen_pos.X;
+
+	if (index >= _console_chars.size())
+		return false;
+
+	ch = _console_chars[index];
+	return true;
+}
+
 bool ConsoleBuffer::Write(const CHAR_INFO &ch, COORD screen_pos)
 {
 	if (screen_pos.X < 0 || screen_pos.Y < 0 || screen_pos.X >= _width)

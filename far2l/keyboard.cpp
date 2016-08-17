@@ -77,8 +77,8 @@ int ReturnAltValue=0;
 /* end Ãëîáàëüíûå ïåðåìåííûå */
 
 
-static SHORT KeyToVKey[MAX_VKEY_CODE];
-static WCHAR VKeyToASCII[0x200];
+//static SHORT KeyToVKey[MAX_VKEY_CODE];
+//static WCHAR VKeyToASCII[0x200];
 
 static unsigned int AltValue=0;
 static int KeyCodeForALT_LastPressed=0;
@@ -362,6 +362,7 @@ void InitKeysArray()
 		}
 	}
 
+#if 0
 	memset(KeyToVKey,0,sizeof(KeyToVKey));
 	memset(VKeyToASCII,0,sizeof(VKeyToASCII));
 
@@ -414,6 +415,7 @@ void InitKeysArray()
 	//if(GetRegKey(L"System",L"KeyToKeyMap",KeyToKeyMap,KeyToKey,sizeof(KeyToKeyMap)))
 	//memcpy(KeyToKey,KeyToKeyMap,sizeof(KeyToKey));
 	//_SVS(SysLogDump("KeyToKey readed",0,KeyToKey,sizeof(KeyToKey),nullptr));
+#endif
 }
 
 //Ñðàâíèâàåò åñëè Key è CompareKey ýòî îäíà è òà æå êëàâèøà â ðàçíûõ ðàñêëàäêàõ
@@ -421,8 +423,8 @@ bool KeyToKeyLayoutCompare(int Key, int CompareKey)
 {
 	_KEYMACRO(CleverSysLog Clev(L"KeyToKeyLayoutCompare()"));
 	_KEYMACRO(SysLog(L"Param: Key=%08X",Key));
-	Key = KeyToVKey[Key&0xFFFF]&0xFF;
-	CompareKey = KeyToVKey[CompareKey&0xFFFF]&0xFF;
+//	Key = KeyToVKey[Key&0xFFFF]&0xFF;
+//	CompareKey = KeyToVKey[CompareKey&0xFFFF]&0xFF;
 
 	if (Key  && Key == CompareKey)
 		return true;
@@ -435,12 +437,14 @@ int KeyToKeyLayout(int Key)
 {
 	_KEYMACRO(CleverSysLog Clev(L"KeyToKeyLayout()"));
 	_KEYMACRO(SysLog(L"Param: Key=%08X",Key));
+return Key;
+/*
 	int VK = KeyToVKey[Key&0xFFFF];
 
 	if (VK && VKeyToASCII[VK])
 		return VKeyToASCII[VK];
 
-	return Key;
+	return Key;*/
 }
 
 /*
@@ -508,7 +512,7 @@ DWORD IsMouseButtonPressed()
 		GetInputRecord(&rec);
 	}
 
-	//todo Sleep(1);
+	WINPORT(Sleep)(10);
 	return MouseButtonState;
 }
 
@@ -799,7 +803,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		}
 
 		ScrBuf.Flush();
-		//todo Sleep(1);
+		WINPORT(Sleep)(10);
 
 		// Ïîçâîëÿåò èçáåæàòü ñèòóàöèè áëîêèðîâàíèÿ ìûøè
 		if (Opt.Mouse) // À íóæíî ëè ýòî óñëîâèå???
@@ -1068,7 +1072,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		int PScrX=ScrX;
 		int PScrY=ScrY;
 		//// // _SVS(SysLog(1,"GetInputRecord(WINDOW_BUFFER_SIZE_EVENT)"));
-		//todo Sleep(1);
+		WINPORT(Sleep)(10);
 		GetVideoMode(CurSize);
 		bool NotIgnore=Opt.WindowMode && (rec->Event.WindowBufferSizeEvent.dwSize.X!=CurSize.X || rec->Event.WindowBufferSizeEvent.dwSize.Y!=CurSize.Y);
 		if (PScrX+1 == CurSize.X && PScrY+1 == CurSize.Y && !NotIgnore)
@@ -1084,7 +1088,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			PrevScrX=PScrX;
 			PrevScrY=PScrY;
 			//// // _SVS(SysLog(-1,"GetInputRecord(WINDOW_BUFFER_SIZE_EVENT); return KEY_CONSOLE_BUFFER_RESIZE"));
-			//todo Sleep(1);
+			WINPORT(Sleep)(10);
 
 			if (FrameManager)
 			{
@@ -1515,7 +1519,7 @@ DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 			break;
 		}
 
-		//todo Sleep(1);
+		WINPORT(Sleep)(10);
 	}
 
 	if (KeyWait == KEY_CTRLALTSHIFTRELEASE || KeyWait == KEY_RCTRLALTSHIFTRELEASE)

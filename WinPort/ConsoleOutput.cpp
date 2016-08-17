@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "ConsoleOutput.h"
 
+#define TAB_WIDTH	8
+
 const char *utf8index(const char *s, size_t bytes, size_t pos)
 {    
     for ( ++pos; bytes; ++s, --bytes) {
@@ -228,6 +230,33 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	_buf.Write(&tmp[0], tmp_size, tmp_pos, scr_rect);
 }
 
+bool ConsoleOutput::ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos)
+{
+	CHAR_INFO ch;
+
+	switch (sm.kind) {
+		case SequenceModifier::SM_WRITE_STR:
+			ch.Char.UnicodeChar = *sm.str;
+			ch.Attributes = _attributes;
+			if ((_mode&ENABLE_PROCESSED_OUTPUT)!=0 && ch.Char.UnicodeChar==L'\t')
+				 ch.Char.UnicodeChar = L' ';
+			break;
+
+		case SequenceModifier::SM_FILL_CHAR:
+			if (!_buf.Read(ch, pos))
+				return false;
+			ch.Char.UnicodeChar = sm.chr;
+			break;
+
+		case SequenceModifier::SM_FILL_ATTR:
+			if (!_buf.Read(ch, pos))
+				return false;
+			ch.Attributes = sm.attr;
+			break;
+	}
+	return _buf.Write(ch, pos);
+}
+
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 {
 	size_t rv = 0;
@@ -237,14 +266,13 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 		std::lock_guard<std::mutex> lock(_mutex);
 		area.Left = area.Right = pos.X; 
 		area.Top = area.Bottom = pos.Y;
-		CHAR_INFO ch;
-		ch.Attributes = _attributes;
+
 		unsigned int width, height;
 		_buf.GetSize(width, height);
 		for (;;) {
 			if (!sm.count) break;
 			if (pos.X >= width) {
-				if ( (_mode&ENABLE_WRAP_AT_EOL_OUTPUT)!=0) {
+				if ( sm.kind!=SequenceModifier::SM_WRITE_STR || (_mode&ENABLE_WRAP_AT_EOL_OUTPUT)!=0) {
 					pos.X = 0;
 					pos.Y++;
 					if (pos.Y>=height) {
@@ -259,12 +287,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					pos.X = width - 1;
 			}
 
-			switch (sm.kind) {
-			case SequenceModifier::SM_WRITE_STR: ch.Char.UnicodeChar = *sm.str; sm.str++; break;
-			case SequenceModifier::SM_FILL_CHAR: ch.Char.UnicodeChar = sm.chr; break;
-			case SequenceModifier::SM_FILL_ATTR: ch.Attributes = sm.attr; break;
-			}
-			if (ch.Char.UnicodeChar==L'\b' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
+			if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\b' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				if (pos.X > 0) {
 					pos.X--;
 					if (area.Left > pos.X) area.Left = pos.X;
@@ -274,13 +297,16 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					if (area.Top > pos.Y) area.Top = pos.Y;
 					area.Right = width  -1;
 				}
+				CHAR_INFO ch;
 				ch.Char.UnicodeChar = L' ';
+				ch.Attributes = _attributes;
 				_buf.Write(ch, pos);
-				
-			} else if (ch.Char.UnicodeChar==L'\r' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
+
+			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\r' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
 				area.Left = 0;
-			} else if (ch.Char.UnicodeChar==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
+
+			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
 				area.Left = 0;
 				pos.Y++;
@@ -291,14 +317,22 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				} else
 					area.Bottom++;
 			} else {
-				_buf.Write(ch, pos);
+				ModifySequenceEntityAt(sm, pos);
 				area.Right++;
 				if (area.Right == width) 
 					area.Right = width - 1;
 				pos.X++;
 			}
-			--sm.count;
-			++rv;				
+			if (sm.kind==SequenceModifier::SM_WRITE_STR) {
+				if (*sm.str!=L'\t' || (pos.X%TAB_WIDTH)==0 || (_mode&ENABLE_PROCESSED_OUTPUT)==0) {
+					++sm.str;
+					--sm.count;
+					++rv;
+				}
+			} else {
+				--sm.count;
+				++rv;				
+			}
 		}	
 		if (scrolled) {
 			area.Left = 0;

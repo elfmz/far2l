@@ -163,7 +163,9 @@ extern "C" {
 	WINPORT_DECL(CharLower, LPWSTR, (LPWSTR lpsz));
 	WINPORT_DECL(GetOEMCP, UINT, ());
 	WINPORT_DECL(GetACP, UINT, ());
-	WINPORT_DECL(GetCPInfo, BOOL, (UINT CodePage, LPCPINFO lpCPInfo));	
+	WINPORT_DECL(GetCPInfo, BOOL, (UINT CodePage, LPCPINFO lpCPInfo));
+	WINPORT_DECL(GetCPInfoEx, BOOL, (UINT codepage, DWORD dwFlags, LPCPINFOEX cpinfo));
+	WINPORT_DECL(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags));
 
 	//synch
 	WINPORT_DECL(CreateThread, HANDLE, (LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, 

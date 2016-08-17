@@ -621,5 +621,65 @@ extern "C" {
 
 		return TRUE;
 	}
+	
+	WINPORT_DECL(GetCPInfoEx, BOOL, (UINT codepage, DWORD dwFlags, LPCPINFOEX cpinfo))
+	{
+		if (!WINPORT(GetCPInfo)( codepage, (LPCPINFO)cpinfo ))
+			return FALSE;
 
+		switch(codepage) {
+			case CP_UTF7:
+			{
+				static const WCHAR utf7[] = {'U','n','i','c','o','d','e',' ','(','U','T','F','-','7',')',0};
+
+				cpinfo->CodePage = CP_UTF7;
+				cpinfo->UnicodeDefaultChar = 0x3f;
+				strcpyW(cpinfo->CodePageName, utf7);
+				break;
+			}
+
+			case CP_UTF8:
+			{
+				static const WCHAR utf8[] = {'U','n','i','c','o','d','e',' ','(','U','T','F','-','8',')',0};
+
+				cpinfo->CodePage = CP_UTF8;
+				cpinfo->UnicodeDefaultChar = 0x3f;
+				strcpyW(cpinfo->CodePageName, utf8);
+				break;
+			}
+
+			default:
+			{
+				const union cptable *table = get_codepage_table( codepage );
+
+				cpinfo->CodePage = table->info.codepage;
+				cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
+				WINPORT(MultiByteToWideChar)( CP_ACP, 0, table->info.name, -1, cpinfo->CodePageName,
+                                 sizeof(cpinfo->CodePageName)/sizeof(WCHAR));
+				break;
+			}
+		}
+		return TRUE;
+	}
+
+	WINPORT_DECL(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags))
+	{
+	    const union cptable *table;
+	    WCHAR buffer[10], *p;
+	    int page, index = 0;
+	    for (;;)
+	    {
+        	if (!(table = wine_cp_enum_table( index++ ))) break;
+	        p = buffer + sizeof(buffer)/sizeof(WCHAR);
+	        *--p = 0;
+	        page = table->info.codepage;
+	        do {
+        	    *--p = '0' + (page % 10);
+	            page /= 10;
+	        } while( page );
+        	if (!lpfnCodePageEnum( p )) break;
+	    }
+	    return TRUE;
+	}
 }
+

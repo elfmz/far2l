@@ -223,6 +223,11 @@ extern "C" {
 #ifdef _WIN32
 		::Sleep(dwMilliseconds);
 #else
+		DWORD seconds  = dwMilliseconds / 1000;
+		if (seconds) {
+			sleep(seconds);
+			dwMilliseconds-= seconds * 1000;
+		}
 		usleep(dwMilliseconds * 1000);
 #endif
 	}

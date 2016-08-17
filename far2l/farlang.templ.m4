@@ -2795,31 +2795,31 @@ upd:"Create link to"
 upd:"Create link to"
 
 MCopyFiles
-"Копировать %d элемент%s"
-"Copy %d item%s"
-"Kopírovat %d polož%s"
-"Kopiere %d Objekt%s"
+"Копировать %d элемент%ls"
+"Copy %d item%ls"
+"Kopírovat %d polož%ls"
+"Kopiere %d Objekt%ls"
 " %d elem másolása"
 "Skopiuj %d plików"
-"Copiar %d ítem%s"
+"Copiar %d ítem%ls"
 
 MMoveFiles
-"Переименовать или перенести %d элемент%s"
-"Rename or move %d item%s"
-"Přejmenovat nebo přesunout %d polož%s"
-"Verschiebe %d Objekt%s"
+"Переименовать или перенести %d элемент%ls"
+"Rename or move %d item%ls"
+"Přejmenovat nebo přesunout %d polož%ls"
+"Verschiebe %d Objekt%ls"
 " %d elem átnevezése-mozgatása"
 "Zmień nazwę lub przenieś %d plików"
-"Renombrar o mover %d ítem%s"
+"Renombrar o mover %d ítem%ls"
 
 MLinkFiles
-"Создать ссылки на %d элемент%s"
-"Create links to %d item%s"
-upd:"Create links to %d item%s"
-upd:"Create links to %d item%s"
-upd:"Create links to %d item%s"
-upd:"Create links to %d item%s"
-upd:"Create links to %d item%s"
+"Создать ссылки на %d элемент%ls"
+"Create links to %d item%ls"
+upd:"Create links to %d item%ls"
+upd:"Create links to %d item%ls"
+upd:"Create links to %d item%ls"
+upd:"Create links to %d item%ls"
+upd:"Create links to %d item%ls"
 
 MCMLTargetTO
 " &в:"
@@ -3073,22 +3073,22 @@ l:
 "Error en puntos de montaje de volumen"
 
 MCopyMountVolFailed
-"Ошибка при монтировании диска '%s'"
-"Attempt to volume mount '%s'"
-"Pokus o připojení svazku '%s'"
-"Versuch Datenträger '%s' zu aktivieren"
-""%s" kötet mountolása"
-"Nie udało się zamontować woluminu '%s'"
-"Intento de montaje de volumen '%s'"
+"Ошибка при монтировании диска '%ls'"
+"Attempt to volume mount '%ls'"
+"Pokus o připojení svazku '%ls'"
+"Versuch Datenträger '%ls' zu aktivieren"
+""%ls" kötet mountolása"
+"Nie udało się zamontować woluminu '%ls'"
+"Intento de montaje de volumen '%ls'"
 
 MCopyMountVolFailed2
-"на '%s'"
-"at '%s' failed"
-"na '%s' selhal"
-"fehlgeschlagen bei '%s'"
-"nem sikerült: "%s""
-"w '%s' nie udało się"
-"a '%s' ha fallado"
+"на '%ls'"
+"at '%ls' failed"
+"na '%ls' selhal"
+"fehlgeschlagen bei '%ls'"
+"nem sikerült: "%ls""
+"w '%ls' nie udało się"
+"a '%ls' ha fallado"
 
 MCopyMountName
 "disk_%c"
@@ -3364,7 +3364,7 @@ l:
 "Konnte nicht kopieren"
 "Nem másolható"
 "Nie mogę skopiować"
-"No se puede copiar %s"
+"No se puede copiar %ls"
 
 MCannotMove
 "Ошибка переноса"
@@ -3373,7 +3373,7 @@ MCannotMove
 "Konnte nicht verschieben"
 "Nem mozgatható"
 "Nie mogę przenieść"
-"No se puede mover %s"
+"No se puede mover %ls"
 
 MCannotLink
 "Ошибка создания ссылки"
@@ -3382,7 +3382,7 @@ MCannotLink
 "Konnte nicht verlinken"
 "Nem linkelhető"
 "Nie mogę dowiązać"
-"No se puede enlazar %s"
+"No se puede enlazar %ls"
 
 MCannotCopyTo
 "в"
@@ -3391,7 +3391,7 @@ MCannotCopyTo
 "nach"
 "ide:"
 "do"
-"hacia %s"
+"hacia %ls"
 
 MCopyEncryptWarn1
 "Файл"
@@ -3632,13 +3632,13 @@ MAskDeleteLinkFile
 "archivo"
 
 MAskDeleteItems
-"%d элемент%s"
-"%d item%s"
-"%d polož%s"
-"%d Objekt%s"
-"%d elemet%s"
-"%d plik%s"
-"%d ítem%s"
+"%d элемент%ls"
+"%d item%ls"
+"%d polož%ls"
+"%d Objekt%ls"
+"%d elemet%ls"
+"%d plik%ls"
+"%d ítem%ls"
 
 MAskDeleteItems0
 ""
@@ -4138,22 +4138,22 @@ upd:"File size could not be determined."
 "Tamaño de archivo no puede ser determinado"
 
 MEditFileLong
-"имеет размер %s,"
-"has the size of %s,"
-"má velikost %s,"
-"hat eine Größe von %s,"
-"mérete %s,"
-"ma wielkość %s,"
-"tiene el tamaño de %s,"
+"имеет размер %ls,"
+"has the size of %ls,"
+"má velikost %ls,"
+"hat eine Größe von %ls,"
+"mérete %ls,"
+"ma wielkość %ls,"
+"tiene el tamaño de %ls,"
 
 MEditFileLong2
-"что превышает заданное ограничение в %s."
-"which exceeds the configured maximum size of %s."
-"která překračuje nastavenou maximální velikost %s."
-"die die konfiguierte Maximalgröße von %s überschreitet."
-"meghaladja %s beállított maximumát."
-"przekraczającą ustalone maksimum %s."
-"cual excede el tamaño máximo configurado de %s."
+"что превышает заданное ограничение в %ls."
+"which exceeds the configured maximum size of %ls."
+"která překračuje nastavenou maximální velikost %ls."
+"die die konfiguierte Maximalgröße von %ls überschreitet."
+"meghaladja %ls beállított maximumát."
+"przekraczającą ustalone maksimum %ls."
+"cual excede el tamaño máximo configurado de %ls."
 
 MEditROOpen
 "Вы хотите редактировать его?"
@@ -6695,40 +6695,40 @@ MListEb
 "E"
 
 MListFileSize
-" %s байт в 1 файле "
-" %s bytes in 1 file "
-" %s bytů v 1 souboru "
-" %s Bytes in 1 Datei "
-" %s bájt 1 fájlban "
-" %s bajtów w 1 pliku "
-" %s bytes en 1 archivo "
+" %ls байт в 1 файле "
+" %ls bytes in 1 file "
+" %ls bytů v 1 souboru "
+" %ls Bytes in 1 Datei "
+" %ls bájt 1 fájlban "
+" %ls bajtów w 1 pliku "
+" %ls bytes en 1 archivo "
 
 MListFilesSize1
-" %s байт в %d файле "
-" %s bytes in %d files "
-" %s bytů v %d souborech "
-" %s Bytes in %d Dateien "
-" %s bájt %d fájlban "
-" %s bajtów w %d plikach "
-" %s bytes en %d archivos "
+" %ls байт в %d файле "
+" %ls bytes in %d files "
+" %ls bytů v %d souborech "
+" %ls Bytes in %d Dateien "
+" %ls bájt %d fájlban "
+" %ls bajtów w %d plikach "
+" %ls bytes en %d archivos "
 
 MListFilesSize2
-" %s байт в %d файлах "
-" %s bytes in %d files "
-" %s bytů v %d souborech "
-" %s Bytes in %d Dateien "
-" %s bájt %d fájlban "
-" %s bajtów w %d plikach "
-" %s bytes en %d archivos "
+" %ls байт в %d файлах "
+" %ls bytes in %d files "
+" %ls bytů v %d souborech "
+" %ls Bytes in %d Dateien "
+" %ls bájt %d fájlban "
+" %ls bajtów w %d plikach "
+" %ls bytes en %d archivos "
 
 MListFreeSize
-" %s байт свободно "
-" %s free bytes "
-" %s volných bytů "
-" %s freie Bytes "
-" %s szabad bájt "
-" %s wolnych bajtów "
-" %s bytes libres "
+" %ls байт свободно "
+" %ls free bytes "
+" %ls volných bytů "
+" %ls freie Bytes "
+" %ls szabad bájt "
+" %ls wolnych bajtów "
+" %ls bytes libres "
 
 MDirInfoViewTitle
 l:
@@ -8764,22 +8764,22 @@ le://end of functional keys (Single Viewer)
 ""
 
 MInViewer
-"просмотр %s"
-"view %s"
-"prohlížení %s"
-"Betrachte %s"
-"%s megnézése"
-"podgląd %s"
-"ver %s"
+"просмотр %ls"
+"view %ls"
+"prohlížení %ls"
+"Betrachte %ls"
+"%ls megnézése"
+"podgląd %ls"
+"ver %ls"
 
 MInEditor
-"редактирование %s"
-"edit %s"
-"editace %s"
-"Bearbeite %s"
-"%s szerkesztése"
-"edycja %s"
-"editar %s"
+"редактирование %ls"
+"edit %ls"
+"editace %ls"
+"Bearbeite %ls"
+"%ls szerkesztése"
+"edycja %ls"
+"editar %ls"
 
 MFilterTitle
 l:
@@ -9099,13 +9099,13 @@ MFindFileAdvanced
 "Avanza&da"
 
 MFindSearchingIn
-"Поиск%s в"
-"Searching%s in"
-"Hledám%s v"
-"Suche%s in"
-"%s keresése"
-"Szukam%s w"
-"Buscando%s en:"
+"Поиск%ls в"
+"Searching%ls in"
+"Hledám%ls v"
+"Suche%ls in"
+"%ls keresése"
+"Szukam%ls w"
+"Buscando%ls en:"
 
 MFindNewSearch
 "&Новый поиск"
@@ -11388,22 +11388,22 @@ MChangeDriveCannotReadDisk
 "No se puede leer el disco en unidad"
 
 MChangeDriveCannotDisconnect
-"Не удаётся отсоединиться от %s"
-"Cannot disconnect from %s"
-"Nelze se odpojit od %s"
-"Verbindung zu %s konnte nicht getrennt werden."
-"Nem lehet leválni innen: %s"
-"Nie mogę odłączyć się od %s"
-"No se puede desconectar desde %s"
+"Не удаётся отсоединиться от %ls"
+"Cannot disconnect from %ls"
+"Nelze se odpojit od %ls"
+"Verbindung zu %ls konnte nicht getrennt werden."
+"Nem lehet leválni innen: %ls"
+"Nie mogę odłączyć się od %ls"
+"No se puede desconectar desde %ls"
 
 MChangeDriveCannotDelSubst
-"Не удаётся удалить виртуальный драйвер %s"
-"Cannot delete a substituted drive %s"
-"Nelze smazat substnutá jednotka %s"
-"Substlaufwerk %s konnte nicht gelöscht werden."
-"%s virtuális meghajtó nem törölhető"
-"Nie można usunąć dysku SUBST %s"
-"No se puede borrar una unidad sustituida %s"
+"Не удаётся удалить виртуальный драйвер %ls"
+"Cannot delete a substituted drive %ls"
+"Nelze smazat substnutá jednotka %ls"
+"Substlaufwerk %ls konnte nicht gelöscht werden."
+"%ls virtuális meghajtó nem törölhető"
+"Nie można usunąć dysku SUBST %ls"
+"No se puede borrar una unidad sustituida %ls"
 
 MChangeDriveOpenFiles
 "Если вы не закроете открытые файлы, данные могут быть утеряны"
@@ -11471,13 +11471,13 @@ MChangeHotPlugDisconnectDriveQuestion
 "Desea remover el dispositivo"
 
 MHotPlugDisks
-"(диск(и): %s)"
-"(disk(s): %s)"
-"(disk(y): %s)"
-"(Laufwerk(e): %s)"
-"(%s meghajtó)"
-"(dysk(i): %s)"
-"(disco(s): %s)"
+"(диск(и): %ls)"
+"(disk(s): %ls)"
+"(disk(y): %ls)"
+"(Laufwerk(e): %ls)"
+"(%ls meghajtó)"
+"(dysk(i): %ls)"
+"(disco(s): %ls)"
 
 MChangeCouldNotEjectHotPlugMedia
 "Невозможно удалить устройство для диска %c:"
@@ -11772,22 +11772,22 @@ l:
 "%d archivos"
 
 MDragMove
-"Перенос %s"
-"Move %s"
-"Přesunout %s"
-"Verschiebe %s"
-"%s mozgatása"
-"Przenieś %s"
-"Mover %s"
+"Перенос %ls"
+"Move %ls"
+"Přesunout %ls"
+"Verschiebe %ls"
+"%ls mozgatása"
+"Przenieś %ls"
+"Mover %ls"
 
 MDragCopy
-"Копирование %s"
-"Copy %s"
-"Kopírovat %s"
-"Kopiere %s"
-"%s másolása"
-"Kopiuj %s"
-"Copiar %s"
+"Копирование %ls"
+"Copy %ls"
+"Kopírovat %ls"
+"Kopiere %ls"
+"%ls másolása"
+"Kopiuj %ls"
+"Copiar %ls"
 
 MProcessListTitle
 l:
@@ -14121,13 +14121,13 @@ l:
 "Imprimir"
 
 MPrintTo
-"Печатать %s на"
-"Print %s to"
-"Vytisknout %s na"
-"Drucke %s nach"
-"%s nyomtatása:"
-"Drukuj %s do"
-"Imprimir %s a"
+"Печатать %ls на"
+"Print %ls to"
+"Vytisknout %ls na"
+"Drucke %ls nach"
+"%ls nyomtatása:"
+"Drukuj %ls do"
+"Imprimir %ls a"
 
 MPrintFilesTo
 "Печатать %d файлов на"
@@ -14191,7 +14191,7 @@ MEnterDescription
 "Beschreibung für"
 upd:"Írja be megjegyzését:"
 "Wprowadź opis"
-"Entrar descripción de %s"
+"Entrar descripción de %ls"
 
 MReadingDiz
 l:
@@ -14684,58 +14684,58 @@ MDefineMacro
 "Pulse la tecla deseada"
 
 MMacroReDefinedKey
-"Макроклавиша '%s' уже определена."
-"Macro key '%s' already defined."
-"Klávesa makra '%s' již je definována."
-"Makro '%s' bereits definiert."
-""%s" makróbillentyű foglalt"
-"Skrót '%s' jest już zdefiniowany."
-"Macro '%s' ya está definido. Secuencia:"
+"Макроклавиша '%ls' уже определена."
+"Macro key '%ls' already defined."
+"Klávesa makra '%ls' již je definována."
+"Makro '%ls' bereits definiert."
+""%ls" makróbillentyű foglalt"
+"Skrót '%ls' jest już zdefiniowany."
+"Macro '%ls' ya está definido. Secuencia:"
 
 MMacroDeleteAssign
-"Макроклавиша '%s' не активна."
-"Macro key '%s' is not active."
-"Klávesa makra '%s' není aktivní."
-"Makro '%s' nicht aktiv."
-""%s" makróbillentyű nem él"
-"Skrót '%s' jest nieaktywny."
-"Macro '%s' no está activo. Secuencia:"
+"Макроклавиша '%ls' не активна."
+"Macro key '%ls' is not active."
+"Klávesa makra '%ls' není aktivní."
+"Makro '%ls' nicht aktiv."
+""%ls" makróbillentyű nem él"
+"Skrót '%ls' jest nieaktywny."
+"Macro '%ls' no está activo. Secuencia:"
 
 MMacroDeleteKey
-"Макроклавиша '%s' будет удалена."
-"Macro key '%s' will be removed."
-"Klávesa makra '%s' bude odstraněna."
-"Makro '%s' wird entfernt und ersetzt:"
-""%s" makróbillentyű törlődik"
-"Skrót '%s' zostanie usunięty."
-"Macro '%s' será removido. Secuencia:"
+"Макроклавиша '%ls' будет удалена."
+"Macro key '%ls' will be removed."
+"Klávesa makra '%ls' bude odstraněna."
+"Makro '%ls' wird entfernt und ersetzt:"
+""%ls" makróbillentyű törlődik"
+"Skrót '%ls' zostanie usunięty."
+"Macro '%ls' será removido. Secuencia:"
 
 MMacroCommonReDefinedKey
-"Общая макроклавиша '%s' уже определена."
-"Common macro key '%s' already defined."
-"Klávesa pro běžné makro '%s' již je definována."
-"Gemeinsames Makro '%s' bereits definiert."
-""%s" közös makróbill. foglalt"
-"Skrót '%s' jest już zdefiniowany."
-"Tecla de macro '%s' ya ha sido definida."
+"Общая макроклавиша '%ls' уже определена."
+"Common macro key '%ls' already defined."
+"Klávesa pro běžné makro '%ls' již je definována."
+"Gemeinsames Makro '%ls' bereits definiert."
+""%ls" közös makróbill. foglalt"
+"Skrót '%ls' jest już zdefiniowany."
+"Tecla de macro '%ls' ya ha sido definida."
 
 MMacroCommonDeleteAssign
-"Общая макроклавиша '%s' не активна."
-"Common macro key '%s' is not active."
-"Klávesa pro běžné makro '%s' není aktivní."
-"Gemeinsames Makro '%s' nicht aktiv."
-""%s" közös makróbill. nem él"
-"Skrót '%s' jest nieaktywny."
-"Tecla de macro '%s' no está activada."
+"Общая макроклавиша '%ls' не активна."
+"Common macro key '%ls' is not active."
+"Klávesa pro běžné makro '%ls' není aktivní."
+"Gemeinsames Makro '%ls' nicht aktiv."
+""%ls" közös makróbill. nem él"
+"Skrót '%ls' jest nieaktywny."
+"Tecla de macro '%ls' no está activada."
 
 MMacroCommonDeleteKey
-"Общая макроклавиша '%s' будет удалена."
-"Common macro key '%s' will be removed."
-"Klávesa pro běžné makro '%s' bude odstraněna."
-"Gemeinsames Makro '%s' wird entfernt und ersetzt:"
-""%s" közös makróbill. törlődik"
-"Skrót '%s' zostanie usunięty."
-"Tecla de macro '%s' será removida."
+"Общая макроклавиша '%ls' будет удалена."
+"Common macro key '%ls' will be removed."
+"Klávesa pro běžné makro '%ls' bude odstraněna."
+"Gemeinsames Makro '%ls' wird entfernt und ersetzt:"
+""%ls" közös makróbill. törlődik"
+"Skrót '%ls' zostanie usunięty."
+"Tecla de macro '%ls' será removida."
 
 MMacroSequence
 "Последовательность:"
@@ -14793,13 +14793,13 @@ MMacroDisAnotherKey
 
 MMacroSettingsTitle
 l:
-"Параметры макрокоманды для '%s'"
-"Macro settings for '%s'"
-"Nastavení makra pro '%s'"
-"Einstellungen für Makro '%s'"
-""%s" makró beállításai"
-"Ustawienia makra dla '%s'"
-"Configurar macro para '%s'"
+"Параметры макрокоманды для '%ls'"
+"Macro settings for '%ls'"
+"Nastavení makra pro '%ls'"
+"Einstellungen für Makro '%ls'"
+""%ls" makró beállításai"
+"Ustawienia makra dla '%ls'"
+"Configurar macro para '%ls'"
 
 MMacroSettingsEnableOutput
 "Разрешить во время &выполнения вывод на экран"
@@ -14885,13 +14885,13 @@ MMacroSettingsSelectionBlockPresent
 MMacroOutputFormatForHelpSz
 l:
 l:// for <!Macro:Vars!> and <!Macro:Consts!>, count formats = 1
-"„%s”"
-"„%s”"
-"„%s”"
-"„%s”"
-"„%s”"
-"„%s”"
-"%s"
+"„%ls”"
+"„%ls”"
+"„%ls”"
+"„%ls”"
+"„%ls”"
+"„%ls”"
+"%ls"
 
 MMacroOutputFormatForHelpDWord
 l:// for <!Macro:Vars!> and <!Macro:Consts!>, count formats = 2
@@ -14943,31 +14943,31 @@ upd:"Line %d, Pos %d"
 
 MMacroPErrUnrecognized_keyword
 l:
-"Неизвестное ключевое слово '%s'"
-"Unrecognized keyword '%s'"
-"Neznámé klíčové slovo '%s'"
-"Unbekanntes Schlüsselwort '%s'"
-"Ismeretlen kulcsszó "%s""
-"Nie rozpoznano słowa kluczowego '%s'"
-"Unrecognized keyword '%s'"
+"Неизвестное ключевое слово '%ls'"
+"Unrecognized keyword '%ls'"
+"Neznámé klíčové slovo '%ls'"
+"Unbekanntes Schlüsselwort '%ls'"
+"Ismeretlen kulcsszó "%ls""
+"Nie rozpoznano słowa kluczowego '%ls'"
+"Unrecognized keyword '%ls'"
 
 MMacroPErrUnrecognized_function
-"Неизвестная функция '%s'"
-"Unrecognized function '%s'"
-"Neznámá funkce '%s'"
-"Unbekannte Funktion '%s'"
-"Ismeretlen funkció "%s""
-"Nie rozpoznano funkcji'%s'"
-"Unrecognized function '%s'"
+"Неизвестная функция '%ls'"
+"Unrecognized function '%ls'"
+"Neznámá funkce '%ls'"
+"Unbekannte Funktion '%ls'"
+"Ismeretlen funkció "%ls""
+"Nie rozpoznano funkcji'%ls'"
+"Unrecognized function '%ls'"
 
 MMacroPErrFuncParam
-"Неверное количество параметров у функции '%s'"
-"Incorrect number of arguments for function '%s'"
-upd:"Incorrect number of arguments for function '%s'"
-upd:"Incorrect number of arguments for function '%s'"
-"'%s' funkció paramétereinek száma helytelen"
-upd:"Incorrect number of arguments for function '%s'"
-"Incorrect number of arguments for function '%s'"
+"Неверное количество параметров у функции '%ls'"
+"Incorrect number of arguments for function '%ls'"
+upd:"Incorrect number of arguments for function '%ls'"
+upd:"Incorrect number of arguments for function '%ls'"
+"'%ls' funkció paramétereinek száma helytelen"
+upd:"Incorrect number of arguments for function '%ls'"
+"Incorrect number of arguments for function '%ls'"
 
 MMacroPErrNot_expected_ELSE
 "Неожиданное появление $Else"
@@ -14997,13 +14997,13 @@ MMacroPErrUnexpected_EOS
 "Unexpected end of source string"
 
 MMacroPErrExpected
-"Ожидается '%s'"
-"Expected '%s'"
-"Očekávané '%s'"
-"Erwartet '%s'"
-"Várható "%s""
-"Oczekiwano '%s'"
-"Expected '%s'"
+"Ожидается '%ls'"
+"Expected '%ls'"
+"Očekávané '%ls'"
+"Erwartet '%ls'"
+"Várható "%ls""
+"Oczekiwano '%ls'"
+"Expected '%ls'"
 
 MMacroPErrBad_Hex_Control_Char
 "Неизвестный шестнадцатеричный управляющий символ"
@@ -15024,13 +15024,13 @@ MMacroPErrBad_Control_Char
 "Bad Control Char"
 
 MMacroPErrVar_Expected
-"Переменная '%s' не найдена"
-"Variable Expected '%s'"
-"Očekávaná proměnná '%s'"
-"Variable erwartet '%s'"
-""%s" várható változó"
-"Oczekiwano zmiennej '%s'"
-"Variable Expected '%s'"
+"Переменная '%ls' не найдена"
+"Variable Expected '%ls'"
+"Očekávaná proměnná '%ls'"
+"Variable erwartet '%ls'"
+""%ls" várható változó"
+"Oczekiwano zmiennej '%ls'"
+"Variable Expected '%ls'"
 
 MMacroPErrExpr_Expected
 "Ошибка синтаксиса"
@@ -19283,13 +19283,13 @@ l:
 "Variable de entorno %COMSPEC% no definida"
 
 MExecuteErrorMessage
-"'%s' не является внутренней или внешней командой, исполняемой программой или пакетным файлом.\n"
-"'%s' is not recognized as an internal or external command, operable program or batch file.\n"
-"'%s' nebylo nalezeno jako vniřní nebo externí příkaz, spustitelná aplikace nebo dávkový soubor.\n"
-"'%s' nicht erkannt als interner oder externer Befehl, Programm oder Stapeldatei.\n"
-""%s" nem azonítható külső vagy belső parancsként, futtatható programként vagy batch fájlként.\n"
-"Nie rozpoznano '%s' jako polecenia, programu ani skryptu.\n"
-"'%s' no es reconocida como un comando interno o externo, programa operable o archivo de lotes.\n"
+"'%ls' не является внутренней или внешней командой, исполняемой программой или пакетным файлом.\n"
+"'%ls' is not recognized as an internal or external command, operable program or batch file.\n"
+"'%ls' nebylo nalezeno jako vniřní nebo externí příkaz, spustitelná aplikace nebo dávkový soubor.\n"
+"'%ls' nicht erkannt als interner oder externer Befehl, Programm oder Stapeldatei.\n"
+""%ls" nem azonítható külső vagy belső parancsként, futtatható programként vagy batch fájlként.\n"
+"Nie rozpoznano '%ls' jako polecenia, programu ani skryptu.\n"
+"'%ls' no es reconocida como un comando interno o externo, programa operable o archivo de lotes.\n"
 
 MOpenPluginCannotOpenFile
 l:

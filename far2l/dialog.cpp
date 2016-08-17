@@ -1984,7 +1984,7 @@ void Dialog::ShowDialog(unsigned ID)
 					if (Y1+Y+CntChr-1 > Y2)
 						CntChr=Y2-(Y1+Y)+1;
 
-					vmprintf(L"%*s",CntChr,L"");
+					vmprintf(L"%*ls",CntChr,L"");
 				}
 
 #if defined(VTEXT_ADN_SEPARATORS)

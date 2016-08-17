@@ -945,7 +945,7 @@ int Manager::ProcessKey(DWORD Key)
 				return TRUE;
 			}
 			case KEY_CONSOLE_BUFFER_RESIZE:
-				//todo Sleep(1);
+				WINPORT(Sleep)(10);
 				ResizeAllFrame();
 				return TRUE;
 		}
@@ -1017,9 +1017,9 @@ int Manager::ProcessKey(DWORD Key)
 				case KEY_ALTF9:
 				{
 					//_MANAGER(SysLog(1,"Manager::ProcessKey, KEY_ALTF9 pressed..."));
-					//todo Sleep(1);
+					WINPORT(Sleep)(10);
 					SetVideoMode();
-					//todo Sleep(1);
+					WINPORT(Sleep)(10);
 
 					/* Â ïðîöåññå èñïîëíåíèÿ Alt-F9 (â íîðìàëüíîì ðåæèìå) â î÷åðåäü
 					   êîíñîëè ïîïàäàåò WINDOW_BUFFER_SIZE_EVENT, ôîðìèðóåòñÿ â
@@ -1031,7 +1031,7 @@ int Manager::ProcessKey(DWORD Key)
 					{
 						int PScrX=ScrX;
 						int PScrY=ScrY;
-						//todo Sleep(1);
+						WINPORT(Sleep)(10);
 						GetVideoMode(CurSize);
 
 						if (PScrX+1 == CurSize.X && PScrY+1 == CurSize.Y)
@@ -1044,7 +1044,7 @@ int Manager::ProcessKey(DWORD Key)
 							PrevScrX=PScrX;
 							PrevScrY=PScrY;
 							//_MANAGER(SysLog(-1,"GetInputRecord(WINDOW_BUFFER_SIZE_EVENT); return KEY_CONSOLE_BUFFER_RESIZE"));
-							//todo Sleep(1);
+							WINPORT(Sleep)(10);
 							return ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 						}
 					}

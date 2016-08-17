@@ -18,5 +18,6 @@ public:
 
 	void Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
 	void Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
+	bool Read(CHAR_INFO &data, COORD screen_pos);
 	bool Write(const CHAR_INFO &data, COORD screen_pos);
 };

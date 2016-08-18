@@ -654,7 +654,7 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	
 	if (mode&ENABLE_QUICK_EDIT_MODE)
 		OnMouseQEdit( event, pos_char );
-	else
+	else if (mode&ENABLE_MOUSE_INPUT)
 		OnMouseNormal( event, pos_char );
 }
 

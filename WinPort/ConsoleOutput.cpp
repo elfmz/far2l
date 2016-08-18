@@ -180,6 +180,12 @@ void ConsoleOutput::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos
 		_listener->OnConsoleOutputUpdated(screen_rect);
 }
 
+bool ConsoleOutput::Read(CHAR_INFO &data, COORD screen_pos)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	return _buf.Read(data, screen_pos);
+}
+
 bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 {
 	{

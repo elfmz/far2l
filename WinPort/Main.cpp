@@ -19,11 +19,20 @@ unsigned int font_height = 8;
 
 extern "C" void WinPortInitRegistry();
 
+
+static void NormalizeArea(SMALL_RECT &area)
+{
+	if (area.Left > area.Right) std::swap(area.Left, area.Right);
+	if (area.Top > area.Bottom) std::swap(area.Top, area.Bottom);	
+}
+
+
 struct EventWithRect : wxCommandEvent
 {
 	EventWithRect(const SMALL_RECT &rect_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
 		:wxCommandEvent(commandType, winid) , rect(rect_)
 	{
+		NormalizeArea(rect);
 	}
 
 	virtual wxEvent *Clone() const { return new EventWithRect(*this); }
@@ -73,9 +82,9 @@ private:
     void OnEraseBackground( wxEraseEvent& event );
 	void OnSize(wxSizeEvent &event);
 	void OnMouse( wxMouseEvent &event );
-
 	void OnMouseNormal( wxMouseEvent &event, COORD pos_char );
 	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char );
+	void DamageAreaBetween(COORD c1, COORD c2);
 
 	wxDECLARE_EVENT_TABLE();
 
@@ -87,8 +96,8 @@ private:
 	wxKeyEvent _last_skipped_keydown;
 	wxFont _font;
 	bool _delayed_init_done, _resize_pending;
-	DWORD _mouse_state;
-	COORD _mouse_qedit_start;
+	DWORD _mouse_state, _mouse_qedit_pending;
+	COORD _mouse_qedit_start, _mouse_qedit_last;
 
 	void UpdateLargestScreenSize();
 };
@@ -281,7 +290,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
 		_cursor_state(false), _delayed_init_done(false), _resize_pending(false), 
-		_mouse_state(0)
+		_mouse_state(0), _mouse_qedit_pending(false)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
@@ -562,11 +571,16 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 	unsigned int cw, ch; g_wx_con_out.GetSize(cw, ch);
 	wxRegion rgn = GetUpdateRegion();
 	wxRect box = rgn.GetBox();
-	SMALL_RECT area = {(unsigned int) (box.GetLeft() / font_width), (unsigned int) (box.GetTop() / font_height),
-		DivCeil(box.GetRight(), font_width), DivCeil(box.GetBottom(), font_height)};
-	if (area.Right >= cw) area.Right = cw - 1;
-	if (area.Bottom >= ch) area.Bottom = ch - 1;
-	if (area.Right < area.Left || area.Bottom < area.Top) return;
+	SMALL_RECT area = {(SHORT) (box.GetLeft() / font_width), (SHORT) (box.GetTop() / font_height),
+		(SHORT)DivCeil(box.GetRight(), font_width), (SHORT)DivCeil(box.GetBottom(), font_height)};
+	SMALL_RECT qedit;
+	if (_mouse_qedit_pending) {
+		qedit.Left = _mouse_qedit_start.X;
+		qedit.Top = _mouse_qedit_start.Y;
+		qedit.Right = _mouse_qedit_last.X;
+		qedit.Bottom = _mouse_qedit_last.Y;
+		NormalizeArea(qedit);
+	}
 	
 	std::vector<CHAR_INFO> line(cw);
 	wxPen *trans_pen = wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT);
@@ -586,6 +600,11 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 			if (rgn.Contains(cx * font_width, cy * font_height, font_width, font_height)==wxOutRegion) continue;
 
 			unsigned short attributes = line[cx].Attributes;
+			
+			if (_mouse_qedit_pending && cx >= qedit.Left && 
+				cx <= qedit.Right && cy >= qedit.Top && cy <= qedit.Bottom) {
+				attributes^= COMMON_LVB_REVERSE_VIDEO;
+			}
 			ccc.SetBackgroundAttributes(attributes);
 			unsigned int x = cx * font_width;
 			unsigned int y = cy * font_height;
@@ -651,6 +670,8 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	DWORD mode = 0;
 	if (!WINPORT(GetConsoleMode)(NULL, &mode))
 		mode = 0;
+		
+	//mode|= ENABLE_QUICK_EDIT_MODE;
 	
 	if (mode&ENABLE_QUICK_EDIT_MODE)
 		OnMouseQEdit( event, pos_char );
@@ -709,32 +730,50 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 	g_wx_con_in.Enqueue(&ir, 1);	
 }
 
+void WinPortPanel::DamageAreaBetween(COORD c1, COORD c2)
+{
+	SMALL_RECT area = {c1.X, c1.Y, c2.X, c2.Y};
+	OnConsoleOutputUpdated(area);
+}
+
 void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 {
 	if (event.LeftDown()) {
-		_mouse_qedit_start = pos_char;
-	} else if (event.LeftUp()) {
-		std::wstring text;
-		USHORT y1 = _mouse_qedit_start.Y, y2 = pos_char.Y;
-		USHORT x1 = _mouse_qedit_start.X, x2 = pos_char.X;
-		if (y1 > y2) std::swap(y1, y2);
-		if (x1 > x2) std::swap(x1, x2);
+		_mouse_qedit_start = _mouse_qedit_last = pos_char;
+		_mouse_qedit_pending = true;
+		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
+		
+	} else if (_mouse_qedit_pending) {
+		if (event.Moving() || event.Dragging()) {
+			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
+			DamageAreaBetween(_mouse_qedit_start, pos_char);			
+			_mouse_qedit_last = pos_char;
+		} else if (event.LeftUp()) {
+			_mouse_qedit_pending = false;
+			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
+			DamageAreaBetween(_mouse_qedit_start, pos_char);			
+			std::wstring text;
+			USHORT y1 = _mouse_qedit_start.Y, y2 = pos_char.Y;
+			USHORT x1 = _mouse_qedit_start.X, x2 = pos_char.X;
+			if (y1 > y2) std::swap(y1, y2);
+			if (x1 > x2) std::swap(x1, x2);
 
-		COORD pos;
-		for (pos.Y = y1; pos.Y<=y2; ++pos.Y) {
-			if (!text.empty())
-				text+= NATIVE_EOLW;
-			for (pos.X = x1; pos.X<=x2; ++pos.X) {
-				CHAR_INFO ch;
-				if (g_wx_con_out.Read(ch, pos))
-					text+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
+			COORD pos;
+			for (pos.Y = y1; pos.Y<=y2; ++pos.Y) {
+				if (!text.empty())
+					text+= NATIVE_EOLW;
+				for (pos.X = x1; pos.X<=x2; ++pos.X) {
+					CHAR_INFO ch;
+					if (g_wx_con_out.Read(ch, pos))
+						text+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
+				}
 			}
-		}
 
-		if (!text.empty()) {
-			if (wxTheClipboard->Open()) {
-				wxTheClipboard->SetData( new wxTextDataObject(text) );
-				wxTheClipboard->Close();
+			if (!text.empty()) {
+				if (wxTheClipboard->Open()) {
+					wxTheClipboard->SetData( new wxTextDataObject(text) );
+					wxTheClipboard->Close();
+				}
 			}
 		}
 	}

@@ -573,6 +573,11 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 	wxRect box = rgn.GetBox();
 	SMALL_RECT area = {(SHORT) (box.GetLeft() / font_width), (SHORT) (box.GetTop() / font_height),
 		(SHORT)DivCeil(box.GetRight(), font_width), (SHORT)DivCeil(box.GetBottom(), font_height)};
+
+	if (area.Right >= cw) area.Right = cw - 1;
+	if (area.Bottom >= ch) area.Bottom = ch - 1;
+	if (area.Right < area.Left || area.Bottom < area.Top) return;
+
 	SMALL_RECT qedit;
 	if (_mouse_qedit_pending) {
 		qedit.Left = _mouse_qedit_start.X;

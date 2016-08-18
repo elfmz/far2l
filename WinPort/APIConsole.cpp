@@ -126,11 +126,16 @@ extern "C" {
 		*lpMode|= g_wx_con_out.GetMode();
 		return TRUE;
 	}
+	
 	WINPORT_DECL(SetConsoleMode,BOOL,(HANDLE hConsoleHandle, DWORD dwMode))
 	{
 		std::lock_guard<std::mutex> lock(g_wx_con_mode_mutex);
+		if ((dwMode&ENABLE_EXTENDED_FLAGS)==0) {
+			dwMode&= ~(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
+			dwMode|= (g_wx_con_mode & (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE));
+		}
 		g_wx_con_mode = dwMode;
-		g_wx_con_out.SetMode(dwMode);
+		g_wx_con_out.SetMode(g_wx_con_mode);
 		return TRUE;
 	}
 

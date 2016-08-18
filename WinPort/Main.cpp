@@ -5,6 +5,8 @@
 #include <wx/fontdlg.h>
 #include <wx/fontenum.h>
 #include <wx/textfile.h>
+#include <wx/clipbrd.h>
+
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
 enum
@@ -72,6 +74,9 @@ private:
 	void OnSize(wxSizeEvent &event);
 	void OnMouse( wxMouseEvent &event );
 
+	void OnMouseNormal( wxMouseEvent &event, COORD pos_char );
+	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char );
+
 	wxDECLARE_EVENT_TABLE();
 
 	wxMemoryDC 	_white_rectangle;
@@ -83,6 +88,7 @@ private:
 	wxFont _font;
 	bool _delayed_init_done, _resize_pending;
 	DWORD _mouse_state;
+	COORD _mouse_qedit_start;
 
 	void UpdateLargestScreenSize();
 };
@@ -274,7 +280,8 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
-		_cursor_state(false), _delayed_init_done(false), _resize_pending(false), _mouse_state(0)
+		_cursor_state(false), _delayed_init_done(false), _resize_pending(false), 
+		_mouse_state(0)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
@@ -625,6 +632,34 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 
 void WinPortPanel::OnMouse( wxMouseEvent &event )
 {
+	wxClientDC dc(this);
+	wxPoint pos = event.GetLogicalPosition(dc);
+	COORD pos_char;
+	pos_char.X =(SHORT)(USHORT)(pos.x / font_width);
+	pos_char.Y =(SHORT)(USHORT)(pos.y / font_height);
+
+	unsigned int width = 80, height = 25;
+	g_wx_con_out.GetSize(width, height);
+	
+	if ( (pos_char.X < 0 || (USHORT)pos_char.X >= width)
+	 ||  (pos_char.Y < 0 || (USHORT)pos_char.Y >= height)) {
+		 fprintf(stderr, "Mouse position out of range: %d %d vs %d %d\n", 
+			(unsigned int)pos_char.X, (unsigned int)pos_char.Y, width, height);
+		return;
+	}
+	
+	DWORD mode = 0;
+	if (!WINPORT(GetConsoleMode)(NULL, &mode))
+		mode = 0;
+	
+	if (mode&ENABLE_QUICK_EDIT_MODE)
+		OnMouseQEdit( event, pos_char );
+	else
+		OnMouseNormal( event, pos_char );
+}
+
+void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
+{
 	INPUT_RECORD ir = {0};
 	ir.EventType = MOUSE_EVENT;
 	if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
@@ -664,28 +699,45 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	}
 	
 	ir.Event.MouseEvent.dwButtonState|= _mouse_state;
-	
-	wxClientDC dc(this);
-	wxPoint pos = event.GetLogicalPosition(dc);
-	ir.Event.MouseEvent.dwMousePosition.X =(SHORT)(USHORT)(pos.x / font_width);
-	ir.Event.MouseEvent.dwMousePosition.Y =(SHORT)(USHORT)(pos.y / font_height);
-
-	unsigned int width = 80, height = 25;
-	g_wx_con_out.GetSize(width, height);
-	
-	if ( (ir.Event.MouseEvent.dwMousePosition.X < 0 || (USHORT)ir.Event.MouseEvent.dwMousePosition.X >= width)
-	 ||  (ir.Event.MouseEvent.dwMousePosition.Y < 0 || (USHORT)ir.Event.MouseEvent.dwMousePosition.Y >= height)) {
-		 fprintf(stderr, "Mouse position out of range: %d %d vs %d %d\n", 
-			(unsigned int)ir.Event.MouseEvent.dwMousePosition.X, 
-			(unsigned int)ir.Event.MouseEvent.dwMousePosition.Y, width, height);
-		return;
-	}
+	ir.Event.MouseEvent.dwMousePosition = pos_char;
 	
 	if (!(ir.Event.MouseEvent.dwEventFlags &MOUSE_MOVED) ) {
 		fprintf(stderr, "Mouse: dwEventFlags=0x%x dwButtonState=0x%x dwControlKeyState=0x%x\n",
 			ir.Event.MouseEvent.dwEventFlags, ir.Event.MouseEvent.dwButtonState, 
 			ir.Event.MouseEvent.dwControlKeyState);
 	}
-	g_wx_con_in.Enqueue(&ir, 1);
+	g_wx_con_in.Enqueue(&ir, 1);	
 }
+
+void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
+{
+	if (event.LeftDown()) {
+		_mouse_qedit_start = pos_char;
+	} else if (event.LeftUp()) {
+		std::wstring text;
+		USHORT y1 = _mouse_qedit_start.Y, y2 = pos_char.Y;
+		USHORT x1 = _mouse_qedit_start.X, x2 = pos_char.X;
+		if (y1 > y2) std::swap(y1, y2);
+		if (x1 > x2) std::swap(x1, x2);
+
+		COORD pos;
+		for (pos.Y = y1; pos.Y<=y2; ++pos.Y) {
+			if (!text.empty())
+				text+= NATIVE_EOLW;
+			for (pos.X = x1; pos.X<=x2; ++pos.X) {
+				CHAR_INFO ch;
+				if (g_wx_con_out.Read(ch, pos))
+					text+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
+			}
+		}
+
+		if (!text.empty()) {
+			if (wxTheClipboard->Open()) {
+				wxTheClipboard->SetData( new wxTextDataObject(text) );
+				wxTheClipboard->Close();
+			}
+		}
+	}
+}
+
 

@@ -1286,36 +1286,30 @@ int LookForString(const wchar_t *Name)
 				if (IsUnicodeCodePage(cpi->CodePage))
 				{
 					// Âû÷èñëÿåì ðàçìåð áóôåðà â UTF-16
-					bufferCount = readBlockSize/sizeof(wchar_t);
+					bufferCount = readBlockSize / 2;
 
 					// Âûõîäèì, åñëè ðàçìåð áóôåðà ìåíüøå äëèíû ñòðîêè ïîñèêà
 					if (bufferCount < findStringCount)
 						CONTINUE(FALSE)
+						
 
-						// Êîïèðóåì áóôåð ÷òåíèÿ â áóôåð ñðàâíåíèÿ
-						//todo
-						/* if (cpi->CodePage==CP_REVERSEBOM)
-						{
-							// Äëÿ UTF-16 (big endian) ïðåîáðàçóåì áóôåð ÷òåíèÿ â áóôåð ñðàâíåíèÿ
-							bufferCount = LCMapStringW(
-							                  LOCALE_NEUTRAL,//LOCALE_INVARIANT,
-							                  LCMAP_BYTEREV,
-							                  (wchar_t *)readBufferA,
-							                  (int)bufferCount,
-							                  readBuffer,
-							                  readBufferSize
-							              );
-
-							if (!bufferCount)
-								CONTINUE(FALSE)
-								// Óñòàíàâëèâàåì áóôåð ñòðàâíåíèÿ
-								buffer = readBuffer;
+					// Êîïèðóåì áóôåð ÷òåíèÿ â áóôåð ñðàâíåíèÿ
+					//todo
+					if (cpi->CodePage==CP_REVERSEBOM)
+					{
+						for (size_t i = 0; i < bufferCount; ++i) {
+							const uint16_t v = *(uint16_t *)&readBufferA[i * 2];
+							readBuffer[i] = (wchar_t)(((v & 0xff) << 8) | ((v & 0xff00) >> 8));
 						}
-						else*/
-						{
-							// Åñëè ïîèñê â UTF-16 (little endian), òî èñïîëüçóåì èñõîäíûé áóôåð
-							buffer = (wchar_t *)readBufferA;
+					}
+					else
+					{
+						for (size_t i = 0; i < bufferCount; ++i) {
+							const uint16_t v = *(uint16_t *)&readBufferA[i * 2];
+							readBuffer[i] = (wchar_t)v;
 						}
+					}
+					buffer = readBuffer;
 				}
 				else
 				{

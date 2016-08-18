@@ -3,9 +3,11 @@
 
 void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 {
-	fprintf(stderr, "ConsoleInput::Enqueue: %u %u\n", 
-		data->Event.KeyEvent.uChar.UnicodeChar,
-		data->Event.KeyEvent.wVirtualKeyCode);
+	/*if (ir.EventType = KEY_EVENT) {
+		fprintf(stderr, "ConsoleInput::Enqueue: %u %u\n", 
+			data->Event.KeyEvent.uChar.UnicodeChar,
+			data->Event.KeyEvent.wVirtualKeyCode);
+	}*/
 	std::unique_lock<std::mutex> lock(_mutex);
 	for (DWORD i = 0; i < size; ++i)
 		_pending.push_back(data[i]);

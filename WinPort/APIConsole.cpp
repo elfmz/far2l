@@ -8,7 +8,7 @@
 extern ConsoleOutput g_wx_con_out;
 extern ConsoleInput g_wx_con_in;
 
-static DWORD g_wx_con_mode = 0;
+static DWORD g_wx_con_mode = ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS;
 static std::mutex g_wx_con_mode_mutex;
 
 extern "C" {

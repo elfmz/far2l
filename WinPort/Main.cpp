@@ -671,8 +671,6 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	if (!WINPORT(GetConsoleMode)(NULL, &mode))
 		mode = 0;
 		
-	//mode|= ENABLE_QUICK_EDIT_MODE;
-	
 	if (mode&ENABLE_QUICK_EDIT_MODE)
 		OnMouseQEdit( event, pos_char );
 	else if (mode&ENABLE_MOUSE_INPUT)

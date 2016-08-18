@@ -70,7 +70,9 @@ private:
 	void OnPaint( wxPaintEvent& event );
     void OnEraseBackground( wxEraseEvent& event );
 	void OnSize(wxSizeEvent &event);
-    wxDECLARE_EVENT_TABLE();
+	void OnMouse( wxMouseEvent &event );
+
+	wxDECLARE_EVENT_TABLE();
 
 	wxMemoryDC 	_white_rectangle;
 	wxBitmap	_white_bitmap;
@@ -80,6 +82,7 @@ private:
 	wxKeyEvent _last_skipped_keydown;
 	wxFont _font;
 	bool _delayed_init_done, _resize_pending;
+	DWORD _mouse_state;
 
 	void UpdateLargestScreenSize();
 };
@@ -128,6 +131,8 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_PAINT(WinPortPanel::OnPaint)
 	EVT_ERASE_BACKGROUND(WinPortPanel::OnEraseBackground)
 	EVT_SIZE(WinPortPanel::OnSize)
+	EVT_MOUSE_EVENTS(WinPortPanel::OnMouse )
+
 wxEND_EVENT_TABLE()
 
 wxIMPLEMENT_APP_NO_MAIN(WinPortApp);
@@ -269,7 +274,7 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
-		_cursor_state(false), _delayed_init_done(false), _resize_pending(false)
+		_cursor_state(false), _delayed_init_done(false), _resize_pending(false), _mouse_state(0)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
@@ -617,3 +622,70 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 	UpdateLargestScreenSize();
 	_resize_pending = true;	
 }
+
+void WinPortPanel::OnMouse( wxMouseEvent &event )
+{
+	INPUT_RECORD ir = {0};
+	ir.EventType = MOUSE_EVENT;
+	if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
+	if (wxGetKeyState(WXK_CONTROL)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+	if (wxGetKeyState(WXK_ALT)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+	if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
+	if (event.LeftDown()) _mouse_state|= FROM_LEFT_1ST_BUTTON_PRESSED;
+	else if (event.MiddleDown()) _mouse_state|= FROM_LEFT_2ND_BUTTON_PRESSED;
+	else if (event.RightDown()) _mouse_state|=  RIGHTMOST_BUTTON_PRESSED;
+	else if (event.LeftUp()) _mouse_state&= ~FROM_LEFT_1ST_BUTTON_PRESSED;
+	else if (event.MiddleUp()) _mouse_state&= ~FROM_LEFT_2ND_BUTTON_PRESSED;
+	else if (event.RightUp()) _mouse_state&= ~RIGHTMOST_BUTTON_PRESSED;
+	else if (event.Moving() || event.Dragging()) ir.Event.MouseEvent.dwEventFlags|= MOUSE_MOVED;
+	else if (event.GetWheelRotation()!=0) {
+		if (event.GetWheelAxis()==wxMOUSE_WHEEL_HORIZONTAL)
+			ir.Event.MouseEvent.dwEventFlags|= MOUSE_HWHEELED;
+		else
+			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
+		if (event.GetWheelRotation() > 0)
+			ir.Event.MouseEvent.dwButtonState|= 0x00010000;
+	} else if ( event.ButtonDClick() ) {
+		
+		if (event.ButtonDClick(wxMOUSE_BTN_LEFT))
+			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_1ST_BUTTON_PRESSED;
+		else if (event.ButtonDClick(wxMOUSE_BTN_MIDDLE))
+			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_2ND_BUTTON_PRESSED;
+		else if (event.ButtonDClick(wxMOUSE_BTN_RIGHT))
+			ir.Event.MouseEvent.dwButtonState|= RIGHTMOST_BUTTON_PRESSED;
+		else {
+			fprintf(stderr, "Unsupported mouse double-click\n");
+			return;			
+		}
+		ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+	} else {
+		fprintf(stderr, "Unsupported mouse event\n");
+		return;
+	}
+	
+	ir.Event.MouseEvent.dwButtonState|= _mouse_state;
+	
+	wxClientDC dc(this);
+	wxPoint pos = event.GetLogicalPosition(dc);
+	ir.Event.MouseEvent.dwMousePosition.X =(SHORT)(USHORT)(pos.x / font_width);
+	ir.Event.MouseEvent.dwMousePosition.Y =(SHORT)(USHORT)(pos.y / font_height);
+
+	unsigned int width = 80, height = 25;
+	g_wx_con_out.GetSize(width, height);
+	
+	if ( (ir.Event.MouseEvent.dwMousePosition.X < 0 || (USHORT)ir.Event.MouseEvent.dwMousePosition.X >= width)
+	 ||  (ir.Event.MouseEvent.dwMousePosition.Y < 0 || (USHORT)ir.Event.MouseEvent.dwMousePosition.Y >= height)) {
+		 fprintf(stderr, "Mouse position out of range: %d %d vs %d %d\n", 
+			(unsigned int)ir.Event.MouseEvent.dwMousePosition.X, 
+			(unsigned int)ir.Event.MouseEvent.dwMousePosition.Y, width, height);
+		return;
+	}
+	
+	if (!(ir.Event.MouseEvent.dwEventFlags &MOUSE_MOVED) ) {
+		fprintf(stderr, "Mouse: dwEventFlags=0x%x dwButtonState=0x%x dwControlKeyState=0x%x\n",
+			ir.Event.MouseEvent.dwEventFlags, ir.Event.MouseEvent.dwButtonState, 
+			ir.Event.MouseEvent.dwControlKeyState);
+	}
+	g_wx_con_in.Enqueue(&ir, 1);
+}
+

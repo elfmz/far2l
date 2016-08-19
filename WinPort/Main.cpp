@@ -467,7 +467,9 @@ void WinPortPanel::OnTitleChanged( wxCommandEvent& event )
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyDown: %x %x\n", event.GetUnicodeKey(), event.GetKeyCode());
+	fprintf(stderr, "OnKeyDown: %x %x %u\n", event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped());
+	if (event.GetSkipped())
+		return;
 	if (event.GetKeyCode()==WXK_RETURN && event.AltDown() &&
 		!event.ShiftDown() && !event.ControlDown() && !event.MetaDown()) {
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
@@ -485,8 +487,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
+	fprintf(stderr, "OnKeyUp: %x %x %d\n", event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped());
+	if (event.GetSkipped())
+		return;
 	wx2INPUT_RECORD ir(event, FALSE);
-	fprintf(stderr, "OnKeyUp: %x %x\n", event.GetUnicodeKey(), event.GetKeyCode());
 	if (event.GetUnicodeKey()==WXK_NONE && event.GetKeyCode()!=WXK_DELETE) 
 		g_wx_con_in.Enqueue(&ir, 1);
 	//event.Skip();
@@ -494,7 +498,9 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnChar: %x %x\n", event.GetUnicodeKey(), event.GetKeyCode());
+	fprintf(stderr, "OnChar: %x %x %d\n", event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped());
+	if (event.GetSkipped())
+		return;
 	if (event.GetUnicodeKey()!=WXK_NONE || event.GetKeyCode()==WXK_DELETE) {
 		wx2INPUT_RECORD ir_down(_last_skipped_keydown, TRUE);
 		wx2INPUT_RECORD ir_up(_last_skipped_keydown, FALSE);

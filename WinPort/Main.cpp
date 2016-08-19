@@ -71,6 +71,7 @@ protected:
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
 	void RefreshArea( const SMALL_RECT &area );
 private:
+	void CheckForResizePending();
 	void OnTimerPeriodic(wxTimerEvent& event);	
 	void OnWindowMoved( wxCommandEvent& event );
 	void OnRefresh( wxCommandEvent& event );
@@ -338,18 +339,14 @@ void WinPortPanel::UpdateLargestScreenSize()
 	g_wx_con_out.SetLargestConsoleWindowSize(size);
 }
 
-void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
+void WinPortPanel::CheckForResizePending()
 {
-	if (!_delayed_init_done) {
-		_delayed_init_done = true;
-		UpdateLargestScreenSize();
-	}
-
 	if (_resize_pending) {
-		_resize_pending = false;
 		DWORD conmode = 0;
 		if (WINPORT(GetConsoleMode)(NULL, &conmode) && (conmode&ENABLE_WINDOW_INPUT)!=0) {
 			unsigned int prev_width = 0, prev_height = 0;
+			_resize_pending = false;
+
 			g_wx_con_out.GetSize(prev_width, prev_height);
 	
 			int width = 0, height = 0;
@@ -369,8 +366,16 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 			Refresh(false);
 			UpdateLargestScreenSize();
 		}
+	}	
+}
+
+void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
+{
+	if (!_delayed_init_done) {
+		_delayed_init_done = true;
+		UpdateLargestScreenSize();
 	}
-	
+	CheckForResizePending();
 	
 	_cursor_state = !_cursor_state;
 	const COORD &pos = g_wx_con_out.GetCursor();
@@ -466,7 +471,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	if (event.GetKeyCode()==WXK_RETURN && event.AltDown() &&
 		!event.ShiftDown() && !event.ControlDown() && !event.MetaDown()) {
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
-		event.Skip();
 		_resize_pending = true;
 		return;
 	}

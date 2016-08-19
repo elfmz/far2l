@@ -59,7 +59,7 @@ WINPORT_DECL(GetSystemTime, VOID, (LPSYSTEMTIME lpSystemTime))
 	TM2Systemtime(lpSystemTime, gmtime(&now));
 }
 
-void FileTime_UnixToWin32(struct timespec ts, FILETIME *lpFileTime)
+WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTime))
 {
 	if (!lpFileTime) return;
 	time_t tm = ts.tv_sec;

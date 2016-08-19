@@ -131,6 +131,8 @@ extern "C" {
 	WINPORT_DECL(GetTempFileName, UINT,( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer ));
 	WINPORT_DECL(GetFullPathName, DWORD, (LPCTSTR lpFileName,  DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart));
 
+	WINPORT_DECL(AttributesByStat, DWORD,( const struct stat *s, const WCHAR *name ));
+
 //time/date
 	WINPORT_DECL(GetLocalTime, VOID, (LPSYSTEMTIME lpSystemTime));
 	WINPORT_DECL(GetSystemTime, VOID, (LPSYSTEMTIME lpSystemTime));
@@ -142,6 +144,7 @@ extern "C" {
 	WINPORT_DECL(GetSystemTimeAsFileTime, VOID, (FILETIME *lpFileTime));
 	WINPORT_DECL(GetTickCount, DWORD, ());
 	WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *lpFileTime, LPWORD   lpFatDate, LPWORD   lpFatTime));
+	WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTime));
 	
 
 	//String
@@ -218,10 +221,56 @@ extern "C" {
 }
 
 #include <string>
-SHAREDSYMBOL std::string UTF16to8(const wchar_t *src);
-SHAREDSYMBOL std::wstring UTF8to16(const char *src);
-SHAREDSYMBOL std::string SUTF16to8(const std::wstring &src);
-SHAREDSYMBOL std::wstring SUTF8to16(const std::string &src);
+#include <string.h>
+
+
+static std::string UTF16to8(const wchar_t *src)
+{
+	size_t src_len = wcslen(src);
+	std::string dst;
+	dst.resize(src_len + 8);
+	for (;; ) {
+		int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, src, src_len, &dst[0], dst.size(), NULL, NULL);
+		if (r<=dst.size()) {
+			dst.resize(r);
+			break;
+		}
+		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
+			dst.resize(dst.size() + 8 + dst.size()/2);
+		} else {
+			fprintf(stderr, "UTF16to8('" WS_FMT "') - failed\n", src);
+			dst.clear();
+			break;
+		}
+	}
+	return dst;
+}
+
+static std::wstring UTF8to16(const char *src)
+{
+	size_t src_len = strlen(src);
+	std::wstring dst;
+	dst.resize(src_len + 8);
+	for (;; ) {
+		int r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, &dst[0], dst.size());
+		if (r<=dst.size()) {
+			dst.resize(r);
+			break;
+		}
+		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
+			dst.resize(dst.size() + 8 + dst.size()/2);
+		} else {
+			fprintf(stderr, "UTF8to16('%s') - failed\n", src);
+			dst.clear();
+			break;
+		}
+	}
+	return dst;
+}
+
+
+static std::string SUTF16to8(const std::wstring &src) {return UTF16to8(src.c_str());}
+static std::wstring SUTF8to16(const std::string &src) {return UTF8to16(src.c_str());}
 
 #endif
 

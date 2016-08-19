@@ -535,6 +535,7 @@ namespace oldfar
 		DWORD    nFileSizeLow;
 		DWORD    dwReserved0;
 		DWORD    dwReserved1;
+		DWORD    dwUnixMode;
 		CHAR     cFileName[MAX_PATH];
 		CHAR     cAlternateFileName[14];
 	};

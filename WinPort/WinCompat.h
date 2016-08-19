@@ -361,6 +361,7 @@ typedef struct _WIN32_FIND_DATAA {
     DWORD nFileSizeLow;
     DWORD dwReserved0;
     DWORD dwReserved1;
+    DWORD dwUnixMode;
     CHAR   cFileName[ MAX_PATH ];
     CHAR   cAlternateFileName[ 14 ];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
@@ -373,6 +374,7 @@ typedef struct _WIN32_FIND_DATAW {
     DWORD nFileSizeLow;
     DWORD dwReserved0;
     DWORD dwReserved1;
+    DWORD dwUnixMode;
     WCHAR  cFileName[ MAX_PATH ];
     WCHAR  cAlternateFileName[ 14 ];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
@@ -938,6 +940,7 @@ typedef void *HMODULE;
 #define FILE_ATTRIBUTE_INTEGRITY_STREAM     0x00008000  
 #define FILE_ATTRIBUTE_VIRTUAL              0x00010000  
 #define FILE_ATTRIBUTE_NO_SCRUB_DATA        0x00020000  
+#define FILE_ATTRIBUTE_EXECUTABLE           0x00400000  
 
 #define FILE_FILE_COMPRESSION               0x00000010  
 #define FILE_SUPPORTS_SPARSE_FILES          0x00000040  

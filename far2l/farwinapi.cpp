@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 #pragma hdrstop
-
+#include <sys/stat.h>
 #include "pathmix.hpp"
 #include "mix.hpp"
 #include "ctrlobj.hpp"
@@ -60,6 +60,7 @@ void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
 	FindData.nPackSize = 0;//WTF?
 	FindData.dwReserved0 = wfd.dwReserved0;
 	FindData.dwReserved1 = wfd.dwReserved1;
+	FindData.dwUnixMode = wfd.dwUnixMode;
 	FindData.strFileName = wfd.cFileName;
 	FindData.strAlternateFileName = wfd.cAlternateFileName;
 }
@@ -467,6 +468,7 @@ void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest)
 	pDest->ftChangeTime.dwLowDateTime=0;
 	pDest->nFileSize = pSrc->nFileSize;
 	pDest->nPackSize = pSrc->nPackSize;
+	pDest->dwUnixMode = pSrc->dwUnixMode;
 	pDest->strFileName = pSrc->lpwszFileName;
 	pDest->strAlternateFileName = pSrc->lpwszAlternateFileName;
 }
@@ -479,6 +481,7 @@ void apiFindDataExToData(const FAR_FIND_DATA_EX *pSrc, FAR_FIND_DATA *pDest)
 	pDest->ftLastWriteTime = pSrc->ftLastWriteTime;
 	pDest->nFileSize = pSrc->nFileSize;
 	pDest->nPackSize = pSrc->nPackSize;
+	pDest->dwUnixMode = pSrc->dwUnixMode;
 	pDest->lpwszFileName = xf_wcsdup(pSrc->strFileName);
 	pDest->lpwszAlternateFileName = xf_wcsdup(pSrc->strAlternateFileName);
 }
@@ -498,41 +501,25 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 	}
 	else if (!wcspbrk(lpwszFileName,L"*?"))
 	{
-		DWORD dwAttr=apiGetFileAttributes(lpwszFileName);
-
-		if (dwAttr!=INVALID_FILE_ATTRIBUTES)
-		{
-			// Àãà, çíà÷èò ôàéë òàêè åñòü. Çàïîëíèì ñòðóêòóðó ðó÷êàìè.
+		struct stat s = {0};
+		if (stat(UTF16to8(lpwszFileName).c_str(), &s)==0) {
 			FindData.Clear();
-			FindData.dwFileAttributes=dwAttr;
-			File file;
-			if(file.Open(lpwszFileName, FILE_READ_ATTRIBUTES, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING))
-			{
-				file.GetTime(&FindData.ftCreationTime,&FindData.ftLastAccessTime,&FindData.ftLastWriteTime,&FindData.ftChangeTime);
-				file.GetSize(FindData.nFileSize);
-				file.Close();
-			}
-
-			/*if (FindData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
-			{
-				string strTmp;
-				GetReparsePointInfo(lpwszFileName,strTmp,&FindData.dwReserved0); //MSDN
-			}
-			else*/
-			{
-				FindData.dwReserved0=0;
-			}
-
-			FindData.dwReserved1=0;
-			FindData.strFileName=PointToName(lpwszFileName);
+			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
+			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
+			WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
+			FindData.dwFileAttributes = WINPORT(AttributesByStat)(&s, lpwszFileName);
+			FindData.nFileSize = s.st_size;
+			FindData.dwUnixMode = s.st_mode;
+			FindData.dwReserved0 = FindData.dwReserved1 = 0;
+			FindData.strFileName = PointToName(lpwszFileName);
 			return TRUE;
 		}
-	} else{
-		fprintf(stderr, "apiGetFindDataEx: FAILED - %ls", lpwszFileName);		
 	}
 
+	fprintf(stderr, "apiGetFindDataEx: FAILED - %ls", lpwszFileName);		
+
 	FindData.Clear();
-	FindData.dwFileAttributes=INVALID_FILE_ATTRIBUTES; //BUGBUG
+	FindData.dwFileAttributes = INVALID_FILE_ATTRIBUTES; //BUGBUG
 
 	return FALSE;
 }

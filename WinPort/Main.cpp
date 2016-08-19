@@ -244,7 +244,7 @@ public:
 	{
 		_result.clear();
 		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
-		fprintf(stderr, "FixedFontLookup: %ls\n", (const wchar_t *)_result);
+		fprintf(stderr, "FixedFontLookup: %ls\n", _result.wc_str());
 		return _result;
 	}
 	
@@ -262,7 +262,7 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
 			font.SetNativeFontInfo(str);
 			if (font.IsOk()) {
-				printf("InitializeFont: used %ls\n", (const wchar_t *)str);
+				printf("InitializeFont: used %ls\n", str.wc_str());
 				return;				
 			}
 		}
@@ -302,7 +302,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 	
 	
 	_white_rectangle.SetFont(_font);
-	fprintf(stderr, "Font: '%ls' %s\n", (const wchar_t *)_font.GetFaceName(), _font.IsFixedWidth() ? "monospaced" : "not monospaced");
+	fprintf(stderr, "Font: '%ls' %s\n", _font.GetFaceName().wc_str(), _font.IsFixedWidth() ? "monospaced" : "not monospaced");
 	
 	wchar_t test_char[2] = {0};
 	for(test_char[0] = L'A';  test_char[0]<=L'Z'; ++test_char[0]) {

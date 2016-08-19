@@ -477,6 +477,7 @@ const string FormatStr_Attribute(DWORD FileAttributes,int Width)
 
 	const wchar_t OutStr[]=
 	{
+		FileAttributes&FILE_ATTRIBUTE_EXECUTABLE?L'X':L' ',
 		FileAttributes&FILE_ATTRIBUTE_READONLY?L'R':L' ',
 		FileAttributes&FILE_ATTRIBUTE_SYSTEM?L'S':L' ',
 		FileAttributes&FILE_ATTRIBUTE_HIDDEN?L'H':L' ',
@@ -489,6 +490,7 @@ const string FormatStr_Attribute(DWORD FileAttributes,int Width)
 		FileAttributes&FILE_ATTRIBUTE_VIRTUAL?L'V':L' ',
 		0
 	};
+
 
 	if (Width > 0)
 		strResult<<fmt::Width(Width)<<fmt::Precision(Width);

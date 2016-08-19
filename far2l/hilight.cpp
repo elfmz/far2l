@@ -802,7 +802,9 @@ void SetHighlighting()
 	        // ýòî íàñòðîéêà äëÿ êàòàëîãîâ íà òåõ ïàíåëÿõ, êîòîðûå äîëæíû ðàñêðàøèâàòüñÿ
 	        // áåç ó÷åòà ìàñîê (íàïðèìåð, ñïèñîê õîñòîâ â "far navigator")
 	        /* 7 */{Masks[0], 1, 0x0010, 0x1F, 0x3F},
+	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE, 0x1A, 0x3A}, 
 	    };
+
 
 	for (size_t I=0; I < ARRAYSIZE(StdHighlightData); I++)
 	{

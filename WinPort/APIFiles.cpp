@@ -13,8 +13,6 @@
 #include "WinPortHandle.h"
 #include "Utils.h"
 
-void FileTime_UnixToWin32(struct timespec ts, FILETIME *lpFileTime);
-
 extern "C"
 {
 	struct WinPortHandleFile : WinPortHandle
@@ -75,7 +73,7 @@ extern "C"
 		case TRUNCATE_EXISTING: flags|= O_TRUNC; break;
 		}
 		std::string path = ConsumeWinPath(lpFileName);
-		int r = _open(path.c_str(), flags	, 0777);		
+		int r = _open(path.c_str(), flags, (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644);		
 		fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s r=%d\n", 
 			lpFileName, dwDesiredAccess, flags, path.c_str(), r);
 		if (r==-1) {
@@ -259,16 +257,16 @@ extern "C"
 		if (fstat(wph->fd, &s) < 0)
 			return FALSE;
 			
-		FileTime_UnixToWin32(s.st_mtim, lpLastWriteTime);
-		FileTime_UnixToWin32(s.st_ctim, lpCreationTime);
-		FileTime_UnixToWin32(s.st_atim, lpLastAccessTime);
+		WINPORT(FileTime_UnixToWin32)(s.st_mtim, lpLastWriteTime);
+		WINPORT(FileTime_UnixToWin32)(s.st_ctim, lpCreationTime);
+		WINPORT(FileTime_UnixToWin32)(s.st_atim, lpLastAccessTime);
 		return TRUE;
 	}
 
-	static DWORD AttributesByStat(const struct stat &s, const WCHAR *name)
+	DWORD WINPORT(AttributesByStat)(const struct stat *s, const WCHAR *name)
 	{
 		DWORD rv = 0;
-		switch (s.st_mode & S_IFMT) {
+		switch (s->st_mode & S_IFMT) {
 			case S_IFCHR: rv = FILE_ATTRIBUTE_DEVICE; break;
 			case S_IFDIR: rv = FILE_ATTRIBUTE_DIRECTORY; break;
 			case S_IFREG: rv = FILE_ATTRIBUTE_ARCHIVE; break;
@@ -285,6 +283,10 @@ extern "C"
 			if ( (slash && slash[1]==L'.') || (!slash && name[0]=='.'))
 				rv|= FILE_ATTRIBUTE_HIDDEN;
 		}
+
+		if ((s->st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0)
+			rv|= FILE_ATTRIBUTE_EXECUTABLE;
+
 		return rv;
 	}
 
@@ -294,7 +296,7 @@ extern "C"
 		if (stat(ConsumeWinPath(lpFileName).c_str(), &s) < 0)
 			return INVALID_FILE_ATTRIBUTES;
 
-		return AttributesByStat(s, lpFileName);
+		return WINPORT(AttributesByStat)(&s, lpFileName);
 	}
 
 	DWORD WINPORT(SetFileAttributes)(LPCWSTR lpFileName, DWORD dwAttributes)
@@ -359,13 +361,14 @@ extern "C"
 	//////////////////////////////////
 	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData)
 	{
-		lpFindFileData->dwFileAttributes = AttributesByStat(s, name);
-		FileTime_UnixToWin32(s.st_mtim, &lpFindFileData->ftLastWriteTime);
-		FileTime_UnixToWin32(s.st_ctim, &lpFindFileData->ftCreationTime);
-		FileTime_UnixToWin32(s.st_atim, &lpFindFileData->ftLastAccessTime);
+		lpFindFileData->dwFileAttributes = WINPORT(AttributesByStat)(&s, name);
+		WINPORT(FileTime_UnixToWin32)(s.st_mtim, &lpFindFileData->ftLastWriteTime);
+		WINPORT(FileTime_UnixToWin32)(s.st_ctim, &lpFindFileData->ftCreationTime);
+		WINPORT(FileTime_UnixToWin32)(s.st_atim, &lpFindFileData->ftLastAccessTime);
 		lpFindFileData->nFileSizeHigh = (DWORD)(((uint64_t)s.st_size >> 32) & 0xffffffff);
 		lpFindFileData->nFileSizeLow = (DWORD)(s.st_size & 0xffffffff);
 		lpFindFileData->dwReserved0 = lpFindFileData->dwReserved1 = 0;
+		lpFindFileData->dwUnixMode = s.st_mode;
 		wcsncpy(lpFindFileData->cFileName, name, MAX_PATH - 1);
 		lpFindFileData->cAlternateFileName[0] = 0;
 	}

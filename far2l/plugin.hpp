@@ -743,6 +743,7 @@ struct FAR_FIND_DATA
 	FILETIME ftLastWriteTime;
 	uint64_t nFileSize;
 	uint64_t nPackSize;
+	DWORD dwUnixMode;
 #ifdef FAR_USE_INTERNALS
 	wchar_t *lpwszFileName;
 	wchar_t *lpwszAlternateFileName;

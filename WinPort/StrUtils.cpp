@@ -11,53 +11,6 @@
 #include "Utils.h"
 
 
-SHAREDSYMBOL std::string UTF16to8(const wchar_t *src)
-{
-	size_t src_len = wcslen(src);
-	std::string dst;
-	dst.resize(src_len + 8);
-	for (;; ) {
-		int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, src, src_len, &dst[0], dst.size(), NULL, NULL);
-		if (r<=dst.size()) {
-			dst.resize(r);
-			break;
-		}
-		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
-			dst.resize(dst.size() + 8 + dst.size()/2);
-		} else {
-			fprintf(stderr, "UTF16to8('" WS_FMT "') - failed\n", src);
-			dst.clear();
-			break;
-		}
-	}
-	return dst;
-}
-
-SHAREDSYMBOL std::wstring UTF8to16(const char *src)
-{
-	size_t src_len = strlen(src);
-	std::wstring dst;
-	dst.resize(src_len + 8);
-	for (;; ) {
-		int r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, &dst[0], dst.size());
-		if (r<=dst.size()) {
-			dst.resize(r);
-			break;
-		}
-		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
-			dst.resize(dst.size() + 8 + dst.size()/2);
-		} else {
-			fprintf(stderr, "UTF8to16('%s') - failed\n", src);
-			dst.clear();
-			break;
-		}
-	}
-	return dst;
-}
-
-
-SHAREDSYMBOL std::string SUTF16to8(const std::wstring &src) {return UTF16to8(src.c_str());}
-SHAREDSYMBOL std::wstring SUTF8to16(const std::string &src) {return UTF8to16(src.c_str());}
 
 ///////////////////
 

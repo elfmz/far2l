@@ -47,8 +47,8 @@ struct FAR_FIND_DATA_EX
 	FILETIME ftLastWriteTime;
 	FILETIME ftChangeTime;
 	uint64_t nFileSize;
-
 	uint64_t nPackSize;
+	DWORD dwUnixMode;
 	struct
 	{
 		DWORD dwReserved0;

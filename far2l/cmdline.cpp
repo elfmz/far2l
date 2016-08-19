@@ -627,7 +627,7 @@ void CommandLine::GetPrompt(string &strDestStr)
 	else // default prompt = "$p$g"
 	{
 		strDestStr = strCurDir;
-		strDestStr += (geteuid()==0) ? L"#" : L"$";
+		strDestStr += (geteuid()==0) ? L"# " : L"$ ";
 	}
 }
 

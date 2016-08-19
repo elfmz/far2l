@@ -1,4 +1,8 @@
 #include "KeyFileHelper.h"
+
+# define GLIB_VERSION_MIN_REQUIRED      (GLIB_VERSION_2_26)
+# define GLIB_VERSION_MAX_ALLOWED	(GLIB_VERSION_2_32)
+
 #include <glib.h>
 #include <string.h>
 #include <mutex>

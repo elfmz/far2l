@@ -608,7 +608,9 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 			
 			if (_mouse_qedit_pending && cx >= qedit.Left && 
 				cx <= qedit.Right && cy >= qedit.Top && cy <= qedit.Bottom) {
-				attributes^= COMMON_LVB_REVERSE_VIDEO;
+				attributes^= FOREGROUND_INTENSITY | BACKGROUND_INTENSITY |
+					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | 
+					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
 			}
 			ccc.SetBackgroundAttributes(attributes);
 			unsigned int x = cx * font_width;
@@ -742,6 +744,8 @@ void WinPortPanel::DamageAreaBetween(COORD c1, COORD c2)
 void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 {
 	if (event.LeftDown()) {
+		if (_mouse_qedit_pending)
+			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 		_mouse_qedit_start = _mouse_qedit_last = pos_char;
 		_mouse_qedit_pending = true;
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);

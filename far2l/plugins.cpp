@@ -152,8 +152,8 @@ DWORD ExportCRC32W[] =
 enum PluginType
 {
 	NOT_PLUGIN,
-	UTF16_PLUGIN,
-	UTF8_PLUGIN
+	WIDE_PLUGIN,
+	MULTIBYTE_PLUGIN
 };
 
 
@@ -161,10 +161,10 @@ PluginType IsModulePlugin(const wchar_t *lpModuleName)
 {
 	const wchar_t *ext = wcsrchr(lpModuleName, L'.');
 	if (ext) {
-		if (wcscmp(ext, L".far-plug-utf16")==0)
-			return UTF16_PLUGIN;
-		if (wcscmp(ext, L".far-plug-utf8")==0)
-			return UTF8_PLUGIN;	
+		if (wcscmp(ext, L".far-plug-wide")==0)
+			return WIDE_PLUGIN;
+		if (wcscmp(ext, L".far-plug-mb")==0)
+			return MULTIBYTE_PLUGIN;
 	}
 	
 	return NOT_PLUGIN;
@@ -246,8 +246,8 @@ bool PluginManager::LoadPlugin(
 
 	switch (IsModulePlugin(lpwszModuleName))
 	{
-		case UTF16_PLUGIN: pPlugin = new PluginW(this, lpwszModuleName); break;
-		case UTF8_PLUGIN: pPlugin = new PluginA(this, lpwszModuleName); break;
+		case WIDE_PLUGIN: pPlugin = new PluginW(this, lpwszModuleName); break;
+		case MULTIBYTE_PLUGIN: pPlugin = new PluginA(this, lpwszModuleName); break;
 		default: return false;
 	}
 

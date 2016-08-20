@@ -61,7 +61,7 @@ int wxKeyCode2WinKeyCode(int code)
     case WXK_SHIFT: return VK_SHIFT;
     case WXK_ALT: return VK_MENU;
     case WXK_CONTROL: return VK_CONTROL;
-    case WXK_MENU: return VK_MENU;
+    case WXK_MENU: return VK_APPS;
     case WXK_PAUSE: return VK_PAUSE;
     case WXK_CAPITAL: return VK_CAPITAL;
     case WXK_END: return VK_END;
@@ -187,7 +187,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	if (event.ShiftDown())
 		Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
 
-	if (event.AltDown())
+	if (event.AltDown())// simulated outside cuz not reliable: || event.MetaDown()
 		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 
 	if (event.ControlDown())

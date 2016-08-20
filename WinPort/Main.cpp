@@ -94,7 +94,7 @@ private:
 	WinPortFrame *_frame;
 	wxTimer* _cursor_timer;
 	bool _cursor_state;
-	wxKeyEvent _last_skipped_keydown;
+	wxKeyEvent _last_skipped_keydown, _last_keydown;
 	wxFont _font;
 	bool _delayed_init_done, _resize_pending;
 	DWORD _mouse_state, _mouse_qedit_pending;
@@ -467,9 +467,16 @@ void WinPortPanel::OnTitleChanged( wxCommandEvent& event )
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyDown: %x %x %u\n", event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped());
-	if (event.GetSkipped())
-		return;
+	fprintf(stderr, "OnKeyDown: %x %x %u %lu\n", 
+		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
+		
+	if (event.GetSkipped() || (event.GetTimestamp() && 
+		_last_keydown.GetKeyCode()==event.GetKeyCode() &&
+		_last_keydown.GetTimestamp()==event.GetTimestamp())) {
+		return; //see https://github.com/elfmz/far2l/issues/4
+	}
+	_last_keydown = event;
+	
 	if (event.GetKeyCode()==WXK_RETURN && event.AltDown() &&
 		!event.ShiftDown() && !event.ControlDown() && !event.MetaDown()) {
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
@@ -487,7 +494,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyUp: %x %x %d\n", event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped());
+	fprintf(stderr, "OnKeyUp: %x %x %d %lu\n", 
+	event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	if (event.GetSkipped())
 		return;
 	wx2INPUT_RECORD ir(event, FALSE);
@@ -498,7 +506,8 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnChar: %x %x %d\n", event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped());
+	fprintf(stderr, "OnChar: %x %x %d %lu\n", 
+		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	if (event.GetSkipped())
 		return;
 	if (event.GetUnicodeKey()!=WXK_NONE || event.GetKeyCode()==WXK_DELETE) {

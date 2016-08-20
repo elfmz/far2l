@@ -205,7 +205,7 @@ extern "C" {
 			wcscpy(lpDst, result.c_str());
 		}
 		
-		fprintf(stderr, "TODO: ExpandEnvironmentStrings(" WS_FMT ") -> " WS_FMT "\n", lpSrc,  result.c_str());
+		//fprintf(stderr, "TODO: ExpandEnvironmentStrings(" WS_FMT ") -> " WS_FMT "\n", lpSrc,  result.c_str());
 		return (DWORD)result.size() + 1;
 	}
 

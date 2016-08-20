@@ -77,6 +77,11 @@ class WinPortFSNotify : public WinPortEvent
 
 	void WatcherProc()
 	{
+		union {
+			struct inotify_event ie;
+			char space[ sizeof(struct inotify_event) + NAME_MAX + 10 ];
+		} buf = { 0 };
+
 		fd_set rfds;
 		for (;;) {
 			FD_ZERO(&rfds);
@@ -86,16 +91,22 @@ class WinPortFSNotify : public WinPortEvent
 			if (!_watching) break;
 
 			if (FD_ISSET(_fd, &rfds)) {
-				union {
-					struct inotify_event ie;
-					char space[ sizeof(struct inotify_event) + NAME_MAX + 10 ];
-				} _buf = { 0 };
-				r = read(_fd, &_buf, sizeof(_buf) - 1);
-				Set();
-				if (r<=0)
+				r = read(_fd, &buf, sizeof(buf) - 1);
+				if (r > 0) {
+					fprintf(stderr, "WatcherProc: triggered by %s\n", buf.ie.name);
+					Set();
+				} else if (errno!=EAGAIN && errno!=EWOULDBLOCK) {
 					fprintf(stderr, "WatcherProc: event read error %u\n", errno);
-				else
-					fprintf(stderr, "WatcherProc: triggered by %s\n", _buf.ie.name);
+					break;
+				}
+			}
+			if (FD_ISSET(_pipe[0], &rfds)) {
+				if (read(_pipe[0], &buf, 1) <= 0) {
+					if (errno!=EAGAIN && errno!=EWOULDBLOCK)  {
+						fprintf(stderr, "WatcherProc: pipe read error %u\n", errno);
+						break;
+					}
+				}
 			}
 		}
 	}

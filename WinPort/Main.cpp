@@ -85,6 +85,7 @@ private:
 	void OnMouse( wxMouseEvent &event );
 	void OnMouseNormal( wxMouseEvent &event, COORD pos_char );
 	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char );
+	void OnKillFocus( wxFocusEvent &event );
 	void DamageAreaBetween(COORD c1, COORD c2);
 
 	wxDECLARE_EVENT_TABLE();
@@ -96,6 +97,7 @@ private:
 	bool _cursor_state;
 	bool _delayed_init_done, _resize_pending;
 	bool _last_keydown_enqueued;
+	bool _simulating_alt;//used to simulate Alt by WIN
 	wxKeyEvent _last_keydown;
 	wxFont _font;
 	DWORD _mouse_state, _mouse_qedit_pending;
@@ -149,6 +151,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_ERASE_BACKGROUND(WinPortPanel::OnEraseBackground)
 	EVT_SIZE(WinPortPanel::OnSize)
 	EVT_MOUSE_EVENTS(WinPortPanel::OnMouse )
+	EVT_KILL_FOCUS(WinPortPanel::OnKillFocus )
 
 wxEND_EVENT_TABLE()
 
@@ -292,7 +295,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
 		_cursor_state(false), _delayed_init_done(false), _resize_pending(false), 
-		_last_keydown_enqueued(false), _mouse_state(0), _mouse_qedit_pending(false)
+		_last_keydown_enqueued(false), _simulating_alt(false), _mouse_state(0), _mouse_qedit_pending(false)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
@@ -491,17 +494,22 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	_last_keydown = event;
 	_last_keydown_enqueued = false;
 	
-	if (event.GetKeyCode()==WXK_RETURN && event.AltDown() &&
-		!event.ShiftDown() && !event.ControlDown() && !event.MetaDown()) {
+	if (event.GetKeyCode()==WXK_RETURN 
+		&& (event.AltDown() || _simulating_alt) 
+		&& !event.ShiftDown() && !event.ControlDown() ) {
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
 		_resize_pending = true;
 		_last_keydown_enqueued = true;
 		return;
 	}
 	
-	if (event.HasModifiers() || event.GetKeyCode()==WXK_DELETE ||
+	if (event.HasModifiers() || _simulating_alt || event.GetKeyCode()==WXK_DELETE ||
 		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
 		wx2INPUT_RECORD ir(event, TRUE);
+		if (ir.Event.KeyEvent.wVirtualKeyCode==VK_MENU)
+			_simulating_alt = true;
+		if (_simulating_alt)
+			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 		g_wx_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
@@ -515,8 +523,12 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	if (event.GetSkipped())
 		return;
 		
+	wx2INPUT_RECORD ir(event, FALSE);
+	if (ir.Event.KeyEvent.wVirtualKeyCode==VK_MENU)
+		_simulating_alt = false;	
+	else if (_simulating_alt)
+		ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	
 	if (_last_keydown_enqueued && event.GetKeyCode()==_last_keydown.GetKeyCode()) {
-		wx2INPUT_RECORD ir(event, FALSE);
 		g_wx_con_in.Enqueue(&ir, 1);
 	}
 	//event.Skip();
@@ -524,7 +536,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnChar: %x %x %d %lu _last_keydown_ts=%lu _last_keydown_enqueued=%u\n", 
+	fprintf(stderr, "OnChar: %x %x %d %lu _lk_ts=%lu _lk_enqueued=%u\n", 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp(),
 		_last_keydown.GetTimestamp(), _last_keydown_enqueued);
 	if (event.GetSkipped())
@@ -535,14 +547,16 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
-		ir.Event.KeyEvent.wVirtualScanCode = 0;
 		if (event.GetUnicodeKey() <= 0x7f) { 
 			wx2INPUT_RECORD ir_last_keydown(_last_keydown, TRUE);
 			ir.Event.KeyEvent.wVirtualKeyCode = ir_last_keydown.Event.KeyEvent.wVirtualKeyCode;
+			/*ir.Event.KeyEvent.dwControlKeyState = ir_last_keydown.Event.KeyEvent.dwControlKeyState;
+			if (_simulating_alt)
+				ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	*/
 		}else // workaround for non-latin characters
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
-		ir.Event.KeyEvent.dwControlKeyState = 0;
+		
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		g_wx_con_in.Enqueue(&ir, 1);
@@ -831,4 +845,16 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 	}
 }
 
+
+void WinPortPanel::OnKillFocus( wxFocusEvent &event )
+{
+	fprintf(stderr, "OnKillFocus\n");
+
+	_simulating_alt = false;
+	
+	if (_mouse_qedit_pending) {
+		_mouse_qedit_pending = false;
+		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
+	}
+}
 

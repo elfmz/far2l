@@ -94,9 +94,10 @@ private:
 	WinPortFrame *_frame;
 	wxTimer* _cursor_timer;
 	bool _cursor_state;
-	wxKeyEvent _last_skipped_keydown, _last_keydown;
-	wxFont _font;
 	bool _delayed_init_done, _resize_pending;
+	bool _last_keydown_enqueued;
+	wxKeyEvent _last_keydown;
+	wxFont _font;
 	DWORD _mouse_state, _mouse_qedit_pending;
 	COORD _mouse_qedit_start, _mouse_qedit_last;
 
@@ -291,7 +292,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
 		_cursor_state(false), _delayed_init_done(false), _resize_pending(false), 
-		_mouse_state(0), _mouse_qedit_pending(false)
+		_last_keydown_enqueued(false), _mouse_state(0), _mouse_qedit_pending(false)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
@@ -473,22 +474,25 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	if (event.GetSkipped() || (event.GetTimestamp() && 
 		_last_keydown.GetKeyCode()==event.GetKeyCode() &&
 		_last_keydown.GetTimestamp()==event.GetTimestamp())) {
+		event.Skip();
 		return; //see https://github.com/elfmz/far2l/issues/4
 	}
 	_last_keydown = event;
+	_last_keydown_enqueued = false;
 	
 	if (event.GetKeyCode()==WXK_RETURN && event.AltDown() &&
 		!event.ShiftDown() && !event.ControlDown() && !event.MetaDown()) {
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
 		_resize_pending = true;
+		_last_keydown_enqueued = true;
 		return;
 	}
 	
 	wx2INPUT_RECORD ir(event, TRUE);
-	if (event.GetUnicodeKey()==WXK_NONE && event.GetKeyCode()!=WXK_DELETE)
+	if (event.GetUnicodeKey()==WXK_NONE || event.GetKeyCode()==WXK_DELETE || event.HasModifiers()) {
 		g_wx_con_in.Enqueue(&ir, 1);
-	else 
-		_last_skipped_keydown = event;
+		_last_keydown_enqueued = true;
+	} 
 	event.Skip();
 }
 
@@ -498,32 +502,38 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	if (event.GetSkipped())
 		return;
-	wx2INPUT_RECORD ir(event, FALSE);
-	if (event.GetUnicodeKey()==WXK_NONE && event.GetKeyCode()!=WXK_DELETE) 
+		
+	if (_last_keydown_enqueued && event.GetKeyCode()==_last_keydown.GetKeyCode()) {
+		wx2INPUT_RECORD ir(event, FALSE);
 		g_wx_con_in.Enqueue(&ir, 1);
+	}
 	//event.Skip();
 }
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnChar: %x %x %d %lu\n", 
-		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
+	fprintf(stderr, "OnChar: %x %x %d %lu _last_keydown_ts=%lu _last_keydown_enqueued=%u\n", 
+		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp(),
+		_last_keydown.GetTimestamp(), _last_keydown_enqueued);
 	if (event.GetSkipped())
 		return;
-	if (event.GetUnicodeKey()!=WXK_NONE || event.GetKeyCode()==WXK_DELETE) {
-		wx2INPUT_RECORD ir_down(_last_skipped_keydown, TRUE);
-		wx2INPUT_RECORD ir_up(_last_skipped_keydown, FALSE);
-		wx2INPUT_RECORD ir_char(event, TRUE);
-		ir_down.Event.KeyEvent.uChar = 
-			ir_up.Event.KeyEvent.uChar = 
-				ir_char.Event.KeyEvent.uChar;
-				
-		//workaround for non-english input
-		if ( ir_down.Event.KeyEvent.uChar.UnicodeChar > 0x7f)
-			ir_down.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
+		
+	if (event.GetUnicodeKey()!=WXK_NONE && 
+		(!_last_keydown_enqueued || _last_keydown.GetTimestamp()!=event.GetTimestamp())) {
+		INPUT_RECORD ir = {0};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.wRepeatCount = 1;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
+		ir.Event.KeyEvent.wVirtualScanCode = 0;
+		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
+		ir.Event.KeyEvent.dwControlKeyState = 0;
 
-		g_wx_con_in.Enqueue(&ir_down, 1);
-		g_wx_con_in.Enqueue(&ir_up, 1);
+		ir.Event.KeyEvent.bKeyDown = TRUE;
+		g_wx_con_in.Enqueue(&ir, 1);
+		
+		ir.Event.KeyEvent.bKeyDown = FALSE;
+		g_wx_con_in.Enqueue(&ir, 1);
+		
 	}
 	//event.Skip();
 }

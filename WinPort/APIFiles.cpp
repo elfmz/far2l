@@ -63,6 +63,8 @@ extern "C"
 		else if (dwDesiredAccess & (GENERIC_READ|GENERIC_ALL|FILE_READ_DATA|FILE_READ_ATTRIBUTES)) flags = O_RDONLY;
 #ifdef _WIN32
 		flags|= O_BINARY;
+#else		
+		flags|= O_CLOEXEC;
 #endif
 		switch (dwCreationDisposition) 
 		{

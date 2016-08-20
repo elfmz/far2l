@@ -466,6 +466,17 @@ void WinPortPanel::OnTitleChanged( wxCommandEvent& event )
 	_frame->SetTitle(title.c_str());
 }
 
+
+static bool IsForcedCharTranslation(int code)
+{
+	return (code==WXK_NUMPAD0 || code==WXK_NUMPAD1|| code==WXK_NUMPAD2 
+		|| code==WXK_NUMPAD3 || code==WXK_NUMPAD4 || code==WXK_NUMPAD5
+		|| code==WXK_NUMPAD6 || code==WXK_NUMPAD7 || code==WXK_NUMPAD8 
+		|| code==WXK_NUMPAD9 || code==WXK_NUMPAD_DECIMAL || code==WXK_NUMPAD_SPACE
+		|| code==WXK_NUMPAD_SEPARATOR || code==WXK_NUMPAD_EQUAL || code==WXK_NUMPAD_ADD
+		|| code==WXK_NUMPAD_MULTIPLY || code==WXK_NUMPAD_SUBTRACT || code==WXK_NUMPAD_DIVIDE);
+}
+
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
 	fprintf(stderr, "OnKeyDown: %x %x %u %lu\n", 
@@ -488,8 +499,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 	
-	wx2INPUT_RECORD ir(event, TRUE);
-	if (event.GetUnicodeKey()==WXK_NONE || event.GetKeyCode()==WXK_DELETE || event.HasModifiers()) {
+	if (event.HasModifiers() || event.GetKeyCode()==WXK_DELETE ||
+		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
+		wx2INPUT_RECORD ir(event, TRUE);
 		g_wx_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 

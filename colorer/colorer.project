@@ -261,7 +261,7 @@
       </Compiler>
       <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes) -fPIC" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="../Build/Plugins/Colorer/bin/$(ProjectName).far-plug-utf16" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="../Build/Plugins/Colorer/bin/$(ProjectName).far-plug-wide" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>

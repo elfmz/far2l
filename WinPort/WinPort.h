@@ -186,6 +186,7 @@ extern "C" {
 
 	//FS notify
 	WINPORT_DECL(FindFirstChangeNotification, HANDLE, (LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter));
+	WINPORT_DECL(FindNextChangeNotification, BOOL, (HANDLE hChangeHandle));
 	WINPORT_DECL(FindCloseChangeNotification, BOOL, (HANDLE hChangeHandle));
 
 	//memory
@@ -231,7 +232,11 @@ static std::string UTF16to8(const wchar_t *src)
 	dst.resize(src_len + 8);
 	for (;; ) {
 		int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, src, src_len, &dst[0], dst.size(), NULL, NULL);
-		if (r<=dst.size()) {
+		if (r < 0) {
+			dst.clear();
+			break;
+		}
+		if ((size_t)r<=dst.size()) {
 			dst.resize(r);
 			break;
 		}
@@ -253,7 +258,11 @@ static std::wstring UTF8to16(const char *src)
 	dst.resize(src_len + 8);
 	for (;; ) {
 		int r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, &dst[0], dst.size());
-		if (r<=dst.size()) {
+		if (r < 0) {
+			dst.clear();
+			break;
+		}
+		if ((size_t)r<=dst.size()) {
 			dst.resize(r);
 			break;
 		}

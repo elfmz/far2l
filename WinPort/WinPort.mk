@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=17/08/16
+Date                   :=20/08/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -36,7 +36,7 @@ ObjectsFileList        :="WinPort.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  $(shell wx-config --debug=yes --libs --unicode=yes)
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)/usr/src/wxWidgets-3.0.2/lib/wx/include/gtk3-unicode-3.0 $(IncludeSwitch)/usr/include/glib-2.0 $(IncludeSwitch)/usr/lib/x86_64-linux-gnu/glib-2.0/include/ 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 
@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch).
 AR       := /usr/bin/ar rcu
 CXX      := /usr/bin/g++
 CC       := /usr/bin/gcc
-CXXFLAGS :=  -g -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
-CFLAGS   :=  -g -O2 -std=c99 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
+CXXFLAGS :=  -g -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
+CFLAGS   :=  -g -O2 -std=c99 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags) -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/as
 

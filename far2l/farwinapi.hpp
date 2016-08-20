@@ -69,6 +69,7 @@ struct FAR_FIND_DATA_EX
 		nPackSize=0;
 		dwReserved0=0;
 		dwReserved1=0;
+		dwUnixMode=0;
 		strFileName.Clear();
 		strAlternateFileName.Clear();
 	}

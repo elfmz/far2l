@@ -535,8 +535,12 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 		ir.Event.KeyEvent.wVirtualScanCode = 0;
+		if (event.GetUnicodeKey() <= 0x7f) { 
+			wx2INPUT_RECORD ir_last_keydown(_last_keydown, TRUE);
+			ir.Event.KeyEvent.wVirtualKeyCode = ir_last_keydown.Event.KeyEvent.wVirtualKeyCode;
+		}else // workaround for non-latin characters
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 		ir.Event.KeyEvent.dwControlKeyState = 0;
 

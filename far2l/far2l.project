@@ -348,7 +348,7 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --unicode=yes --debug=yes) -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" C_Options="-g;-O2;-std=c99;$(shell wx-config --cxxflags --unicode=yes --debug=yes) -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+      <Compiler Options="-g;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --unicode=yes --debug=yes)  -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" C_Options="-g;-O2;-std=c99;$(shell wx-config --cxxflags --unicode=yes --debug=yes)  -Wno-delete-non-virtual-dtor -mcmodel=medium -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <Preprocessor Value="UNICODE"/>
       </Compiler>
       <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic" Required="yes">

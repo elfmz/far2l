@@ -120,9 +120,9 @@ public:
 			return;
 
 		if (bWatchSubtree) {
-			AddWatchRecursive(UTF16to8(lpPathName), 0);
+			AddWatchRecursive(Wide2MB(lpPathName), 0);
 		} else
-			AddWatch( UTF16to8(lpPathName).c_str() );
+			AddWatch( Wide2MB(lpPathName).c_str() );
 
 		if (!_watches.empty() && pipe2(_pipe, O_CLOEXEC)==0) {
 			_watching = true;

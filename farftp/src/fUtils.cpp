@@ -222,7 +222,7 @@ BOOL FTP::FTP_GetFindData(PluginPanelItem **PanelItem,int *ItemsNumber,BOOL From
 
 	do
 	{
-		std::string CurName = UTF16to8(fd.cFileName);
+		std::string CurName = Wide2MB(fd.cFileName);
 
 		if(CurName==".." || CurName==".") continue;
 

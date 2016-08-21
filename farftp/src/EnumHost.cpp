@@ -51,7 +51,7 @@ BOOL EnumHost::GetNextHost(FTPHost* p)
 		return FALSE;
 	}
 	p->Init();
-	strncpy(p->RegKey, p->MkHost(RootKey, UTF16to8(SubKey).c_str()), sizeof(p->RegKey));
+	strncpy(p->RegKey, p->MkHost(RootKey, Wide2MB(SubKey).c_str()), sizeof(p->RegKey));
 	p->LastWrite = lw;
 	HostPos++;
 	Log(("SetKey %p to: %s", p, p->RegKey));

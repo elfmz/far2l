@@ -25,14 +25,14 @@ HKEY WINAPI FP_CreateRegKey(const char *Key)
 	else
 		sprintf(name,"%s",FP_PluginRootKey);
 
-	//WINPORT(SetLastError)(WINPORT(RegOpenKey)(HKEY_CURRENT_USER, UTF8to16(name).c_str(),&hKey));
+	//WINPORT(SetLastError)(WINPORT(RegOpenKey)(HKEY_CURRENT_USER, MB2Wide(name).c_str(),&hKey));
 
 	//if(WINPORT(GetLastError)() == ERROR_SUCCESS)
 	//	return hKey;
 
 	hKey = NULL;
 	WINPORT(SetLastError)(WINPORT(RegCreateKeyEx)(HKEY_CURRENT_USER, 
-		UTF8to16(name).c_str(), 0,NULL,0,KEY_WRITE,NULL,&hKey,&Disposition));
+		MB2Wide(name).c_str(), 0,NULL,0,KEY_WRITE,NULL,&hKey,&Disposition));
 	return hKey;
 }
 
@@ -50,7 +50,7 @@ BOOL WINAPI FP_DeleteRegKey(const char *Key)
 
 BOOL WINAPI FP_DeleteRegKeyFull(const char *Key)
 {
-	WINPORT(SetLastError)(WINPORT(RegDeleteKey)(HKEY_CURRENT_USER, UTF8to16(Key).c_str()));
+	WINPORT(SetLastError)(WINPORT(RegDeleteKey)(HKEY_CURRENT_USER, MB2Wide(Key).c_str()));
 	return WINPORT(GetLastError)() == ERROR_SUCCESS;
 }
 
@@ -93,7 +93,7 @@ BOOL WINAPI FP_DeleteRegKeyAll(HKEY hParentKey, LPCSTR szKey)
 
 	do
 	{
-		nRes = WINPORT(RegOpenKeyEx)(hParentKey, UTF8to16(szKey).c_str(), 0, KEY_ENUMERATE_SUB_KEYS|KEY_READ|KEY_WRITE, &hKey);
+		nRes = WINPORT(RegOpenKeyEx)(hParentKey, MB2Wide(szKey).c_str(), 0, KEY_ENUMERATE_SUB_KEYS|KEY_READ|KEY_WRITE, &hKey);
 		WINPORT(SetLastError)(nRes); //Log(( "open [%s] rc: %s",szKey,__WINError() ));
 
 		if(nRes != ERROR_SUCCESS) break;
@@ -113,7 +113,7 @@ BOOL WINAPI FP_DeleteRegKeyAll(HKEY hParentKey, LPCSTR szKey)
 			if(nRes != ERROR_SUCCESS)
 				break;
 
-			if(!FP_DeleteRegKeyAll(hKey, UTF16to8(szSubKey).c_str()))
+			if(!FP_DeleteRegKeyAll(hKey, Wide2MB(szSubKey).c_str()))
 			{
 				nRes = WINPORT(GetLastError)();
 				break;
@@ -122,7 +122,7 @@ BOOL WINAPI FP_DeleteRegKeyAll(HKEY hParentKey, LPCSTR szKey)
 
 		if(nRes == ERROR_SUCCESS)
 		{
-			nRes = WINPORT(RegDeleteKey)(hParentKey, UTF8to16(szKey).c_str());
+			nRes = WINPORT(RegDeleteKey)(hParentKey, MB2Wide(szKey).c_str());
 			WINPORT(SetLastError)(nRes); //Log(( "delete rc: %s", __WINError() ));
 		}
 	}
@@ -144,7 +144,7 @@ BYTE *WINAPI FP_GetRegKey(const char *Key, const char *ValueName, BYTE *ValueDat
 
 	if(hKey)
 	{
-		ExitCode = WINPORT(RegQueryValueEx)(hKey, UTF8to16(ValueName).c_str(),0,&Type,ValueData,&sz);
+		ExitCode = WINPORT(RegQueryValueEx)(hKey, MB2Wide(ValueName).c_str(),0,&Type,ValueData,&sz);
 		WINPORT(RegCloseKey)(hKey);
 	}
 
@@ -170,7 +170,7 @@ char *WINAPI FP_GetRegKey(const char *Key, const char *ValueName, char *ValueDat
 
 	if(hKey)
 	{
-		ExitCode = WINPORT(RegQueryValueEx)(hKey,UTF8to16(ValueName).c_str(),0,&Type,(LPBYTE)ValueData,&sz);
+		ExitCode = WINPORT(RegQueryValueEx)(hKey,MB2Wide(ValueName).c_str(),0,&Type,(LPBYTE)ValueData,&sz);
 		WINPORT(RegCloseKey)(hKey);
 	}
 
@@ -195,7 +195,7 @@ int WINAPI FP_GetRegKey(const char *Key,const char *ValueName,DWORD Default)
 
 	if(hKey)
 	{
-		if(WINPORT(RegQueryValueEx)(hKey, UTF8to16(ValueName).c_str(),0,&Type,(BYTE*)&data,&Size) != ERROR_SUCCESS)
+		if(WINPORT(RegQueryValueEx)(hKey, MB2Wide(ValueName).c_str(),0,&Type,(BYTE*)&data,&Size) != ERROR_SUCCESS)
 			data = Default;
 
 		WINPORT(RegCloseKey)(hKey);
@@ -217,7 +217,7 @@ HKEY WINAPI FP_OpenRegKey(const char *Key)
 	else
 		snprintf(name,sizeof(name),"%s",FP_PluginRootKey);
 
-	if(WINPORT(RegOpenKeyEx)(HKEY_CURRENT_USER, UTF8to16(name).c_str(), 
+	if(WINPORT(RegOpenKeyEx)(HKEY_CURRENT_USER, MB2Wide(name).c_str(), 
 		0, KEY_ENUMERATE_SUB_KEYS|KEY_READ|KEY_WRITE, &hKey) != ERROR_SUCCESS) {
 		return NULL;		
 	}
@@ -229,7 +229,7 @@ BOOL WINAPI FP_SetRegKey(LPCSTR Key,LPCSTR ValueName,const BYTE * ValueData,DWOR
 {
 	HKEY hKey = FP_CreateRegKey(Key);
 	BOOL rc   = hKey &&
-	            WINPORT(RegSetValueEx)(hKey,UTF8to16(ValueName).c_str(),0,REG_BINARY,ValueData,ValueSize) == ERROR_SUCCESS;
+	            WINPORT(RegSetValueEx)(hKey,MB2Wide(ValueName).c_str(),0,REG_BINARY,ValueData,ValueSize) == ERROR_SUCCESS;
 	WINPORT(RegCloseKey)(hKey);
 	return rc;
 }
@@ -238,7 +238,7 @@ BOOL WINAPI FP_SetRegKey(LPCSTR Key,LPCSTR ValueName,LPCSTR ValueData)
 {
 	HKEY hKey=FP_CreateRegKey(Key);
 	BOOL rc = hKey &&
-	          WINPORT(RegSetValueEx)(hKey,UTF8to16(ValueName).c_str(),0,REG_SZ,(const BYTE *)ValueData,(int)strlen(ValueData)+1) == ERROR_SUCCESS;
+	          WINPORT(RegSetValueEx)(hKey,MB2Wide(ValueName).c_str(),0,REG_SZ,(const BYTE *)ValueData,(int)strlen(ValueData)+1) == ERROR_SUCCESS;
 	WINPORT(RegCloseKey)(hKey);
 	return rc;
 }
@@ -247,7 +247,7 @@ BOOL WINAPI FP_SetRegKey(LPCSTR Key,LPCSTR ValueName,DWORD ValueData)
 {
 	HKEY hKey = FP_CreateRegKey(Key);
 	BOOL rc = hKey &&
-	          WINPORT(RegSetValueEx)(hKey, UTF8to16(ValueName).c_str() ,0,REG_DWORD,(BYTE *)&ValueData,sizeof(ValueData)) == ERROR_SUCCESS;
+	          WINPORT(RegSetValueEx)(hKey, MB2Wide(ValueName).c_str() ,0,REG_DWORD,(BYTE *)&ValueData,sizeof(ValueData)) == ERROR_SUCCESS;
 	WINPORT(RegCloseKey)(hKey);
 	return rc;
 }

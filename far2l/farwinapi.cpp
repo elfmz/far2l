@@ -502,7 +502,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 	else if (!wcspbrk(lpwszFileName,L"*?"))
 	{
 		struct stat s = {0};
-		if (stat(UTF16to8(lpwszFileName).c_str(), &s)==0) {
+		if (stat(Wide2MB(lpwszFileName).c_str(), &s)==0) {
 			FindData.Clear();
 			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
 			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);

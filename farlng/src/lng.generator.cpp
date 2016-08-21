@@ -236,7 +236,7 @@ char *GetTempName ()
 {
 	std::vector<WCHAR> tmp(260);
 	WINPORT(GetTempFileName) (L".", L"lngg", 0, &tmp[0]);
-	return strdup(UTF16to8(&tmp[0]).c_str());
+	return strdup(Wide2MB(&tmp[0]).c_str());
 	//char *lpTempName = (char*)malloc (260);
 	//return lpTempName;
 }
@@ -350,7 +350,7 @@ int main_generator (int argc, char** argv)
     UnquoteIfNeeded (lpFeedFileName);
 
 	HANDLE hFeedFile = WINPORT(CreateFile) (
-			UTF8to16(argv[argc-1]).c_str(),
+			MB2Wide(argv[argc-1]).c_str(),
 			GENERIC_READ,
 			FILE_SHARE_READ,
 			NULL,
@@ -420,7 +420,7 @@ int main_generator (int argc, char** argv)
 		dwHeaderOldCRC32 = (CheckExists(lpFullName) && key_file) ? key_file->GetInt( lpFullName, "CRC32")  : 0;
 
 		HANDLE hHFile = WINPORT(CreateFile) (
-				UTF8to16(lpHPPFileNameTemp).c_str(),
+				MB2Wide(lpHPPFileNameTemp).c_str(),
 				GENERIC_WRITE,
 				FILE_SHARE_READ,
 				NULL,
@@ -466,7 +466,7 @@ int main_generator (int argc, char** argv)
 					pLangEntries[i].lpLNGFileNameTemp = GetTempName ();
 
 					pLangEntries[i].hLNGFile = WINPORT(CreateFile) (
-							UTF8to16(pLangEntries[i].lpLNGFileNameTemp).c_str(),
+							MB2Wide(pLangEntries[i].lpLNGFileNameTemp).c_str(),
 							GENERIC_WRITE,
 							FILE_SHARE_READ,
 							NULL,
@@ -656,13 +656,13 @@ int main_generator (int argc, char** argv)
 					if ( bUpdate )
 					{
 						WINPORT(MoveFileEx) (
-								UTF8to16(pLangEntries[i].lpLNGFileNameTemp).c_str(),
-								UTF8to16(lpFullName).c_str(),
+								MB2Wide(pLangEntries[i].lpLNGFileNameTemp).c_str(),
+								MB2Wide(lpFullName).c_str(),
 								MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED
 								);
 					}
 
-					WINPORT(DeleteFile) (UTF8to16(pLangEntries[i].lpLNGFileNameTemp).c_str());
+					WINPORT(DeleteFile) (MB2Wide(pLangEntries[i].lpLNGFileNameTemp).c_str());
 
 					free (pLangEntries[i].lpLNGFileNameTemp);
 					free (pLangEntries[i].lpLNGFileName);
@@ -692,8 +692,8 @@ int main_generator (int argc, char** argv)
 				if ( bUpdate )
 				{
 					WINPORT(MoveFileEx) (
-							UTF8to16(lpHPPFileNameTemp).c_str(),
-							UTF8to16(lpFullName).c_str(),
+							MB2Wide(lpHPPFileNameTemp).c_str(),
+							MB2Wide(lpFullName).c_str(),
 							MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED
 							);
 				}
@@ -705,7 +705,7 @@ int main_generator (int argc, char** argv)
 	else
 		printf ("ERROR: Zero languages to process, exiting.\n\r");
 
-	WINPORT(DeleteFile) (UTF8to16(lpHPPFileNameTemp).c_str());
+	WINPORT(DeleteFile) (MB2Wide(lpHPPFileNameTemp).c_str());
 
 	free (lpHPPFileNameTemp);
 	free (lpHPPFileName);

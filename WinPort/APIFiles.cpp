@@ -109,7 +109,7 @@ extern "C"
 			return (nBufferLength < 1024) ? 1024 : 0;
 		}
 		
-		std::wstring u16 = UTF8to16(&buf[0]);
+		std::wstring u16 = MB2Wide(&buf[0]);
 		memcpy(lpBuffer, u16.c_str(), (u16.size() + 1) * sizeof(*lpBuffer));
 		return (DWORD)u16.size();
 	}
@@ -430,7 +430,7 @@ extern "C"
 			std::string path(_root);
 			if (path.empty() || path[path.size()-1]!=GOOD_SLASH) path+= GOOD_SLASH;
 			path+= wfd.cFileName;
-			std::wstring utf16 = UTF8to16(wfd.cFileName);
+			std::wstring utf16 = MB2Wide(wfd.cFileName);
 #else
 			struct dirent *de;
 			for (;;) {
@@ -445,7 +445,7 @@ extern "C"
 			std::string path(_root);
 			if (path.empty() || path[path.size()-1]!=GOOD_SLASH) path+= GOOD_SLASH;
 			path+= de->d_name;
-			std::wstring utf16 = UTF8to16(de->d_name);
+			std::wstring utf16 = MB2Wide(de->d_name);
 #endif
 			
 			struct stat s = {0};

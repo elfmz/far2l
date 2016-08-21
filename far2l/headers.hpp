@@ -161,5 +161,5 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 
 #include <string>
 #include <vector>
-std::string UTF16to8(const wchar_t *src);
-std::wstring UTF8to16(const char *src);
+std::string Wide2MB(const wchar_t *src);
+std::wstring MB2Wide(const char *src);

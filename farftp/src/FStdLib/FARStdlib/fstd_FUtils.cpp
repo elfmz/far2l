@@ -36,7 +36,7 @@ void SaveConsoleTitle::Text(LPCSTR buff)
 		buff = _buff;
 	}
 */
-	WINPORT(SetConsoleTitle)(UTF8to16(buff).c_str());
+	WINPORT(SetConsoleTitle)(MB2Wide(buff).c_str());
 }
 
 void SaveConsoleTitle::Restore(void)

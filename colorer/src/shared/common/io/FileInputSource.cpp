@@ -70,7 +70,7 @@ const byte *FileInputSource::openStream()
 {
   if (stream != null) throw InputSourceException(StringBuffer("openStream(): source stream already opened: '")+baseLocation+"'");
 #ifdef _UNICODE
-  int source = open(UTF16to8(baseLocation->getWChars()).c_str(), O_BINARY);
+  int source = open(Wide2MB(baseLocation->getWChars()).c_str(), O_BINARY);
 #else
 dd
   int source = open(baseLocation->getChars(), O_BINARY);

@@ -242,7 +242,7 @@ extern "C" {
 		}
 		std::string path = rd->dir; 
 		path+= WINPORT_REG_DIV_VALUE;
-		if (lpValueName) path+= UTF16to8(lpValueName);
+		if (lpValueName) path+= Wide2MB(lpValueName);
 		return (remove(path.c_str())==0) ? ERROR_SUCCESS : ERROR_PATH_NOT_FOUND;
 	}
 
@@ -269,7 +269,7 @@ extern "C" {
 
 		name.erase(0, strlen(WINPORT_REG_DIV_KEY)-1);
 
-		std::wstring name16 = SUTF8to16(name);
+		std::wstring name16 = StrMB2Wide(name);
 		if (lpcClass) *lpcClass = 0;
 		if (*lpcName <= name16.size()) {
 			*lpcName = name16.size() + 1;
@@ -311,7 +311,7 @@ extern "C" {
 		getline (is, value);
 		fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' %p\n", prefixed_name.c_str(), type.c_str(), value.c_str(), lpData);
 		if (lpValueName) {
-			const std::wstring &u16name = SUTF8to16(name);
+			const std::wstring &u16name = StrMB2Wide(name);
 			if (*lpcchValueName <= u16name.size())
 				return ERROR_MORE_DATA;
 			wcscpy(lpValueName, (const wchar_t *)u16name.c_str());
@@ -378,7 +378,7 @@ extern "C" {
 		}
 		
 		std::string prefixed_name = WINPORT_REG_DIV_VALUE + 1;
-		prefixed_name+= UTF16to8(lpValueName);
+		prefixed_name+= Wide2MB(lpValueName);
 		return CommonQueryValue(root, prefixed_name,
 			NULL, NULL, lpType, lpData, lpcbData);
 	}
@@ -400,7 +400,7 @@ extern "C" {
 		}
 		std::string path = rd->dir; 
 		path+= WINPORT_REG_DIV_VALUE;
-		path+= UTF16to8(lpValueName);
+		path+= Wide2MB(lpValueName);
 		fprintf(stderr, "RegSetValue type=%u cbData=%u\n", dwType, cbData);
 		if  (dwType==REG_DWORD && cbData==8)
 		{
@@ -408,7 +408,7 @@ extern "C" {
 		}
 		std::ofstream os;
 		os.open(path.c_str());
-		std::string name = UTF16to8(lpValueName);
+		std::string name = Wide2MB(lpValueName);
 		os << name << std::endl;
 		os << dwType << std::endl;
 		for (DWORD i = 0; i < cbData; ++i) {
@@ -423,7 +423,7 @@ extern "C" {
 	LONG WINPORT(RegQueryValueExA) (HKEY hKey, LPCSTR lpValueName, 
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 	{
-		return WINPORT(RegQueryValueEx)(hKey, UTF8to16(lpValueName).c_str(), 
+		return WINPORT(RegQueryValueEx)(hKey, MB2Wide(lpValueName).c_str(), 
 			lpReserved, lpType, lpData, lpcbData);
 	}
 
@@ -437,7 +437,7 @@ extern "C" {
 		)
 	{
 		std::vector<WCHAR> tmp;
-		return WINPORT(RegSetValueEx)(hKey, UTF8to16(lpValueName).c_str(), 
+		return WINPORT(RegSetValueEx)(hKey, MB2Wide(lpValueName).c_str(), 
 			lpReserved, lpType, lpData, lpcbData);
 	}
 */

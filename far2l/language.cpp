@@ -76,7 +76,7 @@ FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Langua
 		if (!Language)
 			break;
 
-		if (!(LangFile=fopen(UTF16to8(strFileName).c_str(), "rb")))
+		if (!(LangFile=fopen(Wide2MB(strFileName).c_str(), "rb")))
 		{
 			fprintf(stderr, "OpenLangFile opfailed: %ls\n", strFileName.CPtr());
 
@@ -111,7 +111,7 @@ FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Langua
 
 		if (!strFileName.IsEmpty())
 		{
-			LangFile=fopen(UTF16to8(strFileName).c_str(), FOPEN_READ);
+			LangFile=fopen(Wide2MB(strFileName).c_str(), FOPEN_READ);
 
 			if (pstrLangName)
 				*pstrLangName=strLangName;
@@ -205,7 +205,7 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 
 	while (ScTree.GetNextName(&FindData,strFullName))
 	{
-		FILE *LangFile=fopen(UTF16to8(strFullName).c_str(), FOPEN_READ);
+		FILE *LangFile=fopen(Wide2MB(strFullName).c_str(), FOPEN_READ);
 
 		if (!LangFile)
 			continue;

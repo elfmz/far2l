@@ -325,3 +325,36 @@ WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *ft, LPWORD fatdate, L
                    + tm->tm_mday;
     return TRUE;
 }
+
+void WINAPI RtlSecondsSince1970ToTime( DWORD Seconds, LARGE_INTEGER *Time ) 
+{
+    Time->QuadPart = Seconds * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+}
+
+
+WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETIME ft))
+{
+    struct tm newtm;
+#ifndef HAVE_TIMEGM
+    struct tm *gtm;
+    time_t time1, time2;
+#endif
+    newtm.tm_sec = (fattime & 0x1f) * 2;
+    newtm.tm_min = (fattime >> 5) & 0x3f;
+    newtm.tm_hour = (fattime >> 11);
+    newtm.tm_mday = (fatdate & 0x1f);
+    newtm.tm_mon = ((fatdate >> 5) & 0x0f) - 1;
+    newtm.tm_year = (fatdate >> 9) + 80;
+    newtm.tm_isdst = -1;
+#ifdef HAVE_TIMEGM
+    RtlSecondsSince1970ToTime( timegm(&newtm), (LARGE_INTEGER *)ft );
+#else
+    time1 = mktime(&newtm);
+    gtm = gmtime(&time1);
+    time2 = mktime(gtm);
+    RtlSecondsSince1970ToTime( 2*time1-time2, (LARGE_INTEGER *)ft );
+#endif
+    return TRUE;
+}
+
+

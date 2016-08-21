@@ -11,7 +11,7 @@ LPCSTR WINAPI FP_GetPluginLogName(void)
 {
 	return "farftp.log";
 }
- BOOL     WINAPI FP_PluginStartup(DWORD Reason)
+BOOL WINAPI FP_PluginStartup(DWORD Reason)
 {
 	return TRUE;
 }

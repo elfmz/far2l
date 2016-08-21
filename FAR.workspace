@@ -6,6 +6,7 @@
   <Project Name="farftp" Path="farftp/farftp.project" Active="No"/>
   <Project Name="farlng" Path="farlng/farlng.project" Active="No"/>
   <Project Name="_All" Path="_All/_All.project" Active="Yes"/>
+  <Project Name="multiarc" Path="multiarc/multiarc.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
@@ -15,6 +16,7 @@
       <Project Name="far2l" ConfigName="Debug"/>
       <Project Name="colorer" ConfigName="Debug"/>
       <Project Name="_All" ConfigName="Debug"/>
+      <Project Name="multiarc" ConfigName="Debug"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

@@ -70,12 +70,14 @@ static const string& GetFarTitleAddons()
 	ReplaceStrings(strTitleAddons,L"%Ver",strVer,-1,true);
 	ReplaceStrings(strTitleAddons,L"%Build",strBuild,-1,true);
 	ReplaceStrings(strTitleAddons,L"%Platform",
-#ifdef _WIN64
-#ifdef _M_IA64
-	L"IA64",
-#else
+#if defined(__x86_64__)
 	L"x64",
-#endif
+#elif defined(__ppc64__)
+	L"ppc64",
+#elif defined(__arm64__)
+	L"arm64",
+#elif defined(__arm__)
+	L"arm",
 #else
 	L"x86",
 #endif

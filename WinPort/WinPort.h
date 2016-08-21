@@ -225,7 +225,7 @@ extern "C" {
 #include <string.h>
 
 
-static std::string UTF16to8(const wchar_t *src)
+static std::string Wide2MB(const wchar_t *src)
 {
 	size_t src_len = wcslen(src);
 	std::string dst;
@@ -243,7 +243,7 @@ static std::string UTF16to8(const wchar_t *src)
 		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
 			dst.resize(dst.size() + 8 + dst.size()/2);
 		} else {
-			fprintf(stderr, "UTF16to8('" WS_FMT "') - failed\n", src);
+			fprintf(stderr, "Wide2MB('" WS_FMT "') - failed\n", src);
 			dst.clear();
 			break;
 		}
@@ -251,7 +251,7 @@ static std::string UTF16to8(const wchar_t *src)
 	return dst;
 }
 
-static std::wstring UTF8to16(const char *src)
+static std::wstring MB2Wide(const char *src)
 {
 	size_t src_len = strlen(src);
 	std::wstring dst;
@@ -269,7 +269,7 @@ static std::wstring UTF8to16(const char *src)
 		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
 			dst.resize(dst.size() + 8 + dst.size()/2);
 		} else {
-			fprintf(stderr, "UTF8to16('%s') - failed\n", src);
+			fprintf(stderr, "MB2Wide('%s') - failed\n", src);
 			dst.clear();
 			break;
 		}
@@ -278,8 +278,8 @@ static std::wstring UTF8to16(const char *src)
 }
 
 
-static std::string SUTF16to8(const std::wstring &src) {return UTF16to8(src.c_str());}
-static std::wstring SUTF8to16(const std::string &src) {return UTF8to16(src.c_str());}
+static std::string StrWide2MB(const std::wstring &src) {return Wide2MB(src.c_str());}
+static std::wstring StrMB2Wide(const std::string &src) {return MB2Wide(src.c_str());}
 
 #endif
 

@@ -193,7 +193,7 @@ int main_convertor (int argc, char** argv)
 	}
 
 	HANDLE hFeedFile = WINPORT(CreateFile) (
-			UTF8to16(argv[1]).c_str(),
+			MB2Wide(argv[1]).c_str(),
 			GENERIC_WRITE,
 			FILE_SHARE_READ,
 			NULL,
@@ -210,7 +210,7 @@ int main_convertor (int argc, char** argv)
 
 
 	HANDLE hHFile = WINPORT(CreateFile) (
-			UTF8to16(argv[2]).c_str(),
+			MB2Wide(argv[2]).c_str(),
 			GENERIC_READ,
 			FILE_SHARE_READ,
 			NULL,
@@ -255,7 +255,7 @@ int main_convertor (int argc, char** argv)
 	for (int i = 0; i < dwLangs; i++)
 	{
 		hFile = WINPORT(CreateFile) (
-				UTF8to16(argv[4+i]).c_str(),
+				MB2Wide(argv[4+i]).c_str(),
 				GENERIC_READ,
 				FILE_SHARE_READ,
 				NULL,

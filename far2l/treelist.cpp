@@ -1793,8 +1793,8 @@ void TreeList::ReadCache(const wchar_t *TreeRoot)
 	if (TreeCache.TreeCount)
 		FlushCache();
 
-	if (MustBeCached(TreeRoot) || !(TreeFile=fopen(UTF16to8(strTreeName).c_str(),FOPEN_READ)))
-		if (!GetCacheTreeName(TreeRoot,strTreeName,FALSE) || !(TreeFile=fopen(UTF16to8(strTreeName).c_str(),FOPEN_READ)))
+	if (MustBeCached(TreeRoot) || !(TreeFile=fopen(Wide2MB(strTreeName).c_str(),FOPEN_READ)))
+		if (!GetCacheTreeName(TreeRoot,strTreeName,FALSE) || !(TreeFile=fopen(Wide2MB(strTreeName).c_str(),FOPEN_READ)))
 		{
 			ClearCache(1);
 			return;
@@ -1836,7 +1836,7 @@ void TreeList::FlushCache()
 		if (FileAttributes != INVALID_FILE_ATTRIBUTES)
 			apiSetFileAttributes(TreeCache.strTreeName,FILE_ATTRIBUTE_NORMAL);
 
-		if (!(TreeFile=fopen(UTF16to8(TreeCache.strTreeName).c_str(), FOPEN_WRITE)))
+		if (!(TreeFile=fopen(Wide2MB(TreeCache.strTreeName).c_str(), FOPEN_WRITE)))
 		{
 			ClearCache(1);
 			return;

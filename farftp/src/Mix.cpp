@@ -166,7 +166,7 @@ BOOL WINAPI FTestOpen(LPCSTR nm)
 {
 	HANDLE f;
 	BOOL   rc;
-	f = WINPORT(CreateFile)(UTF8to16(nm).c_str(), 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+	f = WINPORT(CreateFile)(MB2Wide(nm).c_str(), 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 	rc = f &&
 	     f != INVALID_HANDLE_VALUE &&
 	     WINPORT(GetFileType)(f) == FILE_TYPE_DISK;
@@ -178,7 +178,7 @@ BOOL WINAPI FRealFile(LPCSTR nm,FAR_FIND_DATA* fd)
 {
 	HANDLE f;
 	BOOL   rc;
-	f = WINPORT(CreateFile)(UTF8to16(nm).c_str(), 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+	f = WINPORT(CreateFile)(MB2Wide(nm).c_str(), 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 	rc = f &&
 	     f != INVALID_HANDLE_VALUE &&
 	     WINPORT(GetFileType)(f) == FILE_TYPE_DISK;
@@ -186,7 +186,7 @@ BOOL WINAPI FRealFile(LPCSTR nm,FAR_FIND_DATA* fd)
 	if(rc && fd)
 	{
 		strcpy(fd->cFileName, nm);
-		fd->dwFileAttributes = WINPORT(GetFileAttributes)(UTF8to16(nm).c_str());
+		fd->dwFileAttributes = WINPORT(GetFileAttributes)(MB2Wide(nm).c_str());
 		fd->nFileSizeLow     = WINPORT(GetFileSize)(f, &fd->nFileSizeHigh);
 		WINPORT(GetFileTime)(f, &fd->ftCreationTime, &fd->ftLastAccessTime, &fd->ftLastWriteTime);
 	}
@@ -394,10 +394,10 @@ HANDLE WINAPI Fopen(LPCSTR nm,LPCSTR mode /*R|W|A[+]*/, DWORD attr)
 	HANDLE h;
 
 	if(rd)
-		h = WINPORT(CreateFile)(UTF8to16(nm).c_str(), GENERIC_READ,
+		h = WINPORT(CreateFile)(MB2Wide(nm).c_str(), GENERIC_READ,
 		               FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, attr, NULL);
 	else
-		h = WINPORT(CreateFile)(UTF8to16(nm).c_str(), GENERIC_WRITE,
+		h = WINPORT(CreateFile)(MB2Wide(nm).c_str(), GENERIC_WRITE,
 		               FILE_SHARE_READ, NULL, OPEN_ALWAYS, attr, NULL);
 
 	if(!h ||

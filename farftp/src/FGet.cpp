@@ -9,7 +9,7 @@
  ****************************************/
 void SetupFileTimeNDescription(int OpMode,Connection *hConnect,LPCSTR nm,FILETIME *tm)
 {
-	HANDLE SrcFile = WINPORT(CreateFile)( UTF8to16(nm).c_str(),
+	HANDLE SrcFile = WINPORT(CreateFile)( MB2Wide(nm).c_str(),
 	GENERIC_WRITE,0,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
 	DWORD  FileSize;
 	BYTE  *Buf;
@@ -329,7 +329,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 			if(FRealFile(DestName.c_str(),&FindData.FindData))
 			{
 				Log(("Real file: [%s]",DestName.c_str()));
-				DestAttr = WINPORT(GetFileAttributes)(UTF8to16(DestName.c_str()).c_str());
+				DestAttr = WINPORT(GetFileAttributes)(MB2Wide(DestName.c_str()).c_str());
 				DestTime = FindData.FindData.ftLastWriteTime;
 			}
 		}

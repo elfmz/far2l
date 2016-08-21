@@ -84,7 +84,7 @@ extern "C" {
 #ifdef _WIN32
 		return LoadLibraryEx(lpLibFileName, hFile, dwFlags);
 #else
-		std::string path = UTF16to8(lpLibFileName);
+		std::string path = Wide2MB(lpLibFileName);
 		PVOID rv = (PVOID)dlopen(path.c_str(), RTLD_LOCAL|RTLD_LAZY);
 		if (rv) {
 			typedef VOID (*tWINPORT_DllStartup)(const char *path);
@@ -143,12 +143,12 @@ extern "C" {
 #ifdef _WIN32
 		return GetEnvironmentVariable(lpName, lpBuffer, nSize);
 #else
-		char *value = getenv(UTF16to8(lpName).c_str());
+		char *value = getenv(Wide2MB(lpName).c_str());
 		if (!value) {
 			WINPORT(SetLastError)(ERROR_ENVVAR_NOT_FOUND);
 			return 0;
 		}
-		std::wstring wide = UTF8to16(value);
+		std::wstring wide = MB2Wide(value);
 		if (wide.size() >= nSize)
 			return (DWORD)wide.size() + 1;
 
@@ -163,9 +163,9 @@ extern "C" {
 		return SetEnvironmentVariable(lpName, lpValue);
 #else
 		int r;
-		std::string name = UTF16to8(lpName);
+		std::string name = Wide2MB(lpName);
 		if (lpValue) {
-			std::string value = UTF16to8(lpValue);
+			std::string value = Wide2MB(lpValue);
 			r = setenv(name.c_str(), value.c_str(), 1);
 		} else 
 			r = unsetenv(name.c_str());

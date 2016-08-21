@@ -424,7 +424,7 @@ void EnumMountedFilesystems(MountedFilesystems &out, const WCHAR *another = NULL
 		while (fgets(buf, sizeof(buf)-1, f)!=NULL) {
 			if (!first) {
 				buf[sizeof(buf)-1] = 0;
-				s = UTF8to16(buf);
+				s = MB2Wide(buf);
 				
 				ExtractTilSpace(s);
 				mfs.fs = ExtractTilSpace(s);
@@ -454,7 +454,7 @@ void EnumMountedFilesystems(MountedFilesystems &out, const WCHAR *another = NULL
 		out.insert(out.begin(), mfs);
 	}
 	
-	mfs.root = UTF8to16(getenv("HOME"));
+	mfs.root = MB2Wide(getenv("HOME"));
 	mfs.fs = L"~";
 	out.insert(out.begin(), mfs);	
 	if (another && mfs.root!=another) {

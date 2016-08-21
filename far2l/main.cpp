@@ -381,7 +381,7 @@ int FarAppMain(int argc, char **argv)
 	Opt.Macro.DisableMacro=0;
 	for (int I=1; I<argc; I++)
 	{
-		std::wstring arg_w = UTF8to16(argv[I]);
+		std::wstring arg_w = MB2Wide(argv[I]);
 		if ((arg_w[0]==L'/' || arg_w[0]==L'-') && arg_w[1])
 		{
 			switch (Upper(arg_w[1]))

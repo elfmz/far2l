@@ -400,7 +400,7 @@ BOOL TrafficInformation::Callback(int Size)
 		//if(FTP_Info->WinVer->dwPlatformId != VER_PLATFORM_WIN32_NT)
 			//OemToChar(str,str);
 
-		WINPORT(SetConsoleTitle)(UTF8to16(str).c_str());
+		WINPORT(SetConsoleTitle)(MB2Wide(str).c_str());
 		StrCpy(ConsoleTitle,str,ARRAYSIZE(ConsoleTitle));
 	}
 

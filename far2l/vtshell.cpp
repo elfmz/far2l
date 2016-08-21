@@ -155,7 +155,7 @@ class VTShell
 	
 	void ProcessOutput(const char *buf, int len) 
 	{
-		std::wstring ws = UTF8to16(std::string(buf, len).c_str());
+		std::wstring ws = MB2Wide(std::string(buf, len).c_str());
 		_vta.Write(ws.c_str(), ws.size());
 		/*wchar_t crlf[2] = {L'\r', L'\n'};
 		DWORD dw;
@@ -286,7 +286,7 @@ class VTShell
 				printf("key: %u char: %u\n", ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.uChar.UnicodeChar);		
 			}
 		wchar_t wz[2] = {ir.Event.KeyEvent.uChar.UnicodeChar, 0};
-		return UTF16to8(&wz[0]);
+		return Wide2MB(&wz[0]);
 	}
 };
 

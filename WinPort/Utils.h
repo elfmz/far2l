@@ -2,9 +2,6 @@
 
 
 
-std::string UTF16to8(const wchar_t *src);
-std::wstring UTF8to16(const char *src);
-
 
 unsigned char Hex2Digit(const char hex);
 unsigned char Hex2Byte(const char *hex);

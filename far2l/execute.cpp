@@ -154,7 +154,7 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, b
 	WINPORT(WriteConsole)( NULL, CmdStr, wcslen(CmdStr), &dw, NULL );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 	
-	ClassifyAndRun(UTF16to8(CmdStr).c_str());
+	ClassifyAndRun(Wide2MB(CmdStr).c_str());
 	WINPORT(SetConsoleMode)( NULL, saved_mode | 
 	ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
@@ -170,7 +170,30 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, b
 
 int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
 {
-	int r = Execute(CmdLine, AlwaysWaitFinish, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
+	int r;
+
+	string strPrevDir = strCurDir;
+	bool PrintCommand = true;
+	if (ProcessOSCommands(CmdLine, SeparateWindow, PrintCommand) ) {
+		ShowBackground();
+		string strNewDir = strCurDir;
+		strCurDir = strPrevDir;
+		Redraw();
+		strCurDir = strNewDir;
+		if (PrintCommand)
+		{
+			GotoXY(X2+1,Y1);
+			Text(L" ");
+			ScrollScreen(2);
+		}
+
+		SetString(L"", FALSE);
+		SaveBackground();
+		
+		r = -1; 
+	} else {
+		r = Execute(CmdLine, AlwaysWaitFinish, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
+	}
 
 	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL)) {
 		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);

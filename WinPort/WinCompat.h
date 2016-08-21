@@ -1475,6 +1475,11 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 #define _O_BINARY 0
 #define SD_BOTH 2
 
+#define MAKELONG(a, b)      ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
+#define MAKEWPARAM(l, h)      ((WPARAM)(DWORD)MAKELONG(l, h))
+#define MAKELPARAM(l, h)      ((LPARAM)(DWORD)MAKELONG(l, h))
+#define MAKELRESULT(l, h)     ((LRESULT)(DWORD)MAKELONG(l, h))
+
 #endif
 
 #ifdef _WIN32

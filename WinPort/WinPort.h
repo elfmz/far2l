@@ -4,6 +4,8 @@
 # include <Windows.h>
 #else
 # include "WinCompat.h"
+# include <sys/stat.h>
+# include <sys/time.h>
 #endif
 
 #define WINPORT_DECL(NAME, RV, ARGS) SHAREDSYMBOL RV WINPORT_##NAME ARGS
@@ -144,6 +146,7 @@ extern "C" {
 	WINPORT_DECL(GetSystemTimeAsFileTime, VOID, (FILETIME *lpFileTime));
 	WINPORT_DECL(GetTickCount, DWORD, ());
 	WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *lpFileTime, LPWORD   lpFatDate, LPWORD   lpFatTime));
+	WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETIME ft));
 	WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTime));
 	
 

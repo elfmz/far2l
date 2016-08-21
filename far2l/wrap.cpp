@@ -1280,6 +1280,7 @@ void AnsiListItemToUnicode(oldfar::FarListItem* liA, FarListItem* li)
 {
 	wchar_t* ListItemText=(wchar_t*)xf_malloc(ARRAYSIZE(liA->Text)*sizeof(wchar_t));
 	OEMToUnicode(liA->Text, ListItemText, sizeof(liA->Text)-1);
+	ListItemText[ARRAYSIZE(liA->Text) - 1] = 0;
 	li->Text=ListItemText;
 	li->Flags=0;
 
@@ -1475,9 +1476,9 @@ void AnsiDialogItemToUnicode(oldfar::FarDialogItem &diA, FarDialogItem &di,FarLi
 				l.Items = (FarListItem *)xf_malloc(diA.Param.ListItems->ItemsNumber*sizeof(FarListItem));
 				l.ItemsNumber = diA.Param.ListItems->ItemsNumber;
 
-				for (int j=0; j<di.Param.ListItems->ItemsNumber; j++)
+				for (int j=0; j<diA.Param.ListItems->ItemsNumber; j++) {
 					AnsiListItemToUnicode(&diA.Param.ListItems->Items[j],&l.Items[j]);
-
+				}
 				di.Param.ListItems=&l;
 			}
 

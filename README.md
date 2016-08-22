@@ -10,7 +10,7 @@ Used code from projects:<br>
 FAR for Windows<br>
 Wine<br>
 ANSICON<br>
-UnRAR - free<br>
+Portable UnRAR<br>
 
 Before building:<br>
 apt-get install gawk m4 libglib2.0-dev libwxbase3.0-dev wx3.0-headers libwxgtk3.0-dev<br>

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wordexp.h>
 #include <sys/stat.h>
 #include <windows.h>
 
@@ -20,7 +21,7 @@ static void mystrlwr(char *p)
 
 static void mystrupr(char *p) 
 {
-	for (;*p;++p) *p = tolower(*p);
+	for (;*p;++p) *p = toupper(*p);
 }
 
 BOOL GoToFile(const char *Target, BOOL AllowChangeDir)
@@ -95,6 +96,30 @@ const char *GetMsg(int MsgId)
 {
   return Info.GetMsg(Info.ModuleNumber,MsgId);
 }
+
+
+int rar_main(int argc, char *argv[]);
+
+static int InternalExec(const char *cmd)
+{
+	wordexp_t we = {};
+	if (wordexp(cmd, &we, 0)!=0) {
+		fprintf(stderr, "wordexp('%s') failed\n", cmd);
+		return -1;
+	}
+	
+	int r = -2;
+	if (we.we_wordc > 0) {
+		fprintf(stderr, "InternalExec: handler='%s'\n", we.we_wordv[0]);
+		if (strcmp(we.we_wordv[0], "rar")==0) {
+			r = rar_main(we.we_wordc, we.we_wordv);
+		}
+	}
+	
+	wordfree(&we);
+	return r;
+}
+
 
 
 /* $ 13.09.2000 tran
@@ -212,25 +237,30 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,
     si.wShowWindow=SW_MINIMIZE;
   }*/
   /* raVen $ */
-
-	FILE *child_stdout = popen(Wide2MB(ExpandedCmd).c_str(), "r");
-	if (child_stdout) {
-		for (;;) {
-			char buf[0x1000];
-			int r = fread(buf, 1, sizeof(buf), child_stdout);
-			if (r<=0) break;
-			fwrite(buf, 1, r, stderr);
-			if (!HideOutput) {
-				//todo
-			}
-		}
-		fflush(stdout);
-		
-		ExitCode = pclose(child_stdout);
-		LastError = WEXITSTATUS(ExitCode);
+	fprintf(stderr, "Executing: %ls\n", ExpandedCmd);
+	const std::string &expanded_cmd_mb = Wide2MB(ExpandedCmd);
+	if (*expanded_cmd_mb.c_str()=='^') {
+		LastError = InternalExec(expanded_cmd_mb.c_str() + 1);
 		ExitCode = LastError;
 	} else {
-		LastError = ExitCode = errno ? errno : 1;
+		FILE *child_stdout = popen(expanded_cmd_mb.c_str(), "r");
+		if (child_stdout) {
+			for (;;) {
+				char buf[0x1000];
+				int r = fread(buf, 1, sizeof(buf), child_stdout);
+				if (r<=0) break;
+				fwrite(buf, 1, r, stderr);
+				if (!HideOutput) {
+					//todo
+				}
+			}
+		
+			ExitCode = pclose(child_stdout);
+			LastError = WEXITSTATUS(ExitCode);
+			ExitCode = LastError;
+		} else {
+			LastError = ExitCode = errno ? errno : 1;
+		}
 	}
 	
   /*if (HideOutput)

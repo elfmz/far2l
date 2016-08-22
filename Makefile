@@ -11,8 +11,6 @@ All:
 	@cd "colorer" && "$(MAKE)" -f  "colorer.mk" PreBuild && "$(MAKE)" -f  "colorer.mk" && "$(MAKE)" -f  "colorer.mk" PostBuild
 	@echo "----------Building project:[ farftp - Debug ]----------"
 	@cd "farftp" && "$(MAKE)" -f  "farftp.mk" PreBuild && "$(MAKE)" -f  "farftp.mk" && "$(MAKE)" -f  "farftp.mk" PostBuild
-	@echo "----------Building project:[ multiarc - Debug ]----------"
-	@cd "multiarc" && "$(MAKE)" -f  "multiarc.mk" PreBuild && "$(MAKE)" -f  "multiarc.mk"
 	@echo "----------Building project:[ _All - Debug ]----------"
 	@cd "_All" && "$(MAKE)" -f  "_All.mk"
 clean:
@@ -26,7 +24,5 @@ clean:
 	@cd "colorer" && "$(MAKE)" -f  "colorer.mk"  clean
 	@echo "----------Cleaning project:[ farftp - Debug ]----------"
 	@cd "farftp" && "$(MAKE)" -f  "farftp.mk"  clean
-	@echo "----------Cleaning project:[ multiarc - Debug ]----------"
-	@cd "multiarc" && "$(MAKE)" -f  "multiarc.mk"  clean
 	@echo "----------Cleaning project:[ _All - Debug ]----------"
 	@cd "_All" && "$(MAKE)" -f  "_All.mk" clean

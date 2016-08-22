@@ -6,6 +6,8 @@
 #include <memory.h>
 #include <wctype.h>
 
+#define ELFMZ_WINPORT
+
 #ifdef _WIN32
 # define GOOD_SLASH	'\\'
 # define BAD_SLASH	'/'
@@ -559,6 +561,9 @@ typedef struct _INPUT_RECORD {
 
 #define WINAPI	
 #define WINAPIV
+#define CALLBACK 
+#define PASCAL
+
 
 typedef struct _UNICODE_STRING {
   USHORT Length;

@@ -457,6 +457,7 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
 {
   if (Type==0)
   {
+#if 0
     // Console PKZIP 4.0/Win32 commands
     static const char *Commands[]={
     /*Extract               */"pkzipc -ext -dir -over=all -nozip -mask=none -times=mod {-pass=%%P} %%A @%%LNMA",
@@ -475,6 +476,26 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
     /*Move files and folders*/"pkzipc -add -move -attr=all -dir -nozip {-pass=%%P} {-temp=%%W} %%A @%%LNMA",
     /*"All files" mask      */"*.*"
     };
+#else
+    // Linux zip/unzip 
+    static const char *Commands[]={
+    /*Extract               */"unzip -o {-P %%P} %%A %%Fq4096",
+    /*Extract without paths */"unzip -j -o {-P %%P} %%A %%Fq4096",
+    /*Test                  */"unzip -t {-P %%P} %%A",
+    /*Delete                */"zip -d {-P %%P} %%A %%Fq4096",
+    /*Comment archive       */"",
+    /*Comment files         */"",
+    /*Convert to SFX        */"",
+    /*Lock archive          */"",
+    /*Protect archive       */"",
+    /*Recover archive       */"",
+    /*Add files             */"zip {-P %%P} %%A %%Fq4096",
+    /*Move files            */"zip -m {-P %%P} %%A %%Fq4096",
+    /*Add files and folders */"zip -r {-P %%P} %%A %%Fq4096",
+    /*Move files and folders*/"zip -r -m {-P %%P} %%A %%Fq4096",
+    /*"All files" mask      */"*.*"
+    };
+#endif
     if (Command<(int)(ARRAYSIZE(Commands)))
     {
       strcpy(Dest,Commands[Command]);

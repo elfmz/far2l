@@ -456,8 +456,8 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
             else
               if (QuoteName==2)
                 QuoteText(Name);
-            if (UseSlash)
-              for (int I=0;Name[I];I++)
+//            if (UseSlash)
+//              for (int I=0;Name[I];I++)
 //                if (Name[I]=='\\')
 //                  Name[I]='//';
 /* $ 28.11.2000 AS

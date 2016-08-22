@@ -219,10 +219,12 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,
 			char buf[0x1000];
 			int r = fread(buf, 1, sizeof(buf), child_stdout);
 			if (r<=0) break;
+			fwrite(buf, 1, r, stderr);
 			if (!HideOutput) {
 				//todo
 			}
 		}
+		fflush(stdout);
 		
 		ExitCode = pclose(child_stdout);
 		LastError = WEXITSTATUS(ExitCode);

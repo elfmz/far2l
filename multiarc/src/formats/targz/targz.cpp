@@ -462,7 +462,7 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
    {
      { // TAR_FORMAT
        "tar --force-local -xf %%A %%FSq32768",
-       "%comspec% /c tar --force-local -O -xf %%A %%fSq > %%fWq",
+       "tar --force-local -O -xf %%A %%fSq > %%fWq",
        "",
        "tar --delete --force-local -f %%A %%FSq32768",
        "",
@@ -479,8 +479,8 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
      },
 
      { // GZ_FORMAT
-       "%COMSPEC% /c gzip -cd %%A >%%fq",
-       "%COMSPEC% /c gzip -cd %%A >%%fq",
+       "gzip -cd %%A >%%fq",
+       "gzip -cd %%A >%%fq",
        "gzip -t %%A",
        "",
        "",
@@ -489,16 +489,16 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
        "",
        "",
        "",
-       "%COMSPEC% /c gzip -c %%fq >%%A",
+       "gzip -c %%fq >%%A",
        "gzip %%fq",
-       "%COMSPEC% /c gzip -c %%fq >%%A",
+       "gzip -c %%fq >%%A",
        "gzip %%fq",
        "*"
      },
 
      { // Z_FORMAT
-       "%COMSPEC% /c gzip -cd %%A >%%fq",
-       "%COMSPEC% /c gzip -cd %%A >%%fq",
+       "gzip -cd %%A >%%fq",
+       "gzip -cd %%A >%%fq",
        "gzip -t %%A",
        "",
        "",
@@ -515,9 +515,9 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
      },
 
      { // BZ_FORMAT
-       "%COMSPEC% /c bzip2 -cd %%A >%%fq",
-       "%COMSPEC% /c bzip2 -cd %%A >%%fq",
-       "%COMSPEC% /c bzip2 -cd %%A >nul",
+       "bzip2 -cd %%A >%%fq",
+       "bzip2 -cd %%A >%%fq",
+       "bzip2 -cd %%A >nul",
        "",
        "",
        "",
@@ -525,9 +525,9 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
        "",
        "",
        "",
-       "%COMSPEC% /c bzip2 -c %%fq >%%A",
+       "bzip2 -c %%fq >%%A",
        "bzip2 %%fq",
-       "%COMSPEC% /c bzip2 -c %%fq >%%A",
+       "bzip2 -c %%fq >%%A",
        "bzip2 %%fq",
        "*"
      },

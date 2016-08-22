@@ -94,7 +94,7 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-O2;-std=c++11;-fPIC" C_Options="-g;-O2;-std=c99;-fPIC" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+      <Compiler Options="-g;-O2;-std=c++11;-fPIC -fvisibility=hidden" C_Options="-g;-O2;-std=c99;-fPIC -fvisibility=hidden" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="src"/>
         <IncludePath Value="src/libpcre"/>
         <IncludePath Value="../far2l/"/>

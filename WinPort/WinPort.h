@@ -133,7 +133,7 @@ extern "C" {
 	WINPORT_DECL(GetTempFileName, UINT,( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer ));
 	WINPORT_DECL(GetFullPathName, DWORD, (LPCTSTR lpFileName,  DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart));
 
-	WINPORT_DECL(AttributesByStat, DWORD,( const struct stat *s, const WCHAR *name ));
+	WINPORT_DECL(EvaluateAttributes, DWORD,( uint32_t unix_mode, const WCHAR *name ));
 
 //time/date
 	WINPORT_DECL(GetLocalTime, VOID, (LPSYSTEMTIME lpSystemTime));

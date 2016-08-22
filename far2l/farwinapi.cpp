@@ -507,7 +507,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
 			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
 			WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
-			FindData.dwFileAttributes = WINPORT(AttributesByStat)(&s, lpwszFileName);
+			FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, lpwszFileName);
 			FindData.nFileSize = s.st_size;
 			FindData.dwUnixMode = s.st_mode;
 			FindData.dwReserved0 = FindData.dwReserved1 = 0;

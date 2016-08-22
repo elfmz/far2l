@@ -739,7 +739,7 @@ BOOL AddEndSlashA(char *Path,char TypeSlash)
 		}
 
 		int Length=(int)(end-Path);
-		char c=(Slash<BackSlash)?'/':'\\';
+		char c=(Slash<=BackSlash)?'/':'\\';
 		Result=TRUE;
 
 		if (!Length)

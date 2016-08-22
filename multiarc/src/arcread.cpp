@@ -153,13 +153,12 @@ int PluginClass::ReadArchive(const char *Name)
     *CurArcData.FindData.cAlternateFileName=0;
 
     NormalizePath(CurArcData.FindData.cFileName,CurArcData.FindData.cFileName);
-
-    char *NamePtr=CurArcData.FindData.cFileName;
+  fprintf(stderr, "PATH: %s\n", CurArcData.FindData.cFileName);
 
     struct ArcItemUserData *aud=NULL;
     char *Pref=NULL;
 
-    NamePtr=CurArcData.FindData.cFileName;
+    char *NamePtr=CurArcData.FindData.cFileName;
     char *EndPos=NamePtr;
     while(*EndPos == '.') EndPos++;
     if(*EndPos == '/')
@@ -465,7 +464,7 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
     }
   }
 
-  FSF.sprintf(Title," %s:%s%s%s ",FormatName,NameTitle, *CurDir ? "\\" : "", *CurDir ? CurDir : "");
+  FSF.sprintf(Title," %s:%s%s%s ",FormatName,NameTitle, *CurDir ? "/" : "", *CurDir ? CurDir : "");
 
   Info->PanelTitle=Title;
 

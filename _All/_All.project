@@ -77,6 +77,5 @@
     <Project Name="far2l"/>
     <Project Name="colorer"/>
     <Project Name="farftp"/>
-    <Project Name="multiarc"/>
   </Dependencies>
 </CodeLite_Project>

@@ -578,7 +578,7 @@ int ArcCommand::MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
     {
       char OutName[NM];
       // CHECK for BUGS!!
-      if(*FileName == '\\' || *FileName == '/')
+      if(*FileName == '/') //*FileName == '\\' || 
         FSF.sprintf(OutName,"%s%s",PrefixFileName,FileName+1);
       else
         FSF.sprintf(OutName,"%s%s%s",PrefixFileName,CurArcDir,FileName);
@@ -598,7 +598,7 @@ int ArcCommand::MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
     if (!Error && (FileAttr & FILE_ATTRIBUTE_DIRECTORY) && FolderMask)
     {
       char OutName[NM];
-      FSF.sprintf(OutName,"%s%s%s%c%s",PrefixFileName,CurArcDir,FileName,UseSlash ? '/':'\\',LocalAllFilesMask);
+      FSF.sprintf(OutName,"%s%s%s%c%s",PrefixFileName,CurArcDir,FileName,'/',LocalAllFilesMask); //UseSlash ? '/':'\\'
       if (QuoteName==1)
         FSF.QuoteSpaceOnly(OutName);
       else

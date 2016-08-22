@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="multiarc" InternalType="Library">
   <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
     <Plugin Name="CMakePlugin">
       <![CDATA[[{
   "name": "Debug",
@@ -13,17 +16,162 @@
   "parentProject": ""
  }]]]>
     </Plugin>
-    <Plugin Name="qmake">
-      <![CDATA[00010001N0005Debug000000000000]]>
-    </Plugin>
   </Plugins>
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="formats">
       <VirtualDirectory Name="rar">
-        <File Name="src/formats/rar/unrar.h" ExcludeProjConfig="Debug"/>
-        <File Name="src/formats/rar/rar.cpp" ExcludeProjConfig="Debug"/>
+        <File Name="src/formats/rar/rar.cpp" ExcludeProjConfig=""/>
+        <VirtualDirectory Name="unrar">
+          <File Name="src/formats/rar/unrar/smallfn.hpp"/>
+          <File Name="src/formats/rar/unrar/global.hpp"/>
+          <File Name="src/formats/rar/unrar/scantree.cpp"/>
+          <File Name="src/formats/rar/unrar/sha1.cpp"/>
+          <File Name="src/formats/rar/unrar/threadpool.cpp"/>
+          <File Name="src/formats/rar/unrar/crc.cpp"/>
+          <File Name="src/formats/rar/unrar/loclang.hpp"/>
+          <File Name="src/formats/rar/unrar/hash.cpp"/>
+          <File Name="src/formats/rar/unrar/rdwrfn.hpp"/>
+          <File Name="src/formats/rar/unrar/archive.hpp"/>
+          <File Name="src/formats/rar/unrar/strlist.cpp"/>
+          <File Name="src/formats/rar/unrar/rs16.cpp"/>
+          <File Name="src/formats/rar/unrar/extinfo.hpp"/>
+          <File Name="src/formats/rar/unrar/threadpool.hpp"/>
+          <File Name="src/formats/rar/unrar/encname.hpp"/>
+          <File Name="src/formats/rar/unrar/ulinks.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/resource.hpp"/>
+          <File Name="src/formats/rar/unrar/win32stm.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/unpack30.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/volume.hpp"/>
+          <File Name="src/formats/rar/unrar/resource.cpp"/>
+          <File Name="src/formats/rar/unrar/sha256.hpp"/>
+          <File Name="src/formats/rar/unrar/consio.cpp" ExcludeProjConfig=""/>
+          <File Name="src/formats/rar/unrar/uicommon.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/crypt3.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/secpassword.cpp"/>
+          <File Name="src/formats/rar/unrar/arccmt.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/suballoc.hpp"/>
+          <File Name="src/formats/rar/unrar/cmddata.hpp"/>
+          <File Name="src/formats/rar/unrar/version.hpp"/>
+          <File Name="src/formats/rar/unrar/qopen.cpp"/>
+          <File Name="src/formats/rar/unrar/find.hpp"/>
+          <File Name="src/formats/rar/unrar/recvol.cpp" ExcludeProjConfig=""/>
+          <File Name="src/formats/rar/unrar/rijndael.cpp"/>
+          <File Name="src/formats/rar/unrar/timefn.cpp"/>
+          <File Name="src/formats/rar/unrar/crypt1.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/unicode.hpp"/>
+          <File Name="src/formats/rar/unrar/blake2s.hpp"/>
+          <File Name="src/formats/rar/unrar/encname.cpp"/>
+          <File Name="src/formats/rar/unrar/options.hpp"/>
+          <File Name="src/formats/rar/unrar/unpack20.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/rawread.cpp"/>
+          <File Name="src/formats/rar/unrar/blake2sp.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/file.cpp"/>
+          <File Name="src/formats/rar/unrar/log.hpp"/>
+          <File Name="src/formats/rar/unrar/crc.hpp"/>
+          <File Name="src/formats/rar/unrar/hardlinks.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/filestr.hpp"/>
+          <File Name="src/formats/rar/unrar/crypt2.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/secpassword.hpp"/>
+          <File Name="src/formats/rar/unrar/rarvm.hpp"/>
+          <File Name="src/formats/rar/unrar/filefn.hpp"/>
+          <File Name="src/formats/rar/unrar/strfn.cpp"/>
+          <File Name="src/formats/rar/unrar/rarvmtbl.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/strlist.hpp"/>
+          <File Name="src/formats/rar/unrar/headers.hpp"/>
+          <File Name="src/formats/rar/unrar/unpack15.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/sha256.cpp"/>
+          <File Name="src/formats/rar/unrar/filefn.cpp"/>
+          <File Name="src/formats/rar/unrar/rijndael.hpp"/>
+          <File Name="src/formats/rar/unrar/filcreat.cpp"/>
+          <File Name="src/formats/rar/unrar/win32lnk.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/blake2s_sse.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/headers.cpp"/>
+          <File Name="src/formats/rar/unrar/rarlang.hpp"/>
+          <File Name="src/formats/rar/unrar/isnt.hpp"/>
+          <File Name="src/formats/rar/unrar/ulinks.hpp"/>
+          <File Name="src/formats/rar/unrar/system.hpp"/>
+          <File Name="src/formats/rar/unrar/unpack50.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/rs.hpp"/>
+          <File Name="src/formats/rar/unrar/recvol.hpp"/>
+          <File Name="src/formats/rar/unrar/unpackinline.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/blake2s.cpp" ExcludeProjConfig=""/>
+          <File Name="src/formats/rar/unrar/options.cpp"/>
+          <File Name="src/formats/rar/unrar/dll.hpp"/>
+          <File Name="src/formats/rar/unrar/strfn.hpp"/>
+          <File Name="src/formats/rar/unrar/filcreat.hpp"/>
+          <File Name="src/formats/rar/unrar/volume.cpp"/>
+          <File Name="src/formats/rar/unrar/unpack50frag.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/isnt.cpp"/>
+          <File Name="src/formats/rar/unrar/rartypes.hpp"/>
+          <File Name="src/formats/rar/unrar/system.cpp"/>
+          <File Name="src/formats/rar/unrar/timefn.hpp"/>
+          <File Name="src/formats/rar/unrar/model.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/scantree.hpp"/>
+          <File Name="src/formats/rar/unrar/headers5.hpp"/>
+          <File Name="src/formats/rar/unrar/crypt5.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/raros.hpp"/>
+          <File Name="src/formats/rar/unrar/qopen.hpp"/>
+          <File Name="src/formats/rar/unrar/getbits.hpp"/>
+          <File Name="src/formats/rar/unrar/rar.hpp"/>
+          <File Name="src/formats/rar/unrar/crypt.cpp"/>
+          <File Name="src/formats/rar/unrar/rawread.hpp"/>
+          <File Name="src/formats/rar/unrar/rar.cpp"/>
+          <File Name="src/formats/rar/unrar/cmddata.cpp"/>
+          <File Name="src/formats/rar/unrar/errhnd.hpp"/>
+          <File Name="src/formats/rar/unrar/uowners.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/extinfo.cpp"/>
+          <File Name="src/formats/rar/unrar/crypt.hpp"/>
+          <File Name="src/formats/rar/unrar/rardefs.hpp"/>
+          <File Name="src/formats/rar/unrar/extract.hpp"/>
+          <File Name="src/formats/rar/unrar/filestr.cpp"/>
+          <File Name="src/formats/rar/unrar/hash.hpp"/>
+          <File Name="src/formats/rar/unrar/pathfn.hpp"/>
+          <File Name="src/formats/rar/unrar/ui.cpp"/>
+          <File Name="src/formats/rar/unrar/model.hpp"/>
+          <File Name="src/formats/rar/unrar/list.cpp"/>
+          <File Name="src/formats/rar/unrar/threadmisc.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/find.cpp"/>
+          <File Name="src/formats/rar/unrar/array.hpp"/>
+          <File Name="src/formats/rar/unrar/smallfn.cpp"/>
+          <File Name="src/formats/rar/unrar/sha1.hpp"/>
+          <File Name="src/formats/rar/unrar/rs16.hpp"/>
+          <File Name="src/formats/rar/unrar/log.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/unicode.cpp"/>
+          <File Name="src/formats/rar/unrar/os.hpp"/>
+          <File Name="src/formats/rar/unrar/uisilent.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/pathfn.cpp"/>
+          <File Name="src/formats/rar/unrar/global.cpp"/>
+          <File Name="src/formats/rar/unrar/list.hpp"/>
+          <File Name="src/formats/rar/unrar/compress.hpp"/>
+          <File Name="src/formats/rar/unrar/coder.hpp"/>
+          <File Name="src/formats/rar/unrar/rarvm.cpp"/>
+          <File Name="src/formats/rar/unrar/getbits.cpp"/>
+          <File Name="src/formats/rar/unrar/recvol5.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/rs.cpp"/>
+          <File Name="src/formats/rar/unrar/file.hpp"/>
+          <File Name="src/formats/rar/unrar/ui.hpp"/>
+          <File Name="src/formats/rar/unrar/errhnd.cpp"/>
+          <File Name="src/formats/rar/unrar/savepos.hpp"/>
+          <File Name="src/formats/rar/unrar/suballoc.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/uiconsole.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/coder.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/win32acl.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/archive.cpp"/>
+          <File Name="src/formats/rar/unrar/dll.cpp"/>
+          <File Name="src/formats/rar/unrar/extract.cpp"/>
+          <File Name="src/formats/rar/unrar/match.hpp"/>
+          <File Name="src/formats/rar/unrar/match.cpp"/>
+          <File Name="src/formats/rar/unrar/consio.hpp"/>
+          <File Name="src/formats/rar/unrar/unpack.cpp"/>
+          <File Name="src/formats/rar/unrar/recvol3.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/arcread.cpp"/>
+          <File Name="src/formats/rar/unrar/unpack.hpp"/>
+          <File Name="src/formats/rar/unrar/unpack50mt.cpp" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/rar/unrar/rdwrfn.cpp"/>
+          <File Name="src/formats/rar/unrar/rarpch.cpp"/>
+        </VirtualDirectory>
       </VirtualDirectory>
       <VirtualDirectory Name="ha">
         <File Name="src/formats/ha/ha.cpp"/>
@@ -100,6 +248,8 @@
         <IncludePath Value="../far2l/"/>
         <IncludePath Value="../far2l/Include"/>
         <IncludePath Value="../WinPort"/>
+        <IncludePath Value="src/formats/rar/unrar"/>
+        <Preprocessor Value="RARDLL"/>
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>

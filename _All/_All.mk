@@ -5,15 +5,15 @@
 ## Debug
 ProjectName            :=_All
 ConfigurationName      :=Debug
-WorkspacePath          := ".."
-ProjectPath            := "."
+WorkspacePath          := "/home/user/projects/far2l"
+ProjectPath            := "/home/user/projects/far2l/_All"
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=22/08/16
+Date                   :=23/08/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -70,7 +70,7 @@ Objects=
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" "../.build-debug/farlng" "../.build-debug/far2l" "../.build-debug/colorer" "../.build-debug/farftp" "../.build-debug/multiarc" $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" "../.build-debug/farlng" "../.build-debug/far2l" "../.build-debug/colorer" "../.build-debug/farftp" $(Objects) 
 
 MakeIntermediateDirs:
 	@test -d ./Debug || $(MakeDirCommand) ./Debug

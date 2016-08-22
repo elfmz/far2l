@@ -337,7 +337,7 @@ int PluginClass::ProcessKey(int Key,unsigned int ControlState)
          // Slash[1]=0;
         //else
          // *Slash=0;
-        if (!chdir(CurDir)) fprintf(stderr, "chdir('%s') - %u\n", CurDir, errno);
+        if (chdir(CurDir)) fprintf(stderr, "chdir('%s') - %u\n", CurDir, errno);
       }
     }
     struct PanelInfo PInfo;

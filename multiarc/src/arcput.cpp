@@ -503,7 +503,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
       /*21*/{DI_BUTTON,0,14,0,0,0,0,DIF_CENTERGROUP|DIF_DISABLE,0,(char *)MAddSave},
       /*22*/{DI_BUTTON,0,14,0,0,0,0,DIF_CENTERGROUP,0,(char *)MAddCancel},
     };
-    struct FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
+    struct FarDialogItem DialogItems[ARRAYSIZE(InitItems)] = {0};
     InitDialogItems(InitItems,DialogItems,ARRAYSIZE(InitItems));
 
 /*    if(OLD_DIALOG_STYLE)
@@ -608,7 +608,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     if ((OpMode & OPM_SILENT)==0)
     {
       int AskCode=Info.DialogEx(Info.ModuleNumber,-1,-1,76,17,"AddToArc",
-                  DialogItems,ARRAYSIZE(DialogItems),
+                  DialogItems, ARRAYSIZE(DialogItems),
                   0,0,PluginClass::PutDlgProc,(LONG_PTR)&pdd);
 
       strcpy(pdd.Password1,DialogItems[PDI_PASS0WEDT].Data);

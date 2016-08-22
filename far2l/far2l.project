@@ -276,6 +276,7 @@
     <File Name="vtansi.cpp"/>
     <File Name="PluginA.cpp"/>
     <File Name="execute_oscmd.cpp"/>
+    <File Name="wrap.cpp" ExcludeProjConfig="Debug"/>
   </VirtualDirectory>
   <VirtualDirectory Name="UCD">
     <File Name="UCD/Big5Freq.tab"/>

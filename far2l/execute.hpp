@@ -3,7 +3,7 @@
 /*
 execute.hpp
 
-"Запускатель" программ.
+"Г‡Г ГЇГіГ±ГЄГ ГІГҐГ«Гј" ГЇГ°Г®ГЈГ°Г Г¬Г¬.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,6 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+int WINAPI farVTExecuteA(const char *CmdStr, int (WINAPI *ForkProc)(int argc, const char *const argv[]) );
 int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow = false, bool DirectRun = false, bool FolderRun = false, bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
 
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);

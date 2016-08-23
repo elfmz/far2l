@@ -6,6 +6,7 @@
 #include <mutex>
 #include <fcntl.h>
 #include <sys/ioctl.h> 
+#include <wordexp.h>
 #include <condition_variable>
 #include "vtansi.h"
 #define __USE_BSD 
@@ -21,14 +22,15 @@ class VTShell
 {
 	std::string _cmd;
 	std::mutex _mutex;
+	VTAnsi _vta;
+	pthread_t _thread;
+
 	bool  _thread_state;
 	bool _thread_exiting;
-
-	pthread_t _thread;
 	int _fd_out;
 	int _fd_in;
 	pid_t _pid, _grp;
-	VTAnsi _vta;
+	int (WINAPI *_fork_proc)(int argc, const char *const argv[]);
 
 	bool Startup()
 	{
@@ -94,10 +96,19 @@ class VTShell
 			dup2(fd_out[1], STDERR_FILENO);
 			close_fd_pair(fd_in); 
 			close_fd_pair(fd_out);
-		
-			r = execl("/bin/sh", "sh", "-c", _cmd.c_str());
-			//r = system(_cmd.c_str());
-			fprintf(stderr, "execl: %d\n", r);
+			if (_fork_proc) {
+				wordexp_t we = {};
+				if (wordexp(_cmd.c_str(), &we, 0)==0) {
+					r = _fork_proc(we.we_wordc, we.we_wordv);
+					wordfree(&we);
+				} else {
+					fprintf(stderr, "wordexp('%s') errno %u\n", _cmd.c_str(), errno);
+					r = -1;
+				}
+			} else {
+				r = execl("/bin/sh", "sh", "-c", _cmd.c_str());
+				fprintf(stderr, "execl returned %d errno %u\n", r, errno);
+			}
 			exit(r);
 		}
 	
@@ -197,8 +208,8 @@ class VTShell
 	}
 
 	public:
-	VTShell(const char *cmd)  
-		: _cmd(cmd), _thread_state(false), _thread_exiting(false), _fd_out(-1), _fd_in(-1), _pid(-1),  _grp(-1)
+	VTShell(const char *cmd, int (WINAPI *fork_proc)(int argc, const char *const argv[]) = NULL )
+		: _cmd(cmd), _thread_state(false), _thread_exiting(false), _fd_out(-1), _fd_in(-1), _pid(-1),  _grp(-1), _fork_proc(fork_proc)
 	{
 		if (!Startup())
 			return;
@@ -294,8 +305,8 @@ class VTShell
 	}
 };
 
-int VTShell_SendCommand(const char *cmd) 
+int VTShell_Execute(const char *cmd, int (WINAPI *fork_proc)(int argc, const char *const argv[]) ) 
 {	
-	VTShell vts(cmd);
+	VTShell vts(cmd, fork_proc);
 	return vts.Wait();
 }

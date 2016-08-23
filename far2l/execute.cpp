@@ -109,38 +109,7 @@ public:
 	bool NeedPrependCurdir() const {return _need_prepend_curdir; }	
 };
 
-static int ClassifyAndRun(const char *cmd)
-{
-	int r = -1;
-	ExecClassifier ec(cmd);
-	if (ec.IsFile()) {
-		if (ec.NeedPrependCurdir() || !ec.IsExecutable()) {
-			std::string tmp;
-			if (!ec.IsExecutable())
-				tmp+= "xdg-open ";
-				
-			if (ec.NeedPrependCurdir())
-				tmp+= "./";
-			
-			tmp+= cmd;
-			if (!ec.IsExecutable()) {
-				tmp+= " >/dev/null 2>/dev/null&";
-				r = system(tmp.c_str());
-				if (r!=0) {
-					fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
-					//TODO: nicely report if xdg-open exec failed
-				}
-			} else
-				r = VTShell_SendCommand(tmp.c_str());
-		} else
-			r = VTShell_SendCommand(cmd);
-			
-	} else 
-		r = VTShell_SendCommand(cmd);		
-	return r;
-}
-
-int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+int WINAPI farVTExecuteA(const char *CmdStr, int (WINAPI *ForkProc)(int argc, const char *const argv[]) )
 {
 //	fprintf(stderr, "TODO: Execute('" WS_FMT "')\n", CmdStr);
 	ProcessShowClock++;
@@ -153,10 +122,11 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, b
 	WINPORT(GetConsoleMode)(NULL, &saved_mode);
 	WINPORT(SetConsoleMode)(NULL, saved_mode | 
 		ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
-	WINPORT(WriteConsole)( NULL, CmdStr, wcslen(CmdStr), &dw, NULL );
+	const std::wstring &ws = MB2Wide(CmdStr);
+	WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 	
-	int r = ClassifyAndRun(Wide2MB(CmdStr).c_str());
+	int r = VTShell_Execute(CmdStr, ForkProc);
 	WINPORT(SetConsoleMode)( NULL, saved_mode | 
 	ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
@@ -168,6 +138,43 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, b
 	ScrBuf.Flush();
 	
 	return r;
+}
+
+static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+{
+	int r = -1;
+	ExecClassifier ec(CmdStr);
+	if (ec.IsFile()) {
+		if (ec.NeedPrependCurdir() || !ec.IsExecutable()) {
+			std::string tmp;
+			if (!ec.IsExecutable())
+				tmp+= "xdg-open ";
+				
+			if (ec.NeedPrependCurdir())
+				tmp+= "./";
+			
+			tmp+= CmdStr;
+			if (!ec.IsExecutable()) {
+				tmp+= " >/dev/null 2>/dev/null&";
+				r = system(tmp.c_str());
+				if (r!=0) {
+					fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
+					//TODO: nicely report if xdg-open exec failed
+				}
+			} else
+				r = farVTExecuteA(tmp.c_str(), NULL);
+		} else
+			r = farVTExecuteA(CmdStr, NULL);
+			
+	} else 
+		r = farVTExecuteA(CmdStr, NULL);		
+	return r;
+}
+
+
+int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+{
+	return ExecuteA(Wide2MB(CmdStr).c_str(), AlwaysWaitFinish, SeparateWindow, DirectRun, FolderRun , WaitForIdle , Silent , RunAs);
 }
 
 int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)

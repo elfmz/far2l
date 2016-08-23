@@ -1,3 +1,3 @@
 #pragma once
 
-int VTShell_SendCommand(const char *cmd);
+int VTShell_Execute(const char *cmd, int (WINAPI *fork_proc)(int argc, const char *const argv[]) );

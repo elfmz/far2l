@@ -1931,6 +1931,8 @@ typedef int (WINAPI *FARCONVERTPATH)(enum CONVERTPATHMODES Mode, const wchar_t *
 
 typedef DWORD (WINAPI *FARGETCURRENTDIRECTORY)(DWORD Size,wchar_t* Buffer);
 
+typedef int (WINAPI *FARVTEXECUTE)(const wchar_t *CmdStr, int (WINAPI *ForkProc)(int argc, const wchar_t *const argv[]) );
+
 typedef struct FarStandardFunctions
 {
 	int StructSize;
@@ -1991,6 +1993,7 @@ typedef struct FarStandardFunctions
 	FARCONVERTPATH             ConvertPath;
 	FARGETREPARSEPOINTINFO     GetReparsePointInfo;
 	FARGETCURRENTDIRECTORY     GetCurrentDirectory;
+	FARVTEXECUTE               VTExecute;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

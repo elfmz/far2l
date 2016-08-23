@@ -61,6 +61,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "mix.hpp"
 #include "lasterror.hpp"
+#include "execute.hpp"
+#include <string>
+#include <list>
+#include <vector>
 
 static const wchar_t *wszReg_Preload=L"Preload";
 static const wchar_t *wszReg_SysID=L"SysID";
@@ -429,6 +433,24 @@ bool PluginW::Load()
 	return true;
 }
 
+thread_local int (WINAPI *threadVTExecForkProcW)(int argc, const wchar_t *const argv[]);
+static int WINAPI VTExecForkProcA2W(int argc, const char *const argv[])
+{
+	std::vector<const wchar_t *> argvw;
+	std::list<std::wstring> strings;
+	for (int i = 0; i<argc; ++i) {
+		strings.push_back(MB2Wide(argv[i]));
+		argvw.push_back(strings.back().c_str());
+	}
+	return threadVTExecForkProcW(argc, argvw.empty() ? NULL : &argvw[0]);
+}
+
+static int WINAPI farVTExecuteW(const wchar_t *CmdStr, int (WINAPI *ForkProc)(int argc, const wchar_t *const argv[]))
+{
+	threadVTExecForkProcW = ForkProc;
+	return farVTExecuteA(Wide2MB(CmdStr).c_str(), ForkProc ? VTExecForkProcA2W : NULL);
+}
+
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
 {
 	static PluginStartupInfo StartupInfo={0};
@@ -486,6 +508,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.ConvertPath=farConvertPath;
 		StandardFunctions.GetReparsePointInfo=farGetReparsePointInfo;
 		StandardFunctions.GetCurrentDirectory=farGetCurrentDirectory;
+		StandardFunctions.VTExecute = farVTExecuteW;
 	}
 
 	if (!StartupInfo.StructSize)
@@ -1324,3 +1347,4 @@ void PluginW::ClearExports()
 	pGetCustomDataW = 0;
 	pFreeCustomDataW = 0;
 }
+

@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "mix.hpp"
 #include "lasterror.hpp"
+#include "execute.hpp"
 
 #include "wrap.cpp"
 
@@ -423,6 +424,7 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 		StandardFunctions.ConvertNameToReal=ConvertNameToRealA;
 		StandardFunctions.GetReparsePointInfo=FarGetReparsePointInfoA;
 		StandardFunctions.ExpandEnvironmentStr=ExpandEnvironmentStrA;
+		StandardFunctions.VTExecute = farVTExecuteA;
 	}
 
 	if (!StartupInfo.StructSize)

@@ -779,21 +779,6 @@ bool Panel::MakeListFile(string &strListFileName,bool ShortNames,const wchar_t *
 					if (wcschr(Modifers,L'Q')) // 'Q' - заключать имена с пробелами в кавычки;
 						QuoteSpaceOnly(strFileName);
 
-					if (wcschr(Modifers,L'S')) // 'S' - использовать '/' вместо '\' в путях файлов;
-					{
-						size_t Len=strFileName.GetLength();
-						wchar_t *FileName=strFileName.GetBuffer();
-
-						for (size_t i=0; i<Len; i++)
-						{
-							if (FileName[i]==L'\\')
-							{
-								FileName[i]=L'/';
-							}
-						}
-
-						strFileName.ReleaseBuffer();
-					}
 				}
 
 				LPCVOID Ptr=nullptr;

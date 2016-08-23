@@ -33,7 +33,7 @@ LPCSTR WINAPI FP_GetLogFullFileName(void)
 
 //		str[ GetModuleFileName(FP_HModule,str,sizeof(str))] = 0;
 		strcpy(str, "/var/log/");
-//		tmp = strrchr(str,'\\');
+//		tmp = strrchr(str,'/');
 
 //		if(tmp)
 //		{

@@ -599,12 +599,7 @@ int IsTarHeader(const BYTE *Data,int DataSize)
 char *AdjustTARFileName(char *FileName)
 {
   char *EndPos = FileName;
-  while( *EndPos )
-  {
-//    if( *EndPos == '/' )
-//      *EndPos = '\\';
-    EndPos++;
-  }
+  while( *EndPos ) EndPos++;
   return FileName;
 }
 

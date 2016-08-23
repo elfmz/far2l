@@ -15,7 +15,7 @@ void WINAPI CTArgInit(int argc, char **argv,BOOL CaseSensitive)
 	CT_CaseSensitive = CaseSensitive;
 #if defined(__QNX__)
 
-	if(strchr(argv[0],'\\') == NULL)
+	if(strchr(argv[0],'/') == NULL)
 		CT_argv[0] = strdup(MakePathName(GetCurDir(),argv[0]).Text());
 
 #endif

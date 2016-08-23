@@ -13,8 +13,10 @@
 
 String *InputSource::getAbsolutePath(const String*basePath, const String*relPath){
   int root_pos = basePath->lastIndexOf('/');
+#ifdef _WIN32
   int root_pos2 = basePath->lastIndexOf('\\');
   if (root_pos2 > root_pos) root_pos = root_pos2;
+#endif
   if (root_pos == -1) root_pos = 0;
   else root_pos++;
   StringBuffer *newPath = new StringBuffer();
@@ -49,9 +51,7 @@ InputSource *InputSource::newInstance(const String *path, InputSource *base){
 };
 
 bool InputSource::isRelative(const String *path){
-  if (path->indexOf(':') != -1 && path->indexOf(':') < 10) return false;
-  if (path->indexOf('/') == 0 || path->indexOf('\\') == 0) return false;
-  if (path->indexOf('%') == 0) return false;
+  if (path->indexOf('%') == 0 || path->indexOf('/') == 0) return false;
   return true;
 };
 /* ***** BEGIN LICENSE BLOCK *****

@@ -70,7 +70,7 @@ bool IsNetworkServerPath(const wchar_t *Path)
 	bool Result=false;
 	if(IsNetworkPath(Path))
 	{
-		LPCWSTR SharePtr=wcspbrk(HasPathPrefix(Path)?Path+8:Path+2,L"\\/");
+		LPCWSTR SharePtr=wcspbrk(HasPathPrefix(Path)?Path+8:Path+2,L"/");
 		if(!SharePtr || !SharePtr[1] || IsSlash(SharePtr[1]))
 		{
 			Result=true;
@@ -91,12 +91,7 @@ bool IsLocalRootPath(const wchar_t *Path)
 
 bool HasPathPrefix(const wchar_t *Path)
 {
-	/*
-		\\?\
-		\\.\
-		\??\
-	*/
-	return Path && Path[0] == GOOD_SLASH && (Path[1] == GOOD_SLASH || Path[1] == L'?') && (Path[2] == L'?' || Path[2] == L'.') && Path[3] == GOOD_SLASH;
+	return false;
 }
 
 bool IsLocalPrefixPath(const wchar_t *Path)
@@ -125,11 +120,7 @@ bool PathCanHoldRegularFile(const wchar_t *Path)
 		return true;
 
 	/* \\ */
-	unsigned offset = 2;
-
-	/* \\?\UNC\ */
-	if (Path[2] == L'?')
-		offset = 8;
+	unsigned offset = 0;
 
 	const wchar_t *p = FirstSlash(Path + offset);
 
@@ -148,9 +139,6 @@ bool IsPluginPrefixPath(const wchar_t *Path) //Max:
 	const wchar_t* pC = wcschr(Path, L':');
 
 	if (!pC)
-		return false;
-
-	if ((pC - Path) == 1) // îäíîñèìâîëüíûå ïðåôèêñû íå ïîääåðæèâàþòñÿ
 		return false;
 
 	const wchar_t* pS = FirstSlash(Path);
@@ -326,7 +314,7 @@ BOOL AddEndSlash(wchar_t *Path, wchar_t TypeSlash)
 		}
 
 		int Length=(int)(end-Path);
-		char c= '/';//(Slash<BackSlash) ? L'/' : L'\\';
+		char c= '/';
 		Result=TRUE;
 
 		if (!Length)

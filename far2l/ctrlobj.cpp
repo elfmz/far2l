@@ -172,12 +172,12 @@ ControlObject::~ControlObject()
 	delete HiFiles;
 
 	if (Opt.ViOpt.SavePos)
-		ViewerPosCache->Save(L"Viewer\\LastPositions");
+		ViewerPosCache->Save(L"Viewer/LastPositions");
 
 	delete ViewerPosCache;
 
 	if (Opt.EdOpt.SavePos)
-		EditorPosCache->Save(L"Editor\\LastPositions");
+		EditorPosCache->Save(L"Editor/LastPositions");
 
 	delete EditorPosCache;
 

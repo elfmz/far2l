@@ -174,7 +174,7 @@ void TrafficInformation::DrawInfos(time_t tm)
 	char key[ MAX_TRAF_WIDTH+1 ];
 	int  n,i;
 	Count = 0;
-	snprintf(key,ARRAYSIZE(key),"CopyDialog\\%s",FTP_Info->GetMsg(MLanguage));
+	snprintf(key,ARRAYSIZE(key),"CopyDialog/%s",FTP_Info->GetMsg(MLanguage));
 	LineCount = Min(MAX_TRAF_LINES,FTP_Info->GetRegKeyFullInt(key,"Count", 0));
 
 	if(!LineCount)

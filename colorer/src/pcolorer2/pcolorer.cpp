@@ -16,32 +16,6 @@ SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
 	  printf("Colorer startup: %s\n", path);
 }
 //todo:
-/*
-extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved )  
-{
-  switch( fdwReason ) 
-  { 
-  case DLL_PROCESS_ATTACH:
-    {
-      // obtain the path to the folder plugin, without being attached to the file name
-      wchar_t path[MAX_PATH];
-      if (!GetModuleFileName(hinstDLL, path, MAX_PATH)){
-        return false;
-      }
-      DString module(path, 0);
-      int pos = module.lastIndexOf('\\');
-      pos = module.lastIndexOf('\\',pos);
-      PluginPath=new StringBuffer(DString(module, 0, pos));
-    }
-    break;
-
-  case DLL_PROCESS_DETACH:
-    delete PluginPath;
-    break;
-  }
-
-  return true;  
-}*/
 /**
   Returns message from FAR current language.
 */

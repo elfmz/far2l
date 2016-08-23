@@ -69,7 +69,6 @@ void RectifyPath(std::string &s)
 	std::string tmp;
 	bool prev_slash = false;
 	for (auto c : s) {
-		if (c==BAD_SLASH) c = GOOD_SLASH;
 		if (c==GOOD_SLASH) {
 			if (prev_slash) continue;
 			prev_slash = true;
@@ -88,12 +87,6 @@ void RectifyPath(std::string &s)
 
 std::string ConsumeWinPath(const wchar_t *pw)
 {
-	if (pw[0]=='\\' && (pw[1]=='\\' || pw[1]=='?') && pw[2]=='?'  && pw[3]=='\\')
-		pw+= 4;
-	else if (pw[0]=='/' && (pw[1]=='/' || pw[1]=='?') && pw[2]=='?'  && pw[3]=='/')
-		pw+= 4;
-	if (pw[0]=='U' && pw[1]=='N' && pw[2]=='C')
-		pw+=3; 
 	std::string s = Wide2MB(pw);
 	RectifyPath(s);
 	return s;
@@ -105,7 +98,7 @@ void AppendAndRectifyPath(std::string &s, const char *div, LPCWSTR append)
 	if (append) {
 		const std::string &sub = Wide2MB(append);
 		for (size_t i = 0, j = 0, ii = sub.size(); i<=ii; ++i) {
-			if (i==ii || sub[i]==GOOD_SLASH|| sub[i]==BAD_SLASH) {
+			if (i==ii || sub[i]==GOOD_SLASH) {
 				if (i > j) {
 					{
 						s+= div;

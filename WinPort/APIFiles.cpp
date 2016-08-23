@@ -280,8 +280,6 @@ extern "C"
 		}
 		if (name) {
 			const WCHAR *slash = wcsrchr(name, GOOD_SLASH);
-			const WCHAR *slash_bad = wcsrchr(name, BAD_SLASH);
-			if (!slash || (slash_bad && slash_bad < slash))  slash = slash_bad;
 			if ( (slash && slash[1]==L'.') || (!slash && name[0]=='.'))
 				rv|= FILE_ATTRIBUTE_HIDDEN;
 		}

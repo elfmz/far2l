@@ -187,15 +187,6 @@ PluginW::PluginW(PluginManager *owner, const wchar_t *lpwszModuleName):
 	m_hModule(nullptr)
 	//more initialization here!!!
 {
-	wchar_t *p = m_strCacheName.GetBuffer();
-	while (*p)
-	{
-		if (*p == L'\\')
-			*p = L'/';
-
-		p++;
-	}
-	m_strCacheName.ReleaseBuffer();
 	ClearExports();
 }
 
@@ -203,7 +194,6 @@ PluginW::~PluginW()
 {
 	Lang.Close();
 }
-
 
 bool PluginW::LoadFromCache(const FAR_FIND_DATA_EX &FindData)
 {

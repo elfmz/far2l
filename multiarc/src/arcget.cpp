@@ -115,11 +115,11 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
   if (!SpaceOnly)
   {
     for (char *ChPtr=DestPath;*ChPtr!=0;ChPtr++)
-      if (*ChPtr=='\\')
+      if (*ChPtr=='/')
       {
         *ChPtr=0;
         CreateDirectory(DestPath,NULL);
-        *ChPtr='\\';
+        *ChPtr='/';
       }
     CreateDirectory(DestPath,NULL);
   }*/

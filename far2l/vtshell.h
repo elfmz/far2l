@@ -1,3 +1,3 @@
 #pragma once
 
-bool VTShell_SendCommand(const char *cmd);
+int VTShell_SendCommand(const char *cmd);

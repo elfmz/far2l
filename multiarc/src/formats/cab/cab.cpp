@@ -199,18 +199,13 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   lseek( ArcHandle, (LONG)((EndPos-(char*)&FileHeader+1) - ReadSize), SEEK_CUR);
 
   EndPos = (char *)FileHeader.szName;
-  while (*EndPos)
-  {
-//    if (*EndPos == '/')
-//      *EndPos = '\\';
-    EndPos++;
-  }
-
-  EndPos = (char *)FileHeader.szName;
   if (EndPos[ 0 ] == '\\' && EndPos[ 1 ] != '\\')
     EndPos++;
 
   strncpy(Item->FindData.cFileName, EndPos, ARRAYSIZE(Item->FindData.cFileName) - 1);
+  for (size_t i = 0; (i < ARRAYSIZE(Item->FindData.cFileName) && Item->FindData.cFileName[i]); ++i) {
+    if (Item->FindData.cFileName[i] == '\\') Item->FindData.cFileName[i] = '/';
+  }
 
   #define _A_ENCRYPTED 8
   Item->FindData.dwFileAttributes = FileHeader.attribs & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_DIRECTORY);

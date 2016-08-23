@@ -21,7 +21,7 @@ HKEY WINAPI FP_CreateRegKey(const char *Key)
 	CHK_INITED
 
 	if(Key && *Key)
-		sprintf(name,"%s" "\\" "%s",FP_PluginRootKey,Key);
+		sprintf(name,"%s" "/" "%s",FP_PluginRootKey,Key);
 	else
 		sprintf(name,"%s",FP_PluginRootKey);
 
@@ -44,7 +44,7 @@ BOOL WINAPI FP_DeleteRegKey(const char *Key)
 	if(!Key || !Key[0])
 		return FALSE;
 
-	sprintf(name,"%s" "\\" "%s",FP_PluginRootKey,Key);
+	sprintf(name,"%s" "/" "%s",FP_PluginRootKey,Key);
 	return FP_DeleteRegKeyFull(name);
 }
 
@@ -65,7 +65,7 @@ BOOL WINAPI FP_DeleteRegKeyAll(LPCSTR hParentKey,LPCSTR Key)
 		return FP_DeleteRegKeyAll(HKEY_CURRENT_USER,Key);
 	else
 	{
-		sprintf(name,"%s" "\\" "%s",hParentKey,Key);
+		sprintf(name,"%s" "/" "%s",hParentKey,Key);
 		return FP_DeleteRegKeyAll(HKEY_CURRENT_USER,name);
 	}
 }
@@ -78,7 +78,7 @@ BOOL WINAPI FP_DeleteRegKeyAll(LPCSTR Key)
 	if(!Key || !Key[0])
 		return FALSE;
 
-	sprintf(name,"%s" "\\" "%s",FP_PluginRootKey,Key);
+	sprintf(name,"%s" "/" "%s",FP_PluginRootKey,Key);
 	return FP_DeleteRegKeyAll(HKEY_CURRENT_USER,name);
 }
 
@@ -213,7 +213,7 @@ HKEY WINAPI FP_OpenRegKey(const char *Key)
 	CHK_INITED
 
 	if(Key && *Key)
-		snprintf(name,sizeof(name),"%s" "\\" "%s",FP_PluginRootKey,Key);
+		snprintf(name,sizeof(name),"%s" "/" "%s",FP_PluginRootKey,Key);
 	else
 		snprintf(name,sizeof(name),"%s",FP_PluginRootKey);
 

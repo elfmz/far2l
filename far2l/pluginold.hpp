@@ -1591,6 +1591,7 @@ namespace oldfar
 		FARSTDMKLINK               MkLink;
 		FARCONVERTNAMETOREAL       ConvertNameToReal;
 		FARGETREPARSEPOINTINFO     GetReparsePointInfo;
+		
 	} FARSTANDARDFUNCTIONS;
 
 	struct PluginStartupInfo

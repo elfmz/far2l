@@ -31,10 +31,10 @@ void WINAPI FP_SetStartupInfo(const PluginStartupInfo *Info,const char *KeyName)
 //Plugin Reg key
 	FP_PluginRootKey = new char[FAR_MAX_REG+1];
 	StrCpy(FP_PluginRootKey,Info->RootKey,FAR_MAX_REG);
-	StrCat(FP_PluginRootKey,"\\",FAR_MAX_REG);
+	StrCat(FP_PluginRootKey,"/",FAR_MAX_REG);
 	StrCat(FP_PluginRootKey,KeyName,FAR_MAX_REG);
 //Start path
-	char *m = strrchr(FP_PluginStartPath,'\\');
+	char *m = strrchr(FP_PluginStartPath,'/');
 
 	if(m) *m = 0;
 }

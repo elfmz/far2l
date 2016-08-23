@@ -195,7 +195,7 @@
         <File Name="src/formats/lzh/lzh.cpp"/>
       </VirtualDirectory>
       <VirtualDirectory Name="cab">
-        <File Name="src/formats/cab/cab.cpp" ExcludeProjConfig="Debug"/>
+        <File Name="src/formats/cab/cab.cpp" ExcludeProjConfig=""/>
       </VirtualDirectory>
       <VirtualDirectory Name="targz">
         <File Name="src/formats/targz/targz.cpp"/>

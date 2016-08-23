@@ -153,7 +153,7 @@ int PluginClass::ReadArchive(const char *Name)
     *CurArcData.FindData.cAlternateFileName=0;
 
     NormalizePath(CurArcData.FindData.cFileName,CurArcData.FindData.cFileName);
-  fprintf(stderr, "PATH: %s\n", CurArcData.FindData.cFileName);
+    //fprintf(stderr, "PATH: %s\n", CurArcData.FindData.cFileName);
 
     struct ArcItemUserData *aud=NULL;
     char *Pref=NULL;

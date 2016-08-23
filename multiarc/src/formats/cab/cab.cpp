@@ -9,7 +9,9 @@
 
 #include <windows.h>
 #include <string.h>
-#include <dos.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 #include <pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
@@ -62,7 +64,7 @@ struct CFFILE
   u1 szName[256];
 };
 
-static HANDLE ArcHandle;
+static int ArcHandle = -1;
 static DWORD SFXSize,FilesNumber;
 static DWORD UnpVer;
 
@@ -88,54 +90,56 @@ BOOL WINAPI _export CAB_IsArchive(const char *Name,const unsigned char *Data,int
   return(FALSE);
 }
 
+static void CloseArcHandle()
+{
+	close(ArcHandle);
+	ArcHandle = -1;	
+}
 
 BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type)
 {
   struct CFHEADER MainHeader;
-  DWORD ReadSize;
+  int ReadSize;
   int I;
 
-  ArcHandle = WINPORT(CreateFile)( MB2Wide(Name).c_str(), GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,
-              NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL );
-  if (ArcHandle == INVALID_HANDLE_VALUE)
+  ArcHandle = open(Name, O_RDONLY);
+  if (ArcHandle == -1)
     return FALSE;
 
   *Type=0;
 
-  WINPORT(SetFilePointer)(ArcHandle,SFXSize,NULL,FILE_BEGIN);
+  lseek(ArcHandle, SFXSize, SEEK_SET);
   I = SFXSize;
-  if (!WINPORT(ReadFile)( ArcHandle, &MainHeader, sizeof(MainHeader), &ReadSize, NULL ) ||
-    ReadSize != sizeof(MainHeader) || !IsArchive( NULL, (u1*)&MainHeader, sizeof(MainHeader) ))
+  ReadSize = read(ArcHandle, &MainHeader, sizeof(MainHeader));
+  if ( ReadSize != sizeof(MainHeader))
+    return CloseArcHandle(), FALSE;
+	
+  if ( !CAB_IsArchive( NULL, (u1*)&MainHeader, sizeof(MainHeader) ))
   {
-    HANDLE hMapFile;
-    LPBYTE Data;
+	struct stat s = {0};
+	if (fstat(ArcHandle, &s)==-1 || (s.st_mode & S_IFMT)!=S_IFREG) {
+		return CloseArcHandle(), FALSE;
+	}
 
-    if ((ReadSize = WINPORT(GetFileSize)( ArcHandle, NULL )) == 0xFFFFFFFF)
-    {
-    blad:
-      WINPORT(CloseHandle)( ArcHandle );
-      return FALSE;
-    }
-    if (ReadSize > 1024*1024)
-      ReadSize = 1024*1024;
-    hMapFile = WINPORT(CreateFile)Mapping( ArcHandle, NULL, PAGE_READONLY, 0, ReadSize, NULL );
-    if (hMapFile == NULL)
-      goto blad;
-    Data = (LPBYTE)MapViewOfFile( hMapFile, FILE_MAP_READ, 0, 0, ReadSize );
-    WINPORT(CloseHandle)( hMapFile );
+	ReadSize = (s.st_size > 0x100000) ? 0x100000 : s.st_size ;
+
+	  
+    LPBYTE Data = (LPBYTE)mmap( NULL, ReadSize, PROT_READ, MAP_PRIVATE, ArcHandle, 0);
     if (Data == NULL)
-      goto blad;
-    I = IsArchive( NULL, Data, ReadSize );
+		return CloseArcHandle(), FALSE;
+		
+    I = CAB_IsArchive( NULL, Data, ReadSize );
     if (I)
       memcpy( &MainHeader, Data + SFXSize, sizeof(MainHeader) );
-    UnmapViewOfFile( Data );
+	  
+    munmap( Data, ReadSize );
     if (I == 0)
-      goto blad;
+      return CloseArcHandle(), FALSE;
   }
   else
     SFXSize = I;
 
-  WINPORT(SetFilePointer)(ArcHandle,SFXSize+MainHeader.coffFiles,NULL,FILE_BEGIN);
+  lseek(ArcHandle, SFXSize+MainHeader.coffFiles, SEEK_SET);
   FilesNumber = MainHeader.cFiles;
   if (FilesNumber == 65535 && (MainHeader.flags & 8))
     FilesNumber = MainHeader.nFiles;
@@ -145,24 +149,25 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type)
   {
     char *EndPos;
     struct CFFILE FileHeader;
-
-    if (!WINPORT(ReadFile)( ArcHandle, &FileHeader, sizeof(FileHeader), &ReadSize, NULL )
-        || ReadSize < 18)
-      goto blad;
+	ReadSize = read(ArcHandle, &FileHeader, sizeof(FileHeader));
+    if (ReadSize < 18)
+      return CloseArcHandle(), FALSE;
+	  
     if (FileHeader.iFolder == 0xFFFD || FileHeader.iFolder == 0xFFFF)
     {
       EndPos = (char*)FileHeader.szName;
       while (EndPos - (char*)&FileHeader < (int)sizeof(FileHeader) && *EndPos)
         EndPos++;
       if (EndPos - (char*)&FileHeader >= (int)sizeof(FileHeader))
-        goto blad;
+        return CloseArcHandle(), FALSE;
 
-      WINPORT(SetFilePointer)( ArcHandle, (LONG)((EndPos-(char*)&FileHeader+1) - ReadSize), NULL, FILE_CURRENT );
+
+      lseek(ArcHandle, (LONG)((EndPos-(char*)&FileHeader+1) - ReadSize), SEEK_CUR);
       FilesNumber--;
     }
     else
     {
-      WINPORT(SetFilePointer)( ArcHandle, 0 - ReadSize, NULL, FILE_CURRENT );
+      lseek(ArcHandle, 0 - ReadSize, SEEK_CUR);
       break;
     }
   }
@@ -175,14 +180,14 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 {
   struct CFFILE FileHeader;
 
-  DWORD ReadSize;
+  int ReadSize;
   char *EndPos;
   FILETIME lft;
 
   if (FilesNumber-- == 0)
     return GETARC_EOF;
-  if (!WINPORT(ReadFile)(ArcHandle,&FileHeader,sizeof(FileHeader),&ReadSize,NULL)
-      || ReadSize < 18)
+  ReadSize = read(ArcHandle,&FileHeader,sizeof(FileHeader));
+  if (ReadSize < 18)
     return GETARC_READERROR;
 
   EndPos = (char *)FileHeader.szName;
@@ -191,7 +196,7 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (EndPos - (char*)&FileHeader >= (int)sizeof(FileHeader))
     return GETARC_BROKEN;
 
-  WINPORT(SetFilePointer)( ArcHandle, (LONG)((EndPos-(char*)&FileHeader+1) - ReadSize), NULL, FILE_CURRENT );
+  lseek( ArcHandle, (LONG)((EndPos-(char*)&FileHeader+1) - ReadSize), SEEK_CUR);
 
   EndPos = (char *)FileHeader.szName;
   while (*EndPos)
@@ -205,15 +210,15 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (EndPos[ 0 ] == '\\' && EndPos[ 1 ] != '\\')
     EndPos++;
 
-  CharToOem( EndPos, Item->FindData.cFileName );
+  strncpy(Item->FindData.cFileName, EndPos, ARRAYSIZE(Item->FindData.cFileName) - 1);
 
   #define _A_ENCRYPTED 8
   Item->FindData.dwFileAttributes = FileHeader.attribs & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_DIRECTORY);
   Info->Encrypted = FileHeader.attribs & _A_ENCRYPTED;
   Item->PackSize=0;
   Item->FindData.nFileSizeLow=FileHeader.cbFile;
-  DosDateTimeToFileTime(FileHeader.date,FileHeader.time,&lft);
-  LocalFileTimeToFileTime(&lft,&Item->FindData.ftLastWriteTime);
+  WINPORT(DosDateTimeToFileTime)(FileHeader.date,FileHeader.time,&lft);
+  WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);
   Info->UnpVer=UnpVer;
   return(GETARC_SUCCESS);
 }
@@ -222,7 +227,7 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 BOOL WINAPI _export CAB_CloseArchive(struct ArcInfo *Info)
 {
   Info->SFXSize=SFXSize;
-  return(WINPORT(CloseHandle)(ArcHandle));
+  return(close(ArcHandle));
 }
 
 DWORD WINAPI _export CAB_GetSFXPos(void)
@@ -272,3 +277,4 @@ BOOL WINAPI _export CAB_GetDefaultCommands(int Type,int Command,char *Dest)
   }
   return(FALSE);
 }
+

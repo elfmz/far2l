@@ -81,8 +81,8 @@ ArcPlugins::ArcPlugins(const char *ModuleName) : PluginsData(NULL), PluginsCount
 	AddPluginItem("LZH", LZH_IsArchive, LZH_OpenArchive, LZH_GetArcItem, NULL, 
 		LZH_CloseArchive, LZH_GetFormatName, LZH_GetDefaultCommands, LZH_SetFarInfo, LZH_GetSFXPos);
 
-	//AddPluginItem("CAB", CAB_IsArchive, CAB_OpenArchive, CAB_GetArcItem, NULL, 
-	//	CAB_CloseArchive, CAB_GetFormatName, CAB_GetDefaultCommands, NULL, CAB_GetSFXPos);
+	AddPluginItem("CAB", CAB_IsArchive, CAB_OpenArchive, CAB_GetArcItem, NULL, 
+		CAB_CloseArchive, CAB_GetFormatName, CAB_GetDefaultCommands, NULL, CAB_GetSFXPos);
 	
 	AddPluginItem("TARGZ", TARGZ_IsArchive, TARGZ_OpenArchive, TARGZ_GetArcItem, NULL, 
 		TARGZ_CloseArchive, TARGZ_GetFormatName, TARGZ_GetDefaultCommands, TARGZ_SetFarInfo, TARGZ_GetSFXPos);

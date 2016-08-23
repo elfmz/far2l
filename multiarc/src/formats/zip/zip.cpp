@@ -268,12 +268,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   Item->FindData.cFileName[NM-1]=0;
 
   char *EndPos = Item->FindData.cFileName;
-  while( *EndPos )
-  {
-//    if( *EndPos == '/' )
-//      *EndPos = '\\';
-    EndPos++;
-  }
+  while( *EndPos ) EndPos++;
 
   Item->FindData.dwFileAttributes=ZipHeader.Attr & 0x3f;
   Item->FindData.nFileSizeHigh=0;

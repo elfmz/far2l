@@ -148,12 +148,12 @@ String *ParserFactory::searchPath()
   int len = GetModuleFileName(hmod, cname, 256) - 1;
   DString module(cname, 0, len);
   int pos[3];
-  pos[0] = module.lastIndexOf('\\');
-  pos[1] = module.lastIndexOf('\\', pos[0]);
-  pos[2] = module.lastIndexOf('\\', pos[1]);
+  pos[0] = module.lastIndexOf('/');
+  pos[1] = module.lastIndexOf('/', pos[0]);
+  pos[2] = module.lastIndexOf('/', pos[1]);
   for(int idx = 0; idx < 3; idx++)
     if (pos[idx] >= 0)
-      paths.addElement(&(new StringBuffer(DString(module, 0, pos[idx])))->append(DString("\\catalog.xml")));
+      paths.addElement(&(new StringBuffer(DString(module, 0, pos[idx])))->append(DString("/catalog.xml")));
 #endif
 
   // %COLORER5CATALOG%

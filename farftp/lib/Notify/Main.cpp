@@ -17,7 +17,7 @@ static void WINAPI idNotify(const FTNNotify* p)
 	{
 		char fnm[MAX_PATH] = "/var/log/farftp_notify.log";
 		//fnm[ GetModuleFileName(FTP_Module,fnm,ARRAYSIZE(fnm))] = 0;
-		//FTP_Info->StrCpy(strrchr(fnm,'\\')+1, "notify.log", -1);
+		//FTP_Info->StrCpy(strrchr(fnm,'/')+1, "notify.log", -1);
 		File = fopen(fnm,"a");
 
 		if(!File) File = fopen(fnm,"w");

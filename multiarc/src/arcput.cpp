@@ -309,7 +309,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
     }
     // åñëè AddSwitches ïóñòîé è þçàåòñÿ UseLastHistory, òî...
     static char SwHistoryName[NM];
-    FSF.sprintf(SwHistoryName,"ArcSwitches\\%s",pdd->ArcFormat);
+    FSF.sprintf(SwHistoryName,"ArcSwitches/%s",pdd->ArcFormat);
     // ...ñëåäóþùàÿ êîìàíäà çàñòàâèò âûñòàâèòü LastHistory
     Info.SendDlgMessage(hDlg, DM_SETHISTORY, PDI_SWITCHESEDT, (LONG_PTR)SwHistoryName);
     //åñëè èñòîðèÿ áûëà ïóñòàÿ òî âñ¸ òàêè íàäî âûñòàâèòü ýòî ïîëå èç íàñòðîåê

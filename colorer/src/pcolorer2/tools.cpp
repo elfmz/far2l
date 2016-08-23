@@ -72,26 +72,7 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   FSF.ConvertPath(CPM_FULL, new_path, new_path, static_cast<int>(len));
 
   if (unc){
-    // for normal work with long paths, the path must be converted to UNC
-    if (wcsstr(new_path,L"\\\\?\\")==NULL){
-      if (wcsstr(new_path,L"\\\\")==NULL){
-        len+=4;
-        wchar_t *temp = new wchar_t[len];
-        wcscpy(temp,L"\\\\?\\");
-        wcscat(temp,new_path);
-        delete[] new_path;
-        new_path = temp;
-      }
-      else
-      {
-        len+=6;
-        wchar_t *temp = new wchar_t[len];
-        wcscpy(temp,L"\\\\?\\UNC");
-        wcscat(temp,new_path+1);
-        delete[] new_path;
-        new_path = temp;
-      }
-    }
+    fprintf(stderr, "Wanna UNC for '%ls'\n",new_path);
   }
 
   // reduce the length of the buffer

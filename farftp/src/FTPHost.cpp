@@ -193,7 +193,7 @@ char *FTPHost::MkINIFile(char *DestName,LPCSTR Path,LPCSTR DestPath)
 
 	if(Path)
 	{
-		while(*Path == '\\' || *Path == '/') Path++;
+		while(*Path == '/') Path++;
 
 		AddEndSlash(DestName,'/',MAX_PATH);
 		// Add from "Hosts\Folder\Item0" "Folder\Item0" part
@@ -412,7 +412,7 @@ void FTPHost::MakeFreeKey(LPCSTR Hosts)
 	for(n = 0; 1 ; n++)
 	{
 		StrCpy(key, RegKey,                ARRAYSIZE(key));
-		StrCat(key, Message("\\Item%d",n), ARRAYSIZE(key));
+		StrCat(key, Message("/Item%d",n), ARRAYSIZE(key));
 		FP_GetRegKey(key,"HostName",str,NULL,ARRAYSIZE(str));
 
 		if(str[0] == 0)

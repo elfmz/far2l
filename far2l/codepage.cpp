@@ -46,9 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 
 // Ключ где хранятся имена кодовых страниц
-const wchar_t *NamesOfCodePagesKey = L"CodePages\\Names";
+const wchar_t *NamesOfCodePagesKey = L"CodePages/Names";
 
-const wchar_t *FavoriteCodePagesKey = L"CodePages\\Favorites";
+const wchar_t *FavoriteCodePagesKey = L"CodePages/Favorites";
 
 // Стандартные кодовое страницы
 enum StandardCodePages

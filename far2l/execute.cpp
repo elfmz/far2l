@@ -109,8 +109,9 @@ public:
 	bool NeedPrependCurdir() const {return _need_prepend_curdir; }	
 };
 
-static void ClassifyAndRun(const char *cmd)
+static int ClassifyAndRun(const char *cmd)
 {
+	int r = -1;
 	ExecClassifier ec(cmd);
 	if (ec.IsFile()) {
 		if (ec.NeedPrependCurdir() || !ec.IsExecutable()) {
@@ -124,18 +125,19 @@ static void ClassifyAndRun(const char *cmd)
 			tmp+= cmd;
 			if (!ec.IsExecutable()) {
 				tmp+= " >/dev/null 2>/dev/null&";
-				int r = system(tmp.c_str());
+				r = system(tmp.c_str());
 				if (r!=0) {
 					fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
 					//TODO: nicely report if xdg-open exec failed
 				}
 			} else
-				VTShell_SendCommand(tmp.c_str());
+				r = VTShell_SendCommand(tmp.c_str());
 		} else
-			VTShell_SendCommand(cmd);
+			r = VTShell_SendCommand(cmd);
 			
 	} else 
-		VTShell_SendCommand(cmd);		
+		r = VTShell_SendCommand(cmd);		
+	return r;
 }
 
 int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
@@ -154,7 +156,7 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, b
 	WINPORT(WriteConsole)( NULL, CmdStr, wcslen(CmdStr), &dw, NULL );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 	
-	ClassifyAndRun(Wide2MB(CmdStr).c_str());
+	int r = ClassifyAndRun(Wide2MB(CmdStr).c_str());
 	WINPORT(SetConsoleMode)( NULL, saved_mode | 
 	ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
@@ -165,7 +167,7 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, b
 	SetFarConsoleMode(TRUE);
 	ScrBuf.Flush();
 	
-	return 1;
+	return r;
 }
 
 int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)

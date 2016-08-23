@@ -79,7 +79,7 @@ BOOL PreFill(FTPUrl* p)
 		FixLocalSlash(p->SrcPath);
 	ch = '/';
 
-	if(strpbrk(p->FileName.cFileName, "\\/") != NULL)
+	if(strpbrk(p->FileName.cFileName, "/") != NULL)
 	{
 		AddEndSlash(p->SrcPath, ch);
 		p->SrcPath.cat(p->FileName.cFileName);

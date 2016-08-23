@@ -310,9 +310,6 @@ class MetaReplacer
 
             if(m.getFlags() & Meta::useForwardSlashes)
             {
-//                for(; *dest; ++dest)
-//                    if(*dest == '\\')
-//                        *dest = '/';
             }
 
 

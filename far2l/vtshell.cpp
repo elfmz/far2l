@@ -119,7 +119,7 @@ class VTShell
 			_grp = getpgid(_pid);
 			if (_grp!=getpgid(getpid()))break;
 			usleep(10000);
-		} 
+		}
 		return true;
 	}
 	
@@ -198,7 +198,7 @@ class VTShell
 
 	public:
 	VTShell(const char *cmd)  
-		: _cmd(cmd), _fd_out(-1), _fd_in(-1), _pid(-1),  _grp(-1), _thread_state(false), _thread_exiting(false)
+		: _cmd(cmd), _thread_state(false), _thread_exiting(false), _fd_out(-1), _fd_in(-1), _pid(-1),  _grp(-1)
 	{
 		if (!Startup())
 			return;
@@ -217,10 +217,10 @@ class VTShell
 	}
 
 
-	bool Wait()
+	int Wait()
 	{
 		if (_pid==-1)
-			return false;
+			return -1;
 
 		for (;;) {
 			INPUT_RECORD ir = {0};
@@ -240,7 +240,11 @@ class VTShell
 			std::lock_guard<std::mutex> lock(_mutex);
 			if (_thread_exiting) break;
 		}
-		return true;
+
+		int status = 1;
+		//if (waitpid(_pid, &status, 0)==-1)
+		//	fprintf(stderr, "VTShell: waitpid(0x%x) error %u\n", _pid, errno);
+		return status;
 	}
 
 	std::string TranslateInput(const INPUT_RECORD &ir)
@@ -290,7 +294,7 @@ class VTShell
 	}
 };
 
-bool VTShell_SendCommand(const char *cmd) 
+int VTShell_SendCommand(const char *cmd) 
 {	
 	VTShell vts(cmd);
 	return vts.Wait();

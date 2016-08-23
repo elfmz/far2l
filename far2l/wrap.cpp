@@ -714,32 +714,9 @@ BOOL AddEndSlashA(char *Path,char TypeSlash)
 		    èçìåíåíèå óæå ñóùåñòâóþùåãî êîíå÷íîãî ñëåøà íà òàêîé, êîòîðûé
 		    âñòðå÷àåòñÿ ÷àùå.
 		*/
-		char *end;
-		int Slash=0, BackSlash=0;
-
-		if (!TypeSlash)
-		{
-			end=Path;
-
-			while (*end)
-			{
-				Slash+=(*end=='\\');
-				BackSlash+=(*end=='/');
-				end++;
-			}
-		}
-		else
-		{
-			end=Path+strlen(Path);
-
-			if (TypeSlash == '\\')
-				Slash=1;
-			else
-				BackSlash=1;
-		}
-
+		char *end=Path+strlen(Path);
 		int Length=(int)(end-Path);
-		char c=(Slash<=BackSlash)?'/':'\\';
+		char c = (TypeSlash == '\\') ? '\\' : '/';
 		Result=TRUE;
 
 		if (!Length)

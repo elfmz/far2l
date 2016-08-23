@@ -10,7 +10,7 @@ int _snwprintf_s (wchar_t *string, size_t sizeInWords, size_t count, const wchar
 FarEditorSet::FarEditorSet()
 {
   wchar_t key[255];
-  swprintf(key,255, L"%ls\\colorer", Info.RootKey);
+  swprintf(key,255, L"%ls/colorer", Info.RootKey);
 
   DWORD res =rOpenKey(HKEY_CURRENT_USER, key, hPluginRegistry);
   if (res == REG_CREATED_NEW_KEY){
@@ -1007,11 +1007,7 @@ String* FarEditorSet::getCurrentFileName()
   }
 
   DString fnpath(FileName);
-  int slash_idx = fnpath.lastIndexOf('\\');
-
-  if (slash_idx == -1){
-    slash_idx = fnpath.lastIndexOf('/');
-  }
+  int slash_idx = fnpath.lastIndexOf('/');
 
   SString* s=new SString(fnpath, slash_idx+1);
   delete FileName;

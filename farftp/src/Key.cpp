@@ -111,7 +111,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 		Log(("CDROOT"));
 
 		if(ShowHosts)
-			SetDirectory("\\", 0);
+			SetDirectory("/", 0);
 		else
 		{
 			FP_Screen _scr;

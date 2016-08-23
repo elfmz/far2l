@@ -156,7 +156,7 @@ int WINAPI StrSlashCount(LPCSTR m)
 
 	if(m)
 		for(; *m; m++)
-			if(*m == '/' || *m == '\\')
+			if(*m == '/')
 				cn++;
 
 	return cn;
@@ -609,7 +609,7 @@ char *WINAPI PointToName(char *Path)
 
 	while(*Path)
 	{
-		if(*Path=='\\' || *Path=='/' || *Path==':')
+		if(*Path=='/')
 			NamePtr=Path+1;
 
 		Path++;
@@ -661,9 +661,6 @@ void WINAPI FixFTPSlash(String& s)
 void WINAPI FixFTPSlash(char *s)
 {
 	if(!s) return;
-
-	for(; *s; s++)
-		if(*s == '\\') *s = '/';
 }
 
 void WINAPI FixLocalSlash(String& s)
@@ -672,8 +669,4 @@ void WINAPI FixLocalSlash(String& s)
 }
 void WINAPI FixLocalSlash(char *s)
 {
-	if(!s) return;
-
-	for(; *s; s++)
-		if(*s == '\\') *s = '/';
 }

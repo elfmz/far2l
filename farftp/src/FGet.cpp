@@ -147,7 +147,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 	ci.MsgCode         = IS_SILENT(OpMode) ? ocOverAll : OverrideMsgCode;
 	ci.Download        = TRUE;
 	ci.UploadLowCase   = Opt.UploadLowCase;
-	ci.FTPRename       = strpbrk(ci.DestPath.c_str(), "/\\") == NULL;
+	ci.FTPRename       = strpbrk(ci.DestPath.c_str(), "/") == NULL;
 
 	if(!IS_SILENT(OpMode) && !IS_FLAG(OpMode,OPM_NODIALOG))
 	{
@@ -210,7 +210,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 		}
 
 		//Single name
-		if(strpbrk(ci.DestPath.c_str(), "/\\") == NULL)
+		if(strpbrk(ci.DestPath.c_str(), "/") == NULL)
 		{
 			isDestDir    = FALSE;
 			ci.FTPRename = TRUE;
@@ -218,7 +218,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 		}
 
 		//Path on server
-		if(ci.DestPath[i] == '/')//ci.DestPath.Chr('\\') != -1 && 
+		if(ci.DestPath[i] == '/')
 		{
 			isDestDir    = TRUE;
 			ci.FTPRename = TRUE;

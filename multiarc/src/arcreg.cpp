@@ -67,7 +67,7 @@ int GetRegKey(HKEY hRoot,const char *Key,const char *ValueName,DWORD Default)
 
 static char *CreateKeyName(char *FullKeyName, const char *Key)
 {
-  FSF.sprintf(FullKeyName,"%s%s%s",PluginRootKey,*Key ? "\\":"",Key);
+  FSF.sprintf(FullKeyName,"%s%s%s",PluginRootKey,*Key ? "/":"",Key);
   return FullKeyName;
 }
 

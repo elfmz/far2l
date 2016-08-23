@@ -157,16 +157,6 @@ PluginA::PluginA(PluginManager *owner, const wchar_t *lpwszModuleName):
 	RootKey(nullptr)
 	//more initialization here!!!
 {
-	wchar_t *p = m_strCacheName.GetBuffer();
-	while (*p)
-	{
-		if (*p == L'\\')
-			*p = L'/';
-
-		p++;
-	}
-
-	m_strCacheName.ReleaseBuffer();
 	ClearExports();
 	memset(&PI,0,sizeof(PI));
 	memset(&OPI,0,sizeof(OPI));
@@ -205,7 +195,7 @@ bool PluginA::LoadFromCache(const FAR_FIND_DATA_EX &FindData)
 			if (StrCmp(strPluginID, strCurPluginID) )   //îäèíàêîâûå ëè áèíàðíèêè?
 				return false;
 		}
-		strRegKey += L"\\Exports";
+		strRegKey += L"/Exports";
 		SysID=GetRegKey(strRegKey,wszReg_SysID,0);
 		pOpenPlugin=(PLUGINOPENPLUGIN)(INT_PTR)GetRegKey(strRegKey,wszReg_OpenPlugin,0);
 		pOpenFilePlugin=(PLUGINOPENFILEPLUGIN)(INT_PTR)GetRegKey(strRegKey,wszReg_OpenFilePlugin,0);
@@ -283,7 +273,7 @@ bool PluginA::SaveToCache()
 
 		SetRegKey(strRegKey, L"CommandPrefix", NullToEmpty(Info.CommandPrefix));
 		SetRegKey(strRegKey, L"Flags", Info.Flags);
-		strRegKey += L"\\Exports";
+		strRegKey += L"/Exports";
 		SetRegKey(strRegKey, wszReg_SysID, SysID);
 		SetRegKey(strRegKey, wszReg_OpenPlugin, pOpenPlugin!=nullptr);
 		SetRegKey(strRegKey, wszReg_OpenFilePlugin, pOpenFilePlugin!=nullptr);

@@ -333,13 +333,6 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
       strcpy(Command,RealArcDir);
       if (UseSlash)
       {
-//        for (int I=0;Command[I];I++)
-//          if (Command[I]=='\\')
-//            Command[I]='//';
-/* $ 28.11.2000 AS
-*/
-//            Command[I]='/';
-/* AS $*/
       }
       FSF.QuoteSpaceOnly(Command);
       break;
@@ -401,7 +394,7 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
               }
             }
             // CHECK for BUGS!!
-            if(*cFileName == '/') //*cFileName == '\\' || 
+            if(*cFileName == '/')
               FSF.sprintf(Name,"%s%s",PrefixFileName,cFileName+1);
             else
               FSF.sprintf(Name,"%s%s%s",PrefixFileName,CurArcDir,cFileName);
@@ -432,7 +425,7 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
             {
               char FolderMaskName[NM];
               //strcpy(LocalAllFilesMask,PrefixFileName);
-              FSF.sprintf(FolderMaskName,"%s\\%s",Name,LocalAllFilesMask);
+              FSF.sprintf(FolderMaskName,"%s/%s",Name,LocalAllFilesMask);
               if (PathOnly)
               {
                 strcpy(FolderMaskName,Name);
@@ -457,13 +450,6 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
               if (QuoteName==2)
                 QuoteText(Name);
 //            if (UseSlash)
-//              for (int I=0;Name[I];I++)
-//                if (Name[I]=='\\')
-//                  Name[I]='//';
-/* $ 28.11.2000 AS
-*/
-//                  Name[I]='/';
-/* AS $*/
 
 
             if (*Names)
@@ -534,11 +520,7 @@ int ArcCommand::MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
   if (Length>0 && CurArcDir[Length-1]!='/')
     strcat(CurArcDir,"/");
 
-//  if (UseSlash)
-//    for (int I=0;CurArcDir[I];I++)
-//      if (CurArcDir[I]=='\\')
-//        CurArcDir[I]='//';
-//        CurArcDir[I]='/';
+//  if (UseSlash);
 
   for (int I=0;I<ItemsNumber;I++)
   {
@@ -578,7 +560,7 @@ int ArcCommand::MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
     {
       char OutName[NM];
       // CHECK for BUGS!!
-      if(*FileName == '/') //*FileName == '\\' || 
+      if(*FileName == '/')
         FSF.sprintf(OutName,"%s%s",PrefixFileName,FileName+1);
       else
         FSF.sprintf(OutName,"%s%s%s",PrefixFileName,CurArcDir,FileName);
@@ -598,7 +580,7 @@ int ArcCommand::MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
     if (!Error && (FileAttr & FILE_ATTRIBUTE_DIRECTORY) && FolderMask)
     {
       char OutName[NM];
-      FSF.sprintf(OutName,"%s%s%s%c%s",PrefixFileName,CurArcDir,FileName,'/',LocalAllFilesMask); //UseSlash ? '/':'\\'
+      FSF.sprintf(OutName,"%s%s%s%c%s",PrefixFileName,CurArcDir,FileName,'/',LocalAllFilesMask); 
       if (QuoteName==1)
         FSF.QuoteSpaceOnly(OutName);
       else

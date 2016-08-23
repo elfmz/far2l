@@ -602,7 +602,7 @@ void NormalizePath(const char *lpcSrcName,char *lpDestName)
 
     dist=(int)(Ptr-SrcName)+1;
 
-    if(dist == 1 && (/*SrcName == '\\' || */ *SrcName == '/'))
+    if(dist == 1 && (*SrcName == '/'))
     {
       *DestName=*SrcName;
       DestName++;
@@ -625,7 +625,7 @@ void NormalizePath(const char *lpcSrcName,char *lpDestName)
 
         for ( ; ptrCurDestName < DestName-1; ptrCurDestName++)
         {
-           if (*ptrCurDestName == '/')//*ptrCurDestName == '\\' || 
+           if (*ptrCurDestName == '/')
              Temp = ptrCurDestName;
         }
 
@@ -636,7 +636,7 @@ void NormalizePath(const char *lpcSrcName,char *lpDestName)
       }
       else
       {
-         if(SrcName[2] == '/') //SrcName[2] == '\\' || 
+         if(SrcName[2] == '/')
            SrcName++;
       }
 

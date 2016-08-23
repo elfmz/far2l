@@ -86,7 +86,7 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 // SelectedFolderNameLength - длина каталога. Например, есть
 // каталог dir1, а в нем файл file1. Нужно сгенерировать имя по маске для dir1.
 // Параметры могут быть следующими: Src="dir1", SelectedFolderNameLength=0
-// или Src="dir1\\file1", а SelectedFolderNameLength=4 (длина "dir1")
+// или Src="dir1/file1", а SelectedFolderNameLength=4 (длина "dir1")
 int ConvertWildcards(const wchar_t *SrcName, string &strDest, int SelectedFolderNameLength)
 {
 	string strPartAfterFolderName;

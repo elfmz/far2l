@@ -21,7 +21,7 @@ static void file_logger(int level, const char *cname, const char *msg, va_list v
 #ifdef __unix__
     sprintf(log_name, "/tmp/clr-trace%d.log", idx);
 #else
-    sprintf(log_name, "c:\\clr-trace%d.log", idx);
+    sprintf(log_name, "c:/clr-trace%d.log", idx);
 #endif
     log = fopen(log_name, "ab+");
     idx++;

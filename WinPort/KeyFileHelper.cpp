@@ -15,6 +15,7 @@ KeyFileHelper::KeyFileHelper(const char *filename, bool load)
 	GError *err = NULL;
 	g_key_file_helper_mutex.lock();
 	g_key_file_load_from_file(_kf, _filename.c_str(), G_KEY_FILE_NONE, &err);
+	g_key_file_helper_mutex.unlock();
 	fprintf(stderr, "KeyFileHelper(%s, %d) err=%p\n", _filename.c_str(), load, err);
 }
 
@@ -22,10 +23,26 @@ KeyFileHelper::~KeyFileHelper()
 {
 	if (_dirty) {
 		GError *err = NULL;
+		g_key_file_helper_mutex.lock();
 		g_key_file_save_to_file(_kf, _filename.c_str(), &err);
+		g_key_file_helper_mutex.unlock();
 		fprintf(stderr, "~KeyFileHelper(%s) err=%p\n", _filename.c_str(),  err);
 	}
 	g_key_file_helper_mutex.unlock();
+}
+
+std::vector<std::string> KeyFileHelper::EnumSections()
+{
+	std::vector<std::string> out;
+	
+	gchar **r = g_key_file_get_groups (_kf, NULL);
+	if (r) {
+		for (gchar **p = r; *p; ++p) 
+			out.push_back(*p);
+		g_strfreev(r);
+	}
+	
+	return out;
 }
 
 std::string KeyFileHelper::GetString(const char *section, const char *name, const char *def)
@@ -47,7 +64,7 @@ void KeyFileHelper::GetChars(char *buffer, size_t buf_size, const char *section,
 	if (v) {
 		strncpy(buffer, v, buf_size);
 		free(v);
-	} else
+	} else if (def && def!=buffer)
 		strncpy(buffer, def, buf_size);
 
 	buffer[buf_size - 1] = 0;
@@ -76,3 +93,4 @@ void KeyFileHelper::PutInt(const char *section, const char *name, int value)
 	_dirty = true;
 	g_key_file_set_integer(_kf, section, name, value);
 }
+

@@ -1,4 +1,3 @@
-
 /*
   CUSTOM.CPP
 
@@ -10,7 +9,11 @@
 
 #include <windows.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <pluginold.hpp>
+#include <KeyFileHelper.h>
 using namespace oldfar;
 #include "fmt.hpp"
 
@@ -58,8 +61,8 @@ int GetString(char *Str, int MaxSize);
 int HexCharToNum(int HexChar);
 int GetSectionName(int Num, char *Name, int MaxSize);
 
-DWORD GetIniString(LPCTSTR lpAppName,LPCTSTR lpKeyName,LPCTSTR lpDefault,LPTSTR lpReturnedString,DWORD nSize);
-UINT GetIniInt(LPCTSTR lpAppName,LPCTSTR lpKeyName,INT lpDefault);
+DWORD GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault,LPSTR lpReturnedString,DWORD nSize);
+UINT GetIniInt(LPCSTR lpAppName,LPCSTR lpKeyName,INT lpDefault);
 
 void FillFormat(const char *TypeName);
 void MakeFiletime(SYSTEMTIME st, SYSTEMTIME syst, LPFILETIME pft);
@@ -142,7 +145,7 @@ protected:
 class MetaReplacer
 {
     char *m_command;
-    char m_fileName[NM], m_shortName[NM];
+    char m_fileName[NM];
 
     class Meta
     {
@@ -230,31 +233,12 @@ class MetaReplacer
         }
     };
 
-    static void convertNameToShort(const char *Src, char *Dest)
-    {
-        char ShortName[NM], AnsiName[NM];
-        int AnsiApis = AreFileApisANSI();
-
-        if(!AnsiApis)
-            SetFileApisToANSI();
-
-        OemToChar(Src, AnsiName);
-
-        if(GetShortPathName(AnsiName, ShortName, sizeof(ShortName)) && *ShortName)
-            CharToOem(ShortName, Dest);
-        else
-            strcpy(Dest, Src);
-
-        if(!AnsiApis)
-            SetFileApisToOEM();
-    }
 
   public:
     MetaReplacer(const char *command, const char *arcName)
         :   m_command(strdup(command))
     {
-        strcpyn(m_fileName, arcName, sizeof(m_fileName));
-        convertNameToShort(m_fileName, m_shortName);
+        strncpy(m_fileName, arcName, sizeof(m_fileName));
     }
 
     virtual ~MetaReplacer()
@@ -284,7 +268,7 @@ class MetaReplacer
             command += m.getLength();
             bReplacedSomething = true;
 
-            char *var = (m.getType() == Meta::archiveName) ? m_fileName : m_shortName;
+            char *var = m_fileName;
             char *lastSlash = strrchr(var, '/');
 
             if(m.getFlags() & Meta::useNameOnly)
@@ -301,12 +285,12 @@ class MetaReplacer
                 || ((m.getFlags() & Meta::quoteWithSpaces) && strchr(var, ' '));
 
             if(bQuote)
-                lstrcat(dest, "\"");
+                strcat(dest, "\"");
 
-            lstrcat(dest, var);
+            strcat(dest, var);
 
             if(bQuote)
-                lstrcat(dest, "\"");
+                strcat(dest, "\"");
 
             if(m.getFlags() & Meta::useForwardSlashes)
             {
@@ -323,8 +307,8 @@ class MetaReplacer
 
         if(!bReplacedSomething) // there were no meta-symbols, should use old-style method
         {
-            lstrcat(buffer, " ");
-            lstrcat(buffer, m_shortName);
+            strcat(buffer, " ");
+            strcat(buffer, m_fileName);
         }
 
     }
@@ -438,7 +422,7 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *Name, const unsigned char *Data
 
         GetIniString(TypeName, "Extension", "", Ext, sizeof(Ext));
 
-        if(Dot != NULL && *Ext != 0 && LStricmp(Dot + 1, Ext) == 0)
+        if(Dot != NULL && *Ext != 0 && strcasecmp(Dot + 1, Ext) == 0)
         {
             CurType = I;
             return (TRUE);
@@ -474,72 +458,68 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
 
     meta.replaceTo(Command);
 
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    HANDLE StdInput = NULL;//GetStdHandle(STD_INPUT_HANDLE);
-
     char TempName[NM];
-
     if(MkTemp(TempName, "FAR") == NULL)
         return (FALSE);
+	remove(TempName);
+		
 
-    HANDLE OutHandle = WINPORT(CreateFile)(MB2Wide(TempName).c_str(), GENERIC_READ | GENERIC_WRITE,
-                                  FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
-                                  FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
 
-    if(OutHandle == INVALID_HANDLE_VALUE)
-        return (FALSE);
+//    HANDLE OutHandle = WINPORT(CreateFile)(MB2Wide(TempName).c_str(), GENERIC_READ | GENERIC_WRITE,
+  //                                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
+    //                              FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
 
-    memset(&si, 0, sizeof(si));
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = StdInput;
-    si.hStdOutput = OutHandle;
-    si.hStdError = /*GetStdHandle(STD_ERROR_HANDLE) */ OutHandle;
     DWORD ConsoleMode;
 
-    WINPORT(GetConsoleMode)(StdInput, &ConsoleMode);
-    WINPORT(SetConsoleMode)(StdInput, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
+    WINPORT(GetConsoleMode)(NULL, &ConsoleMode);
+    WINPORT(SetConsoleMode)(NULL, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
-    char SaveTitle[512];
+    WCHAR SaveTitle[512];
 
     WINPORT(GetConsoleTitle)(SaveTitle, sizeof(SaveTitle));
-    WINPORT(SetConsoleTitle)(Command);
+    WINPORT(SetConsoleTitle)(MB2Wide(Command).c_str());
 
-    char ExpandedCmd[512];
+    //char ExpandedCmd[512];
 
-    WINPORT(ExpandEnvironmentStrings)(Command, ExpandedCmd, sizeof(ExpandedCmd));
-
-    DWORD ExitCode = system(ExpandedCmd);//CreateProcess(NULL, ExpandedCmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+    //WINPORT(ExpandEnvironmentStrings)(Command, ExpandedCmd, sizeof(ExpandedCmd));
+	std::string cmd = Command;
+	cmd+= " 2>&1 >";
+	cmd+= TempName;
+	DWORD ExitCode = system(cmd.c_str());
+	
 
     if(ExitCode)
     {
-//        WaitForSingleObject(pi.hProcess, INFINITE);
-//        GetExitCodeProcess(pi.hProcess, &ExitCode);
-//        WINPORT(CloseHandle)(pi.hThread);
-//        WINPORT(CloseHandle)(pi.hProcess);
         ExitCode = (ExitCode < GetIniInt(TypeName, "Errorlevel", 1000));
     }
 
     if(ExitCode)
     {
         OutData = NULL;
-        DWORD FileSize = WINPORT(GetFileSize)(OutHandle, NULL);
-
-        if(FileSize != 0xFFFFFFFF)
-        {
-            WINPORT(SetFilePointer)(OutHandle, 0, NULL, FILE_BEGIN);
-            OutData = (char *) malloc(GMEM_FIXED, FileSize);
-            WINPORT(ReadFile)(OutHandle, OutData, FileSize, &OutDataSize, NULL);
-            OutDataPos = 0;
-        }
+		int fd = open(TempName, O_RDONLY);
+		if (fd!=-1) {
+			struct stat s = {0};
+			fstat(fd, &s);
+			if (s.st_size > 0) {
+				OutData = (char *) calloc(s.st_size + 1, 1);
+				if (OutData) {
+					for (off_t i = 0; i < s.st_size;) {
+						int piece = (s.st_size - i < 0x10000) ? s.st_size - i : 0x10000;
+						int r = read(fd, OutData + i, piece);
+						if (r<=0) break;
+						i+= r;
+					}
+				}
+			}
+			close(fd);
+		}
+		
         if(OutData == NULL)
             ExitCode = 0;
     }
 
     WINPORT(SetConsoleTitle)(SaveTitle);
-    WINPORT(SetConsoleMode)(StdInput, ConsoleMode);
-    WINPORT(CloseHandle)(OutHandle);
+    WINPORT(SetConsoleMode)(NULL, ConsoleMode);
 
     FillFormat(TypeName);
 
@@ -562,7 +542,7 @@ int WINAPI _export CUSTOM_GetArcItem(struct PluginPanelItem *Item, struct ArcIte
     memset(&stModification, 0, sizeof(stModification));
     memset(&stCreation, 0, sizeof(stCreation));
     memset(&stAccess, 0, sizeof(stAccess));
-    GetSystemTime(&syst);
+    WINPORT(GetSystemTime)(&syst);
 
     while(GetString(Str, sizeof(Str)))
     {
@@ -733,52 +713,37 @@ int HexCharToNum(int HexChar)
 
 int GetSectionName(int Num, char *Name, int MaxSize)
 {
-    char Buf[8192];
-    char *Section = Buf;
+	{
+		KeyFileHelper kfh(FormatFileName);
+		const std::vector<std::string> &sections = kfh.EnumSections();
+		if (Num < sections.size()) {
+			strncpy(Name, sections[Num].c_str(), MaxSize);
+			return TRUE;		
+		}
+		Num-= sections.size();
+	}
+	{
+		KeyFileHelper kfh(UserFormatFileName);
+		const std::vector<std::string> &sections = kfh.EnumSections();
+		if (Num < sections.size()) {
+			strncpy(Name, sections[Num].c_str(), MaxSize);
+			return TRUE;		
+		}
+	}
 
-    GetPrivateProfileSectionNames(Buf, sizeof(Buf), FormatFileName);
-    char tmp[3];
-    while(*Section)
-    {
-        if(*Section != ';' && !GetPrivateProfileSection(Section,tmp,sizeof(tmp),UserFormatFileName))
-        {
-            if(!Num)
-            {
-                strcpyn(Name, Section, MaxSize);
-                return TRUE;
-            }
-            Num--;
-        }
-        Section += strlen(Section) + 1;
-    }
-
-    Section = Buf;
-    GetPrivateProfileSectionNames(Buf,sizeof(Buf),UserFormatFileName);
-    while(*Section)
-    {
-        if(*Section != ';')
-        {
-            if(!Num)
-            {
-                strcpyn(Name, Section, MaxSize);
-                return TRUE;
-            }
-            Num--;
-        }
-        Section += strlen(Section) + 1;
-    }
-    return FALSE;
+	return FALSE;
 }
 
-DWORD GetIniString(LPCTSTR lpAppName,LPCTSTR lpKeyName,LPCTSTR lpDefault,LPTSTR lpReturnedString,DWORD nSize)
+DWORD GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault,LPSTR lpReturnedString,DWORD nSize)
 {
-	GetPrivateProfileString(lpAppName,lpKeyName,lpDefault,lpReturnedString,nSize,FormatFileName);
-	return GetPrivateProfileString(lpAppName,lpKeyName,lpReturnedString,lpReturnedString,nSize,UserFormatFileName);
+	KeyFileHelper(FormatFileName).GetChars(lpReturnedString, nSize, lpAppName,lpKeyName, lpDefault);
+	KeyFileHelper(UserFormatFileName).GetChars(lpReturnedString, nSize, lpAppName,lpKeyName, lpReturnedString);
+	return strlen(lpReturnedString);
 }
 
-UINT GetIniInt(LPCTSTR lpAppName,LPCTSTR lpKeyName,INT lpDefault)
+UINT GetIniInt(LPCSTR lpAppName,LPCSTR lpKeyName,INT lpDefault)
 {
-	return GetPrivateProfileInt(lpAppName,lpKeyName,GetPrivateProfileInt(lpAppName,lpKeyName,lpDefault,FormatFileName),UserFormatFileName);
+	KeyFileHelper(FormatFileName).GetInt(lpAppName,lpKeyName, KeyFileHelper(UserFormatFileName).GetInt(lpAppName,lpKeyName, lpDefault) );
 }
 
 void FillFormat(const char *TypeName)
@@ -794,7 +759,7 @@ void FillFormat(const char *TypeName)
     {
         char FormatName[100];
 
-        SPrintf(FormatName, "Format%d", FormatNumber++);
+        sprintf(FormatName, "Format%d", FormatNumber++);
         GetIniString(TypeName, FormatName, "", CurFormat->Str(), PROF_STR_LEN);
         if(*CurFormat->Str() == 0)
             break;
@@ -808,7 +773,7 @@ void FillFormat(const char *TypeName)
     {
         char Name[100];
 
-        SPrintf(Name, "IgnoreString%d", Number++);
+        sprintf(Name, "IgnoreString%d", Number++);
         GetIniString(TypeName, Name, "", CurIgnoreString->Str(), PROF_STR_LEN);
         if(*CurIgnoreString->Str() == 0)
             break;
@@ -834,7 +799,7 @@ int GetString(char *Str, int MaxSize)
     int Length = OutDataPos - StartPos;
     int DestLength = Length >= MaxSize ? MaxSize - 1 : Length;
 
-    strcpyn(Str, OutData + StartPos, DestLength + 1);
+    strncpy(Str, OutData + StartPos, DestLength + 1);
 
     while(OutDataPos < OutDataSize)
     {
@@ -866,9 +831,9 @@ void MakeFiletime(SYSTEMTIME st, SYSTEMTIME syst, LPFILETIME pft)
 
     FILETIME ft;
 
-    if(SystemTimeToFileTime(&st, &ft))
+    if(WINPORT(SystemTimeToFileTime)(&st, &ft))
     {
-        LocalFileTimeToFileTime(&ft, pft);
+        WINPORT(LocalFileTimeToFileTime)(&ft, pft);
     }
 }
 
@@ -888,84 +853,75 @@ BOOL WINAPI OpenArchivePipe(const char *Name, int *Type)
     MetaReplacer meta(Command, Name);
 
     meta.replaceTo(Command);
-
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    HANDLE hChildStdoutRd, hChildStdoutWr;
-    HANDLE StdInput = GetStdHandle(STD_INPUT_HANDLE);
-    HANDLE StdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    HANDLE StdError = GetStdHandle(STD_ERROR_HANDLE);
-    SECURITY_ATTRIBUTES saAttr;
-
-    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = NULL;
-
-    if(!CreatePipe(&hChildStdoutRd, &hChildStdoutWr, &saAttr, 32768))
-        return (FALSE);
-    SetStdHandle(STD_OUTPUT_HANDLE, hChildStdoutWr);
-    SetStdHandle(STD_ERROR_HANDLE, hChildStdoutWr);
-
-    memset(&si, 0, sizeof(si));
-    si.cb = sizeof(si);
-
+	int fd[2];
+	if (pipe(fd)==-1) {
+		perror("OpenArchivePipe: pipe");
+		return FALSE;
+	}
+	int pid = fork();
+	if (pid==-1) {
+		perror("OpenArchivePipe: fork");
+		close(fd[0]);
+		close(fd[1]);
+		return FALSE;		
+	}
+	
+	if (pid==0) {
+		dup2(fd[1], STDOUT_FILENO);
+		dup2(fd[1], STDERR_FILENO);
+		close(fd[0]); close(fd[1]);
+		execl("/bin/sh", "sh", "-c", Command, NULL);
+		perror("OpenArchivePipe: execl");
+		exit(errno ? errno : -1);
+	} 
+	
+	
     DWORD ConsoleMode;
 
-    GetConsoleMode(StdInput, &ConsoleMode);
-    SetConsoleMode(StdInput, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
+    WINPORT(GetConsoleMode)(NULL, &ConsoleMode);
+    WINPORT(SetConsoleMode)(NULL, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
+    WCHAR SaveTitle[512];
 
-    char SaveTitle[512];
+    WINPORT(GetConsoleTitle)(SaveTitle, sizeof(SaveTitle));
+    WINPORT(SetConsoleTitle)(MB2Wide(Command).c_str());
 
-    GetConsoleTitle(SaveTitle, sizeof(SaveTitle));
-    SetConsoleTitle(Command);
+	const int ReadSize = 32768;
 
-    char ExpandedCmd[512];
+	OutDataSize = OutDataPos = 0;
+	OutData = (char *) NULL;//malloc(GMEM_FIXED, 0);
 
-    ExpandEnvironmentStrings(Command, ExpandedCmd, sizeof(ExpandedCmd));
+	while(1) {
+		char *tmp = (char *) realloc(OutData, OutDataSize + ReadSize);
+		if (!tmp) {
+			perror("OpenArchivePipe: realloc");
+			free(OutData);
+			close(fd[0]); close(fd[1]);
+			return FALSE;
+		}
+		OutData = tmp;
+		int r = read(fd[0], OutData + OutDataSize, ReadSize);
+		if (r<=0) break;
+		OutDataSize += r;
+	}
+	
+	int status = 0x7fff;
+	if (waitpid(pid, &status, 0)==-1) {
+		perror("OpenArchivePipe: waitpid");
+	}
+	BOOL out = (status < GetIniInt(TypeName, "Errorlevel", 1000));
 
-    DWORD ExitCode = CreateProcess(NULL, ExpandedCmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+	if(!out) {
+		free(OutData);
+		OutData = NULL;
+	}
 
-    SetStdHandle(STD_OUTPUT_HANDLE, StdOutput);
-    SetStdHandle(STD_ERROR_HANDLE, StdError);
-    WINPORT(CloseHandle)(hChildStdoutWr);
-
-    if(ExitCode)
-    {
-        const int ReadSize = 32768;
-
-        OutDataSize = OutDataPos = 0;
-        OutData = (char *) NULL;//malloc(GMEM_FIXED, 0);
-
-        while(1)
-        {
-            DWORD Read;
-
-            if((OutData =
-                (char *) realloc(OutData, OutDataSize + ReadSize)) == NULL)
-                return (FALSE);
-            if(!WINPORT(ReadFile)(hChildStdoutRd, OutData + OutDataSize, ReadSize, &Read, NULL))
-                break;
-            OutDataSize += Read;
-        }
-
-        WINPORT(CloseHandle)(hChildStdoutRd);
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        GetExitCodeProcess(pi.hProcess, &ExitCode);
-        WINPORT(CloseHandle)(pi.hThread);
-        WINPORT(CloseHandle)(pi.hProcess);
-        ExitCode = (ExitCode < GetIniInt(TypeName, "Errorlevel", 1000));
-
-        if(!ExitCode)
-            free(OutData);
-    }
-
-    SetConsoleTitle(SaveTitle);
-    SetConsoleMode(StdInput, ConsoleMode);
+    WINPORT(SetConsoleTitle)(SaveTitle);
+    WINPORT(SetConsoleMode)(NULL, ConsoleMode);
 
     FillFormat(TypeName);
 
-    return (ExitCode);
+    return (out);
 }
 
 int StringToInt(const char *str)

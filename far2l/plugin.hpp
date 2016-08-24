@@ -1931,7 +1931,14 @@ typedef int (WINAPI *FARCONVERTPATH)(enum CONVERTPATHMODES Mode, const wchar_t *
 
 typedef DWORD (WINAPI *FARGETCURRENTDIRECTORY)(DWORD Size,wchar_t* Buffer);
 
-typedef int (WINAPI *FARVTEXECUTE)(const wchar_t *CmdStr, int (WINAPI *ForkProc)(int argc, const wchar_t *const argv[]) );
+
+enum EXECUTEFLAGS
+{
+	EF_HIDEOUT = 0x01,
+	EF_NOWAIT = 0x02
+};
+
+typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags, int (WINAPI *ForkProc)(int argc, wchar_t *argv[]) );
 
 typedef struct FarStandardFunctions
 {
@@ -1993,7 +2000,7 @@ typedef struct FarStandardFunctions
 	FARCONVERTPATH             ConvertPath;
 	FARGETREPARSEPOINTINFO     GetReparsePointInfo;
 	FARGETCURRENTDIRECTORY     GetCurrentDirectory;
-	FARVTEXECUTE               VTExecute;
+	FAREXECUTE                 Execute;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

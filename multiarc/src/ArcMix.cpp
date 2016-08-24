@@ -100,23 +100,16 @@ const char *GetMsg(int MsgId)
 
 int rar_main(int argc, char *argv[]);
 
-static int InternalExec(const char *cmd)
+static int BuiltinMain(int argc, char * argv[])
 {
-	wordexp_t we = {};
-	if (wordexp(cmd, &we, 0)!=0) {
-		fprintf(stderr, "wordexp('%s') failed\n", cmd);
+	if (!argc)
 		return -1;
-	}
-	
+
 	int r = -2;
-	if (we.we_wordc > 0) {
-		fprintf(stderr, "InternalExec: handler='%s'\n", we.we_wordv[0]);
-		if (strcmp(we.we_wordv[0], "rar")==0) {
-			r = rar_main(we.we_wordc, we.we_wordv);
-		}
-	}
-	
-	wordfree(&we);
+	if (strcmp(argv[0], "rar")==0) {
+		r = rar_main(argc, (char **)&argv[0]);
+	} else
+		fprintf(stderr, "BuiltinMain: bad target '%s'\n", argv[0]);	
 	return r;
 }
 
@@ -237,30 +230,12 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,
     si.wShowWindow=SW_MINIMIZE;
   }*/
   /* raVen $ */
-	fprintf(stderr, "Executing: %ls\n", ExpandedCmd);
+	fprintf(stderr, "Executing: h/o=%u s=%u '%ls'\n", HideOutput, Silent, ExpandedCmd);
 	const std::string &expanded_cmd_mb = Wide2MB(ExpandedCmd);
 	if (*expanded_cmd_mb.c_str()=='^') {
-		LastError = InternalExec(expanded_cmd_mb.c_str() + 1);
-		ExitCode = LastError;
+		LastError = ExitCode = FSF.Execute(expanded_cmd_mb.c_str() + 1, (HideOutput) ? EF_HIDEOUT : 0, BuiltinMain);
 	} else {
-		FILE *child_stdout = popen(expanded_cmd_mb.c_str(), "r");
-		if (child_stdout) {
-			for (;;) {
-				char buf[0x1000];
-				int r = fread(buf, 1, sizeof(buf), child_stdout);
-				if (r<=0) break;
-				fwrite(buf, 1, r, stderr);
-				if (!HideOutput) {
-					//todo
-				}
-			}
-		
-			ExitCode = pclose(child_stdout);
-			LastError = WEXITSTATUS(ExitCode);
-			ExitCode = LastError;
-		} else {
-			LastError = ExitCode = errno ? errno : 1;
-		}
+		LastError = ExitCode = FSF.Execute(expanded_cmd_mb.c_str(), (HideOutput) ? EF_HIDEOUT : 0, NULL);
 	}
 	
   /*if (HideOutput)

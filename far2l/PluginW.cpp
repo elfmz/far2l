@@ -433,22 +433,22 @@ bool PluginW::Load()
 	return true;
 }
 
-thread_local int (WINAPI *threadVTExecForkProcW)(int argc, const wchar_t *const argv[]);
-static int WINAPI VTExecForkProcA2W(int argc, const char *const argv[])
+thread_local int (WINAPI *threadExecForkProcW)(int argc, wchar_t *argv[]);
+static int WINAPI ExecForkProcA2W(int argc, char *argv[])
 {
-	std::vector<const wchar_t *> argvw;
+	std::vector<wchar_t *> argvw;
 	std::list<std::wstring> strings;
 	for (int i = 0; i<argc; ++i) {
 		strings.push_back(MB2Wide(argv[i]));
-		argvw.push_back(strings.back().c_str());
+		argvw.push_back((wchar_t *)strings.back().c_str());
 	}
-	return threadVTExecForkProcW(argc, argvw.empty() ? NULL : &argvw[0]);
+	return threadExecForkProcW(argc, argvw.empty() ? NULL : &argvw[0]);
 }
 
-static int WINAPI farVTExecuteW(const wchar_t *CmdStr, int (WINAPI *ForkProc)(int argc, const wchar_t *const argv[]))
+static int WINAPI farExecuteW(const wchar_t *CmdStr, unsigned int flags, int (WINAPI *ForkProc)(int argc,  wchar_t *argv[]))
 {
-	threadVTExecForkProcW = ForkProc;
-	return farVTExecuteA(Wide2MB(CmdStr).c_str(), ForkProc ? VTExecForkProcA2W : NULL);
+	threadExecForkProcW = ForkProc;
+	return farExecuteA(Wide2MB(CmdStr).c_str(), flags, ForkProc ? ExecForkProcA2W : NULL);
 }
 
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
@@ -508,7 +508,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.ConvertPath=farConvertPath;
 		StandardFunctions.GetReparsePointInfo=farGetReparsePointInfo;
 		StandardFunctions.GetCurrentDirectory=farGetCurrentDirectory;
-		StandardFunctions.VTExecute = farVTExecuteW;
+		StandardFunctions.Execute = farExecuteW;
 	}
 
 	if (!StartupInfo.StructSize)

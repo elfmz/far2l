@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 class KeyFileHelper
 {
@@ -15,5 +16,6 @@ public:
 	int GetInt(const char *section, const char *name, int def = 0);
 	void PutString(const char *section, const char *name, const char *value);
 	void PutInt(const char *section, const char *name, int value);
+	std::vector<std::string> EnumSections();
 };
 

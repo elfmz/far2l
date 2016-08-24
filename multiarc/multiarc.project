@@ -177,7 +177,7 @@
         <File Name="src/formats/ha/ha.cpp"/>
       </VirtualDirectory>
       <VirtualDirectory Name="custom">
-        <File Name="src/formats/custom/custom.cpp" ExcludeProjConfig="Debug"/>
+        <File Name="src/formats/custom/custom.cpp" ExcludeProjConfig=""/>
       </VirtualDirectory>
       <VirtualDirectory Name="arj">
         <File Name="src/formats/arj/arj.cpp"/>

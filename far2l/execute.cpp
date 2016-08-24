@@ -111,23 +111,6 @@ public:
 	bool NeedPrependCurdir() const {return _need_prepend_curdir; }	
 };
 
-static unsigned int CmdCheckRedirection(const char *cmd)
-{
-	unsigned int rv = 0;
-	for (const char *p = cmd;*p; ++p) {
-		if (*p=='>') {
-			if (p==cmd) rv|= 1;
-			else if (*(p-1)!='\\') {
-				if (*(p-1)!='2')
-					rv|= 1;
-				else
-					rv|= 2;
-			}
-		}
-	}
-	return rv;
-}
-
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) 
 {
 	int r = -1;

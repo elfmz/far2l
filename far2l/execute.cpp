@@ -63,6 +63,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "constitle.hpp"
 #include "vtshell.h"
+#include <wordexp.h>
+#include <sys/wait.h>
 
 static WCHAR eol[2] = {'\r', '\n'};
 
@@ -109,7 +111,83 @@ public:
 	bool NeedPrependCurdir() const {return _need_prepend_curdir; }	
 };
 
-int WINAPI farVTExecuteA(const char *CmdStr, int (WINAPI *ForkProc)(int argc, const char *const argv[]) )
+static unsigned int CmdCheckRedirection(const char *cmd)
+{
+	unsigned int rv = 0;
+	for (const char *p = cmd;*p; ++p) {
+		if (*p=='>') {
+			if (p==cmd) rv|= 1;
+			else if (*(p-1)!='\\') {
+				if (*(p-1)!='2')
+					rv|= 1;
+				else
+					rv|= 2;
+			}
+		}
+	}
+	return rv;
+}
+
+void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) 
+{
+	int r = -1;
+
+	if (ForkProc) {
+		wordexp_t we = {};
+		if (wordexp(CmdStr, &we, 0)==0) {
+			r = ForkProc(we.we_wordc, we.we_wordv);
+			wordfree(&we);
+		} else
+			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
+	} else {
+		r = execl("/bin/sh", "sh", "-c", CmdStr, NULL);
+		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
+	}
+	exit(r);
+}
+
+static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(int argc, char *argv[]) )
+{
+	int r = -1;
+	int fdr = open("/dev/null", O_RDONLY);
+	if (fdr==-1) perror("open stdin error");
+	
+	//let debug out go to console
+	int fdw = -1;//open("/dev/null", O_WRONLY);
+	//if (fdw==-1) perror("open stdout error");
+	
+	int pid = fork();
+	if (pid==0) {
+		if (fdr!=-1) {
+			dup2(fdr, STDIN_FILENO);
+			close(fdr);
+		}
+			
+		if (fdw!=-1) {
+			dup2(fdw, STDOUT_FILENO);
+			dup2(fdw, STDERR_FILENO);
+			close(fdw);
+		}
+			
+		ExecuteOrForkProc(CmdStr, ForkProc) ;
+	} else if (pid==-1) {
+		perror("fork failed");
+	} else if (!NoWait) {
+		if (waitpid(pid, &r, 0)==-1) {
+			fprintf(stderr, "NotVTExecuteForkProc('%s', %u, %p): waitpid(0x%x) error %u\n", CmdStr, NoWait, ForkProc, pid, errno);
+			r = 1;
+		} else {
+			fprintf(stderr, "NotVTExecuteForkProc:('%s', %u, %p): r=%d\n", CmdStr, NoWait, ForkProc, r);
+		}
+	} else
+		r = 0;
+
+	if (fdr!=-1) close(fdr);
+	if (fdw!=-1) close(fdw);
+	return r;
+}
+
+int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *ForkProc)(int argc, char *argv[]) )
 {
 //	fprintf(stderr, "TODO: Execute('" WS_FMT "')\n", CmdStr);
 	ProcessShowClock++;
@@ -125,8 +203,12 @@ int WINAPI farVTExecuteA(const char *CmdStr, int (WINAPI *ForkProc)(int argc, co
 	const std::wstring &ws = MB2Wide(CmdStr);
 	WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
-	
-	int r = VTShell_Execute(CmdStr, ForkProc);
+	int r;
+	if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
+		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, ForkProc);
+	} else {
+		r = VTShell_Execute(CmdStr, ForkProc);
+	}
 	WINPORT(SetConsoleMode)( NULL, saved_mode | 
 	ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
@@ -136,6 +218,7 @@ int WINAPI farVTExecuteA(const char *CmdStr, int (WINAPI *ForkProc)(int argc, co
 	ProcessShowClock--;
 	SetFarConsoleMode(TRUE);
 	ScrBuf.Flush();
+	fprintf(stderr, "farExecuteA:('%s', 0x%x, %p): r=%d\n", CmdStr, ExecFlags, ForkProc, r);
 	
 	return r;
 }
@@ -155,19 +238,18 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 			
 			tmp+= CmdStr;
 			if (!ec.IsExecutable()) {
-				tmp+= " >/dev/null 2>/dev/null&";
-				r = system(tmp.c_str());
+				r = farExecuteA(tmp.c_str(), EF_NOWAIT, NULL);
 				if (r!=0) {
 					fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
 					//TODO: nicely report if xdg-open exec failed
 				}
 			} else
-				r = farVTExecuteA(tmp.c_str(), NULL);
+				r = farExecuteA(tmp.c_str(), 0, NULL);
 		} else
-			r = farVTExecuteA(CmdStr, NULL);
+			r = farExecuteA(CmdStr, 0, NULL);
 			
 	} else 
-		r = farVTExecuteA(CmdStr, NULL);		
+		r = farExecuteA(CmdStr, 0, NULL);		
 	return r;
 }
 

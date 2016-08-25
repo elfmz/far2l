@@ -3,7 +3,7 @@
 /*
 UnicodeString.hpp
 
-Unicode строка
+Unicode Г±ГІГ°Г®ГЄГ 
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -67,14 +67,14 @@ class UnicodeStringData
 			m_nLength = 0;
 			m_nRefCount = 1;
 			m_pData = AllocData(nSize,&m_nSize);
-			//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
-			//то уж лучше и здесь не проверять а сразу падать
+			//Г’Г ГЄ ГЄГ ГЄ Г­ГЁ ГЈГ¤ГҐ ГўГ»ГёГҐ Гў ГЄГ®Г¤ГҐ Г¬Г» Г­ГҐ ГЈГ®ГІГ®ГўГ» Г­Г  Г±Г«ГіГ·Г Г© Г·ГІГ® ГЇГ Г¬ГїГІГЁ Г­ГҐ ГµГўГ ГІГЁГІ
+			//ГІГ® ГіГ¦ Г«ГіГ·ГёГҐ ГЁ Г§Г¤ГҐГ±Гј Г­ГҐ ГЇГ°Г®ГўГҐГ°ГїГІГј Г  Г±Г°Г Г§Гі ГЇГ Г¤Г ГІГј
 			*m_pData = 0;
 		}
 
 		size_t SetLength(size_t nLength)
 		{
-			//if (nLength<m_nSize) //Эту проверку делает верхний класс, так что скажем что это оптимизация
+			//if (nLength<m_nSize) //ГќГІГі ГЇГ°Г®ГўГҐГ°ГЄГі Г¤ГҐГ«Г ГҐГІ ГўГҐГ°ГµГ­ГЁГ© ГЄГ«Г Г±Г±, ГІГ ГЄ Г·ГІГ® Г±ГЄГ Г¦ГҐГ¬ Г·ГІГ® ГЅГІГ® Г®ГЇГІГЁГ¬ГЁГ§Г Г¶ГЁГї
 			{
 				m_nLength = nLength;
 				m_pData[m_nLength] = 0;
@@ -94,8 +94,8 @@ class UnicodeStringData
 
 			wchar_t *pOldData = m_pData;
 			m_pData = AllocData(nSize,&m_nSize);
-			//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
-			//то уж лучше и здесь не проверять а сразу падать
+			//Г’Г ГЄ ГЄГ ГЄ Г­ГЁ ГЈГ¤ГҐ ГўГ»ГёГҐ Гў ГЄГ®Г¤ГҐ Г¬Г» Г­ГҐ ГЈГ®ГІГ®ГўГ» Г­Г  Г±Г«ГіГ·Г Г© Г·ГІГ® ГЇГ Г¬ГїГІГЁ Г­ГҐ ГµГўГ ГІГЁГІ
+			//ГІГ® ГіГ¦ Г«ГіГ·ГёГҐ ГЁ Г§Г¤ГҐГ±Гј Г­ГҐ ГЇГ°Г®ГўГҐГ°ГїГІГј Г  Г±Г°Г Г§Гі ГЇГ Г¤Г ГІГј
 			wmemcpy(m_pData,pOldData,m_nLength);
 			m_pData[m_nLength] = 0;
 			FreeData(pOldData);
@@ -131,10 +131,10 @@ typedef class UnicodeString
 		UnicodeString(const UnicodeString &strCopy) { SetEUS(); Copy(strCopy); }
 		UnicodeString(const wchar_t *lpwszData) { SetEUS(); Copy(lpwszData); }
 		UnicodeString(const wchar_t *lpwszData, size_t nLength) { SetEUS(); Copy(lpwszData, nLength); }
-		UnicodeString(const char *lpszData, UINT CodePage=CP_OEMCP) { SetEUS(); Copy(lpszData, CodePage); }
+		UnicodeString(const char *lpszData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(lpszData, CodePage); }
 		explicit UnicodeString(size_t nSize, size_t nDelta=0) { m_pData = new UnicodeStringData(nSize, nDelta); }
 
-		~UnicodeString() { /*if (m_pData) он не должен быть nullptr*/ m_pData->DecRef(); }
+		~UnicodeString() { /*if (m_pData) Г®Г­ Г­ГҐ Г¤Г®Г«Г¦ГҐГ­ ГЎГ»ГІГј nullptr*/ m_pData->DecRef(); }
 
 		void Inflate(size_t nSize);
 		wchar_t *GetBuffer(size_t nSize = (size_t)-1);

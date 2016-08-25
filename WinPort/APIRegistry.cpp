@@ -309,7 +309,7 @@ extern "C" {
 		getline (is, name);
 		getline (is, type);
 		getline (is, value);
-		fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' %p\n", prefixed_name.c_str(), type.c_str(), value.c_str(), lpData);
+		//fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' %p\n", prefixed_name.c_str(), type.c_str(), value.c_str(), lpData);
 		if (lpValueName) {
 			const std::wstring &u16name = StrMB2Wide(name);
 			if (*lpcchValueName <= u16name.size())
@@ -326,7 +326,7 @@ extern "C" {
 					break;
 				if (i>=*lpcbData) {
 					*lpcbData = value.size() / 2;
-					fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u  MORE_DATA\n", prefixed_name.c_str(), type.c_str(), value.c_str(),*lpcbData);
+					//fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u  MORE_DATA\n", prefixed_name.c_str(), type.c_str(), value.c_str(),*lpcbData);
 					return ERROR_MORE_DATA;
 				}
 
@@ -336,12 +336,14 @@ extern "C" {
 		if (lpcbData)
 			*lpcbData = value.size()/2;
 		//if (!lpData) {while (!IsDebuggerPresent())Sleep(1000); DebugBreak();}
+		/*
 		if (tip==REG_SZ || tip==REG_MULTI_SZ|| tip==REG_EXPAND_SZ)
 			fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u '%ls'\n", prefixed_name.c_str(), type.c_str(), value.c_str(),*lpcbData, (WCHAR*)lpData);
 		else if (lpData)
 			fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u 0x%x\n", prefixed_name.c_str(), type.c_str(), value.c_str(), *lpcbData, *lpData);
 		else 
 			fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u \n", prefixed_name.c_str(), type.c_str(), value.c_str(), *lpcbData);
+		*/
 		return ERROR_SUCCESS;
 	}
 
@@ -401,7 +403,7 @@ extern "C" {
 		std::string path = rd->dir; 
 		path+= WINPORT_REG_DIV_VALUE;
 		path+= Wide2MB(lpValueName);
-		fprintf(stderr, "RegSetValue type=%u cbData=%u\n", dwType, cbData);
+		//fprintf(stderr, "RegSetValue type=%u cbData=%u\n", dwType, cbData);
 		if  (dwType==REG_DWORD && cbData==8)
 		{
 			*(volatile int*)100 = 200;

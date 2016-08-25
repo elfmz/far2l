@@ -11,23 +11,22 @@ class ConsoleOutputListener
 		virtual void OnConsoleOutputResized() = 0;
 		virtual void OnConsoleOutputTitleChanged() = 0;
 		virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos) = 0;
+		virtual COORD OnConsoleGetLargestWindowSize() = 0;
 };
 
 class ConsoleOutput
 {
-	ConsoleBuffer _buf;
-	USHORT _attributes;
 	std::mutex _mutex;
+	ConsoleBuffer _buf;
+	std::wstring _title;
+	ConsoleOutputListener *_listener;
+	DWORD _mode;	
+	USHORT _attributes;
 	struct {
 		COORD pos;
 		UCHAR height;
 		bool visible;
 	} _cursor;
-	COORD _largest_window_size;
-	std::wstring _title;
-	DWORD _mode;
-	
-	ConsoleOutputListener *_listener;
 
 	struct SequenceModifier
 	{
@@ -61,7 +60,6 @@ public:
 	void SetSize(unsigned int width, unsigned int height);
 	void GetSize(unsigned int &width, unsigned int &height);
 
-	void SetLargestConsoleWindowSize(COORD size);
 	COORD GetLargestConsoleWindowSize();
 
 	void SetWindowInfo(bool absolute, const SMALL_RECT &rect);

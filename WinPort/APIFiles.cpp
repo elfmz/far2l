@@ -492,16 +492,15 @@ extern "C"
 			return (HANDLE)&g_unix_found_file_dummy;
 		}
 
-		fprintf(stderr, "find mask: %s  (for %ls)", mask.c_str(), lpFileName);
 
 		UnixFindFile *uff = new UnixFindFile(root, mask);
 		if (!uff->Iterate(lpFindFileData)) {
 			delete uff;
-			fprintf(stderr, "FAILED\n");
+			fprintf(stderr, "find mask: %s (for %ls) FAILED", mask.c_str(), lpFileName);
 			WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);
 			return INVALID_HANDLE_VALUE;
 		}
-		fprintf(stderr, " - %ls\n", lpFindFileData->cFileName);
+		//fprintf(stderr, "find mask: %s  (for %ls) - %ls", mask.c_str(), lpFileName, lpFindFileData->cFileName);
 
 		std::lock_guard<std::mutex> lock(g_unix_find_files);
 		g_unix_find_files.insert(uff);

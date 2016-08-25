@@ -238,7 +238,7 @@ extern "C" {
 				*lpBuffer = ir.Event.KeyEvent.uChar.UnicodeChar;
 				++lpBuffer;
 				--nNumberOfCharsToRead;
-				*lpNumberOfCharsRead++;
+				++(*lpNumberOfCharsRead);
 			}
 		}
 		return TRUE;

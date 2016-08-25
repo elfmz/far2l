@@ -6,6 +6,7 @@
 #include <wx/fontenum.h>
 #include <wx/textfile.h>
 #include <wx/clipbrd.h>
+#include "CallInMain.h"
 #include <set>
 
 ConsoleOutput g_wx_con_out;
@@ -20,149 +21,6 @@ unsigned int font_height = 8;
 
 extern "C" void WinPortInitRegistry();
 
-
-static void NormalizeArea(SMALL_RECT &area)
-{
-	if (area.Left > area.Right) std::swap(area.Left, area.Right);
-	if (area.Top > area.Bottom) std::swap(area.Top, area.Bottom);	
-}
-
-
-struct EventWithRect : wxCommandEvent
-{
-	EventWithRect(const SMALL_RECT &rect_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
-		:wxCommandEvent(commandType, winid) , rect(rect_)
-	{
-		NormalizeArea(rect);
-	}
-
-	virtual wxEvent *Clone() const { return new EventWithRect(*this); }
-
-	SMALL_RECT rect;
-};
-
-///////////////////////////////////////////
-
-wxDEFINE_EVENT(WX_CONSOLE_REFRESH, EventWithRect);
-wxDEFINE_EVENT(WX_CONSOLE_WINDOW_MOVED, EventWithRect);
-wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
-wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
-
-//////////////////////////////////////////
-
-class WinPortApp: public wxApp
-{
-public:
-    virtual bool OnInit();
-};
-
-class WinPortFrame;
-
-class WinPortPanel: public wxPanel, protected ConsoleOutputListener
-{
-public:
-    WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);
-	virtual ~WinPortPanel();
-	void OnChar( wxKeyEvent& event );
-
-protected: 
-	virtual void OnConsoleOutputUpdated(const SMALL_RECT &area);
-	virtual void OnConsoleOutputResized();
-	virtual void OnConsoleOutputTitleChanged();
-	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
-	void RefreshArea( const SMALL_RECT &area );
-private:
-	void CheckForResizePending();
-	void OnTimerPeriodic(wxTimerEvent& event);	
-	void OnWindowMoved( wxCommandEvent& event );
-	void OnRefresh( wxCommandEvent& event );
-	void OnConsoleResized( wxCommandEvent& event );
-	void OnTitleChanged( wxCommandEvent& event );
-	void OnKeyDown( wxKeyEvent& event );
-	void OnKeyUp( wxKeyEvent& event );
-	void OnPaint( wxPaintEvent& event );
-    void OnEraseBackground( wxEraseEvent& event );
-	void OnSize(wxSizeEvent &event);
-	void OnMouse( wxMouseEvent &event );
-	void OnMouseNormal( wxMouseEvent &event, COORD pos_char );
-	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char );
-	void OnKillFocus( wxFocusEvent &event );
-	void DamageAreaBetween(COORD c1, COORD c2);
-
-	wxDECLARE_EVENT_TABLE();
-	struct PressedKeys : std::set<int> 
-	{
-		bool simulate_alt() const
-		{
-			return find(WXK_ALT)!=end();
-		}
-	} _pressed_keys;
-
-	wxMemoryDC 	_white_rectangle;
-	wxBitmap	_white_bitmap;
-	WinPortFrame *_frame;
-	wxTimer* _cursor_timer;
-	bool _cursor_state;
-	bool _delayed_init_done, _resize_pending;
-	bool _last_keydown_enqueued;
-	wxKeyEvent _last_keydown;
-	wxFont _font;
-	DWORD _mouse_state, _mouse_qedit_pending;
-	COORD _mouse_qedit_start, _mouse_qedit_last;
-
-	void UpdateLargestScreenSize();
-};
-
-///////////////////////////////////////////
-
-class WinPortFrame: public wxFrame
-{
-public:
-    WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size);
-	virtual ~WinPortFrame();
-protected: 
-private:
-	WinPortPanel		*_panel;
-
-	void OnChar( wxKeyEvent& event )
-	{
-		_panel->OnChar(event);
-	}
-	void OnPaint( wxPaintEvent& event ) {}
-	void OnEraseBackground( wxEraseEvent& event ) {}
-    wxDECLARE_EVENT_TABLE();
-};
-
-
-wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
-	EVT_PAINT(WinPortFrame::OnPaint)
-	EVT_ERASE_BACKGROUND(WinPortFrame::OnEraseBackground)
-	EVT_CHAR(WinPortFrame::OnChar)
-wxEND_EVENT_TABLE()
-
-
-////////////////////////////
-
-
-
-wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
-	EVT_TIMER(TIMER_ID_PERIODIC, WinPortPanel::OnTimerPeriodic)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_REFRESH, WinPortPanel::OnRefresh)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_WINDOW_MOVED, WinPortPanel::OnWindowMoved)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_RESIZED, WinPortPanel::OnConsoleResized)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChanged)
-	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
-	EVT_KEY_UP(WinPortPanel::OnKeyUp)
-	EVT_CHAR(WinPortPanel::OnChar)
-	EVT_PAINT(WinPortPanel::OnPaint)
-	EVT_ERASE_BACKGROUND(WinPortPanel::OnEraseBackground)
-	EVT_SIZE(WinPortPanel::OnSize)
-	EVT_MOUSE_EVENTS(WinPortPanel::OnMouse )
-	EVT_KILL_FOCUS(WinPortPanel::OnKillFocus )
-
-wxEND_EVENT_TABLE()
-
-wxIMPLEMENT_APP_NO_MAIN(WinPortApp);
 
 
 class WinPortAppThread : public wxThread
@@ -202,31 +60,153 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	return 0;
 }
 
+///////////////
 
-bool WinPortApp::OnInit()
+static void NormalizeArea(SMALL_RECT &area)
 {
-	WinPortFrame *frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
-    //WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(450, 340) );
-    frame->Show( true );
-
-	unsigned int width = 80, height = 25;
-	g_wx_con_out.GetSize(width, height);
-	width*= font_width; height*= font_height;
-	frame->SetClientSize(width, height);
-	
-	if (g_winport_app_thread) {
-		WinPortAppThread *tmp = g_winport_app_thread;
-		g_winport_app_thread = NULL;
-		if (tmp->Run() != wxTHREAD_NO_ERROR)
-			delete tmp;
-	}
-	
-    return true;
+	if (area.Left > area.Right) std::swap(area.Left, area.Right);
+	if (area.Top > area.Bottom) std::swap(area.Top, area.Bottom);	
 }
 
+struct EventWithRect : wxCommandEvent
+{
+	EventWithRect(const SMALL_RECT &rect_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
+		:wxCommandEvent(commandType, winid) , rect(rect_)
+	{
+		NormalizeArea(rect);
+	}
+
+	virtual wxEvent *Clone() const { return new EventWithRect(*this); }
+
+	SMALL_RECT rect;
+};
+
+///////////////////////////////////////////
+
+wxDEFINE_EVENT(WX_CONSOLE_INITIALIZED, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_REFRESH, EventWithRect);
+wxDEFINE_EVENT(WX_CONSOLE_WINDOW_MOVED, EventWithRect);
+wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
+
+//////////////////////////////////////////
+
+class WinPortApp: public wxApp
+{
+public:
+    virtual bool OnInit();
+};
+
+class WinPortFrame;
+
+class WinPortPanel: public wxPanel, protected ConsoleOutputListener
+{
+public:
+    WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);
+	virtual ~WinPortPanel();
+	void CompleteInitialization();
+	void OnChar( wxKeyEvent& event );
+
+protected: 
+	virtual void OnConsoleOutputUpdated(const SMALL_RECT &area);
+	virtual void OnConsoleOutputResized();
+	virtual void OnConsoleOutputTitleChanged();
+	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
+	virtual COORD OnConsoleGetLargestWindowSize();
+	
+	void RefreshArea( const SMALL_RECT &area );
+private:
+	void CheckForResizePending();
+	void OnInitialized( wxCommandEvent& event );
+	void OnTimerPeriodic(wxTimerEvent& event);	
+	void OnWindowMoved( wxCommandEvent& event );
+	void OnRefresh( wxCommandEvent& event );
+	void OnConsoleResized( wxCommandEvent& event );
+	void OnTitleChanged( wxCommandEvent& event );
+	void OnKeyDown( wxKeyEvent& event );
+	void OnKeyUp( wxKeyEvent& event );
+	void OnPaint( wxPaintEvent& event );
+    void OnEraseBackground( wxEraseEvent& event );
+	void OnSize(wxSizeEvent &event);
+	void OnMouse( wxMouseEvent &event );
+	void OnMouseNormal( wxMouseEvent &event, COORD pos_char );
+	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char );
+	void OnKillFocus( wxFocusEvent &event );
+	void DamageAreaBetween(COORD c1, COORD c2);
+
+	wxDECLARE_EVENT_TABLE();
+	struct PressedKeys : std::set<int> 
+	{
+		bool simulate_alt() const
+		{
+			return find(WXK_ALT)!=end();
+		}
+	} _pressed_keys;
+
+	wxBitmap	_white_bitmap;
+	wxMemoryDC 	_white_rectangle;
+	wxKeyEvent _last_keydown;
+	wxFont _font;
+	
+	WinPortFrame *_frame;
+	wxTimer* _cursor_timer;
+	bool _cursor_state;
+	bool _last_keydown_enqueued;
+	bool _initialized;
+	enum
+	{
+		RP_NONE,
+		RP_DEFER,
+		RP_INSTANT
+	} _resize_pending;
+	DWORD _mouse_state, _mouse_qedit_pending;
+	COORD _mouse_qedit_start, _mouse_qedit_last;
+	int _last_valid_display;
+};
+
+///////////////////////////////////////////
+
+class WinPortFrame: public wxFrame
+{
+public:
+    WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size);
+	virtual ~WinPortFrame();
+	
+	void OnShow(wxShowEvent &show);
+protected: 
+private:
+	WinPortPanel		*_panel;
+	bool _shown;
+
+	void OnChar( wxKeyEvent& event )
+	{
+		_panel->OnChar(event);
+	}
+	void OnPaint( wxPaintEvent& event ) {}
+	void OnEraseBackground( wxEraseEvent& event ) {}
+    wxDECLARE_EVENT_TABLE();
+};
+
+
+wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
+	EVT_PAINT(WinPortFrame::OnPaint)
+	EVT_SHOW(WinPortFrame::OnShow)
+	EVT_ERASE_BACKGROUND(WinPortFrame::OnEraseBackground)
+	EVT_CHAR(WinPortFrame::OnChar)
+wxEND_EVENT_TABLE()
+
+void WinPortFrame::OnShow(wxShowEvent &show)
+{
+	if (!_shown) {
+		_shown = true;
+		wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_INITIALIZED);
+		if (event)
+			wxQueueEvent(_panel, event);		
+	}
+}	
 
 WinPortFrame::WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
-        : wxFrame(NULL, wxID_ANY, title, pos, size)
+        : wxFrame(NULL, wxID_ANY, title, pos, size), _shown(false)
 {
 	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
@@ -238,6 +218,43 @@ WinPortFrame::~WinPortFrame()
 	delete _panel;
 	_panel = NULL;
 }
+
+
+////////////////////////////
+
+
+
+wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_INITIALIZED, WinPortPanel::OnInitialized)
+	EVT_TIMER(TIMER_ID_PERIODIC, WinPortPanel::OnTimerPeriodic)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_REFRESH, WinPortPanel::OnRefresh)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_WINDOW_MOVED, WinPortPanel::OnWindowMoved)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_RESIZED, WinPortPanel::OnConsoleResized)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChanged)
+	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
+	EVT_KEY_UP(WinPortPanel::OnKeyUp)
+	EVT_CHAR(WinPortPanel::OnChar)
+	EVT_PAINT(WinPortPanel::OnPaint)
+	EVT_ERASE_BACKGROUND(WinPortPanel::OnEraseBackground)
+	EVT_SIZE(WinPortPanel::OnSize)
+	EVT_MOUSE_EVENTS(WinPortPanel::OnMouse )
+	EVT_KILL_FOCUS(WinPortPanel::OnKillFocus )
+
+wxEND_EVENT_TABLE()
+
+wxIMPLEMENT_APP_NO_MAIN(WinPortApp);
+
+
+
+
+bool WinPortApp::OnInit()
+{
+	WinPortFrame *frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
+    //WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
+	frame->Show( true );
+    return true;
+}
+
 
 
 ///////////////////////////
@@ -301,8 +318,8 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
-		_cursor_state(false), _delayed_init_done(false), _resize_pending(false), 
-		_last_keydown_enqueued(false), _mouse_state(0), _mouse_qedit_pending(false)
+		_cursor_state(false), _last_keydown_enqueued(false), _initialized(false), _resize_pending(RP_NONE), 
+		_mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
@@ -328,7 +345,6 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 	_cursor_timer = new wxTimer(this, TIMER_ID_PERIODIC);
 	_cursor_timer->Start(500);
 	OnConsoleOutputTitleChanged();
-	UpdateLargestScreenSize();	
 }
 
 WinPortPanel::~WinPortPanel()
@@ -337,31 +353,44 @@ WinPortPanel::~WinPortPanel()
 	g_wx_con_out.SetListener(NULL);
 }
 
-
-void WinPortPanel::UpdateLargestScreenSize()
+void WinPortPanel::OnInitialized( wxCommandEvent& event )
 {
-	wxDisplay disp(wxDisplay::GetFromWindow	(_frame));
-	wxRect rc = disp.GetClientArea();
-	wxSize outer_size = _frame->GetSize();
-	wxSize inner_size = GetClientSize();
-	rc.SetWidth(rc.GetWidth() - (outer_size.GetWidth() - inner_size.GetWidth()));
-	rc.SetHeight(rc.GetHeight() - (outer_size.GetHeight() - inner_size.GetHeight()));
-	COORD size = {(SHORT)(rc.GetWidth() / font_width), (SHORT)(rc.GetHeight() / font_height)};
-	g_wx_con_out.SetLargestConsoleWindowSize(size);
+	int w, h;
+	GetClientSize(&w, &h);
+	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
+	unsigned int cw, ch;
+	g_wx_con_out.GetSize(cw, ch);
+	cw*= font_width;
+	ch*= font_height;
+	if ( w != (int)cw || h != (int)ch)
+		_frame->SetClientSize(cw, ch);
+		
+	_initialized = true;
+
+	if (g_winport_app_thread) {
+		WinPortAppThread *tmp = g_winport_app_thread;
+		g_winport_app_thread = NULL;
+		if (tmp->Run() != wxTHREAD_NO_ERROR)
+			delete tmp;
+	}
 }
+
+
 
 void WinPortPanel::CheckForResizePending()
 {
-	if (_resize_pending) {
+	if (_initialized && _resize_pending!=RP_NONE) {
+		fprintf(stderr, "CheckForResizePending\n");
 		DWORD conmode = 0;
 		if (WINPORT(GetConsoleMode)(NULL, &conmode) && (conmode&ENABLE_WINDOW_INPUT)!=0) {
 			unsigned int prev_width = 0, prev_height = 0;
-			_resize_pending = false;
+			_resize_pending = RP_NONE;
 
 			g_wx_con_out.GetSize(prev_width, prev_height);
 	
 			int width = 0, height = 0;
 			_frame->GetClientSize(&width, &height);
+			fprintf(stderr, "Current client size: %u %u\n", width, height);
 			width/= font_width; 
 			height/= font_height;
 			if (width!=(int)prev_width || height!=(int)prev_height) {
@@ -375,17 +404,15 @@ void WinPortPanel::CheckForResizePending()
 			}
 	
 			Refresh(false);
-			UpdateLargestScreenSize();
+		} else if (_resize_pending != RP_INSTANT) {
+			_resize_pending = RP_INSTANT;
+			fprintf(stderr, "RP_INSTANT\n");
 		}
 	}	
 }
 
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 {
-	if (!_delayed_init_done) {
-		_delayed_init_done = true;
-		UpdateLargestScreenSize();
-	}
 	CheckForResizePending();
 	
 	_cursor_state = !_cursor_state;
@@ -417,10 +444,34 @@ void WinPortPanel::OnConsoleOutputTitleChanged()
 
 void WinPortPanel::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 {
-	SMALL_RECT rect = {pos.X, pos.Y, absolute ? 1 : 0, 0};
+	SMALL_RECT rect = {pos.X, pos.Y, absolute ? (SHORT)1 : (SHORT)0, 0};
 	wxCommandEvent *event = new EventWithRect(rect, WX_CONSOLE_WINDOW_MOVED);
 	if (event)
 		wxQueueEvent	(this, event);
+}
+
+COORD WinPortPanel::OnConsoleGetLargestWindowSize()
+{
+	if (!wxIsMainThread()){
+		auto fn = std::bind(&WinPortPanel::OnConsoleGetLargestWindowSize, this);
+		return CallInMain<COORD>(fn);
+	}
+	
+	int index = wxDisplay::GetFromWindow(_frame);
+	if (index < 0 || index >= (int)wxDisplay::GetCount()) {
+		fprintf(stderr, "OnConsoleGetLargestWindowSize: bad display %d, will use %d\n", index, _last_valid_display);
+		index = _last_valid_display;
+	}
+	
+	wxDisplay disp(index);
+	wxRect rc = disp.GetClientArea();
+	wxSize outer_size = _frame->GetSize();
+	wxSize inner_size = GetClientSize();
+	rc.SetWidth(rc.GetWidth() - (outer_size.GetWidth() - inner_size.GetWidth()));
+	rc.SetHeight(rc.GetHeight() - (outer_size.GetHeight() - inner_size.GetHeight()));
+	COORD size = {(SHORT)(rc.GetWidth() / font_width), (SHORT)(rc.GetHeight() / font_height)};
+//	fprintf(stderr, "OnConsoleGetLargestWindowSize: %u x %u\n", size.X, size.Y);
+	return size;
 }
 
 void WinPortPanel::RefreshArea( const SMALL_RECT &area )
@@ -444,7 +495,6 @@ void WinPortPanel::OnWindowMoved( wxCommandEvent& event )
 		x+= dx; y+= dy;
 	}
 	Move(x, y);
-	UpdateLargestScreenSize();
 }
 
 void WinPortPanel::OnRefresh( wxCommandEvent& event )
@@ -457,16 +507,24 @@ void WinPortPanel::OnConsoleResized( wxCommandEvent& event )
 {
 	unsigned int width = 0, height = 0;
 	g_wx_con_out.GetSize(width, height);
-	width*= font_width;
-	height*= font_height;
 	int prev_width = 0, prev_height = 0;
 	_frame->GetClientSize(&prev_width, &prev_height);
-	if (width > prev_width || height > prev_height)
-		_frame->SetPosition(wxPoint(0,0 ));
+	fprintf(stderr, "OnConsoleResized client size: %u %u\n", prev_width, prev_height);
+
+	prev_width/= font_width;
+	prev_height/= font_height;
 	
-	_frame->SetClientSize(width, height);
+	if ((int)width != prev_width || (int)height != prev_height) {
+		if ((int)width > prev_width || (int)height > prev_height) {
+			_frame->SetPosition(wxPoint(0,0 ));
+		}
+		
+		width*= font_width;
+		height*= font_height;
+		fprintf(stderr, "OnConsoleResized SET client size: %u %u\n", width, height);
+		_frame->SetClientSize(width, height);		
+	}
 	Refresh(false);
-	UpdateLargestScreenSize();
 }
 
 void WinPortPanel::OnTitleChanged( wxCommandEvent& event )
@@ -504,8 +562,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	if (event.GetKeyCode()==WXK_RETURN 
 		&& (event.AltDown() || _pressed_keys.simulate_alt()) 
 		&& !event.ShiftDown() && !event.ControlDown() ) {
+		_resize_pending = RP_INSTANT;
+		fprintf(stderr, "RP_INSTANT\n");
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
-		_resize_pending = true;
+		if (_resize_pending != RP_INSTANT)
+			_resize_pending = RP_DEFER;
 		_last_keydown_enqueued = true;
 		return;
 	}
@@ -715,8 +776,12 @@ void WinPortPanel::OnEraseBackground( wxEraseEvent& event )
 
 void WinPortPanel::OnSize(wxSizeEvent &event)
 {
-	UpdateLargestScreenSize();
-	_resize_pending = true;	
+	if (_resize_pending==RP_INSTANT) {
+		CheckForResizePending();
+	} else {
+		_resize_pending = RP_DEFER;	
+		fprintf(stderr, "RP_DEFER\n");
+	}
 }
 
 void WinPortPanel::OnMouse( wxMouseEvent &event )

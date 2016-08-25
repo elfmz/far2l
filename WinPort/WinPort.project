@@ -143,6 +143,7 @@
     <File Name="KeyFileHelper.h"/>
     <File Name="KeyFileHelper.cpp"/>
     <File Name="APIConsole.cpp"/>
+    <File Name="CallInMain.h"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

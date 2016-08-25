@@ -3,6 +3,14 @@
 
 #define TAB_WIDTH	8
 
+template <class I>
+	static void ApplyConsoleSizeLimits(I &w, I &h)
+{
+	if (w < 24) w = 24;
+	if (h < 12) h = 12;
+}
+
+
 const char *utf8index(const char *s, size_t bytes, size_t pos)
 {    
     for ( ++pos; bytes; ++s, --bytes) {
@@ -18,15 +26,15 @@ size_t utf8_char_len(const char *s, size_t bytes)
 }
 
 
-ConsoleOutput::ConsoleOutput() : _attributes(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED), 
-	_listener(0), _title(L"WinPort"), _mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT)
+ConsoleOutput::ConsoleOutput() :
+	_title(L"WinPort"), _listener(0), 
+	_mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT),
+	_attributes(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED)
 {
-	_largest_window_size.X = 80;
-	_largest_window_size.Y = 25;
 	memset(&_cursor.pos, 0, sizeof(_cursor.pos));	
 	_cursor.height = 13;
 	_cursor.visible = true;
-	SetSize(_largest_window_size.X, _largest_window_size.Y);
+	SetSize(80, 25);
 }
 
 void ConsoleOutput::SetListener(ConsoleOutputListener *listener)
@@ -97,6 +105,8 @@ COORD ConsoleOutput::GetCursor(UCHAR &height, bool &visible)
 
 void ConsoleOutput::SetSize(unsigned int width, unsigned int height)
 {
+	//if (height==23) abort();
+	ApplyConsoleSizeLimits(width, height);
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		_buf.SetSize(width, height, _attributes);
@@ -109,18 +119,21 @@ void ConsoleOutput::GetSize(unsigned int &width, unsigned int &height)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 	_buf.GetSize(width, height);
+//	fprintf(stderr, "GetSize: %u x %u\n", width, height);
 }
 
-void ConsoleOutput::SetLargestConsoleWindowSize(COORD size)
-{
-	std::lock_guard<std::mutex> lock(_mutex);
-	_largest_window_size = size;
-}
 
 COORD ConsoleOutput::GetLargestConsoleWindowSize()
 {
-	std::lock_guard<std::mutex> lock(_mutex);
-	return _largest_window_size;
+	COORD rv;
+	if (!_listener) {
+		unsigned int width = 80, height = 25;
+		GetSize(width, height);
+		rv = {(SHORT)(USHORT)width, (SHORT)(USHORT)height};
+	} else
+		rv = _listener->OnConsoleGetLargestWindowSize();
+	ApplyConsoleSizeLimits(rv.X, rv.Y);
+	return rv;
 }
 
 void ConsoleOutput::SetWindowInfo(bool absolute, const SMALL_RECT &rect)

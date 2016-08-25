@@ -221,7 +221,7 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 			if (!HelpLanguage || (!GetLangParam(LangFile,L"PluginContents",&strEntryName,nullptr,nCodePage) &&
 			                      !GetLangParam(LangFile,L"DocumentContents",&strEntryName,nullptr,nCodePage)))
 			{
-				LangMenuItem.strName.Format(L"%.40s", !strLangDescr.IsEmpty() ? strLangDescr.CPtr():strLangName.CPtr());
+				LangMenuItem.strName.Format(L"%.40ls", !strLangDescr.IsEmpty() ? strLangDescr.CPtr():strLangName.CPtr());
 
 				/* $ 01.08.2001 SVS
 				   Íå äîïóñêàåì äóáëèêàòîâ!

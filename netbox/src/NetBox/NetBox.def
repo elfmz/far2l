@@ -1,0 +1,22 @@
+EXPORTS 
+   ClosePluginW
+   ConfigureW
+   DeleteFilesW
+   ExitFARW
+   FreeFindDataW
+   GetFilesW
+   GetFindDataW
+   GetMinFarVersionW
+   GetOpenPluginInfoW
+   GetPluginInfoW
+   MakeDirectoryW
+   OpenFilePluginW
+   OpenPluginW
+   ProcessKeyW
+   ProcessEventW
+   ProcessHostFileW
+   ProcessEditorEventW
+   ProcessEditorInputW
+   PutFilesW
+   SetDirectoryW
+   SetStartupInfoW

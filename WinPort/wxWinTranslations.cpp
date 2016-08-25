@@ -11,6 +11,10 @@ wxColour ConsoleForeground2wxColorInternal(USHORT attributes)
 		b = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
 	if (attributes & FOREGROUND_GREEN)
 		g = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
+	if ((attributes & 0x0f) == FOREGROUND_INTENSITY)
+            r = g = b = 0x80;
+	if ((attributes & 0x0f) == (FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED))
+            r = g = b = 0xc0;
 	return wxColour(r, g, b);
 }
 
@@ -18,11 +22,15 @@ wxColour ConsoleBackground2wxColorInternal(USHORT attributes)
 {
 	wxColour::ChannelType r = 0, g = 0, b = 0;
 	if (attributes & BACKGROUND_RED)
-		r = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0xa0;
+		r = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
 	if (attributes & BACKGROUND_BLUE)
-		b = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0xa0;
+		b = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
 	if (attributes & BACKGROUND_GREEN)
-		g = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0xa0;
+		g = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
+	if ((attributes & 0xf0) == BACKGROUND_INTENSITY)
+            r = g = b = 0x80;
+	if ((attributes & 0xf0) == (BACKGROUND_BLUE|BACKGROUND_GREEN|BACKGROUND_RED))
+            r = g = b = 0xc0;
 	return wxColour(r, g, b);
 }
 

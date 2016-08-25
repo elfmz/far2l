@@ -28,7 +28,6 @@ KeyFileHelper::~KeyFileHelper()
 		g_key_file_helper_mutex.unlock();
 		fprintf(stderr, "~KeyFileHelper(%s) err=%p\n", _filename.c_str(),  err);
 	}
-	g_key_file_helper_mutex.unlock();
 }
 
 std::vector<std::string> KeyFileHelper::EnumSections()

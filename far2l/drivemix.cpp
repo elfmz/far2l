@@ -39,62 +39,50 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cddrv.hpp"
 #include "pathmix.hpp"
 
+static int StatForPathOrItsParent(const wchar_t *path, struct stat &s)
+{
+	std::string mb = Wide2MB(path);
+	int r = stat(mb.c_str(), &s);
+	if (r == 0)
+		return 0;
+	
+	for (;;) {
+		if (mb.empty())
+			return -1;
+		
+		size_t slash = mb.rfind(mb, GOOD_SLASH);		
+		if (slash==std::string::npos)
+			return -1;
+		
+		bool stop = (slash!=mb.size()-1);	
+		mb.resize(mb.size()-1);
+		if (stop) break;
+	}
+	
+	return stat(mb.c_str(), &s);
+}
 
 int CheckDisksProps(const wchar_t *SrcPath,const wchar_t *DestPath,int CheckedType)
 {
-	string strSrcRoot, strDestRoot;
-	int SrcDriveType, DestDriveType;
-	DWORD SrcVolumeNumber=0, DestVolumeNumber=0;
-	string strSrcVolumeName, strDestVolumeName;
-	string strSrcFileSystemName, strDestFileSystemName;
-	DWORD SrcFileSystemFlags, DestFileSystemFlags;
-	DWORD SrcMaximumComponentLength, DestMaximumComponentLength;
-	strSrcRoot=SrcPath;
-	strDestRoot=DestPath;
-	//ConvertNameToUNC(strSrcRoot);
-	//ConvertNameToUNC(strDestRoot);
-	GetPathRoot(strSrcRoot,strSrcRoot);
-	GetPathRoot(strDestRoot,strDestRoot);
-	SrcDriveType=FAR_GetDriveType(strSrcRoot,nullptr,TRUE);
-	DestDriveType=FAR_GetDriveType(strDestRoot,nullptr,TRUE);
-
-	if (!apiGetVolumeInformation(strSrcRoot,&strSrcVolumeName,&SrcVolumeNumber,&SrcMaximumComponentLength,&SrcFileSystemFlags,&strSrcFileSystemName))
-		return FALSE;
-
-	if (!apiGetVolumeInformation(strDestRoot,&strDestVolumeName,&DestVolumeNumber,&DestMaximumComponentLength,&DestFileSystemFlags,&strDestFileSystemName))
-		return FALSE;
-
 	if (CheckedType == CHECKEDPROPS_ISSAMEDISK)
 	{
-		if (!wcspbrk(DestPath,L"/:"))
-			return TRUE;
+		struct stat s_src = {}, s_dest = {};
+		int r = StatForPathOrItsParent(SrcPath, s_src);
+		if (r==-1) {
+			fprintf(stderr, "CheckDisksProps: stat errno=%u for src='%ls'\n", errno, SrcPath);
+			return false;
+		}
+				
+		r = StatForPathOrItsParent(DestPath, s_dest);
+		if (r==-1) {
+			fprintf(stderr, "CheckDisksProps: stat errno=%u for dest='%ls'\n", errno, DestPath);
+			return false;
+		}
 
-		if (((strSrcRoot.At(0)==GOOD_SLASH && strSrcRoot.At(1)==GOOD_SLASH) || (strDestRoot.At(0)==GOOD_SLASH && strDestRoot.At(1)==GOOD_SLASH)) &&
-		        StrCmpI(strSrcRoot,strDestRoot))
-			return FALSE;
-
-		if (!*SrcPath || !*DestPath || (SrcPath[1]!=L':' && DestPath[1]!=L':'))  //????
-			return TRUE;
-
-		if (Upper(strDestRoot.At(0))==Upper(strSrcRoot.At(0)))
-			return TRUE;
-
-		uint64_t SrcTotalSize,SrcTotalFree,SrcUserFree;
-		uint64_t DestTotalSize,DestTotalFree,DestUserFree;
-
-		if (!apiGetDiskSize(SrcPath,&SrcTotalSize,&SrcTotalFree,&SrcUserFree))
-			return FALSE;
-
-		if (!apiGetDiskSize(DestPath,&DestTotalSize,&DestTotalFree,&DestUserFree))
-			return FALSE;
-
-		if (!(SrcVolumeNumber &&
-		        SrcVolumeNumber==DestVolumeNumber &&
-		        !StrCmpI(strSrcVolumeName, strDestVolumeName) &&
-		        SrcTotalSize==DestTotalSize))
-			return FALSE;
+		return (s_src.st_dev==s_dest.st_dev) ? TRUE : FALSE;
 	}
-	else if (CheckedType == CHECKEDPROPS_ISDST_ENCRYPTION)
+
+	if (CheckedType == CHECKEDPROPS_ISDST_ENCRYPTION)
 	{
 		return FALSE;
 	}

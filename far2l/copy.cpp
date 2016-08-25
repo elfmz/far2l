@@ -3027,6 +3027,8 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 			_LOGCOPYR(SysLog(L"return COPY_FAILURE -> %d CreateFile=-1, LastError=%d (0x%08X)",__LINE__,_localLastError,_localLastError));
 			return COPY_FAILURE;
 		}
+		DestFile.Chmod(SrcData.dwUnixMode);
+		fprintf(stderr, "chmode 0x%x\n", SrcData.dwUnixMode);
 
 		string strDriveRoot;
 		GetPathRoot(strDestName,strDriveRoot);
@@ -3323,6 +3325,8 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 								DestFile.Close();
 								return COPY_FAILURE;
 							}
+							DestFile.Chmod(SrcData.dwUnixMode);
+							fprintf(stderr, "chmode 0x%x\n", SrcData.dwUnixMode);
 						}
 						else
 						{

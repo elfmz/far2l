@@ -85,6 +85,7 @@ struct FAR_FIND_DATA_EX
 			ftChangeTime=ffdexCopy.ftChangeTime;
 			nFileSize=ffdexCopy.nFileSize;
 			nPackSize=ffdexCopy.nPackSize;
+			dwUnixMode=ffdexCopy.dwUnixMode;
 			dwReserved0=ffdexCopy.dwReserved0;
 			dwReserved1=ffdexCopy.dwReserved1;
 			strFileName=ffdexCopy.strFileName;
@@ -123,6 +124,7 @@ public:
 	bool SetTime(const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime);
 	bool GetSize(UINT64& Size);
 	bool FlushBuffers();
+	bool Chmod(DWORD dwUnixMode);
 	bool Close();
 	bool Eof();
 	bool Opened() const {return Handle != INVALID_HANDLE_VALUE;}

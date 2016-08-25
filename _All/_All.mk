@@ -5,8 +5,8 @@
 ## Debug
 ProjectName            :=_All
 ConfigurationName      :=Debug
-WorkspacePath          := "/home/user/projects/far2l"
-ProjectPath            := "/home/user/projects/far2l/_All"
+WorkspacePath          := ".."
+ProjectPath            := "."
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=

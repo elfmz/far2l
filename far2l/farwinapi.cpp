@@ -211,6 +211,16 @@ bool File::FlushBuffers()
 	return WINPORT(FlushFileBuffers)(Handle) != FALSE;
 }
 
+bool File::Chmod(DWORD dwUnixMode)
+{
+	int r = fchmod(WINPORT(GetFileDescriptor)(Handle), dwUnixMode);
+	if (r!=0) {
+		WINPORT(SetLastError)(r);
+		return false;
+	}
+	
+	return true;
+}
 
 bool File::Close()
 {

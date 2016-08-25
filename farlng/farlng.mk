@@ -5,8 +5,8 @@
 ## Debug
 ProjectName            :=farlng
 ConfigurationName      :=Debug
-WorkspacePath          := ".."
-ProjectPath            := "."
+WorkspacePath          := "/home/user/projects/far2l"
+ProjectPath            := "/home/user/projects/far2l/farlng"
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
@@ -92,7 +92,7 @@ PreBuild:
 ## Objects
 ##
 $(IntermediateDirectory)/src_lng.generator.cpp$(ObjectSuffix): src/lng.generator.cpp $(IntermediateDirectory)/src_lng.generator.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/lng.generator.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.generator.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farlng/src/lng.generator.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.generator.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_lng.generator.cpp$(DependSuffix): src/lng.generator.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_lng.generator.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_lng.generator.cpp$(DependSuffix) -MM "src/lng.generator.cpp"
 
@@ -100,7 +100,7 @@ $(IntermediateDirectory)/src_lng.generator.cpp$(PreprocessSuffix): src/lng.gener
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_lng.generator.cpp$(PreprocessSuffix) "src/lng.generator.cpp"
 
 $(IntermediateDirectory)/src_farlng.cpp$(ObjectSuffix): src/farlng.cpp $(IntermediateDirectory)/src_farlng.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/farlng.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_farlng.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farlng/src/farlng.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_farlng.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_farlng.cpp$(DependSuffix): src/farlng.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_farlng.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_farlng.cpp$(DependSuffix) -MM "src/farlng.cpp"
 
@@ -108,7 +108,7 @@ $(IntermediateDirectory)/src_farlng.cpp$(PreprocessSuffix): src/farlng.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_farlng.cpp$(PreprocessSuffix) "src/farlng.cpp"
 
 $(IntermediateDirectory)/src_lng.convertor.cpp$(ObjectSuffix): src/lng.convertor.cpp $(IntermediateDirectory)/src_lng.convertor.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/lng.convertor.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.convertor.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farlng/src/lng.convertor.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.convertor.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_lng.convertor.cpp$(DependSuffix): src/lng.convertor.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_lng.convertor.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_lng.convertor.cpp$(DependSuffix) -MM "src/lng.convertor.cpp"
 
@@ -116,7 +116,7 @@ $(IntermediateDirectory)/src_lng.convertor.cpp$(PreprocessSuffix): src/lng.conve
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_lng.convertor.cpp$(PreprocessSuffix) "src/lng.convertor.cpp"
 
 $(IntermediateDirectory)/src_lng.common.cpp$(ObjectSuffix): src/lng.common.cpp $(IntermediateDirectory)/src_lng.common.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/lng.common.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.common.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farlng/src/lng.common.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.common.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_lng.common.cpp$(DependSuffix): src/lng.common.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_lng.common.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_lng.common.cpp$(DependSuffix) -MM "src/lng.common.cpp"
 
@@ -124,7 +124,7 @@ $(IntermediateDirectory)/src_lng.common.cpp$(PreprocessSuffix): src/lng.common.c
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_lng.common.cpp$(PreprocessSuffix) "src/lng.common.cpp"
 
 $(IntermediateDirectory)/src_lng.inserter.cpp$(ObjectSuffix): src/lng.inserter.cpp $(IntermediateDirectory)/src_lng.inserter.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/lng.inserter.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.inserter.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/user/projects/far2l/farlng/src/lng.inserter.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_lng.inserter.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_lng.inserter.cpp$(DependSuffix): src/lng.inserter.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_lng.inserter.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_lng.inserter.cpp$(DependSuffix) -MM "src/lng.inserter.cpp"
 

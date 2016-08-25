@@ -357,6 +357,16 @@ extern "C"
 		return FILE_TYPE_UNKNOWN;
 #endif
 	}
+	
+	WINPORT_DECL(GetFileDescriptor, int, (HANDLE hFile))
+	{
+		AutoWinPortHandle<WinPortHandleFile> wph(hFile);
+		if (!wph) {
+			return -1;
+		}
+		
+		return wph->fd;
+	}
 
 	//////////////////////////////////
 	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData)

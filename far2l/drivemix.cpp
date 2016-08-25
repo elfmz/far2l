@@ -47,15 +47,15 @@ static int StatForPathOrItsParent(const wchar_t *path, struct stat &s)
 		return 0;
 	
 	for (;;) {
-		if (mb.empty())
-			return -1;
-		
 		size_t slash = mb.rfind(mb, GOOD_SLASH);		
 		if (slash==std::string::npos)
 			return -1;
 		
 		bool stop = (slash!=mb.size()-1);	
 		mb.resize(mb.size()-1);
+		if (mb.empty())
+			return -1;
+		
 		if (stop) break;
 	}
 	

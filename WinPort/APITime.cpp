@@ -374,7 +374,7 @@ WINPORT_DECL(Sleep, VOID, (DWORD dwMilliseconds))
 }
 
 static clock_t g_process_start_stamp = WINPORT(GetTickCount)();
-clock_t GetProcessUptimeMSec()
+SHAREDSYMBOL clock_t GetProcessUptimeMSec()
 {
 	clock_t now = WINPORT(GetTickCount)();
 	return  (now - g_process_start_stamp);

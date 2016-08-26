@@ -460,7 +460,7 @@ void BaseEditor::idleJob(int time)
 {
   if (invalidLine < lineCount) {
     if (time < 0) time = 0;
-    if (time > 100) time = 100;
+    if (time > 1000) time = 1000;
     validate(invalidLine+IDLE_PARSE(time), false);
   }
 }

@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="netbox" InternalType="Library">
+  <Plugins>
+    <Plugin Name="CMakePlugin">
+      <![CDATA[[{
+  "name": "Debug",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }]]]>
+    </Plugin>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
+  </Plugins>
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
@@ -289,6 +306,7 @@
         <IncludePath Value="libs/Putty/charset"/>
         <Preprocessor Value="NO_FILEZILLA"/>
         <Preprocessor Value="MPEXT"/>
+        <Preprocessor Value="WINPORT_DIRECT"/>
       </Compiler>
       <Linker Options="-Wl,--no-undefined $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic" Required="yes">
         <LibraryPath Value="../WinPort/Debug"/>

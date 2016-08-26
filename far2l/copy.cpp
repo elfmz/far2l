@@ -415,7 +415,7 @@ void CopyProgress::SetProgress(bool TotalProgress,UINT64 CompletedSize,UINT64 To
 
 	if (Time&&(!Total||TotalProgress))
 	{
-		DWORD WorkTime=clock()-CopyStartTime;
+		DWORD WorkTime=GetProcessUptimeMSec()-CopyStartTime;
 		UINT64 SizeLeft=(OldTotalSize>OldCompletedSize)?(OldTotalSize-OldCompletedSize):0;
 		long CalcTime=OldCalcTime;
 
@@ -1228,7 +1228,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 			// Çàïîìíèì âðåìÿ íà÷àëà
 			if (ShowCopyTime)
 			{
-				CopyStartTime = clock();
+				CopyStartTime = GetProcessUptimeMSec();
 				WaitUserTime = OldCalcTime = 0;
 			}
 
@@ -3836,13 +3836,13 @@ BOOL ShellCopySecuryMsg(const wchar_t *Name)
 {
 	static clock_t PrepareSecuryStartTime;
 
-	if (!Name || !*Name || (static_cast<DWORD>(clock() - PrepareSecuryStartTime) > Opt.ShowTimeoutDACLFiles))
+	if (!Name || !*Name || (static_cast<DWORD>(GetProcessUptimeMSec() - PrepareSecuryStartTime) > Opt.ShowTimeoutDACLFiles))
 	{
 		static int Width=30;
 		int WidthTemp;
 		if (Name && *Name)
 		{
-			PrepareSecuryStartTime = clock();     // Ïåðâûé ôàéë ðèñóåòñÿ âñåãäà
+			PrepareSecuryStartTime = GetProcessUptimeMSec();     // Ïåðâûé ôàéë ðèñóåòñÿ âñåãäà
 			WidthTemp=Max(StrLength(Name),30);
 		}
 		else

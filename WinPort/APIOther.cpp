@@ -208,20 +208,6 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(Sleep, VOID, (DWORD dwMilliseconds))
-	{
-#ifdef _WIN32
-		::Sleep(dwMilliseconds);
-#else
-		DWORD seconds  = dwMilliseconds / 1000;
-		if (seconds) {
-			sleep(seconds);
-			dwMilliseconds-= seconds * 1000;
-		}
-		usleep(dwMilliseconds * 1000);
-#endif
-	}
-
 	DWORD  WINPORT(WSAGetLastError) ()
 	{
 		return errno;

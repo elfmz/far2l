@@ -6,6 +6,7 @@
 # include "WinCompat.h"
 # include <sys/stat.h>
 # include <sys/time.h>
+# include <time.h>
 #endif
 
 #define WINPORT_DECL(NAME, RV, ARGS) SHAREDSYMBOL RV WINPORT_##NAME ARGS
@@ -91,7 +92,6 @@ extern "C" {
 	WINPORT_DECL(GetEnvironmentVariable, DWORD, (LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize));
 	WINPORT_DECL(SetEnvironmentVariable, BOOL, (LPCWSTR lpName, LPCWSTR lpValue));
 	WINPORT_DECL(ExpandEnvironmentStrings, DWORD, (LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize));
-	WINPORT_DECL(Sleep, VOID, (DWORD dwMilliseconds));
 	
 
 //files
@@ -137,6 +137,9 @@ extern "C" {
 	WINPORT_DECL(EvaluateAttributes, DWORD,( uint32_t unix_mode, const WCHAR *name ));
 
 //time/date
+	clock_t GetProcessUptimeMSec();//use instead of Windows's clock()
+	WINPORT_DECL(Sleep, VOID, (DWORD dwMilliseconds));
+	WINPORT_DECL(GetTickCount, DWORD, ());
 	WINPORT_DECL(GetLocalTime, VOID, (LPSYSTEMTIME lpSystemTime));
 	WINPORT_DECL(GetSystemTime, VOID, (LPSYSTEMTIME lpSystemTime));
 	WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILETIME lpFileTime));
@@ -145,7 +148,6 @@ extern "C" {
 	WINPORT_DECL(FileTimeToLocalFileTime, BOOL, (const FILETIME *lpFileTime, LPFILETIME lpLocalFileTime));
 	WINPORT_DECL(FileTimeToSystemTime, BOOL, (const FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime));
 	WINPORT_DECL(GetSystemTimeAsFileTime, VOID, (FILETIME *lpFileTime));
-	WINPORT_DECL(GetTickCount, DWORD, ());
 	WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *lpFileTime, LPWORD   lpFatDate, LPWORD   lpFatTime));
 	WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETIME ft));
 	WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTime));
@@ -221,6 +223,9 @@ extern "C" {
 	
 	
 	WINPORT_DECL(WSAGetLastError, DWORD, ());
+
+
+
 
 #ifdef __cplusplus
 }

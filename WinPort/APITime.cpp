@@ -275,20 +275,6 @@ WINPORT_DECL(FileTimeToSystemTime, BOOL, (const FILETIME *lpFileTime, LPSYSTEMTI
 }
 
 
-WINPORT_DECL(GetTickCount, DWORD, ())
-{
-#ifdef _WIN32
-	return ::GetTickCount();
-#else
-    struct timespec spec;
-    clock_gettime(CLOCK_REALTIME, &spec);
-	DWORD rv = spec.tv_sec;
-	rv*= 1000;
-	rv+= (DWORD)(spec.tv_nsec / 1000000);
-	return rv;
-#endif
-}
-
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
     ULONGLONG tmp = Time->QuadPart / TICKSPERSEC - SECS_1601_TO_1970;
@@ -357,4 +343,40 @@ WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETI
     return TRUE;
 }
 
+
+
+WINPORT_DECL(GetTickCount, DWORD, ())
+{
+#ifdef _WIN32
+	return ::GetTickCount();
+#else
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+	DWORD rv = spec.tv_sec;
+	rv*= 1000;
+	rv+= (DWORD)(spec.tv_nsec / 1000000);
+	return rv;
+#endif
+}
+
+WINPORT_DECL(Sleep, VOID, (DWORD dwMilliseconds))
+{
+#ifdef _WIN32
+	::Sleep(dwMilliseconds);
+#else
+	DWORD seconds  = dwMilliseconds / 1000;
+	if (seconds) {
+		sleep(seconds);
+		dwMilliseconds-= seconds * 1000;
+	}
+	usleep(dwMilliseconds * 1000);
+#endif
+}
+
+static clock_t g_process_start_stamp = WINPORT(GetTickCount)();
+clock_t GetProcessUptimeMSec()
+{
+	clock_t now = WINPORT(GetTickCount)();
+	return  (now - g_process_start_stamp);
+}
 

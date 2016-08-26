@@ -157,7 +157,7 @@ int ScreenSaver(int EnableExit)
 
 	ChangePriority ChPriority(ChangePriority::IDLE);
 
-	for (WaitTime=clock(); clock()-WaitTime<500;)
+	for (WaitTime=GetProcessUptimeMSec(); GetProcessUptimeMSec()-WaitTime<500;)
 	{
 		if (PeekInputRecord(&rec))
 			return 1;
@@ -184,7 +184,7 @@ int ScreenSaver(int EnableExit)
 
 		while (!PeekInputRecord(&rec))
 		{
-			clock_t CurTime=clock();
+			clock_t CurTime=GetProcessUptimeMSec();
 
 			if (EnableExit && Opt.InactivityExit && Opt.InactivityExitTime>0 &&
 			        CurTime-StartIdleTime>Opt.InactivityExitTime*60000 &&
@@ -201,7 +201,7 @@ int ScreenSaver(int EnableExit)
 	SetCursorType(CursorInfo.bVisible!=FALSE, CursorInfo.dwSize);
 	ScreenSaverActive=FALSE;
 	FlushInputBuffer();
-	StartIdleTime=clock();
+	StartIdleTime=GetProcessUptimeMSec();
 	return 1;
 }
 

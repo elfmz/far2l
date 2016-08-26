@@ -482,7 +482,7 @@ int FarEditor::editorInput(const INPUT_RECORD *ir)
       if (idleCount > 10){
         idleCount = 10;
       }
-      baseEditor->idleJob(idleCount*10);
+      baseEditor->idleJob(idleCount*idleCount*100);
       info->EditorControl(ECTL_REDRAW, NULL);
     }
   }

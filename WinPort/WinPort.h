@@ -137,7 +137,7 @@ extern "C" {
 	WINPORT_DECL(EvaluateAttributes, DWORD,( uint32_t unix_mode, const WCHAR *name ));
 
 //time/date
-	clock_t GetProcessUptimeMSec();//use instead of Windows's clock()
+	SHAREDSYMBOL clock_t GetProcessUptimeMSec();//use instead of Windows's clock()
 	WINPORT_DECL(Sleep, VOID, (DWORD dwMilliseconds));
 	WINPORT_DECL(GetTickCount, DWORD, ());
 	WINPORT_DECL(GetLocalTime, VOID, (LPSYSTEMTIME lpSystemTime));

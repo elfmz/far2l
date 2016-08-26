@@ -4463,13 +4463,13 @@ void Dialog::Process()
 
 		if (!WINPORT(InterlockedIncrement)(&in_dialog))
 		{
-			btm = clock();
+			btm = GetProcessUptimeMSec();
 			save = WaitUserTime;
 			WaitUserTime = -1;
 		}
 
 		FrameManager->ExecuteModal(this);
-		save += (clock() - btm);
+		save += (GetProcessUptimeMSec() - btm);
 
 		if (WINPORT(InterlockedDecrement)(&in_dialog) == -1)
 			WaitUserTime = save;

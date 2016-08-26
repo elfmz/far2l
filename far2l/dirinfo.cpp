@@ -92,7 +92,7 @@ int GetDirInfo(const wchar_t *Title,
 	wakeful W;
 	ScanTree ScTree(FALSE,TRUE,(Flags&GETDIRINFO_SCANSYMLINKDEF?(DWORD)-1:(Flags&GETDIRINFO_SCANSYMLINK)));
 	FAR_FIND_DATA_EX FindData;
-	clock_t StartTime=clock();
+	clock_t StartTime=GetProcessUptimeMSec();
 	SetCursorType(FALSE,0);
 	GetPathRoot(strFullDirName,strDriveRoot);
 	/* $ 20.03.2002 DJ
@@ -157,7 +157,7 @@ int GetDirInfo(const wchar_t *Title,
 			}
 		}
 
-		clock_t CurTime=clock();
+		clock_t CurTime=GetProcessUptimeMSec();
 
 		if (MsgWaitTime!=-1 && CurTime-StartTime > MsgWaitTime)
 		{

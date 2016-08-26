@@ -1594,7 +1594,7 @@ int WINAPI FarGetDirList(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pIte
 	{
 		TPreRedrawFuncGuard preRedrawFuncGuard(PR_FarGetDirListMsg);
 		SaveScreen SaveScr;
-		clock_t StartTime=clock();
+		clock_t StartTime=GetProcessUptimeMSec();
 		int MsgOut=0;
 		FAR_FIND_DATA_EX FindData;
 		string strFullName;
@@ -1617,7 +1617,7 @@ int WINAPI FarGetDirList(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pIte
 					return FALSE;
 				}
 
-				if (!MsgOut && clock()-StartTime > 500)
+				if (!MsgOut && GetProcessUptimeMSec()-StartTime > 500)
 				{
 					SetCursorType(FALSE,0);
 					PR_FarGetDirListMsg();

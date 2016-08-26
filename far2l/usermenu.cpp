@@ -255,7 +255,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 	// по умолчанию меню - это FarMenu.ini
 	MenuMode=MM_LOCAL;
 	string strLocalMenuKey;
-	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",clock());
+	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
 	DeleteKeyTree(strLocalMenuKey);
 	MenuModified=MenuNeedRefresh=false;
 

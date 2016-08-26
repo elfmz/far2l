@@ -139,7 +139,7 @@ void DizList::Read(const wchar_t *Path, const wchar_t *DizName)
 			GetFileString GetStr(DizFile);
 			wchar_t *DizText;
 			int DizLength;
-			clock_t StartTime=clock();
+			clock_t StartTime=GetProcessUptimeMSec();
 			UINT CodePage=CP_AUTODETECT;
 			bool bSigFound=false;
 
@@ -148,7 +148,7 @@ void DizList::Read(const wchar_t *Path, const wchar_t *DizName)
 
 			while (GetStr.GetString(&DizText, CodePage, DizLength) > 0)
 			{
-				if (!(DizCount & 127) && clock()-StartTime>1000)
+				if (!(DizCount & 127) && GetProcessUptimeMSec()-StartTime>1000)
 				{
 					SetCursorType(FALSE,0);
 					PR_ReadingMsg();

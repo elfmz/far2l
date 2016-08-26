@@ -469,7 +469,7 @@ int TreeList::ReadTree()
 	//Redraw();
 	TreeCount=1;
 	int FirstCall=TRUE, AscAbort=FALSE;
-	TreeStartTime = clock();
+	TreeStartTime = GetProcessUptimeMSec();
 	RefreshFrameManager frref(ScrX,ScrY,TreeStartTime,FALSE);//DontRedrawFrame);
 	ScTree.SetFindPath(strRoot, L"*", 0);
 	LastScrX = ScrX;
@@ -732,7 +732,7 @@ int TreeList::MsgReadTree(int TreeCount,int &FirstCall)
 		LastScrY = ScrY;
 	}
 
-	if (IsChangeConsole || (clock() - TreeStartTime) > 1000)
+	if (IsChangeConsole || (GetProcessUptimeMSec() - TreeStartTime) > 1000)
 	{
 		wchar_t NumStr[32];
 		_itow(TreeCount,NumStr,10); //BUGBUG
@@ -741,7 +741,7 @@ int TreeList::MsgReadTree(int TreeCount,int &FirstCall)
 		PreRedrawItem preRedrawItem=PreRedraw.Peek();
 		preRedrawItem.Param.Flags=TreeCount;
 		PreRedraw.SetParam(preRedrawItem.Param);
-		TreeStartTime = clock();
+		TreeStartTime = GetProcessUptimeMSec();
 	}
 
 	return 1;

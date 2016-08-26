@@ -668,7 +668,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 	ScrBuf.Flush();
 
 	if (!LastEventIdle)
-		StartIdleTime=clock();
+		StartIdleTime=GetProcessUptimeMSec();
 
 	LastEventIdle=FALSE;
 	SetFarConsoleMode();
@@ -789,7 +789,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 		if (!(LoopCount & 15))
 		{
-			clock_t CurTime=clock();
+			clock_t CurTime=GetProcessUptimeMSec();
 
 			if (EnableShowTime)
 				ShowTime(0);
@@ -868,7 +868,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		LoopCount++;
 	} // while (1)
 
-	clock_t CurClock=clock();
+	clock_t CurClock=GetProcessUptimeMSec();
 
 	if (rec->EventType==FOCUS_EVENT)
 	{
@@ -1454,7 +1454,7 @@ DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 		SetCursorType(0,10);
 	}
 
-	clock_t CheckTime=clock()+delayMS;
+	clock_t CheckTime=GetProcessUptimeMSec()+delayMS;
 	DWORD Key;
 
 	for (;;)
@@ -1475,7 +1475,7 @@ DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 		else if (Key == KeyWait)
 			break;
 
-		if (delayMS && clock() >= CheckTime)
+		if (delayMS && GetProcessUptimeMSec() >= CheckTime)
 		{
 			Key=KEY_NONE;
 			break;

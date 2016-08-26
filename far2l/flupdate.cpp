@@ -91,7 +91,7 @@ void FileList::Update(int Mode)
 			break;
 		}
 
-	LastUpdateTime=clock();
+	LastUpdateTime=GetProcessUptimeMSec();
 }
 
 void FileList::UpdateIfRequired()
@@ -520,7 +520,7 @@ int FileList::UpdateIfChanged(int UpdateMode)
 	{
 		/* $ 19.12.2001 VVM
 		  ! Сменим приоритеты. При Force обновление всегда! */
-		if ((IsVisible() && (clock()-LastUpdateTime>2000)) || (UpdateMode != UIC_UPDATE_NORMAL))
+		if ((IsVisible() && (GetProcessUptimeMSec()-LastUpdateTime>2000)) || (UpdateMode != UIC_UPDATE_NORMAL))
 		{
 			if (UpdateMode == UIC_UPDATE_NORMAL)
 				ProcessPluginEvent(FE_IDLE,nullptr);

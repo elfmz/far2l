@@ -651,6 +651,8 @@ extern "C" {
 			default:
 			{
 				const union cptable *table = get_codepage_table( codepage );
+				if (!table)
+					return FALSE;
 
 				cpinfo->CodePage = table->info.codepage;
 				cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;

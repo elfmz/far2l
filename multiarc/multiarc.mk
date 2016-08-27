@@ -28,7 +28,7 @@ LibraryPathSwitch      :=-L
 PreprocessorSwitch     :=-D
 SourceSwitch           :=-c 
 OutputFile             :=../Build/Plugins/multiarc/bin/$(ProjectName).far-plug-mb
-Preprocessors          :=$(PreprocessorSwitch)RARDLL 
+Preprocessors          :=$(PreprocessorSwitch)RARDLL $(PreprocessorSwitch)_7ZIP_ST 
 ObjectSwitch           :=-o 
 ArchiveOutputSwitch    := 
 PreprocessOnlySwitch   :=-E
@@ -62,18 +62,25 @@ AS       := /usr/bin/as
 CodeLiteDir:=/usr/share/codelite
 Objects0=$(IntermediateDirectory)/src_MultiArc.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ArcPlg.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_arccfg.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_arcget.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_arcput.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_arcreg.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ArcMix.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ArcProc.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_global.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_arcread.cpp$(ObjectSuffix) \
 	$(IntermediateDirectory)/src_arccmd.cpp$(ObjectSuffix) $(IntermediateDirectory)/libpcre_get.c$(ObjectSuffix) $(IntermediateDirectory)/libpcre_pcre.c$(ObjectSuffix) $(IntermediateDirectory)/libpcre_chartables.c$(ObjectSuffix) $(IntermediateDirectory)/libpcre_study.c$(ObjectSuffix) $(IntermediateDirectory)/rar_rar.cpp$(ObjectSuffix) $(IntermediateDirectory)/ha_ha.cpp$(ObjectSuffix) $(IntermediateDirectory)/custom_custom.cpp$(ObjectSuffix) $(IntermediateDirectory)/arj_arj.cpp$(ObjectSuffix) $(IntermediateDirectory)/ace_ace.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/arc_arc.cpp$(ObjectSuffix) $(IntermediateDirectory)/zip_zip.cpp$(ObjectSuffix) $(IntermediateDirectory)/lzh_lzh.cpp$(ObjectSuffix) $(IntermediateDirectory)/cab_cab.cpp$(ObjectSuffix) $(IntermediateDirectory)/targz_targz.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_scantree.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_sha1.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_threadpool.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_crc.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_hash.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/unrar_strlist.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rs16.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_resource.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_consio.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_secpassword.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_qopen.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_recvol.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rijndael.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_timefn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_encname.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/unrar_rawread.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_file.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_strfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_sha256.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_filefn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_filcreat.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_headers.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_blake2s.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_options.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_volume.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/unrar_isnt.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_system.cpp$(ObjectSuffix) 
+	$(IntermediateDirectory)/arc_arc.cpp$(ObjectSuffix) $(IntermediateDirectory)/zip_zip.cpp$(ObjectSuffix) $(IntermediateDirectory)/lzh_lzh.cpp$(ObjectSuffix) $(IntermediateDirectory)/cab_cab.cpp$(ObjectSuffix) $(IntermediateDirectory)/targz_targz.cpp$(ObjectSuffix) $(IntermediateDirectory)/7z_7z.cpp$(ObjectSuffix) $(IntermediateDirectory)/7z_7zMain.c$(ObjectSuffix) $(IntermediateDirectory)/unrar_scantree.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_sha1.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_threadpool.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/unrar_crc.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_hash.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_strlist.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rs16.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_resource.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_consio.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_secpassword.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_qopen.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_recvol.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rijndael.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/unrar_timefn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_encname.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rawread.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_file.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_strfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_sha256.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_filefn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_filcreat.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_headers.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_blake2s.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/unrar_options.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_volume.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_isnt.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_system.cpp$(ObjectSuffix) 
 
-Objects1=$(IntermediateDirectory)/unrar_crypt.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rar.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_cmddata.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_extinfo.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_filestr.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_ui.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_list.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_find.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/unrar_smallfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_unicode.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_pathfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_global.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rarvm.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_getbits.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rs.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_errhnd.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_archive.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_dll.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/unrar_extract.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_match.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_unpack.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_arcread.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rdwrfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rarpch.cpp$(ObjectSuffix) 
+Objects1=$(IntermediateDirectory)/unrar_crypt.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rar.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_cmddata.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_extinfo.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_filestr.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_ui.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/unrar_list.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_find.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_smallfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_unicode.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_pathfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_global.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rarvm.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_getbits.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rs.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_errhnd.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/unrar_archive.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_dll.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_extract.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_match.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_unpack.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_arcread.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rdwrfn.cpp$(ObjectSuffix) $(IntermediateDirectory)/unrar_rarpch.cpp$(ObjectSuffix) $(IntermediateDirectory)/C_Lzma86Dec.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zDec.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/C_Ppmd7Dec.c$(ObjectSuffix) $(IntermediateDirectory)/C_Sha1.c$(ObjectSuffix) $(IntermediateDirectory)/C_BraIA64.c$(ObjectSuffix) $(IntermediateDirectory)/C_Xz.c$(ObjectSuffix) $(IntermediateDirectory)/C_Lzma2Dec.c$(ObjectSuffix) $(IntermediateDirectory)/C_AesOpt.c$(ObjectSuffix) $(IntermediateDirectory)/C_BwtSort.c$(ObjectSuffix) $(IntermediateDirectory)/C_Bra86.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zCrcOpt.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zAlloc.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/C_LzmaLib.c$(ObjectSuffix) $(IntermediateDirectory)/C_HuffEnc.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zBuf.c$(ObjectSuffix) $(IntermediateDirectory)/C_XzDec.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zBuf2.c$(ObjectSuffix) $(IntermediateDirectory)/C_Lzma86Enc.c$(ObjectSuffix) $(IntermediateDirectory)/C_Alloc.c$(ObjectSuffix) $(IntermediateDirectory)/C_XzCrc64.c$(ObjectSuffix) $(IntermediateDirectory)/C_XzEnc.c$(ObjectSuffix) $(IntermediateDirectory)/C_Ppmd8.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/C_Aes.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zCrc.c$(ObjectSuffix) $(IntermediateDirectory)/C_Bcj2.c$(ObjectSuffix) $(IntermediateDirectory)/C_Delta.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zFile.c$(ObjectSuffix) $(IntermediateDirectory)/C_Bcj2Enc.c$(ObjectSuffix) $(IntermediateDirectory)/C_Ppmd8Enc.c$(ObjectSuffix) 
+
+Objects2=$(IntermediateDirectory)/C_LzmaEnc.c$(ObjectSuffix) $(IntermediateDirectory)/C_Ppmd7Enc.c$(ObjectSuffix) $(IntermediateDirectory)/C_7zStream.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/C_Ppmd8Dec.c$(ObjectSuffix) $(IntermediateDirectory)/C_XzCrc64Opt.c$(ObjectSuffix) $(IntermediateDirectory)/C_LzmaDec.c$(ObjectSuffix) $(IntermediateDirectory)/C_XzIn.c$(ObjectSuffix) $(IntermediateDirectory)/C_CpuArch.c$(ObjectSuffix) $(IntermediateDirectory)/C_LzFind.c$(ObjectSuffix) $(IntermediateDirectory)/C_Ppmd7.c$(ObjectSuffix) $(IntermediateDirectory)/C_Lzma2Enc.c$(ObjectSuffix) $(IntermediateDirectory)/C_Sha256.c$(ObjectSuffix) $(IntermediateDirectory)/C_Sort.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/C_7zArcIn.c$(ObjectSuffix) $(IntermediateDirectory)/C_Bra.c$(ObjectSuffix) $(IntermediateDirectory)/C_Blake2s.c$(ObjectSuffix) 
 
 
 
-Objects=$(Objects0) $(Objects1) 
+Objects=$(Objects0) $(Objects1) $(Objects2) 
 
 ##
 ## Main Build Targets 
@@ -86,6 +93,7 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
 	@echo $(Objects1) >> $(ObjectsFileList)
+	@echo $(Objects2) >> $(ObjectsFileList)
 	$(SharedObjectLinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
 	@$(MakeDirCommand) "../.build-debug"
 	@echo rebuilt > "../.build-debug/multiarc"
@@ -231,6 +239,16 @@ $(IntermediateDirectory)/targz_targz.cpp$(ObjectSuffix): src/formats/targz/targz
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/formats/targz/targz.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/targz_targz.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/targz_targz.cpp$(PreprocessSuffix): src/formats/targz/targz.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/targz_targz.cpp$(PreprocessSuffix) "src/formats/targz/targz.cpp"
+
+$(IntermediateDirectory)/7z_7z.cpp$(ObjectSuffix): src/formats/7z/7z.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/formats/7z/7z.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/7z_7z.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/7z_7z.cpp$(PreprocessSuffix): src/formats/7z/7z.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/7z_7z.cpp$(PreprocessSuffix) "src/formats/7z/7z.cpp"
+
+$(IntermediateDirectory)/7z_7zMain.c$(ObjectSuffix): src/formats/7z/7zMain.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/7zMain.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/7z_7zMain.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/7z_7zMain.c$(PreprocessSuffix): src/formats/7z/7zMain.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/7z_7zMain.c$(PreprocessSuffix) "src/formats/7z/7zMain.c"
 
 $(IntermediateDirectory)/unrar_scantree.cpp$(ObjectSuffix): src/formats/rar/unrar/scantree.cpp 
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/formats/rar/unrar/scantree.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/unrar_scantree.cpp$(ObjectSuffix) $(IncludePath)
@@ -486,6 +504,231 @@ $(IntermediateDirectory)/unrar_rarpch.cpp$(ObjectSuffix): src/formats/rar/unrar/
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/formats/rar/unrar/rarpch.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/unrar_rarpch.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/unrar_rarpch.cpp$(PreprocessSuffix): src/formats/rar/unrar/rarpch.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/unrar_rarpch.cpp$(PreprocessSuffix) "src/formats/rar/unrar/rarpch.cpp"
+
+$(IntermediateDirectory)/C_Lzma86Dec.c$(ObjectSuffix): src/formats/7z/C/Lzma86Dec.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Lzma86Dec.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Lzma86Dec.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Lzma86Dec.c$(PreprocessSuffix): src/formats/7z/C/Lzma86Dec.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Lzma86Dec.c$(PreprocessSuffix) "src/formats/7z/C/Lzma86Dec.c"
+
+$(IntermediateDirectory)/C_7zDec.c$(ObjectSuffix): src/formats/7z/C/7zDec.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zDec.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zDec.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zDec.c$(PreprocessSuffix): src/formats/7z/C/7zDec.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zDec.c$(PreprocessSuffix) "src/formats/7z/C/7zDec.c"
+
+$(IntermediateDirectory)/C_Ppmd7Dec.c$(ObjectSuffix): src/formats/7z/C/Ppmd7Dec.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Ppmd7Dec.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Ppmd7Dec.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Ppmd7Dec.c$(PreprocessSuffix): src/formats/7z/C/Ppmd7Dec.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Ppmd7Dec.c$(PreprocessSuffix) "src/formats/7z/C/Ppmd7Dec.c"
+
+$(IntermediateDirectory)/C_Sha1.c$(ObjectSuffix): src/formats/7z/C/Sha1.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Sha1.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Sha1.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Sha1.c$(PreprocessSuffix): src/formats/7z/C/Sha1.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Sha1.c$(PreprocessSuffix) "src/formats/7z/C/Sha1.c"
+
+$(IntermediateDirectory)/C_BraIA64.c$(ObjectSuffix): src/formats/7z/C/BraIA64.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/BraIA64.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_BraIA64.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_BraIA64.c$(PreprocessSuffix): src/formats/7z/C/BraIA64.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_BraIA64.c$(PreprocessSuffix) "src/formats/7z/C/BraIA64.c"
+
+$(IntermediateDirectory)/C_Xz.c$(ObjectSuffix): src/formats/7z/C/Xz.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Xz.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Xz.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Xz.c$(PreprocessSuffix): src/formats/7z/C/Xz.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Xz.c$(PreprocessSuffix) "src/formats/7z/C/Xz.c"
+
+$(IntermediateDirectory)/C_Lzma2Dec.c$(ObjectSuffix): src/formats/7z/C/Lzma2Dec.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Lzma2Dec.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Lzma2Dec.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Lzma2Dec.c$(PreprocessSuffix): src/formats/7z/C/Lzma2Dec.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Lzma2Dec.c$(PreprocessSuffix) "src/formats/7z/C/Lzma2Dec.c"
+
+$(IntermediateDirectory)/C_AesOpt.c$(ObjectSuffix): src/formats/7z/C/AesOpt.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/AesOpt.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_AesOpt.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_AesOpt.c$(PreprocessSuffix): src/formats/7z/C/AesOpt.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_AesOpt.c$(PreprocessSuffix) "src/formats/7z/C/AesOpt.c"
+
+$(IntermediateDirectory)/C_BwtSort.c$(ObjectSuffix): src/formats/7z/C/BwtSort.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/BwtSort.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_BwtSort.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_BwtSort.c$(PreprocessSuffix): src/formats/7z/C/BwtSort.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_BwtSort.c$(PreprocessSuffix) "src/formats/7z/C/BwtSort.c"
+
+$(IntermediateDirectory)/C_Bra86.c$(ObjectSuffix): src/formats/7z/C/Bra86.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Bra86.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Bra86.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Bra86.c$(PreprocessSuffix): src/formats/7z/C/Bra86.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Bra86.c$(PreprocessSuffix) "src/formats/7z/C/Bra86.c"
+
+$(IntermediateDirectory)/C_7zCrcOpt.c$(ObjectSuffix): src/formats/7z/C/7zCrcOpt.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zCrcOpt.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zCrcOpt.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zCrcOpt.c$(PreprocessSuffix): src/formats/7z/C/7zCrcOpt.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zCrcOpt.c$(PreprocessSuffix) "src/formats/7z/C/7zCrcOpt.c"
+
+$(IntermediateDirectory)/C_7zAlloc.c$(ObjectSuffix): src/formats/7z/C/7zAlloc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zAlloc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zAlloc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zAlloc.c$(PreprocessSuffix): src/formats/7z/C/7zAlloc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zAlloc.c$(PreprocessSuffix) "src/formats/7z/C/7zAlloc.c"
+
+$(IntermediateDirectory)/C_LzmaLib.c$(ObjectSuffix): src/formats/7z/C/LzmaLib.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/LzmaLib.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_LzmaLib.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_LzmaLib.c$(PreprocessSuffix): src/formats/7z/C/LzmaLib.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_LzmaLib.c$(PreprocessSuffix) "src/formats/7z/C/LzmaLib.c"
+
+$(IntermediateDirectory)/C_HuffEnc.c$(ObjectSuffix): src/formats/7z/C/HuffEnc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/HuffEnc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_HuffEnc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_HuffEnc.c$(PreprocessSuffix): src/formats/7z/C/HuffEnc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_HuffEnc.c$(PreprocessSuffix) "src/formats/7z/C/HuffEnc.c"
+
+$(IntermediateDirectory)/C_7zBuf.c$(ObjectSuffix): src/formats/7z/C/7zBuf.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zBuf.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zBuf.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zBuf.c$(PreprocessSuffix): src/formats/7z/C/7zBuf.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zBuf.c$(PreprocessSuffix) "src/formats/7z/C/7zBuf.c"
+
+$(IntermediateDirectory)/C_XzDec.c$(ObjectSuffix): src/formats/7z/C/XzDec.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/XzDec.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_XzDec.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_XzDec.c$(PreprocessSuffix): src/formats/7z/C/XzDec.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_XzDec.c$(PreprocessSuffix) "src/formats/7z/C/XzDec.c"
+
+$(IntermediateDirectory)/C_7zBuf2.c$(ObjectSuffix): src/formats/7z/C/7zBuf2.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zBuf2.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zBuf2.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zBuf2.c$(PreprocessSuffix): src/formats/7z/C/7zBuf2.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zBuf2.c$(PreprocessSuffix) "src/formats/7z/C/7zBuf2.c"
+
+$(IntermediateDirectory)/C_Lzma86Enc.c$(ObjectSuffix): src/formats/7z/C/Lzma86Enc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Lzma86Enc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Lzma86Enc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Lzma86Enc.c$(PreprocessSuffix): src/formats/7z/C/Lzma86Enc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Lzma86Enc.c$(PreprocessSuffix) "src/formats/7z/C/Lzma86Enc.c"
+
+$(IntermediateDirectory)/C_Alloc.c$(ObjectSuffix): src/formats/7z/C/Alloc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Alloc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Alloc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Alloc.c$(PreprocessSuffix): src/formats/7z/C/Alloc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Alloc.c$(PreprocessSuffix) "src/formats/7z/C/Alloc.c"
+
+$(IntermediateDirectory)/C_XzCrc64.c$(ObjectSuffix): src/formats/7z/C/XzCrc64.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/XzCrc64.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_XzCrc64.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_XzCrc64.c$(PreprocessSuffix): src/formats/7z/C/XzCrc64.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_XzCrc64.c$(PreprocessSuffix) "src/formats/7z/C/XzCrc64.c"
+
+$(IntermediateDirectory)/C_XzEnc.c$(ObjectSuffix): src/formats/7z/C/XzEnc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/XzEnc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_XzEnc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_XzEnc.c$(PreprocessSuffix): src/formats/7z/C/XzEnc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_XzEnc.c$(PreprocessSuffix) "src/formats/7z/C/XzEnc.c"
+
+$(IntermediateDirectory)/C_Ppmd8.c$(ObjectSuffix): src/formats/7z/C/Ppmd8.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Ppmd8.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Ppmd8.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Ppmd8.c$(PreprocessSuffix): src/formats/7z/C/Ppmd8.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Ppmd8.c$(PreprocessSuffix) "src/formats/7z/C/Ppmd8.c"
+
+$(IntermediateDirectory)/C_Aes.c$(ObjectSuffix): src/formats/7z/C/Aes.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Aes.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Aes.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Aes.c$(PreprocessSuffix): src/formats/7z/C/Aes.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Aes.c$(PreprocessSuffix) "src/formats/7z/C/Aes.c"
+
+$(IntermediateDirectory)/C_7zCrc.c$(ObjectSuffix): src/formats/7z/C/7zCrc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zCrc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zCrc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zCrc.c$(PreprocessSuffix): src/formats/7z/C/7zCrc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zCrc.c$(PreprocessSuffix) "src/formats/7z/C/7zCrc.c"
+
+$(IntermediateDirectory)/C_Bcj2.c$(ObjectSuffix): src/formats/7z/C/Bcj2.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Bcj2.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Bcj2.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Bcj2.c$(PreprocessSuffix): src/formats/7z/C/Bcj2.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Bcj2.c$(PreprocessSuffix) "src/formats/7z/C/Bcj2.c"
+
+$(IntermediateDirectory)/C_Delta.c$(ObjectSuffix): src/formats/7z/C/Delta.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Delta.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Delta.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Delta.c$(PreprocessSuffix): src/formats/7z/C/Delta.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Delta.c$(PreprocessSuffix) "src/formats/7z/C/Delta.c"
+
+$(IntermediateDirectory)/C_7zFile.c$(ObjectSuffix): src/formats/7z/C/7zFile.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zFile.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zFile.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zFile.c$(PreprocessSuffix): src/formats/7z/C/7zFile.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zFile.c$(PreprocessSuffix) "src/formats/7z/C/7zFile.c"
+
+$(IntermediateDirectory)/C_Bcj2Enc.c$(ObjectSuffix): src/formats/7z/C/Bcj2Enc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Bcj2Enc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Bcj2Enc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Bcj2Enc.c$(PreprocessSuffix): src/formats/7z/C/Bcj2Enc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Bcj2Enc.c$(PreprocessSuffix) "src/formats/7z/C/Bcj2Enc.c"
+
+$(IntermediateDirectory)/C_Ppmd8Enc.c$(ObjectSuffix): src/formats/7z/C/Ppmd8Enc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Ppmd8Enc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Ppmd8Enc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Ppmd8Enc.c$(PreprocessSuffix): src/formats/7z/C/Ppmd8Enc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Ppmd8Enc.c$(PreprocessSuffix) "src/formats/7z/C/Ppmd8Enc.c"
+
+$(IntermediateDirectory)/C_LzmaEnc.c$(ObjectSuffix): src/formats/7z/C/LzmaEnc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/LzmaEnc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_LzmaEnc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_LzmaEnc.c$(PreprocessSuffix): src/formats/7z/C/LzmaEnc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_LzmaEnc.c$(PreprocessSuffix) "src/formats/7z/C/LzmaEnc.c"
+
+$(IntermediateDirectory)/C_Ppmd7Enc.c$(ObjectSuffix): src/formats/7z/C/Ppmd7Enc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Ppmd7Enc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Ppmd7Enc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Ppmd7Enc.c$(PreprocessSuffix): src/formats/7z/C/Ppmd7Enc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Ppmd7Enc.c$(PreprocessSuffix) "src/formats/7z/C/Ppmd7Enc.c"
+
+$(IntermediateDirectory)/C_7zStream.c$(ObjectSuffix): src/formats/7z/C/7zStream.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zStream.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zStream.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zStream.c$(PreprocessSuffix): src/formats/7z/C/7zStream.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zStream.c$(PreprocessSuffix) "src/formats/7z/C/7zStream.c"
+
+$(IntermediateDirectory)/C_Ppmd8Dec.c$(ObjectSuffix): src/formats/7z/C/Ppmd8Dec.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Ppmd8Dec.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Ppmd8Dec.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Ppmd8Dec.c$(PreprocessSuffix): src/formats/7z/C/Ppmd8Dec.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Ppmd8Dec.c$(PreprocessSuffix) "src/formats/7z/C/Ppmd8Dec.c"
+
+$(IntermediateDirectory)/C_XzCrc64Opt.c$(ObjectSuffix): src/formats/7z/C/XzCrc64Opt.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/XzCrc64Opt.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_XzCrc64Opt.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_XzCrc64Opt.c$(PreprocessSuffix): src/formats/7z/C/XzCrc64Opt.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_XzCrc64Opt.c$(PreprocessSuffix) "src/formats/7z/C/XzCrc64Opt.c"
+
+$(IntermediateDirectory)/C_LzmaDec.c$(ObjectSuffix): src/formats/7z/C/LzmaDec.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/LzmaDec.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_LzmaDec.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_LzmaDec.c$(PreprocessSuffix): src/formats/7z/C/LzmaDec.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_LzmaDec.c$(PreprocessSuffix) "src/formats/7z/C/LzmaDec.c"
+
+$(IntermediateDirectory)/C_XzIn.c$(ObjectSuffix): src/formats/7z/C/XzIn.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/XzIn.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_XzIn.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_XzIn.c$(PreprocessSuffix): src/formats/7z/C/XzIn.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_XzIn.c$(PreprocessSuffix) "src/formats/7z/C/XzIn.c"
+
+$(IntermediateDirectory)/C_CpuArch.c$(ObjectSuffix): src/formats/7z/C/CpuArch.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/CpuArch.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_CpuArch.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_CpuArch.c$(PreprocessSuffix): src/formats/7z/C/CpuArch.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_CpuArch.c$(PreprocessSuffix) "src/formats/7z/C/CpuArch.c"
+
+$(IntermediateDirectory)/C_LzFind.c$(ObjectSuffix): src/formats/7z/C/LzFind.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/LzFind.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_LzFind.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_LzFind.c$(PreprocessSuffix): src/formats/7z/C/LzFind.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_LzFind.c$(PreprocessSuffix) "src/formats/7z/C/LzFind.c"
+
+$(IntermediateDirectory)/C_Ppmd7.c$(ObjectSuffix): src/formats/7z/C/Ppmd7.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Ppmd7.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Ppmd7.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Ppmd7.c$(PreprocessSuffix): src/formats/7z/C/Ppmd7.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Ppmd7.c$(PreprocessSuffix) "src/formats/7z/C/Ppmd7.c"
+
+$(IntermediateDirectory)/C_Lzma2Enc.c$(ObjectSuffix): src/formats/7z/C/Lzma2Enc.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Lzma2Enc.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Lzma2Enc.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Lzma2Enc.c$(PreprocessSuffix): src/formats/7z/C/Lzma2Enc.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Lzma2Enc.c$(PreprocessSuffix) "src/formats/7z/C/Lzma2Enc.c"
+
+$(IntermediateDirectory)/C_Sha256.c$(ObjectSuffix): src/formats/7z/C/Sha256.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Sha256.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Sha256.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Sha256.c$(PreprocessSuffix): src/formats/7z/C/Sha256.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Sha256.c$(PreprocessSuffix) "src/formats/7z/C/Sha256.c"
+
+$(IntermediateDirectory)/C_Sort.c$(ObjectSuffix): src/formats/7z/C/Sort.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Sort.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Sort.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Sort.c$(PreprocessSuffix): src/formats/7z/C/Sort.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Sort.c$(PreprocessSuffix) "src/formats/7z/C/Sort.c"
+
+$(IntermediateDirectory)/C_7zArcIn.c$(ObjectSuffix): src/formats/7z/C/7zArcIn.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/7zArcIn.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_7zArcIn.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_7zArcIn.c$(PreprocessSuffix): src/formats/7z/C/7zArcIn.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_7zArcIn.c$(PreprocessSuffix) "src/formats/7z/C/7zArcIn.c"
+
+$(IntermediateDirectory)/C_Bra.c$(ObjectSuffix): src/formats/7z/C/Bra.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Bra.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Bra.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Bra.c$(PreprocessSuffix): src/formats/7z/C/Bra.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Bra.c$(PreprocessSuffix) "src/formats/7z/C/Bra.c"
+
+$(IntermediateDirectory)/C_Blake2s.c$(ObjectSuffix): src/formats/7z/C/Blake2s.c 
+	$(CC) $(SourceSwitch) "./src/formats/7z/C/Blake2s.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/C_Blake2s.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/C_Blake2s.c$(PreprocessSuffix): src/formats/7z/C/Blake2s.c
+	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/C_Blake2s.c$(PreprocessSuffix) "src/formats/7z/C/Blake2s.c"
 
 ##
 ## Clean

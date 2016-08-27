@@ -200,6 +200,100 @@
       <VirtualDirectory Name="targz">
         <File Name="src/formats/targz/targz.cpp"/>
       </VirtualDirectory>
+      <VirtualDirectory Name="7z">
+        <VirtualDirectory Name="C">
+          <File Name="src/formats/7z/C/7zCrc.h"/>
+          <File Name="src/formats/7z/C/Ppmd8.h"/>
+          <File Name="src/formats/7z/C/Lzma86Dec.c"/>
+          <File Name="src/formats/7z/C/7zDec.c"/>
+          <File Name="src/formats/7z/C/Ppmd7Dec.c"/>
+          <File Name="src/formats/7z/C/Sha1.c"/>
+          <File Name="src/formats/7z/C/MtCoder.c" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/7z/C/7zBuf.h"/>
+          <File Name="src/formats/7z/C/BraIA64.c"/>
+          <File Name="src/formats/7z/C/Xz.c"/>
+          <File Name="src/formats/7z/C/Lzma2Dec.c"/>
+          <File Name="src/formats/7z/C/LzHash.h"/>
+          <File Name="src/formats/7z/C/7zVersion.h"/>
+          <File Name="src/formats/7z/C/CpuArch.h"/>
+          <File Name="src/formats/7z/C/Threads.c" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/7z/C/AesOpt.c"/>
+          <File Name="src/formats/7z/C/BwtSort.c"/>
+          <File Name="src/formats/7z/C/Bra86.c"/>
+          <File Name="src/formats/7z/C/7zFile.h"/>
+          <File Name="src/formats/7z/C/7zCrcOpt.c"/>
+          <File Name="src/formats/7z/C/LzmaEnc.h"/>
+          <File Name="src/formats/7z/C/7zAlloc.c"/>
+          <File Name="src/formats/7z/C/LzmaLib.c"/>
+          <File Name="src/formats/7z/C/Sha1.h"/>
+          <File Name="src/formats/7z/C/RotateDefs.h"/>
+          <File Name="src/formats/7z/C/Aes.h"/>
+          <File Name="src/formats/7z/C/HuffEnc.c"/>
+          <File Name="src/formats/7z/C/7zBuf.c"/>
+          <File Name="src/formats/7z/C/Sort.h"/>
+          <File Name="src/formats/7z/C/XzDec.c"/>
+          <File Name="src/formats/7z/C/Alloc.h"/>
+          <File Name="src/formats/7z/C/7zBuf2.c"/>
+          <File Name="src/formats/7z/C/Blake2.h"/>
+          <File Name="src/formats/7z/C/Lzma86Enc.c"/>
+          <File Name="src/formats/7z/C/Alloc.c"/>
+          <File Name="src/formats/7z/C/Sha256.h"/>
+          <File Name="src/formats/7z/C/XzCrc64.c"/>
+          <File Name="src/formats/7z/C/XzEnc.c"/>
+          <File Name="src/formats/7z/C/Ppmd8.c"/>
+          <File Name="src/formats/7z/C/Aes.c"/>
+          <File Name="src/formats/7z/C/7zCrc.c"/>
+          <File Name="src/formats/7z/C/7zTypes.h"/>
+          <File Name="src/formats/7z/C/Bcj2.c"/>
+          <File Name="src/formats/7z/C/Bra.h"/>
+          <File Name="src/formats/7z/C/Delta.c"/>
+          <File Name="src/formats/7z/C/MtCoder.h"/>
+          <File Name="src/formats/7z/C/7zFile.c"/>
+          <File Name="src/formats/7z/C/Bcj2Enc.c"/>
+          <File Name="src/formats/7z/C/HuffEnc.h"/>
+          <File Name="src/formats/7z/C/Ppmd8Enc.c"/>
+          <File Name="src/formats/7z/C/LzmaEnc.c" ExcludeProjConfig=""/>
+          <File Name="src/formats/7z/C/LzFindMt.h"/>
+          <File Name="src/formats/7z/C/Ppmd7Enc.c"/>
+          <File Name="src/formats/7z/C/7zStream.c"/>
+          <File Name="src/formats/7z/C/7z.h"/>
+          <File Name="src/formats/7z/C/Ppmd8Dec.c"/>
+          <File Name="src/formats/7z/C/XzCrc64Opt.c"/>
+          <File Name="src/formats/7z/C/Lzma2Dec.h"/>
+          <File Name="src/formats/7z/C/LzmaDec.c"/>
+          <File Name="src/formats/7z/C/Xz.h"/>
+          <File Name="src/formats/7z/C/Threads.h"/>
+          <File Name="src/formats/7z/C/XzIn.c"/>
+          <File Name="src/formats/7z/C/CpuArch.c"/>
+          <File Name="src/formats/7z/C/LzFind.c"/>
+          <File Name="src/formats/7z/C/7zAlloc.h"/>
+          <File Name="src/formats/7z/C/LzmaLib.h"/>
+          <File Name="src/formats/7z/C/LzmaDec.h"/>
+          <File Name="src/formats/7z/C/Lzma2Enc.h"/>
+          <File Name="src/formats/7z/C/Ppmd7.c"/>
+          <File Name="src/formats/7z/C/Lzma2Enc.c"/>
+          <File Name="src/formats/7z/C/Ppmd.h"/>
+          <File Name="src/formats/7z/C/Sha256.c"/>
+          <File Name="src/formats/7z/C/Compiler.h"/>
+          <File Name="src/formats/7z/C/Lzma86.h"/>
+          <File Name="src/formats/7z/C/LzFindMt.c" ExcludeProjConfig="Debug"/>
+          <File Name="src/formats/7z/C/Ppmd7.h"/>
+          <File Name="src/formats/7z/C/BwtSort.h"/>
+          <File Name="src/formats/7z/C/Precomp.h"/>
+          <File Name="src/formats/7z/C/Bcj2.h"/>
+          <File Name="src/formats/7z/C/Delta.h"/>
+          <File Name="src/formats/7z/C/XzEnc.h"/>
+          <File Name="src/formats/7z/C/LzFind.h"/>
+          <File Name="src/formats/7z/C/XzCrc64.h"/>
+          <File Name="src/formats/7z/C/Sort.c"/>
+          <File Name="src/formats/7z/C/7zArcIn.c"/>
+          <File Name="src/formats/7z/C/Bra.c"/>
+          <File Name="src/formats/7z/C/Blake2s.c"/>
+        </VirtualDirectory>
+        <File Name="src/formats/7z/7z.cpp"/>
+        <File Name="src/formats/7z/7zMain.c"/>
+      </VirtualDirectory>
+      <File Name="src/formats/all.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="libpcre">
       <VirtualDirectory Name="test">
@@ -231,6 +325,8 @@
     <File Name="src/arcread.cpp"/>
     <File Name="src/arccmd.cpp"/>
   </VirtualDirectory>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -250,6 +346,7 @@
         <IncludePath Value="../WinPort"/>
         <IncludePath Value="src/formats/rar/unrar"/>
         <Preprocessor Value="RARDLL"/>
+        <Preprocessor Value="_7ZIP_ST"/>
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
@@ -327,6 +424,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug"/>
-  <Dependencies Name="Release"/>
 </CodeLite_Project>

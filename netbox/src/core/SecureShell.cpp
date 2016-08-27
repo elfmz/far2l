@@ -587,7 +587,10 @@ bool TSecureShell::TryFtp()
         }
         closesocket(Socket);
       }
+#else
+	  abort();
 #endif
+	
       if (Result)
       {
         LogEvent("FTP port opened, will suggest using FTP protocol.");

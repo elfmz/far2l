@@ -99,6 +99,7 @@ const char *GetMsg(int MsgId)
 
 
 int rar_main(int argc, char *argv[]);
+extern "C" int sevenz_main(int argc, char *argv[]);
 
 static int BuiltinMain(int argc, char * argv[])
 {
@@ -107,8 +108,10 @@ static int BuiltinMain(int argc, char * argv[])
 
 	int r = -2;
 	if (strcmp(argv[0], "rar")==0) {
-		r = rar_main(argc, (char **)&argv[0]);
-	} else
+		r = rar_main(argc, &argv[0]);
+	} else if (strcmp(argv[0], "7z")==0) {
+		r = sevenz_main(argc, &argv[0]);
+	} else		
 		fprintf(stderr, "BuiltinMain: bad target '%s'\n", argv[0]);	
 	return r;
 }

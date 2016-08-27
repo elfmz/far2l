@@ -58,11 +58,11 @@ const wchar_t *FileMasksWithExclude::FindExcludeChar(const wchar_t *masks)
 {
 	const wchar_t *pExclude = masks;
 
-	if (*pExclude == BAD_SLASH)
+	if (*pExclude == '\\')
 	{
 		pExclude++;
 
-		while (*pExclude && (*pExclude != BAD_SLASH || *(pExclude-1) == GOOD_SLASH))
+		while (*pExclude && (*pExclude != '\\' || *(pExclude-1) == GOOD_SLASH))
 			pExclude++;
 
 		while (*pExclude && *pExclude != EXCLUDEMASKSEPARATOR)

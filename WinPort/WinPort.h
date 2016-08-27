@@ -75,6 +75,10 @@ extern "C" {
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData));
 	WINPORT_DECL(RegSetValueEx, LONG, (HKEY hKey, LPCWSTR lpValueName, 
 		DWORD lpReserved, DWORD lpType, CONST BYTE * lpData, DWORD cbData));
+	WINPORT_DECL(RegQueryInfoKey, LONG, (HKEY hKey, LPTSTR lpClass, LPDWORD lpcClass,
+		LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen, LPDWORD lpcMaxClassLen,
+		LPDWORD lpcValues, LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen,
+		LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime));
 
 //other
 	WINPORT_DECL(GetLastError, DWORD, ());

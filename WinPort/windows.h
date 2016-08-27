@@ -68,6 +68,7 @@
 #define    RegEnumKeyEx			WINPORT(RegEnumKeyEx)
 #define    RegQueryValueEx			WINPORT(RegQueryValueEx)
 #define    RegSetValueEx			WINPORT(RegSetValueEx)
+#define    RegQueryInfoKey		WINPORT(RegQueryInfoKey)
 
 //other
 #define    GetLastError			WINPORT(GetLastError)

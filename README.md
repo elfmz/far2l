@@ -11,6 +11,7 @@ FAR for Windows<br>
 Wine<br>
 ANSICON<br>
 Portable UnRAR<br>
+7z ANSI-C Decoder<br>
 
 Before building:<br>
 apt-get install gawk m4 libglib2.0-dev libwxbase3.0-dev wx3.0-headers libwxgtk3.0-dev<br>
@@ -24,4 +25,4 @@ I implemented/borrowed from Wine some commonly used WinAPI functions. They all d
 However only main executable linked statically to WinPort, it also _exports_ WinPort functionality, so plugins use it without neccessity to bring own copy of its code. So plugin binary should not statically link to WinPort!<br>
 While FAR internally is UTF16, so WinPort contains UTF16- related stuff. However native Linux wchar_t size is 4 so potentially Linux FAR may be fully UTF32-capable in future, but while it uses Win32-style UTF16 functions - its not. However programmers must be aware on fact that wchar_t is not 2 bytes long anymore.<br>
 Inspect all printf format strings: unlike Windows in Linux both wide and multibyte printf-like functions has same multibyte and wide specifiers. That means %s is always multibyte, while %ls is always wide. So any %s used in wide-printf-s or %ws used in any printf should be replaces by %ls.
-Update from 17aug: now its possible by defining WINPORT_DIRECT to avoid renaming used WIndows API and also to avoid changing format strings as swprintf will be intercepted by compatibility wrapper.
+Update from 27aug: howevr now its possible by defining WINPORT_DIRECT to avoid renaming used WIndows API and also to avoid changing format strings as swprintf will be intercepted by compatibility wrapper.

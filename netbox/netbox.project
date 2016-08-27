@@ -329,7 +329,9 @@
       <PreBuild>
         <Command Enabled="yes">mkdir -p ../Build/Plugins/netbox/</Command>
       </PreBuild>
-      <PostBuild/>
+      <PostBuild>
+        <Command Enabled="yes">cp ./src/NetBox/*.lng ../Build/Plugins/netbox/bin/</Command>
+      </PostBuild>
       <CustomBuild Enabled="no">
         <RebuildCommand/>
         <CleanCommand/>

@@ -3,6 +3,21 @@
 
 #ifdef WINPORT_DIRECT
 
+//force 'normal' wsprintf be declared before our macro-redefinitions will
+# include <stdio.h>
+# include <wchar.h>
+
+# ifdef vswprintf
+#  undef vswprintf
+# endif
+#define vswprintf vswprintf_ws2ls
+
+# ifdef swprintf_ws2ls
+#  undef swprintf_ws2ls
+# endif
+#define swprintf swprintf_ws2ls
+
+
 #define    GetConsoleFontSize			WINPORT(GetConsoleFontSize)
 #define    GetCurrentConsoleFont		WINPORT(GetCurrentConsoleFont)
 #define    GetLargestConsoleWindowSize		WINPORT(GetLargestConsoleWindowSize)

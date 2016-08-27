@@ -85,8 +85,6 @@ PreBuild:
 ##
 ## Objects
 ##
-
--include $(IntermediateDirectory)/*$(DependSuffix)
 ##
 ## Clean
 ##

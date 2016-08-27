@@ -188,4 +188,15 @@
 	
 #define    WSAGetLastError			WINPORT(WSAGetLastError)
 
+
+//%s -> %ls, %ws -> %ls
+int vswprintf_ws2ls(wchar_t * ws, size_t len, const wchar_t * format, va_list arg );
+int swprintf_ws2ls (wchar_t* ws, size_t len, const wchar_t* format, ...);
+
+#undef     vswprintf
+#define    vswprintf  				vswprintf_ws2ls
+
+#undef     swprintf
+#define    swprintf  				swprintf_ws2ls
+
 #endif //#ifdef WINPORT_DIRECT

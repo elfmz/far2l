@@ -73,3 +73,10 @@ int WINAPI _export TARGZ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemI
 BOOL WINAPI _export TARGZ_CloseArchive(struct ArcInfo *Info);
 BOOL WINAPI _export TARGZ_GetFormatName(int Type,char *FormatName,char *DefaultExt);
 BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest);
+
+BOOL WINAPI _export SEVENZ_IsArchive(const char *Name,const unsigned char *Data,int DataSize);
+BOOL WINAPI _export SEVENZ_OpenArchive(const char *Name,int *Type);
+int WINAPI _export SEVENZ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info);
+BOOL WINAPI _export SEVENZ_CloseArchive(struct ArcInfo *Info);
+BOOL WINAPI _export SEVENZ_GetFormatName(int Type,char *FormatName,char *DefaultExt);
+BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest);

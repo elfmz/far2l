@@ -179,6 +179,7 @@ static int cmpforsearch(void *av, void *bv)
 void sk_init(void)
 {
     sktree = newtree234(cmpfortree);
+    uxsel_init();
 }
 
 void sk_cleanup(void)

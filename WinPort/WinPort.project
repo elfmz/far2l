@@ -144,8 +144,8 @@
     <File Name="KeyFileHelper.cpp"/>
     <File Name="APIConsole.cpp"/>
     <File Name="CallInMain.h"/>
-    <File Name="PrintFormat.cpp"/>
     <File Name="windows.h"/>
+    <File Name="APIPrintFormat.cpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

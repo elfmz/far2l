@@ -1,9 +1,12 @@
-#include <string.h>
-#include <stdarg.h>
-#include <wchar.h>
-#include <string>
-#include "WinCompat.h"
+#include "stdafx.h"
+#include <mutex>
+#include <errno.h>
+#include <error.h>
 #include "WinPort.h"
+#include "ConsoleOutput.h"
+#include "ConsoleInput.h"
+#include "WinPortHandle.h"
+#include "Utils.h"
 
 SHAREDSYMBOL int vswprintf_ws2ls(wchar_t * ws, size_t len, const wchar_t * format, va_list arg )
 {

@@ -249,9 +249,56 @@ class VTShell
 		return status;
 	}
 
+	bool IsControlOnlyPressed(DWORD dwControlKeyState)
+	{
+		return ( (dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0  &&
+				(dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|SHIFT_PRESSED)) == 0);
+	}
+	
 	std::string TranslateInput(const INPUT_RECORD &ir)
 	{
-		//switch ( ir.Event.KeyEvent.uChar.UnicodeChar )
+		
+		if (IsControlOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
+			char c = 0;
+			switch (ir.Event.KeyEvent.wVirtualKeyCode)
+			{
+			case 'A': c = (char)0x01; break;
+			case 'B': c = (char)0x02; break;
+			//case 'C': c = (char)0x03; break;
+			case 'D': c = (char)0x04; break;
+			case 'E': c = (char)0x05; break;
+			case 'F': c = (char)0x06; break;
+			case 'G': c = (char)0x07; break;
+			case 'H': c = (char)0x08; break;
+			case 'I': c = (char)0x09; break;
+			case 'J': c = (char)0x0a; break;
+			case 'K': c = (char)0x0b; break;
+			case 'L': c = (char)0x0c; break;			
+			case 'M': c = (char)0x0d; break;
+			case 'N': c = (char)0x0e; break;
+			case 'O': c = (char)0x0f; break;
+			case 'P': c = (char)0x10; break;
+			case 'Q': c = (char)0x11; break;
+			case 'R': c = (char)0x12; break;
+			case 'S': c = (char)0x13; break;
+			case 'T': c = (char)0x14; break;
+			case 'U': c = (char)0x15; break;
+			case 'V': c = (char)0x16; break;
+			case 'W': c = (char)0x17; break;
+			case 'X': c = (char)0x18; break;
+			case 'Y': c = (char)0x19; break;
+			case 'Z': c = (char)0x1a; break;
+			case '[': c = (char)0x1b; break;
+			case '\\': c = (char)0x1c; break;
+			case ']': c = (char)0x1d; break;
+			//case '^': c = (char)0x1e; break;
+			//case '_': c = (char)0x1f; break;
+			}
+			
+			if (c)
+				return std::string(&c, 1);
+		}
+		
 		switch ( ir.Event.KeyEvent.wVirtualKeyCode)
 		{
 			case VK_F1: return "\x1bOP";
@@ -281,8 +328,7 @@ class VTShell
 		}
 			
 		if (ir.Event.KeyEvent.wVirtualKeyCode=='C' && 
-			(ir.Event.KeyEvent.dwControlKeyState==LEFT_CTRL_PRESSED ||
-			ir.Event.KeyEvent.dwControlKeyState==RIGHT_CTRL_PRESSED)) {
+			IsControlOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
 				printf("Ctrl+C -> %u %u!\n",  _pid, _grp);
 				if (_grp!=-1)
 					killpg(_grp, SIGINT);

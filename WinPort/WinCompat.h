@@ -10,7 +10,11 @@
 
 #ifdef _WIN32
 # define GOOD_SLASH	'\\'
-# define BAD_SLASH	'/'
+# define OTHER_SLASH	'/'
+# define LGOOD_SLASH	L'\\'
+# define LOTHER_SLASH	L'/'
+# define WGOOD_SLASH	L"\\"
+# define WOTHER_SLASH	L"/"
 # define WS_FMT	"%ws"
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
@@ -35,10 +39,17 @@ typedef unsigned __int64 uint64_t;
 # define _In_
 # define _Out_
 # define _Inout_
+# define _Out_opt_
+# define _Inout_opt_
+# define _Reserved_
 # define _countof(x) (sizeof(x)/ sizeof(x[0]))
 
 # define GOOD_SLASH	'/'
-# define BAD_SLASH	'\\'
+# define OTHER_SLASH	'/'
+# define LGOOD_SLASH	L'/'
+# define LOTHER_SLASH	L'/'
+# define WGOOD_SLASH	L"/"
+# define WOTHER_SLASH	L"/"
 # define WS_FMT	"%ls"
 
 #define _wcsdup wcsdup
@@ -266,7 +277,7 @@ typedef PULONG PLCID;       // winnt
 typedef USHORT LANGID;      // winnt
 
 
-typedef struct RegDescriptor *HKEY;
+typedef HANDLE HKEY;
 typedef struct _OVERLAPPED	*LPOVERLAPPED;
 typedef HKEY *PHKEY;
 

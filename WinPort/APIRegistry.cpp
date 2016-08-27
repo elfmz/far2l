@@ -9,9 +9,10 @@
 
 #include "WinCompat.h"
 #include "WinPort.h"
+#include "WinPortHandle.h"
 #include "Utils.h"
 
-struct RegDescriptor
+struct WinPortHandleReg : WinPortHandle
 {
 	std::string dir;
 };
@@ -47,7 +48,6 @@ static std::string GetRegistrySubroot(const char *sub)
 	return rv;
 }
 
-struct RegDescriptors : std::set<RegDescriptor *>, std::mutex  {} g_reg_descriptors;
 static std::string HKDir(HKEY hKey)
 {
 	switch ((ULONG_PTR)hKey) {
@@ -60,12 +60,10 @@ static std::string HKDir(HKEY hKey)
 	}
 
 	std::string out;
-	RegDescriptor *rd = reinterpret_cast<RegDescriptor *>(hKey);
-	std::lock_guard<std::mutex> lock(g_reg_descriptors);
-	if (g_reg_descriptors.find(rd)!=g_reg_descriptors.end())
-		out = rd->dir;
+	AutoWinPortHandle<WinPortHandleReg> wph(hKey);
+	
+	if (wph) out = wph->dir;
 
-	//if (out.empty()) fprintf(stderr, "HKDir(0x%x) - not found\n", hKey);
 	return out;
 }
 
@@ -104,14 +102,12 @@ LONG RegXxxKeyEx(
 			*lpdwDisposition = REG_OPENED_EXISTING_KEY;
 
 
-	RegDescriptor *rd = new RegDescriptor;
+	WinPortHandleReg *rd = new WinPortHandleReg;
 	if (!rd)
 		return ERROR_OUTOFMEMORY;
 	rd->dir.swap(dir);
-	std::lock_guard<std::mutex> lock(g_reg_descriptors);
-	g_reg_descriptors.insert(rd);
-	*phkResult = reinterpret_cast<HKEY>(rd);
-	//fprintf(stderr, "RegXxxKeyEx: opened %s\n", rd->dir.c_str());
+	
+	*phkResult = WinPortHandle_Register(rd);
 	return ERROR_SUCCESS;
 }
 
@@ -198,15 +194,10 @@ extern "C" {
 
 	LONG WINPORT(RegCloseKey)(HKEY hKey)
 	{
-		//return RegCloseKey(hKey);
-		RegDescriptor *rd = reinterpret_cast<RegDescriptor *>(hKey);
-		{
-			std::lock_guard<std::mutex> lock(g_reg_descriptors);
-			if (!g_reg_descriptors.erase(rd))
-				return ERROR_INVALID_HANDLE;
+		if (!WinPortHandle_Deregister(hKey)) {
+			return ERROR_INVALID_HANDLE;
 		}
 
-		delete rd;
 		return ERROR_SUCCESS;
 	}
 
@@ -234,13 +225,13 @@ extern "C" {
 		    HKEY    hKey,
 		 LPCWSTR lpValueName)
 	{
-		RegDescriptor *rd = reinterpret_cast<RegDescriptor *>(hKey);
-		std::lock_guard<std::mutex> lock(g_reg_descriptors);
-		if (g_reg_descriptors.find(rd)==g_reg_descriptors.end()) {
+		AutoWinPortHandle<WinPortHandleReg> wph(hKey);
+		if (!wph) {
 			fprintf(stderr, "RegDeleteValue: bad handle - %p, " WS_FMT "\n", hKey, lpValueName);
 			return ERROR_INVALID_HANDLE;
 		}
-		std::string path = rd->dir; 
+		
+		std::string path = wph->dir; 
 		path+= WINPORT_REG_DIV_VALUE;
 		if (lpValueName) path+= Wide2MB(lpValueName);
 		return (remove(path.c_str())==0) ? ERROR_SUCCESS : ERROR_PATH_NOT_FOUND;
@@ -269,14 +260,14 @@ extern "C" {
 
 		name.erase(0, strlen(WINPORT_REG_DIV_KEY)-1);
 
-		std::wstring name16 = StrMB2Wide(name);
+		std::wstring wname = StrMB2Wide(name);
 		if (lpcClass) *lpcClass = 0;
-		if (*lpcName <= name16.size()) {
-			*lpcName = name16.size() + 1;
+		if (*lpcName <= wname.size()) {
+			*lpcName = wname.size() + 1;
 			return ERROR_MORE_DATA;
 		}
-		memcpy(lpName, name16.c_str(), (name16.size() + 1) * sizeof(*lpName));
-		*lpcName = name16.size();
+		memcpy(lpName, wname.c_str(), (wname.size() + 1) * sizeof(*lpName));
+		*lpcName = wname.size();
 		return ERROR_SUCCESS;
 	}
 
@@ -310,24 +301,29 @@ extern "C" {
 		getline (is, type);
 		getline (is, value);
 		//fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' %p\n", prefixed_name.c_str(), type.c_str(), value.c_str(), lpData);
-		if (lpValueName) {
-			const std::wstring &u16name = StrMB2Wide(name);
-			if (*lpcchValueName <= u16name.size())
-				return ERROR_MORE_DATA;
-			wcscpy(lpValueName, (const wchar_t *)u16name.c_str());
-			*lpcchValueName = u16name.size();
+		LONG out = ERROR_SUCCESS;
+		const std::wstring &namew = StrMB2Wide(name);
+		if (lpValueName && lpcchValueName) {
+			if (namew.size() < *lpcchValueName) {
+				wcscpy(lpValueName, (const wchar_t *)namew.c_str());
+			} else
+				out = ERROR_MORE_DATA;
 		}
+		if (lpcchValueName)
+			*lpcchValueName = namew.size();
+		
 		DWORD tip = (DWORD)atoi(type.c_str());
 		if (lpType) *lpType = tip;
+		
 		if (lpData && lpcbData) {
 			for (DWORD i = 0;;++i)
 			{
 				if (i * 2 >= value.size())
 					break;
 				if (i>=*lpcbData) {
-					*lpcbData = value.size() / 2;
 					//fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u  MORE_DATA\n", prefixed_name.c_str(), type.c_str(), value.c_str(),*lpcbData);
-					return ERROR_MORE_DATA;
+					out = ERROR_MORE_DATA;
+					break;
 				}
 
 				lpData[i] = Hex2Byte(value.c_str() + i * 2);
@@ -335,6 +331,7 @@ extern "C" {
 		}
 		if (lpcbData)
 			*lpcbData = value.size()/2;
+		
 		//if (!lpData) {while (!IsDebuggerPresent())Sleep(1000); DebugBreak();}
 		/*
 		if (tip==REG_SZ || tip==REG_MULTI_SZ|| tip==REG_EXPAND_SZ)
@@ -347,16 +344,11 @@ extern "C" {
 		return ERROR_SUCCESS;
 	}
 
-	LONG WINPORT(RegEnumValue)(
-		        HKEY    hKey,
-		        DWORD   dwIndex,
-		       LPWSTR  lpValueName,
-		     LPDWORD lpcchValueName,
-		  LPDWORD lpReserved,
-		   LPDWORD lpType,
-		   LPBYTE  lpData,
-		 LPDWORD lpcbData
-		)
+	LONG WINPORT(RegEnumValue)( HKEY    hKey,
+		        DWORD   dwIndex, LPWSTR  lpValueName,
+				LPDWORD lpcchValueName,
+				LPDWORD lpReserved,  LPDWORD lpType,
+				LPBYTE  lpData, LPDWORD lpcbData )
 	{
 		const std::string &root = HKDir(hKey);
 		if (root.empty()) {
@@ -394,13 +386,12 @@ extern "C" {
 		             DWORD   cbData
 		)
 	{
-		RegDescriptor *rd = reinterpret_cast<RegDescriptor *>(hKey);
-		std::lock_guard<std::mutex> lock(g_reg_descriptors);
-		if (g_reg_descriptors.find(rd)==g_reg_descriptors.end()) {
+		AutoWinPortHandle<WinPortHandleReg> wph(hKey);
+		if (!wph) {
 			fprintf(stderr, "RegSetValueEx: bad handle - %p\n", hKey);
 			return ERROR_INVALID_HANDLE;
 		}
-		std::string path = rd->dir; 
+		std::string path = wph->dir; 
 		path+= WINPORT_REG_DIV_VALUE;
 		path+= Wide2MB(lpValueName);
 		//fprintf(stderr, "RegSetValue type=%u cbData=%u\n", dwType, cbData);
@@ -420,29 +411,64 @@ extern "C" {
 		os << std::endl;
 		return ERROR_SUCCESS;
 	}
-/*
+	
+	LONG WINPORT(RegQueryInfoKey)(
+	_In_        HKEY      hKey,
+	_Out_opt_   LPTSTR    lpClass,
+	_Inout_opt_ LPDWORD   lpcClass,
+	_Reserved_  LPDWORD   lpReserved,
+	_Out_opt_   LPDWORD   lpcSubKeys,
+	_Out_opt_   LPDWORD   lpcMaxSubKeyLen,
+	_Out_opt_   LPDWORD   lpcMaxClassLen,
+	_Out_opt_   LPDWORD   lpcValues,
+	_Out_opt_   LPDWORD   lpcMaxValueNameLen,
+	_Out_opt_   LPDWORD   lpcMaxValueLen,
+	_Out_opt_   LPDWORD   lpcbSecurityDescriptor,
+	_Out_opt_   PFILETIME lpftLastWriteTime)
+  {
+		AutoWinPortHandle<WinPortHandleReg> wph(hKey);
+		if (!wph)
+		{//TODO: FIXME: handle predefined HKEY_-s
+			fprintf(stderr, "RegQueryInfoKey: bad handle - %p\n", hKey);
+			return ERROR_INVALID_HANDLE;
+		}
+		
+		if (lpcMaxSubKeyLen) *lpcMaxSubKeyLen = 0;
+		if (lpcMaxClassLen) {
+			if (lpClass && lpcMaxClassLen ) *lpClass = 0;
+			*lpcMaxClassLen = 0;
+		}
+		if (lpcMaxValueNameLen) *lpcMaxValueNameLen = 0;
+		if (lpcMaxValueLen) *lpcMaxValueLen = 0;
+		if (lpcbSecurityDescriptor) *lpcbSecurityDescriptor = 0;
+		if (lpftLastWriteTime) memset(lpftLastWriteTime, 0, sizeof(*lpftLastWriteTime));
+		
+		for (DWORD i = 0;;++i) {
+			DWORD namelen = 0, classlen = 0;
+			LONG r = WINPORT(RegEnumKeyEx)( hKey, i, NULL, &namelen, NULL, NULL, &classlen, NULL);
+			if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA) {
+				if (lpcSubKeys) *lpcSubKeys = i;
+				break;
+			}
+			if (lpcMaxSubKeyLen) *lpcMaxSubKeyLen = std::max(*lpcMaxSubKeyLen, namelen);
+			if (lpcMaxClassLen) *lpcMaxClassLen = std::max(*lpcMaxClassLen, classlen);
+		}
+		
+		for (DWORD i = 0;;++i) {
+			DWORD  namelen = 0, datalen = 0;
+			LONG r = WINPORT(RegEnumValue)(hKey, i, NULL, &namelen, NULL, NULL, NULL, &datalen);
+			if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA) {
+				if (lpcValues) *lpcValues = i;
+				break;
+			}
+			if (lpcMaxValueNameLen) *lpcMaxValueNameLen = std::max(*lpcMaxValueNameLen, namelen);
+			if (lpcMaxValueLen) *lpcMaxValueLen = std::max(*lpcMaxValueLen, datalen);
+		}
+		
+		return ERROR_SUCCESS;
+  }
 
-	LONG WINPORT(RegQueryValueExA) (HKEY hKey, LPCSTR lpValueName, 
-		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
-	{
-		return WINPORT(RegQueryValueEx)(hKey, MB2Wide(lpValueName).c_str(), 
-			lpReserved, lpType, lpData, lpcbData);
-	}
 
-	LONG WINPORT(RegSetValueExA)(
-		             HKEY    hKey,
-		         LPCSTR lpValueName,
-		       DWORD   Reserved,
-		             DWORD   dwType,
-		       const BYTE    *lpData,
-		             DWORD   cbData
-		)
-	{
-		std::vector<WCHAR> tmp;
-		return WINPORT(RegSetValueEx)(hKey, MB2Wide(lpValueName).c_str(), 
-			lpReserved, lpType, lpData, lpcbData);
-	}
-*/
 	void WinPortInitRegistry()
 	{
 		if (_mkdir( GetRegistrySubroot("") .c_str()) <0)

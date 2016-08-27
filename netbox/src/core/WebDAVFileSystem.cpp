@@ -666,7 +666,7 @@ UnicodeString TWebDAVFileSystem::GetAbsolutePath(const UnicodeString & APath, bo
   }
   else
   {
-    AddTrailingBackslash = (APath[APath.Length()] == L'/');
+    AddTrailingBackslash = (APath[APath.Length()] == LOTHER_SLASH);
   }
 
   UnicodeString Result = core::AbsolutePath(GetCurrDirectory(), APath);

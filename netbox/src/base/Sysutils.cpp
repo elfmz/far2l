@@ -572,7 +572,7 @@ UnicodeString FileSearch(const UnicodeString & AFileName, const UnicodeString & 
   UnicodeString Temp;
   UnicodeString Result;
   Temp = DirectoryList;
-  UnicodeString PathSeparators = L"/\\";
+  UnicodeString PathSeparators = L"/" WGOOD_SLASH "";
   do
   {
     intptr_t Index = ::Pos(Temp, PathSeparators);
@@ -957,9 +957,9 @@ void AppendChar(std::string & Str, const char Ch)
 
 void AppendPathDelimiterW(UnicodeString & Str)
 {
-  if (!Str.IsEmpty() && Str[Str.Length()] != L'/' && Str[Str.Length()] != L'\\')
+  if (!Str.IsEmpty() && Str[Str.Length()] != LOTHER_SLASH && Str[Str.Length()] != LGOOD_SLASH)
   {
-    Str += L"\\";
+    Str += L"" WGOOD_SLASH "";
   }
 }
 
@@ -1230,8 +1230,8 @@ UnicodeString ChangeFileExtension(const UnicodeString & APath, const UnicodeStri
 UnicodeString ExcludeTrailingBackslash(const UnicodeString & Str)
 {
   UnicodeString Result = Str;
-  if ((Result.Length() > 0) && ((Result[Result.Length()] == L'/') ||
-      (Result[Result.Length()] == L'\\')))
+  if ((Result.Length() > 0) && ((Result[Result.Length()] == LOTHER_SLASH) ||
+      (Result[Result.Length()] == LGOOD_SLASH)))
   {
     Result.SetLength(Result.Length() - 1);
   }
@@ -1242,9 +1242,9 @@ UnicodeString IncludeTrailingBackslash(const UnicodeString & Str)
 {
   UnicodeString Result = Str;
   intptr_t L = Result.Length();
-  if ((L == 0) || ((Result[L] != L'/') && (Result[L] != L'\\')))
+  if ((L == 0) || ((Result[L] != LOTHER_SLASH) && (Result[L] != LGOOD_SLASH)))
   {
-    Result += L'\\';
+    Result += LGOOD_SLASH;
   }
   return Result;
 }
@@ -1257,7 +1257,7 @@ UnicodeString IncludeTrailingPathDelimiter(const UnicodeString & Str)
 UnicodeString ExtractFileDir(const UnicodeString & Str)
 {
   UnicodeString Result;
-  intptr_t Pos = Str.LastDelimiter(L"/\\");
+  intptr_t Pos = Str.LastDelimiter(L"/" WGOOD_SLASH "");
   // it used to return Path when no slash was found
   if (Pos > 1)
   {
@@ -1619,7 +1619,7 @@ TDateTime SystemTimeToDateTime(const SYSTEMTIME & SystemTime)
 UnicodeString UnixExcludeLeadingBackslash(const UnicodeString & APath)
 {
   UnicodeString Result = APath;
-  while (!Result.IsEmpty() && Result[1] == L'/')
+  while (!Result.IsEmpty() && Result[1] == LOTHER_SLASH)
   {
     Result.Delete(1, 1);
   }

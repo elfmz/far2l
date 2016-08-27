@@ -202,7 +202,7 @@ TVSFixedFileInfo *GetFixedFileInfo(void * FileInfo)
   UINT Len;
   TVSFixedFileInfo *Result = nullptr;
 #ifndef __linux__
-  if (FileInfo && !::VerQueryValue(FileInfo, L"\\", reinterpret_cast<void **>(&Result), &Len))
+  if (FileInfo && !::VerQueryValue(FileInfo, L"" WGOOD_SLASH "", reinterpret_cast<void **>(&Result), &Len))
   {
     throw Exception(L"Fixed file info not available");
   }
@@ -216,7 +216,7 @@ uint32_t GetTranslationCount(void * FileInfo)
   PTranslations P;
   UINT Len = 0;
 #ifndef __linux__
-  if (!::VerQueryValue(FileInfo, L"\\VarFileInfo\\Translation", reinterpret_cast<void **>(&P), &Len))
+  if (!::VerQueryValue(FileInfo, L"" WGOOD_SLASH "VarFileInfo" WGOOD_SLASH "Translation", reinterpret_cast<void **>(&P), &Len))
     throw Exception(L"File info translations not available");
 #endif
   return Len / 4;
@@ -228,7 +228,7 @@ TTranslation GetTranslation(void * FileInfo, intptr_t I)
   PTranslations P = nullptr;
   UINT Len = 0;
 #ifndef __linux__
-  if (!::VerQueryValue(FileInfo, L"\\VarFileInfo\\Translation", reinterpret_cast<void **>(&P), &Len))
+  if (!::VerQueryValue(FileInfo, L"" WGOOD_SLASH "VarFileInfo" WGOOD_SLASH "Translation", reinterpret_cast<void **>(&P), &Len))
     throw Exception(L"File info translations not available");
   if (I * sizeof(TTranslation) >= Len)
     throw Exception(L"Specified translation not available");
@@ -261,10 +261,10 @@ UnicodeString GetFileInfoString(void * FileInfo,
   wchar_t * P;
   UINT Len;
 
-  if (!::VerQueryValue(FileInfo, (UnicodeString(L"\\StringFileInfo\\") +
+  if (!::VerQueryValue(FileInfo, (UnicodeString(L"" WGOOD_SLASH "StringFileInfo" WGOOD_SLASH "") +
     ::IntToHex(Translation.Language, 4) +
     ::IntToHex(Translation.CharSet, 4) +
-    L"\\" + StringName).c_str(), reinterpret_cast<void **>(&P), &Len))
+    L"" WGOOD_SLASH "" + StringName).c_str(), reinterpret_cast<void **>(&P), &Len))
   {
     if (!AllowEmpty)
     {

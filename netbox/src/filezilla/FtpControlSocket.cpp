@@ -409,7 +409,7 @@ bool CFtpControlSocket::InitConnect()
     TCHAR buffer[1000];
     GetModuleFileName(NULL, buffer, 1000);
     CString filename = buffer;
-    int pos = filename.ReverseFind(L'\\');
+    int pos = filename.ReverseFind(GOOD_SLASH);
     if (pos != -1)
     {
       filename = filename.Left(pos + 1);
@@ -1900,7 +1900,7 @@ void CFtpControlSocket::List(BOOL bFinish, int nError /*=FALSE*/, CServerPath pa
 
       pData->rawpwd = retmsg;
       if ((m_mayBeMvsFilesystem || m_mayBeBS2000Filesystem) && m_CurrentServer.nServerType & FZ_SERVERTYPE_FTP &&
-        pData->rawpwd[0] != L'/')
+        pData->rawpwd[0] != LOTHER_SLASH)
       {
         m_mayBeMvsFilesystem = false;
         m_mayBeBS2000Filesystem = false;
@@ -2910,7 +2910,7 @@ void CFtpControlSocket::FileTransfer(t_transferfile *transferfile/*=0*/,BOOL bFi
       pData->bPasv = GetOptionVal(OPTION_PASV);
 
     //Replace invalid characters in the local filename
-    int pos=transferfile->localfile.ReverseFind(L'\\');
+    int pos=transferfile->localfile.ReverseFind(GOOD_SLASH);
     for (int i=(pos+1);i<transferfile->localfile.GetLength();i++)
       if (transferfile->localfile[i]==L':')
         transferfile->localfile.SetAt(i, L'_');
@@ -2950,14 +2950,14 @@ void CFtpControlSocket::FileTransfer(t_transferfile *transferfile/*=0*/,BOOL bFi
             if (pData->transferfile.get)
             {
               CString path=pData->transferfile.localfile;
-              if (path.ReverseFind(L'\\')!=-1)
+              if (path.ReverseFind(GOOD_SLASH)!=-1)
               {
-                path=path.Left(path.ReverseFind(L'\\')+1);
+                path=path.Left(path.ReverseFind(GOOD_SLASH)+1);
                 CString path2;
                 while (path!=L"")
                 {
-                  path2+=path.Left(path.Find( L"\\" )+1);
-                  path=path.Mid(path.Find( L"\\" )+1);
+                  path2+=path.Left(path.Find( L"" WGOOD_SLASH "" )+1);
+                  path=path.Mid(path.Find( L"" WGOOD_SLASH "" )+1);
                   CreateDirectory(path2, 0);
                 }
               }
@@ -2995,7 +2995,7 @@ void CFtpControlSocket::FileTransfer(t_transferfile *transferfile/*=0*/,BOOL bFi
 
       pData->rawpwd = GetReply();
       if ((m_mayBeMvsFilesystem || m_mayBeBS2000Filesystem) && m_CurrentServer.nServerType & FZ_SERVERTYPE_FTP &&
-        pData->rawpwd[0] != L'/')
+        pData->rawpwd[0] != LOTHER_SLASH)
       {
         m_mayBeMvsFilesystem = false;
         m_mayBeBS2000Filesystem = false;
@@ -3393,14 +3393,14 @@ void CFtpControlSocket::FileTransfer(t_transferfile *transferfile/*=0*/,BOOL bFi
           if (pData->transferfile.get)
           {
             CString path=pData->transferfile.localfile;
-            if (path.ReverseFind(L'\\')!=-1)
+            if (path.ReverseFind(GOOD_SLASH)!=-1)
             {
-              path=path.Left(path.ReverseFind(L'\\')+1);
+              path=path.Left(path.ReverseFind(GOOD_SLASH)+1);
               CString path2;
               while (path!=L"")
               {
-                path2+=path.Left(path.Find( L"\\" )+1);
-                path=path.Mid(path.Find( L"\\" )+1);
+                path2+=path.Left(path.Find( L"" WGOOD_SLASH "" )+1);
+                path=path.Mid(path.Find( L"" WGOOD_SLASH "" )+1);
                 CreateDirectory(path2, 0);
               }
             }
@@ -3445,14 +3445,14 @@ void CFtpControlSocket::FileTransfer(t_transferfile *transferfile/*=0*/,BOOL bFi
           if (pData->transferfile.get)
           {
             CString path=pData->transferfile.localfile;
-            if (path.ReverseFind(L'\\')!=-1)
+            if (path.ReverseFind(GOOD_SLASH)!=-1)
             {
-              path=path.Left(path.ReverseFind(L'\\')+1);
+              path=path.Left(path.ReverseFind(LGOOD_SLASH)+1);
               CString path2;
               while (path!=L"")
               {
-                path2+=path.Left(path.Find( L"\\" )+1);
-                path=path.Mid(path.Find( L"\\" )+1);
+                path2+=path.Left(path.Find( L"" WGOOD_SLASH "" )+1);
+                path=path.Mid(path.Find( L"" WGOOD_SLASH "" )+1);
                 CreateDirectory(path2, 0);
               }
             }
@@ -5115,7 +5115,7 @@ int CFtpControlSocket::CheckOverwriteFile()
         pOverwriteData->pTransferFile = pTransferFile;
         if (pData->transferfile.get)
         {
-          int pos = pData->transferfile.localfile.ReverseFind(L'\\');
+          int pos = pData->transferfile.localfile.ReverseFind(LGOOD_SLASH);
           // pos can be -1 here, e.g. in scripting, the code below still works then
           pOverwriteData->FileName1 = pData->transferfile.localfile.Mid(pos+1);
           pOverwriteData->FileName2 = pData->transferfile.remotefile;
@@ -5126,7 +5126,7 @@ int CFtpControlSocket::CheckOverwriteFile()
         }
         else
         {
-          int pos = pData->transferfile.localfile.ReverseFind(L'\\');
+          int pos = pData->transferfile.localfile.ReverseFind(LGOOD_SLASH);
           // pos can be -1 here, e.g. in scripting, the code below still works then
           pOverwriteData->FileName1 = pData->transferfile.remotefile;
           pOverwriteData->FileName2 = pData->transferfile.localfile.Mid(pos+1);
@@ -5198,7 +5198,7 @@ void CFtpControlSocket::SetFileExistsAction(int nAction, COverwriteRequestData *
       {
         pTransferData->transferfile.localfile = pData->path1+pData->FileName1;
         //Replace invalid characters in the local filename
-        int pos = pTransferData->transferfile.localfile.ReverseFind(L'\\');
+        int pos = pTransferData->transferfile.localfile.ReverseFind(LGOOD_SLASH);
         for (int i = (pos+1); i < pTransferData->transferfile.localfile.GetLength(); i++)
           if (pTransferData->transferfile.localfile[i] == L':')
             pTransferData->transferfile.localfile.SetAt(i, L'_');

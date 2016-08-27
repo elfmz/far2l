@@ -528,7 +528,7 @@ bool TWinSCPFileSystem::GetFindDataEx(TObjectList * PanelItems, int OpMode)
       {
         UnicodeString Name = SessionName.SubString(
           Folder.Length() + 1, SessionName.Length() - Folder.Length());
-        intptr_t Slash = Name.Pos(L'/');
+        intptr_t Slash = Name.Pos(LOTHER_SLASH);
         if (Slash > 0)
         {
           Name.SetLength(Slash - 1);
@@ -2167,7 +2167,7 @@ bool TWinSCPFileSystem::SetDirectoryEx(const UnicodeString & Dir, int OpMode)
   // workaround to ignore "change to root directory" command issued by FAR,
   // before file is opened for viewing/editing from "find file" dialog
   // when plugin uses UNIX style paths
-  else if ((OpMode & OPM_FIND) && (OpMode & OPM_SILENT) && (Dir == L"\\"))
+  else if ((OpMode & OPM_FIND) && (OpMode & OPM_SILENT) && (Dir == L"" WGOOD_SLASH ""))
   {
     if (FSavedFindFolder.IsEmpty())
     {
@@ -2194,7 +2194,7 @@ bool TWinSCPFileSystem::SetDirectoryEx(const UnicodeString & Dir, int OpMode)
     if (IsSessionList())
     {
       FSessionsFolder = core::AbsolutePath(ROOTDIRECTORY + FSessionsFolder, Dir);
-      DebugAssert(FSessionsFolder[1] == L'/');
+      DebugAssert(FSessionsFolder[1] == LOTHER_SLASH);
       FSessionsFolder.Delete(1, 1);
       FNewSessionsFolder.Clear();
     }
@@ -2225,7 +2225,7 @@ bool TWinSCPFileSystem::SetDirectoryEx(const UnicodeString & Dir, int OpMode)
           }
           FNoProgress = false;
         };
-        if (Dir == L"\\")
+        if (Dir == L"" WGOOD_SLASH "")
         {
           FTerminal->RemoteChangeDirectory(ROOTDIRECTORY);
         }

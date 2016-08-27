@@ -31,7 +31,7 @@ UnicodeString GetAppNameString()
 
 UnicodeString GetRegistryKey()
 {
-  return "Software\\Far2\\Plugins\\NetBox 2";
+  return "Software" WGOOD_SLASH "Far2" WGOOD_SLASH "Plugins" WGOOD_SLASH "NetBox 2";
 }
 
 void Busy(bool /*Start*/)

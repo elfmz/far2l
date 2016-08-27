@@ -2102,7 +2102,7 @@ TUploadQueueItem::TUploadQueueItem(TTerminal * Terminal,
     else
     {
       core::ExtractCommonPath(AFilesToCopy, FInfo->Source);
-      // this way the trailing backslash is preserved for root directories like "D:\\"
+      // this way the trailing backslash is preserved for root directories like "D:" WGOOD_SLASH ""
       FInfo->Source = ::ExtractFileDir(::IncludeTrailingBackslash(FInfo->Source));
       FInfo->ModifiedLocal = FLAGCLEAR(Params, cpDelete) ? UnicodeString() :
         ::IncludeTrailingBackslash(FInfo->Source);

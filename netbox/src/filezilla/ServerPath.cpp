@@ -34,11 +34,11 @@ CServerPath::CServerPath(CString path, bool trim)
   int pos1 = path.Find( L":[" );
   if (pos1 != -1 && path.Right(1) == L"]" && pos1 != (path.GetLength()-1))
     m_nServerType |= FZ_SERVERTYPE_SUB_FTP_VMS;
-  else if (path.GetLength() >= 3 && _istalpha(path[0]) && path[1] == L':' && (path[2] == L'\\' || path[2] == L'/'))
+  else if (path.GetLength() >= 3 && _istalpha(path[0]) && path[1] == L':' && (path[2] == LGOOD_SLASH || path[2] == LOTHER_SLASH))
     m_nServerType |= FZ_SERVERTYPE_SUB_FTP_WINDOWS;
   else if (path[0] == FTP_MVS_DOUBLE_QUOTA && path[path.GetLength() - 1] == FTP_MVS_DOUBLE_QUOTA)
     m_nServerType |= FZ_SERVERTYPE_SUB_FTP_MVS;
-  else if (path.GetLength() > 2 && path[0] == L'\'' && path.Right(1) == L"'" && path.Find(L'/') == -1 && path.Find(L'\\') == -1)
+  else if (path.GetLength() > 2 && path[0] == L'\'' && path.Right(1) == L"'" && path.Find(LOTHER_SLASH) == -1 && path.Find(LGOOD_SLASH) == -1)
     m_nServerType |= FZ_SERVERTYPE_SUB_FTP_MVS;
 
   *this = CServerPath(path, m_nServerType, trim);
@@ -113,7 +113,7 @@ CServerPath::CServerPath(CString path, int nServerType, bool trim)
       }
       break;
     default:
-      path.Replace( L"\\", L"/" );
+      path.Replace( L"" WGOOD_SLASH "", L"/" );
       while (path.Replace( L"//", L"/" ));
       path.TrimLeft( L"/" );
       path.TrimRight( L"/" );
@@ -131,9 +131,9 @@ CServerPath::CServerPath(CString path, int nServerType, bool trim)
     break;
   case FZ_SERVERTYPE_LOCAL:
     {
-      path.TrimRight( L"\\" );
-      while (path.Replace( L"\\\\", L"\\" ));
-      int pos = path.Find( L"\\" );
+      path.TrimRight( L"" WGOOD_SLASH "" );
+      while (path.Replace( L"" WGOOD_SLASH "" WGOOD_SLASH "", L"" WGOOD_SLASH "" ));
+      int pos = path.Find( L"" WGOOD_SLASH "" );
       if (pos == -1)
       {
         m_Prefix = path;
@@ -142,12 +142,12 @@ CServerPath::CServerPath(CString path, int nServerType, bool trim)
       DebugAssert(pos == 2);
       m_Prefix = path.Left(pos);
       path = path.Mid(pos + 1);
-      pos = path.Find( L"\\" );
+      pos = path.Find( L"" WGOOD_SLASH "" );
       while (pos != -1)
       {
         m_Segments.push_back(path.Left(pos));
         path=path.Mid(pos + 1);
-        pos=path.Find( L"\\" );
+        pos=path.Find( L"" WGOOD_SLASH "" );
       }
       if (path != L"")
         m_Segments.push_back(path);
@@ -199,7 +199,7 @@ BOOL CServerPath::SetPath(CString &newpath, BOOL bIsFile /*=FALSE*/)
       else if (bIsFile && path.ReverseFind(']')>(pos1+1))
         m_nServerType|=FZ_SERVERTYPE_SUB_FTP_VMS;
     }
-    if (newpath.GetLength() >= 3 && _istalpha(newpath[0]) && newpath[1] == L':' && (newpath[2] == L'\\' || newpath[2] == L'/'))
+    if (newpath.GetLength() >= 3 && _istalpha(newpath[0]) && newpath[1] == L':' && (newpath[2] == LGOOD_SLASH || newpath[2] == LOTHER_SLASH))
       m_nServerType |= FZ_SERVERTYPE_SUB_FTP_WINDOWS;
     else if (path[0] == FTP_MVS_DOUBLE_QUOTA && path[path.GetLength() - 1] == FTP_MVS_DOUBLE_QUOTA)
       m_nServerType |= FZ_SERVERTYPE_SUB_FTP_MVS;
@@ -294,14 +294,14 @@ BOOL CServerPath::SetPath(CString &newpath, BOOL bIsFile /*=FALSE*/)
         }
         break;
       default:
-        path.Replace( L"\\", L"/" );
+        path.Replace( L"" WGOOD_SLASH "", L"/" );
         while(path.Replace( L"//", L"/" ));
         path.TrimLeft( L"/" );
         if (bIsFile)
         {
           if (path.Right(1)!= L"/" )
           {
-            int rpos=path.ReverseFind(L'/');
+            int rpos=path.ReverseFind(LOTHER_SLASH);
             if (rpos==-1)
             {
               newpath=path;
@@ -331,9 +331,9 @@ BOOL CServerPath::SetPath(CString &newpath, BOOL bIsFile /*=FALSE*/)
     {
       if (bIsFile)
       {
-        if (path.Right(1)!= L"\\" )
+        if (path.Right(1)!= L"" WGOOD_SLASH "" )
         {
-          int rpos=path.ReverseFind(L'\\');
+          int rpos=path.ReverseFind(GOOD_SLASH);
           if (rpos==-1)
             return FALSE;
 
@@ -343,9 +343,9 @@ BOOL CServerPath::SetPath(CString &newpath, BOOL bIsFile /*=FALSE*/)
         else
           return FALSE;
       }
-      path.TrimRight( L"\\" );
-      while (path.Replace( L"\\\\", L"\\" ));
-      int pos=path.Find( L":\\" );
+      path.TrimRight( L"" WGOOD_SLASH "" );
+      while (path.Replace( L"" WGOOD_SLASH "" WGOOD_SLASH "", L"" WGOOD_SLASH "" ));
+      int pos=path.Find( L":" WGOOD_SLASH "" );
       if (pos==-1 || pos!=1)
         return FALSE;
       else
@@ -353,12 +353,12 @@ BOOL CServerPath::SetPath(CString &newpath, BOOL bIsFile /*=FALSE*/)
         m_Prefix=path.Left(pos+1);
         path=path.Mid(pos+2);
       }
-      pos=path.Find( L"\\" );
+      pos=path.Find( L"" WGOOD_SLASH "" );
       while (pos!=-1)
       {
         m_Segments.push_back(path.Left(pos));
         path=path.Mid(pos+1);
-        pos=path.Find( L"\\" );
+        pos=path.Find( L"" WGOOD_SLASH "" );
       }
       if (path!=L"")
         m_Segments.push_back(path);
@@ -410,9 +410,9 @@ const CString CServerPath::GetPath() const
   case FZ_SERVERTYPE_LOCAL:
     path=m_Prefix;
     if (!m_Segments.empty())
-      path+=L"\\";
+      path+=L"" WGOOD_SLASH "";
     for (iter=m_Segments.begin(); iter!=m_Segments.end(); iter++)
-      path+=*iter + L"\\";
+      path+=*iter + L"" WGOOD_SLASH "";
 
     break;
   default:
@@ -633,9 +633,9 @@ CString CServerPath::FormatFilename(CString fn, bool omitPath /*=false*/) const
       return fn;
     path=m_Prefix;
     if (!m_Segments.empty())
-      path+=L"\\";
+      path+=L"" WGOOD_SLASH "";
     for (iter=m_Segments.begin(); iter!=m_Segments.end(); iter++)
-      path+=*iter + L"\\";
+      path+=*iter + L"" WGOOD_SLASH "";
     path += fn;
     break;
   default:

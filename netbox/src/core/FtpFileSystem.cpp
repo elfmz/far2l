@@ -629,13 +629,13 @@ void TFTPFileSystem::CollectUsage()
   {
     FTerminal->Configuration->Usage->Inc(L"OpenedSessionsFTPNonUTF8");
   }
-  if (!GetCurrentDirectory().IsEmpty() && (GetCurrentDirectory()[1] != L'/'))
+  if (!GetCurrentDirectory().IsEmpty() && (GetCurrentDirectory()[1] != LOTHER_SLASH))
   {
     if (::IsUnixStyleWindowsPath(GetCurrentDirectory()))
     {
       FTerminal->Configuration->Usage->Inc(L"OpenedSessionsFTPWindowsPath");
     }
-    else if ((GetCurrentDirectory().Length() >= 3) && IsLetter(GetCurrentDirectory()[1]) && (GetCurrentDirectory()[2] == L':') && (CurrentDirectory[3] == L'/'))
+    else if ((GetCurrentDirectory().Length() >= 3) && IsLetter(GetCurrentDirectory()[1]) && (GetCurrentDirectory()[2] == L':') && (CurrentDirectory[3] == LOTHER_SLASH))
     {
       FTerminal->Configuration->Usage->Inc(L"OpenedSessionsFTPRealWindowsPath");
     }
@@ -2518,7 +2518,7 @@ void TFTPFileSystem::ReadCurrentDirectory()
 
         if (Result)
         {
-          if ((Path.Length() > 0) && (Path[1] != L'/'))
+          if ((Path.Length() > 0) && (Path[1] != LOTHER_SLASH))
           {
             Path = L"/" + Path;
           }

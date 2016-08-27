@@ -13,7 +13,7 @@
 
 #define FILE_MASKS_DELIMITERS L";,"
 #define ALL_FILE_MASKS_DELIMITERS L";,|"
-#define DIRECTORY_MASK_DELIMITERS L"/\\"
+#define DIRECTORY_MASK_DELIMITERS L"/" WGOOD_SLASH ""
 #define FILE_MASKS_DELIMITER_STR L"; "
 
 EFileMasksException::EFileMasksException(
@@ -31,7 +31,7 @@ static UnicodeString MaskFilePart(const UnicodeString & Part, const UnicodeStrin
   {
     switch (Mask[Index])
     {
-      case L'\\':
+      case LGOOD_SLASH:
         if (!Delim)
         {
           Delim = true;
@@ -123,9 +123,9 @@ UnicodeString DelimitFileNameMask(const UnicodeString & AMask)
   UnicodeString Mask = AMask;
   for (intptr_t Index = 1; Index <= Mask.Length(); ++Index)
   {
-    if (wcschr(L"\\*?", Mask[Index]) != nullptr)
+    if (wcschr(L"" WGOOD_SLASH "*?", Mask[Index]) != nullptr)
     {
-      Mask.Insert(L"\\", Index);
+      Mask.Insert(L"" WGOOD_SLASH "", Index);
       ++Index;
     }
   }
@@ -529,7 +529,7 @@ UnicodeString TFileMasks::MakeDirectoryMask(const UnicodeString & AStr)
     intptr_t D = Str.LastDelimiter(DIRECTORY_MASK_DELIMITERS);
     // if there's any [back]slash anywhere in str,
     // add the same [back]slash at the end, otherwise add slash
-    wchar_t Delimiter = (D > 0) ? Str[D] : L'/';
+    wchar_t Delimiter = (D > 0) ? Str[D] : LOTHER_SLASH;
     Str += Delimiter;
   }
   return Str;
@@ -644,7 +644,7 @@ void TFileMasks::CreateMask(
       else if (FForceDirectoryMasks > 0)
       {
         Directory = true;
-        Mask.MaskStr.Insert(L'/', PartStart - MaskStart + PartStr.Length());
+        Mask.MaskStr.Insert(LOTHER_SLASH, PartStart - MaskStart + PartStr.Length());
       }
 
       if (D > 0)
@@ -1063,7 +1063,7 @@ void TInteractiveCustomCommand::ParsePromptPattern(
   if (Pos > 0)
   {
     Default = Pattern.SubString(3 + Pos, Pattern.Length() - 3 - Pos);
-    if ((Pos > 1) && (Pattern[3 + Pos - 2] == L'\\'))
+    if ((Pos > 1) && (Pattern[3 + Pos - 2] == LGOOD_SLASH))
     {
       Delimit = false;
       Pos--;
@@ -1191,7 +1191,7 @@ intptr_t TFileCustomCommand::PatternLen(const UnicodeString & Command, intptr_t 
     case L'U':
     case L'P':
     case L'#':
-    case L'/':
+    case LOTHER_SLASH:
     case L'&':
     case L'N':
       Len = 2;

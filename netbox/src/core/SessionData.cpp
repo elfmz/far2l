@@ -161,7 +161,7 @@ void TSessionData::Default()
   SetProxyPort(ProxyPortNumber);
   SetProxyUsername(L"");
   SetProxyPassword(L"");
-  SetProxyTelnetCommand(L"connect %host %port\\n");
+  SetProxyTelnetCommand(L"connect %host %port" WGOOD_SLASH "n");
   SetProxyLocalCommand(L"");
   SetProxyDNS(asAuto);
   SetProxyLocalhost(false);
@@ -1470,7 +1470,7 @@ void TSessionData::CacheHostKeyIfNotCached()
 {
   UnicodeString KeyType = GetKeyTypeFromFingerprint(GetHostKey());
 
-  UnicodeString TargetKey = GetConfiguration()->GetRegistryStorageKey() + L"\\" + GetConfiguration()->GetSshHostKeysSubKey();
+  UnicodeString TargetKey = GetConfiguration()->GetRegistryStorageKey() + L"" WGOOD_SLASH "" + GetConfiguration()->GetSshHostKeysSubKey();
   std::unique_ptr<TRegistryStorage> Storage(new TRegistryStorage(TargetKey));
   Storage->SetAccessMode(smReadWrite);
   if (Storage->OpenRootKey(true))
@@ -1649,7 +1649,7 @@ bool TSessionData::ParseUrl(const UnicodeString & AUrl, TOptions * Options,
             Match = true;
           }
           else if ((AData->GetName().Length() < DecodedUrl.Length()) &&
-                   (DecodedUrl[AData->GetName().Length() + 1] == L'/') &&
+                   (DecodedUrl[AData->GetName().Length() + 1] == LOTHER_SLASH) &&
                    // StrLIComp is an equivalent of SameText
                    (StrLIComp(AData->GetName().c_str(), DecodedUrl.c_str(), (int)AData->GetName().Length()) == 0))
           {
@@ -1816,7 +1816,7 @@ bool TSessionData::ParseUrl(const UnicodeString & AUrl, TOptions * Options,
 
     if (!RemoteDirectory.IsEmpty() && (RemoteDirectory != ROOTDIRECTORY))
     {
-      if ((RemoteDirectory[RemoteDirectory.Length()] != L'/') &&
+      if ((RemoteDirectory[RemoteDirectory.Length()] != LOTHER_SLASH) &&
           (AFileName != nullptr))
       {
         *AFileName = DecodeUrlChars(base::UnixExtractFileName(RemoteDirectory));
@@ -2017,7 +2017,7 @@ void TSessionData::ValidateName(const UnicodeString & Name)
 UnicodeString TSessionData::MakeValidName(const UnicodeString & Name)
 {
   // keep consistent with ValidateName
-  return ReplaceStr(Name, L"/", L"\\");
+  return ReplaceStr(Name, L"/", L"" WGOOD_SLASH "");
 }
 
 RawByteString TSessionData::EncryptPassword(const UnicodeString & Password, const UnicodeString & Key)
@@ -2961,13 +2961,13 @@ UnicodeString TSessionData::AssemblyString(TAssemblyLanguage Language, const Uni
   switch (Language)
   {
     case alCSharp:
-      if (Result.Pos(L"\\") > 0)
+      if (Result.Pos(L"" WGOOD_SLASH "") > 0)
       {
         Result = FORMAT(L"@\"%s\"", ReplaceStr(Result, L"\"", L"\"\"").c_str());
       }
       else
       {
-        Result = FORMAT(L"\"%s\"", ReplaceStr(Result, L"\"", L"\\\"").c_str());
+        Result = FORMAT(L"\"%s\"", ReplaceStr(Result, L"\"", L"" WGOOD_SLASH "\"").c_str());
       }
       break;
 

@@ -561,10 +561,10 @@ void TGUIConfiguration::Default()
   FSessionRememberPassword = false;
   UnicodeString ProgramsFolder;
   SpecialFolderLocation(CSIDL_PROGRAM_FILES, ProgramsFolder);
-  FDefaultPuttyPathOnly = ::IncludeTrailingBackslash(ProgramsFolder) + "PuTTY\\putty.exe";
-  FDefaultPuttyPath = FormatCommand("%PROGRAMFILES%\\PuTTY\\putty.exe", L"");
+  FDefaultPuttyPathOnly = ::IncludeTrailingBackslash(ProgramsFolder) + "PuTTY" WGOOD_SLASH "putty.exe";
+  FDefaultPuttyPath = FormatCommand("%PROGRAMFILES%" WGOOD_SLASH "PuTTY" WGOOD_SLASH "putty.exe", L"");
   FPuttyPath = FDefaultPuttyPath;
-  SetPSftpPath(FormatCommand("%PROGRAMFILES%\\PuTTY\\psftp.exe", L""));
+  SetPSftpPath(FormatCommand("%PROGRAMFILES%" WGOOD_SLASH "PuTTY" WGOOD_SLASH "psftp.exe", L""));
   FPuttyPassword = false;
   FTelnetForFtpInPutty = true;
   FPuttySession = "WinSCP temporary session";
@@ -673,7 +673,7 @@ void TGUIConfiguration::SaveData(THierarchicalStorage * Storage, bool All)
   #undef KEY
   #undef KEYEX
 
-  if (Storage->OpenSubKey(L"Interface\\CopyParam", true, true))
+  if (Storage->OpenSubKey(L"Interface" WGOOD_SLASH "CopyParam", true, true))
   {
     SCOPE_EXIT
     {
@@ -693,7 +693,7 @@ void TGUIConfiguration::SaveData(THierarchicalStorage * Storage, bool All)
     }
   }
 
-  if (Storage->OpenSubKey(L"Interface\\NewDirectory", true, true))
+  if (Storage->OpenSubKey(L"Interface" WGOOD_SLASH "NewDirectory", true, true))
   {
     SCOPE_EXIT
     {
@@ -716,7 +716,7 @@ void TGUIConfiguration::LoadData(THierarchicalStorage * Storage)
   #undef KEY
   #undef KEYEX
 
-  if (Storage->OpenSubKey(L"Interface\\CopyParam", false, true))
+  if (Storage->OpenSubKey(L"Interface" WGOOD_SLASH "CopyParam", false, true))
   {
     SCOPE_EXIT
     {
@@ -754,7 +754,7 @@ void TGUIConfiguration::LoadData(THierarchicalStorage * Storage)
     FPuttyPath = FormatCommand(FPuttyPath, L"");
   }
 
-  if (Storage->OpenSubKey(L"Interface\\NewDirectory", false, true))
+  if (Storage->OpenSubKey(L"Interface" WGOOD_SLASH "NewDirectory", false, true))
   {
     SCOPE_EXIT
     {
@@ -1172,7 +1172,7 @@ TStoredSessionList * TGUIConfiguration::SelectFilezillaSessionsForImport(
 
   UnicodeString AppDataPath = GetShellFolderPath(CSIDL_APPDATA);
   UnicodeString FilezillaSiteManagerFile =
-    IncludeTrailingBackslash(AppDataPath) + L"FileZilla\\sitemanager.xml";
+    IncludeTrailingBackslash(AppDataPath) + L"FileZilla" WGOOD_SLASH "sitemanager.xml";
 
   if (::FileExists(FilezillaSiteManagerFile))
   {

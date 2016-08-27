@@ -150,7 +150,7 @@ void TConfiguration::Default()
   UpdateActualLogProtocol();
   FLogActions = false;
   FPermanentLogActions = false;
-  FActionsLogFileName = "%TEMP%\\&S.xml";
+  FActionsLogFileName = "%TEMP%" WGOOD_SLASH "&S.xml";
   FPermanentActionsLogFileName = FActionsLogFileName;
   FProgramIniPathWrittable = -1;
 
@@ -1207,7 +1207,7 @@ UnicodeString TConfiguration::GetIniFileStorageName(bool ReadingOnly)
       {
         FVirtualIniFileStorageName =
           IncludeTrailingBackslash(LocalAppDataPath) +
-          L"VirtualStore\\" +
+          L"VirtualStore" WGOOD_SLASH "" +
           IniPath.SubString(4, IniPath.Length() - 3);
       }
     }
@@ -1245,7 +1245,7 @@ TStrings * TConfiguration::GetOptionsStorage()
 
 UnicodeString TConfiguration::GetPuttySessionsKey() const
 {
-  return GetPuttyRegistryStorageKey() + "\\Sessions";
+  return GetPuttyRegistryStorageKey() + "" WGOOD_SLASH "Sessions";
 }
 
 UnicodeString TConfiguration::GetStoredSessionsSubKey() const
@@ -1345,7 +1345,7 @@ TStoredSessionList * TConfiguration::SelectFilezillaSessionsForImport(
   UnicodeString AppDataPath = L"./";
 #endif
   UnicodeString FilezillaSiteManagerFile =
-    IncludeTrailingBackslash(AppDataPath) + L"FileZilla\\sitemanager.xml";
+    IncludeTrailingBackslash(AppDataPath) + L"FileZilla" WGOOD_SLASH "sitemanager.xml";
 
   if (FileExists(ApiPath(FilezillaSiteManagerFile)))
   {
@@ -1580,7 +1580,7 @@ bool TConfiguration::GetLogWindowComplete() const
 
 UnicodeString TConfiguration::GetDefaultLogFileName() const
 {
-  return "%TEMP%\\&S.log";
+  return "%TEMP%" WGOOD_SLASH "&S.log";
 }
 
 void TConfiguration::SetConfirmOverwriting(bool Value)

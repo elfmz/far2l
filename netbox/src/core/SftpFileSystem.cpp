@@ -3935,7 +3935,7 @@ void TSFTPFileSystem::CreateLink(const UnicodeString & AFileName,
           // SSH version string bumped to "mod_sftp/1.0.0"
           // http://bugs.proftpd.org/show_bug.cgi?id=4080
           UnicodeString ProFTPDVerStr = GetSessionInfo().SshImplementation;
-          CutToChar(ProFTPDVerStr, L'/', false);
+          CutToChar(ProFTPDVerStr, LOTHER_SLASH, false);
           intptr_t ProFTPDMajorVer = ::StrToIntDef(CutToChar(ProFTPDVerStr, L'.', false), 0);
           Buggy = (ProFTPDMajorVer == 0);
           if (Buggy)

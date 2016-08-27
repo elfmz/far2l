@@ -44,7 +44,7 @@
 #define THISDIRECTORY L"."
 #define ROOTDIRECTORY L"/"
 #define SLASH L"/"
-#define BACKSLASH L"\\"
+#define BACKSLASH L"" WGOOD_SLASH ""
 #define QUOTE L"\'"
 #define DOUBLEQUOTE L"\""
 
@@ -67,15 +67,15 @@ intptr_t __cdecl debug_printf2(const char * format, ...);
 #ifndef NDEBUG
 #if defined(_MSC_VER)
 #if (_MSC_VER >= 1900)
-#define DEBUG_PRINTF(format, ...) do { ::debug_printf(L"Plugin: [%s:%d] %s: " format L"\n", ::ExtractFilename(__FILEW__, L'\\').c_str(), __LINE__, ::MB2W(__FUNCTION__).c_str(), __VA_ARGS__); } while (0)
-#define DEBUG_PRINTF2(format, ...) do { ::debug_printf2("Plugin: [%s:%d] %s: " format "\n", W2MB(::ExtractFilename(__FILEW__, '\\').c_str()).c_str(), __LINE__, __FUNCTION__, __VA_ARGS__); } while (0)
+#define DEBUG_PRINTF(format, ...) do { ::debug_printf(L"Plugin: [%s:%d] %s: " format L"\n", ::ExtractFilename(__FILEW__, LGOOD_SLASH).c_str(), __LINE__, ::MB2W(__FUNCTION__).c_str(), __VA_ARGS__); } while (0)
+#define DEBUG_PRINTF2(format, ...) do { ::debug_printf2("Plugin: [%s:%d] %s: " format "\n", W2MB(::ExtractFilename(__FILEW__, GOOD_SLASH).c_str()).c_str(), __LINE__, __FUNCTION__, __VA_ARGS__); } while (0)
 #else
-#define DEBUG_PRINTF(format, ...) do { ::debug_printf(L"Plugin: [%s:%d] %s: "NB_TEXT(format) L"\n", ::ExtractFilename(__FILEW__, L'\\').c_str(), __LINE__, ::MB2W(__FUNCTION__).c_str(), __VA_ARGS__); } while (0)
-#define DEBUG_PRINTF2(format, ...) do { ::debug_printf2("Plugin: [%s:%d] %s: "format "\n", W2MB(::ExtractFilename(__FILEW__, '\\').c_str()).c_str(), __LINE__, __FUNCTION__, __VA_ARGS__); } while (0)
+#define DEBUG_PRINTF(format, ...) do { ::debug_printf(L"Plugin: [%s:%d] %s: "NB_TEXT(format) L"\n", ::ExtractFilename(__FILEW__, LGOOD_SLASH).c_str(), __LINE__, ::MB2W(__FUNCTION__).c_str(), __VA_ARGS__); } while (0)
+#define DEBUG_PRINTF2(format, ...) do { ::debug_printf2("Plugin: [%s:%d] %s: "format "\n", W2MB(::ExtractFilename(__FILEW__, GOOD_SLASH).c_str()).c_str(), __LINE__, __FUNCTION__, __VA_ARGS__); } while (0)
 #endif
 #else
-#define DEBUG_PRINTF(format, ...) do { ::debug_printf(L"Plugin: [%s:%d] %s: " format L"\n", ::ExtractFilename(MB2W(__FILE__).c_str(), L'\\').c_str(), __LINE__, ::MB2W(__FUNCTION__).c_str(), ##__VA_ARGS__); } while (0)
-#define DEBUG_PRINTF2(format, ...) do { ::debug_printf2("Plugin: [%s:%d] %s: " format "\n", W2MB(::ExtractFilename(MB2W(__FILE__).c_str(), '\\').c_str()).c_str(), __LINE__, __FUNCTION__, ##__VA_ARGS__); } while (0)
+#define DEBUG_PRINTF(format, ...) do { ::debug_printf(L"Plugin: [%s:%d] %s: " format L"\n", ::ExtractFilename(MB2W(__FILE__).c_str(), LGOOD_SLASH).c_str(), __LINE__, ::MB2W(__FUNCTION__).c_str(), ##__VA_ARGS__); } while (0)
+#define DEBUG_PRINTF2(format, ...) do { ::debug_printf2("Plugin: [%s:%d] %s: " format "\n", W2MB(::ExtractFilename(MB2W(__FILE__).c_str(), GOOD_SLASH).c_str()).c_str(), __LINE__, __FUNCTION__, ##__VA_ARGS__); } while (0)
 #endif
 #else
 #define DEBUG_PRINTF(format, ...)
@@ -171,10 +171,10 @@ public:
 void GetLocaleFormatSettings(int LCID, TFormatSettings & FormatSettings);
 
 UnicodeString ExtractShortPathName(const UnicodeString & APath);
-UnicodeString ExtractDirectory(const UnicodeString & APath, wchar_t Delimiter = L'/');
-UnicodeString ExtractFilename(const UnicodeString & APath, wchar_t Delimiter = L'/');
-UnicodeString ExtractFileExtension(const UnicodeString & APath, wchar_t Delimiter = L'/');
-UnicodeString ChangeFileExtension(const UnicodeString & APath, const UnicodeString & Ext, wchar_t Delimiter = L'/');
+UnicodeString ExtractDirectory(const UnicodeString & APath, wchar_t Delimiter = LOTHER_SLASH);
+UnicodeString ExtractFilename(const UnicodeString & APath, wchar_t Delimiter = LOTHER_SLASH);
+UnicodeString ExtractFileExtension(const UnicodeString & APath, wchar_t Delimiter = LOTHER_SLASH);
+UnicodeString ChangeFileExtension(const UnicodeString & APath, const UnicodeString & Ext, wchar_t Delimiter = LOTHER_SLASH);
 
 UnicodeString IncludeTrailingBackslash(const UnicodeString & Str);
 UnicodeString ExcludeTrailingBackslash(const UnicodeString & Str);
@@ -300,7 +300,7 @@ UnicodeString ExpandEnvVars(const UnicodeString & Str);
 UnicodeString StringOfChar(const wchar_t Ch, intptr_t Len);
 
 UnicodeString ChangeFileExt(const UnicodeString & AFileName, const UnicodeString & AExt,
-  wchar_t Delimiter = L'/');
+  wchar_t Delimiter = LOTHER_SLASH);
 UnicodeString ExtractFileExt(const UnicodeString & AFileName);
 UnicodeString ExpandUNCFileName(const UnicodeString & AFileName);
 

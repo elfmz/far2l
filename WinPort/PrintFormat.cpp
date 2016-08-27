@@ -11,12 +11,11 @@ SHAREDSYMBOL int vswprintf_ws2ls(wchar_t * ws, size_t len, const wchar_t * forma
 	for (bool percent = false; *format; ++format) {
 		if (percent) {
 			if (*format==L's') {
-				size_t sz = converted_format.size();
-				if (sz) {
+				if (!converted_format.empty()) {
 					if (converted_format.back() == L'w')
 						converted_format.back() = L'l';
 					else if (converted_format.back() == L'h')
-						converted_format.resize(sz-1);
+						converted_format.pop_back();
 					else
 						converted_format+= L'l';
 				} else

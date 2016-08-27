@@ -545,7 +545,7 @@ UnicodeString TSCPFileSystem::DelimitStr(const UnicodeString & AStr)
   UnicodeString Str = AStr;
   if (!Str.IsEmpty())
   {
-    Str = ::DelimitStr(Str, L"\\`$\"");
+    Str = ::DelimitStr(Str, L"" WGOOD_SLASH "`$\"");
     if (Str[1] == L'-')
       Str = L"./" + Str;
   }

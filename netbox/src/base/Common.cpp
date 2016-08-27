@@ -115,7 +115,7 @@ UnicodeString AnsiToString(const char * S, size_t Len)
 UnicodeString MakeValidFileName(const UnicodeString & AFileName)
 {
   UnicodeString Result = AFileName;
-  UnicodeString IllegalChars(L":;,=+<>|\"[] \\/?*");
+  UnicodeString IllegalChars(L":;,=+<>|\"[] WGOOD_SLASH/?*");
   for (intptr_t Index = 0; Index < IllegalChars.Length(); ++Index)
   {
     Result = ReplaceChar(Result, IllegalChars[Index + 1], L'-');
@@ -275,7 +275,7 @@ UnicodeString DelimitStr(const UnicodeString & Str, const UnicodeString & Chars)
   {
     if (Result.IsDelimiter(Chars, Index))
     {
-      Result.Insert(L"\\", Index);
+      Result.Insert(WGOOD_SLASH, Index);
       ++Index;
     }
   }
@@ -284,7 +284,7 @@ UnicodeString DelimitStr(const UnicodeString & Str, const UnicodeString & Chars)
 
 UnicodeString ShellDelimitStr(const UnicodeString & Str, wchar_t Quote)
 {
-  UnicodeString Chars(L"$\\");
+  UnicodeString Chars(L"$" WGOOD_SLASH);
   if (Quote == L'"')
   {
     Chars += L"`\"";
@@ -615,7 +615,7 @@ void SplitCommand(const UnicodeString & Command, UnicodeString & Program,
       Program = Cmd;
     }
   }
-  intptr_t B = Program.LastDelimiter(L"\\/");
+  intptr_t B = Program.LastDelimiter(L"WGOOD_SLASH/");
   if (B)
   {
     Dir = Program.SubString(1, B).Trim();
@@ -702,15 +702,15 @@ UnicodeString EscapePuttyCommandParam(const UnicodeString & Param)
         Space = true;
         break;
 
-      case L'\\':
+      case LGOOD_SLASH:
         intptr_t I2 = Index;
-        while ((I2 <= Result.Length()) && (Result[I2] == L'\\'))
+        while ((I2 <= Result.Length()) && (Result[I2] == LGOOD_SLASH))
         {
           I2++;
         }
         if ((I2 <= Result.Length()) && (Result[I2] == L'"'))
         {
-          while (Result[Index] == L'\\')
+          while (Result[Index] == LGOOD_SLASH)
           {
             Result.Insert(L"\\", Index);
             Index += 2;
@@ -844,7 +844,7 @@ static intptr_t PathRootLength(const UnicodeString & APath)
   // Correction for PathSkipRoot API
 
   // Replace all /'s with \'s because PathSkipRoot can't handle /'s
-  UnicodeString Result = ReplaceChar(APath, L'/', L'\\');
+  UnicodeString Result = ReplaceChar(APath, LOTHER_SLASH, LGOOD_SLASH);
 
   // Now call the API
   LPCTSTR Buffer = ::PathSkipRoot(Result.c_str());
@@ -861,7 +861,7 @@ static bool PathIsRelative_CorrectedForMicrosoftStupidity(const UnicodeString & 
   // Correction for PathIsRelative API
 
   // Replace all /'s with \'s because PathIsRelative can't handle /'s
-  UnicodeString Result = ReplaceChar(APath, L'/', L'\\');
+  UnicodeString Result = ReplaceChar(APath, LOTHER_SLASH, LGOOD_SLASH);
 
   //Now call the API
   return ::PathIsRelative(Result.c_str()) != FALSE;
@@ -909,14 +909,14 @@ static intptr_t GetOffsetAfterPathRoot(const UnicodeString & APath, PATH_PREFIX_
     intptr_t IndCheckUNC = -1;
 
     if ((Len >= 8) &&
-        (APath[1] == L'\\' || APath[1] == L'/') &&
-        (APath[2] == L'\\' || APath[2] == L'/') &&
+        (APath[1] == LGOOD_SLASH || APath[1] == LOTHER_SLASH) &&
+        (APath[2] == LGOOD_SLASH || APath[2] == LOTHER_SLASH) &&
         (APath[3] == L'?') &&
-        (APath[4] == L'\\' || APath[4] == L'/') &&
+        (APath[4] == LGOOD_SLASH || APath[4] == LOTHER_SLASH) &&
         (APath[5] == L'U' || APath[5] == L'u') &&
         (APath[6] == L'N' || APath[6] == L'n') &&
         (APath[7] == L'C' || APath[7] == L'c') &&
-        (APath[8] == L'\\' || APath[8] == L'/'))
+        (APath[8] == LGOOD_SLASH || APath[8] == LOTHER_SLASH))
     {
       // Found \\?\UNC\ prefix
       PrefixType = PPT_LONG_UNICODE_UNC;
@@ -931,10 +931,10 @@ static intptr_t GetOffsetAfterPathRoot(const UnicodeString & APath, PATH_PREFIX_
       IndCheckUNC = 8;
     }
     else if ((Len >= 4) &&
-        (APath[1] == L'\\' || APath[1] == L'/') &&
-        (APath[2] == L'\\' || APath[2] == L'/') &&
+        (APath[1] == LGOOD_SLASH || APath[1] == LOTHER_SLASH) &&
+        (APath[2] == LGOOD_SLASH || APath[2] == LOTHER_SLASH) &&
         (APath[3] == L'?') &&
-        (APath[4] == L'\\' || APath[4] == L'/'))
+        (APath[4] == LGOOD_SLASH || APath[4] == LOTHER_SLASH))
     {
       // Found \\?\ prefix
       PrefixType = PPT_LONG_UNICODE;
@@ -946,8 +946,8 @@ static intptr_t GetOffsetAfterPathRoot(const UnicodeString & APath, PATH_PREFIX_
       }
     }
     else if ((Len >= 2) &&
-        (APath[1] == L'\\' || APath[1] == L'/') &&
-        (APath[2] == L'\\' || APath[2] == L'/'))
+        (APath[1] == LGOOD_SLASH || APath[1] == LOTHER_SLASH) &&
+        (APath[2] == LGOOD_SLASH || APath[2] == LOTHER_SLASH))
     {
       // Check for UNC share later
       IndCheckUNC = 2;
@@ -962,7 +962,7 @@ static intptr_t GetOffsetAfterPathRoot(const UnicodeString & APath, PATH_PREFIX_
         for(; Index <= Len; ++Index)
         {
           TCHAR z = APath[Index];
-          if ((z == L'\\') || (z == L'/') || (Index >= Len))
+          if ((z == LGOOD_SLASH) || (z == LOTHER_SLASH) || (Index >= Len))
           {
             ++Index;
             if (SkipSlashes == 1)
@@ -1040,7 +1040,7 @@ static UnicodeString MakeUnicodeLargePath(const UnicodeString & APath)
         // First we need to check if its an absolute path relative to the root
         bool AddPrefix = true;
         if ((APath.Length() >= 1) &&
-            ((APath[1] == L'\\') || (APath[1] == L'/')))
+            ((APath[1] == LGOOD_SLASH) || (APath[1] == LOTHER_SLASH)))
         {
           AddPrefix = FALSE;
 
@@ -1066,8 +1066,8 @@ static UnicodeString MakeUnicodeLargePath(const UnicodeString & APath)
       case PPT_UNC:
         // First we need to remove the opening slashes for UNC share
         if ((Result.Length() >= 2) &&
-            ((Result[1] == L'\\') || (Result[1] == L'/')) &&
-            ((Result[2] == L'\\') || (Result[2] == L'/')))
+            ((Result[1] == LGOOD_SLASH) || (Result[1] == LOTHER_SLASH)) &&
+            ((Result[2] == LGOOD_SLASH) || (Result[2] == LOTHER_SLASH)))
         {
           Result = Result.SubString(3, Result.Length() - 2);
         }
@@ -2423,7 +2423,7 @@ UnicodeString DoEncodeUrl(const UnicodeString & S, bool EncodeSlash)
     if (IsLetter(C) ||
         IsDigit(C) ||
         (C == L'_') || (C == L'-') || (C == L'.') ||
-        ((C == L'/') && !EncodeSlash))
+        ((C == LOTHER_SLASH) && !EncodeSlash))
     {
       ++Index;
     }
@@ -3150,7 +3150,7 @@ namespace base {
 
 UnicodeString UnixExtractFileName(const UnicodeString & APath)
 {
-  intptr_t Pos = APath.LastDelimiter(L'/');
+  intptr_t Pos = APath.LastDelimiter(LOTHER_SLASH);
   UnicodeString Result;
   if (Pos > 0)
   {
@@ -3178,7 +3178,7 @@ UnicodeString ExtractFileName(const UnicodeString & APath, bool Unix)
   }
   else
   {
-    return ::ExtractFilename(APath, L'\\');
+    return ::ExtractFilename(APath, LGOOD_SLASH);
   }
 }
 

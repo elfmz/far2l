@@ -582,9 +582,9 @@ UnicodeString TCopyParamType::ValidLocalPath(const UnicodeString & APath) const
   {
     if (!Result.IsEmpty())
     {
-      Result += L"\\";
+      Result += L"" WGOOD_SLASH "";
     }
-    Result += ValidLocalFileName(CutToChar(Path, L'\\', false));
+    Result += ValidLocalFileName(CutToChar(Path, LGOOD_SLASH, false));
   }
   return Result;
 }

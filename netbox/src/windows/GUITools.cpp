@@ -169,7 +169,7 @@ bool FindTool(const UnicodeString & Name, UnicodeString & APath)
   bool Result = true;
   if (!::FileExists(APath))
   {
-    APath = AppPath + "PuTTY\\" + Name;
+    APath = AppPath + "PuTTY" WGOOD_SLASH "" + Name;
     if (!::FileExists(APath))
     {
       APath = Name;
@@ -314,7 +314,7 @@ UnicodeString GetPersonalFolder()
       }
       if (!UserName.IsEmpty())
       {
-        UnicodeString WineHome = L"Z:\\home\\" + UserName;
+        UnicodeString WineHome = L"Z:" WGOOD_SLASH "home" WGOOD_SLASH "" + UserName;
         if (::DirectoryExists(WineHome))
         {
           Result = WineHome;
@@ -394,16 +394,16 @@ bool DeleteDirectory(const UnicodeString & ADirName)
 {
   TSearchRecChecked SearchRec;
   bool retval = true;
-  if (::FindFirst(ADirName + L"\\*", faAnyFile, SearchRec) == 0) // VCL Function
+  if (::FindFirst(ADirName + L"" WGOOD_SLASH "*", faAnyFile, SearchRec) == 0) // VCL Function
   {
     if (FLAGSET(SearchRec.Attr, faDirectory))
     {
       if ((SearchRec.Name != THISDIRECTORY) && (SearchRec.Name != PARENTDIRECTORY))
-        retval = DeleteDirectory(ADirName + L"\\" + SearchRec.Name);
+        retval = DeleteDirectory(ADirName + L"" WGOOD_SLASH "" + SearchRec.Name);
     }
     else
     {
-      retval = ::RemoveFile(ADirName + L"\\" + SearchRec.Name);
+      retval = ::RemoveFile(ADirName + L"" WGOOD_SLASH "" + SearchRec.Name);
     }
 
     if (retval)
@@ -413,11 +413,11 @@ bool DeleteDirectory(const UnicodeString & ADirName)
         if (FLAGSET(SearchRec.Attr, faDirectory))
         {
           if ((SearchRec.Name != THISDIRECTORY) && (SearchRec.Name != PARENTDIRECTORY))
-            retval = DeleteDirectory(ADirName + L"\\" + SearchRec.Name);
+            retval = DeleteDirectory(ADirName + L"" WGOOD_SLASH "" + SearchRec.Name);
         }
         else
         {
-          retval = ::RemoveFile(ADirName + L"\\" + SearchRec.Name);
+          retval = ::RemoveFile(ADirName + L"" WGOOD_SLASH "" + SearchRec.Name);
         }
 
         if (!retval)
@@ -493,7 +493,7 @@ bool TLocalCustomCommand::PatternReplacement(
   intptr_t Index, const UnicodeString & Pattern, UnicodeString & Replacement, bool & Delimit) const
 {
   bool Result = false;
-  if (Pattern == L"!\\")
+  if (Pattern == L"!" WGOOD_SLASH "")
   {
     // When used as "!\" in an argument to PowerShell, the trailing \ would escpae the ",
     // so we exclude it

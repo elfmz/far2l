@@ -171,7 +171,7 @@ void TraceDumpToFile()
     {
       #ifdef TRACE_IN_MEMORY_NO_FORMATTING
       const wchar_t * SourceFile = i->SourceFile;
-      const wchar_t * Slash = wcsrchr(SourceFile, L'\\');
+      const wchar_t * Slash = wcsrchr(SourceFile, LGOOD_SLASH);
       if (Slash != nullptr)
       {
         SourceFile = Slash + 1;
@@ -218,7 +218,7 @@ void DoTrace(const wchar_t * SourceFile, const wchar_t * Func,
   UnicodeString TimeString;
   // DateTimeToString(TimeString, L"hh:mm:ss.zzz", Now());
   TODO("use Format");
-  const wchar_t * Slash = wcsrchr(SourceFile, L'\\');
+  const wchar_t * Slash = wcsrchr(SourceFile, LGOOD_SLASH);
   if (Slash != nullptr)
   {
     SourceFile = Slash + 1;

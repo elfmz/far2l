@@ -2003,7 +2003,7 @@ intptr_t TTerminal::FileOperationLoop(TFileOperationEvent CallBackFunc,
 UnicodeString TTerminal::TranslateLockedPath(const UnicodeString & APath, bool Lock)
 {
   UnicodeString Result = APath;
-  if (GetSessionData()->GetLockInHome() && !Result.IsEmpty() && (Result[1] == L'/'))
+  if (GetSessionData()->GetLockInHome() && !Result.IsEmpty() && (Result[1] == LOTHER_SLASH))
   {
     if (Lock)
     {
@@ -4151,7 +4151,7 @@ bool TTerminal::MoveFiles(TStrings * AFileList, const UnicodeString & Target,
               File->GetIsDirectory() &&
               ((CurrentDirectory.SubString(1, Str.Length()) == Str) &&
                ((Str.Length() == CurrentDirectory.Length()) ||
-                (CurrentDirectory[Str.Length() + 1] == L'/'))))
+                (CurrentDirectory[Str.Length() + 1] == LOTHER_SLASH))))
           {
             PossiblyMoved = true;
           }
@@ -4195,7 +4195,7 @@ bool TTerminal::MoveFiles(TStrings * AFileList, const UnicodeString & Target,
             File->GetIsDirectory() &&
             ((CurrentDirectory.SubString(1, Str.Length()) == Str) &&
              ((Str.Length() == CurrentDirectory.Length()) ||
-              (CurrentDirectory[Str.Length() + 1] == L'/'))))
+              (CurrentDirectory[Str.Length() + 1] == LOTHER_SLASH))))
         {
           PossiblyMoved = true;
         }

@@ -3,7 +3,7 @@
 #include "Configuration.h"
 #include "CopyParam.h"
 
-#define CONST_INVALID_CHARS L"/\\[]"
+#define CONST_INVALID_CHARS L"/" WGOOD_SLASH "[]"
 
 class TGUIConfiguration;
 class TStoredSessionList;

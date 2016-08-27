@@ -853,7 +853,7 @@ bool CFtpListResult::ParseShortDate(const char *str, int len, t_directory::t_dir
   BOOL bGotDay = FALSE;
   int value = 0;
   bool numeric = true;
-  while (str[i] != '-' && str[i] != '.' && str[i] != '/')
+  while (str[i] != '-' && str[i] != '.' && str[i] != OTHER_SLASH)
   {
     if (!str[i])
       return false;
@@ -936,7 +936,7 @@ bool CFtpListResult::ParseShortDate(const char *str, int len, t_directory::t_dir
   if (i >= len)
     return false;
 
-  while (p[i]!='-' && p[i]!='.' && p[i]!='/')
+  while (p[i]!='-' && p[i]!='.' && p[i]!=OTHER_SLASH)
   {
     value *= 10;
     value += p[i]-'0';
@@ -971,7 +971,7 @@ bool CFtpListResult::ParseShortDate(const char *str, int len, t_directory::t_dir
 
   if (i >= len)
     return false;
-  while (p[i]!='-' && p[i]!='.' && p[i]!='/')
+  while (p[i]!='-' && p[i]!='.' && p[i]!=OTHER_SLASH)
   {
     value *= 10;
     value += p[i]-'0';
@@ -1052,7 +1052,7 @@ BOOL CFtpListResult::parseAsVMS(const char *line, const int linelen, t_directory
     return FALSE;
 
   bool gotSize = false;
-  const char *p = strnchr(str, tokenlen, '/');
+  const char *p = strnchr(str, tokenlen, OTHER_SLASH);
   if (!p && IsNumeric(str, tokenlen))
   {
     gotSize = true;
@@ -1077,7 +1077,7 @@ BOOL CFtpListResult::parseAsVMS(const char *line, const int linelen, t_directory
     if (!str)
       return FALSE;
 
-    const char *p = strnchr(str, tokenlen, '/');
+    const char *p = strnchr(str, tokenlen, OTHER_SLASH);
     int len;
     if (p)
       len = p - str;
@@ -1225,7 +1225,7 @@ BOOL CFtpListResult::parseAsEPLF(const char *line, const int linelen, t_director
         len = str - fact - 1;
       else
         len = nextfact - fact;
-      if (len == 1 && fact[0] == '/')
+      if (len == 1 && fact[0] == OTHER_SLASH)
         dir.dir = TRUE;
       else if (*fact=='s')
         dir.size = strntoi64(fact+1, len-1);
@@ -1826,11 +1826,11 @@ BOOL CFtpListResult::parseAsUnix(const char *line, const int linelen, t_director
    * yyyy/dd/mm, yyyy/mm/dd, dd/mm/yyyy, mm/dd/yyyy
    * try to detect them.
    */
-  else if (strnchr(smonth, smonthlen, '/'))
+  else if (strnchr(smonth, smonthlen, OTHER_SLASH))
   {
-    const char *p = strnchr(smonth, smonthlen, '/');
+    const char *p = strnchr(smonth, smonthlen, OTHER_SLASH);
     int plen = smonthlen - (p - smonth);
-    const char *pos2 = strnchr(p+1, plen - 1, '/');
+    const char *pos2 = strnchr(p+1, plen - 1, OTHER_SLASH);
     if (!pos2) //Assume 26/09 2002
     {
       sday = p + 1;
@@ -2145,7 +2145,7 @@ BOOL CFtpListResult::parseAsUnix(const char *line, const int linelen, t_director
 
   //Trim indicators, some server add those to mark special files
   if (str[tokenlen - 1] == '*' ||
-    str[tokenlen - 1] == '/' ||
+    str[tokenlen - 1] == OTHER_SLASH ||
 //    str[tokenlen - 1] == '=' || //Don't trim this char, it would cause problems on certain servers
                   //This char just marks sockets, so it will never appear as indicator
                   //However it is valid as character for filenames on some systems
@@ -2444,7 +2444,7 @@ BOOL CFtpListResult::parseAsOther(const char *line, const int linelen, t_directo
       if (!str)
         return FALSE;
 
-      if (tokenlen > 1 && (str[tokenlen-1] == '\\' || str[tokenlen-1] == '/'))
+      if (tokenlen > 1 && (str[tokenlen-1] == GOOD_SLASH || str[tokenlen-1] == OTHER_SLASH))
       {
         direntry.dir = TRUE;
         tokenlen--;
@@ -2654,7 +2654,7 @@ BOOL CFtpListResult::parseAsIBM(const char *line, const int linelen, t_directory
   if (!str)
     return FALSE;
 
-  if (str[tokenlen-1] == '/')
+  if (str[tokenlen-1] == OTHER_SLASH)
   {
     direntry.dir = TRUE;
     if (!--tokenlen)

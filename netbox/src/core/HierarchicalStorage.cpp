@@ -168,15 +168,15 @@ bool THierarchicalStorage::OpenSubKey(const UnicodeString & ASubKey, bool CanCre
   UnicodeString Key = ASubKey;
   if (Path)
   {
-    DebugAssert(Key.IsEmpty() || (Key[Key.Length()] != L'\\'));
+    DebugAssert(Key.IsEmpty() || (Key[Key.Length()] != LGOOD_SLASH));
     Result = true;
     while (!Key.IsEmpty() && Result)
     {
       if (!MungedKey.IsEmpty())
       {
-        MungedKey += L'\\';
+        MungedKey += LGOOD_SLASH;
       }
-      MungedKey += MungeKeyName(CutToChar(Key, L'\\', false));
+      MungedKey += MungeKeyName(CutToChar(Key, LGOOD_SLASH, false));
       Result = DoOpenSubKey(MungedKey, CanCreate);
     }
 
@@ -507,12 +507,12 @@ bool TRegistryStorage::Copy(TRegistryStorage * Storage)
 
 UnicodeString TRegistryStorage::GetSource() const
 {
-  return RootKeyToStr(FRegistry->GetRootKey()) + L"\\" + GetStorage();
+  return RootKeyToStr(FRegistry->GetRootKey()) + L"" WGOOD_SLASH "" + GetStorage();
 }
 
 UnicodeString TRegistryStorage::GetSource()
 {
-  return RootKeyToStr(FRegistry->GetRootKey()) + L"\\" + GetStorage();
+  return RootKeyToStr(FRegistry->GetRootKey()) + L"" WGOOD_SLASH "" + GetStorage();
 }
 
 void TRegistryStorage::SetAccessMode(TStorageAccessMode Value)
@@ -787,7 +787,7 @@ bool __fastcall TCustomIniFileStorage::DoOpenSubKey(const UnicodeString SubKey, 
       Result = FSections->Find(NewKey, Index);
       if (!Result &&
           (Index < FSections->Count) &&
-          (FSections->Strings[Index].SubString(1, NewKey.Length()+1) == NewKey + L"\\"))
+          (FSections->Strings[Index].SubString(1, NewKey.Length()+1) == NewKey + L"" WGOOD_SLASH ""))
       {
         Result = true;
       }
@@ -893,7 +893,7 @@ void __fastcall TCustomIniFileStorage::GetSubKeyNames(Classes::TStrings* Strings
     {
       UnicodeString SubSection = Section.SubString(CurrentSubKey.Length() + 1,
         Section.Length() - CurrentSubKey.Length());
-      int P = SubSection.Pos(L"\\");
+      int P = SubSection.Pos(L"" WGOOD_SLASH "");
       if (P)
       {
         SubSection.SetLength(P - 1);

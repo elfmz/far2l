@@ -26,8 +26,8 @@ const char * const appname = appname_;
 extern const int share_can_be_downstream = FALSE;
 extern const int share_can_be_upstream = FALSE;
 
-const UnicodeString OriginalPuttyRegistryStorageKey(L"Software\\SimonTatham\\PuTTY");
-const UnicodeString KittyRegistryStorageKey(L"Software\\9bis.com\\KiTTY");
+const UnicodeString OriginalPuttyRegistryStorageKey(L"Software" WGOOD_SLASH "SimonTatham" WGOOD_SLASH "PuTTY");
+const UnicodeString KittyRegistryStorageKey(L"Software" WGOOD_SLASH "9bis.com" WGOOD_SLASH "KiTTY");
 const UnicodeString OriginalPuttyExecutable("putty.exe");
 const UnicodeString KittyExecutable("kitty.exe");
 
@@ -427,7 +427,7 @@ static long OpenWinSCPKey(HKEY Key, const char * SubKey, HKEY * Result, bool Can
   RegKey = RegKey.SubString(PuttyKeyLen + 1, RegKey.Length() - PuttyKeyLen);
   if (!RegKey.IsEmpty())
   {
-    DebugAssert(RegKey[1] == L'\\');
+    DebugAssert(RegKey[1] == LGOOD_SLASH);
     RegKey.Delete(1, 1);
   }
 

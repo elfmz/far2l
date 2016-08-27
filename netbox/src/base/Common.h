@@ -8,7 +8,7 @@ extern const wchar_t EngShortMonthNames[12][4];
 extern const wchar_t TokenPrefix;
 extern const wchar_t NoReplacement;
 extern const wchar_t TokenReplacement;
-#define LOCAL_INVALID_CHARS "/\\:*?\"<>|"
+#define LOCAL_INVALID_CHARS "/" WGOOD_SLASH ":*?\"<>|"
 #define PASSWORD_MASK "***"
 #define sLineBreak L"\n"
 

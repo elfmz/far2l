@@ -1620,7 +1620,7 @@ int64_t TMemoryStream::Write(const void * Buffer, int64_t Count)
 
 bool IsRelative(const UnicodeString & Value)
 {
-  return  !(!Value.IsEmpty() && (Value[1] == L'\\'));
+  return  !(!Value.IsEmpty() && (Value[1] == LGOOD_SLASH));
 }
 
 TRegDataType DataTypeToRegData(DWORD Value)
@@ -1779,7 +1779,7 @@ bool TRegistry::OpenKey(const UnicodeString & Key, bool CanCreate)
   {
     if ((GetCurrentKey() != 0) && Relative)
     {
-      S = FCurrentPath + L'\\' + S;
+      S = FCurrentPath + LGOOD_SLASH + S;
     }
     ChangeKey(TempKey, S);
   }
@@ -2095,14 +2095,10 @@ HKEY TRegistry::GetKey(const UnicodeString & Key) const
 bool TRegistry::GetKeyInfo(TRegKeyInfo & Value) const
 {
   ClearStruct(Value);
-#ifndef __linux__
   bool Result = ::RegQueryInfoKey(GetCurrentKey(), nullptr, nullptr, nullptr, &Value.NumSubKeys,
     &Value.MaxSubKeyLen, nullptr, &Value.NumValues, &Value.MaxValueLen,
     &Value.MaxDataLen, nullptr, &Value.FileTime) == ERROR_SUCCESS;
   return Result;
-#else
-  return false;
-#endif
 }
 
 TShortCut::TShortCut() : FValue(0)

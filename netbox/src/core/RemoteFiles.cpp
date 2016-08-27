@@ -17,13 +17,13 @@ namespace core {
 
 bool IsUnixStyleWindowsPath(const UnicodeString & APath)
 {
-  return (APath.Length() >= 3) && IsLetter(APath[1]) && (APath[2] == L':') && (APath[3] == L'/');
+  return (APath.Length() >= 3) && IsLetter(APath[1]) && (APath[2] == L':') && (APath[3] == LOTHER_SLASH);
 }
 
 bool UnixIsAbsolutePath(const UnicodeString & APath)
 {
   return
-    ((APath.Length() >= 1) && (APath[1] == L'/')) ||
+    ((APath.Length() >= 1) && (APath[1] == LOTHER_SLASH)) ||
     // we need this for FTP only, but this is unfortunately used in a static context
     core::IsUnixStyleWindowsPath(APath);
 }
@@ -76,7 +76,7 @@ bool UnixIsChildPath(const UnicodeString & AParent, const UnicodeString & AChild
 
 UnicodeString UnixExtractFileDir(const UnicodeString & APath)
 {
-  intptr_t Pos = APath.LastDelimiter(L'/');
+  intptr_t Pos = APath.LastDelimiter(LOTHER_SLASH);
   // it used to return Path when no slash was found
   if (Pos > 1)
   {
@@ -91,7 +91,7 @@ UnicodeString UnixExtractFileDir(const UnicodeString & APath)
 // must return trailing backslash
 UnicodeString UnixExtractFilePath(const UnicodeString & APath)
 {
-  intptr_t Pos = APath.LastDelimiter(L'/');
+  intptr_t Pos = APath.LastDelimiter(LOTHER_SLASH);
   // it used to return Path when no slash was found
   if (Pos > 0)
   {
@@ -105,7 +105,7 @@ UnicodeString UnixExtractFilePath(const UnicodeString & APath)
 
 UnicodeString UnixExtractFileName(const UnicodeString & APath)
 {
-  intptr_t Pos = APath.LastDelimiter(L'/');
+  intptr_t Pos = APath.LastDelimiter(LOTHER_SLASH);
   UnicodeString Result;
   if (Pos > 0)
   {
@@ -213,7 +213,7 @@ UnicodeString AbsolutePath(const UnicodeString & Base, const UnicodeString & APa
   {
     Result = Base;
   }
-  else if (APath[1] == L'/')
+  else if (APath[1] == LOTHER_SLASH)
   {
     Result = core::UnixExcludeTrailingBackslash(APath);
   }

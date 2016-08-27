@@ -2847,7 +2847,7 @@ static void AdjustRemoteDir(
   TFarEdit * RemoteDirectoryEdit)
 {
   UnicodeString Dir;
-  intptr_t P = HostName.Pos(L'/');
+  intptr_t P = HostName.Pos(LOTHER_SLASH);
   if (P > 0)
   {
     Dir = HostName.SubString(P, HostName.Length() - P + 1);

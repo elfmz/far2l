@@ -53,8 +53,8 @@ void TFarConfiguration::Default()
   SetApplyCommandCommand(L"");
   SetApplyCommandParams(0);
 
-  SetPuttygenPath(FormatCommand(::ExtractFilePath(ModuleFileName()) + "putty\\puttygen.exe", L""));
-  SetPageantPath(FormatCommand(::ExtractFilePath(ModuleFileName()) + "putty\\pageant.exe", L""));
+  SetPuttygenPath(FormatCommand(::ExtractFilePath(ModuleFileName()) + "putty" WGOOD_SLASH "puttygen.exe", L""));
+  SetPageantPath(FormatCommand(::ExtractFilePath(ModuleFileName()) + "putty" WGOOD_SLASH "pageant.exe", L""));
 
   FBookmarks->Clear();
 }

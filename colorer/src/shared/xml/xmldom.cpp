@@ -569,7 +569,7 @@ void DocumentBuilder::consume(String &s){
   }
 }
 
-void DocumentBuilder::consume(char *s, int len){
+void DocumentBuilder::consume(const char *s, int len){
   int idx;
   if (len == -1){
     len = (int)strlen(s);

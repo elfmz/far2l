@@ -194,7 +194,7 @@ private:
   void consumePI(Node *root);
   void consumeMisc(Node *root);
   void consume(String &s);
-  void consume(char *s, int len = -1);
+  void consume(const char *s, int len = -1);
   void incDocumentLine();
   void setDocumentPos(int pos);
   void incDocumentPos();

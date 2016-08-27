@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="netbox" InternalType="Library">
   <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
     <Plugin Name="CMakePlugin">
       <![CDATA[[{
   "name": "Debug",
@@ -12,9 +15,6 @@
   "arguments": [],
   "parentProject": ""
  }]]]>
-    </Plugin>
-    <Plugin Name="qmake">
-      <![CDATA[00010001N0005Debug000000000000]]>
     </Plugin>
   </Plugins>
   <Description/>
@@ -308,17 +308,16 @@
         <Preprocessor Value="MPEXT"/>
         <Preprocessor Value="WINPORT_DIRECT"/>
       </Compiler>
-      <Linker Options="-Wl,--no-undefined $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic" Required="yes">
+      <Linker Options="-Wl, $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic" Required="yes">
         <LibraryPath Value="../WinPort/Debug"/>
         <Library Value="neon"/>
         <Library Value="tinyxml2"/>
         <Library Value="ssl"/>
         <Library Value="crypto"/>
         <Library Value="dl"/>
-        <Library Value="WinPort"/>
       </Linker>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="../Build/Plugins/netbox/bin/$(ProjectName).far-plug-utf8" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="../Build/Plugins/netbox/bin/$(ProjectName).far-plug-wide" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>

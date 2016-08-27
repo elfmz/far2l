@@ -7,6 +7,7 @@
 # include <sys/stat.h>
 # include <sys/time.h>
 # include <time.h>
+# include <stdarg.h>
 #endif
 
 #define WINPORT_DECL(NAME, RV, ARGS) SHAREDSYMBOL RV WINPORT_##NAME ARGS
@@ -224,6 +225,10 @@ extern "C" {
 	
 	WINPORT_DECL(WSAGetLastError, DWORD, ());
 
+
+	//%s -> %ls, %ws -> %ls
+	SHAREDSYMBOL int vswprintf_ws2ls(wchar_t * ws, size_t len, const wchar_t * format, va_list arg );
+	SHAREDSYMBOL int swprintf_ws2ls (wchar_t* ws, size_t len, const wchar_t* format, ...);
 
 
 

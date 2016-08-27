@@ -23,7 +23,7 @@
     <VirtualDirectory Name="zlib">
       <VirtualDirectory Name="contrib">
         <VirtualDirectory Name="minizip">
-          <File Name="src/zlib/contrib/minizip/iowin32.c"/>
+          <File Name="src/zlib/contrib/minizip/iowin32.c" ExcludeProjConfig="Debug"/>
           <File Name="src/zlib/contrib/minizip/mztools.c"/>
           <File Name="src/zlib/contrib/minizip/mztools.h"/>
           <File Name="src/zlib/contrib/minizip/ioapi.h"/>

@@ -71,8 +71,7 @@ extern "C" {
 	WINPORT_DECL(ScrollConsoleScreenBuffer,BOOL,(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, 
 		const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill))
 	{
-		fprintf(stderr, "TODODODODODO:! ScrollConsoleScreenBuffer\n");
-		return FALSE;
+		return g_wx_con_out.Scroll(lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill) ? TRUE : FALSE;
 	}
 
 

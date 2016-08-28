@@ -106,7 +106,7 @@ int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int 
 
     for (len = dstlen; srclen; srclen--, src++)
     {
-        WCHAR ch = *src;
+        uint16_t ch = (uint16_t)*src;
         unsigned int val;
 
         if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
@@ -324,14 +324,14 @@ int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int 
         }
         if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
         {
-            *dst++ = res;
+            *dst++ = (uint16_t)res;
         }
         else if (res <= 0x10ffff)  /* we need surrogates */
         {
             if (dst == dstend - 1) return -1;  /* overflow */
             res -= 0x10000;
-            *dst++ = 0xd800 | (res >> 10);
-            *dst++ = 0xdc00 | (res & 0x3ff);
+            *dst++ = (uint16_t)(0xd800 | (res >> 10));
+            *dst++ = (uint16_t)(0xdc00 | (res & 0x3ff));
         }
         else if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
         /* otherwise ignore it */

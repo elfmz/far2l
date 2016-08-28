@@ -254,15 +254,17 @@ static std::string Wide2MB(const wchar_t *src)
 			dst.clear();
 			break;
 		}
-		if ((size_t)r<=dst.size()) {
-			dst.resize(r);
-			break;
+		if (r==0) {
+			if (WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
+				dst.resize(dst.size() + 8 + dst.size()/2);
+			} else {
+				fprintf(stderr, "Wide2MB('" WS_FMT "') - failed\n", src);
+				dst.clear();
+				break;
+			}
 		}
-		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
-			dst.resize(dst.size() + 8 + dst.size()/2);
-		} else {
-			fprintf(stderr, "Wide2MB('" WS_FMT "') - failed\n", src);
-			dst.clear();
+		else if ((size_t)r<=dst.size()) {
+			dst.resize(r);
 			break;
 		}
 	}
@@ -277,18 +279,19 @@ static std::wstring MB2Wide(const char *src)
 	for (;; ) {
 		int r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, &dst[0], dst.size());
 		if (r < 0) {
-			dst.clear();
+			dst.clear();			
 			break;
 		}
-		if ((size_t)r<=dst.size()) {
+		if (r==0) {
+			if (WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
+				dst.resize(dst.size() + 8 + dst.size()/2);
+			} else {
+				fprintf(stderr, "MB2Wide('%s') - failed\n", src);
+				dst.clear();
+				break;
+			}
+		} else if ((size_t)r<=dst.size()) {
 			dst.resize(r);
-			break;
-		}
-		if (r==0 && WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
-			dst.resize(dst.size() + 8 + dst.size()/2);
-		} else {
-			fprintf(stderr, "MB2Wide('%s') - failed\n", src);
-			dst.clear();
 			break;
 		}
 	}

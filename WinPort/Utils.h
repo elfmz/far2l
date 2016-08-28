@@ -16,3 +16,5 @@ std::string ConsumeWinPath(const wchar_t *pw);
 void AppendAndRectifyPath(std::string &s, const char *div, LPCWSTR append);
 bool MatchWildcard(const char *string, const char *wild);
 
+std::string SettingsPath(const char *subpath = NULL);
+void WinPortInitWellKnownEnv();

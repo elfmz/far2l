@@ -7,7 +7,9 @@
 #include <wx/textfile.h>
 #include <wx/clipbrd.h>
 #include "CallInMain.h"
+#include "Utils.h"
 #include <set>
+#include <fstream>
 
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
@@ -44,10 +46,12 @@ private:
 	int _r;
 } *g_winport_app_thread = NULL;
 
+
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
 	wxInitialize();
 	WinPortInitRegistry();
+	WinPortInitWellKnownEnv();
 	g_wx_con_out.WriteString(L"Hello", 5);
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new WinPortAppThread(argc, argv, AppMain);
@@ -61,6 +65,30 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 }
 
 ///////////////
+
+
+static void SaveSize(unsigned int width, unsigned int height)
+{
+	std::ofstream os;
+	os.open(SettingsPath("consolesize").c_str());
+	if (os.is_open()) {
+		os << width << std::endl;
+		os << height << std::endl;
+	}
+}
+
+static void LoadSize(unsigned int &width, unsigned int &height)
+{
+	std::ifstream is;
+	is.open(SettingsPath("consolesize").c_str());
+	if (is.is_open()) {
+		std::string str;
+		getline (is, str);
+		width = atoi(str.c_str());
+		getline (is, str);
+		height = atoi(str.c_str());
+	}
+}
 
 static void NormalizeArea(SMALL_RECT &area)
 {
@@ -274,17 +302,12 @@ public:
 		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
 		fprintf(stderr, "FixedFontLookup: %ls\n", _result.wc_str());
 		return _result;
-	}
-	
-	
+	}	
 };
 
 void InitializeFont(wxFrame *frame, wxFont& font)
 {
-	std::string path = getenv("HOME");
-	path+= "/.WinPort";
-	mkdir(path.c_str(), 0777);
-	path+= "/font";
+	const std::string &path = SettingsPath("font");
 	wxTextFile file(path);
 	if (file.Exists() && file.Open()) {
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
@@ -360,6 +383,10 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
 	unsigned int cw, ch;
 	g_wx_con_out.GetSize(cw, ch);
+	LoadSize(cw, ch);
+	g_wx_con_out.SetSize(cw, ch);
+	g_wx_con_out.GetSize(cw, ch);
+	
 	cw*= font_width;
 	ch*= font_height;
 	if ( w != (int)cw || h != (int)ch)
@@ -374,7 +401,6 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 			delete tmp;
 	}
 }
-
 
 
 void WinPortPanel::CheckForResizePending()
@@ -396,6 +422,9 @@ void WinPortPanel::CheckForResizePending()
 			if (width!=(int)prev_width || height!=(int)prev_height) {
 				fprintf(stderr, "Changing size: %u x %u\n", width, height);
 				g_wx_con_out.SetSize(width, height);
+				if (!_frame->IsFullScreen() && !_frame->IsMaximized()) {
+					SaveSize(width, height);
+				}
 				INPUT_RECORD ir = {0};
 				ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
 				ir.Event.WindowBufferSizeEvent.dwSize.X = width;

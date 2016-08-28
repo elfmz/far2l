@@ -264,7 +264,13 @@ class VTShell
 			{
 			case 'A': c = (char)0x01; break;
 			case 'B': c = (char)0x02; break;
-			//case 'C': c = (char)0x03; break;
+			case 'C': 
+				if (_grp!=-1)
+					killpg(_grp, SIGINT);
+				else
+					kill(_pid, SIGINT);			
+				c = (char)0x03; 
+				break;
 			case 'D': c = (char)0x04; break;
 			case 'E': c = (char)0x05; break;
 			case 'F': c = (char)0x06; break;
@@ -327,16 +333,6 @@ class VTShell
 			//case VK_CANCEL: return "\x3";
 		}
 			
-		if (ir.Event.KeyEvent.wVirtualKeyCode=='C' && 
-			IsControlOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
-				printf("Ctrl+C -> %u %u!\n",  _pid, _grp);
-				if (_grp!=-1)
-					killpg(_grp, SIGINT);
-				else
-					kill(_pid, SIGINT);
-			}else {
-				printf("key: %u char: %u\n", ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.uChar.UnicodeChar);		
-			}
 		wchar_t wz[2] = {ir.Event.KeyEvent.uChar.UnicodeChar, 0};
 		return Wide2MB(&wz[0]);
 	}

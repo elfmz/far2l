@@ -116,8 +116,20 @@ char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT Code
 	if (!lpwszUnicodeString || (nLength < 0))
 		return nullptr;
 
-	char *lpResult = (char*)xf_malloc(nLength+1);
-	memset(lpResult, 0, nLength+1);
+	int dst_length = WINPORT(WideCharToMultiByte)(
+		    CodePage,
+		    0,
+		    lpwszUnicodeString,
+		    nLength,
+		    NULL,
+		    0,
+		    nullptr,
+		    nullptr
+		);
+	if (!dst_length) dst_length = nLength + 1; else ++dst_length;
+	char *lpResult = (char*)xf_malloc(dst_length);
+	if (!dst_length) return NULL;
+	memset(lpResult, 0, dst_length);
 
 	if (nLength)
 	{
@@ -127,7 +139,7 @@ char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT Code
 		    lpwszUnicodeString,
 		    nLength,
 		    lpResult,
-		    nLength,
+		    dst_length,
 		    nullptr,
 		    nullptr
 		);

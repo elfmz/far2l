@@ -255,20 +255,35 @@ class VTShell
 				(dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|SHIFT_PRESSED)) == 0);
 	}
 	
+	bool IsControlAltOnlyPressed(DWORD dwControlKeyState)
+	{
+		return ( (dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0  &&
+				(dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0  &&
+				(dwControlKeyState & (SHIFT_PRESSED)) == 0);
+	}	
+	
+	void SendSignal(int sig)
+	{
+		if (_grp!=-1)
+			killpg(_grp, sig);
+		else
+			kill(_pid, sig);
+	}
+	
 	std::string TranslateInput(const INPUT_RECORD &ir)
 	{
-		
-		if (IsControlOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
+		if (IsControlAltOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
+			if (ir.Event.KeyEvent.wVirtualKeyCode=='C')
+				SendSignal(SIGKILL);
+			
+		} else if (IsControlOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
 			char c = 0;
 			switch (ir.Event.KeyEvent.wVirtualKeyCode)
 			{
 			case 'A': c = (char)0x01; break;
 			case 'B': c = (char)0x02; break;
 			case 'C': 
-				if (_grp!=-1)
-					killpg(_grp, SIGINT);
-				else
-					kill(_pid, SIGINT);			
+				SendSignal(SIGINT);
 				c = (char)0x03; 
 				break;
 			case 'D': c = (char)0x04; break;

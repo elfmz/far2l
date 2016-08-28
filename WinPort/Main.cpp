@@ -84,9 +84,11 @@ static void LoadSize(unsigned int &width, unsigned int &height)
 	if (is.is_open()) {
 		std::string str;
 		getline (is, str);
-		width = atoi(str.c_str());
+		if (!str.empty())
+			width = atoi(str.c_str());
 		getline (is, str);
-		height = atoi(str.c_str());
+		if (!str.empty())
+			height = atoi(str.c_str());
 	}
 }
 

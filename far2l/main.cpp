@@ -295,26 +295,9 @@ int MainProcessSEH(string& strEditName,string& strViewName,string& DestName1,str
 	return Result;
 }
 
-void InitWellKnownEnv()
-{
-	if (!getenv("TEMP")) {
-		std::string env = "/var/tmp";
-		const char *home = getenv("HOME");
-		if (home && *home) {
-			env = home;
-			env+= "/.WinPort";
-			mkdir(env.c_str(), 0777);
-			env+= "/tmp";
-			mkdir(env.c_str(), 0777);
-		}
-		setenv("TEMP", env.c_str(), 1);
-	}
-}
-
 int FarAppMain(int argc, char **argv)
 {
 	InitCurrentDirectory();
-	InitWellKnownEnv();
 	//todo if (apiGetModuleFileName(nullptr, g_strFarModuleName)) todo
 	{
 		apiGetCurrentDirectory(g_strFarModuleName);

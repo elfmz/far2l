@@ -40,7 +40,6 @@
     <File Name="Main.cpp"/>
     <File Name="stdafx.cpp"/>
     <File Name="stdafx.h"/>
-    <File Name="StrUtils.cpp"/>
     <File Name="Utils.h"/>
     <File Name="WinCompat.h"/>
     <File Name="wineguts.h"/>
@@ -146,6 +145,7 @@
     <File Name="CallInMain.h"/>
     <File Name="windows.h"/>
     <File Name="APIPrintFormat.cpp"/>
+    <File Name="Utils.cpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

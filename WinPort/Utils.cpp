@@ -154,8 +154,7 @@ bool MatchWildcard(const char *string, const char *wild) {
 std::string SettingsPath(const char *subpath)
 {
 #ifdef _WIN32
-	std::string path = "D:";
-	path+= "\\.far2l";
+	std::string path = "D:\\.far2l";
 #else	
 	const char *home = getenv("HOME");
 	std::string path = home ? home : "/tmp";
@@ -165,7 +164,7 @@ std::string SettingsPath(const char *subpath)
 	mkdir(path.c_str(), 0777);
 	if (subpath) {
 		if (*subpath != GOOD_SLASH) 
-			path+= GOOD_SLASH
+			path+= GOOD_SLASH;
 		for (const char *p = subpath; *p; ++p) {
 			if (*p == GOOD_SLASH)
 				mkdir(path.c_str(), 0777);
@@ -177,4 +176,14 @@ std::string SettingsPath(const char *subpath)
 	
 }
 
+
+
+void WinPortInitWellKnownEnv()
+{
+	if (!getenv("TEMP")) {
+		std::string temp = SettingsPath("tmp");
+		mkdir(temp.c_str(), 0777);
+		setenv("TEMP", temp.c_str(), 1);
+	}
+}
 

@@ -18,31 +18,16 @@ struct WinPortHandleReg : WinPortHandle
 };
 
 #ifdef _WIN32
-# define WINPORT_REGISTRY_SUBROOT	"\\WinPort"
 # define WINPORT_REG_DIV_KEY		"\\k-"
 # define WINPORT_REG_DIV_VALUE	"\\v-"
 #else
-# define WINPORT_REGISTRY_SUBROOT	"/.WinPort"
 # define WINPORT_REG_DIV_KEY		"/k-"
 # define WINPORT_REG_DIV_VALUE	"/v-"
 #endif
 
-static std::string GetRegistryRoot()
-{
-#ifdef _WIN32
-	std::string rv = "D:";
-#else
-	std::string rv = getenv("HOME");
-	if (rv.empty())
-		rv = "/tmp";
-#endif	
-	rv+= WINPORT_REGISTRY_SUBROOT;
-	return rv;	
-}
-
 static std::string GetRegistrySubroot(const char *sub)
 {
-	static std::string s_root = GetRegistryRoot();
+	static std::string s_root = SettingsPath();
 	std::string rv = s_root;
 	rv+= sub;
 	return rv;
@@ -341,7 +326,7 @@ extern "C" {
 		else 
 			fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' SIZE %u \n", prefixed_name.c_str(), type.c_str(), value.c_str(), *lpcbData);
 		*/
-		return ERROR_SUCCESS;
+		return out;
 	}
 
 	LONG WINPORT(RegEnumValue)( HKEY    hKey,

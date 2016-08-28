@@ -176,8 +176,6 @@ private:
 		}
 	} _pressed_keys;
 
-	wxBitmap	_white_bitmap;
-	wxMemoryDC 	_white_rectangle;
 	wxKeyEvent _last_keydown;
 	wxFont _font;
 	
@@ -345,26 +343,25 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
-		_white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH), _frame(frame), _cursor_timer(NULL),  
+		_frame(frame), _cursor_timer(NULL),  
 		_cursor_state(false), _last_keydown_enqueued(false), _initialized(false), _resize_pending(RP_NONE), 
 		_mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
-	_white_rectangle.SelectObject(_white_bitmap);	
-	wxBrush* brush = wxTheBrushList->FindOrCreateBrush(wxColor(0xff, 0xff, 0xff));
-	_white_rectangle.SetBrush(*brush);
-	_white_rectangle.DrawRectangle(0, 0,  _white_bitmap.GetWidth() ,_white_bitmap.GetHeight());
 	
-	
-	_white_rectangle.SetFont(_font);
 	fprintf(stderr, "Font: '%ls' %s\n", _font.GetFaceName().wc_str(), _font.IsFixedWidth() ? "monospaced" : "not monospaced");
-	
+
+	wxBitmap white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH);
+	wxMemoryDC white_rectangle;
+	white_rectangle.SelectObject(white_bitmap);		
+	white_rectangle.SetFont(_font);
+		
 	wchar_t test_char[2] = {0};
 	for(test_char[0] = L'A';  test_char[0]<=L'Z'; ++test_char[0]) {
-		wxSize char_size = _white_rectangle.GetTextExtent(test_char);
-		if (font_width < char_size.GetWidth()) font_width = char_size.GetWidth();
-		if (font_height < char_size.GetHeight()) font_height = char_size.GetHeight();
+		wxSize char_size = white_rectangle.GetTextExtent(test_char);
+		if ((int)font_width < char_size.GetWidth()) font_width = char_size.GetWidth();
+		if ((int)font_height < char_size.GetHeight()) font_height = char_size.GetHeight();
 	}
 	//font_height+= font_height/4;
 
@@ -729,6 +726,25 @@ public:
 	}
 };
 
+#define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
+					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
+					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE )
+
+struct CursorProps
+{
+	CursorProps(bool state) : visible(false), height(1)
+	{
+		if (state) {
+			const COORD pos = g_wx_con_out.GetCursor(height, visible);
+			x = (unsigned int) pos.X;
+			y = (unsigned int) pos.Y;
+		}
+	}
+
+	unsigned int x, y;
+	bool  visible;
+	UCHAR height;
+};
 
 void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
@@ -751,12 +767,15 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 		qedit.Bottom = _mouse_qedit_last.Y;
 		NormalizeArea(qedit);
 	}
-	
+	wxString tmp;
 	std::vector<CHAR_INFO> line(cw);
 	wxPen *trans_pen = wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT);
 	dc.SetPen(*trans_pen);
 	dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 	dc.SetFont(_font);
+	
+	CursorProps cur_props(_cursor_state);
+	
 	ConsoleColorChanger ccc(dc);
 	for (unsigned int cy = area.Top; cy <= area.Bottom; ++cy) {
 		COORD data_size = {cw, 1};
@@ -765,47 +784,38 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 
 		if (rgn.Contains(0, cy * font_height, cw * font_width, font_height)==wxOutRegion) continue;
 		g_wx_con_out.Read(&line[area.Left], data_size, data_pos, screen_rect);
+		const unsigned int y = cy * font_height;
 		
 		for (unsigned int cx = area.Left; cx <= area.Right; ++cx) {
 			if (rgn.Contains(cx * font_width, cy * font_height, font_width, font_height)==wxOutRegion) continue;
 
-			unsigned short attributes = line[cx].Attributes;
+			const unsigned int x = cx * font_width;
+			unsigned short attributes = line[cx].Attributes;			
 			
 			if (_mouse_qedit_pending && cx >= qedit.Left && 
 				cx <= qedit.Right && cy >= qedit.Top && cy <= qedit.Bottom) {
-				attributes^= FOREGROUND_INTENSITY | BACKGROUND_INTENSITY |
-					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | 
-					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
+				attributes^= ALL_ATTRIBUTES;				
 			}
+			
+			unsigned int fill_height;
+			if (cur_props.visible && cx==cur_props.x && cy==cur_props.y) {
+				unsigned int h = (font_height * cur_props.height) / 100;
+				if (h==0) h = 1;
+				fill_height = font_height - h;
+				if (fill_height > font_height) fill_height = font_height;
+				ccc.SetBackgroundAttributes(attributes ^ ALL_ATTRIBUTES);
+				dc.DrawRectangle(x, y + fill_height, font_width, h);				
+			} else
+				fill_height = font_height;
+			
 			ccc.SetBackgroundAttributes(attributes);
-			unsigned int x = cx * font_width;
-			unsigned int y = cy * font_height;
-			//int fill_x = x, fill_y = y, fill_width = font_width, fill_height = font_height;
-			//if (fill_x < font_width) { fill_width+= fill_x; fill_x = 0; }
-			//if (fill_y < font_height) { fill_height+= fill_y; fill_y = 0; };
+			dc.DrawRectangle(x, y, font_width, fill_height);
 			
-			dc.DrawRectangle(x, y, font_width, font_height);
-			
-			WCHAR sz[2] = {line[cx].Char.UnicodeChar, 0};
-			if (sz[0] && sz[0]!=L' ') {
+			const WCHAR wc = line[cx].Char.UnicodeChar;
+			if (wc && wc != L' ') {
+				tmp = wc;
 				ccc.SetTextAttributes(attributes);
-				dc.DrawText(sz, x, y);
-			}
-		}
-	}
-
-	if (_cursor_state) {
-		UCHAR height;
-		bool visible;
-		const COORD &pos = g_wx_con_out.GetCursor(height, visible);
-		if (visible) {
-			unsigned int w = font_width;
-			unsigned int h = (font_height * height) / 100;
-			if (h==0) h = 1;
-			unsigned int x = pos.X * font_width;
-			unsigned int y = (pos.Y + 1) * font_height - h;	
-			if (rgn.Contains(x, y, w, h)!=wxOutRegion)  {
-				dc.Blit(x, y, w, h, &_white_rectangle, 0, 0, wxCOPY);
+				dc.DrawText(tmp, x, y);
 			}
 		}
 	}

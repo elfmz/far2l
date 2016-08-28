@@ -84,11 +84,13 @@ static void LoadSize(unsigned int &width, unsigned int &height)
 	if (is.is_open()) {
 		std::string str;
 		getline (is, str);
-		if (!str.empty())
+		if (!str.empty()) {
 			width = atoi(str.c_str());
+		}
 		getline (is, str);
-		if (!str.empty())
+		if (!str.empty()) {
 			height = atoi(str.c_str());
+		}
 	}
 }
 
@@ -163,6 +165,7 @@ private:
 	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char );
 	void OnKillFocus( wxFocusEvent &event );
 	void DamageAreaBetween(COORD c1, COORD c2);
+	int GetDisplayIndex();
 
 	wxDECLARE_EVENT_TABLE();
 	struct PressedKeys : std::set<int> 
@@ -386,7 +389,10 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	unsigned int cw, ch;
 	g_wx_con_out.GetSize(cw, ch);
 	LoadSize(cw, ch);
-	g_wx_con_out.SetSize(cw, ch);
+	wxDisplay disp(GetDisplayIndex());
+	wxRect rc = disp.GetClientArea();
+	if ((unsigned)rc.GetWidth() >= cw * font_width && (unsigned)rc.GetHeight() >= ch * font_height) 
+		g_wx_con_out.SetSize(cw, ch);
 	g_wx_con_out.GetSize(cw, ch);
 	
 	cw*= font_width;
@@ -481,6 +487,16 @@ void WinPortPanel::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 		wxQueueEvent	(this, event);
 }
 
+int WinPortPanel::GetDisplayIndex()
+{
+	int index = wxDisplay::GetFromWindow(_frame);
+	if (index < 0 || index >= (int)wxDisplay::GetCount()) {
+		fprintf(stderr, "OnConsoleGetLargestWindowSize: bad display %d, will use %d\n", index, _last_valid_display);
+		index = _last_valid_display;
+	}
+	return index;
+}
+
 COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 {
 	if (!wxIsMainThread()){
@@ -488,13 +504,7 @@ COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 		return CallInMain<COORD>(fn);
 	}
 	
-	int index = wxDisplay::GetFromWindow(_frame);
-	if (index < 0 || index >= (int)wxDisplay::GetCount()) {
-		fprintf(stderr, "OnConsoleGetLargestWindowSize: bad display %d, will use %d\n", index, _last_valid_display);
-		index = _last_valid_display;
-	}
-	
-	wxDisplay disp(index);
+	wxDisplay disp(GetDisplayIndex());
 	wxRect rc = disp.GetClientArea();
 	wxSize outer_size = _frame->GetSize();
 	wxSize inner_size = GetClientSize();

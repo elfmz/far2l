@@ -19,6 +19,7 @@ static void close_fd_pair(int *fds)
 }
 
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) ;
+const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad = 0);
 
 class VTShell
 {
@@ -227,13 +228,15 @@ class VTShell
 			DWORD dw = 0;
 			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) break;
 			if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
-				const std::string &translated = TranslateInput(ir);
+				const std::string &translated = TranslateKeyEvent(ir.Event.KeyEvent);
 				if (!translated.empty()) {
 					if (write(_fd_in, translated.c_str(), translated.size())<=0) {
-						printf("VTShell: write failed\n");
+						fprintf(stderr, "VTShell: write failed\n");
 					}
 				} else {
-					printf("VTShell: not translated keydown: 0x%x\n", ir.Event.KeyEvent.wVirtualKeyCode);
+					fprintf(stderr, "VTShell: not translated keydown: VK=0x%x MODS=0x%x char=0x%x\n", 
+						ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.dwControlKeyState,
+						ir.Event.KeyEvent.uChar.UnicodeChar );
 				}
 			}
 			
@@ -260,7 +263,29 @@ class VTShell
 		return ( (dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0  &&
 				(dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0  &&
 				(dwControlKeyState & (SHIFT_PRESSED)) == 0);
-	}	
+	}
+	
+	std::string TranslateKeyEvent(const KEY_EVENT_RECORD &KeyEvent)
+	{
+		if (KeyEvent.wVirtualKeyCode) {
+			if (KeyEvent.wVirtualKeyCode==VK_CONTROL || KeyEvent.wVirtualKeyCode==VK_MENU || KeyEvent.wVirtualKeyCode==VK_SHIFT)
+				return std::string();
+				
+			const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
+			const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
+			const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
+			if (ctrl && !shift && KeyEvent.wVirtualKeyCode=='C') {
+				SendSignal(alt ? SIGKILL : SIGINT);
+			}
+		
+			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift);
+			if (spec)
+				return spec;
+		}
+
+		wchar_t wz[2] = {KeyEvent.uChar.UnicodeChar, 0};
+		return Wide2MB(&wz[0]);
+	}
 	
 	void SendSignal(int sig)
 	{
@@ -268,88 +293,6 @@ class VTShell
 			killpg(_grp, sig);
 		else
 			kill(_pid, sig);
-	}
-	
-	std::string TranslateInput(const INPUT_RECORD &ir)
-	{
-		if (IsControlAltOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
-			if (ir.Event.KeyEvent.wVirtualKeyCode=='C')
-				SendSignal(SIGKILL);
-			
-		} else if (IsControlOnlyPressed(ir.Event.KeyEvent.dwControlKeyState)) {
-			char c = 0;
-			switch (ir.Event.KeyEvent.wVirtualKeyCode)
-			{
-			case 'A': c = (char)0x01; break;
-			case 'B': c = (char)0x02; break;
-			case 'C': 
-				SendSignal(SIGINT);
-				c = (char)0x03; 
-				break;
-			case 'D': c = (char)0x04; break;
-			case 'E': c = (char)0x05; break;
-			case 'F': c = (char)0x06; break;
-			case 'G': c = (char)0x07; break;
-			case 'H': c = (char)0x08; break;
-			case 'I': c = (char)0x09; break;
-			case 'J': c = (char)0x0a; break;
-			case 'K': c = (char)0x0b; break;
-			case 'L': c = (char)0x0c; break;			
-			case 'M': c = (char)0x0d; break;
-			case 'N': c = (char)0x0e; break;
-			case 'O': c = (char)0x0f; break;
-			case 'P': c = (char)0x10; break;
-			case 'Q': c = (char)0x11; break;
-			case 'R': c = (char)0x12; break;
-			case 'S': c = (char)0x13; break;
-			case 'T': c = (char)0x14; break;
-			case 'U': c = (char)0x15; break;
-			case 'V': c = (char)0x16; break;
-			case 'W': c = (char)0x17; break;
-			case 'X': c = (char)0x18; break;
-			case 'Y': c = (char)0x19; break;
-			case 'Z': c = (char)0x1a; break;
-			case '[': c = (char)0x1b; break;
-			case '\\': c = (char)0x1c; break;
-			case ']': c = (char)0x1d; break;
-			//case '^': c = (char)0x1e; break;
-			//case '_': c = (char)0x1f; break;
-			}
-			
-			if (c)
-				return std::string(&c, 1);
-		}
-		
-		switch ( ir.Event.KeyEvent.wVirtualKeyCode)
-		{
-			case VK_F1: return "\x1bOP";
-			case VK_F2: return "\x1bOQ";
-			case VK_F3: return "\x1bOR";
-			case VK_F4: return "\x1bOS";
-			case VK_F5: return "\x1b[15~";
-			case VK_F6: return "\x1b[17~";
-			case VK_F7: return "\x1b[18~";
-			case VK_F8: return "\x1b[19~";
-			case VK_F9: return "\x1b[20~";
-			case VK_F10: return "\x1b[21~";
-			case VK_F11: return "\x1b[23~";
-			case VK_F12: return "\x1b[24~";
-			case VK_UP: return "\x1b[A";
-			case VK_DOWN: return "\x1b[B";
-			case VK_RIGHT: return  "\x1b[C";
-			case VK_LEFT: return "\x1b[D";
-			case VK_HOME: return  "\x1b[H";
-			case VK_END: return  "\x1b[F";
-			case VK_BACK: return "\x08";
-			case VK_DELETE: return "\x1b[3~";
-			case VK_NEXT: return "\x1b[6~";
-			case VK_PRIOR: return "\x1b[5~";
-			case VK_INSERT: return "\x1b[2~";
-			//case VK_CANCEL: return "\x3";
-		}
-			
-		wchar_t wz[2] = {ir.Event.KeyEvent.uChar.UnicodeChar, 0};
-		return Wide2MB(&wz[0]);
 	}
 };
 

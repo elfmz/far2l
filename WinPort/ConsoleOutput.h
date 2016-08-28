@@ -79,6 +79,8 @@ public:
 	size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos);
 	size_t FillAttributeAt(WORD wAttribute, size_t count, COORD &pos);
 	
+	bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
+				COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 };
 
 

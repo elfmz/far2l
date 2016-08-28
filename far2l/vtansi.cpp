@@ -158,18 +158,17 @@ static CONSOLE_CURSOR_INFO orgcci;	// original cursor state
 #define SI	'\x0F'          // Shift In
 
 #define MAX_ARG 16		// max number of args in an escape sequence
-int   state;			// automata state
-TCHAR prefix;			// escape sequence prefix ( '[', ']' or '(' );
-TCHAR prefix2;			// secondary prefix ( '?' or '>' );
-TCHAR suffix;			// escape sequence suffix
-TCHAR suffix2;			// escape sequence secondary suffix
-int   es_argc;			// escape sequence args count
-int   es_argv[MAX_ARG]; 	// escape sequence args
-TCHAR Pt_arg[MAX_PATH*2];	// text parameter for Operating System Command
-int   Pt_len;
-BOOL  shifted;
-int   screen_top = -1;		// initial window top when cleared
-
+static int   state;			// automata state
+static TCHAR prefix;			// escape sequence prefix ( '[', ']' or '(' );
+static TCHAR prefix2;			// secondary prefix ( '?' or '>' );
+static TCHAR suffix;			// escape sequence suffix
+static TCHAR suffix2;			// escape sequence secondary suffix
+static int   es_argc;			// escape sequence args count
+static int   es_argv[MAX_ARG]; 	// escape sequence args
+static TCHAR Pt_arg[MAX_PATH*2];	// text parameter for Operating System Command
+static int   Pt_len;
+static BOOL  shifted;
+static int   screen_top = -1;		// initial window top when cleared
 
 // DEC Special Graphics Character Set from
 // http://vt100.net/docs/vt220-rm/table2-4.html
@@ -295,7 +294,7 @@ static void FlushBuffer( void )
 	if (ansiState.crm) {
 		DWORD mode;
 		WINPORT(GetConsoleMode)( hConOut, &mode );
-		WINPORT(SetConsoleMode)( hConOut, mode & ~ENABLE_PROCESSED_OUTPUT );
+		WINPORT(SetConsoleMode)( hConOut, mode & ~(ENABLE_PROCESSED_OUTPUT) );
 		WINPORT(WriteConsole)( hConOut, ChBuffer, nCharInBuffer, &nWritten, NULL );
 		WINPORT(SetConsoleMode)( hConOut, mode );
 	} else {
@@ -482,7 +481,7 @@ void InterpretEscSeq( void )
 #define LEFT   0
 #define RIGHT  (WIDTH - 1)
 
-#define FillBlank( len, Pos ) \
+#define FillBlank( len, Pos )  \
 	WINPORT(FillConsoleOutputCharacter)( hConOut, ' ', len, Pos, &NumberOfCharsWritten );\
 	WINPORT(FillConsoleOutputAttribute)( hConOut, Info.wAttributes, len, Pos, \
 	                                     &NumberOfCharsWritten )
@@ -510,7 +509,9 @@ void InterpretEscSeq( void )
 			return;			
 		}
 
+
 		WINPORT(GetConsoleScreenBufferInfo)( hConOut, &Info );
+		//fprintf(stderr, "suffix: %c argc: %u argv: %u %u\n", suffix, es_argc, es_argv[0], es_argv[1]);
 		switch (suffix) {
 		case 'm':
 			if (es_argc == 0) es_argv[es_argc++] = 0;
@@ -716,7 +717,7 @@ void InterpretEscSeq( void )
 			CharInfo.Char.UnicodeChar = ' ';
 			CharInfo.Attributes = Info.wAttributes;
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &WIN, Pos, &CharInfo );
-			// Technically should home the cursor, but perhaps not expected.
+			// Technically should home the cursor, but perhaps not expeclted.
 			return;
 
 		case 'M':                 // ESC[#M Delete # lines.
@@ -724,8 +725,8 @@ void InterpretEscSeq( void )
 			if (es_argc != 1) return;
 			Rect.Left   = WIN.Left	= LEFT;
 			Rect.Right  = WIN.Right = RIGHT;
-			Rect.Bottom = BOTTOM;
-			Rect.Top    = CUR.Y - es_argv[0];
+			Rect.Bottom = BOTTOM; BOTTOM-= es_argv[0];
+			Rect.Top    = CUR.Y + es_argv[0];
 			Pos.X = LEFT;
 			Pos.Y = TOP = CUR.Y;
 			CharInfo.Char.UnicodeChar = ' ';
@@ -908,7 +909,7 @@ void InterpretEscSeq( void )
 
 			case 6: {	// ESC[6n Report cursor position
 				TCHAR buf[32] = {0};
-				swprintf( buf, 31, L"\33[%d;%dR", CUR.Y - TOP + 1, CUR.X + 1 );
+				swprintf( buf, 31, L"\33[%d;%dR", CUR.Y - TOP + 1, CUR.X + 1);
 				SendSequence( buf );
 			}
 			return;
@@ -941,7 +942,12 @@ void InterpretEscSeq( void )
 		case 'l':                 // ESC[#l Reset Mode
 			return;			// ESC[3l is handled during parsing
 
+		case 'r':
+			fprintf(stderr, "VTAnsi: TODO: 'r' argc: %u\n",es_argc);
+			return;
+		
 		default:
+			fprintf(stderr, "VTAnsi: unknown suffix %c\n", suffix);
 			return;
 		}
 	} else { // (prefix == ']')
@@ -1143,6 +1149,7 @@ VTAnsi::VTAnsi()
 	ansiState.background = attr2ansi[(orgattr >> 4) & 7];
 	WINPORT(GetConsoleMode)( NULL, &orgmode );
 	WINPORT(GetConsoleCursorInfo)( NULL, &orgcci );
+	
 //	get_state();
 }
 
@@ -1151,6 +1158,7 @@ VTAnsi::~VTAnsi()
 	WINPORT(SetConsoleMode)( NULL, orgmode );
 	WINPORT(SetConsoleCursorInfo)( NULL, &orgcci );
 	WINPORT(SetConsoleTextAttribute)( NULL, orgattr );
+	WINPORT(FlushConsoleInputBuffer)(NULL);
 	vt_ansi_mutex.unlock();
 }
 

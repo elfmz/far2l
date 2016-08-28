@@ -291,7 +291,8 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 		for (;;) {
 			if (!sm.count) break;
 			if (pos.X >= width) {
-				if ( sm.kind!=SequenceModifier::SM_WRITE_STR || (_mode&ENABLE_WRAP_AT_EOL_OUTPUT)!=0) {
+				if ( sm.kind!=SequenceModifier::SM_WRITE_STR || ( (_mode&ENABLE_WRAP_AT_EOL_OUTPUT)!=0 && 
+						((_mode&ENABLE_PROCESSED_OUTPUT)==0 || (*sm.str!='\r'&& *sm.str!='\n')))) {
 					pos.X = 0;
 					pos.Y++;
 					if (pos.Y>=height) {
@@ -325,7 +326,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				pos.X = 0;
 				area.Left = 0;
 
-			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
+			} else if ( sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
 				area.Left = 0;
 				pos.Y++;
@@ -397,3 +398,67 @@ size_t ConsoleOutput::FillAttributeAt(WORD wAttribute, size_t count, COORD &pos)
 	return ModifySequenceAt(sm, pos);
 }
 
+
+static void ClipRect(SMALL_RECT &rect, const SMALL_RECT &clip, COORD *offset = NULL)
+{
+	if (rect.Left < clip.Left) {
+		if (offset) offset->X+= clip.Left - rect.Left;
+		rect.Left = clip.Left;
+	}
+	if (rect.Top < clip.Top) {
+		if (offset) offset->Y+= clip.Top - rect.Top;
+		rect.Top = clip.Top;
+	}
+	if (rect.Right > clip.Right) rect.Right = clip.Right;
+	if (rect.Bottom > clip.Bottom) rect.Bottom = clip.Bottom;	
+}
+
+bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle, 
+	const SMALL_RECT *lpClipRectangle,  COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
+{
+	SMALL_RECT src_rect = *lpScrollRectangle;
+	if (src_rect.Right < src_rect.Left || src_rect.Bottom < src_rect.Top) 
+		return false;
+
+	COORD data_size = {src_rect.Right - src_rect.Left + 1, src_rect.Bottom - src_rect.Top + 1};
+	size_t total_chars = data_size.X;
+	total_chars*= data_size.Y;
+	COORD data_pos = {0, 0};
+		
+	std::vector<CHAR_INFO> data(total_chars);
+	SMALL_RECT dst_rect = {dwDestinationOrigin.X, dwDestinationOrigin.Y, 
+		dwDestinationOrigin.X + data_size.X - 1, dwDestinationOrigin.Y + data_size.Y - 1};
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		_buf.Read(&data[0], data_size, data_pos, src_rect);
+
+		fprintf(stderr, "!!!!SCROLL:[%u %u %u %u] -> [%u %u %u %u]",
+			src_rect.Left, src_rect.Top, src_rect.Right, src_rect.Bottom,
+			dst_rect.Left, dst_rect.Top, dst_rect.Right, dst_rect.Bottom);
+	
+		if (lpClipRectangle) {
+			fprintf(stderr, " CLIP:[%u %u %u %u]",
+				lpClipRectangle->Left, lpClipRectangle->Top, lpClipRectangle->Right, lpClipRectangle->Bottom);
+			ClipRect(src_rect, *lpClipRectangle, &data_pos);
+			ClipRect(dst_rect, *lpClipRectangle);
+		}
+		fprintf(stderr, "\n");
+		
+		if (lpFill) {
+			COORD fill_pos;
+			for (fill_pos.Y = src_rect.Top; fill_pos.Y <= src_rect.Bottom; fill_pos.Y++ )
+			for (fill_pos.X = src_rect.Left; fill_pos.X <= src_rect.Right; fill_pos.X++ ) {
+				_buf.Write(*lpFill, fill_pos);
+			}
+		}
+
+		_buf.Write(&data[0], data_size, data_pos, dst_rect);
+	}
+
+	if (_listener) {
+		if (lpFill)
+			_listener->OnConsoleOutputUpdated(src_rect);
+		_listener->OnConsoleOutputUpdated(dst_rect);
+	}
+	return true;
+}

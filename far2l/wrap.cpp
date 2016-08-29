@@ -126,7 +126,7 @@ char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT Code
 		    nullptr,
 		    nullptr
 		);
-	if (!dst_length) dst_length = nLength + 1; else ++dst_length;
+	if (dst_length<=0) dst_length = nLength + 1; else ++dst_length;
 	char *lpResult = (char*)xf_malloc(dst_length);
 	if (!dst_length) return NULL;
 	memset(lpResult, 0, dst_length);

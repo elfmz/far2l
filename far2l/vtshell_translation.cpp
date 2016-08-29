@@ -6,6 +6,9 @@
     
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad)
 {
+	if (key==VK_CONTROL || key==VK_MENU || key==VK_SHIFT)
+		return ""; //modifiers should not be sent as keys
+
 	if ( ( (int)ctrl + (int)alt + (int)shift ) > 1) {
 		fprintf(stderr, "VT_TranslateSpecialKey: too many modifiers: %u %u %u\n", ctrl, alt, shift);
 		return ""; 

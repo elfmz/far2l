@@ -427,7 +427,7 @@ void WinPortPanel::CheckForResizePending()
 			if (width!=(int)prev_width || height!=(int)prev_height) {
 				fprintf(stderr, "Changing size: %u x %u\n", width, height);
 				g_wx_con_out.SetSize(width, height);
-				if (!_frame->IsFullScreen() && !_frame->IsMaximized()) {
+				if (!_frame->IsFullScreen() && !_frame->IsMaximized() && _frame->IsShown()) {
 					SaveSize(width, height);
 				}
 				INPUT_RECORD ir = {0};

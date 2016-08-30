@@ -2,6 +2,8 @@
 Linux port of FAR v2<br>
 PRE-ALPHA VERSION - currently interesting only for programmers!!!
 
+[![Travis](https://img.shields.io/travis/elfmz/far2l.svg?maxAge=2592000)](https://travis-ci.org/elfmz/far2l)
+
 Better use CodeLite to open and compile this<br>
 
 License: GNU/GPLv2<br>

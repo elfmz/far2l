@@ -97,6 +97,7 @@ public:
 				} else {
 					fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x\n", 
 						cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3]);
+					_executable = true;
 				}
 			} else
 				fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not executable mode=0x%x\n", cmd, s.st_mode);	

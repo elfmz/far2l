@@ -952,6 +952,7 @@ void InterpretEscSeq( void )
 		}
 	} else { // (prefix == ']')
 		// Ignore any "private" sequences.
+		if (prefix!=']') fprintf(stderr, "VTAnsi: unknown prefix= %c\n", prefix);
 		if (prefix2 != 0)
 			return;
 
@@ -961,6 +962,40 @@ void InterpretEscSeq( void )
 		}
 	}
 }
+
+static void PartialLineDown()
+{
+	fprintf(stderr, "ANSI: TODO: PartialLineDown\n");
+}
+
+static void PartialLineUp()
+{
+	fprintf(stderr, "ANSI: TODO: PartialLineUp\n");
+}
+
+static void ReverseIndexGoUpOneLine()
+{
+	fprintf(stderr, "ANSI: ReverseIndexGoUpOneLine\n");
+	FlushBuffer();
+
+	CONSOLE_SCREEN_BUFFER_INFO Info;
+	WINPORT(GetConsoleScreenBufferInfo)( hConOut, &Info );
+	if (Info.dwCursorPosition.Y > 0) {
+		Info.dwCursorPosition.Y--;
+
+		WINPORT(SetConsoleCursorPosition)(hConOut, Info.dwCursorPosition);
+		return;
+	}
+
+	SMALL_RECT Rect = Info.srWindow;
+	Rect.Bottom--;
+	COORD Pos = {0, 1};
+	CHAR_INFO  CharInfo;
+	CharInfo.Char.UnicodeChar = ' ';
+	CharInfo.Attributes = Info.wAttributes;
+	WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
+}
+
 
 //-----------------------------------------------------------------------------
 //   ParseAndPrintString(hDev, lpBuffer, nNumberOfBytesToWrite)
@@ -1013,7 +1048,12 @@ BOOL ParseAndPrintString( HANDLE hDev,
 			           *s == '_') {     // APC Application Program Command
 				*Pt_arg = '\0';
 				state = 6;
-			} else state = 1;
+			} else  {
+				if (*s == 'K') PartialLineDown();
+				if (*s == 'L') PartialLineUp();
+				if (*s == 'M') ReverseIndexGoUpOneLine();
+				state = 1;
+			}
 		} else if (state == 3) {
 			if (is_digit( *s )) {
 				es_argc = 0;

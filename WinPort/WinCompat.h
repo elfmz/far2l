@@ -1457,6 +1457,8 @@ typedef LONG_PTR            LRESULT;
 #define LOCALE_USE_CP_ACP             0x40000000   // use the system ACP
 
 #define MAX_VKEY_CODE 0xffff
+//#define MINSHORT    0x8000      
+#define MAXSHORT    0x7fff      
 #endif
 
 typedef DWORD (*WINPORT_THREAD_START_ROUTINE)(LPVOID lpThreadParameter);

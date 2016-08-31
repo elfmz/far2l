@@ -56,6 +56,12 @@ extern "C" {
 	WINPORT_DECL(GetConsoleAlias, DWORD,(LPWSTR lpSource, LPWSTR lpTargetBuffer, DWORD TargetBufferLength, LPWSTR lpExeName));
 	WINPORT_DECL(GenerateConsoleCtrlEvent, BOOL, (DWORD dwCtrlEvent, DWORD dwProcessGroupId ));
 	WINPORT_DECL(SetConsoleCtrlHandler, BOOL, (PHANDLER_ROUTINE HandlerRoutine, BOOL Add ));
+	
+	WINPORT_DECL(SetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT top, SHORT bottom));
+	WINPORT_DECL(GetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT *top, SHORT *bottom));
+
+	typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Top, unsigned int Width, CHAR_INFO *Charss);
+	WINPORT_DECL(SetConsoleScrollCallback, VOID, (HANDLE hConsoleOutput, PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext));
 
 	///Registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));

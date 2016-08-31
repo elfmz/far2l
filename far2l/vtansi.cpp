@@ -169,6 +169,7 @@ jadoxa@yahoo.com.au
 #include <mutex>
 #include "vtansi.h"
 
+
 #define is_digit(c) ('0' <= (c) && (c) <= '9')
 
 // ========== Global variables and constants
@@ -1220,6 +1221,9 @@ static void ResetState()
 	screen_top = -1;	
 }
 
+
+#include "vthistory.h"
+
 VTAnsi::VTAnsi()
 {
 	vt_ansi_mutex.lock();	
@@ -1240,13 +1244,14 @@ VTAnsi::VTAnsi()
 	WINPORT(GetConsoleCursorInfo)( NULL, &orgcci );
 	WINPORT(GetConsoleScrollRegion)(NULL, &s_initial_scr_rgn.top, &s_initial_scr_rgn.bottom);
 	
-
+	VTHistory::Start();
 	
 //	get_state();
 }
 
 VTAnsi::~VTAnsi()
 {
+	VTHistory::Stop();
 	WINPORT(SetConsoleScrollRegion)(NULL, s_initial_scr_rgn.top, s_initial_scr_rgn.bottom);
 	WINPORT(SetConsoleMode)( NULL, orgmode );
 	WINPORT(SetConsoleCursorInfo)( NULL, &orgcci );

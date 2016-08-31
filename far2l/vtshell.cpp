@@ -37,7 +37,7 @@ class VTShell
 
 	bool Startup()
 	{
-		int fd_term = posix_openpt(O_RDWR | O_NOCTTY); //use -1 to verify _pipes_fallback
+		int fd_term = posix_openpt( O_RDWR ); //use -1 to verify _pipes_fallback, 
 		const char *slavename = NULL;
 		if (fd_term!=-1) {
 			_pipes_fallback = false;

@@ -156,11 +156,12 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 			*p++ = *CmdStr++;
 		}
 		*p = 0;
+		cmds = std::string(EscCmd) + " " + args;
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/bash";
 		const char *shell_switches = strstr(shell, "/bash") ? "-ci" : "-c";
-		r = execl(shell, shell, shell_switches, EscCmd, *args ? args : NULL, NULL);
+		r = execl(shell, shell, shell_switches, cmds.c_str(), NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);

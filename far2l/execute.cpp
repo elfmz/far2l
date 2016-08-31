@@ -73,7 +73,7 @@ static std::string GetExecutable(const char *cmd, const char **args)
 	char stop = (*cmd == '\"') ? '\"' : ' ';
 	if (*cmd == '\"')
 		cmd++;
-	char *CmdOut = (char *)alloca(strlen(cmd)*2 + 1);
+	char *CmdOut = (char *)alloca(strlen(cmd) + 1);
 	char *p = CmdOut;
 	while (*cmd && *cmd != stop)
 		*p++ = *cmd++;

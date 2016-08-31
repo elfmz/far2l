@@ -331,17 +331,12 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				if (pos.X > 0) {
 					pos.X--;
 					if (area.Left > pos.X) area.Left = pos.X;
-				} else if (pos.Y > 0) {
-					pos.Y--;
-					pos.X = width  - 1;
-					if (area.Top > pos.Y) area.Top = pos.Y;
-					area.Right = width  -1;
+					CHAR_INFO ch;
+					ch.Char.UnicodeChar = L' ';
+					ch.Attributes = _attributes;
+					_buf.Write(ch, pos);
+					
 				}
-				CHAR_INFO ch;
-				ch.Char.UnicodeChar = L' ';
-				ch.Attributes = _attributes;
-				_buf.Write(ch, pos);
-
 			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\r' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
 				area.Left = 0;

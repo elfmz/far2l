@@ -184,17 +184,18 @@ class VTShell
 	void ProcessOutput(const char *buf, int len) 
 	{
 		std::wstring ws = MB2Wide(std::string(buf, len).c_str());
+#if 0
+		std::string msg;
+		for (auto c : ws) {
+			if (c <= 32 || c > 127) {
+				char zz[64]; sprintf(zz, "#%02x ", (unsigned int)c);
+				msg+= zz;
+			} else 
+				msg+= (char)(unsigned char)c;
+		}
+		fprintf(stderr, "OUTPUT: %s\n", msg.c_str());
+#endif
 		_vta.Write(ws.c_str(), ws.size());
-		/*wchar_t crlf[2] = {L'\r', L'\n'};
-		DWORD dw;
-		for (;;) {
-			size_t p = ws.find(L'\n');
-			WINPORT(WriteConsole)(0, ws.c_str(), 
-				(p==std::wstring::npos) ? ws.size() : p,  &dw, NULL);
-			if (p==std::wstring::npos) break;
-			ws.erase(0, p + 1);
-			WINPORT(WriteConsole)(0, crlf, 2,  &dw, NULL);
-		}*/
 	}
 
 	

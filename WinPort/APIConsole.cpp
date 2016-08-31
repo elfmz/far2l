@@ -277,4 +277,20 @@ extern "C" {
 
 		return FALSE;
 	}
+	
+	WINPORT_DECL(SetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT top, SHORT bottom))
+	{
+		g_wx_con_out.SetScrollRegion(top, bottom);
+	}
+	
+	WINPORT_DECL(GetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT *top, SHORT *bottom))
+	{
+		g_wx_con_out.GetScrollRegion(*top, *bottom);
+	}
+	
+	WINPORT_DECL(SetConsoleScrollCallback, VOID, (HANDLE hConsoleOutput, PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext))
+	{
+		g_wx_con_out.SetScrollCallback(pCallback, pContext);
+	}
+	
 }

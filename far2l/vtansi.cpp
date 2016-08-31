@@ -298,8 +298,8 @@ static void FlushBuffer( void )
 		WINPORT(WriteConsole)( hConOut, ChBuffer, nCharInBuffer, &nWritten, NULL );
 		WINPORT(SetConsoleMode)( hConOut, mode );
 	} else {
-		HANDLE hConWrap;
-		CONSOLE_CURSOR_INFO cci;
+		//HANDLE hConWrap;
+		//CONSOLE_CURSOR_INFO cci;
 		CONSOLE_SCREEN_BUFFER_INFO csbi, csbi_before;
 
 			LPWSTR b = ChBuffer;
@@ -427,7 +427,7 @@ void PushBuffer( WCHAR c )
 // Send the string to the input buffer.
 //-----------------------------------------------------------------------------
 
-void SendSequence( LPWSTR seq )
+void SendSequence( LPCWSTR seq )
 {
 	DWORD out;
 	INPUT_RECORD in;
@@ -943,7 +943,14 @@ void InterpretEscSeq( void )
 			return;			// ESC[3l is handled during parsing
 
 		case 'r':
-			fprintf(stderr, "VTAnsi: TODO: 'r' argc: %u\n",es_argc);
+			if (es_argc < 2) {
+				es_argv[1] = MAXSHORT;
+				if (es_argc < 1) 
+					es_argv[0] = 1;
+			}
+			fprintf(stderr, "VTAnsi: SET SCOPE: %u %u (limits %u %u)\n", 
+				es_argv[0] - 1, es_argv[1] - 1, TOP, BOTTOM);
+			WINPORT(SetConsoleScrollRegion)(NULL, es_argv[0] - 1, es_argv[1] - 1);
 			return;
 		
 		default:
@@ -973,9 +980,15 @@ static void PartialLineUp()
 	fprintf(stderr, "ANSI: TODO: PartialLineUp\n");
 }
 
-static void ReverseIndexGoUpOneLine()
+static void ForwardIndex()
 {
-	fprintf(stderr, "ANSI: ReverseIndexGoUpOneLine\n");
+	fprintf(stderr, "ANSI: ForwardIndex\n");
+	FlushBuffer();	
+}
+
+static void ReverseIndex()
+{
+	fprintf(stderr, "ANSI: ReverseIndex\n");
 	FlushBuffer();
 
 	CONSOLE_SCREEN_BUFFER_INFO Info;
@@ -996,6 +1009,11 @@ static void ReverseIndexGoUpOneLine()
 	WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
 }
 
+static void ResetTerminal()
+{
+	fprintf(stderr, "ANSI: ResetTerminal\n");
+	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
+}
 
 //-----------------------------------------------------------------------------
 //   ParseAndPrintString(hDev, lpBuffer, nNumberOfBytesToWrite)
@@ -1051,7 +1069,9 @@ BOOL ParseAndPrintString( HANDLE hDev,
 			} else  {
 				if (*s == 'K') PartialLineDown();
 				if (*s == 'L') PartialLineUp();
-				if (*s == 'M') ReverseIndexGoUpOneLine();
+				if (*s == 'D') ForwardIndex();
+				if (*s == 'M') ReverseIndex();
+				if (*s == 'C') ResetTerminal();
 				state = 1;
 			}
 		} else if (state == 3) {
@@ -1107,7 +1127,7 @@ BOOL ParseAndPrintString( HANDLE hDev,
 				Pt_arg[--Pt_len] = '\0';
 				InterpretEscSeq();
 				state = 1;
-			} else if (Pt_len < ARRAYSIZE(Pt_arg)-1)
+			} else if (Pt_len < (int)ARRAYSIZE(Pt_arg)-1)
 				Pt_arg[Pt_len++] = *s;
 		} else if (state == 6) {
 			if (*s == BEL || (*s == '\\' && *Pt_arg == ESC))
@@ -1148,6 +1168,9 @@ BOOL ParseAndPrintString( HANDLE hDev,
 
 
 static std::mutex vt_ansi_mutex;
+static struct {
+	SHORT top, bottom;
+} s_initial_scr_rgn = {0};
 
 
 static void ResetState()
@@ -1189,12 +1212,16 @@ VTAnsi::VTAnsi()
 	ansiState.background = attr2ansi[(orgattr >> 4) & 7];
 	WINPORT(GetConsoleMode)( NULL, &orgmode );
 	WINPORT(GetConsoleCursorInfo)( NULL, &orgcci );
+	WINPORT(GetConsoleScrollRegion)(NULL, &s_initial_scr_rgn.top, &s_initial_scr_rgn.bottom);
+	
+
 	
 //	get_state();
 }
 
 VTAnsi::~VTAnsi()
 {
+	WINPORT(SetConsoleScrollRegion)(NULL, s_initial_scr_rgn.top, s_initial_scr_rgn.bottom);
 	WINPORT(SetConsoleMode)( NULL, orgmode );
 	WINPORT(SetConsoleCursorInfo)( NULL, &orgcci );
 	WINPORT(SetConsoleTextAttribute)( NULL, orgattr );
@@ -1207,11 +1234,7 @@ size_t VTAnsi::Write(const WCHAR *str, size_t len)
 	DWORD processed = 0;
 	if (!ParseAndPrintString(NULL, str, len, &processed))
 		return 0;
-	fprintf(stderr, "VTAnsi::Write: %u processed: %u\n", len, processed);
+	//fprintf(stderr, "VTAnsi::Write: %u processed: %u\n", len, processed);
 	return processed;
 }
 
-size_t VTAnsi::Read(WCHAR *str, size_t len)
-{
-	//todo
-}

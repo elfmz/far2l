@@ -27,13 +27,16 @@ size_t utf8_char_len(const char *s, size_t bytes)
 
 
 ConsoleOutput::ConsoleOutput() :
-	_title(L"WinPort"), _listener(0), 
+	_title(L"WinPort"), _listener(NULL), 
 	_mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT),
 	_attributes(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED)
 {
 	memset(&_cursor.pos, 0, sizeof(_cursor.pos));	
+	_scroll_callback.pfn = NULL;
 	_cursor.height = 13;
 	_cursor.visible = true;
+	_scroll_region.top = 0;
+	_scroll_region.bottom = MAXSHORT;
 	SetSize(80, 25);
 }
 
@@ -55,7 +58,7 @@ USHORT ConsoleOutput::GetAttributes()
 	return _attributes;
 }
 
-void ConsoleOutput::SetCursor(const COORD &pos)
+void ConsoleOutput::SetCursor(COORD pos)
 {
 	SMALL_RECT area[2];
 	{
@@ -92,7 +95,8 @@ void ConsoleOutput::SetCursor(UCHAR height, bool visible)
 COORD ConsoleOutput::GetCursor()
 {
 	std::lock_guard<std::mutex> lock(_mutex);
-	return _cursor.pos;
+	COORD out = _cursor.pos;
+	return out;
 }
 
 COORD ConsoleOutput::GetCursor(UCHAR &height, bool &visible)
@@ -109,6 +113,7 @@ void ConsoleOutput::SetSize(unsigned int width, unsigned int height)
 	ApplyConsoleSizeLimits(width, height);
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
+		_scroll_region = {0, MAXSHORT};
 		_buf.SetSize(width, height, _attributes);
 	}
 	if (_listener)
@@ -218,28 +223,41 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 {
 	unsigned int width, height;
 	_buf.GetSize(width, height);
-	if (height < 2 || width==0)
+	
+	if (height > ((unsigned int)_scroll_region.bottom) + 1)
+		height = ((unsigned int)_scroll_region.bottom) + 1;
+
+	if ( (height - _scroll_region.top) < 2 || width==0)
 		return;
-		
+
 	std::vector<CHAR_INFO> tmp(width * (height - 1) );
 	if (tmp.empty())
 		return;
-		
-	COORD tmp_size = {(SHORT)width, (SHORT)height - 1};
+	
 	COORD tmp_pos = {0, 0};
-	SMALL_RECT scr_rect = {0, 1, width - 1, height - 1};
+	
+	if (_scroll_callback.pfn) {
+		COORD line_size = {(SHORT)width, 1};
+		SMALL_RECT line_rect = {0, 0, width - 1, 0};
+		_buf.Read(&tmp[0], line_size, tmp_pos, line_rect);
+		_scroll_callback.pfn(_scroll_callback.context, _scroll_region.top, width, &tmp[0]);
+	}
+	
+	COORD tmp_size = {(SHORT)width, (SHORT)height - 1 - _scroll_region.top};
+	
+	SMALL_RECT scr_rect = {0, _scroll_region.top + 1, width - 1, height - 1};
 	_buf.Read(&tmp[0], tmp_size, tmp_pos, scr_rect);
-	if (scr_rect.Left!=0 || scr_rect.Top!=1 || scr_rect.Right!=(width-1) || scr_rect.Bottom!=(height-1)) {
+	if (scr_rect.Left!=0 || scr_rect.Top!=(_scroll_region.top + 1) || scr_rect.Right!=(width-1) || scr_rect.Bottom!=(height-1)) {
 		fprintf(stderr, "ConsoleOutput::ScrollOutputOnOverflow: bug\n");
 		return;
 	}
-	scr_rect.Top = 0;
+	scr_rect.Top = _scroll_region.top;
 	scr_rect.Bottom = height - 2;
 	_buf.Write(&tmp[0], tmp_size, tmp_pos, scr_rect);
 	
 	scr_rect.Left = 0;
 	scr_rect.Right = width - 1;
-	scr_rect.Top = scr_rect.Bottom = height- 1;
+	scr_rect.Top = scr_rect.Bottom = height - 1;
 	tmp_size.Y = 1;
 	for (unsigned int i = 0; i < width; ++i) {
 		CHAR_INFO &ci = tmp[i];
@@ -288,6 +306,8 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 
 		unsigned int width, height;
 		_buf.GetSize(width, height);
+		unsigned int scroll_edge = std::min(height, ((unsigned int)_scroll_region.bottom) + 1);
+
 		for (;;) {
 			if (!sm.count) break;
 			if (pos.X >= width) {
@@ -295,11 +315,11 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 						((_mode&ENABLE_PROCESSED_OUTPUT)==0 || (*sm.str!='\r'&& *sm.str!='\n')))) {
 					pos.X = 0;
 					pos.Y++;
-					if (pos.Y>=height) {
+					if (pos.Y >= scroll_edge) {
 						pos.Y--;
 						ScrollOutputOnOverflow();
 						scrolled = true;
-					} else 
+					} else
 						area.Bottom++;
 				
 					area.Left = 0;				
@@ -330,7 +350,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				pos.X = 0;
 				area.Left = 0;
 				pos.Y++;
-				if (pos.Y>=height) {
+				if (pos.Y >= scroll_edge) {
 					pos.Y--;
 					ScrollOutputOnOverflow();
 					scrolled = true;
@@ -461,4 +481,26 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 		_listener->OnConsoleOutputUpdated(dst_rect);
 	}
 	return true;
+}
+
+void ConsoleOutput::SetScrollRegion(SHORT top, SHORT bottom)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	_scroll_region.top = top;
+	_scroll_region.bottom = bottom;
+}
+
+void ConsoleOutput::GetScrollRegion(SHORT &top, SHORT &bottom)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	top = _scroll_region.top;
+	bottom = _scroll_region.bottom;
+}
+
+
+void ConsoleOutput::SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	_scroll_callback.pfn = pCallback;
+	_scroll_callback.context = pContext;
 }

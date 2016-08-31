@@ -61,6 +61,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "keyboard.hpp"
 #include "vmenu.hpp"
+#include "exitcode.hpp"
+#include "vthistory.h"
 
 CommandLine::CommandLine():
 	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
@@ -152,6 +154,24 @@ int CommandLine::ProcessKey(int Key)
 {
 	const wchar_t *PStr;
 	string strStr;
+
+	if ( Key==KEY_F4) { //TODO: verify that panels invisible
+		string histfile = VTHistory::GetAsFile();
+		FileEditor *ShellEditor=new FileEditor(histfile, CP_UTF8, FFILEEDIT_ENABLEF6);
+		if (ShellEditor) {
+			DWORD editorExitCode = ShellEditor->GetExitCode();
+			if (editorExitCode != XC_LOADING_INTERRUPTED && editorExitCode != XC_OPEN_ERROR) {
+				FrameManager->ExecuteModal();
+				fprintf(stderr, "MODAL\n");
+			} else
+				delete ShellEditor;
+		}
+		WINPORT(DeleteFile)(histfile.CPtr());
+		fprintf(stderr, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\n");
+		return TRUE;
+	}
+	
+		
 
 	if ((Key==KEY_CTRLEND || Key==KEY_CTRLNUMPAD1) && CmdStr.GetCurPos()==CmdStr.GetLength())
 	{

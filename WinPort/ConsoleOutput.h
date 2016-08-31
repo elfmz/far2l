@@ -27,6 +27,16 @@ class ConsoleOutput
 		UCHAR height;
 		bool visible;
 	} _cursor;
+	
+	struct {
+		PCONSOLE_SCROLL_CALLBACK pfn;
+		PVOID context;
+	} _scroll_callback;
+	
+	struct {
+		USHORT top;
+		USHORT bottom;
+	} _scroll_region;
 
 	struct SequenceModifier
 	{
@@ -42,6 +52,7 @@ class ConsoleOutput
 			WORD attr;
 		};
 	};
+	
 	bool ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow();
@@ -52,7 +63,7 @@ public:
 
 	void SetAttributes(USHORT attributes);
 	USHORT GetAttributes();
-	void SetCursor(const COORD &pos);
+	void SetCursor(COORD pos);
 	void SetCursor(UCHAR height, bool visible);
 	COORD GetCursor();
 	COORD GetCursor(UCHAR &height, bool &visible);
@@ -81,6 +92,10 @@ public:
 	
 	bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
 				COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
+				
+	void SetScrollRegion(SHORT top, SHORT bottom);
+	void GetScrollRegion(SHORT &top, SHORT &bottom);
+	void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
 };
 
 

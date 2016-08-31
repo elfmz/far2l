@@ -124,7 +124,7 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		} else
 			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
 	} else {
-		r = execl("/bin/sh", "sh", "-c", CmdStr, NULL);
+		r = execl("/bin/bash", "bash", "-ci", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);

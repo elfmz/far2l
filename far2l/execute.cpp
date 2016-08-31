@@ -68,6 +68,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static WCHAR eol[2] = {'\r', '\n'};
 
+static std::string GetExecutable(const char *cmd, const char **args)
+{
+	char stop = (*cmd == '\"') ? '\"' : ' ';
+	if (*cmd == '\"')
+		cmd++;
+	char *CmdOut = (char *)alloca(strlen(cmd)*2 + 1);
+	char *p = CmdOut;
+	while (*cmd && *cmd != stop)
+		*p++ = *cmd++;
+	*p++ = 0;
+	if (args)
+	{
+		cmd++;
+		if (*cmd == ' ')
+			cmd++;
+		*args = cmd;
+	}
+	return std::string(CmdOut);
+}
+
 class ExecClassifier
 {
 	bool _file, _executable, _need_prepend_curdir;
@@ -75,29 +95,29 @@ public:
 	ExecClassifier(const char *cmd) 
 		: _file(false), _executable(false), _need_prepend_curdir(false)
 	{
+		std::string cmds = GetExecutable(cmd, 0);
+		cmd = cmds.c_str();
 		int f = open(cmd, O_RDONLY);
 		if (f==-1) {
 			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
 			return;
 		}
-		_need_prepend_curdir = (*cmd!='.' && *cmd!='/');
+		_need_prepend_curdir = (*cmd!='.' && *cmd!='/') && !(*cmd=='\"' && (cmd[1]=='.' || cmd[1]=='/'));
 	
 		struct stat s = {0};
 		if (fstat(f, &s)==0 && S_ISREG(s.st_mode)) {//todo: handle S_ISLNK(s.st_mode)
 			_file = true;
-		    if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0) {
+			if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0) {
+				_executable = true;
 				char buf[8] = { 0 };
 				int r = read(f, buf, sizeof(buf));
 				if (r > 4 && buf[0]==0x7f && buf[1]=='E' && buf[2]=='L' && buf[3]=='F') {
 					fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
-					_executable = true;
 				} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
 					fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
-					_executable = true;
 				} else {
 					fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x\n", 
 						cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3]);
-					_executable = true;
 				}
 			} else
 				fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not executable mode=0x%x\n", cmd, s.st_mode);	
@@ -124,13 +144,23 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		} else
 			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
 	} else {
+		const char *args;
+		std::string cmds = GetExecutable(CmdStr, &args);
+		CmdStr = cmds.c_str();
+		size_t len = strlen(CmdStr);
+		char *EscCmd = (char *)alloca(len*2 + 1);
+		char *p = EscCmd;
+		while (*CmdStr)
+		{
+			if (*CmdStr == ' ') *p++ = '\\';
+			*p++ = *CmdStr++;
+		}
+		*p = 0;
 		const char *shell = getenv("SHELL");
 		if (!shell)
-			shell = "/bin/sh";
-		
-		const char *arg_exec = strstr(shell, "/bash") ? "-ci" : "-c";
-		
-		r = execl("/bin/bash", "bash", arg_exec, CmdStr, NULL);
+			shell = "/bin/bash";
+		const char *shell_switches = strstr(shell, "/bash") ? "-ci" : "-c";
+		r = execl(shell, shell, shell_switches, EscCmd, *args ? args : NULL, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);
@@ -223,6 +253,11 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 			if (!ec.IsExecutable())
 				tmp+= "xdg-open ";
 				
+			if (*CmdStr == '\"')
+			{
+				tmp+= "\"";
+				CmdStr++;
+			}
 			if (ec.NeedPrependCurdir())
 				tmp+= "./";
 			

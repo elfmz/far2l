@@ -124,7 +124,13 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		} else
 			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
 	} else {
-		r = execl("/bin/bash", "bash", "-ci", CmdStr, NULL);
+		const char *shell = getenv("SHELL");
+		if (!shell)
+			shell = "/bin/sh";
+		
+		const char *arg_exec = strstr(shell, "/bash") ? "-ci" : "-c";
+		
+		r = execl("/bin/bash", "bash", arg_exec, CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);

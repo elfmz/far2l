@@ -99,11 +99,17 @@ static std::string GetExecutable(const char *cmd, bool add_args)
 
 class ExecClassifier
 {
-	bool _file, _executable;
+	bool _file, _executable, _backround;
 public:
 	ExecClassifier(const char *cmd) 
-		: _file(false), _executable(false)
+		: _file(false), _executable(false), _backround(false)
 	{
+		const char *bg_suffix = strrchr(cmd, '&');
+		if (bg_suffix) {
+			for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
+			if (!*bg_suffix) _backround = true;
+		}
+		
 		std::string cmds = GetExecutable(cmd, false);
 		cmd = cmds.c_str();
 		int f = open(cmd, O_RDONLY);
@@ -111,7 +117,7 @@ public:
 			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
 			return;
 		}
-	
+		
 		struct stat s = {0};
 		if (fstat(f, &s)==0 && S_ISREG(s.st_mode)) {//todo: handle S_ISLNK(s.st_mode)
 			_file = true;
@@ -136,7 +142,8 @@ public:
 	}
 	
 	bool IsFile() const {return _file; }
-	bool IsExecutable() const {return _executable; }	
+	bool IsExecutable() const {return _executable; }
+	bool IsBackground() const {return _backround; }
 };
 
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) 
@@ -154,7 +161,7 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/sh";
-		r = execl(shell, shell, "-ci", CmdStr, NULL);
+		r = execl(shell, shell, "-c", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);
@@ -167,9 +174,8 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 	if (fdr==-1) perror("open stdin error");
 	
 	//let debug out go to console
-	int fdw = -1;//open("/dev/null", O_WRONLY);
+	int fdw = open("/dev/null", O_WRONLY);
 	//if (fdw==-1) perror("open stdout error");
-	
 	int pid = fork();
 	if (pid==0) {
 		if (fdr!=-1) {
@@ -182,7 +188,7 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 			dup2(fdw, STDERR_FILENO);
 			close(fdw);
 		}
-			
+		setsid();
 		ExecuteOrForkProc(CmdStr, ForkProc) ;
 	} else if (pid==-1) {
 		perror("fork failed");
@@ -195,7 +201,6 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 		}
 	} else
 		r = 0;
-
 	if (fdr!=-1) close(fdr);
 	if (fdw!=-1) close(fdw);
 	return r;
@@ -241,6 +246,7 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 {
 	int r = -1;
 	ExecClassifier ec(CmdStr);
+	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : 0;
 	if (ec.IsFile()) {
 		std::string tmp;
 		if (!ec.IsExecutable())
@@ -248,15 +254,15 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 			
 		tmp+= GetExecutable(CmdStr, true);
 		if (!ec.IsExecutable()) {
-			r = farExecuteA(tmp.c_str(), EF_NOWAIT, NULL);
+			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);
 			if (r!=0) {
 				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
 				//TODO: nicely report if xdg-open exec failed
 			}
 		} else
-			r = farExecuteA(tmp.c_str(), 0, NULL);
+			r = farExecuteA(tmp.c_str(), flags, NULL);
 	} else 
-		r = farExecuteA(CmdStr, 0, NULL);		
+		r = farExecuteA(CmdStr, flags, NULL);
 	return r;
 }
 

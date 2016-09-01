@@ -25,31 +25,6 @@ extern "C"
 		}
 		int fd;
 	};
-
-	WINPORT_DECL(CreateDirectory, BOOL, (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes ))
-	{
-		std::string path = ConsumeWinPath(lpPathName);
-		int r = _mkdir(path.c_str());
-		if (r==-1) fprintf(stderr, "Faield to create directory: %s\n", path.c_str());
-		return (r==-1) ? FALSE : TRUE;
-	}
-
-
-	BOOL WINPORT(RemoveDirectory)( LPCWSTR lpDirName)
-	{
-		std::string path = ConsumeWinPath(lpDirName);
-		int r = _rmdir(path.c_str());
-		if (r==-1) fprintf(stderr, "Faield to remove directory: %s\n", path.c_str());
-		return (r==-1) ? FALSE : TRUE;
-	}
-
-	BOOL WINPORT(DeleteFile)( LPCWSTR lpFileName)
-	{
-		std::string path = ConsumeWinPath(lpFileName);
-		int r = remove(path.c_str());
-		if (r==-1) fprintf(stderr, "Faield to remove file: %s\n", path.c_str());
-		return (r==-1) ? FALSE : TRUE;
-	}
 	
 	static void TranslateErrno()
 	{
@@ -57,7 +32,9 @@ extern "C"
 		switch (errno) {
 			case EEXIST: gle = ERROR_ALREADY_EXISTS; break;
 			case ENOENT: gle = ERROR_FILE_NOT_FOUND; break;
-			case EACCES: gle = ERROR_ACCESS_DENIED; break;
+			case EACCES: case EPERM: gle = ERROR_ACCESS_DENIED; break;
+			case ETXTBSY: gle = ERROR_SHARING_VIOLATION; break;
+			//case EROFS: gle = ; break;
 			default:
 				fprintf(stderr, "TODO: TranslateErrno - %d\n", errno );
 				gle = ERROR_GEN_FAILURE;
@@ -65,6 +42,46 @@ extern "C"
 		
 		WINPORT(SetLastError)(gle);
 	}
+	
+	
+	WINPORT_DECL(CreateDirectory, BOOL, (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes ))
+	{
+		std::string path = ConsumeWinPath(lpPathName);
+		int r = _mkdir(path.c_str());
+		if (r==-1) {
+			TranslateErrno();		
+			fprintf(stderr, "Failed to create directory: %s errno %u\n", path.c_str(), errno);
+			return FALSE;
+		}
+		
+		return TRUE;
+	}
+
+
+	BOOL WINPORT(RemoveDirectory)( LPCWSTR lpDirName)
+	{
+		std::string path = ConsumeWinPath(lpDirName);
+		int r = _rmdir(path.c_str());
+		if (r==-1) {
+			TranslateErrno();
+			fprintf(stderr, "Failed to remove directory: %s errno %u\n", path.c_str(),errno);
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	BOOL WINPORT(DeleteFile)( LPCWSTR lpFileName)
+	{
+		std::string path = ConsumeWinPath(lpFileName);
+		int r = remove(path.c_str());
+		if (r==-1) {
+			TranslateErrno();
+			fprintf(stderr, "Failed to remove file: %s errno %u\n", path.c_str(), errno);
+			return FALSE;
+		}
+		return TRUE;
+	}
+
 
 	HANDLE WINPORT(CreateFile)( LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 		LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
@@ -106,8 +123,11 @@ extern "C"
 	BOOL WINPORT(MoveFile)(LPCWSTR ExistingFileName, LPCWSTR NewFileName )
 	{
 		struct stat s;
-		if (stat(ConsumeWinPath(NewFileName).c_str(), &s)==0)
-			return false;
+		if (stat(ConsumeWinPath(NewFileName).c_str(), &s)==0) {
+			WINPORT(SetLastError)(ERROR_ALREADY_EXISTS);
+			return false;			
+		}
+			
 		return (rename(ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
 	}
 
@@ -310,8 +330,10 @@ extern "C"
 	DWORD WINPORT(GetFileAttributes)(LPCWSTR lpFileName)
 	{
 		struct stat s = {0};
-		if (stat(ConsumeWinPath(lpFileName).c_str(), &s) < 0)
-			return INVALID_FILE_ATTRIBUTES;
+		if (stat(ConsumeWinPath(lpFileName).c_str(), &s) < 0) {
+			TranslateErrno();
+			return INVALID_FILE_ATTRIBUTES;			
+		}
 
 		return WINPORT(EvaluateAttributes)(s.st_mode, lpFileName);
 	}
@@ -510,8 +532,10 @@ extern "C"
 		}
 		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos) {
 			struct stat s = {0};
-			if (stat((root + mask).c_str(), &s) < 0)
-				return INVALID_HANDLE_VALUE;
+			if (stat((root + mask).c_str(), &s) < 0) {
+				TranslateErrno();
+				return INVALID_HANDLE_VALUE;				
+			}
 
 			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);
 			if (name) ++name; else name = lpFileName;
@@ -522,6 +546,7 @@ extern "C"
 
 		UnixFindFile *uff = new UnixFindFile(root, mask);
 		if (!uff->Iterate(lpFindFileData)) {
+			TranslateErrno();
 			delete uff;
 			fprintf(stderr, "find mask: %s (for %ls) FAILED", mask.c_str(), lpFileName);
 			WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);

@@ -105,7 +105,7 @@ class ExecClassifier
 	bool IsExecutableByExtension(const char *s)
 	{
 		s = strrchr(s, '.');
-		if (!s || _executable)
+		if (!s || strchr(s, GOOD_SLASH))
 			return false;
 			
 		return (strcmp(s, ".sh")==0 || strcasecmp(s, ".pl")==0|| strcasecmp(s, ".py")==0);//todo: extend

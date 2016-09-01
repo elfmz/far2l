@@ -1017,22 +1017,33 @@ static void ReverseIndex()
 {
 	fprintf(stderr, "ANSI: ReverseIndex\n");
 	FlushBuffer();
-
-	CONSOLE_SCREEN_BUFFER_INFO Info;
-	WINPORT(GetConsoleScreenBufferInfo)( hConOut, &Info );
-	if (Info.dwCursorPosition.Y > 0) {
-		Info.dwCursorPosition.Y--;
-
-		WINPORT(SetConsoleCursorPosition)(hConOut, Info.dwCursorPosition);
+	
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	WINPORT(GetConsoleScreenBufferInfo)( hConOut, &info );
+	SHORT scroll_top = 0, scroll_bottom = 0x7fff;
+	WINPORT(GetConsoleScrollRegion)(NULL, &scroll_top, &scroll_bottom);
+	
+	if (scroll_top < info.srWindow.Top) scroll_top = info.srWindow.Top;
+	if (scroll_bottom < info.srWindow.Top) scroll_bottom = info.srWindow.Top;
+	
+	if (scroll_top > info.srWindow.Bottom) scroll_top = info.srWindow.Bottom;
+	
+	if (scroll_bottom > info.srWindow.Bottom) scroll_bottom = info.srWindow.Bottom;
+		
+	if (info.dwCursorPosition.Y != scroll_top) { 
+		info.dwCursorPosition.Y--;
+		WINPORT(SetConsoleCursorPosition)(hConOut, info.dwCursorPosition);
 		return;
 	}
+	
+	if (scroll_top>=scroll_bottom)
+		return;
 
-	SMALL_RECT Rect = Info.srWindow;
-	Rect.Bottom--;
-	COORD Pos = {0, 1};
+	SMALL_RECT Rect = {info.srWindow.Left, scroll_top, info.srWindow.Right, (SHORT)(scroll_bottom - 1) };
+	COORD Pos = {0, (SHORT) (scroll_top + 1) };
 	CHAR_INFO  CharInfo;
 	CharInfo.Char.UnicodeChar = ' ';
-	CharInfo.Attributes = Info.wAttributes;
+	CharInfo.Attributes = info.wAttributes;
 	WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
 }
 

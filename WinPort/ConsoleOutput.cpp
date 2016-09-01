@@ -330,12 +330,11 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\b' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				if (pos.X > 0) {
 					pos.X--;
-					if (area.Left > pos.X) area.Left = pos.X;
+					/*if (area.Left > pos.X) area.Left = pos.X;
 					CHAR_INFO ch;
 					ch.Char.UnicodeChar = L' ';
 					ch.Attributes = _attributes;
-					_buf.Write(ch, pos);
-					
+					_buf.Write(ch, pos);*/
 				}
 			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\r' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;

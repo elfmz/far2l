@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "vtshell.h"
 #include <wordexp.h>
+#include <set>
 #include <sys/wait.h>
 
 static WCHAR eol[2] = {'\r', '\n'};
@@ -161,11 +162,30 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/sh";
-		r = execl(shell, shell, "-c", CmdStr, NULL);
+		r = execl(shell, shell, "-ci", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);
 }
+
+class : std::set<pid_t>
+{
+	std::mutex _mutex;
+	
+public:
+	void Watch(pid_t pid)
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		insert(pid);
+		for (iterator i = begin(); i!=end(); ) {
+			int r;
+			if (waitpid(*i, &r, WNOHANG)==*i)
+				 i = erase(i);
+			else 
+				++i;
+		}
+	}
+} g_dezombify;
 
 static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(int argc, char *argv[]) )
 {
@@ -189,6 +209,9 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 			close(fdw);
 		}
 		setsid();
+		signal( SIGINT, SIG_DFL );
+		signal( SIGHUP, SIG_DFL );
+		signal( SIGPIPE, SIG_DFL );
 		ExecuteOrForkProc(CmdStr, ForkProc) ;
 	} else if (pid==-1) {
 		perror("fork failed");
@@ -199,8 +222,10 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 		} else {
 			fprintf(stderr, "NotVTExecuteForkProc:('%s', %u, %p): r=%d\n", CmdStr, NoWait, ForkProc, r);
 		}
-	} else
+	} else {
+		g_dezombify.Watch(pid);
 		r = 0;
+	}
 	if (fdr!=-1) close(fdr);
 	if (fdw!=-1) close(fdw);
 	return r;

@@ -50,6 +50,21 @@ extern "C"
 		if (r==-1) fprintf(stderr, "Faield to remove file: %s\n", path.c_str());
 		return (r==-1) ? FALSE : TRUE;
 	}
+	
+	static void TranslateErrno()
+	{
+		DWORD gle;
+		switch (errno) {
+			case EEXIST: gle = ERROR_ALREADY_EXISTS; break;
+			case ENOENT: gle = ERROR_FILE_NOT_FOUND; break;
+			case EACCES: gle = ERROR_ACCESS_DENIED; break;
+			default:
+				fprintf(stderr, "TODO: TranslateErrno - %d\n", errno );
+				gle = ERROR_GEN_FAILURE;
+		}
+		
+		WINPORT(SetLastError)(gle);
+	}
 
 	HANDLE WINPORT(CreateFile)( LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 		LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
@@ -76,12 +91,14 @@ extern "C"
 		}
 		std::string path = ConsumeWinPath(lpFileName);
 		int r = _open(path.c_str(), flags, (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644);		
-		fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s r=%d\n", 
-			lpFileName, dwDesiredAccess, flags, path.c_str(), r);
-		if (r==-1) {
-			//if (IsDebuggerPresent()) DebugBreak();
+		if (r==-1) 
+			TranslateErrno();
+
+		fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s r=%d errno=%d\n", 
+			lpFileName, dwDesiredAccess, flags, path.c_str(), r, errno);
+			
+		if (r==-1) 
 			return INVALID_HANDLE_VALUE;
-		}
 
 		return WinPortHandle_Register(new WinPortHandleFile(r));
 	}

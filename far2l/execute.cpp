@@ -80,8 +80,7 @@ static std::string GetExecutable(const char *cmd, const char **args)
 	*p++ = 0;
 	if (args)
 	{
-		cmd++;
-		if (*cmd == ' ')
+		while (*cmd == ' ' || *cmd == '\"')
 			cmd++;
 		*args = cmd;
 	}

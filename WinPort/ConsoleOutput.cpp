@@ -238,16 +238,17 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	
 	if (_scroll_callback.pfn) {
 		COORD line_size = {(SHORT)width, 1};
-		SMALL_RECT line_rect = {0, 0, width - 1, 0};
+		SMALL_RECT line_rect = {0, 0, (SHORT)(width - 1), 0};
 		_buf.Read(&tmp[0], line_size, tmp_pos, line_rect);
 		_scroll_callback.pfn(_scroll_callback.context, _scroll_region.top, width, &tmp[0]);
 	}
 	
-	COORD tmp_size = {(SHORT)width, (SHORT)height - 1 - _scroll_region.top};
+	COORD tmp_size = {(SHORT)width, (SHORT)(height - 1 - _scroll_region.top)};
 	
-	SMALL_RECT scr_rect = {0, _scroll_region.top + 1, width - 1, height - 1};
+	SMALL_RECT scr_rect = {0, (SHORT)(_scroll_region.top + 1), (SHORT)(width - 1), (SHORT)(height - 1) };
 	_buf.Read(&tmp[0], tmp_size, tmp_pos, scr_rect);
-	if (scr_rect.Left!=0 || scr_rect.Top!=(_scroll_region.top + 1) || scr_rect.Right!=(width-1) || scr_rect.Bottom!=(height-1)) {
+	if (scr_rect.Left!=0 || scr_rect.Top!=(int)(_scroll_region.top + 1) 
+		|| scr_rect.Right!=(int)(width-1) || scr_rect.Bottom!=(int)(height-1)) {
 		fprintf(stderr, "ConsoleOutput::ScrollOutputOnOverflow: bug\n");
 		return;
 	}
@@ -310,12 +311,20 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 
 		for (;;) {
 			if (!sm.count) break;
-			if (pos.X >= width) {
+			if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==7 && (_mode&ENABLE_PROCESSED_OUTPUT)!=0 )
+			{
+				//TODO: Ding!
+				--sm.count;
+				++sm.str;
+				continue;
+			}
+			
+			if (pos.X >= (int)width) {
 				if ( sm.kind!=SequenceModifier::SM_WRITE_STR || ( (_mode&ENABLE_WRAP_AT_EOL_OUTPUT)!=0 && 
 						((_mode&ENABLE_PROCESSED_OUTPUT)==0 || (*sm.str!='\r'&& *sm.str!='\n')))) {
 					pos.X = 0;
 					pos.Y++;
-					if (pos.Y >= scroll_edge) {
+					if (pos.Y >= (int) scroll_edge) {
 						pos.Y--;
 						ScrollOutputOnOverflow();
 						scrolled = true;
@@ -344,7 +353,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				pos.X = 0;
 				area.Left = 0;
 				pos.Y++;
-				if (pos.Y >= scroll_edge) {
+				if (pos.Y >= (int)scroll_edge) {
 					pos.Y--;
 					ScrollOutputOnOverflow();
 					scrolled = true;
@@ -353,7 +362,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			} else {
 				ModifySequenceEntityAt(sm, pos);
 				area.Right++;
-				if (area.Right == width) 
+				if (area.Right == (int)width) 
 					area.Right = width - 1;
 				pos.X++;
 			}

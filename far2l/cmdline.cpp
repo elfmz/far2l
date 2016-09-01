@@ -156,21 +156,27 @@ int CommandLine::ProcessKey(int Key)
 	string strStr;
 
 	if ( Key==KEY_F4) { //TODO: verify that panels invisible
-		string histfile = VTHistory::GetAsFile();
-		FileEditor *ShellEditor=new FileEditor(histfile, CP_UTF8, FFILEEDIT_ENABLEF6);
+		const std::string &histfile = VTHistory::GetAsFile();
+		if (histfile.empty())
+			return TRUE;
+			
+		FileEditor *ShellEditor=new FileEditor(StrMB2Wide(histfile).c_str(), CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW);
+		unlink(histfile.c_str());
 		if (ShellEditor) {
 			DWORD editorExitCode = ShellEditor->GetExitCode();
 			if (editorExitCode != XC_LOADING_INTERRUPTED && editorExitCode != XC_OPEN_ERROR) {
 				FrameManager->ExecuteModal();
-				fprintf(stderr, "MODAL\n");
 			} else
 				delete ShellEditor;
 		}
-		WINPORT(DeleteFile)(histfile.CPtr());
-		fprintf(stderr, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\n");
+		
 		return TRUE;
 	}
 	
+	if ( Key==KEY_F8) { //TODO: verify that panels invisible
+		CmdExecute(L"reset", true, false, true, false, false, false);
+		return TRUE;
+	}	
 		
 
 	if ((Key==KEY_CTRLEND || Key==KEY_CTRLNUMPAD1) && CmdStr.GetCurPos()==CmdStr.GetLength())

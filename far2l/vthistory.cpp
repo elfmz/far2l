@@ -14,58 +14,69 @@ namespace VTHistory
 	class Lines
 	{
 		std::mutex _mutex;
-		std::list<wchar_t *> _memories;
+		std::list<std::string> _memories;
 		
 		enum {
 			LIMIT_NOT_IMPORTANT	= 100,
-			LIMIT_IMPORTANT = 1000
+			LIMIT_IMPORTANT = 4000
 		};
+		
+		void RemoveAllExcept(size_t leave_count)
+		{
+			std::lock_guard<std::mutex> lock(_mutex);
+			while (_memories.size() > leave_count )
+				_memories.pop_front();
+		}
 		
 	public:
 		~Lines()
 		{
-			for (auto m : _memories) free(m);
-			_memories.clear();
+			Reset();
 		}
 		
 		void Add(unsigned int Width, const CHAR_INFO *Chars)
 		{
-			wchar_t *line;
+			wchar_t *tmp;
 			if (Width) {
-				line = (wchar_t *)malloc(sizeof(wchar_t) * (Width + 1));
+				tmp = (wchar_t *)alloca(Width * sizeof(wchar_t));
 				for (unsigned int i = 0; i<Width; ++i) 
-					line[i] = Chars[i].Char.UnicodeChar;
-
-				line[Width] = 0;
+					tmp[i] = Chars[i].Char.UnicodeChar ? Chars[i].Char.UnicodeChar : L' ';
+				tmp[Width] = 0;
 			} else
-				line = NULL;
+				tmp = NULL;
 				
 			std::lock_guard<std::mutex> lock(_mutex);
-			while (_memories.size() >= LIMIT_IMPORTANT) {
-				free(_memories.front());
+			while (_memories.size() >= LIMIT_IMPORTANT)
 				_memories.pop_front();				
-			}
-			_memories.push_back(line);
+
+			if (tmp)
+				_memories.emplace_back(Wide2MB(tmp));
+			else
+				_memories.emplace_back();
 			
 		}
 		
 		void OnNotImportant()
 		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			while (_memories.size() > LIMIT_NOT_IMPORTANT) {
-				free(_memories.front());
-				_memories.pop_front();
-			}
+			RemoveAllExcept(LIMIT_NOT_IMPORTANT);
 		}
 		
-		void GetAsString(std::string &out) {
+		void GetAsString(std::string &out) 
+		{
 			out.clear();
 			std::lock_guard<std::mutex> lock(_mutex);
 			for (auto m : _memories) {
-				if (m) out+= Wide2MB(m);
+				out+= m;
 				out+= NATIVE_EOL;
 			}
 		}
+		
+		void Reset()
+		{
+			RemoveAllExcept(0);
+		}
+
+		
 	} g_lines;
 	
 	
@@ -101,16 +112,22 @@ namespace VTHistory
 		WINPORT(SetConsoleScrollCallback) (NULL, NULL, NULL);
 	}
 	
-	void GetAsString(std::string &s, unsigned short append_screen_lines) 
+	void Reset()
+	{
+		g_lines.Reset();
+	}
+	
+	void GetAsString(std::string &s, bool append_screen_lines) 
 	{
 		g_lines.GetAsString(s);
 		if (append_screen_lines) {
 			CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-			if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &csbi) && csbi.dwSize.X > 0) {
+			if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &csbi) && csbi.dwSize.X > 0 && csbi.dwSize.Y > 1) {
+				--csbi.dwSize.Y;//dont grab keys
 				std::vector<CHAR_INFO> line(csbi.dwSize.X);
 				COORD buf_pos = { }, buf_size = {csbi.dwSize.X, 1};
 				SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
-				for (rc.Top = rc.Bottom = 0; (rc.Top < csbi.dwSize.Y && rc.Top < append_screen_lines); rc.Top = ++rc.Bottom) {
+				for (rc.Top = rc.Bottom = 0; rc.Top < csbi.dwSize.Y; rc.Top = ++rc.Bottom) {
 					if (WINPORT(ReadConsoleOutput)(NULL, &line[0], buf_size, buf_pos, &rc)) {
 						unsigned int width = ActualLineWidth(csbi.dwSize.X, &line[0]);
 						for (unsigned int i = 0; i < width; ++i) {
@@ -124,27 +141,35 @@ namespace VTHistory
 		}
 	}
 	
-	string GetAsFile(unsigned short append_screen_lines)
+	std::string GetAsFile(bool append_screen_lines)
 	{
-		string path;
-		if (!FarMkTempEx(path))
-				return string();
+		const char *home = getenv("HOME");
+		std::string path = home ? home : "/tmp";
+		char name[128];
+		SYSTEMTIME st;
+		WINPORT(GetLocalTime)(&st);
+		sprintf(name, "/farvt_%u-%u-%u_%u-%u-%u.txt", 
+			st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+		path+= name;
 				
 		std::string s;
 		GetAsString(s, append_screen_lines);
 		
-		int fd = open(Wide2MB(path).c_str(), O_CREAT | O_TRUNC | O_RDWR | O_CLOEXEC, 0600);
-		if (fd!=-1) {
-			for (size_t i = 0; i < s.size(); ) {
-				size_t piece = s.size() - i;
-				if (piece > 0x1000) piece = 0x1000;
-				int r = write(fd, &s[i], piece);
-				if (r<=0)
-						perror("write");
-				i+= r;
-			}
-			close(fd);		
+		int fd = open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, 0600);
+		if (fd==-1) {
+			fprintf(stderr, "VTHistory: errno %u creating '%s'\n", errno, path.c_str() );
+			return std::string();
 		}
+			
+		for (size_t i = 0; i < s.size(); ) {
+			size_t piece = s.size() - i;
+			if (piece > 0x1000) piece = 0x1000;
+			int r = write(fd, &s[i], piece);
+			if (r<=0)
+					perror("VTHistory: write");
+			i+= r;
+		}
+		close(fd);
 		return path;
 	}
 }

@@ -59,21 +59,21 @@ enum FEOPMODEEXISTFILE
 
 enum FFILEEDIT_FLAGS
 {
-	FFILEEDIT_NEW                   = 0x00010000,  // Ýòîò ôàéë ÑÎÂÅÐØÅÍÍÎ! íîâûé èëè åãî óñïåëè ñòåðåòü! Íåòó òàêîãî è âñå òóò.
-	FFILEEDIT_REDRAWTITLE           = 0x00020000,  // Íóæíî ðåäðàâèòü çàãîëîâîê?
-	FFILEEDIT_FULLSCREEN            = 0x00040000,  // Ïîëíîýêðàííûé ðåæèì?
-	FFILEEDIT_DISABLEHISTORY        = 0x00080000,  // Çàïðåòèòü çàïèñü â èñòîðèþ?
-	FFILEEDIT_ENABLEF6              = 0x00100000,  // Ïåðåêëþ÷àòüñÿ âî âüþâåð ìîæíî?
-	FFILEEDIT_SAVETOSAVEAS          = 0x00200000,  // $ 17.08.2001 KM  Äîáàâëåíî äëÿ ïîèñêà ïî AltF7.
-	//   Ïðè ðåäàêòèðîâàíèè íàéäåííîãî ôàéëà èç àðõèâà äëÿ
-	//   êëàâèøè F2 ñäåëàòü âûçîâ ShiftF2.
-	FFILEEDIT_SAVEWQUESTIONS        = 0x00400000,  // ñîõðàíèòü áåç âîïðîñîâ
-	FFILEEDIT_LOCKED                = 0x00800000,  // çàáëîêèðîâàòü?
-	FFILEEDIT_OPENFAILED            = 0x01000000,  // ôàéë îòêðûòü íå óäàëîñü
-	FFILEEDIT_DELETEONCLOSE         = 0x02000000,  // óäàëèòü â äåñòðóêòîðå ôàéë âìåñòå ñ êàòàëîãîì (åñëè òîò ïóñò)
-	FFILEEDIT_DELETEONLYFILEONCLOSE = 0x04000000,  // óäàëèòü â äåñòðóêòîðå òîëüêî ôàéë
-	FFILEEDIT_CANNEWFILE            = 0x10000000,  // äîïóñêàåòñÿ íîâûé ôàéë?
-	FFILEEDIT_SERVICEREGION         = 0x20000000,  // èñïîëüçóåòñÿ ñåðâèñíàÿ îáëàñòü
+	FFILEEDIT_NEW                   = 0x00010000,  // Этот файл СОВЕРШЕННО! новый или его успели стереть! Нету такого и все тут.
+	FFILEEDIT_REDRAWTITLE           = 0x00020000,  // Нужно редравить заголовок?
+	FFILEEDIT_FULLSCREEN            = 0x00040000,  // Полноэкранный режим?
+	FFILEEDIT_DISABLEHISTORY        = 0x00080000,  // Запретить запись в историю?
+	FFILEEDIT_ENABLEF6              = 0x00100000,  // Переключаться во вьювер можно?
+	FFILEEDIT_SAVETOSAVEAS          = 0x00200000,  // $ 17.08.2001 KM  Добавлено для поиска по AltF7.
+	//   При редактировании найденного файла из архива для
+	//   клавиши F2 сделать вызов ShiftF2.
+	FFILEEDIT_SAVEWQUESTIONS        = 0x00400000,  // сохранить без вопросов
+	FFILEEDIT_LOCKED                = 0x00800000,  // заблокировать?
+	FFILEEDIT_OPENFAILED            = 0x01000000,  // файл открыть не удалось
+	FFILEEDIT_DELETEONCLOSE         = 0x02000000,  // удалить в деструкторе файл вместе с каталогом (если тот пуст)
+	FFILEEDIT_DELETEONLYFILEONCLOSE = 0x04000000,  // удалить в деструкторе только файл
+	FFILEEDIT_CANNEWFILE            = 0x10000000,  // допускается новый файл?
+	FFILEEDIT_SERVICEREGION         = 0x20000000,  // используется сервисная область
 	FFILEEDIT_CODEPAGECHANGEDBYUSER = 0x40000000,
 };
 

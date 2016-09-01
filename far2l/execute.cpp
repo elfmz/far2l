@@ -68,40 +68,49 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static WCHAR eol[2] = {'\r', '\n'};
 
-static std::string GetExecutable(const char *cmd, const char **args)
+static std::string GetExecutable(const char *cmd, bool add_args)
 {
 	char stop = (*cmd == '\"') ? '\"' : ' ';
 	if (*cmd == '\"')
 		cmd++;
-	char *CmdOut = (char *)alloca(strlen(cmd) + 1);
+	char *CmdOut = (char *)alloca(strlen(cmd)*2 + 3);
 	char *p = CmdOut;
-	while (*cmd && *cmd != stop)
-		*p++ = *cmd++;
-	*p++ = 0;
-	if (args)
+	if (add_args && (*cmd!='.' && *cmd!='/'))
 	{
-		while (*cmd == ' ' || *cmd == '\"')
-			cmd++;
-		*args = cmd;
+		*p++ = '.';
+		*p++ = '/';
 	}
+	while (*cmd && *cmd != stop)
+	{
+		if (add_args && *cmd == ' ')
+			*p++ = '\\';
+		*p++ = *cmd++;
+	}
+	if (add_args)
+	{
+		if (*cmd == '\"')
+			cmd++;
+		while (*cmd)
+			*p++ = *cmd++;
+	}
+	*p++ = 0;
 	return std::string(CmdOut);
 }
 
 class ExecClassifier
 {
-	bool _file, _executable, _need_prepend_curdir;
+	bool _file, _executable;
 public:
 	ExecClassifier(const char *cmd) 
-		: _file(false), _executable(false), _need_prepend_curdir(false)
+		: _file(false), _executable(false)
 	{
-		std::string cmds = GetExecutable(cmd, 0);
+		std::string cmds = GetExecutable(cmd, false);
 		cmd = cmds.c_str();
 		int f = open(cmd, O_RDONLY);
 		if (f==-1) {
 			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
 			return;
 		}
-		_need_prepend_curdir = (*cmd!='.' && *cmd!='/') && !(*cmd=='\"' && (cmd[1]=='.' || cmd[1]=='/'));
 	
 		struct stat s = {0};
 		if (fstat(f, &s)==0 && S_ISREG(s.st_mode)) {//todo: handle S_ISLNK(s.st_mode)
@@ -128,7 +137,6 @@ public:
 	
 	bool IsFile() const {return _file; }
 	bool IsExecutable() const {return _executable; }	
-	bool NeedPrependCurdir() const {return _need_prepend_curdir; }	
 };
 
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) 
@@ -143,24 +151,10 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		} else
 			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
 	} else {
-		const char *args;
-		std::string cmds = GetExecutable(CmdStr, &args);
-		CmdStr = cmds.c_str();
-		size_t len = strlen(CmdStr);
-		char *EscCmd = (char *)alloca(len*2 + 1);
-		char *p = EscCmd;
-		while (*CmdStr)
-		{
-			if (*CmdStr == ' ') *p++ = '\\';
-			*p++ = *CmdStr++;
-		}
-		*p = 0;
-		cmds = std::string(EscCmd) + " " + args;
 		const char *shell = getenv("SHELL");
 		if (!shell)
-			shell = "/bin/bash";
-		const char *shell_switches = strstr(shell, "/bash") ? "-ci" : "-c";
-		r = execl(shell, shell, shell_switches, cmds.c_str(), NULL);
+			shell = "/bin/sh";
+		r = execl(shell, shell, "-ci", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);
@@ -248,31 +242,19 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 	int r = -1;
 	ExecClassifier ec(CmdStr);
 	if (ec.IsFile()) {
-		if (ec.NeedPrependCurdir() || !ec.IsExecutable()) {
-			std::string tmp;
-			if (!ec.IsExecutable())
-				tmp+= "xdg-open ";
-				
-			if (*CmdStr == '\"')
-			{
-				tmp+= "\"";
-				CmdStr++;
+		std::string tmp;
+		if (!ec.IsExecutable())
+			tmp+= "xdg-open ";
+			
+		tmp+= GetExecutable(CmdStr, true);
+		if (!ec.IsExecutable()) {
+			r = farExecuteA(tmp.c_str(), EF_NOWAIT, NULL);
+			if (r!=0) {
+				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
+				//TODO: nicely report if xdg-open exec failed
 			}
-			if (ec.NeedPrependCurdir())
-				tmp+= "./";
-			
-			tmp+= CmdStr;
-			if (!ec.IsExecutable()) {
-				r = farExecuteA(tmp.c_str(), EF_NOWAIT, NULL);
-				if (r!=0) {
-					fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
-					//TODO: nicely report if xdg-open exec failed
-				}
-			} else
-				r = farExecuteA(tmp.c_str(), 0, NULL);
 		} else
-			r = farExecuteA(CmdStr, 0, NULL);
-			
+			r = farExecuteA(tmp.c_str(), 0, NULL);
 	} else 
 		r = farExecuteA(CmdStr, 0, NULL);		
 	return r;

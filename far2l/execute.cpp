@@ -106,7 +106,7 @@ class ExecClassifier
 	{
 		s = strrchr(s, '.');
 		if (!s || strchr(s, GOOD_SLASH))
-			return false;
+			return true;//assume files without extension to be scripts
 			
 		return (strcmp(s, ".sh")==0 || strcasecmp(s, ".pl")==0|| strcasecmp(s, ".py")==0);//todo: extend
 	}

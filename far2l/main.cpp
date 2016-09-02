@@ -556,7 +556,8 @@ int FarAppMain(int argc, char **argv)
 
 int _cdecl main(int Argc, char *Argv[])
 {
-	//fprintf(stderr, "WCHAR_MAX=%u sizeof(wchar_t)=%u\n", WCHAR_MAX, sizeof(wchar_t));
+	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
+	
 	apiEnableLowFragmentationHeap();
 	return WinPortMain(Argc, Argv, FarAppMain);
 }

@@ -72,25 +72,26 @@ static WCHAR eol[2] = {'\r', '\n'};
 static std::string GetExecutable(const char *cmd, bool add_args)
 {
 	char stop = (*cmd == '\"') ? '\"' : ' ';
-	if (*cmd == '\"')
-		cmd++;
-	char *CmdOut = (char *)alloca(strlen(cmd)*2 + 3);
+	char *CmdOut = (char *)alloca(strlen(cmd)*4 + 3);
 	char *p = CmdOut;
-	if (add_args && (*cmd!='.' && *cmd!='/'))
-	{
+	if (*cmd == '\"') cmd++;
+	if (add_args) *p++ = '\'';
+	if (add_args && (*cmd!='.' && *cmd!='/')) {
 		*p++ = '.';
 		*p++ = '/';
 	}
-	while (*cmd && *cmd != stop)
-	{
-		if (add_args && *cmd == ' ')
+	while (*cmd && *cmd != stop) {
+		if (add_args && *cmd == '\'')
+		{
+			*p++ = '\'';
 			*p++ = '\\';
+			*p++ = '\'';
+		}
 		*p++ = *cmd++;
 	}
-	if (add_args)
-	{
-		if (*cmd == '\"')
-			cmd++;
+	if (add_args) {
+		if (*cmd == '\"') cmd++;
+		if (add_args) *p++ = '\'';
 		while (*cmd)
 			*p++ = *cmd++;
 	}

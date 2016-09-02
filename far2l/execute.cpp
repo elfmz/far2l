@@ -74,9 +74,8 @@ static std::string GetExecutable(const char *cmd, bool add_args)
 	char stop = (*cmd == '\"') ? '\"' : ' ';
 	char *CmdOut = (char *)alloca(strlen(cmd)*4 + 3);
 	char *p = CmdOut;
-	if (*cmd == '\"') {
-		*cmd++; if (add_args) *p++ = '\'';
-	}
+	if (*cmd == '\"') *cmd++;
+	if (add_args) *p++ = '\'';
 	if (add_args && (*cmd!='.' && *cmd!='/')) {
 		*p++ = '.';
 		*p++ = '/';
@@ -91,9 +90,8 @@ static std::string GetExecutable(const char *cmd, bool add_args)
 		*p++ = *cmd++;
 	}
 	if (add_args) {
-		if (*cmd == '\"') {
-			*cmd++; if (add_args) *p++ = '\'';
-		}
+		if (*cmd == '\"') *cmd++;
+		if (add_args) *p++ = '\'';
 		while (*cmd)
 			*p++ = *cmd++;
 	}

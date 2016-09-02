@@ -63,6 +63,15 @@ extern int DirectRT;
 
 ScreenBuf ScrBuf;
 
+static bool AreSameCharInfoBuffers(const CHAR_INFO *left, const CHAR_INFO *right, size_t count)
+{//use this instead of memcmp cuz it can produce wrong results due to uninitialized alignment gaps
+	for (; count; --count, ++left, ++right) {
+		if (left->Char.UnicodeChar != right->Char.UnicodeChar) return false;
+		if (left->Attributes != right->Attributes) return false;
+	}
+	return true;
+}
+
 ScreenBuf::ScreenBuf():
 	Buf(nullptr),
 	Shadow(nullptr),
@@ -358,7 +367,7 @@ void ScreenBuf::Flush()
 						WriteRegion.Top=I;
 						WriteRegion.Bottom=I-1;
 
-						while (I<BufY && memcmp(PtrBuf,PtrShadow,BufX*sizeof(CHAR_INFO)))
+						while (I<BufY && !AreSameCharInfoBuffers(PtrBuf, PtrShadow, BufX))
 						{
 							I++;
 							PtrBuf+=BufX;
@@ -382,7 +391,7 @@ void ScreenBuf::Flush()
 					{
 						for (SHORT J=0; J<BufX; J++,++PtrBuf,++PtrShadow)
 						{
-							if (memcmp(PtrBuf,PtrShadow,sizeof(CHAR_INFO)))
+							if (!AreSameCharInfoBuffers(PtrBuf, PtrShadow, 1))
 							{
 								WriteRegion.Left=Min(WriteRegion.Left,J);
 								WriteRegion.Top=Min(WriteRegion.Top,I);

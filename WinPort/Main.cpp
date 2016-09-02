@@ -22,7 +22,7 @@ unsigned int font_width = 8;
 unsigned int font_height = 8;
 
 extern "C" void WinPortInitRegistry();
-
+extern "C" bool WinPortIsClipboardBusy();
 
 
 class WinPortAppThread : public wxThread
@@ -149,6 +149,7 @@ protected:
 	void RefreshArea( const SMALL_RECT &area );
 private:
 	void CheckForResizePending();
+	void CheckPutText2CLip();
 	void OnInitialized( wxCommandEvent& event );
 	void OnTimerPeriodic(wxTimerEvent& event);	
 	void OnWindowMoved( wxCommandEvent& event );
@@ -178,6 +179,7 @@ private:
 
 	wxKeyEvent _last_keydown;
 	wxFont _font;
+	std::wstring _text2clip;
 	
 	WinPortFrame *_frame;
 	wxTimer* _cursor_timer;
@@ -448,6 +450,7 @@ void WinPortPanel::CheckForResizePending()
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 {
 	CheckForResizePending();
+	CheckPutText2CLip();
 	
 	_cursor_state = !_cursor_state;
 	const COORD &pos = g_wx_con_out.GetCursor();
@@ -938,7 +941,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			_mouse_qedit_pending = false;
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 			DamageAreaBetween(_mouse_qedit_start, pos_char);			
-			std::wstring text;
+			_text2clip.clear();
 			USHORT y1 = _mouse_qedit_start.Y, y2 = pos_char.Y;
 			USHORT x1 = _mouse_qedit_start.X, x2 = pos_char.X;
 			if (y1 > y2) std::swap(y1, y2);
@@ -946,23 +949,31 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 
 			COORD pos;
 			for (pos.Y = y1; pos.Y<=y2; ++pos.Y) {
-				if (!text.empty())
-					text+= NATIVE_EOLW;
+				if (!_text2clip.empty())
+					_text2clip+= NATIVE_EOLW;
 				for (pos.X = x1; pos.X<=x2; ++pos.X) {
 					CHAR_INFO ch;
 					if (g_wx_con_out.Read(ch, pos))
-						text+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
+						_text2clip+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
 				}
 			}
-
-			if (!text.empty()) {
-				if (wxTheClipboard->Open()) {
-					wxTheClipboard->SetData( new wxTextDataObject(text) );
-					wxTheClipboard->Close();
-				}
-			}
+			CheckPutText2CLip();
 		}
 	}
+}
+
+void WinPortPanel::CheckPutText2CLip()
+{
+	if (!_text2clip.empty())  {
+		if (!WinPortIsClipboardBusy()) {
+			if (wxTheClipboard->Open()) {
+				std::wstring text2clip; text2clip.swap(_text2clip);
+				wxTheClipboard->SetData( new wxTextDataObject(text2clip) );
+				wxTheClipboard->Close();
+			}
+		} else 
+			fprintf(stderr, "CheckPutText2CLip: clipboard busy\n");
+	}	
 }
 
 

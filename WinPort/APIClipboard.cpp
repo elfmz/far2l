@@ -63,17 +63,32 @@ extern "C" {
 		return g_custom_formats.Register(lpszFormat);
 	}
 
-
+	static volatile LONG s_clipboard_open_track = 0;
+	
+	bool WinPortIsClipboardBusy()
+	{
+		return (WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 0, 0)!=0);
+	}
+	
 	WINPORT_DECL(OpenClipboard, BOOL, (PVOID Reserved))
 	{
 		if (!wxIsMainThread()) {
 			auto fn = std::bind(WINPORT(OpenClipboard), Reserved);
 			return CallInMain<BOOL>(fn);
 		}
+		
+		if (WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 1, 0)!=0) {
+			fprintf(stderr, "OpenClipboard - BUSY\n");
+			return FALSE;
+		}
+		
+		if (!wxTheClipboard->Open()) {
+			WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 0, 1);
+			fprintf(stderr, "OpenClipboard - FAILED\n");
+			return FALSE;
+		}
 		fprintf(stderr, "OpenClipboard\n");
-		BOOL rv = wxTheClipboard->Open() ? TRUE : FALSE;
-		fprintf(stderr, "OpenClipboard rv=%i\n", rv);
-		return rv;
+		return TRUE;;
 	}
 
 	WINPORT_DECL(CloseClipboard, BOOL, ())
@@ -88,6 +103,11 @@ extern "C" {
 		g_free_pendings.clear();
 		wxTheClipboard->Flush();
 		wxTheClipboard->Close();
+		
+		if (WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 0, 1) !=1 ) {
+			fprintf(stderr, "Excessive CloseClipboard!\n");
+		}
+		
 		return TRUE;
 	}
 	WINPORT_DECL(EmptyClipboard, BOOL, ())

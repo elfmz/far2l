@@ -74,8 +74,6 @@ COORD InitialSize;
 
 //static HICON hOldLargeIcon=nullptr, hOldSmallIcon=nullptr;
 
-const size_t StackBufferSize=0x2000;
-
 void InitConsole(int FirstInit)
 {
 	InitRecodeOutTable();
@@ -559,15 +557,7 @@ void Text(const WCHAR *Str)
 	if (Length<=0)
 		return;
 
-	CHAR_INFO StackBuffer[StackBufferSize];
-	PCHAR_INFO HeapBuffer=nullptr;
-	PCHAR_INFO BufPtr=StackBuffer;
-
-	if (Length >= StackBufferSize)
-	{
-		HeapBuffer=new CHAR_INFO[Length+1];
-		BufPtr=HeapBuffer;
-	}
+	CHAR_INFO *BufPtr = (CHAR_INFO *)alloca(sizeof(CHAR_INFO)*Length);
 
 	for (size_t i=0; i < Length; i++)
 	{
@@ -576,10 +566,6 @@ void Text(const WCHAR *Str)
 	}
 
 	ScrBuf.Write(CurX, CurY, BufPtr, static_cast<int>(Length));
-	if(HeapBuffer)
-	{
-		delete[] HeapBuffer;
-	}
 	CurX+=static_cast<int>(Length);
 }
 
@@ -827,35 +813,15 @@ void Box(int x1,int y1,int x2,int y2,int Color,int Type)
 	SetColor(Color);
 	Type=(Type==DOUBLE_BOX || Type==SHORT_DOUBLE_BOX);
 
-	WCHAR StackBuffer[StackBufferSize];
-	LPWSTR HeapBuffer=nullptr;
-	LPWSTR BufPtr=StackBuffer;
-
 	const size_t height=y2-y1;
-	if(height>StackBufferSize)
-	{
-		HeapBuffer=new WCHAR[height];
-		BufPtr=HeapBuffer;
-	}
+	const size_t width=x2-x1+2;
+	LPWSTR BufPtr = (LPWSTR)alloca(sizeof(WCHAR)*std::max(width, height));
 	wmemset(BufPtr, BoxSymbols[Type?BS_V2:BS_V1], height-1);
 	BufPtr[height-1]=0;
 	GotoXY(x1,y1+1);
 	VText(BufPtr);
 	GotoXY(x2,y1+1);
 	VText(BufPtr);
-	const size_t width=x2-x1+2;
-	if(width>StackBufferSize)
-	{
-		if(width>height)
-		{
-			if(HeapBuffer)
-			{
-				delete[] HeapBuffer;
-			}
-			HeapBuffer=new WCHAR[width];
-		}
-		BufPtr=HeapBuffer;
-	}
 	BufPtr[0]=BoxSymbols[Type?BS_LT_H2V2:BS_LT_H1V1];
 	wmemset(BufPtr+1, BoxSymbols[Type?BS_H2:BS_H1], width-3);
 	BufPtr[width-2]=BoxSymbols[Type?BS_RT_H2V2:BS_RT_H1V1];
@@ -866,11 +832,6 @@ void Box(int x1,int y1,int x2,int y2,int Color,int Type)
 	BufPtr[width-2]=BoxSymbols[Type?BS_RB_H2V2:BS_RB_H1V1];
 	GotoXY(x1,y2);
 	Text(BufPtr);
-
-	if(HeapBuffer)
-	{
-		delete[] HeapBuffer;
-	}
 }
 
 bool ScrollBarRequired(UINT Length, UINT64 ItemsCount)
@@ -897,14 +858,7 @@ bool ScrollBarEx(UINT X1,UINT Y1,UINT Length,UINT64 TopItem,UINT64 ItemsCount)
 		}
 
 		CaretPos=Min(CaretPos,Length-CaretLength);
-		WCHAR StackBuffer[StackBufferSize];
-		LPWSTR HeapBuffer=nullptr;
-		LPWSTR BufPtr=StackBuffer;
-		if(Length+3>=StackBufferSize)
-		{
-			HeapBuffer=new WCHAR[Length+3];
-			BufPtr=HeapBuffer;
-		}
+		LPWSTR BufPtr = (LPWSTR)alloca(sizeof(WCHAR)*(Length + 3));
 		wmemset(BufPtr+1,BoxSymbols[BS_X_B0],Length);
 		BufPtr[0]=Oem2Unicode[0x1E];
 
@@ -915,10 +869,6 @@ bool ScrollBarEx(UINT X1,UINT Y1,UINT Length,UINT64 TopItem,UINT64 ItemsCount)
 		BufPtr[Length+2]=0;
 		GotoXY(X1,Y1);
 		VText(BufPtr);
-		if(HeapBuffer)
-		{
-			delete[] HeapBuffer;
-		}
 		return true;
 	}
 
@@ -942,24 +892,13 @@ void ScrollBar(int X1,int Y1,int Length, unsigned int Current, unsigned int Tota
 
 	GotoXY(X1,Y1);
 	{
-		WCHAR StackBuffer[StackBufferSize];
-		LPWSTR HeapBuffer=nullptr;
-		LPWSTR BufPtr=StackBuffer;
-		if(static_cast<size_t>(Length+3)>=StackBufferSize)
-		{
-			HeapBuffer=new WCHAR[Length+3];
-			BufPtr=HeapBuffer;
-		}
+		LPWSTR BufPtr = (LPWSTR)alloca(sizeof(WCHAR)*(Length + 3));
 		wmemset(BufPtr+1,BoxSymbols[BS_X_B0],Length);
 		BufPtr[ThumbPos+1]=BoxSymbols[BS_X_B2];
 		BufPtr[0]=Oem2Unicode[0x1E];
 		BufPtr[Length+1]=Oem2Unicode[0x1F];
 		BufPtr[Length+2]=0;
 		VText(BufPtr);
-		if(HeapBuffer)
-		{
-			delete[] HeapBuffer;
-		}
 	}
 }
 
@@ -967,21 +906,10 @@ void DrawLine(int Length,int Type, const wchar_t* UserSep)
 {
 	if (Length>1)
 	{
-		WCHAR StackBuffer[StackBufferSize];
-		LPWSTR HeapBuffer=nullptr;
-		LPWSTR BufPtr=StackBuffer;
-		if(static_cast<size_t>(Length)>=StackBufferSize)
-		{
-			HeapBuffer=new WCHAR[Length+1];
-			BufPtr=HeapBuffer;
-		}
+		LPWSTR BufPtr = (LPWSTR)alloca(sizeof(WCHAR)*Length);
 		MakeSeparator(Length,BufPtr,Type,UserSep);
 
 		(Type >= 4 && Type <= 7) || (Type >= 10 && Type <= 11)? VText(BufPtr) : Text(BufPtr);
-		if(HeapBuffer)
-		{
-			delete[] HeapBuffer;
-		}
 	}
 }
 

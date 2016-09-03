@@ -24,5 +24,5 @@ set_target_properties(farlng
 
 add_subdirectory (farftp)
 add_subdirectory (colorer)
-add_subdirectory (multiarc)
+#add_subdirectory (multiarc)
 

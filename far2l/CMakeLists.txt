@@ -40,6 +40,7 @@ drivemix.cpp
 edit.cpp
 editor.cpp
 execute.cpp
+execute_oscmd.cpp
 farqueue.cpp
 farrtl.cpp
 farwinapi.cpp
@@ -129,7 +130,9 @@ usermenu.cpp
 viewer.cpp
 vmenu.cpp
 vtansi.cpp
+vtlog.cpp
 vtshell.cpp
+vtshell_translation.cpp
 xlat.cpp
 )
 

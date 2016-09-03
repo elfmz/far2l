@@ -108,14 +108,15 @@ extern "C"
 		}
 		std::string path = ConsumeWinPath(lpFileName);
 		int r = _open(path.c_str(), flags, (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644);		
-		if (r==-1) 
+		if (r==-1) {
 			TranslateErrno();
 
-		fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s r=%d errno=%d\n", 
-			lpFileName, dwDesiredAccess, flags, path.c_str(), r, errno);
-			
-		if (r==-1) 
+			fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s errno=%d\n", 
+				lpFileName, dwDesiredAccess, flags, path.c_str(), errno);
+				
 			return INVALID_HANDLE_VALUE;
+		}
+			
 
 		return WinPortHandle_Register(new WinPortHandleFile(r));
 	}
@@ -548,7 +549,7 @@ extern "C"
 		if (!uff->Iterate(lpFindFileData)) {
 			TranslateErrno();
 			delete uff;
-			fprintf(stderr, "find mask: %s (for %ls) FAILED", mask.c_str(), lpFileName);
+			fprintf(stderr, "find mask: %s (for %ls) FAILED\n", mask.c_str(), lpFileName);
 			WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);
 			return INVALID_HANDLE_VALUE;
 		}

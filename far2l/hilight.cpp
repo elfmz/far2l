@@ -160,7 +160,6 @@ void HighlightFiles::InitHighlightFiles()
 			strGroupName.Format(GroupNames[j],i);
 			strRegKey=KeyNames[j];
 			strRegKey+=L"/"+strGroupName;
-fprintf(stderr, "zzz1\n");
 			if (GroupDelta[j]!=DEFAULT_SORT_GROUP)
 			{
 				if (!GetRegKey(KeyNames[j],strGroupName,strMask,L""))
@@ -171,7 +170,6 @@ fprintf(stderr, "zzz1\n");
 				if (!GetRegKey(strRegKey,HLS.Mask,strMask,L""))
 					break;
 			}
-fprintf(stderr, "zzz2\n");
 			FileFilterParams *HData = HiData.addItem();
 
 			if (HData)

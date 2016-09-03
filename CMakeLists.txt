@@ -7,9 +7,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function")
 set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 
-add_subdirectory (WinPort)
 add_subdirectory (farlng)
+add_subdirectory (WinPort)
 add_subdirectory (far2l)
+add_dependencies (far2l farlng)
 
 set_target_properties(far2l
   PROPERTIES

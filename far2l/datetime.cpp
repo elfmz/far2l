@@ -556,7 +556,7 @@ size_t MkStrFTime(FARString &strDest, const wchar_t *Fmt)
 
 int64_t FileTimeDifference(const FILETIME *a, const FILETIME* b)
 {
-	LARGE_INTEGER A={a->dwLowDateTime,a->dwHighDateTime},B={b->dwLowDateTime,b->dwHighDateTime};
+	LARGE_INTEGER A={a->dwLowDateTime, (LONG)a->dwHighDateTime},B={b->dwLowDateTime, (LONG)b->dwHighDateTime};
 	return A.QuadPart - B.QuadPart;
 }
 
@@ -740,7 +740,7 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 			FARString strFullTime;
 			strFullTime.Format(L"%02d%c%02d%c%02d%c%03d",st.wHour,TimeSeparator,
 			                   st.wMinute,TimeSeparator,st.wSecond,DecimalSeparator,st.wMilliseconds);
-			strTimeText.Format(L"%.*s",TimeLength, strFullTime.CPtr());
+			strTimeText.Format(L"%.*ls",TimeLength, strFullTime.CPtr());
 		}
 	}
 	//if ( !strDateText.IsEmpty() )
@@ -757,13 +757,13 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 			switch (CurDateFormat)
 			{
 				case 0:
-					strDateText.Format(L"%3.3s %2d %02d",Month,st.wDay,Year);
+					strDateText.Format(L"%3.3ls %2d %02d",Month,st.wDay,Year);
 					break;
 				case 1:
-					strDateText.Format(L"%2d %3.3s %02d",st.wDay,Month,Year);
+					strDateText.Format(L"%2d %3.3ls %02d",st.wDay,Month,Year);
 					break;
 				default:
-					strDateText.Format(L"%02d %3.3s %2d",Year,Month,st.wDay);
+					strDateText.Format(L"%02d %3.3ls %2d",Year,Month,st.wDay);
 					break;
 			}
 		}

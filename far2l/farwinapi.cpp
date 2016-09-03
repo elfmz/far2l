@@ -94,7 +94,7 @@ FindFile::FindFile(LPCWSTR Object, bool ScanSymLink):
 	Handle(INVALID_HANDLE_VALUE),
 	empty(false)
 {
-	string strName(NTPath(Object).Get());
+	FARString strName(NTPath(Object).Get());
 
 	// temporary disable elevation to try "real" name first
 	DWORD OldElevationMode = Opt.ElevationMode;
@@ -106,7 +106,7 @@ FindFile::FindFile(LPCWSTR Object, bool ScanSymLink):
 	{
 		if(ScanSymLink)
 		{
-			string strReal(strName);
+			FARString strReal(strName);
 			// only links in path should be processed, not the object name itself
 			CutToSlash(strReal);
 			ConvertNameToReal(strReal, strReal);
@@ -244,21 +244,21 @@ bool File::Eof()
 
 BOOL apiDeleteFile(const wchar_t *lpwszFileName)
 {
-	string strNtName(NTPath(lpwszFileName).Get());
+	FARString strNtName(NTPath(lpwszFileName).Get());
 	BOOL Result = WINPORT(DeleteFile)(strNtName);
 	return Result;
 }
 
 BOOL apiRemoveDirectory(const wchar_t *DirName)
 {
-	string strNtName(NTPath(DirName).Get());
+	FARString strNtName(NTPath(DirName).Get());
 	BOOL Result = WINPORT(RemoveDirectory)(strNtName);
 	return Result;
 }
 
 HANDLE apiCreateFile(const wchar_t* Object, DWORD DesiredAccess, DWORD ShareMode, LPSECURITY_ATTRIBUTES SecurityAttributes, DWORD CreationDistribution, DWORD FlagsAndAttributes, HANDLE TemplateFile, bool ForceElevation)
 {
-	string strObject(NTPath(Object).Get());
+	FARString strObject(NTPath(Object).Get());
 	FlagsAndAttributes|=FILE_FLAG_BACKUP_SEMANTICS|(CreationDistribution==OPEN_EXISTING?FILE_FLAG_POSIX_SEMANTICS:0);
 
 	HANDLE Handle=WINPORT(CreateFile)(strObject, DesiredAccess, ShareMode, SecurityAttributes, CreationDistribution, FlagsAndAttributes, TemplateFile);
@@ -280,7 +280,7 @@ BOOL apiMoveFile(
     const wchar_t *lpwszNewFileName   // address of new name for the file
 )
 {
-	string strFrom(NTPath(lpwszExistingFileName).Get()), strTo(NTPath(lpwszNewFileName).Get());
+	FARString strFrom(NTPath(lpwszExistingFileName).Get()), strTo(NTPath(lpwszNewFileName).Get());
 	BOOL Result = WINPORT(MoveFile)(strFrom, strTo);
 	return Result;
 }
@@ -291,12 +291,12 @@ BOOL apiMoveFileEx(
     DWORD dwFlags   // flag to determine how to move file
 )
 {
-	string strFrom(NTPath(lpwszExistingFileName).Get()), strTo(NTPath(lpwszNewFileName).Get());
+	FARString strFrom(NTPath(lpwszExistingFileName).Get()), strTo(NTPath(lpwszNewFileName).Get());
 	BOOL Result = WINPORT(MoveFileEx)(strFrom, strTo, dwFlags);
 	return Result;
 }
 
-DWORD apiGetEnvironmentVariable(const wchar_t *lpwszName, string &strBuffer)
+DWORD apiGetEnvironmentVariable(const wchar_t *lpwszName, FARString &strBuffer)
 {
 	WCHAR Buffer[MAX_PATH];
 	DWORD Size = WINPORT(GetEnvironmentVariable)(lpwszName, Buffer, ARRAYSIZE(Buffer));
@@ -318,9 +318,9 @@ DWORD apiGetEnvironmentVariable(const wchar_t *lpwszName, string &strBuffer)
 	return Size;
 }
 
-string& strCurrentDirectory()
+FARString& strCurrentDirectory()
 {
-	static string strCurrentDirectory;
+	static FARString strCurrentDirectory;
 	return strCurrentDirectory;
 }
 
@@ -331,7 +331,7 @@ void InitCurrentDirectory()
 	DWORD Size=WINPORT(GetCurrentDirectory)(ARRAYSIZE(Buffer),Buffer);
 	if(Size)
 	{
-		string strInitCurDir;
+		FARString strInitCurDir;
 		if(Size>ARRAYSIZE(Buffer))
 		{
 			LPWSTR InitCurDir=strInitCurDir.GetBuffer(Size);
@@ -347,7 +347,7 @@ void InitCurrentDirectory()
 	}
 }
 
-DWORD apiGetCurrentDirectory(string &strCurDir)
+DWORD apiGetCurrentDirectory(FARString &strCurDir)
 {
 	//never give outside world a direct pointer to our internal string
 	//who knows what they gonna do
@@ -358,7 +358,7 @@ DWORD apiGetCurrentDirectory(string &strCurDir)
 BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 {
 	// correct path to our standard
-	string strDir=lpPathName;
+	FARString strDir=lpPathName;
 	if (lpPathName[0]!='/' || lpPathName[1]!=0) 
 		DeleteEndSlash(strDir);
 	LPCWSTR CD=strDir;
@@ -372,7 +372,7 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 
 	if (Validate)
 	{
-		string strLookup=lpPathName;
+		FARString strLookup=lpPathName;
 		AddEndSlash(strLookup);
 		strLookup+=L"*";
 		FAR_FIND_DATA_EX fd;
@@ -397,7 +397,7 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 	return TRUE;
 }
 
-DWORD apiGetTempPath(string &strBuffer)
+DWORD apiGetTempPath(FARString &strBuffer)
 {
 	::apiGetEnvironmentVariable(L"TEMP", strBuffer);
 	if (strBuffer.IsEmpty())
@@ -406,7 +406,7 @@ DWORD apiGetTempPath(string &strBuffer)
 };
 
 
-bool apiExpandEnvironmentStrings(const wchar_t *src, string &strDest)
+bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 {
 	bool Result = false;
 	WCHAR Buffer[MAX_PATH];
@@ -415,7 +415,7 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, string &strDest)
 	{
 		if (Size > ARRAYSIZE(Buffer))
 		{
-			string strSrc(src); //src can point to strDest data
+			FARString strSrc(src); //src can point to strDest data
 			wchar_t *lpwszDest = strDest.GetBuffer(Size);
 			strDest.ReleaseBuffer(WINPORT(ExpandEnvironmentStrings)(strSrc, lpwszDest, Size)-1);
 		}
@@ -429,18 +429,18 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, string &strDest)
 	return Result;
 }
 
-DWORD apiWNetGetConnection(const wchar_t *lpwszLocalName, string &strRemoteName)
+DWORD apiWNetGetConnection(const wchar_t *lpwszLocalName, FARString &strRemoteName)
 {
 	return ERROR_SUCCESS-1;
 }
 
 BOOL apiGetVolumeInformation(
     const wchar_t *lpwszRootPathName,
-    string *pVolumeName,
+    FARString *pVolumeName,
     LPDWORD lpVolumeSerialNumber,
     LPDWORD lpMaximumComponentLength,
     LPDWORD lpFileSystemFlags,
-    string *pFileSystemName
+    FARString *pFileSystemName
 )
 {
 	//todo
@@ -545,7 +545,7 @@ bool apiGetFileSizeEx(HANDLE hFile, UINT64 &Size)
 	return Result;
 }
 
-int apiRegEnumKeyEx(HKEY hKey,DWORD dwIndex,string &strName,PFILETIME lpftLastWriteTime)
+int apiRegEnumKeyEx(HKEY hKey,DWORD dwIndex,FARString &strName,PFILETIME lpftLastWriteTime)
 {
 	int ExitCode=ERROR_MORE_DATA;
 
@@ -562,11 +562,11 @@ int apiRegEnumKeyEx(HKEY hKey,DWORD dwIndex,string &strName,PFILETIME lpftLastWr
 
 BOOL apiIsDiskInDrive(const wchar_t *Root)
 {
-	string strVolName;
-	string strDrive;
+	FARString strVolName;
+	FARString strDrive;
 	DWORD  MaxComSize;
 	DWORD  Flags;
-	string strFS;
+	FARString strFS;
 	strDrive = Root;
 	AddEndSlash(strDrive);
 	BOOL Res = apiGetVolumeInformation(strDrive, &strVolName, nullptr, &MaxComSize, &Flags, &strFS);
@@ -595,7 +595,7 @@ BOOL apiGetDiskSize(const wchar_t *Path,uint64_t *TotalSize, uint64_t *TotalFree
 	uiUserFree=0;
 	uiTotalSize=0;
 	uiTotalFree=0;
-	string strPath(NTPath(Path).Get());
+	FARString strPath(NTPath(Path).Get());
 	AddEndSlash(strPath);
 	ExitCode=GetDiskFreeSpaceEx(strPath,(PULARGE_INTEGER)&uiUserFree,(PULARGE_INTEGER)&uiTotalSize,(PULARGE_INTEGER)&uiTotalFree);
 
@@ -624,14 +624,14 @@ BOOL apiCreateDirectoryEx(LPCWSTR TemplateDirectory, LPCWSTR NewDirectory, LPSEC
 
 DWORD apiGetFileAttributes(LPCWSTR lpFileName)
 {
-	string strNtName(NTPath(lpFileName).Get());
+	FARString strNtName(NTPath(lpFileName).Get());
 	DWORD Result = WINPORT(GetFileAttributes)(strNtName);
 	return Result;
 }
 
 BOOL apiSetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
 {
-	string strNtName(NTPath(lpFileName).Get());
+	FARString strNtName(NTPath(lpFileName).Get());
 	BOOL Result = WINPORT(SetFileAttributes)(strNtName, dwFileAttributes);
 	return Result;
 
@@ -647,7 +647,7 @@ BOOL apiCreateHardLink(LPCWSTR lpFileName,LPCWSTR lpExistingFileName,LPSECURITY_
 	return FALSE;//todo
 }
 
-bool apiGetFinalPathNameByHandle(HANDLE hFile, string& FinalFilePath)
+bool apiGetFinalPathNameByHandle(HANDLE hFile, FARString& FinalFilePath)
 {
 	FinalFilePath = L"";
 	return false;

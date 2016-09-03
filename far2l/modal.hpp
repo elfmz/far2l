@@ -45,7 +45,7 @@ class Modal: public Frame
 
 	protected:
 		INPUT_RECORD ReadRec;
-		string strHelpTopic;
+		FARString strHelpTopic;
 		int  ExitCode;
 		int  EndLoop;
 

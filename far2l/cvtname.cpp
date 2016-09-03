@@ -148,7 +148,7 @@ PATH_PFX_TYPE Point2Root(LPCWSTR stPath, size_t& PathOffset)
 	return (PPT_NONE);
 }
 
-void MixToFullPath(string& strPath)
+void MixToFullPath(FARString& strPath)
 {
 	//Skip all path to root (with slash if exists)
 	LPWSTR pstPath=strPath.GetBuffer();
@@ -230,7 +230,7 @@ void MixToFullPath(string& strPath)
 	strPath.ReleaseBuffer();
 }
 
-bool MixToFullPath(LPCWSTR stPath, string& strDest, LPCWSTR stCurrentDir)
+bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 {
 	size_t lPath=wcslen(NullToEmpty(stPath)),
 	       lCurrentDir=wcslen(NullToEmpty(stCurrentDir)),
@@ -255,7 +255,7 @@ bool MixToFullPath(LPCWSTR stPath, string& strDest, LPCWSTR stCurrentDir)
 			case PPT_DRIVE: //"C:" or "C:abc"
 			{
 				WCHAR DriveVar[]={L'=',*stPath,L':',L'\0'};
-				string strValue;
+				FARString strValue;
 
 				if (apiGetEnvironmentVariable(DriveVar,strValue))
 				{
@@ -284,7 +284,7 @@ bool MixToFullPath(LPCWSTR stPath, string& strDest, LPCWSTR stCurrentDir)
 
 					if (Point2Root(stCurrentDir,PathOffset)!=PPT_NONE)
 					{
-						strDest=string(stCurrentDir,PathOffset);
+						strDest=FARString(stCurrentDir,PathOffset);
 					}
 				}
 			}
@@ -327,7 +327,7 @@ bool MixToFullPath(LPCWSTR stPath, string& strDest, LPCWSTR stCurrentDir)
   Преобразует Src в полный РЕАЛЬНЫЙ путь с учетом reparse point.
   Note that Src can be partially non-existent.
 */
-void ConvertNameToReal(const wchar_t *Src, string &strDest)
+void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 {
 	strDest = Src;
 	/*
@@ -380,7 +380,7 @@ void ConvertNameToReal(const wchar_t *Src, string &strDest)
 
 // Косметические преобразования строки пути.
 // CheckFullPath используется в FCTL_SET[ANOTHER]PANELDIR
-string& PrepareDiskPath(string &strPath, bool CheckFullPath)
+FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 {
 	// elevation not required during cosmetic operation 
 
@@ -491,18 +491,18 @@ string& PrepareDiskPath(string &strPath, bool CheckFullPath)
 	return strPath;
 }
 
-void GetPathRoot(const wchar_t *Path, string &strRoot)
+void GetPathRoot(const wchar_t *Path, FARString &strRoot)
 {
-	string RealPath;
+	FARString RealPath;
 	ConvertNameToReal(Path, RealPath);
 	strRoot = ExtractPathRoot(RealPath);
 }
 
-void ConvertNameToFull(const wchar_t *lpwszSrc, string &strDest)
+void ConvertNameToFull(const wchar_t *lpwszSrc, FARString &strDest)
 {
-	string strCurDir;
+	FARString strCurDir;
 	apiGetCurrentDirectory(strCurDir);
-	string strSrc = lpwszSrc;
+	FARString strSrc = lpwszSrc;
 	MixToFullPath(strSrc,strDest,strCurDir);
 }
 

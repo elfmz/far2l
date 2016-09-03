@@ -208,8 +208,8 @@ void FileList::ReadPanelModes()
 {
 	for (int I=0; I<10; I++)
 	{
-		string strColumnTitles, strColumnWidths;
-		string strStatusColumnTitles, strStatusColumnWidths, strRegKey;
+		FARString strColumnTitles, strColumnWidths;
+		FARString strStatusColumnTitles, strStatusColumnWidths, strRegKey;
 		strRegKey.Format(L"Panel/ViewModes/Mode%d",I);
 		GetRegKey(strRegKey,L"Columns",strColumnTitles,L"");
 		GetRegKey(strRegKey,L"ColumnWidths",strColumnWidths,L"");
@@ -244,8 +244,8 @@ void FileList::SavePanelModes()
 {
 	for (int I=0; I<10; I++)
 	{
-		string strColumnTitles, strColumnWidths;
-		string strStatusColumnTitles, strStatusColumnWidths, strRegKey;
+		FARString strColumnTitles, strColumnWidths;
+		FARString strStatusColumnTitles, strStatusColumnWidths, strRegKey;
 		strRegKey.Format(L"Panel/ViewModes/Mode%d",I);
 		PanelViewSettings NewSettings=ViewSettingsArray[VIEW_0+I];
 		ViewSettingsToText(NewSettings.ColumnType,NewSettings.ColumnWidth,NewSettings.ColumnWidthType,

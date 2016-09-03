@@ -93,8 +93,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 int WINAPI GetSearchReplaceString(
     int IsReplaceMode,
-    string *pSearchStr,
-    string *pReplaceStr,
+    FARString *pSearchStr,
+    FARString *pReplaceStr,
     const wchar_t *TextHistoryName,
     const wchar_t *ReplaceHistoryName,
     int *Case,
@@ -109,7 +109,7 @@ int WINAPI GetString(
     const wchar_t *SubTitle,
     const wchar_t *HistoryName,
     const wchar_t *SrcText,
-    string &strDestText,
+    FARString &strDestText,
     const wchar_t *HelpTopic = nullptr,
     DWORD Flags = 0,
     int *CheckBoxValue = nullptr,
@@ -122,4 +122,4 @@ enum FlagsNameAndPassword
 	GNP_USELAST      = 0x00000001UL, // использовать последние введенные данные
 };
 
-int WINAPI GetNameAndPassword(const wchar_t *Title,string &strUserName, string &strPassword, const wchar_t *HelpTopic,DWORD Flags);
+int WINAPI GetNameAndPassword(const wchar_t *Title,FARString &strUserName, FARString &strPassword, const wchar_t *HelpTopic,DWORD Flags);

@@ -46,7 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 
 static int MessageX1,MessageY1,MessageX2,MessageY2;
-static string strMsgHelpTopic;
+static FARString strMsgHelpTopic;
 static int FirstButtonIndex,LastButtonIndex;
 static BOOL IsWarningStyle;
 
@@ -153,7 +153,7 @@ int Message(
     INT_PTR PluginNumber
 )
 {
-	string strTempStr;
+	FARString strTempStr;
 	int X1,Y1,X2,Y2;
 	int Length, BtnLength, J;
 	DWORD I, MaxLength, StrCount;
@@ -161,7 +161,7 @@ int Message(
 	const wchar_t **Str;
 	wchar_t *PtrStr;
 	const wchar_t *CPtrStr;
-	string strErrStr;
+	FARString strErrStr;
 
 	if (Flags & MSG_ERRORTYPE)
 		ErrorSets = GetErrorString(strErrStr);
@@ -242,7 +242,7 @@ int Message(
 		FarFormatText(strErrStr,LenErrStr,strErrStr,L"\n",0); //?? MaxLength ??
 		PtrStr = strErrStr.GetBuffer();
 
-		//BUGBUG: string íå ïðåäíîçíà÷åí äëÿ õðàíåíèÿ ñòðîê ðàçäåë¸ííûõ \0
+		//BUGBUG: FARString íå ïðåäíîçíà÷åí äëÿ õðàíåíèÿ ñòðîê ðàçäåë¸ííûõ \0
 		while ((PtrStr=wcschr(PtrStr,L'\n')) )
 		{
 			*PtrStr++=0;
@@ -257,7 +257,7 @@ int Message(
 			CountErrorLine=ADDSPACEFORPSTRFORMESSAGE; //??
 	}
 
-	//BUGBUG: string íå ïðåäíîçíà÷åí äëÿ õðàíåíèÿ ñòðîê ðàçäåë¸ííûõ \0
+	//BUGBUG: FARString íå ïðåäíîçíà÷åí äëÿ õðàíåíèÿ ñòðîê ðàçäåë¸ííûõ \0
 	// çàïîëíÿåì ìàññèâ...
 	CPtrStr=strErrStr;
 
@@ -298,7 +298,7 @@ int Message(
 
 	MessageY1=Y1;
 	MessageY2=Y2=Y1+StrCount+3;
-	string strHelpTopic(strMsgHelpTopic);
+	FARString strHelpTopic(strMsgHelpTopic);
 	strMsgHelpTopic.Clear();
 	// *** Âàðèàíò ñ Äèàëîãîì ***
 
@@ -451,7 +451,7 @@ int Message(
 
 	if (Title && *Title)
 	{
-		string strTempTitle = Title;
+		FARString strTempTitle = Title;
 
 		if (strTempTitle.GetLength() > MaxLength)
 			strTempTitle.SetLength(MaxLength);
@@ -542,7 +542,7 @@ void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2)
 	Y2=MessageY2;
 }
 
-bool FormatErrorString(bool Nt, DWORD Code, string& Str)
+bool FormatErrorString(bool Nt, DWORD Code, FARString& Str)
 {
 	bool Result=false;
 	//todo
@@ -554,12 +554,12 @@ bool FormatErrorString(bool Nt, DWORD Code, string& Str)
 	return Result;
 }
 
-bool GetWin32ErrorString(DWORD LastWin32Error, string& Str)
+bool GetWin32ErrorString(DWORD LastWin32Error, FARString& Str)
 {
 	return FormatErrorString(false, LastWin32Error, Str);
 }
 
-bool GetErrorString(string &strErrStr)
+bool GetErrorString(FARString &strErrStr)
 {
 	wchar_t sz[128];
 	DWORD gle = WINPORT(GetLastError)();

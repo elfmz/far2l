@@ -353,7 +353,7 @@ int Manager::CountFramesWithName(const wchar_t *Name, BOOL IgnoreCase)
 	int Counter=0;
 	typedef int (__cdecl *cmpfunc_t)(const wchar_t *s1, const wchar_t *s2);
 	cmpfunc_t cmpfunc=IgnoreCase ? StrCmpI : StrCmp;
-	string strType, strCurName;
+	FARString strType, strCurName;
 
 	for (int I=0; I<FrameCount; I++)
 	{
@@ -395,7 +395,7 @@ Frame *Manager::FrameMenu()
 
 		for (int I=0; I<FrameCount; I++)
 		{
-			string strType, strName, strNumText;
+			FARString strType, strName, strNumText;
 			FrameList[I]->GetTypeAndName(strType, strName);
 			ModalMenuItem.Clear();
 
@@ -464,8 +464,8 @@ void Manager::SetFramePos(int NewPos)
 /*$ 11.05.2001 OT Òåïåðü ìîæíî èñêàòü ôàéë íå òîëüêî ïî ïîëíîìó èìåíè, íî è îòäåëüíî - ïóòü, îòäåëüíî èìÿ */
 int  Manager::FindFrameByFile(int ModalType,const wchar_t *FileName, const wchar_t *Dir)
 {
-	string strBufFileName;
-	string strFullFileName = FileName;
+	FARString strBufFileName;
+	FARString strFullFileName = FileName;
 
 	if (Dir)
 	{
@@ -477,7 +477,7 @@ int  Manager::FindFrameByFile(int ModalType,const wchar_t *FileName, const wchar
 
 	for (int I=0; I<FrameCount; I++)
 	{
-		string strType, strName;
+		FARString strType, strName;
 
 		// Mantis#0000469 - ïîëó÷àòü Name áóäåì òîëüêî ïðè ñîâïàäåíèè ModalType
 		if (FrameList[I]->GetType()==ModalType)
@@ -1181,7 +1181,7 @@ void Manager::PluginsMenu()
 
 			if (pType==QVIEW_PANEL || pType==INFO_PANEL)
 			{
-				string strType, strCurFileName;
+				FARString strType, strCurFileName;
 				CtrlObject->Cp()->GetTypeAndName(strType, strCurFileName);
 
 				if (!strCurFileName.IsEmpty())

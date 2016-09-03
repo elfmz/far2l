@@ -93,7 +93,7 @@ void WINAPI FarRecursiveSearch(const wchar_t *InitDir,const wchar_t *Mask,FRSUSE
 		Flags=Flags&0x000000FF; // òîëüêî ìëàäøèé áàéò!
 		ScanTree ScTree(Flags & FRS_RETUPDIR,Flags & FRS_RECUR, Flags & FRS_SCANSYMLINK);
 		FAR_FIND_DATA_EX FindData;
-		string strFullName;
+		FARString strFullName;
 		ScTree.SetFindPath(InitDir,L"*");
 
 		while (ScTree.GetNextName(&FindData,strFullName))
@@ -123,7 +123,7 @@ void WINAPI FarRecursiveSearch(const wchar_t *InitDir,const wchar_t *Mask,FRSUSE
 */
 int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix)
 {
-	string strDest;
+	FARString strDest;
 	if (FarMkTempEx(strDest, Prefix, TRUE) && Dest && size)
 	{
 		xwcsncpy(Dest, strDest, size);
@@ -139,11 +139,11 @@ int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix)
         |
         +---------- [0A-Z]
 */
-string& FarMkTempEx(string &strDest, const wchar_t *Prefix, BOOL WithTempPath, const wchar_t *UserTempPath)
+FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix, BOOL WithTempPath, const wchar_t *UserTempPath)
 {
 	if (!(Prefix && *Prefix))
 		Prefix=L"FTMP";
-	string strPath = L".";
+	FARString strPath = L".";
 
 	if (WithTempPath)
 	{

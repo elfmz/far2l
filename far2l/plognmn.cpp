@@ -62,7 +62,7 @@ PreserveLongName::~PreserveLongName()
 
 		if (!apiGetFindDataEx(strSaveShortName, FindData) || StrCmp(strSaveLongName,FindData.strFileName))
 		{
-			string strNewName;
+			FARString strNewName;
 			strNewName = strSaveShortName;
 
 			if (CutToSlash(strNewName,true))

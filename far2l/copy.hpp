@@ -80,17 +80,17 @@ class ShellCopy
 		Panel *SrcPanel,*DestPanel;
 		int SrcPanelMode,DestPanelMode;
 		int SrcDriveType,DestDriveType;
-		string strSrcDriveRoot;
-		string strDestDriveRoot;
-		string strDestFSName;
+		FARString strSrcDriveRoot;
+		FARString strDestDriveRoot;
+		FARString strDestFSName;
 		char   *sddata; // Security
 		DizList DestDiz;
-		string strDestDizPath;
+		FARString strDestDizPath;
 		char *CopyBuffer;
 		int CopyBufferSize;
-		string strCopiedName;
-		string strRenamedName;
-		string strRenamedFilesPath;
+		FARString strCopiedName;
+		FARString strRenamedName;
+		FARString strRenamedFilesPath;
 		int OvrMode;
 		int ReadOnlyOvrMode;
 		int ReadOnlyDelMode;
@@ -107,16 +107,16 @@ class ShellCopy
 		COPY_CODES CopyFileTree(const wchar_t *Dest);
 		COPY_CODES ShellCopyOneFile(const wchar_t *Src,
 		                            const FAR_FIND_DATA_EX &SrcData,
-		                            string &strDest,
+		                            FARString &strDest,
 		                            int KeepPathPos, int Rename);
 		COPY_CODES CheckStreams(const wchar_t *Src,const wchar_t *DestPath);
 		int  ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
-		                   string &strDestName,DWORD &DestAttr,int Append);
+		                   FARString &strDestName,DWORD &DestAttr,int Append);
 		int  DeleteAfterMove(const wchar_t *Name,DWORD Attr);
 		void SetDestDizPath(const wchar_t *DestPath);
 		int  AskOverwrite(const FAR_FIND_DATA_EX &SrcData,const wchar_t *SrcName,const wchar_t *DestName,
 		                  DWORD DestAttr,int SameName,int Rename,int AskAppend,
-		                  int &Append,string &strNewName,int &RetCode);
+		                  int &Append,FARString &strNewName,int &RetCode);
 		bool CalcTotalSize();
 		bool ShellSetAttr(const wchar_t *Dest,DWORD Attr);
 		void CheckUpdatePanel(); // выставляет флаг FCOPY_UPDATEPPANEL

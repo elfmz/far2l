@@ -314,11 +314,11 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 {
 	int r;
 
-	string strPrevDir = strCurDir;
+	FARString strPrevDir = strCurDir;
 	bool PrintCommand = true;
 	if (ProcessOSCommands(CmdLine, SeparateWindow, PrintCommand) ) {
 		ShowBackground();
-		string strNewDir = strCurDir;
+		FARString strNewDir = strCurDir;
 		strCurDir = strPrevDir;
 		Redraw();
 		strCurDir = strNewDir;
@@ -352,7 +352,7 @@ const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine)
 	return L"";
 }
 
-bool ProcessOSAliases(string &strStr)
+bool ProcessOSAliases(FARString &strStr)
 {
 	return false;
 }

@@ -61,7 +61,7 @@ void ScanTree::SetFindPath(const wchar_t *Path,const wchar_t *Mask, const DWORD 
 	Flags.Flags=(Flags.Flags&0x0000FFFF)|(NewScanFlags&0xFFFF0000);
 }
 
-bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,string &strFullName)
+bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,FARString &strFullName)
 {
 	if (!ScanItems.getCount())
 		return false;
@@ -141,7 +141,7 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,string &strFullName)
 		if ((fdata->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && Flags.Check(FSCANTREE_RECUR) &&
 		        (!(fdata->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) || Flags.Check(FSCANTREE_SCANSYMLINK)))
 		{
-			string RealPath(ScanItems.lastItem()->RealPath);
+			FARString RealPath(ScanItems.lastItem()->RealPath);
 			AddEndSlash(RealPath);
 			RealPath += fdata->strFileName;
 

@@ -78,8 +78,8 @@ class PluginW: public Plugin
 
 		PluginManager *m_owner; //BUGBUG
 
-		string m_strModuleName;
-		string m_strCacheName;
+		FARString m_strModuleName;
+		FARString m_strCacheName;
 
 		BitFlags WorkFlags;      // ðàáî÷èå ôëàãè òåêóùåãî ïëàãèíà
 		BitFlags FuncFlags;      // áèòîâûå ìàñêè âûçîâà ýêñï.ôóíêöèé ïëàãèíà
@@ -95,7 +95,7 @@ class PluginW: public Plugin
 		*/
 		DWORD SysID;
 
-		string strRootKey;
+		FARString strRootKey;
 
 		PLUGINSETSTARTUPINFOW        pSetStartupInfoW;
 		PLUGINOPENPLUGINW            pOpenPluginW;
@@ -183,7 +183,7 @@ class PluginW: public Plugin
 		bool HasGetCustomData()  { return pGetCustomDataW!=nullptr; }
 		bool HasFreeCustomData() { return pFreeCustomDataW!=nullptr; }
 
-		const string &GetModuleName() { return m_strModuleName; }
+		const FARString &GetModuleName() { return m_strModuleName; }
 		const wchar_t *GetCacheName() { return m_strCacheName; }
 		DWORD GetSysID() { return SysID; }
 		bool CheckWorkFlags(DWORD flags) { return WorkFlags.Check(flags)==TRUE; }

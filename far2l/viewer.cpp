@@ -133,7 +133,7 @@ Viewer::~Viewer()
 
 		if (Opt.ViOpt.SavePos)
 		{
-			string strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFileName);
+			FARString strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFileName);
 			UINT CodePage=0;
 
 			if (CodePageChangedByUser)
@@ -222,7 +222,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 
 	if (Opt.OnlyEditorViewerUsed && !StrCmp(strFileName, L"-"))
 	{
-		string strTempName;
+		FARString strTempName;
 
 		if (!FarMkTempEx(strTempName))
 		{
@@ -277,7 +277,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	if (Opt.ViOpt.SavePos && !ReadStdin)
 	{
 		int64_t NewLeftPos,NewFilePos;
-		string strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
+		FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
 		memset(&BMSavePos,0xff,sizeof(BMSavePos)); //çàïîëíèì ñ -1
 		PosCache poscache={0};
 
@@ -834,7 +834,7 @@ ScrollBarEx(X2+(m_bQuickView?1:0),Y1,Y2-Y1+1,LastPage?Top?Total:0:Top,Total);
 }
 
 
-string &Viewer::GetTitle(string &strName,int,int)
+FARString &Viewer::GetTitle(FARString &strName,int,int)
 {
 	if (!strTitle.IsEmpty())
 	{
@@ -844,7 +844,7 @@ string &Viewer::GetTitle(string &strName,int,int)
 	{
 		if (!IsAbsolutePath(strFileName))
 		{
-			string strPath;
+			FARString strPath;
 			ViewNamesList.GetCurDir(strPath);
 			AddEndSlash(strPath);
 			strName = strPath+strFileName;
@@ -1206,7 +1206,7 @@ int Viewer::ProcessKey(int Key)
 		{
 			if (ViewFile.Opened())
 			{
-				string strRoot;
+				FARString strRoot;
 				GetPathRoot(strFullFileName, strRoot);
 				int DriveType=FAR_GetDriveType(strRoot);
 
@@ -1276,8 +1276,8 @@ int Viewer::ProcessKey(int Key)
 		{
 			if (strTempViewName.IsEmpty())
 			{
-				string strName;
-				string strShortName;
+				FARString strName;
+				FARString strShortName;
 				bool NextFileFound;
 
 				if (Key==KEY_ADD)
@@ -1289,7 +1289,7 @@ int Viewer::ProcessKey(int Key)
 				{
 					if (Opt.ViOpt.SavePos)
 					{
-						string strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
+						FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
 						UINT CodePage=0;
 
 						if (CodePageChangedByUser)
@@ -1318,7 +1318,7 @@ int Viewer::ProcessKey(int Key)
 
 					if (PointToName(strName) == strName)
 					{
-						string strViewDir;
+						FARString strViewDir;
 						ViewNamesList.GetCurDir(strViewDir);
 
 						if (!strViewDir.IsEmpty())
@@ -2145,7 +2145,7 @@ LONG_PTR WINAPI ViewerSearchDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Para
 			{
 				SendDlgMessage(hDlg,DM_ENABLEREDRAW,FALSE,0);
 				bool Hex=(Param1==SD_RADIO_HEX);
-				string strDataStr;
+				FARString strDataStr;
 				Transform(strDataStr,(const wchar_t *)SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,Hex?SD_EDIT_TEXT:SD_EDIT_HEX,0),Hex?L'X':L'S');
 				SendDlgMessage(hDlg,DM_SETTEXTPTR,Hex?SD_EDIT_HEX:SD_EDIT_TEXT,(LONG_PTR)strDataStr.CPtr());
 				SendDlgMessage(hDlg,DM_SDSETVISIBILITY,Hex,0);
@@ -2180,7 +2180,7 @@ static void PR_ViewerSearchMsg()
 
 void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 {
-	string strProgress;
+	FARString strProgress;
 
 	if (Percent>=0)
 	{
@@ -2240,8 +2240,8 @@ void Viewer::Search(int Next,int FirstChar)
 		DI_BUTTON,0,10,0,10,0,DIF_CENTERGROUP,MSG(MViewSearchCancel),
 	};
 	MakeDialogItemsEx(SearchDlgData,SearchDlg);
-	string strSearchStr;
-	string strMsgStr;
+	FARString strSearchStr;
+	FARString strMsgStr;
 	int64_t MatchPos=0;
 	int SearchLength,Case,WholeWords,ReverseSearch,Match,SearchRegexp;
 
@@ -2642,7 +2642,7 @@ void Viewer::SetWrapType(int TypeWrap)
 }
 
 
-void Viewer::GetFileName(string &strName)
+void Viewer::GetFileName(FARString &strName)
 {
 	strName = strFullFileName;
 }
@@ -2650,7 +2650,7 @@ void Viewer::GetFileName(string &strName)
 
 void Viewer::ShowConsoleTitle()
 {
-	string strTitle;
+	FARString strTitle;
 	strTitle.Format(MSG(MInViewer), PointToName(strFileName));
 	ConsoleTitle::SetFarTitle(strTitle);
 }

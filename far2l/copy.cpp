@@ -114,7 +114,7 @@ static size_t   CountTarget;                    // âñåãî öåëåé.
 static int CopySecurityCopy=-1;
 static int CopySecurityMove=-1;
 static bool ShowTotalCopySize;
-static string strTotalCopySizeText;
+static FARString strTotalCopySizeText;
 
 static FileFilter *Filter;
 static int UseFilter=FALSE;
@@ -130,7 +130,7 @@ struct CopyDlgParam
 	bool FolderPresent;
 	bool FilesPresent;
 	int CopySecurity;
-	string strPluginFormat;
+	FARString strPluginFormat;
 	bool AskRO;
 };
 
@@ -186,7 +186,7 @@ class CopyProgress
 		int Color;
 		int Percents;
 		DWORD LastWriteTime;
-		string strSrc,strDst,strFiles,strTime;
+		FARString strSrc,strDst,strFiles,strTime;
 		bool Timer();
 		void Flush();
 		void DrawNames();
@@ -202,7 +202,7 @@ class CopyProgress
 		void SetTotalProgressValue(UINT64 CompletedSize,UINT64 TotalSize) {return SetProgress(true,CompletedSize,TotalSize);}
 };
 
-static void GetTimeText(DWORD Time,string &strTimeText)
+static void GetTimeText(DWORD Time,FARString &strTimeText)
 {
 	DWORD Sec=Time;
 	DWORD Min=Sec/60;
@@ -313,7 +313,7 @@ void CopyProgress::CreateBackground()
 	}
 	else
 	{
-		string strTotalSeparator(L"\x1 ");
+		FARString strTotalSeparator(L"\x1 ");
 		strTotalSeparator+=MSG(MCopyDlgTotal);
 		strTotalSeparator+=L": ";
 		strTotalSeparator+=strTotalCopySizeText;
@@ -440,9 +440,9 @@ void CopyProgress::SetProgress(bool TotalProgress,UINT64 CompletedSize,UINT64 To
 
 			UINT64 CPS=CalcTime?OldCompletedSize/CalcTime:0;
 			DWORD TimeLeft=static_cast<DWORD>(CPS?SizeLeft/CPS:0);
-			string strSpeed;
+			FARString strSpeed;
 			FileSizeToStr(strSpeed,CPS,8,COLUMN_FLOATSIZE|COLUMN_COMMAS);
-			string strWorkTimeStr,strTimeLeftStr;
+			FARString strWorkTimeStr,strTimeLeftStr;
 			GetTimeText(WorkTime,strWorkTimeStr);
 			GetTimeText(TimeLeft,strTimeLeftStr);
 			if(strSpeed.At(0)==L' ' && strSpeed.At(strSpeed.GetLength()-1)>=L'0' && strSpeed.At(strSpeed.GetLength()-1)<=L'9')
@@ -482,7 +482,7 @@ CopyProgress *CP;
 
 int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 {
-	string strSrcFullName = Src, strDestFullName = Dest;
+	FARString strSrcFullName = Src, strDestFullName = Dest;
 
 	// ïîëó÷èì ïîëíûå ïóòè ñ ó÷åòîì ñèìâîëè÷åñêèõ ñâÿçåé
 	DeleteEndSlash(strSrcFullName);
@@ -499,7 +499,7 @@ bool CheckNulOrCon(const wchar_t *Src)
 	return (!StrCmpNI(Src,L"nul",3) || !StrCmpNI(Src,L"con",3)) && (IsSlash(Src[3])||!Src[3]);
 }
 
-string& GetParentFolder(const wchar_t *Src, string &strDest)
+FARString& GetParentFolder(const wchar_t *Src, FARString &strDest)
 {
 	strDest = Src;
 	CutToSlash(strDest,true);
@@ -508,7 +508,7 @@ string& GetParentFolder(const wchar_t *Src, string &strDest)
 
 int CmpFullPath(const wchar_t *Src, const wchar_t *Dest)
 {
-	string strSrcFullName, strDestFullName;
+	FARString strSrcFullName, strDestFullName;
 
 	GetParentFolder(Src, strSrcFullName);
 	GetParentFolder(Dest, strDestFullName);
@@ -518,17 +518,17 @@ int CmpFullPath(const wchar_t *Src, const wchar_t *Dest)
 	return !StrCmpI(strSrcFullName, strDestFullName);
 }
 
-static void GenerateName(string &strName,const wchar_t *Path=nullptr)
+static void GenerateName(FARString &strName,const wchar_t *Path=nullptr)
 {
 	if (Path&&*Path)
 	{
-		string strTmp=Path;
+		FARString strTmp=Path;
 		AddEndSlash(strTmp);
 		strTmp+=PointToName(strName);
 		strName=strTmp;
 	}
 
-	string strExt=PointToExt(strName);
+	FARString strExt=PointToExt(strName);
 	size_t NameLength=strName.GetLength()-strExt.GetLength();
 
 	for (int i=1; apiGetFileAttributes(strName)!=INVALID_FILE_ATTRIBUTES; i++)
@@ -602,7 +602,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 	if (!(CDP.SelCount=SrcPanel->GetSelCount()))
 		return;
 
-	string strSelName;
+	FARString strSelName;
 
 	if (CDP.SelCount==1)
 	{
@@ -751,13 +751,13 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 		CopyDlg[ID_SC_ACINHERIT].Selected=1;
 	}
 
-	string strCopyStr;
+	FARString strCopyStr;
 
 	if (CDP.SelCount==1)
 	{
 		if (SrcPanel->GetType()==TREE_PANEL)
 		{
-			string strNewDir(strSelName);
+			FARString strNewDir(strSelName);
 			size_t pos;
 
 			if (FindLastSlash(pos,strNewDir))
@@ -771,7 +771,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 			}
 		}
 
-		string strSelNameShort = strSelName;
+		FARString strSelNameShort = strSelName;
 		strCopyStr=MSG(Move?MMoveFile:(Link?MLinkFile:MCopyFile));
 		TruncPathStr(strSelNameShort,static_cast<int>(CopyDlg[ID_SC_TITLE].X2-CopyDlg[ID_SC_TITLE].X1-strCopyStr.GetLength()-7));
 		strCopyStr+=L" "+strSelNameShort;
@@ -827,16 +827,16 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 */
 	}
 
-	string strDestDir;
+	FARString strDestDir;
 	DestPanel->GetCurDir(strDestDir);
 	if(ToSubdir)
 	{
 		AddEndSlash(strDestDir);
-		string strSubdir, strShort;
+		FARString strSubdir, strShort;
 		DestPanel->GetCurName(strSubdir, strShort);
 		strDestDir+=strSubdir;
 	}
-	string strSrcDir;
+	FARString strSrcDir;
 	SrcPanel->GetCurDir(strSrcDir);
 
 	if (CurrentOnly)
@@ -881,7 +881,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 			{
 				OpenPluginInfo Info;
 				DestPanel->GetOpenPluginInfo(&Info);
-				string strFormat = Info.Format;
+				FARString strFormat = Info.Format;
 				CopyDlg[ID_SC_TARGETEDIT].strData = strFormat+L":";
 
 				while (CopyDlg[ID_SC_TARGETEDIT].strData.GetLength()<2)
@@ -894,7 +894,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 		}
 	}
 
-	string strInitDestDir = CopyDlg[ID_SC_TARGETEDIT].strData;
+	FARString strInitDestDir = CopyDlg[ID_SC_TARGETEDIT].strData;
 	// Äëÿ ôèëüòðà
 	FAR_FIND_DATA_EX fd;
 	SrcPanel->GetSelName(nullptr,CDP.FileAttr);
@@ -952,7 +952,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 	   íî ïåðåìåííûå âñå ðàâíî èíèöèàëèçèðóþòñÿ. Åñëè ïðîèçîéäåò íåóäà÷íàÿ
 	   êîìïèëÿöèÿ ñïèñêà öåëåé, òî ïîêàæåì äèàëîã.
 	*/
-	string strCopyDlgValue;
+	FARString strCopyDlgValue;
 	if (!Ask)
 	{
 		strCopyDlgValue = CopyDlg[ID_SC_TARGETEDIT].strData;
@@ -1218,7 +1218,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 		if (DestList.Set(strCopyDlgValue)) // åñëè ñïèñîê óñïåøíî "ñêîìïèëèðîâàëñÿ"
 		{
 			const wchar_t *NamePtr;
-			string strNameTmp;
+			FARString strNameTmp;
 			// ïîñ÷èòàåì êîëè÷åñòâî öåëåé.
 			CountTarget=DestList.GetTotal();
 			DestList.Reset();
@@ -1326,7 +1326,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 				// Ïîçàáîòèìñÿ î äèçàõ.
 				if (!(Flags&FCOPY_COPYTONUL) && !strDestDizPath.IsEmpty())
 				{
-					string strDestDizName;
+					FARString strDestDizName;
 					DestDiz.GetDizName(strDestDizName);
 					DWORD Attr=apiGetFileAttributes(strDestDizName);
 					int DestReadOnly=(Attr!=INVALID_FILE_ATTRIBUTES && (Attr & FILE_ATTRIBUTE_READONLY));
@@ -1350,7 +1350,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 	{                 // ðàâíî íóæíî àïäåéòèòü äèçû!
 		if (!(Flags&FCOPY_COPYTONUL) && !strDestDizPath.IsEmpty())
 		{
-			string strDestDizName;
+			FARString strDestDizName;
 			DestDiz.GetDizName(strDestDizName);
 			DWORD Attr=apiGetFileAttributes(strDestDizName);
 			int DestReadOnly=(Attr!=INVALID_FILE_ATTRIBUTES && (Attr & FILE_ATTRIBUTE_READONLY));
@@ -1372,7 +1372,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 
 	if (NeedUpdateAPanel && CDP.FileAttr != INVALID_FILE_ATTRIBUTES && (CDP.FileAttr&FILE_ATTRIBUTE_DIRECTORY) && DestPanelMode != PLUGIN_PANEL)
 	{
-		string strTmpSrcDir;
+		FARString strTmpSrcDir;
 		SrcPanel->GetCurDir(strTmpSrcDir);
 		DestPanel->SetCurDir(strTmpSrcDir,FALSE);
 	}
@@ -1382,8 +1382,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 	if (CDP.FileAttr != INVALID_FILE_ATTRIBUTES && (CDP.FileAttr&FILE_ATTRIBUTE_DIRECTORY) && DestPanelMode != PLUGIN_PANEL)
 	{
 		// åñëè SrcDir ñîäåðæèòñÿ â DestDir...
-		string strTmpDestDir;
-		string strTmpSrcDir;
+		FARString strTmpDestDir;
+		FARString strTmpSrcDir;
 		DestPanel->GetCurDir(strTmpDestDir);
 		SrcPanel->GetCurDir(strTmpSrcDir);
 
@@ -1526,7 +1526,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			if (Param1 == ID_SC_TARGETEDIT)
 			{
 				FarDialogItem *DItemACCopy,*DItemACInherit,*DItemACLeave,/**DItemOnlyNewer,*/*DItemBtnCopy;
-				string strTmpSrcDir;
+				FARString strTmpSrcDir;
 				DlgParam->thisClass->SrcPanel->GetCurDir(strTmpSrcDir);
 				DItemACCopy = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACCOPY,0));
 				SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACCOPY,(LONG_PTR)DItemACCopy);
@@ -1542,7 +1542,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				// íå ñîçäàíèå ëèíêà, îáû÷íûå Copy/Move
 				if (!(DlgParam->thisClass->Flags&FCOPY_LINK))
 				{
-					string strBuf = ((FarDialogItem *)Param2)->PtrData;
+					FARString strBuf = ((FarDialogItem *)Param2)->PtrData;
 					strBuf.Upper();
 
 					if (!DlgParam->strPluginFormat.IsEmpty() && wcsstr(strBuf, DlgParam->strPluginFormat))
@@ -1617,7 +1617,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			     â ñïèñêå.
 			*/
 			BOOL MultiCopy=SendDlgMessage(hDlg,DM_GETCHECK,ID_SC_MULTITARGET,0)==BSTATE_CHECKED;
-			string strOldFolder;
+			FARString strOldFolder;
 			int nLength;
 			FarDialogItemData Data;
 			nLength = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, ID_SC_TARGETEDIT, 0);
@@ -1625,7 +1625,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			Data.PtrLength = nLength;
 			SendDlgMessage(hDlg,DM_GETTEXT,ID_SC_TARGETEDIT,(LONG_PTR)&Data);
 			strOldFolder.ReleaseBuffer();
-			string strNewFolder;
+			FARString strNewFolder;
 
 			if (DlgParam->AltF10 == 2)
 			{
@@ -1654,7 +1654,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			if (DlgParam->AltF10 != -1)
 			{
 				{
-					string strNewFolder2;
+					FARString strNewFolder2;
 					FolderTree Tree(strNewFolder2,
 					                (DlgParam->AltF10==1?MODALTREE_PASSIVE:
 					                 (DlgParam->AltF10==2?MODALTREE_FREE:
@@ -1738,7 +1738,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	//SaveScreen SaveScr;
 	DWORD DestAttr=INVALID_FILE_ATTRIBUTES;
-	string strSelName, strSelShortName;
+	FARString strSelName, strSelShortName;
 	int Length;
 	DWORD FileAttr;
 
@@ -1766,7 +1766,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	{
 		//if (Length > 1 && Dest[Length-1]=='/' && Dest[Length-2]!=':') //??????????
 		{
-			string strNewPath = Dest;
+			FARString strNewPath = Dest;
 
 			if (!IsSlash(strNewPath.At(strNewPath.GetLength()-1)) &&
 			        SrcPanel->GetSelCount()>1 &&
@@ -1819,7 +1819,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 	if (Flags&FCOPY_MOVE)
 	{
-		string strTmpSrcDir;
+		FARString strTmpSrcDir;
 		SrcPanel->GetCurDir(strTmpSrcDir);
 		SameDisk=(CheckDisksProps(strTmpSrcDir,Dest,CHECKEDPROPS_ISSAMEDISK))!=0;
 	}
@@ -1829,7 +1829,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	{
 		while (SrcPanel->GetSelName(&strSelName,FileAttr,&strSelShortName))
 		{
-			string strDest = Dest;
+			FARString strDest = Dest;
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
 				SelectedFolderNameLength=(int)strSelName.GetLength();
@@ -1851,7 +1851,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				}
 			}
 
-			string strDestPath = strDest;
+			FARString strDestPath = strDest;
 			FAR_FIND_DATA_EX SrcData;
 			int CopyCode=COPY_SUCCESS,KeepPathPos;
 			Flags&=~FCOPY_OVERWRITENEXT;
@@ -1971,7 +1971,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 			if (!(Flags&FCOPY_MOVE) || CopyCode==COPY_FAILURE)
 			{
-				string strCopyDest=strDest;
+				FARString strCopyDest=strDest;
 
 				do
 				{
@@ -2044,8 +2044,8 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			   )
 			{
 				int SubCopyCode;
-				string strSubName;
-				string strFullName;
+				FARString strSubName;
+				FARString strFullName;
 				ScanTree ScTree(TRUE,TRUE,Flags&FCOPY_COPYSYMLINKCONTENTS);
 				strSubName = strSelName;
 				strSubName += L"/";
@@ -2076,7 +2076,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 						{
 							AttemptToMove=TRUE;
 							int Ret=COPY_SUCCESS;
-							string strCopyDest=strDest;
+							FARString strCopyDest=strDest;
 
 							do
 							{
@@ -2116,7 +2116,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 						if (AttemptToMove)
 							OvrMode=1;
 
-						string strCopyDest=strDest;
+						FARString strCopyDest=strDest;
 
 						do
 						{
@@ -2206,7 +2206,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 COPY_CODES ShellCopy::ShellCopyOneFile(
     const wchar_t *Src,
     const FAR_FIND_DATA_EX &SrcData,
-    string &strDest,
+    FARString &strDest,
     int KeepPathPos,
     int Rename
 )
@@ -2224,13 +2224,13 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 			return COPY_NOFILTER;
 	}
 
-	string strDestPath = strDest;
+	FARString strDestPath = strDest;
 	const wchar_t *NamePtr=PointToName(strDestPath);
 	DWORD DestAttr=INVALID_FILE_ATTRIBUTES;
 
 	if (strDestPath.At(0)==GOOD_SLASH && strDestPath.At(1)==GOOD_SLASH)
 	{
-		string strRoot;
+		FARString strRoot;
 		GetPathRoot(strDestPath, strRoot);
 		DeleteEndSlash(strRoot);
 
@@ -2338,7 +2338,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 					if (SetAttr!=DestAttr)
 						ShellSetAttr(strDestPath,SetAttr);
 
-					string strSrcFullName;
+					FARString strSrcFullName;
 					ConvertNameToFull(Src,strSrcFullName);
 					return(!StrCmp(strDestPath,strSrcFullName) ? COPY_NEXT:COPY_SUCCESS);
 				}
@@ -2351,7 +2351,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 
 			if (Rename)
 			{
-				string strSrcFullName,strDestFullName;
+				FARString strSrcFullName,strDestFullName;
 				ConvertNameToFull(Src,strSrcFullName);
 
 				// äëÿ Move íàì íåîáõîäèìî óçíàòü êàòàëîã ðîäèòåëü, ÷òîáû ïîëó÷èòü åãî ñåêüþðèòè
@@ -2560,7 +2560,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 			}
 
 			int RetCode=0;
-			string strNewName;
+			FARString strNewName;
 
 			if (!AskOverwrite(SrcData,Src,strDestPath,DestAttr,SameName,Rename,((Flags&FCOPY_LINK)?0:1),Append,strNewName,RetCode))
 			{
@@ -2607,7 +2607,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 
 				if (!Append)
 				{
-					string strSrcFullName;
+					FARString strSrcFullName;
 					ConvertNameToFull(Src,strSrcFullName);
 
 					if (NWFS_Attr)
@@ -2622,7 +2622,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 							IsSetSecuty=FALSE;
 						else if (apiGetFileAttributes(strDest) == INVALID_FILE_ATTRIBUTES) // åñëè êàòàëîãà íåò...
 						{
-							string strDestFullName;
+							FARString strDestFullName;
 						}
 					}
 
@@ -2751,7 +2751,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 				return COPY_FAILURE;
 
 			//????
-			string strMsg1, strMsg2;
+			FARString strMsg1, strMsg2;
 			int MsgMCannot=(Flags&FCOPY_LINK) ? MCannotLink: (Flags&FCOPY_MOVE) ? MCannotMove: MCannotCopy;
 			strMsg1 = Src;
 			strMsg2 = strDestPath;
@@ -2788,7 +2788,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 
 			TotalCopiedSize=SaveTotalSize;
 			int RetCode;
-			string strNewName;
+			FARString strNewName;
 
 			if (!AskOverwrite(SrcData,Src,strDestPath,DestAttr,SameName,Rename,((Flags&FCOPY_LINK)?0:1),Append,strNewName,RetCode))
 				return((COPY_CODES)RetCode);
@@ -2920,7 +2920,7 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 
 
 int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
-                             string &strDestName,DWORD &DestAttr,int Append)
+                             FARString &strDestName,DWORD &DestAttr,int Append)
 {
 	OrigScrX=ScrX;
 	OrigScrY=ScrY;
@@ -2955,7 +2955,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		else
 		{
 			SetMessageHelp(L"WarnCopyEncrypt");
-			string strSrcName = SrcName;
+			FARString strSrcName = SrcName;
 			InsertQuote(strSrcName);
 			MsgCode=Message(MSG_WARNING,3,MSG(MWarning),
 			                MSG(MCopyEncryptWarn1),
@@ -3030,7 +3030,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		DestFile.Chmod(SrcData.dwUnixMode);
 		fprintf(stderr, "chmode 0x%x\n", SrcData.dwUnixMode);
 
-		string strDriveRoot;
+		FARString strDriveRoot;
 		GetPathRoot(strDestName,strDriveRoot);
 
 		/*if (SrcData.dwFileAttributes&FILE_ATTRIBUTE_SPARSE_FILE)
@@ -3218,7 +3218,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 						if ((LastError==ERROR_DISK_FULL || LastError==ERROR_HANDLE_DISK_FULL) &&
 						        !strDestName.IsEmpty() && strDestName.At(1)==L':')
 						{
-							string strDriveRoot;
+							FARString strDriveRoot;
 							GetPathRoot(strDestName,strDriveRoot);
 							UINT64 FreeSize=0;
 
@@ -3291,7 +3291,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 							FAR_FIND_DATA_EX SplitData=SrcData;
 							SplitData.nFileSize-=FilePtr;
 							int RetCode;
-							string strNewName;
+							FARString strNewName;
 
 							if (!AskOverwrite(SplitData,SrcName,strDestName,INVALID_FILE_ATTRIBUTES,FALSE,((Flags&FCOPY_MOVE)?TRUE:FALSE),((Flags&FCOPY_LINK)?0:1),Append,strNewName,RetCode))
 							{
@@ -3311,7 +3311,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 								return COPY_RETRY;
 							}
 
-							string strDestDir = strDestName;
+							FARString strDestDir = strDestName;
 
 							if (CutToSlash(strDestDir,true))
 								CreatePath(strDestDir);
@@ -3480,7 +3480,7 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		case DM_OPENVIEWER:
 		{
 			LPCWSTR ViewName=nullptr;
-			string** WFN=reinterpret_cast<string**>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
+			FARString** WFN=reinterpret_cast<FARString**>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
 
 			if (WFN)
 			{
@@ -3524,8 +3524,8 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					break;
 				case WDLG_RENAME:
 				{
-					string** WFN=reinterpret_cast<string**>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
-					string strDestName=*WFN[1];
+					FARString** WFN=reinterpret_cast<FARString**>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
+					FARString strDestName=*WFN[1];
 					GenerateName(strDestName,*WFN[2]);
 
 					if (SendDlgMessage(hDlg,DM_GETCHECK,WDLG_CHECKBOX,0)==BSTATE_UNCHECKED)
@@ -3573,7 +3573,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
                             const wchar_t *SrcName,
                             const wchar_t *DestName, DWORD DestAttr,
                             int SameName,int Rename,int AskAppend,
-                            int &Append,string &strNewName,int &RetCode)
+                            int &Append,FARString &strNewName,int &RetCode)
 {
 	enum
 	{
@@ -3617,7 +3617,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 		return TRUE;
 
 	int MsgCode=OvrMode;
-	string strDestName=DestName;
+	FARString strDestName=DestName;
 
 	if (OvrMode==-1)
 	{
@@ -3650,7 +3650,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				FILETIME SrcLastWriteTime = SrcData.ftLastWriteTime;
 				if(Flags&FCOPY_COPYSYMLINKCONTENTS && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
 				{
-					string RealName = SrcName;
+					FARString RealName = SrcName;
 					FAR_FIND_DATA_EX FindData;
 					apiGetFindDataEx(RealName,FindData);
 					SrcSize=FindData.nFileSize;
@@ -3662,7 +3662,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				uint64_t DestSize = DestData.nFileSize;
 				FormatString strDestSizeText;
 				strDestSizeText<<DestSize;
-				string strDateText, strTimeText;
+				FARString strDateText, strTimeText;
 				ConvertDate(SrcLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
 				strSrcFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<MSG(MCopySource)<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strSrcSizeText<<L" "<<strDateText<<L" "<<strTimeText;
 				ConvertDate(DestData.ftLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
@@ -3671,9 +3671,9 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				WarnCopyDlgData[WDLG_SRCFILEBTN].Data=strSrcFileStr;
 				WarnCopyDlgData[WDLG_DSTFILEBTN].Data=strDestFileStr;
 				MakeDialogItemsEx(WarnCopyDlgData,WarnCopyDlg);
-				string strFullSrcName;
+				FARString strFullSrcName;
 				ConvertNameToFull(SrcName,strFullSrcName);
-				string *WFN[]={&strFullSrcName,&strDestName,&strRenamedFilesPath};
+				FARString *WFN[]={&strFullSrcName,&strDestName,&strRenamedFilesPath};
 				Dialog WarnDlg(WarnCopyDlg,ARRAYSIZE(WarnCopyDlg),WarnDlgProc,(LONG_PTR)&WFN);
 				WarnDlg.SetDialogMode(DMODE_WARNINGSTYLE);
 				WarnDlg.SetPosition(-1,-1,WARN_DLG_WIDTH,WARN_DLG_HEIGHT);
@@ -3755,7 +3755,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 						apiGetFindDataEx(DestName,DestData);
 					}
 
-					string strDateText,strTimeText;
+					FARString strDateText,strTimeText;
 					FormatString strSrcFileStr, strDestFileStr;
 					uint64_t SrcSize = SrcData.nFileSize;
 					FormatString strSrcSizeText;
@@ -3776,7 +3776,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 					WarnCopyDlgData[WDLG_APPEND].Type=DI_TEXT;
 					WarnCopyDlgData[WDLG_APPEND].Data=L"";
 					MakeDialogItemsEx(WarnCopyDlgData,WarnCopyDlg);
-					string strSrcName;
+					FARString strSrcName;
 					ConvertNameToFull(SrcData.strFileName,strSrcName);
 					LPCWSTR WFN[2]={strSrcName,DestName};
 					Dialog WarnDlg(WarnCopyDlg,ARRAYSIZE(WarnCopyDlg),WarnDlgProc,(LONG_PTR)&WFN);
@@ -3852,7 +3852,7 @@ BOOL ShellCopySecuryMsg(const wchar_t *Name)
 		WidthTemp=Min(WidthTemp,WidthNameForMessage);
 		Width=Max(Width,WidthTemp);
 
-		string strOutFileName = Name; //??? nullptr ???
+		FARString strOutFileName = Name; //??? nullptr ???
 		TruncPathStr(strOutFileName,Width);
 		CenterStr(strOutFileName, strOutFileName,Width+4);
 		Message(0,0,MSG(MMoveDlgTitle),MSG(MCopyPrepareSecury),strOutFileName);
@@ -3872,7 +3872,7 @@ BOOL ShellCopySecuryMsg(const wchar_t *Name)
 
 bool ShellCopy::CalcTotalSize()
 {
-	string strSelName, strSelShortName;
+	FARString strSelName, strSelShortName;
 	DWORD FileAttr;
 	uint64_t FileSize;
 	// Äëÿ ôèëüòðà
@@ -3948,7 +3948,7 @@ bool ShellCopy::CalcTotalSize()
 */
 bool ShellCopy::ShellSetAttr(const wchar_t *Dest,DWORD Attr)
 {
-	string strRoot;
+	FARString strRoot;
 	ConvertNameToFull(Dest,strRoot);
 	GetPathRoot(strRoot,strRoot);
 

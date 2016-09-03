@@ -42,9 +42,9 @@ const int DEFAULT_INDENT = 5;
 
 struct EditFieldBinding: public DialogItemBinding<DialogItemEx>
 {
-	string *TextValue;
+	FARString *TextValue;
 
-	EditFieldBinding(string *aTextValue)
+	EditFieldBinding(FARString *aTextValue)
 		: TextValue(aTextValue)
 	{
 	}
@@ -125,7 +125,7 @@ DialogItemBinding<DialogItemEx> *DialogBuilder::CreateRadioButtonBinding(int *Va
 	return new RadioButtonBinding<DialogItemEx>(Value);
 }
 
-DialogItemEx *DialogBuilder::AddEditField(string *Value, int Width, const wchar_t *HistoryID, int Flags)
+DialogItemEx *DialogBuilder::AddEditField(FARString *Value, int Width, const wchar_t *HistoryID, int Flags)
 {
 	DialogItemEx *Item = AddDialogItem(DI_EDIT, *Value);
 	SetNextY(Item);

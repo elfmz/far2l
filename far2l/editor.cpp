@@ -91,7 +91,12 @@ Editor::Editor(ScreenObject *pOwner,bool DialogUsed):
 	StackPos(0),
 	NewStackPos(FALSE),
 	EditorID(::EditorID++),
-	HostFileEditor(nullptr)
+	HostFileEditor(nullptr),
+	TopList(nullptr),
+	EndList(nullptr),
+	TopScreen(nullptr),
+	CurLine(nullptr),
+	LastGetLineNumber(0)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
 	_KEYMACRO(SysLog(1));

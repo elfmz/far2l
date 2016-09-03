@@ -111,44 +111,45 @@ TSessionData * TSessionData::Clone()
 
 void TSessionData::Default()
 {
+  FSource = ssStored;
   SetHostName(L"");
-  SetPortNumber(SshPortNumber);
-  SetUserName(ANONYMOUS_USER_NAME);
-  SetPassword(ANONYMOUS_PASSWORD);
-  SetPingInterval(30);
-  SetPingType(ptOff);
-  SetTimeout(15);
-  SetTryAgent(true);
-  SetAgentFwd(false);
-  SetAuthTIS(false);
-  SetAuthKI(true);
-  SetAuthKIPassword(true);
-  SetAuthGSSAPI(false);
-  SetGSSAPIFwdTGT(false);
+  FPortNumber = SshPortNumber;
+  FUserName = ANONYMOUS_USER_NAME;
+  FPassword = ANONYMOUS_PASSWORD;
+  FPingInterval = 30;
+  FPingType = ptOff;
+  FTimeout = 15;
+  FTryAgent = true;
+  FAgentFwd = false;
+  FAuthTIS = false;
+  FAuthKI = true;
+  FAuthKIPassword = true;
+  FAuthGSSAPI = false;
+  FGSSAPIFwdTGT = false;
   SetGSSAPIServerRealm(L"");
-  SetChangeUsername(false);
-  SetCompression(false);
-  SetSshProt(ssh2only);
-  SetSsh2DES(false);
-  SetSshNoUserAuth(false);
+  FChangeUsername = false;
+  FCompression = false;
+  FSshProt = ssh2only;
+  FSsh2DES = false;
+  FSshNoUserAuth = false;
   for (intptr_t Index = 0; Index < CIPHER_COUNT; ++Index)
   {
-    SetCipher(Index, DefaultCipherList[Index]);
+    FCiphers[Index] = DefaultCipherList[Index];
   }
   for (intptr_t Index = 0; Index < KEX_COUNT; ++Index)
   {
-    SetKex(Index, DefaultKexList[Index]);
+    FKex[Index] = DefaultKexList[Index];
   }
   SetPublicKeyFile(L"");
   SetPassphrase(L"");
   SetPuttyProtocol(L"");
-  SetTcpNoDelay(true);
-  SetSendBuf(DefaultSendBuf);
-  SetSshSimple(true);
+  FTcpNoDelay = true;
+  FSendBuf = DefaultSendBuf;
+  FSshSimple = true;
   FNotUtf = asAuto;
   FIsWorkspace = false;
   SetHostKey(L"");
-  SetFingerprintScan(false);
+  FFingerprintScan = false;
   FOverrideCachedHostKey = true;
   SetNote(L"");
   FOrigHostName.Clear();
@@ -156,120 +157,120 @@ void TSessionData::Default()
   FOrigProxyMethod = pmNone;
   FTunnelConfigured = false;
 
-  SetProxyMethod(::pmNone);
+  FProxyMethod = ::pmNone;
   SetProxyHost(L"proxy");
-  SetProxyPort(ProxyPortNumber);
+  FProxyPort = ProxyPortNumber;
   SetProxyUsername(L"");
   SetProxyPassword(L"");
   SetProxyTelnetCommand(L"connect %host %port" WGOOD_SLASH "n");
   SetProxyLocalCommand(L"");
-  SetProxyDNS(asAuto);
-  SetProxyLocalhost(false);
+  FProxyDNS = asAuto;
+  FProxyLocalhost = false;
 
   for (intptr_t Index = 0; Index < static_cast<intptr_t>(_countof(FBugs)); ++Index)
   {
-    SetBug(static_cast<TSshBug>(Index), asAuto);
+    FBugs[Index] = asAuto;
   }
 
-  SetSpecial(false);
-  SetFSProtocol(CONST_DEFAULT_PROTOCOL);
-  SetAddressFamily(afAuto);
+  FSpecial = false;
+  FFSProtocol = CONST_DEFAULT_PROTOCOL;
+  FAddressFamily = afAuto;
   SetRekeyData(L"1G");
-  SetRekeyTime(MinsPerHour);
+  FRekeyTime = MinsPerHour;
 
   // FS common
   SetLocalDirectory(L"");
   SetRemoteDirectory(L"");
-  SetSynchronizeBrowsing(false);
-  SetUpdateDirectories(true);
-  SetCacheDirectories(true);
-  SetCacheDirectoryChanges(true);
-  SetPreserveDirectoryChanges(true);
-  SetLockInHome(false);
-  SetResolveSymlinks(true);
-  SetFollowDirectorySymlinks(true);
-  SetDSTMode(dstmUnix);
-  SetDeleteToRecycleBin(false);
-  SetOverwrittenToRecycleBin(false);
+  FSynchronizeBrowsing = false;
+  FUpdateDirectories = true;
+  FCacheDirectories = true;
+  FCacheDirectoryChanges = true;
+  FPreserveDirectoryChanges = true;
+  FLockInHome = false;
+  FResolveSymlinks = true;
+  FFollowDirectorySymlinks = true;
+  FDSTMode = dstmUnix;
+  FDeleteToRecycleBin = false;
+  FOverwrittenToRecycleBin = false;
   SetRecycleBinPath(L"");
-  SetColor(0);
+  FColor = 0;
   SetPostLoginCommands(L"");
 
   // SCP
   SetReturnVar(L"");
-  SetLookupUserGroups(asAuto);
-  SetEOLType(eolLF);
-  SetTrimVMSVersions(false),
+  FLookupUserGroups = asAuto;
+  FEOLType = eolLF;
+  FTrimVMSVersions = false;
   SetShell(L""); //default shell
   SetReturnVar(L"");
-  SetClearAliases(true);
-  SetUnsetNationalVars(true);
+  FClearAliases = true;
+  FUnsetNationalVars = true;
   SetListingCommand(L"ls -la");
-  SetIgnoreLsWarnings(true);
-  SetScp1Compatibility(false);
-  SetTimeDifference(TDateTime(0.0));
-  SetTimeDifferenceAuto(true);
-  SetSCPLsFullTime(asAuto);
-  SetNotUtf(asOn); // asAuto
+  FIgnoreLsWarnings = true;
+  FScp1Compatibility = false;
+  FTimeDifference = TDateTime(0.0);
+  FTimeDifferenceAuto = true;
+  FSCPLsFullTime = asAuto;
+  FNotUtf = asOn; // asAuto
 
   // SFTP
   SetSftpServer(L"");
-  SetSFTPDownloadQueue(32);
-  SetSFTPUploadQueue(32);
-  SetSFTPListingQueue(2);
-  SetSFTPMaxVersion(::SFTPMaxVersion);
-  SetSFTPMaxPacketSize(0);
-  SetSFTPMinPacketSize(0);
+  FSFTPDownloadQueue = 32;
+  FSFTPUploadQueue = 32;
+  FSFTPListingQueue = 2;
+  FSFTPMaxVersion = ::SFTPMaxVersion;
+  FSFTPMaxPacketSize = 0;
+  FSFTPMinPacketSize = 0;
 
   for (intptr_t Index = 0; Index < static_cast<intptr_t>(_countof(FSFTPBugs)); ++Index)
   {
-    SetSFTPBug(static_cast<TSftpBug>(Index), asAuto);
+    FSFTPBugs[Index] = asAuto;
   }
 
-  SetTunnel(false);
+  FTunnel = false;
   SetTunnelHostName(L"");
-  SetTunnelPortNumber(SshPortNumber);
+  FTunnelPortNumber = SshPortNumber;
   SetTunnelUserName(L"");
   SetTunnelPassword(L"");
   SetTunnelPublicKeyFile(L"");
-  SetTunnelLocalPortNumber(0);
+  FTunnelLocalPortNumber = 0;
   SetTunnelPortFwd(L"");
   SetTunnelHostKey(L"");
 
   // FTP
-  SetFtpPasvMode(true);
-  SetFtpForcePasvIp(asAuto);
-  SetFtpUseMlsd(asAuto);
+  FFtpPasvMode = true;
+  FFtpForcePasvIp = asAuto;
+  FFtpUseMlsd = asAuto;
   SetFtpAccount(L"");
-  SetFtpPingInterval(30);
-  SetFtpPingType(ptDummyCommand);
-  SetFtpTransferActiveImmediately(asAuto);
-  SetFtps(ftpsNone);
-  SetMinTlsVersion(tls10);
-  SetMaxTlsVersion(tls12);
-  SetFtpListAll(asAuto);
-  SetFtpHost(asAuto);
-  SetFtpDupFF(false);
-  SetFtpUndupFF(false);
-  SetSslSessionReuse(true);
+  FFtpPingInterval = 30;
+  FFtpPingType = ptDummyCommand;
+  FFtpTransferActiveImmediately = asAuto;
+  FFtps = ftpsNone;
+  FMinTlsVersion = tls10;
+  FMaxTlsVersion = tls12;
+  FFtpListAll = asAuto;
+  FFtpHost = asAuto;
+  FFtpDupFF = false;
+  FFtpUndupFF = false;
+  FSslSessionReuse = true;
   SetTlsCertificateFile(L"");
 
-  SetFtpProxyLogonType(0); // none
+  FFtpProxyLogonType = 0; // none
 
   SetCustomParam1(L"");
   SetCustomParam2(L"");
 
-  SetIsWorkspace(false);
+  FIsWorkspace = false;
   // SetLink(L"");
 
-  SetSelected(false);
+  FSelected = false;
   FModified = false;
   FSource = ::ssNone;
   FSaveOnly = false;
 
   SetCodePage(::GetCodePageAsString(CONST_DEFAULT_CODEPAGE));
-  SetLoginType(ltAnonymous);
-  SetFtpAllowEmptyPassword(false);
+  FLoginType = ltAnonymous;
+  FFtpAllowEmptyPassword = false;
 
   FNumberOfRetries = 0;
   FSessionVersion = ::StrToVersionNumber(GetGlobalFunctions()->GetStrVersionNumber());

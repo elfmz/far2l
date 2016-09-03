@@ -371,7 +371,7 @@ void WinPortPanel::CheckForResizePending()
 			Refresh(false);
 		} else if (_resize_pending != RP_INSTANT) {
 			_resize_pending = RP_INSTANT;
-			fprintf(stderr, "RP_INSTANT\n");
+			//fprintf(stderr, "RP_INSTANT\n");
 		}
 	}	
 }
@@ -519,7 +519,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		&& (event.AltDown() || _pressed_keys.simulate_alt()) 
 		&& !event.ShiftDown() && !event.ControlDown() ) {
 		_resize_pending = RP_INSTANT;
-		fprintf(stderr, "RP_INSTANT\n");
+		//fprintf(stderr, "RP_INSTANT\n");
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
 		if (_resize_pending != RP_INSTANT)
 			_resize_pending = RP_DEFER;
@@ -616,7 +616,7 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 		CheckForResizePending();
 	} else {
 		_resize_pending = RP_DEFER;	
-		fprintf(stderr, "RP_DEFER\n");
+		//fprintf(stderr, "RP_DEFER\n");
 	}
 }
 

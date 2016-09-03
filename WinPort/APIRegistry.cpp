@@ -288,7 +288,7 @@ extern "C" {
 		
 		is.open(path.c_str());
 		if (!is.is_open()) {
-			fprintf(stderr, "RegQueryValue: not found %s\n", path.c_str());
+			//fprintf(stderr, "RegQueryValue: not found %s\n", path.c_str());
 			return ERROR_FILE_NOT_FOUND;
 		}
 		getline (is, name);

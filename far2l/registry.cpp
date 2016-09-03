@@ -175,7 +175,7 @@ int GetRegKeySize(HKEY hKey,const wchar_t *ValueName)
   Åñëè òàêàÿ ñèòóàöèÿ âñòðåòèëàñü - ïîëó÷èì ñêîëüêî íàäî â ëþáîì ñëó÷àå
 */
 
-int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,string &strValueData,const wchar_t *Default,DWORD *pType)
+int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,FARString &strValueData,const wchar_t *Default,DWORD *pType)
 {
 	int ExitCode=!ERROR_SUCCESS;
 	HKEY hKey=OpenRegKey(Key);
@@ -317,7 +317,7 @@ int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,BYTE *ValueData,const 
 	return(Required);
 }
 
-static string &MkKeyName(const wchar_t *Key, string &strDest)
+static FARString &MkKeyName(const wchar_t *Key, FARString &strDest)
 {
 	int len = (int)Opt.strRegRoot.GetLength();
 	int len2 = StrLength(Key);
@@ -350,7 +350,7 @@ HKEY CreateRegKey(const wchar_t *Key)
 
 	HKEY hKey;
 	DWORD Disposition;
-	static string strFullKeyName;
+	static FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 
 	if (WINPORT(RegCreateKeyEx)(hRegRootKey,strFullKeyName,0,nullptr,0,KEY_WRITE,nullptr,
@@ -373,7 +373,7 @@ HKEY OpenRegKey(const wchar_t *Key)
 		return(hRegCurrentKey);
 
 	HKEY hKey;
-	static string strFullKeyName;
+	static FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 
 	if (WINPORT(RegOpenKeyEx)(hRegRootKey,strFullKeyName,0,KEY_QUERY_VALUE|KEY_ENUMERATE_SUB_KEYS,&hKey)!=ERROR_SUCCESS)
@@ -394,7 +394,7 @@ HKEY OpenRegKey(const wchar_t *Key)
 
 void DeleteRegKey(const wchar_t *Key)
 {
-	string strFullKeyName;
+	FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 	WINPORT(RegDeleteKey)(hRegRootKey,strFullKeyName);
 }
@@ -403,7 +403,7 @@ void DeleteRegKey(const wchar_t *Key)
 void DeleteRegValue(const wchar_t *Key,const wchar_t *Value)
 {
 	HKEY hKey;
-	string strFullKeyName;
+	FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 
 	if (WINPORT(RegOpenKeyEx)(hRegRootKey,strFullKeyName,0,KEY_WRITE,&hKey)==ERROR_SUCCESS)
@@ -415,8 +415,8 @@ void DeleteRegValue(const wchar_t *Key,const wchar_t *Value)
 
 void DeleteKeyRecord(const wchar_t *KeyMask,int Position)
 {
-	string strFullKeyName, strNextFullKeyName;
-	string strMaskKeyName;
+	FARString strFullKeyName, strNextFullKeyName;
+	FARString strMaskKeyName;
 	MkKeyName(KeyMask, strMaskKeyName);
 
 	for (;;)
@@ -434,8 +434,8 @@ void DeleteKeyRecord(const wchar_t *KeyMask,int Position)
 
 void InsertKeyRecord(const wchar_t *KeyMask,int Position,int TotalKeys)
 {
-	string strFullKeyName, strPrevFullKeyName;
-	string strMaskKeyName;
+	FARString strFullKeyName, strPrevFullKeyName;
+	FARString strMaskKeyName;
 	MkKeyName(KeyMask,strMaskKeyName);
 
 	for (int CurPos=TotalKeys; CurPos>Position; CurPos--)
@@ -480,9 +480,9 @@ void RenumKeyRecord(const wchar_t *KeyRoot,const wchar_t *KeyMask,const wchar_t 
 {
 	TArray<KeyRecordItem> KAItems;
 	KeyRecordItem KItem;
-	string strRegKey;
-	string strFullKeyName, strPrevFullKeyName;
-	string strMaskKeyName;
+	FARString strRegKey;
+	FARString strFullKeyName, strPrevFullKeyName;
+	FARString strMaskKeyName;
 	BOOL Processed=FALSE;
 
 	// ñáîð äàííûõ
@@ -589,7 +589,7 @@ int CopyKeyTree(const wchar_t *Src,const wchar_t *Dest,const wchar_t *Skip)
 
 	for (int i=0; ; i++)
 	{
-		string strSubkeyName, strSrcKeyName, strDestKeyName;
+		FARString strSubkeyName, strSrcKeyName, strDestKeyName;
 
 		if (apiRegEnumKeyEx(hSrcKey,i,strSubkeyName)!=ERROR_SUCCESS)
 			break;
@@ -630,7 +630,7 @@ int CopyKeyTree(const wchar_t *Src,const wchar_t *Dest,const wchar_t *Skip)
 
 int CopyLocalKeyTree(const wchar_t *Src,const wchar_t *Dst)
 {
-	string strFullSrc,strFullDst;
+	FARString strFullSrc,strFullDst;
 	MkKeyName(Src,strFullSrc);
 	MkKeyName(Dst,strFullDst);
 	return CopyKeyTree(strFullSrc,strFullDst);
@@ -638,7 +638,7 @@ int CopyLocalKeyTree(const wchar_t *Src,const wchar_t *Dst)
 
 void DeleteKeyTree(const wchar_t *KeyName)
 {
-	string strFullKeyName;
+	FARString strFullKeyName;
 	MkKeyName(KeyName,strFullKeyName);
 	DeleteFullKeyTree(strFullKeyName);
 }
@@ -662,7 +662,7 @@ void DeleteKeyTreePart(const wchar_t *KeyName)
 
 	for (int I=0;; I++)
 	{
-		string strSubkeyName,strFullKeyName;
+		FARString strSubkeyName,strFullKeyName;
 
 		if (apiRegEnumKeyEx(hKey,I,strSubkeyName)!=ERROR_SUCCESS)
 			break;
@@ -696,7 +696,7 @@ int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName)
 
 		if (hKey)
 		{
-			string strSubName;
+			FARString strSubName;
 			LONG ExitCode=apiRegEnumKeyEx(hKey,0,strSubName);
 
 			if (ExitCode!=ERROR_SUCCESS)
@@ -710,7 +710,7 @@ int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName)
 
 			if (ExitCode!=ERROR_SUCCESS)
 			{
-				string strKeyName = FullKeyName;
+				FARString strKeyName = FullKeyName;
 				wchar_t *pKeyName = strKeyName.GetBuffer();
 				wchar_t *pSubKey = pKeyName;
 
@@ -740,7 +740,7 @@ int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName)
 int CheckRegKey(const wchar_t *Key)
 {
 	HKEY hKey;
-	string strFullKeyName;
+	FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 	int Exist=WINPORT(RegOpenKeyEx)(hRegRootKey,strFullKeyName,0,KEY_QUERY_VALUE,&hKey)==ERROR_SUCCESS;
 	CloseRegKey(hKey);
@@ -776,7 +776,7 @@ int CheckRegValue(const wchar_t *Key,const wchar_t *ValueName,DWORD *pType,DWORD
 	return TRUE;
 }
 
-int EnumRegKey(const wchar_t *Key,DWORD Index,string &strDestName)
+int EnumRegKey(const wchar_t *Key,DWORD Index,FARString &strDestName)
 {
 	HKEY hKey=OpenRegKey(Key);
 
@@ -787,7 +787,7 @@ int EnumRegKey(const wchar_t *Key,DWORD Index,string &strDestName)
 
 		if (ExitCode==ERROR_SUCCESS)
 		{
-			string strTempName = Key;
+			FARString strTempName = Key;
 
 			if (!strTempName.IsEmpty())
 				AddEndSlash(strTempName);
@@ -801,9 +801,9 @@ int EnumRegKey(const wchar_t *Key,DWORD Index,string &strDestName)
 	return FALSE;
 }
 
-int EnumRegValue(const wchar_t *Key,DWORD Index, string &strDestName,LPBYTE SData,DWORD SDataSize,LPDWORD IData,int64_t* IData64)
+int EnumRegValue(const wchar_t *Key,DWORD Index, FARString &strDestName,LPBYTE SData,DWORD SDataSize,LPDWORD IData,int64_t* IData64)
 {
-	string strSData;
+	FARString strSData;
 	int ExitCode=EnumRegValueEx(Key,Index,strDestName,strSData,IData,IData64);
 
 	if (ExitCode != REG_NONE)
@@ -815,7 +815,7 @@ int EnumRegValue(const wchar_t *Key,DWORD Index, string &strDestName,LPBYTE SDat
 	return ExitCode;
 }
 
-int EnumRegValueEx(const wchar_t *Key,DWORD Index, string &strDestName, string &strSData, LPDWORD IData, int64_t* IData64, DWORD *lpType)
+int EnumRegValueEx(const wchar_t *Key,DWORD Index, FARString &strDestName, FARString &strSData, LPDWORD IData, int64_t* IData64, DWORD *lpType)
 {
 	HKEY hKey=OpenRegKey(Key);
 	int RetCode=REG_NONE;
@@ -823,7 +823,7 @@ int EnumRegValueEx(const wchar_t *Key,DWORD Index, string &strDestName, string &
 
 	if (hKey)
 	{
-		string strValueName;
+		FARString strValueName;
 		DWORD ValNameSize=512, ValNameSize0;
 		LONG ExitCode=ERROR_MORE_DATA;
 
@@ -904,7 +904,7 @@ LONG CloseRegKey(HKEY hKey)
 int RegQueryStringValueEx(
     HKEY hKey,
     const wchar_t *lpwszValueName,
-    string &strData,
+    FARString &strData,
     const wchar_t *lpwszDefault
 )
 {
@@ -942,7 +942,7 @@ int RegQueryStringValueEx(
 int RegQueryStringValue(
     HKEY hKey,
     const wchar_t *lpwszSubKey,
-    string &strData,
+    FARString &strData,
     const wchar_t *lpwszDefault
 )
 {

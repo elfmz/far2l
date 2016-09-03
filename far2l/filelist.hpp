@@ -59,7 +59,7 @@ struct FileListItem
 	int SortGroup;
 	wchar_t *DizText;
 	char DeleteDiz;
-	string strOwner;
+	FARString strOwner;
 	wchar_t **CustomColumnData;
 	int CustomColumnNumber;
 	DWORD CRC32;
@@ -75,12 +75,12 @@ struct FileListItem
 	uint64_t PackSize;
 	uint64_t StreamsSize;
 
-	string strName;
-	string strShortName;
+	FARString strName;
+	FARString strShortName;
 
 	DWORD ReparseTag;
 
-	string strCustomData;
+	FARString strCustomData;
 
 	void Clear()
 	{
@@ -156,8 +156,8 @@ struct FileListItem
 struct PluginsListItem
 {
 	HANDLE hPlugin;
-	string strHostFile;
-	string strPrevOriginalCurDir;
+	FARString strHostFile;
+	FARString strPrevOriginalCurDir;
 	int Modified;
 	int PrevViewMode;
 	int PrevSortMode;
@@ -172,7 +172,7 @@ struct PrevDataItem
 {
 	FileListItem **PrevListData;
 	int PrevFileCount;
-	string strPrevName;
+	FARString strPrevName;
 	int PrevTopFile;
 };
 
@@ -188,8 +188,8 @@ class FileList:public Panel
 		*/
 		wchar_t openBracket[2], closeBracket[2];
 
-		string strOriginalCurDir;
-		string strPluginDizName;
+		FARString strOriginalCurDir;
+		FARString strPluginDizName;
 		FileListItem **ListData;
 		int FileCount;
 		HANDLE hPlugin;
@@ -238,7 +238,7 @@ class FileList:public Panel
 		int  GetShowColor(int Position, int ColorType);
 		void ShowSelectedSize();
 		void ShowTotalSize(OpenPluginInfo &Info);
-		int ConvertName(const wchar_t *SrcName, string &strDest, int MaxLength, int RightAlign, int ShowStatus, DWORD dwFileAttr);
+		int ConvertName(const wchar_t *SrcName, FARString &strDest, int MaxLength, int RightAlign, int ShowStatus, DWORD dwFileAttr);
 
 		void Select(FileListItem *SelPtr,int Selection);
 		long SelectFiles(int Mode,const wchar_t *Mask=nullptr);
@@ -254,15 +254,15 @@ class FileList:public Panel
 
 		void MoveSelection(FileListItem **FileList,long FileCount,FileListItem **OldList,long OldFileCount);
 		virtual int GetSelCount();
-		virtual int GetSelName(string *strName,DWORD &FileAttr,string *strShortName=nullptr,FAR_FIND_DATA_EX *fde=nullptr);
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,FARString *strShortName=nullptr,FAR_FIND_DATA_EX *fde=nullptr);
 		virtual void UngetSelName();
 		virtual void ClearLastGetSelection();
 
 		virtual uint64_t GetLastSelectedSize();
 		virtual int GetLastSelectedItem(FileListItem *LastItem);
 
-		virtual int GetCurName(string &strName, string &strShortName);
-		virtual int GetCurBaseName(string &strName, string &strShortName);
+		virtual int GetCurName(FARString &strName, FARString &strShortName);
+		virtual int GetCurBaseName(FARString &strName, FARString &strShortName);
 
 		void PushPlugin(HANDLE hPlugin,const wchar_t *HostFile);
 		int PopPlugin(int EnableRestoreViewMode);
@@ -293,7 +293,7 @@ class FileList:public Panel
 		void PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber);
 		void ProcessCopyKeys(int Key);
 		void ReadSortGroups(bool UpdateFilterCurrentTime=true);
-		void AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,string Owner=L"");
+		void AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,FARString Owner=L"");
 		int  ProcessOneHostFile(int Idx);
 
 	protected:
@@ -342,7 +342,7 @@ class FileList:public Panel
 		virtual int GetPrevDirectoriesFirst();
 
 		HANDLE OpenFilePlugin(const wchar_t *FileName,int PushPrev, OPENFILEPLUGINTYPE Type);
-		virtual int GetFileName(string &strName,int Pos,DWORD &FileAttr);
+		virtual int GetFileName(FARString &strName,int Pos,DWORD &FileAttr);
 		virtual int GetCurrentPos();
 		virtual int FindPartName(const wchar_t *Name,int Next,int Direct=1,int ExcludeSets=0);
 		long FindFile(const char *Name,BOOL OnlyPartName=FALSE);
@@ -368,7 +368,7 @@ class FileList:public Panel
 		virtual void ReadDiz(PluginPanelItem *ItemList=nullptr,int ItemLength=0, DWORD dwFlags=0);
 		virtual void DeleteDiz(const wchar_t *Name, const wchar_t *ShortName);
 		virtual void FlushDiz();
-		virtual void GetDizName(string &strDizName);
+		virtual void GetDizName(FARString &strDizName);
 		virtual void CopyDiz(const wchar_t *Name, const wchar_t *ShortName, const wchar_t *DestName,
 		                     const wchar_t *DestShortName,DizList *DestDiz);
 		virtual int IsFullScreen();
@@ -382,7 +382,7 @@ class FileList:public Panel
 		void PluginGetPanelInfo(PanelInfo &Info);
 		size_t PluginGetPanelItem(int ItemNumber,PluginPanelItem *Item);
 		size_t PluginGetSelectedPanelItem(int ItemNumber,PluginPanelItem *Item);
-		void PluginGetColumnTypesAndWidths(string& strColumnTypes,string& strColumnWidths);
+		void PluginGetColumnTypesAndWidths(FARString& strColumnTypes,FARString& strColumnWidths);
 
 		void PluginBeginSelection();
 		void PluginSetSelection(int ItemNumber,bool Selection);
@@ -392,11 +392,11 @@ class FileList:public Panel
 		virtual void SetPluginModified();
 		virtual int ProcessPluginEvent(int Event,void *Param);
 		virtual void SetTitle();
-		//virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		//virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		int PluginPanelHelp(HANDLE hPlugin);
 		virtual long GetFileCount() {return FileCount;}
 
-		string &CreateFullPathName(const wchar_t *Name,const wchar_t *ShortName,DWORD FileAttr, string &strDest,int UNC,int ShortNameAsIs=TRUE);
+		FARString &CreateFullPathName(const wchar_t *Name,const wchar_t *ShortName,DWORD FileAttr, FARString &strDest,int UNC,int ShortNameAsIs=TRUE);
 
 
 		virtual BOOL GetItem(int Index,void *Dest);
@@ -416,5 +416,5 @@ class FileList:public Panel
 		size_t FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi);
 		static void PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi);
 		static int IsModeFullScreen(int Mode);
-		static string &AddPluginPrefix(FileList *SrcPanel,string &strPrefix);
+		static FARString &AddPluginPrefix(FileList *SrcPanel,FARString &strPrefix);
 };

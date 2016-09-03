@@ -70,8 +70,8 @@ class KeyBar: public ScreenObject
 		KeyBarTitleGroup RegKeyTitles [KBL_GROUP_COUNT];
 		bool RegReaded;
 
-		string strLanguage;
-		string strRegGroupName;
+		FARString strLanguage;
+		FARString strRegGroupName;
 
 	private:
 		virtual void DisplayObject();

@@ -227,10 +227,10 @@ class KeyMacro
 		class LockScreen *LockScr;
 
 	private:
-		int ReadVarsConst(int ReadMode, string &strBuffer);
-		int ReadMacroFunction(int ReadMode, string &strBuffer);
+		int ReadVarsConst(int ReadMode, FARString &strBuffer);
+		int ReadMacroFunction(int ReadMode, FARString &strBuffer);
 		int WriteVarsConst(int WriteMode);
-		int ReadMacros(int ReadMode, string &strBuffer);
+		int ReadMacros(int ReadMode, FARString &strBuffer);
 		DWORD AssignMacroKey();
 		int GetMacroSettings(int Key,DWORD &Flags);
 		void InitInternalVars(BOOL InitedRAM=TRUE);
@@ -238,7 +238,7 @@ class KeyMacro
 		void ReleaseWORKBuffer(BOOL All=FALSE); // óäàëèòü âðåìåííûé áóôåð
 
 		DWORD SwitchFlags(DWORD& Flags,DWORD Value);
-		string &MkRegKeyName(int IdxMacro,string &strRegKeyName);
+		FARString &MkRegKeyName(int IdxMacro,FARString &strRegKeyName);
 
 		BOOL CheckEditSelected(DWORD CurFlags);
 		BOOL CheckInsidePlugin(DWORD CurFlags);
@@ -295,7 +295,7 @@ class KeyMacro
 		// ïîëó÷åíèå ðàçìåðà, çàíèìàåìîãî óêàçàííûì ìàêðîñîì
 		int GetRecordSize(int Key, int Mode);
 
-		bool GetPlainText(string& Dest);
+		bool GetPlainText(FARString& Dest);
 		int  GetPlainTextSize();
 
 		void SetRedrawEditor(int Sets) {IsRedrawEditor=Sets;}
@@ -309,12 +309,12 @@ class KeyMacro
 
 		static const wchar_t* GetSubKey(int Mode);
 		static int   GetSubKey(const wchar_t *Mode);
-		static int   GetMacroKeyInfo(bool FromReg,int Mode,int Pos,string &strKeyName,string &strDescription);
+		static int   GetMacroKeyInfo(bool FromReg,int Mode,int Pos,FARString &strKeyName,FARString &strDescription);
 		static wchar_t *MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Src=nullptr);
 		// èç ñòðîêîâîãî ïðåäñòàâëåíèÿ ìàêðîñà ñäåëàòü MacroRecord
 		int ParseMacroString(struct MacroRecord *CurMacro,const wchar_t *BufPtr,BOOL onlyCheck=FALSE);
-		BOOL GetMacroParseError(DWORD* ErrCode, COORD* ErrPos, string *ErrSrc);
-		BOOL GetMacroParseError(string *Err1, string *Err2, string *Err3, string *Err4);
+		BOOL GetMacroParseError(DWORD* ErrCode, COORD* ErrPos, FARString *ErrSrc);
+		BOOL GetMacroParseError(FARString *Err1, FARString *Err2, FARString *Err3, FARString *Err4);
 
 		static void SetMacroConst(const wchar_t *ConstName, const TVar Value);
 		static DWORD GetNewOpCode();
@@ -326,7 +326,7 @@ class KeyMacro
 		static bool UnregMacroFunction(size_t Index);
 };
 
-BOOL WINAPI KeyMacroToText(int Key,string &strKeyText0);
+BOOL WINAPI KeyMacroToText(int Key,FARString &strKeyText0);
 int WINAPI KeyNameMacroToKey(const wchar_t *Name);
 void initMacroVarTable(int global);
 void doneMacroVarTable(int global);

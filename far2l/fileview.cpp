@@ -250,7 +250,7 @@ int FileViewer::ProcessKey(int Key)
 			}
 
 			SaveScreen Sc;
-			string strFileName;
+			FARString strFileName;
 			View.GetFileName(strFileName);
 			CtrlObject->Cp()->GoToFile(strFileName);
 			RedrawTitle = TRUE;
@@ -303,7 +303,7 @@ int FileViewer::ProcessKey(int Key)
 			if (!DisableEdit)
 			{
 				UINT cp=View.VM.CodePage;
-				string strViewFileName;
+				FARString strViewFileName;
 				View.GetFileName(strViewFileName);
 				File Edit;
 				if(!Edit.Open(strViewFileName, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
@@ -394,7 +394,7 @@ int FileViewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 }
 
 
-int FileViewer::GetTypeAndName(string &strType, string &strName)
+int FileViewer::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = MSG(MScreensView);
 	View.GetFileName(strName);
@@ -426,7 +426,7 @@ void FileViewer::OnDestroy()
 
 	if (!DisableHistory && (CtrlObject->Cp()->ActivePanel || StrCmp(strName, L"-")))
 	{
-		string strFullFileName;
+		FARString strFullFileName;
 		View.GetFileName(strFullFileName);
 		CtrlObject->ViewHistory->AddToHistory(strFullFileName,0);
 	}
@@ -444,7 +444,7 @@ int FileViewer::ViewerControl(int Command,void *Param)
 	return View.ViewerControl(Command,Param);
 }
 
-string &FileViewer::GetTitle(string &Title,int LenTitle,int TruncSize)
+FARString &FileViewer::GetTitle(FARString &Title,int LenTitle,int TruncSize)
 {
 	return View.GetTitle(Title,LenTitle,TruncSize);
 }
@@ -461,8 +461,8 @@ int64_t FileViewer::GetViewFilePos() const
 
 void FileViewer::ShowStatus()
 {
-	string strName;
-	string strStatus;
+	FARString strName;
+	FARString strStatus;
 
 	if (!IsTitleBarVisible())
 		return;

@@ -111,19 +111,19 @@ class Viewer:public ScreenObject
 
 		ViewerString *Strings[MAXSCRY+1];
 
-		string strFileName;
-		string strFullFileName;
+		FARString strFileName;
+		FARString strFullFileName;
 
 		File ViewFile;
 		CachedRead Reader;
 
 		FAR_FIND_DATA_EX ViewFindData;
 
-		string strTempViewName;
+		FARString strTempViewName;
 
 		BOOL DeleteFolder;
 
-		string strLastSearchStr;
+		FARString strLastSearchStr;
 		int LastSearchCase,LastSearchWholeWords,LastSearchReverse,LastSearchHex,LastSearchRegexp;
 
 		struct ViewerMode VM;
@@ -142,9 +142,9 @@ class Viewer:public ScreenObject
 		int64_t SelectPosOffSet; // Èñïîëüçóåòñÿ äëÿ êîððåêöèè ïîçèöèè âûäåëåíèÿ â þíèêîäíûõ ôàéëàõ
 		int ShowStatusLine,HideCursor;
 
-		string strTitle;
+		FARString strTitle;
 
-		string strPluginData;
+		FARString strPluginData;
 		int CodePageChangedByUser;
 		int ReadStdin;
 		int InternalKey;
@@ -214,13 +214,13 @@ class Viewer:public ScreenObject
 		int GetWrapType();
 		void SetWrapType(int TypeWrap);
 		void KeepInitParameters();
-		void GetFileName(string &strName);
+		void GetFileName(FARString &strName);
 		virtual void ShowConsoleTitle();
 
 		void SetTempViewName(const wchar_t *Name, BOOL DeleteFolder);
 
 		void SetTitle(const wchar_t *Title);
-		string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 
 		void SetFilePos(int64_t Pos); // $ 18.07.2000 tran - change 'long' to 'unsigned long'
 		int64_t GetFilePos() const { return FilePos; };

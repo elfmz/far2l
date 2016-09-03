@@ -73,7 +73,7 @@ void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir)
 	{
 		if (NeedSetUpADir)
 		{
-			string strCurDir;
+			FARString strCurDir;
 			SrcPanel->GetCurDir(strCurDir);
 			AnotherPanel->SetCurDir(strCurDir,TRUE);
 			AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
@@ -112,8 +112,8 @@ int CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName)
 
 	if (AnotherPanel->GetMode() == NORMAL_PANEL)
 	{
-		string strAnotherCurDir;
-		string strFullName;
+		FARString strAnotherCurDir;
+		FARString strFullName;
 		AnotherPanel->GetCurDir(strAnotherCurDir);
 		AddEndSlash(strAnotherCurDir);
 		ConvertNameToFull(SelName, strFullName);
@@ -129,7 +129,7 @@ int CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName)
 	return FALSE;
 }
 
-int _MakePath1(DWORD Key, string &strPathName, const wchar_t *Param2,int ShortNameAsIs)
+int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2,int ShortNameAsIs)
 {
 	int RetCode=FALSE;
 	int NeedRealName=FALSE;
@@ -182,7 +182,7 @@ int _MakePath1(DWORD Key, string &strPathName, const wchar_t *Param2,int ShortNa
 			{
 				if (Key == KEY_SHIFTENTER || Key == KEY_CTRLSHIFTENTER || Key == KEY_SHIFTNUMENTER || Key == KEY_CTRLSHIFTNUMENTER)
 				{
-					string strShortFileName;
+					FARString strShortFileName;
 					SrcPanel->GetCurName(strPathName,strShortFileName);
 
 					if (SrcPanel->GetShowShortNamesMode()) // ó÷òåì êîðîòêîñòü èìåí :-)
@@ -245,7 +245,7 @@ void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
 
 	for (ColumnCount=0; ColumnCount < PANEL_COLUMNCOUNT; ColumnCount++)
 	{
-		string strArgName;
+		FARString strArgName;
 
 		if (!(TextPtr=GetCommaWord(TextPtr,strArgName)))
 			break;
@@ -374,7 +374,7 @@ void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
 
 	for (int I=0; I<ColumnCount; I++)
 	{
-		string strArgName;
+		FARString strArgName;
 
 		if (!(TextPtr=GetCommaWord(TextPtr,strArgName)))
 			break;
@@ -396,15 +396,15 @@ void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
 
 
 void ViewSettingsToText(unsigned int *ViewColumnTypes,int *ViewColumnWidths,
-                                  int *ViewColumnWidthsTypes,int ColumnCount,string &strColumnTitles,
-                                  string &strColumnWidths)
+                                  int *ViewColumnWidthsTypes,int ColumnCount,FARString &strColumnTitles,
+                                  FARString &strColumnWidths)
 {
 	strColumnTitles.Clear();
 	strColumnWidths.Clear();
 
 	for (int I=0; I<ColumnCount; I++)
 	{
-		string strType;
+		FARString strType;
 		int ColumnType=ViewColumnTypes[I] & 0xff;
 		strType = ColumnSymbol[ColumnType];
 
@@ -471,7 +471,7 @@ void ViewSettingsToText(unsigned int *ViewColumnTypes,int *ViewColumnWidths,
 	}
 }
 
-const string FormatStr_Attribute(DWORD FileAttributes,int Width)
+const FARString FormatStr_Attribute(DWORD FileAttributes,int Width)
 {
 	FormatString strResult;
 
@@ -500,7 +500,7 @@ const string FormatStr_Attribute(DWORD FileAttributes,int Width)
 	return strResult.strValue();
 }
 
-const string FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Flags,int Width)
+const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Flags,int Width)
 {
 	FormatString strResult;
 
@@ -545,11 +545,11 @@ const string FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Fl
 		}
 	}
 
-	string strDateStr,strTimeStr;
+	FARString strDateStr,strTimeStr;
 
 	ConvertDate(*FileTime,strDateStr,strTimeStr,ColumnWidth,Brief,TextMonth,FullYear);
 
-	string strOutStr;
+	FARString strOutStr;
 	switch(ColumnType)
 	{
 		case DATE_COLUMN:
@@ -568,7 +568,7 @@ const string FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Fl
 	return strResult.strValue();
 }
 
-const string FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSize, const string strName,DWORD FileAttributes,DWORD ShowFolderSize,DWORD ReparseTag,int ColumnType,DWORD Flags,int Width)
+const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSize, const FARString strName,DWORD FileAttributes,DWORD ShowFolderSize,DWORD ReparseTag,int ColumnType,DWORD Flags,int Width)
 {
 	FormatString strResult;
 
@@ -611,7 +611,7 @@ const string FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSi
 			}*/
 		}
 
-		string strStr;
+		FARString strStr;
 		if (StrLength(PtrName) <= Width-2)
 			strStr.Format(L"<%ls>", PtrName);
 		else
@@ -621,7 +621,7 @@ const string FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSi
 	}
 	else
 	{
-		string strOutStr;
+		FARString strOutStr;
 		strResult<<FileSizeToStr(strOutStr,Packed?PackSize:Streams?StreamsSize:UnpSize,Width,Flags).CPtr();
 	}
 	

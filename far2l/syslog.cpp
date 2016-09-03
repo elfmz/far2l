@@ -125,7 +125,7 @@ static FILE* PrintBaner(FILE *fp,const wchar_t *Category,const wchar_t *Title)
 FILE * OpenLogStream(const wchar_t *file)
 {
 #if defined(SYSLOG)
-	string strRealLogName;
+	FARString strRealLogName;
 	SYSTEMTIME st;
 	WINPORT(GetLocalTime)(&st);
 	strRealLogName.Format(L"%ls/Far.%04d%02d%02d.%05d.log",file,st.wYear,st.wMonth,st.wDay,HIWORD(FAR_VERSION));
@@ -142,7 +142,7 @@ void OpenSysLog()
 	if (LogStream)
 		fclose(LogStream);
 
-	string strLogFileName=g_strFarPath+L"$Log";
+	FARString strLogFileName=g_strFarPath+L"$Log";
 	DWORD Attr=apiGetFileAttributes(strLogFileName);
 
 	if (Attr == INVALID_FILE_ATTRIBUTES)
@@ -343,9 +343,9 @@ struct __XXX_Name
 	const wchar_t *Name;
 };
 
-static string _XXX_ToName(int Val,const wchar_t *Pref,__XXX_Name *arrDef,size_t cntArr)
+static FARString _XXX_ToName(int Val,const wchar_t *Pref,__XXX_Name *arrDef,size_t cntArr)
 {
-	string Name;
+	FARString Name;
 
 	for (size_t i=0; i<cntArr; i++)
 	{
@@ -362,7 +362,7 @@ static string _XXX_ToName(int Val,const wchar_t *Pref,__XXX_Name *arrDef,size_t 
 #endif
 
 
-string __ECTL_ToName(int Command)
+FARString __ECTL_ToName(int Command)
 {
 #if defined(SYSLOG_KEYMACRO) || defined(SYSLOG_ECTL)
 #define DEF_ECTL_(m) { ECTL_##m , L#m }
@@ -389,7 +389,7 @@ string __ECTL_ToName(int Command)
 #endif
 }
 
-string __EE_ToName(int Command)
+FARString __EE_ToName(int Command)
 {
 #if defined(SYSLOG)
 #define DEF_EE_(m) { EE_##m , L#m }
@@ -404,7 +404,7 @@ string __EE_ToName(int Command)
 #endif
 }
 
-string __EEREDRAW_ToName(int Command)
+FARString __EEREDRAW_ToName(int Command)
 {
 #if defined(SYSLOG)
 #define DEF_EEREDRAW_(m) { (int)(INT_PTR)EEREDRAW_##m , L#m }
@@ -418,7 +418,7 @@ string __EEREDRAW_ToName(int Command)
 #endif
 }
 
-string __ESPT_ToName(int Command)
+FARString __ESPT_ToName(int Command)
 {
 #if defined(SYSLOG_KEYMACRO) || defined(SYSLOG_ECTL)
 #define DEF_ESPT_(m) { ESPT_##m , L#m }
@@ -440,7 +440,7 @@ string __ESPT_ToName(int Command)
 #endif
 }
 
-string __VE_ToName(int Command)
+FARString __VE_ToName(int Command)
 {
 #if defined(SYSLOG)
 #define DEF_VE_(m) { VE_##m , L#m }
@@ -455,7 +455,7 @@ string __VE_ToName(int Command)
 #endif
 }
 
-string __FCTL_ToName(int Command)
+FARString __FCTL_ToName(int Command)
 {
 #if defined(SYSLOG)
 #define DEF_FCTL_(m) { FCTL_##m , L#m }
@@ -504,7 +504,7 @@ string __FCTL_ToName(int Command)
 #endif
 }
 
-string __ACTL_ToName(int Command)
+FARString __ACTL_ToName(int Command)
 {
 #if defined(SYSLOG_ACTL)
 #define DEF_ACTL_(m) { ACTL_##m , L#m }
@@ -532,7 +532,7 @@ string __ACTL_ToName(int Command)
 }
 
 
-string __VCTL_ToName(int Command)
+FARString __VCTL_ToName(int Command)
 {
 #if defined(SYSLOG_VCTL)
 #define DEF_VCTL_(m) { VCTL_##m , L#m }
@@ -553,7 +553,7 @@ string __VCTL_ToName(int Command)
 }
 
 
-string __MCODE_ToName(int OpCode)
+FARString __MCODE_ToName(int OpCode)
 {
 #if defined(SYSLOG)
 #define DEF_MCODE_(m) { MCODE_##m , L#m }
@@ -795,7 +795,7 @@ string __MCODE_ToName(int OpCode)
 		DEF_MCODE_(F_WINDOW_SCROLL),               // N=Window.Scroll(Lines[,Axis])
 
 	};
-	string Name;
+	FARString Name;
 
 	for (size_t i=0; i<ARRAYSIZE(MCODE); i++)
 	{
@@ -813,14 +813,14 @@ string __MCODE_ToName(int OpCode)
 #endif
 }
 
-string __FARKEY_ToName(int Key)
+FARString __FARKEY_ToName(int Key)
 {
 #if defined(SYSLOG)
-	string Name;
+	FARString Name;
 
 	if (!(Key >= KEY_MACRO_BASE && Key <= KEY_MACRO_ENDBASE) && KeyToText(Key,Name))
 	{
-		string tmp;
+		FARString tmp;
 		InsertQuote(Name);
 		tmp.Format(L"%ls [%u/0x%08X]",Name.CPtr(),Key,Key);
 		Name = tmp;
@@ -835,7 +835,7 @@ string __FARKEY_ToName(int Key)
 }
 
 
-string __DLGMSG_ToName(int Msg)
+FARString __DLGMSG_ToName(int Msg)
 {
 #if defined(SYSLOG)
 #define DEF_MESSAGE(m) { m , L#m }
@@ -883,7 +883,7 @@ string __DLGMSG_ToName(int Msg)
 		DEF_MESSAGE(DM_GETSELECTION),       DEF_MESSAGE(DM_SETSELECTION),
 		DEF_MESSAGE(DN_DRAWDIALOGDONE),
 	};
-	string Name;
+	FARString Name;
 
 	for (size_t i=0; i<ARRAYSIZE(Message); i++)
 	{
@@ -901,7 +901,7 @@ string __DLGMSG_ToName(int Msg)
 #endif
 }
 
-string __VK_KEY_ToName(int VkKey)
+FARString __VK_KEY_ToName(int VkKey)
 {
 #if defined(SYSLOG)
 #define DEF_VK(k) { VK_##k , L#k }
@@ -985,7 +985,7 @@ string __VK_KEY_ToName(int VkKey)
 
 	if (VkKey >= L'0' && VkKey <= L'9' || VkKey >= L'A' && VkKey <= L'Z')
 	{
-		string Name;
+		FARString Name;
 		Name.Format(L"\"VK_%c\" [%d/0x%04X]",VkKey,VkKey,VkKey);
 		return Name;
 	}
@@ -997,10 +997,10 @@ string __VK_KEY_ToName(int VkKey)
 #endif
 }
 
-string __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *rec)
+FARString __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *rec)
 {
 #if defined(SYSLOG)
-	string Records;
+	FARString Records;
 	Records.Format(
 	    L"MOUSE_EVENT_RECORD: [%d,%d], Btn=0x%08X (%c%c%c%c%c), Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%ls)",
 	    rec->dwMousePosition.X,
@@ -1030,7 +1030,7 @@ string __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *rec)
 
 	if (rec->dwEventFlags==MOUSE_WHEELED  || rec->dwEventFlags==MOUSE_HWHEELED)
 	{
-		string tmp;
+		FARString tmp;
 		tmp.Format(L" (Delta=%d)",HIWORD(rec->dwButtonState));
 		Records+=tmp;
 	}
@@ -1042,10 +1042,10 @@ string __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *rec)
 }
 
 
-string __INPUT_RECORD_Dump(INPUT_RECORD *rec)
+FARString __INPUT_RECORD_Dump(INPUT_RECORD *rec)
 {
 #if defined(SYSLOG)
-	string Records;
+	FARString Records;
 
 	switch (rec->EventType)
 	{
@@ -1109,7 +1109,7 @@ string __INPUT_RECORD_Dump(INPUT_RECORD *rec)
 			break;
 	}
 
-	string tmp;
+	FARString tmp;
 	tmp.Format(L" (%ls)",IsFullscreen()?L"Fullscreen":L"Widowed");
 	Records+=tmp;
 	return Records;
@@ -1176,10 +1176,10 @@ void INPUT_RECORD_DumpBuffer(FILE *fp)
 }
 
 // после вызова этой функции нужно освободить память!!!
-string __SysLog_LinearDump(LPBYTE Buf,int SizeBuf)
+FARString __SysLog_LinearDump(LPBYTE Buf,int SizeBuf)
 {
 #if defined(SYSLOG)
-	string OutBuf, tmp;
+	FARString OutBuf, tmp;
 
 	for (int I=0; I < SizeBuf; ++I)
 	{
@@ -1344,7 +1344,7 @@ void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &wfd,FILE *
 		if (wfd.dwFileAttributes&FILE_ATTRIBUTE_VIRTUAL)
 			fwprintf(fp,L"%*s %ls     FILE_ATTRIBUTE_VIRTUAL             (0x00010000)\n",12,L"",space);
 
-		string D, T;
+		FARString D, T;
 		ConvertDate(wfd.ftCreationTime,D,T,8,FALSE,FALSE,TRUE);
 		fwprintf(fp,L"%*s %ls  ftCreationTime        =0x%08X 0x%08X\n",12,L"",space,wfd.ftCreationTime.dwHighDateTime,wfd.ftCreationTime.dwLowDateTime);
 		ConvertDate(wfd.ftLastAccessTime,D,T,8,FALSE,FALSE,TRUE);

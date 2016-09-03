@@ -163,7 +163,7 @@ static int MainProcess(
 		{
 			Opt.OnlyEditorViewerUsed=0;
 			Opt.SetupArgv=0;
-			string strPath;
+			FARString strPath;
 
 			// âîñïîëüçóåìñÿ òåì, ÷òî ControlObject::Init() ñîçäàåò ïàíåëè
 			// þçàÿ Opt.*
@@ -223,7 +223,7 @@ static int MainProcess(
 			// à òåïåðü "ïðîâàëèìñÿ" â êàòàëîã èëè õîñò-ôàéë (åñëè ïîëó÷èòñÿ ;-)
 			if (*lpwszDestName1)  // àêòèíàÿ ïàíåëü
 			{
-				string strCurDir;
+				FARString strCurDir;
 				Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 				Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
 
@@ -288,7 +288,7 @@ static int MainProcess(
 	return 0;
 }
 
-int MainProcessSEH(string& strEditName,string& strViewName,string& DestName1,string& DestName2,int StartLine,int StartChar)
+int MainProcessSEH(FARString& strEditName,FARString& strViewName,FARString& DestName1,FARString& DestName2,int StartLine,int StartChar)
 {
 	int Result=0;
 	Result=MainProcess(strEditName,strViewName,DestName1,DestName2,StartLine,StartChar);
@@ -316,9 +316,9 @@ int FarAppMain(int argc, char **argv)
 
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));
-	string strEditName;
-	string strViewName;
-	string DestNames[2];
+	FARString strEditName;
+	FARString strViewName;
+	FARString DestNames[2];
 	int StartLine=-1,StartChar=-1;
 	int CntDestName=0; // êîëè÷åñòâî ïàðàìåòðîâ-èìåí êàòàëîãîâ
 	/*$ 18.04.2002 SKV

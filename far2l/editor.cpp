@@ -780,7 +780,7 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		}
 		case MCODE_V_EDITORSELVALUE: // Editor.SelValue
 		{
-			string strText;
+			FARString strText;
 			wchar_t *Text;
 
 			if (VBlockStart)
@@ -794,7 +794,7 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 				xf_free(Text);
 			}
 
-			*(string *)vParam=strText;
+			*(FARString *)vParam=strText;
 			return 1;
 		}
 	}
@@ -2552,7 +2552,7 @@ int Editor::ProcessKey(int Key)
 			if (!Flags.Check(FEDITOR_LOCKMODE))
 			{
 				const wchar_t *Fmt = eStackAsString();
-				string strTStr;
+				FARString strTStr;
 
 				strTStr = Fmt;
 
@@ -3520,10 +3520,10 @@ void Editor::ScrollUp()
 BOOL Editor::Search(int Next)
 {
 	Edit *CurPtr,*TmpPtr;
-	string strSearchStr, strReplaceStr;
-	static string strLastReplaceStr;
+	FARString strSearchStr, strReplaceStr;
+	static FARString strLastReplaceStr;
 	static int LastSuccessfulReplaceMode=0;
-	string strMsgStr;
+	FARString strMsgStr;
 	const wchar_t *TextHistoryName=L"SearchText",*ReplaceHistoryName=L"ReplaceText";
 	int CurPos,Case,WholeWords,ReverseSearch,SelectFound,Regexp,Match,NewNumLine,UserBreak;
 
@@ -3547,7 +3547,7 @@ BOOL Editor::Search(int Next)
 
 			if (Ptr)
 			{
-				string strWord(Ptr,(size_t)EndPickPos-StartPickPos+1);
+				FARString strWord(Ptr,(size_t)EndPickPos-StartPickPos+1);
 				strSearchStr=strWord;
 			}
 		}
@@ -3639,7 +3639,7 @@ BOOL Editor::Search(int Next)
 			}
 
 			int SearchLength=0;
-			string strReplaceStrCurrent(ReplaceMode?strReplaceStr:L"");
+			FARString strReplaceStrCurrent(ReplaceMode?strReplaceStr:L"");
 
 			if (CurPtr->Search(strSearchStr,strReplaceStrCurrent,CurPos,Case,WholeWords,ReverseSearch,Regexp,&SearchLength))
 			{
@@ -3696,7 +3696,7 @@ BOOL Editor::Search(int Next)
 						SHORT CurX,CurY;
 						GetCursorPos(CurX,CurY);
 						ScrBuf.ApplyColor(CurX,CurY,CurPtr->RealPosToTab(CurPtr->TabPosToReal(CurX)+SearchLength)-1,CurY,FarColorToReal(COL_EDITORSELECTEDTEXT));
-						string strQSearchStr(CurPtr->GetStringAddr()+CurPtr->GetCurPos(),SearchLength), strQReplaceStr=strReplaceStrCurrent;
+						FARString strQSearchStr(CurPtr->GetStringAddr()+CurPtr->GetCurPos(),SearchLength), strQReplaceStr=strReplaceStrCurrent;
 						InsertQuote(strQSearchStr);
 						InsertQuote(strQReplaceStr);
 						PreRedrawItem pitem=PreRedraw.Pop();
@@ -3723,7 +3723,7 @@ BOOL Editor::Search(int Next)
 						Pasting++;
 
 						/*$ 15.08.2000 skv
-						  If Replace string doesn't contain control symbols (tab and return),
+						  If Replace FARString doesn't contain control symbols (tab and return),
 						  processed with fast method, otherwise use improved old one.
 						*/
 						if (strReplaceStrCurrent.Contains(L'\t') || strReplaceStrCurrent.Contains(L'\r'))
@@ -4415,7 +4415,7 @@ void Editor::GoToLine(int Line)
 void Editor::GoToPosition()
 {
 	DialogBuilder Builder(MEditGoToLine, L"EditorGotoPos");
-	string strData;
+	FARString strData;
 	Builder.AddEditField(&strData,28,L"LineNumber",DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY|DIF_NOAUTOCOMPLETE);
 	Builder.AddOKCancel();
 	Builder.ShowDialog();
@@ -4447,7 +4447,7 @@ void Editor::GetRowCol(const wchar_t *_argv,int *row,int *col)
 	int l;
 	wchar_t *argvx=0;
 	int LeftPos=CurLine->GetTabCurPos() + 1;
-	string strArg = _argv;
+	FARString strArg = _argv;
 	// что бы не оставить "врагу" выбора - только то, что мы хотим ;-)
 	// "прибьем" все внешние пробелы.
 	RemoveExternalSpaces(strArg);
@@ -6665,7 +6665,7 @@ void Editor::SetSavePosMode(int SavePos, int SaveShortPos)
 
 void Editor::EditorShowMsg(const wchar_t *Title,const wchar_t *Msg, const wchar_t* Name,int Percent)
 {
-	string strProgress;
+	FARString strProgress;
 
 	if (Percent!=-1)
 	{

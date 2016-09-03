@@ -119,8 +119,8 @@ struct SetAttrDlgParam
 	bool Plugin;
 	DWORD FileSystemFlags;
 	DIALOGMODE DialogMode;
-	string strSelName;
-	string strOwner;
+	FARString strSelName;
+	FARString strOwner;
 	bool OwnerChanged;
 	// значения CheckBox`ов на момент старта диалога
 	int OriginalCBAttr[SA_ATTR_LAST-SA_ATTR_FIRST+1];
@@ -423,7 +423,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 		case DM_SETATTR:
 		{
-			string strDate,strTime;
+			FARString strDate,strTime;
 
 			if (Param2) // Set?
 			{
@@ -505,7 +505,7 @@ void ShellSetFileAttributesMsg(const wchar_t *Name)
 
 	WidthTemp=Min(WidthTemp,WidthNameForMessage);
 	Width=Max(Width,WidthTemp);
-	string strOutFileName=Name;
+	FARString strOutFileName=Name;
 	TruncPathStr(strOutFileName,Width);
 	CenterStr(strOutFileName,strOutFileName,Width+4);
 	Message(0,0,MSG(MSetAttrTitle),MSG(MSetAttrSetting),strOutFileName);
@@ -672,11 +672,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 	}
 
 	FarList NameList={0};
-	string *strLinks=nullptr;
+	FARString *strLinks=nullptr;
 
 	if (!DlgParam.Plugin)
 	{
-		string strRootPathName;
+		FARString strRootPathName;
 		apiGetCurrentDirectory(strRootPathName);
 		GetPathRoot(strRootPathName,strRootPathName);
 
@@ -701,7 +701,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 	{
 		DWORD FileAttr=INVALID_FILE_ATTRIBUTES;
-		string strSelName;
+		FARString strSelName;
 		FAR_FIND_DATA_EX FindData;
 		if(SrcPanel)
 		{
@@ -722,7 +722,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		wchar_t TimeSeparator=GetTimeSeparator();
 		wchar_t DecimalSeparator=GetDecimalSeparator();
 		LPCWSTR FmtMask1=L"99%c99%c99%c999",FmtMask2=L"99%c99%c99999",FmtMask3=L"99999%c99%c99";
-		string strDMask, strTMask;
+		FARString strDMask, strTMask;
 		strTMask.Format(FmtMask1,TimeSeparator,TimeSeparator,DecimalSeparator);
 
 		switch (GetDateFormat())
@@ -744,7 +744,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		AttrDlg[SA_EDIT_WDATE].strMask=AttrDlg[SA_EDIT_CDATE].strMask=AttrDlg[SA_EDIT_ADATE].strMask=AttrDlg[SA_EDIT_XDATE].strMask=strDMask;
 		AttrDlg[SA_EDIT_WTIME].strMask=AttrDlg[SA_EDIT_CTIME].strMask=AttrDlg[SA_EDIT_ATIME].strMask=AttrDlg[SA_EDIT_XTIME].strMask=strTMask;
 		bool FolderPresent=false,LinkPresent=false;
-		string strLinkName;
+		FARString strLinkName;
 		static struct ATTRIBUTEPAIR
 		{
 			SETATTRDLG Item;
@@ -860,7 +860,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				AttrDlg[SA_EDIT_SYMLINK].Flags&=~DIF_HIDDEN;
 				AttrDlg[SA_EDIT_SYMLINK].strData=LenJunction?strLinkName.CPtr():MSG(MSetAttrUnknownJunction);
 				DlgParam.FileSystemFlags=0;
-				string strRoot;
+				FARString strRoot;
 				GetPathRoot(strSelName,strRoot);
 
 				if (apiGetVolumeInformation(strRoot,nullptr,0,nullptr,&DlgParam.FileSystemFlags,nullptr))
@@ -922,10 +922,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				}
 			}
 
-			string strComputerName;
+			FARString strComputerName;
 			if(SrcPanel)
 			{
-				string strCurDir;
+				FARString strCurDir;
 				SrcPanel->GetCurDir(strCurDir);
 			}
 			GetFileOwner(strComputerName,strSelName,AttrDlg[SA_EDIT_OWNER].strData);
@@ -963,8 +963,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 			if(SrcPanel)
 			{
-				string strComputerName;
-				string strCurDir;
+				FARString strComputerName;
+				FARString strCurDir;
 				SrcPanel->GetCurDir(strCurDir);
 
 				bool CheckOwner=true;
@@ -993,7 +993,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					}
 					if(CheckOwner)
 					{
-						string strCurOwner;
+						FARString strCurOwner;
 						GetFileOwner(strComputerName,strSelName,strCurOwner);
 						if(AttrDlg[SA_EDIT_OWNER].strData.IsEmpty())
 						{
@@ -1080,7 +1080,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		}
 
 		DlgParam.strOwner=AttrDlg[SA_EDIT_OWNER].strData;
-		string strInitOwner=AttrDlg[SA_EDIT_OWNER].strData;
+		FARString strInitOwner=AttrDlg[SA_EDIT_OWNER].strData;
 
 		DlgParam.DialogMode=((SelCount==1&&!(FileAttr&FILE_ATTRIBUTE_DIRECTORY))?MODE_FILE:(SelCount==1?MODE_FOLDER:MODE_MULTIPLE));
 		DlgParam.strSelName=strSelName;
@@ -1391,7 +1391,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 								ScanTree ScTree(FALSE);
 								ScTree.SetFindPath(strSelName,L"*");
 								DWORD LastTime=WINPORT(GetTickCount)();
-								string strFullName;
+								FARString strFullName;
 
 								while (ScTree.GetNextName(&FindData,strFullName))
 								{
@@ -1535,14 +1535,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				seInfo.nShow = SW_SHOW;
 				seInfo.fMask = SEE_MASK_INVOKEIDLIST;
 				// "/?/c:/" fails on old windows
-				string strFullName(IsLocalRootPath(strSelName)?strSelName:NTPath(strSelName).Get());
+				FARString strFullName(IsLocalRootPath(strSelName)?strSelName:NTPath(strSelName).Get());
 				if(FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				{
 					AddEndSlash(strFullName);
 				}
 				seInfo.lpFile = strFullName;
 				seInfo.lpVerb = L"properties";
-				string strCurDir;
+				FARString strCurDir;
 				apiGetCurrentDirectory(strCurDir);
 				seInfo.lpDirectory=strCurDir;
 				ShellExecuteExW(&seInfo);*/

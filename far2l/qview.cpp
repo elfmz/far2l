@@ -77,7 +77,7 @@ QuickView::~QuickView()
 }
 
 
-string &QuickView::GetTitle(string &strTitle,int SubLen,int TruncSize)
+FARString &QuickView::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
 {
 	strTitle=L" ";
 	strTitle+=MSG(MQuickViewTitle);
@@ -92,7 +92,7 @@ void QuickView::DisplayObject()
 		return;
 
 	Flags.Set(FSCROBJ_ISREDRAWING);
-	string strTitle;
+	FARString strTitle;
 
 	if (!QView && !ProcessingPluginCommand)
 		CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
@@ -118,7 +118,7 @@ void QuickView::DisplayObject()
 
 	if (!strCurFileType.IsEmpty())
 	{
-		string strTypeText=L" ";
+		FARString strTypeText=L" ";
 		strTypeText+=strCurFileType;
 		strTypeText+=L" ";
 		TruncStr(strTypeText,X2-X1-1);
@@ -137,7 +137,7 @@ void QuickView::DisplayObject()
 
 		/*if ((apiGetFileAttributes(strCurFileName)&FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT)
 		{
-			string strJuncName;
+			FARString strJuncName;
 			DWORD ReparseTag=0;
 
 			if (GetReparsePointInfo(strCurFileName, strJuncName,&ReparseTag))
@@ -188,7 +188,7 @@ void QuickView::DisplayObject()
 			GotoXY(X1+2,Y1+8);
 			PrintText(MSG(MQuickViewBytes));
 			SetColor(COL_PANELINFOTEXT);
-			string strSize;
+			FARString strSize;
 			InsertCommas(FileSize,strSize);
 			PrintText(strSize);
 			SetColor(COL_PANELTEXT);
@@ -211,7 +211,7 @@ void QuickView::DisplayObject()
 				GotoXY(X1+2,Y1+12);
 				PrintText(MSG(MQuickViewCluster));
 				SetColor(COL_PANELINFOTEXT);
-				string strSize;
+				FARString strSize;
 				InsertCommas(ClusterSize,strSize);
 				PrintText(strSize);
 				SetColor(COL_PANELTEXT);
@@ -492,7 +492,7 @@ int QuickView::UpdateIfChanged(int UpdateMode)
 {
 	if (IsVisible() && !strCurFileName.IsEmpty() && Directory==2)
 	{
-		string strViewName = strCurFileName;
+		FARString strViewName = strCurFileName;
 		ShowFile(strViewName, !strTempName.IsEmpty() ,nullptr);
 		return TRUE;
 	}
@@ -504,7 +504,7 @@ void QuickView::SetTitle()
 {
 	if (GetFocus())
 	{
-		string strTitleDir(L"{");
+		FARString strTitleDir(L"{");
 
 		if (!strCurFileName.IsEmpty())
 		{
@@ -513,7 +513,7 @@ void QuickView::SetTitle()
 		}
 		else
 		{
-			string strCmdText;
+			FARString strCmdText;
 			CtrlObject->CmdLine->GetString(strCmdText);
 			strTitleDir += strCmdText;
 		}
@@ -548,7 +548,7 @@ void QuickView::SetMacroMode(int Restore)
 	CtrlObject->Macro.SetMode(Restore ? PrevMacroMode:MACRO_QVIEWPANEL);
 }
 
-int QuickView::GetCurName(string &strName, string &strShortName)
+int QuickView::GetCurName(FARString &strName, FARString &strShortName)
 {
 	if (!strCurFileName.IsEmpty())
 	{

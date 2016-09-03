@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define range(low,item,hi) Max(low,Min(item,hi))
 
-string AMonth[2][12], AWeekday[2][7],Month[2][12],Weekday[2][7];
+FARString AMonth[2][12], AWeekday[2][7],Month[2][12],Weekday[2][7];
 
 int CurLang=-1, WeekFirst=0;
 
@@ -143,7 +143,7 @@ void PrepareStrFTime()
 	CurLang=0;
 }
 
-static int atime(string &strDest,const tm *tmPtr)
+static int atime(FARString &strDest,const tm *tmPtr)
 {
 	// Thu Oct 07 12:37:32 1999
 	return strDest.Format(L"%ls %ls %02d %02d:%02d:%02d %4d",
@@ -156,7 +156,7 @@ static int atime(string &strDest,const tm *tmPtr)
 	                      tmPtr->tm_year+1900);
 }
 
-static int st_time(string &strDest,const tm *tmPtr,const wchar_t chr)
+static int st_time(FARString &strDest,const tm *tmPtr,const wchar_t chr)
 {
 	int res;
 	int DateSeparator=GetDateSeparator();
@@ -329,7 +329,7 @@ static int iso8601wknum(const tm *timeptr)
 	return weeknum;
 }
 
-size_t WINAPI StrFTime(string &strDest, const wchar_t *Format,const tm *t)
+size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 {
 	if (CurLang==-1 && Lang.IsLanguageLoaded())
 		PrepareStrFTime();
@@ -349,7 +349,7 @@ size_t WINAPI StrFTime(string &strDest, const wchar_t *Format,const tm *t)
 #if 1
 		else
 		{
-			string strBuf;
+			FARString strBuf;
 
 			switch (*++Format)
 			{
@@ -540,7 +540,7 @@ size_t WINAPI StrFTime(string &strDest, const wchar_t *Format,const tm *t)
 	return Len-1;
 }
 
-size_t MkStrFTime(string &strDest, const wchar_t *Fmt)
+size_t MkStrFTime(FARString &strDest, const wchar_t *Fmt)
 {
 	tm *time_now;
 	time_t secs_now;
@@ -573,7 +573,7 @@ void GetFileDateAndTime(const wchar_t *Src,LPWORD Dst,size_t Count,int Separator
 		Dst[i]=(WORD)-1;
 	}
 
-	string strDigit;
+	FARString strDigit;
 	const wchar_t *Ptr=Src;
 
 	for (size_t i=0; i<Count; i++)
@@ -677,7 +677,7 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 	}
 }
 
-void ConvertDate(const FILETIME &ft,string &strDateText, string &strTimeText,int TimeLength,
+void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeText,int TimeLength,
                  int Brief,int TextMonth,int FullYear,int DynInit)
 {
 	static int WDateFormat;
@@ -737,7 +737,7 @@ void ConvertDate(const FILETIME &ft,string &strDateText, string &strTimeText,int
 			strTimeText.Format(L"%02d%c%02d%ls",st.wHour,TimeSeparator,st.wMinute,Letter);
 		else
 		{
-			string strFullTime;
+			FARString strFullTime;
 			strFullTime.Format(L"%02d%c%02d%c%02d%c%03d",st.wHour,TimeSeparator,
 			                   st.wMinute,TimeSeparator,st.wSecond,DecimalSeparator,st.wMilliseconds);
 			strTimeText.Format(L"%.*s",TimeLength, strFullTime.CPtr());
@@ -806,7 +806,7 @@ void ConvertDate(const FILETIME &ft,string &strDateText, string &strTimeText,int
 	}
 }
 
-void ConvertRelativeDate(const FILETIME &ft,string &strDaysText,string &strTimeText)
+void ConvertRelativeDate(const FILETIME &ft,FARString &strDaysText,FARString &strTimeText)
 {
 	ULARGE_INTEGER time={ft.dwLowDateTime,ft.dwHighDateTime};
 	

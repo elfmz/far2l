@@ -118,7 +118,7 @@ class UnicodeStringData
 		~UnicodeStringData() { FreeData(m_pData); }
 };
 
-typedef class UnicodeString
+class UnicodeString
 {
 	private:
 		UnicodeStringData *m_pData;
@@ -218,4 +218,6 @@ typedef class UnicodeString
 
 		bool Contains(wchar_t Ch, size_t nStartPos=0) const { return !wcschr(m_pData->GetData()+nStartPos,Ch) ? false : true; }
 		bool Contains(const wchar_t *lpwszFind, size_t nStartPos=0) const { return !wcsstr(m_pData->GetData()+nStartPos,lpwszFind) ? false : true; }
-} string;
+};
+
+typedef UnicodeString FARString;

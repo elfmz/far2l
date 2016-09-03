@@ -72,7 +72,7 @@ enum PSCR_RECTYPE
 	PSCR_RT_PLUGINDATA,
 };
 
-static int ProcessShortcutRecord(int Command,int ValType,int RecNumber, string *pValue)
+static int ProcessShortcutRecord(int Command,int ValType,int RecNumber, FARString *pValue)
 {
 	static const wchar_t FolderShortcuts[]=L"FolderShortcuts";
 	static const wchar_t *RecTypeName[]=
@@ -82,7 +82,7 @@ static int ProcessShortcutRecord(int Command,int ValType,int RecNumber, string *
 		L"PluginFile%d",
 		L"PluginData%d",
 	};
-	string strValueName;
+	FARString strValueName;
 
 	if (Command != PSCR_CMDDELALL)
 		strValueName.Format(RecTypeName[ValType], RecNumber);
@@ -105,12 +105,12 @@ static int ProcessShortcutRecord(int Command,int ValType,int RecNumber, string *
 	return FALSE;
 }
 
-int GetShortcutFolder(int Pos,string *pDestFolder,
-                      string *pPluginModule,
-                      string *pPluginFile,
-                      string *pPluginData)
+int GetShortcutFolder(int Pos,FARString *pDestFolder,
+                      FARString *pPluginModule,
+                      FARString *pPluginFile,
+                      FARString *pPluginData)
 {
-	string strFolder;
+	FARString strFolder;
 	ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_SHORTCUT,Pos,&strFolder);
 	apiExpandEnvironmentStrings(strFolder, *pDestFolder);
 
@@ -127,10 +127,10 @@ int GetShortcutFolder(int Pos,string *pDestFolder,
 }
 
 
-int SaveFolderShortcut(int Pos,string *pSrcFolder,
-                       string *pPluginModule,
-                       string *pPluginFile,
-                       string *pPluginData)
+int SaveFolderShortcut(int Pos,FARString *pSrcFolder,
+                       FARString *pPluginModule,
+                       FARString *pPluginFile,
+                       FARString *pPluginData)
 {
 	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_SHORTCUT,Pos,pSrcFolder);
 	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINMODULE,Pos,pPluginModule);
@@ -163,8 +163,8 @@ static int ShowFolderShortcutMenu(int Pos)
 
 		for (I=0; I<10; I++)
 		{
-			string strFolderName;
-			string strValueName;
+			FARString strFolderName;
+			FARString strValueName;
 			ListItem.Clear();
 			ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_SHORTCUT,I,&strFolderName);
 			//TruncStr(strFolderName,60);
@@ -203,7 +203,7 @@ static int ShowFolderShortcutMenu(int Pos)
 					if (Key == KEY_INS || Key == KEY_NUMPAD0)
 					{
 						Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
-						string strNewDir;
+						FARString strNewDir;
 						CtrlObject->CmdLine->GetCurDir(strNewDir);
 						ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_SHORTCUT,SelPos,&strNewDir);
 
@@ -211,7 +211,7 @@ static int ShowFolderShortcutMenu(int Pos)
 						{
 							OpenPluginInfo Info;
 							ActivePanel->GetOpenPluginInfo(&Info);
-							string strTemp;
+							FARString strTemp;
 							PluginHandle *ph = (PluginHandle*)ActivePanel->GetPluginHandle();
 							strTemp = ph->pPlugin->GetModuleName();
 							ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINMODULE,SelPos,&strTemp);
@@ -226,8 +226,8 @@ static int ShowFolderShortcutMenu(int Pos)
 				}
 				case KEY_F4:
 				{
-					string strNewDir;
-					string strTemp;
+					FARString strNewDir;
+					FARString strTemp;
 
 					ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_SHORTCUT,SelPos,&strNewDir);
 					strTemp = strNewDir;

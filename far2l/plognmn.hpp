@@ -40,8 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class PreserveLongName
 {
 	private:
-		string strSaveLongName;
-		string strSaveShortName;
+		FARString strSaveLongName;
+		FARString strSaveShortName;
 		int Preserve;
 
 	public:

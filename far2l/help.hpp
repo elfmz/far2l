@@ -51,10 +51,10 @@ struct StackHelpData
 	int   TopStr;                 // номер верхней видимой строки темы
 	int   CurX,CurY;              // координаты (???)
 
-	string strHelpMask;           // значение маски
-	string strHelpPath;           // путь к хелпам
-	string strHelpTopic;         // текущий топик
-	string strSelTopic;          // выделенный топик (???)
+	FARString strHelpMask;           // значение маски
+	FARString strHelpPath;           // путь к хелпам
+	FARString strHelpTopic;         // текущий топик
+	FARString strSelTopic;          // выделенный топик (???)
 
 	void Clear()
 	{
@@ -124,7 +124,7 @@ class Help:public Frame
 		SaveScreen *TopScreen;      // область сохранени€ под хелпом
 		KeyBar      HelpKeyBar;     // кейбар
 		CallBackStack *Stack;       // стек возврата
-		string  strFullHelpPathName;
+		FARString  strFullHelpPathName;
 
 		StackHelpData StackData;
 		TArray<HelpRecord> HelpList; // "хелп" в пам€ти.
@@ -136,26 +136,26 @@ class Help:public Frame
 		int   IsNewTopic;           // это новый топик?
 		int   MouseDown;
 
-		string strCtrlColorChar;    // CtrlColorChar - опци€! дл€ спецсимвола-
+		FARString strCtrlColorChar;    // CtrlColorChar - опци€! дл€ спецсимвола-
 		//   символа - дл€ атрибутов
 		int   CurColor;             // CurColor - текущий цвет отрисовки
 		int   CtrlTabSize;          // CtrlTabSize - опци€! размер табул€ции
 
 		int   PrevMacroMode;        // предыдущий режим макроса
 
-		string strCurPluginContents; // помним PluginContents (дл€ отображени€ в заголовке)
+		FARString strCurPluginContents; // помним PluginContents (дл€ отображени€ в заголовке)
 
 		DWORD LastStartPos;
 		DWORD StartPos;
 
-		string strCtrlStartPosChar;
+		FARString strCtrlStartPosChar;
 
 	private:
 		virtual void DisplayObject();
 		int  ReadHelp(const wchar_t *Mask=nullptr);
 		void AddLine(const wchar_t *Line);
 		void AddTitle(const wchar_t *Title);
-		void HighlightsCorrection(string &strStr);
+		void HighlightsCorrection(FARString &strStr);
 		void FastShow();
 		void DrawWindowFrame();
 		void OutString(const wchar_t *Str);
@@ -184,10 +184,10 @@ class Help:public Frame
 		virtual int  FastHide(); // ¬ведена дл€ нужд CtrlAltShift
 
 		virtual const wchar_t *GetTypeName() {return L"[Help]";}
-		virtual int GetTypeAndName(string &strType, string &strName);
+		virtual int GetTypeAndName(FARString &strType, FARString &strName);
 		virtual int GetType() { return MODALTYPE_HELP; }
 
 		virtual int64_t VMProcess(int OpCode,void *vParam,int64_t iParam);
 
-		static string &MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,string &strTopic);
+		static FARString &MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,FARString &strTopic);
 };

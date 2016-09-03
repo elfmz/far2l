@@ -80,11 +80,11 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	//todo ChangePriority ChPriority(Opt.DelThreadPriority);
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellDeleteMsg);
 	FAR_FIND_DATA_EX FindData;
-	string strDeleteFilesMsg;
-	string strSelName;
-	string strSelShortName;
-	string strDizName;
-	string strFullName;
+	FARString strDeleteFilesMsg;
+	FARString strSelName;
+	FARString strSelShortName;
+	FARString strDizName;
+	FARString strFullName;
 	DWORD FileAttr;
 	int SelCount,UpdateDiz;
 	int DizPresent;
@@ -104,7 +104,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 	// Óäàëåíèå â êîðçèíó òîëüêî äëÿ  FIXED-äèñêîâ
 	{
-		string strRoot;
+		FARString strRoot;
 //    char FSysNameSrc[NM];
 		SrcPanel->GetSelName(nullptr,FileAttr);
 		SrcPanel->GetSelName(&strSelName,FileAttr);
@@ -345,9 +345,9 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 				if (!DirSymLink && (!Opt.DeleteToRecycleBin || Wipe))
 				{
-					string strFullName;
+					FARString strFullName;
 					ScanTree ScTree(TRUE,TRUE,FALSE);
-					string strSelFullName;
+					FARString strSelFullName;
 
 					if (IsAbsolutePath(strSelName))
 					{
@@ -564,7 +564,7 @@ static void PR_ShellDeleteMsg()
 
 void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent)
 {
-	string strProgress;
+	FARString strProgress;
 	size_t Width=52;
 
 	if (Percent!=-1)
@@ -586,7 +586,7 @@ void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent)
 
 	}
 
-	string strOutFileName(Name);
+	FARString strOutFileName(Name);
 	TruncPathStr(strOutFileName,static_cast<int>(Width));
 	CenterStr(strOutFileName,strOutFileName,static_cast<int>(Width));
 	Message(0,0,MSG(Wipe?MDeleteWipeTitle:MDeleteTitle),(Percent>=0||!Opt.DelOpt.DelShowTotal)?MSG(Wipe?MDeletingWiping:MDeleting):MSG(MScanningFolder),strOutFileName,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
@@ -642,7 +642,7 @@ int AskDeleteReadOnly(const wchar_t *Name,DWORD Attr,int Wipe)
 int ShellRemoveFile(const wchar_t *Name,int Wipe)
 {
 	ProcessedItems++;
-	string strFullName;
+	FARString strFullName;
 	ConvertNameToFull(Name, strFullName);
 	int MsgCode=0;
 
@@ -729,7 +729,7 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 int ERemoveDirectory(const wchar_t *Name,int Wipe)
 {
 	ProcessedItems++;
-	string strFullName;
+	FARString strFullName;
 	ConvertNameToFull(Name,strFullName);
 
 	for (;;)
@@ -845,7 +845,7 @@ int WipeFile(const wchar_t *Name)
 	}
 
 	WipeFile.Close();
-	string strTempName;
+	FARString strTempName;
 	FarMkTempEx(strTempName,nullptr,FALSE);
 
 	if (apiMoveFile(Name,strTempName))
@@ -858,7 +858,7 @@ int WipeFile(const wchar_t *Name)
 
 int WipeDirectory(const wchar_t *Name)
 {
-	string strTempName, strPath;
+	FARString strTempName, strPath;
 
 	if (FirstSlash(Name))
 	{
@@ -880,7 +880,7 @@ int WipeDirectory(const wchar_t *Name)
 
 int DeleteFileWithFolder(const wchar_t *FileName)
 {
-	string strFileOrFolderName;
+	FARString strFileOrFolderName;
 	strFileOrFolderName = FileName;
 	Unquote(strFileOrFolderName);
 	BOOL Ret=apiSetFileAttributes(strFileOrFolderName,FILE_ATTRIBUTE_NORMAL);
@@ -904,7 +904,7 @@ void DeleteDirTree(const wchar_t *Dir)
 	if (!*Dir || (IsSlash(Dir[0]) && !Dir[1]))
 		return;
 
-	string strFullName;
+	FARString strFullName;
 	FAR_FIND_DATA_EX FindData;
 	ScanTree ScTree(TRUE,TRUE,FALSE);
 	ScTree.SetFindPath(Dir,L"*",0);

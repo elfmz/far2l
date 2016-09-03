@@ -147,7 +147,7 @@ bool console::GetWorkingRect(SMALL_RECT& WorkingRect)
 	return Result;
 }
 
-bool console::GetTitle(string &strTitle)
+bool console::GetTitle(FARString &strTitle)
 {
 	DWORD dwSize = 0;
 	DWORD dwBufferSize = MAX_PATH;
@@ -173,7 +173,7 @@ bool console::SetTitle(LPCWSTR Title)
 	return WINPORT(SetConsoleTitle)(Title)!=FALSE;
 }
 
-bool console::GetKeyboardLayoutName(string &strName)
+bool console::GetKeyboardLayoutName(FARString &strName)
 {
 	bool Result=false;
 	strName.Clear();

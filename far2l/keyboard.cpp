@@ -525,8 +525,8 @@ void ReloadEnvironment()
 		{HKEY_CURRENT_USER, L"Environment"},
 		{HKEY_CURRENT_USER, L"Volatile Environment"}
 	};
-	string strName, strData;
-	string strOptRegRoot(Opt.strRegRoot);
+	FARString strName, strData;
+	FARString strOptRegRoot(Opt.strRegRoot);
 	Opt.strRegRoot.Clear();
 
 	for(size_t i=0; i<ARRAYSIZE(Addr); i++)
@@ -549,7 +549,7 @@ void ReloadEnvironment()
 						// see http://support.microsoft.com/kb/100843 for details
 						if(!StrCmpI(strName, L"path") || !StrCmpI(strName, L"libpath") || !StrCmpI(strName, L"os2libpath"))
 						{
-							string strMergedPath;
+							FARString strMergedPath;
 							apiGetEnvironmentVariable(strName, strMergedPath);
 							if(strMergedPath.At(strMergedPath.GetLength()-1)!=L';')
 							{
@@ -1615,7 +1615,7 @@ int CheckForEsc()
    ! äîïîëíèòåëüíûé ïàðàìåòðà ó KeyToText - ðàçìåð äàííûõ
    Size=0 - ïî ìàêñèìóìó!
 */
-static string &GetShiftKeyName(string &strName, DWORD Key,int& Len)
+static FARString &GetShiftKeyName(FARString &strName, DWORD Key,int& Len)
 {
 	if ((Key&KEY_RCTRL) == KEY_RCTRL)   strName += ModifKeyName[0].Name;
 	else if (Key&KEY_CTRL)              strName += ModifKeyName[2].Name;
@@ -1673,7 +1673,7 @@ int WINAPI KeyNameToKey(const wchar_t *Name)
 //   if((Key=KeyNameMacroToKey(Name)) != (DWORD)-1)
 //     return Key;
 	int I, Pos;
-	static string strTmpName;
+	static FARString strTmpName;
 	strTmpName = Name;
 	strTmpName.Upper();
 	int Len=(int)strTmpName.GetLength();
@@ -1770,10 +1770,10 @@ int WINAPI KeyNameToKey(const wchar_t *Name)
 	return (!Key || Pos < Len)? -1: (int)Key;
 }
 
-BOOL WINAPI KeyToText(int Key0, string &strKeyText0)
+BOOL WINAPI KeyToText(int Key0, FARString &strKeyText0)
 {
-	string strKeyText;
-	string strKeyTemp;
+	FARString strKeyText;
+	FARString strKeyTemp;
 	int I, Len;
 	DWORD Key=(DWORD)Key0, FKey=(DWORD)Key0&0xFFFFFF;
 	//if(Key >= KEY_MACRO_BASE && Key <= KEY_MACRO_ENDBASE)

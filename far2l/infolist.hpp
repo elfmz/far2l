@@ -70,7 +70,7 @@ class InfoList:public Panel
 		int  PrevMacroMode;
 		int  OldWrapMode;
 		int  OldWrapType;
-		string strDizFileName;
+		FARString strDizFileName;
 
 	private:
 		virtual void DisplayObject();
@@ -98,8 +98,8 @@ class InfoList:public Panel
 		virtual void Update(int Mode);
 		virtual void SetFocus();
 		virtual void KillFocus();
-		virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		virtual BOOL UpdateKeyBar();
 		virtual void CloseFile();
-		virtual int GetCurName(string &strName, string &strShortName);
+		virtual int GetCurName(FARString &strName, FARString &strShortName);
 };

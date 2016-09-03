@@ -1,13 +1,16 @@
 #pragma once
 
-
 class ConsolePaintContext
 {
 	wxFont _font;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height;
 	bool _buffered_paint, _cursor_state;
-	unsigned char _char_fit_cache[0x7f];
+	struct {
+		std::vector<bool> checked;
+		std::vector<bool> result;
+	} _char_fit_cache;
+
 	std::vector<CHAR_INFO> _line;
 	
 public:

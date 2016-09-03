@@ -132,7 +132,9 @@ class FontSizeInspector
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _buffered_paint(false), _cursor_state(false)
 {
-	memset(_char_fit_cache, 0, sizeof(_char_fit_cache));
+	_char_fit_cache.checked.resize(0xffff);
+	_char_fit_cache.result.resize(0xffff);
+	
 	_window->SetBackgroundColour(*wxBLACK);
 	InitializeFont(_window, _font);
 	FontSizeInspector fsi(_font);
@@ -157,10 +159,9 @@ ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	
 bool ConsolePaintContext::CachedCharFitTest(wxPaintDC &dc, wchar_t c)
 {
-	if ((unsigned int)c <= sizeof(_char_fit_cache)) {
-		if (_char_fit_cache[c  - 1] & 2) {
-			return ((_char_fit_cache[c - 1] & 1) != 0);
-		}
+	const bool cacheable = ((size_t)c <= _char_fit_cache.checked.size());
+	if (cacheable && _char_fit_cache.checked[ (size_t)c  - 1 ]) {
+		return _char_fit_cache.result[ (size_t)c  - 1 ];
 	}
 
 	const wchar_t wz[2] = { c, 0};
@@ -168,8 +169,9 @@ bool ConsolePaintContext::CachedCharFitTest(wxPaintDC &dc, wchar_t c)
 	const bool out = ((unsigned)char_size.GetWidth()==_font_width 
 					&& (unsigned)char_size.GetHeight()==_font_height);
 	
-	if ((unsigned int)c <= sizeof(_char_fit_cache)) {
-		_char_fit_cache[c - 1] = (out ? 3 : 2);
+	if (cacheable) {
+		_char_fit_cache.result[ (size_t)c  - 1 ] = out;
+		_char_fit_cache.checked[ (size_t)c  - 1 ] = true;
 	}
 
 	return out;

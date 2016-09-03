@@ -62,7 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keyboard.hpp"
 #include "vmenu.hpp"
 #include "exitcode.hpp"
-#include "vthistory.h"
+#include "vtlog.h"
 
 CommandLine::CommandLine():
 	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
@@ -156,7 +156,7 @@ int CommandLine::ProcessKey(int Key)
 	string strStr;
 
 	if ( Key==KEY_F4) { //TODO: verify that panels invisible
-		const std::string &histfile = VTHistory::GetAsFile();
+		const std::string &histfile = VTLog::GetAsFile();
 		if (histfile.empty())
 			return TRUE;
 			

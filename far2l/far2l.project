@@ -278,8 +278,8 @@
     <File Name="execute_oscmd.cpp"/>
     <File Name="wrap.cpp" ExcludeProjConfig="Debug"/>
     <File Name="vtshell_translation.cpp"/>
-    <File Name="vthistory.cpp"/>
-    <File Name="vthistory.h"/>
+    <File Name="vtlog.h"/>
+    <File Name="vtlog.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="UCD">
     <File Name="UCD/Big5Freq.tab"/>

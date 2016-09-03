@@ -1564,9 +1564,11 @@ static void  swap_m(
     void* t
 )
 {
-	memcpy(t, a, width);
-	memcpy(a, b, width);
-	memcpy(b, t, width);
+	if (a!=b) {
+		memcpy(t, a, width);
+		memcpy(a, b, width);
+		memcpy(b, t, width);
+	}
 }
 
 /* end qsort */

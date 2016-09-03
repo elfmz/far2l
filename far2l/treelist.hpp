@@ -63,8 +63,8 @@ struct TreeItem
 	void Clear()
 	{
 		strName.Clear();
-		memset(Last,0,sizeof(Last));
-		Depth=0;
+		memset(Last, 0, LastCount * sizeof(*Last));
+		Depth = 0;
 	}
 
 	TreeItem& operator=(const TreeItem &tiCopy)

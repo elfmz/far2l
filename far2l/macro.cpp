@@ -522,7 +522,10 @@ int WINAPI KeyNameMacroToKey(const wchar_t *Name)
 KeyMacro::KeyMacro():
 	MacroVersion(GetRegKey(L"KeyMacros",L"MacroVersion",0)),
 	Recording(MACROMODE_NOMACRO),
+	InternalInput(0),
+	IsRedrawEditor(0),
 	Mode(MACRO_SHELL),
+	StartMode(0),
 	CurPCStack(-1),
 	MacroLIB(nullptr),
 	RecBufferSize(0),
@@ -2266,10 +2269,10 @@ Res=kbdLayout([N])
 // N=kbdLayout([N])
 static bool kbdLayoutFunc(const TMacroFunction*)
 {
-	DWORD dwLayout = (DWORD)VMStack.Pop().getInteger();
+//	DWORD dwLayout = (DWORD)VMStack.Pop().getInteger();
 
 	BOOL Ret=TRUE;
-	HKL  Layout=(HKL)0, RetLayout=(HKL)0;
+	HKL  RetLayout=(HKL)0; //Layout=(HKL)0, 
 
 	VMStack.Push(Ret?TVar(static_cast<INT64>(reinterpret_cast<INT_PTR>(RetLayout))):0);
 
@@ -3017,6 +3020,7 @@ static bool msaveFunc(const TMacroFunction*)
 			Ret=(DWORD)_RegWriteString(L"KeyMacros/Vars",strValueName,Result.toString());
 			break;
 		}
+		case vtUnknown: break;
 	}
 
 	VMStack.Push(TVar(Ret==ERROR_SUCCESS?1:0));
@@ -3654,7 +3658,7 @@ static bool chrFunc(const TMacroFunction*)
 
 	if (tmpVar.isInteger())
 	{
-		const wchar_t tmp[]={tmpVar.i()&0xFFFF,L'\0'};
+		const wchar_t tmp[]={(wchar_t) (tmpVar.i() & (wchar_t)-1),L'\0'};
 		tmpVar = tmp;
 		tmpVar.toString();
 	}
@@ -4493,10 +4497,16 @@ done:
 		}
 		case MCODE_OP_PUSHFLOAT:
 		{
-			LARGE_INTEGER i64;
-			i64.u.HighPart=GetOpCode(MR,Work.ExecLIBPos++);   //???
-			i64.u.LowPart=GetOpCode(MR,Work.ExecLIBPos++);    //???
-			VMStack.Push(*(double*)(void*)&i64);
+			union
+			{
+				LARGE_INTEGER i64;
+				double dbl;
+			} u = {};
+			static_assert( sizeof(u)==sizeof(LARGE_INTEGER) , "MCODE_OP_PUSHFLOAT: too big double");
+			
+			u.i64.u.HighPart=GetOpCode(MR,Work.ExecLIBPos++);   //???
+			u.i64.u.LowPart=GetOpCode(MR,Work.ExecLIBPos++);    //???
+			VMStack.Push(u.dbl);
 			goto begin;
 		}
 		case MCODE_OP_PUSHUNKNOWN:
@@ -5251,6 +5261,8 @@ int KeyMacro::WriteVarsConst(int WriteMode)
 				case vtString:
 					_RegWriteString(strUpKeyName,strValueName,var->value.s());
 					break;
+					
+				case vtUnknown: break;
 			}
 		}
 
@@ -5517,7 +5529,7 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 		AllocatedFuncCount=AllocatedFuncCount+64;
 
 		if (!(pTemp=(TMacroFunction *)xf_realloc(AMacroFunction,AllocatedFuncCount*sizeof(TMacroFunction))))
-			return false;
+			return nullptr;
 
 		AMacroFunction=pTemp;
 	}
@@ -6797,6 +6809,8 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, string &strKeyName,
 					case vtString:
 						strDescription.Format(MSG(MMacroOutputFormatForHelpSz), var->value.s());
 						break;
+						
+					case vtUnknown: break;
 				}
 
 				return Pos+1;

@@ -139,6 +139,7 @@ namespace VTLog
 					unsigned int width = ActualLineWidth(csbi.dwSize.X, &line[0]);
 					for (unsigned int i = 0; i < width; ++i) {
 						WCHAR wz[2] = {line[i].Char.UnicodeChar, 0};
+						if (!wz[0]) wz[0] = L' ';
 						s+= Wide2MB(wz);
 					}
 					s+= NATIVE_EOL;

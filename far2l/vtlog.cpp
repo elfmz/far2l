@@ -163,7 +163,7 @@ namespace VTLog
 		char name[128];
 		SYSTEMTIME st;
 		WINPORT(GetLocalTime)(&st);
-		sprintf(name, "/farvt_%u-%u-%u_%u-%u-%u.txt", 
+		sprintf(name, "/farvt_%u-%u-%u_%u-%u-%u.log", 
 			st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 		path+= name;
 				

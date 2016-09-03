@@ -42,9 +42,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct FAR_FIND_DATA_EX
 {
 	DWORD    dwFileAttributes;
-	FILETIME ftCreationTime;
-	FILETIME ftLastAccessTime;
-	FILETIME ftLastWriteTime;
+	union {
+		FILETIME ftLastAccessTime;
+		FILETIME ftUnixAccessTime;
+	};
+	union {
+		FILETIME ftLastWriteTime;
+		FILETIME ftUnixModificationTime;
+	};
+	union {
+		FILETIME ftCreationTime;
+		FILETIME ftUnixStatusChangeTime;
+	};
 	FILETIME ftChangeTime;
 	uint64_t nFileSize;
 	uint64_t nPackSize;

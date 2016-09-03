@@ -443,7 +443,7 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 	if (src_rect.Right < src_rect.Left || src_rect.Bottom < src_rect.Top) 
 		return false;
 
-	COORD data_size = {src_rect.Right - src_rect.Left + 1, src_rect.Bottom - src_rect.Top + 1};
+	COORD data_size = {src_rect.Right + 1 - src_rect.Left, src_rect.Bottom + 1 - src_rect.Top};
 	size_t total_chars = data_size.X;
 	total_chars*= data_size.Y;
 	COORD data_pos = {0, 0};
@@ -462,8 +462,13 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 		if (lpClipRectangle) {
 			fprintf(stderr, " CLIP:[%u %u %u %u]",
 				lpClipRectangle->Left, lpClipRectangle->Top, lpClipRectangle->Right, lpClipRectangle->Bottom);
-			ClipRect(src_rect, *lpClipRectangle, &data_pos);
-			ClipRect(dst_rect, *lpClipRectangle);
+			ClipRect(src_rect, *lpClipRectangle);
+			ClipRect(dst_rect, *lpClipRectangle, &data_pos);
+
+			fprintf(stderr, " CLIPPED:[%u %u %u %u] -> [%u %u %u %u] DP=[%u %u]",
+				src_rect.Left, src_rect.Top, src_rect.Right, src_rect.Bottom,
+				dst_rect.Left, dst_rect.Top, dst_rect.Right, dst_rect.Bottom,
+				data_pos.X, data_pos.Y);
 		}
 		fprintf(stderr, "\n");
 		

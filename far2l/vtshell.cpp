@@ -21,6 +21,26 @@ static void close_fd_pair(int *fds)
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) ;
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad = 0);
 
+
+#if 1 //change to 0 to enable verbose I/O reports to stderr
+# define DbgPrintEscaped(info, s)
+#else
+static void DbgPrintEscaped(const char *info, const std::string &s)
+{
+	std::string msg;
+	for (auto c : s) {
+		if (c=='\\') {
+			msg+= "\\\\";
+		} else if (c <= 32 || c > 127) {
+			char zz[64]; sprintf(zz, "\\%02x", (unsigned int)c);
+			msg+= zz;
+		} else 
+			msg+= (char)(unsigned char)c;
+	}
+	fprintf(stderr, "VT %s: '%s'\n", info, msg.c_str());
+}
+#endif
+
 class VTShell
 {
 	std::string _cmd;
@@ -183,18 +203,9 @@ class VTShell
 	
 	void ProcessOutput(const char *buf, int len) 
 	{
-		std::wstring ws = MB2Wide(std::string(buf, len).c_str());
-#if 0
-		std::string msg;
-		for (auto c : ws) {
-			if (c <= 32 || c > 127) {
-				char zz[64]; sprintf(zz, "#%02x ", (unsigned int)c);
-				msg+= zz;
-			} else 
-				msg+= (char)(unsigned char)c;
-		}
-		fprintf(stderr, "OUTPUT: %s\n", msg.c_str());
-#endif
+		std::string s(buf, len);
+		const std::wstring &ws = MB2Wide(s.c_str());
+		DbgPrintEscaped("OUTPUT", s);
 		_vta.Write(ws.c_str(), ws.size());
 	}
 
@@ -261,7 +272,8 @@ class VTShell
 					if (_pipes_fallback && ir.Event.KeyEvent.uChar.UnicodeChar) {
 						WINPORT(WriteConsole)( NULL, &ir.Event.KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 					}
-					if (write(_fd_in, translated.c_str(), translated.size())<=0) {
+					DbgPrintEscaped("INPUT", translated.c_str());
+					if (write(_fd_in, translated.c_str(), translated.size())!=(int)translated.size()) {
 						fprintf(stderr, "VT: write failed\n");
 					}
 				} else {

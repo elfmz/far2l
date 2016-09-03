@@ -459,7 +459,7 @@ void SendSequence( LPCWSTR seq )
 	DWORD out;
 	INPUT_RECORD in;
 	HANDLE hStdIn = NULL;//WINPORT(GetStdHandle)( STD_INPUT_HANDLE );
-
+	fprintf(stderr, "VT: SendSequence - '%ls'\n", seq);
 	in.EventType = KEY_EVENT;
 	in.Event.KeyEvent.bKeyDown = TRUE;
 	in.Event.KeyEvent.wRepeatCount = 1;
@@ -765,9 +765,9 @@ void InterpretEscSeq( void )
 		case 'P':                 // ESC[#P Delete # characters.
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[P == ESC[1P
 			if (es_argc != 1) return;
-			Rect.Left   = WIN.Left	= CUR.X;
+			Rect.Left   = WIN.Left	= CUR.X;  Rect.Left+= es_argv[0];
 			Rect.Right  = WIN.Right = RIGHT;
-			Pos.X	    = CUR.X - es_argv[0];
+			Pos.X	    = CUR.X;
 			Pos.Y	    =
 			    Rect.Top    =
 			        Rect.Bottom = CUR.Y;
@@ -865,6 +865,7 @@ void InterpretEscSeq( void )
 			Pos.Y = es_argv[0] - 1;
 			if (Pos.Y < TOP) Pos.Y = TOP;
 			if (Pos.Y > BOTTOM) Pos.Y = BOTTOM;
+			Pos.X = CUR.X;
 			WINPORT(SetConsoleCursorPosition)( hConOut, Pos );
 			return;
 

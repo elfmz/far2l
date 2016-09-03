@@ -18,7 +18,7 @@ namespace VTLog
 		
 		enum {
 			LIMIT_NOT_IMPORTANT	= 100,
-			LIMIT_IMPORTANT = 4000
+			LIMIT_IMPORTANT = 5000
 		};
 		
 		void RemoveAllExcept(size_t leave_count)
@@ -38,7 +38,7 @@ namespace VTLog
 		{
 			wchar_t *tmp;
 			if (Width) {
-				tmp = (wchar_t *)alloca(Width * sizeof(wchar_t));
+				tmp = (wchar_t *)alloca((Width + 1) * sizeof(wchar_t));
 				for (unsigned int i = 0; i<Width; ++i) 
 					tmp[i] = Chars[i].Char.UnicodeChar ? Chars[i].Char.UnicodeChar : L' ';
 				tmp[Width] = 0;
@@ -61,13 +61,22 @@ namespace VTLog
 			RemoveAllExcept(LIMIT_NOT_IMPORTANT);
 		}
 		
-		void GetAsString(std::string &out) 
+		void DumpToString(std::string &out) 
 		{
-			out.clear();
 			std::lock_guard<std::mutex> lock(_mutex);
 			for (auto m : _memories) {
 				out+= m;
 				out+= NATIVE_EOL;
+			}
+		}
+		
+		void DumpToFile(int fd) 
+		{
+			std::lock_guard<std::mutex> lock(_mutex);
+			for (auto m : _memories) {
+				m+= NATIVE_EOL;
+				if (write(fd, m.c_str(), m.size()) != (int)m.size())
+					perror("VTLog: WriteToFile");
 			}
 		}
 		
@@ -117,28 +126,33 @@ namespace VTLog
 		g_lines.Reset();
 	}
 	
-	void GetAsString(std::string &s, bool append_screen_lines) 
+	static void AppendScreenLines(std::string &s)
 	{
-		g_lines.GetAsString(s);
-		if (append_screen_lines) {
-			CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-			if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &csbi) && csbi.dwSize.X > 0 && csbi.dwSize.Y > 1) {
-				--csbi.dwSize.Y;//dont grab keys
-				std::vector<CHAR_INFO> line(csbi.dwSize.X);
-				COORD buf_pos = { }, buf_size = {csbi.dwSize.X, 1};
-				SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
-				for (rc.Top = rc.Bottom = 0; rc.Top < csbi.dwSize.Y; rc.Top = ++rc.Bottom) {
-					if (WINPORT(ReadConsoleOutput)(NULL, &line[0], buf_size, buf_pos, &rc)) {
-						unsigned int width = ActualLineWidth(csbi.dwSize.X, &line[0]);
-						for (unsigned int i = 0; i < width; ++i) {
-							WCHAR wz[2] = {line[i].Char.UnicodeChar, 0};
-							s+= Wide2MB(wz);
-						}
-						s+= NATIVE_EOL;
+		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
+		if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &csbi) && csbi.dwSize.X > 0 && csbi.dwSize.Y > 1) {
+			--csbi.dwSize.Y;//dont grab keys
+			std::vector<CHAR_INFO> line(csbi.dwSize.X);
+			COORD buf_pos = { }, buf_size = {csbi.dwSize.X, 1};
+			SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
+			for (rc.Top = rc.Bottom = 0; rc.Top < csbi.dwSize.Y; rc.Top = ++rc.Bottom) {
+				if (WINPORT(ReadConsoleOutput)(NULL, &line[0], buf_size, buf_pos, &rc)) {
+					unsigned int width = ActualLineWidth(csbi.dwSize.X, &line[0]);
+					for (unsigned int i = 0; i < width; ++i) {
+						WCHAR wz[2] = {line[i].Char.UnicodeChar, 0};
+						s+= Wide2MB(wz);
 					}
+					s+= NATIVE_EOL;
 				}
 			}
-		}
+		}		
+	}
+	
+	void GetAsString(std::string &s, bool append_screen_lines) 
+	{
+		s.clear();
+		g_lines.DumpToString(s);
+		if (append_screen_lines) 
+			AppendScreenLines(s);
 	}
 	
 	std::string GetAsFile(bool append_screen_lines)
@@ -157,17 +171,18 @@ namespace VTLog
 		
 		int fd = open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, 0600);
 		if (fd==-1) {
-			fprintf(stderr, "VTHistory: errno %u creating '%s'\n", errno, path.c_str() );
+			fprintf(stderr, "VTLog: errno %u creating '%s'\n", errno, path.c_str() );
 			return std::string();
 		}
 			
-		for (size_t i = 0; i < s.size(); ) {
-			size_t piece = s.size() - i;
-			if (piece > 0x1000) piece = 0x1000;
-			int r = write(fd, &s[i], piece);
-			if (r<=0)
-					perror("VTHistory: write");
-			i+= r;
+		g_lines.DumpToFile(fd);
+		if (append_screen_lines) {
+			std::string s;
+			AppendScreenLines(s);
+			if (!s.empty()) {
+				if (write(fd, s.c_str(), s.size()) != (int)s.size())
+					perror("VTLog: write");				
+			}
 		}
 		close(fd);
 		return path;

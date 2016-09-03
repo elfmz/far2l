@@ -61,7 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "constitle.hpp"
 #include "console.hpp"
-#include "vthistory.h"
+#include "vtlog.h"
 #include <vector>
 #include <string>
 
@@ -123,7 +123,7 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 		if (ecl.size() == 1) {
 			ClearScreen(COL_COMMANDLINEUSERSCREEN);
 			SaveBackground();
-			VTHistory::Reset();
+			VTLog::Reset();
 			PrintCommand = false;
 			return true;
 		}

@@ -1234,7 +1234,7 @@ static void ResetState()
 }
 
 
-#include "vthistory.h"
+#include "vtlog.h"
 
 VTAnsi::VTAnsi()
 {
@@ -1256,14 +1256,14 @@ VTAnsi::VTAnsi()
 	WINPORT(GetConsoleCursorInfo)( NULL, &orgcci );
 	WINPORT(GetConsoleScrollRegion)(NULL, &s_initial_scr_rgn.top, &s_initial_scr_rgn.bottom);
 	
-	VTHistory::Start();
+	VTLog::Start();
 	
 //	get_state();
 }
 
 VTAnsi::~VTAnsi()
 {
-	VTHistory::Stop();
+	VTLog::Stop();
 	WINPORT(SetConsoleScrollRegion)(NULL, s_initial_scr_rgn.top, s_initial_scr_rgn.bottom);
 	WINPORT(SetConsoleMode)( NULL, orgmode );
 	WINPORT(SetConsoleCursorInfo)( NULL, &orgcci );

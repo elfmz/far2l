@@ -1,12 +1,14 @@
 #pragma once
 #include <string>
 
-namespace VTHistory
+namespace VTLog
 {
 	void Start();
 	void Stop();
 	
 	void Reset();
+	
+	void GetAsString(std::string &s, bool append_screen_lines);
 	std::string GetAsFile(bool append_screen_lines = true);
 	
 }

@@ -189,7 +189,7 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent)
 	if (SetPanel->GetType()!=FILE_PANEL && CtrlObject->Cp()->GetAnotherPanel(SetPanel)->GetType()==FILE_PANEL)
 		SetPanel=CtrlObject->Cp()->GetAnotherPanel(SetPanel);
 
-	string strExpandedDir(CmdLine);
+	FARString strExpandedDir(CmdLine);
 	Unquote(strExpandedDir);
 	apiExpandEnvironmentStrings(strExpandedDir,strExpandedDir);
 

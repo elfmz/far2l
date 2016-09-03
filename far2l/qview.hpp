@@ -43,9 +43,9 @@ class QuickView:public Panel
 	private:
 		Viewer *QView;
 
-		string strCurFileName;
-		string strCurFileType;
-		string strTempName;
+		FARString strCurFileName;
+		FARString strCurFileType;
+		FARString strTempName;
 
 		CriticalSection CS;
 
@@ -79,9 +79,9 @@ class QuickView:public Panel
 
 		virtual int UpdateIfChanged(int UpdateMode);
 		virtual void SetTitle();
-		virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		virtual void SetFocus();
 		virtual void KillFocus();
 		virtual BOOL UpdateKeyBar();
-		virtual int GetCurName(string &strName, string &strShortName);
+		virtual int GetCurName(FARString &strName, FARString &strShortName);
 };

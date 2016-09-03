@@ -94,7 +94,7 @@ class SystemCPEncoder : public ICPEncoder
 		int m_nRefCount;
 		int m_nCodePage; //system single-byte codepage
 
-		string m_strName;
+		FARString m_strName;
 
 	public:
 
@@ -164,7 +164,7 @@ class Edit:public ScreenObject
 
 		int    CursorSize;
 		int    CursorPos;
-		const string* strWordDiv;
+		const FARString* strWordDiv;
 
 		UINT m_codepage; //BUGBUG
 
@@ -222,7 +222,7 @@ class Edit:public ScreenObject
 		void SetShowWhiteSpace(int Mode) {Flags.Change(FEDITLINE_SHOWWHITESPACE,Mode);}
 
 		void  GetString(wchar_t *Str, int MaxSize);
-		void  GetString(string &strStr);
+		void  GetString(FARString &strStr);
 
 		const wchar_t* GetStringAddr();
 
@@ -237,14 +237,14 @@ class Edit:public ScreenObject
 		const wchar_t *GetEOL();
 
 		int   GetSelString(wchar_t *Str,int MaxSize);
-		int   GetSelString(string &strStr);
+		int   GetSelString(FARString &strStr);
 
 		int   GetLength();
 
 		void  InsertString(const wchar_t *Str);
 		void  InsertBinaryString(const wchar_t *Str,int Length);
 
-		int   Search(const string& Str,string& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength);
+		int   Search(const FARString& Str,FARString& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength);
 
 		void  SetClearFlag(int Flag) {Flags.Change(FEDITLINE_CLEARFLAG,Flag);}
 		int   GetClearFlag() {return Flags.Check(FEDITLINE_CLEARFLAG);}
@@ -295,7 +295,7 @@ class Edit:public ScreenObject
 		void SetReadOnly(int NewReadOnly) {Flags.Change(FEDITLINE_READONLY,NewReadOnly);}
 		int  GetDropDownBox() {return Flags.Check(FEDITLINE_DROPDOWNBOX);}
 		void SetDropDownBox(int NewDropDownBox) {Flags.Change(FEDITLINE_DROPDOWNBOX,NewDropDownBox);}
-		void SetWordDiv(const string& WordDiv) {strWordDiv=&WordDiv;}
+		void SetWordDiv(const FARString& WordDiv) {strWordDiv=&WordDiv;}
 		virtual void Changed(bool DelBlock=false);
 };
 

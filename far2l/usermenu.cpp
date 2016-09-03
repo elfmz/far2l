@@ -81,7 +81,7 @@ enum
 	EC_COMMAND_SELECTED = -5, // Выбрана команда - закрыть меню и обновить папку
 };
 
-int PrepareHotKey(string &strHotKey)
+int PrepareHotKey(FARString &strHotKey)
 {
 	int FuncNum=0;
 
@@ -110,14 +110,14 @@ void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool
 {
 	for (int i=0;;i++)
 	{
-		string strItemKey;
+		FARString strItemKey;
 		strItemKey.Format(L"%ls/Item%d",MenuKey,i);
-		string strLabel;
+		FARString strLabel;
 
 		if (!GetRegKey(strItemKey,L"Label",strLabel,L""))
 			break;
 
-		string strHotKey;
+		FARString strHotKey;
 		GetRegKey(strItemKey,L"HotKey",strHotKey,L"");
 		BOOL SubMenu;
 		GetRegKey(strItemKey,L"Submenu",SubMenu,0);
@@ -136,9 +136,9 @@ void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool
 		{
 			for (int i=0;; i++)
 			{
-				string strLineName;
+				FARString strLineName;
 				strLineName.Format(L"Command%d",i);
-				string strCommand;
+				FARString strCommand;
 
 				if (!GetRegKey(strItemKey,strLineName,strCommand,L""))
 					break;
@@ -166,7 +166,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 
 	while(GetStr.GetString(&MenuStr, MenuCP, MenuStrLength))
 	{
-		string strItemKey;
+		FARString strItemKey;
 
 		if (!SingleItemMenu)
 			strItemKey.Format(L"%ls/Item%d",MenuKey,KeyNumber);
@@ -205,8 +205,8 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 			}
 
 			*ChPtr=0;
-			string strHotKey=MenuStr;
-			string strLabel=ChPtr+1;
+			FARString strHotKey=MenuStr;
+			FARString strLabel=ChPtr+1;
 			RemoveLeadingSpaces(strLabel);
 			bool SubMenu=(GetStr.PeekString(&MenuStr, MenuCP, MenuStrLength) && *MenuStr==L'{');
 			UseSameRegKey();
@@ -227,7 +227,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 		{
 			if (KeyNumber>=0)
 			{
-				string strLineName;
+				FARString strLineName;
 				strLineName.Format(L"Command%d",CommandNumber++);
 				RemoveLeadingSpaces(MenuStr);
 				SetRegKey(strItemKey,strLineName,MenuStr);
@@ -250,11 +250,11 @@ UserMenu::~UserMenu()
 void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 {
 	// Путь к текущему каталогу с файлом LocalMenuFileName
-	string strMenuFilePath;
+	FARString strMenuFilePath;
 	CtrlObject->CmdLine->GetCurDir(strMenuFilePath);
 	// по умолчанию меню - это FarMenu.ini
 	MenuMode=MM_LOCAL;
-	string strLocalMenuKey;
+	FARString strLocalMenuKey;
 	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
 	DeleteKeyTree(strLocalMenuKey);
 	MenuModified=MenuNeedRefresh=false;
@@ -280,7 +280,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 
 	while ((ExitCode != EC_CLOSE_LEVEL) && (ExitCode != EC_CLOSE_MENU) && (ExitCode != EC_COMMAND_SELECTED))
 	{
-		string strMenuFileFullPath = strMenuFilePath;
+		FARString strMenuFileFullPath = strMenuFilePath;
 		AddEndSlash(strMenuFileFullPath);
 		strMenuFileFullPath += LocalMenuFileName;
 
@@ -330,7 +330,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 			}
 		}
 
-		string strMenuRootKey = (MenuMode==MM_MAIN) ? L"UserMenu/MainMenu" : strLocalMenuKey;
+		FARString strMenuRootKey = (MenuMode==MM_MAIN) ? L"UserMenu/MainMenu" : strLocalMenuKey;
 		int PrevMacroMode=CtrlObject->Macro.GetMode();
 		int _CurrentFrame=FrameManager->GetCurrentFrame()->GetType();
 		CtrlObject->Macro.SetMode(MACRO_USERMENU);
@@ -461,7 +461,7 @@ int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos
 
 	for (NumLines=0;; NumLines++)
 	{
-		string strItemKey;
+		FARString strItemKey;
 		strItemKey.Format(L"%ls/Item%d",MenuKey,NumLines);
 
 		if (!CheckRegKey(strItemKey))
@@ -471,9 +471,9 @@ int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos
 
 		MenuItemEx UserMenuItem;
 		UserMenuItem.Clear();
-		string strHotKey;
+		FARString strHotKey;
 		GetRegKey(strItemKey,L"HotKey",strHotKey,L"");
-		string strLabel;
+		FARString strLabel;
 		GetRegKey(strItemKey,L"Label",strLabel,L"");
 		int FuncNum=0;
 
@@ -538,10 +538,10 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		for (size_t I=0 ; I < ARRAYSIZE(FuncPos) ; I++)
 			FuncPos[I]=-1;
 
-		string strName,strShortName;
+		FARString strName,strShortName;
 		CtrlObject->Cp()->ActivePanel->GetCurName(strName,strShortName);
 		/* $ 24.07.2000 VVM + При показе главного меню в заголовок добавляет тип - FAR/Registry */
-		string strMenuTitle;
+		FARString strMenuTitle;
 
 		if (Title && *Title)
 			strMenuTitle = Title;
@@ -621,7 +621,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					case KEY_NUMPAD6:
 					case KEY_MSWHEEL_RIGHT:
 					{
-						string strCurrentKey;
+						FARString strCurrentKey;
 						int SubMenu;
 						strCurrentKey.Format(L"%ls/Item%d",MenuKey,MenuPos);
 						GetRegKey(strCurrentKey,L"Submenu",SubMenu,0);
@@ -675,14 +675,14 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					case KEY_ALTF4:       // редактировать все меню
 					{
 						(*FrameManager)[0]->Unlock();
-						string strMenuFileName;
+						FARString strMenuFileName;
 						File MenuFile;
 						if (!FarMkTempEx(strMenuFileName) || (!MenuFile.Open(strMenuFileName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS)))
 						{
 							break;
 						}
 
-						string strCurrentKey;
+						FARString strCurrentKey;
 
 						if (Key==KEY_ALTSHIFTF4)
 							strCurrentKey.Format(L"%ls/Item%d",MenuKey,MenuPos);
@@ -697,7 +697,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 						MenuFile.Close();
 						{
 							ConsoleTitle *OldTitle=new ConsoleTitle;
-							string strFileName = strMenuFileName;
+							FARString strFileName = strMenuFileName;
 							FileEditor ShellEditor(strFileName,CP_UNICODE,FFILEEDIT_DISABLEHISTORY,-1,-1,nullptr);
 							delete OldTitle;
 							ShellEditor.SetDynamicallyBorn(false);
@@ -758,7 +758,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		if (ExitCode<0 || ExitCode>=NumLine)
 			return(EC_CLOSE_LEVEL); //  вверх на один уровень
 
-		string strCurrentKey;
+		FARString strCurrentKey;
 		int SubMenu;
 		strCurrentKey.Format(L"%ls/Item%d",MenuKey,ExitCode);
 		GetRegKey(strCurrentKey,L"Submenu",SubMenu,0);
@@ -766,7 +766,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		if (SubMenu)
 		{
 			/* $ 20.08.2001 VVM + При вложенных меню показывает заголовки предыдущих */
-			string strSubMenuKey, strSubMenuLabel, strSubMenuTitle;
+			FARString strSubMenuKey, strSubMenuLabel, strSubMenuTitle;
 			strSubMenuKey.Format(L"%ls/Item%d",MenuKey,ExitCode);
 
 			if (GetRegKey(strSubMenuKey,L"Label",strSubMenuLabel,L""))
@@ -801,9 +801,9 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		/* $ 01.05.2001 IS Отключим до лучших времен */
 		//int LeftVisible,RightVisible,PanelsHidden=0;
 		int CurLine=0;
-		string strCmdLineDir;
+		FARString strCmdLineDir;
 		CtrlObject->CmdLine->GetCurDir(strCmdLineDir);
-		string strOldCmdLine;
+		FARString strOldCmdLine;
 		CtrlObject->CmdLine->GetString(strOldCmdLine);
 		int OldCmdLineCurPos = CtrlObject->CmdLine->GetCurPos();
 		int OldCmdLineLeftPos = CtrlObject->CmdLine->GetLeftPos();
@@ -815,14 +815,14 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		for (;;)
 		{
 			FormatString strLineName;
-			string strCommand;
+			FARString strCommand;
 			strLineName<<L"Command"<<CurLine;
 
 			if (!GetRegKey(strCurrentKey,strLineName,strCommand,L""))
 				break;
 
-			string strListName, strAnotherListName;
-			string strShortListName, strAnotherShortListName;
+			FARString strListName, strAnotherListName;
+			FARString strShortListName, strAnotherShortListName;
 
 			if (!((!StrCmpNI(strCommand,L"REM",3) && IsSpaceOrEos(strCommand.At(3))) || !StrCmpNI(strCommand,L"::",2)))
 			{
@@ -1099,12 +1099,12 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 				здесь добавка строк из "Command%d" в EMR_MEMOEDIT
 				...
 			*/
-			string strBuffer;
+			FARString strBuffer;
 			int CommandNumber=0;
 
 			while (true)
 			{
-				string strCommandName, strCommand;
+				FARString strCommandName, strCommand;
 				strCommandName.Format(L"Command%d",CommandNumber);
 
 				if (!GetRegKey(strItemKey,strCommandName,strCommand,L""))
@@ -1121,7 +1121,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 			while (CommandNumber < DI_EDIT_COUNT)
 			{
-				string strCommandName, strCommand;
+				FARString strCommandName, strCommand;
 				strCommandName.Format(L"Command%d",CommandNumber);
 
 				if (!GetRegKey(strItemKey,strCommandName,strCommand,L""))
@@ -1145,7 +1145,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 			if (Create)
 			{
-				string strKeyMask;
+				FARString strKeyMask;
 				strKeyMask.Format(L"%ls/Item%%d",MenuKey);
 				InsertKeyRecord(strKeyMask,EditPos,TotalRecords);
 			}
@@ -1175,7 +1175,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 				for (int i=0 ; i < DI_EDIT_COUNT ; i++)
 				{
-					string strCommandName;
+					FARString strCommandName;
 					strCommandName.Format(L"Command%d",i);
 
 					if (i>=CommandNumber)
@@ -1196,13 +1196,13 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 int UserMenu::DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos)
 {
-	string strRecText;
+	FARString strRecText;
 	FormatString strRegKey;
 	strRegKey<<MenuKey<<L"/Item"<<DeletePos;
 	GetRegKey(strRegKey,L"Label",strRecText,L"");
 	int SubMenu;
 	GetRegKey(strRegKey,L"Submenu",SubMenu,0);
-	string strItemName=strRecText;
+	FARString strItemName=strRecText;
 	InsertQuote(strItemName);
 
 	if (Message(MSG_WARNING,2,MSG(MUserMenuTitle),MSG(!SubMenu?MAskDeleteMenuItem:MAskDeleteSubMenuItem),strItemName,MSG(MDelete),MSG(MCancel)))

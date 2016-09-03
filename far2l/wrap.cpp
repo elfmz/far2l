@@ -762,7 +762,7 @@ BOOL WINAPI AddEndSlashA(char *Path)
 
 void WINAPI GetPathRootA(const char *Path, char *Root)
 {
-	string strPath(Path), strRoot;
+	FARString strPath(Path), strRoot;
 	GetPathRoot(strPath,strRoot);
 	strRoot.GetCharString(Root,strRoot.GetLength()+1);
 }
@@ -794,7 +794,7 @@ void WINAPI DeleteBufferA(void *Buffer)
 
 int WINAPI ProcessNameA(const char *Param1,char *Param2,DWORD Flags)
 {
-	string strP1(Param1), strP2(Param2);
+	FARString strP1(Param1), strP2(Param2);
 	int size = (int)(strP1.GetLength()+strP2.GetLength()+oldfar::NM)+1; //à õðåí åù¸ êàê óãàäàòü ñêîêà òàì ýòîò Param2 äëÿ PN_GENERATENAME
 	wchar_t *p=(wchar_t *)xf_malloc(size*sizeof(wchar_t));
 	wcscpy(p,strP2);
@@ -830,13 +830,13 @@ int WINAPI ProcessNameA(const char *Param1,char *Param2,DWORD Flags)
 
 int WINAPI KeyNameToKeyA(const char *Name)
 {
-	string strN(Name);
+	FARString strN(Name);
 	return KeyToOldKey(KeyNameToKey(strN));
 }
 
 BOOL WINAPI FarKeyToNameA(int Key,char *KeyText,int Size)
 {
-	string strKT;
+	FARString strKT;
 	int ret=KeyToText(OldKeyToKey(Key),strKT);
 
 	if (ret)
@@ -852,7 +852,7 @@ int WINAPI InputRecordToKeyA(const INPUT_RECORD *r)
 
 char* WINAPI FarMkTempA(char *Dest, const char *Prefix)
 {
-	string strP(Prefix);
+	FARString strP(Prefix);
 	wchar_t D[oldfar::NM] = {0};
 	FarMkTemp(D,ARRAYSIZE(D),strP);
 	UnicodeToOEM(D,Dest,sizeof(D));
@@ -861,7 +861,7 @@ char* WINAPI FarMkTempA(char *Dest, const char *Prefix)
 
 int WINAPI FarMkLinkA(const char *Src,const char *Dest, DWORD Flags)
 {
-	string s(Src), d(Dest);
+	FARString s(Src), d(Dest);
 	int flg=0;
 
 	switch (Flags&0xf)
@@ -886,13 +886,13 @@ int WINAPI GetNumberOfLinksA(const char *Name)
 {
 	fprintf(stderr, "TODO: GetNumberOfLinksA(%s)\n", Name);
 	return 1;
-	//string n(Name);
+	//FARString n(Name);
 	//return GetNumberOfLinks(n);
 }
 
 int WINAPI ConvertNameToRealA(const char *Src,char *Dest,int DestSize)
 {
-	string strSrc(Src),strDest;
+	FARString strSrc(Src),strDest;
 	ConvertNameToReal(strSrc,strDest);
 
 	if (!Dest)
@@ -908,8 +908,8 @@ int WINAPI FarGetReparsePointInfoA(const char *Src,char *Dest,int DestSize)
 	
 	/*if (Src && *Src)
 	{
-		string strSrc(Src);
-		string strDest;
+		FARString strSrc(Src);
+		FARString strDest;
 		DWORD Size=GetReparsePointInfo(strSrc,strDest,nullptr);
 
 		if (DestSize && Dest)
@@ -946,8 +946,8 @@ static int WINAPI FarRecursiveSearchA_Callback(const FAR_FIND_DATA *FData,const 
 
 void WINAPI FarRecursiveSearchA(const char *InitDir,const char *Mask,oldfar::FRSUSERFUNC Func,DWORD Flags,void *Param)
 {
-	string strInitDir(InitDir);
-	string strMask(Mask);
+	FARString strInitDir(InitDir);
+	FARString strMask(Mask);
 	FAR_SEARCH_A_CALLBACK_PARAM CallbackParam;
 	CallbackParam.Func = Func;
 	CallbackParam.Param = Param;
@@ -964,7 +964,7 @@ void WINAPI FarRecursiveSearchA(const char *InitDir,const char *Mask,oldfar::FRS
 
 DWORD WINAPI ExpandEnvironmentStrA(const char *src, char *dest, size_t size)
 {
-	string strS(src), strD;
+	FARString strS(src), strD;
 	apiExpandEnvironmentStrings(strS,strD);
 	DWORD len = (DWORD)Min(strD.GetLength(),size-1);
 	strD.GetCharString(dest,len+1);
@@ -973,19 +973,19 @@ DWORD WINAPI ExpandEnvironmentStrA(const char *src, char *dest, size_t size)
 
 int WINAPI FarViewerA(const char *FileName,const char *Title,int X1,int Y1,int X2,int Y2,DWORD Flags)
 {
-	string strFN(FileName), strT(Title);
+	FARString strFN(FileName), strT(Title);
 	return FarViewer(strFN,strT,X1,Y1,X2,Y2,Flags,CP_AUTODETECT);
 }
 
 int WINAPI FarEditorA(const char *FileName,const char *Title,int X1,int Y1,int X2,int Y2,DWORD Flags,int StartLine,int StartChar)
 {
-	string strFN(FileName), strT(Title);
+	FARString strFN(FileName), strT(Title);
 	return FarEditor(strFN,strT,X1,Y1,X2,Y2,Flags,StartLine,StartChar,CP_AUTODETECT);
 }
 
 int WINAPI FarCmpNameA(const char *pattern,const char *str,int skippath)
 {
-	string strP(pattern), strS(str);
+	FARString strP(pattern), strS(str);
 	return FarCmpName(strP,strS,skippath);
 }
 
@@ -993,19 +993,19 @@ void WINAPI FarTextA(int X,int Y,int Color,const char *Str)
 {
 	if (!Str) return FarText(X,Y,Color,nullptr);
 
-	string strS(Str);
+	FARString strS(Str);
 	return FarText(X,Y,Color,strS);
 }
 
 BOOL WINAPI FarShowHelpA(const char *ModuleName,const char *HelpTopic,DWORD Flags)
 {
-	string strMN(ModuleName), strHT(HelpTopic);
+	FARString strMN(ModuleName), strHT(HelpTopic);
 	return FarShowHelp(strMN,(HelpTopic?strHT.CPtr():nullptr),Flags);
 }
 
 int WINAPI FarInputBoxA(const char *Title,const char *Prompt,const char *HistoryName,const char *SrcText,char *DestText,int DestLength,const char *HelpTopic,DWORD Flags)
 {
-	string strT(Title), strP(Prompt), strHN(HistoryName), strST(SrcText), strD, strHT(HelpTopic);
+	FARString strT(Title), strP(Prompt), strHN(HistoryName), strST(SrcText), strD, strHT(HelpTopic);
 	wchar_t *D = strD.GetBuffer(DestLength);
 	int ret = FarInputBox((Title?strT.CPtr():nullptr),(Prompt?strP.CPtr():nullptr),(HistoryName?strHN.CPtr():nullptr),(SrcText?strST.CPtr():nullptr),D,DestLength,(HelpTopic?strHT.CPtr():nullptr),Flags);
 	strD.ReleaseBuffer();
@@ -1018,7 +1018,7 @@ int WINAPI FarInputBoxA(const char *Title,const char *Prompt,const char *History
 
 int WINAPI FarMessageFnA(INT_PTR PluginNumber,DWORD Flags,const char *HelpTopic,const char * const *Items,int ItemsNumber,int ButtonsNumber)
 {
-	string strHT(HelpTopic);
+	FARString strHT(HelpTopic);
 	wchar_t **p;
 	int c=0;
 
@@ -1051,7 +1051,7 @@ const char * WINAPI FarGetMsgFnA(INT_PTR PluginHandle,int MsgId)
 {
 	//BUGBUG, íàäî ïðîâåðÿòü, ÷òî PluginHandle - ïëàãèí
 	PluginA *pPlugin = (PluginA*)PluginHandle;
-	string strPath = pPlugin->GetModuleName();
+	FARString strPath = pPlugin->GetModuleName();
 	CutToSlash(strPath);
 //	fprintf(stderr,"FarGetMsgFnA: strPath=%ls\n", strPath.CPtr());
 	if (pPlugin->InitLang(strPath))
@@ -1062,7 +1062,7 @@ const char * WINAPI FarGetMsgFnA(INT_PTR PluginHandle,int MsgId)
 
 int WINAPI FarMenuFnA(INT_PTR PluginNumber,int X,int Y,int MaxHeight,DWORD Flags,const char *Title,const char *Bottom,const char *HelpTopic,const int *BreakKeys,int *BreakCode,const oldfar::FarMenuItem *Item,int ItemsNumber)
 {
-	string strT(Title), strB(Bottom), strHT(HelpTopic);
+	FARString strT(Title), strB(Bottom), strHT(HelpTopic);
 	const wchar_t *wszT  = Title?strT.CPtr():nullptr;
 	const wchar_t *wszB  = Bottom?strB.CPtr():nullptr;
 	const wchar_t *wszHT = HelpTopic?strHT.CPtr():nullptr;
@@ -2360,7 +2360,7 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 
 int WINAPI FarDialogExA(INT_PTR PluginNumber,int X1,int Y1,int X2,int Y2,const char *HelpTopic,oldfar::FarDialogItem *Item,int ItemsNumber,DWORD Reserved,DWORD Flags,oldfar::FARWINDOWPROC DlgProc,LONG_PTR Param)
 {
-	string strHT(HelpTopic);
+	FARString strHT(HelpTopic);
 
 	if (!Item || !ItemsNumber)
 		return -1;
@@ -2866,7 +2866,7 @@ int WINAPI FarGetDirListA(const char *Dir,oldfar::PluginPanelItem **pPanelItem,i
 
 	*pPanelItem=nullptr;
 	*pItemsNumber=0;
-	string strDir(Dir);
+	FARString strDir(Dir);
 	DeleteEndSlash(strDir, true);
 
 	FAR_FIND_DATA *pItems;
@@ -2917,7 +2917,7 @@ int WINAPI FarGetPluginDirListA(INT_PTR PluginNumber,HANDLE hPlugin,const char *
 
 	*pPanelItem=nullptr;
 	*pItemsNumber=0;
-	string strDir(Dir);
+	FARString strDir(Dir);
 
 	PluginPanelItem *pPanelItemW;
 	int ItemsNumber;
@@ -3069,7 +3069,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 
 					if (ErrMsg3) xf_free(ErrMsg3);
 
-					string ErrMessage[3];
+					FARString ErrMessage[3];
 
 					CtrlObject->Macro.GetMacroParseError(&ErrMessage[0],&ErrMessage[1],&ErrMessage[2],nullptr);
 
@@ -3380,7 +3380,7 @@ int GetEditorCodePageFavA()
 {
 	UINT CodePage=GetEditorCodePageA(),nCP;
 	DWORD selectType,Index=0,FavIndex=2;
-	string sTableName;
+	FARString sTableName;
 	int result=-((int)CodePage+2);
 
 	if (WINPORT(GetOEMCP)()==CodePage)
@@ -3429,7 +3429,7 @@ void MultiByteRecode(UINT nCPin, UINT nCPout, char *szBuffer, int nLength)
 
 UINT ConvertCharTableToCodePage(int Command)
 {
-	string sTableName;
+	FARString sTableName;
 	UINT nCP = 0;
 
 	if (Command<0)
@@ -3534,7 +3534,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 
 			if (!p) return FALSE;
 
-			string strP(p);
+			FARString strP(p);
 			return FarEditorControl(ECTL_INSERTTEXT,(void *)strP.CPtr());
 		}
 		case oldfar::ECTL_GETINFO:
@@ -4030,7 +4030,7 @@ char* WINAPI XlatA(
     const oldfar::CharTableSet *TableSet, // ïåðåêîäèðîâî÷íàÿ òàáëèöà (ìîæåò áûòü nullptr)
     DWORD Flags)                   // ôëàãè (ñì. enum XLATMODE)
 {
-	string strLine(Line);
+	FARString strLine(Line);
 	DWORD NewFlags = 0;
 
 	if (Flags&oldfar::XLAT_SWITCHKEYBLAYOUT)
@@ -4053,7 +4053,7 @@ char* WINAPI XlatA(
 
 int WINAPI GetFileOwnerA(const char *Computer,const char *Name, char *Owner)
 {
-	string strComputer(Computer), strName(Name), strOwner;
+	FARString strComputer(Computer), strName(Name), strOwner;
 	int Ret=GetFileOwner(strComputer,strName,strOwner);
 	strOwner.GetCharString(Owner,oldfar::NM);
 	return Ret;

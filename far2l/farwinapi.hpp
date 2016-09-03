@@ -55,8 +55,8 @@ struct FAR_FIND_DATA_EX
 		DWORD dwReserved1;
 	};
 
-	string   strFileName;
-	string   strAlternateFileName;
+	FARString   strFileName;
+	FARString   strAlternateFileName;
 
 	void Clear()
 	{
@@ -135,34 +135,34 @@ private:
 
 DWORD apiGetEnvironmentVariable(
     const wchar_t *lpwszName,
-    string &strBuffer
+    FARString &strBuffer
 );
 
 DWORD apiGetCurrentDirectory(
-    string &strCurDir
+    FARString &strCurDir
 );
 
 DWORD apiGetTempPath(
-    string &strBuffer
+    FARString &strBuffer
 );
 
 bool apiExpandEnvironmentStrings(
     const wchar_t *src,
-    string &strDest
+    FARString &strDest
 );
 
 DWORD apiWNetGetConnection(
     const wchar_t *lpwszLocalName,
-    string &strRemoteName
+    FARString &strRemoteName
 );
 
 BOOL apiGetVolumeInformation(
     const wchar_t *lpwszRootPathName,
-    string *pVolumeName,
+    FARString *pVolumeName,
     LPDWORD lpVolumeSerialNumber,
     LPDWORD lpMaximumComponentLength,
     LPDWORD lpFileSystemFlags,
-    string *pFileSystemName
+    FARString *pFileSystemName
 );
 
 void apiFindDataToDataEx(
@@ -222,7 +222,7 @@ BOOL apiMoveFileEx(
 int apiRegEnumKeyEx(
     HKEY hKey,
     DWORD dwIndex,
-    string &strName,
+    FARString &strName,
     PFILETIME lpftLastWriteTime=nullptr
 );
 
@@ -285,7 +285,7 @@ BOOL apiCreateHardLink(
 
 bool apiGetFinalPathNameByHandle(
     HANDLE hFile,
-    string& FinalFilePath
+    FARString& FinalFilePath
 );
 
 // internal, dont' use outside.

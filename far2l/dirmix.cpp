@@ -54,7 +54,7 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 		return FALSE;
 
 	BOOL rc=FALSE;
-	string strCurDir;
+	FARString strCurDir;
 
 	{
 		if (ChangeDir)
@@ -89,7 +89,7 @@ int TestFolder(const wchar_t *Path)
 	if (!(Path && *Path)) // ïðîâåðêà íà âøèâîñòü
 		return TSTFLD_ERROR;
 
-	string strFindPath = Path;
+	FARString strFindPath = Path;
 	// ñîîáðàçèì ìàñêó äëÿ ïîèñêà.
 	AddEndSlash(strFindPath);
 	strFindPath += L"*";
@@ -155,12 +155,12 @@ int TestFolder(const wchar_t *Path)
    TestPath ìîæåò áûòü ïóñòûì, òîãäà ïðîñòî èñïîëíèì ProcessPluginEvent()
 
 */
-int CheckShortcutFolder(string *pTestPath,int IsHostFile, BOOL Silent)
+int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
 {
 	if (pTestPath && !pTestPath->IsEmpty() && apiGetFileAttributes(*pTestPath) == INVALID_FILE_ATTRIBUTES)
 	{
 		int FoundPath=0;
-		string strTarget = *pTestPath;
+		FARString strTarget = *pTestPath;
 		TruncPathStr(strTarget, ScrX-16);
 
 		if (IsHostFile)
@@ -176,7 +176,7 @@ int CheckShortcutFolder(string *pTestPath,int IsHostFile, BOOL Silent)
 
 			if (Silent || !Message(MSG_WARNING | MSG_ERRORTYPE, 2, MSG(MError), strTarget, MSG(MNeedNearPath), MSG(MHYes),MSG(MHNo)))
 			{
-				string strTestPathTemp = *pTestPath;
+				FARString strTestPathTemp = *pTestPath;
 
 				for (;;)
 				{
@@ -216,7 +216,7 @@ int CheckShortcutFolder(string *pTestPath,int IsHostFile, BOOL Silent)
 	return 1;
 }
 
-void CreatePath(string &strPath)
+void CreatePath(FARString &strPath)
 {
 	wchar_t *ChPtr = strPath.GetBuffer();
 	wchar_t *DirPart = ChPtr;

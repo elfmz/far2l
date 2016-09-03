@@ -51,7 +51,7 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 	if (flags == PN_CMPNAMELIST)
 	{
 		int Found=FALSE;
-		string strFileMask;
+		FARString strFileMask;
 		const wchar_t *MaskPtr;
 		MaskPtr=param1;
 
@@ -69,7 +69,7 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 
 	if (flags&PN_GENERATENAME)
 	{
-		string strResult = param2;
+		FARString strResult = param2;
 		int nResult = ConvertWildcards(param1, strResult, (flags&0xFFFF)|(skippath?PN_SKIPPATH:0));
 		xwcsncpy(param2, strResult, size);
 		return nResult;
@@ -87,13 +87,13 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 // каталог dir1, а в нем файл file1. Нужно сгенерировать имя по маске для dir1.
 // Параметры могут быть следующими: Src="dir1", SelectedFolderNameLength=0
 // или Src="dir1/file1", а SelectedFolderNameLength=4 (длина "dir1")
-int ConvertWildcards(const wchar_t *SrcName, string &strDest, int SelectedFolderNameLength)
+int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFolderNameLength)
 {
-	string strPartAfterFolderName;
-	string strSrc = SrcName;
+	FARString strPartAfterFolderName;
+	FARString strSrc = SrcName;
 	wchar_t *DestName = strDest.GetBuffer(strDest.GetLength()+strSrc.GetLength()+1);  //???
 	wchar_t *DestNamePtr = (wchar_t*)PointToName(DestName);
-	string strWildName = DestNamePtr;
+	FARString strWildName = DestNamePtr;
 
 	if (!wcschr(strWildName, L'*') && !wcschr(strWildName, L'?'))
 	{

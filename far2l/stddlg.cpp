@@ -44,8 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int WINAPI GetSearchReplaceString(
     int IsReplaceMode,
-    string *pSearchStr,
-    string *pReplaceStr,
+    FARString *pSearchStr,
+    FARString *pReplaceStr,
     const wchar_t *TextHistoryName,
     const wchar_t *ReplaceHistoryName,
     int *Case,
@@ -461,7 +461,7 @@ int WINAPI GetString(
     const wchar_t *Prompt,
     const wchar_t *HistoryName,
     const wchar_t *SrcText,
-    string &strDestText,
+    FARString &strDestText,
     const wchar_t *HelpTopic,
     DWORD Flags,
     int *CheckBoxValue,
@@ -596,9 +596,9 @@ int WINAPI GetString(
   HelpTopic - тема помощи (может быть nullptr)
   Flags     - флаги (GNP_*)
 */
-int WINAPI GetNameAndPassword(const wchar_t *Title, string &strUserName, string &strPassword,const wchar_t *HelpTopic,DWORD Flags)
+int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARString &strPassword,const wchar_t *HelpTopic,DWORD Flags)
 {
-	static string strLastName, strLastPassword;
+	static FARString strLastName, strLastPassword;
 	int ExitCode;
 	/*
 	  0         1         2         3         4         5         6         7

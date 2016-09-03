@@ -88,7 +88,7 @@ class Frame: public ScreenObject
 		virtual BOOL IsFileModified() const { return FALSE; };
 
 		virtual const wchar_t *GetTypeName() {return L"[FarModal]";};
-		virtual int GetTypeAndName(string &strType, string &strName) {return(MODALTYPE_VIRTUAL);};
+		virtual int GetTypeAndName(FARString &strType, FARString &strName) {return(MODALTYPE_VIRTUAL);};
 		virtual int GetType() { return MODALTYPE_VIRTUAL; }
 
 		virtual void OnDestroy();  // вызывается перед уничтожением окна
@@ -122,6 +122,6 @@ class Frame: public ScreenObject
 		virtual void ResizeConsole();
 		bool HasSaveScreen();
 //    bool ifFullConsole();
-		virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0) { return Title; };
+		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0) { return Title; };
 		virtual bool ProcessEvents() {return true;};
 };

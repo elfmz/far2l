@@ -105,7 +105,7 @@ void CommandLine::SetAutoComplete(int Mode)
 void CommandLine::DisplayObject()
 {
 	_OT(SysLog(L"[%p] CommandLine::DisplayObject()",this));
-	string strTruncDir;
+	FARString strTruncDir;
 	GetPrompt(strTruncDir);
 	TruncPathStr(strTruncDir,(X2-X1)/2);
 	GotoXY(X1,Y1);
@@ -153,7 +153,7 @@ int64_t CommandLine::VMProcess(int OpCode,void *vParam,int64_t iParam)
 int CommandLine::ProcessKey(int Key)
 {
 	const wchar_t *PStr;
-	string strStr;
+	FARString strStr;
 
 	if ( Key==KEY_F4) { //TODO: verify that panels invisible
 		const std::string &histfile = VTLog::GetAsFile();
@@ -493,7 +493,7 @@ BOOL CommandLine::SetCurDir(const wchar_t *CurDir)
 }
 
 
-int CommandLine::GetCurDir(string &strCurDir)
+int CommandLine::GetCurDir(FARString &strCurDir)
 {
 	strCurDir = CommandLine::strCurDir;
 	return (int)strCurDir.GetLength();
@@ -538,11 +538,11 @@ int CommandLine::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	return(CmdStr.ProcessMouse(MouseEvent));
 }
 
-void CommandLine::GetPrompt(string &strDestStr)
+void CommandLine::GetPrompt(FARString &strDestStr)
 {
 	if (Opt.CmdLine.UsePromptFormat)
 	{
-		string strFormatStr, strExpandedFormatStr;
+		FARString strFormatStr, strExpandedFormatStr;
 		strFormatStr = Opt.CmdLine.strPromptFormat;
 		apiExpandEnvironmentStrings(strFormatStr, strExpandedFormatStr);
 		const wchar_t *Format=strExpandedFormatStr;
@@ -620,7 +620,7 @@ void CommandLine::GetPrompt(string &strDestStr)
 						case L'D': // $D - Current date
 						case L'T': // $T - Current time
 						{
-							string strDateTime;
+							FARString strDateTime;
 							MkStrFTime(strDateTime,(Chr==L'D'?L"%D":L"%T"));
 							strDestStr += strDateTime;
 							break;
@@ -660,7 +660,7 @@ void CommandLine::GetPrompt(string &strDestStr)
 
 void CommandLine::ShowViewEditHistory()
 {
-	string strStr;
+	FARString strStr;
 	int Type;
 	int SelectType=CtrlObject->ViewHistory->Select(MSG(MViewHistoryTitle),L"HistoryViews",strStr,Type);
 	/*

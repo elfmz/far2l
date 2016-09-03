@@ -169,9 +169,9 @@ void KeyBar::ReadRegGroup(const wchar_t *RegGroup, const wchar_t *Language)
 	if (!RegReaded || StrCmpI(strLanguage,Language) || StrCmpI(strRegGroupName,RegGroup))
 	{
 		DWORD I;
-		string strRegName;
-		string strValue;
-		string strValueName;
+		FARString strRegName;
+		FARString strValue;
+		FARString strValueName;
 		memset(RegKeyTitles, 0, sizeof(RegKeyTitles));
 		strLanguage=Language;
 		strRegGroupName=RegGroup;

@@ -42,8 +42,8 @@ class NamesList
 	private:
 		struct FileName2
 		{
-			string strName;
-			string strShortName;
+			FARString strName;
+			FARString strShortName;
 		};
 
 		struct OneName
@@ -67,7 +67,7 @@ class NamesList
 		StrList Names;
 		const OneName *CurrentName;
 
-		string strCurrentDir;
+		FARString strCurrentDir;
 
 	private:
 		void Init();
@@ -78,10 +78,10 @@ class NamesList
 
 	public:
 		void AddName(const wchar_t *Name,const wchar_t *ShortName);
-		bool GetNextName(string &strName, string &strShortName);
-		bool GetPrevName(string &strName, string &strShortName);
+		bool GetNextName(FARString &strName, FARString &strShortName);
+		bool GetPrevName(FARString &strName, FARString &strShortName);
 		void SetCurName(const wchar_t *Name);
 		void MoveData(NamesList &Dest);
-		void GetCurDir(string &strDir);
+		void GetCurDir(FARString &strDir);
 		void SetCurDir(const wchar_t *Dir);
 };

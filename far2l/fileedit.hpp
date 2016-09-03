@@ -94,7 +94,7 @@ class FileEditor : public Frame
 		// àðõèâà äëÿ êëàâèøè F2 ñäåëàòü âûçîâ ShiftF2.
 		void SetSaveToSaveAs(int ToSaveAs) { Flags.Change(FFILEEDIT_SAVETOSAVEAS,ToSaveAs); InitKeyBar(); }
 		virtual BOOL IsFileModified() const { return m_editor->IsFileModified(); };
-		virtual int GetTypeAndName(string &strType, string &strName);
+		virtual int GetTypeAndName(FARString &strType, FARString &strName);
 		int EditorControl(int Command,void *Param);
 		void SetCodePage(UINT codepage);  //BUGBUG
 		BOOL IsFileChanged() const { return m_editor->IsFileChanged(); };
@@ -112,12 +112,12 @@ class FileEditor : public Frame
 		KeyBar EditKeyBar;
 		NamesList *EditNamesList;
 		bool F4KeyOnly;
-		string strFileName;
-		string strFullFileName;
-		string strStartDir;
-		string strTitle;
-		string strPluginTitle;
-		string strPluginData;
+		FARString strFileName;
+		FARString strFullFileName;
+		FARString strStartDir;
+		FARString strTitle;
+		FARString strPluginTitle;
+		FARString strPluginData;
 		FAR_FIND_DATA_EX FileInfo;
 		wchar_t AttrStr[4];            // 13.02.2001 IS - Ñþäà çàïîìíèì áóêâû àòðèáóòîâ, ÷òîáû íå âû÷èñëÿòü èõ ìíîãî ðàç
 		DWORD FileAttributes;          // 12.02.2001 IS - ñþäà çàïîìíèì àòðèáóòû ôàéëà ïðè îòêðûòèè, ïðèãîäÿòñÿ ãäå-íèáóäü...
@@ -139,7 +139,7 @@ class FileEditor : public Frame
 		*/
 		void SetDeleteOnClose(int NewMode);
 		int ReProcessKey(int Key,int CalledFromControl=TRUE);
-		bool AskOverwrite(const string& FileName);
+		bool AskOverwrite(const FARString& FileName);
 		void Init(const wchar_t *Name, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine, int StartChar, const wchar_t *PluginData, int DeleteOnClose, int OpenModeExstFile);
 		virtual void InitKeyBar();
 		virtual int ProcessKey(int Key);
@@ -160,7 +160,7 @@ class FileEditor : public Frame
 		//TextFormat, Codepage è AddSignature èñïîëüçóþòñÿ ÒÎËÜÊÎ, åñëè bSaveAs = true!
 		int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UNICODE, bool AddSignature=false);
 		void SetTitle(const wchar_t *Title);
-		virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		BOOL SetFileName(const wchar_t *NewFileName);
 		int ProcessEditorInput(INPUT_RECORD *Rec);
 		void ChangeEditKeyBar();
@@ -171,4 +171,4 @@ class FileEditor : public Frame
 		void SaveToCache();
 };
 
-bool dlgOpenEditor(string &strFileName, UINT &codepage);
+bool dlgOpenEditor(FARString &strFileName, UINT &codepage);

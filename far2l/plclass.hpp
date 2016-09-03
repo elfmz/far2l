@@ -92,7 +92,7 @@ class Plugin
 		virtual bool HasProcessMacroFunc() = 0;
 #endif
 
-		virtual const string &GetModuleName() = 0;
+		virtual const FARString &GetModuleName() = 0;
 		virtual const wchar_t *GetCacheName() = 0;
 		virtual DWORD GetSysID() = 0;
 		virtual bool CheckWorkFlags(DWORD flags) = 0;

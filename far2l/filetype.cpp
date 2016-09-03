@@ -80,7 +80,7 @@ const FileTypeStrings FTS=
    âûïîëåíî, è FALSE â ïðîòèâíîì ñëó÷àå/
 */
 
-bool ExtractIfExistCommand(string &strCommandText)
+bool ExtractIfExistCommand(FARString &strCommandText)
 {
 	bool Result=true;
 	const wchar_t *wPtrCmd=PrepareOSIfExist(strCommandText);
@@ -115,9 +115,9 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nul
 
 	for (int NumLine=0;; NumLine++)
 	{
-		string strRegKey;
+		FARString strRegKey;
 		strRegKey.Format(FTS.TypeFmt, NumLine);
-		string strMask;
+		FARString strMask;
 
 		if (!GetRegKey(strRegKey,FTS.Mask, strMask, L""))
 			break;
@@ -127,7 +127,7 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nul
 		if (!FMask.Set(strMask, FMF_SILENT))
 			continue;
 
-		string strDescription;
+		FARString strDescription;
 		GetRegKey(strRegKey,FTS.Desc,strDescription,L"");
 		int CurWidth;
 
@@ -138,7 +138,7 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nul
 			if (!FMask.Compare(Name))
 				continue;
 
-			string strExpandedDesc = strDescription;
+			FARString strExpandedDesc = strDescription;
 			SubstFileName(strExpandedDesc,Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
 			CurWidth = HiStrlen(strExpandedDesc);
 		}
@@ -178,13 +178,13 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	int DizWidth=GetDescriptionWidth(Name, ShortName);
 	int ActualCmdCount=0; // îòîáðàæàåìûõ àññîöèàöèé â ìåíþ
 	CFileMask FMask; // äëÿ ðàáîòû ñ ìàñêàìè ôàéëîâ
-	string strCommand, strDescription;
+	FARString strCommand, strDescription;
 	int CommandCount=0;
 
 	for (int I=0;; I++)
 	{
 		strCommand.Clear();
-		string strRegKey, strMask;
+		FARString strRegKey, strMask;
 		strRegKey.Format(FTS.TypeFmt,I);
 
 		if (!GetRegKey(strRegKey,FTS.Mask,strMask,L""))
@@ -222,7 +222,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 
 				if (State&(1<<Mode))
 				{
-					string strNewCommand;
+					FARString strNewCommand;
 					GetRegKey(strRegKey,Type,strNewCommand,L"");
 
 					if (!strNewCommand.IsEmpty())
@@ -239,7 +239,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 		}
 
 		TypesMenuItem.Clear();
-		string strCommandText = strCommand;
+		FARString strCommandText = strCommand;
 		SubstFileName(strCommandText,Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
 
 		// âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
@@ -247,11 +247,11 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 			continue;
 
 		ActualCmdCount++;
-		string strMenuText;
+		FARString strMenuText;
 
 		if (DizWidth)
 		{
-			string strTitle;
+			FARString strTitle;
 
 			if (!strDescription.IsEmpty())
 			{
@@ -296,8 +296,8 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	LPWSTR Command=strCommand.GetBuffer(Size/sizeof(wchar_t));
 	TypesMenu.GetUserData(Command,Size,ExitCode);
 	strCommand.ReleaseBuffer(Size);
-	string strListName, strAnotherListName;
-	string strShortListName, strAnotherShortListName;
+	FARString strListName, strAnotherListName;
+	FARString strShortListName, strAnotherShortListName;
 	int PreserveLFN=SubstFileName(strCommand,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
 	bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
@@ -372,7 +372,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 
 void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool RunAs)
 {
-	string strName(Name);
+	FARString strName(Name);
 	QuoteSpace(strName);
 	CtrlObject->CmdLine->ExecString(strName, AlwaysWaitFinish, true, true, false, false, RunAs);
 
@@ -387,11 +387,11 @@ void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool Run
 */
 void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t *ShortName, bool AlwaysWaitFinish)
 {
-	string strListName, strAnotherListName;
-	string strShortListName, strAnotherShortListName;
-	string strFullName, strFullShortName;
-	string strExecStr = Command;
-	string strFullExecStr = Command;
+	FARString strListName, strAnotherListName;
+	FARString strShortListName, strAnotherShortListName;
+	FARString strFullName, strFullShortName;
+	FARString strExecStr = Command;
+	FARString strFullExecStr = Command;
 	{
 		int PreserveLFN=SubstFileName(strExecStr,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
 		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
@@ -445,23 +445,23 @@ static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)
 
 	for (;; NumLine++)
 	{
-		string strRegKey;
+		FARString strRegKey;
 		strRegKey.Format(FTS.TypeFmt,NumLine);
 		TypesMenuItem.Clear();
-		string strMask;
+		FARString strMask;
 
 		if (!GetRegKey(strRegKey,FTS.Mask,strMask,L""))
 		{
 			break;
 		}
 
-		string strMenuText;
+		FARString strMenuText;
 
 		if (DizWidth)
 		{
-			string strDescription;
+			FARString strDescription;
 			GetRegKey(strRegKey,FTS.Desc,strDescription,L"");
-			string strTitle=strDescription;
+			FARString strTitle=strDescription;
 			size_t Pos=0;
 			bool Ampersand=strTitle.Pos(Pos,L'&');
 
@@ -486,7 +486,7 @@ static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)
 
 void MoveMenuItem(int Pos,int NewPos)
 {
-	string strSrc,strDst,strTmp;
+	FARString strSrc,strDst,strTmp;
 	strSrc.Format(FTS.TypeFmt,Pos);
 	strDst.Format(FTS.TypeFmt,NewPos);
 	strTmp.Format(L"Associations/Tmp%u",WINPORT(GetTickCount)());
@@ -593,7 +593,7 @@ bool EditTypeRecord(int EditPos,int TotalRecords,bool NewRec)
 		DI_BUTTON,   0,DlgY-3, 0,DlgY-3,0,DIF_CENTERGROUP,MSG(MCancel),
 	};
 	MakeDialogItemsEx(EditDlgData,EditDlg);
-	string strRegKey;
+	FARString strRegKey;
 	strRegKey.Format(FTS.TypeFmt,EditPos);
 
 	if (!NewRec)
@@ -658,10 +658,10 @@ bool EditTypeRecord(int EditPos,int TotalRecords,bool NewRec)
 bool DeleteTypeRecord(int DeletePos)
 {
 	bool Result=false;
-	string strRecText, strRegKey;
+	FARString strRecText, strRegKey;
 	strRegKey.Format(FTS.TypeFmt,DeletePos);
 	GetRegKey(strRegKey,FTS.Mask,strRecText,L"");
-	string strItemName=strRecText;
+	FARString strItemName=strRecText;
 	InsertQuote(strItemName);
 
 	if (!Message(MSG_WARNING,2,MSG(MAssocTitle),MSG(MAskDelAssoc),strItemName,MSG(MDelete),MSG(MCancel)))

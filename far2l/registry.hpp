@@ -45,7 +45,7 @@ LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,DWORD ValueData);
 
 LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,const BYTE *ValueData,DWORD ValueSize);
 
-int GetRegKey(const wchar_t *Key,const wchar_t *ValueName, string &strValueData,const wchar_t *Default,DWORD *pType=nullptr);
+int GetRegKey(const wchar_t *Key,const wchar_t *ValueName, FARString &strValueData,const wchar_t *Default,DWORD *pType=nullptr);
 
 int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,BYTE *ValueData,const BYTE *Default,DWORD DataSize,DWORD *pType=nullptr);
 
@@ -61,9 +61,9 @@ int GetRegKeySize(const wchar_t *Key,const wchar_t *ValueName);
 
 int GetRegKeySize(HKEY hKey,const wchar_t *ValueName);
 
-int EnumRegValue(const wchar_t *Key,DWORD Index, string &strDestName, LPBYTE SData,DWORD SDataSize,LPDWORD IData=nullptr,int64_t* IData64=nullptr);
+int EnumRegValue(const wchar_t *Key,DWORD Index, FARString &strDestName, LPBYTE SData,DWORD SDataSize,LPDWORD IData=nullptr,int64_t* IData64=nullptr);
 
-int EnumRegValueEx(const wchar_t *Key,DWORD Index, string &strDestName, string &strData, LPDWORD IData=nullptr,int64_t* IData64=nullptr, DWORD *Type=nullptr);
+int EnumRegValueEx(const wchar_t *Key,DWORD Index, FARString &strDestName, FARString &strData, LPDWORD IData=nullptr,int64_t* IData64=nullptr, DWORD *Type=nullptr);
 
 LONG SetRegKey64(const wchar_t *Key,const wchar_t *ValueName,uint64_t ValueData);
 
@@ -89,7 +89,7 @@ int CheckRegValue(const wchar_t *Key,const wchar_t *ValueName,DWORD *pType=nullp
 
 int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName);
 
-int EnumRegKey(const wchar_t *Key,DWORD Index,string &strDestName);
+int EnumRegKey(const wchar_t *Key,DWORD Index,FARString &strDestName);
 
 int CopyKeyTree(const wchar_t *Src,const wchar_t *Dest,const wchar_t *Skip=nullptr);
 
@@ -99,6 +99,6 @@ void UseSameRegKey();
 
 void CloseSameRegKey();
 
-int RegQueryStringValueEx(HKEY hKey, const wchar_t *lpwszValueName, string &strData, const wchar_t *lpwszDefault = L"");
+int RegQueryStringValueEx(HKEY hKey, const wchar_t *lpwszValueName, FARString &strData, const wchar_t *lpwszDefault = L"");
 
-int RegQueryStringValue(HKEY hKey, const wchar_t *lpwszSubKey, string &strData, const wchar_t *lpwszDefault = L"");
+int RegQueryStringValue(HKEY hKey, const wchar_t *lpwszSubKey, FARString &strData, const wchar_t *lpwszDefault = L"");

@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "exitcode.hpp"
 
-FolderTree::FolderTree(string &strResultFolder,int iModalMode,int IsStandalone,int IsFullScreen):
+FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalone,int IsFullScreen):
 	Tree(nullptr),
 	FindEdit(nullptr),
 	ModalMode(iModalMode),
@@ -118,7 +118,7 @@ void FolderTree::DisplayObject()
 	//if(!TopScreen) TopScreen=new SaveScreen;
 	if (ModalMode == MODALTREE_FREE)
 	{
-		string strSelFolder;
+		FARString strSelFolder;
 		Tree->GetCurDir(strSelFolder);
 		//Tree->Update(UPDATE_KEEP_SELECTION);
 		Tree->Update(0);
@@ -186,7 +186,7 @@ int FolderTree::FastHide()
 }
 
 
-int FolderTree::GetTypeAndName(string &strType, string &strName)
+int FolderTree::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = MSG(MFolderTreeType);
 	strName.Clear();
@@ -241,7 +241,7 @@ int FolderTree::ProcessKey(int Key)
 		case KEY_CTRLENTER:
 		case KEY_CTRLSHIFTENTER:
 		{
-			string strName;
+			FARString strName;
 			FindEdit->GetString(strName);
 			Tree->FindPartName(strName,TRUE,Key==KEY_CTRLSHIFTENTER||Key == KEY_CTRLSHIFTNUMENTER?-1:1,1);
 			DrawEdit();
@@ -287,7 +287,7 @@ int FolderTree::ProcessKey(int Key)
 			*/
 			if (FindEdit->ProcessKey(Key))
 			{
-				string strName;
+				FARString strName;
 				FindEdit->GetString(strName);
 
 				if (Tree->FindPartName(strName,FALSE,1,1))

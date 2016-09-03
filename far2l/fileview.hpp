@@ -50,7 +50,7 @@ class FileViewer:public Frame
 		int DisableEdit;
 		int DisableHistory;
 
-		string strName;
+		FARString strName;
 
 		typedef class Frame inherited;
 		/* $ 17.08.2001 KM
@@ -84,7 +84,7 @@ class FileViewer:public Frame
 		virtual void OnDestroy();
 		virtual void OnChangeFocus(int focus);
 
-		virtual int GetTypeAndName(string &strType, string &strName);
+		virtual int GetTypeAndName(FARString &strType, FARString &strName);
 		virtual const wchar_t *GetTypeName() {return L"[FileView]";}; ///
 		virtual int GetType() { return MODALTYPE_VIEWER; }
 
@@ -99,7 +99,7 @@ class FileViewer:public Frame
 		void SetSaveToSaveAs(int ToSaveAs) { SaveToSaveAs=ToSaveAs; InitKeyBar(); }
 		int  ViewerControl(int Command,void *Param);
 		BOOL IsFullScreen() {return FullScreen;}
-		virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		int64_t GetViewFileSize() const;
 		int64_t GetViewFilePos() const;
 		void ShowStatus();

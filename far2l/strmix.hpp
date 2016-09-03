@@ -54,38 +54,38 @@ enum
 };
 
 wchar_t* WINAPI QuoteSpace(wchar_t *Str);
-string &QuoteSpace(string &strStr);
+FARString &QuoteSpace(FARString &strStr);
 wchar_t* WINAPI InsertQuote(wchar_t *Str);
-string& InsertQuote(string& strStr);
-void WINAPI Unquote(string &strStr);
+FARString& InsertQuote(FARString& strStr);
+void WINAPI Unquote(FARString &strStr);
 void WINAPI Unquote(wchar_t *Str);
 wchar_t * WINAPI InsertRegexpQuote(wchar_t *Str);
-string& InsertRegexpQuote(string& strStr);
-void UnquoteExternal(string &strStr);
+FARString& InsertRegexpQuote(FARString& strStr);
+void UnquoteExternal(FARString &strStr);
 wchar_t* WINAPI RemoveLeadingSpaces(wchar_t *Str);
-string& WINAPI RemoveLeadingSpaces(string &strStr);
+FARString& WINAPI RemoveLeadingSpaces(FARString &strStr);
 wchar_t *WINAPI RemoveTrailingSpaces(wchar_t *Str);
-string& WINAPI RemoveTrailingSpaces(string &strStr);
+FARString& WINAPI RemoveTrailingSpaces(FARString &strStr);
 wchar_t* WINAPI RemoveExternalSpaces(wchar_t *Str);
-string & WINAPI RemoveExternalSpaces(string &strStr);
-string & WINAPI RemoveUnprintableCharacters(string &strStr);
+FARString & WINAPI RemoveExternalSpaces(FARString &strStr);
+FARString & WINAPI RemoveUnprintableCharacters(FARString &strStr);
 wchar_t* WINAPI QuoteSpaceOnly(wchar_t *Str);
-string& WINAPI QuoteSpaceOnly(string &strStr);
+FARString& WINAPI QuoteSpaceOnly(FARString &strStr);
 
-string &RemoveChar(string &strStr,wchar_t Target,BOOL Dup=TRUE);
+FARString &RemoveChar(FARString &strStr,wchar_t Target,BOOL Dup=TRUE);
 wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize=0);
-int ReplaceStrings(string &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count=-1,BOOL IgnoreCase=FALSE);
+int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count=-1,BOOL IgnoreCase=FALSE);
 
-const wchar_t *GetCommaWord(const wchar_t *Src,string &strWord,wchar_t Separator=L',');
+const wchar_t *GetCommaWord(const wchar_t *Src,FARString &strWord,wchar_t Separator=L',');
 
-string& WINAPI FarFormatText(const wchar_t *SrcText, int Width, string &strDestText, const wchar_t* Break, DWORD Flags);
+FARString& WINAPI FarFormatText(const wchar_t *SrcText, int Width, FARString &strDestText, const wchar_t* Break, DWORD Flags);
 
 void PrepareUnitStr();
-string& WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width=-1, int ViewFlags=COLUMN_COMMAS);
+FARString& WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width=-1, int ViewFlags=COLUMN_COMMAS);
 bool CheckFileSizeStringFormat(const wchar_t *FileSizeStr);
 uint64_t ConvertFileSizeString(const wchar_t *FileSizeStr);
-string &FormatNumber(const wchar_t *Src, string &strDest, int NumDigits=0);
-string &InsertCommas(uint64_t li, string &strDest);
+FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits=0);
+FARString &InsertCommas(uint64_t li, FARString &strDest);
 
 inline bool IsWordDiv(const wchar_t *WordDiv, wchar_t Chr) { return wcschr(WordDiv, Chr)!=nullptr; }
 
@@ -94,21 +94,21 @@ inline bool IsWordDiv(const wchar_t *WordDiv, wchar_t Chr) { return wcschr(WordD
 const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End,const wchar_t *WordDiv);
 
 wchar_t* WINAPI TruncStr(wchar_t *Str,int MaxLength);
-string& WINAPI TruncStr(string &strStr,int MaxLength);
+FARString& WINAPI TruncStr(FARString &strStr,int MaxLength);
 wchar_t* WINAPI TruncStrFromEnd(wchar_t *Str,int MaxLength);
-string& WINAPI TruncStrFromEnd(string &strStr, int MaxLength);
+FARString& WINAPI TruncStrFromEnd(FARString &strStr, int MaxLength);
 wchar_t* TruncStrFromCenter(wchar_t *Str, int MaxLength);
-string& TruncStrFromCenter(string &strStr, int MaxLength);
+FARString& TruncStrFromCenter(FARString &strStr, int MaxLength);
 wchar_t* WINAPI TruncPathStr(wchar_t *Str, int MaxLength);
-string& WINAPI TruncPathStr(string &strStr, int MaxLength);
+FARString& WINAPI TruncPathStr(FARString &strStr, int MaxLength);
 
-BOOL IsCaseMixed(const string &strStr);
-BOOL IsCaseLower(const string &strStr);
+BOOL IsCaseMixed(const FARString &strStr);
+BOOL IsCaseLower(const FARString &strStr);
 
-string& CenterStr(const wchar_t *Src, string &strDest,int Length);
+FARString& CenterStr(const wchar_t *Src, FARString &strDest,int Length);
 
-void Transform(string &strBuffer,const wchar_t *ConvStr,wchar_t TransformType);
+void Transform(FARString &strBuffer,const wchar_t *ConvStr,wchar_t TransformType);
 
 wchar_t GetDecimalSeparator();
 
-string ReplaceBrackets(const string& SearchStr,const string& ReplaceStr,RegExpMatch* Match,int Count);
+FARString ReplaceBrackets(const FARString& SearchStr,const FARString& ReplaceStr,RegExpMatch* Match,int Count);

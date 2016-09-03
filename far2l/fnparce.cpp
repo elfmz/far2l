@@ -171,10 +171,10 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 			CntSkip++;
 		}
 
-		WPanel->GetSelName(nullptr,FileAttrL);
+		WPanel->GetSelNameCompat(nullptr,FileAttrL);
 		int First = TRUE;
 
-		while (WPanel->GetSelName(&strFileNameL,FileAttrL,&strShortNameL))
+		while (WPanel->GetSelNameCompat(&strFileNameL,FileAttrL,&strShortNameL))
 		{
 			if (ShortN0)
 				strFileNameL = strShortNameL;
@@ -758,9 +758,9 @@ bool Panel::MakeListFile(FARString &strListFileName,bool ShortNames,const wchar_
 
 			FARString strFileName,strShortName;
 			DWORD FileAttr;
-			GetSelName(nullptr,FileAttr);
+			GetSelNameCompat(nullptr,FileAttr);
 
-			while (GetSelName(&strFileName,FileAttr,&strShortName))
+			while (GetSelNameCompat(&strFileName,FileAttr,&strShortName))
 			{
 				if (ShortNames)
 					strFileName = strShortName;

@@ -2424,7 +2424,7 @@ void DoScanTree(HANDLE hDlg, FARString& strRoot)
 	DWORD FileAttr;
 
 	if (SearchMode==FINDAREA_SELECTED)
-		CtrlObject->Cp()->ActivePanel->GetSelName(nullptr,FileAttr);
+		CtrlObject->Cp()->ActivePanel->GetSelNameCompat(nullptr,FileAttr);
 
 	while (!WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0))
 	{
@@ -2432,7 +2432,7 @@ void DoScanTree(HANDLE hDlg, FARString& strRoot)
 
 		if (SearchMode==FINDAREA_SELECTED)
 		{
-			if (!CtrlObject->Cp()->ActivePanel->GetSelName(&strSelName,FileAttr))
+			if (!CtrlObject->Cp()->ActivePanel->GetSelNameCompat(&strSelName,FileAttr))
 				break;
 
 			if (!(FileAttr & FILE_ATTRIBUTE_DIRECTORY) || TestParentFolderName(strSelName) || !StrCmp(strSelName,L"."))

@@ -106,8 +106,8 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	{
 		FARString strRoot;
 //    char FSysNameSrc[NM];
-		SrcPanel->GetSelName(nullptr,FileAttr);
-		SrcPanel->GetSelName(&strSelName,FileAttr);
+		SrcPanel->GetSelNameCompat(nullptr,FileAttr);
+		SrcPanel->GetSelNameCompat(&strSelName,FileAttr);
 		ConvertNameToFull(strSelName, strRoot);
 		GetPathRoot(strRoot,strRoot);
 
@@ -118,8 +118,8 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 	if (SelCount==1)
 	{
-		SrcPanel->GetSelName(nullptr,FileAttr);
-		SrcPanel->GetSelName(&strSelName,FileAttr);
+		SrcPanel->GetSelNameCompat(nullptr,FileAttr);
+		SrcPanel->GetSelNameCompat(&strSelName,FileAttr);
 
 		if (TestParentFolderName(strSelName) || strSelName.IsEmpty())
 		{
@@ -238,11 +238,11 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 		if (Opt.DelOpt.DelShowTotal)
 		{
-			SrcPanel->GetSelName(nullptr,FileAttr);
+			SrcPanel->GetSelNameCompat(nullptr,FileAttr);
 			DWORD StartTime=WINPORT(GetTickCount)();
 			bool FirstTime=true;
 
-			while (SrcPanel->GetSelName(&strSelName,FileAttr,&strSelShortName) && !Cancel)
+			while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&strSelShortName) && !Cancel)
 			{
 				if (!(FileAttr&FILE_ATTRIBUTE_REPARSE_POINT))
 				{
@@ -284,11 +284,11 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 			}
 		}
 
-		SrcPanel->GetSelName(nullptr,FileAttr);
+		SrcPanel->GetSelNameCompat(nullptr,FileAttr);
 		DWORD StartTime=WINPORT(GetTickCount)();
 		bool FirstTime=true;
 
-		while (SrcPanel->GetSelName(&strSelName,FileAttr,&strSelShortName) && !Cancel)
+		while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&strSelShortName) && !Cancel)
 		{
 			int Length=(int)strSelName.GetLength();
 

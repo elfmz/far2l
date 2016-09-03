@@ -281,6 +281,7 @@ bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTim
 {
 	FAR_FIND_DATA_EX fde;
 	fde.dwFileAttributes=fli.FileAttr;
+	fde.dwUnixMode=fli.FileMode;
 	fde.ftCreationTime=fli.CreationTime;
 	fde.ftLastAccessTime=fli.AccessTime;
 	fde.ftLastWriteTime=fli.WriteTime;

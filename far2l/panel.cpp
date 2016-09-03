@@ -1405,9 +1405,9 @@ int  Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 	{
 		DWORD FileAttr;
 		MoveToMouse(MouseEvent);
-		GetSelName(nullptr,FileAttr);
+		GetSelNameCompat(nullptr,FileAttr);
 
-		if (GetSelName(&strDragName,FileAttr) && !TestParentFolderName(strDragName))
+		if (GetSelNameCompat(&strDragName,FileAttr) && !TestParentFolderName(strDragName))
 		{
 			SrcDragPanel=this;
 			DragX=MouseEvent->dwMousePosition.X;
@@ -1446,8 +1446,8 @@ void Panel::DragMessage(int X,int Y,int Move)
 	{
 		FARString strCvtName;
 		DWORD FileAttr;
-		SrcDragPanel->GetSelName(nullptr,FileAttr);
-		SrcDragPanel->GetSelName(&strSelName,FileAttr);
+		SrcDragPanel->GetSelNameCompat(nullptr,FileAttr);
+		SrcDragPanel->GetSelNameCompat(&strSelName,FileAttr);
 		strCvtName = PointToName(strSelName);
 		QuoteSpace(strCvtName);
 		strSelName = strCvtName;

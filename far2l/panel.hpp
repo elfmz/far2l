@@ -167,7 +167,14 @@ class Panel:public ScreenObject
 
 		virtual int GetSelCount() {return 0;};
 		virtual int GetRealSelCount() {return 0;};
-		virtual int GetSelName(FARString *strName,DWORD &FileAttr,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr) {return FALSE;};
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr) {return FALSE;};
+
+		int GetSelNameCompat(FARString *strName,DWORD &FileAttr,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr) 
+		{
+			DWORD FileMode = 0;
+			return GetSelName(strName, FileAttr, FileMode, ShortName, fd);
+		}
+
 		virtual void UngetSelName() {};
 		virtual void ClearLastGetSelection() {};
 		virtual uint64_t GetLastSelectedSize() {return (uint64_t)(-1);};

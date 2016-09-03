@@ -1591,8 +1591,10 @@ int TreeList::GetSelCount()
 }
 
 
-int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,FARString *strShortName,FAR_FIND_DATA_EX *fd)
+int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *strShortName,FAR_FIND_DATA_EX *fd)
 {
+        FileMode = 0640;
+
 	if (!strName)
 	{
 		GetSelPosition=0;
@@ -1606,7 +1608,8 @@ int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,FARString *strShortN
 		if (strShortName )
 			*strShortName = *strName;
 
-		FileAttr=FILE_ATTRIBUTE_DIRECTORY;
+		FileAttr = FILE_ATTRIBUTE_DIRECTORY;
+		FileMode|= S_IFDIR | S_IXUSR | S_IXGRP | S_IXOTH;
 		GetSelPosition++;
 		return TRUE;
 	}

@@ -3205,15 +3205,15 @@ int FileList::GetRealSelCount()
 }
 
 
-int FileList::GetSelName(FARString *strName,DWORD &FileAttr,FARString *strShortName,FAR_FIND_DATA_EX *fde)
+int FileList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *strShortName,FAR_FIND_DATA_EX *fde)
 {
+        FileMode = 0640;
 	if (!strName)
 	{
 		GetSelPosition=0;
 		LastSelPosition=-1;
 		return TRUE;
 	}
-
 	if (!SelFileCount || ReturnCurrentFile)
 	{
 		if (!GetSelPosition && CurFile<FileCount)
@@ -3230,11 +3230,13 @@ int FileList::GetSelName(FARString *strName,DWORD &FileAttr,FARString *strShortN
 			}
 
 			FileAttr=ListData[CurFile]->FileAttr;
+			FileMode=ListData[CurFile]->FileMode;
 			LastSelPosition=CurFile;
 
 			if (fde)
 			{
 				fde->dwFileAttributes=ListData[CurFile]->FileAttr;
+				fde->dwUnixMode=ListData[CurFile]->FileMode;
 				fde->ftCreationTime=ListData[CurFile]->CreationTime;
 				fde->ftLastAccessTime=ListData[CurFile]->AccessTime;
 				fde->ftLastWriteTime=ListData[CurFile]->WriteTime;
@@ -3265,11 +3267,13 @@ int FileList::GetSelName(FARString *strName,DWORD &FileAttr,FARString *strShortN
 			}
 
 			FileAttr=ListData[GetSelPosition-1]->FileAttr;
+			FileMode=ListData[GetSelPosition-1]->FileMode;
 			LastSelPosition=GetSelPosition-1;
 
 			if (fde)
 			{
 				fde->dwFileAttributes=ListData[GetSelPosition-1]->FileAttr;
+				fde->dwUnixMode=ListData[GetSelPosition-1]->FileMode;
 				fde->ftCreationTime=ListData[GetSelPosition-1]->CreationTime;
 				fde->ftLastAccessTime=ListData[GetSelPosition-1]->AccessTime;
 				fde->ftLastWriteTime=ListData[GetSelPosition-1]->WriteTime;
@@ -3799,8 +3803,8 @@ void FileList::CopyFiles()
 		size_t DataSize=0;
 		FARString strSelName, strSelShortName;
 		DWORD FileAttr;
-		GetSelName(nullptr,FileAttr);
-		while (GetSelName(&strSelName, FileAttr, &strSelShortName))
+		GetSelNameCompat(nullptr,FileAttr);
+		while (GetSelNameCompat(&strSelName, FileAttr, &strSelShortName))
 		{
 			if (TestParentFolderName(strSelName) && TestParentFolderName(strSelShortName))
 			{
@@ -3854,9 +3858,9 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
 	}
 
-	GetSelName(nullptr,FileAttr);
+	GetSelNameCompat(nullptr,FileAttr);
 
-	while (GetSelName(&strSelName,FileAttr,&strSelShortName))
+	while (GetSelNameCompat(&strSelName,FileAttr,&strSelShortName))
 	{
 		if (DataSize>0)
 		{
@@ -4383,11 +4387,11 @@ void FileList::DescribeFiles()
 	int DizCount=0;
 	ReadDiz();
 	SaveSelection();
-	GetSelName(nullptr,FileAttr);
+	GetSelNameCompat(nullptr,FileAttr);
 	Panel* AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 	int AnotherType=AnotherPanel->GetType();
 
-	while (GetSelName(&strSelName,FileAttr,&strSelShortName))
+	while (GetSelNameCompat(&strSelName,FileAttr,&strSelShortName))
 	{
 		FARString strDizText, strMsg, strQuotedName;
 		const wchar_t *PrevText;
@@ -4469,9 +4473,9 @@ bool FileList::ApplyCommand()
 	SaveSelection();
 
 	++UpdateDisabled;
-	GetSelName(nullptr,FileAttr);
+	GetSelNameCompat(nullptr,FileAttr);
 	CtrlObject->CmdLine->LockUpdatePanel(true);
-	while (GetSelName(&strSelName,FileAttr,&strSelShortName) && !CheckForEsc())
+	while (GetSelNameCompat(&strSelName,FileAttr,&strSelShortName) && !CheckForEsc())
 	{
 		FARString strListName, strAnotherListName;
 		FARString strShortListName, strAnotherShortListName;

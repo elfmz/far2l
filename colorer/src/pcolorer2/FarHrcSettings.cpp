@@ -72,7 +72,7 @@ void FarHrcSettings::readUserProfile()
 {
   wchar_t key[MAX_KEY_LENGTH];
   swprintf(key,MAX_KEY_LENGTH, L"%ls/colorer/HrcSettings", Info.RootKey);
-  HKEY dwKey;
+  HKEY dwKey = NULL;
 
   if (WINPORT(RegOpenKeyEx)( HKEY_CURRENT_USER, key, 0, KEY_READ, &dwKey) == ERROR_SUCCESS ){
     readProfileFromRegistry(dwKey);

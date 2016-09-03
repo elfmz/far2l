@@ -40,6 +40,9 @@ protected:
 	}
 
 private:
+	WinPortAppThread() = delete;
+	WinPortAppThread(const WinPortAppThread&) = delete;
+	
 	char **_argv;
 	int _argc;
 	int(*_appmain)(int argc, char **argv);
@@ -186,6 +189,7 @@ private:
 	bool _cursor_state;
 	bool _last_keydown_enqueued;
 	bool _initialized;
+	bool _buffered_paint;
 	enum
 	{
 		RP_NONE,
@@ -342,32 +346,83 @@ void InitializeFont(wxFrame *frame, wxFont& font)
 	}
 }
 
+class FontSizeInspector
+{
+	wxBitmap _bitmap;
+	wxMemoryDC _dc;
+	
+	int _max_width, _prev_width;
+	int _max_height, _prev_height;	
+	bool _unstable_size;
+	
+	void InspectChar(const wchar_t c)
+	{
+		wchar_t wz[2] = { c, 0};
+		wxSize char_size = _dc.GetTextExtent(wz);
+		const int width = char_size.GetWidth();
+		const int height = char_size.GetHeight();
+		
+		if (_max_width < width) _max_width = width;
+		if (_max_height < height) _max_height = height;
+		if ( _prev_width != width ) {
+			if (_prev_width!=-1) 
+				_unstable_size = true;
+			_prev_width = width;
+		}
+		if ( _prev_height != height ) {
+			if (_prev_height!=-1) _unstable_size = true;
+			_prev_height = height;
+		}		
+	}	
+	
+	public:
+	FontSizeInspector(wxFont& font) 
+		: _bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH),
+		_max_width(8), _prev_width(-1), 
+		_max_height(8), _prev_height(-1), 
+		_unstable_size(false)
+	{
+		_dc.SelectObject(_bitmap);
+		_dc.SetFont(font);
+	}
+
+	void InspectChars(const wchar_t *s)
+	{
+		for(; *s; ++s)
+			InspectChar(*s);
+	}
+	
+	bool IsUnstableSize() const { return _unstable_size; }
+	int GetMaxWidth() const { return _max_width; }
+	int GetMaxHeight() const { return _max_height; }
+};
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_frame(frame), _cursor_timer(NULL),  
-		_cursor_state(false), _last_keydown_enqueued(false), _initialized(false), _resize_pending(RP_NONE), 
-		_mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
+		_cursor_state(false), _last_keydown_enqueued(false), _initialized(false), _buffered_paint(false), 
+		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
 {
 	SetBackgroundColour(*wxBLACK);
 	InitializeFont(frame, _font);
+	FontSizeInspector fsi(_font);
+	fsi.InspectChars(L" 1234567890-=!@#$%^&*()_+qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?");
+	//fsi.InspectChars(L"QWERTYUIOPASDFGHJKL");
 	
-	fprintf(stderr, "Font: '%ls' %s\n", _font.GetFaceName().wc_str(), _font.IsFixedWidth() ? "monospaced" : "not monospaced");
-
-	wxBitmap white_bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH);
-	wxMemoryDC white_rectangle;
-	white_rectangle.SelectObject(white_bitmap);		
-	white_rectangle.SetFont(_font);
-		
-	wchar_t test_char[2] = {0};
-	for(test_char[0] = L'A';  test_char[0]<=L'Z'; ++test_char[0]) {
-		wxSize char_size = white_rectangle.GetTextExtent(test_char);
-		if ((int)font_width < char_size.GetWidth()) font_width = char_size.GetWidth();
-		if ((int)font_height < char_size.GetHeight()) font_height = char_size.GetHeight();
-	}
+	bool is_unstable = fsi.IsUnstableSize();
+	font_width = fsi.GetMaxWidth();
+	font_height = fsi.GetMaxHeight();
 	//font_height+= font_height/4;
-
 	
+	fprintf(stderr, "Font: '%ls' - %s\n", _font.GetFaceName().wc_str(), 
+		_font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
+		
+	if (_font.IsFixedWidth() && !is_unstable) {
+		struct stat s = {0};
+		if (stat(SettingsPath("nobuffering").c_str(), &s)!=0)
+			_buffered_paint = true;
+	}
+
 	g_wx_con_out.SetListener(this);
 	_cursor_timer = new wxTimer(this, TIMER_ID_PERIODIC);
 	_cursor_timer->Start(500);
@@ -680,55 +735,6 @@ unsigned int DivCeil(unsigned int v, unsigned int d)
 	return (r * d == v) ? r : r + 1;
 }
 
-class ConsoleColorChanger
-{
-	wxPaintDC &_dc;
-	class RememberedColor
-	{
-		wxColour _clr;
-		bool _valid;
-
-	public:
-		RememberedColor() : _valid(false) {}
-		bool Change(wxColour clr)
-		{
-			if (!_valid || _clr!=clr) {
-				_valid = true;
-				_clr = clr;
-				return true;
-			}
-			return false;
-		}
-	}_brush, _text_fg; // _text_bg;
-
-public:
-	ConsoleColorChanger(wxPaintDC &dc) 
-		: _dc(dc)
-	{
-	}
-	
-	void SetBackgroundAttributes(unsigned short attributes)
-	{
-		wxColour clr = ConsoleBackground2wxColor(attributes);
-		if (_brush.Change(clr)) {
-			wxBrush* brush = wxTheBrushList->FindOrCreateBrush(clr);
-			_dc.SetBrush(*brush);
-			_dc.SetBackground(*brush);
-		}
-	}
-
-	void SetTextAttributes(unsigned short attributes)
-	{
-		wxColour clr = ConsoleForeground2wxColor(attributes);
-		if (_text_fg.Change(clr))
-			_dc.SetTextForeground(clr);
-
-		//clr = ConsoleBackground2wxColor(attributes);
-		//if (_text_bg.Change(clr))
-		//	_dc.SetTextBackground(clr);
-	}
-};
-
 #define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
 					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
 					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE )
@@ -747,6 +753,153 @@ struct CursorProps
 	unsigned int x, y;
 	bool  visible;
 	UCHAR height;
+};
+
+class ConsolePainter
+{
+	class RememberedColor
+	{
+		wxColour _clr;
+		bool _valid;
+
+	public:
+		RememberedColor() : _valid(false) {}
+		bool Change(wxColour clr)
+		{
+			if (!_valid || _clr!=clr) {
+				_valid = true;
+				_clr = clr;
+				return true;
+			}
+			return false;
+		}
+		
+	} _brush;
+	
+	
+	wxString _buffer, _tmp;
+	wxPaintDC &_dc;
+	CursorProps _cursor_props;
+	unsigned int _start_cx, _start_cy, _start_back_cx;
+	unsigned int _start_x, _start_y;
+	wxColour _clr_text, _clr_back;
+	bool _buffered_paint;
+	bool _cursor_state;
+	
+	void SetBackgroundColor(wxColour clr)
+	{
+		if (_brush.Change(clr)) {
+			wxBrush* brush = wxTheBrushList->FindOrCreateBrush(clr);
+			_dc.SetBrush(*brush);
+			_dc.SetBackground(*brush);
+		}		
+	}
+	
+	void PrepareBackground(unsigned int cx, wxColour clr)
+	{
+		const bool cursor_here = (_cursor_props.visible && cx==_cursor_props.x && _start_cy==_cursor_props.y) ;
+		
+		if (!cursor_here && _start_back_cx != (unsigned int)-1 && _clr_back == clr)
+			return;
+		
+		FlushBackground(cx);
+		
+		if (!cursor_here) {
+			_clr_back = clr;
+			_start_back_cx = cx;
+			return;
+		}
+		
+		_start_back_cx = (unsigned int)-1;
+
+		const unsigned int x = cx * font_width;
+		unsigned int h = (font_height * _cursor_props.height) / 100;
+		if (h==0) h = 1;
+		unsigned int fill_height = font_height - h;
+		if (fill_height > font_height) fill_height = font_height;
+		SetBackgroundColor(wxColour(clr.Red()^0xff, clr.Green()^0xff, clr.Blue()^0xff));
+		_dc.DrawRectangle(x, _start_y + fill_height, font_width, h);				
+			
+		if (fill_height) {
+			SetBackgroundColor(clr);
+			_dc.DrawRectangle(x, _start_y, font_width, fill_height);							
+		}
+	}
+	
+
+	void FlushBackground(unsigned int cx)
+	{
+		if (_start_back_cx!= ((unsigned int)-1)) {
+			SetBackgroundColor(_clr_back);
+			_dc.DrawRectangle(_start_back_cx * font_width, _start_y, (cx - _start_back_cx) * font_width, font_height);			
+			_start_back_cx = ((unsigned int)-1);
+		}		
+	}
+	
+	void FlushText()
+	{
+		if (!_buffer.empty()) {
+			_dc.SetTextForeground(_clr_text);
+			_dc.DrawText(_buffer, _start_cx * font_width, _start_y);
+			_buffer.clear();
+		}
+		_start_cx = (unsigned int)-1;
+	}
+		
+public:
+	ConsolePainter(wxPaintDC &dc, bool buffered_paint, bool cursor_state) : 
+		_dc(dc), _cursor_props(cursor_state), _start_cx((unsigned int)-1), 
+		_start_back_cx((unsigned int)-1), _buffered_paint(buffered_paint)
+	{
+	}
+	
+
+	inline void NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
+	{
+		if (!c || c == L' ') {
+			if (!_buffer.empty()) 
+				FlushBackground(cx);
+			FlushText();
+		}
+		
+		PrepareBackground(cx, ConsoleBackground2wxColor(attributes));
+		
+		if (!c || c == L' ') 
+			return;
+			
+		wxColour clr_text = ConsoleForeground2wxColor(attributes);
+		
+
+		if (_buffered_paint && _start_cx != (unsigned int) -1 && _clr_text == clr_text)
+		{
+			_tmp = c;
+			wxSize char_size = _dc.GetTextExtent(_tmp);
+			if (char_size.GetWidth()==(int)font_width && char_size.GetHeight()==(int)font_height)
+			{
+				_buffer+= c;
+				return;
+			}
+		}
+		
+		FlushBackground(cx + 1);
+		FlushText();
+		_start_cx = cx;
+		_buffer = c;
+		_clr_text = clr_text;
+	}
+	
+	inline void LineBegin(unsigned int cy)
+	{
+		_start_cy = cy;
+		_start_y = cy * font_height;
+	}
+	
+	inline void LineFlush(unsigned int cx_end)
+	{
+		FlushBackground(cx_end);
+		FlushText();
+	}
+	
 };
 
 void WinPortPanel::OnPaint( wxPaintEvent& event )
@@ -777,50 +930,35 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 	dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 	dc.SetFont(_font);
 	
-	CursorProps cur_props(_cursor_state);
-	
-	ConsoleColorChanger ccc(dc);
+	ConsolePainter painter(dc, _buffered_paint, _cursor_state);
 	for (unsigned int cy = area.Top; cy <= area.Bottom; ++cy) {
 		COORD data_size = {cw, 1};
 		COORD data_pos = {0, 0};
 		SMALL_RECT screen_rect = {area.Left, cy, area.Right, cy};
 
-		if (rgn.Contains(0, cy * font_height, cw * font_width, font_height)==wxOutRegion) continue;
-		g_wx_con_out.Read(&line[area.Left], data_size, data_pos, screen_rect);
-		const unsigned int y = cy * font_height;
 		
+		if (rgn.Contains(0, cy * font_height, cw * font_width, font_height)==wxOutRegion) {
+			continue;
+		}
+		g_wx_con_out.Read(&line[area.Left], data_size, data_pos, screen_rect);
+		
+		painter.LineBegin(cy);
 		for (unsigned int cx = area.Left; cx <= area.Right; ++cx) {
-			if (rgn.Contains(cx * font_width, cy * font_height, font_width, font_height)==wxOutRegion) continue;
+			if (rgn.Contains(cx * font_width, cy * font_height, font_width, font_height)==wxOutRegion) {
+				painter.LineFlush(cx);
+				continue;
+			}
 
-			const unsigned int x = cx * font_width;
 			unsigned short attributes = line[cx].Attributes;			
 			
 			if (_mouse_qedit_pending && cx >= qedit.Left && 
 				cx <= qedit.Right && cy >= qedit.Top && cy <= qedit.Bottom) {
 				attributes^= ALL_ATTRIBUTES;				
 			}
-			
-			unsigned int fill_height;
-			if (cur_props.visible && cx==cur_props.x && cy==cur_props.y) {
-				unsigned int h = (font_height * cur_props.height) / 100;
-				if (h==0) h = 1;
-				fill_height = font_height - h;
-				if (fill_height > font_height) fill_height = font_height;
-				ccc.SetBackgroundAttributes(attributes ^ ALL_ATTRIBUTES);
-				dc.DrawRectangle(x, y + fill_height, font_width, h);				
-			} else
-				fill_height = font_height;
-			
-			ccc.SetBackgroundAttributes(attributes);
-			dc.DrawRectangle(x, y, font_width, fill_height);
-			
-			const WCHAR wc = line[cx].Char.UnicodeChar;
-			if (wc && wc != L' ') {
-				tmp = wc;
-				ccc.SetTextAttributes(attributes);
-				dc.DrawText(tmp, x, y);
-			}
+						
+			painter.NextChar(cx, attributes, line[cx].Char.UnicodeChar);
 		}
+		painter.LineFlush(area.Right + 1);
 	}
 }
 

@@ -82,7 +82,7 @@ class FilePositionCache
 		int IsMemory;
 		int CurPos;
 
-		string *Names;
+		FARString *Names;
 		BYTE *Param;
 		BYTE *Position;
 

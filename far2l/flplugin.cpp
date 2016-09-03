@@ -107,7 +107,7 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 		if (PStack->Modified)
 		{
 			PluginPanelItem PanelItem={0};
-			string strSaveDir;
+			FARString strSaveDir;
 			apiGetCurrentDirectory(strSaveDir);
 
 			if (FileNameToPluginItem(PStack->strHostFile,&PanelItem))
@@ -158,7 +158,7 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 
 int FileList::FileNameToPluginItem(const wchar_t *Name,PluginPanelItem *pi)
 {
-	string strTempDir = Name;
+	FARString strTempDir = Name;
 
 	if (!CutToSlash(strTempDir,true))
 		return FALSE;
@@ -390,7 +390,7 @@ void FileList::CreatePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber
 
 	long SaveSelPosition=GetSelPosition;
 	long OldLastSelPosition=LastSelPosition;
-	string strSelName;
+	FARString strSelName;
 	DWORD FileAttr;
 	ItemNumber=0;
 	ItemList=new PluginPanelItem[SelFileCount+1]();
@@ -490,8 +490,8 @@ void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
 		for (int I=0; I<ItemNumber; I++)
 			if (ItemList[I].Flags & PPIF_PROCESSDESCR)
 			{
-				string strName = ItemList[I].FindData.lpwszFileName;
-				string strShortName = ItemList[I].FindData.lpwszAlternateFileName;
+				FARString strName = ItemList[I].FindData.lpwszFileName;
+				FARString strShortName = ItemList[I].FindData.lpwszAlternateFileName;
 				int Code;
 
 				if (Delete)
@@ -510,13 +510,13 @@ void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
 
 		if (DizPresent)
 		{
-			string strTempDir;
+			FARString strTempDir;
 
 			if (FarMkTempEx(strTempDir) && apiCreateDirectory(strTempDir,nullptr))
 			{
-				string strSaveDir;
+				FARString strSaveDir;
 				apiGetCurrentDirectory(strSaveDir);
-				string strDizName=strTempDir+L"/"+DestPanel->strPluginDizName;
+				FARString strDizName=strTempDir+L"/"+DestPanel->strPluginDizName;
 				DestDiz->Flush(L"",strDizName);
 
 				if (Move)
@@ -572,8 +572,8 @@ void FileList::PluginGetFiles(const wchar_t **DestPath,int Move)
 						DizFound=TRUE;
 					}
 
-					string strName = PList->FindData.lpwszFileName;
-					string strShortName = PList->FindData.lpwszAlternateFileName;
+					FARString strName = PList->FindData.lpwszFileName;
+					FARString strShortName = PList->FindData.lpwszAlternateFileName;
 					CopyDiz(strName,strShortName,strName,strName,&DestDiz);
 				}
 
@@ -610,7 +610,7 @@ void FileList::PluginToPluginFiles(int Move)
 	PluginPanelItem *ItemList;
 	int ItemNumber;
 	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-	string strTempDir;
+	FARString strTempDir;
 
 	if (AnotherPanel->GetMode()!=PLUGIN_PANEL)
 		return;
@@ -632,7 +632,7 @@ void FileList::PluginToPluginFiles(int Move)
 
 		if (PutCode==1 || PutCode==2)
 		{
-			string strSaveDir;
+			FARString strSaveDir;
 			apiGetCurrentDirectory(strSaveDir);
 			FarChDir(strTempDir);
 			PutCode=CtrlObject->Plugins.PutFiles(AnotherFilePanel->hPlugin,ItemList,ItemNumber,FALSE,0);
@@ -676,8 +676,8 @@ void FileList::PluginToPluginFiles(int Move)
 void FileList::PluginHostGetFiles()
 {
 	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-	string strDestPath;
-	string strSelName;
+	FARString strDestPath;
+	FARString strSelName;
 	DWORD FileAttr;
 	SaveSelection();
 	GetSelName(nullptr,FileAttr);
@@ -964,7 +964,7 @@ int FileList::ProcessOneHostFile(int Idx)
 	_ALGO(CleverSysLog clv(L"FileList::ProcessOneHostFile()"));
 	int Done=-1;
 	_ALGO(SysLog(L"call OpenPluginForFile([Idx=%d] '%ls')",Idx,ListData[Idx]->strName.CPtr()));
-	string strName = ListData[Idx]->strName;
+	FARString strName = ListData[Idx]->strName;
 	HANDLE hNewPlugin=OpenPluginForFile(strName,ListData[Idx]->FileAttr, OFP_COMMANDS);
 
 	if (hNewPlugin!=INVALID_HANDLE_VALUE && hNewPlugin!=(HANDLE)-2)
@@ -1090,7 +1090,7 @@ size_t FileList::PluginGetSelectedPanelItem(int ItemNumber,PluginPanelItem *Item
 	return result;
 }
 
-void FileList::PluginGetColumnTypesAndWidths(string& strColumnTypes,string& strColumnWidths)
+void FileList::PluginGetColumnTypesAndWidths(FARString& strColumnTypes,FARString& strColumnWidths)
 {
 	ViewSettingsToText(ViewSettings.ColumnType,ViewSettings.ColumnWidth,ViewSettings.ColumnWidthType,
 	                   ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);

@@ -115,7 +115,7 @@ struct PanelMenuItem;
 class Panel:public ScreenObject
 {
 	protected:
-		string strCurDir;
+		FARString strCurDir;
 		int Focus;
 		int Type;
 		int EnableUpdate;
@@ -132,7 +132,7 @@ class Panel:public ScreenObject
 		int DirectoriesFirst;
 		int ModalMode;
 		int PluginCommand;
-		string strPluginParam;
+		FARString strPluginParam;
 
 	public:
 		struct PanelViewSettings ViewSettings;
@@ -144,7 +144,7 @@ class Panel:public ScreenObject
 		void RemoveHotplugDevice(PanelMenuItem *item, VMenu &ChDisk);
 		int ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu);
 		void FastFindShow(int FindX,int FindY);
-		void FastFindProcessName(Edit *FindEdit,const wchar_t *Src,string &strLastName, string &strName);
+		void FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName, FARString &strName);
 		void DragMessage(int X,int Y,int Move);
 
 	protected:
@@ -163,19 +163,19 @@ class Panel:public ScreenObject
 		virtual BOOL SetCurDir(const wchar_t *NewDir,int ClosePlugin);
 		virtual void ChangeDirToCurrent();
 
-		virtual int GetCurDir(string &strCurDir);
+		virtual int GetCurDir(FARString &strCurDir);
 
 		virtual int GetSelCount() {return 0;};
 		virtual int GetRealSelCount() {return 0;};
-		virtual int GetSelName(string *strName,DWORD &FileAttr,string *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr) {return FALSE;};
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr) {return FALSE;};
 		virtual void UngetSelName() {};
 		virtual void ClearLastGetSelection() {};
 		virtual uint64_t GetLastSelectedSize() {return (uint64_t)(-1);};
 		virtual int GetLastSelectedItem(struct FileListItem *LastItem) {return 0;};
 
-		virtual int GetCurName(string &strName, string &strShortName);
-		virtual int GetCurBaseName(string &strName, string &strShortName);
-		virtual int GetFileName(string &strName,int Pos,DWORD &FileAttr) {return FALSE;};
+		virtual int GetCurName(FARString &strName, FARString &strShortName);
+		virtual int GetCurBaseName(FARString &strName, FARString &strShortName);
+		virtual int GetFileName(FARString &strName,int Pos,DWORD &FileAttr) {return FALSE;};
 
 		virtual int GetCurrentPos() {return 0;};
 		virtual void SetFocus();
@@ -251,7 +251,7 @@ class Panel:public ScreenObject
 		virtual bool FileInFilter(long idxItem) {return true;};
 		virtual void ReadDiz(struct PluginPanelItem *ItemList=nullptr,int ItemLength=0, DWORD dwFlags=0) {};
 		virtual void DeleteDiz(const wchar_t *Name,const wchar_t *ShortName) {};
-		virtual void GetDizName(string &strDizName) {};
+		virtual void GetDizName(FARString &strDizName) {};
 		virtual void FlushDiz() {};
 		virtual void CopyDiz(const wchar_t *Name,const wchar_t *ShortName,const wchar_t *DestName, const wchar_t *DestShortName,DizList *DestDiz) {};
 		virtual int IsFullScreen() {return ViewSettings.FullScreen;};
@@ -266,7 +266,7 @@ class Panel:public ScreenObject
 		virtual int ProcessPluginEvent(int Event,void *Param) {return FALSE;};
 		virtual HANDLE GetPluginHandle() {return(INVALID_HANDLE_VALUE);};
 		virtual void SetTitle();
-		virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 
 		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
 
@@ -293,7 +293,7 @@ class Panel:public ScreenObject
 		int GetFocus() {return(Focus);};
 		int GetType() {return(Type);};
 		void SetUpdateMode(int Mode) {EnableUpdate=Mode;};
-		bool MakeListFile(string &strListFileName,bool ShortNames,const wchar_t *Modifers=nullptr);
+		bool MakeListFile(FARString &strListFileName,bool ShortNames,const wchar_t *Modifers=nullptr);
 		int SetCurPath();
 
 		BOOL NeedUpdatePanel(Panel *AnotherPanel);

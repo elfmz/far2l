@@ -223,7 +223,7 @@ void ConvertItemSmall(FarDialogItem *Item,DialogItemEx *Data)
 	}
 }
 
-size_t ItemStringAndSize(DialogItemEx *Data,string& ItemString)
+size_t ItemStringAndSize(DialogItemEx *Data, FARString& ItemString)
 {
 	//TODO: òóò âèäèìî íàäî ñäåëàòü ïîóìíåå
 	ItemString=Data->strData;
@@ -267,7 +267,7 @@ bool ConvertItemEx(
 
 				if (FromPlugin==CVTITEM_TOPLUGIN)
 				{
-					string str;
+					FARString str;
 					size_t sz = ItemStringAndSize(Data,str);
 					{
 						wchar_t *p = (wchar_t*)xf_malloc((sz+1)*sizeof(wchar_t));
@@ -338,7 +338,7 @@ bool ConvertItemEx(
 size_t ConvertItemEx2(FarDialogItem *Item,DialogItemEx *Data)
 {
 	size_t size=sizeof(*Item);
-	string str;
+	FARString str;
 	size_t sz = ItemStringAndSize(Data,str);
 	size+=(sz+1)*sizeof(wchar_t);
 
@@ -768,7 +768,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 
 		if (Type==DI_BUTTON && ItemFlags&DIF_SETSHIELD)
 		{
-			CurItem->strData=string(L"\x2580\x2584 ")+CurItem->strData;
+			CurItem->strData=FARString(L"\x2580\x2584 ")+CurItem->strData;
 		}
 
 		// äëÿ êíîïîê íå èìåþùè ñòèëÿ "Ïîêàçûâàåò çàãîëîâîê êíîïêè áåç ñêîáîê"
@@ -1117,11 +1117,11 @@ const wchar_t *Dialog::GetDialogTitle()
 void Dialog::ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex)
 {
 	CriticalSectionLock Lock(CS);
-	string &strData = CurItem->strData;
+	FARString &strData = CurItem->strData;
 
 	if (strData.IsEmpty())
 	{
-		string strRegKey=fmtSavedDialogHistory;
+		FARString strRegKey=fmtSavedDialogHistory;
 		strRegKey+=CurItem->strHistory;
 		History::ReadLastItem(strRegKey, strData);
 
@@ -1386,7 +1386,7 @@ void Dialog::GetDialogObjectsData()
 			{
 				if (CurItem->ObjPtr)
 				{
-					string strData;
+					FARString strData;
 					DlgEdit *EditPtr=(DlgEdit *)(CurItem->ObjPtr);
 
 					// ïîäãîòîâèì äàííûå
@@ -1705,7 +1705,7 @@ void Dialog::ShowDialog(unsigned ID)
 	if (Locked())
 		return;
 
-	string strStr;
+	FARString strStr;
 	wchar_t *lpwszStr;
 	DialogItemEx *CurItem;
 	int X,Y;
@@ -2462,7 +2462,7 @@ int64_t Dialog::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		}
 		case MCODE_V_DLGINFOID:        // Dlg.Info.Id
 		{
-			static string strId;
+			static FARString strId;
 			strId.Format(L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",Id.Data1,Id.Data2,Id.Data3,Id.Data4[0],Id.Data4[1],Id.Data4[2],Id.Data4[3],Id.Data4[4],Id.Data4[5],Id.Data4[6],Id.Data4[7]);
 			return reinterpret_cast<INT64>(strId.CPtr());
 		}
@@ -2520,7 +2520,7 @@ int Dialog::ProcessKey(int Key)
 	_DIALOG(CleverSysLog CL(L"Dialog::ProcessKey"));
 	_DIALOG(SysLog(L"Param: Key=%ls",_FARKEY_ToName(Key)));
 	unsigned I;
-	string strStr;
+	FARString strStr;
 
 	if (Key==KEY_NONE || Key==KEY_IDLE)
 	{
@@ -2963,7 +2963,7 @@ int Dialog::ProcessKey(int Key)
 									DlgEdit *edt_1=(DlgEdit *)Item[FocusPos-1]->ObjPtr;
 									edt_1->GetString(strStr);
 									CurPos=static_cast<int>(strStr.GetLength());
-									string strAdd;
+									FARString strAdd;
 									edt->GetString(strAdd);
 									strStr+=strAdd;
 									edt_1->SetString(strStr);
@@ -3037,7 +3037,7 @@ int Dialog::ProcessKey(int Key)
 
 								if (SelStart > -1)
 								{
-									string strEnd=strStr.CPtr()+SelEnd;
+									FARString strEnd=strStr.CPtr()+SelEnd;
 									strStr.SetLength(SelStart);
 									strStr+=strEnd;
 									edt->SetString(strStr);
@@ -3060,7 +3060,7 @@ int Dialog::ProcessKey(int Key)
 										strStr.ReleaseBuffer(CurPos);
 									}
 
-									string strAdd;
+									FARString strAdd;
 									edt_1->GetString(strAdd);
 									edt_1->SetString(strStr+strAdd);
 									ProcessKey(KEY_CTRLY);
@@ -3641,7 +3641,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 int Dialog::ProcessOpenComboBox(int Type,DialogItemEx *CurItem, unsigned CurFocusPos)
 {
 	CriticalSectionLock Lock(CS);
-	string strStr;
+	FARString strStr;
 	DlgEdit *CurEditLine;
 
 	// äëÿ user-òèïà âûâàëèâàåì
@@ -4059,7 +4059,7 @@ int Dialog::SelectFromComboBox(
 {
 	CriticalSectionLock Lock(CS);
 	//char *Str;
-	string strStr;
+	FARString strStr;
 	int EditX1,EditY1,EditX2,EditY2;
 	int I,Dest, OriginalPos;
 	unsigned CurFocusPos=FocusPos;
@@ -4200,16 +4200,16 @@ int Dialog::SelectFromComboBox(
 BOOL Dialog::SelectFromEditHistory(DialogItemEx *CurItem,
                                    DlgEdit *EditLine,
                                    const wchar_t *HistoryName,
-                                   string &strIStr)
+                                   FARString &strIStr)
 {
 	CriticalSectionLock Lock(CS);
 
 	if (!EditLine)
 		return FALSE;
 
-	string strStr;
+	FARString strStr;
 	int ret=0;
-	string strRegKey=fmtSavedDialogHistory;
+	FARString strRegKey=fmtSavedDialogHistory;
 	strRegKey+=HistoryName;
 	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey, &Opt.Dialogs.EditHistory, false);
 	DlgHist.ReadHistory();
@@ -4253,7 +4253,7 @@ int Dialog::AddToEditHistory(const wchar_t *AddStr,const wchar_t *HistoryName)
 		return FALSE;
 	}
 
-	string strRegKey=fmtSavedDialogHistory;
+	FARString strRegKey=fmtSavedDialogHistory;
 	strRegKey+=HistoryName;
 	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey, &Opt.Dialogs.EditHistory, false);
 	DlgHist.ReadHistory();
@@ -4553,7 +4553,7 @@ void Dialog::SetExitCode(int Code)
 /* $ 19.05.2001 DJ
    âîçâðàùàåì íàøå íàçâàíèå äëÿ ìåíþ ïî F12
 */
-int Dialog::GetTypeAndName(string &strType, string &strName)
+int Dialog::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	CriticalSectionLock Lock(CS);
 	strType = MSG(MDialogType);
@@ -5304,7 +5304,7 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 							if (Param2)
 							{
 								FarListTitles *ListTitle=(FarListTitles *)Param2;
-								string strTitle,strBottomTitle;
+								FARString strTitle,strBottomTitle;
 								ListBox->GetTitle(strTitle);
 								ListBox->GetBottomTitle(strBottomTitle);
 

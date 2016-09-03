@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include <stdarg.h>
 
-static const string& GetFarTitleAddons()
+static const FARString& GetFarTitleAddons()
 {
 	// " - Far%Ver%Admin"
 	/*
@@ -55,7 +55,7 @@ static const string& GetFarTitleAddons()
     */
 	static FormatString strVer, strBuild;
 	static bool bFirstRun = true;
-	static string strTitleAddons;
+	static FARString strTitleAddons;
 
 	strTitleAddons.Copy(L" - Far ",7);
 	strTitleAddons += Opt.strTitleAddons;
@@ -105,7 +105,7 @@ ConsoleTitle::ConsoleTitle(const wchar_t *title)
 ConsoleTitle::~ConsoleTitle()
 {
 	CriticalSectionLock Lock(TitleCS);
-	const string &strTitleAddons = GetFarTitleAddons();
+	const FARString &strTitleAddons = GetFarTitleAddons();
 	size_t OldLen = strOldTitle.GetLength();
 	size_t AddonsLen = strTitleAddons.GetLength();
 
@@ -132,8 +132,8 @@ void ConsoleTitle::Set(const wchar_t *fmt, ...)
 void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force)
 {
 	CriticalSectionLock Lock(TitleCS);
-	static string strFarTitle;
-	string strOldFarTitle;
+	static FARString strFarTitle;
+	FARString strOldFarTitle;
 
 	if (Title)
 	{

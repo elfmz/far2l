@@ -67,10 +67,10 @@ class CallBackStack
 			int   TopStr;            // номер верхней видимой строки темы
 			int   CurX,CurY;         // координаты (???)
 
-			string strHelpTopic;        // текущий топик
-			string strHelpPath;         // путь к хелпам
-			string strSelTopic;         // текущее выделение
-			string strHelpMask;         // маска
+			FARString strHelpTopic;        // текущий топик
+			FARString strHelpPath;         // путь к хелпам
+			FARString strSelTopic;         // текущее выделение
+			FARString strHelpMask;         // маска
 
 			ListNode(const StackHelpData *Data, ListNode* n=nullptr)
 			{
@@ -199,12 +199,12 @@ void Help::Hide()
 int Help::ReadHelp(const wchar_t *Mask)
 {
 	wchar_t *ReadStr;
-	string strSplitLine;
+	FARString strSplitLine;
 	int Formatting=TRUE,RepeatLastLine,BreakProcess;
 	size_t PosTab;
 	const int MaxLength=X2-X1-1;
-	string strTabSpace;
-	string strPath;
+	FARString strTabSpace;
+	FARString strPath;
 
 	if (StackData.strHelpTopic.At(0)==HelpBeginLink)
 	{
@@ -252,7 +252,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 		return FALSE;
 	}
 
-	string strReadStr;
+	FARString strReadStr;
 
 	if (GetOptionsParam(HelpFile,L"TabSize",strReadStr, nCodePage))
 	{
@@ -300,7 +300,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	int RealMaxLength;
 	bool MacroProcess=false;
 	int MI=0;
-	string strMacroArea;
+	FARString strMacroArea;
 
 	OldGetFileString GetStr(HelpFile);
 	int nStrLength,GetCode;
@@ -339,9 +339,9 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 		if (MacroProcess)
 		{
-			string strDescription;
-			string strKeyName;
-			string strOutTemp;
+			FARString strDescription;
+			FARString strKeyName;
+			FARString strOutTemp;
 
 			if (CtrlObject->Macro.GetMacroKeyInfo(true,CtrlObject->Macro.GetSubKey(strMacroArea),MI,strKeyName,strDescription) == -1)
 			{
@@ -396,7 +396,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 		if (!strCtrlStartPosChar.IsEmpty() && wcsstr(strReadStr, strCtrlStartPosChar))
 		{
-			string strLine;
+			FARString strLine;
 			ReadStr = strReadStr.GetBuffer();
 			int Length = (int)(wcsstr(ReadStr, strCtrlStartPosChar)-ReadStr);
 			strLine = ReadStr;
@@ -638,7 +638,7 @@ m1:
 
 void Help::AddLine(const wchar_t *Line)
 {
-	string strLine;
+	FARString strLine;
 
 	if (StartPos != 0xFFFFFFFF)
 	{
@@ -669,12 +669,12 @@ void Help::AddLine(const wchar_t *Line)
 
 void Help::AddTitle(const wchar_t *Title)
 {
-	string strIndexHelpTitle;
+	FARString strIndexHelpTitle;
 	strIndexHelpTitle.Format(L"^ #%ls#", Title);
 	AddLine(strIndexHelpTitle);
 }
 
-void Help::HighlightsCorrection(string &strStr)
+void Help::HighlightsCorrection(FARString &strStr)
 {
 	int I,Count;
 
@@ -803,7 +803,7 @@ void Help::DrawWindowFrame()
 	SetScreen(X1,Y1,X2,Y2,L' ',COL_HELPTEXT);
 	Box(X1,Y1,X2,Y2,COL_HELPBOX,DOUBLE_BOX);
 	SetColor(COL_HELPBOXTITLE);
-	string strHelpTitleBuf;
+	FARString strHelpTitleBuf;
 	strHelpTitleBuf = MSG(MHelpTitle);
 	strHelpTitleBuf += L" - ";
 
@@ -1077,13 +1077,13 @@ int64_t Help::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	switch (OpCode)
 	{
 		case MCODE_V_HELPFILENAME: // Help.FileName
-			*(string *)vParam=strFullHelpPathName;     // ???
+			*(FARString *)vParam=strFullHelpPathName;     // ???
 			break;
 		case MCODE_V_HELPTOPIC: // Help.Topic
-			*(string *)vParam=StackData.strHelpTopic;  // ???
+			*(FARString *)vParam=StackData.strHelpTopic;  // ???
 			break;
 		case MCODE_V_HELPSELTOPIC: // Help.SELTopic
-			*(string *)vParam=StackData.strSelTopic;   // ???
+			*(FARString *)vParam=StackData.strSelTopic;   // ???
 			break;
 		default:
 			return 0;
@@ -1339,7 +1339,7 @@ int Help::ProcessKey(int Key)
 
 int Help::JumpTopic(const wchar_t *JumpTopic)
 {
-	string strNewTopic;
+	FARString strNewTopic;
 	size_t pos;
 	Stack->PrintStack(JumpTopic);
 
@@ -1358,7 +1358,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	        && !IsAbsolutePath(StackData.strSelTopic.CPtr()+1)
 	        && !StackData.strHelpPath.IsEmpty())
 	{
-		string strFullPath;
+		FARString strFullPath;
 		wchar_t *lpwszHelpTopic = strNewTopic.GetBuffer(pos);
 		xwcsncpy(lpwszHelpTopic, StackData.strSelTopic.CPtr()+1,pos);
 		strNewTopic.ReleaseBuffer();
@@ -1780,7 +1780,7 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 	StackData.CurX=StackData.CurY=0;
 	strCtrlColorChar.Clear();
 	const wchar_t *PtrTitle=0, *ContentsName=0;
-	string strPath, strFullFileName;
+	FARString strPath, strFullFileName;
 
 	switch (TypeIndex)
 	{
@@ -1810,7 +1810,7 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 
 				if (HelpFile)
 				{
-					string strEntryName, strHelpLine, strSecondParam;
+					FARString strEntryName, strHelpLine, strSecondParam;
 
 					if (GetLangParam(HelpFile,ContentsName,&strEntryName,&strSecondParam, nCodePage))
 					{
@@ -1838,7 +1838,7 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 }
 
 // Формирование топика с учетом разных факторов
-string &Help::MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,string &strTopic)
+FARString &Help::MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,FARString &strTopic)
 {
 	strTopic.Clear();
 
@@ -2005,7 +2005,7 @@ int Help::FastHide()
 }
 
 
-int Help::GetTypeAndName(string &strType, string &strName)
+int Help::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = MSG(MHelpType);
 	strName = strFullHelpPathName;

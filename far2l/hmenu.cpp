@@ -70,7 +70,7 @@ void HMenu::DisplayObject()
 
 void HMenu::ShowMenu()
 {
-	string strTmpStr;
+	FARString strTmpStr;
 	GotoXY(X1+2,Y1);
 
 	for (int i=0; i<ItemCount; i++)
@@ -104,7 +104,7 @@ int64_t HMenu::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		}
 	}
 
-	string strName;
+	FARString strName;
 
 	switch (OpCode)
 	{
@@ -135,7 +135,7 @@ int64_t HMenu::VMProcess(int OpCode,void *vParam,int64_t iParam)
 			{
 				if (OpCode == MCODE_F_MENU_GETVALUE)
 				{
-					*(string *)vParam=Item[(int)iParam].Name;
+					*(FARString *)vParam=Item[(int)iParam].Name;
 					return 1;
 				}
 				else
@@ -164,7 +164,7 @@ int64_t HMenu::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		}
 		case MCODE_V_MENU_VALUE: // Menu.Value
 		{
-			*(string *)vParam=Item[SelectPos].Name;
+			*(FARString *)vParam=Item[SelectPos].Name;
 			return 1;
 		}
 	}

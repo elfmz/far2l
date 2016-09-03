@@ -38,4 +38,4 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow = 
 
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 
-bool ProcessOSAliases(string &strStr);
+bool ProcessOSAliases(FARString &strStr);

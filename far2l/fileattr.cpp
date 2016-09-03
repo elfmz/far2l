@@ -117,7 +117,7 @@ int ESetFileTime(const wchar_t *Name,FILETIME *LastWriteTime,FILETIME *CreationT
 
 			if ((FileAttr & FILE_ATTRIBUTE_DIRECTORY) && LastError==ERROR_NOT_SUPPORTED)   // FIX: Mantis#223
 			{
-				string strDriveRoot;
+				FARString strDriveRoot;
 				GetPathRoot(Name, strDriveRoot);
 
 				if (WINPORT(GetDriveType)(strDriveRoot)==DRIVE_REMOTE) break;

@@ -51,7 +51,7 @@ void BaseFormat::Put(LPCWSTR Data,size_t Length)
 		_Precision=Length;
 	}
 
-	string OutStr(Data,Min(_Precision,Length));
+	FARString OutStr(Data,Min(_Precision,Length));
 
 	if (_Align==fmt::A_RIGHT)
 	{
@@ -103,7 +103,7 @@ BaseFormat& BaseFormat::operator<<(LPCWSTR Data)
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(string& String)
+BaseFormat& BaseFormat::operator<<(FARString& String)
 {
 	Put(String,String.GetLength());
 	return *this;
@@ -140,7 +140,7 @@ BaseFormat& BaseFormat::operator<<(const fmt::RightAlign& Manipulator)
 	return *this;
 }
 
-void FormatScreen::Commit(const string& Data)
+void FormatScreen::Commit(const FARString& Data)
 {
 	Text(Data);
 }

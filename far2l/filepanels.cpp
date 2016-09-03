@@ -74,7 +74,7 @@ FilePanels::FilePanels():
 //  _D(SysLog(L"MainKeyBar=0x%p",&MainKeyBar));
 }
 
-static void PrepareOptFolder(string &strSrc, int IsLocalPath_FarPath)
+static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
 {
 	if (strSrc.IsEmpty())
 	{
@@ -527,7 +527,7 @@ int FilePanels::ProcessKey(int Key)
 					  ! При возврате из CTRL+Q, CTRL+L восстановим каталог, если активная панель - дерево. */
 					if (ActivePanel->GetType() == TREE_PANEL)
 					{
-						string strCurDir;
+						FARString strCurDir;
 						ActivePanel->GetCurDir(strCurDir);
 						AnotherPanel->SetCurDir(strCurDir, TRUE);
 						AnotherPanel->Update(0);
@@ -989,10 +989,10 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 	return(NewPanel);
 }
 
-int  FilePanels::GetTypeAndName(string &strType, string &strName)
+int  FilePanels::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = MSG(MScreensPanels);
-	string strFullName, strShortName;
+	FARString strFullName, strShortName;
 
 	switch (ActivePanel->GetType())
 	{
@@ -1149,7 +1149,7 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 {
 	if (FirstSlash(FileName))
 	{
-		string ADir,PDir;
+		FARString ADir,PDir;
 		Panel *PassivePanel = GetAnotherPanel(ActivePanel);
 		int PassiveMode = PassivePanel->GetMode();
 
@@ -1167,8 +1167,8 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 			AddEndSlash(ADir);
 		}
 
-		string strNameFile = PointToName(FileName);
-		string strNameDir = FileName;
+		FARString strNameFile = PointToName(FileName);
+		FARString strNameDir = FileName;
 		CutToSlash(strNameDir);
 		/* $ 10.04.2001 IS
 		     Не делаем SetCurDir, если нужный путь уже есть на открытых

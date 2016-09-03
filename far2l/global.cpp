@@ -60,10 +60,10 @@ int WaitInMainLoop=FALSE;
 
 clock_t StartIdleTime=0;
 
-string g_strFarModuleName;
-string g_strFarPath;
+FARString g_strFarModuleName;
+FARString g_strFarPath;
 
-string strGlobalSearchString;
+FARString strGlobalSearchString;
 int GlobalSearchCase=FALSE;
 int GlobalSearchWholeWords=FALSE; // значение "Whole words" для поиска
 int GlobalSearchHex=FALSE;     // значение "Search for hex" для поиска
@@ -97,7 +97,7 @@ int CriticalInternalError=FALSE;
 int _localLastError=0;
 
 int KeepUserScreen;
-string g_strDirToSet;
+FARString g_strDirToSet;
 
 int Macro_DskShowPosType=0; // для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
 

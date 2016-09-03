@@ -58,13 +58,13 @@ const wchar_t LangFileMask[] = L"*.lng";
 Language Lang;
 Language OldLang;
 
-FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, string &strFileName, UINT &nCodePage, BOOL StrongLang,string *pstrLangName)
+FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang,FARString *pstrLangName)
 {
 	strFileName.Clear();
 	FILE *LangFile=nullptr;
-	string strFullName, strEngFileName;
+	FARString strFullName, strEngFileName;
 	FAR_FIND_DATA_EX FindData;
-	string strLangName;
+	FARString strLangName;
 	ScanTree ScTree(FALSE,FALSE);
 	ScTree.SetFindPath(Path,Mask);
 
@@ -122,10 +122,10 @@ FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Langua
 }
 
 
-int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,string *strParam1, string *strParam2, UINT nCodePage)
+int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FARString *strParam2, UINT nCodePage)
 {
 	wchar_t ReadStr[1024];
-	string strFullParamName = L".";
+	FARString strFullParamName = L".";
 	strFullParamName += ParamName;
 	int Length=(int)strFullParamName.GetLength();
 	/* $ 29.11.2001 DJ
@@ -177,7 +177,7 @@ int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,string *strParam1, strin
 int Select(int HelpLanguage,VMenu **MenuPtr)
 {
 	const wchar_t *Title,*Mask;
-	string *strDest;
+	FARString *strDest;
 
 	if (HelpLanguage)
 	{
@@ -198,7 +198,7 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 	*MenuPtr=LangMenu;
 	LangMenu->SetFlags(VMENU_WRAPMODE);
 	LangMenu->SetPosition(ScrX/2-8+5*HelpLanguage,ScrY/2-4+2*HelpLanguage,0,0);
-	string strFullName;
+	FARString strFullName;
 	FAR_FIND_DATA_EX FindData;
 	ScanTree ScTree(FALSE,FALSE);
 	ScTree.SetFindPath(g_strFarPath, Mask);
@@ -212,11 +212,11 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 
 		UINT nCodePage=CP_OEMCP;
 		OldGetFileFormat(LangFile, nCodePage, nullptr, false);
-		string strLangName, strLangDescr;
+		FARString strLangName, strLangDescr;
 
 		if (GetLangParam(LangFile,L"Language",&strLangName,&strLangDescr,nCodePage))
 		{
-			string strEntryName;
+			FARString strEntryName;
 
 			if (!HelpLanguage || (!GetLangParam(LangFile,L"PluginContents",&strEntryName,nullptr,nCodePage) &&
 			                      !GetLangParam(LangFile,L"DocumentContents",&strEntryName,nullptr,nCodePage)))
@@ -255,10 +255,10 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
   + Íîâûé ìåòîä, äëÿ ïîëó÷åíèÿ ïàðàìåòðîâ äëÿ .Options
    .Options <KeyName>=<Value>
 */
-int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,string &strValue, UINT nCodePage)
+int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UINT nCodePage)
 {
 	wchar_t ReadStr[1024];
-	string strFullParamName;
+	FARString strFullParamName;
 	int Length=StrLength(L".Options");
 	long CurFilePos=ftell(SrcFile);
 
@@ -314,7 +314,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 	m_bUnicode = bUnicode;
 	UINT nCodePage = CP_OEMCP;
 	//fprintf(stderr, "Opt.strLanguage=%ls\n", Opt.strLanguage.CPtr());
-	string strLangName=Opt.strLanguage;
+	FARString strLangName=Opt.strLanguage;
 	FILE *LangFile=OpenLangFile(Path,LangFileMask,Opt.strLanguage,strMessageFile, nCodePage,FALSE, &strLangName);
 
 	if (this == &Lang && StrCmpI(Opt.strLanguage,strLangName))
@@ -330,7 +330,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 
 	while (ReadString(LangFile, ReadStr, ARRAYSIZE(ReadStr), nCodePage) )
 	{
-		string strDestStr;
+		FARString strDestStr;
 		RemoveExternalSpaces(ReadStr);
 
 		if (*ReadStr != L'\"')
@@ -478,7 +478,7 @@ void Language::Close()
 }
 
 
-void Language::ConvertString(const wchar_t *Src,string &strDest)
+void Language::ConvertString(const wchar_t *Src,FARString &strDest)
 {
 	wchar_t *Dest = strDest.GetBuffer(wcslen(Src)*2);
 
@@ -554,7 +554,7 @@ bool Language::CheckMsgId(int MsgId) const
 			     (ðàíüøå èìÿ ôàéëà îáðåçàëîñü ñïðàâà è ïðèõîäèëîñü èíîãäà ãàäàòü - â
 			     êàêîì æå ôàéëå îøèáêà)
 			*/
-			string strMsg1(L"Incorrect or damaged ");
+			FARString strMsg1(L"Incorrect or damaged ");
 			strMsg1+=strMessageFile;
 			/* IS $ */
 			FormatString strMsgNotFound;

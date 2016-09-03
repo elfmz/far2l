@@ -72,7 +72,7 @@ DlgEdit::DlgEdit(Dialog* pOwner,unsigned Index,DLGEDITTYPE Type):
 				}
 				if(CurItem->Flags&DIF_HISTORY && !CurItem->strHistory.IsEmpty())
 				{
-					string strHistory = fmtSavedDialogHistory;
+					FARString strHistory = fmtSavedDialogHistory;
 					strHistory+=CurItem->strHistory;
 					iHistory=new History(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strHistory, &Opt.Dialogs.EditHistory, false);
 					iHistory->ReadHistory(true);
@@ -345,7 +345,7 @@ void DlgEdit::GetString(wchar_t *Str,int MaxSize,int Row)
 		lineEdit->GetString(Str,MaxSize);
 }
 
-void DlgEdit::GetString(string &strStr,int Row)
+void DlgEdit::GetString(FARString &strStr,int Row)
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 
@@ -724,7 +724,7 @@ void DlgEdit::DoEditChange()
 	}
 }
 
-bool DlgEdit::HistoryGetSimilar(string &strStr, int LastCmdPartLength, bool bAppend)
+bool DlgEdit::HistoryGetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend)
 {
 	return iHistory?iHistory->GetSimilar(strStr, LastCmdPartLength, bAppend):false;
 }

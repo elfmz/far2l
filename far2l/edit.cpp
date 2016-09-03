@@ -528,11 +528,11 @@ int Edit::RecurseProcessKey(int Key)
 int Edit::ProcessInsPath(int Key,int PrevSelStart,int PrevSelEnd)
 {
 	int RetCode=FALSE;
-	string strPathName;
+	FARString strPathName;
 
 	if (Key>=KEY_RCTRL0 && Key<=KEY_RCTRL9) // øîðòêàòû?
 	{
-		string strPluginModule, strPluginFile, strPluginData;
+		FARString strPluginModule, strPluginFile, strPluginData;
 
 		if (GetShortcutFolder(Key-KEY_RCTRL0,&strPathName,&strPluginModule,&strPluginFile,&strPluginData))
 			RetCode=TRUE;
@@ -1670,7 +1670,7 @@ void Edit::GetString(wchar_t *Str,int MaxSize)
 	Str[MaxSize-1]=0;
 }
 
-void Edit::GetString(string &strStr)
+void Edit::GetString(FARString &strStr)
 {
 	strStr = Str;
 }
@@ -1688,7 +1688,7 @@ void  Edit::SetHiString(const wchar_t *Str)
 	if (Flags.Check(FEDITLINE_READONLY))
 		return;
 
-	string NewStr;
+	FARString NewStr;
 	HiText2Str(NewStr, Str);
 	Select(-1,0);
 	SetBinaryString(NewStr,StrLength(NewStr));
@@ -1864,7 +1864,7 @@ int Edit::GetSelString(wchar_t *Str, int MaxSize)
 	return TRUE;
 }
 
-int Edit::GetSelString(string &strStr)
+int Edit::GetSelString(FARString &strStr)
 {
 	if (SelStart==-1 || (SelEnd!=-1 && SelEnd<=SelStart) ||
 	        SelStart>=StrSize)
@@ -2122,7 +2122,7 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
    Íåìíîãî èçìåí¸í àëãîðèòì èç-çà íåîáõîäèìîñòè
    äîáàâëåíèÿ ïîèñêà öåëûõ ñëîâ.
 */
-int Edit::Search(const string& Str,string& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength)
+int Edit::Search(const FARString& Str,FARString& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength)
 {
 	*SearchLength = 0;
 
@@ -2142,7 +2142,7 @@ int Edit::Search(const string& Str,string& ReplaceStr,int Position,int Case,int 
 		if (!Reverse && Regexp)
 		{
 			RegExp re;
-			string strSlash(Str);
+			FARString strSlash(Str);
 			InsertRegexpQuote(strSlash);
 
 			// Q: ÷òî âàæíåå: îïöèÿ äèàëîãà èëè îïöèÿ RegExp`à?
@@ -3011,7 +3011,7 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 		Reenter++;
 
 		VMenu ComplMenu(nullptr,nullptr,0,0);
-		string strTemp=Str;
+		FARString strTemp=Str;
 
 		if(pHistory)
 		{
@@ -3093,7 +3093,7 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 						// ââîä
 						if((MenuKey>=L' ' && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
 						{
-							string strPrev;
+							FARString strPrev;
 							GetString(strPrev);
 							DeleteBlock();
 							ProcessKey(MenuKey);

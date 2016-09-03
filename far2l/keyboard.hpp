@@ -60,7 +60,7 @@ int KeyToKeyLayout(int Key);
 DWORD IsMouseButtonPressed();
 int TranslateKeyToVK(int Key,int &VirtKey,int &ControlState,INPUT_RECORD *rec=nullptr);
 int WINAPI KeyNameToKey(const wchar_t *Name);
-BOOL WINAPI KeyToText(int Key, string &strKeyText);
+BOOL WINAPI KeyToText(int Key, FARString &strKeyText);
 int WINAPI InputRecordToKey(const INPUT_RECORD *Rec);
 DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro=false,bool ProcessMouse=false,bool AllowSynchro=true);
 DWORD PeekInputRecord(INPUT_RECORD *rec,bool ExcludeMacro=true);

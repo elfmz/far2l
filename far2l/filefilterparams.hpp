@@ -78,12 +78,12 @@ class FileFilterParams
 {
 	private:
 
-		string m_strTitle;
+		FARString m_strTitle;
 
 		struct
 		{
 			bool Used;
-			string strMask;
+			FARString strMask;
 			CFileMask FilterMask; // Õðàíèëèùå ñêîìïèëèðîâàííîé ìàñêè.
 		} FMask;
 
@@ -161,4 +161,4 @@ class FileFilterParams
 bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig=false);
 
 //Öåíòðàëèçîâàííàÿ ôóíêöèÿ äëÿ ñîçäàíèÿ ñòðîê ìåíþ ðàçëè÷íûõ ôèëüòðîâ.
-void MenuString(string &strDest, FileFilterParams *FF, bool bHighlightType=false, int Hotkey=0, bool bPanelType=false, const wchar_t *FMask=nullptr, const wchar_t *Title=nullptr);
+void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType=false, int Hotkey=0, bool bPanelType=false, const wchar_t *FMask=nullptr, const wchar_t *Title=nullptr);

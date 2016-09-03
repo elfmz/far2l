@@ -80,7 +80,7 @@ class BaseFormat
 		void Put(LPCWSTR Data,size_t Length);
 
 	protected:
-		virtual void Commit(const string& Data)=0;
+		virtual void Commit(const FARString& Data)=0;
 
 	public:
 		BaseFormat() {Reset();}
@@ -107,7 +107,7 @@ class BaseFormat
 #endif
 		BaseFormat& operator<<(WCHAR Value);
 		BaseFormat& operator<<(LPCWSTR Data);
-		BaseFormat& operator<<(string& String);
+		BaseFormat& operator<<(FARString& String);
 
 		// manipulators
 		BaseFormat& operator<<(const fmt::Width& Manipulator);
@@ -119,15 +119,15 @@ class BaseFormat
 
 class FormatString:public BaseFormat
 {
-		string Value;
-		void Commit(const string& Data) {Value+=Data;}
+		FARString Value;
+		void Commit(const FARString& Data) {Value+=Data;}
 	public:
 		operator const wchar_t*()const {return Value;}
-		const string& strValue()const {return Value;}
+		const FARString& strValue()const {return Value;}
 		void Clear() {Value.Clear();}
 };
 
 class FormatScreen:public BaseFormat
 {
-		void Commit(const string& Data);
+		void Commit(const FARString& Data);
 };

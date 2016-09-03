@@ -68,7 +68,7 @@ COORD CurSize={0};
 SHORT ScrX=0,ScrY=0;
 SHORT PrevScrX=-1,PrevScrY=-1;
 DWORD InitialConsoleMode=0;
-string strInitTitle;
+FARString strInitTitle;
 SMALL_RECT InitWindowRect;
 COORD InitialSize;
 
@@ -372,7 +372,7 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType)
 
 void ShowTime(int ShowAlways)
 {
-	string strClockText;
+	FARString strClockText;
 	static SYSTEMTIME lasttm={0,0,0,0,0,0,0,0};
 	SYSTEMTIME tm;
 	WINPORT(GetLocalTime)(&tm);
@@ -611,7 +611,7 @@ void VText(const WCHAR *Str)
 
 void HiText(const wchar_t *Str,int HiColor,int isVertText)
 {
-	string strTextStr;
+	FARString strTextStr;
 	int SaveColor;
 	size_t pos;
 	strTextStr = Str;
@@ -662,7 +662,7 @@ void HiText(const wchar_t *Str,int HiColor,int isVertText)
 					Text(Chr);
 
 				SetColor(SaveColor);
-				string strText = (ChPtr+1);
+				FARString strText = (ChPtr+1);
 				strTextStr.ReleaseBuffer();
 				ReplaceStrings(strText,L"&&",L"&",-1);
 
@@ -1019,7 +1019,7 @@ WCHAR* MakeSeparator(int Length,WCHAR *DestStr,int Type, const wchar_t* UserSep)
 	return DestStr;
 }
 
-string& HiText2Str(string& strDest, const wchar_t *Str)
+FARString& HiText2Str(FARString& strDest, const wchar_t *Str)
 {
 	const wchar_t *ChPtr;
 	strDest = Str;
@@ -1049,7 +1049,7 @@ string& HiText2Str(string& strDest, const wchar_t *Str)
 			{
 				wchar_t Chr[]={ChPtr[1],0};
 				strDest+=Chr;
-				string strText = (ChPtr+1);
+				FARString strText = (ChPtr+1);
 				ReplaceStrings(strText,L"&&",L"&",-1);
 				strDest+=strText.CPtr()+1;
 			}

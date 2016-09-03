@@ -54,7 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void DrawGetDirInfoMsg(const wchar_t *Title,const wchar_t *Name,const UINT64 Size)
 {
-	string strSize;
+	FARString strSize;
 	FileSizeToStr(strSize,Size,8,COLUMN_FLOATSIZE|COLUMN_COMMAS);
 	RemoveLeadingSpaces(strSize);
 	Message(0,0,Title,MSG(MScanningFolder),Name,strSize);
@@ -83,8 +83,8 @@ int GetDirInfo(const wchar_t *Title,
                FileFilter *Filter,
                DWORD Flags)
 {
-	string strFullDirName, strDriveRoot;
-	string strFullName, strCurDirName, strLastDirName;
+	FARString strFullDirName, strDriveRoot;
+	FARString strFullName, strCurDirName, strLastDirName;
 	ConvertNameToFull(DirName, strFullDirName);
 	SaveScreen SaveScr;
 	UndoGlobalSaveScrPtr UndSaveScr(&SaveScr);

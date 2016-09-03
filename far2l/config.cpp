@@ -69,7 +69,7 @@ static const wchar_t *WordDiv0 = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
 // Стандартный набор разделителей для функции Xlat
 static const wchar_t *WordDivForXlat0=L" \t!#$%^&*()+|=\\/@?";
 
-string strKeyNameConsoleDetachKey;
+FARString strKeyNameConsoleDetachKey;
 static const wchar_t szCtrlShiftX[]=L"CtrlShiftX";
 static const wchar_t szCtrlDot[]=L"Ctrl.";
 static const wchar_t szCtrlShiftDot[]=L"CtrlShift.";
@@ -481,7 +481,7 @@ void EditorConfig(EditorOptions &EdOpt,bool Local)
 
 void SetFolderInfoFiles()
 {
-	string strFolderInfoFiles;
+	FARString strFolderInfoFiles;
 
 	if (GetString(MSG(MSetFolderInfoTitle),MSG(MSetFolderInfoNames),L"FolderInfoFiles",
 	              Opt.InfoPanel.strFolderInfoFiles,strFolderInfoFiles,L"OptMenu",FIB_ENABLEEMPTY|FIB_BUTTONS))
@@ -815,8 +815,8 @@ static struct FARConfig
 void ReadConfig()
 {
 	DWORD OptPolicies_ShowHiddenDrives,  OptPolicies_DisabledOptions;
-	string strKeyNameFromReg;
-	string strPersonalPluginsPath;
+	FARString strKeyNameFromReg;
+	FARString strPersonalPluginsPath;
 	size_t I;
 
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */
@@ -839,7 +839,7 @@ void ReadConfig()
 				GetRegKey(CFG[I].KeyName, CFG[I].ValName,*(int *)CFG[I].ValPtr,(DWORD)CFG[I].DefDWord);
 				break;
 			case REG_SZ:
-				GetRegKey(CFG[I].KeyName, CFG[I].ValName,*(string *)CFG[I].ValPtr,CFG[I].DefStr);
+				GetRegKey(CFG[I].KeyName, CFG[I].ValName,*(FARString *)CFG[I].ValPtr,CFG[I].DefStr);
 				break;
 			case REG_BINARY:
 				int Size=GetRegKey(CFG[I].KeyName, CFG[I].ValName,(BYTE*)CFG[I].ValPtr,(BYTE*)CFG[I].DefStr,CFG[I].DefDWord);
@@ -931,7 +931,7 @@ void ReadConfig()
 	{
 		Opt.XLat.CurrentLayout=0;
 		memset(Opt.XLat.Layouts,0,sizeof(Opt.XLat.Layouts));
-		string strXLatLayouts;
+		FARString strXLatLayouts;
 		GetRegKey(NKeyXLat,L"Layouts",strXLatLayouts,L"");
 
 		if (!strXLatLayouts.IsEmpty())
@@ -985,7 +985,7 @@ void SaveConfig(int Ask)
 	if (Ask && Message(0,2,MSG(MSaveSetupTitle),MSG(MSaveSetupAsk1),MSG(MSaveSetupAsk2),MSG(MSaveSetup),MSG(MCancel)))
 		return;
 
-	string strTemp;
+	FARString strTemp;
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */
 	Panel *LeftPanel=CtrlObject->Cp()->LeftPanel;
 	Panel *RightPanel=CtrlObject->Cp()->RightPanel;
@@ -1041,7 +1041,7 @@ void SaveConfig(int Ask)
 					SetRegKey(CFG[I].KeyName, CFG[I].ValName,*(int *)CFG[I].ValPtr);
 					break;
 				case REG_SZ:
-					SetRegKey(CFG[I].KeyName, CFG[I].ValName,*(string *)CFG[I].ValPtr);
+					SetRegKey(CFG[I].KeyName, CFG[I].ValName,*(FARString *)CFG[I].ValPtr);
 					break;
 				case REG_BINARY:
 					SetRegKey(CFG[I].KeyName, CFG[I].ValName,(BYTE*)CFG[I].ValPtr,CFG[I].DefDWord);

@@ -137,7 +137,7 @@ bool FileFilter::FilterEdit()
 
 				const wchar_t *FMask;
 				TempFilterData.getItem(i)->GetMask(&FMask);
-				string strMask = FMask;
+				FARString strMask = FMask;
 				Unquote(strMask);
 
 				if (!ParseAndAddMasks(&ExtPtr,strMask,0,ExtCount,GetCheck(TempFilterData.getItem(i))))
@@ -159,7 +159,7 @@ bool FileFilter::FilterEdit()
 
 		if (GetHostPanel()->GetMode()==NORMAL_PANEL)
 		{
-			string strCurDir, strFileName;
+			FARString strCurDir, strFileName;
 			FAR_FIND_DATA_EX fdata;
 			GetHostPanel()->GetCurDir(strCurDir);
 			ScanTree ScTree(FALSE,FALSE);
@@ -171,7 +171,7 @@ bool FileFilter::FilterEdit()
 		}
 		else
 		{
-			string strFileName;
+			FARString strFileName;
 			DWORD FileAttr;
 
 			for (int i=0; GetHostPanel()->GetFileName(strFileName,i,FileAttr); i++)
@@ -351,7 +351,7 @@ bool FileFilter::FilterEdit()
 
 				if (SelPos<(int)FilterData.getCount())
 				{
-					string strQuotedTitle=FilterData.getItem(SelPos)->GetTitle();
+					FARString strQuotedTitle=FilterData.getItem(SelPos)->GetTitle();
 					InsertQuote(strQuotedTitle);
 
 					if (!Message(0,2,MSG(MFilterTitle),MSG(MAskDeleteFilter),
@@ -510,7 +510,7 @@ void FileFilter::ProcessSelection(VMenu *FilterList)
 		{
 			const wchar_t *FMask;
 			wchar_t Mask[MAX_PATH];
-			string strMask1;
+			FARString strMask1;
 			FilterList->GetUserData(Mask,sizeof(Mask),i);
 			//AY: “ак как в меню мы показываем только те выбранные авто фильтры
 			//которые выбраны в области данного меню и TempFilterData вполне
@@ -523,7 +523,7 @@ void FileFilter::ProcessSelection(VMenu *FilterList)
 
 			while ((CurFilterData=TempFilterData.getItem(j)))
 			{
-				string strMask2;
+				FARString strMask2;
 				CurFilterData->GetMask(&FMask);
 				strMask2 = FMask;
 				Unquote(strMask2);
@@ -786,8 +786,8 @@ void FileFilter::InitFilter()
 {
 	FilterData.Free();
 	TempFilterData.Free();
-	string strRegKey;
-	string strTitle, strMask, strSizeBelow, strSizeAbove;
+	FARString strRegKey;
+	FARString strTitle, strMask, strSizeBelow, strSizeAbove;
 
 	while (1)
 	{
@@ -876,7 +876,7 @@ void FileFilter::CloseFilter()
 
 void FileFilter::SaveFilters()
 {
-	string strRegKey;
+	FARString strRegKey;
 	DeleteKeyTree(L"Filters");
 	FileFilterParams *CurFilterData;
 
@@ -962,7 +962,7 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD 
 		return -1;
 
 	const wchar_t *DotPtr=wcsrchr(FileName,L'.');
-	string strMask;
+	FARString strMask;
 
 	// ≈сли маска содержит разделитель (',' или ';'), то возьмем ее в кавычки
 	if (!DotPtr)

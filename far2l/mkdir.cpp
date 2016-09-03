@@ -69,7 +69,7 @@ LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		{
 			if (Param1==MKDIR_OK)
 			{
-				string strDirName=reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,MKDIR_EDIT,0));
+				FARString strDirName=reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,MKDIR_EDIT,0));
 				Opt.MultiMakeDir=(SendDlgMessage(hDlg,DM_GETCHECK,MKDIR_CHECKBOX,0)==BSTATE_CHECKED);
 
 				// это по поводу создания одиночного каталога, который
@@ -106,8 +106,8 @@ LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 void ShellMakeDir(Panel *SrcPanel)
 {
-	string strDirName;
-	string strOriginalDirName;
+	FARString strDirName;
+	FARString strOriginalDirName;
 	wchar_t *lpwszDirName;
 	UserDefinedList DirList(0,0,ULF_UNIQUE);
 	DialogDataEx MkDirDlgData[]=

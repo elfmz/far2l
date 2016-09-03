@@ -45,7 +45,7 @@ enum
 
 struct PushPopRecord
 {
-	string strName;
+	FARString strName;
 
 	const PushPopRecord& operator=(const PushPopRecord &rhs) {strName=rhs.strName; return *this;}
 };
@@ -56,15 +56,15 @@ class CommandLine:public ScreenObject
 	private:
 		EditControl CmdStr;
 		SaveScreen *BackgroundScreen;
-		string strCurDir;
-		string strLastCmdStr;
+		FARString strCurDir;
+		FARString strLastCmdStr;
 		int LastCmdPartLength;
 		TStack<PushPopRecord> ppstack;
 
 	private:
 		virtual void DisplayObject();
 		int CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
-		void GetPrompt(string &strDestStr);
+		void GetPrompt(FARString &strDestStr);
 		BOOL IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent=false);
 		bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
 
@@ -79,10 +79,10 @@ class CommandLine:public ScreenObject
 
 		virtual void ResizeConsole();
 
-		int GetCurDir(string &strCurDir);
+		int GetCurDir(FARString &strCurDir);
 		BOOL SetCurDir(const wchar_t *CurDir);
 
-		void GetString(string &strStr) { CmdStr.GetString(strStr); };
+		void GetString(FARString &strStr) { CmdStr.GetString(strStr); };
 		int GetLength() { return CmdStr.GetLength(); };
 		void SetString(const wchar_t *Str,BOOL Redraw=TRUE);
 		void InsertString(const wchar_t *Str);
@@ -99,7 +99,7 @@ class CommandLine:public ScreenObject
 		void SetDelRemovesBlocks(int Mode);
 		void SetAutoComplete(int Mode);
 
-		void GetSelString(string &strStr) { CmdStr.GetSelString(strStr); };
+		void GetSelString(FARString &strStr) { CmdStr.GetSelString(strStr); };
 		void GetSelection(int &Start,int &End) { CmdStr.GetSelection(Start,End); };
 		void Select(int Start, int End) { CmdStr.Select(Start,End); };
 

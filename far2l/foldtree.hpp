@@ -52,8 +52,8 @@ class FolderTree:public Frame
 		int IsStandalone;
 		int  PrevMacroMode;        // предыдущий режим макроса
 
-		string strNewFolder;
-		string strLastName;
+		FARString strNewFolder;
+		FARString strLastName;
 
 	private:
 		void DrawEdit();
@@ -61,7 +61,7 @@ class FolderTree:public Frame
 		void SetCoords();
 
 	public:
-		FolderTree(string &strResultFolder,int ModalMode,int IsStandalone=TRUE,int IsFullScreen=TRUE);
+		FolderTree(FARString &strResultFolder,int ModalMode,int IsStandalone=TRUE,int IsFullScreen=TRUE);
 		virtual ~FolderTree();
 
 	public:
@@ -76,7 +76,7 @@ class FolderTree:public Frame
 		virtual int  FastHide();
 
 		virtual const wchar_t *GetTypeName() {return L"[FolderTree]";}
-		virtual int GetTypeAndName(string &strType, string &strName);
+		virtual int GetTypeAndName(FARString &strType, FARString &strName);
 		virtual int GetType() { return MODALTYPE_FINDFOLDER; }
 
 };

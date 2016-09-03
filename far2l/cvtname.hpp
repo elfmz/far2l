@@ -45,10 +45,10 @@ enum ReparsePointTypes
 };
 
 
-string& PrepareDiskPath(string &strPath, bool CheckFullPath=true);
+FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath=true);
 
-void ConvertNameToReal(const wchar_t *Src, string &strDest);
-void ConvertNameToFull(const wchar_t *Src, string &strDest);
+void ConvertNameToReal(const wchar_t *Src, FARString &strDest);
+void ConvertNameToFull(const wchar_t *Src, FARString &strDest);
 
-void GetPathRoot(const wchar_t *Path, string &strRoot);
+void GetPathRoot(const wchar_t *Path, FARString &strRoot);
 

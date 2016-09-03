@@ -146,7 +146,7 @@ int WINAPI FarInputBox(
 	if (FrameManager->ManagerIsDown())
 		return FALSE;
 
-	string strDest;
+	FARString strDest;
 	int nResult = GetString(Title,Prompt,HistoryName,SrcText,strDest,HelpTopic,Flags&~FIB_CHECKBOX,nullptr,nullptr);
 	xwcsncpy(DestText, strDest, DestLength+1);
 	return nResult;
@@ -167,8 +167,8 @@ BOOL WINAPI FarShowHelp(
 
 	DWORD OFlags=Flags;
 	Flags&=~(FHELP_NOSHOWERROR|FHELP_USECONTENTS);
-	string strPath, strTopic;
-	string strMask;
+	FARString strPath, strTopic;
+	FARString strMask;
 
 	// äâîåòî÷èå â íà÷àëå òîïèêà íàäî áû èãíîðèðîâàòü è â òîì ñëó÷àå,
 	// åñëè ñòîèò FHELP_FARHELP...
@@ -439,7 +439,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 						}
 						else
 						{
-							static string ErrSrc;
+							static FARString ErrSrc;
 							Macro.GetMacroParseError(&KeyMacro->Param.MacroResult.ErrCode,&KeyMacro->Param.MacroResult.ErrPos,&ErrSrc);
 							KeyMacro->Param.MacroResult.ErrSrc=ErrSrc;
 						}
@@ -527,7 +527,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 		{
 			if (FrameManager && Param)
 			{
-				string strType, strName;
+				FARString strType, strName;
 				WindowInfo *wi=(WindowInfo*)Param;
 				Frame *f;
 
@@ -878,7 +878,7 @@ int WINAPI FarMenuFn(
 			*BreakCode=-1;
 
 		{
-			string strTopic;
+			FARString strTopic;
 
 			if (Help::MkTopic(PluginNumber,HelpTopic,strTopic))
 				FarMenu.SetHelp(strTopic);
@@ -1166,7 +1166,7 @@ const wchar_t* WINAPI FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
 {
 	//BUGBUG, íàäî ïðîâåðÿòü, ÷òî PluginHandle - ïëàãèí
 	PluginW *pPlugin = (PluginW*)PluginHandle;
-	string strPath = pPlugin->GetModuleName();
+	FARString strPath = pPlugin->GetModuleName();
 	CutToSlash(strPath);
 
 	if (pPlugin->InitLang(strPath))
@@ -1301,7 +1301,7 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
 	// çàïîìèíàåì òîïèê
 	if (PluginNumber != -1)
 	{
-		string strTopic;
+		FARString strTopic;
 
 		if (Help::MkTopic(PluginNumber,HelpTopic,strTopic))
 			SetMessageHelp(strTopic);
@@ -1461,7 +1461,7 @@ int WINAPI FarControl(HANDLE hPlugin,int Command,int Param1,LONG_PTR Param2)
 		case FCTL_GETCMDLINE:
 		case FCTL_GETCMDLINESELECTEDTEXT:
 		{
-			string strParam;
+			FARString strParam;
 
 			if (Command==FCTL_GETCMDLINE)
 				CmdLine->GetString(strParam);
@@ -1589,7 +1589,7 @@ int WINAPI FarGetDirList(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pIte
 	if (FrameManager->ManagerIsDown() || !Dir || !*Dir || !pItemsNumber || !pPanelItem)
 		return FALSE;
 
-	string strDirName;
+	FARString strDirName;
 	ConvertNameToFull(Dir, strDirName);
 	{
 		TPreRedrawFuncGuard preRedrawFuncGuard(PR_FarGetDirListMsg);
@@ -1597,7 +1597,7 @@ int WINAPI FarGetDirList(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pIte
 		clock_t StartTime=GetProcessUptimeMSec();
 		int MsgOut=0;
 		FAR_FIND_DATA_EX FindData;
-		string strFullName;
+		FARString strFullName;
 		ScanTree ScTree(FALSE);
 		ScTree.SetFindPath(strDirName,L"*");
 		*pItemsNumber=0;
@@ -1652,7 +1652,7 @@ int WINAPI FarGetDirList(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pIte
 
 static PluginPanelItem *PluginDirList;
 static int DirListItemsNumber;
-static string strPluginSearchPath;
+static FARString strPluginSearchPath;
 static int StopSearch;
 static HANDLE hDirListPlugin;
 static int PluginSearchMsgOut;
@@ -1710,7 +1710,7 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber,
 			SaveScreen SaveScr;
 			TPreRedrawFuncGuard preRedrawFuncGuard(PR_FarGetPluginDirListMsg);
 			{
-				string strDirName;
+				FARString strDirName;
 				strDirName = Dir;
 				TruncStr(strDirName,30);
 				CenterStr(strDirName,strDirName,30);
@@ -1723,7 +1723,7 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber,
 				*pPanelItem=PluginDirList=nullptr;
 				OpenPluginInfo Info;
 				CtrlObject->Plugins.GetOpenPluginInfo(hDirListPlugin,&Info);
-				string strPrevDir = Info.CurDir;
+				FARString strPrevDir = Info.CurDir;
 
 				if (CtrlObject->Plugins.SetDirectory(hDirListPlugin,Dir,OPM_SILENT))
 				{
@@ -1761,7 +1761,7 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber,
 
 static void CopyPluginDirItem(PluginPanelItem *CurPanelItem)
 {
-	string strFullName;
+	FARString strFullName;
 	strFullName = strPluginSearchPath;
 	strFullName += CurPanelItem->FindData.lpwszFileName;
 	wchar_t *lpwszFullName = strFullName.GetBuffer();
@@ -1791,7 +1791,7 @@ void ScanPluginDir()
 	PluginPanelItem *PanelData=nullptr;
 	int ItemCount=0;
 	int AbortOp=FALSE;
-	string strDirName;
+	FARString strDirName;
 	strDirName = strPluginSearchPath;
 	wchar_t *lpwszDirName = strDirName.GetBuffer();
 
@@ -1857,7 +1857,7 @@ void ScanPluginDir()
 					îáðàáîòàòü PPIF_USERDATA)
 			*/
 			CopyPluginDirItem(CurPanelItem);
-			string strFileName = CurPanelItem->FindData.lpwszFileName;
+			FARString strFileName = CurPanelItem->FindData.lpwszFileName;
 
 			if (CtrlObject->Plugins.SetDirectory(hDirListPlugin,strFileName,OPM_FIND))
 			{
@@ -2230,7 +2230,7 @@ int WINAPI farIsAlphaNum(wchar_t Ch)
 
 int WINAPI farGetFileOwner(const wchar_t *Computer,const wchar_t *Name, wchar_t *Owner,int Size)
 {
-	string strOwner;
+	FARString strOwner;
 	/*int Ret=*/GetFileOwner(Computer,Name,strOwner);
 
 	if (Owner && Size)
@@ -2243,7 +2243,7 @@ int WINAPI farConvertPath(CONVERTPATHMODES Mode,const wchar_t *Src, wchar_t *Des
 {
 	if (Src && *Src)
 	{
-		string strDest;
+		FARString strDest;
 
 		switch (Mode)
 		{
@@ -2280,8 +2280,8 @@ int WINAPI farGetReparsePointInfo(const wchar_t *Src,wchar_t *Dest,int DestSize)
 	/*
 	if (Src && *Src)
 	{
-		string strSrc(Src);
-		string strDest;
+		FARString strSrc(Src);
+		FARString strDest;
 		AddEndSlash(strDest);
 		DWORD Size=GetReparsePointInfo(strSrc,strDest,nullptr);
 		_LOGCOPYR(SysLog(L"return -> %d strSrc='%ls', strDest='%ls'",__LINE__,strSrc.CPtr(),strDest.CPtr()));
@@ -2299,7 +2299,7 @@ int WINAPI farGetPathRoot(const wchar_t *Path, wchar_t *Root, int DestSize)
 {
 	if (Path && *Path)
 	{
-		string strPath(Path), strRoot;
+		FARString strPath(Path), strRoot;
 		GetPathRoot(strPath,strRoot);
 
 		if (DestSize && Root)
@@ -2328,7 +2328,7 @@ int WINAPI farPluginsControl(HANDLE hHandle, int Command, int Param1, LONG_PTR P
 			{
 				if (Param2 )
 				{
-					string strPath;
+					FARString strPath;
 					ConvertNameToFull((const wchar_t *)Param2, strPath);
 
 					if (Command == PCTL_LOADPLUGIN)
@@ -2482,7 +2482,7 @@ int WINAPI farRegExpControl(HANDLE hHandle, int Command, LONG_PTR Param)
 
 DWORD WINAPI farGetCurrentDirectory(DWORD Size,wchar_t* Buffer)
 {
-	string strCurDir;
+	FARString strCurDir;
 	apiGetCurrentDirectory(strCurDir);
 
 	if (Buffer && Size)

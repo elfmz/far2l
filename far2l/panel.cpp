@@ -79,7 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static int DragX,DragY,DragMove;
 static Panel *SrcDragPanel;
 static SaveScreen *DragSaveScr=nullptr;
-static string strDragName;
+static FARString strDragName;
 
 /* $ 21.08.2002 IS
    Êëàññ äëÿ õðàíåíèÿ ïóíêòà ïëàãèíà â ìåíþ âûáîðà äèñêîâ
@@ -145,7 +145,7 @@ void Panel::SetViewMode(int ViewMode)
 
 void Panel::ChangeDirToCurrent()
 {
-	string strNewDir;
+	FARString strNewDir;
 	apiGetCurrentDirectory(strNewDir);
 	SetCurDir(strNewDir,TRUE);
 }
@@ -216,8 +216,8 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 	// Ñïèñîê äîïîëíèòåëüíûõ õîòêååâ, äëÿ ñëó÷àÿ, êîãäà ïëàãèíîâ, äîáàâëÿþùèõ ïóíêò â ìåíþ, áîëüøå 9.
 	int PluginItem, PluginNumber = 0; // IS: ñ÷åò÷èêè - ïëàãèíîâ è ïóíêòîâ ïëàãèíà
 	bool ItemPresent,Done=false;
-	string strMenuText;
-	string strPluginText;
+	FARString strMenuText;
+	FARString strPluginText;
 	size_t PluginMenuItemsCount = 0;
 
 	while (!Done)
@@ -310,7 +310,7 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 					SetSelected=DiskCount+static_cast<int>(I)+1==Pos;
 			}
 			const wchar_t HotKeyStr[]={MPItems.getItem(I)->HotKey?L'&':L' ',MPItems.getItem(I)->HotKey?MPItems.getItem(I)->HotKey:L' ',L' ',MPItems.getItem(I)->HotKey?L' ':L'\0',L'\0'};
-			MPItems.getItem(I)->Item.strName = string(HotKeyStr) + MPItems.getItem(I)->Item.strName;
+			MPItems.getItem(I)->Item.strName = FARString(HotKeyStr) + MPItems.getItem(I)->Item.strName;
 			ChDisk.AddItem(&MPItems.getItem(I)->Item);
 
 			delete(PanelMenuItem*)MPItems.getItem(I)->Item.UserData;  //ììäà...
@@ -465,7 +465,7 @@ void EnumMountedFilesystems(MountedFilesystems &out, const WCHAR *another = NULL
 }
 
 
-string StringPrepend(string s, size_t width)
+FARString StringPrepend(FARString s, size_t width)
 {
 	//fprintf(stderr, "%u %u\n", s.GetSize(), width);
 	while (s.GetLength() < width) {
@@ -491,14 +491,14 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	};
 	Guard_Macro_DskShowPosType _guard_Macro_DskShowPosType(this);
 	MenuItemEx ChDiskItem;
-	string strDiskType, strRootDir, strDiskLetter;
+	FARString strDiskType, strRootDir, strDiskLetter;
 //	DWORD Mask = 4,DiskMask;
 	int Focus;//DiskCount = 1
 	WCHAR I;
 	bool SetSelected=false;
 	DWORD NetworkMask = 0;
 
-	string curdir, another_curdir;
+	FARString curdir, another_curdir;
 	GetCurDir(curdir);
 	CtrlObject->Cp()->GetAnotherPanel(this)->GetCurDir(another_curdir);
 	MountedFilesystems filesystems;
@@ -515,7 +515,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 		ChDisk.SetHelp(L"DriveDlg");
 		ChDisk.SetFlags(VMENU_WRAPMODE);
-		string strMenuText;
+		FARString strMenuText;
 		int MenuLine = 0;
 
 		/* $ 02.04.2001 VVM
@@ -661,9 +661,9 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						}
 						else
 						{
-							string strRegKey;
+							FARString strRegKey;
 							CtrlObject->Plugins.GetHotKeyRegKey(item->pPlugin, item->nItem,strRegKey);
-							string strName = ChDisk.GetItemPtr(SelPos)->strName + 3;
+							FARString strName = ChDisk.GetItemPtr(SelPos)->strName + 3;
 							RemoveExternalSpaces(strName);
 							if(CtrlObject->Plugins.SetHotKeyDialog(strName, strRegKey, L"DriveMenuHotkey"))
 							{
@@ -842,7 +842,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				CHDISKERROR_BUTTON_CANCEL,
 			};
 			//const wchar_t Drive[]={mitem->cDrive,L'\0'};
-			string strError;
+			FARString strError;
 			GetErrorString(strError);
 			int Len1=static_cast<int>(strError.GetLength());
 			int Len2=StrLength(MSG(MChangeDriveCannotReadDisk));
@@ -874,7 +874,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			}*/
 		}
 
-		string strNewCurDir;
+		FARString strNewCurDir;
 		apiGetCurrentDirectory(strNewCurDir);
 
 		if ((PanelMode == NORMAL_PANEL) &&
@@ -938,7 +938,7 @@ void Panel::RemoveHotplugDevice(PanelMenuItem *item, VMenu &ChDisk)
 
 int Panel::ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu)
 {
-	string strMsgText;
+	FARString strMsgText;
 	wchar_t DiskLetter[]={Drive,L':',0};
 
 	switch(DriveType)
@@ -1006,7 +1006,7 @@ int Panel::ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu)
 }
 
 
-void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,string &strLastName,string &strName)
+void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName,FARString &strName)
 {
 	wchar_t *Ptr=(wchar_t *)xf_malloc((StrLength(Src)+StrLength(FindEdit->GetStringAddr())+32)*sizeof(wchar_t));
 
@@ -1069,7 +1069,7 @@ void Panel::FastFind(int FirstKey)
 {
 	// // _SVS(CleverSysLog Clev(L"Panel::FastFind"));
 	INPUT_RECORD rec;
-	string strLastName, strName;
+	FARString strLastName, strName;
 	int Key,KeyToProcess=0;
 	WaitInFastFind++;
 	{
@@ -1127,7 +1127,7 @@ void Panel::FastFind(int FirstKey)
 					}
 					else if (Key == KEY_OP_XLAT)
 					{
-						string strTempName;
+						FARString strTempName;
 						FindEdit.Xlat();
 						FindEdit.GetString(strTempName);
 						FindEdit.SetString(L"");
@@ -1137,7 +1137,7 @@ void Panel::FastFind(int FirstKey)
 					}
 					else if (Key == KEY_OP_PLAINTEXT)
 					{
-						string strTempName;
+						FARString strTempName;
 						FindEdit.ProcessKey(Key);
 						FindEdit.GetString(strTempName);
 						FindEdit.SetString(L"");
@@ -1436,7 +1436,7 @@ void Panel::EndDrag()
 
 void Panel::DragMessage(int X,int Y,int Move)
 {
-	string strDragMsg, strSelName;
+	FARString strDragMsg, strSelName;
 	int SelCount,MsgX,Length;
 
 	if (!(SelCount=SrcDragPanel->GetSelCount()))
@@ -1444,7 +1444,7 @@ void Panel::DragMessage(int X,int Y,int Move)
 
 	if (SelCount==1)
 	{
-		string strCvtName;
+		FARString strCvtName;
 		DWORD FileAttr;
 		SrcDragPanel->GetSelName(nullptr,FileAttr);
 		SrcDragPanel->GetSelName(&strSelName,FileAttr);
@@ -1484,7 +1484,7 @@ void Panel::DragMessage(int X,int Y,int Move)
 
 
 
-int Panel::GetCurDir(string &strCurDir)
+int Panel::GetCurDir(FARString &strCurDir)
 {
 	strCurDir = Panel::strCurDir; // TODO: ÎÏÀÑÍÎ!!!
 	return (int)strCurDir.GetLength();
@@ -1560,7 +1560,7 @@ int Panel::SetCurPath()
 
 		while (!FarChDir(strCurDir))
 		{
-			string strRoot;
+			FARString strRoot;
 			GetPathRoot(strCurDir, strRoot);
 
 			if (FAR_GetDriveType(strRoot) != DRIVE_REMOVABLE || apiIsDiskInDrive(strRoot))
@@ -1586,7 +1586,7 @@ int Panel::SetCurPath()
 			}
 			else                                               // îïïà...
 			{
-				string strTemp=strCurDir;
+				FARString strTemp=strCurDir;
 				CutToFolderNameIfFolder(strCurDir);             // ïîäûìàåìñÿ ââåðõ, äëÿ î÷åðåäíîé ïîðöèè ChDir
 
 				if (strTemp.GetLength()==strCurDir.GetLength())  // çäåñü ïðîáëåìà - âèäèìî äèñê íåäîñòóïåí
@@ -1714,8 +1714,8 @@ void Panel::ShowScreensCount()
 
 		if (Viewers>0 || Editors>0 || Dialogs > 0)
 		{
-			string strScreensText;
-			string strAdd;
+			FARString strScreensText;
+			FARString strAdd;
 			strScreensText.Format(L"[%d", Viewers);
 
 			if (Editors > 0)
@@ -1743,7 +1743,7 @@ void Panel::SetTitle()
 {
 	if (GetFocus())
 	{
-		string strTitleDir(L"{");
+		FARString strTitleDir(L"{");
 
 		if (!strCurDir.IsEmpty())
 		{
@@ -1751,7 +1751,7 @@ void Panel::SetTitle()
 		}
 		else
 		{
-			string strCmdText;
+			FARString strCmdText;
 			CtrlObject->CmdLine->GetCurDir(strCmdText);
 			strTitleDir += strCmdText;
 		}
@@ -1762,9 +1762,9 @@ void Panel::SetTitle()
 	}
 }
 
-string &Panel::GetTitle(string &strTitle,int SubLen,int TruncSize)
+FARString &Panel::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
 {
-	string strTitleDir;
+	FARString strTitleDir;
 	bool truncTitle = (SubLen==-1 || TruncSize==0)?false:true;
 
 	if (PanelMode==PLUGIN_PANEL)
@@ -1952,7 +1952,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 		case FCTL_GETPANELFORMAT:
 		case FCTL_GETPANELDIR:
 		{
-			string strTemp;
+			FARString strTemp;
 
 			if (Command == FCTL_GETPANELDIR)
 				GetCurDir(strTemp);
@@ -1998,7 +1998,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 
 			if (GetType()==FILE_PANEL)
 			{
-				string strColumnTypes,strColumnWidths;
+				FARString strColumnTypes,strColumnWidths;
 				((FileList *)this)->PluginGetColumnTypesAndWidths(strColumnTypes,strColumnWidths);
 
 				if (Command==FCTL_GETCOLUMNTYPES)
@@ -2128,7 +2128,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 }
 
 
-int Panel::GetCurName(string &strName, string &strShortName)
+int Panel::GetCurName(FARString &strName, FARString &strShortName)
 {
 	strName.Clear();
 	strShortName.Clear();
@@ -2136,7 +2136,7 @@ int Panel::GetCurName(string &strName, string &strShortName)
 }
 
 
-int Panel::GetCurBaseName(string &strName, string &strShortName)
+int Panel::GetCurBaseName(FARString &strName, FARString &strShortName)
 {
 	strName.Clear();
 	strShortName.Clear();
@@ -2156,7 +2156,7 @@ BOOL Panel::NeedUpdatePanel(Panel *AnotherPanel)
 
 bool Panel::SaveShortcutFolder(int Pos)
 {
-	string strShortcutFolder,strPluginModule,strPluginFile,strPluginData;
+	FARString strShortcutFolder,strPluginModule,strPluginFile,strPluginData;
 
 	if (PanelMode==PLUGIN_PANEL)
 	{
@@ -2186,7 +2186,7 @@ bool Panel::SaveShortcutFolder(int Pos)
 /*
 int Panel::ProcessShortcutFolder(int Key,BOOL ProcTreePanel)
 {
-	string strShortcutFolder, strPluginModule, strPluginFile, strPluginData;
+	FARString strShortcutFolder, strPluginModule, strPluginFile, strPluginData;
 
 	if (GetShortcutFolder(Key-KEY_RCTRL0,&strShortcutFolder,&strPluginModule,&strPluginFile,&strPluginData))
 	{
@@ -2223,7 +2223,7 @@ int Panel::ProcessShortcutFolder(int Key,BOOL ProcTreePanel)
 
 bool Panel::ExecShortcutFolder(int Pos)
 {
-	string strShortcutFolder,strPluginModule,strPluginFile,strPluginData;
+	FARString strShortcutFolder,strPluginModule,strPluginFile,strPluginData;
 
 	if (GetShortcutFolder(Pos,&strShortcutFolder,&strPluginModule,&strPluginFile,&strPluginData))
 	{
@@ -2261,7 +2261,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 				}
 
 				/* Ñâîåîáðàçíîå ðåøåíèå BugZ#50 */
-				string strRealDir;
+				FARString strRealDir;
 				strRealDir = strPluginFile;
 
 				if (CutToSlash(strRealDir))

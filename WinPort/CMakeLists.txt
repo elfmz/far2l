@@ -11,6 +11,8 @@ include(${wxWidgets_USE_FILE})
 include_directories(${GLIB2_INCLUDE_DIRS})
 include_directories(wxWidgets_INCLUDE_DIRS)
 
+include_directories(src/UI)
+include_directories(.)
 
 add_subdirectory(wineguts)
 file(GLOB_RECURSE SOURCES "*.cpp")

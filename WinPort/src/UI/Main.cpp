@@ -2,12 +2,10 @@
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "wxWinTranslations.h"
-#include <wx/fontdlg.h>
-#include <wx/fontenum.h>
-#include <wx/textfile.h>
 #include <wx/clipbrd.h>
 #include "CallInMain.h"
 #include "Utils.h"
+#include "Paint.h"
 #include <set>
 #include <fstream>
 
@@ -18,12 +16,15 @@ enum
     TIMER_ID_PERIODIC = 10
 };
 
-unsigned int font_width = 8;
-unsigned int font_height = 8;
-
 extern "C" void WinPortInitRegistry();
 extern "C" bool WinPortIsClipboardBusy();
 
+
+static void NormalizeArea(SMALL_RECT &area)
+{
+	if (area.Left > area.Right) std::swap(area.Left, area.Right);
+	if (area.Top > area.Bottom) std::swap(area.Top, area.Bottom);	
+}
 
 class WinPortAppThread : public wxThread
 {
@@ -97,12 +98,6 @@ static void LoadSize(unsigned int &width, unsigned int &height)
 	}
 }
 
-static void NormalizeArea(SMALL_RECT &area)
-{
-	if (area.Left > area.Right) std::swap(area.Left, area.Right);
-	if (area.Top > area.Bottom) std::swap(area.Top, area.Bottom);	
-}
-
 struct EventWithRect : wxCommandEvent
 {
 	EventWithRect(const SMALL_RECT &rect_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
@@ -149,7 +144,6 @@ protected:
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
 	virtual COORD OnConsoleGetLargestWindowSize();
 	
-	void RefreshArea( const SMALL_RECT &area );
 private:
 	void CheckForResizePending();
 	void CheckPutText2CLip();
@@ -179,17 +173,15 @@ private:
 			return find(WXK_ALT)!=end();
 		}
 	} _pressed_keys;
-
+	
+	ConsolePaintContext _paint_context;
 	wxKeyEvent _last_keydown;
-	wxFont _font;
 	std::wstring _text2clip;
 	
 	WinPortFrame *_frame;
-	wxTimer* _cursor_timer;
-	bool _cursor_state;
+	wxTimer* _periodic_timer;
 	bool _last_keydown_enqueued;
 	bool _initialized;
-	bool _buffered_paint;
 	enum
 	{
 		RP_NONE,
@@ -295,143 +287,23 @@ bool WinPortApp::OnInit()
 
 
 ///////////////////////////
-class FixedFontLookup : wxFontEnumerator
-{
-	wxString _result;
-	virtual bool OnFacename(const wxString &font)
-	{
-		_result = font;
-		return false;
-	}
-public:
 
-	wxString Query()
-	{
-		_result.clear();
-		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
-		fprintf(stderr, "FixedFontLookup: %ls\n", _result.wc_str());
-		return _result;
-	}	
-};
-
-void InitializeFont(wxFrame *frame, wxFont& font)
-{
-	const std::string &path = SettingsPath("font");
-	wxTextFile file(path);
-	if (file.Exists() && file.Open()) {
-		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
-			font.SetNativeFontInfo(str);
-			if (font.IsOk()) {
-				printf("InitializeFont: used %ls\n", str.wc_str());
-				return;				
-			}
-		}
-	} else 
-		file.Create(path);
-	
-	for (;;) {
-		FixedFontLookup ffl;
-		wxString fixed_font = ffl.Query();
-		if (!fixed_font.empty()) {
-			font = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, fixed_font);
-		}
-		if (fixed_font.empty() || !font.IsOk())
-			font = wxFont(wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT));
-		font = wxGetFontFromUser(frame, font);
-		if (font.IsOk()) {
-			file.InsertLine(font.GetNativeFontInfoDesc(), 0);
-			file.Write();
-			return;
-		}
-	}
-}
-
-class FontSizeInspector
-{
-	wxBitmap _bitmap;
-	wxMemoryDC _dc;
-	
-	int _max_width, _prev_width;
-	int _max_height, _prev_height;	
-	bool _unstable_size;
-	
-	void InspectChar(const wchar_t c)
-	{
-		wchar_t wz[2] = { c, 0};
-		wxSize char_size = _dc.GetTextExtent(wz);
-		const int width = char_size.GetWidth();
-		const int height = char_size.GetHeight();
-		
-		if (_max_width < width) _max_width = width;
-		if (_max_height < height) _max_height = height;
-		if ( _prev_width != width ) {
-			if (_prev_width!=-1) 
-				_unstable_size = true;
-			_prev_width = width;
-		}
-		if ( _prev_height != height ) {
-			if (_prev_height!=-1) _unstable_size = true;
-			_prev_height = height;
-		}		
-	}	
-	
-	public:
-	FontSizeInspector(wxFont& font) 
-		: _bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH),
-		_max_width(8), _prev_width(-1), 
-		_max_height(8), _prev_height(-1), 
-		_unstable_size(false)
-	{
-		_dc.SelectObject(_bitmap);
-		_dc.SetFont(font);
-	}
-
-	void InspectChars(const wchar_t *s)
-	{
-		for(; *s; ++s)
-			InspectChar(*s);
-	}
-	
-	bool IsUnstableSize() const { return _unstable_size; }
-	int GetMaxWidth() const { return _max_width; }
-	int GetMaxHeight() const { return _max_height; }
-};
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
-		_frame(frame), _cursor_timer(NULL),  
-		_cursor_state(false), _last_keydown_enqueued(false), _initialized(false), _buffered_paint(false), 
-		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
+		_paint_context(this), _frame(frame), _periodic_timer(NULL),  
+		_last_keydown_enqueued(false), _initialized(false), _resize_pending(RP_NONE),  
+		_mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
 {
-	SetBackgroundColour(*wxBLACK);
-	InitializeFont(frame, _font);
-	FontSizeInspector fsi(_font);
-	fsi.InspectChars(L" 1234567890-=!@#$%^&*()_+qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?");
-	//fsi.InspectChars(L"QWERTYUIOPASDFGHJKL");
-	
-	bool is_unstable = fsi.IsUnstableSize();
-	font_width = fsi.GetMaxWidth();
-	font_height = fsi.GetMaxHeight();
-	//font_height+= font_height/4;
-	
-	fprintf(stderr, "Font: '%ls' - %s\n", _font.GetFaceName().wc_str(), 
-		_font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
-		
-	if (_font.IsFixedWidth() && !is_unstable) {
-		struct stat s = {0};
-		if (stat(SettingsPath("nobuffering").c_str(), &s)!=0)
-			_buffered_paint = true;
-	}
-
 	g_wx_con_out.SetListener(this);
-	_cursor_timer = new wxTimer(this, TIMER_ID_PERIODIC);
-	_cursor_timer->Start(500);
+	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
+	_periodic_timer->Start(500);
 	OnConsoleOutputTitleChanged();
 }
 
 WinPortPanel::~WinPortPanel()
 {
-	delete _cursor_timer;
+	delete _periodic_timer;
 	g_wx_con_out.SetListener(NULL);
 }
 
@@ -445,12 +317,14 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	LoadSize(cw, ch);
 	wxDisplay disp(GetDisplayIndex());
 	wxRect rc = disp.GetClientArea();
-	if ((unsigned)rc.GetWidth() >= cw * font_width && (unsigned)rc.GetHeight() >= ch * font_height) 
-		g_wx_con_out.SetSize(cw, ch);
+	if ((unsigned)rc.GetWidth() >= cw * _paint_context.FontWidth() 
+		&& (unsigned)rc.GetHeight() >= ch * _paint_context.FontHeight()) {
+		g_wx_con_out.SetSize(cw, ch);		
+	}
 	g_wx_con_out.GetSize(cw, ch);
 	
-	cw*= font_width;
-	ch*= font_height;
+	cw*= _paint_context.FontWidth();
+	ch*= _paint_context.FontHeight();
 	if ( w != (int)cw || h != (int)ch)
 		_frame->SetClientSize(cw, ch);
 		
@@ -479,8 +353,8 @@ void WinPortPanel::CheckForResizePending()
 			int width = 0, height = 0;
 			_frame->GetClientSize(&width, &height);
 			fprintf(stderr, "Current client size: %u %u\n", width, height);
-			width/= font_width; 
-			height/= font_height;
+			width/= _paint_context.FontWidth(); 
+			height/= _paint_context.FontHeight();
 			if (width!=(int)prev_width || height!=(int)prev_height) {
 				fprintf(stderr, "Changing size: %u x %u\n", width, height);
 				g_wx_con_out.SetSize(width, height);
@@ -505,12 +379,8 @@ void WinPortPanel::CheckForResizePending()
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 {
 	CheckForResizePending();
-	CheckPutText2CLip();
-	
-	_cursor_state = !_cursor_state;
-	const COORD &pos = g_wx_con_out.GetCursor();
-	SMALL_RECT area = {pos.X, pos.Y, pos.X, pos.Y};
-	RefreshArea( area );
+	CheckPutText2CLip();	
+	_paint_context.ToggleCursor();
 }
 
 void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT &area)
@@ -565,26 +435,16 @@ COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 	wxSize inner_size = GetClientSize();
 	rc.SetWidth(rc.GetWidth() - (outer_size.GetWidth() - inner_size.GetWidth()));
 	rc.SetHeight(rc.GetHeight() - (outer_size.GetHeight() - inner_size.GetHeight()));
-	COORD size = {(SHORT)(rc.GetWidth() / font_width), (SHORT)(rc.GetHeight() / font_height)};
+	COORD size = {(SHORT)(rc.GetWidth() / _paint_context.FontWidth()), (SHORT)(rc.GetHeight() / _paint_context.FontHeight())};
 //	fprintf(stderr, "OnConsoleGetLargestWindowSize: %u x %u\n", size.X, size.Y);
 	return size;
-}
-
-void WinPortPanel::RefreshArea( const SMALL_RECT &area )
-{
-	wxRect rc;
-	rc.SetLeft(((int)area.Left) * font_width);
-	rc.SetRight(((int)area.Right + 1) * font_width);
-	rc.SetTop(((int)area.Top) * font_height);
-	rc.SetBottom(((int)area.Bottom + 1) * font_height);
-	Refresh(false, &rc);
 }
 
 void WinPortPanel::OnWindowMoved( wxCommandEvent& event )
 {
 	EventWithRect *e = (EventWithRect *)&event;
 	int x = e->rect.Left, y = e->rect.Top;
-	x*= font_width; y*= font_height;
+	x*= _paint_context.FontWidth(); y*= _paint_context.FontHeight();
 	if (!e->rect.Right) {
 		int dx = 0, dy = 0;
 		GetPosition(&dx, &dy);
@@ -596,7 +456,7 @@ void WinPortPanel::OnWindowMoved( wxCommandEvent& event )
 void WinPortPanel::OnRefresh( wxCommandEvent& event )
 {
 	EventWithRect *e = (EventWithRect *)&event;
-	RefreshArea( e->rect );
+	_paint_context.RefreshArea( e->rect );
 }
 
 void WinPortPanel::OnConsoleResized( wxCommandEvent& event )
@@ -607,16 +467,16 @@ void WinPortPanel::OnConsoleResized( wxCommandEvent& event )
 	_frame->GetClientSize(&prev_width, &prev_height);
 	fprintf(stderr, "OnConsoleResized client size: %u %u\n", prev_width, prev_height);
 
-	prev_width/= font_width;
-	prev_height/= font_height;
+	prev_width/= _paint_context.FontWidth();
+	prev_height/= _paint_context.FontHeight();
 	
 	if ((int)width != prev_width || (int)height != prev_height) {
 		if ((int)width > prev_width || (int)height > prev_height) {
 			_frame->SetPosition(wxPoint(0,0 ));
 		}
 		
-		width*= font_width;
-		height*= font_height;
+		width*= _paint_context.FontWidth();
+		height*= _paint_context.FontHeight();
 		fprintf(stderr, "OnConsoleResized SET client size: %u %u\n", width, height);
 		_frame->SetClientSize(width, height);		
 	}
@@ -729,237 +589,21 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 	//event.Skip();
 }
 
-unsigned int DivCeil(unsigned int v, unsigned int d)
-{
-	unsigned int r = v / d;
-	return (r * d == v) ? r : r + 1;
-}
-
-#define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
-					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
-					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE )
-
-struct CursorProps
-{
-	CursorProps(bool state) : visible(false), height(1)
-	{
-		if (state) {
-			const COORD pos = g_wx_con_out.GetCursor(height, visible);
-			x = (unsigned int) pos.X;
-			y = (unsigned int) pos.Y;
-		}
-	}
-
-	unsigned int x, y;
-	bool  visible;
-	UCHAR height;
-};
-
-class ConsolePainter
-{
-	class RememberedColor
-	{
-		wxColour _clr;
-		bool _valid;
-
-	public:
-		RememberedColor() : _valid(false) {}
-		bool Change(wxColour clr)
-		{
-			if (!_valid || _clr!=clr) {
-				_valid = true;
-				_clr = clr;
-				return true;
-			}
-			return false;
-		}
-		
-	} _brush;
-	
-	
-	wxString _buffer, _tmp;
-	wxPaintDC &_dc;
-	CursorProps _cursor_props;
-	unsigned int _start_cx, _start_cy, _start_back_cx;
-	unsigned int _start_x, _start_y;
-	wxColour _clr_text, _clr_back;
-	bool _buffered_paint;
-	bool _cursor_state;
-	
-	void SetBackgroundColor(wxColour clr)
-	{
-		if (_brush.Change(clr)) {
-			wxBrush* brush = wxTheBrushList->FindOrCreateBrush(clr);
-			_dc.SetBrush(*brush);
-			_dc.SetBackground(*brush);
-		}		
-	}
-	
-	void PrepareBackground(unsigned int cx, wxColour clr)
-	{
-		const bool cursor_here = (_cursor_props.visible && cx==_cursor_props.x && _start_cy==_cursor_props.y) ;
-		
-		if (!cursor_here && _start_back_cx != (unsigned int)-1 && _clr_back == clr)
-			return;
-		
-		FlushBackground(cx);
-		
-		if (!cursor_here) {
-			_clr_back = clr;
-			_start_back_cx = cx;
-			return;
-		}
-		
-		_start_back_cx = (unsigned int)-1;
-
-		const unsigned int x = cx * font_width;
-		unsigned int h = (font_height * _cursor_props.height) / 100;
-		if (h==0) h = 1;
-		unsigned int fill_height = font_height - h;
-		if (fill_height > font_height) fill_height = font_height;
-		SetBackgroundColor(wxColour(clr.Red()^0xff, clr.Green()^0xff, clr.Blue()^0xff));
-		_dc.DrawRectangle(x, _start_y + fill_height, font_width, h);				
-			
-		if (fill_height) {
-			SetBackgroundColor(clr);
-			_dc.DrawRectangle(x, _start_y, font_width, fill_height);							
-		}
-	}
-	
-
-	void FlushBackground(unsigned int cx)
-	{
-		if (_start_back_cx!= ((unsigned int)-1)) {
-			SetBackgroundColor(_clr_back);
-			_dc.DrawRectangle(_start_back_cx * font_width, _start_y, (cx - _start_back_cx) * font_width, font_height);			
-			_start_back_cx = ((unsigned int)-1);
-		}		
-	}
-	
-	void FlushText()
-	{
-		if (!_buffer.empty()) {
-			_dc.SetTextForeground(_clr_text);
-			_dc.DrawText(_buffer, _start_cx * font_width, _start_y);
-			_buffer.clear();
-		}
-		_start_cx = (unsigned int)-1;
-	}
-		
-public:
-	ConsolePainter(wxPaintDC &dc, bool buffered_paint, bool cursor_state) : 
-		_dc(dc), _cursor_props(cursor_state), _start_cx((unsigned int)-1), 
-		_start_back_cx((unsigned int)-1), _buffered_paint(buffered_paint)
-	{
-	}
-	
-
-	inline void NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
-	{
-		if (!c || c == L' ') {
-			if (!_buffer.empty()) 
-				FlushBackground(cx);
-			FlushText();
-		}
-		
-		PrepareBackground(cx, ConsoleBackground2wxColor(attributes));
-		
-		if (!c || c == L' ') 
-			return;
-			
-		wxColour clr_text = ConsoleForeground2wxColor(attributes);
-		
-
-		if (_buffered_paint && _start_cx != (unsigned int) -1 && _clr_text == clr_text)
-		{
-			_tmp = c;
-			wxSize char_size = _dc.GetTextExtent(_tmp);
-			if (char_size.GetWidth()==(int)font_width && char_size.GetHeight()==(int)font_height)
-			{
-				_buffer+= c;
-				return;
-			}
-		}
-		
-		FlushBackground(cx + 1);
-		FlushText();
-		_start_cx = cx;
-		_buffer = c;
-		_clr_text = clr_text;
-	}
-	
-	inline void LineBegin(unsigned int cy)
-	{
-		_start_cy = cy;
-		_start_y = cy * font_height;
-	}
-	
-	inline void LineFlush(unsigned int cx_end)
-	{
-		FlushBackground(cx_end);
-		FlushText();
-	}
-	
-};
 
 void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
-	wxPaintDC dc(this);
-	unsigned int cw, ch; g_wx_con_out.GetSize(cw, ch);
-	wxRegion rgn = GetUpdateRegion();
-	wxRect box = rgn.GetBox();
-	SMALL_RECT area = {(SHORT) (box.GetLeft() / font_width), (SHORT) (box.GetTop() / font_height),
-		(SHORT)DivCeil(box.GetRight(), font_width), (SHORT)DivCeil(box.GetBottom(), font_height)};
-
-	if (area.Right >= cw) area.Right = cw - 1;
-	if (area.Bottom >= ch) area.Bottom = ch - 1;
-	if (area.Right < area.Left || area.Bottom < area.Top) return;
-
-	SMALL_RECT qedit;
 	if (_mouse_qedit_pending) {
+		SMALL_RECT qedit;
 		qedit.Left = _mouse_qedit_start.X;
 		qedit.Top = _mouse_qedit_start.Y;
 		qedit.Right = _mouse_qedit_last.X;
 		qedit.Bottom = _mouse_qedit_last.Y;
 		NormalizeArea(qedit);
+		_paint_context.OnPaint(&qedit);
 	}
-	wxString tmp;
-	std::vector<CHAR_INFO> line(cw);
-	wxPen *trans_pen = wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT);
-	dc.SetPen(*trans_pen);
-	dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
-	dc.SetFont(_font);
+	else
+		_paint_context.OnPaint();
 	
-	ConsolePainter painter(dc, _buffered_paint, _cursor_state);
-	for (unsigned int cy = area.Top; cy <= area.Bottom; ++cy) {
-		COORD data_size = {cw, 1};
-		COORD data_pos = {0, 0};
-		SMALL_RECT screen_rect = {area.Left, cy, area.Right, cy};
-
-		
-		if (rgn.Contains(0, cy * font_height, cw * font_width, font_height)==wxOutRegion) {
-			continue;
-		}
-		g_wx_con_out.Read(&line[area.Left], data_size, data_pos, screen_rect);
-		
-		painter.LineBegin(cy);
-		for (unsigned int cx = area.Left; cx <= area.Right; ++cx) {
-			if (rgn.Contains(cx * font_width, cy * font_height, font_width, font_height)==wxOutRegion) {
-				painter.LineFlush(cx);
-				continue;
-			}
-
-			unsigned short attributes = line[cx].Attributes;			
-			
-			if (_mouse_qedit_pending && cx >= qedit.Left && 
-				cx <= qedit.Right && cy >= qedit.Top && cy <= qedit.Bottom) {
-				attributes^= ALL_ATTRIBUTES;				
-			}
-						
-			painter.NextChar(cx, attributes, line[cx].Char.UnicodeChar);
-		}
-		painter.LineFlush(area.Right + 1);
-	}
 }
 
 void WinPortPanel::OnEraseBackground( wxEraseEvent& event )
@@ -981,8 +625,8 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	wxClientDC dc(this);
 	wxPoint pos = event.GetLogicalPosition(dc);
 	COORD pos_char;
-	pos_char.X =(SHORT)(USHORT)(pos.x / font_width);
-	pos_char.Y =(SHORT)(USHORT)(pos.y / font_height);
+	pos_char.X =(SHORT)(USHORT)(pos.x / _paint_context.FontWidth());
+	pos_char.Y =(SHORT)(USHORT)(pos.y / _paint_context.FontHeight());
 
 	unsigned int width = 80, height = 25;
 	g_wx_con_out.GetSize(width, height);

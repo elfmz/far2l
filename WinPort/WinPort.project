@@ -37,7 +37,6 @@
     <File Name="ConsoleInput.h"/>
     <File Name="ConsoleOutput.cpp"/>
     <File Name="ConsoleOutput.h"/>
-    <File Name="Main.cpp"/>
     <File Name="stdafx.cpp"/>
     <File Name="stdafx.h"/>
     <File Name="Utils.h"/>
@@ -146,6 +145,11 @@
     <File Name="windows.h"/>
     <File Name="APIPrintFormat.cpp"/>
     <File Name="Utils.cpp"/>
+    <VirtualDirectory Name="UI">
+      <File Name="src/UI/Paint.h"/>
+      <File Name="src/UI/Paint.cpp"/>
+      <File Name="src/UI/Main.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>

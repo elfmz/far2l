@@ -98,7 +98,7 @@ struct MenuItemEx
 {
 	DWORD  Flags;                  // Ôëàãè ïóíêòà
 
-	string strName;
+	FARString strName;
 
 	DWORD  AccelKey;
 	int    UserDataSize;           // Ðàçìåð ïîëüçîâàòåëüñêèõ äàííûõ
@@ -200,8 +200,8 @@ class ConsoleTitle;
 class VMenu: public Modal
 {
 	private:
-		string strTitle;
-		string strBottomTitle;
+		FARString strTitle;
+		FARString strBottomTitle;
 
 		int SelectPos;
 		int TopPos;
@@ -227,7 +227,7 @@ class VMenu: public Modal
 
 		bool bFilterEnabled;
 		bool bFilterLocked;
-		string strFilter;
+		FARString strFilter;
 
 		MenuItemEx **Item;
 
@@ -285,11 +285,11 @@ class VMenu: public Modal
 		void ResetCursor();
 
 		void SetTitle(const wchar_t *Title);
-		virtual string &GetTitle(string &strDest,int SubLen=-1,int TruncSize=0);
+		virtual FARString &GetTitle(FARString &strDest,int SubLen=-1,int TruncSize=0);
 		const wchar_t *GetPtrTitle() { return strTitle.CPtr(); }
 
 		void SetBottomTitle(const wchar_t *BottomTitle);
-		string &GetBottomTitle(string &strDest);
+		FARString &GetBottomTitle(FARString &strDest);
 		void SetDialogStyle(int Style) {ChangeFlags(VMENU_WARNDIALOG,Style); SetColors(nullptr);}
 		void SetUpdateRequired(int SetUpdate) {ChangeFlags(VMENU_UPDATEREQUIRED,SetUpdate);}
 		void SetBoxType(int BoxType);
@@ -349,7 +349,7 @@ class VMenu: public Modal
 		BOOL GetVMenuInfo(struct FarListInfo* Info);
 
 		virtual const wchar_t *GetTypeName() {return L"[VMenu]";};
-		virtual int GetTypeAndName(string &strType, string &strName);
+		virtual int GetTypeAndName(FARString &strType, FARString &strName);
 
 		virtual int GetType() { return CheckFlags(VMENU_COMBOBOX)?MODALTYPE_COMBOBOX:MODALTYPE_VMENU; }
 

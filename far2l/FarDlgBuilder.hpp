@@ -38,7 +38,7 @@ struct DialogItemEx;
 
 /*
  ласс дл€ динамического построени€ диалогов, используемый внутри кода FAR.
-»спользует FAR'овский класс string дл€ работы с текстовыми пол€ми.
+»спользует FAR'овский класс FARString дл€ работы с текстовыми пол€ми.
 
 ƒл€ того, чтобы сместить элемент относительно дефолтного
 положени€ по горизонтали, можно использовать метод DialogItemEx::Indent().
@@ -67,7 +67,7 @@ class DialogBuilder: public DialogBuilderBase<DialogItemEx>
 		~DialogBuilder();
 
 		// ƒобавл€ет поле типа DI_EDIT дл€ редактировани€ указанного строкового значени€.
-		DialogItemEx *AddEditField(string *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
+		DialogItemEx *AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
 
 		// ƒобавл€ет поле типа DI_FIXEDIT дл€ редактировани€ указанного числового значени€.
 		virtual DialogItemEx *AddIntEditField(int *Value, int Width);

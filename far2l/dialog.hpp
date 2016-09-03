@@ -122,12 +122,12 @@ struct DialogItemEx
 		int  ListPos;
 		CHAR_INFO *VBuf;
 	};
-	string strHistory;
-	string strMask;
+	FARString strHistory;
+	FARString strMask;
 	DWORD Flags;
 	int DefaultButton;
 
-	string strData;
+	FARString strData;
 	size_t nMaxLength;
 
 	WORD ID;
@@ -311,7 +311,7 @@ class Dialog: public Frame
 		void ChangeFocus2(unsigned SetFocusPos);
 
 		unsigned ChangeFocus(unsigned FocusPos,int Step,int SkipGroup);
-		BOOL SelectFromEditHistory(DialogItemEx *CurItem,DlgEdit *EditLine,const wchar_t *HistoryName,string &strStr);
+		BOOL SelectFromEditHistory(DialogItemEx *CurItem,DlgEdit *EditLine,const wchar_t *HistoryName,FARString &strStr);
 		int SelectFromComboBox(DialogItemEx *CurItem,DlgEdit*EditLine,VMenu *List);
 		int AddToEditHistory(const wchar_t *AddStr,const wchar_t *HistoryName);
 
@@ -398,7 +398,7 @@ class Dialog: public Frame
 
 		void CloseDialog();
 
-		virtual int GetTypeAndName(string &strType, string &strName);
+		virtual int GetTypeAndName(FARString &strType, FARString &strName);
 		virtual int GetType() { return MODALTYPE_DIALOG; }
 		virtual const wchar_t *GetTypeName() {return L"[Dialog]";};
 

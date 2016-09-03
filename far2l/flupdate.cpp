@@ -139,17 +139,17 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	DizRead=FALSE;
 	FAR_FIND_DATA_EX fdata;
 	FileListItem *CurPtr=0,**OldData=0;
-	string strCurName, strNextCurName;
+	FARString strCurName, strNextCurName;
 	int OldFileCount=0;
 	CloseChangeNotification();
 
 	if (this!=CtrlObject->Cp()->LeftPanel && this!=CtrlObject->Cp()->RightPanel)
 		return;
 
-	string strSaveDir;
+	FARString strSaveDir;
 	apiGetCurrentDirectory(strSaveDir);
 	{
-		string strOldCurDir = strCurDir;
+		FARString strOldCurDir = strCurDir;
 
 		if (!SetCurPath())
 		{
@@ -225,7 +225,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	int ReadNumLinks=IsColumnDisplayed(NUMLINK_COLUMN);
 	int ReadNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
 	int ReadStreamsSize=IsColumnDisplayed(STREAMSSIZE_COLUMN);
-	string strComputerName;
+	FARString strComputerName;
 
 
 	WINPORT(SetLastError)(ERROR_SUCCESS);
@@ -321,7 +321,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 			if (ReadOwners)
 			{
-				string strOwner;
+				FARString strOwner;
 				GetFileOwner(strComputerName, NewPtr->strName,strOwner);
 				NewPtr->strOwner = strOwner;
 			}
@@ -347,7 +347,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				StartTime = CurTime;
 				if (IsVisible())
 				{
-					string strReadMsg;
+					FARString strReadMsg;
 
 					if (!IsShowTitle)
 					{
@@ -409,7 +409,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 		{
 			ListData[FileCount] = new FileListItem;
 
-			string TwoDotsOwner;
+			FARString TwoDotsOwner;
 			if (ReadOwners)
 			{
 				GetFileOwner(strComputerName,strCurDir,TwoDotsOwner);
@@ -440,7 +440,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	{
 		HANDLE hAnotherPlugin=AnotherPanel->GetPluginHandle();
 		PluginPanelItem *PanelData=nullptr;
-		string strPath;
+		FARString strPath;
 		int PanelCount=0;
 		strPath = strCurDir;
 		AddEndSlash(strPath);
@@ -644,7 +644,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 	DizRead=FALSE;
 	FileListItem *CurPtr, **OldData=0;
-	string strCurName, strNextCurName;
+	FARString strCurName, strNextCurName;
 	int OldFileCount=0;
 	CloseChangeNotification();
 	LastCurFile=-1;
@@ -888,11 +888,11 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 
 				for (int J=0; J < PluginFileCount; J++, CurPanelData++)
 				{
-					string strFileName = CurPanelData->FindData.lpwszFileName;
+					FARString strFileName = CurPanelData->FindData.lpwszFileName;
 
 					if (!StrCmpI(strFileName,Info.DescrFiles[I]))
 					{
-						string strTempDir, strDizName;
+						FARString strTempDir, strDizName;
 
 						if (FarMkTempEx(strTempDir) && apiCreateDirectory(strTempDir,nullptr))
 						{
@@ -949,7 +949,7 @@ void FileList::ReadSortGroups(bool UpdateFilterCurrentTime)
 }
 
 // Обнулить текущий CurPtr и занести предопределенные данные для каталога ".."
-void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times,string Owner)
+void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times,FARString Owner)
 {
 	CurPtr->Clear();
 	CurPtr->FileAttr = FILE_ATTRIBUTE_DIRECTORY;

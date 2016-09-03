@@ -39,10 +39,10 @@ extern clock_t StartIdleTime;
 extern int WaitInMainLoop;
 extern int WaitInFastFind;
 
-extern string g_strFarModuleName;
-extern string g_strFarPath;
+extern FARString g_strFarModuleName;
+extern FARString g_strFarPath;
 
-extern string strGlobalSearchString;
+extern FARString strGlobalSearchString;
 extern int GlobalSearchCase;
 extern int GlobalSearchWholeWords; // значение "Whole words" для поиска
 extern int GlobalSearchHex; // значение "Search for hex" для поиска
@@ -85,7 +85,7 @@ extern int CriticalInternalError;
 extern int _localLastError;
 
 extern int KeepUserScreen;
-extern string g_strDirToSet; //RAVE!!!
+extern FARString g_strDirToSet; //RAVE!!!
 
 extern int Macro_DskShowPosType; // для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
 

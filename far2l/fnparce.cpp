@@ -54,20 +54,20 @@ struct TSubstData
 	const wchar_t *Name;           // Длинное имя
 	const wchar_t *ShortName;      // Короткое имя
 
-	string *pListName;
-	string *pAnotherListName;
+	FARString *pListName;
+	FARString *pAnotherListName;
 
-	string *pShortListName;
-	string *pAnotherShortListName;
+	FARString *pShortListName;
+	FARString *pAnotherShortListName;
 
 	// локальные переменные
-	string strAnotherName;
-	string strAnotherShortName;
-	string strNameOnly;
-	string strShortNameOnly;
-	string strAnotherNameOnly;
-	string strAnotherShortNameOnly;
-	string strCmdDir;
+	FARString strAnotherName;
+	FARString strAnotherShortName;
+	FARString strNameOnly;
+	FARString strShortNameOnly;
+	FARString strAnotherNameOnly;
+	FARString strAnotherShortNameOnly;
+	FARString strCmdDir;
 	int  PreserveLFN;
 	int  PassivePanel;
 
@@ -84,11 +84,11 @@ static int IsReplaceVariable(const wchar_t *str,int *scr = nullptr,
                              int *end_txt_break = nullptr);
 
 
-static int ReplaceVariables(string &strStr,TSubstData *PSubstData);
+static int ReplaceVariables(FARString &strStr,TSubstData *PSubstData);
 
 // Str=if exist !#!\!^!.! far:edit < diff -c -p "!#!\!^!.!" !\!.!
 
-static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstData,string &strOut)
+static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstData,FARString &strOut)
 {
 	// рассмотрим переключатели активности/пассивности панели.
 	if (!StrCmpN(CurStr,L"!#",2))
@@ -159,7 +159,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	if ((!StrCmpN(CurStr,L"!&~",3) && CurStr[3] != L'?') ||
 	        (!StrCmpN(CurStr,L"!&",2) && CurStr[2] != L'?'))
 	{
-		string strFileNameL, strShortNameL;
+		FARString strFileNameL, strShortNameL;
 		Panel *WPanel=PSubstData->PassivePanel?PSubstData->AnotherPanel:PSubstData->ActivePanel;
 		DWORD FileAttrL;
 		int ShortN0=FALSE;
@@ -205,8 +205,8 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// Но нафиг нада:)
 	if (!StrCmpN(CurStr,L"!@",2) || !StrCmpN(CurStr,L"!$",2))
 	{
-		string *pListName;
-		string *pAnotherListName;
+		FARString *pListName;
+		FARString *pAnotherListName;
 		bool ShortN0 = FALSE;
 
 		if (CurStr[1] == L'$')
@@ -286,8 +286,8 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !:       Текущий диск
 	if (!StrCmpN(CurStr,L"!:",2))
 	{
-		string strCurDir;
-		string strRootDir;
+		FARString strCurDir;
+		FARString strRootDir;
 
 //		if (*PSubstData->Name && PSubstData->Name[1]==L':')
 			strCurDir = PSubstData->Name;
@@ -308,7 +308,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// Ниже идет совмещение кода для разбора как !\ так и !/
 	if (!StrCmpN(CurStr,L"!/",2) || !StrCmpN(CurStr,L"!=/",3) || !StrCmpN(CurStr,L"!/",2) || !StrCmpN(CurStr,L"!=/",3))
 	{
-		string strCurDir;
+		FARString strCurDir;
 		bool ShortN0 = FALSE;
 		int RealPath= CurStr[1]==L'='?1:0;
 
@@ -378,14 +378,14 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
   Преобразование метасимволов ассоциации файлов в реальные значения
 
 */
-int SubstFileName(string &strStr,            // результирующая строка
+int SubstFileName(FARString &strStr,            // результирующая строка
                   const wchar_t *Name,           // Длинное имя
                   const wchar_t *ShortName,      // Короткое имя
 
-                  string *pListName,
-                  string *pAnotherListName,
-                  string *pShortListName,
-                  string *pAnotherShortListName,
+                  FARString *pListName,
+                  FARString *pAnotherListName,
+                  FARString *pShortListName,
+                  FARString *pAnotherShortListName,
                   int   IgnoreInput,    // TRUE - не исполнять "!?<title>?<init>!"
                   const wchar_t *CmdLineDir)     // Каталог исполнения
 {
@@ -449,13 +449,13 @@ int SubstFileName(string &strStr,            // результирующая строка
 
 	PSubstData->PreserveLFN=FALSE;
 	PSubstData->PassivePanel=FALSE; // первоначально речь идет про активную панель!
-	string strTmp = strStr;
+	FARString strTmp = strStr;
 
 	if (!IgnoreInput)
 		ReplaceVariables(strTmp,PSubstData);
 
 	const wchar_t *CurStr = strTmp;
-	string strOut;
+	FARString strOut;
 
 	while (*CurStr)
 	{
@@ -474,7 +474,7 @@ int SubstFileName(string &strStr,            // результирующая строка
 	return(PSubstData->PreserveLFN);
 }
 
-int ReplaceVariables(string &strStr,TSubstData *PSubstData)
+int ReplaceVariables(FARString &strStr,TSubstData *PSubstData)
 {
 	const int MaxSize=20;
 	const wchar_t *Str=strStr;
@@ -485,7 +485,7 @@ int ReplaceVariables(string &strStr,TSubstData *PSubstData)
 			Str++;
 
 	DialogItemEx *DlgData = new DialogItemEx[MaxSize+2];
-	string HistoryName[MaxSize];
+	FARString HistoryName[MaxSize];
 	int DlgSize=0;
 	int StrPos[128],StrEndPos[128],StrPosSize=0;
 
@@ -539,7 +539,7 @@ int ReplaceVariables(string &strStr,TSubstData *PSubstData)
 			DlgData[DlgSize+1].Focus=TRUE;
 		}
 
-		string strTitle;
+		FARString strTitle;
 
 		if (scr > 2)          // if between !? and ? exist some
 			strTitle.Append(Str,scr-2);
@@ -569,15 +569,15 @@ int ReplaceVariables(string &strStr,TSubstData *PSubstData)
 		}
 		else if ((end_t - beg_t) > 1) //if between ( and ) exist some
 		{
-			string strTitle2;
-			string strTitle3;
+			FARString strTitle2;
+			FARString strTitle3;
 			strTitle2.Append(strTitle.CPtr()+(end_t-2)+1-hist_correct,scr-end_t-1); // !?$zz$xxxx(fffff)ddddd
 			//                  ^   ^
 			strTitle3.Append(strTitle.CPtr()+(beg_t-2)+1-hist_correct,end_t-beg_t-1);  // !?$zz$xxxx(ffffff)ddddd
 			//            ^    ^
 			strTitle.SetLength(beg_t-2-hist_correct);    // !?$zz$xxxx(fffff)ddddd
 			//       ^  ^
-			string strTmp;
+			FARString strTmp;
 			const wchar_t *CurStr = strTitle3;
 
 			while (*CurStr)
@@ -600,7 +600,7 @@ int ReplaceVariables(string &strStr,TSubstData *PSubstData)
 		//do it - типа здесь все уже раскрыто и преобразовано
 		DlgData[DlgSize].strData = strTitle;
 		// Заполняем поле ввода заданным шаблоном - если есть
-		string strTxt;
+		FARString strTxt;
 
 		if ((end-scr) > 1)  //if between ? and ! exist some
 			strTxt.Append((Str-2)+scr+1,(end-scr)-1);
@@ -611,15 +611,15 @@ int ReplaceVariables(string &strStr,TSubstData *PSubstData)
 		}
 		else if ((end_s - beg_s) > 1) //if between ( and ) exist some
 		{
-			string strTxt2;
-			string strTxt3;
+			FARString strTxt2;
+			FARString strTxt3;
 			strTxt2.Copy(strTxt.CPtr()+(end_s-scr),end-end_s-1); // !?$zz$xxxx(fffff)ddddd?rrrr(pppp)qqqqq!
 			//                                  ^   ^
 			strTxt3.Copy(strTxt.CPtr()+(beg_s-scr),end_s-beg_s-1);  // !?$zz$xxxx(ffffff)ddddd?rrrr(pppp)qqqqq!
 			//                              ^  ^
 			strTxt.SetLength(beg_s-scr-1);   // !?$zz$xxxx(fffff)ddddd?rrrr(pppp)qqqqq!
 			//                        ^  ^
-			string strTmp;
+			FARString strTmp;
 			const wchar_t *CurStr = strTxt3;
 
 			while (*CurStr)
@@ -672,7 +672,7 @@ int ReplaceVariables(string &strStr,TSubstData *PSubstData)
 		return 0;
 	}
 
-	string strTmpStr;
+	FARString strTmpStr;
 
 	for (Str=StartStr; *Str; Str++)
 	{
@@ -706,7 +706,7 @@ int ReplaceVariables(string &strStr,TSubstData *PSubstData)
 	return 1;
 }
 
-bool Panel::MakeListFile(string &strListFileName,bool ShortNames,const wchar_t *Modifers)
+bool Panel::MakeListFile(FARString &strListFileName,bool ShortNames,const wchar_t *Modifers)
 {
 	bool Ret=false;
 
@@ -756,7 +756,7 @@ bool Panel::MakeListFile(string &strListFileName,bool ShortNames,const wchar_t *
 				}
 			}
 
-			string strFileName,strShortName;
+			FARString strFileName,strShortName;
 			DWORD FileAttr;
 			GetSelName(nullptr,FileAttr);
 
@@ -769,7 +769,7 @@ bool Panel::MakeListFile(string &strListFileName,bool ShortNames,const wchar_t *
 				{
 					if (wcschr(Modifers,L'F') && PointToName(strFileName) == strFileName.CPtr()) // 'F' - использовать полный путь; //BUGBUG ?
 					{
-						string strTempFileName=strCurDir;
+						FARString strTempFileName=strCurDir;
 
 						AddEndSlash(strTempFileName);
 						strTempFileName+=strFileName; //BUGBUG ?

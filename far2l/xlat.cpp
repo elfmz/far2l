@@ -75,7 +75,7 @@ wchar_t* WINAPI Xlat(wchar_t *Line,
 		return Line;
 
 	size_t MinLenTable=Min(Opt.XLat.Table[0].GetLength(),Opt.XLat.Table[1].GetLength());
-	string strLayoutName;
+	FARString strLayoutName;
 	int ProcessLayoutName=FALSE;
 
 	if ((Flags & XLAT_USEKEYBLAYOUTNAME) && Console.GetKeyboardLayoutName(strLayoutName))

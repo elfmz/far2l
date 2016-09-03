@@ -42,35 +42,35 @@ void SysLogLastError();
 void ShowHeap();
 void CheckHeap(int NumLine);
 
-string __FARKEY_ToName(int Key);
+FARString __FARKEY_ToName(int Key);
 #define _FARKEY_ToName(K) __FARKEY_ToName(K).CPtr()
-string __MCODE_ToName(int OpCode);
+FARString __MCODE_ToName(int OpCode);
 #define _MCODE_ToName(K) __MCODE_ToName(K).CPtr()
-string __VK_KEY_ToName(int VkKey);
+FARString __VK_KEY_ToName(int VkKey);
 #define _VK_KEY_ToName(K) __VK_KEY_ToName(K).CPtr()
-string __ECTL_ToName(int Command);
+FARString __ECTL_ToName(int Command);
 #define _ECTL_ToName(K) __ECTL_ToName(K).CPtr()
-string __EE_ToName(int Command);
+FARString __EE_ToName(int Command);
 #define _EE_ToName(K) __EE_ToName(K).CPtr()
-string __EEREDRAW_ToName(int Command);
+FARString __EEREDRAW_ToName(int Command);
 #define _EEREDRAW_ToName(K) __EEREDRAW_ToName(K).CPtr()
-string __ESPT_ToName(int Command);
+FARString __ESPT_ToName(int Command);
 #define _ESPT_ToName(K) __ESPT_ToName(K).CPtr()
-string __VE_ToName(int Command);
+FARString __VE_ToName(int Command);
 #define _VE_ToName(K) __VE_ToName(K).CPtr()
-string __FCTL_ToName(int Command);
+FARString __FCTL_ToName(int Command);
 #define _FCTL_ToName(K) __FCTL_ToName(K).CPtr()
-string __DLGMSG_ToName(int Msg);
+FARString __DLGMSG_ToName(int Msg);
 #define _DLGMSG_ToName(K) __DLGMSG_ToName(K).CPtr()
-string __ACTL_ToName(int Command);
+FARString __ACTL_ToName(int Command);
 #define _ACTL_ToName(K) __ACTL_ToName(K).CPtr()
-string __VCTL_ToName(int Command);
+FARString __VCTL_ToName(int Command);
 #define _VCTL_ToName(K) __VCTL_ToName(K).CPtr()
-string __INPUT_RECORD_Dump(INPUT_RECORD *Rec);
+FARString __INPUT_RECORD_Dump(INPUT_RECORD *Rec);
 #define _INPUT_RECORD_Dump(K) __INPUT_RECORD_Dump(K).CPtr()
-string __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *Rec);
+FARString __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *Rec);
 #define _MOUSE_EVENT_RECORD_Dump(K) __MOUSE_EVENT_RECORD_Dump(K).CPtr()
-string __SysLog_LinearDump(LPBYTE Buf,int SizeBuf);
+FARString __SysLog_LinearDump(LPBYTE Buf,int SizeBuf);
 #define _SysLog_LinearDump(B,S) __SysLog_LinearDump((B),(S)).CPtr()
 
 void GetOpenPluginInfo_Dump(const wchar_t *Title,const struct OpenPluginInfo *Info,FILE *fp);

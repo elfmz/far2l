@@ -484,9 +484,9 @@ TVMStack VMStack;
 static LONG _RegWriteString(const wchar_t *Key,const wchar_t *ValueName,const wchar_t *Data);
 
 // ôóíêöèÿ ïðåîáðàçîâàíèÿ êîäà ìàêðîêëàâèøè â òåêñò
-BOOL WINAPI KeyMacroToText(int Key,string &strKeyText0)
+BOOL WINAPI KeyMacroToText(int Key,FARString &strKeyText0)
 {
-	string strKeyText;
+	FARString strKeyText;
 
 	for (int I=0; I<int(ARRAYSIZE(KeyMacroCodes)); I++)
 	{
@@ -671,7 +671,7 @@ int KeyMacro::LoadMacros(BOOL InitedRAM,BOOL LoadAll)
 	if (Opt.Macro.DisableMacro&MDOL_ALL)
 		return FALSE;
 
-	string strBuffer;
+	FARString strBuffer;
 	ReadVarsConst(MACRO_VARS,strBuffer);
 	ReadVarsConst(MACRO_CONSTS,strBuffer);
 	ReadMacroFunction(MACRO_FUNCS,strBuffer);
@@ -949,7 +949,7 @@ int KeyMacro::ProcessKey(int Key)
 	}
 }
 
-bool KeyMacro::GetPlainText(string& strDest)
+bool KeyMacro::GetPlainText(FARString& strDest)
 {
 	strDest.Clear();
 
@@ -995,7 +995,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 	_KEYMACRO(CleverSysLog Clev(L"KeyMacro::FARPseudoVariable()"));
 	size_t I;
 	TVar Cond((int64_t)0ll);
-	string strFileName;
+	FARString strFileName;
 	DWORD FileAttr=INVALID_FILE_ATTRIBUTES;
 
 	// Íàéäåì èíäåêñ íóæíîãî êåéâîðäà
@@ -1486,7 +1486,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 
 /*						if (IsLocalPath(strFileName))
 						{
-							string strRemoteName;
+							FARString strRemoteName;
 							strFileName.SetLength(2);
 
 							if (GetSubstName(DriveType,strFileName,strRemoteName))
@@ -1530,7 +1530,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 						}
 						else
 						{
-							string strType;
+							FARString strType;
 
 							switch (f->GetTypeAndName(strType,strFileName))
 							{
@@ -1586,7 +1586,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 
 						if (f)
 						{
-							string NewStr;
+							FARString NewStr;
 
 							if (f->VMProcess(CheckCode,&NewStr))
 							{
@@ -1645,7 +1645,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					{
 						if (CheckCode == MCODE_V_EDITORFILENAME)
 						{
-							string strType;
+							FARString strType;
 							CtrlObject->Plugins.CurEditor->GetTypeAndName(strType, strFileName);
 							Cond=strFileName.CPtr();
 						}
@@ -1815,14 +1815,14 @@ static bool substrFunc(const TMacroFunction*)
 	return Ret;
 }
 
-static BOOL SplitFileName(const wchar_t *lpFullName,string &strDest,int nFlags)
+static BOOL SplitFileName(const wchar_t *lpFullName,FARString &strDest,int nFlags)
 {
 #define FLAG_DISK   1
 #define FLAG_PATH   2
 #define FLAG_NAME   4
 #define FLAG_EXT    8
 	const wchar_t *s = lpFullName; //start of sub-string
-	const wchar_t *p = s; //current string pointer
+	const wchar_t *p = s; //current FARString pointer
 	const wchar_t *es = s+StrLength(s); //end of string
 	const wchar_t *e; //end of sub-string
 
@@ -1936,7 +1936,7 @@ static bool fsplitFunc(const TMacroFunction*)
 	VMStack.Pop(Val);
 	const wchar_t *s = Val.toString();
 	bool Ret=false;
-	string strPath;
+	FARString strPath;
 
 	if (!SplitFileName(s,strPath,m))
 		strPath.Clear();
@@ -2058,7 +2058,7 @@ static bool keyFunc(const TMacroFunction*)
 {
 	TVar VarKey;
 	VMStack.Pop(VarKey);
-	string strKeyText;
+	FARString strKeyText;
 
 	if (VarKey.isInteger())
 	{
@@ -2087,7 +2087,7 @@ static bool waitkeyFunc(const TMacroFunction*)
 
 	if (!Type)
 	{
-		string strKeyText;
+		FARString strKeyText;
 
 		if (Key != KEY_NONE)
 			if (!KeyToText(Key,strKeyText))
@@ -2193,7 +2193,7 @@ static bool dateFunc(const TMacroFunction*)
 
 	const wchar_t *s = Val.toString();
 	bool Ret=false;
-	string strTStr;
+	FARString strTStr;
 
 	if (MkStrFTime(strTStr,s))
 		Ret=true;
@@ -2312,7 +2312,7 @@ static bool promptFunc(const TMacroFunction*)
 			prompt=ValPrompt.s();
 
 		const wchar_t *title=NullToEmpty(ValTitle.toString());
-		string strDest;
+		FARString strDest;
 
 		if (GetString(title,prompt,history,src,strDest,nullptr,Flags&~FIB_CHECKBOX,nullptr,nullptr))
 		{
@@ -2351,7 +2351,7 @@ static bool msgBoxFunc(const TMacroFunction*)
 
 	//_KEYMACRO(SysLog(L"title='%ls'",title));
 	//_KEYMACRO(SysLog(L"text='%ls'",text));
-	string TempBuf = title;
+	FARString TempBuf = title;
 	TempBuf += L"\n";
 	TempBuf += text;
 	int Result=FarMessageFn(-1,Flags,nullptr,(const wchar_t * const *)TempBuf.CPtr(),0,0)+1;
@@ -2366,7 +2366,7 @@ static bool environFunc(const TMacroFunction*)
 	TVar S;
 	VMStack.Pop(S);
 	bool Ret=false;
-	string strEnv;
+	FARString strEnv;
 
 	if (apiGetEnvironmentVariable(S.toString(), strEnv))
 		Ret=true;
@@ -2408,7 +2408,7 @@ static bool panelselectFunc(const TMacroFunction*)
 
 		if (Mode == 2 || Mode == 3)
 		{
-			string strStr=ValItems.s();
+			FARString strStr=ValItems.s();
 			ReplaceStrings(strStr,L"\r\n",L";");
 			ValItems=strStr.CPtr();
 		}
@@ -2465,7 +2465,7 @@ static bool _fattrFunc(int Type)
 
 			if (Pos >= 0)
 			{
-				string strFileName;
+				FARString strFileName;
 				SelPanel->GetFileName(strFileName,Pos,FileAttr);
 				Ret=true;
 			}
@@ -2931,7 +2931,7 @@ static bool mloadFunc(const TMacroFunction*)
 			case REG_SZ:
 			case REG_MULTI_SZ:
 			{
-				string strSData;
+				FARString strSData;
 				strSData.Clear();
 				GetRegKey(L"KeyMacros/Vars",Name,strSData,L"");
 
@@ -3000,7 +3000,7 @@ static bool msaveFunc(const TMacroFunction*)
 
 	TVar Result=tmpVarSet->value;
 	DWORD Ret=(DWORD)-1;
-	string strValueName = Val.s();
+	FARString strValueName = Val.s();
 
 	switch (Result.type())
 	{
@@ -3381,7 +3381,7 @@ static bool replaceFunc(const TMacroFunction*)
 	TVar Src;   VMStack.Pop(Src);
 	int64_t Ret=1;
 	// TODO: Çäåñü íóæíî ïðîâåðèòü â ñîîòâåòñòâèè ñ ÓÍÈÕÎÄÎÌ!
-	string strStr;
+	FARString strStr;
 	int lenS=(int)StrLength(Src.s());
 	int lenF=(int)StrLength(Find.s());
 	int lenR=(int)StrLength(Repl.s());
@@ -3474,7 +3474,7 @@ static bool panelitemFunc(const TMacroFunction*)
 	}
 	else
 	{
-		string strDate, strTime;
+		FARString strDate, strTime;
 
 		if (TypeInfo == 11)
 			SelPanel->ReadDiz();
@@ -4225,7 +4225,7 @@ done:
 
 	DWORD Key=!MR?MCODE_OP_EXIT:GetOpCode(MR,Work.ExecLIBPos++);
 
-	string value;
+	FARString value;
 	_KEYMACRO(SysLog(L"[%d] IP=%d Op=%08X ==> %ls or %ls",__LINE__,Work.ExecLIBPos-1,Key,_MCODE_ToName(Key),_FARKEY_ToName(Key)));
 
 	if (Work.KeyProcess && Key != MCODE_OP_ENDKEYS)
@@ -4747,7 +4747,7 @@ done:
 						*/
 						int _Mode;
 						bool UseCommon=true;
-						string strVal=Val.toString();
+						FARString strVal=Val.toString();
 						strVal=RemoveExternalSpaces(strVal);
 
 						wchar_t *lpwszVal = strVal.GetBuffer();
@@ -4882,7 +4882,7 @@ done:
 					}
 					else if (Key == MCODE_F_MENU_GETVALUE)
 					{
-						string NewStr;
+						FARString NewStr;
 						if (f->VMProcess(Key,&NewStr,MenuItemPos))
 						{
 							HiText2Str(NewStr, NewStr);
@@ -5076,9 +5076,9 @@ DWORD KeyMacro::SwitchFlags(DWORD& Flags,DWORD Value)
 }
 
 
-string &KeyMacro::MkRegKeyName(int IdxMacro, string &strRegKeyName)
+FARString &KeyMacro::MkRegKeyName(int IdxMacro, FARString &strRegKeyName)
 {
-	string strKeyText;
+	FARString strKeyText;
 	KeyToText(MacroLIB[IdxMacro].Key, strKeyText);
 	strRegKeyName=L"KeyMacros/";
 	strRegKeyName+=GetSubKey(MacroLIB[IdxMacro].Flags&MFLAGS_MODEMASK);
@@ -5101,8 +5101,8 @@ string &KeyMacro::MkRegKeyName(int IdxMacro, string &strRegKeyName)
 wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Src)
 {
 	int J, Key;
-	string strMacroKeyText;
-	string strTextBuffer;
+	FARString strMacroKeyText;
+	FARString strTextBuffer;
 
 	if (!Buffer)
 		return nullptr;
@@ -5161,7 +5161,7 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Sr
 // Ñîõðàíåíèå ÂÑÅÕ ìàêðîñîâ
 void KeyMacro::SaveMacros(BOOL AllSaved)
 {
-	string strRegKeyName;
+	FARString strRegKeyName;
 	//WriteVarsConst(MACRO_VARS);
 	//WriteVarsConst(MACRO_CONSTS);
 
@@ -5234,9 +5234,9 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 
 int KeyMacro::WriteVarsConst(int WriteMode)
 {
-	string strUpKeyName=L"KeyMacros/";
+	FARString strUpKeyName=L"KeyMacros/";
 	strUpKeyName+=(WriteMode==MACRO_VARS?L"Vars":L"Consts");
-	string strValueName;
+	FARString strValueName;
 	TVarTable *t = (WriteMode==MACRO_VARS)?&glbVarTable:&glbConstTable;
 
 	for (int I=0; I < V_TABLE_SIZE; I++)
@@ -5274,12 +5274,12 @@ int KeyMacro::WriteVarsConst(int WriteMode)
      "StringName":REG_SZ
      "IntName":REG_DWORD
 */
-int KeyMacro::ReadVarsConst(int ReadMode, string &strSData)
+int KeyMacro::ReadVarsConst(int ReadMode, FARString &strSData)
 {
-	string strValueName;
+	FARString strValueName;
 	long IData;
 	int64_t IData64;
-	string strUpKeyName=L"KeyMacros/";
+	FARString strUpKeyName=L"KeyMacros/";
 	strUpKeyName+=(ReadMode==MACRO_VARS?L"Vars":L"Consts");
 	TVarTable *t = (ReadMode==MACRO_VARS)?&glbVarTable:&glbConstTable;
 
@@ -5346,7 +5346,7 @@ void KeyMacro::SetMacroConst(const wchar_t *ConstName, const TVar Value)
 /*
    KeyMacros\Function
 */
-int KeyMacro::ReadMacroFunction(int ReadMode, string& strBuffer)
+int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 {
 	/*
 	 Â ðååñòðå äåðæàòü ðàçäåë "KeyMacros\Funcs" - áèáëèîòåêà ìàêðîôóíêöèé, ýêñïîðòèðóåìûõ ïëàãèíàìè (ProcessMacroW)
@@ -5391,15 +5391,15 @@ int KeyMacro::ReadMacroFunction(int ReadMode, string& strBuffer)
 	{
 #if 1
 		int I;
-		string strUpKeyName=L"KeyMacros/Funcs";
-		string strRegKeyName;
-		string strFuncName;
-		string strSyntax;
+		FARString strUpKeyName=L"KeyMacros/Funcs";
+		FARString strRegKeyName;
+		FARString strFuncName;
+		FARString strSyntax;
 		DWORD  nParams;
 		DWORD  oParams;
 		DWORD  Flags;
-		string strGUID;
-		string strDescription;
+		FARString strGUID;
+		FARString strDescription;
 		DWORD regType=0;
 
 		for (I=0;; I++)
@@ -5613,14 +5613,14 @@ DWORD KeyMacro::GetNewOpCode()
 	return LastOpCodeUF++;
 }
 
-int KeyMacro::ReadMacros(int ReadMode, string &strBuffer)
+int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 {
 	int I, J;
 	MacroRecord CurMacro={0};
-	string strUpKeyName=L"KeyMacros/";
+	FARString strUpKeyName=L"KeyMacros/";
 	strUpKeyName+=GetSubKey(ReadMode);
-	string strRegKeyName, strKeyText;
-	string strDescription;
+	FARString strRegKeyName, strKeyText;
+	FARString strDescription;
 	int ErrorCount=0;
 
 	for (I=0;; I++)
@@ -5860,7 +5860,7 @@ void KeyMacro::RunStartMacro()
 // îáðàáîò÷èê äèàëîãîâîãî îêíà íàçíà÷åíèÿ êëàâèøè
 LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
-	string strKeyText;
+	FARString strKeyText;
 	static int LastKey=0;
 	static DlgParam *KMParam=nullptr;
 	int Index;
@@ -5998,10 +5998,10 @@ M1:
 			// îáùèå ìàêðîñû ó÷èòûâàåì òîëüêî ïðè óäàëåíèè.
 			if (!MacroDlg->RecBuffer || !MacroDlg->RecBufferSize || (Mac->Flags&0xFF)!=MACRO_COMMON)
 			{
-				string strRegKeyName;
+				FARString strRegKeyName;
 				MacroDlg->MkRegKeyName(Index, strRegKeyName);
 
-				string strBufKey;
+				FARString strBufKey;
 				if (Mac->Src )
 				{
 					strBufKey=Mac->Src;
@@ -6009,7 +6009,7 @@ M1:
 				}
 
 				DWORD DisFlags=Mac->Flags&MFLAGS_DISABLEMACRO;
-				string strBuf;
+				FARString strBuf;
 				if ((Mac->Flags&0xFF)==MACRO_COMMON)
 					strBuf.Format(MSG(!MacroDlg->RecBufferSize?
 					                  (DisFlags?MMacroCommonDeleteAssign:MMacroCommonDeleteKey):
@@ -6301,7 +6301,7 @@ int KeyMacro::GetMacroSettings(int Key,DWORD &Flags)
 		DI_BUTTON,0,16,0,16,0,DIF_CENTERGROUP,MSG(MCancel),
 	};
 	MakeDialogItemsEx(MacroSettingsDlgData,MacroSettingsDlg);
-	string strKeyText;
+	FARString strKeyText;
 	KeyToText(Key,strKeyText);
 	MacroSettingsDlg[MS_DOUBLEBOX].strData.Format(MSG(MMacroSettingsTitle), strKeyText.CPtr());
 	//if(!(Key&0x7F000000))
@@ -6527,7 +6527,7 @@ int KeyMacro::ParseMacroString(MacroRecord *CurMacro,const wchar_t *BufPtr,BOOL 
 		{
 			// TODO: ÝÒÎÒ ÊÓÑÎÊ ÄÎËÆÅÍ ÏÐÅÄÏÎËÀÃÀÒÜ ÂÎÇÌÎÆÍÎÑÒÜ ÐÅÆÈÌÀ SILENT!
 			bool scrLocks=LockScr!=nullptr;
-			string ErrMsg[4];
+			FARString ErrMsg[4];
 
 			if (scrLocks) // åñëè áûë - óäàëèì
 			{
@@ -6539,11 +6539,11 @@ int KeyMacro::ParseMacroString(MacroRecord *CurMacro,const wchar_t *BufPtr,BOOL 
 			InternalInput++; // InternalInput - îãðàíè÷èòåëü òîãî, ÷òîáû ìàêðîñ íå ïðîäîëæàë ñâîå èñïîëíåíèå
 			GetMacroParseError(&ErrMsg[0],&ErrMsg[1],&ErrMsg[2],&ErrMsg[3]);
 			//if(...)
-			string strTitle=MSG(MMacroPErrorTitle);
+			FARString strTitle=MSG(MMacroPErrorTitle);
 			if(CurMacro->Key)
 			{
 				strTitle+=L" ";
-				string strKey;
+				FARString strKey;
 				KeyToText(CurMacro->Key,strKey);
 				strTitle.Append(GetSubKey(LOBYTE(LOWORD(CurMacro->Flags)))).Append(L"/").Append(strKey);
 			}
@@ -6693,19 +6693,19 @@ int KeyMacro::GetSubKey(const wchar_t *Mode)
 	return MACRO_FUNCS-1;
 }
 
-int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, string &strKeyName, string &strDescription)
+int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyName, FARString &strDescription)
 {
 	if (Mode >= MACRO_FUNCS && Mode < MACRO_LAST)
 	{
 		if (FromReg)
 		{
-			string strUpKeyName;
-			string strRegKeyName;
+			FARString strUpKeyName;
+			FARString strRegKeyName;
 			strUpKeyName.Format(L"KeyMacros/%ls",GetSubKey(Mode));
 
 			if (Mode >= MACRO_OTHER || Mode == MACRO_FUNCS)
 			{
-				string strSyntax, strDescr;
+				FARString strSyntax, strDescr;
 
 				if (!EnumRegKey(strUpKeyName,Pos,strRegKeyName))
 					return -1;
@@ -6735,7 +6735,7 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, string &strKeyName,
 			}
 			else
 			{
-				string strSData;
+				FARString strSData;
 				DWORD IData;
 				int64_t IData64;
 				DWORD Type;
@@ -6880,7 +6880,7 @@ BOOL KeyMacro::CheckPanel(int PanelMode,DWORD CurFlags,BOOL IsPassivePanel)
 
 BOOL KeyMacro::CheckFileFolder(Panel *CheckPanel,DWORD CurFlags, BOOL IsPassivePanel)
 {
-	string strFileName;
+	FARString strFileName;
 	DWORD FileAttr=INVALID_FILE_ATTRIBUTES;
 	CheckPanel->GetFileName(strFileName,CheckPanel->GetCurrentPos(),FileAttr);
 
@@ -7136,12 +7136,12 @@ void doneMacroVarTable(int global)
 	}
 }
 
-BOOL KeyMacro::GetMacroParseError(DWORD* ErrCode, COORD* ErrPos, string *ErrSrc)
+BOOL KeyMacro::GetMacroParseError(DWORD* ErrCode, COORD* ErrPos, FARString *ErrSrc)
 {
 	return __getMacroParseError(ErrCode,ErrPos,ErrSrc);
 }
 
-BOOL KeyMacro::GetMacroParseError(string *Err1, string *Err2, string *Err3, string *Err4)
+BOOL KeyMacro::GetMacroParseError(FARString *Err1, FARString *Err2, FARString *Err3, FARString *Err4)
 {
 	return __getMacroParseError(Err1, Err2, Err3, Err4);
 }

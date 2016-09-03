@@ -38,13 +38,13 @@ class Panel;
 void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir=FALSE);
 int  CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName);
 
-int _MakePath1(DWORD Key,string &strPathName, const wchar_t *Param2,int ShortNameAsIs=TRUE);
+int _MakePath1(DWORD Key,FARString &strPathName, const wchar_t *Param2,int ShortNameAsIs=TRUE);
 
-const string FormatStr_Attribute(DWORD FileAttributes,int Width=-1);
-const string FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Flags,int Width);
-const string FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSize, const string strName,DWORD FileAttributes,DWORD ShowFolderSize,DWORD ReparseTag,int ColumnType,DWORD Flags,int Width);
+const FARString FormatStr_Attribute(DWORD FileAttributes,int Width=-1);
+const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Flags,int Width);
+const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSize, const FARString strName,DWORD FileAttributes,DWORD ShowFolderSize,DWORD ReparseTag,int ColumnType,DWORD Flags,int Width);
 void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
 						unsigned int *ViewColumnTypes,int *ViewColumnWidths,int *ViewColumnWidthsTypes,int &ColumnCount);
 void ViewSettingsToText(unsigned int *ViewColumnTypes,
-						int *ViewColumnWidths,int *ViewColumnWidthsTypes,int ColumnCount,string &strColumnTitles,
-						string &strColumnWidths);
+						int *ViewColumnWidths,int *ViewColumnWidthsTypes,int ColumnCount,FARString &strColumnTitles,
+						FARString &strColumnWidths);

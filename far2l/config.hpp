@@ -144,7 +144,7 @@ struct Confirmation
 
 struct DizOptions
 {
-	string strListNames;
+	FARString strListNames;
 	int ROUpdate;
 	int UpdateMode;
 	int SetHidden;
@@ -160,12 +160,12 @@ struct CodeXLAT
 	/* $ 25.11.2000 IS
 	   Разграничитель слов из реестра для функции Xlat
 	*/
-	string strWordDivForXlat;
+	FARString strWordDivForXlat;
 	HKL Layouts[10];
 	int CurrentLayout;
 
-	string Table[2]; // [0] non-english буквы, [1] english буквы
-	string Rules[3]; // правила:
+	FARString Table[2]; // [0] non-english буквы, [1] english буквы
+	FARString Rules[3]; // правила:
 	// [0] "если предыдущий символ латинский"
 	// [1] "если предыдущий символ нелатинский символ"
 	// [2] "если предыдущий символ не рус/lat"
@@ -202,7 +202,7 @@ struct EditorOptions
 	int SearchPickUpWord;
 	int ShowWhiteSpace;
 
-	string strWordDiv;
+	FARString strWordDiv;
 
 	void Clear()
 	{
@@ -324,7 +324,7 @@ struct CommandLineOptions
 	int DelRemovesBlocks;
 	int AutoComplete;
 	int UsePromptFormat;
-	string strPromptFormat;
+	FARString strPromptFormat;
 };
 
 struct NowellOptions
@@ -346,8 +346,8 @@ struct LoadPluginsOptions
 	int PluginsCacheOnly; // seting by '/co' switch, not saved in registry
 	int PluginsPersonal;
 
-	string strCustomPluginsPath;  // путь для поиска плагинов, указанный в /p
-	string strPersonalPluginsPath;
+	FARString strCustomPluginsPath;  // путь для поиска плагинов, указанный в /p
+	FARString strPersonalPluginsPath;
 	int SilentLoadPlugin; // при загрузке плагина с кривым...
 	int OEMPluginsSupport;
 	int ScanSymlinks;
@@ -361,10 +361,10 @@ struct FindFileOptions
 	bool CollectFiles;
 	bool UseFilter;
 	bool FindAlternateStreams;
-	string strSearchInFirstSize;
+	FARString strSearchInFirstSize;
 
-	string strSearchOutFormat;
-	string strSearchOutFormatWidth;
+	FARString strSearchOutFormat;
+	FARString strSearchOutFormatWidth;
 	int OutColumnCount;
 	unsigned int OutColumnTypes[20];
 	int OutColumnWidths[20];
@@ -373,7 +373,7 @@ struct FindFileOptions
 
 struct InfoPanelOptions
 {
-	string strFolderInfoFiles;
+	FARString strFolderInfoFiles;
 };
 
 struct TreeOptions
@@ -409,8 +409,8 @@ struct MacroOptions
 	DWORD KeyMacroCtrlDot; // аля KEY_CTRLDOT
 	DWORD KeyMacroCtrlShiftDot; // аля KEY_CTRLSHIFTDOT
 	int CallPluginRules; // 0 - блокировать макросы при вызове плагина, 1 - разрешить макросы (ахтунг!)
-	string strMacroCONVFMT; // формат преобразования double в строку
-	string strDateFormat; // Для $Date
+	FARString strMacroCONVFMT; // формат преобразования double в строку
+	FARString strDateFormat; // Для $Date
 };
 
 struct Options
@@ -426,11 +426,11 @@ struct Options
 	int ShowHidden;
 	int Highlight;
 
-	string strLeftFolder;
-	string strRightFolder;
+	FARString strLeftFolder;
+	FARString strRightFolder;
 
-	string strLeftCurFile;
-	string strRightCurFile;
+	FARString strLeftCurFile;
+	FARString strRightCurFile;
 
 	int RightSelectedFirst;
 	int LeftSelectedFirst;
@@ -456,14 +456,14 @@ struct Options
 	int SaveViewHistory;
 	int ViewHistoryCount;
 
-	string strExternalEditor;
+	FARString strExternalEditor;
 	EditorOptions EdOpt;
-	string strExternalViewer;
+	FARString strExternalViewer;
 	ViewerOptions ViOpt;
 
 
-	string strWordDiv; // $ 03.08.2000 SVS Разграничитель слов из реестра
-	string strQuotedSymbols;
+	FARString strWordDiv; // $ 03.08.2000 SVS Разграничитель слов из реестра
+	FARString strQuotedSymbols;
 	DWORD QuotedName;
 	int AutoSaveSetup;
 	int SetupArgv; // количество каталогов в комюстроке ФАРа
@@ -510,9 +510,9 @@ struct Options
 	DWORD  AutoUpdateLimit; // выше этого количество автоматически не обновлять панели.
 	int AutoUpdateRemoteDrive;
 
-	string strLanguage;
+	FARString strLanguage;
 	int SmallIcon;
-	string strRegRoot;
+	FARString strRegRoot;
 	int PanelRightClickRule; // задает поведение правой клавиши мыши
 	int PanelCtrlAltShiftRule; // задает поведение Ctrl-Alt-Shift для панелей.
 	// Panel/CtrlFRule в реестре - задает поведение Ctrl-F. Если = 0, то штампуется файл как есть, иначе - с учетом отображения на панели
@@ -557,7 +557,7 @@ struct Options
 
 	int UsePrintManager;
 
-	string strHelpLanguage;
+	FARString strHelpLanguage;
 	int FullScreenHelp;
 	int HelpTabSize;
 
@@ -611,7 +611,7 @@ struct Options
 	int ExecuteUseAppPath;
 	int ExecuteFullTitle;
 	int ExecuteSilentExternal;
-	string strExecuteBatchType;
+	FARString strExecuteBatchType;
 
 	DWORD PluginMaxReadData;
 	int UseNumPad;
@@ -642,7 +642,7 @@ struct Options
 	DWORD CPMenuMode;
 
 	bool IsUserAdmin;
-	string strTitleAddons;
+	FARString strTitleAddons;
 
 	int ElevationMode;
 	BOOL WindowMode;

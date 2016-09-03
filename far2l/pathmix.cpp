@@ -161,7 +161,7 @@ bool TestCurrentFolderName(const wchar_t *Name)
 
 bool TestCurrentDirectory(const wchar_t *TestDir)
 {
-	string strCurDir;
+	FARString strCurDir;
 
 	if (apiGetCurrentDirectory(strCurDir) && !StrCmpI(strCurDir,TestDir))
 		return true;
@@ -174,7 +174,7 @@ const wchar_t* WINAPI PointToName(const wchar_t *lpwszPath)
 	return PointToName(lpwszPath,nullptr);
 }
 
-const wchar_t* PointToName(string& strPath)
+const wchar_t* PointToName(FARString& strPath)
 {
 	const wchar_t *lpwszPath=strPath.CPtr();
 	const wchar_t *lpwszEndPtr=lpwszPath+strPath.GetLength();
@@ -245,7 +245,7 @@ const wchar_t* PointToExt(const wchar_t *lpwszPath)
 	return PointToExt(lpwszPath,lpwszEndPtr);
 }
 
-const wchar_t* PointToExt(string& strPath)
+const wchar_t* PointToExt(FARString& strPath)
 {
 	const wchar_t *lpwszPath=strPath.CPtr();
 	const wchar_t *lpwszEndPtr=lpwszPath+strPath.GetLength();
@@ -348,12 +348,12 @@ BOOL WINAPI AddEndSlash(wchar_t *Path)
 }
 
 
-BOOL AddEndSlash(string &strPath)
+BOOL AddEndSlash(FARString &strPath)
 {
 	return AddEndSlash(strPath, 0);
 }
 
-BOOL AddEndSlash(string &strPath, wchar_t TypeSlash)
+BOOL AddEndSlash(FARString &strPath, wchar_t TypeSlash)
 {
 	wchar_t *lpwszPath = strPath.GetBuffer(strPath.GetLength()+2);
 	BOOL Result = AddEndSlash(lpwszPath, TypeSlash);
@@ -378,7 +378,7 @@ bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash)
 	return Ret;
 }
 
-BOOL WINAPI DeleteEndSlash(string &strPath, bool AllEndSlash)
+BOOL WINAPI DeleteEndSlash(FARString &strPath, bool AllEndSlash)
 {
 	BOOL Ret=FALSE;
 
@@ -402,7 +402,7 @@ BOOL WINAPI DeleteEndSlash(string &strPath, bool AllEndSlash)
 	return Ret;
 }
 
-bool CutToSlash(string &strStr, bool bInclude)
+bool CutToSlash(FARString &strStr, bool bInclude)
 {
 	size_t pos;
 
@@ -422,7 +422,7 @@ bool CutToSlash(string &strStr, bool bInclude)
 	return false;
 }
 
-string &CutToNameUNC(string &strPath)
+FARString &CutToNameUNC(FARString &strPath)
 {
 	wchar_t *lpwszPath = strPath.GetBuffer();
 
@@ -456,7 +456,7 @@ string &CutToNameUNC(string &strPath)
 	return strPath;
 }
 
-string &CutToFolderNameIfFolder(string &strPath)
+FARString &CutToFolderNameIfFolder(FARString &strPath)
 {
 	wchar_t *lpwszPath = strPath.GetBuffer();
 	wchar_t *lpwszNamePtr=lpwszPath, *lpwszprevNamePtr=lpwszPath;
@@ -538,7 +538,7 @@ const wchar_t *LastSlash(const wchar_t *String)
 	return IsSlash(*String)?String:nullptr;
 }
 
-bool FindSlash(size_t &Pos, const string &Str, size_t StartPos)
+bool FindSlash(size_t &Pos, const FARString &Str, size_t StartPos)
 {
 	for (size_t p = StartPos; p < Str.GetLength(); p++)
 	{
@@ -552,7 +552,7 @@ bool FindSlash(size_t &Pos, const string &Str, size_t StartPos)
 	return false;
 }
 
-bool FindLastSlash(size_t &Pos, const string &Str)
+bool FindLastSlash(size_t &Pos, const FARString &Str)
 {
 	for (size_t p = Str.GetLength(); p > 0; p--)
 	{
@@ -567,7 +567,7 @@ bool FindLastSlash(size_t &Pos, const string &Str)
 }
 
 // find path root component (drive letter / volume name / server share) and calculate its length
-size_t GetPathRootLength(const string &Path)
+size_t GetPathRootLength(const FARString &Path)
 {
 	unsigned PrefixLen = 0;
 	bool IsUNC = false;
@@ -602,17 +602,17 @@ size_t GetPathRootLength(const string &Path)
 	return p;
 }
 
-string ExtractPathRoot(const string &Path)
+FARString ExtractPathRoot(const FARString &Path)
 {
 	size_t PathRootLen = GetPathRootLength(Path);
 
 	if (PathRootLen)
-		return string(Path.CPtr(), PathRootLen).Append(GOOD_SLASH);
+		return FARString(Path.CPtr(), PathRootLen).Append(GOOD_SLASH);
 	else
-		return string();
+		return FARString();
 }
 
-string ExtractFileName(const string &Path)
+FARString ExtractFileName(const FARString &Path)
 {
 	size_t p;
 
@@ -624,12 +624,12 @@ string ExtractFileName(const string &Path)
 	size_t PathRootLen = GetPathRootLength(Path);
 
 	if (p <= PathRootLen && PathRootLen)
-		return string();
+		return FARString();
 
-	return string(Path.CPtr() + p, Path.GetLength() - p);
+	return FARString(Path.CPtr() + p, Path.GetLength() - p);
 }
 
-string ExtractFilePath(const string &Path)
+FARString ExtractFilePath(const FARString &Path)
 {
 	size_t p;
 
@@ -639,12 +639,12 @@ string ExtractFilePath(const string &Path)
 	size_t PathRootLen = GetPathRootLength(Path);
 
 	if (p <= PathRootLen && PathRootLen)
-		return string(Path.CPtr(), PathRootLen).Append(GOOD_SLASH);
+		return FARString(Path.CPtr(), PathRootLen).Append(GOOD_SLASH);
 
-	return string(Path.CPtr(), p);
+	return FARString(Path.CPtr(), p);
 }
 
-bool IsRootPath(const string &Path)
+bool IsRootPath(const FARString &Path)
 {
 	size_t PathRootLen = GetPathRootLength(Path);
 
@@ -657,9 +657,9 @@ bool IsRootPath(const string &Path)
 	return false;
 }
 
-bool PathStartsWith(const string &Path, const string &Start)
+bool PathStartsWith(const FARString &Path, const FARString &Start)
 {
-	string PathPart(Start);
+	FARString PathPart(Start);
 	DeleteEndSlash(PathPart, true);
 	return Path.Equal(0, PathPart) && (Path.GetLength() == PathPart.GetLength() || IsSlash(Path[PathPart.GetLength()]));
 }

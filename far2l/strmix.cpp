@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "pathmix.hpp"
 
-string &FormatNumber(const wchar_t *Src, string &strDest, int NumDigits)
+FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 {
 	strDest = Src;
 	while ((int)strDest.GetSize() < NumDigits)strDest.Insert(0, L'0');
@@ -73,7 +73,7 @@ string &FormatNumber(const wchar_t *Src, string &strDest, int NumDigits)
 	}
 
 	fmt.NumDigits = NumDigits;
-	string strSrc=Src;
+	FARString strSrc=Src;
 	int Size=GetNumberFormat(LOCALE_USER_DEFAULT,0,strSrc,&fmt,nullptr,0);
 	wchar_t* lpwszDest=strDest.GetBuffer(Size);
 	GetNumberFormat(LOCALE_USER_DEFAULT,0,strSrc,&fmt,lpwszDest,Size);
@@ -81,7 +81,7 @@ string &FormatNumber(const wchar_t *Src, string &strDest, int NumDigits)
 	return strDest;*/
 }
 
-string &InsertCommas(uint64_t li,string &strDest)
+FARString &InsertCommas(uint64_t li,FARString &strDest)
 {
 	strDest.Format(L"%llu", li);
 	return FormatNumber(strDest,strDest);
@@ -106,7 +106,7 @@ static wchar_t * WINAPI InsertCustomQuote(wchar_t *Str,wchar_t QuoteChar)
 	return Str;
 }
 
-static string& InsertCustomQuote(string &strStr,wchar_t QuoteChar)
+static FARString& InsertCustomQuote(FARString &strStr,wchar_t QuoteChar)
 {
 	size_t l = strStr.GetLength();
 
@@ -146,12 +146,12 @@ wchar_t* WINAPI QuoteSpace(wchar_t *Str)
 }
 
 
-string& InsertQuote(string &strStr)
+FARString& InsertQuote(FARString &strStr)
 {
 	return InsertCustomQuote(strStr,L'\"');
 }
 
-string& InsertRegexpQuote(string &strStr)
+FARString& InsertRegexpQuote(FARString &strStr)
 {
 	if (strStr.IsEmpty() || strStr[0] != L'/')
 		return InsertCustomQuote(strStr,L'/');
@@ -159,7 +159,7 @@ string& InsertRegexpQuote(string &strStr)
 		return strStr;
 }
 
-string &QuoteSpace(string &strStr)
+FARString &QuoteSpace(FARString &strStr)
 {
 	if (wcspbrk(strStr, Opt.strQuotedSymbols) )
 		InsertQuote(strStr);
@@ -177,7 +177,7 @@ wchar_t*  WINAPI QuoteSpaceOnly(wchar_t *Str)
 }
 
 
-string& WINAPI QuoteSpaceOnly(string &strStr)
+FARString& WINAPI QuoteSpaceOnly(FARString &strStr)
 {
 	if (strStr.Contains(L' '))
 		InsertQuote(strStr);
@@ -186,7 +186,7 @@ string& WINAPI QuoteSpaceOnly(string &strStr)
 }
 
 
-string& WINAPI TruncStrFromEnd(string &strStr, int MaxLength)
+FARString& WINAPI TruncStrFromEnd(FARString &strStr, int MaxLength)
 {
 	wchar_t *lpwszBuffer = strStr.GetBuffer();
 	TruncStrFromEnd(lpwszBuffer, MaxLength);
@@ -247,7 +247,7 @@ wchar_t* WINAPI TruncStr(wchar_t *Str,int MaxLength)
 }
 
 
-string& WINAPI TruncStr(string &strStr, int MaxLength)
+FARString& WINAPI TruncStr(FARString &strStr, int MaxLength)
 {
 	wchar_t *lpwszBuffer = strStr.GetBuffer();
 	TruncStr(lpwszBuffer, MaxLength);
@@ -287,7 +287,7 @@ wchar_t* TruncStrFromCenter(wchar_t *Str, int MaxLength)
 	return Str;
 }
 
-string& TruncStrFromCenter(string &strStr, int MaxLength)
+FARString& TruncStrFromCenter(FARString &strStr, int MaxLength)
 {
 	wchar_t *lpwszBuffer = strStr.GetBuffer();
 	TruncStrFromCenter(lpwszBuffer, MaxLength);
@@ -338,7 +338,7 @@ wchar_t* WINAPI TruncPathStr(wchar_t *Str, int MaxLength)
 }
 
 
-string& WINAPI TruncPathStr(string &strStr, int MaxLength)
+FARString& WINAPI TruncPathStr(FARString &strStr, int MaxLength)
 {
 	wchar_t *lpwszStr = strStr.GetBuffer();
 	TruncPathStr(lpwszStr, MaxLength);
@@ -364,7 +364,7 @@ wchar_t* WINAPI RemoveLeadingSpaces(wchar_t *Str)
 }
 
 
-string& WINAPI RemoveLeadingSpaces(string &strStr)
+FARString& WINAPI RemoveLeadingSpaces(FARString &strStr)
 {
 	const wchar_t *ChPtr = strStr;
 
@@ -397,7 +397,7 @@ wchar_t* WINAPI RemoveTrailingSpaces(wchar_t *Str)
 }
 
 
-string& WINAPI RemoveTrailingSpaces(string &strStr)
+FARString& WINAPI RemoveTrailingSpaces(FARString &strStr)
 {
 	if (strStr.IsEmpty())
 		return strStr;
@@ -418,7 +418,7 @@ wchar_t* WINAPI RemoveExternalSpaces(wchar_t *Str)
 	return RemoveTrailingSpaces(RemoveLeadingSpaces(Str));
 }
 
-string&  WINAPI RemoveExternalSpaces(string &strStr)
+FARString&  WINAPI RemoveExternalSpaces(FARString &strStr)
 {
 	return RemoveTrailingSpaces(RemoveLeadingSpaces(strStr));
 }
@@ -428,7 +428,7 @@ string&  WINAPI RemoveExternalSpaces(string &strStr)
    Çàìåíÿåò ïðîáåëàìè íåïå÷àòíûå ñèìâîëû â ñòðîêå. Â íàñòîÿùèé ìîìåíò
    îáðàáàòûâàþòñÿ òîëüêî cr è lf.
 */
-string& WINAPI RemoveUnprintableCharacters(string &strStr)
+FARString& WINAPI RemoveUnprintableCharacters(FARString &strStr)
 {
 	wchar_t *p = strStr.GetBuffer();
 
@@ -446,7 +446,7 @@ string& WINAPI RemoveUnprintableCharacters(string &strStr)
 
 
 // Óäàëèòü ñèìâîë Target èç ñòðîêè Str (âåçäå!)
-string &RemoveChar(string &strStr,wchar_t Target,BOOL Dup)
+FARString &RemoveChar(FARString &strStr,wchar_t Target,BOOL Dup)
 {
 	wchar_t *Ptr = strStr.GetBuffer();
 	wchar_t *Str = Ptr, Chr;
@@ -472,10 +472,10 @@ string &RemoveChar(string &strStr,wchar_t Target,BOOL Dup)
 	return strStr;
 }
 
-string& CenterStr(const wchar_t *Src, string &strDest, int Length)
+FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 {
 	int SrcLength=StrLength(Src);
-	string strTempStr = Src; //åñëè Src == strDest, òî íàäî êîïèðîâàòü Src!
+	FARString strTempStr = Src; //åñëè Src == strDest, òî íàäî êîïèðîâàòü Src!
 
 	if (SrcLength >= Length)
 	{
@@ -496,7 +496,7 @@ string& CenterStr(const wchar_t *Src, string &strDest, int Length)
 }
 
 
-const wchar_t *GetCommaWord(const wchar_t *Src, string &strWord,wchar_t Separator)
+const wchar_t *GetCommaWord(const wchar_t *Src, FARString &strWord,wchar_t Separator)
 {
 	if (!*Src)
 		return nullptr;
@@ -530,7 +530,7 @@ const wchar_t *GetCommaWord(const wchar_t *Src, string &strWord,wchar_t Separato
 }
 
 
-BOOL IsCaseMixed(const string &strSrc)
+BOOL IsCaseMixed(const FARString &strSrc)
 {
 	const wchar_t *lpwszSrc = strSrc;
 
@@ -546,7 +546,7 @@ BOOL IsCaseMixed(const string &strSrc)
 	return FALSE;
 }
 
-BOOL IsCaseLower(const string &strSrc)
+BOOL IsCaseLower(const FARString &strSrc)
 {
 	const wchar_t *lpwszSrc = strSrc;
 
@@ -582,7 +582,7 @@ void WINAPI Unquote(wchar_t *Str)
 }
 
 
-void WINAPI Unquote(string &strStr)
+void WINAPI Unquote(FARString &strStr)
 {
 	wchar_t *Dst = strStr.GetBuffer();
 	const wchar_t *Str = Dst;
@@ -600,7 +600,7 @@ void WINAPI Unquote(string &strStr)
 }
 
 
-void UnquoteExternal(string &strStr)
+void UnquoteExternal(FARString &strStr)
 {
 	size_t len = strStr.GetLength();
 
@@ -632,9 +632,9 @@ void PrepareUnitStr()
 	}
 }
 
-string & WINAPI FileSizeToStr(string &strDestStr, uint64_t Size, int Width, int ViewFlags)
+FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width, int ViewFlags)
 {
-	string strStr;
+	FARString strStr;
 	uint64_t Divider;
 	int IndexDiv, IndexB;
 
@@ -790,7 +790,7 @@ wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize)
 // Çàìåíèòü â ñòðîêå Str Count âõîæäåíèé ïîäñòðîêè FindStr íà ïîäñòðîêó ReplStr
 // Åñëè Count < 0 - çàìåíÿòü "äî ïîëíîé ïîáåäû"
 // Return - êîëè÷åñòâî çàìåí
-int ReplaceStrings(string &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count,BOOL IgnoreCase)
+int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count,BOOL IgnoreCase)
 {
 	const int LenFindStr=StrLength(FindStr);
 	if ( !LenFindStr || !Count )
@@ -885,9 +885,9 @@ enum FFTMODE
 	FFTM_BREAKLONGWORD = 0x00000001,
 };
 
-string& WINAPI FarFormatText(const wchar_t *SrcText,     // èñòî÷íèê
+FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // èñòî÷íèê
                              int Width,               // çàäàííàÿ øèðèíà
-                             string &strDestText,          // ïðèåìíèê
+                             FARString &strDestText,          // ïðèåìíèê
                              const wchar_t* Break,       // áðèê, åñëè = nullptr, òî ïðèíèìàåòñÿ '\n'
                              DWORD Flags)             // îäèí èç FFTM_*
 {
@@ -900,7 +900,7 @@ string& WINAPI FarFormatText(const wchar_t *SrcText,     // èñòî÷íèê
 		return strDestText;
 	}
 
-	string strSrc = SrcText; //copy string in case of SrcText == strDestText
+	FARString strSrc = SrcText; //copy FARString in case of SrcText == strDestText
 
 	if (!wcspbrk(strSrc,breakchar) && strSrc.GetLength() <= static_cast<size_t>(Width))
 	{
@@ -1100,7 +1100,7 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 	if (CurPos >= StrSize)
 		return nullptr;
 
-	string strWordDiv(WordDiv0);
+	FARString strWordDiv(WordDiv0);
 	strWordDiv += L" \t\n\r";
 
 	if (IsWordDiv(strWordDiv,Str[CurPos]))
@@ -1234,15 +1234,15 @@ uint64_t ConvertFileSizeString(const wchar_t *FileSizeStr)
 /* $ 21.09.2003 KM
    Òðàíñôîðìàöèÿ ñòðîêè ïî çàäàííîìó òèïó.
 */
-void Transform(string &strBuffer,const wchar_t *ConvStr,wchar_t TransformType)
+void Transform(FARString &strBuffer,const wchar_t *ConvStr,wchar_t TransformType)
 {
-	string strTemp;
+	FARString strTemp;
 
 	switch (TransformType)
 	{
-		case L'X': // Convert common string to hexadecimal string representation
+		case L'X': // Convert common FARString to hexadecimal FARString representation
 		{
-			string strHex;
+			FARString strHex;
 
 			while (*ConvStr)
 			{
@@ -1253,7 +1253,7 @@ void Transform(string &strBuffer,const wchar_t *ConvStr,wchar_t TransformType)
 
 			break;
 		}
-		case L'S': // Convert hexadecimal string representation to common string
+		case L'S': // Convert hexadecimal FARString representation to common string
 		{
 			const wchar_t *ptrConvStr=ConvStr;
 
@@ -1289,9 +1289,9 @@ wchar_t GetDecimalSeparator()
 	return L'.';
 }
 
-string ReplaceBrackets(const string& SearchStr,const string& ReplaceStr,RegExpMatch* Match,int Count)
+FARString ReplaceBrackets(const FARString& SearchStr,const FARString& ReplaceStr,RegExpMatch* Match,int Count)
 {
-	string result;
+	FARString result;
 	size_t pos=0,length=ReplaceStr.GetLength();
 
 	while (pos<length)
@@ -1320,7 +1320,7 @@ string ReplaceBrackets(const string& SearchStr,const string& ReplaceStr,RegExpMa
 			{
 				if (index<Count)
 				{
-					string bracket(SearchStr.CPtr()+Match[index].start,Match[index].end-Match[index].start);
+					FARString bracket(SearchStr.CPtr()+Match[index].start,Match[index].end-Match[index].start);
 					result+=bracket;
 				}
 

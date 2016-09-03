@@ -39,7 +39,7 @@ const size_t cVolumeGuidLen = 48;
 
 class NTPath
 {
-		string Str;
+		FARString Str;
 	public:
 		NTPath(LPCWSTR Src);
 
@@ -48,7 +48,7 @@ class NTPath
 			return Str;
 		}
 
-		const string Get() const
+		const FARString Get() const
 		{
 			return Str;
 		}
@@ -66,41 +66,41 @@ bool IsLocalPrefixRootPath(const wchar_t *Path);
 bool IsLocalVolumePath(const wchar_t *Path);
 bool IsLocalVolumeRootPath(const wchar_t *Path);
 bool IsAbsolutePath(const wchar_t *Path);
-bool IsRootPath(const string &Path);
+bool IsRootPath(const FARString &Path);
 bool HasPathPrefix(const wchar_t *Path);
-bool PathStartsWith(const string &Path, const string &Start);
+bool PathStartsWith(const FARString &Path, const FARString &Start);
 bool PathCanHoldRegularFile(const wchar_t *Path);
 bool IsPluginPrefixPath(const wchar_t *Path);
 
-bool CutToSlash(string &strStr, bool bInclude = false);
-string &CutToNameUNC(string &strPath);
-string &CutToFolderNameIfFolder(string &strPath);
+bool CutToSlash(FARString &strStr, bool bInclude = false);
+FARString &CutToNameUNC(FARString &strPath);
+FARString &CutToFolderNameIfFolder(FARString &strPath);
 const wchar_t *PointToNameUNC(const wchar_t *lpwszPath);
 const wchar_t* WINAPI PointToName(const wchar_t *lpwszPath);
-const wchar_t* PointToName(string &strPath);
+const wchar_t* PointToName(FARString &strPath);
 const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr);
 const wchar_t* WINAPI PointToFolderNameIfFolder(const wchar_t *lpwszPath);
 const wchar_t* PointToExt(const wchar_t *lpwszPath);
-const wchar_t* PointToExt(string& strPath);
+const wchar_t* PointToExt(FARString& strPath);
 const wchar_t* PointToExt(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr);
 
-BOOL AddEndSlash(string &strPath, wchar_t TypeSlash);
-BOOL AddEndSlash(string &strPath);
+BOOL AddEndSlash(FARString &strPath, wchar_t TypeSlash);
+BOOL AddEndSlash(FARString &strPath);
 BOOL AddEndSlash(wchar_t *Path, wchar_t TypeSlash);
 BOOL WINAPI AddEndSlash(wchar_t *Path);
 bool DeleteEndSlash(wchar_t* Path, bool AllEndSlash = false);
-BOOL WINAPI DeleteEndSlash(string &strPath,bool AllEndSlash = false);
+BOOL WINAPI DeleteEndSlash(FARString &strPath,bool AllEndSlash = false);
 
 const wchar_t *FirstSlash(const wchar_t *String);
 const wchar_t *LastSlash(const wchar_t *String);
-bool FindSlash(size_t &Pos, const string &Str, size_t StartPos = 0);
-bool FindLastSlash(size_t &Pos, const string &Str);
+bool FindSlash(size_t &Pos, const FARString &Str, size_t StartPos = 0);
+bool FindLastSlash(size_t &Pos, const FARString &Str);
 
 bool TestParentFolderName(const wchar_t *Name);
 bool TestCurrentFolderName(const wchar_t *Name);
 bool TestCurrentDirectory(const wchar_t *TestDir);
 
-string ExtractPathRoot(const string &Path);
-string ExtractFileName(const string &Path);
-string ExtractFilePath(const string &Path);
+FARString ExtractPathRoot(const FARString &Path);
+FARString ExtractFileName(const FARString &Path);
+FARString ExtractFilePath(const FARString &Path);
 

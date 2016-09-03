@@ -269,7 +269,7 @@ end:
 	return ret;
 }
 
-bool History::ReadLastItem(const wchar_t *RegKey, string &strStr)
+bool History::ReadLastItem(const wchar_t *RegKey, FARString &strStr)
 {
 	strStr.Clear();
 	HKEY hKey=OpenRegKey(RegKey);
@@ -487,7 +487,7 @@ const wchar_t *History::GetTitle(int Type)
 	return L"";
 }
 
-int History::Select(const wchar_t *Title, const wchar_t *HelpTopic, string &strStr, int &Type)
+int History::Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &strStr, int &Type)
 {
 	int Height=ScrY-8;
 	VMenu HistoryMenu(Title,nullptr,0,Height);
@@ -501,7 +501,7 @@ int History::Select(const wchar_t *Title, const wchar_t *HelpTopic, string &strS
 	return ProcessMenu(strStr, Title, HistoryMenu, Height, Type, nullptr);
 }
 
-int History::Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, string &strStr)
+int History::Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, FARString &strStr)
 {
 	int Type=0;
 	return ProcessMenu(strStr, nullptr, HistoryMenu, Height, Type, Dlg);
@@ -519,7 +519,7 @@ int History::Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, string &strStr)
    6 - Ctrl-Shift-Enter
    7 - Ctrl-Alt-Enter
 */
-int History::ProcessMenu(string &strStr, const wchar_t *Title, VMenu &HistoryMenu, int Height, int &Type, Dialog *Dlg)
+int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &HistoryMenu, int Height, int &Type, Dialog *Dlg)
 {
 	MenuItemEx MenuItem;
 	HistoryRecord *SelectedRecord=nullptr;
@@ -541,7 +541,7 @@ int History::ProcessMenu(string &strStr, const wchar_t *Title, VMenu &HistoryMen
 		// заполнение пунктов меню
 		for (const HistoryRecord *HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Last():HistoryList.First(); HistoryItem ; HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Prev(HistoryItem):HistoryList.Next(HistoryItem))
 		{
-			string strRecord = HistoryItem->strName;
+			FARString strRecord = HistoryItem->strName;
 			strRecord.Clear();
 
 			if (TypeHistory == HISTORYTYPE_VIEW)
@@ -837,7 +837,7 @@ int History::ProcessMenu(string &strStr, const wchar_t *Title, VMenu &HistoryMen
 	return RetCode;
 }
 
-void History::GetPrev(string &strStr)
+void History::GetPrev(FARString &strStr)
 {
 	CurrentItem=HistoryList.Prev(CurrentItem);
 
@@ -851,7 +851,7 @@ void History::GetPrev(string &strStr)
 }
 
 
-void History::GetNext(string &strStr)
+void History::GetNext(FARString &strStr)
 {
 	if (CurrentItem)
 		CurrentItem=HistoryList.Next(CurrentItem);
@@ -863,7 +863,7 @@ void History::GetNext(string &strStr)
 }
 
 
-bool History::GetSimilar(string &strStr, int LastCmdPartLength, bool bAppend)
+bool History::GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend)
 {
 	int Length=(int)strStr.GetLength();
 

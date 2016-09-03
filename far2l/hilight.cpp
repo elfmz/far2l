@@ -107,8 +107,8 @@ void LoadFilterFromReg(FileFilterParams *HData, const wchar_t *RegKey, const wch
 	               DateAfter,
 	               DateBefore,
 	               GetRegKey(RegKey,HLS.DateRelative,0)!=0);
-	string strSizeAbove;
-	string strSizeBelow;
+	FARString strSizeAbove;
+	FARString strSizeBelow;
 	GetRegKey(RegKey,HLS.SizeAbove,strSizeAbove,L"");
 	GetRegKey(RegKey,HLS.SizeBelow,strSizeBelow,L"");
 	HData->SetSize(GetRegKey(RegKey,HLS.UseSize,0)!=0,
@@ -145,7 +145,7 @@ void LoadFilterFromReg(FileFilterParams *HData, const wchar_t *RegKey, const wch
 
 void HighlightFiles::InitHighlightFiles()
 {
-	string strRegKey, strGroupName, strMask;
+	FARString strRegKey, strGroupName, strMask;
 	const int GroupDelta[4]={DEFAULT_SORT_GROUP,0,DEFAULT_SORT_GROUP+1,DEFAULT_SORT_GROUP};
 	const wchar_t *KeyNames[4]={RegColorsHighlight,SortGroupsKeyName,SortGroupsKeyName,RegColorsHighlight};
 	const wchar_t *GroupNames[4]={fmtFirstGroup,fmtUpperGroup,fmtLowerGroup,fmtLastGroup};
@@ -717,7 +717,7 @@ void SaveFilterToReg(FileFilterParams *CurHiData, const wchar_t *RegKey, bool bS
 
 void HighlightFiles::SaveHiData()
 {
-	string strRegKey, strGroupName;
+	FARString strRegKey, strGroupName;
 	const wchar_t *KeyNames[4]={RegColorsHighlight,SortGroupsKeyName,SortGroupsKeyName,RegColorsHighlight};
 	const wchar_t *GroupNames[4]={fmtFirstGroup,fmtUpperGroup,fmtLowerGroup,fmtLastGroup};
 	const int Count[4][2] =
@@ -766,7 +766,7 @@ void SetHighlighting()
 	if (CheckRegKey(RegColorsHighlight))
 		return;
 
-	string strRegKey;
+	FARString strRegKey;
 	static const wchar_t *Masks[]=
 	{
 		/* 0 */ L"*.*",

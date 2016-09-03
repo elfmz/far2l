@@ -72,8 +72,8 @@ static int exprBuffSize = 0;
 static DWORD FARVar, *exprBuff = nullptr;
 static int IsProcessFunc=0;
 
-static string _ErrWord;
-static string ErrMessage[4];
+static FARString _ErrWord;
+static FARString ErrMessage[4];
 static int _macro_nErr = 0;
 static int _macro_nLine = 0;
 static int _macro_nPos = 0;
@@ -96,7 +96,7 @@ static void printKeyValue(DWORD* k, int& i);
 #endif
 #endif
 
-static const wchar_t *__GetNextWord(const wchar_t *BufPtr,string &strCurKeyText,int& Line);
+static const wchar_t *__GetNextWord(const wchar_t *BufPtr,FARString &strCurKeyText,int& Line);
 static void keyMacroParseError(int err, const wchar_t *s, const wchar_t *p, const wchar_t *c=nullptr);
 static void keyMacroParseError(int err, const wchar_t *c = nullptr);
 
@@ -1266,7 +1266,7 @@ static int parseExpr(const wchar_t*& BufPtr, DWORD *eBuff, wchar_t bound1, wchar
 }
 
 
-static const wchar_t *__GetNextWord(const wchar_t *BufPtr,string &strCurKeyText,int& Line)
+static const wchar_t *__GetNextWord(const wchar_t *BufPtr,FARString &strCurKeyText,int& Line)
 {
 	// ïðîïóñêàåì âåäóùèå ïðîáåëüíûå ñèìâîëû
 	while (IsSpace(*BufPtr) || IsEol(*BufPtr))
@@ -1330,8 +1330,8 @@ static wchar_t *printfStr(DWORD* k, int& i)
 static void printKeyValue(DWORD* k, int& i)
 {
 	DWORD Code=k[i];
-	string _mcodename=_MCODE_ToName(Code);
-	string cmt;
+	FARString _mcodename=_MCODE_ToName(Code);
+	FARString cmt;
 
 	if (Code >= MCODE_F_NOFUNC && Code <= KEY_MACRO_C_BASE-1 || Code >= KEY_MACRO_U_BASE && Code <= KEY_MACRO_ENDBASE-1)
 	{
@@ -1349,7 +1349,7 @@ static void printKeyValue(DWORD* k, int& i)
 
 	if (Code == MCODE_OP_KEYS)
 	{
-		string strTmp;
+		FARString strTmp;
 		SysLog(L"%08X: %08X | MCODE_OP_KEYS", i,MCODE_OP_KEYS);
 		++i;
 
@@ -1454,7 +1454,7 @@ static void printKeyValue(DWORD* k, int& i)
 
 		if (!FARFunc)
 		{
-			string strTmp;
+			FARString strTmp;
 
 			if (KeyToText(k[i], strTmp))
 				SysLog(L"%08X: %08X | Key: '%ls'", ii,Code,strTmp.CPtr());
@@ -1502,7 +1502,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 	//}
 
 	int SizeCurKeyText = (int)(StrLength(BufPtr)*2)*sizeof(wchar_t);
-	string strCurrKeyText;
+	FARString strCurrKeyText;
 	//- AN ----------------------------------------------
 	//  Áóôåð ïîä ïàðñèíã âûðàæåíèé
 	//- AN ----------------------------------------------
@@ -2084,7 +2084,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 	return TRUE;
 }
 
-BOOL __getMacroParseError(DWORD* ErrCode, COORD* ErrPos, string *ErrSrc)
+BOOL __getMacroParseError(DWORD* ErrCode, COORD* ErrPos, FARString *ErrSrc)
 {
 	if (_macro_nErr)
 	{
@@ -2106,7 +2106,7 @@ BOOL __getMacroParseError(DWORD* ErrCode, COORD* ErrPos, string *ErrSrc)
 	return FALSE;
 }
 
-BOOL __getMacroParseError(string *strErrMsg1,string *strErrMsg2,string *strErrMsg3,string *strErrMsg4)
+BOOL __getMacroParseError(FARString *strErrMsg1,FARString *strErrMsg2,FARString *strErrMsg3,FARString *strErrMsg4)
 {
 	if (_macro_nErr)
 	{

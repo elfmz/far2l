@@ -133,7 +133,7 @@ static const char NFMP_GetMinFarVersion[]="GetMinFarVersion";
 
 static BOOL PrepareModulePath(const wchar_t *ModuleName)
 {
-	string strModulePath;
+	FARString strModulePath;
 	strModulePath = ModuleName;
 	CutToSlash(strModulePath); //??
 	return FarChDir(strModulePath);
@@ -175,7 +175,7 @@ PluginA::~PluginA()
 
 bool PluginA::LoadFromCache(const FAR_FIND_DATA_EX &FindData)
 {
-	string strRegKey;
+	FARString strRegKey;
 	strRegKey.Format(FmtPluginsCache_PluginS, m_strCacheName.CPtr());
 
 	if (CheckRegKey(strRegKey))
@@ -184,7 +184,7 @@ bool PluginA::LoadFromCache(const FAR_FIND_DATA_EX &FindData)
 			return Load();
 
 		{
-			string strPluginID, strCurPluginID;
+			FARString strPluginID, strCurPluginID;
 			strCurPluginID.Format(
 			    L"%I64x%x%x",
 			    FindData.nFileSize,
@@ -227,7 +227,7 @@ bool PluginA::SaveToCache()
 		PluginInfo Info;
 		GetPluginInfo(&Info);
 		SysID = Info.SysID; //LAME!!!
-		string strRegKey;
+		FARString strRegKey;
 		strRegKey.Format(FmtPluginsCache_PluginS, m_strCacheName.CPtr());
 		DeleteKeyTree(strRegKey);
 		{
@@ -239,7 +239,7 @@ bool PluginA::SaveToCache()
 				return true;
 		}
 		{
-			string strCurPluginID;
+			FARString strCurPluginID;
 			FAR_FIND_DATA_EX fdata;
 			apiGetFindDataEx(m_strModuleName, fdata);
 			strCurPluginID.Format(
@@ -253,21 +253,21 @@ bool PluginA::SaveToCache()
 
 		for (int i = 0; i < Info.DiskMenuStringsNumber; i++)
 		{
-			string strValue;
+			FARString strValue;
 			strValue.Format(FmtDiskMenuStringD, i);
 			SetRegKey(strRegKey, strValue, Info.DiskMenuStrings[i]);
 		}
 
 		for (int i = 0; i < Info.PluginMenuStringsNumber; i++)
 		{
-			string strValue;
+			FARString strValue;
 			strValue.Format(FmtPluginMenuStringD, i);
 			SetRegKey(strRegKey, strValue, Info.PluginMenuStrings[i]);
 		}
 
 		for (int i = 0; i < Info.PluginConfigStringsNumber; i++)
 		{
-			string strValue;
+			FARString strValue;
 			strValue.Format(FmtPluginConfigStringD, i);
 			SetRegKey(strRegKey,strValue,Info.PluginConfigStrings[i]);
 		}
@@ -300,7 +300,7 @@ bool PluginA::Load()
 
 	if (!m_hModule)
 	{/*
-		string strCurPath, strCurPlugDiskPath;
+		FARString strCurPath, strCurPlugDiskPath;
 		wchar_t Drive[]={0,L' ',L':',0}; // ñòàâèì 0, êàê ïðèçíàê òîãî, ÷òî âåðòàòü îáðàòíî íåíàäî!
 		apiGetCurrentDirectory(strCurPath);
 
@@ -555,7 +555,7 @@ bool PluginA::SetStartupInfo(bool &bUnloaded)
 
 static void ShowMessageAboutIllegalPluginVersion(const wchar_t* plg,int required)
 {
-	string strMsg1, strMsg2;
+	FARString strMsg1, strMsg2;
 	strMsg1.Format(MSG(MPlgRequired),(WORD)HIBYTE(LOWORD(required)),(WORD)LOBYTE(LOWORD(required)),HIWORD(required));
 	strMsg2.Format(MSG(MPlgRequired2),(WORD)HIBYTE(LOWORD(FAR_VERSION)),(WORD)LOBYTE(LOWORD(FAR_VERSION)),HIWORD(FAR_VERSION));
 	Message(MSG_WARNING,1,MSG(MError),MSG(MPlgBadVers),plg,strMsg1,strMsg2,MSG(MOk));
@@ -636,7 +636,7 @@ HANDLE PluginA::OpenPlugin(int OpenFrom, INT_PTR Item)
 	CheckScreenLock(); //??
 
 	{
-//		string strCurDir;
+//		FARString strCurDir;
 //		CtrlObject->CmdLine->GetCurDir(strCurDir);
 //		FarChDir(strCurDir);
 		g_strDirToSet.Clear();

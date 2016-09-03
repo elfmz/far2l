@@ -55,7 +55,7 @@ void NamesList::AddName(const wchar_t *Name,const wchar_t *ShortName)
 }
 
 
-bool NamesList::GetNextName(string &strName, string &strShortName)
+bool NamesList::GetNextName(FARString &strName, FARString &strShortName)
 {
 	const OneName *pName=Names.Next(CurrentName);
 
@@ -69,7 +69,7 @@ bool NamesList::GetNextName(string &strName, string &strShortName)
 }
 
 
-bool NamesList::GetPrevName(string &strName, string &strShortName)
+bool NamesList::GetPrevName(FARString &strName, FARString &strShortName)
 {
 	const OneName *pName=Names.Prev(CurrentName);
 
@@ -105,7 +105,7 @@ void NamesList::MoveData(NamesList &Dest)
 }
 
 
-void NamesList::GetCurDir(string &strDir)
+void NamesList::GetCurDir(FARString &strDir)
 {
 	strDir = strCurrentDir;
 }

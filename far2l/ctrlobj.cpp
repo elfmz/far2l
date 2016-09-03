@@ -118,12 +118,12 @@ void ControlObject::Init()
 	}
 
 	FrameManager->InsertFrame(FPanels);
-	string strStartCurDir;
+	FARString strStartCurDir;
 	Cp()->ActivePanel->GetCurDir(strStartCurDir);
 	FarChDir(strStartCurDir);
 	Cp()->ActivePanel->SetFocus();
 	{
-		string strOldTitle;
+		FARString strOldTitle;
 		Console.GetTitle(strOldTitle);
 		FrameManager->PluginCommit();
 		Plugins.LoadPlugins();
@@ -156,7 +156,7 @@ ControlObject::~ControlObject()
 
 		if (Cp()->ActivePanel->GetMode()!=PLUGIN_PANEL)
 		{
-			string strCurDir;
+			FARString strCurDir;
 			Cp()->ActivePanel->GetCurDir(strCurDir);
 			FolderHistory->AddToHistory(strCurDir);
 		}
@@ -206,8 +206,8 @@ void ControlObject::ShowCopyright(DWORD Flags)
 		}
 	}
 
-	string strStr(Str, CP_OEMCP); //BUGBUG
-	string strLine(Line2, CP_OEMCP);  //BUGBUG
+	FARString strStr(Str, CP_OEMCP); //BUGBUG
+	FARString strLine(Line2, CP_OEMCP);  //BUGBUG
 	xf_free(Str);
 
 	if (Flags&1)

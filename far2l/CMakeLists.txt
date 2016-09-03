@@ -4,6 +4,7 @@ project(far2l)
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory (bootstrap)
+
 add_subdirectory (UCD)
 
 add_definitions(-DUNICODE)
@@ -133,6 +134,6 @@ xlat.cpp
 )
 
 add_executable (far2l ${SOURCES})
+add_dependencies(far2l bootstrap)
 
 target_link_libraries(far2l UCD WinPort dl)
-add_dependencies(far2l bootstrap)

@@ -133,11 +133,11 @@ bool IsDriveTypeCDROM(UINT DriveType)
 
 UINT FAR_GetDriveType(const wchar_t *RootDir, CDROM_DeviceCapabilities *Caps, DWORD Detect)
 {
-	string strRootDir;
+	FARString strRootDir;
 
 	if (!RootDir || !*RootDir)
 	{
-		string strCurDir;
+		FARString strCurDir;
 		apiGetCurrentDirectory(strCurDir);
 		GetPathRoot(strCurDir, strRootDir);
 	}
@@ -155,7 +155,7 @@ UINT FAR_GetDriveType(const wchar_t *RootDir, CDROM_DeviceCapabilities *Caps, DW
 	// анализ CD-привода
 	if ((Detect&1) && DrvType == DRIVE_CDROM)
 	{
-		string VolumePath = strRootDir;
+		FARString VolumePath = strRootDir;
 		DeleteEndSlash(VolumePath);
 
 		if (VolumePath.Equal(0, L"//?/"))

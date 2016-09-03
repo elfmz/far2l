@@ -44,7 +44,7 @@ enum
 
 struct TreeItem
 {
-	string strName;
+	FARString strName;
 	int *Last;
 	size_t LastCount;
 	int Depth;             // óðîâåíü âëîæåííîñòè
@@ -92,7 +92,7 @@ class TreeList: public Panel
 	private:
 		int PrevMacroMode;
 		TreeItem **ListData;
-		string strRoot;
+		FARString strRoot;
 		long TreeCount;
 		long WorkDir;
 		long GetSelPosition;
@@ -125,16 +125,16 @@ class TreeList: public Panel
 		void DynamicUpdateKeyBar();
 		int GetNextNavPos();
 		int GetPrevNavPos();
-		static string &MkTreeFileName(const wchar_t *RootDir,string &strDest);
-		static string &MkTreeCacheFolderName(const wchar_t *RootDir,string &strDest);
-		static string &CreateTreeFileName(const wchar_t *Path,string &strDest);
+		static FARString &MkTreeFileName(const wchar_t *RootDir,FARString &strDest);
+		static FARString &MkTreeCacheFolderName(const wchar_t *RootDir,FARString &strDest);
+		static FARString &CreateTreeFileName(const wchar_t *Path,FARString &strDest);
 
 		bool SaveState();
 		bool RestoreState();
 
 	private:
 		static int MsgReadTree(int TreeCount,int &FirstCall);
-		static int GetCacheTreeName(const wchar_t *Root, string &strName,int CreateDir);
+		static int GetCacheTreeName(const wchar_t *Root, FARString &strName,int CreateDir);
 
 	public:
 		TreeList(int IsPanel=TRUE);
@@ -152,9 +152,9 @@ class TreeList: public Panel
 
 		void SetRootDir(const wchar_t *NewRootDir);
 
-		virtual int GetCurDir(string &strCurDir);
+		virtual int GetCurDir(FARString &strCurDir);
 
-		virtual int GetCurName(string &strName, string &strShortName);
+		virtual int GetCurName(FARString &strName, FARString &strShortName);
 
 		virtual void UpdateViewPanel();
 		virtual void MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent);
@@ -171,17 +171,17 @@ class TreeList: public Panel
 
 		int GetExitCode() {return ExitCode;}
 		virtual long GetFileCount() {return TreeCount;}
-		virtual int GetFileName(string &strName,int Pos,DWORD &FileAttr);
+		virtual int GetFileName(FARString &strName,int Pos,DWORD &FileAttr);
 
 		virtual void SetTitle();
-		virtual string &GetTitle(string &Title,int SubLen=-1,int TruncSize=0);
+		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		virtual void SetFocus();
 		virtual void KillFocus();
 		virtual BOOL UpdateKeyBar();
 		virtual BOOL GetItem(int Index,void *Dest);
 		virtual int GetCurrentPos();
 
-		virtual int GetSelName(string *strName,DWORD &FileAttr,string *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr);
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr);
 
 	public:
 		static void AddTreeName(const wchar_t *Name);

@@ -57,7 +57,7 @@ class DlgEdit: public ScreenObject
 {
 	public:
 		// for CtrlEnd
-		string strLastStr;
+		FARString strLastStr;
 		int LastPartLength;
 
 		BitFlags& Flags();
@@ -103,7 +103,7 @@ class DlgEdit: public ScreenObject
 		void  InsertString(const wchar_t *Str);
 		void  SetHiString(const wchar_t *Str);
 		void  GetString(wchar_t *Str, int MaxSize,int Row=-1); // Row==-1 - current line
-		void  GetString(string &strStr,int Row=-1);            // Row==-1 - current line
+		void  GetString(FARString &strStr,int Row=-1);            // Row==-1 - current line
 		const wchar_t* GetStringAddr();
 
 		void  SetCurPos(int NewCol, int NewRow=-1); // Row==-1 - current line
@@ -145,7 +145,7 @@ class DlgEdit: public ScreenObject
 		void DisableAC(){return lineEdit->DisableAC();}
 		void RevertAC(){return lineEdit->RevertAC();}
 
-		bool HistoryGetSimilar(string &strStr, int LastCmdPartLength, bool bAppend=false);
+		bool HistoryGetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend=false);
 
 	private:
 		Dialog* m_Dialog;

@@ -124,7 +124,7 @@ void DizList::Read(const wchar_t *Path, const wchar_t *DizName)
 			if (!PathCanHoldRegularFile(strDizFileName))
 				break;
 
-			string strArgName;
+			FARString strArgName;
 
 			if (!(NamePtr=GetCommaWord(NamePtr,strArgName)))
 				break;
@@ -292,7 +292,7 @@ int DizList::GetDizPosEx(const wchar_t *Name, const wchar_t *ShortName, int *Tex
 		AnsiBuf = tmp;
 		WINPORT(WideCharToMultiByte)(OrigCodePage, 0, Name, len, AnsiBuf, len, nullptr, nullptr);
 		AnsiBuf[len]=0;
-		string strRecoded(AnsiBuf, OrigCodePage);
+		FARString strRecoded(AnsiBuf, OrigCodePage);
 
 		if (strRecoded==Name)
 			return -1;
@@ -458,7 +458,7 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 
 		strDizFileName = Path;
 		AddEndSlash(strDizFileName);
-		string strArgName;
+		FARString strArgName;
 		GetCommaWord(Opt.Diz.strListNames,strArgName);
 		strDizFileName += strArgName;
 	}
@@ -581,7 +581,7 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 bool DizList::AddDizText(const wchar_t *Name,const wchar_t *ShortName,const wchar_t *DizText)
 {
 	DeleteDiz(Name,ShortName);
-	string strQuotedName = Name;
+	FARString strQuotedName = Name;
 	QuoteSpaceOnly(strQuotedName);
 	FormatString FString;
 	FString<<fmt::LeftAlign()<<fmt::Width(Opt.Diz.StartPos>1?Opt.Diz.StartPos-2:0)<<strQuotedName<<L" "<<DizText;
@@ -614,7 +614,7 @@ bool DizList::CopyDiz(const wchar_t *Name, const wchar_t *ShortName, const wchar
 }
 
 
-void DizList::GetDizName(string &strDizName)
+void DizList::GetDizName(FARString &strDizName)
 {
 	strDizName = strDizFileName;
 }

@@ -98,8 +98,8 @@ void FileList::ShowFileList(int Fast)
 		return;
 	}
 
-	string strTitle;
-	string strInfoCurDir;
+	FARString strTitle;
+	FARString strInfoCurDir;
 	int Length;
 	OpenPluginInfo Info;
 
@@ -140,7 +140,7 @@ void FileList::ShowFileList(int Fast)
 
 		if (Opt.ShowColumnTitles)
 		{
-			string strTitle;
+			FARString strTitle;
 			int IDMessage=-1;
 
 			switch (ViewSettings.ColumnType[I] & 0xff)
@@ -205,7 +205,7 @@ void FileList::ShowFileList(int Fast)
 					strTitle=NewTitle;
 			}
 
-			string strTitleMsg;
+			FARString strTitleMsg;
 			CenterStr(strTitle,strTitleMsg,ViewSettings.ColumnWidth[I]);
 			SetColor(COL_PANELCOLUMNTITLE);
 			GotoXY(ColumnPos,Y1+1);
@@ -470,7 +470,7 @@ void FileList::SetShowColor(int Position, int ColorType)
 void FileList::ShowSelectedSize()
 {
 	int Length;
-	string strSelStr, strFormStr;
+	FARString strSelStr, strFormStr;
 
 	if (Opt.ShowPanelStatus)
 	{
@@ -508,7 +508,7 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 	if (!Opt.ShowPanelTotals && PanelMode==PLUGIN_PANEL && !(Info.Flags & OPIF_REALNAMES))
 		return;
 
-	string strTotalStr, strFormSize, strFreeSize;
+	FARString strTotalStr, strFormSize, strFreeSize;
 	int Length;
 	InsertCommas(TotalFileSize,strFormSize);
 
@@ -561,7 +561,7 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 	}
 }
 
-int FileList::ConvertName(const wchar_t *SrcName,string &strDest,int MaxLength,int RightAlign,int ShowStatus,DWORD FileAttr)
+int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLength,int RightAlign,int ShowStatus,DWORD FileAttr)
 {
 	wchar_t *lpwszDest = strDest.GetBuffer(MaxLength+1);
 	wmemset(lpwszDest,L' ',MaxLength);
@@ -859,7 +859,7 @@ extern void GetColor(int PaletteIndex);
 
 void FileList::ShowList(int ShowStatus,int StartColumn)
 {
-	string strDateStr, strTimeStr;
+	FARString strDateStr, strTimeStr;
 	int StatusShown=FALSE;
 	int MaxLeftPos=0,MinLeftPos=FALSE;
 	int ColumnCount=ShowStatus ? ViewSettings.StatusColumnCount:ViewSettings.ColumnCount;
@@ -1044,7 +1044,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								}
 							}
 
-							string strName;
+							FARString strName;
 							int TooLong=ConvertName(NamePtr, strName, Width, RightAlign,ShowStatus,ListData[ListPos]->FileAttr);
 
 							if (CurLeftPos)
@@ -1181,7 +1181,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								}
 							}
 
-							string strDizText=ListData[ListPos]->DizText ? ListData[ListPos]->DizText+CurLeftPos:L"";
+							FARString strDizText=ListData[ListPos]->DizText ? ListData[ListPos]->DizText+CurLeftPos:L"";
 							size_t pos;
 
 							if (strDizText.Pos(pos,L'\4'))

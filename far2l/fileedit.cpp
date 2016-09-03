@@ -114,7 +114,7 @@ LONG_PTR __stdcall hndOpenEditor(
 	return DefDlgProc(hDlg, msg, param1, param2);
 }
 
-bool dlgOpenEditor(string &strFileName, UINT &codepage)
+bool dlgOpenEditor(FARString &strFileName, UINT &codepage)
 {
 	const wchar_t *HistoryName=L"NewEdit";
 	DialogDataEx EditDlgData[]=
@@ -246,7 +246,7 @@ LONG_PTR __stdcall hndSaveFileAs(
 
 
 
-bool dlgSaveFileAs(string &strFileName, int &TextFormat, UINT &codepage,bool &AddSignature)
+bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage,bool &AddSignature)
 {
 	const wchar_t *HistoryName=L"NewEdit";
 	DialogDataEx EditDlgData[]=
@@ -1002,7 +1002,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			case KEY_SHIFTF2:
 			{
 				BOOL Done=FALSE;
-				string strOldCurDir;
+				FARString strOldCurDir;
 				apiGetCurrentDirectory(strOldCurDir);
 
 				while (!Done) // бьемс€ до упора
@@ -1043,11 +1043,11 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					UINT codepage = m_codepage;
 					bool SaveAs = Key==KEY_SHIFTF2 || Flags.Check(FFILEEDIT_SAVETOSAVEAS);
 					int NameChanged=FALSE;
-					string strFullSaveAsName = strFullFileName;
+					FARString strFullSaveAsName = strFullFileName;
 
 					if (SaveAs)
 					{
-						string strSaveAsName = Flags.Check(FFILEEDIT_SAVETOSAVEAS)?strFullFileName:strFileName;
+						FARString strSaveAsName = Flags.Check(FFILEEDIT_SAVETOSAVEAS)?strFullFileName:strFileName;
 
 						if (!dlgSaveFileAs(strSaveAsName, TextFormat, codepage, m_bAddSignature))
 							return FALSE;
@@ -1070,7 +1070,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 						ConvertNameToFull(strSaveAsName, strFullSaveAsName);  //BUGBUG, не провер€ем им€ на правильность
 						//это не про нас, про нас ниже, все куда страшнее
-						/*string strFileNameTemp = strSaveAsName;
+						/*FARString strFileNameTemp = strSaveAsName;
 
 						if(!SetFileName(strFileNameTemp))
 						{
@@ -1157,7 +1157,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					return TRUE;
 				}
 
-				string strFullFileNameTemp = strFullFileName;
+				FARString strFullFileNameTemp = strFullFileName;
 
 				if (apiGetFileAttributes(strFullFileName) == INVALID_FILE_ATTRIBUTES) // а сам файл то еще на месте?
 				{
@@ -1326,7 +1326,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 {
-	string strOldCurDir;
+	FARString strOldCurDir;
 	apiGetCurrentDirectory(strOldCurDir);
 
 	for (;;)
@@ -1425,7 +1425,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 
 			if (FileSize > MaxSize)
 			{
-				string strTempStr1, strTempStr2, strTempStr3, strTempStr4;
+				FARString strTempStr1, strTempStr2, strTempStr3, strTempStr4;
 				// Ўирина = 8 - это будет... в Kb и выше...
 				FileSizeToStr(strTempStr1, FileSize, 8);
 				FileSizeToStr(strTempStr2, MaxSize, 8);
@@ -1705,7 +1705,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 	else
 	{
 		// проверим путь к файлу, может его уже снесли...
-		string strCreatedPath = Name;
+		FARString strCreatedPath = Name;
 		const wchar_t *Ptr=LastSlash(strCreatedPath);
 
 		if (Ptr)
@@ -2056,7 +2056,7 @@ int FileEditor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 }
 
 
-int FileEditor::GetTypeAndName(string &strType, string &strName)
+int FileEditor::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = MSG(MScreensEdit);
 	strName = strFullFileName;
@@ -2066,7 +2066,7 @@ int FileEditor::GetTypeAndName(string &strType, string &strName)
 
 void FileEditor::ShowConsoleTitle()
 {
-	string strTitle;
+	FARString strTitle;
 	strTitle.Format(MSG(MInEditor), PointToName(strFileName));
 	ConsoleTitle::SetFarTitle(strTitle);
 	Flags.Clear(FFILEEDIT_REDRAWTITLE);
@@ -2163,11 +2163,11 @@ BOOL FileEditor::SetFileName(const wchar_t *NewFileName)
 			return FALSE;
 
 		ConvertNameToFull(strFileName, strFullFileName);
-		string strFilePath=strFullFileName;
+		FARString strFilePath=strFullFileName;
 
 		if (CutToSlash(strFilePath,1))
 		{
-			string strCurPath;
+			FARString strCurPath;
 
 			if (apiGetCurrentDirectory(strCurPath))
 			{
@@ -2204,7 +2204,7 @@ void FileEditor::ChangeEditKeyBar()
 	EditKeyBar.Redraw();
 }
 
-string &FileEditor::GetTitle(string &strLocalTitle,int SubLen,int TruncSize)
+FARString &FileEditor::GetTitle(FARString &strLocalTitle,int SubLen,int TruncSize)
 {
 	if (!strPluginTitle.IsEmpty())
 		strLocalTitle = strPluginTitle;
@@ -2226,8 +2226,8 @@ void FileEditor::ShowStatus()
 
 	SetColor(COL_EDITORSTATUS);
 	GotoXY(X1,Y1); //??
-	string strLineStr;
-	string strLocalTitle;
+	FARString strLineStr;
+	FARString strLocalTitle;
 	GetTitle(strLocalTitle);
 	int NameLength = Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 17:23;
 
@@ -2249,7 +2249,7 @@ void FileEditor::ShowStatus()
 		SizeLineStr = 12;
 
 	strLineStr.Format(L"%d/%d", m_editor->NumLine+1, m_editor->NumLastLine);
-	string strAttr(AttrStr);
+	FARString strAttr(AttrStr);
 	FormatString FString;
 	FString<<fmt::LeftAlign()<<fmt::Width(NameLength)<<strLocalTitle<<L' '<<
 	(m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*':L' ')<<
@@ -2330,7 +2330,7 @@ BOOL FileEditor::UpdateFileList()
 {
 	Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
 	const wchar_t *FileName = PointToName(strFullFileName);
-	string strFilePath, strPanelPath;
+	FARString strFilePath, strPanelPath;
 	strFilePath = strFullFileName;
 	strFilePath.SetLength(FileName - strFullFileName.CPtr());
 	ActivePanel->GetCurDir(strPanelPath);
@@ -2542,7 +2542,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 		}
 		case ECTL_SAVEFILE:
 		{
-			string strName = strFullFileName;
+			FARString strName = strFullFileName;
 			int EOL=0;
 			UINT codepage=m_codepage;
 
@@ -2568,7 +2568,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 			}
 
 			{
-				string strOldFullFileName = strFullFileName;
+				FARString strOldFullFileName = strFullFileName;
 
 				if (SetFileName(strName))
 				{
@@ -2712,7 +2712,7 @@ bool FileEditor::LoadFromCache(EditorCacheParams *pp)
 	memset(pp, 0, sizeof(EditorCacheParams));
 	memset(&pp->SavePos,0xff,sizeof(InternalEditorBookMark));
 
-	string strCacheName;
+	FARString strCacheName;
 
 	if (*GetPluginData())
 	{
@@ -2765,7 +2765,7 @@ void FileEditor::SaveToCache()
 {
 	EditorCacheParams cp;
 	m_editor->GetCacheParams(&cp);
-	string strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFullFileName);
+	FARString strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFullFileName);
 
 	if (!Flags.Check(FFILEEDIT_OPENFAILED))   //????
 	{
@@ -2808,7 +2808,7 @@ void FileEditor::SetCodePage(UINT codepage)
 	}
 }
 
-bool FileEditor::AskOverwrite(const string& FileName)
+bool FileEditor::AskOverwrite(const FARString& FileName)
 {
 	bool result=true;
 	DWORD FNAttr=apiGetFileAttributes(FileName);

@@ -88,7 +88,7 @@ void InfoList::Update(int Mode)
 		Redraw();
 }
 
-string &InfoList::GetTitle(string &strTitle,int SubLen,int TruncSize)
+FARString &InfoList::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
 {
 	strTitle.Format(L" %ls ", MSG(MInfoTitle));
 	TruncStr(strTitle,X2-X1-3);
@@ -97,13 +97,13 @@ string &InfoList::GetTitle(string &strTitle,int SubLen,int TruncSize)
 
 void InfoList::DisplayObject()
 {
-	string strTitle;
-	string strOutStr;
+	FARString strTitle;
+	FARString strOutStr;
 	Panel *AnotherPanel;
-	string strDriveRoot;
-	string strVolumeName, strFileSystemName;
+	FARString strDriveRoot;
+	FARString strVolumeName, strFileSystemName;
 	DWORD MaxNameLength,FileSystemFlags,VolumeNumber;
-	string strDiskNumber;
+	FARString strDiskNumber;
 	CloseFile();
 
 	Box(X1,Y1,X2,Y2,COL_PANELBOX,DOUBLE_BOX);
@@ -124,7 +124,7 @@ void InfoList::DisplayObject()
 	/* #1 - computer name/user name */
 
 	{
-		string strComputerName, strUserName;
+		FARString strComputerName, strUserName;
 		DWORD dwSize = 256; //MAX_COMPUTERNAME_LENGTH+1;
 		wchar_t *ComputerName = strComputerName.GetBuffer(dwSize);
 //		if (Opt.InfoPanel.ComputerNameFormat == ComputerNamePhysicalNetBIOS || !GetComputerNameEx(Opt.InfoPanel.ComputerNameFormat, ComputerName, &dwSize))
@@ -166,7 +166,7 @@ void InfoList::DisplayObject()
 	*/
 /*	if ((apiGetFileAttributes(strCurDir)&FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT)
 	{
-		string strJuncName;
+		FARString strJuncName;
 
 		if (GetReparsePointInfo(strCurDir, strJuncName))
 		{
@@ -211,7 +211,7 @@ void InfoList::DisplayObject()
 
 		LPCWSTR DiskType=(IdxMsgID!=-1)?MSG(IdxMsgID):L"";
 //		wchar_t LocalName[]={ExtractPathRoot(strCurDir).At(0),L':',L'\0'}; // strDriveRoot?
-		string strAssocPath;
+		FARString strAssocPath;
 
 		/*if (GetSubstName(DriveType,LocalName,strAssocPath))
 		{
@@ -225,7 +225,7 @@ void InfoList::DisplayObject()
 		}
 
 
-		strTitle=string(L" ")+DiskType+L" "+MSG(MInfoDisk)+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
+		strTitle=FARString(L" ")+DiskType+L" "+MSG(MInfoDisk)+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
 
 /*		switch(DriveType)
 		{
@@ -400,7 +400,7 @@ int InfoList::ProcessKey(int Key)
 			}
 			else if (!Opt.InfoPanel.strFolderInfoFiles.IsEmpty())
 			{
-				string strArgName;
+				FARString strArgName;
 				const wchar_t *p = Opt.InfoPanel.strFolderInfoFiles;
 
 				while ((p = GetCommaWord(p,strArgName)) )
@@ -522,7 +522,7 @@ void InfoList::PrintInfo(const wchar_t *str)
 	if (MaxLength<0)
 		MaxLength=0;
 
-	string strStr = str;
+	FARString strStr = str;
 	TruncStr(strStr,MaxLength);
 	int Length=(int)strStr.GetLength();
 	int NewX=X2-Length-1;
@@ -550,18 +550,18 @@ void InfoList::ShowDirDescription(int YPos)
 
 	if (AnotherPanel->GetMode()==FILE_PANEL)
 	{
-		string strDizDir;
+		FARString strDizDir;
 		AnotherPanel->GetCurDir(strDizDir);
 
 		if (!strDizDir.IsEmpty())
 			AddEndSlash(strDizDir);
 
-		string strArgName;
+		FARString strArgName;
 		const wchar_t *NamePtr = Opt.InfoPanel.strFolderInfoFiles;
 
 		while ((NamePtr=GetCommaWord(NamePtr,strArgName)))
 		{
-			string strFullDizName;
+			FARString strFullDizName;
 			strFullDizName = strDizDir;
 			strFullDizName += strArgName;
 			FAR_FIND_DATA_EX FindData;
@@ -616,7 +616,7 @@ void InfoList::ShowPluginDescription()
 
 		if (InfoLine->Separator)
 		{
-			string strTitle;
+			FARString strTitle;
 
 			if (InfoLine->Text && *InfoLine->Text)
 				strTitle.Append(L" ").Append(InfoLine->Text).Append(L" ");
@@ -695,7 +695,7 @@ int InfoList::OpenDizFile(const wchar_t *DizFile,int YPos)
 	}
 
 	DizView->Show();
-	string strTitle;
+	FARString strTitle;
 	strTitle.Append(L" ").Append(PointToName(strDizFileName)).Append(L" ");
 	TruncStr(strTitle,X2-X1-3);
 	GotoXY(X1+(X2-X1-(int)strTitle.GetLength())/2,YPos);
@@ -728,7 +728,7 @@ void InfoList::SetMacroMode(int Restore)
 }
 
 
-int InfoList::GetCurName(string &strName, string &strShortName)
+int InfoList::GetCurName(FARString &strName, FARString &strShortName)
 {
 	strName = strDizFileName;
 	strShortName = strName;

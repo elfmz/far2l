@@ -213,7 +213,7 @@ class Editor:public ScreenObject
 
 		int XX2; //scrollbar
 
-		string strLastSearchStr;
+		FARString strLastSearchStr;
 		/* $ 30.07.2000 KM
 		   Íîâàÿ ïåðåìåííàÿ äëÿ ïîèñêà "Whole words"
 		*/

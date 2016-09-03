@@ -53,10 +53,10 @@ public:
 
 	bool GetWorkingRect(SMALL_RECT& WorkingRect);
 
-	bool GetTitle(string &strTitle);
+	bool GetTitle(FARString &strTitle);
 	bool SetTitle(LPCWSTR Title);
 
-	bool GetKeyboardLayoutName(string &strName);
+	bool GetKeyboardLayoutName(FARString &strName);
 
 	UINT GetInputCodepage();
 	bool SetInputCodepage(UINT Codepage);

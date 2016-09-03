@@ -45,7 +45,7 @@ struct DizRecord
 class DizList
 {
 	private:
-		string strDizFileName;
+		FARString strDizFileName;
 		DizRecord *DizData;
 		int DizCount;
 		int *IndexData;
@@ -73,6 +73,6 @@ class DizList
 		bool Flush(const wchar_t *Path, const wchar_t *DizName=nullptr);
 		bool AddDizText(const wchar_t *Name, const wchar_t *ShortName, const wchar_t *DizText);
 		bool CopyDiz(const wchar_t *Name, const wchar_t *ShortName, const wchar_t *DestName, const wchar_t *DestShortName,DizList *DestDiz);
-		void GetDizName(string &strDizName);
+		void GetDizName(FARString &strDizName);
 		static void PR_ReadingMsg();
 };

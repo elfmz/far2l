@@ -64,10 +64,10 @@ private:
 	char *MsgListA;
 	long MsgSize;
 	int MsgCount;
-	string strMessageFile;
+	FARString strMessageFile;
 	bool m_bUnicode;
 
-	void ConvertString(const wchar_t *Src,string &strDest);
+	void ConvertString(const wchar_t *Src,FARString &strDest);
 	bool CheckMsgId(int MsgId) const;
 	void Free();
 };
@@ -78,7 +78,7 @@ extern Language Lang;
 
 class VMenu;
 
-FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, string &strFileName, UINT &nCodePage, BOOL StrongLang=FALSE,string *pstrLangName=nullptr);
-int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,string *strParam1, string *strParam2, UINT nCodePage);
-int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,string &strValue, UINT nCodePage);
+FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang=FALSE,FARString *pstrLangName=nullptr);
+int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FARString *strParam2, UINT nCodePage);
+int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UINT nCodePage);
 int Select(int HelpLanguage,VMenu **MenuPtr);

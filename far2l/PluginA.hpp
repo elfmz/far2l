@@ -71,8 +71,8 @@ class PluginA: public Plugin
 
 		PluginManager *m_owner; //BUGBUG
 
-		string m_strModuleName;
-		string m_strCacheName;
+		FARString m_strModuleName;
+		FARString m_strCacheName;
 
 		BitFlags WorkFlags;      // рабочие флаги текущего плагина
 		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
@@ -88,7 +88,7 @@ class PluginA: public Plugin
 		*/
 		DWORD SysID;
 
-		string strRootKey;
+		FARString strRootKey;
 		char *RootKey;
 
 		PluginInfo PI;
@@ -176,7 +176,7 @@ class PluginA: public Plugin
 		bool HasGetCustomData()  { return false; }
 		bool HasFreeCustomData() { return false; }
 
-		const string &GetModuleName() { return m_strModuleName; }
+		const FARString &GetModuleName() { return m_strModuleName; }
 		const wchar_t *GetCacheName() { return m_strCacheName; }
 		DWORD GetSysID() { return SysID; }
 		bool CheckWorkFlags(DWORD flags) { return WorkFlags.Check(flags)==TRUE; }

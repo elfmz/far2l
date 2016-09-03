@@ -755,7 +755,7 @@ int64_t VMenu::VMProcess(int OpCode,void *vParam,int64_t iParam)
 
 			if (*str)
 			{
-				string strTemp;
+				FARString strTemp;
 				int Res;
 				int Direct=(iParam >> 8)&0xFF;
 				/*
@@ -849,7 +849,7 @@ int64_t VMenu::VMProcess(int OpCode,void *vParam,int64_t iParam)
 				{
 					if (OpCode == MCODE_F_MENU_GETVALUE)
 					{
-						*(string *)vParam = menuEx->strName;
+						*(FARString *)vParam = menuEx->strName;
 						return 1;
 					}
 					else
@@ -891,7 +891,7 @@ int64_t VMenu::VMProcess(int OpCode,void *vParam,int64_t iParam)
 
 			if (menuEx)
 			{
-				*(string *)vParam = menuEx->strName;
+				*(FARString *)vParam = menuEx->strName;
 				return 1;
 			}
 
@@ -1710,7 +1710,7 @@ void VMenu::DrawTitles()
 
 	if (!strTitle.IsEmpty() || bFilterEnabled)
 	{
-		string strDisplayTitle = strTitle;
+		FARString strDisplayTitle = strTitle;
 
 		if (bFilterEnabled)
 		{
@@ -1881,7 +1881,7 @@ void VMenu::ShowMenu(bool IsParent)
 	if (TopPos<0)
 		TopPos=0;
 
-	string strTmpStr;
+	FARString strTmpStr;
 
 	for (int Y=Y1+((BoxType!=NO_BOX)?1:0), I=TopPos; Y<((BoxType!=NO_BOX)?Y2:Y2+1); Y++, I++)
 	{
@@ -1973,7 +1973,7 @@ void VMenu::ShowMenu(bool IsParent)
 				else
 					SetColor(VMenu::Colors[Item[I]->Flags&LIF_DISABLE?VMenuColorDisabled:(Item[I]->Flags&LIF_GRAYED?VMenuColorGrayed:VMenuColorText)]);
 
-				string strMenuLine;
+				FARString strMenuLine;
 				wchar_t CheckMark = L' ';
 
 				if (Item[I]->Flags & LIF_CHECKED)
@@ -1987,7 +1987,7 @@ void VMenu::ShowMenu(bool IsParent)
 				strMenuLine.Append(CheckMark);
 				strMenuLine.Append(L' '); // left scroller (<<) placeholder
 				int ShowPos = HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-				string strMItemPtr(Item[I]->strName.CPtr() + ShowPos);
+				FARString strMItemPtr(Item[I]->strName.CPtr() + ShowPos);
 				int strMItemPtrLen;
 
 				if (CheckFlags(VMENU_SHOWAMPERSAND))
@@ -1995,7 +1995,7 @@ void VMenu::ShowMenu(bool IsParent)
 				else
 					strMItemPtrLen = HiStrlen(strMItemPtr);
 
-				// fit menu string into available space
+				// fit menu FARString into available space
 				if (strMItemPtrLen > MaxLineWidth)
 					strMItemPtr.SetLength(HiFindRealPos(strMItemPtr, MaxLineWidth, CheckFlags(VMENU_SHOWAMPERSAND)));
 
@@ -2006,7 +2006,7 @@ void VMenu::ShowMenu(bool IsParent)
 
 					if ((AmpPos >= 0) && (static_cast<size_t>(AmpPos) < strMItemPtr.GetLength()) && (strMItemPtr.At(AmpPos) != L'&'))
 					{
-						string strEnd = strMItemPtr.CPtr() + AmpPos;
+						FARString strEnd = strMItemPtr.CPtr() + AmpPos;
 						strMItemPtr.SetLength(AmpPos);
 						strMItemPtr += L"&";
 						strMItemPtr += strEnd;
@@ -2311,7 +2311,7 @@ void VMenu::SetMaxHeight(int NewMaxHeight)
 		MaxHeight = ScrY-6;
 }
 
-string &VMenu::GetTitle(string &strDest,int,int)
+FARString &VMenu::GetTitle(FARString &strDest,int,int)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -2319,7 +2319,7 @@ string &VMenu::GetTitle(string &strDest,int,int)
 	return strDest;
 }
 
-string &VMenu::GetBottomTitle(string &strDest)
+FARString &VMenu::GetBottomTitle(FARString &strDest)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -2767,7 +2767,7 @@ MenuItemEx *VMenu::FarList2MenuItem(const FarListItem *FItem, MenuItemEx *MItem)
 	return nullptr;
 }
 
-int VMenu::GetTypeAndName(string &strType, string &strName)
+int VMenu::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -2792,7 +2792,7 @@ int VMenu::FindItem(int StartIndex,const wchar_t *Pattern,DWORD Flags)
 
 		for (int I=StartIndex; I < ItemCount; I++)
 		{
-			string strTmpBuf(Item[I]->strName);
+			FARString strTmpBuf(Item[I]->strName);
 			int LenNamePtr = (int)strTmpBuf.GetLength();
 			RemoveChar(strTmpBuf, L'&');
 
@@ -2820,8 +2820,8 @@ struct SortItemParam
 
 static int __cdecl SortItem(const MenuItemEx **el1, const MenuItemEx **el2, const SortItemParam *Param)
 {
-	string strName1((*el1)->strName);
-	string strName2((*el2)->strName);
+	FARString strName1((*el1)->strName);
+	FARString strName2((*el2)->strName);
 	RemoveChar(strName1,L'&',TRUE);
 	RemoveChar(strName2,L'&',TRUE);
 	int Res = StrCmpI(strName1.CPtr()+Param->Offset,strName2.CPtr()+Param->Offset);
@@ -2883,7 +2883,7 @@ void EnumFiles(VMenu& Menu, const wchar_t* Str)
 {
 	if(Str && *Str)
 	{
-		string strStr(Str);
+		FARString strStr(Str);
 
 		bool OddQuote = false;
 		for(size_t i=0; i<strStr.GetLength(); i++)
@@ -2928,13 +2928,13 @@ void EnumFiles(VMenu& Menu, const wchar_t* Str)
 			Pos++;
 			StartQuote=true;
 		}
-		string strStart(strStr,Pos);
+		FARString strStart(strStr,Pos);
 		strStr.LShift(Pos);
 		Unquote(strStr);
 		if(!strStr.IsEmpty())
 		{
 			FAR_FIND_DATA_EX d;
-			string strExp;
+			FARString strExp;
 			apiExpandEnvironmentStrings(strStr,strExp);
 			FindFile Find(strExp+L"*");
 			bool Separator=false;
@@ -2945,7 +2945,7 @@ void EnumFiles(VMenu& Menu, const wchar_t* Str)
 				if(NameMatch || AltNameMatch)
 				{
 					strStr.SetLength(FileName-strStr);
-					string strTmp(strStart+strStr);
+					FARString strTmp(strStart+strStr);
 					strTmp+=NameMatch?d.strFileName:d.strAlternateFileName;
 					if(!Separator)
 					{

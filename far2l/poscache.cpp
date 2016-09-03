@@ -60,7 +60,7 @@ FilePositionCache::FilePositionCache():
 		GetRegKey(L"System",L"MaxPositionCache",Opt.MaxPositionCache,MAX_POSITIONS);
 	}
 
-	Names=new string[Opt.MaxPositionCache];
+	Names=new FARString[Opt.MaxPositionCache];
 
 	if (Names )
 	{
@@ -105,7 +105,7 @@ void FilePositionCache::AddPosition(const wchar_t *Name,PosCache& poscache)
 	if (!IsMemory)
 		return;
 
-	string strFullName;
+	FARString strFullName;
 
 	if (*Name==L'<')
 		strFullName = Name;
@@ -142,7 +142,7 @@ bool FilePositionCache::GetPosition(const wchar_t *Name,PosCache& poscache)
 	bool Result=false;
 	if (IsMemory)
 	{
-		string strFullName;
+		FARString strFullName;
 
 		if (*Name==L'<')
 			strFullName = Name;
@@ -211,7 +211,7 @@ bool FilePositionCache::Read(const wchar_t *Key)
 			FormatString strShort;
 			strShort<<L"Short"<<i;
 			GetRegKey(Key,strShort,(LPBYTE)Position+POSITION_POS(i,0),(LPBYTE)DefPos,MSIZE_POSITION1);
-			string strDataStr;
+			FARString strDataStr;
 			GetRegKey(Key,strItem,strDataStr,EmptyPos);
 
 			if (!StrCmp(strDataStr,EmptyPos))

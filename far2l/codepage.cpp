@@ -569,7 +569,7 @@ wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length,
 	// Пытаемся получить заданное пользоваталем имя таблицы символов
 	FormatString strCodePage;
 	strCodePage<<CodePage;
-	string strCodePageName;
+	FARString strCodePageName;
 	if (GetRegKey(NamesOfCodePagesKey, strCodePage, strCodePageName, L""))
 	{
 		Length = Min(Length-1, strCodePageName.GetLength());
@@ -616,7 +616,7 @@ LONG_PTR WINAPI EditDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 	{
 		if (Param1==EDITCP_OK || Param1==EDITCP_RESET)
 		{
-			string strCodePageName;
+			FARString strCodePageName;
 			UINT CodePage = GetMenuItemCodePage();
 			FormatString strCodePage;
 			strCodePage<<CodePage;
@@ -663,7 +663,7 @@ void EditCodePageName()
 	UINT Position = CodePages->GetSelectPos();
 	if (IsPositionStandard(Position))
 		return;
-	string CodePageName = CodePages->GetItemPtr(Position)->strName;
+	FARString CodePageName = CodePages->GetItemPtr(Position)->strName;
 	size_t BoxPosition;
 	if (!CodePageName.Pos(BoxPosition, BoxSymbols[BS_V1]))
 		return;

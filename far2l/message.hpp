@@ -80,4 +80,4 @@ void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2);
 */
 int AbortMessage();
 
-bool GetErrorString(string &strErrStr);
+bool GetErrorString(FARString &strErrStr);

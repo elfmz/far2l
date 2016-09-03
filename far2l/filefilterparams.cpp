@@ -92,9 +92,9 @@ void FileFilterParams::SetTitle(const wchar_t *Title)
 // â %PATHEXT%
 // IS: Ñðàâíåíèé íà ñîâïàäåíèå î÷åðåäíîé ìàñêè ñ òåì, ÷òî èìååòñÿ â Dest
 // IS: íå äåëàåòñÿ, ò.ê. äóáëè ñàìè óáåðóòñÿ ïðè êîìïèëÿöèè ìàñêè
-string &Add_PATHEXT(string &strDest)
+FARString &Add_PATHEXT(FARString &strDest)
 {
-	string strBuf;
+	FARString strBuf;
 	size_t curpos=strDest.GetLength()-1;
 	UserDefinedList MaskList(0,0,ULF_UNIQUE);
 
@@ -129,7 +129,7 @@ void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
 	FMask.Used = Used;
 	FMask.strMask = Mask;
 	/* Îáðàáîòêà %PATHEXT% */
-	string strMask = FMask.strMask;
+	FARString strMask = FMask.strMask;
 	size_t pos;
 
 	// ïðîâåðèì
@@ -152,7 +152,7 @@ void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
 			}
 			else
 			{
-				string strTmp = strMask;
+				FARString strTmp = strMask;
 				strTmp.LShift(posSeparator+1);
 				strMask.SetLength(posSeparator);
 				Add_PATHEXT(strMask);
@@ -402,7 +402,7 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTim
 }
 
 //Öåíòðàëèçîâàííàÿ ôóíêöèÿ äëÿ ñîçäàíèÿ ñòðîê ìåíþ ðàçëè÷íûõ ôèëüòðîâ.
-void MenuString(string &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType, const wchar_t *FMask, const wchar_t *Title)
+void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType, const wchar_t *FMask, const wchar_t *Title)
 {
 	const wchar_t AttrC[] = L"RAHSDCEI$TLOV";
 	const DWORD   AttrF[] =
@@ -677,7 +677,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 			if (Param1==ID_FF_CURRENT || Param1==ID_FF_BLANK) //Current è Blank
 			{
 				FILETIME ft;
-				string strDate, strTime;
+				FARString strDate, strTime;
 
 				if (Param1==ID_FF_CURRENT)
 				{
@@ -803,7 +803,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 
 			if (Param1 == ID_FF_OK && SendDlgMessage(hDlg,DM_GETCHECK,ID_FF_MATCHSIZE,0))
 			{
-				string strTemp;
+				FARString strTemp;
 				wchar_t *temp;
 				temp = strTemp.GetBuffer(SendDlgMessage(hDlg,DM_GETTEXTPTR,ID_FF_SIZEFROMEDIT,0)+1);
 				SendDlgMessage(hDlg,DM_GETTEXTPTR,ID_FF_SIZEFROMEDIT,(LONG_PTR)temp);
@@ -838,7 +838,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	// Ìàñêè äëÿ äèàëîãà íàñòðîéêè
 	// Ìàñêà äëÿ ââîäà äíåé äëÿ îòíîñèòåëüíîé äàòû
 	const wchar_t DaysMask[] = L"9999";
-	string strDateMask, strTimeMask;
+	FARString strDateMask, strTimeMask;
 	// Îïðåäåëåíèå ïàðàìåòðîâ äàòû è âðåìåíè â ñèñòåìå.
 	int DateSeparator=GetDateSeparator();
 	int TimeSeparator=GetTimeSeparator();

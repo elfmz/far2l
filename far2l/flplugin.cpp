@@ -327,6 +327,7 @@ void FileList::PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi)
 	fi->UnpSize=pi->FindData.nFileSize;
 	fi->PackSize=pi->FindData.nPackSize;
 	fi->FileAttr=pi->FindData.dwFileAttributes;
+	fi->FileMode=pi->FindData.dwUnixMode;
 	fi->WriteTime=pi->FindData.ftLastWriteTime;
 	fi->CreationTime=pi->FindData.ftCreationTime;
 	fi->AccessTime=pi->FindData.ftLastAccessTime;
@@ -397,9 +398,9 @@ void FileList::CreatePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber
 
 	if (ItemList)
 	{
-		GetSelName(nullptr,FileAttr);
+		GetSelNameCompat(nullptr,FileAttr);
 
-		while (GetSelName(&strSelName,FileAttr))
+		while (GetSelNameCompat(&strSelName,FileAttr))
 			if ((!(FileAttr & FILE_ATTRIBUTE_DIRECTORY) || !TestParentFolderName(strSelName))
 			        && LastSelPosition>=0 && LastSelPosition<FileCount)
 			{
@@ -680,9 +681,9 @@ void FileList::PluginHostGetFiles()
 	FARString strSelName;
 	DWORD FileAttr;
 	SaveSelection();
-	GetSelName(nullptr,FileAttr);
+	GetSelNameCompat(nullptr,FileAttr);
 
-	if (!GetSelName(&strSelName,FileAttr))
+	if (!GetSelNameCompat(&strSelName,FileAttr))
 		return;
 
 	AnotherPanel->GetCurDir(strDestPath);
@@ -699,9 +700,9 @@ void FileList::PluginHostGetFiles()
 	}
 
 	int OpMode=OPM_TOPLEVEL,ExitLoop=FALSE;
-	GetSelName(nullptr,FileAttr);
+	GetSelNameCompat(nullptr,FileAttr);
 
-	while (!ExitLoop && GetSelName(&strSelName,FileAttr))
+	while (!ExitLoop && GetSelNameCompat(&strSelName,FileAttr))
 	{
 		HANDLE hCurPlugin;
 

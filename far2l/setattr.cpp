@@ -66,20 +66,20 @@ enum SETATTRDLG
 	SA_TEXT_OWNER,
 	SA_EDIT_OWNER,
 	SA_SEPARATOR2,
-	SA_TEXT_MODE_OWNER,
+	SA_TEXT_MODE_USER,
 	SA_TEXT_MODE_GROUP,
-	SA_TEXT_MODE_WORLD,
+	SA_TEXT_MODE_OTHER,
 	SA_ATTR_FIRST,
-	SA_CHECKBOX_OWNER_READ = SA_ATTR_FIRST,
-	SA_CHECKBOX_OWNER_WRITE,
-	SA_CHECKBOX_OWNER_EXECUTE,
+	SA_CHECKBOX_USER_READ = SA_ATTR_FIRST,
+	SA_CHECKBOX_USER_WRITE,
+	SA_CHECKBOX_USER_EXECUTE,
 	SA_CHECKBOX_GROUP_READ,
 	SA_CHECKBOX_GROUP_WRITE,
 	SA_CHECKBOX_GROUP_EXECUTE,
-	SA_CHECKBOX_WORLD_READ,
-	SA_CHECKBOX_WORLD_WRITE,
+	SA_CHECKBOX_OTHER_READ,
+	SA_CHECKBOX_OTHER_WRITE,
 	SA_ATTR_LAST,
-	SA_CHECKBOX_WORLD_EXECUTE = SA_ATTR_LAST,
+	SA_CHECKBOX_OTHER_EXECUTE = SA_ATTR_LAST,
 	SA_SEPARATOR3,
 	SA_TEXT_TITLEDATE,
 	SA_TEXT_LAST_ACCESS,
@@ -522,9 +522,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		DI_TEXT,5,5,17,5,0,0,MSG(MSetAttrOwner),
 		DI_EDIT,18,5,short(DlgX-6),5,0,0,L"",
 		DI_TEXT,3,6,0,6,0,DIF_SEPARATOR,L"",
-		DI_TEXT,5,7,0,7,0,0,L"Owner",
+		DI_TEXT,5,7,0,7,0,0,L"User",
 		DI_TEXT,short(DlgX/3),7,0,7,0,0,L"Group",
-		DI_TEXT, short(2*DlgX/3),7,0,7,0,0,L"World",
+		DI_TEXT, short(2*DlgX/3),7,0,7,0,0,L"Other",
 		DI_CHECKBOX,5,8,0,8,0,DIF_FOCUS|DIF_3STATE, L"Read",
 		DI_CHECKBOX,5,9,0,9,0,DIF_3STATE, L"Write",
 		DI_CHECKBOX,5,10,0,10,0,DIF_3STATE, L"Execute",
@@ -535,7 +535,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		DI_CHECKBOX,short(2*DlgX/3),9,0,9,0,DIF_3STATE, L"Write",
 		DI_CHECKBOX,short(2*DlgX/3),10,0,0,0,DIF_3STATE, L"Execute",
 		DI_TEXT,3,11,0,11,0,DIF_SEPARATOR,L"",
-		DI_TEXT,DlgX-29,12,0,12,0,0,L"",
+		DI_TEXT,short(DlgX-29),12,0,12,0,0,L"",
 		DI_TEXT,    5,13,0,13,0,0, L"Last access time",
 		DI_FIXEDIT,short(DlgX-29),13,short(DlgX-19),13,0,DIF_MASKEDIT,L"",
 		DI_FIXEDIT,short(DlgX-17),13,short(DlgX-6),13,0,DIF_MASKEDIT,L"",
@@ -598,9 +598,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		FAR_FIND_DATA_EX FindData;
 		if(SrcPanel)
 		{
-			SrcPanel->GetSelName(nullptr,FileAttr);
-			SrcPanel->GetSelName(&strSelName,FileAttr,nullptr,&FindData);
-			//todo: FileMode=
+			SrcPanel->GetSelName(nullptr,FileAttr, FileMode);
+			SrcPanel->GetSelName(&strSelName,FileAttr, FileMode,nullptr,&FindData);
 		}
 		else
 		{
@@ -609,6 +608,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			FileAttr=FindData.dwFileAttributes;
 			FileMode=FindData.dwUnixMode;
 		}
+		fprintf(stderr, "FileMode=%u\n", FileMode);
 
 		if (!SelCount || (SelCount==1 && TestParentFolderName(strSelName)))
 			return false;
@@ -650,15 +650,15 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		}
 		AP[]=
 		{
-			{SA_CHECKBOX_OWNER_READ, S_IRUSR },
-			{SA_CHECKBOX_OWNER_WRITE, S_IWUSR },
-			{SA_CHECKBOX_OWNER_EXECUTE, S_IXUSR },
+			{SA_CHECKBOX_USER_READ, S_IRUSR },
+			{SA_CHECKBOX_USER_WRITE, S_IWUSR },
+			{SA_CHECKBOX_USER_EXECUTE, S_IXUSR },
 			{SA_CHECKBOX_GROUP_READ, S_IRGRP },
 			{SA_CHECKBOX_GROUP_WRITE, S_IWGRP },
 			{SA_CHECKBOX_GROUP_EXECUTE, S_IXGRP },
-			{SA_CHECKBOX_WORLD_READ, S_IROTH },
-			{SA_CHECKBOX_WORLD_WRITE, S_IWOTH },
-			{SA_CHECKBOX_WORLD_EXECUTE, S_IXOTH },
+			{SA_CHECKBOX_OTHER_READ, S_IROTH },
+			{SA_CHECKBOX_OTHER_WRITE, S_IWOTH },
+			{SA_CHECKBOX_OTHER_EXECUTE, S_IXOTH },
 		};
 
 		if (SelCount==1)
@@ -852,7 +852,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			// так же проверка на атрибуты
 			if(SrcPanel)
 			{
-				SrcPanel->GetSelName(nullptr,FileAttr);
+				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
 			}
 			FolderPresent=false;
 
@@ -863,7 +863,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				SrcPanel->GetCurDir(strCurDir);
 
 				bool CheckOwner=true;
-				while (SrcPanel->GetSelName(&strSelName,FileAttr,nullptr,&FindData))
+				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, nullptr, &FindData))
 				{
 					if (!FolderPresent&&(FileAttr&FILE_ATTRIBUTE_DIRECTORY))
 					{
@@ -928,8 +928,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			}
 			if(SrcPanel)
 			{
-				SrcPanel->GetSelName(nullptr,FileAttr);
-				SrcPanel->GetSelName(&strSelName,FileAttr,nullptr,&FindData);
+				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
+				SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, nullptr, &FindData);
 			}
 
 			// выставим "неопределенку" или то, что нужно
@@ -1084,14 +1084,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 					if(SrcPanel)
 					{
-						SrcPanel->GetSelName(nullptr,FileAttr);
+						SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
 					}
 					wakeful W;
 					bool Cancel=false;
 					DWORD LastTime=0;
 
 					bool SingleFileDone=false;
-					while ((SrcPanel?SrcPanel->GetSelName(&strSelName,FileAttr,nullptr,&FindData):!SingleFileDone) && !Cancel)
+					while ((SrcPanel?SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, nullptr, &FindData):!SingleFileDone) && !Cancel)
 					{
 						if(!SrcPanel)
 						{
@@ -1244,7 +1244,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 								}
 							}
 						}
-					} // END: while (SrcPanel->GetSelName(...))
+					} // END: while (SrcPanel->GetSelNameCompat(...))
 				}
 			}
 			break;

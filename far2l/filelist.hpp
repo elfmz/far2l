@@ -3,7 +3,7 @@
 /*
 filelist.hpp
 
-Файловая панель - общие функции
+Г”Г Г©Г«Г®ГўГ Гї ГЇГ Г­ГҐГ«Гј - Г®ГЎГ№ГЁГҐ ГґГіГ­ГЄГ¶ГЁГЁ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -66,6 +66,7 @@ struct FileListItem
 
 	//BUGBUG!!
 	DWORD FileAttr;
+	DWORD FileMode;
 	FILETIME CreationTime;
 	FILETIME AccessTime;
 	FILETIME WriteTime;
@@ -102,6 +103,7 @@ struct FileListItem
 		CustomColumnNumber = 0;
 		CRC32 = 0;
 		FileAttr = 0;
+		FileMode = 0;
 		memset(&CreationTime, 0, sizeof(CreationTime));
 		memset(&AccessTime, 0, sizeof(AccessTime));
 		memset(&WriteTime, 0, sizeof(WriteTime));
@@ -137,6 +139,7 @@ struct FileListItem
 			CustomColumnNumber = fliCopy.CustomColumnNumber;
 			CRC32 = fliCopy.CRC32;
 			FileAttr = fliCopy.FileAttr;
+			FileMode = fliCopy.FileMode;
 			CreationTime=fliCopy.CreationTime;
 			AccessTime=fliCopy.AccessTime;
 			WriteTime=fliCopy.WriteTime;
@@ -183,8 +186,8 @@ class FileList:public Panel
 		DizList Diz;
 		int DizRead;
 		/* $ 09.11.2001 IS
-		     Открывающий и закрывающий символ, которые используются для показа
-		     имени, которое не помещается в панели. По умолчанию - фигурные скобки.
+		     ГЋГІГЄГ°Г»ГўГ ГѕГ№ГЁГ© ГЁ Г§Г ГЄГ°Г»ГўГ ГѕГ№ГЁГ© Г±ГЁГ¬ГўГ®Г«, ГЄГ®ГІГ®Г°Г»ГҐ ГЁГ±ГЇГ®Г«ГјГ§ГіГѕГІГ±Гї Г¤Г«Гї ГЇГ®ГЄГ Г§Г 
+		     ГЁГ¬ГҐГ­ГЁ, ГЄГ®ГІГ®Г°Г®ГҐ Г­ГҐ ГЇГ®Г¬ГҐГ№Г ГҐГІГ±Гї Гў ГЇГ Г­ГҐГ«ГЁ. ГЏГ® ГіГ¬Г®Г«Г·Г Г­ГЁГѕ - ГґГЁГЈГіГ°Г­Г»ГҐ Г±ГЄГ®ГЎГЄГЁ.
 		*/
 		wchar_t openBracket[2], closeBracket[2];
 
@@ -213,7 +216,7 @@ class FileList:public Panel
 		int ShiftSelection;
 		int MouseSelection;
 		int SelectedFirst;
-		int IsEmpty; // указывает на полностью пустую колонку
+		int IsEmpty; // ГіГЄГ Г§Г»ГўГ ГҐГІ Г­Г  ГЇГ®Г«Г­Г®Г±ГІГјГѕ ГЇГіГ±ГІГіГѕ ГЄГ®Г«Г®Г­ГЄГі
 		int AccessTimeUpdateRequired;
 
 		int UpdateRequired,UpdateRequiredMode,UpdateDisabled;
@@ -243,18 +246,18 @@ class FileList:public Panel
 		void Select(FileListItem *SelPtr,int Selection);
 		long SelectFiles(int Mode,const wchar_t *Mask=nullptr);
 		void ProcessEnter(bool EnableExec,bool SeparateWindow, bool EnableAssoc=true, bool RunAs = false, OPENFILEPLUGINTYPE Type = OFP_NORMAL);
-		// ChangeDir возвращает FALSE, eсли не смогла выставить заданный путь
+		// ChangeDir ГўГ®Г§ГўГ°Г Г№Г ГҐГІ FALSE, eГ±Г«ГЁ Г­ГҐ Г±Г¬Г®ГЈГ«Г  ГўГ»Г±ГІГ ГўГЁГІГј Г§Г Г¤Г Г­Г­Г»Г© ГЇГіГІГј
 		BOOL ChangeDir(const wchar_t *NewDir,BOOL IsUpdated=TRUE);
 		void CountDirSize(DWORD PluginFlags);
 		/* $ 19.03.2002 DJ
-		   IgnoreVisible - обновить, даже если панель невидима
+		   IgnoreVisible - Г®ГЎГ­Г®ГўГЁГІГј, Г¤Г Г¦ГҐ ГҐГ±Г«ГЁ ГЇГ Г­ГҐГ«Гј Г­ГҐГўГЁГ¤ГЁГ¬Г 
 		*/
 		void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage);
 		void UpdatePlugin(int KeepSelection, int IgnoreVisible);
 
 		void MoveSelection(FileListItem **FileList,long FileCount,FileListItem **OldList,long OldFileCount);
 		virtual int GetSelCount();
-		virtual int GetSelName(FARString *strName,DWORD &FileAttr,FARString *strShortName=nullptr,FAR_FIND_DATA_EX *fde=nullptr);
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *strShortName=nullptr,FAR_FIND_DATA_EX *fde=nullptr);
 		virtual void UngetSelName();
 		virtual void ClearLastGetSelection();
 
@@ -287,7 +290,7 @@ class FileList:public Panel
 		void PluginToPluginFiles(int Move);
 		void PluginHostGetFiles();
 		void PluginPutFilesToNew();
-		// возвращает то, что возвращает PutFiles
+		// ГўГ®Г§ГўГ°Г Г№Г ГҐГІ ГІГ®, Г·ГІГ® ГўГ®Г§ГўГ°Г Г№Г ГҐГІ PutFiles
 		int PluginPutFilesToAnother(int Move,Panel *AnotherPanel);
 		void ProcessPluginCommand();
 		void PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber);
@@ -311,14 +314,14 @@ class FileList:public Panel
 		virtual void SetFocus();
 		virtual void Update(int Mode);
 		/*$ 22.06.2001 SKV
-		  Параметр для игнорирования времени последнего Update.
-		  Используется для Update после исполнения команды.
+		  ГЏГ Г°Г Г¬ГҐГІГ° Г¤Г«Гї ГЁГЈГ­Г®Г°ГЁГ°Г®ГўГ Г­ГЁГї ГўГ°ГҐГ¬ГҐГ­ГЁ ГЇГ®Г±Г«ГҐГ¤Г­ГҐГЈГ® Update.
+		  Г€Г±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї Г¤Г«Гї Update ГЇГ®Г±Г«ГҐ ГЁГ±ГЇГ®Г«Г­ГҐГ­ГЁГї ГЄГ®Г¬Г Г­Г¤Г».
 		*/
 		virtual int UpdateIfChanged(int UpdateMode);
 
 		/* $ 19.03.2002 DJ
-		   UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
-		   что панель невидима
+		   UpdateIfRequired() - Г®ГЎГ­Г®ГўГЁГІГј, ГҐГ±Г«ГЁ Г ГЇГ¤ГҐГ©ГІ ГЎГ»Г« ГЇГ°Г®ГЇГіГ№ГҐГ­ ГЁГ§-Г§Г  ГІГ®ГЈГ®,
+		   Г·ГІГ® ГЇГ Г­ГҐГ«Гј Г­ГҐГўГЁГ¤ГЁГ¬Г 
 		*/
 		virtual void UpdateIfRequired();
 

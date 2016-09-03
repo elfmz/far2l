@@ -278,6 +278,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			ListData[FileCount]->Clear();
 			NewPtr=ListData[FileCount];
 			NewPtr->FileAttr = fdata.dwFileAttributes;
+			NewPtr->FileMode = fdata.dwUnixMode;
 			NewPtr->CreationTime = fdata.ftCreationTime;
 			NewPtr->AccessTime = fdata.ftLastAccessTime;
 			NewPtr->WriteTime = fdata.ftLastWriteTime;
@@ -953,6 +954,7 @@ void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Tim
 {
 	CurPtr->Clear();
 	CurPtr->FileAttr = FILE_ATTRIBUTE_DIRECTORY;
+	CurPtr->FileMode = S_IFDIR | S_IXUSR | S_IXGRP | S_IXOTH;
 	CurPtr->strName = L"..";
 
 	if (Times)

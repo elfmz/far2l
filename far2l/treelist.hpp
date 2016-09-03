@@ -181,7 +181,7 @@ class TreeList: public Panel
 		virtual BOOL GetItem(int Index,void *Dest);
 		virtual int GetCurrentPos();
 
-		virtual int GetSelName(FARString *strName,DWORD &FileAttr,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr);
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr);
 
 	public:
 		static void AddTreeName(const wchar_t *Name);

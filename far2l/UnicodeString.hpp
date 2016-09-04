@@ -149,7 +149,7 @@ class UnicodeString
 
 		bool IsEmpty() const { return !(m_pData->GetLength() && *m_pData->GetData()); }
 
-		size_t GetCharString(char *lpszStr, size_t nSize, UINT CodePage=CP_OEMCP) const;
+		size_t GetCharString(char *lpszStr, size_t nSize, UINT CodePage=CP_UTF8) const;
 
 		int __cdecl Format(const wchar_t * format, ...);
 

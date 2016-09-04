@@ -969,17 +969,17 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 	if (Ask)
 	{
 		FarList ComboList;
-		FarListItem LinkTypeItems[5]={0},CopyModeItems[8]={0};
+		FarListItem LinkTypeItems[2]={0},CopyModeItems[8]={0};
 
 		if (Link)
 		{
 			ComboList.ItemsNumber=ARRAYSIZE(LinkTypeItems);
 			ComboList.Items=LinkTypeItems;
 			ComboList.Items[0].Text=MSG(MLinkTypeHardlink);
-			ComboList.Items[1].Text=MSG(MLinkTypeJunction);
-			ComboList.Items[2].Text=MSG(MLinkTypeSymlink);
-			ComboList.Items[3].Text=MSG(MLinkTypeSymlinkFile);
-			ComboList.Items[4].Text=MSG(MLinkTypeSymlinkDirectory);
+			ComboList.Items[1].Text=MSG(MLinkTypeSymlink);
+//			ComboList.Items[2].Text=MSG(MLinkTypeJunction);
+//			ComboList.Items[3].Text=MSG(MLinkTypeSymlinkFile);
+//			ComboList.Items[4].Text=MSG(MLinkTypeSymlinkDirectory);
 
 			if (CDP.FilesPresent)
 				ComboList.Items[0].Flags|=LIF_SELECTED;

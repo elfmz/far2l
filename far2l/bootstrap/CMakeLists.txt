@@ -31,7 +31,16 @@ set(DEPENDENCIES
   "${SCRIPTS}/farlang.templ.m4"
 )
 
-
+set(HLFFILES
+  "${BOOTSTRAP}/FarEng.hlf"
+  "${BOOTSTRAP}/FarRus.hlf"
+  "${BOOTSTRAP}/FarHun.hlf"
+)
+set(LNGFILES
+  "${BOOTSTRAP}/FarEng.lng"
+  "${BOOTSTRAP}/FarRus.lng"
+  "${BOOTSTRAP}/FarHun.lng"
+)
 
 add_custom_command(OUTPUT "${BOOTSTRAP}/copyright.inc"
    COMMAND ${M4} "${SCRIPTS}/copyright.inc.m4" | ${GAWK} -f "${SCRIPTS}/enc.awk" > "${BOOTSTRAP}/copyright.inc"
@@ -73,4 +82,10 @@ add_custom_command(TARGET bootstrap
 add_custom_command(TARGET bootstrap
    COMMAND ${FARLNGTOOL} generator -nc -i ${BOOTSTRAP}/lang.ini -ol ${BOOTSTRAP} ${BOOTSTRAP}/farlang.templ
    COMMENT generating languages
+)
+
+add_custom_command(TARGET bootstrap
+   POST_BUILD
+   DEPENDS ${LNGFILES} ${HLFFILES}
+   COMMAND ${CMAKE_COMMAND} -E copy ${LNGFILES} ${HLFFILES} "${INSTALL_DIR}"
 )

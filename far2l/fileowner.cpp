@@ -1,7 +1,7 @@
 /*
 fileowner.cpp
 
-Êýø SID`îâ è ôóíêöèÿ GetOwner
+ÃŠÃ½Ã¸ SID`Ã®Ã¢ Ã¨ Ã´Ã³Ã­ÃªÃ¶Ã¨Ã¿ GetOwner
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -42,11 +42,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner)
 {
-	return 0;
+	return true;
 }
 
 
 bool SetOwner(LPCWSTR Object, LPCWSTR Owner)
 {
-	return 0;
+	/*struct passwd *p = getpwnam(Wide2MB(Owner).c_str());
+	if (!p) return false;
+	p-> pw_uid
+	chown(	const char *pathname,
+ 	uid_t owner,
+ 	gid_t group);*/
+	return true;
 }

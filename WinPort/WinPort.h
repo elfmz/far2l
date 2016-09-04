@@ -87,6 +87,7 @@ extern "C" {
 		LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime));
 
 //other
+	WINPORT_DECL(TranslateErrno, VOID, ());
 	WINPORT_DECL(GetLastError, DWORD, ());
 	WINPORT_DECL(SetLastError, VOID, (DWORD code));
 	WINPORT_DECL(InterlockedIncrement, LONG, (LONG volatile *Value));

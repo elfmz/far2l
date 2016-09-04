@@ -26,22 +26,7 @@ extern "C"
 		int fd;
 	};
 	
-	static void TranslateErrno()
-	{
-		DWORD gle;
-		switch (errno) {
-			case EEXIST: gle = ERROR_ALREADY_EXISTS; break;
-			case ENOENT: gle = ERROR_FILE_NOT_FOUND; break;
-			case EACCES: case EPERM: gle = ERROR_ACCESS_DENIED; break;
-			case ETXTBSY: gle = ERROR_SHARING_VIOLATION; break;
-			//case EROFS: gle = ; break;
-			default:
-				fprintf(stderr, "TODO: TranslateErrno - %d\n", errno );
-				gle = ERROR_GEN_FAILURE;
-		}
-		
-		WINPORT(SetLastError)(gle);
-	}
+
 	
 	
 	WINPORT_DECL(CreateDirectory, BOOL, (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes ))
@@ -49,7 +34,7 @@ extern "C"
 		std::string path = ConsumeWinPath(lpPathName);
 		int r = _mkdir(path.c_str());
 		if (r==-1) {
-			TranslateErrno();		
+			WINPORT(TranslateErrno)();
 			fprintf(stderr, "Failed to create directory: %s errno %u\n", path.c_str(), errno);
 			return FALSE;
 		}
@@ -63,7 +48,7 @@ extern "C"
 		std::string path = ConsumeWinPath(lpDirName);
 		int r = _rmdir(path.c_str());
 		if (r==-1) {
-			TranslateErrno();
+			WINPORT(TranslateErrno)();
 			fprintf(stderr, "Failed to remove directory: %s errno %u\n", path.c_str(),errno);
 			return FALSE;
 		}
@@ -75,7 +60,7 @@ extern "C"
 		std::string path = ConsumeWinPath(lpFileName);
 		int r = remove(path.c_str());
 		if (r==-1) {
-			TranslateErrno();
+			WINPORT(TranslateErrno)();
 			fprintf(stderr, "Failed to remove file: %s errno %u\n", path.c_str(), errno);
 			return FALSE;
 		}
@@ -109,7 +94,7 @@ extern "C"
 		std::string path = ConsumeWinPath(lpFileName);
 		int r = _open(path.c_str(), flags, (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644);		
 		if (r==-1) {
-			TranslateErrno();
+			WINPORT(TranslateErrno)();
 
 			fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s errno=%d\n", 
 				lpFileName, dwDesiredAccess, flags, path.c_str(), errno);
@@ -332,7 +317,7 @@ extern "C"
 	{
 		struct stat s = {0};
 		if (stat(ConsumeWinPath(lpFileName).c_str(), &s) < 0) {
-			TranslateErrno();
+			WINPORT(TranslateErrno)();
 			return INVALID_FILE_ATTRIBUTES;			
 		}
 
@@ -534,7 +519,7 @@ extern "C"
 		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos) {
 			struct stat s = {0};
 			if (stat((root + mask).c_str(), &s) < 0) {
-				TranslateErrno();
+				WINPORT(TranslateErrno)();
 				return INVALID_HANDLE_VALUE;				
 			}
 
@@ -547,7 +532,7 @@ extern "C"
 
 		UnixFindFile *uff = new UnixFindFile(root, mask);
 		if (!uff->Iterate(lpFindFileData)) {
-			TranslateErrno();
+			WINPORT(TranslateErrno)();
 			delete uff;
 			fprintf(stderr, "find mask: %s (for %ls) FAILED\n", mask.c_str(), lpFileName);
 			WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);

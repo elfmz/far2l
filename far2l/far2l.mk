@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=03/09/16
+Date                   :=05/09/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -76,11 +76,11 @@ Objects1=$(IntermediateDirectory)/flplugin.cpp$(ObjectSuffix) $(IntermediateDire
 Objects2=$(IntermediateDirectory)/registry.cpp$(ObjectSuffix) $(IntermediateDirectory)/savefpos.cpp$(ObjectSuffix) $(IntermediateDirectory)/savescr.cpp$(ObjectSuffix) $(IntermediateDirectory)/scantree.cpp$(ObjectSuffix) $(IntermediateDirectory)/scrbuf.cpp$(ObjectSuffix) $(IntermediateDirectory)/scrobj.cpp$(ObjectSuffix) $(IntermediateDirectory)/scrsaver.cpp$(ObjectSuffix) \
 	$(IntermediateDirectory)/setattr.cpp$(ObjectSuffix) $(IntermediateDirectory)/setcolor.cpp$(ObjectSuffix) $(IntermediateDirectory)/stddlg.cpp$(ObjectSuffix) $(IntermediateDirectory)/strmix.cpp$(ObjectSuffix) $(IntermediateDirectory)/synchro.cpp$(ObjectSuffix) $(IntermediateDirectory)/syntax.cpp$(ObjectSuffix) $(IntermediateDirectory)/syslog.cpp$(ObjectSuffix) $(IntermediateDirectory)/TPreRedrawFunc.cpp$(ObjectSuffix) $(IntermediateDirectory)/treelist.cpp$(ObjectSuffix) $(IntermediateDirectory)/tvar.cpp$(ObjectSuffix) \
 	$(IntermediateDirectory)/udlist.cpp$(ObjectSuffix) $(IntermediateDirectory)/UnicodeString.cpp$(ObjectSuffix) $(IntermediateDirectory)/usermenu.cpp$(ObjectSuffix) $(IntermediateDirectory)/viewer.cpp$(ObjectSuffix) $(IntermediateDirectory)/vmenu.cpp$(ObjectSuffix) $(IntermediateDirectory)/xlat.cpp$(ObjectSuffix) $(IntermediateDirectory)/vtshell.cpp$(ObjectSuffix) $(IntermediateDirectory)/vtansi.cpp$(ObjectSuffix) $(IntermediateDirectory)/PluginA.cpp$(ObjectSuffix) $(IntermediateDirectory)/execute_oscmd.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/vtshell_translation.cpp$(ObjectSuffix) $(IntermediateDirectory)/vtlog.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_CharDistribution.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_JpCntx.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangBulgarianModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangCyrillicModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangGreekModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangHebrewModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangHungarianModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangThaiModel.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/UCD_nsBig5Prober.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsCharSetProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEscCharsetProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEscSM.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEUCJPProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEUCKRProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEUCTWProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsGB2312Prober.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsHebrewProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsLatin1Prober.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/UCD_nsMBCSGroupProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsMBCSSM.cpp$(ObjectSuffix) 
+	$(IntermediateDirectory)/vtshell_translation.cpp$(ObjectSuffix) $(IntermediateDirectory)/vtlog.cpp$(ObjectSuffix) $(IntermediateDirectory)/flink.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_CharDistribution.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_JpCntx.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangBulgarianModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangCyrillicModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangGreekModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangHebrewModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_LangHungarianModel.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/UCD_LangThaiModel.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsBig5Prober.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsCharSetProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEscCharsetProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEscSM.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEUCJPProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEUCKRProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsEUCTWProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsGB2312Prober.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsHebrewProber.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/UCD_nsLatin1Prober.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsMBCSGroupProber.cpp$(ObjectSuffix) 
 
-Objects3=$(IntermediateDirectory)/UCD_nsSBCharSetProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsSBCSGroupProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsSJISProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsUniversalDetector.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsUTF8Prober.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_prmem.c$(ObjectSuffix) 
+Objects3=$(IntermediateDirectory)/UCD_nsMBCSSM.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsSBCharSetProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsSBCSGroupProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsSJISProber.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsUniversalDetector.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_nsUTF8Prober.cpp$(ObjectSuffix) $(IntermediateDirectory)/UCD_prmem.c$(ObjectSuffix) 
 
 
 
@@ -731,6 +731,11 @@ $(IntermediateDirectory)/vtlog.cpp$(ObjectSuffix): vtlog.cpp
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./vtlog.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/vtlog.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/vtlog.cpp$(PreprocessSuffix): vtlog.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/vtlog.cpp$(PreprocessSuffix) "vtlog.cpp"
+
+$(IntermediateDirectory)/flink.cpp$(ObjectSuffix): flink.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./flink.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/flink.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/flink.cpp$(PreprocessSuffix): flink.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/flink.cpp$(PreprocessSuffix) "flink.cpp"
 
 $(IntermediateDirectory)/UCD_CharDistribution.cpp$(ObjectSuffix): UCD/CharDistribution.cpp 
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./UCD/CharDistribution.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/UCD_CharDistribution.cpp$(ObjectSuffix) $(IncludePath)

@@ -1,9 +1,9 @@
 #pragma once
 
 /*
-cvtname.hpp
+flink.hpp
 
-������� ��� �������������� ���� ������/�����.
+Çàãîëîâî÷íûé ôàéë äëÿ ðàáîòû ñ Hard & SymLink
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,10 +33,18 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath=true);
+enum ReparsePointTypes
+{
+	RP_EXACTCOPY,   // äëÿ êîïèðîâàíèÿ/ïåðåíîñà ññûëîê, êîïèÿ ñóùåñòâóþùåãî
+	RP_HARDLINK,    // æ¸ñòêàÿ ññûëêà
+	RP_JUNCTION,    // ñâÿçü
+	RP_VOLMOUNT,    // ìîíòèðîâàííûé òîì
+	RP_SYMLINK, // ññûëêà, NT>=6
+	RP_SYMLINKFILE, // ôàéë-ññûëêà, NT>=6
+	RP_SYMLINKDIR,  // êàòàëîã-ññûëêà, NT>=6
+};
 
-void ConvertNameToReal(const wchar_t *Src, FARString &strDest);
-void ConvertNameToFull(const wchar_t *Src, FARString &strDest);
-
-void GetPathRoot(const wchar_t *Path, FARString &strRoot);
-
+int WINAPI GetNumberOfLinks(const wchar_t *Name);
+int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName);
+int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, DWORD Flags);
+int WINAPI FarMkLink(const wchar_t *ExistingName, const wchar_t *NewName, DWORD Flags);

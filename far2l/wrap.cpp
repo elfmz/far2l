@@ -877,9 +877,7 @@ int WINAPI FarMkLinkA(const char *Src,const char *Dest, DWORD Flags)
 
 	if (Flags&oldfar::FLINK_DONOTUPDATEPANEL) flg|=FLINK_DONOTUPDATEPANEL;
 
-	fprintf(stderr, "TODO: FarMkLinkA(%s, %s, 0x%x)\n", Src, Dest, Flags);
-	return 0;
-	//return FarMkLink(s, d, flg);
+	return FarMkLink(s, d, flg);
 }
 
 int WINAPI GetNumberOfLinksA(const char *Name)

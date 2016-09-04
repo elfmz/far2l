@@ -312,16 +312,41 @@ extern "C"
 
 		return rv;
 	}
+	
+	static int stat_symcheck(const char *path, struct stat &s, bool &symlink)
+	{
+		if (lstat(path, &s) < 0) {
+			fprintf(stderr, "stat_symcheck: lstat failed for %s\n", path);
+			return -1;
+		}
+		symlink = ((s.st_mode & S_IFMT)==S_IFLNK);
+		if (symlink) {
+			struct stat sdst = {0};
+			if (stat(path, &sdst) == 0) 
+				s = sdst;
+			else
+				fprintf(stderr, "stat_symcheck: stat failed for %s\n", path);
+		}
+		
+		return 0;
+	}
+	
+	
 
 	DWORD WINPORT(GetFileAttributes)(LPCWSTR lpFileName)
 	{
 		struct stat s = {0};
-		if (stat(ConsumeWinPath(lpFileName).c_str(), &s) < 0) {
+		const std::string &path = ConsumeWinPath(lpFileName);
+		
+		bool symlink = false;
+		if (stat_symcheck(path.c_str(), s, symlink) < 0 ) {
 			WINPORT(TranslateErrno)();
 			return INVALID_FILE_ATTRIBUTES;			
 		}
-
-		return WINPORT(EvaluateAttributes)(s.st_mode, lpFileName);
+		
+		DWORD out = WINPORT(EvaluateAttributes)(s.st_mode, lpFileName);
+		if (symlink) out|= FILE_ATTRIBUTE_REPARSE_POINT;
+		return out;
 	}
 
 	DWORD WINPORT(SetFileAttributes)(LPCWSTR lpFileName, DWORD dwAttributes)
@@ -394,15 +419,19 @@ extern "C"
 	}
 
 	//////////////////////////////////
-	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData)
+	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData, bool symlink)
 	{
 		lpFindFileData->dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, name);
+		if (symlink) lpFindFileData->dwFileAttributes|= FILE_ATTRIBUTE_REPARSE_POINT;
+		
 		WINPORT(FileTime_UnixToWin32)(s.st_mtim, &lpFindFileData->ftLastWriteTime);
 		WINPORT(FileTime_UnixToWin32)(s.st_ctim, &lpFindFileData->ftCreationTime);
 		WINPORT(FileTime_UnixToWin32)(s.st_atim, &lpFindFileData->ftLastAccessTime);
 		lpFindFileData->nFileSizeHigh = (DWORD)(((uint64_t)s.st_size >> 32) & 0xffffffff);
 		lpFindFileData->nFileSizeLow = (DWORD)(s.st_size & 0xffffffff);
-		lpFindFileData->dwReserved0 = lpFindFileData->dwReserved1 = 0;
+		lpFindFileData->dwReserved0 = 
+			(lpFindFileData->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ) ? IO_REPARSE_TAG_SYMLINK : 0;
+		lpFindFileData->dwReserved1 = 0;
 		lpFindFileData->dwUnixMode = s.st_mode;
 		wcsncpy(lpFindFileData->cFileName, name, MAX_PATH - 1);
 		lpFindFileData->cAlternateFileName[0] = 0;
@@ -480,12 +509,14 @@ extern "C"
 			path+= de->d_name;
 			std::wstring utf16 = MB2Wide(de->d_name);
 #endif
-			
-			struct stat s = {0};
-			if (stat(path.c_str(), &s) < 0) {
-				fprintf(stderr, "stat failed: %s\n",path.c_str());
+
+			struct stat s = { };
+			bool symlink = false;
+			if (stat_symcheck(path.c_str(), s, symlink) < 0 ) {
+				fprintf(stderr, "UnixFindFile: stat failed for %s\n",path.c_str());
 			}
-			FillWFD((const wchar_t *)utf16.c_str(), s, lpFindFileData);
+						
+			FillWFD((const wchar_t *)utf16.c_str(), s, lpFindFileData, symlink);
 			//fprintf(stderr, "stat attr %x for %s\n", lpFindFileData->dwFileAttributes , path.c_str());
 			return true;
 		}
@@ -517,15 +548,17 @@ extern "C"
 			//fprintf(stderr, "find mask: %s\n", mask.c_str());
 		}
 		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos) {
+
 			struct stat s = {0};
-			if (stat((root + mask).c_str(), &s) < 0) {
+			bool symlink = false;
+			if (stat_symcheck((root + mask).c_str(), s, symlink) < 0 ) {
 				WINPORT(TranslateErrno)();
-				return INVALID_HANDLE_VALUE;				
+				return INVALID_HANDLE_VALUE;			
 			}
 
 			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);
 			if (name) ++name; else name = lpFileName;
-			FillWFD(name, s, lpFindFileData);
+			FillWFD(name, s, lpFindFileData, symlink);
 			return (HANDLE)&g_unix_found_file_dummy;
 		}
 

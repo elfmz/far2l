@@ -1137,7 +1137,7 @@ typedef void *HKL;
 #define COMPRESSION_ENGINE_HIBER         (0x0200)   
 
 
-
+#define IO_REPARSE_TAG_SYMLINK                  (0xA000000CL)
 
 
 #define CTRL_C_EVENT        0

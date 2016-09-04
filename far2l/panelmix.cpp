@@ -590,7 +590,7 @@ const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t Stream
 			PtrName=MSG(MListUp);
 		}
 		else
-		{/*
+		{
 			if (FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
 			{
 				PtrName=MSG(MListSymLink);
@@ -599,16 +599,16 @@ const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t Stream
 					case IO_REPARSE_TAG_SYMLINK:
 						break;
 
-					case IO_REPARSE_TAG_MOUNT_POINT:
+					/*case IO_REPARSE_TAG_MOUNT_POINT:
 						PtrName=MSG(MListJunction);
-						break;
+						break;*/
 
 					//case IO_REPARSE_TAG_DRIVER_EXTENDER:
 						//...
 						//break;
 					//case ...
 				}
-			}*/
+			}
 		}
 
 		FARString strStr;

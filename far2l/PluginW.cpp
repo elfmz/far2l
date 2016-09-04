@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "lasterror.hpp"
 #include "execute.hpp"
+#include "flink.hpp"
 #include <string>
 #include <list>
 #include <vector>
@@ -504,7 +505,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.MkTemp=FarMkTemp;
 		StandardFunctions.DeleteBuffer=DeleteBuffer;
 		StandardFunctions.ProcessName=ProcessName;
-		StandardFunctions.MkLink=0;//FarMkLink;
+		StandardFunctions.MkLink=FarMkLink;
 		StandardFunctions.ConvertPath=farConvertPath;
 		StandardFunctions.GetReparsePointInfo=farGetReparsePointInfo;
 		StandardFunctions.GetCurrentDirectory=farGetCurrentDirectory;

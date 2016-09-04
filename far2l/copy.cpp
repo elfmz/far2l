@@ -1869,7 +1869,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 			KeepPathPos=(int)(PointToName(strSelName)-strSelName.CPtr());
 
-/*			if (RPT==RP_JUNCTION || RPT==RP_SYMLINK || RPT==RP_SYMLINKFILE || RPT==RP_SYMLINKDIR)
+			if (RPT==RP_JUNCTION || RPT==RP_SYMLINK || RPT==RP_SYMLINKFILE || RPT==RP_SYMLINKDIR)
 			{
 				switch (MkSymLink(strSelName,strDest,RPT,Flags))
 				{
@@ -1886,7 +1886,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 						return COPY_FAILURE;
 				}
 			}
-			else*/
+			else
 			{
 				// ïðîâåðêà íà âøèâîñòü ;-)
 				if (!apiGetFindDataEx(strSelName,SrcData))
@@ -2006,33 +2006,6 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				SrcPanel->CopyDiz(strSelName,strSelShortName,strCopiedName,strCopiedName,&DestDiz);
 			}
 
-#if 0
-
-			// Åñëè [ ] Copy contents of symbolic links
-			if ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) && !(Flags&FCOPY_COPYSYMLINKCONTENTS))
-			{
-				//ñîçäàòü ñèìëèíê
-				switch (MkSymLink(SelName,Dest,FCOPY_LINK/*|FCOPY_NOSHOWMSGLINK*/))
-				{
-					case 2:
-						break;
-					case 1:
-
-						// Îòìåòèì (Ins) íåñêîëüêî êàòàëîãîâ, ALT-F6 Enter - âûäåëåíèå ñ ïàïîê íå ñíÿëîñü.
-						if ((!(Flags&FCOPY_CURRENTONLY)) && (Flags&FCOPY_COPYLASTTIME))
-							SrcPanel->ClearLastGetSelection();
-
-						_LOGCOPYR(SysLog(L"%d continue;",__LINE__));
-						continue;
-					case 0:
-						_LOGCOPYR(SysLog(L"return COPY_FAILURE -> %d",__LINE__));
-						return COPY_FAILURE;
-				}
-
-				continue;
-			}
-
-#endif
 
 			// Mantis#44 - Ïîòåðÿ äàííûõ ïðè êîïèðîâàíèè ññûëîê íà ïàïêè
 			// åñëè êàòàëîã (èëè íóæíî êîïèðîâàòü ñèìëèíê) - ïðèäåòñÿ ðåêóðñèâíî ñïóñêàòüñÿ...
@@ -2513,7 +2486,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 			// [ ] Copy contents of symbolic links
 			// For file symbolic links only!!!
 			// Directory symbolic links and junction points are handled by CreateDirectoryEx.
-			/*if (!(SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT && !(Flags&FCOPY_COPYSYMLINKCONTENTS) && RPT==RP_EXACTCOPY)
+			if (!(SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT && !(Flags&FCOPY_COPYSYMLINKCONTENTS) && RPT==RP_EXACTCOPY)
 			{
 				switch (MkSymLink(Src, strDestPath,RPT,0))
 				{
@@ -2524,7 +2497,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 					case 0:
 						return COPY_FAILURE;
 				}
-			}*/
+			}
 
 			TreeList::AddTreeName(strDestPath);
 			return COPY_SUCCESS;
@@ -2927,8 +2900,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 	if ((Flags&FCOPY_LINK))
 	{
-		return COPY_FAILURE;//todo
-		/*if (RPT==RP_HARDLINK)
+		if (RPT==RP_HARDLINK)
 		{
 			apiDeleteFile(strDestName); //BUGBUG
 			return(MkHardLink(SrcName,strDestName) ? COPY_SUCCESS:COPY_FAILURE);
@@ -2936,7 +2908,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		else
 		{
 			return(MkSymLink(SrcName,strDestName,RPT,0) ? COPY_SUCCESS:COPY_FAILURE);
-		}*/
+		}
 	}
 
 	if ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_ENCRYPTED) &&

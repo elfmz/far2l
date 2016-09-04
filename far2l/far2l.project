@@ -280,6 +280,8 @@
     <File Name="vtshell_translation.cpp"/>
     <File Name="vtlog.h"/>
     <File Name="vtlog.cpp"/>
+    <File Name="flink.cpp"/>
+    <File Name="flink.hpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="UCD">
     <File Name="UCD/Big5Freq.tab"/>

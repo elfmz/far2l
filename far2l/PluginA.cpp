@@ -67,7 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "lasterror.hpp"
 #include "execute.hpp"
-
+#include "flink.hpp"
 #include "wrap.cpp"
 
 static const wchar_t *wszReg_Preload=L"Preload";

@@ -88,11 +88,11 @@ target_link_libraries (colorer far2l)
 
 set_target_properties(colorer
   PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/Colorer/bin"
+    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/colorer/bin"
     PREFIX ""
     SUFFIX ".far-plug-mb")
 
 add_custom_command(TARGET colorer POST_BUILD
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/Colorer"
+   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
 )

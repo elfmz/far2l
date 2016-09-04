@@ -1,5 +1,56 @@
 
-file(GLOB_RECURSE SOURCES "*.cpp" "*.c")
+SET(SOURCES
+UCD/CharDistribution.cpp 
+UCD/CharDistribution.cpp
+UCD/JpCntx.cpp 
+UCD/JpCntx.cpp
+UCD/LangBulgarianModel.cpp 
+UCD/LangBulgarianModel.cpp
+UCD/LangCyrillicModel.cpp 
+UCD/LangCyrillicModel.cpp
+UCD/LangGreekModel.cpp 
+UCD/LangGreekModel.cpp
+UCD/LangHebrewModel.cpp 
+UCD/LangHebrewModel.cpp
+UCD/LangHungarianModel.cpp 
+UCD/LangHungarianModel.cpp
+UCD/LangThaiModel.cpp 
+UCD/LangThaiModel.cpp
+UCD/nsBig5Prober.cpp 
+UCD/nsBig5Prober.cpp
+UCD/nsCharSetProber.cpp 
+UCD/nsCharSetProber.cpp
+UCD/nsEscCharsetProber.cpp 
+UCD/nsEscCharsetProber.cpp
+UCD/nsEscSM.cpp 
+UCD/nsEscSM.cpp
+UCD/nsEUCJPProber.cpp 
+UCD/nsEUCJPProber.cpp
+UCD/nsEUCKRProber.cpp 
+UCD/nsEUCKRProber.cpp
+UCD/nsEUCTWProber.cpp 
+UCD/nsEUCTWProber.cpp
+UCD/nsGB2312Prober.cpp 
+UCD/nsGB2312Prober.cpp
+UCD/nsHebrewProber.cpp 
+UCD/nsHebrewProber.cpp
+UCD/nsLatin1Prober.cpp 
+UCD/nsLatin1Prober.cpp
+UCD/nsMBCSGroupProber.cpp 
+UCD/nsMBCSGroupProber.cpp
+UCD/nsMBCSSM.cpp 
+UCD/nsMBCSSM.cpp
+UCD/nsSBCharSetProber.cpp 
+UCD/nsSBCharSetProber.cpp
+UCD/nsSBCSGroupProber.cpp 
+UCD/nsSBCSGroupProber.cpp
+UCD/nsSJISProber.cpp 
+UCD/nsSJISProber.cpp
+UCD/nsUniversalDetector.cpp 
+UCD/nsUniversalDetector.cpp
+UCD/nsUTF8Prober.cpp 
+UCD/nsUTF8Prober.cpp
+)
 
 add_library (UCD ${SOURCES})
 

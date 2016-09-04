@@ -435,4 +435,7 @@
     <Project Name="farlng"/>
   </Dependencies>
   <Dependencies Name="Release"/>
+  <VirtualDirectory Name="lang">
+    <File Name="farlang.templ.m4"/>
+  </VirtualDirectory>
 </CodeLite_Project>

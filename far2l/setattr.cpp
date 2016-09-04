@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileowner.hpp"
 #include "wakeful.hpp"
 #include "DlgGuid.hpp"
+#include <list>
 
 
 enum SETATTRDLG
@@ -521,6 +522,48 @@ void PR_ShellSetFileAttributesMsg()
 }
 
 
+
+static void SystemProperties(const FARString &strSelName)
+{
+	std::string cmd = "file ";
+	cmd+= Wide2MB(strSelName.CPtr());
+	FILE *f = popen(cmd.c_str(), "r");
+	if (!f) {
+		perror("SystemProperties: popen");
+		return;
+	}
+
+	std::list<std::wstring> lines;
+	char buf[0x400] = { };
+	while (fgets(buf, sizeof(buf)-1, f)) {
+		size_t l = strlen(buf);
+		while (l && (buf[l-1]=='\r' || buf[l-1]=='\n')) --l;
+		if (l) {
+			buf[l] = 0;
+			std::wstring line = MB2Wide(buf);
+			while (line.size() > 40) {
+				size_t p = line.find(L',' , 30);
+				if (p==std::string::npos) break;
+				lines.push_back( line.substr(0, p) );
+				line.erase(0, p + 1);
+			}
+			
+			if (!line.empty()) lines.push_back( line );
+		}
+	}
+	pclose(f);
+	
+	if (lines.empty())
+		return;
+		
+	std::vector<const wchar_t *> lines_wz;
+	for (const auto & l : lines) 
+		lines_wz.push_back(l.c_str());
+	lines_wz.push_back(MSG(MHOk));
+
+	Message(0, 1, MSG(MSetAttrSystemDialog), &lines_wz[0], lines_wz.size());
+}
+
 static bool CheckFileOwnerGroup(DialogItemEx &EditItem, bool (WINAPI *GetFN)(const wchar_t *,const wchar_t *, FARString &),
 	FARString strComputerName, FARString strSelName)
 {
@@ -549,7 +592,6 @@ static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(L
 	}
 	return true;
 }
-
 
 bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 {
@@ -1260,21 +1302,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			break;
 		case SA_BUTTON_SYSTEMDLG:
 			{
-/*				SHELLEXECUTEINFOW seInfo={sizeof(seInfo)};
-				seInfo.nShow = SW_SHOW;
-				seInfo.fMask = SEE_MASK_INVOKEIDLIST;
-				// "/?/c:/" fails on old windows
-				FARString strFullName(IsLocalRootPath(strSelName)?strSelName:NTPath(strSelName).Get());
-				if(FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)
-				{
-					AddEndSlash(strFullName);
-				}
-				seInfo.lpFile = strFullName;
-				seInfo.lpVerb = L"properties";
-				FARString strCurDir;
-				apiGetCurrentDirectory(strCurDir);
-				seInfo.lpDirectory=strCurDir;
-				ShellExecuteExW(&seInfo);*/
+				SystemProperties(strSelName);
 			}
 			break;
 		default:

@@ -418,7 +418,7 @@ void EnumMountedFilesystems(MountedFilesystems &out, const WCHAR *another = NULL
 	
 	FILE *f = popen("df -T", "r");
 	if (f) {
-		char buf[0x400];
+		char buf[0x400] = { };
 		std::wstring s, tmp;
 		bool first = true;
 		while (fgets(buf, sizeof(buf)-1, f)!=NULL) {

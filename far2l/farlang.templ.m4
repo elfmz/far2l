@@ -12062,114 +12062,6 @@ MSetAttrUnknownJunction
 "(dane niedostępne)"
 "(dato no disponible)"
 
-MSetAttrRO
-"&Только для чтения"
-"&Read only"
-"&Pouze pro čtení"
-"Sch&reibschutz"
-"&Csak olvasható"
-"&Tylko do odczytu"
-"Sólo &lectura"
-
-MSetAttrArchive
-"&Архивный"
-"&Archive"
-"&Archivovat"
-"&Archiv"
-"&Archív"
-"&Archiwalny"
-"&Archivo"
-
-MSetAttrHidden
-"&Скрытый"
-"&Hidden"
-"&Skrytý"
-"&Versteckt"
-"&Rejtett"
-"&Ukryty"
-"&Oculto"
-
-MSetAttrSystem
-"С&истемный"
-"&System"
-"S&ystémový"
-"&System"
-"Ren&dszer"
-"&Systemowy"
-"&Sistema"
-
-MSetAttrCompressed
-"Сжаты&й"
-"&Compressed"
-"&Komprimovaný"
-"&Komprimiert"
-"&Tömörített"
-"S&kompresowany"
-"&Comprimido"
-
-MSetAttrEncrypted
-"За&шифрованный"
-"&Encrypted"
-"&Šifrovaný"
-"V&erschlüsselt"
-"Tit&kosított"
-"Zaszy&frowany"
-"Ci&frado"
-
-MSetAttrNotIndexed
-"Н&еиндексируемый"
-"Not &Indexed"
-"Neinde&xovaný"
-"Nicht &indiziert"
-"Nem inde&xelt"
-"Nie z&indeksowany"
-"No &Indexar"
-
-MSetAttrSparse
-"Разре&женный"
-"S&parse"
-upd:"Rozptýlený"
-upd:"Reserve"
-"Ritk&ított"
-upd:"Sparse"
-"S&parse"
-
-MSetAttrTemp
-"Временный"
-"Temporary"
-"Dočasný"
-"Temporär"
-"&Átmeneti"
-"&Tymczasowy"
-"Temporal"
-
-MSetAttrOffline
-"Автономный"
-"Offline"
-"Offline"
-"Offline"
-"O&ffline"
-"Offline"
-"Offline"
-
-MSetAttrReparsePoint
-"Точка повторной обработки"
-"Reparse point"
-upd:"Reparse point"
-upd:"Reparse point"
-upd:"Reparse point"
-upd:"Reparse point"
-"Punto reparse"
-
-MSetAttrVirtual
-"Виртуальный"
-"Virtual"
-"Virtuální"
-"Virtuell"
-"&Virtuális"
-"Wirtualny"
-"Virtual"
-
 MSetAttrSubfolders
 "Обрабатывать &вложенные папки"
 "Process sub&folders"
@@ -12370,6 +12262,149 @@ upd:"Cannot set owner for"
 upd:"Cannot set owner for"
 "No se puede poner como dueño para"
 
+MSetAttrGroup
+"Группа:"
+"Group:"
+"Group:"
+"Group:"
+"Group:"
+"Group:"
+"Group:"
+
+MSetAttrAccessUser
+"Права пользователя"
+"User's access"
+"User's access"
+"User's access"
+"User's access"
+"User's access"
+"User's access"
+
+MSetAttrAccessGroup
+"Права группы"
+"Group's access"
+"Group's access"
+"Group's access"
+"Group's access"
+"Group's access"
+"Group's access"
+
+MSetAttrAccessOther
+"Права остальных"
+"Other's access"
+"Other's access"
+"Other's access"
+"Other's access"
+"Other's access"
+"Other's access"
+
+MSetAttrAccessUserRead
+"&Чтение"
+"&Read"
+"&Read"
+"&Read"
+"&Read"
+"&Read"
+"&Read"
+
+MSetAttrAccessUserWrite
+"&Запись"
+"&Write"
+"&Write"
+"&Write"
+"&Write"
+"&Write"
+"&Write"
+
+MSetAttrAccessUserExecute
+"&Исполнение"
+"E&xecute"
+"E&xecute"
+"E&xecute"
+"E&xecute"
+"E&xecute"
+"E&xecute"
+
+MSetAttrAccessGroupRead
+"Чтение"
+"Read"
+"Read"
+"Read"
+"Read"
+"Read"
+"Read"
+
+MSetAttrAccessGroupWrite
+"Запись"
+"Write"
+"Write"
+"Write"
+"Write"
+"Write"
+"Write"
+
+MSetAttrAccessGroupExecute
+"Исполнение"
+"Execute"
+"Execute"
+"Execute"
+"Execute"
+"Execute"
+"Execute"
+
+MSetAttrAccessOtherRead
+"Чтение"
+"Read"
+"Read"
+"Read"
+"Read"
+"Read"
+"Read"
+
+MSetAttrAccessOtherWrite
+"Запись"
+"Write"
+"Write"
+"Write"
+"Write"
+"Write"
+"Write"
+
+MSetAttrAccessOtherExecute
+"Исполнение"
+"Execute"
+"Execute"
+"Execute"
+"Execute"
+"Execute"
+"Execute"
+
+MSetAttrAccessTime
+"Время последнего доступа"
+"Last access time"
+"Last access time"
+"Last access time"
+"Last access time"
+"Last access time"
+"Last access time"
+
+MSetAttrModificationTime
+"Время последней модификации"
+"Last modification time"
+"Last modification time"
+"Last modification time"
+"Last modification time"
+"Last modification time"
+"Last modification time"
+
+MSetAttrStatusChangeTime
+"Время изменения статуса"
+"Last status change time"
+"Last status change time"
+"Last status change time"
+"Last status change time"
+"Last status change time"
+"Last status change time"
 
 MSetColorPanel
 l:

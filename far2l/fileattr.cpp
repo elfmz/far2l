@@ -186,7 +186,7 @@ int ESetFileGroup(LPCWSTR Name,LPCWSTR Group,int SkipMode)
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),MSG(MSetAttrOwnerCannotFor),Name,MSG(MHRetry),MSG(MHSkip),MSG(MHSkipAll),MSG(MHCancel));
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),MSG(MSetAttrGroupCannotFor),Name,MSG(MHRetry),MSG(MHSkip),MSG(MHSkipAll),MSG(MHCancel));
 
 		if (Code==1 || Code<0)
 		{

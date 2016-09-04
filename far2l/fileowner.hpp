@@ -3,7 +3,7 @@
 /*
 fileowner.hpp
 
-Êýø SID`îâ è ôóíêöèÿ GetOwner
+ÃŠÃ½Ã¸ SID`Ã®Ã¢ Ã¨ Ã´Ã³Ã­ÃªÃ¶Ã¨Ã¿ GetOwner
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner);
+bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString &strGroup);
 
 bool SetOwner(LPCWSTR Object, LPCWSTR Owner);
-
+bool SetGroup(LPCWSTR Object, LPCWSTR Group);

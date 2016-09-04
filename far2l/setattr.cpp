@@ -130,6 +130,19 @@ struct SetAttrDlgParam
 
 #define DM_SETATTR (DM_USER+1)
 
+
+static void BlankEditIfChanged(HANDLE hDlg,int EditControl, FARString &Remembered, bool &Changed)
+{
+	LPCWSTR Actual = reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, EditControl, 0));
+	if(!Changed) 
+		Changed = StrCmp(Actual, Remembered)!=0;
+	
+	Remembered = Actual;
+	
+	if(!Changed)
+		SendDlgMessage(hDlg, DM_SETTEXTPTR, EditControl, reinterpret_cast<LONG_PTR>(L""));
+}
+
 LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
 	SetAttrDlgParam *DlgParam=reinterpret_cast<SetAttrDlgParam*>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
@@ -170,16 +183,9 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 											SendDlgMessage(hDlg,DM_SETCHECK,i,BSTATE_3STATE);
 										}
 									}
-									LPCWSTR Owner=reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,SA_EDIT_OWNER,0));
-									if(!DlgParam->OwnerChanged)
-									{
-										DlgParam->OwnerChanged=StrCmpI(Owner,DlgParam->strOwner)!=0;
-									}
-									DlgParam->strOwner=Owner;
-									if(!DlgParam->OwnerChanged)
-									{
-										SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(L""));
-									}
+									
+									BlankEditIfChanged(hDlg, SA_EDIT_OWNER, DlgParam->strOwner, DlgParam->OwnerChanged);
+									BlankEditIfChanged(hDlg, SA_EDIT_GROUP, DlgParam->strGroup, DlgParam->GroupChanged);
 								}
 								// сняли?
 								else
@@ -189,7 +195,10 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 										SendDlgMessage(hDlg,DM_SET3STATE,i,FALSE);
 										SendDlgMessage(hDlg,DM_SETCHECK,i,DlgParam->OriginalCBAttr[i-SA_ATTR_FIRST]);
 									}
-									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER, 
+										reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP, 
+										reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 
 
@@ -234,6 +243,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 										}
 									}
 									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(L""));
+									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_GROUP,reinterpret_cast<LONG_PTR>(L""));
 								}
 								// сняли?
 								else
@@ -244,6 +254,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 										SendDlgMessage(hDlg,DM_SETCHECK,i,DlgParam->OriginalCBAttr[i-SA_ATTR_FIRST]);
 									}
 									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
+									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_GROUP,reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 							}
 						}
@@ -509,6 +520,35 @@ void PR_ShellSetFileAttributesMsg()
 	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t*>(preRedrawItem.Param.Param1));
 }
 
+
+static bool CheckFileOwnerGroup(DialogItemEx &EditItem, bool (WINAPI *GetFN)(const wchar_t *,const wchar_t *, FARString &),
+	FARString strComputerName, FARString strSelName)
+{
+	FARString strCur;
+	bool out = true;
+	GetFN(strComputerName, strSelName, strCur);
+	if (EditItem.strData.IsEmpty()) {
+		EditItem.strData = strCur;		
+	} else if (!EditItem.strData.Equal(0, strCur)) {
+		EditItem.strData = MSG(MSetAttrOwnerMultiple);
+		out = false;
+	}
+	return out;
+}
+
+static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(LPCWSTR Name, LPCWSTR Owner, int SkipMode), 
+	int &SkipMode, const FARString &strSelName, const FARString &strInit, bool force = false) 
+{
+	if (!EditItem.strData.IsEmpty() && (force || StrCmp(strInit, EditItem.strData))) {
+		int Result = ESetFN(strSelName, EditItem.strData, SkipMode);
+		if(Result == SETATTR_RET_SKIPALL) {
+			SkipMode = SETATTR_RET_SKIP;
+		} else if(Result == SETATTR_RET_ERROR) {
+			return false;
+		}
+	}
+	return true;
+}
 
 
 bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
@@ -831,6 +871,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				SrcPanel->GetCurDir(strCurDir);
 			}
 			GetFileOwner(strComputerName,strSelName,AttrDlg[SA_EDIT_OWNER].strData);
+			GetFileGroup(strComputerName,strSelName,AttrDlg[SA_EDIT_GROUP].strData);
 		}
 		else
 		{
@@ -867,7 +908,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				FARString strCurDir;
 				SrcPanel->GetCurDir(strCurDir);
 
-				bool CheckOwner=true;
+				bool CheckOwner = true, CheckGroup = true;
 				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, nullptr, &FindData))
 				{
 					if (!FolderPresent&&(FileAttr&FILE_ATTRIBUTE_DIRECTORY))
@@ -891,20 +932,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 							AttrDlg[AP[i].Item].Selected++;
 						}
 					}
-					if(CheckOwner)
-					{
-						FARString strCurOwner;
-						GetFileOwner(strComputerName,strSelName,strCurOwner);
-						if(AttrDlg[SA_EDIT_OWNER].strData.IsEmpty())
-						{
-							AttrDlg[SA_EDIT_OWNER].strData=strCurOwner;
-						}
-						else if(!AttrDlg[SA_EDIT_OWNER].strData.Equal(0,strCurOwner))
-						{
-							AttrDlg[SA_EDIT_OWNER].strData=MSG(MSetAttrOwnerMultiple);
-							CheckOwner=false;
-						}
-					}
+					if(CheckOwner) CheckFileOwnerGroup(AttrDlg[SA_EDIT_OWNER], GetFileOwner, strComputerName, strSelName);
+					if(CheckGroup) CheckFileOwnerGroup(AttrDlg[SA_EDIT_GROUP], GetFileGroup, strComputerName, strSelName);
 				}
 			}
 			else
@@ -977,8 +1006,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			DlgParam.OriginalCBFlag[i-SA_ATTR_FIRST]=AttrDlg[i].Flags;
 		}
 
-		DlgParam.strOwner=AttrDlg[SA_EDIT_OWNER].strData;
-		FARString strInitOwner=AttrDlg[SA_EDIT_OWNER].strData;
+		DlgParam.strOwner = AttrDlg[SA_EDIT_OWNER].strData;
+		DlgParam.strGroup = AttrDlg[SA_EDIT_GROUP].strData;
+		FARString strInitOwner = DlgParam.strOwner, strInitGroup = DlgParam.strGroup;
 
 		DlgParam.DialogMode=((SelCount==1&&!(FileAttr&FILE_ATTRIBUTE_DIRECTORY))?MODE_FILE:(SelCount==1?MODE_FOLDER:MODE_MULTIPLE));
 		DlgParam.strSelName=strSelName;
@@ -1031,20 +1061,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						}
 					}
 
-					if(!AttrDlg[SA_EDIT_OWNER].strData.IsEmpty() && StrCmpI(strInitOwner,AttrDlg[SA_EDIT_OWNER].strData))
-					{
-						int Result=ESetFileOwner(strSelName,AttrDlg[SA_EDIT_OWNER].strData,SkipMode);
-						if(Result==SETATTR_RET_SKIPALL)
-						{
-							SkipMode=SETATTR_RET_SKIP;
-						}
-						else if(Result==SETATTR_RET_ERROR)
-						{
-							break;
-						}
-					}
-
-					FILETIME UnixAccessTime={},UnixModificationTime={},UnixStatusChangeTime={};
+					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode, strSelName, strInitOwner)) break;
+					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode, strSelName, strInitGroup)) break;
+					
+					FILETIME UnixAccessTime={},UnixModificationTime={};
 					int SetAccessTime = DlgParam.OAccessTime  && 
 						ReadFileTime(0, strSelName, UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
 					int SetModifyTime = DlgParam.OModifyTime   && 
@@ -1121,21 +1141,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 								break;
 						}
 
-						if(!AttrDlg[SA_EDIT_OWNER].strData.IsEmpty() && StrCmpI(strInitOwner,AttrDlg[SA_EDIT_OWNER].strData))
-						{
-							int Result=ESetFileOwner(strSelName,AttrDlg[SA_EDIT_OWNER].strData,SkipMode);
-							if(Result==SETATTR_RET_SKIPALL)
-							{
-								SkipMode=SETATTR_RET_SKIP;
-							}
-							else if(Result==SETATTR_RET_ERROR)
-							{
-								break;
-							}
-						}
-
+						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode, strSelName, strInitOwner)) break;
+						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode, strSelName, strInitGroup)) break;
 	
-						FILETIME UnixAccessTime, UnixModificationTime, UnixStatusChangeTime;
+						FILETIME UnixAccessTime = {}, UnixModificationTime = {};
 						int SetAccessTime = DlgParam.OAccessTime  && 
 							ReadFileTime(0,strSelName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
 						int SetModifyTime = DlgParam.OModifyTime   && 
@@ -1195,18 +1204,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 										}
 									}
 
-									if(!AttrDlg[SA_EDIT_OWNER].strData.IsEmpty() && (DlgParam.OSubfoldersState || StrCmpI(strInitOwner,AttrDlg[SA_EDIT_OWNER].strData)))
-									{
-										int Result=ESetFileOwner(strFullName,AttrDlg[SA_EDIT_OWNER].strData,SkipMode);
-										if(Result==SETATTR_RET_SKIPALL)
-										{
-											SkipMode=SETATTR_RET_SKIP;
-										}
-										else if(Result==SETATTR_RET_ERROR)
-										{
-											break;
-										}
-									}
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, 
+										SkipMode, strSelName, strInitOwner, DlgParam.OSubfoldersState)) break;
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, 
+										SkipMode, strSelName, strInitGroup, DlgParam.OSubfoldersState)) break;									
 
 									SetAccessTime=     DlgParam.OAccessTime  && 
 										ReadFileTime(0,strFullName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);

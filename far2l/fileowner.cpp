@@ -37,22 +37,60 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileowner.hpp"
 #include "pathmix.hpp"
 #include "DList.hpp"
-
-
+#include <sys/stat.h>
+#include <pwd.h>
+#include <grp.h>
 
 bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner)
 {
-	return true;
+	struct stat s = {};
+	if (stat(Wide2MB(Name).c_str(), &s)==0) {
+		struct passwd *pw = getpwuid(s.st_uid);
+		if (pw) {
+			strOwner = pw->pw_name;
+			return true;
+		}
+	}
+	
+	WINPORT(TranslateErrno)();
+	return false;
 }
 
+bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString &strGroup)
+{
+	struct stat s = {};
+	if (stat(Wide2MB(Name).c_str(), &s)==0) {
+		struct group  *gr = getgrgid(s.st_gid);
+		if (gr) {
+			strGroup = gr->gr_name;
+			return true;
+		}
+	}
+
+	WINPORT(TranslateErrno)();
+	return false;
+}
 
 bool SetOwner(LPCWSTR Object, LPCWSTR Owner)
+{		
+	struct passwd *p = getpwnam(Wide2MB(Owner).c_str());
+	if ( p) {
+		if (chown(Wide2MB(Object).c_str(), p->pw_uid, -1)==0)
+			return true;
+	}
+		
+	WINPORT(TranslateErrno)();
+	return false;
+}
+
+bool SetGroup(LPCWSTR Object, LPCWSTR Group)
 {
-	/*struct passwd *p = getpwnam(Wide2MB(Owner).c_str());
-	if (!p) return false;
-	p-> pw_uid
-	chown(	const char *pathname,
- 	uid_t owner,
- 	gid_t group);*/
-	return true;
+	struct group *g = getgrnam(Wide2MB(Group).c_str());
+	if (g) {
+		if (chown(Wide2MB(Object).c_str(), -1, g->gr_gid)==0)
+			return true;
+	}
+		
+	WINPORT(TranslateErrno)();
+	return false;
 }

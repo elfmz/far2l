@@ -212,4 +212,21 @@ extern "C" {
 	{
 		return errno;
 	}
+	
+	WINPORT_DECL(TranslateErrno, VOID, ())
+	{
+		DWORD gle;
+		switch (errno) {
+			case EEXIST: gle = ERROR_ALREADY_EXISTS; break;
+			case ENOENT: gle = ERROR_FILE_NOT_FOUND; break;
+			case EACCES: case EPERM: gle = ERROR_ACCESS_DENIED; break;
+			case ETXTBSY: gle = ERROR_SHARING_VIOLATION; break;
+			//case EROFS: gle = ; break;
+			default:
+				gle = 20000 + errno;
+				fprintf(stderr, "TODO: TranslateErrno - %d\n", errno );
+		}
+		
+		WINPORT(SetLastError)(gle);
+	}	
 }

@@ -65,6 +65,8 @@ enum SETATTRDLG
 	SA_SEPARATOR1,
 	SA_TEXT_OWNER,
 	SA_EDIT_OWNER,
+	SA_TEXT_GROUP,
+	SA_EDIT_GROUP,
 	SA_SEPARATOR2,
 	SA_TEXT_MODE_USER,
 	SA_TEXT_MODE_GROUP,
@@ -116,7 +118,8 @@ struct SetAttrDlgParam
 	DIALOGMODE DialogMode;
 	FARString strSelName;
 	FARString strOwner;
-	bool OwnerChanged;
+	FARString strGroup;
+	bool OwnerChanged, GroupChanged;
 	// значения CheckBox`ов на момент старта диалога
 	int OriginalCBAttr[SA_ATTR_LAST-SA_ATTR_FIRST+1];
 	int OriginalCBAttr2[SA_ATTR_LAST-SA_ATTR_FIRST+1];
@@ -278,7 +281,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				}
 				SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_ACCESS, Value);
 				SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_MODIFICATION, Value);
-				SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_CHANGE, Value);
+				//SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_CHANGE, Value);
 				DlgParam->OAccessTime=DlgParam->OModifyTime=DlgParam->OStatusChangeTime=true;
 				SendDlgMessage(hDlg,DM_SETFOCUS,SA_FIXEDIT_LAST_ACCESS_DATE,0);
 				return TRUE;
@@ -511,7 +514,7 @@ void PR_ShellSetFileAttributesMsg()
 bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
-	short DlgX=70,DlgY=22;
+	short DlgX=70,DlgY=23;
 
 	DialogDataEx AttrDlgData[]=
 	{
@@ -521,35 +524,37 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		DI_TEXT,3,4,0,4,0,DIF_SEPARATOR,L"",
 		DI_TEXT,5,5,17,5,0,0,MSG(MSetAttrOwner),
 		DI_EDIT,18,5,short(DlgX-6),5,0,0,L"",
-		DI_TEXT,3,6,0,6,0,DIF_SEPARATOR,L"",
-		DI_TEXT,5,7,0,7,0,0,L"User",
-		DI_TEXT,short(DlgX/3),7,0,7,0,0,L"Group",
-		DI_TEXT, short(2*DlgX/3),7,0,7,0,0,L"Other",
-		DI_CHECKBOX,5,8,0,8,0,DIF_FOCUS|DIF_3STATE, L"Read",
-		DI_CHECKBOX,5,9,0,9,0,DIF_3STATE, L"Write",
-		DI_CHECKBOX,5,10,0,10,0,DIF_3STATE, L"Execute",
-		DI_CHECKBOX,short(DlgX/3),8,0,8,0,DIF_3STATE, L"Read",
-		DI_CHECKBOX,short(DlgX/3),9,0,9,0,DIF_3STATE, L"Write",
-		DI_CHECKBOX,short(DlgX/3),10,0,10,0,DIF_3STATE, L"Execute",
-		DI_CHECKBOX,short(2*DlgX/3),8,0,8,0,DIF_3STATE, L"Read",
-		DI_CHECKBOX,short(2*DlgX/3),9,0,9,0,DIF_3STATE, L"Write",
-		DI_CHECKBOX,short(2*DlgX/3),10,0,0,0,DIF_3STATE, L"Execute",
-		DI_TEXT,3,11,0,11,0,DIF_SEPARATOR,L"",
-		DI_TEXT,short(DlgX-29),12,0,12,0,0,L"",
-		DI_TEXT,    5,13,0,13,0,0, L"Last access time",
-		DI_FIXEDIT,short(DlgX-29),13,short(DlgX-19),13,0,DIF_MASKEDIT,L"",
-		DI_FIXEDIT,short(DlgX-17),13,short(DlgX-6),13,0,DIF_MASKEDIT,L"",
-		DI_TEXT,    5,14,0,14,0,0, L"Last modification time",
+		DI_TEXT,5,6,17,6,0,0,L"Group:",
+		DI_EDIT,18,6,short(DlgX-6),6,0,0,L"",
+		DI_TEXT,3,7,0,7,0,DIF_SEPARATOR,L"",
+		DI_TEXT,5,8,0,8,0,0,L"User",
+		DI_TEXT,short(DlgX/3),8,0,8,0,0,L"Group",
+		DI_TEXT,short(2*DlgX/3),8,0,8,0,0,L"Other",
+		DI_CHECKBOX,5,9,0,9,0,DIF_FOCUS|DIF_3STATE, L"Read",
+		DI_CHECKBOX,5,10,0,10,0,DIF_3STATE, L"Write",
+		DI_CHECKBOX,5,11,0,11,0,DIF_3STATE, L"Execute",
+		DI_CHECKBOX,short(DlgX/3),9,0,9,0,DIF_3STATE, L"Read",
+		DI_CHECKBOX,short(DlgX/3),10,0,10,0,DIF_3STATE, L"Write",
+		DI_CHECKBOX,short(DlgX/3),11,0,11,0,DIF_3STATE, L"Execute",
+		DI_CHECKBOX,short(2*DlgX/3),9,0,9,0,DIF_3STATE, L"Read",
+		DI_CHECKBOX,short(2*DlgX/3),10,0,10,0,DIF_3STATE, L"Write",
+		DI_CHECKBOX,short(2*DlgX/3),11,0,11,0,DIF_3STATE, L"Execute",
+		DI_TEXT,3,12,0,12,0,DIF_SEPARATOR,L"",
+		DI_TEXT,short(DlgX-29),13,0,13,0,0,L"",
+		DI_TEXT,    5,14,0,14,0,0, L"Last access time",
 		DI_FIXEDIT,short(DlgX-29),14,short(DlgX-19),14,0,DIF_MASKEDIT,L"",
 		DI_FIXEDIT,short(DlgX-17),14,short(DlgX-6),14,0,DIF_MASKEDIT,L"",
-		DI_TEXT,    5,15,0,15,0,0, L"Last change time",
+		DI_TEXT,    5,15,0,15,0,0, L"Last modification time",
 		DI_FIXEDIT,short(DlgX-29),15,short(DlgX-19),15,0,DIF_MASKEDIT,L"",
 		DI_FIXEDIT,short(DlgX-17),15,short(DlgX-6),15,0,DIF_MASKEDIT,L"",
-		DI_BUTTON,0,17,0,17,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrOriginal),
-		DI_BUTTON,0,17,0,17,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrCurrent),
-		DI_BUTTON,0,17,0,17,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrBlank),
-		DI_TEXT,3,18,0,18,0,DIF_SEPARATOR|DIF_HIDDEN,L"",
-		DI_CHECKBOX,5,19,0,19,0,DIF_DISABLE|DIF_HIDDEN,MSG(MSetAttrSubfolders),
+		DI_TEXT,    5,16,0,16,0,0, L"Last status change time",
+		DI_FIXEDIT,short(DlgX-29),16,short(DlgX-19),16,0,DIF_MASKEDIT|DIF_READONLY,L"",
+		DI_FIXEDIT,short(DlgX-17),16,short(DlgX-6),16,0,DIF_MASKEDIT|DIF_READONLY,L"",
+		DI_BUTTON,0,18,0,18,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrOriginal),
+		DI_BUTTON,0,18,0,18,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrCurrent),
+		DI_BUTTON,0,18,0,18,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrBlank),
+		DI_TEXT,3,19,0,19,0,DIF_SEPARATOR|DIF_HIDDEN,L"",
+		DI_CHECKBOX,5,20,0,20,0,DIF_DISABLE|DIF_HIDDEN,MSG(MSetAttrSubfolders),
 		DI_TEXT,3,short(DlgY-4),0,short(DlgY-4),0,DIF_SEPARATOR,L"",
 		DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MSetAttrSet),
 		DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),0,DIF_CENTERGROUP|DIF_DISABLE,MSG(MSetAttrSystemDialog),
@@ -1044,19 +1049,25 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						ReadFileTime(0, strSelName, UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
 					int SetModifyTime = DlgParam.OModifyTime   && 
 						ReadFileTime(1,strSelName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
-					int SetStatusChangeTime = DlgParam.OStatusChangeTime && 
-						ReadFileTime(2,strSelName,UnixStatusChangeTime,AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData);
 
 					//_SVS(SysLog(L"\n\tSetWriteTime=%d\n\tSetCreationTime=%d\n\tSetLastAccessTime=%d",SetWriteTime,SetCreationTime,SetLastAccessTime));
 
-					if (SetAccessTime || SetModifyTime || SetStatusChangeTime)
-					{//todo
-						/*if(ESetFileTime(strSelName,SetWriteTime?&LastWriteTime:nullptr,SetCreationTime?&CreationTime:nullptr,SetLastAccessTime?&LastAccessTime:nullptr,SetChangeTime?&ChangeTime:nullptr,FileAttr,SkipMode)==SETATTR_RET_SKIPALL)
+					if (SetAccessTime || SetModifyTime)
+					{
+						if(ESetFileTime(strSelName, SetAccessTime? &UnixAccessTime : nullptr,
+							SetModifyTime ? &UnixModificationTime : nullptr, FileAttr, SkipMode)==SETATTR_RET_SKIPALL)
 						{
 							SkipMode=SETATTR_RET_SKIP;
-						}*/
+						}
 					}
 
+					if (FileMode != NewMode)
+					{
+						if (ESetFileMode(strSelName, NewMode, SkipMode)==SETATTR_RET_SKIPALL)
+						{
+							SkipMode=SETATTR_RET_SKIP;
+						}
+					}
 				}
 				/* Multi *********************************************************** */
 				else
@@ -1125,14 +1136,13 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 	
 						FILETIME UnixAccessTime, UnixModificationTime, UnixStatusChangeTime;
-						int SetAccessTime=     DlgParam.OAccessTime  && 
+						int SetAccessTime = DlgParam.OAccessTime  && 
 							ReadFileTime(0,strSelName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
-						int SetModifyTime=  DlgParam.OModifyTime   && 
+						int SetModifyTime = DlgParam.OModifyTime   && 
 							ReadFileTime(1,strSelName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
-						int SetStatusChangeTime=DlgParam.OStatusChangeTime && 
-							ReadFileTime(2,strSelName,UnixStatusChangeTime,AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData);
 
-						RetCode=0;//todo ESetFileTime(strSelName,SetWriteTime?&LastWriteTime:nullptr,SetCreationTime?&CreationTime:nullptr,SetLastAccessTime?&LastAccessTime:nullptr,SetChangeTime?&ChangeTime:nullptr,FileAttr,SkipMode);
+						RetCode = ESetFileTime(strSelName, SetAccessTime ? &UnixAccessTime : nullptr,
+							SetModifyTime ? &UnixModificationTime : nullptr, FileAttr,SkipMode);
 
 						if (RetCode == SETATTR_RET_ERROR)
 							break;
@@ -1149,7 +1159,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 							if (((FileMode|SetMode)&~ClearMode) != FileMode)
 							{
 
-								RetCode=0;//todo ESetFileAttributes(strSelName,((FileMode|SetMode)&(~ClearMode)),SkipMode);
+								RetCode = ESetFileMode(strSelName,((FileMode|SetMode)&(~ClearMode)),SkipMode);
 
 								if (RetCode == SETATTR_RET_ERROR)
 									break;
@@ -1202,12 +1212,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 										ReadFileTime(0,strFullName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
 									SetModifyTime=  DlgParam.OModifyTime   && 
 										ReadFileTime(1,strFullName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
-									SetStatusChangeTime=DlgParam.OStatusChangeTime && 
-										ReadFileTime(2,strFullName,UnixStatusChangeTime,AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData);
-
-									if (SetAccessTime || SetModifyTime || SetStatusChangeTime)
+									
+									if (SetAccessTime || SetModifyTime)
 									{
-										RetCode=0;//todo ESetFileTime(strFullName,SetWriteTime?&LastWriteTime:nullptr,SetCreationTime?&CreationTime:nullptr,SetLastAccessTime?&LastAccessTime:nullptr,SetChangeTime?&ChangeTime:nullptr,FindData.dwFileAttributes,SkipMode);
+										RetCode = ESetFileTime(strFullName, SetAccessTime ? &UnixAccessTime : nullptr,
+											SetModifyTime ? &UnixModificationTime : nullptr, FindData.dwFileAttributes,SkipMode);
 
 										if (RetCode == SETATTR_RET_ERROR)
 										{
@@ -1226,7 +1235,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 									if (((FindData.dwUnixMode|SetMode)&(~ClearMode)) !=
 													FindData.dwUnixMode)
 									{
-										RetCode=0;//todo ESetFileAttributes(strFullName,(FindData.dwUnixMode|SetMode)&(~ClearMode),SkipMode);
+										RetCode = ESetFileMode(strFullName,(FindData.dwUnixMode|SetMode)&(~ClearMode),SkipMode);
 
 										if (RetCode == SETATTR_RET_ERROR)
 										{

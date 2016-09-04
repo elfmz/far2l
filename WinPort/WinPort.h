@@ -162,6 +162,7 @@ extern "C" {
 	WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *lpFileTime, LPWORD   lpFatDate, LPWORD   lpFatTime));
 	WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETIME ft));
 	WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTime));
+	WINPORT_DECL(FileTime_Win32ToUnix, VOID, (const FILETIME *lpFileTime, struct timespec *ts));
 	
 
 	//String

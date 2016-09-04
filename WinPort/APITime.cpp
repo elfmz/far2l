@@ -47,6 +47,18 @@ static void TM2Systemtime(LPSYSTEMTIME lpSystemTime, const struct tm *ptm)
 	lpSystemTime->wMilliseconds = 0;
 }
 
+static void Systemtime2TM2(const SYSTEMTIME *lpSystemTime, struct tm *ptm)
+{
+	ptm->tm_sec = lpSystemTime->wSecond;
+	ptm->tm_min = lpSystemTime->wMinute;
+	ptm->tm_hour = lpSystemTime->wHour;
+	ptm->tm_mday - lpSystemTime->wDay;
+	ptm->tm_mon = lpSystemTime->wMonth - 1;
+	ptm->tm_year = lpSystemTime->wYear - 1900;
+	ptm->tm_wday = lpSystemTime->wDayOfWeek;
+}
+
+
 WINPORT_DECL(GetLocalTime, VOID, (LPSYSTEMTIME lpSystemTime))
 {
 	time_t now = time(NULL);
@@ -69,10 +81,22 @@ WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTi
 		ts.tv_nsec-= add_ns * 1000000000;
 	}
 	
-	SYSTEMTIME sys_time;
+	SYSTEMTIME sys_time = {};
 	TM2Systemtime(&sys_time, gmtime(&tm));
 	sys_time.wMilliseconds+= ts.tv_nsec/1000000;
 	WINPORT(SystemTimeToFileTime)(&sys_time, lpFileTime);
+}
+
+WINPORT_DECL(FileTime_Win32ToUnix, VOID, (const FILETIME *lpFileTime, struct timespec *ts))
+{
+	if (!lpFileTime || !ts) return;
+	SYSTEMTIME sys_time = {};
+	WINPORT(FileTimeToSystemTime)(lpFileTime, &sys_time);
+	struct tm tm = {};	
+	Systemtime2TM2(&sys_time, &tm);
+	ts->tv_sec = mktime(&tm);
+	ts->tv_nsec = sys_time.wMilliseconds;
+	ts->tv_nsec*= 1000000;
 }
 
 WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILETIME lpFileTime))

@@ -1,5 +1,6 @@
-The source code of original Far Manager 2 can be found here:
+This software includes source code of Far Manager, which can be found here:
 https://sourceforge.net/p/farmanager/code/HEAD/tree/branches/far2/unicode_far/
+and distributed under the license terms below.
 ---
 Copyright (c) 1996 Eugene Roshal
 Copyright (c) 2000 Far Group

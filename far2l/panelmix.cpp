@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lang.hpp"
 #include "datetime.hpp"
 
-int ColumnTypeWidth[]={0, 6, 6, 8, 5, 14, 14, 14, 14, 6, 0, 0, 3, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int ColumnTypeWidth[]={0, 6, 6, 8, 5, 14, 14, 14, 14, 10, 0, 0, 3, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static const wchar_t *ColumnSymbol[]={L"N",L"S",L"P",L"D",L"T",L"DM",L"DC",L"DA",L"DE",L"A",L"Z",L"O",L"LN",L"F",L"G",L"C0",L"C1",L"C2",L"C3",L"C4",L"C5",L"C6",L"C7",L"C8",L"C9"};
 
@@ -471,26 +471,44 @@ void ViewSettingsToText(unsigned int *ViewColumnTypes,int *ViewColumnWidths,
 	}
 }
 
-const FARString FormatStr_Attribute(DWORD FileAttributes,int Width)
+const FARString FormatStr_Attribute( DWORD FileAttributes, DWORD UnixMode, int Width)
 {
 	FormatString strResult;
+	wchar_t OutStr[16] = { };
+	if (UnixMode!=0) {
+			if (FileAttributes&FILE_ATTRIBUTE_BROKEN)
+				OutStr[0] = L'B';
+			else if (FileAttributes&FILE_ATTRIBUTE_DEVICE) 
+				OutStr[0] = L'V';
+			else if (FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) 
+				OutStr[0] = L'L';
+			else if (FileAttributes&FILE_ATTRIBUTE_DIRECTORY) 
+				OutStr[0] = L'D';
+			else 
+				OutStr[0] = L'F';
 
-	const wchar_t OutStr[]=
-	{
-		FileAttributes&FILE_ATTRIBUTE_EXECUTABLE?L'X':L' ',
-		FileAttributes&FILE_ATTRIBUTE_READONLY?L'R':L' ',
-		FileAttributes&FILE_ATTRIBUTE_SYSTEM?L'S':L' ',
-		FileAttributes&FILE_ATTRIBUTE_HIDDEN?L'H':L' ',
-		FileAttributes&FILE_ATTRIBUTE_ARCHIVE?L'A':L' ',
-		FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT?L'L':FileAttributes&FILE_ATTRIBUTE_SPARSE_FILE?L'$':L' ',
-		FileAttributes&FILE_ATTRIBUTE_COMPRESSED?L'C':FileAttributes&FILE_ATTRIBUTE_ENCRYPTED?L'E':L' ',
-		FileAttributes&FILE_ATTRIBUTE_TEMPORARY?L'T':L' ',
-		FileAttributes&FILE_ATTRIBUTE_NOT_CONTENT_INDEXED?L'I':L' ',
-		FileAttributes&FILE_ATTRIBUTE_OFFLINE?L'O':L' ',
-		FileAttributes&FILE_ATTRIBUTE_VIRTUAL?L'V':L' ',
-		0
-	};
-
+			OutStr[1] = UnixMode&S_IRUSR? L'r' : L'-';
+			OutStr[2] = UnixMode&S_IWUSR? L'w' : L'-';
+			OutStr[3] = UnixMode&S_IXUSR? L'x' : L'-';
+			OutStr[4] = UnixMode&S_IRGRP? L'r' : L'-';
+			OutStr[5] = UnixMode&S_IWGRP? L'w' : L'-';
+			OutStr[6] = UnixMode&S_IXGRP? L'x' : L'-';
+			OutStr[7] = UnixMode&S_IROTH? L'r' : L'-';
+			OutStr[8] = UnixMode&S_IWOTH? L'w' : L'-';
+			OutStr[9] = UnixMode&S_IXOTH? L'x' : L'-';
+	} else {
+			OutStr[0] = FileAttributes&FILE_ATTRIBUTE_EXECUTABLE ? L'X' : L' ';
+			OutStr[1] = FileAttributes&FILE_ATTRIBUTE_READONLY ? L'R' : L' ';
+			OutStr[2] = FileAttributes&FILE_ATTRIBUTE_SYSTEM ? L'S' : L' ';
+			OutStr[3] = FileAttributes&FILE_ATTRIBUTE_HIDDEN ? L'H' : L' ';
+			OutStr[4] = FileAttributes&FILE_ATTRIBUTE_ARCHIVE ? L'A' : L' ';
+			OutStr[5] = FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT ? L'L' : FileAttributes&FILE_ATTRIBUTE_SPARSE_FILE ? L'$' : L' ';
+			OutStr[6] = FileAttributes&FILE_ATTRIBUTE_COMPRESSED ? L'C' : FileAttributes&FILE_ATTRIBUTE_ENCRYPTED ? L'E' : L' ';
+			OutStr[7] = FileAttributes&FILE_ATTRIBUTE_TEMPORARY ? L'T' : L' ';
+			OutStr[8] = FileAttributes&FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ? L'I' : L' ';
+			OutStr[9] = FileAttributes&FILE_ATTRIBUTE_OFFLINE ? L'O' : L' ';
+			OutStr[10] = FileAttributes&FILE_ATTRIBUTE_VIRTUAL ? L'V' : L' ';
+	}
 
 	if (Width > 0)
 		strResult<<fmt::Width(Width)<<fmt::Precision(Width);

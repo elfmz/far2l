@@ -1157,7 +1157,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 						case ATTR_COLUMN:
 						{
-							FS<<FormatStr_Attribute(ListData[ListPos]->FileAttr,ColumnWidth);
+							FS<<FormatStr_Attribute(ListData[ListPos]->FileAttr,ListData[ListPos]->FileMode,ColumnWidth);
 							break;
 						}
 

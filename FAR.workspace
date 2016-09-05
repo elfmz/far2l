@@ -8,6 +8,7 @@
   <Project Name="_All" Path="_All/_All.project" Active="Yes"/>
   <Project Name="netbox" Path="netbox/netbox.project" Active="No"/>
   <Project Name="multiarc" Path="multiarc/multiarc.project" Active="No"/>
+  <Project Name="tmppanel" Path="tmppanel/tmppanel.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
@@ -19,6 +20,7 @@
       <Project Name="_All" ConfigName="Debug"/>
       <Project Name="netbox" ConfigName="Debug"/>
       <Project Name="multiarc" ConfigName="Debug"/>
+      <Project Name="tmppanel" ConfigName="Debug"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

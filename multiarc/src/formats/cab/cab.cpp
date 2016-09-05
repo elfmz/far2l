@@ -125,7 +125,7 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type)
 
 	  
     LPBYTE Data = (LPBYTE)mmap( NULL, ReadSize, PROT_READ, MAP_PRIVATE, ArcHandle, 0);
-    if (Data == NULL)
+    if (Data == (LPBYTE)MAP_FAILED)
 		return CloseArcHandle(), FALSE;
 		
     I = CAB_IsArchive( NULL, Data, ReadSize );

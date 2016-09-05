@@ -2,7 +2,7 @@
 #ifndef __PLUGIN_HPP__
 #define __PLUGIN_HPP__
 
-#ifndef FAR_USE_INTERNALS
+#if !defined(FAR_USE_INTERNALS) && !defined(FAR_DONT_USE_INTERNALS)
 #define FAR_USE_INTERNALS
 #endif // END FAR_USE_INTERNALS
 /*
@@ -1824,7 +1824,6 @@ typedef int (WINAPI *FARAPIREGEXPCONTROL)(
 );
 
 // <C&C++>
-typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format,...);
 // </C&C++>
@@ -1949,7 +1948,6 @@ typedef struct FarStandardFunctions
 	FARSTDITOA                 itoa;
 	FARSTDITOA64               itoa64;
 	// <C&C++>
-	FARSTDSPRINTF              sprintf;
 	FARSTDSSCANF               sscanf;
 	// </C&C++>
 	FARSTDQSORT                qsort;

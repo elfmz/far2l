@@ -19,14 +19,6 @@
   </Plugins>
   <Description/>
   <Dependencies/>
-  <Dependencies Name="Debug">
-    <Project Name="WinPort"/>
-    <Project Name="farlng"/>
-    <Project Name="far2l"/>
-    <Project Name="colorer"/>
-    <Project Name="farftp"/>
-    <Project Name="multiarc"/>
-  </Dependencies>
   <Settings Type="Executable">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -79,4 +71,13 @@
       </Completion>
     </Configuration>
   </Settings>
+  <Dependencies Name="Debug">
+    <Project Name="WinPort"/>
+    <Project Name="farlng"/>
+    <Project Name="far2l"/>
+    <Project Name="colorer"/>
+    <Project Name="farftp"/>
+    <Project Name="multiarc"/>
+    <Project Name="tmppanel"/>
+  </Dependencies>
 </CodeLite_Project>

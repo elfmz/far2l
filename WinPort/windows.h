@@ -17,6 +17,17 @@
 # endif
 #define swprintf swprintf_ws2ls
 
+#ifdef UNICODE
+# define lstrcpy wcscpy
+# define lstrlen wcslen
+# define lstrcmp wcscmp
+# define _tcschr wcschr
+# define _tcsrchr wcsrchr
+# define _tcsdup wcsdup
+# define lstrcat wcscat
+# define lstrcpyn wcsncpy
+# define lstrcmpi wcscasecmp
+#endif
 
 #define    GetConsoleFontSize			WINPORT(GetConsoleFontSize)
 #define    GetCurrentConsoleFont		WINPORT(GetCurrentConsoleFont)

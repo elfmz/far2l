@@ -313,20 +313,24 @@ extern "C"
 		return rv;
 	}
 	
-	static int stat_symcheck(const char *path, struct stat &s, bool &symlink)
+	static int stat_symcheck(const char *path, struct stat &s, DWORD &symattr)
 	{
 		if (lstat(path, &s) < 0) {
 			fprintf(stderr, "stat_symcheck: lstat failed for %s\n", path);
 			return -1;
 		}
-		symlink = ((s.st_mode & S_IFMT)==S_IFLNK);
-		if (symlink) {
+		
+		if ((s.st_mode & S_IFMT) == S_IFLNK) {
 			struct stat sdst = {0};
-			if (stat(path, &sdst) == 0) 
+			if (stat(path, &sdst) == 0) {
 				s = sdst;
-			else
+				symattr = FILE_ATTRIBUTE_REPARSE_POINT;
+			} else {
 				fprintf(stderr, "stat_symcheck: stat failed for %s\n", path);
-		}
+				symattr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
+			}
+		} else
+			symattr = 0;
 		
 		return 0;
 	}
@@ -335,18 +339,16 @@ extern "C"
 
 	DWORD WINPORT(GetFileAttributes)(LPCWSTR lpFileName)
 	{
-		struct stat s = {0};
+		struct stat s = { };
 		const std::string &path = ConsumeWinPath(lpFileName);
 		
-		bool symlink = false;
-		if (stat_symcheck(path.c_str(), s, symlink) < 0 ) {
+		DWORD symattr = 0;
+		if (stat_symcheck(path.c_str(), s, symattr) < 0 ) {
 			WINPORT(TranslateErrno)();
 			return INVALID_FILE_ATTRIBUTES;			
 		}
 		
-		DWORD out = WINPORT(EvaluateAttributes)(s.st_mode, lpFileName);
-		if (symlink) out|= FILE_ATTRIBUTE_REPARSE_POINT;
-		return out;
+		return ( symattr | WINPORT(EvaluateAttributes)(s.st_mode, lpFileName) );
 	}
 
 	DWORD WINPORT(SetFileAttributes)(LPCWSTR lpFileName, DWORD dwAttributes)
@@ -419,11 +421,9 @@ extern "C"
 	}
 
 	//////////////////////////////////
-	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData, bool symlink)
+	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData, DWORD add_attr)
 	{
-		lpFindFileData->dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, name);
-		if (symlink) lpFindFileData->dwFileAttributes|= FILE_ATTRIBUTE_REPARSE_POINT;
-		
+		lpFindFileData->dwFileAttributes = (add_attr | WINPORT(EvaluateAttributes)(s.st_mode, name));
 		WINPORT(FileTime_UnixToWin32)(s.st_mtim, &lpFindFileData->ftLastWriteTime);
 		WINPORT(FileTime_UnixToWin32)(s.st_ctim, &lpFindFileData->ftCreationTime);
 		WINPORT(FileTime_UnixToWin32)(s.st_atim, &lpFindFileData->ftLastAccessTime);
@@ -511,12 +511,12 @@ extern "C"
 #endif
 
 			struct stat s = { };
-			bool symlink = false;
-			if (stat_symcheck(path.c_str(), s, symlink) < 0 ) {
+			DWORD symattr = 0;
+			if (stat_symcheck(path.c_str(), s, symattr) < 0 ) {
 				fprintf(stderr, "UnixFindFile: stat failed for %s\n",path.c_str());
 			}
 						
-			FillWFD((const wchar_t *)utf16.c_str(), s, lpFindFileData, symlink);
+			FillWFD((const wchar_t *)utf16.c_str(), s, lpFindFileData, symattr);
 			//fprintf(stderr, "stat attr %x for %s\n", lpFindFileData->dwFileAttributes , path.c_str());
 			return true;
 		}
@@ -549,16 +549,16 @@ extern "C"
 		}
 		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos) {
 
-			struct stat s = {0};
-			bool symlink = false;
-			if (stat_symcheck((root + mask).c_str(), s, symlink) < 0 ) {
+			struct stat s = { };
+			DWORD symattr = 0;
+			if (stat_symcheck((root + mask).c_str(), s, symattr) < 0 ) {
 				WINPORT(TranslateErrno)();
 				return INVALID_HANDLE_VALUE;			
 			}
 
 			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);
 			if (name) ++name; else name = lpFileName;
-			FillWFD(name, s, lpFindFileData, symlink);
+			FillWFD(name, s, lpFindFileData, symattr);
 			return (HANDLE)&g_unix_found_file_dummy;
 		}
 

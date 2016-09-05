@@ -461,7 +461,6 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 	if (!StandardFunctions.StructSize)
 	{
 		StandardFunctions.StructSize=sizeof(StandardFunctions);
-		StandardFunctions.sprintf=0;//todo swprintf;
 		StandardFunctions.snprintf=swprintf;
 		StandardFunctions.sscanf=swscanf;
 		StandardFunctions.qsort=FarQsort;

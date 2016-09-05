@@ -13,6 +13,8 @@ All:
 	@cd "farftp" && "$(MAKE)" -f  "farftp.mk" PreBuild && "$(MAKE)" -f  "farftp.mk" && "$(MAKE)" -f  "farftp.mk" PostBuild
 	@echo "----------Building project:[ multiarc - Debug ]----------"
 	@cd "multiarc" && "$(MAKE)" -f  "multiarc.mk" PreBuild && "$(MAKE)" -f  "multiarc.mk"
+	@echo "----------Building project:[ tmppanel - Debug ]----------"
+	@cd "tmppanel" && "$(MAKE)" -f  "tmppanel.mk" PreBuild && "$(MAKE)" -f  "tmppanel.mk"
 	@echo "----------Building project:[ _All - Debug ]----------"
 	@cd "_All" && "$(MAKE)" -f  "_All.mk"
 clean:
@@ -28,5 +30,7 @@ clean:
 	@cd "farftp" && "$(MAKE)" -f  "farftp.mk"  clean
 	@echo "----------Cleaning project:[ multiarc - Debug ]----------"
 	@cd "multiarc" && "$(MAKE)" -f  "multiarc.mk"  clean
+	@echo "----------Cleaning project:[ tmppanel - Debug ]----------"
+	@cd "tmppanel" && "$(MAKE)" -f  "tmppanel.mk"  clean
 	@echo "----------Cleaning project:[ _All - Debug ]----------"
 	@cd "_All" && "$(MAKE)" -f  "_All.mk" clean

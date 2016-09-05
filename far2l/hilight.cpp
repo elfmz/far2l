@@ -799,8 +799,10 @@ void SetHighlighting()
 	        /* 6 */{Masks[2], 0, 0x0000, 0x16, 0x36},
 	        // ýòî íàñòðîéêà äëÿ êàòàëîãîâ íà òåõ ïàíåëÿõ, êîòîðûå äîëæíû ðàñêðàøèâàòüñÿ
 	        // áåç ó÷åòà ìàñîê (íàïðèìåð, ñïèñîê õîñòîâ â "far navigator")
-	        /* 7 */{Masks[0], 1, 0x0010, 0x1F, 0x3F},
-	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE, 0x1A, 0x3A}, 
+	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_BROKEN, 0x10 | F_LIGHTRED, 0x30 | F_LIGHTRED }, 
+	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0x10 | F_GREEN, 0x30 | F_GREEN }, 
+	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_WHITE, 0x30 | F_WHITE},
+	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE, 0x10 | F_LIGHTGREEN, 0x30 | F_LIGHTGREEN}, 
 	    };
 
 

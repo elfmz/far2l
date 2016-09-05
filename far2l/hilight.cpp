@@ -768,7 +768,7 @@ void SetHighlighting()
 	static const wchar_t *Masks[]=
 	{
 		/* 0 */ L"*.*",
-		/* 1 */ L"*.rar,*.zip,*.[zj],*.[bg7]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*.bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.zoo,*.hqx,*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,*.x2,*.rkv,*.[lw]sz,*.h[ay]p,*.lim,*.sqz,*.chz",
+		/* 1 */ L"*.rar,*.zip,*.[zj],*.[bxg7]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*.bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.zoo,*.hqx,*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,*.x2,*.rkv,*.[lw]sz,*.h[ay]p,*.lim,*.sqz,*.chz",
 		/* 2 */ L"*.bak,*.tmp",                                                                                                                                                                                //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -> ìîæåò ê òåðàïåâòó? ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 		/* $ 25.09.2001  IS
 		    Ýòà ìàñêà äëÿ êàòàëîãîâ: îáðàáàòûâàòü âñå êàòàëîãè, êðîìå òåõ, ÷òî
@@ -790,6 +790,7 @@ void SetHighlighting()
              Mask                NormalColor
                           IncludeAttributes
                        IgnoreMask       CursorColor             */
+	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_BROKEN, 0x10 | F_LIGHTRED, 0x30 | F_LIGHTRED }, 
 	        /* 0 */{Masks[0], 0, 0x0002, 0x13, 0x38},
 	        /* 1 */{Masks[0], 0, 0x0004, 0x13, 0x38},
 	        /* 2 */{Masks[3], 0, 0x0010, 0x1F, 0x3F},
@@ -799,7 +800,6 @@ void SetHighlighting()
 	        /* 6 */{Masks[2], 0, 0x0000, 0x16, 0x36},
 	        // ýòî íàñòðîéêà äëÿ êàòàëîãîâ íà òåõ ïàíåëÿõ, êîòîðûå äîëæíû ðàñêðàøèâàòüñÿ
 	        // áåç ó÷åòà ìàñîê (íàïðèìåð, ñïèñîê õîñòîâ â "far navigator")
-	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_BROKEN, 0x10 | F_LIGHTRED, 0x30 | F_LIGHTRED }, 
 	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0x10 | F_GREEN, 0x30 | F_GREEN }, 
 	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_WHITE, 0x30 | F_WHITE},
 	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE, 0x10 | F_LIGHTGREEN, 0x30 | F_LIGHTGREEN}, 

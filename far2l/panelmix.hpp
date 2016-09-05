@@ -40,7 +40,7 @@ int  CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName);
 
 int _MakePath1(DWORD Key,FARString &strPathName, const wchar_t *Param2,int ShortNameAsIs=TRUE);
 
-const FARString FormatStr_Attribute(DWORD FileAttributes,int Width=-1);
+const FARString FormatStr_Attribute(DWORD FileAttributes, DWORD UnixMode, int Width=-1);
 const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Flags,int Width);
 const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSize, const FARString strName,DWORD FileAttributes,DWORD ShowFolderSize,DWORD ReparseTag,int ColumnType,DWORD Flags,int Width);
 void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,

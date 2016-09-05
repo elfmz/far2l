@@ -2168,7 +2168,7 @@ void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& 
 
 			case ATTR_COLUMN:
 			{
-				MenuText << FormatStr_Attribute(FindData.dwFileAttributes) << BoxSymbols[BS_V1];
+				MenuText << FormatStr_Attribute(FindData.dwFileAttributes, FindData.dwUnixMode) << BoxSymbols[BS_V1];
 				break;
 			}
 			case NUMSTREAMS_COLUMN:

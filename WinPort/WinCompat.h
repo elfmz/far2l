@@ -76,6 +76,13 @@ typedef unsigned __int64 uint64_t;
 
 #define FOPEN_READ		"r"
 #define FOPEN_WRITE	"w"
+
+#ifdef __APPLE__
+#define st_mtim st_mtimespec
+#define st_ctim st_ctimespec
+#define st_atim st_atimespec
+#endif
+
 static int _wtoi(const wchar_t *w)
 {
 	wchar_t *endptr = 0;

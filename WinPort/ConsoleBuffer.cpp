@@ -11,7 +11,7 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, unsigned sh
 	if (width==_width && (width*height)==_console_chars.size() )
 		return;
 
-	COORD prev_size = {_width, _width ? (USHORT)(_console_chars.size() / _width) : 0 };
+	COORD prev_size = {(SHORT)_width, _width ? (SHORT)(_console_chars.size() / _width) : (SHORT)0 };
 	ConsoleChars other_chars; 
 	other_chars.resize(height * width);
 	_console_chars.swap(other_chars);
@@ -23,7 +23,7 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, unsigned sh
 
 	if (!other_chars.empty() && !_console_chars.empty()) {
 		COORD prev_pos = {0, 0};
-		SMALL_RECT screen_rect = {0, 0, width - 1, height - 1};
+		SMALL_RECT screen_rect = {0, 0, (SHORT)(width - 1), (SHORT)(height - 1)};
 		Write(&other_chars[0], prev_size, prev_pos, screen_rect);
 	}
 	

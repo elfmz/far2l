@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <vector>
 
 #include "WinCompat.h"
 #include "WinPort.h"

@@ -240,7 +240,9 @@ extern "C"
 
 int64_t ftell64(FILE *fp)
 {
-#ifdef __GNUC__
+#if defined(__APPLE__)
+	return ftello(fp);
+#elif defined(__GNUC__)
 	return ftello64(fp);
 #else
 	return _ftelli64(fp);
@@ -249,7 +251,9 @@ int64_t ftell64(FILE *fp)
 
 int fseek64(FILE *fp, int64_t offset, int whence)
 {
-#ifdef __GNUC__
+#if defined(__APPLE__)
+	return fseeko(fp,offset,whence);
+#elif defined(__GNUC__)
 	return fseeko64(fp,offset,whence);
 #else
 	return _fseeki64(fp,offset,whence);

@@ -79,9 +79,9 @@ SOCKET WINAPI scCreate(short addr_type)
 
 //		if(setsockopt(s,SOL_SOCKET,SO_DONTLINGER,(char FAR *)&iv,sizeof(iv)) != 0) break;
 
-		iv = TRUE;
+//		iv = TRUE;
 
-		if(setsockopt(s,SOL_SOCKET,SO_DONTROUTE,(char FAR *)&iv,sizeof(iv)) != 0) break;
+//		if(setsockopt(s,SOL_SOCKET,SO_DONTROUTE,(char FAR *)&iv,sizeof(iv)) != 0) break;
 
 		iv = TRUE;
 

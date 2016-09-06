@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include <string>
-#include <stdlib.h>
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
+#include <malloc.h>
+#endif
 #include <locale> 
 #include <map>
 #include <set>
@@ -17,10 +21,6 @@
 #include "WinPortHandle.h"
 #include "Utils.h"
 #include "CallInMain.h"
-	
-#ifdef __APPLE__
-#include <malloc/malloc.h>
-#endif
 
 extern "C" {
 	std::mutex g_clipboard_mutex;

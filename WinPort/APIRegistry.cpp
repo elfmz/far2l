@@ -428,7 +428,7 @@ extern "C" {
 	_Out_opt_   LPDWORD   lpcMaxValueLen,
 	_Out_opt_   LPDWORD   lpcbSecurityDescriptor,
 	_Out_opt_   PFILETIME lpftLastWriteTime)
-  {
+	{
 		AutoWinPortHandle<WinPortHandleReg> wph(hKey);
 		if (!wph)
 		{//TODO: FIXME: handle predefined HKEY_-s
@@ -469,12 +469,13 @@ extern "C" {
 		}
 		
 		return ERROR_SUCCESS;
-  }
+	}
 
 
 	void WinPortInitRegistry()
 	{
-		if (_mkdir( GetRegistrySubroot("") .c_str()) <0)
+		int ret = _mkdir( GetRegistrySubroot("") .c_str());
+		if (ret < 0 && EEXIST != errno)
 			fprintf(stderr, "WinPortInitRegistry: errno=%d \n", errno);
 		else
 			fprintf(stderr, "WinPortInitRegistry: OK \n");

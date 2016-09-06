@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include <string>
-#include <malloc.h>
+#include <stdlib.h>
 #include <locale> 
 #include <map>
 #include <set>
@@ -18,9 +18,9 @@
 #include "Utils.h"
 #include "CallInMain.h"
 	
-
-
-
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#endif
 
 extern "C" {
 	std::mutex g_clipboard_mutex;
@@ -178,6 +178,8 @@ extern "C" {
 		}
 #ifdef _WIN32
 		size_t len = _msize(mem);
+#elif defined(__APPLE__)
+		size_t len = malloc_size(mem);
 #else
 		size_t len = malloc_usable_size(mem);
 #endif

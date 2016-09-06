@@ -229,12 +229,12 @@ void SaveScreen::Resize(int NewX,int NewY, DWORD Corner, bool SyncWithConsole)
 		Console.ResetPosition();
 		if(NewY!=OHe)
 		{
-			COORD Size={Max(NewX,OWi), abs(OHe-NewY)};
+			COORD Size={(SHORT)Max(NewX,OWi), (SHORT)abs(OHe-NewY)};
 			COORD Coord={0, 0};
 			PCHAR_INFO Tmp=new CHAR_INFO[Size.X*Size.Y];
 			if(NewY>OHe)
 			{
-				SMALL_RECT ReadRegion={0, 0, NewX-1, NewY-OHe-1};
+				SMALL_RECT ReadRegion={0, 0, (SHORT)(NewX-1), (SHORT)(NewY-OHe-1)};
 				Console.ReadOutput(*Tmp, Size, Coord, ReadRegion);
 				for(int i=0; i<Size.Y;i++)
 				{
@@ -243,7 +243,7 @@ void SaveScreen::Resize(int NewX,int NewY, DWORD Corner, bool SyncWithConsole)
 			}
 			else
 			{
-				SMALL_RECT WriteRegion={0, NewY-OHe, NewX-1, -1};
+				SMALL_RECT WriteRegion={0, (SHORT)(NewY-OHe), (SHORT)(NewX-1), (SHORT)(-1)};
 				for(int i=0; i<Size.Y;i++)
 				{
 					CharCopy(&Tmp[i*Size.X],&ScreenBuf[i*OWi], Size.X);
@@ -255,12 +255,12 @@ void SaveScreen::Resize(int NewX,int NewY, DWORD Corner, bool SyncWithConsole)
 
 		if(NewX!=OWi)
 		{
-			COORD Size={abs(NewX-OWi), Max(NewY,OHe)};
+			COORD Size={(SHORT)abs(NewX-OWi), (SHORT)Max(NewY,OHe)};
 			COORD Coord={0, 0};
 			PCHAR_INFO Tmp=new CHAR_INFO[Size.X*Size.Y];
 			if(NewX>OWi)
 			{
-				SMALL_RECT ReadRegion={OWi, 0, NewX-1, NewY-1};
+				SMALL_RECT ReadRegion={(SHORT)OWi, 0, (SHORT)(NewX-1), (SHORT)(NewY-1)};
 				Console.ReadOutput(*Tmp, Size, Coord, ReadRegion);
 				for(int i=0; i<Size.Y;i++)
 				{
@@ -269,7 +269,7 @@ void SaveScreen::Resize(int NewX,int NewY, DWORD Corner, bool SyncWithConsole)
 			}
 			else
 			{
-				SMALL_RECT WriteRegion={NewX, NewY-OHe, OWi-1, NewY-1};
+				SMALL_RECT WriteRegion={(SHORT)NewX, (SHORT)(NewY-OHe), (SHORT)(OWi-1), (SHORT)(NewY-1)};
 				for(int i=0; i<Size.Y;i++)
 				{
 					CharCopy(&Tmp[i*Size.X],&ScreenBuf[i*OWi+NewX], Size.X);

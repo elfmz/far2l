@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "cddrv.hpp"
 #include "pathmix.hpp"
+#include <errno.h>
 
 static int StatForPathOrItsParent(const wchar_t *path, struct stat &s)
 {

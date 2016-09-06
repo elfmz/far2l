@@ -251,7 +251,7 @@ void ChangeVideoMode(int NumLines,int NumColumns)
 	srWindowRect.Bottom = ySize-1;
 	srWindowRect.Left = srWindowRect.Top = 0;
 	
-	COORD coordScreen={xSize,ySize};
+	COORD coordScreen={(SHORT)xSize,(SHORT)ySize};
 
 	if (xSize>Size.X || ySize > Size.Y)
 	{
@@ -463,7 +463,7 @@ void GetCursorType(bool& Visible, DWORD& Size)
 
 void MoveRealCursor(int X,int Y)
 {
-	COORD C={X,Y};
+	COORD C={(SHORT)X,(SHORT)Y};
 	Console.SetCursorPosition(C);
 }
 

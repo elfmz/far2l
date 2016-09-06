@@ -388,7 +388,7 @@ BOOL FtpPutFile(Connection *Connect,LPCSTR loc,LPCSTR rem,BOOL Reput,int AsciiMo
 		Reput = FALSE;
 
 //Remote file
-	if(*rem=='/')
+	if(*rem=='\\' || (rem[0] && rem[1]==':'))//slash is really back, otherwise BUG
 		rem = PointToName((char *)rem);
 
 	if(Connect->Host.ServerType!=FTP_TYPE_MVS)

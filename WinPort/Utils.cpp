@@ -80,7 +80,12 @@ void RectifyPath(std::string &s)
 	s.swap(tmp);
 	if (s[0]!=GOOD_SLASH && (s[0]!='.' || s[1]!=GOOD_SLASH)) {
 		s.insert(s.begin(), GOOD_SLASH);
-		s.insert(s.begin(), '.');
+		char *dir = get_current_dir_name();
+		if (dir) {
+			s.insert(0, dir);
+			free(dir);
+		} else
+			s.insert(s.begin(), '.');
 	}
 	
 }

@@ -44,7 +44,7 @@ NTPath::NTPath(LPCWSTR Src)
 	if (Src&&*Src)
 	{
 		Str=Src;
-		if (!HasPathPrefix(Src))
+		if (!HasPathPrefix(Src) && *Src!='/')
 		{
 			ConvertNameToFull(Str,Str);
 		}

@@ -2763,17 +2763,17 @@ bool FindFilesProcess(Vars& v)
 	int DlgHeight = ScrY + 1 - 2;
 	DialogDataEx FindDlgData[]=
 	{
-		DI_DOUBLEBOX,3,1,DlgWidth-4,DlgHeight-2,0,DIF_SHOWAMPERSAND,strTitle,
-		DI_LISTBOX,4,2,DlgWidth-5,DlgHeight-7,0,DIF_LISTNOBOX|DIF_DISABLE,0,
-		DI_TEXT,0,DlgHeight-6,0,DlgHeight-6,0,DIF_SEPARATOR2,L"",
-		DI_TEXT,5,DlgHeight-5,DlgWidth-(strFindStr.IsEmpty()?6:12),DlgHeight-5,0,DIF_SHOWAMPERSAND,strSearchStr,
-		DI_TEXT,DlgWidth-9,DlgHeight-5,DlgWidth-6,DlgHeight-5,0,(strFindStr.IsEmpty()?DIF_HIDDEN:0),L"",
-		DI_TEXT,0,DlgHeight-4,0,DlgHeight-4,0,DIF_SEPARATOR,L"",
-		DI_BUTTON,0,DlgHeight-3,0,DlgHeight-3,0,DIF_FOCUS|DIF_DEFAULT|DIF_CENTERGROUP,MSG(MFindNewSearch),
-		DI_BUTTON,0,DlgHeight-3,0,DlgHeight-3,0,DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindGoTo),
-		DI_BUTTON,0,DlgHeight-3,0,DlgHeight-3,0,DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindView),
-		DI_BUTTON,0,DlgHeight-3,0,DlgHeight-3,0,DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindPanel),
-		DI_BUTTON,0,DlgHeight-3,0,DlgHeight-3,0,DIF_CENTERGROUP,MSG(MFindStop),
+		DI_DOUBLEBOX,3,1,(short)(DlgWidth-4),(short)(DlgHeight-2),0,DIF_SHOWAMPERSAND,strTitle,
+		DI_LISTBOX,4,2,(short)(DlgWidth-5),(short)(DlgHeight-7),0,DIF_LISTNOBOX|DIF_DISABLE,0,
+		DI_TEXT,0,(short)(DlgHeight-6),0,(short)(DlgHeight-6),0,DIF_SEPARATOR2,L"",
+		DI_TEXT,5,(short)(DlgHeight-5),(short)(DlgWidth-(strFindStr.IsEmpty()?6:12)),(short)(DlgHeight-5),0,DIF_SHOWAMPERSAND,strSearchStr,
+		DI_TEXT,(short)(DlgWidth-9),(short)(DlgHeight-5),(short)(DlgWidth-6),(short)(DlgHeight-5),0,(strFindStr.IsEmpty()?DIF_HIDDEN:0),L"",
+		DI_TEXT,0,(short)(DlgHeight-4),0,(short)(DlgHeight-4),0,DIF_SEPARATOR,L"",
+		DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),0,DIF_FOCUS|DIF_DEFAULT|DIF_CENTERGROUP,MSG(MFindNewSearch),
+		DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),0,DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindGoTo),
+		DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),0,DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindView),
+		DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),0,DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindPanel),
+		DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),0,DIF_CENTERGROUP,MSG(MFindStop),
 	};
 	MakeDialogItemsEx(FindDlgData,FindDlg);
 	ChangePriority ChPriority(ChangePriority::NORMAL);

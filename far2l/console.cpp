@@ -99,7 +99,7 @@ bool console::SetSize(COORD Size)
 		csbi.srWindow.Right=Size.X-1;
 		csbi.srWindow.Bottom=csbi.dwSize.Y-1;
 		csbi.srWindow.Top=csbi.srWindow.Bottom-(Size.Y-1);
-		COORD WindowCoord={csbi.srWindow.Right-csbi.srWindow.Left+1, csbi.srWindow.Bottom-csbi.srWindow.Top+1};
+		COORD WindowCoord={(SHORT)(csbi.srWindow.Right-csbi.srWindow.Left+1), (SHORT)(csbi.srWindow.Bottom-csbi.srWindow.Top+1)};
 		if(WindowCoord.X>csbi.dwSize.X || WindowCoord.Y>csbi.dwSize.Y)
 		{
 			WindowCoord.X=Max(WindowCoord.X,csbi.dwSize.X);
@@ -263,7 +263,7 @@ bool console::WriteInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEven
 	return WINPORT(WriteConsoleInput)(GetInputHandle(), &Buffer, Length, &NumberOfEventsWritten)!=FALSE;
 }
 
-// пишем/читаем порциями по 32 K, иначе проблемы.
+// ГЇГЁГёГҐГ¬/Г·ГЁГІГ ГҐГ¬ ГЇГ®Г°Г¶ГЁГїГ¬ГЁ ГЇГ® 32 K, ГЁГ­Г Г·ГҐ ГЇГ°Г®ГЎГ«ГҐГ¬Г».
 const unsigned int MAXSIZE=0x8000;
 
 bool console::ReadOutput(CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT& ReadRegion)
@@ -451,7 +451,7 @@ bool console::ClearExtraRegions(WORD Color)
 	WINPORT(FillConsoleOutputAttribute)(GetOutputHandle(), Color, TopSize, TopCoord, &CharsWritten );
 
 	DWORD RightSize = csbi.dwSize.X-csbi.srWindow.Right;
-	COORD RightCoord={csbi.srWindow.Right,GetDelta()};
+	COORD RightCoord={csbi.srWindow.Right,(SHORT)GetDelta()};
 	for(; RightCoord.Y<csbi.dwSize.Y; RightCoord.Y++)
 	{
 		WINPORT(FillConsoleOutputCharacter)(GetOutputHandle(), L' ', RightSize, RightCoord, &CharsWritten);
@@ -517,8 +517,8 @@ bool console::ScrollScreenBuffer(int Lines)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	WINPORT(GetConsoleScreenBufferInfo)(GetOutputHandle(), &csbi);
-	SMALL_RECT ScrollRectangle={0, 0, csbi.dwSize.X-1, csbi.dwSize.Y-1};
-	COORD DestinationOrigin={0,-Lines};
+	SMALL_RECT ScrollRectangle={0, 0, (SHORT)(csbi.dwSize.X-1), (SHORT)(csbi.dwSize.Y-1)};
+	COORD DestinationOrigin={0,(SHORT)(-Lines)};
 	CHAR_INFO Fill={L' ', FarColorToReal(COL_COMMANDLINEUSERSCREEN)};
 	return WINPORT(ScrollConsoleScreenBuffer)(GetOutputHandle(), &ScrollRectangle, nullptr, DestinationOrigin, &Fill)!=FALSE;
 }

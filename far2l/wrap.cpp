@@ -1889,7 +1889,7 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 				didA->PtrLength = static_cast<int>(FarSendDlgMessage(hDlg, DM_GETTEXT, Param1, 0));
 			wchar_t* text = (wchar_t*) xf_malloc((didA->PtrLength+1)*sizeof(wchar_t));
 			//BUGBUG: åñëè didA->PtrLength=0, òî âåðí¸òñÿ ñ ó÷¸òîì '\0', â Ýíö íàïèñàíî, ÷òî áåç, õç êàê ïðàâèëüíî.
-			FarDialogItemData did = {didA->PtrLength, text};
+			FarDialogItemData did = {(size_t)didA->PtrLength, text};
 			LONG_PTR ret = FarSendDlgMessage(hDlg, DM_GETTEXT, Param1, (LONG_PTR)&did);
 			didA->PtrLength = (unsigned)did.PtrLength;
 			UnicodeToOEM(text,didA->PtrData,didA->PtrLength+1);
@@ -1943,7 +1943,7 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 
 			wchar_t* text = AnsiToUnicode(didA->PtrData);
 			//BUGBUG - PtrLength íè íà ÷òî íå âëèÿåò.
-			FarDialogItemData di = {didA->PtrLength,text};
+			FarDialogItemData di = {(size_t)didA->PtrLength,text};
 			LONG_PTR ret = FarSendDlgMessage(hDlg, DM_SETTEXT, Param1, (LONG_PTR)&di);
 			xf_free(text);
 			return ret;

@@ -44,8 +44,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __GNUC__
 #include <cctype>
 #include <climits>
-
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #endif //__GNUC__
 
 #include <search.h>

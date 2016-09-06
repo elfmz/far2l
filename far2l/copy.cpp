@@ -389,7 +389,7 @@ void CopyProgress::SetProgress(bool TotalProgress,UINT64 CompletedSize,UINT64 To
 	CompletedSize>>=8;
 	TotalSize>>=8;
 	CompletedSize=Min(CompletedSize,TotalSize);
-	COORD BarCoord={Rect.Left+5,Rect.Top+(TotalProgress?8:6)};
+	COORD BarCoord={(SHORT)(Rect.Left+5),(SHORT)(Rect.Top+(TotalProgress?8:6))};
 	size_t BarLength=Rect.Right-Rect.Left-9-5; //-5 äëÿ ïðîöåíòîâ
 	size_t Length=TotalSize?static_cast<size_t>((TotalSize<1000000?CompletedSize:CompletedSize/100)*BarLength/(TotalSize<1000000?TotalSize:TotalSize/100)):BarLength;
 
@@ -647,7 +647,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 
 	DialogDataEx CopyDlgData[]=
 	{
-		DI_DOUBLEBOX,   3, 1,DLG_WIDTH-4,DLG_HEIGHT-2,0,0,MSG(MCopyDlgTitle),
+		DI_DOUBLEBOX,   3, 1,(SHORT)(DLG_WIDTH-4),(SHORT)(DLG_HEIGHT-2),0,0,MSG(MCopyDlgTitle),
 		DI_TEXT,        5, 2, 0, 2,0,0,MSG(Link?MCMLTargetIN:MCMLTargetTO),
 		DI_EDIT,        5, 3,70, 3,reinterpret_cast<DWORD_PTR>(L"Copy"),DIF_FOCUS|DIF_HISTORY|DIF_EDITEXPAND|DIF_USELASTHISTORY|DIF_EDITPATH,L"",
 		DI_TEXT,        3, 4, 0, 4,0,DIF_SEPARATOR,L"",

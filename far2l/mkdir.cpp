@@ -1,7 +1,7 @@
 /*
 mkdir.cpp
 
-Создание каталога
+Г‘Г®Г§Г¤Г Г­ГЁГҐ ГЄГ ГІГ Г«Г®ГЈГ 
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -72,20 +72,20 @@ LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				FARString strDirName=reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,MKDIR_EDIT,0));
 				Opt.MultiMakeDir=(SendDlgMessage(hDlg,DM_GETCHECK,MKDIR_CHECKBOX,0)==BSTATE_CHECKED);
 
-				// это по поводу создания одиночного каталога, который
-				// начинается с пробела! Чтобы ручками не заключать
-				// такой каталог в кавычки
+				// ГЅГІГ® ГЇГ® ГЇГ®ГўГ®Г¤Гі Г±Г®Г§Г¤Г Г­ГЁГї Г®Г¤ГЁГ­Г®Г·Г­Г®ГЈГ® ГЄГ ГІГ Г«Г®ГЈГ , ГЄГ®ГІГ®Г°Г»Г©
+				// Г­Г Г·ГЁГ­Г ГҐГІГ±Гї Г± ГЇГ°Г®ГЎГҐГ«Г ! Г—ГІГ®ГЎГ» Г°ГіГ·ГЄГ Г¬ГЁ Г­ГҐ Г§Г ГЄГ«ГѕГ·Г ГІГј
+				// ГІГ ГЄГ®Г© ГЄГ ГІГ Г«Г®ГЈ Гў ГЄГ ГўГ»Г·ГЄГЁ
 				if (Opt.MultiMakeDir && !wcspbrk(strDirName,L";,\""))
 				{
 					QuoteSpaceOnly(strDirName);
 				}
 
-				// нужно создать только ОДИН каталог
+				// Г­ГіГ¦Г­Г® Г±Г®Г§Г¤Г ГІГј ГІГ®Г«ГјГЄГ® ГЋГ„Г€ГЌ ГЄГ ГІГ Г«Г®ГЈ
 				if (!Opt.MultiMakeDir)
 				{
-					// уберем все лишние кавычки
+					// ГіГЎГҐГ°ГҐГ¬ ГўГ±ГҐ Г«ГЁГёГ­ГЁГҐ ГЄГ ГўГ»Г·ГЄГЁ
 					Unquote(strDirName);
-					// возьмем в кавычки, т.к. могут быть разделители
+					// ГўГ®Г§ГјГ¬ГҐГ¬ Гў ГЄГ ГўГ»Г·ГЄГЁ, ГІ.ГЄ. Г¬Г®ГЈГіГІ ГЎГ»ГІГј Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«ГЁ
 					InsertQuote(strDirName);
 				}
 
@@ -116,7 +116,7 @@ void ShellMakeDir(Panel *SrcPanel)
 		DI_TEXT,     5,2, 0,2,0,0,MSG(MCreateFolder),
 		DI_EDIT,     5,3,70,3,(DWORD_PTR)L"NewFolder",DIF_FOCUS|DIF_EDITEXPAND|DIF_HISTORY|DIF_USELASTHISTORY|DIF_EDITPATH,L"",
 		DI_TEXT,     0,4, 0,4,0,DIF_SEPARATOR,L"",
-		DI_CHECKBOX, 5,5, 0,5,Opt.MultiMakeDir,0,MSG(MMultiMakeDir),
+		DI_CHECKBOX, 5,5, 0,5,(DWORD_PTR)Opt.MultiMakeDir,0,MSG(MMultiMakeDir),
 		DI_TEXT,     0,6, 0,6,0,DIF_SEPARATOR,L"",
 		DI_BUTTON,   0,7, 0,7,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk),
 		DI_BUTTON,   0,7, 0,7,0,DIF_CENTERGROUP,MSG(MCancel),

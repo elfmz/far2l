@@ -4588,7 +4588,7 @@ void Dialog::ResizeConsole()
 		Hide();
 	}
 
-	COORD c = {ScrX+1, ScrY+1};
+	COORD c = {(SHORT)(ScrX+1), (SHORT)(ScrY+1)};
 	SendDlgMessage(reinterpret_cast<HANDLE>(this), DN_RESIZECONSOLE, 0, reinterpret_cast<LONG_PTR>(&c));
 
 	int x1, y1, x2, y2;
@@ -5955,7 +5955,7 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			if (!Param2)
 				return 0;
 
-			FarDialogItemData IData={StrLength((wchar_t *)Param2),(wchar_t *)Param2};
+			FarDialogItemData IData={(size_t)StrLength((wchar_t *)Param2),(wchar_t *)Param2};
 			return SendDlgMessage(hDlg,DM_SETTEXT,Param1,(LONG_PTR)&IData);
 		}
 		/*****************************************************************/

@@ -108,8 +108,8 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 	if (ModifyTime) WINPORT(FileTime_Win32ToUnix)(ModifyTime, &s.st_mtim);
 
 	for(;;) {
-		struct timeval times[2] = { {s.st_atim.tv_sec, s.st_atim.tv_nsec/1000}, 
-									{s.st_mtim.tv_sec, s.st_mtim.tv_nsec/1000} };
+		struct timeval times[2] = { {s.st_atim.tv_sec, (int)(s.st_atim.tv_nsec/1000)}, 
+									{s.st_mtim.tv_sec, (int)(s.st_mtim.tv_nsec/1000)} };
 		
 		if (utimes(mb_name.c_str(), times)==0) break;
 		

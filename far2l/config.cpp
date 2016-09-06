@@ -1,7 +1,7 @@
 /*
 config.cpp
 
-Конфигурация
+ГЉГ®Г­ГґГЁГЈГіГ°Г Г¶ГЁГї
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -63,10 +63,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Options Opt={0};
 
-// Стандартный набор разделителей
+// Г‘ГІГ Г­Г¤Г Г°ГІГ­Г»Г© Г­Г ГЎГ®Г° Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«ГҐГ©
 static const wchar_t *WordDiv0 = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
 
-// Стандартный набор разделителей для функции Xlat
+// Г‘ГІГ Г­Г¤Г Г°ГІГ­Г»Г© Г­Г ГЎГ®Г° Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«ГҐГ© Г¤Г«Гї ГґГіГ­ГЄГ¶ГЁГЁ Xlat
 static const wchar_t *WordDivForXlat0=L" \t!#$%^&*()+|=\\/@?";
 
 FARString strKeyNameConsoleDetachKey;
@@ -192,8 +192,8 @@ void PanelSettings()
 
 
 /* $ 17.12.2001 IS
-   Настройка средней кнопки мыши для панелей. Воткнем пока сюда, потом надо
-   переехать в специальный диалог по программированию мыши.
+   ГЌГ Г±ГІГ°Г®Г©ГЄГ  Г±Г°ГҐГ¤Г­ГҐГ© ГЄГ­Г®ГЇГЄГЁ Г¬Г»ГёГЁ Г¤Г«Гї ГЇГ Г­ГҐГ«ГҐГ©. Г‚Г®ГІГЄГ­ГҐГ¬ ГЇГ®ГЄГ  Г±ГѕГ¤Г , ГЇГ®ГІГ®Г¬ Г­Г Г¤Г®
+   ГЇГҐГ°ГҐГҐГµГ ГІГј Гў Г±ГЇГҐГ¶ГЁГ Г«ГјГ­Г»Г© Г¤ГЁГ Г«Г®ГЈ ГЇГ® ГЇГ°Г®ГЈГ°Г Г¬Г¬ГЁГ°Г®ГўГ Г­ГЁГѕ Г¬Г»ГёГЁ.
 */
 void InterfaceSettings()
 {
@@ -229,7 +229,7 @@ void InterfaceSettings()
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->SetScreenPosition();
-		// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
+		// $ 10.07.2001 SKV ! Г­Г Г¤Г® ГЅГІГ® Г¤ГҐГ«Г ГІГј, ГЁГ­Г Г·ГҐ ГҐГ±Г«ГЁ ГЄГҐГ©ГЎГ Г° Г±ГЇГ°ГїГІГ Г«ГЁ, ГЎГіГ¤ГҐГІ ГЇГ®Г«Г­Г»Г© Г°Г Г¬Г±.
 		CtrlObject->Cp()->Redraw();
 	}
 }
@@ -497,19 +497,19 @@ void SetFolderInfoFiles()
 }
 
 
-// Структура, описывающая всю конфигурацию(!)
+// Г‘ГІГ°ГіГЄГІГіГ°Г , Г®ГЇГЁГ±Г»ГўГ ГѕГ№Г Гї ГўГ±Гѕ ГЄГ®Г­ГґГЁГЈГіГ°Г Г¶ГЁГѕ(!)
 static struct FARConfig
 {
-	int   IsSave;   // =1 - будет записываться в SaveConfig()
+	int   IsSave;   // =1 - ГЎГіГ¤ГҐГІ Г§Г ГЇГЁГ±Г»ГўГ ГІГјГ±Гї Гў SaveConfig()
 	DWORD ValType;  // REG_DWORD, REG_SZ, REG_BINARY
 	const wchar_t *KeyName;
 	const wchar_t *ValName;
-	void *ValPtr;   // адрес переменной, куда помещаем данные
-	DWORD DefDWord; // он же размер данных для REG_SZ и REG_BINARY
-	const wchar_t *DefStr;   // строка/данные по умолчанию
+	void *ValPtr;   // Г Г¤Г°ГҐГ± ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г®Г©, ГЄГіГ¤Г  ГЇГ®Г¬ГҐГ№Г ГҐГ¬ Г¤Г Г­Г­Г»ГҐ
+	DWORD DefDWord; // Г®Г­ Г¦ГҐ Г°Г Г§Г¬ГҐГ° Г¤Г Г­Г­Г»Гµ Г¤Г«Гї REG_SZ ГЁ REG_BINARY
+	const wchar_t *DefStr;   // Г±ГІГ°Г®ГЄГ /Г¤Г Г­Г­Г»ГҐ ГЇГ® ГіГ¬Г®Г«Г·Г Г­ГЁГѕ
 } CFG[]=
 {
-	{1, REG_BINARY, NKeyColors, L"CurrentPalette",(char*)Palette,SizeArrayPalette,(wchar_t*)DefaultPalette},
+	{1, REG_BINARY, NKeyColors, L"CurrentPalette",(char*)Palette,(DWORD)SizeArrayPalette,(wchar_t*)DefaultPalette},
 
 	{1, REG_DWORD,  NKeyScreen, L"Clock", &Opt.Clock, 1, 0},
 	{1, REG_DWORD,  NKeyScreen, L"ViewerEditorClock",&Opt.ViewerEditorClock,0, 0},
@@ -584,8 +584,8 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyEditor,L"SaveEditorShortPos",&Opt.EdOpt.SaveShortPos,1, 0},
 	{1, REG_DWORD,  NKeyEditor,L"AutoDetectCodePage",&Opt.EdOpt.AutoDetectCodePage,0, 0},
 	{1, REG_DWORD,  NKeyEditor,L"EditorCursorBeyondEOL",&Opt.EdOpt.CursorBeyondEOL,1, 0},
-	{1, REG_DWORD,  NKeyEditor,L"ReadOnlyLock",&Opt.EdOpt.ReadOnlyLock,0, 0}, // Вернём назад дефолт 1.65 - не предупреждать и не блокировать
-	{0, REG_DWORD,  NKeyEditor,L"EditorUndoSize",&Opt.EdOpt.UndoSize,0, 0}, // $ 03.12.2001 IS размер буфера undo в редакторе
+	{1, REG_DWORD,  NKeyEditor,L"ReadOnlyLock",&Opt.EdOpt.ReadOnlyLock,0, 0}, // Г‚ГҐГ°Г­ВёГ¬ Г­Г Г§Г Г¤ Г¤ГҐГґГ®Г«ГІ 1.65 - Г­ГҐ ГЇГ°ГҐГ¤ГіГЇГ°ГҐГ¦Г¤Г ГІГј ГЁ Г­ГҐ ГЎГ«Г®ГЄГЁГ°Г®ГўГ ГІГј
+	{0, REG_DWORD,  NKeyEditor,L"EditorUndoSize",&Opt.EdOpt.UndoSize,0, 0}, // $ 03.12.2001 IS Г°Г Г§Г¬ГҐГ° ГЎГіГґГҐГ°Г  undo Гў Г°ГҐГ¤Г ГЄГІГ®Г°ГҐ
 	{0, REG_SZ,     NKeyEditor,L"WordDiv",&Opt.strWordDiv, 0, WordDiv0},
 	{0, REG_DWORD,  NKeyEditor,L"BSLikeDel",&Opt.EdOpt.BSLikeDel,1, 0},
 	{0, REG_DWORD,  NKeyEditor,L"EditorF7Rules",&Opt.EdOpt.F7Rules,1, 0},
@@ -819,8 +819,8 @@ void ReadConfig()
 	FARString strPersonalPluginsPath;
 	size_t I;
 
-	/* <ПРЕПРОЦЕССЫ> *************************************************** */
-	// "Вспомним" путь для дополнительного поиска плагинов
+	/* <ГЏГђГ…ГЏГђГЋГ–Г…Г‘Г‘Г›> *************************************************** */
+	// "Г‚Г±ГЇГ®Г¬Г­ГЁГ¬" ГЇГіГІГј Г¤Г«Гї Г¤Г®ГЇГ®Г«Г­ГЁГІГҐГ«ГјГ­Г®ГЈГ® ГЇГ®ГЁГ±ГЄГ  ГЇГ«Г ГЈГЁГ­Г®Гў
 	SetRegRootKey(HKEY_LOCAL_MACHINE);
 	GetRegKey(NKeySystem,L"TemplatePluginsPath",strPersonalPluginsPath,L"");
 	OptPolicies_ShowHiddenDrives=GetRegKey(NKeyPolicies,L"ShowHiddenDrives",1)&1;
@@ -828,8 +828,8 @@ void ReadConfig()
 	SetRegRootKey(HKEY_CURRENT_USER);
 	GetRegKey(NKeySystem,L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath, strPersonalPluginsPath);
 	bool ExplicitWindowMode=Opt.WindowMode!=FALSE;
-	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
-	/* *************************************************** </ПРЕПРОЦЕССЫ> */
+	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // ГЇГ°Г®ГЁГ­ГЁГ¶ГЁГ Г«ГЁГ§ГЁГ°ГіГҐГ¬ Г­Г  ГўГ±ГїГЄГЁГ© Г±Г«ГіГ·Г Г©
+	/* *************************************************** </ГЏГђГ…ГЏГђГЋГ–Г…Г‘Г‘Г›> */
 
 	for (I=0; I < ARRAYSIZE(CFG); ++I)
 	{
@@ -851,7 +851,7 @@ void ReadConfig()
 		}
 	}
 
-	/* <ПОСТПРОЦЕССЫ> *************************************************** */
+	/* <ГЏГЋГ‘Г’ГЏГђГЋГ–Г…Г‘Г‘Г›> *************************************************** */
 	if (Opt.ShowMenuBar)
 		Opt.ShowMenuBar=1;
 
@@ -863,8 +863,8 @@ void ReadConfig()
 		Opt.WindowMode=TRUE;
 	}
 
-	Opt.HelpTabSize=8; // пока жестко пропишем...
-	//   Уточняем алгоритм "взятия" палитры.
+	Opt.HelpTabSize=8; // ГЇГ®ГЄГ  Г¦ГҐГ±ГІГЄГ® ГЇГ°Г®ГЇГЁГёГҐГ¬...
+	//   Г“ГІГ®Г·Г­ГїГҐГ¬ Г Г«ГЈГ®Г°ГЁГІГ¬ "ГўГ§ГїГІГЁГї" ГЇГ Г«ГЁГІГ°Г».
 	for (I=COL_PRIVATEPOSITION_FOR_DIF165ABOVE-COL_FIRSTPALETTECOLOR+1;
 	        I < (COL_LASTPALETTECOLOR-COL_FIRSTPALETTECOLOR);
 	        ++I)
@@ -878,8 +878,8 @@ void ReadConfig()
 
 			/*
 			else
-			  в других случаях нифига ничего не делаем, т.к.
-			  есть другие палитры...
+			  Гў Г¤Г°ГіГЈГЁГµ Г±Г«ГіГ·Г ГїГµ Г­ГЁГґГЁГЈГ  Г­ГЁГ·ГҐГЈГ® Г­ГҐ Г¤ГҐГ«Г ГҐГ¬, ГІ.ГЄ.
+			  ГҐГ±ГІГј Г¤Г°ГіГЈГЁГҐ ГЇГ Г«ГЁГІГ°Г»...
 			*/
 		}
 	}
@@ -887,11 +887,11 @@ void ReadConfig()
 	Opt.ViOpt.ViewerIsWrap&=1;
 	Opt.ViOpt.ViewerWrap&=1;
 
-	// Исключаем случайное стирание разделителей ;-)
+	// Г€Г±ГЄГ«ГѕГ·Г ГҐГ¬ Г±Г«ГіГ·Г Г©Г­Г®ГҐ Г±ГІГЁГ°Г Г­ГЁГҐ Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«ГҐГ© ;-)
 	if (Opt.strWordDiv.IsEmpty())
 		Opt.strWordDiv = WordDiv0;
 
-	// Исключаем случайное стирание разделителей
+	// Г€Г±ГЄГ«ГѕГ·Г ГҐГ¬ Г±Г«ГіГ·Г Г©Г­Г®ГҐ Г±ГІГЁГ°Г Г­ГЁГҐ Г°Г Г§Г¤ГҐГ«ГЁГІГҐГ«ГҐГ©
 	if (Opt.XLat.strWordDivForXlat.IsEmpty())
 		Opt.XLat.strWordDivForXlat = WordDivForXlat0;
 
@@ -919,13 +919,13 @@ void ReadConfig()
 	FileList::ReadPanelModes();
 	CtrlObject->EditorPosCache->Read(L"Editor/LastPositions");
 	CtrlObject->ViewerPosCache->Read(L"Viewer/LastPositions");
-	// уточняем системную политику
-	// для дисков HKCU может только отменять показ
+	// ГіГІГ®Г·Г­ГїГҐГ¬ Г±ГЁГ±ГІГҐГ¬Г­ГіГѕ ГЇГ®Г«ГЁГІГЁГЄГі
+	// Г¤Г«Гї Г¤ГЁГ±ГЄГ®Гў HKCU Г¬Г®Г¦ГҐГІ ГІГ®Г«ГјГЄГ® Г®ГІГ¬ГҐГ­ГїГІГј ГЇГ®ГЄГ Г§
 	Opt.Policies.ShowHiddenDrives&=OptPolicies_ShowHiddenDrives;
-	// для опций HKCU может только добавлять блокироку пунктов
+	// Г¤Г«Гї Г®ГЇГ¶ГЁГ© HKCU Г¬Г®Г¦ГҐГІ ГІГ®Г«ГјГЄГ® Г¤Г®ГЎГ ГўГ«ГїГІГј ГЎГ«Г®ГЄГЁГ°Г®ГЄГі ГЇГіГ­ГЄГІГ®Гў
 	Opt.Policies.DisabledOptions|=OptPolicies_DisabledOptions;
 
-	if (Opt.strExecuteBatchType.IsEmpty()) // предохраняемся
+	if (Opt.strExecuteBatchType.IsEmpty()) // ГЇГ°ГҐГ¤Г®ГµГ°Г Г­ГїГҐГ¬Г±Гї
 		Opt.strExecuteBatchType=constBatchExt;
 
 	{
@@ -953,7 +953,7 @@ void ReadConfig()
 					break;
 			}
 
-			if (I <= 1) // если указано меньше двух - "откключаем" эту
+			if (I <= 1) // ГҐГ±Г«ГЁ ГіГЄГ Г§Г Г­Г® Г¬ГҐГ­ГјГёГҐ Г¤ГўГіГµ - "Г®ГІГЄГЄГ«ГѕГ·Г ГҐГ¬" ГЅГІГі
 				Opt.XLat.Layouts[0]=0;
 		}
 	}
@@ -973,20 +973,20 @@ void ReadConfig()
                                   Opt.FindOpt.OutColumnCount);
 	}
 
-	/* *************************************************** </ПОСТПРОЦЕССЫ> */
+	/* *************************************************** </ГЏГЋГ‘Г’ГЏГђГЋГ–Г…Г‘Г‘Г›> */
 }
 
 
 void SaveConfig(int Ask)
 {
-	if (Opt.Policies.DisabledOptions&0x20000) // Bit 17 - Сохранить параметры
+	if (Opt.Policies.DisabledOptions&0x20000) // Bit 17 - Г‘Г®ГµГ°Г Г­ГЁГІГј ГЇГ Г°Г Г¬ГҐГІГ°Г»
 		return;
 
 	if (Ask && Message(0,2,MSG(MSaveSetupTitle),MSG(MSaveSetupAsk1),MSG(MSaveSetupAsk2),MSG(MSaveSetup),MSG(MCancel)))
 		return;
 
 	FARString strTemp;
-	/* <ПРЕПРОЦЕССЫ> *************************************************** */
+	/* <ГЏГђГ…ГЏГђГЋГ–Г…Г‘Г‘Г›> *************************************************** */
 	Panel *LeftPanel=CtrlObject->Cp()->LeftPanel;
 	Panel *RightPanel=CtrlObject->Cp()->RightPanel;
 	Opt.LeftPanel.Focus=LeftPanel->GetFocus();
@@ -1028,7 +1028,7 @@ void SaveConfig(int Ask)
 	RightPanel->GetCurDir(Opt.strRightFolder);
 	RightPanel->GetCurBaseName(Opt.strRightCurFile,strTemp);
 	CtrlObject->HiFiles->SaveHiData();
-	/* *************************************************** </ПРЕПРОЦЕССЫ> */
+	/* *************************************************** </ГЏГђГ…ГЏГђГЋГ–Г…Г‘Г‘Г›> */
 	SetRegKey(NKeySystem,L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath);
 	SetRegKey(NKeyLanguage,L"Main",Opt.strLanguage);
 
@@ -1049,12 +1049,12 @@ void SaveConfig(int Ask)
 			}
 	}
 
-	/* <ПОСТПРОЦЕССЫ> *************************************************** */
+	/* <ГЏГЋГ‘Г’ГЏГђГЋГ–Г…Г‘Г‘Г›> *************************************************** */
 	FileFilter::SaveFilters();
 	FileList::SavePanelModes();
 
 	if (Ask)
 		CtrlObject->Macro.SaveMacros();
 
-	/* *************************************************** </ПОСТПРОЦЕССЫ> */
+	/* *************************************************** </ГЏГЋГ‘Г’ГЏГђГЋГ–Г…Г‘Г‘Г›> */
 }

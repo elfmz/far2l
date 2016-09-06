@@ -4,7 +4,9 @@
 #include <chrono>
 #include <thread>
 #include <condition_variable>
+#ifndef __APPLE__
 #include <sys/inotify.h>
+#endif
 #include <pthread.h>
 
 #include "WinPortHandle.h"
@@ -25,6 +27,8 @@ class WinPortFSNotify : public WinPortEvent
 
 	void AddWatch(const char *path)
 	{
+		int w = -1;
+#ifndef __APPLE__
 		uint32_t mask = 0;
 		
 		//TODO: be smarter with filtering
@@ -34,7 +38,8 @@ class WinPortFSNotify : public WinPortEvent
 		if (_filter & (FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SECURITY))
 			mask|= IN_MODIFY | IN_CREATE | IN_ATTRIB;
 
-		int w = inotify_add_watch(_fd, path, mask);
+		w = inotify_add_watch(_fd, path, mask);
+#endif
 		if (w!=-1)
 			_watches.push_back(w);
 		else
@@ -77,6 +82,7 @@ class WinPortFSNotify : public WinPortEvent
 
 	void WatcherProc()
 	{
+#ifndef __APPLE__
 		union {
 			struct inotify_event ie;
 			char space[ sizeof(struct inotify_event) + NAME_MAX + 10 ];
@@ -109,13 +115,16 @@ class WinPortFSNotify : public WinPortEvent
 				}
 			}
 		}
+#endif
 	}
 
 public:
 	WinPortFSNotify(LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter)
-		: WinPortEvent(true, false), _watcher(0), _fd(inotify_init1(IN_CLOEXEC | IN_NONBLOCK)), 
+		: WinPortEvent(true, false), _watcher(0),
 		_filter(dwNotifyFilter), _watching(false)
 	{
+#ifndef __APPLE__
+		_fd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
 		if (_fd==-1)
 			return;
 
@@ -137,10 +146,12 @@ public:
 		} else {
 			fprintf(stderr, "WinPortFSNotify('%ls') - not watching\n", lpPathName);
 		}
+#endif
 	}
 
 	~WinPortFSNotify()
 	{
+#ifndef __APPLE__
 		if (_fd!=-1) {
 			if (_watching) {
 				_watching = false;
@@ -155,6 +166,7 @@ public:
 				inotify_rm_watch(_fd, w);
 			close(_fd);
 		}
+#endif
 	}
 
 };

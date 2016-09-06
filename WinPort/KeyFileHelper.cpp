@@ -6,6 +6,7 @@
 #include <glib.h>
 #include <string.h>
 #include <mutex>
+#include <stdlib.h>
 
 static std::mutex g_key_file_helper_mutex;
 

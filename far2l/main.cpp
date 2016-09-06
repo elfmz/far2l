@@ -61,6 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include <string>
 #include <sys/stat.h>
+#include <locale.h>
 
 #ifdef DIRECT_RT
 int DirectRT=0;

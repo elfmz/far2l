@@ -443,14 +443,14 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 	if (src_rect.Right < src_rect.Left || src_rect.Bottom < src_rect.Top) 
 		return false;
 
-	COORD data_size = {src_rect.Right + 1 - src_rect.Left, src_rect.Bottom + 1 - src_rect.Top};
+	COORD data_size = {(SHORT)(src_rect.Right + 1 - src_rect.Left), (SHORT)(src_rect.Bottom + 1 - src_rect.Top)};
 	size_t total_chars = data_size.X;
 	total_chars*= data_size.Y;
 	COORD data_pos = {0, 0};
 		
 	std::vector<CHAR_INFO> data(total_chars);
 	SMALL_RECT dst_rect = {dwDestinationOrigin.X, dwDestinationOrigin.Y, 
-		dwDestinationOrigin.X + data_size.X - 1, dwDestinationOrigin.Y + data_size.Y - 1};
+		(SHORT)(dwDestinationOrigin.X + data_size.X - 1), (SHORT)(dwDestinationOrigin.Y + data_size.Y - 1)};
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		_buf.Read(&data[0], data_size, data_pos, src_rect);

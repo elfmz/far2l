@@ -2,6 +2,9 @@
 #include <time.h>
 #include "WinCompat.h"
 #include "WinPort.h"
+#ifdef __APPLE__
+#include <mach/mach_time.h>
+#endif
 
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
@@ -373,6 +376,11 @@ WINPORT_DECL(GetTickCount, DWORD, ())
 {
 #ifdef _WIN32
 	return ::GetTickCount();
+#elif defined(__APPLE__)
+    static mach_timebase_info_data_t g_timebase_info;
+    if (g_timebase_info.denom == 0)
+        mach_timebase_info(&g_timebase_info);
+    return mach_absolute_time()*g_timebase_info.numer/g_timebase_info.denom/1000000u;
 #else
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);

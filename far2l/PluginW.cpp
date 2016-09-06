@@ -499,7 +499,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.FarInputRecordToKey=InputRecordToKey;
 		StandardFunctions.XLat=Xlat;
 		StandardFunctions.GetFileOwner=farGetFileOwner;
-		StandardFunctions.GetNumberOfLinks=0;//GetNumberOfLinks;
+		StandardFunctions.GetNumberOfLinks=GetNumberOfLinks;
 		StandardFunctions.FarRecursiveSearch=FarRecursiveSearch;
 		StandardFunctions.MkTemp=FarMkTemp;
 		StandardFunctions.DeleteBuffer=DeleteBuffer;

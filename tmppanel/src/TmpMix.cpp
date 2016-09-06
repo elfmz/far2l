@@ -6,6 +6,7 @@ Temporary panel miscellaneous utility functions
 */
 
 #include "TmpPanel.hpp"
+#include <string>
 
 const TCHAR *GetMsg(int MsgId)
 {
@@ -243,6 +244,26 @@ TCHAR* ExpandEnvStrs(const TCHAR* input, StrBuf& output) {
   return output;
 }
 
+static DWORD LookAtPath(const TCHAR *dir, const TCHAR *name, TCHAR *buffer = NULL, DWORD buf_size = 0)
+{
+	std::wstring path(dir);
+	if (path.empty())
+		return 0;
+
+	if (path[path.size()-1]!=GOOD_SLASH)
+		path+= GOOD_SLASH;
+
+	path+= name;
+	if (GetFileAttributes(path.c_str())==INVALID_FILE_ATTRIBUTES)
+		return 0;
+
+	if (buf_size >= (path.size() + 1))
+		wcscpy(buffer, path.c_str());
+
+	return path.size() + 1;
+}
+
+
 bool FindListFile(const TCHAR *FileName, StrBuf &output)
 {
   StrBuf Path;
@@ -269,21 +290,19 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
     lstrcpy(output, FullPath);
     return true;
   }
-
   {
     const TCHAR *tmp = FSF.PointToName(Info.ModuleName);
     Path.Grow((int)(tmp-Info.ModuleName+1));
     lstrcpyn(Path,Info.ModuleName,(int)(tmp-Info.ModuleName+1));
-    dwSize=0; fprintf(stderr, "SearchPath1\n"); //SearchPath(Path,FileName,NULL,0,NULL,NULL);
+    dwSize = LookAtPath(Path, FileName);
     if (dwSize)
     {
       final = Path;
       goto success;
     }
   }
-
-  ExpandEnvStrs(_T("%FARHOME%;%PATH%"),Path);
-  for (TCHAR *str=Path, *p=_tcschr(Path,_T(';')); *str; p=_tcschr(str,_T(';')))
+  ExpandEnvStrs(_T("%FARHOME%:%PATH%"),Path);
+  for (TCHAR *str=Path, *p=_tcschr(Path,_T(':')); *str; p=_tcschr(str,_T(':')))
   {
     if (p)
       *p = 0;
@@ -293,7 +312,7 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 
     if (*str)
     {
-      dwSize=fprintf(stderr, "SearchPath2\n"); //SearchPath(str,FileName,NULL,0,NULL,NULL);
+      dwSize = LookAtPath(str, FileName);
       if (dwSize)
       {
         final = str;
@@ -312,7 +331,8 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 success:
 
   output.Grow(dwSize);
-  fprintf(stderr, "SearchPath3\n"); //SearchPath(final,FileName,NULL,dwSize,output,NULL);
+  if (LookAtPath(final, FileName, output, dwSize)!=dwSize)
+	  fprintf(stderr, "LookAtPath: unexpected size\n");
 
   return true;
 }

@@ -165,6 +165,7 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
 {
   ffd.dwFileAttributes=wfd.dwFileAttributes;
+  ffd.dwUnixMode=wfd.dwUnixMode;
   ffd.ftCreationTime=wfd.ftCreationTime;
   ffd.ftLastAccessTime=wfd.ftLastAccessTime;
   ffd.ftLastWriteTime=wfd.ftLastWriteTime;

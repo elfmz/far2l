@@ -101,7 +101,16 @@ extern "C"
 				
 			return INVALID_HANDLE_VALUE;
 		}
-			
+		
+		/*nobody cares.. if ((dwFlagsAndAttributes&FILE_FLAG_BACKUP_SEMANTICS)==0) {
+			struct stat s = { };
+			fstat(r, &s);
+			if ( (s.st_mode & S_IFMT) == FILE_ATTRIBUTE_DIRECTORY) {
+				close(r);
+				WINPORT(SetLastError)(ERROR_DIRECTORY);
+				return INVALID_HANDLE_VALUE;
+			}
+		}*/
 
 		return WinPortHandle_Register(new WinPortHandleFile(r));
 	}
@@ -545,8 +554,11 @@ extern "C"
 		if (p!=std::string::npos) {
 			mask.assign(root.c_str() + p + 1);
 			root.resize(p + 1);
-			//fprintf(stderr, "find mask: %s\n", mask.c_str());
+		} else {
+			fprintf(stderr, "FindFirstFile: no slash in root='%s' for lpFileName='%ls'\n", root.c_str(), lpFileName);
 		}
+
+		if (mask=="*" || mask=="*.*") mask.clear();
 		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos) {
 
 			struct stat s = { };

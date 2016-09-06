@@ -527,10 +527,10 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 				goto Skip;
 			}
 
-			if(chdir(m)) break;
+			if(chdir(m)==0) break;
 
 			if(DoCreateDirectory(m))
-				if(chdir(m)) break;
+				if(chdir(m)==0) break;
 
 			p->Error.printf(FP_GetMsg(MQCanNotChangeLocal), m, __WINError());
 			goto Skip;

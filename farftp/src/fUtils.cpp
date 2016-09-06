@@ -124,7 +124,7 @@ int FTP::ExpandList(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL FromPlu
 
 		if(!pSaved)
 			SaveUsedDirNFile();
-
+		
 		rc = ExpandListINT(pi,icn,il,FromPlugin,cb,Param);
 
 		if(hConnect)
@@ -179,11 +179,10 @@ int FTP::ExpandList(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL FromPlu
 BOOL FTP::FTP_SetDirectory(LPCSTR dir,BOOL FromPlugin)
 {
 	PROC(("FTP::FTP_SetDirectory", "%s,%d", dir,FromPlugin))
-
 	if(FromPlugin)
 		return SetDirectory(dir,OPM_SILENT) == TRUE;
 	else
-		return chdir(dir);
+		return chdir(dir) == 0;
 }
 
 BOOL FTP::FTP_GetFindData(PluginPanelItem **PanelItem,int *ItemsNumber,BOOL FromPlugin)
@@ -196,7 +195,7 @@ BOOL FTP::FTP_GetFindData(PluginPanelItem **PanelItem,int *ItemsNumber,BOOL From
 
 	PROC(("LOCAL GetFindData", NULL))
 	FP_SizeItemList il(FALSE);
-	WIN32_FIND_DATA fd;
+	WIN32_FIND_DATA fd = {};
 	PluginPanelItem p;
 	HANDLE          h = WINPORT(FindFirstFile)(L"*.*",&fd);
 
@@ -233,7 +232,15 @@ BOOL FTP::FTP_GetFindData(PluginPanelItem **PanelItem,int *ItemsNumber,BOOL From
 		//Reset plugin structure
 		memset(&p,0,sizeof(PluginPanelItem));
 		//Copy win32 data
-		memmove(&p.FindData,&fd,sizeof(p.FindData));
+		p.FindData.dwFileAttributes = fd.dwFileAttributes;
+		p.FindData.ftLastAccessTime = fd.ftLastAccessTime;
+		p.FindData.ftLastWriteTime = fd.ftLastWriteTime;
+		p.FindData.nFileSizeHigh = fd.nFileSizeHigh;
+		p.FindData.nFileSizeLow = fd.nFileSizeLow;
+		p.FindData.dwReserved0 = fd.dwReserved0;
+		p.FindData.dwReserved1 = fd.dwReserved1;
+		p.FindData.dwUnixMode = fd.dwUnixMode;
+		WINPORT(WideCharToMultiByte)(CP_UTF8, 0, fd.cFileName, -1, p.FindData.cFileName, ARRAYSIZE(p.FindData.cFileName), NULL, NULL);
 
 		if(!il.Add(&p,1))
 			return FALSE;
@@ -319,7 +326,6 @@ int FTP::ExpandListINT(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL From
 
 			continue;
 		}
-
 //============
 //DIR
 		//Get name

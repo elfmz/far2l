@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "exitcode.hpp"
 #include "vtlog.h"
+#include <limits>
 
 CommandLine::CommandLine():
 	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
@@ -160,7 +161,7 @@ int CommandLine::ProcessKey(int Key)
 		if (histfile.empty())
 			return TRUE;
 			
-		FileEditor *ShellEditor=new FileEditor(StrMB2Wide(histfile).c_str(), CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW);
+		FileEditor *ShellEditor=new FileEditor(StrMB2Wide(histfile).c_str(), CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW, std::numeric_limits<int>::max() );
 		unlink(histfile.c_str());
 		if (ShellEditor) {
 			DWORD editorExitCode = ShellEditor->GetExitCode();

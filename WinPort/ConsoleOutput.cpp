@@ -10,6 +10,14 @@ template <class I>
 	if (h < 12) h = 12;
 }
 
+template <class I> 
+	void ApplyCoordinateLimits(I &v, unsigned int limit)
+{
+	if (v <= 0) v = 0;
+	else if ((unsigned int)v >= limit) v = limit - 1;
+}
+
+
 
 const char *utf8index(const char *s, size_t bytes, size_t pos)
 {    
@@ -494,6 +502,10 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 void ConsoleOutput::SetScrollRegion(SHORT top, SHORT bottom)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
+	unsigned int width = 0, height = 0;
+	_buf.GetSize(width, height);
+	ApplyCoordinateLimits(bottom, height);
+	ApplyCoordinateLimits(top, bottom);
 	_scroll_region.top = top;
 	_scroll_region.bottom = bottom;
 }

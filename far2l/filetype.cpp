@@ -74,39 +74,6 @@ const FileTypeStrings FTS=
 };
 
 
-/* $ 25.04.2001 DJ
-   îáðàáîòêà @ â IF EXIST: ôóíêöèÿ, êîòîðàÿ èçâëåêàåò êîìàíäó èç ñòðîêè
-   ñ IF EXIST ñ ó÷åòîì @ è âîçâðàùàåò TRUE, åñëè óñëîâèå IF EXIST
-   âûïîëåíî, è FALSE â ïðîòèâíîì ñëó÷àå/
-*/
-
-bool ExtractIfExistCommand(FARString &strCommandText)
-{
-	bool Result=true;
-	const wchar_t *wPtrCmd=PrepareOSIfExist(strCommandText);
-
-	// Âî! Óñëîâèå íå âûïîëíåíî!!!
-	// (íàïðèìåð, ïîêà ðàññìàòðèâàëè ìåíþõó, â ýòî âðåìÿ)
-	// êàêîé-òî çëîáíûé ÷åáóðàøêà ñòåð ôàéë!
-	if (wPtrCmd)
-	{
-		if (!*wPtrCmd)
-		{
-			Result=false;
-		}
-		else
-		{
-			size_t offset = wPtrCmd-strCommandText.CPtr();
-			wchar_t *CommandText = strCommandText.GetBuffer();
-			wchar_t *PtrCmd = CommandText+offset;
-			// ïðîêèíåì "if exist"
-			wmemmove(CommandText+(*CommandText==L'@'?1:0),PtrCmd,StrLength(PtrCmd)+1);
-			strCommandText.ReleaseBuffer();
-		}
-	}
-
-	return Result;
-}
 
 int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nullptr)
 {
@@ -242,10 +209,6 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 		FARString strCommandText = strCommand;
 		SubstFileName(strCommandText,Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
 
-		// âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
-		if (!ExtractIfExistCommand(strCommandText))
-			continue;
-
 		ActualCmdCount++;
 		FARString strMenuText;
 
@@ -301,8 +264,6 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	int PreserveLFN=SubstFileName(strCommand,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
 	bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
-	// Ñíîâà âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
-	if (ExtractIfExistCommand(strCommand))
 	{
 		PreserveLongName PreserveName(ShortName,PreserveLFN);
 		RemoveExternalSpaces(strCommand);
@@ -396,19 +357,11 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t 
 		int PreserveLFN=SubstFileName(strExecStr,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
 		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
-		// Ñíîâà âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
-		if (!ExtractIfExistCommand(strExecStr))
-			return;
-
 		PreserveLongName PreserveName(ShortName,PreserveLFN);
 		ConvertNameToFull(Name,strFullName);
 		strFullShortName = strFullName;
 		//BUGBUGBUGBUGBUGBUG !!! Same ListNames!!!
 		SubstFileName(strFullExecStr,strFullName,strFullShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
-
-		// Ñíîâà âñå "ïîäñòàâëåíî", òåïåðü ïðîâåðèì óñëîâèÿ "if exist"
-		if (!ExtractIfExistCommand(strFullExecStr))
-			return;
 
 		CtrlObject->ViewHistory->AddToHistory(strFullExecStr,(AlwaysWaitFinish&1)+2);
 

@@ -4483,7 +4483,6 @@ bool FileList::ApplyCommand()
 		int PreserveLFN=SubstFileName(strConvertedCommand,strSelName,strSelShortName,&strListName,&strAnotherListName,&strShortListName, &strAnotherShortListName);
 		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
-		if (ExtractIfExistCommand(strConvertedCommand))
 		{
 			PreserveLongName PreserveName(strSelShortName,PreserveLFN);
 			RemoveExternalSpaces(strConvertedCommand);

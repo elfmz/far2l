@@ -175,7 +175,7 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/sh";
-		r = execl(shell, shell, "-ci", CmdStr, NULL);
+		r = execl(shell, shell, "-ic", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
 	exit(r);

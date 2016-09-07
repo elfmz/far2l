@@ -97,8 +97,8 @@ src/FStdLib/FARStdlib/fstd_exSPS.cpp
 src/FStdLib/FARStdlib/fstd_FUtils.cpp
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -Wall -std=c++11 -fPIC --shared -Wno-unused-function")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -Wall -std=c99 -fPIC --shared -Wno-unused-function")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -Wall -std=c++11 -fPIC -Wno-unused-function")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -Wall -std=c99 -fPIC -Wno-unused-function")
 
 include_directories(.)
 include_directories(src)

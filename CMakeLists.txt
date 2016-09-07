@@ -2,10 +2,12 @@
 cmake_minimum_required (VERSION 3.3.2)
 project (FAR)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC -Wno-unused-function")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -fPIC -Wno-unused-function -Wno-c++11-narrowing -fsanitize=address")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -fsanitize=address")
 set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
+set(ENV{ASAN_SYMBOLIZER_PATH} /usr/bin/llvm-symbolizer-3.8)
+set(ENV{ASAN_OPTIONS} symbolize=1)
 
 add_subdirectory (farlng)
 add_subdirectory (WinPort)
@@ -15,7 +17,7 @@ add_dependencies (far2l farlng)
 set_target_properties(far2l
   PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}"
-    ENABLE_EXPORTS ON
+    ENABLE_EXPORTS TRUE
 )
 set_target_properties(farlng
   PROPERTIES

@@ -35,23 +35,18 @@ static std::string GetRegistrySubroot(const char *sub)
 
 static std::string HKDir(HKEY hKey)
 {
-	switch ((ULONG_PTR)hKey) {
-#ifdef __APPLE__
-	case 0x80000000: return GetRegistrySubroot("/hklm/software/classes"); 
-	case 0x80000001: return GetRegistrySubroot("/hku/c"); 
-	case 0x80000002: return GetRegistrySubroot("/hklm"); 
-	case 0x80000003: return GetRegistrySubroot("/hku") ;
-	case 0x80000004: return GetRegistrySubroot("/pd"); 
-	case 0x80000050: return GetRegistrySubroot("/pt");
-#else
-	case (ULONG_PTR)HKEY_CLASSES_ROOT: return GetRegistrySubroot("/hklm/software/classes"); 
-	case (ULONG_PTR)HKEY_CURRENT_USER: return GetRegistrySubroot("/hku/c"); 
-	case (ULONG_PTR)HKEY_LOCAL_MACHINE: return GetRegistrySubroot("/hklm"); 
-	case (ULONG_PTR)HKEY_USERS: return GetRegistrySubroot("/hku") ;
-	case (ULONG_PTR)HKEY_PERFORMANCE_DATA: return GetRegistrySubroot("/pd"); 
-	case (ULONG_PTR)HKEY_PERFORMANCE_TEXT: return GetRegistrySubroot("/pt");
-#endif 
-	}
+	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_CLASSES_ROOT)
+		return GetRegistrySubroot("/hklm/software/classes");
+	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_CURRENT_USER)
+		return GetRegistrySubroot("/hku/c");
+	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_LOCAL_MACHINE)
+		return GetRegistrySubroot("/hklm");
+	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_USERS)
+		return GetRegistrySubroot("/hku") ;
+	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_PERFORMANCE_DATA)
+		return GetRegistrySubroot("/pd");
+	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_PERFORMANCE_TEXT)
+		return GetRegistrySubroot("/pt");
 
 	std::string out;
 	AutoWinPortHandle<WinPortHandleReg> wph(hKey);

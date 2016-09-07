@@ -173,11 +173,10 @@ int wxKeyCode2WinKeyCode(int code)
 	return code;
 }
 
-/*int wxKeyIsEnhanced(int code)
+static int IsEnhancedKey(int code)
 {
-	
-	return false;
-}*/
+	return (code==WXK_LEFT || code==WXK_RIGHT || code==WXK_UP || code==WXK_DOWN);
+}
 
 wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 {
@@ -189,8 +188,8 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
 	
-//	if (wxKeyIsEnhanced(event.GetKeyCode()))
-//		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+	if (IsEnhancedKey(event.GetKeyCode()))
+		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 		
 	if (wxGetKeyState(WXK_NUMLOCK))
 		Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;

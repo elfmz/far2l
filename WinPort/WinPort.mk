@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=06/09/16
+Date                   :=07/09/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -36,7 +36,7 @@ ObjectsFileList        :="WinPort.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  $(shell wx-config --debug=yes --libs --unicode=yes)
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 
@@ -60,17 +60,17 @@ AS       := /usr/bin/as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/APIClipboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIFiles.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIFSNotify.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIKeyboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIMemory.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIOther.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIRegistry.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIStringCodepages.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIStringMap.cpp$(ObjectSuffix) $(IntermediateDirectory)/APISynch.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/APITime.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleBuffer.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleInput.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConsoleOutput.cpp$(ObjectSuffix) $(IntermediateDirectory)/stdafx.cpp$(ObjectSuffix) $(IntermediateDirectory)/WinPortHandle.cpp$(ObjectSuffix) $(IntermediateDirectory)/wxWinTranslations.cpp$(ObjectSuffix) $(IntermediateDirectory)/WinPortSynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/KeyFileHelper.cpp$(ObjectSuffix) $(IntermediateDirectory)/APIConsole.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/APIPrintFormat.cpp$(ObjectSuffix) $(IntermediateDirectory)/Utils.cpp$(ObjectSuffix) $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_collation.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_compose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cpsymbol.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cptable.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_decompose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_locale.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_mbtowc.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/wineguts_sortkey.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_utf8.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctomb.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctype.c$(ObjectSuffix) $(IntermediateDirectory)/UI_Paint.cpp$(ObjectSuffix) $(IntermediateDirectory)/UI_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_037.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_424.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_437.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_500.c$(ObjectSuffix) \
+Objects0=$(IntermediateDirectory)/src_APIClipboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIConsole.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIFiles.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIFSNotify.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIKeyboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIMemory.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIOther.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIPrintFormat.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIRegistry.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIStringCodepages.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/src_APIStringMap.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APISynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APITime.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleBuffer.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleInput.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleOutput.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_KeyFileHelper.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_stdafx.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Utils.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_WinPortHandle.cpp$(ObjectSuffix) \
+	$(IntermediateDirectory)/src_WinPortSynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_collation.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_compose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cpsymbol.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cptable.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_decompose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_locale.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_mbtowc.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_sortkey.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/wineguts_utf8.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctomb.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctype.c$(ObjectSuffix) $(IntermediateDirectory)/UI_Paint.cpp$(ObjectSuffix) $(IntermediateDirectory)/UI_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/UI_wxWinTranslations.cpp$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_037.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_424.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_437.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_500.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_737.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_775.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_850.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_852.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_855.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_856.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_857.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_860.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_861.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_862.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_863.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_864.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_865.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_869.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_874.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_875.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_878.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_932.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_936.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_949.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_950.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1006.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1026.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1250.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1251.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1252.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1253.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1254.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1255.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_1256.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1257.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1258.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1361.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10000.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10001.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10002.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10003.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10004.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10005.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_10006.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10007.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10008.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10010.c$(ObjectSuffix) 
+	$(IntermediateDirectory)/codepages_c_10006.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10007.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10008.c$(ObjectSuffix) 
 
-Objects1=$(IntermediateDirectory)/codepages_c_10017.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10021.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10029.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10079.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10081.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10082.c$(ObjectSuffix) \
+Objects1=$(IntermediateDirectory)/codepages_c_10010.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10017.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10021.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10029.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10079.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10081.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10082.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_20127.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_20866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_20932.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_21866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28591.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28592.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28593.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28594.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28595.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28596.c$(ObjectSuffix) \
 	$(IntermediateDirectory)/codepages_c_28597.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28598.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28599.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28600.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28603.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28604.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28605.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28606.c$(ObjectSuffix) 
 
@@ -106,115 +106,110 @@ PreBuild:
 ##
 ## Objects
 ##
-$(IntermediateDirectory)/APIClipboard.cpp$(ObjectSuffix): APIClipboard.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIClipboard.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIClipboard.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIClipboard.cpp$(PreprocessSuffix): APIClipboard.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIClipboard.cpp$(PreprocessSuffix) "APIClipboard.cpp"
+$(IntermediateDirectory)/src_APIClipboard.cpp$(ObjectSuffix): src/APIClipboard.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIClipboard.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIClipboard.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIClipboard.cpp$(PreprocessSuffix): src/APIClipboard.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIClipboard.cpp$(PreprocessSuffix) "src/APIClipboard.cpp"
 
-$(IntermediateDirectory)/APIFiles.cpp$(ObjectSuffix): APIFiles.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIFiles.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIFiles.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIFiles.cpp$(PreprocessSuffix): APIFiles.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIFiles.cpp$(PreprocessSuffix) "APIFiles.cpp"
+$(IntermediateDirectory)/src_APIConsole.cpp$(ObjectSuffix): src/APIConsole.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIConsole.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIConsole.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIConsole.cpp$(PreprocessSuffix): src/APIConsole.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIConsole.cpp$(PreprocessSuffix) "src/APIConsole.cpp"
 
-$(IntermediateDirectory)/APIFSNotify.cpp$(ObjectSuffix): APIFSNotify.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIFSNotify.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIFSNotify.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIFSNotify.cpp$(PreprocessSuffix): APIFSNotify.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIFSNotify.cpp$(PreprocessSuffix) "APIFSNotify.cpp"
+$(IntermediateDirectory)/src_APIFiles.cpp$(ObjectSuffix): src/APIFiles.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIFiles.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIFiles.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIFiles.cpp$(PreprocessSuffix): src/APIFiles.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIFiles.cpp$(PreprocessSuffix) "src/APIFiles.cpp"
 
-$(IntermediateDirectory)/APIKeyboard.cpp$(ObjectSuffix): APIKeyboard.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIKeyboard.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIKeyboard.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIKeyboard.cpp$(PreprocessSuffix): APIKeyboard.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIKeyboard.cpp$(PreprocessSuffix) "APIKeyboard.cpp"
+$(IntermediateDirectory)/src_APIFSNotify.cpp$(ObjectSuffix): src/APIFSNotify.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIFSNotify.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIFSNotify.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIFSNotify.cpp$(PreprocessSuffix): src/APIFSNotify.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIFSNotify.cpp$(PreprocessSuffix) "src/APIFSNotify.cpp"
 
-$(IntermediateDirectory)/APIMemory.cpp$(ObjectSuffix): APIMemory.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIMemory.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIMemory.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIMemory.cpp$(PreprocessSuffix): APIMemory.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIMemory.cpp$(PreprocessSuffix) "APIMemory.cpp"
+$(IntermediateDirectory)/src_APIKeyboard.cpp$(ObjectSuffix): src/APIKeyboard.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIKeyboard.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIKeyboard.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIKeyboard.cpp$(PreprocessSuffix): src/APIKeyboard.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIKeyboard.cpp$(PreprocessSuffix) "src/APIKeyboard.cpp"
 
-$(IntermediateDirectory)/APIOther.cpp$(ObjectSuffix): APIOther.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIOther.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIOther.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIOther.cpp$(PreprocessSuffix): APIOther.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIOther.cpp$(PreprocessSuffix) "APIOther.cpp"
+$(IntermediateDirectory)/src_APIMemory.cpp$(ObjectSuffix): src/APIMemory.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIMemory.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIMemory.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIMemory.cpp$(PreprocessSuffix): src/APIMemory.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIMemory.cpp$(PreprocessSuffix) "src/APIMemory.cpp"
 
-$(IntermediateDirectory)/APIRegistry.cpp$(ObjectSuffix): APIRegistry.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIRegistry.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIRegistry.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIRegistry.cpp$(PreprocessSuffix): APIRegistry.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIRegistry.cpp$(PreprocessSuffix) "APIRegistry.cpp"
+$(IntermediateDirectory)/src_APIOther.cpp$(ObjectSuffix): src/APIOther.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIOther.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIOther.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIOther.cpp$(PreprocessSuffix): src/APIOther.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIOther.cpp$(PreprocessSuffix) "src/APIOther.cpp"
 
-$(IntermediateDirectory)/APIStringCodepages.cpp$(ObjectSuffix): APIStringCodepages.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIStringCodepages.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIStringCodepages.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIStringCodepages.cpp$(PreprocessSuffix): APIStringCodepages.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIStringCodepages.cpp$(PreprocessSuffix) "APIStringCodepages.cpp"
+$(IntermediateDirectory)/src_APIPrintFormat.cpp$(ObjectSuffix): src/APIPrintFormat.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIPrintFormat.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIPrintFormat.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIPrintFormat.cpp$(PreprocessSuffix): src/APIPrintFormat.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIPrintFormat.cpp$(PreprocessSuffix) "src/APIPrintFormat.cpp"
 
-$(IntermediateDirectory)/APIStringMap.cpp$(ObjectSuffix): APIStringMap.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIStringMap.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIStringMap.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIStringMap.cpp$(PreprocessSuffix): APIStringMap.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIStringMap.cpp$(PreprocessSuffix) "APIStringMap.cpp"
+$(IntermediateDirectory)/src_APIRegistry.cpp$(ObjectSuffix): src/APIRegistry.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIRegistry.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIRegistry.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIRegistry.cpp$(PreprocessSuffix): src/APIRegistry.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIRegistry.cpp$(PreprocessSuffix) "src/APIRegistry.cpp"
 
-$(IntermediateDirectory)/APISynch.cpp$(ObjectSuffix): APISynch.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APISynch.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APISynch.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APISynch.cpp$(PreprocessSuffix): APISynch.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APISynch.cpp$(PreprocessSuffix) "APISynch.cpp"
+$(IntermediateDirectory)/src_APIStringCodepages.cpp$(ObjectSuffix): src/APIStringCodepages.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIStringCodepages.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIStringCodepages.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIStringCodepages.cpp$(PreprocessSuffix): src/APIStringCodepages.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIStringCodepages.cpp$(PreprocessSuffix) "src/APIStringCodepages.cpp"
 
-$(IntermediateDirectory)/APITime.cpp$(ObjectSuffix): APITime.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APITime.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APITime.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APITime.cpp$(PreprocessSuffix): APITime.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APITime.cpp$(PreprocessSuffix) "APITime.cpp"
+$(IntermediateDirectory)/src_APIStringMap.cpp$(ObjectSuffix): src/APIStringMap.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APIStringMap.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APIStringMap.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APIStringMap.cpp$(PreprocessSuffix): src/APIStringMap.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APIStringMap.cpp$(PreprocessSuffix) "src/APIStringMap.cpp"
 
-$(IntermediateDirectory)/ConsoleBuffer.cpp$(ObjectSuffix): ConsoleBuffer.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./ConsoleBuffer.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/ConsoleBuffer.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/ConsoleBuffer.cpp$(PreprocessSuffix): ConsoleBuffer.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/ConsoleBuffer.cpp$(PreprocessSuffix) "ConsoleBuffer.cpp"
+$(IntermediateDirectory)/src_APISynch.cpp$(ObjectSuffix): src/APISynch.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APISynch.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APISynch.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APISynch.cpp$(PreprocessSuffix): src/APISynch.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APISynch.cpp$(PreprocessSuffix) "src/APISynch.cpp"
 
-$(IntermediateDirectory)/ConsoleInput.cpp$(ObjectSuffix): ConsoleInput.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./ConsoleInput.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/ConsoleInput.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/ConsoleInput.cpp$(PreprocessSuffix): ConsoleInput.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/ConsoleInput.cpp$(PreprocessSuffix) "ConsoleInput.cpp"
+$(IntermediateDirectory)/src_APITime.cpp$(ObjectSuffix): src/APITime.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/APITime.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_APITime.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_APITime.cpp$(PreprocessSuffix): src/APITime.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_APITime.cpp$(PreprocessSuffix) "src/APITime.cpp"
 
-$(IntermediateDirectory)/ConsoleOutput.cpp$(ObjectSuffix): ConsoleOutput.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./ConsoleOutput.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/ConsoleOutput.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/ConsoleOutput.cpp$(PreprocessSuffix): ConsoleOutput.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/ConsoleOutput.cpp$(PreprocessSuffix) "ConsoleOutput.cpp"
+$(IntermediateDirectory)/src_ConsoleBuffer.cpp$(ObjectSuffix): src/ConsoleBuffer.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/ConsoleBuffer.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_ConsoleBuffer.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_ConsoleBuffer.cpp$(PreprocessSuffix): src/ConsoleBuffer.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_ConsoleBuffer.cpp$(PreprocessSuffix) "src/ConsoleBuffer.cpp"
 
-$(IntermediateDirectory)/stdafx.cpp$(ObjectSuffix): stdafx.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./stdafx.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/stdafx.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/stdafx.cpp$(PreprocessSuffix): stdafx.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/stdafx.cpp$(PreprocessSuffix) "stdafx.cpp"
+$(IntermediateDirectory)/src_ConsoleInput.cpp$(ObjectSuffix): src/ConsoleInput.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/ConsoleInput.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_ConsoleInput.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_ConsoleInput.cpp$(PreprocessSuffix): src/ConsoleInput.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_ConsoleInput.cpp$(PreprocessSuffix) "src/ConsoleInput.cpp"
 
-$(IntermediateDirectory)/WinPortHandle.cpp$(ObjectSuffix): WinPortHandle.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./WinPortHandle.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/WinPortHandle.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/WinPortHandle.cpp$(PreprocessSuffix): WinPortHandle.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/WinPortHandle.cpp$(PreprocessSuffix) "WinPortHandle.cpp"
+$(IntermediateDirectory)/src_ConsoleOutput.cpp$(ObjectSuffix): src/ConsoleOutput.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/ConsoleOutput.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_ConsoleOutput.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_ConsoleOutput.cpp$(PreprocessSuffix): src/ConsoleOutput.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_ConsoleOutput.cpp$(PreprocessSuffix) "src/ConsoleOutput.cpp"
 
-$(IntermediateDirectory)/wxWinTranslations.cpp$(ObjectSuffix): wxWinTranslations.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./wxWinTranslations.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wxWinTranslations.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/wxWinTranslations.cpp$(PreprocessSuffix): wxWinTranslations.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/wxWinTranslations.cpp$(PreprocessSuffix) "wxWinTranslations.cpp"
+$(IntermediateDirectory)/src_KeyFileHelper.cpp$(ObjectSuffix): src/KeyFileHelper.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/KeyFileHelper.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_KeyFileHelper.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_KeyFileHelper.cpp$(PreprocessSuffix): src/KeyFileHelper.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_KeyFileHelper.cpp$(PreprocessSuffix) "src/KeyFileHelper.cpp"
 
-$(IntermediateDirectory)/WinPortSynch.cpp$(ObjectSuffix): WinPortSynch.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./WinPortSynch.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/WinPortSynch.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/WinPortSynch.cpp$(PreprocessSuffix): WinPortSynch.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/WinPortSynch.cpp$(PreprocessSuffix) "WinPortSynch.cpp"
+$(IntermediateDirectory)/src_stdafx.cpp$(ObjectSuffix): src/stdafx.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/stdafx.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_stdafx.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_stdafx.cpp$(PreprocessSuffix): src/stdafx.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_stdafx.cpp$(PreprocessSuffix) "src/stdafx.cpp"
 
-$(IntermediateDirectory)/KeyFileHelper.cpp$(ObjectSuffix): KeyFileHelper.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./KeyFileHelper.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/KeyFileHelper.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/KeyFileHelper.cpp$(PreprocessSuffix): KeyFileHelper.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/KeyFileHelper.cpp$(PreprocessSuffix) "KeyFileHelper.cpp"
+$(IntermediateDirectory)/src_Utils.cpp$(ObjectSuffix): src/Utils.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/Utils.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_Utils.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_Utils.cpp$(PreprocessSuffix): src/Utils.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_Utils.cpp$(PreprocessSuffix) "src/Utils.cpp"
 
-$(IntermediateDirectory)/APIConsole.cpp$(ObjectSuffix): APIConsole.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIConsole.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIConsole.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIConsole.cpp$(PreprocessSuffix): APIConsole.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIConsole.cpp$(PreprocessSuffix) "APIConsole.cpp"
+$(IntermediateDirectory)/src_WinPortHandle.cpp$(ObjectSuffix): src/WinPortHandle.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/WinPortHandle.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_WinPortHandle.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_WinPortHandle.cpp$(PreprocessSuffix): src/WinPortHandle.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_WinPortHandle.cpp$(PreprocessSuffix) "src/WinPortHandle.cpp"
 
-$(IntermediateDirectory)/APIPrintFormat.cpp$(ObjectSuffix): APIPrintFormat.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./APIPrintFormat.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/APIPrintFormat.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/APIPrintFormat.cpp$(PreprocessSuffix): APIPrintFormat.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/APIPrintFormat.cpp$(PreprocessSuffix) "APIPrintFormat.cpp"
-
-$(IntermediateDirectory)/Utils.cpp$(ObjectSuffix): Utils.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./Utils.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Utils.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/Utils.cpp$(PreprocessSuffix): Utils.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Utils.cpp$(PreprocessSuffix) "Utils.cpp"
+$(IntermediateDirectory)/src_WinPortSynch.cpp$(ObjectSuffix): src/WinPortSynch.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/WinPortSynch.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_WinPortSynch.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_WinPortSynch.cpp$(PreprocessSuffix): src/WinPortSynch.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_WinPortSynch.cpp$(PreprocessSuffix) "src/WinPortSynch.cpp"
 
 $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix): wineguts/casemap.c 
 	$(CC) $(SourceSwitch) "./wineguts/casemap.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IncludePath)
@@ -285,6 +280,11 @@ $(IntermediateDirectory)/UI_Main.cpp$(ObjectSuffix): src/UI/Main.cpp
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/UI/Main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/UI_Main.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/UI_Main.cpp$(PreprocessSuffix): src/UI/Main.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/UI_Main.cpp$(PreprocessSuffix) "src/UI/Main.cpp"
+
+$(IntermediateDirectory)/UI_wxWinTranslations.cpp$(ObjectSuffix): src/UI/wxWinTranslations.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/UI/wxWinTranslations.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/UI_wxWinTranslations.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/UI_wxWinTranslations.cpp$(PreprocessSuffix): src/UI/wxWinTranslations.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/UI_wxWinTranslations.cpp$(PreprocessSuffix) "src/UI/wxWinTranslations.cpp"
 
 $(IntermediateDirectory)/codepages_c_037.c$(ObjectSuffix): wineguts/codepages/c_037.c 
 	$(CC) $(SourceSwitch) "./wineguts/codepages/c_037.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/codepages_c_037.c$(ObjectSuffix) $(IncludePath)

@@ -60,8 +60,9 @@ BOOL Connection::hookup(char *host, int port)
 			memmove(&hisctladdr.sin_addr,he->h_addr,he->h_length);
 			hisctladdr.sin_family = he->h_addrtype;
 		}
-		else
-			break;
+		else {
+			break;			
+		}
 
 //Sock
 		if(!scValid(sock=scCreate(hisctladdr.sin_family))) break;

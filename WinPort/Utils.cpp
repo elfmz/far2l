@@ -64,6 +64,15 @@ std::string FromUTF16(const wchar_t *pw)
 }
 */
 
+#ifdef __APPLE__
+char *get_current_dir_name()
+{
+    char buf[4096];
+    char *path = getcwd(buf, sizeof(buf));
+    return (!path) ? path : strdup(path);
+}
+#endif
+
 void RectifyPath(std::string &s)
 {
 	std::string tmp;

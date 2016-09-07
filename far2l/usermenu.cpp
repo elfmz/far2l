@@ -836,7 +836,6 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 				  ÝÒÎ âûïîëíÿåòñÿ âñåãäà, ò.ê. ïàðñèíã âñåé ñòðîêè èäåò, à íàäî
 				  ïðîâåðèòü ôàçó "if exist ..\a.bat", à óæ ïîòîì äåëàòü âûâîäû...
 				*/
-				//if(ExtractIfExistCommand(Command))
 				{
 					/* $ 01.05.2001 IS Îòêëþ÷èì äî ëó÷øèõ âðåìåí */
 					/*
@@ -855,7 +854,6 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					int PreserveLFN=SubstFileName(strCommand,strName,strShortName,&strListName,&strAnotherListName, &strShortListName,&strAnotherShortListName, FALSE, strCmdLineDir);
 					bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
-					if (ExtractIfExistCommand(strCommand))
 					{
 						PreserveLongName PreserveName(strShortName,PreserveLFN);
 						RemoveExternalSpaces(strCommand);

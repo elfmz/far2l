@@ -684,7 +684,8 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 		}
 		ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
 	} else {
-		fprintf(stderr, "Unsupported mouse event\n");
+		if (!event.Leaving() && !event.Entering() )
+			fprintf(stderr, "Unsupported mouse event\n");
 		return;
 	}
 	

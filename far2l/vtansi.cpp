@@ -976,7 +976,7 @@ void InterpretEscSeq( void )
 				if (es_argc < 1) 
 					es_argv[0] = 1;
 			}
-			fprintf(stderr, "VTAnsi: SET SCOPE: %u %u (limits %u %u)\n", 
+			fprintf(stderr, "VTAnsi: SET SCOPE: %d %d (limits %d %d)\n", 
 				es_argv[0] - 1, es_argv[1] - 1, TOP, BOTTOM);
 			WINPORT(SetConsoleScrollRegion)(NULL, es_argv[0] - 1, es_argv[1] - 1);
 			return;
@@ -1054,6 +1054,20 @@ static void ResetTerminal()
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
 }
 
+
+static CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
+static void SaveCursor()
+{
+	FlushBuffer();
+	WINPORT(GetConsoleScreenBufferInfo)( NULL, &save_cursor_info );
+}
+
+static void RestoreCursor()
+{
+	FlushBuffer();
+	WINPORT(SetConsoleCursorPosition)(NULL, save_cursor_info.dwCursorPosition);
+}
+
 //-----------------------------------------------------------------------------
 //   ParseAndPrintString(hDev, lpBuffer, nNumberOfBytesToWrite)
 // Parses the string lpBuffer, interprets the escapes sequences and prints the
@@ -1106,11 +1120,15 @@ BOOL ParseAndPrintString( HANDLE hDev,
 				*Pt_arg = '\0';
 				state = 6;
 			} else  {
-				if (*s == 'K') PartialLineDown();
-				if (*s == 'L') PartialLineUp();
-				if (*s == 'D') ForwardIndex();
-				if (*s == 'M') ReverseIndex();
-				if (*s == 'C') ResetTerminal();
+				switch (*s) {
+					case 'K': PartialLineDown(); break;
+					case 'L': PartialLineUp(); break;
+					case 'D': ForwardIndex(); break;
+					case 'M': ReverseIndex(); break;
+					case 'C': ResetTerminal(); break;
+					case '7': SaveCursor(); break;
+					case '8': RestoreCursor(); break;			
+				}
 				state = 1;
 			}
 		} else if (state == 3) {

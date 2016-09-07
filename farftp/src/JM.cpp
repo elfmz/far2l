@@ -110,10 +110,10 @@ char *WINAPI FixFileNameChars(char *fnm,BOOL slashes)
 		if((m=strchr(inv,*src)) != NULL)
 			*src = cor[ m-inv ];
 
-	if(slashes)
+	/*if(slashes)
 		for(src = buff; *src; src++)
 			if(*src == '/') *src = '_';
-			else if(*src == ':')  *src = '!';
+			else if(*src == ':')  *src = '!';*/
 
 	return buff;
 }

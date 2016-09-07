@@ -56,7 +56,7 @@ class ConsoleOutput
 	bool ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow();
-
+	
 public:
 	ConsoleOutput();
 	void SetListener(ConsoleOutputListener *listener);

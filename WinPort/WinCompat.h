@@ -295,8 +295,13 @@ typedef ACCESS_MASK REGSAM;
 typedef int HRESULT;
 
 
-#define _T(x) L##x
-#define TEXT(x) L##x
+#ifndef _T
+# define _T(x) L##x
+#endif
+
+#ifndef TEXT
+# define TEXT(x) L##x
+#endif
 
 #define SEVERITY_SUCCESS    0
 #define SEVERITY_ERROR      1

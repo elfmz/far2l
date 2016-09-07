@@ -855,7 +855,6 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					int PreserveLFN=SubstFileName(strCommand,strName,strShortName,&strListName,&strAnotherListName, &strShortListName,&strAnotherShortListName, FALSE, strCmdLineDir);
 					bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
 
-					if (ExtractIfExistCommand(strCommand))
 					{
 						PreserveLongName PreserveName(strShortName,PreserveLFN);
 						RemoveExternalSpaces(strCommand);

@@ -20,33 +20,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <File Name="APIClipboard.cpp"/>
-    <File Name="APIFiles.cpp"/>
-    <File Name="APIFSNotify.cpp"/>
-    <File Name="APIKeyboard.cpp"/>
-    <File Name="APIMemory.cpp"/>
-    <File Name="APIOther.cpp"/>
-    <File Name="APIRegistry.cpp"/>
-    <File Name="APIStringCodepages.cpp"/>
-    <File Name="APIStringMap.cpp"/>
-    <File Name="APISynch.cpp"/>
-    <File Name="APITime.cpp"/>
-    <File Name="ConsoleBuffer.cpp"/>
-    <File Name="ConsoleBuffer.h"/>
-    <File Name="ConsoleInput.cpp"/>
-    <File Name="ConsoleInput.h"/>
-    <File Name="ConsoleOutput.cpp"/>
-    <File Name="ConsoleOutput.h"/>
-    <File Name="stdafx.cpp"/>
-    <File Name="stdafx.h"/>
-    <File Name="Utils.h"/>
     <File Name="WinCompat.h"/>
-    <File Name="wineguts.h"/>
     <File Name="WinPort.h"/>
-    <File Name="WinPortHandle.cpp"/>
-    <File Name="WinPortHandle.h"/>
-    <File Name="wxWinTranslations.cpp"/>
-    <File Name="wxWinTranslations.h"/>
     <VirtualDirectory Name="wineguts">
       <File Name="wineguts/casemap.c"/>
       <File Name="wineguts/collation.c"/>
@@ -136,21 +111,49 @@
         <File Name="wineguts/codepages/c_28606.c"/>
       </VirtualDirectory>
     </VirtualDirectory>
-    <File Name="WinPortSynch.h"/>
-    <File Name="WinPortSynch.cpp"/>
-    <File Name="KeyFileHelper.h"/>
-    <File Name="KeyFileHelper.cpp"/>
-    <File Name="APIConsole.cpp"/>
-    <File Name="CallInMain.h"/>
     <File Name="windows.h"/>
-    <File Name="APIPrintFormat.cpp"/>
-    <File Name="Utils.cpp"/>
     <VirtualDirectory Name="UI">
       <File Name="src/UI/Paint.h"/>
       <File Name="src/UI/Paint.cpp"/>
       <File Name="src/UI/Main.cpp"/>
+      <File Name="src/UI/wxWinTranslations.cpp"/>
+      <File Name="src/UI/wxWinTranslations.h"/>
     </VirtualDirectory>
+    <File Name="src/APIClipboard.cpp"/>
+    <File Name="src/APIConsole.cpp"/>
+    <File Name="src/APIFiles.cpp"/>
+    <File Name="src/APIFSNotify.cpp"/>
+    <File Name="src/APIKeyboard.cpp"/>
+    <File Name="src/APIMemory.cpp"/>
+    <File Name="src/APIOther.cpp"/>
+    <File Name="src/APIPrintFormat.cpp"/>
+    <File Name="src/APIRegistry.cpp"/>
+    <File Name="src/APIStringCodepages.cpp"/>
+    <File Name="src/APIStringMap.cpp"/>
+    <File Name="src/APISynch.cpp"/>
+    <File Name="src/APITime.cpp"/>
+    <File Name="src/CallInMain.h"/>
+    <File Name="src/ConsoleBuffer.cpp"/>
+    <File Name="src/ConsoleBuffer.h"/>
+    <File Name="src/ConsoleInput.cpp"/>
+    <File Name="src/ConsoleInput.h"/>
+    <File Name="src/ConsoleOutput.cpp"/>
+    <File Name="src/ConsoleOutput.h"/>
+    <File Name="src/KeyFileHelper.cpp"/>
+    <File Name="src/stdafx.cpp"/>
+    <File Name="src/stdafx.h"/>
+    <File Name="src/targetver.h"/>
+    <File Name="src/Utils.cpp"/>
+    <File Name="src/Utils.h"/>
+    <File Name="src/wineguts.h"/>
+    <File Name="src/WinPortHandle.cpp"/>
+    <File Name="src/WinPortHandle.h"/>
+    <File Name="src/WinPortSynch.cpp"/>
+    <File Name="src/WinPortSynch.h"/>
+    <File Name="KeyFileHelper.h"/>
   </VirtualDirectory>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
   <Settings Type="Static Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -164,6 +167,7 @@
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Static Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function" C_Options="-g;-O2;-std=c99;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags) -Wno-unused-function -fvisibility=hidden -Wno-unused-function" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
+        <IncludePath Value="src"/>
       </Compiler>
       <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes)" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
@@ -239,6 +243,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug"/>
-  <Dependencies Name="Release"/>
 </CodeLite_Project>

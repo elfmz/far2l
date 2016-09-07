@@ -81,6 +81,7 @@ int Connection::nb_waitstate(SOCKET *peer, int state,DWORD tmW)
 //Select
 		// in windows nfds ignored
 		res = select( (*peer)+1, readfds, writefds, excptfds, &timeout);
+		fprintf(stderr, "-----------------------select: %r\n", res);
 //Idle
 		static bool inIdle = false;
 		static DWORD idleB;
@@ -190,12 +191,15 @@ BOOL Connection::nb_connect(SOCKET *peer, struct sockaddr FAR* addr, int addrlen
 {
 	if(connect(*peer, addr, addrlen) == 0)
 		return TRUE;
+
 	int err = errno;
+	fprintf(stderr, "zzzzzzzzzzzzzzzz3 %u for %u.%u.%u.%u\n", err, 
+		hisctladdr.sin_addr.s_addr&0xff, (hisctladdr.sin_addr.s_addr>>8)&0xff,
+		(hisctladdr.sin_addr.s_addr>>16)&0xff, (hisctladdr.sin_addr.s_addr>>24)&0xff);
 
-
-	if(IS_SOCKET_NONBLOCKING_ERR(err))
+	if(IS_SOCKET_NONBLOCKING_ERR(err)) {
 		return nb_waitstate(peer, ws_connect);
-	else
+	}else
 		return FALSE;
 }
 

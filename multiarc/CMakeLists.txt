@@ -13,10 +13,6 @@ set(SOURCES
     src/global.cpp
     src/arcread.cpp
     src/arccmd.cpp
-    src/libpcre/get.c
-    src/libpcre/pcre.c
-    src/libpcre/chartables.c
-    src/libpcre/study.c
     src/formats/rar/rar.cpp
     src/formats/ha/ha.cpp
     src/formats/custom/custom.cpp
@@ -127,8 +123,8 @@ set(SOURCES
     src/formats/7z/C/Blake2s.c
 )
 
-set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -fPIC --shared -Wno-unused-function")
-set(CMAKE_C_FLAGS "-Wall -std=c99 -fPIC --shared -Wno-unused-function")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -fPIC -Wno-unused-function")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function")
 
 include_directories(src/formats/rar/unrar)
 include_directories(src)

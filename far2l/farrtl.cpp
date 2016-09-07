@@ -171,65 +171,6 @@ void __cdecl xf_free(void * block)
 	free(block);
 }
 
-void * __cdecl operator new(size_t size)
-{
-	void * res = xf_malloc(size);
-
-#ifdef MEMORY_CHECK
-	MEMINFO* Info = reinterpret_cast<MEMINFO*>(reinterpret_cast<LPBYTE>(res)-sizeof(MEMINFO));
-	Info->AllocationType = AT_CPP;
-#endif
-
-#if defined(SYSLOG)
-	CallNewDelete++;
-#endif
-
-	return res;
-}
-
-void * __cdecl operator new[] (size_t size)
-{
-	void * res = operator new(size);
-
-#ifdef MEMORY_CHECK
-	MEMINFO* Info = reinterpret_cast<MEMINFO*>(reinterpret_cast<LPBYTE>(res)-sizeof(MEMINFO));
-	Info->AllocationType = AT_CPPARRAY;
-#endif
-
-	return res;
-}
-
-void operator delete(void *ptr)
-{
-
-#ifdef MEMORY_CHECK
-	if (ptr) {
-		MEMINFO* Info = reinterpret_cast<MEMINFO*>(reinterpret_cast<LPBYTE>(ptr)-sizeof(MEMINFO));
-		assert(Info->AllocationType == AT_CPP);
-		Info->AllocationType = AT_C;
-	}
-#endif
-
-	xf_free(ptr);
-
-#if defined(SYSLOG)
-	CallNewDelete--;
-#endif
-}
-
-void __cdecl operator delete[] (void *ptr)
-{
-#ifdef MEMORY_CHECK
-	if (ptr) {
-		MEMINFO* Info = reinterpret_cast<MEMINFO*>(reinterpret_cast<LPBYTE>(ptr)-sizeof(MEMINFO));
-		assert(Info->AllocationType == AT_CPPARRAY);
-		Info->AllocationType = AT_CPP;
-	}
-#endif
-
-	operator delete(ptr);
-}
-
 #ifdef _MSC_VER
 extern "C"
 {

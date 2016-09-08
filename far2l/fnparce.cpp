@@ -116,10 +116,13 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !.!      Длинное имя файла с расширением
 	if (!StrCmpN(CurStr,L"!.!",3) && CurStr[3] != L'?')
 	{
+    FARString filename;
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherName;
+			filename = PSubstData->strAnotherName;
 		else
-			strOut += PSubstData->Name;
+			filename = PSubstData->Name;
+    BashQuoteIfNeeded(filename);
+  	strOut += filename;
 
 		CurStr+=3;
 		return CurStr;
@@ -128,7 +131,9 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !~       Короткое имя файла без расширения
 	if (!StrCmpN(CurStr,L"!~",2))
 	{
-		strOut += PSubstData->PassivePanel ? PSubstData->strAnotherShortNameOnly : PSubstData->strShortNameOnly;
+		FARString filename = PSubstData->PassivePanel ? PSubstData->strAnotherShortNameOnly : PSubstData->strShortNameOnly;
+    BashQuoteIfNeeded(filename);
+  	strOut += filename;
 		CurStr+=2;
 		return CurStr;
 	}
@@ -260,11 +265,14 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !-!      Короткое имя файла с расширением
 	if (!StrCmpN(CurStr,L"!-!",3) && CurStr[3] != L'?')
 	{
+    FARString filename;
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherShortName;
+			filename = PSubstData->strAnotherShortName;
 		else
-			strOut += PSubstData->ShortName;
+			filename = PSubstData->ShortName;
 
+    BashQuoteIfNeeded(filename);
+  	strOut += filename;
 		CurStr+=3;
 		return CurStr;
 	}
@@ -273,10 +281,14 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	//          после выполнения команды, FAR восстановит его
 	if (!StrCmpN(CurStr,L"!+!",3) && CurStr[3] != L'?')
 	{
+    FARString filename;
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherShortName;
+			filename = PSubstData->strAnotherShortName;
 		else
-			strOut += PSubstData->ShortName;
+			filename = PSubstData->ShortName;
+
+    BashQuoteIfNeeded(filename);
+  	strOut += filename;
 
 		CurStr+=3;
 		PSubstData->PreserveLFN=TRUE;
@@ -337,6 +349,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 			if (wcspbrk(PSubstData->PassivePanel?PSubstData->strAnotherName.CPtr():PSubstData->Name,L"/:"))
 				strCurDir.Clear();
 		}
+    BashQuoteIfNeeded(strCurDir);
 
 		strOut +=  strCurDir;
 		return CurStr;
@@ -365,7 +378,9 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !        Длинное имя файла без расширения
 	if (*CurStr==L'!')
 	{
-		strOut += PointToName(PSubstData->PassivePanel ? PSubstData->strAnotherNameOnly : PSubstData->strNameOnly);
+    FARString filename = PointToName(PSubstData->PassivePanel ? PSubstData->strAnotherNameOnly : PSubstData->strNameOnly);
+    BashQuoteIfNeeded(filename);
+		strOut += filename;
 		CurStr++;
 	}
 

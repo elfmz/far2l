@@ -10,7 +10,7 @@ namespace oldfar
 #endif
 #endif
 
-	const int NM=260;
+	const int NM=MAX_PATH;
 
 	enum FARMESSAGEFLAGS
 	{

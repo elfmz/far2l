@@ -73,14 +73,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // echo "a\\b"	         -> {'echo', 'a\b'}
 // echo "a"'!'"b"	        -> {'echo', 'a!b'}
 // echo "" '' 	         -> {'echo', '', ''}
+// TODO: return std::vector<{int begin, end; std::string dequoted; }>
 std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 	std::vector<std::string> rc;
 	std::string tmp;
-	enum 
+	enum
 	{
 			S_SPACE,
 			S_RAW,	   S_RAW_BACKSLASH,
-			S_SINGLEQ, 
+			S_SINGLEQ,
 			S_DOUBLEQ, S_DOUBLEQ_BACKSLASH
 	} state = S_SPACE;
 	const char *cur = cmd_line;
@@ -104,7 +105,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 				break;
 			case S_RAW:
 				if (*cur == ' ') {
-					fprintf(stderr, "ExplodeCmdLine(%s) [%u] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
+					fprintf(stderr, "ExplodeCmdLine(%s) [%lu] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
 					rc.push_back(tmp);
 					tmp.clear();
 					state = S_SPACE;
@@ -131,7 +132,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 				} else if (*cur=='\\') {
 					state = S_DOUBLEQ_BACKSLASH;
 				} else {
-        	tmp+= *cur;
+					tmp+= *cur;
 				}
 				break;
 			case S_RAW_BACKSLASH:
@@ -148,7 +149,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 	}
 	switch (state) {
 		case S_RAW:
-			fprintf(stderr, "ExplodeCmdLine(%s) [%u] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
+			fprintf(stderr, "ExplodeCmdLine(%s) [%lu] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
 			rc.push_back(tmp);
 			break;
 

@@ -53,10 +53,7 @@ enum
 	COLUMN_MINSIZEINDEX_MASK = 0x00000003,
 };
 
-FARString& WINAPI BashQuoteIfNeeded(FARString &strStr);
-
-wchar_t* WINAPI QuoteSpace(wchar_t *Str);
-FARString &QuoteSpace(FARString &strStr);
+FARString &EscapeSpace(FARString &strStr);
 wchar_t* WINAPI InsertQuote(wchar_t *Str);
 FARString& InsertQuote(FARString& strStr);
 void WINAPI Unquote(FARString &strStr);

@@ -870,7 +870,7 @@ int TreeList::ProcessKey(int Key)
 		case KEY_CTRLALTNUMPAD0:
 		{
 			FARString strQuotedName=ListData[CurFile]->strName;
-			BashQuoteIfNeeded(strQuotedName);
+			EscapeSpace(strQuotedName);
 
 			if (Key==KEY_CTRLALTINS||Key==KEY_CTRLALTNUMPAD0)
 			{

@@ -67,8 +67,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <set>
 #include <sys/wait.h>
 
-extern std::vector<std::string> ExplodeCmdLine(const char *cmd_line);
-
 static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
@@ -88,21 +86,6 @@ public:
 	ExecClassifier(const char *cmd) 
 		: _file(false), _executable(false), _backround(false)
 	{
-		const char *bg_suffix = strrchr(cmd, '&');
-		if (bg_suffix) {
-			for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
-			if (!*bg_suffix) _backround = true;
-		}
-		
-		std::vector<std::string> cmds = ExplodeCmdLine(cmd);
-		if (cmds.empty() || cmds[0].empty()) {
-			fprintf(stderr, "ExecClassifier(%s) - empty cmd\n", cmd);
-			return;
-		}
-		if (cmds[0][0]!='/' && cmds[0][0]!='.')
-			cmds[0] = "./" + cmds[0];
-
-		cmd = cmds[0].c_str();
 		int f = open(cmd, O_RDONLY);
 		if (f==-1) {
 			fprintf(stderr, "ExecClassifier(%s) - open error %u\n", cmd, errno);
@@ -136,7 +119,6 @@ public:
 	
 	bool IsFile() const {return _file; }
 	bool IsExecutable() const {return _executable; }
-	bool IsBackground() const {return _backround; }
 };
 
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) 
@@ -151,9 +133,10 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		} else
 			fprintf(stderr, "ExecuteOrForkProc: wordexp(%s) errno %u\n", CmdStr, errno);
 	} else {
-		const char *shell = getenv("SHELL");
-		if (!shell)
-			shell = "/bin/sh";
+		//const char *shell = getenv("SHELL"); // avoid using fish, it have different escaping rules
+		//if (!shell)
+		//	shell = "/bin/sh";
+		const char *shell = "/bin/bash";
 		r = execl(shell, shell, "-ic", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
@@ -259,48 +242,46 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 	return r;
 }
 
-static std::string MakeCommandLine(const std::vector<std::string>& cmds) {
-	std::string tmp;
-	for (size_t i=0; i<cmds.size(); i++) {
-		if (i != 0)
-			tmp += ' ';
-		std::wstring ws = StrMB2Wide(cmds[i]); // TODO: avoid conversion to UTF16 and then back
-		//fprintf(stderr, "ws[%u]=(%ls)\n", i, ws.c_str());
-		FARString fs(ws.c_str(), ws.size());
-		EscapeSpace(fs); // TODO: were some of the cmds' parts made by ExplodeCmdLine(), escape them closer to the original (using ' or " or \)
-		//fprintf(stderr, "fs[%u]=(%ls)\n", i, fs.CPtr());
-		tmp += Wide2MB(fs.CPtr());
-	}
-  return tmp;
-}
-
 static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
 	int r = -1;
 
+	bool _background = false;
+	const char *bg_suffix = strrchr(CmdStr, '&');
+	if (bg_suffix) {
+		for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
+		if (!*bg_suffix) _background = true;
+	}
+	unsigned int flags = _background ? EF_NOWAIT | EF_HIDEOUT : 0;
+
+
+	// TODO: extract only cmd, stop on space, >, <, $, (, ...
 	std::vector<std::string> cmds = ExplodeCmdLine(CmdStr);
 	if (cmds.empty() || cmds[0].empty()) {
 		fprintf(stderr, "ExecuteA(%s) - empty cmd\n", CmdStr);
 		return -1;
 	}
 
-	ExecClassifier ec(CmdStr);
-	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : 0;
+	ExecClassifier ec(cmds[0].c_str());
 	if (ec.IsFile()) {
-		if (cmds[0][0]!='/' && cmds[0][0]!='.')
-			cmds[0] = "./" + cmds[0];
+  	std::string tmp;
+		if (!ec.IsExecutable()) 
+			tmp += "xdg-open ";
+
+  	if (cmds[0][0]!='/' && cmds[0][0]!='.')
+			tmp += "./";
+    tmp += CmdStr;
 
 		if (!ec.IsExecutable()) {
-			cmds.insert(cmds.begin(), "xdg-open");
-			r = farExecuteA(MakeCommandLine(cmds).c_str(), flags | EF_NOWAIT, NULL);
+			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);
 			if (r!=0) {
-				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, MakeCommandLine(cmds).c_str() );
+				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
 				//TODO: nicely report if xdg-open exec failed
 			}
 		} else
-			r = farExecuteA(MakeCommandLine(cmds).c_str(), flags, NULL);
+			r = farExecuteA(tmp.c_str(), flags, NULL);
 	} else
-		r = farExecuteA(MakeCommandLine(cmds).c_str(), flags, NULL);
+		r = farExecuteA(CmdStr, flags, NULL);
 	return r;
 }
 

@@ -162,8 +162,11 @@ static FARString escapeSpace(const wchar_t* str) {
 
 FARString &EscapeSpace(FARString &strStr)
 {
-	if (wcspbrk(strStr, Opt.strQuotedSymbols) )
+	if (strStr.IsEmpty()) {
+		strStr.Copy("''");
+	} else if (wcspbrk(strStr, Opt.strQuotedSymbols)) {
 		strStr.Copy(escapeSpace(strStr.CPtr()));
+	}
 
 	return strStr;
 }

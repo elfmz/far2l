@@ -622,7 +622,6 @@ bool FileFilter::FileInFilter(const FileListItem& fli,enumFileInFilterType *foun
 	fde.nFileSize=fli.UnpSize;
 	fde.nPackSize=fli.PackSize;
 	fde.strFileName=fli.strName;
-	fde.strAlternateFileName=fli.strShortName;
 	return FileInFilter(fde,foundType);
 }
 

@@ -1,7 +1,7 @@
 /*
 fnparce.cpp
 
-Парсер файловых ассоциаций
+ГЏГ Г°Г±ГҐГ° ГґГ Г©Г«Г®ГўГ»Гµ Г Г±Г±Г®Г¶ГЁГ Г¶ГЁГ©
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -50,23 +50,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct TSubstData
 {
-	// параметры функции SubstFileName
-	const wchar_t *Name;           // Длинное имя
-	const wchar_t *ShortName;      // Короткое имя
+	// ГЇГ Г°Г Г¬ГҐГІГ°Г» ГґГіГ­ГЄГ¶ГЁГЁ SubstFileName
+	const wchar_t *Name;           // Г„Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї
 
 	FARString *pListName;
 	FARString *pAnotherListName;
 
-	FARString *pShortListName;
-	FARString *pAnotherShortListName;
-
-	// локальные переменные
+	// Г«Г®ГЄГ Г«ГјГ­Г»ГҐ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ
 	FARString strAnotherName;
-	FARString strAnotherShortName;
 	FARString strNameOnly;
-	FARString strShortNameOnly;
 	FARString strAnotherNameOnly;
-	FARString strAnotherShortNameOnly;
 	FARString strCmdDir;
 	int  PreserveLFN;
 	int  PassivePanel;
@@ -90,7 +83,7 @@ static int ReplaceVariables(FARString &strStr,TSubstData *PSubstData);
 
 static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstData,FARString &strOut)
 {
-	// рассмотрим переключатели активности/пассивности панели.
+	// Г°Г Г±Г±Г¬Г®ГІГ°ГЁГ¬ ГЇГҐГ°ГҐГЄГ«ГѕГ·Г ГІГҐГ«ГЁ Г ГЄГІГЁГўГ­Г®Г±ГІГЁ/ГЇГ Г±Г±ГЁГўГ­Г®Г±ГІГЁ ГЇГ Г­ГҐГ«ГЁ.
 	if (!StrCmpN(CurStr,L"!#",2))
 	{
 		CurStr+=2;
@@ -105,7 +98,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		return CurStr;
 	}
 
-	// !! символ '!'
+	// !! Г±ГЁГ¬ГўГ®Г« '!'
 	if (!StrCmpN(CurStr,L"!!",2) && CurStr[2] != L'?')
 	{
 		strOut += L"!";
@@ -113,7 +106,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		return CurStr;
 	}
 
-	// !.!      Длинное имя файла с расширением
+	// !.!      Г„Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї ГґГ Г©Г«Г  Г± Г°Г Г±ГёГЁГ°ГҐГ­ГЁГҐГ¬
 	if (!StrCmpN(CurStr,L"!.!",3) && CurStr[3] != L'?')
 	{
 		if (PSubstData->PassivePanel)
@@ -125,25 +118,19 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		return CurStr;
 	}
 
-	// !~       Короткое имя файла без расширения
-	if (!StrCmpN(CurStr,L"!~",2))
+	// !~       ГЉГ®Г°Г®ГІГЄГ®ГҐ ГЁГ¬Гї ГґГ Г©Г«Г  ГЎГҐГ§ Г°Г Г±ГёГЁГ°ГҐГ­ГЁГї
+	/*if (!StrCmpN(CurStr,L"!~",2))
 	{
-		strOut += PSubstData->PassivePanel ? PSubstData->strAnotherShortNameOnly : PSubstData->strShortNameOnly;
+		strOut += PSubstData->PassivePanel ? PSubstData->strAnothertNameOnly : PSubstData->strNameOnly;
 		CurStr+=2;
 		return CurStr;
-	}
+	}*/
 
-	// !`  Длинное расширение файла без имени
+	// !`  Г„Г«ГЁГ­Г­Г®ГҐ Г°Г Г±ГёГЁГ°ГҐГ­ГЁГҐ ГґГ Г©Г«Г  ГЎГҐГ§ ГЁГ¬ГҐГ­ГЁ
 	if (!StrCmpN(CurStr,L"!`",2))
 	{
 		const wchar_t *Ext;
 
-		if (CurStr[2] == L'~')
-		{
-			Ext=wcsrchr((PSubstData->PassivePanel ? PSubstData->strAnotherShortName.CPtr():PSubstData->ShortName),L'.');
-			CurStr+=3;
-		}
-		else
 		{
 			Ext=wcsrchr((PSubstData->PassivePanel ? PSubstData->strAnotherName.CPtr():PSubstData->Name),L'.');
 			CurStr+=2;
@@ -155,11 +142,11 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		return CurStr;
 	}
 
-	// !& !&~  список файлов разделенных пробелом.
+	// !& !&~  Г±ГЇГЁГ±Г®ГЄ ГґГ Г©Г«Г®Гў Г°Г Г§Г¤ГҐГ«ГҐГ­Г­Г»Гµ ГЇГ°Г®ГЎГҐГ«Г®Г¬.
 	if ((!StrCmpN(CurStr,L"!&~",3) && CurStr[3] != L'?') ||
 	        (!StrCmpN(CurStr,L"!&",2) && CurStr[2] != L'?'))
 	{
-		FARString strFileNameL, strShortNameL;
+		FARString strFileNameL;
 		Panel *WPanel=PSubstData->PassivePanel?PSubstData->AnotherPanel:PSubstData->ActivePanel;
 		DWORD FileAttrL;
 		int ShortN0=FALSE;
@@ -174,18 +161,15 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		WPanel->GetSelNameCompat(nullptr,FileAttrL);
 		int First = TRUE;
 
-		while (WPanel->GetSelNameCompat(&strFileNameL,FileAttrL,&strShortNameL))
+		while (WPanel->GetSelNameCompat(&strFileNameL,FileAttrL))
 		{
-			if (ShortN0)
-				strFileNameL = strShortNameL;
-			else // в список все же должно попасть имя в кавычках.
-				QuoteSpaceOnly(strFileNameL);
+			QuoteSpaceOnly(strFileNameL);
 
-// Вот здесь фиг его знает - нужно/ненужно...
-//   если будет нужно - раскомментируем :-)
+// Г‚Г®ГІ Г§Г¤ГҐГ±Гј ГґГЁГЈ ГҐГЈГ® Г§Г­Г ГҐГІ - Г­ГіГ¦Г­Г®/Г­ГҐГ­ГіГ¦Г­Г®...
+//   ГҐГ±Г«ГЁ ГЎГіГ¤ГҐГІ Г­ГіГ¦Г­Г® - Г°Г Г±ГЄГ®Г¬Г¬ГҐГ­ГІГЁГ°ГіГҐГ¬ :-)
 //          if(FileAttrL & FILE_ATTRIBUTE_DIRECTORY)
 //            AddEndSlash(FileNameL);
-			// А нужен ли нам пробел в самом начале?
+			// ГЂ Г­ГіГ¦ГҐГ­ Г«ГЁ Г­Г Г¬ ГЇГ°Г®ГЎГҐГ« Гў Г±Г Г¬Г®Г¬ Г­Г Г·Г Г«ГҐ?
 			if (First)
 				First = FALSE;
 			else
@@ -198,30 +182,18 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		return CurStr;
 	}
 
-	// !@  Имя файла, содержащего имена помеченных файлов
-	// !$!      Имя файла, содержащего короткие имена помеченных файлов
-	// Ниже идет совмещение кода для разбора как !@! так и !$!
-	//Вообще-то (по исторической справедливости как бы) - в !$! нужно выбрасывать модификаторы Q и A
-	// Но нафиг нада:)
+	// !@  Г€Г¬Гї ГґГ Г©Г«Г , Г±Г®Г¤ГҐГ°Г¦Г Г№ГҐГЈГ® ГЁГ¬ГҐГ­Г  ГЇГ®Г¬ГҐГ·ГҐГ­Г­Г»Гµ ГґГ Г©Г«Г®Гў
+	// !$!      Г€Г¬Гї ГґГ Г©Г«Г , Г±Г®Г¤ГҐГ°Г¦Г Г№ГҐГЈГ® ГЄГ®Г°Г®ГІГЄГЁГҐ ГЁГ¬ГҐГ­Г  ГЇГ®Г¬ГҐГ·ГҐГ­Г­Г»Гµ ГґГ Г©Г«Г®Гў
+	// ГЌГЁГ¦ГҐ ГЁГ¤ГҐГІ Г±Г®ГўГ¬ГҐГ№ГҐГ­ГЁГҐ ГЄГ®Г¤Г  Г¤Г«Гї Г°Г Г§ГЎГ®Г°Г  ГЄГ ГЄ !@! ГІГ ГЄ ГЁ !$!
+	//Г‚Г®Г®ГЎГ№ГҐ-ГІГ® (ГЇГ® ГЁГ±ГІГ®Г°ГЁГ·ГҐГ±ГЄГ®Г© Г±ГЇГ°Г ГўГҐГ¤Г«ГЁГўГ®Г±ГІГЁ ГЄГ ГЄ ГЎГ») - Гў !$! Г­ГіГ¦Г­Г® ГўГ»ГЎГ°Г Г±Г»ГўГ ГІГј Г¬Г®Г¤ГЁГґГЁГЄГ ГІГ®Г°Г» Q ГЁ A
+	// ГЌГ® Г­Г ГґГЁГЈ Г­Г Г¤Г :)
 	if (!StrCmpN(CurStr,L"!@",2) || !StrCmpN(CurStr,L"!$",2))
 	{
 		FARString *pListName;
 		FARString *pAnotherListName;
-		bool ShortN0 = FALSE;
 
-		if (CurStr[1] == L'$')
-			ShortN0 = TRUE;
-
-		if (ShortN0)
-		{
-			pListName = PSubstData->pShortListName;
-			pAnotherListName = PSubstData->pAnotherShortListName;
-		}
-		else
-		{
-			pListName = PSubstData->pListName;
-			pAnotherListName = PSubstData->pAnotherListName;
-		}
+		pListName = PSubstData->pListName;
+		pAnotherListName = PSubstData->pAnotherListName;
 
 		wchar_t Modifers[32]=L"";
 		const wchar_t *Ptr;
@@ -234,12 +206,12 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 
 				if (pListName)
 				{
-					if (PSubstData->PassivePanel && (!pAnotherListName->IsEmpty() || PSubstData->AnotherPanel->MakeListFile(*pAnotherListName,ShortN0,Modifers)))
+					if (PSubstData->PassivePanel && (!pAnotherListName->IsEmpty() || PSubstData->AnotherPanel->MakeListFile(*pAnotherListName,Modifers)))
 					{
 						strOut += *pAnotherListName;
 					}
 
-					if (!PSubstData->PassivePanel && (!pListName->IsEmpty() || PSubstData->ActivePanel->MakeListFile(*pListName,ShortN0,Modifers)))
+					if (!PSubstData->PassivePanel && (!pListName->IsEmpty() || PSubstData->ActivePanel->MakeListFile(*pListName,Modifers)))
 					{
 						strOut += *pListName;
 					}
@@ -257,33 +229,33 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		}
 	}
 
-	// !-!      Короткое имя файла с расширением
+	// !-!      ГЉГ®Г°Г®ГІГЄГ®ГҐ ГЁГ¬Гї ГґГ Г©Г«Г  Г± Г°Г Г±ГёГЁГ°ГҐГ­ГЁГҐГ¬
 	if (!StrCmpN(CurStr,L"!-!",3) && CurStr[3] != L'?')
 	{
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherShortName;
+			strOut += PSubstData->strAnotherName;
 		else
-			strOut += PSubstData->ShortName;
+			strOut += PSubstData->Name;
 
 		CurStr+=3;
 		return CurStr;
 	}
 
-	// !+!      Аналогично !-!, но если длинное имя файла утеряно
-	//          после выполнения команды, FAR восстановит его
+	// !+!      ГЂГ­Г Г«Г®ГЈГЁГ·Г­Г® !-!, Г­Г® ГҐГ±Г«ГЁ Г¤Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї ГґГ Г©Г«Г  ГіГІГҐГ°ГїГ­Г®
+	//          ГЇГ®Г±Г«ГҐ ГўГ»ГЇГ®Г«Г­ГҐГ­ГЁГї ГЄГ®Г¬Г Г­Г¤Г», FAR ГўГ®Г±Г±ГІГ Г­Г®ГўГЁГІ ГҐГЈГ®
 	if (!StrCmpN(CurStr,L"!+!",3) && CurStr[3] != L'?')
 	{
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherShortName;
+			strOut += PSubstData->strAnotherName;
 		else
-			strOut += PSubstData->ShortName;
+			strOut += PSubstData->Name;
 
 		CurStr+=3;
 		PSubstData->PreserveLFN=TRUE;
 		return CurStr;
 	}
 
-	// !:       Текущий диск
+	// !:       Г’ГҐГЄГіГ№ГЁГ© Г¤ГЁГ±ГЄ
 	if (!StrCmpN(CurStr,L"!:",2))
 	{
 		FARString strCurDir;
@@ -303,19 +275,13 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		return CurStr;
 	}
 
-	// !\       Текущий путь
-	// !/       Короткое имя текущего пути
-	// Ниже идет совмещение кода для разбора как !\ так и !/
+	// !\       Г’ГҐГЄГіГ№ГЁГ© ГЇГіГІГј
+	// !/       ГЉГ®Г°Г®ГІГЄГ®ГҐ ГЁГ¬Гї ГІГҐГЄГіГ№ГҐГЈГ® ГЇГіГІГЁ
+	// ГЌГЁГ¦ГҐ ГЁГ¤ГҐГІ Г±Г®ГўГ¬ГҐГ№ГҐГ­ГЁГҐ ГЄГ®Г¤Г  Г¤Г«Гї Г°Г Г§ГЎГ®Г°Г  ГЄГ ГЄ !\ ГІГ ГЄ ГЁ !/
 	if (!StrCmpN(CurStr,L"!/",2) || !StrCmpN(CurStr,L"!=/",3) || !StrCmpN(CurStr,L"!/",2) || !StrCmpN(CurStr,L"!=/",3))
 	{
 		FARString strCurDir;
-		bool ShortN0 = FALSE;
 		int RealPath= CurStr[1]==L'='?1:0;
-
-		if (CurStr[1] == L'/' || (RealPath && CurStr[2] == L'/'))
-		{
-			ShortN0 = TRUE;
-		}
 
 		if (PSubstData->PassivePanel)
 			PSubstData->AnotherPanel->GetCurDir(strCurDir);
@@ -324,7 +290,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 
 		if (RealPath)
 		{
-			_MakePath1(PSubstData->PassivePanel?KEY_ALTSHIFTBACKBRACKET:KEY_ALTSHIFTBRACKET,strCurDir,L"",ShortN0);
+			_MakePath1(PSubstData->PassivePanel?KEY_ALTSHIFTBACKBRACKET:KEY_ALTSHIFTBRACKET,strCurDir,L"");
 			Unquote(strCurDir);
 		}
 
@@ -362,7 +328,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		return CurStr;
 	}
 
-	// !        Длинное имя файла без расширения
+	// !        Г„Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї ГґГ Г©Г«Г  ГЎГҐГ§ Г°Г Г±ГёГЁГ°ГҐГ­ГЁГї
 	if (*CurStr==L'!')
 	{
 		strOut += PointToName(PSubstData->PassivePanel ? PSubstData->strAnotherNameOnly : PSubstData->strNameOnly);
@@ -375,19 +341,15 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 
 /*
   SubstFileName()
-  Преобразование метасимволов ассоциации файлов в реальные значения
+  ГЏГ°ГҐГ®ГЎГ°Г Г§Г®ГўГ Г­ГЁГҐ Г¬ГҐГІГ Г±ГЁГ¬ГўГ®Г«Г®Гў Г Г±Г±Г®Г¶ГЁГ Г¶ГЁГЁ ГґГ Г©Г«Г®Гў Гў Г°ГҐГ Г«ГјГ­Г»ГҐ Г§Г­Г Г·ГҐГ­ГЁГї
 
 */
-int SubstFileName(FARString &strStr,            // результирующая строка
-                  const wchar_t *Name,           // Длинное имя
-                  const wchar_t *ShortName,      // Короткое имя
-
+int SubstFileName(FARString &strStr,            // Г°ГҐГ§ГіГ«ГјГІГЁГ°ГіГѕГ№Г Гї Г±ГІГ°Г®ГЄГ 
+                  const wchar_t *Name,           // Г„Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї
                   FARString *pListName,
                   FARString *pAnotherListName,
-                  FARString *pShortListName,
-                  FARString *pAnotherShortListName,
-                  int   IgnoreInput,    // TRUE - не исполнять "!?<title>?<init>!"
-                  const wchar_t *CmdLineDir)     // Каталог исполнения
+                  int   IgnoreInput,    // TRUE - Г­ГҐ ГЁГ±ГЇГ®Г«Г­ГїГІГј "!?<title>?<init>!"
+                  const wchar_t *CmdLineDir)     // ГЉГ ГІГ Г«Г®ГЈ ГЁГ±ГЇГ®Г«Г­ГҐГ­ГЁГї
 {
 	if (pListName)
 		pListName->Clear();
@@ -395,60 +357,41 @@ int SubstFileName(FARString &strStr,            // результирующая строка
 	if (pAnotherListName)
 		pAnotherListName->Clear();
 
-	if (pShortListName)
-		pShortListName->Clear();
-
-	if (pAnotherShortListName)
-		pAnotherShortListName->Clear();
-
 	/* $ 19.06.2001 SVS
-	  ВНИМАНИЕ! Для альтернативных метасимволов, не основанных на "!",
-	  нужно будет либо убрать эту проверку либо изменить условие (последнее
-	  предпочтительнее!)
+	  Г‚ГЌГ€ГЊГЂГЌГ€Г…! Г„Г«Гї Г Г«ГјГІГҐГ°Г­Г ГІГЁГўГ­Г»Гµ Г¬ГҐГІГ Г±ГЁГ¬ГўГ®Г«Г®Гў, Г­ГҐ Г®Г±Г­Г®ГўГ Г­Г­Г»Гµ Г­Г  "!",
+	  Г­ГіГ¦Г­Г® ГЎГіГ¤ГҐГІ Г«ГЁГЎГ® ГіГЎГ°Г ГІГј ГЅГІГі ГЇГ°Г®ГўГҐГ°ГЄГі Г«ГЁГЎГ® ГЁГ§Г¬ГҐГ­ГЁГІГј ГіГ±Г«Г®ГўГЁГҐ (ГЇГ®Г±Г«ГҐГ¤Г­ГҐГҐ
+	  ГЇГ°ГҐГ¤ГЇГ®Г·ГІГЁГІГҐГ«ГјГ­ГҐГҐ!)
 	*/
 	if (!wcschr(strStr,L'!'))
 		return FALSE;
 
 	TSubstData SubstData, *PSubstData=&SubstData;
-	PSubstData->Name=Name;                    // Длинное имя
-	PSubstData->ShortName=ShortName;          // Короткое имя
-	PSubstData->pListName=pListName;            // Длинное имя файла-списка
-	PSubstData->pAnotherListName=pAnotherListName;            // Длинное имя файла-списка
-	PSubstData->pShortListName=pShortListName;  // Короткое имя файла-списка
-	PSubstData->pAnotherShortListName=pAnotherShortListName;  // Короткое имя файла-списка
-	// Если имя текущего каталога не задано...
+	PSubstData->Name=Name;                    // Г„Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї
+	PSubstData->pListName=pListName;            // Г„Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї ГґГ Г©Г«Г -Г±ГЇГЁГ±ГЄГ 
+	PSubstData->pAnotherListName=pAnotherListName;            // Г„Г«ГЁГ­Г­Г®ГҐ ГЁГ¬Гї ГґГ Г©Г«Г -Г±ГЇГЁГ±ГЄГ 
+	// Г…Г±Г«ГЁ ГЁГ¬Гї ГІГҐГЄГіГ№ГҐГЈГ® ГЄГ ГІГ Г«Г®ГЈГ  Г­ГҐ Г§Г Г¤Г Г­Г®...
 	if (CmdLineDir)
 		PSubstData->strCmdDir = CmdLineDir;
-	else // ...спросим у ком.строки
+	else // ...Г±ГЇГ°Г®Г±ГЁГ¬ Гі ГЄГ®Г¬.Г±ГІГ°Г®ГЄГЁ
 		CtrlObject->CmdLine->GetCurDir(PSubstData->strCmdDir);
 
 	size_t pos;
-	// Предварительно получим некоторые "константы" :-)
+	// ГЏГ°ГҐГ¤ГўГ Г°ГЁГІГҐГ«ГјГ­Г® ГЇГ®Г«ГіГ·ГЁГ¬ Г­ГҐГЄГ®ГІГ®Г°Г»ГҐ "ГЄГ®Г­Г±ГІГ Г­ГІГ»" :-)
 	PSubstData->strNameOnly = Name;
 
 	if (PSubstData->strNameOnly.RPos(pos,L'.'))
 		PSubstData->strNameOnly.SetLength(pos);
 
-	PSubstData->strShortNameOnly = ShortName;
-
-	if (PSubstData->strShortNameOnly.RPos(pos,L'.'))
-		PSubstData->strShortNameOnly.SetLength(pos);
-
 	PSubstData->ActivePanel=CtrlObject->Cp()->ActivePanel;
 	PSubstData->AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(PSubstData->ActivePanel);
-	PSubstData->AnotherPanel->GetCurName(PSubstData->strAnotherName,PSubstData->strAnotherShortName);
+	PSubstData->AnotherPanel->GetCurName(PSubstData->strAnotherName);
 	PSubstData->strAnotherNameOnly = PSubstData->strAnotherName;
 
 	if (PSubstData->strAnotherNameOnly.RPos(pos,L'.'))
 		PSubstData->strAnotherNameOnly.SetLength(pos);
 
-	PSubstData->strAnotherShortNameOnly = PSubstData->strAnotherShortName;
-
-	if (PSubstData->strAnotherShortNameOnly.RPos(pos,L'.'))
-		PSubstData->strAnotherShortNameOnly.SetLength(pos);
-
 	PSubstData->PreserveLFN=FALSE;
-	PSubstData->PassivePanel=FALSE; // первоначально речь идет про активную панель!
+	PSubstData->PassivePanel=FALSE; // ГЇГҐГ°ГўГ®Г­Г Г·Г Г«ГјГ­Г® Г°ГҐГ·Гј ГЁГ¤ГҐГІ ГЇГ°Г® Г ГЄГІГЁГўГ­ГіГѕ ГЇГ Г­ГҐГ«Гј!
 	FARString strTmp = strStr;
 
 	if (!IgnoreInput)
@@ -503,9 +446,9 @@ int ReplaceVariables(FARString &strStr,TSubstData *PSubstData)
 		if (!*Str)
 			break;
 
-		// теперича все не просто
-		// придется сразу определить наличие операторных скобок
-		// запомнить их позицию
+		// ГІГҐГЇГҐГ°ГЁГ·Г  ГўГ±ГҐ Г­ГҐ ГЇГ°Г®Г±ГІГ®
+		// ГЇГ°ГЁГ¤ГҐГІГ±Гї Г±Г°Г Г§Гі Г®ГЇГ°ГҐГ¤ГҐГ«ГЁГІГј Г­Г Г«ГЁГ·ГЁГҐ Г®ГЇГҐГ°Г ГІГ®Г°Г­Г»Гµ Г±ГЄГ®ГЎГ®ГЄ
+		// Г§Г ГЇГ®Г¬Г­ГЁГІГј ГЁГµ ГЇГ®Г§ГЁГ¶ГЁГѕ
 		int scr,end, beg_t,end_t,beg_s,end_s;
 		scr = end = beg_t = end_t = beg_s = end_s = 0;
 		int ii = IsReplaceVariable(Str-2,&scr,&end,&beg_t,&end_t,&beg_s,&end_s);
@@ -597,9 +540,9 @@ int ReplaceVariables(FARString &strStr,TSubstData *PSubstData)
 			strTitle += strTitle2;
 		}
 
-		//do it - типа здесь все уже раскрыто и преобразовано
+		//do it - ГІГЁГЇГ  Г§Г¤ГҐГ±Гј ГўГ±ГҐ ГіГ¦ГҐ Г°Г Г±ГЄГ°Г»ГІГ® ГЁ ГЇГ°ГҐГ®ГЎГ°Г Г§Г®ГўГ Г­Г®
 		DlgData[DlgSize].strData = strTitle;
-		// Заполняем поле ввода заданным шаблоном - если есть
+		// Г‡Г ГЇГ®Г«Г­ГїГҐГ¬ ГЇГ®Г«ГҐ ГўГўГ®Г¤Г  Г§Г Г¤Г Г­Г­Г»Г¬ ГёГ ГЎГ«Г®Г­Г®Г¬ - ГҐГ±Г«ГЁ ГҐГ±ГІГј
 		FARString strTxt;
 
 		if ((end-scr) > 1)  //if between ? and ! exist some
@@ -706,7 +649,7 @@ int ReplaceVariables(FARString &strStr,TSubstData *PSubstData)
 	return 1;
 }
 
-bool Panel::MakeListFile(FARString &strListFileName,bool ShortNames,const wchar_t *Modifers)
+bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 {
 	bool Ret=false;
 
@@ -756,18 +699,15 @@ bool Panel::MakeListFile(FARString &strListFileName,bool ShortNames,const wchar_
 				}
 			}
 
-			FARString strFileName,strShortName;
+			FARString strFileName;
 			DWORD FileAttr;
 			GetSelNameCompat(nullptr,FileAttr);
 
-			while (GetSelNameCompat(&strFileName,FileAttr,&strShortName))
+			while (GetSelNameCompat(&strFileName,FileAttr))
 			{
-				if (ShortNames)
-					strFileName = strShortName;
-
 				if (Modifers && *Modifers)
 				{
-					if (wcschr(Modifers,L'F') && PointToName(strFileName) == strFileName.CPtr()) // 'F' - использовать полный путь; //BUGBUG ?
+					if (wcschr(Modifers,L'F') && PointToName(strFileName) == strFileName.CPtr()) // 'F' - ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ ГІГј ГЇГ®Г«Г­Г»Г© ГЇГіГІГј; //BUGBUG ?
 					{
 						FARString strTempFileName=strCurDir;
 
@@ -776,7 +716,7 @@ bool Panel::MakeListFile(FARString &strListFileName,bool ShortNames,const wchar_
 						strFileName=strTempFileName;
 					}
 
-					if (wcschr(Modifers,L'Q')) // 'Q' - заключать имена с пробелами в кавычки;
+					if (wcschr(Modifers,L'Q')) // 'Q' - Г§Г ГЄГ«ГѕГ·Г ГІГј ГЁГ¬ГҐГ­Г  Г± ГЇГ°Г®ГЎГҐГ«Г Г¬ГЁ Гў ГЄГ ГўГ»Г·ГЄГЁ;
 						QuoteSpaceOnly(strFileName);
 
 				}
@@ -848,11 +788,11 @@ static int IsReplaceVariable(const wchar_t *str,
                              int *end_scr_break,
                              int *beg_txt_break,
                              int *end_txt_break)
-// все очень сложно - посл-иe 4 указателя - это смещения от str
-// начало скобок в строке описания, конец этих скобок, начало скобок в строке начального заполнения, ну и соотв конец.
-// Вообще при простом вызове (который я собираюсь юзать) это выглядит просто:
-// i = IsReplaceVariable(str) - ведь нам надо только проверять семантику скобок и всяких ?!
-// где  i - тот прыжок, который надо совершить, чтоб прыгнуть на конец ! структуры !??!
+// ГўГ±ГҐ Г®Г·ГҐГ­Гј Г±Г«Г®Г¦Г­Г® - ГЇГ®Г±Г«-ГЁe 4 ГіГЄГ Г§Г ГІГҐГ«Гї - ГЅГІГ® Г±Г¬ГҐГ№ГҐГ­ГЁГї Г®ГІ str
+// Г­Г Г·Г Г«Г® Г±ГЄГ®ГЎГ®ГЄ Гў Г±ГІГ°Г®ГЄГҐ Г®ГЇГЁГ±Г Г­ГЁГї, ГЄГ®Г­ГҐГ¶ ГЅГІГЁГµ Г±ГЄГ®ГЎГ®ГЄ, Г­Г Г·Г Г«Г® Г±ГЄГ®ГЎГ®ГЄ Гў Г±ГІГ°Г®ГЄГҐ Г­Г Г·Г Г«ГјГ­Г®ГЈГ® Г§Г ГЇГ®Г«Г­ГҐГ­ГЁГї, Г­Гі ГЁ Г±Г®Г®ГІГў ГЄГ®Г­ГҐГ¶.
+// Г‚Г®Г®ГЎГ№ГҐ ГЇГ°ГЁ ГЇГ°Г®Г±ГІГ®Г¬ ГўГ»Г§Г®ГўГҐ (ГЄГ®ГІГ®Г°Г»Г© Гї Г±Г®ГЎГЁГ°Г ГѕГ±Гј ГѕГ§Г ГІГј) ГЅГІГ® ГўГ»ГЈГ«ГїГ¤ГЁГІ ГЇГ°Г®Г±ГІГ®:
+// i = IsReplaceVariable(str) - ГўГҐГ¤Гј Г­Г Г¬ Г­Г Г¤Г® ГІГ®Г«ГјГЄГ® ГЇГ°Г®ГўГҐГ°ГїГІГј Г±ГҐГ¬Г Г­ГІГЁГЄГі Г±ГЄГ®ГЎГ®ГЄ ГЁ ГўГ±ГїГЄГЁГµ ?!
+// ГЈГ¤ГҐ  i - ГІГ®ГІ ГЇГ°Г»Г¦Г®ГЄ, ГЄГ®ГІГ®Г°Г»Г© Г­Г Г¤Г® Г±Г®ГўГҐГ°ГёГЁГІГј, Г·ГІГ®ГЎ ГЇГ°Г»ГЈГ­ГіГІГј Г­Г  ГЄГ®Г­ГҐГ¶ ! Г±ГІГ°ГіГЄГІГіГ°Г» !??!
 {
 	const wchar_t *s      = str;
 	const wchar_t *scrtxt = str;

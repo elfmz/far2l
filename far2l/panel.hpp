@@ -126,7 +126,6 @@ class Panel:public ScreenObject
 		int PrevViewMode,ViewMode;
 		int CurTopFile;
 		int CurFile;
-		int ShowShortNames;
 		int NumericSort;
 		int CaseSensitiveSort;
 		int DirectoriesFirst;
@@ -167,12 +166,12 @@ class Panel:public ScreenObject
 
 		virtual int GetSelCount() {return 0;};
 		virtual int GetRealSelCount() {return 0;};
-		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr) {return FALSE;};
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fd=nullptr) {return FALSE;};
 
-		int GetSelNameCompat(FARString *strName,DWORD &FileAttr,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr) 
+		int GetSelNameCompat(FARString *strName,DWORD &FileAttr,FAR_FIND_DATA_EX *fd=nullptr) 
 		{
 			DWORD FileMode = 0;
-			return GetSelName(strName, FileAttr, FileMode, ShortName, fd);
+			return GetSelName(strName, FileAttr, FileMode, fd);
 		}
 
 		virtual void UngetSelName() {};
@@ -180,8 +179,8 @@ class Panel:public ScreenObject
 		virtual uint64_t GetLastSelectedSize() {return (uint64_t)(-1);};
 		virtual int GetLastSelectedItem(struct FileListItem *LastItem) {return 0;};
 
-		virtual int GetCurName(FARString &strName, FARString &strShortName);
-		virtual int GetCurBaseName(FARString &strName, FARString &strShortName);
+		virtual int GetCurName(FARString &strName);
+		virtual int GetCurBaseName(FARString &strName);
 		virtual int GetFileName(FARString &strName,int Pos,DWORD &FileAttr) {return FALSE;};
 
 		virtual int GetCurrentPos() {return 0;};
@@ -243,8 +242,6 @@ class Panel:public ScreenObject
 		virtual void ChangeSortOrder(int NewOrder) {SetSortOrder(NewOrder);};
 		int GetSortGroups() {return(SortGroups);};
 		void SetSortGroups(int SortGroups) {Panel::SortGroups=SortGroups;};
-		int GetShowShortNamesMode() {return(ShowShortNames);};
-		void SetShowShortNamesMode(int Mode) {ShowShortNames=Mode;};
 		void InitCurDir(const wchar_t *CurDir);
 		virtual void CloseFile() {};
 		virtual void UpdateViewPanel() {};
@@ -257,10 +254,10 @@ class Panel:public ScreenObject
 		virtual void EditFilter() {};
 		virtual bool FileInFilter(long idxItem) {return true;};
 		virtual void ReadDiz(struct PluginPanelItem *ItemList=nullptr,int ItemLength=0, DWORD dwFlags=0) {};
-		virtual void DeleteDiz(const wchar_t *Name,const wchar_t *ShortName) {};
+		virtual void DeleteDiz(const wchar_t *Name) {};
 		virtual void GetDizName(FARString &strDizName) {};
 		virtual void FlushDiz() {};
-		virtual void CopyDiz(const wchar_t *Name,const wchar_t *ShortName,const wchar_t *DestName, const wchar_t *DestShortName,DizList *DestDiz) {};
+		virtual void CopyDiz(const wchar_t *Name,const wchar_t *DestName, DizList *DestDiz) {};
 		virtual int IsFullScreen() {return ViewSettings.FullScreen;};
 		virtual int IsDizDisplayed() {return FALSE;};
 		virtual int IsColumnDisplayed(int Type) {return FALSE;};
@@ -300,7 +297,7 @@ class Panel:public ScreenObject
 		int GetFocus() {return(Focus);};
 		int GetType() {return(Type);};
 		void SetUpdateMode(int Mode) {EnableUpdate=Mode;};
-		bool MakeListFile(FARString &strListFileName,bool ShortNames,const wchar_t *Modifers=nullptr);
+		bool MakeListFile(FARString &strListFileName,const wchar_t *Modifers=nullptr);
 		int SetCurPath();
 
 		BOOL NeedUpdatePanel(Panel *AnotherPanel);

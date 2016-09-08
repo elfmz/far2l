@@ -1277,13 +1277,12 @@ int Viewer::ProcessKey(int Key)
 			if (strTempViewName.IsEmpty())
 			{
 				FARString strName;
-				FARString strShortName;
 				bool NextFileFound;
 
 				if (Key==KEY_ADD)
-					NextFileFound=ViewNamesList.GetNextName(strName, strShortName);
+					NextFileFound=ViewNamesList.GetNextName(strName);
 				else
-					NextFileFound=ViewNamesList.GetPrevName(strName, strShortName);
+					NextFileFound=ViewNamesList.GetPrevName(strName);
 
 				if (NextFileFound)
 				{

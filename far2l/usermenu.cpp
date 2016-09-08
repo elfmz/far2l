@@ -454,7 +454,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 }
 
 // çàïîëíåíèå ìåíþ
-int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos,const wchar_t *Name,const wchar_t *ShortName)
+int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos,const wchar_t *Name)
 {
 	UserMenu.DeleteItems();
 	int NumLines=0;
@@ -491,7 +491,7 @@ int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos
 		}
 		else
 		{
-			SubstFileName(strLabel,Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
+			SubstFileName(strLabel,Name,nullptr,nullptr,TRUE);
 			apiExpandEnvironmentStrings(strLabel, strLabel);
 			FuncNum=PrepareHotKey(strHotKey);
 			int Offset=strHotKey.At(0)==L'&'?5:4;
@@ -538,8 +538,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		for (size_t I=0 ; I < ARRAYSIZE(FuncPos) ; I++)
 			FuncPos[I]=-1;
 
-		FARString strName,strShortName;
-		CtrlObject->Cp()->ActivePanel->GetCurName(strName,strShortName);
+		FARString strName;
+		CtrlObject->Cp()->ActivePanel->GetCurName(strName);
 		/* $ 24.07.2000 VVM + Ïðè ïîêàçå ãëàâíîãî ìåíþ â çàãîëîâîê äîáàâëÿåò òèï - FAR/Registry */
 		FARString strMenuTitle;
 
@@ -581,7 +581,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			UserMenu.SetHelp(L"UserMenu");
 			UserMenu.SetPosition(-1,-1,0,0);
 			UserMenu.SetBottomTitle(MSG(MMainMenuBottomTitle));
-			//NumLine=FillUserMenu(UserMenu,MenuKey,MenuPos,FuncPos,Name,ShortName);
+			//NumLine=FillUserMenu(UserMenu,MenuKey,MenuPos,FuncPos,Name);
 			MenuNeedRefresh=true;
 
 			while (!UserMenu.Done())
@@ -590,7 +590,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 				{
 					UserMenu.Hide(); // ñïðÿ÷åì
 					// "èçíàñèëóåì" (ïåðåçàïîëíèì :-)
-					NumLine=FillUserMenu(UserMenu,MenuKey,MenuPos,FuncPos,strName,strShortName);
+					NumLine=FillUserMenu(UserMenu,MenuKey,MenuPos,FuncPos,strName);
 					// çàñòàâèì ìàíàãåð ìåíþõè êîððåêòíî îòðèñîâàòü øèðèíó è
 					// âûñîòó, à çàîäíî è ñêîððåêòèðîâàòü âåðòèêàëüíûå ïîçèöèè
 					UserMenu.SetPosition(-1,-1,-1,-1);
@@ -771,7 +771,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 
 			if (GetRegKey(strSubMenuKey,L"Label",strSubMenuLabel,L""))
 			{
-				SubstFileName(strSubMenuLabel,strName,strShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
+				SubstFileName(strSubMenuLabel,strName,nullptr,nullptr,TRUE);
 				apiExpandEnvironmentStrings(strSubMenuLabel, strSubMenuLabel);
 				size_t pos;
 
@@ -822,7 +822,6 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 				break;
 
 			FARString strListName, strAnotherListName;
-			FARString strShortListName, strAnotherShortListName;
 
 			if (!((!StrCmpNI(strCommand,L"REM",3) && IsSpaceOrEos(strCommand.At(3))) || !StrCmpNI(strCommand,L"::",2)))
 			{
@@ -851,11 +850,11 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					}
 					*/
 					//;
-					int PreserveLFN=SubstFileName(strCommand,strName,strShortName,&strListName,&strAnotherListName, &strShortListName,&strAnotherShortListName, FALSE, strCmdLineDir);
-					bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
+					int PreserveLFN=SubstFileName(strCommand,strName,&strListName,&strAnotherListName, FALSE, strCmdLineDir);
+					bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 					{
-						PreserveLongName PreserveName(strShortName,PreserveLFN);
+						//PreserveLongName PreserveName(PreserveLFN);
 						RemoveExternalSpaces(strCommand);
 
 						if (!strCommand.IsEmpty())
@@ -893,12 +892,6 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 
 			if (!strAnotherListName.IsEmpty())
 				apiDeleteFile(strAnotherListName);
-
-			if (!strShortListName.IsEmpty())
-				apiDeleteFile(strShortListName);
-
-			if (!strAnotherShortListName.IsEmpty())
-				apiDeleteFile(strAnotherShortListName);
 
 			CurLine++;
 		} // while (1)

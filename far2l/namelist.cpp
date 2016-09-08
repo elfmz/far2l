@@ -46,16 +46,15 @@ NamesList::~NamesList()
 {
 }
 
-void NamesList::AddName(const wchar_t *Name,const wchar_t *ShortName)
+void NamesList::AddName(const wchar_t *Name)
 {
 	OneName *pName=Names.Push();
 	pName->Value.strName = Name?Name:L"";
-	pName->Value.strShortName = ShortName?ShortName:L"";
 	CurrentName=pName;
 }
 
 
-bool NamesList::GetNextName(FARString &strName, FARString &strShortName)
+bool NamesList::GetNextName(FARString &strName)
 {
 	const OneName *pName=Names.Next(CurrentName);
 
@@ -63,13 +62,12 @@ bool NamesList::GetNextName(FARString &strName, FARString &strShortName)
 		return false;
 
 	strName = pName->Value.strName;
-	strShortName = pName->Value.strShortName;
 	CurrentName=pName;
 	return true;
 }
 
 
-bool NamesList::GetPrevName(FARString &strName, FARString &strShortName)
+bool NamesList::GetPrevName(FARString &strName)
 {
 	const OneName *pName=Names.Prev(CurrentName);
 
@@ -77,7 +75,6 @@ bool NamesList::GetPrevName(FARString &strName, FARString &strShortName)
 		return false;
 
 	strName = pName->Value.strName;
-	strShortName = pName->Value.strShortName;
 	CurrentName=pName;
 	return true;
 }

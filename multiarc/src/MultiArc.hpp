@@ -208,7 +208,7 @@ class ArcCommand
     int ProcessCommand(char *Command,int CommandType,int IgnoreErrors,char *ListFileName=0);
     void DeleteBraces(char *Command);
     int ReplaceVar(char *Command,int &Length);
-    int MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
+    int MakeListFile(char *ListFileName,int QuoteName,
                      int UseSlash,int FolderName,int NameOnly,int PathOnly,
                      int FolderMask,char *LocalAllFilesMask,int AnsiCode);
 

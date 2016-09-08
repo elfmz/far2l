@@ -537,7 +537,6 @@ namespace oldfar
 		DWORD    dwReserved1;
 		DWORD    dwUnixMode;
 		CHAR     cFileName[MAX_NAME];
-		CHAR     cAlternateFileName[14];
 	};
 
 	struct PluginPanelItem
@@ -593,7 +592,6 @@ namespace oldfar
 		char                    ColumnTypes[80];
 		char                    ColumnWidths[80];
 		char                    CurDir[NM];
-		int                     ShortNames;
 		int                     SortMode;
 		DWORD                   Flags;
 		DWORD                   Reserved;

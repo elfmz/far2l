@@ -43,7 +43,6 @@ class NamesList
 		struct FileName2
 		{
 			FARString strName;
-			FARString strShortName;
 		};
 
 		struct OneName
@@ -57,7 +56,6 @@ class NamesList
 			const OneName& operator=(struct FileName2 &rhs)
 			{
 				Value.strName = rhs.strName;
-				Value.strShortName = rhs.strShortName;
 				return *this;
 			}
 		};
@@ -77,9 +75,9 @@ class NamesList
 		~NamesList();
 
 	public:
-		void AddName(const wchar_t *Name,const wchar_t *ShortName);
-		bool GetNextName(FARString &strName, FARString &strShortName);
-		bool GetPrevName(FARString &strName, FARString &strShortName);
+		void AddName(const wchar_t *Name);
+		bool GetNextName(FARString &strName);
+		bool GetPrevName(FARString &strName);
 		void SetCurName(const wchar_t *Name);
 		void MoveData(NamesList &Dest);
 		void GetCurDir(FARString &strDir);

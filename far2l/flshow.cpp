@@ -989,7 +989,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								SetColor(OldColor);
 							}
 
-							const wchar_t *NamePtr = ShowShortNames && !ListData[ListPos]->strShortName.IsEmpty() && !ShowStatus ? ListData[ListPos]->strShortName:ListData[ListPos]->strName;
+							const wchar_t *NamePtr = ListData[ListPos]->strName;
 
 							const wchar_t *NameCopy = NamePtr;
 

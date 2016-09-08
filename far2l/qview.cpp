@@ -548,12 +548,11 @@ void QuickView::SetMacroMode(int Restore)
 	CtrlObject->Macro.SetMode(Restore ? PrevMacroMode:MACRO_QVIEWPANEL);
 }
 
-int QuickView::GetCurName(FARString &strName, FARString &strShortName)
+int QuickView::GetCurName(FARString &strName)
 {
 	if (!strCurFileName.IsEmpty())
 	{
 		strName = strCurFileName;
-		strShortName = strName;
 		return (TRUE);
 	}
 

@@ -161,7 +161,6 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
     {
       memset(&MaskPanelItem,0,sizeof(MaskPanelItem));
       strcpy(MaskPanelItem.FindData.cFileName,AllFilesMask);
-      strcpy(MaskPanelItem.FindData.cAlternateFileName,AllFilesMask);
       if (ItemsInfo.Encrypted)
         MaskPanelItem.Flags=F_ENCRYPTED;
       PanelItem=&MaskPanelItem;

@@ -412,7 +412,6 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 		(*PanelItemW)[i].FindData.nFileSize = (uint64_t)PanelItemA[i].FindData.nFileSizeLow + (((uint64_t)PanelItemA[i].FindData.nFileSizeHigh)<<32);
 		(*PanelItemW)[i].FindData.nPackSize = (uint64_t)PanelItemA[i].PackSize + (((uint64_t)PanelItemA[i].PackSizeHigh)<<32);
 		(*PanelItemW)[i].FindData.lpwszFileName = AnsiToUnicode(PanelItemA[i].FindData.cFileName);
-		(*PanelItemW)[i].FindData.lpwszAlternateFileName = AnsiToUnicode(PanelItemA[i].FindData.cAlternateFileName);
 	}
 }
 
@@ -455,7 +454,6 @@ void ConvertPanelItemToAnsi(const PluginPanelItem &PanelItem, oldfar::PluginPane
 	PanelItemA.PackSize = (DWORD)PanelItem.FindData.nPackSize;
 	PanelItemA.PackSizeHigh = (DWORD)(PanelItem.FindData.nPackSize>>32);
 	UnicodeToOEM(PanelItem.FindData.lpwszFileName,PanelItemA.FindData.cFileName,ARRAYSIZE(PanelItemA.FindData.cFileName));
-	UnicodeToOEM(PanelItem.FindData.lpwszAlternateFileName,PanelItemA.FindData.cAlternateFileName,ARRAYSIZE(PanelItemA.FindData.cAlternateFileName));
 }
 
 void ConvertPanelItemsArrayToAnsi(const PluginPanelItem *PanelItemW, oldfar::PluginPanelItem *&PanelItemA, int ItemsNumber)
@@ -936,7 +934,6 @@ static int WINAPI FarRecursiveSearchA_Callback(const FAR_FIND_DATA *FData,const 
 	FindData.nFileSizeLow = (DWORD)FData->nFileSize;
 	FindData.nFileSizeHigh = (DWORD)(FData->nFileSize>>32);
 	UnicodeToOEM(FData->lpwszFileName,FindData.cFileName,ARRAYSIZE(FindData.cFileName));
-	UnicodeToOEM(FData->lpwszAlternateFileName,FindData.cAlternateFileName,ARRAYSIZE(FindData.cAlternateFileName));
 	char FullNameA[oldfar::NM];
 	UnicodeToOEM(FullName,FullNameA,sizeof(FullNameA));
 	return pCallbackParam->Func(&FindData,FullNameA,pCallbackParam->Param);
@@ -2479,7 +2476,6 @@ void ConvertUnicodePanelInfoToAnsi(PanelInfo* PIW, oldfar::PanelInfo* PIA)
 	PIA->Visible = PIW->Visible;
 	PIA->Focus = PIW->Focus;
 	PIA->ViewMode = PIW->ViewMode;
-	PIA->ShortNames = PIW->ShortNames;
 	PIA->SortMode = 0;
 
 	switch (PIW->SortMode)
@@ -2894,7 +2890,6 @@ int WINAPI FarGetDirListA(const char *Dir,oldfar::PluginPanelItem **pPanelItem,i
 				(*pPanelItem)[i].FindData.nFileSizeLow = (DWORD)pItems[i].nFileSize;
 				(*pPanelItem)[i].FindData.nFileSizeHigh = (DWORD)(pItems[i].nFileSize>>32);
 				UnicodeToOEM(pItems[i].lpwszFileName+PathOffset, (*pPanelItem)[i].FindData.cFileName, ARRAYSIZE((*pPanelItem)[i].FindData.cFileName) );
-				UnicodeToOEM(pItems[i].lpwszAlternateFileName, (*pPanelItem)[i].FindData.cAlternateFileName, ARRAYSIZE((*pPanelItem)[i].FindData.cAlternateFileName) );
 			}
 		}
 		else

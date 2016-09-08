@@ -686,7 +686,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		if(SrcPanel)
 		{
 			SrcPanel->GetSelName(nullptr,FileAttr, FileMode);
-			SrcPanel->GetSelName(&strSelName,FileAttr, FileMode,nullptr,&FindData);
+			SrcPanel->GetSelName(&strSelName,FileAttr, FileMode,&FindData);
 		}
 		else
 		{
@@ -951,7 +951,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				SrcPanel->GetCurDir(strCurDir);
 
 				bool CheckOwner = true, CheckGroup = true;
-				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, nullptr, &FindData))
+				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData))
 				{
 					if (!FolderPresent&&(FileAttr&FILE_ATTRIBUTE_DIRECTORY))
 					{
@@ -1005,7 +1005,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			if(SrcPanel)
 			{
 				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
-				SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, nullptr, &FindData);
+				SrcPanel->GetSelName(&strSelName, FileAttr, FileMode,  &FindData);
 			}
 
 			// выставим "неопределенку" или то, что нужно
@@ -1164,7 +1164,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					DWORD LastTime=0;
 
 					bool SingleFileDone=false;
-					while ((SrcPanel?SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, nullptr, &FindData):!SingleFileDone) && !Cancel)
+					while ((SrcPanel?SrcPanel->GetSelName(&strSelName, FileAttr, FileMode,  &FindData):!SingleFileDone) && !Cancel)
 					{
 						if(!SrcPanel)
 						{

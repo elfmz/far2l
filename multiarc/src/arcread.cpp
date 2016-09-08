@@ -547,7 +547,7 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
     strcpy(InfoLines[13].Text,GetMsg(MInfoPackedSize));
     InsertCommas(PackedSize,InfoLines[13].Data);
     strcpy(InfoLines[14].Text,GetMsg(MInfoRatio));
-    FSF.sprintf(InfoLines[14].Data,"%d%%",ToPercent(PackedSize,TotalSize));
+    FSF.sprintf(InfoLines[14].Data,"%d%%",MA_ToPercent(PackedSize,TotalSize));
 
     memset(&KeyBar,0,sizeof(KeyBar));
     KeyBar.ShiftTitles[1-1]=(char*)"";

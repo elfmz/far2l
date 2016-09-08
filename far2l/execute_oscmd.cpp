@@ -65,15 +65,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 
-// echo foo = bar	      -> {'echo', 'foo', '=', 'bar'}
-// echo foo=bar	        -> {'echo', 'foo=bar'}
+// explode cmdline to argv[] array
+//
+// Bash cmdlines cannot be correctly parsed that way because some bash constructions are not space-separated (such as `...`, $(...), cmd>/dev/null, cmd&)
+
+// echo foo = bar       -> {'echo', 'foo', '=', 'bar'}
+// echo foo=bar         -> {'echo', 'foo=bar'}
 // echo "foo=long bar"  -> {'echo', 'foo=long bar'}
-// echo "a\"b"	         -> {'echo', 'a"b'}
-// echo 'a\\b'	         -> {'echo', 'a\\b'}
-// echo "a\\b"	         -> {'echo', 'a\b'}
-// echo "a"'!'"b"	        -> {'echo', 'a!b'}
-// echo "" '' 	         -> {'echo', '', ''}
-// TODO: return std::vector<{int begin, end; std::string dequoted; }>
+// echo "a\"b"	          -> {'echo', 'a"b'}
+// echo 'a\\b'          -> {'echo', 'a\\b'}
+// echo "a\\b"          -> {'echo', 'a\b'}
+// echo "a"'!'"b"       -> {'echo', 'a!b'}
+// echo "" '' 	          -> {'echo', '', ''}
+
 std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 	std::vector<std::string> rc;
 	std::string tmp;
@@ -99,6 +103,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 				} else if (*cur=='\\') {
 					state = S_RAW_BACKSLASH;
 				} else {
+					// TODO: stop on >, <, $, (, ...
 					state = S_RAW;
 					tmp+= *cur;
 				}
@@ -116,6 +121,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 				} else if (*cur=='\\') {
 					state = S_RAW_BACKSLASH;
 				} else {
+					// TODO: stop on >, <, $, (, ...
 					tmp+= *cur;
 				}
 				break;
@@ -128,7 +134,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 				break;
 			case S_DOUBLEQ:
 				if (*cur == '"') {
-					  state = S_RAW;
+					state = S_RAW;
 				} else if (*cur=='\\') {
 					state = S_DOUBLEQ_BACKSLASH;
 				} else {
@@ -148,15 +154,15 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 		}
 	}
 	switch (state) {
+		case S_SPACE:
+			break;
 		case S_RAW:
 			fprintf(stderr, "ExplodeCmdLine(%s) [%lu] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
 			rc.push_back(tmp);
 			break;
-
-		case S_SPACE:
-			break;
 		default:
 			fprintf(stderr, "ExplodeCmdLine(%s) invalid state at the end %d\n", cmd_line, state);
+			rc.push_back(tmp);
 			// TODO: return nullptr? throw an exception?
 	}
 	return rc;

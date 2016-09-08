@@ -192,14 +192,15 @@ int TmpPanel::PutDirectoryContents(const TCHAR* Path)
 #ifdef UNICODE
       CurPanelItem->FindData=DirItems[i];
       CurPanelItem->FindData.lpwszFileName = wcsdup(DirItems[i].lpwszFileName);
-      CurPanelItem->FindData.lpwszAlternateFileName = NULL;
 #else
-      CurPanelItem->FindData=DirItems[i].FindData;
-      lstrcpy(CurPanelItem->FindData.cFileName,Path);
-      CurPanelItem->FindData.cFileName[PathLen] = 0;
-      FSF.AddEndSlash(CurPanelItem->FindData.cFileName);
-      lstrcat(CurPanelItem->FindData.cFileName,DirItems[i].FindData.cFileName);
-      *CurPanelItem->FindData.cAlternateFileName = 0;
+	if ( (PathLen + 1 + strlen(DirItems[i].FindData.cFileName)) < ARRAYSIZE(CurPanelItem->FindData.cFileName) ) {
+	      CurPanelItem->FindData=DirItems[i].FindData;
+	      strncpy(CurPanelItem->FindData.cFileName,Path);
+	      CurPanelItem->FindData.cFileName[PathLen] = 0;
+	      FSF.AddEndSlash(CurPanelItem->FindData.cFileName);
+	      lstrcat(CurPanelItem->FindData.cFileName,DirItems[i].FindData.cFileName);
+	} else
+		strcpy(CurPanelItem->FindData.cFileName, "Oh long Johnson!");
 #endif
     }
     Info.FreeDirList(DirItems
@@ -225,10 +226,8 @@ int TmpPanel::PutOneFile(const TCHAR* SrcPath, PluginPanelItem &PanelItem)
   CurPanelItem->FindData.lpwszFileName = reinterpret_cast<wchar_t*>(malloc((lstrlen(SrcPath)+1+lstrlen(PanelItem.FindData.lpwszFileName)+1)*sizeof(wchar_t)));
   if (CurPanelItem->FindData.lpwszFileName==NULL)
     return FALSE;
-  CurPanelItem->FindData.lpwszAlternateFileName = NULL;
 #else
   *CurPanelItem->FindData.cFileName = 0;
-  *CurPanelItem->FindData.cAlternateFileName = 0;
 #endif
   if (*SrcPath)
   {
@@ -285,9 +284,7 @@ int TmpPanel::SetFindList(const struct PluginPanelItem *PanelItem,int ItemsNumbe
 #ifdef UNICODE
       if(TmpPanelItem[i].FindData.lpwszFileName)
         TmpPanelItem[i].FindData.lpwszFileName = wcsdup(TmpPanelItem[i].FindData.lpwszFileName);
-      TmpPanelItem[i].FindData.lpwszAlternateFileName = NULL;
 #else
-      *TmpPanelItem[i].FindData.cAlternateFileName = 0;
 #endif
     }
   }

@@ -654,7 +654,7 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 	else // default prompt = "$p$g"
 	{
 		strDestStr = strCurDir;
-		strDestStr += (geteuid()==0) ? L"# " : L"$ ";
+		strDestStr += Opt.IsUserAdmin ? L"# " : L"$ ";
 	}
 }
 

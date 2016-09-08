@@ -10,7 +10,7 @@ namespace oldfar
 #endif
 #endif
 
-	const int NM=260;
+	const int NM=MAX_PATH;
 
 	enum FARMESSAGEFLAGS
 	{
@@ -536,8 +536,7 @@ namespace oldfar
 		DWORD    dwReserved0;
 		DWORD    dwReserved1;
 		DWORD    dwUnixMode;
-		CHAR     cFileName[MAX_PATH];
-		CHAR     cAlternateFileName[14];
+		CHAR     cFileName[MAX_NAME];
 	};
 
 	struct PluginPanelItem
@@ -593,7 +592,6 @@ namespace oldfar
 		char                    ColumnTypes[80];
 		char                    ColumnWidths[80];
 		char                    CurDir[NM];
-		int                     ShortNames;
 		int                     SortMode;
 		DWORD                   Flags;
 		DWORD                   Reserved;

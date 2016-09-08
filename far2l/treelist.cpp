@@ -1591,7 +1591,7 @@ int TreeList::GetSelCount()
 }
 
 
-int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *strShortName,FAR_FIND_DATA_EX *fd)
+int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fd)
 {
         FileMode = 0640;
 
@@ -1605,9 +1605,6 @@ int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARS
 	{
 		GetCurDir(*strName);
 
-		if (strShortName )
-			*strShortName = *strName;
-
 		FileAttr = FILE_ATTRIBUTE_DIRECTORY;
 		FileMode|= S_IFDIR | S_IXUSR | S_IXGRP | S_IXOTH;
 		GetSelPosition++;
@@ -1619,17 +1616,15 @@ int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARS
 }
 
 
-int TreeList::GetCurName(FARString &strName, FARString &strShortName)
+int TreeList::GetCurName(FARString &strName)
 {
 	if (!TreeCount)
 	{
 		strName.Clear();
-		strShortName.Clear();
 		return FALSE;
 	}
 
 	strName = ListData[CurFile]->strName;
-	strShortName = strName;
 	return TRUE;
 }
 

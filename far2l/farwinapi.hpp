@@ -65,7 +65,6 @@ struct FAR_FIND_DATA_EX
 	};
 
 	FARString   strFileName;
-	FARString   strAlternateFileName;
 
 	void Clear()
 	{
@@ -80,7 +79,6 @@ struct FAR_FIND_DATA_EX
 		dwReserved1=0;
 		dwUnixMode=0;
 		strFileName.Clear();
-		strAlternateFileName.Clear();
 	}
 
 	FAR_FIND_DATA_EX& operator=(const FAR_FIND_DATA_EX &ffdexCopy)
@@ -98,7 +96,6 @@ struct FAR_FIND_DATA_EX
 			dwReserved0=ffdexCopy.dwReserved0;
 			dwReserved1=ffdexCopy.dwReserved1;
 			strFileName=ffdexCopy.strFileName;
-			strAlternateFileName=ffdexCopy.strAlternateFileName;
 		}
 
 		return *this;

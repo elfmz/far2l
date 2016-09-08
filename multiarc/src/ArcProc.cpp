@@ -1,6 +1,6 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
-
+#include <errno.h>
 
 BOOL PluginClass::GetFormatName(char *FormatName, char *DefExt)
 {
@@ -159,7 +159,6 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem,int ItemsNumb
     {
       memset(&MaskPanelItem,0,sizeof(MaskPanelItem));
       strcpy(MaskPanelItem.FindData.cFileName,AllFilesMask);
-      strcpy(MaskPanelItem.FindData.cAlternateFileName,AllFilesMask);
       if (ItemsInfo.Encrypted)
         MaskPanelItem.Flags=F_ENCRYPTED;
       PanelItem=&MaskPanelItem;

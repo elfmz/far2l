@@ -57,7 +57,7 @@ class DizList
 
 	private:
 		int GetDizPos(const wchar_t *Name, int *TextPos);
-		int GetDizPosEx(const wchar_t *Name, const wchar_t *ShortName, int *TextPos);
+		int GetDizPosEx(const wchar_t *Name, int *TextPos);
 		bool AddRecord(const wchar_t *DizText);
 		void BuildIndex();
 
@@ -68,11 +68,11 @@ class DizList
 	public:
 		void Read(const wchar_t *Path, const wchar_t *DizName=nullptr);
 		void Reset();
-		const wchar_t *GetDizTextAddr(const wchar_t *Name, const wchar_t *ShortName, const int64_t FileSize);
-		bool DeleteDiz(const wchar_t *Name, const wchar_t *ShortName);
+		const wchar_t *GetDizTextAddr(const wchar_t *Name, const int64_t FileSize);
+		bool DeleteDiz(const wchar_t *Name);
 		bool Flush(const wchar_t *Path, const wchar_t *DizName=nullptr);
-		bool AddDizText(const wchar_t *Name, const wchar_t *ShortName, const wchar_t *DizText);
-		bool CopyDiz(const wchar_t *Name, const wchar_t *ShortName, const wchar_t *DestName, const wchar_t *DestShortName,DizList *DestDiz);
+		bool AddDizText(const wchar_t *Name, const wchar_t *DizText);
+		bool CopyDiz(const wchar_t *Name, const wchar_t *DestName, DizList *DestDiz);
 		void GetDizName(FARString &strDizName);
 		static void PR_ReadingMsg();
 };

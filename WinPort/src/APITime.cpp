@@ -49,13 +49,13 @@ static void TM2Systemtime(LPSYSTEMTIME lpSystemTime, const struct tm *ptm)
 	lpSystemTime->wDayOfWeek = ptm->tm_wday;
 	lpSystemTime->wMilliseconds = 0;
 }
-
+		
 static void Systemtime2TM2(const SYSTEMTIME *lpSystemTime, struct tm *ptm)
 {
 	ptm->tm_sec = lpSystemTime->wSecond;
 	ptm->tm_min = lpSystemTime->wMinute;
 	ptm->tm_hour = lpSystemTime->wHour;
-	ptm->tm_mday - lpSystemTime->wDay;
+	ptm->tm_mday = lpSystemTime->wDay;
 	ptm->tm_mon = lpSystemTime->wMonth - 1;
 	ptm->tm_year = lpSystemTime->wYear - 1900;
 	ptm->tm_wday = lpSystemTime->wDayOfWeek;

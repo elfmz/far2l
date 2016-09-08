@@ -120,8 +120,6 @@ void FilePanels::Init()
 	RightPanel->SetSortOrder(Opt.RightPanel.SortOrder);
 	LeftPanel->SetSortGroups(Opt.LeftPanel.SortGroups);
 	RightPanel->SetSortGroups(Opt.RightPanel.SortGroups);
-	LeftPanel->SetShowShortNamesMode(Opt.LeftPanel.ShowShortNames);
-	RightPanel->SetShowShortNamesMode(Opt.RightPanel.ShowShortNames);
 	LeftPanel->SetSelectedFirstMode(Opt.LeftSelectedFirst);
 	RightPanel->SetSelectedFirstMode(Opt.RightSelectedFirst);
 	LeftPanel->SetDirectoriesFirst(Opt.LeftPanel.DirectoriesFirst);
@@ -838,7 +836,7 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 	// OldType не инициализировался...
 	int OldType=Current->GetType(),X1,Y1,X2,Y2;
 	int OldViewMode,OldSortMode,OldSortOrder,OldSortGroups,OldSelectedFirst,OldDirectoriesFirst;
-	int OldShowShortNames,OldPanelMode,LeftPosition,ChangePosition,OldNumericSort,OldCaseSensitiveSort;
+	int OldPanelMode,LeftPosition,ChangePosition,OldNumericSort,OldCaseSensitiveSort;
 	int OldFullScreen,OldFocus,UseLastPanel=0;
 	OldPanelMode=Current->GetMode();
 
@@ -852,7 +850,6 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 	OldNumericSort=Current->GetPrevNumericSort();
 	OldCaseSensitiveSort=Current->GetPrevCaseSensitiveSort();
 	OldSortGroups=Current->GetSortGroups();
-	OldShowShortNames=Current->GetShowShortNamesMode();
 	OldFocus=Current->GetFocus();
 	OldSelectedFirst=Current->GetSelectedFirstMode();
 	OldDirectoriesFirst=Current->GetPrevDirectoriesFirst();
@@ -979,7 +976,6 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 		NewPanel->SetNumericSort(OldNumericSort);
 		NewPanel->SetCaseSensitiveSort(OldCaseSensitiveSort);
 		NewPanel->SetSortGroups(OldSortGroups);
-		NewPanel->SetShowShortNamesMode(OldShowShortNames);
 		NewPanel->SetPrevViewMode(OldViewMode);
 		NewPanel->SetViewMode(OldViewMode);
 		NewPanel->SetSelectedFirstMode(OldSelectedFirst);
@@ -992,7 +988,7 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 int  FilePanels::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = MSG(MScreensPanels);
-	FARString strFullName, strShortName;
+	FARString strFullName;
 
 	switch (ActivePanel->GetType())
 	{
@@ -1000,7 +996,7 @@ int  FilePanels::GetTypeAndName(FARString &strType, FARString &strName)
 		case QVIEW_PANEL:
 		case FILE_PANEL:
 		case INFO_PANEL:
-			ActivePanel->GetCurName(strFullName, strShortName);
+			ActivePanel->GetCurName(strFullName);
 			ConvertNameToFull(strFullName, strFullName);
 			break;
 	}

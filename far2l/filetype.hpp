@@ -45,6 +45,6 @@ enum
 };
 
 void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool RunAs);
-bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mode, bool AlwaysWaitFinish);
-void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t *ShortName, bool AlwaysWaitFinish);
+bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish);
+void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool AlwaysWaitFinish);
 void EditFileTypes();

@@ -350,7 +350,7 @@ void InsertCommas(int64_t Number,char *Dest)
 }
 
 
-int ToPercent(int32_t N1, int32_t N2)
+int MA_ToPercent(int32_t N1, int32_t N2)
 {
   if (N1 > 10000)
   {
@@ -364,7 +364,7 @@ int ToPercent(int32_t N1, int32_t N2)
   return (int)(N1*100/N2);
 }
 
-int ToPercent(int64_t N1,int64_t N2)
+int MA_ToPercent(int64_t N1,int64_t N2)
 {
   if (N1 > 10000)
   {

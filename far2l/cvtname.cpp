@@ -1,7 +1,7 @@
 /*
 cvtname.cpp
 
-Функций для преобразования имен файлов/путей.
+Г”ГіГ­ГЄГ¶ГЁГ© Г¤Г«Гї ГЇГ°ГҐГ®ГЎГ°Г Г§Г®ГўГ Г­ГЁГї ГЁГ¬ГҐГ­ ГґГ Г©Г«Г®Гў/ГЇГіГІГҐГ©.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "drivemix.hpp"
 #include "strmix.hpp"
+#include <set>
 
 #define IsColon(str)         (str == L':')
 #define IsDot(str)           (str == L'.')
@@ -324,62 +325,37 @@ bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 
 
 /*
-  Преобразует Src в полный РЕАЛЬНЫЙ путь с учетом reparse point.
+  ГЏГ°ГҐГ®ГЎГ°Г Г§ГіГҐГІ Src Гў ГЇГ®Г«Г­Г»Г© ГђГ…ГЂГ‹ГњГЌГ›Г‰ ГЇГіГІГј Г± ГіГ·ГҐГІГ®Г¬ reparse point.
   Note that Src can be partially non-existent.
 */
 void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 {
-	strDest = Src;
-	/*
-	// Получим сначала полный путь до объекта обычным способом
-	string FullPath;
-	ConvertNameToFull(Src, FullPath);
-	strDest = FullPath;
-
-	string Path = FullPath;
-	HANDLE hFile;
-
-	for (;;)
-	{
-		hFile = apiCreateFile(Path.CPtr(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, 0);
-
-		if (hFile != INVALID_HANDLE_VALUE)
-			break;
-
-		if (IsRootPath(Path))
-			break;
-
-		Path = ExtractFilePath(Path);
-	}
-
-	if (hFile != INVALID_HANDLE_VALUE)
-	{
-		string FinalFilePath;
-		apiGetFinalPathNameByHandle(hFile, FinalFilePath);
-
-		CloseHandle(hFile);
-
-		//assert(!FinalFilePath.IsEmpty());
-
-		if (!FinalFilePath.IsEmpty())
-		{
-			// append non-existent path part (if present)
-			DeleteEndSlash(Path);
-
-			if (FullPath.GetLength() > Path.GetLength() + 1)
-			{
-				AddEndSlash(FinalFilePath);
-				FinalFilePath.Append(FullPath.CPtr() + Path.GetLength() + 1, FullPath.GetLength() - Path.GetLength() - 1);
+	if (*Src==GOOD_SLASH) {
+		std::string s = Wide2MB(Src), cutoff;
+		char buf[PATH_MAX + 1];
+		for (;;) {
+			if (realpath(s.c_str(), buf)) {
+				buf[sizeof(buf)-1] = 0;
+				if (strcmp(buf, s.c_str())!=0) {
+					strDest = buf;
+					if (!cutoff.empty())
+						strDest.Append(cutoff.c_str());
+					return;
+				}
+				break;
 			}
-
-			FinalFilePath = TryConvertVolumeGuidToDrivePath(FinalFilePath);
-			strDest = FinalFilePath;
+			
+			size_t p = s.rfind(GOOD_SLASH);
+			if (p==std::string::npos || p==0) break;
+			cutoff.insert(0, s.c_str() + p);
+			s.resize(p);
 		}
-	}*/
+	}
+	strDest = Src;
 }
 
-// Косметические преобразования строки пути.
-// CheckFullPath используется в FCTL_SET[ANOTHER]PANELDIR
+// ГЉГ®Г±Г¬ГҐГІГЁГ·ГҐГ±ГЄГЁГҐ ГЇГ°ГҐГ®ГЎГ°Г Г§Г®ГўГ Г­ГЁГї Г±ГІГ°Г®ГЄГЁ ГЇГіГІГЁ.
+// CheckFullPath ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї Гў FCTL_SET[ANOTHER]PANELDIR
 FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 {
 	// elevation not required during cosmetic operation 

@@ -442,8 +442,7 @@ extern "C"
 			(lpFindFileData->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ) ? IO_REPARSE_TAG_SYMLINK : 0;
 		lpFindFileData->dwReserved1 = 0;
 		lpFindFileData->dwUnixMode = s.st_mode;
-		wcsncpy(lpFindFileData->cFileName, name, MAX_PATH - 1);
-		lpFindFileData->cAlternateFileName[0] = 0;
+		wcsncpy(lpFindFileData->cFileName, name, MAX_NAME - 1);
 	}
 
 

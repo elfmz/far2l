@@ -17,3 +17,4 @@ long __cdecl atol (const char *nptr);
 void TrimEnd (char *lpStr);
 void TrimStart (char *lpStr);
 void Trim (char *lpStr);
+void strmove(char *dst, const char *src);

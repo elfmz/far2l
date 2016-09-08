@@ -1241,7 +1241,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					Panel *SelPanel = CheckCode == MCODE_C_APANEL_LFN ? ActivePanel : PassivePanel;
 
 					if (SelPanel )
-						Cond = SelPanel->GetShowShortNamesMode()?0:1;
+						Cond = 1;
 
 					break;
 				}
@@ -3487,8 +3487,8 @@ static bool panelitemFunc(const TMacroFunction*)
 			case 0:  // Name
 				Ret=TVar(filelistItem.strName);
 				break;
-			case 1:  // ShortName
-				Ret=TVar(filelistItem.strShortName);
+			case 1:  // ShortName obsolete, use Name
+				Ret=TVar(filelistItem.strName);
 				break;
 			case 2:  // FileAttr
 				Ret=TVar((int64_t)(long)filelistItem.FileAttr);

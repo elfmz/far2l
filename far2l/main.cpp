@@ -314,7 +314,7 @@ int FarAppMain(int argc, char **argv)
 		fprintf(stderr, "g_strFarModuleName=%ls\n", g_strFarModuleName.CPtr());
 		PrepareDiskPath(g_strFarModuleName);
 	}
-
+	Opt.IsUserAdmin = (geteuid()==0);
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));
 	FARString strEditName;

@@ -129,7 +129,7 @@ int CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName)
 	return FALSE;
 }
 
-int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2,int ShortNameAsIs)
+int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 {
 	int RetCode=FALSE;
 	int NeedRealName=FALSE;
@@ -182,11 +182,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2,int Shor
 			{
 				if (Key == KEY_SHIFTENTER || Key == KEY_CTRLSHIFTENTER || Key == KEY_SHIFTNUMENTER || Key == KEY_CTRLSHIFTNUMENTER)
 				{
-					FARString strShortFileName;
-					SrcPanel->GetCurName(strPathName,strShortFileName);
-
-					if (SrcPanel->GetShowShortNamesMode()) // ó÷òåì êîðîòêîñòü èìåí :-)
-						strPathName = strShortFileName;
+					SrcPanel->GetCurName(strPathName);
 				}
 				else
 				{
@@ -202,7 +198,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2,int Shor
 						SrcFilePanel->GetCurDir(strPathName);
 						{
 							if (NeedRealName)
-								SrcFilePanel->CreateFullPathName(strPathName, strPathName,FILE_ATTRIBUTE_DIRECTORY, strPathName,TRUE,ShortNameAsIs);
+								SrcFilePanel->CreateFullPathName(strPathName, FILE_ATTRIBUTE_DIRECTORY, strPathName,TRUE);
 						}
 					}
 					else

@@ -289,7 +289,6 @@ bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTim
 	fde.nFileSize=fli.UnpSize;
 	fde.nPackSize=fli.PackSize;
 	fde.strFileName=fli.strName;
-	fde.strAlternateFileName=fli.strShortName;
 	return FileInFilter(fde, CurrentTime);
 }
 

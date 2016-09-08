@@ -82,7 +82,6 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	FAR_FIND_DATA_EX FindData;
 	FARString strDeleteFilesMsg;
 	FARString strSelName;
-	FARString strSelShortName;
 	FARString strDizName;
 	FARString strFullName;
 	DWORD FileAttr;
@@ -242,7 +241,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 			DWORD StartTime=WINPORT(GetTickCount)();
 			bool FirstTime=true;
 
-			while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&strSelShortName) && !Cancel)
+			while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr) && !Cancel)
 			{
 				if (!(FileAttr&FILE_ATTRIBUTE_REPARSE_POINT))
 				{
@@ -288,7 +287,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 		DWORD StartTime=WINPORT(GetTickCount)();
 		bool FirstTime=true;
 
-		while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&strSelShortName) && !Cancel)
+		while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr) && !Cancel)
 		{
 			int Length=(int)strSelName.GetLength();
 
@@ -408,7 +407,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 								TreeList::DelTreeName(strFullName);
 
 								if (UpdateDiz)
-									SrcPanel->DeleteDiz(strFullName,strSelShortName);
+									SrcPanel->DeleteDiz(strFullName);
 
 								continue;
 							}
@@ -497,7 +496,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 							TreeList::DelTreeName(strSelName);
 
 							if (UpdateDiz)
-								SrcPanel->DeleteDiz(strSelName,strSelShortName);
+								SrcPanel->DeleteDiz(strSelName);
 						}
 					}
 					else
@@ -512,7 +511,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 							TreeList::DelTreeName(strSelName);
 
 							if (UpdateDiz)
-								SrcPanel->DeleteDiz(strSelName,strSelShortName);
+								SrcPanel->DeleteDiz(strSelName);
 						}
 					}
 				}
@@ -530,7 +529,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 					if (DeleteCode==DELETE_SUCCESS && UpdateDiz)
 					{
-						SrcPanel->DeleteDiz(strSelName,strSelShortName);
+						SrcPanel->DeleteDiz(strSelName);
 					}
 
 					if (DeleteCode==DELETE_CANCEL)

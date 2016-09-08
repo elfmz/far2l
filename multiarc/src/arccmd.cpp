@@ -283,7 +283,7 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
       break;
     case 'l':
     case 'L':
-      if (!MakeListFile(ListFileName,Command[2]=='l',QuoteName,UseSlash,
+      if (!MakeListFile(ListFileName,QuoteName,UseSlash,
                         FolderName,NameOnly,PathOnly,FolderMask,
                         LocalAllFilesMask,AnsiCode))
         return -1;
@@ -473,7 +473,7 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
 }
 
 
-int ArcCommand::MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
+int ArcCommand::MakeListFile(char *ListFileName,int QuoteName,
                 int UseSlash,int FolderName,int NameOnly,int PathOnly,
                 int FolderMask,char *LocalAllFilesMask,int AnsiCode)
 {
@@ -525,15 +525,10 @@ int ArcCommand::MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
   for (int I=0;I<ItemsNumber;I++)
   {
     char FileName[NM];
-    if (ShortNames && *PanelItem[I].FindData.cAlternateFileName)
-      strcpy(FileName,PanelItem[I].FindData.cAlternateFileName);
-    else
-      strcpy(FileName,PanelItem[I].FindData.cFileName);
+    strncpy(FileName,PanelItem[I].FindData.cFileName, ARRAYSIZE(FileName));
     if (NameOnly)
     {
-      char NewName[NM];
-      strcpy(NewName,FSF.PointToName(FileName));
-      strcpy(FileName,NewName);
+      strncpy(FileName, FSF.PointToName(FileName), ARRAYSIZE(FileName));
     }
     if (PathOnly)
     {

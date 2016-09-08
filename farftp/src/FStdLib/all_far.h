@@ -7,7 +7,9 @@
 
 #include <signal.h>             // SIGxxx
 #include <sys/stat.h>           // stat
+#ifndef __APPLE__
 #include <malloc.h>             // alloc,NULL
+#endif
 #include <math.h>               // sqrt
 #include <ctype.h>              // isprint
 #include <stdio.h>              // sprintf

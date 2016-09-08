@@ -341,7 +341,10 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 
 void WinPortPanel::CheckForResizePending()
 {
-	if (_initialized && _resize_pending!=RP_NONE) {
+#ifndef __APPLE__
+	if (_initialized && _resize_pending!=RP_NONE)
+#endif
+	{
 		fprintf(stderr, "CheckForResizePending\n");
 		DWORD conmode = 0;
 		if (WINPORT(GetConsoleMode)(NULL, &conmode) && (conmode&ENABLE_WINDOW_INPUT)!=0) {
@@ -357,6 +360,9 @@ void WinPortPanel::CheckForResizePending()
 			height/= _paint_context.FontHeight();
 			if (width!=(int)prev_width || height!=(int)prev_height) {
 				fprintf(stderr, "Changing size: %u x %u\n", width, height);
+#ifdef __APPLE__
+				this->SetSize(width * _paint_context.FontWidth(), height * _paint_context.FontHeight());
+#endif
 				g_wx_con_out.SetSize(width, height);
 				if (!_frame->IsFullScreen() && !_frame->IsMaximized() && _frame->IsShown()) {
 					SaveSize(width, height);

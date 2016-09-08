@@ -150,6 +150,7 @@ class UnicodeString
 		bool IsEmpty() const { return !(m_pData->GetLength() && *m_pData->GetData()); }
 
 		size_t GetCharString(char *lpszStr, size_t nSize, UINT CodePage=CP_UTF8) const;
+		std::string GetMB() const;
 
 		int __cdecl Format(const wchar_t * format, ...);
 
@@ -189,6 +190,7 @@ class UnicodeString
 		const UnicodeString& operator=(const char *lpszData) { return Copy(lpszData); }
 		const UnicodeString& operator=(const wchar_t *lpwszData) { return Copy(lpwszData); }
 		const UnicodeString& operator=(wchar_t chData) { return Copy(chData); }
+		const UnicodeString& operator=(const std::string &strSrc) { return Copy(strSrc.c_str(), CP_UTF8); }
 
 		const UnicodeString& operator+=(const UnicodeString &strAdd) { return Append(strAdd); }
 		const UnicodeString& operator+=(const char *lpszAdd) { return Append(lpszAdd); }

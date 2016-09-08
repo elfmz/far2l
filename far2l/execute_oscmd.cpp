@@ -86,7 +86,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 	} state = S_SPACE;
 	const char *cur = cmd_line;
 	for (; *cur; ++cur) {
-		if (*cur < ' ') {
+		if (0x00 <= *cur && *cur <= 0x1F) {
 			fprintf(stderr, "ExplodeCmdLine(%s) unexpected char \\x%X\n", cmd_line, *cur); // TODO: handle them as space?
 		}
 		switch (state) {

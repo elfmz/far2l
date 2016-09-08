@@ -102,8 +102,10 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 					state = S_DOUBLEQ;
 				} else if (*cur=='\\') {
 					state = S_RAW_BACKSLASH;
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};!`", *cur)!=NULL) {
+					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
+					return rc; // TODO?: return info about parsing was not completed successuly
 				} else {
-					// TODO: stop on >, <, $, (, ...
 					state = S_RAW;
 					tmp+= *cur;
 				}
@@ -120,8 +122,11 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 					state = S_DOUBLEQ;
 				} else if (*cur=='\\') {
 					state = S_RAW_BACKSLASH;
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};!`", *cur)!=NULL) {
+					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
+					rc.push_back(tmp);
+					return rc; // TODO?: return info about parsing was not completed successuly
 				} else {
-					// TODO: stop on >, <, $, (, ...
 					tmp+= *cur;
 				}
 				break;
@@ -163,7 +168,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 		default:
 			fprintf(stderr, "ExplodeCmdLine(%s) invalid state at the end %d\n", cmd_line, state);
 			rc.push_back(tmp);
-			// TODO: return nullptr? throw an exception?
+			// TODO?: return info about parsing was not completed successuly
 	}
 	return rc;
 };

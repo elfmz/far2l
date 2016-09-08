@@ -124,7 +124,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !~       Êîðîòêîå èìÿ ôàéëà áåç ðàñøèðåíèÿ
 	/*if (!StrCmpN(CurStr,L"!~",2))
 	{
-		FARString filename = PSubstData->PassivePanel ? PSubstData->strAnotherShortNameOnly : PSubstData->strShortNameOnly;
+		FARString filename = PSubstData->PassivePanel ? PSubstData->strAnothertNameOnly : PSubstData->strNameOnly;
 		EscapeSpace(filename);
 		strOut += filename;
 		CurStr+=2;
@@ -239,9 +239,9 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	{
 		FARString filename;
 		if (PSubstData->PassivePanel)
-			filename = PSubstData->strAnotherShortName;
+			filename = PSubstData->strAnotherName;
 		else
-			filename = PSubstData->ShortName;
+			filename = PSubstData->Name;
 
 		EscapeSpace(filename);
 		strOut += filename;
@@ -255,9 +255,9 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	{
 		FARString filename;
 		if (PSubstData->PassivePanel)
-			filename = PSubstData->strAnotherShortName;
+			filename = PSubstData->strAnotherName;
 		else
-			filename = PSubstData->ShortName;
+			filename = PSubstData->Name;
 
 		EscapeSpace(filename);
 		strOut += filename;

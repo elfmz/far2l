@@ -72,6 +72,7 @@ static WCHAR eol[2] = {'\r', '\n'};
 class ExecClassifier
 {
 	bool _file, _executable, _backround;
+  std::string _cmd;
 	
 	bool IsExecutableByExtension(const char *s)
 	{
@@ -86,9 +87,21 @@ public:
 	ExecClassifier(const char *cmd) 
 		: _file(false), _executable(false), _backround(false)
 	{
-		int f = open(cmd, O_RDONLY);
+		const char *bg_suffix = strrchr(cmd, '&'); // BUG: cmd could end with \&
+		if (bg_suffix) {
+			for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
+			if (!*bg_suffix) _backround = true;
+		}
+
+		std::vector<std::string> argv = ExplodeCmdLine(cmd);
+		if (argv.empty() || argv[0].empty()) {
+			fprintf(stderr, "ExecClassifier('%s') - empty command\n", cmd);
+			return;
+		}
+		_cmd = argv[0];
+		int f = open(_cmd.c_str(), O_RDONLY);
 		if (f==-1) {
-			fprintf(stderr, "ExecClassifier(%s) - open error %u\n", cmd, errno);
+			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
 			return;
 		}
 		
@@ -99,26 +112,28 @@ public:
 				char buf[8] = { 0 };
 				int r = read(f, buf, sizeof(buf));
 				if (r > 4 && buf[0]==0x7f && buf[1]=='E' && buf[2]=='L' && buf[3]=='F') {
-					fprintf(stderr, "ExecClassifier(%s) - ELF executable\n", cmd);
+					fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
 					_executable = true;
 				} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
-					fprintf(stderr, "ExecClassifier(%s) - script\n", cmd);
+					fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
 					_executable = true;
 				} else {
 					_executable = IsExecutableByExtension(cmd);
-					fprintf(stderr, "ExecClassifier(%s) - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
+					fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
 						cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3], _executable ? "" : "not ");
 				}
 			} else
-				fprintf(stderr, "IsPossibleXDGOpeSubject(%s) - not executable mode=0x%x\n", cmd, s.st_mode);	
+				fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not executable mode=0x%x\n", cmd, s.st_mode);	
 		} else 
-			fprintf(stderr, "IsPossibleXDGOpeSubject(%s) - not regular mode=0x%x\n", cmd, s.st_mode);
+			fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not regular mode=0x%x\n", cmd, s.st_mode);
 	
 		close(f);
 	}
 	
+	const std::string& cmd() const {return _cmd; }
 	bool IsFile() const {return _file; }
 	bool IsExecutable() const {return _executable; }
+	bool IsBackground() const {return _backround; }
 };
 
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) 
@@ -131,12 +146,14 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 			r = ForkProc(we.we_wordc, we.we_wordv);
 			wordfree(&we);
 		} else
-			fprintf(stderr, "ExecuteOrForkProc: wordexp(%s) errno %u\n", CmdStr, errno);
+			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
 	} else {
-		//const char *shell = getenv("SHELL"); // avoid using fish, it have different escaping rules
-		//if (!shell)
-		//	shell = "/bin/sh";
-		const char *shell = "/bin/bash";
+		const char *shell = getenv("SHELL");
+		if (!shell)
+			shell = "/bin/sh";
+		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols
+		if (0==strcmp(shell, "/usr/bin/fish"))
+			shell = "/bin/bash";
 		r = execl(shell, shell, "-ic", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
@@ -245,32 +262,16 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
 	int r = -1;
-
-	bool _background = false;
-	const char *bg_suffix = strrchr(CmdStr, '&');
-	if (bg_suffix) {
-		for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
-		if (!*bg_suffix) _background = true;
-	}
-	unsigned int flags = _background ? EF_NOWAIT | EF_HIDEOUT : 0;
-
-
-	// TODO: extract only cmd, stop on space, >, <, $, (, ...
-	std::vector<std::string> cmds = ExplodeCmdLine(CmdStr);
-	if (cmds.empty() || cmds[0].empty()) {
-		fprintf(stderr, "ExecuteA(%s) - empty cmd\n", CmdStr);
-		return -1;
-	}
-
-	ExecClassifier ec(cmds[0].c_str());
+	ExecClassifier ec(CmdStr);
+	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : 0;
 	if (ec.IsFile()) {
-  	std::string tmp;
-		if (!ec.IsExecutable()) 
-			tmp += "xdg-open ";
+		std::string tmp;
+		if (!ec.IsExecutable())
+			tmp+= "xdg-open ";
 
-  	if (cmds[0][0]!='/' && cmds[0][0]!='.')
-			tmp += "./";
-    tmp += CmdStr;
+  	if (ec.cmd()[0]!='/' && ec.cmd()[0]!='.')
+			tmp+= "./"; // it is ok to prefix ./ even to a quoted string
+		tmp += CmdStr;
 
 		if (!ec.IsExecutable()) {
 			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);
@@ -280,7 +281,7 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 			}
 		} else
 			r = farExecuteA(tmp.c_str(), flags, NULL);
-	} else
+	} else 
 		r = farExecuteA(CmdStr, flags, NULL);
 	return r;
 }

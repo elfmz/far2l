@@ -184,7 +184,7 @@ void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
   ffd.nPackSize = 0;
 #endif
 #ifndef UNICODE
-  lstrcpy(ffd.cFileName,wfd.cFileName);
+  strncpy(ffd.cFileName,wfd.cFileName, ARRAYSIZE(ffd.cFileName));
   *ffd.cAlternateFileName = 0;
 #else
   ffd.lpwszFileName = wcsdup(wfd.cFileName);

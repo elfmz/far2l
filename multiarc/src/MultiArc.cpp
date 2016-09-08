@@ -97,6 +97,10 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigne
   return hPlugin;
 }
 
+#ifdef __APPLE__
+char *get_current_dir_name();
+#endif
+
 std::string MakeFullName(const char *name)
 {
 	if (name[0]=='.'=='/')

@@ -443,7 +443,6 @@ extern "C"
 		lpFindFileData->dwReserved1 = 0;
 		lpFindFileData->dwUnixMode = s.st_mode;
 		wcsncpy(lpFindFileData->cFileName, name, MAX_NAME - 1);
-		lpFindFileData->cAlternateFileName[0] = 0;
 	}
 
 

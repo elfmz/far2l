@@ -85,7 +85,6 @@ struct PanelOptions
 	int SortMode;
 	int SortOrder;
 	int SortGroups;
-	int ShowShortNames;
 	int NumericSort;
 	int CaseSensitiveSort;
 	int DirectoriesFirst;

@@ -150,8 +150,6 @@ int PluginClass::ReadArchive(const char *Name)
 
     CurArcData.NumberOfLinks=1;
 
-    *CurArcData.FindData.cAlternateFileName=0;
-
     NormalizePath(CurArcData.FindData.cFileName,CurArcData.FindData.cFileName);
     //fprintf(stderr, "PATH: %s\n", CurArcData.FindData.cFileName);
 

@@ -728,10 +728,9 @@ void InfoList::SetMacroMode(int Restore)
 }
 
 
-int InfoList::GetCurName(FARString &strName, FARString &strShortName)
+int InfoList::GetCurName(FARString &strName)
 {
 	strName = strDizFileName;
-	strShortName = strName;
 	return (TRUE);
 }
 

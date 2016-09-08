@@ -1111,7 +1111,6 @@ bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, const wcha
 	//SetPluginDirectory(ArcList[ArcIndex]->strRootPath,hPlugin);
 	SetPluginDirectory(FindData.strFileName,ArcItem.hPlugin);
 	const wchar_t *lpFileNameToFind = PointToName(FindData.strFileName);
-	const wchar_t *lpFileNameToFindShort = PointToName(FindData.strAlternateFileName);
 	PluginPanelItem *pItems;
 	int nItemsNumber;
 	bool nResult=false;
@@ -1122,9 +1121,8 @@ bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, const wcha
 		{
 			PluginPanelItem Item = pItems[i];
 			Item.FindData.lpwszFileName=const_cast<LPWSTR>(PointToName(NullToEmpty(pItems[i].FindData.lpwszFileName)));
-			Item.FindData.lpwszAlternateFileName=const_cast<LPWSTR>(PointToName(NullToEmpty(pItems[i].FindData.lpwszAlternateFileName)));
 
-			if (!StrCmp(lpFileNameToFind,Item.FindData.lpwszFileName) && !StrCmp(lpFileNameToFindShort,Item.FindData.lpwszAlternateFileName))
+			if (!StrCmp(lpFileNameToFind,Item.FindData.lpwszFileName))
 			{
 				nResult=CtrlObject->Plugins.GetFile(ArcItem.hPlugin,&Item,DestPath,strResultName,OPM_SILENT)!=0;
 				break;
@@ -1800,8 +1798,6 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 					else
 					{
 						strSearchFileName = FindItem.FindData.strFileName;
-						if (apiGetFileAttributes(strSearchFileName) == INVALID_FILE_ATTRIBUTES && apiGetFileAttributes(FindItem.FindData.strAlternateFileName) != INVALID_FILE_ATTRIBUTES)
-							strSearchFileName = FindItem.FindData.strAlternateFileName;
 					}
 
 					DWORD FileAttr=apiGetFileAttributes(strSearchFileName);
@@ -1838,7 +1834,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									if (RealNames)
 									{
 										if (!FindItem.FindData.strFileName.IsEmpty() && !(FindItem.FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
-											ViewList.AddName(FindItem.FindData.strFileName, FindItem.FindData.strAlternateFileName);
+											ViewList.AddName(FindItem.FindData.strFileName);
 									}
 								}
 

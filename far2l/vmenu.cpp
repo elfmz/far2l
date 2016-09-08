@@ -2941,12 +2941,12 @@ void EnumFiles(VMenu& Menu, const wchar_t* Str)
 			while(Find.Get(d))
 			{
 				const wchar_t* FileName=PointToName(strStr);
-				bool NameMatch=!StrCmpNI(FileName,d.strFileName,StrLength(FileName)),AltNameMatch=NameMatch?false:!StrCmpNI(FileName,d.strAlternateFileName,StrLength(FileName));
-				if(NameMatch || AltNameMatch)
+				bool NameMatch=!StrCmpNI(FileName,d.strFileName,StrLength(FileName));
+				if(NameMatch)
 				{
 					strStr.SetLength(FileName-strStr);
 					FARString strTmp(strStart+strStr);
-					strTmp+=NameMatch?d.strFileName:d.strAlternateFileName;
+					strTmp+=d.strFileName;
 					if(!Separator)
 					{
 						if(Menu.GetItemCount())

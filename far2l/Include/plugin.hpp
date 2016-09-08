@@ -742,10 +742,8 @@ struct FAR_FIND_DATA
 	uint64_t nPackSize;
 #ifdef FAR_USE_INTERNALS
 	wchar_t *lpwszFileName;
-	wchar_t *lpwszAlternateFileName;
 #else // ELSE FAR_USE_INTERNALS
 	const wchar_t *lpwszFileName;
-	const wchar_t *lpwszAlternateFileName;
 #endif // END FAR_USE_INTERNALS
 };
 
@@ -798,7 +796,6 @@ struct PanelInfo
 	int Visible;
 	int Focus;
 	int ViewMode;
-	int ShortNames;
 	int SortMode;
 	DWORD Flags;
 	DWORD Reserved;

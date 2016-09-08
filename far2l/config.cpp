@@ -747,7 +747,6 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyPanelLeft,L"SortMode",&Opt.LeftPanel.SortMode,1, 0},
 	{1, REG_DWORD,  NKeyPanelLeft,L"SortOrder",&Opt.LeftPanel.SortOrder,1, 0},
 	{1, REG_DWORD,  NKeyPanelLeft,L"SortGroups",&Opt.LeftPanel.SortGroups,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft,L"ShortNames",&Opt.LeftPanel.ShowShortNames,0, 0},
 	{1, REG_DWORD,  NKeyPanelLeft,L"NumericSort",&Opt.LeftPanel.NumericSort,0, 0},
 	{1, REG_DWORD,  NKeyPanelLeft,L"CaseSensitiveSort",&Opt.LeftPanel.CaseSensitiveSort,0, 0},
 	{1, REG_SZ,     NKeyPanelLeft,L"Folder",&Opt.strLeftFolder, 0, L""},
@@ -762,7 +761,6 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyPanelRight,L"SortMode",&Opt.RightPanel.SortMode,1, 0},
 	{1, REG_DWORD,  NKeyPanelRight,L"SortOrder",&Opt.RightPanel.SortOrder,1, 0},
 	{1, REG_DWORD,  NKeyPanelRight,L"SortGroups",&Opt.RightPanel.SortGroups,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight,L"ShortNames",&Opt.RightPanel.ShowShortNames,0, 0},
 	{1, REG_DWORD,  NKeyPanelRight,L"NumericSort",&Opt.RightPanel.NumericSort,0, 0},
 	{1, REG_DWORD,  NKeyPanelRight,L"CaseSensitiveSort",&Opt.RightPanel.CaseSensitiveSort,0, 0},
 	{1, REG_SZ,     NKeyPanelRight,L"Folder",&Opt.strRightFolder, 0,L""},
@@ -985,7 +983,6 @@ void SaveConfig(int Ask)
 	if (Ask && Message(0,2,MSG(MSaveSetupTitle),MSG(MSaveSetupAsk1),MSG(MSaveSetupAsk2),MSG(MSaveSetup),MSG(MCancel)))
 		return;
 
-	FARString strTemp;
 	/* <ÏÐÅÏÐÎÖÅÑÑÛ> *************************************************** */
 	Panel *LeftPanel=CtrlObject->Cp()->LeftPanel;
 	Panel *RightPanel=CtrlObject->Cp()->RightPanel;
@@ -1001,7 +998,6 @@ void SaveConfig(int Ask)
 		Opt.LeftPanel.SortMode=LeftPanel->GetSortMode();
 		Opt.LeftPanel.SortOrder=LeftPanel->GetSortOrder();
 		Opt.LeftPanel.SortGroups=LeftPanel->GetSortGroups();
-		Opt.LeftPanel.ShowShortNames=LeftPanel->GetShowShortNamesMode();
 		Opt.LeftPanel.NumericSort=LeftPanel->GetNumericSort();
 		Opt.LeftPanel.CaseSensitiveSort=LeftPanel->GetCaseSensitiveSort();
 		Opt.LeftSelectedFirst=LeftPanel->GetSelectedFirstMode();
@@ -1009,7 +1005,7 @@ void SaveConfig(int Ask)
 	}
 
 	LeftPanel->GetCurDir(Opt.strLeftFolder);
-	LeftPanel->GetCurBaseName(Opt.strLeftCurFile, strTemp);
+	LeftPanel->GetCurBaseName(Opt.strLeftCurFile);
 
 	if (RightPanel->GetMode()==NORMAL_PANEL)
 	{
@@ -1018,7 +1014,6 @@ void SaveConfig(int Ask)
 		Opt.RightPanel.SortMode=RightPanel->GetSortMode();
 		Opt.RightPanel.SortOrder=RightPanel->GetSortOrder();
 		Opt.RightPanel.SortGroups=RightPanel->GetSortGroups();
-		Opt.RightPanel.ShowShortNames=RightPanel->GetShowShortNamesMode();
 		Opt.RightPanel.NumericSort=RightPanel->GetNumericSort();
 		Opt.RightPanel.CaseSensitiveSort=RightPanel->GetCaseSensitiveSort();
 		Opt.RightSelectedFirst=RightPanel->GetSelectedFirstMode();
@@ -1026,7 +1021,7 @@ void SaveConfig(int Ask)
 	}
 
 	RightPanel->GetCurDir(Opt.strRightFolder);
-	RightPanel->GetCurBaseName(Opt.strRightCurFile,strTemp);
+	RightPanel->GetCurBaseName(Opt.strRightCurFile);
 	CtrlObject->HiFiles->SaveHiData();
 	/* *************************************************** </ÏÐÅÏÐÎÖÅÑÑÛ> */
 	SetRegKey(NKeySystem,L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath);

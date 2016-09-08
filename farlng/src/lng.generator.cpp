@@ -234,10 +234,10 @@ void SmartWrite (
 
 char *GetTempName ()
 {
-	std::vector<WCHAR> tmp(260);
+	std::vector<WCHAR> tmp(MAX_PATH);
 	WINPORT(GetTempFileName) (L".", L"lngg", 0, &tmp[0]);
 	return strdup(Wide2MB(&tmp[0]).c_str());
-	//char *lpTempName = (char*)malloc (260);
+	//char *lpTempName = (char*)malloc (MAX_PATH);
 	//return lpTempName;
 }
 
@@ -321,8 +321,8 @@ int main_generator (int argc, char** argv)
 			if ( strcmp (argv[i],"-i") == 0 && ++i < argc-1 )
 			{
 				key_file.reset(new KeyFileHelper(argv[i]));
-//				lpIniFileName = (char*)malloc (260);
-//				GetFullPathName (argv[i], 260, lpIniFileName, NULL);
+//				lpIniFileName = (char*)malloc (MAX_PATH);
+//				GetFullPathName (argv[i], MAX_PATH, lpIniFileName, NULL);
 			}
 			else
 
@@ -344,8 +344,7 @@ int main_generator (int argc, char** argv)
 
 				fprintf(stderr, "lpLNGOutputPath=%s\n", lpLNGOutputPath);
 
-    char* lpFeedFileName = (char*)malloc (strlen(argv[argc-1])+1);
-    strcpy (lpFeedFileName, argv[argc-1]);
+    char* lpFeedFileName = (char*)strdup(argv[argc-1]);
 
     UnquoteIfNeeded (lpFeedFileName);
 
@@ -388,7 +387,7 @@ int main_generator (int argc, char** argv)
 	char *lpHPPFileName = NULL;
 	char *lpHPPFileNameTemp = GetTempName ();
 
-	char *lpFullName = (char*)malloc (260);
+	char *lpFullName = (char*)malloc (MAX_PATH);
 
 	char *lpString = (char*)malloc (1024);
 
@@ -410,9 +409,9 @@ int main_generator (int argc, char** argv)
 	int nHPPEncoding = bOutputInUTF8 ? CP_UTF8 : ReadInteger(lpStart);
 
 	// read language count
-	DWORD dwLangs = ReadInteger(lpStart);
+	int dwLangs = ReadInteger(lpStart);
 
-	if ( dwLangs )
+	if ( dwLangs > 0 )
 	{
 		sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
 
@@ -560,7 +559,7 @@ int main_generator (int argc, char** argv)
 							{
 								if ( !strncmp (lpLNGString, "upd:", 4) )
 								{
-									strcpy (lpLNGString, lpLNGString+4);
+									strmove (lpLNGString, lpLNGString+4);
 
 									/*
 									printf (

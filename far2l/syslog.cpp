@@ -1380,7 +1380,6 @@ void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &wfd,FILE *
 
 		fwprintf(fp,L"%*s %ls  dwReserved1           =0x%08X (%d)\n",12,L"",space,wfd.dwReserved1,wfd.dwReserved1);
 		fwprintf(fp,L"%*s %ls  cFileName             =\"%ls\"\n",12,L"",space,wfd.cFileName);
-		fwprintf(fp,L"%*s %ls  cAlternateFileName    =\"%ls\"\n",12,L"",space,wfd.cAlternateFileName);
 		fwprintf(fp,L"%*s %ls  }\n",12,L"",space);
 		fflush(fp);
 	}

@@ -832,8 +832,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 	if(ToSubdir)
 	{
 		AddEndSlash(strDestDir);
-		FARString strSubdir, strShort;
-		DestPanel->GetCurName(strSubdir, strShort);
+		FARString strSubdir;
+		DestPanel->GetCurName(strSubdir);
 		strDestDir+=strSubdir;
 	}
 	FARString strSrcDir;
@@ -901,7 +901,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // èñõîäíàÿ ïàíåëü (�
 
 	bool AddSlash=false;
 
-	while (SrcPanel->GetSelNameCompat(&strSelName,CDP.FileAttr,nullptr,&fd))
+	while (SrcPanel->GetSelNameCompat(&strSelName,CDP.FileAttr,&fd))
 	{
 		if (UseFilter)
 		{
@@ -1738,7 +1738,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	//SaveScreen SaveScr;
 	DWORD DestAttr=INVALID_FILE_ATTRIBUTES;
-	FARString strSelName, strSelShortName;
+	FARString strSelName;
 	int Length;
 	DWORD FileAttr;
 
@@ -1827,7 +1827,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	// Îñíîâíîé öèêë êîïèðîâàíèÿ îäíîé ïîðöèè.
 	SrcPanel->GetSelNameCompat(nullptr,FileAttr);
 	{
-		while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&strSelShortName))
+		while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr))
 		{
 			FARString strDest = Dest;
 
@@ -1937,16 +1937,16 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 						{
 							if (!strRenamedName.IsEmpty())
 							{
-								DestDiz.DeleteDiz(strSelName,strSelShortName);
-								SrcPanel->CopyDiz(strSelName,strSelShortName,strRenamedName,strRenamedName,&DestDiz);
+								DestDiz.DeleteDiz(strSelName);
+								SrcPanel->CopyDiz(strSelName,strRenamedName,&DestDiz);
 							}
 							else
 							{
 								if (strCopiedName.IsEmpty())
 									strCopiedName = strSelName;
 
-								SrcPanel->CopyDiz(strSelName,strSelShortName,strCopiedName,strCopiedName,&DestDiz);
-								SrcPanel->DeleteDiz(strSelName,strSelShortName);
+								SrcPanel->CopyDiz(strSelName,strCopiedName,&DestDiz);
+								SrcPanel->DeleteDiz(strSelName);
 							}
 						}
 
@@ -2003,7 +2003,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				if (strCopiedName.IsEmpty())
 					strCopiedName = strSelName;
 
-				SrcPanel->CopyDiz(strSelName,strSelShortName,strCopiedName,strCopiedName,&DestDiz);
+				SrcPanel->CopyDiz(strSelName,strCopiedName,&DestDiz);
 			}
 
 
@@ -2148,7 +2148,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 						TreeList::DelTreeName(strSelName);
 
 						if (!strDestDizPath.IsEmpty())
-							SrcPanel->DeleteDiz(strSelName,strSelShortName);
+							SrcPanel->DeleteDiz(strSelName);
 					}
 				}
 			}
@@ -2160,7 +2160,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					return COPY_CANCEL;
 
 				if (DeleteCode==COPY_SUCCESS && !strDestDizPath.IsEmpty())
-					SrcPanel->DeleteDiz(strSelName,strSelShortName);
+					SrcPanel->DeleteDiz(strSelName);
 			}
 
 			if ((!(Flags&FCOPY_CURRENTONLY)) && (Flags&FCOPY_COPYLASTTIME))
@@ -3844,7 +3844,7 @@ BOOL ShellCopySecuryMsg(const wchar_t *Name)
 
 bool ShellCopy::CalcTotalSize()
 {
-	FARString strSelName, strSelShortName;
+	FARString strSelName;
 	DWORD FileAttr;
 	uint64_t FileSize;
 	// Äëÿ ôèëüòðà
@@ -3857,7 +3857,7 @@ bool ShellCopy::CalcTotalSize()
 	TotalFilesToProcess = 0;
 	SrcPanel->GetSelNameCompat(nullptr,FileAttr);
 
-	while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&strSelShortName,&fd))
+	while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&fd))
 	{
 		if ((FileAttr&FILE_ATTRIBUTE_REPARSE_POINT) && !(Flags&FCOPY_COPYSYMLINKCONTENTS))
 			continue;

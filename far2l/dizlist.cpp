@@ -227,11 +227,11 @@ bool DizList::AddRecord(const wchar_t *DizText)
 }
 
 
-const wchar_t* DizList::GetDizTextAddr(const wchar_t *Name, const wchar_t *ShortName, const int64_t FileSize)
+const wchar_t* DizList::GetDizTextAddr(const wchar_t *Name, const int64_t FileSize)
 {
 	const wchar_t *DizText=nullptr;
 	int TextPos;
-	int DizPos=GetDizPosEx(Name,ShortName,&TextPos);
+	int DizPos=GetDizPosEx(Name,&TextPos);
 
 	if (DizPos!=-1)
 	{
@@ -273,12 +273,9 @@ const wchar_t* DizList::GetDizTextAddr(const wchar_t *Name, const wchar_t *Short
 }
 
 
-int DizList::GetDizPosEx(const wchar_t *Name, const wchar_t *ShortName, int *TextPos)
+int DizList::GetDizPosEx(const wchar_t *Name, int *TextPos)
 {
 	int DizPos=GetDizPos(Name,TextPos);
-
-	if (DizPos==-1)
-		DizPos=GetDizPos(ShortName,TextPos);
 
 	//åñëè ôàéë îïèñàíèé áûë â OEM/ANSI òî èìåíà ôàéëîâ ìîãóò íå ñîâïàäàòü ñ þíèêîäíûìè
 	if (DizPos==-1 && !IsUnicodeOrUtfCodePage(OrigCodePage) && OrigCodePage!=CP_AUTODETECT)
@@ -418,9 +415,9 @@ int _cdecl SortDizSearch(const void *key,const void *elem)
 }
 
 
-bool DizList::DeleteDiz(const wchar_t *Name,const wchar_t *ShortName)
+bool DizList::DeleteDiz(const wchar_t *Name)
 {
-	int DizPos=GetDizPosEx(Name,ShortName,nullptr);
+	int DizPos=GetDizPosEx(Name,nullptr);
 
 	if (DizPos==-1)
 		return false;
@@ -578,9 +575,9 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 }
 
 
-bool DizList::AddDizText(const wchar_t *Name,const wchar_t *ShortName,const wchar_t *DizText)
+bool DizList::AddDizText(const wchar_t *Name,const wchar_t *DizText)
 {
-	DeleteDiz(Name,ShortName);
+	DeleteDiz(Name);
 	FARString strQuotedName = Name;
 	QuoteSpaceOnly(strQuotedName);
 	FormatString FString;
@@ -589,10 +586,10 @@ bool DizList::AddDizText(const wchar_t *Name,const wchar_t *ShortName,const wcha
 }
 
 
-bool DizList::CopyDiz(const wchar_t *Name, const wchar_t *ShortName, const wchar_t *DestName, const wchar_t *DestShortName, DizList *DestDiz)
+bool DizList::CopyDiz(const wchar_t *Name, const wchar_t *DestName, DizList *DestDiz)
 {
 	int TextPos;
-	int DizPos=GetDizPosEx(Name,ShortName,&TextPos);
+	int DizPos=GetDizPosEx(Name,&TextPos);
 
 	if (DizPos==-1)
 		return false;
@@ -600,7 +597,7 @@ bool DizList::CopyDiz(const wchar_t *Name, const wchar_t *ShortName, const wchar
 	while (IsSpace(DizData[DizPos].DizText[TextPos]))
 		TextPos++;
 
-	DestDiz->AddDizText(DestName,DestShortName,&DizData[DizPos].DizText[TextPos]);
+	DestDiz->AddDizText(DestName,&DizData[DizPos].DizText[TextPos]);
 
 	while (++DizPos<DizCount)
 	{

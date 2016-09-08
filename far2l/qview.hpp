@@ -83,5 +83,5 @@ class QuickView:public Panel
 		virtual void SetFocus();
 		virtual void KillFocus();
 		virtual BOOL UpdateKeyBar();
-		virtual int GetCurName(FARString &strName, FARString &strShortName);
+		virtual int GetCurName(FARString &strName);
 };

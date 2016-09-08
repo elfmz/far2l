@@ -285,7 +285,6 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			NewPtr->ChangeTime = fdata.ftChangeTime;
 			NewPtr->UnpSize = fdata.nFileSize;
 			NewPtr->strName = fdata.strFileName;
-			NewPtr->strShortName = fdata.strAlternateFileName;
 			NewPtr->Position=FileCount++;
 			NewPtr->NumberOfLinks=1;
 
@@ -925,7 +924,7 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 		if (!ListData[I]->DizText)
 		{
 			ListData[I]->DeleteDiz=FALSE;
-			ListData[I]->DizText=(wchar_t*)Diz.GetDizTextAddr(ListData[I]->strName,ListData[I]->strShortName,ListData[I]->UnpSize);
+			ListData[I]->DizText=(wchar_t*)Diz.GetDizTextAddr(ListData[I]->strName,ListData[I]->UnpSize);
 		}
 	}
 }

@@ -62,7 +62,6 @@ void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
 	FindData.dwReserved1 = wfd.dwReserved1;
 	FindData.dwUnixMode = wfd.dwUnixMode;
 	FindData.strFileName = wfd.cFileName;
-	FindData.strAlternateFileName = wfd.cAlternateFileName;
 }
 
 HANDLE FindFirstFileInternal(LPCWSTR Name, FAR_FIND_DATA_EX& FindData)
@@ -144,7 +143,6 @@ bool FindFile::Get(FAR_FIND_DATA_EX& FindData)
 	// skip ".." & "."
 	if(Result && FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY && FindData.strFileName.At(0) == L'.' &&
 		// õèòðûé ñïîñîá - ó âèðòóàëüíûõ ïàïîê íå áûâàåò SFN, â îòëè÷èå îò.
-		FindData.strAlternateFileName.IsEmpty() &&
 		((FindData.strFileName.At(1) == L'.' && !FindData.strFileName.At(2)) || !FindData.strFileName.At(1)))
 	{
 		Result = Get(FindData);
@@ -480,7 +478,6 @@ void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest)
 	pDest->nPackSize = pSrc->nPackSize;
 	pDest->dwUnixMode = pSrc->dwUnixMode;
 	pDest->strFileName = pSrc->lpwszFileName;
-	pDest->strAlternateFileName = pSrc->lpwszAlternateFileName;
 }
 
 void apiFindDataExToData(const FAR_FIND_DATA_EX *pSrc, FAR_FIND_DATA *pDest)
@@ -493,13 +490,11 @@ void apiFindDataExToData(const FAR_FIND_DATA_EX *pSrc, FAR_FIND_DATA *pDest)
 	pDest->nPackSize = pSrc->nPackSize;
 	pDest->dwUnixMode = pSrc->dwUnixMode;
 	pDest->lpwszFileName = xf_wcsdup(pSrc->strFileName);
-	pDest->lpwszAlternateFileName = xf_wcsdup(pSrc->strAlternateFileName);
 }
 
 void apiFreeFindData(FAR_FIND_DATA *pData)
 {
 	xf_free(pData->lpwszFileName);
-	xf_free(pData->lpwszAlternateFileName);
 }
 
 BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink)

@@ -88,7 +88,6 @@ enum enumLeftMenu
 	MENU_LEFT_QUICKVIEW,
 	MENU_LEFT_SEPARATOR2,
 	MENU_LEFT_SORTMODES,
-	MENU_LEFT_LONGNAMES,
 	MENU_LEFT_TOGGLEPANEL,
 	MENU_LEFT_REREAD,
 	MENU_LEFT_CHANGEDRIVE
@@ -202,8 +201,6 @@ void SetLeftRightMenuChecks(MenuDataEx *pMenu, bool bLeft)
 			pMenu[MENU_LEFT_QUICKVIEW].SetCheck(1);
 			break;
 	}
-
-	pMenu[MENU_LEFT_LONGNAMES].SetCheck(!pPanel->GetShowShortNamesMode());
 }
 
 void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
@@ -226,7 +223,6 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		MSG(MMenuQuickView),0,KEY_CTRLQ,
 		L"",LIF_SEPARATOR,0,
 		MSG(MMenuSortModes),0,KEY_CTRLF12,
-		MSG(MMenuLongNames),0,KEY_CTRLN,
 		MSG(MMenuTogglePanel),0,KEY_CTRLF1,
 		MSG(MMenuReread),0,KEY_CTRLR,
 		MSG(MMenuChangeDrive),0,KEY_ALTF1,
@@ -323,7 +319,6 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		MSG(MMenuQuickView),0,KEY_CTRLQ,
 		L"",LIF_SEPARATOR,0,
 		MSG(MMenuSortModes),0,KEY_CTRLF12,
-		MSG(MMenuLongNames),0,KEY_CTRLN,
 		MSG(MMenuTogglePanelRight),0,KEY_CTRLF2,
 		MSG(MMenuReread),0,KEY_CTRLR,
 		MSG(MMenuChangeDriveRight),0,KEY_ALTF2,
@@ -436,9 +431,6 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 						break;
 					case MENU_LEFT_SORTMODES: // Sort modes
 						pPanel->ProcessKey(KEY_CTRLF12);
-						break;
-					case MENU_LEFT_LONGNAMES: // Show long names
-						pPanel->ProcessKey(KEY_CTRLN);
 						break;
 					case MENU_LEFT_TOGGLEPANEL: // Panel On/Off
 						FrameManager->ProcessKey((HItem==MENU_LEFT)?KEY_CTRLF1:KEY_CTRLF2);

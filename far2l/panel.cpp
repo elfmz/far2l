@@ -2128,18 +2128,16 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 }
 
 
-int Panel::GetCurName(FARString &strName, FARString &strShortName)
+int Panel::GetCurName(FARString &strName)
 {
 	strName.Clear();
-	strShortName.Clear();
 	return FALSE;
 }
 
 
-int Panel::GetCurBaseName(FARString &strName, FARString &strShortName)
+int Panel::GetCurBaseName(FARString &strName)
 {
 	strName.Clear();
-	strShortName.Clear();
 	return FALSE;
 }
 

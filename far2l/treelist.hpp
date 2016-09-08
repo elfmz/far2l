@@ -154,7 +154,7 @@ class TreeList: public Panel
 
 		virtual int GetCurDir(FARString &strCurDir);
 
-		virtual int GetCurName(FARString &strName, FARString &strShortName);
+		virtual int GetCurName(FARString &strName);
 
 		virtual void UpdateViewPanel();
 		virtual void MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent);
@@ -181,7 +181,7 @@ class TreeList: public Panel
 		virtual BOOL GetItem(int Index,void *Dest);
 		virtual int GetCurrentPos();
 
-		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *ShortName=nullptr,FAR_FIND_DATA_EX *fd=nullptr);
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fd=nullptr);
 
 	public:
 		static void AddTreeName(const wchar_t *Name);

@@ -75,7 +75,7 @@ const FileTypeStrings FTS=
 
 
 
-int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nullptr)
+int GetDescriptionWidth(const wchar_t *Name=nullptr)
 {
 	int Width=0;
 	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
@@ -106,7 +106,7 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nul
 				continue;
 
 			FARString strExpandedDesc = strDescription;
-			SubstFileName(strExpandedDesc,Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
+			SubstFileName(strExpandedDesc,Name,nullptr,nullptr,TRUE);
 			CurWidth = HiStrlen(strExpandedDesc);
 		}
 
@@ -134,7 +134,7 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr,const wchar_t *ShortName=nul
    - Óáðàë íåïîíÿòíûé ìíå çàïðåò íà èñïîëüçîâàíèå ìàñêè ôàéëîâ òèïà "*.*"
      (áûë êîãäà-òî, âðîäå, òàêîé áàã-ðåïîðò)
 */
-bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mode, bool AlwaysWaitFinish)
+bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 {
 	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
 	MenuItemEx TypesMenuItem;
@@ -142,7 +142,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	TypesMenu.SetHelp(FTS.Help);
 	TypesMenu.SetFlags(VMENU_WRAPMODE);
 	TypesMenu.SetPosition(-1,-1,0,0);
-	int DizWidth=GetDescriptionWidth(Name, ShortName);
+	int DizWidth=GetDescriptionWidth(Name);
 	int ActualCmdCount=0; // îòîáðàæàåìûõ àññîöèàöèé â ìåíþ
 	CFileMask FMask; // äëÿ ðàáîòû ñ ìàñêàìè ôàéëîâ
 	FARString strCommand, strDescription;
@@ -207,7 +207,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 
 		TypesMenuItem.Clear();
 		FARString strCommandText = strCommand;
-		SubstFileName(strCommandText,Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
+		SubstFileName(strCommandText,Name,nullptr,nullptr,TRUE);
 
 		ActualCmdCount++;
 		FARString strMenuText;
@@ -219,7 +219,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 			if (!strDescription.IsEmpty())
 			{
 				strTitle = strDescription;
-				SubstFileName(strTitle, Name,ShortName,nullptr,nullptr,nullptr,nullptr,TRUE);
+				SubstFileName(strTitle, Name,nullptr,nullptr,TRUE);
 			}
 
 			size_t Pos=0;
@@ -260,12 +260,11 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	TypesMenu.GetUserData(Command,Size,ExitCode);
 	strCommand.ReleaseBuffer(Size);
 	FARString strListName, strAnotherListName;
-	FARString strShortListName, strAnotherShortListName;
-	int PreserveLFN=SubstFileName(strCommand,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
-	bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
+	int PreserveLFN=SubstFileName(strCommand,Name,&strListName,&strAnotherListName);
+	bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 	{
-		PreserveLongName PreserveName(ShortName,PreserveLFN);
+		//PreserveLongName PreserveName(PreserveLFN);
 		RemoveExternalSpaces(strCommand);
 
 		if (!strCommand.IsEmpty())
@@ -321,12 +320,6 @@ bool ProcessLocalFileTypes(const wchar_t *Name, const wchar_t *ShortName, int Mo
 	if (!strAnotherListName.IsEmpty())
 		apiDeleteFile(strAnotherListName);
 
-	if (!strShortListName.IsEmpty())
-		apiDeleteFile(strShortListName);
-
-	if (!strAnotherShortListName.IsEmpty())
-		apiDeleteFile(strAnotherShortListName);
-
 	return true;
 }
 
@@ -346,22 +339,20 @@ void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool Run
 /*
   Èñïîëüçóåòñÿ äëÿ çàïóñêà âíåøíåãî ðåäàêòîðà è âüþâåðà
 */
-void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t *ShortName, bool AlwaysWaitFinish)
+void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool AlwaysWaitFinish)
 {
 	FARString strListName, strAnotherListName;
-	FARString strShortListName, strAnotherShortListName;
-	FARString strFullName, strFullShortName;
+	FARString strFullName;
 	FARString strExecStr = Command;
 	FARString strFullExecStr = Command;
 	{
-		int PreserveLFN=SubstFileName(strExecStr,Name,ShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
-		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty()||!strShortListName.IsEmpty()||!strAnotherShortListName.IsEmpty();
+		int PreserveLFN=SubstFileName(strExecStr,Name,&strListName,&strAnotherListName);
+		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
-		PreserveLongName PreserveName(ShortName,PreserveLFN);
+		//PreserveLongName PreserveName(PreserveLFN);
 		ConvertNameToFull(Name,strFullName);
-		strFullShortName = strFullName;
 		//BUGBUGBUGBUGBUGBUG !!! Same ListNames!!!
-		SubstFileName(strFullExecStr,strFullName,strFullShortName,&strListName,&strAnotherListName, &strShortListName, &strAnotherShortListName);
+		SubstFileName(strFullExecStr,strFullName,&strListName,&strAnotherListName);
 
 		CtrlObject->ViewHistory->AddToHistory(strFullExecStr,(AlwaysWaitFinish&1)+2);
 
@@ -382,11 +373,6 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, const wchar_t 
 	if (!strAnotherListName.IsEmpty())
 		apiDeleteFile(strAnotherListName);
 
-	if (!strShortListName.IsEmpty())
-		apiDeleteFile(strShortListName);
-
-	if (!strAnotherShortListName.IsEmpty())
-		apiDeleteFile(strAnotherShortListName);
 }
 
 static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)

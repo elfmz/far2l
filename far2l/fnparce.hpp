@@ -33,9 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-int SubstFileName(FARString &strStr, const wchar_t *Name, const wchar_t *ShortName,
+int SubstFileName(FARString &strStr, const wchar_t *Name, 
                   FARString *strListName=nullptr,
                   FARString *strAnotherListName = nullptr,
-                  FARString *strShortListName=nullptr,
-                  FARString *strAnotherShortListName=nullptr,
                   int IgnoreInput=FALSE,const wchar_t *CmdLineDir=nullptr);

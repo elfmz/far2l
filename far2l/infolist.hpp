@@ -101,5 +101,5 @@ class InfoList:public Panel
 		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		virtual BOOL UpdateKeyBar();
 		virtual void CloseFile();
-		virtual int GetCurName(FARString &strName, FARString &strShortName);
+		virtual int GetCurName(FARString &strName);
 };

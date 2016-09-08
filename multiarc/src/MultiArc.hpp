@@ -208,7 +208,7 @@ class ArcCommand
     int ProcessCommand(char *Command,int CommandType,int IgnoreErrors,char *ListFileName=0);
     void DeleteBraces(char *Command);
     int ReplaceVar(char *Command,int &Length);
-    int MakeListFile(char *ListFileName,int ShortNames,int QuoteName,
+    int MakeListFile(char *ListFileName,int QuoteName,
                      int UseSlash,int FolderName,int NameOnly,int PathOnly,
                      int FolderMask,char *LocalAllFilesMask,int AnsiCode);
 
@@ -324,8 +324,8 @@ void InitDialogItems(const struct InitDialogItem *Init,struct FarDialogItem *Ite
                      int ItemsNumber);
 void InsertCommas(unsigned long Number,char *Dest);
 void InsertCommas(int64_t Number,char *Dest);
-int ToPercent(long N1,long N2);
-int ToPercent(int64_t N1,int64_t N2);
+int MA_ToPercent(long N1,long N2);
+int MA_ToPercent(int64_t N1,int64_t N2);
 int IsCaseMixed(const char *Str);
 int CheckForEsc();
 int LocalStrnicmp(const char *Str1,const char *Str2,int Length);

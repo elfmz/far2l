@@ -35,16 +35,3 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-
-
-class PreserveLongName
-{
-	private:
-		FARString strSaveLongName;
-		FARString strSaveShortName;
-		int Preserve;
-
-	public:
-		PreserveLongName(const wchar_t *ShortName,int Preserve);
-		~PreserveLongName();
-};

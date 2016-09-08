@@ -47,7 +47,6 @@ struct FileListItem
 	char Selected;
 	char PrevSelected;
 	char ShowFolderSize;
-	char ShortNamePresent;
 	HighlightDataColor Colors;
 
 	DWORD NumberOfLinks;
@@ -77,7 +76,6 @@ struct FileListItem
 	uint64_t StreamsSize;
 
 	FARString strName;
-	FARString strShortName;
 
 	DWORD ReparseTag;
 
@@ -88,7 +86,6 @@ struct FileListItem
 		Selected = 0;
 		PrevSelected = 0;
 		ShowFolderSize = 0;
-		ShortNamePresent = 0;
 		memset(&Colors, 0, sizeof(HighlightDataColor));
 		NumberOfLinks = 0;
 		NumberOfStreams = 0;
@@ -112,7 +109,6 @@ struct FileListItem
 		PackSize = 0;
 		StreamsSize = 0;
 		strName.Clear();
-		strShortName.Clear();
 		ReparseTag=0;
 		strCustomData.Clear();
 	}
@@ -124,7 +120,6 @@ struct FileListItem
 			Selected = fliCopy.Selected;
 			PrevSelected = fliCopy.PrevSelected;
 			ShowFolderSize = fliCopy.ShowFolderSize;
-			ShortNamePresent = fliCopy.ShortNamePresent;
 			Colors=fliCopy.Colors;
 			NumberOfLinks = fliCopy.NumberOfLinks;
 			NumberOfStreams = fliCopy.NumberOfStreams;
@@ -148,7 +143,6 @@ struct FileListItem
 			PackSize = fliCopy.PackSize;
 			StreamsSize = fliCopy.StreamsSize;
 			strName = fliCopy.strName;
-			strShortName = fliCopy.strShortName;
 			strCustomData = fliCopy.strCustomData;
 		}
 
@@ -257,15 +251,15 @@ class FileList:public Panel
 
 		void MoveSelection(FileListItem **FileList,long FileCount,FileListItem **OldList,long OldFileCount);
 		virtual int GetSelCount();
-		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FARString *strShortName=nullptr,FAR_FIND_DATA_EX *fde=nullptr);
+		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fde=nullptr);
 		virtual void UngetSelName();
 		virtual void ClearLastGetSelection();
 
 		virtual uint64_t GetLastSelectedSize();
 		virtual int GetLastSelectedItem(FileListItem *LastItem);
 
-		virtual int GetCurName(FARString &strName, FARString &strShortName);
-		virtual int GetCurBaseName(FARString &strName, FARString &strShortName);
+		virtual int GetCurName(FARString &strName);
+		virtual int GetCurBaseName(FARString &strName);
 
 		void PushPlugin(HANDLE hPlugin,const wchar_t *HostFile);
 		int PopPlugin(int EnableRestoreViewMode);
@@ -369,11 +363,10 @@ class FileList:public Panel
 		virtual void EditFilter();
 		virtual bool FileInFilter(long idxItem);
 		virtual void ReadDiz(PluginPanelItem *ItemList=nullptr,int ItemLength=0, DWORD dwFlags=0);
-		virtual void DeleteDiz(const wchar_t *Name, const wchar_t *ShortName);
+		virtual void DeleteDiz(const wchar_t *Name);
 		virtual void FlushDiz();
 		virtual void GetDizName(FARString &strDizName);
-		virtual void CopyDiz(const wchar_t *Name, const wchar_t *ShortName, const wchar_t *DestName,
-		                     const wchar_t *DestShortName,DizList *DestDiz);
+		virtual void CopyDiz(const wchar_t *Name, const wchar_t *DestName, DizList *DestDiz);
 		virtual int IsFullScreen();
 		virtual int IsDizDisplayed();
 		virtual int IsColumnDisplayed(int Type);
@@ -399,7 +392,7 @@ class FileList:public Panel
 		int PluginPanelHelp(HANDLE hPlugin);
 		virtual long GetFileCount() {return FileCount;}
 
-		FARString &CreateFullPathName(const wchar_t *Name,const wchar_t *ShortName,DWORD FileAttr, FARString &strDest,int UNC,int ShortNameAsIs=TRUE);
+		FARString &CreateFullPathName(const wchar_t *Name,DWORD FileAttr, FARString &strDest,int UNC);
 
 
 		virtual BOOL GetItem(int Index,void *Dest);

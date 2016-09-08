@@ -16,6 +16,7 @@
 #include <KeyFileHelper.h>
 using namespace oldfar;
 #include "fmt.hpp"
+#include <errno.h>
 
 #define PCRE_STATIC
 #include "pcre++.h"

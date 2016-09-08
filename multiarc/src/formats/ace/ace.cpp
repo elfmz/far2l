@@ -9,7 +9,9 @@
 
 #include <windows.h>
 #include <string.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #include <stddef.h>
 #include <memory.h>
 #include <pluginold.hpp>

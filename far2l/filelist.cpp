@@ -1156,7 +1156,7 @@ int FileList::ProcessKey(int Key)
 					}
 
 					if (Opt.QuotedName&QUOTEDNAME_INSERT)
-						BashQuoteIfNeeded(strFileName);
+						EscapeSpace(strFileName);
 
 					strFileName += L" ";
 				}
@@ -2281,7 +2281,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 				strFullPath = CurPtr->strName;
 			}
 
-			BashQuoteIfNeeded(strFullPath);
+			EscapeSpace(strFullPath);
 			Execute(strFullPath, false, SeparateWindow, true, (CurPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY)!=0);
 		}
 		else
@@ -2354,7 +2354,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 
 		if (EnableExec && (ExeType || BatType))
 		{
-			BashQuoteIfNeeded(strFileName);
+			EscapeSpace(strFileName);
 
 			if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTPANEL) && !PluginMode) //AN
 				CtrlObject->CmdHistory->AddToHistory(strFileName);
@@ -3950,7 +3950,7 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 		}
 
 		if (Opt.QuotedName&QUOTEDNAME_CLIPBOARD)
-			BashQuoteIfNeeded(strQuotedName);
+			EscapeSpace(strQuotedName);
 
 		int Length=(int)strQuotedName.GetLength();
 		wchar_t *NewPtr=(wchar_t *)xf_realloc(CopyData, (DataSize+Length+3)*sizeof(wchar_t));

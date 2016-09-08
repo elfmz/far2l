@@ -149,7 +149,7 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 			r = ForkProc(we.we_wordc, we.we_wordv);
 			wordfree(&we);
 		} else
-			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
+			fprintf(stderr, "ExecuteOrForkProc: wordexp(%s) errno %u\n", CmdStr, errno);
 	} else {
 		const char *shell = getenv("SHELL");
 		if (!shell)
@@ -274,16 +274,16 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 			fprintf(stderr, "ExecuteA(%s) - empty cmd\n", CmdStr);
 			return -1;
 		}
-    if (cmds[0][0]!='/' && cmds[0][0]!='.')
-      cmds[0] = "./" + cmds[0];
+		if (cmds[0][0]!='/' && cmds[0][0]!='.')
+			cmds[0] = "./" + cmds[0];
 		for (size_t i=0; i<cmds.size(); i++) {
-      if (i != 0)
-        tmp += ' ';
-      std::wstring ws = StrMB2Wide(cmds[i]); // TODO: avoid conversion to UTF16 and then back
-      FARString fs(ws.c_str(), ws.size());
-      BashQuoteIfNeeded(fs);
-      tmp += StrWide2MB(fs.CPtr());
-    }
+			if (i != 0)
+				tmp += ' ';
+			std::wstring ws = StrMB2Wide(cmds[i]); // TODO: avoid conversion to UTF16 and then back
+			FARString fs(ws.c_str(), ws.size());
+			EscapeSpace(fs);
+			tmp += Wide2MB(fs.CPtr());
+		}
 
 		if (!ec.IsExecutable()) {
 			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);

@@ -137,15 +137,6 @@ wchar_t * WINAPI InsertRegexpQuote(wchar_t *Str)
 		return Str;
 }
 
-wchar_t* WINAPI QuoteSpace(wchar_t *Str)
-{
-	if (wcspbrk(Str, Opt.strQuotedSymbols) )
-		InsertQuote(Str);
-
-	return Str;
-}
-
-
 FARString& InsertQuote(FARString &strStr)
 {
 	return InsertCustomQuote(strStr,L'\"');
@@ -159,10 +150,20 @@ FARString& InsertRegexpQuote(FARString &strStr)
 		return strStr;
 }
 
-FARString &QuoteSpace(FARString &strStr)
+static FARString escapeSpace(const wchar_t* str) {
+	FARString result;
+	for (const wchar_t *cur = str; *cur; ++cur) {
+		if (wcschr(Opt.strQuotedSymbols, *cur) != NULL)
+			result.Append('\\');
+		result.Append(*cur);
+	}
+	return result;
+}
+
+FARString &EscapeSpace(FARString &strStr)
 {
 	if (wcspbrk(strStr, Opt.strQuotedSymbols) )
-		InsertQuote(strStr);
+		strStr.Copy(escapeSpace(strStr.CPtr()));
 
 	return strStr;
 }
@@ -185,42 +186,6 @@ FARString& WINAPI QuoteSpaceOnly(FARString &strStr)
 	return(strStr);
 }
 
-FARString BashQuote(const wchar_t* str) {
-	FARString result;
-	result.Append("\"");
-	for (const wchar_t *cur = str; *cur; ++cur) {
-		switch (*cur) {
-			case L'"':  result.Append(L"\\\"");    break;
-			case L'$':  result.Append(L"\\$");     break;
-			case L'\\': result.Append(L"\\\\");    break;
-			case L'`':  result.Append(L"\\`");     break;
-			case L'!':  result.Append(L"\"'!'\""); break;
-			default:    result.Append(*cur);       break;
-		}
-	}
-	result.Append("\"");
-	return result;
-}
-
-static bool NeedBashQuote(const wchar_t* str) {
-  if (*str == L'\0')
-    return true;
-	// it is a bit paranoid to have the list of chars which could be left unescaped instead of those which must be escaped (" \"\\$!")
-	// TODO?: allow russian and european with acute
-	static const wchar_t validchars[] = L"%+,-./0123456789:=@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz";
-	for (const wchar_t *cur = str; *cur; ++cur) {
-		if (wcschr(validchars, *cur) == NULL) 
-			return true;
-	}
-	return false;
-}
-
-FARString& WINAPI BashQuoteIfNeeded(FARString &strStr) {
-	if (NeedBashQuote(strStr.CPtr())) {
-		strStr.Copy(BashQuote(strStr.CPtr()));
-	}
-	return(strStr);
-}
 
 FARString& WINAPI TruncStrFromEnd(FARString &strStr, int MaxLength)
 {

@@ -2454,7 +2454,7 @@ void DoScanTree(HANDLE hDlg, FARString& strRoot)
 
 		while (!WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0) && ScTree.GetNextName(&FindData,strFullName))
 		{
-			WINPORT(Sleep)(0);
+			//WINPORT(Sleep)(0);
 			while (WINPORT(InterlockedCompareExchange)(&PauseFlag, 0, 0)) WINPORT(Sleep)(10);
 
 			bool bContinue=false;
@@ -2543,7 +2543,7 @@ void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& RecurseLevel)
 	{
 		for (int I=0; I<ItemCount && !WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0); I++)
 		{
-			WINPORT(Sleep)(0);
+			//WINPORT(Sleep)(0);
 			while (WINPORT(InterlockedCompareExchange)(&PauseFlag, 0, 0))WINPORT(Sleep)(10);
 
 			PluginPanelItem *CurPanelItem=PanelData+I;

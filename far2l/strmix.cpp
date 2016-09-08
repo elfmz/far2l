@@ -150,7 +150,12 @@ FARString& InsertRegexpQuote(FARString &strStr)
 		return strStr;
 }
 
-static FARString escapeSpace(const wchar_t* str) {
+// all 3 variants suppose to be equivalent but variants 2 and 3 have to have two forms: 
+// a) for producing the code which can be used in bash-script 
+// b) for execl()'s args (no escape ` within "", escape \ within '', ...)
+static FARString escapeSpaceVariant1(const wchar_t* str) {
+	if (*str == L'\0')
+		return "''";
 	FARString result;
 	for (const wchar_t *cur = str; *cur; ++cur) {
 		if (wcschr(Opt.strQuotedSymbols, *cur) != NULL)
@@ -159,13 +164,53 @@ static FARString escapeSpace(const wchar_t* str) {
 	}
 	return result;
 }
+#if 0
+static FARString escapeSpaceVariant2(const wchar_t* str, bool forExecl) {
+	FARString result;
+	result.Append('"');
+	for (const wchar_t *cur = str; *cur; ++cur) {
+		switch (*cur) {
+			case L'!':  if (!forExecl) 
+										result.Append(L"\"'!'\""); 
+									else
+										result.Append('!');
+									break;
+			case L'"':  result.Append(L"\\\"");    break;
+			case L'$':  result.Append(L"\\$");     break;
+			case L'\\': result.Append(L"\\\\");    break;
+			case L'`':  if (!forExecl) result.Append('\\');
+									result.Append('`');
+									break;
+			default:    result.Append(*cur);       break;
+		}
+	}
+	result.Append('"');
+	return result;
+}
+
+static FARString escapeSpaceVariant3(const wchar_t* str, bool forExecl) {
+	FARString result;
+	result.Append('\'');
+	for (const wchar_t *cur = str; *cur; ++cur) {
+		switch (*cur) {
+			case L'\'': result.Append(L"'\\''");   break;
+			case L'\\': if (forExecl) result.Append('\\');
+									result.Append('\\');
+									break;
+			default:    result.Append(*cur);       break;
+		}
+	}
+	result.Append('\'');
+	return result;
+}
+#endif
 
 FARString &EscapeSpace(FARString &strStr)
 {
-	if (strStr.IsEmpty()) {
-		strStr.Copy("''");
-	} else if (wcspbrk(strStr, Opt.strQuotedSymbols)) {
-		strStr.Copy(escapeSpace(strStr.CPtr()));
+	if (strStr.IsEmpty() || wcspbrk(strStr, Opt.strQuotedSymbols)) {
+    strStr.Copy(escapeSpaceVariant1(strStr.CPtr()));
+		//strStr.Copy(escapeSpaceVariant2(strStr.CPtr(), true));
+		//strStr.Copy(escapeSpaceVariant3(strStr.CPtr(), true));
 	}
 
 	return strStr;

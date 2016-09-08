@@ -370,3 +370,8 @@ bool UnicodeString::RPos(size_t &nPos, wchar_t Ch, size_t nStartPos) const
 
 	return false;
 }
+
+std::string UnicodeString::GetMB() const
+{
+	return Wide2MB(CPtr());
+}

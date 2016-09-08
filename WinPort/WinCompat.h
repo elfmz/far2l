@@ -331,8 +331,11 @@ typedef int HRESULT;
     ((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 
 
-
-#define MAX_PATH          260
+#ifdef PATH_MAX
+# define MAX_PATH          PATH_MAX
+#else
+# define MAX_PATH          0x1000
+#endif
 
 typedef struct _FILETIME {
     DWORD dwLowDateTime;

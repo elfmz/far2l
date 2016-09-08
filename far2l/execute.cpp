@@ -259,42 +259,48 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 	return r;
 }
 
+static std::string MakeCommandLine(const std::vector<std::string>& cmds) {
+	std::string tmp;
+	for (size_t i=0; i<cmds.size(); i++) {
+		if (i != 0)
+			tmp += ' ';
+		std::wstring ws = StrMB2Wide(cmds[i]); // TODO: avoid conversion to UTF16 and then back
+		fprintf(stderr, "ws[%u]=(%ls)\n", i, ws.c_str());
+		FARString fs(ws.c_str(), ws.size());
+		EscapeSpace(fs); // TODO: were some of the cmds' parts made by ExplodeCmdLine(), escape them closer to the original (using ' or " or \)
+		fprintf(stderr, "fs[%u]=(%ls)\n", i, fs.CPtr());
+		tmp += Wide2MB(fs.CPtr());
+	}
+  return tmp;
+}
+
 static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
 	int r = -1;
+
+	std::vector<std::string> cmds = ExplodeCmdLine(CmdStr);
+	if (cmds.empty() || cmds[0].empty()) {
+		fprintf(stderr, "ExecuteA(%s) - empty cmd\n", CmdStr);
+		return -1;
+	}
+
 	ExecClassifier ec(CmdStr);
 	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : 0;
 	if (ec.IsFile()) {
-		std::string tmp;
-		if (!ec.IsExecutable())
-			tmp+= "xdg-open ";
-			
-		std::vector<std::string> cmds = ExplodeCmdLine(CmdStr);
-		if (cmds.empty() || cmds[0].empty()) {
-			fprintf(stderr, "ExecuteA(%s) - empty cmd\n", CmdStr);
-			return -1;
-		}
 		if (cmds[0][0]!='/' && cmds[0][0]!='.')
 			cmds[0] = "./" + cmds[0];
-		for (size_t i=0; i<cmds.size(); i++) {
-			if (i != 0)
-				tmp += ' ';
-			std::wstring ws = StrMB2Wide(cmds[i]); // TODO: avoid conversion to UTF16 and then back
-			FARString fs(ws.c_str(), ws.size());
-			EscapeSpace(fs);
-			tmp += Wide2MB(fs.CPtr());
-		}
 
 		if (!ec.IsExecutable()) {
-			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);
+			cmds.insert(cmds.begin(), "xdg-open");
+			r = farExecuteA(MakeCommandLine(cmds).c_str(), flags | EF_NOWAIT, NULL);
 			if (r!=0) {
-				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
+				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, MakeCommandLine(cmds).c_str() );
 				//TODO: nicely report if xdg-open exec failed
 			}
 		} else
-			r = farExecuteA(tmp.c_str(), flags, NULL);
-	} else 
-		r = farExecuteA(CmdStr, flags, NULL);
+			r = farExecuteA(MakeCommandLine(cmds).c_str(), flags, NULL);
+	} else
+		r = farExecuteA(MakeCommandLine(cmds).c_str(), flags, NULL);
 	return r;
 }
 

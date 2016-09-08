@@ -1,6 +1,6 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
-
+#include <errno.h>
 
 BOOL PluginClass::GetFormatName(char *FormatName, char *DefExt)
 {

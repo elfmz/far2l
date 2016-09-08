@@ -454,8 +454,8 @@ void ConvertPanelItemToAnsi(const PluginPanelItem &PanelItem, oldfar::PluginPane
 	PanelItemA.FindData.nFileSizeHigh = (DWORD)(PanelItem.FindData.nFileSize>>32);
 	PanelItemA.PackSize = (DWORD)PanelItem.FindData.nPackSize;
 	PanelItemA.PackSizeHigh = (DWORD)(PanelItem.FindData.nPackSize>>32);
-	UnicodeToOEM(PanelItem.FindData.lpwszFileName,PanelItemA.FindData.cFileName,sizeof(PanelItemA.FindData.cFileName));
-	UnicodeToOEM(PanelItem.FindData.lpwszAlternateFileName,PanelItemA.FindData.cAlternateFileName,sizeof(PanelItemA.FindData.cAlternateFileName));
+	UnicodeToOEM(PanelItem.FindData.lpwszFileName,PanelItemA.FindData.cFileName,ARRAYSIZE(PanelItemA.FindData.cFileName));
+	UnicodeToOEM(PanelItem.FindData.lpwszAlternateFileName,PanelItemA.FindData.cAlternateFileName,ARRAYSIZE(PanelItemA.FindData.cAlternateFileName));
 }
 
 void ConvertPanelItemsArrayToAnsi(const PluginPanelItem *PanelItemW, oldfar::PluginPanelItem *&PanelItemA, int ItemsNumber)
@@ -935,8 +935,8 @@ static int WINAPI FarRecursiveSearchA_Callback(const FAR_FIND_DATA *FData,const 
 	FindData.ftLastWriteTime = FData->ftLastWriteTime;
 	FindData.nFileSizeLow = (DWORD)FData->nFileSize;
 	FindData.nFileSizeHigh = (DWORD)(FData->nFileSize>>32);
-	UnicodeToOEM(FData->lpwszFileName,FindData.cFileName,sizeof(FindData.cFileName));
-	UnicodeToOEM(FData->lpwszAlternateFileName,FindData.cAlternateFileName,sizeof(FindData.cAlternateFileName));
+	UnicodeToOEM(FData->lpwszFileName,FindData.cFileName,ARRAYSIZE(FindData.cFileName));
+	UnicodeToOEM(FData->lpwszAlternateFileName,FindData.cAlternateFileName,ARRAYSIZE(FindData.cAlternateFileName));
 	char FullNameA[oldfar::NM];
 	UnicodeToOEM(FullName,FullNameA,sizeof(FullNameA));
 	return pCallbackParam->Func(&FindData,FullNameA,pCallbackParam->Param);
@@ -2893,8 +2893,8 @@ int WINAPI FarGetDirListA(const char *Dir,oldfar::PluginPanelItem **pPanelItem,i
 				(*pPanelItem)[i].FindData.ftLastWriteTime = pItems[i].ftLastWriteTime;
 				(*pPanelItem)[i].FindData.nFileSizeLow = (DWORD)pItems[i].nFileSize;
 				(*pPanelItem)[i].FindData.nFileSizeHigh = (DWORD)(pItems[i].nFileSize>>32);
-				UnicodeToOEM(pItems[i].lpwszFileName+PathOffset,(*pPanelItem)[i].FindData.cFileName,MAX_PATH);
-				UnicodeToOEM(pItems[i].lpwszAlternateFileName,(*pPanelItem)[i].FindData.cAlternateFileName,14);
+				UnicodeToOEM(pItems[i].lpwszFileName+PathOffset, (*pPanelItem)[i].FindData.cFileName, ARRAYSIZE((*pPanelItem)[i].FindData.cFileName) );
+				UnicodeToOEM(pItems[i].lpwszAlternateFileName, (*pPanelItem)[i].FindData.cAlternateFileName, ARRAYSIZE((*pPanelItem)[i].FindData.cAlternateFileName) );
 			}
 		}
 		else

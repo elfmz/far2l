@@ -78,9 +78,12 @@ typedef unsigned __int64 uint64_t;
 #define FOPEN_WRITE	"w"
 
 #ifdef __APPLE__
-#define st_mtim st_mtimespec
-#define st_ctim st_ctimespec
-#define st_atim st_atimespec
+# define st_mtim st_mtimespec
+# define st_ctim st_ctimespec
+# define st_atim st_atimespec
+# include <sys/syslimits.h>
+#else
+# include <linux/limits.h>
 #endif
 
 static int _wtoi(const wchar_t *w)
@@ -332,9 +335,17 @@ typedef int HRESULT;
 
 
 #ifdef PATH_MAX
-# define MAX_PATH          PATH_MAX
+# define MAX_PATH	PATH_MAX
 #else
-# define MAX_PATH          0x1000
+# define MAX_PATH	0x1000
+# warning "PATH_MAX not defined"
+#endif
+
+#ifdef NAME_MAX
+# define MAX_NAME	NAME_MAX
+#else
+# define MAX_NAME	255
+# warning "NAME_MAX not defined"
 #endif
 
 typedef struct _FILETIME {
@@ -393,7 +404,7 @@ typedef struct _WIN32_FIND_DATAA {
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
-    CHAR   cFileName[ MAX_PATH ];
+    CHAR   cFileName[ MAX_NAME ];
     CHAR   cAlternateFileName[ 14 ];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 typedef struct _WIN32_FIND_DATAW {
@@ -406,7 +417,7 @@ typedef struct _WIN32_FIND_DATAW {
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
-    WCHAR  cFileName[ MAX_PATH ];
+    WCHAR  cFileName[ MAX_NAME ];
     WCHAR  cAlternateFileName[ 14 ];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
 
@@ -1219,7 +1230,7 @@ typedef struct _cpinfoex {
   BYTE  LeadByte[MAX_LEADBYTES];
   WCHAR UnicodeDefaultChar;
   UINT  CodePage;
-  TCHAR CodePageName[MAX_PATH];
+  TCHAR CodePageName[MAX_NAME];
 } CPINFOEX, *LPCPINFOEX;
 
 typedef BOOL (*CODEPAGE_ENUMPROCW)(LPWSTR);

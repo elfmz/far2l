@@ -67,37 +67,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <set>
 #include <sys/wait.h>
 
-static WCHAR eol[2] = {'\r', '\n'};
+extern std::vector<std::string> ExplodeCmdLine(const char *cmd_line);
 
-static std::string GetExecutable(const char *cmd, bool add_args)
-{
-	char stop = (*cmd == '\"') ? '\"' : ' ';
-	char *CmdOut = (char *)alloca(strlen(cmd)*4 + 3);
-	char *p = CmdOut;
-	if (*cmd == '\"') cmd++;
-	if (add_args) *p++ = '\'';
-	if (add_args && (*cmd!='.' && *cmd!='/')) {
-		*p++ = '.';
-		*p++ = '/';
-	}
-	while (*cmd && *cmd != stop) {
-		if (add_args && *cmd == '\'')
-		{
-			*p++ = '\'';
-			*p++ = '\\';
-			*p++ = '\'';
-		}
-		*p++ = *cmd++;
-	}
-	if (add_args) {
-		if (*cmd == '\"') cmd++;
-		if (add_args) *p++ = '\'';
-		while (*cmd)
-			*p++ = *cmd++;
-	}
-	*p++ = 0;
-	return std::string(CmdOut);
-}
+static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
 {
@@ -122,11 +94,18 @@ public:
 			if (!*bg_suffix) _backround = true;
 		}
 		
-		std::string cmds = GetExecutable(cmd, false);
-		cmd = cmds.c_str();
+		std::vector<std::string> cmds = ExplodeCmdLine(cmd);
+		if (cmds.empty() || cmds[0].empty()) {
+			fprintf(stderr, "ExecClassifier(%s) - empty cmd\n", cmd);
+			return;
+		}
+		if (cmds[0][0]!='/' && cmds[0][0]!='.')
+			cmds[0] = "./" + cmds[0];
+
+		cmd = cmds[0].c_str();
 		int f = open(cmd, O_RDONLY);
 		if (f==-1) {
-			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
+			fprintf(stderr, "ExecClassifier(%s) - open error %u\n", cmd, errno);
 			return;
 		}
 		
@@ -137,20 +116,20 @@ public:
 				char buf[8] = { 0 };
 				int r = read(f, buf, sizeof(buf));
 				if (r > 4 && buf[0]==0x7f && buf[1]=='E' && buf[2]=='L' && buf[3]=='F') {
-					fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
+					fprintf(stderr, "ExecClassifier(%s) - ELF executable\n", cmd);
 					_executable = true;
 				} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
-					fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
+					fprintf(stderr, "ExecClassifier(%s) - script\n", cmd);
 					_executable = true;
 				} else {
 					_executable = IsExecutableByExtension(cmd);
-					fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
+					fprintf(stderr, "ExecClassifier(%s) - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
 						cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3], _executable ? "" : "not ");
 				}
 			} else
-				fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not executable mode=0x%x\n", cmd, s.st_mode);	
+				fprintf(stderr, "IsPossibleXDGOpeSubject(%s) - not executable mode=0x%x\n", cmd, s.st_mode);	
 		} else 
-			fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not regular mode=0x%x\n", cmd, s.st_mode);
+			fprintf(stderr, "IsPossibleXDGOpeSubject(%s) - not regular mode=0x%x\n", cmd, s.st_mode);
 	
 		close(f);
 	}
@@ -290,7 +269,22 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 		if (!ec.IsExecutable())
 			tmp+= "xdg-open ";
 			
-		tmp+= GetExecutable(CmdStr, true);
+		std::vector<std::string> cmds = ExplodeCmdLine(CmdStr);
+		if (cmds.empty() || cmds[0].empty()) {
+			fprintf(stderr, "ExecuteA(%s) - empty cmd\n", CmdStr);
+			return -1;
+		}
+    if (cmds[0][0]!='/' && cmds[0][0]!='.')
+      cmds[0] = "./" + cmds[0];
+		for (size_t i=0; i<cmds.size(); i++) {
+      if (i != 0)
+        tmp += ' ';
+      std::wstring ws = StrMB2Wide(cmds[i]); // TODO: avoid conversion to UTF16 and then back
+      FARString fs(ws.c_str(), ws.size());
+      BashQuoteIfNeeded(fs);
+      tmp += StrWide2MB(fs.CPtr());
+    }
+
 		if (!ec.IsExecutable()) {
 			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);
 			if (r!=0) {

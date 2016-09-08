@@ -403,7 +403,7 @@ int CommandLine::ProcessKey(int Key)
 			ProcessOSAliases(strStr);
 
 			if (!ActivePanel->ProcessPluginEvent(FE_COMMAND,(void *)strStr.CPtr()))
-				CmdExecute(strStr, false, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, false, false, false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
+				CmdExecute(strStr.CPtr(), false, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, false, false, false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
 		}
 		return TRUE;
 		case KEY_CTRLU:

@@ -223,7 +223,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2,int Shor
 				}
 
 				if (Opt.QuotedName&QUOTEDNAME_INSERT)
-					QuoteSpace(strPathName);
+					BashQuoteIfNeeded(strPathName);
 
 				if (Param2)
 					strPathName += Param2;

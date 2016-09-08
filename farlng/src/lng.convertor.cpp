@@ -47,9 +47,9 @@ void FixQuotes (char *lpStr)
 
 	if ( lpEnd == lpStart )
 	{
-		strcpy (lpTmp, lpStart);
+		strmove (lpTmp, lpStart);
 		strcat (lpTmp, "\"");
-		strcpy (lpStr, lpTmp);
+		strmove (lpStr, lpTmp);
 
 		free (lpTmp);
 
@@ -69,7 +69,7 @@ void FixQuotes (char *lpStr)
 
 	*lpPtr = '"';
 
-	strcpy (lpStr, lpTmp);
+	strmove (lpStr, lpTmp);
 
 	free (lpTmp);
 }
@@ -149,8 +149,8 @@ bool ReadLanguage (
 			true
 			) && strstr (lpParam,".Language") )
 	{
-		strcpy (*lpLngName, strstr (lpParam, "=")+1);
-		strcpy (*lpLngDesc, "\"");
+		strmove (*lpLngName, strstr (lpParam, "=")+1);
+		strmove (*lpLngDesc, "\"");
 
 		strcat (*lpLngDesc, strstr (*lpLngName, ",")+1);
 		strcat (*lpLngDesc, "\"");
@@ -225,9 +225,9 @@ int main_convertor (int argc, char** argv)
 		return 0;
 	}
 
-	DWORD dwLangs = atol(argv[3]);
+	int dwLangs = atol(argv[3]);
 
-	if ( !dwLangs )
+	if ( dwLangs<=0 )
 	{
 		printf ("ERROR: Zero language files to process, exiting.\n\r");
 		return 0;
@@ -487,7 +487,7 @@ int main_convertor (int argc, char** argv)
 						free(pLangEntries[i].lpString);
 					}
 
-					strcpy(lpTmp,pLangEntries[i].lpString);
+					strmove(lpTmp,pLangEntries[i].lpString);
 
 					FixQuotes(lpTmp);
 

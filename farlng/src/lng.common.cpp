@@ -55,3 +55,8 @@ unsigned long CRC32(
 
 	return crc ^ 0xffffffffL;
 }
+
+void strmove(char *dst, const char *src)
+{
+	memmove(dst, src, strlen(src) + 1);
+}

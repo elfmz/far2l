@@ -344,8 +344,7 @@ int main_generator (int argc, char** argv)
 
 				fprintf(stderr, "lpLNGOutputPath=%s\n", lpLNGOutputPath);
 
-    char* lpFeedFileName = (char*)malloc (strlen(argv[argc-1])+1);
-    strcpy (lpFeedFileName, argv[argc-1]);
+    char* lpFeedFileName = (char*)strdup(argv[argc-1]);
 
     UnquoteIfNeeded (lpFeedFileName);
 
@@ -410,9 +409,9 @@ int main_generator (int argc, char** argv)
 	int nHPPEncoding = bOutputInUTF8 ? CP_UTF8 : ReadInteger(lpStart);
 
 	// read language count
-	DWORD dwLangs = ReadInteger(lpStart);
+	int dwLangs = ReadInteger(lpStart);
 
-	if ( dwLangs )
+	if ( dwLangs > 0 )
 	{
 		sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
 
@@ -560,7 +559,7 @@ int main_generator (int argc, char** argv)
 							{
 								if ( !strncmp (lpLNGString, "upd:", 4) )
 								{
-									strcpy (lpLNGString, lpLNGString+4);
+									strmove (lpLNGString, lpLNGString+4);
 
 									/*
 									printf (

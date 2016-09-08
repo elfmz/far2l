@@ -265,10 +265,10 @@ static std::string MakeCommandLine(const std::vector<std::string>& cmds) {
 		if (i != 0)
 			tmp += ' ';
 		std::wstring ws = StrMB2Wide(cmds[i]); // TODO: avoid conversion to UTF16 and then back
-		fprintf(stderr, "ws[%u]=(%ls)\n", i, ws.c_str());
+		//fprintf(stderr, "ws[%u]=(%ls)\n", i, ws.c_str());
 		FARString fs(ws.c_str(), ws.size());
 		EscapeSpace(fs); // TODO: were some of the cmds' parts made by ExplodeCmdLine(), escape them closer to the original (using ' or " or \)
-		fprintf(stderr, "fs[%u]=(%ls)\n", i, fs.CPtr());
+		//fprintf(stderr, "fs[%u]=(%ls)\n", i, fs.CPtr());
 		tmp += Wide2MB(fs.CPtr());
 	}
   return tmp;

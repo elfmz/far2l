@@ -355,7 +355,8 @@ void WinPortPanel::CheckForResizePending()
 	
 			int width = 0, height = 0;
 			_frame->GetClientSize(&width, &height);
-			fprintf(stderr, "Current client size: %u %u\n", width, height);
+			fprintf(stderr, "Current client size: %u %u font %u %u\n", 
+				width, height, _paint_context.FontWidth(), _paint_context.FontHeight());
 			width/= _paint_context.FontWidth(); 
 			height/= _paint_context.FontHeight();
 			if (width!=(int)prev_width || height!=(int)prev_height) {

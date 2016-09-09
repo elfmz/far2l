@@ -1010,7 +1010,7 @@ String* FarEditorSet::getCurrentFileName()
   int slash_idx = fnpath.lastIndexOf('/');
 
   SString* s=new SString(fnpath, slash_idx+1);
-  delete FileName;
+  delete [] FileName;
   return s;
 }
 

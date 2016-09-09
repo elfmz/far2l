@@ -87,8 +87,8 @@ public:
 	ExecClassifier(const char *cmd) 
 		: _file(false), _executable(false), _backround(false)
 	{
-		const char *bg_suffix = strrchr(cmd, '&'); // BUG: cmd could end with \&
-		if (bg_suffix) {
+		const char *bg_suffix = strrchr(cmd, '&');
+		if (bg_suffix && bg_suffix!=cmd && *(bg_suffix-1)!='\\') {
 			for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
 			if (!*bg_suffix) _backround = true;
 		}

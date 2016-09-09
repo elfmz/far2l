@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <string>
 #ifdef __APPLE__
 #include <malloc/malloc.h>
@@ -14,6 +13,8 @@
 #include <fstream>
 #include <mutex>
 #include <condition_variable>
+#include <wx/wx.h>
+#include <wx/display.h>
 #include <wx/clipbrd.h>
 
 #include "WinCompat.h"

@@ -79,26 +79,37 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // echo "a"'!'"b"       -> {'echo', 'a!b'}
 // echo "" '' 	          -> {'echo', '', ''}
 
-std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
+std::vector<std::string> ExplodeCmdLine(std::string cmd_line) {
 	std::vector<std::string> rc;
-	fprintf(stderr, "ExplodeCmdLine('%s'): ", cmd_line);
+	fprintf(stderr, "ExplodeCmdLine('%s'): ", cmd_line.c_str());
 	wordexp_t we = {};
-	if (wordexp(cmd_line, &we, 0)==0) {
-		for (size_t i = 0; i < we.we_wordc; ++i) {
-			rc.push_back(we.we_wordv[i]);
-			fprintf(stderr, "'%s' ", we.we_wordv[i]);
+	for (;;) {
+		int r = wordexp(cmd_line.c_str(), &we, 0);
+		if (r==0) {
+			for (size_t i = 0; i < we.we_wordc; ++i) {
+				rc.push_back(we.we_wordv[i]);
+				fprintf(stderr, "'%s' ", we.we_wordv[i]);
+			}
+			fprintf(stderr, "\n");
+			wordfree(&we);
+			break;
+		} else if (r==WRDE_BADCHAR) {
+			size_t p = cmd_line.find_last_of("|&;<>(){}");
+			if (p!=std::string::npos) {
+				cmd_line.resize(p);
+				continue;
+			}
 		}
-		fprintf(stderr, "\n");
-		wordfree(&we);
-	} else
-		perror("failed");
+		fprintf(stderr, "error %d\n", r);
+		break;
+	}
 	return rc;
 };
 
 
 bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand)
 {
-	std::vector<std::string> ecl = ExplodeCmdLine(Wide2MB(CmdLine).c_str());
+	const std::vector<std::string> &ecl = ExplodeCmdLine(Wide2MB(CmdLine));
 	if (ecl.empty())
 		return false;
 		

@@ -5,10 +5,6 @@ LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory (bootstrap)
 
-add_definitions(-DUNICODE)
-include_directories(Include)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 set(SOURCES
 cache.cpp
 cddrv.cpp
@@ -56,6 +52,7 @@ filetype.cpp
 fileview.cpp
 findfile.cpp
 flmodes.cpp
+flink.cpp
 flplugin.cpp
 flshow.cpp
 flupdate.cpp
@@ -161,6 +158,11 @@ UCD/prmem.c
 )
 
 add_executable (far2l ${SOURCES})
+
+target_compile_definitions(far2l PRIVATE -DUNICODE)
+target_include_directories(far2l PRIVATE Include)
+target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
 add_dependencies(far2l bootstrap)
 
 SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)

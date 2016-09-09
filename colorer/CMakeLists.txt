@@ -51,19 +51,19 @@ set(SOURCES
     src/shared/colorer/parsers/helpers/TextParserHelpers.cpp
 )
 
-add_definitions(-D_UNICODE -DUNICODE -D__unix__)
-
-include_directories(src/shared)
-include_directories(src/pcolorer2)
-include_directories(../WinPort)
-include_directories(../far2l)
-include_directories(../far2l/Include)
-
 add_library (colorer MODULE ${SOURCES})
+
+target_compile_definitions(colorer PRIVATE -D_UNICODE -DUNICODE -D__unix__)
+
+target_include_directories(colorer PRIVATE src/shared)
+target_include_directories(colorer PRIVATE src/pcolorer2)
+target_include_directories(colorer PRIVATE ../WinPort)
+target_include_directories(colorer PRIVATE ../far2l)
+target_include_directories(colorer PRIVATE ../far2l/Include)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )
-    include_directories( ${ZLIB_INCLUDE_DIRS} )
+    target_include_directories(colorer SYSTEM PRIVATE ${ZLIB_INCLUDE_DIRS} )
     target_link_libraries( colorer ${ZLIB_LIBRARIES} )
 endif( ZLIB_FOUND )
 

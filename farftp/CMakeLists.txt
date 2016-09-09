@@ -97,14 +97,14 @@ src/FStdLib/FARStdlib/fstd_exSPS.cpp
 src/FStdLib/FARStdlib/fstd_FUtils.cpp
 )
 
-include_directories(.)
-include_directories(src)
-include_directories(src/FStdLib)
-include_directories(../WinPort)
-include_directories(../far2l)
-include_directories(../far2l/Include)
-
 add_library (farftp MODULE ${SOURCES})
+
+target_include_directories(farftp PRIVATE .)
+target_include_directories(farftp PRIVATE src)
+target_include_directories(farftp PRIVATE src/FStdLib)
+target_include_directories(farftp PRIVATE ../WinPort)
+target_include_directories(farftp PRIVATE ../far2l)
+target_include_directories(farftp PRIVATE ../far2l/Include)
 
 set_target_properties(farftp
   PROPERTIES

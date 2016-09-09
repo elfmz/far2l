@@ -93,7 +93,7 @@ public:
 			if (!*bg_suffix) _backround = true;
 		}
 
-		std::vector<std::string> argv = ExplodeCmdLine(cmd);
+		const std::vector<std::string> &argv = ExplodeCmdLine(cmd);
 		if (argv.empty() || argv[0].empty()) {
 			fprintf(stderr, "ExecClassifier('%s') - empty command\n", cmd);
 			return;

@@ -109,10 +109,13 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !.!      Äëèííîå èìÿ ôàéëà ñ ðàñøèðåíèåì
 	if (!StrCmpN(CurStr,L"!.!",3) && CurStr[3] != L'?')
 	{
+		FARString filename;
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherName;
+			filename = PSubstData->strAnotherName;
 		else
-			strOut += PSubstData->Name;
+			filename = PSubstData->Name;
+		EscapeSpace(filename);
+		strOut += filename;
 
 		CurStr+=3;
 		return CurStr;
@@ -121,7 +124,9 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !~       Êîðîòêîå èìÿ ôàéëà áåç ðàñøèðåíèÿ
 	/*if (!StrCmpN(CurStr,L"!~",2))
 	{
-		strOut += PSubstData->PassivePanel ? PSubstData->strAnothertNameOnly : PSubstData->strNameOnly;
+		FARString filename = PSubstData->PassivePanel ? PSubstData->strAnothertNameOnly : PSubstData->strNameOnly;
+		EscapeSpace(filename);
+		strOut += filename;
 		CurStr+=2;
 		return CurStr;
 	}*/
@@ -232,11 +237,14 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !-!      Êîðîòêîå èìÿ ôàéëà ñ ðàñøèðåíèåì
 	if (!StrCmpN(CurStr,L"!-!",3) && CurStr[3] != L'?')
 	{
+		FARString filename;
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherName;
+			filename = PSubstData->strAnotherName;
 		else
-			strOut += PSubstData->Name;
+			filename = PSubstData->Name;
 
+		EscapeSpace(filename);
+		strOut += filename;
 		CurStr+=3;
 		return CurStr;
 	}
@@ -245,10 +253,14 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	//          ïîñëå âûïîëíåíèÿ êîìàíäû, FAR âîññòàíîâèò åãî
 	if (!StrCmpN(CurStr,L"!+!",3) && CurStr[3] != L'?')
 	{
+		FARString filename;
 		if (PSubstData->PassivePanel)
-			strOut += PSubstData->strAnotherName;
+			filename = PSubstData->strAnotherName;
 		else
-			strOut += PSubstData->Name;
+			filename = PSubstData->Name;
+
+		EscapeSpace(filename);
+		strOut += filename;
 
 		CurStr+=3;
 		PSubstData->PreserveLFN=TRUE;
@@ -303,6 +315,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 			if (wcspbrk(PSubstData->PassivePanel?PSubstData->strAnotherName.CPtr():PSubstData->Name,L"/:"))
 				strCurDir.Clear();
 		}
+		EscapeSpace(strCurDir);
 
 		strOut +=  strCurDir;
 		return CurStr;
@@ -331,7 +344,9 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !        Äëèííîå èìÿ ôàéëà áåç ðàñøèðåíèÿ
 	if (*CurStr==L'!')
 	{
-		strOut += PointToName(PSubstData->PassivePanel ? PSubstData->strAnotherNameOnly : PSubstData->strNameOnly);
+		FARString filename = PointToName(PSubstData->PassivePanel ? PSubstData->strAnotherNameOnly : PSubstData->strNameOnly);
+		EscapeSpace(filename);
+		strOut += filename;
 		CurStr++;
 	}
 

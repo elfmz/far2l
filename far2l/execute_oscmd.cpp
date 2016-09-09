@@ -65,57 +65,118 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 
-struct ExplodeCmdLine : std::vector<std::string>
-{
-	// 'export foo = bar' 	-> {'export' 'foo' '=' 'bar'}
-	// 'export foo=bar' -> {'export' 'foo=bar'}
-	// 'export "foo=long bar"' -> {'export' 'foo=long bar'}
-	// TODO: \\-escaping is still missing...
-	ExplodeCmdLine(const wchar_t *cmd_line)
-	{ 
-		std::wstring tmp;
-		enum 
-		{
-			S_RAW,
-			S_QUOTED,
-			S_SPACE
-		} state = S_RAW;
-		for (const wchar_t *cur = cmd_line; *cur; ++cur) {
-			if (state==S_SPACE && *cur != L' ') {
-				if (*cur==L'\"') {
-					state = S_QUOTED;
-					continue;
-				}
-				state = S_RAW;
-			}
-				
-			if ( (state==S_RAW && *cur == L' ') || (state==S_QUOTED && *cur == L'\"')) {
-				if (!tmp.empty()) {
-					push_back(StrWide2MB(tmp));
-					tmp.clear();
-				}
-				state = S_SPACE;
-				continue;
-			}
-			
-			if (state==S_RAW || state==S_QUOTED )
-				tmp+= *cur;
-		}
-		if (!tmp.empty()) 
-			push_back(StrWide2MB(tmp));
-			
-		fprintf(stderr, "ExplodeCmdLine('%ls') -> ", cmd_line);
-		for (auto s : *this) 
-			fprintf(stderr, "\'%s\' ", s.c_str());
+// explode cmdline to argv[] array
+//
+// Bash cmdlines cannot be correctly parsed that way because some bash constructions are not space-separated (such as `...`, $(...), cmd>/dev/null, cmd&)
 
-		fprintf(stderr, "\n");
+// echo foo = bar       -> {'echo', 'foo', '=', 'bar'}
+// echo foo=bar         -> {'echo', 'foo=bar'}
+// echo "foo=long bar"  -> {'echo', 'foo=long bar'}
+// echo "a\"b"	          -> {'echo', 'a"b'}
+// echo 'a\\b'          -> {'echo', 'a\\b'}
+// echo "a\\b"          -> {'echo', 'a\b'}
+// echo "a"'!'"b"       -> {'echo', 'a!b'}
+// echo "" '' 	          -> {'echo', '', ''}
+
+std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
+	std::vector<std::string> rc;
+	std::string tmp;
+	enum
+	{
+			S_SPACE,
+			S_RAW,	   S_RAW_BACKSLASH,
+			S_SINGLEQ,
+			S_DOUBLEQ, S_DOUBLEQ_BACKSLASH
+	} state = S_SPACE;
+	const char *cur = cmd_line;
+	for (; *cur; ++cur) {
+		if (0x00 <= *cur && *cur <= 0x1F) {
+			fprintf(stderr, "ExplodeCmdLine(%s) unexpected char \\x%X\n", cmd_line, *cur); // TODO: handle them as space?
+		}
+		switch (state) {
+			case S_SPACE:
+				if (*cur == ' ') {
+				} else if (*cur=='\'') {
+					state = S_SINGLEQ;
+				} else if (*cur=='"') {
+					state = S_DOUBLEQ;
+				} else if (*cur=='\\') {
+					state = S_RAW_BACKSLASH;
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};|*?!`", *cur)!=NULL) { // TODO?: fish compat: exclude ` and !
+					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
+					return rc; // TODO?: return info about parsing was not completed successuly
+				} else {
+					state = S_RAW;
+					tmp+= *cur;
+				}
+				break;
+			case S_RAW:
+				if (*cur == ' ') {
+					fprintf(stderr, "ExplodeCmdLine(%s) [%lu] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
+					rc.push_back(tmp);
+					tmp.clear();
+					state = S_SPACE;
+				} else if (*cur=='\'') {
+					state = S_SINGLEQ;
+				} else if (*cur=='"') {
+					state = S_DOUBLEQ;
+				} else if (*cur=='\\') {
+					state = S_RAW_BACKSLASH;
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};|*?!`", *cur)!=NULL) { // TODO?: fish compat: exclude ` and !
+					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
+					rc.push_back(tmp);
+					return rc; // TODO?: return info about parsing was not completed successuly
+				} else {
+					tmp+= *cur;
+				}
+				break;
+			case S_SINGLEQ:
+				if (*cur == '\'') {
+					state = S_RAW;
+				} else {
+					tmp+= *cur;
+				}
+				break;
+			case S_DOUBLEQ:
+				if (*cur == '"') {
+					state = S_RAW;
+				} else if (*cur=='\\') {
+					state = S_DOUBLEQ_BACKSLASH;
+				} else {
+					tmp+= *cur;
+				}
+				break;
+			case S_RAW_BACKSLASH:
+				tmp+= *cur;
+				state = S_RAW;
+				break;
+			case S_DOUBLEQ_BACKSLASH:
+				if (!(*cur=='$' || *cur=='`' || *cur=='"' || *cur=='\\')) { // TODO?: fish compat: exclude `
+					tmp+= '\\';
+				}
+				tmp+= *cur;
+				state = S_DOUBLEQ;
+		}
 	}
+	switch (state) {
+		case S_SPACE:
+			break;
+		case S_RAW:
+			fprintf(stderr, "ExplodeCmdLine(%s) [%lu] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
+			rc.push_back(tmp);
+			break;
+		default:
+			fprintf(stderr, "ExplodeCmdLine(%s) invalid state at the end %d\n", cmd_line, state);
+			rc.push_back(tmp);
+			// TODO?: return info about parsing was not completed successuly
+	}
+	return rc;
 };
 
 
 bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand)
 {
-	ExplodeCmdLine ecl(CmdLine);
+	std::vector<std::string> ecl = ExplodeCmdLine(Wide2MB(CmdLine).c_str());
 	if (ecl.empty())
 		return false;
 		

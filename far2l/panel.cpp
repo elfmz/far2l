@@ -1449,7 +1449,7 @@ void Panel::DragMessage(int X,int Y,int Move)
 		SrcDragPanel->GetSelNameCompat(nullptr,FileAttr);
 		SrcDragPanel->GetSelNameCompat(&strSelName,FileAttr);
 		strCvtName = PointToName(strSelName);
-		QuoteSpace(strCvtName);
+		EscapeSpace(strCvtName);
 		strSelName = strCvtName;
 	}
 	else

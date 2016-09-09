@@ -327,7 +327,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool RunAs)
 {
 	FARString strName(Name);
-	QuoteSpace(strName);
+	EscapeSpace(strName);
 	CtrlObject->CmdLine->ExecString(strName, AlwaysWaitFinish, true, true, false, false, RunAs);
 
 	if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTWINASS) && !AlwaysWaitFinish)

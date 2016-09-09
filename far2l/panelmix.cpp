@@ -219,7 +219,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 				}
 
 				if (Opt.QuotedName&QUOTEDNAME_INSERT)
-					QuoteSpace(strPathName);
+					EscapeSpace(strPathName);
 
 				if (Param2)
 					strPathName += Param2;

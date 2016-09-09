@@ -137,15 +137,6 @@ wchar_t * WINAPI InsertRegexpQuote(wchar_t *Str)
 		return Str;
 }
 
-wchar_t* WINAPI QuoteSpace(wchar_t *Str)
-{
-	if (wcspbrk(Str, Opt.strQuotedSymbols) )
-		InsertQuote(Str);
-
-	return Str;
-}
-
-
 FARString& InsertQuote(FARString &strStr)
 {
 	return InsertCustomQuote(strStr,L'\"');
@@ -159,10 +150,25 @@ FARString& InsertRegexpQuote(FARString &strStr)
 		return strStr;
 }
 
-FARString &QuoteSpace(FARString &strStr)
+
+static FARString escapeSpace(const wchar_t* str) {
+	if (*str == L'\0')
+		return "''";
+	FARString result;
+	for (const wchar_t *cur = str; *cur; ++cur) {
+		if (wcschr(Opt.strQuotedSymbols, *cur) != NULL)
+			result.Append('\\');
+		result.Append(*cur);
+	}
+	return result;
+}
+
+
+FARString &EscapeSpace(FARString &strStr)
 {
-	if (wcspbrk(strStr, Opt.strQuotedSymbols) )
-		InsertQuote(strStr);
+	if (strStr.IsEmpty() || wcspbrk(strStr, Opt.strQuotedSymbols)) {
+		strStr.Copy(escapeSpace(strStr.CPtr()));
+	}
 
 	return strStr;
 }

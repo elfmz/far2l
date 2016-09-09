@@ -3,7 +3,7 @@
 /*
 farwinapi.hpp
 
-Âðàïåðû âîêðóã íåêîòîðûõ WinAPI ôóíêöèé
+Враперы вокруг некоторых WinAPI функций
 */
 /*
 Copyright (c) 1996 Eugene Roshal

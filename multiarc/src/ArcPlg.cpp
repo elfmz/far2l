@@ -30,8 +30,8 @@ bool ArcPlugins::AddPluginItem(const char *name,
 		pLoadFormatModule(name);
 
 	if (pSetFarInfo) {
-		// Äàáû FMT íå èñïîðòèë îðèãèíàëüíûé PluginStartupInfo äàäèì åìó
-		// âðåìåííóþ "ïåðåìåííóþ"
+		// Дабы FMT не испортил оригинальный PluginStartupInfo дадим ему
+		// временную "переменную"
 		memcpy(&item.Info,&Info,sizeof(struct PluginStartupInfo));
 		memcpy(&item.FSF, &FSF, sizeof(struct FarStandardFunctions));
 		item.Info.FSF=&item.FSF;

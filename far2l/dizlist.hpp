@@ -3,7 +3,7 @@
 /*
 dizlist.hpp
 
-Îïèñàíèÿ ôàéëîâ
+Описания файлов
 */
 /*
 Copyright (c) 1996 Eugene Roshal

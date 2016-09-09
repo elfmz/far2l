@@ -1,7 +1,7 @@
 /*
 dizlist.cpp
 
-Îïèñàíèÿ ôàéëîâ
+Описания файлов
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -277,7 +277,7 @@ int DizList::GetDizPosEx(const wchar_t *Name, int *TextPos)
 {
 	int DizPos=GetDizPos(Name,TextPos);
 
-	//åñëè ôàéë îïèñàíèé áûë â OEM/ANSI òî èìåíà ôàéëîâ ìîãóò íå ñîâïàäàòü ñ þíèêîäíûìè
+	//если файл описаний был в OEM/ANSI то имена файлов могут не совпадать с юникодными
 	if (DizPos==-1 && !IsUnicodeOrUtfCodePage(OrigCodePage) && OrigCodePage!=CP_AUTODETECT)
 	{
 		int len=StrLength(Name);

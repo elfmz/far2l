@@ -3,7 +3,7 @@
 /*
 flink.hpp
 
-Çàãîëîâî÷íûé ôàéë äëÿ ðàáîòû ñ Hard & SymLink
+Заголовочный файл для работы с Hard & SymLink
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -35,13 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum ReparsePointTypes
 {
-	RP_EXACTCOPY,   // äëÿ êîïèðîâàíèÿ/ïåðåíîñà ññûëîê, êîïèÿ ñóùåñòâóþùåãî
-	RP_HARDLINK,    // æ¸ñòêàÿ ññûëêà
-	RP_JUNCTION,    // ñâÿçü
-	RP_VOLMOUNT,    // ìîíòèðîâàííûé òîì
-	RP_SYMLINK, // ññûëêà, NT>=6
-	RP_SYMLINKFILE, // ôàéë-ññûëêà, NT>=6
-	RP_SYMLINKDIR,  // êàòàëîã-ññûëêà, NT>=6
+	RP_EXACTCOPY,   // для копирования/переноса ссылок, копия существующего
+	RP_HARDLINK,    // жёсткая ссылка
+	RP_JUNCTION,    // связь
+	RP_VOLMOUNT,    // монтированный том
+	RP_SYMLINK, // ссылка, NT>=6
+	RP_SYMLINKFILE, // файл-ссылка, NT>=6
+	RP_SYMLINKDIR,  // каталог-ссылка, NT>=6
 };
 
 int WINAPI GetNumberOfLinks(const wchar_t *Name);

@@ -1,7 +1,7 @@
 /*
 poscache.cpp
 
-Êýø ïîçèöèé â ôàéëàõ äëÿ viewer/editor
+Кэш позиций в файлах для viewer/editor
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -119,7 +119,7 @@ void FilePositionCache::AddPosition(const wchar_t *Name,PosCache& poscache)
 		Pos = CurPos;
 
 	Names[Pos] = strFullName;
-	memcpy(Param+PARAM_POS(Pos),&poscache,MSIZE_PARAM1); // Ïðè óñëîâèè, ÷òî â TPosCache?? Param ñòîèò ïåðâûì :-)
+	memcpy(Param+PARAM_POS(Pos),&poscache,MSIZE_PARAM1); // При условии, что в TPosCache?? Param стоит первым :-)
 	memset(Position+POSITION_POS(Pos,0),0xFF,MSIZE_POSITION1);
 
 	for (size_t i=0; i<4; i++)
@@ -151,11 +151,11 @@ bool FilePositionCache::GetPosition(const wchar_t *Name,PosCache& poscache)
 
 		int Pos = FindPosition(strFullName);
 		//memset(Position+POSITION_POS(CurPos,0),0xFF,(BOOKMARK_COUNT*4)*SizeValue);
-		//memcpy(Param+PARAM_POS(CurPos),PosCache,SizeValue*5); // Ïðè óñëîâèè, ÷òî â TPosCache?? Param ñòîèò ïåðâûì :-)
+		//memcpy(Param+PARAM_POS(CurPos),PosCache,SizeValue*5); // При условии, что в TPosCache?? Param стоит первым :-)
 
 		if (Pos >= 0)
 		{
-			memcpy(&poscache,Param+PARAM_POS(Pos),MSIZE_PARAM1); // Ïðè óñëîâèè, ÷òî â TPosCache?? Param ñòîèò ïåðâûì :-)
+			memcpy(&poscache,Param+PARAM_POS(Pos),MSIZE_PARAM1); // При условии, что в TPosCache?? Param стоит первым :-)
 
 			for (size_t i=0; i<4; i++)
 			{
@@ -169,7 +169,7 @@ bool FilePositionCache::GetPosition(const wchar_t *Name,PosCache& poscache)
 		return Result;
 	}
 
-	memset(&poscache,0,sizeof(DWORD64)*5); // Ïðè óñëîâèè, ÷òî â TPosCache?? Param ñòîèò ïåðâûì :-)
+	memset(&poscache,0,sizeof(DWORD64)*5); // При условии, что в TPosCache?? Param стоит первым :-)
 	return FALSE;
 }
 
@@ -264,11 +264,11 @@ bool FilePositionCache::Save(const wchar_t *Key)
 			}
 			PDWORD64 Ptr=reinterpret_cast<PDWORD64>(Param+PARAM_POS(Pos));
 
-			//Èìÿ ôàéëà äîëæíî áûòü âçÿòî â êàâû÷êè, ò.ê. îíî ìîæåò ñîäåðæàòü ñèìâîëû-ðàçäåëèòåëè
+			//Имя файла должно быть взято в кавычки, т.к. оно может содержать символы-разделители
 			FormatString strDataStr;
 			strDataStr<<(uint64_t)Ptr[0]<<L","<<(uint64_t)Ptr[1]<<L","<<(uint64_t)Ptr[2]<<L","<<(uint64_t)Ptr[3]<<L","<<(uint64_t)Ptr[4]<<L",\"$"<<Names[Pos]<<L"\"";
 
-			//Ïóñòàÿ ïîçèöèÿ?
+			//Пустая позиция?
 			if (!StrCmp(strDataStr,EmptyPos))
 			{
 				DeleteRegValue(Key,strItem);
@@ -279,12 +279,12 @@ bool FilePositionCache::Save(const wchar_t *Key)
 
 			if ((Opt.ViOpt.SaveShortPos && Opt.ViOpt.SavePos) || (Opt.EdOpt.SaveShortPos && Opt.EdOpt.SavePos))
 			{
-				// Åñëè íå çàïîìèíàëèñü ïîçèöèè ïî RCtrl+<N>, òî è íå çàïèñûâàåì èõ
+				// Если не запоминались позиции по RCtrl+<N>, то и не записываем их
 				bool found=false;
 				for (int j=0; j < 4; j++)
 				{
 					DWORD64 *CurLine=reinterpret_cast<PDWORD64>(Position+POSITION_POS(Pos,j));
-					// ïðîñìîòð âñåõ BOOKMARK_COUNT ïîçèöèé.
+					// просмотр всех BOOKMARK_COUNT позиций.
 					for (int k=0; k < BOOKMARK_COUNT; ++k)
 					{
 						if (CurLine[k] != POS_NONE)

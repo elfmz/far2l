@@ -1,7 +1,7 @@
 /*
 plugapi.cpp
 
-API, äîñòóïíîå ïëàãèíàì (äèàëîãè, ìåíþ, ...)
+API, доступное плагинам (диалоги, меню, ...)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -129,8 +129,8 @@ void WINAPI DeleteBuffer(void *Buffer)
 void ScanPluginDir();
 
 /* $ 07.12.2001 IS
-   Îáåðòêà âîêðóã GetString äëÿ ïëàãèíîâ - ñ ìåíüøåé ôóíêöèîíàëüíîñòüþ.
-   Ñäåëàíî äëÿ òîãî, ÷òîáû íå äóáëèðîâàòü êîä GetString.
+   Обертка вокруг GetString для плагинов - с меньшей функциональностью.
+   Сделано для того, чтобы не дублировать код GetString.
 */
 int WINAPI FarInputBox(
     const wchar_t *Title,
@@ -152,7 +152,7 @@ int WINAPI FarInputBox(
 	return nResult;
 }
 
-/* Ôóíêöèÿ âûâîäà ïîìîùè */
+/* Функция вывода помощи */
 BOOL WINAPI FarShowHelp(
     const wchar_t *ModuleName,
     const wchar_t *HelpTopic,
@@ -170,19 +170,19 @@ BOOL WINAPI FarShowHelp(
 	FARString strPath, strTopic;
 	FARString strMask;
 
-	// äâîåòî÷èå â íà÷àëå òîïèêà íàäî áû èãíîðèðîâàòü è â òîì ñëó÷àå,
-	// åñëè ñòîèò FHELP_FARHELP...
+	// двоеточие в начале топика надо бы игнорировать и в том случае,
+	// если стоит FHELP_FARHELP...
 	if ((Flags&FHELP_FARHELP) || *HelpTopic==L':')
 		strTopic = HelpTopic+((*HelpTopic == L':')?1:0);
 	else
 	{
 		if (ModuleName)
 		{
-			// FHELP_SELFHELP=0 - òðàêòîâàòü ïåðâûé ïàð-ð êàê Info.ModuleName
-			//                   è ïîêàçàòü òîïèê èç õåëïà âûçâàâøåãî ïëàãèíà
+			// FHELP_SELFHELP=0 - трактовать первый пар-р как Info.ModuleName
+			//                   и показать топик из хелпа вызвавшего плагина
 			/* $ 17.11.2000 SVS
-			   À çíà÷åíèå FHELP_SELFHELP ðàâíî ÷åìó? Ïðàâèëüíî - 0
-			   È ôèãëÿ çäåñü óäèâëÿòñÿ òîìó, ÷òî ôóíêöèÿ íå ðàáîòàåò :-(
+			   А значение FHELP_SELFHELP равно чему? Правильно - 0
+			   И фигля здесь удивлятся тому, что функция не работает :-(
 			*/
 			if (Flags == FHELP_SELFHELP || (Flags&(FHELP_CUSTOMFILE|FHELP_CUSTOMPATH)))
 			{
@@ -218,7 +218,7 @@ BOOL WINAPI FarShowHelp(
 }
 
 /* $ 05.07.2000 IS
-  Ôóíêöèÿ, êîòîðàÿ áóäåò äåéñòâîâàòü è â ðåäàêòîðå, è â ïàíåëÿõ, è...
+  Функция, которая будет действовать и в редакторе, и в панелях, и...
 */
 INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 {
@@ -283,20 +283,20 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			return (int)Opt.strWordDiv.GetLength()+1;
 		}
 		/* $ 24.08.2000 SVS
-		   îæèäàòü îïðåäåëåííóþ (èëè ëþáóþ) êëàâèøó
-		   (int)Param - âíóòðåííèé êîä êëàâèøè, êîòîðóþ îæèäàåì, èëè -1
-		   åñëè âñå ðàâíî êàêóþ êëàâèøó æäàòü.
-		   âîçâðàùàåò 0;
+		   ожидать определенную (или любую) клавишу
+		   (int)Param - внутренний код клавиши, которую ожидаем, или -1
+		   если все равно какую клавишу ждать.
+		   возвращает 0;
 		*/
 		case ACTL_WAITKEY:
 		{
 			return WaitKey(Param?(DWORD)(DWORD_PTR)Param:(DWORD)-1,0,false);
 		}
 		/* $ 04.12.2000 SVS
-		  ACTL_GETCOLOR - ïîëó÷èòü îïðåäåëåííûé öâåò ïî èíäåêñ, îïðåäåëåííîìó
-		   â farcolor.hpp
-		  (int)Param - èíäåêñ.
-		  Return - çíà÷åíèå öâåòà èëè -1 åñëè èíäåêñ íåâåðåí.
+		  ACTL_GETCOLOR - получить определенный цвет по индекс, определенному
+		   в farcolor.hpp
+		  (int)Param - индекс.
+		  Return - значение цвета или -1 если индекс неверен.
 		*/
 		case ACTL_GETCOLOR:
 		{
@@ -306,9 +306,9 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			return -1;
 		}
 		/* $ 04.12.2000 SVS
-		  ACTL_GETARRAYCOLOR - ïîëó÷èòü âåñü ìàññèâ öâåòîâ
-		  Param - óêàçàòåëü íà ìàññèâ èëè nullptr - ÷òîáû ïîëó÷èòü ðàçìåð áóôåðà
-		  Return - ðàçìåð ìàññèâà.
+		  ACTL_GETARRAYCOLOR - получить весь массив цветов
+		  Param - указатель на массив или nullptr - чтобы получить размер буфера
+		  Return - размер массива.
 		*/
 		case ACTL_GETARRAYCOLOR:
 		{
@@ -339,10 +339,10 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 
 					if (Pal->Flags&FCLR_REDRAW)
 					{
-						ScrBuf.Lock(); // îòìåíÿåì âñÿêóþ ïðîðèñîâêó
+						ScrBuf.Lock(); // отменяем всякую прорисовку
 						FrameManager->ResizeAllFrame();
-						FrameManager->PluginCommit(); // êîììèòèì.
-						ScrBuf.Unlock(); // ðàçðåøàåì ïðîðèñîâêó
+						FrameManager->PluginCommit(); // коммитим.
+						ScrBuf.Unlock(); // разрешаем прорисовку
 					}
 
 					return TRUE;
@@ -352,9 +352,9 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			return FALSE;
 		}
 		/* $ 14.12.2000 SVS
-		  ACTL_EJECTMEDIA - èçâëå÷ü äèñê èç ñúåìíîãî íàêîïèòåëÿ
-		  Param - óêàçàòåëü íà ñòðóêòóðó ActlEjectMedia
-		  Return - TRUE - óñïåøíîå èçâëå÷åíèå, FALSE - îøèáêà.
+		  ACTL_EJECTMEDIA - извлечь диск из съемного накопителя
+		  Param - указатель на структуру ActlEjectMedia
+		  Return - TRUE - успешное извлечение, FALSE - ошибка.
 		*/
 		case ACTL_EJECTMEDIA:
 		{
@@ -366,7 +366,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 							ActlEjectMedia *aem=(ActlEjectMedia *)Param;
 			        char DiskLetter[4]=" :/";
 			        DiskLetter[0]=(char)aem->Letter;
-			        int DriveType = FAR_GetDriveType(DiskLetter,nullptr,FALSE); // çäåñü íå îïðåäåëÿåì òèï CD
+			        int DriveType = FAR_GetDriveType(DiskLetter,nullptr,FALSE); // здесь не определяем тип CD
 
 			        if(DriveType == DRIVE_USBDRIVE && RemoveUSBDrive((char)aem->Letter,aem->Flags))
 			          return TRUE;
@@ -393,21 +393,21 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 		*/
 		case ACTL_KEYMACRO:
 		{
-			if (CtrlObject && Param) // âñå çàâèñèò îò ýòîé áàäÿãè.
+			if (CtrlObject && Param) // все зависит от этой бадяги.
 			{
 				KeyMacro& Macro=CtrlObject->Macro; //??
 				ActlKeyMacro *KeyMacro=(ActlKeyMacro*)Param;
 
 				switch (KeyMacro->Command)
 				{
-					case MCMD_LOADALL: // èç ðååñòðà â ïàìÿòü ÔÀÐ ñ çàòèðàíèåì ïðåäûäóùåãî
+					case MCMD_LOADALL: // из реестра в память ФАР с затиранием предыдущего
 					{
 						if (Macro.IsRecording())
 							return FALSE;
 
 						return Macro.LoadMacros(!Macro.IsExecuting());
 					}
-					case MCMD_SAVEALL: // èç ïàìÿòè ÔÀÐà â ðååñòðà
+					case MCMD_SAVEALL: // из памяти ФАРа в реестра
 					{
 						if (Macro.IsRecording()) // || Macro.IsExecuting())
 							return FALSE;
@@ -426,7 +426,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 					{
 						return FALSE;
 					}
-					case MCMD_CHECKMACRO:  // ïðîâåðêà ìàêðîñà
+					case MCMD_CHECKMACRO:  // проверка макроса
 					{
 						MacroRecord CurMacro={0};
 						int Ret=Macro.ParseMacroString(&CurMacro,KeyMacro->Param.PlainText.SequenceText,(KeyMacro->Param.PlainText.Flags&KSFLAGS_SILENTCHECK)?TRUE:FALSE);
@@ -491,7 +491,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 
 				return CtrlObject->Macro.PostNewMacro(&MRec,TRUE,TRUE);
 #if 0
-				// Ýòîò êóñîê - äëÿ äàëüíåéøèõ ýêñïåðèìåíòîâ
+				// Этот кусок - для дальнейших экспериментов
 				{
 					//CtrlObject->Macro.PostNewMacro(&MRec);
 					for (int I=0; I < MRec.BufferSize; ++I)
@@ -519,7 +519,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			return FALSE;
 		}
 		/* $ 05.06.2001 tran
-		   íîâûå ACTL_ äëÿ ðàáîòû ñ ôðåéìàìè */
+		   новые ACTL_ для работы с фреймами */
 		case ACTL_GETWINDOWINFO:
 			/* $ 12.04.2005 AY
 			     thread safe window info */
@@ -532,7 +532,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 				Frame *f;
 
 				/* $ 22.12.2001 VVM
-				  + Åñëè Pos == -1 òî áåðåì òåêóùèé ôðåéì */
+				  + Если Pos == -1 то берем текущий фрейм */
 				if (wi->Pos == -1)
 					f=FrameManager->GetCurrentFrame();
 				else
@@ -586,12 +586,12 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 		}
 		case ACTL_SETCURRENTWINDOW:
 		{
-			// Çàïðåòèì ïåðåêëþ÷åíèå ôðýéìîâ, åñëè íàõîäèìñÿ â ìîäàëüíîì ðåäàêòîðå/âüþåðå.
+			// Запретим переключение фрэймов, если находимся в модальном редакторе/вьюере.
 			if (FrameManager && !FrameManager->InModalEV() && FrameManager->operator[]((int)(INT_PTR)Param))
 			{
 				int TypeFrame=FrameManager->GetCurrentFrame()->GetType();
 
-				// Çàïðåòèì ïåðåêëþ÷åíèå ôðýéìîâ, åñëè íàõîäèìñÿ â õåëïå èëè äèàëîãå (òîæå ìîäàëüíûõ)
+				// Запретим переключение фрэймов, если находимся в хелпе или диалоге (тоже модальных)
 				if (TypeFrame != MODALTYPE_HELP && TypeFrame != MODALTYPE_DIALOG)
 				{
 					Frame* PrevFrame = FrameManager->GetCurrentFrame();
@@ -604,15 +604,15 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			return FALSE;
 		}
 		/*$ 26.06.2001 SKV
-		  Äëÿ ïîëíîöåííîé ðàáîòû ñ ACTL_SETCURRENTWINDOW
-		  (è ìîæåò åùå äëÿ ÷åãî â áóäóùåì)
+		  Для полноценной работы с ACTL_SETCURRENTWINDOW
+		  (и может еще для чего в будущем)
 		*/
 		case ACTL_COMMIT:
 		{
 			return FrameManager?FrameManager->PluginCommit():FALSE;
 		}
 		/* $ 15.09.2001 tran
-		   ïðèãîäèòñÿ ïëàãèíàì */
+		   пригодится плагинам */
 		case ACTL_GETFARHWND:
 		{
 			return 0;
@@ -637,7 +637,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			return Options;
 		}
 		/* $ 24.11.2001 IS
-		   Îçíàêîìèì ñ íàñòðîéêàìè ñèñòåìíûìè, ïàíåëè, èíòåðôåéñà, ïîäòâåðæäåíèé
+		   Ознакомим с настройками системными, панели, интерфейса, подтверждений
 		*/
 		case ACTL_GETSYSTEMSETTINGS:
 		{
@@ -736,7 +736,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 		}
 		case ACTL_GETDESCSETTINGS:
 		{
-			// îïöèé ìàëî - ñ ìàññèâîì íå çàìîðà÷èâàåìñÿ
+			// опций мало - с массивом не заморачиваемся
 			DWORD Options=0;
 
 			if (Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED)
@@ -887,7 +887,7 @@ int WINAPI FarMenuFn(
 		if (Bottom)
 			FarMenu.SetBottomTitle(Bottom);
 
-		// îáùèå ôëàãè ìåíþ
+		// общие флаги меню
 		DWORD MenuFlags=0;
 
 		if (Flags & FMENU_SHOWAMPERSAND)
@@ -912,7 +912,7 @@ int WINAPI FarMenuFn(
 			{
 				CurItem.Flags=ItemEx[i].Flags;
 				CurItem.strName.Clear();
-				// èñêëþ÷àåì MultiSelected, ò.ê. ó íàñ ñåé÷àñ äâèæîê ê ýòîìó íå ïðèñïîñîáëåí, îñòàâëÿåì òîëüêî ïåðâûé
+				// исключаем MultiSelected, т.к. у нас сейчас движок к этому не приспособлен, оставляем только первый
 				DWORD SelCurItem=CurItem.Flags&LIF_SELECTED;
 				CurItem.Flags&=~LIF_SELECTED;
 
@@ -956,7 +956,7 @@ int WINAPI FarMenuFn(
 		if (!Selected)
 			FarMenu.SetSelectPos(0,1);
 
-		// ôëàãè ìåíþ, ñ çàáèòûì êîíòåíòîì
+		// флаги меню, с забитым контентом
 		if (Flags & FMENU_AUTOHIGHLIGHT)
 			FarMenu.AssignHighlights(FALSE);
 
@@ -1033,19 +1033,19 @@ int WINAPI FarMenuFn(
 	return(ExitCode);
 }
 
-// Ôóíêöèÿ FarDefDlgProc îáðàáîòêè äèàëîãà ïî óìîë÷àíèþ
+// Функция FarDefDlgProc обработки диалога по умолчанию
 LONG_PTR WINAPI FarDefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
-	if (hDlg) // èñêëþ÷àåì ëèøíèé âûçîâ äëÿ hDlg=0
+	if (hDlg) // исключаем лишний вызов для hDlg=0
 		return DefDlgProc(hDlg,Msg,Param1,Param2);
 
 	return 0;
 }
 
-// Ïîñûëêà ñîîáùåíèÿ äèàëîãó
+// Посылка сообщения диалогу
 LONG_PTR WINAPI FarSendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
-	if (hDlg) // èñêëþ÷àåì ëèøíèé âûçîâ äëÿ hDlg=0
+	if (hDlg) // исключаем лишний вызов для hDlg=0
 		return SendDlgMessage(hDlg,Msg,Param1,Param2);
 
 	return 0;
@@ -1070,7 +1070,7 @@ HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2
 	if (DisablePluginsOutput || ItemsNumber <= 0 || !Item)
 		return hDlg;
 
-	// ÔÈ×À! íåëüçÿ óêàçûâàòü îòðèöàòåëüíûå X2 è Y2
+	// ФИЧА! нельзя указывать отрицательные X2 и Y2
 	if (X2 < 0 || Y2 < 0)
 		return hDlg;
 
@@ -1109,7 +1109,7 @@ HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2
 
 		FarDialog->SetHelp(HelpTopic);
 		/* $ 29.08.2000 SVS
-		   Çàïîìíèì íîìåð ïëàãèíà - ñåé÷àñ â îñíîâíîì äëÿ ôîðìèðîâàíèÿ HelpTopic
+		   Запомним номер плагина - сейчас в основном для формирования HelpTopic
 		*/
 		FarDialog->SetPluginNumber(PluginNumber);
 	}
@@ -1126,7 +1126,7 @@ int WINAPI FarDialogRun(HANDLE hDlg)
 	Frame *frame;
 
 	if ((frame=FrameManager->GetBottomFrame()) )
-		frame->Lock(); // îòìåíèì ïðîðèñîâêó ôðåéìà
+		frame->Lock(); // отменим прорисовку фрейма
 
 	int ExitCode=-1;
 	Dialog *FarDialog = (Dialog *)hDlg;
@@ -1143,13 +1143,13 @@ int WINAPI FarDialogRun(HANDLE hDlg)
 	}
 
 	/* $ 15.05.2002 SKV
-		Îäíàêî ðàçëî÷èâàòü íóæíî ðîâíî òî, ÷òî çàëî÷èëè.
+		Однако разлочивать нужно ровно то, что залочили.
 	*/
 	if (frame )
-		frame->Unlock(); // òåïåðü ìîæíî :-)
+		frame->Unlock(); // теперь можно :-)
 
 	//CheckScreenLock();
-	FrameManager->RefreshFrame(); //?? - //AY - ýòî íóæíî ÷òîá îáíîâëÿòü ïàíåëè ïîñëå âûõîäà èç äèàëîãà
+	FrameManager->RefreshFrame(); //?? - //AY - это нужно чтоб обновлять панели после выхода из диалога
 	return(ExitCode);
 }
 
@@ -1164,7 +1164,7 @@ void WINAPI FarDialogFree(HANDLE hDlg)
 
 const wchar_t* WINAPI FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
 {
-	//BUGBUG, íàäî ïðîâåðÿòü, ÷òî PluginHandle - ïëàãèí
+	//BUGBUG, надо проверять, что PluginHandle - плагин
 	PluginW *pPlugin = (PluginW*)PluginHandle;
 	FARString strPath = pPlugin->GetModuleName();
 	CutToSlash(strPath);
@@ -1191,7 +1191,7 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
 	wchar_t *SingleItems=nullptr;
 	wchar_t *Msg;
 
-	// àíàëèç êîëè÷åñòâà ñòðîê äëÿ FMSG_ALLINONE
+	// анализ количества строк для FMSG_ALLINONE
 	if (Flags&FMSG_ALLINONE)
 	{
 		ItemsNumber=0;
@@ -1227,7 +1227,7 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
 	{
 		int I=0;
 		Msg=SingleItems;
-		// àíàëèç êîëè÷åñòâà ñòðîê è ðàçáèâêà íà ïóíêòû
+		// анализ количества строк и разбивка на пункты
 		wchar_t *MsgTemp;
 
 		while ((MsgTemp = wcschr(Msg, L'\n')) )
@@ -1254,7 +1254,7 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
 		}
 	}
 
-	// îãðàíè÷åíèå íà ñòðîêè
+	// ограничение на строки
 	if (ItemsNumber > ScrY-2)
 	{
 		ItemsNumber=ScrY-2-(Flags&0x000F0000?1:0);
@@ -1262,7 +1262,7 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
 
 	/* $ 22.03.2001 tran
 	   ItemsNumber++ -> ++ItemsNumber
-	   òåðåÿëñÿ ïîñëåäíèé ýëåìåíò */
+	   тереялся последний элемент */
 	switch (Flags&0x000F0000)
 	{
 		case FMSG_MB_OK:
@@ -1298,7 +1298,7 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
 			break;
 	}
 
-	// çàïîìèíàåì òîïèê
+	// запоминаем топик
 	if (PluginNumber != -1)
 	{
 		FARString strTopic;
@@ -1307,19 +1307,19 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
 			SetMessageHelp(strTopic);
 	}
 
-	// íåïîñðåäñòâåííî... âûâîä
+	// непосредственно... вывод
 	Frame *frame;
 
 	if ((frame=FrameManager->GetBottomFrame()) )
-		frame->Lock(); // îòìåíèì ïðîðèñîâêó ôðåéìà
+		frame->Lock(); // отменим прорисовку фрейма
 
 	int MsgCode=Message(Flags,ButtonsNumber,MsgItems[0],MsgItems+1,ItemsNumber-1,PluginNumber);
 
 	/* $ 15.05.2002 SKV
-	  Îäíàêî ðàçëî÷èâàòü íàäî ðîâíî òî, ÷òî çàëî÷èëè.
+	  Однако разлочивать надо ровно то, что залочили.
 	*/
 	if (frame )
-		frame->Unlock(); // òåïåðü ìîæíî :-)
+		frame->Unlock(); // теперь можно :-)
 
 	//CheckScreenLock();
 
@@ -1686,11 +1686,11 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber,
 
 		static PluginHandle DirListPlugin;
 
-		// À íå õî÷åò ëè ïëàãèí ïîñìîòðåòü íà òåêóùóþ ïàíåëü?
+		// А не хочет ли плагин посмотреть на текущую панель?
 		if (hPlugin==PANEL_ACTIVE || hPlugin==PANEL_PASSIVE)
 		{
 			/* $ 30.11.2001 DJ
-			   À ïëàãèíîâàÿ ëè ýòî ïàíåëü?
+			   А плагиновая ли это панель?
 			*/
 			HANDLE Handle = ((hPlugin==PANEL_ACTIVE)?CtrlObject->Cp()->ActivePanel:CtrlObject->Cp()->GetAnotherPanel(CtrlObject->Cp()->ActivePanel))->GetPluginHandle();
 
@@ -1755,7 +1755,7 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber,
 }
 
 /* $ 30.11.2001 DJ
-   âûòàùèì â ôóíêöèþ îáùèé êîä äëÿ êîïèðîâàíèÿ àéòåìà â ScanPluginDir()
+   вытащим в функцию общий код для копирования айтема в ScanPluginDir()
 */
 
 static void CopyPluginDirItem(PluginPanelItem *CurPanelItem)
@@ -1803,7 +1803,7 @@ void ScanPluginDir()
 
 	if (CheckForEscSilent())
 	{
-		if (Opt.Confirm.Esc) // Áóäåò âûäàâàòüñÿ äèàëîã?
+		if (Opt.Confirm.Esc) // Будет выдаваться диалог?
 			AbortOp=TRUE;
 
 		if (ConfirmAbortOp())
@@ -1851,8 +1851,8 @@ void ScanPluginDir()
 
 			PluginDirList=NewList;
 			/* $ 30.11.2001 DJ
-					èñïîëüçóåì îáùóþ ôóíêöèþ äëÿ êîïèðîâàíèÿ FindData (íå çàáûâàåì
-					îáðàáîòàòü PPIF_USERDATA)
+					используем общую функцию для копирования FindData (не забываем
+					обработать PPIF_USERDATA)
 			*/
 			CopyPluginDirItem(CurPanelItem);
 			FARString strFileName = CurPanelItem->FindData.lpwszFileName;
@@ -1925,7 +1925,7 @@ int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
 	class ConsoleTitle ct;
 	int DisableHistory=(Flags & VF_DISABLEHISTORY)?TRUE:FALSE;
 
-	// $ 15.05.2002 SKV - Çàïðåòèì âûçîâ íåìîäàëüíîãî ðåäàêòîðà âüþåðà èç ìîäàëüíîãî.
+	// $ 15.05.2002 SKV - Запретим вызов немодального редактора вьюера из модального.
 	if (FrameManager->InModalEV())
 	{
 		Flags&=~VF_NONMODAL;
@@ -1933,15 +1933,15 @@ int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
 
 	if (Flags & VF_NONMODAL)
 	{
-		/* 09.09.2001 IS ! Äîáàâèì èìÿ ôàéëà â èñòîðèþ, åñëè ïîòðåáóåòñÿ */
+		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileViewer *Viewer=new FileViewer(FileName,TRUE,DisableHistory,Title,X1,Y1,X2,Y2,CodePage);
 
 		if (!Viewer)
 			return FALSE;
 
 		/* $ 14.06.2002 IS
-		   Îáðàáîòêà VF_DELETEONLYFILEONCLOSE - ýòîò ôëàã èìååò áîëåå íèçêèé
-		   ïðèîðèòåò ïî ñðàâíåíèþ ñ VF_DELETEONCLOSE
+		   Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
+		   приоритет по сравнению с VF_DELETEONCLOSE
 		*/
 		if (Flags & (VF_DELETEONCLOSE|VF_DELETEONLYFILEONCLOSE))
 			Viewer->SetTempViewName(FileName,(Flags&VF_DELETEONCLOSE)?TRUE:FALSE);
@@ -1949,7 +1949,7 @@ int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
 		Viewer->SetEnableF6((Flags & VF_ENABLE_F6) );
 
 		/* $ 21.05.2002 SKV
-		  Çàïóñêàåì ñâîé öèêë òîëüêî åñëè íå áûë óêàçàí ôëàã.
+		  Запускаем свой цикл только если не был указан флаг.
 		*/
 		if (!(Flags&VF_IMMEDIATERETURN))
 		{
@@ -1965,17 +1965,17 @@ int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
 	}
 	else
 	{
-		/* 09.09.2001 IS ! Äîáàâèì èìÿ ôàéëà â èñòîðèþ, åñëè ïîòðåáóåòñÿ */
+		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileViewer Viewer(FileName,FALSE,DisableHistory,Title,X1,Y1,X2,Y2,CodePage);
-		/* $ 28.05.2001 Ïî óìîë÷àíèþ Âüþåð, ïîýòîìó íóæíî çäåñü ïðèçíàê âûñòàâèëü ÿâíî */
+		/* $ 28.05.2001 По умолчанию Вьюер, поэтому нужно здесь признак выставиль явно */
 		Viewer.SetDynamicallyBorn(false);
 		FrameManager->EnterModalEV();
 		FrameManager->ExecuteModal();
 		FrameManager->ExitModalEV();
 
 		/* $ 14.06.2002 IS
-		   Îáðàáîòêà VF_DELETEONLYFILEONCLOSE - ýòîò ôëàã èìååò áîëåå íèçêèé
-		   ïðèîðèòåò ïî ñðàâíåíèþ ñ VF_DELETEONCLOSE
+		   Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
+		   приоритет по сравнению с VF_DELETEONCLOSE
 		*/
 		if (Flags & (VF_DELETEONCLOSE|VF_DELETEONLYFILEONCLOSE))
 			Viewer.SetTempViewName(FileName,(Flags&VF_DELETEONCLOSE)?TRUE:FALSE);
@@ -2010,15 +2010,15 @@ int WINAPI FarEditor(
 
 	ConsoleTitle ct;
 	/* $ 12.07.2000 IS
-	 Ïðîâåðêà ôëàãîâ ðåäàêòîðà (ðàíüøå îíè èãíîðèðîâàëèñü) è îòêðûòèå
-	 íåìîäàëüíîãî ðåäàêòîðà, åñëè åñòü ñîîòâåòñòâóþùèé ôëàã
+	 Проверка флагов редактора (раньше они игнорировались) и открытие
+	 немодального редактора, если есть соответствующий флаг
 	*/
 	int CreateNew = (Flags & EF_CREATENEW)?TRUE:FALSE;
 	int Locked=(Flags & EF_LOCKED)?TRUE:FALSE;
 	int DisableHistory=(Flags & EF_DISABLEHISTORY)?TRUE:FALSE;
 	/* $ 14.06.2002 IS
-	   Îáðàáîòêà EF_DELETEONLYFILEONCLOSE - ýòîò ôëàã èìååò áîëåå íèçêèé
-	   ïðèîðèòåò ïî ñðàâíåíèþ ñ EF_DELETEONCLOSE
+	   Обработка EF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
+	   приоритет по сравнению с EF_DELETEONCLOSE
 	*/
 	int DeleteOnClose = 0;
 
@@ -2033,8 +2033,8 @@ int WINAPI FarEditor(
 		OpMode=Flags&EF_OPENMODE_MASK;
 
 	/*$ 15.05.2002 SKV
-	  Çàïðåòèì âûçîâ íåìîäàëüíîãî ðåäàêòîðà, åñëè íàõîäèìñÿ â ìîäàëüíîì
-	  ðåäàêòîðå èëè âüþåðå.
+	  Запретим вызов немодального редактора, если находимся в модальном
+	  редакторе или вьюере.
 	*/
 	if (FrameManager->InModalEV())
 	{
@@ -2046,7 +2046,7 @@ int WINAPI FarEditor(
 
 	if (Flags & EF_NONMODAL)
 	{
-		/* 09.09.2001 IS ! Äîáàâèì èìÿ ôàéëà â èñòîðèþ, åñëè ïîòðåáóåòñÿ */
+		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileEditor *Editor=new FileEditor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
 		                                  StartLine,StartChar,Title,
 		                                  X1,Y1,X2,Y2,
@@ -2056,7 +2056,7 @@ int WINAPI FarEditor(
 		{
 			editorExitCode=Editor->GetExitCode();
 
-			// äîáàâî÷êà - ïðîâåðêà êîäà âîçâðàòà (ïî÷åìó âîçíèêàåò XC_OPEN_ERROR - ñì. êîä FileEditor::Init())
+			// добавочка - проверка кода возврата (почему возникает XC_OPEN_ERROR - см. код FileEditor::Init())
 			if (editorExitCode == XC_OPEN_ERROR || editorExitCode == XC_LOADING_INTERRUPTED)
 			{
 				delete Editor;
@@ -2067,7 +2067,7 @@ int WINAPI FarEditor(
 			Editor->SetEnableF6((Flags & EF_ENABLE_F6) );
 			Editor->SetPluginTitle(Title);
 
-			/* $ 21.05.2002 SKV - Çàïóñêàåì ñâîé öèêë, òîëüêî åñëè íå áûë óêàçàí ôëàã. */
+			/* $ 21.05.2002 SKV - Запускаем свой цикл, только если не был указан флаг. */
 			if (!(Flags&EF_IMMEDIATERETURN))
 			{
 				FrameManager->ExecuteNonModal();
@@ -2085,14 +2085,14 @@ int WINAPI FarEditor(
 	}
 	else
 	{
-		/* 09.09.2001 IS ! Äîáàâèì èìÿ ôàéëà â èñòîðèþ, åñëè ïîòðåáóåòñÿ */
+		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileEditor Editor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
 		                  StartLine,StartChar,Title,
 		                  X1,Y1,X2,Y2,
 		                  DeleteOnClose,OpMode);
 		editorExitCode=Editor.GetExitCode();
 
-		// âûïîëíèì ïðåäïðîâåðêó (îøèáêè ðàçíûå ìîãóò áûòü)
+		// выполним предпроверку (ошибки разные могут быть)
 		if (editorExitCode == XC_OPEN_ERROR || editorExitCode == XC_LOADING_INTERRUPTED)
 			ExitCode=editorExitCode;
 		else
@@ -2101,7 +2101,7 @@ int WINAPI FarEditor(
 			Editor.SetEnableF6((Flags & EF_ENABLE_F6) );
 			Editor.SetPluginTitle(Title);
 			/* $ 15.05.2002 SKV
-			  Çàôèêñèðóåì âõîä è âûõîä â/èç ìîäàëüíîãî ðåäàêòîðà.
+			  Зафиксируем вход и выход в/из модального редактора.
 			*/
 			FrameManager->EnterModalEV();
 			FrameManager->ExecuteModal();

@@ -1,7 +1,7 @@
 /*
 findfile.cpp
 
-Ïîèñê (Alt-F7)
+Поиск (Alt-F7)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -83,7 +83,7 @@ const size_t readBufferSize=(readBufferSizeA*sizeof(wchar_t));
 
 bool AnySetFindList=false;
 
-// Ñïèñîê íàéäåííûõ ôàéëîâ. Èíäåêñ èç ñïèñêà õðàíèòñÿ â ìåíþ.
+// Список найденных файлов. Индекс из списка хранится в меню.
 struct FINDLIST
 {
 	FAR_FIND_DATA_EX FindData;
@@ -91,7 +91,7 @@ struct FINDLIST
 	DWORD Used;
 };
 
-// Ñïèñîê àðõèâîâ. Åñëè ôàéë íàéäåí â àðõèâå, òî FindList->ArcIndex óêàçûâàåò ñþäà.
+// Список архивов. Если файл найден в архиве, то FindList->ArcIndex указывает сюда.
 struct ARCLIST
 {
 	FARString strArcName;
@@ -307,8 +307,8 @@ struct Vars
 	{
 	}
 
-	// Èñïîëüçóþòñÿ äëÿ îòïðàâêè ôàéëîâ íà âðåìåííóþ ïàíåëü.
-	// èíäåêñ òåêóùåãî ýëåìåíòà â ñïèñêå è ôëàã äëÿ îòïðàâêè.
+	// Используются для отправки файлов на временную панель.
+	// индекс текущего элемента в списке и флаг для отправки.
 	DWORD FindExitIndex;
 	bool FindFoldersChanged;
 	bool SearchFromChanged;
@@ -447,13 +447,13 @@ void InitInFileSearch()
 	if (!InFileSearchInited && !strFindStr.IsEmpty())
 	{
 		size_t findStringCount = strFindStr.GetLength();
-		// Èíèöèàëèçèðóåì áóôåðû ÷òåíèÿ èç ôàéëà
+		// Инициализируем буферы чтения из файла
 		readBufferA = (char *)xf_malloc(readBufferSizeA);
 		readBuffer = (wchar_t *)xf_malloc(readBufferSize);
 
 		if (!SearchHex)
 		{
-			// Ôîðìèðóåì ñòðîêó ïîèñêà
+			// Формируем строку поиска
 			if (!CmpCase)
 			{
 				findStringBuffer = (wchar_t *)xf_malloc(2*findStringCount*sizeof(wchar_t));
@@ -478,7 +478,7 @@ void InitInFileSearch()
 			else
 				findString = strFindStr.GetBuffer();
 
-			// Èíèçèàëèçèðóåì äàííûå äëÿ àëãîðèòìà ïîèñêà
+			// Инизиализируем данные для алгоритма поиска
 			skipCharsTable = (size_t *)xf_malloc((MAX_VKEY_CODE+1)*sizeof(size_t));
 
 			for (size_t index = 0; index < MAX_VKEY_CODE+1; index++)
@@ -491,14 +491,14 @@ void InitInFileSearch()
 				for (size_t index = 0; index < findStringCount-1; index++)
 					skipCharsTable[findString[index+findStringCount]] = findStringCount-1-index;
 
-			// Ôîðìèðóåì ñïèñîê êîäîâûõ ñòðàíèö
+			// Формируем список кодовых страниц
 			if (CodePage == CP_AUTODETECT)
 			{
 				DWORD data;
 				FARString codePageName;
 				bool hasSelected = false;
 
-				// Ïðîâåðÿåì íàëè÷èå âûáðàííûõ ñòðàíèö ñèìâîëîâ
+				// Проверяем наличие выбранных страниц символов
 				for (int i=0; EnumRegValue(FavoriteCodePagesKey, i, codePageName, (BYTE *)&data, sizeof(data)); i++)
 				{
 					if (data & CPST_FIND)
@@ -508,7 +508,7 @@ void InitInFileSearch()
 					}
 				}
 
-				// Äîáàâëÿåì ñòàíäàðòíûå òàáëèöû ñèìâîëîâ
+				// Добавляем стандартные таблицы символов
 				if (!hasSelected)
 				{
 					codePagesCount = StandardCPCount;
@@ -526,14 +526,14 @@ void InitInFileSearch()
 					codePages = nullptr;
 				}
 
-				// Äîáàâëÿåì ñòàíäàðòíûå òàáëèöû ñèìâîëîâ
+				// Добавляем стандартные таблицы символов
 				for (int i=0; EnumRegValue(FavoriteCodePagesKey, i, codePageName, (BYTE *)&data, sizeof(data)); i++)
 				{
 					if (data & (hasSelected?CPST_FIND:CPST_FAVORITE))
 					{
 						UINT codePage = _wtoi(codePageName);
 
-						// Ïðîâåðÿåì äóáëè
+						// Проверяем дубли
 						if (!hasSelected)
 						{
 							bool isDouble = false;
@@ -572,7 +572,7 @@ void InitInFileSearch()
 					CPINFO cpi;
 
 					if (!WINPORT(GetCPInfo)(cp->CodePage, &cpi))
-						cpi.MaxCharSize = 0; //Ñ÷èòàåì, ÷òî îøèáêà è ïîòîì òàêèå òàáëèöû â ïîèñêå ïðîïóñêàåì
+						cpi.MaxCharSize = 0; //Считаем, что ошибка и потом такие таблицы в поиске пропускаем
 
 					cp->MaxCharSize = cpi.MaxCharSize;
 				}
@@ -583,7 +583,7 @@ void InitInFileSearch()
 		}
 		else
 		{
-			// Ôîðìèðóåì hex-ñòðîêó äëÿ ïîèñêà
+			// Формируем hex-строку для поиска
 			hexFindStringSize = 0;
 
 			if (SearchHex)
@@ -614,7 +614,7 @@ void InitInFileSearch()
 				}
 			}
 
-			// Èíèçèàëèçèðóåì äàííûå äëÿ àãëîðèòìà ïîèñêà
+			// Инизиализируем данные для аглоритма поиска
 			skipCharsTable = (size_t *)xf_malloc((255+1)*sizeof(size_t));
 
 			for (size_t index = 0; index < 255+1; index++)
@@ -696,10 +696,10 @@ FARString &PrepareDriveNameStr(FARString &strSearchFromRoot)
 	return strSearchFromRoot;
 }
 
-// Ïðîâåðÿåì ñèìâîë íà ïðèíàäëåæíîñòü ðàçäåëèòåëÿì ñëîâ
+// Проверяем символ на принадлежность разделителям слов
 bool IsWordDiv(const wchar_t symbol)
 {
-	// Òàê æå ðàçäåëèòåëåì ÿâëÿåòñÿ êîíåö ñòðîêè è ïðîáåëüíûå ñèìâîëû
+	// Так же разделителем является конец строки и пробельные символы
 	return !symbol||IsSpace(symbol)||IsEol(symbol)||IsWordDiv(Opt.strWordDiv,symbol);
 }
 
@@ -736,7 +736,7 @@ void SetPluginDirectory(const wchar_t *DirName,HANDLE hPlugin,bool UpdatePanel=f
 			}
 		}
 
-		// Îòðèñóåì ïàíåëü ïðè íåîáõîäèìîñòè.
+		// Отрисуем панель при необходимости.
 		if (UpdatePanel)
 		{
 			CtrlObject->Cp()->ActivePanel->Update(UPDATE_KEEP_SELECTION);
@@ -744,7 +744,7 @@ void SetPluginDirectory(const wchar_t *DirName,HANDLE hPlugin,bool UpdatePanel=f
 			CtrlObject->Cp()->ActivePanel->Show();
 		}
 
-		//strName.ReleaseBuffer(); Íå íàäî. Ñòðîêà âñå ðîâíî óäàëÿåòñÿ, ëèøíèé âûçîâ StrLength.
+		//strName.ReleaseBuffer(); Не надо. Строка все ровно удаляется, лишний вызов StrLength.
 	}
 }
 
@@ -844,11 +844,11 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 			SendDlgMessage(hDlg,DM_SETCOMBOBOXEVENT,FAD_COMBOBOX_CP,CBET_KEY);
 			FarListTitles Titles={0,nullptr,0,MSG(MFindFileCodePageBottom)};
 			SendDlgMessage(hDlg,DM_LISTSETTITLES,FAD_COMBOBOX_CP,reinterpret_cast<LONG_PTR>(&Titles));
-			// Óñòàíîâêà çàïîìíåííûõ ðàíåå ïàðàìåòðîâ
+			// Установка запомненных ранее параметров
 			CodePage = Opt.FindCodePage;
 			favoriteCodePages = FillCodePagesList(hDlg, FAD_COMBOBOX_CP, CodePage, false, true);
-			// Òåêóùåå çíà÷åíèå â â ñïèñêå âûáîðà êîäîâûõ ñòðàíèö â îáùåì ñëó÷àå ìîäåò íå ñîâïàäàòü ñ CodePage,
-			// òàê ÷òî ïîëó÷àåì CodePage èç ñïèñêà âûáîðà
+			// Текущее значение в в списке выбора кодовых страниц в общем случае модет не совпадать с CodePage,
+			// так что получаем CodePage из списка выбора
 			FarListPos Position;
 			SendDlgMessage(hDlg, DM_LISTGETCURPOS, FAD_COMBOBOX_CP, (LONG_PTR)&Position);
 			FarListGetItem Item = { Position.SelectPos };
@@ -873,8 +873,8 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 				{
 					IsRedrawFramesInProcess++;
 					CtrlObject->Cp()->ActivePanel->ChangeDisk();
-					// Íó ÷òî æ, ðàç ïîøëà òàêàÿ ïüÿíêà ðåôðåøèòü ôðåéìû
-					// áóäåì òàêèì ñïîñîáîì.
+					// Ну что ж, раз пошла такая пьянка рефрешить фреймы
+					// будем таким способом.
 					//FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 					FrameManager->ResizeAllFrame();
 					IsRedrawFramesInProcess--;
@@ -970,31 +970,31 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 						case KEY_NUMPAD0:
 						case KEY_SPACE:
 						{
-							// Îáðàáîòêà óñòàíîâêè/ñíÿòèÿ ôëàæêîâ äëÿ ñòàíäàðòíûõ è ëþáèìûõ òàáëèö ñèìâîëîâ
-							// Ïîëó÷àåì òåêóùóþ ïîçèöèþ â âûïàäàþùåì ñïèñêå òàáëèö ñèìâîëîâ
+							// Обработка установки/снятия флажков для стандартных и любимых таблиц символов
+							// Получаем текущую позицию в выпадающем списке таблиц символов
 							FarListPos Position;
 							SendDlgMessage(hDlg, DM_LISTGETCURPOS, FAD_COMBOBOX_CP, (LONG_PTR)&Position);
-							// Ïîëó÷àåì íîìåð âûáðàííîé òàáëèöû ñèìîëîâ
+							// Получаем номер выбранной таблицы симолов
 							FarListGetItem Item = { Position.SelectPos };
 							SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&Item);
 							UINT SelectedCodePage = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Position.SelectPos);
-							// Ðàçðåøàåì îòìå÷àòü òîëüêî ñòàíäàðòíûå è ëþáèìûå òàáëèöû ñèìâîëîâ
+							// Разрешаем отмечать только стандартные и любимые таблицы символов
 							int FavoritesIndex = 2 + StandardCPCount + 2;
 
 							if (Position.SelectPos > 1 && Position.SelectPos < FavoritesIndex + (favoriteCodePages ? favoriteCodePages + 1 : 0))
 							{
-								// Ïðåîáðàçóåì íîìåð òàáëèöû ñèâîëîâ ê ñòðîêå
+								// Преобразуем номер таблицы сиволов к строке
 								FARString strCodePageName;
 								strCodePageName.Format(L"%u", SelectedCodePage);
-								// Ïîëó÷àåì òåêóùåå ñîñòîÿíèå ôëàãà â ðååñòðå
+								// Получаем текущее состояние флага в реестре
 								int SelectType = 0;
 								GetRegKey(FavoriteCodePagesKey, strCodePageName, SelectType, 0);
 
-								// Îòìå÷àåì/ðàçîòìå÷àåì òàáëèöó ñèìâîëîâ
+								// Отмечаем/разотмечаем таблицу символов
 								if (Item.Item.Flags & LIF_CHECKED)
 								{
-									// Äëÿ ñòàíäàðòíûõ òàáëèö ñèìâîëîâ ïðîñòî óäàëÿåì çíà÷åíèå èç ðååñòà, äëÿ
-									// ëþáèìûõ æå îñòàâëÿåì â ðååñòðå ôëàã, ÷òî òàáëèöà ñèìâîëîâ ëþáèìàÿ
+									// Для стандартных таблиц символов просто удаляем значение из рееста, для
+									// любимых же оставляем в реестре флаг, что таблица символов любимая
 									if (SelectType & CPST_FAVORITE)
 										SetRegKey(FavoriteCodePagesKey, strCodePageName, CPST_FAVORITE);
 									else
@@ -1008,7 +1008,7 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									Item.Item.Flags |= LIF_CHECKED;
 								}
 
-								// Îáíîâëÿåì òåêóùèé ýëåìåíò â âûïàäàþùåì ñïèñêå
+								// Обновляем текущий элемент в выпадающем списке
 								SendDlgMessage(hDlg, DM_LISTUPDATE, FAD_COMBOBOX_CP, (LONG_PTR)&Item);
 
 								if (Position.SelectPos<FavoritesIndex + (favoriteCodePages ? favoriteCodePages + 1 : 0)-2)
@@ -1017,17 +1017,17 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									SendDlgMessage(hDlg, DM_LISTSETCURPOS, FAD_COMBOBOX_CP,reinterpret_cast<LONG_PTR>(&Pos));
 								}
 
-								// Îáðàáàòûâàåì ñëó÷àé, êîãäà òàáëèöà ñèìâîëîâ ìîæåò ïðèñóòñòâîâàòü, êàê â ñòàíäàðòíûõ, òàê è â ëþáèìûõ,
-								// ò.å. âûáîð/ñíÿòèå ôëàãà àâòîìàòè÷åêñêè ïðîèñõîäóèò ó îáîèõ ýëåìåíòîâ
+								// Обрабатываем случай, когда таблица символов может присутствовать, как в стандартных, так и в любимых,
+								// т.е. выбор/снятие флага автоматичекски происходуит у обоих элементов
 								bool bStandardCodePage = Position.SelectPos < FavoritesIndex;
 
 								for (int Index = bStandardCodePage ? FavoritesIndex : 0; Index < (bStandardCodePage ? FavoritesIndex + favoriteCodePages : FavoritesIndex); Index++)
 								{
-									// Ïîëó÷àåì ýëåìåíò òàáëèöû ñèìîëîâ
+									// Получаем элемент таблицы симолов
 									FarListGetItem CheckItem = { Index };
 									SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&CheckItem);
 
-									// Îáðàáàòûâàåì òîëüêî òàáëèöû ñèìîâëîâ
+									// Обрабатываем только таблицы симовлов
 									if (!(CheckItem.Item.Flags&LIF_SEPARATOR))
 									{
 										if (SelectedCodePage == (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Index))
@@ -1060,7 +1060,7 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 			{
 				case FAD_EDIT_TEXT:
 					{
-						// Ñòðîêà "Ñîäåðæàùèõ òåêñò"
+						// Строка "Содержащих текст"
 						if (!v->FindFoldersChanged)
 						{
 							BOOL Checked = (Item.PtrData && *Item.PtrData)?FALSE:Opt.FindOpt.FindFolders;
@@ -1073,7 +1073,7 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 				case FAD_COMBOBOX_CP:
 				{
-					// Ïîëó÷àåì âûáðàííóþ â âûïàäàþùåì ñïèñêå òàáëèöó ñèìâîëîâ
+					// Получаем выбранную в выпадающем списке таблицу символов
 					CodePage = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, SendDlgMessage(hDlg, DM_LISTGETCURPOS, FAD_COMBOBOX_CP, 0));
 				}
 				return TRUE;
@@ -1137,7 +1137,7 @@ bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, const wcha
 	return nResult;
 }
 
-// Àëãîðèòìà Áîéåðà-Ìóðà-Õîðñïóëà ïîèñêà ïîäñòðîêè (Unicode âåðñèÿ)
+// Алгоритма Бойера-Мура-Хорспула поиска подстроки (Unicode версия)
 const int FindStringBMH(const wchar_t* searchBuffer, size_t searchBufferCount)
 {
 	size_t findStringCount = strFindStr.GetLength();
@@ -1159,7 +1159,7 @@ const int FindStringBMH(const wchar_t* searchBuffer, size_t searchBufferCount)
 	return -1;
 }
 
-// Àëãîðèòìà Áîéåðà-Ìóðà-Õîðñïóëà ïîèñêà ïîäñòðîêè (Char âåðñèÿ)
+// Алгоритма Бойера-Мура-Хорспула поиска подстроки (Char версия)
 const int FindStringBMH(const unsigned char* searchBuffer, size_t searchBufferCount)
 {
 	const unsigned char *buffer = searchBuffer;
@@ -1184,27 +1184,27 @@ int LookForString(const wchar_t *Name)
 {
 #define RETURN(r) { result = (r); goto exit; }
 #define CONTINUE(r) { if ((r) || cpIndex==codePagesCount-1) RETURN(r) else continue; }
-	// Äëèíà ñòðîêè ïîèñêà
+	// Длина строки поиска
 	size_t findStringCount;
 
-	// Åñëè ñòðîêè ïîèñêà ïóñòàÿ, òî ñ÷èòàåì, ÷òî ìû âñåãäà ÷òî-íèáóäü íàéä¸ì
+	// Если строки поиска пустая, то считаем, что мы всегда что-нибудь найдём
 	if (!(findStringCount = strFindStr.GetLength()))
 		return (TRUE);
 
-	// Ðåçóëüòàò ïîèñêà
+	// Результат поиска
 	BOOL result = FALSE;
 
 	File file;
-	// Îòêðûâàåì ôàéë
+	// Открываем файл
 	if(!file.Open(Name, FILE_READ_DATA, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 	{
 		return FALSE;
 	}
-	// Êîëè÷åñòâî ñ÷èòàííûõ èç ôàéëà áàéò
+	// Количество считанных из файла байт
 	DWORD readBlockSize = 0;
-	// Êîëè÷åñòâî ïðî÷èòàííûõ èç ôàéëà áàéò
+	// Количество прочитанных из файла байт
 	uint64_t alreadyRead = 0;
-	// Ñìåùåíèå íà êîòîðîå ìû îòñòóïèëè ïðè ïåðåõîäå ìåæäó áëîêàìè
+	// Смещение на которое мы отступили при переходе между блоками
 	int offset=0;
 
 	if (SearchHex)
@@ -1220,7 +1220,7 @@ int LookForString(const wchar_t *Name)
 
 	UINT LastPercents=0;
 
-	// Îñíîâíîé öèêë ÷òåíèÿ èç ôàéëà
+	// Основной цикл чтения из файла
 
 	while (!WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0) && 
 		file.Read(readBufferA, (!SearchInFirst || 
@@ -1233,17 +1233,17 @@ int LookForString(const wchar_t *Name)
 			LastPercents=Percents;
 		}
 
-		// Óâåëè÷èâàåì ñ÷¸ò÷èê ïðî÷èòûííõ áàéò
+		// Увеличиваем счётчик прочитыннх байт
 		alreadyRead += readBlockSize;
 
-		// Äëÿ hex è îáûêíîâåííîãî ïîèñêà ðàçíûå âåòêè
+		// Для hex и обыкновенного поиска разные ветки
 		if (SearchHex)
 		{
-			// Âûõîäèì, åñëè íè÷åãî íå ïðî÷èòàëè èëè ïðî÷èòàëè ìàëî
+			// Выходим, если ничего не прочитали или прочитали мало
 			if (!readBlockSize || readBlockSize<hexFindStringSize)
 				RETURN(FALSE)
 
-				// Èùåì
+				// Ищем
 				if (FindStringBMH((unsigned char *)readBufferA, readBlockSize)!=-1)
 					RETURN(TRUE)
 				}
@@ -1251,47 +1251,47 @@ int LookForString(const wchar_t *Name)
 		{
 			for (int cpIndex = 0; cpIndex<codePagesCount; cpIndex++)
 			{
-				// Èíôîðìàöèÿ î êîäîâîé ñòðàíèöå
+				// Информация о кодовой странице
 				CodePageInfo *cpi = codePages+cpIndex;
 
-				// Ïðîïóñêàåì îøèáî÷íûå êîäîâûå ñòðàíèöû
+				// Пропускаем ошибочные кодовые страницы
 				if (!cpi->MaxCharSize)
 					CONTINUE(FALSE)
 
-					// Åñëè íà÷àëî ôàéëà î÷èùàåì èíôîðìàöèþ î ïîèñêå ïî ñëîâàì
+					// Если начало файла очищаем информацию о поиске по словам
 					if (WholeWords && alreadyRead==readBlockSize)
 					{
 						cpi->WordFound = false;
 						cpi->LastSymbol = 0;
 					}
 
-				// Åñëè íè÷åãî íå ïðî÷èòàëè
+				// Если ничего не прочитали
 				if (!readBlockSize)
-					// Åñëè ïîèñê ïî ñëîâàì è â êîíöå ïðåäûäóùåãî áëîêà áûëî ÷òî-òî íàéäåíî,
-					// òî ñ÷èòàåì, ÷òî íàøëè òî, ÷òî íóæíî
+					// Если поиск по словам и в конце предыдущего блока было что-то найдено,
+					// то считаем, что нашли то, что нужно
 					CONTINUE(WholeWords && cpi->WordFound)
 
-					// Âûõîäèì, åñëè ïðî÷èòàëè ìåíüøå ðàçìåðà ñòðîêè ïîèñêà è íåò ïîèñêà ïî ñëîâàì
+					// Выходим, если прочитали меньше размера строки поиска и нет поиска по словам
 					if (readBlockSize < findStringCount && !(WholeWords && cpi->WordFound))
 						CONTINUE(FALSE)
-						// Êîëè÷åñòâî ñèìâîëîâ â âûõîäíîì áóôåðå
+						// Количество символов в выходном буфере
 						unsigned int bufferCount;
 
-				// Áóôåð äëÿ ïîèñêà
+				// Буфер для поиска
 				wchar_t *buffer;
 
-				// Ïåðåãîíÿåì áóôåð â UTF-16
+				// Перегоняем буфер в UTF-16
 				if (IsUnicodeCodePage(cpi->CodePage))
 				{
-					// Âû÷èñëÿåì ðàçìåð áóôåðà â UTF-16
+					// Вычисляем размер буфера в UTF-16
 					bufferCount = readBlockSize / 2;
 
-					// Âûõîäèì, åñëè ðàçìåð áóôåðà ìåíüøå äëèíû ñòðîêè ïîñèêà
+					// Выходим, если размер буфера меньше длины строки посика
 					if (bufferCount < findStringCount)
 						CONTINUE(FALSE)
 						
 
-					// Êîïèðóåì áóôåð ÷òåíèÿ â áóôåð ñðàâíåíèÿ
+					// Копируем буфер чтения в буфер сравнения
 					//todo
 					if (cpi->CodePage==CP_REVERSEBOM)
 					{
@@ -1311,7 +1311,7 @@ int LookForString(const wchar_t *Name)
 				}
 				else
 				{
-					// Êîíâåðòèðóåì áóôåð ÷òåíèÿ èç êîäèðîâêè ïîèñêà â UTF-16
+					// Конвертируем буфер чтения из кодировки поиска в UTF-16
 					bufferCount = WINPORT(MultiByteToWideChar)(
 					                  cpi->CodePage,
 					                  0,
@@ -1321,31 +1321,31 @@ int LookForString(const wchar_t *Name)
 					                  readBufferSize
 					              );
 
-					// Âûõîäèì, åñëè íàì íå óäàëîñü ñêîíâåðòèðîâàòü ñòðîêó
+					// Выходим, если нам не удалось сконвертировать строку
 					if (!bufferCount)
 						CONTINUE(FALSE)
 
-						// Åñëè ïðî÷èòàëè ìåíüøå ðàçìåðà ñòðîêè ïîèñêà è ïîèñêà ïî ñëîâàì, òî ïðîâåðÿåì
-						// ïåðâûé ñèìâîë áëîêà íà ðàçäåëèòåëü è âûõîäèì
-						// Åñëè ó íàñ ïîèñê ïî ñëîâàì è â êîíöå ïðåäûäóùåãî áëîêà áûëî âõîæäåíèå
+						// Если прочитали меньше размера строки поиска и поиска по словам, то проверяем
+						// первый символ блока на разделитель и выходим
+						// Если у нас поиск по словам и в конце предыдущего блока было вхождение
 						if (WholeWords && cpi->WordFound)
 						{
-							// Åñëè êîíåö ôàéëà, òî ñ÷èòàåì, ÷òî åñòü ðàçäåëèòåëü â êîíöå
+							// Если конец файла, то считаем, что есть разделитель в конце
 							if (findStringCount-1>=bufferCount)
 								RETURN(TRUE)
-								// Ïðîâåðÿåì ïåðâûé ñèìâîë òåêóùåãî áëîêà ñ ó÷¸òîì îáðàòíîãî ñìåùåíèÿ, êîòîðîå äåëàåòñÿ
-								// ïðè ïåðåõîäå ìåæäó áëîêàìè
+								// Проверяем первый символ текущего блока с учётом обратного смещения, которое делается
+								// при переходе между блоками
 								cpi->LastSymbol = readBuffer[findStringCount-1];
 
 							if (IsWordDiv(cpi->LastSymbol))
 								RETURN(TRUE)
 
-								// Åñëè ðàçìåð áóôåðà ìåíüøå ðàçìåðà ñëîâà, òî âûõîäèì
+								// Если размер буфера меньше размера слова, то выходим
 								if (readBlockSize < findStringCount)
 									CONTINUE(FALSE)
 								}
 
-					// Óñòàíàâëèâàåì áóôåð ñòðàâíåíèÿ
+					// Устанавливаем буфер стравнения
 					buffer = readBuffer;
 				}
 
@@ -1353,47 +1353,47 @@ int LookForString(const wchar_t *Name)
 
 				do
 				{
-					// Èùåì ïîäñòðîêó â áóôåðå è âîçâðàùàåì èíäåêñ å¸ íà÷àëà â ñëó÷àå óñïåõà
+					// Ищем подстроку в буфере и возвращаем индекс её начала в случае успеха
 					int foundIndex = FindStringBMH(buffer+index, bufferCount-index);
 
-					// Åñëè ïîäñòðîêà íå íàéäåíà èä¸ì íà ñëåäóþùèé øàã
+					// Если подстрока не найдена идём на следующий шаг
 					if (foundIndex == -1)
 						break;
 
-					// Åñëè ïîñäñòðîêà íàéäåíà è îòêëþ÷åí ïîèñê ïî ñëîâàì, òî ñ÷èòàåì ÷òî âñ¸ õîðîøî
+					// Если посдстрока найдена и отключен поиск по словам, то считаем что всё хорошо
 					if (!WholeWords)
 						RETURN(TRUE)
-						// Óñòàíàâëèâàåì ïîçèöèþ â èñõîäíîì áóôåðå
+						// Устанавливаем позицию в исходном буфере
 						index += foundIndex;
 
-					// Åñëè èä¸ò ïîèñê ïî ñëîâàì, òî äåëàåì ñîîòâåòâóþùèå ïðîâåðêè
+					// Если идёт поиск по словам, то делаем соответвующие проверки
 					bool firstWordDiv = false;
 
-					// Åñëè ìû íàõîäèìñÿ âíà÷àëå áëîêà
+					// Если мы находимся вначале блока
 					if (!index)
 					{
-						// Åñëè ìû íàõîäèìñÿ âíà÷àëå ôàéëà, òî ñ÷èòàåì, ÷òî ðàçäåëèòåëü åñòü
-						// Åñëè ìû íàõîäèìñÿ âíà÷àëå áëîêà, òî ïðîâåðÿåì ÿâëÿåòñÿ
-						// èëè íåò ïîñëåäíèé ñèìâîë ïðåäûäóùåãî áëîêà ðàçäåëèòåëåì
+						// Если мы находимся вначале файла, то считаем, что разделитель есть
+						// Если мы находимся вначале блока, то проверяем является
+						// или нет последний символ предыдущего блока разделителем
 						if (alreadyRead==readBlockSize || IsWordDiv(cpi->LastSymbol))
 							firstWordDiv = true;
 					}
 					else
 					{
-						// Ïðîâåðÿåì ÿâëÿåòñÿ èëè íåò ïðåäûäóùèé íàéäåíîìó ñèìâîë áëîêà ðàçäåëèòåëåì
+						// Проверяем является или нет предыдущий найденому символ блока разделителем
 						cpi->LastSymbol = buffer[index-1];
 
 						if (IsWordDiv(cpi->LastSymbol))
 							firstWordDiv = true;
 					}
 
-					// Ïðîâåðÿåì ðàçäåëèòåëü â êîíöå, òîëüêî åñëè íàéäåí ðàçäåëèòåëü âíà÷àëå
+					// Проверяем разделитель в конце, только если найден разделитель вначале
 					if (firstWordDiv)
 					{
-						// Åñëè áëîê âûáðàí íå äî êîíöà
+						// Если блок выбран не до конца
 						if (index+findStringCount!=bufferCount)
 						{
-							// Ïðîâåðÿåì ÿâëÿåòñÿ èëè íåò ïîñëåäóþùèé çà íàéäåíûì ñèìâîë áëîêà ðàçäåëèòåëåì
+							// Проверяем является или нет последующий за найденым символ блока разделителем
 							cpi->LastSymbol = buffer[index+findStringCount];
 
 							if (IsWordDiv(cpi->LastSymbol))
@@ -1405,21 +1405,21 @@ int LookForString(const wchar_t *Name)
 				}
 				while (++index<=bufferCount-findStringCount);
 
-				// Âûõîäèì, åñëè ìû âûøëè çà ïðåäåëû êîëè÷åñòâà áàéò ðàçðåø¸ííûõ äëÿ ïîèñêà
+				// Выходим, если мы вышли за пределы количества байт разрешённых для поиска
 				if (SearchInFirst && SearchInFirst>=alreadyRead)
 					CONTINUE(FALSE)
-					// Çàïîìèíàåì ïîñëåäíèé ñèìâîë áëîêà
+					// Запоминаем последний символ блока
 					cpi->LastSymbol = buffer[bufferCount-1];
 			}
 
-			// Ïîëó÷àåì ñìåùåíèå íà êîòîðîå ìû îòñòóïèëè ïðè ïåðåõîäå ìåæäó áëîêàìè
+			// Получаем смещение на которое мы отступили при переходе между блоками
 			offset = (int)((CodePage==CP_AUTODETECT?sizeof(wchar_t):codePages->MaxCharSize)*(findStringCount-1));
 		}
 
-		// Åñëè ìû ïîòåíöèàëüíî ïðî÷èòàëè íå âåñü ôàéë
+		// Если мы потенциально прочитали не весь файл
 		if (readBlockSize==readBufferSizeA)
 		{
-			// Îòñòóïàåì íàçàä íà äëèíó ñëîâà ïîèñêà ìèíóñ 1
+			// Отступаем назад на длину слова поиска минус 1
 			if (!file.SetPointer(-1*offset, nullptr, FILE_CURRENT))
 				RETURN(FALSE)
 				alreadyRead -= offset;
@@ -1427,9 +1427,9 @@ int LookForString(const wchar_t *Name)
 	}
 
 exit:
-	// Çàêðûâàåì õýíäë ôàéëà
+	// Закрываем хэндл файла
 	file.Close();
-	// Âîçâðàùàåì ðåçóëüòàò
+	// Возвращаем результат
 	return (result);
 #undef CONTINUE
 #undef RETURN
@@ -1449,7 +1449,7 @@ bool IsFileIncluded(PluginPanelItem* FileItem, const wchar_t *FullName, DWORD Fi
 
 	while (FileFound)
 	{
-		// Åñëè âêëþ÷åí ðåæèì ïîèñêà hex-êîäîâ, òîãäà ïàïêè â ïîèñê íå âêëþ÷àåì
+		// Если включен режим поиска hex-кодов, тогда папки в поиск не включаем
 		if ((FileAttr & FILE_ATTRIBUTE_DIRECTORY) && (!Opt.FindOpt.FindFolders || SearchHex))
 			return FALSE;
 
@@ -1468,7 +1468,7 @@ bool IsFileIncluded(PluginPanelItem* FileItem, const wchar_t *FullName, DWORD Fi
 				if (!CtrlObject->Plugins.UseFarCommand(hPlugin, PLUGIN_FARGETFILES))
 				{
 					FARString strTempDir;
-					FarMkTempEx(strTempDir); // À ïðîâåðêà íà nullptr???
+					FarMkTempEx(strTempDir); // А проверка на nullptr???
 					apiCreateDirectory(strTempDir,nullptr);
 
 					bool GetFileResult=false;
@@ -1586,7 +1586,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 		{
 			DefDlgProc(hDlg,Msg,Param1,Param2);
 
-			// Ïåðåìåñòèì ôîêóñ íà êíîïêó [Go To]
+			// Переместим фокус на кнопку [Go To]
 			if ((itd.GetDirCount() || itd.GetFileCount()) && !v->FindPositionChanged)
 			{
 				v->FindPositionChanged=true;
@@ -1723,7 +1723,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 					size_t ItemIndex = reinterpret_cast<size_t>(ListBox->GetUserData(nullptr,0));
 					bool RemoveTemp=false;
-					// Ïëàãèíû íàäî çàêðûâàòü, åñëè îòêðûëè.
+					// Плагины надо закрывать, если открыли.
 					bool ClosePlugin=false;
 					FARString strSearchFileName;
 					FARString strTempDir;
@@ -1735,8 +1735,8 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 						return TRUE;
 					}
 
-					// FindFileArcIndex íåëüçÿ çäåñü èñïîëüçîâàòü
-					// Îí ìîæåò áûòü óæå äðóãîé.
+					// FindFileArcIndex нельзя здесь использовать
+					// Он может быть уже другой.
 					if(FindItem.ArcIndex != LIST_INDEX_NONE)
 					{
 						ARCLIST ArcItem;
@@ -1812,7 +1812,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 							int ListSize=ListBox->GetItemCount();
 							NamesList ViewList;
 
-							// Âîçüìåì âñå ôàéëû, êîòîðûå èìåþò ðåàëüíûå èìåíà...
+							// Возьмем все файлы, которые имеют реальные имена...
 							if (Opt.FindOpt.CollectFiles)
 							{
 								for (int I=0; I<ListSize; I++)
@@ -1849,8 +1849,8 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 								ShellViewer.SetDynamicallyBorn(FALSE);
 								ShellViewer.SetEnableF6(TRUE);
 
-								// FindFileArcIndex íåëüçÿ çäåñü èñïîëüçîâàòü
-								// Îí ìîæåò áûòü óæå äðóãîé.
+								// FindFileArcIndex нельзя здесь использовать
+								// Он может быть уже другой.
 								if(FindItem.ArcIndex != LIST_INDEX_NONE)
 								{
 									ARCLIST ArcItem;
@@ -1863,7 +1863,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 								FrameManager->EnterModalEV();
 								FrameManager->ExecuteModal();
 								FrameManager->ExitModalEV();
-								// çàñòàâëÿåì ðåôðåøèòñÿ ýêðàí
+								// заставляем рефрешится экран
 								FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 							}
 							SendDlgMessage(hDlg,DM_ENABLEREDRAW,TRUE,0);
@@ -1875,8 +1875,8 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 							SendDlgMessage(hDlg,DM_ENABLEREDRAW,FALSE,0);
 							{
 								/* $ 14.08.2002 VVM
-								  ! Ïîêà-÷òî çàïðåòèì èç ïîèñêà ïåðåêëþ÷àòüñÿ â àêòèâíûé ðåäàêòîð.
-								    Ê ñîæàëåíèþ, ìàíàãåð íà ýòî íå ñïîñîáåí ñåé÷àñ
+								  ! Пока-что запретим из поиска переключаться в активный редактор.
+								    К сожалению, манагер на это не способен сейчас
 															int FramePos=FrameManager->FindFrameByFile(MODALTYPE_EDITOR,SearchFileName);
 															int SwitchTo=FALSE;
 															if (FramePos!=-1)
@@ -1919,7 +1919,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 																FrameManager->ExecuteModal ();
 																FrameManager->ExitModalEV();
 																// FrameManager->ExecuteNonModal();
-																// çàñòàâëÿåì ðåôðåøèòñÿ ýêðàí
+																// заставляем рефрешится экран
 																FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 															}
 															else
@@ -1929,8 +1929,8 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									ShellEditor.SetDynamicallyBorn(FALSE);
 									ShellEditor.SetEnableF6(TRUE);
 
-									// FindFileArcIndex íåëüçÿ çäåñü èñïîëüçîâàòü
-									// Îí ìîæåò áûòü óæå äðóãîé.
+									// FindFileArcIndex нельзя здесь использовать
+									// Он может быть уже другой.
 									if(FindItem.ArcIndex != LIST_INDEX_NONE)
 									{
 										ARCLIST ArcItem;
@@ -1943,7 +1943,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									FrameManager->EnterModalEV();
 									FrameManager->ExecuteModal();
 									FrameManager->ExitModalEV();
-									// çàñòàâëÿåì ðåôðåøèòñÿ ýêðàí
+									// заставляем рефрешится экран
 									FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 								}
 							}
@@ -1999,9 +1999,9 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 			case FD_BUTTON_GOTO:
 			case FD_BUTTON_PANEL:
 				{
-					// Ïåðåõîä è ïîñûë íà ïàíåëü áóäåì äåëàòü íå â äèàëîãå, à ïîñëå îêîí÷àíèÿ ïîèñêà.
-					// Èíà÷å âîçìîæíà ñèòóàöèÿ, êîãäà ìû èùåì íà ïàíåëè, ïîòîì åå ãðîõàåì è ñîçäàåì íîâóþ
-					// (à ïîèñê-òî èäåò!) è â ðåçóëüòàòå ÔÀÐ òðàïàåòñÿ.
+					// Переход и посыл на панель будем делать не в диалоге, а после окончания поиска.
+					// Иначе возможна ситуация, когда мы ищем на панели, потом ее грохаем и создаем новую
+					// (а поиск-то идет!) и в результате ФАР трапается.
 					if(!ListBox->GetItemCount())
 					{
 						return TRUE;
@@ -2153,12 +2153,12 @@ void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& 
 			case DIZ_COLUMN:
 			case OWNER_COLUMN:
 			{
-				// ïðîïóñêàåì, íå ðåàëèçîâàíî
+				// пропускаем, не реализовано
 				break;
 			}
 			case NAME_COLUMN:
 			{
-				// äàæå åñëè óêàçàëè, ïðîïóñêàåì, ò.ê. ïîëå èìåíè îáÿçàòåëüíîå è èäåò â êîíöå.
+				// даже если указали, пропускаем, т.к. поле имени обязательное и идет в конце.
 				break;
 			}
 
@@ -2226,10 +2226,10 @@ void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& 
 	}
 
 
-	// Â ïëàãèíàõ ïðèíóäèòåëüíî ïîñòàâèì óêàçàòåëü â èìåíè íà èìÿ
-	// äëÿ êîððåêòíîãî åãî îòîáðàæåíèÿ â ñïèñêå, îòáðîñèâ ïóòü,
-	// ò.ê. íåêîòîðûå ïëàãèíû âîçâðàùàþò èìÿ âìåñòå ñ ïîëíûì ïóò¸ì,
-	// ê ïðèìåðó âðåìåííàÿ ïàíåëü.
+	// В плагинах принудительно поставим указатель в имени на имя
+	// для корректного его отображения в списке, отбросив путь,
+	// т.к. некоторые плагины возвращают имя вместе с полным путём,
+	// к примеру временная панель.
 
 	const wchar_t *DisplayName0=DisplayName;
 	if (itd.GetFindFileArcIndex() != LIST_INDEX_NONE)
@@ -2279,15 +2279,15 @@ void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& 
 
 		if (ItemIndex != LIST_INDEX_NONE)
 		{
-			// Ñáðîñèì äàííûå â FindData. Îíè òàì îò ôàéëà
+			// Сбросим данные в FindData. Они там от файла
 			FINDLIST FindItem;
 			itd.GetFindListItem(ItemIndex, FindItem);
 			FindItem.FindData.Clear();
-			// Èñïîëüçóåì LastDirName, ò.ê. PathName óæå ìîæåò áûòü èñêàæåíà
+			// Используем LastDirName, т.к. PathName уже может быть искажена
 			FindItem.FindData.strFileName = strLastDirName;
-			// Used=0 - Èìÿ íå ïîïàäàä¸ò âî âðåìåííóþ ïàíåëü.
+			// Used=0 - Имя не попададёт во временную панель.
 			FindItem.Used=0;
-			// Ïîñòàâèì àòðèáóò ó êàòàëîãà, ÷òî-áû îí íå áûë ôàéëîì :)
+			// Поставим атрибут у каталога, что-бы он не был файлом :)
 			FindItem.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
 			size_t ArcIndex=itd.GetFindFileArcIndex();
@@ -2318,7 +2318,7 @@ void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& 
 	int ListPos = ListBox->AddItem(&ListItem);
 	ListBox->SetUserData((void*)(DWORD_PTR)ItemIndex,sizeof(ItemIndex), ListPos);
 
-	// Âûäåëèì êàê ïîëîæåíî - â ñïèñêå.
+	// Выделим как положено - в списке.
 	int FC=itd.GetFileCount(), DC=itd.GetDirCount(), LF=itd.GetLastFoundNumber();
 	if (!FC && !DC)
 	{
@@ -2384,11 +2384,11 @@ void ArchiveSearch(HANDLE hDlg, const wchar_t *ArcName)
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hArc,&Info);
 		itd.SetFindFileArcIndex(itd.AddArcListItem(ArcName, hArc, Info.Flags, Info.CurDir));
-		// Çàïîìíèì êàòàëîã ïåðåä ïîèñêîì â àðõèâå. È åñëè íè÷åãî íå íàøëè - íå ðèñóåì åãî ñíîâà.
+		// Запомним каталог перед поиском в архиве. И если ничего не нашли - не рисуем его снова.
 		{
 			FARString strSaveDirName, strSaveSearchPath;
 			size_t SaveListCount = itd.GetFindListCount();
-			// Çàïîìíèì ïóòè ïîèñêà â ïëàãèíå, îíè ìîãóò èçìåíèòüñÿ.
+			// Запомним пути поиска в плагине, они могут измениться.
 			strSaveSearchPath = strPluginSearchPath;
 			strSaveDirName = strLastDirName;
 			strLastDirName.Clear();
@@ -2467,9 +2467,9 @@ void DoScanTree(HANDLE hDlg, FARString& strRoot)
 
 					if (!Filter->FileInFilter(FindData,&foundType))
 					{
-						// ñþäà çàõîäèì, åñëè íå ïîïàëè â ôèëüòð èëè ïîïàëè â Exclude-ôèëüòð
+						// сюда заходим, если не попали в фильтр или попали в Exclude-фильтр
 						if ((FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && foundType==FIFT_EXCLUDE)
-							ScTree.SkipDir(); // ñêèïàåì òîëüêî ïî Exclude-ôèëüòðó, ò.ê. ãëóáæå òîæå íóæíî ïðîñìîòðåòü
+							ScTree.SkipDir(); // скипаем только по Exclude-фильтру, т.к. глубже тоже нужно просмотреть
 
 						{
 							bContinue=true;
@@ -2713,7 +2713,7 @@ DWORD ThreadRoutine(LPVOID Param)
 bool FindFilesProcess(Vars& v)
 {
 	_ALGO(CleverSysLog clv(L"FindFiles::FindFilesProcess()"));
-	// Åñëè èñïîëüçóåòñÿ ôèëüòð îïåðàöèé, òî âî âðåìÿ ïîèñêà ñîîáùàåì îá ýòîì
+	// Если используется фильтр операций, то во время поиска сообщаем об этом
 	FARString strTitle=MSG(MFindFileTitle);
 	FARString strSearchStr;
 
@@ -2811,8 +2811,8 @@ bool FindFilesProcess(Vars& v)
 //  pDlg->SetDynamicallyBorn();
 	Dlg.SetHelp(L"FindFileResult");
 	Dlg.SetPosition(-1, -1, DlgWidth, DlgHeight);
-	// Íàäî áû ïîêàçàòü äèàëîã, à òî èíèöèàëèçàöèÿ ýëåìåíòîâ çàïàçäûâàåò
-	// èíîãäà ïðè ïîèñêå è ïåðâûå ýëåìåíòû íå äîáàâëÿþòñÿ
+	// Надо бы показать диалог, а то инициализация элементов запаздывает
+	// иногда при поиске и первые элементы не добавляются
 	Dlg.InitDialog();
 	Dlg.Show();
 
@@ -2838,7 +2838,7 @@ bool FindFilesProcess(Vars& v)
 			}
 
 			case FD_BUTTON_PANEL:
-			// Îòðàáîòàåì ïåðåáðîñêó íà âðåìåííóþ ïàíåëü
+			// Отработаем переброску на временную панель
 			{
 				size_t ListSize = itd.GetFindListCount();
 				PluginPanelItem *PanelItems=new PluginPanelItem[ListSize];
@@ -2853,10 +2853,10 @@ bool FindFilesProcess(Vars& v)
 					FINDLIST FindItem;
 					itd.GetFindListItem(i, FindItem);
 					if (!FindItem.FindData.strFileName.IsEmpty() && FindItem.Used)
-					// Äîáàâëÿåì âñåãäà, åñëè èìÿ çàäàíî
+					// Добавляем всегда, если имя задано
 					{
-						// Äëÿ ïëàãèíîâ ñ âèðòóàëüíûìè èìåíàìè çàìåíèì èìÿ ôàéëà íà èìÿ àðõèâà.
-						// ïàíåëü ñàìà óáåðåò ëèøíèå äóáëè.
+						// Для плагинов с виртуальными именами заменим имя файла на имя архива.
+						// панель сама уберет лишние дубли.
 						bool IsArchive=false;
 						if(FindItem.ArcIndex != LIST_INDEX_NONE)
 						{
@@ -2867,7 +2867,7 @@ bool FindFilesProcess(Vars& v)
 								IsArchive=true;
 							}
 						}
-						// Äîáàâëÿåì òîëüêî ôàéëû èëè èìåíà àðõèâîâ èëè ïàïêè êîãäà ïðîñèëè
+						// Добавляем только файлы или имена архивов или папки когда просили
 						if (IsArchive || (Opt.FindOpt.FindFolders && !SearchHex) ||
 							    !(FindItem.FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 						{
@@ -2989,15 +2989,15 @@ bool FindFilesProcess(Vars& v)
 						FindPanel=CtrlObject->Cp()->GetAnotherPanel(FindPanel);
 
 					if ((FindPanel->GetType()!=FILE_PANEL) || (FindPanel->GetMode()!=NORMAL_PANEL))
-					// Ñìåíèì ïàíåëü íà îáû÷íóþ ôàéëîâóþ...
+					// Сменим панель на обычную файловую...
 					{
 						FindPanel=CtrlObject->Cp()->ChangePanel(FindPanel,FILE_PANEL,TRUE,TRUE);
 						FindPanel->SetVisible(TRUE);
 						FindPanel->Update(0);
 					}
 
-					// ! Íå ìåíÿåì êàòàëîã, åñëè ìû óæå â íåì íàõîäèìñÿ.
-					// Òåì ñàìûì äîáèâàåìñÿ òîãî, ÷òî âûäåëåíèå ñ ýëåìåíòîâ ïàíåëè íå ñáðàñûâàåòñÿ.
+					// ! Не меняем каталог, если мы уже в нем находимся.
+					// Тем самым добиваемся того, что выделение с элементов панели не сбрасывается.
 					FARString strDirTmp;
 					FindPanel->GetCurDir(strDirTmp);
 					Length=strDirTmp.GetLength();
@@ -3025,10 +3025,10 @@ FindFiles::FindFiles()
 {
 	_ALGO(CleverSysLog clv(L"FindFiles::FindFiles()"));
 	static FARString strLastFindMask=L"*.*", strLastFindStr;
-	// Ñòàòè÷åñêîé ñòðóêòóðå è ñòàòè÷åñêèå ïåðåìåííûå
+	// Статической структуре и статические переменные
 	static FARString strSearchFromRoot;
 	static int LastCmpCase=0,LastWholeWords=0,LastSearchInArchives=0,LastSearchHex=0;
-	// Ñîçäàäèì îáúåêò ôèëüòðà
+	// Создадим объект фильтра
 	Filter=new FileFilter(CtrlObject->Cp()->ActivePanel,FFT_FINDFILE);
 	CmpCase=LastCmpCase;
 	WholeWords=LastWholeWords;
@@ -3145,7 +3145,7 @@ FindFiles::FindFiles()
 		Dlg.SetPosition(-1,-1,78,20);
 		Dlg.Process();
 		ExitCode=Dlg.GetExitCode();
-		//Ðåôðåø òåêóùåìó âðåìåíè äëÿ ôèëüòðà ñðàçó ïîñëå âûõîäà èç äèàëîãà
+		//Рефреш текущему времени для фильтра сразу после выхода из диалога
 		Filter->UpdateCurrentTime();
 
 		if (ExitCode!=FAD_BUTTON_FIND)

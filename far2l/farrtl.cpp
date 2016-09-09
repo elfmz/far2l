@@ -1,7 +1,7 @@
 /*
 farrtl.cpp
 
-Ïåðåîïðåäåëåíèå ðàçëè÷íûõ CRT ôóíêöèé
+Переопределение различных CRT функций
 */
 
 #include "headers.hpp"
@@ -627,7 +627,7 @@ uint64_t __cdecl _wcstoui64(const wchar_t *nptr,wchar_t **endptr,int ibase)
 
 #endif
 
-// dest è src ÍÅ ÄÎËÆÍÛ ïåðåñåêàòüñÿ
+// dest и src НЕ ДОЛЖНЫ пересекаться
 char * __cdecl xstrncpy(char * dest,const char * src,size_t DestSize)
 {
 	char *tmpsrc = dest;
@@ -1580,9 +1580,9 @@ static void  swap_m(
 
 #if defined(_DEBUG) && defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(_WIN64) && (_MSC_VER <= 1400)
 // && (WINVER < 0x0500)
-// Áîðüáà ñ ìåñàãîì äåáàæíîé ëèíêîâêè:
+// Борьба с месагом дебажной линковки:
 // strmix.obj : error LNK2019: unresolved external symbol __ftol2 referenced in function "char * __stdcall FileSizeToStr (char *,unsigned long,unsigned long,int,int)" (?FileSizeToStr@@YGPADPADKKHH@Z)
-// Èñòî÷íèê: http://q12.org/pipermail/ode/2004-January/010811.html
+// Источник: http://q12.org/pipermail/ode/2004-January/010811.html
 //VC7 or later, building with pre-VC7 runtime libraries
 extern "C" long _ftol(double);   //defined by VC6 C libs
 extern "C" long _ftol2(double dblSource) { return _ftol(dblSource); }

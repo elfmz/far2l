@@ -1,7 +1,7 @@
 /*
 flink.cpp
 
-Êó÷à ðàçíûõ ôóíêöèé ïî îáðàáîòêå Link`îâ - Hard&Sym
+Куча разных функций по обработке Link`ов - Hard&Sym
 */
 /*
 Copyright (c) 1996 Eugene Roshal

@@ -1,7 +1,7 @@
 /*
 filetype.cpp
 
-Ðàáîòà ñ àññîöèàöèÿìè ôàéëîâ
+Работа с ассоциациями файлов
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -121,18 +121,18 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr)
 }
 
 /* $ 14.01.2001 SVS
-   Äîáàâèì èíòåëåêòóàëüíîñòè.
-   Åñëè âñòðå÷àåòñÿ "IF" è îíî âûïîëíÿåòñÿ, òî êîìàíäà
-   ïîìåùàåòñÿ â ñïèñîê
+   Добавим интелектуальности.
+   Если встречается "IF" и оно выполняется, то команда
+   помещается в список
 
-   Âûçûâàåòñÿ äëÿ F3, F4 - àññîöèàöèè
-   Enter â êîì ñòðîêå - àññîöèàöèè.
+   Вызывается для F3, F4 - ассоциации
+   Enter в ком строке - ассоциации.
 */
 /* $ 06.07.2001
-   + Èñïîëüçóåì CFileMask âìåñòî GetCommaWord, ýòèì ñàìûì äîáèâàåìñÿ òîãî, ÷òî
-     ìîæíî èñïîëüçîâàòü ìàñêè èñêëþ÷åíèÿ
-   - Óáðàë íåïîíÿòíûé ìíå çàïðåò íà èñïîëüçîâàíèå ìàñêè ôàéëîâ òèïà "*.*"
-     (áûë êîãäà-òî, âðîäå, òàêîé áàã-ðåïîðò)
+   + Используем CFileMask вместо GetCommaWord, этим самым добиваемся того, что
+     можно использовать маски исключения
+   - Убрал непонятный мне запрет на использование маски файлов типа "*.*"
+     (был когда-то, вроде, такой баг-репорт)
 */
 bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 {
@@ -143,8 +143,8 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 	TypesMenu.SetFlags(VMENU_WRAPMODE);
 	TypesMenu.SetPosition(-1,-1,0,0);
 	int DizWidth=GetDescriptionWidth(Name);
-	int ActualCmdCount=0; // îòîáðàæàåìûõ àññîöèàöèé â ìåíþ
-	CFileMask FMask; // äëÿ ðàáîòû ñ ìàñêàìè ôàéëîâ
+	int ActualCmdCount=0; // отображаемых ассоциаций в меню
+	CFileMask FMask; // для работы с масками файлов
 	FARString strCommand, strDescription;
 	int CommandCount=0;
 
@@ -293,14 +293,14 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 				CtrlObject->Cp()->RightPanel->CloseFile();
 				Execute(strCommand,AlwaysWaitFinish, 0, 0, 0, ListFileUsed, true);
 #else
-				// çäåñü áûëà áàãà ñ ïðîðèñîâêîé (è... âûâîä äàííûõ
-				// íà êîìàíäó "@type !@!" ïðîïàäàë ñ ýêðàíà)
-				// ñäåëàåì ïî àíàëîãèè ñ CommandLine::CmdExecute()
+				// здесь была бага с прорисовкой (и... вывод данных
+				// на команду "@type !@!" пропадал с экрана)
+				// сделаем по аналогии с CommandLine::CmdExecute()
 				{
 					RedrawDesktop RdrwDesktop(TRUE);
 					Execute(strCommand,AlwaysWaitFinish, 0, 0, 0, ListFileUsed);
-					ScrollScreen(1); // îáÿçàòåëüíî, èíà÷å äåñòðóêòîð RedrawDesktop
-					// ïðîðåäðàâèâ ýêðàí çàáüåò ïîñëåäíþþ ñòðîêó âûâîäà.
+					ScrollScreen(1); // обязательно, иначе деструктор RedrawDesktop
+					// проредравив экран забьет последнюю строку вывода.
 				}
 				CtrlObject->Cp()->LeftPanel->UpdateIfChanged(UIC_UPDATE_FORCE);
 				CtrlObject->Cp()->RightPanel->UpdateIfChanged(UIC_UPDATE_FORCE);
@@ -337,7 +337,7 @@ void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool Run
 }
 
 /*
-  Èñïîëüçóåòñÿ äëÿ çàïóñêà âíåøíåãî ðåäàêòîðà è âüþâåðà
+  Используется для запуска внешнего редактора и вьювера
 */
 void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool AlwaysWaitFinish)
 {

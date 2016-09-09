@@ -1,7 +1,7 @@
 /*
 UnicodeString.hpp
 
-Unicode ñòðîêè
+Unicode строки
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 UnicodeStringData *eus()
 {
-	//äëÿ îïòèìèçàöèè ñîçäàíèÿ ïóñòûõ UnicodeString
+	//для оптимизации создания пустых UnicodeString
 	static UnicodeStringData *EmptyUnicodeStringData = new UnicodeStringData(1,1);
 	return EmptyUnicodeStringData;
 }
@@ -285,8 +285,8 @@ int __cdecl UnicodeString::Format(const wchar_t * format, ...)
 		}
 
 		buffer = tmpbuffer;
-		//_vsnwprintf íå âñåãäà ñòàâèò '\0' âêîíöå.
-		//Ïîýòîìó íàäî îáíóëèòü è ïåðåäàòü â _vsnwprintf ðàçìåð-1.
+		//_vsnwprintf не всегда ставит '\0' вконце.
+		//Поэтому надо обнулить и передать в _vsnwprintf размер-1.
 		buffer[Size-1] = 0;
 		retValue = vswprintf(buffer, Size-1, format, argptr);
 	}

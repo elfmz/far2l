@@ -3,7 +3,7 @@
 /*
 filepanels.hpp
 
-ôàéëîâûå ïàíåëè
+файловые панели
 */
 /*
 Copyright (c) 1996 Eugene Roshal

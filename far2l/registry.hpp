@@ -3,7 +3,7 @@
 /*
 registry.cpp
 
-Ðàáîòà ñ registry
+Работа с registry
 */
 /*
 Copyright (c) 1996 Eugene Roshal

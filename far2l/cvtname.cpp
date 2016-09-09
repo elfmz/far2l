@@ -1,7 +1,7 @@
 /*
 cvtname.cpp
 
-Ôóíêöèé äëÿ ïðåîáðàçîâàíèÿ èìåí ôàéëîâ/ïóòåé.
+Функций для преобразования имен файлов/путей.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -325,7 +325,7 @@ bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 
 
 /*
-  Ïðåîáðàçóåò Src â ïîëíûé ÐÅÀËÜÍÛÉ ïóòü ñ ó÷åòîì reparse point.
+  Преобразует Src в полный РЕАЛЬНЫЙ путь с учетом reparse point.
   Note that Src can be partially non-existent.
 */
 void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
@@ -354,8 +354,8 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 	strDest = Src;
 }
 
-// Êîñìåòè÷åñêèå ïðåîáðàçîâàíèÿ ñòðîêè ïóòè.
-// CheckFullPath èñïîëüçóåòñÿ â FCTL_SET[ANOTHER]PANELDIR
+// Косметические преобразования строки пути.
+// CheckFullPath используется в FCTL_SET[ANOTHER]PANELDIR
 FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 {
 	// elevation not required during cosmetic operation 

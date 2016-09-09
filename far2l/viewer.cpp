@@ -92,7 +92,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	LastSearchReverse=GlobalSearchReverse;
 	LastSearchHex=GlobalSearchHex;
 	VM.CodePage=DefCodePage=aCodePage;
-	// Âñïîìíèì òèï âðàïà
+	// Вспомним тип врапа
 	VM.Wrap=Opt.ViOpt.ViewerIsWrap;
 	VM.WordWrap=Opt.ViOpt.ViewerWrap;
 	VM.Hex=InitHex;
@@ -162,14 +162,14 @@ Viewer::~Viewer()
 
 	_tran(SysLog(L"[%p] Viewer::~Viewer, TempViewName=[%ls]",this,TempViewName));
 	/* $ 11.10.2001 IS
-	   Óäàëÿåì ôàéë òîëüêî, åñëè íåò îòêðûòûõ ôðåéìîâ ñ òàêèì èìåíåì.
+	   Удаляем файл только, если нет открытых фреймов с таким именем.
 	*/
 
 	if (!strTempViewName.IsEmpty() && !FrameManager->CountFramesWithName(strTempViewName))
 	{
 		/* $ 14.06.2002 IS
-		   Åñëè DeleteFolder ñáðîøåí, òî óäàëÿåì òîëüêî ôàéë. Èíà÷å - óäàëÿåì åùå
-		   è êàòàëîã.
+		   Если DeleteFolder сброшен, то удаляем только файл. Иначе - удаляем еще
+		   и каталог.
 		*/
 		if (DeleteFolder)
 			DeleteFileWithFolder(strTempViewName);
@@ -217,7 +217,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	ViewFile.Close();
 	Reader.Clear();
 
-	SelectSize = 0; // Ñáðîñèì âûäåëåíèå
+	SelectSize = 0; // Сбросим выделение
 	strFileName = Name;
 
 	if (Opt.OnlyEditorViewerUsed && !StrCmp(strFileName, L"-"))
@@ -278,7 +278,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	{
 		int64_t NewLeftPos,NewFilePos;
 		FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
-		memset(&BMSavePos,0xff,sizeof(BMSavePos)); //çàïîëíèì ñ -1
+		memset(&BMSavePos,0xff,sizeof(BMSavePos)); //заполним с -1
 		PosCache poscache={0};
 
 		if (Opt.ViOpt.SaveShortPos)
@@ -296,7 +296,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		//=poscache.Param[3];
 		CachedCodePage=(UINT)poscache.Param[4];
 
-		// Ïðîâåðÿåì ïîääåðæèâàåòñÿ èëè íåò çàãðóæåííàÿ èç êýøà êîäîâàÿ ñòðàíèöà
+		// Проверяем поддерживается или нет загруженная из кэша кодовая страница
 		if (CachedCodePage && !IsCodePageSupported(CachedCodePage))
 			CachedCodePage = 0;
 		LastSelPos=FilePos=NewFilePos;
@@ -308,9 +308,9 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	}
 
 	/* $ 26.07.2002 IS
-	     Àâòîîïðåäåëåíèå Unicode íå äîëæíî çàâèñåòü îò îïöèè
-	     "Àâòîîïðåäåëåíèå òàáëèöû ñèìâîëîâ", ò.ê. Unicode íå åñòü
-	     _òàáëèöà ñèìâîëîâ_ äëÿ ïåðåêîäèðîâêè.
+	     Автоопределение Unicode не должно зависеть от опции
+	     "Автоопределение таблицы символов", т.к. Unicode не есть
+	     _таблица символов_ для перекодировки.
 	*/
 	//if(ViOpt.AutoDetectTable)
 	{
@@ -321,7 +321,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		{
 			Detect=GetFileFormat(ViewFile,CodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0);
 
-			// Ïðîâåðÿåì ïîääåðæèâàåòñÿ èëè íåò çàäåòåêòèðîâàííàÿ êîäîâàÿ ñòðàíèöà
+			// Проверяем поддерживается или нет задетектированная кодовая страница
 			if (Detect)
 				Detect = IsCodePageSupported(CodePage);
 		}
@@ -348,7 +348,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		}
 
 		// BUGBUG
-		// ïîêà ÷òî çàïðåòèì ïåðåêëþ÷àòü hex â UTF8, èáî íå ðàáîòàåò.
+		// пока что запретим переключать hex в UTF8, ибо не работает.
 		if (VM.Hex && VM.CodePage==CP_UTF8)
 		{
 			VM.CodePage=Opt.ViOpt.AnsiCodePageAsDefault?WINPORT(GetACP)():WINPORT(GetOEMCP)();
@@ -372,7 +372,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	AdjustWidth();
 	CtrlObject->Plugins.CurViewer=this; // HostFileViewer;
 	/* $ 15.09.2001 tran
-	   ïîðà ëåãàëèçèðîâàòüñÿ */
+	   пора легализироваться */
 	CtrlObject->Plugins.ProcessViewerEvent(VE_READ,nullptr);
 	bVE_READ_Sent = true;
 	return TRUE;
@@ -380,7 +380,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 
 
 /* $ 27.04.2001 DJ
-   ôóíêöèÿ âû÷èñëåíèÿ øèðèíû â çàâèñèìîñòè îò íàëè÷èÿ ñêðîëëáàðà
+   функция вычисления ширины в зависимости от наличия скроллбара
 */
 
 void Viewer::AdjustWidth()
@@ -652,9 +652,9 @@ void Viewer::ShowHex()
 					SelStart = (int)wcslen(OutStr);
 					SelSize=SelectSize;
 					/* $ 22.01.2001 IS
-					    Âíèìàíèå! Âîçìîæíî, ýòî íå ñîâñåì âåðíîå ðåøåíèå ïðîáëåìû
-					    âûäåëåíèÿ èç ïëàãèíîâ, íî ìíå ïîêà äðóãîãî â ãîëîâó íå ïðèøëî.
-					    ß ïðèðàâíèâàþ SelectSize íóëþ â Process*
+					    Внимание! Возможно, это не совсем верное решение проблемы
+					    выделения из плагинов, но мне пока другого в голову не пришло.
+					    Я приравниваю SelectSize нулю в Process*
 					*/
 					//SelectSize=0;
 				}
@@ -669,8 +669,8 @@ void Viewer::ShowHex()
 				if (!vgetc(Ch))
 				{
 					/* $ 28.06.2000 tran
-					   óáèðàåì ïîêàç ïóñòîé ñòðîêè, åñëè äëèíà
-					   ôàéëà êðàòíà 16 */
+					   убираем показ пустой строки, если длина
+					   файла кратна 16 */
 					EndFile=1;
 					LastPage=1;
 
@@ -720,9 +720,9 @@ void Viewer::ShowHex()
 					SelStart = (int)wcslen(OutStr);
 					SelSize=SelectSize;
 					/* $ 22.01.2001 IS
-					    Âíèìàíèå! Âîçìîæíî, ýòî íå ñîâñåì âåðíîå ðåøåíèå ïðîáëåìû
-					    âûäåëåíèÿ èç ïëàãèíîâ, íî ìíå ïîêà äðóãîãî â ãîëîâó íå ïðèøëî.
-					    ß ïðèðàâíèâàþ SelectSize íóëþ â Process*
+					    Внимание! Возможно, это не совсем верное решение проблемы
+					    выделения из плагинов, но мне пока другого в голову не пришло.
+					    Я приравниваю SelectSize нулю в Process*
 					*/
 					//SelectSize=0;
 				}
@@ -737,8 +737,8 @@ void Viewer::ShowHex()
 				if (!vgetc(Ch))
 				{
 					/* $ 28.06.2000 tran
-					   óáèðàåì ïîêàç ïóñòîé ñòðîêè, åñëè äëèíà
-					   ôàéëà êðàòíà 16 */
+					   убираем показ пустой строки, если длина
+					   файла кратна 16 */
 					EndFile=1;
 					LastPage=1;
 
@@ -749,7 +749,7 @@ void Viewer::ShowHex()
 					}
 
 					/* $ 03.07.2000 tran
-					   - âìåñòî 5 ïðîáåëîâ òóò íàäî 3 */
+					   - вместо 5 пробелов тут надо 3 */
 					wcscat(OutStr,L"   ");
 					TextStr[TextPos++]=L' ';
 				}
@@ -808,7 +808,7 @@ void Viewer::ShowHex()
 }
 
 /* $ 27.04.2001 DJ
-   îòðèñîâêà ñêðîëëáàðà - â îòäåëüíóþ ôóíêöèþ
+   отрисовка скроллбара - в отдельную функцию
 */
 
 void Viewer::DrawScrollbar()
@@ -901,7 +901,7 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 				break;
 
 			/* $ 12.07.2000 SVS
-			  ! Wrap - òðåõïîçèöèîííûé
+			  ! Wrap - трехпозиционный
 			*/
 			if (VM.Wrap && OutPtr>XX2-X1)
 			{
@@ -921,7 +921,7 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 							int64_t SavePtr=OutPtr;
 
 							/* $ 18.07.2000 tran
-							   äîáàâèë â êà÷åñòâå wordwrap ðàçäåëèòåëåé , ; > ) */
+							   добавил в качестве wordwrap разделителей , ; > ) */
 							while (OutPtr)
 							{
 								Ch2=pString->lpData[(int)OutPtr];
@@ -1004,7 +1004,7 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 			}
 
 			/* $ 20.09.01 IS
-			   Áàã: íå ó÷èòûâàëè ëåâóþ ãðàíèöó ïðè ñâåðòêå
+			   Баг: не учитывали левую границу при свертке
 			*/
 			if (Ch==L'\r')
 			{
@@ -1088,9 +1088,9 @@ int64_t Viewer::VMProcess(int OpCode,void *vParam,int64_t iParam)
 			MacroViewerState|=HostFileViewer && !HostFileViewer->GetCanLoseFocus()?0x00000800:0;
 			return (int64_t)MacroViewerState;
 		}
-		case MCODE_V_ITEMCOUNT: // ItemCount - ÷èñëî ýëåìåíòîâ â òåêóùåì îáúåêòå
+		case MCODE_V_ITEMCOUNT: // ItemCount - число элементов в текущем объекте
 			return (int64_t)GetViewFileSize();
-		case MCODE_V_CURPOS: // CurPos - òåêóùèé èíäåêñ â òåêóùåì îáúåêòå
+		case MCODE_V_CURPOS: // CurPos - текущий индекс в текущем объекте
 			return (int64_t)(GetViewFilePos()+1);
 	}
 
@@ -1098,14 +1098,14 @@ int64_t Viewer::VMProcess(int OpCode,void *vParam,int64_t iParam)
 }
 
 /* $ 28.01.2001
-   - Ïóòåì ïðîâåðêè ViewFile íà nullptr èçáàâëÿåìñÿ îò ïàäåíèÿ
+   - Путем проверки ViewFile на nullptr избавляемся от падения
 */
 int Viewer::ProcessKey(int Key)
 {
 	ViewerString vString;
 
 	/* $ 22.01.2001 IS
-	     Ïðîèñõîäÿò êàêèå-òî ìàíèïóëÿöèè -> ñíèìåì âûäåëåíèå
+	     Происходят какие-то манипуляции -> снимем выделение
 	*/
 	if (!ViOpt.PersistentBlocks &&
 	        Key!=KEY_IDLE && Key!=KEY_NONE && !(Key==KEY_CTRLINS||Key==KEY_CTRLNUMPAD0) && Key!=KEY_CTRLC)
@@ -1190,7 +1190,7 @@ int Viewer::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		//   âêëþ÷èòü/âûêëþ÷èòü ñêðîëáàð
+		//   включить/выключить скролбар
 		case KEY_CTRLS:
 		{
 			ViOpt.ShowScrollbar=!ViOpt.ShowScrollbar;
@@ -1391,7 +1391,7 @@ int Viewer::ProcessKey(int Key)
 			UINT nCodePage = SelectCodePage(VM.CodePage, true, true);
 
 			// BUGBUG
-			// ïîêà ÷òî çàïðåòèì ïåðåêëþ÷àòü hex â UTF8, èáî íå ðàáîòàåò.
+			// пока что запретим переключать hex в UTF8, ибо не работает.
 			if (VM.Hex && nCodePage==CP_UTF8)
 			{
 				return TRUE;
@@ -1439,7 +1439,7 @@ int Viewer::ProcessKey(int Key)
 			return TRUE;
 		}
 		/* $ 27.06.2001 VVM
-		  + Ñ àëüòîì ñêðîëèì ïî 1 */
+		  + С альтом скролим по 1 */
 		case KEY_MSWHEEL_UP:
 		case(KEY_MSWHEEL_UP | KEY_ALT):
 		{
@@ -1559,12 +1559,12 @@ int Viewer::ProcessKey(int Key)
 				ReadString(&vString,-1, MAX_VIEWLINEB);
 
 			/* $ 02.06.2003 VVM
-			  + Ñòàðîå ïîâåäåíèå îñòàâèì íà Ctrl-Down */
+			  + Старое поведение оставим на Ctrl-Down */
 
 			/* $ 21.05.2003 VVM
-			  + Ïî PgDn ëèñòàåì âñåãäà ïî îäíîé ñòðàíèöå,
-			    äàæå åñëè îñòàëàñü âñåãî îäíà ñòðî÷êà.
-			    Óäîáíî òåêñòû ÷èòàòü */
+			  + По PgDn листаем всегда по одной странице,
+			    даже если осталась всего одна строчка.
+			    Удобно тексты читать */
 			if (LastPage && Key == KEY_CTRLDOWN)
 			{
 				InternalKey++;
@@ -1656,7 +1656,7 @@ int Viewer::ProcessKey(int Key)
 		}
 		case KEY_CTRLSHIFTLEFT:    case KEY_CTRLSHIFTNUMPAD4:
 
-			// Ïåðåéòè íà íà÷àëî ñòðîê
+			// Перейти на начало строк
 			if (ViewFile.Opened())
 			{
 				LeftPos = 0;
@@ -1666,7 +1666,7 @@ int Viewer::ProcessKey(int Key)
 			return TRUE;
 		case KEY_CTRLSHIFTRIGHT:     case KEY_CTRLSHIFTNUMPAD6:
 		{
-			// Ïåðåéòè íà êîíåö ñòðîê
+			// Перейти на конец строк
 			if (ViewFile.Opened())
 			{
 				int I, Y, Len, MaxLen = 0;
@@ -1692,7 +1692,7 @@ int Viewer::ProcessKey(int Key)
 		case KEY_CTRLHOME:    case KEY_CTRLNUMPAD7:
 		case KEY_HOME:        case KEY_NUMPAD7:   case KEY_SHIFTNUMPAD7:
 
-			// Ïåðåéòè íà íà÷àëî ôàéëà
+			// Перейти на начало файла
 			if (ViewFile.Opened())
 				LeftPos=0;
 
@@ -1709,7 +1709,7 @@ int Viewer::ProcessKey(int Key)
 		case KEY_CTRLEND:     case KEY_CTRLNUMPAD1:
 		case KEY_END:         case KEY_NUMPAD1: case KEY_SHIFTNUMPAD1:
 
-			// Ïåðåéòè íà êîíåö ôàéëà
+			// Перейти на конец файла
 			if (ViewFile.Opened())
 				LeftPos=0;
 
@@ -1718,9 +1718,9 @@ int Viewer::ProcessKey(int Key)
 			if (ViewFile.Opened())
 			{
 				/* $ 15.08.2002 IS
-				   Äëÿ îáû÷íîãî ðåæèìà, åñëè ïîñëåäíÿÿ ñòðîêà íå ñîäåðæèò ïåðåâîä
-				   ñòðîêè, êðóòàíåì ââåðõ íà îäèí ðàç áîëüøå - èíà÷å âèçóàëüíî
-				   îáðàáîòêà End (è ïîäîáíûõ) íà òàêîé ñòðîêå îòëè÷àåòñÿ îò îáðàáîòêè
+				   Для обычного режима, если последняя строка не содержит перевод
+				   строки, крутанем вверх на один раз больше - иначе визуально
+				   обработка End (и подобных) на такой строке отличается от обработки
 				   Down.
 				*/
 				unsigned int max_counter=Y2-Y1;
@@ -1789,22 +1789,22 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return FALSE;
 
 	/* $ 22.01.2001 IS
-	     Ïðîèñõîäÿò êàêèå-òî ìàíèïóëÿöèè -> ñíèìåì âûäåëåíèå
+	     Происходят какие-то манипуляции -> снимем выделение
 	*/
 //  SelectSize=0;
 
 	/* $ 10.09.2000 SVS
-	   ! Ïîñòîÿííûé ñêðîëëèíã ïðè íàæàòîé êëàâèøå
-	     Îáûêíîâåííûé çàõâàò ìûøè
+	   ! Постоянный скроллинг при нажатой клавише
+	     Обыкновенный захват мыши
 	*/
 	/* $ 02.10.2000 SVS
-	  > Åñëè íàæàòü â ñàìîì íèçó ñêðîëáàðà, âüþåð îòìîòàåòñÿ íà ñòðàíèöó
-	  > íèæå íèæíåé ãðàíèöû òåêñòà. Ïåðåä ãëàçàìè áóäåò ïóñòîé ýêðàí.
+	  > Если нажать в самом низу скролбара, вьюер отмотается на страницу
+	  > ниже нижней границы текста. Перед глазами будет пустой экран.
 	*/
 	if (ViOpt.ShowScrollbar && MouseX==X2+(m_bQuickView?1:0))
 	{
 		/* $ 01.09.2000 SVS
-		   Íåáîëüøàÿ áàãà ñ òûêàíèåì â âåðõíþþ ïîçèöèþ ScrollBar`à
+		   Небольшая бага с тыканием в верхнюю позицию ScrollBar`а
 		*/
 		if (MouseY == Y1)
 			while (IsMouseButtonPressed())
@@ -1826,7 +1826,7 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			while (IsMouseButtonPressed())
 			{
 				/* $ 14.05.2001 DJ
-				   áîëåå òî÷íîå ïîçèöèîíèðîâàíèå; êîððåêòíàÿ ðàáîòà íà áîëüøèõ ôàéëàõ
+				   более точное позиционирование; корректная работа на больших файлах
 				*/
 				FilePos=(FileSize-1)/(Y2-Y1-1)*(MouseY-Y1);
 				int Perc;
@@ -1852,7 +1852,7 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				else
 				{
 					/* $ 27.04.2001 DJ
-					   íå ðâåì ñòðîêè ïîñåðåäèíå
+					   не рвем строки посередине
 					*/
 					AdjustFilePos();
 					Show();
@@ -1864,10 +1864,10 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	/* $ 16.12.2000 tran
-	   øåë÷îê ìûøüþ íà ñòàòóñ áàðå */
+	   шелчок мышью на статус баре */
 
 	/* $ 12.10.2001 SKV
-	  óãó, à òîëüêî åñëè îí íñòü, statusline...
+	  угу, а только если он нсть, statusline...
 	*/
 	if (MouseY == (Y1-1) && (HostFileViewer && HostFileViewer->IsTitleBarVisible()))  // Status line
 	{
@@ -1970,7 +1970,7 @@ void Viewer::Up()
 	for (I=BufSize-1; I>=-1; I--)
 	{
 		/* $ 29.11.2001 DJ
-		   íå îáðàùàåìñÿ çà ãðàíèöó ìàññèâà (à íàäî áûëî âñåãî ëèøü ïîìåíÿòü ìåñòàìè óñëîâèÿ...)
+		   не обращаемся за границу массива (а надо было всего лишь поменять местами условия...)
 		*/
 		if (I==-1 || Buf[I]==(unsigned int)CRSym)
 		{
@@ -2069,10 +2069,10 @@ void Viewer::ChangeViewKeyBar()
 	if (ViewKeyBar)
 	{
 		/* $ 12.07.2000 SVS
-		   Wrap èìååò 3 ïîçèöèè
+		   Wrap имеет 3 позиции
 		*/
 		/* $ 15.07.2000 SVS
-		   Wrap äîëæåí ïîêàçûâàòüñÿ ñëåäóþùèé, à íå òåêóùèé
+		   Wrap должен показываться следующий, а не текущий
 		*/
 		ViewKeyBar->Change(
 		    MSG(
@@ -2211,10 +2211,10 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 }
 
 /* $ 27.01.2003 VVM
-   + Ïàðàìåòð Next ìîæåò ïðèíèìàòü çíà÷åíèÿ:
-   0 - Íîâûé ïîèñê
-   1 - Ïðîäîëæèòü ïîèñê ñî ñëåäóþùåé ïîçèöèè
-   2 - Ïðîäîëæèòü ïîèñê ñ íà÷àëà ôàéëà
+   + Параметр Next может принимать значения:
+   0 - Новый поиск
+   1 - Продолжить поиск со следующей позиции
+   2 - Продолжить поиск с начала файла
 */
 
 void Viewer::Search(int Next,int FirstChar)
@@ -2378,7 +2378,7 @@ void Viewer::Search(int Next,int FirstChar)
 			if (ReverseSearch)
 			{
 				/* $ 01.08.2000 KM
-				   Èçìåí¸íî âû÷èñëåíèå CurPos ñ ó÷¸òîì Whole words
+				   Изменёно вычисление CurPos с учётом Whole words
 				*/
 				if (WholeWords)
 					CurPos-=ARRAYSIZE(Buf)-SearchLength+1;
@@ -2397,9 +2397,9 @@ void Viewer::Search(int Next,int FirstChar)
 			while (!Match)
 			{
 				/* $ 01.08.2000 KM
-				   Èçìåíåíà ñòðîêà if (ReverseSearch && CurPos<0) íà if (CurPos<0),
-				   òàê êàê ïðè îáû÷íîì ïðÿìîì è LastSelPos=0xFFFFFFFF, ïîèñê
-				   çàêàí÷èâàëñÿ òàê è íå íà÷àâøèñü.
+				   Изменена строка if (ReverseSearch && CurPos<0) на if (CurPos<0),
+				   так как при обычном прямом и LastSelPos=0xFFFFFFFF, поиск
+				   заканчивался так и не начавшись.
 				*/
 				if (CurPos<0)
 					CurPos=0;
@@ -2427,8 +2427,8 @@ void Viewer::Search(int Next,int FirstChar)
 					INT64 Total=ReverseSearch?StartPos:FileSize-StartPos;
 					INT64 Current=_abs64(CurPos-StartPos);
 					int Percent=Total>0?static_cast<int>(Current*100/Total):-1;
-					// Â ñëó÷àå åñëè ôàéë óâåëè÷èâàåòñÿ ðàçìåðå, òî êîëè÷åñòâî
-					// ïðîöåíòîâ ìîæåò áûòü áîëüøå 100. Îáðàáàòûâàåì ýòó ñèòóàöèþ.
+					// В случае если файл увеличивается размере, то количество
+					// процентов может быть больше 100. Обрабатываем эту ситуацию.
 					if (Percent>100)
 					{
 						SetFileSize();
@@ -2443,17 +2443,17 @@ void Viewer::Search(int Next,int FirstChar)
 				}
 
 				/* $ 01.08.2000 KM
-				   Ñäåëàíà ñðàçó ïðîâåðêà íà Case sensitive è Hex
-				   è åñëè íåò, òîãäà Buf ïðèâîäèòñÿ ê âåðõíåìó ðåãèñòðó
+				   Сделана сразу проверка на Case sensitive и Hex
+				   и если нет, тогда Buf приводится к верхнему регистру
 				*/
 				if (!Case && !SearchHex) {
 					WINPORT(CharUpperBuff)(Buf,ReadSize);
 				}
 
 				/* $ 01.08.2000 KM
-				   Óáðàí êóñîê òåêñòà ïîñëå ïðèâåäåíèÿ ïîèñêîâîé ñòðîêè
-				   è Buf ê åäèíîìó ðåãèñòðó, åñëè ïîèñê íå ðåãèñòðîçàâèñèìûé
-				   èëè íå èùåòñÿ Hex-ñòðîêà è â ñâÿçè ñ ýòèì ïåðåðàáîòàí êîä ïîèñêà
+				   Убран кусок текста после приведения поисковой строки
+				   и Buf к единому регистру, если поиск не регистрозависимый
+				   или не ищется Hex-строка и в связи с этим переработан код поиска
 				*/
 				int MaxSize=ReadSize-SearchLength+1;
 				int Increment=ReverseSearch ? -1:+1;
@@ -2461,7 +2461,7 @@ void Viewer::Search(int Next,int FirstChar)
 				for (int I=ReverseSearch ? MaxSize-1:0; I<MaxSize && I>=0; I+=Increment)
 				{
 					/* $ 01.08.2000 KM
-					   Îáðàáîòêà ïîèñêà "Whole words"
+					   Обработка поиска "Whole words"
 					*/
 					int locResultLeft=FALSE;
 					int locResultRight=FALSE;
@@ -2509,7 +2509,7 @@ void Viewer::Search(int Next,int FirstChar)
 				if (ReverseSearch)
 				{
 					/* $ 01.08.2000 KM
-					   Èçìåí¸íî âû÷èñëåíèå CurPos ñ ó÷¸òîì Whole words
+					   Изменёно вычисление CurPos с учётом Whole words
 					*/
 					if (WholeWords)
 						CurPos-=ARRAYSIZE(Buf)-SearchLength+1;
@@ -2530,11 +2530,11 @@ void Viewer::Search(int Next,int FirstChar)
 	if (Match)
 	{
 		/* $ 24.01.2003 KM
-		   ! Ïî îêîí÷àíèè ïîèñêà îòñòóïèì îò âåðõà ýêðàíà íà
-		     òðåòü îòîáðàæàåìîé âûñîòû.
+		   ! По окончании поиска отступим от верха экрана на
+		     треть отображаемой высоты.
 		*/
 		SelectText(MatchPos,SearchLength,ReverseSearch?0x2:0);
-		// Ïîêàæåì íàéäåííîå íà ðàññòîÿíèè òðåòè ýêðàíà îò âåðõà.
+		// Покажем найденное на расстоянии трети экрана от верха.
 		int FromTop=(ScrY-(Opt.ViOpt.ShowKeyBar?2:1))/4;
 
 		if (FromTop<0 || FromTop>ScrY)
@@ -2551,7 +2551,7 @@ void Viewer::Search(int Next,int FirstChar)
 	{
 		//Show();
 		/* $ 27.01.2003 VVM
-		   + Ïîñëå îêîí÷àíèÿ ïîèñêà ñïðîñèì î ïåðåõîäå ïîèñêà â íà÷àëî/êîíåö */
+		   + После окончания поиска спросим о переходе поиска в начало/конец */
 		if (SearchFlags.Check(SEARCH_MODE2))
 			Message(MSG_WARNING,1,MSG(MViewSearchTitle),
 			        (SearchHex?MSG(MViewSearchCannotFindHex):MSG(MViewSearchCannotFind)),strMsgStr,MSG(MOk));
@@ -2701,7 +2701,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
 	if (IsUnicodeCodePage(VM.CodePage))
 	{
-		// âûäåëÿåì ñòîëüêî, ñêîëüêî íóæíî!
+		// выделяем столько, сколько нужно!
 		char *TmpBuf=(char *)xf_malloc(Count*2+16);
 
 		if (!TmpBuf)
@@ -2711,7 +2711,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		Reader.Read(TmpBuf, Count*2, &ReadSize);
 		TmpBuf[ReadSize]=0;
 		/* $ 20.10.2000 tran
-		   îáðàòíûé ïîðÿäîê áàéòîâ */
+		   обратный порядок байтов */
 		TmpBuf[ReadSize+1]=0;
 
 		if (!Raw && VM.CodePage == CP_REVERSEBOM)
@@ -2747,7 +2747,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 
 		if (Count == 1)
 		{
-			//Åñëè UTF8 òî ïðîñòîé ëè ýòî ñèìâîë èëè íåò?
+			//Если UTF8 то простой ли это символ или нет?
 			unsigned int c=*TmpBuf;
 
 			if (VM.CodePage==CP_UTF8 && ReadSize && (c&0x80) )
@@ -2761,7 +2761,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 				11110zzz  10zzyyyy  10yyyyxx  10xxxxxx
 				*/
 
-				//Ìû ïîñðåäè áóêâû? Òîãäà èùåì íà÷àëî ñëåäóþùåé.
+				//Мы посреди буквы? Тогда ищем начало следующей.
 				while ((c&0xC0) == 0x80)
 				{
 					DWORD Readed=0;
@@ -2772,7 +2772,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 					c=*TmpBuf;
 				}
 
-				//Ïîñ÷èòàåì ñêîëüêî áàéò íàì åù¸ íàäî ïðî÷èòàòü ÷òîá ïîëó÷èòü öåëóþ áóêâó.
+				//Посчитаем сколько байт нам ещё надо прочитать чтоб получить целую букву.
 				DWORD cc=1;
 				c = c & 0xF0;
 
@@ -2872,7 +2872,7 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 			if (Dlg.GetExitCode()<=0)
 				return;
 
-			if (GoToDlg[1].strData.At(0)==L'+' || GoToDlg[1].strData.At(0)==L'-')       // þçåð õî÷åò îòíîñèòåëüíîñòè
+			if (GoToDlg[1].strData.At(0)==L'+' || GoToDlg[1].strData.At(0)==L'-')       // юзер хочет относительности
 			{
 				if (GoToDlg[1].strData.At(0)==L'+')
 					Relative=1;
@@ -2882,7 +2882,7 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 				GoToDlg[1].strData.LShift(1);
 			}
 
-			if (GoToDlg[1].strData.Contains(L'%'))     // îí õî÷åò ïðîöåíòîâ
+			if (GoToDlg[1].strData.Contains(L'%'))     // он хочет процентов
 			{
 				GoToDlg[RB_HEX].Selected=GoToDlg[RB_DEC].Selected=0;
 				GoToDlg[RB_PRC].Selected=1;
@@ -2890,7 +2890,7 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 			else if (!StrCmpNI(GoToDlg[1].strData,L"0x",2)
 			         || GoToDlg[1].strData.At(0)==L'$'
 			         || GoToDlg[1].strData.Contains(L'h')
-			         || GoToDlg[1].strData.Contains(L'H'))  // îí óìíûé - hex êîä ââåë!
+			         || GoToDlg[1].strData.Contains(L'H'))  // он умный - hex код ввел!
 			{
 				GoToDlg[RB_PRC].Selected=GoToDlg[RB_DEC].Selected=0;
 				GoToDlg[RB_HEX].Selected=1;
@@ -2900,7 +2900,7 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 				else if (GoToDlg[1].strData.At(0)==L'$')
 					GoToDlg[1].strData.LShift(1);
 
-				//Relative=0; // ïðè hex çíà÷åíèè íèêàêèõ îòíîñèòåëüíûõ çíà÷åíèé?
+				//Relative=0; // при hex значении никаких относительных значений?
 			}
 
 			if (GoToDlg[RB_PRC].Selected)
@@ -2909,7 +2909,7 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 				PrevMode=0;
 				int Percent=_wtoi(GoToDlg[1].strData);
 
-				//if ( Relative  && (cPercent+Percent*Relative<0) || (cPercent+Percent*Relative>100)) // çà ïðåäåëû - íèçÿ
+				//if ( Relative  && (cPercent+Percent*Relative<0) || (cPercent+Percent*Relative>100)) // за пределы - низя
 				//  return;
 				if (Percent>100)
 					return;
@@ -2962,7 +2962,7 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 
 		if (Relative)
 		{
-			if (Relative==-1 && Offset>FilePos)   // ìåíüøå íóëÿ, if (FilePos<0) íå ïðîéäåò - FilePos ó íàñ uint32_t
+			if (Relative==-1 && Offset>FilePos)   // меньше нуля, if (FilePos<0) не пройдет - FilePos у нас uint32_t
 				FilePos=0;
 			else
 				FilePos=IsUnicodeCodePage(VM.CodePage)? FilePos+Offset*Relative/2 : FilePos+Offset*Relative;
@@ -2970,10 +2970,10 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 		else
 			FilePos=IsUnicodeCodePage(VM.CodePage) ? Offset/2:Offset;
 
-		if (FilePos>FileSize || FilePos<0)     // è êóäà åãî íåñåò?
-			FilePos=FileSize;     // òàì âñå ðàâíî íè÷åãî íåòó
+		if (FilePos>FileSize || FilePos<0)     // и куда его несет?
+			FilePos=FileSize;     // там все равно ничего нету
 	}
-	// êîððåêöèÿ
+	// коррекция
 	AdjustFilePos();
 
 //  LastSelPos=FilePos;
@@ -3024,8 +3024,8 @@ void Viewer::SetFileSize()
 	FileSize=uFileSize;
 
 	/* $ 20.02.2003 IS
-	   Âåçäå ñðàâíèâàåì FilePos ñ FileSize, FilePos äëÿ þíèêîäíûõ ôàéëîâ
-	   óìåíüøàåòñÿ â äâà ðàçà, ïîýòîìó FileSize òîæå íàäî óìåíüøàòü
+	   Везде сравниваем FilePos с FileSize, FilePos для юникодных файлов
+	   уменьшается в два раза, поэтому FileSize тоже надо уменьшать
 	*/
 	if (IsUnicodeCodePage(VM.CodePage))
 		FileSize=(FileSize+(FileSize&1))/2;
@@ -3040,9 +3040,9 @@ void Viewer::GetSelectedParam(int64_t &Pos, int64_t &Length, DWORD &Flags)
 }
 
 /* $ 19.01.2001 SVS
-   Âûäåëåíèå - â êà÷åñòâå ñàìîñòîÿòåëüíîé ôóíêöèè.
-   Flags=0x01 - ïîêàçûâàòü (äåëàòü Show())
-         0x02 - "îáðàòíûé ïîèñê" ?
+   Выделение - в качестве самостоятельной функции.
+   Flags=0x01 - показывать (делать Show())
+         0x02 - "обратный поиск" ?
 */
 void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, const DWORD Flags)
 {
@@ -3086,10 +3086,10 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 		}
 
 		/* $ 13.03.2001 IS
-		   Åñëè íàéäåííîå ðàñïîëîæåíî â ñàìîé ïåðâîé ñòðîêå þíèêîäíîãî ôàéëà è ôàéë
-		   èìååò â íà÷àëå fffe èëè feff, òî äëÿ áîëåå ïðàâèëüíîãî âûäåëåíèÿ, åãî
-		   ïîçèöèþ íóæíî óìåíüøèòü íà åäèíèöó (èç-çà òîãî, ÷òî ïóñòîé ñèìâîë íå
-		   ïîêàçûâàåòñÿ)
+		   Если найденное расположено в самой первой строке юникодного файла и файл
+		   имеет в начале fffe или feff, то для более правильного выделения, его
+		   позицию нужно уменьшить на единицу (из-за того, что пустой символ не
+		   показывается)
 		*/
 		SelectPosOffSet=(IsUnicodeOrUtfCodePage(VM.CodePage) && Signature
 		                 && (MatchPos+SelectSize<=ObjWidth && MatchPos<(int64_t)StrLength(Strings[0]->lpData)))?1:0;
@@ -3153,8 +3153,8 @@ int Viewer::ViewerControl(int Command,void *Param)
 		}
 		/*
 		   Param = ViewerSetPosition
-		           ñþäà æå áóäåò çàïèñàíî íîâîå ñìåùåíèå
-		           Â îñíîâíîì ñîâïàäàåò ñ ïåðåäàííûì
+		           сюда же будет записано новое смещение
+		           В основном совпадает с переданным
 		*/
 		case VCTL_SETPOSITION:
 		{
@@ -3167,9 +3167,9 @@ int Viewer::ViewerControl(int Command,void *Param)
 					LeftPos=0;
 
 				/* $ 20.01.2003 IS
-				     Åñëè êîäèðîâêà - þíèêîä, òî îïåðèðóåì ÷èñëàìè, óìåíüøåííûìè â
-				     2 ðàçà. Ïîýòîìó óâåëè÷èì StartPos â 2 ðàçà, ò.ê. ôóíêöèÿ
-				     GoTo ïðèíèìàåò ñìåùåíèÿ â _áàéòàõ_.
+				     Если кодировка - юникод, то оперируем числами, уменьшенными в
+				     2 раза. Поэтому увеличим StartPos в 2 раза, т.к. функция
+				     GoTo принимает смещения в _байтах_.
 				*/
 				GoTo(FALSE, vsp->StartPos*(IsUnicodeCodePage(VM.CodePage)?2:1), vsp->Flags);
 
@@ -3216,9 +3216,9 @@ int Viewer::ViewerControl(int Command,void *Param)
 
 			break;
 		}
-		/* Ôóíêöèÿ óñòàíîâêè Keybar Labels
-		     Param = nullptr - âîññòàíîâèòü, ïðåä. çíà÷åíèå
-		     Param = -1   - îáíîâèòü ïîëîñó (ïåðåðèñîâàòü)
+		/* Функция установки Keybar Labels
+		     Param = nullptr - восстановить, пред. значение
+		     Param = -1   - обновить полосу (перерисовать)
 		     Param = KeyBarTitles
 		*/
 		case VCTL_SETKEYBAR:
@@ -3226,13 +3226,13 @@ int Viewer::ViewerControl(int Command,void *Param)
 			KeyBarTitles *Kbt=(KeyBarTitles*)Param;
 
 			if (!Kbt)
-			{        // âîññòàíîâèòü ïðåä çíà÷åíèå!
+			{        // восстановить пред значение!
 				if (HostFileViewer)
 					HostFileViewer->InitKeyBar();
 			}
 			else
 			{
-				if ((LONG_PTR)Param != (LONG_PTR)-1) // íå òîëüêî ïåðåðèñîâàòü?
+				if ((LONG_PTR)Param != (LONG_PTR)-1) // не только перерисовать?
 				{
 					for (int i=0; i < 12; i++)
 					{
@@ -3277,14 +3277,14 @@ int Viewer::ViewerControl(int Command,void *Param)
 		case VCTL_QUIT:
 		{
 			/* $ 28.12.2002 IS
-			   Ðàçðåøàåì âûïîëíåíèå VCTL_QUIT òîëüêî äëÿ âüþåðà, êîòîðûé
-			   íå ÿâëÿåòñÿ ïàíåëüþ èíôîðìàöèè è áûñòðîãî ïðîñìîòðà (ò.å.
-			   ôàêòè÷åñêè ïàíåëåé íà ýêðàíå íå âèäíî)
+			   Разрешаем выполнение VCTL_QUIT только для вьюера, который
+			   не является панелью информации и быстрого просмотра (т.е.
+			   фактически панелей на экране не видно)
 			*/
 			if (!FrameManager->IsPanelsActive())
 			{
 				/* $ 29.09.2002 IS
-				   áåç ýòîãî íå çàêðûâàëñÿ âüþåð, à ïðîñèëè èìåííî ýòî
+				   без этого не закрывался вьюер, а просили именно это
 				*/
 				FrameManager->DeleteFrame(HostFileViewer);
 
@@ -3294,7 +3294,7 @@ int Viewer::ViewerControl(int Command,void *Param)
 				return TRUE;
 			}
 		}
-		/* Ôóíêöèÿ óñòàíîâêè ðåæèìîâ
+		/* Функция установки режимов
 		     Param = ViewerSetMode
 		*/
 		case VCTL_SETMODE:
@@ -3334,8 +3334,8 @@ BOOL Viewer::isTemporary()
 int Viewer::ProcessHexMode(int newMode, bool isRedraw)
 {
 	// BUGBUG
-	// Äî òåõ ïîð, ïîêà íå áóäåò ðåàëèçîâàí àäåêâàòíûé hex-ïðîñìîòð â UTF8 - áóäåì ñìîòðåòü â OEM.
-	// Èáî ñåé÷àñ ýòî íå ïðîñìîòð, à ãåíåðàòîð îäíîòèïíûõ óíûëûõ áàãðåïîðòîâ.
+	// До тех пор, пока не будет реализован адекватный hex-просмотр в UTF8 - будем смотреть в OEM.
+	// Ибо сейчас это не просмотр, а генератор однотипных унылых багрепортов.
 	if (VM.CodePage==CP_UTF8 && newMode)
 	{
 		VM.CodePage=Opt.ViOpt.AnsiCodePageAsDefault?WINPORT(GetACP)():WINPORT(GetOEMCP)();

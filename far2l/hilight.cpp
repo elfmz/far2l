@@ -93,8 +93,8 @@ HighlightFiles::HighlightFiles()
 
 void LoadFilterFromReg(FileFilterParams *HData, const wchar_t *RegKey, const wchar_t *Mask, int SortGroup, bool bSortGroup)
 {
-	//Äåôîëòíûå çíà÷åíèÿ âûáðàíû òàê ÷òîá êàê ìîæíî ïðàâèëüíåé çàãðóçèòü
-	//íàñòðîéêè ñòàðûõ âåðñèé ôàðà.
+	//Дефолтные значения выбраны так чтоб как можно правильней загрузить
+	//настройки старых версий фара.
 	if (bSortGroup)
 		HData->SetMask(GetRegKey(RegKey,HLS.UseMask,1)!=0, Mask);
 	else
@@ -210,9 +210,9 @@ void ApplyBlackOnBlackColors(HighlightDataColor *Colors)
 {
 	for (int i=0; i<4; i++)
 	{
-		//Ïðèìåíèì black on black.
-		//Äëÿ ôàéëîâ âîçüìåì öâåòà ïàíåëè íå èçìåíÿÿ ïðîçðà÷íîñòü.
-		//Äëÿ ïîìåòêè âîçüìåì öâåòà ôàéëà âêëþ÷àÿ ïðîçðà÷íîñòü.
+		//Применим black on black.
+		//Для файлов возьмем цвета панели не изменяя прозрачность.
+		//Для пометки возьмем цвета файла включая прозрачность.
 		if (!(Colors->Color[HIGHLIGHTCOLORTYPE_FILE][i]&0x00FF))
 			Colors->Color[HIGHLIGHTCOLORTYPE_FILE][i]=(Colors->Color[HIGHLIGHTCOLORTYPE_FILE][i]&0xFF00)|(0x00FF&Palette[FarColor[i]-COL_FIRSTPALETTECOLOR]);
 
@@ -223,8 +223,8 @@ void ApplyBlackOnBlackColors(HighlightDataColor *Colors)
 
 void ApplyColors(HighlightDataColor *DestColors, HighlightDataColor *SrcColors)
 {
-	//Îáðàáîòàåì black on black ÷òîá íàñëåäîâàòü ïðàâèëüíûå öâåòà
-	//è ÷òîá ïîñëå íàñëåäîâàíèÿ áûëè ïðàâèëüíûå öâåòà.
+	//Обработаем black on black чтоб наследовать правильные цвета
+	//и чтоб после наследования были правильные цвета.
 	ApplyBlackOnBlackColors(DestColors);
 	ApplyBlackOnBlackColors(SrcColors);
 
@@ -232,8 +232,8 @@ void ApplyColors(HighlightDataColor *DestColors, HighlightDataColor *SrcColors)
 	{
 		for (int i=0; i<4; i++)
 		{
-			//Åñëè òåêóùèå öâåòà â Src (fore è/èëè back) íå ïðîçðà÷íûå
-			//òî óíàñëåäóåì èõ â Dest.
+			//Если текущие цвета в Src (fore и/или back) не прозрачные
+			//то унаследуем их в Dest.
 			if (!(SrcColors->Color[j][i]&0xF000))
 				DestColors->Color[j][i]=(DestColors->Color[j][i]&0x0F0F)|(SrcColors->Color[j][i]&0xF0F0);
 
@@ -242,7 +242,7 @@ void ApplyColors(HighlightDataColor *DestColors, HighlightDataColor *SrcColors)
 		}
 	}
 
-	//Óíàñëåäóåì ïîìåòêó èç Src åñëè îíà íå ïðîçðà÷íàÿ
+	//Унаследуем пометку из Src если она не прозрачная
 	if (!(SrcColors->MarkChar&0x00FF0000))
 		DestColors->MarkChar=SrcColors->MarkChar;
 }
@@ -264,24 +264,24 @@ bool HasTransparent(HighlightDataColor *Colors)
 
 void ApplyFinalColors(HighlightDataColor *Colors)
 {
-	//Îáðàáîòàåì black on black ÷òîá ïîñëå íàñëåäîâàíèÿ áûëè ïðàâèëüíûå öâåòà.
+	//Обработаем black on black чтоб после наследования были правильные цвета.
 	ApplyBlackOnBlackColors(Colors);
 
 	for (int j=0; j<2; j++)
 		for (int i=0; i<4; i++)
 		{
-			//Åñëè êàêîé òî èç òåêóùèõ öâåòîâ (fore èëè back) ïðîçðà÷íûé
-			//òî óíàñëåäóåì ñîîòâåòñòâóþùèé öâåò ñ ïàíåëåé.
+			//Если какой то из текущих цветов (fore или back) прозрачный
+			//то унаследуем соответствующий цвет с панелей.
 			BYTE temp=(BYTE)((Colors->Color[j][i]&0xFF00)>>8);
 			Colors->Color[j][i]=((~temp)&(BYTE)Colors->Color[j][i])|(temp&(BYTE)Palette[FarColor[i]-COL_FIRSTPALETTECOLOR]);
 		}
 
-	//Åñëè ñèìâîë ïîìåòêè ïðîçðà÷íûé òî åãî êàê áû è íåò âîîáùå.
+	//Если символ пометки прозрачный то его как бы и нет вообще.
 	if (Colors->MarkChar&0x00FF0000)
 		Colors->MarkChar=0;
 
-	//Ïàðàíîÿ íî ñëó÷èòñÿ ìîæåò:
-	//Îáðàáîòàåì black on black ñíîâà ÷òîá îáðàáîòàëèñü óíàñëåäîâàíûå öâåòà.
+	//Параноя но случится может:
+	//Обработаем black on black снова чтоб обработались унаследованые цвета.
 	ApplyBlackOnBlackColors(Colors);
 }
 
@@ -462,7 +462,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 			switch (Key)
 			{
 					/* $ 07.07.2000 IS
-					  Åñëè íàæàëè ctrl+r, òî âîññòàíîâèòü çíà÷åíèÿ ïî óìîë÷àíèþ.
+					  Если нажали ctrl+r, то восстановить значения по умолчанию.
 					*/
 				case KEY_CTRLR:
 
@@ -639,17 +639,17 @@ void HighlightFiles::HiEdit(int MenuPos)
 					break;
 			}
 
-			// ïîâòîðÿþùèéñÿ êóñîê!
+			// повторяющийся кусок!
 			if (NeedUpdate)
 			{
-				ScrBuf.Lock(); // îòìåíÿåì âñÿêóþ ïðîðèñîâêó
+				ScrBuf.Lock(); // отменяем всякую прорисовку
 				HiMenu.Hide();
 				ProcessGroups();
 
 				if (Opt.AutoSaveSetup)
 					SaveHiData();
 
-				//FrameManager->RefreshFrame(); // ðåôðåøèì
+				//FrameManager->RefreshFrame(); // рефрешим
 				LeftPanel->Update(UPDATE_KEEP_SELECTION);
 				LeftPanel->Redraw();
 				RightPanel->Update(UPDATE_KEEP_SELECTION);
@@ -657,7 +657,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 				FillMenu(&HiMenu,MenuPos=SelectPos);
 				HiMenu.SetPosition(-1,-1,0,0);
 				HiMenu.Show();
-				ScrBuf.Unlock(); // ðàçðåøàåì ïðîðèñîâêó
+				ScrBuf.Unlock(); // разрешаем прорисовку
 			}
 		}
 
@@ -769,13 +769,13 @@ void SetHighlighting()
 	{
 		/* 0 */ L"*.*",
 		/* 1 */ L"*.rar,*.zip,*.[zj],*.[bxg7]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*.bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.zoo,*.hqx,*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,*.x2,*.rkv,*.[lw]sz,*.h[ay]p,*.lim,*.sqz,*.chz",
-		/* 2 */ L"*.bak,*.tmp",                                                                                                                                                                                //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -> ìîæåò ê òåðàïåâòó? ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		/* 2 */ L"*.bak,*.tmp",                                                                                                                                                                                //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -> может к терапевту? ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 		/* $ 25.09.2001  IS
-		    Ýòà ìàñêà äëÿ êàòàëîãîâ: îáðàáàòûâàòü âñå êàòàëîãè, êðîìå òåõ, ÷òî
-		    ÿâëÿþòñÿ ðîäèòåëüñêèìè (èõ èìåíà - äâå òî÷êè).
+		    Эта маска для каталогов: обрабатывать все каталоги, кроме тех, что
+		    являются родительскими (их имена - две точки).
 		*/
-		/* 3 */ L"*.*|..", // ìàñêà äëÿ êàòàëîãîâ
-		/* 4 */ L"..",     // òàêèå êàòàëîãè îêðàøèâàòü êàê ïðîñòûå ôàéëû
+		/* 3 */ L"*.*|..", // маска для каталогов
+		/* 4 */ L"..",     // такие каталоги окрашивать как простые файлы
 	};
 	static struct DefaultData
 	{
@@ -798,8 +798,8 @@ void SetHighlighting()
 	        /* 4 */{L"*.sh,*.py,*.pl,*.cmd,*.exe,*.bat,*.com",0, 0x0000, 0x1A, 0x3A},
 	        /* 5 */{Masks[1], 0, 0x0000, 0x1D, 0x3D},
 	        /* 6 */{Masks[2], 0, 0x0000, 0x16, 0x36},
-	        // ýòî íàñòðîéêà äëÿ êàòàëîãîâ íà òåõ ïàíåëÿõ, êîòîðûå äîëæíû ðàñêðàøèâàòüñÿ
-	        // áåç ó÷åòà ìàñîê (íàïðèìåð, ñïèñîê õîñòîâ â "far navigator")
+	        // это настройка для каталогов на тех панелях, которые должны раскрашиваться
+	        // без учета масок (например, список хостов в "far navigator")
 	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0x10 | F_GREEN, 0x30 | F_GREEN }, 
 	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_WHITE, 0x30 | F_WHITE},
 	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE, 0x10 | F_LIGHTGREEN, 0x30 | F_LIGHTGREEN}, 

@@ -3,7 +3,7 @@
 /*
 filefilterparams.hpp
 
-Ïàðàìåòðû Ôàéëîâîãî ôèëüòðà
+Параметры Файлового фильтра
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum enumFileFilterFlagsType
 {
-	FFFT_FIRST = 0, //îáÿçàí áûòü ïåðâûì
+	FFFT_FIRST = 0, //обязан быть первым
 
 	FFFT_LEFTPANEL = FFFT_FIRST,
 	FFFT_RIGHTPANEL,
@@ -53,7 +53,7 @@ enum enumFileFilterFlagsType
 	FFFT_SELECT,
 	FFFT_CUSTOM,
 
-	FFFT_COUNT, //îáÿçàí áûòü ïîñëåäíèì
+	FFFT_COUNT, //обязан быть последним
 };
 
 enum enumFileFilterFlags
@@ -71,7 +71,7 @@ enum enumFDateType
 	FDATE_OPENED,
 	FDATE_CHANGED,
 
-	FDATE_COUNT, // âñåãäà ïîñëåäíèé !!!
+	FDATE_COUNT, // всегда последний !!!
 };
 
 class FileFilterParams
@@ -84,7 +84,7 @@ class FileFilterParams
 		{
 			bool Used;
 			FARString strMask;
-			CFileMask FilterMask; // Õðàíèëèùå ñêîìïèëèðîâàííîé ìàñêè.
+			CFileMask FilterMask; // Хранилище скомпилированной маски.
 		} FMask;
 
 		struct
@@ -98,10 +98,10 @@ class FileFilterParams
 
 		struct
 		{
-			uint64_t SizeAboveReal; // Çäåñü âñåãäà áóäåò ðàçìåð â áàéòàõ
-			uint64_t SizeBelowReal; // Çäåñü âñåãäà áóäåò ðàçìåð â áàéòàõ
-			wchar_t SizeAbove[FILEFILTER_SIZE_SIZE]; // Çäåñü âñåãäà áóäåò ðàçìåð êàê åãî ââ¸ë þçåð
-			wchar_t SizeBelow[FILEFILTER_SIZE_SIZE]; // Çäåñü âñåãäà áóäåò ðàçìåð êàê åãî ââ¸ë þçåð
+			uint64_t SizeAboveReal; // Здесь всегда будет размер в байтах
+			uint64_t SizeBelowReal; // Здесь всегда будет размер в байтах
+			wchar_t SizeAbove[FILEFILTER_SIZE_SIZE]; // Здесь всегда будет размер как его ввёл юзер
+			wchar_t SizeBelow[FILEFILTER_SIZE_SIZE]; // Здесь всегда будет размер как его ввёл юзер
 			bool Used;
 		} FSize;
 
@@ -149,10 +149,10 @@ class FileFilterParams
 		bool  GetContinueProcessing() const { return FHighlight.bContinueProcessing; }
 		DWORD GetFlags(enumFileFilterFlagsType FType) const { return FFlags[FType]; }
 
-		// Äàííûé ìåòîä âûçûâàåòñÿ "ñíàðóæè" è ñëóæèò äëÿ îïðåäåëåíèÿ:
-		// ïîïàäàåò ëè ôàéë fd ïîä óñëîâèå óñòàíîâëåííîãî ôèëüòðà.
-		// Âîçâðàùàåò true  - ïîïàäàåò;
-		//            false - íå ïîïàäàåò.
+		// Данный метод вызывается "снаружи" и служит для определения:
+		// попадает ли файл fd под условие установленного фильтра.
+		// Возвращает true  - попадает;
+		//            false - не попадает.
 		bool FileInFilter(const FileListItem& fli, uint64_t CurrentTime);
 		bool FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime);
 		bool FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime);
@@ -160,5 +160,5 @@ class FileFilterParams
 
 bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig=false);
 
-//Öåíòðàëèçîâàííàÿ ôóíêöèÿ äëÿ ñîçäàíèÿ ñòðîê ìåíþ ðàçëè÷íûõ ôèëüòðîâ.
+//Централизованная функция для создания строк меню различных фильтров.
 void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType=false, int Hotkey=0, bool bPanelType=false, const wchar_t *FMask=nullptr, const wchar_t *Title=nullptr);

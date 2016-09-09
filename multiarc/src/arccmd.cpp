@@ -295,7 +295,7 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
       strcpy(Command,Password);
       break;
     case 'C':
-      if(*CommentFileName) //âòîðîé ðàç ñþäà íå ëåçåì
+      if(*CommentFileName) //второй раз сюда не лезем
         break;
       {
         *Command=0;
@@ -318,8 +318,8 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
         {
           DWORD Count;
           if(Info.InputBox(GetMsg(MComment), GetMsg(MInputComment), NULL, "", Buf, sizeof(Buf), NULL, 0))
-          //??òóò ìîæíî è çàïîëíèòü ñòðîêó êîììåíòàðèåì, íî íàäî çíàòü, ôàéëîâûé
-          //?? îí èëè àðõèâíûé. äà è èìÿ ôàéëà â àðõèâå òîæå íàäî çíàòü...
+          //??тут можно и заполнить строку комментарием, но надо знать, файловый
+          //?? он или архивный. да и имя файла в архиве тоже надо знать...
           {
             WINPORT(WriteFile)(CommentFile, Buf, strlen(Buf), &Count, NULL);
             strcpy(Command, CommentFileName);

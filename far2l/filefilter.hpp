@@ -3,7 +3,7 @@
 /*
 filefilter.hpp
 
-Ôàéëîâûé ôèëüòð
+Файловый фильтр
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -39,12 +39,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class VMenu;
 class Panel;
 
-// ïî÷åìó FileInFilter âåðíóë true èëè false
+// почему FileInFilter вернул true или false
 enum enumFileInFilterType
 {
-	FIFT_NOTINTFILTER = 0,   // ôàéëîâûé îáúåêò íå ïîïàë íè â îäèí èç ôèëüòðîâ
-	FIFT_INCLUDE,            // ôàéëîâûé îáúåêò ïîïàë â Include
-	FIFT_EXCLUDE,            // ôàéëîâûé îáúåêò ïîïàë â Exclude
+	FIFT_NOTINTFILTER = 0,   // файловый объект не попал ни в один из фильтров
+	FIFT_INCLUDE,            // файловый объект попал в Include
+	FIFT_EXCLUDE,            // файловый объект попал в Exclude
 };
 
 

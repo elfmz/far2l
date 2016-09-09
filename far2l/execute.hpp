@@ -3,7 +3,7 @@
 /*
 execute.hpp
 
-"Çàïóñêàòåëü" ïðîãðàìì.
+"Запускатель" программ.
 */
 /*
 Copyright (c) 1996 Eugene Roshal

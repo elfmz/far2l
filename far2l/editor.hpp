@@ -3,7 +3,7 @@
 /*
 editor.hpp
 
-Ðåäàêòîð
+Редактор
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -120,7 +120,7 @@ struct EditorUndoData
 	}
 };
 
-// Ìëàäøèé áàéò (ìàñêà 0xFF) þçàåòñÿ êëàññîì ScreenObject!!!
+// Младший байт (маска 0xFF) юзается классом ScreenObject!!!
 enum FLAGS_CLASS_EDITOR
 {
 	FEDITOR_MODIFIED              = 0x00000200,
@@ -133,13 +133,13 @@ enum FLAGS_CLASS_EDITOR
 	FEDITOR_OVERTYPE              = 0x00004000,
 	FEDITOR_NEWUNDO               = 0x00010000,
 	FEDITOR_UNDOSAVEPOSLOST       = 0x00020000,
-	FEDITOR_DISABLEUNDO           = 0x00040000,   // âîçìîæíî ïðîöåññ Undo óæå èäåò?
+	FEDITOR_DISABLEUNDO           = 0x00040000,   // возможно процесс Undo уже идет?
 	FEDITOR_LOCKMODE              = 0x00080000,
-	FEDITOR_CURPOSCHANGEDBYPLUGIN = 0x00100000,   // TRUE, åñëè ïîçèöèÿ â ðåäàêòîðå áûëà èçìåíåíà
-	// ïëàãèíîì (ECTL_SETPOSITION)
+	FEDITOR_CURPOSCHANGEDBYPLUGIN = 0x00100000,   // TRUE, если позиция в редакторе была изменена
+	// плагином (ECTL_SETPOSITION)
 	FEDITOR_ISRESIZEDCONSOLE      = 0x00800000,
-	FEDITOR_PROCESSCTRLQ          = 0x02000000,   // íàæàòà Ctrl-Q è èäåò ïðîöåññ âñòàâêè êîäà ñèìâîëà
-	FEDITOR_DIALOGMEMOEDIT        = 0x80000000,   // Editor èñïîëüçóåòñÿ â äèàëîãå â êà÷åñòâå DI_MEMOEDIT
+	FEDITOR_PROCESSCTRLQ          = 0x02000000,   // нажата Ctrl-Q и идет процесс вставки кода символа
+	FEDITOR_DIALOGMEMOEDIT        = 0x80000000,   // Editor используется в диалоге в качестве DI_MEMOEDIT
 };
 
 class Edit;
@@ -153,8 +153,8 @@ class Editor:public ScreenObject
 	private:
 
 		/* $ 04.11.2003 SKV
-		  íà ëþáîì âûõîäå åñëè áûëà íàæàòà êíîïêà âûäåëåíèÿ,
-		  è îíà åãî "ñíÿëà" (ñäåëàëà 0-é øèðèíû), òî åãî íàäî óáðàòü.
+		  на любом выходе если была нажата кнопка выделения,
+		  и она его "сняла" (сделала 0-й ширины), то его надо убрать.
 		*/
 		class EditorBlockGuard:public NonCopyable
 		{
@@ -188,15 +188,15 @@ class Editor:public ScreenObject
 		int NumLastLine;
 		int NumLine;
 		/* $ 26.02.2001 IS
-		     Ñþäà çàïîìíèì ðàçìåð òàáóëÿöèè è â äàëüíåéøåì áóäåì èñïîëüçîâàòü åãî,
-		     à íå Opt.TabSize
+		     Сюда запомним размер табуляции и в дальнейшем будем использовать его,
+		     а не Opt.TabSize
 		*/
 		EditorOptions EdOpt;
 
 		int Pasting;
 		wchar_t GlobalEOL[10];
 
-		// ðàáîòà ñ áëîêàìè èç ìàêðîñîâ (MCODE_F_EDITOR_SEL)
+		// работа с блоками из макросов (MCODE_F_EDITOR_SEL)
 		Edit *MBlockStart;
 		int   MBlockStartX;
 
@@ -215,7 +215,7 @@ class Editor:public ScreenObject
 
 		FARString strLastSearchStr;
 		/* $ 30.07.2000 KM
-		   Íîâàÿ ïåðåìåííàÿ äëÿ ïîèñêà "Whole words"
+		   Новая переменная для поиска "Whole words"
 		*/
 		int LastSearchCase,LastSearchWholeWords,LastSearchReverse,LastSearchSelFound,LastSearchRegexp;
 
@@ -309,8 +309,8 @@ class Editor:public ScreenObject
 		bool SetCodePage(UINT codepage);  //BUGBUG
 		UINT GetCodePage();  //BUGBUG
 
-		int SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat); // ïðåîáðàçîâàíèå èç áóôåðà â ñïèñîê
-		int GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat=0);   // ïðåîáðàçîâàíèå èç ñïèñêà â áóôåð
+		int SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat); // преобразование из буфера в список
+		int GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat=0);   // преобразование из списка в буфер
 
 		virtual int ProcessKey(int Key);
 		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
@@ -369,8 +369,8 @@ class Editor:public ScreenObject
 
 		void GetSavePosMode(int &SavePos, int &SaveShortPos);
 
-		// ïåðåäàâàéòå â êà÷åñòâå çíà÷åíèÿ ïàðàìåòðà "-1" äëÿ ïàðàìåòðà,
-		// êîòîðûé íå íóæíî ìåíÿòü
+		// передавайте в качестве значения параметра "-1" для параметра,
+		// который не нужно менять
 		void SetSavePosMode(int SavePos, int SaveShortPos);
 
 		void GetRowCol(const wchar_t *argv,int *row,int *col);

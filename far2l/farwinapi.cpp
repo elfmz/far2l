@@ -1,7 +1,7 @@
 /*
 farwinapi.cpp
 
-Âðàïåðû âîêðóã íåêîòîðûõ WinAPI ôóíêöèé
+Враперы вокруг некоторых WinAPI функций
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -142,7 +142,7 @@ bool FindFile::Get(FAR_FIND_DATA_EX& FindData)
 
 	// skip ".." & "."
 	if(Result && FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY && FindData.strFileName.At(0) == L'.' &&
-		// õèòðûé ñïîñîá - ó âèðòóàëüíûõ ïàïîê íå áûâàåò SFN, â îòëè÷èå îò.
+		// хитрый способ - у виртуальных папок не бывает SFN, в отличие от.
 		((FindData.strFileName.At(1) == L'.' && !FindData.strFileName.At(2)) || !FindData.strFileName.At(1)))
 	{
 		Result = Get(FindData);

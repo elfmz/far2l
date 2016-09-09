@@ -3,7 +3,7 @@
 /*
 fileedit.hpp
 
-Ðåäàêòèðîâàíèå ôàéëà - íàäñòðîéêà íàä editor.cpp
+Редактирование файла - надстройка над editor.cpp
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -39,15 +39,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class NamesList;
 
-// êîäû âîçâðàòà Editor::SaveFile()
+// коды возврата Editor::SaveFile()
 enum
 {
-	SAVEFILE_ERROR   = 0,         // ïûòàëèñü ñîõðàíÿòü, íå ïîëó÷èëîñü
-	SAVEFILE_SUCCESS = 1,         // ëèáî óñïåøíî ñîõðàíèëè, ëèáî ñîõðàíÿòü áûëî íå íàäî
-	SAVEFILE_CANCEL  = 2          // ñîõðàíåíèå îòìåíåíî, ðåäàêòîð íå çàêðûâàòü
+	SAVEFILE_ERROR   = 0,         // пытались сохранять, не получилось
+	SAVEFILE_SUCCESS = 1,         // либо успешно сохранили, либо сохранять было не надо
+	SAVEFILE_CANCEL  = 2          // сохранение отменено, редактор не закрывать
 };
 
-// êàê îòêðûâàòü
+// как открывать
 enum FEOPMODEEXISTFILE
 {
 	FEOPMODE_QUERY        =0x00000000,
@@ -80,7 +80,7 @@ enum FFILEEDIT_FLAGS
 
 class FileEditor : public Frame
 {
-	public:
+		public:
 		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine=-1,int StartChar=-1,const wchar_t *PluginData=nullptr,int OpenModeExstFile=FEOPMODE_QUERY);
 		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine,int StartChar,const wchar_t *Title,int X1,int Y1,int X2,int Y2,int DeleteOnClose=0,int OpenModeExstFile=FEOPMODE_QUERY);
 		virtual ~FileEditor();
@@ -90,8 +90,8 @@ class FileEditor : public Frame
 		bool IsFullScreen() {return Flags.Check(FFILEEDIT_FULLSCREEN)!=FALSE;}
 		void SetNamesList(NamesList *Names);
 		void SetEnableF6(int AEnableF6) { Flags.Change(FFILEEDIT_ENABLEF6,AEnableF6); InitKeyBar(); }
-		// Äîáàâëåíî äëÿ ïîèñêà ïî AltF7. Ïðè ðåäàêòèðîâàíèè íàéäåííîãî ôàéëà èç
-		// àðõèâà äëÿ êëàâèøè F2 ñäåëàòü âûçîâ ShiftF2.
+		// Добавлено для поиска по AltF7. При редактировании найденного файла из
+		// архива для клавиши F2 сделать вызов ShiftF2.
 		void SetSaveToSaveAs(int ToSaveAs) { Flags.Change(FFILEEDIT_SAVETOSAVEAS,ToSaveAs); InitKeyBar(); }
 		virtual BOOL IsFileModified() const { return m_editor->IsFileModified(); };
 		virtual int GetTypeAndName(FARString &strType, FARString &strName);
@@ -119,11 +119,11 @@ class FileEditor : public Frame
 		FARString strPluginTitle;
 		FARString strPluginData;
 		FAR_FIND_DATA_EX FileInfo;
-		wchar_t AttrStr[4];            // 13.02.2001 IS - Ñþäà çàïîìíèì áóêâû àòðèáóòîâ, ÷òîáû íå âû÷èñëÿòü èõ ìíîãî ðàç
-		DWORD FileAttributes;          // 12.02.2001 IS - ñþäà çàïîìíèì àòðèáóòû ôàéëà ïðè îòêðûòèè, ïðèãîäÿòñÿ ãäå-íèáóäü...
-		BOOL  FileAttributesModified;  // 04.11.2003 SKV - íàäî ëè âîññòàíàâëèâàòü àòòðèáóòû ïðè save
+		wchar_t AttrStr[4]; // 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
+		DWORD FileAttributes; // 12.02.2001 IS - сюда запомним атрибуты файла при открытии, пригодятся где-нибудь...
+		BOOL FileAttributesModified; // 04.11.2003 SKV - надо ли восстанавливать аттрибуты при save
 		DWORD SysErrorCode;
-		bool m_bClosing;               // 28.04.2005 AY: true êîãäà ðåäàêòîð çàêðûâàåòüñÿ (ò.å. â äåñòðóêòîðå)
+		bool m_bClosing; // 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
 		bool bEE_READ_Sent;
 		bool m_bAddSignature;
 		bool BadConversion;
@@ -133,9 +133,9 @@ class FileEditor : public Frame
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);
 		BOOL UpdateFileList();
 		/* Ret:
-		      0 - íå óäàëÿòü íè÷åãî
-		      1 - óäàëÿòü ôàéë è êàòàëîã
-		      2 - óäàëÿòü òîëüêî ôàéë
+		      0 - не удалять ничего
+		      1 - удалять файл и каталог
+		      2 - удалять только файл
 		*/
 		void SetDeleteOnClose(int NewMode);
 		int ReProcessKey(int Key,int CalledFromControl=TRUE);
@@ -151,13 +151,13 @@ class FileEditor : public Frame
 		virtual int GetType() { return MODALTYPE_EDITOR; }
 		virtual void OnDestroy();
 		virtual int GetCanLoseFocus(int DynamicMode=FALSE);
-		virtual int FastHide(); // äëÿ íóæä CtrlAltShift
-		// âîçâðàùàåò ïðèçíàê òîãî, ÿâëÿåòñÿ ëè ôàéë âðåìåííûì
-		// èñïîëüçóåòñÿ äëÿ ïðèíÿòèÿ ðåøåíèÿ ïåðåõîäèòü â êàòàëîã ïî CtrlF10
+		virtual int FastHide(); // для нужд CtrlAltShift
+		// возвращает признак того, является ли файл временным
+		// используется для принятия решения переходить в каталог по CtrlF10
 		BOOL isTemporary();
 		virtual void ResizeConsole();
 		int LoadFile(const wchar_t *Name, int &UserBreak);
-		//TextFormat, Codepage è AddSignature èñïîëüçóþòñÿ ÒÎËÜÊÎ, åñëè bSaveAs = true!
+		//TextFormat, Codepage и AddSignature используются ТОЛЬКО, если bSaveAs = true!
 		int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UNICODE, bool AddSignature=false);
 		void SetTitle(const wchar_t *Title);
 		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);

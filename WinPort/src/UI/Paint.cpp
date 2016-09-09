@@ -13,6 +13,8 @@
 					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
 					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE )
 
+#define DYNAMIC_FONTS
+
 extern ConsoleOutput g_wx_con_out;
 
 static unsigned int DivCeil(unsigned int v, unsigned int d)
@@ -130,14 +132,16 @@ class FontSizeInspector
 
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
-	_window(window), _buffered_paint(false), _cursor_state(false)
+	_window(window), _font_width(12), _font_height(16), 
+	_buffered_paint(false), _cursor_state(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
 	
 	_window->SetBackgroundColour(*wxBLACK);
-	InitializeFont(_window, _font);
-	FontSizeInspector fsi(_font);
+	wxFont font;
+	InitializeFont(_window, font);
+	FontSizeInspector fsi(font);
 	fsi.InspectChars(L" 1234567890-=!@#$%^&*()_+qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?");
 	//fsi.InspectChars(L"QWERTYUIOPASDFGHJKL");
 	
@@ -147,34 +151,65 @@ ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	//font_height+= _font_height/4;
 
 	
-	fprintf(stderr, "Font: '%ls' - %s\n", _font.GetFaceName().wc_str(), 
-		_font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
+	fprintf(stderr, "Font %u x %u: '%ls' - %s\n", _font_width, _font_height, font.GetFaceName().wc_str(), 
+		font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
 		
-	if (_font.IsFixedWidth() && !is_unstable) {
+	if (font.IsFixedWidth() && !is_unstable) {
 		struct stat s = {0};
 		if (stat(SettingsPath("nobuffering").c_str(), &s)!=0)
 			_buffered_paint = true;
-	}	
+	}
+	_fonts.push_back(font);
 }
 	
-bool ConsolePaintContext::CachedCharFitTest(wxPaintDC &dc, wchar_t c)
+uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
 {
 	const bool cacheable = ((size_t)c <= _char_fit_cache.checked.size());
 	if (cacheable && _char_fit_cache.checked[ (size_t)c  - 1 ]) {
 		return _char_fit_cache.result[ (size_t)c  - 1 ];
 	}
 
+	uint32_t font_index;
 	const wchar_t wz[2] = { c, 0};
-	const wxSize char_size = dc.GetTextExtent(wz);
-	const bool out = ((unsigned)char_size.GetWidth()==_font_width 
-					&& (unsigned)char_size.GetHeight()==_font_height);
+	wxSize char_size = dc.GetTextExtent(wz);
+	if ((unsigned)char_size.GetWidth()==_font_width 
+		&& (unsigned)char_size.GetHeight()==_font_height) {
+		font_index = 0;
+	} else {
+		font_index = 0xff;
+#ifdef DYNAMIC_FONTS		
+		for (uint8_t try_index = 1;;++try_index) {
+			if (try_index==0xff || (
+				(unsigned)char_size.GetWidth() <= _font_width && 
+				(unsigned)char_size.GetHeight() <= _font_height)) 
+				{
+					if (font_index!=0xff) ApplyFont(dc);
+					break;
+				}
+
+			while (_fonts.size() <= try_index) {
+				wxFont smallest = _fonts.back();
+				_fonts.emplace_back(smallest.MakeSmaller());
+			}
+			dc.SetFont(_fonts[try_index]);
+			char_size = dc.GetTextExtent(wz);
+			font_index = try_index;
+		}
+#endif		
+	}
 	
 	if (cacheable) {
-		_char_fit_cache.result[ (size_t)c  - 1 ] = out;
+		_char_fit_cache.result[ (size_t)c  - 1 ] = font_index;
 		_char_fit_cache.checked[ (size_t)c  - 1 ] = true;
 	}
+	
+	return font_index;
+}
 
-	return out;
+void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
+{
+	if (index < _fonts.size())
+		dc.SetFont(_fonts[index]);
 }
 
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
@@ -197,7 +232,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 
 	wxString tmp;
 	_line.resize(cw);
-	dc.SetFont(_font);
+	ApplyFont(dc);
 
 	ConsolePainter painter(this, dc);
 	for (unsigned int cy = (unsigned)area.Top; cy <= (unsigned)area.Bottom; ++cy) {
@@ -350,11 +385,13 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		return;
 
 	wxColour clr_text = ConsoleForeground2wxColor(attributes);
-
-	if (_context->IsPaintBuffered() && _start_cx != (unsigned int) -1 && 
-			_clr_text == clr_text && _context->CachedCharFitTest(_dc, c)) {
+	
+	uint8_t fit_font_index = _context->CharFitTest(_dc, c);
+	
+	if (fit_font_index==0 && _context->IsPaintBuffered() && 
+		_start_cx != (unsigned int) -1 && _clr_text == clr_text) {
 		_buffer+= c;
-		return;			
+		return;
 	}
 
 	FlushBackground(cx + 1);
@@ -362,4 +399,9 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 	_start_cx = cx;
 	_buffer = c;
 	_clr_text = clr_text;
+	if (fit_font_index!=0 && fit_font_index!=0xff) {
+		_context->ApplyFont(_dc, fit_font_index);
+		FlushText();
+		_context->ApplyFont(_dc);
+	}
 }

@@ -2,21 +2,22 @@
 
 class ConsolePaintContext
 {
-	wxFont _font;
+	std::vector<wxFont> _fonts;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height;
 	bool _buffered_paint, _cursor_state;
 	struct {
 		std::vector<bool> checked;
-		std::vector<bool> result;
+		std::vector<uint8_t> result;
 	} _char_fit_cache;
 
-	std::vector<CHAR_INFO> _line;
+	std::vector<CHAR_INFO> _line;	
 	
 public:
 	ConsolePaintContext(wxWindow *window);
 	
-	bool CachedCharFitTest(wxPaintDC &dc, wchar_t c);
+	uint8_t CharFitTest(wxPaintDC &dc, wchar_t c);
+	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
 	void OnPaint(SMALL_RECT *qedit = NULL);	
 	void RefreshArea( const SMALL_RECT &area );
 	void ToggleCursor();

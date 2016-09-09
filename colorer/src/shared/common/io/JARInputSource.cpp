@@ -29,7 +29,7 @@ JARInputSource::~JARInputSource(){
   sharedIS->delref();
   delete baseLocation;
   delete inJarLocation;
-  delete stream;
+  delete [] stream;
 }
 
 JARInputSource::JARInputSource(const String *basePath, JARInputSource *base, bool faked){
@@ -118,7 +118,7 @@ const byte *JARInputSource::openStream()
 void JARInputSource::closeStream(){
   if (stream == null)
     throw InputSourceException(StringBuffer("closeStream(): source stream is not yet opened"));
-  delete stream;
+  delete[] stream;
   stream = null;
 }
 

@@ -1,7 +1,7 @@
 /*
 panel.cpp
 
-Parent class äëÿ ïàíåëåé
+Parent class для панелей
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -82,7 +82,7 @@ static SaveScreen *DragSaveScr=nullptr;
 static FARString strDragName;
 
 /* $ 21.08.2002 IS
-   Êëàññ äëÿ õðàíåíèÿ ïóíêòà ïëàãèíà â ìåíþ âûáîðà äèñêîâ
+   Класс для хранения пункта плагина в меню выбора дисков
 */
 class ChDiskPluginItem
 {
@@ -213,8 +213,8 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 {
 	TArray<ChDiskPluginItem> MPItems;
 	ChDiskPluginItem OneItem;
-	// Ñïèñîê äîïîëíèòåëüíûõ õîòêååâ, äëÿ ñëó÷àÿ, êîãäà ïëàãèíîâ, äîáàâëÿþùèõ ïóíêò â ìåíþ, áîëüøå 9.
-	int PluginItem, PluginNumber = 0; // IS: ñ÷åò÷èêè - ïëàãèíîâ è ïóíêòîâ ïëàãèíà
+	// Список дополнительных хоткеев, для случая, когда плагинов, добавляющих пункт в меню, больше 9.
+	int PluginItem, PluginNumber = 0; // IS: счетчики - плагинов и пунктов плагина
 	bool ItemPresent,Done=false;
 	FARString strMenuText;
 	FARString strPluginText;
@@ -269,12 +269,12 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 
 				if (pResult)
 				{
-					pResult->Item.UserData = (char*)item; //BUGBUG, ýòî ôàíòàñòèêà ïðîñòî. Èñïðàâèòü!!!! ñâÿçàíî ñ ðàáîòîé TArray
+					pResult->Item.UserData = (char*)item; //BUGBUG, это фантастика просто. Исправить!!!! связано с работой TArray
 					pResult->Item.UserDataSize = sizeof(PanelMenuItem);
 				}
 
 				/*
-				else BUGBUG, à âîò ýòî, ïîõîæå, ëèøíåå
+				else BUGBUG, а вот это, похоже, лишнее
 				{
 					Done=TRUE;
 					break;
@@ -287,7 +287,7 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 	}
 
 	MPItems.Sort();
-	MPItems.Pack(); // âûêèíåì äóáëè
+	MPItems.Pack(); // выкинем дубли
 	PluginMenuItemsCount=MPItems.getSize();
 
 	if (PluginMenuItemsCount)
@@ -313,7 +313,7 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 			MPItems.getItem(I)->Item.strName = FARString(HotKeyStr) + MPItems.getItem(I)->Item.strName;
 			ChDisk.AddItem(&MPItems.getItem(I)->Item);
 
-			delete(PanelMenuItem*)MPItems.getItem(I)->Item.UserData;  //ììäà...
+			delete(PanelMenuItem*)MPItems.getItem(I)->Item.UserData;  //ммда...
 		}
 	}
 	return PluginMenuItemsCount;
@@ -483,7 +483,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	Events.MediaArivalEvent.Reset();
 	Events.MediaRemoveEvent.Reset();*/
 
-	class Guard_Macro_DskShowPosType  //ôèãíÿ êàêàÿ-òî
+	class Guard_Macro_DskShowPosType  //фигня какая-то
 	{
 		public:
 			Guard_Macro_DskShowPosType(Panel *curPanel) {Macro_DskShowPosType=(curPanel==CtrlObject->Cp()->LeftPanel)?1:2;};
@@ -505,7 +505,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	EnumMountedFilesystems(filesystems, (another_curdir==curdir) ? NULL : another_curdir.CPtr());
 
 	PanelMenuItem Item, *mitem=0;
-	{ // ýòà ñêîáêà íàäî, ñì. M#605
+	{ // эта скобка надо, см. M#605
 		VMenu ChDisk(MSG(MChangeDriveTitle),nullptr,0,ScrY-Y1-3);
 		ChDisk.SetBottomTitle(MSG(MChangeDriveMenuFooter));
 		ChDisk.SetFlags(VMENU_NOTCENTER);
@@ -519,7 +519,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		int MenuLine = 0;
 
 		/* $ 02.04.2001 VVM
-		! Ïîïûòêà íå áóäèòü ñïÿùèå äèñêè... */
+		! Попытка не будить спящие диски... */
 		size_t root_width = 4,  fs_width = 4;
 		for (auto f : filesystems) {
 			if (root_width < f.root.size()) root_width = f.root.size();
@@ -595,7 +595,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			}
 			else*/
 			{
-				{ //î÷åðåäíàÿ ôèãíÿ
+				{ //очередная фигня
 					ChangeMacroMode MacroMode(MACRO_DISKS);
 					Key=ChDisk.ReadInput();
 				}
@@ -605,7 +605,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 			switch (Key)
 			{
-				// Shift-Enter â ìåíþ âûáîðà äèñêîâ âûçûâàåò ïðîâîäíèê äëÿ äàííîãî äèñêà
+				// Shift-Enter в меню выбора дисков вызывает проводник для данного диска
 				case KEY_SHIFTNUMENTER:
 				case KEY_SHIFTENTER:
 				{
@@ -622,8 +622,8 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						return -1;
 				}
 				break;
-				// Ò.ê. íåò ñïîñîáà ïîëó÷èòü ñîñòîÿíèå "îòêðûòîñòè" óñòðîéñòâà,
-				// òî äîáàâèì îáðàáîòêó Ins äëÿ CD - "çàêðûòü äèñê"
+				// Т.к. нет способа получить состояние "открытости" устройства,
+				// то добавим обработку Ins для CD - "закрыть диск"
 				case KEY_INS:
 				case KEY_NUMPAD0:
 				{
@@ -640,10 +640,10 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						int Code = DisconnectDrive(item, ChDisk);
 						if (Code != DRIVE_DEL_FAIL && Code != DRIVE_DEL_NONE)
 						{
-							ScrBuf.Lock(); // îòìåíÿåì âñÿêóþ ïðîðèñîâêó
+							ScrBuf.Lock(); // отменяем всякую прорисовку
 							FrameManager->ResizeAllFrame();
-							FrameManager->PluginCommit(); // êîììèòèì.
-							ScrBuf.Unlock(); // ðàçðåøàåì ïðîðèñîâêó
+							FrameManager->PluginCommit(); // коммитим.
+							ScrBuf.Unlock(); // разрешаем прорисовку
 							return (((filesystems.size()-SelPos)==1) && (SelPos > 0) && (Code != DRIVE_DEL_EJECT))?SelPos-1:SelPos;
 						}
 					}
@@ -741,7 +741,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				{
 					if (item && item->bIsPlugin)
 					{
-						// Âûçûâàåì íóæíûé òîïèê, êîòîðûé ïåðåäàëè â CommandsMenu()
+						// Вызываем нужный топик, который передали в CommandsMenu()
 						FarShowHelp(
 						    item->pPlugin->GetModuleName(),
 						    nullptr,
@@ -795,7 +795,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			Item=*mitem;
 			mitem=&Item;
 		}
-	} // ýòà ñêîáêà íàäî, ñì. M#605
+	} // эта скобка надо, см. M#605
 
 	
 
@@ -882,7 +882,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		        !StrCmpI(strCurDir,strNewCurDir) &&
 		        IsVisible())
 		{
-			// À íóæíî ëè äåëàòü çäåñü Update????
+			// А нужно ли делать здесь Update????
 			Update(UPDATE_KEEP_SELECTION);
 		}
 		else
@@ -899,7 +899,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				CtrlObject->Cp()->GetAnotherPanel(this)->UpdateKeyBar();
 		}
 	}
-	else //ýòà ïëàãèí, äà
+	else //эта плагин, да
 	{
 		HANDLE hPlugin = CtrlObject->Plugins.OpenPlugin(
 		                     mitem->pPlugin,
@@ -933,7 +933,7 @@ void Panel::RemoveHotplugDevice(PanelMenuItem *item, VMenu &ChDisk)
 }
 
 /* $ 28.12.2001 DJ
-   îáðàáîòêà Del â ìåíþ äèñêîâ
+   обработка Del в меню дисков
 */
 
 int Panel::ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu)
@@ -979,7 +979,7 @@ int Panel::ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu)
 				}
 				Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),strMsgText,MSG(MOk));
 			}
-			return DRIVE_DEL_FAIL; // áëèí. â ïðîøëûé ðàç çàáûë ïðî ýòî äåëî...
+			return DRIVE_DEL_FAIL; // блин. в прошлый раз забыл про это дело...
 		}
 		break;
 
@@ -1050,7 +1050,7 @@ int64_t Panel::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
-// êîððåêòèðîâêà áóêâ
+// корректировка букв
 static DWORD _CorrectFastFindKbdLayout(INPUT_RECORD *rec,DWORD Key)
 {
 	if ((Key&KEY_ALT))// && Key!=(KEY_ALT|0x3C))
@@ -1107,7 +1107,7 @@ void Panel::FastFind(int FirstKey)
 				}
 				else if (!rec.EventType || rec.EventType==KEY_EVENT || rec.EventType==FARMACRO_KEY_EVENT)
 				{
-					// äëÿ âñòàâêè âîñïîëüçóåìñÿ ìàêðîäâèæêîì...
+					// для вставки воспользуемся макродвижком...
 					if (Key==KEY_CTRLV || Key==KEY_SHIFTINS || Key==KEY_SHIFTNUMPAD0)
 					{
 						wchar_t *ClipText=PasteFromClipboard();
@@ -1209,7 +1209,7 @@ void Panel::FastFind(int FirstKey)
 					{
 						FindEdit.GetString(strName);
 
-						// óáåðåì äâîéíûå '**'
+						// уберем двойные '**'
 						if (strName.GetLength() > 1
 						        && strName.At(strName.GetLength()-1) == L'*'
 						        && strName.At(strName.GetLength()-2) == L'*')
@@ -1219,8 +1219,8 @@ void Panel::FastFind(int FirstKey)
 						}
 
 						/* $ 09.04.2001 SVS
-						   ïðîáëåìû ñ áûñòðûì ïîèñêîì.
-						   Ïîäðîáíåå â 00573.ChangeDirCrash.txt
+						   проблемы с быстрым поиском.
+						   Подробнее в 00573.ChangeDirCrash.txt
 						*/
 						if (strName.At(0) == L'"')
 						{
@@ -1234,9 +1234,9 @@ void Panel::FastFind(int FirstKey)
 						}
 						else
 						{
-							if (CtrlObject->Macro.IsExecuting())// && CtrlObject->Macro.GetLevelState() > 0) // åñëè âñòàâêà ìàêðîñîì...
+							if (CtrlObject->Macro.IsExecuting())// && CtrlObject->Macro.GetLevelState() > 0) // если вставка макросом...
 							{
-								//CtrlObject->Macro.DropProcess(); // ... òî äðîïíåì ìàêðîïðîöåññ
+								//CtrlObject->Macro.DropProcess(); // ... то дропнем макропроцесс
 								//CtrlObject->Macro.PopState();
 								;
 							}
@@ -1486,7 +1486,7 @@ void Panel::DragMessage(int X,int Y,int Move)
 
 int Panel::GetCurDir(FARString &strCurDir)
 {
-	strCurDir = Panel::strCurDir; // TODO: ÎÏÀÑÍÎ!!!
+	strCurDir = Panel::strCurDir; // TODO: ОПАСНО!!!
 	return (int)strCurDir.GetLength();
 }
 
@@ -1519,20 +1519,20 @@ void Panel::InitCurDir(const wchar_t *CurDir)
 
 
 /* $ 14.06.2001 KM
-   + Äîáàâëåíà óñòàíîâêà ïåðåìåííûõ îêðóæåíèÿ, îïðåäåëÿþùèõ
-     òåêóùèå äèðåêòîðèè äèñêîâ êàê äëÿ àêòèâíîé, òàê è äëÿ
-     ïàññèâíîé ïàíåëè. Ýòî íåîáõîäèìî ïðîãðàììàì çàïóñêàåìûì
-     èç FAR.
+   + Добавлена установка переменных окружения, определяющих
+     текущие директории дисков как для активной, так и для
+     пассивной панели. Это необходимо программам запускаемым
+     из FAR.
 */
 /* $ 05.10.2001 SVS
-   ! Äàâàéòå äëÿ íà÷àëà âûñòàâèì íóæíûå çíà÷åíèÿ äëÿ ïàññèâíîé ïàíåëè,
-     à óæ ïîòîì...
-     À òî ôèãíÿ êàêàÿ-òî ïîëó÷àåòñÿ...
+   ! Давайте для начала выставим нужные значения для пассивной панели,
+     а уж потом...
+     А то фигня какая-то получается...
 */
 /* $ 14.01.2002 IS
-   ! Óáðàë óñòàíîâêó ïåðåìåííûõ îêðóæåíèÿ, ïîòîìó ÷òî îíà ïðîèçâîäèòñÿ
-     â FarChDir, êîòîðàÿ òåïåðü èñïîëüçóåòñÿ ó íàñ äëÿ óñòàíîâëåíèÿ
-     òåêóùåãî êàòàëîãà.
+   ! Убрал установку переменных окружения, потому что она производится
+     в FarChDir, которая теперь используется у нас для установления
+     текущего каталога.
 */
 int Panel::SetCurPath()
 {
@@ -1546,16 +1546,16 @@ int Panel::SetCurPath()
 		if (IsAlpha(AnotherPanel->strCurDir.At(0)) && AnotherPanel->strCurDir.At(1)==L':' &&
 		        Upper(AnotherPanel->strCurDir.At(0))!=Upper(strCurDir.At(0)))
 		{
-			// ñíà÷àëà óñòàíîâèì ïåðåìåííûå îêðóæåíèÿ äëÿ ïàññèâíîé ïàíåëè
-			// (áåç ðåàëüíîé ñìåíû ïóòè, ÷òîáû ëèøíèé ðàç ïàññèâíûé êàòàëîã
-			// íå ïåðå÷èòûâàòü)
+			// сначала установим переменные окружения для пассивной панели
+			// (без реальной смены пути, чтобы лишний раз пассивный каталог
+			// не перечитывать)
 			FarChDir(AnotherPanel->strCurDir,FALSE);
 		}
 	}
 
 	if (!FarChDir(strCurDir))
 	{
-		// çäåñü íà âûáîð :-)
+		// здесь на выбор :-)
 #if 1
 
 		while (!FarChDir(strCurDir))
@@ -1579,19 +1579,19 @@ int Panel::SetCurPath()
 					break;
 			}
 
-			if (FrameManager && FrameManager->ManagerStarted()) // ñíà÷àëà ïðîâåðèì - à çàïóùåí ëè ìåíåäæåð
+			if (FrameManager && FrameManager->ManagerStarted()) // сначала проверим - а запущен ли менеджер
 			{
-				SetCurDir(g_strFarPath,TRUE);                    // åñëè çàïóùåí - âûñòàâèì ïóòü êîòîðûé ìû òî÷íî çíàåì ÷òî ñóùåñòâóåò
-				ChangeDisk();                                    // è âûçîâåì ìåíþ âûáîðà äèñêîâ
+				SetCurDir(g_strFarPath,TRUE);                    // если запущен - выставим путь который мы точно знаем что существует
+				ChangeDisk();                                    // и вызовем меню выбора дисков
 			}
-			else                                               // îïïà...
+			else                                               // оппа...
 			{
 				FARString strTemp=strCurDir;
-				CutToFolderNameIfFolder(strCurDir);             // ïîäûìàåìñÿ ââåðõ, äëÿ î÷åðåäíîé ïîðöèè ChDir
+				CutToFolderNameIfFolder(strCurDir);             // подымаемся вверх, для очередной порции ChDir
 
-				if (strTemp.GetLength()==strCurDir.GetLength())  // çäåñü ïðîáëåìà - âèäèìî äèñê íåäîñòóïåí
+				if (strTemp.GetLength()==strCurDir.GetLength())  // здесь проблема - видимо диск недоступен
 				{
-					SetCurDir(g_strFarPath,TRUE);                 // òîãäà ïðîñòî ñâàëèâàåì â êàòàëîã, îòêóäà ñòàðòàíóë FAR.
+					SetCurDir(g_strFarPath,TRUE);                 // тогда просто сваливаем в каталог, откуда стартанул FAR.
 					break;
 				}
 				else
@@ -1656,7 +1656,7 @@ void Panel::Show()
 	if (Locked())
 		return;
 
-	/* $ 03.10.2001 IS ïåðåðèñóåì ñòðî÷êó ìåíþ */
+	/* $ 03.10.2001 IS перерисуем строчку меню */
 	if (Opt.ShowMenuBar)
 		CtrlObject->TopMenuBar->Show();
 
@@ -1809,7 +1809,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 
 			if ((Mode>SM_DEFAULT) && (Mode<=SM_CHTIME))
 			{
-				SetSortMode(--Mode); // Óìåíüøèì íà 1 èç-çà SM_DEFAULT
+				SetSortMode(--Mode); // Уменьшим на 1 из-за SM_DEFAULT
 				Result=TRUE;
 			}
 			break;
@@ -1941,7 +1941,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 				DestFilePanel->PluginGetPanelInfo(*Info);
 			}
 
-			if (!Info->Plugin) // $ 12.12.2001 DJ - íà íåïëàãèíîâîé ïàíåëè - âñåãäà ðåàëüíûå èìåíà
+			if (!Info->Plugin) // $ 12.12.2001 DJ - на неплагиновой панели - всегда реальные имена
 				Info->Flags |= PFLAGS_REALNAMES;
 
 			Result=TRUE;
@@ -2098,7 +2098,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 				CurTopFile=Info->TopPanelItem;
 			}
 
-			// $ 12.05.2001 DJ ïåðåðèñîâûâàåìñÿ òîëüêî â òîì ñëó÷àå, åñëè ìû - òåêóùèé ôðåéì
+			// $ 12.05.2001 DJ перерисовываемся только в том случае, если мы - текущий фрейм
 			if (FPanels->IsTopFrame())
 				Redraw();
 
@@ -2143,7 +2143,7 @@ int Panel::GetCurBaseName(FARString &strName)
 
 BOOL Panel::NeedUpdatePanel(Panel *AnotherPanel)
 {
-	/* Îáíîâèòü, åñëè îáíîâëåíèå ðàçðåøåíî è ïóòè ñîâïàäàþò */
+	/* Обновить, если обновление разрешено и пути совпадают */
 	if ((!Opt.AutoUpdateLimit || static_cast<DWORD>(GetFileCount()) <= Opt.AutoUpdateLimit) &&
 	        !StrCmpI(AnotherPanel->strCurDir,strCurDir))
 		return TRUE;
@@ -2258,7 +2258,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 						return true;
 				}
 
-				/* Ñâîåîáðàçíîå ðåøåíèå BugZ#50 */
+				/* Своеобразное решение BugZ#50 */
 				FARString strRealDir;
 				strRealDir = strPluginFile;
 

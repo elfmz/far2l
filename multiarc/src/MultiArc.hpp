@@ -236,7 +236,7 @@ struct InitDialogItem
 };
 
 /* $ 13.09.2000 tran
-   ðàçíîå äëÿ îæèäàíèÿ ïðîöåññà, ÷òîáû óáèòü ëèñò-ôàéë */
+   разное для ожидания процесса, чтобы убить лист-файл */
 struct KillStruct
 {
     char ListFileName[260];
@@ -267,7 +267,7 @@ struct Options
   int ReadDescriptions;
   int UpdateDescriptions;
   /* $ 13.09.2000 tran
-     çàïóñê ïðîöåññà â ôîíå */
+     запуск процесса в фоне */
   int UserBackground;
   int Background;
   int PriorityClass;

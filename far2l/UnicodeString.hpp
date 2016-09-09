@@ -3,7 +3,7 @@
 /*
 UnicodeString.hpp
 
-Unicode ñòðîêà
+Unicode строка
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -67,14 +67,14 @@ class UnicodeStringData
 			m_nLength = 0;
 			m_nRefCount = 1;
 			m_pData = AllocData(nSize,&m_nSize);
-			//Òàê êàê íè ãäå âûøå â êîäå ìû íå ãîòîâû íà ñëó÷àé ÷òî ïàìÿòè íå õâàòèò
-			//òî óæ ëó÷øå è çäåñü íå ïðîâåðÿòü à ñðàçó ïàäàòü
+			//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
+			//то уж лучше и здесь не проверять а сразу падать
 			*m_pData = 0;
 		}
 
 		size_t SetLength(size_t nLength)
 		{
-			//if (nLength<m_nSize) //Ýòó ïðîâåðêó äåëàåò âåðõíèé êëàññ, òàê ÷òî ñêàæåì ÷òî ýòî îïòèìèçàöèÿ
+			//if (nLength<m_nSize) //Эту проверку делает верхний класс, так что скажем что это оптимизация
 			{
 				m_nLength = nLength;
 				m_pData[m_nLength] = 0;
@@ -94,8 +94,8 @@ class UnicodeStringData
 
 			wchar_t *pOldData = m_pData;
 			m_pData = AllocData(nSize,&m_nSize);
-			//Òàê êàê íè ãäå âûøå â êîäå ìû íå ãîòîâû íà ñëó÷àé ÷òî ïàìÿòè íå õâàòèò
-			//òî óæ ëó÷øå è çäåñü íå ïðîâåðÿòü à ñðàçó ïàäàòü
+			//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
+			//то уж лучше и здесь не проверять а сразу падать
 			wmemcpy(m_pData,pOldData,m_nLength);
 			m_pData[m_nLength] = 0;
 			FreeData(pOldData);
@@ -134,7 +134,7 @@ class UnicodeString
 		UnicodeString(const char *lpszData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(lpszData, CodePage); }
 		explicit UnicodeString(size_t nSize, size_t nDelta=0) { m_pData = new UnicodeStringData(nSize, nDelta); }
 
-		~UnicodeString() { /*if (m_pData) îí íå äîëæåí áûòü nullptr*/ m_pData->DecRef(); }
+		~UnicodeString() { /*if (m_pData) он не должен быть nullptr*/ m_pData->DecRef(); }
 
 		void Inflate(size_t nSize);
 		wchar_t *GetBuffer(size_t nSize = (size_t)-1);

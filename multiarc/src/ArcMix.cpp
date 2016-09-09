@@ -119,7 +119,7 @@ static int BuiltinMain(int argc, char * argv[])
 
 
 /* $ 13.09.2000 tran
-   çàïóñê òðåäà äëÿ îæèäàíèÿ ìîìåíòà óáèéñòâà ëèñò ôàéëà */
+   запуск треда для ожидания момента убийства лист файла */
    /*
 void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list)
 {
@@ -226,7 +226,7 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,
     WINPORT(SetConsoleTitle)(ExpandedCmd);
 
   /* $ 14.02.2001 raVen
-     äåëàòü îêîøêó minimize, åñëè â ôîíå */
+     делать окошку minimize, если в фоне */
 /*  if (Opt.Background)
   {
     si.dwFlags=si.dwFlags | STARTF_USESHOWWINDOW;
@@ -463,7 +463,7 @@ int FindExecuteFile(char *OriginalName,char *DestName,int SizeDest)
 
 char *SeekDefExtPoint(char *Name, char *DefExt/*=NULL*/, char **Ext/*=NULL*/)
 {
-  FSF.Unquote(Name); //$ AA 15.04.2003 äëÿ ïðàâèëüíîé îáðàáîòêè èìåí â êàâû÷êàõ
+  FSF.Unquote(Name); //$ AA 15.04.2003 для правильной обработки имен в кавычках
   Name=FSF.PointToName(Name);
   char *TempExt=strrchr(Name, '.');
   if(!DefExt)
@@ -476,7 +476,7 @@ char *SeekDefExtPoint(char *Name, char *DefExt/*=NULL*/, char **Ext/*=NULL*/)
 BOOL AddExt(char *Name, char *Ext)
 {
   char *ExtPnt;
-  FSF.Unquote(Name); //$ AA 15.04.2003 äëÿ ïðàâèëüíîé îáðàáîòêè èìåí â êàâû÷êàõ
+  FSF.Unquote(Name); //$ AA 15.04.2003 для правильной обработки имен в кавычках
   if(Name && *Name && !SeekDefExtPoint(Name, Ext, &ExtPnt))
   {
     // transform Ext
@@ -558,9 +558,9 @@ int PathMayBeAbsolute(const char *Path)
 }
 
 /*
-  ïðåîáðàçóåò ñòðîêó
+  преобразует строку
     "cdrecord-1.6.1/mkisofs-1.12b4/../cdrecord/cd_misc.c"
-  â
+  в
     "cdrecord-1.6.1/cdrecord/cd_misc.c"
 */
 void NormalizePath(const char *lpcSrcName,char *lpDestName)

@@ -3,7 +3,7 @@
 /*
 edit.hpp
 
-Ðåàëèçàöèÿ îäèíî÷íîé ñòðîêè ðåäàêòèðîâàíèÿ
+Реализация одиночной строки редактирования
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "colors.hpp"
 #include "bitflags.hpp"
 
-// Ìëàäøèé áàéò (ìàñêà 0xFF) þçàåòñÿ êëàññîì ScreenObject!!!
+// Младший байт (маска 0xFF) юзается классом ScreenObject!!!
 enum FLAGS_CLASS_EDITLINE
 {
 	FEDITLINE_MARKINGBLOCK         = 0x00000100,
@@ -47,16 +47,16 @@ enum FLAGS_CLASS_EDITLINE
 	FEDITLINE_EDITBEYONDEND        = 0x00001000,
 	FEDITLINE_EDITORMODE           = 0x00002000,
 	FEDITLINE_OVERTYPE             = 0x00004000,
-	FEDITLINE_DELREMOVESBLOCKS     = 0x00008000,  // Del óäàëÿåò áëîêè (Opt.EditorDelRemovesBlocks)
-	FEDITLINE_PERSISTENTBLOCKS     = 0x00010000,  // Ïîñòîÿííûå áëîêè (Opt.EditorPersistentBlocks)
+	FEDITLINE_DELREMOVESBLOCKS     = 0x00008000,  // Del удаляет блоки (Opt.EditorDelRemovesBlocks)
+	FEDITLINE_PERSISTENTBLOCKS     = 0x00010000,  // Постоянные блоки (Opt.EditorPersistentBlocks)
 	FEDITLINE_SHOWWHITESPACE       = 0x00020000,
 	FEDITLINE_READONLY             = 0x00040000,
 	FEDITLINE_CURSORVISIBLE        = 0x00080000,
-	// Åñëè íè îäèí èç FEDITLINE_PARENT_ íå óêàçàí (èëè óêàçàíû îáà), òî Edit
-	// ÿâíî íå â äèàëîãå þçàåòñÿ.
-	FEDITLINE_PARENT_SINGLELINE    = 0x00100000,  // îáû÷íàÿ ñòðîêà ââîäà â äèàëîãå
-	FEDITLINE_PARENT_MULTILINE     = 0x00200000,  // äëÿ áóäóùåãî Memo-Edit (DI_EDITOR èëè DIF_MULTILINE)
-	FEDITLINE_PARENT_EDITOR        = 0x00400000,  // "ââåðõó" îáû÷íûé ðåäàêòîð
+	// Если ни один из FEDITLINE_PARENT_ не указан (или указаны оба), то Edit
+	// явно не в диалоге юзается.
+	FEDITLINE_PARENT_SINGLELINE    = 0x00100000,  // обычная строка ввода в диалоге
+	FEDITLINE_PARENT_MULTILINE     = 0x00200000,  // для будущего Memo-Edit (DI_EDITOR или DIF_MULTILINE)
+	FEDITLINE_PARENT_EDITOR        = 0x00400000,  // "вверху" обычный редактор
 };
 
 struct ColorItem
@@ -146,13 +146,13 @@ class Edit:public ScreenObject
 
 		int    Color;
 		int    SelColor;
-		int    ColorUnChanged;   // 28.07.2000 SVS - äëÿ äèàëîãà
+		int    ColorUnChanged;   // 28.07.2000 SVS - для диалога
 
 		int    LeftPos;
 		int    CurPos;
-		int    PrevCurPos;       // 12.08.2000 KM - ïðåäûäóùåå ïîëîæåíèå êóðñîðà
+		int    PrevCurPos;       // 12.08.2000 KM - предыдущее положение курсора
 
-		int    TabSize;          // 14.02.2001 IS - Ðàçìåð òàáóëÿöèè - ïî óìîë÷àíèþ ðàâåí Opt.TabSize;
+		int    TabSize;          // 14.02.2001 IS - Размер табуляции - по умолчанию равен Opt.TabSize;
 
 		int    TabExpandMode;
 
@@ -204,9 +204,9 @@ class Edit:public ScreenObject
 		virtual int   ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
 
-		//   ! Ôóíêöèÿ óñòàíîâêè òåêóùèõ Color,SelColor è ColorUnChanged!
+		//   ! Функция установки текущих Color,SelColor и ColorUnChanged!
 		void  SetObjectColor(int Color,int SelColor=0xf,int ColorUnChanged=COL_DIALOGEDITUNCHANGED);
-		//   + Ôóíêöèÿ ïîëó÷åíèÿ òåêóùèõ Color,SelColor
+		//   + Функция получения текущих Color,SelColor
 		long  GetObjectColor() {return MAKELONG(Color,SelColor);}
 		int   GetObjectColorUnChanged() {return ColorUnChanged;}
 
@@ -257,7 +257,7 @@ class Edit:public ScreenObject
 		void  SetPasswordMode(int Mode) {Flags.Change(FEDITLINE_PASSWORDMODE,Mode);};
 		void  SetMaxLength(int Length) {MaxLength=Length;};
 
-		// Ïîëó÷åíèå ìàêñèìàëüíîãî çíà÷åíèÿ ñòðîêè äëÿ ïîòðåáíîñòåé Dialod API
+		// Получение максимального значения строки для потребностей Dialod API
 		int   GetMaxLength() {return MaxLength;};
 
 		void  SetInputMask(const wchar_t *InputMask);
@@ -304,8 +304,8 @@ class Edit:public ScreenObject
 class History;
 class VMenu;
 
-// Íàäñòðîéêà íàä Edit.
-// Îäèíî÷íàÿ ñòðîêà ââîäà äëÿ äèàëîãîâ è êîìñòðîêè (íå äëÿ ðåäàêòîðà)
+// Надстройка над Edit.
+// Одиночная строка ввода для диалогов и комстроки (не для редактора)
 
 class EditControl:public Edit
 {

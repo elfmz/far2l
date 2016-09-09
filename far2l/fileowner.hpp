@@ -3,7 +3,7 @@
 /*
 fileowner.hpp
 
-Êýø SID`îâ è ôóíêöèÿ GetOwner
+Кэш SID`ов и функция GetOwner
 */
 /*
 Copyright (c) 1996 Eugene Roshal

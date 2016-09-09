@@ -1,10 +1,10 @@
 /*
 vmenu.cpp
 
-Îáû÷íîå âåðòèêàëüíîå ìåíþ
-  à òàê æå:
-    * ñïèñîê â DI_COMBOBOX
-    * ñïèñîê â DI_LISTBOX
+Обычное вертикальное меню
+  а так же:
+    * список в DI_COMBOBOX
+    * список в DI_LISTBOX
     * ...
 */
 /*
@@ -58,14 +58,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "pathmix.hpp"
 #include "cmdline.hpp"
-VMenu::VMenu(const wchar_t *Title,       // çàãîëîâîê ìåíþ
-             MenuDataEx *Data, // ïóíêòû ìåíþ
-             int ItemCount,     // êîëè÷åñòâî ïóíêòîâ ìåíþ
-             int MaxHeight,     // ìàêñèìàëüíàÿ âûñîòà
-             DWORD Flags,       // íóæåí ScrollBar?
-             FARWINDOWPROC Proc,    // îáðàáîò÷èê
+VMenu::VMenu(const wchar_t *Title,       // заголовок меню
+             MenuDataEx *Data, // пункты меню
+             int ItemCount,     // количество пунктов меню
+             int MaxHeight,     // максимальная высота
+             DWORD Flags,       // нужен ScrollBar?
+             FARWINDOWPROC Proc,    // обработчик
              Dialog *ParentDialog
-            ):  // ðîäèòåëü äëÿ ListBox
+            ):  // родитель для ListBox
 	strTitle(Title),
 	SelectPos(-1),
 	TopPos(0),
@@ -89,7 +89,7 @@ VMenu::VMenu(const wchar_t *Title,       // çàãîëîâîê ìåíþ
 	GetCursorType(PrevCursorVisible,PrevCursorSize);
 	bRightBtnPressed = false;
 
-	// èíèöèàëèçèðóåì ïåðåä òåì, êàê äîáàâëÿòü àéòåìà
+	// инициализируем перед тем, как добавлять айтема
 	UpdateMaxLengthFromTitles();
 
 	MenuItemEx NewItem;
@@ -110,7 +110,7 @@ VMenu::VMenu(const wchar_t *Title,       // çàãîëîâîê ìåíþ
 	}
 
 	SetMaxHeight(MaxHeight);
-	SetColors(nullptr); //Óñòàíîâèì öâåò ïî óìîë÷àíèþ
+	SetColors(nullptr); //Установим цвет по умолчанию
 
 	if (!CheckFlags(VMENU_LISTBOX) && CtrlObject)
 	{
@@ -150,19 +150,19 @@ void VMenu::ResetCursor()
 	GetCursorType(PrevCursorVisible,PrevCursorSize);
 }
 
-//ìîæåò èìåòü ôîêóñ
+//может иметь фокус
 bool VMenu::ItemCanHaveFocus(DWORD Flags)
 {
 	return !(Flags&(LIF_DISABLE|LIF_HIDDEN|LIF_SEPARATOR));
 }
 
-//ìîæåò áûòü âûáðàí
+//может быть выбран
 bool VMenu::ItemCanBeEntered(DWORD Flags)
 {
 	return !(Flags&(LIF_DISABLE|LIF_HIDDEN|LIF_GRAYED|LIF_SEPARATOR));
 }
 
-//âèäèìûé
+//видимый
 bool VMenu::ItemIsVisible(DWORD Flags)
 {
 	return !(Flags&(LIF_HIDDEN));
@@ -226,7 +226,7 @@ void VMenu::UpdateItemFlags(int Pos, DWORD NewFlags)
 	}
 }
 
-// ïåðåìåñòèòü êóðñîð c ó÷¸òîì ïóíêòîâ êîòîðûå íå ìîãó ïîëó÷àòü ôîêóñ
+// переместить курсор c учётом пунктов которые не могу получать фокус
 int VMenu::SetSelectPos(int Pos, int Direct)
 {
 	CriticalSectionLock Lock(CS);
@@ -270,7 +270,7 @@ int VMenu::SetSelectPos(int Pos, int Direct)
 
 		Pos += Direct;
 
-		if (I>=ItemCount) // êðóã ïðîéäåí - íè÷åãî íå íàéäåíî :-(
+		if (I>=ItemCount) // круг пройден - ничего не найдено :-(
 			Pass++;
 	}
 
@@ -281,7 +281,7 @@ int VMenu::SetSelectPos(int Pos, int Direct)
 	return Pos;
 }
 
-// óñòàíîâèòü êóðñîð è âåðõíèé èòåì
+// установить курсор и верхний итем
 int VMenu::SetSelectPos(FarListPos *ListPos)
 {
 	CriticalSectionLock Lock(CS);
@@ -317,7 +317,7 @@ int VMenu::SetSelectPos(FarListPos *ListPos)
 	return Ret;
 }
 
-//êîððåêòèðîâêà òåêóùåé ïîçèöèè
+//корректировка текущей позиции
 void VMenu::UpdateSelectPos()
 {
 	CriticalSectionLock Lock(CS);
@@ -325,7 +325,7 @@ void VMenu::UpdateSelectPos()
 	if (!Item || !ItemCount)
 		return;
 
-	// åñëè selection ñòîèò â íåêîððåêòíîì ìåñòå - ñáðîñèì åãî
+	// если selection стоит в некорректном месте - сбросим его
 	if (SelectPos >= 0 && !ItemCanHaveFocus(Item[SelectPos]->Flags))
 		SelectPos = -1;
 
@@ -366,7 +366,7 @@ int VMenu::GetItemPosition(int Position)
 	return DataPos;
 }
 
-// ïîëó÷èòü ïîçèöèþ êóðñîðà è âåðõíþþ ïîçèöèþ èòåìà
+// получить позицию курсора и верхнюю позицию итема
 int VMenu::GetSelectPos(FarListPos *ListPos)
 {
 	CriticalSectionLock Lock(CS);
@@ -427,7 +427,7 @@ int VMenu::AddItem(const wchar_t *NewStrItem)
 
 	FarList FarList0={1,&FarListItem0};
 
-	return AddItem(&FarList0)-1; //-1 ïîòîìó ÷òî AddItem(FarList) âîçâðàùàåò êîëè÷åñòâî ýëåìåíòîâ
+	return AddItem(&FarList0)-1; //-1 потому что AddItem(FarList) возвращает количество элементов
 }
 
 int VMenu::AddItem(const MenuItemEx *NewItem,int PosAdd)
@@ -440,7 +440,7 @@ int VMenu::AddItem(const MenuItemEx *NewItem,int PosAdd)
 	if (PosAdd > ItemCount)
 		PosAdd = ItemCount;
 
-	// Åñëè < 0 - îäíîçíà÷íî ñòàâèì â íóëåâóþ ïîçèöèþ, ò.å äîáàâêà ñâåðõó
+	// Если < 0 - однозначно ставим в нулевую позицию, т.е добавка сверху
 	if (PosAdd < 0)
 		PosAdd = 0;
 
@@ -493,7 +493,7 @@ int VMenu::UpdateItem(const FarListUpdate *NewItem)
 
 	if (NewItem && (DWORD)NewItem->Index < (DWORD)ItemCount)
 	{
-		// Îñâîáîäèì ïàìÿòü... îò ðàíåå çàíÿòîãî ;-)
+		// Освободим память... от ранее занятого ;-)
 		MenuItemEx *PItem = Item[NewItem->Index];
 
 		if (PItem->UserDataSize > (int)sizeof(PItem->UserData) && PItem->UserData && (NewItem->Item.Flags&LIF_DELETEUSERDATA))
@@ -518,7 +518,7 @@ int VMenu::UpdateItem(const FarListUpdate *NewItem)
 	return FALSE;
 }
 
-//ôóíêöèÿ óäàëåíèÿ N ïóíêòîâ ìåíþ
+//функция удаления N пунктов меню
 int VMenu::DeleteItem(int ID, int Count)
 {
 	CriticalSectionLock Lock(CS);
@@ -538,7 +538,7 @@ int VMenu::DeleteItem(int ID, int Count)
 		return ItemCount;
 	}
 
-	// Íàäîáíî óäàëèòü äàííûå, ÷òîá ïîòåðè ïî ïàìÿòè íå áûëè
+	// Надобно удалить данные, чтоб потери по памяти не были
 	for (int I=0; I < Count; ++I)
 	{
 		MenuItemEx *PtrItem = Item[ID+I];
@@ -549,13 +549,13 @@ int VMenu::DeleteItem(int ID, int Count)
 		UpdateInternalCounters(PtrItem->Flags,0);
 	}
 
-	// à âîò òåïåðü ïåðåìåùåíèÿ
+	// а вот теперь перемещения
 	if (ItemCount > 1)
 		memmove(Item+ID,Item+ID+Count,sizeof(*Item)*(ItemCount-(ID+Count))); //BUGBUG
 
 	ItemCount -= Count;
 
-	// êîððåêöèÿ òåêóùåé ïîçèöèè
+	// коррекция текущей позиции
 	if (SelectPos >= ID && SelectPos < ID+Count)
 	{
 		SelectPos = -1;
@@ -654,7 +654,7 @@ void VMenu::FilterStringUpdated(bool bLonger)
 
 	if (bLonger)
 	{
-		//ñòðîêà ôèëüòðà óâåëè÷èëàñü
+		//строка фильтра увеличилась
 		for (int i=0; i < ItemCount; i++)
 		{
 			if (ItemIsVisible(Item[i]->Flags) && !StrStrI(Item[i]->strName, strFilter))
@@ -671,7 +671,7 @@ void VMenu::FilterStringUpdated(bool bLonger)
 	}
 	else
 	{
-		//ñòðîêà ôèëüòðà ñîêðàòèëàñü
+		//строка фильтра сократилась
 		for (int i=0; i < ItemCount; i++)
 		{
 			if (!ItemIsVisible(Item[i]->Flags) && StrStrI(Item[i]->strName, strFilter))
@@ -716,7 +716,7 @@ int VMenu::ReadInput(INPUT_RECORD *GetReadRec)
 	{
 		ReadKey = Modal::ReadInput(GetReadRec);
 
-		//ôèëüòð äîëæåí îáðàáàòûâàòü íàæàòèÿ ðàíüøå "ïîëüçîâàòåëÿ" ìåíþ
+		//фильтр должен обрабатывать нажатия раньше "пользователя" меню
 		if (ShouldSendKeyToFilter(ReadKey))
 		{
 			ProcessInput();
@@ -760,9 +760,9 @@ int64_t VMenu::VMProcess(int OpCode,void *vParam,int64_t iParam)
 				int Direct=(iParam >> 8)&0xFF;
 				/*
 					Direct:
-						0 - îò íà÷àëà â êîíåö ñïèñêà;
-						1 - îò òåêóùåé ïîçèöèè â íà÷àëî;
-						2 - îò òåêóùåé ïîçèöèè â êîíåö ñïèñêà ïóíêòîâ ìåíþ.
+						0 - от начала в конец списка;
+						1 - от текущей позиции в начало;
+						2 - от текущей позиции в конец списка пунктов меню.
 				*/
 				iParam&=0xFF;
 				int StartPos=Direct?SelectPos:0;
@@ -940,7 +940,7 @@ int VMenu::ProcessKey(int Key)
 		if (!*str)
 			return FALSE;
 
-		if ( AddToFilter(str) ) // äëÿ ôèëüòðà: âñþ ñòðîêó öåëèêîì â ôèëüòð, à òàì ðàçáåðåìñÿ.
+		if ( AddToFilter(str) ) // для фильтра: всю строку целиком в фильтр, а там разберемся.
 		{
 			if (strFilter.IsEmpty())
 				RestoreFilteredItems();
@@ -951,7 +951,7 @@ int VMenu::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		else // íå äëÿ ôèëüòðà: ïî ñòàðèíêå, ïåðâûé ñèìâîë ïîñëåäîâàòåëüíîñòè, îñòàëüíîå èãíîðèðóåì (èáî íåêóäà)
+		else // не для фильтра: по старинке, первый символ последовательности, остальное игнорируем (ибо некуда)
 			Key=*str;
 	}
 
@@ -1105,7 +1105,7 @@ int VMenu::ProcessKey(int Key)
 
 			break;
 		}
-		case KEY_MSWHEEL_UP: // $ 27.04.2001 VVM - Îáðàáîòêà KEY_MSWHEEL_XXXX
+		case KEY_MSWHEEL_UP: // $ 27.04.2001 VVM - Обработка KEY_MSWHEEL_XXXX
 		case KEY_LEFT:         case KEY_NUMPAD4:
 		case KEY_UP:           case KEY_NUMPAD8:
 		{
@@ -1113,7 +1113,7 @@ int VMenu::ProcessKey(int Key)
 			ShowMenu(true);
 			break;
 		}
-		case KEY_MSWHEEL_DOWN: // $ 27.04.2001 VVM + Îáðàáîòêà KEY_MSWHEEL_XXXX
+		case KEY_MSWHEEL_DOWN: // $ 27.04.2001 VVM + Обработка KEY_MSWHEEL_XXXX
 		case KEY_RIGHT:        case KEY_NUMPAD6:
 		case KEY_DOWN:         case KEY_NUMPAD2:
 		{
@@ -1257,7 +1257,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	int MsX=MouseEvent->dwMousePosition.X;
 	int MsY=MouseEvent->dwMousePosition.Y;
 
-	// íåîáõîäèìî çíàòü, ÷òî RBtn áûë íàæàò ÏÎÑËÅ ïîÿâëåíèÿ VMenu, à íå äî
+	// необходимо знать, что RBtn был нажат ПОСЛЕ появления VMenu, а не до
 	if (MouseEvent->dwButtonState&RIGHTMOST_BUTTON_PRESSED && MouseEvent->dwEventFlags==0)
 		bRightBtnPressed=true;
 
@@ -1292,7 +1292,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		{
 			while (IsMouseButtonPressed())
 			{
-				//ïðîêðóòêà ìûøüþ íå äîëæíà âðàïèòü ìåíþ
+				//прокрутка мышью не должна врапить меню
 				if (SelectPos>=0 && GetVisualPos(SelectPos))
 					ProcessKey(KEY_UP);
 
@@ -1306,7 +1306,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		{
 			while (IsMouseButtonPressed())
 			{
-				//ïðîêðóòêà ìûøüþ íå äîëæíà âðàïèòü ìåíþ
+				//прокрутка мышью не должна врапить меню
 				if (SelectPos>=0 && GetVisualPos(SelectPos)!=GetShowItemCount()-1)
 					ProcessKey(KEY_DOWN);
 
@@ -1382,8 +1382,8 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			{
 				/* TODO:
 
-				   Ýòî çàãîòîâêà äëÿ óïðàâëåíèÿ ïîâåäåíèåì ëèñòîâ "íå â ñòèëå ìåíþ" - êîãäà òåêóùèé
-				   óêàçàòåëü ñïèñêà (ïîçèöèÿ) ñëåäèò çà ìûøîé...
+				   Это заготовка для управления поведением листов "не в стиле меню" - когда текущий
+				   указатель списка (позиция) следит за мышой...
 
 				        if(!CheckFlags(VMENU_LISTBOX|VMENU_COMBOBOX) && MouseEvent->dwEventFlags==MOUSE_MOVED ||
 				            CheckFlags(VMENU_LISTBOX|VMENU_COMBOBOX) && MouseEvent->dwEventFlags!=MOUSE_MOVED)
@@ -1402,7 +1402,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			}
 
 			/* $ 13.10.2001 VVM
-			  + Çàïîìíèòü íàæàòèå êëàâèøè ìûøêè è òîëüêî â ýòîì ñëó÷àå ðåàãèðîâàòü ïðè îòïóñêàíèè */
+			  + Запомнить нажатие клавиши мышки и только в этом случае реагировать при отпускании */
 			if (!MouseEvent->dwEventFlags && (MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)))
 				SetFlags(VMENU_MOUSEDOWN);
 
@@ -1851,7 +1851,7 @@ void VMenu::ShowMenu(bool IsParent)
 	int VisualSelectPos = GetVisualPos(SelectPos);
 	int VisualTopPos = GetVisualPos(TopPos);
 
-	// êîððåêöèÿ Top`à
+	// коррекция Top`а
 	if (VisualTopPos+GetShowItemCount() >= Y2-Y1 && VisualSelectPos == GetShowItemCount()-1)
 	{
 		VisualTopPos--;
@@ -2016,8 +2016,8 @@ void VMenu::ShowMenu(bool IsParent)
 				strMenuLine.Append(strMItemPtr);
 
 				{
-					// òàáóëÿöèè ìåíÿåì òîëüêî ïðè ïîêàçå!!!
-					// äëÿ ñîõðàíåíèå îðèãèíàëüíîé ñòðîêè!!!
+					// табуляции меняем только при показе!!!
+					// для сохранение оригинальной строки!!!
 					wchar_t *TabPtr, *TmpStr = strMenuLine.GetBuffer();
 
 					while ((TabPtr = wcschr(TmpStr, L'\t')))
@@ -2045,7 +2045,7 @@ void VMenu::ShowMenu(bool IsParent)
 				else
 					HiText(strMenuLine, Col);
 
-				// ñäåëàåì äîáàâî÷êó äëÿ NO_BOX
+				// сделаем добавочку для NO_BOX
 				{
 					int Width = X2-WhereX()+(BoxType==NO_BOX?1:0);
 					if (Width > 0)
@@ -2089,7 +2089,7 @@ void VMenu::ShowMenu(bool IsParent)
 			}
 
 			SetColor(Colors[VMenuColorText]);
-			// ñäåëàåì äîáàâî÷êó äëÿ NO_BOX
+			// сделаем добавочку для NO_BOX
 			FS << fmt::Width(((BoxType!=NO_BOX)?X2-X1-1:X2-X1)+((BoxType==NO_BOX)?1:0)) << L"";
 		}
 	}
@@ -2176,11 +2176,11 @@ void VMenu::AssignHighlights(int Reverse)
 	memset(Used,0,MAX_VKEY_CODE);
 
 	/* $ 02.12.2001 KM
-	   + Ïîåëèêó VMENU_SHOWAMPERSAND ñáðàñûâàåòñÿ äëÿ êîððåêòíîé
-	     ðàáîòû ShowMenu ñäåëàåì ñîõðàíåíèå ýíòîãî ôëàãà, â ïðîòèâíîì
-	     ñëó÷àå åñëè â äèàëîãå èñïîëüçîâàëñÿ DI_LISTBOX áåç ôëàãà
-	     DIF_LISTNOAMPERSAND, òî àìïåðñàíäû îòîáðàæàëèñü â ñïèñêå
-	     òîëüêî îäèí ðàç äî ñëåäóþùåãî ShowMenu.
+	   + Поелику VMENU_SHOWAMPERSAND сбрасывается для корректной
+	     работы ShowMenu сделаем сохранение энтого флага, в противном
+	     случае если в диалоге использовался DI_LISTBOX без флага
+	     DIF_LISTNOAMPERSAND, то амперсанды отображались в списке
+	     только один раз до следующего ShowMenu.
 	*/
 	if (CheckFlags(VMENU_SHOWAMPERSAND))
 		VMOldFlags.Set(VMENU_SHOWAMPERSAND);
@@ -2190,14 +2190,14 @@ void VMenu::AssignHighlights(int Reverse)
 
 	int I, Delta = Reverse ? -1 : 1;
 
-	// ïðîâåðêà çàäàííûõ õîòêååâ
+	// проверка заданных хоткеев
 	for (I = Reverse ? ItemCount-1 : 0; I>=0 && I<ItemCount; I+=Delta)
 	{
 		wchar_t Ch = 0;
 		int ShowPos = HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
 		const wchar_t *Name = Item[I]->strName.CPtr() + ShowPos;
 		Item[I]->AmpPos = -1;
-		// TODO: ïðîâåðêà íà LIF_HIDDEN
+		// TODO: проверка на LIF_HIDDEN
 		const wchar_t *ChPtr = wcschr(Name, L'&');
 
 		if (ChPtr)
@@ -2224,7 +2224,7 @@ void VMenu::AssignHighlights(int Reverse)
 		}
 	}
 
-	// TODO:  ÝÒÎÒ öèêë íóæíî óòî÷íèòü - âîçìîæíî âûëåçóò àðòåôàêòû (õîòÿ íå óâåðåí)
+	// TODO:  ЭТОТ цикл нужно уточнить - возможно вылезут артефакты (хотя не уверен)
 	for (I = Reverse ? ItemCount-1 : 0; I>=0 && I<ItemCount; I+=Delta)
 	{
 		int ShowPos = HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
@@ -2233,7 +2233,7 @@ void VMenu::AssignHighlights(int Reverse)
 
 		if (!ChPtr || CheckFlags(VMENU_SHOWAMPERSAND))
 		{
-			// TODO: ïðîâåðêà íà LIF_HIDDEN
+			// TODO: проверка на LIF_HIDDEN
 			for (int J=0; Name[J]; J++)
 			{
 				wchar_t Ch = Name[J];
@@ -2260,7 +2260,7 @@ bool VMenu::CheckKeyHiOrAcc(DWORD Key, int Type, int Translate)
 {
 	CriticalSectionLock Lock(CS);
 
-	//íå çàáóäåì ñáðîñèòü EndLoop äëÿ ëèñòáîêñà, èíà÷å íå áóäóò ðàáîòàòü õîòêåè â àêòèâíîì ñïèñêå
+	//не забудем сбросить EndLoop для листбокса, иначе не будут работать хоткеи в активном списке
 	if (CheckFlags(VMENU_LISTBOX))
 		EndLoop = FALSE;
 
@@ -2288,7 +2288,7 @@ bool VMenu::CheckKeyHiOrAcc(DWORD Key, int Type, int Translate)
 
 void VMenu::UpdateMaxLengthFromTitles()
 {
-	//òàéòë + 2 ïðîáåëà âîêðóã
+	//тайтл + 2 пробела вокруг
 	UpdateMaxLength((int)Max(strTitle.GetLength(),strBottomTitle.GetLength())+2);
 }
 
@@ -2436,110 +2436,110 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 			// Not VMENU_WARNDIALOG
 			{
 				{ // VMENU_LISTBOX
-					COL_DIALOGLISTTEXT,                        // ïîäëîæêà
-					COL_DIALOGLISTBOX,                         // ðàìêà
-					COL_DIALOGLISTTITLE,                       // çàãîëîâîê - âåðõíèé è íèæíèé
-					COL_DIALOGLISTTEXT,                        // Òåêñò ïóíêòà
+					COL_DIALOGLISTTEXT,                        // подложка
+					COL_DIALOGLISTBOX,                         // рамка
+					COL_DIALOGLISTTITLE,                       // заголовок - верхний и нижний
+					COL_DIALOGLISTTEXT,                        // Текст пункта
 					COL_DIALOGLISTHIGHLIGHT,                   // HotKey
 					COL_DIALOGLISTBOX,                         // separator
-					COL_DIALOGLISTSELECTEDTEXT,                // Âûáðàííûé
-					COL_DIALOGLISTSELECTEDHIGHLIGHT,           // Âûáðàííûé - HotKey
+					COL_DIALOGLISTSELECTEDTEXT,                // Выбранный
+					COL_DIALOGLISTSELECTEDHIGHLIGHT,           // Выбранный - HotKey
 					COL_DIALOGLISTSCROLLBAR,                   // ScrollBar
 					COL_DIALOGLISTDISABLED,                    // Disabled
 					COL_DIALOGLISTARROWS,                      // Arrow
-					COL_DIALOGLISTARROWSSELECTED,              // Âûáðàííûé - Arrow
+					COL_DIALOGLISTARROWSSELECTED,              // Выбранный - Arrow
 					COL_DIALOGLISTARROWSDISABLED,              // Arrow Disabled
-					COL_DIALOGLISTGRAY,                        // "ñåðûé"
-					COL_DIALOGLISTSELECTEDGRAYTEXT,            // âûáðàííûé "ñåðûé"
+					COL_DIALOGLISTGRAY,                        // "серый"
+					COL_DIALOGLISTSELECTEDGRAYTEXT,            // выбранный "серый"
 				},
 				{ // VMENU_COMBOBOX
-					COL_DIALOGCOMBOTEXT,                       // ïîäëîæêà
-					COL_DIALOGCOMBOBOX,                        // ðàìêà
-					COL_DIALOGCOMBOTITLE,                      // çàãîëîâîê - âåðõíèé è íèæíèé
-					COL_DIALOGCOMBOTEXT,                       // Òåêñò ïóíêòà
+					COL_DIALOGCOMBOTEXT,                       // подложка
+					COL_DIALOGCOMBOBOX,                        // рамка
+					COL_DIALOGCOMBOTITLE,                      // заголовок - верхний и нижний
+					COL_DIALOGCOMBOTEXT,                       // Текст пункта
 					COL_DIALOGCOMBOHIGHLIGHT,                  // HotKey
 					COL_DIALOGCOMBOBOX,                        // separator
-					COL_DIALOGCOMBOSELECTEDTEXT,               // Âûáðàííûé
-					COL_DIALOGCOMBOSELECTEDHIGHLIGHT,          // Âûáðàííûé - HotKey
+					COL_DIALOGCOMBOSELECTEDTEXT,               // Выбранный
+					COL_DIALOGCOMBOSELECTEDHIGHLIGHT,          // Выбранный - HotKey
 					COL_DIALOGCOMBOSCROLLBAR,                  // ScrollBar
 					COL_DIALOGCOMBODISABLED,                   // Disabled
 					COL_DIALOGCOMBOARROWS,                     // Arrow
-					COL_DIALOGCOMBOARROWSSELECTED,             // Âûáðàííûé - Arrow
+					COL_DIALOGCOMBOARROWSSELECTED,             // Выбранный - Arrow
 					COL_DIALOGCOMBOARROWSDISABLED,             // Arrow Disabled
-					COL_DIALOGCOMBOGRAY,                       // "ñåðûé"
-					COL_DIALOGCOMBOSELECTEDGRAYTEXT,           // âûáðàííûé "ñåðûé"
+					COL_DIALOGCOMBOGRAY,                       // "серый"
+					COL_DIALOGCOMBOSELECTEDGRAYTEXT,           // выбранный "серый"
 				},
 				{ // VMenu
-					COL_MENUBOX,                               // ïîäëîæêà
-					COL_MENUBOX,                               // ðàìêà
-					COL_MENUTITLE,                             // çàãîëîâîê - âåðõíèé è íèæíèé
-					COL_MENUTEXT,                              // Òåêñò ïóíêòà
+					COL_MENUBOX,                               // подложка
+					COL_MENUBOX,                               // рамка
+					COL_MENUTITLE,                             // заголовок - верхний и нижний
+					COL_MENUTEXT,                              // Текст пункта
 					COL_MENUHIGHLIGHT,                         // HotKey
 					COL_MENUBOX,                               // separator
-					COL_MENUSELECTEDTEXT,                      // Âûáðàííûé
-					COL_MENUSELECTEDHIGHLIGHT,                 // Âûáðàííûé - HotKey
+					COL_MENUSELECTEDTEXT,                      // Выбранный
+					COL_MENUSELECTEDHIGHLIGHT,                 // Выбранный - HotKey
 					COL_MENUSCROLLBAR,                         // ScrollBar
 					COL_MENUDISABLEDTEXT,                      // Disabled
 					COL_MENUARROWS,                            // Arrow
-					COL_MENUARROWSSELECTED,                    // Âûáðàííûé - Arrow
+					COL_MENUARROWSSELECTED,                    // Выбранный - Arrow
 					COL_MENUARROWSDISABLED,                    // Arrow Disabled
-					COL_MENUGRAYTEXT,                          // "ñåðûé"
-					COL_MENUSELECTEDGRAYTEXT,                  // âûáðàííûé "ñåðûé"
+					COL_MENUGRAYTEXT,                          // "серый"
+					COL_MENUSELECTEDGRAYTEXT,                  // выбранный "серый"
 				}
 			},
 
 			// == VMENU_WARNDIALOG
 			{
 				{ // VMENU_LISTBOX
-					COL_WARNDIALOGLISTTEXT,                    // ïîäëîæêà
-					COL_WARNDIALOGLISTBOX,                     // ðàìêà
-					COL_WARNDIALOGLISTTITLE,                   // çàãîëîâîê - âåðõíèé è íèæíèé
-					COL_WARNDIALOGLISTTEXT,                    // Òåêñò ïóíêòà
+					COL_WARNDIALOGLISTTEXT,                    // подложка
+					COL_WARNDIALOGLISTBOX,                     // рамка
+					COL_WARNDIALOGLISTTITLE,                   // заголовок - верхний и нижний
+					COL_WARNDIALOGLISTTEXT,                    // Текст пункта
 					COL_WARNDIALOGLISTHIGHLIGHT,               // HotKey
 					COL_WARNDIALOGLISTBOX,                     // separator
-					COL_WARNDIALOGLISTSELECTEDTEXT,            // Âûáðàííûé
-					COL_WARNDIALOGLISTSELECTEDHIGHLIGHT,       // Âûáðàííûé - HotKey
+					COL_WARNDIALOGLISTSELECTEDTEXT,            // Выбранный
+					COL_WARNDIALOGLISTSELECTEDHIGHLIGHT,       // Выбранный - HotKey
 					COL_WARNDIALOGLISTSCROLLBAR,               // ScrollBar
 					COL_WARNDIALOGLISTDISABLED,                // Disabled
 					COL_WARNDIALOGLISTARROWS,                  // Arrow
-					COL_WARNDIALOGLISTARROWSSELECTED,          // Âûáðàííûé - Arrow
+					COL_WARNDIALOGLISTARROWSSELECTED,          // Выбранный - Arrow
 					COL_WARNDIALOGLISTARROWSDISABLED,          // Arrow Disabled
-					COL_WARNDIALOGLISTGRAY,                    // "ñåðûé"
-					COL_WARNDIALOGLISTSELECTEDGRAYTEXT,        // âûáðàííûé "ñåðûé"
+					COL_WARNDIALOGLISTGRAY,                    // "серый"
+					COL_WARNDIALOGLISTSELECTEDGRAYTEXT,        // выбранный "серый"
 				},
 				{ // VMENU_COMBOBOX
-					COL_WARNDIALOGCOMBOTEXT,                   // ïîäëîæêà
-					COL_WARNDIALOGCOMBOBOX,                    // ðàìêà
-					COL_WARNDIALOGCOMBOTITLE,                  // çàãîëîâîê - âåðõíèé è íèæíèé
-					COL_WARNDIALOGCOMBOTEXT,                   // Òåêñò ïóíêòà
+					COL_WARNDIALOGCOMBOTEXT,                   // подложка
+					COL_WARNDIALOGCOMBOBOX,                    // рамка
+					COL_WARNDIALOGCOMBOTITLE,                  // заголовок - верхний и нижний
+					COL_WARNDIALOGCOMBOTEXT,                   // Текст пункта
 					COL_WARNDIALOGCOMBOHIGHLIGHT,              // HotKey
 					COL_WARNDIALOGCOMBOBOX,                    // separator
-					COL_WARNDIALOGCOMBOSELECTEDTEXT,           // Âûáðàííûé
-					COL_WARNDIALOGCOMBOSELECTEDHIGHLIGHT,      // Âûáðàííûé - HotKey
+					COL_WARNDIALOGCOMBOSELECTEDTEXT,           // Выбранный
+					COL_WARNDIALOGCOMBOSELECTEDHIGHLIGHT,      // Выбранный - HotKey
 					COL_WARNDIALOGCOMBOSCROLLBAR,              // ScrollBar
 					COL_WARNDIALOGCOMBODISABLED,               // Disabled
 					COL_WARNDIALOGCOMBOARROWS,                 // Arrow
-					COL_WARNDIALOGCOMBOARROWSSELECTED,         // Âûáðàííûé - Arrow
+					COL_WARNDIALOGCOMBOARROWSSELECTED,         // Выбранный - Arrow
 					COL_WARNDIALOGCOMBOARROWSDISABLED,         // Arrow Disabled
-					COL_WARNDIALOGCOMBOGRAY,                   // "ñåðûé"
-					COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,       // âûáðàííûé "ñåðûé"
+					COL_WARNDIALOGCOMBOGRAY,                   // "серый"
+					COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,       // выбранный "серый"
 				},
 				{ // VMenu
-					COL_MENUBOX,                               // ïîäëîæêà
-					COL_MENUBOX,                               // ðàìêà
-					COL_MENUTITLE,                             // çàãîëîâîê - âåðõíèé è íèæíèé
-					COL_MENUTEXT,                              // Òåêñò ïóíêòà
+					COL_MENUBOX,                               // подложка
+					COL_MENUBOX,                               // рамка
+					COL_MENUTITLE,                             // заголовок - верхний и нижний
+					COL_MENUTEXT,                              // Текст пункта
 					COL_MENUHIGHLIGHT,                         // HotKey
 					COL_MENUBOX,                               // separator
-					COL_MENUSELECTEDTEXT,                      // Âûáðàííûé
-					COL_MENUSELECTEDHIGHLIGHT,                 // Âûáðàííûé - HotKey
+					COL_MENUSELECTEDTEXT,                      // Выбранный
+					COL_MENUSELECTEDHIGHLIGHT,                 // Выбранный - HotKey
 					COL_MENUSCROLLBAR,                         // ScrollBar
 					COL_MENUDISABLEDTEXT,                      // Disabled
 					COL_MENUARROWS,                            // Arrow
-					COL_MENUARROWSSELECTED,                    // Âûáðàííûé - Arrow
+					COL_MENUARROWSSELECTED,                    // Выбранный - Arrow
 					COL_MENUARROWSDISABLED,                    // Arrow Disabled
-					COL_MENUGRAYTEXT,                          // "ñåðûé"
-					COL_MENUSELECTEDGRAYTEXT,                  // âûáðàííûé "ñåðûé"
+					COL_MENUGRAYTEXT,                          // "серый"
+					COL_MENUSELECTEDGRAYTEXT,                  // выбранный "серый"
 				}
 			}
 		};
@@ -2595,13 +2595,13 @@ BOOL VMenu::GetVMenuInfo(FarListInfo* Info)
 	return FALSE;
 }
 
-// ôóíêöèÿ îáðàáîòêè ìåíþ (ïî óìîë÷àíèþ)
+// функция обработки меню (по умолчанию)
 LONG_PTR WINAPI VMenu::DefMenuProc(HANDLE hVMenu, int Msg, int Param1, LONG_PTR Param2)
 {
 	return 0;
 }
 
-// ôóíêöèÿ ïîñûëêè ñîîáùåíèé ìåíþ
+// функция посылки сообщений меню
 LONG_PTR WINAPI VMenu::SendMenuMessage(HANDLE hVMenu, int Msg, int Param1, LONG_PTR Param2)
 {
 	CriticalSectionLock Lock(((VMenu*)hVMenu)->CS);
@@ -2612,7 +2612,7 @@ LONG_PTR WINAPI VMenu::SendMenuMessage(HANDLE hVMenu, int Msg, int Param1, LONG_
 	return 0;
 }
 
-// Ôóíêöèÿ GetItemPtr - ïîëó÷èòü óêàçàòåëü íà íóæíûé Item.
+// Функция GetItemPtr - получить указатель на нужный Item.
 MenuItemEx *VMenu::GetItemPtr(int Position)
 {
 	CriticalSectionLock Lock(CS);
@@ -2628,24 +2628,24 @@ MenuItemEx *VMenu::GetItemPtr(int Position)
 void *VMenu::_GetUserData(MenuItemEx *PItem, void *Data, int Size)
 {
 	int DataSize = PItem->UserDataSize;
-	char *PtrData = PItem->UserData; // PtrData ñîäåðæèò: ëèáî óêàçàòåëü íà ÷òî-òî ëèáî sizeof(void*)!
+	char *PtrData = PItem->UserData; // PtrData содержит: либо указатель на что-то либо sizeof(void*)!
 
 	if (Size > 0 && Data )
 	{
-		if (PtrData) // äàííûå åñòü?
+		if (PtrData) // данные есть?
 		{
-			// ðàçìåð÷èê áîëüøå sizeof(void*)?
+			// размерчик больше sizeof(void*)?
 			if (DataSize > (int)sizeof(PItem->UserData))
 			{
 				memmove(Data,PtrData,Min(Size,DataSize));
 			}
-			else if (DataSize > 0) // à äàííûå òî âîîáùå åñòü? Ò.å. åñëè â UserData
-			{                      // åñòü ñòðîêà èç sizeof(void*) áàéò (UserDataSize ïðè ýòîì > 0)
+			else if (DataSize > 0) // а данные то вообще есть? Т.е. если в UserData
+			{                      // есть строка из sizeof(void*) байт (UserDataSize при этом > 0)
 				memmove(Data,PItem->Str4,Min(Size,DataSize));
 			}
-			// else à èíà÷å... â PtrData óæå óêàçàòåëü ñèäèò!
+			// else а иначе... в PtrData уже указатель сидит!
 		}
-		else // ... äàííûõ íåò, çíà÷èò ëóäèì èìÿ ïóíêòà!
+		else // ... данных нет, значит лудим имя пункта!
 		{
 			memcpy(Data,PItem->strName.CPtr(),Min(Size,static_cast<int>((PItem->strName.GetLength()+1)*sizeof(wchar_t))));
 		}
@@ -2667,8 +2667,8 @@ int VMenu::GetUserDataSize(int Position)
 }
 
 int VMenu::_SetUserData(MenuItemEx *PItem,
-                        const void *Data,   // Äàííûå
-                        int Size)           // Ðàçìåð, åñëè =0 òî ïðåäïîëàãàåòñÿ, ÷òî â Data-ñòðîêà
+                        const void *Data,   // Данные
+                        int Size)           // Размер, если =0 то предполагается, что в Data-строка
 {
 	if (PItem->UserDataSize > (int)sizeof(PItem->UserData) && PItem->UserData)
 		xf_free(PItem->UserData);
@@ -2680,43 +2680,43 @@ int VMenu::_SetUserData(MenuItemEx *PItem,
 	{
 		int SizeReal = Size;
 
-		// Åñëè Size=0, òî ïîäðàçóìåâàåòñÿ, ÷òî â Data íàõîäèòñÿ ASCIIZ ñòðîêà
+		// Если Size=0, то подразумевается, что в Data находится ASCIIZ строка
 		if (!Size)
 			SizeReal = (int)((StrLength((const wchar_t *)Data)+1)*sizeof(wchar_t));
 
-		// åñëè ðàçìåð äàííûõ Size=0 èëè Size áîëüøå sizeof(void*)
+		// если размер данных Size=0 или Size больше sizeof(void*)
 		if (!Size || Size > (int)sizeof(PItem->UserData))
 		{
-			// ðàçìåð áîëüøå sizeof(void*)?
+			// размер больше sizeof(void*)?
 			if (SizeReal > (int)sizeof(PItem->UserData))
 			{
-				// ...çíà÷èò âûäåëÿåì íóæíóþ ïàìÿòü.
+				// ...значит выделяем нужную память.
 				if ((PItem->UserData=(char*)xf_malloc(SizeReal)) )
 				{
 					PItem->UserDataSize=SizeReal;
 					memcpy(PItem->UserData,Data,SizeReal);
 				}
 			}
-			else // ÝÒÀ ÑÒÐÎÊÀ ÏÎÌÅÙÀÅÒÑß Â sizeof(void*)!
+			else // ЭТА СТРОКА ПОМЕЩАЕТСЯ В sizeof(void*)!
 			{
 				PItem->UserDataSize=SizeReal;
 				memcpy(PItem->Str4,Data,SizeReal);
 			}
 		}
-		else // Îê. äàííûå ïîìåùàþòñÿ â sizeof(void*)...
+		else // Ок. данные помещаются в sizeof(void*)...
 		{
-			PItem->UserDataSize = 0;         // ïðèçíàê òîãî, ÷òî äàííûõ ëèáî íåò, ëèáî
-			PItem->UserData = (char*)Data;   // îíè ïîìåùàþòñÿ â 4 áàéòà
+			PItem->UserDataSize = 0;         // признак того, что данных либо нет, либо
+			PItem->UserData = (char*)Data;   // они помещаются в 4 байта
 		}
 	}
 
 	return PItem->UserDataSize;
 }
 
-// Ïðèñîâîêóïèòü ê èòåìó äàííûå.
-int VMenu::SetUserData(LPCVOID Data,   // Äàííûå
-                       int Size,     // Ðàçìåð, åñëè =0 òî ïðåäïîëàãàåòñÿ, ÷òî â Data-ñòðîêà
-                       int Position) // íîìåð èòåìà
+// Присовокупить к итему данные.
+int VMenu::SetUserData(LPCVOID Data,   // Данные
+                       int Size,     // Размер, если =0 то предполагается, что в Data-строка
+                       int Position) // номер итема
 {
 	CriticalSectionLock Lock(CS);
 
@@ -2728,7 +2728,7 @@ int VMenu::SetUserData(LPCVOID Data,   // Äàííûå
 	return _SetUserData(Item[ItemPos], Data, Size);
 }
 
-// Ïîëó÷èòü äàííûå
+// Получить данные
 void* VMenu::GetUserData(void *Data,int Size,int Position)
 {
 	CriticalSectionLock Lock(CS);
@@ -2844,8 +2844,8 @@ static int __cdecl SortItemDataDWORD(const MenuItemEx **el1, const MenuItemEx **
 	return (Param->Direction?(Res<0?1:(Res>0?-1:0)):Res);
 }
 
-// Ñîðòèðîâêà ýëåìåíòîâ ñïèñêà
-// Offset - íà÷àëî ñðàâíåíèÿ! ïî óìîë÷àíèþ =0
+// Сортировка элементов списка
+// Offset - начало сравнения! по умолчанию =0
 void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 {
 	CriticalSectionLock Lock(CS);
@@ -2856,7 +2856,7 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 	Param.Direction=Direction;
 	Param.Offset=Offset;
 
-	if (!SortForDataDWORD) // îáû÷íàÿ ñîðòèðîâêà
+	if (!SortForDataDWORD) // обычная сортировка
 	{
 		qsortex((char *)Item,
 		        ItemCount,
@@ -2873,7 +2873,7 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 		        &Param);
 	}
 
-	// ñêîððåêòèðóåì SelectPos
+	// скорректируем SelectPos
 	UpdateSelectPos();
 
 	SetFlags(VMENU_UPDATEREQUIRED);

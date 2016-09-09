@@ -123,16 +123,17 @@ set(SOURCES
     src/formats/7z/C/Blake2s.c
 )
 
-include_directories(src/formats/rar/unrar)
-include_directories(src)
-include_directories(src/libpcre)
-include_directories(../WinPort)
-include_directories(../far2l)
-include_directories(../far2l/Include)
-
-add_definitions(-DRARDLL -D_7ZIP_ST)
-
 add_library (multiarc MODULE ${SOURCES})
+
+
+target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
+target_include_directories(multiarc PRIVATE src)
+target_include_directories(multiarc PRIVATE src/libpcre)
+target_include_directories(multiarc PRIVATE ../WinPort)
+target_include_directories(multiarc PRIVATE ../far2l)
+target_include_directories(multiarc PRIVATE ../far2l/Include)
+
+target_compile_definitions(multiarc PRIVATE -DRARDLL -D_7ZIP_ST)
 
 set_target_properties(multiarc
   PROPERTIES

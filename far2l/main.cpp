@@ -1,7 +1,7 @@
 /*
 main.cpp
 
-Ôóíêöèÿ main.
+Функция main.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -142,7 +142,7 @@ static int MainProcess(
 					FrameManager->ExitMainLoop(0);
 				}
 			}
-			// TODO: Ýòîò else óáðàòü òîëüêî ïîñëå ðàçáîðîê ñ âîçìîæíîñòüþ çàäàâàòü íåñêîëüêî /e è /v â êîì.ñòðîêå
+			// TODO: Этот else убрать только после разборок с возможностью задавать несколько /e и /v в ком.строке
 			else if (*lpwszViewName)
 			{
 				FileViewer *ShellViewer=new FileViewer(lpwszViewName,FALSE);
@@ -166,23 +166,23 @@ static int MainProcess(
 			Opt.SetupArgv=0;
 			FARString strPath;
 
-			// âîñïîëüçóåìñÿ òåì, ÷òî ControlObject::Init() ñîçäàåò ïàíåëè
-			// þçàÿ Opt.*
-			if (*lpwszDestName1)  // àêòèíàÿ ïàíåëü
+			// воспользуемся тем, что ControlObject::Init() создает панели
+			// юзая Opt.*
+			if (*lpwszDestName1)  // актиная панель
 			{
 				Opt.SetupArgv++;
 				strPath = lpwszDestName1;
 				CutToNameUNC(strPath);
-				DeleteEndSlash(strPath); //BUGBUG!! åñëè êîíå÷íûé ñëåøü íå óáðàòü - ïîëó÷àåì çàáàâíûé ýôôåêò - îòñóòñòâóåò ".."
+				DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
 
 //				if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
 //					AddEndSlash(strPath);
 
-				// Òà ïàíåëü, êîòîðàÿ èìååò ôîêóñ - àêòèâíà (íà÷íåì ïî òðàäèöèè ñ Ëåâîé Ïàíåëè ;-)
+				// Та панель, которая имеет фокус - активна (начнем по традиции с Левой Панели ;-)
 				if (Opt.LeftPanel.Focus)
 				{
-					Opt.LeftPanel.Type=FILE_PANEL;  // ñìåíèì ìîäó ïàíåëè
-					Opt.LeftPanel.Visible=TRUE;     // è âêëþ÷èì åå
+					Opt.LeftPanel.Type=FILE_PANEL;  // сменим моду панели
+					Opt.LeftPanel.Visible=TRUE;     // и включим ее
 					Opt.strLeftFolder = strPath;
 				}
 				else
@@ -192,21 +192,21 @@ static int MainProcess(
 					Opt.strRightFolder = strPath;
 				}
 
-				if (*lpwszDestName2)  // ïàññèâíàÿ ïàíåëü
+				if (*lpwszDestName2)  // пассивная панель
 				{
 					Opt.SetupArgv++;
 					strPath = lpwszDestName2;
 					CutToNameUNC(strPath);
-					DeleteEndSlash(strPath); //BUGBUG!! åñëè êîíå÷íûé ñëåøü íå óáðàòü - ïîëó÷àåì çàáàâíûé ýôôåêò - îòñóòñòâóåò ".."
+					DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
 
 //					if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
 //						AddEndSlash(strPath);
 
-					// à çäåñü ñ òî÷íîòüþ íàîáîðîò - îáðàáàòûâàåì ïàññèâíóþ ïàíåëü
+					// а здесь с точнотью наоборот - обрабатываем пассивную панель
 					if (Opt.LeftPanel.Focus)
 					{
-						Opt.RightPanel.Type=FILE_PANEL; // ñìåíèì ìîäó ïàíåëè
-						Opt.RightPanel.Visible=TRUE;    // è âêëþ÷èì åå
+						Opt.RightPanel.Type=FILE_PANEL; // сменим моду панели
+						Opt.RightPanel.Visible=TRUE;    // и включим ее
 						Opt.strRightFolder = strPath;
 					}
 					else
@@ -218,17 +218,17 @@ static int MainProcess(
 				}
 			}
 
-			// òåïåðü âñå ãîòîâî - ñîçäàåì ïàíåëè!
+			// теперь все готово - создаем панели!
 			CtrlObj.Init();
 
-			// à òåïåðü "ïðîâàëèìñÿ" â êàòàëîã èëè õîñò-ôàéë (åñëè ïîëó÷èòñÿ ;-)
-			if (*lpwszDestName1)  // àêòèíàÿ ïàíåëü
+			// а теперь "провалимся" в каталог или хост-файл (если получится ;-)
+			if (*lpwszDestName1)  // актиная панель
 			{
 				FARString strCurDir;
 				Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 				Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
 
-				if (*lpwszDestName2)  // ïàññèâíàÿ ïàíåëü
+				if (*lpwszDestName2)  // пассивная панель
 				{
 					AnotherPanel->GetCurDir(strCurDir);
 					FarChDir(strCurDir);
@@ -269,8 +269,8 @@ static int MainProcess(
 					}
 				}
 
-				// !!! ÂÍÈÌÀÍÈÅ !!!
-				// Ñíà÷àëà ðåäðàâèì ïàññèâíóþ ïàíåëü, à ïîòîì àêòèâíóþ!
+				// !!! ВНИМАНИЕ !!!
+				// Сначала редравим пассивную панель, а потом активную!
 				AnotherPanel->Redraw();
 				ActivePanel->Redraw();
 			}
@@ -278,7 +278,7 @@ static int MainProcess(
 			FrameManager->EnterMainLoop();
 		}
 
-		// î÷èñòèì çà ñîáîé!
+		// очистим за собой!
 		SetScreen(0,0,ScrX,ScrY,L' ',COL_COMMANDLINEUSERSCREEN);
 		Console.SetTextAttributes(InitAttributes);
 		ScrBuf.ResetShadow();
@@ -321,17 +321,17 @@ int FarAppMain(int argc, char **argv)
 	FARString strViewName;
 	FARString DestNames[2];
 	int StartLine=-1,StartChar=-1;
-	int CntDestName=0; // êîëè÷åñòâî ïàðàìåòðîâ-èìåí êàòàëîãîâ
+	int CntDestName=0; // количество параметров-имен каталогов
 	/*$ 18.04.2002 SKV
-	  Ïîïîëüçóåì floating point ÷òî áû ïðîèíèöèàëèçèðîâàëñÿ vc-íûé fprtl.
+	  Попользуем floating point что бы проинициализировался vc-ный fprtl.
 	*/
 #ifdef _MSC_VER
 	float x=1.1f;
 	wchar_t buf[15];
 	swprintf(buf,L"%f",x);
 #endif
-	// åñëè ïîä äåáàãåðîì, òî îòêëþ÷àåì èñêëþ÷åíèÿ îäíîçíà÷íî,
-	//  èíà÷å - ñìîòðÿ ÷òî óêàçàë þçâåð.
+	// если под дебагером, то отключаем исключения однозначно,
+	//  иначе - смотря что указал юзвер.
 #if defined(_DEBUGEXC)
 	Opt.ExceptRules=-1;
 #else
@@ -346,7 +346,7 @@ int FarAppMain(int argc, char **argv)
 //_SVS(SysLog(L"Opt.ExceptRules=%d",Opt.ExceptRules));
 	SetRegRootKey(HKEY_CURRENT_USER);
 	Opt.strRegRoot = L"Software/Far2";
-	// Ïî óìîë÷àíèþ - áðàòü ïëàãèíû èç îñíîâíîãî êàòàëîãà
+	// По умолчанию - брать плагины из основного каталога
 	Opt.LoadPlug.MainPluginDir=TRUE;
 	Opt.LoadPlug.PluginsPersonal=TRUE;
 	Opt.LoadPlug.PluginsCacheOnly=FALSE;
@@ -361,7 +361,7 @@ int FarAppMain(int argc, char **argv)
 
 	WINPORT(SetEnvironmentVariable)(L"FARADMINMODE", Opt.IsUserAdmin?L"1":nullptr);
 
-	// ìàêðîñû íå äèñàáëèì
+	// макросы не дисаблим
 	Opt.Macro.DisableMacro=0;
 	for (int I=1; I<argc; I++)
 	{
@@ -471,7 +471,7 @@ int FarAppMain(int argc, char **argv)
 					break;
 			}
 		}
-		else // ïðîñòûå ïàðàìåòðû. Èõ ìîæåò áûòü max äâå øòóêÀ.
+		else // простые параметры. Их может быть max две штукА.
 		{
 			if (CntDestName < 2)
 			{
@@ -492,15 +492,15 @@ int FarAppMain(int argc, char **argv)
 		}
 	}
 
-	//Íàñòðîéêà OEM ñîðòèðîâêè. Äîëæíà áûòü ïîñëå CopyGlobalSettings è ïåðåä InitKeysArray!
+	//Настройка OEM сортировки. Должна быть после CopyGlobalSettings и перед InitKeysArray!
 	//LocalUpperInit();
 	//InitLCIDSort();
-	//Èíèöèàëèçàöèÿ ìàññèâà êëàâèø. Äîëæíà áûòü ïîñëå CopyGlobalSettings!
+	//Инициализация массива клавиш. Должна быть после CopyGlobalSettings!
 	InitKeysArray();
 	//WaitForInputIdle(GetCurrentProcess(),0);
 	std::set_new_handler(nullptr);
 
-	if (!Opt.LoadPlug.MainPluginDir) //åñëè åñòü êëþ÷ /p òî îí îòìåíÿåò /co
+	if (!Opt.LoadPlug.MainPluginDir) //если есть ключ /p то он отменяет /co
 		Opt.LoadPlug.PluginsCacheOnly=FALSE;
 
 	if (Opt.LoadPlug.PluginsCacheOnly)
@@ -531,7 +531,7 @@ int FarAppMain(int argc, char **argv)
 		}
 		Console.Write(LngMsg,StrLength(LngMsg));
 		Console.FlushInputBuffer();
-		WaitKey(); // À ñòîèò ëè îæèäàòü êëàâèøó??? Ñòîèò
+		WaitKey(); // А стоит ли ожидать клавишу??? Стоит
 		return 1;
 	}
 
@@ -565,24 +565,24 @@ int _cdecl main(int Argc, char *Argv[])
 
 
 /* $ 03.08.2000 SVS
-  ! Íå ñðàáàòûâàë øàáëîí ïîèñêà ôàéëîâ äëÿ ïîä-þçåðîâ
+  ! Не срабатывал шаблон поиска файлов для под-юзеров
 */
 void CopyGlobalSettings()
 {
-	if (CheckRegKey(L"")) // ïðè ñóùåñòâóþùåì - âûâàëèâàåìñÿ
+	if (CheckRegKey(L"")) // при существующем - вываливаемся
 		return;
 
-	// òàêîãî èçâåðà íåòó - ïåðåíåñåì äàííûå!
+	// такого извера нету - перенесем данные!
 	SetRegRootKey(HKEY_LOCAL_MACHINE);
 	CopyKeyTree(L"Software/Far2",Opt.strRegRoot,L"Software/Far2/Users\0");
 	SetRegRootKey(HKEY_CURRENT_USER);
 	CopyKeyTree(L"Software/Far2",Opt.strRegRoot,L"Software/Far2/Users/Software/Far2/PluginsCache\0");
-	//  "Âñïîìíèì" ïóòü ïî øàáëîíó!!!
+	//  "Вспомним" путь по шаблону!!!
 	SetRegRootKey(HKEY_LOCAL_MACHINE);
 	GetRegKey(L"System",L"TemplatePluginsPath",Opt.LoadPlug.strPersonalPluginsPath,L"");
-	// óäàëèì!!!
+	// удалим!!!
 	DeleteRegKey(L"System");
-	// çàïèøåì íîâîå çíà÷åíèå!
+	// запишем новое значение!
 	SetRegRootKey(HKEY_CURRENT_USER);
 	SetRegKey(L"System",L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath);
 }

@@ -3,7 +3,7 @@
 /*
 CriticalSections.hpp
 
-Êðèòè÷åñêèå ñåêöèè
+Критические секции
 */
 /*
 Copyright (c) 1996 Eugene Roshal

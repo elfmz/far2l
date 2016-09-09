@@ -1,7 +1,7 @@
 /*
 scrbuf.cpp
 
-Áóôåðèçàöèÿ âûâîäà íà ýêðàí, âåñü âûâîä èäåò ÷åðåç ýòîò áóôåð
+Буферизация вывода на экран, весь вывод идет через этот буфер
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -111,7 +111,7 @@ void ScreenBuf::AllocBuf(int X,int Y)
 	BufY=Y;
 }
 
-/* Çàïîëíåíèå âèðòóàëüíîãî áóôåðà çíà÷åíèåì èç êîíñîëè.
+/* Заполнение виртуального буфера значением из консоли.
 */
 void ScreenBuf::FillBuf()
 {
@@ -127,7 +127,7 @@ void ScreenBuf::FillBuf()
 	CurY=CursorPosition.Y;
 }
 
-/* Çàïèñàòü Text â âèðòóàëüíûé áóôåð
+/* Записать Text в виртуальный буфер
 */
 void ScreenBuf::Write(int X,int Y,const CHAR_INFO *Text,int TextLength)
 {
@@ -166,7 +166,7 @@ void ScreenBuf::Write(int X,int Y,const CHAR_INFO *Text,int TextLength)
 }
 
 
-/* ×èòàòü áëîê èç âèðòóàëüíîãî áóôåðà.
+/* Читать блок из виртуального буфера.
 */
 void ScreenBuf::Read(int X1,int Y1,int X2,int Y2,CHAR_INFO *Text,int MaxTextLength)
 {
@@ -179,8 +179,8 @@ void ScreenBuf::Read(int X1,int Y1,int X2,int Y2,CHAR_INFO *Text,int MaxTextLeng
 		memcpy(Text+Idx,Buf+(Y1+I)*BufX+X1,Min((int)sizeof(CHAR_INFO)*Width,(int)MaxTextLength));
 }
 
-/* Èçìåíèòü çíà÷åíèå öâåòîâûõ àòðèáóòîâ â ñîîòâåòñòâèè ñ ìàñêîé
-   (â îñíîâíîì ïðèìåíÿåòñÿ äëÿ "ñîçäàíèÿ" òåíè)
+/* Изменить значение цветовых атрибутов в соответствии с маской
+   (в основном применяется для "создания" тени)
 */
 void ScreenBuf::ApplyColorMask(int X1,int Y1,int X2,int Y2,WORD ColorMask)
 {
@@ -210,7 +210,7 @@ void ScreenBuf::ApplyColorMask(int X1,int Y1,int X2,int Y2,WORD ColorMask)
 #endif
 }
 
-/* Íåïîñðåäñòâåííîå èçìåíåíèå öâåòîâûõ àòðèáóòîâ
+/* Непосредственное изменение цветовых атрибутов
 */
 void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,WORD Color)
 {
@@ -247,7 +247,7 @@ void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,WORD Color)
 	}
 }
 
-/* Íåïîñðåäñòâåííîå èçìåíåíèå öâåòîâûõ àòðèáóòîâ ñ çàäàíûì öåòîì èñêëþ÷åíèåì
+/* Непосредственное изменение цветовых атрибутов с заданым цетом исключением
 */
 void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,int Color,WORD ExceptColor)
 {
@@ -279,7 +279,7 @@ void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,int Color,WORD ExceptColo
 	}
 }
 
-/* Çàêðàñèòü ïðÿìîóãîëüíèê ñèìâîëîì Ch è öâåòîì Color
+/* Закрасить прямоугольник символом Ch и цветом Color
 */
 void ScreenBuf::FillRect(int X1,int Y1,int X2,int Y2,WCHAR Ch,WORD Color)
 {
@@ -308,7 +308,7 @@ void ScreenBuf::FillRect(int X1,int Y1,int X2,int Y2,WCHAR Ch,WORD Color)
 #endif
 }
 
-/* "Ñáðîñèòü" âèðòóàëüíûé áóôåð íà êîíñîëü
+/* "Сбросить" виртуальный буфер на консоль
 */
 void ScreenBuf::Flush()
 {
@@ -358,8 +358,8 @@ void ScreenBuf::Flush()
 
 				if (Opt.ClearType)
 				{
-					//Äëÿ ïîëíîãî èçáàâëåíèÿ îò àðòåôàêòîâ ClearType áóäåì ïåðåðèñîâûâàòü íà âñþ øèðèíó.
-					//×ðåâàòî òîðìîçàìè/ìèãàíèåì â çàâèñèìîñòè îò êîíôèãóðàöèè ñèñòåìû.
+					//Для полного избавления от артефактов ClearType будем перерисовывать на всю ширину.
+					//Чревато тормозами/миганием в зависимости от конфигурации системы.
 					SMALL_RECT WriteRegion={0,0,(SHORT)(BufX-1),0};
 
 					for (SHORT I=0; I<BufY; I++, PtrBuf+=BufX, PtrShadow+=BufX)
@@ -402,10 +402,10 @@ void ScreenBuf::Flush()
 							}
 							else if (Started && I>WriteRegion.Bottom && J>=WriteRegion.Left)
 							{
-								//BUGBUG: ïðè âêëþ÷åííîì ÑlearType-ñãëàæèâàíèè íà ýêðàíå îñòà¸òñÿ "ìóñîð" - òîíêèå âåðòèêàëüíûå ïîëîñû
-								// êñòàòè, è ïðè âûêëþ÷åííîì òîæå (íî ðåæå).
-								// áàã, êîíå÷íî, íå íàø, íî ÷òî äåëàòü.
-								// ðàñøèðÿåì îáëàñòü ïðîðèñîâêè âëåâî-âïðàâî íà 1 ñèìâîë:
+								//BUGBUG: при включенном СlearType-сглаживании на экране остаётся "мусор" - тонкие вертикальные полосы
+								// кстати, и при выключенном тоже (но реже).
+								// баг, конечно, не наш, но что делать.
+								// расширяем область прорисовки влево-вправо на 1 символ:
 								WriteRegion.Left=Max(static_cast<SHORT>(0),static_cast<SHORT>(WriteRegion.Left-1));
 								WriteRegion.Right=Min(static_cast<SHORT>(WriteRegion.Right+1),static_cast<SHORT>(BufX-1));
 								bool Merge=false;
@@ -537,8 +537,8 @@ void ScreenBuf::GetCursorPos(SHORT& X,SHORT& Y)
 void ScreenBuf::SetCursorType(bool Visible, DWORD Size)
 {
 	/* $ 09.01.2001 SVS
-	   Ïî íàâîäêå ER - â SetCursorType íå äåðãàòü ðàíüøå
-	   âðåìåíè óñòàíîâêó êóðñîðà
+	   По наводке ER - в SetCursorType не дергать раньше
+	   времени установку курсора
 	*/
 	if (CurVisible!=Visible || CurSize!=Size)
 	{
@@ -573,7 +573,7 @@ void ScreenBuf::RestoreElevationChar()
 	}
 }
 
-//  ïðîñêðîëëèðîâàòü áóôôåð íà îäíó ñòðîêó ââåðõ.
+//  проскроллировать буффер на одну строку вверх.
 void ScreenBuf::Scroll(int Num)
 {
 	CriticalSectionLock Lock(CS);

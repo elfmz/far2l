@@ -1,7 +1,7 @@
 /*
 plugins.cpp
 
-Ðàáîòà ñ ïëàãèíàìè (íèçêèé óðîâåíü, êîå-÷òî ïîâûøå â flplugin.cpp)
+Работа с плагинами (низкий уровень, кое-что повыше в flplugin.cpp)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -306,9 +306,9 @@ int PluginManager::UnloadPlugin(Plugin *pPlugin, DWORD dwException, bool bRemove
 {
 	int nResult = FALSE;
 
-	if (pPlugin && (dwException != EXCEPT_EXITFAR))   //ñõèòðèì, åñëè óïàëè â EXITFAR, íå ïîëåçåì â ðåêóðñèþ, ìû è òàê â Unload
+	if (pPlugin && (dwException != EXCEPT_EXITFAR))   //схитрим, если упали в EXITFAR, не полезем в рекурсию, мы и так в Unload
 	{
-		//êàêèå-òî íåïîíÿòíûå äåéñòâèÿ...
+		//какие-то непонятные действия...
 		CurPluginItem=nullptr;
 		Frame *frame;
 
@@ -349,7 +349,7 @@ int PluginManager::UnloadPlugin(Plugin *pPlugin, DWORD dwException, bool bRemove
 
 int PluginManager::UnloadPluginExternal(const wchar_t *lpwszModuleName)
 {
-//BUGBUG íóæíû ïðîâåðêè íà ëåãàëüíîñòü âûãðóçêè
+//BUGBUG нужны проверки на легальность выгрузки
 	int nResult = FALSE;
 	Plugin *pPlugin = GetPlugin(lpwszModuleName);
 
@@ -396,23 +396,23 @@ void PluginManager::LoadPlugins()
 	else if (Opt.LoadPlug.MainPluginDir || !Opt.LoadPlug.strCustomPluginsPath.IsEmpty() || (Opt.LoadPlug.PluginsPersonal && !Opt.LoadPlug.strPersonalPluginsPath.IsEmpty()))
 	{
 		ScanTree ScTree(FALSE,TRUE,Opt.LoadPlug.ScanSymlinks);
-		UserDefinedList PluginPathList;  // õðàíåíèå ñïèñêà êàòàëîãîâ
+		UserDefinedList PluginPathList;  // хранение списка каталогов
 		FARString strPluginsDir;
 		FARString strFullName;
 		FAR_FIND_DATA_EX FindData;
 		PluginPathList.SetParameters(0,0,ULF_UNIQUE);
 
-		// ñíà÷àëà ïîäãîòîâèì ñïèñîê
-		if (Opt.LoadPlug.MainPluginDir) // òîëüêî îñíîâíûå è ïåðñîíàëüíûå?
+		// сначала подготовим список
+		if (Opt.LoadPlug.MainPluginDir) // только основные и персональные?
 		{
 			strPluginsDir=g_strFarPath+PluginsFolderName;
 			PluginPathList.AddItem(strPluginsDir);
 
-			// ...à ïåðñîíàëüíûå åñòü?
+			// ...а персональные есть?
 			if (Opt.LoadPlug.PluginsPersonal && !Opt.LoadPlug.strPersonalPluginsPath.IsEmpty() && !(Opt.Policies.DisabledOptions&FFPOL_PERSONALPATH))
 				PluginPathList.AddItem(Opt.LoadPlug.strPersonalPluginsPath);
 		}
-		else if (!Opt.LoadPlug.strCustomPluginsPath.IsEmpty())  // òîëüêî "çàêàçíûå" ïóòè?
+		else if (!Opt.LoadPlug.strCustomPluginsPath.IsEmpty())  // только "заказные" пути?
 		{
 			PluginPathList.AddItem(Opt.LoadPlug.strCustomPluginsPath);
 		}
@@ -420,12 +420,12 @@ void PluginManager::LoadPlugins()
 		const wchar_t *NamePtr;
 		PluginPathList.Reset();
 
-		// òåïåðü ïðîéäåìñÿ ïî âñåìó ðàíåå ñîáðàííîìó ñïèñêó
+		// теперь пройдемся по всему ранее собранному списку
 		while (nullptr!=(NamePtr=PluginPathList.GetNext()))
 		{
-			// ðàñøèðÿåì çíà÷åíèå ïóòè
+			// расширяем значение пути
 			apiExpandEnvironmentStrings(NamePtr,strFullName);
-			Unquote(strFullName); //??? çäåñü ÕÇ
+			Unquote(strFullName); //??? здесь ХЗ
 
 			if (!IsAbsolutePath(strFullName))
 			{
@@ -434,17 +434,17 @@ void PluginManager::LoadPlugins()
 				strFullName = strPluginsDir;
 			}
 
-			// Ïîëó÷èì ðåàëüíîå çíà÷åíèå ïîëíîãî äëèííîãî ïóòè
+			// Получим реальное значение полного длинного пути
 			ConvertNameToFull(strFullName,strFullName);
 			strPluginsDir = strFullName;
 
-			if (strPluginsDir.IsEmpty())  // Õìì... à íóæíî ëè ÝÒÎ óñëîâèå ïîñëå òàêîé ìîäåðíèçàöèè àëãîðèòìà çàãðóçêè?
+			if (strPluginsDir.IsEmpty())  // Хмм... а нужно ли ЭТО условие после такой модернизации алгоритма загрузки?
 				continue;
 
-			// ñòàâèì íà ïîòîê î÷åðåäíîé ïóòü èç ñïèñêà...
+			// ставим на поток очередной путь из списка...
 			ScTree.SetFindPath(strPluginsDir,L"*");
 
-			// ...è ïðîéäåìñÿ ïî íåìó
+			// ...и пройдемся по нему
 			while (ScTree.GetNextName(&FindData,strFullName))
 			{
 				if (CmpName(L"*.far-plug-*",FindData.strFileName,false) && !(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -620,7 +620,7 @@ HANDLE PluginManager::OpenFilePlugin(
 
 			hPlugin = pPlugin->OpenFilePlugin(Name, Data, DataSize, OpMode);
 
-			if (hPlugin == (HANDLE)-2)   //ñðàçó íà âûõîä, ïëàãèí ðåøèë íàãëî îáðàáîòàòü âñå ñàì (Autorun/PictureView)!!!
+			if (hPlugin == (HANDLE)-2)   //сразу на выход, плагин решил нагло обработать все сам (Autorun/PictureView)!!!
 			{
 				hResult = (HANDLE)-2;
 				break;
@@ -1150,7 +1150,7 @@ void PluginManager::GetOpenPluginInfo(
 	PluginHandle *ph = (PluginHandle*)hPlugin;
 	ph->pPlugin->GetOpenPluginInfo(ph->hPlugin, Info);
 
-	if (!Info->CurDir)  //õìì...
+	if (!Info->CurDir)  //хмм...
 		Info->CurDir = L"";
 
 	if ((Info->Flags & OPIF_REALNAMES) && (CtrlObject->Cp()->ActivePanel->GetPluginHandle() == hPlugin) && *Info->CurDir && !IsNetworkServerPath(Info->CurDir))
@@ -1220,12 +1220,12 @@ struct PluginMenuItemData
 };
 
 /* $ 29.05.2001 IS
-   ! Ïðè íàñòðîéêå "ïàðàìåòðîâ âíåøíèõ ìîäóëåé" çàêðûâàòü îêíî ñ èõ
-     ñïèñêîì òîëüêî ïðè íàæàòèè íà ESC
+   ! При настройке "параметров внешних модулей" закрывать окно с их
+     списком только при нажатии на ESC
 */
 void PluginManager::Configure(int StartPos)
 {
-	// Ïîëèöèÿ 4 - Ïàðàìåòðû âíåøíèõ ìîäóëåé
+	// Полиция 4 - Параметры внешних модулей
 	if (Opt.Policies.DisabledOptions&FFPOL_MAINMENUPLUGINS)
 		return;
 
@@ -1501,7 +1501,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 				switch (Key)
 				{
 					case KEY_SHIFTF1:
-						// Âûçûâàåì íóæíûé òîïèê, êîòîðûé ïåðåäàëè â CommandsMenu()
+						// Вызываем нужный топик, который передали в CommandsMenu()
 						FarShowHelp(item->pPlugin->GetModuleName(),HistoryName,FHELP_SELFHELP|FHELP_NOSHOWERROR|FHELP_USECONTENTS);
 						break;
 					case KEY_ALTF11:
@@ -1663,13 +1663,13 @@ void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const wchar
 }
 
 bool PluginManager::SetHotKeyDialog(
-    const wchar_t *DlgPluginTitle,  // èìÿ ïëàãèíà
-    const wchar_t *RegKey,          // êëþ÷, îòêóäà áåðåì çíà÷åíèå
-    const wchar_t *RegValueName     // íàçâàíèå ïàðàìåòðà èç ðååñòðà
+    const wchar_t *DlgPluginTitle,  // имя плагина
+    const wchar_t *RegKey,          // ключ, откуда берем значение
+    const wchar_t *RegValueName     // название параметра из реестра
 )
 {
 	/*
-	ã================ Assign plugin hot key =================¬
+	г================ Assign plugin hot key =================¬
 	¦ Enter hot key (letter or digit)                        ¦
 	¦ _                                                      ¦
 	L========================================================-
@@ -1989,8 +1989,8 @@ void PluginManager::ReadUserBackgound(SaveScreen *SaveScr)
 
 
 /* $ 27.09.2000 SVS
-  Ôóíêöèÿ CallPlugin - íàéòè ïëàãèí ïî ID è çàïóñòèòü
-  â çà÷àòî÷íîì ñîñòîÿíèè!
+  Функция CallPlugin - найти плагин по ID и запустить
+  в зачаточном состоянии!
 */
 int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 {
@@ -2024,8 +2024,8 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 					SetDirectory(hNewPlugin,(const wchar_t *)Data,0);
 
 				/* $ 04.04.2001 SVS
-					Êîä çàêîììåíòèðîâàí! Ïîïûòêà èñêëþ÷èòü íåíóæíûå âûçîâû â CallPlugin()
-					Åñëè ÷òî-òî íå òàê - ðàñêîììåíòèðîâàòü!!!
+					Код закомментирован! Попытка исключить ненужные вызовы в CallPlugin()
+					Если что-то не так - раскомментировать!!!
 				*/
 				//NewPanel->Update(0);
 				//NewPanel->Show();
@@ -2046,7 +2046,7 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 
 Plugin *PluginManager::FindPlugin(DWORD SysID)
 {
-	if (SysID  && SysID != 0xFFFFFFFFUl) // íå äîïóñêàåòñÿ 0 è -1
+	if (SysID  && SysID != 0xFFFFFFFFUl) // не допускается 0 и -1
 	{
 		Plugin *PData;
 

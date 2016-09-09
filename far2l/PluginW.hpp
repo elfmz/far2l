@@ -61,7 +61,7 @@ typedef int (WINAPI *PLUGINPUTFILESW)(HANDLE hPlugin,PluginPanelItem *PanelItem,
 typedef int (WINAPI *PLUGINSETDIRECTORYW)(HANDLE hPlugin,const wchar_t *Dir,int OpMode);
 typedef int (WINAPI *PLUGINSETFINDLISTW)(HANDLE hPlugin,const PluginPanelItem *PanelItem,int ItemsNumber);
 typedef void (WINAPI *PLUGINSETSTARTUPINFOW)(const PluginStartupInfo *Info);
-typedef int (WINAPI *PLUGINPROCESSVIEWEREVENTW)(int Event,void *Param); //* $ 27.09.2000 SVS -  Ñîáûòèÿ âî âüþâåðå
+typedef int (WINAPI *PLUGINPROCESSVIEWEREVENTW)(int Event,void *Param); //* $ 27.09.2000 SVS -  События во вьювере
 typedef int (WINAPI *PLUGINPROCESSDIALOGEVENTW)(int Event,void *Param);
 typedef int (WINAPI *PLUGINPROCESSSYNCHROEVENTW)(int Event,void *Param);
 #if defined(PROCPLUGINMACROFUNC)
@@ -81,15 +81,15 @@ class PluginW: public Plugin
 		FARString m_strModuleName;
 		FARString m_strCacheName;
 
-		BitFlags WorkFlags;      // ðàáî÷èå ôëàãè òåêóùåãî ïëàãèíà
-		BitFlags FuncFlags;      // áèòîâûå ìàñêè âûçîâà ýêñï.ôóíêöèé ïëàãèíà
+		BitFlags WorkFlags;      // рабочие флаги текущего плагина
+		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
 
 		HMODULE m_hModule;
 		Language Lang;
 
 		/* $ 21.09.2000 SVS
-		   ïîëå - ñèñòåìíûé èäåíòèôèêàòîð ïëàãèíà
-		   Ïëàãèí äîëæåí ñàì çàäàâàòü, íàïðèìåð äëÿ
+		   поле - системный идентификатор плагина
+		   Плагин должен сам задавать, например для
 		   Network      = 0x5774654E (NetW)
 		   PrintManager = 0x6E614D50 (PMan)  SYSID_PRINTMANAGER
 		*/

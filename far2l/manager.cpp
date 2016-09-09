@@ -1,7 +1,7 @@
 /*
 manager.cpp
 
-Ïåðåêëþ÷åíèå ìåæäó íåñêîëüêèìè file panels, viewers, editors, dialogs
+Переключение между несколькими file panels, viewers, editors, dialogs
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -97,9 +97,9 @@ Manager::~Manager()
 
 
 /* $ 29.12.2000 IS
-  Àíàëîã CloseAll, íî ðàçðåøàåò ïðîäîëæåíèå ïîëíîöåííîé ðàáîòû â ôàðå,
-  åñëè ïîëüçîâàòåëü ïðîäîëæèë ðåäàêòèðîâàòü ôàéë.
-  Âîçâðàùàåò TRUE, åñëè âñå çàêðûëè è ìîæíî âûõîäèòü èç ôàðà.
+  Аналог CloseAll, но разрешает продолжение полноценной работы в фаре,
+  если пользователь продолжил редактировать файл.
+  Возвращает TRUE, если все закрыли и можно выходить из фара.
 */
 BOOL Manager::ExitAll()
 {
@@ -259,7 +259,7 @@ void Manager::ExecuteNonModal()
 	}
 
 	/* $ 14.05.2002 SKV
-	  Ïîëîæèì òåêóùèé ôðýéì â ñïèñîê "ðîäèòåëåé" ïîëóìîäàëüíûõ ôðýéìîâ
+	  Положим текущий фрэйм в список "родителей" полумодальных фрэймов
 	*/
 	//Frame *SaveFrame=CurrentFrame;
 	//AddSemiModalBackFrame(SaveFrame);
@@ -292,7 +292,7 @@ void Manager::ExecuteNonModal()
 
 	//ExecuteModal(NonModal);
 	/* $ 14.05.2002 SKV
-	  ... è óáåð¸ì åãî æå.
+	  ... и уберём его же.
 	*/
 	//RemoveSemiModalBackFrame(SaveFrame);
 }
@@ -311,8 +311,8 @@ void Manager::ExecuteModal(Frame *Executed)
 	{
 		if (ExecutedFrame)
 		{
-			_MANAGER(SysLog(L"WARNING! Ïîïûòêà â îäíîì öèêëå çàïóñòèòü â ìîäàëüíîì ðåæèìå äâà ôðåéìà. Executed=%p, ExecitedFrame=%p",Executed, ExecutedFrame));
-			return;// nullptr; //?? Îïðåäåëèòü, êàêîå çíà÷åíèå ïðàâèëüíî âîçâðàùàòü â ýòîì ñëó÷àå
+			_MANAGER(SysLog(L"WARNING! Попытка в одном цикле запустить в модальном режиме два фрейма. Executed=%p, ExecitedFrame=%p",Executed, ExecutedFrame));
+			return;// nullptr; //?? Определить, какое значение правильно возвращать в этом случае
 		}
 		else
 		{
@@ -346,7 +346,7 @@ int Manager::GetModalExitCode()
 }
 
 /* $ 11.10.2001 IS
-   Ïîäñ÷èòàòü êîëè÷åñòâî ôðåéìîâ ñ óêàçàííûì èìåíåì.
+   Подсчитать количество фреймов с указанным именем.
 */
 int Manager::CountFramesWithName(const wchar_t *Name, BOOL IgnoreCase)
 {
@@ -366,16 +366,16 @@ int Manager::CountFramesWithName(const wchar_t *Name, BOOL IgnoreCase)
 }
 
 /*!
-  \return Âîçâðàùàåò nullptr åñëè íàæàò "îòêàç" èëè åñëè íàæàò òåêóùèé ôðåéì.
-  Äðóãèìè ñëîâàìè, åñëè íåìîäàëüíûé ôðåéì íå ïîìåíÿëñÿ.
-  Åñëè æå ôðåéì ïîìåíÿëñÿ, òî òîãäà ôóíêöèÿ äîëæíà âîçâðàòèòü
-  óêàçàòåëü íà ïðåäûäóùèé ôðåéì.
+  \return Возвращает nullptr если нажат "отказ" или если нажат текущий фрейм.
+  Другими словами, если немодальный фрейм не поменялся.
+  Если же фрейм поменялся, то тогда функция должна возвратить
+  указатель на предыдущий фрейм.
 */
 Frame *Manager::FrameMenu()
 {
 	/* $ 28.04.2002 KM
-	    Ôëàã äëÿ îïðåäåëåíèÿ òîãî, ÷òî ìåíþ ïåðåêëþ÷åíèÿ
-	    ýêðàíîâ óæå àêòèâèðîâàíî.
+	    Флаг для определения того, что меню переключения
+	    экранов уже активировано.
 	*/
 	static int AlreadyShown=FALSE;
 
@@ -408,7 +408,7 @@ Frame *Manager::FrameMenu()
 
 			//TruncPathStr(strName,ScrX-24);
 			ReplaceStrings(strName,L"&",L"&&",-1);
-			/*  äîáàâëÿåòñÿ "*" åñëè ôàéë èçìåíåí */
+			/*  добавляется "*" если файл изменен */
 			ModalMenuItem.strName.Format(L"%ls%-10.10ls %lc %ls", strNumText.CPtr(), strType.CPtr(),(FrameList[I]->IsFileModified()?L'*':L' '), strName.CPtr());
 			ModalMenuItem.SetSelect(I==FramePos);
 			ModalMenu.AddItem(&ModalMenuItem);
@@ -442,7 +442,7 @@ int Manager::GetFrameCountByType(int Type)
 	for (int I=0; I<FrameCount; I++)
 	{
 		/* $ 10.05.2001 DJ
-		   íå ó÷èòûâàåì ôðåéì, êîòîðûé ñîáèðàåìñÿ óäàëÿòü
+		   не учитываем фрейм, который собираемся удалять
 		*/
 		if (FrameList[I] == DeletedFrame || (unsigned int)FrameList [I]->GetExitCode() == XC_QUIT)
 			continue;
@@ -461,7 +461,7 @@ void Manager::SetFramePos(int NewPos)
 	FramePos=NewPos;
 }
 
-/*$ 11.05.2001 OT Òåïåðü ìîæíî èñêàòü ôàéë íå òîëüêî ïî ïîëíîìó èìåíè, íî è îòäåëüíî - ïóòü, îòäåëüíî èìÿ */
+/*$ 11.05.2001 OT Теперь можно искать файл не только по полному имени, но и отдельно - путь, отдельно имя */
 int  Manager::FindFrameByFile(int ModalType,const wchar_t *FileName, const wchar_t *Dir)
 {
 	FARString strBufFileName;
@@ -479,7 +479,7 @@ int  Manager::FindFrameByFile(int ModalType,const wchar_t *FileName, const wchar
 	{
 		FARString strType, strName;
 
-		// Mantis#0000469 - ïîëó÷àòü Name áóäåì òîëüêî ïðè ñîâïàäåíèè ModalType
+		// Mantis#0000469 - получать Name будем только при совпадении ModalType
 		if (FrameList[I]->GetType()==ModalType)
 		{
 			FrameList[I]->GetTypeAndName(strType, strName);
@@ -611,14 +611,14 @@ void Manager::RefreshFrame(Frame *Refreshed)
 		return;
 
 	/* $ 13.04.2002 KM
-	  - Âûçûâàåì ïðèíóäèòåëüíûé Commit() äëÿ ôðåéìà èìåþùåãî ÷ëåíà
-	    NextModal, ýòî îçíà÷àåò ÷òî àêòèâíûì ñåé÷àñ ÿâëÿåòñÿ
-	    VMenu, à çíà÷èò Commit() ñàì íå áóäåò âûçâàí ïîñëå âîçâðàòà
-	    èç ôóíêöèè.
-	    Óñòðàíÿåò åù¸ îäèí ìîìåíò íåïåðåðèñîâêè, êîãäà îäèí íàä
-	    äðóãèì íàõîäèòñÿ íåñêîëüêî îáúåêòîâ VMenu. Ïðèìåð:
-	    íàñòðîéêà öâåòîâ. Òåïåðü AltF9 â äèàëîãå íàñòðîéêè
-	    öâåòîâ êîððåêòíî ïåðåðèñîâûâàåò ìåíþ.
+	  - Вызываем принудительный Commit() для фрейма имеющего члена
+	    NextModal, это означает что активным сейчас является
+	    VMenu, а значит Commit() сам не будет вызван после возврата
+	    из функции.
+	    Устраняет ещё один момент неперерисовки, когда один над
+	    другим находится несколько объектов VMenu. Пример:
+	    настройка цветов. Теперь AltF9 в диалоге настройки
+	    цветов корректно перерисовывает меню.
 	*/
 	if (RefreshedFrame && RefreshedFrame->NextModal)
 		Commit();
@@ -640,7 +640,7 @@ void Manager::ExecuteFrame(Frame *Executed)
 
 
 /* $ 10.05.2001 DJ
-   ïåðåêëþ÷àåòñÿ íà ïàíåëè (ôðåéì ñ íîìåðîì 0)
+   переключается на панели (фрейм с номером 0)
 */
 
 void Manager::SwitchToPanels()
@@ -695,7 +695,7 @@ void Manager::ProcessMainLoop()
 	}
 	else
 	{
-		// Mantis#0000073: Íå ðàáîòàåò àâòîñêðîëèíã â QView
+		// Mantis#0000073: Не работает автоскролинг в QView
 		WaitInMainLoop=IsPanelsActive() && ((FilePanels*)CurrentFrame)->ActivePanel->GetType()!=QVIEW_PANEL;
 		//WaitInFastFind++;
 		int Key=GetInputRecord(&LastInputRecord);
@@ -707,7 +707,7 @@ void Manager::ProcessMainLoop()
 
 		if (LastInputRecord.EventType==MOUSE_EVENT)
 		{
-				// èñïîëüçóåì êîïèþ ñòðóêòóðû, ò.ê. LastInputRecord ìîæåò âíåçàïíî èçìåíèòüñÿ âî âðåìÿ âûïîëíåíèÿ ProcessMouse
+				// используем копию структуры, т.к. LastInputRecord может внезапно измениться во время выполнения ProcessMouse
 				MOUSE_EVENT_RECORD mer=LastInputRecord.Event.MouseEvent;
 				ProcessMouse(&mer);
 		}
@@ -727,13 +727,13 @@ void Manager::ExitMainLoop(int Ask)
 	if (!Ask || !Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo)))
 	{
 		/* $ 29.12.2000 IS
-		   + Ïðîâåðÿåì, ñîõðàíåíû ëè âñå èçìåíåííûå ôàéëû. Åñëè íåò, òî íå âûõîäèì
-		     èç ôàðà.
+		   + Проверяем, сохранены ли все измененные файлы. Если нет, то не выходим
+		     из фара.
 		*/
 		if (ExitAll())
 		{
-			//TODO: ïðè çàêðûòèè ïî x íóæíî äåëàòü ôîðñèðîâàííûé âûõîä. Èíà÷å ìîãóò áûòü
-			//      ãëþêè, íàïðèìåð, ïðè ïåðåçàãðóçêå
+			//TODO: при закрытии по x нужно делать форсированный выход. Иначе могут быть
+			//      глюки, например, при перезагрузке
 			FilePanels *cp;
 
 			if (!(cp = CtrlObject->Cp())
@@ -764,7 +764,7 @@ extern "C" void __setReg(int, uint64_t);
 #endif
 static void Test_EXCEPTION_STACK_OVERFLOW(char* target)
 {
-	char Buffer[1024]; /* ÷òîáû áûñòðåå ðâàíóëî */
+	char Buffer[1024]; /* чтобы быстрее рвануло */
 	strcpy(Buffer, "zzzz");
 	Test_EXCEPTION_STACK_OVERFLOW(Buffer);
 }
@@ -782,7 +782,7 @@ int Manager::ProcessKey(DWORD Key)
 	{
 		DWORD KeyM=(Key&(~KEY_CTRLMASK));
 
-		if (!((KeyM >= KEY_MACRO_BASE && KeyM <= KEY_MACRO_ENDBASE) || (KeyM >= KEY_OP_BASE && KeyM <= KEY_OP_ENDBASE))) // ïðîïóñòèì ìàêðî-êîäû
+		if (!((KeyM >= KEY_MACRO_BASE && KeyM <= KEY_MACRO_ENDBASE) || (KeyM >= KEY_OP_BASE && KeyM <= KEY_OP_ENDBASE))) // пропустим макро-коды
 		{
 			switch (CurrentFrame->GetType())
 			{
@@ -820,7 +820,7 @@ int Manager::ProcessKey(DWORD Key)
 #if 0
 #if defined(FAR_ALPHA_VERSION)
 
-// ñåé êîä äëÿ ïðîâåðêè èñêëþ÷àòîð, ïðîñüáà íå òðîãàòü :-)
+// сей код для проверки исключатор, просьба не трогать :-)
 		if (Key == (KEY_APPS|KEY_CTRL|KEY_ALT) && GetRegKey(L"System/Exception",L"Used",0))
 		{
 			struct __ECODE
@@ -933,9 +933,9 @@ int Manager::ProcessKey(DWORD Key)
 
 #endif
 #endif
-		/*** ÁËÎÊ ÏÐÈÂÅËÅÃÈÐÎÂÀÍÍÛÕ ÊËÀÂÈØ ! ***/
+		/*** БЛОК ПРИВЕЛЕГИРОВАННЫХ КЛАВИШ ! ***/
 
-		/***   ÊÎÒÎÐÛÅ ÍÅËÜÇß ÍÀÌÀÊÐÎÑÈÒÜ    ***/
+		/***   КОТОРЫЕ НЕЛЬЗЯ НАМАКРОСИТЬ    ***/
 		switch (Key)
 		{
 			case KEY_ALT|KEY_NUMPAD0:
@@ -950,13 +950,13 @@ int Manager::ProcessKey(DWORD Key)
 				return TRUE;
 		}
 
-		/*** À âîò çäåñü - âñå îñòàëüíîå! ***/
+		/*** А вот здесь - все остальное! ***/
 		if (!IsProcessAssignMacroKey)
-			// â ëþáîì ñëó÷àå åñëè êîìó-òî íåíóæíû âñå êëàâèøè èëè
+			// в любом случае если кому-то ненужны все клавиши или
 		{
 			switch (Key)
 			{
-				// <Óäàëèòü ïîñëå ïîÿâëåíèÿ ìàêðîôóíêöèè Scroll>
+				// <Удалить после появления макрофункции Scroll>
 				case KEY_CTRLALTUP:
 					if(Opt.WindowMode)
 					{
@@ -1004,7 +1004,7 @@ int Manager::ProcessKey(DWORD Key)
 						return TRUE;
 					}
 					break;
-				// </Óäàëèòü ïîñëå ïîÿâëåíèÿ ìàêðîôóíêöèè Scroll>
+				// </Удалить после появления макрофункции Scroll>
 
 				case KEY_CTRLW:
 					ShowProcessList();
@@ -1021,11 +1021,11 @@ int Manager::ProcessKey(DWORD Key)
 					SetVideoMode();
 					WINPORT(Sleep)(10);
 
-					/* Â ïðîöåññå èñïîëíåíèÿ Alt-F9 (â íîðìàëüíîì ðåæèìå) â î÷åðåäü
-					   êîíñîëè ïîïàäàåò WINDOW_BUFFER_SIZE_EVENT, ôîðìèðóåòñÿ â
+					/* В процессе исполнения Alt-F9 (в нормальном режиме) в очередь
+					   консоли попадает WINDOW_BUFFER_SIZE_EVENT, формируется в
 					   ChangeVideoMode().
-					   Â ðåæèìå èñïîëíåíèÿ ìàêðîñîâ ÝÒÎ íå ïðîèñõîäèò ïî âïîëíå ïîíÿòíûì
-					   ïðè÷èíàì.
+					   В режиме исполнения макросов ЭТО не происходит по вполне понятным
+					   причинам.
 					*/
 					if (CtrlObject->Macro.IsExecuting())
 					{
@@ -1063,7 +1063,7 @@ int Manager::ProcessKey(DWORD Key)
 						return TRUE;
 					}
 
-					break; // îòäàäèì F12 äàëüøå ïî öåïî÷êå
+					break; // отдадим F12 дальше по цепочке
 				}
 
 				case KEY_CTRLALTSHIFTPRESS:
@@ -1149,7 +1149,7 @@ int Manager::ProcessKey(DWORD Key)
 
 int Manager::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
-	// Ïðè êàïòþðåííîé ìûøè îòäàåì óïðàâëåíèå çàäàííîìó îáúåêòó
+	// При каптюренной мыши отдаем управление заданному объекту
 //    if (ScreenObject::CaptureMouseObject)
 //      return ScreenObject::CaptureMouseObject->ProcessMouse(MouseEvent);
 	int ret=FALSE;
@@ -1171,9 +1171,9 @@ void Manager::PluginsMenu()
 	if (curType == MODALTYPE_PANELS || curType == MODALTYPE_EDITOR || curType == MODALTYPE_VIEWER || curType == MODALTYPE_DIALOG)
 	{
 		/* 02.01.2002 IS
-		   ! Âûâîä ïðàâèëüíîé ïîìîùè ïî Shift-F1 â ìåíþ ïëàãèíîâ â ðåäàêòîðå/âüþåðå/äèàëîãå
-		   ! Åñëè íà ïàíåëè QVIEW èëè INFO îòêðûò ôàéë, òî ñ÷èòàåì, ÷òî ýòî
-		     ïîëíîöåííûé âüþåð è çàïóñêàåì ñ ñîîòâåòñòâóþùèì ïàðàìåòðîì ïëàãèíû
+		   ! Вывод правильной помощи по Shift-F1 в меню плагинов в редакторе/вьюере/диалоге
+		   ! Если на панели QVIEW или INFO открыт файл, то считаем, что это
+		     полноценный вьюер и запускаем с соответствующим параметром плагины
 		*/
 		if (curType==MODALTYPE_PANELS)
 		{
@@ -1188,14 +1188,14 @@ void Manager::PluginsMenu()
 				{
 					DWORD Attr=apiGetFileAttributes(strCurFileName);
 
-					// èíòåðåñóþò òîëüêî îáû÷íûå ôàéëû
+					// интересуют только обычные файлы
 					if (Attr!=INVALID_FILE_ATTRIBUTES && !(Attr&FILE_ATTRIBUTE_DIRECTORY))
 						curType=MODALTYPE_VIEWER;
 				}
 			}
 		}
 
-		// â ðåäàêòîðå, âüþåðå èëè äèàëîãå ïîêàæåì ñâîþ ïîìîùü ïî Shift-F1
+		// в редакторе, вьюере или диалоге покажем свою помощь по Shift-F1
 		const wchar_t *Topic=curType==MODALTYPE_EDITOR?L"Editor":
 		                     curType==MODALTYPE_VIEWER?L"Viewer":
 		                     curType==MODALTYPE_DIALOG?L"Dialog":nullptr;
@@ -1336,7 +1336,7 @@ void Manager::DeactivateCommit()
 	_MANAGER(SysLog(L"DeactivatedFrame=%p",DeactivatedFrame));
 
 	/*$ 18.04.2002 skv
-	  Åñëè íå÷åãî àêòèâèðîâàòü, òî â îáùåì-òî íå íàäî è äåàêòèâèðîâàòü.
+	  Если нечего активировать, то в общем-то не надо и деактивировать.
 	*/
 	if (!DeactivatedFrame || !ActivatedFrame)
 	{
@@ -1358,7 +1358,7 @@ void Manager::DeactivateCommit()
 	if (-1 != modalIndex && modalIndex== ModalStackCount-1)
 	{
 		/*if (IsSemiModalBackFrame(ActivatedFrame))
-		{ // ßâëÿåòñÿ ëè "ðîäèòåëåì" ïîëóìîäàëüíîãî ôðýéìà?
+		{ // Является ли "родителем" полумодального фрэйма?
 		  ModalStackCount--;
 		}
 		else
@@ -1396,8 +1396,8 @@ void Manager::ActivateCommit()
 	}
 
 	/* 14.05.2002 SKV
-	  Åñëè ìû ïûòàåìñÿ àêòèâèðîâàòü ïîëóìîäàëüíûé ôðýéì,
-	  òî íàäî åãî âûòàùèò íà âåðõ ñòýêà ìîäàëîâ.
+	  Если мы пытаемся активировать полумодальный фрэйм,
+	  то надо его вытащит на верх стэка модалов.
 	*/
 
 	for (int I=0; I<ModalStackCount; I++)
@@ -1440,9 +1440,9 @@ void Manager::UpdateCommit()
 	}
 }
 
-//! Óäàëÿåò DeletedFrame èçî âñåõ î÷åðåäåé!
-//! Íàçíà÷àåò ñëåäóþùèé àêòèâíûé, (èñõîäÿ èç ñâîèõ ïðåäñòàâëåíèé)
-//! Íî òîëüêî â òîì ñëó÷àå, åñëè àêòèâíûé ôðåéì åùå íå íàçíà÷åí çàðàíåå.
+//! Удаляет DeletedFrame изо всех очередей!
+//! Назначает следующий активный, (исходя из своих представлений)
+//! Но только в том случае, если активный фрейм еще не назначен заранее.
 void Manager::DeleteCommit()
 {
 	_MANAGER(CleverSysLog clv(L"Manager::DeleteCommit()"));
@@ -1461,8 +1461,8 @@ void Manager::DeleteCommit()
 	if (ModalIndex!=-1)
 	{
 		/* $ 14.05.2002 SKV
-		  Íàä¸æíåå íàéòè è óäàëèòü èìåííî òî, ÷òî
-		  íóæíî, à íå ïðîñòî âåðõíèé.
+		  Надёжнее найти и удалить именно то, что
+		  нужно, а не просто верхний.
 		*/
 		for (int i=0; i<ModalStackCount; i++)
 		{
@@ -1521,10 +1521,10 @@ void Manager::DeleteCommit()
 	}
 
 	/* $ 14.05.2002 SKV
-	  Äîëãî íå ìîã ïîíÿòü, íóæåí âñ¸ æå ýòîò êîä èëè íåò.
-	  Íî âðîäå êàê íóæåí.
-	  SVS> Êîãäà ïîíàäîáèòñÿ - â íåêîòîðûõ ìåñòàõ ðàññêîììåíòèòü êóñêè êîäà
-	       ïîìå÷åííûå ñêîáêàìè <ifDoubleInstance>
+	  Долго не мог понять, нужен всё же этот код или нет.
+	  Но вроде как нужен.
+	  SVS> Когда понадобится - в некоторых местах расскомментить куски кода
+	       помеченные скобками <ifDoubleInstance>
 
 	if (ifDoubI && IsSemiModalBackFrame(ActivatedFrame)){
 	  for(int i=0;i<ModalStackCount;i++)
@@ -1554,16 +1554,16 @@ void Manager::DeleteCommit()
 			CurrentFrame=0;
 
 		/* $ 14.05.2002 SKV
-		  Òàê êàê â äåñòðóêòîðå ôðýéìà íåÿâíî ìîæåò áûòü
-		  âûçâàí commit, òî íàäî ïîäñòðàõîâàòüñÿ.
+		  Так как в деструкторе фрэйма неявно может быть
+		  вызван commit, то надо подстраховаться.
 		*/
 		Frame *tmp=DeletedFrame;
 		DeletedFrame=nullptr;
 		delete tmp;
 	}
 
-	// Ïîëàãàåìñÿ íà òî, ÷òî â ActevateFrame íå áóäåò ïåðåïèñàí óæå
-	// ïðèñâîåííûé  ActivatedFrame
+	// Полагаемся на то, что в ActevateFrame не будет переписан уже
+	// присвоенный  ActivatedFrame
 	if (ModalStackCount)
 	{
 		ActivateFrame(ModalStack[ModalStackCount-1]);
@@ -1651,33 +1651,33 @@ void Manager::ExecuteCommit()
 }
 
 /*$ 26.06.2001 SKV
-  Äëÿ âûçîâà èç ïëàãèíîâ ïîñðåäñòâîì ACTL_COMMIT
+  Для вызова из плагинов посредством ACTL_COMMIT
 */
 BOOL Manager::PluginCommit()
 {
 	return Commit();
 }
 
-/* $ Ââåäåíà äëÿ íóæä CtrlAltShift OT */
+/* $ Введена для нужд CtrlAltShift OT */
 void Manager::ImmediateHide()
 {
 	if (FramePos<0)
 		return;
 
-	// Ñíà÷àëà ïðîâåðÿåì, åñòü ëè ó ïðÿòûâàåìîãî ôðåéìà SaveScreen
+	// Сначала проверяем, есть ли у прятываемого фрейма SaveScreen
 	if (CurrentFrame->HasSaveScreen())
 	{
 		CurrentFrame->Hide();
 		return;
 	}
 
-	// Ôðåéìû ïåðåðèñîâûâàþòñÿ, çíà÷èò äëÿ íèæíèõ
-	// íå âûñòàâëÿåì çàãîëîâîê êîíñîëè, ÷òîáû íå ìåëüêàë.
+	// Фреймы перерисовываются, значит для нижних
+	// не выставляем заголовок консоли, чтобы не мелькал.
 	if (ModalStackCount>0)
 	{
 		/* $ 28.04.2002 KM
-		    Ïðîâåðèì, à íå ìîäàëüíûé ëè ðåäàêòîð èëè âüþâåð íà âåðøèíå
-		    ìîäàëüíîãî ñòåêà? È åñëè äà, ïîêàæåì User screen.
+		    Проверим, а не модальный ли редактор или вьювер на вершине
+		    модального стека? И если да, покажем User screen.
 		*/
 		if (ModalStack[ModalStackCount-1]->GetType()==MODALTYPE_EDITOR ||
 		        ModalStack[ModalStackCount-1]->GetType()==MODALTYPE_VIEWER)
@@ -1721,9 +1721,9 @@ void Manager::ImmediateHide()
 			}
 
 			/* $ 04.04.2002 KM
-			   Ïåðåðèñóåì çàãîëîâîê òîëüêî ó àêòèâíîãî ôðåéìà.
-			   Ýòèì ìû ïðåäîòâðàùàåì ìåëüêàíèå çàãîëîâêà êîíñîëè
-			   ïðè ïåðåðèñîâêå âñåõ ôðåéìîâ.
+			   Перерисуем заголовок только у активного фрейма.
+			   Этим мы предотвращаем мелькание заголовка консоли
+			   при перерисовке всех фреймов.
 			*/
 			IsRedrawFramesInProcess--;
 			CurrentFrame->ShowConsoleTitle();
@@ -1784,8 +1784,8 @@ BOOL Manager::ifDoubleInstance(Frame *frame)
 	return FALSE;
 }
 
-/*  Âûçîâ ResizeConsole äëÿ âñåõ NextModal ó
-    ìîäàëüíîãî ôðåéìà. KM
+/*  Вызов ResizeConsole для всех NextModal у
+    модального фрейма. KM
 */
 void Manager::ResizeAllModal(Frame *ModalFrame)
 {
@@ -1813,7 +1813,7 @@ void Manager::ResizeAllFrame()
 	{
 		ModalStack[i]->ResizeConsole();
 		/* $ 13.04.2002 KM
-		  - À òåïåðü ïðîðåñàéçèì âñå NextModal...
+		  - А теперь проресайзим все NextModal...
 		*/
 		ResizeAllModal(ModalStack[i]);
 	}
@@ -1871,7 +1871,7 @@ void Manager::RemoveSemiModalBackFrame(Frame* frame)
 }
 */
 
-// âîçâðàùàåò top-ìîäàë èëè ñàì ôðåéì, åñëè ó ôðåéìà íåòó ìîäàëîâ
+// возвращает top-модал или сам фрейм, если у фрейма нету модалов
 Frame* Manager::GetTopModal()
 {
 	Frame *f=CurrentFrame, *fo=nullptr;

@@ -1,7 +1,7 @@
 /*
 flplugin.cpp
 
-Ôàéëîâàÿ ïàíåëü - ðàáîòà ñ ïëàãèíàìè
+Файловая панель - работа с плагинами
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 
 /*
-   Â ñòåêå ÔÀÐîâà ïàíåëü íå õðàíèòñÿ - òîëüêî ïëàãèíîâûå!
+   В стеке ФАРова панель не хранится - только плагиновые!
 */
 
 void FileList::PushPlugin(HANDLE hPlugin,const wchar_t *HostFile)
@@ -82,10 +82,10 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 		return FALSE;
 	}
 
-	// óêàçàòåëü íà ïëàãèí, ñ êîòîðîãî óõîäèì
+	// указатель на плагин, с которого уходим
 	PluginsListItem *PStack=*PluginsList.Last();
 
-	// çàêðûâàåì òåêóùèé ïëàãèí.
+	// закрываем текущий плагин.
 	PluginsList.Delete(PluginsList.Last());
 	CtrlObject->Plugins.ClosePlugin(hPlugin);
 
@@ -129,7 +129,7 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 
 		if (!(Info.Flags & OPIF_REALNAMES))
 		{
-			DeleteFileWithFolder(PStack->strHostFile);  // óäàëåíèå ôàéëà îò ïðåäûäóùåãî ïëàãèíà
+			DeleteFileWithFolder(PStack->strHostFile);  // удаление файла от предыдущего плагина
 		}
 	}
 	else
@@ -403,7 +403,7 @@ void FileList::CreatePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber
 				ItemNumber++;
 			}
 
-		if (AddTwoDot && !ItemNumber && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)) // ýòî ïðî ".."
+		if (AddTwoDot && !ItemNumber && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)) // это про ".."
 		{
 			FileListToPluginItem(ListData[0],ItemList+ItemNumber);
 			//ItemList->FindData.lpwszFileName = xf_wcsdup (ListData[0]->strName);
@@ -685,7 +685,7 @@ void FileList::PluginHostGetFiles()
 	        !SelFileCount) || strDestPath.IsEmpty())
 	{
 		strDestPath = PointToName(strSelName);
-		// SVS: À çà÷åì çäåñü âåëñÿ ïîèñê òî÷êè ñ íà÷àëà?
+		// SVS: А зачем здесь велся поиск точки с начала?
 		size_t pos;
 
 		if (strDestPath.RPos(pos,L'.'))
@@ -751,19 +751,19 @@ void FileList::PluginPutFilesToNew()
 		TmpPanel.SetModalMode(TRUE);
 		int PrevFileCount=FileCount;
 		/* $ 12.04.2002 IS
-		   Åñëè PluginPutFilesToAnother âåðíóëà ÷èñëî, îòëè÷íîå îò 2, òî íóæíî
-		   ïîïðîáîâàòü óñòàíîâèòü êóðñîð íà ñîçäàííûé ôàéë.
+		   Если PluginPutFilesToAnother вернула число, отличное от 2, то нужно
+		   попробовать установить курсор на созданный файл.
 		*/
 		int rc=PluginPutFilesToAnother(FALSE,&TmpPanel);
 
 		if (rc!=2 && FileCount==PrevFileCount+1)
 		{
 			int LastPos = 0;
-			/* Ìåñòî, ãäå âû÷èñëÿþòñÿ êîîðäèíàòû âíîâü ñîçäàííîãî ôàéëà
-			   Ïîçèöèîíèðîâàíèå ïðîèñõîäèò íà ôàéë ñ ìàêñèìàëüíîé äàòîé
-			   ñîçäàíèÿ ôàéëà. Ïîñåìó, åñëè êàêîé-òî çëîáíûé áóðàòèíî ïîèìåë
-			   â òåêóùåì êàòàëîãå ôàéëî ñ äàòîé ñîçäàíèÿ ïîáîëåå òåêóùåé,
-			   òî êîððåêòíîãî ïîçèöèîíèðîâàíèÿ íå ïðîèçîéäåò!
+			/* Место, где вычисляются координаты вновь созданного файла
+			   Позиционирование происходит на файл с максимальной датой
+			   создания файла. Посему, если какой-то злобный буратино поимел
+			   в текущем каталоге файло с датой создания поболее текущей,
+			   то корректного позиционирования не произойдет!
 			*/
 			FileListItem *PtrListData, *PtrLastPos = nullptr;
 
@@ -799,13 +799,13 @@ void FileList::PluginPutFilesToNew()
 
 
 /* $ 12.04.2002 IS
-     PluginPutFilesToAnother òåïåðü int - âîçâðàùàåò òî, ÷òî âîçâðàùàåò
+     PluginPutFilesToAnother теперь int - возвращает то, что возвращает
      PutFiles:
-     -1 - ïðåðâàíî ïîëüçîâòåëåì
-      0 - íåóäà÷à
-      1 - óäà÷à
-      2 - óäà÷à, êóðñîð ïðèíóäèòåëüíî óñòàíîâëåí íà ôàéë è çàíîâî åãî
-          óñòàíàâëèâàòü íå íóæíî (ñì. PluginPutFilesToNew)
+     -1 - прервано пользовтелем
+      0 - неудача
+      1 - удача
+      2 - удача, курсор принудительно установлен на файл и заново его
+          устанавливать не нужно (см. PluginPutFilesToNew)
 */
 int FileList::PluginPutFilesToAnother(int Move,Panel *AnotherPanel)
 {
@@ -867,7 +867,7 @@ void FileList::GetOpenPluginInfo(OpenPluginInfo *Info)
 
 
 /*
-   Ôóíêöèÿ äëÿ âûçîâà êîìàíäû "Àðõèâíûå êîìàíäû" (Shift-F3)
+   Функция для вызова команды "Архивные команды" (Shift-F3)
 */
 void FileList::ProcessHostFile()
 {
@@ -920,7 +920,7 @@ void FileList::ProcessHostFile()
 							Select(ListData[I],0);
 						else if (Done == -1)
 							continue;
-						else       // Åñëè ÝÒÎ óáðàòü, òî... áóäåì æàòü ESC äî ïîòåðå ïóëüñÿ
+						else       // Если ЭТО убрать, то... будем жать ESC до потере пулься
 							break;   //
 					}
 				}
@@ -947,11 +947,11 @@ void FileList::ProcessHostFile()
 }
 
 /*
-  Îáðàáîòêà îäíîãî õîñò-ôàéëà.
+  Обработка одного хост-файла.
   Return:
-    -1 - Ýòîò ôàéë íèêàêèì ïëàãèíîì íå ïîääåðæàí
-     0 - Ïëàãèí âåðíóë FALSE
-     1 - Ïëàãèí âåðíóë TRUE
+    -1 - Этот файл никаким плагином не поддержан
+     0 - Плагин вернул FALSE
+     1 - Плагин вернул TRUE
 */
 int FileList::ProcessOneHostFile(int Idx)
 {

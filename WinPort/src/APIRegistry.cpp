@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <set>
 #include <string>
 #include <locale> 
@@ -7,10 +6,14 @@
 #include <fstream>
 #include <mutex>
 
+#include <wx/wx.h>
+#include <wx/display.h>
+
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
 #include "Utils.h"
+
 
 struct WinPortHandleReg : WinPortHandle
 {

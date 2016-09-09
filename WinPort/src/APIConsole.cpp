@@ -1,5 +1,7 @@
-#include "stdafx.h"
 #include <mutex>
+#include <wx/wx.h>
+#include <wx/display.h>
+
 #include "WinPort.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"

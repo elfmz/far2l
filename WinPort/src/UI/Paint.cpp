@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "wxWinTranslations.h"

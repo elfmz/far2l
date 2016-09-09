@@ -3,10 +3,10 @@
 /*
 dialog.hpp
 
-Êëàññ äèàëîãà Dialog.
+Класс диалога Dialog.
 
-Ïðåäíàçíà÷åí äëÿ îòîáðàæåíèÿ ìîäàëüíûõ äèàëîãîâ.
-ßâëÿåòñÿ ïðîèçâîäíûì îò êëàññà Frame.
+Предназначен для отображения модальных диалогов.
+Является производным от класса Frame.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -44,46 +44,46 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class History;
 
-// Ôëàãè òåêóùåãî ðåæèìà äèàëîãà
+// Флаги текущего режима диалога
 enum DIALOG_MODES
 {
-	DMODE_INITOBJECTS           =0x00000001, // ýëåìåíòû èíèöèàëèçàðîâàíû?
-	DMODE_CREATEOBJECTS         =0x00000002, // îáúåêòû (Edit,...) ñîçäàíû?
+	DMODE_INITOBJECTS           =0x00000001, // элементы инициализарованы?
+	DMODE_CREATEOBJECTS         =0x00000002, // объекты (Edit,...) созданы?
 	DMODE_WARNINGSTYLE          =0x00000004, // Warning Dialog Style?
-	DMODE_DRAGGED               =0x00000008, // äèàëîã äâèãàåòñÿ?
-	DMODE_ISCANMOVE             =0x00000010, // ìîæíî ëè äâèãàòü äèàëîã?
-	DMODE_ALTDRAGGED            =0x00000020, // äèàëîã äâèãàåòñÿ ïî Alt-Ñòðåëêà?
-	DMODE_SMALLDIALOG           =0x00000040, // "êîðîòêèé äèàëîã"
-	DMODE_DRAWING               =0x00001000, // äèàëîã ðèñóåòñÿ?
-	DMODE_KEY                   =0x00002000, // Èäåò ïîñûëêà êëàâèø?
-	DMODE_SHOW                  =0x00004000, // Äèàëîã âèäåí?
-	DMODE_MOUSEEVENT            =0x00008000, // Íóæíî ïîñûëàòü MouseMove â îáðàáîò÷èê?
+	DMODE_DRAGGED               =0x00000008, // диалог двигается?
+	DMODE_ISCANMOVE             =0x00000010, // можно ли двигать диалог?
+	DMODE_ALTDRAGGED            =0x00000020, // диалог двигается по Alt-Стрелка?
+	DMODE_SMALLDIALOG           =0x00000040, // "короткий диалог"
+	DMODE_DRAWING               =0x00001000, // диалог рисуется?
+	DMODE_KEY                   =0x00002000, // Идет посылка клавиш?
+	DMODE_SHOW                  =0x00004000, // Диалог виден?
+	DMODE_MOUSEEVENT            =0x00008000, // Нужно посылать MouseMove в обработчик?
 	DMODE_RESIZED               =0x00010000, //
-	DMODE_ENDLOOP               =0x00020000, // Êîíåö öèêëà îáðàáîòêè äèàëîãà?
-	DMODE_BEGINLOOP             =0x00040000, // Íà÷àëî öèêëà îáðàáîòêè äèàëîãà?
-	//DMODE_OWNSITEMS           =0x00080000, // åñëè TRUE, Dialog îñâîáîæäàåò ñïèñîê Item â äåñòðóêòîðå
-	DMODE_NODRAWSHADOW          =0x00100000, // íå ðèñîâàòü òåíü?
-	DMODE_NODRAWPANEL           =0x00200000, // íå ðèñîâàòü ïîäëîæêó?
+	DMODE_ENDLOOP               =0x00020000, // Конец цикла обработки диалога?
+	DMODE_BEGINLOOP             =0x00040000, // Начало цикла обработки диалога?
+	//DMODE_OWNSITEMS           =0x00080000, // если TRUE, Dialog освобождает список Item в деструкторе
+	DMODE_NODRAWSHADOW          =0x00100000, // не рисовать тень?
+	DMODE_NODRAWPANEL           =0x00200000, // не рисовать подложку?
 	DMODE_FULLSHADOW            =0x00400000,
 	DMODE_NOPLUGINS             =0x00800000,
-	DMODE_KEEPCONSOLETITLE      =0x10000000, // íå èçìåíÿòü çàãîëîâîê êîíñîëè
-	DMODE_CLICKOUTSIDE          =0x20000000, // áûëî íàæàòèå ìûøè âíå äèàëîãà?
-	DMODE_MSGINTERNAL           =0x40000000, // Âíóòðåííÿÿ Message?
-	DMODE_OLDSTYLE              =0x80000000, // Äèàëîã â ñòàðîì (äî 1.70) ñòèëå
+	DMODE_KEEPCONSOLETITLE      =0x10000000, // не изменять заголовок консоли
+	DMODE_CLICKOUTSIDE          =0x20000000, // было нажатие мыши вне диалога?
+	DMODE_MSGINTERNAL           =0x40000000, // Внутренняя Message?
+	DMODE_OLDSTYLE              =0x80000000, // Диалог в старом (до 1.70) стиле
 };
 
-//#define DIMODE_REDRAW       0x00000001 // òðåáóåòñÿ ïðèíóäèòåëüíàÿ ïðîðèñîâêà èòåìà?
+//#define DIMODE_REDRAW       0x00000001 // требуется принудительная прорисовка итема?
 
 #define MakeDialogItemsEx(Data,Item) \
 	DialogItemEx Item[ARRAYSIZE(Data)]; \
 	DataToItemEx(Data,Item,ARRAYSIZE(Data));
 
-// Ñòðóêòóðà, îïèñûâàþùàÿ àâòîìàòèçàöèþ äëÿ DIF_AUTOMATION
-// íà ïåðâîì ýòàïå - ïðèìèòèâíàÿ - âûñòàâëåíèå ôëàãîâ ó ýëåìåíòîâ äëÿ CheckBox
+// Структура, описывающая автоматизацию для DIF_AUTOMATION
+// на первом этапе - примитивная - выставление флагов у элементов для CheckBox
 struct DialogItemAutomation
 {
-	WORD ID;                    // Äëÿ ýòîãî ýëåìåíòà...
-	DWORD Flags[3][2];          // ...âûñòàâèòü âîò ýòè ôëàãè
+	WORD ID;                    // Для этого элемента...
+	DWORD Flags[3][2];          // ...выставить вот эти флаги
 	// [0] - Unchecked, [1] - Checked, [2] - 3Checked
 	// [][0] - Set, [][1] - Skip
 };
@@ -106,8 +106,8 @@ class DlgUserControl
 };
 
 /*
-Îïèñûâàåò îäèí ýëåìåíò äèàëîãà - âíóòðåííå ïðåäñòàâëåíèå.
-Äëÿ ïëàãèíîâ ýòî FarDialogItem (çà èñêëþ÷åíèåì ObjPtr)
+Описывает один элемент диалога - внутренне представление.
+Для плагинов это FarDialogItem (за исключением ObjPtr)
 */
 struct DialogItemEx
 {
@@ -132,11 +132,11 @@ struct DialogItemEx
 
 	WORD ID;
 	BitFlags IFlags;
-	unsigned AutoCount;   // Àâòîìàòèçàöèÿ
+	unsigned AutoCount;   // Автоматизация
 	DialogItemAutomation* AutoPtr;
-	DWORD_PTR UserData; // àññîöèèðîâàííûå äàííûå
+	DWORD_PTR UserData; // ассоциированные данные
 
-	// ïðî÷åå
+	// прочее
 	void *ObjPtr;
 	VMenu *ListPtr;
 	DlgUserControl *UCData;
@@ -229,8 +229,8 @@ struct DialogItemEx
 };
 
 /*
-Îïèñûâàåò îäèí ýëåìåíò äèàëîãà - äëÿ ñîêðàùåíèÿ îáúåìîâ
-Ñòðóêòóðà àíàëîãè÷åíà ñòðóêòóðå InitDialogItem (ñì. "Far PlugRinG
+Описывает один элемент диалога - для сокращения объемов
+Структура аналогичена структуре InitDialogItem (см. "Far PlugRinG
 Russian Help Encyclopedia of Developer")
 */
 
@@ -262,31 +262,31 @@ class Dialog: public Frame
 		friend LONG_PTR WINAPI DefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
 
 	private:
-		bool bInitOK;               // äèàëîã áûë óñïåøíî èíèöèàëèçèðîâàí
-		INT_PTR PluginNumber;       // Íîìåð ïëàãèíà, äëÿ ôîðìèðîâàíèÿ HelpTopic
-		unsigned FocusPos;               // âñåãäà èçâåñòíî êàêîé ýëåìåíò â ôîêóñå
-		unsigned PrevFocusPos;           // âñåãäà èçâåñòíî êàêîé ýëåìåíò áûë â ôîêóñå
-		int IsEnableRedraw;         // Ðàçðåøåíà ïåðåðèñîâêà äèàëîãà? ( 0 - ðàçðåøåíà)
-		BitFlags DialogMode;        // Ôëàãè òåêóùåãî ðåæèìà äèàëîãà
+		bool bInitOK;               // диалог был успешно инициализирован
+		INT_PTR PluginNumber;       // Номер плагина, для формирования HelpTopic
+		unsigned FocusPos;               // всегда известно какой элемент в фокусе
+		unsigned PrevFocusPos;           // всегда известно какой элемент был в фокусе
+		int IsEnableRedraw;         // Разрешена перерисовка диалога? ( 0 - разрешена)
+		BitFlags DialogMode;        // Флаги текущего режима диалога
 
-		LONG_PTR DataDialog;        // Äàííûå, ñïåöèôè÷åñêèå äëÿ êîíêðåòíîãî ýêçåìïëÿðà äèàëîãà (ïåðâîíà÷àëüíî çäåñü ïàðàìåòð, ïåðåäàííûé â êîíñòðóêòîð)
+		LONG_PTR DataDialog;        // Данные, специфические для конкретного экземпляра диалога (первоначально здесь параметр, переданный в конструктор)
 
-		DialogItemEx **Item; // ìàññèâ ýëåìåíòîâ äèàëîãà
-		DialogItemEx *pSaveItemEx; // ïîëüçîâàòåëüñêèé ìàññèâ ýëåìåíòîâ äèàëîãà
+		DialogItemEx **Item; // массив элементов диалога
+		DialogItemEx *pSaveItemEx; // пользовательский массив элементов диалога
 
-		unsigned ItemCount;         // êîëè÷åñòâî ýëåìåíòîâ äèàëîãà
+		unsigned ItemCount;         // количество элементов диалога
 
-		ConsoleTitle *OldTitle;     // ïðåäûäóùèé çàãîëîâîê
-		int PrevMacroMode;          // ïðåäûäóùèé ðåæèì ìàêðî
+		ConsoleTitle *OldTitle;     // предыдущий заголовок
+		int PrevMacroMode;          // предыдущий режим макро
 
-		FARWINDOWPROC RealDlgProc;      // ôóíêöèÿ îáðàáîòêè äèàëîãà
+		FARWINDOWPROC RealDlgProc;      // функция обработки диалога
 
-		// ïåðåìåííûå äëÿ ïåðåìåùåíèÿ äèàëîãà
+		// переменные для перемещения диалога
 		int OldX1,OldX2,OldY1,OldY2;
 
 		wchar_t *HelpTopic;
 
-		volatile int DropDownOpened;// Ñîäåðæèò ñòàòóñ êîìáîáîêñà è õèñòîðè: TRUE - îòêðûò, FALSE - çàêðûò.
+		volatile int DropDownOpened;// Содержит статус комбобокса и хистори: TRUE - открыт, FALSE - закрыт.
 
 		CriticalSection CS;
 
@@ -301,12 +301,12 @@ class Dialog: public Frame
 		void DeleteDialogObjects();
 		int  LenStrItem(int ID, const wchar_t *lpwszStr = nullptr);
 
-		void ShowDialog(unsigned ID=(unsigned)-1);  //    ID=-1 - îòðèñîâàòü âåñü äèàëîã
+		void ShowDialog(unsigned ID=(unsigned)-1);  //    ID=-1 - отрисовать весь диалог
 
 		LONG_PTR CtlColorDlgItem(int ItemPos,int Type,int Focus,int Default,DWORD Flags);
 		/* $ 28.07.2000 SVS
-		   + Èçìåíÿåò ôîêóñ ââîäà ìåæäó äâóìÿ ýëåìåíòàìè.
-		     Âûíåñåí îòäåëüíî äëÿ òîãî, ÷òîáû îáðàáîòàòü DMSG_KILLFOCUS & DMSG_SETFOCUS
+		   + Изменяет фокус ввода между двумя элементами.
+		     Вынесен отдельно для того, чтобы обработать DMSG_KILLFOCUS & DMSG_SETFOCUS
 		*/
 		void ChangeFocus2(unsigned SetFocusPos);
 
@@ -315,7 +315,7 @@ class Dialog: public Frame
 		int SelectFromComboBox(DialogItemEx *CurItem,DlgEdit*EditLine,VMenu *List);
 		int AddToEditHistory(const wchar_t *AddStr,const wchar_t *HistoryName);
 
-		void ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex);  // îáðàáîòêà DIF_USELASTHISTORY
+		void ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex);  // обработка DIF_USELASTHISTORY
 
 		int ProcessHighlighting(int Key,unsigned FocusPos,int Translate);
 		int CheckHighlights(WORD Chr,int StartPos=0);
@@ -326,14 +326,14 @@ class Dialog: public Frame
 		BOOL GetItemRect(unsigned I,SMALL_RECT& Rect);
 		bool ItemHasDropDownArrow(const DialogItemEx *Item);
 
-		// âîçâðàùàåò çàãîëîâîê äèàëîãà (òåêñò ïåðâîãî òåêñòà èëè ôðåéìà)
+		// возвращает заголовок диалога (текст первого текста или фрейма)
 		const wchar_t *GetDialogTitle();
 
 		BOOL SetItemRect(unsigned ID,SMALL_RECT *Rect);
 
 		/* $ 23.06.2001 KM
-		   + Ôóíêöèè ïðîãðàììíîãî îòêðûòèÿ/çàêðûòèÿ êîìáîáîêñà è õèñòîðè
-		     è ïîëó÷åíèÿ ñòàòóñà îòêðûòîñòè/çàêðûòîñòè êîìáîáîêñà è õèñòîðè.
+		   + Функции программного открытия/закрытия комбобокса и хистори
+		     и получения статуса открытости/закрытости комбобокса и хистори.
 		*/
 		volatile void SetDropDownOpened(int Status) { DropDownOpened=Status; }
 		volatile int GetDropDownOpened() { return DropDownOpened; }
@@ -377,7 +377,7 @@ class Dialog: public Frame
 		void SetDialogMode(DWORD Flags) { DialogMode.Set(Flags); }
 		bool CheckDialogMode(DWORD Flags) { return DialogMode.Check(Flags)!=FALSE; }
 
-		// ìåòîä äëÿ ïåðåìåùåíèÿ äèàëîãà
+		// метод для перемещения диалога
 		void AdjustEditPos(int dx,int dy);
 
 		int IsMoving() {return DialogMode.Check(DMODE_DRAGGED);}
@@ -404,14 +404,14 @@ class Dialog: public Frame
 
 		virtual int GetMacroMode();
 
-		/* $ Ââåäåíà äëÿ íóæä CtrlAltShift OT */
+		/* $ Введена для нужд CtrlAltShift OT */
 		virtual int FastHide();
 		virtual void ResizeConsole();
 //    virtual void OnDestroy();
 
 		// For MACRO
 		const DialogItemEx **GetAllItem() {return (const DialogItemEx**)Item;};
-		unsigned GetAllItemCount() {return ItemCount;};             // êîëè÷åñòâî ýëåìåíòîâ äèàëîãà
+		unsigned GetAllItemCount() {return ItemCount;};             // количество элементов диалога
 		unsigned GetDlgFocusPos() {return FocusPos;};
 
 

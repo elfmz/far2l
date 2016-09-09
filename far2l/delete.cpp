@@ -1,7 +1,7 @@
 /*
 delete.cpp
 
-Óäàëåíèå ôàéëîâ
+Удаление файлов
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -90,7 +90,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	int Ret;
 	BOOL NeedUpdate=TRUE, NeedSetUpADir=FALSE;
 	int Opt_DeleteToRecycleBin=Opt.DeleteToRecycleBin;
-	/*& 31.05.2001 OT Çàïðåòèòü ïåðåðèñîâêó òåêóùåãî ôðåéìà*/
+	/*& 31.05.2001 OT Запретить перерисовку текущего фрейма*/
 	Frame *FrameFromLaunched=FrameManager->GetCurrentFrame();
 	FrameFromLaunched->Lock();
 	DeleteAllFolders=!Opt.Confirm.DeleteFolder;
@@ -101,7 +101,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	if (!(SelCount=SrcPanel->GetSelCount()))
 		goto done;
 
-	// Óäàëåíèå â êîðçèíó òîëüêî äëÿ  FIXED-äèñêîâ
+	// Удаление в корзину только для  FIXED-дисков
 	{
 		FARString strRoot;
 //    char FSysNameSrc[NM];
@@ -130,7 +130,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	}
 	else
 	{
-		// â çàâèñèìîñòè îò ÷èñëà ñòàâèì íóæíîå îêîí÷àíèå
+		// в зависимости от числа ставим нужное окончание
 		const wchar_t *Ends;
 		wchar_t StrItems[16];
 		_itow(SelCount,StrItems,10);
@@ -157,8 +157,8 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 		const wchar_t *DelMsg;
 		const wchar_t *TitleMsg=MSG(Wipe?MDeleteWipeTitle:MDeleteTitle);
 		/* $ 05.01.2001 IS
-		   ! Êîñìåòèêà â ñîîáùåíèÿõ - ðàçíûå ñîîáùåíèÿ â çàâèñèìîñòè îò òîãî,
-		     êàêèå è ñêîëüêî ýëåìåíòîâ âûäåëåíî.
+		   ! Косметика в сообщениях - разные сообщения в зависимости от того,
+		     какие и сколько элементов выделено.
 		*/
 		BOOL folder=(FileAttr & FILE_ATTRIBUTE_DIRECTORY);
 
@@ -319,7 +319,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 					{
 						int MsgCode=0;
 
-						// äëÿ symlink`à íå íóæíî ïîäòâåðæäåíèå
+						// для symlink`а не нужно подтверждение
 						if (!(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
 							MsgCode=Message(MSG_WARNING,4,MSG(Wipe?MWipeFolderTitle:MDeleteFolderTitle),
 							                MSG(Wipe?MWipeFolderConfirm:MDeleteFolderConfirm),strFullName,
@@ -483,8 +483,8 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 					int DeleteCode;
 
-					// íåôèãà çäåñü âûäåëûâàòüñÿ, à íàäî ó÷åñòü, ÷òî óäàëåíèå
-					// ñèìëèíêà â êîðçèíó ÷ðåâàòî ïîòåðåé îðèãèíàëà.
+					// нефига здесь выделываться, а надо учесть, что удаление
+					// симлинка в корзину чревато потерей оригинала.
 					if (DirSymLink || !Opt.DeleteToRecycleBin || Wipe)
 					{
 						DeleteCode=ERemoveDirectory(strSelName,Wipe);
@@ -546,7 +546,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	delete DeleteTitle;
 done:
 	Opt.DeleteToRecycleBin=Opt_DeleteToRecycleBin;
-	// Ðàçðåøèòü ïåðåðèñîâêó ôðåéìà
+	// Разрешить перерисовку фрейма
 	FrameFromLaunched->Unlock();
 
 	if (NeedUpdate)
@@ -568,7 +568,7 @@ void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent)
 
 	if (Percent!=-1)
 	{
-		size_t Length=Width-5; // -5 ïîä ïðîöåíòû
+		size_t Length=Width-5; // -5 под проценты
 		wchar_t *Progress=strProgress.GetBuffer(Length);
 
 		if (Progress)
@@ -656,11 +656,11 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 			else if (0) //todo if (GetNumberOfLinks(strFullName)>1)
 			{
 				/*
-				                            Ôàéë
-				                         "èìÿ ôàéëà"
-				                Ôàéë èìååò íåñêîëüêî æåñòêèõ ññûëîê.
-				  Óíè÷òîæåíèå ôàéëà ïðèâåäåò ê îáíóëåíèþ âñåõ ññûëàþùèõñÿ íà íåãî ôàéëîâ.
-				                        Óíè÷òîæàòü ôàéë?
+				                            Файл
+				                         "имя файла"
+				                Файл имеет несколько жестких ссылок.
+				  Уничтожение файла приведет к обнулению всех ссылающихся на него файлов.
+				                        Уничтожать файл?
 				*/
 				MsgCode=Message(MSG_WARNING,5,MSG(MError),strFullName,
 				                MSG(MDeleteHardLink1),MSG(MDeleteHardLink2),MSG(MDeleteHardLink3),
@@ -836,7 +836,7 @@ int WipeFile(const wchar_t *Name)
 	{
 		const int BufSize=65536;
 		LPBYTE Buf=new BYTE[BufSize];
-		memset(Buf, Opt.WipeSymbol, BufSize); // èñïîëüçóåì ñèìâîë çàïîëíèòåëü
+		memset(Buf, Opt.WipeSymbol, BufSize); // используем символ заполнитель
 		DWORD Written;
 		while (FileSize>0)
 		{

@@ -85,7 +85,7 @@ void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir)
 			//  AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
 			//else
 			{
-				// Ñáðîñèì âðåìÿ îáíîâëåíèÿ ïàíåëè. Åñëè òàì åñòü íîòèôèêàöèÿ - îáíîâèòñÿ ñàìà.
+				// Сбросим время обновления панели. Если там есть нотификация - обновится сама.
 				if (AnotherType==FILE_PANEL)
 					((FileList *)AnotherPanel)->ResetLastUpdateTime();
 
@@ -137,19 +137,19 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 
 	switch (Key)
 	{
-		case KEY_CTRLALTBRACKET:       // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLALTBACKBRACKET:   // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïðàâîé ïàíåëè
-		case KEY_ALTSHIFTBRACKET:      // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_ALTSHIFTBACKBRACKET:  // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïàññèâíîé ïàíåëè
+		case KEY_CTRLALTBRACKET:       // Вставить сетевое (UNC) путь из левой панели
+		case KEY_CTRLALTBACKBRACKET:   // Вставить сетевое (UNC) путь из правой панели
+		case KEY_ALTSHIFTBRACKET:      // Вставить сетевое (UNC) путь из активной панели
+		case KEY_ALTSHIFTBACKBRACKET:  // Вставить сетевое (UNC) путь из пассивной панели
 			NeedRealName=TRUE;
-		case KEY_CTRLBRACKET:          // Âñòàâèòü ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLBACKBRACKET:      // Âñòàâèòü ïóòü èç ïðàâîé ïàíåëè
-		case KEY_CTRLSHIFTBRACKET:     // Âñòàâèòü ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_CTRLSHIFTBACKBRACKET: // Âñòàâèòü ïóòü èç ïàññèâíîé ïàíåëè
-		case KEY_CTRLSHIFTNUMENTER:    // Òåêóùèé ôàéë ñ ïàññ.ïàíåëè
-		case KEY_SHIFTNUMENTER:        // Òåêóùèé ôàéë ñ àêòèâ.ïàíåëè
-		case KEY_CTRLSHIFTENTER:       // Òåêóùèé ôàéë ñ ïàññ.ïàíåëè
-		case KEY_SHIFTENTER:           // Òåêóùèé ôàéë ñ àêòèâ.ïàíåëè
+		case KEY_CTRLBRACKET:          // Вставить путь из левой панели
+		case KEY_CTRLBACKBRACKET:      // Вставить путь из правой панели
+		case KEY_CTRLSHIFTBRACKET:     // Вставить путь из активной панели
+		case KEY_CTRLSHIFTBACKBRACKET: // Вставить путь из пассивной панели
+		case KEY_CTRLSHIFTNUMENTER:    // Текущий файл с пасс.панели
+		case KEY_SHIFTNUMENTER:        // Текущий файл с актив.панели
+		case KEY_CTRLSHIFTENTER:       // Текущий файл с пасс.панели
+		case KEY_SHIFTENTER:           // Текущий файл с актив.панели
 		{
 			Panel *SrcPanel=nullptr;
 			FilePanels *Cp=CtrlObject->Cp();
@@ -186,7 +186,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 				}
 				else
 				{
-					/* TODO: Çäåñü íóæíî ó÷åñòü, ÷òî ó TreeList òîæå åñòü ïóòü :-) */
+					/* TODO: Здесь нужно учесть, что у TreeList тоже есть путь :-) */
 					if (!(SrcPanel->GetType()==FILE_PANEL || SrcPanel->GetType()==TREE_PANEL))
 						return FALSE;
 

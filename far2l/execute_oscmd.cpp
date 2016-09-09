@@ -1,7 +1,7 @@
 /*
 execute.cpp
 
-"Çàïóñêàòåëü" ïðîãðàìì.
+"Запускатель" программ.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -64,7 +64,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtlog.h"
 #include <vector>
 #include <string>
-#include <wordexp.h>
 
 // explode cmdline to argv[] array
 //
@@ -81,17 +80,96 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 	std::vector<std::string> rc;
-	fprintf(stderr, "ExplodeCmdLine('%s'): ", cmd_line);
-	wordexp_t we = {};
-	if (wordexp(cmd_line, &we, 0)==0) {
-		for (size_t i = 0; i < we.we_wordc; ++i) {
-			rc.push_back(we.we_wordv[i]);
-			fprintf(stderr, "'%s' ", we.we_wordv[i]);
+	std::string tmp;
+	enum
+	{
+			S_SPACE,
+			S_RAW,	   S_RAW_BACKSLASH,
+			S_SINGLEQ,
+			S_DOUBLEQ, S_DOUBLEQ_BACKSLASH
+	} state = S_SPACE;
+	const char *cur = cmd_line;
+	for (; *cur; ++cur) {
+		if (0x00 <= *cur && *cur <= 0x1F) {
+			fprintf(stderr, "ExplodeCmdLine(%s) unexpected char \\x%X\n", cmd_line, *cur); // TODO: handle them as space?
 		}
-		fprintf(stderr, "\n");
-		wordfree(&we);
-	} else
-		perror("failed");
+		switch (state) {
+			case S_SPACE:
+				if (*cur == ' ') {
+				} else if (*cur=='\'') {
+					state = S_SINGLEQ;
+				} else if (*cur=='"') {
+					state = S_DOUBLEQ;
+				} else if (*cur=='\\') {
+					state = S_RAW_BACKSLASH;
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};|*?!`", *cur)!=NULL) { // TODO?: fish compat: exclude ` and !
+					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
+					return rc; // TODO?: return info about parsing was not completed successuly
+				} else {
+					state = S_RAW;
+					tmp+= *cur;
+				}
+				break;
+			case S_RAW:
+				if (*cur == ' ') {
+					fprintf(stderr, "ExplodeCmdLine(%s) [%lu] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
+					rc.push_back(tmp);
+					tmp.clear();
+					state = S_SPACE;
+				} else if (*cur=='\'') {
+					state = S_SINGLEQ;
+				} else if (*cur=='"') {
+					state = S_DOUBLEQ;
+				} else if (*cur=='\\') {
+					state = S_RAW_BACKSLASH;
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};|*?!`", *cur)!=NULL) { // TODO?: fish compat: exclude ` and !
+					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
+					rc.push_back(tmp);
+					return rc; // TODO?: return info about parsing was not completed successuly
+				} else {
+					tmp+= *cur;
+				}
+				break;
+			case S_SINGLEQ:
+				if (*cur == '\'') {
+					state = S_RAW;
+				} else {
+					tmp+= *cur;
+				}
+				break;
+			case S_DOUBLEQ:
+				if (*cur == '"') {
+					state = S_RAW;
+				} else if (*cur=='\\') {
+					state = S_DOUBLEQ_BACKSLASH;
+				} else {
+					tmp+= *cur;
+				}
+				break;
+			case S_RAW_BACKSLASH:
+				tmp+= *cur;
+				state = S_RAW;
+				break;
+			case S_DOUBLEQ_BACKSLASH:
+				if (!(*cur=='$' || *cur=='`' || *cur=='"' || *cur=='\\')) { // TODO?: fish compat: exclude `
+					tmp+= '\\';
+				}
+				tmp+= *cur;
+				state = S_DOUBLEQ;
+		}
+	}
+	switch (state) {
+		case S_SPACE:
+			break;
+		case S_RAW:
+			fprintf(stderr, "ExplodeCmdLine(%s) [%lu] = (%s)\n", cmd_line, rc.size(), tmp.c_str());
+			rc.push_back(tmp);
+			break;
+		default:
+			fprintf(stderr, "ExplodeCmdLine(%s) invalid state at the end %d\n", cmd_line, state);
+			rc.push_back(tmp);
+			// TODO?: return info about parsing was not completed successuly
+	}
 	return rc;
 };
 

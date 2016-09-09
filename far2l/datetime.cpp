@@ -1,7 +1,7 @@
 /*
 datetime.cpp
 
-Ôóíêöèè äëÿ ðàáîòû ñ äàòîé è âðåìåíåì
+Функции для работы с датой и временем
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -334,7 +334,7 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 	if (CurLang==-1 && Lang.IsLanguageLoaded())
 		PrepareStrFTime();
 
-	// ìåíÿåì ÿçûê.
+	// меняем язык.
 	CurLang=0;
 	size_t Len;
 
@@ -356,53 +356,53 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 				case L'L':
 					CurLang=!CurLang;
 					continue;
-					// Êðàòêîå èìÿ äíÿ íåäåëè (Sun,Mon,Tue,Wed,Thu,Fri,Sat)
+					// Краткое имя дня недели (Sun,Mon,Tue,Wed,Thu,Fri,Sat)
 					// abbreviated weekday name
 				case L'a':
 					strBuf=AWeekday[CurLang][!WeekFirst?((t->tm_wday+6)%7):(!t->tm_wday?6:t->tm_wday-1)];
 					break;
-					// Ïîëíîå èìÿ äíÿ íåäåëè
+					// Полное имя дня недели
 					// full weekday name
 				case L'A':
 					strBuf=Weekday[CurLang][!WeekFirst?((t->tm_wday+6)%7):(!t->tm_wday?6:t->tm_wday-1)];
 					break;
-					// Êðàòêîå èìÿ ìåñÿöà (Jan,Feb,...)
+					// Краткое имя месяца (Jan,Feb,...)
 					// abbreviated month name
 				case L'h':
 				case L'b':
 					strBuf=AMonth[CurLang][t->tm_mon];
 					break;
-					// Ïîëíîå èìÿ ìåñÿöà
+					// Полное имя месяца
 					// full month name
 				case L'B':
 					strBuf=Month[CurLang][t->tm_mon];
 					break;
-					//Äàòà è âðåìÿ â ôîðìàòå WDay Mnt  Day HH:MM:SS yyyy
+					//Дата и время в формате WDay Mnt  Day HH:MM:SS yyyy
 					//appropriate date and time representation
 				case L'c':
 					atime(strBuf,t);
 					break;
-					// Ñòîëåòèå êàê äåñÿòè÷íîå ÷èñëî (00 - 99). Íàïðèìåð, 1992 => 19
+					// Столетие как десятичное число (00 - 99). Например, 1992 => 19
 				case L'C':
 					strBuf.Format(L"%02d",(t->tm_year+1900)/100);
 					break;
 					// day of month, blank padded
 				case L'e':
-					// Äâå öèôðû äíÿ ìåñÿöà (01 - 31)
+					// Две цифры дня месяца (01 - 31)
 					// day of the month, 01 - 31
 				case L'd':
 					strBuf.Format(*Format==L'e'?L"%2d":L"%02d",t->tm_mday);
 					break;
 					// hour, 24-hour clock, blank pad
 				case L'k':
-					// Äâå öèôðû ÷àñà (00 - 23)
+					// Две цифры часа (00 - 23)
 					// hour, 24-hour clock, 00 - 23
 				case L'H':
 					strBuf.Format(*Format==L'k'?L"%2d":L"%02d",t->tm_hour);
 					break;
 					// hour, 12-hour clock, 1 - 12, blank pad
 				case L'l':
-					// Äâå öèôðû ÷àñà (01 - 12)
+					// Две цифры часа (01 - 12)
 					// hour, 12-hour clock, 01 - 12
 				case L'I':
 				{
@@ -414,17 +414,17 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 					strBuf.Format(*Format==L'l'?L"%2d":L"%02d",I);
 					break;
 				}
-				// Òðè öèôðû äíÿ â ãîäó (001 - 366)
+				// Три цифры дня в году (001 - 366)
 				// day of the year, 001 - 366
 				case L'j':
 					strBuf.Format(L"%03d",t->tm_yday+1);
 					break;
-					// Äâå öèôðû ìåñÿöà, êàê äåñÿòè÷íîå ÷èñëî (1 - 12)
+					// Две цифры месяца, как десятичное число (1 - 12)
 					// month, 01 - 12
 				case L'm':
 				{
 					// %mh - Hex month digit
-					// %m0 - âåäóùèé 0
+					// %m0 - ведущий 0
 					const wchar_t *fmt=Format[1]==L'h'?L"%X":Format[1]==L'0'?L"%02d":L"%d";
 
 					if (fmt[1]!=L'd')
@@ -433,32 +433,32 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 					strBuf.Format(fmt,t->tm_mon+1);
 					break;
 				}
-				// Äâå öèôðû ìèíóò (00 - 59)
+				// Две цифры минут (00 - 59)
 				// minute, 00 - 59
 				case L'M':
 					strBuf.Format(L"%02d",t->tm_min);
 					break;
-					// AM èëè PM
+					// AM или PM
 					// am or pm based on 12-hour clock
 				case L'p':
 					strBuf=(t->tm_hour/12)?L"PM":L"AM";
 					break;
-					// Äâå öèôðû ñåêóíä (00 - 59)
+					// Две цифры секунд (00 - 59)
 					// second, 00 - 59
 				case L'S':
 					strBuf.Format(L"%02d",t->tm_sec);
 					break;
-					// Äåíü íåäåëè ãäå 0 - Âîñêðåñåíüå (Sunday) (0 - 6)
+					// День недели где 0 - Воскресенье (Sunday) (0 - 6)
 					// weekday, Sunday == 0, 0 - 6
 				case L'w':
 					strBuf.Format(L"%d",t->tm_wday);
 					break;
-					// Äâå öèôðû íîìåðà íåäåëè, ãäå Âîñêðåñåíüå (Sunday)
-					//   ÿâëÿåòñÿ ïåðâûì äíåì íåäåëè (00 - 53)
+					// Две цифры номера недели, где Воскресенье (Sunday)
+					//   является первым днем недели (00 - 53)
 					// week of year, Sunday is first day of week
 				case L'U':
-					// Äâå öèôðû íîìåðà íåäåëè, ãäå Ïîíåäåëüíèê (Monday)
-					//    ÿâëÿåòñÿ ïåðâûì äíåì íåäåëè (00 - 53)
+					// Две цифры номера недели, где Понедельник (Monday)
+					//    является первым днем недели (00 - 53)
 					// week of year, Monday is first day of week
 				case L'W':
 				{
@@ -473,13 +473,13 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 				}
 				// date as dd-bbb-YYYY
 				case L'v':
-					// Äàòà â ôîðìàòå mm.dd.yyyy
+					// Дата в формате mm.dd.yyyy
 					// appropriate date representation
 				case L'D':
 				case L'x':
 					st_time(strBuf,t,*Format);
 					break;
-					// Âðåìÿ â ôîðìàòå HH:MM:SS
+					// Время в формате HH:MM:SS
 					// appropriate time representation
 				case L'T':
 				case L'X':
@@ -488,17 +488,17 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 					strBuf.Format(L"%02d%c%02d%c%02d",t->tm_hour,TimeSeparator,t->tm_min,TimeSeparator,t->tm_sec);
 					break;
 				}
-				// Äâå öèôðû ãîäà áåç ñòîëåòèÿ (00 to 99)
+				// Две цифры года без столетия (00 to 99)
 				// year without a century, 00 - 99
 				case L'y':
 					strBuf.Format(L"%02d",t->tm_year%100);
 					break;
-					// Ãîä ñî ñòîëåòèåì (19yy-20yy)
+					// Год со столетием (19yy-20yy)
 					// year with century
 				case L'Y':
 					strBuf.Format(L"%d",1900+t->tm_year);
 					break;
-					// Èìÿ ÷àñîâîãî ïîÿñà èëè ïóñòî, åñëè ÷àñîâîé ïîÿñ íå çàäàí
+					// Имя часового пояса или пусто, если часовой пояс не задан
 				case L'Z':
 					//todo strBuf.Format(L"%+03d%02d",-(_timezone/3600),-(_timezone/60)%60);
 					//Ptr = _tzname[ t->tm_isdst ];
@@ -605,7 +605,7 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 {
 	WORD DateN[3]={0},TimeN[4]={0};
 	SYSTEMTIME st={0};
-	// Ïðåîáðàçóåì ââåä¸ííûå ïîëüçîâàòåëåì äàòó è âðåìÿ
+	// Преобразуем введённые пользователем дату и время
 	GetFileDateAndTime(CDate,DateN,ARRAYSIZE(DateN),DateSeparator);
 	GetFileDateAndTime(CTime,TimeN,ARRAYSIZE(TimeN),TimeSeparator);
 
@@ -613,12 +613,12 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 	{
 		if (DateN[0]==(WORD)-1||DateN[1]==(WORD)-1||DateN[2]==(WORD)-1)
 		{
-			// Ïîëüçîâàòåëü îñòàâèë äàòó ïóñòîé, çíà÷èò îáíóëèì äàòó è âðåìÿ.
+			// Пользователь оставил дату пустой, значит обнулим дату и время.
 			memset(&ft,0,sizeof(ft));
 			return;
 		}
 
-		// "Îôîðìèì"
+		// "Оформим"
 		switch (DateFormat)
 		{
 			case 0:
@@ -653,7 +653,7 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 	st.wSecond = TimeN[2]!=(WORD)-1?(TimeN[2]):0;
 	st.wMilliseconds = TimeN[3]!=(WORD)-1?(TimeN[3]):0;
 
-	// ïðåîáðàçîâàíèå â "óäîáîâàðèìûé" ôîðìàò
+	// преобразование в "удобоваримый" формат
 	if (bRelative)
 	{
 		ULARGE_INTEGER time;

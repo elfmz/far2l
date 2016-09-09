@@ -1,7 +1,7 @@
 /*
 fileview.cpp
 
-Ïðîñìîòð ôàéëà - íàäñòðîéêà íàä viewer.cpp
+Просмотр файла - надстройка над viewer.cpp
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -125,8 +125,8 @@ void FileViewer::Init(const wchar_t *name,int EnableSwitch,int disableHistory, /
 
 	if (!View.OpenFile(strName,TRUE)) // $ 04.07.2000 tran + add TRUE as 'warning' parameter
 	{
-		DisableHistory = TRUE;  // $ 26.03.2002 DJ - ïðè íåóäà÷å îòêðûòèÿ - íå ïèøåì ìóñîð â èñòîðèþ
-		// FrameManager->DeleteFrame(this); // ÇÀ×ÅÌ? Âüþâåð òî åùå íå ïîìåùåí â î÷åðåäü ìàíàãåðà!
+		DisableHistory = TRUE;  // $ 26.03.2002 DJ - при неудаче открытия - не пишем мусор в историю
+		// FrameManager->DeleteFrame(this); // ЗАЧЕМ? Вьювер то еще не помещен в очередь манагера!
 		ExitCode=FALSE;
 		CtrlObject->Macro.SetMode(OldMacroMode);
 		return;
@@ -229,8 +229,8 @@ int FileViewer::ProcessKey(int Key)
 	{
 #if 0
 			/* $ 30.05.2003 SVS
-			   Ôè÷à :-) Shift-F4 â ðåäàêòîðå/âüþâåðå ïîçâîëÿåò îòêðûâàòü äðóãîé ðåäàêòîð/âüþâåð
-			   Ïîêà çàêîììåíòèì
+			   Фича :-) Shift-F4 в редакторе/вьювере позволяет открывать другой редактор/вьювер
+			   Пока закомментим
 			*/
 		case KEY_SHIFTF4:
 		{
@@ -241,7 +241,7 @@ int FileViewer::ProcessKey(int Key)
 		}
 #endif
 		/* $ 22.07.2000 tran
-		   + âûõîä ïî ctrl-f10 ñ óñòàíîâêîé êóðñîðà íà ôàéë */
+		   + выход по ctrl-f10 с установкой курсора на файл */
 		case KEY_CTRLF10:
 		{
 			if (View.isTemporary())
@@ -312,25 +312,25 @@ int FileViewer::ProcessKey(int Key)
 					return TRUE;
 				}
 				Edit.Close();
-				// Åñëè ïåðåêëþ÷àåìñÿ â ðåäàêòîð, òî óäàëÿòü ôàéë óæå íå íóæíî
+				// Если переключаемся в редактор, то удалять файл уже не нужно
 				SetTempViewName(L"");
 				SetExitCode(0);
 				int64_t FilePos=View.GetFilePos();
 				/* $ 07.07.2006 IS
-				   Òóò êîñÿê, çàìå÷åííûé ïðè ÷òåíèè warnings - FilePos òåðÿåò èíôîðìàöèþ ïðè ïðåîáðàçîâàíèè int64_t -> int
-				   Íàäî áû ïîïðàâèòü FileEditor íà ýòîò ñ÷åò.
+				   Тут косяк, замеченный при чтении warnings - FilePos теряет информацию при преобразовании int64_t -> int
+				   Надо бы поправить FileEditor на этот счет.
 				*/
 				FileEditor *ShellEditor = new FileEditor(strViewFileName, cp,
 				        (GetCanLoseFocus()?FFILEEDIT_ENABLEF6:0)|(SaveToSaveAs?FFILEEDIT_SAVETOSAVEAS:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0),-2, static_cast<int>(FilePos), nullptr);
 				ShellEditor->SetEnableF6(TRUE);
-				/* $ 07.05.2001 DJ ñîõðàíÿåì NamesList */
+				/* $ 07.05.2001 DJ сохраняем NamesList */
 				ShellEditor->SetNamesList(View.GetNamesList());
-				FrameManager->DeleteFrame(this); // Insert óæå åñòü âíóòðè êîíñòðóêòîðà
+				FrameManager->DeleteFrame(this); // Insert уже есть внутри конструктора
 				ShowTime(2);
 			}
 
 			return TRUE;
-			// Ïå÷àòü ôàéëà ñ èñïîëüçîâàíèåì ïëàãèíà PrintMan
+			// Печать файла с использованием плагина PrintMan
 		case KEY_ALTF5:
 		{
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
@@ -339,7 +339,7 @@ int FileViewer::ProcessKey(int Key)
 			return TRUE;
 		}
 		case KEY_ALTSHIFTF9:
-			// Ðàáîòà ñ ëîêàëüíîé êîïèåé ViewerOptions
+			// Работа с локальной копией ViewerOptions
 			ViewerOptions ViOpt;
 			ViOpt.TabSize=View.GetTabSize();
 			ViOpt.AutoDetectCodePage=View.GetAutoDetectCodePage();
@@ -365,11 +365,11 @@ int FileViewer::ProcessKey(int Key)
 
 			return TRUE;
 		default:
-//      Ýòîò êóñîê - íà áóäóùåå (ïî àíàëîãèè ñ ðåäàêòîðîì :-)
+//      Этот кусок - на будущее (по аналогии с редактором :-)
 //      if (CtrlObject->Macro.IsExecuting() || !View.ProcessViewerInput(&ReadRec))
 		{
 			/* $ 22.03.2001 SVS
-			   Ýòî ïîìîãëî îò çàëèïàíèÿ :-)
+			   Это помогло от залипания :-)
 			*/
 			if (!CtrlObject->Macro.IsExecuting())
 				if (Opt.ViOpt.ShowKeyBar)

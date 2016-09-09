@@ -1,7 +1,7 @@
 /*
 usermenu.cpp
 
-User menu è åñòü
+User menu и есть
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -65,20 +65,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(PROJECT_DI_MEMOEDIT)
 /*
-  Èäåÿ â ñëåäóþùåì.
-  1. Ñòðîêè â ðååñòðå õðàíÿòüñÿ êàê è ðàíüøå, ò.ê. CommandXXX
-  2. Äëÿ DI_MEMOEDIT ìû èç òîëüêî ïðåîáðàçîâûâàåì â îäèí ìàññèâ
+  Идея в следующем.
+  1. Строки в реестре храняться как и раньше, т.к. CommandXXX
+  2. Для DI_MEMOEDIT мы из только преобразовываем в один массив
 */
 #endif
 
-// Êîäû âûõîäà èç ìåíþ (Exit codes)
+// Коды выхода из меню (Exit codes)
 enum
 {
-	EC_CLOSE_LEVEL      = -1, // Âûéòè èç ìåíþ íà îäèí óðîâåíü ââåðõ
-	EC_CLOSE_MENU       = -2, // Âûéòè èç ìåíþ ïî SHIFT+F10
-	EC_PARENT_MENU      = -3, // Ïîêàçàòü ìåíþ ðîäèòåëüñêîãî êàòàëîãà
-	EC_MAIN_MENU        = -4, // Ïîêàçàòü ãëàâíîå ìåíþ
-	EC_COMMAND_SELECTED = -5, // Âûáðàíà êîìàíäà - çàêðûòü ìåíþ è îáíîâèòü ïàïêó
+	EC_CLOSE_LEVEL      = -1, // Выйти из меню на один уровень вверх
+	EC_CLOSE_MENU       = -2, // Выйти из меню по SHIFT+F10
+	EC_PARENT_MENU      = -3, // Показать меню родительского каталога
+	EC_MAIN_MENU        = -4, // Показать главное меню
+	EC_COMMAND_SELECTED = -5, // Выбрана команда - закрыть меню и обновить папку
 };
 
 int PrepareHotKey(FARString &strHotKey)
@@ -87,7 +87,7 @@ int PrepareHotKey(FARString &strHotKey)
 
 	if (strHotKey.GetLength() > 1)
 	{
-		// åñëè õîòêåé áîëüøå 1 ñèìâîëà, ñ÷èòàåì ýòî ñëó÷àåì "F?", ïðè÷åì ïðè êðèâèçíå âñåãäà áóäåò "F1"
+		// если хоткей больше 1 символа, считаем это случаем "F?", причем при кривизне всегда будет "F1"
 		FuncNum=_wtoi(strHotKey.CPtr()+1);
 
 		if (FuncNum < 1 || FuncNum > 24)
@@ -98,7 +98,7 @@ int PrepareHotKey(FARString &strHotKey)
 	}
 	else
 	{
-		// ïðè íàëè÷èè "&" ïðîäóáëèðóåì
+		// при наличии "&" продублируем
 		if (strHotKey.At(0) == L'&')
 			strHotKey += L"&";
 	}
@@ -249,10 +249,10 @@ UserMenu::~UserMenu()
 
 void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 {
-	// Ïóòü ê òåêóùåìó êàòàëîãó ñ ôàéëîì LocalMenuFileName
+	// Путь к текущему каталогу с файлом LocalMenuFileName
 	FARString strMenuFilePath;
 	CtrlObject->CmdLine->GetCurDir(strMenuFilePath);
-	// ïî óìîë÷àíèþ ìåíþ - ýòî FarMenu.ini
+	// по умолчанию меню - это FarMenu.ini
 	MenuMode=MM_LOCAL;
 	FARString strLocalMenuKey;
 	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
@@ -273,7 +273,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 		}
 	}
 
-	// îñíîâíîé öèêë îáðàáîòêè
+	// основной цикл обработки
 	const wchar_t *LocalMenuFileName=L"FarMenu.ini";
 	bool FirstRun=true;
 	int ExitCode = 0;
@@ -286,22 +286,22 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 
 		if (MenuMode != MM_MAIN)
 		{
-			// Ïûòàåìñÿ îòêðûòü ôàéë íà ëîêàëüíîì äèñêå
+			// Пытаемся открыть файл на локальном диске
 			File MenuFile;
 			bool FileOpened = PathCanHoldRegularFile(strMenuFilePath) ? MenuFile.Open(strMenuFileFullPath,GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING) : false;
 			if (FileOpened)
 			{
-				// ñëèâàåì ñîäåðæèìîå â ðååñòð "íà çàïàñíîé ïóòü" è îòòóäà áóäåì ïîëüçîâàòü
+				// сливаем содержимое в реестр "на запасной путь" и оттуда будем пользовать
 				GetFileString GetStr(MenuFile);
 				MenuFileToReg(strLocalMenuKey, MenuFile, GetStr);
 				MenuFile.Close();
 			}
 			else
 			{
-				// Ôàéë íå îòêðûëñÿ. Ñìîòðèì äàëüøå.
-				if (MenuMode == MM_FAR) // áûë â %FARHOME%?
+				// Файл не открылся. Смотрим дальше.
+				if (MenuMode == MM_FAR) // был в %FARHOME%?
 				{
-					MenuMode=MM_MAIN; // ...ðååñòð
+					MenuMode=MM_MAIN; // ...реестр
 				}
 				else
 				{
@@ -309,7 +309,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 					{
 						if (!FirstRun)
 						{
-							// ïîäûìàåìñÿ âûøå...
+							// подымаемся выше...
 							size_t pos;
 
 							if (FindLastSlash(pos,strMenuFilePath))
@@ -334,16 +334,16 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 		int PrevMacroMode=CtrlObject->Macro.GetMode();
 		int _CurrentFrame=FrameManager->GetCurrentFrame()->GetType();
 		CtrlObject->Macro.SetMode(MACRO_USERMENU);
-		// âûçûâàåì ìåíþ
+		// вызываем меню
 		ExitCode=ProcessSingleMenu(strMenuRootKey, 0,strMenuRootKey);
 
 		if (_CurrentFrame == FrameManager->GetCurrentFrame()->GetType()) //???
 			CtrlObject->Macro.SetMode(PrevMacroMode);
 
-		// îáðàáîòêà ëîêàëüíîãî ìåíþ...
+		// обработка локального меню...
 		if (MenuMode != MM_MAIN)
 		{
-			// ...çàïèøåì èçìåíåíèÿ îáðàòíî â ôàéë
+			// ...запишем изменения обратно в файл
 			if (MenuModified)
 			{
 				DWORD FileAttr=apiGetFileAttributes(strMenuFileFullPath);
@@ -376,7 +376,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 					MenuFile.GetSize(Size);
 					MenuFile.Close();
 
-					// åñëè ôàéë FarMenu.ini ïóñò, òî óäàëèì åãî
+					// если файл FarMenu.ini пуст, то удалим его
 					if (Size<3) // 2 for BOM
 					{
 						apiDeleteFile(strMenuFileFullPath);
@@ -388,14 +388,14 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 				}
 			}
 
-			// ...ïî÷èñòèì ðååñòð.
+			// ...почистим реестр.
 			DeleteKeyTree(strLocalMenuKey);
 		}
 
-		// ÷òî áûëî ïîñëå âûçîâà ìåíþ?
+		// что было после вызова меню?
 		switch (ExitCode)
 		{
-				// Ïîêàçàòü ìåíþ ðîäèòåëüñêîãî êàòàëîãà
+				// Показать меню родительского каталога
 			case EC_PARENT_MENU:
 			{
 				if (MenuMode == MM_LOCAL)
@@ -420,10 +420,10 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 
 				break;
 			}
-			// Ïîêàçàòü ãëàâíîå ìåíþ
+			// Показать главное меню
 			case EC_MAIN_MENU:
 			{
-				// $ 14.07.2000 VVM: Shift+F2 ïåðåêëþ÷àåò Ãëàâíîå ìåíþ/ëîêàëüíîå â öèêëå
+				// $ 14.07.2000 VVM: Shift+F2 переключает Главное меню/локальное в цикле
 				switch (MenuMode)
 				{
 					case MM_LOCAL:
@@ -453,7 +453,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel,FALSE);
 }
 
-// çàïîëíåíèå ìåíþ
+// заполнение меню
 int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos,const wchar_t *Name)
 {
 	UserMenu.DeleteItems();
@@ -477,7 +477,7 @@ int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos
 		GetRegKey(strItemKey,L"Label",strLabel,L"");
 		int FuncNum=0;
 
-		// ñåïàðàòîðîì ÿâëÿåòñÿ ñëó÷àé, êîãäà õîòêåé == "--"
+		// сепаратором является случай, когда хоткей == "--"
 		if (!StrCmp(strHotKey,L"--"))
 		{
 			UserMenuItem.Flags|=LIF_SEPARATOR;
@@ -524,7 +524,7 @@ int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos
 	return NumLines;
 }
 
-// îáðàáîòêà åäèíè÷íîãî ìåíþ
+// обработка единичного меню
 int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t *MenuRootKey,const wchar_t *Title)
 {
 	MenuItemEx UserMenuItem;
@@ -534,13 +534,13 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		UserMenuItem.Clear();
 		int NumLine=0,ExitCode,FuncPos[24];
 
-		// î÷èñòêà F-õîòêååâ
+		// очистка F-хоткеев
 		for (size_t I=0 ; I < ARRAYSIZE(FuncPos) ; I++)
 			FuncPos[I]=-1;
 
 		FARString strName;
 		CtrlObject->Cp()->ActivePanel->GetCurName(strName);
-		/* $ 24.07.2000 VVM + Ïðè ïîêàçå ãëàâíîãî ìåíþ â çàãîëîâîê äîáàâëÿåò òèï - FAR/Registry */
+		/* $ 24.07.2000 VVM + При показе главного меню в заголовок добавляет тип - FAR/Registry */
 		FARString strMenuTitle;
 
 		if (Title && *Title)
@@ -588,11 +588,11 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			{
 				if (MenuNeedRefresh)
 				{
-					UserMenu.Hide(); // ñïðÿ÷åì
-					// "èçíàñèëóåì" (ïåðåçàïîëíèì :-)
+					UserMenu.Hide(); // спрячем
+					// "изнасилуем" (перезаполним :-)
 					NumLine=FillUserMenu(UserMenu,MenuKey,MenuPos,FuncPos,strName);
-					// çàñòàâèì ìàíàãåð ìåíþõè êîððåêòíî îòðèñîâàòü øèðèíó è
-					// âûñîòó, à çàîäíî è ñêîððåêòèðîâàòü âåðòèêàëüíûå ïîçèöèè
+					// заставим манагер менюхи корректно отрисовать ширину и
+					// высоту, а заодно и скорректировать вертикальные позиции
 					UserMenu.SetPosition(-1,-1,-1,-1);
 					UserMenu.Show();
 					MenuNeedRefresh=false;
@@ -611,12 +611,12 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 						continue;
 					}
 				}
-				else if (Key == L' ') // èñêëþ÷àåì ïðîáåë èç "õîòêååâ"!
+				else if (Key == L' ') // исключаем пробел из "хоткеев"!
 					continue;
 
 				switch (Key)
 				{
-						/* $ 24.08.2001 VVM + Ñòðåëêè âïðàâî/âëåâî îòêðûâàþò/çàêðûâàþò ïîäìåíþ ñîîòâåòñòâåííî */
+						/* $ 24.08.2001 VVM + Стрелки вправо/влево открывают/закрывают подменю соответственно */
 					case KEY_RIGHT:
 					case KEY_NUMPAD6:
 					case KEY_MSWHEEL_RIGHT:
@@ -671,8 +671,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 						}
 					}
 					break;
-					//case KEY_ALTSHIFTF4:  // ðåäàêòèðîâàòü òîëüêî òåêóùèé ïóíêò (åñëè ñóáìåíþ - òî âñå ñóáìåíþ)
-					case KEY_ALTF4:       // ðåäàêòèðîâàòü âñå ìåíþ
+					//case KEY_ALTSHIFTF4:  // редактировать только текущий пункт (если субменю - то все субменю)
+					case KEY_ALTF4:       // редактировать все меню
 					{
 						(*FrameManager)[0]->Unlock();
 						FARString strMenuFileName;
@@ -709,7 +709,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 							{
 								apiDeleteFile(strMenuFileName);
 
-								if (Key == KEY_ALTSHIFTF4) // äëÿ òóêóùåãî ïóíêòà ìåíþ çàêðûâàòü íåíàäî
+								if (Key == KEY_ALTSHIFTF4) // для тукущего пункта меню закрывать ненадо
 									break;
 
 								return 0;
@@ -723,21 +723,21 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 						MenuModified=true;
 						UserMenu.Hide();
 
-						if (Key == KEY_ALTSHIFTF4) // äëÿ òóêóùåãî ïóíêòà ìåíþ çàêðûâàòü íåíàäî
+						if (Key == KEY_ALTSHIFTF4) // для тукущего пункта меню закрывать ненадо
 							break;
 
-						return 0; // Çàêðûòü ìåíþ
+						return 0; // Закрыть меню
 					}
 					/* $ 28.06.2000 tran
-					âûõîä èç ïîëüçîâàòåëüñêîãî ìåíþ ïî ShiftF10 èç ëþáîãî óðîâíÿ
-					âëîæåííîñòè ïðîñòî çàäàåì ExitCode -1, è âîçâðàùàåì FALSE -
-					ïî FALSE îíî è âûéäåò îòêóäà óãîäíî */
+					выход из пользовательского меню по ShiftF10 из любого уровня
+					вложенности просто задаем ExitCode -1, и возвращаем FALSE -
+					по FALSE оно и выйдет откуда угодно */
 					case KEY_SHIFTF10:
 						//UserMenu.SetExitCode(-1);
 						return(EC_CLOSE_MENU);
-					case KEY_SHIFTF2: // Ïîêàçàòü ãëàâíîå ìåíþ
+					case KEY_SHIFTF2: // Показать главное меню
 						return(EC_MAIN_MENU);
-					case KEY_BS: // Ïîêàçàòü ìåíþ èç ðîäèòåëüñêîãî êàòàëîãà òîëüêî â MM_LOCAL ðåæèìå
+					case KEY_BS: // Показать меню из родительского каталога только в MM_LOCAL режиме
 
 						if (MenuMode != MM_MAIN)
 							return(EC_PARENT_MENU);
@@ -756,7 +756,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		}
 
 		if (ExitCode<0 || ExitCode>=NumLine)
-			return(EC_CLOSE_LEVEL); //  ââåðõ íà îäèí óðîâåíü
+			return(EC_CLOSE_LEVEL); //  вверх на один уровень
 
 		FARString strCurrentKey;
 		int SubMenu;
@@ -765,7 +765,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 
 		if (SubMenu)
 		{
-			/* $ 20.08.2001 VVM + Ïðè âëîæåííûõ ìåíþ ïîêàçûâàåò çàãîëîâêè ïðåäûäóùèõ */
+			/* $ 20.08.2001 VVM + При вложенных меню показывает заголовки предыдущих */
 			FARString strSubMenuKey, strSubMenuLabel, strSubMenuTitle;
 			strSubMenuKey.Format(L"%ls/Item%d",MenuKey,ExitCode);
 
@@ -788,7 +788,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					strSubMenuTitle = strSubMenuLabel;
 			}
 
-			/* $ 14.07.2000 VVM ! Åñëè çàêðûëè ïîäìåíþ, òî îñòàòüñÿ. Èíå÷å ïåðåäàòü óïðàâëåíèå âûøå */
+			/* $ 14.07.2000 VVM ! Если закрыли подменю, то остаться. Инече передать управление выше */
 			MenuPos=ProcessSingleMenu(strSubMenuKey,0,MenuRootKey,strSubMenuTitle);
 
 			if (MenuPos!=EC_CLOSE_LEVEL)
@@ -798,7 +798,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			continue;
 		}
 
-		/* $ 01.05.2001 IS Îòêëþ÷èì äî ëó÷øèõ âðåìåí */
+		/* $ 01.05.2001 IS Отключим до лучших времен */
 		//int LeftVisible,RightVisible,PanelsHidden=0;
 		int CurLine=0;
 		FARString strCmdLineDir;
@@ -811,7 +811,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		CtrlObject->CmdLine->GetSelection(OldCmdLineSelStart,OldCmdLineSelEnd);
 		CtrlObject->CmdLine->LockUpdatePanel(TRUE);
 
-		// Öèêë èñïîëíåíèÿ êîìàíä ìåíþ (CommandX)
+		// Цикл исполнения команд меню (CommandX)
 		for (;;)
 		{
 			FormatString strLineName;
@@ -826,17 +826,17 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			if (!((!StrCmpNI(strCommand,L"REM",3) && IsSpaceOrEos(strCommand.At(3))) || !StrCmpNI(strCommand,L"::",2)))
 			{
 				/*
-				  Îñòàëîñü êîððåêòíî îáðàáîòàòü ñèòóàöèþ, íàïðèìåð:
+				  Осталось корректно обработать ситуацию, например:
 				  if exist !#!\!^!.! far:edit < diff -c -p !#!\!^!.! !\!.!
-				  Ò.å. ñíà÷àëà "âû÷èñëèòü" êóñîê "if exist !#!\!^!.!", íó à åñëè
-				  âûïîëíèòñÿ, òî äåëàòü äàëüøå.
-				  Èëè åùå ïðèìåð,
-				  if exist ..\a.bat D:\FAR\170\DIFF.MY\mkdiff.bat !?&Íîìåð ïàò÷à?!
-				  ÝÒÎ âûïîëíÿåòñÿ âñåãäà, ò.ê. ïàðñèíã âñåé ñòðîêè èäåò, à íàäî
-				  ïðîâåðèòü ôàçó "if exist ..\a.bat", à óæ ïîòîì äåëàòü âûâîäû...
+				  Т.е. сначала "вычислить" кусок "if exist !#!\!^!.!", ну а если
+				  выполнится, то делать дальше.
+				  Или еще пример,
+				  if exist ..\a.bat D:\FAR\170\DIFF.MY\mkdiff.bat !?&Номер патча?!
+				  ЭТО выполняется всегда, т.к. парсинг всей строки идет, а надо
+				  проверить фазу "if exist ..\a.bat", а уж потом делать выводы...
 				*/
 				{
-					/* $ 01.05.2001 IS Îòêëþ÷èì äî ëó÷øèõ âðåìåí */
+					/* $ 01.05.2001 IS Отключим до лучших времен */
 					/*
 					if (!PanelsHidden)
 					{
@@ -868,8 +868,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 							}
 
 							ProcessOSAliases(strCommand);
-							// TODO: Àõòóíã. Â ðåæèìå isSilent èìååì ïðîáëåìû ñ êîìàíäàìè, êîòîðûå âûâîäÿò ÷òî-òî íà ýêðàí
-							//       Çäåñü íåîáõîäèìî ïåðåäåëêà, íàïðèìåð, ïåðåä èñïîëíåíèåì ïîäñóíóòü âðåìåííûé ýêðàííûé áóôåð, à ïîòîì åãî ñîäåðæèìîå ïîäñóíóòü â ScreenBuf...
+							// TODO: Ахтунг. В режиме isSilent имеем проблемы с командами, которые выводят что-то на экран
+							//       Здесь необходимо переделка, например, перед исполнением подсунуть временный экранный буфер, а потом его содержимое подсунуть в ScreenBuf...
 
 							if (!isSilent)
 							{
@@ -898,14 +898,14 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 
 		CtrlObject->CmdLine->LockUpdatePanel(FALSE);
 
-		if (!strOldCmdLine.IsEmpty())  // âîññòàíîâèì ñîõðàíåííóþ êîìàíäíóþ ñòðîêó
+		if (!strOldCmdLine.IsEmpty())  // восстановим сохраненную командную строку
 		{
 			CtrlObject->CmdLine->SetString(strOldCmdLine, FrameManager->IsPanelsActive());
 			CtrlObject->CmdLine->SetCurPos(OldCmdLineCurPos, OldCmdLineLeftPos);
 			CtrlObject->CmdLine->Select(OldCmdLineSelStart, OldCmdLineSelEnd);
 		}
 
-		/* $ 01.05.2001 IS Îòêëþ÷èì äî ëó÷øèõ âðåìåí */
+		/* $ 01.05.2001 IS Отключим до лучших времен */
 		/*
 		if (PanelsHidden)
 		{
@@ -919,8 +919,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 				CtrlObject->Cp()->LeftPanel->Show();
 		}
 		*/
-		/* $ 14.07.2000 VVM ! Çàêðûòü ìåíþ */
-		/* $ 25.04.2001 DJ - ñîîáùàåì, ÷òî áûëà âûïîëíåíà êîìàíäà (íóæíî ïåðåðèñîâàòü ïàíåëè) */
+		/* $ 14.07.2000 VVM ! Закрыть меню */
+		/* $ 25.04.2001 DJ - сообщаем, что была выполнена команда (нужно перерисовать панели) */
 		return(EC_COMMAND_SELECTED);
 	}
 }
@@ -1087,7 +1087,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 #if defined(PROJECT_DI_MEMOEDIT)
 			/*
 				...
-				çäåñü äîáàâêà ñòðîê èç "Command%d" â EMR_MEMOEDIT
+				здесь добавка строк из "Command%d" в EMR_MEMOEDIT
 				...
 			*/
 			FARString strBuffer;
@@ -1154,7 +1154,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 #if defined(PROJECT_DI_MEMOEDIT)
 				/*
 				...
-				çäåñü ïðåîáðàçîâàíèå ñîäåðæèìîãî èòåìà EMR_MEMOEDIT â "Command%d"
+				здесь преобразование содержимого итема EMR_MEMOEDIT в "Command%d"
 				...
 				*/
 #else

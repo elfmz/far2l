@@ -3,7 +3,7 @@
 /*
 DlgBuilder.hpp
 
-Äèíàìè÷åñêîå êîíñòðóèðîâàíèå äèàëîãîâ
+Динамическое конструирование диалогов
 */
 /*
 Copyright (c) 2009 Far Group
@@ -38,13 +38,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EMPTY_TEXT ""
 #endif
 
-// Ýëåìåíò âûïàäàþùåãî ñïèñêà â äèàëîãå.
+// Элемент выпадающего списка в диалоге.
 struct DialogBuilderListItem
 {
-	// Ñòðî÷êà èç LNG-ôàéëà, êîòîðàÿ áóäåò ïîêàçàíà â äèàëîãå.
+	// Строчка из LNG-файла, которая будет показана в диалоге.
 	int MessageId;
 
-	// Çíà÷åíèå, êîòîðîå áóäåò çàïèñàíî â ïîëå Value ïðè âûáîðå ýòîé ñòðî÷êè.
+	// Значение, которое будет записано в поле Value при выборе этой строчки.
 	int ItemValue;
 };
 
@@ -131,24 +131,24 @@ struct ComboBoxBinding: public DialogItemBinding<T>
 };
 
 /*
-Êëàññ äëÿ äèíàìè÷åñêîãî ïîñòðîåíèÿ äèàëîãîâ. Àâòîìàòè÷åñêè âû÷èñëÿåò ïîëîæåíèå è ðàçìåð
-äëÿ äîáàâëÿåìûõ êîíòðîëîâ, à òàêæå ðàçìåð ñàìîãî äèàëîãà. Àâòîìàòè÷åñêè çàïèñûâàåò âûáðàííûå
-çíà÷åíèÿ â óêàçàííîå ìåñòî ïîñëå çàêðûòèÿ äèàëîãà ïî OK.
+Класс для динамического построения диалогов. Автоматически вычисляет положение и размер
+для добавляемых контролов, а также размер самого диалога. Автоматически записывает выбранные
+значения в указанное место после закрытия диалога по OK.
 
-Ïî óìîë÷àíèþ êàæäûé êîíòðîë ðàçìåùàåòñÿ â íîâîé ñòðîêå äèàëîãà. Øèðèíà äëÿ òåêñòîâûõ ñòðîê,
-checkbox è radio button âû÷èñëÿåòñÿ àâòîìàòè÷åñêè, äëÿ äðóãèõ ýëåìåíòîâ ïåðåäà¸òñÿ ÿâíî.
-Åñòü òàêæå âîçìîæíîñòü äîáàâèòü ñòàòè÷åñêèé òåêñò ñëåâà èëè ñïðàâà îò êîíòðîëà, ïðè ïîìîùè
-ìåòîäîâ AddTextBefore è AddTextAfter.
+По умолчанию каждый контрол размещается в новой строке диалога. Ширина для текстовых строк,
+checkbox и radio button вычисляется автоматически, для других элементов передаётся явно.
+Есть также возможность добавить статический текст слева или справа от контрола, при помощи
+методов AddTextBefore и AddTextAfter.
 
-Ïîääåðæèâàåòñÿ òàêæå âîçìîæíîñòü ðàñïîëîæåíèÿ êîíòðîëîâ â äâå êîëîíêè. Èñïîëüçóåòñÿ ñëåäóþùèì
-îáðàçîì:
+Поддерживается также возможность расположения контролов в две колонки. Используется следующим
+образом:
 - StartColumns()
-- äîáàâëÿþòñÿ êîíòðîëû äëÿ ïåðâîé êîëîíêè
+- добавляются контролы для первой колонки
 - ColumnBreak()
-- äîáàâëÿþòñÿ êîíòðîëû äëÿ âòîðîé êîëîíêè
+- добавляются контролы для второй колонки
 - EndColumns()
 
-Áàçîâàÿ âåðñèÿ êëàññà èñïîëüçóåòñÿ êàê âíóòðè êîäà FAR, òàê è â ïëàãèíàõ.
+Базовая версия класса используется как внутри кода FAR, так и в плагинах.
 */
 
 template<class T>
@@ -171,10 +171,10 @@ class DialogBuilderBase
 
 		void ReallocDialogItems()
 		{
-			// ðåàëëîêàöèÿ èíâàëèäèðóåò óêàçàòåëè íà DialogItemEx, âîçâðàù¸ííûå èç
-			// AddDialogItem è àíàëîãè÷íûõ ìåòîäîâ, ïîýòîìó ðàçìåð ìàññèâà ïîäáèðàåì òàêîé,
-			// ÷òîáû âñå íîðìàëüíûå äèàëîãè ïîìåùàëèñü áåç ðåàëëîêàöèè
-			// TODO õîðîøî áû, ÷òîáû îíè âîîáùå íå èíâàëèäèðîâàëèñü
+			// реаллокация инвалидирует указатели на DialogItemEx, возвращённые из
+			// AddDialogItem и аналогичных методов, поэтому размер массива подбираем такой,
+			// чтобы все нормальные диалоги помещались без реаллокации
+			// TODO хорошо бы, чтобы они вообще не инвалидировались
 			DialogItemsAllocated += 32;
 			if (!DialogItems)
 			{
@@ -232,7 +232,7 @@ class DialogBuilderBase
 			case DI_FIXEDIT:
 			case DI_COMBOBOX:
 				int Width = Item.X2 - Item.X1 + 1;
-				/* ñòðåëêà history çàíèìàåò äîïîëíèòåëüíîå ìåñòî, íî ðàíüøå îíà ðèñîâàëàñü ïîâåðõ ðàìêè
+				/* стрелка history занимает дополнительное место, но раньше она рисовалась поверх рамки
 				if (Item.Flags & DIF_HISTORY)
 					Width++;
 				*/
@@ -372,7 +372,7 @@ class DialogBuilderBase
 		}
 
 	public:
-		// Äîáàâëÿåò ñòàòè÷åñêèé òåêñò, ðàñïîëîæåííûé íà îòäåëüíîé ñòðîêå â äèàëîãå.
+		// Добавляет статический текст, расположенный на отдельной строке в диалоге.
 		T *AddText(int LabelId)
 		{
 			T *Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
@@ -380,7 +380,7 @@ class DialogBuilderBase
 			return Item;
 		}
 
-		// Äîáàâëÿåò ÷åêáîêñ.
+		// Добавляет чекбокс.
 		T *AddCheckbox(int TextMessageId, BOOL *Value, int Mask=0)
 		{
 			T *Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
@@ -394,7 +394,7 @@ class DialogBuilderBase
 			return Item;
 		}
 
-		// Äîáàâëÿåò ãðóïïó ðàäèîêíîïîê.
+		// Добавляет группу радиокнопок.
 		void AddRadioButtons(int *Value, int OptionCount, int MessageIDs[])
 		{
 			for(int i=0; i<OptionCount; i++)
@@ -410,13 +410,13 @@ class DialogBuilderBase
 			}
 		}
 
-		// Äîáàâëÿåò ïîëå òèïà DI_FIXEDIT äëÿ ðåäàêòèðîâàíèÿ óêàçàííîãî ÷èñëîâîãî çíà÷åíèÿ.
+		// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
 		virtual T *AddIntEditField(int *Value, int Width)
 		{
 			return nullptr;
 		}
 
-		// Äîáàâëÿåò óêàçàííóþ òåêñòîâóþ ñòðîêó ñëåâà îò ýëåìåíòà RelativeTo.
+		// Добавляет указанную текстовую строку слева от элемента RelativeTo.
 		T *AddTextBefore(T *RelativeTo, int LabelId)
 		{
 			T *Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
@@ -435,7 +435,7 @@ class DialogBuilderBase
 			return Item;
 		}
 
-		// Äîáàâëÿåò óêàçàííóþ òåêñòîâóþ ñòðîêó ñïðàâà îò ýëåìåíòà RelativeTo.
+		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
 		T *AddTextAfter(T *RelativeTo, int LabelId)
 		{
 			T *Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
@@ -449,14 +449,14 @@ class DialogBuilderBase
 			return Item;
 		}
 
-		// Íà÷èíàåò ðàñïîëàãàòü ïîëÿ äèàëîãà â äâå êîëîíêè.
+		// Начинает располагать поля диалога в две колонки.
 		void StartColumns()
 		{
 			ColumnStartIndex = DialogItemsCount;
 			ColumnStartY = NextY;
 		}
 
-		// Çàâåðøàåò êîëîíêó ïîëåé â äèàëîãå è ïåðåõîäèò ê ñëåäóþùåé êîëîíêå.
+		// Завершает колонку полей в диалоге и переходит к следующей колонке.
 		void ColumnBreak()
 		{
 			ColumnBreakIndex = DialogItemsCount;
@@ -464,7 +464,7 @@ class DialogBuilderBase
 			NextY = ColumnStartY;
 		}
 
-		// Çàâåðøàåò ðàñïîëîæåíèå ïîëåé äèàëîãà â äâå êîëîíêè.
+		// Завершает расположение полей диалога в две колонки.
 		void EndColumns()
 		{
 			for(int i=ColumnStartIndex; i<DialogItemsCount; i++)
@@ -483,13 +483,13 @@ class DialogBuilderBase
 			ColumnBreakIndex = -1;
 		}
 
-		// Äîáàâëÿåò ïóñòóþ ñòðîêó.
+		// Добавляет пустую строку.
 		void AddEmptyLine()
 		{
 			NextY++;
 		}
 
-		// Äîáàâëÿåò ñåïàðàòîð.
+		// Добавляет сепаратор.
 		void AddSeparator(int MessageId=-1)
 		{
 			T *Separator = AddDialogItem(DI_TEXT, MessageId == -1 ? EMPTY_TEXT : GetLangString(MessageId));
@@ -498,7 +498,7 @@ class DialogBuilderBase
 			Separator->Y1 = Separator->Y2 = NextY++;
 		}
 
-		// Äîáàâëÿåò ñåïàðàòîð, êíîïêè OK è Cancel.
+		// Добавляет сепаратор, кнопки OK и Cancel.
 		void AddOKCancel(int OKMessageId, int CancelMessageId)
 		{
 			AddSeparator();
@@ -699,7 +699,7 @@ public:
 #endif
 
 /*
-Âåðñèÿ êëàññà äëÿ äèíàìè÷åñêîãî ïîñòðîåíèÿ äèàëîãîâ, èñïîëüçóåìàÿ â ïëàãèíàõ ê FAR.
+Версия класса для динамического построения диалогов, используемая в плагинах к FAR.
 */
 class PluginDialogBuilder: public DialogBuilderBase<FarDialogItem>
 {

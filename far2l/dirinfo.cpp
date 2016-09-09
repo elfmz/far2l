@@ -96,7 +96,7 @@ int GetDirInfo(const wchar_t *Title,
 	SetCursorType(FALSE,0);
 	GetPathRoot(strFullDirName,strDriveRoot);
 	/* $ 20.03.2002 DJ
-	   äëÿ . - ïîêàæåì èìÿ ðîäèòåëüñêîãî êàòàëîãà
+	   для . - покажем имя родительского каталога
 	*/
 	const wchar_t *ShowDirName = DirName;
 
@@ -115,7 +115,7 @@ int GetDirInfo(const wchar_t *Title,
 	//todo if (GetDiskFreeSpace(strDriveRoot,&SectorsPerCluster,&BytesPerSector,&FreeClusters,&Clusters))
 	//	ClusterSize=SectorsPerCluster*BytesPerSector;
 
-	// Âðåìåííûå õðàíèëèùà èì¸í êàòàëîãîâ
+	// Временные хранилища имён каталогов
 	strLastDirName.Clear();
 	strCurDirName.Clear();
 	DirCount=FileCount=0;
@@ -163,22 +163,22 @@ int GetDirInfo(const wchar_t *Title,
 		{
 			StartTime=CurTime;
 			MsgWaitTime=500;
-			OldTitle.Set(L"%ls %ls",MSG(MScanningFolder), ShowDirName); // ïîêàæåì çàãîëîâîê êîíñîëè
+			OldTitle.Set(L"%ls %ls",MSG(MScanningFolder), ShowDirName); // покажем заголовок консоли
 			SetCursorType(FALSE,0);
 			DrawGetDirInfoMsg(Title,ShowDirName,FileSize);
 		}
 
 		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			// Ñ÷¸ò÷èê êàòàëîãîâ íàðàùèâàåì òîëüêî åñëè íå âêëþ÷åí ôèëüòð,
-			// â ïðîòèâíîì ñëó÷àå ýòî áóäåì äåëàòü â ïîäñ÷¸òå êîëè÷åñòâà ôàéëîâ
+			// Счётчик каталогов наращиваем только если не включен фильтр,
+			// в противном случае это будем делать в подсчёте количества файлов
 			if (!(Flags&GETDIRINFO_USEFILTER))
 				DirCount++;
 			else
 			{
-				// Åñëè êàòàëîã íå ïîïàäàåò ïîä ôèëüòð òî åãî íàäî ïîëíîñòüþ
-				// ïðîïóñòèòü - èíà÷å ïðè âêëþ÷åííîì ïîäñ÷¸òå total
-				// îí ó÷ò¸òñÿ (mantis 551)
+				// Если каталог не попадает под фильтр то его надо полностью
+				// пропустить - иначе при включенном подсчёте total
+				// он учтётся (mantis 551)
 				if (!Filter->FileInFilter(FindData))
 					ScTree.SkipDir();
 			}
@@ -186,7 +186,7 @@ int GetDirInfo(const wchar_t *Title,
 		else
 		{
 			/* $ 17.04.2005 KM
-			   Ïðîâåðêà ïîïàäàíèÿ ôàéëà â óñëîâèÿ ôèëüðà
+			   Проверка попадания файла в условия фильра
 			*/
 			if ((Flags&GETDIRINFO_USEFILTER))
 			{
@@ -194,9 +194,9 @@ int GetDirInfo(const wchar_t *Title,
 					continue;
 			}
 
-			// Íàðàùèâàåì ñ÷¸ò÷èê êàòàëîãîâ ïðè âêëþ÷åííîì ôèëüòðå òîëüêî òîãäà,
-			// êîãäà â òàêîì êàòàëîãå íàéäåí ôàéë, óäîâëåòâîðÿþùèé óñëîâèÿì
-			// ôèëüòðà.
+			// Наращиваем счётчик каталогов при включенном фильтре только тогда,
+			// когда в таком каталоге найден файл, удовлетворяющий условиям
+			// фильтра.
 			if ((Flags&GETDIRINFO_USEFILTER))
 			{
 				strCurDirName = strFullName;

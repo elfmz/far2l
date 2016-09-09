@@ -1,7 +1,7 @@
 /*
 language.cpp
 
-Ðàáîòà ñ lng ôàéëàìè
+Работа с lng файлами
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -129,7 +129,7 @@ int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FA
 	strFullParamName += ParamName;
 	int Length=(int)strFullParamName.GetLength();
 	/* $ 29.11.2001 DJ
-	   íå ïîãàíèì ïîçèöèþ â ôàéëå; äàëüøå @Contents íå ÷èòàåì
+	   не поганим позицию в файле; дальше @Contents не читаем
 	*/
 	BOOL Found = FALSE;
 	long OldPos = ftell(SrcFile);
@@ -224,9 +224,9 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 				LangMenuItem.strName.Format(L"%.40ls", !strLangDescr.IsEmpty() ? strLangDescr.CPtr():strLangName.CPtr());
 
 				/* $ 01.08.2001 SVS
-				   Íå äîïóñêàåì äóáëèêàòîâ!
-				   Åñëè â êàòàëîã ñ ÔÀÐîì ïîëîæèòü åùå îäèí HLF ñ îäíîèìåííûì
-				   ÿçûêîì, òî... ôèãíÿ ïîëó÷àåòñÿ ïðè âûáîðå ÿçûêà.
+				   Не допускаем дубликатов!
+				   Если в каталог с ФАРом положить еще один HLF с одноименным
+				   языком, то... фигня получается при выборе языка.
 				*/
 				if (LangMenu->FindItem(0,LangMenuItem.strName,LIFIND_EXACTMATCH) == -1)
 				{
@@ -252,7 +252,7 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 }
 
 /* $ 01.09.2000 SVS
-  + Íîâûé ìåòîä, äëÿ ïîëó÷åíèÿ ïàðàìåòðîâ äëÿ .Options
+  + Новый метод, для получения параметров для .Options
    .Options <KeyName>=<Value>
 */
 int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UINT nCodePage)
@@ -371,7 +371,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 		MsgCount++;
 	}
 
-	//   Ïðîâåäåì ïðîâåðêó íà êîëè÷åñòâî ñòðîê â LNG-ôàéëàõ
+	//   Проведем проверку на количество строк в LNG-файлах
 	if (CountNeed != -1 && CountNeed != MsgCount-1)
 	{
 		fclose(LangFile);
@@ -536,8 +536,8 @@ void Language::ConvertString(const wchar_t *Src,FARString &strDest)
 bool Language::CheckMsgId(int MsgId) const
 {
 	/* $ 19.03.2002 DJ
-	   ïðè îòðèöàòåëüíîì èíäåêñå - òàêæå ïîêàæåì ñîîáùåíèå îá îøèáêå
-	   (âñå ëó÷øå, ÷åì òðàïàòüñÿ)
+	   при отрицательном индексе - также покажем сообщение об ошибке
+	   (все лучше, чем трапаться)
 	*/
 	if (MsgId>=MsgCount || MsgId < 0)
 	{
@@ -545,14 +545,14 @@ bool Language::CheckMsgId(int MsgId) const
 			return true;
 
 		/* $ 26.03.2002 DJ
-		   åñëè ìåíåäæåð óæå â äàóíå - ñîîáùåíèå íå âûâîäèì
+		   если менеджер уже в дауне - сообщение не выводим
 		*/
 		if (!FrameManager->ManagerIsDown())
 		{
 			/* $ 03.09.2000 IS
-			   ! Íîðìàëüíîå ñîîáùåíèå îá îòñóòñòâèè ñòðîêè â ÿçûêîâîì ôàéëå
-			     (ðàíüøå èìÿ ôàéëà îáðåçàëîñü ñïðàâà è ïðèõîäèëîñü èíîãäà ãàäàòü - â
-			     êàêîì æå ôàéëå îøèáêà)
+			   ! Нормальное сообщение об отсутствии строки в языковом файле
+			     (раньше имя файла обрезалось справа и приходилось иногда гадать - в
+			     каком же файле ошибка)
 			*/
 			FARString strMsg1(L"Incorrect or damaged ");
 			strMsg1+=strMessageFile;

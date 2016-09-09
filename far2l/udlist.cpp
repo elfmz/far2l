@@ -1,10 +1,10 @@
 /*
 udlist.cpp
 
-Ñïèñîê ÷åãî-ëèáî, ïåðå÷èñëåííîãî ÷åðåç ñèìâîë-ðàçäåëèòåëü. Åñëè íóæíî, ÷òîáû
-ýëåìåíò ñïèñêà ñîäåðæàë ðàçäåëèòåëü, òî ýòîò ýëåìåíò ñëåäóåò çàêëþ÷èòü â
-êàâû÷êè. Åñëè êðîìå ðàçäåëèòåëÿ íè÷åãî áîëüøå â ñòðîêå íåò, òî ñ÷èòàåòñÿ, ÷òî
-ýòî íå ðàçäåëèòåëü, à ïðîñòîé ñèìâîë.
+Список чего-либо, перечисленного через символ-разделитель. Если нужно, чтобы
+элемент списка содержал разделитель, то этот элемент следует заключить в
+кавычки. Если кроме разделителя ничего больше в строке нет, то считается, что
+это не разделитель, а простой символ.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -182,7 +182,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 {
 	if (AddToList)
 	{
-		if (List && !*List) // ïóñòî, íå÷åãî äîáàâëÿòü
+		if (List && !*List) // пусто, нечего добавлять
 			return true;
 	}
 	else
@@ -248,7 +248,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 							{
 								Length=StrLength(item.Str);
 								/* $ 18.09.2002 DJ
-								   âûäåëÿëîñü íà 1 áàéò ìåíüøå, ÷åì íàäî
+								   выделялось на 1 байт меньше, чем надо
 								*/
 								item.Str=static_cast<wchar_t*>(xf_realloc(item.Str, (Length+2)*sizeof(wchar_t)));
 
@@ -287,10 +287,10 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 			const wchar_t *End=List+1;
 
 			if ( IsTrim )
-				while (IsSpace(*End)) ++End; // ïðîïóñòèì ìóñîð
+				while (IsSpace(*End)) ++End; // пропустим мусор
 
-			if (!*End) // Åñëè êðîìå ðàçäåëèòåëÿ íè÷åãî áîëüøå â ñòðîêå íåò,
-			{         // òî ñ÷èòàåòñÿ, ÷òî ýòî íå ðàçäåëèòåëü, à ïðîñòîé ñèìâîë
+			if (!*End) // Если кроме разделителя ничего больше в строке нет,
+			{         // то считается, что это не разделитель, а простой символ
 				item=L" ";
 
 				if (item.Str)
@@ -314,7 +314,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 
 		if (!Sort)
 			Array.Sort(reinterpret_cast<TARRAYCMPFUNC>(CmpItems));
-		else if (!Unique) // ÷òîáû íå ñîðòèðîâàòü óæå îòñîðòèðîâàííîå
+		else if (!Unique) // чтобы не сортировать уже отсортированное
 			Array.Sort();
 
 		size_t i=0, maxI=Array.getSize();
@@ -361,8 +361,8 @@ const wchar_t *UserDefinedList::Skip(const wchar_t *Str, int &Length, int &RealL
 	const wchar_t *cur=Str;
 	bool InBrackets=false, InQoutes = (*cur==L'\"');
 
-	if (!InQoutes) // åñëè ìû â êàâû÷êàõ, òî îáðàáîòêà áóäåò ïîçæå è ÷óòü ñëîæíåå
-		while (*cur) // âàæíî! ïðîâåðêà *cur äîëæíà ñòîÿòü ïåðâîé
+	if (!InQoutes) // если мы в кавычках, то обработка будет позже и чуть сложнее
+		while (*cur) // важно! проверка *cur должна стоять первой
 		{
 			if (ProcessBrackets)
 			{
@@ -396,7 +396,7 @@ const wchar_t *UserDefinedList::Skip(const wchar_t *Str, int &Length, int &RealL
 
 	if ( IsUnQuotes )
 	{
-		// ìû â êàâû÷êàõ - çàõâàòèì âñå îòñþäà è äî ñëåäóþùèõ êàâû÷åê
+		// мы в кавычках - захватим все отсюда и до следующих кавычек
 		++cur;
 		const wchar_t *QuoteEnd=wcschr(cur, L'\"');
 

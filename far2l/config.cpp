@@ -1,7 +1,7 @@
 /*
 config.cpp
 
-Êîíôèãóðàöèÿ
+Конфигурация
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -63,10 +63,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Options Opt={0};
 
-// Ñòàíäàðòíûé íàáîð ðàçäåëèòåëåé
+// Стандартный набор разделителей
 static const wchar_t *WordDiv0 = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
 
-// Ñòàíäàðòíûé íàáîð ðàçäåëèòåëåé äëÿ ôóíêöèè Xlat
+// Стандартный набор разделителей для функции Xlat
 static const wchar_t *WordDivForXlat0=L" \t!#$%^&*()+|=\\/@?";
 
 FARString strKeyNameConsoleDetachKey;
@@ -192,8 +192,8 @@ void PanelSettings()
 
 
 /* $ 17.12.2001 IS
-   Íàñòðîéêà ñðåäíåé êíîïêè ìûøè äëÿ ïàíåëåé. Âîòêíåì ïîêà ñþäà, ïîòîì íàäî
-   ïåðååõàòü â ñïåöèàëüíûé äèàëîã ïî ïðîãðàììèðîâàíèþ ìûøè.
+   Настройка средней кнопки мыши для панелей. Воткнем пока сюда, потом надо
+   переехать в специальный диалог по программированию мыши.
 */
 void InterfaceSettings()
 {
@@ -229,7 +229,7 @@ void InterfaceSettings()
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->SetScreenPosition();
-		// $ 10.07.2001 SKV ! íàäî ýòî äåëàòü, èíà÷å åñëè êåéáàð ñïðÿòàëè, áóäåò ïîëíûé ðàìñ.
+		// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
 		CtrlObject->Cp()->Redraw();
 	}
 }
@@ -497,16 +497,16 @@ void SetFolderInfoFiles()
 }
 
 
-// Ñòðóêòóðà, îïèñûâàþùàÿ âñþ êîíôèãóðàöèþ(!)
+// Структура, описывающая всю конфигурацию(!)
 static struct FARConfig
 {
-	int   IsSave;   // =1 - áóäåò çàïèñûâàòüñÿ â SaveConfig()
+	int   IsSave;   // =1 - будет записываться в SaveConfig()
 	DWORD ValType;  // REG_DWORD, REG_SZ, REG_BINARY
 	const wchar_t *KeyName;
 	const wchar_t *ValName;
-	void *ValPtr;   // àäðåñ ïåðåìåííîé, êóäà ïîìåùàåì äàííûå
-	DWORD DefDWord; // îí æå ðàçìåð äàííûõ äëÿ REG_SZ è REG_BINARY
-	const wchar_t *DefStr;   // ñòðîêà/äàííûå ïî óìîë÷àíèþ
+	void *ValPtr;   // адрес переменной, куда помещаем данные
+	DWORD DefDWord; // он же размер данных для REG_SZ и REG_BINARY
+	const wchar_t *DefStr;   // строка/данные по умолчанию
 } CFG[]=
 {
 	{1, REG_BINARY, NKeyColors, L"CurrentPalette",(char*)Palette,(DWORD)SizeArrayPalette,(wchar_t*)DefaultPalette},
@@ -584,8 +584,8 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyEditor,L"SaveEditorShortPos",&Opt.EdOpt.SaveShortPos,1, 0},
 	{1, REG_DWORD,  NKeyEditor,L"AutoDetectCodePage",&Opt.EdOpt.AutoDetectCodePage,0, 0},
 	{1, REG_DWORD,  NKeyEditor,L"EditorCursorBeyondEOL",&Opt.EdOpt.CursorBeyondEOL,1, 0},
-	{1, REG_DWORD,  NKeyEditor,L"ReadOnlyLock",&Opt.EdOpt.ReadOnlyLock,0, 0}, // Âåðí¸ì íàçàä äåôîëò 1.65 - íå ïðåäóïðåæäàòü è íå áëîêèðîâàòü
-	{0, REG_DWORD,  NKeyEditor,L"EditorUndoSize",&Opt.EdOpt.UndoSize,0, 0}, // $ 03.12.2001 IS ðàçìåð áóôåðà undo â ðåäàêòîðå
+	{1, REG_DWORD,  NKeyEditor,L"ReadOnlyLock",&Opt.EdOpt.ReadOnlyLock,0, 0}, // Вернём назад дефолт 1.65 - не предупреждать и не блокировать
+	{0, REG_DWORD,  NKeyEditor,L"EditorUndoSize",&Opt.EdOpt.UndoSize,0, 0}, // $ 03.12.2001 IS размер буфера undo в редакторе
 	{0, REG_SZ,     NKeyEditor,L"WordDiv",&Opt.strWordDiv, 0, WordDiv0},
 	{0, REG_DWORD,  NKeyEditor,L"BSLikeDel",&Opt.EdOpt.BSLikeDel,1, 0},
 	{0, REG_DWORD,  NKeyEditor,L"EditorF7Rules",&Opt.EdOpt.F7Rules,1, 0},
@@ -817,8 +817,8 @@ void ReadConfig()
 	FARString strPersonalPluginsPath;
 	size_t I;
 
-	/* <ÏÐÅÏÐÎÖÅÑÑÛ> *************************************************** */
-	// "Âñïîìíèì" ïóòü äëÿ äîïîëíèòåëüíîãî ïîèñêà ïëàãèíîâ
+	/* <ПРЕПРОЦЕССЫ> *************************************************** */
+	// "Вспомним" путь для дополнительного поиска плагинов
 	SetRegRootKey(HKEY_LOCAL_MACHINE);
 	GetRegKey(NKeySystem,L"TemplatePluginsPath",strPersonalPluginsPath,L"");
 	OptPolicies_ShowHiddenDrives=GetRegKey(NKeyPolicies,L"ShowHiddenDrives",1)&1;
@@ -826,8 +826,8 @@ void ReadConfig()
 	SetRegRootKey(HKEY_CURRENT_USER);
 	GetRegKey(NKeySystem,L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath, strPersonalPluginsPath);
 	bool ExplicitWindowMode=Opt.WindowMode!=FALSE;
-	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // ïðîèíèöèàëèçèðóåì íà âñÿêèé ñëó÷àé
-	/* *************************************************** </ÏÐÅÏÐÎÖÅÑÑÛ> */
+	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
+	/* *************************************************** </ПРЕПРОЦЕССЫ> */
 
 	for (I=0; I < ARRAYSIZE(CFG); ++I)
 	{
@@ -849,7 +849,7 @@ void ReadConfig()
 		}
 	}
 
-	/* <ÏÎÑÒÏÐÎÖÅÑÑÛ> *************************************************** */
+	/* <ПОСТПРОЦЕССЫ> *************************************************** */
 	if (Opt.ShowMenuBar)
 		Opt.ShowMenuBar=1;
 
@@ -861,8 +861,8 @@ void ReadConfig()
 		Opt.WindowMode=TRUE;
 	}
 
-	Opt.HelpTabSize=8; // ïîêà æåñòêî ïðîïèøåì...
-	//   Óòî÷íÿåì àëãîðèòì "âçÿòèÿ" ïàëèòðû.
+	Opt.HelpTabSize=8; // пока жестко пропишем...
+	//   Уточняем алгоритм "взятия" палитры.
 	for (I=COL_PRIVATEPOSITION_FOR_DIF165ABOVE-COL_FIRSTPALETTECOLOR+1;
 	        I < (COL_LASTPALETTECOLOR-COL_FIRSTPALETTECOLOR);
 	        ++I)
@@ -876,8 +876,8 @@ void ReadConfig()
 
 			/*
 			else
-			  â äðóãèõ ñëó÷àÿõ íèôèãà íè÷åãî íå äåëàåì, ò.ê.
-			  åñòü äðóãèå ïàëèòðû...
+			  в других случаях нифига ничего не делаем, т.к.
+			  есть другие палитры...
 			*/
 		}
 	}
@@ -885,11 +885,11 @@ void ReadConfig()
 	Opt.ViOpt.ViewerIsWrap&=1;
 	Opt.ViOpt.ViewerWrap&=1;
 
-	// Èñêëþ÷àåì ñëó÷àéíîå ñòèðàíèå ðàçäåëèòåëåé ;-)
+	// Исключаем случайное стирание разделителей ;-)
 	if (Opt.strWordDiv.IsEmpty())
 		Opt.strWordDiv = WordDiv0;
 
-	// Èñêëþ÷àåì ñëó÷àéíîå ñòèðàíèå ðàçäåëèòåëåé
+	// Исключаем случайное стирание разделителей
 	if (Opt.XLat.strWordDivForXlat.IsEmpty())
 		Opt.XLat.strWordDivForXlat = WordDivForXlat0;
 
@@ -917,13 +917,13 @@ void ReadConfig()
 	FileList::ReadPanelModes();
 	CtrlObject->EditorPosCache->Read(L"Editor/LastPositions");
 	CtrlObject->ViewerPosCache->Read(L"Viewer/LastPositions");
-	// óòî÷íÿåì ñèñòåìíóþ ïîëèòèêó
-	// äëÿ äèñêîâ HKCU ìîæåò òîëüêî îòìåíÿòü ïîêàç
+	// уточняем системную политику
+	// для дисков HKCU может только отменять показ
 	Opt.Policies.ShowHiddenDrives&=OptPolicies_ShowHiddenDrives;
-	// äëÿ îïöèé HKCU ìîæåò òîëüêî äîáàâëÿòü áëîêèðîêó ïóíêòîâ
+	// для опций HKCU может только добавлять блокироку пунктов
 	Opt.Policies.DisabledOptions|=OptPolicies_DisabledOptions;
 
-	if (Opt.strExecuteBatchType.IsEmpty()) // ïðåäîõðàíÿåìñÿ
+	if (Opt.strExecuteBatchType.IsEmpty()) // предохраняемся
 		Opt.strExecuteBatchType=constBatchExt;
 
 	{
@@ -951,7 +951,7 @@ void ReadConfig()
 					break;
 			}
 
-			if (I <= 1) // åñëè óêàçàíî ìåíüøå äâóõ - "îòêêëþ÷àåì" ýòó
+			if (I <= 1) // если указано меньше двух - "откключаем" эту
 				Opt.XLat.Layouts[0]=0;
 		}
 	}
@@ -971,19 +971,19 @@ void ReadConfig()
                                   Opt.FindOpt.OutColumnCount);
 	}
 
-	/* *************************************************** </ÏÎÑÒÏÐÎÖÅÑÑÛ> */
+	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 
 
 void SaveConfig(int Ask)
 {
-	if (Opt.Policies.DisabledOptions&0x20000) // Bit 17 - Ñîõðàíèòü ïàðàìåòðû
+	if (Opt.Policies.DisabledOptions&0x20000) // Bit 17 - Сохранить параметры
 		return;
 
 	if (Ask && Message(0,2,MSG(MSaveSetupTitle),MSG(MSaveSetupAsk1),MSG(MSaveSetupAsk2),MSG(MSaveSetup),MSG(MCancel)))
 		return;
 
-	/* <ÏÐÅÏÐÎÖÅÑÑÛ> *************************************************** */
+	/* <ПРЕПРОЦЕССЫ> *************************************************** */
 	Panel *LeftPanel=CtrlObject->Cp()->LeftPanel;
 	Panel *RightPanel=CtrlObject->Cp()->RightPanel;
 	Opt.LeftPanel.Focus=LeftPanel->GetFocus();
@@ -1023,7 +1023,7 @@ void SaveConfig(int Ask)
 	RightPanel->GetCurDir(Opt.strRightFolder);
 	RightPanel->GetCurBaseName(Opt.strRightCurFile);
 	CtrlObject->HiFiles->SaveHiData();
-	/* *************************************************** </ÏÐÅÏÐÎÖÅÑÑÛ> */
+	/* *************************************************** </ПРЕПРОЦЕССЫ> */
 	SetRegKey(NKeySystem,L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath);
 	SetRegKey(NKeyLanguage,L"Main",Opt.strLanguage);
 
@@ -1044,12 +1044,12 @@ void SaveConfig(int Ask)
 			}
 	}
 
-	/* <ÏÎÑÒÏÐÎÖÅÑÑÛ> *************************************************** */
+	/* <ПОСТПРОЦЕССЫ> *************************************************** */
 	FileFilter::SaveFilters();
 	FileList::SavePanelModes();
 
 	if (Ask)
 		CtrlObject->Macro.SaveMacros();
 
-	/* *************************************************** </ÏÎÑÒÏÐÎÖÅÑÑÛ> */
+	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }

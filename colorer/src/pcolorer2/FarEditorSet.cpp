@@ -938,7 +938,7 @@ void FarEditorSet::ReloadBase()
       }
       regionMapper = parserFactory->createStyledMapper(&hrdClass, NULL);
     };
-    //óñòàíàâëèâàåì ôîí ðåäàêòîðà ïðè êàæäîé ïåðåçàãðóçêå ñõåì.
+    //устанавливаем фон редактора при каждой перезагрузке схем.
     SetBgEditor();
   }
   catch (Exception &e){
@@ -1080,7 +1080,7 @@ void FarEditorSet::dropCurrentEditor(bool clean)
 void FarEditorSet::dropAllEditors(bool clean)
 {
   if (clean){
-    //ìû íå èìååì äîñòóïà ê äðóãèì ðåäàêòîðàì, êðîìå òåêóùåãî
+    //мы не имеем доступа к другим редакторам, кроме текущего
     dropCurrentEditor(clean);
   }
   for (FarEditor *fe = farEditorInstances.enumerate(); fe != NULL; fe = farEditorInstances.next()){
@@ -1569,15 +1569,15 @@ void FarEditorSet::SaveChangedValueParam(HANDLE hDlg)
   FileTypeImpl *type = getCurrentTypeInDialog(hDlg);
   const String *value=((FileTypeImpl*)type)->getParamNotDefaultValue(p);
   const String *def_value=getParamDefValue(type,p);
-  if (value==NULL || !value->length()){//áûëî default çíà÷åíèå
-    //åñëè åãî èçìåíèëè  
+  if (value==NULL || !value->length()){//было default значение
+    //если его изменили  
     if (!v.equals(def_value)){
       if (type->getParamValue(p)==null){
         ((FileTypeImpl*)type)->addParam(&p);
       }
       type->setParamValue(p,&v);
     }
-  }else{//áûëî ïîëüçîâàòåëüñêîå çíà÷åíèå
+  }else{//было пользовательское значение
     if (!v.equals(value)){//changed
       if (v.equals(def_value)){
          //delete value

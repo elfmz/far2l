@@ -323,7 +323,7 @@ int PluginClass::ProcessKey(int Key,unsigned int ControlState)
   if ((ControlState & PKF_ALT) && Key==VK_F6)
   {
 //    HANDLE hScreen=Info.SaveScreen(0,0,-1,-1);
-    if(strstr(ArcName,/*"FarTmp"*/"FTMP")==NULL)//$AA êàêàÿ-òî áÿêà áàëîâàëàñü
+    if(strstr(ArcName,/*"FarTmp"*/"FTMP")==NULL)//$AA какая-то бяка баловалась
     {
       char CurDir[NM];
       strcpy(CurDir,ArcName);

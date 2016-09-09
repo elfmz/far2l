@@ -47,7 +47,7 @@ struct TreeItem
 	FARString strName;
 	int *Last;
 	size_t LastCount;
-	int Depth;             // óðîâåíü âëîæåííîñòè
+	int Depth;             // уровень вложенности
 
 	TreeItem()
 	{
@@ -98,7 +98,7 @@ class TreeList: public Panel
 		long GetSelPosition;
 		int NumericSort;
 		int CaseSensitiveSort;
-		int ExitCode; // àêòóàëüíî òîëüêî äëÿ äåðåâà, âûçâàííîãî èç êîïèðà!
+		int ExitCode; // актуально только для дерева, вызванного из копира!
 
 		struct TreeItem *SaveListData;
 		long SaveTreeCount;
@@ -192,6 +192,6 @@ class TreeList: public Panel
 		static void ReadCache(const wchar_t *TreeRoot);
 		static void FlushCache();
 
-		static int MustBeCached(const wchar_t *Root); // $ 16.10.2000 tran - ôóíêöèÿ, îïðåäåëÿþùàÿÿ íåîáõîäèìîñòü êåøèðîâàíèÿ ôàéëà
+		static int MustBeCached(const wchar_t *Root); // $ 16.10.2000 tran - функция, определяющаяя необходимость кеширования файла
 		static void PR_MsgReadTree();
 };

@@ -61,7 +61,7 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 		{
 			if (*NewDir=='/') {
 				strCurDir = NewDir;
-				rc = apiSetCurrentDirectory(strCurDir); // çäåñü áåðåì êîðåíü
+				rc = apiSetCurrentDirectory(strCurDir); // здесь берем корень
 			} else {
 				apiGetCurrentDirectory(strCurDir);
 				ConvertNameToFull(NewDir,strCurDir);
@@ -76,25 +76,25 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 }
 
 /*
-  Ôóíêöèÿ TestFolder âîçâðàùàåò îäíî ñîñòîÿíèé òåñòèðóåìîãî êàòàëîãà:
+  Функция TestFolder возвращает одно состояний тестируемого каталога:
 
-    TSTFLD_NOTFOUND   (2) - íåò òàêîãî
-    TSTFLD_NOTEMPTY   (1) - íå ïóñòî
-    TSTFLD_EMPTY      (0) - ïóñòî
-    TSTFLD_NOTACCESS (-1) - íåò äîñòóïà
-    TSTFLD_ERROR     (-2) - îøèáêà (êðèâûå ïàðàìåòðû èëè íåõâàòèëî ïàìÿòè äëÿ âûäåëåíèÿ ïðîìåæóòî÷íûõ áóôåðîâ)
+    TSTFLD_NOTFOUND   (2) - нет такого
+    TSTFLD_NOTEMPTY   (1) - не пусто
+    TSTFLD_EMPTY      (0) - пусто
+    TSTFLD_NOTACCESS (-1) - нет доступа
+    TSTFLD_ERROR     (-2) - ошибка (кривые параметры или нехватило памяти для выделения промежуточных буферов)
 */
 int TestFolder(const wchar_t *Path)
 {
-	if (!(Path && *Path)) // ïðîâåðêà íà âøèâîñòü
+	if (!(Path && *Path)) // проверка на вшивость
 		return TSTFLD_ERROR;
 
 	FARString strFindPath = Path;
-	// ñîîáðàçèì ìàñêó äëÿ ïîèñêà.
+	// сообразим маску для поиска.
 	AddEndSlash(strFindPath);
 	strFindPath += L"*";
 
-	// ïåðâàÿ ïðîâåðêà - ÷å-íèòü ñ÷èòàòü ìîæåì?
+	// первая проверка - че-нить считать можем?
 	FAR_FIND_DATA_EX fdata;
 	FindFile Find(strFindPath);
 
@@ -111,13 +111,13 @@ int TestFolder(const wchar_t *Path)
 		if (lstError.Get() == ERROR_FILE_NOT_FOUND)
 			return TSTFLD_EMPTY;
 
-		// ñîáñòâåííî... íå ôàêò, ÷òî äèñê íå ÷èòàåì, ò.ê. íà ÷èñòîì äèñêå â êîðíå íåòó äàæå "."
-		// ïîýòîìó ïîñìîòðèì íà Root
+		// собственно... не факт, что диск не читаем, т.к. на чистом диске в корне нету даже "."
+		// поэтому посмотрим на Root
 		GetPathRoot(Path,strFindPath);
 
 		if (!StrCmp(Path,strFindPath))
 		{
-			// ïðîâåðêà àòðèáóòîâ ãàðàíòèðîâàíî ñêàæåò - ýòî áàãà BugZ#743 èëè ïóñòîé êîðåíü äèñêà.
+			// проверка атрибутов гарантировано скажет - это бага BugZ#743 или пустой корень диска.
 			if (apiGetFileAttributes(strFindPath)!=INVALID_FILE_ATTRIBUTES)
 			{
 				if (lstError.Get() == ERROR_ACCESS_DENIED)
@@ -139,20 +139,20 @@ int TestFolder(const wchar_t *Path)
 	}
 
 
-	// îäíîçíà÷íî êàòàëîã ïóñò
+	// однозначно каталог пуст
 	return TSTFLD_EMPTY;
 }
 
 /*
-   Ïðîâåðêà ïóòè èëè õîñò-ôàéëà íà ñóùåñòâîâàíèå
-   Åñëè èäåò ïðîâåðêà ïóòè (IsHostFile=FALSE), òî áóäåò
-   ïðåäïðèíÿòà ïîïûòêà íàéòè áëèæàéøèé ïóòü. Ðåçóëüòàò ïîïûòêè
-   âîçâðàùàåòñÿ â ïåðåäàííîì TestPath.
+   Проверка пути или хост-файла на существование
+   Если идет проверка пути (IsHostFile=FALSE), то будет
+   предпринята попытка найти ближайший путь. Результат попытки
+   возвращается в переданном TestPath.
 
-   Return: 0 - áßäà.
-           1 - ÎÁÈ!,
-          -1 - Ïî÷òè ÷òî ÎÁÈ, íî ProcessPluginEvent âåðíóë TRUE
-   TestPath ìîæåò áûòü ïóñòûì, òîãäà ïðîñòî èñïîëíèì ProcessPluginEvent()
+   Return: 0 - бЯда.
+           1 - ОБИ!,
+          -1 - Почти что ОБИ, но ProcessPluginEvent вернул TRUE
+   TestPath может быть пустым, тогда просто исполним ProcessPluginEvent()
 
 */
 int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
@@ -170,7 +170,7 @@ int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
 			if (!Silent)
 				Message(MSG_WARNING | MSG_ERRORTYPE, 1, MSG(MError), strTarget, MSG(MOk));
 		}
-		else // ïîïûòêà íàéòè!
+		else // попытка найти!
 		{
 			WINPORT(SetLastError)(ERROR_PATH_NOT_FOUND);
 
@@ -193,7 +193,7 @@ int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
 							{
 								*pTestPath = strTestPathTemp;
 
-								if (pTestPath->GetLength() == 2) // äëÿ ñëó÷àÿ "C:", èíà÷å ïîïàäåì â òåêóùèé êàòàëîã äèñêà C:
+								if (pTestPath->GetLength() == 2) // для случая "C:", иначе попадем в текущий каталог диска C:
 									AddEndSlash(*pTestPath);
 
 								FoundPath=1;

@@ -1,7 +1,7 @@
 /*
 registry.cpp
 
-Ðàáîòà ñ registry
+Работа с registry
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -171,8 +171,8 @@ int GetRegKeySize(HKEY hKey,const wchar_t *ValueName)
 
 
 /* $ 22.02.2001 SVS
-  Äëÿ ïîëó÷åíèÿ ñòðîêè (GetRegKey) îòðàáîòàåì ñèòóàöèþ ñ ERROR_MORE_DATA
-  Åñëè òàêàÿ ñèòóàöèÿ âñòðåòèëàñü - ïîëó÷èì ñêîëüêî íàäî â ëþáîì ñëó÷àå
+  Для получения строки (GetRegKey) отработаем ситуацию с ERROR_MORE_DATA
+  Если такая ситуация встретилась - получим сколько надо в любом случае
 */
 
 int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,FARString &strValueData,const wchar_t *Default,DWORD *pType)
@@ -180,7 +180,7 @@ int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,FARString &strValueDat
 	int ExitCode=!ERROR_SUCCESS;
 	HKEY hKey=OpenRegKey(Key);
 
-	if (hKey) // íàäîáíî ïðîâåðèòü!
+	if (hKey) // надобно проверить!
 	{
 		DWORD Type,QueryDataSize=0;
 
@@ -193,7 +193,7 @@ int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,FARString &strValueDat
 		                    &QueryDataSize
 		                )) == ERROR_SUCCESS)
 		{
-			wchar_t *TempBuffer = strValueData.GetBuffer(QueryDataSize/sizeof(wchar_t)+1);  // ...òî âûäåëèì ñêîëüêî íàäî
+			wchar_t *TempBuffer = strValueData.GetBuffer(QueryDataSize/sizeof(wchar_t)+1);  // ...то выделим сколько надо
 			ExitCode = WINPORT(RegQueryValueEx)(hKey,ValueName,0,&Type,(unsigned char *)TempBuffer,&QueryDataSize);
 			strValueData.ReleaseBuffer(QueryDataSize/sizeof(wchar_t));
 
@@ -285,14 +285,14 @@ int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,BYTE *ValueData,const 
 		DWORD Type;
 		ExitCode=WINPORT(RegQueryValueEx)(hKey,ValueName,0,&Type,ValueData,&Required);
 
-		if (ExitCode == ERROR_MORE_DATA) // åñëè ðàçìåð íå ïîäõîäÿùèå...
+		if (ExitCode == ERROR_MORE_DATA) // если размер не подходящие...
 		{
-			char *TempBuffer=new char[Required+1]; // ...òî âûäåëèì ñêîëüêî íàäî
+			char *TempBuffer=new char[Required+1]; // ...то выделим сколько надо
 
-			if (TempBuffer) // Åñëè ñ ïàìÿòüþ âñå íîðìàëüíî...
+			if (TempBuffer) // Если с памятью все нормально...
 			{
 				if ((ExitCode=WINPORT(RegQueryValueEx)(hKey,ValueName,0,&Type,(unsigned char *)TempBuffer,&Required)) == ERROR_SUCCESS)
-					memcpy(ValueData,TempBuffer,DataSize);  // ñêîïèðóåì ñêîëüêî íàäî.
+					memcpy(ValueData,TempBuffer,DataSize);  // скопируем сколько надо.
 
 				delete[] TempBuffer;
 			}
@@ -485,7 +485,7 @@ void RenumKeyRecord(const wchar_t *KeyRoot,const wchar_t *KeyMask,const wchar_t 
 	FARString strMaskKeyName;
 	BOOL Processed=FALSE;
 
-	// ñáîð äàííûõ
+	// сбор данных
 	for (int CurPos=0;; CurPos++)
 	{
 		if (!EnumRegKey(KeyRoot,CurPos,strRegKey))
@@ -511,7 +511,7 @@ void RenumKeyRecord(const wchar_t *KeyRoot,const wchar_t *KeyMask,const wchar_t 
 			if (!Item)
 				break;
 
-			// ïðîâåðÿì ñóùåñòâîâàíèå CurPos
+			// проверям существование CurPos
 			strFullKeyName.Format(KeyMask,CurPos);
 
 			if (!CheckRegKey(strFullKeyName))
@@ -681,8 +681,8 @@ void DeleteKeyTreePart(const wchar_t *KeyName)
 
 
 /* 07.03.2001 IS
-   Óäàëåíèå ïóñòîãî êëþ÷à â òîì ñëó÷àå, åñëè îí íå ñîäåðæèò íèêàêèõ ïåðåìåííûõ
-   è ïîäêëþ÷åé. Âîçâðàùàåò TRUE ïðè óñïåõå.
+   Удаление пустого ключа в том случае, если он не содержит никаких переменных
+   и подключей. Возвращает TRUE при успехе.
 */
 
 int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName)
@@ -727,7 +727,7 @@ int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName)
 					}
 				}
 
-				//strKeyName.ReleaseBuffer (); íå íàäî, ñòðîêà âñå ðîâíî óäàëÿåòñÿ
+				//strKeyName.ReleaseBuffer (); не надо, строка все ровно удаляется
 			}
 		}
 
@@ -748,8 +748,8 @@ int CheckRegKey(const wchar_t *Key)
 }
 
 /* 15.09.2000 IS
-   Âîçâðàùàåò FALSE, åñëè óêàçàííàÿ ïåðåìåííàÿ íå ñîäåðæèò äàííûå
-   èëè ðàçìåð äàííûõ ðàâåí íóëþ.
+   Возвращает FALSE, если указанная переменная не содержит данные
+   или размер данных равен нулю.
 */
 int CheckRegValue(const wchar_t *Key,const wchar_t *ValueName,DWORD *pType,DWORD *pDataSize)
 {
@@ -842,9 +842,9 @@ int EnumRegValueEx(const wchar_t *Key,DWORD Index, FARString &strDestName, FARSt
 			ValNameSize0=ValNameSize;
 			// Get DataSize
 			/*ExitCode = */WINPORT(RegEnumValue)(hKey,Index,(LPWSTR)strValueName.CPtr(),&ValNameSize0, nullptr, &Type, nullptr, &Size);
-			// çäåñü ExitCode == ERROR_SUCCESS
+			// здесь ExitCode == ERROR_SUCCESS
 
-			// êîððåêòèðîâêà ðàçìåðà
+			// корректировка размера
 			if (Type == REG_DWORD)
 			{
 				if (Size < sizeof(DWORD))

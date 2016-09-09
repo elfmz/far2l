@@ -123,9 +123,6 @@ set(SOURCES
     src/formats/7z/C/Blake2s.c
 )
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -fPIC -Wno-unused-function")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function")
-
 include_directories(src/formats/rar/unrar)
 include_directories(src)
 include_directories(src/libpcre)
@@ -135,9 +132,7 @@ include_directories(../far2l/Include)
 
 add_definitions(-DRARDLL -D_7ZIP_ST)
 
-add_library (multiarc SHARED ${SOURCES})
-
-target_link_libraries (multiarc far2l)
+add_library (multiarc MODULE ${SOURCES})
 
 set_target_properties(multiarc
   PROPERTIES

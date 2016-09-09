@@ -165,4 +165,8 @@ add_dependencies(far2l bootstrap)
 
 SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)
 
+set_target_properties(far2l
+    PROPERTIES
+    ENABLE_EXPORTS TRUE)
+
 target_link_libraries(far2l ${WINPORT} dl)

@@ -2,21 +2,6 @@
 project(colorer)
 
 set(SOURCES
-    src/zlib/uncompr.c
-    src/zlib/deflate.c
-    src/zlib/inftrees.c
-    src/zlib/trees.c
-    src/zlib/gzwrite.c
-    src/zlib/infback.c
-    src/zlib/crc32.c
-    src/zlib/gzclose.c
-    src/zlib/zutil.c
-    src/zlib/inflate.c
-    src/zlib/gzlib.c
-    src/zlib/gzread.c
-    src/zlib/adler32.c
-    src/zlib/compress.c
-    src/zlib/inffast.c
     src/pcolorer2/FarEditor.cpp
     src/pcolorer2/ChooseTypeMenu.cpp
     src/pcolorer2/tools.cpp
@@ -40,10 +25,6 @@ set(SOURCES
     src/shared/unicode/StringBuffer.cpp
     src/shared/cregexp/cregexp.cpp
     src/shared/xml/xmldom.cpp
-    src/zlib/contrib/minizip/mztools.c
-    src/zlib/contrib/minizip/zip.c
-    src/zlib/contrib/minizip/ioapi.c
-    src/zlib/contrib/minizip/unzip.c
     src/shared/common/io/Writer.cpp
     src/shared/common/io/FileInputSource.cpp
     src/shared/common/io/HTTPInputSource.cpp
@@ -73,18 +54,18 @@ set(SOURCES
 add_definitions(-D_UNICODE -DUNICODE -D__unix__)
 
 include_directories(src/shared)
-include_directories(src/zlib)
 include_directories(src/pcolorer2)
 include_directories(../WinPort)
 include_directories(../far2l)
 include_directories(../far2l/Include)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -Wall -std=c++11 -fPIC -Wno-unused-function")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -Wall -std=c99 -fPIC -Wno-unused-function")
+add_library (colorer MODULE ${SOURCES})
 
-add_library (colorer SHARED ${SOURCES})
-
-target_link_libraries (colorer WinPort)
+find_package( ZLIB REQUIRED )
+if ( ZLIB_FOUND )
+    include_directories( ${ZLIB_INCLUDE_DIRS} )
+    target_link_libraries( colorer ${ZLIB_LIBRARIES} )
+endif( ZLIB_FOUND )
 
 set_target_properties(colorer
   PROPERTIES

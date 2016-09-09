@@ -102,7 +102,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 					state = S_DOUBLEQ;
 				} else if (*cur=='\\') {
 					state = S_RAW_BACKSLASH;
-        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};!`", *cur)!=NULL) {
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};|!`", *cur)!=NULL) {
 					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
 					return rc; // TODO?: return info about parsing was not completed successuly
 				} else {
@@ -122,7 +122,7 @@ std::vector<std::string> ExplodeCmdLine(const char *cmd_line) {
 					state = S_DOUBLEQ;
 				} else if (*cur=='\\') {
 					state = S_RAW_BACKSLASH;
-        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};!`", *cur)!=NULL) {
+        } else if (0x00 <= *cur && *cur <= 0x1F || strchr("$&()[]{};|!`", *cur)!=NULL) {
 					fprintf(stderr, "ExplodeCmdLine(%s) \\x%02X at position \n", cmd_line, *cur, cur-cmd_line);
 					rc.push_back(tmp);
 					return rc; // TODO?: return info about parsing was not completed successuly

@@ -189,7 +189,9 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
 
 			while (_fonts.size() <= try_index) {
 				wxFont smallest = _fonts.back();
-				_fonts.emplace_back(smallest.MakeSmaller());
+				smallest.MakeSmaller();
+				smallest.MakeBold();
+				_fonts.emplace_back(smallest);
 			}
 			dc.SetFont(_fonts[try_index]);
 			char_size = dc.GetTextExtent(wz);

@@ -148,7 +148,7 @@ static wchar_t * _itow(int i, wchar_t *w, int radix)
         *w = 0;
         for (--w; i; i/= radix) {
                 unsigned int d = i % radix;
-                if (d>=0 && d<=9) *w = d + '0';
+                if (d<=9) *w = d + '0';
                 else *w = d + 'a';
                 --w;
         }

@@ -67,6 +67,8 @@ if ( ZLIB_FOUND )
     target_link_libraries( colorer ${ZLIB_LIBRARIES} )
 endif( ZLIB_FOUND )
 
+target_link_libraries(colorer minizip)
+
 set_target_properties(colorer
   PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/colorer/bin"

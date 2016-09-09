@@ -79,7 +79,7 @@ void CloseSameRegKey()
 
 LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,const wchar_t * const ValueData, int SizeData, DWORD Type)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	LONG Ret=ERROR_SUCCESS;
 
 	if ((hKey=CreateRegKey(Key)) )
@@ -91,7 +91,7 @@ LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,const wchar_t * const
 
 LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,const wchar_t * const ValueData)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	LONG Ret=ERROR_SUCCESS;
 
 	if ((hKey=CreateRegKey(Key)) ) {
@@ -108,7 +108,7 @@ LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,const wchar_t * const
 
 LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,DWORD ValueData)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	LONG Ret=ERROR_SUCCESS;
 
 	if ((hKey=CreateRegKey(Key)) )
@@ -121,7 +121,7 @@ LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,DWORD ValueData)
 
 LONG SetRegKey64(const wchar_t *Key,const wchar_t *ValueName,uint64_t ValueData)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	LONG Ret=ERROR_SUCCESS;
 
 	if ((hKey=CreateRegKey(Key)) )
@@ -133,7 +133,7 @@ LONG SetRegKey64(const wchar_t *Key,const wchar_t *ValueName,uint64_t ValueData)
 
 LONG SetRegKey(const wchar_t *Key,const wchar_t *ValueName,const BYTE *ValueData,DWORD ValueSize)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	LONG Ret=ERROR_SUCCESS;
 
 	if ((hKey=CreateRegKey(Key)) )
@@ -372,7 +372,7 @@ HKEY OpenRegKey(const wchar_t *Key)
 	if (hRegCurrentKey)
 		return(hRegCurrentKey);
 
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	static FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 
@@ -402,7 +402,7 @@ void DeleteRegKey(const wchar_t *Key)
 
 void DeleteRegValue(const wchar_t *Key,const wchar_t *Value)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 
@@ -531,7 +531,7 @@ void RenumKeyRecord(const wchar_t *KeyRoot,const wchar_t *KeyMask,const wchar_t 
 
 int CopyKeyTree(const wchar_t *Src,const wchar_t *Dest,const wchar_t *Skip)
 {
-	HKEY hSrcKey,hDestKey;
+	HKEY hSrcKey = nullptr,hDestKey = nullptr;
 
 	if (WINPORT(RegOpenKeyEx)(hRegRootKey,Src,0,KEY_READ,&hSrcKey)!=ERROR_SUCCESS)
 		return FALSE;
@@ -687,7 +687,7 @@ void DeleteKeyTreePart(const wchar_t *KeyName)
 
 int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	int Exist=WINPORT(RegOpenKeyEx)(hRoot,FullKeyName,0,KEY_ALL_ACCESS,&hKey)==ERROR_SUCCESS;
 
 	if (Exist)
@@ -739,7 +739,7 @@ int DeleteEmptyKey(HKEY hRoot, const wchar_t *FullKeyName)
 
 int CheckRegKey(const wchar_t *Key)
 {
-	HKEY hKey;
+	HKEY hKey = nullptr;
 	FARString strFullKeyName;
 	MkKeyName(Key,strFullKeyName);
 	int Exist=WINPORT(RegOpenKeyEx)(hRegRootKey,strFullKeyName,0,KEY_QUERY_VALUE,&hKey)==ERROR_SUCCESS;

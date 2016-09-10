@@ -15,7 +15,6 @@ addons:
     - m4
     - libpcre3-dev
     - zlib1g-dev
-    - libminizip-dev
 
 script: cmake
 compiler: clang

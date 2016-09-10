@@ -536,7 +536,13 @@ int CommandLine::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	{
 		return ProcessKey(KEY_ALTF8);
 	}
-	return(CmdStr.ProcessMouse(MouseEvent));
+	int r = CmdStr.ProcessMouse(MouseEvent);
+	if (r==0) {
+		if (MouseEvent->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED) {
+			WINPORT(BeginConsoleAdhocQuickEdit)();
+		}
+	}
+	return r;
 }
 
 void CommandLine::GetPrompt(FARString &strDestStr)

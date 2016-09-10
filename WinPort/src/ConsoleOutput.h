@@ -12,6 +12,7 @@ class ConsoleOutputListener
 		virtual void OnConsoleOutputTitleChanged() = 0;
 		virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos) = 0;
 		virtual COORD OnConsoleGetLargestWindowSize() = 0;
+		virtual void OnConsoleAdhocQuickEdit() = 0;
 };
 
 class ConsoleOutput
@@ -98,6 +99,8 @@ public:
 	void SetScrollRegion(SHORT top, SHORT bottom);
 	void GetScrollRegion(SHORT &top, SHORT &bottom);
 	void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
+	
+	void AdhocQuickEdit();
 };
 
 

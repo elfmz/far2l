@@ -62,6 +62,8 @@ extern "C" {
 
 	typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Top, unsigned int Width, CHAR_INFO *Charss);
 	WINPORT_DECL(SetConsoleScrollCallback, VOID, (HANDLE hConsoleOutput, PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext));
+	
+	WINPORT_DECL(BeginConsoleAdhocQuickEdit, BOOL, ());
 
 	///Registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));

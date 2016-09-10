@@ -2,8 +2,8 @@
 cmake_minimum_required (VERSION 3.3.2)
 project (FAR)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -fPIC -Wno-unused-function -Wno-c++11-narrowing -fsanitize=address")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -fsanitize=address")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -fPIC -Wno-unused-function -Wno-c++11-narrowing -fsanitize=address") #  -fsanitize=address
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -fsanitize=address") #  -fsanitize=address
 set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 
@@ -30,4 +30,4 @@ set_target_properties(farlng
 add_subdirectory (farftp)
 add_subdirectory (colorer)
 add_subdirectory (multiarc)
-
+add_subdirectory (tmppanel)

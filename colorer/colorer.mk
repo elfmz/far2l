@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=07/09/16
+Date                   :=11/09/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -36,7 +36,7 @@ ObjectsFileList        :="colorer.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  $(shell wx-config --debug=yes --libs --unicode=yes) -fPIC
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src $(IncludeSwitch)src/zlib $(IncludeSwitch)src/pcolorer2 $(IncludeSwitch)src/shared $(IncludeSwitch)src/shared/colorer $(IncludeSwitch)src/shared/common $(IncludeSwitch)src/shared/cregexp $(IncludeSwitch)src/shared/misc $(IncludeSwitch)src/shared/unicode $(IncludeSwitch)src/shared/xml $(IncludeSwitch)../far2l/ $(IncludeSwitch)../far2l/Include $(IncludeSwitch)../WinPort 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src $(IncludeSwitch)src/zlib $(IncludeSwitch)src/pcolorer2 $(IncludeSwitch)src/shared $(IncludeSwitch)src/shared/colorer $(IncludeSwitch)src/shared/common $(IncludeSwitch)src/shared/cregexp $(IncludeSwitch)src/shared/misc $(IncludeSwitch)src/shared/xml $(IncludeSwitch)../far2l/ $(IncludeSwitch)../far2l/Include $(IncludeSwitch)../WinPort 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 

@@ -11,6 +11,7 @@
 #include "WinPort.h"
 #include "wineguts.h"
 #include "Utils.h"
+#include "ConvertUTF.h"
 
 extern "C" {
 	UINT TranslateCodepage(UINT codepage)
@@ -252,6 +253,57 @@ extern "C" {
 		return dest_index;
 	}
 
+
+	int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+	{
+		int ret;
+		const UTF32 *source = (const UTF32 *)src, *source_end = (const UTF32 *)src;
+		source_end+= (srclen==-1) ? wcslen(src) + 1 : srclen;
+
+		if (dstlen==0) {
+			if (CalcSpaceUTF32toUTF8 (&ret, &source, source_end, lenientConversion)!=conversionOK) {
+				if (ret==0) ret = -2;
+			}
+		} else {
+			UTF8 *target = (UTF8 *)dst, *target_end = (UTF8 *)(dst + dstlen);
+
+			ConversionResult cr = ConvertUTF32toUTF8(
+				&source, source_end, &target, target_end, lenientConversion);
+			if (cr==targetExhausted) {
+				ret = -1;
+			} else {
+				ret = target - (UTF8 *)dst;
+				if (cr!=conversionOK && ret==0) ret = -2;
+			}
+		}
+		return ret;
+	}
+	
+	int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+	{
+		int ret;
+		const UTF8 *source = (const UTF8 *)src, *source_end = (const UTF8 *)src;
+		source_end+= (srclen==-1) ? strlen(src) + 1 : srclen;
+
+		if (dstlen==0) {
+			if (CalcSpaceUTF8toUTF32 (&ret, &source, source_end, lenientConversion)!=conversionOK) {
+				if (ret==0) ret = -2;
+			}
+		} else {
+			UTF32 *target = (UTF32 *)dst, *target_end = (UTF32 *)(dst + dstlen);
+
+			ConversionResult cr = ConvertUTF8toUTF32(
+				&source, source_end, &target, target_end, lenientConversion);
+			if (cr==targetExhausted) {
+				ret = -1;
+			} else {
+				ret = target - (UTF32 *)dst;
+				if (cr!=conversionOK && ret==0) ret = -2;
+			}
+		}
+		return ret;
+	}
+	
 	/***********************************************************************
 	*              MultiByteToWideChar   (KERNEL32.@)
 	*
@@ -312,7 +364,11 @@ extern "C" {
 			break;
 
 		case CP_UTF8:
-			ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+			if (sizeof(wchar_t)==4) {
+				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+			} else {
+				ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+			}
 			break;
 
 		default:
@@ -536,10 +592,16 @@ extern "C" {
 		case CP_UTF8:
 			if (defchar || used)
 			{
+				abort();
 				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 				return 0;
 			}
-			ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+			
+			if (sizeof(wchar_t)==4) {
+				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+			} else {
+				ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+			}
 			break;
 
 		default:

@@ -151,6 +151,8 @@
     <File Name="src/WinPortSynch.cpp"/>
     <File Name="src/WinPortSynch.h"/>
     <File Name="KeyFileHelper.h"/>
+    <File Name="src/ConvertUTF.c"/>
+    <File Name="src/ConvertUTF.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>

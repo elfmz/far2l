@@ -21,7 +21,7 @@ matrix:
             - m4
             - libpcre3-dev
             - zlib1g-dev
-      env: COMPILER=g++-4.9
+      env: CXX=g++-4.9
     - compiler: gcc
       addons:
         apt:
@@ -36,7 +36,7 @@ matrix:
             - m4
             - libpcre3-dev
             - zlib1g-dev
-      env: COMPILER=g++-5
+      env: CXX=g++-5
     - compiler: clang
       addons:
         apt:
@@ -52,7 +52,7 @@ matrix:
             - m4
             - libpcre3-dev
             - zlib1g-dev
-      env: COMPILER=clang++-3.6
+      env: CXX=clang++-3.6
     - compiler: clang
       addons:
         apt:
@@ -68,7 +68,7 @@ matrix:
             - m4
             - libpcre3-dev
             - zlib1g-dev
-      env: COMPILER=clang++-3.7
+      env: CXX=clang++-3.7
 
 script:
   - mkdir build

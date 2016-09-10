@@ -252,20 +252,25 @@ extern "C" {
 #include <string>
 #include <string.h>
 
-
-static std::string Wide2MB(const wchar_t *src)
+static void Wide2MB(const wchar_t *src, std::string &dst)
 {
 	size_t src_len = wcslen(src);
-	std::string dst;
-	dst.resize(src_len + 8);
+	if (!src_len) {
+		dst.clear();
+		return;
+	}
+	
+	int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, src, src_len, NULL, 0, NULL, NULL);
+	dst.resize( ( (r > 0) ? r : src_len) + 1);
+	
 	for (;; ) {
-		int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, src, src_len, &dst[0], dst.size(), NULL, NULL);
+		r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, src, src_len, &dst[0], dst.size(), NULL, NULL);
 		if (r < 0) {
 			dst.clear();
 			break;
 		}
 		if (r==0) {
-			if (WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER) {
+			if (WINPORT(GetLastError)()==ERROR_INSUFFICIENT_BUFFER ) {
 				dst.resize(dst.size() + 8 + dst.size()/2);
 			} else {
 				fprintf(stderr, "Wide2MB('" WS_FMT "') - failed\n", src);
@@ -278,16 +283,21 @@ static std::string Wide2MB(const wchar_t *src)
 			break;
 		}
 	}
-	return dst;
 }
 
-static std::wstring MB2Wide(const char *src)
+static void MB2Wide(const char *src, std::wstring &dst)
 {
 	size_t src_len = strlen(src);
-	std::wstring dst;
-	dst.resize(src_len + 8);
+	if (!src_len) {
+		dst.clear();
+		return;
+	}
+	
+	int r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, NULL, 0);	
+	dst.resize( ( (r > 0) ? r : src_len) + 1);
+	
 	for (;; ) {
-		int r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, &dst[0], dst.size());
+		r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, &dst[0], dst.size());
 		if (r < 0) {
 			dst.clear();			
 			break;
@@ -305,6 +315,21 @@ static std::wstring MB2Wide(const char *src)
 			break;
 		}
 	}
+}
+
+/////////////////////
+
+static std::string Wide2MB(const wchar_t *src)
+{
+	std::string dst;
+	Wide2MB(src, dst);
+	return dst;
+}
+
+static std::wstring MB2Wide(const char *src)
+{
+	std::wstring dst;
+	MB2Wide(src, dst);
 	return dst;
 }
 

@@ -319,7 +319,7 @@ static void FlushBuffer( void )
 	if (nCharInBuffer <= 0) return;
 
 	if (ansiState.crm) {
-		DWORD mode;
+		DWORD mode = 0;
 		WINPORT(GetConsoleMode)( hConOut, &mode );
 		WINPORT(SetConsoleMode)( hConOut, mode & ~(ENABLE_PROCESSED_OUTPUT) );
 		WINPORT(WriteConsole)( hConOut, ChBuffer, nCharInBuffer, &nWritten, NULL );

@@ -18,10 +18,12 @@ class ConsoleOutput
 {
 	std::mutex _mutex;
 	ConsoleBuffer _buf;
+	std::vector<CHAR_INFO> _temp_chars;
 	std::wstring _title;
 	ConsoleOutputListener *_listener;
 	DWORD _mode;	
 	USHORT _attributes;
+	
 	struct {
 		COORD pos;
 		UCHAR height;

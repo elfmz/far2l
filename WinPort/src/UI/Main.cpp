@@ -791,9 +791,13 @@ void WinPortPanel::OnConsoleAdhocQuickEditSync( wxCommandEvent& event )
 		ir.Event.MouseEvent.dwButtonState = _mouse_state;
 		ir.Event.MouseEvent.dwMousePosition = pos_char;
 		g_wx_con_in.Enqueue(&ir, 1);
+		_last_mouse_event.SetEventType(wxEVT_LEFT_DOWN);
 		_last_mouse_event.SetLeftDown(true);
+		fprintf(stderr, "OnConsoleAdhocQuickEditSync: lbutton pressed, %u\n", _last_mouse_event.LeftIsDown());
+
 		OnMouseQEdit( _last_mouse_event, pos_char );
-	}
+	} else
+		fprintf(stderr, "OnConsoleAdhocQuickEditSync: lbutton not pressed\n");
 }
 
 void WinPortPanel::OnConsoleAdhocQuickEdit()

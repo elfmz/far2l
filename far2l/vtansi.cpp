@@ -769,8 +769,8 @@ void InterpretEscSeq( void )
 			}
 			return;
 			
-		case 'T':                 // ESC[#S Scroll down
-			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[S == ESC[1S
+		case 'T':                 // ESC[#T Scroll down
+			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[T == ESC[1T
 			if (es_argc != 1) return;
 			while (es_argv[0]--) {
 				

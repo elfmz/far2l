@@ -5,8 +5,17 @@ language: cpp
 sudo: required
 dist: trusty
 
-install:
-- sudo apt-get -y install libwxgtk3.0-dev libglib2.0-dev gawk m4 libpcre3-dev zlib1g-dev libminizip-dev
+addons:
+  apt:
+    packages:
+    - cmake
+    - libwxgtk3.0-dev
+    - libglib2.0-dev
+    - gawk
+    - m4
+    - libpcre3-dev
+    - zlib1g-dev
+    - libminizip-dev
 
 script: cmake
 compiler: clang

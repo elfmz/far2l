@@ -38,18 +38,29 @@ static std::string GetRegistrySubroot(const char *sub)
 
 static std::string HKDir(HKEY hKey)
 {
-	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_CLASSES_ROOT)
-		return GetRegistrySubroot("/hklm/software/classes");
-	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_CURRENT_USER)
-		return GetRegistrySubroot("/hku/c");
-	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_LOCAL_MACHINE)
-		return GetRegistrySubroot("/hklm");
-	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_USERS)
-		return GetRegistrySubroot("/hku") ;
-	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_PERFORMANCE_DATA)
-		return GetRegistrySubroot("/pd");
-	if((ULONG_PTR)hKey == (ULONG_PTR)HKEY_PERFORMANCE_TEXT)
+#ifndef __APPLE__
+	switch ((ULONG_PTR)hKey) {
+	case (ULONG_PTR)HKEY_CLASSES_ROOT: return GetRegistrySubroot("/hklm/software/classes"); 
+	case (ULONG_PTR)HKEY_CURRENT_USER: return GetRegistrySubroot("/hku/c"); 
+	case (ULONG_PTR)HKEY_LOCAL_MACHINE: return GetRegistrySubroot("/hklm"); 
+	case (ULONG_PTR)HKEY_USERS: return GetRegistrySubroot("/hku");
+	case (ULONG_PTR)HKEY_PERFORMANCE_DATA: return GetRegistrySubroot("/pd"); 
+	case (ULONG_PTR)HKEY_PERFORMANCE_TEXT: return GetRegistrySubroot("/pt");
+	}
+#else
+	if ((ULONG_PTR)hKey == (ULONG_PTR)HKEY_CLASSES_ROOT)
+		return GetRegistrySubroot("/hklm/software/classes"); else
+	if ((ULONG_PTR)hKey == (ULONG_PTR)HKEY_CURRENT_USER)
+		return GetRegistrySubroot("/hku/c"); else
+	if ((ULONG_PTR)hKey == (ULONG_PTR)HKEY_LOCAL_MACHINE)
+		return GetRegistrySubroot("/hklm"); else
+	if ((ULONG_PTR)hKey == (ULONG_PTR)HKEY_USERS)
+		return GetRegistrySubroot("/hku"); else
+	if ((ULONG_PTR)hKey == (ULONG_PTR)HKEY_PERFORMANCE_DATA)
+		return GetRegistrySubroot("/pd"); else
+	if ((ULONG_PTR)hKey == (ULONG_PTR)HKEY_PERFORMANCE_TEXT)
 		return GetRegistrySubroot("/pt");
+#endif
 
 	std::string out;
 	AutoWinPortHandle<WinPortHandleReg> wph(hKey);

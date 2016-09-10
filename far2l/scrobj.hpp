@@ -3,7 +3,7 @@
 /*
 scrobj.hpp
 
-Parent class äëÿ âñåõ screen objects
+Parent class для всех screen objects
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -37,13 +37,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class SaveScreen;
 
-// ìîæíî èñïîëüçîâàòü òîëüêî ìëàäøèé áàéò (ò.å. ìàñêà 0x000000FF), îñòàëüíîå îòäàåòñÿ ïîðîæäåííûì êëàññàì
+// можно использовать только младший байт (т.е. маска 0x000000FF), остальное отдается порожденным классам
 enum
 {
 	FSCROBJ_VISIBLE              = 0x00000001,
 	FSCROBJ_ENABLERESTORESCREEN  = 0x00000002,
 	FSCROBJ_SETPOSITIONDONE      = 0x00000004,
-	FSCROBJ_ISREDRAWING          = 0x00000008,   // èäåò ïðîöåññ Show?
+	FSCROBJ_ISREDRAWING          = 0x00000008,   // идет процесс Show?
 };
 
 class ScreenObject

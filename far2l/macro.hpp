@@ -3,7 +3,7 @@
 /*
 macro.hpp
 
-Ìàêðîñû
+Макросы
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -39,11 +39,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum MACRODISABLEONLOAD
 {
-	MDOL_ALL            = 0x80000000, // äèñàáëèì âñå ìàêðîñû ïðè çàãðóçêå
-	MDOL_AUTOSTART      = 0x00000001, // äèñàáëèì àâòîñòàðòóþùèå ìàêðîñû
+	MDOL_ALL            = 0x80000000, // дисаблим все макросы при загрузке
+	MDOL_AUTOSTART      = 0x00000001, // дисаблим автостартующие макросы
 };
 
-// îáëàñòè äåéñòâèÿ ìàêðîñîâ (íà÷àëî èñïîëíåíèÿ) -  ÍÅ ÁÎËÅÅ 0xFF îáëàñòåé!
+// области действия макросов (начало исполнения) -  НЕ БОЛЕЕ 0xFF областей!
 enum MACROMODEAREA
 {
 	MACRO_FUNCS                =  -3,
@@ -51,69 +51,69 @@ enum MACROMODEAREA
 	MACRO_VARS                 =  -1,
 
 	// see also plugin.hpp # FARMACROAREA
-	MACRO_OTHER                =   0, // Ðåæèì êîïèðîâàíèÿ òåêñòà ñ ýêðàíà, âåðòèêàëüíûå ìåíþ
-	MACRO_SHELL                =   1, // Ôàéëîâûå ïàíåëè
-	MACRO_VIEWER               =   2, // Âíóòðåííÿÿ ïðîãðàììà ïðîñìîòðà
-	MACRO_EDITOR               =   3, // Ðåäàêòîð
-	MACRO_DIALOG               =   4, // Äèàëîãè
-	MACRO_SEARCH               =   5, // Áûñòðûé ïîèñê â ïàíåëÿõ
-	MACRO_DISKS                =   6, // Ìåíþ âûáîðà äèñêîâ
-	MACRO_MAINMENU             =   7, // Îñíîâíîå ìåíþ
-	MACRO_MENU                 =   8, // Ïðî÷èå ìåíþ
-	MACRO_HELP                 =   9, // Ñèñòåìà ïîìîùè
-	MACRO_INFOPANEL            =  10, // Èíôîðìàöèîííàÿ ïàíåëü
-	MACRO_QVIEWPANEL           =  11, // Ïàíåëü áûñòðîãî ïðîñìîòðà
-	MACRO_TREEPANEL            =  12, // Ïàíåëü äåðåâà ïàïîê
-	MACRO_FINDFOLDER           =  13, // Ïîèñê ïàïîê
-	MACRO_USERMENU             =  14, // Ìåíþ ïîëüçîâàòåëÿ
-	MACRO_AUTOCOMPLETION       =  15, // Ñïèñîê àâòîäîïîëíåíèÿ
+	MACRO_OTHER                =   0, // Режим копирования текста с экрана, вертикальные меню
+	MACRO_SHELL                =   1, // Файловые панели
+	MACRO_VIEWER               =   2, // Внутренняя программа просмотра
+	MACRO_EDITOR               =   3, // Редактор
+	MACRO_DIALOG               =   4, // Диалоги
+	MACRO_SEARCH               =   5, // Быстрый поиск в панелях
+	MACRO_DISKS                =   6, // Меню выбора дисков
+	MACRO_MAINMENU             =   7, // Основное меню
+	MACRO_MENU                 =   8, // Прочие меню
+	MACRO_HELP                 =   9, // Система помощи
+	MACRO_INFOPANEL            =  10, // Информационная панель
+	MACRO_QVIEWPANEL           =  11, // Панель быстрого просмотра
+	MACRO_TREEPANEL            =  12, // Панель дерева папок
+	MACRO_FINDFOLDER           =  13, // Поиск папок
+	MACRO_USERMENU             =  14, // Меню пользователя
+	MACRO_AUTOCOMPLETION       =  15, // Список автодополнения
 
-	MACRO_COMMON,                     // ÂÅÇÄÅ! - äîëæåí áûòü ïðåäïîñëåäíèì, ò.ê. ïðèîðèòåò ñàìûé íèçøèé !!!
-	MACRO_LAST                        // Äîëæåí áûòü âñåãäà ïîñëåäíèì! Èñïîëüçóåòñÿ â öèêëàõ
+	MACRO_COMMON,                     // ВЕЗДЕ! - должен быть предпоследним, т.к. приоритет самый низший !!!
+	MACRO_LAST                        // Должен быть всегда последним! Используется в циклах
 };
 
 enum MACROFLAGS_MFLAGS
 {
-	MFLAGS_MODEMASK            =0x000000FF, // ìàñêà äëÿ âûäåëåíèÿ îáëàñòè äåéñòâèÿ (îáëàñòè íà÷àëà èñïîëíåíèÿ) ìàêðîñà
+	MFLAGS_MODEMASK            =0x000000FF, // маска для выделения области действия (области начала исполнения) макроса
 
-	MFLAGS_DISABLEOUTPUT       =0x00000100, // ïîäàâèòü îáíîâëåíèå ýêðàíà âî âðåìÿ âûïîëíåíèÿ ìàêðîñà
-	MFLAGS_NOSENDKEYSTOPLUGINS =0x00000200, // ÍÅ ïåðåäàâàòü ïëàãèíàì êëàâèøè âî âðåìÿ çàïèñè/âîñïðîèçâåäåíèÿ ìàêðîñà
-	MFLAGS_RUNAFTERFARSTARTED  =0x00000400, // ýòîò ìàêðîñ óæå çàïóñêàëñÿ ïðè ñòàðòå ÔÀÐà
-	MFLAGS_RUNAFTERFARSTART    =0x00000800, // ýòîò ìàêðîñ çàïóñêàåòñÿ ïðè ñòàðòå ÔÀÐà
+	MFLAGS_DISABLEOUTPUT       =0x00000100, // подавить обновление экрана во время выполнения макроса
+	MFLAGS_NOSENDKEYSTOPLUGINS =0x00000200, // НЕ передавать плагинам клавиши во время записи/воспроизведения макроса
+	MFLAGS_RUNAFTERFARSTARTED  =0x00000400, // этот макрос уже запускался при старте ФАРа
+	MFLAGS_RUNAFTERFARSTART    =0x00000800, // этот макрос запускается при старте ФАРа
 
-	MFLAGS_EMPTYCOMMANDLINE    =0x00001000, // çàïóñêàòü, åñëè êîìàíäíàÿ ëèíèÿ ïóñòà
-	MFLAGS_NOTEMPTYCOMMANDLINE =0x00002000, // çàïóñêàòü, åñëè êîìàíäíàÿ ëèíèÿ íå ïóñòà
-	MFLAGS_EDITSELECTION       =0x00004000, // çàïóñêàòü, åñëè åñòü âûäåëåíèå â ðåäàêòîðå
-	MFLAGS_EDITNOSELECTION     =0x00008000, // çàïóñêàòü, åñëè åñòü íåò âûäåëåíèÿ â ðåäàêòîðå
+	MFLAGS_EMPTYCOMMANDLINE    =0x00001000, // запускать, если командная линия пуста
+	MFLAGS_NOTEMPTYCOMMANDLINE =0x00002000, // запускать, если командная линия не пуста
+	MFLAGS_EDITSELECTION       =0x00004000, // запускать, если есть выделение в редакторе
+	MFLAGS_EDITNOSELECTION     =0x00008000, // запускать, если есть нет выделения в редакторе
 
-	MFLAGS_SELECTION           =0x00010000, // àêòèâíàÿ:  çàïóñêàòü, åñëè åñòü âûäåëåíèå
-	MFLAGS_PSELECTION          =0x00020000, // ïàññèâíàÿ: çàïóñêàòü, åñëè åñòü âûäåëåíèå
-	MFLAGS_NOSELECTION         =0x00040000, // àêòèâíàÿ:  çàïóñêàòü, åñëè åñòü íåò âûäåëåíèÿ
-	MFLAGS_PNOSELECTION        =0x00080000, // ïàññèâíàÿ: çàïóñêàòü, åñëè åñòü íåò âûäåëåíèÿ
-	MFLAGS_NOFILEPANELS        =0x00100000, // àêòèâíàÿ:  çàïóñêàòü, åñëè ýòî ïëàãèíîâàÿ ïàíåëü
-	MFLAGS_PNOFILEPANELS       =0x00200000, // ïàññèâíàÿ: çàïóñêàòü, åñëè ýòî ïëàãèíîâàÿ ïàíåëü
-	MFLAGS_NOPLUGINPANELS      =0x00400000, // àêòèâíàÿ:  çàïóñêàòü, åñëè ýòî ôàéëîâàÿ ïàíåëü
-	MFLAGS_PNOPLUGINPANELS     =0x00800000, // ïàññèâíàÿ: çàïóñêàòü, åñëè ýòî ôàéëîâàÿ ïàíåëü
-	MFLAGS_NOFOLDERS           =0x01000000, // àêòèâíàÿ:  çàïóñêàòü, åñëè òåêóùèé îáúåêò "ôàéë"
-	MFLAGS_PNOFOLDERS          =0x02000000, // ïàññèâíàÿ: çàïóñêàòü, åñëè òåêóùèé îáúåêò "ôàéë"
-	MFLAGS_NOFILES             =0x04000000, // àêòèâíàÿ:  çàïóñêàòü, åñëè òåêóùèé îáúåêò "ïàïêà"
-	MFLAGS_PNOFILES            =0x08000000, // ïàññèâíàÿ: çàïóñêàòü, åñëè òåêóùèé îáúåêò "ïàïêà"
+	MFLAGS_SELECTION           =0x00010000, // активная:  запускать, если есть выделение
+	MFLAGS_PSELECTION          =0x00020000, // пассивная: запускать, если есть выделение
+	MFLAGS_NOSELECTION         =0x00040000, // активная:  запускать, если есть нет выделения
+	MFLAGS_PNOSELECTION        =0x00080000, // пассивная: запускать, если есть нет выделения
+	MFLAGS_NOFILEPANELS        =0x00100000, // активная:  запускать, если это плагиновая панель
+	MFLAGS_PNOFILEPANELS       =0x00200000, // пассивная: запускать, если это плагиновая панель
+	MFLAGS_NOPLUGINPANELS      =0x00400000, // активная:  запускать, если это файловая панель
+	MFLAGS_PNOPLUGINPANELS     =0x00800000, // пассивная: запускать, если это файловая панель
+	MFLAGS_NOFOLDERS           =0x01000000, // активная:  запускать, если текущий объект "файл"
+	MFLAGS_PNOFOLDERS          =0x02000000, // пассивная: запускать, если текущий объект "файл"
+	MFLAGS_NOFILES             =0x04000000, // активная:  запускать, если текущий объект "папка"
+	MFLAGS_PNOFILES            =0x08000000, // пассивная: запускать, если текущий объект "папка"
 
-	MFLAGS_REG_MULTI_SZ        =0x10000000, // òåêñò ìàêðîñà ìíîãîñòðî÷íûé (REG_MULTI_SZ)
+	MFLAGS_REG_MULTI_SZ        =0x10000000, // текст макроса многострочный (REG_MULTI_SZ)
 
-	MFLAGS_NEEDSAVEMACRO       =0x40000000, // íåîáõîäèìî ýòîò ìàêðîñ çàïîìíèòü
-	MFLAGS_DISABLEMACRO        =0x80000000, // ýòîò ìàêðîñ îòêëþ÷åí
+	MFLAGS_NEEDSAVEMACRO       =0x40000000, // необходимо этот макрос запомнить
+	MFLAGS_DISABLEMACRO        =0x80000000, // этот макрос отключен
 };
 
 
-// êîäû âîçâðàòà äëÿ KeyMacro::GetCurRecord()
+// коды возврата для KeyMacro::GetCurRecord()
 enum MACRORECORDANDEXECUTETYPE
 {
-	MACROMODE_NOMACRO          =0,  // íå â ðåæèìå ìàêðî
-	MACROMODE_EXECUTING        =1,  // èñïîëíåíèå: áåç ïåðåäà÷è ïëàãèíó ïèìï
-	MACROMODE_EXECUTING_COMMON =2,  // èñïîëíåíèå: ñ ïåðåäà÷åé ïëàãèíó ïèìï
-	MACROMODE_RECORDING        =3,  // çàïèñü: áåç ïåðåäà÷è ïëàãèíó ïèìï
-	MACROMODE_RECORDING_COMMON =4,  // çàïèñü: ñ ïåðåäà÷åé ïëàãèíó ïèìï
+	MACROMODE_NOMACRO          =0,  // не в режиме макро
+	MACROMODE_EXECUTING        =1,  // исполнение: без передачи плагину пимп
+	MACROMODE_EXECUTING_COMMON =2,  // исполнение: с передачей плагину пимп
+	MACROMODE_RECORDING        =3,  // запись: без передачи плагину пимп
+	MACROMODE_RECORDING_COMMON =4,  // запись: с передачей плагину пимп
 };
 
 class Panel;
@@ -128,32 +128,32 @@ enum INTMF_FLAGS{
 
 struct TMacroFunction
 {
-	const wchar_t *Name;             // èìÿ ôóíêöèè
-	int nParam;                      // êîëè÷åñòâî ïàðàìåòðîâ
-	int oParam;                      // íåîáÿçàòåëüíûå ïàðàìåòðû
-	TMacroOpCode Code;               // áàéòêîä ôóíêöèè
-	const wchar_t *fnGUID;           // GUID îáðàáîò÷èêà ôóíêöèè
+	const wchar_t *Name;             // имя функции
+	int nParam;                      // количество параметров
+	int oParam;                      // необязательные параметры
+	TMacroOpCode Code;               // байткод функции
+	const wchar_t *fnGUID;           // GUID обработчика функции
 
-	int    BufferSize;               // Ðàçìåð áóôåðà êîìïèëèðîâàííîé ïîñëåäîâàòåëüíîñòè
-	DWORD *Buffer;                   // êîìïèëèðîâàííàÿ ïîñëåäîâàòåëüíîñòü (OpCode) ìàêðîñà
-	//wchar_t  *Src;                   // îðèãèíàëüíûé "òåêñò" ìàêðîñà
-	//wchar_t  *Description;           // îïèñàíèå ìàêðîñà
+	int    BufferSize;               // Размер буфера компилированной последовательности
+	DWORD *Buffer;                   // компилированная последовательность (OpCode) макроса
+	//wchar_t  *Src;                   // оригинальный "текст" макроса
+	//wchar_t  *Description;           // описание макроса
 
-	const wchar_t *Syntax;           // Ñèíòàêñèñ ôóíêöèè
+	const wchar_t *Syntax;           // Синтаксис функции
 
-	DWORD IntFlags;                  // ôëàãè èç INTMF_FLAGS (â îñíîâíîì îòâå÷àþùèå "êàê âûçûâàòü ôóíêöèþ")
-	INTMACROFUNC Func;               // ôóíêöèÿ
+	DWORD IntFlags;                  // флаги из INTMF_FLAGS (в основном отвечающие "как вызывать функцию")
+	INTMACROFUNC Func;               // функция
 };
 
 struct MacroRecord
 {
-	DWORD  Flags;         // Ôëàãè ìàêðîïîñëåäîâàòåëüíîñòè
-	int    Key;           // Íàçíà÷åííàÿ êëàâèøà
-	int    BufferSize;    // Ðàçìåð áóôåðà êîìïèëèðîâàííîé ïîñëåäîâàòåëüíîñòè
-	DWORD *Buffer;        // êîìïèëèðîâàííàÿ ïîñëåäîâàòåëüíîñòü (OpCode) ìàêðîñà
-	wchar_t  *Src;           // îðèãèíàëüíûé "òåêñò" ìàêðîñà
-	wchar_t  *Description;   // îïèñàíèå ìàêðîñà
-	DWORD  Reserved[2];   // çàðåçåðâèðîâàíî
+	DWORD  Flags;         // Флаги макропоследовательности
+	int    Key;           // Назначенная клавиша
+	int    BufferSize;    // Размер буфера компилированной последовательности
+	DWORD *Buffer;        // компилированная последовательность (OpCode) макроса
+	wchar_t  *Src;           // оригинальный "текст" макроса
+	wchar_t  *Description;   // описание макроса
+	DWORD  Reserved[2];   // зарезервировано
 };
 
 #define STACKLEVEL      32
@@ -166,8 +166,8 @@ struct MacroState
 	int ExecLIBPos;
 	int MacroWORKCount;
 	bool UseInternalClipboard;
-	struct MacroRecord *MacroWORK; // ò.í. òåêóùåå èñïîëíåíèå
-	INPUT_RECORD cRec; // "îïèñàíèå ðåàëüíî íàæàòîé êëàâèøè"
+	struct MacroRecord *MacroWORK; // т.н. текущее исполнение
+	INPUT_RECORD cRec; // "описание реально нажатой клавиши"
 
 	bool AllocVarTable;
 	TVarTable *locVarTable;
@@ -185,8 +185,8 @@ struct MacroPanelSelect {
 };
 
 /* $TODO:
-    1. Óäàëèòü IndexMode[], Sort()
-    2. Èç MacroLIB ñäåëàòü
+    1. Удалить IndexMode[], Sort()
+    2. Из MacroLIB сделать
        struct MacroRecord *MacroLIB[MACRO_LAST];
 */
 class KeyMacro
@@ -194,14 +194,14 @@ class KeyMacro
 	private:
 		DWORD MacroVersion;
 
-		static DWORD LastOpCodeUF; // ïîñëåäíèé íå çàíÿòûé OpCode äëÿ UserFunction (îòíîñèòåëüíî KEY_MACRO_U_BASE)
-		// äëÿ ôóíêöèé
+		static DWORD LastOpCodeUF; // последний не занятый OpCode для UserFunction (относительно KEY_MACRO_U_BASE)
+		// для функций
 		static size_t CMacroFunction;
 		static size_t AllocatedFuncCount;
 		static TMacroFunction *AMacroFunction;
 
-		// òèï çàïèñè - ñ âûçîâîì äèàëîãà íàñòðîåê èëè...
-		// 0 - íåò çàïèñè, 1 - ïðîñòàÿ çàïèñü, 2 - âûçîâ äèàëîãà íàñòðîåê
+		// тип записи - с вызовом диалога настроек или...
+		// 0 - нет записи, 1 - простая запись, 2 - вызов диалога настроек
 		int Recording;
 		int InternalInput;
 		int IsRedrawEditor;
@@ -213,8 +213,8 @@ class KeyMacro
 		struct MacroState PCStack[STACKLEVEL];
 		int CurPCStack;
 
-		// ñþäà "ìîãóò" ïèñàòü òîëüêî ïðè ÷òåíèè ìàêðîñîâ (çàíåñåíèå íîâîãî),
-		// à èñïîëíÿòü ÷åðåç MacroWORK
+		// сюда "могут" писать только при чтении макросов (занесение нового),
+		// а исполнять через MacroWORK
 		int MacroLIBCount;
 		struct MacroRecord *MacroLIB;
 
@@ -235,7 +235,7 @@ class KeyMacro
 		int GetMacroSettings(int Key,DWORD &Flags);
 		void InitInternalVars(BOOL InitedRAM=TRUE);
 		void InitInternalLIBVars();
-		void ReleaseWORKBuffer(BOOL All=FALSE); // óäàëèòü âðåìåííûé áóôåð
+		void ReleaseWORKBuffer(BOOL All=FALSE); // удалить временный буфер
 
 		DWORD SwitchFlags(DWORD& Flags,DWORD Value);
 		FARString &MkRegKeyName(int IdxMacro,FARString &strRegKeyName);
@@ -281,18 +281,18 @@ class KeyMacro
 
 		void RunStartMacro();
 
-		// Ïîìåñòèòü âðåìåííîå ñòðîêîâîå ïðåäñòàâëåíèå ìàêðîñà
+		// Поместить временное строковое представление макроса
 		int PostNewMacro(const wchar_t *PlainText,DWORD Flags=0,DWORD AKey=0,BOOL onlyCheck=FALSE);
-		// Ïîìåñòèòü âðåìåííûé ðåêîðä (áèíàðíîå ïðåäñòàâëåíèå)
+		// Поместить временный рекорд (бинарное представление)
 		int PostNewMacro(struct MacroRecord *MRec,BOOL NeedAddSendFlag=0,BOOL IsPluginSend=FALSE);
 
 		int  LoadMacros(BOOL InitedRAM=TRUE,BOOL LoadAll=TRUE);
 		void SaveMacros(BOOL AllSaved=TRUE);
 
 		int GetStartIndex(int Mode) {return IndexMode[Mode<MACRO_LAST-1?Mode:MACRO_LAST-1][0];}
-		// Ôóíêöèÿ ïîëó÷åíèÿ èíäåêñà íóæíîãî ìàêðîñà â ìàññèâå
+		// Функция получения индекса нужного макроса в массиве
 		int GetIndex(int Key, int Mode, bool UseCommon=true);
-		// ïîëó÷åíèå ðàçìåðà, çàíèìàåìîãî óêàçàííûì ìàêðîñîì
+		// получение размера, занимаемого указанным макросом
 		int GetRecordSize(int Key, int Mode);
 
 		bool GetPlainText(FARString& Dest);
@@ -302,16 +302,16 @@ class KeyMacro
 
 		void RestartAutoMacro(int Mode);
 
-		// ïîëó÷èòü äàííûå î ìàêðîñå (âîçâðàùàåò ñòàòóñ)
+		// получить данные о макросе (возвращает статус)
 		int GetCurRecord(struct MacroRecord* RBuf=nullptr,int *KeyPos=nullptr);
-		// ïðîâåðèòü ôëàãè òåêóùåãî èñïîëíÿåìîãî ìàêðîñà.
+		// проверить флаги текущего исполняемого макроса.
 		BOOL CheckCurMacroFlags(DWORD Flags);
 
 		static const wchar_t* GetSubKey(int Mode);
 		static int   GetSubKey(const wchar_t *Mode);
 		static int   GetMacroKeyInfo(bool FromReg,int Mode,int Pos,FARString &strKeyName,FARString &strDescription);
 		static wchar_t *MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Src=nullptr);
-		// èç ñòðîêîâîãî ïðåäñòàâëåíèÿ ìàêðîñà ñäåëàòü MacroRecord
+		// из строкового представления макроса сделать MacroRecord
 		int ParseMacroString(struct MacroRecord *CurMacro,const wchar_t *BufPtr,BOOL onlyCheck=FALSE);
 		BOOL GetMacroParseError(DWORD* ErrCode, COORD* ErrPos, FARString *ErrSrc);
 		BOOL GetMacroParseError(FARString *Err1, FARString *Err2, FARString *Err3, FARString *Err4);

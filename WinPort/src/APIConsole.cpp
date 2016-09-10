@@ -295,4 +295,18 @@ extern "C" {
 		g_wx_con_out.SetScrollCallback(pCallback, pContext);
 	}
 	
+	WINPORT_DECL(BeginConsoleAdhocQuickEdit, BOOL, ())
+	{
+		{
+			std::lock_guard<std::mutex> lock(g_wx_con_mode_mutex);
+			if (g_wx_con_mode & ENABLE_QUICK_EDIT_MODE) {
+				fprintf(stderr, "BeginConsoleAdhocQuickEdit: meaningless when enabled ENABLE_QUICK_EDIT_MODE\n");
+				return FALSE;
+			}
+		}
+		
+		//here is possible non-critical race with enabling ENABLE_QUICK_EDIT_MODE
+		g_wx_con_out.AdhocQuickEdit();
+		return TRUE;
+	}
 }

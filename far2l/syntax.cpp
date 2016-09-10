@@ -1,7 +1,7 @@
 /*
 syntax.cpp
 
-Ðåàëèçàöèÿ ïàðñåðà äëÿ MacroDrive II
+Реализация парсера для MacroDrive II
 
 */
 /*
@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // If this code works, it was written by Alexander Nazarenko.
 // If not, I don't know who wrote it.
 //---------------------------------------------------------------
-// Ïàðñåð è "âûïîëíÿòîð" âûðàæåíèé
+// Парсер и "выполнятор" выражений
 //---------------------------------------------------------------
 
 
@@ -78,7 +78,7 @@ static int _macro_nErr = 0;
 static int _macro_nLine = 0;
 static int _macro_nPos = 0;
 static int _macro_ErrCode=err_Success;
-static int inloop = 0; // =1 ìû â öèêëå
+static int inloop = 0; // =1 мы в цикле
 static wchar_t nameString[1024];
 static wchar_t *sSrcString;
 static const wchar_t *pSrcString = nullptr;
@@ -100,7 +100,7 @@ static const wchar_t *__GetNextWord(const wchar_t *BufPtr,FARString &strCurKeyTe
 static void keyMacroParseError(int err, const wchar_t *s, const wchar_t *p, const wchar_t *c=nullptr);
 static void keyMacroParseError(int err, const wchar_t *c = nullptr);
 
-// Ñòåê ñòðóêòóðíûõ îïåðàòîðîâ
+// Стек структурных операторов
 enum TExecMode
 {
 	emmMain,
@@ -206,11 +206,11 @@ static void putstr(const wchar_t *s)
 	_KEYMACRO(CleverSysLog Clev(L"putstr"));
 	_KEYMACRO(SysLog(L"s[%p]='%ls'", s,s));
 	int Length = (int)(StrLength(s)+1)*sizeof(wchar_t);
-	// ñòðîêà äîëæíà áûòü âûðîâíåíà íà 4
+	// строка должна быть выровнена на 4
 	int nSize = Length/sizeof(DWORD);
 	memmove(&exprBuff[exprBuffSize],s,Length);
 
-	if (Length == sizeof(wchar_t) || (Length % sizeof(DWORD)) )    // äîïîëíåíèå äî sizeof(DWORD) íóëÿìè.
+	if (Length == sizeof(wchar_t) || (Length % sizeof(DWORD)) )    // дополнение до sizeof(DWORD) нулями.
 		nSize++;
 
 	memset(&exprBuff[exprBuffSize],0,nSize*sizeof(DWORD));
@@ -226,7 +226,7 @@ static void keyMacroParseError(int err, const wchar_t *s, const wchar_t *p, cons
 
 		while (*s && iswspace(*s))
 		{
-			// TODO: çäåñü íóæíî ðàçâåðíóòü òàáóëÿöèè íà çàäàííîå (÷åì?) êîëè÷åñòâî ïðîáåëîâ
+			// TODO: здесь нужно развернуть табуляции на заданное (чем?) количество пробелов
 			s++;
 		}
 
@@ -355,7 +355,7 @@ static void calcFunc()
 
 					if ( currTok != ((i == nParam-1) ? tRp : tComma) )
 					{
-						if (oParam > 0 &&  currTok != tEnd)  // åñëè îïöèîíàëüíûå ïàðàìåòðû åñòü è...
+						if (oParam > 0 &&  currTok != tEnd)  // если опциональные параметры есть и...
 							break;
 
 						if (i == nParam-1)
@@ -377,19 +377,19 @@ static void calcFunc()
 
 			if (oParam > 0) //???
 			{
-				if (nParam-(i+1) > oParam || (!i && nParam && nParam > oParam && !foundparam))  // ïðîñêàêèâàåò eval() áåç ïàðàìåòðîâ!
+				if (nParam-(i+1) > oParam || (!i && nParam && nParam > oParam && !foundparam))  // проскакивает eval() без параметров!
 				{
 					keyMacroParseError(err_Func_Param, nameString);
 					currTok = tEnd;
 				}
 
-				// äîáüåì íóëÿìè îïöèîíàëüíûå ïàðàìåòðû
+				// добьем нулями опциональные параметры
 				for (; i < nParam-(!foundparam?0:1); ++i)
 				{
-					// TODO: íóæåí MCODE_OP_PUSHUNKNOWN âìåñòî MCODE_OP_PUSHINT
+					// TODO: нужен MCODE_OP_PUSHUNKNOWN вместо MCODE_OP_PUSHINT
 					put(MCODE_OP_PUSHINT);
 
-					// èñêëþ÷åíèå äëÿ substr
+					// исключение для substr
 					if (nFunc == MCODE_F_SUBSTR)
 						put64((uint64_t)(((uint64_t)1)<<63));
 					else
@@ -889,7 +889,7 @@ static TToken getToken()
 						ch = getNextChar();
 				}
 
-				if (ch == L'(')   //!!!! à ïðîáåëû ïðîïóñòèòü? ÄÀ!
+				if (ch == L'(')   //!!!! а пробелы пропустить? ДА!
 					__currTok = tFunc;
 				else
 				{
@@ -905,7 +905,7 @@ static TToken getToken()
 
 					if (__currTok == tNo)
 					{
-						if (IsProcessFunc || currTok == tFunc || currTok == tLt) // TODO: óòî÷íèòü
+						if (IsProcessFunc || currTok == tFunc || currTok == tLt) // TODO: уточнить
 						{
 							if (KeyNameMacroToKey(nameString) == -1 && KeyNameToKey(nameString) == -1 && checkMacroConst(nameString))
 								__currTok = tConst;
@@ -989,7 +989,7 @@ static void prim()
 			getToken();
 			break;
 		case tFARVar:
-			put(FARVar); // nFARVar ïîëó÷àåì â getToken()
+			put(FARVar); // nFARVar получаем в getToken()
 			getToken();
 			break;
 		case tStr:
@@ -1268,7 +1268,7 @@ static int parseExpr(const wchar_t*& BufPtr, DWORD *eBuff, wchar_t bound1, wchar
 
 static const wchar_t *__GetNextWord(const wchar_t *BufPtr,FARString &strCurKeyText,int& Line)
 {
-	// ïðîïóñêàåì âåäóùèå ïðîáåëüíûå ñèìâîëû
+	// пропускаем ведущие пробельные символы
 	while (IsSpace(*BufPtr) || IsEol(*BufPtr))
 	{
 		if (IsEol(*BufPtr))
@@ -1286,7 +1286,7 @@ static const wchar_t *__GetNextWord(const wchar_t *BufPtr,FARString &strCurKeyTe
 	wchar_t Chr=*BufPtr, Chr2=BufPtr[1];
 	BOOL SpecMacro=Chr==L'$' && Chr2 && !(IsSpace(Chr2) || IsEol(Chr2));
 
-	// èùåì êîíåö î÷åðåäíîãî íàçâàíèÿ êëàâèøè
+	// ищем конец очередного названия клавиши
 	while (Chr && !(IsSpace(Chr) || IsEol(Chr)))
 	{
 		if (SpecMacro && (Chr == L'[' || Chr == L'(' || Chr == L'{'))
@@ -1308,10 +1308,10 @@ static const wchar_t *__GetNextWord(const wchar_t *BufPtr,FARString &strCurKeyTe
 	return BufPtr;
 }
 
-// Ïàðñåð ñòðîêîâûõ ýêâèâàëåíòîâ â êîäû êëàâèø
+// Парсер строковых эквивалентов в коды клавиш
 //- AN ----------------------------------------------
-//  Ïàðñåð ñòðîêîâûõ ýêâèâàëåíòîâ â áàéòêîä
-//  Ïåðåïèñàí ïðàêòè÷åñêè ñ íóëÿ 15.11.2003
+//  Парсер строковых эквивалентов в байткод
+//  Переписан практически с нуля 15.11.2003
 //- AN ----------------------------------------------
 
 #ifdef _DEBUG
@@ -1468,7 +1468,7 @@ static void printKeyValue(DWORD* k, int& i)
 
 
 //- AN ----------------------------------------------
-//  Êîìïèëÿöèÿ ñòðîêè BufPtr â áàéòêîä CurMacroBuffer
+//  Компиляция строки BufPtr в байткод CurMacroBuffer
 //- AN ----------------------------------------------
 int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wchar_t *BufPtr)
 {
@@ -1492,7 +1492,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 
 	UserDefinedList MacroSrcList(L'\n',L'\r',ULF_NOTTRIM|ULF_NOTUNQUOTES|ULF_ACCOUNTEMPTYLINE);
 	if(!MacroSrcList.Set(BufPtr))
-		useUDL=false; // âñå â îäíó ñòðîêó!
+		useUDL=false; // все в одну строку!
 
 	//{
 	//	_SVS(SysLog(L"MacroSrcList.GetTotal()=%d",MacroSrcList.GetTotal()));
@@ -1504,7 +1504,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 	int SizeCurKeyText = (int)(StrLength(BufPtr)*2)*sizeof(wchar_t);
 	FARString strCurrKeyText;
 	//- AN ----------------------------------------------
-	//  Áóôåð ïîä ïàðñèíã âûðàæåíèé
+	//  Буфер под парсинг выражений
 	//- AN ----------------------------------------------
 	DWORD *dwExprBuff = (DWORD*)xf_malloc(SizeCurKeyText*sizeof(DWORD));
 
@@ -1543,8 +1543,8 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 		_SVS(SysLog(L"strCurrKeyText = [%ls]",strCurrKeyText.CPtr()));
 
 		//- AN ----------------------------------------------
-		//  Ïðîâåðêà íà ñòðîêîâûé ëèòåðàë
-		//  Ñäåëàåì $Text îïöèîíàëüíûì
+		//  Проверка на строковый литерал
+		//  Сделаем $Text опциональным
 		//- AN ----------------------------------------------
 		if (strCurrKeyText.At(0) == L'\"' && strCurrKeyText.At(1))
 		{
@@ -1592,10 +1592,10 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 
 				*p = 0;
 				int Length = (int)(StrLength(varName)+1)*sizeof(wchar_t);
-				// ñòðîêà äîëæíà áûòü âûðîâíåíà íà 4
+				// строка должна быть выровнена на 4
 				SizeVarName = Length/sizeof(DWORD);
 
-				if (Length == sizeof(wchar_t) || (Length % sizeof(DWORD)) )    // äîïîëíåíèå äî sizeof(DWORD) íóëÿìè.
+				if (Length == sizeof(wchar_t) || (Length % sizeof(DWORD)) )    // дополнение до sizeof(DWORD) нулями.
 					SizeVarName++;
 
 				_SVS(SysLog(L"BufPtr=%ls",BufPtr));
@@ -1610,9 +1610,9 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 			}
 			else
 			{
-				// ïðîâåðèì âàðèàíò, êîãäà âûçâàëè ôóíêöèþ, íî ðåçóëüòàò íå ïðèñâîèëè,
-				// íàïðèìåð, âûçâàëè MsgBox(), íî ðåçóëüòàò íåâàæåí
-				// òîãäà SizeVarName=1 è varName=""
+				// проверим вариант, когда вызвали функцию, но результат не присвоили,
+				// например, вызвали MsgBox(), но результат неважен
+				// тогда SizeVarName=1 и varName=""
 				int __nParam,__oParam;
 				wchar_t *lpwszCurrKeyText = strCurrKeyText.GetBuffer();
 				wchar_t *Brack=(wchar_t *)wcspbrk(lpwszCurrKeyText,L"( "), Chr=0;
@@ -1641,7 +1641,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 					Size += parseExpr(BufPtr, dwExprBuff, 0, 0);
 
 					/*
-					// ýòîãî ïîêà íåíàäî, ñ÷èòàåì, ÷òî ';' èäåò ñðàçó çà ôóíêöèåé, èíà÷å ýòî îòäåëüíûé ñèìâîë ';', êîòîðûé íóæíî ïîìåñòèòü â ïîòîê
+					// этого пока ненадо, считаем, что ';' идет сразу за функцией, иначе это отдельный символ ';', который нужно поместить в поток
 					while ( *BufPtr && (IsSpace(*BufPtr) || IsEol(*BufPtr)) )
 					{
 						if (IsEol(*BufPtr))
@@ -1652,7 +1652,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 					}
 					*/
 					if (*BufPtr == L';')
-						BufPtr++; // çäåñü Size íå óâåëè÷èâàåì, ò.ê. ìû ïðîêèäûâàåì ñèìâîë ';'
+						BufPtr++; // здесь Size не увеличиваем, т.к. мы прокидываем символ ';'
 
 					//Size--; //???
 					if (_macro_nErr)
@@ -1720,7 +1720,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 			// +--------- addr2                    |
 			// |          ...          <-----------+
 			// +--------> MCODE_OP_END
-			// èëè
+			// или
 			//            <expr>
 			//            MCODE_OP_JZ                     p1=*+0
 			//            addr1        ------------+
@@ -1782,7 +1782,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 					return FALSE;
 				}
 
-				Size += 5;  // åñòåñòâåííî, ðàçìåð áóäåò áîëüøå = 4
+				Size += 5;  // естественно, размер будет больше = 4
 				break;
 			}
 			// $While (expr) ... $End
@@ -1823,7 +1823,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 			// +--------- addr
 			case MCODE_OP_CONTINUE:
 			{
-				Size += 2; // Ìåñòî ïîä äîïîëíèòåëüíûé JMP
+				Size += 2; // Место под дополнительный JMP
 				break;
 			}
 			case MCODE_OP_END:
@@ -1832,7 +1832,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 				{
 					case emmRep:
 					case emmWhile:
-						Size += 2; // Ìåñòî ïîä äîïîëíèòåëüíûé JMP
+						Size += 2; // Место под дополнительный JMP
 						break;
 				}
 
@@ -1856,7 +1856,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 		if (!BufPtr)   // ???
 			break;
 
-		// êîä íàéäåí, äîáàâèì ýòîò êîä â áóôåð ïîñëåäîâàòåëüíîñòè.
+		// код найден, добавим этот код в буфер последовательности.
 		CurMacro_Buffer = (DWORD *)xf_realloc(CurMacro_Buffer,sizeof(*CurMacro_Buffer)*(CurMacroBufferSize+Size+SizeVarName));
 
 		if (!CurMacro_Buffer)
@@ -1914,7 +1914,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 					exec().pos1 = CurMacroBufferSize;
 					CurMacro_Buffer[CurMacroBufferSize] = 0;
 				}
-				else // òóò $else è íå ïðåäâèäåëîñü :-/
+				else // тут $else и не предвиделось :-/
 				{
 					keyMacroParseError(err_Not_expected_ELSE, BufPtr, pSrcString); // strCurrKeyText
 
@@ -1948,7 +1948,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 					xf_free(dwExprBuff);
 					return FALSE;
 				}
-				CurMacro_Buffer[CurMacroBufferSize+Size-3] = MCODE_OP_CONTINUE; // äëÿ ìåòêè!
+				CurMacro_Buffer[CurMacroBufferSize+Size-3] = MCODE_OP_CONTINUE; // для метки!
 				CurMacro_Buffer[CurMacroBufferSize+Size-2] = MCODE_OP_JMP;
 				CurMacro_Buffer[CurMacroBufferSize+Size-1] = ei->pos1;
 				break;
@@ -1958,7 +1958,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 				switch (exec().state)
 				{
 					case emmMain:
-						// òóò $end è íå ïðåäâèäåëîñü :-/
+						// тут $end и не предвиделось :-/
 						keyMacroParseError(err_Not_expected_END, BufPtr, pSrcString); // strCurrKeyText
 
 						if (CurMacro_Buffer )
@@ -1996,7 +1996,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 						break;
 				}
 
-				if (!exec.del())    // Âîîáùå-òî ýòîãî áûòü íå äîëæíî,  íî ïîäñòðàõóåìñÿ
+				if (!exec.del())    // Вообще-то этого быть не должно,  но подстрахуемся
 				{
 					if (CurMacro_Buffer )
 					{

@@ -1,7 +1,7 @@
 /*
 execute.cpp
 
-"Çàïóñêàòåëü" ïðîãðàìì.
+"Запускатель" программ.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -69,39 +69,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static WCHAR eol[2] = {'\r', '\n'};
 
-static std::string GetExecutable(const char *cmd, bool add_args)
-{
-	char stop = (*cmd == '\"') ? '\"' : ' ';
-	char *CmdOut = (char *)alloca(strlen(cmd)*4 + 3);
-	char *p = CmdOut;
-	if (*cmd == '\"') cmd++;
-	if (add_args) *p++ = '\'';
-	if (add_args && (*cmd!='.' && *cmd!='/')) {
-		*p++ = '.';
-		*p++ = '/';
-	}
-	while (*cmd && *cmd != stop) {
-		if (add_args && *cmd == '\'')
-		{
-			*p++ = '\'';
-			*p++ = '\\';
-			*p++ = '\'';
-		}
-		*p++ = *cmd++;
-	}
-	if (add_args) {
-		if (*cmd == '\"') cmd++;
-		if (add_args) *p++ = '\'';
-		while (*cmd)
-			*p++ = *cmd++;
-	}
-	*p++ = 0;
-	return std::string(CmdOut);
-}
-
 class ExecClassifier
 {
 	bool _file, _executable, _backround;
+  std::string _cmd;
 	
 	bool IsExecutableByExtension(const char *s)
 	{
@@ -117,14 +88,18 @@ public:
 		: _file(false), _executable(false), _backround(false)
 	{
 		const char *bg_suffix = strrchr(cmd, '&');
-		if (bg_suffix) {
+		if (bg_suffix && bg_suffix!=cmd && *(bg_suffix-1)!='\\') {
 			for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
 			if (!*bg_suffix) _backround = true;
 		}
-		
-		std::string cmds = GetExecutable(cmd, false);
-		cmd = cmds.c_str();
-		int f = open(cmd, O_RDONLY);
+
+		const std::vector<std::string> &argv = ExplodeCmdLine(cmd);
+		if (argv.empty() || argv[0].empty()) {
+			fprintf(stderr, "ExecClassifier('%s') - empty command\n", cmd);
+			return;
+		}
+		_cmd = argv[0];
+		int f = open(_cmd.c_str(), O_RDONLY);
 		if (f==-1) {
 			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
 			return;
@@ -155,6 +130,7 @@ public:
 		close(f);
 	}
 	
+	const std::string& cmd() const {return _cmd; }
 	bool IsFile() const {return _file; }
 	bool IsExecutable() const {return _executable; }
 	bool IsBackground() const {return _backround; }
@@ -175,6 +151,9 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/sh";
+		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols
+		if (0==strcmp(shell, "/usr/bin/fish"))
+			shell = "/bin/bash";
 		r = execl(shell, shell, "-ic", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
@@ -255,8 +234,8 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 	
 	DWORD saved_mode = 0, dw;
 	WINPORT(GetConsoleMode)(NULL, &saved_mode);
-	WINPORT(SetConsoleMode)(NULL, saved_mode | 
-		ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
+	WINPORT(SetConsoleMode)(NULL, saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
+		| ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE );
 	const std::wstring &ws = MB2Wide(CmdStr);
 	WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
@@ -267,7 +246,7 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 		r = VTShell_Execute(CmdStr, ForkProc);
 	}
 	WINPORT(SetConsoleMode)( NULL, saved_mode | 
-	ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
+		ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
 	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 	WINPORT(SetConsoleMode)(NULL, saved_mode);
 	ScrBuf.FillBuf();
@@ -289,8 +268,11 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 		std::string tmp;
 		if (!ec.IsExecutable())
 			tmp+= "xdg-open ";
-			
-		tmp+= GetExecutable(CmdStr, true);
+
+  	if (ec.cmd()[0]!='/' && ec.cmd()[0]!='.')
+			tmp+= "./"; // it is ok to prefix ./ even to a quoted string
+		tmp += CmdStr;
+
 		if (!ec.IsExecutable()) {
 			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);
 			if (r!=0) {

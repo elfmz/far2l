@@ -3,7 +3,7 @@
 /*
 filelist.hpp
 
-Ôàéëîâàÿ ïàíåëü - îáùèå ôóíêöèè
+Файловая панель - общие функции
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -180,8 +180,8 @@ class FileList:public Panel
 		DizList Diz;
 		int DizRead;
 		/* $ 09.11.2001 IS
-		     Îòêðûâàþùèé è çàêðûâàþùèé ñèìâîë, êîòîðûå èñïîëüçóþòñÿ äëÿ ïîêàçà
-		     èìåíè, êîòîðîå íå ïîìåùàåòñÿ â ïàíåëè. Ïî óìîë÷àíèþ - ôèãóðíûå ñêîáêè.
+		     Открывающий и закрывающий символ, которые используются для показа
+		     имени, которое не помещается в панели. По умолчанию - фигурные скобки.
 		*/
 		wchar_t openBracket[2], closeBracket[2];
 
@@ -210,7 +210,7 @@ class FileList:public Panel
 		int ShiftSelection;
 		int MouseSelection;
 		int SelectedFirst;
-		int IsEmpty; // óêàçûâàåò íà ïîëíîñòüþ ïóñòóþ êîëîíêó
+		int IsEmpty; // указывает на полностью пустую колонку
 		int AccessTimeUpdateRequired;
 
 		int UpdateRequired,UpdateRequiredMode,UpdateDisabled;
@@ -240,11 +240,11 @@ class FileList:public Panel
 		void Select(FileListItem *SelPtr,int Selection);
 		long SelectFiles(int Mode,const wchar_t *Mask=nullptr);
 		void ProcessEnter(bool EnableExec,bool SeparateWindow, bool EnableAssoc=true, bool RunAs = false, OPENFILEPLUGINTYPE Type = OFP_NORMAL);
-		// ChangeDir âîçâðàùàåò FALSE, eñëè íå ñìîãëà âûñòàâèòü çàäàííûé ïóòü
+		// ChangeDir возвращает FALSE, eсли не смогла выставить заданный путь
 		BOOL ChangeDir(const wchar_t *NewDir,BOOL IsUpdated=TRUE);
 		void CountDirSize(DWORD PluginFlags);
 		/* $ 19.03.2002 DJ
-		   IgnoreVisible - îáíîâèòü, äàæå åñëè ïàíåëü íåâèäèìà
+		   IgnoreVisible - обновить, даже если панель невидима
 		*/
 		void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage);
 		void UpdatePlugin(int KeepSelection, int IgnoreVisible);
@@ -284,7 +284,7 @@ class FileList:public Panel
 		void PluginToPluginFiles(int Move);
 		void PluginHostGetFiles();
 		void PluginPutFilesToNew();
-		// âîçâðàùàåò òî, ÷òî âîçâðàùàåò PutFiles
+		// возвращает то, что возвращает PutFiles
 		int PluginPutFilesToAnother(int Move,Panel *AnotherPanel);
 		void ProcessPluginCommand();
 		void PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber);
@@ -308,14 +308,14 @@ class FileList:public Panel
 		virtual void SetFocus();
 		virtual void Update(int Mode);
 		/*$ 22.06.2001 SKV
-		  Ïàðàìåòð äëÿ èãíîðèðîâàíèÿ âðåìåíè ïîñëåäíåãî Update.
-		  Èñïîëüçóåòñÿ äëÿ Update ïîñëå èñïîëíåíèÿ êîìàíäû.
+		  Параметр для игнорирования времени последнего Update.
+		  Используется для Update после исполнения команды.
 		*/
 		virtual int UpdateIfChanged(int UpdateMode);
 
 		/* $ 19.03.2002 DJ
-		   UpdateIfRequired() - îáíîâèòü, åñëè àïäåéò áûë ïðîïóùåí èç-çà òîãî,
-		   ÷òî ïàíåëü íåâèäèìà
+		   UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
+		   что панель невидима
 		*/
 		virtual void UpdateIfRequired();
 

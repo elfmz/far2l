@@ -35,7 +35,7 @@ inline void CreateDirectory(char *FullPath) //$ 16.05.2002 AA
 int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
                           int Move, char *DestPath, int OpMode)
 {
-  //êîñòûëü ïðîòèâ çàöèêëèâàíèÿ â FAR'å ïðè Quick View àðõèâîâ ñ ïàðîëåì
+  //костыль против зацикливания в FAR'е при Quick View архивов с паролем
   TRecur Recur;   //$ 07.04.2002 AA
   if(Recur.Count>1 && OpMode&(OPM_VIEW|OPM_QUICKVIEW))
     return 0;
@@ -45,7 +45,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
 	  strcpy(SaveDir, ".");
   char Command[512],AllFilesMask[32];
   if (ItemsNumber==0)
-    return /*0*/1; //$ 07.02.2002 AA ÷òîáû ìíîãîòîìíûå CABû íîðìàëüíî ðàñïàêîâûâàëèñü
+    return /*0*/1; //$ 07.02.2002 AA чтобы многотомные CABы нормально распаковывались
   if (*DestPath)
     FSF.AddEndSlash(DestPath);
   const char *PathHistoryName="ExtrDestPath";
@@ -82,9 +82,9 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
       }
   }
 
-  Opt.UserBackground=0; // $ 14.02.2001 raVen //ñáðîñ ãàëêè "ôîíîâàÿ àðõèâàöèÿ"
+  Opt.UserBackground=0; // $ 14.02.2001 raVen //сброс галки "фоновая архивация"
   if ((OpMode & ~OPM_SILENT) & ~OPM_TOPLEVEL)
-    Opt.OldUserBackground=0; // $ 03.07.02 AY: åñëè OPM_SILENT íî íå èç çà Shift-F2 ïðè íåñêîëüêî âûáðàíûõ àðõèâàõ
+    Opt.OldUserBackground=0; // $ 03.07.02 AY: если OPM_SILENT но не из за Shift-F2 при несколько выбраных архивах
   DialogItems[8].Selected=Opt.UserBackground;
   DialogItems[9].Selected=Move;
 
@@ -97,13 +97,13 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
     strcpy(DestPath,DialogItems[2].Data);
     FSF.Unquote(DestPath);
     Opt.UserBackground=DialogItems[8].Selected;
-    Opt.OldUserBackground=Opt.UserBackground; // $ 02.07.2002 AY: çàïîìíèì è íå áóäåì íå ãäå ñáðàñûâàòü
+    Opt.OldUserBackground=Opt.UserBackground; // $ 02.07.2002 AY: запомним и не будем не где сбрасывать
     //SetRegKey(HKEY_CURRENT_USER,"","Background",Opt.UserBackground); // $ 06.02.2002 AA
   }
 
   LastWithoutPathsState=DialogItems[7].Selected;
 
-  Opt.Background=OpMode & OPM_SILENT ? Opt.OldUserBackground : Opt.UserBackground; // $ 02.07.2002 AY: Åñëè OPM_SILENT çíà÷èò âûáðàíî íåñêîëüêî àðõèâîâ
+  Opt.Background=OpMode & OPM_SILENT ? Opt.OldUserBackground : Opt.UserBackground; // $ 02.07.2002 AY: Если OPM_SILENT значит выбрано несколько архивов
 
   /*int SpaceOnly=TRUE;
   for (int I=0;DestPath[I]!=0;I++)
@@ -140,9 +140,9 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
 
     /*if(OpMode & OPM_TOPLEVEL) // $ 16.02.2002 AA
     {
-      //?? åñòü ðàçíèöà ìåæäó èçâëå÷åíèåì âûäåëåííûõ ôàéëîâ òîìà è
-      //èçâëå÷åíèåì èç âûäåëåííûõ òîìîâ. çäåñü ìîæíî åå ó÷åñòü.
-      //êàê ìèíèìóì - íóæíî èçìåíèòü íàäïèñü â ìåññàäæáîêñå
+      //?? есть разница между извлечением выделенных файлов тома и
+      //извлечением из выделенных томов. здесь можно ее учесть.
+      //как минимум - нужно изменить надпись в мессаджбоксе
       MsgCode=1;
     }
     else        */
@@ -191,7 +191,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
              DialogItems[5].Data,AllFilesMask,IgnoreErrors,
              (OpMode & OPM_VIEW)!=0,(OpMode & OPM_FIND),CurDir);
 
-  //ïîñëåäóþùèå îïåðàöèè (òåñòèðîâàíèå è òä) íå äîëæíû áûòü ôîíîâûìè
+  //последующие операции (тестирование и тд) не должны быть фоновыми
   Opt.Background=0; // $ 06.02.2002 AA
 
   Opt.HideOutput=SaveHideOut;

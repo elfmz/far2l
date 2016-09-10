@@ -37,8 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 
-const wchar_t *ReservedFilenameSymbols = L"<>|";
-
 NTPath::NTPath(LPCWSTR Src)
 {
 	if (Src&&*Src)
@@ -209,9 +207,9 @@ const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 		return lpwszPath;
 }
 
-//   Àíàëîã PointToName, òîëüêî äëÿ ñòðîê òèïà
-//   "name\" (îêàí÷èâàåòñÿ íà ñëåø) âîçâðàùàåò óêàçàòåëü íà name, à íå íà ïóñòóþ
-//   ñòðîêó
+//   Аналог PointToName, только для строк типа
+//   "name\" (оканчивается на слеш) возвращает указатель на name, а не на пустую
+//   строку
 const wchar_t* WINAPI PointToFolderNameIfFolder(const wchar_t *Path)
 {
 	if (!Path)
@@ -285,9 +283,9 @@ BOOL AddEndSlash(wchar_t *Path, wchar_t TypeSlash)
 	if (Path)
 	{
 		/* $ 06.12.2000 IS
-		  ! Òåïåðü ôóíêöèÿ ðàáîòàåò ñ îáîèìè âèäàìè ñëåøåé, òàêæå ïðîèñõîäèò
-		    èçìåíåíèå óæå ñóùåñòâóþùåãî êîíå÷íîãî ñëåøà íà òàêîé, êîòîðûé
-		    âñòðå÷àåòñÿ ÷àùå.
+		  ! Теперь функция работает с обоими видами слешей, также происходит
+		    изменение уже существующего конечного слеша на такой, который
+		    встречается чаще.
 		*/
 		wchar_t *end;
 		int Slash=0, BackSlash=0;

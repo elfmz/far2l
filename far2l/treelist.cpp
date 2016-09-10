@@ -149,7 +149,7 @@ static struct TreeListCache
 		strTreeName.Clear();
 	}
 
-	//TODO: íåîáõîäèìî îïòèìèçèðîâàòü!
+	//TODO: необходимо оптимизировать!
 	void Copy(TreeListCache *Dest)
 	{
 		Dest->Clean();
@@ -341,7 +341,7 @@ void TreeList::DisplayTree(int Fast)
 	}
 
 	UpdateViewPanel();
-	SetTitle(); // íå çàáóäèì ïðîðèñîâàòü çàãîëîâîê
+	SetTitle(); // не забудим прорисовать заголовок
 
 	if (LckScreen)
 		delete LckScreen;
@@ -464,8 +464,8 @@ int TreeList::ReadTree()
 	ListData[0]->strName = strRoot;
 	SaveScreen SaveScrTree;
 	UndoGlobalSaveScrPtr UndSaveScr(&SaveScrTree);
-	/* Ò.ê. ìû ìîæåì âûçâàòü äèàëîã ïîäòâåðæäåíèÿ (êîòîðûé íå ïåðåðèñîâûâàåò ïàíåëüêè,
-	   à âîññòàíàâëèâàåò ñîõðàíåííûé îáðàç ýêðàíà, òî íàðèñóåì ÷èñòóþ ïàíåëü */
+	/* Т.к. мы можем вызвать диалог подтверждения (который не перерисовывает панельки,
+	   а восстанавливает сохраненный образ экрана, то нарисуем чистую панель */
 	//Redraw();
 	TreeCount=1;
 	int FirstCall=TRUE, AscAbort=FALSE;
@@ -537,7 +537,7 @@ int TreeList::ReadTree()
 		SaveTreeFile();
 
 	if (!FirstCall && !Flags.Check(FTREELIST_ISPANEL))
-	{ // Ïåðåðèñóåì äðóãóþ ïàíåëü - óäàëèì ñëåäû ñîîáùåíèé :)
+	{ // Перерисуем другую панель - удалим следы сообщений :)
 		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 		AnotherPanel->Redraw();
 	}
@@ -555,7 +555,7 @@ void TreeList::SaveTreeFile()
 	long I;
 	size_t RootLength=strRoot.IsEmpty()?0:strRoot.GetLength()-1;
 	MkTreeFileName(strRoot, strName);
-	// ïîëó÷èì è ñðàçó ñáðîñèì àòðèáóòû (åñëè ïîëó÷èòñÿ)
+	// получим и сразу сбросим атрибуты (если получится)
 	DWORD FileAttributes=apiGetFileAttributes(strName);
 
 	if (FileAttributes != INVALID_FILE_ATTRIBUTES)
@@ -565,7 +565,7 @@ void TreeList::SaveTreeFile()
 	if (!TreeFile.Open(strName,GENERIC_WRITE,FILE_SHARE_READ,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL))
 	{
 		/* $ 16.10.2000 tran
-		   åñëè äèñê äîëæåí êåøèðîâàòüñÿ, òî è ïûòàòüñÿ íå ñòîèò */
+		   если диск должен кешироваться, то и пытаться не стоит */
 		if (MustBeCached(strRoot))
 			if (!GetCacheTreeName(strRoot,strName,TRUE) || !TreeFile.Open(strName,GENERIC_WRITE,FILE_SHARE_READ,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL))
 				return;
@@ -598,7 +598,7 @@ void TreeList::SaveTreeFile()
 		apiDeleteFile(strName);
 		Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotSaveTree),strName,MSG(MOk));
 	}
-	else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // âåðíåì àòðèáóòû (åñëè ïîëó÷èòñÿ :-)
+	else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // вернем атрибуты (если получится :-)
 		apiSetFileAttributes(strName,FileAttributes);
 }
 
@@ -723,7 +723,7 @@ void TreeList::PR_MsgReadTree()
 int TreeList::MsgReadTree(int TreeCount,int &FirstCall)
 {
 	/* $ 24.09.2001 VVM
-	  ! Ïèñàòü ñîîáùåíèå î ÷òåíèè äåðåâà òîëüêî, åñëè ýòî çàíÿëî áîëåå 500 ìñåê. */
+	  ! Писать сообщение о чтении дерева только, если это заняло более 500 мсек. */
 	BOOL IsChangeConsole = LastScrX != ScrX || LastScrY != ScrY;
 
 	if (IsChangeConsole)
@@ -870,7 +870,7 @@ int TreeList::ProcessKey(int Key)
 		case KEY_CTRLALTNUMPAD0:
 		{
 			FARString strQuotedName=ListData[CurFile]->strName;
-			QuoteSpace(strQuotedName);
+			EscapeSpace(strQuotedName);
 
 			if (Key==KEY_CTRLALTINS||Key==KEY_CTRLALTNUMPAD0)
 			{
@@ -951,7 +951,7 @@ int TreeList::ProcessKey(int Key)
 				             !CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES);
 				int Link=(Key==KEY_ALTF6 && !ToPlugin);
 
-				if (Key==KEY_ALTF6 && !Link) // ìîë÷à îòâàëèì :-)
+				if (Key==KEY_ALTF6 && !Link) // молча отвалим :-)
 					return TRUE;
 
 				{
@@ -991,14 +991,14 @@ int TreeList::ProcessKey(int Key)
 			return TRUE;
 		}
 		/*
-		  Óäàëåíèå                                   Shift-Del, Shift-F8, F8
+		  Удаление                                   Shift-Del, Shift-F8, F8
 
-		  Óäàëåíèå ôàéëîâ è ïàïîê. F8 è Shift-Del óäàëÿþò âñå âûáðàííûå
-		 ôàéëû, Shift-F8 - òîëüêî ôàéë ïîä êóðñîðîì. Shift-Del âñåãäà óäàëÿåò
-		 ôàéëû, íå èñïîëüçóÿ Êîðçèíó (Recycle Bin). Èñïîëüçîâàíèå Êîðçèíû
-		 êîìàíäàìè F8 è Shift-F8 çàâèñèò îò êîíôèãóðàöèè.
+		  Удаление файлов и папок. F8 и Shift-Del удаляют все выбранные
+		 файлы, Shift-F8 - только файл под курсором. Shift-Del всегда удаляет
+		 файлы, не используя Корзину (Recycle Bin). Использование Корзины
+		 командами F8 и Shift-F8 зависит от конфигурации.
 
-		  Óíè÷òîæåíèå ôàéëîâ è ïàïîê                                 Alt-Del
+		  Уничтожение файлов и папок                                 Alt-Del
 		*/
 		case KEY_F8:
 		case KEY_SHIFTDEL:
@@ -1016,7 +1016,7 @@ int TreeList::ProcessKey(int Key)
 					Opt.DeleteToRecycleBin=0;
 
 				ShellDelete(this,Key==KEY_ALTDEL||Key==KEY_ALTNUMDEL||Key==KEY_ALTDECIMAL);
-				// Íàäîáíî íå çàáûòü îáíîâèòü ïðîòèâîïîëîæíóþ ïàíåëü...
+				// Надобно не забыть обновить противоположную панель...
 				Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 				AnotherPanel->Update(UPDATE_KEEP_SELECTION);
 				AnotherPanel->Redraw();
@@ -1853,7 +1853,7 @@ void TreeList::FlushCache()
 			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotSaveTree),
 			        TreeCache.strTreeName,MSG(MOk));
 		}
-		else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // âåðíåì àòðèáóòû (åñëè ïîëó÷èòñÿ :-)
+		else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // вернем атрибуты (если получится :-)
 			apiSetFileAttributes(TreeCache.strTreeName,FileAttributes);
 	}
 
@@ -1991,8 +1991,8 @@ int TreeCmp(const wchar_t *Str1, const wchar_t *Str2, int Numeric, int CaseSensi
 }
 
 /* $ 16.10.2000 tran
- ôóíêöèÿ, îïðåäåëÿþùàÿÿ íåîáõîäèìîñòü êåøèðîâàíèÿ
- ôàéëà */
+ функция, определяющаяя необходимость кеширования
+ файла */
 int TreeList::MustBeCached(const wchar_t *Root)
 {
 	UINT type;
@@ -2007,14 +2007,14 @@ int TreeList::MustBeCached(const wchar_t *Root)
 		if (type==DRIVE_REMOVABLE)
 		{
 			if (Upper(Root[0])==L'A' || Upper(Root[0])==L'B')
-				return FALSE; // ýòî äèñêåòû
+				return FALSE; // это дискеты
 		}
 
 		return TRUE;
-		// êåøèðóþòñÿ CD, removable è íåèçâåñòíî ÷òî :)
+		// кешируются CD, removable и неизвестно что :)
 	}
 
-	/* îñòàëèñü
+	/* остались
 	    DRIVE_REMOTE
 	    DRIVE_RAMDISK
 	    DRIVE_FIXED
@@ -2103,11 +2103,11 @@ void TreeList::SetTitle()
 
 */
 
-// TODO: Ôàéëû "Tree.Far" äëÿ ëîêàëüíûõ äèñêîâ äîëæíû õðàíèòüñÿ â "Local AppData\Far"
-// TODO: Ôàéëû "Tree.Far" äëÿ ñåòåâûõ äèñêîâ äîëæíû õðàíèòüñÿ â "%HOMEDRIVE%\%HOMEPATH%",
-//                        åñëè ýòè ïåðåìåííûå ñðåäû íå îïðåäåëåíû, òî "%APPDATA%\Far"
-// õpàíèì "X.tree" (ãäå 'X'  - áóêâà äèñêà, åñëè íå ñåòåâîé ïóòü)
-// õpàíèì "server.share.tree" - äëÿ ñåòåâîãî äèñêà áåç áóêâû
+// TODO: Файлы "Tree.Far" для локальных дисков должны храниться в "Local AppData\Far"
+// TODO: Файлы "Tree.Far" для сетевых дисков должны храниться в "%HOMEDRIVE%\%HOMEPATH%",
+//                        если эти переменные среды не определены, то "%APPDATA%\Far"
+// хpаним "X.tree" (где 'X'  - буква диска, если не сетевой путь)
+// хpаним "server.share.tree" - для сетевого диска без буквы
 FARString &TreeList::MkTreeFileName(const wchar_t *RootDir,FARString &strDest)
 {
 	strDest = RootDir;
@@ -2116,7 +2116,7 @@ FARString &TreeList::MkTreeFileName(const wchar_t *RootDir,FARString &strDest)
 	return strDest;
 }
 
-// TODO: ýòîìó êàòàëîãó (Tree.Cache) ìåñòî íå â FarPath, à â "Local AppData\Far\"
+// TODO: этому каталогу (Tree.Cache) место не в FarPath, а в "Local AppData\Far\"
 FARString &TreeList::MkTreeCacheFolderName(const wchar_t *RootDir,FARString &strDest)
 {
 	strDest = RootDir;
@@ -2134,11 +2134,11 @@ FARString &TreeList::MkTreeCacheFolderName(const wchar_t *RootDir,FARString &str
   Opt.Tree.CDROM
   Opt.Tree.SavedTreePath
 
-   ëîêàëüíûõ äèñêîâ - "X.nnnnnnnn.tree"
-   ñåòåâûõ äèñêîâ - "X.nnnnnnnn.tree"
-   ñåòåâûõ ïóòåé - "Server.share.tree"
-   ñìåííûõ äèñêîâ(DRIVE_REMOVABLE) - "Far.nnnnnnnn.tree"
-   ñìåííûõ äèñêîâ(CD) - "Label.nnnnnnnn.tree"
+   локальных дисков - "X.nnnnnnnn.tree"
+   сетевых дисков - "X.nnnnnnnn.tree"
+   сетевых путей - "Server.share.tree"
+   сменных дисков(DRIVE_REMOVABLE) - "Far.nnnnnnnn.tree"
+   сменных дисков(CD) - "Label.nnnnnnnn.tree"
 
 */
 FARString &TreeList::CreateTreeFileName(const wchar_t *Path,FARString &strDest)
@@ -2147,7 +2147,7 @@ FARString &TreeList::CreateTreeFileName(const wchar_t *Path,FARString &strDest)
 	char RootPath[NM];
 	RootPath = ExtractPathRoot(Path);
 	UINT DriveType = FAR_GetDriveType(RootPath,nullptr,FALSE);
-	// ïîëó÷åíèå èíôû î òîìå
+	// получение инфы о томе
 	char VolumeName[NM],FileSystemName[NM];
 	DWORD MaxNameLength,FileSystemFlags,VolumeNumber;
 

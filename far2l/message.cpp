@@ -1,7 +1,7 @@
 /*
 message.cpp
 
-Âûâîä MessageBox
+Вывод MessageBox
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -166,7 +166,7 @@ int Message(
 	if (Flags & MSG_ERRORTYPE)
 		ErrorSets = GetErrorString(strErrStr);
 
-	// âûäåëèì ïàìÿòü ïîä ðàáî÷èé ìàññèâ óêàçàòåëåé íà ñòðîêè (+çàïàñ 16)
+	// выделим память под рабочий массив указателей на строки (+запас 16)
 	Str=(const wchar_t **)xf_malloc((ItemsNumber+ADDSPACEFORPSTRFORMESSAGE) * sizeof(wchar_t*));
 
 	if (!Str)
@@ -174,7 +174,7 @@ int Message(
 
 	StrCount=ItemsNumber-Buttons;
 
-	// ïðåäâàðèòåëüíûé îáñ÷åò ìàêñèìàëüíîãî ðàçìåðà.
+	// предварительный обсчет максимального размера.
 	for (BtnLength=0,I=0; I<static_cast<DWORD>(Buttons); I++) //??
 	{
 		BtnLength+=HiStrlen(Items[I+StrCount])+2+2+1; // "[ ", " ]", " "
@@ -190,7 +190,7 @@ int Message(
 			MaxLength=Length;
 	}
 
-	// ó÷òåì òàê æå ðàçìåð çàãîëîâêà
+	// учтем так же размер заголовка
 	if (Title && *Title)
 	{
 		I=(DWORD)StrLength(Title)+2;
@@ -199,27 +199,27 @@ int Message(
 			MaxLength=I;
 	}
 
-	// ïåâàÿ êîððåêöèÿ ìàêñèìàëüíîãî ðàçìåðà
+	// певая коррекция максимального размера
 	if (MaxLength > MAX_WIDTH_MESSAGE)
 		MaxLength=MAX_WIDTH_MESSAGE;
 
-	// òåïåðü îáðàáîòàåì MSG_ERRORTYPE
+	// теперь обработаем MSG_ERRORTYPE
 	DWORD CountErrorLine=0;
 
 	if ((Flags & MSG_ERRORTYPE) && ErrorSets)
 	{
-		// ïîäñ÷åò êîëè÷åñòâà ñòðîê âî âðàïåííîì ñîîáùåíèåè
+		// подсчет количества строк во врапенном сообщениеи
 		++CountErrorLine;
-		//InsertQuote(ErrStr); // îêâî÷èì
-		// âû÷èñëåíèå "êðàñèâîãî" ðàçìåðà
+		//InsertQuote(ErrStr); // оквочим
+		// вычисление "красивого" размера
 		DWORD LenErrStr=(DWORD)strErrStr.GetLength();
 
 		if (LenErrStr > MAX_WIDTH_MESSAGE)
 		{
-			// ïîëîâèíà ìåíüøå?
+			// половина меньше?
 			if (LenErrStr/2 < MAX_WIDTH_MESSAGE)
 			{
-				// à ïîëîâèíà + 1/3?
+				// а половина + 1/3?
 				if ((LenErrStr+LenErrStr/3)/2 < MAX_WIDTH_MESSAGE)
 					LenErrStr=(LenErrStr+LenErrStr/3)/2;
 				else
@@ -237,12 +237,12 @@ int Message(
 		if (MaxLength < LenErrStr && LenErrStr <= MAX_WIDTH_MESSAGE)
 			MaxLength=LenErrStr;
 
-		// à òåïåðü ïðîâðàïèì
+		// а теперь проврапим
 		//PtrStr=FarFormatText(ErrStr,MaxLength-(MaxLength > MAX_WIDTH_MESSAGE/2?1:0),ErrStr,sizeof(ErrStr),"\n",0); //?? MaxLength ??
 		FarFormatText(strErrStr,LenErrStr,strErrStr,L"\n",0); //?? MaxLength ??
 		PtrStr = strErrStr.GetBuffer();
 
-		//BUGBUG: FARString íå ïðåäíîçíà÷åí äëÿ õðàíåíèÿ ñòðîê ðàçäåë¸ííûõ \0
+		//BUGBUG: FARString не преднозначен для хранения строк разделённых \0
 		while ((PtrStr=wcschr(PtrStr,L'\n')) )
 		{
 			*PtrStr++=0;
@@ -257,8 +257,8 @@ int Message(
 			CountErrorLine=ADDSPACEFORPSTRFORMESSAGE; //??
 	}
 
-	//BUGBUG: FARString íå ïðåäíîçíà÷åí äëÿ õðàíåíèÿ ñòðîê ðàçäåë¸ííûõ \0
-	// çàïîëíÿåì ìàññèâ...
+	//BUGBUG: FARString не преднозначен для хранения строк разделённых \0
+	// заполняем массив...
 	CPtrStr=strErrStr;
 
 	for (I=0; I < CountErrorLine; I++)
@@ -266,7 +266,7 @@ int Message(
 		Str[I]=CPtrStr;
 		CPtrStr+=StrLength(CPtrStr)+1;
 
-		if (!*CPtrStr) // äâà èäóùèõ ïîäðÿä íóëÿ - "õàíäåö" âñåìó
+		if (!*CPtrStr) // два идущих подряд нуля - "хандец" всему
 		{
 			++I;
 			break;
@@ -300,7 +300,7 @@ int Message(
 	MessageY2=Y2=Y1+StrCount+3;
 	FARString strHelpTopic(strMsgHelpTopic);
 	strMsgHelpTopic.Clear();
-	// *** Âàðèàíò ñ Äèàëîãîì ***
+	// *** Вариант с Диалогом ***
 
 	if (Buttons>0)
 	{
@@ -414,7 +414,7 @@ int Message(
 			if (!strHelpTopic.IsEmpty())
 				Dlg.SetHelp(strHelpTopic);
 
-			Dlg.SetPluginNumber(PluginNumber); // Çàïîìíèì íîìåð ïëàãèíà
+			Dlg.SetPluginNumber(PluginNumber); // Запомним номер плагина
 
 			if (IsWarningStyle)
 			{
@@ -436,7 +436,7 @@ int Message(
 		return(RetCode<0?RetCode:RetCode-StrCount-1-(Separator?1:0));
 	}
 
-	// *** Áåç Äèàëîãà! ***
+	// *** Без Диалога! ***
 	SetCursorType(0,0);
 
 	if (!(Flags & MSG_KEEPBACKGROUND))
@@ -515,10 +515,10 @@ int Message(
 	}
 
 	/* $ 13.01.2003 IS
-	   - Ïðèíóäèòåëüíî óáåðåì çàïðåò îòðèñîâêè ýêðàíà, åñëè êîëè÷åñòâî êíîïîê
-	     â ñîîáùåíèè ðàâíî íóëþ è ìàêðîñ çàêîí÷èë âûïîëíÿòüñÿ. Ýòî íåîáõîäèìî,
-	     ÷òîáû çàðàáîòàë ïðîãðåññ-áàð îò ïëàãèíà, êîòîðûé áûë çàïóùåí ïðè ïîìîùè
-	     ìàêðîñà çàïðåòîì îòðèñîâêè (bugz#533).
+	   - Принудительно уберем запрет отрисовки экрана, если количество кнопок
+	     в сообщении равно нулю и макрос закончил выполняться. Это необходимо,
+	     чтобы заработал прогресс-бар от плагина, который был запущен при помощи
+	     макроса запретом отрисовки (bugz#533).
 	*/
 	xf_free(Str);
 
@@ -653,11 +653,11 @@ void SetMessageHelp(const wchar_t *Topic)
 }
 
 /* $ 12.03.2002 VVM
-  Íîâàÿ ôóíêöèÿ - ïîëüçîâàòåëü ïîïûòàëñÿ ïðåðâàòü îïåðàöèþ.
-  Çàäàäèì âîïðîñ.
-  Âîçâðàùàåò:
-   FALSE - ïðîäîëæèòü îïåðàöèþ
-   TRUE  - ïðåðâàòü îïåðàöèþ
+  Новая функция - пользователь попытался прервать операцию.
+  Зададим вопрос.
+  Возвращает:
+   FALSE - продолжить операцию
+   TRUE  - прервать операцию
 */
 int AbortMessage()
 {

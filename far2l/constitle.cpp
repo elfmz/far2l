@@ -1,7 +1,7 @@
 /*
 constitle.cpp
 
-Çàãîëîâîê êîíñîëè
+Заголовок консоли
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -159,9 +159,9 @@ void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force)
 	else
 	{
 		/*
-			Title=nullptr äëÿ ñëó÷àÿ, êîãäà íóæíî âûñòàâèòü ïðåä.çàãîëîâîê
-			SetFarTitle(nullptr) - ýòî íå äëÿ âñåõ!
-			Ýòîò âûçîâ èìååò ïðàâî äåëàòü òîëüêî ìàêðî-äâèæîê!
+			Title=nullptr для случая, когда нужно выставить пред.заголовок
+			SetFarTitle(nullptr) - это не для всех!
+			Этот вызов имеет право делать только макро-движок!
 		*/
 		Console.SetTitle(strFarTitle);
 		TitleModified=false;

@@ -235,64 +235,26 @@ class VTShell
 		}
 	}
 
-	public:
-	VTShell(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]) = NULL )
-		: _cmd(cmd), _pipes_fallback(false), _thread_state(false), _thread_exiting(false), 
-		_fd_out(-1), _fd_in(-1), _pid(-1),  _fork_proc(fork_proc)
+	void OnKeyEvent(KEY_EVENT_RECORD &KeyEvent)
 	{
-		if (!Startup())
+		if (!KeyEvent.bKeyDown)
 			return;
-
-		_thread_state = true;
-		if (pthread_create(&_thread, NULL, sOutputReaderThread, this)) {
-			perror("VT: pthread_create");
-			_thread_state = false;
-			Shutdown();
-		}
-	}
-	
-	~VTShell()
-	{
-		Shutdown();
-	}
-
-
-	int Wait()
-	{
-		if (_pid==-1)
-			return -1;
-
-		for (;;) {
-			INPUT_RECORD ir = {0};
-			DWORD dw = 0;
-			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) break;
-			if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
-				const std::string &translated = TranslateKeyEvent(ir.Event.KeyEvent);
-				if (!translated.empty()) {
-					if (_pipes_fallback && ir.Event.KeyEvent.uChar.UnicodeChar) {
-						WINPORT(WriteConsole)( NULL, &ir.Event.KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
-					}
-					DbgPrintEscaped("INPUT", translated.c_str());
-					if (write(_fd_in, translated.c_str(), translated.size())!=(int)translated.size()) {
-						fprintf(stderr, "VT: write failed\n");
-					}
-				} else {
-					fprintf(stderr, "VT: not translated keydown: VK=0x%x MODS=0x%x char=0x%x\n", 
-						ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.dwControlKeyState,
-						ir.Event.KeyEvent.uChar.UnicodeChar );
-				}
+		
+		DWORD dw;
+		const std::string &translated = TranslateKeyEvent(KeyEvent);
+		if (!translated.empty()) {
+			if (_pipes_fallback && KeyEvent.uChar.UnicodeChar) {
+				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
-			
-			std::lock_guard<std::mutex> lock(_mutex);
-			if (_thread_exiting) break;
-		}
-
-		int status = 0;
-		if (waitpid(_pid, &status, 0)==-1) {
-			fprintf(stderr, "VT: waitpid(0x%x) error %u\n", _pid, errno);
-			status = 1;
-		}
-		return status;
+			DbgPrintEscaped("INPUT", translated.c_str());
+			if (write(_fd_in, translated.c_str(), translated.size())!=(int)translated.size()) {
+				fprintf(stderr, "VT: write failed\n");
+			}
+		} else {
+			fprintf(stderr, "VT: not translated keydown: VK=0x%x MODS=0x%x char=0x%x\n", 
+				KeyEvent.wVirtualKeyCode, KeyEvent.dwControlKeyState,
+				KeyEvent.uChar.UnicodeChar );
+		}		
 	}
 
 	bool IsControlOnlyPressed(DWORD dwControlKeyState)
@@ -343,6 +305,53 @@ class VTShell
 		else
 			kill(_pid, sig);
 	}
+	
+	public:
+	VTShell(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]) = NULL )
+		: _cmd(cmd), _pipes_fallback(false), _thread_state(false), _thread_exiting(false), 
+		_fd_out(-1), _fd_in(-1), _pid(-1),  _fork_proc(fork_proc)
+	{
+		if (!Startup())
+			return;
+
+		_thread_state = true;
+		if (pthread_create(&_thread, NULL, sOutputReaderThread, this)) {
+			perror("VT: pthread_create");
+			_thread_state = false;
+			Shutdown();
+		}
+	}
+	
+	~VTShell()
+	{
+		Shutdown();
+	}
+
+
+	int Wait()
+	{
+		if (_pid==-1)
+			return -1;
+
+		for (;;) {
+			INPUT_RECORD ir = {0};
+			DWORD dw = 0;
+			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) break;
+			if (ir.EventType==KEY_EVENT) 
+				OnKeyEvent(ir.Event.KeyEvent);
+			
+			std::lock_guard<std::mutex> lock(_mutex);
+			if (_thread_exiting) break;
+		}
+
+		int status = 0;
+		if (waitpid(_pid, &status, 0)==-1) {
+			fprintf(stderr, "VT: waitpid(0x%x) error %u\n", _pid, errno);
+			status = 1;
+		}
+		return status;
+	}
+
 };
 
 int VTShell_Execute(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]) ) 

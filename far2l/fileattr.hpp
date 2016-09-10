@@ -3,7 +3,7 @@
 /*
 fileattr.hpp
 
-Ðàáîòà ñ àòðèáóòàìè ôàéëîâ
+Работа с атрибутами файлов
 */
 /*
 Copyright (c) 1996 Eugene Roshal

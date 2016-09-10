@@ -1,7 +1,7 @@
 /*
 tvar.cpp
 
-Ðåàëèçàöèÿ êëàññà TVar (äëÿ ìàêðîñîâ)
+Реализация класса TVar (для макросов)
 
 */
 /*
@@ -157,7 +157,7 @@ static TypeString checkTypeString(const wchar_t *TestStr)
 
 					if (ch2 == L'-' || ch2 == L'+')  // E+D
 					{
-						if (isBegHex || isExpSign)  // íà÷àëî hex èëè óæå áûë çíàê ó ïîðÿäêà?
+						if (isBegHex || isExpSign)  // начало hex или уже был знак у порядка?
 						{
 							isNum=false;
 							break;
@@ -166,7 +166,7 @@ static TypeString checkTypeString(const wchar_t *TestStr)
 						isExpSign=true;
 						wchar_t ch3=*ptrTestStr++;
 
-						if (!iswdigit(ch3))   // çà çíàêîì èäåò ÷èñëî?
+						if (!iswdigit(ch3))   // за знаком идет число?
 						{
 							isNum=false;
 							break;
@@ -1588,7 +1588,7 @@ TVar TVar::operator~()
 
 
 //---------------------------------------------------------------
-// Ðàáîòà ñ òàáëèöàìè èìåí ïåðåìåííûõ
+// Работа с таблицами имен переменных
 //---------------------------------------------------------------
 int hash(const wchar_t *p)
 {

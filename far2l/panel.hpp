@@ -3,7 +3,7 @@
 /*
 panel.hpp
 
-Parent class äëÿ ïàíåëåé
+Parent class для панелей
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -188,13 +188,13 @@ class Panel:public ScreenObject
 		virtual void KillFocus();
 		virtual void Update(int Mode) {};
 		/*$ 22.06.2001 SKV
-		  Ïàðàìåòð äëÿ èãíîðèðîâàíèÿ âðåìåíè ïîñëåäíåãî Update.
-		  Èñïîëüçóåòñÿ äëÿ Update ïîñëå èñïîëíåíèÿ êîìàíäû.
+		  Параметр для игнорирования времени последнего Update.
+		  Используется для Update после исполнения команды.
 		*/
 		virtual int UpdateIfChanged(int UpdateMode) {return 0;};
 		/* $ 19.03.2002 DJ
-		   UpdateIfRequired() - îáíîâèòü, åñëè àïäåéò áûë ïðîïóùåí èç-çà òîãî,
-		   ÷òî ïàíåëü íåâèäèìà
+		   UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
+		   что панель невидима
 		*/
 		virtual void UpdateIfRequired() {};
 
@@ -277,8 +277,8 @@ class Panel:public ScreenObject
 		virtual void IfGoHome(wchar_t Drive) {};
 
 		/* $ 30.04.2001 DJ
-		   ôóíêöèÿ âûçûâàåòñÿ äëÿ îáíîâëåíèÿ êåéáàðà; åñëè âîçâðàùàåò FALSE,
-		   èñïîëüçóåòñÿ ñòàíäàðòíûé êåéáàð
+		   функция вызывается для обновления кейбара; если возвращает FALSE,
+		   используется стандартный кейбар
 		*/
 		virtual BOOL UpdateKeyBar() { return FALSE; };
 

@@ -524,3 +524,10 @@ void ConsoleOutput::SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID 
 	_scroll_callback.pfn = pCallback;
 	_scroll_callback.context = pContext;
 }
+
+
+void ConsoleOutput::AdhocQuickEdit()
+{
+	if (_listener)
+		_listener->OnConsoleAdhocQuickEdit();
+}

@@ -2159,9 +2159,6 @@ BOOL FileEditor::SetFileName(const wchar_t *NewFileName)
 
 	if (StrCmp(strFileName,MSG(MNewFileName)))
 	{
-		if (wcspbrk(strFileName, ReservedFilenameSymbols))
-			return FALSE;
-
 		ConvertNameToFull(strFileName, strFullFileName);
 		FARString strFilePath=strFullFileName;
 

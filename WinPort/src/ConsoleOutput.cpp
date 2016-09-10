@@ -238,8 +238,8 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	if ( (height - _scroll_region.top) < 2 || width==0)
 		return;
 
-	std::vector<CHAR_INFO> tmp(width * (height - 1) );
-	if (tmp.empty())
+	_temp_chars.resize(width * (height - 1) );
+	if (_temp_chars.empty())
 		return;
 	
 	COORD tmp_pos = {0, 0};
@@ -247,14 +247,14 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	if (_scroll_callback.pfn) {
 		COORD line_size = {(SHORT)width, 1};
 		SMALL_RECT line_rect = {0, 0, (SHORT)(width - 1), 0};
-		_buf.Read(&tmp[0], line_size, tmp_pos, line_rect);
-		_scroll_callback.pfn(_scroll_callback.context, _scroll_region.top, width, &tmp[0]);
+		_buf.Read(&_temp_chars[0], line_size, tmp_pos, line_rect);
+		_scroll_callback.pfn(_scroll_callback.context, _scroll_region.top, width, &_temp_chars[0]);
 	}
 	
 	COORD tmp_size = {(SHORT)width, (SHORT)(height - 1 - _scroll_region.top)};
 	
 	SMALL_RECT scr_rect = {0, (SHORT)(_scroll_region.top + 1), (SHORT)(width - 1), (SHORT)(height - 1) };
-	_buf.Read(&tmp[0], tmp_size, tmp_pos, scr_rect);
+	_buf.Read(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
 	if (scr_rect.Left!=0 || scr_rect.Top!=(int)(_scroll_region.top + 1) 
 		|| scr_rect.Right!=(int)(width-1) || scr_rect.Bottom!=(int)(height-1)) {
 		fprintf(stderr, "ConsoleOutput::ScrollOutputOnOverflow: bug\n");
@@ -262,18 +262,18 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	}
 	scr_rect.Top = _scroll_region.top;
 	scr_rect.Bottom = height - 2;
-	_buf.Write(&tmp[0], tmp_size, tmp_pos, scr_rect);
+	_buf.Write(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
 	
 	scr_rect.Left = 0;
 	scr_rect.Right = width - 1;
 	scr_rect.Top = scr_rect.Bottom = height - 1;
 	tmp_size.Y = 1;
 	for (unsigned int i = 0; i < width; ++i) {
-		CHAR_INFO &ci = tmp[i];
+		CHAR_INFO &ci = _temp_chars[i];
 		ci.Char.UnicodeChar = ' ';
 		ci.Attributes = _attributes;
 	}
-	_buf.Write(&tmp[0], tmp_size, tmp_pos, scr_rect);
+	_buf.Write(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
 }
 
 bool ConsoleOutput::ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos)
@@ -456,12 +456,12 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 	total_chars*= data_size.Y;
 	COORD data_pos = {0, 0};
 		
-	std::vector<CHAR_INFO> data(total_chars);
+	_temp_chars.resize(total_chars);
 	SMALL_RECT dst_rect = {dwDestinationOrigin.X, dwDestinationOrigin.Y, 
 		(SHORT)(dwDestinationOrigin.X + data_size.X - 1), (SHORT)(dwDestinationOrigin.Y + data_size.Y - 1)};
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		_buf.Read(&data[0], data_size, data_pos, src_rect);
+		_buf.Read(&_temp_chars[0], data_size, data_pos, src_rect);
 
 		fprintf(stderr, "!!!!SCROLL:[%u %u %u %u] -> [%u %u %u %u]",
 			src_rect.Left, src_rect.Top, src_rect.Right, src_rect.Bottom,
@@ -488,7 +488,7 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 			}
 		}
 
-		_buf.Write(&data[0], data_size, data_pos, dst_rect);
+		_buf.Write(&_temp_chars[0], data_size, data_pos, dst_rect);
 	}
 
 	if (_listener) {

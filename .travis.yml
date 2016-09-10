@@ -14,6 +14,13 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
+            - cmake
+            - libwxgtk3.0-dev
+            - libglib2.0-dev
+            - gawk
+            - m4
+            - libpcre3-dev
+            - zlib1g-dev
       env: COMPILER=g++-4.9
     - compiler: gcc
       addons:
@@ -22,6 +29,13 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
+            - cmake
+            - libwxgtk3.0-dev
+            - libglib2.0-dev
+            - gawk
+            - m4
+            - libpcre3-dev
+            - zlib1g-dev
       env: COMPILER=g++-5
     - compiler: clang
       addons:
@@ -31,6 +45,13 @@ matrix:
             - llvm-toolchain-precise-3.6
           packages:
             - clang-3.6
+            - cmake
+            - libwxgtk3.0-dev
+            - libglib2.0-dev
+            - gawk
+            - m4
+            - libpcre3-dev
+            - zlib1g-dev
       env: COMPILER=clang++-3.6
     - compiler: clang
       addons:
@@ -40,19 +61,14 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
+            - cmake
+            - libwxgtk3.0-dev
+            - libglib2.0-dev
+            - gawk
+            - m4
+            - libpcre3-dev
+            - zlib1g-dev
       env: COMPILER=clang++-3.7
-
-
-addons:
-  apt:
-    packages:
-    - cmake
-    - libwxgtk3.0-dev
-    - libglib2.0-dev
-    - gawk
-    - m4
-    - libpcre3-dev
-    - zlib1g-dev
 
 script:
   - mkdir build

@@ -78,8 +78,14 @@ matrix:
       install:
             - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
 
+before_install:
+  - sudo add-apt-repository -y ppa:saiarcot895/chromium-beta
+  - sudo apt-get update
+
+install: sudo apt-get install ninja-build
+
 script:
   - mkdir build
   - cd build
-  - cmake .. && make
+  - cmake -G Ninja .. && ninja -j10
 

@@ -1,5 +1,5 @@
 
-cmake_minimum_required (VERSION 3.3.2)
+cmake_minimum_required (VERSION 3.2.2)
 project (FAR)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -fPIC -Wno-unused-function -Wno-c++11-narrowing -fsanitize=address") #  -fsanitize=address

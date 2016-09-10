@@ -3,7 +3,7 @@
 /*
 interf.hpp
 
-Консольные функции ввода-вывода
+ГЉГ®Г­Г±Г®Г«ГјГ­Г»ГҐ ГґГіГ­ГЄГ¶ГЁГЁ ГўГўГ®Г¤Г -ГўГ»ГўГ®Г¤Г 
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -42,7 +42,7 @@ extern SHORT ScrX,ScrY;
 extern SHORT PrevScrX,PrevScrY;
 extern DWORD InitialConsoleMode;
 
-// типы рамок
+// ГІГЁГЇГ» Г°Г Г¬Г®ГЄ
 enum
 {
 	NO_BOX,
@@ -70,22 +70,22 @@ enum BOX_DEF_SYMBOLS
 	BS_RB_H1V2,       // 0xBD
 	BS_RB_H2V1,       // 0xBE
 	BS_RT_H1V1,       // 0xBF
-	BS_LB_H1V1,       // 0xС0
-	BS_B_H1V1,        // 0xС1
-	BS_T_H1V1,        // 0xС2
-	BS_L_H1V1,        // 0xС3
-	BS_H1,            // 0xС4
-	BS_C_H1V1,        // 0xС5
-	BS_L_H2V1,        // 0xС6
-	BS_L_H1V2,        // 0xС7
-	BS_LB_H2V2,       // 0xС8
-	BS_LT_H2V2,       // 0xС9
-	BS_B_H2V2,        // 0xСA
-	BS_T_H2V2,        // 0xСB
-	BS_L_H2V2,        // 0xСC
-	BS_H2,            // 0xСD
-	BS_C_H2V2,        // 0xСE
-	BS_B_H2V1,        // 0xСF
+	BS_LB_H1V1,       // 0xГ‘0
+	BS_B_H1V1,        // 0xГ‘1
+	BS_T_H1V1,        // 0xГ‘2
+	BS_L_H1V1,        // 0xГ‘3
+	BS_H1,            // 0xГ‘4
+	BS_C_H1V1,        // 0xГ‘5
+	BS_L_H2V1,        // 0xГ‘6
+	BS_L_H1V2,        // 0xГ‘7
+	BS_LB_H2V2,       // 0xГ‘8
+	BS_LT_H2V2,       // 0xГ‘9
+	BS_B_H2V2,        // 0xГ‘A
+	BS_T_H2V2,        // 0xГ‘B
+	BS_L_H2V2,        // 0xГ‘C
+	BS_H2,            // 0xГ‘D
+	BS_C_H2V2,        // 0xГ‘E
+	BS_B_H2V1,        // 0xГ‘F
 	BS_B_H1V2,        // 0xD0
 	BS_T_H2V1,        // 0xD1
 	BS_T_H1V2,        // 0xD2
@@ -107,9 +107,9 @@ enum BOX_DEF_SYMBOLS
 void ShowTime(int ShowAlways);
 
 /*$ 14.02.2001 SKV
-  Инитить ли палитру default значениями.
-  По умолчанию - да.
-  С 0 используется для ConsoleDetach.
+  Г€Г­ГЁГІГЁГІГј Г«ГЁ ГЇГ Г«ГЁГІГ°Гі default Г§Г­Г Г·ГҐГ­ГЁГїГ¬ГЁ.
+  ГЏГ® ГіГ¬Г®Г«Г·Г Г­ГЁГѕ - Г¤Г .
+  Г‘ 0 ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї Г¤Г«Гї ConsoleDetach.
 */
 void InitConsole(int FirstInit=TRUE);
 void CloseConsole();
@@ -171,7 +171,7 @@ int WINAPI TextToCharInfo(const char *Text,WORD Attr, CHAR_INFO *CharInfo, int L
 
 inline void SetVidChar(CHAR_INFO& CI,wchar_t Chr)
 {
-	CI.Char.UnicodeChar = (Chr<L'\x20'||Chr==L'\x7f')?Oem2Unicode[Chr]:Chr;
+	CI.Char.UnicodeChar = (Chr >= 0 && (Chr < L'\x20' || Chr == L'\x7f')) ? Oem2Unicode[Chr] : Chr;
 }
 
 int HiStrlen(const wchar_t *Str);

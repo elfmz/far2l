@@ -120,6 +120,7 @@ wxDEFINE_EVENT(WX_CONSOLE_REFRESH, EventWithRect);
 wxDEFINE_EVENT(WX_CONSOLE_WINDOW_MOVED, EventWithRect);
 wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
 
 //////////////////////////////////////////
 
@@ -145,25 +146,28 @@ protected:
 	virtual void OnConsoleOutputTitleChanged();
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
 	virtual COORD OnConsoleGetLargestWindowSize();
+	virtual void OnConsoleAdhocQuickEdit();
 	
 private:
 	void CheckForResizePending();
 	void CheckPutText2CLip();
 	void OnInitialized( wxCommandEvent& event );
 	void OnTimerPeriodic(wxTimerEvent& event);	
-	void OnWindowMoved( wxCommandEvent& event );
-	void OnRefresh( wxCommandEvent& event );
-	void OnConsoleResized( wxCommandEvent& event );
-	void OnTitleChanged( wxCommandEvent& event );
+	void OnWindowMovedSync( wxCommandEvent& event );
+	void OnRefreshSync( wxCommandEvent& event );
+	void OnConsoleResizedSync( wxCommandEvent& event );
+	void OnTitleChangedSync( wxCommandEvent& event );
+	void OnConsoleAdhocQuickEditSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
 	void OnPaint( wxPaintEvent& event );
     void OnEraseBackground( wxEraseEvent& event );
 	void OnSize(wxSizeEvent &event);
 	void OnMouse( wxMouseEvent &event );
-	void OnMouseNormal( wxMouseEvent &event, COORD pos_char );
-	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char );
+	void OnMouseNormal( wxMouseEvent &event, COORD pos_char);
+	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char);
 	void OnKillFocus( wxFocusEvent &event );
+	COORD TranslateMousePosition( wxMouseEvent &event );
 	void DamageAreaBetween(COORD c1, COORD c2);
 	int GetDisplayIndex();
 
@@ -178,12 +182,14 @@ private:
 	
 	ConsolePaintContext _paint_context;
 	wxKeyEvent _last_keydown;
+	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	
 	WinPortFrame *_frame;
 	wxTimer* _periodic_timer;
 	bool _last_keydown_enqueued;
 	bool _initialized;
+	bool _adhoc_quickedit;
 	enum
 	{
 		RP_NONE,
@@ -192,6 +198,7 @@ private:
 	} _resize_pending;
 	DWORD _mouse_state, _mouse_qedit_pending;
 	COORD _mouse_qedit_start, _mouse_qedit_last;
+	
 	int _last_valid_display;
 };
 
@@ -258,10 +265,12 @@ WinPortFrame::~WinPortFrame()
 wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_INITIALIZED, WinPortPanel::OnInitialized)
 	EVT_TIMER(TIMER_ID_PERIODIC, WinPortPanel::OnTimerPeriodic)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_REFRESH, WinPortPanel::OnRefresh)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_WINDOW_MOVED, WinPortPanel::OnWindowMoved)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_RESIZED, WinPortPanel::OnConsoleResized)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChanged)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_REFRESH, WinPortPanel::OnRefreshSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_WINDOW_MOVED, WinPortPanel::OnWindowMovedSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_RESIZED, WinPortPanel::OnConsoleResizedSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChangedSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
+	
 	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
 	EVT_KEY_UP(WinPortPanel::OnKeyUp)
 	EVT_CHAR(WinPortPanel::OnChar)
@@ -294,8 +303,8 @@ bool WinPortApp::OnInit()
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_paint_context(this), _frame(frame), _periodic_timer(NULL),  
-		_last_keydown_enqueued(false), _initialized(false), _resize_pending(RP_NONE),  
-		_mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
+		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
+		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
 {
 	g_wx_con_out.SetListener(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
@@ -357,7 +366,8 @@ void WinPortPanel::CheckForResizePending()
 	
 			int width = 0, height = 0;
 			_frame->GetClientSize(&width, &height);
-			fprintf(stderr, "Current client size: %u %u\n", width, height);
+			fprintf(stderr, "Current client size: %u %u font %u %u\n", 
+				width, height, _paint_context.FontWidth(), _paint_context.FontHeight());
 			width/= _paint_context.FontWidth(); 
 			height/= _paint_context.FontHeight();
 			if (width!=(int)prev_width || height!=(int)prev_height) {
@@ -448,7 +458,7 @@ COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 	return size;
 }
 
-void WinPortPanel::OnWindowMoved( wxCommandEvent& event )
+void WinPortPanel::OnWindowMovedSync( wxCommandEvent& event )
 {
 	EventWithRect *e = (EventWithRect *)&event;
 	int x = e->rect.Left, y = e->rect.Top;
@@ -461,13 +471,13 @@ void WinPortPanel::OnWindowMoved( wxCommandEvent& event )
 	Move(x, y);
 }
 
-void WinPortPanel::OnRefresh( wxCommandEvent& event )
+void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 {
 	EventWithRect *e = (EventWithRect *)&event;
 	_paint_context.RefreshArea( e->rect );
 }
 
-void WinPortPanel::OnConsoleResized( wxCommandEvent& event )
+void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
 {
 	unsigned int width = 0, height = 0;
 	g_wx_con_out.GetSize(width, height);
@@ -491,7 +501,7 @@ void WinPortPanel::OnConsoleResized( wxCommandEvent& event )
 	Refresh(false);
 }
 
-void WinPortPanel::OnTitleChanged( wxCommandEvent& event )
+void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 {
 	const std::wstring &title = g_wx_con_out.GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
@@ -628,29 +638,35 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 	}
 }
 
-void WinPortPanel::OnMouse( wxMouseEvent &event )
+COORD WinPortPanel::TranslateMousePosition( wxMouseEvent &event )
 {
 	wxClientDC dc(this);
 	wxPoint pos = event.GetLogicalPosition(dc);
-	COORD pos_char;
-	pos_char.X =(SHORT)(USHORT)(pos.x / _paint_context.FontWidth());
-	pos_char.Y =(SHORT)(USHORT)(pos.y / _paint_context.FontHeight());
+	COORD out;
+	out.X =(SHORT)(USHORT)(pos.x / _paint_context.FontWidth());
+	out.Y =(SHORT)(USHORT)(pos.y / _paint_context.FontHeight());
 
 	unsigned int width = 80, height = 25;
 	g_wx_con_out.GetSize(width, height);
 	
-	if ( (pos_char.X < 0 || (USHORT)pos_char.X >= width)
-	 ||  (pos_char.Y < 0 || (USHORT)pos_char.Y >= height)) {
-		 fprintf(stderr, "Mouse position out of range: %d %d vs %d %d\n", 
-			(unsigned int)pos_char.X, (unsigned int)pos_char.Y, width, height);
-		return;
-	}
+	if ( out.X < 0 ) out.X = 0;
+	if ( (USHORT)out.X >= width) out.X = width - 1;
+	if ( out.Y < 0 ) out.Y = 0;
+	if ( (USHORT)out.Y >= height) out.Y = height - 1;
+	return out;
+}
+
+void WinPortPanel::OnMouse( wxMouseEvent &event )
+{
+	COORD pos_char = TranslateMousePosition( event );
 	
 	DWORD mode = 0;
 	if (!WINPORT(GetConsoleMode)(NULL, &mode))
 		mode = 0;
-		
-	if (mode&ENABLE_QUICK_EDIT_MODE)
+
+	_last_mouse_event = event;
+
+	if ((mode&ENABLE_QUICK_EDIT_MODE) || _adhoc_quickedit)
 		OnMouseQEdit( event, pos_char );
 	else if (mode&ENABLE_MOUSE_INPUT)
 		OnMouseNormal( event, pos_char );
@@ -729,7 +745,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			DamageAreaBetween(_mouse_qedit_start, pos_char);			
 			_mouse_qedit_last = pos_char;
 		} else if (event.LeftUp()) {
-			_mouse_qedit_pending = false;
+			_mouse_qedit_pending = _adhoc_quickedit = false;
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 			DamageAreaBetween(_mouse_qedit_start, pos_char);			
 			_text2clip.clear();
@@ -751,6 +767,46 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			CheckPutText2CLip();
 		}
 	}
+}
+
+
+void WinPortPanel::OnConsoleAdhocQuickEditSync( wxCommandEvent& event )
+{
+	if (_adhoc_quickedit) {
+		fprintf(stderr, "OnConsoleAdhocQuickEditSync: already\n");
+		return;		
+	}
+	if ((_mouse_state & (FROM_LEFT_2ND_BUTTON_PRESSED | RIGHTMOST_BUTTON_PRESSED)) != 0) {
+		fprintf(stderr, "OnConsoleAdhocQuickEditSync: inappropriate _mouse_state=0x%x\n", _mouse_state);
+		return;
+	}
+	
+	_adhoc_quickedit = true;
+	
+	if ( (_mouse_state & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
+		_mouse_state&= ~FROM_LEFT_1ST_BUTTON_PRESSED;
+	
+		COORD pos_char = TranslateMousePosition( _last_mouse_event );
+		
+		INPUT_RECORD ir = {0};
+		ir.EventType = MOUSE_EVENT;
+		ir.Event.MouseEvent.dwButtonState = _mouse_state;
+		ir.Event.MouseEvent.dwMousePosition = pos_char;
+		g_wx_con_in.Enqueue(&ir, 1);
+		_last_mouse_event.SetEventType(wxEVT_LEFT_DOWN);
+		_last_mouse_event.SetLeftDown(true);
+		fprintf(stderr, "OnConsoleAdhocQuickEditSync: lbutton pressed, %u\n", _last_mouse_event.LeftIsDown());
+
+		OnMouseQEdit( _last_mouse_event, pos_char );
+	} else
+		fprintf(stderr, "OnConsoleAdhocQuickEditSync: lbutton not pressed\n");
+}
+
+void WinPortPanel::OnConsoleAdhocQuickEdit()
+{
+	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_ADHOC_QEDIT);
+	if (event)
+		wxQueueEvent(this, event);
 }
 
 void WinPortPanel::CheckPutText2CLip()

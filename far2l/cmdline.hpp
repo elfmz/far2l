@@ -3,7 +3,7 @@
 /*
 cmdline.hpp
 
-Êîìàíäíàÿ ñòðîêà
+Командная строка
 */
 /*
 Copyright (c) 1996 Eugene Roshal

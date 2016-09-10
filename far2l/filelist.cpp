@@ -1,7 +1,7 @@
 /*
 filelist.cpp
 
-Ôàéëîâàÿ ïàíåëü - îáùèå ôóíêöèè
+Файловая панель - общие функции
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -375,7 +375,7 @@ int _cdecl SortList(const void *el1,const void *el2)
 			return ListSortOrder*RetCode;
 	}
 
-	// ÍÅ ÑÎÐÒÈÐÓÅÌ ÊÀÒÀËÎÃÈ Â ÐÅÆÈÌÅ "ÏÎ ÐÀÑØÈÐÅÍÈÞ" (Îïöèîíàëüíî!)
+	// НЕ СОРТИРУЕМ КАТАЛОГИ В РЕЖИМЕ "ПО РАСШИРЕНИЮ" (Опционально!)
 	if (!(ListSortMode == BY_EXT && !Opt.SortFolderExt && ((SPtr1->FileAttr & FILE_ATTRIBUTE_DIRECTORY) && (SPtr2->FileAttr & FILE_ATTRIBUTE_DIRECTORY))))
 	{
 		switch (ListSortMode)
@@ -592,10 +592,10 @@ void FileList::SetFocus()
 	Panel::SetFocus();
 
 	/* $ 07.04.2002 KM
-	  ! Ðèñóåì çàãîëîâîê êîíñîëè ôàðà òîëüêî òîãäà, êîãäà
-	    íå èä¸ò ïðîöåññ ïåðåðèñîâêè âñåõ ôðåéìîâ. Â äàííîì
-	    ñëó÷àå íàä ïàíåëÿìè âèñèò äèàëîã è íåçà÷åì âûâîäèòü
-	    ïàíåëüíûé çàãîëîâîê.
+	  ! Рисуем заголовок консоли фара только тогда, когда
+	    не идёт процесс перерисовки всех фреймов. В данном
+	    случае над панелями висит диалог и незачем выводить
+	    панельный заголовок.
 	*/
 	if (!IsRedrawFramesInProcess)
 		SetTitle();
@@ -713,19 +713,19 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 			// mps->ActionFlags
 			switch (mps->Action)
 			{
-				case 0:  // ñíÿòü âûäåëåíèå
+				case 0:  // снять выделение
 				{
 					switch(mps->Mode)
 					{
-						case 0: // ñíÿòü ñî âñåãî?
+						case 0: // снять со всего?
 							Result=(int64_t)GetRealSelCount();
 							ClearSelection();
 							break;
-						case 1: // ïî èíäåêñó?
+						case 1: // по индексу?
 							Result=1;
 							Select(ListData[mps->Index],FALSE);
 							break;
-						case 2: // íàáîð ñòðîê
+						case 2: // набор строк
 						{
 							const wchar_t *namePtr;
 							int Pos;
@@ -741,27 +741,27 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							}
 							break;
 						}
-						case 3: // ìàñêàìè ôàéëîâ, ðàçäåëåííûõ çàïÿòûìè
+						case 3: // масками файлов, разделенных запятыми
 							Result=SelectFiles(SELECT_REMOVEMASK,mps->Item->s());
 							break;
 					}
 					break;
 				}
 
-				case 1:  // äîáàâèòü âûäåëåíèå
+				case 1:  // добавить выделение
 				{
 					switch(mps->Mode)
 					{
-						case 0: // âûäåëèòü âñå?
+						case 0: // выделить все?
 						    for (int i=0; i < FileCount; i++)
 						    	Select(ListData[i],TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
-						case 1: // ïî èíäåêñó?
+						case 1: // по индексу?
 							Result=1;
 							Select(ListData[mps->Index],TRUE);
 							break;
-						case 2: // íàáîð ñòðîê ÷åðåç CRLF
+						case 2: // набор строк через CRLF
 						{
 							const wchar_t *namePtr;
 							int Pos;
@@ -777,27 +777,27 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							}
 							break;
 						}
-						case 3: // ìàñêàìè ôàéëîâ, ðàçäåëåííûõ çàïÿòûìè
+						case 3: // масками файлов, разделенных запятыми
 							Result=SelectFiles(SELECT_ADDMASK,mps->Item->s());
 							break;
 					}
 					break;
 				}
 
-				case 2:  // èíâåðòèðîâàòü âûäåëåíèå
+				case 2:  // инвертировать выделение
 				{
 					switch(mps->Mode)
 					{
-						case 0: // èíâåðòèðîâàòü âñå?
+						case 0: // инвертировать все?
 						    for (int i=0; i < FileCount; i++)
 						    	Select(ListData[i],ListData[i]->Selected?FALSE:TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
-						case 1: // ïî èíäåêñó?
+						case 1: // по индексу?
 							Result=1;
 							Select(ListData[mps->Index],ListData[mps->Index]->Selected?FALSE:TRUE);
 							break;
-						case 2: // íàáîð ñòðîê ÷åðåç CRLF
+						case 2: // набор строк через CRLF
 						{
 							const wchar_t *namePtr;
 							int Pos;
@@ -813,14 +813,14 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							}
 							break;
 						}
-						case 3: // ìàñêàìè ôàéëîâ, ðàçäåëåííûõ çàïÿòûìè
+						case 3: // масками файлов, разделенных запятыми
 							Result=SelectFiles(SELECT_INVERTMASK,mps->Item->s());
 							break;
 					}
 					break;
 				}
 
-				case 3:  // âîññòàíîâèòü âûäåëåíèå
+				case 3:  // восстановить выделение
 				{
 					RestoreSelection();
 					Result=(int64_t)GetRealSelCount();
@@ -861,7 +861,7 @@ int FileList::ProcessKey(int Key)
 	}
 	else
 	{
-		// Òå êëàâèøè, êîòîðûå ðàáîòàþò ïðè ïîãàøåííûõ ïàíåëÿõ:
+		// Те клавиши, которые работают при погашенных панелях:
 		switch (Key)
 		{
 			case KEY_CTRLF:
@@ -886,7 +886,7 @@ int FileList::ProcessKey(int Key)
 			case KEY_ALTSHIFTF9:
 			case KEY_CTRLN:
 				break;
-				// ýòè ñïîðíûå, õîòÿ, åñëè Ctrl-F ðàáîòàåò, òî è ýòè äîëæíû :-)
+				// эти спорные, хотя, если Ctrl-F работает, то и эти должны :-)
 				/*
 				      case KEY_CTRLINS:
 				      case KEY_CTRLSHIFTINS:
@@ -927,7 +927,7 @@ int FileList::ProcessKey(int Key)
 	}
 
 	/* $ 27.08.2002 SVS
-	    [*] Â ïàíåëè ñ îäíîé êîëîíêîé Shift-Left/Right àíàëîãè÷íî íàæàòèþ
+	    [*] В панели с одной колонкой Shift-Left/Right аналогично нажатию
 	        Shift-PgUp/PgDn.
 	*/
 	if (Columns==1 && !CmdLength)
@@ -1013,13 +1013,13 @@ int FileList::ProcessKey(int Key)
 		case KEY_CTRLMULTIPLY:
 			SelectFiles(SELECT_INVERTALL);
 			return TRUE;
-		case KEY_ALTLEFT:     // Ïðîêðóòêà äëèííûõ èìåí è îïèñàíèé
-		case KEY_ALTHOME:     // Ïðîêðóòêà äëèííûõ èìåí è îïèñàíèé - â íà÷àëî
+		case KEY_ALTLEFT:     // Прокрутка длинных имен и описаний
+		case KEY_ALTHOME:     // Прокрутка длинных имен и описаний - в начало
 			LeftPos=(Key == KEY_ALTHOME)?-0x7fff:LeftPos-1;
 			Redraw();
 			return TRUE;
-		case KEY_ALTRIGHT:    // Ïðîêðóòêà äëèííûõ èìåí è îïèñàíèé
-		case KEY_ALTEND:     // Ïðîêðóòêà äëèííûõ èìåí è îïèñàíèé - â êîíåö
+		case KEY_ALTRIGHT:    // Прокрутка длинных имен и описаний
+		case KEY_ALTEND:     // Прокрутка длинных имен и описаний - в конец
 			LeftPos=(Key == KEY_ALTEND)?0x7fff:LeftPos+1;
 			Redraw();
 			return TRUE;
@@ -1028,9 +1028,9 @@ int FileList::ProcessKey(int Key)
 			if (CmdLength>0)
 				return FALSE;
 
-		case KEY_CTRLSHIFTINS: case KEY_CTRLSHIFTNUMPAD0:  // êîïèðîâàòü èìåíà
-		case KEY_CTRLALTINS:   case KEY_CTRLALTNUMPAD0:    // êîïèðîâàòü UNC-èìåíà
-		case KEY_ALTSHIFTINS:  case KEY_ALTSHIFTNUMPAD0:   // êîïèðîâàòü ïîëíûå èìåíà
+		case KEY_CTRLSHIFTINS: case KEY_CTRLSHIFTNUMPAD0:  // копировать имена
+		case KEY_CTRLALTINS:   case KEY_CTRLALTNUMPAD0:    // копировать UNC-имена
+		case KEY_ALTSHIFTINS:  case KEY_ALTSHIFTNUMPAD0:   // копировать полные имена
 			//if (FileCount>0 && SetCurPath()) // ?????
 			SetCurPath();
 			CopyNames(Key == KEY_CTRLALTINS || Key == KEY_ALTSHIFTINS || Key == KEY_CTRLALTNUMPAD0 || Key == KEY_ALTSHIFTNUMPAD0,
@@ -1042,8 +1042,8 @@ int FileList::ProcessKey(int Key)
 			return TRUE;
 
 			/* $ 14.02.2001 VVM
-			  + Ctrl: âñòàâëÿåò èìÿ ôàéëà ñ ïàññèâíîé ïàíåëè.
-			  + CtrlAlt: âñòàâëÿåò UNC-èìÿ ôàéëà ñ ïàññèâíîé ïàíåëè */
+			  + Ctrl: вставляет имя файла с пассивной панели.
+			  + CtrlAlt: вставляет UNC-имя файла с пассивной панели */
 		case KEY_CTRL|KEY_SEMICOLON:
 		case KEY_CTRL|KEY_ALT|KEY_SEMICOLON:
 		{
@@ -1066,7 +1066,7 @@ int FileList::ProcessKey(int Key)
 		case KEY_CTRLSHIFTENTER:
 		case KEY_CTRLJ:
 		case KEY_CTRLF:
-		case KEY_CTRLALTF:  // 29.01.2001 VVM + Ïî CTRL+ALT+F â êîìàíäíóþ ñòðîêó ñáðàñûâàåòñÿ UNC-èìÿ òåêóùåãî ôàéëà.
+		case KEY_CTRLALTF:  // 29.01.2001 VVM + По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла.
 		{
 			if (FileCount>0 && SetCurPath())
 			{
@@ -1121,7 +1121,7 @@ int FileList::ProcessKey(int Key)
 							if (Opt.PanelCtrlFRule)
 							{
 								/* $ 13.10.2000 tran
-								  ïî Ctrl-f èìÿ äîëæíî îòâå÷àòü óñëîâèÿì íà ïàíåëè */
+								  по Ctrl-f имя должно отвечать условиям на панели */
 								if (ViewSettings.FileLowerCase && !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 									strFileName.Lower();
 
@@ -1138,12 +1138,12 @@ int FileList::ProcessKey(int Key)
 					if (CurrentPath)
 						AddEndSlash(strFileName);
 
-					// äîáàâèì ïåðâûé ïðåôèêñ!
+					// добавим первый префикс!
 					if (PanelMode==PLUGIN_PANEL && Opt.SubstPluginPrefix && !(Key == KEY_CTRLENTER || Key == KEY_CTRLNUMENTER || Key == KEY_CTRLJ))
 					{
 						FARString strPrefix;
 
-						/* $ 19.11.2001 IS îïòèìèçàöèÿ ïî ñêîðîñòè :) */
+						/* $ 19.11.2001 IS оптимизация по скорости :) */
 						if (*AddPluginPrefix((FileList *)CtrlObject->Cp()->ActivePanel,strPrefix))
 						{
 							strPrefix += strFileName;
@@ -1152,7 +1152,7 @@ int FileList::ProcessKey(int Key)
 					}
 
 					if (Opt.QuotedName&QUOTEDNAME_INSERT)
-						QuoteSpace(strFileName);
+						EscapeSpace(strFileName);
 
 					strFileName += L" ";
 				}
@@ -1162,14 +1162,14 @@ int FileList::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		case KEY_CTRLALTBRACKET:       // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLALTBACKBRACKET:   // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïðàâîé ïàíåëè
-		case KEY_ALTSHIFTBRACKET:      // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_ALTSHIFTBACKBRACKET:  // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïàññèâíîé ïàíåëè
-		case KEY_CTRLBRACKET:          // Âñòàâèòü ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLBACKBRACKET:      // Âñòàâèòü ïóòü èç ïðàâîé ïàíåëè
-		case KEY_CTRLSHIFTBRACKET:     // Âñòàâèòü ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_CTRLSHIFTBACKBRACKET: // Âñòàâèòü ïóòü èç ïàññèâíîé ïàíåëè
+		case KEY_CTRLALTBRACKET:       // Вставить сетевое (UNC) путь из левой панели
+		case KEY_CTRLALTBACKBRACKET:   // Вставить сетевое (UNC) путь из правой панели
+		case KEY_ALTSHIFTBRACKET:      // Вставить сетевое (UNC) путь из активной панели
+		case KEY_ALTSHIFTBACKBRACKET:  // Вставить сетевое (UNC) путь из пассивной панели
+		case KEY_CTRLBRACKET:          // Вставить путь из левой панели
+		case KEY_CTRLBACKBRACKET:      // Вставить путь из правой панели
+		case KEY_CTRLSHIFTBRACKET:     // Вставить путь из активной панели
+		case KEY_CTRLSHIFTBACKBRACKET: // Вставить путь из пассивной панели
 		{
 			FARString strPanelDir;
 
@@ -1198,7 +1198,7 @@ int FileList::ProcessKey(int Key)
 			        CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FAROTHER))
 				if (FileCount>0 && ApplyCommand())
 				{
-					// ïîçèöèîíèðóåìñÿ â ïàíåëè
+					// позиционируемся в панели
 					if (!FrameManager->IsPanelsActive())
 						FrameManager->ActivateFrame(0);
 
@@ -1290,7 +1290,7 @@ int FileList::ProcessKey(int Key)
 				{
 					ChangeDir(L"..");
 					NeedChangeDir=FALSE;
-					//"this" ìîã áûòü óäàë¸í â ChangeDir
+					//"this" мог быть удалён в ChangeDir
 					Panel* ActivePanel = CtrlObject->Cp()->ActivePanel;
 
 					if (CheckFullScreen!=ActivePanel->IsFullScreen())
@@ -1421,7 +1421,7 @@ int FileList::ProcessKey(int Key)
 
 							size_t pos;
 
-							// ïðîâåðèì ïóòü ê ôàéëó
+							// проверим путь к файлу
 							if (FindLastSlash(pos,strFileName) && pos)
 							{
 								if (!(HasPathPrefix(strFileName) && pos==3))
@@ -1444,11 +1444,11 @@ int FileList::ProcessKey(int Key)
 									}
 
 									lpwszFileName[pos+1]=wChr;
-									//strFileName.ReleaseBuffer (); ýòî íå íàäî òàê êàê ñòðîêà íå ïîìåíÿëàñü
+									//strFileName.ReleaseBuffer (); это не надо так как строка не поменялась
 								}
 							}
 						}
-						else if (PluginMode) // ïóñòîå èìÿ ôàéëà â ïàíåëè ïëàãèíà íå ðàçðåøàåòñÿ!
+						else if (PluginMode) // пустое имя файла в панели плагина не разрешается!
 						{
 							SetMessageHelp(L"WarnEditorPluginName");
 
@@ -1523,9 +1523,9 @@ int FileList::ProcessKey(int Key)
 				}
 
 				/* $ 08.04.2002 IS
-				   Ôëàã, ãîâîðÿùèé î òîì, ÷òî íóæíî óäàëèòü ôàéë, êîòîðûé îòêðûâàëè âî
-				   âüþåðå. Åñëè ôàéë îòêðûëè âî âíóòðåííåì âüþåðå, òî DeleteViewedFile
-				   äîëæíî áûò ðàâíî false, ò.ê. âíóòðåííèé âüþåð ñàì âñå óäàëèò.
+				   Флаг, говорящий о том, что нужно удалить файл, который открывали во
+				   вьюере. Если файл открыли во внутреннем вьюере, то DeleteViewedFile
+				   должно быт равно false, т.к. внутренний вьюер сам все удалит.
 				*/
 				bool DeleteViewedFile=PluginMode && !Edit;
 
@@ -1536,7 +1536,7 @@ int FileList::ProcessKey(int Key)
 						int editorExitCode;
 						int EnableExternal=(((Key==KEY_F4 || Key==KEY_SHIFTF4) && Opt.EdOpt.UseExternalEditor) ||
 						                    (Key==KEY_ALTF4 && !Opt.EdOpt.UseExternalEditor)) && !Opt.strExternalEditor.IsEmpty();
-						/* $ 02.08.2001 IS îáðàáîòàåì àññîöèàöèè äëÿ alt-f4 */
+						/* $ 02.08.2001 IS обработаем ассоциации для alt-f4 */
 						BOOL Processed=FALSE;
 
 						if (Key==KEY_ALTF4 &&
@@ -1562,8 +1562,8 @@ int FileList::ProcessKey(int Key)
 								FrameManager->ExecuteModal();//OT
 								FrameManager->ExitModalEV();
 								/* $ 24.11.2001 IS
-								     Åñëè ìû ñîçäàëè íîâûé ôàéë, òî íå âàæíî, èçìåíÿëñÿ îí
-								     èëè íåò, âñå ðàâíî äîáàâèì åãî íà ïàíåëü ïëàãèíà.
+								     Если мы создали новый файл, то не важно, изменялся он
+								     или нет, все равно добавим его на панель плагина.
 								*/
 								UploadFile=ShellEditor.IsFileChanged() || NewFile;
 								Modaling=TRUE;///
@@ -1645,7 +1645,7 @@ int FileList::ProcessKey(int Key)
 						int EnableExternal=((Key==KEY_F3 && Opt.ViOpt.UseExternalViewer) ||
 						                    (Key==KEY_ALTF3 && !Opt.ViOpt.UseExternalViewer)) &&
 						                   !Opt.strExternalViewer.IsEmpty();
-						/* $ 02.08.2001 IS îáðàáîòàåì àññîöèàöèè äëÿ alt-f3 */
+						/* $ 02.08.2001 IS обработаем ассоциации для alt-f3 */
 						BOOL Processed=FALSE;
 
 						if (Key==KEY_ALTF3 &&
@@ -1682,7 +1682,7 @@ int FileList::ProcessKey(int Key)
 										delete ShellViewer;
 									}
 									/* $ 08.04.2002 IS
-									Ñáðîñèì DeleteViewedFile, ò.ê. âíóòðåííèé âüþåð ñàì âñå óäàëèò
+									Сбросим DeleteViewedFile, т.к. внутренний вьюер сам все удалит
 									*/
 									else if (PluginMode)
 									{
@@ -1698,8 +1698,8 @@ int FileList::ProcessKey(int Key)
 				}
 
 				/* $ 08.04.2002 IS
-				     äëÿ ôàéëà, êîòîðûé îòêðûâàëñÿ âî âíóòðåííåì âüþåðå, íè÷åãî íå
-				     ïðåäïðèíèìàåì, ò.ê. âüþåð îá ýòîì ïîçàáîòèòñÿ ñàì
+				     для файла, который открывался во внутреннем вьюере, ничего не
+				     предпринимаем, т.к. вьюер об этом позаботится сам
 				*/
 				if (PluginMode)
 				{
@@ -1707,8 +1707,8 @@ int FileList::ProcessKey(int Key)
 						Message(MSG_WARNING,1,MSG(MError),MSG(MCannotSaveFile),
 						        MSG(MTextSavedToTemp),strFileName,MSG(MOk));
 					else if (Edit || DeleteViewedFile)
-						// óäàëÿåì ôàéë òîëüêî äëÿ ñëó÷àÿ îêðûòèÿ åãî â ðåäàêòîðå èëè âî
-						// âíåøíåì âüþåðå, ò.ê. âíóòðåííèé âüþåð óäàëÿåò ôàéë ñàì
+						// удаляем файл только для случая окрытия его в редакторе или во
+						// внешнем вьюере, т.к. внутренний вьюер удаляет файл сам
 						DeleteFileWithFolder(strFileName);
 				}
 
@@ -1734,8 +1734,8 @@ int FileList::ProcessKey(int Key)
 			}
 
 			/* $ 15.07.2000 tran
-			   à òóò ìû âûçûâàåì ïåðåðèñîâêó ïàíåëåé
-			   ïîòîìó ÷òî ýòîò viewer, editor ìîãóò íàì íåâåðíî âîññòàíîâèòü
+			   а тут мы вызываем перерисовку панелей
+			   потому что этот viewer, editor могут нам неверно восстановить
 			   */
 //      CtrlObject->Cp()->Redraw();
 			return TRUE;
@@ -1754,12 +1754,12 @@ int FileList::ProcessKey(int Key)
 			return TRUE;
 		}
 
-		case KEY_ALTF5:  // Ïå÷àòü òåêóùåãî/âûáðàííûõ ôàéëà/îâ
+		case KEY_ALTF5:  // Печать текущего/выбранных файла/ов
 		{
 			_ALGO(CleverSysLog clv(L"Alt-F5"));
 			_ALGO(SysLog(L"%ls, FileCount=%d",(PanelMode==PLUGIN_PANEL?"PluginPanel":"FilePanel"),FileCount));
 
-			// $ 11.03.2001 VVM - Ïå÷àòü ÷åðåç pman òîëüêî èç ôàéëîâûõ ïàíåëåé.
+			// $ 11.03.2001 VVM - Печать через pman только из файловых панелей.
 			if ((PanelMode!=PLUGIN_PANEL) && (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER)))
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER,OPEN_FILEPANEL,0); // printman
 			else if (FileCount>0 && SetCurPath())
@@ -1836,7 +1836,7 @@ int FileList::ProcessKey(int Key)
 					Redraw();
 					Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 					/* $ 07.09.2001 VVM
-					  ! Îáíîâèòü ñîñåäíþþ ïàíåëü ñ óñòàíîâêîé íà íîâûé êàòàëîã */
+					  ! Обновить соседнюю панель с установкой на новый каталог */
 //          AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
 //          AnotherPanel->Redraw();
 
@@ -1889,7 +1889,7 @@ int FileList::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		// $ 26.07.2001 VVM  Ñ àëüòîì ñêðîëèì âñåãäà ïî 1
+		// $ 26.07.2001 VVM  С альтом скролим всегда по 1
 		case KEY_MSWHEEL_UP:
 		case(KEY_MSWHEEL_UP | KEY_ALT):
 			Scroll(Key & KEY_ALT?-1:-Opt.MsWheelDelta);
@@ -1965,8 +1965,8 @@ int FileList::ProcessKey(int Key)
 
 			return FALSE;
 			/* $ 25.04.2001 DJ
-			   îïòèìèçàöèÿ Shift-ñòðåëîê äëÿ Selected files first: äåëàåì ñîðòèðîâêó
-			   îäèí ðàç
+			   оптимизация Shift-стрелок для Selected files first: делаем сортировку
+			   один раз
 			*/
 		case KEY_SHIFTHOME:    case KEY_SHIFTNUMPAD7:
 		{
@@ -2149,7 +2149,7 @@ int FileList::ProcessKey(int Key)
 			return TRUE;
 		case KEY_CTRLPGUP:     case KEY_CTRLNUMPAD9:
 		{
-			//"this" ìîæåò áûòü óäàë¸í â ChangeDir
+			//"this" может быть удалён в ChangeDir
 			int CheckFullScreen=IsFullScreen();
 			ChangeDir(L"..");
 			Panel *NewActivePanel = CtrlObject->Cp()->ActivePanel;
@@ -2177,8 +2177,8 @@ int FileList::ProcessKey(int Key)
 			   )
 			{
 				//_SVS(SysLog(L">FastFind: Key=%ls",_FARKEY_ToName(Key)));
-				// Ñêîððåêòèðåì óæå çäåñü íóæíûå êëàâèøè, ò.ê. WaitInFastFind
-				// â ýòî âðåìÿ åùå ðàâíî íóëþ.
+				// Скорректирем уже здесь нужные клавиши, т.к. WaitInFastFind
+				// в это время еще равно нулю.
 				static const char Code[]=")!@#$%^&*(";
 
 				if (Key >= KEY_ALTSHIFT0 && Key <= KEY_ALTSHIFT9)
@@ -2247,7 +2247,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			IsRealName=Info.Flags&OPIF_REALNAMES;
 		}
 
-		// Shift-Enter íà êàòàëîãå âûçûâàåò ïðîâîäíèê
+		// Shift-Enter на каталоге вызывает проводник
 		if ((PanelMode!=PLUGIN_PANEL || IsRealName) && SeparateWindow)
 		{
 			FARString strFullPath;
@@ -2258,7 +2258,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 				AddEndSlash(strFullPath);
 
 				/* 23.08.2001 VVM
-				  ! SHIFT+ENTER íà ".." ñðàáàòûâàåò äëÿ òåêóùåãî êàòàëîãà, à íå ðîäèòåëüñêîãî */
+				  ! SHIFT+ENTER на ".." срабатывает для текущего каталога, а не родительского */
 				if (!TestParentFolderName(CurPtr->strName))
 					strFullPath += CurPtr->strName;
 			}
@@ -2267,7 +2267,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 				strFullPath = CurPtr->strName;
 			}
 
-			QuoteSpace(strFullPath);
+			EscapeSpace(strFullPath);
 			Execute(strFullPath, false, SeparateWindow, true, (CurPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY)!=0);
 		}
 		else
@@ -2276,7 +2276,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 
 			ChangeDir(CurPtr->strName);
 
-			//"this" ìîæåò áûòü óäàë¸í â ChangeDir
+			//"this" может быть удалён в ChangeDir
 			Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
 
 			if (CheckFullScreen!=ActivePanel->IsFullScreen())
@@ -2330,7 +2330,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 
 		if (EnableExec && (ExeType || BatType))
 		{
-			QuoteSpace(strFileName);
+			EscapeSpace(strFileName);
 
 			if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTPANEL) && !PluginMode) //AN
 				CtrlObject->CmdHistory->AddToHistory(strFileName);
@@ -2345,8 +2345,8 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			HANDLE hOpen=INVALID_HANDLE_VALUE;
 
 			if (EnableAssoc &&
-			        !EnableExec &&     // íå çàïóñêàåì è íå â îòäåëüíîì îêíå,
-			        !SeparateWindow && // ñëåäîâàòåëüíî ýòî Ctrl-PgDn
+			        !EnableExec &&     // не запускаем и не в отдельном окне,
+			        !SeparateWindow && // следовательно это Ctrl-PgDn
 			        ProcessLocalFileTypes(strFileName,FILETYPE_ALTEXEC, PluginMode)
 			   )
 			{
@@ -2428,8 +2428,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	if (PanelMode!=PLUGIN_PANEL)
 	{
 		/* $ 28.08.2007 YJH
-		+ Ó ôîðòî÷åê ñíîñèò êðûøó íà GetFileAttributes("..") ïðè íàõîæäåíèè â
-		êîðíå UNC ïóòè. Ïðèõîäèòñÿ îáõîäèòü â ðó÷íóþ */
+		+ У форточек сносит крышу на GetFileAttributes("..") при нахождении в
+		корне UNC пути. Приходится обходить в ручную */
 		if (dot2Present &&
 		        !StrCmpN(strCurDir, L"//?/", 4) && strCurDir.At(4) &&
 		        !StrCmpN(&strCurDir[5], L":/",2))
@@ -2461,14 +2461,14 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
 		/* $ 16.01.2002 VVM
-		  + Åñëè ó ïëàãèíà íåò OPIF_REALNAMES, òî èñòîðèÿ ïàïîê íå ïèøåòñÿ â ðååñòð */
+		  + Если у плагина нет OPIF_REALNAMES, то история папок не пишется в реестр */
 		FARString strInfoCurDir=Info.CurDir;
 		FARString strInfoFormat=Info.Format;
 		FARString strInfoHostFile=Info.HostFile;
 		CtrlObject->FolderHistory->AddToHistory(strInfoCurDir,1,strInfoFormat,
 		                                        (Info.Flags & OPIF_REALNAMES)?false:(Opt.SavePluginFoldersHistory?false:true));
 		/* $ 25.04.01 DJ
-		   ïðè íåóäà÷å SetDirectory íå ñáðàñûâàåì âûäåëåíèå
+		   при неудаче SetDirectory не сбрасываем выделение
 		*/
 		BOOL SetDirectorySuccess = TRUE;
 
@@ -2541,7 +2541,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			CorrectPosition();
 		}
 		/* $ 26.04.2001 DJ
-		   äîäåëêà ïðî íåñáðîñ âûäåëåíèÿ ïðè íåóäà÷å SetDirectory
+		   доделка про несброс выделения при неудаче SetDirectory
 		*/
 		else if (SetDirectorySuccess)
 			CurFile=CurTopFile=0;
@@ -2582,7 +2582,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 				FARString strNewCurDir;
 				strNewCurDir = strCurDir;
 
-				if (!strNewCurDir.IsEmpty())  // ïðîâåðèì - ìîæåò íå óäàëîñü îïðåäåëèòü RemoteName
+				if (!strNewCurDir.IsEmpty())  // проверим - может не удалось определить RemoteName
 				{
 					const wchar_t *PtrS1=FirstSlash(strNewCurDir.CPtr()+2);
 
@@ -2598,8 +2598,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 
 	strFindDir = PointToName(strCurDir);
 	/* $ 26.04.2001 DJ
-	   ïðîâåðÿåì, óäàëîñü ëè ñìåíèòü êàòàëîã, è îáíîâëÿåì ñ KEEP_SELECTION,
-	   åñëè íå óäàëîñü
+	   проверяем, удалось ли сменить каталог, и обновляем с KEEP_SELECTION,
+	   если не удалось
 	*/
 	int UpdateFlags = 0;
 	BOOL SetDirectorySuccess = TRUE;
@@ -2613,7 +2613,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	{
 		if (FrameManager && FrameManager->ManagerStarted())
 		{
-			/* $ 03.11.2001 IS Óêàæåì èìÿ íåóäà÷íîãî êàòàëîãà */
+			/* $ 03.11.2001 IS Укажем имя неудачного каталога */
 			Message(MSG_WARNING | MSG_ERRORTYPE, 1, MSG(MError), (dot2Present?L"..":strSetDir), MSG(MOk));
 			UpdateFlags = UPDATE_KEEP_SELECTION;
 		}
@@ -2764,13 +2764,13 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			}
 
 			/*$ 21.02.2001 SKV
-			  Åñëè ïðèøåë DOUBLE_CLICK áåç ïðåäøåâñòâóþùåãî åìó
-			  ïðîñòîãî êëèêà, òî êóðñîð íå ïåðåðèñîâûâàåòñÿ.
-			  Ïåðåðåñóåì åãî.
-			  Ïî èäåå ïðè íîðìàëüíîì DOUBLE_CLICK, áóäåò
-			  äâîéíàÿ ïåðåðèñîâêà...
-			  Íî ìû æå âûçûâàåì Fast=TRUE...
-			  Âðîäå âñ¸ äîëæíî áûòü îê.
+			  Если пришел DOUBLE_CLICK без предшевствующего ему
+			  простого клика, то курсор не перерисовывается.
+			  Перересуем его.
+			  По идее при нормальном DOUBLE_CLICK, будет
+			  двойная перерисовка...
+			  Но мы же вызываем Fast=TRUE...
+			  Вроде всё должно быть ок.
 			*/
 			ShowFileList(TRUE);
 			FlushInputBuffer();
@@ -2780,7 +2780,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		else
 		{
 			/* $ 11.09.2000 SVS
-			   Bug #17: Âûäåëÿåì ïðè óñëîâèè, ÷òî êîëîíêà ÏÎËÍÎÑÒÜÞ ïóñòà.
+			   Bug #17: Выделяем при условии, что колонка ПОЛНОСТЬЮ пуста.
 			*/
 			if ((MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) && !IsEmpty)
 			{
@@ -2853,7 +2853,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 
 /* $ 12.09.2000 SVS
-  + Îïöèîíàëüíîå ïîâåäåíèå äëÿ ïðàâîé êëàâèøè ìûøè íà ïóñòîé ïàíåëè
+  + Опциональное поведение для правой клавиши мыши на пустой панели
 */
 void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
@@ -2889,7 +2889,7 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	CorrectPosition();
 
 	/* $ 11.09.2000 SVS
-	   Bug #17: Ïðîâåðèì íà ÏÎËÍÎÑÒÜÞ ïóñòóþ êîëîíêó.
+	   Bug #17: Проверим на ПОЛНОСТЬЮ пустую колонку.
 	*/
 	if (Opt.PanelRightClickRule == 1)
 		IsEmpty=((CurColumn-1)*Height > FileCount);
@@ -3107,7 +3107,7 @@ bool FileList::FileInFilter(long idxItem)
 	return false;
 }
 
-// $ 02.08.2000 IG  Wish.Mix #21 - ïðè íàæàòèè '/' èëè '\' â QuickSerach ïåðåõîäèì íà äèðåêòîðèþ
+// $ 02.08.2000 IG  Wish.Mix #21 - при нажатии '/' или '\' в QuickSerach переходим на директорию
 int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {
 	int DirFind = 0;
@@ -3303,7 +3303,7 @@ int FileList::GetCurBaseName(FARString &strName)
 		return FALSE;
 	}
 
-	if (PanelMode==PLUGIN_PANEL && !PluginsList.Empty()) // äëÿ ïëàãèíîâ
+	if (PanelMode==PLUGIN_PANEL && !PluginsList.Empty()) // для плагинов
 	{
 		strName = PointToName((*PluginsList.First())->strHostFile);
 	}
@@ -3318,7 +3318,7 @@ int FileList::GetCurBaseName(FARString &strName)
 
 long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 {
-	CFileMask FileMask; // Êëàññ äëÿ ðàáîòû ñ ìàñêàìè
+	CFileMask FileMask; // Класс для работы с масками
 	const wchar_t *HistoryName=L"Masks";
 	DialogDataEx SelectDlgData[]=
 	{
@@ -3335,14 +3335,14 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	FileListItem *CurPtr;
 	static FARString strPrevMask=L"*.*";
 	/* $ 20.05.2002 IS
-	   Ïðè îáðàáîòêå ìàñêè, åñëè ðàáîòàåì ñ èìåíåì ôàéëà íà ïàíåëè,
-	   áåðåì êàæäóþ êâàäðàòíóþ ñêîáêó â èìåíè ïðè îáðàçîâàíèè ìàñêè â ñêîáêè,
-	   ÷òîáû ïîäîáíûå èìåíà çàõâàòûâàëèñü ïîëó÷åííîé ìàñêîé - ýòî ñïåöèôèêà,
-	   äèêòóåìàÿ CmpName.
+	   При обработке маски, если работаем с именем файла на панели,
+	   берем каждую квадратную скобку в имени при образовании маски в скобки,
+	   чтобы подобные имена захватывались полученной маской - это специфика,
+	   диктуемая CmpName.
 	*/
 	FARString strMask=L"*.*", strRawMask;
 	int Selection=0,I;
-	bool WrapBrackets=false; // ãîâîðèò î òîì, ÷òî íóæíî âçÿòü êâ.ñêîáêè â ñêîáêè
+	bool WrapBrackets=false; // говорит о том, что нужно взять кв.скобки в скобки
 
 	if (CurFile>=FileCount)
 		return 0;
@@ -3365,7 +3365,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 
 		if (strCurName.RPos(pos,L'.'))
 		{
-			// Ó÷òåì òîò ìîìåíò, ÷òî ðàñøèðåíèå ìîæåò ñîäåðæàòü ñèìâîëû-ðàçäåëèòåëè
+			// Учтем тот момент, что расширение может содержать символы-разделители
 			strRawMask.Format(L"\"*.%ls\"", strCurName.CPtr()+pos+1);
 			WrapBrackets=true;
 		}
@@ -3380,7 +3380,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	{
 		if (Mode==SELECT_ADDNAME || Mode==SELECT_REMOVENAME)
 		{
-			// Ó÷òåì òîò ìîìåíò, ÷òî èìÿ ìîæåò ñîäåðæàòü ñèìâîëû-ðàçäåëèòåëè
+			// Учтем тот момент, что имя может содержать символы-разделители
 			strRawMask=L"\"";
 			strRawMask+=strCurName;
 			size_t pos;
@@ -3415,7 +3415,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 
 						if (Dlg.GetExitCode()==4 && Filter.FilterEdit())
 						{
-							//Ðåôðåø òåêóùåìó âðåìåíè äëÿ ôèëüòðà ñðàçó ïîñëå âûõîäà èç äèàëîãà
+							//Рефреш текущему времени для фильтра сразу после выхода из диалога
 							Filter.UpdateCurrentTime();
 							bUseFilter = true;
 							break;
@@ -3426,7 +3426,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 
 						strMask = SelectDlg[1].strData;
 
-						if (FileMask.Set(strMask, 0)) // Ïðîâåðèì ââîäèìûå ïîëüçîâàòåëåì ìàñêè íà îøèáêè
+						if (FileMask.Set(strMask, 0)) // Проверим вводимые пользователем маски на ошибки
 						{
 							strPrevMask = strMask;
 							break;
@@ -3438,7 +3438,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 			{
 				strMask = Mask;
 
-				if (!FileMask.Set(strMask, 0)) // Ïðîâåðèì ìàñêè íà îøèáêè
+				if (!FileMask.Set(strMask, 0)) // Проверим маски на ошибки
 					return 0;
 			}
 		}
@@ -3446,8 +3446,8 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 
 	SaveSelection();
 
-	if (!bUseFilter && WrapBrackets) // âîçüìåì êâ.ñêîáêè â ñêîáêè, ÷òîáû ïîëó÷èòü
-	{                               // ðàáîòîñïîñîáíóþ ìàñêó
+	if (!bUseFilter && WrapBrackets) // возьмем кв.скобки в скобки, чтобы получить
+	{                               // работоспособную маску
 		const wchar_t *src = strRawMask;
 		strMask.Clear();
 
@@ -3470,8 +3470,8 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 
 	long workCount=0;
 
-	if (bUseFilter || FileMask.Set(strMask, FMF_SILENT)) // Ñêîìïèëèðóåì ìàñêè ôàéëîâ è ðàáîòàåì
-	{                                                // äàëüøå â çàâèñèìîñòè îò óñïåõà êîìïèëÿöèè
+	if (bUseFilter || FileMask.Set(strMask, FMF_SILENT)) // Скомпилируем маски файлов и работаем
+	{                                                // дальше в зависимости от успеха компиляции
 		for (I=0; I < FileCount; I++)
 		{
 			CurPtr=ListData[I];
@@ -3588,21 +3588,21 @@ void FileList::CompareDir()
 	}
 
 	ScrBuf.Flush();
-	// ïîëíîñòüþ ñíèìàåì âûäåëåíèå ñ îáîèõ ïàíåëåé
+	// полностью снимаем выделение с обоих панелей
 	ClearSelection();
 	Another->ClearSelection();
 	FARString strTempName1, strTempName2;
 	const wchar_t *PtrTempName1, *PtrTempName2;
 	BOOL OpifRealnames1=FALSE, OpifRealnames2=FALSE;
 
-	// ïîìå÷àåì ÂÑÅ, êðîìå êàòàëîãîâ íà àêòèâíîé ïàíåëè
+	// помечаем ВСЕ, кроме каталогов на активной панели
 	for (int I=0; I < FileCount; I++)
 	{
 		if (!(ListData[I]->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 			Select(ListData[I],TRUE);
 	}
 
-	// ïîìå÷àåì ÂÑÅ, êðîìå êàòàëîãîâ íà ïàññèâíîé ïàíåëè
+	// помечаем ВСЕ, кроме каталогов на пассивной панели
 	for (int J=0; J < Another->FileCount; J++)
 	{
 		if (!(Another->ListData[J]->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
@@ -3646,11 +3646,11 @@ void FileList::CompareDir()
 				CompareFatTime=TRUE;
 	}
 
-	// òåïåðü íà÷íåì öèêë ïî ñíÿòèþ âûäåëåíèé
-	// êàæäûé ýëåìåíò àêòèâíîé ïàíåëè...
+	// теперь начнем цикл по снятию выделений
+	// каждый элемент активной панели...
 	for (int I=0; I < FileCount; I++)
 	{
-		// ...ñðàâíèâàåì ñ ýëåìåíòîì ïàññèâíîé ïàíåëè...
+		// ...сравниваем с элементом пассивной панели...
 		for (int J=0; J < Another->FileCount; J++)
 		{
 			int Cmp=0;
@@ -3821,7 +3821,7 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 			if (PanelMode!=PLUGIN_PANEL)
 			{
 				/* $ 14.02.2002 IS
-				   ".." â òåêóùåì êàòàëîãå îáðàáîòàåì êàê èìÿ òåêóùåãî êàòàëîãà
+				   ".." в текущем каталоге обработаем как имя текущего каталога
 				*/
 				if (TestParentFolderName(strQuotedName) )
 				{
@@ -3851,7 +3851,7 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 
 				if (Opt.PanelCtrlFRule)
 				{
-					// èìÿ äîëæíî îòâå÷àòü óñëîâèÿì íà ïàíåëè
+					// имя должно отвечать условиям на панели
 					if (ViewSettings.FileLowerCase && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 						strQuotedName.Lower();
 
@@ -3863,12 +3863,12 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 				strFullName += strQuotedName;
 				strQuotedName = strFullName;
 
-				// äîáàâèì ïåðâûé ïðåôèêñ!
+				// добавим первый префикс!
 				if (PanelMode==PLUGIN_PANEL && Opt.SubstPluginPrefix)
 				{
 					FARString strPrefix;
 
-					/* $ 19.11.2001 IS îïòèìèçàöèÿ ïî ñêîðîñòè :) */
+					/* $ 19.11.2001 IS оптимизация по скорости :) */
 					if (*AddPluginPrefix((FileList *)CtrlObject->Cp()->ActivePanel,strPrefix))
 					{
 						strPrefix += strQuotedName;
@@ -3895,7 +3895,7 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 		}
 
 		if (Opt.QuotedName&QUOTEDNAME_CLIPBOARD)
-			QuoteSpace(strQuotedName);
+			EscapeSpace(strQuotedName);
 
 		int Length=(int)strQuotedName.GetLength();
 		wchar_t *NewPtr=(wchar_t *)xf_realloc(CopyData, (DataSize+Length+3)*sizeof(wchar_t));
@@ -3933,15 +3933,15 @@ FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FAR
 
 
 	/* $ 29.01.2001 VVM
-	  + Ïî CTRL+ALT+F â êîìàíäíóþ ñòðîêó ñáðàñûâàåòñÿ UNC-èìÿ òåêóùåãî ôàéëà. */
+	  + По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла. */
 	/*if (UNC)
 		ConvertNameToUNC(strFileName);*/
 
-	// $ 20.10.2000 SVS Ñäåëàåì ôè÷ó Ctrl-F îïöèîíàëüíîé!
+	// $ 20.10.2000 SVS Сделаем фичу Ctrl-F опциональной!
 	if (Opt.PanelCtrlFRule)
 	{
 		/* $ 13.10.2000 tran
-		  ïî Ctrl-f èìÿ äîëæíî îòâå÷àòü óñëîâèÿì íà ïàíåëè */
+		  по Ctrl-f имя должно отвечать условиям на панели */
 		if (ViewSettings.FolderUpperCase)
 		{
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -4146,9 +4146,9 @@ void FileList::SelectSortMode()
 		{
 			if (MenuNeedRefresh)
 			{
-				SortModeMenu.Hide(); // ñïðÿ÷åì
-				// çàñòàâèì ìàíàãåð ìåíþõè êîððåêòíî îòðèñîâàòü øèðèíó è
-				// âûñîòó, à çàîäíî è ñêîððåêòèðîâàòü âåðòèêàëüíûå ïîçèöèè
+				SortModeMenu.Hide(); // спрячем
+				// заставим манагер менюхи корректно отрисовать ширину и
+				// высоту, а заодно и скорректировать вертикальные позиции
 				SortModeMenu.SetPosition(X1+4,-1,0,0);
 				SortModeMenu.Show();
 				MenuNeedRefresh=false;
@@ -4325,7 +4325,7 @@ void FileList::DescribeFiles()
 		strMsg.Append(MSG(MEnterDescription)).Append(L" ").Append(strQuotedName).Append(L":");
 
 		/* $ 09.08.2000 SVS
-		   Äëÿ Ctrl-Z íåíóæíî áðàòü ïðåäûäóùåå çíà÷åíèå!
+		   Для Ctrl-Z ненужно брать предыдущее значение!
 		*/
 		if (!GetString(MSG(MDescribeFiles),strMsg,L"DizText",
 		               PrevText ? PrevText:L"",strDizText,
@@ -4347,7 +4347,7 @@ void FileList::DescribeFiles()
 		// BugZ#442 - Deselection is late when making file descriptions
 		FlushDiz();
 
-		// BugZ#863 - Ïðè ðåäàêòèðîâàíèè ãðóïïû äåñêðèïøåíîâ îíè íå îáíîâëÿþòñÿ íà õîäó
+		// BugZ#863 - При редактировании группы дескрипшенов они не обновляются на ходу
 		//if (AnotherType==QVIEW_PANEL) continue; //TODO ???
 		if (AnotherType==INFO_PANEL) AnotherPanel->Update(UIC_UPDATE_NORMAL);
 
@@ -4414,7 +4414,7 @@ bool FileList::ApplyCommand()
 			{
 				ProcessOSAliases(strConvertedCommand);
 
-				if (!isSilent)   // TODO: Çäåñü íå isSilent!
+				if (!isSilent)   // TODO: Здесь не isSilent!
 				{
 					CtrlObject->CmdLine->ExecString(strConvertedCommand,FALSE, 0, 0, ListFileUsed); // Param2 == TRUE?
 					//if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTAPPLYCMD))
@@ -4459,7 +4459,7 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	DWORD SelDirCount=0;
 
 	/* $ 09.11.2000 OT
-	  F3 íà ".." â ïëàãèíàõ
+	  F3 на ".." в плагинах
 	*/
 	if (PanelMode==PLUGIN_PANEL && !CurFile && TestParentFolderName(ListData[0]->strName))
 	{
@@ -4508,7 +4508,7 @@ void FileList::CountDirSize(DWORD PluginFlags)
 		}
 	}
 
-	//Ðåôðåø òåêóùåìó âðåìåíè äëÿ ôèëüòðà ïåðåä íà÷àëîì îïåðàöèè
+	//Рефреш текущему времени для фильтра перед началом операции
 	Filter->UpdateCurrentTime();
 
 	for (int I=0; I < FileCount; I++)
@@ -4799,7 +4799,7 @@ int FileList::PluginPanelHelp(HANDLE hPlugin)
 }
 
 /* $ 19.11.2001 IS
-     äëÿ ôàéëîâûõ ïàíåëåé ñ ðåàëüíûìè ôàéëàìè íèêàêîãî ïðåôèêñà íå äîáàâëÿåì
+     для файловых панелей с реальными файлами никакого префикса не добавляем
 */
 FARString &FileList::AddPluginPrefix(FileList *SrcPanel,FARString &strPrefix)
 {
@@ -4840,10 +4840,10 @@ void FileList::IfGoHome(wchar_t Drive)
 
 	{
 		strFName.SetLength(3); //BUGBUG!
-		// ÑÍÀ×ÀËÀ ÏÀÑÑÈÂÍÀß ÏÀÍÅËÜ!!!
+		// СНАЧАЛА ПАССИВНАЯ ПАНЕЛЬ!!!
 		/*
-			Ïî÷åìó? - Ïðîñòî - åñëè àêòèâíàÿ øèðîêàÿ (èëè ïàññèâíàÿ
-			øèðîêàÿ) - ïîëó÷àåì áàãó ñ ïðîðèñîâêîé!
+			Почему? - Просто - если активная широкая (или пассивная
+			широкая) - получаем багу с прорисовкой!
 		*/
 		Panel *Another=CtrlObject->Cp()->GetAnotherPanel(this);
 
@@ -4860,7 +4860,7 @@ void FileList::IfGoHome(wchar_t Drive)
 			GetCurDir(strTmpCurDir);
 
 			if (strTmpCurDir.At(0) == Drive && strTmpCurDir.At(1) == L':')
-				SetCurDir(strFName, FALSE); // ïåðåõîäèì â êîðåíü äèñêà ñ far.exe
+				SetCurDir(strFName, FALSE); // переходим в корень диска с far.exe
 		}
 	}
 }
@@ -4880,7 +4880,7 @@ BOOL FileList::GetItem(int Index,void *Dest)
 
 void FileList::ClearAllItem()
 {
-	// óäàëèì ïðåä.çíà÷åíèå.
+	// удалим пред.значение.
 	if (!PrevDataList.Empty()) //???
 	{
 		for(PrevDataItem* i=*PrevDataList.Last();i;i=*PrevDataList.Prev(&i))

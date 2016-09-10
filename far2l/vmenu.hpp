@@ -3,10 +3,10 @@
 /*
 vmenu.hpp
 
-Îáû÷íîå âåðòèêàëüíîå ìåíþ
-  à òàê æå:
-    * ñïèñîê â DI_COMBOBOX
-    * ñïèñîê â DI_LISTBOX
+Обычное вертикальное меню
+  а так же:
+    * список в DI_COMBOBOX
+    * список в DI_LISTBOX
     * ...
 */
 /*
@@ -45,48 +45,48 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CriticalSections.hpp"
 
 
-// Öâåòîâûå àòðèáóòû - èíäåêñû â ìàññèâå öâåòîâ
+// Цветовые атрибуты - индексы в массиве цветов
 enum
 {
-	VMenuColorBody                = 0,     // ïîäëîæêà
-	VMenuColorBox                 = 1,     // ðàìêà
-	VMenuColorTitle               = 2,     // çàãîëîâîê - âåðõíèé è íèæíèé
-	VMenuColorText                = 3,     // Òåêñò ïóíêòà
+	VMenuColorBody                = 0,     // подложка
+	VMenuColorBox                 = 1,     // рамка
+	VMenuColorTitle               = 2,     // заголовок - верхний и нижний
+	VMenuColorText                = 3,     // Текст пункта
 	VMenuColorHilite              = 4,     // HotKey
 	VMenuColorSeparator           = 5,     // separator
-	VMenuColorSelected            = 6,     // Âûáðàííûé
-	VMenuColorHSelect             = 7,     // Âûáðàííûé - HotKey
+	VMenuColorSelected            = 6,     // Выбранный
+	VMenuColorHSelect             = 7,     // Выбранный - HotKey
 	VMenuColorScrollBar           = 8,     // ScrollBar
 	VMenuColorDisabled            = 9,     // Disabled
-	VMenuColorArrows              =10,     // '<' & '>' îáû÷íûå
-	VMenuColorArrowsSelect        =11,     // '<' & '>' âûáðàííûå
+	VMenuColorArrows              =10,     // '<' & '>' обычные
+	VMenuColorArrowsSelect        =11,     // '<' & '>' выбранные
 	VMenuColorArrowsDisabled      =12,     // '<' & '>' Disabled
-	VMenuColorGrayed              =13,     // "ñåðûé"
-	VMenuColorSelGrayed           =14,     // âûáðàííûé "ñåðûé"
+	VMenuColorGrayed              =13,     // "серый"
+	VMenuColorSelGrayed           =14,     // выбранный "серый"
 
-	VMENU_COLOR_COUNT,                     // âñåãäà ïîñëåäíÿÿ - ðàçìåðíîñòü ìàññèâà
+	VMENU_COLOR_COUNT,                     // всегда последняя - размерность массива
 };
 
 enum VMENU_FLAGS
 {
-	VMENU_ALWAYSSCROLLBAR      =0x00000100, // âñåãäà ïîêàçûâàòü ñêðîëëáàð
-	VMENU_LISTBOX              =0x00000200, // Ýòî ñïèñîê â äèàëîãå
-	VMENU_SHOWNOBOX            =0x00000400, // ïîêàçàòü áåç ðàìêè
-	VMENU_AUTOHIGHLIGHT        =0x00000800, // àâòîìàòè÷åñêè âûáèðàòü ñèìîëû ïîäñâåòêè
-	VMENU_REVERSEHIGHLIGHT     =0x00001000, // ... òîëüêî ñ êîíöà
-	VMENU_UPDATEREQUIRED       =0x00002000, // ëèñò íåîáõîäèìî îáíîâèòü (ïåðåðèñîâàòü)
-	VMENU_DISABLEDRAWBACKGROUND=0x00004000, // ïîäëîæêó íå ðèñîâàòü
-	VMENU_WRAPMODE             =0x00008000, // çàöèêëåííûé ñïèñîê (ïðè ïåðåìåùåíèè)
-	VMENU_SHOWAMPERSAND        =0x00010000, // ñèìâîë '&' ïîêàçûâàòü AS IS
+	VMENU_ALWAYSSCROLLBAR      =0x00000100, // всегда показывать скроллбар
+	VMENU_LISTBOX              =0x00000200, // Это список в диалоге
+	VMENU_SHOWNOBOX            =0x00000400, // показать без рамки
+	VMENU_AUTOHIGHLIGHT        =0x00000800, // автоматически выбирать симолы подсветки
+	VMENU_REVERSEHIGHLIGHT     =0x00001000, // ... только с конца
+	VMENU_UPDATEREQUIRED       =0x00002000, // лист необходимо обновить (перерисовать)
+	VMENU_DISABLEDRAWBACKGROUND=0x00004000, // подложку не рисовать
+	VMENU_WRAPMODE             =0x00008000, // зацикленный список (при перемещении)
+	VMENU_SHOWAMPERSAND        =0x00010000, // символ '&' показывать AS IS
 	VMENU_WARNDIALOG           =0x00020000, //
-	VMENU_NOTCENTER            =0x00040000, // íå öèòðîâàòü
-	VMENU_LEFTMOST             =0x00080000, // "êðàéíèé ñëåâà" - íàðèñîâàòü íà 5 ïîçèöèé âïðàâî îò öåíòðà (X1 => (ScrX+1)/2+5)
+	VMENU_NOTCENTER            =0x00040000, // не цитровать
+	VMENU_LEFTMOST             =0x00080000, // "крайний слева" - нарисовать на 5 позиций вправо от центра (X1 => (ScrX+1)/2+5)
 	VMENU_NOTCHANGE            =0x00100000, //
-	VMENU_LISTHASFOCUS         =0x00200000, // ìåíþ ÿâëÿåòñÿ ñïèñêîì â äèàëîãå è èìååò ôîêóñ
-	VMENU_COMBOBOX             =0x00400000, // ìåíþ ÿâëÿåòñÿ êîìáîáîêñîì è îáðàáàòûâàåòñÿ ìåíåäæåðîì ïî-îñîáîìó.
+	VMENU_LISTHASFOCUS         =0x00200000, // меню является списком в диалоге и имеет фокус
+	VMENU_COMBOBOX             =0x00400000, // меню является комбобоксом и обрабатывается менеджером по-особому.
 	VMENU_MOUSEDOWN            =0x00800000, //
 	VMENU_CHANGECONSOLETITLE   =0x01000000, //
-	VMENU_MOUSEREACTION        =0x02000000, // ðåàãèðîâàòü íà äâèæåíèå ìûøè? (ïåðåìåùàòü ïîçèöèþ ïðè ïåðåìåùåíèè êóðñîðà ìûøè?)
+	VMENU_MOUSEREACTION        =0x02000000, // реагировать на движение мыши? (перемещать позицию при перемещении курсора мыши?)
 	VMENU_DISABLED             =0x04000000, //
 };
 
@@ -96,21 +96,21 @@ class SaveScreen;
 
 struct MenuItemEx
 {
-	DWORD  Flags;                  // Ôëàãè ïóíêòà
+	DWORD  Flags;                  // Флаги пункта
 
 	FARString strName;
 
 	DWORD  AccelKey;
-	int    UserDataSize;           // Ðàçìåð ïîëüçîâàòåëüñêèõ äàííûõ
-	union                          // Ïîëüçîâàòåëüñêèå äàííûå:
+	int    UserDataSize;           // Размер пользовательских данных
+	union                          // Пользовательские данные:
 	{
-		char  *UserData;             // - óêàçàòåëü!
-		char   Str4[sizeof(char*)];  // - strlen(ñòðîêà)+1 <= sizeof(char*)
+		char  *UserData;             // - указатель!
+		char   Str4[sizeof(char*)];  // - strlen(строка)+1 <= sizeof(char*)
 	};
 
-	short AmpPos;                  // Ïîçèöèÿ àâòîíàçíà÷åííîé ïîäñâåòêè
-	short Len[2];                  // ðàçìåðû 2-õ ÷àñòåé
-	short Idx2;                    // íà÷àëî 2-é ÷àñòè
+	short AmpPos;                  // Позиция автоназначенной подсветки
+	short Len[2];                  // размеры 2-х частей
+	short Idx2;                    // начало 2-й части
 
 	int   ShowPos;
 
@@ -148,7 +148,7 @@ struct MenuItemEx
 		ShowPos = 0;
 	}
 
-	//UserData íå êîïèðóåòñÿ.
+	//UserData не копируется.
 	const MenuItemEx& operator=(const MenuItemEx &srcMenu)
 	{
 		if (this != &srcMenu)
@@ -212,15 +212,15 @@ class VMenu: public Modal
 		DWORD PrevCursorSize;
 		int PrevMacroMode;
 
-		// ïåðåìåííàÿ, îòâå÷àþùàÿ çà îòîáðàæåíèå scrollbar â DI_LISTBOX & DI_COMBOBOX
+		// переменная, отвечающая за отображение scrollbar в DI_LISTBOX & DI_COMBOBOX
 		BitFlags VMFlags;
 		BitFlags VMOldFlags;
 
-		Dialog *ParentDialog;         // Äëÿ LisBox - ðîäèòåëü â âèäå äèàëîãà
+		Dialog *ParentDialog;         // Для LisBox - родитель в виде диалога
 		int DialogItemID;
-		FARWINDOWPROC VMenuProc;      // ôóíêöèÿ îáðàáîòêè ìåíþ
+		FARWINDOWPROC VMenuProc;      // функция обработки меню
 
-		ConsoleTitle *OldTitle;     // ïðåäûäóùèé çàãîëîâîê
+		ConsoleTitle *OldTitle;     // предыдущий заголовок
 
 		CriticalSection CS;
 		bool *Used;
@@ -263,7 +263,7 @@ class VMenu: public Modal
 		bool IsFilterEditKey(int Key);
 		bool ShouldSendKeyToFilter(int Key);
 		bool AddToFilter(const wchar_t *str);
-		//êîðåêòèðîâêà òåêóùåé ïîçèöèè è ôëàãîâ SELECTED
+		//коректировка текущей позиции и флагов SELECTED
 		void UpdateSelectPos();
 
 	public:

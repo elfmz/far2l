@@ -82,8 +82,9 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1b[15;2~";
 			if (alt) return "\x1b[15;3~";
 			if (ctrl) return "\x1b[15;5~";
-			if (keypad==1 || keypad==2) return "\x1b[15~";
-			return "\x1b[[E";
+			if (keypad==1 || keypad==2) return "\x1b[[E";
+			return "\x1b[15~";
+			
 
 		case VK_F6: /*
         F6                 \x1b[17~

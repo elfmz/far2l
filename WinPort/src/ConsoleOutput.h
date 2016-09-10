@@ -12,16 +12,19 @@ class ConsoleOutputListener
 		virtual void OnConsoleOutputTitleChanged() = 0;
 		virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos) = 0;
 		virtual COORD OnConsoleGetLargestWindowSize() = 0;
+		virtual void OnConsoleAdhocQuickEdit() = 0;
 };
 
 class ConsoleOutput
 {
 	std::mutex _mutex;
 	ConsoleBuffer _buf;
+	std::vector<CHAR_INFO> _temp_chars;
 	std::wstring _title;
 	ConsoleOutputListener *_listener;
 	DWORD _mode;	
 	USHORT _attributes;
+	
 	struct {
 		COORD pos;
 		UCHAR height;
@@ -96,6 +99,8 @@ public:
 	void SetScrollRegion(SHORT top, SHORT bottom);
 	void GetScrollRegion(SHORT &top, SHORT &bottom);
 	void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
+	
+	void AdhocQuickEdit();
 };
 
 

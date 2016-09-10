@@ -422,9 +422,9 @@ void TmpPanel::UpdateItems(int ShowOwners,int ShowLinks)
 
     int SameFolderItems=1;
     /* $ 23.12.2001 DJ
-       åñëè FullName - ýòî êàòàëîã, òî FindFirstFile (FullName+"*.*")
-       ýòîò êàòàëîã íå íàéäåò. Ïîýòîìó äëÿ êàòàëîãîâ îïòèìèçàöèþ ñ
-       SameFolderItems ïðîïóñêàåì.
+       если FullName - это каталог, то FindFirstFile (FullName+"*.*")
+       этот каталог не найдет. Поэтому для каталогов оптимизацию с
+       SameFolderItems пропускаем.
     */
     if (Length>0 && Length > (int)lstrlen (lpFullName))   /* DJ $ */
     {
@@ -442,10 +442,10 @@ void TmpPanel::UpdateItems(int ShowOwners,int ShowLinks)
       }
     }
 
-    // SameFolderItems - îïòèìèçàöèÿ äëÿ ñëó÷àÿ, êîãäà â ïàíåëè ëåæàò
-    // íåñêîëüêî ôàéëîâ èç îäíîãî è òîãî æå êàòàëîãà. Ïðè ýòîì
-    // FindFirstFile() äåëàåòñÿ îäèí ðàç íà êàòàëîã, à íå îòäåëüíî äëÿ
-    // êàæäîãî ôàéëà.
+    // SameFolderItems - оптимизация для случая, когда в панели лежат
+    // несколько файлов из одного и того же каталога. При этом
+    // FindFirstFile() делается один раз на каталог, а не отдельно для
+    // каждого файла.
     if (SameFolderItems>2)
     {
       WIN32_FIND_DATA FindData;

@@ -3,7 +3,7 @@
 /*
 execute.hpp
 
-"Çàïóñêàòåëü" ïðîãðàìì.
+"Запускатель" программ.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -39,3 +39,5 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow = 
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 
 bool ProcessOSAliases(FARString &strStr);
+
+std::vector<std::string> ExplodeCmdLine(std::string cmd_line);

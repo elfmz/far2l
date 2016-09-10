@@ -1,7 +1,7 @@
 /*
 cmdline.cpp
 
-Êîìàíäíàÿ ñòðîêà
+Командная строка
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -216,7 +216,7 @@ int CommandLine::ProcessKey(int Key)
 		Key=KEY_CTRLX;
 	}
 
-	// $ 25.03.2002 VVM + Ïðè ïîãàøåííûõ ïàíåëÿõ êîëåñîì êðóòèì èñòîðèþ
+	// $ 25.03.2002 VVM + При погашенных панелях колесом крутим историю
 	if (!CtrlObject->Cp()->LeftPanel->IsVisible() && !CtrlObject->Cp()->RightPanel->IsVisible())
 	{
 		switch (Key)
@@ -251,7 +251,7 @@ int CommandLine::ProcessKey(int Key)
 
 			if (Key == KEY_ESC)
 			{
-				// $ 24.09.2000 SVS - Åñëè çàäàíî ïîâåäåíèå ïî "Íåñîõðàíåíèþ ïðè Esc", òî ïîçèöèþ â õèñòîðè íå ìåíÿåì è ñòàâèì â ïåðâîå ïîëîæåíèå.
+				// $ 24.09.2000 SVS - Если задано поведение по "Несохранению при Esc", то позицию в хистори не меняем и ставим в первое положение.
 				if (Opt.CmdHistoryRule)
 					CtrlObject->CmdHistory->ResetPosition();
 
@@ -270,7 +270,7 @@ int CommandLine::ProcessKey(int Key)
 		case KEY_ALTF8:
 		{
 			int Type;
-			// $ 19.09.2000 SVS - Ïðè âûáîðå èç History (ïî Alt-F8) ïëàãèí íå ïîëó÷àë óïðàâëåíèå!
+			// $ 19.09.2000 SVS - При выборе из History (по Alt-F8) плагин не получал управление!
 			int SelectType=CtrlObject->CmdHistory->Select(MSG(MHistoryTitle),L"History",strStr,Type);
 			// BUGBUG, magic numbers
 			if ((SelectType > 0 && SelectType <= 3) || SelectType == 7)
@@ -299,7 +299,7 @@ int CommandLine::ProcessKey(int Key)
 		{
 			Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 			{
-				// TODO: çäåñü ìîæíî äîáàâèòü ïðîâåðêó, ÷òî ìû â êîðíå äèñêà è îòñóòñòâèå ôàéëà Tree.Far...
+				// TODO: здесь можно добавить проверку, что мы в корне диска и отсутствие файла Tree.Far...
 				FolderTree Tree(strStr,MODALTREE_ACTIVE,TRUE,FALSE);
 			}
 			CtrlObject->Cp()->RedrawKeyBar();
@@ -314,7 +314,7 @@ int CommandLine::ProcessKey(int Key)
 			}
 			else
 			{
-				// TODO: ... à çäåñü ïðîâåðèòü ôàêò èçìåíåíèÿ/ïîÿâëåíèÿ ôàéëà Tree.Far è ìû îïÿòü æå â êîðíå (÷òîáû ëèøíèé ðàç íå àïäåéòèòü ïàíåëü)
+				// TODO: ... а здесь проверить факт изменения/появления файла Tree.Far и мы опять же в корне (чтобы лишний раз не апдейтить панель)
 				ActivePanel->Update(UPDATE_KEEP_SELECTION);
 				ActivePanel->Redraw();
 				Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
@@ -344,23 +344,23 @@ int CommandLine::ProcessKey(int Key)
 			                1 - Enter
 			                2 - Shift-Enter
 			                3 - Ctrl-Enter
-			                6 - Ctrl-Shift-Enter - íà ïàññèâíóþ ïàíåëü ñî ñìåíîé ïîçèöèè
+			                6 - Ctrl-Shift-Enter - на пассивную панель со сменой позиции
 			*/
 			if (SelectType == 1 || SelectType == 2 || SelectType == 6)
 			{
 				if (SelectType==2)
 					CtrlObject->FolderHistory->SetAddMode(false,2,true);
 
-				// ïóñòü ïëàãèí ñàì ïðûãàåò... ;-)
+				// пусть плагин сам прыгает... ;-)
 				Panel *Panel=CtrlObject->Cp()->ActivePanel;
 
 				if (SelectType == 6)
 					Panel=CtrlObject->Cp()->GetAnotherPanel(Panel);
 
-				//Type==1 - ïëàãèíîâûé ïóòü
-				//Type==0 - îáû÷íûé ïóòü
-				//åñëè ïóòü ïëàãèíîâûé òî ñíà÷àëà ïîïðîáóåì çàïóñòèòü åãî (à âäðóã òàì ïðåôèêñ)
-				//íó à åñëè ïóòü íå ïëàãèíîâûé òî çàïóñêàòü åãî òî÷íî íå íàäî
+				//Type==1 - плагиновый путь
+				//Type==0 - обычный путь
+				//если путь плагиновый то сначала попробуем запустить его (а вдруг там префикс)
+				//ну а если путь не плагиновый то запускать его точно не надо
 				if (!Type || !CtrlObject->Plugins.ProcessCommandLine(strStr,Panel))
 				{
 					if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strStr,FALSE))
@@ -412,18 +412,18 @@ int CommandLine::ProcessKey(int Key)
 			return TRUE;
 		case KEY_OP_XLAT:
 		{
-			// 13.12.2000 SVS - ! Äëÿ CmdLine - åñëè íåò âûäåëåíèÿ, ïðåîáðàçóåì âñþ ñòðîêó (XLat)
+			// 13.12.2000 SVS - ! Для CmdLine - если нет выделения, преобразуем всю строку (XLat)
 			CmdStr.Xlat(Opt.XLat.Flags&XLAT_CONVERTALLCMDLINE?TRUE:FALSE);
 
-			// èíà÷å íåïðàâèëüíî ðàáîòàåò ctrl-end
+			// иначе неправильно работает ctrl-end
 			strLastCmdStr = CmdStr.GetStringAddr();
 			LastCmdPartLength=(int)strLastCmdStr.GetLength();
 
 			return TRUE;
 		}
-		/* äîïîëíèòåëüíûå êëàâèøè äëÿ âûäåëåíèÿ â êîì ñòðîêå.
-		   ÂÍÈÌÀÍÈÅ!
-		   Äëÿ ñîêðàùåíèÿ êîäà ýòîò êóñîê äîëæåí ñòîÿòü ïåðåä "default"
+		/* дополнительные клавиши для выделения в ком строке.
+		   ВНИМАНИЕ!
+		   Для сокращения кода этот кусок должен стоять перед "default"
 		*/
 		case KEY_ALTSHIFTLEFT:  case KEY_ALTSHIFTNUMPAD4:
 		case KEY_ALTSHIFTRIGHT: case KEY_ALTSHIFTNUMPAD6:
@@ -432,7 +432,7 @@ int CommandLine::ProcessKey(int Key)
 			Key&=~KEY_ALT;
 		default:
 
-			//   Ñáðàñûâàåì âûäåëåíèå íà íåêîòîðûõ êëàâèøàõ
+			//   Сбрасываем выделение на некоторых клавишах
 			if (!Opt.CmdLine.EditBlock)
 			{
 				static int UnmarkKeys[]=
@@ -535,7 +535,13 @@ int CommandLine::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	{
 		return ProcessKey(KEY_ALTF8);
 	}
-	return(CmdStr.ProcessMouse(MouseEvent));
+	int r = CmdStr.ProcessMouse(MouseEvent);
+	if (r==0) {
+		if (MouseEvent->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED) {
+			WINPORT(BeginConsoleAdhocQuickEdit)();
+		}
+	}
+	return r;
 }
 
 void CommandLine::GetPrompt(FARString &strDestStr)
@@ -579,13 +585,13 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 				{
 					switch (Chr)
 					{
-							/* ýòè íå ðàåëèçîâàíû
+							/* эти не раелизованы
 							$E - Escape code (ASCII code 27)
 							$V - Windows XP version number
 							$_ - Carriage return and linefeed
-							$M - Îòîáðàæåíèå ïîëíîãî èìåíè óäàëåííîãî äèñêà, ñâÿçàííîãî ñ èìåíåì òåêóùåãî äèñêà, èëè ïóñòîé ñòðîêè, åñëè òåêóùèé äèñê íå ÿâëÿåòñÿ ñåòåâûì.
+							$M - Отображение полного имени удаленного диска, связанного с именем текущего диска, или пустой строки, если текущий диск не является сетевым.
 							*/
-						case L'+': // $+  - Îòîáðàæåíèå íóæíîãî ÷èñëà çíàêîâ ïëþñ (+) â çàâèñèìîñòè îò òåêóùåé ãëóáèíû ñòåêà êàòàëîãîâ PUSHD, ïî îäíîìó çíàêó íà êàæäûé ñîõðàíåííûé ïóòü.
+						case L'+': // $+  - Отображение нужного числа знаков плюс (+) в зависимости от текущей глубины стека каталогов PUSHD, по одному знаку на каждый сохраненный путь.
 						{
 							DWORD ppstacksize=ppstack.size();
 
@@ -679,15 +685,15 @@ void CommandLine::ShowViewEditHistory()
 
 		switch (Type)
 		{
-			case 0: // âüþâåð
+			case 0: // вьювер
 			{
 				new FileViewer(strStr,TRUE);
 				break;
 			}
-			case 1: // îáû÷íîå îòêðûòèå â ðåäàêòîðå
-			case 4: // îòêðûòèå ñ ëîêîì
+			case 1: // обычное открытие в редакторе
+			case 4: // открытие с локом
 			{
-				// ïóñòü ôàéë ñîçäàåòñÿ
+				// пусть файл создается
 				FileEditor *FEdit=new FileEditor(strStr,CP_AUTODETECT,FFILEEDIT_CANNEWFILE|FFILEEDIT_ENABLEF6);
 
 				if (Type == 4)
@@ -695,7 +701,7 @@ void CommandLine::ShowViewEditHistory()
 
 				break;
 			}
-			// 2 è 3 - çàïîëíÿåòñÿ â ProcessExternal
+			// 2 и 3 - заполняется в ProcessExternal
 			case 2:
 			case 3:
 			{
@@ -717,7 +723,7 @@ void CommandLine::ShowViewEditHistory()
 
 		CtrlObject->ViewHistory->SetAddMode(true,Opt.FlagPosixSemantics?1:2,true);
 	}
-	else if (SelectType==3) // ñêèíóòü èç èñòîðèè â êîì.ñòðîêó?
+	else if (SelectType==3) // скинуть из истории в ком.строку?
 		SetString(strStr);
 }
 

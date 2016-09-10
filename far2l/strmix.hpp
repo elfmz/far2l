@@ -3,7 +3,7 @@
 /*
 strmix.hpp
 
-Êó÷à ðàçíûõ âñïîìîãàòåëüíûõ ôóíêöèé ïî ðàáîòå ñî ñòðîêàìè
+Куча разных вспомогательных функций по работе со строками
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -49,12 +49,11 @@ enum
 	COLUMN_SHOWBYTESINDEX = 0x00100000,
 	COLUMN_FULLOWNER      = 0x00080000,
 
-	//MINSIZEINDEX ìîæåò áûòü òîëüêî 0, 1, 2 èëè 3 (K,M,G,T)
+	//MINSIZEINDEX может быть только 0, 1, 2 или 3 (K,M,G,T)
 	COLUMN_MINSIZEINDEX_MASK = 0x00000003,
 };
 
-wchar_t* WINAPI QuoteSpace(wchar_t *Str);
-FARString &QuoteSpace(FARString &strStr);
+FARString &EscapeSpace(FARString &strStr);
 wchar_t* WINAPI InsertQuote(wchar_t *Str);
 FARString& InsertQuote(FARString& strStr);
 void WINAPI Unquote(FARString &strStr);
@@ -89,8 +88,8 @@ FARString &InsertCommas(uint64_t li, FARString &strDest);
 
 inline bool IsWordDiv(const wchar_t *WordDiv, wchar_t Chr) { return wcschr(WordDiv, Chr)!=nullptr; }
 
-//   WordDiv  - íàáîð ðàçäåëèòåëåé ñëîâà â êîäèðîâêå OEM
-// âîçâðàùàåò óêàçàòåëü íà íà÷àëî ñëîâà
+//   WordDiv  - набор разделителей слова в кодировке OEM
+// возвращает указатель на начало слова
 const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End,const wchar_t *WordDiv);
 
 wchar_t* WINAPI TruncStr(wchar_t *Str,int MaxLength);

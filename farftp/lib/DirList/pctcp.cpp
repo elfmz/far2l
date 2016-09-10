@@ -16,25 +16,25 @@ BOOL net_parse_pctcp_date_time(char *datestr, Time_t& decoded)
 	st.wMilliseconds = 0;
 	CHECK((datestr[3]!=' ' || datestr[7]!=' ' || datestr[10]!=' ' || datestr[19]!=' '), FALSE)
 	CHECK((datestr[13] != ':' || datestr[16] != ':'), FALSE)
-	// ¬¥áïæ
+	// месяц
 	datestr[7] = 0;
 	st.wMonth = NET_MonthNo(datestr+4);
 	datestr[7] = ' ';
 	CHECK((st.wMonth > 12), FALSE)
 
-	// ¤¥­ì
+	// день
 	if(!NET_IS_DIGIT(datestr[8]) || !NET_IS_DIGIT(datestr[9])) return FALSE;
 
 	st.wDay = ((datestr[8]-'0')*10) + (datestr[9]-'0');
 
 	if(st.wDay==0 || st.wDay>31) return FALSE;
 
-	// £®¤
+	// год
 	st.wYear = AtoI(datestr+20,MAX_WORD);
 
 	if(st.wYear == MAX_WORD) return FALSE;
 
-	// ¢à¥¬ï
+	// время
 	st.wHour   = ((datestr[11]-'0')*10) + (datestr[12]-'0');
 	st.wMinute = ((datestr[14]-'0')*10) + (datestr[15]-'0');
 	st.wSecond = ((datestr[17]-'0')*10) + (datestr[18]-'0');
@@ -64,15 +64,15 @@ BOOL WINAPI idPRParcePCTCP(const FTPServerInfo* Server, FTPFileInfo* p, char *en
 	NET_FileEntryInfo  entry_info;
 	char              *e;
 	CHECK((entry_len<56 || entry[10]!=' ' || entry[30]!=' ' || entry[32]!=' '), FALSE)
-	// ¯ àá¨¬ ¤ âã-¢à¥¬ï
+	// парсим дату-время
 	CHECK((!net_parse_pctcp_date_time(entry+33, entry_info.date)), FALSE)
-	// ¨¬ï
+	// имя
 	entry[30] = 0;
 	e = SkipSpace(entry+11);
 	CHECK((e[0]==0), FALSE)
 	StrCpy(entry_info.FindData.cFileName, e, ARRAYSIZE(entry_info.FindData.cFileName));
 
-	// à §¬¥à ¨«¨ ¯à¨§­ ª ¤¨à¥ªâ®à¨ï
+	// размер или признак директория
 	if(StrCmp(entry, "<dir> ",6,FALSE) == 0)
 	{
 		entry_info.FileType = NET_DIRECTORY;
@@ -89,8 +89,8 @@ BOOL WINAPI idPRParcePCTCP(const FTPServerInfo* Server, FTPFileInfo* p, char *en
 
 BOOL WINAPI idDirParcePCTCP(const FTPServerInfo* Server, LPCSTR Line, char *CurDir, size_t CurDirSize)
 {
-	// ¥á«¨ áâà®ª  ­ ç¨­ ¥âáï á 'Current Working Directory is ',
-	// â® ª®¯¨àã¥¬ â¥ªáâ ¯®á«¥ íâ®© áâà®ª¨
+// если строка начинается с 'Current Working Directory is ',
+// то копируем текст после этой строки
 	if(memcmp(Line, PCTCP_PWD_Title, PCTCP_PWD_TITLE_LEN)==0)
 	{
 		StrCpy(CurDir, Line+PCTCP_PWD_TITLE_LEN, (int)CurDirSize);

@@ -1,7 +1,7 @@
 /*
 execute.cpp
 
-"Çàïóñêàòåëü" ïðîãðàìì.
+"Запускатель" программ.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -64,58 +64,52 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtlog.h"
 #include <vector>
 #include <string>
+#include <wordexp.h>
 
-struct ExplodeCmdLine : std::vector<std::string>
-{
-	// 'export foo = bar' 	-> {'export' 'foo' '=' 'bar'}
-	// 'export foo=bar' -> {'export' 'foo=bar'}
-	// 'export "foo=long bar"' -> {'export' 'foo=long bar'}
-	// TODO: \\-escaping is still missing...
-	ExplodeCmdLine(const wchar_t *cmd_line)
-	{ 
-		std::wstring tmp;
-		enum 
-		{
-			S_RAW,
-			S_QUOTED,
-			S_SPACE
-		} state = S_RAW;
-		for (const wchar_t *cur = cmd_line; *cur; ++cur) {
-			if (state==S_SPACE && *cur != L' ') {
-				if (*cur==L'\"') {
-					state = S_QUOTED;
-					continue;
-				}
-				state = S_RAW;
+// explode cmdline to argv[] array
+//
+// Bash cmdlines cannot be correctly parsed that way because some bash constructions are not space-separated (such as `...`, $(...), cmd>/dev/null, cmd&)
+
+// echo foo = bar       -> {'echo', 'foo', '=', 'bar'}
+// echo foo=bar         -> {'echo', 'foo=bar'}
+// echo "foo=long bar"  -> {'echo', 'foo=long bar'}
+// echo "a\"b"	          -> {'echo', 'a"b'}
+// echo 'a\\b'          -> {'echo', 'a\\b'}
+// echo "a\\b"          -> {'echo', 'a\b'}
+// echo "a"'!'"b"       -> {'echo', 'a!b'}
+// echo "" '' 	          -> {'echo', '', ''}
+
+std::vector<std::string> ExplodeCmdLine(std::string cmd_line) {
+	std::vector<std::string> rc;
+	fprintf(stderr, "ExplodeCmdLine('%s'): ", cmd_line.c_str());
+	wordexp_t we = {};
+	for (;;) {
+		int r = wordexp(cmd_line.c_str(), &we, 0);
+		if (r==0) {
+			for (size_t i = 0; i < we.we_wordc; ++i) {
+				rc.push_back(we.we_wordv[i]);
+				fprintf(stderr, "'%s' ", we.we_wordv[i]);
 			}
-				
-			if ( (state==S_RAW && *cur == L' ') || (state==S_QUOTED && *cur == L'\"')) {
-				if (!tmp.empty()) {
-					push_back(StrWide2MB(tmp));
-					tmp.clear();
-				}
-				state = S_SPACE;
+			fprintf(stderr, "\n");
+			wordfree(&we);
+			break;
+		} else if (r==WRDE_BADCHAR) {
+			size_t p = cmd_line.find_last_of("|&;<>(){}");
+			if (p!=std::string::npos) {
+				cmd_line.resize(p);
 				continue;
 			}
-			
-			if (state==S_RAW || state==S_QUOTED )
-				tmp+= *cur;
 		}
-		if (!tmp.empty()) 
-			push_back(StrWide2MB(tmp));
-			
-		fprintf(stderr, "ExplodeCmdLine('%ls') -> ", cmd_line);
-		for (auto s : *this) 
-			fprintf(stderr, "\'%s\' ", s.c_str());
-
-		fprintf(stderr, "\n");
+		fprintf(stderr, "error %d\n", r);
+		break;
 	}
+	return rc;
 };
 
 
 bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand)
 {
-	ExplodeCmdLine ecl(CmdLine);
+	const std::vector<std::string> &ecl = ExplodeCmdLine(Wide2MB(CmdLine));
 	if (ecl.empty())
 		return false;
 		

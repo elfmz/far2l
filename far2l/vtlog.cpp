@@ -3,10 +3,12 @@
 #include "mix.hpp"
 #include <mutex>
 #include <vector>
-#include <list>
+#include <deque>
 #include <fcntl.h>
 
 #include "vtlog.h"
+
+
 
 
 namespace VTLog
@@ -14,7 +16,7 @@ namespace VTLog
 	class Lines
 	{
 		std::mutex _mutex;
-		std::list<std::string> _memories;
+		std::deque<std::string> _memories;
 		
 		enum {
 			LIMIT_NOT_IMPORTANT	= 100,
@@ -46,14 +48,20 @@ namespace VTLog
 				tmp = NULL;
 				
 			std::lock_guard<std::mutex> lock(_mutex);
-			while (_memories.size() >= LIMIT_IMPORTANT)
-				_memories.pop_front();				
-
-			if (tmp)
-				_memories.emplace_back(Wide2MB(tmp));
-			else
-				_memories.emplace_back();
+			//a little hustling to reduce reallocations
+			_memories.emplace_back();
 			
+			if (_memories.size() >= LIMIT_IMPORTANT) {
+				_memories.back().swap(_memories.front());
+				do {
+					_memories.pop_front();
+				} while (_memories.size() >= LIMIT_IMPORTANT);
+			}
+
+			if (tmp) {
+				Wide2MB(tmp, _memories.back());
+			} else
+				_memories.back().clear();
 		}
 		
 		void OnNotImportant()
@@ -107,7 +115,6 @@ namespace VTLog
 		if (Top==0) {
 			g_lines.Add( ActualLineWidth(Width, Chars), Chars);
 		}
-			
 	}
 	
 	void Start()

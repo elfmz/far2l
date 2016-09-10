@@ -1,7 +1,7 @@
 /*
 interf.cpp
 
-Êîíñîëüíûå ôóíêöèè ââîäà-âûâîäà
+Консольные функции ввода-вывода
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -89,15 +89,15 @@ void InitConsole(int FirstInit)
 
 	GetRegKey(L"Interface",L"Mouse",Opt.Mouse,1);
 
-	// ðàçìåð êëàâèàòóðíîé î÷åðåäè = 1024 êîäà êëàâèøè
+	// размер клавиатурной очереди = 1024 кода клавиши
 	if (!KeyQueue)
 		KeyQueue=new FarQueue<DWORD>(1024);
 
 	SetFarConsoleMode();
 
 	/* $ 09.04.2002 DJ
-	   åñëè ðàçìåð êîíñîëüíîãî áóôåðà áîëüøå ðàçìåðà îêíà, âûñòàâèì
-	   èõ ðàâíûìè
+	   если размер консольного буфера больше размера окна, выставим
+	   их равными
 	*/
 	if(!Opt.WindowMode)
 	{
@@ -129,9 +129,9 @@ void InitConsole(int FirstInit)
 	GetVideoMode(CurSize);
 	ScrBuf.FillBuf();
 
-	// áûëî sizeof(Palette)
+	// было sizeof(Palette)
 	/*$ 14.02.2001 SKV
-	  äëÿ consoledetach íå íóæíî, ÷òî áû èíèòèëàñü ïàëèòðà.
+	  для consoledetach не нужно, что бы инитилась палитра.
 	*/
 	if (FirstInit)
 		memcpy(Palette,DefaultPalette,SizeArrayPalette);
@@ -164,7 +164,7 @@ void SetFarConsoleMode(BOOL SetsActiveBuffer)
 	}
 	else
 	{
-		//åñëè âäðóã èçìåíèëè îïöèþ âî âðåìÿ ðàáîòû ôàðà, òî âêëþ÷èì òî ÷òî íàäî
+		//если вдруг изменили опцию во время работы фара, то включим то что надо
 		Mode|=InitialConsoleMode&(ENABLE_EXTENDED_FLAGS|ENABLE_QUICK_EDIT_MODE);
 	}
 
@@ -282,7 +282,7 @@ void ChangeVideoMode(int NumLines,int NumColumns)
 		Console.SetSize(coordScreen);
 	}
 
-	// çàøëåì ýâåíò òîëüêî â ñëó÷àå, êîãäà ìàêðîñû íå èñïîëíÿþòñÿ
+	// зашлем эвент только в случае, когда макросы не исполняются
 	if (CtrlObject && !CtrlObject->Macro.IsExecuting())
 		GenerateWINDOW_BUFFER_SIZE_EVENT(NumColumns,NumLines);
 }
@@ -304,7 +304,7 @@ void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx, int Sy)
 
 void GetVideoMode(COORD& Size)
 {
-	//÷òîá ðåøèòü áàã âèíäû ïðèâîäÿùèé ê ïîÿâëåíèþ ñêðîëîâ è ò.ï. ïîñëå ïîòåðè ôîêóñà
+	//чтоб решить баг винды приводящий к появлению скролов и т.п. после потери фокуса
 	SaveConsoleWindowRect();
 	Size.X=0;
 	Size.Y=0;
@@ -352,10 +352,10 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType)
 	CloseFAR=TRUE;
 
 	/* $ 30.08.2001 IS
-	   Ïðè çàêðûòèè îêíà "ïî êðåñòó" âñåãäà âîçâðàùàåì TRUE, â ïðîòèâíîì ñëó÷àå
-	   Ôàð áóäåò çàêðûò ñèñòåìîé è íå áóäóò âûïîëíåíû îáû÷íûå ïðè çàêðûòèè
-	   ïðîöåäóðû: îïîâåùåíû ïëàãèíû, âûçâàíû äåñòðóêòîðû, ñîõðàíåíû íàñòðîéêè è
-	   ò.ï.
+	   При закрытии окна "по кресту" всегда возвращаем TRUE, в противном случае
+	   Фар будет закрыт системой и не будут выполнены обычные при закрытии
+	   процедуры: оповещены плагины, вызваны деструкторы, сохранены настройки и
+	   т.п.
 	*/
 	if (!Opt.CloseConsoleRule)
 	{
@@ -393,7 +393,7 @@ void ShowTime(int ShowAlways)
 	lasttm=tm;
 	strClockText.Format(L"%02d:%02d",tm.wHour,tm.wMinute);
 	GotoXY(ScrX-4,0);
-	// Çäåñü õðåíü êàêàÿ-òî ïîëó÷àåòñÿ ñ ModType - âñå âðåìÿ íå âåðíîå çíà÷åíèå!
+	// Здесь хрень какая-то получается с ModType - все время не верное значение!
 	Frame *CurFrame=FrameManager->GetCurrentFrame();
 
 	if (CurFrame)
@@ -526,7 +526,7 @@ void InitRecodeOutTable()
 			0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B,
 			0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580,
 		};
-		// ïåðåä [ïåðå]èíèöèàëèçàöèåé âîññòàíîâèì áóôåð (ëèáî èç ðååñòðà, ëèáî...)
+		// перед [пере]инициализацией восстановим буфер (либо из реестра, либо...)
 		GetRegKey(L"System",L"BoxSymbols",(BYTE *)BoxSymbols,(BYTE*)_BoxSymbols,sizeof(_BoxSymbols));
 
 		if (Opt.NoGraphics)
@@ -641,7 +641,7 @@ void HiText(const wchar_t *Str,int HiColor,int isVertText)
 		while (*ChPtr2++ == L'&')
 			++I;
 
-		if (I&1) // íå÷åò?
+		if (I&1) // нечет?
 		{
 			*ChPtr=0;
 
@@ -817,7 +817,7 @@ void BoxText(const wchar_t *Str,int IsVert)
 
 
 /*
-   Îòðèñîâêà ïðÿìîóãîëüíèêà.
+   Отрисовка прямоугольника.
 */
 void Box(int x1,int y1,int x2,int y2,int Color,int Type)
 {
@@ -985,7 +985,7 @@ void DrawLine(int Length,int Type, const wchar_t* UserSep)
 	}
 }
 
-// "Íàðèñîâàòü" ñåïàðàòîð â ïàìÿòè.
+// "Нарисовать" сепаратор в памяти.
 WCHAR* MakeSeparator(int Length,WCHAR *DestStr,int Type, const wchar_t* UserSep)
 {
 	wchar_t BoxType[12][3]=
@@ -1041,7 +1041,7 @@ FARString& HiText2Str(FARString& strDest, const wchar_t *Str)
 		while (*ChPtr2++ == L'&')
 			++I;
 
-		if (I&1) // íå÷åò?
+		if (I&1) // нечет?
 		{
 			strDest.SetLength(ChPtr-Str);
 
@@ -1092,7 +1092,7 @@ int HiStrlen(const wchar_t *Str)
 					Count++;
 				}
 
-				if (Count&1) //íå÷¸ò?
+				if (Count&1) //нечёт?
 				{
 					if (Hi)
 						Length+=+1;

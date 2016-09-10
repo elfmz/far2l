@@ -192,7 +192,7 @@ bool PluginA::LoadFromCache(const FAR_FIND_DATA_EX &FindData)
 			);
 			GetRegKey(strRegKey, L"ID", strPluginID, L"");
 
-			if (StrCmp(strPluginID, strCurPluginID) )   //îäèíàêîâûå ëè áèíàðíèêè?
+			if (StrCmp(strPluginID, strCurPluginID) )   //одинаковые ли бинарники?
 				return false;
 		}
 		strRegKey += L"/Exports";
@@ -300,10 +300,10 @@ bool PluginA::Load()
 	if (!m_hModule)
 	{/*
 		FARString strCurPath, strCurPlugDiskPath;
-		wchar_t Drive[]={0,L' ',L':',0}; // ñòàâèì 0, êàê ïðèçíàê òîãî, ÷òî âåðòàòü îáðàòíî íåíàäî!
+		wchar_t Drive[]={0,L' ',L':',0}; // ставим 0, как признак того, что вертать обратно ненадо!
 		apiGetCurrentDirectory(strCurPath);
 
-		if (IsLocalPath(m_strModuleName))  // åñëè óêàçàí ëîêàëüíûé ïóòü, òî...
+		if (IsLocalPath(m_strModuleName))  // если указан локальный путь, то...
 		{
 			Drive[0] = L'=';
 			Drive[1] = m_strModuleName.At(0);
@@ -315,19 +315,19 @@ bool PluginA::Load()
 		GuardLastError Err;
 		//FarChDir(strCurPath);
 
-	//	if (Drive[0]) // âåðíåì åå (ïåðåìåííóþ îêðóæåíèÿ) îáðàòíî
+	//	if (Drive[0]) // вернем ее (переменную окружения) обратно
 		//	WINPORT(SetEnvironmentVariable)(Drive,strCurPlugDiskPath);
 	}
 
 	if (!m_hModule)
 	{
-		if (!Opt.LoadPlug.SilentLoadPlugin) //óáðàòü â PluginSet
+		if (!Opt.LoadPlug.SilentLoadPlugin) //убрать в PluginSet
 		{
 			SetMessageHelp(L"ErrLoadPlugin");
 			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MPlgLoadPluginError),m_strModuleName,MSG(MOk));
 		}
 
-		//÷òîá íå ïûòàòüñÿ çàãðóçèòü îïÿòü à òî îøèáêà áóäåò ïîñòîÿííî ïîêàçûâàòüñÿ.
+		//чтоб не пытаться загрузить опять а то ошибка будет постоянно показываться.
 		WorkFlags.Set(PIWF_DONTLOADAGAIN);
 
 		return false;
@@ -367,7 +367,7 @@ bool PluginA::Load()
 		if (!bUnloaded)
 			Unload();
 
-		//÷òîá íå ïûòàòüñÿ çàãðóçèòü îïÿòü à òî îøèáêà áóäåò ïîñòîÿííî ïîêàçûâàòüñÿ.
+		//чтоб не пытаться загрузить опять а то ошибка будет постоянно показываться.
 		WorkFlags.Set(PIWF_DONTLOADAGAIN);
 
 		return false;
@@ -383,7 +383,7 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 	static oldfar::PluginStartupInfo StartupInfo={0};
 	static oldfar::FarStandardFunctions StandardFunctions={0};
 
-	// çàïîëíÿåì ñòðóêòóðó StandardFunctions îäèí ðàç!!!
+	// заполняем структуру StandardFunctions один раз!!!
 	if (!StandardFunctions.StructSize)
 	{
 		StandardFunctions.StructSize=sizeof(StandardFunctions);
@@ -531,7 +531,7 @@ bool PluginA::SetStartupInfo(bool &bUnloaded)
 
 		CreatePluginStartupInfoA(this, &_info, &_fsf);
 		printf( "x2Opt.strLanguage=%ls\n", Opt.strLanguage.CPtr());		
-		// ñêîððåêòèðåì àäðåñà è ïëàãèíî-çàâèñèìûå ïîëÿ
+		// скорректирем адреса и плагино-зависимые поля
 		strRootKey = Opt.strRegRoot;
 		strRootKey += L"/Plugins";
 		RootKey = UnicodeToAnsi(strRootKey);

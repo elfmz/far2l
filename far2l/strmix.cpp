@@ -1,7 +1,7 @@
 /*
 strmix.cpp
 
-Êó÷à ðàçíûõ âñïîìîãàòåëüíûõ ôóíêöèé ïî ðàáîòå ñî ñòðîêàìè
+Куча разных вспомогательных функций по работе со строками
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -55,8 +55,8 @@ FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 	{
 		GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_STHOUSAND,ThousandSep,ARRAYSIZE(ThousandSep));
 		GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SDECIMAL,DecimalSep,ARRAYSIZE(DecimalSep));
-		DecimalSep[1]=0;  //Â âèíäå ñåïàðàòîðû öèôð ìîãóò áûòü áîëüøå îäíîãî ñèìâîëà
-		ThousandSep[1]=0; //íî äëÿ íàñ ýòî áóäåò íå î÷åíü õîðîøî
+		DecimalSep[1]=0;  //В винде сепараторы цифр могут быть больше одного символа
+		ThousandSep[1]=0; //но для нас это будет не очень хорошо
 
 		if (LOWORD(Opt.FormatNumberSeparators))
 			*DecimalSep=LOWORD(Opt.FormatNumberSeparators);
@@ -133,18 +133,9 @@ wchar_t * WINAPI InsertRegexpQuote(wchar_t *Str)
 {
 	if (Str && *Str != L'/')
 		return InsertCustomQuote(Str,L'/');
-	else          //âûðàæåíèå âèäà /regexp/i íå äîïîëíÿåì ñëýøåì
+	else          //выражение вида /regexp/i не дополняем слэшем
 		return Str;
 }
-
-wchar_t* WINAPI QuoteSpace(wchar_t *Str)
-{
-	if (wcspbrk(Str, Opt.strQuotedSymbols) )
-		InsertQuote(Str);
-
-	return Str;
-}
-
 
 FARString& InsertQuote(FARString &strStr)
 {
@@ -155,14 +146,29 @@ FARString& InsertRegexpQuote(FARString &strStr)
 {
 	if (strStr.IsEmpty() || strStr[0] != L'/')
 		return InsertCustomQuote(strStr,L'/');
-	else          //âûðàæåíèå âèäà /regexp/i íå äîïîëíÿåì ñëýøåì
+	else          //выражение вида /regexp/i не дополняем слэшем
 		return strStr;
 }
 
-FARString &QuoteSpace(FARString &strStr)
+
+static FARString escapeSpace(const wchar_t* str) {
+	if (*str == L'\0')
+		return "''";
+	FARString result;
+	for (const wchar_t *cur = str; *cur; ++cur) {
+		if (wcschr(Opt.strQuotedSymbols, *cur) != NULL)
+			result.Append('\\');
+		result.Append(*cur);
+	}
+	return result;
+}
+
+
+FARString &EscapeSpace(FARString &strStr)
 {
-	if (wcspbrk(strStr, Opt.strQuotedSymbols) )
-		InsertQuote(strStr);
+	if (strStr.IsEmpty() || wcspbrk(strStr, Opt.strQuotedSymbols)) {
+		strStr.Copy(escapeSpace(strStr.CPtr()));
+	}
 
 	return strStr;
 }
@@ -376,7 +382,7 @@ FARString& WINAPI RemoveLeadingSpaces(FARString &strStr)
 }
 
 
-// óäàëèòü êîíå÷íûå ïðîáåëû
+// удалить конечные пробелы
 wchar_t* WINAPI RemoveTrailingSpaces(wchar_t *Str)
 {
 	if (!Str)
@@ -425,8 +431,8 @@ FARString&  WINAPI RemoveExternalSpaces(FARString &strStr)
 
 
 /* $ 02.02.2001 IS
-   Çàìåíÿåò ïðîáåëàìè íåïå÷àòíûå ñèìâîëû â ñòðîêå. Â íàñòîÿùèé ìîìåíò
-   îáðàáàòûâàþòñÿ òîëüêî cr è lf.
+   Заменяет пробелами непечатные символы в строке. В настоящий момент
+   обрабатываются только cr и lf.
 */
 FARString& WINAPI RemoveUnprintableCharacters(FARString &strStr)
 {
@@ -445,7 +451,7 @@ FARString& WINAPI RemoveUnprintableCharacters(FARString &strStr)
 }
 
 
-// Óäàëèòü ñèìâîë Target èç ñòðîêè Str (âåçäå!)
+// Удалить символ Target из строки Str (везде!)
 FARString &RemoveChar(FARString &strStr,wchar_t Target,BOOL Dup)
 {
 	wchar_t *Ptr = strStr.GetBuffer();
@@ -475,12 +481,12 @@ FARString &RemoveChar(FARString &strStr,wchar_t Target,BOOL Dup)
 FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 {
 	int SrcLength=StrLength(Src);
-	FARString strTempStr = Src; //åñëè Src == strDest, òî íàäî êîïèðîâàòü Src!
+	FARString strTempStr = Src; //если Src == strDest, то надо копировать Src!
 
 	if (SrcLength >= Length)
 	{
-		/* Çäåñü íå íàäî îòíèìàòü 1 îò äëèíû, ò.ê. strlen íå ó÷èòûâàåò \0
-		   è ìû ïîëó÷àëè îáðåçàííûå ñòðîêè */
+		/* Здесь не надо отнимать 1 от длины, т.к. strlen не учитывает \0
+		   и мы получали обрезанные строки */
 		strDest = strTempStr;
 		strDest.SetLength(Length);
 	}
@@ -613,7 +619,7 @@ void UnquoteExternal(FARString &strStr)
 
 
 /* FileSizeToStr()
-   Ôîðìàòèðîâàíèå ðàçìåðà ôàéëà â óäîáî÷èòàåìûé âèä.
+   Форматирование размера файла в удобочитаемый вид.
 */
 #define MAX_UNITSTR_SIZE 16
 
@@ -638,7 +644,7 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 	uint64_t Divider;
 	int IndexDiv, IndexB;
 
-	// ïîäãîòîâèòåëüíûå ìåðîïðèÿòèÿ
+	// подготовительные мероприятия
 	if (!UnitStr[0][0][0])
 	{
 		PrepareUnitStr();
@@ -668,8 +674,8 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 	{
 		uint64_t Divider64F = 1, Divider64F_mul = 1000, Divider64F2 = 1, Divider64F2_mul = Divider;
 
-		//âûðàâíèâàíèå èä¸ò ïî 1000 íî ñàìî äåëåíèå ïðîèñõîäèò íà Divider
-		//íàïðèìåð 999 bytes ïîêàæóòñÿ êàê 999 à âîò 1000 bytes óæå ïîêàæóòñÿ êàê 0.97 K
+		//выравнивание идёт по 1000 но само деление происходит на Divider
+		//например 999 bytes покажутся как 999 а вот 1000 bytes уже покажутся как 0.97 K
 		for (IndexB=0; IndexB<UNIT_COUNT-1; IndexB++)
 		{
 			if (Sz < Divider64F*Divider64F_mul)
@@ -770,9 +776,9 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 
 
 
-// âñòàâèòü ñ ïîçèöèè Pos â Str ñòðîêó InsStr (ðàçìåðîì InsSize áàéò)
-// åñëè InsSize = 0, òî... âñòàâëÿòü âñå ñòðîêó InsStr
-// âîçâðàùàåò óêàçàòåëü íà Str
+// вставить с позиции Pos в Str строку InsStr (размером InsSize байт)
+// если InsSize = 0, то... вставлять все строку InsStr
+// возвращает указатель на Str
 
 wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize)
 {
@@ -787,9 +793,9 @@ wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize)
 }
 
 
-// Çàìåíèòü â ñòðîêå Str Count âõîæäåíèé ïîäñòðîêè FindStr íà ïîäñòðîêó ReplStr
-// Åñëè Count < 0 - çàìåíÿòü "äî ïîëíîé ïîáåäû"
-// Return - êîëè÷åñòâî çàìåí
+// Заменить в строке Str Count вхождений подстроки FindStr на подстроку ReplStr
+// Если Count < 0 - заменять "до полной победы"
+// Return - количество замен
 int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count,BOOL IgnoreCase)
 {
 	const int LenFindStr=StrLength(FindStr);
@@ -840,42 +846,42 @@ int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplS
 
 /*
 From PHP 4.x.x
-Ôîðìàòèðóåò èñõîäíûé òåêñò ïî çàäàííîé øèðèíå, èñïîëüçóÿ
-ðàçäåëèòåëüíóþ ñòðîêó. Âîçâðàùàåò ñòðîêó SrcText ñâ¸ðíóòóþ
-â êîëîíêå, çàäàííîé ïàðàìåòðîì Width. Ñòðîêà ðóáèòñÿ ïðè
-ïîìîùè ñòðîêè Break.
+Форматирует исходный текст по заданной ширине, используя
+разделительную строку. Возвращает строку SrcText свёрнутую
+в колонке, заданной параметром Width. Строка рубится при
+помощи строки Break.
 
-Ðàçáèâàåò íà ñòðîêè ñ âûðàâíèâàåíèåì âëåâî.
+Разбивает на строки с выравниваением влево.
 
-Åñëè ïàðàìåòð Flahs & FFTM_BREAKLONGWORD, òî ñòðîêà âñåãäà
-ñâîðà÷èâàåòñÿ ïî çàäàííîé øèðèíå. Òàê åñëè ó âàñ åñòü ñëîâî,
-êîòîðîå áîëüøå çàäàííîé øèðèíû, òî îíî áóäåò ðàçðåçàíî íà ÷àñòè.
+Если параметр Flahs & FFTM_BREAKLONGWORD, то строка всегда
+сворачивается по заданной ширине. Так если у вас есть слово,
+которое больше заданной ширины, то оно будет разрезано на части.
 
 Example 1.
-FarFormatText("Ïðèìåð ñòðîêè, êîòîðàÿ áóäåò ðàçáèòà íà íåñêîëüêî ñòðîê ïî øèðèíå â 20 ñèìâîëîâ.", 20 ,Dest, "\n", 0);
-Ýòîò ïðèìåð âåðíåò:
+FarFormatText("Пример строки, которая будет разбита на несколько строк по ширине в 20 символов.", 20 ,Dest, "\n", 0);
+Этот пример вернет:
 ---
-Ïðèìåð ñòðîêè,
-êîòîðàÿ áóäåò
-ðàçáèòà íà
-íåñêîëüêî ñòðîê ïî
-øèðèíå â 20
-ñèìâîëîâ.
+Пример строки,
+которая будет
+разбита на
+несколько строк по
+ширине в 20
+символов.
 ---
 
 Example 2.
-FarFormatText( "Ýòà ñòðîêà ñîäåðæèò îîîîîîîîîîîîî÷÷÷÷÷÷÷÷ååååíü äëèíîå ñëîâî", 9, Dest, nullptr, FFTM_BREAKLONGWORD);
-Ýòîò ïðèìåð âåðíåò:
+FarFormatText( "Эта строка содержит оооооооооооооччччччччеееень длиное слово", 9, Dest, nullptr, FFTM_BREAKLONGWORD);
+Этот пример вернет:
 
 ---
-Ýòà
-ñòðîêà
-ñîäåðæèò
-îîîîîîîîî
-îîîî÷÷÷÷÷
-÷÷÷ååååíü
-äëèíîå
-ñëîâî
+Эта
+строка
+содержит
+ооооооооо
+ооооччччч
+чччеееень
+длиное
+слово
 ---
 
 */
@@ -885,11 +891,11 @@ enum FFTMODE
 	FFTM_BREAKLONGWORD = 0x00000001,
 };
 
-FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // èñòî÷íèê
-                             int Width,               // çàäàííàÿ øèðèíà
-                             FARString &strDestText,          // ïðèåìíèê
-                             const wchar_t* Break,       // áðèê, åñëè = nullptr, òî ïðèíèìàåòñÿ '\n'
-                             DWORD Flags)             // îäèí èç FFTM_*
+FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
+                             int Width,               // заданная ширина
+                             FARString &strDestText,          // приемник
+                             const wchar_t* Break,       // брик, если = nullptr, то принимается '\n'
+                             DWORD Flags)             // один из FFTM_*
 {
 	const wchar_t *breakchar;
 	breakchar = Break?Break:L"\n";
@@ -1087,9 +1093,9 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // èñòî÷íèê
   xstrncpy(Dest,Ptr,End-Start+1);
   Dest[End-Start+1]=0;
 
-// Ïàðàìåòðû:
-//   WordDiv  - íàáîð ðàçäåëèòåëåé ñëîâà â êîäèðîâêå OEM
-  âîçâðàùàåò óêàçàòåëü íà íà÷àëî ñëîâà
+// Параметры:
+//   WordDiv  - набор разделителей слова в кодировке OEM
+  возвращает указатель на начало слова
 */
 const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End, const wchar_t *WordDiv0)
 {
@@ -1105,9 +1111,9 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 
 	if (IsWordDiv(strWordDiv,Str[CurPos]))
 	{
-		// âû÷èñëÿåì äèñòàíöèþ - êóäà êîïàòü, ãäå áëèæå ñëîâî - ñëåâà èëè ñïðàâà
+		// вычисляем дистанцию - куда копать, где ближе слово - слева или справа
 		I=J=CurPos;
-		// êîïàåì âëåâî
+		// копаем влево
 		DistLeft=-1;
 
 		while (I >= 0 && IsWordDiv(strWordDiv,Str[I]))
@@ -1119,7 +1125,7 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 		if (I < 0)
 			DistLeft=-1;
 
-		// êîïàåì âïðàâî
+		// копаем вправо
 		DistRight=-1;
 
 		while (J < StrSize && IsWordDiv(strWordDiv,Str[J]))
@@ -1136,7 +1142,7 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 		else
 			EndWPos=StartWPos=I;
 	}
-	else // çäåñü âñå îáè, ò.å. ñòîèì íà áóêîâêå
+	else // здесь все оби, т.е. стоим на буковке
 		EndWPos=StartWPos=CurPos;
 
 	if (StartWPos < StrSize)
@@ -1174,7 +1180,7 @@ const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Star
 
 bool CheckFileSizeStringFormat(const wchar_t *FileSizeStr)
 {
-//ïðîâåðÿåò åñëè ôîðìàò ñòðîêè òàêîé: [0-9]+[BbKkMmGgTtPpEe]?
+//проверяет если формат строки такой: [0-9]+[BbKkMmGgTtPpEe]?
 	const wchar_t *p = FileSizeStr;
 
 	while (iswdigit(*p))
@@ -1232,7 +1238,7 @@ uint64_t ConvertFileSizeString(const wchar_t *FileSizeStr)
 }
 
 /* $ 21.09.2003 KM
-   Òðàíñôîðìàöèÿ ñòðîêè ïî çàäàííîìó òèïó.
+   Трансформация строки по заданному типу.
 */
 void Transform(FARString &strBuffer,const wchar_t *ConvStr,wchar_t TransformType)
 {

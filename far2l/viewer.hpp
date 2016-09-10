@@ -46,8 +46,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define  MAXSCRY     300
 
 /* $ 12.07.2000 SVS
-  - èç-çà óâåëè÷åíèÿ äëèíû ñòðîêè äî 0x800 âûëåòàë FAR
-    ïî Alt-F7. Ñîêðàòèì MAX_VIEWLINE äî 1024 (0x400)
+  - из-за увеличения длины строки до 0x800 вылетал FAR
+    по Alt-F7. Сократим MAX_VIEWLINE до 1024 (0x400)
 */
 #define MAX_VIEWLINE  0x800 // 0x400
 #define MAX_VIEWLINEB 0x80f // 0x40f
@@ -139,7 +139,7 @@ class Viewer:public ScreenObject
 		int CRSym;
 		int64_t SelectPos,SelectSize;
 		DWORD SelectFlags;
-		int64_t SelectPosOffSet; // Èñïîëüçóåòñÿ äëÿ êîððåêöèè ïîçèöèè âûäåëåíèÿ â þíèêîäíûõ ôàéëàõ
+		int64_t SelectPosOffSet; // Используется для коррекции позиции выделения в юникодных файлах
 		int ShowStatusLine,HideCursor;
 
 		FARString strTitle;
@@ -153,7 +153,7 @@ class Viewer:public ScreenObject
 		struct ViewerUndoData UndoData[VIEWER_UNDO_COUNT];
 
 		int LastKeyUndo;
-		int Width,XX2;  // , èñïîëüçóåòñÿ ïðè ðàñ÷åòå øèðèíû ïðè ñêðîëáàðå
+		int Width,XX2;  // , используется при расчете ширины при скролбаре
 		int ViewerID;
 		bool OpenFailed;
 		bool bVE_READ_Sent;
@@ -172,9 +172,9 @@ class Viewer:public ScreenObject
 		void ShowHex();
 		void ShowStatus();
 		/* $ 27.04.2001 DJ
-		   ôóíêöèè äëÿ ðèñîâàíèÿ ñêðîëëáàðà, äëÿ êîððåêòèðîâêè øèðèíû â
-		   çàâèñèìîñòè îò íàëè÷èÿ ñêðîëëáàðà è äëÿ êîððåêòèðîâêè ïîçèöèè ôàéëà
-		   íà ãðàíèöó ñòðîêè
+		   функции для рисования скроллбара, для корректировки ширины в
+		   зависимости от наличия скроллбара и для корректировки позиции файла
+		   на границу строки
 		*/
 		void DrawScrollbar();
 		void AdjustWidth();
@@ -235,7 +235,7 @@ class Viewer:public ScreenObject
 
 		void GoTo(int ShowDlg=TRUE,int64_t NewPos=0,DWORD Flags=0);
 		void GetSelectedParam(int64_t &Pos, int64_t &Length, DWORD &Flags);
-		// Ôóíêöèÿ âûäåëåíèÿ - êàê ñàìîñòîÿòåëüíàÿ ôóíêöèÿ
+		// Функция выделения - как самостоятельная функция
 		void SelectText(const int64_t &MatchPos,const int64_t &SearchLength, const DWORD Flags=0x1);
 
 		int GetTabSize() const { return ViOpt.TabSize; }
@@ -260,8 +260,8 @@ class Viewer:public ScreenObject
 		NamesList *GetNamesList() { return &ViewNamesList; }
 
 		/* $ 08.12.2001 OT
-		  âîçâðàùàåò ïðèçíàê òîãî, ÿâëÿåòñÿ ëè ôàéë âðåìåííûì
-		  èñïîëüçóåòñÿ äëÿ ïðèíÿòèÿ ðåøåíèÿ ïåðåõîäèòü â êàòàëîã ïî */
+		  возвращает признак того, является ли файл временным
+		  используется для принятия решения переходить в каталог по */
 		BOOL isTemporary();
 
 		int ProcessHexMode(int newMode, bool isRedraw=TRUE);

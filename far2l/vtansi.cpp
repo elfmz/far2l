@@ -747,6 +747,51 @@ void InterpretEscSeq( void )
 			// Technically should home the cursor, but perhaps not expeclted.
 			return;
 
+		case 'S':                 // ESC[#S Scroll up
+			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[S == ESC[1S
+			if (es_argc != 1) return;
+			while (es_argv[0]--) {
+				
+				SHORT scroll_top = TOP, scroll_bottom = BOTTOM;
+				WINPORT(GetConsoleScrollRegion)(NULL, &scroll_top, &scroll_bottom);
+				
+				Pos.X = Rect.Left;
+				Pos.Y = std::max(TOP, scroll_top);
+				
+				Rect.Left   = LEFT;
+				Rect.Right  = RIGHT;
+				Rect.Top    = Pos.Y + 1;
+				Rect.Bottom = std::min(BOTTOM, scroll_bottom);
+				CharInfo.Char.UnicodeChar = ' ';
+				CharInfo.Attributes = Info.wAttributes;
+			
+				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, NULL, Pos, &CharInfo );
+			}
+			return;
+			
+		case 'T':                 // ESC[#S Scroll down
+			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[S == ESC[1S
+			if (es_argc != 1) return;
+			while (es_argv[0]--) {
+				
+				SHORT scroll_top = TOP, scroll_bottom = BOTTOM;
+				WINPORT(GetConsoleScrollRegion)(NULL, &scroll_top, &scroll_bottom);
+
+				Rect.Left   = LEFT;
+				Rect.Right  = RIGHT;
+				Rect.Top    = std::max(TOP, scroll_top);
+				Rect.Bottom = std::min(BOTTOM, scroll_bottom) - 1;
+				
+				Pos.X = LEFT;
+				Pos.Y = Rect.Top + 1;
+
+				CharInfo.Char.UnicodeChar = ' ';
+				CharInfo.Attributes = Info.wAttributes;
+				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, NULL, Pos, &CharInfo );
+			}
+			return;
+			
+			
 		case 'M':                 // ESC[#M Delete # lines.
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[M == ESC[1M
 			if (es_argc != 1) return;
@@ -976,7 +1021,7 @@ void InterpretEscSeq( void )
 				if (es_argc < 1) 
 					es_argv[0] = 1;
 			}
-			fprintf(stderr, "VTAnsi: SET SCOPE: %d %d (limits %d %d)\n", 
+			fprintf(stderr, "VTAnsi: SET SCROLL REGION: %d %d (limits %d %d)\n", 
 				es_argv[0] - 1, es_argv[1] - 1, TOP, BOTTOM);
 			WINPORT(SetConsoleScrollRegion)(NULL, es_argv[0] - 1, es_argv[1] - 1);
 			return;

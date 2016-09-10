@@ -326,12 +326,13 @@ extern "C" {
 			break;
 		}
 
-		if (ret < 0)
+		if (ret <= 0)
 		{
 			switch(ret)
 			{
 			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
 			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
+			case 0: WINPORT(SetLastError)( ERROR_SUCCESS ); break;
 			}
 			ret = 0;
 		}
@@ -554,12 +555,13 @@ extern "C" {
 			break;
 		}
 
-		if (ret < 0)
+		if (ret <= 0)
 		{
 			switch(ret)
 			{
 			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
 			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
+			default: WINPORT(SetLastError)( ERROR_SUCCESS ); break;
 			}
 			ret = 0;
 		}

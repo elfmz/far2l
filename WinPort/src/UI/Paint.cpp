@@ -38,7 +38,7 @@ public:
 
 	wxString Query()
 	{
-		_result.clear();
+		_result.Empty();
 		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
 		fprintf(stderr, "FixedFontLookup: %ls\n", _result.wc_str());
 		return _result;
@@ -236,7 +236,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 	_line.resize(cw);
 	ApplyFont(dc);
 
-	ConsolePainter painter(this, dc);
+	ConsolePainter painter(this, dc, _buffer);
 	for (unsigned int cy = (unsigned)area.Top; cy <= (unsigned)area.Bottom; ++cy) {
 		COORD data_size = {(SHORT)cw, 1};
 		COORD data_pos = {0, 0};
@@ -301,13 +301,14 @@ CursorProps::CursorProps(bool state) : visible(false), height(1)
 
 //////////////////////
 
-ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc) : 
+ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer) : 
 	_context(context), _dc(dc), _cursor_props(context->GetCursorState()),
-	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1)
+	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _buffer(buffer)
 {
 	wxPen *trans_pen = wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT);
 	_dc.SetPen(*trans_pen);
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
+	_buffer.Empty();
 }
 	
 	
@@ -367,7 +368,7 @@ void ConsolePainter::FlushText()
 	if (!_buffer.empty()) {
 		_dc.SetTextForeground(_clr_text);
 		_dc.DrawText(_buffer, _start_cx * _context->FontWidth(), _start_y);
-		_buffer.clear();
+		_buffer.Empty();
 	}
 	_start_cx = (unsigned int)-1;
 }

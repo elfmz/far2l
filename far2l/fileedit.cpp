@@ -1280,23 +1280,27 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				return TRUE;
 			}
 			case KEY_SHIFTF8:
-			if (!IsFileModified())
 			{
-				const bool from_fixed_single_char = IsFixedSingleCharCodePage(m_codepage);
 				int codepage = SelectCodePage(m_codepage, false, true);
 				if (codepage != -1 && codepage != (int)m_codepage) {
-					const bool need_reload = (!from_fixed_single_char || !IsFixedSingleCharCodePage(codepage));
-					SetCodePage(codepage);
-					Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
-					if (need_reload) {
-						int UserBreak = 0;
-						SaveToCache();
-						LoadFile(strLoadedFileName, UserBreak);
-					}
+					const bool need_reload = 
+								IsFixedSingleCharCodePage(m_codepage) != IsFixedSingleCharCodePage(codepage)
+								|| IsUTF7(m_codepage) != IsUTF7(codepage)
+								|| IsUTF8(m_codepage) != IsUTF8(codepage)
+								|| IsUTF16(m_codepage) != IsUTF16(codepage)
+								|| IsUTF32(m_codepage) != IsUTF32(codepage);
+					if (!IsFileModified() || !need_reload) {
+						SetCodePage(codepage);
+						Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
+						if (need_reload) {
+							int UserBreak = 0;
+							SaveToCache();
+							LoadFile(strLoadedFileName, UserBreak);
+						}
+					} else
+						Message(0, 1, MSG(MEditTitle), L"Save file before changing this codepage", MSG(MHOk), nullptr);
 				}
 				return TRUE;
-			} else {
-				Message(0, 1, MSG(MEditTitle), L"Save file before changing codepage", MSG(MHOk), nullptr);
 			}
 			case KEY_ALTSHIFTF9:
 			{

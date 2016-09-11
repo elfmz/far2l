@@ -44,7 +44,12 @@ enum CPSelectType
 
 extern const wchar_t *FavoriteCodePagesKey;
 
-inline bool IsFixedSingleCharCodePage(UINT CP) {return (CP!=CP_UTF8 && CP!=CP_UTF16LE && CP!=CP_UTF16BE && CP!=CP_UTF32BE && CP!=CP_UTF32BE); };
+inline bool IsUTF7(UINT CP) {return (CP==CP_UTF7); };
+inline bool IsUTF8(UINT CP) {return (CP==CP_UTF8); };
+inline bool IsUTF16(UINT CP) {return (CP==CP_UTF16LE || CP==CP_UTF16BE); };
+inline bool IsUTF32(UINT CP) {return (CP==CP_UTF32LE || CP==CP_UTF32BE); };
+inline bool IsFixedSingleCharCodePage(UINT CP) {return (!IsUTF7(CP) && IsUTF8(CP) && !IsUTF16(CP) && !IsUTF32(CP)  ); };
+
 #if (__WCHAR_MAX__ > 0xffff)
 const int StandardCPCount = 3 /* DOS, ANSI, KOI */ + 2 /* UTF-32 LE, UTF-32 BE */ + 2 /* UTF-16 LE, UTF-16 BE */ + 2 /* UTF-7, UTF-8 */;
 inline bool IsStandardCodePage(UINT CP) { return (CP==CP_UTF8 || CP==CP_UTF16LE || CP==CP_UTF16BE || CP==CP_UTF32LE || CP==CP_UTF32BE); }

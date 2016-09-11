@@ -65,7 +65,7 @@ static int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 		flags, (const UTF8 *)src, srclen, (UTF32 *)dst, dstlen);
 }
 	
-static int short_wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
+static int wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
 {
 	if (srclen==-1)
 		srclen = wcslen(src) + 1;
@@ -89,10 +89,10 @@ static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char 
 		ret = utf_translation<UTF32, UTF16>( CalcSpaceUTF32toUTF16, ConvertUTF32toUTF16,
 									flags, (const UTF32 *)src, srclen, (UTF16 *)dst, dstlen);
 	} else
-		ret = short_wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
+		ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
 	
 	if (ret > 0)  {
-		if (reverse && dst) {
+		if (reverse && dstlen > 0) {
 			for (int i = 0; i < ret; ++i) {
 				std::swap(dst[i * 2], dst[i * 2 + 1]);
 			}
@@ -103,7 +103,39 @@ static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char 
 	return ret;
 }
 
-	
+static int wide_utf32_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen, bool reverse)
+{
+	dstlen/= sizeof(wchar_t);
+	int ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
+	if (ret > 0)  {
+		if (reverse && dstlen > 0) {
+			for (int i = 0; i < ret; ++i) {
+				std::swap(dst[i * 4], dst[i * 4 + 3]);
+				std::swap(dst[i * 4 + 1], dst[i * 4 + 2]);
+			}
+		}
+		ret*= sizeof(wchar_t);
+	}
+	return ret;
+}
+
+static int wide_utf32_mbstowcs( int flags, const char *src, int srclen, wchar_t *dst, int dstlen, bool reverse)
+{
+	if (srclen > 0) srclen/= sizeof(wchar_t);
+	int ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
+	if (ret > 0)  {
+		if (reverse && dstlen > 0) {
+			char *dst_as_chars = (char *)dst;
+			for (int i = 0; i < ret; ++i) {				
+				std::swap(dst_as_chars[i * 4], dst_as_chars[i * 4 + 3]);
+				std::swap(dst_as_chars[i * 4 + 1], dst_as_chars[i * 4 + 2]);
+			}
+		}
+	}
+	return ret;
+}
+
+
 static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen, bool reverse)
 {
 	int ret;
@@ -133,7 +165,7 @@ static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 		ret = utf_translation<UTF16, UTF32>( CalcSpaceUTF16toUTF32, ConvertUTF16toUTF32,
 			flags, (const UTF16 *)src, srclen, (UTF32 *)dst, dstlen);
 	} else
-		ret = short_wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
+		ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
 		
 	free(tmp);
 	return ret;
@@ -451,6 +483,14 @@ extern "C" {
 			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, true );
 			break;
 
+		case CP_UTF32LE:
+			ret = wide_utf32_mbstowcs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF32BE:
+			ret = wide_utf32_mbstowcs( flags, src, srclen, dst, dstlen, true );
+			break;
+
 		case CP_UTF8:
 			if (sizeof(wchar_t)==4) {
 				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen);
@@ -684,6 +724,14 @@ extern "C" {
 
 		case CP_UTF16BE:
 			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, true );
+			break;
+
+		case CP_UTF32LE:
+			ret = wide_utf32_wcstombs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF32BE:
+			ret = wide_utf32_wcstombs( flags, src, srclen, dst, dstlen, true );
 			break;
 
 		case CP_UTF8:

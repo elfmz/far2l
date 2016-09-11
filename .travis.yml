@@ -89,5 +89,5 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -G Ninja .. && ninja -j8
+  - cmake -G Ninja .. && ninja -j8 -v
 

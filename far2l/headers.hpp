@@ -129,9 +129,19 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 
 #define IsPtr(x) ((DWORD_PTR)x>(DWORD_PTR)0xffff)// && (DWORD_PTR)x<(((DWORD_PTR)-1)>>1))
 
-#define SIGN_UNICODE    0xFEFF
-#define SIGN_REVERSEBOM 0xFFFE
+#define SIGN_UTF16LE    0xFEFF
+#define SIGN_UTF16BE	0xFFFE
+#define SIGN_UTF32LE    0x0000FEFF
+#define SIGN_UTF32BE	0xFFFE0000
 #define SIGN_UTF8       0xBFBBEF
+
+#if (__WCHAR_MAX__ > 0xffff)
+# define SIGN_WIDE_LE	SIGN_UTF32LE
+# define SIGN_WIDE_BE	SIGN_UTF32BE
+#else
+# define SIGN_WIDE_LE	SIGN_UTF16LE
+# define SIGN_WIDE_BE	SIGN_UTF16BE
+#endif
 
 #if (defined(__GNUC__)) || (defined(_MSC_VER) && _MSC_VER<1600)
 #define nullptr NULL

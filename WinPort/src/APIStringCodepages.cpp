@@ -35,7 +35,6 @@ template <class SRC_T, class DST_T>
 			if (ret==0) ret = -2; 
 			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
 		}
-		if (ret > 0) ret*= sizeof(SRC_T);
 		
 	} else {
 		DST_T *target = (DST_T *)dst;

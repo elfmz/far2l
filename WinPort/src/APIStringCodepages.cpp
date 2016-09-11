@@ -13,6 +13,109 @@
 #include "PathHelpers.h"
 #include "ConvertUTF.h"
 
+
+
+template <class SRC_T, class DST_T>
+	int utf_translation( 
+			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
+			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flags),
+			int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
+{
+	int ret;
+	const ConversionFlags cf = ((flags&MB_ERR_INVALID_CHARS)!=0) ? strictConversion : lenientConversion;
+	const SRC_T *source = (const SRC_T *)src, *source_end = (const SRC_T *)src;
+	if (srclen==-1) {
+		for(;*source_end;++source_end);
+	} else {
+		for(;srclen;++source_end, --srclen);
+	}
+
+	if (dstlen==0) {
+		if (fnCalcSpace (&ret, &source, source_end, cf)!=conversionOK) {
+			if (ret==0) ret = -2; 
+			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+		}
+		if (ret > 0) ret*= sizeof(SRC_T);
+		
+	} else {
+		DST_T *target = (DST_T *)dst;
+		DST_T *target_end = target + dstlen;
+		
+		ConversionResult cr = fnConvert(&source, source_end, &target, target_end, cf);
+		if (cr==targetExhausted) {
+			ret = 0;
+			WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+		} else {
+			ret = target - (DST_T *)dst;
+			if (cr!=conversionOK) {
+				if (ret==0) ret = -2;
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+			}
+		}
+	}
+	return ret;		
+}
+
+static int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
+{
+	return utf_translation<UTF32, UTF8>( CalcSpaceUTF32toUTF8, ConvertUTF32toUTF8,
+		flags, (const UTF32 *)src, srclen, (UTF8 *)dst, dstlen);
+}
+	
+static int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
+{
+	return utf_translation<UTF8, UTF32>( CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32,
+		flags, (const UTF8 *)src, srclen, (UTF32 *)dst, dstlen);
+}
+	
+static int short_wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
+{
+	if (srclen==-1)
+		srclen = wcslen(src) + 1;
+		
+	if (dstlen != 0) {
+		if (dstlen < srclen)
+			return -1;
+			
+		memcpy(dst, src, srclen * sizeof(WCHAR));
+	}
+	return srclen;
+}
+	
+static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen)
+{
+	int ret;
+	
+	if (dstlen > 0) dstlen/= sizeof(UTF16);
+	
+	if (sizeof(WCHAR)==4) {
+		ret = utf_translation<UTF32, UTF16>( CalcSpaceUTF32toUTF16, ConvertUTF32toUTF16,
+									flags, (const UTF32 *)src, srclen, (UTF16 *)dst, dstlen);
+	} else
+		ret = short_wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
+	
+	if (ret > 0) ret*= sizeof(UTF16);
+	
+	return ret;
+}
+
+	
+static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
+{
+	int ret;
+	
+	if (srclen > 0) srclen/= sizeof(UTF16);
+	
+	if (sizeof(WCHAR)==4) {
+		
+		ret = utf_translation<UTF16, UTF32>( CalcSpaceUTF16toUTF32, ConvertUTF16toUTF32,
+			flags, (const UTF16 *)src, srclen, (UTF32 *)dst, dstlen);
+	} else
+		ret = short_wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
+		
+	return ret;
+}
+	
 extern "C" {
 	UINT TranslateCodepage(UINT codepage)
 	{
@@ -253,66 +356,8 @@ extern "C" {
 		return dest_index;
 	}
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen, bool strict )
-	{
-		int ret;
-		const ConversionFlags cf = strict ? strictConversion : lenientConversion;
-		const UTF32 *source = (const UTF32 *)src, *source_end = (const UTF32 *)src;
-		source_end+= (srclen==-1) ? wcslen(src) + 1 : srclen;
-
-		if (dstlen==0) {
-			if (CalcSpaceUTF32toUTF8 (&ret, &source, source_end, cf)!=conversionOK) {
-				if (ret==0) ret = -2;
-				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
-			}
-		} else {
-			UTF8 *target = (UTF8 *)dst, *target_end = (UTF8 *)(dst + dstlen);
-
-			ConversionResult cr = ConvertUTF32toUTF8(
-				&source, source_end, &target, target_end, cf);
-			if (cr==targetExhausted) {
-				ret = -1;
-			} else {
-				ret = target - (UTF8 *)dst;
-				if (cr!=conversionOK) {
-					if (ret==0) ret = -2;
-					WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
-				}
-			}
-		}
-		return ret;
-	}
-	
-	int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen, bool strict )
-	{
-		int ret;
-		const ConversionFlags cf = strict ? strictConversion : lenientConversion;
-		const UTF8 *source = (const UTF8 *)src, *source_end = (const UTF8 *)src;
-		source_end+= (srclen==-1) ? strlen(src) + 1 : srclen;
-
-		if (dstlen==0) {
-			if (CalcSpaceUTF8toUTF32 (&ret, &source, source_end, cf)!=conversionOK) {
-				if (ret==0) ret = -2;
-				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
-			}
-		} else {
-			UTF32 *target = (UTF32 *)dst, *target_end = (UTF32 *)(dst + dstlen);
-
-			ConversionResult cr = ConvertUTF8toUTF32(
-				&source, source_end, &target, target_end, cf);
-			if (cr==targetExhausted) {
-				ret = -1;
-			} else {
-				ret = target - (UTF32 *)dst;
-				if (cr!=conversionOK) {
-					if (ret==0) ret = -2;
-					WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
-				}
-			}
-		}
-		return ret;
-	}
 	
 	/***********************************************************************
 	*              MultiByteToWideChar   (KERNEL32.@)
@@ -354,6 +399,7 @@ extern "C" {
 
 		if (srclen < 0) srclen = strlen(src) + 1;
 
+		WINPORT(SetLastError)( ERROR_SUCCESS );
 		switch(page)
 		{
 		case CP_SYMBOL:
@@ -373,9 +419,13 @@ extern "C" {
 			ret = utf7_mbstowcs( src, srclen, dst, dstlen );
 			break;
 
+		case CP_UTF16:
+			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen );
+			break;
+
 		case CP_UTF8:
 			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen, (flags&MB_ERR_INVALID_CHARS)!=0 );
+				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen);
 			} else {
 				ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
 			}
@@ -398,7 +448,6 @@ extern "C" {
 			{
 			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
 			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
-			case 0: WINPORT(SetLastError)( ERROR_SUCCESS ); break;
 			}
 			ret = 0;
 		}
@@ -566,9 +615,10 @@ extern "C" {
 			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 			return 0;
 		}
-
+		
 		if (srclen < 0) srclen = strlenW(src) + 1;
 
+		WINPORT(SetLastError)( ERROR_SUCCESS );
 		switch(page)
 		{
 		case CP_SYMBOL:
@@ -599,6 +649,11 @@ extern "C" {
 			}
 			ret = utf7_wcstombs( src, srclen, dst, dstlen );
 			break;
+		
+		case CP_UTF16:
+			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen );
+			break;
+
 		case CP_UTF8:
 			if (defchar || used)
 			{
@@ -608,7 +663,7 @@ extern "C" {
 			}
 			
 			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen, (flags&MB_ERR_INVALID_CHARS)!=0 );
+				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen );
 			} else {
 				ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
 			}
@@ -633,7 +688,6 @@ extern "C" {
 			{
 			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
 			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
-			default: WINPORT(SetLastError)( ERROR_SUCCESS ); break;
 			}
 			ret = 0;
 		}

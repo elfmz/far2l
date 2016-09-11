@@ -7,7 +7,7 @@ ProjectName            :=colorer
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./$(ConfigurationName)
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
@@ -36,12 +36,12 @@ ObjectsFileList        :="colorer.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  $(shell wx-config --debug=yes --libs --unicode=yes) -fPIC
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src $(IncludeSwitch)src/zlib $(IncludeSwitch)src/pcolorer2 $(IncludeSwitch)src/shared $(IncludeSwitch)src/shared/colorer $(IncludeSwitch)src/shared/common $(IncludeSwitch)src/shared/cregexp $(IncludeSwitch)src/shared/misc $(IncludeSwitch)src/shared/xml $(IncludeSwitch)../far2l/ $(IncludeSwitch)../far2l/Include $(IncludeSwitch)../WinPort 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src $(IncludeSwitch)src/zlib $(IncludeSwitch)src/pcolorer2 $(IncludeSwitch)src/shared $(IncludeSwitch)src/shared/colorer $(IncludeSwitch)src/shared/common $(IncludeSwitch)src/shared/cregexp $(IncludeSwitch)src/shared/misc $(IncludeSwitch)src/shared/xml $(IncludeSwitch)../far2l/ $(IncludeSwitch)../far2l/Include $(IncludeSwitch)../WinPort $(IncludeSwitch)../utils/include 
 IncludePCH             := 
 RcIncludePath          := 
-Libs                   := 
-ArLibs                 :=  
-LibPath                := $(LibraryPathSwitch). 
+Libs                   := $(LibrarySwitch)utils 
+ArLibs                 :=  "utils" 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/$(ConfigurationName) $(LibraryPathSwitch)../utils/$(ConfigurationName) 
 
 ##
 ## Common variables
@@ -95,11 +95,11 @@ PostBuild:
 	@echo Done
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 PreBuild:
 	@echo Executing Pre Build commands ...
@@ -445,6 +445,6 @@ $(IntermediateDirectory)/helpers_TextParserHelpers.cpp$(PreprocessSuffix): src/s
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./$(ConfigurationName)/
 
 

@@ -12,7 +12,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 
 WINPORT_DECL(GlobalAlloc, HGLOBAL, ( UINT   uFlags, SIZE_T dwBytes))
 {

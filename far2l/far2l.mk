@@ -7,7 +7,7 @@ ProjectName            :=far2l
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./$(ConfigurationName)
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
@@ -35,13 +35,13 @@ PreprocessOnlySwitch   :=-E
 ObjectsFileList        :="far2l.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
-LinkOptions            :=  -Wl,--whole-archive -lWinPort -Wl,--no-whole-archive -lglib-2.0  -ldl  $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic
-IncludePath            :=  $(IncludeSwitch). 
+LinkOptions            :=  -Wl,--whole-archive -lWinPort -Wl,--no-whole-archive -lutils -lglib-2.0  -ldl  $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)../utils/include 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 
 ArLibs                 :=  
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/Debug 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/$(ConfigurationName) $(LibraryPathSwitch)../utils/$(ConfigurationName) 
 
 ##
 ## Common variables
@@ -107,11 +107,11 @@ PostBuild:
 	@echo Done
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 PreBuild:
 	@echo Executing Pre Build commands ...
@@ -871,6 +871,6 @@ $(IntermediateDirectory)/UCD_prmem.c$(PreprocessSuffix): UCD/prmem.c
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./$(ConfigurationName)/
 
 

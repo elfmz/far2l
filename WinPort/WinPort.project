@@ -139,20 +139,18 @@
     <File Name="src/ConsoleInput.h"/>
     <File Name="src/ConsoleOutput.cpp"/>
     <File Name="src/ConsoleOutput.h"/>
-    <File Name="src/KeyFileHelper.cpp"/>
     <File Name="src/stdafx.cpp"/>
     <File Name="src/stdafx.h"/>
     <File Name="src/targetver.h"/>
-    <File Name="src/Utils.cpp"/>
-    <File Name="src/Utils.h"/>
     <File Name="src/wineguts.h"/>
     <File Name="src/WinPortHandle.cpp"/>
     <File Name="src/WinPortHandle.h"/>
     <File Name="src/WinPortSynch.cpp"/>
     <File Name="src/WinPortSynch.h"/>
-    <File Name="KeyFileHelper.h"/>
     <File Name="src/ConvertUTF.c"/>
     <File Name="src/ConvertUTF.h"/>
+    <File Name="src/PathHelpers.cpp"/>
+    <File Name="src/PathHelpers.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>
@@ -167,13 +165,14 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Static Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function" C_Options="-g;-O2;-std=c99;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags) -Wno-unused-function -fvisibility=hidden -Wno-unused-function" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+      <Compiler Options="-g;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function" C_Options="-g;-O2;-std=c99;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
         <IncludePath Value="src"/>
+        <IncludePath Value="../utils/include"/>
       </Compiler>
       <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes)" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="$(IntermediateDirectory)/lib$(ProjectName).a" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="$(IntermediateDirectory)/lib$(ProjectName).a" IntermediateDirectory="./$(ConfigurationName)" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>

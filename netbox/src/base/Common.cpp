@@ -18,7 +18,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
-
+#include <utils.h>
 #include "TextsCore.h"
 
 const wchar_t * DSTModeNames = L"Win;Unix;Keep";

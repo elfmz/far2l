@@ -4,8 +4,9 @@
 #include "wxWinTranslations.h"
 #include <wx/clipbrd.h>
 #include "CallInMain.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 #include "Paint.h"
+#include "utils.h"
 #include <set>
 #include <fstream>
 
@@ -74,7 +75,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 static void SaveSize(unsigned int width, unsigned int height)
 {
 	std::ofstream os;
-	os.open(SettingsPath("consolesize").c_str());
+	os.open(InMyProfile("consolesize").c_str());
 	if (os.is_open()) {
 		os << width << std::endl;
 		os << height << std::endl;
@@ -84,7 +85,7 @@ static void SaveSize(unsigned int width, unsigned int height)
 static void LoadSize(unsigned int &width, unsigned int &height)
 {
 	std::ifstream is;
-	is.open(SettingsPath("consolesize").c_str());
+	is.open(InMyProfile("consolesize").c_str());
 	if (is.is_open()) {
 		std::string str;
 		getline (is, str);

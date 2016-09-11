@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <windows.h>
 #include <string>
+#include <utils.h>
 #include <pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"

@@ -325,8 +325,10 @@
     <File Name="src/arcread.cpp"/>
     <File Name="src/arccmd.cpp"/>
   </VirtualDirectory>
-  <Dependencies Name="Debug"/>
   <Dependencies Name="Release"/>
+  <Dependencies Name="Debug">
+    <Project Name="utils"/>
+  </Dependencies>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -345,12 +347,16 @@
         <IncludePath Value="../far2l/Include"/>
         <IncludePath Value="../WinPort"/>
         <IncludePath Value="src/formats/rar/unrar"/>
+        <IncludePath Value="../utils/include"/>
         <Preprocessor Value="RARDLL"/>
         <Preprocessor Value="_7ZIP_ST"/>
       </Compiler>
-      <Linker Options="" Required="yes"/>
+      <Linker Options="" Required="yes">
+        <LibraryPath Value="../utils/$(ConfigurationName)"/>
+        <Library Value="utils"/>
+      </Linker>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="../Build/Plugins/multiarc/bin/$(ProjectName).far-plug-mb" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="../Build/Plugins/multiarc/bin/$(ProjectName).far-plug-mb" IntermediateDirectory="./$(ConfigurationName)" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>

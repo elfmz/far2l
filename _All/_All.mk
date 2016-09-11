@@ -7,7 +7,7 @@ ProjectName            :=_All
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./$(ConfigurationName)
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
@@ -70,14 +70,14 @@ Objects=
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/WinPort" "../.build-debug/farlng" "../.build-debug/far2l" "../.build-debug/colorer" "../.build-debug/farftp" "../.build-debug/multiarc" "../.build-debug/tmppanel" $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/utils" "../.build-debug/WinPort" "../.build-debug/farlng" "../.build-debug/far2l" "../.build-debug/colorer" "../.build-debug/farftp" "../.build-debug/multiarc" "../.build-debug/tmppanel" $(Objects) 
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 PreBuild:
 
@@ -89,6 +89,6 @@ PreBuild:
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./$(ConfigurationName)/
 
 

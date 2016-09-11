@@ -254,7 +254,9 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 							hConnect->ConnectMessage(MErrorTempFile,str,-MOk);
 							return TRUE;
 						}
-						write(file,hConnect->Output,hConnect->OutputSize);
+						if (write(file,hConnect->Output,hConnect->OutputSize) != hConnect->OutputSize) {
+							perror("write");
+						}
 						close(file);
 						FP_Info->Viewer(str,Message("%s: %s {%s}",FP_GetMsg(MDirTitle),PanelTitle,str),
 						                0,0,-1,-1,VF_NONMODAL|VF_DELETEONCLOSE);

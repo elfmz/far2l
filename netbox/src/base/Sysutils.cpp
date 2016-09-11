@@ -5,6 +5,7 @@
 #include <Common.h>
 #include <rtlconsts.h>
 #include <Sysutils.hpp>
+#include <utils.h>
 
 intptr_t __cdecl debug_printf(const wchar_t * format, ...)
 {

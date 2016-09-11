@@ -7,13 +7,13 @@ ProjectName            :=netbox
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./$(ConfigurationName)
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=user
-Date                   :=27/08/16
+Date                   :=11/09/16
 CodeLitePath           :="/home/user/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -36,12 +36,12 @@ ObjectsFileList        :="netbox.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  -Wl, $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)../WinPort $(IncludeSwitch)src/base $(IncludeSwitch)src/resource $(IncludeSwitch)src/core $(IncludeSwitch)src/PluginSDK/Far2 $(IncludeSwitch)src/windows $(IncludeSwitch)src/NetBox $(IncludeSwitch)libs/Putty $(IncludeSwitch)libs/Putty/unix $(IncludeSwitch)libs/Putty/charset 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)../WinPort $(IncludeSwitch)src/base $(IncludeSwitch)src/resource $(IncludeSwitch)src/core $(IncludeSwitch)src/PluginSDK/Far2 $(IncludeSwitch)src/windows $(IncludeSwitch)src/NetBox $(IncludeSwitch)libs/Putty $(IncludeSwitch)libs/Putty/unix $(IncludeSwitch)libs/Putty/charset $(IncludeSwitch)../utils/include 
 IncludePCH             := 
 RcIncludePath          := 
-Libs                   := $(LibrarySwitch)neon $(LibrarySwitch)tinyxml2 $(LibrarySwitch)ssl $(LibrarySwitch)crypto $(LibrarySwitch)dl 
-ArLibs                 :=  "neon" "tinyxml2" "ssl" "crypto" "dl" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/Debug 
+Libs                   := $(LibrarySwitch)neon $(LibrarySwitch)tinyxml2 $(LibrarySwitch)ssl $(LibrarySwitch)crypto $(LibrarySwitch)dl $(LibrarySwitch)utils 
+ArLibs                 :=  "neon" "tinyxml2" "ssl" "crypto" "dl" "utils" 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/$(ConfigurationName) $(LibraryPathSwitch)../utils/$(ConfigurationName) 
 
 ##
 ## Common variables
@@ -89,7 +89,7 @@ Objects=$(Objects0) $(Objects1) $(Objects2)
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d "../.build-debug/utils" $(Objects) 
 	@$(MakeDirCommand) $(@D)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
@@ -99,17 +99,24 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	@$(MakeDirCommand) "../.build-debug"
 	@echo rebuilt > "../.build-debug/netbox"
 
+"../.build-debug/utils":
+	@$(MakeDirCommand) "../.build-debug"
+	@echo stam > "../.build-debug/utils"
+
+
+
+
 PostBuild:
 	@echo Executing Post Build commands ...
 	cp ./src/NetBox/*.lng ../Build/Plugins/netbox/bin/
 	@echo Done
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 PreBuild:
 	@echo Executing Pre Build commands ...
@@ -779,6 +786,6 @@ $(IntermediateDirectory)/unix_uxsel.c$(PreprocessSuffix): libs/Putty/unix/uxsel.
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./$(ConfigurationName)/
 
 

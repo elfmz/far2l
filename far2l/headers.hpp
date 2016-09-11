@@ -100,6 +100,7 @@ typedef struct _ADAPTER_OBJECT ADAPTER_OBJECT,*PADAPTER_OBJECT;
 #endif // __GNUC__
 #endif
 #include "../WinPort/WinPort.h"
+#include <utils.h>
 
 
 #include "SDK/sdk.common.h"

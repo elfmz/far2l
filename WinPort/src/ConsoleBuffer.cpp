@@ -16,7 +16,7 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, unsigned sh
 	other_chars.resize(height * width);
 	_console_chars.swap(other_chars);
 	_width = width;
-	for (auto i : _console_chars) {
+	for (auto &i : _console_chars) {
 		i.Attributes = attributes;
 		i.Char.UnicodeChar = 0;
 	}

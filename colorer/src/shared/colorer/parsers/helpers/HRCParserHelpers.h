@@ -75,7 +75,7 @@ public:
 };
 
 enum SchemeNodeType { SNT_EMPTY, SNT_RE, SNT_SCHEME, SNT_KEYWORDS, SNT_INHERIT };
-extern char*schemeNodeTypeNames[];
+extern const char*schemeNodeTypeNames[];
 
 typedef Vector<VirtualEntry*> VirtualEntryVector;
 

@@ -339,6 +339,15 @@
     <File Name="UCD/prmem.h"/>
     <File Name="UCD/prtypes.h"/>
   </VirtualDirectory>
+  <Dependencies Name="Release"/>
+  <VirtualDirectory Name="lang">
+    <File Name="farlang.templ.m4"/>
+  </VirtualDirectory>
+  <Dependencies Name="Debug">
+    <Project Name="utils"/>
+    <Project Name="WinPort"/>
+    <Project Name="farlng"/>
+  </Dependencies>
   <Settings Type="Executable">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -351,13 +360,15 @@
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --unicode=yes --debug=yes)  -Wno-delete-non-virtual-dtor -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" C_Options="-g;-O2;-std=c99;$(shell wx-config --cxxflags --unicode=yes --debug=yes)  -Wno-delete-non-virtual-dtor -fvisibility=hidden -Wno-unused-function -Wno-unknown-pragmas" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="../utils/include"/>
         <Preprocessor Value="UNICODE"/>
       </Compiler>
-      <Linker Options="-Wl,--whole-archive -lWinPort -Wl,--no-whole-archive -lglib-2.0  -ldl  $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic" Required="yes">
-        <LibraryPath Value="../WinPort/Debug"/>
+      <Linker Options="-Wl,--whole-archive -lWinPort -Wl,--no-whole-archive -lutils -lglib-2.0  -ldl  $(shell wx-config --debug=yes --libs --unicode=yes) -export-dynamic" Required="yes">
+        <LibraryPath Value="../WinPort/$(ConfigurationName)"/>
+        <LibraryPath Value="../utils/$(ConfigurationName)"/>
       </Linker>
       <ResourceCompiler Options="$(shell wx-config --rcflags)" Required="no"/>
-      <General OutputFile="../Build/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="../Build/$(ProjectName)" IntermediateDirectory="./$(ConfigurationName)" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -432,12 +443,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug">
-    <Project Name="WinPort"/>
-    <Project Name="farlng"/>
-  </Dependencies>
-  <Dependencies Name="Release"/>
-  <VirtualDirectory Name="lang">
-    <File Name="farlang.templ.m4"/>
-  </VirtualDirectory>
 </CodeLite_Project>

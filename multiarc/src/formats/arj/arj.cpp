@@ -8,6 +8,7 @@
 */
 
 #include <windows.h>
+#include <utils.h>
 #include <limits.h>
 #include <string.h>
 #include <pluginold.hpp>

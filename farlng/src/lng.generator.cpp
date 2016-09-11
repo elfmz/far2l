@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <sys/stat.h>
 #include <KeyFileHelper.h>
+#include <utils.h>
 #define VERSION "v1.5"
 
 void UnquoteIfNeeded (char *lpStr)

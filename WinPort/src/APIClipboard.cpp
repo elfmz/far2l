@@ -19,7 +19,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 #include "CallInMain.h"
 
 extern "C" {

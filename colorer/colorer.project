@@ -224,10 +224,11 @@
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="include"/>
+  <Dependencies Name="Release"/>
   <Dependencies Name="Debug">
+    <Project Name="utils"/>
     <Project Name="farlng"/>
   </Dependencies>
-  <Dependencies Name="Release"/>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -253,14 +254,18 @@
         <IncludePath Value="../far2l/"/>
         <IncludePath Value="../far2l/Include"/>
         <IncludePath Value="../WinPort"/>
+        <IncludePath Value="../utils/include"/>
         <Preprocessor Value="_UNICODE"/>
         <Preprocessor Value="UNICODE"/>
         <Preprocessor Value="__unix__"/>
       </Compiler>
-      <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes) -fPIC" Required="yes"/>
+      <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes) -fPIC" Required="yes">
+        <LibraryPath Value="../WinPort/$(ConfigurationName)"/>
+        <LibraryPath Value="../utils/$(ConfigurationName)"/>
+        <Library Value="utils"/>
+      </Linker>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="../Build/Plugins/Colorer/bin/$(ProjectName).far-plug-wide" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
-      <BuildSystem Name="Default"/>
+      <General OutputFile="../Build/Plugins/Colorer/bin/$(ProjectName).far-plug-wide" IntermediateDirectory="./$(ConfigurationName)" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -304,7 +309,6 @@
       <Linker Options="$(shell wx-config --debug=no --libs --unicode=yes);-s" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/lib$(ProjectName).so" IntermediateDirectory="./Release" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
-      <BuildSystem Name="Default"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>

@@ -1,6 +1,8 @@
 .PHONY: clean All
 
 All:
+	@echo "----------Building project:[ utils - Debug ]----------"
+	@cd "utils" && "$(MAKE)" -f  "utils.mk"
 	@echo "----------Building project:[ WinPort - Debug ]----------"
 	@cd "WinPort" && "$(MAKE)" -f  "WinPort.mk"
 	@echo "----------Building project:[ farlng - Debug ]----------"
@@ -18,6 +20,8 @@ All:
 	@echo "----------Building project:[ _All - Debug ]----------"
 	@cd "_All" && "$(MAKE)" -f  "_All.mk"
 clean:
+	@echo "----------Cleaning project:[ utils - Debug ]----------"
+	@cd "utils" && "$(MAKE)" -f  "utils.mk"  clean
 	@echo "----------Cleaning project:[ WinPort - Debug ]----------"
 	@cd "WinPort" && "$(MAKE)" -f  "WinPort.mk"  clean
 	@echo "----------Cleaning project:[ farlng - Debug ]----------"

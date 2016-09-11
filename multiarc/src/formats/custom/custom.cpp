@@ -8,6 +8,7 @@
 */
 
 #include <windows.h>
+#include <utils.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>

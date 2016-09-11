@@ -152,6 +152,11 @@
     <File Name="src/Connect.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include"/>
+  <Dependencies Name="Release"/>
+  <Dependencies Name="Debug">
+    <Project Name="utils"/>
+    <Project Name="farlng"/>
+  </Dependencies>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -171,12 +176,14 @@
         <IncludePath Value="../far2l/"/>
         <IncludePath Value="../far2l/Include"/>
         <IncludePath Value="../WinPort"/>
-        <IncludePath Value="/usr/include/glib-2.0"/>
-        <IncludePath Value="/usr/lib/x86_64-linux-gnu/glib-2.0/include/"/>
+        <IncludePath Value="../utils/include"/>
       </Compiler>
-      <Linker Options="" Required="yes"/>
+      <Linker Options="" Required="yes">
+        <LibraryPath Value="../utils/$(ConfigurationName)"/>
+        <Library Value="utils"/>
+      </Linker>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="../Build/Plugins/farftp/bin/$(ProjectName).far-plug-mb" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="../Build/Plugins/farftp/bin/$(ProjectName).far-plug-mb" IntermediateDirectory="./$(ConfigurationName)" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -252,8 +259,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug">
-    <Project Name="farlng"/>
-  </Dependencies>
-  <Dependencies Name="Release"/>
 </CodeLite_Project>

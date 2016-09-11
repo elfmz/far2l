@@ -7,7 +7,7 @@ ProjectName            :=WinPort
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./$(ConfigurationName)
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
@@ -36,7 +36,7 @@ ObjectsFileList        :="WinPort.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  $(shell wx-config --debug=yes --libs --unicode=yes)
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src $(IncludeSwitch)../utils/include 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 
@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch).
 AR       := /usr/bin/ar rcu
 CXX      := /usr/bin/g++
 CC       := /usr/bin/gcc
-CXXFLAGS :=  -g -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags)  -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
-CFLAGS   :=  -g -O2 -std=c99 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) $(shell pkg-config glib-2.0 --cflags) -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
+CXXFLAGS :=  -g -O2 -std=c++11 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
+CFLAGS   :=  -g -O2 -std=c99 -Wall $(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/as
 
@@ -61,18 +61,18 @@ AS       := /usr/bin/as
 ##
 CodeLiteDir:=/usr/share/codelite
 Objects0=$(IntermediateDirectory)/src_APIClipboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIConsole.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIFiles.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIFSNotify.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIKeyboard.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIMemory.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIOther.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIPrintFormat.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIRegistry.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APIStringCodepages.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/src_APIStringMap.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APISynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APITime.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleBuffer.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleInput.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleOutput.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_KeyFileHelper.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_stdafx.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Utils.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_WinPortHandle.cpp$(ObjectSuffix) \
-	$(IntermediateDirectory)/src_WinPortSynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConvertUTF.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_collation.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_compose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cpsymbol.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cptable.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_decompose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_locale.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_mbtowc.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/wineguts_sortkey.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_utf8.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctomb.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctype.c$(ObjectSuffix) $(IntermediateDirectory)/UI_Paint.cpp$(ObjectSuffix) $(IntermediateDirectory)/UI_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/UI_wxWinTranslations.cpp$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_037.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_424.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_437.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_500.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_737.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_775.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_850.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_852.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_855.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_856.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_857.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_860.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_861.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_862.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_863.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_864.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_865.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_869.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_874.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_875.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_878.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_932.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_936.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_949.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_950.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1006.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1026.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1250.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1251.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1252.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1253.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1254.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_1255.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1256.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1257.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1258.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1361.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10000.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10001.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10002.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10003.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10004.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_10005.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10006.c$(ObjectSuffix) 
+	$(IntermediateDirectory)/src_APIStringMap.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APISynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_APITime.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleBuffer.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleInput.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConsoleOutput.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_stdafx.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_WinPortHandle.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_WinPortSynch.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_ConvertUTF.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/src_PathHelpers.cpp$(ObjectSuffix) $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_collation.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_compose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cpsymbol.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_cptable.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_decompose.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_locale.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_mbtowc.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_sortkey.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/wineguts_utf8.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctomb.c$(ObjectSuffix) $(IntermediateDirectory)/wineguts_wctype.c$(ObjectSuffix) $(IntermediateDirectory)/UI_Paint.cpp$(ObjectSuffix) $(IntermediateDirectory)/UI_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/UI_wxWinTranslations.cpp$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_037.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_424.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_437.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_500.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/codepages_c_737.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_775.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_850.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_852.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_855.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_856.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_857.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_860.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_861.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_862.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/codepages_c_863.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_864.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_865.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_869.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_874.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_875.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_878.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_932.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_936.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/codepages_c_949.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_950.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1006.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1026.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1250.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1251.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1252.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1253.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1254.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1255.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/codepages_c_1256.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1257.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1258.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_1361.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10000.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10001.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10002.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10003.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10004.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10005.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/codepages_c_10006.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10007.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10008.c$(ObjectSuffix) 
 
-Objects1=$(IntermediateDirectory)/codepages_c_10007.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10008.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10010.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10017.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10021.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10029.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10079.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10081.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_10082.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_20127.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_20866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_20932.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_21866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28591.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28592.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28593.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28594.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28595.c$(ObjectSuffix) \
-	$(IntermediateDirectory)/codepages_c_28596.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28597.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28598.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28599.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28600.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28603.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28604.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28605.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28606.c$(ObjectSuffix) 
+Objects1=$(IntermediateDirectory)/codepages_c_10010.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10017.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10021.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10029.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10079.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10081.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_10082.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/codepages_c_20127.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_20866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_20932.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_21866.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28591.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28592.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28593.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28594.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28595.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28596.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/codepages_c_28597.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28598.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28599.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28600.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28603.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28604.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28605.c$(ObjectSuffix) $(IntermediateDirectory)/codepages_c_28606.c$(ObjectSuffix) 
 
 
 
@@ -94,11 +94,11 @@ $(OutputFile): $(Objects)
 	@echo rebuilt > "../.build-debug/WinPort"
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 
-./Debug:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+./$(ConfigurationName):
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 PreBuild:
 
@@ -186,20 +186,10 @@ $(IntermediateDirectory)/src_ConsoleOutput.cpp$(ObjectSuffix): src/ConsoleOutput
 $(IntermediateDirectory)/src_ConsoleOutput.cpp$(PreprocessSuffix): src/ConsoleOutput.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_ConsoleOutput.cpp$(PreprocessSuffix) "src/ConsoleOutput.cpp"
 
-$(IntermediateDirectory)/src_KeyFileHelper.cpp$(ObjectSuffix): src/KeyFileHelper.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/KeyFileHelper.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_KeyFileHelper.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/src_KeyFileHelper.cpp$(PreprocessSuffix): src/KeyFileHelper.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_KeyFileHelper.cpp$(PreprocessSuffix) "src/KeyFileHelper.cpp"
-
 $(IntermediateDirectory)/src_stdafx.cpp$(ObjectSuffix): src/stdafx.cpp 
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/stdafx.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_stdafx.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_stdafx.cpp$(PreprocessSuffix): src/stdafx.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_stdafx.cpp$(PreprocessSuffix) "src/stdafx.cpp"
-
-$(IntermediateDirectory)/src_Utils.cpp$(ObjectSuffix): src/Utils.cpp 
-	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/Utils.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_Utils.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/src_Utils.cpp$(PreprocessSuffix): src/Utils.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_Utils.cpp$(PreprocessSuffix) "src/Utils.cpp"
 
 $(IntermediateDirectory)/src_WinPortHandle.cpp$(ObjectSuffix): src/WinPortHandle.cpp 
 	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/WinPortHandle.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_WinPortHandle.cpp$(ObjectSuffix) $(IncludePath)
@@ -215,6 +205,11 @@ $(IntermediateDirectory)/src_ConvertUTF.c$(ObjectSuffix): src/ConvertUTF.c
 	$(CC) $(SourceSwitch) "./src/ConvertUTF.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_ConvertUTF.c$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_ConvertUTF.c$(PreprocessSuffix): src/ConvertUTF.c
 	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_ConvertUTF.c$(PreprocessSuffix) "src/ConvertUTF.c"
+
+$(IntermediateDirectory)/src_PathHelpers.cpp$(ObjectSuffix): src/PathHelpers.cpp 
+	$(CXX) $(IncludePCH) $(SourceSwitch) "./src/PathHelpers.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_PathHelpers.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_PathHelpers.cpp$(PreprocessSuffix): src/PathHelpers.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_PathHelpers.cpp$(PreprocessSuffix) "src/PathHelpers.cpp"
 
 $(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix): wineguts/casemap.c 
 	$(CC) $(SourceSwitch) "./wineguts/casemap.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wineguts_casemap.c$(ObjectSuffix) $(IncludePath)
@@ -655,6 +650,6 @@ $(IntermediateDirectory)/codepages_c_28606.c$(PreprocessSuffix): wineguts/codepa
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./$(ConfigurationName)/
 
 

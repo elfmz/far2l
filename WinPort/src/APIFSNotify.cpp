@@ -13,6 +13,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortSynch.h"
+#include <utils.h>
 
 
 class WinPortFSNotify : public WinPortEvent

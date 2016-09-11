@@ -7,11 +7,12 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <utils.h>
 
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 
 extern "C"
 {

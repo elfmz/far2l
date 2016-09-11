@@ -7,7 +7,7 @@ ProjectName            :=tmppanel
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./$(ConfigurationName)
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
@@ -81,11 +81,11 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	@echo rebuilt > "../.build-debug/tmppanel"
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 PreBuild:
 	@echo Executing Pre Build commands ...
@@ -121,6 +121,6 @@ $(IntermediateDirectory)/src_TmpPanel.cpp$(PreprocessSuffix): src/TmpPanel.cpp
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./$(ConfigurationName)/
 
 

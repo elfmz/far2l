@@ -591,6 +591,8 @@ typedef struct _INPUT_RECORD {
 #define CP_SYMBOL                 42          // SYMBOL translations
 #define CP_UTF7                   65000       // UTF-7 translation
 #define CP_UTF8                   65001       // UTF-8 translation
+#define CP_UTF16LE                65002       // UTF-16 translation
+#define CP_UTF16BE                65003       // UTF-16 translation
 
 
 #define CSTR_LESS_THAN            1           // string 1 less than string 2

@@ -10,7 +10,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "wineguts.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 #include "ConvertUTF.h"
 
 extern "C" {
@@ -254,51 +254,61 @@ extern "C" {
 	}
 
 
-	int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+	int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen, bool strict )
 	{
 		int ret;
+		const ConversionFlags cf = strict ? strictConversion : lenientConversion;
 		const UTF32 *source = (const UTF32 *)src, *source_end = (const UTF32 *)src;
 		source_end+= (srclen==-1) ? wcslen(src) + 1 : srclen;
 
 		if (dstlen==0) {
-			if (CalcSpaceUTF32toUTF8 (&ret, &source, source_end, lenientConversion)!=conversionOK) {
+			if (CalcSpaceUTF32toUTF8 (&ret, &source, source_end, cf)!=conversionOK) {
 				if (ret==0) ret = -2;
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
 			}
 		} else {
 			UTF8 *target = (UTF8 *)dst, *target_end = (UTF8 *)(dst + dstlen);
 
 			ConversionResult cr = ConvertUTF32toUTF8(
-				&source, source_end, &target, target_end, lenientConversion);
+				&source, source_end, &target, target_end, cf);
 			if (cr==targetExhausted) {
 				ret = -1;
 			} else {
 				ret = target - (UTF8 *)dst;
-				if (cr!=conversionOK && ret==0) ret = -2;
+				if (cr!=conversionOK) {
+					if (ret==0) ret = -2;
+					WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+				}
 			}
 		}
 		return ret;
 	}
 	
-	int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+	int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen, bool strict )
 	{
 		int ret;
+		const ConversionFlags cf = strict ? strictConversion : lenientConversion;
 		const UTF8 *source = (const UTF8 *)src, *source_end = (const UTF8 *)src;
 		source_end+= (srclen==-1) ? strlen(src) + 1 : srclen;
 
 		if (dstlen==0) {
-			if (CalcSpaceUTF8toUTF32 (&ret, &source, source_end, lenientConversion)!=conversionOK) {
+			if (CalcSpaceUTF8toUTF32 (&ret, &source, source_end, cf)!=conversionOK) {
 				if (ret==0) ret = -2;
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
 			}
 		} else {
 			UTF32 *target = (UTF32 *)dst, *target_end = (UTF32 *)(dst + dstlen);
 
 			ConversionResult cr = ConvertUTF8toUTF32(
-				&source, source_end, &target, target_end, lenientConversion);
+				&source, source_end, &target, target_end, cf);
 			if (cr==targetExhausted) {
 				ret = -1;
 			} else {
 				ret = target - (UTF32 *)dst;
-				if (cr!=conversionOK && ret==0) ret = -2;
+				if (cr!=conversionOK) {
+					if (ret==0) ret = -2;
+					WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+				}
 			}
 		}
 		return ret;
@@ -365,7 +375,7 @@ extern "C" {
 
 		case CP_UTF8:
 			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen, (flags&MB_ERR_INVALID_CHARS)!=0 );
 			} else {
 				ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
 			}
@@ -598,7 +608,7 @@ extern "C" {
 			}
 			
 			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen, (flags&MB_ERR_INVALID_CHARS)!=0 );
 			} else {
 				ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
 			}

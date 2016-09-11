@@ -7,7 +7,7 @@ ProjectName            :=farlng
 ConfigurationName      :=Debug
 WorkspacePath          := ".."
 ProjectPath            := "."
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./$(ConfigurationName)
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
@@ -36,12 +36,12 @@ ObjectsFileList        :="farlng.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  $(shell wx-config --debug=yes --libs --unicode=yes)
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src $(IncludeSwitch)../WinPort 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). $(IncludeSwitch)src $(IncludeSwitch)../WinPort $(IncludeSwitch)../utils/include 
 IncludePCH             := 
 RcIncludePath          := 
-Libs                   := $(LibrarySwitch)WinPort $(LibrarySwitch)dl $(LibrarySwitch)glib-2.0 
-ArLibs                 :=  "WinPort" "dl" "glib-2.0" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/Debug 
+Libs                   := $(LibrarySwitch)WinPort $(LibrarySwitch)utils $(LibrarySwitch)dl $(LibrarySwitch)glib-2.0 
+ArLibs                 :=  "WinPort" "utils" "dl" "glib-2.0" 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)../WinPort/$(ConfigurationName) $(LibraryPathSwitch)../utils/$(ConfigurationName) 
 
 ##
 ## Common variables
@@ -79,11 +79,11 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./$(ConfigurationName) || $(MakeDirCommand) ./$(ConfigurationName)
 
 PreBuild:
 
@@ -120,6 +120,6 @@ $(IntermediateDirectory)/src_lng.inserter.cpp$(PreprocessSuffix): src/lng.insert
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./$(ConfigurationName)/
 
 

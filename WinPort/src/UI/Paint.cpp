@@ -6,7 +6,8 @@
 #include <wx/fontenum.h>
 #include <wx/textfile.h>
 #include "Paint.h"
-#include "Utils.h"
+#include "PathHelpers.h"
+#include "utils.h"
 
 
 #define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
@@ -47,7 +48,7 @@ public:
 
 static void InitializeFont(wxWindow *parent, wxFont& font)
 {
-	const std::string &path = SettingsPath("font");
+	const std::string &path = InMyProfile("font");
 	wxTextFile file(path);
 	if (file.Exists() && file.Open()) {
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
@@ -156,7 +157,7 @@ ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 		
 	if (font.IsFixedWidth() && !is_unstable) {
 		struct stat s = {0};
-		if (stat(SettingsPath("nobuffering").c_str(), &s)!=0)
+		if (stat(InMyProfile("nobuffering").c_str(), &s)!=0)
 			_buffered_paint = true;
 	}
 	_fonts.push_back(font);

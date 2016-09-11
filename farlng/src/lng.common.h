@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include <utils.h>
 
 extern unsigned long CRC32 (
 		unsigned long crc,

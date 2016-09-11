@@ -537,18 +537,22 @@ ConversionResult CalcSpaceUTF8toUTF32 (int *out,
 	*out = 0;
     while (source < sourceEnd) {
         UTF32 ch = 0;
+		
         unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
         if (extraBytesToRead >= sourceEnd - source) {
-            result = sourceExhausted; break;
-        }
-        /* Do this check whether lenient or strict */
-        if (!isLegalUTF8(source, extraBytesToRead+1)) {
+            result = sourceExhausted;
+			break;
+        } 
+		
+		if (!isLegalUTF8(source, extraBytesToRead+1)) {
             result = sourceIllegal;
-            break;
-        }
-        /*
-         * The cases all fall through. See "Note A" below.
-         */
+			if (flags!=lenientConversion) break;
+			++source;
+			++(*out);
+			continue;
+        } 
+		
+		
         switch (extraBytesToRead) {
             case 5: ch += *source++; ch <<= 6;
             case 4: ch += *source++; ch <<= 6;
@@ -595,10 +599,17 @@ ConversionResult ConvertUTF8toUTF32 (
         if (extraBytesToRead >= sourceEnd - source) {
             result = sourceExhausted; break;
         }
+        if (target >= targetEnd) {
+            result = targetExhausted; break;
+        }
+		
         /* Do this check whether lenient or strict */
         if (!isLegalUTF8(source, extraBytesToRead+1)) {
             result = sourceIllegal;
-            break;
+			if (flags!=lenientConversion) break;
+			++source;
+			*target++ = UNI_REPLACEMENT_CHAR;
+			continue;
         }
         /*
          * The cases all fall through. See "Note A" below.
@@ -613,10 +624,6 @@ ConversionResult ConvertUTF8toUTF32 (
         }
         ch -= offsetsFromUTF8[extraBytesToRead];
 
-        if (target >= targetEnd) {
-            source -= (extraBytesToRead+1); /* Back up the source pointer! */
-            result = targetExhausted; break;
-        }
         if (ch <= UNI_MAX_LEGAL_UTF32) {
             /*
              * UTF-16 surrogate values are illegal in UTF-32, and anything

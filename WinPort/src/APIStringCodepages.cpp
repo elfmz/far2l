@@ -32,7 +32,6 @@ template <class SRC_T, class DST_T>
 
 	if (dstlen==0) {
 		if (fnCalcSpace (&ret, &source, source_end, cf)!=conversionOK) {
-			if (ret==0) ret = -2; 
 			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
 		}
 		
@@ -47,7 +46,6 @@ template <class SRC_T, class DST_T>
 		} else {
 			ret = target - (DST_T *)dst;
 			if (cr!=conversionOK) {
-				if (ret==0) ret = -2;
 				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
 			}
 		}
@@ -81,7 +79,7 @@ static int short_wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_
 	return srclen;
 }
 	
-static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen)
+static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen, bool reverse)
 {
 	int ret;
 	
@@ -93,17 +91,42 @@ static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char 
 	} else
 		ret = short_wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
 	
-	if (ret > 0) ret*= sizeof(UTF16);
+	if (ret > 0)  {
+		if (reverse && dst) {
+			for (int i = 0; i < ret; ++i) {
+				std::swap(dst[i * 2], dst[i * 2 + 1]);
+			}
+		}		
+		ret*= sizeof(UTF16);
+	}
 	
 	return ret;
 }
 
 	
-static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
+static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen, bool reverse)
 {
 	int ret;
 	
 	if (srclen > 0) srclen/= sizeof(UTF16);
+	
+	char *tmp = NULL;
+	if (reverse) {
+		if (srclen==-1) srclen = wcslen((const wchar_t *)src) + 1;
+		
+		const bool onstack = (srclen < 0x10000);
+		tmp = (char *) (onstack ? alloca(srclen * sizeof(UTF16)) : malloc(srclen * sizeof(UTF16)));
+			
+		if (!tmp) 
+			return -2;
+			
+		for (int i = 0; i < srclen; ++i) {
+			tmp[2 * i] = src[2 * i + 1];
+			tmp[2 * i + 1] = src[2 * i];
+		}
+		src = tmp;
+		if (onstack) tmp = NULL;
+	}
 	
 	if (sizeof(WCHAR)==4) {
 		
@@ -112,8 +135,10 @@ static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 	} else
 		ret = short_wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
 		
+	free(tmp);
 	return ret;
 }
+
 	
 extern "C" {
 	UINT TranslateCodepage(UINT codepage)
@@ -418,8 +443,12 @@ extern "C" {
 			ret = utf7_mbstowcs( src, srclen, dst, dstlen );
 			break;
 
-		case CP_UTF16:
-			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen );
+		case CP_UTF16LE:
+			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF16BE:
+			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, true );
 			break;
 
 		case CP_UTF8:
@@ -649,8 +678,12 @@ extern "C" {
 			ret = utf7_wcstombs( src, srclen, dst, dstlen );
 			break;
 		
-		case CP_UTF16:
-			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen );
+		case CP_UTF16LE:
+			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF16BE:
+			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, true );
 			break;
 
 		case CP_UTF8:
@@ -712,19 +745,37 @@ extern "C" {
 			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 			return FALSE;
 		}
+		memset(cpinfo, 0, sizeof(*cpinfo));
 
 		codepage = TranslateCodepage(codepage);
 
 		if (!(table = get_codepage_table( codepage )))
 		{
-			switch(codepage)
-			{
+			switch(codepage) {
 			case CP_UTF7:
 			case CP_UTF8:
 				cpinfo->DefaultChar[0] = 0x3f;
-				cpinfo->DefaultChar[1] = 0;
-				cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
 				cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
+				return TRUE;
+
+			case CP_UTF16LE: 
+				cpinfo->DefaultChar[0] = 0x3f;
+				cpinfo->MaxCharSize = 2;
+				return TRUE;
+
+			case CP_UTF16BE:
+				cpinfo->DefaultChar[1] = 0x3f;
+				cpinfo->MaxCharSize = 2;
+				return TRUE;
+				
+			case CP_UTF32LE: 
+				cpinfo->DefaultChar[0] = 0x3f;
+				cpinfo->MaxCharSize = 4;
+				return TRUE;
+
+			case CP_UTF32BE:
+				cpinfo->DefaultChar[3] = 0x3f;
+				cpinfo->MaxCharSize = 4;
 				return TRUE;
 			}
 			fprintf(stderr, "GetCPInfo: bad codepage %u\n", codepage);
@@ -772,6 +823,38 @@ extern "C" {
 				cpinfo->CodePage = CP_UTF8;
 				cpinfo->UnicodeDefaultChar = 0x3f;
 				strcpyW(cpinfo->CodePageName, utf8);
+				break;
+			}
+
+			case CP_UTF16LE:
+			{
+				cpinfo->CodePage = CP_UTF16LE;
+				cpinfo->UnicodeDefaultChar = 0x3f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-16 LE)");
+				break;
+			}
+
+			case CP_UTF16BE:
+			{
+				cpinfo->CodePage = CP_UTF16BE;
+				cpinfo->UnicodeDefaultChar = 0x003f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-16 BE)");
+				break;
+			}
+
+			case CP_UTF32LE:
+			{
+				cpinfo->CodePage = CP_UTF32LE;
+				cpinfo->UnicodeDefaultChar = 0x3f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-32 LE)");
+				break;
+			}
+
+			case CP_UTF32BE:
+			{
+				cpinfo->CodePage = CP_UTF32BE;
+				cpinfo->UnicodeDefaultChar = 0x0000003f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-32 BE)");
 				break;
 			}
 

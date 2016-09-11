@@ -142,7 +142,7 @@ DWORD Edit::SetCodePage(UINT codepage)
 	BOOL UsedDefaultChar=FALSE;
 	LPBOOL lpUsedDefaultChar=&UsedDefaultChar;
 
-	if (m_codepage==CP_UTF7 || m_codepage==CP_UTF8) // BUGBUG: CP_SYMBOL, 50xxx, 57xxx too
+	if (m_codepage==CP_UTF7 || m_codepage==CP_UTF8 || m_codepage==CP_UTF16LE|| m_codepage==CP_UTF16BE) // BUGBUG: CP_SYMBOL, 50xxx, 57xxx too
 	{
 		wc2mbFlags=0;
 		lpUsedDefaultChar=nullptr;

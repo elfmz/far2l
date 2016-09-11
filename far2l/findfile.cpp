@@ -515,10 +515,15 @@ void InitInFileSearch()
 					codePages = (CodePageInfo *)xf_malloc(codePagesCount*sizeof(CodePageInfo));
 					codePages[0].CodePage = WINPORT(GetOEMCP)();
 					codePages[1].CodePage = WINPORT(GetACP)();
-					codePages[2].CodePage = CP_UTF7;
-					codePages[3].CodePage = CP_UTF8;
-					codePages[4].CodePage = CP_UNICODE;
-					codePages[5].CodePage = CP_REVERSEBOM;
+					codePages[2].CodePage = CP_KOI8R;
+					codePages[3].CodePage = CP_UTF7;
+					codePages[4].CodePage = CP_UTF8;
+					codePages[5].CodePage = CP_UTF16LE;
+					codePages[6].CodePage = CP_UTF16BE;
+#if (__WCHAR_MAX__ > 0xffff)					
+					codePages[7].CodePage = CP_UTF32LE;
+					codePages[8].CodePage = CP_UTF32LE;
+#endif					
 				}
 				else
 				{
@@ -565,9 +570,9 @@ void InitInFileSearch()
 			{
 				CodePageInfo *cp = codePages+index;
 
-				if (IsUnicodeCodePage(cp->CodePage))
-					cp->MaxCharSize = 2;
-				else
+				if (IsFullWideCodePage(cp->CodePage)) {
+					cp->MaxCharSize = sizeof(wchar_t);
+				} else
 				{
 					CPINFO cpi;
 
@@ -1138,22 +1143,26 @@ bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, const wcha
 }
 
 // Алгоритма Бойера-Мура-Хорспула поиска подстроки (Unicode версия)
+
+#define WC16(wc) ((wc)&0xffff) //workaround since buffers were designed for 16bit wchar_t
+
 const int FindStringBMH(const wchar_t* searchBuffer, size_t searchBufferCount)
 {
 	size_t findStringCount = strFindStr.GetLength();
 	const wchar_t *buffer = searchBuffer;
 	const wchar_t *findStringLower = CmpCase ? nullptr : findString+findStringCount;
 	size_t lastBufferChar = findStringCount-1;
-
 	while (searchBufferCount>=findStringCount)
 	{
-		for (size_t index = lastBufferChar; buffer[index]==findString[index] || (CmpCase ? 0 : buffer[index]==findStringLower[index]); index--)
+		for (size_t index = lastBufferChar; 
+			WC16(buffer[index])==WC16(findString[index]) || (CmpCase ? 0 : WC16(buffer[index])==WC16(findStringLower[index])); index--) {
 			if (!index)
-				return static_cast<int>(buffer-searchBuffer);
-
-		size_t offset = skipCharsTable[buffer[lastBufferChar]];
-		searchBufferCount -= offset;
-		buffer += offset;
+				return static_cast<int>(buffer-searchBuffer);				
+		}
+		
+		size_t offset = skipCharsTable[WC16(buffer[lastBufferChar])];
+		searchBufferCount-= offset;
+		buffer+= offset;
 	}
 
 	return -1;
@@ -1280,11 +1289,11 @@ int LookForString(const wchar_t *Name)
 				// Буфер для поиска
 				wchar_t *buffer;
 
-				// Перегоняем буфер в UTF-16
-				if (IsUnicodeCodePage(cpi->CodePage))
+				// Перегоняем буфер в wchar_t
+				if (IsFullWideCodePage(cpi->CodePage))
 				{
-					// Вычисляем размер буфера в UTF-16
-					bufferCount = readBlockSize / 2;
+					// Вычисляем размер буфера в wchar_t
+					bufferCount = readBlockSize / sizeof(wchar_t);
 
 					// Выходим, если размер буфера меньше длины строки посика
 					if (bufferCount < findStringCount)
@@ -1293,25 +1302,14 @@ int LookForString(const wchar_t *Name)
 
 					// Копируем буфер чтения в буфер сравнения
 					//todo
-					if (cpi->CodePage==CP_REVERSEBOM)
-					{
-						for (size_t i = 0; i < bufferCount; ++i) {
-							const uint16_t v = *(uint16_t *)&readBufferA[i * 2];
-							readBuffer[i] = (wchar_t)(((v & 0xff) << 8) | ((v & 0xff00) >> 8));
-						}
-					}
-					else
-					{
-						for (size_t i = 0; i < bufferCount; ++i) {
-							const uint16_t v = *(uint16_t *)&readBufferA[i * 2];
-							readBuffer[i] = (wchar_t)v;
-						}
+					if (cpi->CodePage==CP_WIDE_BE) {
+						WideReverse((wchar_t*)readBufferA, (wchar_t*)readBufferA, bufferCount);
 					}
 					buffer = readBuffer;
 				}
 				else
 				{
-					// Конвертируем буфер чтения из кодировки поиска в UTF-16
+					// Конвертируем буфер чтения из кодировки поиска в wchar_t
 					bufferCount = WINPORT(MultiByteToWideChar)(
 					                  cpi->CodePage,
 					                  0,
@@ -1345,7 +1343,7 @@ int LookForString(const wchar_t *Name)
 									CONTINUE(FALSE)
 								}
 
-					// Устанавливаем буфер стравнения
+					// Устанавливаем буфер сравнения
 					buffer = readBuffer;
 				}
 
@@ -2454,8 +2452,6 @@ void DoScanTree(HANDLE hDlg, FARString& strRoot)
 			while (WINPORT(InterlockedCompareExchange)(&PauseFlag, 0, 0)) WINPORT(Sleep)(10);
 
 			bool bContinue=false;
-			HANDLE hFindStream=INVALID_HANDLE_VALUE;
-			bool FirstCall=true;
 			FARString strFindDataFileName=FindData.strFileName;
 
 			while (!WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0))

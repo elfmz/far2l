@@ -150,7 +150,7 @@ void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool
 	}
 }
 
-void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr, bool SingleItemMenu = false, UINT MenuCP = CP_UNICODE)
+void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr, bool SingleItemMenu = false, UINT MenuCP = CP_WIDE_LE)
 {
 	INT64 Pos = 0;
 	MenuFile.GetPointer(Pos);
@@ -368,8 +368,8 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 				if (MenuFile.Open(strMenuFileFullPath,GENERIC_WRITE, FILE_SHARE_READ, nullptr, FileAttr==INVALID_FILE_ATTRIBUTES?CREATE_NEW:TRUNCATE_EXISTING))
 				{
 					CachedWrite CW(MenuFile);
-					WCHAR Data = SIGN_UNICODE;
-					CW.Write(&Data, 1*sizeof(WCHAR));
+					WCHAR Data = SIGN_WIDE_LE;
+					CW.Write(&Data, sizeof(WCHAR));
 					MenuRegToFile(strLocalMenuKey,MenuFile, CW);
 					CW.Flush();
 					UINT64 Size = 0;
@@ -689,8 +689,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 						else
 							strCurrentKey=MenuRootKey;
 						CachedWrite CW(MenuFile);
-						WCHAR Data = SIGN_UNICODE;
-						CW.Write(&Data, 1*sizeof(WCHAR));
+						WCHAR Data = SIGN_WIDE_LE;
+						CW.Write(&Data, sizeof(WCHAR));
 						MenuRegToFile(strCurrentKey, MenuFile, CW, Key==KEY_ALTSHIFTF4);
 						CW.Flush();
 						MenuNeedRefresh=true;
@@ -698,7 +698,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 						{
 							ConsoleTitle *OldTitle=new ConsoleTitle;
 							FARString strFileName = strMenuFileName;
-							FileEditor ShellEditor(strFileName,CP_UNICODE,FFILEEDIT_DISABLEHISTORY,-1,-1,nullptr);
+							FileEditor ShellEditor(strFileName,CP_WIDE_LE,FFILEEDIT_DISABLEHISTORY,-1,-1,nullptr);
 							delete OldTitle;
 							ShellEditor.SetDynamicallyBorn(false);
 							FrameManager->EnterModalEV();

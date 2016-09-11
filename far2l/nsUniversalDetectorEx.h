@@ -29,10 +29,14 @@ class nsUniversalDetectorEx : public nsUniversalDetector
 				m_codepage = 1253;
 			else if (!strcmp(aCharset, "windows-1255"))
 				m_codepage = 1255;
-			else if (!strcmp(aCharset, "UTF16-LE"))
-				m_codepage = CP_UNICODE;
+			else if (!strcmp(aCharset, "UTF16-LE") || !strcmp(aCharset, "UTF16"))
+				m_codepage = CP_UTF16LE;
 			else if (!strcmp(aCharset, "UTF16-BE"))
-				m_codepage = CP_REVERSEBOM;
+				m_codepage = CP_UTF16BE;
+			else if (!strcmp(aCharset, "UTF32-LE") || !strcmp(aCharset, "UTF32"))
+				m_codepage = CP_UTF32LE;
+			else if (!strcmp(aCharset, "UTF32-BE"))
+				m_codepage = CP_UTF32BE;
 			else if (!strcmp(aCharset, "UTF-8"))
 				m_codepage = CP_UTF8;
 			else if (!strcmp(aCharset, "IBM855"))
@@ -44,7 +48,7 @@ class nsUniversalDetectorEx : public nsUniversalDetector
 			else if (!strcmp(aCharset, "x-mac-hebrew"))
 				m_codepage = 10005;
 			else if (!strcmp(aCharset, "x-mac-cyrillic"))
-				m_codepage = 1251; /*10007*/ //Оно слишком похоже на 1251 и детектор бывает путает.
+				m_codepage = 1251; /*10007*/ //ГЋГ­Г® Г±Г«ГЁГёГЄГ®Г¬ ГЇГ®ГµГ®Г¦ГҐ Г­Г  1251 ГЁ Г¤ГҐГІГҐГЄГІГ®Г° ГЎГ»ГўГ ГҐГІ ГЇГіГІГ ГҐГІ.
 			else if (!strcmp(aCharset, "ISO-8859-2"))
 				m_codepage = 28592;
 			else if (!strcmp(aCharset, "ISO-8859-5"))

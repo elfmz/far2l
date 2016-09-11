@@ -589,10 +589,22 @@ typedef struct _INPUT_RECORD {
 #define CP_MACCP                  2           // default to MAC  code page
 #define CP_THREAD_ACP             3           // current thread's ANSI code page
 #define CP_SYMBOL                 42          // SYMBOL translations
+#define CP_KOI8R                  20866       // UTF-7 translation
 #define CP_UTF7                   65000       // UTF-7 translation
 #define CP_UTF8                   65001       // UTF-8 translation
-#define CP_UTF16                  65002       // UTF-16 translation
+#define CP_UTF16LE                1200        // UTF-16 translation
+#define CP_UTF16BE                1201        // UTF-16 translation
+#define CP_UTF32LE				  61200
+#define CP_UTF32BE				  61201
 
+#if (__WCHAR_MAX__ > 0xffff)
+# define CP_WIDE_LE CP_UTF32LE
+# define CP_WIDE_BE CP_UTF32BE
+# define WCHAR_REVERSE(w) ()
+#else
+# define CP_WIDE_LE CP_UTF16LE
+# define CP_WIDE_BE CP_UTF16BE
+#endif
 
 #define CSTR_LESS_THAN            1           // string 1 less than string 2
 #define CSTR_EQUAL                2           // string 1 equal to string 2
@@ -1215,7 +1227,7 @@ typedef void *HKL;
 #define IS_TEXT_UNICODE_NOT_ASCII_MASK        0xF000
 
 #define MAX_LEADBYTES             12          // 5 ranges, 2 bytes ea., 0 term.
-#define MAX_DEFAULTCHAR           2           // single or double byte
+#define MAX_DEFAULTCHAR           4           // single or double byte
 
 typedef struct _cpinfo {
     UINT    MaxCharSize;                    // max length (in bytes) of a char
@@ -1532,9 +1544,11 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 #ifdef _WIN32
 # define NATIVE_EOL		"\r\n"
 # define NATIVE_EOLW		L"\r\n"
+# define NATIVE_EOL2		"\r\0\n\0"
 #else
 # define NATIVE_EOL		"\n"
 # define NATIVE_EOLW		L"\n"
+# define NATIVE_EOL2		"\n\0"
 #endif
 
 #ifdef __GNUC__

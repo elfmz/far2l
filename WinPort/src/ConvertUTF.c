@@ -114,6 +114,43 @@ static const UTF8 firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC 
 
 
 /* --------------------------------------------------------------------- */
+ConversionResult CalcSpaceUTF32toUTF16 (int *out,
+	const UTF32** sourceStart, const UTF32* sourceEnd,
+	ConversionFlags flags)
+{
+    ConversionResult result = conversionOK;
+    const UTF32* source = *sourceStart;
+	*out = 0;
+    while (source < sourceEnd) {
+        UTF32 ch;
+        ch = *source++;
+        if (ch <= UNI_MAX_BMP) { /* Target is a character <= 0xFFFF */
+            /* UTF-16 surrogate values are illegal in UTF-32; 0xffff or 0xfffe are both reserved values */
+            if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_LOW_END) {
+                if (flags == strictConversion) {
+                    --source; /* return to the illegal value itself */
+                    result = sourceIllegal;
+                    break;
+                } else {
+					++(*out);
+                }
+            } else {
+                ++(*out);
+            }
+        } else if (ch > UNI_MAX_LEGAL_UTF32) {
+            if (flags == strictConversion) {
+                result = sourceIllegal;
+            } else {
+                ++(*out);
+            }
+        } else {
+            ch -= halfBase;
+			(*out)+= 2;
+        }
+    }
+    *sourceStart = source;
+    return result;
+}
 
 ConversionResult ConvertUTF32toUTF16 (
         const UTF32** sourceStart, const UTF32* sourceEnd, 
@@ -163,6 +200,50 @@ ConversionResult ConvertUTF32toUTF16 (
 }
 
 /* --------------------------------------------------------------------- */
+
+ConversionResult CalcSpaceUTF16toUTF32 (int *out,
+	const UTF16** sourceStart, const UTF16* sourceEnd,
+	ConversionFlags flags)
+{
+    ConversionResult result = conversionOK;
+    const UTF16* source = *sourceStart;
+    UTF32 ch, ch2;
+	*out = 0;
+    while (source < sourceEnd) {
+        ch = *source++;
+        /* If we have a surrogate pair, convert to UTF32 first. */
+        if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_HIGH_END) {
+            /* If the 16 bits following the high surrogate are in the source buffer... */
+            if (source < sourceEnd) {
+                ch2 = *source;
+                /* If it's a low surrogate, convert to UTF32. */
+                if (ch2 >= UNI_SUR_LOW_START && ch2 <= UNI_SUR_LOW_END) {
+                    ch = ((ch - UNI_SUR_HIGH_START) << halfShift)
+                        + (ch2 - UNI_SUR_LOW_START) + halfBase;
+                    ++source;
+                } else if (flags == strictConversion) { /* it's an unpaired high surrogate */
+                    --source; /* return to the illegal value itself */
+                    result = sourceIllegal;
+                    break;
+                }
+            } else { /* We don't have the 16 bits following the high surrogate. */
+                --source; /* return to the high surrogate */
+                result = sourceExhausted;
+                break;
+            }
+        } else if (flags == strictConversion) {
+            /* UTF-16 surrogate values are illegal in UTF-32 */
+            if (ch >= UNI_SUR_LOW_START && ch <= UNI_SUR_LOW_END) {
+                --source; /* return to the illegal value itself */
+                result = sourceIllegal;
+                break;
+            }
+        }
+		++(*out);
+    }
+    *sourceStart = source;
+    return result;
+}
 
 ConversionResult ConvertUTF16toUTF32 (
         const UTF16** sourceStart, const UTF16* sourceEnd, 
@@ -218,6 +299,9 @@ if (result == sourceIllegal) {
 #endif
     return result;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+
 ConversionResult ConvertUTF16toUTF8 (
         const UTF16** sourceStart, const UTF16* sourceEnd, 
         UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags) {

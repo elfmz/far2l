@@ -1283,10 +1283,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			{
 				int codepage = SelectCodePage(m_codepage, false, true);
 				if (codepage != -1 && codepage != (int)m_codepage) {
-					const bool need_reload = 
-								IsFixedSingleCharCodePage(m_codepage) != IsFixedSingleCharCodePage(codepage)
+					const bool need_reload = 0
+//								|| IsFixedSingleCharCodePage(m_codepage) != IsFixedSingleCharCodePage(codepage)
+//								|| (!IsUTF8(m_codepage) &&8IsUTF7(codepage))
 								|| IsUTF7(m_codepage) != IsUTF7(codepage)
-								|| IsUTF8(m_codepage) != IsUTF8(codepage)
 								|| IsUTF16(m_codepage) != IsUTF16(codepage)
 								|| IsUTF32(m_codepage) != IsUTF32(codepage);
 					if (!IsFileModified() || !need_reload) {

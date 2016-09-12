@@ -22,5 +22,5 @@ target_include_directories(WinPort PRIVATE .)
 target_include_directories(WinPort PRIVATE src/UI)
 target_include_directories(WinPort PRIVATE src)
 
-target_link_libraries(WinPort wineguts ${wxWidgets_LIBRARIES} ${GLIB2_LIBRARIES})
+target_link_libraries(WinPort wineguts utils ${wxWidgets_LIBRARIES} ${GLIB2_LIBRARIES})
 

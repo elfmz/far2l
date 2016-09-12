@@ -220,6 +220,12 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	SelectSize = 0; // Сбросим выделение
 	strFileName = Name;
 
+	DWORD FileAttr = apiGetFileAttributes(Name);
+	if (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr&FILE_ATTRIBUTE_DEVICE)!=0) {//avoid stuck
+		OpenFailed=TRUE;
+		return FALSE;
+	}
+
 	if (Opt.OnlyEditorViewerUsed && !StrCmp(strFileName, L"-"))
 	{
 		FARString strTempName;

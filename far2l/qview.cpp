@@ -372,11 +372,17 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 		return;
 	}
 
+	if (!hDirPlugin) {
+		FileAttr = apiGetFileAttributes(FileName);
+		if (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr&FILE_ATTRIBUTE_DEVICE)!=0)  //avoid stuck
+			return;
+	}
+
 	bool SameFile=!StrCmp(strCurFileName,FileName);
 	strCurFileName = FileName;
 //	size_t pos;
 
-	if (hDirPlugin || ((FileAttr=apiGetFileAttributes(strCurFileName))!=INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
+	if (hDirPlugin || (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
 	{
 		// Не показывать тип файла для каталогов в "Быстром просмотре"
 		strCurFileType.Clear();

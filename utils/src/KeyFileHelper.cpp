@@ -2,7 +2,7 @@
 
 //# define GLIB_VERSION_MIN_REQUIRED      (GLIB_VERSION_2_26)
 //# define GLIB_VERSION_MAX_ALLOWED	(G_ENCODE_VERSION (2, 99))
-
+#include <WinCompat.h>
 #include <glib.h>
 #include <string.h>
 #include <mutex>

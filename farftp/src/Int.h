@@ -1,6 +1,7 @@
 #ifndef __FAR_PLUGIN_FTP
 #define __FAR_PLUGIN_FTP
 
+#include <utils.h>
 #include "fstdlib.h"         //FAR plugin stdlib
 #include "lib/Plugin.h"  //Plugin
 

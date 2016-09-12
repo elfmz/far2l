@@ -220,6 +220,12 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	SelectSize = 0; // Сбросим выделение
 	strFileName = Name;
 
+	DWORD FileAttr = apiGetFileAttributes(Name);
+	if (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr&FILE_ATTRIBUTE_DEVICE)!=0) {//avoid stuck
+		OpenFailed=TRUE;
+		return FALSE;
+	}
+
 	if (Opt.OnlyEditorViewerUsed && !StrCmp(strFileName, L"-"))
 	{
 		FARString strTempName;
@@ -348,8 +354,8 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		}
 
 		// BUGBUG
-		// пока что запретим переключать hex в UTF8, ибо не работает.
-		if (VM.Hex && VM.CodePage==CP_UTF8)
+		// пока что запретим переключать hex в UTF8/UTF32, ибо не работает.
+		if (VM.Hex && (VM.CodePage==CP_UTF8 || VM.CodePage==CP_UTF32LE || VM.CodePage==CP_UTF32BE))
 		{
 			VM.CodePage=Opt.ViOpt.AnsiCodePageAsDefault?WINPORT(GetACP)():WINPORT(GetOEMCP)();
 		}
@@ -640,7 +646,7 @@ void Viewer::ShowHex()
 
 		const wchar_t BorderLine[]={BoxSymbols[BS_V1],L' ',0};
 
-		if (IsUnicodeCodePage(VM.CodePage))
+		if (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE)
 		{
 			for (X=0; X<8; X++)
 			{
@@ -685,12 +691,12 @@ void Viewer::ShowHex()
 				}
 				else
 				{
-					WCHAR OutChar=Ch;
+					WCHAR OutChar = Ch;
 
-					if (VM.CodePage == CP_REVERSEBOM)
-					{
-						_swab(reinterpret_cast<LPSTR>(&OutChar),reinterpret_cast<LPSTR>(&OutChar),sizeof(WCHAR));
+					if (VM.CodePage == CP_UTF16BE) {
+						_swab((char*)&OutChar, (char*)&OutChar, sizeof(OutChar));
 					}
+
 
 					int OutStrLen=StrLength(OutStr);
 					swprintf(OutStr+OutStrLen,ARRAYSIZE(OutStr)-OutStrLen,L"%02X%02X ", (unsigned int)HIBYTE(OutChar), (unsigned int)LOBYTE(OutChar));
@@ -882,8 +888,11 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 
 	if (VM.Hex)
 	{
-		OutPtr=vread(pString->lpData,IsUnicodeCodePage(VM.CodePage) ? 8:16);
-		pString->lpData[IsUnicodeCodePage(VM.CodePage) ? 8:16]=0;
+		size_t len = 8;
+		if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t);
+
+		OutPtr=vread(pString->lpData, len);
+		pString->lpData[len] = 0;
 	}
 	else
 	{
@@ -1174,7 +1183,7 @@ int Viewer::ProcessKey(int Key)
 			if (SelectSize && ViewFile.Opened())
 			{
 				wchar_t *SelData;
-				size_t DataSize = (size_t)SelectSize+(IsUnicodeCodePage(VM.CodePage)?sizeof(wchar_t):1);
+				size_t DataSize = (size_t)SelectSize + (IsFullWideCodePage(VM.CodePage) ? sizeof(wchar_t) : 1);
 				int64_t CurFilePos=vtell();
 
 				if ((SelData=(wchar_t*)xf_malloc(DataSize*sizeof(wchar_t))) )
@@ -1371,9 +1380,9 @@ int Viewer::ProcessKey(int Key)
 		}
 		case KEY_F8:
 		{
-			if (IsUnicodeCodePage(VM.CodePage))
+			if (IsFullWideCodePage(VM.CodePage))
 			{
-				FilePos*=2;
+				FilePos*= sizeof(wchar_t);
 				SetFileSize();
 				SelectPos = 0;
 				SelectSize = 0;
@@ -1391,8 +1400,8 @@ int Viewer::ProcessKey(int Key)
 			UINT nCodePage = SelectCodePage(VM.CodePage, true, true);
 
 			// BUGBUG
-			// пока что запретим переключать hex в UTF8, ибо не работает.
-			if (VM.Hex && nCodePage==CP_UTF8)
+			// пока что запретим переключать hex в UTF8/UTF32, ибо не работает.
+			if (VM.Hex && (nCodePage==CP_UTF8 || nCodePage==CP_UTF32LE || nCodePage==CP_UTF32BE))
 			{
 				return TRUE;
 			}
@@ -1401,16 +1410,16 @@ int Viewer::ProcessKey(int Key)
 			{
 				CodePageChangedByUser=TRUE;
 
-				if (IsUnicodeCodePage(VM.CodePage) && !IsUnicodeCodePage(nCodePage))
+				if (IsFullWideCodePage(VM.CodePage) && !IsFullWideCodePage(nCodePage))
 				{
-					FilePos*=2;
+					FilePos*= sizeof(wchar_t);
 					SelectPos = 0;
 					SelectSize = 0;
 					SetCRSym();
 				}
-				else if (!IsUnicodeCodePage(VM.CodePage) && IsUnicodeCodePage(nCodePage))
+				else if (!IsFullWideCodePage(VM.CodePage) && IsFullWideCodePage(nCodePage))
 				{
-					FilePos=(FilePos+(FilePos&1))/2; //????
+					FilePos=(FilePos+(FilePos&3))/4; //????
 					SelectPos = 0;
 					SelectSize = 0;
 					SetCRSym();
@@ -1488,7 +1497,9 @@ int Viewer::ProcessKey(int Key)
 
 				if (VM.Hex)
 				{
-					FilePos&=~(IsUnicodeCodePage(VM.CodePage) ? 0x7:0xf);
+					size_t len = 0x8;
+					if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t); 
+					FilePos&=~ (len - 1);
 					Show();
 				}
 				else
@@ -1755,8 +1766,11 @@ int Viewer::ProcessKey(int Key)
 				          Message(0,1,"Up",Buf,"Ok");
 				        }
 				*/
-				if (VM.Hex)
-					FilePos&=~(IsUnicodeCodePage(VM.CodePage) ? 0x7:0xf);
+				if (VM.Hex) {
+					size_t len = 0x8;
+					if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t); 
+					FilePos&= ~(len - 1);
+				}
 
 				/*
 				        if (VM.Hex)
@@ -1941,7 +1955,7 @@ void Viewer::Up()
 
 	if (VM.Hex)
 	{
-		int UpSize=IsUnicodeCodePage(VM.CodePage) ? 8:16;
+		int UpSize=IsFullWideCodePage(VM.CodePage) ? 8 : 8 * sizeof(wchar_t);
 
 		if (FilePos<(int64_t)UpSize)
 			FilePos=0;
@@ -2051,7 +2065,7 @@ int Viewer::CalcStrSize(const wchar_t *Str,int Length)
 
 int Viewer::GetStrBytesNum(const wchar_t *Str, int Length)
 {
-	if (IsUnicodeCodePage(VM.CodePage))
+	if (IsFullWideCodePage(VM.CodePage))
 		return Length;
 	else
 		return WINPORT(WideCharToMultiByte)(VM.CodePage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
@@ -2262,7 +2276,7 @@ void Viewer::Search(int Next,int FirstChar)
 	if (SearchFlags.Check(REVERSE_SEARCH))
 		SearchDlg[SD_CHECKBOX_REVERSE].Selected=!SearchDlg[SD_CHECKBOX_REVERSE].Selected;
 
-	if (IsUnicodeCodePage(VM.CodePage))
+	if (IsFullWideCodePage(VM.CodePage))
 	{
 		SearchDlg[SD_RADIO_TEXT].Selected=TRUE;
 		SearchDlg[SD_RADIO_HEX].Flags|=DIF_DISABLE;
@@ -2699,33 +2713,27 @@ void Viewer::SetNamesList(NamesList *List)
 
 int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
-	if (IsUnicodeCodePage(VM.CodePage))
+	if (IsFullWideCodePage(VM.CodePage))
 	{
 		// выделяем столько, сколько нужно!
-		char *TmpBuf=(char *)xf_malloc(Count*2+16);
+		char *TmpBuf=(char *)xf_malloc(Count * sizeof(wchar_t) + 32);
 
 		if (!TmpBuf)
 			return -1;
 
 		DWORD ReadSize=0;
-		Reader.Read(TmpBuf, Count*2, &ReadSize);
+		Reader.Read(TmpBuf, Count * sizeof(wchar_t), &ReadSize);
 		TmpBuf[ReadSize]=0;
 		/* $ 20.10.2000 tran
 		   обратный порядок байтов */
 		TmpBuf[ReadSize+1]=0;
 
-		if (!Raw && VM.CodePage == CP_REVERSEBOM)
-		{
-			for (DWORD i=0; i<ReadSize; i+=2)
-			{
-				char t=TmpBuf[i];
-				TmpBuf[i]=TmpBuf[i+1];
-				TmpBuf[i+1]=t;
-			}
+		if (!Raw && VM.CodePage == CP_WIDE_BE) {
+			WideReverse((const wchar_t *)TmpBuf, (wchar_t *)TmpBuf, ReadSize/sizeof(wchar_t));
 		}
 
-		ReadSize+=(ReadSize & 1);
-		Count = ReadSize / 2;
+		ReadSize+=(ReadSize & (sizeof(wchar_t)-1));
+		Count = ReadSize / sizeof(wchar_t);
 		for (int i = 0; i<Count; ++i) {
 			Buf[i] = (wchar_t)*(unsigned short *)&TmpBuf[i * 2];
 		}
@@ -2785,6 +2793,17 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 				Reader.Read(TmpBuf+1, cc, &CurRead);
 				ReadSize += CurRead;
 				ConvertSize = Min(cc+1,ReadSize);
+			} else if ( (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) && ReadSize ) {
+				DWORD CurRead=0;
+				Reader.Read(TmpBuf + 1, 1, &CurRead);
+				ReadSize += CurRead;
+				ConvertSize = Min((DWORD)2, ReadSize);
+				if (CurRead > 0 && *(PDWORD)TmpBuf>=0xd800 && *(PDWORD)TmpBuf<=0xdfff) {
+					CurRead = 0;
+					Reader.Read(TmpBuf+2, 2, &CurRead);
+					ReadSize += CurRead;
+					ConvertSize = Min((DWORD)4, ReadSize);
+				}
 			}
 		}
 
@@ -2808,7 +2827,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 
 int Viewer::vseek(int64_t Offset,int Whence)
 {
-	return ViewFile.SetPointer(Offset*(IsUnicodeCodePage(VM.CodePage)?2:1), nullptr, Whence);
+	return ViewFile.SetPointer(Offset * ( IsFullWideCodePage(VM.CodePage) ? sizeof(wchar_t) : 1), nullptr, Whence);
 }
 
 
@@ -2816,9 +2835,9 @@ int64_t Viewer::vtell()
 {
 	INT64 Ptr=0;
 	ViewFile.GetPointer(Ptr);
-	if (IsUnicodeCodePage(VM.CodePage))
+	if (IsFullWideCodePage(VM.CodePage))
 	{
-		Ptr=(Ptr+(Ptr&1))/2;
+		Ptr=(Ptr+(Ptr&3))/4;
 	}
 	return Ptr;
 }
@@ -2918,8 +2937,8 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 				//  Percent=0;
 				Offset=FileSize/100*Percent;
 
-				if (IsUnicodeCodePage(VM.CodePage))
-					Offset*=2;
+				if (IsFullWideCodePage(VM.CodePage))
+					Offset*= sizeof(wchar_t);
 
 				while (ToPercent64(Offset,FileSize)<Percent)
 					Offset++;
@@ -2952,8 +2971,8 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 				//  Percent=0;
 				Offset=FileSize/100*Percent;
 
-				if (IsUnicodeCodePage(VM.CodePage))
-					Offset*=2;
+				if (IsFullWideCodePage(VM.CodePage))
+					Offset*= sizeof(wchar_t);
 
 				while (ToPercent64(Offset,FileSize)<Percent)
 					Offset++;
@@ -2965,10 +2984,10 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 			if (Relative==-1 && Offset>FilePos)   // меньше нуля, if (FilePos<0) не пройдет - FilePos у нас uint32_t
 				FilePos=0;
 			else
-				FilePos=IsUnicodeCodePage(VM.CodePage)? FilePos+Offset*Relative/2 : FilePos+Offset*Relative;
+				FilePos=IsFullWideCodePage(VM.CodePage)? FilePos+Offset*Relative/sizeof(wchar_t) : FilePos+Offset*Relative;
 		}
 		else
-			FilePos=IsUnicodeCodePage(VM.CodePage) ? Offset/2:Offset;
+			FilePos=IsFullWideCodePage(VM.CodePage) ? Offset/sizeof(wchar_t):Offset;
 
 		if (FilePos>FileSize || FilePos<0)     // и куда его несет?
 			FilePos=FileSize;     // там все равно ничего нету
@@ -3004,8 +3023,11 @@ void Viewer::AdjustFilePos()
 
 		vseek(FilePos+1,SEEK_SET);
 
-		if (VM.Hex)
-			FilePos&=~(IsUnicodeCodePage(VM.CodePage) ? 0x7:0xf);
+		if (VM.Hex) {
+			size_t len = 8;
+			if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t);
+			FilePos&= ~(len - 1);
+		}
 		else
 		{
 			if (FilePos!=StartLinePos)
@@ -3027,8 +3049,8 @@ void Viewer::SetFileSize()
 	   Везде сравниваем FilePos с FileSize, FilePos для юникодных файлов
 	   уменьшается в два раза, поэтому FileSize тоже надо уменьшать
 	*/
-	if (IsUnicodeCodePage(VM.CodePage))
-		FileSize=(FileSize+(FileSize&1))/2;
+	if (IsFullWideCodePage(VM.CodePage))
+		FileSize=(FileSize+(FileSize&3)) / 4;
 }
 
 
@@ -3075,7 +3097,9 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 //  LastSelPos=SelectPos+((Flags&0x2) ? -1:1);
 	if (VM.Hex)
 	{
-		FilePos&=~(IsUnicodeCodePage(VM.CodePage) ? 0x7:0xf);
+		size_t len = 8;
+		if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t);
+		FilePos&= ~(len - 1);
 	}
 	else
 	{
@@ -3171,7 +3195,7 @@ int Viewer::ViewerControl(int Command,void *Param)
 				     2 раза. Поэтому увеличим StartPos в 2 раза, т.к. функция
 				     GoTo принимает смещения в _байтах_.
 				*/
-				GoTo(FALSE, vsp->StartPos*(IsUnicodeCodePage(VM.CodePage)?2:1), vsp->Flags);
+				GoTo(FALSE, vsp->StartPos*(IsFullWideCodePage(VM.CodePage)?sizeof(wchar_t):1), vsp->Flags);
 
 				if (isReShow && !(vsp->Flags&VSP_NOREDRAW))
 					ScrBuf.Flush();

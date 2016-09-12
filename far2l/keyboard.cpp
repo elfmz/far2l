@@ -320,11 +320,11 @@ static TFKey3 SpecKeyName[]=
 */
 void InitKeysArray()
 {
+#if 0
 	HKL Layout[10];
 	int LayoutNumber=WINPORT(GetKeyboardLayoutList)(ARRAYSIZE(Layout),Layout); // возвращает 0! в telnet
 
 
-#if 0
 	memset(KeyToVKey,0,sizeof(KeyToVKey));
 	memset(VKeyToASCII,0,sizeof(VKeyToASCII));
 

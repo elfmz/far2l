@@ -5,7 +5,7 @@
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 
 SHAREDSYMBOL int vswprintf_ws2ls(wchar_t * ws, size_t len, const wchar_t * format, va_list arg )
 {

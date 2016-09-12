@@ -3875,7 +3875,7 @@ int WINAPI FarViewerControlA(int Command,void* Param)
 			viA->CurMode.UseDecodeTable = 0;
 			viA->CurMode.TableNum       = 0;
 			viA->CurMode.AnsiMode       = viW.CurMode.CodePage == WINPORT(GetACP)();
-			viA->CurMode.Unicode        = IsUnicodeCodePage(viW.CurMode.CodePage);
+			viA->CurMode.Unicode        = IsFullWideCodePage(viW.CurMode.CodePage);
 			viA->CurMode.Wrap           = viW.CurMode.Wrap;
 			viA->CurMode.WordWrap       = viW.CurMode.WordWrap;
 			viA->CurMode.Hex            = viW.CurMode.Hex;

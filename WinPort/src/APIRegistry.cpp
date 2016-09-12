@@ -12,7 +12,8 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
+#include <utils.h>
 
 
 struct WinPortHandleReg : WinPortHandle
@@ -30,7 +31,7 @@ struct WinPortHandleReg : WinPortHandle
 
 static std::string GetRegistrySubroot(const char *sub)
 {
-	static std::string s_root = SettingsPath();
+	static std::string s_root = InMyProfile();
 	std::string rv = s_root;
 	rv+= sub;
 	return rv;

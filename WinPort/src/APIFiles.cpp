@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <utils.h>
 
 #include <wx/wx.h>
 #include <wx/display.h>
@@ -13,7 +14,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 
 extern "C"
 {
@@ -310,7 +311,7 @@ extern "C"
 			case S_IFLNK: rv = FILE_ATTRIBUTE_REPARSE_POINT; break;
 			case S_IFSOCK: rv = FILE_ATTRIBUTE_DEVICE; break;
 #endif
-			default: rv = FILE_ATTRIBUTE_ARCHIVE;
+			default: rv = FILE_ATTRIBUTE_DEVICE;
 		}
 		if (name) {
 			const WCHAR *slash = wcsrchr(name, GOOD_SLASH);

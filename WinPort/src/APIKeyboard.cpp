@@ -14,7 +14,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 
 void *g_dummy_hkl[2] = {0};
 #define HKL_DUMMY ((HKL)(&g_dummy_hkl[0]));

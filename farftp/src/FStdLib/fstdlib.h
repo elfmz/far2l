@@ -42,7 +42,7 @@
 */
 
 #define _FAR_USE_FARFINDDATA 1
-
+#include <utils.h>
 #include <pluginold.hpp>
 using namespace oldfar;
 #include <farcolor.hpp>

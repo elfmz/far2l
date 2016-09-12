@@ -154,12 +154,10 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		FARString strFileNameL;
 		Panel *WPanel=PSubstData->PassivePanel?PSubstData->AnotherPanel:PSubstData->ActivePanel;
 		DWORD FileAttrL;
-		int ShortN0=FALSE;
 		int CntSkip=2;
 
 		if (CurStr[2] == L'~')
 		{
-			ShortN0=TRUE;
 			CntSkip++;
 		}
 
@@ -681,28 +679,28 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 			{
 				if (wcschr(Modifers,L'A')) // ANSI
 				{
-					CodePage=CP_ACP;
+					CodePage = CP_ACP;
 				}
 				else
 				{
 					DWORD Signature=0;
 					int SignatureSize=0;
 
-					if (wcschr(Modifers,L'W')) // UTF16LE
+					if (wcschr(Modifers,L'W')) // Wide
 					{
-						CodePage=CP_UNICODE;
-						Signature=SIGN_UNICODE;
-						SignatureSize=2;
-						Eol=NATIVE_EOLW;
-						EolSize=2*wcslen(NATIVE_EOLW);
+						CodePage = CP_UTF16LE;
+						Signature = SIGN_UTF16LE;
+						SignatureSize = 2;
+						Eol = NATIVE_EOLW;
+						EolSize = sizeof(wchar_t) * wcslen(NATIVE_EOLW);
 					}
 					else
 					{
-						if (wcschr(Modifers,L'U')) // UTF8
+						if (wcschr(Modifers, L'U')) // UTF8
 						{
-							CodePage=CP_UTF8;
-							Signature=SIGN_UTF8;
-							SignatureSize=3;
+							CodePage = CP_UTF8;
+							Signature = SIGN_UTF8;
+							SignatureSize = 3;
 						}
 					}
 
@@ -740,7 +738,7 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 				LPSTR Buffer=nullptr;
 				DWORD NumberOfBytesToWrite=0,NumberOfBytesWritten=0;
 
-				if (CodePage==CP_UNICODE)
+				if (CodePage == CP_WIDE_LE)
 				{
 					Ptr=strFileName.CPtr();
 					NumberOfBytesToWrite=static_cast<DWORD>(strFileName.GetLength()*sizeof(WCHAR));

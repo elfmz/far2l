@@ -13,7 +13,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "wineguts.h"
-#include "Utils.h"
+#include "PathHelpers.h"
 
 /*************************************************************************
 *           LCMapStringEx   (KERNEL32.@)

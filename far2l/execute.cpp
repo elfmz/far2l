@@ -294,6 +294,22 @@ int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, b
 
 int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
 {
+	if (!SeparateWindow && CtrlObject->Plugins.ProcessCommandLine(CmdLine))
+	{
+		/* $ 12.05.2001 DJ - рисуемся только если остались верхним фреймом */
+		if (CtrlObject->Cp()->IsTopFrame())
+		{
+			//CmdStr.SetString(L"");
+			GotoXY(X1,Y1);
+			FS<<fmt::Width(X2-X1+1)<<L"";
+			Show();
+			ScrBuf.Flush();
+		}
+
+		return -1;
+	}
+
+
 	int r;
 
 	FARString strPrevDir = strCurDir;

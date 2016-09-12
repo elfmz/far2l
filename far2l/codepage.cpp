@@ -54,13 +54,22 @@ enum StandardCodePages
 {
 	SearchAll = 1,
 	Auto = 2,
-	OEM = 4,
-	ANSI = 8,
-	UTF7 = 16,
-	UTF8 = 32,
-	UTF16LE = 64,
-	UTF16BE = 128,
-	AllStandard = OEM | ANSI | UTF7 | UTF8 | UTF16BE | UTF16LE
+	KOI8 = 4,
+	DOS = 8,
+	ANSI = 16,
+	UTF7 = 32,
+	UTF8 = 64,
+	UTF16LE = 128,
+	UTF16BE = 256,
+#if (__WCHAR_MAX__ > 0xffff)	
+	UTF32LE = 512,
+	UTF32BE = 1024,
+	AllUtfBiggerThan8 = UTF16BE | UTF16LE | UTF32BE | UTF32LE,
+	AllStandard = DOS | ANSI | KOI8 | UTF7 | UTF8 | UTF16BE | UTF16LE | UTF32BE | UTF32LE
+#else
+	AllUtfBiggerThan8 = UTF16BE | UTF16LE,
+	AllStandard = DOS | ANSI | KOI8 | UTF7 | UTF8 | UTF16BE | UTF16LE
+#endif	
 };
 
 // Источник вызова каллбака прохода по кодовым страницам
@@ -404,13 +413,18 @@ void AddCodePages(DWORD codePages)
 	// Добавляем стандартные таблицы символов
 	AddStandardCodePage((codePages & ::SearchAll) ? MSG(MFindFileAllCodePages) : MSG(MEditOpenAutoDetect), CP_AUTODETECT, -1, (codePages & ::SearchAll) || (codePages & ::Auto));
 	AddSeparator(MSG(MGetCodePageSystem));
-	AddStandardCodePage(L"OEM", WINPORT(GetOEMCP)(), -1, (codePages & ::OEM)?1:0);
-	AddStandardCodePage(L"ANSI", WINPORT(GetACP)(), -1, (codePages & ::ANSI)?1:0);
+	AddStandardCodePage(L"DOS", WINPORT(GetOEMCP)(), -1, true);
+	AddStandardCodePage(L"ANSI", WINPORT(GetACP)(), -1, true);
+	AddStandardCodePage(L"KOI8", CP_KOI8R, -1, true);
 	AddSeparator(MSG(MGetCodePageUnicode));
-	AddStandardCodePage(L"UTF-7", CP_UTF7, -1, (codePages & ::UTF7)?1:0);
-	AddStandardCodePage(L"UTF-8", CP_UTF8, -1, (codePages & ::UTF8)?1:0);
-	AddStandardCodePage(L"UTF-16 (Little endian)", CP_UNICODE, -1, (codePages & ::UTF16LE)?1:0);
-	AddStandardCodePage(L"UTF-16 (Big endian)", CP_REVERSEBOM, -1, (codePages & ::UTF16BE)?1:0);
+	AddStandardCodePage(L"UTF-7", CP_UTF7, -1, true);
+	AddStandardCodePage(L"UTF-8", CP_UTF8, -1, true);
+	AddStandardCodePage(L"UTF-16 (Little endian)", CP_UTF16LE, -1, true);
+	AddStandardCodePage(L"UTF-16 (Big endian)", CP_UTF16BE, -1, true);
+	if (sizeof(wchar_t)==4) {
+		AddStandardCodePage(L"UTF-32 (Little endian)", CP_UTF32LE, -1, true);
+		AddStandardCodePage(L"UTF-32 (Big endian)", CP_UTF32BE, -1, true);
+	}
 	// Получаем таблицы символов установленные в системе
 	//EnumSystemCodePages((CODEPAGE_ENUMPROCW)EnumCodePagesProc, CP_INSTALLED);
 }
@@ -543,7 +557,7 @@ void FillCodePagesVMenu(bool bShowUnicode, bool bShowUTF, bool bShowUTF7)
 
 	// Добавляем таблицы символов
 	// BUBUG: Когда добавится поддержка UTF7 параметр bShowUTF7 нужно убрать отовсюду
-	AddCodePages(::OEM | ::ANSI | (bShowUTF ? ::UTF8 : 0) | (bShowUTF7 ? ::UTF7 : 0) | (bShowUnicode ? (::UTF16BE | ::UTF16LE) : 0));
+	AddCodePages(::DOS | ::ANSI | ::KOI8 | (bShowUTF ? ::UTF8 : 0) | (bShowUTF7 ? ::UTF7 : 0) | (bShowUnicode ? AllUtfBiggerThan8 : 0));
 	// Восстанавливаем оригинальню таблицу символов
 	currentCodePage = codePage;
 	// Позиционируем меню

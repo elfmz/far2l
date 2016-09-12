@@ -218,8 +218,11 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 {
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		if (!_buf.Write(data, screen_pos))
-			return false;
+		switch (_buf.Write(data, screen_pos)) {
+			case ConsoleBuffer::WR_BAD: return false;
+			case ConsoleBuffer::WR_SAME: return true;
+			case ConsoleBuffer::WR_MODIFIED: break;
+		}
 	}
 
 	if (_listener) {
@@ -229,7 +232,24 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 	return true;
 }
 
-void ConsoleOutput::ScrollOutputOnOverflow()
+static inline void AffectArea(SMALL_RECT &area, SHORT x, SHORT y)
+{
+	if (area.Left > x) area.Left = x;
+	if (area.Right < x) area.Right = x;
+	if (area.Top > y) area.Top = y;
+	if (area.Bottom < y) area.Bottom = y;
+}
+
+static inline void AffectArea(SMALL_RECT &area, const SMALL_RECT &r)
+{
+	if (area.Left > r.Left) area.Left = r.Left;
+	if (area.Right < r.Right) area.Right = r.Right;
+	if (area.Top > r.Top) area.Top = r.Top;
+	if (area.Bottom < r.Bottom) area.Bottom = r.Bottom;
+}
+
+
+void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 {
 	unsigned int width, height;
 	_buf.GetSize(width, height);
@@ -265,6 +285,7 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	scr_rect.Top = _scroll_region.top;
 	scr_rect.Bottom = height - 2;
 	_buf.Write(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
+	AffectArea(area, scr_rect);
 	
 	scr_rect.Left = 0;
 	scr_rect.Right = width - 1;
@@ -276,9 +297,10 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 		ci.Attributes = _attributes;
 	}
 	_buf.Write(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
+	AffectArea(area, scr_rect);
 }
 
-bool ConsoleOutput::ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos)
+void ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
 {
 	CHAR_INFO ch;
 
@@ -292,29 +314,33 @@ bool ConsoleOutput::ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos
 
 		case SequenceModifier::SM_FILL_CHAR:
 			if (!_buf.Read(ch, pos))
-				return false;
+				return;
+
 			ch.Char.UnicodeChar = sm.chr;
 			break;
 
 		case SequenceModifier::SM_FILL_ATTR:
 			if (!_buf.Read(ch, pos))
-				return false;
+				return;
+
 			ch.Attributes = sm.attr;
 			break;
 	}
-	return _buf.Write(ch, pos);
+	
+	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED)
+		AffectArea(sm.area, pos.X, pos.Y);
 }
 
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 {
 	size_t rv = 0;
-	SMALL_RECT area;
-	bool scrolled = false;
+	SMALL_RECT pos_areas[2];
+	bool refresh_pos_areas = false;
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		area.Left = area.Right = pos.X; 
-		area.Top = area.Bottom = pos.Y;
-
+		pos_areas[0].Left = pos_areas[0].Right = pos.X;
+		pos_areas[0].Top = pos_areas[0].Bottom = pos.Y;
+		
 		unsigned int width, height;
 		_buf.GetSize(width, height);
 		unsigned int scroll_edge = std::min(height, ((unsigned int)_scroll_region.bottom) + 1);
@@ -336,12 +362,8 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					pos.Y++;
 					if (pos.Y >= (int) scroll_edge) {
 						pos.Y--;
-						ScrollOutputOnOverflow();
-						scrolled = true;
-					} else
-						area.Bottom++;
-				
-					area.Left = 0;				
+						ScrollOutputOnOverflow(sm.area);
+					}
 				} else
 					pos.X = width - 1;
 			}
@@ -349,31 +371,19 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\b' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				if (pos.X > 0) {
 					pos.X--;
-					/*if (area.Left > pos.X) area.Left = pos.X;
-					CHAR_INFO ch;
-					ch.Char.UnicodeChar = L' ';
-					ch.Attributes = _attributes;
-					_buf.Write(ch, pos);*/
 				}
 			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\r' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
-				area.Left = 0;
 
 			} else if ( sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
-				area.Left = 0;
 				pos.Y++;
 				if (pos.Y >= (int)scroll_edge) {
 					pos.Y--;
-					ScrollOutputOnOverflow();
-					scrolled = true;
-				} else
-					area.Bottom++;
+					ScrollOutputOnOverflow(sm.area);
+				}
 			} else {
 				ModifySequenceEntityAt(sm, pos);
-				area.Right++;
-				if (area.Right == (int)width) 
-					area.Right = width - 1;
 				pos.X++;
 			}
 			if (sm.kind==SequenceModifier::SM_WRITE_STR) {
@@ -386,23 +396,28 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				--sm.count;
 				++rv;				
 			}
-		}	
-		if (scrolled) {
-			area.Left = 0;
-			area.Top = 0;
-			area.Right = width - 1;
-			area.Bottom = height - 1;
+		}
+		
+		if (&pos == &_cursor.pos && (pos_areas[0].Left!=pos.X || pos_areas[0].Top!=pos.Y)) {
+			refresh_pos_areas = true;
+			pos_areas[1].Left = pos_areas[1].Right = pos.X;
+			pos_areas[1].Top = pos_areas[1].Bottom = pos.Y;
 		}
 	}
-	if (rv && _listener) {
-		_listener->OnConsoleOutputUpdated(area);
+	if (_listener) {
+		if (refresh_pos_areas) {
+			_listener->OnConsoleOutputUpdated(pos_areas[0]);
+			_listener->OnConsoleOutputUpdated(pos_areas[1]);
+		}
+		if (sm.area.Right >= sm.area.Left && sm.area.Bottom >= sm.area.Top) 
+			_listener->OnConsoleOutputUpdated(sm.area);
 	}
 	return rv;
 }
 
 size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
 {
-	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count};
+	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count, {MAXSHORT, MAXSHORT, 0, 0} };
 	sm.str = data;
 	return ModifySequenceAt(sm, _cursor.pos);
 }
@@ -410,7 +425,7 @@ size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
 
 size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos)
 {
-	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count};
+	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count, {MAXSHORT, MAXSHORT, 0, 0} };
 	sm.str = data;
 	return ModifySequenceAt(sm, pos);
 }
@@ -418,7 +433,7 @@ size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos)
 
 size_t ConsoleOutput::FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos)
 {
-	SequenceModifier sm = {SequenceModifier::SM_FILL_CHAR, count};
+	SequenceModifier sm = {SequenceModifier::SM_FILL_CHAR, count, {MAXSHORT, MAXSHORT, 0, 0} };
 	sm.chr = cCharacter;
 	return ModifySequenceAt(sm, pos);
 }

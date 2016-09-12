@@ -7,7 +7,8 @@
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "WinPortHandle.h"
-#include "Utils.h"
+#include "PathHelpers.h"
+#include <utils.h>
 
 #ifndef _WIN32
 # include <dlfcn.h>

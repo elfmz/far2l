@@ -1402,7 +1402,9 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 	EditorCacheParams cp;
 	UserBreak = 0;
 	File EditFile;
-	if(!EditFile.Open(Name, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
+	DWORD FileAttr = apiGetFileAttributes(Name);
+	if ((FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr&FILE_ATTRIBUTE_DEVICE)!=0) || //avoid stuck
+		!EditFile.Open(Name, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 	{
 		SysErrorCode=WINPORT(GetLastError)();
 

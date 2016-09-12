@@ -750,7 +750,7 @@ void InterpretEscSeq( void )
 		case 'S':                 // ESC[#S Scroll up
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[S == ESC[1S
 			if (es_argc != 1) return;
-			while (es_argv[0]--) {
+			/*while (es_argv[0]--)*/ {
 				
 				SHORT scroll_top = TOP, scroll_bottom = BOTTOM;
 				WINPORT(GetConsoleScrollRegion)(NULL, &scroll_top, &scroll_bottom);
@@ -760,19 +760,20 @@ void InterpretEscSeq( void )
 				
 				Rect.Left   = LEFT;
 				Rect.Right  = RIGHT;
-				Rect.Top    = Pos.Y + 1;
+				Rect.Top    = Pos.Y + es_argv[0];
 				Rect.Bottom = std::min(BOTTOM, scroll_bottom);
+				SMALL_RECT clip = {Rect.Left, Pos.Y, Rect.Right, Rect.Bottom};
+			
 				CharInfo.Char.UnicodeChar = ' ';
 				CharInfo.Attributes = Info.wAttributes;
-			
-				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, NULL, Pos, &CharInfo );
+				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &clip, Pos, &CharInfo );
 			}
 			return;
 			
 		case 'T':                 // ESC[#T Scroll down
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[T == ESC[1T
 			if (es_argc != 1) return;
-			while (es_argv[0]--) {
+			/*while (es_argv[0]--)*/ {
 				
 				SHORT scroll_top = TOP, scroll_bottom = BOTTOM;
 				WINPORT(GetConsoleScrollRegion)(NULL, &scroll_top, &scroll_bottom);
@@ -780,14 +781,16 @@ void InterpretEscSeq( void )
 				Rect.Left   = LEFT;
 				Rect.Right  = RIGHT;
 				Rect.Top    = std::max(TOP, scroll_top);
-				Rect.Bottom = std::min(BOTTOM, scroll_bottom) - 1;
+				Rect.Bottom = std::min(BOTTOM, scroll_bottom) - es_argv[0];
 				
 				Pos.X = LEFT;
-				Pos.Y = Rect.Top + 1;
+				Pos.Y = Rect.Top + es_argv[0];
 
+				SMALL_RECT clip = {Rect.Left, Rect.Top, Rect.Right, std::min(BOTTOM, scroll_bottom) };
+				
 				CharInfo.Char.UnicodeChar = ' ';
 				CharInfo.Attributes = Info.wAttributes;
-				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, NULL, Pos, &CharInfo );
+				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &clip, Pos, &CharInfo );
 			}
 			return;
 			

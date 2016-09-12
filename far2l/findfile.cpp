@@ -1455,7 +1455,7 @@ bool IsFileIncluded(PluginPanelItem* FileItem, const wchar_t *FullName, DWORD Fi
 		{
 			FileFound=false;
 
-			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
+			if (FileAttr & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))
 				break;
 
 			FARString strSearchFileName;
@@ -1490,7 +1490,6 @@ bool IsFileIncluded(PluginPanelItem* FileItem, const wchar_t *FullName, DWORD Fi
 			{
 				strSearchFileName = FullName;
 			}
-
 			if (LookForString(strSearchFileName))
 				FileFound=true;
 

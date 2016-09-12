@@ -9,6 +9,8 @@
 #include "utils.h"
 #include <set>
 #include <fstream>
+#include <vector>
+#include <algorithm>
 
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
@@ -115,7 +117,7 @@ struct EventWithRect : wxCommandEvent
 ///////////////////////////////////////////
 
 wxDEFINE_EVENT(WX_CONSOLE_INITIALIZED, wxCommandEvent);
-wxDEFINE_EVENT(WX_CONSOLE_REFRESH, EventWithRect);
+wxDEFINE_EVENT(WX_CONSOLE_REFRESH, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_WINDOW_MOVED, EventWithRect);
 wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
@@ -199,6 +201,8 @@ private:
 	COORD _mouse_qedit_start, _mouse_qedit_last;
 	
 	int _last_valid_display;
+	
+	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 };
 
 ///////////////////////////////////////////
@@ -365,7 +369,9 @@ void WinPortPanel::CheckForResizePending()
 	
 			int width = 0, height = 0;
 			_frame->GetClientSize(&width, &height);
+#ifndef __APPLE__			
 			fprintf(stderr, "Current client size: %u %u font %u %u\n", 
+#endif			
 				width, height, _paint_context.FontWidth(), _paint_context.FontHeight());
 			width/= _paint_context.FontWidth(); 
 			height/= _paint_context.FontHeight();
@@ -403,9 +409,19 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 
 void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT &area)
 {
-	wxCommandEvent *event = new EventWithRect(area, WX_CONSOLE_REFRESH);
-	if (event)
-		wxQueueEvent	(this, event);
+	bool should_queue_event;
+	{
+		SMALL_RECT norm_area = area;
+		NormalizeArea(norm_area);
+		std::lock_guard<std::mutex> lock(_refresh_rects);
+		should_queue_event = _refresh_rects.empty();
+		_refresh_rects.emplace_back(norm_area);
+	}
+	if (should_queue_event) {
+		wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_REFRESH);
+		if (event)
+			wxQueueEvent	(this, event);
+	}
 }
 
 void WinPortPanel::OnConsoleOutputResized()
@@ -473,8 +489,44 @@ void WinPortPanel::OnWindowMovedSync( wxCommandEvent& event )
 
 void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 {
-	EventWithRect *e = (EventWithRect *)&event;
-	_paint_context.RefreshArea( e->rect );
+	RefreshRects refresh_rects;
+	{
+		std::lock_guard<std::mutex> lock(_refresh_rects);
+		if (_refresh_rects.empty())
+			return;
+
+		refresh_rects.swap(_refresh_rects);	
+	}
+	
+#if 0
+	std::sort(refresh_rects.begin(), refresh_rects.end(), 
+		[](const SMALL_RECT &r1, const SMALL_RECT &r2) -> bool {   
+            return (r1.Top < r2.Top || r1.Left < r2.Left);
+	});
+	
+	RefreshRects::const_iterator i = refresh_rects.begin();
+	SMALL_RECT prev = *i;
+	_paint_context.RefreshArea( prev );
+	unsigned int skipped = 0;
+	for (++i; i!=refresh_rects.end(); ++i) {
+		const SMALL_RECT &rect = *i;
+		if (rect.Left!=prev.Left || rect.Top!=prev.Top || 
+			rect.Right!=prev.Right || rect.Bottom!=prev.Bottom) {
+				
+			_paint_context.RefreshArea( rect );
+			prev = rect;
+		} else
+			skipped++;
+	}
+	//fprintf(stderr, "OnRefreshSync: count=%u skipped=%u\n", 
+	//	(unsigned int)refresh_rects.size(), skipped);
+#else
+	for (const auto & r : refresh_rects) {
+		_paint_context.RefreshArea( r );
+	}
+	//fprintf(stderr, "OnRefreshSync: count=%u\n", 
+	//	(unsigned int)refresh_rects.size());
+#endif		
 }
 
 void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
@@ -610,6 +662,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
+	//fprintf(stderr, "WinPortPanel::OnPaint\n"); 
 	if (_mouse_qedit_pending) {
 		SMALL_RECT qedit;
 		qedit.Left = _mouse_qedit_start.X;

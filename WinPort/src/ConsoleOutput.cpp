@@ -332,9 +332,13 @@ void ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 {
 	size_t rv = 0;
+	SMALL_RECT pos_areas[2];
+	bool refresh_pos_areas = false;
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-
+		pos_areas[0].Left = pos_areas[0].Right = pos.X;
+		pos_areas[0].Top = pos_areas[0].Bottom = pos.Y;
+		
 		unsigned int width, height;
 		_buf.GetSize(width, height);
 		unsigned int scroll_edge = std::min(height, ((unsigned int)_scroll_region.bottom) + 1);
@@ -390,9 +394,19 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				--sm.count;
 				++rv;				
 			}
-		}	
+		}
+		
+		if (&pos == &_cursor.pos && (pos_areas[0].Left!=pos.X || pos_areas[0].Top!=pos.Y)) {
+			refresh_pos_areas = true;
+			pos_areas[1].Left = pos_areas[1].Right = pos.X;
+			pos_areas[1].Top = pos_areas[1].Bottom = pos.Y;
+		}
 	}
 	if (_listener) {
+		if (refresh_pos_areas) {
+			_listener->OnConsoleOutputUpdated(pos_areas[0]);
+			_listener->OnConsoleOutputUpdated(pos_areas[1]);
+		}
 		if (sm.area.Right >= sm.area.Left && sm.area.Bottom >= sm.area.Top) 
 			_listener->OnConsoleOutputUpdated(sm.area);
 	}

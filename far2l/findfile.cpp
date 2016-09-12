@@ -522,7 +522,7 @@ void InitInFileSearch()
 					codePages[6].CodePage = CP_UTF16BE;
 #if (__WCHAR_MAX__ > 0xffff)					
 					codePages[7].CodePage = CP_UTF32LE;
-					codePages[8].CodePage = CP_UTF32LE;
+					codePages[8].CodePage = CP_UTF32BE;
 #endif					
 				}
 				else
@@ -1303,9 +1303,11 @@ int LookForString(const wchar_t *Name)
 					// Копируем буфер чтения в буфер сравнения
 					//todo
 					if (cpi->CodePage==CP_WIDE_BE) {
-						WideReverse((wchar_t*)readBufferA, (wchar_t*)readBufferA, bufferCount);
+						WideReverse((const wchar_t*)readBufferA, readBuffer, bufferCount);
+						buffer = readBuffer;
+					} else {
+						buffer = (wchar_t*)readBufferA;
 					}
-					buffer = readBuffer;
 				}
 				else
 				{

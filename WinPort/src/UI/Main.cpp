@@ -384,8 +384,9 @@ void WinPortPanel::CheckForResizePending()
 				ir.Event.WindowBufferSizeEvent.dwSize.Y = height;
 				g_wx_con_in.Enqueue(&ir, 1);
 			}
-	
+#ifndef __APPLE__
 			Refresh(false);
+#endif
 		} else if (_resize_pending != RP_INSTANT) {
 			_resize_pending = RP_INSTANT;
 			//fprintf(stderr, "RP_INSTANT\n");

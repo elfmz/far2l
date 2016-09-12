@@ -59,7 +59,7 @@ class ConsoleOutput
 	
 	void ModifySequenceEntityAt(SequenceModifier &sm, COORD pos);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
-	void ScrollOutputOnOverflow();
+	void ScrollOutputOnOverflow(SMALL_RECT &area);
 	
 public:
 	ConsoleOutput();

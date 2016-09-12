@@ -230,7 +230,24 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 	return true;
 }
 
-void ConsoleOutput::ScrollOutputOnOverflow()
+static inline void AffectArea(SMALL_RECT &area, SHORT x, SHORT y)
+{
+	if (area.Left > x) area.Left = x;
+	if (area.Right < x) area.Right = x;
+	if (area.Top > y) area.Top = y;
+	if (area.Bottom < y) area.Bottom = y;
+}
+
+static inline void AffectArea(SMALL_RECT &area, const SMALL_RECT &r)
+{
+	if (area.Left > r.Left) area.Left = r.Left;
+	if (area.Right < r.Right) area.Right = r.Right;
+	if (area.Top > r.Top) area.Top = r.Top;
+	if (area.Bottom < r.Bottom) area.Bottom = r.Bottom;
+}
+
+
+void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 {
 	unsigned int width, height;
 	_buf.GetSize(width, height);
@@ -266,6 +283,7 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	scr_rect.Top = _scroll_region.top;
 	scr_rect.Bottom = height - 2;
 	_buf.Write(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
+	AffectArea(area, scr_rect);
 	
 	scr_rect.Left = 0;
 	scr_rect.Right = width - 1;
@@ -277,6 +295,7 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 		ci.Attributes = _attributes;
 	}
 	_buf.Write(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
+	AffectArea(area, scr_rect);
 }
 
 void ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
@@ -306,19 +325,14 @@ void ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
 			break;
 	}
 	
-	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {
-		if (sm.area.Left > pos.X) sm.area.Left = pos.X;
-		if (sm.area.Right < pos.X) sm.area.Right = pos.X;
-		if (sm.area.Top > pos.Y) sm.area.Top = pos.Y;
-		if (sm.area.Bottom < pos.Y) sm.area.Bottom = pos.Y;
-	}
+	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED)
+		AffectArea(sm.area, pos.X, pos.Y);
 }
 
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 {
 	size_t rv = 0;
 	{
-		bool scrolled = false;
 		std::lock_guard<std::mutex> lock(_mutex);
 
 		unsigned int width, height;
@@ -342,8 +356,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					pos.Y++;
 					if (pos.Y >= (int) scroll_edge) {
 						pos.Y--;
-						ScrollOutputOnOverflow();
-						scrolled = true;
+						ScrollOutputOnOverflow(sm.area);
 					}
 				} else
 					pos.X = width - 1;
@@ -361,8 +374,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				pos.Y++;
 				if (pos.Y >= (int)scroll_edge) {
 					pos.Y--;
-					ScrollOutputOnOverflow();
-					scrolled = true;
+					ScrollOutputOnOverflow(sm.area);
 				}
 			} else {
 				ModifySequenceEntityAt(sm, pos);
@@ -379,12 +391,6 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				++rv;				
 			}
 		}	
-		if (scrolled) {
-			sm.area.Left = 0;
-			sm.area.Top = 0;
-			sm.area.Right = width - 1;
-			sm.area.Bottom = height - 1;
-		}
 	}
 	if (_listener) {
 		if (sm.area.Right >= sm.area.Left && sm.area.Bottom >= sm.area.Top) 

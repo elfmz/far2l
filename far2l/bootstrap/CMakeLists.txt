@@ -81,6 +81,7 @@ add_custom_command(TARGET bootstrap
 
 add_custom_command(TARGET bootstrap
    COMMAND ${FARLNGTOOL} generator -nc -i ${BOOTSTRAP}/lang.ini -ol ${BOOTSTRAP} ${BOOTSTRAP}/farlang.templ
+   WORKING_DIRECTORY ${BOOTSTRAP}
    COMMENT generating languages
 )
 

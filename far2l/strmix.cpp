@@ -1270,7 +1270,7 @@ void Transform(FARString &strBuffer,const wchar_t *ConvStr,wchar_t TransformType
 					WCHAR Hex[]={ptrConvStr[0],ptrConvStr[1],0};
 					size_t l=strTemp.GetLength();
 					wchar_t *Temp=strTemp.GetBuffer(l+2);
-					Temp[l]=(wchar_t)wcstoul(Hex,nullptr,16)&0xFFFF;
+					Temp[l]=(wchar_t)wcstoul(Hex,nullptr,16) & ((wchar_t)-1);
 					strTemp.ReleaseBuffer(l+1);
 					ptrConvStr++;
 				}

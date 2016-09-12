@@ -1482,7 +1482,7 @@ int TreeList::ReadTreeFile()
 		GetFileString GetStr(TreeFile);
 		LPWSTR Record=nullptr;
 		int RecordLength=0;
-		while(GetStr.GetString(&Record, CP_UNICODE, RecordLength) > 0)
+		while(GetStr.GetString(&Record, CP_WIDE_LE, RecordLength) > 0)
 		{
 			FARString strDirName(strRoot, RootLength);
 			strDirName.Append(Record, RecordLength);

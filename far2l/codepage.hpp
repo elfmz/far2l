@@ -3,7 +3,7 @@
 /*
 codepage.cpp
 
-Ðàáîòà ñ êîäîâûìè ñòðàíèöàìè
+ÃÃ Ã¡Ã®Ã²Ã  Ã± ÃªÃ®Ã¤Ã®Ã¢Ã»Ã¬Ã¨ Ã±Ã²Ã°Ã Ã­Ã¨Ã¶Ã Ã¬Ã¨
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,24 +33,62 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Òèï âûáðàííîé òàáëèöû ñèìâîëîâ
+// Ã’Ã¨Ã¯ Ã¢Ã»Ã¡Ã°Ã Ã­Ã­Ã®Ã© Ã²Ã Ã¡Ã«Ã¨Ã¶Ã» Ã±Ã¨Ã¬Ã¢Ã®Ã«Ã®Ã¢
 enum CPSelectType
 {
-	// "Ëþáèìàÿ" òàáëèöà ñèìâîëîâ
+	// "Ã‹Ã¾Ã¡Ã¨Ã¬Ã Ã¿" Ã²Ã Ã¡Ã«Ã¨Ã¶Ã  Ã±Ã¨Ã¬Ã¢Ã®Ã«Ã®Ã¢
 	CPST_FAVORITE = 1,
-	// Òàáëèöà ñèìâîëîâ ó÷àñòâóþùàÿ â ïîèñêå ïî âñåì òàáëèöàì ñèìâîëîâ
+	// Ã’Ã Ã¡Ã«Ã¨Ã¶Ã  Ã±Ã¨Ã¬Ã¢Ã®Ã«Ã®Ã¢ Ã³Ã·Ã Ã±Ã²Ã¢Ã³Ã¾Ã¹Ã Ã¿ Ã¢ Ã¯Ã®Ã¨Ã±ÃªÃ¥ Ã¯Ã® Ã¢Ã±Ã¥Ã¬ Ã²Ã Ã¡Ã«Ã¨Ã¶Ã Ã¬ Ã±Ã¨Ã¬Ã¢Ã®Ã«Ã®Ã¢
 	CPST_FIND = 2
 };
 
 extern const wchar_t *FavoriteCodePagesKey;
 
-const int StandardCPCount = 2 /* OEM, ANSI */ + 2 /* UTF-16 LE, UTF-16 BE */ + 2 /* UTF-7, UTF-8 */;
+inline bool IsUTF7(UINT CP) {return (CP==CP_UTF7); };
+inline bool IsUTF8(UINT CP) {return (CP==CP_UTF8); };
+inline bool IsUTF16(UINT CP) {return (CP==CP_UTF16LE || CP==CP_UTF16BE); };
+inline bool IsUTF32(UINT CP) {return (CP==CP_UTF32LE || CP==CP_UTF32BE); };
+inline bool IsFixedSingleCharCodePage(UINT CP) {return (!IsUTF7(CP) && IsUTF8(CP) && !IsUTF16(CP) && !IsUTF32(CP)  ); };
 
-inline bool IsStandardCodePage(UINT CP) { return(CP==CP_UNICODE)||(CP==CP_UTF8)|(CP==CP_REVERSEBOM); }
+#if (__WCHAR_MAX__ > 0xffff)
+const int StandardCPCount = 3 /* DOS, ANSI, KOI */ + 2 /* UTF-32 LE, UTF-32 BE */ + 2 /* UTF-16 LE, UTF-16 BE */ + 2 /* UTF-7, UTF-8 */;
+inline bool IsStandardCodePage(UINT CP) { return (CP==CP_UTF8 || CP==CP_UTF16LE || CP==CP_UTF16BE || CP==CP_UTF32LE || CP==CP_UTF32BE); }
+inline bool IsFullWideCodePage(UINT CP) { return (CP==CP_UTF32LE || CP==CP_UTF32BE); }
+inline bool IsUnicodeOrUtfCodePage(UINT CP) { return (CP==CP_UTF8 || CP==CP_UTF16LE || CP==CP_UTF16BE || CP==CP_UTF32LE || CP==CP_UTF32BE); }
+inline static wchar_t WideReverse(wchar_t w)
+{
+	union {
+		uint8_t b[4];
+		wchar_t w;
+	} u;
+	u.w = w;
+	std::swap(u.b[0], u.b[3]);
+	std::swap(u.b[1], u.b[2]);
+	return u.w;
+}
+#else
+const int StandardCPCount = 3 /* DOS, ANSI, KOI */ + 2 /* UTF-16 LE, UTF-16 BE */ + 2 /* UTF-7, UTF-8 */;
+inline bool IsStandardCodePage(UINT CP) { return (CP==CP_UTF8 || CP==CP_UTF16LE || CP==CP_UTF16BE); }
+inline bool IsFullWideCodePage(UINT CP) { return (CP==CP_UTF16LE || CP==CP_UTF16BE); }
+inline bool IsUnicodeOrUtfCodePage(UINT CP) { return (CP==CP_UTF8 || CP==CP_UTF16LE || CP==CP_UTF16BE); }
+inline static wchar_t WideReverse(wchar_t w)
+{
+	union {
+		uint8_t b[2];
+		wchar_t w;
+	} u;
+	u.w = w;
+	std::swap(u.b[0], u.b[1]);
+	return u.w;
+}
 
-inline bool IsUnicodeCodePage(UINT CP) { return(CP==CP_UNICODE)||(CP==CP_REVERSEBOM); }
+#endif
 
-inline bool IsUnicodeOrUtfCodePage(UINT CP) { return(CP==CP_UNICODE)||(CP==CP_UTF8)||(CP==CP_REVERSEBOM); }
+inline static void WideReverse(const wchar_t *src, wchar_t *dst, size_t l) {
+	for ( ; l; --l, ++src, ++dst) {
+		*dst = WideReverse(*src);
+	}
+}
 
 bool IsCodePageSupported(UINT CodePage);
 

@@ -118,6 +118,7 @@ class FileEditor : public Frame
 		FARString strTitle;
 		FARString strPluginTitle;
 		FARString strPluginData;
+		FARString strLoadedFileName;
 		FAR_FIND_DATA_EX FileInfo;
 		wchar_t AttrStr[4]; // 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
 		DWORD FileAttributes; // 12.02.2001 IS - сюда запомним атрибуты файла при открытии, пригодятся где-нибудь...
@@ -158,7 +159,7 @@ class FileEditor : public Frame
 		virtual void ResizeConsole();
 		int LoadFile(const wchar_t *Name, int &UserBreak);
 		//TextFormat, Codepage и AddSignature используются ТОЛЬКО, если bSaveAs = true!
-		int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UNICODE, bool AddSignature=false);
+		int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UTF8, bool AddSignature=false);
 		void SetTitle(const wchar_t *Title);
 		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		BOOL SetFileName(const wchar_t *NewFileName);

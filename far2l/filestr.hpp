@@ -3,7 +3,7 @@
 /*
 filestr.hpp
 
-Êëàññ GetFileString
+ÃŠÃ«Ã Ã±Ã± GetFileString
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -32,6 +32,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+#include <vector>
 
 // BUGBUG, delete!
 class OldGetFileString
@@ -70,39 +72,54 @@ bool OldGetFileFormat(FILE *file, UINT &nCodePage, bool *pSignatureFound = nullp
 wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePage);
 
 //-----------------------------------------------------------------------------
+struct GetFileStringContext
+{
+	GetFileStringContext(File &SrcFile_) : 
+		SrcFile(SrcFile_),
+		bCrCr(false),
+		SomeDataLost(false),
+		ReadPos(0),
+		ReadSize(0)
+	{
+	}
+
+	File &SrcFile;
+	bool bCrCr;
+	bool SomeDataLost;
+	DWORD ReadPos;	
+	DWORD ReadSize;
+};
+
+
+template <class CHAR_T> class TypedStringReader;
+typedef TypedStringReader<char> Char_StringReader;
+typedef TypedStringReader<uint16_t> UTF16_StringReader;
+typedef TypedStringReader<uint32_t> UTF32_StringReader;
+
 
 class GetFileString
 {
-	public:
+public:
 		GetFileString(File& SrcFile);
 		~GetFileString();
 		int PeekString(LPWSTR* DestStr, UINT nCodePage, int& Length);
 		int GetString(LPWSTR* DestStr, UINT nCodePage, int& Length);
-		bool IsConversionValid() { return !SomeDataLost; }
+		bool IsConversionValid() { return !context.SomeDataLost; }
 
 	private:
-		File& SrcFile;
-		DWORD ReadPos, ReadSize;
+		GetFileString(const GetFileString&) = delete;
+
+		GetFileStringContext context;
+		UTF32_StringReader *UTF32Reader;
+		UTF16_StringReader *UTF16Reader;
+		Char_StringReader *CharReader;
 
 		bool Peek;
 		int LastLength;
 		LPWSTR* LastString;
 		int LastResult;
-
-		char ReadBuf[8192];
-		wchar_t wReadBuf[8192];
-
-		int m_nStrLength;
-		char *Str;
-
-		int m_nwStrLength;
-		wchar_t *wStr;
-
-		bool SomeDataLost;
-		bool bCrCr;
-
-		int GetAnsiString(LPSTR* DestStr, int& Length);
-		int GetUnicodeString(LPWSTR* DestStr, int& Length, bool bBigEndian);
+		
+		std::vector<wchar_t> Buffer;
 };
 
 bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound = nullptr, bool bUseHeuristics = true);

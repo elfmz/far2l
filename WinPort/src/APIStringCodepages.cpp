@@ -12,8 +12,168 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "wineguts.h"
-#include "Utils.h"
+#include "PathHelpers.h"
+#include "ConvertUTF.h"
 
+
+
+template <class SRC_T, class DST_T>
+	int utf_translation( 
+			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
+			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flags),
+			int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
+{
+	int ret;
+	const ConversionFlags cf = ((flags&MB_ERR_INVALID_CHARS)!=0) ? strictConversion : lenientConversion;
+	const SRC_T *source = (const SRC_T *)src, *source_end = (const SRC_T *)src;
+	if (srclen==-1) {
+		for(;*source_end;++source_end);
+	} else {
+		for(;srclen;++source_end, --srclen);
+	}
+
+	if (dstlen==0) {
+		if (fnCalcSpace (&ret, &source, source_end, cf)!=conversionOK) {
+			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+		}
+		
+	} else {
+		DST_T *target = (DST_T *)dst;
+		DST_T *target_end = target + dstlen;
+		
+		ConversionResult cr = fnConvert(&source, source_end, &target, target_end, cf);
+		if (cr==targetExhausted) {
+			ret = 0;
+			WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+		} else {
+			ret = target - (DST_T *)dst;
+			if (cr!=conversionOK) {
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+			}
+		}
+	}
+	return ret;		
+}
+
+static int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
+{
+	return utf_translation<UTF32, UTF8>( CalcSpaceUTF32toUTF8, ConvertUTF32toUTF8,
+		flags, (const UTF32 *)src, srclen, (UTF8 *)dst, dstlen);
+}
+	
+static int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
+{
+	return utf_translation<UTF8, UTF32>( CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32,
+		flags, (const UTF8 *)src, srclen, (UTF32 *)dst, dstlen);
+}
+	
+static int wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
+{
+	if (srclen==-1)
+		srclen = wcslen(src) + 1;
+		
+	if (dstlen != 0) {
+		if (dstlen < srclen)
+			return -1;
+			
+		memcpy(dst, src, srclen * sizeof(WCHAR));
+	}
+	return srclen;
+}
+	
+static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen, bool reverse)
+{
+	int ret;
+	
+	if (dstlen > 0) dstlen/= sizeof(UTF16);
+	
+	if (sizeof(WCHAR)==4) {
+		ret = utf_translation<UTF32, UTF16>( CalcSpaceUTF32toUTF16, ConvertUTF32toUTF16,
+									flags, (const UTF32 *)src, srclen, (UTF16 *)dst, dstlen);
+	} else
+		ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
+	
+	if (ret > 0)  {
+		if (reverse && dstlen > 0) {
+			for (int i = 0; i < ret; ++i) {
+				std::swap(dst[i * 2], dst[i * 2 + 1]);
+			}
+		}		
+		ret*= sizeof(UTF16);
+	}
+	
+	return ret;
+}
+
+static int wide_utf32_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen, bool reverse)
+{
+	dstlen/= sizeof(wchar_t);
+	int ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
+	if (ret > 0)  {
+		if (reverse && dstlen > 0) {
+			for (int i = 0; i < ret; ++i) {
+				std::swap(dst[i * 4], dst[i * 4 + 3]);
+				std::swap(dst[i * 4 + 1], dst[i * 4 + 2]);
+			}
+		}
+		ret*= sizeof(wchar_t);
+	}
+	return ret;
+}
+
+static int wide_utf32_mbstowcs( int flags, const char *src, int srclen, wchar_t *dst, int dstlen, bool reverse)
+{
+	if (srclen > 0) srclen/= sizeof(wchar_t);
+	int ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
+	if (ret > 0)  {
+		if (reverse && dstlen > 0) {
+			char *dst_as_chars = (char *)dst;
+			for (int i = 0; i < ret; ++i) {				
+				std::swap(dst_as_chars[i * 4], dst_as_chars[i * 4 + 3]);
+				std::swap(dst_as_chars[i * 4 + 1], dst_as_chars[i * 4 + 2]);
+			}
+		}
+	}
+	return ret;
+}
+
+
+static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen, bool reverse)
+{
+	int ret;
+	
+	if (srclen > 0) srclen/= sizeof(UTF16);
+	
+	char *tmp = NULL;
+	if (reverse) {
+		if (srclen==-1) srclen = wcslen((const wchar_t *)src) + 1;
+		
+		const bool onstack = (srclen < 0x10000);
+		tmp = (char *) (onstack ? alloca(srclen * sizeof(UTF16)) : malloc(srclen * sizeof(UTF16)));
+			
+		if (!tmp) 
+			return -2;
+			
+		for (int i = 0; i < srclen; ++i) {
+			tmp[2 * i] = src[2 * i + 1];
+			tmp[2 * i + 1] = src[2 * i];
+		}
+		src = tmp;
+		if (onstack) tmp = NULL;
+	}
+	
+	if (sizeof(WCHAR)==4) {
+		
+		ret = utf_translation<UTF16, UTF32>( CalcSpaceUTF16toUTF32, ConvertUTF16toUTF32,
+			flags, (const UTF16 *)src, srclen, (UTF32 *)dst, dstlen);
+	} else
+		ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
+		
+	free(tmp);
+	return ret;
+}
+
+	
 extern "C" {
 	UINT TranslateCodepage(UINT codepage)
 	{
@@ -254,6 +414,9 @@ extern "C" {
 		return dest_index;
 	}
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	
 	/***********************************************************************
 	*              MultiByteToWideChar   (KERNEL32.@)
 	*
@@ -294,6 +457,7 @@ extern "C" {
 
 		if (srclen < 0) srclen = strlen(src) + 1;
 
+		WINPORT(SetLastError)( ERROR_SUCCESS );
 		switch(page)
 		{
 		case CP_SYMBOL:
@@ -313,8 +477,28 @@ extern "C" {
 			ret = utf7_mbstowcs( src, srclen, dst, dstlen );
 			break;
 
+		case CP_UTF16LE:
+			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF16BE:
+			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, true );
+			break;
+
+		case CP_UTF32LE:
+			ret = wide_utf32_mbstowcs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF32BE:
+			ret = wide_utf32_mbstowcs( flags, src, srclen, dst, dstlen, true );
+			break;
+
 		case CP_UTF8:
-			ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+			if (sizeof(wchar_t)==4) {
+				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen);
+			} else {
+				ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+			}
 			break;
 
 		default:
@@ -334,7 +518,6 @@ extern "C" {
 			{
 			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
 			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
-			case 0: WINPORT(SetLastError)( ERROR_SUCCESS ); break;
 			}
 			ret = 0;
 		}
@@ -502,9 +685,10 @@ extern "C" {
 			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 			return 0;
 		}
-
+		
 		if (srclen < 0) srclen = strlenW(src) + 1;
 
+		WINPORT(SetLastError)( ERROR_SUCCESS );
 		switch(page)
 		{
 		case CP_SYMBOL:
@@ -535,13 +719,36 @@ extern "C" {
 			}
 			ret = utf7_wcstombs( src, srclen, dst, dstlen );
 			break;
+		
+		case CP_UTF16LE:
+			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF16BE:
+			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, true );
+			break;
+
+		case CP_UTF32LE:
+			ret = wide_utf32_wcstombs( flags, src, srclen, dst, dstlen, false );
+			break;
+
+		case CP_UTF32BE:
+			ret = wide_utf32_wcstombs( flags, src, srclen, dst, dstlen, true );
+			break;
+
 		case CP_UTF8:
 			if (defchar || used)
 			{
+				abort();
 				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 				return 0;
 			}
-			ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+			
+			if (sizeof(wchar_t)==4) {
+				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+			} else {
+				ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+			}
 			break;
 
 		default:
@@ -563,7 +770,6 @@ extern "C" {
 			{
 			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
 			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
-			default: WINPORT(SetLastError)( ERROR_SUCCESS ); break;
 			}
 			ret = 0;
 		}
@@ -589,19 +795,37 @@ extern "C" {
 			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 			return FALSE;
 		}
+		memset(cpinfo, 0, sizeof(*cpinfo));
 
 		codepage = TranslateCodepage(codepage);
 
 		if (!(table = get_codepage_table( codepage )))
 		{
-			switch(codepage)
-			{
+			switch(codepage) {
 			case CP_UTF7:
 			case CP_UTF8:
 				cpinfo->DefaultChar[0] = 0x3f;
-				cpinfo->DefaultChar[1] = 0;
-				cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
 				cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
+				return TRUE;
+
+			case CP_UTF16LE: 
+				cpinfo->DefaultChar[0] = 0x3f;
+				cpinfo->MaxCharSize = 2;
+				return TRUE;
+
+			case CP_UTF16BE:
+				cpinfo->DefaultChar[1] = 0x3f;
+				cpinfo->MaxCharSize = 2;
+				return TRUE;
+				
+			case CP_UTF32LE: 
+				cpinfo->DefaultChar[0] = 0x3f;
+				cpinfo->MaxCharSize = 4;
+				return TRUE;
+
+			case CP_UTF32BE:
+				cpinfo->DefaultChar[3] = 0x3f;
+				cpinfo->MaxCharSize = 4;
 				return TRUE;
 			}
 			fprintf(stderr, "GetCPInfo: bad codepage %u\n", codepage);
@@ -649,6 +873,38 @@ extern "C" {
 				cpinfo->CodePage = CP_UTF8;
 				cpinfo->UnicodeDefaultChar = 0x3f;
 				strcpyW(cpinfo->CodePageName, utf8);
+				break;
+			}
+
+			case CP_UTF16LE:
+			{
+				cpinfo->CodePage = CP_UTF16LE;
+				cpinfo->UnicodeDefaultChar = 0x3f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-16 LE)");
+				break;
+			}
+
+			case CP_UTF16BE:
+			{
+				cpinfo->CodePage = CP_UTF16BE;
+				cpinfo->UnicodeDefaultChar = 0x003f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-16 BE)");
+				break;
+			}
+
+			case CP_UTF32LE:
+			{
+				cpinfo->CodePage = CP_UTF32LE;
+				cpinfo->UnicodeDefaultChar = 0x3f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-32 LE)");
+				break;
+			}
+
+			case CP_UTF32BE:
+			{
+				cpinfo->CodePage = CP_UTF32BE;
+				cpinfo->UnicodeDefaultChar = 0x0000003f;
+				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-32 BE)");
 				break;
 			}
 

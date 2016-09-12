@@ -7,31 +7,13 @@
 #include <mutex>
 #include "WinCompat.h"
 #include "WinPort.h"
-#include "Utils.h"
+#include "PathHelpers.h"
+#include <utils.h>
 
 
 
 ///////////////////
 
-unsigned char Hex2Digit(const char hex)
-{
-	if (hex>='0' && hex<='9')
-		return hex - '0';
-	if (hex>='a' && hex<='f')
-		return 10 + hex - 'a';
-	if (hex>='A' && hex<='F')
-		return 10 + hex - 'A';
-
-	return 0;
-}
-
-unsigned char Hex2Byte(const char *hex)
-{
-	unsigned char r = Hex2Digit(hex[0]);
-	r<<=4;
-	r+= Hex2Digit(hex[1]);
-	return r;
-}
 /*
 std::u16string ToUTF16(const char *pc)
 {
@@ -164,37 +146,10 @@ bool MatchWildcard(const char *string, const char *wild) {
 }
 
 
-std::string SettingsPath(const char *subpath)
-{
-#ifdef _WIN32
-	std::string path = "D:\\.far2l";
-#else	
-	const char *home = getenv("HOME");
-	std::string path = home ? home : "/tmp";
-	path+= "/.far2l";
-#endif
-	
-	mkdir(path.c_str(), 0777);
-	if (subpath) {
-		if (*subpath != GOOD_SLASH) 
-			path+= GOOD_SLASH;
-		for (const char *p = subpath; *p; ++p) {
-			if (*p == GOOD_SLASH)
-				mkdir(path.c_str(), 0777);
-			path+= *p;
-		}
-	}
-	
-	return path;
-	
-}
-
-
-
 void WinPortInitWellKnownEnv()
 {
 	if (!getenv("TEMP")) {
-		std::string temp = SettingsPath("tmp");
+		std::string temp = InMyProfile("tmp");
 		mkdir(temp.c_str(), 0777);
 		setenv("TEMP", temp.c_str(), 1);
 	}

@@ -9,6 +9,7 @@
 */
 
 #include <windows.h>
+#include <utils.h>
 #include <string.h>
 #ifndef __APPLE__
 #include <malloc.h>

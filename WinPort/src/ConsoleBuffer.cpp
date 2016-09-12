@@ -49,9 +49,9 @@ CHAR_INFO *ConsoleBuffer::InspectCopyArea(const COORD &data_size, const COORD &d
 	{fprintf(stderr, "bad1\n"); return NULL;}
 
 	unsigned int height = _console_chars.size() / _width;
-	if (_width <= screen_rect.Right)
+	if ((int)_width <= screen_rect.Right)
 		screen_rect.Right = _width - 1;
-	if (height <= screen_rect.Bottom)
+	if ((int)height <= screen_rect.Bottom)
 		screen_rect.Bottom = height - 1;
 
 	SHORT data_avail_width = data_size.X - data_pos.X;
@@ -61,9 +61,9 @@ CHAR_INFO *ConsoleBuffer::InspectCopyArea(const COORD &data_size, const COORD &d
 	if (data_avail_height <= (screen_rect.Bottom - screen_rect.Top))
 		screen_rect.Bottom = screen_rect.Top + data_avail_height - 1;
 
-	if (_width <= screen_rect.Left || screen_rect.Right < screen_rect.Left)
+	if ((int)_width <= screen_rect.Left || screen_rect.Right < screen_rect.Left)
 	{fprintf(stderr, "bad2\n"); return NULL;}
-	if (height <= screen_rect.Top || screen_rect.Bottom < screen_rect.Top)
+	if ((int)height <= screen_rect.Top || screen_rect.Bottom < screen_rect.Top)
 	{fprintf(stderr, "bad3\n"); return NULL;}
 
 	return OffsetMatrixPtr(&_console_chars[0], _width, screen_rect.Left, screen_rect.Top);
@@ -76,21 +76,26 @@ void ConsoleBuffer::Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL
 		return;
 	
 	data = OffsetMatrixPtr(data, data_size.X, data_pos.X, data_pos.Y);
-	for (ULONG y = screen_rect.Top; y <= screen_rect.Bottom; ++y) {
+	for (SHORT y = screen_rect.Top; y <= screen_rect.Bottom; ++y) {
 		memcpy(data, screen, (screen_rect.Right + 1 - screen_rect.Left) * sizeof(*data));
 		screen+= _width;
 		data+= data_size.X;
 	}
 }
 
+static inline bool AreSameChars(const CHAR_INFO &one, const CHAR_INFO &another)
+{
+	return one.Char.UnicodeChar==another.Char.UnicodeChar && one.Attributes==another.Attributes;
+}
+
 void ConsoleBuffer::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect)
 {
 	CHAR_INFO *screen = InspectCopyArea(data_size, data_pos, screen_rect);
 	if (!screen)
-		return;
+		return ;
 
 	data = OffsetMatrixPtr(data, data_size.X, data_pos.X, data_pos.Y);
-	for (ULONG y = screen_rect.Top; y <= screen_rect.Bottom; ++y) {
+	for (SHORT y = screen_rect.Top; y <= screen_rect.Bottom; ++y) {
 		memcpy(screen, data, (screen_rect.Right + 1 - screen_rect.Left) * sizeof(*data));
 		screen+= _width;
 		data+= data_size.X;
@@ -99,7 +104,7 @@ void ConsoleBuffer::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos
 
 bool ConsoleBuffer::Read(CHAR_INFO &ch, COORD screen_pos)
 {
-	if (screen_pos.X < 0 || screen_pos.Y < 0 || screen_pos.X >= _width)
+	if (screen_pos.X < 0 || screen_pos.Y < 0 || screen_pos.X >= (int)_width)
 		return false;
 
 	size_t index = screen_pos.Y;
@@ -113,18 +118,22 @@ bool ConsoleBuffer::Read(CHAR_INFO &ch, COORD screen_pos)
 	return true;
 }
 
-bool ConsoleBuffer::Write(const CHAR_INFO &ch, COORD screen_pos)
+ConsoleBuffer::WriteResult ConsoleBuffer::Write(const CHAR_INFO &ch, COORD screen_pos)
 {
-	if (screen_pos.X < 0 || screen_pos.Y < 0 || screen_pos.X >= _width)
-		return false;
+	if (screen_pos.X < 0 || screen_pos.Y < 0 || screen_pos.X >= (int)_width)
+		return WR_BAD;
 
 	size_t index = screen_pos.Y;
 	index*= _width;
 	index+= screen_pos.X;
 
 	if (index >= _console_chars.size())
-		return false;
+		return WR_BAD;
 
-	_console_chars[index] = ch;
-	return true;
+	CHAR_INFO &dch = _console_chars[index];
+	if (AreSameChars(dch, ch))
+		return WR_SAME;
+		
+	dch = ch;
+	return WR_MODIFIED;
 }

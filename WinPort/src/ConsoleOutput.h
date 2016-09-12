@@ -49,6 +49,7 @@ class ConsoleOutput
 			SM_FILL_ATTR
 		} kind;
 		size_t count;
+		SMALL_RECT area;
 		union {
 			const WCHAR *str;
 			TCHAR chr;
@@ -56,7 +57,7 @@ class ConsoleOutput
 		};
 	};
 	
-	bool ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos);
+	void ModifySequenceEntityAt(SequenceModifier &sm, COORD pos);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow();
 	

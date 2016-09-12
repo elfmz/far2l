@@ -216,8 +216,11 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 {
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		if (!_buf.Write(data, screen_pos))
-			return false;
+		switch (_buf.Write(data, screen_pos)) {
+			case ConsoleBuffer::WR_BAD: return false;
+			case ConsoleBuffer::WR_SAME: return true;
+			case ConsoleBuffer::WR_MODIFIED: break;
+		}
 	}
 
 	if (_listener) {
@@ -276,7 +279,7 @@ void ConsoleOutput::ScrollOutputOnOverflow()
 	_buf.Write(&_temp_chars[0], tmp_size, tmp_pos, scr_rect);
 }
 
-bool ConsoleOutput::ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos)
+void ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
 {
 	CHAR_INFO ch;
 
@@ -290,28 +293,33 @@ bool ConsoleOutput::ModifySequenceEntityAt(const SequenceModifier &sm, COORD pos
 
 		case SequenceModifier::SM_FILL_CHAR:
 			if (!_buf.Read(ch, pos))
-				return false;
+				return;
+
 			ch.Char.UnicodeChar = sm.chr;
 			break;
 
 		case SequenceModifier::SM_FILL_ATTR:
 			if (!_buf.Read(ch, pos))
-				return false;
+				return;
+
 			ch.Attributes = sm.attr;
 			break;
 	}
-	return _buf.Write(ch, pos);
+	
+	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {
+		if (sm.area.Left > pos.X) sm.area.Left = pos.X;
+		if (sm.area.Right < pos.X) sm.area.Right = pos.X;
+		if (sm.area.Top > pos.Y) sm.area.Top = pos.Y;
+		if (sm.area.Bottom < pos.Y) sm.area.Bottom = pos.Y;
+	}
 }
 
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 {
 	size_t rv = 0;
-	SMALL_RECT area;
-	bool scrolled = false;
 	{
+		bool scrolled = false;
 		std::lock_guard<std::mutex> lock(_mutex);
-		area.Left = area.Right = pos.X; 
-		area.Top = area.Bottom = pos.Y;
 
 		unsigned int width, height;
 		_buf.GetSize(width, height);
@@ -336,10 +344,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 						pos.Y--;
 						ScrollOutputOnOverflow();
 						scrolled = true;
-					} else
-						area.Bottom++;
-				
-					area.Left = 0;				
+					}
 				} else
 					pos.X = width - 1;
 			}
@@ -347,31 +352,20 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\b' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				if (pos.X > 0) {
 					pos.X--;
-					/*if (area.Left > pos.X) area.Left = pos.X;
-					CHAR_INFO ch;
-					ch.Char.UnicodeChar = L' ';
-					ch.Attributes = _attributes;
-					_buf.Write(ch, pos);*/
 				}
 			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\r' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
-				area.Left = 0;
 
 			} else if ( sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
 				pos.X = 0;
-				area.Left = 0;
 				pos.Y++;
 				if (pos.Y >= (int)scroll_edge) {
 					pos.Y--;
 					ScrollOutputOnOverflow();
 					scrolled = true;
-				} else
-					area.Bottom++;
+				}
 			} else {
 				ModifySequenceEntityAt(sm, pos);
-				area.Right++;
-				if (area.Right == (int)width) 
-					area.Right = width - 1;
 				pos.X++;
 			}
 			if (sm.kind==SequenceModifier::SM_WRITE_STR) {
@@ -386,21 +380,22 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			}
 		}	
 		if (scrolled) {
-			area.Left = 0;
-			area.Top = 0;
-			area.Right = width - 1;
-			area.Bottom = height - 1;
+			sm.area.Left = 0;
+			sm.area.Top = 0;
+			sm.area.Right = width - 1;
+			sm.area.Bottom = height - 1;
 		}
 	}
-	if (rv && _listener) {
-		_listener->OnConsoleOutputUpdated(area);
+	if (_listener) {
+		if (sm.area.Right >= sm.area.Left && sm.area.Bottom >= sm.area.Top) 
+			_listener->OnConsoleOutputUpdated(sm.area);
 	}
 	return rv;
 }
 
 size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
 {
-	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count};
+	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count, {MAXSHORT, MAXSHORT, 0, 0} };
 	sm.str = data;
 	return ModifySequenceAt(sm, _cursor.pos);
 }
@@ -408,7 +403,7 @@ size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
 
 size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos)
 {
-	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count};
+	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count, {MAXSHORT, MAXSHORT, 0, 0} };
 	sm.str = data;
 	return ModifySequenceAt(sm, pos);
 }
@@ -416,7 +411,7 @@ size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos)
 
 size_t ConsoleOutput::FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos)
 {
-	SequenceModifier sm = {SequenceModifier::SM_FILL_CHAR, count};
+	SequenceModifier sm = {SequenceModifier::SM_FILL_CHAR, count, {MAXSHORT, MAXSHORT, 0, 0} };
 	sm.chr = cCharacter;
 	return ModifySequenceAt(sm, pos);
 }

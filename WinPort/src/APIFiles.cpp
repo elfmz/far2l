@@ -309,7 +309,7 @@ extern "C"
 			case S_IFLNK: rv = FILE_ATTRIBUTE_REPARSE_POINT; break;
 			case S_IFSOCK: rv = FILE_ATTRIBUTE_DEVICE; break;
 #endif
-			default: rv = FILE_ATTRIBUTE_ARCHIVE;
+			default: rv = FILE_ATTRIBUTE_DEVICE;
 		}
 		if (name) {
 			const WCHAR *slash = wcsrchr(name, GOOD_SLASH);

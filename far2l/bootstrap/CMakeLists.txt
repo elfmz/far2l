@@ -89,8 +89,16 @@ add_custom_command(TARGET bootstrap
    COMMENT generating languages
 )
 
-add_custom_command(TARGET bootstrap
-   POST_BUILD
-   DEPENDS ${LNGFILES} ${HLFFILES}
-   COMMAND ${CMAKE_COMMAND} -E copy "${LNGFILES}" "${HLFFILES}" "${INSTALL_DIR}"
-)
+
+# older cmake versions does not support copying of multiple files, so use foreach
+
+set(LNGCOPYLIST "${LNGFILES}")
+set(HLFCOPYLIST "${HLFFILES}")
+
+foreach(_file ${LNGCOPYLIST} ${HLFCOPYLIST})
+  add_custom_command(TARGET bootstrap
+     POST_BUILD
+     DEPENDS ${_file}
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_file}" "${INSTALL_DIR}"
+  )
+endforeach()

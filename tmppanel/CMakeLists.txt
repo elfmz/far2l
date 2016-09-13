@@ -17,8 +17,6 @@ target_include_directories(tmppanel PRIVATE ../far2l)
 target_include_directories(tmppanel PRIVATE ../far2l/Include)
 target_include_directories(tmppanel PRIVATE ../WinPort)
 
-target_link_libraries(tmppanel far2l)
-
 set_target_properties(tmppanel
   PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/tmppanel/bin"

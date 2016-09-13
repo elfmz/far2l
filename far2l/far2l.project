@@ -282,6 +282,8 @@
     <File Name="vtlog.cpp"/>
     <File Name="flink.cpp"/>
     <File Name="flink.hpp"/>
+    <File Name="vtcompletor.cpp"/>
+    <File Name="vtcompletor.h"/>
   </VirtualDirectory>
   <VirtualDirectory Name="UCD">
     <File Name="UCD/Big5Freq.tab"/>

@@ -1,7 +1,7 @@
 /*
 filepanels.cpp
 
-Ôàéëîâûå ïàíåëè
+Ã”Ã Ã©Ã«Ã®Ã¢Ã»Ã¥ Ã¯Ã Ã­Ã¥Ã«Ã¨
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -142,7 +142,7 @@ void FilePanels::Init()
 	}
 
 	ActivePanel->SetFocus();
-	// ïûòàåìñÿ èçáàâèòñÿ îò çàâèñàíèÿ ïðè çàïóñêå
+	// Ã¯Ã»Ã²Ã Ã¥Ã¬Ã±Ã¿ Ã¨Ã§Ã¡Ã Ã¢Ã¨Ã²Ã±Ã¿ Ã®Ã² Ã§Ã Ã¢Ã¨Ã±Ã Ã­Ã¨Ã¿ Ã¯Ã°Ã¨ Ã§Ã Ã¯Ã³Ã±ÃªÃ¥
 	int IsLocalPath_FarPath=IsLocalPath(g_strFarPath);
 	PrepareOptFolder(Opt.strLeftFolder,IsLocalPath_FarPath);
 	PrepareOptFolder(Opt.strRightFolder,IsLocalPath_FarPath);
@@ -196,7 +196,7 @@ void FilePanels::Init()
 
 #if 1
 
-	//! Âíà÷àëå "ïîêàçûâàåì" ïàññèâíóþ ïàíåëü
+	//! Ã‚Ã­Ã Ã·Ã Ã«Ã¥ "Ã¯Ã®ÃªÃ Ã§Ã»Ã¢Ã Ã¥Ã¬" Ã¯Ã Ã±Ã±Ã¨Ã¢Ã­Ã³Ã¾ Ã¯Ã Ã­Ã¥Ã«Ã¼
 	if (PassiveIsLeftFlag)
 	{
 		if (Opt.LeftPanel.Visible)
@@ -224,7 +224,7 @@ void FilePanels::Init()
 
 #endif
 
-	// ïðè ïîíàøåííûõ ïàíåëÿõ íå çàáûòü áû âûñòàâèòü êîððåêòíî êàòàëîã â CmdLine
+	// Ã¯Ã°Ã¨ Ã¯Ã®Ã­Ã Ã¸Ã¥Ã­Ã­Ã»Ãµ Ã¯Ã Ã­Ã¥Ã«Ã¿Ãµ Ã­Ã¥ Ã§Ã Ã¡Ã»Ã²Ã¼ Ã¡Ã» Ã¢Ã»Ã±Ã²Ã Ã¢Ã¨Ã²Ã¼ ÃªÃ®Ã°Ã°Ã¥ÃªÃ²Ã­Ã® ÃªÃ Ã²Ã Ã«Ã®Ã£ Ã¢ CmdLine
 	if (!Opt.RightPanel.Visible && !Opt.LeftPanel.Visible)
 	{
 		CtrlObject->CmdLine->SetCurDir(PassiveIsLeftFlag?Opt.strRightFolder:Opt.strLeftFolder);
@@ -367,7 +367,7 @@ int FilePanels::SetAnhoterPanelFocus()
 
 int FilePanels::SwapPanels()
 {
-	int Ret=FALSE; // ýòî çíà÷èò íè îäíà èç ïàíåëåé íå âèäíà
+	int Ret=FALSE; // Ã½Ã²Ã® Ã§Ã­Ã Ã·Ã¨Ã² Ã­Ã¨ Ã®Ã¤Ã­Ã  Ã¨Ã§ Ã¯Ã Ã­Ã¥Ã«Ã¥Ã© Ã­Ã¥ Ã¢Ã¨Ã¤Ã­Ã 
 
 	if (LeftPanel->IsVisible() || RightPanel->IsVisible())
 	{
@@ -437,7 +437,9 @@ int FilePanels::ProcessKey(int Key)
 		}
 		case KEY_TAB:
 		{
-			SetAnhoterPanelFocus();
+			if (!SetAnhoterPanelFocus()) {
+				CtrlObject->CmdLine->ProcessKey(Key);
+			}
 			break;
 		}
 		case KEY_CTRLF1:
@@ -515,14 +517,14 @@ int FilePanels::ProcessKey(int Key)
 				{
 					if (AnotherPanel->GetType()==NewType)
 						/* $ 19.09.2000 IS
-						  Ïîâòîðíîå íàæàòèå íà ctrl-l|q|t âñåãäà âêëþ÷àåò ôàéëîâóþ ïàíåëü
+						  ÃÃ®Ã¢Ã²Ã®Ã°Ã­Ã®Ã¥ Ã­Ã Ã¦Ã Ã²Ã¨Ã¥ Ã­Ã  ctrl-l|q|t Ã¢Ã±Ã¥Ã£Ã¤Ã  Ã¢ÃªÃ«Ã¾Ã·Ã Ã¥Ã² Ã´Ã Ã©Ã«Ã®Ã¢Ã³Ã¾ Ã¯Ã Ã­Ã¥Ã«Ã¼
 						*/
 						AnotherPanel=ChangePanel(AnotherPanel,FILE_PANEL,FALSE,FALSE);
 					else
 						AnotherPanel=ChangePanel(AnotherPanel,NewType,FALSE,FALSE);
 
 					/* $ 07.09.2001 VVM
-					  ! Ïðè âîçâðàòå èç CTRL+Q, CTRL+L âîññòàíîâèì êàòàëîã, åñëè àêòèâíàÿ ïàíåëü - äåðåâî. */
+					  ! ÃÃ°Ã¨ Ã¢Ã®Ã§Ã¢Ã°Ã Ã²Ã¥ Ã¨Ã§ CTRL+Q, CTRL+L Ã¢Ã®Ã±Ã±Ã²Ã Ã­Ã®Ã¢Ã¨Ã¬ ÃªÃ Ã²Ã Ã«Ã®Ã£, Ã¥Ã±Ã«Ã¨ Ã ÃªÃ²Ã¨Ã¢Ã­Ã Ã¿ Ã¯Ã Ã­Ã¥Ã«Ã¼ - Ã¤Ã¥Ã°Ã¥Ã¢Ã®. */
 					if (ActivePanel->GetType() == TREE_PANEL)
 					{
 						FARString strCurDir;
@@ -610,10 +612,10 @@ int FilePanels::ProcessKey(int Key)
 			break;
 		}
 		/* $ 08.04.2002 IS
-		   Ïðè ñìåíå äèñêà óñòàíîâèì ïðèíóäèòåëüíî òåêóùèé êàòàëîã íà àêòèâíîé
-		   ïàíåëè, ò.ê. ñèñòåìà íå çíàåò íè÷åãî î òîì, ÷òî ó Ôàðà äâå ïàíåëè, è
-		   òåêóùèì äëÿ ñèñòåìû ïîñëå ñìåíû äèñêà ìîæåò áûòü êàòàëîã è íà ïàññèâíîé
-		   ïàíåëè
+		   ÃÃ°Ã¨ Ã±Ã¬Ã¥Ã­Ã¥ Ã¤Ã¨Ã±ÃªÃ  Ã³Ã±Ã²Ã Ã­Ã®Ã¢Ã¨Ã¬ Ã¯Ã°Ã¨Ã­Ã³Ã¤Ã¨Ã²Ã¥Ã«Ã¼Ã­Ã® Ã²Ã¥ÃªÃ³Ã¹Ã¨Ã© ÃªÃ Ã²Ã Ã«Ã®Ã£ Ã­Ã  Ã ÃªÃ²Ã¨Ã¢Ã­Ã®Ã©
+		   Ã¯Ã Ã­Ã¥Ã«Ã¨, Ã².Ãª. Ã±Ã¨Ã±Ã²Ã¥Ã¬Ã  Ã­Ã¥ Ã§Ã­Ã Ã¥Ã² Ã­Ã¨Ã·Ã¥Ã£Ã® Ã® Ã²Ã®Ã¬, Ã·Ã²Ã® Ã³ Ã”Ã Ã°Ã  Ã¤Ã¢Ã¥ Ã¯Ã Ã­Ã¥Ã«Ã¨, Ã¨
+		   Ã²Ã¥ÃªÃ³Ã¹Ã¨Ã¬ Ã¤Ã«Ã¿ Ã±Ã¨Ã±Ã²Ã¥Ã¬Ã» Ã¯Ã®Ã±Ã«Ã¥ Ã±Ã¬Ã¥Ã­Ã» Ã¤Ã¨Ã±ÃªÃ  Ã¬Ã®Ã¦Ã¥Ã² Ã¡Ã»Ã²Ã¼ ÃªÃ Ã²Ã Ã«Ã®Ã£ Ã¨ Ã­Ã  Ã¯Ã Ã±Ã±Ã¨Ã¢Ã­Ã®Ã©
+		   Ã¯Ã Ã­Ã¥Ã«Ã¨
 		*/
 		case KEY_ALTF1:
 		{
@@ -792,7 +794,7 @@ int FilePanels::ChangePanelViewMode(Panel *Current,int Mode,BOOL RefreshFrame)
 		Current->SetViewMode(Mode);
 		Current=ChangePanelToFilled(Current,FILE_PANEL);
 		Current->SetViewMode(Mode);
-		// ÂÍÈÌÀÍÈÅ! Êîñòûëü! Íî Ðàáîòàåò!
+		// Ã‚ÃÃˆÃŒÃ€ÃÃˆÃ…! ÃŠÃ®Ã±Ã²Ã»Ã«Ã¼! ÃÃ® ÃÃ Ã¡Ã®Ã²Ã Ã¥Ã²!
 		SetScreenPosition();
 
 		if (RefreshFrame)
@@ -833,7 +835,7 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 {
 	Panel *NewPanel;
 	SaveScreen *SaveScr=nullptr;
-	// OldType íå èíèöèàëèçèðîâàëñÿ...
+	// OldType Ã­Ã¥ Ã¨Ã­Ã¨Ã¶Ã¨Ã Ã«Ã¨Ã§Ã¨Ã°Ã®Ã¢Ã Ã«Ã±Ã¿...
 	int OldType=Current->GetType(),X1,Y1,X2,Y2;
 	int OldViewMode,OldSortMode,OldSortOrder,OldSortGroups,OldSelectedFirst,OldDirectoriesFirst;
 	int OldPanelMode,LeftPosition,ChangePosition,OldNumericSort,OldCaseSensitiveSort;
@@ -1010,18 +1012,18 @@ void FilePanels::OnChangeFocus(int f)
 	_OT(SysLog(L"FilePanels::OnChangeFocus(%i)",f));
 
 	/* $ 20.06.2001 tran
-	   áàã ñ îòðèñîâêîé ïðè êîïèðîâàíèè è óäàëåíèè
-	   íå ó÷èòûâàëñÿ LockRefreshCount */
+	   Ã¡Ã Ã£ Ã± Ã®Ã²Ã°Ã¨Ã±Ã®Ã¢ÃªÃ®Ã© Ã¯Ã°Ã¨ ÃªÃ®Ã¯Ã¨Ã°Ã®Ã¢Ã Ã­Ã¨Ã¨ Ã¨ Ã³Ã¤Ã Ã«Ã¥Ã­Ã¨Ã¨
+	   Ã­Ã¥ Ã³Ã·Ã¨Ã²Ã»Ã¢Ã Ã«Ã±Ã¿ LockRefreshCount */
 	if (f)
 	{
 		/*$ 22.06.2001 SKV
-		  + update ïàíåëåé ïðè ïîëó÷åíèè ôîêóñà
+		  + update Ã¯Ã Ã­Ã¥Ã«Ã¥Ã© Ã¯Ã°Ã¨ Ã¯Ã®Ã«Ã³Ã·Ã¥Ã­Ã¨Ã¨ Ã´Ã®ÃªÃ³Ã±Ã 
 		*/
 		CtrlObject->Cp()->GetAnotherPanel(ActivePanel)->UpdateIfChanged(UIC_UPDATE_FORCE_NOTIFICATION);
 		ActivePanel->UpdateIfChanged(UIC_UPDATE_FORCE_NOTIFICATION);
 		/* $ 13.04.2002 KM
-		  ! ??? ß íå ïîíÿë çà÷åì çäåñü Redraw, åñëè
-		    Redraw âûçûâàåòñÿ ñëåäîì âî Frame::OnChangeFocus.
+		  ! ??? ÃŸ Ã­Ã¥ Ã¯Ã®Ã­Ã¿Ã« Ã§Ã Ã·Ã¥Ã¬ Ã§Ã¤Ã¥Ã±Ã¼ Redraw, Ã¥Ã±Ã«Ã¨
+		    Redraw Ã¢Ã»Ã§Ã»Ã¢Ã Ã¥Ã²Ã±Ã¿ Ã±Ã«Ã¥Ã¤Ã®Ã¬ Ã¢Ã® Frame::OnChangeFocus.
 		*/
 //    Redraw();
 		Frame::OnChangeFocus(1);
@@ -1071,7 +1073,7 @@ void FilePanels::DisplayObject()
 		PassiveIsLeftFlag=TRUE;
 	}
 
-	//! Âíà÷àëå "ïîêàçûâàåì" ïàññèâíóþ ïàíåëü
+	//! Ã‚Ã­Ã Ã·Ã Ã«Ã¥ "Ã¯Ã®ÃªÃ Ã§Ã»Ã¢Ã Ã¥Ã¬" Ã¯Ã Ã±Ã±Ã¨Ã¢Ã­Ã³Ã¾ Ã¯Ã Ã­Ã¥Ã«Ã¼
 	if (PassiveIsLeftFlag)
 	{
 		if (Opt.LeftPanel.Visible)
@@ -1134,8 +1136,8 @@ int FilePanels::FastHide()
 void FilePanels::Refresh()
 {
 	/*$ 31.07.2001 SKV
-	  Âûçîâåì òàê, à íå Frame::OnChangeFocus,
-	  êîòîðûé èç ýòîãî è ïîçîâ¸òñÿ.
+	  Ã‚Ã»Ã§Ã®Ã¢Ã¥Ã¬ Ã²Ã Ãª, Ã  Ã­Ã¥ Frame::OnChangeFocus,
+	  ÃªÃ®Ã²Ã®Ã°Ã»Ã© Ã¨Ã§ Ã½Ã²Ã®Ã£Ã® Ã¨ Ã¯Ã®Ã§Ã®Ã¢Â¸Ã²Ã±Ã¿.
 	*/
 	//Frame::OnChangeFocus(1);
 	OnChangeFocus(1);
@@ -1167,14 +1169,14 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 		FARString strNameDir = FileName;
 		CutToSlash(strNameDir);
 		/* $ 10.04.2001 IS
-		     Íå äåëàåì SetCurDir, åñëè íóæíûé ïóòü óæå åñòü íà îòêðûòûõ
-		     ïàíåëÿõ, òåì ñàìûì äîáèâàåìñÿ òîãî, ÷òî âûäåëåíèå ñ ýëåìåíòîâ
-		     ïàíåëåé íå ñáðàñûâàåòñÿ.
+		     ÃÃ¥ Ã¤Ã¥Ã«Ã Ã¥Ã¬ SetCurDir, Ã¥Ã±Ã«Ã¨ Ã­Ã³Ã¦Ã­Ã»Ã© Ã¯Ã³Ã²Ã¼ Ã³Ã¦Ã¥ Ã¥Ã±Ã²Ã¼ Ã­Ã  Ã®Ã²ÃªÃ°Ã»Ã²Ã»Ãµ
+		     Ã¯Ã Ã­Ã¥Ã«Ã¿Ãµ, Ã²Ã¥Ã¬ Ã±Ã Ã¬Ã»Ã¬ Ã¤Ã®Ã¡Ã¨Ã¢Ã Ã¥Ã¬Ã±Ã¿ Ã²Ã®Ã£Ã®, Ã·Ã²Ã® Ã¢Ã»Ã¤Ã¥Ã«Ã¥Ã­Ã¨Ã¥ Ã± Ã½Ã«Ã¥Ã¬Ã¥Ã­Ã²Ã®Ã¢
+		     Ã¯Ã Ã­Ã¥Ã«Ã¥Ã© Ã­Ã¥ Ã±Ã¡Ã°Ã Ã±Ã»Ã¢Ã Ã¥Ã²Ã±Ã¿.
 		*/
 		BOOL AExist=(ActiveMode==NORMAL_PANEL) && !StrCmpI(ADir,strNameDir);
 		BOOL PExist=(PassiveMode==NORMAL_PANEL) && !StrCmpI(PDir,strNameDir);
 
-		// åñëè íóæíûé ïóòü åñòü íà ïàññèâíîé ïàíåëè
+		// Ã¥Ã±Ã«Ã¨ Ã­Ã³Ã¦Ã­Ã»Ã© Ã¯Ã³Ã²Ã¼ Ã¥Ã±Ã²Ã¼ Ã­Ã  Ã¯Ã Ã±Ã±Ã¨Ã¢Ã­Ã®Ã© Ã¯Ã Ã­Ã¥Ã«Ã¨
 		if (!AExist && PExist)
 			ProcessKey(KEY_TAB);
 
@@ -1182,8 +1184,8 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 			ActivePanel->SetCurDir(strNameDir,TRUE);
 
 		ActivePanel->GoToFile(strNameFile);
-		// âñåãäà îáíîâèì çàãîëîâîê ïàíåëè, ÷òîáû äàòü îáðàòíóþ ñâÿçü, ÷òî
-		// Ctrl-F10 îáðàáîòàí
+		// Ã¢Ã±Ã¥Ã£Ã¤Ã  Ã®Ã¡Ã­Ã®Ã¢Ã¨Ã¬ Ã§Ã Ã£Ã®Ã«Ã®Ã¢Ã®Ãª Ã¯Ã Ã­Ã¥Ã«Ã¨, Ã·Ã²Ã®Ã¡Ã» Ã¤Ã Ã²Ã¼ Ã®Ã¡Ã°Ã Ã²Ã­Ã³Ã¾ Ã±Ã¢Ã¿Ã§Ã¼, Ã·Ã²Ã®
+		// Ctrl-F10 Ã®Ã¡Ã°Ã Ã¡Ã®Ã²Ã Ã­
 		ActivePanel->SetTitle();
 	}
 }

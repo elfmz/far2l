@@ -1,7 +1,13 @@
 
 project(farlng)
 
-file(GLOB_RECURSE SOURCES "*.cpp")
+set(SOURCES
+  src/farlng.cpp
+  src/lng.common.cpp
+  src/lng.convertor.cpp
+  src/lng.generator.cpp
+  src/lng.inserter.cpp
+)
 
 
 find_package(PkgConfig REQUIRED)

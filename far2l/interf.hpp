@@ -3,7 +3,7 @@
 /*
 interf.hpp
 
-Êîíñîëüíûå ôóíêöèè ââîäà-âûâîäà
+Консольные функции ввода-вывода
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -42,7 +42,7 @@ extern SHORT ScrX,ScrY;
 extern SHORT PrevScrX,PrevScrY;
 extern DWORD InitialConsoleMode;
 
-// òèïû ðàìîê
+// типы рамок
 enum
 {
 	NO_BOX,
@@ -70,22 +70,22 @@ enum BOX_DEF_SYMBOLS
 	BS_RB_H1V2,       // 0xBD
 	BS_RB_H2V1,       // 0xBE
 	BS_RT_H1V1,       // 0xBF
-	BS_LB_H1V1,       // 0xÑ0
-	BS_B_H1V1,        // 0xÑ1
-	BS_T_H1V1,        // 0xÑ2
-	BS_L_H1V1,        // 0xÑ3
-	BS_H1,            // 0xÑ4
-	BS_C_H1V1,        // 0xÑ5
-	BS_L_H2V1,        // 0xÑ6
-	BS_L_H1V2,        // 0xÑ7
-	BS_LB_H2V2,       // 0xÑ8
-	BS_LT_H2V2,       // 0xÑ9
-	BS_B_H2V2,        // 0xÑA
-	BS_T_H2V2,        // 0xÑB
-	BS_L_H2V2,        // 0xÑC
-	BS_H2,            // 0xÑD
-	BS_C_H2V2,        // 0xÑE
-	BS_B_H2V1,        // 0xÑF
+	BS_LB_H1V1,       // 0xC0
+	BS_B_H1V1,        // 0xC1
+	BS_T_H1V1,        // 0xC2
+	BS_L_H1V1,        // 0xC3
+	BS_H1,            // 0xC4
+	BS_C_H1V1,        // 0xC5
+	BS_L_H2V1,        // 0xC6
+	BS_L_H1V2,        // 0xC7
+	BS_LB_H2V2,       // 0xC8
+	BS_LT_H2V2,       // 0xC9
+	BS_B_H2V2,        // 0xCA
+	BS_T_H2V2,        // 0xCB
+	BS_L_H2V2,        // 0xCC
+	BS_H2,            // 0xCD
+	BS_C_H2V2,        // 0xCE
+	BS_B_H2V1,        // 0xCF
 	BS_B_H1V2,        // 0xD0
 	BS_T_H2V1,        // 0xD1
 	BS_T_H1V2,        // 0xD2
@@ -107,9 +107,9 @@ enum BOX_DEF_SYMBOLS
 void ShowTime(int ShowAlways);
 
 /*$ 14.02.2001 SKV
-  Èíèòèòü ëè ïàëèòðó default çíà÷åíèÿìè.
-  Ïî óìîë÷àíèþ - äà.
-  Ñ 0 èñïîëüçóåòñÿ äëÿ ConsoleDetach.
+  Инитить ли палитру default значениями.
+  По умолчанию - да.
+  С 0 используется для ConsoleDetach.
 */
 void InitConsole(int FirstInit=TRUE);
 void CloseConsole();

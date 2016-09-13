@@ -1,11 +1,3 @@
-#include <wx/wx.h>
-#include <wx/display.h>
-#include <wx/clipbrd.h>
-#include <set>
-#include <fstream>
-#include <vector>
-#include <algorithm>
-
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "wxWinTranslations.h"
@@ -13,6 +5,14 @@
 #include "PathHelpers.h"
 #include "Paint.h"
 #include "utils.h"
+
+#include <wx/wx.h>
+#include <wx/display.h>
+#include <wx/clipbrd.h>
+#include <set>
+#include <fstream>
+#include <vector>
+#include <algorithm>
 
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
@@ -500,35 +500,11 @@ void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 		refresh_rects.swap(_refresh_rects);	
 	}
 	
-#if 0
-	std::sort(refresh_rects.begin(), refresh_rects.end(), 
-		[](const SMALL_RECT &r1, const SMALL_RECT &r2) -> bool {   
-            return (r1.Top < r2.Top || r1.Left < r2.Left);
-	});
-	
-	RefreshRects::const_iterator i = refresh_rects.begin();
-	SMALL_RECT prev = *i;
-	_paint_context.RefreshArea( prev );
-	unsigned int skipped = 0;
-	for (++i; i!=refresh_rects.end(); ++i) {
-		const SMALL_RECT &rect = *i;
-		if (rect.Left!=prev.Left || rect.Top!=prev.Top || 
-			rect.Right!=prev.Right || rect.Bottom!=prev.Bottom) {
-				
-			_paint_context.RefreshArea( rect );
-			prev = rect;
-		} else
-			skipped++;
-	}
-	//fprintf(stderr, "OnRefreshSync: count=%u skipped=%u\n", 
-	//	(unsigned int)refresh_rects.size(), skipped);
-#else
 	for (const auto & r : refresh_rects) {
 		_paint_context.RefreshArea( r );
 	}
 	//fprintf(stderr, "OnRefreshSync: count=%u\n", 
 	//	(unsigned int)refresh_rects.size());
-#endif		
 }
 
 void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )

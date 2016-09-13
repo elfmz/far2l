@@ -3,7 +3,7 @@
 /*
 codepage.cpp
 
-Ðàáîòà ñ êîäîâûìè ñòðàíèöàìè
+Работа с кодовыми страницами
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,12 +33,12 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Òèï âûáðàííîé òàáëèöû ñèìâîëîâ
+// Тип выбранной таблицы символов
 enum CPSelectType
 {
-	// "Ëþáèìàÿ" òàáëèöà ñèìâîëîâ
+	// "Любимая" таблица символов
 	CPST_FAVORITE = 1,
-	// Òàáëèöà ñèìâîëîâ ó÷àñòâóþùàÿ â ïîèñêå ïî âñåì òàáëèöàì ñèìâîëîâ
+	// Таблица символов участвующая в поиске по всем таблицам символов
 	CPST_FIND = 2
 };
 

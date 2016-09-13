@@ -48,7 +48,7 @@ class nsUniversalDetectorEx : public nsUniversalDetector
 			else if (!strcmp(aCharset, "x-mac-hebrew"))
 				m_codepage = 10005;
 			else if (!strcmp(aCharset, "x-mac-cyrillic"))
-				m_codepage = 1251; /*10007*/ //Îíî ñëèøêîì ïîõîæå íà 1251 è äåòåêòîð áûâàåò ïóòàåò.
+				m_codepage = 1251; /*10007*/ //Оно слишком похоже на 1251 и детектор бывает путает.
 			else if (!strcmp(aCharset, "ISO-8859-2"))
 				m_codepage = 28592;
 			else if (!strcmp(aCharset, "ISO-8859-5"))

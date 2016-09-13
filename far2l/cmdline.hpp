@@ -59,6 +59,7 @@ class CommandLine:public ScreenObject
 		FARString strCurDir;
 		FARString strLastCmdStr;
 		int LastCmdPartLength;
+		int LastKey;
 		TStack<PushPopRecord> ppstack;
 
 	private:

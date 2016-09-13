@@ -89,8 +89,8 @@ add_custom_command(TARGET bootstrap
    COMMENT generating languages
 )
 
-add_custom_command(TARGET bootstrap
-   POST_BUILD
-   DEPENDS ${LNGFILES} ${HLFFILES}
-   COMMAND ${CMAKE_COMMAND} -E copy ${LNGFILES} ${HLFFILES} "${INSTALL_DIR}"
-)
+#add_custom_command(TARGET bootstrap
+#   POST_BUILD
+#   DEPENDS ${LNGFILES} ${HLFFILES}
+#   COMMAND ${CMAKE_COMMAND} -E copy ${LNGFILES} ${HLFFILES} "${INSTALL_DIR}"
+#)

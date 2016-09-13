@@ -184,6 +184,9 @@ void CommandLine::ProcessCompletion(bool possibilities)
 					mi.strName = p;						
 					vm.AddItem(&mi);
 				}
+				
+				if (possibilities.size() < 10)
+					vm.AssignHighlights(0);
 					
 				vm.SetBoxType(SHORT_SINGLE_BOX);
 				vm.ClearDone();

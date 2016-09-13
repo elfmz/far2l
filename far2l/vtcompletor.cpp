@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/select.h>
 #include <sys/wait.h>
+#include <wordexp.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,7 +73,7 @@ bool VTCompletor::EnsureStarted()
 		dup2(pipe_out[1], STDERR_FILENO);
 		CheckedCloseFDPair(pipe_in);
 		CheckedCloseFDPair(pipe_out);
-		execl("/bin/bash", "bash", "-i",  NULL);
+		execl("/bin/bash", "bash", "--noprofile", "-i",  NULL);
 		perror("execl");
 		exit(0);
 	}
@@ -95,8 +96,8 @@ void VTCompletor::Stop()
 	}
 }
 
-bool VTCompletor::ExpandCommand(std::string &cmd)
-{
+bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, const char *tabs)
+{	
 	if (!EnsureStarted())
 		return false;
 
@@ -108,8 +109,9 @@ bool VTCompletor::ExpandCommand(std::string &cmd)
 		} while (cmd.find(done)!=std::string::npos);
 	}
 
-	std::string sendline = cmd;
-	sendline+= "\t";
+	std::string sendline = "PS1=''\n";
+	sendline+= cmd;
+	sendline+= tabs;
 	sendline+= done;
 	
 	
@@ -119,14 +121,14 @@ bool VTCompletor::ExpandCommand(std::string &cmd)
 		return false;
 	}
 
-	std::string reply;
+	reply.clear();
 	fd_set fds;
 	struct timeval tv;
 	for (;;) {
 		FD_ZERO(&fds);
 		FD_SET(_pipe_stdout, &fds);
-		tv.tv_sec = 0;
-		tv.tv_usec = reply.empty() ? 2000000 : 1000000;
+		tv.tv_sec = reply.empty() ? 2 : 1;
+		tv.tv_usec = 0;
 		int rv = select(_pipe_stdout + 1, &fds, NULL, NULL, &tv);
 		if(rv == -1) {
 			perror("VTCompletor: select");
@@ -150,11 +152,61 @@ bool VTCompletor::ExpandCommand(std::string &cmd)
 		}
 	}
 	Stop();
-	size_t p = reply.rfind(cmd);
+	
+	for (;;) {
+		 size_t p = reply.find('\a');
+		 if (p==std::string::npos) break;
+		 reply.erase(p, 1);
+	}
+	
+	return true;
+}
+
+
+bool VTCompletor::ExpandCommand(std::string &cmd)
+{
+	std::string reply;
+	if (!TalkWithShell(cmd, reply, "\t"))
+		return false;
+
+	size_t p = reply.find(cmd);
 	if (p == std::string::npos)
 		return false;
 
 	reply.erase(0, p);
-	cmd = reply;
+	if (reply.empty())
+		return false;
+		
+	cmd.swap(reply);
+	return true;
+}
+
+bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::string> &possibilities)
+{
+	std::string reply;
+	if (!TalkWithShell(cmd, reply, "\t\t"))
+		return false;
+
+	size_t p = reply.find(cmd);
+	if (p == std::string::npos || p + cmd.size() >= reply.size() )
+		return false;
+
+	reply.erase(0, p + cmd.size());
+	
+	for (;;) {
+		p = reply.find('\n');
+		size_t pt = reply.find('\t');
+		size_t ps = reply.find(' ');
+		if (p==std::string::npos || (pt!=std::string::npos && pt < p))
+			p = pt;
+		if (p==std::string::npos || (ps!=std::string::npos && ps < p))
+			p = ps;
+		
+		if (p==std::string::npos ) break;
+		if (p > 0)
+			possibilities.push_back(reply.substr(0, p));
+		reply.erase(0, p + 1);
+	}
+	
 	return true;
 }

@@ -62,12 +62,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "exitcode.hpp"
 #include "vtlog.h"
+#include "vtcompletor.h"
 #include <limits>
 
 CommandLine::CommandLine():
 	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
 	BackgroundScreen(nullptr),
-	LastCmdPartLength(-1)
+	LastCmdPartLength(-1),
+	LastKey(0)
 {
 	CmdStr.SetEditBeyondEnd(FALSE);
 	SetPersistentBlocks(Opt.CmdLine.EditBlock);
@@ -155,7 +157,37 @@ int CommandLine::ProcessKey(int Key)
 	const wchar_t *PStr;
 	FARString strStr;
 
-	if ( Key==KEY_F4) { //TODO: verify that panels invisible
+	int SavedLastKey = LastKey;
+	
+	if ( Key!=KEY_NONE)
+		LastKey = Key;
+	
+	if ( Key==KEY_TAB) {
+		CmdStr.GetString(strStr);
+		if (!strStr.IsEmpty()) {
+			std::string cmd = strStr.GetMB();
+			VTCompletor vtc;
+			if (vtc.ExpandCommand(cmd)) {
+				strStr = cmd;
+				CmdStr.SetString(strStr);
+				CmdStr.Show();
+			}
+			
+			if (SavedLastKey==KEY_TAB) {
+				std::vector<std::string>  possibilities;
+				if (vtc.GetPossibilities(cmd, possibilities)) {
+					fprintf(stderr, "Possibilities: ");
+					for(const auto &p : possibilities) 
+						fprintf(stderr, "%s ", p.c_str());
+					fprintf(stderr, "\n");
+				}
+			}
+		}
+		return TRUE;
+	}
+	
+	
+	if ( Key==KEY_F4) { 
 		const std::string &histfile = VTLog::GetAsFile();
 		if (histfile.empty())
 			return TRUE;
@@ -173,7 +205,7 @@ int CommandLine::ProcessKey(int Key)
 		return TRUE;
 	}
 	
-	if ( Key==KEY_F8) { //TODO: verify that panels invisible
+	if ( Key==KEY_F8) { 
 		CmdExecute(L"reset", true, false, true, false, false, false);
 		return TRUE;
 	}	

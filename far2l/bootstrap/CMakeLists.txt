@@ -19,7 +19,7 @@ set(DIRBIT 64)
 
 # set(RM rm) actually not needed: use $(CMAKE_COMMAND) -E remove
 set(GAWK gawk)
-set(M4 m4 -P -DFARBIT=${DIRBIT})
+set(M4 m4 -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
 
 set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")

@@ -1,7 +1,7 @@
 /*
 filestr.cpp
 
-Êëàññ GetFileString
+Класс GetFileString
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -49,9 +49,9 @@ enum EolType
 	FEOL_UNIX,
 	// \r
 	FEOL_MAC,
-	// \r\r (ýòî íå ðåàëüíîå çàâåðøåíèå ñòðîêè, à ñîñòîÿíèå ïàðñåðà)
+	// \r\r (это не реальное завершение строки, а состояние парсера)
 	FEOL_MAC2,
-	// \r\r\n (ïîÿâëåíèå òàêèõ çàâåðøåíèé ñòðîê âûçâàíî áàãîì Notepad-à)
+	// \r\r\n (появление таких завершений строк вызвано багом Notepad-а)
 	FEOL_NOTEPAD
 };
 
@@ -100,7 +100,7 @@ int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 
 			if (!SomeDataLost)
 			{
-				// ïðè CP_UTF7 dwFlags äîëæåí áûòü 0, ñì. MSDN
+				// при CP_UTF7 dwFlags должен быть 0, см. MSDN
 				nResultLength = WINPORT(MultiByteToWideChar)( nCodePage,
 				                    (SomeDataLost || nCodePage==CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS,
 				                    Str, Length, wStr, m_nwStrLength - 1);
@@ -155,8 +155,8 @@ int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 	int x = 0;
 	char *ReadBufPtr = ReadPos < ReadSize ? ReadBuf + ReadPos : nullptr;
 
-	// Îáðàáîòêà ñèòóàöèè, êîãäà ó íàñ ïðèø¸ë äâîéíîé \r\r, à ïîòîì íå áûëî \n.
-	// Â ýòîì ñëó÷àåì ñ÷èòàåì \r\r äâóìÿ MAC îêîí÷àíèÿìè ñòðîê.
+	// Обработка ситуации, когда у нас пришёл двойной \r\r, а потом не было \n.
+	// В этом случаем считаем \r\r двумя MAC окончаниями строк.
 	if (bCrCr)
 	{
 		*Str = '\r';
@@ -210,7 +210,7 @@ int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 					Eol = FEOL_NOTEPAD;
 				else
 				{
-					// Ïðèø¸ë \r\r, à \n íå ïðèø¸ë, ïîýòîìó ñ÷èòàåì \r\r äâóìÿ MAC îêîí÷àíèÿìè ñòðîê
+					// Пришёл \r\r, а \n не пришёл, поэтому считаем \r\r двумя MAC окончаниями строк
 					--CurLength;
 					bCrCr = true;
 					break;
@@ -252,8 +252,8 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 	int x = 0;
 	wchar_t *ReadBufPtr = ReadPos < ReadSize ? wReadBuf + ReadPos / sizeof(wchar_t) : nullptr;
 
-	// Îáðàáîòêà ñèòóàöèè, êîãäà ó íàñ ïðèø¸ë äâîéíîé \r\r, à ïîòîì íå áûëî \n.
-	// Â ýòîì ñëó÷àåì ñ÷èòàåì \r\r äâóìÿ MAC îêîí÷àíèÿìè ñòðîê.
+	// Обработка ситуации, когда у нас пришёл двойной \r\r, а потом не было \n.
+	// В этом случаем считаем \r\r двумя MAC окончаниями строк.
 	if (bCrCr)
 	{
 		*wStr = L'\r';
@@ -310,7 +310,7 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 					Eol = FEOL_NOTEPAD;
 				else
 				{
-					// Ïðèø¸ë \r\r, à \n íå ïðèø¸ë, ïîýòîìó ñ÷èòàåì \r\r äâóìÿ MAC îêîí÷àíèÿìè ñòðîê
+					// Пришёл \r\r, а \n не пришёл, поэтому считаем \r\r двумя MAC окончаниями строк
 					--CurLength;
 					bCrCr = true;
 					break;

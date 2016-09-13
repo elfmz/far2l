@@ -171,11 +171,12 @@ void CommandLine::ProcessCompletion(bool possibilities)
 				VMenu vm(nullptr, nullptr, 0, ScrY-4);
 				//vm.SetBottomTitle(L"Possibilities SetBottomTitle");
 				vm.SetFlags(VMENU_WRAPMODE);// | VMENU_AUTOHIGHLIGHT
-				//vm.SetPosition(ScrX/2,ScrY/2,0,0);
+				
 				int height = possibilities.size() + 2;
-				if ( height > (CmdStr.Y1 - 2)) height = (CmdStr.Y1 - 2);
-					
-				vm.SetPosition(CmdStr.X1, CmdStr.Y1 - height, 0, height);
+				if ( height > (CmdStr.Y1 - 3)) height = (CmdStr.Y1 - 3);
+				fprintf(stderr, "ProcessCompletion: count=%u ScrY=%u CmdStr.Y1=%u height=%u\n", 
+					(unsigned int)possibilities.size(), ScrY, CmdStr.Y1, height);
+				vm.SetPosition(CmdStr.X1, CmdStr.Y1 - height, 0, 0);
 					
 				for(const auto &p : possibilities)  {
 					MenuItemEx mi;
@@ -184,8 +185,7 @@ void CommandLine::ProcessCompletion(bool possibilities)
 					vm.AddItem(&mi);
 				}
 					
-				//vm.SetSelectPos(0,0);
-				//vm.SetBoxType(SHORT_SINGLE_BOX);
+				vm.SetBoxType(SHORT_SINGLE_BOX);
 				vm.ClearDone();
 				vm.Process();
 				int choice = vm.Modal::GetExitCode();

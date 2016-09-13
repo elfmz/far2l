@@ -153,6 +153,57 @@ int64_t CommandLine::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
+void CommandLine::ProcessCompletion(bool possibilities)
+{
+	FARString strStr;
+	CmdStr.GetString(strStr);
+	if (!strStr.IsEmpty()) {
+		std::string cmd = strStr.GetMB();
+		VTCompletor vtc;		
+		if (possibilities) {
+			std::vector<std::string>  possibilities;
+			if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
+				fprintf(stderr, "Possibilities: ");
+				for(const auto &p : possibilities) 
+					fprintf(stderr, "%s ", p.c_str());
+				fprintf(stderr, "\n");
+
+				VMenu vm(nullptr, nullptr, 0, ScrY-4);
+				//vm.SetBottomTitle(L"Possibilities SetBottomTitle");
+				vm.SetFlags(VMENU_WRAPMODE);// | VMENU_AUTOHIGHLIGHT
+				//vm.SetPosition(ScrX/2,ScrY/2,0,0);
+				int height = possibilities.size() + 2;
+				if ( height > (CmdStr.Y1 - 2)) height = (CmdStr.Y1 - 2);
+					
+				vm.SetPosition(CmdStr.X1, CmdStr.Y1 - height, 0, height);
+					
+				for(const auto &p : possibilities)  {
+					MenuItemEx mi;
+					mi.Clear();
+					mi.strName = p;						
+					vm.AddItem(&mi);
+				}
+					
+				//vm.SetSelectPos(0,0);
+				//vm.SetBoxType(SHORT_SINGLE_BOX);
+				vm.ClearDone();
+				vm.Process();
+				int choice = vm.Modal::GetExitCode();
+				if ( choice >= 0) {
+					CmdStr.SetString(vm.GetItemPtr(choice)->strName);
+					CmdStr.Show();						
+				}
+			}
+		} else {
+			if (vtc.ExpandCommand(cmd)) {
+				strStr = cmd;
+				CmdStr.SetString(strStr);
+				CmdStr.Show();
+			}			
+		}
+	}	
+}
+
 int CommandLine::ProcessKey(int Key)
 {
 	const wchar_t *PStr;
@@ -164,29 +215,9 @@ int CommandLine::ProcessKey(int Key)
 		LastKey = Key;
 	
 	if ( Key==KEY_TAB) {
-		CmdStr.GetString(strStr);
-		if (!strStr.IsEmpty()) {
-			std::string cmd = strStr.GetMB();
-			VTCompletor vtc;
-			if (vtc.ExpandCommand(cmd)) {
-				strStr = cmd;
-				CmdStr.SetString(strStr);
-				CmdStr.Show();
-			}
-			
-			if (SavedLastKey==KEY_TAB) {
-				std::vector<std::string>  possibilities;
-				if (vtc.GetPossibilities(cmd, possibilities)) {
-					fprintf(stderr, "Possibilities: ");
-					for(const auto &p : possibilities) 
-						fprintf(stderr, "%s ", p.c_str());
-					fprintf(stderr, "\n");
-				}
-			}
-		}
+		ProcessCompletion(SavedLastKey==KEY_TAB);
 		return TRUE;
 	}
-	
 	
 	if ( Key==KEY_F4) { 
 		const std::string &histfile = VTLog::GetAsFile();

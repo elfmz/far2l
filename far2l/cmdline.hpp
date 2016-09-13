@@ -68,6 +68,7 @@ class CommandLine:public ScreenObject
 		void GetPrompt(FARString &strDestStr);
 		BOOL IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent=false);
 		bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
+		void ProcessCompletion(bool possibilities);
 
 	public:
 		CommandLine();

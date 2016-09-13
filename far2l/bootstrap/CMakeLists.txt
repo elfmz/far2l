@@ -2,7 +2,7 @@
 cmake_minimum_required (VERSION 3.2.2)
 
 set(TOOLS "${CMAKE_BINARY_DIR}/tools")
-set(FARLNGTOOL ${TOOLS}/farlng)
+set(FARLNGTOOL "${TOOLS}/farlng")
 
 add_custom_target(bootstrap 
   DEPENDS farlng copyright.inc farversion.inc farlang.templ 
@@ -64,33 +64,33 @@ add_custom_command(OUTPUT "${BOOTSTRAP}/farlang.templ"
 )
 
 add_custom_command(TARGET bootstrap
-   COMMAND ${GAWK} -f ${SCRIPTS}/mkhlf.awk "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"
    WORKING_DIRECTORY "${SCRIPTS}"
    DEPENDS ${DEPENDENCIES}
    COMMENT generating lang eng
 )
 add_custom_command(TARGET bootstrap
-   COMMAND ${GAWK} -f ${SCRIPTS}/mkhlf.awk "${SCRIPTS}/FarRus.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarRus.hlf"
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarRus.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarRus.hlf"
    WORKING_DIRECTORY "${SCRIPTS}"
    DEPENDS ${DEPENDENCIES}
    COMMENT generating lang rus
 )
 add_custom_command(TARGET bootstrap
-   COMMAND ${GAWK} -f ${SCRIPTS}/mkhlf.awk "${SCRIPTS}/FarHun.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarHun.hlf"
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarHun.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarHun.hlf"
    WORKING_DIRECTORY "${SCRIPTS}"
    DEPENDS ${DEPENDENCIES}
    COMMENT generating lang hun
 )
 
 add_custom_command(TARGET bootstrap
-   COMMAND ${FARLNGTOOL} generator -nc -i ${BOOTSTRAP}/lang.ini -ol ${BOOTSTRAP} ${BOOTSTRAP}/farlang.templ
-   WORKING_DIRECTORY ${BOOTSTRAP}
+   COMMAND "${FARLNGTOOL}" generator -nc -i "${BOOTSTRAP}/lang.ini" -ol "${BOOTSTRAP}" "${BOOTSTRAP}/farlang.templ"
+   WORKING_DIRECTORY "${BOOTSTRAP}"
    DEPENDS "${BOOTSTRAP}/farlang.templ"
    COMMENT generating languages
 )
 
-#add_custom_command(TARGET bootstrap
-#   POST_BUILD
-#   DEPENDS ${LNGFILES} ${HLFFILES}
-#   COMMAND ${CMAKE_COMMAND} -E copy ${LNGFILES} ${HLFFILES} "${INSTALL_DIR}"
-#)
+add_custom_command(TARGET bootstrap
+   POST_BUILD
+   DEPENDS ${LNGFILES} ${HLFFILES}
+   COMMAND ${CMAKE_COMMAND} -E copy "${LNGFILES}" "${HLFFILES}" "${INSTALL_DIR}"
+)

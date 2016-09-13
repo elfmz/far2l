@@ -73,7 +73,6 @@ const byte *FileInputSource::openStream()
 #ifdef _UNICODE
   int source = open(Wide2MB(baseLocation->getWChars()).c_str(), O_BINARY);
 #else
-dd
   int source = open(baseLocation->getChars(), O_BINARY);
 #endif
   if (source == -1) {

@@ -1,5 +1,6 @@
-#include "stdafx.h"
 #include <time.h>
+#include <wx/wx.h>
+#include <wx/display.h>
 #include "WinCompat.h"
 #include "WinPort.h"
 #ifdef __APPLE__

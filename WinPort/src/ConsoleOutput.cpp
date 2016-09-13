@@ -1,5 +1,7 @@
-#include "stdafx.h"
 #include "ConsoleOutput.h"
+
+#include <wx/wx.h>
+#include <wx/display.h>
 
 #define TAB_WIDTH	8
 

@@ -373,8 +373,8 @@ void WinPortPanel::CheckForResizePending()
 			_frame->GetClientSize(&width, &height);
 #ifndef __APPLE__			
 			fprintf(stderr, "Current client size: %u %u font %u %u\n", 
-#endif			
 				width, height, _paint_context.FontWidth(), _paint_context.FontHeight());
+#endif
 			width/= _paint_context.FontWidth(); 
 			height/= _paint_context.FontHeight();
 			if (width!=(int)prev_width || height!=(int)prev_height) {

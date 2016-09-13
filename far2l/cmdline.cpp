@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtlog.h"
 #include "vtcompletor.h"
 #include <limits>
+#include <algorithm>
 
 CommandLine::CommandLine():
 	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
@@ -163,6 +164,7 @@ void CommandLine::ProcessCompletion(bool possibilities)
 		if (possibilities) {
 			std::vector<std::string>  possibilities;
 			if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
+				std::sort(possibilities.begin(), possibilities.end());
 				fprintf(stderr, "Possibilities: ");
 				for(const auto &p : possibilities) 
 					fprintf(stderr, "%s ", p.c_str());
@@ -193,7 +195,12 @@ void CommandLine::ProcessCompletion(bool possibilities)
 				vm.Process();
 				int choice = vm.Modal::GetExitCode();
 				if ( choice >= 0) {
-					CmdStr.SetString(vm.GetItemPtr(choice)->strName);
+					FARString chosen = vm.GetItemPtr(choice)->strName;
+					if (wcsstr(chosen.CPtr(), strStr.CPtr())!=chosen.CPtr()) {
+						//chosen.Insert(0, L" ");
+						chosen.Insert(0, strStr);
+					}
+					CmdStr.SetString(chosen);
 					CmdStr.Show();						
 				}
 			}

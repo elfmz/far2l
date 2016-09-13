@@ -661,7 +661,7 @@ public:
 					}
 					else
 					{
-						// Ïðèø¸ë \r\r, à \n íå ïðèø¸ë, ïîýòîìó ñ÷èòàåì \r\r äâóìÿ MAC îêîí÷àíèÿìè ñòðîê
+						// Пришёл \r\r, а \n не пришёл, поэтому считаем \r\r двумя MAC окончаниями строк
 						CurLength--;
 						context.bCrCr = true;
 						break;
@@ -788,7 +788,7 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 
 		if (!context.SomeDataLost)
 		{
-			// ïðè CP_UTF7 dwFlags äîëæåí áûòü 0, ñì. MSDN
+			// при CP_UTF7 dwFlags должен быть 0, см. MSDN
 			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 
 				(context.SomeDataLost || nCodePage==CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS, 
 				Str, Length, &Buffer[0], Buffer.size()-1);

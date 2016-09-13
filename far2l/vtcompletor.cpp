@@ -9,7 +9,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <string>
+#include <utils.h>
 #include "vtcompletor.h"
 
 
@@ -29,9 +31,25 @@ static void CheckedCloseFDPair(int *fd)
 	CheckedCloseFD(fd[1]);
 }
 
+static const char *vtc_inputrc = "set completion-query-items 0\n"
+									"set page-completions off\n";
+
+
 VTCompletor::VTCompletor()
-	:_pipe_stdin(-1), _pipe_stdout(-1), _pid(-1)
+	: _vtc_inputrc(InMyProfile("tmp/vtc_inputrc")),
+	_pipe_stdin(-1), _pipe_stdout(-1), _pid(-1)
 {
+	int fd = open(_vtc_inputrc.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0622);
+	if (fd!=-1) {
+		if (write(fd, vtc_inputrc, strlen(vtc_inputrc))<=0) {
+			perror("VTCompletor: write vtc_inputrc");
+			_vtc_inputrc.clear();
+		}
+		close(fd);
+	} else {
+		perror("VTCompletor: open vtc_inputrc");
+		_vtc_inputrc.clear();
+	}
 }
 
 VTCompletor::~VTCompletor()
@@ -110,6 +128,11 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	}
 
 	std::string sendline = "PS1=''\n";
+	if (!_vtc_inputrc.empty()) {
+		sendline+= "bind -f \"";
+		sendline+= _vtc_inputrc;
+		sendline+= "\"\n";
+	}
 	sendline+= cmd;
 	sendline+= tabs;
 	sendline+= done;
@@ -197,14 +220,12 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 		p = reply.find('\n');
 		size_t pt = reply.find('\t');
 		size_t ps = reply.find(' ');
-		if (p==std::string::npos || (pt!=std::string::npos && pt < p))
-			p = pt;
-		if (p==std::string::npos || (ps!=std::string::npos && ps < p))
-			p = ps;
+		if (p==std::string::npos || (pt!=std::string::npos && pt < p)) p = pt;
+		if (p==std::string::npos || (ps!=std::string::npos && ps < p)) p = ps;
 		
 		if (p==std::string::npos ) break;
 		if (p > 0)
-			possibilities.push_back(reply.substr(0, p));
+			possibilities.emplace_back(reply.substr(0, p));
 		reply.erase(0, p + 1);
 	}
 	

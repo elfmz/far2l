@@ -1,7 +1,7 @@
 /*
 filepanels.cpp
 
-Ôàéëîâûå ïàíåëè
+Файловые панели
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -141,7 +141,7 @@ void FilePanels::Init()
 	}
 
 	ActivePanel->SetFocus();
-	// ïûòàåìñÿ èçáàâèòñÿ îò çàâèñàíèÿ ïðè çàïóñêå
+	// пытаемся избавится от зависания при запуске
 	int IsLocalPath_FarPath=IsLocalPath(g_strFarPath);
 	PrepareOptFolder(Opt.strLeftFolder,IsLocalPath_FarPath);
 	PrepareOptFolder(Opt.strRightFolder,IsLocalPath_FarPath);
@@ -195,7 +195,7 @@ void FilePanels::Init()
 
 #if 1
 
-	//! Âíà÷àëå "ïîêàçûâàåì" ïàññèâíóþ ïàíåëü
+	//! Вначале "показываем" пассивную панель
 	if (PassiveIsLeftFlag)
 	{
 		if (Opt.LeftPanel.Visible)
@@ -223,7 +223,7 @@ void FilePanels::Init()
 
 #endif
 
-	// ïðè ïîíàøåííûõ ïàíåëÿõ íå çàáûòü áû âûñòàâèòü êîððåêòíî êàòàëîã â CmdLine
+	// при понашенных панелях не забыть бы выставить корректно каталог в CmdLine
 	if (!Opt.RightPanel.Visible && !Opt.LeftPanel.Visible)
 	{
 		CtrlObject->CmdLine->SetCurDir(PassiveIsLeftFlag?Opt.strRightFolder:Opt.strLeftFolder);
@@ -366,7 +366,7 @@ int FilePanels::SetAnhoterPanelFocus()
 
 int FilePanels::SwapPanels()
 {
-	int Ret=FALSE; // ýòî çíà÷èò íè îäíà èç ïàíåëåé íå âèäíà
+	int Ret=FALSE; // это значит ни одна из панелей не видна
 
 	if (LeftPanel->IsVisible() || RightPanel->IsVisible())
 	{
@@ -516,14 +516,14 @@ int FilePanels::ProcessKey(int Key)
 				{
 					if (AnotherPanel->GetType()==NewType)
 						/* $ 19.09.2000 IS
-						  Ïîâòîðíîå íàæàòèå íà ctrl-l|q|t âñåãäà âêëþ÷àåò ôàéëîâóþ ïàíåëü
+						  Повторное нажатие на ctrl-l|q|t всегда включает файловую панель
 						*/
 						AnotherPanel=ChangePanel(AnotherPanel,FILE_PANEL,FALSE,FALSE);
 					else
 						AnotherPanel=ChangePanel(AnotherPanel,NewType,FALSE,FALSE);
 
 					/* $ 07.09.2001 VVM
-					  ! Ïðè âîçâðàòå èç CTRL+Q, CTRL+L âîññòàíîâèì êàòàëîã, åñëè àêòèâíàÿ ïàíåëü - äåðåâî. */
+					  ! При возврате из CTRL+Q, CTRL+L восстановим каталог, если активная панель - дерево. */
 					if (ActivePanel->GetType() == TREE_PANEL)
 					{
 						FARString strCurDir;
@@ -611,10 +611,10 @@ int FilePanels::ProcessKey(int Key)
 			break;
 		}
 		/* $ 08.04.2002 IS
-		   Ïðè ñìåíå äèñêà óñòàíîâèì ïðèíóäèòåëüíî òåêóùèé êàòàëîã íà àêòèâíîé
-		   ïàíåëè, ò.ê. ñèñòåìà íå çíàåò íè÷åãî î òîì, ÷òî ó Ôàðà äâå ïàíåëè, è
-		   òåêóùèì äëÿ ñèñòåìû ïîñëå ñìåíû äèñêà ìîæåò áûòü êàòàëîã è íà ïàññèâíîé
-		   ïàíåëè
+		   При смене диска установим принудительно текущий каталог на активной
+		   панели, т.к. система не знает ничего о том, что у Фара две панели, и
+		   текущим для системы после смены диска может быть каталог и на пассивной
+		   панели
 		*/
 		case KEY_ALTF1:
 		{
@@ -793,7 +793,7 @@ int FilePanels::ChangePanelViewMode(Panel *Current,int Mode,BOOL RefreshFrame)
 		Current->SetViewMode(Mode);
 		Current=ChangePanelToFilled(Current,FILE_PANEL);
 		Current->SetViewMode(Mode);
-		// ÂÍÈÌÀÍÈÅ! Êîñòûëü! Íî Ðàáîòàåò!
+		// ВНИМАНИЕ! Костыль! Но Работает!
 		SetScreenPosition();
 
 		if (RefreshFrame)
@@ -834,7 +834,7 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 {
 	Panel *NewPanel;
 	SaveScreen *SaveScr=nullptr;
-	// OldType íå èíèöèàëèçèðîâàëñÿ...
+	// OldType не инициализировался...
 	int OldType=Current->GetType(),X1,Y1,X2,Y2;
 	int OldViewMode,OldSortMode,OldSortOrder,OldSortGroups,OldSelectedFirst,OldDirectoriesFirst;
 	int OldPanelMode,LeftPosition,ChangePosition,OldNumericSort,OldCaseSensitiveSort;
@@ -1011,18 +1011,18 @@ void FilePanels::OnChangeFocus(int f)
 	_OT(SysLog(L"FilePanels::OnChangeFocus(%i)",f));
 
 	/* $ 20.06.2001 tran
-	   áàã ñ îòðèñîâêîé ïðè êîïèðîâàíèè è óäàëåíèè
-	   íå ó÷èòûâàëñÿ LockRefreshCount */
+	   баг с отрисовкой при копировании и удалении
+	   не учитывался LockRefreshCount */
 	if (f)
 	{
 		/*$ 22.06.2001 SKV
-		  + update ïàíåëåé ïðè ïîëó÷åíèè ôîêóñà
+		  + update панелей при получении фокуса
 		*/
 		CtrlObject->Cp()->GetAnotherPanel(ActivePanel)->UpdateIfChanged(UIC_UPDATE_FORCE_NOTIFICATION);
 		ActivePanel->UpdateIfChanged(UIC_UPDATE_FORCE_NOTIFICATION);
 		/* $ 13.04.2002 KM
-		  ! ??? ß íå ïîíÿë çà÷åì çäåñü Redraw, åñëè
-		    Redraw âûçûâàåòñÿ ñëåäîì âî Frame::OnChangeFocus.
+		  ! ??? Я не понял зачем здесь Redraw, если
+		    Redraw вызывается следом во Frame::OnChangeFocus.
 		*/
 //    Redraw();
 		Frame::OnChangeFocus(1);
@@ -1072,7 +1072,7 @@ void FilePanels::DisplayObject()
 		PassiveIsLeftFlag=TRUE;
 	}
 
-	//! Âíà÷àëå "ïîêàçûâàåì" ïàññèâíóþ ïàíåëü
+	//! Вначале "показываем" пассивную панель
 	if (PassiveIsLeftFlag)
 	{
 		if (Opt.LeftPanel.Visible)
@@ -1135,8 +1135,8 @@ int FilePanels::FastHide()
 void FilePanels::Refresh()
 {
 	/*$ 31.07.2001 SKV
-	  Âûçîâåì òàê, à íå Frame::OnChangeFocus,
-	  êîòîðûé èç ýòîãî è ïîçîâ¸òñÿ.
+	  Вызовем так, а не Frame::OnChangeFocus,
+	  который из этого и позовётся.
 	*/
 	//Frame::OnChangeFocus(1);
 	OnChangeFocus(1);
@@ -1168,14 +1168,14 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 		FARString strNameDir = FileName;
 		CutToSlash(strNameDir);
 		/* $ 10.04.2001 IS
-		     Íå äåëàåì SetCurDir, åñëè íóæíûé ïóòü óæå åñòü íà îòêðûòûõ
-		     ïàíåëÿõ, òåì ñàìûì äîáèâàåìñÿ òîãî, ÷òî âûäåëåíèå ñ ýëåìåíòîâ
-		     ïàíåëåé íå ñáðàñûâàåòñÿ.
+		     Не делаем SetCurDir, если нужный путь уже есть на открытых
+		     панелях, тем самым добиваемся того, что выделение с элементов
+		     панелей не сбрасывается.
 		*/
 		BOOL AExist=(ActiveMode==NORMAL_PANEL) && !StrCmpI(ADir,strNameDir);
 		BOOL PExist=(PassiveMode==NORMAL_PANEL) && !StrCmpI(PDir,strNameDir);
 
-		// åñëè íóæíûé ïóòü åñòü íà ïàññèâíîé ïàíåëè
+		// если нужный путь есть на пассивной панели
 		if (!AExist && PExist)
 			ProcessKey(KEY_TAB);
 
@@ -1183,8 +1183,8 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 			ActivePanel->SetCurDir(strNameDir,TRUE);
 
 		ActivePanel->GoToFile(strNameFile);
-		// âñåãäà îáíîâèì çàãîëîâîê ïàíåëè, ÷òîáû äàòü îáðàòíóþ ñâÿçü, ÷òî
-		// Ctrl-F10 îáðàáîòàí
+		// всегда обновим заголовок панели, чтобы дать обратную связь, что
+		// Ctrl-F10 обработан
 		ActivePanel->SetTitle();
 	}
 }

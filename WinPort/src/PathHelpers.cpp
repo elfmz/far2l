@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <set>
 #include <string>
 #include <locale> 

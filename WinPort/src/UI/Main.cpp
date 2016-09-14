@@ -1,15 +1,18 @@
-#include "stdafx.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "wxWinTranslations.h"
-#include <wx/clipbrd.h>
 #include "CallInMain.h"
 #include "PathHelpers.h"
 #include "Paint.h"
 #include "utils.h"
+
+#include <wx/wx.h>
+#include <wx/display.h>
+#include <wx/clipbrd.h>
 #include <set>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;

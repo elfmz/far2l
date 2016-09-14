@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <set>
 #include <mutex>
 #include "WinPortHandle.h"

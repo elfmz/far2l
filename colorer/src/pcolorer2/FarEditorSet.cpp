@@ -1010,7 +1010,7 @@ String* FarEditorSet::getCurrentFileName()
   int slash_idx = fnpath.lastIndexOf('/');
 
   SString* s=new SString(fnpath, slash_idx+1);
-  delete FileName;
+  delete [] FileName;
   return s;
 }
 
@@ -1722,7 +1722,6 @@ void FarEditorSet::configureHrc()
 
   dialogFirstFocus = true;
   HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 59, 23, L"confighrc", fdi, ARRAY_SIZE(fdi), 0, 0, SettingHrcDialogProc, (LONG_PTR)this);
-  int i = Info.DialogRun(hDlg);
   
   for (int idx = 0; idx < l->ItemsNumber; idx++){
     if (l->Items[idx].Text){

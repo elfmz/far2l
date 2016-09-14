@@ -121,6 +121,12 @@ set(SOURCES
     src/formats/7z/C/7zArcIn.c
     src/formats/7z/C/Bra.c
     src/formats/7z/C/Blake2s.c
+
+    src/libpcre/get.c
+    src/libpcre/pcre.c
+    src/libpcre/chartables.c
+    src/libpcre/study.c
+
 )
 
 add_library (multiarc MODULE ${SOURCES})

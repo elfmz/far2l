@@ -1,5 +1,5 @@
 #include <vcl.h>
-#pragma hdrstop
+
 
 #define PUTTY_DO_GLOBALS
 #include <Exceptions.h>

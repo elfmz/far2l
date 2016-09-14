@@ -1,5 +1,5 @@
 #include <vcl.h>
-#pragma hdrstop
+
 
 #ifndef __linux__
 #include <shlobj.h>

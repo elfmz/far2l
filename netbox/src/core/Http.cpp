@@ -1,6 +1,6 @@
 
 #include <vcl.h>
-#pragma hdrstop
+
 
 #include <neon/ne_request.h>
 #include <openssl/ssl.h>

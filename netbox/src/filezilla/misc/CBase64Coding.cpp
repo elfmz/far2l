@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "CBase64Coding.hpp"
-#pragma hdrstop
+
 
 #define CARRIAGE_RETURN (13)
 #define LINE_FEED       (10)

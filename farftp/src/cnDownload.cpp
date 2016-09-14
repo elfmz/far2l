@@ -1,5 +1,5 @@
 #include <all_far.h>
-#pragma hdrstop
+
 #include <sys/ioctl.h>
 #include "Int.h"
 

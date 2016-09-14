@@ -1,5 +1,5 @@
 #include <vcl.h>
-#pragma hdrstop
+
 
 #include "WinSCPFileSystem.h"
 #include "WinSCPPlugin.h"

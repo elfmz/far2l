@@ -1,1 +1,0 @@
-./Debug/src_lng.generator.cpp.o ./Debug/src_farlng.cpp.o ./Debug/src_lng.convertor.cpp.o ./Debug/src_lng.common.cpp.o ./Debug/src_lng.inserter.cpp.o

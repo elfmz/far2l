@@ -345,10 +345,6 @@ int main_generator (int argc, char** argv)
 
 				fprintf(stderr, "lpLNGOutputPath=%s\n", lpLNGOutputPath);
 
-    char* lpFeedFileName = (char*)strdup(argv[argc-1]);
-
-    UnquoteIfNeeded (lpFeedFileName);
-
 	HANDLE hFeedFile = WINPORT(CreateFile) (
 			MB2Wide(argv[argc-1]).c_str(),
 			GENERIC_READ,
@@ -560,7 +556,8 @@ int main_generator (int argc, char** argv)
 							{
 								if ( !strncmp (lpLNGString, "upd:", 4) )
 								{
-									strmove (lpLNGString, lpLNGString+4);
+                                    size_t length = strlen(lpLNGString);
+                                    memmove(lpLNGString, lpLNGString+4, length-4);
 
 									/*
 									printf (
@@ -669,6 +666,8 @@ int main_generator (int argc, char** argv)
 					free (pLangEntries[i].lpLanguageName);
 					free (pLangEntries[i].lpLanguageDescription);
 				}
+
+                free(pLangEntries);
 
 				WINPORT(CloseHandle) (hHFile);
 

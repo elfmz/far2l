@@ -178,13 +178,13 @@ int String::getBytes(byte **bytes, int encoding) const{
 }
 
 const char *String::getChars(int encoding) const{
-  delete ret_char_val;
+  delete [] ret_char_val;
   getBytes((byte**)&ret_char_val, encoding);
   return ret_char_val;
 }
 
 const wchar *String::getWChars() const{
-  delete ret_wchar_val;
+  delete [] ret_wchar_val;
   getWChars((wchar**)&ret_wchar_val);
   return ret_wchar_val;
 }

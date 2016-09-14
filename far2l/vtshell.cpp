@@ -1,6 +1,6 @@
 
 #include "headers.hpp"
-#pragma hdrstop
+
 #include <signal.h>
 #include <pthread.h>
 #include <mutex>

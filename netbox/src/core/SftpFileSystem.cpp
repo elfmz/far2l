@@ -1,5 +1,5 @@
 #include <vcl.h>
-#pragma hdrstop
+
 
 #define CLEAN_SPACE_AVAILABLE
 

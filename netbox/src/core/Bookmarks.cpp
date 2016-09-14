@@ -1,5 +1,5 @@
 #include <vcl.h>
-#pragma hdrstop
+
 #include <Common.h>
 #include "NamedObjs.h"
 #include "Bookmarks.h"

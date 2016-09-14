@@ -1,8 +1,9 @@
+#include "stdafx.h"
 #include <mutex>
-
-#include <wx/wx.h>
-#include <wx/display.h>
-
+#include <errno.h>
+#ifndef __APPLE__
+#include <error.h>
+#endif
 #include "WinPort.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"

@@ -1,7 +1,6 @@
+#include "stdafx.h"
 #include "wxWinTranslations.h"
 
-#include <wx/wx.h>
-#include <wx/display.h>
 
 wxColour ConsoleForeground2wxColorInternal(USHORT attributes)
 {

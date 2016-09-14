@@ -1,6 +1,4 @@
-#include <set>
-#include <fstream>
-
+#include "stdafx.h"
 #include <string>
 #include <locale> 
 #include <set> 

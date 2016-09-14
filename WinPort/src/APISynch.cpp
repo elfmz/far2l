@@ -1,14 +1,10 @@
+#include "stdafx.h"
 #include <mutex>
 #include <thread>
-
-#include <wx/wx.h>
-#include <wx/display.h>
-
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
 #include "WinPortSynch.h"
-
 
 class WinPortThreadEvent : public WinPortEvent
 {

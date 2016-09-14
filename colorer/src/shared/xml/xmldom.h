@@ -399,8 +399,8 @@ protected:
   int line, pos;
   Element *documentElement;
   bool useBOM;
-  String *xmlEncoding;
   String *xmlVersion;
+  String *xmlEncoding;
   Document() : Node(Node::DOCUMENT_NODE, new DString("#document")), documentElement(null), useBOM(false) ,xmlEncoding(NULL),xmlVersion(NULL) {};
   friend class DocumentBuilder;
 };

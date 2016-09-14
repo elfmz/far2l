@@ -42,4 +42,8 @@ class ChangePriority
 		};
 		ChangePriority(Priority NewPriority);
 		~ChangePriority();
+
+	private:
+		int SavePriority;
+
 };

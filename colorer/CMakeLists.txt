@@ -50,11 +50,25 @@ set(SOURCES
     src/shared/colorer/parsers/helpers/HRCParserHelpers.cpp
     src/shared/colorer/parsers/helpers/TextParserHelpers.cpp
 
-    src/minizip/ioapi.c
-    src/minizip/mztools.c
-    src/minizip/unzip.c
-    src/minizip/zip.c
-
+    src/zlib/adler32.c
+    src/zlib/compress.c
+    src/zlib/contrib/minizip/ioapi.c
+    src/zlib/contrib/minizip/mztools.c
+    src/zlib/contrib/minizip/unzip.c
+    src/zlib/contrib/minizip/zip.c
+    src/zlib/crc32.c
+    src/zlib/deflate.c
+    src/zlib/gzclose.c
+    src/zlib/gzlib.c
+    src/zlib/gzread.c
+    src/zlib/gzwrite.c
+    src/zlib/infback.c
+    src/zlib/inffast.c
+    src/zlib/inflate.c
+    src/zlib/inftrees.c
+    src/zlib/trees.c
+    src/zlib/uncompr.c
+    src/zlib/zutil.c
 )
 
 add_library (colorer MODULE ${SOURCES})
@@ -67,6 +81,7 @@ target_include_directories(colorer PRIVATE src)
 target_include_directories(colorer PRIVATE ../WinPort)
 target_include_directories(colorer PRIVATE ../far2l)
 target_include_directories(colorer PRIVATE ../far2l/Include)
+target_include_directories(colorer PRIVATE src/zlib)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )

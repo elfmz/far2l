@@ -1,7 +1,7 @@
 
 #include<common/io/JARInputSource.h>
 #include<common/io/MemoryFile.h>
-#include<minizip/unzip.h>
+#include<contrib/minizip/unzip.h>
 
 JARInputSource::JARInputSource(const String *basePath, InputSource *base){
   if (basePath == null)

@@ -1,4 +1,4 @@
-
+#include "stdafx.h"
 #include <set>
 #include <mutex>
 #include <chrono>
@@ -8,9 +8,6 @@
 #include <sys/inotify.h>
 #endif
 #include <pthread.h>
-
-#include <wx/wx.h>
-#include <wx/display.h>
 
 #include "WinPortHandle.h"
 #include "WinCompat.h"

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include <string>
 #include <locale> 
 #include <set> 
@@ -7,9 +8,6 @@
 #include <fstream>
 #include <mutex>
 #include <wx/clipbrd.h>
-
-#include <wx/wx.h>
-#include <wx/display.h>
 
 #include "WinCompat.h"
 #include "WinPort.h"

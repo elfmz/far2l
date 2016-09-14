@@ -3,17 +3,8 @@
 #include "WinPort.h"
 #include <vector>
 
-class WinPortHandle;
-
-HANDLE WinPortHandle_Register(WinPortHandle *wph);
-bool WinPortHandle_Deregister(HANDLE h);
-
-WinPortHandle *WinPortHandle_Reference(HANDLE h);
-
-
-class WinPortHandle
+struct WinPortHandle
 {
-public:
 	WinPortHandle();
 	virtual ~WinPortHandle();
 	
@@ -25,6 +16,11 @@ public:
 private:
 	volatile LONG _refcnt;
 };
+
+HANDLE WinPortHandle_Register(WinPortHandle *wph);
+bool WinPortHandle_Deregister(HANDLE h);
+
+WinPortHandle *WinPortHandle_Reference(HANDLE h);
 
 template <class T> 
 	class AutoWinPortHandle

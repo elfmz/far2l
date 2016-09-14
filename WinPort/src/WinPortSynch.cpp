@@ -1,8 +1,6 @@
-
+#include "stdafx.h"
 #include "WinPortSynch.h"
 
-#include <wx/wx.h>
-#include <wx/display.h>
 
 static std::condition_variable s_winport_synch_cond;
 static std::mutex s_winport_synch_mutex;

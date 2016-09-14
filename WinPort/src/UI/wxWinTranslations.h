@@ -1,10 +1,5 @@
 #pragma once
-
 #include "WinCompat.h"
-
-#include <wx/wx.h>
-#include <wx/display.h>
-
 struct wx2INPUT_RECORD : INPUT_RECORD
 {
 	wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown);

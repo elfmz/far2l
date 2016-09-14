@@ -1,7 +1,5 @@
+#include "stdafx.h"
 #include "ConsoleInput.h"
-
-#include <wx/wx.h>
-#include <wx/display.h>
 
 void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 {

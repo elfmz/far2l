@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _CHOOSE_TYPE_MENU_H_
+#define _CHOOSE_TYPE_MENU_H_
 
 #include "pcolorer.h"
 #include"FarEditor.h"
@@ -39,3 +40,5 @@ private:
   static const size_t favorite_idx=2;
 };
 
+
+#endif _CHOOSE_TYPE_MENU_H_

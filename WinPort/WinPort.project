@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="WinPort" InternalType="Library">
+  <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
+    <Plugin Name="CMakePlugin">
+      <![CDATA[[{
+  "name": "Debug",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }]]]>
+    </Plugin>
+  </Plugins>
+  <Description/>
+  <Dependencies/>
+  <VirtualDirectory Name="src">
+    <File Name="WinCompat.h"/>
+    <File Name="WinPort.h"/>
+    <VirtualDirectory Name="wineguts">
+      <File Name="wineguts/casemap.c"/>
+      <File Name="wineguts/collation.c"/>
+      <File Name="wineguts/compose.c"/>
+      <File Name="wineguts/cpsymbol.c"/>
+      <File Name="wineguts/cptable.c"/>
+      <File Name="wineguts/decompose.c"/>
+      <File Name="wineguts/locale.c"/>
+      <File Name="wineguts/mbtowc.c"/>
+      <File Name="wineguts/sortkey.c"/>
+      <File Name="wineguts/unicode.h"/>
+      <File Name="wineguts/utf8.c"/>
+      <File Name="wineguts/wctomb.c"/>
+      <File Name="wineguts/wctype.c"/>
+      <VirtualDirectory Name="codepages">
+        <File Name="wineguts/codepages/c_037.c"/>
+        <File Name="wineguts/codepages/c_424.c"/>
+        <File Name="wineguts/codepages/c_437.c"/>
+        <File Name="wineguts/codepages/c_500.c"/>
+        <File Name="wineguts/codepages/c_737.c"/>
+        <File Name="wineguts/codepages/c_775.c"/>
+        <File Name="wineguts/codepages/c_850.c"/>
+        <File Name="wineguts/codepages/c_852.c"/>
+        <File Name="wineguts/codepages/c_855.c"/>
+        <File Name="wineguts/codepages/c_856.c"/>
+        <File Name="wineguts/codepages/c_857.c"/>
+        <File Name="wineguts/codepages/c_860.c"/>
+        <File Name="wineguts/codepages/c_861.c"/>
+        <File Name="wineguts/codepages/c_862.c"/>
+        <File Name="wineguts/codepages/c_863.c"/>
+        <File Name="wineguts/codepages/c_864.c"/>
+        <File Name="wineguts/codepages/c_865.c"/>
+        <File Name="wineguts/codepages/c_866.c"/>
+        <File Name="wineguts/codepages/c_869.c"/>
+        <File Name="wineguts/codepages/c_874.c"/>
+        <File Name="wineguts/codepages/c_875.c"/>
+        <File Name="wineguts/codepages/c_878.c"/>
+        <File Name="wineguts/codepages/c_932.c"/>
+        <File Name="wineguts/codepages/c_936.c"/>
+        <File Name="wineguts/codepages/c_949.c"/>
+        <File Name="wineguts/codepages/c_950.c"/>
+        <File Name="wineguts/codepages/c_1006.c"/>
+        <File Name="wineguts/codepages/c_1026.c"/>
+        <File Name="wineguts/codepages/c_1250.c"/>
+        <File Name="wineguts/codepages/c_1251.c"/>
+        <File Name="wineguts/codepages/c_1252.c"/>
+        <File Name="wineguts/codepages/c_1253.c"/>
+        <File Name="wineguts/codepages/c_1254.c"/>
+        <File Name="wineguts/codepages/c_1255.c"/>
+        <File Name="wineguts/codepages/c_1256.c"/>
+        <File Name="wineguts/codepages/c_1257.c"/>
+        <File Name="wineguts/codepages/c_1258.c"/>
+        <File Name="wineguts/codepages/c_1361.c"/>
+        <File Name="wineguts/codepages/c_10000.c"/>
+        <File Name="wineguts/codepages/c_10001.c"/>
+        <File Name="wineguts/codepages/c_10002.c"/>
+        <File Name="wineguts/codepages/c_10003.c"/>
+        <File Name="wineguts/codepages/c_10004.c"/>
+        <File Name="wineguts/codepages/c_10005.c"/>
+        <File Name="wineguts/codepages/c_10006.c"/>
+        <File Name="wineguts/codepages/c_10007.c"/>
+        <File Name="wineguts/codepages/c_10008.c"/>
+        <File Name="wineguts/codepages/c_10010.c"/>
+        <File Name="wineguts/codepages/c_10017.c"/>
+        <File Name="wineguts/codepages/c_10021.c"/>
+        <File Name="wineguts/codepages/c_10029.c"/>
+        <File Name="wineguts/codepages/c_10079.c"/>
+        <File Name="wineguts/codepages/c_10081.c"/>
+        <File Name="wineguts/codepages/c_10082.c"/>
+        <File Name="wineguts/codepages/c_20127.c"/>
+        <File Name="wineguts/codepages/c_20866.c"/>
+        <File Name="wineguts/codepages/c_20932.c"/>
+        <File Name="wineguts/codepages/c_21866.c"/>
+        <File Name="wineguts/codepages/c_28591.c"/>
+        <File Name="wineguts/codepages/c_28592.c"/>
+        <File Name="wineguts/codepages/c_28593.c"/>
+        <File Name="wineguts/codepages/c_28594.c"/>
+        <File Name="wineguts/codepages/c_28595.c"/>
+        <File Name="wineguts/codepages/c_28596.c"/>
+        <File Name="wineguts/codepages/c_28597.c"/>
+        <File Name="wineguts/codepages/c_28598.c"/>
+        <File Name="wineguts/codepages/c_28599.c"/>
+        <File Name="wineguts/codepages/c_28600.c"/>
+        <File Name="wineguts/codepages/c_28603.c"/>
+        <File Name="wineguts/codepages/c_28604.c"/>
+        <File Name="wineguts/codepages/c_28605.c"/>
+        <File Name="wineguts/codepages/c_28606.c"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <File Name="windows.h"/>
+    <VirtualDirectory Name="UI">
+      <File Name="src/UI/Paint.h"/>
+      <File Name="src/UI/Paint.cpp"/>
+      <File Name="src/UI/Main.cpp"/>
+      <File Name="src/UI/wxWinTranslations.cpp"/>
+      <File Name="src/UI/wxWinTranslations.h"/>
+    </VirtualDirectory>
+    <File Name="src/APIClipboard.cpp"/>
+    <File Name="src/APIConsole.cpp"/>
+    <File Name="src/APIFiles.cpp"/>
+    <File Name="src/APIFSNotify.cpp"/>
+    <File Name="src/APIKeyboard.cpp"/>
+    <File Name="src/APIMemory.cpp"/>
+    <File Name="src/APIOther.cpp"/>
+    <File Name="src/APIPrintFormat.cpp"/>
+    <File Name="src/APIRegistry.cpp"/>
+    <File Name="src/APIStringCodepages.cpp"/>
+    <File Name="src/APIStringMap.cpp"/>
+    <File Name="src/APISynch.cpp"/>
+    <File Name="src/APITime.cpp"/>
+    <File Name="src/CallInMain.h"/>
+    <File Name="src/ConsoleBuffer.cpp"/>
+    <File Name="src/ConsoleBuffer.h"/>
+    <File Name="src/ConsoleInput.cpp"/>
+    <File Name="src/ConsoleInput.h"/>
+    <File Name="src/ConsoleOutput.cpp"/>
+    <File Name="src/ConsoleOutput.h"/>
+    <File Name="src/stdafx.cpp"/>
+    <File Name="src/stdafx.h"/>
+    <File Name="src/targetver.h"/>
+    <File Name="src/wineguts.h"/>
+    <File Name="src/WinPortHandle.cpp"/>
+    <File Name="src/WinPortHandle.h"/>
+    <File Name="src/WinPortSynch.cpp"/>
+    <File Name="src/WinPortSynch.h"/>
+    <File Name="src/ConvertUTF.c"/>
+    <File Name="src/ConvertUTF.h"/>
+    <File Name="src/PathHelpers.cpp"/>
+    <File Name="src/PathHelpers.h"/>
+  </VirtualDirectory>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
+  <Settings Type="Static Library">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="" Assembler="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Static Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g;-O2;-std=c++11;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function" C_Options="-g;-O2;-std=c99;-Wall;$(shell wx-config --cxxflags --debug=yes --unicode=yes) -Wno-unused-function -fvisibility=hidden -Wno-unused-function" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+        <IncludePath Value="src"/>
+        <IncludePath Value="../utils/include"/>
+      </Compiler>
+      <Linker Options="$(shell wx-config --debug=yes --libs --unicode=yes)" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="$(IntermediateDirectory)/lib$(ProjectName).a" IntermediateDirectory="./$(ConfigurationName)" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="yes">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName/>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+    <Configuration Name="Release" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Static Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-O2;-Wall;$(shell wx-config --cxxflags --debug=no --unicode=yes);" C_Options="-O2;-Wall;$(shell wx-config --cxxflags --debug=no --unicode=yes);" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+        <Preprocessor Value="NDEBUG"/>
+      </Compiler>
+      <Linker Options="-s;$(shell wx-config --libs --debug=no --unicode=yes)" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="$(IntermediateDirectory)/lib$(ProjectName).a" IntermediateDirectory="./Release" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName/>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+</CodeLite_Project>

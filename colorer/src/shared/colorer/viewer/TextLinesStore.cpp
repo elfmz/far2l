@@ -30,7 +30,7 @@ void TextLinesStore::loadFile(const String *fileName, const String *inputEncodin
 
   if (fileName == null){
     char line[256];
-    while(fgets(line, 256, stdin) != null){
+    while(gets(line) != null){
       lines.addElement(new SString(line));
       if (tab2spaces) replaceTabs(lines.size()-1);
     }

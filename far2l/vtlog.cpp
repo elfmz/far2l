@@ -1,5 +1,5 @@
 #include "headers.hpp"
-#pragma hdrstop
+
 #include "mix.hpp"
 #include <mutex>
 #include <vector>

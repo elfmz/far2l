@@ -165,7 +165,7 @@ jadoxa@yahoo.com.au
 #define _CRT_NON_CONFORMING_WCSTOK
 
 #include "headers.hpp"
-#pragma hdrstop
+
 #include <mutex>
 #include "vtansi.h"
 

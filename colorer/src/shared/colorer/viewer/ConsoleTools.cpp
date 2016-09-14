@@ -159,11 +159,11 @@ void ConsoleTools::RETest(){
   re = new CRegExp();
   do{
     printf("\nregexp:");
-    gets(text);
+    fgets(text, 255, stdin);
 	DString ds_text(text);
     if (!re->setRE(&ds_text)) continue;
     printf("exprn:");
-    gets(text);
+    fgets(text, 255, stdin);
 	DString ds_text2(text);
     res = re->parse(&ds_text2, &match);
     printf("%s\nmatch:  ",res?"ok":"error");

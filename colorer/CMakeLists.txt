@@ -83,12 +83,6 @@ target_include_directories(colorer PRIVATE ../far2l)
 target_include_directories(colorer PRIVATE ../far2l/Include)
 target_include_directories(colorer PRIVATE src/zlib)
 
-find_package( ZLIB REQUIRED )
-if ( ZLIB_FOUND )
-    target_include_directories(colorer SYSTEM PRIVATE ${ZLIB_INCLUDE_DIRS} )
-    target_link_libraries( colorer ${ZLIB_LIBRARIES} )
-endif( ZLIB_FOUND )
-
 set_target_properties(colorer
   PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/colorer/bin"

@@ -19,8 +19,6 @@ matrix:
             - libglib2.0-dev
             - gawk
             - m4
-            - libpcre3-dev
-            - zlib1g-dev
             - ninja-build
       env: CXX=g++-4.9
       install:
@@ -37,8 +35,6 @@ matrix:
             - libglib2.0-dev
             - gawk
             - m4
-            - libpcre3-dev
-            - zlib1g-dev
             - ninja-build
       env: CXX=g++-5
       install:
@@ -56,8 +52,6 @@ matrix:
             - libglib2.0-dev
             - gawk
             - m4
-            - libpcre3-dev
-            - zlib1g-dev
             - ninja-build
       env: CXX=clang++-3.6
       install:
@@ -89,5 +83,5 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -G Ninja .. && ninja -j8 -v
+  - cmake -G Ninja .. && ninja -j4 -v
 

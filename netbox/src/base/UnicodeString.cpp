@@ -1,7 +1,7 @@
 #include <Sysutils.hpp>
 
 #include "UnicodeString.hpp"
-#pragma hdrstop
+
 
 AnsiString::AnsiString(const AnsiString & rht)
 {

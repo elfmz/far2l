@@ -10,9 +10,6 @@ set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 
-set(ENV{ASAN_SYMBOLIZER_PATH} /usr/bin/llvm-symbolizer-3.8)
-set(ENV{ASAN_OPTIONS} symbolize=1)
-
 include_directories(utils/include)
 
 add_subdirectory (farlng)

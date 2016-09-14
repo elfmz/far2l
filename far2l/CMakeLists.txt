@@ -1,8 +1,6 @@
 
 project(far2l)
 
-LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-
 add_subdirectory (bootstrap)
 
 set(SOURCES

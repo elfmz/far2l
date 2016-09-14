@@ -90,15 +90,17 @@ add_custom_command(TARGET bootstrap
 )
 
 
-# older cmake versions does not support copying of multiple files, so use foreach
+# older cmake versions does not support copying of multiple files,
+# so we use simple stupid /bin/cp and wildcards
 
-set(LNGCOPYLIST "${LNGFILES}")
-set(HLFCOPYLIST "${HLFFILES}")
+add_custom_command(TARGET bootstrap
+   POST_BUILD
+   DEPENDS "${LNGFILES}"
+   COMMAND "cp" "${BOOTSTRAP}/*.lng" "${INSTALL_DIR}"
+)
 
-foreach(_file ${LNGCOPYLIST} ${HLFCOPYLIST})
-  add_custom_command(TARGET bootstrap
-     POST_BUILD
-     DEPENDS ${_file}
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_file}" "${INSTALL_DIR}"
-  )
-endforeach()
+add_custom_command(TARGET bootstrap
+   POST_BUILD
+   DEPENDS "${HLFFILES}"
+   COMMAND "cp" "${BOOTSTRAP}/*.hlf" "${INSTALL_DIR}"
+)

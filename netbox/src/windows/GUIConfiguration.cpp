@@ -1,5 +1,5 @@
 #include <vcl.h>
-#pragma hdrstop
+
 #include <LanguagesDEPfix.hpp>
 #include "GUIConfiguration.h"
 #include "GUITools.h"

@@ -1,6 +1,6 @@
 #define NO_WIN32_LEAN_AND_MEAN
 #include <vcl.h>
-#pragma hdrstop
+
 
 #ifndef __linux__
 #include <shellapi.h>

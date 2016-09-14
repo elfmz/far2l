@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-#pragma hdrstop
+
 
 /* $ 29.06.2000 tran
   בונול char *CopyRight טח inc פאיכא */

@@ -1,5 +1,5 @@
 #include <vcl.h>
-#pragma hdrstop
+
 
 #ifdef _DEBUG
 #include <stdio.h>

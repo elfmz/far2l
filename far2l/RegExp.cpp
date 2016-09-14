@@ -31,7 +31,7 @@
 */
 
 #include "headers.hpp"
-#pragma hdrstop
+
 
 #include "RegExp.hpp"
 #include <ctype.h>

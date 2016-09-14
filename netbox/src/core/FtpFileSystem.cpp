@@ -1,6 +1,6 @@
 
 #include <vcl.h>
-#pragma hdrstop
+
 
 #ifndef NO_FILEZILLA
 

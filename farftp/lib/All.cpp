@@ -1,5 +1,5 @@
 #include <all_far.h>
-#pragma hdrstop
+
 
 #include <fstdlib.h>
 #include "Plugin.h"

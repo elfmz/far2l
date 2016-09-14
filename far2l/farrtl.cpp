@@ -5,7 +5,7 @@ farrtl.cpp
 */
 
 #include "headers.hpp"
-#pragma hdrstop
+
 
 #include "savefpos.hpp"
 #include "console.hpp"

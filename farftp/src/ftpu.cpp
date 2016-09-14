@@ -1,6 +1,6 @@
 //#include <all_lib.h>
 #include <windows.h>
-#pragma hdrstop
+
 
 #include "pwd.h"
 #include "Crypt.inc"

@@ -3,7 +3,7 @@ project(WinPort)
 
 
 find_package(PkgConfig REQUIRED)
-find_package(wxWidgets REQUIRED net gl core base)
+find_package(wxWidgets REQUIRED net core base)
 
 pkg_check_modules(GLIB2 glib-2.0)
 

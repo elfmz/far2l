@@ -3,7 +3,7 @@
 /*
 plist.hpp
 
-Список процессов (Ctrl-W)
+РЎРїРёСЃРѕРє РїСЂРѕС†РµСЃСЃРѕРІ (Ctrl-W)
 */
 /*
 Copyright (c) 1996 Eugene Roshal

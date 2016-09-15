@@ -1,7 +1,7 @@
 /*
 editor.cpp
 
-Ðåäàêòîð
+Редактор
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -107,9 +107,9 @@ Editor::Editor(ScreenObject *pOwner,bool DialogUsed):
 		Flags.Set(FEDITOR_DIALOGMEMOEDIT);
 
 	/* $ 26.10.2003 KM
-	   Åñëè óñòàíîâëåí ãëîáàëüíûé ðåæèì ïîèñêà 16-ðè÷íûõ êîäîâ, òîãäà
-	   ñêîíâåðòèðóåì GlobalSearchString â ñòðîêó, èáî îíà ñîäåðæèò ñòðîêó â
-	   16-ðè÷íîì ïðåäñòàâëåíèè.
+	   Если установлен глобальный режим поиска 16-ричных кодов, тогда
+	   сконвертируем GlobalSearchString в строку, ибо она содержит строку в
+	   16-ричном представлении.
 	*/
 	if (GlobalSearchHex)
 		Transform(strLastSearchStr,strGlobalSearchString,L'S');
@@ -118,8 +118,8 @@ Editor::Editor(ScreenObject *pOwner,bool DialogUsed):
 
 	UnmarkMacroBlock();
 	/* $ 12.01.2002 IS
-	   Ïî óìîë÷àíèþ êîíåö ñòðîêè òàê èëè èíà÷å ðàâåí \r\n, ïîýòîìó íå÷åãî
-	   ïóäðèòü ìîçãè, ïðîïèøåì åãî ÿâíî.
+	   По умолчанию конец строки так или иначе равен \r\n, поэтому нечего
+	   пудрить мозги, пропишем его явно.
 	*/
 	wcscpy(GlobalEOL, NATIVE_EOLW);
 	memset(&SavePos,0xff,sizeof(SavePos));
@@ -156,7 +156,7 @@ void Editor::FreeAllocatedData(bool FreeUndo)
 
 void Editor::KeepInitParameters()
 {
-	// Óñòàíîâëåí ãëîáàëüíûé ðåæèì ïîèñêà 16-ðè÷íûõ äàííûõ?
+	// Установлен глобальный режим поиска 16-ричных данных?
 	if (GlobalSearchHex)
 		Transform(strGlobalSearchString,strLastSearchStr,L'X');
 	else
@@ -170,7 +170,7 @@ void Editor::KeepInitParameters()
 }
 
 /*
-	ïðåîáðàçîâàíèå èç áóôåðà â ñïèñîê
+	преобразование из буфера в список
 */
 int Editor::SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat)
 {
@@ -183,23 +183,23 @@ int Editor::SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat)
 }
 
 /*
-  Editor::Edit2Str - ïðåîáðàçîâàíèå èç ñïèñêà â áóôåð ñ ó÷åòîì EOL
+  Editor::Edit2Str - преобразование из списка в буфер с учетом EOL
 
-    DestBuf     - êóäà ñîõðàíÿåì (âûäåëÿåòñÿ äèíàìè÷åñêè!)
-    SizeDestBuf - ðàçìåð ñîõðàíåíèÿ
-    TextFormat  - òèï êîíöîâêè ñòðîê
+    DestBuf     - куда сохраняем (выделяется динамически!)
+    SizeDestBuf - размер сохранения
+    TextFormat  - тип концовки строк
 */
 int Editor::GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat)
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 	wchar_t* PDest=nullptr;
-	SizeDestBuf=0; // îáùèé ðàçìåð = 0
+	SizeDestBuf=0; // общий размер = 0
 
 	const wchar_t *SaveStr, *EndSeq;
 
 	int Length;
 
-	// ïîñ÷èòàåì êîëè÷åñòâî ñòðîê è îáùèé ðàçìåð ïàìÿòè (÷òîáû íå äåðãàòü realloc)
+	// посчитаем количество строк и общий размер памяти (чтобы не дергать realloc)
 	Edit *CurPtr=TopList;
 
 	DWORD AllLength=0;
@@ -217,7 +217,7 @@ int Editor::GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat)
 		*MemEditStr=0;
 		PDest=MemEditStr;
 
-		// ïðéäåìñÿ ïî ñïèñêó ñòðîê
+		// прйдемся по списку строк
 		CurPtr=TopList;
 
 		AllLength=0;
@@ -285,9 +285,9 @@ void Editor::ShowEditor(int CurLineOnly)
 
 	XX2=X2-(EdOpt.ShowScrollBar?1:0);
 	/* 17.04.2002 skv
-	  ×òî á êóðñîð íå áåãàë ïðè Alt-F9 â êîíöå äëèííîãî ôàéëà.
-	  Åñëè íà ýêðàíå åñòü ñâîáîäíîå ìåñòî, è åñòü òåêñò ñâåðõó,
-	  ïåðåïîçèöèîíèðóåì.
+	  Что б курсор не бегал при Alt-F9 в конце длинного файла.
+	  Если на экране есть свободное место, и есть текст сверху,
+	  перепозиционируем.
 	*/
 
 	if (!EdOpt.AllowEmptySpaceAfterEof)
@@ -302,9 +302,9 @@ void Editor::ShowEditor(int CurLineOnly)
 	}
 
 	/*
-	  åñëè êóðñîð óäðóã îêàçàëñÿ "çà ýêðàíîì",
-	  ïîäâèíåì ýêðàí ïîä êóðñîð, à íå
-	  êóðñîð çàãîíèì â ýêðàí.
+	  если курсор удруг оказался "за экраном",
+	  подвинем экран под курсор, а не
+	  курсор загоним в экран.
 	*/
 
 	while (CalcDistance(TopScreen,CurLine,-1)>=Y2-Y1+1)
@@ -374,7 +374,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		LeftPos=CurLine->GetLeftPos();
 #if 0
 
-		// êðàéíå ýêñïåðåìåíòàëüíûé êóñîê!
+		// крайне эксперементальный кусок!
 		if (CurPos+LeftPos < XX2)
 			LeftPos=0;
 		else if (CurLine->X2 < XX2)
@@ -400,7 +400,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			}
 			else
 			{
-				SetScreen(X1,Y,XX2,Y,L' ',COL_EDITORTEXT); //Ïóñòûå ñòðîêè ïîñëå êîíöà òåêñòà
+				SetScreen(X1,Y,XX2,Y,L' ',COL_EDITORTEXT); //Пустые строки после конца текста
 			}
 	}
 
@@ -502,7 +502,7 @@ int Editor::BlockEnd2NumLine(int *Pos)
 	{
 		int StartSel, EndSel;
 		Edit *eLine=eBlock;
-		iLine=BlockStart2NumLine(nullptr); // ïîëó÷èëè ñòðîêó íà÷àëà áëîêà
+		iLine=BlockStart2NumLine(nullptr); // получили строку начала блока
 
 		if (VBlockStart)
 		{
@@ -516,21 +516,21 @@ int Editor::BlockEnd2NumLine(int *Pos)
 		}
 		else
 		{
-			while (eLine)  // ïîèñê ñòðîêè, ñîäåðæàùóþ êîíåö áëîêà
+			while (eLine)  // поиск строки, содержащую конец блока
 			{
 				eLine->GetSelection(StartSel,EndSel);
 
-				if (EndSel == -1) // ýòî çíà÷èò, ÷òî êîíåö áëîêà "çà ñòðîêîé"
+				if (EndSel == -1) // это значит, что конец блока "за строкой"
 					eLine->GetRealSelection(StartSel,EndSel);
 
 				if (StartSel == -1)
 				{
-					// Åñëè â òåêóùåé ñòðîêè íåò âûäåëåíèÿ, ýòî åùå íå çíà÷èò ÷òî ìû â êîíöå. Ýòî ìîæåò áûòü òîëüêî íà÷àëî :)
+					// Если в текущей строки нет выделения, это еще не значит что мы в конце. Это может быть только начало :)
 					if (eLine->m_next)
 					{
 						eLine->m_next->GetSelection(StartSel,EndSel);
 
-						if (EndSel == -1) // ýòî çíà÷èò, ÷òî êîíåö áëîêà "çà ñòðîêîé"
+						if (EndSel == -1) // это значит, что конец блока "за строкой"
 							eLine->m_next->GetRealSelection(StartSel,EndSel);
 
 						if (StartSel==-1)
@@ -584,7 +584,7 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		case MCODE_V_ITEMCOUNT:
 		case MCODE_V_EDITORLINES:
 			return (int64_t)NumLastLine;
-			// ðàáîòà ñî ñòåêîâûìè çàêëàäêàìè
+			// работа со стековыми закладками
 		case MCODE_F_BM_ADD:
 			return AddStackBookmark();
 		case MCODE_F_BM_CLEAR:
@@ -599,20 +599,20 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		{
 			switch (iParam)
 			{
-				case 0: // BM.Stat(0) âîçâðàùàåò êîëè÷åñòâî
+				case 0: // BM.Stat(0) возвращает количество
 					return GetStackBookmarks(nullptr);
-				case 1: // èíäåêñ òåêóùåé çàêëàäêè (0 åñëè çàêëàäîê íåò)
+				case 1: // индекс текущей закладки (0 если закладок нет)
 					return CurrentStackBookmarkIdx()+1;
 			}
 			return 0;
 		}
-		case MCODE_F_BM_PUSH:             // N=BM.push() - ñîõðàíèòü òåêóùóþ ïîçèöèþ â âèäå çàêëàäêè â êîíöå ñòåêà
+		case MCODE_F_BM_PUSH:             // N=BM.push() - сохранить текущую позицию в виде закладки в конце стека
 			return PushStackBookMark();
-		case MCODE_F_BM_POP:              // N=BM.pop() - âîññòàíîâèòü òåêóùóþ ïîçèöèþ èç çàêëàäêè â êîíöå ñòåêà è óäàëèòü çàêëàäêó
+		case MCODE_F_BM_POP:              // N=BM.pop() - восстановить текущую позицию из закладки в конце стека и удалить закладку
 			return PopStackBookMark();
-		case MCODE_F_BM_GOTO:             // N=BM.goto([n]) - ïåðåõîä íà çàêëàäêó ñ óêàçàííûì èíäåêñîì (0 --> òåêóùóþ)
+		case MCODE_F_BM_GOTO:             // N=BM.goto([n]) - переход на закладку с указанным индексом (0 --> текущую)
 			return GotoStackBookmark((int)iParam-1);
-		case MCODE_F_BM_GET:                   // N=BM.Get(Idx,M) - âîçâðàùàåò êîîðäèíàòû ñòðîêè (M==0) èëè êîëîíêè (M==1) çàêëàäêè ñ èíäåêñîì (Idx=1...)
+		case MCODE_F_BM_GET:                   // N=BM.Get(Idx,M) - возвращает координаты строки (M==0) или колонки (M==1) закладки с индексом (Idx=1...)
 		{
 			int64_t Ret=-1;
 			long Val[1];
@@ -633,7 +633,7 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 
 			return Ret;
 		}
-		case MCODE_F_BM_DEL:                   // N=BM.Del(Idx) - óäàëÿåò çàêëàäêó ñ óêàçàííûì èíäåêñîì (x=1...), 0 - óäàëÿåò òåêóùóþ çàêëàäêó
+		case MCODE_F_BM_DEL:                   // N=BM.Del(Idx) - удаляет закладку с указанным индексом (x=1...), 0 - удаляет текущую закладку
 			return DeleteStackBookmark(PointerToStackBookmark((int)iParam-1));
 
 		case MCODE_F_EDITOR_SEL:
@@ -888,7 +888,7 @@ int Editor::ProcessKey(int Key)
 	if (Key==KEY_ALTD)
 		Key=KEY_CTRLK;
 
-	// ðàáîòà ñ çàêëàäêàìè
+	// работа с закладками
 	if (Key>=KEY_CTRL0 && Key<=KEY_CTRL9)
 		return GotoBookmark(Key-KEY_CTRL0);
 
@@ -915,16 +915,16 @@ int Editor::ProcessKey(int Key)
 		{
 			_KEYMACRO(CleverSysLog SL(L"Editor::ProcessKey(KEY_SHIFT*)"));
 			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d",__LINE__,SelStart,SelEnd));
-			UnmarkEmptyBlock(); // óáåðåì âûäåëåíèå, åñëè åãî ðàçìåð ðàâåí 0
+			UnmarkEmptyBlock(); // уберем выделение, если его размер равен 0
 			_bg.SetNeedCheckUnmark(true);
 			CurLine->GetRealSelection(SelStart,SelEnd);
 
 			if (Flags.Check(FEDITOR_CURPOSCHANGEDBYPLUGIN))
 			{
-				if (SelStart!=-1 && (CurPos<SelStart || // åñëè êóðñîð äî âûäåëåíèÿ
-				                     (SelEnd!=-1 && (CurPos>SelEnd ||    // ... ïîñëå âûäåëåíèÿ
+				if (SelStart!=-1 && (CurPos<SelStart || // если курсор до выделения
+				                     (SelEnd!=-1 && (CurPos>SelEnd ||    // ... после выделения
 				                                     (CurPos>SelStart && CurPos<SelEnd)))) &&
-				        CurPos<CurLine->GetLength()) // ... âíóòðè âûäëåíèÿ
+				        CurPos<CurLine->GetLength()) // ... внутри выдления
 					Flags.Clear(FEDITOR_MARKINGVBLOCK|FEDITOR_MARKINGBLOCK);
 
 				Flags.Clear(FEDITOR_CURPOSCHANGEDBYPLUGIN);
@@ -988,14 +988,14 @@ int Editor::ProcessKey(int Key)
 			}
 
 			/* $ 06.02.2002 IS
-			   Ïðèíóäèòåëüíî ñáðîñèì ôëàã òîãî, ÷òî ïîçèöèÿ èçìåíåíà ïëàãèíîì.
-			   Äëÿ ÷åãî:
-			     ïðè âûïîëíåíèè "ProcessKey(KEY_SHIFTPGDN)" (ñì. ÷óòü âûøå)
-			     ïîçèöèÿ ïëàãèíû (â ìîåì ñëó÷àå - êîëîðåð) ìîãóò äåðãàòü
-			     ECTL_SETPOSITION, â ðåçóëüòàòå ÷åãî âûñòàâëÿåòñÿ ôëàã
-			     FEDITOR_CURPOSCHANGEDBYPLUGIN. À ïðè îáðàáîòêå KEY_SHIFTEND
-			     âûäåëåíèå â ïîäîáíîì ñëó÷àå íà÷èíàåòñÿ ñ íóëÿ, ÷òî ñâîäèò íà íåò
-			     ïðåäûäóùåå âûïîëíåíèå KEY_SHIFTPGDN.
+			   Принудительно сбросим флаг того, что позиция изменена плагином.
+			   Для чего:
+			     при выполнении "ProcessKey(KEY_SHIFTPGDN)" (см. чуть выше)
+			     позиция плагины (в моем случае - колорер) могут дергать
+			     ECTL_SETPOSITION, в результате чего выставляется флаг
+			     FEDITOR_CURPOSCHANGEDBYPLUGIN. А при обработке KEY_SHIFTEND
+			     выделение в подобном случае начинается с нуля, что сводит на нет
+			     предыдущее выполнение KEY_SHIFTPGDN.
 			*/
 			Flags.Clear(FEDITOR_CURPOSCHANGEDBYPLUGIN);
 
@@ -1122,14 +1122,14 @@ int Editor::ProcessKey(int Key)
 
 			if (!CurPos && !CurLine->m_prev)return TRUE;
 
-			if (!CurPos) //êóðñîð â íà÷àëå ñòðîêè
+			if (!CurPos) //курсор в начале строки
 			{
-				if (SelAtBeginning) //êóðñîð â íà÷àëå áëîêà
+				if (SelAtBeginning) //курсор в начале блока
 				{
 					BlockStart=CurLine->m_prev;
 					CurLine->m_prev->Select(CurLine->m_prev->GetLength(),-1);
 				}
-				else // êóðñîð â êîíöå áëîêà
+				else // курсор в конце блока
 				{
 					CurLine->Select(-1,0);
 					CurLine->m_prev->GetRealSelection(SelStart,SelEnd);
@@ -1220,7 +1220,7 @@ int Editor::ProcessKey(int Key)
 					int Length;
 					CurLine->GetBinaryString(&Str,nullptr,Length);
 					/* $ 12.11.2002 DJ
-					   îáåñïå÷èì êîððåêòíóþ ðàáîòó Ctrl-Shift-Left çà êîíöîì ñòðîêè
+					   обеспечим корректную работу Ctrl-Shift-Left за концом строки
 					*/
 					CurPos=CurLine->GetCurPos();
 
@@ -1312,7 +1312,7 @@ int Editor::ProcessKey(int Key)
 
 			CurPos=CurLine->RealPosToTab(CurPos);
 
-			if (SelAtBeginning)//Ñíèìàåì âûäåëåíèå
+			if (SelAtBeginning)//Снимаем выделение
 			{
 				if (SelEnd==-1)
 				{
@@ -1362,7 +1362,7 @@ int Editor::ProcessKey(int Key)
 				  SelStart=CurLine->m_next->GetLength();
 				}*/
 			}
-			else //ðàñøèðÿåì âûäåëåíèå
+			else //расширяем выделение
 			{
 				CurLine->Select(SelStart,-1);
 				SelStart=0;
@@ -1395,7 +1395,7 @@ int Editor::ProcessKey(int Key)
 		{
 			if (!CurLine->m_prev) return 0;
 
-			if (SelAtBeginning || SelFirst) // ðàñøèðÿåì âûäåëåíèå
+			if (SelAtBeginning || SelFirst) // расширяем выделение
 			{
 				CurLine->Select(0,SelEnd);
 				SelStart=CurLine->RealPosToTab(CurPos);
@@ -1411,7 +1411,7 @@ int Editor::ProcessKey(int Key)
 				BlockStart=CurLine->m_prev;
 				BlockStartLine=NumLine-1;
 			}
-			else // ñíèìàåì âûäåëåíèå
+			else // снимаем выделение
 			{
 				CurPos=CurLine->RealPosToTab(CurPos);
 
@@ -1516,8 +1516,8 @@ int Editor::ProcessKey(int Key)
 				ProcessKey(Key==KEY_CTRLP ? KEY_CTRLINS:KEY_SHIFTDEL);
 
 				/* $ 10.04.2001 SVS
-				  ^P/^M - íåêîððåêòíî ðàáîòàëè: óëîâèå äëÿ CurPos äîëæíî áûòü ">=",
-				   à íå "ìåíüøå".
+				  ^P/^M - некорректно работали: уловие для CurPos должно быть ">=",
+				   а не "меньше".
 				*/
 				if (Key==KEY_CTRLM && SelStart!=-1 && SelEnd!=-1)
 				{
@@ -1532,8 +1532,8 @@ int Editor::ProcessKey(int Key)
 				EmptyInternalClipboard();
 				Clipboard::SetUseInternalClipboardState(OldUseInternalClipboard);
 				/*$ 08.02.2001 SKV
-				  âñ¸ äåëàëîñü ñ pasting'îì, ïîýòîìó redraw ïëàãèíàì íå óøåë.
-				  ñäåëàåì åãî.
+				  всё делалось с pasting'ом, поэтому redraw плагинам не ушел.
+				  сделаем его.
 				*/
 				Show();
 			}
@@ -1611,12 +1611,12 @@ int Editor::ProcessKey(int Key)
 		{
 			if (!Flags.Check(FEDITOR_LOCKMODE))
 			{
-				// Del â ñàìîé ïîñëåäíåé ïîçèöèè íè÷åãî íå óäàëÿåò, ïîýòîìó íå ìîäèôèöèðóåì...
+				// Del в самой последней позиции ничего не удаляет, поэтому не модифицируем...
 				if (!CurLine->m_next && CurPos>=CurLine->GetLength() && !BlockStart && !VBlockStart)
 					return TRUE;
 
 				/* $ 07.03.2002 IS
-				   Ñíèìåì âûäåëåíèå, åñëè áëîê âñå ðàâíî ïóñòîé
+				   Снимем выделение, если блок все равно пустой
 				*/
 				if (!Pasting)
 					UnmarkEmptyBlock();
@@ -1682,7 +1682,7 @@ int Editor::ProcessKey(int Key)
 		{
 			if (!Flags.Check(FEDITOR_LOCKMODE))
 			{
-				// Bs â ñàìîì íà÷àëå íèõðåíà íè÷åãî íå óäàëÿåò, ïîñåìó íå áóäåì âûñòàâëÿòü
+				// Bs в самом начале нихрена ничего не удаляет, посему не будем выставлять
 				if (!CurLine->m_prev && !CurPos && !BlockStart && !VBlockStart)
 					return TRUE;
 
@@ -2015,11 +2015,11 @@ int Editor::ProcessKey(int Key)
 		case KEY_SHIFTF7:
 		{
 			/* $ 20.09.2000 SVS
-			   Ïðè All ïîñëå íàæàòèÿ Shift-F7 íàäîáíî ñíîâà ñïðîñèòü...
+			   При All после нажатия Shift-F7 надобно снова спросить...
 			*/
 			//ReplaceAll=FALSE;
 			/* $ 07.05.2001 IS
-			   Ñêàçàíî â õåëïå "Shift-F7 Ïðîäîëæèòü _ïîèñê_"
+			   Сказано в хелпе "Shift-F7 Продолжить _поиск_"
 			*/
 			//ReplaceMode=FALSE;
 			Flags.Clear(FEDITOR_MARKINGVBLOCK|FEDITOR_MARKINGBLOCK);
@@ -2150,7 +2150,7 @@ int Editor::ProcessKey(int Key)
 				}
 
 				/* $ 25.07.2000 tran
-				   îñòàòêè áàãà 22 - ïîäïðàâêà ïðè ïåðåáåãà çà ãðàíèöó áëîêà */
+				   остатки бага 22 - подправка при перебега за границу блока */
 				if (VBlockSizeX<0)
 				{
 					VBlockSizeX=-VBlockSizeX;
@@ -2169,9 +2169,9 @@ int Editor::ProcessKey(int Key)
 		case KEY_ALTRIGHT:
 		{
 			/* $ 23.10.2000 tran
-			   âìåñòî GetTabCurPos íàäî âûçûâàòü GetCurPos -
-			   ñðàâíèâàòü ðåàëüíóþ ïîçèöèþ ñ ðåàëüíîé äëèíîé
-			   à áûëî ñðàâíåíèå âèäèìîé ïîçèöèåé ñ ðåàëüíîé äëèíîé*/
+			   вместо GetTabCurPos надо вызывать GetCurPos -
+			   сравнивать реальную позицию с реальной длиной
+			   а было сравнение видимой позицией с реальной длиной*/
 			if (!EdOpt.CursorBeyondEOL && CurLine->GetCurPos()>=CurLine->GetLength())
 				return TRUE;
 
@@ -2183,9 +2183,9 @@ int Editor::ProcessKey(int Key)
 			{
 				int Delta;
 				/* $ 18.07.2000 tran
-				     âñòàíü â íà÷àëî òåêñòà, íàæìè alt-right, alt-pagedown,
-				     âûäåëèòñÿ áëîê øèðèíîé â 1 êîëîíêó, íàæìè åùå alt-right
-				     âûäåëåíèå ñáðîñèòñÿ
+				     встань в начало текста, нажми alt-right, alt-pagedown,
+				     выделится блок шириной в 1 колонку, нажми еще alt-right
+				     выделение сбросится
 				*/
 				int VisPos=CurLine->RealPosToTab(CurPos),
 				           NextVisPos=CurLine->RealPosToTab(CurPos+1);
@@ -2203,7 +2203,7 @@ int Editor::ProcessKey(int Key)
 				}
 
 				/* $ 25.07.2000 tran
-				   îñòàòêè áàãà 22 - ïîäïðàâêà ïðè ïåðåáåãà çà ãðàíèöó áëîêà */
+				   остатки бага 22 - подправка при перебега за границу блока */
 				if (VBlockSizeX<0)
 				{
 					VBlockSizeX=-VBlockSizeX;
@@ -2219,7 +2219,7 @@ int Editor::ProcessKey(int Key)
 			return TRUE;
 		}
 		/* $ 29.06.2000 IG
-		  + CtrlAltLeft, CtrlAltRight äëÿ âåðòèêàëüíûé áëîêîâ
+		  + CtrlAltLeft, CtrlAltRight для вертикальный блоков
 		*/
 		case KEY_CTRLALTLEFT: case KEY_CTRLALTNUMPAD4:
 		{
@@ -2458,14 +2458,14 @@ int Editor::ProcessKey(int Key)
 			Show();
 			return TRUE;
 		}
-		case KEY_CTRLALTBRACKET:       // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLALTBACKBRACKET:   // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïðàâîé ïàíåëè
-		case KEY_ALTSHIFTBRACKET:      // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_ALTSHIFTBACKBRACKET:  // Âñòàâèòü ñåòåâîå (UNC) ïóòü èç ïàññèâíîé ïàíåëè
-		case KEY_CTRLBRACKET:          // Âñòàâèòü ïóòü èç ëåâîé ïàíåëè
-		case KEY_CTRLBACKBRACKET:      // Âñòàâèòü ïóòü èç ïðàâîé ïàíåëè
-		case KEY_CTRLSHIFTBRACKET:     // Âñòàâèòü ïóòü èç àêòèâíîé ïàíåëè
-		case KEY_CTRLSHIFTBACKBRACKET: // Âñòàâèòü ïóòü èç ïàññèâíîé ïàíåëè
+		case KEY_CTRLALTBRACKET:       // Вставить сетевое (UNC) путь из левой панели
+		case KEY_CTRLALTBACKBRACKET:   // Вставить сетевое (UNC) путь из правой панели
+		case KEY_ALTSHIFTBRACKET:      // Вставить сетевое (UNC) путь из активной панели
+		case KEY_ALTSHIFTBACKBRACKET:  // Вставить сетевое (UNC) путь из пассивной панели
+		case KEY_CTRLBRACKET:          // Вставить путь из левой панели
+		case KEY_CTRLBACKBRACKET:      // Вставить путь из правой панели
+		case KEY_CTRLSHIFTBRACKET:     // Вставить путь из активной панели
+		case KEY_CTRLSHIFTBACKBRACKET: // Вставить путь из пассивной панели
 		case KEY_CTRLSHIFTNUMENTER:
 		case KEY_SHIFTNUMENTER:
 		case KEY_CTRLSHIFTENTER:
@@ -2541,7 +2541,7 @@ int Editor::ProcessKey(int Key)
 				}
 			}
 
-			CurPos=OldCurPos; // âîçâðàùàåì îáðàòíî
+			CurPos=OldCurPos; // возвращаем обратно
 			Pasting--;
 			Unlock();
 			Show();
@@ -2558,7 +2558,7 @@ int Editor::ProcessKey(int Key)
 
 				wchar_t *Ptr=strTStr.GetBuffer();
 
-				while (*Ptr) // çàìåíèì L'\n' íà L'\r' ïî ïðàâèëàì Paset ;-)
+				while (*Ptr) // заменим L'\n' на L'\r' по правилам Paset ;-)
 				{
 					if (*Ptr == L'\n')
 						*Ptr=L'\r';
@@ -2594,8 +2594,8 @@ int Editor::ProcessKey(int Key)
 				if ((Key==KEY_CTRLDEL || Key==KEY_CTRLNUMDEL || Key==KEY_CTRLDECIMAL || Key==KEY_CTRLT) && CurPos>=CurLine->GetLength())
 				{
 					/*$ 08.12.2000 skv
-					  - CTRL-DEL â íà÷àëå ñòðîêè ïðè âûäåëåííîì áëîêå è
-					    âêëþ÷åííîì EditorDelRemovesBlocks
+					  - CTRL-DEL в начале строки при выделенном блоке и
+					    включенном EditorDelRemovesBlocks
 					*/
 					int save=EdOpt.DelRemovesBlocks;
 					EdOpt.DelRemovesBlocks=0;
@@ -2610,10 +2610,10 @@ int Editor::ProcessKey(int Key)
 					{
 						DeleteBlock();
 						/* $ 19.09.2002 SKV
-						  Îäíàêî íàäî.
-						  Èíà÷å åñäè ïðè íàäè÷èè âûäåëåíèÿ íàáèðàòü
-						  òåêñò ñ øèôòîì ôëàãè íå ñáðîñÿòñÿ è ñëåäóþùèé
-						  âûäåëåííûé áëîê áóäåò ãëþ÷íûé.
+						  Однако надо.
+						  Иначе есди при надичии выделения набирать
+						  текст с шифтом флаги не сбросятся и следующий
+						  выделенный блок будет глючный.
 						*/
 						Flags.Clear(FEDITOR_MARKINGVBLOCK|FEDITOR_MARKINGBLOCK);
 						Show();
@@ -2635,8 +2635,8 @@ int Editor::ProcessKey(int Key)
 					ProcessKey(KEY_LEFT);
 					Pasting--;
 					/* $ 24.9.2001 SKV
-					  fix áàãà ñ ctrl-left â íà÷àëå ñòðîêè
-					  â áëîêå ñ ïåðåîïðåäåë¸ííûì ïëàãèíîì ôîíîì.
+					  fix бага с ctrl-left в начале строки
+					  в блоке с переопределённым плагином фоном.
 					*/
 					ShowEditor(FALSE);
 					//if(!Flags.Check(FEDITOR_DIALOGMEMOEDIT)){
@@ -2665,8 +2665,8 @@ int Editor::ProcessKey(int Key)
 					}
 
 					/*$ 03.02.2001 SKV
-					  À òî EEREDRAW_ALL òî óõîäèò, à íà ñàìîì äåëå
-					  òîëüêî òåêóùàÿ ëèíèÿ ïåðåðèñîâûâàåòñÿ.
+					  А то EEREDRAW_ALL то уходит, а на самом деле
+					  только текущая линия перерисовывается.
 					*/
 					ShowEditor(0);
 					return TRUE;
@@ -2740,11 +2740,11 @@ int Editor::ProcessKey(int Key)
 					return TRUE;
 				}
 
-				// <comment> - ýòî òðåáóåòñÿ äëÿ êîððåêòíîé ðàáîòû ëîãèêè áëîêîâ äëÿ Ctrl-K
+				// <comment> - это требуется для корректной работы логики блоков для Ctrl-K
 				int PreSelStart,PreSelEnd;
 				CurLine->GetSelection(PreSelStart,PreSelEnd);
 				// </comment>
-				//AY: Ýòî ÷òî áû ïðè FastShow LeftPos íå ñòàíîâèëñÿ â êîíåö ñòðîêè.
+				//AY: Это что бы при FastShow LeftPos не становился в конец строки.
 				CurLine->ObjWidth=XX2-X1+1;
 
 				if (CurLine->ProcessKey(Key))
@@ -2752,9 +2752,9 @@ int Editor::ProcessKey(int Key)
 					int SelStart,SelEnd;
 
 					/* $ 17.09.2002 SKV
-					  Åñëè íàõîäèìñÿ â ñåðåäèíå áëîêà,
-					  â íà÷àëå ñòðîêè, è íàæèìàåì tab, êîòîðûé çàìåíÿåòñÿ
-					  íà ïðîáåëû, âûäåëåíèå ñúåäåò. Ýòî ôèêñ.
+					  Если находимся в середине блока,
+					  в начале строки, и нажимаем tab, который заменяется
+					  на пробелы, выделение съедет. Это фикс.
 					*/
 					if (Key==KEY_TAB && CurLine->GetConvertTabs() &&
 					        BlockStart && BlockStart!=CurLine)
@@ -2779,7 +2779,7 @@ int Editor::ProcessKey(int Key)
 					}
 
 					// <Bug 794>
-					// îáðàáîòàåì òîëüêî ïåðâóþ è ïîñëåäíþþ ñòðîêó ñ áëîêîì
+					// обработаем только первую и последнюю строку с блоком
 					if (Key == KEY_CTRLK && EdOpt.PersistentBlocks)
 					{
 						if (CurLine==BlockStart)
@@ -2788,15 +2788,15 @@ int Editor::ProcessKey(int Key)
 							{
 								CurLine->GetSelection(SelStart,SelEnd);
 
-								// 1. áëîê çà êîíöîì ñòðîêè (CurPos áûë áëèæå ê íà÷àëó, ÷åì SelStart)
+								// 1. блок за концом строки (CurPos был ближе к началу, чем SelStart)
 								if ((SelEnd == -1 && PreSelStart > CurPos) || SelEnd > CurPos)
-									SelStart=SelEnd=-1; // â ýòîì ñëó÷àå ñíèìàåì âûäåëåíèå
+									SelStart=SelEnd=-1; // в этом случае снимаем выделение
 
-								// 2. CurPos âíóòðè áëîêà
+								// 2. CurPos внутри блока
 								else if (SelEnd == -1 && PreSelEnd > CurPos && SelStart < CurPos)
-									SelEnd=PreSelEnd;   // â ýòîì ñëó÷àå óñåêàåì áëîê
+									SelEnd=PreSelEnd;   // в этом случае усекаем блок
 
-								// 3. áëîê îñòàëñÿ ñëåâà îò CurPos èëè âûäåëåíèå íóæíî ñíÿòü (ñì. âûøå)
+								// 3. блок остался слева от CurPos или выделение нужно снять (см. выше)
 								if (SelEnd >= CurPos || SelStart==-1)
 									CurLine->Select(SelStart,CurPos);
 							}
@@ -2806,9 +2806,9 @@ int Editor::ProcessKey(int Key)
 								BlockStart=BlockStart->m_next;
 							}
 						}
-						else // ÇÄÅÑÜ ÇÀÑÀÄÀ !!! ÅÑËÈ ÂÛÄÅËÅÍÍÛÉ ÁËÎÊ ÄÎÑÒÀÒÎ×ÍÎ ÁÎËÜØÎÉ (ÏÎ ÑÒÐÎÊÀÌ), ÒÎ ÖÈÊË ÏÅÐÅÁÎÐÀ... ÌÎÆÅÒ ÇÀÒßÍÓÒÜ...
+						else // ЗДЕСЬ ЗАСАДА !!! ЕСЛИ ВЫДЕЛЕННЫЙ БЛОК ДОСТАТОЧНО БОЛЬШОЙ (ПО СТРОКАМ), ТО ЦИКЛ ПЕРЕБОРА... МОЖЕТ ЗАТЯНУТЬ...
 						{
-							// íàéäåì ýòó ïîñëåäíþþ ñòðîêó (è ïîñëåäíÿÿ ëè îíà)
+							// найдем эту последнюю строку (и последняя ли она)
 							Edit *CurPtrBlock=BlockStart,*CurPtrBlock2=BlockStart;
 
 							while (CurPtrBlock)
@@ -2859,7 +2859,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	Edit *NewPtr;
 	int NewDist,Dist;
 
-	// $ 28.12.2000 VVM - Ùåë÷îê ìûøêîé ñíèìàåò íåïîñòîÿííûé áëîê âñåãäà
+	// $ 28.12.2000 VVM - Щелчок мышкой снимает непостоянный блок всегда
 	if ((MouseEvent->dwButtonState & 3))
 	{
 		Flags.Clear(FEDITOR_MARKINGVBLOCK|FEDITOR_MARKINGBLOCK);
@@ -3025,7 +3025,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast,int UndoL
 		return;
 
 	/* $ 16.12.2000 OT
-	   CtrlY íà ïîñëåäíåé ñòðîêå ñ âûäåëåííûì âåðòèêàëüíûì áëîêîì íå ñíèìàë âûäåëåíèå */
+	   CtrlY на последней строке с выделенным вертикальным блоком не снимал выделение */
 	if (VBlockStart && NumLine<VBlockY+VBlockSizeY)
 	{
 		if (NumLine<VBlockY)
@@ -3102,7 +3102,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast,int UndoL
 		{
 			CurLine=DelPtr->m_prev;
 			/* $ 04.11.2002 SKV
-			  Âðîäå êàê åñëè ýòî ïðîèçîøëî, íîìåð òåêóùåé ñòðîêè íàäî èçìåíèòü.
+			  Вроде как если это произошло, номер текущей строки надо изменить.
 			*/
 			NumLine--;
 		}
@@ -3137,7 +3137,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast,int UndoL
 	{
 		BlockStart=BlockStart->m_next;
 
-		// Mantis#0000316: Íå ðàáîòàåò êîïèðîâàíèå ñòðîêè
+		// Mantis#0000316: Не работает копирование строки
 		if (BlockStart && !BlockStart->IsSelection())
 			BlockStart=nullptr;
 	}
@@ -3181,8 +3181,8 @@ void Editor::InsertString()
 	CurLine->GetBinaryString(&CurLineStr,&EndSeq,Length);
 
 	/* $ 13.01.2002 IS
-	   Åñëè íå áûë îïðåäåëåí òèï êîíöà ñòðîêè, òî ñ÷èòàåì ÷òî êîíåö ñòðîêè
-	   ó íàñ ðàâåí DOS_EOL_fmt è óñòàíîâèì åãî ÿâíî.
+	   Если не был определен тип конца строки, то считаем что конец строки
+	   у нас равен DOS_EOL_fmt и установим его явно.
 	*/
 	if (!*EndSeq)
 		CurLine->SetEOL(*GlobalEOL?GlobalEOL:NATIVE_EOLW);
@@ -3423,7 +3423,7 @@ void Editor::InsertString()
 
 void Editor::Down()
 {
-	//TODO: "Ñâåðòêà" - åñëè ó÷åñòü "!Flags.Check(FSCROBJ_VISIBLE)", òî êðóòèòü íàäî äî ñëåäóþùåé âèäèìîé ñòðîêè
+	//TODO: "Свертка" - если учесть "!Flags.Check(FSCROBJ_VISIBLE)", то крутить надо до следующей видимой строки
 	Edit *CurPtr;
 	int LeftPos,CurPos,Y;
 
@@ -3447,7 +3447,7 @@ void Editor::Down()
 
 void Editor::ScrollDown()
 {
-	//TODO: "Ñâåðòêà" - åñëè ó÷åñòü "!Flags.Check(FSCROBJ_VISIBLE)", òî êðóòèòü íàäî äî ñëåäóþùåé âèäèìîé ñòðîêè
+	//TODO: "Свертка" - если учесть "!Flags.Check(FSCROBJ_VISIBLE)", то крутить надо до следующей видимой строки
 	int LeftPos,CurPos;
 
 	if (!CurLine->m_next || !TopScreen->m_next)
@@ -3471,7 +3471,7 @@ void Editor::ScrollDown()
 
 void Editor::Up()
 {
-	//TODO: "Ñâåðòêà" - åñëè ó÷åñòü "!Flags.Check(FSCROBJ_VISIBLE)", òî êðóòèòü íàäî äî ñëåäóþùåé âèäèìîé ñòðîêè
+	//TODO: "Свертка" - если учесть "!Flags.Check(FSCROBJ_VISIBLE)", то крутить надо до следующей видимой строки
 	int LeftPos,CurPos;
 
 	if (!CurLine->m_prev)
@@ -3491,7 +3491,7 @@ void Editor::Up()
 
 void Editor::ScrollUp()
 {
-	//TODO: "Ñâåðòêà" - åñëè ó÷åñòü "!Flags.Check(FSCROBJ_VISIBLE)", òî êðóòèòü íàäî äî ñëåäóþùåé âèäèìîé ñòðîêè
+	//TODO: "Свертка" - если учесть "!Flags.Check(FSCROBJ_VISIBLE)", то крутить надо до следующей видимой строки
 	int LeftPos,CurPos;
 
 	if (!CurLine->m_prev)
@@ -3513,9 +3513,9 @@ void Editor::ScrollUp()
 }
 
 /* $ 21.01.2001 SVS
-   Äèàëîãè ïîèñêà/çàìåíû âûâåäåí èç Editor::Search
-   â îòäåëüíóþ ôóíêöèþ GetSearchReplaceString
-   (ôàéë stddlg.cpp)
+   Диалоги поиска/замены выведен из Editor::Search
+   в отдельную функцию GetSearchReplaceString
+   (файл stddlg.cpp)
 */
 BOOL Editor::Search(int Next)
 {
@@ -3585,24 +3585,24 @@ BOOL Editor::Search(int Next)
 		UserBreak=0;
 		CurPos=CurLine->GetCurPos();
 		/* $ 16.10.2000 tran
-		   CurPos óâåëè÷èâàåòñÿ ïðè ñëåäóþùåì ïîèñêå
+		   CurPos увеличивается при следующем поиске
 		*/
 		/* $ 28.11.2000 SVS
-		   "Î, ýòî íå îùèáêà - ýòî ñâîéñòâî ìîåé ïðîãðàììû" :-)
-		   Íîâîå ïîâåäåíèå ñòàëî ïîäêîíòðîëüíûì
+		   "О, это не ощибка - это свойство моей программы" :-)
+		   Новое поведение стало подконтрольным
 		*/
 		/* $ 21.12.2000 SVS
-		   - Â ïðåäûäóùåì èñïðàâëåíèè áûëî çàäàíî íåâåðíîå óñëîâèå äëÿ
-		     ïðàâèëà EditorF7Rules
+		   - В предыдущем исправлении было задано неверное условие для
+		     правила EditorF7Rules
 		*/
 		/* $ 10.06.2001 IS
-		   - Áàã: çà÷åì-òî ïðè ïðîäîëæåíèè _îáðàòíîãî_ ïîèñêà ïðîêðó÷èâàëèñü íà øàã
-		     _âïåðåä_.
+		   - Баг: зачем-то при продолжении _обратного_ поиска прокручивались на шаг
+		     _вперед_.
 		*/
 
 		/* $ 09.11.2001 IS
-		     ïðîêëÿòîå ìåñòî, áëèí.
-		     îïÿòü ôèêñèì, ò.ê. íå ñîîòâåòñòâóåò çàÿâëåííîìó
+		     проклятое место, блин.
+		     опять фиксим, т.к. не соответствует заявленному
 		*/
 		if (!ReverseSearch && (Next || (EdOpt.F7Rules && !ReplaceMode)))
 			CurPos++;
@@ -3659,10 +3659,10 @@ BOOL Editor::Search(int Next)
 
 				int Skip=FALSE;
 				/* $ 24.01.2003 KM
-				   ! Ïî îêîí÷àíèè ïîèñêà îòñòóïèì îò âåðõà ýêðàíà íà òðåòü îòîáðàæàåìîé âûñîòû.
+				   ! По окончании поиска отступим от верха экрана на треть отображаемой высоты.
 				*/
 				/* $ 15.04.2003 VVM
-				   Îòñòóïèì íà ÷åòâåðòü è ïðîâåðèì íà ïåðåêðûòèå äèàëîãîì çàìåíû */
+				   Отступим на четверть и проверим на перекрытие диалогом замены */
 				int FromTop=(ScrY-2)/4;
 
 				if (FromTop<0 || FromTop>=((ScrY-5)/2-2))
@@ -3750,8 +3750,8 @@ BOOL Editor::Search(int Next)
 								}
 
 								/* $ 24.05.2002 SKV
-								  Åñëè ðåïëýéñèì íà Enter, òî overtype íå ñïàñ¸ò.
-								  Íóæíî ñíà÷àëà óäàëèòü òî, ÷òî çàìåíÿåì.
+								  Если реплэйсим на Enter, то overtype не спасёт.
+								  Нужно сначала удалить то, что заменяем.
 								*/
 								if (Ch==L'\r')
 								{
@@ -3837,8 +3837,8 @@ BOOL Editor::Search(int Next)
 						}
 
 						/* skv$*/
-						//AY: Â ýòîì íåò íèêàêîé íàäîáíîñòè è îíî ïðèâîäèò ê íå ïðàâèëüíîìó
-						//ïîçèöèîíèðîâàíèþ ïðè Replace
+						//AY: В этом нет никакой надобности и оно приводит к не правильному
+						//позиционированию при Replace
 						//if (ReverseSearch)
 						//CurLine->SetCurPos(CurPos);
 						Pasting--;
@@ -3938,8 +3938,8 @@ void Editor::Paste(const wchar_t *Src)
 		BlockStart=CurLine;
 		BlockStartLine=NumLine;
 		/* $ 19.05.2001 IS
-		   Ðåøåíèå ïðîáëåìû íåïðîøåíîé êîíâåðòàöèè òàáóëÿöèè (êîòîðàÿ äîëæíà áûòü
-		   äîáàâëåíà â íà÷àëî ñòðîêè ïðè àâòîîòñòóïå) â ïðîáåëû.
+		   Решение проблемы непрошеной конвертации табуляции (которая должна быть
+		   добавлена в начало строки при автоотступе) в пробелы.
 		*/
 		int StartPos=CurLine->GetCurPos();
 		int oldAutoIndent=EdOpt.AutoIndent;
@@ -3960,8 +3960,8 @@ void Editor::Paste(const wchar_t *Src)
 			}
 			else
 			{
-				if (EdOpt.AutoIndent)      // ïåðâûé ñèìâîë âñòàâèì òàê, ÷òîáû
-				{                          // ñðàáîòàë àâòîîòñòóï
+				if (EdOpt.AutoIndent)      // первый символ вставим так, чтобы
+				{                          // сработал автоотступ
 					//ProcessKey(UseDecodeTable?TableSet.DecodeTable[(unsigned)ClipText[I]]:ClipText[I]); //BUGBUG
 					ProcessKey(ClipText[I]); //BUGBUG
 					I++;
@@ -4125,7 +4125,7 @@ void Editor::DeleteBlock()
 		TextChanged(1);
 		int StartSel,EndSel;
 		/* $ 17.09.2002 SKV
-		  ìåíÿåì íà Real ÷òî á ëîâèòü âûäåëåíèå çà êîíöîì ñòðîêè.
+		  меняем на Real что б ловить выделение за концом строки.
 		*/
 		CurPtr->GetRealSelection(StartSel,EndSel);
 
@@ -4158,8 +4158,8 @@ void Editor::DeleteBlock()
 			AddUndoData(UNDO_EDIT,CurPtr->GetStringAddr(),CurPtr->GetEOL(),BlockStartLine,CurPtr->GetCurPos(),CurPtr->GetLength());
 
 		/* $ 17.09.2002 SKV
-		  îïÿòü ïðî âûäåëåíèå çà êîíöîì ñòðîêè.
-		  InsertBinaryString äîáàâèò trailing space'îâ
+		  опять про выделение за концом строки.
+		  InsertBinaryString добавит trailing space'ов
 		*/
 		if (StartSel>Length)
 		{
@@ -4172,7 +4172,7 @@ void Editor::DeleteBlock()
 
 		CurPtr->GetBinaryString(&CurStr,&EndSeq,Length);
 
-		// äàëüøå áóäåò realloc, ïîýòîìó òóò malloc.
+		// дальше будет realloc, поэтому тут malloc.
 		wchar_t *TmpStr=(wchar_t*)xf_malloc((Length+3)*sizeof(wchar_t));
 
 		wmemcpy(TmpStr,CurStr,Length);
@@ -4283,9 +4283,9 @@ void Editor::UnmarkBlock()
 		if (StartSel==-1)
 		{
 			/* $ 24.06.2002 SKV
-			  Åñëè â òåêóùåé ñòðîêè íåò âûäåëåíèÿ,
-			  ýòî åùå íå çíà÷èò ÷òî ìû â êîíöå.
-			  Ýòî ìîæåò áûòü òîëüêî íà÷àëî :)
+			  Если в текущей строки нет выделения,
+			  это еще не значит что мы в конце.
+			  Это может быть только начало :)
 			*/
 			if (BlockStart->m_next)
 			{
@@ -4309,13 +4309,13 @@ void Editor::UnmarkBlock()
 }
 
 /* $ 07.03.2002 IS
-   Óäàëèòü âûäåëåíèå, åñëè îíî ïóñòîå (âûäåëåíî íîëü ñèìâîëîâ â øèðèíó)
+   Удалить выделение, если оно пустое (выделено ноль символов в ширину)
 */
 void Editor::UnmarkEmptyBlock()
 {
 	_SVS(SysLog(L"[%d] Editor::UnmarkEmptyBlock()",__LINE__));
 
-	if (BlockStart || VBlockStart) // ïðèñóòñòâóåò âûäåëåíèå
+	if (BlockStart || VBlockStart) // присутствует выделение
 	{
 		int Lines=0,StartSel,EndSel;
 		Edit *Block=BlockStart;
@@ -4325,24 +4325,24 @@ void Editor::UnmarkEmptyBlock()
 			if (VBlockSizeX)
 				Lines=VBlockSizeY;
 		}
-		else while (Block) // ïðîáåãàåì ïî âñåì âûäåëåííûì ñòðîêàì
+		else while (Block) // пробегаем по всем выделенным строкам
 			{
 				Block->GetRealSelection(StartSel,EndSel);
 
 				if (StartSel==-1)
 					break;
 
-				if (StartSel!=EndSel)// âûäåëåíî ñêîëüêî-òî ñèìâîëîâ
+				if (StartSel!=EndSel)// выделено сколько-то символов
 				{
-					++Lines;           // óâåëè÷èì ñ÷åò÷èê íåïóñòûõ ñòðîê
+					++Lines;           // увеличим счетчик непустых строк
 					break;
 				}
 
 				Block=Block->m_next;
 			}
 
-		if (!Lines)            // åñëè âûäåëåíî íîëü ñèìâîëîâ â øèðèíó, òî
-			UnmarkBlock();       // ïåðåñòàíåì ìîðî÷èòü ãîëîâó è ñíèìåì âûäåëåíèå
+		if (!Lines)            // если выделено ноль символов в ширину, то
+			UnmarkBlock();       // перестанем морочить голову и снимем выделение
 	}
 }
 
@@ -4448,29 +4448,29 @@ void Editor::GetRowCol(const wchar_t *_argv,int *row,int *col)
 	wchar_t *argvx=0;
 	int LeftPos=CurLine->GetTabCurPos() + 1;
 	FARString strArg = _argv;
-	// ÷òî áû íå îñòàâèòü "âðàãó" âûáîðà - òîëüêî òî, ÷òî ìû õîòèì ;-)
-	// "ïðèáüåì" âñå âíåøíèå ïðîáåëû.
+	// что бы не оставить "врагу" выбора - только то, что мы хотим ;-)
+	// "прибьем" все внешние пробелы.
 	RemoveExternalSpaces(strArg);
 	wchar_t *argv = strArg.GetBuffer();
-	// ïîëó÷àåì èíäåêñ âõîæäåíèÿ ëþáîãî ðàçäåëèòåëÿ
-	// â èñêîìîé ñòðîêå
+	// получаем индекс вхождения любого разделителя
+	// в искомой строке
 	l=(int)wcscspn(argv,L",:;. ");
-	// åñëè ðàçäåëèòåëÿ íåòó, òî l=strlen(argv)
+	// если разделителя нету, то l=strlen(argv)
 
-	if (l < StrLength(argv)) // Âàðèàíòû: "row,col" èëè ",col"?
+	if (l < StrLength(argv)) // Варианты: "row,col" или ",col"?
 	{
-		argv[l]=L'\0'; // Âìåñòî ðàçäåëèòåëÿ âïèíäþëèì "êîíåö ñòðîêè" :-)
+		argv[l]=L'\0'; // Вместо разделителя впиндюлим "конец строки" :-)
 		argvx=argv+l+1;
 		x=_wtoi(argvx);
 	}
 
 	y=_wtoi(argv);
 
-	// + ïåðåõîä íà ïðîöåíòû
+	// + переход на проценты
 	if (wcschr(argv,L'%'))
 		y=NumLastLine * y / 100;
 
-	//   âû÷èñëÿåì îòíîñèòåëüíîñòü
+	//   вычисляем относительность
 	if (argv[0]==L'-' || argv[0]==L'+')
 		y=NumLine+y+1;
 
@@ -4483,7 +4483,7 @@ void Editor::GetRowCol(const wchar_t *_argv,int *row,int *col)
 	}
 
 	strArg.ReleaseBuffer();
-	// òåïåðü çàãîíèì ðåçóëüòàò íàçàä
+	// теперь загоним результат назад
 	*row=y;
 
 	if (x!=0xffff)
@@ -4493,8 +4493,8 @@ void Editor::GetRowCol(const wchar_t *_argv,int *row,int *col)
 
 	(*row)--;
 
-	if (*row< 0)   // åñëè ââåëè ",Col"
-		*row=NumLine;  //   òî ïåðåõîäèì íà òåêóùóþ ñòðîêó è êîëîíêó
+	if (*row< 0)   // если ввели ",Col"
+		*row=NumLine;  //   то переходим на текущую строку и колонку
 
 	(*col)--;
 
@@ -4645,7 +4645,7 @@ void Editor::Undo(int redo)
 				if (ud->Str)
 				{
 					CurLine->SetString(ud->Str,ud->Length);
-					CurLine->SetEOL(ud->EOL); // íåîáõîäèìî äîïîëíèòåëüíî âûñòàâëÿòü, ò.ê. SetString âûçûâàåò Edit::SetBinaryString è... äàëüøå ïî òåêñòó
+					CurLine->SetEOL(ud->EOL); // необходимо дополнительно выставлять, т.к. SetString вызывает Edit::SetBinaryString и... дальше по тексту
 				}
 
 				break;
@@ -4657,7 +4657,7 @@ void Editor::Undo(int redo)
 				if (ud->Str)
 				{
 					CurLine->SetString(ud->Str,ud->Length);
-					CurLine->SetEOL(ud->EOL); // íåîáõîäèìî äîïîëíèòåëüíî âûñòàâëÿòü, ò.ê. SetString âûçûâàåò Edit::SetBinaryString è... äàëüøå ïî òåêñòó
+					CurLine->SetEOL(ud->EOL); // необходимо дополнительно выставлять, т.к. SetString вызывает Edit::SetBinaryString и... дальше по тексту
 				}
 
 				CurLine->SetCurPos(ud->StrPos);
@@ -4714,7 +4714,7 @@ BOOL Editor::IsFileModified() const
 	return Flags.Check(FEDITOR_MODIFIED);
 }
 
-// èñïîëüçóåòñÿ â FileEditor
+// используется в FileEditor
 long Editor::GetCurPos()
 {
 	Edit *CurPtr=TopList;
@@ -4757,7 +4757,7 @@ void Editor::BlockLeft()
 	Edit *CurPtr=BlockStart;
 	int LineNum=BlockStartLine;
 	/* $ 14.02.2001 VVM
-	  + Ïðè îòñóòñòâèè áëîêà AltU/AltI ñäâèãàþò òåêóùóþ ñòðî÷êó */
+	  + При отсутствии блока AltU/AltI сдвигают текущую строчку */
 	int MoveLine = 0;
 
 	if (!CurPtr)
@@ -4775,7 +4775,7 @@ void Editor::BlockLeft()
 		CurPtr->GetSelection(StartSel,EndSel);
 
 		/* $ 14.02.2001 VVM
-		  + Áëîêà íåò - ñäåëàåì åãî èñêóññòâåííî */
+		  + Блока нет - сделаем его искусственно */
 		if (MoveLine)
 		{
 			StartSel = 0; EndSel = -1;
@@ -4837,7 +4837,7 @@ void Editor::BlockRight()
 	Edit *CurPtr=BlockStart;
 	int LineNum=BlockStartLine;
 	/* $ 14.02.2001 VVM
-	  + Ïðè îòñóòñòâèè áëîêà AltU/AltI ñäâèãàþò òåêóùóþ ñòðî÷êó */
+	  + При отсутствии блока AltU/AltI сдвигают текущую строчку */
 	int MoveLine = 0;
 
 	if (!CurPtr)
@@ -4855,7 +4855,7 @@ void Editor::BlockRight()
 		CurPtr->GetSelection(StartSel,EndSel);
 
 		/* $ 14.02.2001 VVM
-		  + Áëîêà íåò - ñäåëàåì åãî èñêóññòâåííî */
+		  + Блока нет - сделаем его искусственно */
 		if (MoveLine)
 		{
 			StartSel = 0; EndSel = -1;
@@ -5015,7 +5015,7 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 	if (ptrInitData)
 		DataSize = wcslen(ptrInitData);
 
-	//RealPos âñåãäà <= TabPos, ïîýòîìó áåð¸ì ìàêñèìàëüíûé ðàçìåð áóôôåðà
+	//RealPos всегда <= TabPos, поэтому берём максимальный размер буффера
 	size_t TotalChars = DataSize + (VBlockSizeX + wcslen(NATIVE_EOLW)) * VBlockSizeY + 1;
 
 	wchar_t *CopyData=(wchar_t *)xf_malloc(TotalChars*sizeof(wchar_t));
@@ -5127,9 +5127,9 @@ void Editor::VPaste(wchar_t *ClipText)
 						ProcessKey(KEY_ENTER);
 
 						/* $ 19.05.2001 IS
-						   Íå âñòàâëÿåì ïðîáåëû òîãäà, êîãäà íàñ îá ýòîì íå ïðîñÿò, à
-						   èìåííî - ïðè âêëþ÷åííîì àâòîîòñòóïå íè÷åãî âñòàâëÿòü íå íóæíî,
-						   îíî ñàìî âñòàâèòñÿ è â äðóãîì ìåñòå.
+						   Не вставляем пробелы тогда, когда нас об этом не просят, а
+						   именно - при включенном автоотступе ничего вставлять не нужно,
+						   оно само вставится и в другом месте.
 						*/
 						if (!EdOpt.AutoIndent)
 							for (int I=0; I<StartPos; I++)
@@ -5375,8 +5375,8 @@ int Editor::EditorControl(int Command,void *Param)
 			else
 			{
 				/* $ 06.08.2002 IS
-				   Ïðîâåðÿåì êîððåêòíîñòü StringLength è âåðíåì FALSE, åñëè îíî ìåíüøå
-				   íóëÿ.
+				   Проверяем корректность StringLength и вернем FALSE, если оно меньше
+				   нуля.
 				*/
 				int Length=SetString->StringLength;
 
@@ -5508,10 +5508,10 @@ int Editor::EditorControl(int Command,void *Param)
 		}
 		case ECTL_SETPOSITION:
 		{
-			// "Âíà÷àëå áûëî ñëîâî..."
+			// "Вначале было слово..."
 			if (Param)
 			{
-				// ...à âîò òåïåðü ïîðàáîòàåì ñ òåì, ÷òî ïåðåäàëàè
+				// ...а вот теперь поработаем с тем, что передалаи
 				EditorSetPosition *Pos=(EditorSetPosition *)Param;
 				_ECTLLOG(SysLog(L"EditorSetPosition{"));
 				_ECTLLOG(SysLog(L"  CurLine       = %d",Pos->CurLine));
@@ -5524,12 +5524,12 @@ int Editor::EditorControl(int Command,void *Param)
 				Lock();
 				int CurPos=CurLine->GetCurPos();
 
-				// âûñòàâèì ôëàã îá èçìåíåíèè ïîç (åñëè íàäî)
+				// выставим флаг об изменении поз (если надо)
 				if ((Pos->CurLine >= 0 || Pos->CurPos >= 0)&&
 				        (Pos->CurLine!=NumLine || Pos->CurPos!=CurPos))
 					Flags.Set(FEDITOR_CURPOSCHANGEDBYPLUGIN);
 
-				if (Pos->CurLine >= 0) // ïîìåíÿåì ñòðîêó
+				if (Pos->CurLine >= 0) // поменяем строку
 				{
 					if (Pos->CurLine==NumLine-1)
 						Up();
@@ -5557,9 +5557,9 @@ int Editor::EditorControl(int Command,void *Param)
 					CurLine->SetLeftPos(Pos->LeftPos);
 
 				/* $ 30.08.2001 IS
-				   Èçìåíåíèå ðåæèìà íóæíî âûñòàâëÿòü ñðàçó, â ïðîòèâíîì ñëó÷àå ïðèõîäÿò
-				   ãëþêè, ò.ê. ïëàãèíîïèñàòåëü äóìàåò, ÷òî ðåæèì èçìåíåí, è âåäåò ñåáÿ
-				   ñîîòâåòñòâóþùå, â ðåçóëüòàòå ÷åãî ïîëó÷àåò íåîïðåäåëåííîå ïîâåäåíèå.
+				   Изменение режима нужно выставлять сразу, в противном случае приходят
+				   глюки, т.к. плагинописатель думает, что режим изменен, и ведет себя
+				   соответствующе, в результате чего получает неопределенное поведение.
 				*/
 				if (Pos->Overtype >= 0)
 				{
@@ -5625,7 +5625,7 @@ int Editor::EditorControl(int Command,void *Param)
 						CurPtr=CurPtr->m_next;
 
 						if (!CurPtr)
-							return TRUE; // ðàíåå áûëî FALSE
+							return TRUE; // ранее было FALSE
 					}
 				}
 				else if (Sel->BlockType==BTYPE_COLUMN)
@@ -5738,7 +5738,7 @@ int Editor::EditorControl(int Command,void *Param)
 
 			return TRUE;
 		}
-		// TODO: Åñëè DI_MEMOEDIT íå áóäåò þçàòü ðàñêàñêó, òî äîëæíî âûïîëíÿåòñÿ â FileEditor::EditorControl(), â äèàëîãå - íàôèã íåíàòü
+		// TODO: Если DI_MEMOEDIT не будет юзать раскаску, то должно выполняется в FileEditor::EditorControl(), в диалоге - нафиг ненать
 		case ECTL_ADDCOLOR:
 		{
 			if (Param)
@@ -5772,7 +5772,7 @@ int Editor::EditorControl(int Command,void *Param)
 
 			break;
 		}
-		// TODO: Åñëè DI_MEMOEDIT íå áóäåò þçàòü ðàñêàñêó, òî äîëæíî âûïîëíÿåòñÿ â FileEditor::EditorControl(), â äèàëîãå - íàôèã íåíàòü
+		// TODO: Если DI_MEMOEDIT не будет юзать раскаску, то должно выполняется в FileEditor::EditorControl(), в диалоге - нафиг ненать
 		case ECTL_GETCOLOR:
 		{
 			if (Param)
@@ -5809,7 +5809,7 @@ int Editor::EditorControl(int Command,void *Param)
 
 			break;
 		}
-		// äîëæíî âûïîëíÿåòñÿ â FileEditor::EditorControl()
+		// должно выполняется в FileEditor::EditorControl()
 		case ECTL_PROCESSKEY:
 		{
 			_ECTLLOG(SysLog(L"Key = %ls",_FARKEY_ToName((DWORD)Param)));
@@ -5817,8 +5817,8 @@ int Editor::EditorControl(int Command,void *Param)
 			return TRUE;
 		}
 		/* $ 16.02.2001 IS
-		     Èçìåíåíèå íåêîòîðûõ âíóòðåííèõ íàñòðîåê ðåäàêòîðà. Param óêàçûâàåò íà
-		     ñòðóêòóðó EditorSetParameter
+		     Изменение некоторых внутренних настроек редактора. Param указывает на
+		     структуру EditorSetParameter
 		*/
 		case ECTL_SETPARAM:
 		{
@@ -5863,7 +5863,7 @@ int Editor::EditorControl(int Command,void *Param)
 						_ECTLLOG(SysLog(L"  iParam      =%ls",(!espar->Param.iParam?L"0 (Oct)":(espar->Param.iParam==1?L"1 (Dec)":(espar->Param.iParam==2?L"2 (Hex)":L"?????")))));
 						SetCharCodeBase(espar->Param.iParam);
 						break;
-						/* $ 07.08.2001 IS ñìåíèòü êîäèðîâêó èç ïëàãèíà */
+						/* $ 07.08.2001 IS сменить кодировку из плагина */
 					case ESPT_CODEPAGE:
 					{
 						//BUGBUG
@@ -5887,12 +5887,12 @@ int Editor::EditorControl(int Command,void *Param)
 						}
 					}
 					break;
-					/* $ 29.10.2001 IS èçìåíåíèå íàñòðîéêè "Ñîõðàíÿòü ïîçèöèþ ôàéëà" */
+					/* $ 29.10.2001 IS изменение настройки "Сохранять позицию файла" */
 					case ESPT_SAVEFILEPOSITION:
 						_ECTLLOG(SysLog(L"  iParam      =%ls",espar->Param.iParam?L"On":L"Off"));
 						SetSavePosMode(espar->Param.iParam, -1);
 						break;
-						/* $ 23.03.2002 IS çàïðåòèòü/îòìåíèòü èçìåíåíèå ôàéëà */
+						/* $ 23.03.2002 IS запретить/отменить изменение файла */
 					case ESPT_LOCKMODE:
 						_ECTLLOG(SysLog(L"  iParam      =%ls",espar->Param.iParam?L"On":L"Off"));
 						Flags.Change(FEDITOR_LOCKMODE, espar->Param.iParam);
@@ -5911,7 +5911,7 @@ int Editor::EditorControl(int Command,void *Param)
 
 			return  FALSE;
 		}
-		// Óáðàòü ôëàã ðåäàêòîðà "îñóùåñòâëÿåòñÿ âûäåëåíèå áëîêà"
+		// Убрать флаг редактора "осуществляется выделение блока"
 		case ECTL_TURNOFFMARKINGBLOCK:
 		{
 			Flags.Clear(FEDITOR_MARKINGVBLOCK|FEDITOR_MARKINGBLOCK);
@@ -6395,40 +6395,40 @@ void Editor::AdjustVBlock(int PrevX)
 	int c2;
 
 	//_D(SysLog(L"AdjustVBlock, x=%i,   vblock is VBlockY=%i:%i, VBlockX=%i:%i, PrevX=%i",x,VBlockY,VBlockSizeY,VBlockX,VBlockSizeX,PrevX));
-	if (x==VBlockX+VBlockSizeX)   // íè÷åãî íå ñëó÷èëîñü, íèêàêèõ òàáóëÿöèé íåò
+	if (x==VBlockX+VBlockSizeX)   // ничего не случилось, никаких табуляций нет
 		return;
 
-	if (x>VBlockX)    // êóðñîð óáåæàë âíóòðü áëîêà
+	if (x>VBlockX)    // курсор убежал внутрь блока
 	{
 		VBlockSizeX=x-VBlockX;
 		//_D(SysLog(L"x>VBlockX");
 	}
-	else if (x<VBlockX)   // êóðñîð óáåæàë çà íà÷àëî áëîêà
+	else if (x<VBlockX)   // курсор убежал за начало блока
 	{
 		c2=VBlockX;
 
-		if (PrevX>VBlockX)      // ñäâèãàëèñü âïðàâî, à ïðèøëè âëåâî
+		if (PrevX>VBlockX)      // сдвигались вправо, а пришли влево
 		{
 			VBlockX=x;
-			VBlockSizeX=c2-x;   // ìåíÿåì áëîê
+			VBlockSizeX=c2-x;   // меняем блок
 		}
-		else      // ñäâèãàëèñü âëåâî è ïðèøëè åùå áîëüøå âëåâî
+		else      // сдвигались влево и пришли еще больше влево
 		{
 			VBlockX=x;
-			VBlockSizeX+=c2-x;  // ðàñøèðÿåì áëîê
+			VBlockSizeX+=c2-x;  // расширяем блок
 		}
 
 		//_D(SysLog(L"x<VBlockX"));
 	}
 	else if (x==VBlockX && x!=PrevX)
 	{
-		VBlockSizeX=0;  // øèðèíà â 0, ïîòîìó ïðûãíóëè ïðÿì íà òàáóëÿöèþ
+		VBlockSizeX=0;  // ширина в 0, потому прыгнули прям на табуляцию
 		//_D(SysLog(L"x==VBlockX && x!=PrevX"));
 	}
 
-	// ïðèìå÷àíèå
-	//   ñëó÷àé x>VBLockX+VBlockSizeX íå ìîæåò áûòü
-	//   ïîòîìó ÷òî êóðñîð ïðûãàåò íàçàä íà òàáóëÿöèþ, íî íå âïåðåä
+	// примечание
+	//   случай x>VBLockX+VBlockSizeX не может быть
+	//   потому что курсор прыгает назад на табуляцию, но не вперед
 	//_D(SysLog(L"AdjustVBlock, changed vblock  VBlockY=%i:%i, VBlockX=%i:%i",VBlockY,VBlockSizeY,VBlockX,VBlockSizeX));
 }
 
@@ -6469,8 +6469,8 @@ void Editor::Xlat()
 		CurPtr=BlockStart;
 
 		// $ 25.11.2000 IS
-		//     Åñëè íåò âûäåëåíèÿ, òî îáðàáîòàåì òåêóùåå ñëîâî. Ñëîâî îïðåäåëÿåòñÿ íà
-		//     îñíîâå ñïåöèàëüíîé ãðóïïû ðàçäåëèòåëåé.
+		//     Если нет выделения, то обработаем текущее слово. Слово определяется на
+		//     основе специальной группы разделителей.
 		if (CurPtr)
 		{
 			while (CurPtr)
@@ -6497,8 +6497,8 @@ void Editor::Xlat()
 			wchar_t *Str=CurLine->Str;
 			int start=CurLine->GetCurPos(), end, StrSize=CurLine->GetLength();//StrLength(Str);
 			// $ 10.12.2000 IS
-			//   Îáðàáàòûâàåì òîëüêî òî ñëîâî, íà êîòîðîì ñòîèò êóðñîð, èëè òî ñëîâî,
-			//   ÷òî íàõîäèòñÿ ëåâåå ïîçèöèè êóðñîðà íà 1 ñèìâîë
+			//   Обрабатываем только то слово, на котором стоит курсор, или то слово,
+			//   что находится левее позиции курсора на 1 символ
 			DoXlat=TRUE;
 
 			if (IsWordDiv(Opt.XLat.strWordDivForXlat,Str[start]))
@@ -6533,18 +6533,18 @@ void Editor::Xlat()
 /* SVS $ */
 
 /* $ 15.02.2001 IS
-     Ìàíèïóëÿöèè ñ òàáóëÿöèåé íà óðîâíå âñåãî çàãðóæåííîãî ôàéëà.
-     Ìîæåò áûòü äëèòåëüíîé âî âðåìåíè îïåðàöèåé, íî òóò óæ, imho,
-     íè÷åãî íå ïîäåëàòü.
+     Манипуляции с табуляцией на уровне всего загруженного файла.
+     Может быть длительной во времени операцией, но тут уж, imho,
+     ничего не поделать.
 */
-//Îáíîâèì ðàçìåð òàáóëÿöèè
+//Обновим размер табуляции
 void Editor::SetTabSize(int NewSize)
 {
 	if (NewSize<1 || NewSize>512)
 		NewSize=8;
 
-	if (NewSize!=EdOpt.TabSize) /* Ìåíÿåì ðàçìåð òàáóëÿöèè òîëüêî â òîì ñëó÷àå, åñëè îí
-                          íà ñàìîì äåëå èçìåíèëñÿ */
+	if (NewSize!=EdOpt.TabSize) /* Меняем размер табуляции только в том случае, если он
+                          на самом деле изменился */
 	{
 		EdOpt.TabSize=NewSize;
 		Edit *CurPtr=TopList;
@@ -6557,12 +6557,12 @@ void Editor::SetTabSize(int NewSize)
 	}
 }
 
-// îáíîâèì ðåæèì ïðîáåëû âìåñòî òàáóëÿöèè
-// îïåðàöèÿ íåîáðàòèìà, êñòàòè, ò.å. ïðîáåëû íà òàáóëÿöèþ îáðàòíî íå èçìåíÿòñÿ
+// обновим режим пробелы вместо табуляции
+// операция необратима, кстати, т.е. пробелы на табуляцию обратно не изменятся
 void Editor::SetConvertTabs(int NewMode)
 {
-	if (NewMode!=EdOpt.ExpandTabs) /* Ìåíÿåì ðåæèì òîëüêî â òîì ñëó÷àå, åñëè îí
-                              íà ñàìîì äåëå èçìåíèëñÿ */
+	if (NewMode!=EdOpt.ExpandTabs) /* Меняем режим только в том случае, если он
+                              на самом деле изменился */
 	{
 		EdOpt.ExpandTabs=NewMode;
 		Edit *CurPtr=TopList;
@@ -6622,7 +6622,7 @@ void Editor::SetPersistentBlocks(int NewMode)
 	}
 }
 
-//     "Êóðñîð çà ïðåäåëàìè ñòðîêè"
+//     "Курсор за пределами строки"
 void Editor::SetCursorBeyondEOL(int NewMode)
 {
 	if (NewMode!=EdOpt.CursorBeyondEOL)
@@ -6638,9 +6638,9 @@ void Editor::SetCursorBeyondEOL(int NewMode)
 	}
 
 	/* $ 16.10.2001 SKV
-	  Åñëè ïåðåêëþ÷èëèñü òóäà ñþäà ýòîò ðåæèì,
-	  òî èç-çà ýòîé øòóêè âîçíèêàþò íåõèëûå ãëþêè
-	  ïðè âûäåëåíèè âåðòèêàëüíûõ áëîêîâ.
+	  Если переключились туда сюда этот режим,
+	  то из-за этой штуки возникают нехилые глюки
+	  при выделении вертикальных блоков.
 	*/
 	if (EdOpt.CursorBeyondEOL)
 	{
@@ -6654,8 +6654,8 @@ void Editor::GetSavePosMode(int &SavePos, int &SaveShortPos)
 	SaveShortPos=EdOpt.SaveShortPos;
 }
 
-// ïåðåäàâàéòå â êà÷åñòâå çíà÷åíèÿ ïàðàìåòðà "-1" äëÿ ïàðàìåòðà,
-// êîòîðûé íå íóæíî ìåíÿòü
+// передавайте в качестве значения параметра "-1" для параметра,
+// который не нужно менять
 void Editor::SetSavePosMode(int SavePos, int SaveShortPos)
 {
 	if (SavePos!=-1)

@@ -1,7 +1,7 @@
 /*
 flupdate.cpp
 
-Файловая панель - чтение имен файлов
+Р¤Р°Р№Р»РѕРІР°СЏ РїР°РЅРµР»СЊ - С‡С‚РµРЅРёРµ РёРјРµРЅ С„Р°Р№Р»РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "mix.hpp"
 
-// Флаги для ReadDiz()
+// Р¤Р»Р°РіРё РґР»СЏ ReadDiz()
 enum ReadDizFlags
 {
 	RDF_NO_UPDATE         = 0x00000001UL,
@@ -118,8 +118,8 @@ static void PR_ReadFileNamesMsg()
 }
 
 
-// ЭТО ЕСТЬ УЗКОЕ МЕСТО ДЛЯ СКОРОСТНЫХ ХАРАКТЕРИСТИК Far Manager
-// при считывании дирректории
+// Р­РўРћ Р•РЎРўР¬ РЈР—РљРћР• РњР•РЎРўРћ Р”Р›РЇ РЎРљРћР РћРЎРўРќР«РҐ РҐРђР РђРљРўР•Р РРЎРўРРљ Far Manager
+// РїСЂРё СЃС‡РёС‚С‹РІР°РЅРёРё РґРёСЂСЂРµРєС‚РѕСЂРёРё
 
 void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage)
 {
@@ -153,7 +153,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 		if (!SetCurPath())
 		{
-			FlushInputBuffer(); // Очистим буффер ввода, т.к. мы уже можем быть в другом месте...
+			FlushInputBuffer(); // РћС‡РёСЃС‚РёРј Р±СѓС„С„РµСЂ РІРІРѕРґР°, С‚.Рє. РјС‹ СѓР¶Рµ РјРѕР¶РµРј Р±С‹С‚СЊ РІ РґСЂСѓРіРѕРј РјРµСЃС‚Рµ...
 
 			if (!StrCmp(strCurDir, strOldCurDir)) //?? i??
 			{
@@ -162,7 +162,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				if (!apiIsDiskInDrive(strOldCurDir))
 					IfGoHome(strOldCurDir.At(0));
 
-				/* При смене каталога путь не изменился */
+				/* РџСЂРё СЃРјРµРЅРµ РєР°С‚Р°Р»РѕРіР° РїСѓС‚СЊ РЅРµ РёР·РјРµРЅРёР»СЃСЏ */
 			}
 
 			return;
@@ -231,7 +231,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	WINPORT(SetLastError)(ERROR_SUCCESS);
 	int AllocatedCount=0;
 	FileListItem *NewPtr;
-	// сформируем заголовок вне цикла
+	// СЃС„РѕСЂРјРёСЂСѓРµРј Р·Р°РіРѕР»РѕРІРѕРє РІРЅРµ С†РёРєР»Р°
 	wchar_t Title[2048];
 	int TitleLength=Min((int)X2-X1-1,(int)(ARRAYSIZE(Title))-1);
 	//wmemset(Title,0x0CD,TitleLength); //BUGBUG
@@ -243,13 +243,13 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	if (!Filter)
 		Filter=new FileFilter(this,FFT_PANEL);
 
-	//Рефреш текущему времени для фильтра перед началом операции
+	//Р РµС„СЂРµС€ С‚РµРєСѓС‰РµРјСѓ РІСЂРµРјРµРЅРё РґР»СЏ С„РёР»СЊС‚СЂР° РїРµСЂРµРґ РЅР°С‡Р°Р»РѕРј РѕРїРµСЂР°С†РёРё
 	Filter->UpdateCurrentTime();
 	CtrlObject->HiFiles->UpdateCurrentTime();
 	bool bCurDirRoot=IsLocalRootPath(strCurDir)||IsLocalPrefixRootPath(strCurDir)||IsLocalVolumeRootPath(strCurDir);
 
 	FileCount = 0;
-	//BUGBUG!!! // что это?
+	//BUGBUG!!! // С‡С‚Рѕ СЌС‚Рѕ?
 	::FindFile Find(L"*",true);
 	DWORD FindErrorCode = ERROR_SUCCESS;
 	bool UseFilter=Filter->IsEnabledOnPanel();
@@ -394,7 +394,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	}
 	*/
 
-	// пока кусок закомментим, возможно он даже и не пригодится.
+	// РїРѕРєР° РєСѓСЃРѕРє Р·Р°РєРѕРјРјРµРЅС‚РёРј, РІРѕР·РјРѕР¶РЅРѕ РѕРЅ РґР°Р¶Рµ Рё РЅРµ РїСЂРёРіРѕРґРёС‚СЃСЏ.
 	if (!bCurDirRoot) // && !NetRoot)
 	{
 		if (FileCount>=AllocatedCount)
@@ -468,7 +468,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 						TotalFileCount++;
 				}
 
-				// цветовую боевую раскраску в самом конце, за один раз
+				// С†РІРµС‚РѕРІСѓСЋ Р±РѕРµРІСѓСЋ СЂР°СЃРєСЂР°СЃРєСѓ РІ СЃР°РјРѕРј РєРѕРЅС†Рµ, Р·Р° РѕРґРёРЅ СЂР°Р·
 				CtrlObject->HiFiles->GetHiColor(&ListData[FileCount],PanelCount);
 				FileCount+=PanelCount;
 			}
@@ -502,7 +502,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			GoToFile(strNextCurName);
 
 	/* $ 13.02.2002 DJ
-		SetTitle() - только если мы текущий фрейм!
+		SetTitle() - С‚РѕР»СЊРєРѕ РµСЃР»Рё РјС‹ С‚РµРєСѓС‰РёР№ С„СЂРµР№Рј!
 	*/
 	if (CtrlObject->Cp() == FrameManager->GetCurrentFrame())
 		SetTitle();
@@ -511,7 +511,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 }
 
 /*$ 22.06.2001 SKV
-  Добавлен параметр для вызова после исполнения команды.
+  Р”РѕР±Р°РІР»РµРЅ РїР°СЂР°РјРµС‚СЂ РґР»СЏ РІС‹Р·РѕРІР° РїРѕСЃР»Рµ РёСЃРїРѕР»РЅРµРЅРёСЏ РєРѕРјР°РЅРґС‹.
 */
 int FileList::UpdateIfChanged(int UpdateMode)
 {
@@ -519,19 +519,19 @@ int FileList::UpdateIfChanged(int UpdateMode)
 	if (!Opt.AutoUpdateLimit || static_cast<DWORD>(FileCount) <= Opt.AutoUpdateLimit)
 	{
 		/* $ 19.12.2001 VVM
-		  ! Сменим приоритеты. При Force обновление всегда! */
+		  ! РЎРјРµРЅРёРј РїСЂРёРѕСЂРёС‚РµС‚С‹. РџСЂРё Force РѕР±РЅРѕРІР»РµРЅРёРµ РІСЃРµРіРґР°! */
 		if ((IsVisible() && (GetProcessUptimeMSec()-LastUpdateTime>2000)) || (UpdateMode != UIC_UPDATE_NORMAL))
 		{
 			if (UpdateMode == UIC_UPDATE_NORMAL)
 				ProcessPluginEvent(FE_IDLE,nullptr);
 
 			/* $ 24.12.2002 VVM
-			  ! Поменяем логику обновления панелей. */
-			if (// Нормальная панель, на ней установлено уведомление и есть сигнал
+			  ! РџРѕРјРµРЅСЏРµРј Р»РѕРіРёРєСѓ РѕР±РЅРѕРІР»РµРЅРёСЏ РїР°РЅРµР»РµР№. */
+			if (// РќРѕСЂРјР°Р»СЊРЅР°СЏ РїР°РЅРµР»СЊ, РЅР° РЅРµР№ СѓСЃС‚Р°РЅРѕРІР»РµРЅРѕ СѓРІРµРґРѕРјР»РµРЅРёРµ Рё РµСЃС‚СЊ СЃРёРіРЅР°Р»
 			    (PanelMode==NORMAL_PANEL && hListChange!=INVALID_HANDLE_VALUE && WINPORT(WaitForSingleObject)(hListChange,0)==WAIT_OBJECT_0) ||
-			    // Или Нормальная панель, но нет уведомления и мы попросили обновить через UPDATE_FORCE
+			    // РР»Рё РќРѕСЂРјР°Р»СЊРЅР°СЏ РїР°РЅРµР»СЊ, РЅРѕ РЅРµС‚ СѓРІРµРґРѕРјР»РµРЅРёСЏ Рё РјС‹ РїРѕРїСЂРѕСЃРёР»Рё РѕР±РЅРѕРІРёС‚СЊ С‡РµСЂРµР· UPDATE_FORCE
 			    (PanelMode==NORMAL_PANEL && hListChange==INVALID_HANDLE_VALUE && UpdateMode==UIC_UPDATE_FORCE) ||
-			    // Или плагинная панель и обновляем через UPDATE_FORCE
+			    // РР»Рё РїР»Р°РіРёРЅРЅР°СЏ РїР°РЅРµР»СЊ Рё РѕР±РЅРѕРІР»СЏРµРј С‡РµСЂРµР· UPDATE_FORCE
 			    (PanelMode!=NORMAL_PANEL && UpdateMode==UIC_UPDATE_FORCE)
 			)
 			{
@@ -668,7 +668,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 		PopPlugin(TRUE);
 		Update(KeepSelection);
 
-		// WARP> явный хак, но очень способствует - восстанавливает позицию на панели при ошибке чтения архива.
+		// WARP> СЏРІРЅС‹Р№ С…Р°Рє, РЅРѕ РѕС‡РµРЅСЊ СЃРїРѕСЃРѕР±СЃС‚РІСѓРµС‚ - РІРѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РїРѕР·РёС†РёСЋ РЅР° РїР°РЅРµР»Рё РїСЂРё РѕС€РёР±РєРµ С‡С‚РµРЅРёСЏ Р°СЂС…РёРІР°.
 		if (!PrevDataList.Empty())
 			GoToFile((*PrevDataList.Last())->strPrevName);
 
@@ -730,7 +730,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	if (!Filter)
 		Filter=new FileFilter(this,FFT_PANEL);
 
-	//Рефреш текущему времени для фильтра перед началом операции
+	//Р РµС„СЂРµС€ С‚РµРєСѓС‰РµРјСѓ РІСЂРµРјРµРЅРё РґР»СЏ С„РёР»СЊС‚СЂР° РїРµСЂРµРґ РЅР°С‡Р°Р»РѕРј РѕРїРµСЂР°С†РёРё
 	Filter->UpdateCurrentTime();
 	CtrlObject->HiFiles->UpdateCurrentTime();
 	int DotsPresent=FALSE;
@@ -815,7 +815,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 		CurFile = FileCount ? FileCount-1 : 0;
 
 	/* $ 25.02.2001 VVM
-	    ! Не считывать повторно список файлов с панели плагина */
+	    ! РќРµ СЃС‡РёС‚С‹РІР°С‚СЊ РїРѕРІС‚РѕСЂРЅРѕ СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ СЃ РїР°РЅРµР»Рё РїР»Р°РіРёРЅР° */
 	if (IsColumnDisplayed(DIZ_COLUMN))
 		ReadDiz(PanelData,PluginFileCount,RDF_NO_UPDATE);
 
@@ -869,7 +869,7 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 		int GetCode=TRUE;
 
 		/* $ 25.02.2001 VVM
-		    + Обработка флага RDF_NO_UPDATE */
+		    + РћР±СЂР°Р±РѕС‚РєР° С„Р»Р°РіР° RDF_NO_UPDATE */
 		if (!ItemList && !(dwFlags & RDF_NO_UPDATE))
 		{
 			GetCode=CtrlObject->Plugins.GetFindData(hPlugin,&PanelData,&PluginFileCount,0);
@@ -913,7 +913,7 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 			}
 
 			/* $ 25.02.2001 VVM
-			    + Обработка флага RDF_NO_UPDATE */
+			    + РћР±СЂР°Р±РѕС‚РєР° С„Р»Р°РіР° RDF_NO_UPDATE */
 			if (!ItemList && !(dwFlags & RDF_NO_UPDATE))
 				CtrlObject->Plugins.FreeFindData(hPlugin,PanelData,PluginFileCount);
 		}
@@ -948,7 +948,7 @@ void FileList::ReadSortGroups(bool UpdateFilterCurrentTime)
 	}
 }
 
-// Обнулить текущий CurPtr и занести предопределенные данные для каталога ".."
+// РћР±РЅСѓР»РёС‚СЊ С‚РµРєСѓС‰РёР№ CurPtr Рё Р·Р°РЅРµСЃС‚Рё РїСЂРµРґРѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ РґР°РЅРЅС‹Рµ РґР»СЏ РєР°С‚Р°Р»РѕРіР° ".."
 void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times,FARString Owner)
 {
 	CurPtr->Clear();

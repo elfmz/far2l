@@ -3,7 +3,7 @@
 /*
 findfile.hpp
 
-Поиск (Alt-F7)
+РџРѕРёСЃРє (Alt-F7)
 */
 /*
 Copyright (c) 1996 Eugene Roshal

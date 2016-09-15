@@ -3,7 +3,7 @@
 /*
 cddrv.hpp
 
-про сидюк
+РїСЂРѕ СЃРёРґСЋРє
 */
 /*
 Copyright (c) 1996 Eugene Roshal

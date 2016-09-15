@@ -1,7 +1,7 @@
 /*
 filefilter.cpp
 
-Файловый фильтр
+Р¤Р°Р№Р»РѕРІС‹Р№ С„РёР»СЊС‚СЂ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -130,8 +130,8 @@ bool FileFilter::FilterEdit()
 
 			for (size_t i=0; i<TempFilterData.getCount(); i++)
 			{
-				//AY: Будем показывать только те выбранные авто фильтры
-				//(для которых нету файлов на панели) которые выбраны в области данного меню
+				//AY: Р‘СѓРґРµРј РїРѕРєР°Р·С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ С‚Рµ РІС‹Р±СЂР°РЅРЅС‹Рµ Р°РІС‚Рѕ С„РёР»СЊС‚СЂС‹
+				//(РґР»СЏ РєРѕС‚РѕСЂС‹С… РЅРµС‚Сѓ С„Р°Р№Р»РѕРІ РЅР° РїР°РЅРµР»Рё) РєРѕС‚РѕСЂС‹Рµ РІС‹Р±СЂР°РЅС‹ РІ РѕР±Р»Р°СЃС‚Рё РґР°РЅРЅРѕРіРѕ РјРµРЅСЋ
 				if (!TempFilterData.getItem(i)->GetFlags(FFFT))
 					continue;
 
@@ -314,7 +314,7 @@ bool FileFilter::FilterEdit()
 						wchar_t Mask[MAX_PATH];
 						FilterList.GetUserData(Mask,sizeof(Mask),static_cast<int>(SelPos2-1));
 						NewFilter->SetMask(1,Mask);
-						//Авто фильтры они только для файлов, папки не должны к ним подходить
+						//РђРІС‚Рѕ С„РёР»СЊС‚СЂС‹ РѕРЅРё С‚РѕР»СЊРєРѕ РґР»СЏ С„Р°Р№Р»РѕРІ, РїР°РїРєРё РЅРµ РґРѕР»Р¶РЅС‹ Рє РЅРёРј РїРѕРґС…РѕРґРёС‚СЊ
 						NewFilter->SetAttr(1,0,FILE_ATTRIBUTE_DIRECTORY);
 					}
 					else
@@ -325,7 +325,7 @@ bool FileFilter::FilterEdit()
 				}
 				else
 				{
-					//AY: Раз создаём новый фильтр то думаю будет логично если он будет только для файлов
+					//AY: Р Р°Р· СЃРѕР·РґР°С‘Рј РЅРѕРІС‹Р№ С„РёР»СЊС‚СЂ С‚Рѕ РґСѓРјР°СЋ Р±СѓРґРµС‚ Р»РѕРіРёС‡РЅРѕ РµСЃР»Рё РѕРЅ Р±СѓРґРµС‚ С‚РѕР»СЊРєРѕ РґР»СЏ С„Р°Р№Р»РѕРІ
 					NewFilter->SetAttr(1,0,FILE_ATTRIBUTE_DIRECTORY);
 				}
 
@@ -409,7 +409,7 @@ bool FileFilter::FilterEdit()
 			{
 				FilterList.ProcessInput();
 
-				//заставляем хоткеи позиционировать курсор на пункте но не закрывать меню
+				//Р·Р°СЃС‚Р°РІР»СЏРµРј С…РѕС‚РєРµРё РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°С‚СЊ РєСѓСЂСЃРѕСЂ РЅР° РїСѓРЅРєС‚Рµ РЅРѕ РЅРµ Р·Р°РєСЂС‹РІР°С‚СЊ РјРµРЅСЋ
 				if (Key!=KEY_NUMENTER && Key!=KEY_ENTER && Key!=KEY_ESC && Key!=KEY_F10 && (IsAlphaNum(Key) || Key&(KEY_ALT|KEY_RALT)))
 					FilterList.ClearDone();
 			}
@@ -512,12 +512,12 @@ void FileFilter::ProcessSelection(VMenu *FilterList)
 			wchar_t Mask[MAX_PATH];
 			FARString strMask1;
 			FilterList->GetUserData(Mask,sizeof(Mask),i);
-			//AY: Так как в меню мы показываем только те выбранные авто фильтры
-			//которые выбраны в области данного меню и TempFilterData вполне
-			//может содержать маску которую тока что выбрали в этом меню но
-			//она уже была выбрана в другом и так как TempFilterData
-			//и авто фильтры в меню отсортированы по алфавиту то немного
-			//поколдуем чтоб не было дубликатов в памяти.
+			//AY: РўР°Рє РєР°Рє РІ РјРµРЅСЋ РјС‹ РїРѕРєР°Р·С‹РІР°РµРј С‚РѕР»СЊРєРѕ С‚Рµ РІС‹Р±СЂР°РЅРЅС‹Рµ Р°РІС‚Рѕ С„РёР»СЊС‚СЂС‹
+			//РєРѕС‚РѕСЂС‹Рµ РІС‹Р±СЂР°РЅС‹ РІ РѕР±Р»Р°СЃС‚Рё РґР°РЅРЅРѕРіРѕ РјРµРЅСЋ Рё TempFilterData РІРїРѕР»РЅРµ
+			//РјРѕР¶РµС‚ СЃРѕРґРµСЂР¶Р°С‚СЊ РјР°СЃРєСѓ РєРѕС‚РѕСЂСѓСЋ С‚РѕРєР° С‡С‚Рѕ РІС‹Р±СЂР°Р»Рё РІ СЌС‚РѕРј РјРµРЅСЋ РЅРѕ
+			//РѕРЅР° СѓР¶Рµ Р±С‹Р»Р° РІС‹Р±СЂР°РЅР° РІ РґСЂСѓРіРѕРј Рё С‚Р°Рє РєР°Рє TempFilterData
+			//Рё Р°РІС‚Рѕ С„РёР»СЊС‚СЂС‹ РІ РјРµРЅСЋ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РїРѕ Р°Р»С„Р°РІРёС‚Сѓ С‚Рѕ РЅРµРјРЅРѕРіРѕ
+			//РїРѕРєРѕР»РґСѓРµРј С‡С‚РѕР± РЅРµ Р±С‹Р»Рѕ РґСѓР±Р»РёРєР°С‚РѕРІ РІ РїР°РјСЏС‚Рё.
 			strMask1 = Mask;
 			Unquote(strMask1);
 
@@ -573,7 +573,7 @@ void FileFilter::ProcessSelection(VMenu *FilterList)
 				if (NewFilter)
 				{
 					NewFilter->SetMask(1,Mask);
-					//Авто фильтры они только для файлов, папки не должны к ним подходить
+					//РђРІС‚Рѕ С„РёР»СЊС‚СЂС‹ РѕРЅРё С‚РѕР»СЊРєРѕ РґР»СЏ С„Р°Р№Р»РѕРІ, РїР°РїРєРё РЅРµ РґРѕР»Р¶РЅС‹ Рє РЅРёРј РїРѕРґС…РѕРґРёС‚СЊ
 					NewFilter->SetAttr(1,0,FILE_ATTRIBUTE_DIRECTORY);
 					j++;
 					CurFilterData = NewFilter;
@@ -670,7 +670,7 @@ bool FileFilter::FileInFilter(const FAR_FIND_DATA_EX& fde,enumFileInFilterType *
 		}
 	}
 
-	//авто-фильтр папки
+	//Р°РІС‚Рѕ-С„РёР»СЊС‚СЂ РїР°РїРєРё
 	if (FFFT != FFFT_CUSTOM)
 	{
 		Flags = FoldersFilter.GetFlags(FFFT);
@@ -698,7 +698,7 @@ bool FileFilter::FileInFilter(const FAR_FIND_DATA_EX& fde,enumFileInFilterType *
 		}
 	}
 
-	//авто-фильтры
+	//Р°РІС‚Рѕ-С„РёР»СЊС‚СЂС‹
 	for (size_t i=0; i<TempFilterData.getCount(); i++)
 	{
 		CurFilterData = TempFilterData.getItem(i);
@@ -708,7 +708,7 @@ bool FileFilter::FileInFilter(const FAR_FIND_DATA_EX& fde,enumFileInFilterType *
 		{
 			bAnyIncludeFound = bAnyIncludeFound || (Flags&FFF_INCLUDE);
 
-			if (bFolder) //авто-фильтры никогда не могут быть для папок
+			if (bFolder) //Р°РІС‚Рѕ-С„РёР»СЊС‚СЂС‹ РЅРёРєРѕРіРґР° РЅРµ РјРѕРіСѓС‚ Р±С‹С‚СЊ РґР»СЏ РїР°РїРѕРє
 				continue;
 
 			if (CurFilterData->FileInFilter(fde, CurrentTime))
@@ -726,9 +726,9 @@ bool FileFilter::FileInFilter(const FAR_FIND_DATA_EX& fde,enumFileInFilterType *
 		}
 	}
 
-	//Если папка и она не попала ни под какой exclude фильтр то самое логичное
-	//будет сделать ей include если небыло дугих include фильтров на папки.
-	//А вот Select логичней всего работать чисто по заданному фильтру.
+	//Р•СЃР»Рё РїР°РїРєР° Рё РѕРЅР° РЅРµ РїРѕРїР°Р»Р° РЅРё РїРѕРґ РєР°РєРѕР№ exclude С„РёР»СЊС‚СЂ С‚Рѕ СЃР°РјРѕРµ Р»РѕРіРёС‡РЅРѕРµ
+	//Р±СѓРґРµС‚ СЃРґРµР»Р°С‚СЊ РµР№ include РµСЃР»Рё РЅРµР±С‹Р»Рѕ РґСѓРіРёС… include С„РёР»СЊС‚СЂРѕРІ РЅР° РїР°РїРєРё.
+	//Рђ РІРѕС‚ Select Р»РѕРіРёС‡РЅРµР№ РІСЃРµРіРѕ СЂР°Р±РѕС‚Р°С‚СЊ С‡РёСЃС‚Рѕ РїРѕ Р·Р°РґР°РЅРЅРѕРјСѓ С„РёР»СЊС‚СЂСѓ.
 	if (!bFound && bFolder && !bAnyFolderIncludeFound && m_FilterType!=FFT_SELECT)
 	{
 		if (foundType)
@@ -744,8 +744,8 @@ final:
 
 	if (bFound) return bInc;
 
-	//Если элемент не попал ни под один фильтр то он будет включен
-	//только если не было ни одного Include фильтра (т.е. были только фильтры исключения).
+	//Р•СЃР»Рё СЌР»РµРјРµРЅС‚ РЅРµ РїРѕРїР°Р» РЅРё РїРѕРґ РѕРґРёРЅ С„РёР»СЊС‚СЂ С‚Рѕ РѕРЅ Р±СѓРґРµС‚ РІРєР»СЋС‡РµРЅ
+	//С‚РѕР»СЊРєРѕ РµСЃР»Рё РЅРµ Р±С‹Р»Рѕ РЅРё РѕРґРЅРѕРіРѕ Include С„РёР»СЊС‚СЂР° (С‚.Рµ. Р±С‹Р»Рё С‚РѕР»СЊРєРѕ С„РёР»СЊС‚СЂС‹ РёСЃРєР»СЋС‡РµРЅРёСЏ).
 	return !bAnyIncludeFound;
 }
 
@@ -799,8 +799,8 @@ void FileFilter::InitFilter()
 
 		if (NewFilter)
 		{
-			//Дефолтные значения выбраны так чтоб как можно правильней загрузить
-			//настройки старых версий фара.
+			//Р”РµС„РѕР»С‚РЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІС‹Р±СЂР°РЅС‹ С‚Р°Рє С‡С‚РѕР± РєР°Рє РјРѕР¶РЅРѕ РїСЂР°РІРёР»СЊРЅРµР№ Р·Р°РіСЂСѓР·РёС‚СЊ
+			//РЅР°СЃС‚СЂРѕР№РєРё СЃС‚Р°СЂС‹С… РІРµСЂСЃРёР№ С„Р°СЂР°.
 			NewFilter->SetTitle(strTitle);
 			GetRegKey(strRegKey,L"Mask",strMask,L"");
 			NewFilter->SetMask(GetRegKey(strRegKey,L"UseMask",1)!=0,
@@ -843,7 +843,7 @@ void FileFilter::InitFilter()
 		if (NewFilter)
 		{
 			NewFilter->SetMask(1,strMask);
-			//Авто фильтры они только для файлов, папки не должны к ним подходить
+			//РђРІС‚Рѕ С„РёР»СЊС‚СЂС‹ РѕРЅРё С‚РѕР»СЊРєРѕ РґР»СЏ С„Р°Р№Р»РѕРІ, РїР°РїРєРё РЅРµ РґРѕР»Р¶РЅС‹ Рє РЅРёРј РїРѕРґС…РѕРґРёС‚СЊ
 			NewFilter->SetAttr(1,0,FILE_ATTRIBUTE_DIRECTORY);
 			DWORD Flags[FFFT_COUNT];
 			GetRegKey(strRegKey,L"FFlags",(BYTE *)Flags,nullptr,sizeof(Flags));
@@ -963,7 +963,7 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD 
 	const wchar_t *DotPtr=wcsrchr(FileName,L'.');
 	FARString strMask;
 
-	// Если маска содержит разделитель (',' или ';'), то возьмем ее в кавычки
+	// Р•СЃР»Рё РјР°СЃРєР° СЃРѕРґРµСЂР¶РёС‚ СЂР°Р·РґРµР»РёС‚РµР»СЊ (',' РёР»Рё ';'), С‚Рѕ РІРѕР·СЊРјРµРј РµРµ РІ РєР°РІС‹С‡РєРё
 	if (!DotPtr)
 		strMask = L"*.";
 	else if (wcspbrk(DotPtr,L",;"))
@@ -971,13 +971,13 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD 
 	else
 		strMask.Format(L"*%ls",DotPtr);
 
-	// сначала поиск...
+	// СЃРЅР°С‡Р°Р»Р° РїРѕРёСЃРє...
 	unsigned int Cnt=ExtCount;
 
 	if (_lfind(strMask.CPtr(),*ExtPtr,&Cnt,MAX_PATH*sizeof(wchar_t),ExtSort))
 		return -1;
 
-	// ... а потом уже выделение памяти!
+	// ... Р° РїРѕС‚РѕРј СѓР¶Рµ РІС‹РґРµР»РµРЅРёРµ РїР°РјСЏС‚Рё!
 	wchar_t *NewPtr;
 
 	if (!(NewPtr=(wchar_t *)xf_realloc(*ExtPtr,MAX_PATH*(ExtCount+1)*sizeof(wchar_t))))

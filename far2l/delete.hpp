@@ -3,7 +3,7 @@
 /*
 delete.hpp
 
-Удаление файлов
+РЈРґР°Р»РµРЅРёРµ С„Р°Р№Р»РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal

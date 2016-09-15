@@ -3,7 +3,7 @@
 /*
 usermenu.hpp
 
-User menu и есть
+User menu Рё РµСЃС‚СЊ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -35,12 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class UserMenu
 {
-		// Режимы показа меню (Menu mode)
+		// Р РµР¶РёРјС‹ РїРѕРєР°Р·Р° РјРµРЅСЋ (Menu mode)
 		enum MENUMODE
 		{
-			MM_LOCAL, // Локальное меню
-			MM_FAR, // Меню из каталога ФАРа
-			MM_MAIN, // Главное меню
+			MM_LOCAL, // Р›РѕРєР°Р»СЊРЅРѕРµ РјРµРЅСЋ
+			MM_FAR, // РњРµРЅСЋ РёР· РєР°С‚Р°Р»РѕРіР° Р¤РђР Р°
+			MM_MAIN, // Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ
 		};
 
 		MENUMODE MenuMode;
@@ -54,6 +54,6 @@ class UserMenu
 		bool MoveMenuItem(const wchar_t *MenuKey,int Pos,int NewPos);
 
 	public:
-		UserMenu(bool ChoiceMenuType); //	true - выбор типа меню (основное или локальное), false - зависит от наличия FarMenu.Ini в текущем каталоге
+		UserMenu(bool ChoiceMenuType); //	true - РІС‹Р±РѕСЂ С‚РёРїР° РјРµРЅСЋ (РѕСЃРЅРѕРІРЅРѕРµ РёР»Рё Р»РѕРєР°Р»СЊРЅРѕРµ), false - Р·Р°РІРёСЃРёС‚ РѕС‚ РЅР°Р»РёС‡РёСЏ FarMenu.Ini РІ С‚РµРєСѓС‰РµРј РєР°С‚Р°Р»РѕРіРµ
 		~UserMenu();
 };

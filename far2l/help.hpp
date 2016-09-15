@@ -3,7 +3,7 @@
 /*
 help.hpp
 
-Помощь
+РџРѕРјРѕС‰СЊ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -43,18 +43,18 @@ class CallBackStack;
 #define HelpEndLink L'>'
 #define HelpFormatLink L"<%s\\>%s"
 
-#define HELPMODE_CLICKOUTSIDE  0x20000000 // было нажатие мыши вне хелпа?
+#define HELPMODE_CLICKOUTSIDE  0x20000000 // Р±С‹Р»Рѕ РЅР°Р¶Р°С‚РёРµ РјС‹С€Рё РІРЅРµ С…РµР»РїР°?
 
 struct StackHelpData
 {
-	DWORD Flags;                  // флаги
-	int   TopStr;                 // номер верхней видимой строки темы
-	int   CurX,CurY;              // координаты (???)
+	DWORD Flags;                  // С„Р»Р°РіРё
+	int   TopStr;                 // РЅРѕРјРµСЂ РІРµСЂС…РЅРµР№ РІРёРґРёРјРѕР№ СЃС‚СЂРѕРєРё С‚РµРјС‹
+	int   CurX,CurY;              // РєРѕРѕСЂРґРёРЅР°С‚С‹ (???)
 
-	FARString strHelpMask;           // значение маски
-	FARString strHelpPath;           // путь к хелпам
-	FARString strHelpTopic;         // текущий топик
-	FARString strSelTopic;          // выделенный топик (???)
+	FARString strHelpMask;           // Р·РЅР°С‡РµРЅРёРµ РјР°СЃРєРё
+	FARString strHelpPath;           // РїСѓС‚СЊ Рє С…РµР»РїР°Рј
+	FARString strHelpTopic;         // С‚РµРєСѓС‰РёР№ С‚РѕРїРёРє
+	FARString strSelTopic;          // РІС‹РґРµР»РµРЅРЅС‹Р№ С‚РѕРїРёРє (???)
 
 	void Clear()
 	{
@@ -70,8 +70,8 @@ struct StackHelpData
 
 enum HELPDOCUMENTSHELPTYPE
 {
-	HIDX_PLUGINS,                 // Индекс плагинов
-	HIDX_DOCUMS,                  // Индекс документов
+	HIDX_PLUGINS,                 // РРЅРґРµРєСЃ РїР»Р°РіРёРЅРѕРІ
+	HIDX_DOCUMS,                  // РРЅРґРµРєСЃ РґРѕРєСѓРјРµРЅС‚РѕРІ
 };
 
 enum
@@ -120,30 +120,30 @@ class HelpRecord
 class Help:public Frame
 {
 	private:
-		BOOL  ErrorHelp;            // TRUE - ошибка! Например - нет такого топика
-		SaveScreen *TopScreen;      // область сохранения под хелпом
-		KeyBar      HelpKeyBar;     // кейбар
-		CallBackStack *Stack;       // стек возврата
+		BOOL  ErrorHelp;            // TRUE - РѕС€РёР±РєР°! РќР°РїСЂРёРјРµСЂ - РЅРµС‚ С‚Р°РєРѕРіРѕ С‚РѕРїРёРєР°
+		SaveScreen *TopScreen;      // РѕР±Р»Р°СЃС‚СЊ СЃРѕС…СЂР°РЅРµРЅРёСЏ РїРѕРґ С…РµР»РїРѕРј
+		KeyBar      HelpKeyBar;     // РєРµР№Р±Р°СЂ
+		CallBackStack *Stack;       // СЃС‚РµРє РІРѕР·РІСЂР°С‚Р°
 		FARString  strFullHelpPathName;
 
 		StackHelpData StackData;
-		TArray<HelpRecord> HelpList; // "хелп" в памяти.
+		TArray<HelpRecord> HelpList; // "С…РµР»Рї" РІ РїР°РјСЏС‚Рё.
 
-		int   StrCount;             // количество строк в теме
-		int   FixCount;             // количество строк непрокручиваемой области
-		int   FixSize;              // Размер непрокручиваемой области
-		int   TopicFound;           // TRUE - топик найден
-		int   IsNewTopic;           // это новый топик?
+		int   StrCount;             // РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂРѕРє РІ С‚РµРјРµ
+		int   FixCount;             // РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂРѕРє РЅРµРїСЂРѕРєСЂСѓС‡РёРІР°РµРјРѕР№ РѕР±Р»Р°СЃС‚Рё
+		int   FixSize;              // Р Р°Р·РјРµСЂ РЅРµРїСЂРѕРєСЂСѓС‡РёРІР°РµРјРѕР№ РѕР±Р»Р°СЃС‚Рё
+		int   TopicFound;           // TRUE - С‚РѕРїРёРє РЅР°Р№РґРµРЅ
+		int   IsNewTopic;           // СЌС‚Рѕ РЅРѕРІС‹Р№ С‚РѕРїРёРє?
 		int   MouseDown;
 
-		FARString strCtrlColorChar;    // CtrlColorChar - опция! для спецсимвола-
-		//   символа - для атрибутов
-		int   CurColor;             // CurColor - текущий цвет отрисовки
-		int   CtrlTabSize;          // CtrlTabSize - опция! размер табуляции
+		FARString strCtrlColorChar;    // CtrlColorChar - РѕРїС†РёСЏ! РґР»СЏ СЃРїРµС†СЃРёРјРІРѕР»Р°-
+		//   СЃРёРјРІРѕР»Р° - РґР»СЏ Р°С‚СЂРёР±СѓС‚РѕРІ
+		int   CurColor;             // CurColor - С‚РµРєСѓС‰РёР№ С†РІРµС‚ РѕС‚СЂРёСЃРѕРІРєРё
+		int   CtrlTabSize;          // CtrlTabSize - РѕРїС†РёСЏ! СЂР°Р·РјРµСЂ С‚Р°Р±СѓР»СЏС†РёРё
 
-		int   PrevMacroMode;        // предыдущий режим макроса
+		int   PrevMacroMode;        // РїСЂРµРґС‹РґСѓС‰РёР№ СЂРµР¶РёРј РјР°РєСЂРѕСЃР°
 
-		FARString strCurPluginContents; // помним PluginContents (для отображения в заголовке)
+		FARString strCurPluginContents; // РїРѕРјРЅРёРј PluginContents (РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РІ Р·Р°РіРѕР»РѕРІРєРµ)
 
 		DWORD LastStartPos;
 		DWORD StartPos;
@@ -178,10 +178,10 @@ class Help:public Frame
 		virtual void InitKeyBar();
 		BOOL GetError() {return ErrorHelp;}
 		virtual void SetScreenPosition();
-		virtual void OnChangeFocus(int focus); // вызывается при смене фокуса
+		virtual void OnChangeFocus(int focus); // РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЃРјРµРЅРµ С„РѕРєСѓСЃР°
 		virtual void ResizeConsole();
 
-		virtual int  FastHide(); // Введена для нужд CtrlAltShift
+		virtual int  FastHide(); // Р’РІРµРґРµРЅР° РґР»СЏ РЅСѓР¶Рґ CtrlAltShift
 
 		virtual const wchar_t *GetTypeName() {return L"[Help]";}
 		virtual int GetTypeAndName(FARString &strType, FARString &strName);

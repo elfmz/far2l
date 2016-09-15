@@ -21,7 +21,7 @@ target_include_directories(farlng PRIVATE ../WinPort)
 
 target_link_libraries (farlng WinPort utils ${wxWidgets_LIBRARIES} dl)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries(farlng glib-2.0)
+    target_link_libraries(farlng glib-2.0 -L/usr/local/lib)
 else()
     target_link_libraries(farlng ${GLIB2_LIBRARIES})
 endif()

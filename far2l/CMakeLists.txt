@@ -164,7 +164,12 @@ target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 add_dependencies(far2l bootstrap)
 
-SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    find_package(wxWidgets REQUIRED net core base)
+    SET (WINPORT "-force_load ../WinPort/libWinPort.a -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL" wineguts utils glib-2.0 -L/usr/local/lib ${wxWidgets_LIBRARIES} ${wxWidgets_CXX_FLAGS})
+else()
+    SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)
+endif()
 
 set_target_properties(far2l
     PROPERTIES

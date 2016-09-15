@@ -1,6 +1,7 @@
 #pragma once
 #include <mutex>
 #include <vector>
+#include <string>
 #include "WinCompat.h"
 #include "ConsoleBuffer.h"
 

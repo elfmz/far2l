@@ -51,6 +51,17 @@ cmake -G Ninja ../far2l
 ninja -j4
 ```
 
+#### Macos build
+
+ * Run brew install glib gawk
+
+ * Build latest wxWidgets (brew version is not good one).
+Sample configuration: ./configure --disable-shared --disable-debug CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++ -std=c++11" OBJCXXFLAGS="-stdlib=libc++ -std=c++11" LDFLAGS=-stdlib=libc++ --enable-monolithic --enable-unicode
+
+ * Run cmake -G "CodeLite - Unix Makefiles"
+
+ * Open FAR.workspace and build project
+
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite or any other, which supports cmake or cmake is able to generate projects for
 

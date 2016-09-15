@@ -3,7 +3,7 @@ Linux port of FAR v2 (http://farmanager.com/)
 PRE-ALPHA VERSION.
 **Currently interesting only for programmers!!!**
 
-Currently working plugins: colorer, multiarc, farftp
+Currently working plugins: colorer, multiarc, farftp, tmppanel
 
 [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 
@@ -17,41 +17,43 @@ Currently working plugins: colorer, multiarc, farftp
 * Portable UnRAR
 * 7z ANSI-C Decoder
 
-## Contributing, Hacking, Building
+## Contributing, Hacking
 #### Required dependencies
 
 * gawk
 * m4
-* libgliv2.0-dev
+* libglib2.0-dev
 * libwxbase3.0-dev
 * wx3.0-headers
 * libwxgtk3.0-dev
 
 #### Or simply on Ubuntu:
-apt-get install gawk m4 libglib2.0-dev libwxbase3.0-dev wx3.0-headers libwxgtk3.0-dev<br>
-
+``` sh
+apt-get install gawk m4 libglib2.0-dev libwxbase3.0-dev wx3.0-headers libwxgtk3.0-dev
+```
 
 #### Clone and Build
 
- * git clone _far2 lrepository url_
- * mkdir build
- * cd build
-
+``` sh
+git clone https://github.com/elfmz/far2l
+mkdir build
+cd build
+```
 _with make:_
-
- * cmake ../far2l
- * make -j4
- 
+``` sh
+cmake ../far2l
+make -j4
+``` 
 _or with ninja_
-
- * cmake -G Ninja ../far2l
- * ninja -j4
-
+``` sh
+cmake -G Ninja ../far2l
+ninja -j4
+```
 
 #### IDE Setup
-You can import the project in your favourite IDE like QtCreator or CodeLite
+You can import the project into your favourite IDE like QtCreator, CodeLite or any other, which supports cmake or cmake is able to generate projects for
 
- * **QtCreqtor**: Select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
+ * **QtCreator**: Select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
  * **CodeLite**: use this guide to setup a project: http://codelite.org/LiteEditor/WorkingWithCMake. Don't create workspace inside far2l directory, so you don't polute your source tree.
 
 

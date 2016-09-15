@@ -26,10 +26,11 @@ Currently working plugins: colorer, multiarc, farftp, tmppanel
 * libwxbase3.0-dev
 * wx3.0-headers
 * libwxgtk3.0-dev
+* cmake ( >= 3.2.2 )
 
 #### Or simply on Ubuntu:
 ``` sh
-apt-get install gawk m4 libglib2.0-dev libwxbase3.0-dev wx3.0-headers libwxgtk3.0-dev
+apt-get install gawk m4 libglib2.0-dev libwxbase3.0-dev wx3.0-headers libwxgtk3.0-dev cmake
 ```
 
 #### Clone and Build
@@ -44,7 +45,7 @@ _with make:_
 cmake ../far2l
 make -j4
 ``` 
-_or with ninja_
+_or with ninja (you need **ninja-build** package installed)_
 ``` sh
 cmake -G Ninja ../far2l
 ninja -j4

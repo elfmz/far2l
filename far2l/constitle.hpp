@@ -3,7 +3,7 @@
 /*
 constitle.hpp
 
-Заголовок консоли
+Р—Р°РіРѕР»РѕРІРѕРє РєРѕРЅСЃРѕР»Рё
 */
 /*
 Copyright (c) 1996 Eugene Roshal

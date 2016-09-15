@@ -1,7 +1,7 @@
 /*
 global.cpp
 
-Глобальные переменные
+Р“Р»РѕР±Р°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -35,27 +35,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /* $ 29.06.2000 tran
-  берем char *CopyRight из inc файла */
+  Р±РµСЂРµРј char *CopyRight РёР· inc С„Р°Р№Р»Р° */
 #include "bootstrap/copyright.inc"
 
 /* $ 07.12.2000 SVS
-   + Версия берется из файла farversion.inc
+   + Р’РµСЂСЃРёСЏ Р±РµСЂРµС‚СЃСЏ РёР· С„Р°Р№Р»Р° farversion.inc
 */
 #include "bootstrap/farversion.inc"
 
-// идет процесс назначения клавиши в макросе?
+// РёРґРµС‚ РїСЂРѕС†РµСЃСЃ РЅР°Р·РЅР°С‡РµРЅРёСЏ РєР»Р°РІРёС€Рё РІ РјР°РєСЂРѕСЃРµ?
 BOOL IsProcessAssignMacroKey=FALSE;
 
-// идет процесс "вьювер/редактор" во время поиска файлов?
+// РёРґРµС‚ РїСЂРѕС†РµСЃСЃ "РІСЊСЋРІРµСЂ/СЂРµРґР°РєС‚РѕСЂ" РІРѕ РІСЂРµРјСЏ РїРѕРёСЃРєР° С„Р°Р№Р»РѕРІ?
 BOOL IsProcessVE_FindFile=FALSE;
 
-// Идёт процесс перерисовки всех фреймов
+// РРґС‘С‚ РїСЂРѕС†РµСЃСЃ РїРµСЂРµСЂРёСЃРѕРІРєРё РІСЃРµС… С„СЂРµР№РјРѕРІ
 BOOL IsRedrawFramesInProcess=FALSE;
 
-// идет процесс быстрого поиска в панелях?
+// РёРґРµС‚ РїСЂРѕС†РµСЃСЃ Р±С‹СЃС‚СЂРѕРіРѕ РїРѕРёСЃРєР° РІ РїР°РЅРµР»СЏС…?
 int WaitInFastFind=FALSE;
 
-// мы крутимся в основном цикле?
+// РјС‹ РєСЂСѓС‚РёРјСЃСЏ РІ РѕСЃРЅРѕРІРЅРѕРј С†РёРєР»Рµ?
 int WaitInMainLoop=FALSE;
 
 clock_t StartIdleTime=0;
@@ -65,8 +65,8 @@ FARString g_strFarPath;
 
 FARString strGlobalSearchString;
 int GlobalSearchCase=FALSE;
-int GlobalSearchWholeWords=FALSE; // значение "Whole words" для поиска
-int GlobalSearchHex=FALSE;     // значение "Search for hex" для поиска
+int GlobalSearchWholeWords=FALSE; // Р·РЅР°С‡РµРЅРёРµ "Whole words" РґР»СЏ РїРѕРёСЃРєР°
+int GlobalSearchHex=FALSE;     // Р·РЅР°С‡РµРЅРёРµ "Search for hex" РґР»СЏ РїРѕРёСЃРєР°
 int GlobalSearchReverse=FALSE;
 
 int ScreenSaverActive=FALSE;
@@ -99,7 +99,7 @@ int _localLastError=0;
 int KeepUserScreen;
 FARString g_strDirToSet;
 
-int Macro_DskShowPosType=0; // для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
+int Macro_DskShowPosType=0; // РґР»СЏ РєР°РєРѕР№ РїР°РЅРµР»Рё РІС‹Р·С‹РІР°Р»Рё РјРµРЅСЋ РІС‹Р±РѕСЂР° РґРёСЃРєРѕРІ (0 - РЅРёС‡РµСЂС‚Р° РЅРµ РІС‹Р·С‹РІР°Р»Рё, 1 - Р»РµРІР°СЏ (AltF1), 2 - РїСЂР°РІР°СЏ (AltF2))
 
 // Macro Const
 const wchar_t constMsX[]=L"MsX";

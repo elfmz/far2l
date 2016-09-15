@@ -3,7 +3,7 @@
 /*
 frame.hpp
 
-Немодальное окно (базовый класс для FilePanels, FileEditor, FileViewer)
+РќРµРјРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ (Р±Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РґР»СЏ FilePanels, FileEditor, FileViewer)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -38,9 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class KeyBar;
 
-// ПРОСЬБА НЕ ЗАБЫВАТЬ СИНХРОНИЗИРОВАТЬ ИЗМЕНЕНИЯ
-// WTYPE_* (plugin.hpp) и MODALTYPE_*!!!
-// (и не надо убирать этот комментарий, пока ситуация не изменится ;)
+// РџР РћРЎР¬Р‘Рђ РќР• Р—РђР‘Р«Р’РђРўР¬ РЎРРќРҐР РћРќРР—РР РћР’РђРўР¬ РР—РњР•РќР•РќРРЇ
+// WTYPE_* (plugin.hpp) Рё MODALTYPE_*!!!
+// (Рё РЅРµ РЅР°РґРѕ СѓР±РёСЂР°С‚СЊ СЌС‚РѕС‚ РєРѕРјРјРµРЅС‚Р°СЂРёР№, РїРѕРєР° СЃРёС‚СѓР°С†РёСЏ РЅРµ РёР·РјРµРЅРёС‚СЃСЏ ;)
 enum
 {
 	MODALTYPE_VIRTUAL,
@@ -91,10 +91,10 @@ class Frame: public ScreenObject
 		virtual int GetTypeAndName(FARString &strType, FARString &strName) {return(MODALTYPE_VIRTUAL);};
 		virtual int GetType() { return MODALTYPE_VIRTUAL; }
 
-		virtual void OnDestroy();  // вызывается перед уничтожением окна
-		virtual void OnCreate() {};   // вызывается перед созданием окна
-		virtual void OnChangeFocus(int focus); // вызывается при смене фокуса
-		virtual void Refresh() {OnChangeFocus(1);};  // Просто перерисоваться :)
+		virtual void OnDestroy();  // РІС‹Р·С‹РІР°РµС‚СЃСЏ РїРµСЂРµРґ СѓРЅРёС‡С‚РѕР¶РµРЅРёРµРј РѕРєРЅР°
+		virtual void OnCreate() {};   // РІС‹Р·С‹РІР°РµС‚СЃСЏ РїРµСЂРµРґ СЃРѕР·РґР°РЅРёРµРј РѕРєРЅР°
+		virtual void OnChangeFocus(int focus); // РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЃРјРµРЅРµ С„РѕРєСѓСЃР°
+		virtual void Refresh() {OnChangeFocus(1);};  // РџСЂРѕСЃС‚Рѕ РїРµСЂРµСЂРёСЃРѕРІР°С‚СЊСЃСЏ :)
 
 		virtual void InitKeyBar() {}
 		void SetKeyBar(KeyBar *FrameKeyBar);

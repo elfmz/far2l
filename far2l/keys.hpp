@@ -8,11 +8,11 @@
 /*
 keys.hpp
 
-Внутренние фаровские имена клавиш
+Р’РЅСѓС‚СЂРµРЅРЅРёРµ С„Р°СЂРѕРІСЃРєРёРµ РёРјРµРЅР° РєР»Р°РІРёС€
 
-ВНИМАНИЕ!
-  Новые пвсевдоклавиши, типа KEY_FOCUS_CHANGED и KEY_CONSOLE_BUFFER_RESIZE
-  добавлять между KEY_END_FKEY и KEY_END_SKEY
+Р’РќРРњРђРќРР•!
+  РќРѕРІС‹Рµ РїРІСЃРµРІРґРѕРєР»Р°РІРёС€Рё, С‚РёРїР° KEY_FOCUS_CHANGED Рё KEY_CONSOLE_BUFFER_RESIZE
+  РґРѕР±Р°РІР»СЏС‚СЊ РјРµР¶РґСѓ KEY_END_FKEY Рё KEY_END_SKEY
 */
 #else // ELSE FAR_USE_INTERNALS
 /*
@@ -268,14 +268,14 @@ enum BaseDefKeyboard
 	KEY_LAST_BASE            =KEY_END_SKEY,
 
 #ifdef FAR_USE_INTERNALS
-	// см macroopcode.hpp
+	// СЃРј macroopcode.hpp
 	KEY_MACRO_BASE           =INTERNAL_MACRO_BASE,
 	KEY_MACRO_OP_BASE        =INTERNAL_MACRO_BASE+0x0000,     // opcode             0x00080000 - 0x000803FF
-	KEY_MACRO_C_BASE         =INTERNAL_MACRO_BASE+0x0400,     // булевые условия    0x00080400 - 0x000807FF
-	KEY_MACRO_V_BASE         =INTERNAL_MACRO_BASE+0x0800,     // разные переменные  0x00080800 - 0x00080BFF
-	KEY_MACRO_F_BASE         =INTERNAL_MACRO_BASE+0x0C00,     // функции            0x00080C00 -
+	KEY_MACRO_C_BASE         =INTERNAL_MACRO_BASE+0x0400,     // Р±СѓР»РµРІС‹Рµ СѓСЃР»РѕРІРёСЏ    0x00080400 - 0x000807FF
+	KEY_MACRO_V_BASE         =INTERNAL_MACRO_BASE+0x0800,     // СЂР°Р·РЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ  0x00080800 - 0x00080BFF
+	KEY_MACRO_F_BASE         =INTERNAL_MACRO_BASE+0x0C00,     // С„СѓРЅРєС†РёРё            0x00080C00 -
 
-	KEY_MACRO_U_BASE         =INTERNAL_MACRO_BASE+0x8000,     // внешние функции    0x00088000 -
+	KEY_MACRO_U_BASE         =INTERNAL_MACRO_BASE+0x8000,     // РІРЅРµС€РЅРёРµ С„СѓРЅРєС†РёРё    0x00088000 -
 
 	KEY_MACRO_ENDBASE        =0x000FFFFF,
 #endif // END FAR_USE_INTERNALS

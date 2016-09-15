@@ -1,7 +1,7 @@
 /*
 flshow.cpp
 
-Файловая панель - вывод на экран
+Р¤Р°Р№Р»РѕРІР°СЏ РїР°РЅРµР»СЊ - РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -287,7 +287,7 @@ void FileList::ShowFileList(int Fast)
 		}
 	}
 
-	/* <режимы сортировки> */
+	/* <СЂРµР¶РёРјС‹ СЃРѕСЂС‚РёСЂРѕРІРєРё> */
 	if (/*GetNumericSort() || GetCaseSensitiveSort() || GetSortGroups() || */GetSelectedFirstMode())
 	{
 		if (Opt.ShowColumnTitles)
@@ -319,7 +319,7 @@ void FileList::ShowFileList(int Fast)
 		PtrOutCharacter[1]=0;
 	}
 
-	/* </режимы сортировки> */
+	/* </СЂРµР¶РёРјС‹ СЃРѕСЂС‚РёСЂРѕРІРєРё> */
 
 	if (!Fast && GetFocus())
 	{
@@ -537,7 +537,7 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 
 	SetColor(COL_PANELTOTALINFO);
 	/* $ 01.08.2001 VVM
-	  + Обрезаем строчку справа, а не слева */
+	  + РћР±СЂРµР·Р°РµРј СЃС‚СЂРѕС‡РєСѓ СЃРїСЂР°РІР°, Р° РЅРµ СЃР»РµРІР° */
 	TruncStrFromEnd(strTotalStr, X2-X1-1);
 	Length=(int)strTotalStr.GetLength();
 	GotoXY(X1+(X2-X1+1-Length)/2,Y2);
@@ -996,8 +996,8 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 							if (ViewFlags & COLUMN_NAMEONLY)
 							{
 								//BUGBUG!!!
-								// !!! НЕ УВЕРЕН, но то, что отображается пустое
-								// пространство вместо названия - бага
+								// !!! РќР• РЈР’Р•Р Р•Рќ, РЅРѕ С‚Рѕ, С‡С‚Рѕ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РїСѓСЃС‚РѕРµ
+								// РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРѕ РІРјРµСЃС‚Рѕ РЅР°Р·РІР°РЅРёСЏ - Р±Р°РіР°
 								NamePtr=PointToFolderNameIfFolder(NamePtr);
 							}
 

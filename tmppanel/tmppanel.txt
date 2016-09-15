@@ -1,1 +1,0 @@
-./Debug/src_TmpCfg.cpp.o ./Debug/src_TmpClass.cpp.o ./Debug/src_TmpMix.cpp.o ./Debug/src_TmpPanel.cpp.o

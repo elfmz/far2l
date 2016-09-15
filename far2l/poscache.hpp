@@ -3,7 +3,7 @@
 /*
 poscache.hpp
 
-Кэш позиций в файлах для viewer/editor
+РљСЌС€ РїРѕР·РёС†РёР№ РІ С„Р°Р№Р»Р°С… РґР»СЏ viewer/editor
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -35,10 +35,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 const DWORD64 POS_NONE=_UI64_MAX;
 
-// Максимальное количество элементов в кэше
+// РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ РєСЌС€Рµ
 #define MAX_POSITIONS 512
 
-// Количество закладок в редакторе/вьювере на одну позицию
+// РљРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РєР»Р°РґРѕРє РІ СЂРµРґР°РєС‚РѕСЂРµ/РІСЊСЋРІРµСЂРµ РЅР° РѕРґРЅСѓ РїРѕР·РёС†РёСЋ
 #define BOOKMARK_COUNT   10
 
 struct PosCache

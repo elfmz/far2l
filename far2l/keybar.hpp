@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scrobj.hpp"
 
 
-//   Группы меток
+//   Р“СЂСѓРїРїС‹ РјРµС‚РѕРє
 enum
 {
 	KBL_MAIN=0,
@@ -91,7 +91,7 @@ class KeyBar: public ScreenObject
 		void SetAllRegGroup();
 
 		void SetGroup(int Group,const wchar_t * const *Key,int KeyCount);
-		// Групповая установка идущих подряд строк LNG для указанной группы
+		// Р“СЂСѓРїРїРѕРІР°СЏ СѓСЃС‚Р°РЅРѕРІРєР° РёРґСѓС‰РёС… РїРѕРґСЂСЏРґ СЃС‚СЂРѕРє LNG РґР»СЏ СѓРєР°Р·Р°РЅРЅРѕР№ РіСЂСѓРїРїС‹
 		void SetAllGroup(int Group, int StartIndex, int Count);
 
 		void ClearGroup(int Group);
@@ -108,7 +108,7 @@ class KeyBar: public ScreenObject
 		void SetDisableMask(int Mask);
 		void Change(const wchar_t *NewStr,int Pos)                   { Change(KBL_MAIN, NewStr, Pos); }
 
-		// Изменение любого Label
+		// РР·РјРµРЅРµРЅРёРµ Р»СЋР±РѕРіРѕ Label
 		void Change(int Group,const wchar_t *NewStr,int Pos);
 
 		void RedrawIfChanged();

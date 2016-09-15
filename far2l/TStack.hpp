@@ -1,10 +1,10 @@
 #pragma once
 
 /*  TStack.hpp
-    Шаблон работы со стеком (LIFO)
+    РЁР°Р±Р»РѕРЅ СЂР°Р±РѕС‚С‹ СЃРѕ СЃС‚РµРєРѕРј (LIFO)
 
     TStack<Object> Stack;
-    // Object должен иметь конструктор по умолчанию и оператор
+    // Object РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё РѕРїРµСЂР°С‚РѕСЂ
     // const Object& operator=(const Object &)
 */
 /*
@@ -55,14 +55,14 @@ class TStack : private NonCopyable
 		~TStack() { Free(); }
 
 	public:
-		// вернуть количество элементов на стеке
+		// РІРµСЂРЅСѓС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РЅР° СЃС‚РµРєРµ
 		DWORD size() const { return Size; }
 
-		// возвращает TRUE, если список пуст
+		// РІРѕР·РІСЂР°С‰Р°РµС‚ TRUE, РµСЃР»Рё СЃРїРёСЃРѕРє РїСѓСЃС‚
 		bool empty() const { return !Size; }
 
-		// взять элемент со стека
-		// при удаче вернется адрес Destination, иначе - nullptr
+		// РІР·СЏС‚СЊ СЌР»РµРјРµРЅС‚ СЃРѕ СЃС‚РµРєР°
+		// РїСЂРё СѓРґР°С‡Рµ РІРµСЂРЅРµС‚СЃСЏ Р°РґСЂРµСЃ Destination, РёРЅР°С‡Рµ - nullptr
 		Object *Pop(Object &Destination)
 		{
 			if (Top)
@@ -78,8 +78,8 @@ class TStack : private NonCopyable
 			return nullptr;
 		}
 
-		// взять элемент со стека без изменения стека
-		// при удаче вернется адрес Destination, иначе - nullptr
+		// РІР·СЏС‚СЊ СЌР»РµРјРµРЅС‚ СЃРѕ СЃС‚РµРєР° Р±РµР· РёР·РјРµРЅРµРЅРёСЏ СЃС‚РµРєР°
+		// РїСЂРё СѓРґР°С‡Рµ РІРµСЂРЅРµС‚СЃСЏ Р°РґСЂРµСЃ Destination, РёРЅР°С‡Рµ - nullptr
 		Object *Peek(/*Object &Destination*/)
 		{
 			if (Top)
@@ -92,8 +92,8 @@ class TStack : private NonCopyable
 			return nullptr;
 		}
 
-		// положить элемент на стек
-		// при удаче вернется адрес элемента на стеке, иначе - nullptr
+		// РїРѕР»РѕР¶РёС‚СЊ СЌР»РµРјРµРЅС‚ РЅР° СЃС‚РµРє
+		// РїСЂРё СѓРґР°С‡Рµ РІРµСЂРЅРµС‚СЃСЏ Р°РґСЂРµСЃ СЌР»РµРјРµРЅС‚Р° РЅР° СЃС‚РµРєРµ, РёРЅР°С‡Рµ - nullptr
 		Object *Push(const Object &Source)
 		{
 			struct OneItem *Temp=new OneItem;
@@ -110,7 +110,7 @@ class TStack : private NonCopyable
 			return nullptr;
 		}
 
-		// очистить стек
+		// РѕС‡РёСЃС‚РёС‚СЊ СЃС‚РµРє
 		void Free()
 		{
 			while (Top)

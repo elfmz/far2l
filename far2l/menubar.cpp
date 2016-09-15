@@ -1,7 +1,7 @@
 /*
 menubar.cpp
 
-Показ горизонтального меню при включенном "Always show menu bar"
+РџРѕРєР°Р· РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРіРѕ РјРµРЅСЋ РїСЂРё РІРєР»СЋС‡РµРЅРЅРѕРј "Always show menu bar"
 */
 /*
 Copyright (c) 1996 Eugene Roshal

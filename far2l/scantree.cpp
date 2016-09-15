@@ -1,8 +1,8 @@
 /*
 scantree.cpp
 
-Ñêàíèðîâàíèå òåêóùåãî êàòàëîãà è, îïöèîíàëüíî, ïîäêàòàëîãîâ íà
-ïðåäìåò èìåí ôàéëîâ
+Ð¡ÐºÐ°Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾ ÐºÐ°Ñ‚Ð°Ð»Ð¾Ð³Ð° Ð¸, Ð¾Ð¿Ñ†Ð¸Ð¾Ð½Ð°Ð»ÑŒÐ½Ð¾, Ð¿Ð¾Ð´ÐºÐ°Ñ‚Ð°Ð»Ð¾Ð³Ð¾Ð² Ð½Ð°
+Ð¿Ñ€ÐµÐ´Ð¼ÐµÑ‚ Ð¸Ð¼ÐµÐ½ Ñ„Ð°Ð¹Ð»Ð¾Ð²
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -162,7 +162,7 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,FARString &strFullName)
 				strFindPath += L"/";
 				strFindPath += strFindMask;
 				ScanItems.addItem();
-				ScanItems.lastItem()->Flags = ScanItems.getItem(ScanItems.getCount()-2)->Flags; // íàñëåäóåì ôëàã
+				ScanItems.lastItem()->Flags = ScanItems.getItem(ScanItems.getCount()-2)->Flags; // Ð½Ð°ÑÐ»ÐµÐ´ÑƒÐµÐ¼ Ñ„Ð»Ð°Ð³
 				ScanItems.lastItem()->Flags.Clear(FSCANTREE_SECONDPASS);
 				ScanItems.lastItem()->RealPath = RealPath;
 

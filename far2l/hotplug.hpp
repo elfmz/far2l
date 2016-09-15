@@ -3,7 +3,7 @@
 /*
 hotplug.hpp
 
-Отключение Hotplug-устройств
+РћС‚РєР»СЋС‡РµРЅРёРµ Hotplug-СѓСЃС‚СЂРѕР№СЃС‚РІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal

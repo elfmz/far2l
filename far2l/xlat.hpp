@@ -3,7 +3,7 @@
 /*
 xlat.hpp
 
-XLat - перекодировка
+XLat - РїРµСЂРµРєРѕРґРёСЂРѕРІРєР°
 */
 /*
 Copyright (c) 1996 Eugene Roshal

@@ -1,7 +1,7 @@
 /*
 infolist.cpp
 
-Èíôîðìàöèîííàÿ ïàíåëü
+Ð˜Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ð¾Ð½Ð½Ð°Ñ Ð¿Ð°Ð½ÐµÐ»ÑŒ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -77,7 +77,7 @@ InfoList::~InfoList()
 	SetMacroMode(TRUE);
 }
 
-// ïåðåðèñîâêà, òîëüêî åñëè ìû òåêóùèé ôðåéì
+// Ð¿ÐµÑ€ÐµÑ€Ð¸ÑÐ¾Ð²ÐºÐ°, Ñ‚Ð¾Ð»ÑŒÐºÐ¾ ÐµÑÐ»Ð¸ Ð¼Ñ‹ Ñ‚ÐµÐºÑƒÑ‰Ð¸Ð¹ Ñ„Ñ€ÐµÐ¹Ð¼
 void InfoList::Update(int Mode)
 {
 	if (!EnableUpdate)
@@ -160,8 +160,8 @@ void InfoList::DisplayObject()
 		apiGetCurrentDirectory(strCurDir);
 
 	/*
-		Êîððåêòíî îòîáðàæàòü èíôó ïðè çàõîäå â Juction êàòàëîã
-		Ðóò-äèñê ìîæåò áûòü äðóãèì
+		ÐšÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð½Ð¾ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶Ð°Ñ‚ÑŒ Ð¸Ð½Ñ„Ñƒ Ð¿Ñ€Ð¸ Ð·Ð°Ñ…Ð¾Ð´Ðµ Ð² Juction ÐºÐ°Ñ‚Ð°Ð»Ð¾Ð³
+		Ð ÑƒÑ‚-Ð´Ð¸ÑÐº Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð´Ñ€ÑƒÐ³Ð¸Ð¼
 	*/
 /*	if ((apiGetFileAttributes(strCurDir)&FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT)
 	{
@@ -384,9 +384,9 @@ int InfoList::ProcessKey(int Key)
 			return TRUE;
 		case KEY_F4:
 			/* $ 30.04.2001 DJ
-			íå ïîêàçûâàåì ðåäàêòîð, åñëè íè÷åãî íå çàäàíî â èìåíàõ ôàéëîâ;
-			íå ðåäàêòèðóåì èìåíà îïèñàíèé ñî çâåçäî÷êàìè;
-			óáèðàåì ëèøíþþ ïåðåðèñîâêó ïàíåëåé
+			Ð½Ðµ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÐ¼ Ñ€ÐµÐ´Ð°ÐºÑ‚Ð¾Ñ€, ÐµÑÐ»Ð¸ Ð½Ð¸Ñ‡ÐµÐ³Ð¾ Ð½Ðµ Ð·Ð°Ð´Ð°Ð½Ð¾ Ð² Ð¸Ð¼ÐµÐ½Ð°Ñ… Ñ„Ð°Ð¹Ð»Ð¾Ð²;
+			Ð½Ðµ Ñ€ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€ÑƒÐµÐ¼ Ð¸Ð¼ÐµÐ½Ð° Ð¾Ð¿Ð¸ÑÐ°Ð½Ð¸Ð¹ ÑÐ¾ Ð·Ð²ÐµÐ·Ð´Ð¾Ñ‡ÐºÐ°Ð¼Ð¸;
+			ÑƒÐ±Ð¸Ñ€Ð°ÐµÐ¼ Ð»Ð¸ÑˆÐ½ÑŽÑŽ Ð¿ÐµÑ€ÐµÑ€Ð¸ÑÐ¾Ð²ÐºÑƒ Ð¿Ð°Ð½ÐµÐ»ÐµÐ¹
 			*/
 		{
 			Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
@@ -424,7 +424,7 @@ int InfoList::ProcessKey(int Key)
 	}
 
 	/* $ 30.04.2001 DJ
-		îáíîâëÿåì êåéáàð ïîñëå íàæàòèÿ F8, F2 èëè Shift-F2
+		Ð¾Ð±Ð½Ð¾Ð²Ð»ÑÐµÐ¼ ÐºÐµÐ¹Ð±Ð°Ñ€ Ð¿Ð¾ÑÐ»Ðµ Ð½Ð°Ð¶Ð°Ñ‚Ð¸Ñ F8, F2 Ð¸Ð»Ð¸ Shift-F2
 	*/
 	if (DizView && Key>=256)
 	{
@@ -677,7 +677,7 @@ int InfoList::OpenDizFile(const wchar_t *DizFile,int YPos)
 	}
 	else
 	{
-		//íå áóäåì ìåíÿòü âíóòðåííîñòè åñëè ìû ïîñðåäè îïåðàöèè ñî âüþâåðîì.
+		//Ð½Ðµ Ð±ÑƒÐ´ÐµÐ¼ Ð¼ÐµÐ½ÑÑ‚ÑŒ Ð²Ð½ÑƒÑ‚Ñ€ÐµÐ½Ð½Ð¾ÑÑ‚Ð¸ ÐµÑÐ»Ð¸ Ð¼Ñ‹ Ð¿Ð¾ÑÑ€ÐµÐ´Ð¸ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸ ÑÐ¾ Ð²ÑŒÑŽÐ²ÐµÑ€Ð¾Ð¼.
 		bOK = !DizView->InRecursion;
 	}
 
@@ -783,7 +783,7 @@ void InfoList::DynamicUpdateKeyBar()
 		KB->Change(L"", 3-1);
 		KB->Change(L"", 8-1);
 		KB->Change(KBL_SHIFT, L"", 8-1);
-		KB->Change(KBL_ALT, MSG(MAltF8), 8-1);  // ñòàíäàðòíûé äëÿ ïàíåëè - "õèñòîðè"
+		KB->Change(KBL_ALT, MSG(MAltF8), 8-1);  // ÑÑ‚Ð°Ð½Ð´Ð°Ñ€Ñ‚Ð½Ñ‹Ð¹ Ð´Ð»Ñ Ð¿Ð°Ð½ÐµÐ»Ð¸ - "Ñ…Ð¸ÑÑ‚Ð¾Ñ€Ð¸"
 	}
 
 	KB->ReadRegGroup(L"Info",Opt.strLanguage);

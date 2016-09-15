@@ -406,7 +406,7 @@ wchar_t *Clipboard::PasteFormat(const wchar_t *Format)
 			if (ClipText)
 			{
 				if (isOEMVBlock) {
-					WINPORT(MultiByteToWideChar)(CP_OEMCP,0,(LPCSTR)ClipAddr,-1,ClipText,(int)BufferSize);
+					WINPORT(MultiByteToWideChar)(CP_UTF8,0,(LPCSTR)ClipAddr,-1,ClipText,(int)BufferSize);
 				} else
 					wcscpy(ClipText,ClipAddr);
 			}

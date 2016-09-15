@@ -53,7 +53,7 @@ ninja -j4
 
 #### Macos build
 
-1. Run brew install glib
+1. Run brew install glib gawk
 
 2. Build latest wxWidgets (brew version is not good one).
 Sample configuration: ./configure --disable-shared --disable-debug CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++ -std=c++11" OBJCXXFLAGS="-stdlib=libc++ -std=c++11" LDFLAGS=-stdlib=libc++ --enable-monolithic --enable-unicode

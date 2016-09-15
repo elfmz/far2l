@@ -132,7 +132,7 @@ set(SOURCES
 add_library (multiarc MODULE ${SOURCES})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress")
+    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
 endif()
 
 target_include_directories(multiarc PRIVATE src/formats/rar/unrar)

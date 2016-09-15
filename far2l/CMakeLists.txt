@@ -165,7 +165,7 @@ target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 add_dependencies(far2l bootstrap)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    SET (WINPORT "-force_load ../WinPort/libWinPort.a" -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL)
+    SET (WINPORT "-force_load ../WinPort/libWinPort.a -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL" glib-2.0 ${wxWidgets_LIBRARIES})
 else()
     SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)
 endif()

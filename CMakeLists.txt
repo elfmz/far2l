@@ -10,6 +10,8 @@ set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 
+cmake_policy(SET CMP0063 NEW)
+
 include_directories(utils/include)
 
 add_subdirectory (farlng)

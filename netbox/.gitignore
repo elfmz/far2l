@@ -1,5 +1,7 @@
 *.log
 build/
+Debug/
+netbox.txt
 /src/NetBox-build/
 build-CMakeLists.txt-*
 /src/build-NetBox-*

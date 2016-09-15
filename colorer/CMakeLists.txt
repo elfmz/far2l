@@ -73,6 +73,10 @@ set(SOURCES
 
 add_library (colorer MODULE ${SOURCES})
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flat_namespace -undefined suppress")
+endif()
+
 target_compile_definitions(colorer PRIVATE -D_UNICODE -DUNICODE -D__unix__)
 
 target_include_directories(colorer PRIVATE src/shared)

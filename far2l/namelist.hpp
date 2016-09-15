@@ -3,7 +3,7 @@
 /*
 namelist.hpp
 
-Список имен файлов, используется в viewer при нажатии Gray+/Gray-
+РЎРїРёСЃРѕРє РёРјРµРЅ С„Р°Р№Р»РѕРІ, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ viewer РїСЂРё РЅР°Р¶Р°С‚РёРё Gray+/Gray-
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -52,7 +52,7 @@ class NamesList
 			OneName()
 			{
 			}
-			// для перекрывающихся объектов поведение как у xstrncpy!
+			// РґР»СЏ РїРµСЂРµРєСЂС‹РІР°СЋС‰РёС…СЃСЏ РѕР±СЉРµРєС‚РѕРІ РїРѕРІРµРґРµРЅРёРµ РєР°Рє Сѓ xstrncpy!
 			const OneName& operator=(struct FileName2 &rhs)
 			{
 				Value.strName = rhs.strName;

@@ -1,7 +1,7 @@
 /*
 options.cpp
 
-Ôàðîâñêîå ãîðèçîíòàëüíîå ìåíþ (âûçîâ hmenu.cpp ñ êîíêðåòíûìè ïàðàìåòðàìè)
+Ð¤Ð°Ñ€Ð¾Ð²ÑÐºÐ¾Ðµ Ð³Ð¾Ñ€Ð¸Ð·Ð¾Ð½Ñ‚Ð°Ð»ÑŒÐ½Ð¾Ðµ Ð¼ÐµÐ½ÑŽ (Ð²Ñ‹Ð·Ð¾Ð² hmenu.cpp Ñ ÐºÐ¾Ð½ÐºÑ€ÐµÑ‚Ð½Ñ‹Ð¼Ð¸ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð°Ð¼Ð¸)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -347,7 +347,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 
 	SetLeftRightMenuChecks(LeftMenu, true);
 	SetLeftRightMenuChecks(RightMenu, false);
-	// Íàâèãàöèÿ ïî ìåíþ
+	// ÐÐ°Ð²Ð¸Ð³Ð°Ñ†Ð¸Ñ Ð¿Ð¾ Ð¼ÐµÐ½ÑŽ
 	{
 		HMenu HOptMenu(MainMenu,ARRAYSIZE(MainMenu));
 		HOptMenu.SetHelp(L"Menus");
@@ -402,7 +402,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		HOptMenu.GetExitCode(HItem,VItem);
 	}
 
-	// "Èñïîëíÿòîð êîìàíä ìåíþ"
+	// "Ð˜ÑÐ¿Ð¾Ð»Ð½ÑÑ‚Ð¾Ñ€ ÐºÐ¾Ð¼Ð°Ð½Ð´ Ð¼ÐµÐ½ÑŽ"
 	switch (HItem)
 	{
 		case MENU_LEFT:
@@ -666,8 +666,8 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	int _CurrentFrame=FrameManager->GetCurrentFrame()->GetType();
-	// TODO:Çäåñü êàê òî íóæíî èçìåíèòü, ÷òîáû ó÷åñòü áóäóùèå íîâûå òèïû ïîëíîýêðàííûõ ôðåéìîâ
-	//      èëè òî, ÷òî, ñêàæåì ðåäàêòîð/âüþâåð ìîæåò áûòü íå ïîëíîýêðàííûì
+	// TODO:Ð—Ð´ÐµÑÑŒ ÐºÐ°Ðº Ñ‚Ð¾ Ð½ÑƒÐ¶Ð½Ð¾ Ð¸Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ, Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑƒÑ‡ÐµÑÑ‚ÑŒ Ð±ÑƒÐ´ÑƒÑ‰Ð¸Ðµ Ð½Ð¾Ð²Ñ‹Ðµ Ñ‚Ð¸Ð¿Ñ‹ Ð¿Ð¾Ð»Ð½Ð¾ÑÐºÑ€Ð°Ð½Ð½Ñ‹Ñ… Ñ„Ñ€ÐµÐ¹Ð¼Ð¾Ð²
+	//      Ð¸Ð»Ð¸ Ñ‚Ð¾, Ñ‡Ñ‚Ð¾, ÑÐºÐ°Ð¶ÐµÐ¼ Ñ€ÐµÐ´Ð°ÐºÑ‚Ð¾Ñ€/Ð²ÑŒÑŽÐ²ÐµÑ€ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð¿Ð¾Ð»Ð½Ð¾ÑÐºÑ€Ð°Ð½Ð½Ñ‹Ð¼
 
 	if (!(_CurrentFrame == MODALTYPE_VIEWER || _CurrentFrame == MODALTYPE_EDITOR))
 		CtrlObject->CmdLine->Show();

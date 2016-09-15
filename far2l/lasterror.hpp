@@ -3,7 +3,7 @@
 /*
 lasterror.hpp
 
-Сохрание/восстановление LastError
+РЎРѕС…СЂР°РЅРёРµ/РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ LastError
 */
 /*
 Copyright (c) 1996 Eugene Roshal

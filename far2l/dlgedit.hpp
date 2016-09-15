@@ -3,8 +3,8 @@
 /*
 dlgedit.hpp
 
-Одиночная строка редактирования для диалога (как наследник класса Edit)
-Мультиредактор
+РћРґРёРЅРѕС‡РЅР°СЏ СЃС‚СЂРѕРєР° СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ РґР»СЏ РґРёР°Р»РѕРіР° (РєР°Рє РЅР°СЃР»РµРґРЅРёРє РєР»Р°СЃСЃР° Edit)
+РњСѓР»СЊС‚РёСЂРµРґР°РєС‚РѕСЂ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -35,9 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
-  Сюда нужно перетащить из edit.hpp и editor.hpp все вещи,
-  касаемые масок и.. все что относится только к диалогам
-  Это пока только шаблон, заготовка для будущего перехода
+  РЎСЋРґР° РЅСѓР¶РЅРѕ РїРµСЂРµС‚Р°С‰РёС‚СЊ РёР· edit.hpp Рё editor.hpp РІСЃРµ РІРµС‰Рё,
+  РєР°СЃР°РµРјС‹Рµ РјР°СЃРѕРє Рё.. РІСЃРµ С‡С‚Рѕ РѕС‚РЅРѕСЃРёС‚СЃСЏ С‚РѕР»СЊРєРѕ Рє РґРёР°Р»РѕРіР°Рј
+  Р­С‚Рѕ РїРѕРєР° С‚РѕР»СЊРєРѕ С€Р°Р±Р»РѕРЅ, Р·Р°РіРѕС‚РѕРІРєР° РґР»СЏ Р±СѓРґСѓС‰РµРіРѕ РїРµСЂРµС…РѕРґР°
 */
 
 #include "scrobj.hpp"
@@ -128,8 +128,8 @@ class DlgEdit: public ScreenObject
 
 		void  DeleteBlock();
 
-		void  Select(int Start,int End);           // TODO: не учтено для multiline!
-		void  GetSelection(int &Start,int &End);   // TODO: не учтено для multiline!
+		void  Select(int Start,int End);           // TODO: РЅРµ СѓС‡С‚РµРЅРѕ РґР»СЏ multiline!
+		void  GetSelection(int &Start,int &End);   // TODO: РЅРµ СѓС‡С‚РµРЅРѕ РґР»СЏ multiline!
 
 		void Xlat(bool All=false);
 

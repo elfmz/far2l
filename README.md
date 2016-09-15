@@ -60,6 +60,8 @@ Sample configuration: ./configure --disable-shared --disable-debug CC=clang CXX=
 
 3. Run cmake -G "CodeLite - Unix Makefiles"
 
+4. Open FAR.workspace and build project
+
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite or any other, which supports cmake or cmake is able to generate projects for
 

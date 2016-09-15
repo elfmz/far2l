@@ -50,7 +50,7 @@ target_include_directories(WinPort PRIVATE src)
 
 target_link_libraries(WinPort wineguts utils ${wxWidgets_LIBRARIES})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries(WinPort glib-2.0)
+    target_link_libraries(WinPort glib-2.0 -L/usr/local/lib)
 else()
     target_link_libraries(WinPort ${GLIB2_LIBRARIES})
 endif()

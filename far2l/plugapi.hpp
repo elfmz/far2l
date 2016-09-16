@@ -3,7 +3,7 @@
 /*
 plugapi.hpp
 
-API, доступное плагинам (диалоги, меню, ...)
+API, РґРѕСЃС‚СѓРїРЅРѕРµ РїР»Р°РіРёРЅР°Рј (РґРёР°Р»РѕРіРё, РјРµРЅСЋ, ...)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 //----------- PLUGIN API/FSF ---------------------------------------------------
-//все эти функции, за исключение sprintf/sscanf имеют тип вызова __stdcall
+//РІСЃРµ СЌС‚Рё С„СѓРЅРєС†РёРё, Р·Р° РёСЃРєР»СЋС‡РµРЅРёРµ sprintf/sscanf РёРјРµСЋС‚ С‚РёРї РІС‹Р·РѕРІР° __stdcall
 
 wchar_t *WINAPI FarItoa(int value, wchar_t *string, int radix);
 int64_t WINAPI FarAtoi64(const wchar_t *s);
@@ -99,29 +99,29 @@ int WINAPI FarEditorControl(int Command,void *Param);
 
 int WINAPI FarViewerControl(int Command,void *Param);
 
-/* Функция вывода помощи */
+/* Р¤СѓРЅРєС†РёСЏ РІС‹РІРѕРґР° РїРѕРјРѕС‰Рё */
 BOOL WINAPI FarShowHelp(const wchar_t *ModuleName,
                         const wchar_t *HelpTopic,DWORD Flags);
 
-/* Обертка вокруг GetString для плагинов - с меньшей функциональностью.
-   Сделано для того, чтобы не дублировать код GetString.*/
+/* РћР±РµСЂС‚РєР° РІРѕРєСЂСѓРі GetString РґР»СЏ РїР»Р°РіРёРЅРѕРІ - СЃ РјРµРЅСЊС€РµР№ С„СѓРЅРєС†РёРѕРЅР°Р»СЊРЅРѕСЃС‚СЊСЋ.
+   РЎРґРµР»Р°РЅРѕ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РЅРµ РґСѓР±Р»РёСЂРѕРІР°С‚СЊ РєРѕРґ GetString.*/
 
 int WINAPI FarInputBox(const wchar_t *Title,const wchar_t *Prompt,
                        const wchar_t *HistoryName,const wchar_t *SrcText,
                        wchar_t *DestText,int DestLength,
                        const wchar_t *HelpTopic,DWORD Flags);
-/* Функция, которая будет действовать и в редакторе, и в панелях, и... */
+/* Р¤СѓРЅРєС†РёСЏ, РєРѕС‚РѕСЂР°СЏ Р±СѓРґРµС‚ РґРµР№СЃС‚РІРѕРІР°С‚СЊ Рё РІ СЂРµРґР°РєС‚РѕСЂРµ, Рё РІ РїР°РЅРµР»СЏС…, Рё... */
 INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param);
-//  Функция расширенного диалога
+//  Р¤СѓРЅРєС†РёСЏ СЂР°СЃС€РёСЂРµРЅРЅРѕРіРѕ РґРёР°Р»РѕРіР°
 HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2,
                             const wchar_t *HelpTopic, struct FarDialogItem *Item,
                             unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
                             FARWINDOWPROC Proc, LONG_PTR Param);
 int WINAPI FarDialogRun(HANDLE hDlg);
 void WINAPI FarDialogFree(HANDLE hDlg);
-//  Функция обработки диалога по умолчанию
+//  Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РґРёР°Р»РѕРіР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 LONG_PTR WINAPI FarDefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
-// Посылка сообщения диалогу
+// РџРѕСЃС‹Р»РєР° СЃРѕРѕР±С‰РµРЅРёСЏ РґРёР°Р»РѕРіСѓ
 LONG_PTR WINAPI FarSendDlgMessage(HANDLE hDlg,int Msg,int Param1, LONG_PTR Param2);
 
 int WINAPI farPluginsControl(HANDLE hHandle, int Command, int Param1, LONG_PTR Param2);

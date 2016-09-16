@@ -42,12 +42,12 @@ cd build
 ```
 _with make:_
 ``` sh
-cmake ../far2l
+cmake -DCMAKE_BUILD_TYPE=Release ../far2l
 make -j4
 ``` 
 _or with ninja (you need **ninja-build** package installed)_
 ``` sh
-cmake -G Ninja ../far2l
+cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ../far2l
 ninja -j4
 ```
 

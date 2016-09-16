@@ -3,7 +3,7 @@
 /*
 keyboard.hpp
 
-Функции, имеющие отношение к клавитуре
+Р¤СѓРЅРєС†РёРё, РёРјРµСЋС‰РёРµ РѕС‚РЅРѕС€РµРЅРёРµ Рє РєР»Р°РІРёС‚СѓСЂРµ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -56,7 +56,7 @@ void InitKeysArray();
 bool KeyToKeyLayoutCompare(int Key, int CompareKey);
 int KeyToKeyLayout(int Key);
 
-// возвращает: 1 - LeftPressed, 2 - Right Pressed, 3 - Middle Pressed, 0 - none
+// РІРѕР·РІСЂР°С‰Р°РµС‚: 1 - LeftPressed, 2 - Right Pressed, 3 - Middle Pressed, 0 - none
 DWORD IsMouseButtonPressed();
 int TranslateKeyToVK(int Key,int &VirtKey,int &ControlState,INPUT_RECORD *rec=nullptr);
 int WINAPI KeyNameToKey(const wchar_t *Name);

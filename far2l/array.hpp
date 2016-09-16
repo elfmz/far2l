@@ -3,17 +3,17 @@
 /*
 array.hpp
 
-Шаблон работы с массивом
+РЁР°Р±Р»РѕРЅ СЂР°Р±РѕС‚С‹ СЃ РјР°СЃСЃРёРІРѕРј
 
  TArray<Object> Array;
- // Object должен иметь конструктор по умолчанию и следующие операторы
+ // Object РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР»РµРґСѓСЋС‰РёРµ РѕРїРµСЂР°С‚РѕСЂС‹
  //  bool operator==(const Object &) const
  //  bool operator<(const Object &) const
  //  const Object& operator=(const Object &)
 
  TPointerArray<Object> Array;
- Object должен иметь конструктор по умолчанию.
- Класс для тупой но прозрачной работы с массивом понтеров на класс Object
+ Object РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ.
+ РљР»Р°СЃСЃ РґР»СЏ С‚СѓРїРѕР№ РЅРѕ РїСЂРѕР·СЂР°С‡РЅРѕР№ СЂР°Р±РѕС‚С‹ СЃ РјР°СЃСЃРёРІРѕРј РїРѕРЅС‚РµСЂРѕРІ РЅР° РєР»Р°СЃСЃ Object
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -77,15 +77,15 @@ class TArray
 		Object *getItem(size_t index);
 		int getIndex(const Object &item, int start=-1);
 
-		// сортировка массива. Offset - сколько первых пунктов пропустить
+		// СЃРѕСЂС‚РёСЂРѕРІРєР° РјР°СЃСЃРёРІР°. Offset - СЃРєРѕР»СЊРєРѕ РїРµСЂРІС‹С… РїСѓРЅРєС‚РѕРІ РїСЂРѕРїСѓСЃС‚РёС‚СЊ
 		void Sort(TARRAYCMPFUNC user_cmp_func=nullptr,size_t Offset=0);
 
-		// упаковать массив - вместо нескольких одинаковых элементов,
+		// СѓРїР°РєРѕРІР°С‚СЊ РјР°СЃСЃРёРІ - РІРјРµСЃС‚Рѕ РЅРµСЃРєРѕР»СЊРєРёС… РѕРґРёРЅР°РєРѕРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ,
 		/*
-			идущих подряд, оставить только один. Возвращает, false,
-			если изменений массива не производилось.
-			Вызов Pack() после Sort(nullptr) приведет к устранению
-			дубликатов
+			РёРґСѓС‰РёС… РїРѕРґСЂСЏРґ, РѕСЃС‚Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РѕРґРёРЅ. Р’РѕР·РІСЂР°С‰Р°РµС‚, false,
+			РµСЃР»Рё РёР·РјРµРЅРµРЅРёР№ РјР°СЃСЃРёРІР° РЅРµ РїСЂРѕРёР·РІРѕРґРёР»РѕСЃСЊ.
+			Р’С‹Р·РѕРІ Pack() РїРѕСЃР»Рµ Sort(nullptr) РїСЂРёРІРµРґРµС‚ Рє СѓСЃС‚СЂР°РЅРµРЅРёСЋ
+			РґСѓР±Р»РёРєР°С‚РѕРІ
 		*/
 		bool Pack();
 
@@ -199,7 +199,7 @@ bool TArray<Object>::setSize(size_t newSize)
 {
 	bool rc=false;
 
-	if (newSize < Count)              // уменьшение размера
+	if (newSize < Count)              // СѓРјРµРЅСЊС€РµРЅРёРµ СЂР°Р·РјРµСЂР°
 	{
 		for (size_t i=newSize; i<Count; ++i)
 		{
@@ -210,7 +210,7 @@ bool TArray<Object>::setSize(size_t newSize)
 		Count=newSize;
 		rc=true;
 	}
-	else if (newSize < internalCount) // увеличение, но в рамках имеющегося
+	else if (newSize < internalCount) // СѓРІРµР»РёС‡РµРЅРёРµ, РЅРѕ РІ СЂР°РјРєР°С… РёРјРµСЋС‰РµРіРѕСЃСЏ
 	{
 		for (size_t i=Count; i<newSize; ++i)
 			items[i]=nullptr;
@@ -218,7 +218,7 @@ bool TArray<Object>::setSize(size_t newSize)
 		Count=newSize;
 		rc=true;
 	}
-	else                              // увеличение размера
+	else                              // СѓРІРµР»РёС‡РµРЅРёРµ СЂР°Р·РјРµСЂР°
 	{
 		size_t Remainder=newSize%Delta;
 		size_t newCount=Remainder?(newSize+Delta)-Remainder:
@@ -344,12 +344,12 @@ class TPointerArray
 		{
 			bool rc=false;
 
-			if (newSize < Count)              // уменьшение размера
+			if (newSize < Count)              // СѓРјРµРЅСЊС€РµРЅРёРµ СЂР°Р·РјРµСЂР°
 			{
 				Count=newSize;
 				rc=true;
 			}
-			else if (newSize < internalCount) // увеличение, но в рамках имеющегося
+			else if (newSize < internalCount) // СѓРІРµР»РёС‡РµРЅРёРµ, РЅРѕ РІ СЂР°РјРєР°С… РёРјРµСЋС‰РµРіРѕСЃСЏ
 			{
 				for (size_t i=Count; i<newSize; i++)
 					items[i]=nullptr;
@@ -357,7 +357,7 @@ class TPointerArray
 				Count=newSize;
 				rc=true;
 			}
-			else                              // увеличение размера
+			else                              // СѓРІРµР»РёС‡РµРЅРёРµ СЂР°Р·РјРµСЂР°
 			{
 				size_t Remainder=newSize%Delta;
 				size_t newCount=Remainder?(newSize+Delta)-Remainder:(newSize?newSize:Delta);

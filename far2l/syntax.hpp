@@ -3,7 +3,7 @@
 /*
 syntax.hpp
 
-Реализация парсера для MacroDrive II
+Р РµР°Р»РёР·Р°С†РёСЏ РїР°СЂСЃРµСЂР° РґР»СЏ MacroDrive II
 
 */
 
@@ -42,13 +42,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct TMacroKeywords
 {
-	int Type;              // Тип: 0=Area, 1=Flags, 2=Condition
-	const wchar_t *Name;   // Наименование
-	DWORD Value;           // Значение
+	int Type;              // РўРёРї: 0=Area, 1=Flags, 2=Condition
+	const wchar_t *Name;   // РќР°РёРјРµРЅРѕРІР°РЅРёРµ
+	DWORD Value;           // Р—РЅР°С‡РµРЅРёРµ
 	DWORD Reserved;
 };
 
-// в plugin.hpp это FARMACROPARSEERRORCODE
+// РІ plugin.hpp СЌС‚Рѕ FARMACROPARSEERRORCODE
 enum errParseCode
 {
 	err_Success = 0,

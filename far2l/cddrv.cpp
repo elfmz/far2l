@@ -1,7 +1,7 @@
 /*
 cddrv.cpp
 
-про сидюк
+РїСЂРѕ СЃРёРґСЋРє
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -151,7 +151,7 @@ UINT FAR_GetDriveType(const wchar_t *RootDir, CDROM_DeviceCapabilities *Caps, DW
 
 	UINT DrvType = WINPORT(GetDriveType)(strRootDir);
 
-	// анализ CD-привода
+	// Р°РЅР°Р»РёР· CD-РїСЂРёРІРѕРґР°
 	if ((Detect&1) && DrvType == DRIVE_CDROM)
 	{
 		FARString VolumePath = strRootDir;
@@ -171,8 +171,8 @@ UINT FAR_GetDriveType(const wchar_t *RootDir, CDROM_DeviceCapabilities *Caps, DW
 			DrvType = GetDeviceTypeByCaps(caps);
 		}
 
-		if (DrvType == DRIVE_UNKNOWN) // фигня могла кака-нить произойти, посему...
-			DrvType=DRIVE_CDROM;       // ...вертаем в зад сидюк.
+		if (DrvType == DRIVE_UNKNOWN) // С„РёРіРЅСЏ РјРѕРіР»Р° РєР°РєР°-РЅРёС‚СЊ РїСЂРѕРёР·РѕР№С‚Рё, РїРѕСЃРµРјСѓ...
+			DrvType=DRIVE_CDROM;       // ...РІРµСЂС‚Р°РµРј РІ Р·Р°Рґ СЃРёРґСЋРє.
 	}
 
 //  if((Detect&2) && IsDriveUsb(*LocalName,nullptr)) //DrvType == DRIVE_REMOVABLE

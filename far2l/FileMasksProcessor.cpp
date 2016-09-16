@@ -1,8 +1,8 @@
 /*
 FileMasksProcessor.cpp
 
-Класс для работы с простыми масками файлов (не учитывается наличие масок
-исключения).
+РљР»Р°СЃСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РїСЂРѕСЃС‚С‹РјРё РјР°СЃРєР°РјРё С„Р°Р№Р»РѕРІ (РЅРµ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ РЅР°Р»РёС‡РёРµ РјР°СЃРѕРє
+РёСЃРєР»СЋС‡РµРЅРёСЏ).
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -65,15 +65,15 @@ void FileMasksProcessor::Free()
 }
 
 /*
- Инициализирует список масок. Принимает список, разделенных запятой.
- Возвращает FALSE при неудаче (например, одна из
- длина одной из масок равна 0)
+ РРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ СЃРїРёСЃРѕРє РјР°СЃРѕРє. РџСЂРёРЅРёРјР°РµС‚ СЃРїРёСЃРѕРє, СЂР°Р·РґРµР»РµРЅРЅС‹С… Р·Р°РїСЏС‚РѕР№.
+ Р’РѕР·РІСЂР°С‰Р°РµС‚ FALSE РїСЂРё РЅРµСѓРґР°С‡Рµ (РЅР°РїСЂРёРјРµСЂ, РѕРґРЅР° РёР·
+ РґР»РёРЅР° РѕРґРЅРѕР№ РёР· РјР°СЃРѕРє СЂР°РІРЅР° 0)
 */
 
 bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 {
 	Free();
-	// разделителем масок является не только запятая, но и точка с запятой!
+	// СЂР°Р·РґРµР»РёС‚РµР»РµРј РјР°СЃРѕРє СЏРІР»СЏРµС‚СЃСЏ РЅРµ С‚РѕР»СЊРєРѕ Р·Р°РїСЏС‚Р°СЏ, РЅРѕ Рё С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№!
 	DWORD flags=ULF_PACKASTERISKS|ULF_PROCESSBRACKETS|ULF_SORT|ULF_UNIQUE;
 
 	if (Flags&FMPF_ADDASTERISK)
@@ -117,9 +117,9 @@ bool FileMasksProcessor::IsEmpty()
 	return Masks.IsEmpty();
 }
 
-/* сравнить имя файла со списком масок
-   Возвращает TRUE в случае успеха.
-   Путь к файлу в FileName НЕ игнорируется */
+/* СЃСЂР°РІРЅРёС‚СЊ РёРјСЏ С„Р°Р№Р»Р° СЃРѕ СЃРїРёСЃРєРѕРј РјР°СЃРѕРє
+   Р’РѕР·РІСЂР°С‰Р°РµС‚ TRUE РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС…Р°.
+   РџСѓС‚СЊ Рє С„Р°Р№Р»Сѓ РІ FileName РќР• РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ */
 bool FileMasksProcessor::Compare(const wchar_t *FileName)
 {
 	if (bRE)
@@ -128,7 +128,7 @@ bool FileMasksProcessor::Compare(const wchar_t *FileName)
 		int len = StrLength(FileName);
 		bool ret = re->Search(FileName,FileName+len,m,i) ? TRUE : FALSE;
 
-		//Освободим память если большая строка, чтоб не накапливалось.
+		//РћСЃРІРѕР±РѕРґРёРј РїР°РјСЏС‚СЊ РµСЃР»Рё Р±РѕР»СЊС€Р°СЏ СЃС‚СЂРѕРєР°, С‡С‚РѕР± РЅРµ РЅР°РєР°РїР»РёРІР°Р»РѕСЃСЊ.
 		if (len > 1024)
 			re->CleanStack();
 
@@ -139,7 +139,7 @@ bool FileMasksProcessor::Compare(const wchar_t *FileName)
 
 	while (nullptr!=(MaskPtr=Masks.GetNext()))
 	{
-		// SkipPath=FALSE, т.к. в CFileMask вызывается PointToName
+		// SkipPath=FALSE, С‚.Рє. РІ CFileMask РІС‹Р·С‹РІР°РµС‚СЃСЏ PointToName
 		if (CmpName(MaskPtr,FileName, false))
 			return true;
 	}

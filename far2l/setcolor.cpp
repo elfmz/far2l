@@ -1,7 +1,7 @@
 /*
 setcolor.cpp
 
-Установка фаровских цветов
+РЈСЃС‚Р°РЅРѕРІРєР° С„Р°СЂРѕРІСЃРєРёС… С†РІРµС‚РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -86,10 +86,10 @@ static int ListPaletteItems[4][13]=
 		COL_DIALOGLISTTITLE,
 		COL_DIALOGLISTSCROLLBAR,
 		COL_DIALOGLISTARROWS,             // Arrow
-		COL_DIALOGLISTARROWSSELECTED,     // Выбранный - Arrow
+		COL_DIALOGLISTARROWSSELECTED,     // Р’С‹Р±СЂР°РЅРЅС‹Р№ - Arrow
 		COL_DIALOGLISTARROWSDISABLED,     // Arrow disabled
-		COL_DIALOGLISTGRAY,                        // "серый"
-		COL_DIALOGLISTSELECTEDGRAYTEXT,            // выбранный "серый"
+		COL_DIALOGLISTGRAY,                        // "СЃРµСЂС‹Р№"
+		COL_DIALOGLISTSELECTEDGRAYTEXT,            // РІС‹Р±СЂР°РЅРЅС‹Р№ "СЃРµСЂС‹Р№"
 	},
 	{ // warn
 		COL_WARNDIALOGLISTTEXT,
@@ -101,10 +101,10 @@ static int ListPaletteItems[4][13]=
 		COL_WARNDIALOGLISTTITLE,
 		COL_WARNDIALOGLISTSCROLLBAR,
 		COL_WARNDIALOGLISTARROWS,                   // Arrow
-		COL_WARNDIALOGLISTARROWSSELECTED,           // Выбранный - Arrow
+		COL_WARNDIALOGLISTARROWSSELECTED,           // Р’С‹Р±СЂР°РЅРЅС‹Р№ - Arrow
 		COL_WARNDIALOGLISTARROWSDISABLED,           // Arrow disabled
-		COL_WARNDIALOGLISTGRAY,                    // "серый"
-		COL_WARNDIALOGLISTSELECTEDGRAYTEXT,        // выбранный "серый"
+		COL_WARNDIALOGLISTGRAY,                    // "СЃРµСЂС‹Р№"
+		COL_WARNDIALOGLISTSELECTEDGRAYTEXT,        // РІС‹Р±СЂР°РЅРЅС‹Р№ "СЃРµСЂС‹Р№"
 	},
 	// Combobox
 	{ // normal
@@ -117,10 +117,10 @@ static int ListPaletteItems[4][13]=
 		COL_DIALOGCOMBOTITLE,
 		COL_DIALOGCOMBOSCROLLBAR,
 		COL_DIALOGCOMBOARROWS,                      // Arrow
-		COL_DIALOGCOMBOARROWSSELECTED,              // Выбранный - Arrow
+		COL_DIALOGCOMBOARROWSSELECTED,              // Р’С‹Р±СЂР°РЅРЅС‹Р№ - Arrow
 		COL_DIALOGCOMBOARROWSDISABLED,              // Arrow disabled
-		COL_DIALOGCOMBOGRAY,                       // "серый"
-		COL_DIALOGCOMBOSELECTEDGRAYTEXT,           // выбранный "серый"
+		COL_DIALOGCOMBOGRAY,                       // "СЃРµСЂС‹Р№"
+		COL_DIALOGCOMBOSELECTEDGRAYTEXT,           // РІС‹Р±СЂР°РЅРЅС‹Р№ "СЃРµСЂС‹Р№"
 	},
 	{ // warn
 		COL_WARNDIALOGCOMBOTEXT,
@@ -132,10 +132,10 @@ static int ListPaletteItems[4][13]=
 		COL_WARNDIALOGCOMBOTITLE,
 		COL_WARNDIALOGCOMBOSCROLLBAR,
 		COL_WARNDIALOGCOMBOARROWS,                  // Arrow
-		COL_WARNDIALOGCOMBOARROWSSELECTED,          // Выбранный - Arrow
+		COL_WARNDIALOGCOMBOARROWSSELECTED,          // Р’С‹Р±СЂР°РЅРЅС‹Р№ - Arrow
 		COL_WARNDIALOGCOMBOARROWSDISABLED,          // Arrow disabled
-		COL_WARNDIALOGCOMBOGRAY,                   // "серый"
-		COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,       // выбранный "серый"
+		COL_WARNDIALOGCOMBOGRAY,                   // "СЃРµСЂС‹Р№"
+		COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,       // РІС‹Р±СЂР°РЅРЅС‹Р№ "СЃРµСЂС‹Р№"
 	},
 };
 
@@ -297,10 +297,10 @@ void SetColors()
 		COL_MENUSELECTEDHIGHLIGHT,COL_MENUDISABLEDTEXT,
 		COL_MENUBOX,COL_MENUTITLE,COL_MENUSCROLLBAR,
 		COL_MENUARROWS,                             // Arrow
-		COL_MENUARROWSSELECTED,                     // Выбранный - Arrow
+		COL_MENUARROWSSELECTED,                     // Р’С‹Р±СЂР°РЅРЅС‹Р№ - Arrow
 		COL_MENUARROWSDISABLED,
-		COL_MENUGRAYTEXT,                          // "серый"
-		COL_MENUSELECTEDGRAYTEXT,                  // выбранный "серый"
+		COL_MENUGRAYTEXT,                          // "СЃРµСЂС‹Р№"
+		COL_MENUSELECTEDGRAYTEXT,                  // РІС‹Р±СЂР°РЅРЅС‹Р№ "СЃРµСЂС‹Р№"
 	};
 	MenuDataEx HMenuItems[]=
 	{
@@ -401,7 +401,7 @@ void SetColors()
 
 			if (GroupsCode==12)
 			{
-				//                   было sizeof(Palette)
+				//                   Р±С‹Р»Рѕ sizeof(Palette)
 				memcpy(Palette,DefaultPalette,SizeArrayPalette);
 				break;
 			}
@@ -499,7 +499,7 @@ void GetColor(int PaletteIndex)
 	if (GetColorDialog(NewColor))
 	{
 		Palette[PaletteIndex-COL_FIRSTPALETTECOLOR]=static_cast<BYTE>(NewColor);
-		ScrBuf.Lock(); // отменяем всякую прорисовку
+		ScrBuf.Lock(); // РѕС‚РјРµРЅСЏРµРј РІСЃСЏРєСѓСЋ РїСЂРѕСЂРёСЃРѕРІРєСѓ
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->LeftPanel->Redraw();
 		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
@@ -508,12 +508,12 @@ void GetColor(int PaletteIndex)
 		if (MenuToRedraw3)
 			MenuToRedraw3->Hide();
 
-		MenuToRedraw2->Hide(); // гасим
+		MenuToRedraw2->Hide(); // РіР°СЃРёРј
 		MenuToRedraw1->Hide();
-		FrameManager->RefreshFrame(); // рефрешим
-		FrameManager->PluginCommit(); // коммитим.
+		FrameManager->RefreshFrame(); // СЂРµС„СЂРµС€РёРј
+		FrameManager->PluginCommit(); // РєРѕРјРјРёС‚РёРј.
 		MenuToRedraw1->SetColors();
-		MenuToRedraw1->Show(); // кажем
+		MenuToRedraw1->Show(); // РєР°Р¶РµРј
 		MenuToRedraw2->SetColors();
 		MenuToRedraw2->Show();
 
@@ -526,8 +526,8 @@ void GetColor(int PaletteIndex)
 		if (Opt.Clock)
 			ShowTime(1);
 
-		ScrBuf.Unlock(); // разрешаем прорисовку
-		FrameManager->PluginCommit(); // коммитим.
+		ScrBuf.Unlock(); // СЂР°Р·СЂРµС€Р°РµРј РїСЂРѕСЂРёСЃРѕРІРєСѓ
+		FrameManager->PluginCommit(); // РєРѕРјРјРёС‚РёРј.
 	}
 }
 

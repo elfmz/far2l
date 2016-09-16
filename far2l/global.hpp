@@ -3,8 +3,8 @@
 /*
 global.hpp
 
-Описание глобальных переменных
-Включать последним.
+РћРїРёСЃР°РЅРёРµ РіР»РѕР±Р°Р»СЊРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
+Р’РєР»СЋС‡Р°С‚СЊ РїРѕСЃР»РµРґРЅРёРј.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -44,8 +44,8 @@ extern FARString g_strFarPath;
 
 extern FARString strGlobalSearchString;
 extern int GlobalSearchCase;
-extern int GlobalSearchWholeWords; // значение "Whole words" для поиска
-extern int GlobalSearchHex; // значение "Search for hex" для поиска
+extern int GlobalSearchWholeWords; // Р·РЅР°С‡РµРЅРёРµ "Whole words" РґР»СЏ РїРѕРёСЃРєР°
+extern int GlobalSearchHex; // Р·РЅР°С‡РµРЅРёРµ "Search for hex" РґР»СЏ РїРѕРёСЃРєР°
 
 extern int GlobalSearchReverse;
 
@@ -87,7 +87,7 @@ extern int _localLastError;
 extern int KeepUserScreen;
 extern FARString g_strDirToSet; //RAVE!!!
 
-extern int Macro_DskShowPosType; // для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
+extern int Macro_DskShowPosType; // РґР»СЏ РєР°РєРѕР№ РїР°РЅРµР»Рё РІС‹Р·С‹РІР°Р»Рё РјРµРЅСЋ РІС‹Р±РѕСЂР° РґРёСЃРєРѕРІ (0 - РЅРёС‡РµСЂС‚Р° РЅРµ РІС‹Р·С‹РІР°Р»Рё, 1 - Р»РµРІР°СЏ (AltF1), 2 - РїСЂР°РІР°СЏ (AltF2))
 
 // Macro Const
 extern const wchar_t constMsX[];

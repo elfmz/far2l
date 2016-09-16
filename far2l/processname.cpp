@@ -1,7 +1,7 @@
 /*
 processname.cpp
 
-Обработать имя файла: сравнить с маской, масками, сгенерировать по маске
+РћР±СЂР°Р±РѕС‚Р°С‚СЊ РёРјСЏ С„Р°Р№Р»Р°: СЃСЂР°РІРЅРёС‚СЊ СЃ РјР°СЃРєРѕР№, РјР°СЃРєР°РјРё, СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ РїРѕ РјР°СЃРєРµ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "pathmix.hpp"
 
-// обработать имя файла: сравнить с маской, масками, сгенерировать по маске
+// РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РёРјСЏ С„Р°Р№Р»Р°: СЃСЂР°РІРЅРёС‚СЊ СЃ РјР°СЃРєРѕР№, РјР°СЃРєР°РјРё, СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ РїРѕ РјР°СЃРєРµ
 int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags)
 {
 	bool skippath = (flags&PN_SKIPPATH)!=0;
@@ -79,14 +79,14 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 }
 
 /* $ 09.10.2000 IS
-    Генерация нового имени по маске
-    (взял из ShellCopy::ShellCopyConvertWildcards)
+    Р“РµРЅРµСЂР°С†РёСЏ РЅРѕРІРѕРіРѕ РёРјРµРЅРё РїРѕ РјР°СЃРєРµ
+    (РІР·СЏР» РёР· ShellCopy::ShellCopyConvertWildcards)
 */
-// На основе имени файла (Src) и маски (Dest) генерируем новое имя
-// SelectedFolderNameLength - длина каталога. Например, есть
-// каталог dir1, а в нем файл file1. Нужно сгенерировать имя по маске для dir1.
-// Параметры могут быть следующими: Src="dir1", SelectedFolderNameLength=0
-// или Src="dir1/file1", а SelectedFolderNameLength=4 (длина "dir1")
+// РќР° РѕСЃРЅРѕРІРµ РёРјРµРЅРё С„Р°Р№Р»Р° (Src) Рё РјР°СЃРєРё (Dest) РіРµРЅРµСЂРёСЂСѓРµРј РЅРѕРІРѕРµ РёРјСЏ
+// SelectedFolderNameLength - РґР»РёРЅР° РєР°С‚Р°Р»РѕРіР°. РќР°РїСЂРёРјРµСЂ, РµСЃС‚СЊ
+// РєР°С‚Р°Р»РѕРі dir1, Р° РІ РЅРµРј С„Р°Р№Р» file1. РќСѓР¶РЅРѕ СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ РёРјСЏ РїРѕ РјР°СЃРєРµ РґР»СЏ dir1.
+// РџР°СЂР°РјРµС‚СЂС‹ РјРѕРіСѓС‚ Р±С‹С‚СЊ СЃР»РµРґСѓСЋС‰РёРјРё: Src="dir1", SelectedFolderNameLength=0
+// РёР»Рё Src="dir1/file1", Р° SelectedFolderNameLength=4 (РґР»РёРЅР° "dir1")
 int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFolderNameLength)
 {
 	FARString strPartAfterFolderName;
@@ -97,7 +97,7 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 
 	if (!wcschr(strWildName, L'*') && !wcschr(strWildName, L'?'))
 	{
-		//strDest.ReleaseBuffer (); не надо так как строка не поменялась
+		//strDest.ReleaseBuffer (); РЅРµ РЅР°РґРѕ С‚Р°Рє РєР°Рє СЃС‚СЂРѕРєР° РЅРµ РїРѕРјРµРЅСЏР»Р°СЃСЊ
 		return FALSE;
 	}
 
@@ -189,9 +189,9 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 }
 
 
-// IS: это реальное тело функции сравнения с маской, но использовать
-// IS: "снаружи" нужно не эту функцию, а CmpName (ее тело расположено
-// IS: после CmpName_Body)
+// IS: СЌС‚Рѕ СЂРµР°Р»СЊРЅРѕРµ С‚РµР»Рѕ С„СѓРЅРєС†РёРё СЃСЂР°РІРЅРµРЅРёСЏ СЃ РјР°СЃРєРѕР№, РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ
+// IS: "СЃРЅР°СЂСѓР¶Рё" РЅСѓР¶РЅРѕ РЅРµ СЌС‚Сѓ С„СѓРЅРєС†РёСЋ, Р° CmpName (РµРµ С‚РµР»Рѕ СЂР°СЃРїРѕР»РѕР¶РµРЅРѕ
+// IS: РїРѕСЃР»Рµ CmpName_Body)
 static int CmpName_Body(const wchar_t *pattern,const wchar_t *str, bool CmpNameSearchMode)
 {
 	wchar_t stringc,patternc,rangec;
@@ -200,7 +200,7 @@ static int CmpName_Body(const wchar_t *pattern,const wchar_t *str, bool CmpNameS
 	for (;; ++str)
 	{
 		/* $ 01.05.2001 DJ
-		   используем инлайновые версии
+		   РёСЃРїРѕР»СЊР·СѓРµРј РёРЅР»Р°Р№РЅРѕРІС‹Рµ РІРµСЂСЃРёРё
 		*/
 		stringc=Upper(*str);
 		patternc=Upper(*pattern++);
@@ -221,8 +221,8 @@ static int CmpName_Body(const wchar_t *pattern,const wchar_t *str, bool CmpNameS
 					return TRUE;
 
 				/* $ 01.05.2001 DJ
-				   оптимизированная ветка работает и для имен с несколькими
-				   точками
+				   РѕРїС‚РёРјРёР·РёСЂРѕРІР°РЅРЅР°СЏ РІРµС‚РєР° СЂР°Р±РѕС‚Р°РµС‚ Рё РґР»СЏ РёРјРµРЅ СЃ РЅРµСЃРєРѕР»СЊРєРёРјРё
+				   С‚РѕС‡РєР°РјРё
 				*/
 				if (*pattern==L'.')
 				{
@@ -317,7 +317,7 @@ static int CmpName_Body(const wchar_t *pattern,const wchar_t *str, bool CmpNameS
 	}
 }
 
-// IS: функция для внешнего мира, использовать ее
+// IS: С„СѓРЅРєС†РёСЏ РґР»СЏ РІРЅРµС€РЅРµРіРѕ РјРёСЂР°, РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РµРµ
 int CmpName(const wchar_t *pattern,const wchar_t *str, bool skippath, bool CmpNameSearchMode)
 {
 	if (!pattern || !str)

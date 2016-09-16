@@ -1,7 +1,7 @@
 /*
 syslog.cpp
 
-Системный отладочный лог :-)
+РЎРёСЃС‚РµРјРЅС‹Р№ РѕС‚Р»Р°РґРѕС‡РЅС‹Р№ Р»РѕРі :-)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -302,7 +302,7 @@ void WINAPI _export FarSysLog_INPUT_RECORD_Dump(const wchar_t *ModuleName,INPUT_
 }
 #endif
 
-// "Умный класс для SysLog
+// "РЈРјРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ SysLog
 CleverSysLog::CleverSysLog(const wchar_t *Title)
 {
 #if defined(SYSLOG)
@@ -661,9 +661,9 @@ FARString __MCODE_ToName(int OpCode)
 		DEF_MCODE_(F_BM_STAT),             // N=BM.Stat()
 		DEF_MCODE_(F_BM_GET),
 		DEF_MCODE_(F_BM_DEL),
-		DEF_MCODE_(F_BM_GOTO),                  // N=BM.Goto(n) - переход на закладку с указанным индексом (0 --> текущую)
-		DEF_MCODE_(F_BM_PUSH),                  // N=BM.Push() - сохранить текущую позицию в виде закладки в конце стека
-		DEF_MCODE_(F_BM_POP),                   // N=BM.Pop() - восстановить текущую позицию из закладки в конце стека и удалить закладку
+		DEF_MCODE_(F_BM_GOTO),                  // N=BM.Goto(n) - РїРµСЂРµС…РѕРґ РЅР° Р·Р°РєР»Р°РґРєСѓ СЃ СѓРєР°Р·Р°РЅРЅС‹Рј РёРЅРґРµРєСЃРѕРј (0 --> С‚РµРєСѓС‰СѓСЋ)
+		DEF_MCODE_(F_BM_PUSH),                  // N=BM.Push() - СЃРѕС…СЂР°РЅРёС‚СЊ С‚РµРєСѓС‰СѓСЋ РїРѕР·РёС†РёСЋ РІ РІРёРґРµ Р·Р°РєР»Р°РґРєРё РІ РєРѕРЅС†Рµ СЃС‚РµРєР°
+		DEF_MCODE_(F_BM_POP),                   // N=BM.Pop() - РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РµРєСѓС‰СѓСЋ РїРѕР·РёС†РёСЋ РёР· Р·Р°РєР»Р°РґРєРё РІ РєРѕРЅС†Рµ СЃС‚РµРєР° Рё СѓРґР°Р»РёС‚СЊ Р·Р°РєР»Р°РґРєСѓ
 		DEF_MCODE_(OP_ADD),
 		DEF_MCODE_(OP_AKEY),
 		DEF_MCODE_(OP_AND),
@@ -747,7 +747,7 @@ FARString __MCODE_ToName(int OpCode)
 		DEF_MCODE_(V_DRVSHOWPOS),
 		DEF_MCODE_(V_EDITORCURLINE),
 		DEF_MCODE_(V_EDITORCURPOS),
-		DEF_MCODE_(V_EDITORREALPOS),      // Editor.RealPos - текущая поз. в редакторе без привязки к размеру табуляции
+		DEF_MCODE_(V_EDITORREALPOS),      // Editor.RealPos - С‚РµРєСѓС‰Р°СЏ РїРѕР·. РІ СЂРµРґР°РєС‚РѕСЂРµ Р±РµР· РїСЂРёРІСЏР·РєРё Рє СЂР°Р·РјРµСЂСѓ С‚Р°Р±СѓР»СЏС†РёРё
 		DEF_MCODE_(V_EDITORFILENAME),
 		DEF_MCODE_(V_EDITORLINES),
 		DEF_MCODE_(V_EDITORSTATE),
@@ -1127,7 +1127,7 @@ void INPUT_RECORD_DumpBuffer(FILE *fp)
 
 	int InternalLog=fp?FALSE:TRUE;
 	DWORD ReadCount2;
-	// берем количество оставшейся порции эвентов
+	// Р±РµСЂРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РѕСЃС‚Р°РІС€РµР№СЃСЏ РїРѕСЂС†РёРё СЌРІРµРЅС‚РѕРІ
 	Console.GetNumberOfInputEvents(ReadCount2);
 
 	if (ReadCount2 <= 1)
@@ -1161,7 +1161,7 @@ void INPUT_RECORD_DumpBuffer(FILE *fp)
 					fwprintf(fp,L"             %ls%04d: %ls\n",MakeSpace(),I,_INPUT_RECORD_Dump(TmpRec+I));
 				}
 
-				// освободим память
+				// РѕСЃРІРѕР±РѕРґРёРј РїР°РјСЏС‚СЊ
 				xf_free(TmpRec);
 			}
 		}
@@ -1175,7 +1175,7 @@ void INPUT_RECORD_DumpBuffer(FILE *fp)
 #endif
 }
 
-// после вызова этой функции нужно освободить память!!!
+// РїРѕСЃР»Рµ РІС‹Р·РѕРІР° СЌС‚РѕР№ С„СѓРЅРєС†РёРё РЅСѓР¶РЅРѕ РѕСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ!!!
 FARString __SysLog_LinearDump(LPBYTE Buf,int SizeBuf)
 {
 #if defined(SYSLOG)

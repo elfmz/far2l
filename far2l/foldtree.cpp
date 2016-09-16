@@ -1,7 +1,7 @@
 /*
 foldtree.cpp
 
-Ïîèñê êàòàëîãà ïî Alt-F10
+ÐŸÐ¾Ð¸ÑÐº ÐºÐ°Ñ‚Ð°Ð»Ð¾Ð³Ð° Ð¿Ð¾ Alt-F10
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -61,7 +61,7 @@ FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalon
 	SetRestoreScreenMode(TRUE);
 	if (ModalMode != MODALTREE_FREE)
 		strResultFolder.Clear();
-	KeyBarVisible = TRUE;  // Çàñòàâèì îáíîâëÿòñÿ êåéáàð
+	KeyBarVisible = TRUE;  // Ð—Ð°ÑÑ‚Ð°Ð²Ð¸Ð¼ Ð¾Ð±Ð½Ð¾Ð²Ð»ÑÑ‚ÑÑ ÐºÐµÐ¹Ð±Ð°Ñ€
 	//TopScreen=new SaveScreen;
 	SetCoords();
 
@@ -79,7 +79,7 @@ FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalon
 		Tree->SetVisible(TRUE);
 		Tree->Update(0);
 
-		// åñëè áûëî ïðåðûâàíèå â ïðîöåññå ñêàíèðîâàíèÿ è ýòî áûëî äåðåâî êîïèðà...
+		// ÐµÑÐ»Ð¸ Ð±Ñ‹Ð»Ð¾ Ð¿Ñ€ÐµÑ€Ñ‹Ð²Ð°Ð½Ð¸Ðµ Ð² Ð¿Ñ€Ð¾Ñ†ÐµÑÑÐµ ÑÐºÐ°Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ Ð¸ ÑÑ‚Ð¾ Ð±Ñ‹Ð»Ð¾ Ð´ÐµÑ€ÐµÐ²Ð¾ ÐºÐ¾Ð¿Ð¸Ñ€Ð°...
 		if (Tree->GetExitCode())
 		{
 			if (!(FindEdit=new Edit))

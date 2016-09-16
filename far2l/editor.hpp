@@ -172,12 +172,6 @@ class Editor:public ScreenObject
 				}
 		};
 
-		Edit *TopList;
-		Edit *EndList;
-		Edit *TopScreen;
-		Edit *CurLine;
-		Edit *LastGetLine;
-		int LastGetLineNumber;
 
 		DList<EditorUndoData> UndoData;
 		EditorUndoData *UndoPos;
@@ -232,6 +226,12 @@ class Editor:public ScreenObject
 		int EditorID;
 
 		FileEditor *HostFileEditor;
+		Edit *TopList;
+		Edit *EndList;
+		Edit *TopScreen;
+		Edit *CurLine;
+		Edit *LastGetLine;
+		int LastGetLineNumber;
 
 	private:
 		virtual void DisplayObject();

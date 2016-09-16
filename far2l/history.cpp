@@ -1,7 +1,7 @@
 /*
 history.cpp
 
-История (Alt-F8, Alt-F11, Alt-F12)
+РСЃС‚РѕСЂРёСЏ (Alt-F8, Alt-F11, Alt-F12)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -65,8 +65,8 @@ History::~History()
 }
 
 /*
-   SaveForbid - принудительно запретить запись добавляемой строки.
-                Используется на панели плагина
+   SaveForbid - РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ Р·Р°РїСЂРµС‚РёС‚СЊ Р·Р°РїРёСЃСЊ РґРѕР±Р°РІР»СЏРµРјРѕР№ СЃС‚СЂРѕРєРё.
+                РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅР° РїР°РЅРµР»Рё РїР»Р°РіРёРЅР°
 */
 void History::AddToHistory(const wchar_t *Str, int Type, const wchar_t *Prefix, bool SaveForbid)
 {
@@ -96,7 +96,7 @@ void History::AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int T
 	AddRecord.strName += Str;
 	AddRecord.Type=Type;
 
-	if (RemoveDups) // удалять дубликаты?
+	if (RemoveDups) // СѓРґР°Р»СЏС‚СЊ РґСѓР±Р»РёРєР°С‚С‹?
 	{
 		for (HistoryRecord *HistoryItem=HistoryList.First(); HistoryItem ; HistoryItem=HistoryList.Next(HistoryItem))
 		{
@@ -280,7 +280,7 @@ bool History::ReadLastItem(const wchar_t *RegKey, FARString &strStr)
 	DWORD Type;
 	DWORD Size=0;
 
-	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,nullptr,&Size)!=ERROR_SUCCESS || Size<sizeof(wchar_t)) // Нету ничерта
+	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,nullptr,&Size)!=ERROR_SUCCESS || Size<sizeof(wchar_t)) // РќРµС‚Сѓ РЅРёС‡РµСЂС‚Р°
 		return false;
 
 	wchar_t *Buffer=(wchar_t*)xf_malloc(Size);
@@ -382,7 +382,7 @@ bool History::ReadHistory(bool bOnlyLines)
 
 	Size=0;
 
-	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,nullptr,&Size)!=ERROR_SUCCESS || !Size) // Нету ничерта
+	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,nullptr,&Size)!=ERROR_SUCCESS || !Size) // РќРµС‚Сѓ РЅРёС‡РµСЂС‚Р°
 	{
 		ret = true;
 		goto end;
@@ -474,12 +474,12 @@ const wchar_t *History::GetTitle(int Type)
 {
 	switch (Type)
 	{
-		case 0: // вьювер
+		case 0: // РІСЊСЋРІРµСЂ
 			return MSG(MHistoryView);
-		case 1: // обычное открытие в редакторе
-		case 4: // открытие с локом
+		case 1: // РѕР±С‹С‡РЅРѕРµ РѕС‚РєСЂС‹С‚РёРµ РІ СЂРµРґР°РєС‚РѕСЂРµ
+		case 4: // РѕС‚РєСЂС‹С‚РёРµ СЃ Р»РѕРєРѕРј
 			return MSG(MHistoryEdit);
-		case 2: // external - без ожидания
+		case 2: // external - Р±РµР· РѕР¶РёРґР°РЅРёСЏ
 		case 3: // external - AlwaysWaitFinish
 			return MSG(MHistoryExt);
 	}
@@ -538,7 +538,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		HistoryMenu.DeleteItems();
 		HistoryMenu.Modal::ClearDone();
 
-		// заполнение пунктов меню
+		// Р·Р°РїРѕР»РЅРµРЅРёРµ РїСѓРЅРєС‚РѕРІ РјРµРЅСЋ
 		for (const HistoryRecord *HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Last():HistoryList.First(); HistoryItem ; HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Prev(HistoryItem):HistoryList.Next(HistoryItem))
 		{
 			FARString strRecord = HistoryItem->strName;
@@ -552,11 +552,11 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			}
 
 			/*
-				TODO: возможно здесь! или выше....
+				TODO: РІРѕР·РјРѕР¶РЅРѕ Р·РґРµСЃСЊ! РёР»Рё РІС‹С€Рµ....
 				char Date[16],Time[16], OutStr[32];
 				ConvertDate(HistoryItem->Timestamp,Date,Time,5,TRUE,FALSE,TRUE,TRUE);
-				а дальше
-				strRecord += дату и время
+				Р° РґР°Р»СЊС€Рµ
+				strRecord += РґР°С‚Сѓ Рё РІСЂРµРјСЏ
 			*/
 			strRecord += HistoryItem->strName;;
 
@@ -595,7 +595,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		/*BUGBUG???
 			if (TypeHistory == HISTORYTYPE_DIALOG)
 			{
-					//  Перед отрисовкой спросим об изменении цветовых атрибутов
+					//  РџРµСЂРµРґ РѕС‚СЂРёСЃРѕРІРєРѕР№ СЃРїСЂРѕСЃРёРј РѕР± РёР·РјРµРЅРµРЅРёРё С†РІРµС‚РѕРІС‹С… Р°С‚СЂРёР±СѓС‚РѕРІ
 					BYTE RealColors[VMENU_COLOR_COUNT];
 					FarListColors ListColors={0};
 					ListColors.ColorCount=VMENU_COLOR_COUNT;
@@ -617,7 +617,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 
 			int Key=HistoryMenu.ReadInput();
 
-			if (TypeHistory == HISTORYTYPE_DIALOG && Key==KEY_TAB) // Tab в списке хистори диалогов - аналог Enter
+			if (TypeHistory == HISTORYTYPE_DIALOG && Key==KEY_TAB) // Tab РІ СЃРїРёСЃРєРµ С…РёСЃС‚РѕСЂРё РґРёР°Р»РѕРіРѕРІ - Р°РЅР°Р»РѕРі Enter
 			{
 				HistoryMenu.ProcessKey(KEY_ENTER);
 				continue;
@@ -628,7 +628,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 
 			switch (Key)
 			{
-				case KEY_CTRLR: // обновить с удалением недоступных
+				case KEY_CTRLR: // РѕР±РЅРѕРІРёС‚СЊ СЃ СѓРґР°Р»РµРЅРёРµРј РЅРµРґРѕСЃС‚СѓРїРЅС‹С…
 				{
 					if (TypeHistory == HISTORYTYPE_FOLDER || TypeHistory == HISTORYTYPE_VIEW)
 					{
@@ -636,10 +636,10 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 
 						for (HistoryRecord *HistoryItem=HistoryList.First(); HistoryItem ; HistoryItem=HistoryList.Next(HistoryItem))
 						{
-							if (HistoryItem->Lock) // залоченные не трогаем
+							if (HistoryItem->Lock) // Р·Р°Р»РѕС‡РµРЅРЅС‹Рµ РЅРµ С‚СЂРѕРіР°РµРј
 								continue;
 
-							// убить запись из истории
+							// СѓР±РёС‚СЊ Р·Р°РїРёСЃСЊ РёР· РёСЃС‚РѕСЂРёРё
 							if (apiGetFileAttributes(HistoryItem->strName) == INVALID_FILE_ATTRIBUTES)
 							{
 								HistoryItem=HistoryList.Delete(HistoryItem);
@@ -647,9 +647,9 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 							}
 						}
 
-						if (ModifiedHistory) // избавляемся от лишних телодвижений
+						if (ModifiedHistory) // РёР·Р±Р°РІР»СЏРµРјСЃСЏ РѕС‚ Р»РёС€РЅРёС… С‚РµР»РѕРґРІРёР¶РµРЅРёР№
 						{
-							SaveHistory(); // сохранить
+							SaveHistory(); // СЃРѕС…СЂР°РЅРёС‚СЊ
 							HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
 							HistoryMenu.SetUpdateRequired(TRUE);
 							IsUpdate=true;
@@ -689,7 +689,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					RetCode=(Key==KEY_F4? 5 : 4);
 					break;
 				}
-				// $ 09.04.2001 SVS - Фича - копирование из истории строки в Clipboard
+				// $ 09.04.2001 SVS - Р¤РёС‡Р° - РєРѕРїРёСЂРѕРІР°РЅРёРµ РёР· РёСЃС‚РѕСЂРёРё СЃС‚СЂРѕРєРё РІ Clipboard
 				case KEY_CTRLC:
 				case KEY_CTRLINS:  case KEY_CTRLNUMPAD0:
 				{
@@ -751,7 +751,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					{
 						for (HistoryRecord *HistoryItem=HistoryList.First(); HistoryItem ; HistoryItem=HistoryList.Next(HistoryItem))
 						{
-							if (HistoryItem->Lock) // залоченные не трогаем
+							if (HistoryItem->Lock) // Р·Р°Р»РѕС‡РµРЅРЅС‹Рµ РЅРµ С‚СЂРѕРіР°РµРј
 								continue;
 
 							HistoryItem=HistoryList.Delete(HistoryItem);
@@ -792,7 +792,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			{
 				WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);
 
-				if (SelectedRecord->Type == 1 && TypeHistory == HISTORYTYPE_VIEW) // Edit? тогда спросим и если надо создадим
+				if (SelectedRecord->Type == 1 && TypeHistory == HISTORYTYPE_VIEW) // Edit? С‚РѕРіРґР° СЃРїСЂРѕСЃРёРј Рё РµСЃР»Рё РЅР°РґРѕ СЃРѕР·РґР°РґРёРј
 				{
 					if (!Message(MSG_WARNING|MSG_ERRORTYPE,2,Title,SelectedRecord->strName,MSG(MViewHistoryIsCreate),MSG(MHYes),MSG(MHNo)))
 						break;

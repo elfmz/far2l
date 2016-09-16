@@ -3,7 +3,7 @@
 /*
 bitflags.hpp
 
-Флаги
+Р¤Р»Р°РіРё
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -45,16 +45,16 @@ class BitFlags
 		~BitFlags() {}
 
 	public:
-		// установить набор флагов
+		// СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РЅР°Р±РѕСЂ С„Р»Р°РіРѕРІ
 		DWORD Set(DWORD NewFlags) { Flags|=NewFlags; return Flags;}
-		// сбросить набор флагов
+		// СЃР±СЂРѕСЃРёС‚СЊ РЅР°Р±РѕСЂ С„Р»Р°РіРѕРІ
 		DWORD Clear(DWORD NewFlags) { Flags&=~NewFlags; return Flags; }
-		// проверить набор флагов
+		// РїСЂРѕРІРµСЂРёС‚СЊ РЅР°Р±РѕСЂ С„Р»Р°РіРѕРІ
 		BOOL Check(DWORD NewFlags) const { return Flags&NewFlags?TRUE:FALSE; }
-		// изменить состояние набора флагов в заивисмости от Status
+		// РёР·РјРµРЅРёС‚СЊ СЃРѕСЃС‚РѕСЏРЅРёРµ РЅР°Р±РѕСЂР° С„Р»Р°РіРѕРІ РІ Р·Р°РёРІРёСЃРјРѕСЃС‚Рё РѕС‚ Status
 		DWORD Change(DWORD NewFlags,BOOL Status) { if (Status) Flags|=NewFlags; else Flags&=~NewFlags; return Flags;}
-		// инвертировать состояние флагов
+		// РёРЅРІРµСЂС‚РёСЂРѕРІР°С‚СЊ СЃРѕСЃС‚РѕСЏРЅРёРµ С„Р»Р°РіРѕРІ
 		DWORD Swap(DWORD SwapedFlags) { if (Flags&SwapedFlags) Flags&=~SwapedFlags; else Flags|=SwapedFlags; return Flags;}
-		//сбросить все флаги
+		//СЃР±СЂРѕСЃРёС‚СЊ РІСЃРµ С„Р»Р°РіРё
 		void ClearAll() {Flags=0;}
 };

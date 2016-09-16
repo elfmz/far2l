@@ -195,30 +195,7 @@ wchar_t* FormNtPath(const wchar_t* path, StrBuf& buf) {
   int l = lstrlen(path);
   buf.Grow(l + 1);
   lstrcpy(buf, path);
-/*
-  if (l > 4 && path[0] == GOOD_SLASH && path[1] == GOOD_SLASH)
-  {
-    if ((path[2] == L'?' || path[2] == L'.') && path[3] == L'\\')
-    {
-    }
-    else
-    {
-      buf.Grow(6 + l + 1);
-      lstrcpy(buf, L"\\\\?\\UNC\\");
-      lstrcat(buf, path + 2);
-    }
-  }
-  else
-  {
-    buf.Grow(4 + l + 1);
-    lstrcpy(buf, L"\\\\?\\");
-    lstrcat(buf, path);
-  }
-  // slash -> backslash
-  for (wchar_t* ch = buf; *ch; ch++)
-    if (*ch == L'/')
-      *ch = L'\\';
-  return buf;*/
+  return buf;
 }
 #endif
 

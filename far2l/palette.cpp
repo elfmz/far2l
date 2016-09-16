@@ -1,7 +1,7 @@
 /*
 palette.cpp
 
-Таблица цветов
+РўР°Р±Р»РёС†Р° С†РІРµС‚РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -123,7 +123,7 @@ unsigned char DefaultPalette[]=
 	F_BLACK|B_CYAN,                         // COL_COMMANDLINESELECTED,
 	F_YELLOW|B_BLUE,                        // COL_VIEWERARROWS,
 
-	0,                                      // COL_RESERVED0                   // Служебная позиция: 1 - это есть default color
+	0,                                      // COL_RESERVED0                   // РЎР»СѓР¶РµР±РЅР°СЏ РїРѕР·РёС†РёСЏ: 1 - СЌС‚Рѕ РµСЃС‚СЊ default color
 
 	F_BLACK|B_LIGHTGRAY,                    // COL_DIALOGLISTSCROLLBAR,
 	F_WHITE|B_CYAN,                         // COL_MENUSCROLLBAR,
@@ -302,7 +302,7 @@ unsigned char BlackPalette[]=
 	F_BLACK|B_LIGHTGRAY,                    // COL_COMMANDLINESELECTED,
 	F_WHITE|B_BLACK,                        // COL_VIEWERARROWS,
 
-	1,                                      // COL_RESERVED0                   // Служебная позиция: 1 - это есть default color
+	1,                                      // COL_RESERVED0                   // РЎР»СѓР¶РµР±РЅР°СЏ РїРѕР·РёС†РёСЏ: 1 - СЌС‚Рѕ РµСЃС‚СЊ default color
 
 	F_BLACK|B_LIGHTGRAY,                    // COL_DIALOGLISTSCROLLBAR,
 	F_BLACK|B_LIGHTGRAY,                    // COL_MENUSCROLLBAR,

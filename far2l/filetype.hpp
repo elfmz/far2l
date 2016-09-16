@@ -3,7 +3,7 @@
 /*
 filetype.hpp
 
-Работа с ассоциациями файлов
+Р Р°Р±РѕС‚Р° СЃ Р°СЃСЃРѕС†РёР°С†РёСЏРјРё С„Р°Р№Р»РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,7 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Работа с ассоциациями файлов
+// Р Р°Р±РѕС‚Р° СЃ Р°СЃСЃРѕС†РёР°С†РёСЏРјРё С„Р°Р№Р»РѕРІ
 enum
 {
 	FILETYPE_EXEC,       // Enter

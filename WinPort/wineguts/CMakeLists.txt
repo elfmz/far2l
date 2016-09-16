@@ -89,5 +89,8 @@ wctomb.c
 wctype.c
 )
 
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_C_VISIBILITY_PRESET default)
+
 add_library (wineguts ${SOURCES})
 

@@ -63,6 +63,7 @@ typedef FKeyBarTitle *PFKeyBarTitle;
 #define FHK_KEY(hkey)      ((int)HI_WORD((DWORD)hkey))
 
 //Usefull console chars
+/*
 #define FAR_SHADOW_CHAR                      '\xB0' //°
 #define FAR_FULL_CHAR                        '\xDB' //Û
 #define FAR_VERT_CHAR                        '\xB3' //³
@@ -92,6 +93,20 @@ typedef FKeyBarTitle *PFKeyBarTitle;
 #define FAR_TAB_STR                          "\xFE" //þ
 #define FAR_DOWN_STR                         "\x19" //
 #define FAR_SKIP_STR                         "\x20" //" "
+*/
+
+#define FAR_SBMENU_CHAR                      '\x10' //
+#define FAR_LEFT_CHAR                        '\x11' //
+#define FAR_RIGHT_CHAR                       FAR_SBMENU_CHAR
+#define FAR_VERT_CHAR                        '|' //³
+#define FAR_DOWN_CHAR                        '\x19' //
+#define FAR_SKIP_CHAR                        '\x20' //' '
+#define FAR_SHADOW_CHAR                       '='
+#define FAR_FULL_CHAR                         '#'
+#define FAR_SHADOW_STR                       "="
+#define FAR_FULL_STR                         "#"
+
+
 //Menu spec characters
 #define FMENU_CHECKED                        FAR_CHECK_STR
 #define FMENU_DELIMITER                      FAR_VERT_STR

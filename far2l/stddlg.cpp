@@ -1,7 +1,7 @@
 /*
 stddlg.cpp
 
-Куча разных стандартных диалогов
+РљСѓС‡Р° СЂР°Р·РЅС‹С… СЃС‚Р°РЅРґР°СЂС‚РЅС‹С… РґРёР°Р»РѕРіРѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -104,9 +104,9 @@ int WINAPI GetSearchReplaceString(
 			DI_BUTTON,0,11,0,11,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MEditReplaceReplace),
 			DI_BUTTON,0,11,0,11,0,DIF_CENTERGROUP,MSG(MEditSearchCancel),
 		};
-		//индекс самого нижнего чекбокса каждой колонки в диалоге.
-		//предполагаем, что чекбокс на позиции Y+1 имеет индекс, на единицу больший
-		//чекбокса той же колонки на позиции Y.
+		//РёРЅРґРµРєСЃ СЃР°РјРѕРіРѕ РЅРёР¶РЅРµРіРѕ С‡РµРєР±РѕРєСЃР° РєР°Р¶РґРѕР№ РєРѕР»РѕРЅРєРё РІ РґРёР°Р»РѕРіРµ.
+		//РїСЂРµРґРїРѕР»Р°РіР°РµРј, С‡С‚Рѕ С‡РµРєР±РѕРєСЃ РЅР° РїРѕР·РёС†РёРё Y+1 РёРјРµРµС‚ РёРЅРґРµРєСЃ, РЅР° РµРґРёРЅРёС†Сѓ Р±РѕР»СЊС€РёР№
+		//С‡РµРєР±РѕРєСЃР° С‚РѕР№ Р¶Рµ РєРѕР»РѕРЅРєРё РЅР° РїРѕР·РёС†РёРё Y.
 		static const int COL1_HIGH=8;
 		static const int COL2_HIGH=9;
 		HeightDialog=14;
@@ -195,7 +195,7 @@ int WINAPI GetSearchReplaceString(
 			}
 		}
 
-		//сдвигаем кнопки
+		//СЃРґРІРёРіР°РµРј РєРЅРѕРїРєРё
 		DeltaCol=(DeltaCol1<DeltaCol2)?DeltaCol1:DeltaCol2;
 
 		if (DeltaCol>0)
@@ -209,7 +209,7 @@ int WINAPI GetSearchReplaceString(
 			}
 		}
 
-		// нам не нужны 2 разделительных линии
+		// РЅР°Рј РЅРµ РЅСѓР¶РЅС‹ 2 СЂР°Р·РґРµР»РёС‚РµР»СЊРЅС‹С… Р»РёРЅРёРё
 		if (HeightDialog == 11)
 		{
 			for (I=10; I < (int)ARRAYSIZE(ReplaceDlgData); ++I)
@@ -277,9 +277,9 @@ int WINAPI GetSearchReplaceString(
 			DI_BUTTON,0,9,0,9,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MEditSearchSearch),
 			DI_BUTTON,0,9,0,9,0,DIF_CENTERGROUP,MSG(MEditSearchCancel),
 		};
-		//индекс самого нижнего чекбокса каждой колонки в диалоге.
-		//предполагаем, что чекбокс на позиции Y+1 имеет индекс, на единицу больший
-		//чекбокса той же колонки на позиции Y.
+		//РёРЅРґРµРєСЃ СЃР°РјРѕРіРѕ РЅРёР¶РЅРµРіРѕ С‡РµРєР±РѕРєСЃР° РєР°Р¶РґРѕР№ РєРѕР»РѕРЅРєРё РІ РґРёР°Р»РѕРіРµ.
+		//РїСЂРµРґРїРѕР»Р°РіР°РµРј, С‡С‚Рѕ С‡РµРєР±РѕРєСЃ РЅР° РїРѕР·РёС†РёРё Y+1 РёРјРµРµС‚ РёРЅРґРµРєСЃ, РЅР° РµРґРёРЅРёС†Сѓ Р±РѕР»СЊС€РёР№
+		//С‡РµРєР±РѕРєСЃР° С‚РѕР№ Р¶Рµ РєРѕР»РѕРЅРєРё РЅР° РїРѕР·РёС†РёРё Y.
 		static const int COL1_HIGH=6;
 		static const int COL2_HIGH=8;
 		HeightDialog=12;
@@ -372,7 +372,7 @@ int WINAPI GetSearchReplaceString(
 			}
 		}
 
-		//сдвигаем кнопки
+		//СЃРґРІРёРіР°РµРј РєРЅРѕРїРєРё
 		DeltaCol=(DeltaCol1<DeltaCol2)?DeltaCol1:DeltaCol2;
 
 		if (DeltaCol>0)
@@ -386,7 +386,7 @@ int WINAPI GetSearchReplaceString(
 			}
 		}
 
-		// нам не нужны 2 разделительных линии
+		// РЅР°Рј РЅРµ РЅСѓР¶РЅС‹ 2 СЂР°Р·РґРµР»РёС‚РµР»СЊРЅС‹С… Р»РёРЅРёРё
 		if (HeightDialog == 9)
 		{
 			for (I=9; I < (int)ARRAYSIZE(SearchDlgData); ++I)
@@ -434,7 +434,7 @@ int WINAPI GetSearchReplaceString(
 }
 
 
-// Функция для коррекции аля Shift-F4 Shift-Enter без отпускания Shift ;-)
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РєРѕСЂСЂРµРєС†РёРё Р°Р»СЏ Shift-F4 Shift-Enter Р±РµР· РѕС‚РїСѓСЃРєР°РЅРёСЏ Shift ;-)
 static LONG_PTR WINAPI GetStringDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
 	/*
@@ -468,7 +468,7 @@ int WINAPI GetString(
     const wchar_t *CheckBoxText
 )
 {
-	int Substract=5; // дополнительная величина :-)
+	int Substract=5; // РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РІРµР»РёС‡РёРЅР° :-)
 	int ExitCode;
 	bool addCheckBox=Flags&FIB_CHECKBOX && CheckBoxValue && CheckBoxText;
 	int offset=addCheckBox?2:0;
@@ -587,14 +587,14 @@ int WINAPI GetString(
 }
 
 /*
-  Стандартный диалог ввода пароля.
-  Умеет сам запоминать последнего юзвера и пароль.
+  РЎС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РґРёР°Р»РѕРі РІРІРѕРґР° РїР°СЂРѕР»СЏ.
+  РЈРјРµРµС‚ СЃР°Рј Р·Р°РїРѕРјРёРЅР°С‚СЊ РїРѕСЃР»РµРґРЅРµРіРѕ СЋР·РІРµСЂР° Рё РїР°СЂРѕР»СЊ.
 
-  Name      - сюда будет помещен юзвер (max 256 символов!!!)
-  Password  - сюда будет помещен пароль (max 256 символов!!!)
-  Title     - заголовок диалога (может быть nullptr)
-  HelpTopic - тема помощи (может быть nullptr)
-  Flags     - флаги (GNP_*)
+  Name      - СЃСЋРґР° Р±СѓРґРµС‚ РїРѕРјРµС‰РµРЅ СЋР·РІРµСЂ (max 256 СЃРёРјРІРѕР»РѕРІ!!!)
+  Password  - СЃСЋРґР° Р±СѓРґРµС‚ РїРѕРјРµС‰РµРЅ РїР°СЂРѕР»СЊ (max 256 СЃРёРјРІРѕР»РѕРІ!!!)
+  Title     - Р·Р°РіРѕР»РѕРІРѕРє РґРёР°Р»РѕРіР° (РјРѕР¶РµС‚ Р±С‹С‚СЊ nullptr)
+  HelpTopic - С‚РµРјР° РїРѕРјРѕС‰Рё (РјРѕР¶РµС‚ Р±С‹С‚СЊ nullptr)
+  Flags     - С„Р»Р°РіРё (GNP_*)
 */
 int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARString &strPassword,const wchar_t *HelpTopic,DWORD Flags)
 {
@@ -641,7 +641,7 @@ int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARS
 	if (ExitCode!=6)
 		return FALSE;
 
-	// запоминаем всегда.
+	// Р·Р°РїРѕРјРёРЅР°РµРј РІСЃРµРіРґР°.
 	strUserName = PassDlg[2].strData;
 	strLastName = strUserName;
 	strPassword = PassDlg[4].strData;

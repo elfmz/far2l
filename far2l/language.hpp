@@ -3,7 +3,7 @@
 /*
 language.hpp
 
-Работа с LNG-файлами
+Р Р°Р±РѕС‚Р° СЃ LNG-С„Р°Р№Р»Р°РјРё
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -60,7 +60,7 @@ private:
 	bool LanguageLoaded;
 	wchar_t **MsgAddr;
 	wchar_t *MsgList;
-	char **MsgAddrA; //фантастика, да
+	char **MsgAddrA; //С„Р°РЅС‚Р°СЃС‚РёРєР°, РґР°
 	char *MsgListA;
 	long MsgSize;
 	int MsgCount;

@@ -74,15 +74,15 @@ class PluginA: public Plugin
 		FARString m_strModuleName;
 		FARString m_strCacheName;
 
-		BitFlags WorkFlags;      // рабочие флаги текущего плагина
-		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
+		BitFlags WorkFlags;      // СЂР°Р±РѕС‡РёРµ С„Р»Р°РіРё С‚РµРєСѓС‰РµРіРѕ РїР»Р°РіРёРЅР°
+		BitFlags FuncFlags;      // Р±РёС‚РѕРІС‹Рµ РјР°СЃРєРё РІС‹Р·РѕРІР° СЌРєСЃРї.С„СѓРЅРєС†РёР№ РїР»Р°РіРёРЅР°
 
 		HMODULE m_hModule;
 		Language Lang;
 
 		/* $ 21.09.2000 SVS
-		   поле - системный идентификатор плагина
-		   Плагин должен сам задавать, например для
+		   РїРѕР»Рµ - СЃРёСЃС‚РµРјРЅС‹Р№ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїР»Р°РіРёРЅР°
+		   РџР»Р°РіРёРЅ РґРѕР»Р¶РµРЅ СЃР°Рј Р·Р°РґР°РІР°С‚СЊ, РЅР°РїСЂРёРјРµСЂ РґР»СЏ
 		   Network      = 0x5774654E (NetW)
 		   PrintManager = 0x6E614D50 (PMan)  SYSID_PRINTMANAGER
 		*/

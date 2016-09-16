@@ -1,7 +1,7 @@
 /*
 frame.cpp
 
-Parent class для немодальных объектов
+Parent class РґР»СЏ РЅРµРјРѕРґР°Р»СЊРЅС‹С… РѕР±СЉРµРєС‚РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -146,7 +146,7 @@ int Frame::operator[](Frame *ModalFrame)
 
 void Frame::DestroyAllModal()
 {
-	// найти вершину
+	// РЅР°Р№С‚Рё РІРµСЂС€РёРЅСѓ
 	Frame *Prev=this;
 	Frame *Next=NextModal;
 

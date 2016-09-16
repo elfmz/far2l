@@ -3,7 +3,7 @@
 /*
 processname.hpp
 
-Обработать имя файла: сравнить с маской, масками, сгенерировать по маске
+РћР±СЂР°Р±РѕС‚Р°С‚СЊ РёРјСЏ С„Р°Р№Р»Р°: СЃСЂР°РІРЅРёС‚СЊ СЃ РјР°СЃРєРѕР№, РјР°СЃРєР°РјРё, СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ РїРѕ РјР°СЃРєРµ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,7 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// обработать имя файла: сравнить с маской, масками, сгенерировать по маске
+// РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РёРјСЏ С„Р°Р№Р»Р°: СЃСЂР°РІРЅРёС‚СЊ СЃ РјР°СЃРєРѕР№, РјР°СЃРєР°РјРё, СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ РїРѕ РјР°СЃРєРµ
 int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags);
 int ConvertWildcards(const wchar_t *SrcName,FARString &strDest, int SelectedFolderNameLength);
 int CmpName(const wchar_t *pattern, const wchar_t *str, bool skippath=true, bool CmpNameSearchMode=false);

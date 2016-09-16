@@ -3,7 +3,7 @@
 /*
 history.hpp
 
-История (Alt-F8, Alt-F11, Alt-F12)
+РСЃС‚РѕСЂРёСЏ (Alt-F8, Alt-F11, Alt-F12)
 */
 /*
 Copyright (c) 1996 Eugene Roshal

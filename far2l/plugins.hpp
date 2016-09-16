@@ -3,7 +3,7 @@
 /*
 plugins.hpp
 
-Работа с плагинами (низкий уровень, кое-что повыше в flplugin.cpp)
+Р Р°Р±РѕС‚Р° СЃ РїР»Р°РіРёРЅР°РјРё (РЅРёР·РєРёР№ СѓСЂРѕРІРµРЅСЊ, РєРѕРµ-С‡С‚Рѕ РїРѕРІС‹С€Рµ РІ flplugin.cpp)
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -70,19 +70,19 @@ enum
 	PLUGIN_FAROTHER
 };
 
-// флаги для поля Plugin.WorkFlags
+// С„Р»Р°РіРё РґР»СЏ РїРѕР»СЏ Plugin.WorkFlags
 enum PLUGINITEMWORKFLAGS
 {
-	PIWF_CACHED        = 0x00000001, // кешируется
+	PIWF_CACHED        = 0x00000001, // РєРµС€РёСЂСѓРµС‚СЃСЏ
 	PIWF_PRELOADED     = 0x00000002, //
-	PIWF_DONTLOADAGAIN = 0x00000004, // не загружать плагин снова, ставится в
-	//   результате проверки требуемой версии фара
+	PIWF_DONTLOADAGAIN = 0x00000004, // РЅРµ Р·Р°РіСЂСѓР¶Р°С‚СЊ РїР»Р°РіРёРЅ СЃРЅРѕРІР°, СЃС‚Р°РІРёС‚СЃСЏ РІ
+	//   СЂРµР·СѓР»СЊС‚Р°С‚Рµ РїСЂРѕРІРµСЂРєРё С‚СЂРµР±СѓРµРјРѕР№ РІРµСЂСЃРёРё С„Р°СЂР°
 };
 
-// флаги для поля Plugin.FuncFlags - активности функций
+// С„Р»Р°РіРё РґР»СЏ РїРѕР»СЏ Plugin.FuncFlags - Р°РєС‚РёРІРЅРѕСЃС‚Рё С„СѓРЅРєС†РёР№
 enum PLUGINITEMCALLFUNCFLAGS
 {
-	PICFF_LOADED               = 0x00000001, // DLL загружен ;-)
+	PICFF_LOADED               = 0x00000001, // DLL Р·Р°РіСЂСѓР¶РµРЅ ;-)
 	PICFF_SETSTARTUPINFO       = 0x00000002, //
 	PICFF_OPENPLUGIN           = 0x00000004, //
 	PICFF_OPENFILEPLUGIN       = 0x00000008, //
@@ -114,7 +114,7 @@ enum PLUGINITEMCALLFUNCFLAGS
 #if defined(PROCPLUGINMACROFUNC)
 	PICFF_PROCESSMACROFUNC     = 0x20000000, //
 #endif
-	// PICFF_PANELPLUGIN - первая попытка определиться с понятием "это панель"
+	// PICFF_PANELPLUGIN - РїРµСЂРІР°СЏ РїРѕРїС‹С‚РєР° РѕРїСЂРµРґРµР»РёС‚СЊСЃСЏ СЃ РїРѕРЅСЏС‚РёРµРј "СЌС‚Рѕ РїР°РЅРµР»СЊ"
 	PICFF_PANELPLUGIN          = PICFF_OPENFILEPLUGIN|
 	PICFF_GETFINDDATA|
 	PICFF_FREEFINDDATA|
@@ -133,12 +133,12 @@ enum PLUGINITEMCALLFUNCFLAGS
 	PICFF_GETOPENPLUGININFO,
 };
 
-// флаги для поля PluginManager.Flags
+// С„Р»Р°РіРё РґР»СЏ РїРѕР»СЏ PluginManager.Flags
 enum PLUGINSETFLAGS
 {
-	PSIF_ENTERTOOPENPLUGIN        = 0x00000001, // ввалились в плагин OpenPlugin
-	PSIF_DIALOG                   = 0x00000002, // была бадяга с диалогом
-	PSIF_PLUGINSLOADDED           = 0x80000000, // плагины загружены
+	PSIF_ENTERTOOPENPLUGIN        = 0x00000001, // РІРІР°Р»РёР»РёСЃСЊ РІ РїР»Р°РіРёРЅ OpenPlugin
+	PSIF_DIALOG                   = 0x00000002, // Р±С‹Р»Р° Р±Р°РґСЏРіР° СЃ РґРёР°Р»РѕРіРѕРј
+	PSIF_PLUGINSLOADDED           = 0x80000000, // РїР»Р°РіРёРЅС‹ Р·Р°РіСЂСѓР¶РµРЅС‹
 };
 
 enum OPENFILEPLUGINTYPE
@@ -168,12 +168,12 @@ class PluginManager
 
 	public:
 
-		BitFlags Flags;        // флаги манагера плагинов
+		BitFlags Flags;        // С„Р»Р°РіРё РјР°РЅР°РіРµСЂР° РїР»Р°РіРёРЅРѕРІ
 
 		Plugin *CurPluginItem;
 
 		FileEditor *CurEditor;
-		Viewer *CurViewer;     // 27.09.2000 SVS: Указатель на текущий Viewer
+		Viewer *CurViewer;     // 27.09.2000 SVS: РЈРєР°Р·Р°С‚РµР»СЊ РЅР° С‚РµРєСѓС‰РёР№ Viewer
 
 	private:
 
@@ -232,7 +232,7 @@ class PluginManager
 		bool SetHotKeyDialog(const wchar_t *DlgPluginTitle,const wchar_t *RegKey,const wchar_t *RegValueName);
 		void GetHotKeyRegKey(Plugin *pPlugin,int ItemNumber,FARString &strRegKey);
 
-		// $ .09.2000 SVS - Функция CallPlugin - найти плагин по ID и запустить OpenFrom = OPEN_*
+		// $ .09.2000 SVS - Р¤СѓРЅРєС†РёСЏ CallPlugin - РЅР°Р№С‚Рё РїР»Р°РіРёРЅ РїРѕ ID Рё Р·Р°РїСѓСЃС‚РёС‚СЊ OpenFrom = OPEN_*
 		int CallPlugin(DWORD SysID,int OpenFrom, void *Data, int *Ret=nullptr);
 		Plugin *FindPlugin(DWORD SysID);
 

@@ -3,7 +3,7 @@
 /*
 copy.hpp
 
-class ShellCopy - Копирование файлов
+class ShellCopy - РљРѕРїРёСЂРѕРІР°РЅРёРµ С„Р°Р№Р»РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -42,7 +42,7 @@ enum COPY_CODES
 {
 	COPY_CANCEL,
 	COPY_NEXT,
-	COPY_NOFILTER,                              // не считать размеры, т.к. файл не прошел по фильтру
+	COPY_NOFILTER,                              // РЅРµ СЃС‡РёС‚Р°С‚СЊ СЂР°Р·РјРµСЂС‹, С‚.Рє. С„Р°Р№Р» РЅРµ РїСЂРѕС€РµР» РїРѕ С„РёР»СЊС‚СЂСѓ
 	COPY_FAILURE,
 	COPY_FAILUREREAD,
 	COPY_SUCCESS,
@@ -52,26 +52,26 @@ enum COPY_CODES
 
 enum COPY_FLAGS
 {
-	FCOPY_COPYTONUL               = 0x00000001, // Признак копирования в NUL
-	FCOPY_CURRENTONLY             = 0x00000002, // Только текщий?
+	FCOPY_COPYTONUL               = 0x00000001, // РџСЂРёР·РЅР°Рє РєРѕРїРёСЂРѕРІР°РЅРёСЏ РІ NUL
+	FCOPY_CURRENTONLY             = 0x00000002, // РўРѕР»СЊРєРѕ С‚РµРєС‰РёР№?
 	FCOPY_ONLYNEWERFILES          = 0x00000004, // Copy only newer files
 	FCOPY_OVERWRITENEXT           = 0x00000008, // Overwrite all
-	FCOPY_LINK                    = 0x00000010, // создание линков
-	FCOPY_MOVE                    = 0x00000040, // перенос/переименование
+	FCOPY_LINK                    = 0x00000010, // СЃРѕР·РґР°РЅРёРµ Р»РёРЅРєРѕРІ
+	FCOPY_MOVE                    = 0x00000040, // РїРµСЂРµРЅРѕСЃ/РїРµСЂРµРёРјРµРЅРѕРІР°РЅРёРµ
 	FCOPY_DIZREAD                 = 0x00000080, //
 	FCOPY_COPYSECURITY            = 0x00000100, // [x] Copy access rights
-	FCOPY_NOSHOWMSGLINK           = 0x00000200, // не показывать месаги при ликовании
-	FCOPY_VOLMOUNT                = 0x00000400, // операция монтированния тома
-	FCOPY_STREAMSKIP              = 0x00000800, // потоки
-	FCOPY_STREAMALL               = 0x00001000, // потоки
-	FCOPY_SKIPSETATTRFLD          = 0x00002000, // больше не пытаться ставить атрибуты для каталогов - когда нажали Skip All
-	FCOPY_COPYSYMLINKCONTENTS     = 0x00004000, // Копировать содержимое симолических связей?
-	FCOPY_COPYPARENTSECURITY      = 0x00008000, // Накладывать родительские права, в случае если мы не копируем права доступа
-	FCOPY_LEAVESECURITY           = 0x00010000, // Move: [?] Ничего не делать с правами доступа
-	FCOPY_DECRYPTED_DESTINATION   = 0x00020000, // для криптованных файлов - расшифровывать...
-	FCOPY_USESYSTEMCOPY           = 0x00040000, // использовать системную функцию копирования
-	FCOPY_COPYLASTTIME            = 0x10000000, // При копировании в несколько каталогов устанавливается для последнего.
-	FCOPY_UPDATEPPANEL            = 0x80000000, // необходимо обновить пассивную панель
+	FCOPY_NOSHOWMSGLINK           = 0x00000200, // РЅРµ РїРѕРєР°Р·С‹РІР°С‚СЊ РјРµСЃР°РіРё РїСЂРё Р»РёРєРѕРІР°РЅРёРё
+	FCOPY_VOLMOUNT                = 0x00000400, // РѕРїРµСЂР°С†РёСЏ РјРѕРЅС‚РёСЂРѕРІР°РЅРЅРёСЏ С‚РѕРјР°
+	FCOPY_STREAMSKIP              = 0x00000800, // РїРѕС‚РѕРєРё
+	FCOPY_STREAMALL               = 0x00001000, // РїРѕС‚РѕРєРё
+	FCOPY_SKIPSETATTRFLD          = 0x00002000, // Р±РѕР»СЊС€Рµ РЅРµ РїС‹С‚Р°С‚СЊСЃСЏ СЃС‚Р°РІРёС‚СЊ Р°С‚СЂРёР±СѓС‚С‹ РґР»СЏ РєР°С‚Р°Р»РѕРіРѕРІ - РєРѕРіРґР° РЅР°Р¶Р°Р»Рё Skip All
+	FCOPY_COPYSYMLINKCONTENTS     = 0x00004000, // РљРѕРїРёСЂРѕРІР°С‚СЊ СЃРѕРґРµСЂР¶РёРјРѕРµ СЃРёРјРѕР»РёС‡РµСЃРєРёС… СЃРІСЏР·РµР№?
+	FCOPY_COPYPARENTSECURITY      = 0x00008000, // РќР°РєР»Р°РґС‹РІР°С‚СЊ СЂРѕРґРёС‚РµР»СЊСЃРєРёРµ РїСЂР°РІР°, РІ СЃР»СѓС‡Р°Рµ РµСЃР»Рё РјС‹ РЅРµ РєРѕРїРёСЂСѓРµРј РїСЂР°РІР° РґРѕСЃС‚СѓРїР°
+	FCOPY_LEAVESECURITY           = 0x00010000, // Move: [?] РќРёС‡РµРіРѕ РЅРµ РґРµР»Р°С‚СЊ СЃ РїСЂР°РІР°РјРё РґРѕСЃС‚СѓРїР°
+	FCOPY_DECRYPTED_DESTINATION   = 0x00020000, // РґР»СЏ РєСЂРёРїС‚РѕРІР°РЅРЅС‹С… С„Р°Р№Р»РѕРІ - СЂР°СЃС€РёС„СЂРѕРІС‹РІР°С‚СЊ...
+	FCOPY_USESYSTEMCOPY           = 0x00040000, // РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃРёСЃС‚РµРјРЅСѓСЋ С„СѓРЅРєС†РёСЋ РєРѕРїРёСЂРѕРІР°РЅРёСЏ
+	FCOPY_COPYLASTTIME            = 0x10000000, // РџСЂРё РєРѕРїРёСЂРѕРІР°РЅРёРё РІ РЅРµСЃРєРѕР»СЊРєРѕ РєР°С‚Р°Р»РѕРіРѕРІ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РґР»СЏ РїРѕСЃР»РµРґРЅРµРіРѕ.
+	FCOPY_UPDATEPPANEL            = 0x80000000, // РЅРµРѕР±С…РѕРґРёРјРѕ РѕР±РЅРѕРІРёС‚СЊ РїР°СЃСЃРёРІРЅСѓСЋ РїР°РЅРµР»СЊ
 };
 
 class ShellCopy
@@ -94,14 +94,14 @@ class ShellCopy
 		int OvrMode;
 		int ReadOnlyOvrMode;
 		int ReadOnlyDelMode;
-		int SkipMode;          // ...для пропуска при копировании залоченных файлов.
+		int SkipMode;          // ...РґР»СЏ РїСЂРѕРїСѓСЃРєР° РїСЂРё РєРѕРїРёСЂРѕРІР°РЅРёРё Р·Р°Р»РѕС‡РµРЅРЅС‹С… С„Р°Р№Р»РѕРІ.
 		int SkipEncMode;
 		int SkipDeleteMode;
 		int SelectedFolderNameLength;
 		UserDefinedList DestList;
-		// тип создаваемого репарспоинта.
-		// при AltF6 будет то, что выбрал юзер в диалоге,
-		// в остальных случаях - RP_EXACTCOPY - как у источника
+		// С‚РёРї СЃРѕР·РґР°РІР°РµРјРѕРіРѕ СЂРµРїР°СЂСЃРїРѕРёРЅС‚Р°.
+		// РїСЂРё AltF6 Р±СѓРґРµС‚ С‚Рѕ, С‡С‚Рѕ РІС‹Р±СЂР°Р» СЋР·РµСЂ РІ РґРёР°Р»РѕРіРµ,
+		// РІ РѕСЃС‚Р°Р»СЊРЅС‹С… СЃР»СѓС‡Р°СЏС… - RP_EXACTCOPY - РєР°Рє Сѓ РёСЃС‚РѕС‡РЅРёРєР°
 		ReparsePointTypes RPT;
 
 		COPY_CODES CopyFileTree(const wchar_t *Dest);
@@ -119,7 +119,7 @@ class ShellCopy
 		                  int &Append,FARString &strNewName,int &RetCode);
 		bool CalcTotalSize();
 		bool ShellSetAttr(const wchar_t *Dest,DWORD Attr);
-		void CheckUpdatePanel(); // выставляет флаг FCOPY_UPDATEPPANEL
+		void CheckUpdatePanel(); // РІС‹СЃС‚Р°РІР»СЏРµС‚ С„Р»Р°Рі FCOPY_UPDATEPPANEL
 	public:
 		ShellCopy(Panel *SrcPanel,int Move,int Link,int CurrentOnly,int Ask,
 		          int &ToPlugin, const wchar_t *PluginDestPath, bool ToSubdir=false);

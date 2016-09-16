@@ -9,6 +9,8 @@ set(SOURCES
   src/lng.inserter.cpp
 )
 
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_C_VISIBILITY_PRESET default)
 
 find_package(PkgConfig REQUIRED)
 

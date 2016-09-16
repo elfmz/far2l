@@ -10,7 +10,8 @@ void Wide2MB(const wchar_t *src, std::string &dst)
 		dst.clear();
 		return;
 	}
-	
+
+	WINPORT(LastErrorGuard) leg;
 	int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, src, src_len, NULL, 0, NULL, NULL);
 	dst.resize( ( (r > 0) ? r : src_len) + 1);
 	
@@ -43,7 +44,8 @@ void MB2Wide(const char *src, std::wstring &dst)
 		dst.clear();
 		return;
 	}
-	
+
+	WINPORT(LastErrorGuard) leg;
 	int r = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, src, src_len, NULL, 0);	
 	dst.resize( ( (r > 0) ? r : src_len) + 1);
 	

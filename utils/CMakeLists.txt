@@ -14,5 +14,3 @@ target_include_directories(utils PRIVATE ${GLIB2_INCLUDE_DIRS})
 
 target_include_directories(utils PRIVATE include)
 target_include_directories(utils PRIVATE ../WinPort)
-
-

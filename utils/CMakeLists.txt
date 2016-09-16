@@ -8,9 +8,6 @@ set(SOURCES
   src/utils.cpp
 )
 
-set(CMAKE_CXX_VISIBILITY_PRESET default)
-set(CMAKE_C_VISIBILITY_PRESET default)
-
 add_library (utils ${SOURCES})
 
 target_include_directories(utils PRIVATE ${GLIB2_INCLUDE_DIRS})

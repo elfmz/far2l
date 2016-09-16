@@ -85,30 +85,32 @@ enum { PROF_STR_LEN = 256 };
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Class StringList
+// Class CustomStringList
 
-class StringList
+class CustomStringList
 {
 public:
-    StringList()
+    CustomStringList()
         :   pNext(0)
     {
         str[0] = '\0';
     }
 
-    ~StringList()
+    ~CustomStringList()
     {
-        delete pNext;
+        if (pNext)
+            delete pNext;
     }
 
-    StringList *Add()
+    CustomStringList *Add()
     {
-        delete pNext;
-        pNext = new StringList;
+        if (pNext)
+            delete pNext;
+        pNext = new CustomStringList;
         return pNext;
     }
 
-    StringList *Next()
+    CustomStringList *Next()
     {
         return pNext;
     }
@@ -120,24 +122,15 @@ public:
 
     void Empty()
     {
-        delete pNext;
+        if (pNext)
+            delete pNext;
         pNext = 0;
         str[0] = '\0';
     }
 
-    void *operator new(size_t nSize)
-    {
-        return calloc(nSize, 1);
-    }
-
-    void operator delete(void *p)
-    {
-        free(p);
-    }
-
 protected:
     char str[PROF_STR_LEN];
-    StringList *pNext;
+    CustomStringList *pNext;
 };
 
 
@@ -329,8 +322,8 @@ char    FormatFileName[NM],UserFormatFileName[NM];
 
 char    StartText[PROF_STR_LEN], EndText[PROF_STR_LEN];
 
-StringList *Format = 0;
-StringList *IgnoreStrings = 0;
+CustomStringList *Format = 0;
+CustomStringList *IgnoreStrings = 0;
 
 int     IgnoreErrors;
 int     ArcChapters;
@@ -538,7 +531,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
 int WINAPI _export CUSTOM_GetArcItem(struct PluginPanelItem *Item, struct ArcItemInfo *Info)
 {
     char Str[512];
-    StringList *CurFormatNode = Format;
+    CustomStringList *CurFormatNode = Format;
     SYSTEMTIME stModification, stCreation, stAccess, syst;
 
     memset(&stModification, 0, sizeof(stModification));
@@ -586,7 +579,7 @@ int WINAPI _export CUSTOM_GetArcItem(struct PluginPanelItem *Item, struct ArcIte
         }
 
         bool bFoundIgnoreString = false;
-        for(StringList * CurIgnoreString = IgnoreStrings; CurIgnoreString->Next(); CurIgnoreString = CurIgnoreString->Next())
+        for(CustomStringList * CurIgnoreString = IgnoreStrings; CurIgnoreString->Next(); CurIgnoreString = CurIgnoreString->Next())
         {
             if(re.compile(CurIgnoreString->Str()))
             {
@@ -756,8 +749,8 @@ void FillFormat(const char *TypeName)
     int FormatNumber = 0;
 
     delete Format;
-    Format = new StringList;
-    for(StringList * CurFormat = Format;; CurFormat = CurFormat->Add())
+    Format = new CustomStringList;
+    for(CustomStringList * CurFormat = Format;; CurFormat = CurFormat->Add())
     {
         char FormatName[100];
 
@@ -770,8 +763,8 @@ void FillFormat(const char *TypeName)
     int Number = 0;
 
     delete IgnoreStrings;
-    IgnoreStrings = new StringList;
-    for(StringList * CurIgnoreString = IgnoreStrings;; CurIgnoreString = CurIgnoreString->Add())
+    IgnoreStrings = new CustomStringList;
+    for(CustomStringList * CurIgnoreString = IgnoreStrings;; CurIgnoreString = CurIgnoreString->Add())
     {
         char Name[100];
 

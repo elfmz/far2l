@@ -3,7 +3,7 @@
 /*
 foldtree.hpp
 
-Поиск каталога по Alt-F10
+РџРѕРёСЃРє РєР°С‚Р°Р»РѕРіР° РїРѕ Alt-F10
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -46,11 +46,11 @@ class FolderTree:public Frame
 		TreeList *Tree;
 		Edit *FindEdit;
 
-		KeyBar TreeKeyBar;     // кейбар
+		KeyBar TreeKeyBar;     // РєРµР№Р±Р°СЂ
 		int ModalMode;
 		int IsFullScreen;
 		int IsStandalone;
-		int  PrevMacroMode;        // предыдущий режим макроса
+		int  PrevMacroMode;        // РїСЂРµРґС‹РґСѓС‰РёР№ СЂРµР¶РёРј РјР°РєСЂРѕСЃР°
 
 		FARString strNewFolder;
 		FARString strLastName;
@@ -69,10 +69,10 @@ class FolderTree:public Frame
 		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
 		virtual void InitKeyBar();
-		virtual void OnChangeFocus(int focus); // вызывается при смене фокуса
+		virtual void OnChangeFocus(int focus); // РІС‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЃРјРµРЅРµ С„РѕРєСѓСЃР°
 		virtual void SetScreenPosition();
 		virtual void ResizeConsole();
-		/* $ Введена для нужд CtrlAltShift OT */
+		/* $ Р’РІРµРґРµРЅР° РґР»СЏ РЅСѓР¶Рґ CtrlAltShift OT */
 		virtual int  FastHide();
 
 		virtual const wchar_t *GetTypeName() {return L"[FolderTree]";}

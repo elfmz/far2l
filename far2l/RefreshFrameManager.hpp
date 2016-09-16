@@ -3,7 +3,7 @@
 /*
 RefreshFrameManager.hpp
 
-Класс для решрешки
+РљР»Р°СЃСЃ РґР»СЏ СЂРµС€СЂРµС€РєРё
 */
 /*
 Copyright (c) 1996 Eugene Roshal

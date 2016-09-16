@@ -3,7 +3,7 @@
 /*
 palette.hpp
 
-Таблица цветов
+РўР°Р±Р»РёС†Р° С†РІРµС‚РѕРІ
 */
 /*
 Copyright (c) 1996 Eugene Roshal

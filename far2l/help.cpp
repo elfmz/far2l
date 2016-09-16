@@ -1,7 +1,7 @@
 /*
 help.cpp
 
-Помощь
+РџРѕРјРѕС‰СЊ
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "exitcode.hpp"
 #include "filestr.hpp"
 
-// Стек возврата
+// РЎС‚РµРє РІРѕР·РІСЂР°С‚Р°
 class CallBackStack
 {
 	private:
@@ -63,14 +63,14 @@ class CallBackStack
 		{
 			ListNode *Next;
 
-			DWORD Flags;             // флаги
-			int   TopStr;            // номер верхней видимой строки темы
-			int   CurX,CurY;         // координаты (???)
+			DWORD Flags;             // С„Р»Р°РіРё
+			int   TopStr;            // РЅРѕРјРµСЂ РІРµСЂС…РЅРµР№ РІРёРґРёРјРѕР№ СЃС‚СЂРѕРєРё С‚РµРјС‹
+			int   CurX,CurY;         // РєРѕРѕСЂРґРёРЅР°С‚С‹ (???)
 
-			FARString strHelpTopic;        // текущий топик
-			FARString strHelpPath;         // путь к хелпам
-			FARString strSelTopic;         // текущее выделение
-			FARString strHelpMask;         // маска
+			FARString strHelpTopic;        // С‚РµРєСѓС‰РёР№ С‚РѕРїРёРє
+			FARString strHelpPath;         // РїСѓС‚СЊ Рє С…РµР»РїР°Рј
+			FARString strSelTopic;         // С‚РµРєСѓС‰РµРµ РІС‹РґРµР»РµРЅРёРµ
+			FARString strHelpMask;         // РјР°СЃРєР°
 
 			ListNode(const StackHelpData *Data, ListNode* n=nullptr)
 			{
@@ -122,13 +122,13 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
 {
 	CanLoseFocus=FALSE;
 	KeyBarVisible=TRUE;
-	/* $ OT По умолчанию все хелпы создаются статически*/
+	/* $ OT РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РІСЃРµ С…РµР»РїС‹ СЃРѕР·РґР°СЋС‚СЃСЏ СЃС‚Р°С‚РёС‡РµСЃРєРё*/
 	SetDynamicallyBorn(FALSE);
 	CtrlObject->Macro.SetMode(MACRO_HELP);
 	Stack=new CallBackStack;
 	StackData.Clear();
 	StackData.Flags=Flags;
-	StackData.strHelpMask = Mask; // сохраним маску файла
+	StackData.strHelpMask = Mask; // СЃРѕС…СЂР°РЅРёРј РјР°СЃРєСѓ С„Р°Р№Р»Р°
 	TopScreen=new SaveScreen;
 	StackData.strHelpTopic = Topic;
 
@@ -273,7 +273,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 		strCtrlStartPosChar.Clear();
 
 	/* $ 29.11.2001 DJ
-	   запомним, чего там написано в PluginContents
+	   Р·Р°РїРѕРјРЅРёРј, С‡РµРіРѕ С‚Р°Рј РЅР°РїРёСЃР°РЅРѕ РІ PluginContents
 	*/
 	if (!GetLangParam(HelpFile,L"PluginContents",&strCurPluginContents, nullptr, nCodePage))
 		strCurPluginContents.Clear();
@@ -361,7 +361,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 			ReplaceStrings(strKeyName,L"@",L"@@",-1);
 			int SizeKeyName=20;
 
-			if (wcschr(strKeyName,L'~')) // корректировка размера
+			if (wcschr(strKeyName,L'~')) // РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєР° СЂР°Р·РјРµСЂР°
 				SizeKeyName++;
 
 			strOutTemp.Format(L" #%-*.*ls# ",SizeKeyName,SizeKeyName,strKeyName.CPtr());
@@ -388,7 +388,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 			lpwszPtr[PosTab]=L' ';
 			strReadStr.ReleaseBuffer();
 
-			if (CtrlTabSize > 1) // заменим табулятор по всем праивилам
+			if (CtrlTabSize > 1) // Р·Р°РјРµРЅРёРј С‚Р°Р±СѓР»СЏС‚РѕСЂ РїРѕ РІСЃРµРј РїСЂР°РёРІРёР»Р°Рј
 				strReadStr.Insert(PosTab, strTabSpace.CPtr(), CtrlTabSize - (PosTab % CtrlTabSize));
 		}
 
@@ -464,9 +464,9 @@ m1:
 					continue;
 				}
 
-				/* $<text> в начале строки, определение темы
-				   Определяет не прокручиваемую область помощи
-				   Если идут несколько подряд сразу после строки обозначения темы...
+				/* $<text> РІ РЅР°С‡Р°Р»Рµ СЃС‚СЂРѕРєРё, РѕРїСЂРµРґРµР»РµРЅРёРµ С‚РµРјС‹
+				   РћРїСЂРµРґРµР»СЏРµС‚ РЅРµ РїСЂРѕРєСЂСѓС‡РёРІР°РµРјСѓСЋ РѕР±Р»Р°СЃС‚СЊ РїРѕРјРѕС‰Рё
+				   Р•СЃР»Рё РёРґСѓС‚ РЅРµСЃРєРѕР»СЊРєРѕ РїРѕРґСЂСЏРґ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ СЃС‚СЂРѕРєРё РѕР±РѕР·РЅР°С‡РµРЅРёСЏ С‚РµРјС‹...
 				*/
 				if (NearTopicFound)
 				{
@@ -693,8 +693,8 @@ void Help::DisplayObject()
 
 	if (!TopicFound)
 	{
-		if (!ErrorHelp) // если это убрать, то при несуществующей ссылки
-		{              // с нынешним манагером попадаем в бесконечный цикл.
+		if (!ErrorHelp) // РµСЃР»Рё СЌС‚Рѕ СѓР±СЂР°С‚СЊ, С‚Рѕ РїСЂРё РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№ СЃСЃС‹Р»РєРё
+		{              // СЃ РЅС‹РЅРµС€РЅРёРј РјР°РЅР°РіРµСЂРѕРј РїРѕРїР°РґР°РµРј РІ Р±РµСЃРєРѕРЅРµС‡РЅС‹Р№ С†РёРєР».
 			ErrorHelp=TRUE;
 
 			if (!(StackData.Flags&FHELP_NOSHOWERROR))
@@ -737,8 +737,8 @@ void Help::FastShow()
 	CorrectPosition();
 	StackData.strSelTopic.Clear();
 	/* $ 01.09.2000 SVS
-	   Установим по умолчанию текущий цвет отрисовки...
-	   чтобы новая тема начиналась с нормальными атрибутами
+	   РЈСЃС‚Р°РЅРѕРІРёРј РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ С‚РµРєСѓС‰РёР№ С†РІРµС‚ РѕС‚СЂРёСЃРѕРІРєРё...
+	   С‡С‚РѕР±С‹ РЅРѕРІР°СЏ С‚РµРјР° РЅР°С‡РёРЅР°Р»Р°СЃСЊ СЃ РЅРѕСЂРјР°Р»СЊРЅС‹РјРё Р°С‚СЂРёР±СѓС‚Р°РјРё
 	*/
 	CurColor=COL_HELPTEXT;
 
@@ -818,7 +818,7 @@ void Help::DrawWindowFrame()
 }
 
 /* $ 01.09.2000 SVS
-  Учтем символ CtrlColorChar & CurColor
+  РЈС‡С‚РµРј СЃРёРјРІРѕР» CtrlColorChar & CurColor
 */
 void Help::OutString(const wchar_t *Str)
 {
@@ -858,8 +858,8 @@ void Help::OutString(const wchar_t *Str)
 					{
 						StackData.strSelTopic = (Str+2);
 						/* $ 25.08.2000 SVS
-						   учтем, что может быть такой вариант: @@ или \@
-						   этот вариант только для URL!
+						   СѓС‡С‚РµРј, С‡С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚Р°РєРѕР№ РІР°СЂРёР°РЅС‚: @@ РёР»Рё \@
+						   СЌС‚РѕС‚ РІР°СЂРёР°РЅС‚ С‚РѕР»СЊРєРѕ РґР»СЏ URL!
 						*/
 						size_t pos;
 
@@ -896,7 +896,7 @@ void Help::OutString(const wchar_t *Str)
 			}
 
 			/* $ 24.09.2001 VVM
-			  ! Обрежем длинные строки при показе. Такое будет только при длинных ссылках... */
+			  ! РћР±СЂРµР¶РµРј РґР»РёРЅРЅС‹Рµ СЃС‚СЂРѕРєРё РїСЂРё РїРѕРєР°Р·Рµ. РўР°РєРѕРµ Р±СѓРґРµС‚ С‚РѕР»СЊРєРѕ РїСЂРё РґР»РёРЅРЅС‹С… СЃСЃС‹Р»РєР°С…... */
 			if (static_cast<int>(StrLength(OutStr) + WhereX()) > X2)
 				OutStr[X2 - WhereX()] = 0;
 
@@ -924,8 +924,8 @@ void Help::OutString(const wchar_t *Str)
 		if (*Str==L'@')
 		{
 			/* $ 25.08.2000 SVS
-			   учтем, что может быть такой вариант: @@
-			   этот вариант только для URL!
+			   СѓС‡С‚РµРј, С‡С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚Р°РєРѕР№ РІР°СЂРёР°РЅС‚: @@
+			   СЌС‚РѕС‚ РІР°СЂРёР°РЅС‚ С‚РѕР»СЊРєРѕ РґР»СЏ URL!
 			*/
 			while (*Str)
 				if (*(++Str)==L'@' && *(Str-1)!=L'@')
@@ -947,7 +947,7 @@ void Help::OutString(const wchar_t *Str)
 			WORD Chr;
 			Chr=(BYTE)Str[1];
 
-			if (Chr == L'-') // "\-" - установить дефолтовый цвет
+			if (Chr == L'-') // "\-" - СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РґРµС„РѕР»С‚РѕРІС‹Р№ С†РІРµС‚
 			{
 				Str+=2;
 				CurColor=COL_HELPTEXT;
@@ -1006,8 +1006,8 @@ int Help::StringLen(const wchar_t *Str)
 		if (*Str==L'@')
 		{
 			/* $ 25.08.2000 SVS
-			   учтем, что может быть такой вариант: @@
-			   этот вариант только для URL!
+			   СѓС‡С‚РµРј, С‡С‚Рѕ РјРѕР¶РµС‚ Р±С‹С‚СЊ С‚Р°РєРѕР№ РІР°СЂРёР°РЅС‚: @@
+			   СЌС‚РѕС‚ РІР°СЂРёР°РЅС‚ С‚РѕР»СЊРєРѕ РґР»СЏ URL!
 			*/
 			while (*Str)
 				if (*(++Str)==L'@' && *(Str-1)!=L'@')
@@ -1018,7 +1018,7 @@ int Help::StringLen(const wchar_t *Str)
 		}
 
 		/* $ 01.09.2000 SVS
-		   учтем наше нововведение \XX или \-
+		   СѓС‡С‚РµРј РЅР°С€Рµ РЅРѕРІРѕРІРІРµРґРµРЅРёРµ \XX РёР»Рё \-
 		*/
 		if (*Str == strCtrlColorChar.At(0))
 		{
@@ -1190,7 +1190,7 @@ int Help::ProcessKey(int Key)
 			return TRUE;
 		}
 		/* $ 26.07.2001 VVM
-		  + С альтом скролим по 1 */
+		  + РЎ Р°Р»СЊС‚РѕРј СЃРєСЂРѕР»РёРј РїРѕ 1 */
 		case KEY_MSWHEEL_UP:
 		case(KEY_MSWHEEL_UP | KEY_ALT):
 		{
@@ -1258,7 +1258,7 @@ int Help::ProcessKey(int Key)
 		}
 		case KEY_F1:
 		{
-			// не поганим SelTopic, если и так в Help on Help
+			// РЅРµ РїРѕРіР°РЅРёРј SelTopic, РµСЃР»Рё Рё С‚Р°Рє РІ Help on Help
 			if (StrCmpI(StackData.strHelpTopic,HelpOnHelpTopic))
 			{
 				Stack->Push(&StackData);
@@ -1272,7 +1272,7 @@ int Help::ProcessKey(int Key)
 		}
 		case KEY_SHIFTF1:
 		{
-			//   не поганим SelTopic, если и так в теме Contents
+			//   РЅРµ РїРѕРіР°РЅРёРј SelTopic, РµСЃР»Рё Рё С‚Р°Рє РІ С‚РµРјРµ Contents
 			if (StrCmpI(StackData.strHelpTopic,HelpContents))
 			{
 				Stack->Push(&StackData);
@@ -1286,7 +1286,7 @@ int Help::ProcessKey(int Key)
 		}
 		case KEY_SHIFTF2:
 		{
-			//   не поганим SelTopic, если и так в PluginContents
+			//   РЅРµ РїРѕРіР°РЅРёРј SelTopic, РµСЃР»Рё Рё С‚Р°Рє РІ PluginContents
 			if (StrCmpI(StackData.strHelpTopic,PluginContents))
 			{
 				Stack->Push(&StackData);
@@ -1301,7 +1301,7 @@ int Help::ProcessKey(int Key)
 		case KEY_ALTF1:
 		case KEY_BS:
 		{
-			// Если стек возврата пуст - выходим их хелпа
+			// Р•СЃР»Рё СЃС‚РµРє РІРѕР·РІСЂР°С‚Р° РїСѓСЃС‚ - РІС‹С…РѕРґРёРј РёС… С…РµР»РїР°
 			if (!Stack->isEmpty())
 			{
 				Stack->Pop(&StackData);
@@ -1323,7 +1323,7 @@ int Help::ProcessKey(int Key)
 				if (!JumpTopic())
 				{
 					Stack->Pop(&StackData);
-					ReadHelp(StackData.strHelpMask); // вернем то, что отображали.
+					ReadHelp(StackData.strHelpMask); // РІРµСЂРЅРµРј С‚Рѕ, С‡С‚Рѕ РѕС‚РѕР±СЂР°Р¶Р°Р»Рё.
 				}
 
 				ErrorHelp=FALSE;
@@ -1347,12 +1347,12 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 		StackData.strSelTopic = JumpTopic;
 
 	/* $ 14.07.2002 IS
-	     При переходе по ссылкам используем всегда только абсолютные пути,
-	     если это возможно.
+	     РџСЂРё РїРµСЂРµС…РѕРґРµ РїРѕ СЃСЃС‹Р»РєР°Рј РёСЃРїРѕР»СЊР·СѓРµРј РІСЃРµРіРґР° С‚РѕР»СЊРєРѕ Р°Р±СЃРѕР»СЋС‚РЅС‹Рµ РїСѓС‚Рё,
+	     РµСЃР»Рё СЌС‚Рѕ РІРѕР·РјРѕР¶РЅРѕ.
 	*/
 
-	// Если ссылка на другой файл, путь относительный и есть то, от чего можно
-	// вычислить абсолютный путь, то сделаем это
+	// Р•СЃР»Рё СЃСЃС‹Р»РєР° РЅР° РґСЂСѓРіРѕР№ С„Р°Р№Р», РїСѓС‚СЊ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Р№ Рё РµСЃС‚СЊ С‚Рѕ, РѕС‚ С‡РµРіРѕ РјРѕР¶РЅРѕ
+	// РІС‹С‡РёСЃР»РёС‚СЊ Р°Р±СЃРѕР»СЋС‚РЅС‹Р№ РїСѓС‚СЊ, С‚Рѕ СЃРґРµР»Р°РµРј СЌС‚Рѕ
 	if (StackData.strSelTopic.At(0)==HelpBeginLink
 	        && StackData.strSelTopic.Pos(pos,HelpEndLink,2)
 	        && !IsAbsolutePath(StackData.strSelTopic.CPtr()+1)
@@ -1363,7 +1363,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 		xwcsncpy(lpwszHelpTopic, StackData.strSelTopic.CPtr()+1,pos);
 		strNewTopic.ReleaseBuffer();
 		strFullPath = StackData.strHelpPath;
-		// уберем _все_ конечные слеши и добавим один
+		// СѓР±РµСЂРµРј _РІСЃРµ_ РєРѕРЅРµС‡РЅС‹Рµ СЃР»РµС€Рё Рё РґРѕР±Р°РІРёРј РѕРґРёРЅ
 		DeleteEndSlash(strFullPath, true);
 		strFullPath += L"/";
 		strFullPath += strNewTopic.CPtr()+(IsSlash(strNewTopic.At(0))?1:0);
@@ -1374,11 +1374,11 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	}
 
 	//_SVS(SysLog(L"JumpTopic() = SelTopic=%ls",StackData.SelTopic));
-	// URL активатор - это ведь так просто :-)))
+	// URL Р°РєС‚РёРІР°С‚РѕСЂ - СЌС‚Рѕ РІРµРґСЊ С‚Р°Рє РїСЂРѕСЃС‚Рѕ :-)))
 	{
 		strNewTopic = StackData.strSelTopic;
 
-		if (strNewTopic.Pos(pos,L':') && strNewTopic.At(0) != L':') // наверное подразумевается URL
+		if (strNewTopic.Pos(pos,L':') && strNewTopic.At(0) != L':') // РЅР°РІРµСЂРЅРѕРµ РїРѕРґСЂР°Р·СѓРјРµРІР°РµС‚СЃСЏ URL
 		{
 			wchar_t *lpwszNewTopic = strNewTopic.GetBuffer();
 			lpwszNewTopic[pos] = 0;
@@ -1395,10 +1395,10 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 			}
 
 			lpwszNewTopic[pos] = L':';
-			//strNewTopic.ReleaseBuffer (); не надо, так как строка не поменялась
+			//strNewTopic.ReleaseBuffer (); РЅРµ РЅР°РґРѕ, С‚Р°Рє РєР°Рє СЃС‚СЂРѕРєР° РЅРµ РїРѕРјРµРЅСЏР»Р°СЃСЊ
 		}
 	}
-	// а вот теперь попробуем...
+	// Р° РІРѕС‚ С‚РµРїРµСЂСЊ РїРѕРїСЂРѕР±СѓРµРј...
 
 	//_SVS(SysLog(L"JumpTopic() = SelTopic=%ls, StackData.HelpPath=%ls",StackData.SelTopic,StackData.HelpPath));
 	if (!StackData.strHelpPath.IsEmpty() && StackData.strSelTopic.At(0) !=HelpBeginLink && StrCmp(StackData.strSelTopic,HelpOnHelpTopic))
@@ -1418,7 +1418,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 		strNewTopic = StackData.strSelTopic.CPtr()+(!StrCmp(StackData.strSelTopic,HelpOnHelpTopic)?1:0);
 	}
 
-	// удалим ссылку на .DLL
+	// СѓРґР°Р»РёРј СЃСЃС‹Р»РєСѓ РЅР° .DLL
 	wchar_t *lpwszNewTopic = strNewTopic.GetBuffer();
 	wchar_t *p=wcsrchr(lpwszNewTopic,HelpEndLink);
 
@@ -1516,7 +1516,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	// ResizeConsole();
 	if (IsNewTopic
-	        || !StrCmpI(StackData.strSelTopic,PluginContents) // Это неприятный костыль :-((
+	        || !StrCmpI(StackData.strSelTopic,PluginContents) // Р­С‚Рѕ РЅРµРїСЂРёСЏС‚РЅС‹Р№ РєРѕСЃС‚С‹Р»СЊ :-((
 	   )
 		MoveToReference(1,1);
 
@@ -1546,7 +1546,7 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	{
 		if (Flags.Check(HELPMODE_CLICKOUTSIDE))
 		{
-			// Вываливаем если предыдущий эвент не был двойным кликом
+			// Р’С‹РІР°Р»РёРІР°РµРј РµСЃР»Рё РїСЂРµРґС‹РґСѓС‰РёР№ СЌРІРµРЅС‚ РЅРµ Р±С‹Р» РґРІРѕР№РЅС‹Рј РєР»РёРєРѕРј
 			if (PreMouseEventFlags != DOUBLE_CLICK)
 				ProcessKey(KEY_ESC);
 		}
@@ -1580,7 +1580,7 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	/* $ 15.03.2002 DJ
-	   обработаем щелчок в середине скроллбара
+	   РѕР±СЂР°Р±РѕС‚Р°РµРј С‰РµР»С‡РѕРє РІ СЃРµСЂРµРґРёРЅРµ СЃРєСЂРѕР»Р»Р±Р°СЂР°
 	*/
 	if (MouseX == X2)
 	{
@@ -1603,7 +1603,7 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 	}
 
-	// DoubliClock - свернуть/развернуть хелп.
+	// DoubliClock - СЃРІРµСЂРЅСѓС‚СЊ/СЂР°Р·РІРµСЂРЅСѓС‚СЊ С…РµР»Рї.
 	if (MouseEvent->dwEventFlags==DOUBLE_CLICK &&
 	        (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) &&
 	        MouseEvent->dwMousePosition.Y<Y1+1+FixSize)
@@ -1629,7 +1629,7 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	/* $ 26.11.2001 VVM
-	  + Запомнить нажатие клавиши мышки и только в этом случае реагировать при отпускании */
+	  + Р—Р°РїРѕРјРЅРёС‚СЊ РЅР°Р¶Р°С‚РёРµ РєР»Р°РІРёС€Рё РјС‹С€РєРё Рё С‚РѕР»СЊРєРѕ РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ СЂРµР°РіРёСЂРѕРІР°С‚СЊ РїСЂРё РѕС‚РїСѓСЃРєР°РЅРёРё */
 	if (!MouseEvent->dwEventFlags &&
 	        (MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)))
 		MouseDown = TRUE;
@@ -1731,7 +1731,7 @@ void Help::MoveToReference(int Forward,int CurScreen)
 				StartSelection=0;
 			else
 			{
-				// небольшая заплата, артефакты есть но уже меньше :-)
+				// РЅРµР±РѕР»СЊС€Р°СЏ Р·Р°РїР»Р°С‚Р°, Р°СЂС‚РµС„Р°РєС‚С‹ РµСЃС‚СЊ РЅРѕ СѓР¶Рµ РјРµРЅСЊС€Рµ :-)
 				if (ReferencePresent && CurScreen)
 					StartSelection=0;
 
@@ -1792,8 +1792,8 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 
 	AddTitle(PtrTitle);
 	/* TODO:
-	   1. Поиск (для "документов") не только в каталоге Documets, но
-	      и в плагинах
+	   1. РџРѕРёСЃРє (РґР»СЏ "РґРѕРєСѓРјРµРЅС‚РѕРІ") РЅРµ С‚РѕР»СЊРєРѕ РІ РєР°С‚Р°Р»РѕРіРµ Documets, РЅРѕ
+	      Рё РІ РїР»Р°РіРёРЅР°С…
 	*/
 	int OldStrCount=StrCount;
 
@@ -1830,14 +1830,14 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 		}
 	}
 
-	// сортируем по алфавиту
+	// СЃРѕСЂС‚РёСЂСѓРµРј РїРѕ Р°Р»С„Р°РІРёС‚Сѓ
 	HelpList.Sort(reinterpret_cast<TARRAYCMPFUNC>(CmpItems),OldStrCount);
 
-	// $ 26.06.2000 IS - Устранение глюка с хелпом по f1, shift+f2, end (решение предложил IG)
+	// $ 26.06.2000 IS - РЈСЃС‚СЂР°РЅРµРЅРёРµ РіР»СЋРєР° СЃ С…РµР»РїРѕРј РїРѕ f1, shift+f2, end (СЂРµС€РµРЅРёРµ РїСЂРµРґР»РѕР¶РёР» IG)
 	AddLine(L"");
 }
 
-// Формирование топика с учетом разных факторов
+// Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ С‚РѕРїРёРєР° СЃ СѓС‡РµС‚РѕРј СЂР°Р·РЅС‹С… С„Р°РєС‚РѕСЂРѕРІ
 FARString &Help::MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,FARString &strTopic)
 {
 	strTopic.Clear();
@@ -1872,32 +1872,32 @@ FARString &Help::MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,FARString
 				}
 				else
 				{
-					if (!Ptr[1]) // Вона как поперло то...
-						wcscat(lpwszTopic,HelpContents); // ... значит покажем основную тему. //BUGBUG
+					if (!Ptr[1]) // Р’РѕРЅР° РєР°Рє РїРѕРїРµСЂР»Рѕ С‚Рѕ...
+						wcscat(lpwszTopic,HelpContents); // ... Р·РЅР°С‡РёС‚ РїРѕРєР°Р¶РµРј РѕСЃРЅРѕРІРЅСѓСЋ С‚РµРјСѓ. //BUGBUG
 
-					/* А вот теперь разгребем...
-					   Формат может быть :
-					     "<FullPath>Topic" или "<FullModuleName>Topic"
-					   Для случая "FullPath" путь ДОЛЖЕН заканчиваться СЛЕШЕМ!
-					   Т.о. мы отличим ЧТО ЭТО - имя модуля или путь!
+					/* Рђ РІРѕС‚ С‚РµРїРµСЂСЊ СЂР°Р·РіСЂРµР±РµРј...
+					   Р¤РѕСЂРјР°С‚ РјРѕР¶РµС‚ Р±С‹С‚СЊ :
+					     "<FullPath>Topic" РёР»Рё "<FullModuleName>Topic"
+					   Р”Р»СЏ СЃР»СѓС‡Р°СЏ "FullPath" РїСѓС‚СЊ Р”РћР›Р–Р•Рќ Р·Р°РєР°РЅС‡РёРІР°С‚СЊСЃСЏ РЎР›Р•РЁР•Рњ!
+					   Рў.Рѕ. РјС‹ РѕС‚Р»РёС‡РёРј Р§РўРћ Р­РўРћ - РёРјСЏ РјРѕРґСѓР»СЏ РёР»Рё РїСѓС‚СЊ!
 					*/
 					Ptr2=Ptr-1;
 
-					if (!IsSlash(*Ptr2)) // Это имя модуля?
+					if (!IsSlash(*Ptr2)) // Р­С‚Рѕ РёРјСЏ РјРѕРґСѓР»СЏ?
 					{
-						// значит удалим это чертово имя :-)
-						if (!(Ptr2=const_cast<wchar_t*>(LastSlash(lpwszTopic)))) // ВО! Фигня какая-то :-(
+						// Р·РЅР°С‡РёС‚ СѓРґР°Р»РёРј СЌС‚Рѕ С‡РµСЂС‚РѕРІРѕ РёРјСЏ :-)
+						if (!(Ptr2=const_cast<wchar_t*>(LastSlash(lpwszTopic)))) // Р’Рћ! Р¤РёРіРЅСЏ РєР°РєР°СЏ-С‚Рѕ :-(
 							*lpwszTopic=0;
 					}
 
 					if (*lpwszTopic)
 					{
 						/* $ 21.08.2001 KM
-						  - Неверно создавался топик с учётом нового правила,
-						    в котором путь для топика должен заканчиваться "/".
+						  - РќРµРІРµСЂРЅРѕ СЃРѕР·РґР°РІР°Р»СЃСЏ С‚РѕРїРёРє СЃ СѓС‡С‘С‚РѕРј РЅРѕРІРѕРіРѕ РїСЂР°РІРёР»Р°,
+						    РІ РєРѕС‚РѕСЂРѕРј РїСѓС‚СЊ РґР»СЏ С‚РѕРїРёРєР° РґРѕР»Р¶РµРЅ Р·Р°РєР°РЅС‡РёРІР°С‚СЊСЃСЏ "/".
 						*/
 						wmemmove(Ptr2+1,Ptr,StrLength(Ptr)+1); //???
-						// А вот ЗДЕСЬ теперь все по правилам Help API!
+						// Рђ РІРѕС‚ Р—Р”Р•РЎР¬ С‚РµРїРµСЂСЊ РІСЃРµ РїРѕ РїСЂР°РІРёР»Р°Рј Help API!
 					}
 				}
 
@@ -1934,7 +1934,7 @@ void Help::InitKeyBar()
 	HelpKeyBar.SetAllGroup(KBL_CTRLALT, MHelpCtrlAltF1, 12);
 	HelpKeyBar.SetAllGroup(KBL_ALTSHIFT, MHelpAltShiftF1, 12);
 	HelpKeyBar.SetAllGroup(KBL_CTRLALTSHIFT, MHelpCtrlAltShiftF1, 12);
-	// Уберем лишнее с глаз долой
+	// РЈР±РµСЂРµРј Р»РёС€РЅРµРµ СЃ РіР»Р°Р· РґРѕР»РѕР№
 	HelpKeyBar.Change(KBL_SHIFT,L"",3-1);
 	HelpKeyBar.Change(KBL_MAIN,L"",7-1);
 	HelpKeyBar.Change(KBL_SHIFT,L"",7-1);
@@ -1944,14 +1944,14 @@ void Help::InitKeyBar()
 }
 
 /* $ 25.08.2000 SVS
-   Запуск URL-ссылок... ;-)
-   Это ведь так просто... ась?
-   Вернет:
-     0 - это не URL ссылка (не похожа)
-     1 - CreateProcess вернул FALSE
-     2 - Все Ок
+   Р—Р°РїСѓСЃРє URL-СЃСЃС‹Р»РѕРє... ;-)
+   Р­С‚Рѕ РІРµРґСЊ С‚Р°Рє РїСЂРѕСЃС‚Рѕ... Р°СЃСЊ?
+   Р’РµСЂРЅРµС‚:
+     0 - СЌС‚Рѕ РЅРµ URL СЃСЃС‹Р»РєР° (РЅРµ РїРѕС…РѕР¶Р°)
+     1 - CreateProcess РІРµСЂРЅСѓР» FALSE
+     2 - Р’СЃРµ РћРє
 
-   Параметры (например):
+   РџР°СЂР°РјРµС‚СЂС‹ (РЅР°РїСЂРёРјРµСЂ):
      Protocol="mailto"
      URLPath ="mailto:vskirdin@mail.ru?Subject=Reversi"
 */
@@ -1990,7 +1990,7 @@ void Help::ResizeConsole()
 
 	ReadHelp(StackData.strHelpMask);
 	ErrorHelp=FALSE;
-	//StackData.CurY--; // ЭТО ЕСМЬ КОСТЫЛЬ (пусть пока будет так!)
+	//StackData.CurY--; // Р­РўРћ Р•РЎРњР¬ РљРћРЎРўР«Р›Р¬ (РїСѓСЃС‚СЊ РїРѕРєР° Р±СѓРґРµС‚ С‚Р°Рє!)
 	StackData.CurX--;
 	MoveToReference(1,1);
 	IsNewTopic=OldIsNewTopic;

@@ -1,7 +1,7 @@
 /*
 clipboard.cpp
 
-Работа с буфером обмена.
+Р Р°Р±РѕС‚Р° СЃ Р±СѓС„РµСЂРѕРј РѕР±РјРµРЅР°.
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -245,7 +245,7 @@ BOOL Clipboard::IsFormatAvailable(UINT Format)
 	return WINPORT(IsClipboardFormatAvailable)(Format);
 }
 
-// Перед вставкой производится очистка буфера
+// РџРµСЂРµРґ РІСЃС‚Р°РІРєРѕР№ РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ РѕС‡РёСЃС‚РєР° Р±СѓС„РµСЂР°
 bool Clipboard::Copy(const wchar_t *Data)
 {
 	Empty();
@@ -276,7 +276,7 @@ bool Clipboard::Copy(const wchar_t *Data)
 	return true;
 }
 
-// вставка без очистки буфера - на добавление
+// РІСЃС‚Р°РІРєР° Р±РµР· РѕС‡РёСЃС‚РєРё Р±СѓС„РµСЂР° - РЅР° РґРѕР±Р°РІР»РµРЅРёРµ
 bool Clipboard::CopyFormat(const wchar_t *Format, const wchar_t *Data)
 {
 	UINT FormatType=RegisterFormat(Format);
@@ -335,7 +335,7 @@ wchar_t *Clipboard::Paste()
 	return ClipText;
 }
 
-// max - без учета символа конца строки!
+// max - Р±РµР· СѓС‡РµС‚Р° СЃРёРјРІРѕР»Р° РєРѕРЅС†Р° СЃС‚СЂРѕРєРё!
 wchar_t *Clipboard::PasteEx(int max)
 {
 	wchar_t *ClipText=nullptr;
@@ -461,7 +461,7 @@ wchar_t * WINAPI PasteFromClipboard()
 	return ClipText;
 }
 
-// max - без учета символа конца строки!
+// max - Р±РµР· СѓС‡РµС‚Р° СЃРёРјРІРѕР»Р° РєРѕРЅС†Р° СЃС‚СЂРѕРєРё!
 wchar_t *PasteFromClipboardEx(int max)
 {
 	Clipboard clip;

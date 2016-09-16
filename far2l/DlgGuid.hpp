@@ -3,7 +3,7 @@
 /*
 DlgGuid.hpp
 
-GUID'ы диалогов.
+GUID'С‹ РґРёР°Р»РѕРіРѕРІ.
 */
 /*
 Copyright (c) 2010 Far Group

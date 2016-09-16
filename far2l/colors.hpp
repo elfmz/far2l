@@ -8,7 +8,7 @@
 /*
 colors.hpp
 
-Цвета
+Р¦РІРµС‚Р°
 
 */
 #else // ELSE FAR_USE_INTERNALS
@@ -54,11 +54,11 @@ other possible license with no implications from the above license on them.
 
 #ifdef FAR_USE_INTERNALS
 /*
-  Внимание!
-  Пункт COL_LASTPALETTECOLOR должен быть самым последним!!!!!!
+  Р’РЅРёРјР°РЅРёРµ!
+  РџСѓРЅРєС‚ COL_LASTPALETTECOLOR РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃР°РјС‹Рј РїРѕСЃР»РµРґРЅРёРј!!!!!!
 */
 
-// Стандартные цвета FAR Manager
+// РЎС‚Р°РЅРґР°СЂС‚РЅС‹Рµ С†РІРµС‚Р° FAR Manager
 enum
 {
 	F_BLACK=0,
@@ -191,7 +191,7 @@ enum PaletteColors
 	COL_VIEWERARROWS,
 
 #ifdef FAR_USE_INTERNALS
-	//  + 1 Служебная позиция перед новыми цветами :-)
+	//  + 1 РЎР»СѓР¶РµР±РЅР°СЏ РїРѕР·РёС†РёСЏ РїРµСЂРµРґ РЅРѕРІС‹РјРё С†РІРµС‚Р°РјРё :-)
 	COL_PRIVATEPOSITION_FOR_DIF165ABOVE,
 #else // ELSE FAR_USE_INTERNALS
 	COL_RESERVED0,

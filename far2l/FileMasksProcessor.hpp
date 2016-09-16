@@ -3,8 +3,8 @@
 /*
 FileMasksProcessor.hpp
 
-Класс для работы с простыми масками файлов (не учитывается наличие масок
-исключения).
+РљР»Р°СЃСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РїСЂРѕСЃС‚С‹РјРё РјР°СЃРєР°РјРё С„Р°Р№Р»РѕРІ (РЅРµ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ РЅР°Р»РёС‡РёРµ РјР°СЃРѕРє
+РёСЃРєР»СЋС‡РµРЅРёСЏ).
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -40,9 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum FMP_FLAGS
 {
-	FMPF_ADDASTERISK = 0x00000001 // Добавлять '*', если маска не содержит
-	// ни одного из следующих
-	// символов: '*', '?', '.'
+	FMPF_ADDASTERISK = 0x00000001 // Р”РѕР±Р°РІР»СЏС‚СЊ '*', РµСЃР»Рё РјР°СЃРєР° РЅРµ СЃРѕРґРµСЂР¶РёС‚
+	// РЅРё РѕРґРЅРѕРіРѕ РёР· СЃР»РµРґСѓСЋС‰РёС…
+	// СЃРёРјРІРѕР»РѕРІ: '*', '?', '.'
 };
 
 class FileMasksProcessor : public BaseFileMask
@@ -58,8 +58,8 @@ class FileMasksProcessor : public BaseFileMask
 		void Free();
 
 	private:
-		UserDefinedList Masks; // список масок файлов
-		const wchar_t *MaskPtr;   // указатель на текущую маску в списке
+		UserDefinedList Masks; // СЃРїРёСЃРѕРє РјР°СЃРѕРє С„Р°Р№Р»РѕРІ
+		const wchar_t *MaskPtr;   // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С‚РµРєСѓС‰СѓСЋ РјР°СЃРєСѓ РІ СЃРїРёСЃРєРµ
 		RegExp *re;
 		SMatch *m;
 		int n;

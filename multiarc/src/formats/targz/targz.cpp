@@ -234,7 +234,7 @@ int WINAPI _export TARGZ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemI
       {
         Item->PackSize=Item->FindData.nFileSizeLow=FileSize.Part.LowPart;
         Item->PackSizeHigh=Item->FindData.nFileSizeHigh=FileSize.Part.HighPart;
-        strcpy(Item->FindData.cFileName,ZipName);
+        strncpy(Item->FindData.cFileName,ZipName,ARRAYSIZE(Item->FindData.cFileName)-1);
         *ZipName=0;
         return(GETARC_SUCCESS);
       }

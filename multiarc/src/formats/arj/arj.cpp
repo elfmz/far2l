@@ -312,7 +312,7 @@ int WINAPI _export ARJ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   Name[sizeof(Name)-1]=0;
   if (Name[strlen(Name)+1]!=0)
     Info->Comment=TRUE;
-  strcpy(Item->FindData.cFileName,Name);
+  strncpy(Item->FindData.cFileName,Name,ARRAYSIZE(Item->FindData.cFileName)-1);
 
   DWORD PrevPosition=NextPosition;
   NextPosition+=8+ArjHeader.HeadSize;

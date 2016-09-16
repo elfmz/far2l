@@ -853,7 +853,7 @@ int PluginA::GetVirtualFindData(
 		pVFDPanelItemA = nullptr;
 		size_t Size=StrLength(Path)+1;
 		LPSTR PathA=new char[Size * 4];
-		UnicodeToOEM(Path,PathA, Size * 4);
+		PWZ_to_PZ(Path,PathA, Size * 4);
 		EXECUTE_FUNCTION_EX(pGetVirtualFindData(hPlugin, &pVFDPanelItemA, pItemsNumber, PathA), es);
 		bResult = es.bResult;
 		delete[] PathA;
@@ -906,10 +906,10 @@ int PluginA::GetFiles(
 		oldfar::PluginPanelItem *PanelItemA = nullptr;
 		ConvertPanelItemsArrayToAnsi(PanelItem,PanelItemA,ItemsNumber);
 		char DestA[oldfar::NM];
-		UnicodeToOEM(*DestPath,DestA,sizeof(DestA));
+		PWZ_to_PZ(*DestPath,DestA,sizeof(DestA));
 		EXECUTE_FUNCTION_EX(pGetFiles(hPlugin, PanelItemA, ItemsNumber, Move, DestA, OpMode), es);
 		static wchar_t DestW[oldfar::NM];
-		OEMToUnicode(DestA,DestW,ARRAYSIZE(DestW));
+		PZ_to_PWZ(DestA,DestW,ARRAYSIZE(DestW));
 		*DestPath=DestW;
 		FreePanelItemA(PanelItemA,ItemsNumber);
 		nResult = (int)es.nResult;
@@ -983,10 +983,10 @@ int PluginA::MakeDirectory(
 		es.id = EXCEPT_MAKEDIRECTORY;
 		es.nDefaultResult = -1;
 		char NameA[oldfar::NM];
-		UnicodeToOEM(*Name,NameA,sizeof(NameA));
+		PWZ_to_PZ(*Name,NameA,sizeof(NameA));
 		EXECUTE_FUNCTION_EX(pMakeDirectory(hPlugin, NameA, OpMode), es);
 		static wchar_t NameW[oldfar::NM];
-		OEMToUnicode(NameA,NameW,ARRAYSIZE(NameW));
+		PZ_to_PWZ(NameA,NameW,ARRAYSIZE(NameW));
 		*Name=NameW;
 		nResult = (int)es.nResult;
 	}

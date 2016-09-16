@@ -10,7 +10,9 @@ set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 
-cmake_policy(SET CMP0063 NEW)
+if(CMAKE_VERSION VERSION_GREATER "3.3")
+  cmake_policy(SET CMP0063 NEW)
+endif()
 
 include_directories(utils/include)
 

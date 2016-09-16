@@ -158,7 +158,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem,int ItemsNumb
     if (MsgCode==1)
     {
       memset(&MaskPanelItem,0,sizeof(MaskPanelItem));
-      strcpy(MaskPanelItem.FindData.cFileName,AllFilesMask);
+      strncpy(MaskPanelItem.FindData.cFileName,AllFilesMask,ARRAYSIZE(MaskPanelItem.FindData.cFileName)-1);
       if (ItemsInfo.Encrypted)
         MaskPanelItem.Flags=F_ENCRYPTED;
       PanelItem=&MaskPanelItem;

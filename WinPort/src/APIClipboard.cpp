@@ -24,7 +24,6 @@
 #include "CallInMain.h"
 
 extern "C" {
-	std::mutex g_clipboard_mutex;
 	static class CustomFormats : std::map<UINT, std::wstring>  {
 	public:
 		CustomFormats() :_next_index(0)
@@ -60,7 +59,11 @@ extern "C" {
 	
 	WINPORT_DECL(RegisterClipboardFormat, UINT, (LPCWSTR lpszFormat))
 	{		
-		std::lock_guard<std::mutex> lock(g_clipboard_mutex);
+		if (!wxIsMainThread()) {
+			auto fn = std::bind(WINPORT(RegisterClipboardFormat), lpszFormat);
+			return CallInMain<UINT>(fn);
+		}
+
 		return g_custom_formats.Register(lpszFormat);
 	}
 
@@ -89,7 +92,7 @@ extern "C" {
 			return FALSE;
 		}
 		fprintf(stderr, "OpenClipboard\n");
-		return TRUE;;
+		return TRUE;
 	}
 
 	WINPORT_DECL(CloseClipboard, BOOL, ())
@@ -99,7 +102,7 @@ extern "C" {
 			return CallInMain<BOOL>(fn);
 		}
 		fprintf(stderr, "CloseClipboard\n");
-		std::lock_guard<std::mutex> lock(g_clipboard_mutex);
+
 		for (auto p : g_free_pendings) free(p);
 		g_free_pendings.clear();
 		wxTheClipboard->Flush();
@@ -119,7 +122,6 @@ extern "C" {
 		}
 		fprintf(stderr, "EmptyClipboard\n");
 		wxTheClipboard->Clear();
-		std::lock_guard<std::mutex> lock(g_clipboard_mutex);
 		g_custom_data.clear();
 		return TRUE;
 	}
@@ -131,7 +133,6 @@ extern "C" {
 			return CallInMain<BOOL>(fn);
 		}
 		if (format!=CF_UNICODETEXT && format!=CF_TEXT) {
-			std::lock_guard<std::mutex> lock(g_clipboard_mutex);
 			CustomData::iterator i = g_custom_data.find(format);
 			return (i==g_custom_data.end()) ? FALSE : TRUE;
 		} else {
@@ -146,15 +147,7 @@ extern "C" {
 			return CallInMain<HANDLE>(fn);
 		}
 		PVOID p = NULL;		
-		if (format!=CF_UNICODETEXT && format!=CF_TEXT) {
-			std::lock_guard<std::mutex> lock(g_clipboard_mutex);
-			CustomData::iterator i = g_custom_data.find(format);
-			if (i==g_custom_data.end()) 
-				return NULL;
-
-			p = malloc(i->second.size());
-			if (p) memcpy(p, &i->second[0], i->second.size());
-		} else if (format==CF_UNICODETEXT) {
+		if (format==CF_UNICODETEXT) {
 			wxTextDataObject data;
 			wxTheClipboard->GetData( data );
 			p = _wcsdup(data.GetText().wchar_str());
@@ -162,10 +155,16 @@ extern "C" {
 			wxTextDataObject data;
 			wxTheClipboard->GetData( data );
 			p = _strdup(data.GetText().char_str());
+		} else {
+			CustomData::iterator i = g_custom_data.find(format);
+			if (i==g_custom_data.end()) 
+				return NULL;
+
+			p = malloc(i->second.size());
+			if (p) memcpy(p, &i->second[0], i->second.size());
 		}
 
 		if (p) {
-			std::lock_guard<std::mutex> lock(g_clipboard_mutex);
 			g_free_pendings.insert(p);
 		}
 		return p;
@@ -184,20 +183,18 @@ extern "C" {
 #else
 		size_t len = malloc_usable_size(mem);
 #endif
-fprintf(stderr, "SetClipboardData\n");
-		if (format!=CF_UNICODETEXT && format!=CF_TEXT) {
-			std::lock_guard<std::mutex> lock(g_clipboard_mutex);
-			std::vector<char> &data = g_custom_data[format];
-			data.resize(len);
-			if (len) memcpy(&data[0], mem, data.size());
-		} else if (format==CF_UNICODETEXT) {
+		fprintf(stderr, "SetClipboardData: %u\n", format);
+		if (format==CF_UNICODETEXT) {
 			wxTheClipboard->SetData( new wxTextDataObject((const wchar_t *)mem) );
 		} else if (format==CF_TEXT) {
 			wxTheClipboard->SetData( new wxTextDataObject((const char *)mem) );
+		} else {
+			std::vector<char> &data = g_custom_data[format];
+			data.resize(len);
+			if (len) memcpy(&data[0], mem, data.size());			
 		}
 
 		if (mem) {
-			std::lock_guard<std::mutex> lock(g_clipboard_mutex);
 			g_free_pendings.insert(mem);
 		}
 		return mem;

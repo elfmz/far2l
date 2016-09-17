@@ -392,8 +392,7 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (PrevPosition>=NextPosition || PathSize>NM)
     return(GETARC_BROKEN);
 
-  strcpy(Item->FindData.cFileName,PathName);
-  strcat(Item->FindData.cFileName,FileName);
+  snprintf(Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName) - 1, "%s%s", PathName, FileName);
 
   Item->FindData.dwFileAttributes=Attr;
 

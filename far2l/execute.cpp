@@ -226,34 +226,37 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *ForkProc)(int argc, char *argv[]) )
 {
 //	fprintf(stderr, "TODO: Execute('" WS_FMT "')\n", CmdStr);
-	ProcessShowClock++;
-	CtrlObject->CmdLine->ShowBackground();
-	CtrlObject->CmdLine->Redraw();
-	CtrlObject->CmdLine->SetString(L"", TRUE);
-	ScrBuf.Flush();
-	
-	DWORD saved_mode = 0, dw;
-	WINPORT(GetConsoleMode)(NULL, &saved_mode);
-	WINPORT(SetConsoleMode)(NULL, saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
-		| ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE );
-	const std::wstring &ws = MB2Wide(CmdStr);
-	WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
-	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 	int r;
-	if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
+	if (ExecFlags & EF_HIDEOUT) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, ForkProc);
 	} else {
-		r = VTShell_Execute(CmdStr, ForkProc);
+		ProcessShowClock++;
+		CtrlObject->CmdLine->ShowBackground();
+		CtrlObject->CmdLine->Redraw();
+		CtrlObject->CmdLine->SetString(L"", TRUE);
+		ScrBuf.Flush();
+		DWORD saved_mode = 0, dw;
+		WINPORT(GetConsoleMode)(NULL, &saved_mode);
+		WINPORT(SetConsoleMode)(NULL, saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
+			| ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE );
+		const std::wstring &ws = MB2Wide(CmdStr);
+		WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
+		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
+		if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
+			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, ForkProc);
+		} else {
+			r = VTShell_Execute(CmdStr, ForkProc);
+		}
+		WINPORT(SetConsoleMode)( NULL, saved_mode | 
+			ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
+		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
+		WINPORT(SetConsoleMode)(NULL, saved_mode);
+		ScrBuf.FillBuf();
+		CtrlObject->CmdLine->SaveBackground();
+		ProcessShowClock--;
+		SetFarConsoleMode(TRUE);
+		ScrBuf.Flush();
 	}
-	WINPORT(SetConsoleMode)( NULL, saved_mode | 
-		ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
-	WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
-	WINPORT(SetConsoleMode)(NULL, saved_mode);
-	ScrBuf.FillBuf();
-	CtrlObject->CmdLine->SaveBackground();
-	ProcessShowClock--;
-	SetFarConsoleMode(TRUE);
-	ScrBuf.Flush();
 	fprintf(stderr, "farExecuteA:('%s', 0x%x, %p): r=%d\n", CmdStr, ExecFlags, ForkProc, r);
 	
 	return r;

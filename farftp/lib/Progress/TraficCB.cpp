@@ -7,15 +7,15 @@ extern LPCSTR StdCommands[];
 
 LPCSTR StdDialogLines[] =
 {
-	"%*\xFA-61SrcPathname%",
-	"%*\xFA-61DestPathname%",
+	"%*\x20-61SrcPathname%",
+	"%*\x20-61DestPathname%",
 
-	"\xC4" "Current %Cn%(%CurPc%)%>\xC4%",
+	"-" "Current %Cn%(%CurPc%)%>-%",
 	"   %+14CurSize%  %CurTime%      %CurCPS%    %CPS%",
 	"   %+14CurFSize%  %CurRTime%         <%CurETime% %CurEDate%>",
 	"%.Pc%-[%57Progress%]-",
 
-	"\xC4" "Total %CnF%/%Cn%/%CnSkip%%>\xC4%",
+	"-" "Total %CnF%/%Cn%/%CnSkip%%>-%",
 	"   %+14TotSize%  %TotTime%                  %TotCps%",
 	"   %+14TotFSize%  %TotRTime%         <%TotETime% %TotEDate%>",
 	"%.FPercent%-[%57FProgress%]-",

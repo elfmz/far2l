@@ -262,11 +262,13 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
       ArcComment=TRUE;
     return(GETARC_EOF);
   }
-  DWORD SizeToRead=(ZipHeader.NameLen<NM-1) ? ZipHeader.NameLen : NM-1;
+  
+  DWORD SizeToRead=(ZipHeader.NameLen<ARRAYSIZE(Item->FindData.cFileName)-1) ? ZipHeader.NameLen : ARRAYSIZE(Item->FindData.cFileName)-1;
   if (!WINPORT(ReadFile)(ArcHandle,Item->FindData.cFileName,SizeToRead,&ReadSize,NULL) ||
       ReadSize!=SizeToRead)
     return(GETARC_READERROR);
-  Item->FindData.cFileName[NM-1]=0;
+    
+  Item->FindData.cFileName[ARRAYSIZE(Item->FindData.cFileName)-1]=0;
 
   char *EndPos = Item->FindData.cFileName;
   while( *EndPos ) EndPos++;
@@ -289,7 +291,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
                         "Win32","SMS/QDOS","Acorn RISC OS","Win32 VFAT","MVS",
                         "BeOS","Tandem"};
   if (ZipHeader.PackOS<ARRAYSIZE(ZipOS))
-    strcpy(Info->HostOS,ZipOS[ZipHeader.PackOS]);
+    strncpy(Info->HostOS,ZipOS[ZipHeader.PackOS],ARRAYSIZE(Info->HostOS)-1);
 
   //if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
     //WINPORT(CharToOem)(Item->FindData.cFileName,Item->FindData.cFileName);

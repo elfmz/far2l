@@ -18,6 +18,16 @@ extern "C" {
 
 	/* gcc doesn't know _Thread_local from C11 yet */
 	thread_local DWORD g_winport_lasterror;
+	
+	WINPORT(LastErrorGuard):: WINPORT(LastErrorGuard)() : value(g_winport_lasterror)
+	{
+	}
+	
+	WINPORT(LastErrorGuard)::~ WINPORT(LastErrorGuard)()
+	{
+		g_winport_lasterror = value;
+	}
+	
 	WINPORT_DECL(GetLastError, DWORD, ())
 	{
 		return g_winport_lasterror;

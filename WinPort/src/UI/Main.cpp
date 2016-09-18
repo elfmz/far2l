@@ -303,7 +303,7 @@ bool WinPortApp::OnInit()
 //    WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
 	frame->Show( true );
 	if (g_broadway)
-		frame->ShowFullScreen(true);
+		frame->Maximize();
     return true;
 }
 

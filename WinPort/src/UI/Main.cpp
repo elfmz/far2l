@@ -16,6 +16,7 @@
 
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
+bool g_broadway = false;
 enum
 {
     TIMER_ID_PERIODIC = 10
@@ -58,6 +59,10 @@ private:
 
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
+	const char *gdk_backend = getenv("GDK_BACKEND");
+	if (gdk_backend && strcmp(gdk_backend, "broadway")==0)
+		g_broadway = true;
+
 	wxInitialize();
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
@@ -295,8 +300,10 @@ wxIMPLEMENT_APP_NO_MAIN(WinPortApp);
 bool WinPortApp::OnInit()
 {
 	WinPortFrame *frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
-    //WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
+//    WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
 	frame->Show( true );
+	if (g_broadway)
+		frame->ShowFullScreen(true);
     return true;
 }
 
@@ -707,10 +714,12 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 {
 	INPUT_RECORD ir = {0};
 	ir.EventType = MOUSE_EVENT;
-	if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
-	if (wxGetKeyState(WXK_CONTROL)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-	if (wxGetKeyState(WXK_ALT)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
-	if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
+	if (!g_broadway) {
+		if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
+		if (wxGetKeyState(WXK_CONTROL)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+		if (wxGetKeyState(WXK_ALT)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+		if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
+	}
 	if (event.LeftDown()) _mouse_state|= FROM_LEFT_1ST_BUTTON_PRESSED;
 	else if (event.MiddleDown()) _mouse_state|= FROM_LEFT_2ND_BUTTON_PRESSED;
 	else if (event.RightDown()) _mouse_state|=  RIGHTMOST_BUTTON_PRESSED;

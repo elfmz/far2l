@@ -3,6 +3,8 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 
+extern bool g_broadway;
+
 wxColour ConsoleForeground2wxColorInternal(USHORT attributes)
 {
 	wxColour::ChannelType r = 0, g = 0, b = 0;
@@ -192,15 +194,17 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	
 	if (IsEnhancedKey(event.GetKeyCode()))
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+	
+	if (!g_broadway) {
+		if (wxGetKeyState(WXK_NUMLOCK))
+			Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
 		
-	if (wxGetKeyState(WXK_NUMLOCK))
-		Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
+		if (wxGetKeyState(WXK_SCROLL))
+			Event.KeyEvent.dwControlKeyState|= SCROLLLOCK_ON;
 		
-	if (wxGetKeyState(WXK_SCROLL))
-		Event.KeyEvent.dwControlKeyState|= SCROLLLOCK_ON;
-		
-	if (wxGetKeyState(WXK_CAPITAL))
-		Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;
+		if (wxGetKeyState(WXK_CAPITAL))
+			Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;
+	}
 		
 	if (event.ShiftDown())
 		Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;

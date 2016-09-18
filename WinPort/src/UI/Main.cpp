@@ -130,6 +130,9 @@ wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
 
+
+
+
 //////////////////////////////////////////
 
 class WinPortApp: public wxApp
@@ -221,17 +224,26 @@ public:
 	virtual ~WinPortFrame();
 	
 	void OnShow(wxShowEvent &show);
+	
 protected: 
 private:
+	enum {
+		ID_CTRL_BASE = 1
+	};
 	WinPortPanel		*_panel;
 	bool _shown;
+	wxMenuBar *_menu_bar;
+	std::vector<wxMenu *> _menus;
 
 	void OnChar( wxKeyEvent& event )
 	{
 		_panel->OnChar(event);
 	}
+	
+	void OnAccelerator_Ctrl(wxCommandEvent& event);
 	void OnPaint( wxPaintEvent& event ) {}
 	void OnEraseBackground( wxEraseEvent& event ) {}
+	
     wxDECLARE_EVENT_TABLE();
 };
 
@@ -241,10 +253,23 @@ wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 	EVT_SHOW(WinPortFrame::OnShow)
 	EVT_ERASE_BACKGROUND(WinPortFrame::OnEraseBackground)
 	EVT_CHAR(WinPortFrame::OnChar)
+	EVT_MENU_RANGE(ID_CTRL_BASE, ID_CTRL_BASE + ('Z' - 'A'), WinPortFrame::OnAccelerator_Ctrl)
 wxEND_EVENT_TABLE()
 
 void WinPortFrame::OnShow(wxShowEvent &show)
 {
+	if (g_broadway) {
+		_menu_bar = new wxMenuBar(wxMB_DOCKABLE);
+		wxMenu *menu = new wxMenu;
+		for (char c = 'A'; c<='Z'; ++c) {
+			char str[128]; 
+			sprintf(str, "Ctrl+%c\tCtrl+%c", c, c);
+			menu->Append(ID_CTRL_BASE + (c - 'A'), wxString(str));
+		}
+		_menu_bar->Append(menu, _T("Ctrl + ?"));
+		SetMenuBar(_menu_bar);
+	}
+	
 	if (!_shown) {
 		_shown = true;
 		wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_INITIALIZED);
@@ -254,7 +279,8 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 }	
 
 WinPortFrame::WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
-        : wxFrame(NULL, wxID_ANY, title, pos, size), _shown(false)
+        : wxFrame(NULL, wxID_ANY, title, pos, size), _shown(false), 
+		_menu_bar(nullptr)
 {
 	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
@@ -263,8 +289,27 @@ WinPortFrame::WinPortFrame(const wxString& title, const wxPoint& pos, const wxSi
 
 WinPortFrame::~WinPortFrame()
 {
+	SetMenuBar(nullptr);
+	delete _menu_bar;
 	delete _panel;
 	_panel = NULL;
+}
+
+	
+void WinPortFrame::OnAccelerator_Ctrl(wxCommandEvent& event)
+{
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.bKeyDown = TRUE;
+	ir.Event.KeyEvent.wRepeatCount = 1;
+	ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_BASE);
+	ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
+		
+	fprintf(stderr, "OnAccelerator_Ctrl_%c (%u)\n", ir.Event.KeyEvent.wVirtualKeyCode, event.GetId() );
+		
+	g_wx_con_in.Enqueue(&ir, 1);
+	ir.Event.KeyEvent.bKeyDown = FALSE;
+	g_wx_con_in.Enqueue(&ir, 1);
 }
 
 
@@ -304,6 +349,7 @@ bool WinPortApp::OnInit()
 	frame->Show( true );
 	if (g_broadway)
 		frame->Maximize();
+		
     return true;
 }
 

@@ -216,7 +216,7 @@ BOOL WINAPI _export RAR_CloseArchive(struct ArcInfo *Info)
 
   *Password=0;
 
-  RARCloseArchive(hArcData);
+  return RARCloseArchive(hArcData);
 }
 
 DWORD WINAPI _export RAR_GetSFXPos(void)

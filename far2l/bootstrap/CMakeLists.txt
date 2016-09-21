@@ -104,3 +104,8 @@ add_custom_command(TARGET bootstrap
    DEPENDS "${HLFFILES}"
    COMMAND "cp" "${BOOTSTRAP}/*.hlf" "${INSTALL_DIR}"
 )
+
+add_custom_command(TARGET bootstrap
+   POST_BUILD
+   COMMAND "cp" "${CMAKE_CURRENT_SOURCE_DIR}/*.svg" "${INSTALL_DIR}"
+)

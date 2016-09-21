@@ -795,8 +795,11 @@ char* WINAPI PasteFromClipboardA()
 {
 	wchar_t *p = PasteFromClipboard();
 
-	if (p)
-		return UnicodeToAnsi(p);
+	if (p) {
+		char *pa = UnicodeToAnsi(p);
+		xf_free(p);
+		return pa;
+	}
 
 	return nullptr;
 }

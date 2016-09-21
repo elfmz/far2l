@@ -228,7 +228,8 @@ public:
 protected: 
 private:
 	enum {
-		ID_CTRL_BASE = 1
+		ID_CTRL_BASE = 1,
+		ID_CTRL_SHIFT_BASE = 32
 	};
 	WinPortPanel		*_panel;
 	bool _shown;
@@ -241,6 +242,7 @@ private:
 	}
 	
 	void OnAccelerator_Ctrl(wxCommandEvent& event);
+	void OnAccelerator_CtrlShift(wxCommandEvent& event);
 	void OnPaint( wxPaintEvent& event ) {}
 	void OnEraseBackground( wxEraseEvent& event ) {}
 	
@@ -254,6 +256,7 @@ wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 	EVT_ERASE_BACKGROUND(WinPortFrame::OnEraseBackground)
 	EVT_CHAR(WinPortFrame::OnChar)
 	EVT_MENU_RANGE(ID_CTRL_BASE, ID_CTRL_BASE + ('Z' - 'A'), WinPortFrame::OnAccelerator_Ctrl)
+	EVT_MENU_RANGE(ID_CTRL_SHIFT_BASE, ID_CTRL_SHIFT_BASE + ('Z' - 'A'), WinPortFrame::OnAccelerator_CtrlShift)
 wxEND_EVENT_TABLE()
 
 void WinPortFrame::OnShow(wxShowEvent &show)
@@ -263,10 +266,17 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		wxMenu *menu = new wxMenu;
 		for (char c = 'A'; c<='Z'; ++c) {
 			char str[128]; 
-			sprintf(str, "Ctrl+%c\tCtrl+%c", c, c);
+			sprintf(str, "Ctrl + %c\tCtrl+%c", c, c);
 			menu->Append(ID_CTRL_BASE + (c - 'A'), wxString(str));
 		}
 		_menu_bar->Append(menu, _T("Ctrl + ?"));
+		menu = new wxMenu;
+		for (char c = 'A'; c<='Z'; ++c) {
+			char str[128]; 
+			sprintf(str, "Ctrl + Shift + %c\tCtrl+Shift+%c", c, c);
+			menu->Append(ID_CTRL_SHIFT_BASE + (c - 'A'), wxString(str));
+		}
+		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 		SetMenuBar(_menu_bar);
 	}
 	
@@ -306,6 +316,22 @@ void WinPortFrame::OnAccelerator_Ctrl(wxCommandEvent& event)
 	ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
 		
 	fprintf(stderr, "OnAccelerator_Ctrl_%c (%u)\n", ir.Event.KeyEvent.wVirtualKeyCode, event.GetId() );
+		
+	g_wx_con_in.Enqueue(&ir, 1);
+	ir.Event.KeyEvent.bKeyDown = FALSE;
+	g_wx_con_in.Enqueue(&ir, 1);
+}
+
+void WinPortFrame::OnAccelerator_CtrlShift(wxCommandEvent& event)
+{
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.bKeyDown = TRUE;
+	ir.Event.KeyEvent.wRepeatCount = 1;
+	ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
+	ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED | SHIFT_PRESSED;
+		
+	fprintf(stderr, "OnAccelerator_CtrlShift_%c (%u)\n", ir.Event.KeyEvent.wVirtualKeyCode, event.GetId() );
 		
 	g_wx_con_in.Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;

@@ -1,6 +1,6 @@
 
 #include "headers.hpp"
-
+#include "clipboard.hpp"
 #include <signal.h>
 #include <pthread.h>
 #include <mutex>
@@ -270,20 +270,39 @@ class VTShell
 				(dwControlKeyState & (SHIFT_PRESSED)) == 0);
 	}
 	
+	void OnCtrlC(bool alt)
+	{
+		if (alt) {
+			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
+			SendSignal(SIGKILL);
+		} else if (_pipes_fallback) 
+			SendSignal(SIGINT);		
+	}
+	
+	std::string OnCtrlShiftV()
+	{
+		std::string out;
+		wchar_t *wz = PasteFromClipboard();
+		if (wz) {
+			out = Wide2MB(&wz[0]);
+			xf_free(wz);
+		}
+
+		return out;
+	}
+	
 	std::string TranslateKeyEvent(const KEY_EVENT_RECORD &KeyEvent)
 	{
 		if (KeyEvent.wVirtualKeyCode) {
 			const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 			const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 			const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
-			if (ctrl && !shift && KeyEvent.wVirtualKeyCode=='C') {
-				if (alt) {
-					fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
-					SendSignal(SIGKILL);
-				} else if (_pipes_fallback) 
-					SendSignal(SIGINT);
+			if (ctrl && shift && !alt && KeyEvent.wVirtualKeyCode=='V') {
+				return OnCtrlShiftV();
 			}
-				
+			if (ctrl && !shift && KeyEvent.wVirtualKeyCode=='C') {
+				OnCtrlC(alt);
+			} 
 			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift);
 			if (spec)
 				return spec;

@@ -25,23 +25,42 @@ static unsigned int DivCeil(unsigned int v, unsigned int d)
 
 
 /////////////////////////////////////////////////////////////////////////////////
+static const char *g_known_good_fonts[] = { "Ubuntu", "Terminus", "DejaVu", 
+											"Liberation", "Droid", "Monospace", 
+											NULL};
+	
 
 class FixedFontLookup : wxFontEnumerator
 {
-	wxString _result;
-	virtual bool OnFacename(const wxString &font)
+	wxString _any, _known_good;
+	virtual bool OnFacename(const wxString &face_name)
 	{
-		_result = font;
+		_any = face_name;
+		for (const char **p = g_known_good_fonts; *p; ++p) {
+			if (face_name.find(*p)!=wxString::npos) {
+				_known_good = face_name;
+			}
+		}
+		
+		/* unfortunatelly following code gives nothing interesting
+		wxFont f(wxFontInfo(16).Underlined().FaceName(face_name));
+		if (f.IsOk()) {
+			fprintf(stderr, "FONT family %u encoding %u face_name='%ls' \n", 
+				(unsigned int)f.GetFamily(), (unsigned int)f.GetEncoding(), face_name.wc_str());
+		} else {
+			fprintf(stderr, "BAD FONT: face_name='%ls'\n", face_name.wc_str());
+		} */
 		return false;
 	}
 public:
 
 	wxString Query()
 	{
-		_result.Empty();
+		_any.Empty();
+		_known_good.Empty();
 		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
-		fprintf(stderr, "FixedFontLookup: %ls\n", _result.wc_str());
-		return _result;
+		fprintf(stderr, "FixedFontLookup: _any='%ls' _known_good='%ls'\n", _any.wc_str(), _known_good.wc_str());
+		return _known_good.IsEmpty() ? _any : _known_good;
 	}	
 };
 

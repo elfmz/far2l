@@ -279,7 +279,7 @@ class VTShell
 			SendSignal(SIGINT);		
 	}
 	
-	std::string OnCtrlShiftV()
+	std::string StringClipboard()
 	{
 		std::string out;
 		wchar_t *wz = PasteFromClipboard();
@@ -297,8 +297,9 @@ class VTShell
 			const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 			const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 			const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
-			if (ctrl && shift && !alt && KeyEvent.wVirtualKeyCode=='V') {
-				return OnCtrlShiftV();
+			if ((ctrl && shift && !alt && KeyEvent.wVirtualKeyCode=='V') ||
+			    (!ctrl && shift && !alt && KeyEvent.wVirtualKeyCode==VK_INSERT) ){
+				return StringClipboard();
 			}
 			if (ctrl && !shift && KeyEvent.wVirtualKeyCode=='C') {
 				OnCtrlC(alt);

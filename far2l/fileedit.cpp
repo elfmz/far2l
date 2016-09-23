@@ -658,7 +658,7 @@ void FileEditor::Init(
 		}
 
 		if (m_codepage==CP_AUTODETECT)
-			m_codepage=Opt.EdOpt.AnsiCodePageForNewFile?WINPORT(GetACP)():WINPORT(GetOEMCP)();
+			m_codepage=Opt.EdOpt.UTF8CodePageForNewFile ? CP_UTF8 : CP_KOI8R;
 
 		m_editor->SetCodePage(m_codepage);
 	}
@@ -1039,7 +1039,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						Flags.Clear(FFILEEDIT_SAVETOSAVEAS);
 					}
 
-					static int TextFormat=0;
+					static int TextFormat=2;
 					UINT codepage = m_codepage;
 					bool SaveAs = Key==KEY_SHIFTF2 || Flags.Check(FFILEEDIT_SAVETOSAVEAS);
 					int NameChanged=FALSE;
@@ -1511,7 +1511,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 		}
 
 		if (m_codepage==CP_AUTODETECT)
-			m_codepage=Opt.EdOpt.AnsiCodePageAsDefault?WINPORT(GetACP)():WINPORT(GetOEMCP)();
+			m_codepage=Opt.EdOpt.UTF8CodePageAsDefault?CP_UTF8:CP_KOI8R;
 	}
 	else
 	{
@@ -1620,7 +1620,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 {
 	if (!bSaveAs)
 	{
-		TextFormat=0;
+		TextFormat=2;
 		codepage=m_editor->GetCodePage();
 	}
 

@@ -223,8 +223,8 @@ int CommandLine::ProcessKey(int Key)
 	if ( Key!=KEY_NONE)
 		LastKey = Key;
 	
-	if ( Key==KEY_TAB) {
-		ProcessCompletion(SavedLastKey==KEY_TAB);
+	if ( Key==KEY_TAB || Key==KEY_SHIFTTAB) {
+		ProcessCompletion(SavedLastKey==Key);
 		return TRUE;
 	}
 	

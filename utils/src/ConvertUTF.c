@@ -667,6 +667,7 @@ ConversionResult CalcSpaceUTF8toUTF32 (int *out,
             (*out)++;
         }
 	}
+	*sourceStart = source;
 	return result;
 }
 

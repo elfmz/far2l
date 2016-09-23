@@ -555,10 +555,23 @@ int FarAppMain(int argc, char **argv)
 	return Result;
 }
 
+/*void EncodingTest()
+{
+	std::wstring v = MB2Wide("\x80hello\x80""aaaaaaaaaaaa\x80""zzzzzzzzzzz\x80");
+	printf("%u: '%ls'\n", (unsigned int)v.size(), v.c_str());
+	for (size_t i = 0; i<v.size(); ++i)
+		printf("%02x ", (unsigned int)v[i]);
+		
+	printf("\n");
+	std::string a = StrWide2MB(v);
+	for (size_t i = 0; i<a.size(); ++i)
+		printf("%02x ", (unsigned char)a[i]);
+	printf("\n");	
+}*/
+
 int _cdecl main(int Argc, char *Argv[])
 {
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
-	
 	apiEnableLowFragmentationHeap();
 	return WinPortMain(Argc, Argv, FarAppMain);
 }

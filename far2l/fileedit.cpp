@@ -658,7 +658,7 @@ void FileEditor::Init(
 		}
 
 		if (m_codepage==CP_AUTODETECT)
-			m_codepage=Opt.EdOpt.AnsiCodePageForNewFile?WINPORT(GetACP)():WINPORT(GetOEMCP)();
+            m_codepage=Opt.EdOpt.UTF8CodePageForNewFile ? CP_UTF8 : CP_KOI8R;
 
 		m_editor->SetCodePage(m_codepage);
 	}
@@ -1511,7 +1511,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 		}
 
 		if (m_codepage==CP_AUTODETECT)
-			m_codepage=Opt.EdOpt.AnsiCodePageAsDefault?WINPORT(GetACP)():WINPORT(GetOEMCP)();
+            m_codepage=Opt.EdOpt.UTF8CodePageAsDefault?CP_UTF8:CP_KOI8R;
 	}
 	else
 	{

@@ -178,8 +178,8 @@ struct EditorOptions
 	int DelRemovesBlocks;
 	int AutoIndent;
 	int AutoDetectCodePage;
-	int AnsiCodePageForNewFile;
-	int AnsiCodePageAsDefault;
+	int UTF8CodePageForNewFile;
+	int UTF8CodePageAsDefault;
 	int CursorBeyondEOL;
 	int BSLikeDel;
 	int CharCodeBase;
@@ -211,8 +211,8 @@ struct EditorOptions
 		DelRemovesBlocks = 0;
 		AutoIndent = 0;
 		AutoDetectCodePage = 0;
-		AnsiCodePageForNewFile = 0;
-		AnsiCodePageAsDefault = 0;
+		UTF8CodePageForNewFile = 0;
+		UTF8CodePageAsDefault = 0;
 		CursorBeyondEOL = 0;
 		BSLikeDel = 0;
 		CharCodeBase = 0;
@@ -244,8 +244,8 @@ struct EditorOptions
 		dest.DelRemovesBlocks = DelRemovesBlocks;
 		dest.AutoIndent = AutoIndent;
 		dest.AutoDetectCodePage = AutoDetectCodePage;
-		dest.AnsiCodePageForNewFile = AnsiCodePageForNewFile;
-		dest.AnsiCodePageAsDefault = AnsiCodePageAsDefault;
+		dest.UTF8CodePageForNewFile = UTF8CodePageForNewFile;
+		dest.UTF8CodePageAsDefault = UTF8CodePageAsDefault;
 		dest.CursorBeyondEOL = CursorBeyondEOL;
 		dest.BSLikeDel = BSLikeDel;
 		dest.CharCodeBase = CharCodeBase;
@@ -285,7 +285,7 @@ struct ViewerOptions
 	int SaveShortPos;
 	int UseExternalViewer;
 	int ShowKeyBar; // $ 15.07.2000 tran + ShowKeyBar
-	int AnsiCodePageAsDefault;
+	int UTF8CodePageAsDefault;
 	int ShowTitleBar;
 	int SearchRegexp;
 };

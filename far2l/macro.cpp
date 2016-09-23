@@ -2813,8 +2813,8 @@ static bool editorsetFunc(const TMacroFunction*)
 				Ret=(int64_t)EdOpt.AutoIndent; break;
 			case 5:  // AutoDetectCodePage;
 				Ret=(int64_t)EdOpt.AutoDetectCodePage; break;
-			case 6:  // AnsiCodePageForNewFile;
-				Ret=(int64_t)EdOpt.AnsiCodePageForNewFile; break;
+			case 6:  // UTF8CodePageForNewFile;
+				Ret=(int64_t)EdOpt.UTF8CodePageForNewFile; break;
 			case 7:  // CursorBeyondEOL;
 				Ret=(int64_t)EdOpt.CursorBeyondEOL; break;
 			case 8:  // BSLikeDel;
@@ -2863,8 +2863,8 @@ static bool editorsetFunc(const TMacroFunction*)
 					EdOpt.AutoIndent=longState; break;
 				case 5:  // AutoDetectCodePage;
 					EdOpt.AutoDetectCodePage=longState; break;
-				case 6:  // AnsiCodePageForNewFile;
-					EdOpt.AnsiCodePageForNewFile=longState; break;
+				case 6:  // UTF8CodePageForNewFile;
+					EdOpt.UTF8CodePageForNewFile=longState; break;
 				case 7:  // CursorBeyondEOL;
 					EdOpt.CursorBeyondEOL=longState; break;
 				case 8:  // BSLikeDel;

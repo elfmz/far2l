@@ -68,6 +68,7 @@ namespace FailTolerantUTF8
 	
 		const UTF8 *src_end = (const UTF8*)(src + src_len);
 		size_t dst_len = 0;
+		wchar_t wz[16];
 		do {
 			const UTF8* tmp = (const UTF8*)src;
 			int len = 0;
@@ -84,13 +85,13 @@ namespace FailTolerantUTF8
 				assert (target == target_end);
 				for (size_t pos = dst.find(ESCAPE_CHAR, dst_len); 
 						pos != std::wstring::npos; pos = dst.find(ESCAPE_CHAR, pos)) {
-					dst.insert(pos, 1, ESCAPE_CHAR);
-					pos+= 2;
+					swprintf(wz, ARRAYSIZE(wz), L"%02x", ESCAPE_CHAR);
+					dst.insert(pos + 1, wz);
+					pos+= 3;
 					len++;
 				}
 				dst_len+= len;
 			} else {
-				wchar_t wz[16];
 				swprintf(wz, ARRAYSIZE(wz), L"%c%02x", ESCAPE_CHAR, *(unsigned char *)src);
 				dst.resize(dst_len);
 				dst+= wz;

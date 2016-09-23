@@ -31,12 +31,10 @@ src/ConsoleInput.cpp
 src/ConsoleOutput.cpp
 src/WinPortHandle.cpp
 src/WinPortSynch.cpp
-src/ConvertUTF.c
 src/PathHelpers.cpp
 src/UI/Paint.cpp
 src/UI/Main.cpp
 src/UI/wxWinTranslations.cpp
- src/ConvertUTF.c
 )
 
 add_library (WinPort ${SOURCES})

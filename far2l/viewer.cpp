@@ -346,7 +346,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 			}
 
 			if (VM.CodePage==CP_AUTODETECT)
-                VM.CodePage = Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
+				VM.CodePage = Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
 		}
 		else
 		{
@@ -357,7 +357,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		// пока что запретим переключать hex в UTF8/UTF32, ибо не работает.
 		if (VM.Hex && (VM.CodePage==CP_UTF8 || VM.CodePage==CP_UTF32LE || VM.CodePage==CP_UTF32BE))
 		{
-            VM.CodePage=Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
+			VM.CodePage=Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
 		}
 
 		if (!IsUnicodeOrUtfCodePage(VM.CodePage))
@@ -3362,7 +3362,7 @@ int Viewer::ProcessHexMode(int newMode, bool isRedraw)
 	// Ибо сейчас это не просмотр, а генератор однотипных унылых багрепортов.
 	if (VM.CodePage==CP_UTF8 && newMode)
 	{
-        VM.CodePage=WINPORT(GetOEMCP)(); //Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
+		VM.CodePage=WINPORT(GetOEMCP)(); //Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
 	}
 
 	int oldHex=VM.Hex;

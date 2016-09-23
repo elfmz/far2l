@@ -1039,7 +1039,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						Flags.Clear(FFILEEDIT_SAVETOSAVEAS);
 					}
 
-					static int TextFormat=0;
+					static int TextFormat=2;
 					UINT codepage = m_codepage;
 					bool SaveAs = Key==KEY_SHIFTF2 || Flags.Check(FFILEEDIT_SAVETOSAVEAS);
 					int NameChanged=FALSE;
@@ -1620,7 +1620,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 {
 	if (!bSaveAs)
 	{
-		TextFormat=0;
+		TextFormat=2;
 		codepage=m_editor->GetCodePage();
 	}
 

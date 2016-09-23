@@ -593,7 +593,7 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeyEditor,L"FileSizeLimitHi",&Opt.EdOpt.FileSizeLimitHi,(DWORD)0, 0},
 	{0, REG_DWORD,  NKeyEditor,L"CharCodeBase",&Opt.EdOpt.CharCodeBase,1, 0},
 	{0, REG_DWORD,  NKeyEditor,L"AllowEmptySpaceAfterEof", &Opt.EdOpt.AllowEmptySpaceAfterEof,0,0},//skv
-    {1, REG_DWORD,  NKeyEditor,L"AnsiCodePageForNewFile",&Opt.EdOpt.UTF8CodePageForNewFile,1, 0},
+    {1, REG_DWORD,  NKeyEditor,L"Utf8CodePageForNewFile",&Opt.EdOpt.UTF8CodePageForNewFile,1, 0},
     {1, REG_DWORD,  NKeyEditor,L"UTF8CodePageAsDefault",&Opt.EdOpt.UTF8CodePageAsDefault,1, 0},
 	{1, REG_DWORD,  NKeyEditor,L"ShowKeyBar",&Opt.EdOpt.ShowKeyBar,1, 0},
 	{0, REG_DWORD,  NKeyEditor,L"ShowTitleBar",&Opt.EdOpt.ShowTitleBar,1, 0},

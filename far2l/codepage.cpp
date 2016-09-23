@@ -413,14 +413,14 @@ void AddCodePages(DWORD codePages)
 	// Добавляем стандартные таблицы символов
 	AddStandardCodePage((codePages & ::SearchAll) ? MSG(MFindFileAllCodePages) : MSG(MEditOpenAutoDetect), CP_AUTODETECT, -1, (codePages & ::SearchAll) || (codePages & ::Auto));
 	AddSeparator(MSG(MGetCodePageSystem));
-	AddStandardCodePage(L"DOS", WINPORT(GetOEMCP)(), -1, true);
+	AddStandardCodePage(L"UTF-8", CP_UTF8, -1, true);
 	AddStandardCodePage(L"ANSI", WINPORT(GetACP)(), -1, true);
 	AddStandardCodePage(L"KOI8", CP_KOI8R, -1, true);
 	AddSeparator(MSG(MGetCodePageUnicode));
 	AddStandardCodePage(L"UTF-7", CP_UTF7, -1, true);
-	AddStandardCodePage(L"UTF-8", CP_UTF8, -1, true);
 	AddStandardCodePage(L"UTF-16 (Little endian)", CP_UTF16LE, -1, true);
 	AddStandardCodePage(L"UTF-16 (Big endian)", CP_UTF16BE, -1, true);
+	AddStandardCodePage(L"DOS", WINPORT(GetOEMCP)(), -1, true);
 	if (sizeof(wchar_t)==4) {
 		AddStandardCodePage(L"UTF-32 (Little endian)", CP_UTF32LE, -1, true);
 		AddStandardCodePage(L"UTF-32 (Big endian)", CP_UTF32BE, -1, true);

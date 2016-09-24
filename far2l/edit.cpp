@@ -3000,6 +3000,40 @@ void EditControl::SetMenuPos(VMenu& menu)
 }
 
 
+static void FilteredAddToMenu(VMenu &menu, const FARString &filter, const FARString &text)
+{
+	if (!StrCmpNI(text, filter, static_cast<int>(filter.GetLength())) && StrCmp(text, filter)) {
+		menu.AddItem(text);
+	}
+}
+
+void EditControl::PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strFilter)
+{
+	if (pCustomCompletionList)
+	{
+		for (const auto &possibility : *pCustomCompletionList) 
+			FilteredAddToMenu(ComplMenu, strFilter, FARString(possibility));
+			
+		if (ComplMenu.GetItemCount() < 10)
+			ComplMenu.AssignHighlights(0);
+	}
+	else 
+	{
+		if(pHistory) 
+		{
+			pHistory->GetAllSimilar(ComplMenu, strFilter);
+		} 
+		else if(pList) 
+		{
+			for(int i=0;i<pList->ItemsNumber;i++)
+				FilteredAddToMenu(ComplMenu, strFilter, pList->Items[i].Text);
+		}
+		if(ECFlags.Check(EC_ENABLEFNCOMPLETE))
+			EnumFiles(ComplMenu, strFilter);
+	}	
+}
+
+
 int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 {
 	int Result=0;
@@ -3010,38 +3044,8 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 		Reenter++;
 
 		VMenu ComplMenu(nullptr,nullptr,0,0);
-		FARString strTemp=Str;
-		if (pCustomCompletionList)
-		{
-			for (const auto &possibility : *pCustomCompletionList)
-			{
-				ComplMenu.AddItem(FARString(possibility));
-			}
-			if (pCustomCompletionList->size() < 10)
-				ComplMenu.AssignHighlights(0);
-		}
-		else 
-		{
-			if(pHistory)
-			{
-				pHistory->GetAllSimilar(ComplMenu,strTemp);
-			}
-			else if(pList)
-			{
-				for(int i=0;i<pList->ItemsNumber;i++)
-				{
-					if (!StrCmpNI(pList->Items[i].Text, strTemp, static_cast<int>(strTemp.GetLength())) && StrCmp(pList->Items[i].Text, strTemp))
-					{
-						ComplMenu.AddItem(pList->Items[i].Text);
-					}
-				}
-			}
-
-			if(ECFlags.Check(EC_ENABLEFNCOMPLETE))
-			{
-				EnumFiles(ComplMenu,strTemp);
-			}
-		}
+		FARString strTemp = Str;
+		PopulateCompletionMenu(ComplMenu, strTemp);
 
 		if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
 		{
@@ -3114,24 +3118,7 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 								PrevPos=0;
 								if(!strTemp.IsEmpty())
 								{
-									if(pHistory)
-									{
-										pHistory->GetAllSimilar(ComplMenu,strTemp);
-									}
-									else if(pList)
-									{
-										for(int i=0;i<pList->ItemsNumber;i++)
-										{
-											if (!StrCmpNI(pList->Items[i].Text, strTemp, static_cast<int>(strTemp.GetLength())) && StrCmp(pList->Items[i].Text, strTemp))
-											{
-												ComplMenu.AddItem(pList->Items[i].Text);
-											}
-										}
-									}
-								}
-								if(ECFlags.Check(EC_ENABLEFNCOMPLETE))
-								{
-									EnumFiles(ComplMenu,strTemp);
+									PopulateCompletionMenu(ComplMenu, strTemp);
 								}
 								if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
 								{

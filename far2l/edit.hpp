@@ -320,7 +320,7 @@ class EditControl:public Edit
 
 	void SetMenuPos(VMenu& menu);
 	int AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey);
-
+	void PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strFilter);
 
 
 public:

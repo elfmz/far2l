@@ -167,7 +167,12 @@ void CommandLine::ProcessCompletion(bool possibilities)
 				fprintf(stderr, "Possibilities: ");
 				for(auto &p : possibilities) {
 					fprintf(stderr, "%s ", p.c_str());
-					p.insert(0, cmd);
+					if (p.find(cmd)!=0) {
+						if (p.find(' ') != 0 && !cmd.empty() && cmd[cmd.size()-1]!=' ') {
+							p.insert(0, 1, ' ');
+						}
+						p.insert(0, cmd);
+					}
 				}
 				fprintf(stderr, "\n");
 				

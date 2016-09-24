@@ -132,6 +132,7 @@ class UnicodeString
 		UnicodeString(const wchar_t *lpwszData) { SetEUS(); Copy(lpwszData); }
 		UnicodeString(const wchar_t *lpwszData, size_t nLength) { SetEUS(); Copy(lpwszData, nLength); }
 		UnicodeString(const char *lpszData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(lpszData, CodePage); }
+		UnicodeString(const std::string &strData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(strData.c_str(), CodePage); }
 		explicit UnicodeString(size_t nSize, size_t nDelta=0) { m_pData = new UnicodeStringData(nSize, nDelta); }
 
 		~UnicodeString() { /*if (m_pData) он не должен быть nullptr*/ m_pData->DecRef(); }

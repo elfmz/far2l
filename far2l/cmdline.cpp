@@ -165,43 +165,13 @@ void CommandLine::ProcessCompletion(bool possibilities)
 			if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
 				std::sort(possibilities.begin(), possibilities.end());
 				fprintf(stderr, "Possibilities: ");
-				for(const auto &p : possibilities) 
+				for(auto &p : possibilities) {
 					fprintf(stderr, "%s ", p.c_str());
+					p.insert(0, cmd);
+				}
 				fprintf(stderr, "\n");
-
-				VMenu vm(nullptr, nullptr, 0, ScrY-4);
-				//vm.SetBottomTitle(L"Possibilities SetBottomTitle");
-				vm.SetFlags(VMENU_WRAPMODE);// | VMENU_AUTOHIGHLIGHT
 				
-				int height = possibilities.size() + 2;
-				if ( height > (CmdStr.Y1 - 3)) height = (CmdStr.Y1 - 3);
-				fprintf(stderr, "ProcessCompletion: count=%u ScrY=%u CmdStr.Y1=%u height=%u\n", 
-					(unsigned int)possibilities.size(), ScrY, CmdStr.Y1, height);
-				vm.SetPosition(CmdStr.X1, CmdStr.Y1 - height, 0, 0);
-					
-				for(const auto &p : possibilities)  {
-					MenuItemEx mi;
-					mi.Clear();
-					mi.strName = p;						
-					vm.AddItem(&mi);
-				}
-				
-				if (possibilities.size() < 10)
-					vm.AssignHighlights(0);
-					
-				vm.SetBoxType(SHORT_SINGLE_BOX);
-				vm.ClearDone();
-				vm.Process();
-				int choice = vm.Modal::GetExitCode();
-				if ( choice >= 0) {
-					FARString chosen = vm.GetItemPtr(choice)->strName;
-					if (wcsstr(chosen.CPtr(), strStr.CPtr())!=chosen.CPtr()) {
-						//chosen.Insert(0, L" ");
-						chosen.Insert(0, strStr);
-					}
-					CmdStr.SetString(chosen);
-					CmdStr.Show();						
-				}
+				CmdStr.ShowCustomCompletionList(possibilities);
 			}
 		} else {
 			if (vtc.ExpandCommand(cmd)) {

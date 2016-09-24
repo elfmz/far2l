@@ -303,7 +303,6 @@ class Edit:public ScreenObject
 
 class History;
 class VMenu;
-
 // Надстройка над Edit.
 // Одиночная строка ввода для диалогов и комстроки (не для редактора)
 
@@ -311,18 +310,18 @@ class EditControl:public Edit
 {
 	friend class DlgEdit;
 
-	bool Selection;
-	int SelectionStart;
-
+	const std::vector<std::string> *pCustomCompletionList;
 	History* pHistory;
 	FarList* pList;
+	bool Selection;
+	int SelectionStart;
+	BitFlags ECFlags;
+	bool ACState;
+
 	void SetMenuPos(VMenu& menu);
 	int AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey);
 
 
-	BitFlags ECFlags;
-
-	bool ACState;
 
 public:
 
@@ -342,4 +341,5 @@ public:
 	void EnableAC(bool Permanent=false);
 	void DisableAC(bool Permanent=false);
 	void RevertAC(){ACState?EnableAC():DisableAC();}
+	void ShowCustomCompletionList(const std::vector<std::string> &list);
 };

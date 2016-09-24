@@ -2960,13 +2960,12 @@ int __stdcall SystemCPEncoder::Transcode(
 }
 */
 
-EditControl::EditControl(ScreenObject *pOwner,Callback* aCallback,bool bAllocateData,History* iHistory,FarList* iList,DWORD iFlags):Edit(pOwner,aCallback,bAllocateData)
+EditControl::EditControl(ScreenObject *pOwner,Callback* aCallback,bool bAllocateData,History* iHistory,FarList* iList,DWORD iFlags)
+	: Edit(pOwner,aCallback,bAllocateData),
+	pCustomCompletionList(nullptr), pHistory(iHistory), pList(iList), 
+	Selection(false), SelectionStart(-1), ECFlags(iFlags)
+
 {
-	ECFlags=iFlags;
-	pHistory=iHistory;
-	pList=iList;
-	Selection=false;
-	SelectionStart=-1;
 	ACState=ECFlags.Check(EC_ENABLEAUTOCOMPLETE)!=FALSE;
 }
 
@@ -3012,25 +3011,36 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 
 		VMenu ComplMenu(nullptr,nullptr,0,0);
 		FARString strTemp=Str;
-
-		if(pHistory)
+		if (pCustomCompletionList)
 		{
-			pHistory->GetAllSimilar(ComplMenu,strTemp);
-		}
-		else if(pList)
-		{
-			for(int i=0;i<pList->ItemsNumber;i++)
+			for (const auto &possibility : *pCustomCompletionList)
 			{
-				if (!StrCmpNI(pList->Items[i].Text, strTemp, static_cast<int>(strTemp.GetLength())) && StrCmp(pList->Items[i].Text, strTemp))
+				ComplMenu.AddItem(FARString(possibility));
+			}
+			if (pCustomCompletionList->size() < 10)
+				ComplMenu.AssignHighlights(0);
+		}
+		else 
+		{
+			if(pHistory)
+			{
+				pHistory->GetAllSimilar(ComplMenu,strTemp);
+			}
+			else if(pList)
+			{
+				for(int i=0;i<pList->ItemsNumber;i++)
 				{
-					ComplMenu.AddItem(pList->Items[i].Text);
+					if (!StrCmpNI(pList->Items[i].Text, strTemp, static_cast<int>(strTemp.GetLength())) && StrCmp(pList->Items[i].Text, strTemp))
+					{
+						ComplMenu.AddItem(pList->Items[i].Text);
+					}
 				}
 			}
-		}
 
-		if(ECFlags.Check(EC_ENABLEFNCOMPLETE))
-		{
-			EnumFiles(ComplMenu,strTemp);
+			if(ECFlags.Check(EC_ENABLEFNCOMPLETE))
+			{
+				EnumFiles(ComplMenu,strTemp);
+			}
 		}
 
 		if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
@@ -3321,4 +3331,11 @@ void EditControl::DisableAC(bool Permanent)
 {
 	ACState=Permanent?false:ECFlags.Check(EC_ENABLEAUTOCOMPLETE)!=FALSE;
 	ECFlags.Clear(EC_ENABLEAUTOCOMPLETE);
+}
+
+void EditControl::ShowCustomCompletionList(const std::vector<std::string> &list)
+{
+	pCustomCompletionList = &list;
+	AutoComplete(true, false);
+	pCustomCompletionList = nullptr;
 }

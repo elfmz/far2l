@@ -257,19 +257,6 @@ class VTShell
 		}		
 	}
 
-	bool IsControlOnlyPressed(DWORD dwControlKeyState)
-	{
-		return ( (dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0  &&
-				(dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|SHIFT_PRESSED)) == 0);
-	}
-	
-	bool IsControlAltOnlyPressed(DWORD dwControlKeyState)
-	{
-		return ( (dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0  &&
-				(dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0  &&
-				(dwControlKeyState & (SHIFT_PRESSED)) == 0);
-	}
-	
 	void OnCtrlC(bool alt)
 	{
 		if (alt) {
@@ -279,7 +266,7 @@ class VTShell
 			SendSignal(SIGINT);		
 	}
 	
-	std::string StringClipboard()
+	std::string StringFromClipboard()
 	{
 		std::string out;
 		wchar_t *wz = PasteFromClipboard();
@@ -297,13 +284,22 @@ class VTShell
 			const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 			const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 			const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
+			
+			if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK) {
+				//WCM has a setting for that, so probably in some cases backspace should be returned as is
+				char backspace[] = {127, 0};
+				return backspace;
+			}
+			
 			if ((ctrl && shift && !alt && KeyEvent.wVirtualKeyCode=='V') ||
 			    (!ctrl && shift && !alt && KeyEvent.wVirtualKeyCode==VK_INSERT) ){
-				return StringClipboard();
+				return StringFromClipboard();
 			}
+			
 			if (ctrl && !shift && KeyEvent.wVirtualKeyCode=='C') {
 				OnCtrlC(alt);
 			} 
+			
 			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift);
 			if (spec)
 				return spec;

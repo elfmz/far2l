@@ -10,7 +10,7 @@ add_library (gvfspanel MODULE ${SOURCES})
 
 target_link_libraries(gvfspanel utils)
 
-#target_compile_definitions(gvfspanel PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
+target_compile_definitions(gvfspanel PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
 
 target_include_directories(gvfspanel PRIVATE ./inc)
 target_include_directories(gvfspanel PRIVATE ../far2l)

@@ -1,5 +1,4 @@
-#ifndef __TMPLNG_HPP__
-#define __TMPLNG_HPP__
+#pragma once
 
 enum
 {
@@ -8,8 +7,8 @@ enum
   MError,
   MWarning,
 
-  MTempPanel,
-  MTempPanelTitleNum,
+  MGvfsPanel,
+  MGvfsPanelTitleNum,
 
   MDiskMenuString,
 
@@ -18,8 +17,8 @@ enum
   MAltShiftF2,
   MAltShiftF3,
 
-  MTempUpdate,
-  MTempSendFiles,
+  MGvfsUpdate,
+  MGvfsSendFiles,
 
   MSwitchMenuTxt,
   MSwitchMenuTitle,
@@ -53,5 +52,3 @@ enum
 
   MCopyContensMsg
 };
-
-#endif /* __TMPLNG_HPP__ */

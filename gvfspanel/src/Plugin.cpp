@@ -11,46 +11,45 @@ Plugin& Plugin::getInstance()
 
 Plugin::Plugin()
 {
-
+    Opt.AddToDisksMenu = true;
 }
 
 int Plugin::getVersion()
 {
-
+    return 1;
 }
 
 void Plugin::setStartupInfo(const PluginStartupInfo *psi)
 {
-
+    this->m_pPsi = *psi;
 }
 
 void Plugin::getPluginInfo(PluginInfo *pi)
 {
-    pi->StructSize=sizeof(PluginInfo);
+
+    pi->StructSize=sizeof(PluginStartupInfo);
     pi->Flags=PF_PRELOAD;
+
     static const wchar_t *DiskMenuStrings[1];
-    DiskMenuStrings[0]=pi->GetMsg(pi->ModuleNumber, MDiskMenuString);
-    Info->DiskMenuStrings=DiskMenuStrings;
-  #ifndef UNICODE
-    static int DiskMenuNumbers[1];
-    DiskMenuNumbers[0]=FSF.atoi(Opt.DisksMenuDigit);
-    Info->DiskMenuNumbers=DiskMenuNumbers;
-  #endif
-    Info->DiskMenuStringsNumber=Opt.AddToDisksMenu?ARRAYSIZE(DiskMenuStrings):0;
+    DiskMenuStrings[0] = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MDiskMenuString);
+    pi->DiskMenuStrings = DiskMenuStrings;
+    pi->DiskMenuStringsNumber = Opt.AddToDisksMenu ? ARRAYSIZE(DiskMenuStrings) : 0;
+
     static const TCHAR *PluginMenuStrings[1];
-    PluginMenuStrings[0]=GetMsg(MTempPanel);
-    Info->PluginMenuStrings=Opt.AddToPluginsMenu?PluginMenuStrings:NULL;
-    Info->PluginMenuStringsNumber=Opt.AddToPluginsMenu?ARRAYSIZE(PluginMenuStrings):0;
+    PluginMenuStrings[0] = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MGvfsPanel);
+    pi->PluginMenuStrings = Opt.AddToPluginsMenu?PluginMenuStrings:NULL;
+    pi->PluginMenuStringsNumber = Opt.AddToPluginsMenu ? ARRAYSIZE(PluginMenuStrings) : 0;
+
     static const TCHAR *PluginCfgStrings[1];
-    PluginCfgStrings[0]=GetMsg(MTempPanel);
-    Info->PluginConfigStrings=PluginCfgStrings;
-    Info->PluginConfigStringsNumber=ARRAYSIZE(PluginCfgStrings);
-    Info->CommandPrefix=Opt.Prefix;
+    PluginCfgStrings[0] = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MGvfsPanel);
+    pi->PluginConfigStrings = PluginCfgStrings;
+    pi->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
+    pi->CommandPrefix=Opt.Prefix;
 }
 
 HANDLE Plugin::openPlugin(int openFrom, intptr_t item)
 {
-
+    return static_cast<HANDLE>(this);
 }
 
 void Plugin::closePlugin(HANDLE Plugin)
@@ -58,7 +57,7 @@ void Plugin::closePlugin(HANDLE Plugin)
 
 }
 
-int Plugin::getOpenPluginInfo(HANDLE Plugin, OpenPluginInfo *pluginInfo)
+void Plugin::getOpenPluginInfo(HANDLE Plugin, OpenPluginInfo *pluginInfo)
 {
 
 }
@@ -66,9 +65,10 @@ int Plugin::getOpenPluginInfo(HANDLE Plugin, OpenPluginInfo *pluginInfo)
 int Plugin::getFindData(HANDLE Plugin, PluginPanelItem **PanelItem, int *itemsNumber, int OpMode)
 {
 
+    return 1;
 }
 
-int Plugin::freeFindData(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber)
+void Plugin::freeFindData(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber)
 {
 
 }
@@ -80,12 +80,12 @@ int Plugin::processHostFile(HANDLE Plugin, PluginPanelItem *PanelItem, int Items
 
 int Plugin::processKey(HANDLE Plugin, int key, unsigned int controlState)
 {
-
+    return 0;
 }
 
-int Plugin::rocessEvent(HANDLE Plugin, int Event, void *Param)
+int Plugin::processEvent(HANDLE Plugin, int Event, void *Param)
 {
-
+    return 0;
 }
 
 int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
@@ -95,7 +95,7 @@ int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
 
 int Plugin::makeDirectory(HANDLE Plugin, const wchar_t **Name, int OpMode)
 {
-
+    return 0;
 }
 
 int Plugin::deleteFiles(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber, int OpMode)

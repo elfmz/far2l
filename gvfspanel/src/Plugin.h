@@ -4,6 +4,31 @@
 #include "plugin.hpp"
 #include <windows.h>
 
+#include <memory>
+
+class Options
+{
+public:
+    bool AddToDisksMenu;
+    bool AddToPluginsMenu;
+    int CommonPanel;
+    int SafeModePanel;
+    int AnyInPanel;
+    int CopyContents;
+    int Mode;
+    int MenuForFilelist;
+    int NewPanelForSearchResults;
+    int FullScreenPanel;
+    int LastSearchResultsPanel;
+    int SelectedCopyContents;
+    TCHAR ColumnTypes[64];
+    TCHAR ColumnWidths[64];
+    TCHAR StatusColumnTypes[64];
+    TCHAR StatusColumnWidths[64];
+    TCHAR Mask[512];
+    TCHAR Prefix[16];
+};
+
 class Plugin {
 public:
     static Plugin& getInstance();
@@ -12,18 +37,18 @@ public:
     Plugin();
 public:
     int getVersion();
-    void setStartupInfo(const struct PluginStartupInfo * psi);
+    void setStartupInfo(const struct PluginStartupInfo * m_pPsi);
     void exitFar();
     void getPluginInfo(PluginInfo * pi);
     int configure(int item);
     HANDLE openPlugin(int openFrom, intptr_t item);
     void closePlugin(HANDLE Plugin);
-    int getOpenPluginInfo(HANDLE Plugin, OpenPluginInfo * pluginInfo);
+    void getOpenPluginInfo(HANDLE Plugin, OpenPluginInfo * pluginInfo);
     int getFindData(HANDLE Plugin, PluginPanelItem ** PanelItem, int * itemsNumber, int OpMode);
-    int freeFindData(HANDLE Plugin, PluginPanelItem * PanelItem, int itemsNumber);
+    void freeFindData(HANDLE Plugin, PluginPanelItem * PanelItem, int itemsNumber);
     int processHostFile(HANDLE Plugin, struct PluginPanelItem * PanelItem, int ItemsNumber, int OpMode);
     int processKey(HANDLE Plugin, int key, unsigned int controlState);
-    int rocessEvent(HANDLE Plugin, int Event, void * Param);
+    int processEvent(HANDLE Plugin, int Event, void * Param);
     int setDirectory(HANDLE Plugin, const wchar_t * Dir, int OpMode);
     int makeDirectory(HANDLE Plugin, const wchar_t ** Name, int OpMode);
     int deleteFiles(HANDLE Plugin, PluginPanelItem * PanelItem, int itemsNumber, int OpMode);
@@ -32,4 +57,7 @@ public:
     int processEditorEvent(int Event, void * Param);
     int processEditorInput(const INPUT_RECORD * Rec);
 
+private:
+    Options Opt;
+    PluginStartupInfo m_pPsi;
 };

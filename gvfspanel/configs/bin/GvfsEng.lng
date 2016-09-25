@@ -5,23 +5,23 @@
 "Error"
 "Warning"
 
-"Temporary panel"
-" %sTemporary panel [%d] "
+"Gvfs panel"
+" %sGvfs panel [%d] "
 
-"temporary"
+"gvfs"
 
 "Remove"
 "Switch"
 "SavLst"
 "Goto"
 
-"Updating temporary panel contents"
-"Sending files to temporary panel"
+"Updating Gvfs panel contents"
+"Sending files to Gvfs panel"
 
 "Total files:"
-"Available temporary panels"
+"Available Gvfs panels"
 
-"Temporary panel"
+"Gvfs panel"
 "Add to &Disks menu"
 "Disks menu &hotkey ('1'-'9'). Leave empty to autoassign"
 "Add to &Plugins menu"

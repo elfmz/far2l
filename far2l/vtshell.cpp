@@ -265,6 +265,19 @@ class VTShell : VTOutputReader::IProcessor
 		return 0;
 	}
 	
+	void UpdateTerminalSize(int fd_term)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
+		if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )  
+					&& csbi.dwSize.X && csbi.dwSize.Y) {
+			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
+			struct winsize ws = {(unsigned short)csbi.dwSize.Y, 
+				(unsigned short)csbi.dwSize.X, 0, 0};
+			if (ioctl( fd_term, TIOCSWINSZ, &ws )==-1)
+				perror("VT: ioctl(TIOCSWINSZ)");
+		}
+	}
+	
 	bool InitTerminal()
 	{
 		int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify pipes fallback functionality
@@ -273,16 +286,7 @@ class VTShell : VTOutputReader::IProcessor
 			fcntl(fd_term, F_SETFD, FD_CLOEXEC);
 			
 			if (grantpt(fd_term)==0 && unlockpt(fd_term)==0) {
-				CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-				if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )  
-							&& csbi.dwSize.X && csbi.dwSize.Y) {
-								
-					struct winsize ws = {(unsigned short)csbi.dwSize.Y, 
-						(unsigned short)csbi.dwSize.X, 0, 0};
-					if (ioctl( fd_term, TIOCSWINSZ, &ws )==-1)
-						perror("VT: ioctl(TIOCSWINSZ)");
-				}
-				
+				UpdateTerminalSize(fd_term);
 				const char *slavename = ptsname(fd_term);
 				if (slavename && *slavename)
 					_slavename = slavename;
@@ -396,7 +400,7 @@ class VTShell : VTOutputReader::IProcessor
 		int r = ForkAndAttachToSlave(true);
 		if (r == 0) {
 			RunShell();
-			fprintf(stderr, "ExecuteOrForkProc: RunShell returned %d errno %u\n", r, errno);
+			fprintf(stderr, "ExecuteOrForkProc: RunShell returned, errno %u\n", errno);
 			_exit(errno);
 			exit(errno);
 		}
@@ -405,7 +409,7 @@ class VTShell : VTOutputReader::IProcessor
 			perror("VT: fork");
 			return false;
 		}
-		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed and thus not
+		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
 		_pid = r;		
 		return true;
 	}
@@ -427,7 +431,7 @@ class VTShell : VTOutputReader::IProcessor
 		
 		//_completion_marker is not thread safe generically,
 		//but while OnProcessOutput called from single thread .
-		//and can't overlap wti ScanReset() - its ok.
+		//and can't overlap with ScanReset() - its ok.
 		//But if it will be called from several threads - this 
 		//calls must be guarded by mutex.
 		if (_completion_marker.Scan(buf, len)) {
@@ -575,6 +579,12 @@ class VTShell : VTOutputReader::IProcessor
 	
 	int ExecuteCommand(const char *cmd)
 	{
+		if (_pid==-1) {
+			return -1;
+		}
+		if (!_slavename.empty())
+			UpdateTerminalSize(_fd_out);
+		
 		char tmp_script_name[128]; sprintf(tmp_script_name, "vtcmd/%x_%p.cmd", getpid(), this);
 		std::string tmp_script = InMyProfile(tmp_script_name);
 		FILE *f = fopen(tmp_script.c_str(), "wt");
@@ -621,12 +631,9 @@ static bool shown_tip_exit = false;
 		_completion_marker.ScanReset();
 		_skipping_line = true;
 		
-		if (_pid==-1) {
-			return -1;
-		}
-
 		VTOutputReader output_reader(this, _fd_out);
-
+		INPUT_RECORD last_window_info_ir = {0};
+		
 		for (;;) {
 			INPUT_RECORD ir = {0};
 			DWORD dw = 0;
@@ -636,11 +643,19 @@ static bool shown_tip_exit = false;
 
 			if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
 				OnKeyDown(ir.Event.KeyEvent);
+			} else if (ir.EventType==WINDOW_BUFFER_SIZE_EVENT) {
+				last_window_info_ir = ir;
+				if (!_slavename.empty())
+					UpdateTerminalSize(_fd_out);
 			}
 			if (!output_reader.IsActive())
 				break;
 		}
 		
+		if (last_window_info_ir.EventType==WINDOW_BUFFER_SIZE_EVENT) { //handover this event to far
+			DWORD dw = 0;
+			WINPORT(WriteConsoleInput)(NULL, &last_window_info_ir, 1, &dw);
+		}
 		
 		if (_pid!=-1) {
 			int status;

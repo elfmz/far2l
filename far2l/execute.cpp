@@ -234,7 +234,7 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 		DWORD saved_mode = 0, dw;
 		WINPORT(GetConsoleMode)(NULL, &saved_mode);
 		WINPORT(SetConsoleMode)(NULL, saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
-			| ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE );
+			| ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE | WINDOW_BUFFER_SIZE_EVENT);
 		const std::wstring &ws = MB2Wide(CmdStr);
 		WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );

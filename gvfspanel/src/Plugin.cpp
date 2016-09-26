@@ -100,25 +100,25 @@ int Plugin::makeDirectory(HANDLE Plugin, const wchar_t **Name, int OpMode)
 
 int Plugin::deleteFiles(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber, int OpMode)
 {
-
+    return 0;
 }
 
 int Plugin::getFiles(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber, int Move, const wchar_t **destPath, int OpMode)
 {
-
+    return 0;
 }
 
 int Plugin::putFiles(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber, int Move, const wchar_t *SrcPath, int OpMode)
 {
-
+    return 0;
 }
 
 int Plugin::processEditorEvent(int Event, void *Param)
 {
-
+    return 0;
 }
 
 int Plugin::processEditorInput(const INPUT_RECORD *Rec)
 {
-
+    return 0;
 }

@@ -51,14 +51,22 @@ public:
 	VTOutputReader(IProcessor *processor, int fd_out) : _processor(processor),
 		_thread(0), _fd_out(fd_out), _thread_exited(false), _started(false)
 	{
+		if (pipe2(_pipe,  O_CLOEXEC)==-1) {
+			perror("VTOutputReader: pipe2");
+			return;
+		} 
+
+		_thread_exited = false;
+		_started = true;
+		if (pthread_create(&_thread, NULL, sOutputReaderThread, this)) {
+			perror("VTOutputReader: pthread_create");
+			CheckedCloseFDPair(_pipe);
+			_started = false;
+			return;
+		}
 	}
 	
 	virtual ~VTOutputReader()
-	{
-		Stop();
-	}
-
-	void Stop()
 	{
 		if (_started) {
 			_started = false;
@@ -71,26 +79,7 @@ public:
 			_thread = 0;
 		}		
 	}
-	
-	bool Start()
-	{
-		if (pipe2(_pipe,  O_CLOEXEC)==-1) {
-			perror("VTOutputReader: pipe2");
-			return false;
-		} 
 
-		_thread_exited = false;
-		_started = true;
-		if (pthread_create(&_thread, NULL, sOutputReaderThread, this)) {
-			perror("VTOutputReader: pthread_create");
-			CheckedCloseFDPair(_pipe);
-			_started = false;
-			return false;
-		}
-
-		return true;
-	}
-	
 	bool IsActive()
 	{
 		return (_started && !_thread_exited);
@@ -231,7 +220,6 @@ class VTShell : VTOutputReader::IProcessor
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _pid;
-	VTOutputReader *_output_reader;
 	std::string _slavename;
 	CompletionMarker _completion_marker;
 	
@@ -548,7 +536,6 @@ class VTShell : VTOutputReader::IProcessor
 
 	void Shutdown() {
 		CheckedCloseFD(_fd_in);
-		ReleaseOutputReader();
 		CheckedCloseFD(_fd_out);
 		
 		if (_pid!=-1) {
@@ -559,43 +546,30 @@ class VTShell : VTOutputReader::IProcessor
 		}
 	}
 	
-	void ReleaseOutputReader()
-	{
-		delete _output_reader;
-		_output_reader = nullptr;		
-	}
-
-
-	
 	public:
 	VTShell()
 		:
-		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
-		_pid(-1),  _output_reader(nullptr)
+		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1), _pid(-1)
 	{		
 		if (!Startup())
 			return;
-
-		_output_reader = new VTOutputReader(this, _fd_out);	
 	}
 	
 	~VTShell()
 	{
 		fprintf(stderr, "~VTShell\n");
-		ReleaseOutputReader();
 		Shutdown();
 		CheckedCloseFD(_pipes_fallback_in);
 		CheckedCloseFD(_pipes_fallback_out);
 	}
 	
-	std::string EscapeQuotas(const char *str)
+	std::string EscapeQuotas(std::string str)
 	{
-		std::string out = str;
-		for(size_t p = out.find('\"'); p!=std::string::npos; p = out.find('\"', p)) {
-			out.insert(p, 1, '\\');
+		for(size_t p = str.find('\"'); p!=std::string::npos; p = str.find('\"', p)) {
+			str.insert(p, 1, '\\');
 			p+= 2;
 		}
-		return out;
+		return str;
 	}
 	
 	int ExecuteCommand(const char *cmd)
@@ -621,7 +595,7 @@ class VTShell : VTOutputReader::IProcessor
 		fclose(f);
 		
 		std::string cmd_str = ". ";
-		cmd_str+= tmp_script;
+		cmd_str+= EscapeQuotas(tmp_script);
 		cmd_str+= ';';
 		cmd_str+= _completion_marker.EchoCommand();
 		cmd_str+= '\n';
@@ -635,9 +609,11 @@ class VTShell : VTOutputReader::IProcessor
 		_completion_marker.ScanReset();
 		_echo_skipped = false;
 		
-		if (_pid==-1 || !_output_reader->Start()) {
+		if (_pid==-1) {
 			return -1;
 		}
+
+		VTOutputReader output_reader(this, _fd_out);
 
 		for (;;) {
 			INPUT_RECORD ir = {0};
@@ -649,10 +625,8 @@ class VTShell : VTOutputReader::IProcessor
 			if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
 				OnKeyDown(ir.Event.KeyEvent);
 			}
-
-			if (!_output_reader->IsActive()) {
+			if (!output_reader.IsActive())
 				break;
-			}
 		}
 		
 		
@@ -686,12 +660,11 @@ class VTShell : VTOutputReader::IProcessor
 			abort();
 		}
 		
-		
-		_output_reader->Start();
+		_completion_marker.ScanReset();
+		VTOutputReader output_reader(this, _fd_out);
 		
 		int status = -1;
 		waitpid(r, &status, 0);
-		_output_reader->Stop();
 		
 		/*if (!_slavename.empty()) {
 			tcsetattr( _fd_out, TCSADRAIN, &ts );

@@ -121,18 +121,6 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 			PrintCommand = false;
 			return true;
 		}
-	} else if (ecl[0] == "export") {
-		if (ecl.size() == 2) {
-			size_t p = ecl[1].find('=');
-			if (p != std::string::npos) {
-				const std::string &name = ecl[1].substr(0, p);
-				if (p == ecl[1].size() - 1)
-					unsetenv(name.c_str());
-				else
-					setenv(name.c_str(), ecl[1].substr(p + 1, ecl[1].size() - p - 1).c_str(), 1);
-				return true;
-			}
-		}
 	} else if (ecl[0]=="cd") {
 		if (ecl.size() == 2 ) {
 			if (IntChDir(StrMB2Wide(ecl[1]).c_str(), true, false))
@@ -163,9 +151,7 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 			}
 		}
 	}else if (ecl[0]=="exit") {
-		if (ecl.size() == 1 ) {
-			fprintf(stderr, "Use 'exit far' instead\n");
-		} else if (ecl.size() == 2 && ecl[1]=="far") {
+		if (ecl.size() == 2 && ecl[1]=="far") {
 			FrameManager->ExitMainLoop(FALSE);
 			return true;			
 		}

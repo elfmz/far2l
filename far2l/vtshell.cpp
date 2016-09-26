@@ -1,10 +1,12 @@
-
 #include "headers.hpp"
 #include "clipboard.hpp"
 #include <signal.h>
 #include <pthread.h>
 #include <mutex>
+#include <atomic>
 #include <fcntl.h>
+#include <iostream>
+#include <fstream>
 #include <sys/ioctl.h> 
 #include <sys/wait.h> 
 #include <condition_variable>
@@ -12,19 +14,11 @@
 #define __USE_BSD 
 #include <termios.h> 
 
-static void close_fd_pair(int *fds)
-{
-	if (close(fds[0])<0) fprintf(stderr, "close_fd_pair bad 1\n");
-	if (close(fds[1])<0) fprintf(stderr, "close_fd_pair bad 2\n");
-}
-
 void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) ;
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad = 0);
 
 
-#if 1 //change to 0 to enable verbose I/O reports to stderr
-# define DbgPrintEscaped(info, s)
-#else
+#if 0 //change to 1 to enable verbose I/O reports to stderr
 static void DbgPrintEscaped(const char *info, const std::string &s)
 {
 	std::string msg;
@@ -39,28 +33,256 @@ static void DbgPrintEscaped(const char *info, const std::string &s)
 	}
 	fprintf(stderr, "VT %s: '%s'\n", info, msg.c_str());
 }
+#else
+# define DbgPrintEscaped(info, s)
 #endif
 
-class VTShell
-{
-	std::string _cmd;
-	std::mutex _mutex;
-	VTAnsi _vta;
-	pthread_t _thread;
-	bool _pipes_fallback;
-	bool  _thread_state;
-	bool _thread_exiting;
-	int _fd_out;
-	int _fd_in;
-	pid_t _pid;
-	int (WINAPI *_fork_proc)(int argc, char *argv[]);
+	
 
-	bool Startup()
+class VTOutputReader
+{
+public:
+	struct IProcessor
 	{
-		int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify _pipes_fallback, 
-		const char *slavename = NULL;
+		virtual bool OnProcessOutput(const char *buf, int len) = 0;
+		virtual void OnStoppedOutput() = 0;
+	};
+	
+	VTOutputReader(IProcessor *processor, int fd_out) : _processor(processor),
+		_thread(0), _fd_out(fd_out), _thread_exited(false), _started(false)
+	{
+	}
+	
+	virtual ~VTOutputReader()
+	{
+		Stop();
+	}
+
+	void Stop()
+	{
+		if (_started) {
+			_started = false;
+			char c = 0;
+			if (write(_pipe[1], &c, sizeof(c)) != sizeof(c))
+				perror("VTOutputReader: write");
+			
+			pthread_join(_thread, NULL);
+			CheckedCloseFDPair(_pipe);
+			_thread = 0;
+		}		
+	}
+	
+	bool Start()
+	{
+		if (pipe2(_pipe,  O_CLOEXEC)==-1) {
+			perror("VTOutputReader: pipe2");
+			return false;
+		} 
+
+		_thread_exited = false;
+		_started = true;
+		if (pthread_create(&_thread, NULL, sOutputReaderThread, this)) {
+			perror("VTOutputReader: pthread_create");
+			CheckedCloseFDPair(_pipe);
+			_started = false;
+			return false;
+		}
+
+		return true;
+	}
+	
+	bool IsActive()
+	{
+		return (_started && !_thread_exited);
+	}
+	
+private:
+	IProcessor *_processor;
+	pthread_t _thread;
+	int _fd_out, _pipe[2];
+	std::atomic<bool> _thread_exited;
+	bool  _started;
+
+
+	static void *sOutputReaderThread(void *p)
+	{
+		return ((VTOutputReader *)p)->OutputReaderThread();
+	}
+	
+
+	void *OutputReaderThread()
+	{
+		char buf[0x1000];
+		fd_set rfds;
+		
+		for (;;) {
+			FD_ZERO(&rfds);
+			FD_SET(_fd_out, &rfds);
+			FD_SET(_pipe[0], &rfds);
+			
+			int r = select(std::max(_fd_out, _pipe[0]) + 1, &rfds, NULL, NULL, NULL);
+			
+			if (FD_ISSET(_fd_out, &rfds)) {
+				r = read(_fd_out, buf, sizeof(buf));
+				if (r <= 0) break;
+				if (!_processor->OnProcessOutput(buf, r)) break;
+			} else {
+				if (FD_ISSET(_pipe[0], &rfds)) {
+					r = read(_pipe[0], buf, sizeof(buf));
+					if (r <= 0) break;
+				}
+				if (!_started) break;
+			}
+		}
+		
+		
+		_thread_exited = true;
+		_processor->OnStoppedOutput();
+		return NULL;
+	}
+};
+
+class CompletionMarker 
+{
+	std::string _marker;
+	std::string _backlog;
+	size_t _marker_start;
+	int _exit_code;
+	bool _active;
+	
+public:
+	CompletionMarker() : _exit_code(-1)
+	{
+		ScanReset();
+		srand(time(NULL));
+		for (size_t l = 8 + (rand()%9); l; --l) {
+			char c;
+			switch (rand() % 3) {
+				case 0: c = 'A' + (rand() % ('Z' + 1 - 'A')); break;
+				case 1: c = 'a' + (rand() % ('z' + 1 - 'a')); break;
+				case 2: c = '0' + (rand() % ('9' + 1 - '0')); break;
+			}
+			_marker+= c;
+		}
+		_marker+= "\x1b[1K";
+		//setenv("FARVTMARKER", _marker.c_str(), 1);
+		fprintf(stderr, "CompletionMarker: '%s'\n", _marker.c_str());
+	}
+		
+	std::string SetEnvCommand() const
+	{
+		std::string out = "export FARVTMARKER=";
+		out+= _marker;
+		return out;
+	}
+	
+	std::string EchoCommand() const
+	{
+		return "echo -ne \"=$FARVTRESULT:$FARVTMARKER\"";
+	}
+	
+	int LastExitCode() const
+	{
+		return _exit_code;
+	}
+		
+	void ScanReset()
+	{
+		_active = false;
+		_marker_start = (size_t)-1;
+		_backlog.clear();
+	}
+
+	bool Scan(const char *buf, int len)
+	{
+		for (int i = 0; i < len; ++i) {
+			if (buf[i]=='=') {
+				ScanReset();
+				_active = true;
+			} else if (_active) {
+				_backlog+= buf[i];
+				if (_marker_start==(size_t)-1) {
+					//check for reasonable length limit
+					if (_backlog.size() > 12 + _marker.size()) { 
+						ScanReset();
+					} else if (buf[i]==':')
+						_marker_start = _backlog.size();
+
+				} else if (buf[i]==':') {//second splitter??
+					ScanReset();
+				} else if (_backlog.size() - _marker_start >= _marker.size())  {
+					if (memcmp(_backlog.c_str() + _marker_start, _marker.c_str(), _marker.size())==0) {
+						_backlog[_marker_start - 1] = 0;
+						_exit_code = atoi(&_backlog[0]);
+						ScanReset();
+						return true;
+					}
+					ScanReset();
+				}
+			}
+		}
+		return false;
+	}
+};
+	
+class VTShell : VTOutputReader::IProcessor
+{
+	VTAnsi _vta;
+	int _fd_out, _fd_in;
+	int _pipes_fallback_in, _pipes_fallback_out;
+	pid_t _pid;
+	VTOutputReader *_output_reader;
+	std::string _slavename;
+	CompletionMarker _completion_marker;
+	
+	
+	int ForkAndAttachToSlave(bool shell)
+	{
+		int r = fork();
+		if (r!=0)
+			return r;
+			
+		if (!_slavename.empty()) {
+			if (shell) {
+				if (setsid()==-1)
+					perror("VT: setsid");
+			}
+				
+			r = open(_slavename.c_str(), O_RDWR); 
+			if (r==-1) {
+				perror("VT: open slave");
+				_exit(errno);
+				exit(errno);
+			}
+				
+			if ( ioctl( 0, TIOCSCTTY, 0 )==-1 )
+				perror( "VT: ioctl(TIOCSCTTY)" );
+					
+			dup2(r, STDIN_FILENO);
+			dup2(r, STDOUT_FILENO);
+			dup2(r, STDERR_FILENO);
+			CheckedCloseFD(r);
+		} else {
+			dup2(_pipes_fallback_in, STDIN_FILENO);
+			dup2(_pipes_fallback_out, STDOUT_FILENO);
+			dup2(_pipes_fallback_out, STDERR_FILENO);
+			CheckedCloseFD(_pipes_fallback_in);
+			CheckedCloseFD(_pipes_fallback_out);
+		}
+			
+		//setenv("TERM", "xterm-256color", 1);
+		setenv("TERM", "xterm", 1);
+		signal( SIGINT, SIG_DFL );
+		return 0;
+	}
+	
+	bool InitTerminal()
+	{
+		int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify pipes fallback functionality
+		_slavename.clear();
 		if (fd_term!=-1) {
-			_pipes_fallback = false;
+			fcntl(fd_term, F_SETFD, FD_CLOEXEC);
+			
 			if (grantpt(fd_term)==0 && unlockpt(fd_term)==0) {
 				CONSOLE_SCREEN_BUFFER_INFO csbi = { };
 				if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )  
@@ -72,22 +294,23 @@ class VTShell
 						perror("VT: ioctl(TIOCSWINSZ)");
 				}
 				
-				slavename = ptsname(fd_term);
-				if (!slavename)
-					perror("VT: ptsname");
+				const char *slavename = ptsname(fd_term);
+				if (slavename && *slavename)
+					_slavename = slavename;
+				else
+					perror("VT: ptsname");				
 			} else
 				perror("VT: grantpt/unlockpt");
 				
-			if (!slavename) {
-				close(fd_term);
-				fd_term = -1;
+			if (_slavename.empty()) {
+				CheckedCloseFD(fd_term);
 			}
 		} else
 			perror("VT: posix_openpt");
 
-		int fd_in[2] = {-1, -1}, fd_out[2] = {-1, -1};
 		if (fd_term==-1) {
 			fprintf(stderr, "VT: fallback to pipes\n");
+			int fd_in[2] = {-1, -1}, fd_out[2] = {-1, -1};
 			if (pipe(fd_in) < 0) {
 				perror("VT: fds_in");
 				return false;
@@ -95,155 +318,155 @@ class VTShell
 
 			if (pipe(fd_out) < 0) {
 				perror("VT: fds_out");
-				close_fd_pair(fd_in);
+				CheckedCloseFDPair(fd_in);
 				return false;
 			}
-			_pipes_fallback = true;
+			fcntl(fd_in[1], F_SETFD, FD_CLOEXEC);
+			fcntl(fd_out[0], F_SETFD, FD_CLOEXEC);
+			
+			_pipes_fallback_in = fd_in[0];
+			_pipes_fallback_out = fd_out[1];
+			_fd_in = fd_in[1];
+			_fd_out = fd_out[0];
+			
+		} else {
+			_pipes_fallback_in = _pipes_fallback_out = -1;
+			struct termios ts = {0};
+			if (tcgetattr(fd_term, &ts)==0) {
+				ts.c_lflag |= ISIG | ICANON | ECHO;
+				//ts.c_lflag&= ~ECHO;
+				ts.c_cc[VINTR] = 3;
+				tcsetattr( fd_term, TCSAFLUSH, &ts );
+			}
+			_fd_in = fd_term;
+			_fd_out = dup(fd_term);
+			fcntl(_fd_out, F_SETFD, FD_CLOEXEC);
 		}
 		
-		int r = fork();
-		if (r == 0) {
-			if (fd_term!=-1) {
-				close(fd_term);
-				fd_term = -1;
-			}
-			if (slavename) {
-				if (setsid()==-1)
-					perror("VT: setsid");
-				
-				fd_term = open(slavename, O_RDWR); 
-				if (fd_term==-1) {
-					perror("VT: open slave");
-					exit(errno);
+		return true;
+	}
+
+	void RunShell()
+	{
+		//CheckedCloseFD(fd_term);
+			
+		const char *shell = getenv("SHELL");
+		if (!shell)
+			shell = "/bin/sh";
+		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols
+		if (strcmp(shell, "/usr/bin/fish")==0)
+			shell = "/bin/bash";
+
+		//shell = "/usr/bin/zsh";
+		//shell = "/bin/bash";
+		//shell = "/bin/sh";
+		std::vector<const char *> args;
+		args.push_back(shell);
+#if 0		
+		const char *home = getenv("HOME");
+		if (!home) home = "/root";
+		
+		//following hussle is to set PS='' from the very beginning of shell
+		//to avoid undesirable prompt to be printed
+		std::string rc_src, rc_dst, rc_arg;
+		if (strstr(shell, "/bash")) {
+			rc_src = std::string(home) + "/.bashrc";
+			rc_dst = InMyProfile("vtcmd/init.bash");
+			rc_arg = "--rcfile";
+		}/* else if (strstr(shell, "/zsh")) {
+			rc_src = std::string(home) + "/.zshrc";
+			rc_dst = InMyProfile("vtcmd/init.zsh");
+			rc_arg = "--rcs";
+		}*/
+		
+		if (!rc_arg.empty()) {
+			std::ofstream dst_stream(rc_dst, std::ios::binary);
+			if (dst_stream.is_open()) {
+				std::ifstream src_stream(rc_src, std::ios::binary);
+				if (src_stream.is_open()) {
+					dst_stream << src_stream.rdbuf();
 				}
-				
-				struct termios ts = {0};
-				if (tcgetattr(fd_term, &ts)==0) {
-					ts.c_lflag |= ECHO | ISIG | ICANON;
-					ts.c_cc[VINTR] = 3;
-					tcsetattr( fd_term, TCSAFLUSH, &ts );
-				} 
-				if ( ioctl( 0, TIOCSCTTY, 0 )==-1 )
-					perror( "VT: ioctl(TIOCSCTTY)" );
-					
-				dup2(fd_term, STDIN_FILENO);
-				dup2(fd_term, STDOUT_FILENO);
-				dup2(fd_term, STDERR_FILENO);
-				close(fd_term);
-				fd_term = -1;
-			} else {
-				dup2(fd_in[0], STDIN_FILENO);
-				dup2(fd_out[1], STDOUT_FILENO);
-				dup2(fd_out[1], STDERR_FILENO);
-				close_fd_pair(fd_in); 
-				close_fd_pair(fd_out);				
+				dst_stream << "\nPS1=''\n";
+				args.push_back(rc_arg.c_str());
+				args.push_back(rc_dst.c_str());
 			}
-			
-			//setenv("TERM", "xterm-256color", 1);
-			setenv("TERM", "xterm", 1);
-			signal( SIGINT, SIG_DFL );
-			
-			ExecuteOrForkProc(_cmd.c_str(), _fork_proc) ;
+		}
+#endif
+		args.push_back("-i");
+		args.push_back(nullptr);
+		
+		//FIXME: not fair - removing const 
+		execv(shell, (char **)&args[0]);
+	}
+	
+	bool Startup()
+	{
+		if (!InitTerminal())
+			return false;
+		
+		int r = ForkAndAttachToSlave(true);
+		if (r == 0) {
+			RunShell();
+			fprintf(stderr, "ExecuteOrForkProc: RunShell returned %d errno %u\n", r, errno);
+			_exit(errno);
+			exit(errno);
 		}
 	
 		if (r==-1) { 
 			perror("VT: fork");
-			if (fd_term==-1) {
-				close_fd_pair(fd_in);
-				close_fd_pair(fd_out);
-			} else
-				close(fd_term);
 			return false;
 		}
-		
-		if (fd_term==-1) {
-			close(fd_in[0]);
-			close(fd_out[1]);
-			_fd_in = fd_in[1];
-			_fd_out = fd_out[0];
-		} else {
-			_fd_in = dup(fd_term);
-			_fd_out = fd_term;
-		}
-		fcntl(_fd_in, F_SETFD, FD_CLOEXEC);
-		fcntl(_fd_out, F_SETFD, FD_CLOEXEC);
+		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed and thus not
 		_pid = r;		
 		return true;
 	}
 	
-	static void *sOutputReaderThread(void *p)
+
+	bool _echo_skipped;
+	virtual bool OnProcessOutput(const char *buf, int len) 
 	{
-		return ((VTShell *)p)->OutputReaderThread();
-	}
-	
-	void *OutputReaderThread()
-	{
-		char buf[0x1000];
-		for (;;) {
-			int r = read(_fd_out, buf, sizeof(buf));
-			if (r>0)
-				ProcessOutput(buf, r) ;
-				
-			std::lock_guard<std::mutex> lock(_mutex);
-			if (r<=0 || !_thread_state)  {
-				_thread_exiting = true;
-				break;
-			}
+		std::string s(buf, len);
+		DbgPrintEscaped("OUTPUT", s);
+		while (!_echo_skipped) {
+			if (s.empty()) break;
+			if (s[0]=='\n') _echo_skipped = true;
+			s.erase(0, 1);
+		}
+		if (!s.empty()) {
+			const std::wstring &ws = MB2Wide(s.c_str());
+			_vta.Write(ws.c_str(), ws.size());
 		}
 		
+		//_completion_marker is not thread safe generically,
+		//but while OnProcessOutput called from single thread .
+		//and can't overlap wti ScanReset() - its ok.
+		//But if it will be called from several threads - this 
+		//calls must be guarded by mutex.
+		if (_completion_marker.Scan(buf, len)) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	virtual void OnStoppedOutput()
+	{
 		//write some console input to kick pending ReadConsoleInput
 		INPUT_RECORD ir = {0};
 		ir.EventType = FOCUS_EVENT;
 		ir.Event.FocusEvent.bSetFocus = TRUE;
 		DWORD dw = 0;
 		WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
-
-		return NULL;
+		fprintf(stderr, "OnStoppedOutput\n");
 	}
-	
-	void ProcessOutput(const char *buf, int len) 
+
+
+	void OnKeyDown(KEY_EVENT_RECORD &KeyEvent)
 	{
-		std::string s(buf, len);
-		const std::wstring &ws = MB2Wide(s.c_str());
-		DbgPrintEscaped("OUTPUT", s);
-		_vta.Write(ws.c_str(), ws.size());
-	}
-
-	
-	void Shutdown() {
-		if (_fd_in!=-1) {
-			close(_fd_in);
-			_fd_in = -1;
-		}
-		
-		if (_thread_state) {
-			{
-				std::lock_guard<std::mutex> cl(_mutex);
-				_thread_state = false;
-			}
-			pthread_join(_thread, NULL);
-		}
-
-
-		if (_pid!=-1) {
-			//kill(_pid, SIGKILL);
-			_pid = -1;
-		}
-		if (_fd_out!=-1) {
-			close(_fd_out);
-			_fd_out = -1;
-		}
-	}
-
-	void OnKeyEvent(KEY_EVENT_RECORD &KeyEvent)
-	{
-		if (!KeyEvent.bKeyDown)
-			return;
-		
 		DWORD dw;
 		const std::string &translated = TranslateKeyEvent(KeyEvent);
 		if (!translated.empty()) {
-			if (_pipes_fallback && KeyEvent.uChar.UnicodeChar) {
+			if (_slavename.empty() && KeyEvent.uChar.UnicodeChar) {//pipes fallback
 				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
 			DbgPrintEscaped("INPUT", translated.c_str());
@@ -262,7 +485,7 @@ class VTShell
 		if (alt) {
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
 			SendSignal(SIGKILL);
-		} else if (_pipes_fallback) 
+		} else if (_slavename.empty()) //pipes fallback
 			SendSignal(SIGINT);		
 	}
 	
@@ -306,7 +529,7 @@ class VTShell
 		}
 
 		wchar_t wz[3] = {KeyEvent.uChar.UnicodeChar, 0};
-		if (_pipes_fallback && wz[0] == '\r') 
+		if (_slavename.empty() && wz[0] == '\r') //pipes fallback
 			wz[0] = '\n';
 		
 		return Wide2MB(&wz[0]);
@@ -322,56 +545,187 @@ class VTShell
 			kill(_pid, sig);
 	}
 	
-	public:
-	VTShell(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]) = NULL )
-		: _cmd(cmd), _pipes_fallback(false), _thread_state(false), _thread_exiting(false), 
-		_fd_out(-1), _fd_in(-1), _pid(-1),  _fork_proc(fork_proc)
+
+	void Shutdown() {
+		CheckedCloseFD(_fd_in);
+		ReleaseOutputReader();
+		CheckedCloseFD(_fd_out);
+		
+		if (_pid!=-1) {
+			//kill(_pid, SIGKILL);
+			int status;
+			waitpid(_pid, &status, 0);
+			_pid = -1;
+		}
+	}
+	
+	void ReleaseOutputReader()
 	{
+		delete _output_reader;
+		_output_reader = nullptr;		
+	}
+
+
+	
+	public:
+	VTShell()
+		:
+		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
+		_pid(-1),  _output_reader(nullptr)
+	{		
 		if (!Startup())
 			return;
 
-		_thread_state = true;
-		if (pthread_create(&_thread, NULL, sOutputReaderThread, this)) {
-			perror("VT: pthread_create");
-			_thread_state = false;
-			Shutdown();
-		}
+		_output_reader = new VTOutputReader(this, _fd_out);	
 	}
 	
 	~VTShell()
 	{
+		fprintf(stderr, "~VTShell\n");
+		ReleaseOutputReader();
 		Shutdown();
+		CheckedCloseFD(_pipes_fallback_in);
+		CheckedCloseFD(_pipes_fallback_out);
 	}
-
-
-	int Wait()
+	
+	std::string EscapeQuotas(const char *str)
 	{
-		if (_pid==-1)
+		std::string out = str;
+		for(size_t p = out.find('\"'); p!=std::string::npos; p = out.find('\"', p)) {
+			out.insert(p, 1, '\\');
+			p+= 2;
+		}
+		return out;
+	}
+	
+	int ExecuteCommand(const char *cmd)
+	{
+		char tmp_script_name[128]; sprintf(tmp_script_name, "vtcmd/%x_%p.cmd", getpid(), this);
+		std::string tmp_script = InMyProfile(tmp_script_name);
+		FILE *f = fopen(tmp_script.c_str(), "wt");
+		if (!f)
 			return -1;
+
+		char cd[MAX_PATH + 1] = {'.', 0};
+		if (!getcwd(cd, MAX_PATH)) perror("getcwd");
+		fprintf(f, "PS1=''\n");//reduce risk of glitches
+		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());
+		fprintf(f, "cd \"%s\"\n", EscapeQuotas(cd).c_str());
+		//fprintf(f, "stty echo\n");
+		if (strcmp(cmd, "exit")==0) fprintf(f, "echo \"Closing back shell. To close FAR - type 'exit far'.\"\n");
+		fprintf(f, "%s\n", cmd);
+		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
+		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
+		//fprintf(f, "stty -echo\n");
+		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());//second time - prevent user from shooting own leg
+		fclose(f);
+		
+		std::string cmd_str = ". ";
+		cmd_str+= tmp_script;
+		cmd_str+= ';';
+		cmd_str+= _completion_marker.EchoCommand();
+		cmd_str+= '\n';
+		
+		int r = write(_fd_in, cmd_str.c_str(), cmd_str.size());
+		if (r != (int)cmd_str.size()) {
+			fprintf(stderr, "VT: write failed\n");
+			return -1;
+		}
+		
+		_completion_marker.ScanReset();
+		_echo_skipped = false;
+		
+		if (_pid==-1 || !_output_reader->Start()) {
+			return -1;
+		}
 
 		for (;;) {
 			INPUT_RECORD ir = {0};
 			DWORD dw = 0;
-			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) break;
-			if (ir.EventType==KEY_EVENT) 
-				OnKeyEvent(ir.Event.KeyEvent);
-			
-			std::lock_guard<std::mutex> lock(_mutex);
-			if (_thread_exiting) break;
-		}
+			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) {
+				break;
+			}
 
-		int status = 0;
-		if (waitpid(_pid, &status, 0)==-1) {
-			fprintf(stderr, "VT: waitpid(0x%x) error %u\n", _pid, errno);
-			status = 1;
+			if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
+				OnKeyDown(ir.Event.KeyEvent);
+			}
+
+			if (!_output_reader->IsActive()) {
+				break;
+			}
 		}
+		
+		
+		if (_pid!=-1) {
+			int status;
+			if (waitpid(_pid, &status, WNOHANG)==_pid) {
+				_pid = -1;
+			}
+		}
+		
+		remove(tmp_script.c_str());
+
+		return _completion_marker.LastExitCode();
+	}	
+
+	int ExecuteForkProc(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]))
+	{
+		/*struct termios ts = {0};
+		if (!_slavename.empty() && tcgetattr(_fd_out, &ts)==0) {
+			struct termios tse = ts;
+			tse.c_lflag|= ECHO;
+			tcsetattr( _fd_out, TCSADRAIN, &tse );
+		}*/
+		
+		int r = ForkAndAttachToSlave(false);
+		if (r==-1)
+			return -1;
+
+		if (r==0) {
+			::ExecuteOrForkProc(cmd, fork_proc);
+			abort();
+		}
+		
+		
+		_output_reader->Start();
+		
+		int status = -1;
+		waitpid(r, &status, 0);
+		_output_reader->Stop();
+		
+		/*if (!_slavename.empty()) {
+			tcsetattr( _fd_out, TCSADRAIN, &ts );
+		}*/		
 		return status;
 	}
-
+	
+	bool IsOK()
+	{
+		return _pid!=-1;
+	}
 };
+
+static std::unique_ptr<VTShell> g_vts;
+static std::mutex g_vts_mutex;
 
 int VTShell_Execute(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]) ) 
 {	
-	VTShell vts(cmd, fork_proc);
-	return vts.Wait();
+	std::lock_guard<std::mutex> lock(g_vts_mutex);
+	if (!g_vts)
+		g_vts.reset(new VTShell);
+		
+	int r;
+	if (fork_proc) {
+		r = g_vts->ExecuteForkProc(cmd, fork_proc);
+	} else {
+		r = g_vts->ExecuteCommand(cmd);
+	}
+
+	if (!g_vts->IsOK()) {
+		fprintf(stderr, "zzzzzzzzzzzzz\n");
+		g_vts.reset();
+	}
+
+	return r;
 }
+

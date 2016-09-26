@@ -523,7 +523,7 @@ void InterpretEscSeq( void )
 				return;
 
 			case 7:
-				mode = ENABLE_PROCESSED_OUTPUT;
+				mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WINDOW_INPUT;
 				if (suffix == 'h')
 					mode |= ENABLE_WRAP_AT_EOL_OUTPUT;
 				WINPORT(SetConsoleMode)( hConOut, mode );

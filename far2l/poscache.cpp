@@ -184,10 +184,7 @@ int FilePositionCache::FindPosition(const wchar_t *FullName)
 
 		int CmpRes=0;
 
-		if (Opt.FlagPosixSemantics)
-			CmpRes = StrCmp(Names[Pos],FullName);
-		else
-			CmpRes = StrCmpI(Names[Pos],FullName);
+		CmpRes = StrCmp(Names[Pos],FullName);
 
 		if (!CmpRes)
 			return Pos;

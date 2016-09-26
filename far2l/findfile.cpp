@@ -2246,7 +2246,7 @@ void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& 
 	}
 	AddEndSlash(strPathName);
 
-	if (StrCmpI(strPathName,strLastDirName))
+	if (StrCmp(strPathName,strLastDirName))
 	{
 		if (ListBox->GetItemCount())
 		{
@@ -3002,7 +3002,7 @@ bool FindFilesProcess(Vars& v)
 					if (Length>1 && IsSlash(strDirTmp.At(Length-1)) && strDirTmp.At(Length-2)!=L':')
 						strDirTmp.SetLength(Length-1);
 
-					if (StrCmpI(strFileName, strDirTmp))
+					if (StrCmp(strFileName, strDirTmp))
 						FindPanel->SetCurDir(strFileName,TRUE);
 
 					if (!strSetName.IsEmpty())

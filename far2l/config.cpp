@@ -659,7 +659,6 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem,L"OEMPluginsSupport",  &Opt.LoadPlug.OEMPluginsSupport, 1, 0},
 	{1, REG_DWORD,  NKeySystem,L"ScanSymlinks",  &Opt.LoadPlug.ScanSymlinks, 1, 0},
 	{1, REG_DWORD,  NKeySystem,L"MultiMakeDir",&Opt.MultiMakeDir,0, 0},
-	{0, REG_DWORD,  NKeySystem,L"FlagPosixSemantics", &Opt.FlagPosixSemantics, 1, 0},
 	{0, REG_DWORD,  NKeySystem,L"MsWheelDelta", &Opt.MsWheelDelta, 1, 0},
 	{0, REG_DWORD,  NKeySystem,L"MsWheelDeltaView", &Opt.MsWheelDeltaView, 1, 0},
 	{0, REG_DWORD,  NKeySystem,L"MsWheelDeltaEdit", &Opt.MsWheelDeltaEdit, 1, 0},
@@ -970,7 +969,6 @@ void ReadConfig()
                                   Opt.FindOpt.OutColumnTypes,Opt.FindOpt.OutColumnWidths,Opt.FindOpt.OutColumnWidthType,
                                   Opt.FindOpt.OutColumnCount);
 	}
-
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 

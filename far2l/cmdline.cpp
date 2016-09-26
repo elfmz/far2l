@@ -529,7 +529,7 @@ int CommandLine::ProcessKey(int Key)
 
 BOOL CommandLine::SetCurDir(const wchar_t *CurDir)
 {
-	if (StrCmpI(strCurDir,CurDir) || !TestCurrentDirectory(CurDir))
+	if (StrCmp(strCurDir,CurDir) || !TestCurrentDirectory(CurDir))
 	{
 		strCurDir = CurDir;
 
@@ -729,7 +729,7 @@ void CommandLine::ShowViewEditHistory()
 		if (SelectType!=2)
 			CtrlObject->ViewHistory->AddToHistory(strStr,Type);
 
-		CtrlObject->ViewHistory->SetAddMode(false,Opt.FlagPosixSemantics?1:2,true);
+		CtrlObject->ViewHistory->SetAddMode(false, 1,true);
 
 		switch (Type)
 		{
@@ -769,7 +769,7 @@ void CommandLine::ShowViewEditHistory()
 			}
 		}
 
-		CtrlObject->ViewHistory->SetAddMode(true,Opt.FlagPosixSemantics?1:2,true);
+		CtrlObject->ViewHistory->SetAddMode(true, 1, true);
 	}
 	else if (SelectType==3) // скинуть из истории в ком.строку?
 		SetString(strStr);

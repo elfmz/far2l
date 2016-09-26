@@ -161,7 +161,7 @@ bool TestCurrentDirectory(const wchar_t *TestDir)
 {
 	FARString strCurDir;
 
-	if (apiGetCurrentDirectory(strCurDir) && !StrCmpI(strCurDir,TestDir))
+	if (apiGetCurrentDirectory(strCurDir) && !StrCmp(strCurDir,TestDir))
 		return true;
 
 	return false;

@@ -1193,7 +1193,7 @@ void FileList::PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber)
 
 		if (!(CurPluginPtr->Flags & PPIF_SELECTED))
 		{
-			while (StrCmpI(CurPluginPtr->FindData.lpwszFileName,ListData[FileNumber]->strName))
+			while (StrCmp(CurPluginPtr->FindData.lpwszFileName,ListData[FileNumber]->strName))
 				if (++FileNumber>=FileCount)
 					return;
 

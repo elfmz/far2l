@@ -202,7 +202,7 @@ int GetDirInfo(const wchar_t *Title,
 				strCurDirName = strFullName;
 				CutToSlash(strCurDirName); //???
 
-				if (StrCmpI(strCurDirName,strLastDirName))
+				if (StrCmp(strCurDirName,strLastDirName))
 				{
 					DirCount++;
 					strLastDirName = strCurDirName;

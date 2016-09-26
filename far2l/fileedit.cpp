@@ -306,7 +306,7 @@ bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage,bool 
 const FileEditor *FileEditor::CurrentEditor = nullptr;
 
 FileEditor::FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags, int StartLine, int StartChar, const wchar_t *PluginData, int OpenModeExstFile):
-	BadConversion(false)
+	BadConversion(false), SaveAsTextFormat(0)
 {
 	ScreenObject::SetPosition(0,0,ScrX,ScrY);
 	Flags.Set(InitFlags);
@@ -328,7 +328,7 @@ FileEditor::FileEditor(
     int Y2,
     int DeleteOnClose,
     int OpenModeExstFile
-)
+) : SaveAsTextFormat(0)
 {
 	Flags.Set(InitFlags);
 
@@ -1039,7 +1039,6 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						Flags.Clear(FFILEEDIT_SAVETOSAVEAS);
 					}
 
-					static int TextFormat=2;
 					UINT codepage = m_codepage;
 					bool SaveAs = Key==KEY_SHIFTF2 || Flags.Check(FFILEEDIT_SAVETOSAVEAS);
 					int NameChanged=FALSE;
@@ -1049,7 +1048,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					{
 						FARString strSaveAsName = Flags.Check(FFILEEDIT_SAVETOSAVEAS)?strFullFileName:strFileName;
 
-						if (!dlgSaveFileAs(strSaveAsName, TextFormat, codepage, m_bAddSignature))
+						if (!dlgSaveFileAs(strSaveAsName, SaveAsTextFormat, codepage, m_bAddSignature))
 							return FALSE;
 
 						apiExpandEnvironmentStrings(strSaveAsName, strSaveAsName);
@@ -1088,7 +1087,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 					ShowConsoleTitle();
 					FarChDir(strStartDir); //???
-					int SaveResult=SaveFile(strFullSaveAsName, 0, SaveAs, TextFormat, codepage, m_bAddSignature);
+					int SaveResult=SaveFile(strFullSaveAsName, 0, SaveAs, SaveAsTextFormat, codepage, m_bAddSignature);
 
 					if (SaveResult==SAVEFILE_ERROR)
 					{
@@ -1620,7 +1619,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 {
 	if (!bSaveAs)
 	{
-		TextFormat=2;
+		TextFormat=0;
 		codepage=m_editor->GetCodePage();
 	}
 

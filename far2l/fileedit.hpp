@@ -129,6 +129,7 @@ class FileEditor : public Frame
 		bool m_bAddSignature;
 		bool BadConversion;
 		UINT m_codepage; //BUGBUG
+		int SaveAsTextFormat;
 
 		virtual void DisplayObject();
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);

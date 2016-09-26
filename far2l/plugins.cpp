@@ -370,7 +370,7 @@ Plugin *PluginManager::GetPlugin(const wchar_t *lpwszModuleName)
 	{
 		pPlugin = PluginsData[i];
 
-		if (!StrCmpI(lpwszModuleName, pPlugin->GetModuleName()))
+		if (!StrCmp(lpwszModuleName, pPlugin->GetModuleName()))
 			return pPlugin;
 	}
 

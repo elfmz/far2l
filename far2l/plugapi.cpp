@@ -1735,7 +1735,7 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber,
 					OpenPluginInfo NewInfo;
 					CtrlObject->Plugins.GetOpenPluginInfo(hDirListPlugin,&NewInfo);
 
-					if (StrCmpI(strPrevDir, NewInfo.CurDir) )
+					if (StrCmp(strPrevDir, NewInfo.CurDir) )
 					{
 						PluginPanelItem *PanelData=nullptr;
 						int ItemCount=0;

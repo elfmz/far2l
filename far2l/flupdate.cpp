@@ -497,7 +497,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 	SortFileList(FALSE);
 
-	if (CurFile>=FileCount || StrCmpI(ListData[CurFile]->strName,strCurName))
+	if (CurFile>=FileCount || StrCmp(ListData[CurFile]->strName,strCurName))
 		if (!GoToFile(strCurName) && !strNextCurName.IsEmpty())
 			GoToFile(strNextCurName);
 
@@ -836,7 +836,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 	SortFileList(FALSE);
 
-	if (CurFile>=FileCount || StrCmpI(ListData[CurFile]->strName,strCurName))
+	if (CurFile>=FileCount || StrCmp(ListData[CurFile]->strName,strCurName))
 		if (!GoToFile(strCurName) && !strNextCurName.IsEmpty())
 			GoToFile(strNextCurName);
 
@@ -890,7 +890,7 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 				{
 					FARString strFileName = CurPanelData->FindData.lpwszFileName;
 
-					if (!StrCmpI(strFileName,Info.DescrFiles[I]))
+					if (!StrCmp(strFileName,Info.DescrFiles[I]))
 					{
 						FARString strTempDir, strDizName;
 

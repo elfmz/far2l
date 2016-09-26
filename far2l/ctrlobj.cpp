@@ -69,7 +69,7 @@ ControlObject::ControlObject():
 	FolderHistory=new History(HISTORYTYPE_FOLDER,Opt.FoldersHistoryCount,L"SavedFolderHistory",&Opt.SaveFoldersHistory,true);
 	ViewHistory=new History(HISTORYTYPE_VIEW,Opt.ViewHistoryCount,L"SavedViewHistory",&Opt.SaveViewHistory,true);
 	FolderHistory->SetAddMode(true,2,true);
-	ViewHistory->SetAddMode(true,Opt.FlagPosixSemantics?1:2,true);
+	ViewHistory->SetAddMode(true, 1, true);
 
 	if (Opt.SaveHistory)
 		CmdHistory->ReadHistory();

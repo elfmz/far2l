@@ -569,8 +569,6 @@ struct Options
 	      добавление файлов в историю с разным регистром
 	      добавление LastPositions в редакторе и вьюере
 	*/
-	int FlagPosixSemantics;
-
 	int MsWheelDelta; // задает смещение для прокрутки
 	int MsWheelDeltaView;
 	int MsWheelDeltaEdit;

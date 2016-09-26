@@ -645,7 +645,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 				{
 					FARString strDriveRoot;
 					GetPathRoot(strCurDir, strDriveRoot);
-					return (int64_t)(!StrCmpI(strCurDir, strDriveRoot));
+					return (int64_t)(!StrCmp(strCurDir, strDriveRoot));
 				}
 
 				return 1;
@@ -2554,7 +2554,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			FARString strFullNewDir;
 			ConvertNameToFull(strSetDir, strFullNewDir);
 
-			if (StrCmpI(strFullNewDir, strCurDir))
+			if (StrCmp(strFullNewDir, strCurDir))
 				CtrlObject->FolderHistory->AddToHistory(strCurDir);
 		}
 
@@ -3061,8 +3061,8 @@ long FileList::FindFile(const wchar_t *Name,BOOL OnlyPartName)
 		if (!StrCmp(Name,CurPtrName))
 			return I;
 
-		if (!StrCmpI(Name,CurPtrName))
-			return I;
+//		if (!StrCmpI(Name,CurPtrName))
+//			return I;
 	}
 
 	return -1;

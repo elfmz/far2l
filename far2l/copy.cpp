@@ -488,7 +488,7 @@ int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 	DeleteEndSlash(strSrcFullName);
 	DeleteEndSlash(strDestFullName);
 
-	return !StrCmpI(strSrcFullName,strDestFullName);
+	return !StrCmp(strSrcFullName,strDestFullName);
 }
 
 bool CheckNulOrCon(const wchar_t *Src)
@@ -515,7 +515,7 @@ int CmpFullPath(const wchar_t *Src, const wchar_t *Dest)
 	DeleteEndSlash(strSrcFullName);
 	DeleteEndSlash(strDestFullName);
 
-	return !StrCmpI(strSrcFullName, strDestFullName);
+	return !StrCmp(strSrcFullName, strDestFullName);
 }
 
 static void GenerateName(FARString &strName,const wchar_t *Path=nullptr)
@@ -856,7 +856,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		{
 			case NORMAL_PANEL:
 			{
-				if ((strDestDir.IsEmpty() || !DestPanel->IsVisible() || !StrCmpI(strSrcDir,strDestDir)) && CDP.SelCount==1)
+				if ((strDestDir.IsEmpty() || !DestPanel->IsVisible() || !StrCmp(strSrcDir,strDestDir)) && CDP.SelCount==1)
 					CopyDlg[ID_SC_TARGETEDIT].strData = strSelName;
 				else
 				{
@@ -1864,7 +1864,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 			// "замочим" к едрене фени симлинк - копируем полный контент, независимо от опции
 			// (но не для случая переименования линка по сети)
-			if ((DestDriveType == DRIVE_REMOTE || SrcDriveType == DRIVE_REMOTE) && StrCmpI(strSrcDriveRoot,strDestDriveRoot))
+			if ((DestDriveType == DRIVE_REMOTE || SrcDriveType == DRIVE_REMOTE) && StrCmp(strSrcDriveRoot,strDestDriveRoot))
 				Flags|=FCOPY_COPYSYMLINKCONTENTS;
 
 			KeepPathPos=(int)(PointToName(strSelName)-strSelName.CPtr());
@@ -2274,7 +2274,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 		}
 	}
 
-	if (!(Flags&FCOPY_COPYTONUL) && StrCmpI(strDestPath,L"prn"))
+	if (!(Flags&FCOPY_COPYTONUL))
 		SetDestDizPath(strDestPath);
 
 	CP->SetProgressValue(0,0);
@@ -2695,7 +2695,7 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 						        (SrcData.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 							ShellSetAttr(strDestPath,SrcData.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
 
-						if (DestAttr!=INVALID_FILE_ATTRIBUTES && !StrCmpI(strCopiedName,DestData.strFileName) &&
+						if (DestAttr!=INVALID_FILE_ATTRIBUTES && !StrCmp(strCopiedName,DestData.strFileName) &&
 						        StrCmp(strCopiedName,DestData.strFileName))
 							apiMoveFile(strDestPath,strDestPath); //???
 					}

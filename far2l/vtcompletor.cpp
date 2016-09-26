@@ -14,23 +14,6 @@
 #include <utils.h>
 #include "vtcompletor.h"
 
-
-
-
-static void CheckedCloseFD(int &fd)
-{
-	if (fd!=-1) {
-		close(fd);
-		fd = -1;
-	}
-}
-
-static void CheckedCloseFDPair(int *fd)
-{
-	CheckedCloseFD(fd[0]);
-	CheckedCloseFD(fd[1]);
-}
-
 static const char *vtc_inputrc = "set completion-query-items 0\n"
 									"set page-completions off\n";
 

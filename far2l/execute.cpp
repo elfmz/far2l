@@ -148,15 +148,11 @@ void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char
 		} else
 			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
 	} else {
-		const char *shell = getenv("SHELL");
-		if (!shell)
-			shell = "/bin/sh";
-		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols
-		if (0==strcmp(shell, "/usr/bin/fish"))
-			shell = "/bin/bash";
-		r = execl(shell, shell, "-ic", CmdStr, NULL);
+		r = execl("/bin/sh", "sh", "-c", CmdStr, NULL);
 		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
 	}
+	
+	_exit(r);//forget about static object, just exit
 	exit(r);
 }
 

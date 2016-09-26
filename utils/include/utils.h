@@ -13,3 +13,7 @@ unsigned char Hex2Digit(const char hex);
 unsigned char Hex2Byte(const char *hex);
 
 std::string InMyProfile(const char *subpath = NULL);
+
+
+void CheckedCloseFD(int &fd);
+void CheckedCloseFDPair(int *fd);

@@ -207,3 +207,22 @@ std::string InMyProfile(const char *subpath)
 	return path;
 	
 }
+
+////////////////////////////////////////////////////////////////
+
+void CheckedCloseFD(int &fd)
+{
+       if (fd!=-1) {
+               if (close(fd) != 0) {
+                       perror("CheckedCloseFD");
+                       abort();
+               }
+               fd = -1;
+       }
+}
+
+void CheckedCloseFDPair(int *fd)
+{
+       CheckedCloseFD(fd[0]);
+       CheckedCloseFD(fd[1]);
+}

@@ -222,6 +222,7 @@ class VTShell : VTOutputReader::IProcessor
 	pid_t _pid;
 	std::string _slavename;
 	CompletionMarker _completion_marker;
+	bool _skipping_line;
 	
 	
 	int ForkAndAttachToSlave(bool shell)
@@ -410,14 +411,13 @@ class VTShell : VTOutputReader::IProcessor
 	}
 	
 
-	bool _echo_skipped;
 	virtual bool OnProcessOutput(const char *buf, int len) 
 	{
 		std::string s(buf, len);
 		DbgPrintEscaped("OUTPUT", s);
-		while (!_echo_skipped) {
+		while (_skipping_line) {
 			if (s.empty()) break;
-			if (s[0]=='\n') _echo_skipped = true;
+			if (s[0]=='\n') _skipping_line = false;
 			s.erase(0, 1);
 		}
 		if (!s.empty()) {
@@ -547,9 +547,10 @@ class VTShell : VTOutputReader::IProcessor
 	}
 	
 	public:
-	VTShell()
-		:
-		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1), _pid(-1)
+	VTShell() :
+		_fd_out(-1), _fd_in(-1), 
+		_pipes_fallback_in(-1), _pipes_fallback_out(-1), 
+		_pid(-1), _skipping_line(false)
 	{		
 		if (!Startup())
 			return;
@@ -580,13 +581,24 @@ class VTShell : VTOutputReader::IProcessor
 		if (!f)
 			return -1;
 
+static bool shown_tip_ctrl_alc_c = false;
+static bool shown_tip_exit = false;
+
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (!getcwd(cd, MAX_PATH)) perror("getcwd");
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());
 		fprintf(f, "cd \"%s\"\n", EscapeQuotas(cd).c_str());
 		//fprintf(f, "stty echo\n");
-		if (strcmp(cmd, "exit")==0) fprintf(f, "echo \"Closing back shell. To close FAR - type 'exit far'.\"\n");
+		if (strcmp(cmd, "exit")==0) {
+			if (!shown_tip_exit) {
+				fprintf(f, "echo \"TIP: Closing back shell. To close FAR - type 'exit far'.\"\n");
+				shown_tip_exit = true;
+			}
+		} else if (!shown_tip_ctrl_alc_c) {
+			fprintf(f, "echo \"TIP: If you feel stuck - use Ctrl+Alt+C to terminate everything in this shell.\"\n");
+			shown_tip_ctrl_alc_c = true;
+		}
 		fprintf(f, "%s\n", cmd);
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
 		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
@@ -607,7 +619,7 @@ class VTShell : VTOutputReader::IProcessor
 		}
 		
 		_completion_marker.ScanReset();
-		_echo_skipped = false;
+		_skipping_line = true;
 		
 		if (_pid==-1) {
 			return -1;
@@ -661,6 +673,7 @@ class VTShell : VTOutputReader::IProcessor
 		}
 		
 		_completion_marker.ScanReset();
+		_skipping_line = false;
 		VTOutputReader output_reader(this, _fd_out);
 		
 		int status = -1;
@@ -695,7 +708,7 @@ int VTShell_Execute(const char *cmd, int (WINAPI *fork_proc)(int argc, char *arg
 	}
 
 	if (!g_vts->IsOK()) {
-		fprintf(stderr, "zzzzzzzzzzzzz\n");
+		fprintf(stderr, "Shell exited\n");
 		g_vts.reset();
 	}
 

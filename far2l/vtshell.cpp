@@ -327,7 +327,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 	VTAnsi _vta;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
-	pid_t _pid;
+	pid_t _shell_pid, _forked_proc_pid;
 	std::string _slavename;
 	CompletionMarker _completion_marker;
 	bool _skipping_line;
@@ -339,12 +339,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		if (r!=0)
 			return r;
 			
+		if (shell) {
+			if (setsid()==-1)
+				perror("VT: setsid");
+		}
+			
 		if (!_slavename.empty()) {
-			if (shell) {
-				if (setsid()==-1)
-					perror("VT: setsid");
-			}
-				
 			r = open(_slavename.c_str(), O_RDWR); 
 			if (r==-1) {
 				perror("VT: open slave");
@@ -517,8 +517,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 			perror("VT: fork");
 			return false;
 		}
+		_shell_pid = r;
 		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
-		_pid = r;		
 		return true;
 	}
 	
@@ -578,9 +578,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 	{
 		if (alt) {
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
-			SendSignal(SIGKILL);
-		} else if (_slavename.empty()) //pipes fallback
-			SendSignal(SIGINT);		
+			SendSignalToShell(SIGKILL);
+			if (_forked_proc_pid!=-1)
+				kill(_forked_proc_pid, SIGKILL);
+			
+		} else {
+			if (_slavename.empty()) //pipes fallback
+				SendSignalToShell(SIGINT);
+			if (_forked_proc_pid!=-1)
+				kill(_forked_proc_pid, SIGINT);
+		}
 	}
 	
 	std::string StringFromClipboard()
@@ -629,14 +636,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		return Wide2MB(&wz[0]);
 	}
 	
-	void SendSignal(int sig)
+	void SendSignalToShell(int sig)
 	{
-		pid_t grp = getpgid(_pid);
+		pid_t grp = getpgid(_shell_pid);
 		
 		if (grp!=-1 && grp!=getpgid(getpid()))
 			killpg(grp, sig);
 		else
-			kill(_pid, sig);
+			kill(_shell_pid, sig);			
 	}
 	
 
@@ -644,11 +651,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		CheckedCloseFD(_fd_in);
 		CheckedCloseFD(_fd_out);
 		
-		if (_pid!=-1) {
-			//kill(_pid, SIGKILL);
+		if (_shell_pid!=-1) {
+			//kill(_shell_pid, SIGKILL);
 			int status;
-			waitpid(_pid, &status, 0);
-			_pid = -1;
+			waitpid(_shell_pid, &status, 0);
+			_shell_pid = -1;
 		}
 	}
 	
@@ -656,7 +663,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 	VTShell() :
 		_fd_out(-1), _fd_in(-1), 
 		_pipes_fallback_in(-1), _pipes_fallback_out(-1), 
-		_pid(-1), _skipping_line(false)
+		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false)
 	{		
 		if (!Startup())
 			return;
@@ -718,7 +725,7 @@ static bool shown_tip_exit = false;
 	
 	int ExecuteCommand(const char *cmd)
 	{
-		if (_pid==-1)
+		if (_shell_pid==-1)
 			return -1;
 		
 		const std::string &cmd_script = GenerateExecuteCommandScript(cmd);
@@ -749,10 +756,10 @@ static bool shown_tip_exit = false;
 		output_reader.WaitDeactivation();
 
 		
-		if (_pid!=-1) {
+		if (_shell_pid!=-1) {
 			int status;
-			if (waitpid(_pid, &status, WNOHANG)==_pid) {
-				_pid = -1;
+			if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
+				_shell_pid = -1;
 			}
 		}
 		
@@ -772,6 +779,7 @@ static bool shown_tip_exit = false;
 			abort();
 		}
 		
+		_forked_proc_pid = r;
 		_completion_marker.ScanReset();
 		_skipping_line = false;
 
@@ -780,13 +788,14 @@ static bool shown_tip_exit = false;
 		
 		int status = -1;
 		waitpid(r, &status, 0);
+		_forked_proc_pid = -1;
 		
 		return status;
 	}
 	
 	bool IsOK()
 	{
-		return _pid!=-1;
+		return _shell_pid!=-1;
 	}
 };
 

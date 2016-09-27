@@ -1,4 +1,4 @@
-/*
+﻿/*
 fileedit.cpp
 
 Редактирование файла - надстройка над editor.cpp
@@ -451,7 +451,7 @@ void FileEditor::Init(
 	//AY: флаг оповещающий закрытие редактора.
 	m_bClosing = false;
 	bEE_READ_Sent = false;
-	m_bAddSignature = false;
+	m_AddSignature = FB_NO;
 	m_editor = new Editor;
 	__smartlock.Set(m_editor);
 
@@ -620,7 +620,7 @@ void FileEditor::Init(
 		Flags.Set(FFILEEDIT_NEW);
 
 	if (Flags.Check(FFILEEDIT_NEW))
-	  m_bAddSignature = true;
+	  m_AddSignature = FB_MAYBE;
 
 	if (Flags.Check(FFILEEDIT_LOCKED))
 		m_editor->Flags.Set(FEDITOR_LOCKMODE);
@@ -1047,9 +1047,13 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					if (SaveAs)
 					{
 						FARString strSaveAsName = Flags.Check(FFILEEDIT_SAVETOSAVEAS)?strFullFileName:strFileName;
-
-						if (!dlgSaveFileAs(strSaveAsName, SaveAsTextFormat, codepage, m_bAddSignature))
+						
+						bool AddSignature = DecideAboutSignature();
+						if (!dlgSaveFileAs(strSaveAsName, SaveAsTextFormat, codepage, AddSignature))
 							return FALSE;
+
+						if (AddSignature)
+							m_AddSignature = FB_YES;
 
 						apiExpandEnvironmentStrings(strSaveAsName, strSaveAsName);
 						Unquote(strSaveAsName);
@@ -1087,7 +1091,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 					ShowConsoleTitle();
 					FarChDir(strStartDir); //???
-					int SaveResult=SaveFile(strFullSaveAsName, 0, SaveAs, SaveAsTextFormat, codepage, m_bAddSignature);
+					int SaveResult=SaveFile(strFullSaveAsName, 0, SaveAs, SaveAsTextFormat, codepage, DecideAboutSignature());
 
 					if (SaveResult==SAVEFILE_ERROR)
 					{
@@ -1486,11 +1490,16 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 
 	if (m_codepage == CP_AUTODETECT || IsUnicodeOrUtfCodePage(m_codepage))
 	{
-		Detect=GetFileFormat(EditFile,dwCP,&m_bAddSignature,Opt.EdOpt.AutoDetectCodePage!=0);
+		bool bSignatureDetected = false;
+		Detect=GetFileFormat(EditFile,dwCP,&bSignatureDetected,Opt.EdOpt.AutoDetectCodePage!=0);
 
 		// Проверяем поддерживается или нет задетектировання кодовая страница
-		if (Detect)
+		if (Detect) {
 			Detect = IsCodePageSupported(dwCP);
+			if (Detect) {
+				m_AddSignature = (bSignatureDetected ? FB_YES : FB_NO);
+			}
+		}
 	}
 
 	if (m_codepage == CP_AUTODETECT)
@@ -1866,38 +1875,38 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		SetCursorType(FALSE,0);
 		TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
 
-		if (!bSaveAs)
-			AddSignature=m_bAddSignature;
-
+		DWORD dwSignature = 0;
+		DWORD SignLength = 0;
+		switch (codepage)
+		{
+			case CP_UTF32LE:
+				dwSignature = SIGN_UTF32LE;
+				SignLength = 4;
+				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+				break;
+			case CP_UTF32BE:
+				dwSignature = SIGN_UTF32BE;
+				SignLength = 4;
+				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+				break;
+			case CP_UTF16LE:
+				dwSignature = SIGN_UTF16LE;
+				SignLength = 2;
+				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+				break;
+			case CP_UTF16BE:
+				dwSignature = SIGN_UTF16BE;
+				SignLength = 2;
+				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+				break;
+			case CP_UTF8:
+				dwSignature = SIGN_UTF8;
+				SignLength = 3;
+				if (!bSaveAs) AddSignature = (m_AddSignature == FB_YES);
+				break;
+		}
 		if (AddSignature)
 		{
-			DWORD dwSignature = 0;
-			DWORD SignLength=0;
-
-			switch (codepage)
-			{
-				case CP_UTF32LE:
-					dwSignature = SIGN_UTF32LE;
-					SignLength = 4;
-					break;
-				case CP_UTF32BE:
-					dwSignature = SIGN_UTF32BE;
-					SignLength = 4;
-					break;
-				case CP_UTF16LE:
-					dwSignature = SIGN_UTF16LE;
-					SignLength = 2;
-					break;
-				case CP_UTF16BE:
-					dwSignature = SIGN_UTF16BE;
-					SignLength = 2;
-					break;
-				case CP_UTF8:
-					dwSignature = SIGN_UTF8;
-					SignLength = 3;
-					break;
-			}
-
 			if (!EditFile.Write(&dwSignature,SignLength,&dwWritten,nullptr)||dwWritten!=SignLength)
 			{
 				EditFile.Close();
@@ -2599,7 +2608,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 
 					Flags.Set(FFILEEDIT_SAVEWQUESTIONS);
 					//всегда записываем в режиме save as - иначе не сменить кодировку и концы линий.
-					return SaveFile(strName,FALSE,true,EOL,codepage,m_bAddSignature);
+					return SaveFile(strName, FALSE, true, EOL, codepage, DecideAboutSignature());
 				}
 			}
 
@@ -2701,9 +2710,9 @@ int FileEditor::EditorControl(int Command, void *Param)
 				EditorSetParameter *espar=(EditorSetParameter *)Param;
 				if (ESPT_SETBOM==espar->Type)
 				{
-				    if(IsUnicodeOrUtfCodePage(m_codepage))
-				    {
-						m_bAddSignature=espar->Param.iParam?true:false;
+					if (IsUnicodeOrUtfCodePage(m_codepage))
+					{
+						m_AddSignature = espar->Param.iParam ? FB_YES : FB_NO;
 						return TRUE;
 					}
 					return FALSE;
@@ -2717,10 +2726,15 @@ int FileEditor::EditorControl(int Command, void *Param)
 	if (result&&Param&&ECTL_GETINFO==Command)
 	{
 		EditorInfo *Info=(EditorInfo *)Param;
-		if (m_bAddSignature)
-			Info->Options|=EOPT_BOM;
+		if (DecideAboutSignature())
+			Info->Options|= EOPT_BOM;
 	}
 	return result;
+}
+
+bool FileEditor::DecideAboutSignature()
+{
+	return (m_AddSignature==FB_YES || (m_AddSignature==FB_MAYBE && IsUnicodeOrUtfCodePage(m_codepage) && m_codepage!=CP_UTF8));
 }
 
 bool FileEditor::LoadFromCache(EditorCacheParams *pp)

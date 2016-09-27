@@ -679,34 +679,30 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		return str;
 	}
 	
-	int ExecuteCommand(const char *cmd)
+	std::string GenerateExecuteCommandScript(const char *cmd)
 	{
-		if (_pid==-1) {
-			return -1;
-		}
-		if (!_slavename.empty())
-			UpdateTerminalSize(_fd_out);
-		
-		char tmp_script_name[128]; sprintf(tmp_script_name, "vtcmd/%x_%p.cmd", getpid(), this);
-		std::string tmp_script = InMyProfile(tmp_script_name);
-		FILE *f = fopen(tmp_script.c_str(), "wt");
+		char name[128]; 
+		sprintf(name, "vtcmd/%x_%p", getpid(), this);
+		std::string cmd_script = InMyProfile(name);
+		FILE *f = fopen(cmd_script.c_str(), "wt");
 		if (!f)
-			return -1;
+			return std::string();
 
 static bool shown_tip_ctrl_alc_c = false;
 static bool shown_tip_exit = false;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (!getcwd(cd, MAX_PATH)) perror("getcwd");
+		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());
 		fprintf(f, "cd \"%s\"\n", EscapeQuotas(cd).c_str());
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
-			if (!shown_tip_exit) {
-				fprintf(f, "echo \"TIP: Closing back shell. To close FAR - type 'exit far'.\"\n");
-				shown_tip_exit = true;
-			}
+			fprintf(f, "echo \"Closing back shell.%s\"\n", 
+				shown_tip_exit ? "" : "TIP: To close FAR - type 'exit far'.");
+			shown_tip_exit = true;
+
 		} else if (!shown_tip_ctrl_alc_c) {
 			fprintf(f, "echo \"TIP: If you feel stuck - use Ctrl+Alt+C to terminate everything in this shell.\"\n");
 			shown_tip_ctrl_alc_c = true;
@@ -717,9 +713,24 @@ static bool shown_tip_exit = false;
 		//fprintf(f, "stty -echo\n");
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());//second time - prevent user from shooting own leg
 		fclose(f);
+		return cmd_script;
+	}
+	
+	int ExecuteCommand(const char *cmd)
+	{
+		if (_pid==-1)
+			return -1;
+		
+		const std::string &cmd_script = GenerateExecuteCommandScript(cmd);
+		if (cmd_script.empty())
+			return -1;
+
+		if (!_slavename.empty())
+			UpdateTerminalSize(_fd_out);
+		
 		
 		std::string cmd_str = ". ";
-		cmd_str+= EscapeQuotas(tmp_script);
+		cmd_str+= EscapeQuotas(cmd_script);
 		cmd_str+= ';';
 		cmd_str+= _completion_marker.EchoCommand();
 		cmd_str+= '\n';
@@ -745,7 +756,7 @@ static bool shown_tip_exit = false;
 			}
 		}
 		
-		remove(tmp_script.c_str());
+		remove(cmd_script.c_str());
 
 		return _completion_marker.LastExitCode();
 	}	

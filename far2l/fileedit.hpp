@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /*
 fileedit.hpp
@@ -126,7 +126,7 @@ class FileEditor : public Frame
 		DWORD SysErrorCode;
 		bool m_bClosing; // 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
 		bool bEE_READ_Sent;
-		bool m_bAddSignature;
+		FemaleBool m_AddSignature;
 		bool BadConversion;
 		UINT m_codepage; //BUGBUG
 		int SaveAsTextFormat;
@@ -134,6 +134,7 @@ class FileEditor : public Frame
 		virtual void DisplayObject();
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);
 		BOOL UpdateFileList();
+		bool DecideAboutSignature();
 		/* Ret:
 		      0 - не удалять ничего
 		      1 - удалять файл и каталог

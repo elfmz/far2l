@@ -4022,7 +4022,7 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 			return -1;
 
 		WINPORT(LastErrorGuard) leg;
-		wchar_t *codePageName = L"";//FormatCodePageName(nCP, cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t));
+		const wchar_t *codePageName = L"";//FormatCodePageName(nCP, cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t));
 		sTableName<<fmt::Width(5)<<nCP<<BoxSymbols[BS_V1]<<L" "<<codePageName;
 		sTableName.strValue().GetCharString(TableSet->TableName, sizeof(TableSet->TableName) - 1, CP_OEMCP);
 		wchar_t *us=AnsiToUnicodeBin((char*)TableSet->DecodeTable, sizeof(TableSet->DecodeTable), nCP);

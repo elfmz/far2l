@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 /*
 headers.hpp
@@ -116,6 +116,12 @@ typedef struct _ADAPTER_OBJECT ADAPTER_OBJECT,*PADAPTER_OBJECT;
 #endif*/ // __GNUC__
 
 
+enum FemaleBool{
+	FB_NO = 0,
+	FB_YES = 1,
+	FB_MAYBE = 42
+};
+
 #define NullToEmpty(s) (s?s:L"")
 
 template <class T>
@@ -173,5 +179,4 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 
 #include <string>
 #include <vector>
-std::string Wide2MB(const wchar_t *src);
-std::wstring MB2Wide(const char *src);
+

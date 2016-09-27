@@ -27,6 +27,7 @@
 
 const wchar_t HostKeyDelimiter = L';';
 
+
 struct TPuttyTranslation
 {
   const wchar_t * Original;
@@ -553,7 +554,7 @@ bool TSecureShell::TryFtp()
     else
     {
       LogEvent("Knocking FTP port.");
-#ifndef __linux__
+
       SOCKET Socket = socket(AF_INET, SOCK_STREAM, 0);
       Result = (Socket != INVALID_SOCKET);
       if (Result)
@@ -569,7 +570,8 @@ bool TSecureShell::TryFtp()
           intptr_t Port = FtpPortNumber;
           Address.sin_port = htons(static_cast<short>(Port));
           Address.sin_addr.s_addr = *(reinterpret_cast<uint32_t *>(*HostEntry->h_addr_list));
-
+		  
+#ifndef __linux__
           HANDLE Event = ::CreateEvent(nullptr, false, false, nullptr);
           Result = (::WSAEventSelect(Socket, (WSAEVENT)Event, FD_CONNECT | FD_CLOSE) != SOCKET_ERROR);
 
@@ -584,12 +586,31 @@ bool TSecureShell::TryFtp()
             }
           }
           ::CloseHandle(Event);
+#else
+          Result = FALSE;
+          fcntl(Socket, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK );
+		  int r = connect(Socket, reinterpret_cast<sockaddr *>(&Address), sizeof(Address));
+		  if (r==0) {
+			  Result = TRUE;
+		  } else if (IS_SOCKET_NONBLOCKING_ERR(errno)) {
+			  timeval tv = {};
+			  fd_set fdr, fdw, fde;
+			  FD_ZERO(&fdr);
+			  FD_ZERO(&fdw);
+			  FD_ZERO(&fde);
+			  FD_SET(Socket, &fdr);
+			  FD_SET(Socket, &fdw);
+			  FD_SET(Socket, &fde);
+			  tv.tv_sec = 2;
+			  select( Socket + 1, &fdr, &fdw, &fde, &timeout);
+			  if (FD_ISSET(Socket, &fdw))
+				  Result = TRUE;
+		  }
+#endif
+		  
         }
         closesocket(Socket);
       }
-#else
-	  abort();
-#endif
 	
       if (Result)
       {

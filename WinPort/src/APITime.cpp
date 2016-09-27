@@ -181,24 +181,23 @@ WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILE
 static void BiasFileTimeToFileTime(const FILETIME *lpSrc, LPFILETIME lpDst, bool from_local)
 {
 	time_t now = time(NULL);
-	tm *local_tm = localtime(&now);
-	tm xtm = *local_tm;
-	xtm.tm_isdst = 0;
-	time_t local_now = mktime(&xtm);
+	struct tm lt = { };
+	localtime_r(&now, &lt);
+	//local = utc + lt.tm_gmtoff
 		
 	ULARGE_INTEGER li;
 	li.LowPart = lpSrc->dwLowDateTime;
 	li.HighPart = lpSrc->dwHighDateTime;
 
-	if (local_now > now) {
-		ULONGLONG diff = local_now - now;
+	if (lt.tm_gmtoff > 0) {
+		ULONGLONG diff = lt.tm_gmtoff;
 		diff*= 10000000LL;
 		if (from_local)
 			li.QuadPart-= diff;
 		else
 			li.QuadPart+= diff;
-	} else if (local_now < now) {
-		ULONGLONG diff = now - local_now;
+	} else if (lt.tm_gmtoff < 0) {
+		ULONGLONG diff = -lt.tm_gmtoff;
 		diff*= 10000000LL;
 		if (from_local)
 			li.QuadPart+= diff;

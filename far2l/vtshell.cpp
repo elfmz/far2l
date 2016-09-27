@@ -37,69 +37,116 @@ static void DbgPrintEscaped(const char *info, const std::string &s)
 # define DbgPrintEscaped(info, s)
 #endif
 
-	
 
-class VTOutputReader
+
+
+class WithThread
+{
+public:
+	WithThread() : _started(false), _thread(0)
+	{
+	}
+	
+	virtual ~WithThread()
+	{
+		assert(!_started);
+	}
+
+protected:
+	bool  _started;
+
+	bool Start()
+	{
+		assert(!_started);
+		_started = true;
+		if (pthread_create(&_thread, NULL, sThreadProc, this)) {
+			perror("VT: pthread_create");
+			_started = false;
+			return false;
+		}		
+		return true;
+	}
+	
+	void Join()
+	{
+		if (_started) {
+			_started = false;
+			pthread_join(_thread, NULL);
+			_thread = 0;
+		}
+	}
+	
+	virtual void *ThreadProc() = 0;
+
+private:
+	pthread_t _thread;
+	
+	static void *sThreadProc(void *p)
+	{
+		return ((WithThread *)p)->ThreadProc();
+	}
+};
+
+class VTOutputReader : protected WithThread
 {
 public:
 	struct IProcessor
 	{
 		virtual bool OnProcessOutput(const char *buf, int len) = 0;
-		virtual void OnStoppedOutput() = 0;
 	};
 	
-	VTOutputReader(IProcessor *processor, int fd_out) : _processor(processor),
-		_thread(0), _fd_out(fd_out), _thread_exited(false), _started(false)
+	VTOutputReader(IProcessor *processor, int fd_out) 
+		: _processor(processor), _fd_out(fd_out), _thread_exited(false)
 	{
 		if (pipe2(_pipe,  O_CLOEXEC)==-1) {
 			perror("VTOutputReader: pipe2");
 			return;
 		} 
 
-		_thread_exited = false;
-		_started = true;
-		if (pthread_create(&_thread, NULL, sOutputReaderThread, this)) {
-			perror("VTOutputReader: pthread_create");
+		if (!Start()) {
 			CheckedCloseFDPair(_pipe);
-			_started = false;
-			return;
 		}
 	}
 	
 	virtual ~VTOutputReader()
 	{
 		if (_started) {
-			_started = false;
 			char c = 0;
 			if (write(_pipe[1], &c, sizeof(c)) != sizeof(c))
 				perror("VTOutputReader: write");
-			
-			pthread_join(_thread, NULL);
+				
+			Join();
 			CheckedCloseFDPair(_pipe);
-			_thread = 0;
 		}		
 	}
 
+	void WaitDeactivation()
+	{
+		if (_started) {
+			for (;;) {
+				std::unique_lock<std::mutex> locker(_mutex);
+				if (_thread_exited) break;
+				_cond.wait(locker);
+			}
+		}
+	}
+	
 	bool IsActive()
 	{
+		std::unique_lock<std::mutex> locker(_mutex);
 		return (_started && !_thread_exited);
 	}
 	
 private:
 	IProcessor *_processor;
-	pthread_t _thread;
 	int _fd_out, _pipe[2];
-	std::atomic<bool> _thread_exited;
-	bool  _started;
-
-
-	static void *sOutputReaderThread(void *p)
-	{
-		return ((VTOutputReader *)p)->OutputReaderThread();
-	}
+	bool _thread_exited;
+	
+	std::mutex _mutex;
+	std::condition_variable _cond;
 	
 
-	void *OutputReaderThread()
+	virtual void *ThreadProc()
 	{
 		char buf[0x1000];
 		fd_set rfds;
@@ -123,11 +170,72 @@ private:
 				if (!_started) break;
 			}
 		}
-		
-		
+
+		std::unique_lock<std::mutex> locker(_mutex);
 		_thread_exited = true;
-		_processor->OnStoppedOutput();
+		_cond.notify_all();
+
 		return NULL;
+	}
+};
+
+class VTInputReader : protected WithThread
+{
+public:
+	struct IProcessor
+	{
+		virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) = 0;
+		virtual void OnInputResized() = 0;
+	};
+	
+	VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
+	{
+		Start();
+	}
+	
+	~VTInputReader()
+	{
+		if (_started) {
+			_stop = true;
+			//write some dommy console input to kick pending ReadConsoleInput
+			INPUT_RECORD ir = {0};
+			ir.EventType = FOCUS_EVENT;
+			ir.Event.FocusEvent.bSetFocus = TRUE;
+			DWORD dw = 0;
+			WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
+			Join();
+		}
+	}
+
+private:
+	pid_t _pid;
+	std::atomic<bool> _stop;
+	IProcessor *_processor;
+	
+	virtual void *ThreadProc()
+	{
+		INPUT_RECORD last_window_info_ir = {0};
+		
+		while (!_stop) {
+			INPUT_RECORD ir = {0};
+			DWORD dw = 0;
+			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) {
+				perror("VT: ReadConsoleInput");
+				usleep(100000);
+			}else if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
+				_processor->OnInputKeyDown(ir.Event.KeyEvent);
+			} else if (ir.EventType==WINDOW_BUFFER_SIZE_EVENT) {
+				last_window_info_ir = ir;
+				_processor->OnInputResized();
+			}
+		}
+
+		if (last_window_info_ir.EventType==WINDOW_BUFFER_SIZE_EVENT) { //handover this event to far
+			DWORD dw = 0;
+			WINPORT(WriteConsoleInput)(NULL, &last_window_info_ir, 1, &dw);
+		}
+
+		return nullptr;
 	}
 };
 
@@ -214,7 +322,7 @@ public:
 	}
 };
 	
-class VTShell : VTOutputReader::IProcessor
+class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 {
 	VTAnsi _vta;
 	int _fd_out, _fd_in;
@@ -415,7 +523,7 @@ class VTShell : VTOutputReader::IProcessor
 	}
 	
 
-	virtual bool OnProcessOutput(const char *buf, int len) 
+	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
 		std::string s(buf, len);
 		DbgPrintEscaped("OUTPUT", s);
@@ -441,19 +549,13 @@ class VTShell : VTOutputReader::IProcessor
 		return true;
 	}
 	
-	virtual void OnStoppedOutput()
+	virtual void OnInputResized() //called from worker thread
 	{
-		//write some console input to kick pending ReadConsoleInput
-		INPUT_RECORD ir = {0};
-		ir.EventType = FOCUS_EVENT;
-		ir.Event.FocusEvent.bSetFocus = TRUE;
-		DWORD dw = 0;
-		WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
-		fprintf(stderr, "OnStoppedOutput\n");
+		if (!_slavename.empty())
+			UpdateTerminalSize(_fd_out);
 	}
 
-
-	void OnKeyDown(KEY_EVENT_RECORD &KeyEvent)
+	virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
 	{
 		DWORD dw;
 		const std::string &translated = TranslateKeyEvent(KeyEvent);
@@ -632,30 +734,9 @@ static bool shown_tip_exit = false;
 		_skipping_line = true;
 		
 		VTOutputReader output_reader(this, _fd_out);
-		INPUT_RECORD last_window_info_ir = {0};
-		
-		for (;;) {
-			INPUT_RECORD ir = {0};
-			DWORD dw = 0;
-			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) {
-				break;
-			}
+		VTInputReader input_reader(this);
+		output_reader.WaitDeactivation();
 
-			if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
-				OnKeyDown(ir.Event.KeyEvent);
-			} else if (ir.EventType==WINDOW_BUFFER_SIZE_EVENT) {
-				last_window_info_ir = ir;
-				if (!_slavename.empty())
-					UpdateTerminalSize(_fd_out);
-			}
-			if (!output_reader.IsActive())
-				break;
-		}
-		
-		if (last_window_info_ir.EventType==WINDOW_BUFFER_SIZE_EVENT) { //handover this event to far
-			DWORD dw = 0;
-			WINPORT(WriteConsoleInput)(NULL, &last_window_info_ir, 1, &dw);
-		}
 		
 		if (_pid!=-1) {
 			int status;
@@ -671,13 +752,6 @@ static bool shown_tip_exit = false;
 
 	int ExecuteForkProc(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]))
 	{
-		/*struct termios ts = {0};
-		if (!_slavename.empty() && tcgetattr(_fd_out, &ts)==0) {
-			struct termios tse = ts;
-			tse.c_lflag|= ECHO;
-			tcsetattr( _fd_out, TCSADRAIN, &tse );
-		}*/
-		
 		int r = ForkAndAttachToSlave(false);
 		if (r==-1)
 			return -1;
@@ -689,14 +763,13 @@ static bool shown_tip_exit = false;
 		
 		_completion_marker.ScanReset();
 		_skipping_line = false;
+
 		VTOutputReader output_reader(this, _fd_out);
+		VTInputReader input_reader(this);
 		
 		int status = -1;
 		waitpid(r, &status, 0);
 		
-		/*if (!_slavename.empty()) {
-			tcsetattr( _fd_out, TCSADRAIN, &ts );
-		}*/		
 		return status;
 	}
 	

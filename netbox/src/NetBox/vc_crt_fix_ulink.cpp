@@ -1,4 +1,4 @@
-﻿/*
+/*
 vc_crt_fix_ulink.cpp
 
 Workaround for Visual C++ CRT incompatibility with old Windows versions (ulink version)

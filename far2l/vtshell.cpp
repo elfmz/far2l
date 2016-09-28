@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <mutex>
 #include <atomic>
+#include <memory>
 #include <fcntl.h>
 #include <iostream>
 #include <fstream>

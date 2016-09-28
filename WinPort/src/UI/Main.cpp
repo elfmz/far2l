@@ -261,7 +261,8 @@ wxEND_EVENT_TABLE()
 
 void WinPortFrame::OnShow(wxShowEvent &show)
 {
-	if (g_broadway) {
+	struct stat s;
+	if (g_broadway || stat(InMyProfile("forcemenu").c_str(), &s)==0) {
 		_menu_bar = new wxMenuBar(wxMB_DOCKABLE);
 		wxMenu *menu = new wxMenu;
 		for (char c = 'A'; c<='Z'; ++c) {

@@ -556,8 +556,8 @@ int main_generator (int argc, char** argv)
 							{
 								if ( !strncmp (lpLNGString, "upd:", 4) )
 								{
-                                    size_t length = strlen(lpLNGString);
-                                    memmove(lpLNGString, lpLNGString+4, length-4);
+									size_t length = strlen(lpLNGString);
+									memmove(lpLNGString, lpLNGString+4, length-3);
 
 									/*
 									printf (

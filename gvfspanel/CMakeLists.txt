@@ -10,6 +10,9 @@ set(SOURCES
 
 add_library (gvfspanel MODULE ${SOURCES})
 
+set_property(TARGET gvfspanel PROPERTY CXX_STANDARD 14)
+set_property(TARGET gvfspanel PROPERTY CXX_STANDARD_REQUIRED ON)
+
 target_link_libraries(gvfspanel utils)
 
 target_compile_definitions(gvfspanel PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)

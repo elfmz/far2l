@@ -4,6 +4,8 @@ project(gvfspanel)
 set(SOURCES
     src/PluginMain.cpp
     src/Plugin.cpp
+    src/gvfsdlg.cpp
+    src/MountOptions.cpp
 )
 
 add_library (gvfspanel MODULE ${SOURCES})

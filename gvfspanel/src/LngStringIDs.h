@@ -50,5 +50,10 @@ enum
   MNewPanelForSearchResults,
   MListFilePath,
 
-  MCopyContensMsg
+  MCopyContensMsg,
+
+  MUser,
+  MPassword,
+  MMountPointType,
+  __LAST_LNG_ENTRY__
 };

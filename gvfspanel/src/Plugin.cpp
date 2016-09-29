@@ -1,6 +1,6 @@
 
 #include "Plugin.h"
-
+#include "gvfsdlg.h"
 #include "LngStringIDs.h"
 
 Plugin& Plugin::getInstance()
@@ -64,7 +64,9 @@ void Plugin::getOpenPluginInfo(HANDLE Plugin, OpenPluginInfo *pluginInfo)
 
 int Plugin::getFindData(HANDLE Plugin, PluginPanelItem **PanelItem, int *itemsNumber, int OpMode)
 {
-
+    updatePanelItems();
+    *PanelItem = &(m_items[0]);
+    *itemsNumber = m_items.size();
     return 1;
 }
 
@@ -80,7 +82,14 @@ int Plugin::processHostFile(HANDLE Plugin, PluginPanelItem *PanelItem, int Items
 
 int Plugin::processKey(HANDLE Plugin, int key, unsigned int controlState)
 {
-    return 0;
+    /* create item */
+    if(!controlState && key == VK_F7)
+    {
+        GetLoginData(this->m_pPsi);
+        return 1;
+    }
+    else
+        return 0;
 }
 
 int Plugin::processEvent(HANDLE Plugin, int Event, void *Param)
@@ -122,3 +131,13 @@ int Plugin::processEditorInput(const INPUT_RECORD *Rec)
 {
     return 0;
 }
+
+void Plugin::updatePanelItems()
+{
+    PluginPanelItem item { };
+
+    item.FindData.lpwszFileName = L"test";
+    item.CustomColumnNumber = 0;
+    m_items.push_back(item);
+}
+

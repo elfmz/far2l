@@ -4,6 +4,7 @@
 #include "plugin.hpp"
 #include <windows.h>
 
+#include <vector>
 #include <memory>
 
 class Options
@@ -56,8 +57,11 @@ public:
     int putFiles(HANDLE Plugin, PluginPanelItem * PanelItem, int itemsNumber, int Move, const wchar_t * SrcPath, int OpMode);
     int processEditorEvent(int Event, void * Param);
     int processEditorInput(const INPUT_RECORD * Rec);
+private:
+    void updatePanelItems();
 
 private:
     Options Opt;
     PluginStartupInfo m_pPsi;
+    std::vector<PluginPanelItem> m_items;
 };

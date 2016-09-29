@@ -52,7 +52,7 @@ using namespace oldfar;
 
 static ISzAlloc g_alloc_imp = { SzAlloc, SzFree };
 
-#define SzArEx_GetFilePackedSize(p, i) ((p)->db.PackPositions[(i) + 1] - (p)->db.PackPositions[i])
+#define SzArEx_GetFilePackedSize(p, i) ((p)->db.PackPositions ? (p)->db.PackPositions[(i) + 1] - (p)->db.PackPositions[i] : 0)
 
 class Traverser
 {
@@ -115,13 +115,11 @@ public:
 			
 		if (_index >= _db.NumFiles )
 			return GETARC_EOF;
-			
         size_t offset = 0;
         size_t outSizeProcessed = 0;
         
         unsigned is_dir = SzArEx_IsDir(&_db, _index);
         size_t len = SzArEx_GetFileNameUtf16(&_db, _index, NULL);
-
 		if (len > _temp_size)
 		{
 			SzFree(NULL, _temp);
@@ -139,7 +137,6 @@ public:
 		for (size_t i = 0; i < len; ++i) {
 			_tmp_str+= (wchar_t)(uint16_t)_temp[i];
 		}
-		
 		const std::string &name = StrWide2MB(_tmp_str);
 		
 		
@@ -147,7 +144,6 @@ public:
 		DWORD crc32 = SzBitWithVals_Check(&_db.CRCs, _index) ? _db.CRCs.Vals[_index] : 0;
 		UInt64 file_size = SzArEx_GetFileSize(&_db, _index);
 		UInt64 packed_size = SzArEx_GetFilePackedSize(&_db, _index);
-		
 		
 		FILETIME ftm = {}, ftc = {};
 		if (SzBitWithVals_Check(&_db.MTime, _index)) {
@@ -159,8 +155,7 @@ public:
 		
 		++_index;
 		
-		//
-		
+		attribs&=~ (FILE_ATTRIBUTE_BROKEN | FILE_ATTRIBUTE_EXECUTABLE);
 		strncpy(Item->FindData.cFileName, name.c_str(), ARRAYSIZE(Item->FindData.cFileName)-1);
 		Item->FindData.dwFileAttributes = attribs;
 		Item->FindData.dwUnixMode = is_dir ? 0755 : 0644;

@@ -15,14 +15,14 @@
 using namespace oldfar;
 #include "fmt.hpp"
 
-BOOL WINAPI OEMToUTF8( LPCSTR s, LPSTR d, int dlen )
+static BOOL CPToUTF8( UINT cp, LPCSTR s, LPSTR d, int dlen )
 {
 	if (!s || !d || dlen<=1 )
 		return FALSE;
 
 	std::vector<wchar_t> buf((1 + strlen( s )) * 2);
 
-	int r = WINPORT(MultiByteToWideChar)( CP_OEMCP, 0, s, -1, &buf[0], buf.size() );
+	int r = WINPORT(MultiByteToWideChar)( cp, 0, s, -1, &buf[0], buf.size() );
 	if (r >= 0) {
 		r = WINPORT(WideCharToMultiByte)( CP_UTF8, 0, &buf[0], r, d, dlen - 1, NULL, NULL );
 		d[ (r >= 0) ? r : 0 ] = 0;
@@ -311,8 +311,11 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     strncpy(Info->HostOS,ZipOS[ZipHeader.PackOS],ARRAYSIZE(Info->HostOS)-1);
 
 //  if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
-  if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0)
-    OEMToUTF8(Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
+
+  if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
+    CPToUTF8(CP_ACP, Item->FindData.cFileName,Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
+  else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0)
+    CPToUTF8(CP_OEMCP, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
 
   Info->UnpVer=(ZipHeader.UnpVer/10)*256+(ZipHeader.UnpVer%10);
   Info->DictSize=32;

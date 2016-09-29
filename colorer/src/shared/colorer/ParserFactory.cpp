@@ -371,7 +371,7 @@ HRCParser* ParserFactory::getHRCParser(){
         }
 #endif
       }else{
-        InputSource *dfis;
+        InputSource *dfis = nullptr;
         try{
           dfis = InputSource::newInstance(hrcLocations.elementAt(idx), catalogFIS);
           hrcParser->loadSource(dfis);
@@ -426,7 +426,7 @@ StyledHRDMapper *ParserFactory::createStyledMapper(const String *classID, const 
   StyledHRDMapper *mapper = new StyledHRDMapper();
   for(int idx = 0; idx < hrdLocV->size(); idx++)
     if (hrdLocV->elementAt(idx) != null){
-      InputSource *dfis;
+      InputSource *dfis = nullptr;
       try{
 			fprintf(stderr, "zz1\n");
         dfis = InputSource::newInstance(hrdLocV->elementAt(idx), catalogFIS);

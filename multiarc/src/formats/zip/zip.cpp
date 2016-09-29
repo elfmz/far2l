@@ -510,7 +510,7 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
     /*Move files            */"zip -m {-P %%P} %%A %%Fq4096",
     /*Add files and folders */"zip -r {-P %%P} %%A %%Fq4096",
     /*Move files and folders*/"zip -r -m {-P %%P} %%A %%Fq4096",
-    /*"All files" mask      */"*.*"
+    /*"All files" mask      */"*"
     };
 #endif
     if (Command<(int)(ARRAYSIZE(Commands)))

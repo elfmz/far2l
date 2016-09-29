@@ -708,7 +708,7 @@ static bool shown_tip_exit = false;
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
 			fprintf(f, "echo \"Closing back shell.%s\"\n", 
-				shown_tip_exit ? "" : "TIP: To close FAR - type 'exit far'.");
+				shown_tip_exit ? "" : " TIP: To close FAR - type 'exit far'.");
 			shown_tip_exit = true;
 
 		} else if (!shown_tip_ctrl_alc_c) {

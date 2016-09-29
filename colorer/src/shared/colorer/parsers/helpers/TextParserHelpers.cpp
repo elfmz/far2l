@@ -6,11 +6,19 @@
 /////////////////////////////////////////////////////////////////////////
 // parser's cache structures
 ParseCache::ParseCache()
+	: sline(0), eline(0),
+	scheme(nullptr),
+	clender(nullptr),
+	vcache(nullptr),
+	backLine(nullptr),
+	children(nullptr), 
+	next(nullptr), 
+	prev(nullptr), 
+	parent(nullptr)
+
 {
-  children = next = prev = parent = null;
-  backLine = null;
-  vcache = 0;
 };
+
 ParseCache::~ParseCache()
 {
   CLR_TRACE("TPCache", "~ParseCache():%s,%d-%d", scheme->getName()->getChars(), sline, eline);

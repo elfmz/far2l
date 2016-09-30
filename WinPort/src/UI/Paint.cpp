@@ -130,8 +130,8 @@ class FontSizeInspector
 	public:
 	FontSizeInspector(wxFont& font) 
 		: _bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH),
-		_max_width(8), _prev_width(-1), 
-		_max_height(8), _prev_height(-1), 
+		_max_width(4), _prev_width(-1), 
+		_max_height(6), _prev_height(-1), 
 		_unstable_size(false)
 	{
 		_dc.SelectObject(_bitmap);

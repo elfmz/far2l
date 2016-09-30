@@ -819,7 +819,7 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 		if (Result == ERROR_INSUFFICIENT_BUFFER)
 		{
 			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, nullptr, 0);
-			if (nResultLength > (int)Buffer.size())
+			if (nResultLength >= (int)Buffer.size())
 				Buffer.resize(nResultLength + 128);
 			Buffer[0] = 0;
 			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, &Buffer[0], Buffer.size()-1);

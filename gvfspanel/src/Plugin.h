@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MountOptions.h"
 
 #include "plugin.hpp"
 #include <windows.h>
@@ -64,4 +65,5 @@ private:
     Options Opt;
     PluginStartupInfo m_pPsi;
     std::vector<PluginPanelItem> m_items;
+    std::vector<MountPoint> m_mountPoints;
 };

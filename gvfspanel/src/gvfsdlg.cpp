@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 std::vector<FarDialogItem> InitDialogItems(PluginStartupInfo &info,
         const std::vector<InitDialogItem> &Init)
@@ -42,18 +43,34 @@ std::vector<FarDialogItem> InitDialogItems(PluginStartupInfo &info,
 MountPoint GetLoginData(PluginStartupInfo &info)
 {
     const int DIALOG_WIDTH = 78;
-    const int DIALOG_HEIGHT = 22;
+    const int DIALOG_HEIGHT = 13;
 
     std::vector<InitDialogItem> initItems = {
-        {DI_DOUBLEBOX,3,1,72,8,0,0,0,0,MConfigTitle, L""},
-        {DI_CHECKBOX,5,2,0,2,0,0,0,0,MConfigAddToDisksMenu, L""},
-        {DI_FIXEDIT,7,3,7,3,1,0,0,0,0, L""},
-        {DI_TEXT,9,3,0,3,0,0,0,0,MConfigDisksMenuDigit, L""},
-        {DI_TEXT,5,4,0,4,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,0, L""},
-        {DI_CHECKBOX,5,5,0,5,0,0,0,0,MConfigCommonPanel, L""},
-        {DI_TEXT,5,6,0,6,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,0, L""},
-        {DI_BUTTON,0,7,0,7,0,0,DIF_CENTERGROUP,1,MOk, L""},
-        {DI_BUTTON,0,7,0,7,0,0,DIF_CENTERGROUP,0,MCancel, L""}
+        {DI_DOUBLEBOX,3,1,DIALOG_WIDTH-3,DIALOG_HEIGHT-2,0,0,0,0,
+                MConfigTitle, L""},
+        {DI_TEXT,5,2,0,2,0,0,0,0,
+                0, L"Resource path (smb://, scp://, webdav:// ..."},
+        {DI_FIXEDIT,7,3,DIALOG_WIDTH-6,3,1,0,0,0,
+                0,                     L""},
+
+        {DI_TEXT,5,4,0,4,0,0,0,0,
+                0, L"login"},
+        {DI_FIXEDIT,7,5,DIALOG_WIDTH-6,5,1,0,0,0,
+                0,                     L""},
+
+        {DI_TEXT,5,6,0,6,0,0,0,0,
+                0, L"password"},
+        {DI_FIXEDIT,7,7,DIALOG_WIDTH-6,7,1,0,0,0,
+                0,                     L""},
+
+
+        {DI_CHECKBOX,5,8,0,8,0,0,0,0,
+                0,    L"Add this mount point to disk menu"},
+
+        {DI_BUTTON,0,10,0,10,0,0,DIF_CENTERGROUP,1,
+                MOk,                   L""},
+        {DI_BUTTON,0,10,0,10,0,0,DIF_CENTERGROUP,0,
+                MCancel,               L""}
     };
     auto dialogItems = InitDialogItems(info, initItems);
 
@@ -61,7 +78,11 @@ MountPoint GetLoginData(PluginStartupInfo &info)
                         L"Config",dialogItems.data(),dialogItems.size(),0,0,NULL,0);
 
     int ret = info.DialogRun(hDlg);
-
-    // TODO: fill mount based on user input
-    return MountPoint();
+    std::wstring resource = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,2,0));
+    std::wstring login = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,4,0));
+    std::wstring password = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,6,0));
+    std::wcerr << resource << "\n";
+    std::wcerr << login << "\n";
+    std::wcerr << password << "\n";
+    return MountPoint(resource, login, password);
 }

@@ -82,14 +82,7 @@ int Plugin::processHostFile(HANDLE Plugin, PluginPanelItem *PanelItem, int Items
 
 int Plugin::processKey(HANDLE Plugin, int key, unsigned int controlState)
 {
-    /* create item */
-    if(!controlState && key == VK_F7)
-    {
-        GetLoginData(this->m_pPsi);
-        return 1;
-    }
-    else
-        return 0;
+    return 0;
 }
 
 int Plugin::processEvent(HANDLE Plugin, int Event, void *Param)
@@ -104,7 +97,8 @@ int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
 
 int Plugin::makeDirectory(HANDLE Plugin, const wchar_t **Name, int OpMode)
 {
-    return 0;
+    m_mountPoints.emplace_back(GetLoginData(this->m_pPsi));
+    return 1;
 }
 
 int Plugin::deleteFiles(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber, int OpMode)
@@ -134,10 +128,15 @@ int Plugin::processEditorInput(const INPUT_RECORD *Rec)
 
 void Plugin::updatePanelItems()
 {
-    PluginPanelItem item { };
-
-    item.FindData.lpwszFileName = L"test";
-    item.CustomColumnNumber = 0;
-    m_items.push_back(item);
+    m_items.clear();
+    for(const auto& mountPt : m_mountPoints)
+    {
+        PluginPanelItem item { };
+        // dangerous stuff. if m_resPAth or mountPt changes (reallocation) it will crash far
+        // but for test purposes enough
+        item.FindData.lpwszFileName = mountPt.m_resPath.c_str();
+        item.CustomColumnNumber = 0;
+        m_items.push_back(item);
+    }
 }
 

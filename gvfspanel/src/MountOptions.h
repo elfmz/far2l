@@ -2,13 +2,11 @@
 
 #include <string>
 
-class MountOptions
+class MountPoint
 {
-public:
-    MountOptions();
+private:
 
-    std::string user;
-    std::string password;
+    std::wstring m_mountPointPath;
 
     enum class FileSystem {
         DiskFs,
@@ -16,6 +14,22 @@ public:
         Nfs,
         Samba,
         WebDav
-    };
+    } type;
+
+public:
+    MountPoint(const std::wstring& resPath, const std::wstring& login, const std::wstring& password);
+
+public:
+    bool isMounted();
+    bool mount();
+    bool unmount();
+
+public:
+    std::wstring m_resPath;
+    std::wstring m_user;
+    std::wstring m_password;
+
+    std::wstring& getFsPath();
+    FileSystem getFsType() const;
 };
 

@@ -262,7 +262,8 @@ wxEND_EVENT_TABLE()
 void WinPortFrame::OnShow(wxShowEvent &show)
 {
 	struct stat s;
-	if (g_broadway || stat(InMyProfile("forcemenu").c_str(), &s)==0) {
+	if (stat(InMyProfile("nomenu").c_str(), &s)!=0) {
+		//workaround for non-working with non-latin input language Ctrl+? hotkeys 
 		_menu_bar = new wxMenuBar(wxMB_DOCKABLE);
 		wxMenu *menu = new wxMenu;
 		for (char c = 'A'; c<='Z'; ++c) {
@@ -279,6 +280,12 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 		SetMenuBar(_menu_bar);
+		
+		//now hide menu bar just like it gets hidden during fullscreen transition
+        //wxAcceleratorTable table(wxCreateAcceleratorTableForMenuBar(_menu_bar);
+        //if (table.IsOk())
+        //    SetAcceleratorTable(table);		
+		_menu_bar->Show(false);
 	}
 	
 	if (!_shown) {

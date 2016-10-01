@@ -16,6 +16,41 @@
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
 
+
+
+
+template <class CHAR_T>
+static DWORD EvaluateAttributesT(uint32_t unix_mode, const CHAR_T *name)
+{
+	DWORD rv = 0;
+	switch (unix_mode & S_IFMT) {
+		case S_IFCHR: rv = FILE_ATTRIBUTE_DEVICE; break;
+		case S_IFDIR: rv = FILE_ATTRIBUTE_DIRECTORY; break;
+		case S_IFREG: rv = FILE_ATTRIBUTE_ARCHIVE; break;
+#ifndef _WIN32
+		case S_IFLNK: rv = FILE_ATTRIBUTE_REPARSE_POINT; break;
+		case S_IFSOCK: rv = FILE_ATTRIBUTE_DEVICE; break;
+#endif
+		default: rv = FILE_ATTRIBUTE_DEVICE;
+	}
+
+	if (name) {
+		bool dotfile = (*name == '.');
+		for (; *name; ++name) {
+			if (name[0]==GOOD_SLASH) {
+				dotfile = (name[1] == '.');
+			}
+		}
+		if (dotfile)
+			rv|= FILE_ATTRIBUTE_HIDDEN;
+	}
+
+	if ((unix_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0)
+		rv|= FILE_ATTRIBUTE_EXECUTABLE;
+
+	return rv;
+}
+	
 extern "C"
 {
 	struct WinPortHandleFile : WinPortHandle
@@ -299,30 +334,16 @@ extern "C"
 		WINPORT(FileTime_UnixToWin32)(s.st_atim, lpLastAccessTime);
 		return TRUE;
 	}
+	
 
 	DWORD WINPORT(EvaluateAttributes)(uint32_t unix_mode, const WCHAR *name)
 	{
-		DWORD rv = 0;
-		switch (unix_mode & S_IFMT) {
-			case S_IFCHR: rv = FILE_ATTRIBUTE_DEVICE; break;
-			case S_IFDIR: rv = FILE_ATTRIBUTE_DIRECTORY; break;
-			case S_IFREG: rv = FILE_ATTRIBUTE_ARCHIVE; break;
-#ifndef _WIN32
-			case S_IFLNK: rv = FILE_ATTRIBUTE_REPARSE_POINT; break;
-			case S_IFSOCK: rv = FILE_ATTRIBUTE_DEVICE; break;
-#endif
-			default: rv = FILE_ATTRIBUTE_DEVICE;
-		}
-		if (name) {
-			const WCHAR *slash = wcsrchr(name, GOOD_SLASH);
-			if ( (slash && slash[1]==L'.') || (!slash && name[0]=='.'))
-				rv|= FILE_ATTRIBUTE_HIDDEN;
-		}
-
-		if ((unix_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0)
-			rv|= FILE_ATTRIBUTE_EXECUTABLE;
-
-		return rv;
+		return EvaluateAttributesT(unix_mode, name);
+	}
+	
+	DWORD WINPORT(EvaluateAttributesA)(uint32_t unix_mode, const char *name)
+	{
+		return EvaluateAttributesT(unix_mode, name);		
 	}
 	
 	static int stat_symcheck(const char *path, struct stat &s, DWORD &symattr)

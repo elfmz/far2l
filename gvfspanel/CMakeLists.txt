@@ -8,12 +8,16 @@ set(SOURCES
     src/MountOptions.cpp
 )
 
+find_package(PkgConfig)
+
+pkg_check_modules(GTKMM gtkmm-2.4)
+
 add_library (gvfspanel MODULE ${SOURCES})
 
 set_property(TARGET gvfspanel PROPERTY CXX_STANDARD 14)
 set_property(TARGET gvfspanel PROPERTY CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(gvfspanel utils)
+target_link_libraries(gvfspanel utils ${GTKMM_LIBRARIES})
 
 target_compile_definitions(gvfspanel PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
 
@@ -21,6 +25,7 @@ target_include_directories(gvfspanel PRIVATE ./inc)
 target_include_directories(gvfspanel PRIVATE ../far2l)
 target_include_directories(gvfspanel PRIVATE ../far2l/Include)
 target_include_directories(gvfspanel PRIVATE ../WinPort)
+target_include_directories(gvfspanel PRIVATE ${GTKMM_INCLUDE_DIRS})
 
 set_target_properties(gvfspanel
   PROPERTIES

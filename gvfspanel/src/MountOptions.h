@@ -15,6 +15,7 @@ private:
         Samba,
         WebDav
     } type;
+    bool m_bMounted;
 
 public:
     MountPoint(const std::wstring& resPath, const std::wstring& login, const std::wstring& password);

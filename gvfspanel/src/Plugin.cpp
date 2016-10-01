@@ -77,7 +77,7 @@ void Plugin::freeFindData(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNu
 
 int Plugin::processHostFile(HANDLE Plugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
-
+    return 0;
 }
 
 int Plugin::processKey(HANDLE Plugin, int key, unsigned int controlState)
@@ -92,12 +92,29 @@ int Plugin::processEvent(HANDLE Plugin, int Event, void *Param)
 
 int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
 {
+    auto it = m_mountPoints.find(std::wstring(Dir));
+    if(it != m_mountPoints.end())
+    {
+        auto mountPoint = it->second;
+        if(!mountPoint.isMounted())
+        {
+            // switchdirectory to:
+            if(! mountPoint.mount())
+                return 0;
 
+        }
+        // change directory to:
+        mountPoint.getFsPath();
+    }
+
+    return 0;
 }
 
 int Plugin::makeDirectory(HANDLE Plugin, const wchar_t **Name, int OpMode)
 {
-    m_mountPoints.emplace_back(GetLoginData(this->m_pPsi));
+    auto mountPoint = GetLoginData(this->m_pPsi);
+    *Name = mountPoint.m_resPath.c_str();
+    m_mountPoints.insert(std::pair<std::wstring, MountPoint>(mountPoint.m_resPath, mountPoint));
     return 1;
 }
 
@@ -134,7 +151,8 @@ void Plugin::updatePanelItems()
         PluginPanelItem item { };
         // dangerous stuff. if m_resPAth or mountPt changes (reallocation) it will crash far
         // but for test purposes enough
-        item.FindData.lpwszFileName = mountPt.m_resPath.c_str();
+        item.FindData.lpwszFileName = mountPt.second.m_resPath.c_str();
+        item.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE;
         item.CustomColumnNumber = 0;
         m_items.push_back(item);
     }

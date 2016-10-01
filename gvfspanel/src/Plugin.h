@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 
 class Options
 {
@@ -65,5 +66,5 @@ private:
     Options Opt;
     PluginStartupInfo m_pPsi;
     std::vector<PluginPanelItem> m_items;
-    std::vector<MountPoint> m_mountPoints;
+    std::map<std::wstring, MountPoint> m_mountPoints;
 };

@@ -149,6 +149,7 @@ extern "C" {
 	WINPORT_DECL(GetFullPathName, DWORD, (LPCTSTR lpFileName,  DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart));
 
 	WINPORT_DECL(EvaluateAttributes, DWORD,( uint32_t unix_mode, const WCHAR *name ));
+	WINPORT_DECL(EvaluateAttributesA, DWORD,( uint32_t unix_mode, const char *name ));
 
 //time/date
 	SHAREDSYMBOL clock_t GetProcessUptimeMSec();//use instead of Windows's clock()

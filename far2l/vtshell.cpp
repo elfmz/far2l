@@ -678,15 +678,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		CheckedCloseFD(_pipes_fallback_out);
 	}
 	
-	std::string EscapeQuotas(std::string str)
-	{
-		for(size_t p = str.find('\"'); p!=std::string::npos; p = str.find('\"', p)) {
-			str.insert(p, 1, '\\');
-			p+= 2;
-		}
-		return str;
-	}
-	
 	std::string GenerateExecuteCommandScript(const char *cmd)
 	{
 		char name[128]; 

@@ -17,6 +17,7 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libglib2.0-dev
+            - libgtkmm-2.4-dev
             - gawk
             - m4
             - ninja-build
@@ -33,6 +34,7 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libglib2.0-dev
+            - libgtkmm-2.4-dev
             - gawk
             - m4
             - ninja-build
@@ -50,6 +52,7 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libglib2.0-dev
+            - libgtkmm-2.4-dev
             - gawk
             - m4
             - ninja-build
@@ -67,6 +70,7 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libglib2.0-dev
+            - libgtkmm-2.4-dev
             - gawk
             - m4
             - libpcre3-dev

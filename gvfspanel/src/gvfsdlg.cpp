@@ -27,7 +27,7 @@ std::vector<FarDialogItem> InitDialogItems(PluginStartupInfo &info,
         farDlgItem.DefaultButton = item.DefaultButton;
 
         // TODO: refactor
-        if(item.lngIdx > 0)
+        if(item.lngIdx >= 0 && item.lngIdx < __LAST_LNG_ENTRY__)
         {
             farDlgItem.PtrData = info.GetMsg(info.ModuleNumber, (unsigned int)item.lngIdx);
         }
@@ -40,7 +40,7 @@ std::vector<FarDialogItem> InitDialogItems(PluginStartupInfo &info,
     return dlgItems;
 }
 
-MountPoint GetLoginData(PluginStartupInfo &info)
+bool GetLoginData(PluginStartupInfo &info, MountPoint& mountPoint)
 {
     const int DIALOG_WIDTH = 78;
     const int DIALOG_HEIGHT = 13;
@@ -49,23 +49,23 @@ MountPoint GetLoginData(PluginStartupInfo &info)
         {DI_DOUBLEBOX,3,1,DIALOG_WIDTH-3,DIALOG_HEIGHT-2,0,0,0,0,
                 MConfigTitle, L""},
         {DI_TEXT,5,2,0,2,0,0,0,0,
-                0, L"Resource path (smb://, scp://, webdav:// ..."},
+                -1, L"Resource path (smb://, scp://, webdav:// ..."},
         {DI_FIXEDIT,7,3,DIALOG_WIDTH-6,3,1,0,0,0,
-                0,                     L""},
+                -1,                     mountPoint.m_resPath.c_str()},
 
         {DI_TEXT,5,4,0,4,0,0,0,0,
-                0, L"login"},
+                -1, L"login"},
         {DI_FIXEDIT,7,5,DIALOG_WIDTH-6,5,1,0,0,0,
-                0,                     L""},
+                -1,                     mountPoint.m_user.c_str()},
 
         {DI_TEXT,5,6,0,6,0,0,0,0,
-                0, L"password"},
+                -1, L"password"},
         {DI_FIXEDIT,7,7,DIALOG_WIDTH-6,7,1,0,0,0,
-                0,                     L""},
+                -1,                     mountPoint.m_password.c_str()},
 
 
         {DI_CHECKBOX,5,8,0,8,0,0,0,0,
-                0,    L"Add this mount point to disk menu"},
+                -1,    L"Add this mount point to disk menu"},
 
         {DI_BUTTON,0,10,0,10,0,0,DIF_CENTERGROUP,1,
                 MOk,                   L""},
@@ -75,14 +75,16 @@ MountPoint GetLoginData(PluginStartupInfo &info)
     auto dialogItems = InitDialogItems(info, initItems);
 
     HANDLE hDlg=info.DialogInit(info.ModuleNumber,-1,-1,DIALOG_WIDTH,DIALOG_HEIGHT,
-                        L"Config",dialogItems.data(),dialogItems.size(),0,0,NULL,0);
+                        L"Config",dialogItems.data(), dialogItems.size(),0,0,NULL,0);
 
     int ret = info.DialogRun(hDlg);
-    std::wstring resource = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,2,0));
-    std::wstring login = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,4,0));
-    std::wstring password = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,6,0));
-    std::wcerr << resource << "\n";
-    std::wcerr << login << "\n";
-    std::wcerr << password << "\n";
-    return MountPoint(resource, login, password);
+    if(ret == -1 || ret == 9)
+    {
+        return false;
+    }
+    mountPoint.m_resPath = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,2,0));
+    mountPoint.m_user = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,4,0));
+    mountPoint.m_password = reinterpret_cast<const wchar_t*>(info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,6,0));
+
+    return true;
 }

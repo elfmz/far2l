@@ -6,6 +6,7 @@ set(SOURCES
     src/Plugin.cpp
     src/gvfsdlg.cpp
     src/MountOptions.cpp
+    src/GvfsService.cpp
 )
 
 find_package(PkgConfig)

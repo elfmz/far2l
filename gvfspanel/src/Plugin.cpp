@@ -35,12 +35,12 @@ void Plugin::getPluginInfo(PluginInfo *pi)
     pi->DiskMenuStrings = DiskMenuStrings;
     pi->DiskMenuStringsNumber = Opt.AddToDisksMenu ? ARRAYSIZE(DiskMenuStrings) : 0;
 
-    static const TCHAR *PluginMenuStrings[1];
+    static const wchar_t *PluginMenuStrings[1];
     PluginMenuStrings[0] = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MGvfsPanel);
     pi->PluginMenuStrings = Opt.AddToPluginsMenu?PluginMenuStrings:NULL;
     pi->PluginMenuStringsNumber = Opt.AddToPluginsMenu ? ARRAYSIZE(PluginMenuStrings) : 0;
 
-    static const TCHAR *PluginCfgStrings[1];
+    static const wchar_t *PluginCfgStrings[1];
     PluginCfgStrings[0] = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MGvfsPanel);
     pi->PluginConfigStrings = PluginCfgStrings;
     pi->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
@@ -82,7 +82,39 @@ int Plugin::processHostFile(HANDLE Plugin, PluginPanelItem *PanelItem, int Items
 
 int Plugin::processKey(HANDLE Plugin, int key, unsigned int controlState)
 {
-    return 0;
+    switch(key)
+    {
+    case VK_F3:
+    case VK_F5:
+    case VK_F6:
+        // block keys
+        return 1;
+    case VK_F4:
+    {
+        struct PanelInfo pInfo;
+        m_pPsi.Control(Plugin, FCTL_GETPANELINFO, 0, (LONG_PTR)&pInfo);
+        auto currentItem = pInfo.CurrentItem;
+        PluginPanelItem item = m_items[currentItem];
+        std::wstring name = item.FindData.lpwszFileName;
+        auto it = m_mountPoints.find(name);
+        if(it != m_mountPoints.end())
+        {
+            if(GetLoginData(m_pPsi, it->second))
+            {
+                MountPoint changedMountPt = it->second;
+                m_mountPoints.erase(it);
+                m_mountPoints.insert(
+                            std::pair<std::wstring, MountPoint>
+                            (changedMountPt.m_resPath, changedMountPt));
+                m_pPsi.Control(Plugin, FCTL_UPDATEPANEL, 0, nullptr);
+
+            }
+        }
+        return 1; // return 1: far should not handel this key
+    }
+    default:
+        return 0; // all other keys left to far
+    }
 }
 
 int Plugin::processEvent(HANDLE Plugin, int Event, void *Param)
@@ -92,19 +124,22 @@ int Plugin::processEvent(HANDLE Plugin, int Event, void *Param)
 
 int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
 {
-    auto it = m_mountPoints.find(std::wstring(Dir));
-    if(it != m_mountPoints.end())
+    if(OpMode == 0)
     {
-        auto mountPoint = it->second;
-        if(!mountPoint.isMounted())
+        auto it = m_mountPoints.find(std::wstring(Dir));
+        if(it != m_mountPoints.end())
         {
-            // switchdirectory to:
-            if(! mountPoint.mount())
-                return 0;
+            auto mountPoint = it->second;
+            if(!mountPoint.isMounted())
+            {
+                // switchdirectory to:
+                if(! mountPoint.mount())
+                    return 0;
 
+            }
+            // change directory to:
+            mountPoint.getFsPath();
         }
-        // change directory to:
-        mountPoint.getFsPath();
     }
 
     return 0;
@@ -112,14 +147,40 @@ int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
 
 int Plugin::makeDirectory(HANDLE Plugin, const wchar_t **Name, int OpMode)
 {
-    auto mountPoint = GetLoginData(this->m_pPsi);
-    *Name = mountPoint.m_resPath.c_str();
-    m_mountPoints.insert(std::pair<std::wstring, MountPoint>(mountPoint.m_resPath, mountPoint));
-    return 1;
+    MountPoint mountPoint;
+    if(GetLoginData(this->m_pPsi, mountPoint))
+    {
+        m_mountPoints.insert(std::pair<std::wstring, MountPoint>(mountPoint.m_resPath, mountPoint));
+        return 1;
+    }
+    return 0;
 }
 
 int Plugin::deleteFiles(HANDLE Plugin, PluginPanelItem *PanelItem, int itemsNumber, int OpMode)
 {
+    const unsigned N = 2;
+    const wchar_t *msgItems[N] =
+    {
+        L"Delete selected mounts",
+        L"Do you really want to delete mount point?"
+    };
+
+    auto msgCode = m_pPsi.Message(m_pPsi.ModuleNumber, FMSG_WARNING | FMSG_MB_YESNO, NULL, msgItems, N, 0);
+    // if no or canceled msg box, do nothing
+    if(msgCode == -1 || msgCode == 1)
+    {
+        return -1;
+    }
+
+    for(int i = 0; i < itemsNumber; ++i)
+    {
+        auto name = PanelItem[i].FindData.lpwszFileName;
+        auto it = m_mountPoints.find(name);
+        if(it != m_mountPoints.end())
+        {
+            m_mountPoints.erase(it);
+        }
+    }
     return 0;
 }
 

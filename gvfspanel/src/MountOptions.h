@@ -18,6 +18,7 @@ private:
     bool m_bMounted;
 
 public:
+    MountPoint();
     MountPoint(const std::wstring& resPath, const std::wstring& login, const std::wstring& password);
 
 public:

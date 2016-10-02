@@ -17,9 +17,9 @@ struct InitDialogItem
     DWORD_PTR Selected;
     unsigned int Flags;
     int DefaultButton;
-    unsigned int lngIdx;
+    int lngIdx;
     std::wstring text;
 };
 
 
-MountPoint GetLoginData(PluginStartupInfo &info);
+bool GetLoginData(PluginStartupInfo &info, MountPoint& mountPoint);

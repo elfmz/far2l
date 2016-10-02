@@ -103,7 +103,7 @@ class WinPortFSNotify : public WinPortEvent
 			if (FD_ISSET(_fd, &rfds)) {
 				r = read(_fd, &buf, sizeof(buf) - 1);
 				if (r > 0) {
-					fprintf(stderr, "WatcherProc: triggered by %s\n", buf.ie.name);
+					//fprintf(stderr, "WatcherProc: triggered by %s\n", buf.ie.name);
 					Set();
 				} else if (errno!=EAGAIN && errno!=EWOULDBLOCK) {
 					fprintf(stderr, "WatcherProc: event read error %u\n", errno);

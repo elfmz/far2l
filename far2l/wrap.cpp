@@ -3218,7 +3218,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 
 			if (ss&oldfar::FSS_DELETETORECYCLEBIN)        ret|=FSS_DELETETORECYCLEBIN;
 
-			if (ss&oldfar::FSS_USESYSTEMCOPYROUTINE)      ret|=FSS_USESYSTEMCOPYROUTINE;
+			if (ss&oldfar::FSS_WRITETHROUGH)              ret|=FSS_WRITETHROUGH;
 
 			if (ss&oldfar::FSS_COPYFILESOPENEDFORWRITING) ret|=FSS_COPYFILESOPENEDFORWRITING;
 

@@ -1301,14 +1301,14 @@ MConfigRecycleBinLink
 "Usuń &linki symboliczne"
 "Borrar en&laces simbólicos"
 
-MConfigSystemCopy
-"Использовать систе&мную функцию копирования"
-"Use sys&tem copy routine"
-"Používat kopírovací rutiny sys&tému"
-"Sys&temeigene Kopierroutine verwenden"
-"&Másoláshoz a rendszerrutin használata"
-"Używaj &systemowej procedury kopiowania"
-"Usar rutina de copia del sis&tema"
+MCopyWriteThrough
+"Выключить кэ&ширование записи"
+"Disable &write cache"
+upd:"Disable &write cache"
+upd:"Disable &write cache"
+upd:"Disable &write cache"
+upd:"Disable &write cache"
+upd:"Disable &write cache"
 
 MConfigCopySharing
 "Копировать открытые для &записи файлы"

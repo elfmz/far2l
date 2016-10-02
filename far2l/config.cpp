@@ -123,7 +123,7 @@ void SystemSettings()
 	DeleteLinks->Indent(4);
 	Builder.LinkFlags(DeleteToRecycleBin, DeleteLinks, DIF_DISABLE);
 
-	Builder.AddCheckbox(MConfigSystemCopy, &Opt.CMOpt.UseSystemCopy);
+//	Builder.AddCheckbox(CopyWriteThrough, &Opt.CMOpt.WriteThrough);
 	Builder.AddCheckbox(MConfigCopySharing, &Opt.CMOpt.CopyOpened);
 	Builder.AddCheckbox(MConfigScanJunction, &Opt.ScanJunction);
 	Builder.AddCheckbox(MConfigCreateUppercaseFolders, &Opt.CreateUppercaseFolders);
@@ -628,7 +628,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem,L"DeleteToRecycleBinKillLink",&Opt.DeleteToRecycleBinKillLink,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"WipeSymbol",&Opt.WipeSymbol,0, 0},
 
-	{1, REG_DWORD,  NKeySystem,L"UseSystemCopy",&Opt.CMOpt.UseSystemCopy,1, 0},
+	{1, REG_DWORD,  NKeySystem,L"WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
 	{0, REG_DWORD,  NKeySystem,L"CopySecurityOptions",&Opt.CMOpt.CopySecurityOptions,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"CopyOpened",&Opt.CMOpt.CopyOpened,1, 0},
 	{1, REG_DWORD,  NKeySystem, L"MultiCopy",&Opt.CMOpt.MultiCopy,0, 0},

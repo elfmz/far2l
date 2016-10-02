@@ -149,6 +149,7 @@ enum enumShellCopy
 	ID_SC_COMBO,
 	ID_SC_COPYSYMLINK,
 	ID_SC_MULTITARGET,
+	ID_SC_WRITETHROUGH,
 	ID_SC_SEPARATOR3,
 	ID_SC_USEFILTER,
 	ID_SC_SEPARATOR4,
@@ -584,6 +585,17 @@ BOOL CheckAndUpdateConsole(BOOL IsChangeConsole)
 	return IsChangeConsole;
 }
 
+#define USE_PAGE_SIZE 0x1000
+template <class T> static T AlignPageUp(T v)
+{
+//todo: use actual system page size
+	uintptr_t al = ((uintptr_t)v) & (USE_PAGE_SIZE - 1);
+	if (al) {
+		v = (T)(((uintptr_t)v) + (USE_PAGE_SIZE - al));
+	}
+	return v;
+}
+
 ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (активная)
                      int Move,               // =1 - операция Move
                      int Link,               // =1 - Sym/Hard Link
@@ -593,7 +605,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
                      const wchar_t *PluginDestPath,
                      bool ToSubdir):
 	sddata(nullptr),
-	CopyBuffer(nullptr),
+	CopyBuffer(nullptr), CopyBufferBase(nullptr),
 	RPT(RP_EXACTCOPY)
 {
 	Filter=nullptr;
@@ -623,7 +635,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	(*FrameManager)[0]->Lock();
 	// Размер буфера берется из реестра
 	GetRegKey(L"System", L"CopyBufferSize", CopyBufferSize, 0);
-	CopyBufferSize=Max(CopyBufferSize,(int)COPY_BUFFER_SIZE);
+	CopyBufferSize=AlignPageUp(Max(CopyBufferSize,(int)COPY_BUFFER_SIZE));
 	CDP.thisClass=this;
 	CDP.AltF10=0;
 	CDP.FolderPresent=false;
@@ -643,7 +655,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	// *** Prepare Dialog Controls
 	// ***********************************************************************
-	int DLG_HEIGHT=16, DLG_WIDTH=76;
+	int DLG_HEIGHT=17, DLG_WIDTH=76;
 
 	DialogDataEx CopyDlgData[]=
 	{
@@ -660,17 +672,19 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		DI_COMBOBOX,   29, 7,70, 7,0,DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L"",
 		DI_CHECKBOX,    5, 8, 0, 8,0,0,MSG(MCopySymLinkContents),
 		DI_CHECKBOX,    5, 9, 0, 9,0,0,MSG(MCopyMultiActions),
-		DI_TEXT,        3,10, 0,10,0,DIF_SEPARATOR,L"",
-		DI_CHECKBOX,    5,11, 0,11,UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED,DIF_AUTOMATION,(wchar_t *)MCopyUseFilter,
-		DI_TEXT,        3,12, 0,12,0,DIF_SEPARATOR,L"",
-		DI_BUTTON,      0,13, 0,13,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy),
-		DI_BUTTON,      0,13, 0,13,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree),
-		DI_BUTTON,      0,13, 0,13,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter),
-		DI_BUTTON,      0,13, 0,13,0,DIF_CENTERGROUP,MSG(MCopyDlgCancel),
+		DI_CHECKBOX,    5, 10, 0, 10,0,0,MSG(MCopyWriteThrough),
+		DI_TEXT,        3,11, 0,11,0,DIF_SEPARATOR,L"",
+		DI_CHECKBOX,    5,12, 0,12,UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED,DIF_AUTOMATION,(wchar_t *)MCopyUseFilter,
+		DI_TEXT,        3,13, 0,13,0,DIF_SEPARATOR,L"",
+		DI_BUTTON,      0,14, 0,14,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy),
+		DI_BUTTON,      0,14, 0,14,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree),
+		DI_BUTTON,      0,14, 0,14,0,DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter),
+		DI_BUTTON,      0,14, 0,14,0,DIF_CENTERGROUP,MSG(MCopyDlgCancel),
 		DI_TEXT,        5, 2, 0, 2,0,DIF_SHOWAMPERSAND,L"",
 	};
 	MakeDialogItemsEx(CopyDlgData,CopyDlg);
 	CopyDlg[ID_SC_MULTITARGET].Selected=Opt.CMOpt.MultiCopy;
+	CopyDlg[ID_SC_WRITETHROUGH].Selected=Opt.CMOpt.WriteThrough;
 	{
 		const wchar_t *Str = MSG(MCopySecurity);
 		CopyDlg[ID_SC_ACLEAVE].X1 = CopyDlg[ID_SC_ACTITLE].X1 + StrLength(Str) - (wcschr(Str, L'&')?1:0) + 1;
@@ -1035,6 +1049,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				{
 					Opt.CMOpt.MultiCopy=CopyDlg[ID_SC_MULTITARGET].Selected;
 				}
+				Opt.CMOpt.WriteThrough=CopyDlg[ID_SC_WRITETHROUGH].Selected;
 
 				if (!CopyDlg[ID_SC_MULTITARGET].Selected || !wcspbrk(strCopyDlgValue,L",;")) // отключено multi*
 				{
@@ -1087,10 +1102,10 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		Flags|=FCOPY_LEAVESECURITY;
 	}
 
-	if (Opt.CMOpt.UseSystemCopy)
-		Flags|=FCOPY_USESYSTEMCOPY;
+	if (Opt.CMOpt.WriteThrough)
+		Flags|=FCOPY_WRITETHROUGH;
 	else
-		Flags&=~FCOPY_USESYSTEMCOPY;
+		Flags&=~FCOPY_WRITETHROUGH;
 
 	if (!(Flags&(FCOPY_COPYSECURITY|FCOPY_LEAVESECURITY)))
 		Flags|=FCOPY_COPYPARENTSECURITY;
@@ -1192,7 +1207,10 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		CtrlObject->Cp()->RightPanel->ReadDiz();
 	}
 
-	CopyBuffer=new char[CopyBufferSize];
+	//allocate page-aligned memory: IO works faster on that, also direct-io requires buffer to be aligned sometimes
+	//OSX lacks aligned_malloc so do it manually
+	CopyBufferBase = new char[CopyBufferSize + USE_PAGE_SIZE];
+	CopyBuffer = AlignPageUp(CopyBufferBase);
 	DestPanel->CloseFile();
 	strDestDizPath.Clear();
 	SrcPanel->SaveSelection();
@@ -1709,8 +1727,8 @@ ShellCopy::~ShellCopy()
 {
 	_tran(SysLog(L"[%p] ShellCopy::~ShellCopy(), CopyBufer=%p",this,CopyBuffer));
 
-	if (CopyBuffer)
-		delete[] CopyBuffer;
+	if (CopyBufferBase)
+		delete[] CopyBufferBase;
 
 	// $ 26.05.2001 OT Разрешить перерисовку панелей
 	_tran(SysLog(L"call (*FrameManager)[0]->UnlockRefresh()"));
@@ -2984,13 +3002,39 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 	int64_t AppendPos=0;
 
 	//bool CopySparse=false;
-
+	DWORD DstFlags = FILE_FLAG_SEQUENTIAL_SCAN;
 	if (!(Flags&FCOPY_COPYTONUL))
 	{
 		//if (DestAttr!=INVALID_FILE_ATTRIBUTES && !Append) //вот это портит копирование поверх хардлинков
 		//apiDeleteFile(DestName);
-		bool DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), SrcData.dwFileAttributes&(~((Flags&(FCOPY_DECRYPTED_DESTINATION))?FILE_ATTRIBUTE_ENCRYPTED|FILE_FLAG_SEQUENTIAL_SCAN:FILE_FLAG_SEQUENTIAL_SCAN)));
-		Flags&=~FCOPY_DECRYPTED_DESTINATION;
+		if ( (SrcData.dwFileAttributes & FILE_ATTRIBUTE_ENCRYPTED) == FILE_ATTRIBUTE_ENCRYPTED &&
+			(Flags & FCOPY_DECRYPTED_DESTINATION)!=FCOPY_DECRYPTED_DESTINATION) {
+			DstFlags|= FILE_ATTRIBUTE_ENCRYPTED;
+		}
+
+		if ((Flags & FCOPY_WRITETHROUGH) != 0) {
+			DstFlags|= FILE_FLAG_WRITE_THROUGH;
+
+#ifdef __linux__ //anyway OSX doesn't have O_DIRECT
+			if (SrcData.nFileSize > 128 * USE_PAGE_SIZE)// just empiric
+				DstFlags|= FILE_FLAG_NO_BUFFERING;
+#endif
+		}
+		
+		bool DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), DstFlags);
+		if ((DstFlags & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
+			if (!DstOpened) {
+				DstFlags&= ~(FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING);
+				DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), DstFlags);
+				if (DstOpened) {
+					Flags&= ~FCOPY_WRITETHROUGH; 
+					fprintf(stderr, "COPY: unbuffered FAILED: 0x%x\n", DstFlags & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING));
+				}
+			}/* else
+				fprintf(stderr, "COPY: unbuffered OK: 0x%x\n", DstFlags & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING));*/
+		}
+
+		Flags&= ~FCOPY_DECRYPTED_DESTINATION;
 
 		if (!DstOpened)
 		{
@@ -3000,7 +3044,6 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 			return COPY_FAILURE;
 		}
 		DestFile.Chmod(SrcData.dwUnixMode);
-		fprintf(stderr, "chmode 0x%x\n", SrcData.dwUnixMode);
 
 		FARString strDriveRoot;
 		GetPathRoot(strDestName,strDriveRoot);
@@ -3182,13 +3225,17 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 				if (!(Flags&FCOPY_COPYTONUL))
 				{
-					while (!DestFile.Write(CopyBuffer,BytesRead,&BytesWritten,nullptr))
+					DWORD WriteSize = BytesRead;
+					if ((DstFlags & FILE_FLAG_NO_BUFFERING)!=0)
+						WriteSize = AlignPageUp(WriteSize);
+					BytesWritten = 0;
+					while (!DestFile.Write(CopyBuffer, WriteSize, &BytesWritten, nullptr))
 					{
 						DWORD LastError=WINPORT(GetLastError)();
 						int Split=FALSE,SplitCancelled=FALSE,SplitSkipped=FALSE;
-
+/*TODO
 						if ((LastError==ERROR_DISK_FULL || LastError==ERROR_HANDLE_DISK_FULL) &&
-						        !strDestName.IsEmpty() && strDestName.At(1)==L':')
+						        !strDestName.IsEmpty() && strDestName.At(0)==L'/')
 						{
 							FARString strDriveRoot;
 							GetPathRoot(strDestName,strDriveRoot);
@@ -3254,7 +3301,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 										SplitCancelled=TRUE;
 								}
 							}
-						}
+						}*/
 
 						if (Split)
 						{
@@ -3335,6 +3382,13 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 						}
 
 						break;
+					}
+					if (BytesWritten > BytesRead) { 
+						//likely we written bit more due to no_buffering requires aligned io
+						//move backward and correct file size
+						DestFile.SetPointer((INT64)BytesRead - (INT64)WriteSize, nullptr, FILE_CURRENT);
+						DestFile.SetEnd();
+						BytesWritten = BytesRead;
 					}
 				}
 				else

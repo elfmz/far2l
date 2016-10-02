@@ -12,6 +12,8 @@ std::wstring StrMB2Wide(const std::string &src);
 unsigned char Hex2Digit(const char hex);
 unsigned char Hex2Byte(const char *hex);
 
+std::string EscapeQuotas(std::string str);
+
 std::string InMyProfile(const char *subpath = NULL);
 
 

@@ -183,6 +183,15 @@ unsigned char Hex2Byte(const char *hex)
 	return r;
 }
 
+std::string EscapeQuotas(std::string str)
+{
+	for(size_t p = str.find('\"'); p!=std::string::npos; p = str.find('\"', p)) {
+		str.insert(p, 1, '\\');
+		p+= 2;
+	}
+	return str;
+}
+	
 std::string InMyProfile(const char *subpath)
 {
 #ifdef _WIN32
@@ -226,3 +235,4 @@ void CheckedCloseFDPair(int *fd)
        CheckedCloseFD(fd[0]);
        CheckedCloseFD(fd[1]);
 }
+

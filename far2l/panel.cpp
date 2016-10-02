@@ -378,18 +378,10 @@ bool IsCharTrimmable(wchar_t c)
 	return (c==L' ' || c==L'\t' || c==L'\r' || c==L'\n');
 }
 
-void Trim(std::wstring &s)
-{
-		while (!s.empty() && IsCharTrimmable(s[0])) s.erase(0, 1);
-		while (!s.empty() && IsCharTrimmable(s[s.size()-1])) s.resize(s.size() - 1);
-}
 
-std::wstring ExtractTilSpace(std::wstring &s)
+std::wstring ExtractTilTab(std::wstring &s)
 {
-	Trim(s);
-	size_t p = s.find(' ');
-	size_t p2 = s.find('\t');
-	if (p==std::wstring::npos || (p > p2 && p2!=std::wstring::npos)) p = p2;
+	size_t p = s.find('\t');
 
 	std::wstring rv;
 	if (p!=std::wstring::npos) {
@@ -400,80 +392,61 @@ std::wstring ExtractTilSpace(std::wstring &s)
 	return rv;
 }
 
-struct MountedFS
+struct RootEntry
 {
-	std::wstring root;
-	std::wstring fs;
+	FARString text;
+	FARString root;
 };
 
-typedef std::vector<MountedFS>	MountedFilesystems;
+typedef std::vector<RootEntry> RootEntries;
 
-void EnumMountedFilesystems(MountedFilesystems &out, const WCHAR *another = NULL)
+static void EnumRoots(RootEntries &out, const FARString &curdir, const FARString &another_curdir)
 {
-	bool has_root = false;
-	MountedFS mfs;
-
-	out.clear();
-
+	RootEntry re;
 	
-	FILE *f = popen("df -T", "r");
+	out.clear();
+	std::string roots_script = "\"";
+	roots_script+= EscapeQuotas(g_strFarPath.GetMB());
+	roots_script+= "roots.sh\"";
+	roots_script+= " \"";
+	roots_script+= EscapeQuotas(Wide2MB(curdir));
+	roots_script+= "\" \"";
+	roots_script+= EscapeQuotas(Wide2MB(another_curdir));
+	roots_script+= '\"';
+
+	FILE *f = popen(roots_script.c_str(), "r");
 	if (f) {
 		char buf[0x400] = { };
 		std::wstring s, tmp;
-		bool first = true;
 		while (fgets(buf, sizeof(buf)-1, f)!=NULL) {
-			if (!first) {
-				buf[sizeof(buf)-1] = 0;
-				s = MB2Wide(buf);
-				
-				ExtractTilSpace(s);
-				mfs.fs = ExtractTilSpace(s);
-				mfs.root.clear();
-				for (;;) {
-					tmp = ExtractTilSpace(s);
-					if (tmp.empty()) break;
-					if (tmp[0]=='/') {
-						mfs.root = tmp;
-						if (tmp.size()==1) has_root = true;
-					}
-				}
-				if (mfs.root==L"/")
-					out.insert(out.begin(), mfs);
-				else
-					out.push_back(mfs);
+			for (;;) {
+				size_t l = strlen(buf);
+				if (!l) break;
+				if (buf[l-1]!='\r' && buf[l-1]!='\n') break;
+				buf[l-1] = 0;
 			}
-			first = false;
+			
+			re.text.Copy(buf);
+			re.root.Clear();
+			
+			for (bool first = true;;) {
+				size_t t;
+				if (!re.text.Pos(t, L'\t')) break;
+				if (first) {
+					first = false;
+					re.root = re.text.SubStr(0, t);
+					re.text.Remove(0, t + 1);
+				}else
+					re.text.Replace(t, 1, BoxSymbols[BS_V1]);
+			}
+			
+			out.emplace_back(re);
 		}
 		pclose(f);
-	}
-
-	if (!has_root) {
-		MountedFS mfs;
-		mfs.fs = L"/";
-		mfs.root = L"/";
-		out.insert(out.begin(), mfs);
-	}
-	
-	mfs.root = MB2Wide(getenv("HOME"));
-	mfs.fs = L"~";
-	out.insert(out.begin(), mfs);	
-	if (another && mfs.root!=another) {
-		mfs.root = another;
-		mfs.fs = L"";
-		out.insert(out.begin(), mfs);			
+	} else {
+		fprintf(stderr, "Error %u executing '%s'\n", errno, roots_script.c_str());
 	}
 }
-
-
-FARString StringPrepend(FARString s, size_t width)
-{
-	//fprintf(stderr, "%u %u\n", s.GetSize(), width);
-	while (s.GetLength() < width) {
-		s.Insert(0, ' ');
-	}
-	return s;
-}
-
 
 
 int Panel::ChangeDiskMenu(int Pos,int FirstCall)
@@ -494,15 +467,15 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	FARString strDiskType, strRootDir, strDiskLetter;
 //	DWORD Mask = 4,DiskMask;
 	int Focus;//DiskCount = 1
-	WCHAR I;
+	//WCHAR I;
 	bool SetSelected=false;
-	DWORD NetworkMask = 0;
+	//DWORD NetworkMask = 0;
 
 	FARString curdir, another_curdir;
 	GetCurDir(curdir);
 	CtrlObject->Cp()->GetAnotherPanel(this)->GetCurDir(another_curdir);
-	MountedFilesystems filesystems;
-	EnumMountedFilesystems(filesystems, (another_curdir==curdir) ? NULL : another_curdir.CPtr());
+	RootEntries roots;
+	EnumRoots(roots, curdir, another_curdir);
 
 	PanelMenuItem Item, *mitem=0;
 	{ // эта скобка надо, см. M#605
@@ -515,26 +488,11 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 		ChDisk.SetHelp(L"DriveDlg");
 		ChDisk.SetFlags(VMENU_WRAPMODE);
-		FARString strMenuText;
 		int MenuLine = 0;
-
-		/* $ 02.04.2001 VVM
-		! Попытка не будить спящие диски... */
-		size_t root_width = 4,  fs_width = 4;
-		for (auto f : filesystems) {
-			if (root_width < f.root.size()) root_width = f.root.size();
-			if (fs_width < f.fs.size()) fs_width = f.fs.size();
-		}
-		
-		for (auto f : filesystems) {
-			strMenuText.Clear();
-			strMenuText += StringPrepend(f.root.c_str(), root_width);
-			strMenuText += BoxSymbols[BS_V1];
-			strMenuText += StringPrepend(f.fs.c_str(), fs_width);
-
-
+		Pos = 0;
+		for (const auto &f : roots) {
 			ChDiskItem.Clear();
-
+/*
 			if (FirstCall)
 			{
 				ChDiskItem.SetSelect(I==Pos);
@@ -542,9 +500,9 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				if (!SetSelected)
 					SetSelected=(I==Pos);
 			}
-			else
+			else*/
 			{
-				if (Pos < filesystems.size())
+				if (Pos < (int)roots.size())
 				{
 					ChDiskItem.SetSelect(MenuLine==Pos);
 
@@ -553,11 +511,11 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				}
 			}
 
-			ChDiskItem.strName = strMenuText;
+			ChDiskItem.strName = f.text;
 
 			PanelMenuItem item;
 			item.bIsPlugin = false;
-			wcsncpy(item.root, f.root.c_str(), sizeof(item.root)/sizeof(item.root[0]));
+			wcsncpy(item.root, f.root.CPtr(), sizeof(item.root)/sizeof(item.root[0]));
 			ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
 			MenuLine++;
 		}
@@ -566,7 +524,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 		if (Opt.ChangeDriveMode & DRIVE_SHOW_PLUGINS)
 		{
-			PluginMenuItemsCount = AddPluginItems(ChDisk, Pos, filesystems.size(), SetSelected);
+			PluginMenuItemsCount = AddPluginItems(ChDisk, Pos, roots.size(), SetSelected);
 		}
 
 		int X=X1+5;
@@ -574,7 +532,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		if ((this == CtrlObject->Cp()->RightPanel) && IsFullScreen() && (X2-X1 > 40))
 			X = (X2-X1+1)/2+5;
 
-		int Y = (ScrY+1-(filesystems.size()+static_cast<int>(PluginMenuItemsCount)+5))/2;
+		int Y = (ScrY+1-(roots.size()+static_cast<int>(PluginMenuItemsCount)+5))/2;
 
 		if (Y < 1)
 			Y=1;
@@ -644,7 +602,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 							FrameManager->ResizeAllFrame();
 							FrameManager->PluginCommit(); // коммитим.
 							ScrBuf.Unlock(); // разрешаем прорисовку
-							return (((filesystems.size()-SelPos)==1) && (SelPos > 0) && (Code != DRIVE_DEL_EJECT))?SelPos-1:SelPos;
+							return (((roots.size()-SelPos)==1) && (SelPos > 0) && (Code != DRIVE_DEL_EJECT))?SelPos-1:SelPos;
 						}
 					}
 				}

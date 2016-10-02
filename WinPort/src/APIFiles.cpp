@@ -120,6 +120,14 @@ extern "C"
 		flags|= O_BINARY;
 #else		
 		flags|= O_CLOEXEC;
+#ifdef __linux__
+		if ((dwFlagsAndAttributes & FILE_FLAG_WRITE_THROUGH) != 0)
+			flags|= O_SYNC;
+
+		if ((dwFlagsAndAttributes & FILE_FLAG_NO_BUFFERING) != 0)
+			flags|= O_DIRECT;
+		
+#endif
 #endif
 		switch (dwCreationDisposition) 
 		{
@@ -139,7 +147,12 @@ extern "C"
 				
 			return INVALID_HANDLE_VALUE;
 		}
-		
+
+#ifndef __linux__
+		if ((dwFlagsAndAttributes & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
+			fcntl(r, F_NOCACHE, 1);
+		}
+#endif
 		/*nobody cares.. if ((dwFlagsAndAttributes&FILE_FLAG_BACKUP_SEMANTICS)==0) {
 			struct stat s = { };
 			fstat(r, &s);

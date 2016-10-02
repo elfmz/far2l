@@ -388,7 +388,7 @@ struct TreeOptions
 
 struct CopyMoveOptions
 {
-	int UseSystemCopy;         // использовать системную функцию копирования
+	int WriteThrough;          // disable write caching
 	int CopyOpened;            // копировать открытые на запись файлы
 	int CopyShowTotal;         // показать общий индикатор копирования
 	int MultiCopy;             // "разрешить мультикопирование/перемещение/создание связей"

@@ -646,7 +646,7 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			{
 				{&Opt.ClearReadOnly,FSS_CLEARROATTRIBUTE},
 				{&Opt.DeleteToRecycleBin,FSS_DELETETORECYCLEBIN},
-				{&Opt.CMOpt.UseSystemCopy,FSS_USESYSTEMCOPYROUTINE},
+				{&Opt.CMOpt.WriteThrough,FSS_WRITETHROUGH},
 				{&Opt.CMOpt.CopyOpened,FSS_COPYFILESOPENEDFORWRITING},
 				{&Opt.ScanJunction,FSS_SCANSYMLINK},
 				{&Opt.CreateUppercaseFolders,FSS_CREATEFOLDERSINUPPERCASE},

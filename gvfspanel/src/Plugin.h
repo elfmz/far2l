@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MountOptions.h"
+#include "KeyBarTitlesHelper.h"
 
 #include "plugin.hpp"
 #include <windows.h>
@@ -24,12 +25,12 @@ public:
     int FullScreenPanel;
     int LastSearchResultsPanel;
     int SelectedCopyContents;
-    TCHAR ColumnTypes[64];
-    TCHAR ColumnWidths[64];
-    TCHAR StatusColumnTypes[64];
-    TCHAR StatusColumnWidths[64];
-    TCHAR Mask[512];
-    TCHAR Prefix[16];
+    wchar_t ColumnTypes[64];
+    wchar_t ColumnWidths[64];
+    wchar_t StatusColumnTypes[64];
+    wchar_t StatusColumnWidths[64];
+    wchar_t Mask[512];
+    wchar_t Prefix[16];
 };
 
 class Plugin {
@@ -64,6 +65,7 @@ private:
 
 private:
     Options Opt;
+    KeyBarTitlesHelper m_keyBar;
     PluginStartupInfo m_pPsi;
     std::vector<PluginPanelItem> m_items;
     std::map<std::wstring, MountPoint> m_mountPoints;

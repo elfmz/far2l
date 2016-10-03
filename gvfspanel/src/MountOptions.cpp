@@ -54,6 +54,11 @@ std::wstring &MountPoint::getFsPath()
     return this->m_mountPointPath;
 }
 
+std::wstring &MountPoint::getMountName()
+{
+    return this->m_shareName;
+}
+
 MountPoint::FileSystem MountPoint::getFsType() const
 {
     return this->type;

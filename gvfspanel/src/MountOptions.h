@@ -33,6 +33,7 @@ public:
     std::wstring m_password;
 
     std::wstring& getFsPath();
+    std::wstring& getMountName();
     FileSystem getFsType() const;
 };
 

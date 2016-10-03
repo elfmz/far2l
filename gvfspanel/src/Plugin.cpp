@@ -12,6 +12,8 @@ Plugin& Plugin::getInstance()
 Plugin::Plugin()
 {
     Opt.AddToDisksMenu = true;
+//    m_keyBar.setNormalKey(7, L"MkMount");
+//    m_keyBar.setNormalKey(4, L"EdMount");
 }
 
 int Plugin::getVersion()
@@ -27,8 +29,8 @@ void Plugin::setStartupInfo(const PluginStartupInfo *psi)
 void Plugin::getPluginInfo(PluginInfo *pi)
 {
 
-    pi->StructSize=sizeof(PluginStartupInfo);
-    pi->Flags=PF_PRELOAD;
+    pi->StructSize = sizeof(PluginStartupInfo);
+    pi->Flags = PF_PRELOAD;
 
     static const wchar_t *DiskMenuStrings[1];
     DiskMenuStrings[0] = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MDiskMenuString);
@@ -44,7 +46,7 @@ void Plugin::getPluginInfo(PluginInfo *pi)
     PluginCfgStrings[0] = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MGvfsPanel);
     pi->PluginConfigStrings = PluginCfgStrings;
     pi->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
-    pi->CommandPrefix=Opt.Prefix;
+    pi->CommandPrefix = Opt.Prefix;
 }
 
 HANDLE Plugin::openPlugin(int openFrom, intptr_t item)
@@ -59,7 +61,10 @@ void Plugin::closePlugin(HANDLE Plugin)
 
 void Plugin::getOpenPluginInfo(HANDLE Plugin, OpenPluginInfo *pluginInfo)
 {
+//    pluginInfo->KeyBar = &(m_keyBar.getKeyBar());
 
+    static const wchar_t *pluginPanelTitle = m_pPsi.GetMsg(m_pPsi.ModuleNumber, MGvfsPanel);
+    pluginInfo->PanelTitle = pluginPanelTitle;
 }
 
 int Plugin::getFindData(HANDLE Plugin, PluginPanelItem **PanelItem, int *itemsNumber, int OpMode)
@@ -132,10 +137,8 @@ int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
             auto mountPoint = it->second;
             if(!mountPoint.isMounted())
             {
-                // switchdirectory to:
                 if(! mountPoint.mount())
                     return 0;
-
             }
             // change directory to:
             std::wstring dir = mountPoint.getFsPath();

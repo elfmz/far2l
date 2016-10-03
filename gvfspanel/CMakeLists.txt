@@ -7,6 +7,7 @@ set(SOURCES
     src/gvfsdlg.cpp
     src/MountOptions.cpp
     src/GvfsService.cpp
+    src/KeyBarTitlesHelper.cpp
 )
 
 find_package(PkgConfig)

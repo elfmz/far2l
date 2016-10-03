@@ -9,7 +9,9 @@ class GvfsService
 
     void mount_cb(Glib::RefPtr<Gio::AsyncResult>& result);
     void unmount_cb(Glib::RefPtr<Gio::AsyncResult>& result);
-
+public:
+    std::string m_mountName;
+    std::string m_mountPath;
 public:
     void mount(const std::string& resPath, const std::string &userName, const std::string &password);
     void umount(const std::string& resPath);

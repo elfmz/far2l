@@ -14,11 +14,51 @@ void GvfsService::mount(const std::string &resPath, const std::string &userName,
 
     file = Gio::File::create_for_parse_name(resPath);
     Glib::RefPtr<Gio::MountOperation> mount_operation = Gio::MountOperation::create();
-    mount_operation->set_domain("WORKGROUP");
-    mount_operation->set_username(userName);
-    mount_operation->set_password(password);
 
-    mount_operation->set_anonymous(true);
+    bool bAnonymous = true;
+
+    mount_operation->signal_ask_password().connect(
+    [mount_operation, bAnonymous](const Glib::ustring& msg,
+                                  const Glib::ustring& defaultUser,
+                                  const Glib::ustring& defaultdomain,
+                                  Gio::AskPasswordFlags flags)
+    {
+        std::cerr << "ask password\n";
+        std::cerr << msg << "\n";
+        std::cerr << "default user: " << defaultUser << "\n";
+
+        if ((flags & G_ASK_PASSWORD_ANONYMOUS_SUPPORTED) && bAnonymous)
+        {
+            mount_operation->set_anonymous(true);
+        }
+        else
+        {
+            // trigger functor for entering user credentials
+            if (flags & G_ASK_PASSWORD_NEED_USERNAME)
+            {
+                // trigger user name enter callback, call passwd functor
+            }
+
+            if (flags & G_ASK_PASSWORD_NEED_DOMAIN)
+            {
+                // trigger domain name enter callback, call passwd functor
+            }
+            if (flags & G_ASK_PASSWORD_NEED_PASSWORD)
+            {
+                // trigger password name enter callback, call passwd functor
+            }
+        }
+        if (bAnonymous)
+        {
+             mount_operation->reply(Gio::MOUNT_OPERATION_HANDLED);
+        }
+    });
+    mount_operation->signal_ask_question().connect(
+    [mount_operation](const Glib::ustring& msg, const Glib::StringArrayHandle& choices)
+    {
+        std::cerr << "ask question\n";
+        std::cerr << msg << "\n";
+    });
 
     try
     {
@@ -33,6 +73,10 @@ void GvfsService::mount(const std::string &resPath, const std::string &userName,
         {
             main_loop->run();
         }
+        m_mountName = file->find_enclosing_mount()->get_name();
+        m_mountPath = file->find_enclosing_mount()->get_default_location()->get_path();
+        std::cout << "mount: " << m_mountName << "\n";
+        std::cout << "mount: " << m_mountPath << "\n";
     }
     catch(const Glib::Error& ex)
     {
@@ -85,9 +129,6 @@ void GvfsService::mount_cb(Glib::RefPtr<Gio::AsyncResult>& result)
     try
     {
         file->mount_enclosing_volume_finish(result);
-
-        std::cout << "mount: " << file->find_enclosing_mount()->get_name() << "\n";
-        std::cout << "mount: " << file->find_enclosing_mount()->get_default_location()->get_path() << "\n";
     }
     catch(const Glib::Error& ex)
     {

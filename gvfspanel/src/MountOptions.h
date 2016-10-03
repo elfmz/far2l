@@ -7,6 +7,7 @@ class MountPoint
 private:
 
     std::wstring m_mountPointPath;
+    std::wstring m_shareName;
 
     enum class FileSystem {
         DiskFs,

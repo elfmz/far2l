@@ -37,6 +37,10 @@ bool MountPoint::mount()
 
     GvfsService service;
     service.mount(resPath, userName, password);
+
+    m_shareName = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(service.m_mountName);
+    m_mountPointPath = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(service.m_mountPath);
+
     return true;
 }
 

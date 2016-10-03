@@ -138,7 +138,11 @@ int Plugin::setDirectory(HANDLE Plugin, const wchar_t *Dir, int OpMode)
 
             }
             // change directory to:
-            mountPoint.getFsPath();
+            std::wstring dir = mountPoint.getFsPath();
+            if(!dir.empty())
+            {
+                m_pPsi.Control(Plugin, FCTL_SETPANELDIR, 0, (LONG_PTR)(dir.c_str()));
+            }
         }
     }
 

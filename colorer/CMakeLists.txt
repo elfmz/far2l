@@ -13,7 +13,6 @@ set(SOURCES
     src/shared/common/Logging.cpp
     src/shared/common/MemoryChunks.cpp
     src/shared/colorer/ParserFactory.cpp
-    src/shared/misc/malloc.c
     src/shared/unicode/BitArray.cpp
     src/shared/unicode/CharacterClass.cpp
     src/shared/unicode/DString.cpp

@@ -263,7 +263,7 @@ BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest)
     /*Move files            */"",
     /*Add files and folders */"7z a -y -r {-p%%P} %%A @%%LN",
     /*Move files and folders*/"",
-    /*"All files" mask      */"*.*"
+    /*"All files" mask      */"*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))
     {

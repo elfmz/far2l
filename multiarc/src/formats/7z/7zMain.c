@@ -255,10 +255,14 @@ static unsigned char MatchString(const UInt16 *s, const char *m)
   if (res == SZ_OK) {
 	  size_t l = strlen(m);
 	  if (l && m[l-1]=='*') {
-		  if (strncmp(buf.data, m, l - 1)==0)
-			  out = 1;
+		  if (strncmp((const char *)buf.data, m, l - 1)==0) {
+			  out = 1; 
+		  } else if (l > 1 && m[l-2]=='/') {//match '/path/name' by '/path/name/*'
+			  if (strncmp((const char *)buf.data, m, l - 2)==0 && !buf.data[l - 2])
+				  out = 1; 
+		  }
 			  
-	  } else if (strcmp(buf.data, m)==0)
+	  } else if (strcmp((const char *)buf.data, m)==0)
 		out = 1;
   }
   Buf_Free(&buf, &g_Alloc);

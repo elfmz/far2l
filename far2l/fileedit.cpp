@@ -435,6 +435,7 @@ void FileEditor::Init(
     int OpenModeExstFile
 )
 {
+	SudoClientRegion sdc_rgn;
 	class SmartLock
 	{
 		private:
@@ -808,6 +809,7 @@ int FileEditor::ProcessKey(int Key)
 
 int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 {
+	SudoClientRegion sdc_rgn;
 	if (Key!=KEY_F4 && Key!=KEY_IDLE)
 		F4KeyOnly=false;
 
@@ -1337,6 +1339,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 {
+	SudoClientRegion sdc_rgn;
 	FARString strOldCurDir;
 	apiGetCurrentDirectory(strOldCurDir);
 
@@ -1398,6 +1401,7 @@ int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 // сюды плавно переносить код из Editor::ReadFile()
 int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 {
+	SudoClientRegion sdc_rgn;
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
 	wakeful W;
@@ -1626,6 +1630,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 
 int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature)
 {
+	SudoClientRegion sdc_rgn;
 	if (!bSaveAs)
 	{
 		TextFormat=0;
@@ -2333,6 +2338,7 @@ void FileEditor::ShowStatus()
 */
 DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 {
+	SudoClientRegion sdc_rgn;
 	FileAttributes=apiGetFileAttributes(Name);
 	int ind=0;
 

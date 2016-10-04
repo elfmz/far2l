@@ -1357,6 +1357,7 @@ int FileList::ProcessKey(int Key)
 		{
 			_ALGO(CleverSysLog clv(L"Edit/View"));
 			_ALGO(SysLog(L"%ls, FileCount=%d Key=%ls",(PanelMode==PLUGIN_PANEL?"PluginPanel":"FilePanel"),FileCount,_FARKEY_ToName(Key)));
+			SudoClientRegion sdc_rgn;
 			OpenPluginInfo Info={0};
 			BOOL RefreshedPanel=TRUE;
 
@@ -4645,6 +4646,7 @@ void FileList::ProcessCopyKeys(int Key)
 {
 	if (FileCount>0)
 	{
+		SudoClientRegion sdc_rgn;
 		int Drag=Key==KEY_DRAGCOPY || Key==KEY_DRAGMOVE;
 		int Ask=!Drag || Opt.Confirm.Drag;
 		int Move=(Key==KEY_F6 || Key==KEY_DRAGMOVE);

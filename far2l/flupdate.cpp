@@ -146,6 +146,8 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	if (this!=CtrlObject->Cp()->LeftPanel && this!=CtrlObject->Cp()->RightPanel)
 		return;
 
+	SudoClientRegion sdc_rgn;
+
 	FARString strSaveDir;
 	apiGetCurrentDirectory(strSaveDir);
 	{

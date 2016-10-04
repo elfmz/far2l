@@ -236,3 +236,13 @@ void CheckedCloseFDPair(int *fd)
        CheckedCloseFD(fd[1]);
 }
 
+//////////////
+
+ErrnoSaver::ErrnoSaver() : v(errno) 
+{
+}
+
+ErrnoSaver::~ErrnoSaver() 
+{ 
+	errno = v;
+}

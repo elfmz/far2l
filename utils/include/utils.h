@@ -19,3 +19,10 @@ std::string InMyProfile(const char *subpath = NULL);
 
 void CheckedCloseFD(int &fd);
 void CheckedCloseFDPair(int *fd);
+
+struct ErrnoSaver
+{
+	int v;
+	ErrnoSaver();
+	~ErrnoSaver();
+};

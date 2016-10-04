@@ -101,6 +101,7 @@ typedef struct _ADAPTER_OBJECT ADAPTER_OBJECT,*PADAPTER_OBJECT;
 #endif
 #include "../WinPort/WinPort.h"
 #include <utils.h>
+#include "../WinPort/sudo.h"
 
 
 #include "SDK/sdk.common.h"

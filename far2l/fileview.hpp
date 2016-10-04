@@ -42,6 +42,7 @@ class FileViewer:public Frame
 	private:
 		virtual void Show();
 		virtual void DisplayObject();
+		SudoClientRegion _sdc_rgn;
 		Viewer View;
 		int RedrawTitle;
 		KeyBar ViewKeyBar;

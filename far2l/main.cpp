@@ -62,6 +62,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <sys/stat.h>
 #include <locale.h>
+#include <fcntl.h>
+#include "../WinPort/sudo.h"
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -296,7 +298,7 @@ int MainProcessSEH(FARString& strEditName,FARString& strViewName,FARString& Dest
 	return Result;
 }
 
-int FarAppMain(int argc, char **argv)
+static void SetupFarPath(int argc, char **argv)
 {
 	InitCurrentDirectory();
 	//todo if (apiGetModuleFileName(nullptr, g_strFarModuleName)) todo
@@ -314,6 +316,11 @@ int FarAppMain(int argc, char **argv)
 		fprintf(stderr, "g_strFarModuleName=%ls\n", g_strFarModuleName.CPtr());
 		PrepareDiskPath(g_strFarModuleName);
 	}
+}
+
+int FarAppMain(int argc, char **argv)
+{
+
 	Opt.IsUserAdmin = (geteuid()==0);
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));
@@ -555,6 +562,36 @@ int FarAppMain(int argc, char **argv)
 	return Result;
 }
 
+
+static int sudo_launcher(int pipe_request, int pipe_reply)
+{
+	char *askpass = getenv("SUDO_ASKPASS");
+	struct stat s = {0};
+	if (!askpass || !*askpass || stat(askpass, &s)==-1) {
+		fprintf(stderr, "sudo_launcher: SUDO_ASKPASS env not set or invalid\n");
+		return -1;
+	}
+	std::string command = "sudo -A \"";
+	command+= Wide2MB(g_strFarModuleName.CPtr());
+	command+= "\" --sudo";
+
+	fprintf(stderr, "sudo_launcher: %s\n", command.c_str());
+	
+	int r = fork();
+	if (r==0) {	
+		//sudo closes all descriptors except std, so use them
+		dup2(pipe_reply, STDOUT_FILENO);
+		close(pipe_reply);
+		dup2(pipe_request, STDIN_FILENO); 
+		close(pipe_request);
+		
+		r = execl("/bin/sh", "sh", "-c", command.c_str(), NULL);
+		perror("execl");
+		_exit(r);
+		exit(r);
+	}
+	return r;
+}
 /*void EncodingTest()
 {
 	std::wstring v = MB2Wide("\x80hello\x80""aaaaaaaaaaaa\x80""zzzzzzzzzzz\x80");
@@ -567,13 +604,45 @@ int FarAppMain(int argc, char **argv)
 	for (size_t i = 0; i<a.size(); ++i)
 		printf("%02x ", (unsigned char)a[i]);
 	printf("\n");	
-}*/
+}
 
-int _cdecl main(int Argc, char *Argv[])
+void SudoTest()
+{
+	SudoClientRegion sdc_rgn;
+	int fd = sdc_open("/root/foo", O_CREAT | O_RDWR, 0666);
+	if (fd!=-1) {
+		sdc_write(fd, "bar", 3);
+		sdc_close(fd);
+	} else
+		perror("sdc_open");
+	exit(0);
+}
+*/
+
+
+
+int _cdecl main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
+	if (argc > 1 && strcmp(argv[1], "--sudo")==0 ) {
+		int pipe_reply = dup(STDOUT_FILENO);
+		int pipe_request = dup(STDIN_FILENO);
+		int fd = open("/dev/null", O_RDWR);
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDIN_FILENO);
+		close(fd);
+
+		sudo_dispatcher(pipe_request, pipe_reply);
+		return 0;
+	}
+
+	SetupFarPath(argc, argv);
+	sudo_client(sudo_launcher);
+	
+	//SudoTest();
+
 	apiEnableLowFragmentationHeap();
-	return WinPortMain(Argc, Argv, FarAppMain);
+	return WinPortMain(argc, argv, FarAppMain);
 }
 
 

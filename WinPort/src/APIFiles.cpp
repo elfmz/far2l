@@ -15,6 +15,7 @@
 #include "WinPort.h"
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
+#include "sudo.h"
 
 
 
@@ -59,7 +60,7 @@ extern "C"
 
 		virtual ~WinPortHandleFile()
 		{
-			_close(fd);
+			sdc_close(fd);
 		}
 		int fd;
 	};
@@ -138,7 +139,7 @@ extern "C"
 		case TRUNCATE_EXISTING: flags|= O_TRUNC; break;
 		}
 		std::string path = ConsumeWinPath(lpFileName);
-		int r = _open(path.c_str(), flags, (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644);		
+		int r = sdc_open(path.c_str(), flags, (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644);		
 		if (r==-1) {
 			WINPORT(TranslateErrno)();
 
@@ -155,9 +156,9 @@ extern "C"
 #endif
 		/*nobody cares.. if ((dwFlagsAndAttributes&FILE_FLAG_BACKUP_SEMANTICS)==0) {
 			struct stat s = { };
-			fstat(r, &s);
+			sdc_fstat(r, &s);
 			if ( (s.st_mode & S_IFMT) == FILE_ATTRIBUTE_DIRECTORY) {
-				close(r);
+				sdc_close(r);
 				WINPORT(SetLastError)(ERROR_DIRECTORY);
 				return INVALID_HANDLE_VALUE;
 			}
@@ -169,7 +170,7 @@ extern "C"
 	BOOL WINPORT(MoveFile)(LPCWSTR ExistingFileName, LPCWSTR NewFileName )
 	{
 		struct stat s;
-		if (stat(ConsumeWinPath(NewFileName).c_str(), &s)==0) {
+		if (sdc_stat(ConsumeWinPath(NewFileName).c_str(), &s)==0) {
 			WINPORT(SetLastError)(ERROR_ALREADY_EXISTS);
 			return false;			
 		}
@@ -215,7 +216,7 @@ extern "C"
 		lpFileSize->QuadPart = len;
 #else
 		struct stat s = {0};
-		if (fstat(wph->fd,  &s)<0)
+		if (sdc_fstat(wph->fd,  &s)<0)
 			return FALSE;
 		lpFileSize->QuadPart = s.st_size;
 #endif
@@ -248,7 +249,7 @@ extern "C"
 		ssize_t done = 0, remain = nNumberOfBytesToRead;
 		for (;;) {
 			if (!remain) break;
-			ssize_t r = _read(wph->fd, lpBuffer, remain);
+			ssize_t r = sdc_read(wph->fd, lpBuffer, remain);
 			if (r < 0) {
 				if (done==0)
 					return FALSE;
@@ -280,7 +281,7 @@ extern "C"
 			fprintf(stderr, "WINPORT(WriteFile) with lpOverlapped\n");
 		}
 
-		ssize_t r = _write(wph->fd, lpBuffer, nNumberOfBytesToWrite);
+		ssize_t r = sdc_write(wph->fd, lpBuffer, nNumberOfBytesToWrite);
 		if (r < 0)
 			return FALSE;
 
@@ -305,7 +306,7 @@ extern "C"
 			return INVALID_SET_FILE_POINTER;
 		}
 
-		off_t r = _lseek(wph->fd, liDistanceToMove.QuadPart, whence);
+		off_t r = sdc_lseek(wph->fd, liDistanceToMove.QuadPart, whence);
 		if (r==(off_t)-1)
 			return FALSE;
 		if (lpNewFilePointer) lpNewFilePointer->QuadPart = r;
@@ -339,7 +340,7 @@ extern "C"
 			return FALSE;
 		}
 		struct stat s = {0};
-		if (fstat(wph->fd, &s) < 0)
+		if (sdc_fstat(wph->fd, &s) < 0)
 			return FALSE;
 			
 		WINPORT(FileTime_UnixToWin32)(s.st_mtim, lpLastWriteTime);
@@ -361,14 +362,14 @@ extern "C"
 	
 	static int stat_symcheck(const char *path, struct stat &s, DWORD &symattr)
 	{
-		if (lstat(path, &s) < 0) {
+		if (sdc_lstat(path, &s) < 0) {
 			fprintf(stderr, "stat_symcheck: lstat failed for %s\n", path);
 			return -1;
 		}
 		
 		if ((s.st_mode & S_IFMT) == S_IFLNK) {
 			struct stat sdst = {0};
-			if (stat(path, &sdst) == 0) {
+			if (sdc_stat(path, &sdst) == 0) {
 				s = sdst;
 				symattr = FILE_ATTRIBUTE_REPARSE_POINT;
 			} else {
@@ -410,10 +411,10 @@ extern "C"
 			return FALSE;
 		}
 
-		off_t pos = _lseek(wph->fd, 0, SEEK_CUR);
+		off_t pos = sdc_lseek(wph->fd, 0, SEEK_CUR);
 		if (pos==(off_t)-1)
 			return FALSE;
-		if (_chsize(wph->fd, pos) < 0)
+		if (sdc_ftruncate(wph->fd, pos) < 0)
 			return FALSE;
 
 		return TRUE;
@@ -440,7 +441,7 @@ extern "C"
 		return FILE_TYPE_DISK;//::GetFileType(hFile);
 #else
 		struct stat s;
-		if (fstat(wph->fd, &s) == 0) {
+		if (sdc_fstat(wph->fd, &s) == 0) {
 
 			switch (s.st_mode & S_IFMT) {
 			case S_IFCHR: return FILE_TYPE_CHAR;
@@ -502,9 +503,9 @@ extern "C"
 #else
 			if (_root.size() > 1 && _root[_root.size()-1]==GOOD_SLASH)
 				_root.resize(_root.size()-1);
-			_d = opendir(_root.c_str());
+			_d = sdc_opendir(_root.c_str());
 			if (!_d) {
-				fprintf(stderr, "opendir faield on %s\n", _root.c_str());
+				fprintf(stderr, "opendir failed on %s\n", _root.c_str());
 			} 
 				
 #endif
@@ -515,7 +516,7 @@ extern "C"
 #ifdef _WIN32
 			if (_h!=INVALID_HANDLE_VALUE) ::FindClose(_h);
 #else
-			if (_d) closedir(_d);
+			if (_d) sdc_closedir(_d);
 #endif
 		}
 
@@ -544,7 +545,7 @@ extern "C"
 				if (!_d)
 					return false;
 
-				de = readdir(_d);
+				de = sdc_readdir(_d);
 				if (!de)
 					return false;
 				if (_mask.empty() || MatchWildcard(de->d_name, _mask.c_str())) break;

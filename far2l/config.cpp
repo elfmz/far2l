@@ -123,6 +123,7 @@ void SystemSettings()
 	DeleteLinks->Indent(4);
 	Builder.LinkFlags(DeleteToRecycleBin, DeleteLinks, DIF_DISABLE);
 
+	Builder.AddCheckbox(MSudoParanoic, &Opt.SudoParanoic);
 //	Builder.AddCheckbox(CopyWriteThrough, &Opt.CMOpt.WriteThrough);
 	Builder.AddCheckbox(MConfigCopySharing, &Opt.CMOpt.CopyOpened);
 	Builder.AddCheckbox(MConfigScanJunction, &Opt.ScanJunction);
@@ -627,6 +628,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem,L"DeleteToRecycleBin",&Opt.DeleteToRecycleBin,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"DeleteToRecycleBinKillLink",&Opt.DeleteToRecycleBinKillLink,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"WipeSymbol",&Opt.WipeSymbol,0, 0},
+	{1, REG_DWORD,  NKeySystem,L"SudoParanoic",&Opt.SudoParanoic,0, 0},
 
 	{1, REG_DWORD,  NKeySystem,L"WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
 	{0, REG_DWORD,  NKeySystem,L"CopySecurityOptions",&Opt.CMOpt.CopySecurityOptions,0, 0},

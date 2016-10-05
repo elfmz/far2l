@@ -6,6 +6,7 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <map>
 #include <mutex>
 #include "sudo_common.h"
@@ -152,8 +153,10 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_open(const char* path
 		va_end(va);
 	}
 	
+	ClientReconstructCurDir crcd(pathname);
+	
 	int r = open(pathname, flags, mode);
-	if (r!=-1 || !IsAccessDeniedErrno() || !TouchClientConnection())
+	if (r!=-1 || !pathname || !IsAccessDeniedErrno() || !TouchClientConnection())
 		return r;
 		
 	try {
@@ -281,7 +284,7 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void
 	}
 }
 
-static int send_stat_cmd(SudoCommand cmd, const char *path, struct stat *buf)
+static int common_stat(SudoCommand cmd, const char *path, struct stat *buf)
 {
 	try {
 		ClientTransaction ct(cmd);
@@ -293,7 +296,7 @@ static int send_stat_cmd(SudoCommand cmd, const char *path, struct stat *buf)
 
 		return r;
 	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: send_stat_cmd(%u, '%s') - error %s\n", cmd, path, what);
+		fprintf(stderr, "sudo_client: common_stat(%u, '%s') - error %s\n", cmd, path, what);
 		return -1;
 	}
 }
@@ -301,9 +304,10 @@ static int send_stat_cmd(SudoCommand cmd, const char *path, struct stat *buf)
 extern "C" __attribute__ ((visibility("default"))) int sdc_stat(const char *path, struct stat *buf)
 {
 	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
 	int r = stat(path, buf);
 	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
-		r = send_stat_cmd(SUDO_CMD_STAT, path, buf);
+		r = common_stat(SUDO_CMD_STAT, path, buf);
 		if (r==0)
 			errno = saved_errno;
 	}
@@ -314,9 +318,10 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_stat(const char *path
 extern "C" __attribute__ ((visibility("default"))) int sdc_lstat(const char *path, struct stat *buf)
 {
 	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
 	int r = lstat(path, buf);
 	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
-		r = send_stat_cmd(SUDO_CMD_LSTAT, path, buf);
+		r = common_stat(SUDO_CMD_LSTAT, path, buf);
 		if (r==0)
 			errno = saved_errno;
 	}
@@ -367,14 +372,35 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_ftruncate(int fd, off
 	}
 }
 
-extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *name)
+extern "C" __attribute__ ((visibility("default"))) int sdc_fchmod(int fd, mode_t mode)
+{
+	int remote_fd = s_c2s_fd.Lookup(fd);
+	if (remote_fd==-1)
+		return fchmod(fd, mode);
+	
+	try {
+		ClientTransaction ct(SUDO_CMD_FCHMOD);
+		ct.SendPOD(remote_fd);
+		ct.SendPOD(mode);
+		int r = ct.RecvInt();
+		if (r != 0)
+			ct.RecvErrno();
+		return r;
+	} catch(const char *what) {
+		fprintf(stderr, "sdc_fchmod(0x%x) - error %s\n", fd, what);
+		return -1;
+	}
+}
+
+extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *path)
 {
 	int saved_errno = errno;
-	DIR *dir = opendir(name);
+	ClientReconstructCurDir crcd(path);
+	DIR *dir = opendir(path);
 	if (dir==NULL && IsAccessDeniedErrno() && TouchClientConnection()) {
 		try {
 			ClientTransaction ct(SUDO_CMD_OPENDIR);
-			ct.SendStr(name);
+			ct.SendStr(path);
 			void *remote;
 			ct.RecvPOD(remote);
 			if (remote) {
@@ -389,7 +415,7 @@ extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *
 			}
 
 		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: opendir('%s') - error %s\n", name, what);
+			fprintf(stderr, "sudo_client: opendir('%s') - error %s\n", path, what);
 			return nullptr;
 		}
 	}
@@ -435,6 +461,208 @@ extern "C" __attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DI
 		fprintf(stderr, "sudo_client: readdir(%p -> %p) - error %s\n", dir, remote_dir, what);
 	}
 	return nullptr;
+}
+
+
+static int common_path_and_mode(SudoCommand cmd, int (*pfn)(const char *, mode_t), const char *path, mode_t mode)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	int r = pfn(path, mode);
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
+		try {
+			ClientTransaction ct(cmd);
+			ct.SendStr(path);
+			ct.SendPOD(mode);
+			r = ct.RecvInt();
+			if (r==-1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: common_path_and_mode(%u, '%s', 0x%x) - error %s\n", cmd, path, mode, what);
+			r = -1;
+		}
+	}
+	return r;	
+}
+
+static int common_one_path(SudoCommand cmd, int (*pfn)(const char *), const char *path)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	int r = pfn(path);
+	
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
+		try {
+			ClientTransaction ct(cmd);
+			ct.SendStr(path);
+			r = ct.RecvInt();
+			if (r==-1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: common_one_path(%u, '%s') - error %s\n", cmd, path, what);
+			r = -1;
+		}
+	}
+	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_mkdir(const char *path, mode_t mode)
+{
+	return common_path_and_mode(SUDO_CMD_MKDIR, &mkdir, path, mode);
+}
+
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *path)
+{
+	int r = common_one_path(SUDO_CMD_CHDIR, &chdir, path);
+	if (r==0)
+		ClientSetLastCurDir(path);
+	fprintf(stderr, "sdc_chdir %s - %d\n", path, r);
+	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_rmdir(const char *path)
+{
+	return common_one_path(SUDO_CMD_RMDIR, &rmdir, path);
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_remove(const char *path)
+{
+	return common_one_path(SUDO_CMD_REMOVE, &remove, path);	
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_unlink(const char *path)
+{
+	return common_one_path(SUDO_CMD_UNLINK, &unlink, path);
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_chmod(const char *path, mode_t mode)
+{
+	return common_path_and_mode(SUDO_CMD_CHMOD, &mkdir, path, mode);
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	int r = chown(path, owner, group);
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
+		try {
+			ClientTransaction ct(SUDO_CMD_CHOWN);
+			ct.SendStr(path);
+			ct.SendPOD(owner);
+			ct.SendPOD(group);
+			r = ct.RecvInt();
+			if (r==-1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: sdc_chown('%s') - error %s\n", path, what);
+			r = -1;
+		}
+	}
+	return r;	
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_utimes(const char *filename, const struct timeval times[2])
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(filename);
+	int r = utimes(filename, times);
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
+		try {
+			ClientTransaction ct(SUDO_CMD_UTIMES);
+			ct.SendStr(filename);
+			ct.SendPOD(times[0]);
+			ct.SendPOD(times[1]);
+			r = ct.RecvInt();
+			if (r==-1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: sdc_utimes('%s') - error %s\n", filename, what);
+			r = -1;
+		}
+	}
+	return r;	
+}
+
+static int common_two_pathes(SudoCommand cmd, 
+	int (*pfn)(const char *, const char *), const char *path1, const char *path2)
+{
+	int saved_errno = errno;
+	int r = pfn(path1, path2);
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
+		try {
+			ClientTransaction ct(cmd);
+			ct.SendStr(path1);
+			ct.SendStr(path2);
+			r = ct.RecvInt();
+			if (r==-1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: common_two_pathes(%u, '%s', '%s') - error %s\n", cmd, path1, path2, what);
+			r = -1;
+		}
+	}
+	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_rename(const char *path1, const char *path2)
+{
+	ClientReconstructCurDir crcd(path1);
+	return common_two_pathes(SUDO_CMD_RENAME, &rename, path1, path2);	
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_symlink(const char *path1, const char *path2)
+{
+	ClientReconstructCurDir crcd(path2);
+	return common_two_pathes(SUDO_CMD_SYMLINK, &symlink, path1, path2);	
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_link(const char *path1, const char *path2)
+{
+	ClientReconstructCurDir crcd(path2);
+	return common_two_pathes(SUDO_CMD_LINK, &link, path1, path2);	
+}
+
+extern "C" __attribute__ ((visibility("default"))) char *sdc_realpath(const char *path, char *resolved_path)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	char *r = realpath(path, resolved_path);
+	if (!r && IsAccessDeniedErrno() && TouchClientConnection()) {
+		try {
+			ClientTransaction ct(SUDO_CMD_REALPATH);
+			ct.SendStr(path);
+			int err = ct.RecvInt();
+			if (err == 0) {
+				std::string str;
+				ct.RecvStr(str);
+				if (str.size() >= PATH_MAX)
+					str.resize(PATH_MAX - 1);
+				if (!resolved_path)
+					resolved_path = (char *)malloc(PATH_MAX);
+				if (resolved_path)
+					strcpy(resolved_path, str.c_str());
+				r = resolved_path;
+				errno = saved_errno;
+			} else
+				errno = err;
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: sdc_realpath('%s') - error %s\n", path, what);
+			r = nullptr;
+		}
+	}
+	return r;
 }
 
 

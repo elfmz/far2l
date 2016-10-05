@@ -82,7 +82,7 @@ LONG RegXxxKeyEx(
 
 		for (size_t i = 0, ii = dir.size(); i<=ii; ++i)  {
 			if (i==ii || dir[i]==GOOD_SLASH) {
-				if (_mkdir(dir.substr(0, i).c_str())==0)
+				if (mkdir(dir.substr(0, i).c_str(), 0775)==0)
 					fprintf(stderr, "RegXxxKeyEx: creating %s\n", dir.c_str());
 					
 			}
@@ -473,14 +473,14 @@ extern "C" {
 
 	void WinPortInitRegistry()
 	{
-		int ret = _mkdir( GetRegistrySubroot("") .c_str());
+		int ret = mkdir( GetRegistrySubroot("") .c_str(), 0775);
 		if (ret < 0 && EEXIST != errno)
 			fprintf(stderr, "WinPortInitRegistry: errno=%d \n", errno);
 		else
 			fprintf(stderr, "WinPortInitRegistry: OK \n");
-		_mkdir(HKDir(HKEY_LOCAL_MACHINE).c_str());
-		_mkdir(HKDir(HKEY_USERS).c_str());
-		_mkdir(HKDir(HKEY_CURRENT_USER).c_str());
+		mkdir(HKDir(HKEY_LOCAL_MACHINE).c_str(), 0775);
+		mkdir(HKDir(HKEY_USERS).c_str(), 0775);
+		mkdir(HKDir(HKEY_CURRENT_USER).c_str(), 0775);
 	}
 
 }

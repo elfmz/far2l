@@ -595,6 +595,8 @@ static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(L
 
 bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 {
+	SudoClientRegion scr;
+
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	short DlgX=70,DlgY=23;
 
@@ -912,6 +914,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				FARString strCurDir;
 				SrcPanel->GetCurDir(strCurDir);
 			}
+
 			GetFileOwner(strComputerName,strSelName,AttrDlg[SA_EDIT_OWNER].strData);
 			GetFileGroup(strComputerName,strSelName,AttrDlg[SA_EDIT_GROUP].strData);
 		}

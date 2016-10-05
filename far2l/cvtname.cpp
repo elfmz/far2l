@@ -334,7 +334,7 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 		std::string s = Wide2MB(Src), cutoff;
 		char buf[PATH_MAX + 1];
 		for (;;) {
-			if (realpath(s.c_str(), buf)) {
+			if (sdc_realpath(s.c_str(), buf)) {
 				buf[sizeof(buf)-1] = 0;
 				if (strcmp(buf, s.c_str())!=0) {
 					strDest = buf;

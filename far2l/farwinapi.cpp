@@ -211,7 +211,7 @@ bool File::FlushBuffers()
 
 bool File::Chmod(DWORD dwUnixMode)
 {
-	int r = fchmod(WINPORT(GetFileDescriptor)(Handle), dwUnixMode);
+	int r = sdc_fchmod(WINPORT(GetFileDescriptor)(Handle), dwUnixMode);
 	if (r!=0) {
 		WINPORT(SetLastError)(r);
 		return false;
@@ -507,7 +507,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 	else if (!wcspbrk(lpwszFileName,L"*?"))
 	{
 		struct stat s = {0};
-		if (stat(Wide2MB(lpwszFileName).c_str(), &s)==0) {
+		if (sdc_stat(Wide2MB(lpwszFileName).c_str(), &s)==0) {
 			FindData.Clear();
 			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
 			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);

@@ -44,12 +44,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner)
 {
 	struct stat s = {};
-	if (stat(Wide2MB(Name).c_str(), &s)==0) {
+	if (sdc_stat(Wide2MB(Name).c_str(), &s)==0) {
 		struct passwd *pw = getpwuid(s.st_uid);
 		if (pw) {
 			strOwner = pw->pw_name;
 			return true;
-		}
+		} else
+			perror("getpwuid");
 	}
 	
 	WINPORT(TranslateErrno)();
@@ -59,12 +60,13 @@ bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString 
 bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString &strGroup)
 {
 	struct stat s = {};
-	if (stat(Wide2MB(Name).c_str(), &s)==0) {
+	if (sdc_stat(Wide2MB(Name).c_str(), &s)==0) {
 		struct group  *gr = getgrgid(s.st_gid);
 		if (gr) {
 			strGroup = gr->gr_name;
 			return true;
-		}
+		} else
+			perror("getgrgid");
 	}
 
 	WINPORT(TranslateErrno)();
@@ -75,9 +77,10 @@ bool SetOwner(LPCWSTR Object, LPCWSTR Owner)
 {		
 	struct passwd *p = getpwnam(Wide2MB(Owner).c_str());
 	if ( p) {
-		if (chown(Wide2MB(Object).c_str(), p->pw_uid, -1)==0)
+		if (sdc_chown(Wide2MB(Object).c_str(), p->pw_uid, -1)==0)
 			return true;
-	}
+	} else
+		perror("getpwnam");
 		
 	WINPORT(TranslateErrno)();
 	return false;
@@ -87,9 +90,10 @@ bool SetGroup(LPCWSTR Object, LPCWSTR Group)
 {
 	struct group *g = getgrnam(Wide2MB(Group).c_str());
 	if (g) {
-		if (chown(Wide2MB(Object).c_str(), -1, g->gr_gid)==0)
+		if (sdc_chown(Wide2MB(Object).c_str(), -1, g->gr_gid)==0)
 			return true;
-	}
+	} else
+		perror("getgrnam");
 		
 	WINPORT(TranslateErrno)();
 	return false;

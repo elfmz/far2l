@@ -17,9 +17,22 @@ namespace Sudo
 		SUDO_CMD_LSTAT,
 		SUDO_CMD_FSTAT,
 		SUDO_CMD_FTRUNCATE,
+		SUDO_CMD_FCHMOD,
 		SUDO_CMD_OPENDIR,
 		SUDO_CMD_CLOSEDIR,
 		SUDO_CMD_READDIR,
+		SUDO_CMD_MKDIR,
+		SUDO_CMD_CHDIR,
+		SUDO_CMD_RMDIR,
+		SUDO_CMD_REMOVE,
+		SUDO_CMD_UNLINK,
+		SUDO_CMD_CHMOD,
+		SUDO_CMD_CHOWN,
+		SUDO_CMD_UTIMES,
+		SUDO_CMD_RENAME,
+		SUDO_CMD_SYMLINK,
+		SUDO_CMD_LINK,
+		SUDO_CMD_REALPATH
 	};
 
 	class BaseTransaction
@@ -57,6 +70,16 @@ namespace Sudo
 	};
 
 	bool TouchClientConnection();
-	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt);
+	void ClientSetLastCurDir(const char *path);
+	
+	class ClientReconstructCurDir
+	{
+		char *_free_ptr;
+		const char * _initial_path;
+		const char * &_path;
+	public:
+		ClientReconstructCurDir(const char * &path);
+		~ClientReconstructCurDir();
+	};
 
 }

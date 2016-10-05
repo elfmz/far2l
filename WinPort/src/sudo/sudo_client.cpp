@@ -11,6 +11,7 @@ namespace Sudo
 	static std::mutex s_client_mutex;
 	static int s_client_pipe_send = -1;
 	static int s_client_pipe_recv = -1;
+	static std::string g_last_curdir;
 
 
 	static void CloseClientConnection()
@@ -19,6 +20,53 @@ namespace Sudo
 		CheckedCloseFD(s_client_pipe_recv);
 	}
 	
+	
+	void ClientSetLastCurDir(const char *path)
+	{
+		std::lock_guard<std::mutex> lock(s_client_mutex);
+		g_last_curdir = path;
+	}
+	
+	ClientReconstructCurDir::ClientReconstructCurDir(const char * &path)
+		: _free_ptr(nullptr), _initial_path(path), _path(path)
+	{
+		if (path[0] != '/' && path[0]) {
+			std::lock_guard<std::mutex> lock(s_client_mutex);
+			std::string  str = g_last_curdir;
+			if (path[0] == '.' && path[1] == '/') {
+				str+= &path[1];
+			} else {
+				str+= '/';
+				str+= &path[0];
+			}
+			_free_ptr = strdup(str.c_str());
+			if (_free_ptr)
+				_path = _free_ptr;
+		}
+	}
+	
+	ClientReconstructCurDir::~ClientReconstructCurDir()
+	{
+		_path = _initial_path;
+		free(_free_ptr);
+	}
+	
+	std::string ClientReconstructCurDir(const char *path)
+	{
+		std::string out = path;
+		if (path[0] != '/' && path[0]) {
+			std::lock_guard<std::mutex> lock(s_client_mutex);
+			if (path[0] == '.' && path[1] == '/') {
+				out.replace(0, 1, g_last_curdir);
+			} else {
+				out.insert(0, "/");
+				out.insert(0, g_last_curdir);
+			}
+		}
+
+		std::lock_guard<std::mutex> lock(s_client_mutex);
+		g_last_curdir = path;		
+	}
 	
 /////////////////////////
 	static int (*g_sudo_launcher)(int pipe_request, int pipe_reply) = nullptr;
@@ -64,7 +112,7 @@ namespace Sudo
 		}
 	}
 	
-	static bool ClientPing()
+	static bool ClientInitSequence()
 	{
 		try {
 			SudoCommand cmd = SUDO_CMD_PING;
@@ -73,13 +121,32 @@ namespace Sudo
 			bt.RecvPOD(cmd);
 
 			if (bt.IsFailed())
-				throw "failed";
+				throw "ping failed";
 
 			if (cmd!=SUDO_CMD_PING)
-				throw "bad reply";
+				throw "bad ping reply";
+				
+			if (!g_last_curdir.empty()) {
+				cmd = SUDO_CMD_CHDIR;
+				bt.SendPOD(cmd);
+				bt.SendStr(g_last_curdir.c_str());
+				int r = bt.RecvInt();
+				if (r == -1)
+					bt.RecvErrno();
+				
+				bt.RecvPOD(cmd);
+			
+				if (bt.IsFailed())
+					throw "chdir failed";
+
+				if (cmd!=SUDO_CMD_CHDIR)
+					throw "bad chdir reply";
+					
+				fprintf(stderr, "Sudo::ClientInitSequence: chdir='%s' -> %d\n", g_last_curdir.c_str(), r);
+			}
 
 		} catch (const char *what) {
-			fprintf(stderr, "Sudo::ClientPing - %s\n", what);
+			fprintf(stderr, "Sudo::ClientInitSequence - %s\n", what);
 			CloseClientConnection();
 			return false;
 		}
@@ -119,7 +186,7 @@ namespace Sudo
 				CheckedCloseFD(rep[1]);
 				s_client_pipe_send = req[1];
 				s_client_pipe_recv = rep[0];
-				if (!ClientPing()) {//likely bad password or Cancel
+				if (!ClientInitSequence()) {//likely bad password or Cancel
 					thread_client_region_counter.failed = 1;
 					return false; 
 				}

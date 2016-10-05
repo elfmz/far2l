@@ -581,9 +581,8 @@ static int SudoLauncher(int pipe_request, int pipe_reply)
 	if (!askpass || !*askpass || stat(askpass, &s)==-1) {
 		fprintf(stderr, "SudoLauncher: SUDO_ASKPASS env not set or invalid\n");
 		if (!DetectAskPass("/usr/lib/openssh/gnome-ssh-askpass")
-			&& !DetectAskPass("/usr/lib/ssh/x11-ssh-askpass")
 			&& !DetectAskPass("/usr/bin/ssh-askpass")
-			&& !DetectAskPass("/usr/lib/seahorse/seahorse-ssh-askpass") ) {
+			&& !DetectAskPass("/usr/lib/ssh/x11-ssh-askpass")) {
 			return -1;
 		}
 	}

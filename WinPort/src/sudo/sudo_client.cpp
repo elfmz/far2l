@@ -32,16 +32,18 @@ namespace Sudo
 	{
 		if (path[0] != '/' && path[0]) {
 			std::lock_guard<std::mutex> lock(s_client_mutex);
-			std::string  str = g_last_curdir;
-			if (path[0] == '.' && path[1] == '/') {
-				str+= &path[1];
-			} else {
-				str+= '/';
-				str+= &path[0];
+			if (!g_last_curdir.empty()) {
+				std::string  str = g_last_curdir;
+				if (path[0] == '.' && path[1] == '/') {
+					str+= &path[1];
+				} else {
+					str+= '/';
+					str+= &path[0];
+				}
+				_free_ptr = strdup(str.c_str());
+				if (_free_ptr)
+					_path = _free_ptr;
 			}
-			_free_ptr = strdup(str.c_str());
-			if (_free_ptr)
-				_path = _free_ptr;
 		}
 	}
 	

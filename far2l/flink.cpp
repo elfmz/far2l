@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int WINAPI GetNumberOfLinks(const wchar_t *Name)
 {
 	struct stat s = {};
-	if (stat(Wide2MB(Name).c_str(), &s)!=0)
+	if (sdc_stat(Wide2MB(Name).c_str(), &s)!=0)
 		return 1;
 		
 	return (s.st_nlink > 0) ? s.st_nlink : 1;
@@ -85,7 +85,7 @@ static std::string SymSubject(const wchar_t *ExistingName)
 
 int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName)
 {
-	int r = link( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
+	int r = sdc_link( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
 	if (r!=0) {
 		WINPORT(TranslateErrno)();
 		return 0;
@@ -96,7 +96,7 @@ int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName)
 
 int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, DWORD Flags)
 {
-	int r = symlink( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
+	int r = sdc_symlink( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
 	if (r!=0) {
 		WINPORT(TranslateErrno)();
 		

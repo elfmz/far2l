@@ -77,6 +77,7 @@ enum {DELETE_SUCCESS,DELETE_YES,DELETE_SKIP,DELETE_CANCEL};
 
 void ShellDelete(Panel *SrcPanel,int Wipe)
 {
+	SudoClientRegion scr;
 	//todo ChangePriority ChPriority(Opt.DelThreadPriority);
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellDeleteMsg);
 	FAR_FIND_DATA_EX FindData;
@@ -739,7 +740,7 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 				break;
 		} else {
 			struct stat s = {};
-			if (lstat(Wide2MB(Name).c_str(), &s)==0 && (s.st_mode & S_IFMT)==S_IFLNK )
+			if (sdc_lstat(Wide2MB(Name).c_str(), &s)==0 && (s.st_mode & S_IFMT)==S_IFLNK )
 			{
 				if (apiDeleteFile(Name))
 					break;
@@ -886,6 +887,7 @@ int WipeDirectory(const wchar_t *Name)
 
 int DeleteFileWithFolder(const wchar_t *FileName)
 {
+	SudoClientRegion scr;
 	FARString strFileOrFolderName;
 	strFileOrFolderName = FileName;
 	Unquote(strFileOrFolderName);
@@ -910,6 +912,7 @@ void DeleteDirTree(const wchar_t *Dir)
 	if (!*Dir || (IsSlash(Dir[0]) && !Dir[1]))
 		return;
 
+	SudoClientRegion scr;
 	FARString strFullName;
 	FAR_FIND_DATA_EX FindData;
 	ScanTree ScTree(TRUE,TRUE,FALSE);

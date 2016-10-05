@@ -71,7 +71,7 @@ extern "C"
 	WINPORT_DECL(CreateDirectory, BOOL, (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes ))
 	{
 		std::string path = ConsumeWinPath(lpPathName);
-		int r = _mkdir(path.c_str());
+		int r = sdc_mkdir(path.c_str(), 0775);
 		if (r==-1) {
 			WINPORT(TranslateErrno)();
 			fprintf(stderr, "Failed to create directory: %s errno %u\n", path.c_str(), errno);
@@ -85,7 +85,7 @@ extern "C"
 	BOOL WINPORT(RemoveDirectory)( LPCWSTR lpDirName)
 	{
 		std::string path = ConsumeWinPath(lpDirName);
-		int r = _rmdir(path.c_str());
+		int r = sdc_rmdir(path.c_str());
 		if (r==-1) {
 			WINPORT(TranslateErrno)();
 			fprintf(stderr, "Failed to remove directory: %s errno %u\n", path.c_str(),errno);
@@ -97,7 +97,7 @@ extern "C"
 	BOOL WINPORT(DeleteFile)( LPCWSTR lpFileName)
 	{
 		std::string path = ConsumeWinPath(lpFileName);
-		int r = remove(path.c_str());
+		int r = sdc_remove(path.c_str());
 		if (r==-1) {
 			WINPORT(TranslateErrno)();
 			fprintf(stderr, "Failed to remove file: %s errno %u\n", path.c_str(), errno);
@@ -200,7 +200,7 @@ extern "C"
 
 	BOOL WINPORT(SetCurrentDirectory)(LPCWSTR lpPathName)
 	{
-		return (_chdir(ConsumeWinPath(lpPathName).c_str())==0) ? TRUE : FALSE;
+		return (sdc_chdir(ConsumeWinPath(lpPathName).c_str())==0) ? TRUE : FALSE;
 	}
 
 	BOOL WINPORT(GetFileSizeEx)( HANDLE hFile, PLARGE_INTEGER lpFileSize)
@@ -414,7 +414,7 @@ extern "C"
 		off_t pos = sdc_lseek(wph->fd, 0, SEEK_CUR);
 		if (pos==(off_t)-1)
 			return FALSE;
-		if (sdc_ftruncate(wph->fd, pos) < 0)
+		if (sdc_ftruncate(wph->fd, pos) == -1)
 			return FALSE;
 
 		return TRUE;

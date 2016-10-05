@@ -54,7 +54,7 @@ int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
 	const std::string &mb_name = Wide2MB(Name);
 	
 	for (;;) {
-		if (chmod(mb_name.c_str(), Mode)==0) break;
+		if (sdc_chmod(mb_name.c_str(), Mode)==0) break;
 		
 		WINPORT(TranslateErrno)();
 		
@@ -102,7 +102,7 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 
 	const std::string &mb_name = Wide2MB(Name);
 	struct stat s = {};
-	if (stat(mb_name.c_str(), &s)!=0) memset(&s, 0, sizeof(s));
+	if (sdc_stat(mb_name.c_str(), &s)!=0) memset(&s, 0, sizeof(s));
 
 	if (AccessTime) WINPORT(FileTime_Win32ToUnix)(AccessTime, &s.st_atim);
 	if (ModifyTime) WINPORT(FileTime_Win32ToUnix)(ModifyTime, &s.st_mtim);
@@ -111,7 +111,7 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 		struct timeval times[2] = { {s.st_atim.tv_sec, (int)(s.st_atim.tv_nsec/1000)}, 
 									{s.st_mtim.tv_sec, (int)(s.st_mtim.tv_nsec/1000)} };
 		
-		if (utimes(mb_name.c_str(), times)==0) break;
+		if (sdc_utimes(mb_name.c_str(), times)==0) break;
 		
 		WINPORT(TranslateErrno)();
 		 

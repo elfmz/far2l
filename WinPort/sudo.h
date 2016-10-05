@@ -21,10 +21,22 @@ extern "C" {
  __attribute__ ((visibility("default"))) int sdc_lstat(const char *path, struct stat *buf);
  __attribute__ ((visibility("default"))) int sdc_fstat(int fd, struct stat *buf);
  __attribute__ ((visibility("default"))) int sdc_ftruncate(int fd, off_t length);
+ __attribute__ ((visibility("default"))) int sdc_fchmod(int fd, mode_t mode);
  __attribute__ ((visibility("default"))) int sdc_closedir(DIR *dir);
  __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *name);
  __attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DIR *dir);
-
+ __attribute__ ((visibility("default"))) int sdc_mkdir(const char *path, mode_t mode);
+ __attribute__ ((visibility("default"))) int sdc_chdir(const char *path);
+ __attribute__ ((visibility("default"))) int sdc_rmdir(const char *path);
+ __attribute__ ((visibility("default"))) int sdc_remove(const char *path);
+ __attribute__ ((visibility("default"))) int sdc_unlink(const char *path);
+ __attribute__ ((visibility("default"))) int sdc_chmod(const char *pathname, mode_t mode);
+ __attribute__ ((visibility("default"))) int sdc_chown(const char *pathname, uid_t owner, gid_t group);
+ __attribute__ ((visibility("default"))) int sdc_utimes(const char *filename, const struct timeval times[2]);
+ __attribute__ ((visibility("default"))) int sdc_rename(const char *path1, const char *path2);
+ __attribute__ ((visibility("default"))) int sdc_symlink(const char *path1, const char *path2);
+ __attribute__ ((visibility("default"))) int sdc_link(const char *path1, const char *path2);
+ __attribute__ ((visibility("default"))) char *sdc_realpath(const char *path, char *resolved_path);
 #ifdef __cplusplus
 }
 

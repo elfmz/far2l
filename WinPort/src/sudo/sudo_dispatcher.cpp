@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <set>
 #include <vector>
 #include <mutex>
@@ -118,12 +119,13 @@ namespace Sudo
 		}
 	}
 	
-	static void OnSudoDispatch_Stat(bool l, BaseTransaction &bt)
+	
+	static void OnSudoDispatch_StatCommon(int (*pfn)(const char *path, struct stat *buf), BaseTransaction &bt)
 	{		
 		std::string path;
 		bt.RecvStr(path);
 		struct stat s;
-		int r = l ? lstat(path.c_str(), &s) : stat(path.c_str(), &s);
+		int r = pfn(path.c_str(), &s);
 		bt.SendPOD(r);
 		if (r==0)
 			bt.SendPOD(s);
@@ -152,6 +154,19 @@ namespace Sudo
 		bt.RecvPOD(length);
 		
 		int r = g_fds.Check(fd) ? ftruncate(fd, length) : -1;
+		bt.SendPOD(r);
+		if (r != 0)
+			bt.SendErrno();
+	}
+	
+	static void OnSudoFChmod(BaseTransaction &bt)
+	{
+		int fd;
+		mode_t mode;
+		bt.RecvPOD(fd);
+		bt.RecvPOD(mode);
+		
+		int r = g_fds.Check(fd) ? fchmod(fd, mode) : -1;
 		bt.SendPOD(r);
 		if (r != 0)
 			bt.SendErrno();
@@ -188,6 +203,102 @@ namespace Sudo
 		}
 	}
 	
+	static void OnSudoDispatch_MkDir(BaseTransaction &bt)
+	{
+		std::string path;
+		mode_t mode;
+		
+		bt.RecvStr(path);
+		bt.RecvPOD(mode);
+		
+		int r = mkdir(path.c_str(), mode);
+		bt.SendInt(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+	
+	static void OnSudoDispatch_OnePathCommon(int (*pfn)(const char *path), BaseTransaction &bt)
+	{
+		std::string path;
+		bt.RecvStr(path);
+		int r = pfn(path.c_str());
+		bt.SendInt(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+	
+	static void OnSudoDispatch_ChMod(BaseTransaction &bt)
+	{
+		std::string path;
+		mode_t mode;
+		
+		bt.RecvStr(path);
+		bt.RecvPOD(mode);
+		
+		int r = chmod(path.c_str(), mode);
+		bt.SendInt(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+				
+	static void OnSudoDispatch_ChOwn(BaseTransaction &bt)
+	{
+		std::string path;
+		uid_t owner;
+		gid_t group;
+		
+		bt.RecvStr(path);
+		bt.RecvPOD(owner);
+		bt.RecvPOD(group);
+		
+		int r = chown(path.c_str(), owner, group);
+		bt.SendInt(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+				
+	static void OnSudoDispatch_UTimes(BaseTransaction &bt)
+	{
+		std::string path;
+		struct timeval times[2];
+		
+		bt.RecvStr(path);
+		bt.RecvPOD(times[0]);
+		bt.RecvPOD(times[1]);
+		
+		int r = utimes(path.c_str(), times);
+		bt.SendInt(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+	
+	static void OnSudoDispatch_TwoPathes(int (*pfn)(const char *, const char *), BaseTransaction &bt)
+	{
+		std::string path1, path2;
+		
+		bt.RecvStr(path1);
+		bt.RecvStr(path2);
+		
+		int r = pfn(path1.c_str(), path2.c_str());
+		bt.SendInt(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+	
+	static void OnSudoDispatch_RealPath(BaseTransaction &bt)
+	{
+		std::string path;		
+		bt.RecvStr(path);
+		char resolved_path[PATH_MAX + 1] = { 0 };
+		if (realpath(path.c_str(), resolved_path)) {
+			bt.SendInt(0);
+			bt.SendStr(resolved_path);
+		} else {
+			int err = errno;
+			bt.SendInt( err ? err : -1 );
+		}
+	}
+	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt)
 	{
 		fprintf(stderr, "OnSudoDispatch: %u\n", cmd);
@@ -216,20 +327,23 @@ namespace Sudo
 				break;
 				
 			case SUDO_CMD_STAT:
-				OnSudoDispatch_Stat(false, bt);
+				OnSudoDispatch_StatCommon(&stat, bt);
 				break;
 				
 			case SUDO_CMD_LSTAT:
-				OnSudoDispatch_Stat(true, bt);
+				OnSudoDispatch_StatCommon(&lstat, bt);
 				break;
 				
-			
 			case SUDO_CMD_FSTAT:
 				OnSudoDispatch_FStat(bt);
 				break;
 				
 			case SUDO_CMD_FTRUNCATE:
 				OnSudoFTruncate(bt);
+				break;
+
+			case SUDO_CMD_FCHMOD:
+				OnSudoFChmod(bt);
 				break;
 				
 			case SUDO_CMD_CLOSEDIR:
@@ -244,6 +358,54 @@ namespace Sudo
 				OnSudoDispatch_ReadDir(bt);
 				break;
 				
+			case SUDO_CMD_MKDIR:
+				OnSudoDispatch_MkDir(bt);
+				break;
+				
+			case SUDO_CMD_CHDIR:
+				OnSudoDispatch_OnePathCommon(&chdir, bt);
+				break;
+				
+			case SUDO_CMD_RMDIR:
+				OnSudoDispatch_OnePathCommon(&rmdir, bt);
+				break;
+			
+			case SUDO_CMD_REMOVE:
+				OnSudoDispatch_OnePathCommon(&remove, bt);
+				break;
+			
+			case SUDO_CMD_UNLINK:
+				OnSudoDispatch_OnePathCommon(&unlink, bt);
+				break;
+			
+			case SUDO_CMD_CHMOD:
+				OnSudoDispatch_ChMod(bt);
+				break;
+				
+			case SUDO_CMD_CHOWN:
+				OnSudoDispatch_ChOwn(bt);
+				break;
+				
+			case SUDO_CMD_UTIMES:
+				OnSudoDispatch_UTimes(bt);
+				break;
+			
+			case SUDO_CMD_RENAME:
+				OnSudoDispatch_TwoPathes(&rename, bt);
+				break;
+
+			case SUDO_CMD_SYMLINK:
+				OnSudoDispatch_TwoPathes(&symlink, bt);
+				break;
+				
+			case SUDO_CMD_LINK:
+				OnSudoDispatch_TwoPathes(&link, bt);
+				break;
+
+			case SUDO_CMD_REALPATH:
+				OnSudoDispatch_RealPath(bt);
+				break;
+			
 			default:
 				throw "OnSudoDispatch - bad command";
 		}

@@ -2416,6 +2416,8 @@ BOOL FileList::SetCurDir(const wchar_t *NewDir,int ClosePlugin)
 
 BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 {
+	SudoClientRegion sdc_rgn;
+
 	Panel *AnotherPanel;
 	FARString strFindDir, strSetDir;
 

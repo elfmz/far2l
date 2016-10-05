@@ -62,7 +62,7 @@ namespace Sudo
 		if (r!=-1) 
 			g_fds.Put(r);
 		else
-			bt.SendPOD(errno);
+			bt.SendErrno();
 	}
 	
 	static void OnSudoDispatch_LSeek(BaseTransaction &bt)
@@ -78,7 +78,7 @@ namespace Sudo
 		off_t r = g_fds.Check(fd) ? lseek(fd, offset, whence) : -1;
 		bt.SendPOD(r);
 		if (r==-1)
-			bt.SendPOD(errno);
+			bt.SendErrno();
 	}
 	
 	static void OnSudoDispatch_Write(BaseTransaction &bt)
@@ -96,7 +96,7 @@ namespace Sudo
 		ssize_t r = g_fds.Check(fd) ? write(fd, &buf[0], count) : -1;
 		bt.SendPOD(r);
 		if (r==-1)
-			bt.SendPOD(errno);
+			bt.SendErrno();
 	}
 	
 	static void OnSudoDispatch_Read(BaseTransaction &bt)
@@ -112,7 +112,7 @@ namespace Sudo
 		ssize_t r = g_fds.Check(fd) ? read(fd, &buf[0], count) : -1;
 		bt.SendPOD(r);
 		if (r==-1) {
-			bt.SendPOD(errno);
+			bt.SendErrno();
 		} else if (r > 0) {
 			bt.SendBuf(&buf[0], r);
 		}
@@ -138,8 +138,10 @@ namespace Sudo
 		struct stat s;
 		int r = g_fds.Check(fd) ? fstat(fd, &s) : -1;
 		bt.SendPOD(r);
-		if (r==0)
+		if (r == 0)
 			bt.SendPOD(s);
+		else
+			bt.SendErrno();
 	}
 	
 	static void OnSudoFTruncate(BaseTransaction &bt)
@@ -151,6 +153,8 @@ namespace Sudo
 		
 		int r = g_fds.Check(fd) ? ftruncate(fd, length) : -1;
 		bt.SendPOD(r);
+		if (r != 0)
+			bt.SendErrno();
 	}
 	
 	static void OnSudoDispatch_CloseDir(BaseTransaction &bt)
@@ -176,10 +180,12 @@ namespace Sudo
 		bt.RecvPOD(d);
 		struct dirent *de = g_dirs.Check(d) ? readdir(d) : nullptr;
 		if (de) {
-			bt.SendPOD((char)1);
+			bt.SendInt(0);
 			bt.SendPOD(*de);
-		} else
-			bt.SendPOD((char)0);
+		} else {
+			int err = errno;
+			bt.SendInt(err ? err : -1);
+		}
 	}
 	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt)
@@ -240,6 +246,23 @@ namespace Sudo
 				
 			default:
 				throw "OnSudoDispatch - bad command";
+		}
+	}
+	
+	extern "C" __attribute__ ((visibility("default"))) void sudo_dispatcher(int pipe_request, int pipe_reply)
+	{
+		fprintf(stderr, "sudo_dispatcher(%d, %d)\n", pipe_request, pipe_reply);
+		
+		try {
+			for (;;) {
+				BaseTransaction bt(pipe_reply, pipe_request);
+				SudoCommand cmd;
+				bt.RecvPOD(cmd);
+				OnSudoDispatch(cmd, bt);
+				bt.SendPOD(cmd);
+			}
+		} catch (const char *what) {
+			fprintf(stderr, "sudo_dispatcher - %s (errno=%u)\n", what, errno);
 		}
 	}	
 }

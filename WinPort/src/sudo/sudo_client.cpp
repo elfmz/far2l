@@ -1,444 +1,172 @@
 #include <unistd.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <string.h>
-#include <dlfcn.h>
-#include <sys/stat.h>
-#include <map>
+#include <assert.h>
 #include <mutex>
 #include "sudo_common.h"
 
-namespace Sudo {
-
-template <class LOCAL, class REMOTE> class Client2Server
+namespace Sudo 
 {
-	struct Map : std::map<LOCAL, REMOTE> {} _map;
-	std::mutex _mutex;
+	static std::mutex s_client_mutex;
+	static int s_client_pipe_send = -1;
+	static int s_client_pipe_recv = -1;
 
-public:
-	typedef Client2Server<LOCAL, REMOTE> Client2ServerBase;
 
-	void Register(LOCAL local, REMOTE remote)
+	static void CloseClientConnection()
 	{
-		std::lock_guard<std::mutex> lock(_mutex);
-		_map[local] = remote;
-	}
-
-	bool Deregister(LOCAL local, REMOTE &remote)
-	{
-		std::lock_guard<std::mutex> lock(_mutex);
-		auto i = _map.find(local);
-		if (i == _map.end())
-			return false;
-
-		remote = i->second;
-		_map.erase(i);
-		return true;
-
-	}
-
-	bool Lookup(LOCAL local, REMOTE &remote)
-	{
-		std::lock_guard<std::mutex> lock(_mutex);
-		auto i = _map.find(local);
-		if (i == _map.end())
-			return false;
-
-		remote = i->second;
-		return true;
-	}
-
-};
-
-
-static class Client2ServerFD : protected Client2Server<int, int>
-{
-	public:
-
-	int Register(int remote)
-	{
-		int local = open("/dev/null", O_RDWR, 0);
-		if (local != -1)
-			Client2ServerBase::Register(local, remote);
-		return local;
-	}
-
-	int Deregister(int local)
-	{
-		int remote;
-		if (!Client2ServerBase::Deregister(local, remote)) 
-			return -1;
-
-		close(local);
-		return remote;
-
-	}
-
-	int Lookup(int local)
-	{
-		int remote;
-		if (!Client2ServerBase::Lookup(local, remote))
-			return -1;
-
-		return remote;
-	}
-
-} s_c2s_fd;
-
-
-static class Client2ServerDIR : protected Client2Server<DIR *, void *>
-{
-	public:
-
-	DIR *Register(void *remote)
-	{
-		DIR *local = opendir("/");
-		if (local)
-			Client2ServerBase::Register(local, remote);
-		return local;
-	}
-
-	void *Deregister(DIR *local)
-	{
-		void *remote;
-		if (!Client2ServerBase::Deregister(local, remote)) 
-			return nullptr;
-
-		closedir(local);
-		return remote;
-
-	}
-
-	void *Lookup(DIR *local)
-	{
-		void *remote;
-		if (!Client2ServerBase::Lookup(local, remote))
-			return nullptr;
-
-		return remote;
-	}
-
-} s_c2s_dir;
-
-////////////////////////////////////////////
-
-
-static int send_remote_fd_close(int fd)
-{
-	ClientTransaction ct(SUDO_CMD_CLOSE);
-	ct.SendPOD(fd);
-	ct.RecvPOD(fd);
-	return fd;
-}
-
-
-extern "C" __attribute__ ((visibility("default"))) int sdc_close(int fd)
-{
-	int remote_fd = s_c2s_fd.Deregister(fd);
-	if (remote_fd==-1) {
-		return close(fd);
-	}
-
-	try {
-		return send_remote_fd_close(remote_fd);
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: close(0x%x -> 0x%x) - error %s\n", fd, remote_fd, what);
-		return 0;
-	}
-}
-
-inline bool IsAccessDeniedErrno()
-{
-	return (errno==EACCES || errno==EPERM);
-}
-
-extern "C" __attribute__ ((visibility("default"))) int sdc_open(const char* pathname, int flags, ...)
-{
-	int saved_errno = errno;
-	mode_t mode = 0;
-	
-	if (flags & O_CREAT) {
-		va_list va;
-		va_start(va, flags);
-		mode = va_arg(va, mode_t);
-		va_end(va);
+		CheckedCloseFD(s_client_pipe_send);
+		CheckedCloseFD(s_client_pipe_recv);
 	}
 	
-	int r = open(pathname, flags, mode);
-	if (r!=-1 || !IsAccessDeniedErrno() || !TouchClientConnection())
-		return r;
-		
-	try {
-		ClientTransaction ct(SUDO_CMD_OPEN);
-		ct.SendStr(pathname);
-		ct.SendPOD(flags);
-		ct.SendPOD(mode);
+	
+/////////////////////////
+	static int (*g_sudo_launcher)(int pipe_request, int pipe_reply) = nullptr;
+	
+	struct ThreadRegionCounter
+	{
+		int count;
+		int failed;
+	};
+	
+	thread_local ThreadRegionCounter thread_client_region_counter = { 0, 0 };
+	static int global_client_region_counter = 0;
 
-		int remote_fd;
-		ct.RecvPOD(remote_fd);
-
-		if (remote_fd!=-1) {
-			r = s_c2s_fd.Register(remote_fd);
-
-			if (r==-1) {
-				send_remote_fd_close(remote_fd);
-				throw "register";
-			}
-			errno = saved_errno;
-		} else {
-			ct.RecvErrno();
+	extern "C" {
+		__attribute__ ((visibility("default"))) void sudo_client(int (*p_sudo_launcher)(int pipe_request, int pipe_reply))
+		{
+			std::lock_guard<std::mutex> lock(s_client_mutex);
+			g_sudo_launcher = p_sudo_launcher;
 		}
 		
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: open(%s, 0x%x, 0x%x) - error %s\n", pathname, flags, mode, what);
-		return -1;
-	}
-}
-
-extern "C" __attribute__ ((visibility("default"))) off_t sdc_lseek(int fd, off_t offset, int whence)
-{
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return lseek(fd, offset, whence);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_LSEEK);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(offset);
-		ct.SendPOD(whence);
-
-		off_t r;
-		ct.RecvPOD(r);
-		if (r==-1)
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: close(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
-}
-
-extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_write(int fd, const void *buf, size_t count)
-{
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return write(fd, buf, count);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_WRITE);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(count);
-		if (count) ct.SendBuf(buf, count);
-
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r == -1)
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: write(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
-}
-
-extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void *buf, size_t count)
-{
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return read(fd, buf, count);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_READ);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(count);
-
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r ==-1) {
-			ct.RecvErrno();
-		} else if ( r > 0) {
-			if (r > (ssize_t)count)
-				throw "too many bytes";
-
-			ct.RecvBuf(buf, r);
+		
+		__attribute__ ((visibility("default"))) void sudo_client_region_enter()
+		{
+			std::lock_guard<std::mutex> lock(s_client_mutex);
+			global_client_region_counter++;
+			thread_client_region_counter.count++;
 		}
+		
+		__attribute__ ((visibility("default"))) void sudo_client_region_leave()
+		{
+			std::lock_guard<std::mutex> lock(s_client_mutex);
+			assert(global_client_region_counter > 0);
+			assert(thread_client_region_counter.count > 0);
 
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: read(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
-}
+			global_client_region_counter--;
+			thread_client_region_counter.count--;
+			
+			if (!thread_client_region_counter.count)
+				thread_client_region_counter.failed = 0;
 
-static int send_stat_cmd(SudoCommand cmd, const char *path, struct stat *buf)
-{
-	try {
-		ClientTransaction ct(cmd);
-		ct.SendStr(path);
-
-		int r;
-		ct.RecvPOD(r);
-		if (r == 0)
-			ct.RecvPOD(*buf);
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: send_stat_cmd(%u, '%s') - error %s\n", cmd, path, what);
-		return -1;
-	}
-}
-
-extern "C" __attribute__ ((visibility("default"))) int sdc_stat(const char *path, struct stat *buf)
-{
-	int saved_errno = errno;
-	int r = stat(path, buf);
-	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
-		r = send_stat_cmd(SUDO_CMD_STAT, path, buf);
-		if (r==0) errno = saved_errno;
-	}
-
-	return r;
-}
-
-extern "C" __attribute__ ((visibility("default"))) int sdc_lstat(const char *path, struct stat *buf)
-{
-	int saved_errno = errno;
-	int r = lstat(path, buf);
-	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
-		r = send_stat_cmd(SUDO_CMD_LSTAT, path, buf);
-		if (r==0) errno = saved_errno;
-	}
-	return r;
-}
-
-extern "C" __attribute__ ((visibility("default"))) int sdc_fstat(int fd, struct stat *buf)
-{
-	int saved_errno = errno;
-
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return fstat(fd, buf);
-
-
-	try {
-		ClientTransaction ct(SUDO_CMD_FSTAT);
-		ct.SendPOD(remote_fd);
-
-		int r;
-		ct.RecvPOD(r);
-		if (r == 0) {
-			ct.RecvPOD(*buf);
-			errno = saved_errno;
+			if (!global_client_region_counter)
+				CloseClientConnection();
 		}
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: fstat(0x%x) - error %s\n", fd, what);
-		return -1;
 	}
-}
-
-extern "C" __attribute__ ((visibility("default"))) int sdc_ftruncate(int fd, off_t length)
-{
-	int saved_errno = errno;
-
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return ftruncate(fd, length);
 	
-	try {
-		ClientTransaction ct(SUDO_CMD_FTRUNCATE);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(length);
-
-		int r;
-		ct.RecvPOD(r);
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sdc_ftruncate(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
-}
-
-static int send_remote_closedir(void *remote_dir)
-{
-	ClientTransaction ct(SUDO_CMD_CLOSEDIR);
-	ct.SendPOD(remote_dir);
-	int r;
-	ct.RecvPOD(r);
-	return r;
-}
-
-extern "C" __attribute__ ((visibility("default"))) int sdc_closedir(DIR *dir)
-{
-	void *remote_dir = s_c2s_dir.Deregister(dir);
-	if (!remote_dir) {
-		return closedir(dir);
-	}
-
-	try {
-		return send_remote_closedir(remote_dir);
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: closedir(%p -> %p) - error %s\n", dir, remote_dir, what);
-		return 0;
-	}
-}
-
-
-extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *name)
-{
-	int saved_errno = errno;
-	DIR *dir = opendir(name);
-	if (dir==NULL && IsAccessDeniedErrno() && TouchClientConnection()) {
+	static bool ClientPing()
+	{
 		try {
-			ClientTransaction ct(SUDO_CMD_OPENDIR);
-			ct.SendStr(name);
-			void *remote;
-			ct.RecvPOD(remote);
-			if (remote) {
-				dir = s_c2s_dir.Register(remote);
-				if (dir) {
-					errno = saved_errno;
-				} else {
-					send_remote_closedir(remote);
+			SudoCommand cmd = SUDO_CMD_PING;
+			BaseTransaction bt(s_client_pipe_send, s_client_pipe_recv);
+			bt.SendPOD(cmd);
+			bt.RecvPOD(cmd);
+
+			if (bt.IsFailed())
+				throw "failed";
+
+			if (cmd!=SUDO_CMD_PING)
+				throw "bad reply";
+
+		} catch (const char *what) {
+			fprintf(stderr, "Sudo::ClientPing - %s\n", what);
+			CloseClientConnection();
+			return false;
+		}
+		
+		return true;
+	}
+
+	bool TouchClientConnection()
+	{
+		if (!thread_client_region_counter.count || thread_client_region_counter.failed) {
+			return false;
+		}
+
+		ErrnoSaver es;
+		std::lock_guard<std::mutex> lock(s_client_mutex);
+		if (s_client_pipe_send==-1 || s_client_pipe_recv==-1) {
+			CloseClientConnection();
+			if (g_sudo_launcher) {
+				int req[2] = {-1, -1}, rep[2] = {-1, -1};
+				if (pipe(req)==-1)
+					return false;
+				if (pipe(rep)==-1) {
+					CheckedCloseFDPair(req);
+					return false;
+				}
+				fcntl(req[1], F_SETFD, FD_CLOEXEC);
+				fcntl(rep[0], F_SETFD, FD_CLOEXEC);
+				
+				if (g_sudo_launcher(req[0], rep[1])==-1) {//likely missing askpass
+					perror("g_sudo_launcher\n");
+					CheckedCloseFDPair(req);
+					CheckedCloseFDPair(rep);
+					thread_client_region_counter.failed = 1;
+					return false;
+				}
+				CheckedCloseFD(req[0]);
+				CheckedCloseFD(rep[1]);
+				s_client_pipe_send = req[1];
+				s_client_pipe_recv = rep[0];
+				if (!ClientPing()) {//likely bad password or Cancel
+					thread_client_region_counter.failed = 1;
+					return false; 
 				}
 			}
+		}
+			
+		return true;
+	}
 
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: opendir('%s') - error %s\n", name, what);
-			return nullptr;
+
+	ClientTransaction::ClientTransaction(SudoCommand cmd) : 
+		std::lock_guard<std::mutex>(s_client_mutex),
+		BaseTransaction(s_client_pipe_send, s_client_pipe_recv), 
+		_cmd(cmd)
+	{
+		try {
+			SendPOD(_cmd);
+		} catch (const char *) {
+			CloseClientConnection();
+			throw;
 		}
 	}
-	return dir;
-}
-
-thread_local struct dirent sudo_client_dirent;
-
-extern "C" __attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DIR *dir)
-{
-	void *remote_dir = s_c2s_dir.Lookup(dir);
-	if (!remote_dir)
-		return readdir(dir);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_READDIR);
-		ct.SendPOD(remote_dir);
-		char r;
-		ct.RecvPOD(r);
-		if (r) {
-			ct.RecvPOD(sudo_client_dirent);
-			return &sudo_client_dirent;
+	
+	ClientTransaction::~ClientTransaction()
+	{
+		try {//should catch cuz used from d-tor
+			Finalize();
+			if (IsFailed())
+				CloseClientConnection();
+		} catch (const char * what) {
+			fprintf(stderr, "ClientTransaction(%u)::Finalize - %s\n", _cmd, what);
+			CloseClientConnection();
 		}
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: readdir(%p -> %p) - error %s\n", dir, remote_dir, what);
 	}
-	return nullptr;
+	
+	void ClientTransaction::NewTransaction(SudoCommand cmd)
+	{
+		Finalize();
+		_cmd = cmd;
+		SendPOD(_cmd);
+	}
+	
+	void ClientTransaction::Finalize()
+	{
+		SudoCommand reply;
+		RecvPOD(reply);
+		if (reply!=_cmd)
+			throw "bad reply";
+	}
 }
-
-
-} //namespace Sudo

@@ -170,7 +170,7 @@ UnicodeString& UnicodeString::Copy(const char *lpszData, UINT CodePage)
 	{
 		size_t nSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,-1,nullptr,0);
 		m_pData = new UnicodeStringData(nSize);
-		WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,(int)nSize,m_pData->GetData(),(int)m_pData->GetSize());
+		WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,-1,m_pData->GetData(),(int)m_pData->GetSize());
 		m_pData->SetLength(nSize - 1);
 	}
 

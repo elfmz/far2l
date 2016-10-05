@@ -175,7 +175,7 @@ class UnicodeString
 		UnicodeString& Copy(const wchar_t *Str) { return Copy(Str, StrLength(NullToEmpty(Str))); }
 		UnicodeString& Copy(wchar_t Ch) { return Copy(&Ch, 1); }
 		UnicodeString& Copy(const UnicodeString &Str);
-		UnicodeString& Copy(const char *lpszData, UINT CodePage=CP_OEMCP);
+		UnicodeString& Copy(const char *lpszData, UINT CodePage=CP_UTF8);
 
 		UnicodeString& Remove(size_t Pos, size_t Len = 1) { return Replace(Pos, Len, nullptr, 0); }
 		UnicodeString& LShift(size_t nShiftCount, size_t nStartPos=0) { return Remove(nStartPos, nShiftCount); }

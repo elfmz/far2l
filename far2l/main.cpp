@@ -563,19 +563,35 @@ int FarAppMain(int argc, char **argv)
 }
 
 
-static int sudo_launcher(int pipe_request, int pipe_reply)
+static bool DetectAskPass(const char *possible)
+{
+	struct stat s = {0};
+	if (stat(possible, &s)==0 && (s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0) {
+		setenv("SUDO_ASKPASS", possible, 1);
+		fprintf(stderr, "DetectAskPass: found %s\n", possible);
+		return true;
+	}
+	return false;
+}
+
+static int SudoLauncher(int pipe_request, int pipe_reply)
 {
 	char *askpass = getenv("SUDO_ASKPASS");
 	struct stat s = {0};
 	if (!askpass || !*askpass || stat(askpass, &s)==-1) {
-		fprintf(stderr, "sudo_launcher: SUDO_ASKPASS env not set or invalid\n");
-		return -1;
+		fprintf(stderr, "SudoLauncher: SUDO_ASKPASS env not set or invalid\n");
+		if (!DetectAskPass("/usr/lib/openssh/gnome-ssh-askpass")
+			&& !DetectAskPass("/usr/lib/ssh/x11-ssh-askpass")
+			&& !DetectAskPass("/usr/bin/ssh-askpass")
+			&& !DetectAskPass("/usr/lib/seahorse/seahorse-ssh-askpass") ) {
+			return -1;
+		}
 	}
-	std::string command = "sudo -A \"";
+	std::string command = Opt.SudoParanoic ? "sudo -Ak \"" : "sudo -A \"";
 	command+= Wide2MB(g_strFarModuleName.CPtr());
 	command+= "\" --sudo";
 
-	fprintf(stderr, "sudo_launcher: %s\n", command.c_str());
+	fprintf(stderr, "SudoLauncher: %s\n", command.c_str());
 	
 	int r = fork();
 	if (r==0) {	
@@ -637,7 +653,7 @@ int _cdecl main(int argc, char *argv[])
 	}
 
 	SetupFarPath(argc, argv);
-	sudo_client(sudo_launcher);
+	sudo_client(SudoLauncher);
 	
 	//SudoTest();
 

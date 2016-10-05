@@ -440,6 +440,7 @@ struct Options
 	int DeleteToRecycleBin;         // удалять в корзину?
 	int DeleteToRecycleBinKillLink; // перед удалением папки в корзину кильнем вложенные симлинки.
 	int WipeSymbol; // символ заполнитель для "ZAP-операции"
+	int SudoParanoic;
 
 	CopyMoveOptions CMOpt;
 

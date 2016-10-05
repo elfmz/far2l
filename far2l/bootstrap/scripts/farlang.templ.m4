@@ -1283,6 +1283,15 @@ MConfigRO
 "Wyczyść atrybut &R/O przy kopiowaniu z CD"
 "&Borrar atributos R/O de archivos de CD"
 
+MSudoParanoic
+"Всегда спрашивать пароль для sudo"
+"Always ask sudo password"
+upd:"Always ask sudo password"
+upd:"Always ask sudo password"
+upd:"Always ask sudo password"
+upd:"Always ask sudo password"
+upd:"Always ask sudo password"
+
 MConfigRecycleBin
 "Удалять в &Корзину"
 "&Delete to Recycle Bin"

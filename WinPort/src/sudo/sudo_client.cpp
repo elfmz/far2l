@@ -51,23 +51,6 @@ namespace Sudo
 		free(_free_ptr);
 	}
 	
-	std::string ClientReconstructCurDir(const char *path)
-	{
-		std::string out = path;
-		if (path[0] != '/' && path[0]) {
-			std::lock_guard<std::mutex> lock(s_client_mutex);
-			if (path[0] == '.' && path[1] == '/') {
-				out.replace(0, 1, g_last_curdir);
-			} else {
-				out.insert(0, "/");
-				out.insert(0, g_last_curdir);
-			}
-		}
-
-		std::lock_guard<std::mutex> lock(s_client_mutex);
-		g_last_curdir = path;		
-	}
-	
 /////////////////////////
 	static int (*g_sudo_launcher)(int pipe_request, int pipe_reply) = nullptr;
 	

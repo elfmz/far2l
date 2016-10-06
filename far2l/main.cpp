@@ -586,11 +586,9 @@ static int SudoLauncher(int pipe_request, int pipe_reply)
 			return -1;
 		}
 	}
-	std::string command = Opt.SudoParanoic ? "sudo -Ak \"" : "sudo -A \"";
-	command+= Wide2MB(g_strFarModuleName.CPtr());
-	command+= "\" --sudo";
+	const std::string & far2l_path = Wide2MB(g_strFarModuleName.CPtr());
 
-	fprintf(stderr, "SudoLauncher: %s\n", command.c_str());
+	fprintf(stderr, "SudoLauncher (paranoic=%u): %s\n", Opt.SudoParanoic, far2l_path.c_str());
 	
 	int r = fork();
 	if (r==0) {	
@@ -600,7 +598,13 @@ static int SudoLauncher(int pipe_request, int pipe_reply)
 		dup2(pipe_request, STDIN_FILENO); 
 		close(pipe_request);
 		
-		r = execl("/bin/sh", "sh", "-c", command.c_str(), NULL);
+		//if process doesn't hav terminal then sudo caches password per parent pid
+		//so don't use intermediate shell for running it!
+		if (Opt.SudoParanoic) {
+			r = execlp("sudo", "-n", "-A", "-k", far2l_path.c_str(), "--sudo", NULL);
+		} else {
+			r = execlp("sudo", "-n", "-A", far2l_path.c_str(), "--sudo", NULL);
+		}
 		perror("execl");
 		_exit(r);
 		exit(r);

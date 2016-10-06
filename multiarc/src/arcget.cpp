@@ -181,7 +181,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
         break;
       }
 
-  if (chdir(DestPath)) fprintf(stderr, "chdir('%s') - %u\n", DestPath, errno);
+  if (sdc_chdir(DestPath)) fprintf(stderr, "sdc_chdir('%s') - %u\n", DestPath, errno);
   int SaveHideOut=Opt.HideOutput;
   if (OpMode & OPM_FIND)
     Opt.HideOutput=2;
@@ -195,7 +195,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
   Opt.Background=0; // $ 06.02.2002 AA
 
   Opt.HideOutput=SaveHideOut;
-  if (chdir(SaveDir)) fprintf(stderr, "chdir('%s') - %u\n", SaveDir, errno);
+  if (sdc_chdir(SaveDir)) fprintf(stderr, "sdc_chdir('%s') - %u\n", SaveDir, errno);
   if (!IgnoreErrors && ArcCmd.GetExecCode()!=0)
     if (!(OpMode & OPM_VIEW))
       return 0;

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <windows.h>
+#include <sudo.h>
 #include <string>
 #include <utils.h>
 #include <pluginold.hpp>

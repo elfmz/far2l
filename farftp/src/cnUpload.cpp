@@ -44,7 +44,7 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 	}
 
 	struct stat s = {0};
-	if (stat(local, &s)) {
+	if (sdc_stat(local, &s)) {
 		ErrorCode = ERROR_OPEN_FAILED;
 		SysError = TRUE;
 		return;		

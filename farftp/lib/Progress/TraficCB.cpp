@@ -302,7 +302,7 @@ void TrafficInformation::Resume(LPCSTR nm)
 {
 	FileSize = 0;
 	struct stat s = {0};
-	if (stat(nm, &s) == 0) 
+	if (sdc_stat(nm, &s) == 0) 
 		StartFileSize  = s.st_size;
 	else
 		StartFileSize = 0;

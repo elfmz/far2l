@@ -520,11 +520,12 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_mkdir(const char *pat
 extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *path)
 {
 	int saved_errno = errno;
+	//fprintf(stderr, "sdc_chdir: %s\n", path);
 	ClientReconstructCurDir crcd(path);
-	fprintf(stderr, "sdc_chdir: %s\n", path);
 	int r = chdir(path);
-	
-	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
+	const bool access_denied = (r==-1 && IsAccessDeniedErrno());	
+	ClientCurDirOverrideReset();
+	if (access_denied && TouchClientConnection()) {
 		std::string cwd;
 		try {
 			ClientTransaction ct(SUDO_CMD_CHDIR);
@@ -541,22 +542,23 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 			r = -1;
 		}
 		if (!cwd.empty())
-			ClientSetLastCurDir(cwd.c_str());
-	} else {
-		char buf[PATH_MAX + 1];
-		//todo: simulate chdir in case of access denied without active connection
-		if (getcwd(buf, sizeof(buf)-1)) {
-			ClientSetLastCurDir(buf);
+			ClientCurDirOverrideSet(cwd.c_str());
+	} else if (access_denied && !IsSudoRegionActive()) {
+		//Workaround to avoid excessive sudo prompt on TAB panel swicth:
+		//set override if path likely to be existing but not accessible 
+		//cuz we're out of sudo region now
+		//Right solution would be putting TAB worker code into sudo region
+		//but showing sudo just to switch focus between panels is bad UX
+		if (ClientCurDirOverrideSetIfKnown(path)) {
+			r = 0;
+			errno = saved_errno;
+		} else {
+			fprintf(stderr, "sdc_chdir: access denied for unknown - '%s'\n", path);
 		}
 	}
-
-	/*
-	int r = common_one_path(SUDO_CMD_CHDIR, &chdir, path);
-	if (r==0 || (IsAccessDeniedErrno() && !HasClientConnection())) {
-		fprintf(stderr, "sdc_chdir apply %s - %d\n", path, r);
-		ClientSetLastCurDir(path);
-	} else
-		fprintf(stderr, "sdc_chdir deny %s - %d\n", path, errno);*/
+	
+	//if (r!=0)
+	//	fprintf(stderr, "FAILED sdc_chdir: %s\n", path);
 	
 	return r;
 }
@@ -578,7 +580,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_unlink(const char *pa
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_chmod(const char *path, mode_t mode)
 {
-	return common_path_and_mode(SUDO_CMD_CHMOD, &mkdir, path, mode);
+	return common_path_and_mode(SUDO_CMD_CHMOD, &chmod, path, mode);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
@@ -703,7 +705,7 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_realpath(const char
 
 extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, size_t size)
 {
-	if (!ClientGetLastCurDir(buf, size))
+	if (!ClientCurDirOverrideQuery(buf, size))
 		return NULL;
 	
 	if (*buf)

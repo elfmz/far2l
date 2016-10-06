@@ -7,6 +7,7 @@ namespace Sudo
 {
 	enum SudoCommand
 	{
+		SUDO_CMD_INVALID = 0,
 		SUDO_CMD_PING = 1,
 		SUDO_CMD_OPEN,
 		SUDO_CMD_CLOSE,
@@ -70,9 +71,12 @@ namespace Sudo
 	};
 
 	bool TouchClientConnection();
-	bool HasClientConnection();
-	void ClientSetLastCurDir(const char *path);
-	bool ClientGetLastCurDir(char *path, size_t size);
+	bool IsSudoRegionActive();
+	
+	void ClientCurDirOverrideReset();
+	void ClientCurDirOverrideSet(const char *path);
+	bool ClientCurDirOverrideSetIfKnown(const char *path);
+	bool ClientCurDirOverrideQuery(char *path, size_t size);
 	
 	class ClientReconstructCurDir
 	{

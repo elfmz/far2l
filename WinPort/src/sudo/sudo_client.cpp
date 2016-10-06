@@ -4,6 +4,9 @@
 #include <string.h>
 #include <assert.h>
 #include <mutex>
+#include <list>
+#include <string>
+#include <algorithm>
 #include "sudo_common.h"
 
 namespace Sudo 
@@ -11,7 +14,12 @@ namespace Sudo
 	static std::mutex s_client_mutex;
 	static int s_client_pipe_send = -1;
 	static int s_client_pipe_recv = -1;
-	static std::string g_last_curdir;
+	static std::string g_curdir_override;
+	static struct ListOfStrings : std::list<std::string> {} g_known_curdirs;
+	
+	enum {
+		KNOWN_CURDIRS_LIMIT = 4
+	};
 
 
 	static void CloseClientConnection()
@@ -21,22 +29,48 @@ namespace Sudo
 	}
 	
 	
-	void ClientSetLastCurDir(const char *path)
+	void ClientCurDirOverrideReset()
 	{
-		fprintf(stderr, "ClientSetLastCurDir: %s\n", path);
 		std::lock_guard<std::mutex> lock(s_client_mutex);
-		g_last_curdir = path;
+		g_curdir_override.clear();
 	}
 	
-	bool ClientGetLastCurDir(char *path, size_t size)
+	void ClientCurDirOverrideSet(const char *path)
+	{
+		//fprintf(stderr, "ClientCurDirOverride: %s\n", path);
+		std::lock_guard<std::mutex> lock(s_client_mutex);
+		g_curdir_override = path;
+		if (!g_curdir_override.empty()) {
+			g_known_curdirs.push_back(g_curdir_override);
+			while (g_known_curdirs.size() > KNOWN_CURDIRS_LIMIT)
+				g_known_curdirs.pop_front();
+		}
+	}
+	
+	bool ClientCurDirOverrideSetIfKnown(const char *path)
+	{
+		std::string str = path;
+		std::lock_guard<std::mutex> lock(s_client_mutex);
+		ListOfStrings::iterator  i = 
+			std::find(g_known_curdirs.begin(), g_known_curdirs.end(), str);
+		if (i == g_known_curdirs.end())
+			return false;
+		
+		g_curdir_override.swap(str);
+		g_known_curdirs.erase(i);
+		g_known_curdirs.push_back(g_curdir_override);
+		return true;
+	}
+	
+	bool ClientCurDirOverrideQuery(char *path, size_t size)
 	{
 		std::lock_guard<std::mutex> lock(s_client_mutex);
-		if (g_last_curdir.size() >= size ) {
+		if (g_curdir_override.size() >= size ) {
 			errno = ERANGE;
 			return false;
 		}
 		
-		strcpy(path, g_last_curdir.c_str() );
+		strcpy(path, g_curdir_override.c_str() );
 		return true;
 	}
 	
@@ -45,8 +79,8 @@ namespace Sudo
 	{
 		if (path[0] != '/' && path[0]) {
 			std::lock_guard<std::mutex> lock(s_client_mutex);
-			if (!g_last_curdir.empty()) {
-				std::string  str = g_last_curdir;
+			if (!g_curdir_override.empty()) {
+				std::string  str = g_curdir_override;
 				if (strcmp(path, ".")==0 || strcmp(path, "./")==0) {
 					
 				} else if (strcmp(path, "..")==0 || strcmp(path, "../")==0) {
@@ -124,16 +158,13 @@ namespace Sudo
 			bt.SendPOD(cmd);
 			bt.RecvPOD(cmd);
 
-			if (bt.IsFailed())
+			if (bt.IsFailed() || cmd!=SUDO_CMD_PING)
 				throw "ping failed";
-
-			if (cmd!=SUDO_CMD_PING)
-				throw "bad ping reply";
 				
-			if (!g_last_curdir.empty()) {
+			if (!g_curdir_override.empty()) {
 				cmd = SUDO_CMD_CHDIR;
 				bt.SendPOD(cmd);
-				bt.SendStr(g_last_curdir.c_str());
+				bt.SendStr(g_curdir_override.c_str());
 				int r = bt.RecvInt();
 				if (r == -1) {
 					bt.RecvErrno();
@@ -144,13 +175,10 @@ namespace Sudo
 				
 				bt.RecvPOD(cmd);
 			
-				if (bt.IsFailed())
+				if (bt.IsFailed() || cmd!=SUDO_CMD_CHDIR)
 					throw "chdir failed";
-
-				if (cmd!=SUDO_CMD_CHDIR)
-					throw "bad chdir reply";
 					
-				fprintf(stderr, "Sudo::ClientInitSequence: chdir='%s' -> %d\n", g_last_curdir.c_str(), r);
+				fprintf(stderr, "Sudo::ClientInitSequence: chdir='%s' -> %d\n", g_curdir_override.c_str(), r);
 			}
 
 		} catch (const char *what) {
@@ -162,10 +190,10 @@ namespace Sudo
 		return true;
 	}
 
-	bool HasClientConnection()
+	bool IsSudoRegionActive()
 	{
 		std::lock_guard<std::mutex> lock(s_client_mutex);
-		return (s_client_pipe_send!=-1 && s_client_pipe_recv!=-1);
+		return (s_client_pipe_send!=-1 && s_client_pipe_recv!=-1 && thread_client_region_counter.count);
 	}
 	
 	bool TouchClientConnection()

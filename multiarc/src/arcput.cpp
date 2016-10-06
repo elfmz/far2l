@@ -558,7 +558,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
         if (ItemsNumber==1 && pi.SelectedItemsNumber==1 && (pi.SelectedItems[0].Flags&PPIF_SELECTED))
         {
           char CurDir[NM] = {0};
-          if (getcwd(CurDir, sizeof(CurDir)))
+          if (sdc_getcwd(CurDir, sizeof(CurDir)))
 			strcpy(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
         }
         else
@@ -798,7 +798,7 @@ void PluginClass::GetGroupName(PluginPanelItem *Items, int Count, char *ArcName)
     {
       //взять имя папки
       char CurDir[NM] = {0};
-      if (getcwd(CurDir, sizeof(CurDir)))
+      if (sdc_getcwd(CurDir, sizeof(CurDir)))
 		strcpy(ArcName, FSF.PointToName(CurDir));
       return;
     }

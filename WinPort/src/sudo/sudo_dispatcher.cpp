@@ -319,7 +319,7 @@ namespace Sudo
 	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt)
 	{
-		fprintf(stderr, "OnSudoDispatch: %u\n", cmd);
+		//fprintf(stderr, "OnSudoDispatch: %u\n", cmd);
 		switch (cmd) {
 			case SUDO_CMD_PING:
 				break;
@@ -433,16 +433,16 @@ namespace Sudo
 	{
 		fprintf(stderr, "sudo_dispatcher(%d, %d)\n", pipe_request, pipe_reply);
 		
+		SudoCommand cmd = SUDO_CMD_INVALID;
 		try {
 			for (;;) {
 				BaseTransaction bt(pipe_reply, pipe_request);
-				SudoCommand cmd;
 				bt.RecvPOD(cmd);
 				OnSudoDispatch(cmd, bt);
 				bt.SendPOD(cmd);
 			}
 		} catch (const char *what) {
-			fprintf(stderr, "sudo_dispatcher - %s (errno=%u)\n", what, errno);
+			fprintf(stderr, "sudo_dispatcher - %s (cmd=%u errno=%u)\n", what, cmd, errno);
 		}
 	}	
 }

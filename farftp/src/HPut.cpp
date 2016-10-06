@@ -54,7 +54,7 @@ int FTP::PutHostsFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Mov
 		CurName = FTP_FILENAME(&il.List[n]);
 		
 		
-		if(stat(CurName.c_str(), &src_stat)<0)
+		if(sdc_stat(CurName.c_str(), &src_stat)<0)
 			continue;
 
 		if( (src_stat.st_mode & S_IFMT) == S_IFDIR)

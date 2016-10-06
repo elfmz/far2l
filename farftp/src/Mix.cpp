@@ -341,7 +341,7 @@ BOOL WINAPI DoCreateDirectory(char *directoryPath)
 int64_t WINAPI Fsize(LPCSTR nm)
 {
 	struct stat s = {0};
-	if (stat(nm, &s)<0)
+	if (sdc_stat(nm, &s)<0)
 		return 0;
 		
 	return s.st_size;
@@ -645,7 +645,7 @@ BOOL WINAPI CheckForEsc(BOOL isConnection,BOOL IgnoreSilent)
 BOOL WINAPI IsDirExist(LPCSTR nm)
 {
 	struct stat s = {0};
-	if (stat(nm, &s) < 0)
+	if (sdc_stat(nm, &s) < 0)
 		return FALSE;
 	
 	if ((s.st_mode & S_IFMT)!=S_IFDIR)

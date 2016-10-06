@@ -41,7 +41,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
     return 0;
 
   char SaveDir[NM];
-  if (!getcwd(SaveDir, sizeof(SaveDir)))
+  if (!sdc_getcwd(SaveDir, sizeof(SaveDir)))
 	  strcpy(SaveDir, ".");
   char Command[512],AllFilesMask[32];
   if (ItemsNumber==0)

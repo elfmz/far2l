@@ -692,10 +692,11 @@ static bool shown_tip_exit = false;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (!sdc_getcwd(cd, MAX_PATH)) perror("getcwd");
+		bool need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
+
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());
-		fprintf(f, "cd \"%s\"\n", EscapeQuotas(cd).c_str());
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
 			fprintf(f, "echo \"Closing back shell.%s\"\n", 
@@ -706,7 +707,12 @@ static bool shown_tip_exit = false;
 			fprintf(f, "echo \"TIP: If you feel stuck - use Ctrl+Alt+C to terminate everything in this shell.\"\n");
 			shown_tip_ctrl_alc_c = true;
 		}
-		fprintf(f, "%s\n", cmd);
+		if (need_sudo) {
+			fprintf(f, "sudo sh -c \"cd '%s' && %s\"\n", EscapeQuotas(cd).c_str(), cmd);
+		} else {
+			fprintf(f, "cd '%s' && %s\n", EscapeQuotas(cd).c_str(), cmd);
+		}
+
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
 		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
 		//fprintf(f, "stty -echo\n");

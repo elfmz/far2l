@@ -134,7 +134,7 @@ int FTP::GetHostFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move
 
 			p->MkINIFile(DestName, HostsPath, DestPath.c_str());
 			struct stat s = {0};
-			bool dest_exists = (stat(DestName, &s)==0);
+			bool dest_exists = (sdc_stat(DestName, &s)==0);
 			//DWORD DestAttr=GetFileAttributes(DestName);
 
 			if(!IS_SILENT(OpMode) &&

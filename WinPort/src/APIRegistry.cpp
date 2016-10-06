@@ -215,7 +215,7 @@ extern "C" {
 			if (remove(file.c_str())) return ERROR_PATH_NOT_FOUND;
 		}
 
-		if (_rmdir(dir.c_str())!=0) {
+		if (rmdir(dir.c_str())!=0) {
 			struct stat s = {0};
 			if (stat(dir.c_str(), &s)==0)
 				return ERROR_DIR_NOT_EMPTY;

@@ -187,6 +187,8 @@ namespace Sudo
 		DIR *d = opendir(path.c_str());
 		g_dirs.Put(d);
 		bt.SendPOD(d);
+		if (!d)
+			bt.SendErrno();
 	}
 	
 	static void OnSudoDispatch_ReadDir(BaseTransaction &bt)
@@ -225,6 +227,22 @@ namespace Sudo
 		bt.SendInt(r);
 		if (r==-1)
 			bt.SendErrno();
+	}
+	
+	static void OnSudoDispatch_ChDir(BaseTransaction &bt)
+	{
+		std::string path;
+		bt.RecvStr(path);
+		int r = chdir(path.c_str());
+		bt.SendInt(r);
+		if (r==-1) {
+			bt.SendErrno();
+		} else {
+			char cwd[PATH_MAX + 1];
+			if (!getcwd(cwd, sizeof(cwd)-1))
+				cwd[0] = 0;
+			bt.SendStr(cwd);
+		}
 	}
 	
 	static void OnSudoDispatch_ChMod(BaseTransaction &bt)
@@ -363,7 +381,7 @@ namespace Sudo
 				break;
 				
 			case SUDO_CMD_CHDIR:
-				OnSudoDispatch_OnePathCommon(&chdir, bt);
+				OnSudoDispatch_ChDir(bt);
 				break;
 				
 			case SUDO_CMD_RMDIR:

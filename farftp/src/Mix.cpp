@@ -207,17 +207,17 @@ BOOL WINAPI DoCreateDirectory(char *directoryPath)
 		return TRUE;
 	}
 
-	if(mkdir(directoryPath, 0777) == 0 || errno==EEXIST)
+	if(sdc_mkdir(directoryPath, 0777) == 0 || errno==EEXIST)
 		return TRUE;
 
 	for (char *p = directoryPath + 1; *p; ++p) {
 		if (*p=='/') {
 			std::string tmp(directoryPath, p - directoryPath);
-			mkdir(tmp.c_str(), 0777) ;
+			sdc_mkdir(tmp.c_str(), 0777) ;
 			//WINPORT(CreateDirectory)(tmp.c_str(), NULL);
 		}
 	}
-	if(mkdir(directoryPath, 0777) == 0 || errno==EEXIST)
+	if(sdc_mkdir(directoryPath, 0777) == 0 || errno==EEXIST)
 		return TRUE;
 
 	Log(("CreateDirectory error: %d", WINPORT(GetLastError)()));

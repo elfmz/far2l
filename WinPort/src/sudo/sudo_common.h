@@ -70,7 +70,9 @@ namespace Sudo
 	};
 
 	bool TouchClientConnection();
+	bool HasClientConnection();
 	void ClientSetLastCurDir(const char *path);
+	bool ClientGetLastCurDir(char *path, size_t size);
 	
 	class ClientReconstructCurDir
 	{

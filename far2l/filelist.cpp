@@ -1749,7 +1749,7 @@ int FileList::ProcessKey(int Key)
 		{
 			_ALGO(CleverSysLog clv(L"F5/F6/Alt-F6/DragCopy/DragMove"));
 			_ALGO(SysLog(L"%ls, FileCount=%d Key=%ls",(PanelMode==PLUGIN_PANEL?"PluginPanel":"FilePanel"),FileCount,_FARKEY_ToName(Key)));
-
+			SudoClientRegion sdc_rgn;
 			ProcessCopyKeys(Key);
 
 			return TRUE;
@@ -1759,7 +1759,7 @@ int FileList::ProcessKey(int Key)
 		{
 			_ALGO(CleverSysLog clv(L"Alt-F5"));
 			_ALGO(SysLog(L"%ls, FileCount=%d",(PanelMode==PLUGIN_PANEL?"PluginPanel":"FilePanel"),FileCount));
-
+			SudoClientRegion sdc_rgn;
 			// $ 11.03.2001 VVM - Печать через pman только из файловых панелей.
 			if ((PanelMode!=PLUGIN_PANEL) && (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER)))
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER,OPEN_FILEPANEL,0); // printman
@@ -1773,7 +1773,7 @@ int FileList::ProcessKey(int Key)
 		{
 			_ALGO(CleverSysLog clv(L"Shift-F5/Shift-F6"));
 			_ALGO(SysLog(L"%ls, FileCount=%d Key=%ls",(PanelMode==PLUGIN_PANEL?"PluginPanel":"FilePanel"),FileCount,_FARKEY_ToName(Key)));
-
+			SudoClientRegion sdc_rgn;
 			if (FileCount>0 && SetCurPath())
 			{
 				int OldFileCount=FileCount,OldCurFile=CurFile;
@@ -1817,6 +1817,7 @@ int FileList::ProcessKey(int Key)
 			_ALGO(CleverSysLog clv(L"F7"));
 			_ALGO(SysLog(L"%ls, FileCount=%d",(PanelMode==PLUGIN_PANEL?"PluginPanel":"FilePanel"),FileCount));
 
+			SudoClientRegion sdc_rgn;
 			if (SetCurPath())
 			{
 				if (PanelMode==PLUGIN_PANEL && !CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARMAKEDIRECTORY))
@@ -1864,7 +1865,7 @@ int FileList::ProcessKey(int Key)
 		{
 			_ALGO(CleverSysLog clv(L"F8/Shift-F8/Shift-Del/Alt-Del"));
 			_ALGO(SysLog(L"%ls, FileCount=%d, Key=%ls",(PanelMode==PLUGIN_PANEL?"PluginPanel":"FilePanel"),FileCount,_FARKEY_ToName(Key)));
-
+			SudoClientRegion sdc_rgn;
 			if (FileCount>0 && SetCurPath())
 			{
 				if (Key==KEY_SHIFTF8)

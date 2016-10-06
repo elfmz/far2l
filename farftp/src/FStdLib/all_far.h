@@ -4,6 +4,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
+#include <sudo.h>
 
 #include <signal.h>             // SIGxxx
 #include <sys/stat.h>           // stat

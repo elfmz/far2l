@@ -244,7 +244,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 					{
 						char str[MAX_PATH];  //Must be static buff because of MkTemp
 						FP_FSF->MkTemp(str,"FTP");
-						mkdir(str, 0777);
+						sdc_mkdir(str, 0777);
 						AddEndSlash(str,'/',ARRAYSIZE(str));
 						StrCat(str, "FTPDir.txt", ARRAYSIZE(str));
 						file = creat(str, S_IREAD | S_IWRITE | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);

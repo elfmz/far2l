@@ -7,6 +7,7 @@
 #include <mutex>
 #include "WinCompat.h"
 #include "WinPort.h"
+#include "sudo.h"
 #include "PathHelpers.h"
 #include <utils.h>
 
@@ -45,15 +46,6 @@ std::string FromUTF16(const wchar_t *pw)
 }
 */
 
-#ifdef __APPLE__
-char *get_current_dir_name()
-{
-    char buf[4096];
-    char *path = getcwd(buf, sizeof(buf));
-    return (!path) ? path : strdup(path);
-}
-#endif
-
 void RectifyPath(std::string &s)
 {
 	std::string tmp;
@@ -70,11 +62,13 @@ void RectifyPath(std::string &s)
 	s.swap(tmp);
 	if (s[0]!=GOOD_SLASH && (s[0]!='.' || s[1]!=GOOD_SLASH)) {
 		s.insert(s.begin(), GOOD_SLASH);
-		char *dir = get_current_dir_name();
-		if (dir) {
+		char buf[MAX_PATH + 1];
+		char *dir = sdc_getcwd(buf, ARRAYSIZE(buf) - 1);
+		buf[ARRAYSIZE(buf) - 1] = 0;
+		
+		if (dir)
 			s.insert(0, dir);
-			free(dir);
-		} else
+		else
 			s.insert(s.begin(), '.');
 	}
 	

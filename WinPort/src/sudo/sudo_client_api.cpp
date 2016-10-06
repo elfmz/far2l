@@ -412,7 +412,8 @@ extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *
 					ct.SendPOD(remote);
 					ct.RecvInt();
 				}
-			}
+			} else
+				ct.RecvErrno();
 
 		} catch(const char *what) {
 			fprintf(stderr, "sudo_client: opendir('%s') - error %s\n", path, what);
@@ -518,10 +519,45 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_mkdir(const char *pat
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *path)
 {
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	fprintf(stderr, "sdc_chdir: %s\n", path);
+	int r = chdir(path);
+	
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection()) {
+		std::string cwd;
+		try {
+			ClientTransaction ct(SUDO_CMD_CHDIR);
+			ct.SendStr(path);
+			r = ct.RecvInt();
+			if (r==-1) {
+				ct.RecvErrno();
+			} else {
+				ct.RecvStr(cwd);
+				errno = saved_errno;
+			}
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: sdc_chdir('%s') - error %s\n", path, what);
+			r = -1;
+		}
+		if (!cwd.empty())
+			ClientSetLastCurDir(cwd.c_str());
+	} else {
+		char buf[PATH_MAX + 1];
+		//todo: simulate chdir in case of access denied without active connection
+		if (getcwd(buf, sizeof(buf)-1)) {
+			ClientSetLastCurDir(buf);
+		}
+	}
+
+	/*
 	int r = common_one_path(SUDO_CMD_CHDIR, &chdir, path);
-	if (r==0)
+	if (r==0 || (IsAccessDeniedErrno() && !HasClientConnection())) {
+		fprintf(stderr, "sdc_chdir apply %s - %d\n", path, r);
 		ClientSetLastCurDir(path);
-	fprintf(stderr, "sdc_chdir %s - %d\n", path, r);
+	} else
+		fprintf(stderr, "sdc_chdir deny %s - %d\n", path, errno);*/
+	
 	return r;
 }
 
@@ -663,6 +699,17 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_realpath(const char
 		}
 	}
 	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, size_t size)
+{
+	if (!ClientGetLastCurDir(buf, size))
+		return NULL;
+	
+	if (*buf)
+		return buf;
+
+	return getcwd(buf, size);
 }
 
 

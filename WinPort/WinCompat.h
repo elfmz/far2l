@@ -54,15 +54,15 @@ typedef unsigned __int64 uint64_t;
 
 #define _wcsdup wcsdup
 #define _strdup strdup
-#define _close close
+#define _close sdc_close
 #define _mkdir(dir) sdc_mkdir(dir, 0775)
-#define _rmdir rmdir
-#define _open open
-#define _getcwd getcwd
-#define _chdir chdir
-#define _write write
-#define _read read
-#define _lseek lseek
+#define _rmdir sdc_rmdir
+#define _open sdc_open
+#define _getcwd sdc_getcwd
+#define _chdir sdc_chdir
+#define _write sdc_write
+#define _read sdc_read
+#define _lseek sdc_lseek
 #define _chsize sdc_ftruncate
 #define _swab swab
 #define _itoa itoa

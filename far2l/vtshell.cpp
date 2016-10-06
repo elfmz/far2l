@@ -691,7 +691,7 @@ static bool shown_tip_ctrl_alc_c = false;
 static bool shown_tip_exit = false;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
-		if (!getcwd(cd, MAX_PATH)) perror("getcwd");
+		if (!sdc_getcwd(cd, MAX_PATH)) perror("getcwd");
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());

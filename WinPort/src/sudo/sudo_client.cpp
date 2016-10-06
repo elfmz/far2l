@@ -23,8 +23,21 @@ namespace Sudo
 	
 	void ClientSetLastCurDir(const char *path)
 	{
+		fprintf(stderr, "ClientSetLastCurDir: %s\n", path);
 		std::lock_guard<std::mutex> lock(s_client_mutex);
 		g_last_curdir = path;
+	}
+	
+	bool ClientGetLastCurDir(char *path, size_t size)
+	{
+		std::lock_guard<std::mutex> lock(s_client_mutex);
+		if (g_last_curdir.size() >= size ) {
+			errno = ERANGE;
+			return false;
+		}
+		
+		strcpy(path, g_last_curdir.c_str() );
+		return true;
 	}
 	
 	ClientReconstructCurDir::ClientReconstructCurDir(const char * &path)
@@ -34,7 +47,13 @@ namespace Sudo
 			std::lock_guard<std::mutex> lock(s_client_mutex);
 			if (!g_last_curdir.empty()) {
 				std::string  str = g_last_curdir;
-				if (path[0] == '.' && path[1] == '/') {
+				if (strcmp(path, ".")==0 || strcmp(path, "./")==0) {
+					
+				} else if (strcmp(path, "..")==0 || strcmp(path, "../")==0) {
+					size_t p = str.rfind('/');
+					if (p!=std::string::npos)
+						str.resize(p);
+				} else if (path[0] == '.' && path[1] == '/') {
 					str+= &path[1];
 				} else {
 					str+= '/';
@@ -116,8 +135,12 @@ namespace Sudo
 				bt.SendPOD(cmd);
 				bt.SendStr(g_last_curdir.c_str());
 				int r = bt.RecvInt();
-				if (r == -1)
+				if (r == -1) {
 					bt.RecvErrno();
+				} else {
+					std::string str;
+					bt.RecvStr(str);
+				}
 				
 				bt.RecvPOD(cmd);
 			
@@ -139,6 +162,12 @@ namespace Sudo
 		return true;
 	}
 
+	bool HasClientConnection()
+	{
+		std::lock_guard<std::mutex> lock(s_client_mutex);
+		return (s_client_pipe_send!=-1 && s_client_pipe_recv!=-1);
+	}
+	
 	bool TouchClientConnection()
 	{
 		if (!thread_client_region_counter.count || thread_client_region_counter.failed) {

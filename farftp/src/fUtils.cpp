@@ -182,7 +182,7 @@ BOOL FTP::FTP_SetDirectory(LPCSTR dir,BOOL FromPlugin)
 	if(FromPlugin)
 		return SetDirectory(dir,OPM_SILENT) == TRUE;
 	else
-		return chdir(dir) == 0;
+		return sdc_chdir(dir) == 0;
 }
 
 BOOL FTP::FTP_GetFindData(PluginPanelItem **PanelItem,int *ItemsNumber,BOOL FromPlugin)

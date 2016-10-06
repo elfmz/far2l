@@ -175,7 +175,7 @@ extern "C"
 			return false;			
 		}
 			
-		return (rename(ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
+		return (sdc_rename(ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
 	}
 
 	BOOL WINPORT(MoveFileEx)(LPCWSTR ExistingFileName, LPCWSTR NewFileName,DWORD dwFlags)
@@ -183,7 +183,7 @@ extern "C"
 		if ((dwFlags&MOVEFILE_REPLACE_EXISTING)==0)
 			return WINPORT(MoveFile)(ExistingFileName, NewFileName);
 
-		return (rename(ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
+		return (sdc_rename(ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
 	}
 
 	DWORD WINPORT(GetCurrentDirectory)( DWORD  nBufferLength, LPWSTR lpBuffer)

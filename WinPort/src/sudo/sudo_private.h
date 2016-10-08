@@ -70,7 +70,7 @@ namespace Sudo
 		void NewTransaction(SudoCommand cmd);
 	};
 
-	bool TouchClientConnection();
+	bool TouchClientConnection(bool want_modify);
 	bool IsSudoRegionActive();
 	
 	void ClientCurDirOverrideReset();

@@ -3214,15 +3214,11 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 			INT_PTR ss = FarAdvControl(ModuleNumber, ACTL_GETSYSTEMSETTINGS, 0);
 			INT_PTR ret = 0;
 
-			if (ss&oldfar::FSS_CLEARROATTRIBUTE)          ret|=FSS_CLEARROATTRIBUTE;
-
 			if (ss&oldfar::FSS_DELETETORECYCLEBIN)        ret|=FSS_DELETETORECYCLEBIN;
 
 			if (ss&oldfar::FSS_WRITETHROUGH)              ret|=FSS_WRITETHROUGH;
 
 			if (ss&oldfar::FSS_COPYFILESOPENEDFORWRITING) ret|=FSS_COPYFILESOPENEDFORWRITING;
-
-			if (ss&oldfar::FSS_CREATEFOLDERSINUPPERCASE)  ret|=FSS_CREATEFOLDERSINUPPERCASE;
 
 			if (ss&oldfar::FSS_SAVECOMMANDSHISTORY)       ret|=FSS_SAVECOMMANDSHISTORY;
 

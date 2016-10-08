@@ -7,7 +7,11 @@
 #include <list>
 #include <string>
 #include <algorithm>
-#include "sudo_common.h"
+#include "sudo_private.h"
+#include "sudo.h"
+
+
+bool SudoClientConfirm();
 
 namespace Sudo 
 {
@@ -17,10 +21,31 @@ namespace Sudo
 	static std::string g_curdir_override;
 	static struct ListOfStrings : std::list<std::string> {} g_known_curdirs;
 	
+	static int (*g_sudo_launcher)(int pipe_request, int pipe_reply) = nullptr;
+	
+	enum ModifyState
+	{
+		MODIFY_UNDEFINED = 0,
+		MODIFY_ALLOWED,
+		MODIFY_DENIED		
+	};
+	struct ThreadRegionCounter
+	{
+		int count;
+		ModifyState modify;
+		bool cancelled;
+	};
+	
+	thread_local ThreadRegionCounter thread_client_region_counter = { 0, MODIFY_UNDEFINED, false };
+	static int global_client_region_counter = 0;
+	static SudoClientMode client_mode = SCM_DISABLE;
+	static time_t client_askpass_timeout = 0;
+	static time_t client_askpass_timestamp = 0;
+
+	
 	enum {
 		KNOWN_CURDIRS_LIMIT = 4
 	};
-
 
 	static void CloseClientConnection()
 	{
@@ -28,6 +53,116 @@ namespace Sudo
 		CheckedCloseFD(s_client_pipe_recv);
 	}
 	
+	static bool ClientInitSequence()
+	{
+		try {
+			SudoCommand cmd = SUDO_CMD_PING;
+			BaseTransaction bt(s_client_pipe_send, s_client_pipe_recv);
+			bt.SendPOD(cmd);
+			bt.RecvPOD(cmd);
+
+			if (bt.IsFailed() || cmd!=SUDO_CMD_PING)
+				throw "ping failed";
+				
+			if (!g_curdir_override.empty()) {
+				cmd = SUDO_CMD_CHDIR;
+				bt.SendPOD(cmd);
+				bt.SendStr(g_curdir_override.c_str());
+				int r = bt.RecvInt();
+				if (r == -1) {
+					bt.RecvErrno();
+				} else {
+					std::string str;
+					bt.RecvStr(str);
+				}
+				
+				bt.RecvPOD(cmd);
+			
+				if (bt.IsFailed() || cmd!=SUDO_CMD_CHDIR)
+					throw "chdir failed";
+					
+				fprintf(stderr, "Sudo::ClientInitSequence: chdir='%s' -> %d\n", g_curdir_override.c_str(), r);
+			}
+
+		} catch (const char *what) {
+			fprintf(stderr, "Sudo::ClientInitSequence - %s\n", what);
+			CloseClientConnection();
+			return false;
+		}
+		
+		return true;
+	}
+/*
+	static bool ClientConfirm()
+	{
+		
+		
+		//actually its possible to show dialog right from here however
+		//this would be dangerous due to possible reentrancy problems
+		bool out = false;
+		try {
+			SudoCommand cmd = SUDO_CMD_CONFIRM;
+			BaseTransaction bt(s_client_pipe_send, s_client_pipe_recv);
+			bt.SendPOD(cmd);
+			int r = bt.RecvInt();
+			bt.RecvPOD(cmd);
+			if (bt.IsFailed() || cmd!=SUDO_CMD_CONFIRM)
+				throw "confirm failed";
+
+			out = (r != 0);
+		} catch (const char *what) {
+			fprintf(stderr, "Sudo::ClientConfirm - %s\n", what);
+			CloseClientConnection();
+		}
+		
+		return out;
+	}*/
+
+	static bool OpenClientConnection()
+	{
+		if (!g_sudo_launcher)
+			return false;
+			
+		int req[2] = {-1, -1}, rep[2] = {-1, -1};
+		if (pipe(req)==-1)
+			return false;
+		if (pipe(rep)==-1) {
+			CheckedCloseFDPair(req);
+			return false;
+		}
+				
+		fcntl(req[1], F_SETFD, FD_CLOEXEC);
+		fcntl(rep[0], F_SETFD, FD_CLOEXEC);
+				
+		if (g_sudo_launcher(req[0], rep[1])==-1) {//likely missing askpass
+			perror("g_sudo_launcher\n");
+			CheckedCloseFDPair(req);
+			CheckedCloseFDPair(rep);
+			return false;
+		}
+		CheckedCloseFD(req[0]);
+		CheckedCloseFD(rep[1]);
+		s_client_pipe_send = req[1];
+		s_client_pipe_recv = rep[0];
+		return true;
+	}
+
+
+	static void CheckForCloseClientConnection()
+	{
+		if (global_client_region_counter != 0)
+			return;
+			
+		if (client_mode != SCM_DISABLE) {
+			if (time(nullptr) - client_askpass_timestamp < client_askpass_timeout) {
+				return;
+			}
+		}
+			
+		CloseClientConnection();
+	}
+	
+	/////////////////////////////////////////////////////////////////////
 	
 	void ClientCurDirOverrideReset()
 	{
@@ -51,6 +186,9 @@ namespace Sudo
 	{
 		std::string str = path;
 		std::lock_guard<std::mutex> lock(s_client_mutex);
+		if (client_mode == SCM_DISABLE)
+			return false;
+
 		ListOfStrings::iterator  i = 
 			std::find(g_known_curdirs.begin(), g_known_curdirs.end(), str);
 		if (i == g_known_curdirs.end())
@@ -107,18 +245,17 @@ namespace Sudo
 	}
 	
 /////////////////////////
-	static int (*g_sudo_launcher)(int pipe_request, int pipe_reply) = nullptr;
-	
-	struct ThreadRegionCounter
-	{
-		int count;
-		int failed;
-	};
-	
-	thread_local ThreadRegionCounter thread_client_region_counter = { 0, 0 };
-	static int global_client_region_counter = 0;
-
 	extern "C" {
+		
+		
+		void sudo_client_configure(SudoClientMode mode, int askpass_timeout)
+		{
+			std::lock_guard<std::mutex> lock(s_client_mutex);
+			client_mode = mode;
+			client_askpass_timeout = askpass_timeout;
+			CheckForCloseClientConnection();
+		}
+		
 		__attribute__ ((visibility("default"))) void sudo_client(int (*p_sudo_launcher)(int pipe_request, int pipe_reply))
 		{
 			std::lock_guard<std::mutex> lock(s_client_mutex);
@@ -142,53 +279,15 @@ namespace Sudo
 			global_client_region_counter--;
 			thread_client_region_counter.count--;
 			
-			if (!thread_client_region_counter.count)
-				thread_client_region_counter.failed = 0;
+			if (!thread_client_region_counter.count) {
+				thread_client_region_counter.cancelled = false;
+				thread_client_region_counter.modify = MODIFY_UNDEFINED;
+			}
 
-			if (!global_client_region_counter)
-				CloseClientConnection();
+			CheckForCloseClientConnection();
 		}
 	}
 	
-	static bool ClientInitSequence()
-	{
-		try {
-			SudoCommand cmd = SUDO_CMD_PING;
-			BaseTransaction bt(s_client_pipe_send, s_client_pipe_recv);
-			bt.SendPOD(cmd);
-			bt.RecvPOD(cmd);
-
-			if (bt.IsFailed() || cmd!=SUDO_CMD_PING)
-				throw "ping failed";
-				
-			if (!g_curdir_override.empty()) {
-				cmd = SUDO_CMD_CHDIR;
-				bt.SendPOD(cmd);
-				bt.SendStr(g_curdir_override.c_str());
-				int r = bt.RecvInt();
-				if (r == -1) {
-					bt.RecvErrno();
-				} else {
-					std::string str;
-					bt.RecvStr(str);
-				}
-				
-				bt.RecvPOD(cmd);
-			
-				if (bt.IsFailed() || cmd!=SUDO_CMD_CHDIR)
-					throw "chdir failed";
-					
-				fprintf(stderr, "Sudo::ClientInitSequence: chdir='%s' -> %d\n", g_curdir_override.c_str(), r);
-			}
-
-		} catch (const char *what) {
-			fprintf(stderr, "Sudo::ClientInitSequence - %s\n", what);
-			CloseClientConnection();
-			return false;
-		}
-		
-		return true;
-	}
 
 	bool IsSudoRegionActive()
 	{
@@ -196,45 +295,41 @@ namespace Sudo
 		return (s_client_pipe_send!=-1 && s_client_pipe_recv!=-1 && thread_client_region_counter.count);
 	}
 	
-	bool TouchClientConnection()
+	bool TouchClientConnection(bool want_modify)
 	{
-		if (!thread_client_region_counter.count || thread_client_region_counter.failed) {
+		if (!thread_client_region_counter.count || thread_client_region_counter.cancelled) {
 			return false;
 		}
 
 		ErrnoSaver es;
 		std::lock_guard<std::mutex> lock(s_client_mutex);
+		if (client_mode == SCM_DISABLE)
+			return false;
+
 		if (s_client_pipe_send==-1 || s_client_pipe_recv==-1) {
 			CloseClientConnection();
-			if (g_sudo_launcher) {
-				int req[2] = {-1, -1}, rep[2] = {-1, -1};
-				if (pipe(req)==-1)
-					return false;
-				if (pipe(rep)==-1) {
-					CheckedCloseFDPair(req);
-					return false;
-				}
-				fcntl(req[1], F_SETFD, FD_CLOEXEC);
-				fcntl(rep[0], F_SETFD, FD_CLOEXEC);
+			if (!OpenClientConnection())
+				return false;
 				
-				if (g_sudo_launcher(req[0], rep[1])==-1) {//likely missing askpass
-					perror("g_sudo_launcher\n");
-					CheckedCloseFDPair(req);
-					CheckedCloseFDPair(rep);
-					thread_client_region_counter.failed = 1;
-					return false;
-				}
-				CheckedCloseFD(req[0]);
-				CheckedCloseFD(rep[1]);
-				s_client_pipe_send = req[1];
-				s_client_pipe_recv = rep[0];
-				if (!ClientInitSequence()) {//likely bad password or Cancel
-					thread_client_region_counter.failed = 1;
-					return false; 
-				}
+			if (!ClientInitSequence()) {//likely bad password or Cancel
+				thread_client_region_counter.cancelled = true;
+				return false; 
 			}
-		}
 			
+			//assume user confirmed also modify operation with this password
+			if (want_modify && client_mode == SCM_CONFIRM_MODIFY )
+				thread_client_region_counter.modify = MODIFY_ALLOWED;
+
+			client_askpass_timestamp = time(nullptr);
+
+		} else if (want_modify && client_mode == SCM_CONFIRM_MODIFY ) {
+			if (thread_client_region_counter.modify == MODIFY_UNDEFINED) {
+				thread_client_region_counter.modify = 
+					SudoClientConfirm() ? MODIFY_ALLOWED : MODIFY_DENIED;
+			}
+			return (thread_client_region_counter.modify == MODIFY_ALLOWED);
+		}
+
 		return true;
 	}
 

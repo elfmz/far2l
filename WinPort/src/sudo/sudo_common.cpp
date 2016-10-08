@@ -5,7 +5,7 @@
 #include <mutex>
 #include <fcntl.h>
 #include <assert.h>
-#include "sudo_common.h"
+#include "sudo_private.h"
 
 namespace Sudo
 {

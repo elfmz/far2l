@@ -576,8 +576,9 @@ static int SudoLauncher(int pipe_request, int pipe_reply)
 	
 	setenv("far2l_sudo_title", Wide2MB(MSG(MSudoTitle)).c_str(), 1);
 	setenv("far2l_sudo_prompt", Wide2MB(MSG(MSudoPrompt)).c_str(), 1);
+	setenv("far2l_sudo_confirm", Wide2MB(MSG(MSudoConfirm)).c_str(), 1);
 
-	fprintf(stderr, "SudoLauncher (paranoic=%u): far2l_path='%s'\n", Opt.SudoParanoic, far2l_path.c_str());
+	fprintf(stderr, "SudoLauncher far2l_path='%s'\n", far2l_path.c_str());
 	
 	int r = fork();
 	if (r==0) {	
@@ -589,11 +590,7 @@ static int SudoLauncher(int pipe_request, int pipe_reply)
 		
 		//if process doesn't hav terminal then sudo caches password per parent pid
 		//so don't use intermediate shell for running it!
-		if (Opt.SudoParanoic) {
-			r = execlp("sudo", "-n", "-A", "-k", far2l_path.c_str(), "--sudo", NULL);
-		} else {
-			r = execlp("sudo", "-n", "-A", far2l_path.c_str(), "--sudo", NULL);
-		}
+		r = execlp("sudo", "-n", "-A", "-k", far2l_path.c_str(), "--sudo", NULL);
 		perror("execl");
 		_exit(r);
 		exit(r);

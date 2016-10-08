@@ -9,7 +9,7 @@
 #include <set>
 #include <vector>
 #include <mutex>
-#include "sudo_common.h"
+#include "sudo_private.h"
 
 namespace Sudo 
 {
@@ -323,7 +323,7 @@ namespace Sudo
 		switch (cmd) {
 			case SUDO_CMD_PING:
 				break;
-		
+				
 			case SUDO_CMD_CLOSE:
 				OnSudoDispatch_Close(bt);
 				break;

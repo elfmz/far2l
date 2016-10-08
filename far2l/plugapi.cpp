@@ -644,12 +644,10 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 			DWORD Options=0;
 			static Opt2Flags OSys[]=
 			{
-				{&Opt.ClearReadOnly,FSS_CLEARROATTRIBUTE},
 				{&Opt.DeleteToRecycleBin,FSS_DELETETORECYCLEBIN},
 				{&Opt.CMOpt.WriteThrough,FSS_WRITETHROUGH},
 				{&Opt.CMOpt.CopyOpened,FSS_COPYFILESOPENEDFORWRITING},
 				{&Opt.ScanJunction,FSS_SCANSYMLINK},
-				{&Opt.CreateUppercaseFolders,FSS_CREATEFOLDERSINUPPERCASE},
 				{&Opt.SaveHistory,FSS_SAVECOMMANDSHISTORY},
 				{&Opt.SaveFoldersHistory,FSS_SAVEFOLDERSHISTORY},
 				{&Opt.SaveViewHistory,FSS_SAVEVIEWANDEDITHISTORY},

@@ -3,7 +3,9 @@
 #include <WinPort.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <fcntl.h>
 #include "ConvertUTF.h"
+#include <errno.h>
 
 //TODO: Implement convertion according to locale set, but not only UTF8
 //NB: Routines here should not change or preserve result of WINPORT(GetLastError)
@@ -245,4 +247,20 @@ ErrnoSaver::ErrnoSaver() : v(errno)
 ErrnoSaver::~ErrnoSaver() 
 { 
 	errno = v;
+}
+
+
+//////////
+int pipe_cloexec(int pipedes[2])
+{
+#ifdef __APPLE__
+	int r = pipe(pipedes);
+	if (r==0) {
+		fcntl(pipedes[0], F_SETFD, FD_CLOEXEC);
+		fcntl(pipedes[1], F_SETFD, FD_CLOEXEC);
+	}
+	return r;
+#else
+	return pipe2(pipedes, O_CLOEXEC);
+#endif	
 }

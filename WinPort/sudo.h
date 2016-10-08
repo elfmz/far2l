@@ -13,7 +13,7 @@ extern "C" {
 	 SCM_CONFIRM_MODIFY,
 	 SCM_CONFIRM_NONE
  } SudoClientMode;
- void sudo_client_configure(SudoClientMode mode, int askpass_timeout);
+ void sudo_client_configure(SudoClientMode mode, int password_expiration);
  
  __attribute__ ((visibility("default"))) void sudo_client(int (*p_sudo_launcher)(int pipe_request, int pipe_reply));
  __attribute__ ((visibility("default"))) void sudo_dispatcher(int pipe_request, int pipe_reply);

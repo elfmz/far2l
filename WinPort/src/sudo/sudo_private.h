@@ -75,7 +75,7 @@ namespace Sudo
 	
 	void ClientCurDirOverrideReset();
 	void ClientCurDirOverrideSet(const char *path);
-	bool ClientCurDirOverrideSetIfKnown(const char *path);
+	bool ClientCurDirOverrideSetIfRecent(const char *path);
 	bool ClientCurDirOverrideQuery(char *path, size_t size);
 	
 	class ClientReconstructCurDir

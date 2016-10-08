@@ -19,7 +19,7 @@ namespace Sudo
 	static int s_client_pipe_send = -1;
 	static int s_client_pipe_recv = -1;
 	static std::string g_curdir_override;
-	static struct ListOfStrings : std::list<std::string> {} g_known_curdirs;
+	static struct ListOfStrings : std::list<std::string> {} g_recent_curdirs;
 	
 	static int (*g_sudo_launcher)(int pipe_request, int pipe_reply) = nullptr;
 	
@@ -39,12 +39,12 @@ namespace Sudo
 	thread_local ThreadRegionCounter thread_client_region_counter = { 0, MODIFY_UNDEFINED, false };
 	static int global_client_region_counter = 0;
 	static SudoClientMode client_mode = SCM_DISABLE;
-	static time_t client_askpass_timeout = 0;
-	static time_t client_askpass_timestamp = 0;
+	static time_t client_password_expiration = 0;
+	static time_t client_password_timestamp = 0;
 
 	
 	enum {
-		KNOWN_CURDIRS_LIMIT = 4
+		RECENT_CURDIRS_LIMIT = 4
 	};
 
 	static void CloseClientConnection()
@@ -92,31 +92,7 @@ namespace Sudo
 		
 		return true;
 	}
-/*
-	static bool ClientConfirm()
-	{
-		
-		
-		//actually its possible to show dialog right from here however
-		//this would be dangerous due to possible reentrancy problems
-		bool out = false;
-		try {
-			SudoCommand cmd = SUDO_CMD_CONFIRM;
-			BaseTransaction bt(s_client_pipe_send, s_client_pipe_recv);
-			bt.SendPOD(cmd);
-			int r = bt.RecvInt();
-			bt.RecvPOD(cmd);
-			if (bt.IsFailed() || cmd!=SUDO_CMD_CONFIRM)
-				throw "confirm failed";
 
-			out = (r != 0);
-		} catch (const char *what) {
-			fprintf(stderr, "Sudo::ClientConfirm - %s\n", what);
-			CloseClientConnection();
-		}
-		
-		return out;
-	}*/
 
 	static bool OpenClientConnection()
 	{
@@ -154,7 +130,7 @@ namespace Sudo
 			return;
 			
 		if (client_mode != SCM_DISABLE) {
-			if (time(nullptr) - client_askpass_timestamp < client_askpass_timeout) {
+			if (time(nullptr) - client_password_timestamp < client_password_expiration) {
 				return;
 			}
 		}
@@ -176,13 +152,13 @@ namespace Sudo
 		std::lock_guard<std::mutex> lock(s_client_mutex);
 		g_curdir_override = path;
 		if (!g_curdir_override.empty()) {
-			g_known_curdirs.push_back(g_curdir_override);
-			while (g_known_curdirs.size() > KNOWN_CURDIRS_LIMIT)
-				g_known_curdirs.pop_front();
+			g_recent_curdirs.push_back(g_curdir_override);
+			while (g_recent_curdirs.size() > RECENT_CURDIRS_LIMIT)
+				g_recent_curdirs.pop_front();
 		}
 	}
 	
-	bool ClientCurDirOverrideSetIfKnown(const char *path)
+	bool ClientCurDirOverrideSetIfRecent(const char *path)
 	{
 		std::string str = path;
 		std::lock_guard<std::mutex> lock(s_client_mutex);
@@ -190,13 +166,13 @@ namespace Sudo
 			return false;
 
 		ListOfStrings::iterator  i = 
-			std::find(g_known_curdirs.begin(), g_known_curdirs.end(), str);
-		if (i == g_known_curdirs.end())
+			std::find(g_recent_curdirs.begin(), g_recent_curdirs.end(), str);
+		if (i == g_recent_curdirs.end())
 			return false;
 		
 		g_curdir_override.swap(str);
-		g_known_curdirs.erase(i);
-		g_known_curdirs.push_back(g_curdir_override);
+		g_recent_curdirs.erase(i);
+		g_recent_curdirs.push_back(g_curdir_override);
 		return true;
 	}
 	
@@ -248,11 +224,11 @@ namespace Sudo
 	extern "C" {
 		
 		
-		void sudo_client_configure(SudoClientMode mode, int askpass_timeout)
+		void sudo_client_configure(SudoClientMode mode, int password_expiration)
 		{
 			std::lock_guard<std::mutex> lock(s_client_mutex);
 			client_mode = mode;
-			client_askpass_timeout = askpass_timeout;
+			client_password_expiration = password_expiration;
 			CheckForCloseClientConnection();
 		}
 		
@@ -320,7 +296,7 @@ namespace Sudo
 			if (want_modify && client_mode == SCM_CONFIRM_MODIFY )
 				thread_client_region_counter.modify = MODIFY_ALLOWED;
 
-			client_askpass_timestamp = time(nullptr);
+			client_password_timestamp = time(nullptr);
 
 		} else if (want_modify && client_mode == SCM_CONFIRM_MODIFY ) {
 			if (thread_client_region_counter.modify == MODIFY_UNDEFINED) {

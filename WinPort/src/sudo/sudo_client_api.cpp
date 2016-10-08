@@ -551,7 +551,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 		//cuz we're out of sudo region now
 		//Right solution would be putting TAB worker code into sudo region
 		//but showing sudo just to switch focus between panels is bad UX
-		if (ClientCurDirOverrideSetIfKnown(path)) {
+		if (ClientCurDirOverrideSetIfRecent(path)) {
 			r = 0;
 			errno = saved_errno;
 		} else {

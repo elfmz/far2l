@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+ int sudo_askpass(int pipe_sendpass);
+ 
  __attribute__ ((visibility("default"))) void sudo_client(int (*p_sudo_launcher)(int pipe_request, int pipe_reply));
  __attribute__ ((visibility("default"))) void sudo_dispatcher(int pipe_request, int pipe_reply);
 

@@ -563,32 +563,18 @@ int FarAppMain(int argc, char **argv)
 }
 
 
-static bool DetectAskPass(const char *possible)
-{
-	struct stat s = {0};
-	if (stat(possible, &s)==0 && (s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0) {
-		setenv("SUDO_ASKPASS", possible, 1);
-		fprintf(stderr, "DetectAskPass: found %s\n", possible);
-		return true;
-	}
-	return false;
-}
-
 static int SudoLauncher(int pipe_request, int pipe_reply)
 {
+	const std::string & far2l_path = Wide2MB(g_strFarModuleName.CPtr());
 	char *askpass = getenv("SUDO_ASKPASS");
 	struct stat s = {0};
 	if (!askpass || !*askpass || stat(askpass, &s)==-1) {
-		fprintf(stderr, "SudoLauncher: SUDO_ASKPASS env not set or invalid\n");
-		if (!DetectAskPass("/usr/lib/openssh/gnome-ssh-askpass")
-			&& !DetectAskPass("/usr/bin/ssh-askpass")
-			&& !DetectAskPass("/usr/lib/ssh/x11-ssh-askpass")) {
-			return -1;
-		}
+		std::string far2l_askpass = g_strFarPath.GetMB();
+		far2l_askpass+= "/askpass";
+		setenv("SUDO_ASKPASS", far2l_askpass.c_str(), 1);
 	}
-	const std::string & far2l_path = Wide2MB(g_strFarModuleName.CPtr());
 
-	fprintf(stderr, "SudoLauncher (paranoic=%u): %s\n", Opt.SudoParanoic, far2l_path.c_str());
+	fprintf(stderr, "SudoLauncher (paranoic=%u): far2l_path='%s'\n", Opt.SudoParanoic, far2l_path.c_str());
 	
 	int r = fork();
 	if (r==0) {	
@@ -639,21 +625,46 @@ void SudoTest()
 */
 
 
+int main_sudo_dispatcher()
+{
+	int pipe_reply = dup(STDOUT_FILENO);
+	int pipe_request = dup(STDIN_FILENO);
+	int fd = open("/dev/null", O_RDWR);
+	if (fd!=-1) {
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDIN_FILENO);
+		close(fd);
+	} else
+		perror("open /dev/null");
+
+	sudo_dispatcher(pipe_request, pipe_reply);
+	return 0;	
+}
+
+int main_sudo_askpass()
+{
+	int pipe_sendpass = dup(STDOUT_FILENO);
+	int fd = open("/dev/null", O_RDWR);
+	if (fd!=-1) {
+		dup2(fd, STDOUT_FILENO);
+		close(fd);
+	} else
+		perror("open /dev/null");
+
+	sudo_askpass(pipe_sendpass);
+	return 0;	
+}
 
 int _cdecl main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
-	if (argc > 1 && strcmp(argv[1], "--sudo")==0 ) {
-		int pipe_reply = dup(STDOUT_FILENO);
-		int pipe_request = dup(STDIN_FILENO);
-		int fd = open("/dev/null", O_RDWR);
-		dup2(fd, STDOUT_FILENO);
-		dup2(fd, STDIN_FILENO);
-		close(fd);
+	char *name = strrchr(argv[0], GOOD_SLASH);
+	if (name) ++name; else name = argv[0];
+	if (strcmp(name, "askpass")==0)
+		return main_sudo_askpass();
 
-		sudo_dispatcher(pipe_request, pipe_reply);
-		return 0;
-	}
+	if (argc > 1 && strcmp(argv[1], "--sudo")==0)
+		return main_sudo_dispatcher();
 
 	SetupFarPath(argc, argv);
 	sudo_client(SudoLauncher);

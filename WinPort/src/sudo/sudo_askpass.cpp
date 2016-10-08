@@ -13,15 +13,17 @@
 #include <wx/evtloop.h>
 #include <wx/apptrait.h>
 
-extern "C" int sudo_askpass(int pipe_sendpass)
+static int sudo_askpass_to_pipe(int pipe_sendpass)
 {
 	wxInitialize();
-	const char *far2l_sudo_title = getenv("far2l_sudo_title");
-	const char *far2l_sudo_prompt = getenv("far2l_sudo_prompt");
+	const char *title = getenv(SDC_ENV_TITLE);
+	const char *prompt = getenv(SDC_ENV_PROMPT);
+	if (!title)
+		title = "sudo";
+	if (!prompt)
+		prompt = "Enter sudo password:";
 	
-	wxPasswordEntryDialog dlg(nullptr, 
-		far2l_sudo_prompt ? far2l_sudo_prompt : "Enter sudo password:", 
-		far2l_sudo_title ? far2l_sudo_title : "far2l askpass", 
+	wxPasswordEntryDialog dlg(nullptr, prompt, title, 
 		wxString(), wxCENTRE | wxOK | wxCANCEL);
 
 	int r;
@@ -37,5 +39,21 @@ extern "C" int sudo_askpass(int pipe_sendpass)
 	} else
 		r = 1;
 	
+	return r;
+}
+
+extern "C" int sudo_main_askpass()
+{
+	int pipe_sendpass = dup(STDOUT_FILENO);
+	int fd = open("/dev/null", O_RDWR);
+	if (fd!=-1) {
+		dup2(fd, STDOUT_FILENO);
+		close(fd);
+	} else
+		perror("open /dev/null");
+
+	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
+	int r = sudo_askpass_to_pipe(pipe_sendpass);
+	close(fd);
 	return r;
 }

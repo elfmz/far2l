@@ -11,7 +11,7 @@
 #include "sudo.h"
 
 
-bool SudoClientConfirm();
+bool ConfirmationDialog(const char *title, const char *text);
 
 namespace Sudo 
 {
@@ -21,7 +21,7 @@ namespace Sudo
 	static std::string g_curdir_override;
 	static struct ListOfStrings : std::list<std::string> {} g_recent_curdirs;
 	
-	static int (*g_sudo_launcher)(int pipe_request, int pipe_reply) = nullptr;
+	static std::string 	g_sudo_app, g_askpass_app;
 	
 	enum ModifyState
 	{
@@ -92,13 +92,52 @@ namespace Sudo
 		
 		return true;
 	}
+	
+	static bool ClientConfirm()
+	{
+		const char *title = getenv(SDC_ENV_TITLE);
+		const char *text = getenv(SDC_ENV_CONFIRM);
+		if (!title)
+			title = "sudo";
+		if (!text)
+			text = "Confirm priviledged operation";
+		return ConfirmationDialog(title, text);
+	}
 
+	static bool LaunchDispatcher(int pipe_request, int pipe_reply)
+	{
+		struct stat s = {0};
+		
+		if (g_sudo_app.empty() || stat(g_sudo_app.c_str(), &s)==-1)
+			return false;
 
+		char *askpass = getenv("SUDO_ASKPASS");
+		if (!askpass || !*askpass || stat(askpass, &s)==-1) {
+			if (g_askpass_app.empty() || stat(g_askpass_app.c_str(), &s)==-1)
+				return false;
+			setenv("SUDO_ASKPASS", g_askpass_app.c_str(), 1);
+		}
+	
+		int r = fork();
+		if (r==0) {
+			//sudo closes all descriptors except std, so use them
+			dup2(pipe_reply, STDOUT_FILENO);
+			close(pipe_reply);
+			dup2(pipe_request, STDIN_FILENO);
+			close(pipe_request);
+	
+			//if process doesn't hav terminal then sudo caches password per parent pid
+			//so don't use intermediate shell for running it!
+			r = execlp("sudo", "-n", "-A", "-k", g_sudo_app.c_str(), NULL);
+			perror("execl");
+			_exit(r);
+			exit(r);
+		}
+		return ( r != -1);
+	}
+	
 	static bool OpenClientConnection()
 	{
-		if (!g_sudo_launcher)
-			return false;
-			
 		int req[2] = {-1, -1}, rep[2] = {-1, -1};
 		if (pipe(req)==-1)
 			return false;
@@ -110,7 +149,7 @@ namespace Sudo
 		fcntl(req[1], F_SETFD, FD_CLOEXEC);
 		fcntl(rep[0], F_SETFD, FD_CLOEXEC);
 				
-		if (g_sudo_launcher(req[0], rep[1])==-1) {//likely missing askpass
+		if (!LaunchDispatcher(req[0], rep[1])) {//likely missing askpass
 			perror("g_sudo_launcher\n");
 			CheckedCloseFDPair(req);
 			CheckedCloseFDPair(rep);
@@ -224,18 +263,20 @@ namespace Sudo
 	extern "C" {
 		
 		
-		void sudo_client_configure(SudoClientMode mode, int password_expiration)
+		void sudo_client_configure(SudoClientMode mode, int password_expiration, 
+			const char *sudo_app, const char *askpass_app,
+			const char *sudo_title, const char *sudo_prompt, const char *sudo_confirm)
 		{
+			setenv(SDC_ENV_TITLE, sudo_title, 1);
+			setenv(SDC_ENV_PROMPT, sudo_prompt, 1);
+			setenv(SDC_ENV_CONFIRM, sudo_confirm, 1);
+
 			std::lock_guard<std::mutex> lock(s_client_mutex);
+			g_sudo_app = sudo_app;
+			g_askpass_app = askpass_app ? askpass_app : "";
 			client_mode = mode;
 			client_password_expiration = password_expiration;
 			CheckForCloseClientConnection();
-		}
-		
-		__attribute__ ((visibility("default"))) void sudo_client(int (*p_sudo_launcher)(int pipe_request, int pipe_reply))
-		{
-			std::lock_guard<std::mutex> lock(s_client_mutex);
-			g_sudo_launcher = p_sudo_launcher;
 		}
 		
 		
@@ -301,7 +342,7 @@ namespace Sudo
 		} else if (want_modify && client_mode == SCM_CONFIRM_MODIFY ) {
 			if (thread_client_region_counter.modify == MODIFY_UNDEFINED) {
 				thread_client_region_counter.modify = 
-					SudoClientConfirm() ? MODIFY_ALLOWED : MODIFY_DENIED;
+					ClientConfirm() ? MODIFY_ALLOWED : MODIFY_DENIED;
 			}
 			return (thread_client_region_counter.modify == MODIFY_ALLOWED);
 		}

@@ -429,7 +429,7 @@ namespace Sudo
 		}
 	}
 	
-	extern "C" __attribute__ ((visibility("default"))) void sudo_dispatcher(int pipe_request, int pipe_reply)
+	static void sudo_dispatcher_with_pipes(int pipe_request, int pipe_reply)
 	{
 		fprintf(stderr, "sudo_dispatcher(%d, %d)\n", pipe_request, pipe_reply);
 		
@@ -444,6 +444,27 @@ namespace Sudo
 		} catch (const char *what) {
 			fprintf(stderr, "sudo_dispatcher - %s (cmd=%u errno=%u)\n", what, cmd, errno);
 		}
-	}	
+	}
+	
+	
+	extern "C" __attribute__ ((visibility("default"))) int sudo_main_dispatcher()
+	{
+		int pipe_reply = dup(STDOUT_FILENO);
+		int pipe_request = dup(STDIN_FILENO);
+		int fd = open("/dev/null", O_RDWR);
+		if (fd!=-1) {
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDIN_FILENO);
+			close(fd);
+		} else
+			perror("open /dev/null");
+
+		setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
+		sudo_dispatcher_with_pipes(pipe_request, pipe_reply);
+		close(pipe_request);
+		close(pipe_reply);
+		return 0;	
+	}
+
 }
 

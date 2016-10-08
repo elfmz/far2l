@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panelmix.hpp"
 #include "strmix.hpp"
 #include "udlist.hpp"
+#include "datetime.hpp"
 #include "FarDlgBuilder.hpp"
 
 Options Opt={0};
@@ -112,14 +113,21 @@ const wchar_t NKeyVMenu[]=L"VMenu";
 
 const wchar_t *constBatchExt=L".BAT;.CMD;";
 
-static void ApplySudoSettings()
+static void ApplySudoConfiguration()
 {
+ 	std::string sudo_app = g_strFarPath.GetMB(); 
+	std::string askpass_app = g_strFarPath.GetMB(); 
+	
+	sudo_app+= "/sdc_dispatcher";
+	askpass_app+= "/sdc_askpass";
+
 	SudoClientMode mode;
 	if (Opt.SudoEnabled) {
 		mode = Opt.SudoConfirmModify ? SCM_CONFIRM_MODIFY : SCM_CONFIRM_NONE;
 	} else
 		mode = SCM_DISABLE;
-	sudo_client_configure(mode, Opt.SudoPasswordExpiration);
+	sudo_client_configure(mode, Opt.SudoPasswordExpiration, sudo_app.c_str(), askpass_app.c_str(),
+		Wide2MB(MSG(MSudoTitle)).c_str(), Wide2MB(MSG(MSudoPrompt)).c_str(), Wide2MB(MSG(MSudoConfirm)).c_str());
 }
 
 void SystemSettings()
@@ -168,7 +176,7 @@ void SystemSettings()
 	Builder.AddOKCancel();
 
 	Builder.ShowDialog();
-	ApplySudoSettings();
+	ApplySudoConfiguration();
 }
 
 
@@ -996,7 +1004,7 @@ void ReadConfig()
                                   Opt.FindOpt.OutColumnCount);
 	}
 
-	ApplySudoSettings();
+	ApplySudoConfiguration();
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 
@@ -1078,4 +1086,33 @@ void SaveConfig(int Ask)
 		CtrlObject->Macro.SaveMacros();
 
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
+}
+
+void LanguageSettings()
+{
+	VMenu *LangMenu, *HelpMenu;
+
+	if (Select(FALSE, &LangMenu))
+	{
+		Lang.Close();
+
+		if (!Lang.Init(g_strFarPath, true, MNewFileName))
+		{
+			Message(MSG_WARNING, 1, L"Error", L"Cannot load language data", L"Ok");
+			exit(0);
+		}
+
+		Select(TRUE,&HelpMenu);
+		delete HelpMenu;
+		LangMenu->Hide();
+		CtrlObject->Plugins.ReloadLanguage();
+		WINPORT(SetEnvironmentVariable)(L"FARLANG",Opt.strLanguage);
+		PrepareStrFTime();
+		PrepareUnitStr();
+		FrameManager->InitKeyBar();
+		CtrlObject->Cp()->RedrawKeyBar();
+		CtrlObject->Cp()->SetScreenPosition();
+		ApplySudoConfiguration();
+	}
+	delete LangMenu; //???? BUGBUG
 }

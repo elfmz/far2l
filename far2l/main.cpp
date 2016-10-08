@@ -63,7 +63,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <locale.h>
 #include <fcntl.h>
-#include "../WinPort/sudo.h"
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -563,40 +562,6 @@ int FarAppMain(int argc, char **argv)
 }
 
 
-static int SudoLauncher(int pipe_request, int pipe_reply)
-{
-	const std::string & far2l_path = Wide2MB(g_strFarModuleName.CPtr());
-	char *askpass = getenv("SUDO_ASKPASS");
-	struct stat s = {0};
-	if (!askpass || !*askpass || stat(askpass, &s)==-1) {
-		std::string far2l_askpass = g_strFarPath.GetMB();
-		far2l_askpass+= "/askpass";
-		setenv("SUDO_ASKPASS", far2l_askpass.c_str(), 1);
-	}
-	
-	setenv("far2l_sudo_title", Wide2MB(MSG(MSudoTitle)).c_str(), 1);
-	setenv("far2l_sudo_prompt", Wide2MB(MSG(MSudoPrompt)).c_str(), 1);
-	setenv("far2l_sudo_confirm", Wide2MB(MSG(MSudoConfirm)).c_str(), 1);
-
-	fprintf(stderr, "SudoLauncher far2l_path='%s'\n", far2l_path.c_str());
-	
-	int r = fork();
-	if (r==0) {	
-		//sudo closes all descriptors except std, so use them
-		dup2(pipe_reply, STDOUT_FILENO);
-		close(pipe_reply);
-		dup2(pipe_request, STDIN_FILENO); 
-		close(pipe_request);
-		
-		//if process doesn't hav terminal then sudo caches password per parent pid
-		//so don't use intermediate shell for running it!
-		r = execlp("sudo", "-n", "-A", "-k", far2l_path.c_str(), "--sudo", NULL);
-		perror("execl");
-		_exit(r);
-		exit(r);
-	}
-	return r;
-}
 /*void EncodingTest()
 {
 	std::wstring v = MB2Wide("\x80hello\x80""aaaaaaaaaaaa\x80""zzzzzzzzzzz\x80");
@@ -625,51 +590,17 @@ void SudoTest()
 */
 
 
-int main_sudo_dispatcher()
-{
-	int pipe_reply = dup(STDOUT_FILENO);
-	int pipe_request = dup(STDIN_FILENO);
-	int fd = open("/dev/null", O_RDWR);
-	if (fd!=-1) {
-		dup2(fd, STDOUT_FILENO);
-		dup2(fd, STDIN_FILENO);
-		close(fd);
-	} else
-		perror("open /dev/null");
-
-	sudo_dispatcher(pipe_request, pipe_reply);
-	return 0;	
-}
-
-int main_sudo_askpass()
-{
-	int pipe_sendpass = dup(STDOUT_FILENO);
-	int fd = open("/dev/null", O_RDWR);
-	if (fd!=-1) {
-		dup2(fd, STDOUT_FILENO);
-		close(fd);
-	} else
-		perror("open /dev/null");
-
-	sudo_askpass(pipe_sendpass);
-	return 0;	
-}
-
 int _cdecl main(int argc, char *argv[])
 {
-	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
 	char *name = strrchr(argv[0], GOOD_SLASH);
 	if (name) ++name; else name = argv[0];
-	if (strcmp(name, "askpass")==0)
-		return main_sudo_askpass();
+	if (strcmp(name, "sdc_askpass")==0)
+		return sudo_main_askpass();
+	if (strcmp(name, "sdc_dispatcher")==0)
+		return sudo_main_dispatcher();
 
-	if (argc > 1 && strcmp(argv[1], "--sudo")==0)
-		return main_sudo_dispatcher();
-
+	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
 	SetupFarPath(argc, argv);
-	sudo_client(SudoLauncher);
-	
-	//SudoTest();
 
 	apiEnableLowFragmentationHeap();
 	return WinPortMain(argc, argv, FarAppMain);

@@ -573,6 +573,9 @@ static int SudoLauncher(int pipe_request, int pipe_reply)
 		far2l_askpass+= "/askpass";
 		setenv("SUDO_ASKPASS", far2l_askpass.c_str(), 1);
 	}
+	
+	setenv("far2l_sudo_title", Wide2MB(MSG(MSudoTitle)).c_str(), 1);
+	setenv("far2l_sudo_prompt", Wide2MB(MSG(MSudoPrompt)).c_str(), 1);
 
 	fprintf(stderr, "SudoLauncher (paranoic=%u): far2l_path='%s'\n", Opt.SudoParanoic, far2l_path.c_str());
 	

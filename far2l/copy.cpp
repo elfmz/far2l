@@ -1809,9 +1809,6 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			{
 				strNewPath.SetLength(pos+1);
 
-				if (Opt.CreateUppercaseFolders && !IsCaseMixed(strNewPath))
-					strNewPath.Upper();
-
 				DWORD Attr=apiGetFileAttributes(strNewPath);
 
 				if (Attr==INVALID_FILE_ATTRIBUTES)
@@ -2323,9 +2320,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 				{
 					DWORD SetAttr=SrcData.dwFileAttributes;
 
-					if (IsDriveTypeCDROM(SrcDriveType) && Opt.ClearReadOnly && (SetAttr & FILE_ATTRIBUTE_READONLY))
-						SetAttr&=~FILE_ATTRIBUTE_READONLY;
-
 					if (SetAttr!=DestAttr)
 						ShellSetAttr(strDestPath,SetAttr);
 
@@ -2417,9 +2411,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 				}
 
 				DWORD SetAttr=SrcData.dwFileAttributes;
-
-				if (IsDriveTypeCDROM(SrcDriveType) && Opt.ClearReadOnly && (SetAttr & FILE_ATTRIBUTE_READONLY))
-					SetAttr&=~FILE_ATTRIBUTE_READONLY;
 
 				if ((SetAttr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY)
 				{
@@ -2683,10 +2674,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 							strCopiedName = PointToName(strDestPath);
 					}
 
-					if (IsDriveTypeCDROM(SrcDriveType) && Opt.ClearReadOnly &&
-					        (SrcData.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-						ShellSetAttr(strDestPath,SrcData.dwFileAttributes & (~FILE_ATTRIBUTE_READONLY));
-
 					TotalFiles++;
 
 					if (AskDelete && DeleteAfterMove(Src,SrcData.dwFileAttributes)==COPY_CANCEL)
@@ -2709,10 +2696,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 
 					if (!(Flags&FCOPY_COPYTONUL))
 					{
-						if (IsDriveTypeCDROM(SrcDriveType) && Opt.ClearReadOnly &&
-						        (SrcData.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-							ShellSetAttr(strDestPath,SrcData.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
-
 						if (DestAttr!=INVALID_FILE_ATTRIBUTES && !StrCmp(strCopiedName,DestData.strFileName) &&
 						        StrCmp(strCopiedName,DestData.strFileName))
 							apiMoveFile(strDestPath,strDestPath); //???

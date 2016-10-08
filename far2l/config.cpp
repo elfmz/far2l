@@ -112,22 +112,44 @@ const wchar_t NKeyVMenu[]=L"VMenu";
 
 const wchar_t *constBatchExt=L".BAT;.CMD;";
 
+static void ApplySudoSettings()
+{
+	SudoClientMode mode;
+	if (Opt.SudoEnabled) {
+		mode = Opt.SudoConfirmModify ? SCM_CONFIRM_MODIFY : SCM_CONFIRM_NONE;
+	} else
+		mode = SCM_DISABLE;
+	sudo_client_configure(mode, Opt.SudoPasswordExpiration);
+}
+
 void SystemSettings()
 {
 	DialogBuilder Builder(MConfigSystemTitle, L"SystemSettings");
 
-	Builder.AddCheckbox(MConfigRO, &Opt.ClearReadOnly);
+	DialogItemEx *SudoEnabledItem = Builder.AddCheckbox(MConfigSudoEnabled, &Opt.SudoEnabled);
+	DialogItemEx *SudoPasswordExpirationEdit = Builder.AddIntEditField(&Opt.SudoPasswordExpiration, 4);
+	DialogItemEx *SudoPasswordExpirationText = Builder.AddTextBefore(SudoPasswordExpirationEdit, MConfigSudoPasswordExpiration);
+	
+	SudoPasswordExpirationText->Indent(4);
+	SudoPasswordExpirationEdit->Indent(4);
+
+	DialogItemEx *SudoConfirmModifyItem = Builder.AddCheckbox(MConfigSudoConfirmModify, &Opt.SudoConfirmModify);
+	SudoConfirmModifyItem->Indent(4);
+
+	Builder.LinkFlags(SudoEnabledItem, SudoConfirmModifyItem, DIF_DISABLE);
+	Builder.LinkFlags(SudoEnabledItem, SudoPasswordExpirationEdit, DIF_DISABLE);
+
 
 	DialogItemEx *DeleteToRecycleBin = Builder.AddCheckbox(MConfigRecycleBin, &Opt.DeleteToRecycleBin);
 	DialogItemEx *DeleteLinks = Builder.AddCheckbox(MConfigRecycleBinLink, &Opt.DeleteToRecycleBinKillLink);
 	DeleteLinks->Indent(4);
 	Builder.LinkFlags(DeleteToRecycleBin, DeleteLinks, DIF_DISABLE);
 
-	Builder.AddCheckbox(MSudoParanoic, &Opt.SudoParanoic);
+
+//	Builder.AddCheckbox(MSudoParanoic, &Opt.SudoParanoic);
 //	Builder.AddCheckbox(CopyWriteThrough, &Opt.CMOpt.WriteThrough);
 	Builder.AddCheckbox(MConfigCopySharing, &Opt.CMOpt.CopyOpened);
 	Builder.AddCheckbox(MConfigScanJunction, &Opt.ScanJunction);
-	Builder.AddCheckbox(MConfigCreateUppercaseFolders, &Opt.CreateUppercaseFolders);
 
 	DialogItemEx *InactivityExit = Builder.AddCheckbox(MConfigInactivity, &Opt.InactivityExit);
 	DialogItemEx *InactivityExitTime = Builder.AddIntEditField(&Opt.InactivityExitTime, 2);
@@ -141,11 +163,12 @@ void SystemSettings()
 	Builder.AddCheckbox(MConfigRegisteredTypes, &Opt.UseRegisteredTypes);
 	Builder.AddCheckbox(MConfigCloseCDGate, &Opt.CloseCDGate);
 	Builder.AddCheckbox(MConfigUpdateEnvironment, &Opt.UpdateEnvironment);
-	Builder.AddText(MConfigElevation);
+
 	Builder.AddCheckbox(MConfigAutoSave, &Opt.AutoSaveSetup);
 	Builder.AddOKCancel();
 
 	Builder.ShowDialog();
+	ApplySudoSettings();
 }
 
 
@@ -624,11 +647,13 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem,L"SaveViewHistory",&Opt.SaveViewHistory,1, 0},
 	{1, REG_DWORD,  NKeySystem,L"UseRegisteredTypes",&Opt.UseRegisteredTypes,1, 0},
 	{1, REG_DWORD,  NKeySystem,L"AutoSaveSetup",&Opt.AutoSaveSetup,0, 0},
-	{1, REG_DWORD,  NKeySystem,L"ClearReadOnly",&Opt.ClearReadOnly,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"DeleteToRecycleBin",&Opt.DeleteToRecycleBin,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"DeleteToRecycleBinKillLink",&Opt.DeleteToRecycleBinKillLink,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"WipeSymbol",&Opt.WipeSymbol,0, 0},
-	{1, REG_DWORD,  NKeySystem,L"SudoParanoic",&Opt.SudoParanoic,0, 0},
+	{1, REG_DWORD,  NKeySystem,L"SudoEnabled",&Opt.SudoEnabled,1, 0},
+	{1, REG_DWORD,  NKeySystem,L"SudoConfirmModify",&Opt.SudoConfirmModify,1, 0},
+	{1, REG_DWORD,  NKeySystem,L"SudoPasswordExpiration",&Opt.SudoPasswordExpiration,15*60, 0},
+
 
 	{1, REG_DWORD,  NKeySystem,L"WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
 	{0, REG_DWORD,  NKeySystem,L"CopySecurityOptions",&Opt.CMOpt.CopySecurityOptions,0, 0},
@@ -636,7 +661,6 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem, L"MultiCopy",&Opt.CMOpt.MultiCopy,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"CopyTimeRule",  &Opt.CMOpt.CopyTimeRule, 3, 0},
 
-	{1, REG_DWORD,  NKeySystem,L"CreateUppercaseFolders",&Opt.CreateUppercaseFolders,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"InactivityExit",&Opt.InactivityExit,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"InactivityExitTime",&Opt.InactivityExitTime,15, 0},
 	{1, REG_DWORD,  NKeySystem,L"DriveMenuMode",&Opt.ChangeDriveMode,DRIVE_SHOW_TYPE|DRIVE_SHOW_PLUGINS|DRIVE_SHOW_SIZE_FLOAT|DRIVE_SHOW_CDROM, 0},
@@ -971,6 +995,8 @@ void ReadConfig()
                                   Opt.FindOpt.OutColumnTypes,Opt.FindOpt.OutColumnWidths,Opt.FindOpt.OutColumnWidthType,
                                   Opt.FindOpt.OutColumnCount);
 	}
+
+	ApplySudoSettings();
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 

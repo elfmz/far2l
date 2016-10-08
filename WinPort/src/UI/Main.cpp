@@ -963,3 +963,28 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 	}
 }
 
+
+
+static bool SudoClientConfirmSync()
+{
+	const char *far2l_sudo_title = getenv("far2l_sudo_title");
+	const char *far2l_sudo_confirm = getenv("far2l_sudo_confirm");
+	
+	wxMessageDialog dlg(wxTheApp->GetTopWindow(), 
+		far2l_sudo_confirm ? far2l_sudo_confirm : "Confirm sudo priviledges", 
+		far2l_sudo_title ? far2l_sudo_title : "far2l confirm", 
+		wxCENTRE | wxOK | wxCANCEL);
+	return ( dlg.ShowModal() == wxID_OK );
+}
+
+bool SudoClientConfirm()
+{
+	if (wxIsMainThread()) {
+		fprintf(stderr, "SudoClientConfirm: called from main thread\n");
+		abort();
+		return false;
+	}
+		
+	auto fn = std::bind(SudoClientConfirmSync);
+	return CallInMain<bool>(fn);	
+}

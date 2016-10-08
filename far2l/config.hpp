@@ -435,12 +435,13 @@ struct Options
 	int LeftSelectedFirst;
 	int SelectFolders;
 	int ReverseSort;
-	int ClearReadOnly;
 	int SortFolderExt;
 	int DeleteToRecycleBin;         // удалять в корзину?
 	int DeleteToRecycleBinKillLink; // перед удалением папки в корзину кильнем вложенные симлинки.
 	int WipeSymbol; // символ заполнитель для "ZAP-операции"
-	int SudoParanoic;
+	int SudoEnabled;
+	int SudoConfirmModify;
+	int SudoPasswordExpiration;
 
 	CopyMoveOptions CMOpt;
 
@@ -448,7 +449,6 @@ struct Options
 
 	int MultiMakeDir; // Опция создания нескольких каталогов за один сеанс
 
-	int CreateUppercaseFolders;
 	int UseRegisteredTypes;
 
 	int ViewerEditorClock;

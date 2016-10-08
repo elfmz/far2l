@@ -1283,14 +1283,59 @@ MConfigRO
 "Wyczyść atrybut &R/O przy kopiowaniu z CD"
 "&Borrar atributos R/O de archivos de CD"
 
-MSudoParanoic
-"Всегда спрашивать пароль для sudo"
-"Always ask sudo password"
-upd:"Always ask sudo password"
-upd:"Always ask sudo password"
-upd:"Always ask sudo password"
-upd:"Always ask sudo password"
-upd:"Always ask sudo password"
+MConfigSudoEnabled
+"Разрешить повышение привилегий"
+"Enable s&udo privileges elevation"
+upd:"Enable sudo privileges elevation"
+upd:"Enable sudo privileges elevation"
+upd:"Enable sudo privileges elevation"
+upd:"Enable sudo privileges elevation"
+upd:"Enable sudo privileges elevation"
+
+MConfigSudoConfirmModify
+"Подтверждать все операции записи"
+"Always confirm modify operations"
+upd:"Always confirm modify operations"
+upd:"Always confirm modify operations"
+upd:"Always confirm modify operations"
+upd:"Always confirm modify operations"
+upd:"Always confirm modify operations"
+
+MConfigSudoPasswordExpiration
+"Время действия пароля (сек):"
+"Password expiration (sec):"
+upd:"Password expiration (sec):"
+upd:"Password expiration (sec):"
+upd:"Password expiration (sec):"
+upd:"Password expiration (sec):"
+upd:"Password expiration (sec):"
+
+MSudoTitle
+"Операция требует повышения привилегий"
+"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+
+MSudoPrompt
+"Введите пароль для sudo:"
+"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+
+MSudoConfirm
+"Подтвердите использование привилегий"
+"Confirm elevated priviledges use"
+upd:"Confirm elevated priviledges use"
+upd:"Confirm elevated priviledges use"
+upd:"Confirm elevated priviledges use"
+upd:"Confirm elevated priviledges use"
+upd:"Confirm elevated priviledges use"
 
 MConfigRecycleBin
 "Удалять в &Корзину"
@@ -1336,15 +1381,6 @@ MConfigScanJunction
 "Szimbolikus linkek &vizsgálata"
 "Skanuj linki s&ymboliczne"
 "Explorar enlaces simbólicos"
-
-MConfigCreateUppercaseFolders
-"Создавать &папки заглавными буквами"
-"Create folders in &uppercase"
-"Vytvářet adresáře &velkými písmeny"
-"Ordner in Großschreib&ung erstellen"
-"Mappák létrehozása &NAGYBETŰKKEL"
-"Nazwy katalogów &WIELKIMI LITERAMI"
-"Crear directorios en ma&yúsculas"
 
 MConfigInactivity
 "&Время бездействия"
@@ -1417,60 +1453,6 @@ upd:"Automatic update of environment variables"
 upd:"Automatic update of environment variables"
 upd:"Automatic update of environment variables"
 upd:"Automatic update of environment variables"
-
-MSudoTitle
-"Операция требует повышения привилегий"
-"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-upd:"Operation requires priviledges elevation"
-
-MSudoPrompt
-"Введите пароль для sudo:"
-"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
-
-MConfigElevation
-"Запрос прав администратора:"
-"Request administrator rights:"
-upd:"request administrator rights:"
-upd:"request administrator rights:"
-upd:"request administrator rights:"
-upd:"request administrator rights:"
-upd:"request administrator rights:"
-
-MConfigElevationModify
-"для изменения"
-"for modification"
-upd:"for modification"
-upd:"for modification"
-upd:"for modification"
-upd:"for modification"
-upd:"for modification"
-
-MConfigElevationRead
-"для чтения"
-"for read"
-upd:"for read"
-upd:"for read"
-upd:"for read"
-upd:"for read"
-upd:"for read"
-
-MConfigElevationUsePrivileges
-"использовать дополнительные привилегии"
-"use additional privileges"
-upd:"use additional privileges"
-upd:"use additional privileges"
-upd:"use additional privileges"
-upd:"use additional privileges"
-upd:"use additional privileges"
 
 MConfigAutoSave
 "Автозапись кон&фигурации"

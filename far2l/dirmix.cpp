@@ -231,9 +231,6 @@ void CreatePath(FARString &strPath)
 
 			*ChPtr = 0;
 
-			if (Opt.CreateUppercaseFolders && !IsCaseMixed(DirPart) && apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES)  //BUGBUG
-				WINPORT(CharUpper)(DirPart);
-
 			if (apiCreateDirectory(strPath, nullptr))
 				TreeList::AddTreeName(strPath);
 

@@ -5,6 +5,10 @@
 
 namespace Sudo
 {
+	#define SDC_ENV_TITLE	"sdc_sudo_title"
+	#define SDC_ENV_CONFIRM	"sdc_sudo_confirm"
+	#define SDC_ENV_PROMPT	"sdc_sudo_prompt"
+
 	enum SudoCommand
 	{
 		SUDO_CMD_INVALID = 0,

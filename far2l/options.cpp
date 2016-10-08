@@ -580,34 +580,8 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 					InterfaceSettings();
 					break;
 				case MENU_OPTIONS_LANGUAGES:   // Languages
-				{
-					VMenu *LangMenu, *HelpMenu;
-
-					if (Select(FALSE, &LangMenu))
-					{
-						Lang.Close();
-
-						if (!Lang.Init(g_strFarPath, true, MNewFileName))
-						{
-							Message(MSG_WARNING, 1, L"Error", L"Cannot load language data", L"Ok");
-							exit(0);
-						}
-
-						Select(TRUE,&HelpMenu);
-						delete HelpMenu;
-						LangMenu->Hide();
-						CtrlObject->Plugins.ReloadLanguage();
-						WINPORT(SetEnvironmentVariable)(L"FARLANG",Opt.strLanguage);
-						PrepareStrFTime();
-						PrepareUnitStr();
-						FrameManager->InitKeyBar();
-						CtrlObject->Cp()->RedrawKeyBar();
-						CtrlObject->Cp()->SetScreenPosition();
-					}
-
-					delete LangMenu; //???? BUGBUG
+					LanguageSettings();
 					break;
-				}
 				case MENU_OPTIONS_PLUGINSCONFIG:   // Plugins configuration
 					CtrlObject->Plugins.Configure();
 					break;

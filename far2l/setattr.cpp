@@ -525,8 +525,9 @@ void PR_ShellSetFileAttributesMsg()
 
 static void SystemProperties(const FARString &strSelName)
 {
-	std::string cmd = "file ";
-	cmd+= Wide2MB(strSelName.CPtr());
+	std::string cmd = "file \"";
+	cmd+= EscapeQuotas(Wide2MB(strSelName.CPtr()));
+	cmd+= '\"';
 	FILE *f = popen(cmd.c_str(), "r");
 	if (!f) {
 		perror("SystemProperties: popen");

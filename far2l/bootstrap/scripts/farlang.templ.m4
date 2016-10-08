@@ -1418,6 +1418,24 @@ upd:"Automatic update of environment variables"
 upd:"Automatic update of environment variables"
 upd:"Automatic update of environment variables"
 
+MSudoTitle
+"Операция требует повышения привилегий"
+"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+upd:"Operation requires priviledges elevation"
+
+MSudoPrompt
+"Введите пароль для sudo:"
+"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+upd:"Enter sudo password:"
+
 MConfigElevation
 "Запрос прав администратора:"
 "Request administrator rights:"

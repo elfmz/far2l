@@ -14,7 +14,13 @@
 extern "C" int sudo_askpass(int pipe_sendpass)
 {
 	wxInitialize();
-	wxPasswordEntryDialog dlg(nullptr, "Enter sudo password", "Operation requires priviledges elevation", 
+	
+	const char *far2l_sudo_title = getenv("far2l_sudo_title");
+	const char *far2l_sudo_prompt = getenv("far2l_sudo_prompt");
+	
+	wxPasswordEntryDialog dlg(nullptr, 
+		far2l_sudo_prompt ? far2l_sudo_prompt : "Enter sudo password:", 
+		far2l_sudo_title ? far2l_sudo_title : "far2l askpass", 
 		wxString(), wxCENTRE | wxOK | wxCANCEL);
 	if ( dlg.ShowModal() == wxID_OK )
 	{

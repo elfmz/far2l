@@ -26,3 +26,6 @@ struct ErrnoSaver
 	ErrnoSaver();
 	~ErrnoSaver();
 };
+
+
+int pipe_cloexec(int pipedes[2]);

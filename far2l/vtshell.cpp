@@ -99,8 +99,8 @@ public:
 	VTOutputReader(IProcessor *processor, int fd_out) 
 		: _processor(processor), _fd_out(fd_out), _thread_exited(false)
 	{
-		if (pipe2(_pipe,  O_CLOEXEC)==-1) {
-			perror("VTOutputReader: pipe2");
+		if (pipe_cloexec(_pipe)==-1) {
+			perror("VTOutputReader: pipe_cloexec");
 			return;
 		} 
 

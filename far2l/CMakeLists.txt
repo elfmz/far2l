@@ -178,5 +178,5 @@ set_target_properties(far2l
 target_link_libraries(far2l ${WINPORT} dl)
 
 add_custom_command(TARGET far2l POST_BUILD
-   COMMAND rm ${INSTALL_DIR}/askpass || 0
+   COMMAND rm ${INSTALL_DIR}/askpass || echo ""
    COMMAND ln -s far2l ${INSTALL_DIR}/askpass)

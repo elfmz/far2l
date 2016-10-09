@@ -2912,6 +2912,7 @@ void FileList::SetViewMode(int ViewMode)
 
 	int CurFullScreen=IsFullScreen();
 	int OldOwner=IsColumnDisplayed(OWNER_COLUMN);
+	int OldGroup=IsColumnDisplayed(GROUP_COLUMN);
 	int OldPacked=IsColumnDisplayed(PACKED_COLUMN);
 	int OldNumLink=IsColumnDisplayed(NUMLINK_COLUMN);
 	int OldNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
@@ -2919,6 +2920,7 @@ void FileList::SetViewMode(int ViewMode)
 	int OldDiz=IsColumnDisplayed(DIZ_COLUMN);
 	PrepareViewSettings(ViewMode,nullptr);
 	int NewOwner=IsColumnDisplayed(OWNER_COLUMN);
+	int NewGroup=IsColumnDisplayed(GROUP_COLUMN);
 	int NewPacked=IsColumnDisplayed(PACKED_COLUMN);
 	int NewNumLink=IsColumnDisplayed(NUMLINK_COLUMN);
 	int NewNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
@@ -2935,7 +2937,9 @@ void FileList::SetViewMode(int ViewMode)
 			NewPacked=FALSE;
 
 	if (FileCount>0 && PanelMode!=PLUGIN_PANEL &&
-	        ((!OldOwner && NewOwner) || (!OldPacked && NewPacked) ||
+	        ((!OldOwner && NewOwner) || 
+	         (!OldGroup && NewGroup) || 
+	         (!OldPacked && NewPacked) ||
 	         (!OldNumLink && NewNumLink) ||
 	         (!OldNumStreams && NewNumStreams) ||
 	         (!OldStreamsSize && NewStreamsSize) ||

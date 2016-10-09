@@ -6576,6 +6576,15 @@ MColumnOwner
 "Właściciel"
 "Dueño"
 
+MColumnGroup
+"Группа"
+"Group"
+upd:"Group"
+upd:"Group"
+upd:"Group"
+upd:"Group"
+upd:"Group"
+
 MColumnMumLinks
 "КлС"
 "NmL"

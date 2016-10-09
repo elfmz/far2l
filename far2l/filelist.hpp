@@ -58,7 +58,7 @@ struct FileListItem
 	int SortGroup;
 	wchar_t *DizText;
 	char DeleteDiz;
-	FARString strOwner;
+	FARString strOwner, strGroup;
 	wchar_t **CustomColumnData;
 	int CustomColumnNumber;
 	DWORD CRC32;
@@ -290,7 +290,7 @@ class FileList:public Panel
 		void PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber);
 		void ProcessCopyKeys(int Key);
 		void ReadSortGroups(bool UpdateFilterCurrentTime=true);
-		void AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,FARString Owner=L"");
+		void AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,FARString Owner=L"",FARString Group=L"");
 		int  ProcessOneHostFile(int Idx);
 
 	protected:

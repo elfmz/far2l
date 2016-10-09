@@ -223,6 +223,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 	ListData=nullptr;
 	int ReadOwners=IsColumnDisplayed(OWNER_COLUMN);
+	int ReadGroups=IsColumnDisplayed(GROUP_COLUMN);
 	int ReadPacked=IsColumnDisplayed(PACKED_COLUMN);
 	int ReadNumLinks=IsColumnDisplayed(NUMLINK_COLUMN);
 	int ReadNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
@@ -328,6 +329,13 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				NewPtr->strOwner = strOwner;
 			}
 
+			if (ReadGroups)
+			{
+				FARString strGroup;
+				GetFileGroup(strComputerName, NewPtr->strName, strGroup);
+				NewPtr->strGroup = strGroup;
+			}
+
 			NewPtr->NumberOfStreams=NewPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY?0:1;
 			NewPtr->StreamsSize=NewPtr->UnpSize;
 
@@ -411,10 +419,15 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 		{
 			ListData[FileCount] = new FileListItem;
 
-			FARString TwoDotsOwner;
+			FARString TwoDotsOwner, TwoDotsGroup;
 			if (ReadOwners)
 			{
 				GetFileOwner(strComputerName,strCurDir,TwoDotsOwner);
+			}
+
+			if (ReadGroups)
+			{
+				GetFileGroup(strComputerName,strCurDir,TwoDotsGroup);
 			}
 
 			FILETIME TwoDotsTimes[4]={0};
@@ -426,7 +439,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				TwoDotsTimes[3]=fdata.ftChangeTime;
 			}
 
-			AddParentPoint(ListData[FileCount],FileCount,TwoDotsTimes,TwoDotsOwner);
+			AddParentPoint(ListData[FileCount],FileCount,TwoDotsTimes,TwoDotsOwner,TwoDotsGroup);
 
 			if (NeedHighlight)
 				CtrlObject->HiFiles->GetHiColor(&ListData[FileCount],1);
@@ -951,7 +964,7 @@ void FileList::ReadSortGroups(bool UpdateFilterCurrentTime)
 }
 
 // Обнулить текущий CurPtr и занести предопределенные данные для каталога ".."
-void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times,FARString Owner)
+void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times,FARString Owner,FARString Group)
 {
 	CurPtr->Clear();
 	CurPtr->FileAttr = FILE_ATTRIBUTE_DIRECTORY;
@@ -967,5 +980,6 @@ void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Tim
 	}
 
 	CurPtr->strOwner = Owner;
+	CurPtr->strGroup = Group;
 	CurPtr->Position = CurFilePos;
 }

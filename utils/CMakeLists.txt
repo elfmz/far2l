@@ -6,6 +6,7 @@ find_package(PkgConfig REQUIRED)
 set(SOURCES
   src/KeyFileHelper.cpp
   src/utils.cpp
+  src/ZombieControl.cpp
   src/ConvertUTF.c
 )
 

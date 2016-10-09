@@ -42,6 +42,31 @@ namespace Sudo
 	static Opened<int> g_fds;
 	static Opened<DIR *> g_dirs;
 
+	static void OnSudoDispatch_Execute(BaseTransaction &bt)
+	{
+		std::string cmd;
+		bt.RecvStr(cmd);
+		int no_wait = bt.RecvInt();
+		int r;
+		if (no_wait) {
+			r = fork();
+			if (r == 0) {
+				r = system(cmd.c_str());
+				_exit(r);
+				exit(r);
+			}
+			if (r != -1) {
+				PutZombieUnderControl(r);
+				r = 0;
+			}
+		} else {
+			r = system(cmd.c_str());
+		}
+		bt.SendInt(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+	
 	static void OnSudoDispatch_Close(BaseTransaction &bt)
 	{
 		int fd;
@@ -325,6 +350,10 @@ namespace Sudo
 			case SUDO_CMD_PING:
 				break;
 				
+			case SUDO_CMD_EXECUTE:
+				OnSudoDispatch_Execute(bt);
+				break;
+				
 			case SUDO_CMD_CLOSE:
 				OnSudoDispatch_Close(bt);
 				break;
@@ -468,4 +497,5 @@ namespace Sudo
 	}
 
 }
+
 

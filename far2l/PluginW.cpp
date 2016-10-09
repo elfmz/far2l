@@ -434,22 +434,14 @@ bool PluginW::Load()
 	return true;
 }
 
-thread_local int (WINAPI *threadExecForkProcW)(int argc, wchar_t *argv[]);
-static int WINAPI ExecForkProcA2W(int argc, char *argv[])
+static int WINAPI farExecuteW(const wchar_t *CmdStr, unsigned int flags)
 {
-	std::vector<wchar_t *> argvw;
-	std::list<std::wstring> strings;
-	for (int i = 0; i<argc; ++i) {
-		strings.push_back(MB2Wide(argv[i]));
-		argvw.push_back((wchar_t *)strings.back().c_str());
-	}
-	return threadExecForkProcW(argc, argvw.empty() ? NULL : &argvw[0]);
+	return farExecuteA(Wide2MB(CmdStr).c_str(), flags);
 }
 
-static int WINAPI farExecuteW(const wchar_t *CmdStr, unsigned int flags, int (WINAPI *ForkProc)(int argc,  wchar_t *argv[]))
+static int WINAPI farExecuteLibraryW(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int flags)
 {
-	threadExecForkProcW = ForkProc;
-	return farExecuteA(Wide2MB(CmdStr).c_str(), flags, ForkProc ? ExecForkProcA2W : NULL);
+	return farExecuteLibraryA(Wide2MB(Library).c_str(), Wide2MB(Symbol).c_str(), Wide2MB(CmdStr).c_str(), flags);
 }
 
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
@@ -509,6 +501,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.GetReparsePointInfo=farGetReparsePointInfo;
 		StandardFunctions.GetCurrentDirectory=farGetCurrentDirectory;
 		StandardFunctions.Execute = farExecuteW;
+		StandardFunctions.ExecuteLibrary = farExecuteLibraryW;
 	}
 
 	if (!StartupInfo.StructSize)

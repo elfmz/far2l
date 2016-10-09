@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <locale.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -589,15 +590,38 @@ void SudoTest()
 }
 */
 
+static int libexec(const char *lib, const char *symbol, int argc, char *argv[])
+{
+	void *dl = dlopen(lib, RTLD_LOCAL|RTLD_LAZY);
+	if (!dl) {
+		fprintf(stderr, "libexec('%s', '%s', %u) - dlopen error %u\n", lib, symbol, argc, errno);
+		return -1;
+	}
+
+	typedef int (*libexec_main_t)(int argc, char *argv[]);
+	libexec_main_t libexec_main = (libexec_main_t)dlsym(dl, symbol);
+	if (!libexec_main) {
+		fprintf(stderr, "libexec('%s', '%s', %u) - dlsym error %u\n", lib, symbol, argc, errno);
+		return -1;
+	}
+
+	return libexec_main(argc, argv);
+}
 
 int _cdecl main(int argc, char *argv[])
 {
 	char *name = strrchr(argv[0], GOOD_SLASH);
 	if (name) ++name; else name = argv[0];
-	if (strcmp(name, "sdc_askpass")==0)
-		return sudo_main_askpass();
-	if (strcmp(name, "sdc_dispatcher")==0)
-		return sudo_main_dispatcher();
+	if (argc > 0) {
+		if (strcmp(name, "sdc_askpass")==0)
+			return sudo_main_askpass();
+		if (strcmp(name, "sdc_dispatcher")==0)
+			return sudo_main_dispatcher();
+		if (argc >= 4) {
+			if (strcmp(argv[1], "--libexec")==0)
+				return libexec(argv[2], argv[3], argc - 4, argv + 4);
+		}
+	}
 
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
 	SetupFarPath(argc, argv);

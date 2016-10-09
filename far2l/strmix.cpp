@@ -42,9 +42,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 {
-	strDest = Src;
-	while ((int)strDest.GetSize() < NumDigits)strDest.Insert(0, L'0');
-	return strDest;
+	FARString result;//can't use strDest cuz Src may point to its internal buffer
+	
+	const wchar_t *dot = wcschr(Src, L'.');
+	const wchar_t *part = dot ? dot : Src + wcslen(Src);
+	if (part == Src) {
+		result = L"0";
+	} else {
+		size_t i = 0;
+		do {
+			--part;
+			result.Insert(0, *part);
+			++i;
+			if ((i % 3)==0)
+				result.Insert(0, L' ');
+		} while (part != Src);
+	}
+	if (dot) {
+		result.Append(dot, std::min(wcslen(dot), (size_t)NumDigits + 1) );
+	}
+	strDest = result;
+
 	/*
 	static bool first = true;
 	static NUMBERFMT fmt;

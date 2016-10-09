@@ -1,5 +1,6 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
+#include <string>
 
 #if defined(__GNUC__)
 #ifdef __cplusplus
@@ -290,4 +291,11 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
   }while(1);
 
   //return FALSE;
+}
+
+std::string gMultiArcPluginPath;
+
+SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
+{
+	gMultiArcPluginPath = path;
 }

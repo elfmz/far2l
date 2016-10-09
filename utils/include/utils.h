@@ -29,3 +29,5 @@ struct ErrnoSaver
 
 
 int pipe_cloexec(int pipedes[2]);
+
+void PutZombieUnderControl(pid_t pid);

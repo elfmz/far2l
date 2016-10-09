@@ -7,6 +7,9 @@
 #include <wordexp.h>
 #include <sys/stat.h>
 #include <windows.h>
+#include <string>
+
+extern std::string gMultiArcPluginPath;
 
 BOOL FileExists(const char* Name)
 {
@@ -101,7 +104,7 @@ const char *GetMsg(int MsgId)
 int rar_main(int argc, char *argv[]);
 extern "C" int sevenz_main(int argc, char *argv[]);
 
-static int BuiltinMain(int argc, char * argv[])
+SHAREDSYMBOL int BuiltinMain(int argc, char * argv[])
 {
 	if (!argc)
 		return -1;
@@ -235,10 +238,12 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,
   /* raVen $ */
 	fprintf(stderr, "Executing: h/o=%u s=%u '%ls'\n", HideOutput, Silent, ExpandedCmd);
 	const std::string &expanded_cmd_mb = Wide2MB(ExpandedCmd);
+	DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
 	if (*expanded_cmd_mb.c_str()=='^') {
-		LastError = ExitCode = FSF.Execute(expanded_cmd_mb.c_str() + 1, (HideOutput) ? EF_HIDEOUT : 0, BuiltinMain);
+		LastError = ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), 
+								"BuiltinMain", expanded_cmd_mb.c_str() + 1, flags);
 	} else {
-		LastError = ExitCode = FSF.Execute(expanded_cmd_mb.c_str(), (HideOutput) ? EF_HIDEOUT : 0, NULL);
+		LastError = ExitCode = FSF.Execute(expanded_cmd_mb.c_str(), flags);
 	}
 	
   /*if (HideOutput)

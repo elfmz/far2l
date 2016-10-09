@@ -15,7 +15,6 @@
 #define __USE_BSD 
 #include <termios.h> 
 
-void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) ;
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad = 0);
 
 
@@ -509,7 +508,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		int r = ForkAndAttachToSlave(true);
 		if (r == 0) {
 			RunShell();
-			fprintf(stderr, "ExecuteOrForkProc: RunShell returned, errno %u\n", errno);
+			fprintf(stderr, "VT: RunShell returned, errno %u\n", errno);
 			_exit(errno);
 			exit(errno);
 		}
@@ -678,7 +677,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		CheckedCloseFD(_pipes_fallback_out);
 	}
 	
-	std::string GenerateExecuteCommandScript(const char *cmd)
+	std::string GenerateExecuteCommandScript(const char *cmd, bool need_sudo)
 	{
 		char name[128]; 
 		sprintf(name, "vtcmd/%x_%p", getpid(), this);
@@ -691,8 +690,13 @@ static bool shown_tip_ctrl_alc_c = false;
 static bool shown_tip_exit = false;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
-		if (!sdc_getcwd(cd, MAX_PATH)) perror("getcwd");
-		bool need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
+		if (!sdc_getcwd(cd, MAX_PATH)) {
+			perror("getcwd");
+		} 
+				
+		if (!need_sudo) {
+			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
+		}
 
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
@@ -721,12 +725,12 @@ static bool shown_tip_exit = false;
 		return cmd_script;
 	}
 	
-	int ExecuteCommand(const char *cmd)
+	int ExecuteCommand(const char *cmd, bool force_sudo)
 	{
 		if (_shell_pid==-1)
 			return -1;
 		
-		const std::string &cmd_script = GenerateExecuteCommandScript(cmd);
+		const std::string &cmd_script = GenerateExecuteCommandScript(cmd, force_sudo);
 		if (cmd_script.empty())
 			return -1;
 
@@ -766,31 +770,6 @@ static bool shown_tip_exit = false;
 		return _completion_marker.LastExitCode();
 	}	
 
-	int ExecuteForkProc(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]))
-	{
-		int r = ForkAndAttachToSlave(false);
-		if (r==-1)
-			return -1;
-
-		if (r==0) {
-			::ExecuteOrForkProc(cmd, fork_proc);
-			abort();
-		}
-		
-		_forked_proc_pid = r;
-		_completion_marker.ScanReset();
-		_skipping_line = false;
-
-		VTOutputReader output_reader(this, _fd_out);
-		VTInputReader input_reader(this);
-		
-		int status = -1;
-		waitpid(r, &status, 0);
-		_forked_proc_pid = -1;
-		
-		return status;
-	}
-	
 	bool IsOK()
 	{
 		return _shell_pid!=-1;
@@ -800,18 +779,13 @@ static bool shown_tip_exit = false;
 static std::unique_ptr<VTShell> g_vts;
 static std::mutex g_vts_mutex;
 
-int VTShell_Execute(const char *cmd, int (WINAPI *fork_proc)(int argc, char *argv[]) ) 
+int VTShell_Execute(const char *cmd, bool need_sudo) 
 {	
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	if (!g_vts)
 		g_vts.reset(new VTShell);
 		
-	int r;
-	if (fork_proc) {
-		r = g_vts->ExecuteForkProc(cmd, fork_proc);
-	} else {
-		r = g_vts->ExecuteCommand(cmd);
-	}
+	int r = g_vts->ExecuteCommand(cmd, need_sudo);
 
 	if (!g_vts->IsOK()) {
 		fprintf(stderr, "Shell exited\n");

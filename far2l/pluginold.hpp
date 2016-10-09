@@ -1542,10 +1542,12 @@ namespace oldfar
 	enum EXECUTEFLAGS
 	{
 		EF_HIDEOUT = 0x01,
-		EF_NOWAIT = 0x02
+		EF_NOWAIT = 0x02,
+		EF_SUDO = 0x04
 	};
 
-        typedef int (WINAPI *FAREXECUTE)(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *ForkProc)(int argc, char *argv[]) );
+        typedef int (WINAPI *FAREXECUTE)(const char *CmdStr, unsigned int ExecFlags);
+	typedef int (WINAPI *FAREXECUTE_LIBRARY)(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags);
 
 	typedef struct FarStandardFunctions
 	{
@@ -1595,7 +1597,8 @@ namespace oldfar
 		FARSTDMKLINK               MkLink;
 		FARCONVERTNAMETOREAL       ConvertNameToReal;
 		FARGETREPARSEPOINTINFO     GetReparsePointInfo;
-		FAREXECUTE               Execute;
+		FAREXECUTE                 Execute;
+		FAREXECUTE_LIBRARY         ExecuteLibrary;
 	} FARSTANDARDFUNCTIONS;
 
 	struct PluginStartupInfo

@@ -2,7 +2,7 @@
 #ifndef __PLUGIN_HPP__
 #define __PLUGIN_HPP__
 
-#ifndef FAR_USE_INTERNALS
+#if !defined(FAR_USE_INTERNALS) && !defined(FAR_DONT_USE_INTERNALS)
 #define FAR_USE_INTERNALS
 #endif // END FAR_USE_INTERNALS
 /*
@@ -128,7 +128,7 @@ other possible license with no implications from the above license on them.
 #define FARMACRO_KEY_EVENT  (KEY_EVENT|0x8000)
 
 #ifdef FAR_USE_INTERNALS
-//#define _FAR_NO_NAMELESS_UNIONS
+#define _FAR_NO_NAMELESS_UNIONS
 #else // ELSE FAR_USE_INTERNALS
 // To ensure compatibility of plugin.hpp with compilers not supporting C++,
 // you can #define _FAR_NO_NAMELESS_UNIONS. In this case, to access,
@@ -142,8 +142,6 @@ typedef struct _INPUT_RECORD INPUT_RECORD;
 typedef struct _CHAR_INFO    CHAR_INFO;
 #endif
 
-#define CP_UNICODE 1200
-#define CP_REVERSEBOM 1201
 #define CP_AUTODETECT ((UINT)-1)
 
 enum FARMESSAGEFLAGS
@@ -1382,11 +1380,6 @@ struct WindowInfo
 
 enum PROGRESSTATE
 {
-	PS_NOPROGRESS   =0x0,
-	PS_INDETERMINATE=0x1,
-	PS_NORMAL       =0x2,
-	PS_ERROR        =0x4,
-	PS_PAUSED       =0x8,
 	PGS_NOPROGRESS   =0x0,
 	PGS_INDETERMINATE=0x1,
 	PGS_NORMAL       =0x2,
@@ -1824,7 +1817,6 @@ typedef int (WINAPI *FARAPIREGEXPCONTROL)(
 );
 
 // <C&C++>
-typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format,...);
 // </C&C++>
@@ -1935,10 +1927,12 @@ typedef DWORD (WINAPI *FARGETCURRENTDIRECTORY)(DWORD Size,wchar_t* Buffer);
 enum EXECUTEFLAGS
 {
 	EF_HIDEOUT = 0x01,
-	EF_NOWAIT = 0x02
+	EF_NOWAIT = 0x02,
+	EF_SUDO = 0x04
 };
 
-typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags, int (WINAPI *ForkProc)(int argc, wchar_t *argv[]) );
+typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);
+typedef int (WINAPI *FAREXECUTE_LIBRARY)(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags);
 
 typedef struct FarStandardFunctions
 {
@@ -1949,7 +1943,6 @@ typedef struct FarStandardFunctions
 	FARSTDITOA                 itoa;
 	FARSTDITOA64               itoa64;
 	// <C&C++>
-	FARSTDSPRINTF              sprintf;
 	FARSTDSSCANF               sscanf;
 	// </C&C++>
 	FARSTDQSORT                qsort;
@@ -2001,6 +1994,7 @@ typedef struct FarStandardFunctions
 	FARGETREPARSEPOINTINFO     GetReparsePointInfo;
 	FARGETCURRENTDIRECTORY     GetCurrentDirectory;
 	FAREXECUTE                 Execute;
+	FAREXECUTE_LIBRARY         ExecuteLibrary;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

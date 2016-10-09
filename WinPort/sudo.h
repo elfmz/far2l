@@ -20,8 +20,9 @@ extern "C" {
 	
  int sudo_main_askpass();
  int sudo_main_dispatcher();
- 
- 
+
+ int sudo_client_execute(const char *cmd, bool modify, bool no_wait);
+
  __attribute__ ((visibility("default"))) void sudo_client_region_enter();
  __attribute__ ((visibility("default"))) void sudo_client_region_leave();
 
@@ -51,6 +52,7 @@ extern "C" {
  __attribute__ ((visibility("default"))) int sdc_link(const char *path1, const char *path2);
  __attribute__ ((visibility("default"))) char *sdc_realpath(const char *path, char *resolved_path);
  __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, size_t size);
+ 
 #ifdef __cplusplus
 }
 

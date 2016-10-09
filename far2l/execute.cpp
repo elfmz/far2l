@@ -136,48 +136,20 @@ public:
 	bool IsBackground() const {return _backround; }
 };
 
-void ExecuteOrForkProc(const char *CmdStr, int (WINAPI *ForkProc)(int argc, char *argv[]) ) 
+static void CallExec(const char *CmdStr) 
 {
-	int r = -1;
-
-	if (ForkProc) {
-		wordexp_t we = {};
-		if (wordexp(CmdStr, &we, 0)==0) {
-			r = ForkProc(we.we_wordc, we.we_wordv);
-			wordfree(&we);
-		} else
-			fprintf(stderr, "ExecuteOrForkProc: wordexp('%s') errno %u\n", CmdStr, errno);
-	} else {
-		r = execl("/bin/sh", "sh", "-c", CmdStr, NULL);
-		fprintf(stderr, "ExecuteOrForkProc: execl returned %d errno %u\n", r, errno);
-	}
-	
+	int r = execl("/bin/sh", "sh", "-c", CmdStr, NULL);
+	fprintf(stderr, "CallExec: execl returned %d errno %u\n", r, errno);
 	_exit(r);//forget about static object, just exit
 	exit(r);
 }
 
-class : std::set<pid_t>
-{
-	std::mutex _mutex;
-	
-public:
-	void Watch(pid_t pid)
-	{
-		std::lock_guard<std::mutex> lock(_mutex);
-		insert(pid);
-		for (iterator i = begin(); i!=end(); ) {
-			int r;
-			if (waitpid(*i, &r, WNOHANG)==*i)
-				 i = erase(i);
-			else 
-				++i;
-		}
-	}
-} g_dezombify;
-
-static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(int argc, char *argv[]) )
+static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 {
 	int r = -1;
+	if (NeedSudo) {
+		return sudo_client_execute(CmdStr, false, NoWait);
+	}
 	int fdr = open("/dev/null", O_RDONLY);
 	if (fdr==-1) perror("open stdin error");
 	
@@ -200,18 +172,18 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 		signal( SIGINT, SIG_DFL );
 		signal( SIGHUP, SIG_DFL );
 		signal( SIGPIPE, SIG_DFL );
-		ExecuteOrForkProc(CmdStr, ForkProc) ;
+		CallExec(CmdStr);
 	} else if (pid==-1) {
 		perror("fork failed");
 	} else if (!NoWait) {
 		if (waitpid(pid, &r, 0)==-1) {
-			fprintf(stderr, "NotVTExecuteForkProc('%s', %u, %p): waitpid(0x%x) error %u\n", CmdStr, NoWait, ForkProc, pid, errno);
+			fprintf(stderr, "NotVTExecute('%s', %u): waitpid(0x%x) error %u\n", CmdStr, NoWait, pid, errno);
 			r = 1;
 		} else {
-			fprintf(stderr, "NotVTExecuteForkProc:('%s', %u, %p): r=%d\n", CmdStr, NoWait, ForkProc, r);
+			fprintf(stderr, "NotVTExecute('%s', %u): r=%d\n", CmdStr, NoWait, r);
 		}
 	} else {
-		g_dezombify.Watch(pid);
+		PutZombieUnderControl(pid);
 		r = 0;
 	}
 	if (fdr!=-1) close(fdr);
@@ -219,12 +191,12 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, int (WINAPI *ForkProc)(
 	return r;
 }
 
-int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *ForkProc)(int argc, char *argv[]) )
+int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 {
 //	fprintf(stderr, "TODO: Execute('" WS_FMT "')\n", CmdStr);
 	int r;
 	if (ExecFlags & EF_HIDEOUT) {
-		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, ForkProc);
+		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 	} else {
 		ProcessShowClock++;
 		CtrlObject->CmdLine->ShowBackground();
@@ -239,9 +211,9 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 		WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 		if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
-			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, ForkProc);
+			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 		} else {
-			r = VTShell_Execute(CmdStr, ForkProc);
+			r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0);
 		}
 		WINPORT(SetConsoleMode)( NULL, saved_mode | 
 			ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
@@ -253,9 +225,22 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags, int (WINAPI *
 		SetFarConsoleMode(TRUE);
 		ScrBuf.Flush();
 	}
-	fprintf(stderr, "farExecuteA:('%s', 0x%x, %p): r=%d\n", CmdStr, ExecFlags, ForkProc, r);
+	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
 	
 	return r;
+}
+
+int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags)
+{
+	std::string actual_cmd = "\"";
+	actual_cmd+= EscapeQuotas(g_strFarModuleName.GetMB());
+	actual_cmd+= "\" --libexec \"";
+	actual_cmd+= EscapeQuotas(Library);
+	actual_cmd+= "\" ";
+	actual_cmd+= Symbol;
+	actual_cmd+= " ";
+	actual_cmd+= CmdStr;
+	return farExecuteA(actual_cmd.c_str(), ExecFlags);
 }
 
 static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
@@ -273,15 +258,15 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 		tmp += CmdStr;
 
 		if (!ec.IsExecutable()) {
-			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT, NULL);
+			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT);
 			if (r!=0) {
 				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
 				//TODO: nicely report if xdg-open exec failed
 			}
 		} else
-			r = farExecuteA(tmp.c_str(), flags, NULL);
+			r = farExecuteA(tmp.c_str(), flags);
 	} else 
-		r = farExecuteA(CmdStr, flags, NULL);
+		r = farExecuteA(CmdStr, flags);
 	return r;
 }
 

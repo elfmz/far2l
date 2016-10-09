@@ -424,6 +424,7 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 		StandardFunctions.GetReparsePointInfo=FarGetReparsePointInfoA;
 		StandardFunctions.ExpandEnvironmentStr=ExpandEnvironmentStrA;
 		StandardFunctions.Execute = farExecuteA;
+		StandardFunctions.ExecuteLibrary = farExecuteLibraryA;
 	}
 
 	if (!StartupInfo.StructSize)

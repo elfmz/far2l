@@ -118,8 +118,8 @@ static void ApplySudoConfiguration()
  	std::string sudo_app = g_strFarPath.GetMB(); 
 	std::string askpass_app = g_strFarPath.GetMB(); 
 	
-	sudo_app+= "/sdc_dispatcher";
-	askpass_app+= "/sdc_askpass";
+	sudo_app+= "/far2l_sudoapp";
+	askpass_app+= "/far2l_askpass";
 
 	SudoClientMode mode;
 	if (Opt.SudoEnabled) {

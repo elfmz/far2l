@@ -613,9 +613,9 @@ int _cdecl main(int argc, char *argv[])
 	char *name = strrchr(argv[0], GOOD_SLASH);
 	if (name) ++name; else name = argv[0];
 	if (argc > 0) {
-		if (strcmp(name, "sdc_askpass")==0)
+		if (strcmp(name, "far2l_askpass")==0)
 			return sudo_main_askpass();
-		if (strcmp(name, "sdc_dispatcher")==0)
+		if (strcmp(name, "far2l_sudoapp")==0)
 			return sudo_main_dispatcher();
 		if (argc >= 4) {
 			if (strcmp(argv[1], "--libexec")==0)

@@ -422,7 +422,7 @@ int FilePanels::ProcessKey(int Key)
 		CtrlObject->CmdLine->ProcessKey(Key);
 		return TRUE;
 	}
-
+	SudoClientRegion scr;
 	switch (Key)
 	{
 		case KEY_F1:

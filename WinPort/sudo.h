@@ -22,6 +22,7 @@ extern "C" {
  int sudo_main_dispatcher();
 
  int sudo_client_execute(const char *cmd, bool modify, bool no_wait);
+ __attribute__ ((visibility("default"))) int sudo_client_is_required_for(const char *pathname, bool modify);
 
  __attribute__ ((visibility("default"))) void sudo_client_region_enter();
  __attribute__ ((visibility("default"))) void sudo_client_region_leave();

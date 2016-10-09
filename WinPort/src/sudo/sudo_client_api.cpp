@@ -11,6 +11,7 @@
 #include <map>
 #include <mutex>
 #include "sudo_private.h"
+#include "sudo.h"
 
 namespace Sudo {
 
@@ -140,6 +141,53 @@ static int send_remote_fd_close(int fd)
 inline bool IsAccessDeniedErrno()
 {
 	return (errno==EACCES || errno==EPERM);
+}
+
+extern "C" int sudo_client_execute(const char *cmd, bool modify, bool no_wait)
+{
+	//this call doesnt require outside region demarkation, so ensure it now
+	SudoClientRegion scr;
+			
+	if (!TouchClientConnection(modify))
+		return -2;
+	
+	int r;
+	try {
+		ClientTransaction ct(SUDO_CMD_EXECUTE);
+		ct.SendStr(cmd);
+		ct.SendInt(no_wait ? 1 : 0);
+		r = ct.RecvInt();
+		if (r==-1) {
+			ct.RecvErrno();
+		}
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: sudo_client_execute('%s', %u) - error %s\n", cmd, modify, what);
+		r = -3;
+	}
+	return r;
+}		
+
+extern "C" __attribute__ ((visibility("default"))) int sudo_client_is_required_for(const char *pathname, bool modify)
+{
+	struct stat s;
+	int r = stat(pathname, &s);
+	if (r == 0) {
+		if (!modify)
+			return 0;
+	} else {
+		if (!IsAccessDeniedErrno())
+			return -1;
+
+		if (!modify)
+			return 1;
+	}
+
+	r = open(pathname, O_RDWR);
+	if (r != -1) {
+		close(r);
+		return 0;
+	}
+	return (IsAccessDeniedErrno() ? 1 : -1);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_open(const char* pathname, int flags, ...)
@@ -528,24 +576,31 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 	int r = chdir(path);
 	const bool access_denied = (r==-1 && IsAccessDeniedErrno());	
 	ClientCurDirOverrideReset();
-	if (access_denied && TouchClientConnection(false)) {
+	if (IsSudoRegionActive() || (access_denied && TouchClientConnection(false))) {
+		int r2;
 		std::string cwd;
 		try {
+			
 			ClientTransaction ct(SUDO_CMD_CHDIR);
 			ct.SendStr(path);
-			r = ct.RecvInt();
-			if (r==-1) {
+			r2 = ct.RecvInt();
+			if (r2 == -1)
 				ct.RecvErrno();
-			} else {
+			else
 				ct.RecvStr(cwd);
-				errno = saved_errno;
-			}
+
 		} catch(const char *what) {
 			fprintf(stderr, "sudo_client: sdc_chdir('%s') - error %s\n", path, what);
-			r = -1;
+			r2 = -1;
 		}
 		if (!cwd.empty())
 			ClientCurDirOverrideSet(cwd.c_str());
+		
+		if (r != 0 && r2 == 0) {
+			r = 0;
+			errno = saved_errno;
+		}
+
 	} else if (access_denied && !IsSudoRegionActive()) {
 		//Workaround to avoid excessive sudo prompt on TAB panel swicth:
 		//set override if path likely to be existing but not accessible 

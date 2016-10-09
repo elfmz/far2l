@@ -8,6 +8,7 @@
 */
 
 #include <windows.h>
+#include <sudo.h>
 #include <utils.h>
 #include <string.h>
 #include <fcntl.h>
@@ -456,7 +457,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
     char TempName[NM];
     if(MkTemp(TempName, "FAR") == NULL)
         return (FALSE);
-	remove(TempName);
+    sdc_remove(TempName);
 		
 
 
@@ -491,22 +492,22 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
     if(ExitCode)
     {
         OutData = NULL;
-		int fd = open(TempName, O_RDONLY);
+		int fd = sdc_open(TempName, O_RDONLY);
 		if (fd!=-1) {
 			struct stat s = {0};
-			fstat(fd, &s);
+			sdc_fstat(fd, &s);
 			if (s.st_size > 0) {
 				OutData = (char *) calloc(s.st_size + 1, 1);
 				if (OutData) {
 					for (off_t i = 0; i < s.st_size;) {
 						int piece = (s.st_size - i < 0x10000) ? s.st_size - i : 0x10000;
-						int r = read(fd, OutData + i, piece);
+						int r = sdc_read(fd, OutData + i, piece);
 						if (r<=0) break;
 						i+= r;
 					}
 				}
 			}
-			close(fd);
+			sdc_close(fd);
 		}
 		
         if(OutData == NULL)

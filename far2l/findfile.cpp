@@ -2700,6 +2700,7 @@ struct THREADPARAM
 
 DWORD ThreadRoutine(LPVOID Param)
 {
+	SudoClientRegion scr;
 	InitInFileSearch();
 	THREADPARAM* tParam=reinterpret_cast<THREADPARAM*>(Param);
 	tParam->PluginMode?DoPreparePluginList(tParam->hDlg, false):DoPrepareFileList(tParam->hDlg);

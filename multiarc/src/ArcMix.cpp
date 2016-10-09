@@ -14,7 +14,7 @@ extern std::string gMultiArcPluginPath;
 BOOL FileExists(const char* Name)
 {
   struct stat s = {0};
-  return stat(Name, &s)!=-1;
+  return sdc_stat(Name, &s)!=-1;
 }
 
 static void mystrlwr(char *p) 
@@ -149,13 +149,13 @@ DWORD WINAPI ThreadWhatWaitingForKillListFile(LPVOID par)
     WINPORT(WaitForSingleObject)(ks->hProcess,INFINITE);
     WINPORT(CloseHandle)(ks->hThread);
     WINPORT(CloseHandle)(ks->hProcess);
-    unlink(ks->ListFileName);
+    sdc_unlink(ks->ListFileName);
     free((LPVOID)ks);
     return SUPER_PUPER_ZERO;
 }
 /* tran 13.09.2000 $ */
 
-int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,char *ListFileName)
+int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int NeedSudo,int ShowTitle,char *ListFileName)
 {
  // STARTUPINFO si;
   //PROCESS_INFORMATION pi;
@@ -236,12 +236,14 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,
     si.wShowWindow=SW_MINIMIZE;
   }*/
   /* raVen $ */
-	fprintf(stderr, "Executing: h/o=%u s=%u '%ls'\n", HideOutput, Silent, ExpandedCmd);
 	const std::string &expanded_cmd_mb = Wide2MB(ExpandedCmd);
 	DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
+	if (NeedSudo)
+		flags|= EF_SUDO;
+	
 	if (*expanded_cmd_mb.c_str()=='^') {
 		LastError = ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), 
-								"BuiltinMain", expanded_cmd_mb.c_str() + 1, flags);
+						"BuiltinMain", expanded_cmd_mb.c_str() + 1, flags);
 	} else {
 		LastError = ExitCode = FSF.Execute(expanded_cmd_mb.c_str(), flags);
 	}

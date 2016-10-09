@@ -309,30 +309,6 @@ namespace Sudo
 			CheckForCloseClientConnection();
 		}
 		
-
-		int sudo_client_execute(const char *cmd, bool modify, bool no_wait)
-		{
-			//this call doesnt require outside region demarkation, so ensure it now
-			SudoClientRegion scr;
-			
-			if (!TouchClientConnection(modify))
-				return -2;
-			
-			int r;
-			try {
-				ClientTransaction ct(SUDO_CMD_EXECUTE);
-				ct.SendStr(cmd);
-				ct.SendInt(no_wait ? 1 : 0);
-				r = ct.RecvInt();
-				if (r==-1) {
-					ct.RecvErrno();
-				}
-			} catch(const char *what) {
-				fprintf(stderr, "sudo_client: sudo_client_execute('%s', %u) - error %s\n", cmd, modify, what);
-				r = -3;
-			}
-			return r;
-		}		
 	}
 	
 

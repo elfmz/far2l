@@ -8,6 +8,7 @@
 */
 
 #include <windows.h>
+#include <sudo.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -92,7 +93,7 @@ BOOL WINAPI _export CAB_IsArchive(const char *Name,const unsigned char *Data,int
 
 static void CloseArcHandle()
 {
-	close(ArcHandle);
+	sdc_close(ArcHandle);
 	ArcHandle = -1;	
 }
 
@@ -102,7 +103,7 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type)
   int ReadSize;
   int I;
 
-  ArcHandle = open(Name, O_RDONLY);
+  ArcHandle = sdc_open(Name, O_RDONLY);
   if (ArcHandle == -1)
     return FALSE;
 
@@ -110,20 +111,20 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type)
 
   lseek(ArcHandle, SFXSize, SEEK_SET);
   I = SFXSize;
-  ReadSize = read(ArcHandle, &MainHeader, sizeof(MainHeader));
+  ReadSize = sdc_read(ArcHandle, &MainHeader, sizeof(MainHeader));
   if ( ReadSize != sizeof(MainHeader))
     return CloseArcHandle(), FALSE;
 	
   if ( !CAB_IsArchive( NULL, (u1*)&MainHeader, sizeof(MainHeader) ))
   {
 	struct stat s = {0};
-	if (fstat(ArcHandle, &s)==-1 || (s.st_mode & S_IFMT)!=S_IFREG) {
+	if (sdc_fstat(ArcHandle, &s)==-1 || (s.st_mode & S_IFMT)!=S_IFREG) {
 		return CloseArcHandle(), FALSE;
 	}
 
 	ReadSize = (s.st_size > 0x100000) ? 0x100000 : s.st_size ;
 
-	  
+//todo: replace with sdc_read cuz mmap is not sudo-able
     LPBYTE Data = (LPBYTE)mmap( NULL, ReadSize, PROT_READ, MAP_PRIVATE, ArcHandle, 0);
     if (Data == (LPBYTE)MAP_FAILED)
 		return CloseArcHandle(), FALSE;
@@ -149,7 +150,7 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type)
   {
     char *EndPos;
     struct CFFILE FileHeader;
-	ReadSize = read(ArcHandle, &FileHeader, sizeof(FileHeader));
+	ReadSize = sdc_read(ArcHandle, &FileHeader, sizeof(FileHeader));
     if (ReadSize < 18)
       return CloseArcHandle(), FALSE;
 	  
@@ -186,7 +187,7 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 
   if (FilesNumber-- == 0)
     return GETARC_EOF;
-  ReadSize = read(ArcHandle,&FileHeader,sizeof(FileHeader));
+  ReadSize = sdc_read(ArcHandle,&FileHeader,sizeof(FileHeader));
   if (ReadSize < 18)
     return GETARC_READERROR;
 
@@ -222,7 +223,7 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 BOOL WINAPI _export CAB_CloseArchive(struct ArcInfo *Info)
 {
   Info->SFXSize=SFXSize;
-  return(close(ArcHandle));
+  return(sdc_close(ArcHandle));
 }
 
 DWORD WINAPI _export CAB_GetSFXPos(void)

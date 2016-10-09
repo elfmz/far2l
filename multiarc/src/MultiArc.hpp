@@ -186,6 +186,7 @@ class PluginClass
 class ArcCommand
 {
   private:
+    bool NeedSudo;
     struct PluginPanelItem *PanelItem;
     int ItemsNumber;
     char ArcName[NM];
@@ -316,7 +317,7 @@ int ConfigGeneral();
 int ConfigCommands(char *ArcFormat,int IDFocus=2,BOOL FastAccess=FALSE,int PluginNumber=0,int PluginType=0);
 
 const char *GetMsg(int MsgId);
-int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int ShowTitle,char *ListFileName=0);
+int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int NeedSudo,int ShowTitle,char *ListFileName=0);
 char *SeekDefExtPoint(char *Name, char *DefExt=NULL, char **Ext=NULL); //$ AA 28.11.2001
 BOOL AddExt(char *Name, char *Ext);                               //$ AA 28.11.2001
 //void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list);

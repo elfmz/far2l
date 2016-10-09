@@ -8,7 +8,7 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
                        const char *Password,const char *AllFilesMask,int IgnoreErrors,
                        int CommandType,int ASilent,const char *RealArcDir)
 {
-
+  NeedSudo = false;
   Silent=ASilent;
 //  CommentFile=INVALID_HANDLE_VALUE; //$ AA 25.11.2001
   *CommentFileName=0; //$ AA 25.11.2001
@@ -19,6 +19,17 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
 
   if (*FormatString==0)
     return;
+
+  bool arc_modify = (CommandType!=CMD_EXTRACT && CommandType!=CMD_EXTRACTWITHOUTPATH && CommandType!=CMD_TEST);
+
+  if (ArcDir && *ArcDir && sudo_client_is_required_for(ArcDir, false)==1) {
+      NeedSudo = true;
+  } else if (RealArcDir && *RealArcDir && sudo_client_is_required_for(RealArcDir, false)==1) {
+      NeedSudo = true;
+  } else if (ArcName && *ArcName && sudo_client_is_required_for(ArcName, arc_modify)==1) {
+      NeedSudo = true;
+  }
+
   //char QPassword[NM+5],QTempPath[NM+5];
   char Command[MAX_COMMAND_LENGTH];
   ArcCommand::PanelItem=PanelItem;
@@ -43,7 +54,7 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
     if (*ListFileName)
     {
       if ( !Opt.Background )
-        remove(ListFileName);
+        sdc_remove(ListFileName);
       *ListFileName=0;
     }
   } while (NameNumber!=-1 && NameNumber<ItemsNumber);
@@ -77,7 +88,7 @@ int ArcCommand::ProcessCommand(char *Command,int CommandType,int IgnoreErrors,
     int Hide=Opt.HideOutput;
     if ((Hide==1 && CommandType==0) || CommandType==2)
       Hide=0;
-    ExecCode=Execute(this,Command,Hide,Silent,!*Password,ListFileName);
+    ExecCode=Execute(this,Command,Hide,Silent,NeedSudo,!*Password,ListFileName);
     if(ExecCode==RETEXEC_ARCNOTFOUND)
     {
       return FALSE;
@@ -252,7 +263,7 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
         strcpy(Command, ArcName);//TODO: ConvertNameToShort(ArcName,Command);
         char *Slash=strrchr(ArcName, GOOD_SLASH);
 		struct stat s;
-        if (stat(ArcName, &s)==-1 && Slash!=NULL && Slash!=ArcName)
+        if (sdc_stat(ArcName, &s)==-1 && Slash!=NULL && Slash!=ArcName)
         {
           char Path[NM];
           strcpy(Path,ArcName);
@@ -590,7 +601,7 @@ int ArcCommand::MakeListFile(char *ListFileName,int QuoteName,
     if (Error)
     {
       WINPORT(CloseHandle)(ListFile);
-      remove(ListFileName);
+      sdc_remove(ListFileName);
       if(!Silent)
       {
         const char *MsgItems[]={GetMsg(MError),GetMsg(MCannotCreateListFile),GetMsg(MOk)};
@@ -622,5 +633,5 @@ ArcCommand::~ArcCommand() //$ AA 25.11.2001
 {
 /*  if(CommentFile!=INVALID_HANDLE_VALUE)
     WINPORT(CloseHandle)(CommentFile);*/
-    remove(CommentFileName);
+    sdc_remove(CommentFileName);
 }

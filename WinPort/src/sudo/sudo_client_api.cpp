@@ -200,7 +200,7 @@ extern "C" __attribute__ ((visibility("default"))) int sudo_client_is_required_f
 	
 	r = access(tmp.c_str(), modify ? R_OK|W_OK : R_OK);
 	if (r==0) {
-		fprintf(stderr, "access: may %s path %s\n", modify ? "modify" : "read", tmp.c_str());
+		//fprintf(stderr, "access: may %s path %s\n", modify ? "modify" : "read", tmp.c_str());
 		return 0;
 	}
 		

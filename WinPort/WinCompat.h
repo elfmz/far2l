@@ -1511,8 +1511,6 @@ typedef BOOL (*WINPORT_HANDLER_ROUTINE)(  DWORD CtrlType );
 typedef WINPORT_HANDLER_ROUTINE PHANDLER_ROUTINE;
 typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTINE;
 
-#define nullptr NULL
-
 #define STDMETHOD(method)        virtual HRESULT method
 #define STDMETHOD_(type,method)  virtual type method
 #define STDMETHODV(method)       virtual HRESULT method

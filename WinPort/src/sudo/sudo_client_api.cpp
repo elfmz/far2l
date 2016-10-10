@@ -169,25 +169,46 @@ extern "C" int sudo_client_execute(const char *cmd, bool modify, bool no_wait)
 
 extern "C" __attribute__ ((visibility("default"))) int sudo_client_is_required_for(const char *pathname, bool modify)
 {
+	ClientReconstructCurDir crcd(pathname);
 	struct stat s;
+	
 	int r = stat(pathname, &s);
 	if (r == 0) {
-		if (!modify)
+		r = access(pathname, modify ? R_OK|W_OK : R_OK);
+		if (r==0)
 			return 0;
-	} else {
-		if (!IsAccessDeniedErrno())
-			return -1;
-
-		if (!modify)
-			return 1;
+			
+		return IsAccessDeniedErrno() ? 1 : -1;
 	}
 
-	r = open(pathname, O_RDWR);
-	if (r != -1) {
-		close(r);
+	if (IsAccessDeniedErrno())
+		return 1;
+		
+	if (errno != ENOENT) {
+		//fprintf(stderr, "stat: error %u on path %s\n", errno, pathname);
+		return -1;
+	}
+	
+	std::string tmp(pathname);
+	size_t p = tmp.rfind('/');
+	if (p == std::string::npos)
+		tmp = ".";
+	else if (p > 0)
+		tmp.resize(p - 1);
+	else
+		tmp = "/";
+	
+	r = access(tmp.c_str(), modify ? R_OK|W_OK : R_OK);
+	if (r==0) {
+		fprintf(stderr, "access: may %s path %s\n", modify ? "modify" : "read", tmp.c_str());
 		return 0;
 	}
-	return (IsAccessDeniedErrno() ? 1 : -1);
+		
+	if (IsAccessDeniedErrno())
+		return 1;
+
+	//fprintf(stderr, "access: error %u on path %s\n", errno, tmp.c_str());
+	return -1;
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_open(const char* pathname, int flags, ...)

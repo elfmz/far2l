@@ -370,17 +370,13 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 
 	if (Validate)
 	{
-		FARString strLookup=lpPathName;
-		AddEndSlash(strLookup);
-		strLookup+=L"*";
-		FAR_FIND_DATA_EX fd;
-		if (!apiGetFindDataEx(strLookup, fd))
-		{
-			DWORD LastError = WINPORT(GetLastError)();
-			if(!(LastError == ERROR_FILE_NOT_FOUND || LastError == ERROR_NO_MORE_FILES)) {
-				fprintf(stderr, "apiSetCurrentDirectory: validate failed for %ls\n", lpPathName);
-				return FALSE;
-			}
+		DWORD attr = WINPORT(GetFileAttributes)(lpPathName);
+		if (attr == 0xffffffff) {
+			fprintf(stderr, "apiSetCurrentDirectory: get attr error %u for %ls\n", WINPORT(GetLastError()), lpPathName);
+			return FALSE;
+		} else if ( (attr & FILE_ATTRIBUTE_DIRECTORY) == 0 ) {
+			fprintf(stderr, "apiSetCurrentDirectory: not dir attr 0x%x for %ls\n", attr, lpPathName);
+			return FALSE;
 		}
 	}
 
@@ -389,7 +385,9 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 	// try to synchronize far cur dir with process cur dir
 	if(CtrlObject && CtrlObject->Plugins.GetOemPluginsCount())
 	{
-		WINPORT(SetCurrentDirectory)(strCurrentDirectory());
+		if (!WINPORT(SetCurrentDirectory)(strCurrentDirectory())) {
+			fprintf(stderr, "apiSetCurrentDirectory: set curdir error %u for %ls\n", WINPORT(GetLastError()), lpPathName);
+		}
 	}
 
 	return TRUE;

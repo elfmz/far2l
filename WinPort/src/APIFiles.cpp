@@ -200,7 +200,13 @@ extern "C"
 
 	BOOL WINPORT(SetCurrentDirectory)(LPCWSTR lpPathName)
 	{
-		return (sdc_chdir(ConsumeWinPath(lpPathName).c_str())==0) ? TRUE : FALSE;
+		const std::string &path = ConsumeWinPath(lpPathName);
+		int r = sdc_chdir(path.c_str());
+		if (r == 0)
+			return TRUE;
+
+		WINPORT(TranslateErrno)();
+		return FALSE;
 	}
 
 	BOOL WINPORT(GetFileSizeEx)( HANDLE hFile, PLARGE_INTEGER lpFileSize)
@@ -604,7 +610,6 @@ extern "C"
 				WINPORT(TranslateErrno)();
 				return INVALID_HANDLE_VALUE;			
 			}
-
 			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);
 			if (name) ++name; else name = lpFileName;
 			FillWFD(name, s, lpFindFileData, symattr);
@@ -621,7 +626,6 @@ extern "C"
 			return INVALID_HANDLE_VALUE;
 		}
 		//fprintf(stderr, "find mask: %s  (for %ls) - %ls", mask.c_str(), lpFileName, lpFindFileData->cFileName);
-
 		std::lock_guard<std::mutex> lock(g_unix_find_files);
 		g_unix_find_files.insert(uff);
 		return (HANDLE)uff;

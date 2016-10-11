@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "dirinfo.hpp"
 #include "wakeful.hpp"
+#include "execute.hpp"
 
 static void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent);
 static int AskDeleteReadOnly(const wchar_t *Name,DWORD Attr,int Wipe);
@@ -814,7 +815,25 @@ DWORD SHErrorToWinError(DWORD SHError)
 
 int RemoveToRecycleBin(const wchar_t *Name)
 {
-	return -1;
+	const std::string &name_mb = Wide2MB(Name);
+	std::string script = "\"";
+	script+= EscapeQuotas(g_strFarPath.GetMB());
+	script+= "trash.sh\"";
+	script+= " \"";
+	script+= name_mb;
+	script+= '\"';
+
+	unsigned int flags = EF_HIDEOUT;
+	if (sudo_client_is_required_for(name_mb.c_str(), true))
+		flags = EF_SUDO;
+
+	int r = farExecuteA(script.c_str(), flags);
+	if (r==0)
+		return TRUE;
+
+	errno = r;
+	WINPORT(TranslateErrno)();
+	return FALSE;
 }
 
 int WipeFile(const wchar_t *Name)

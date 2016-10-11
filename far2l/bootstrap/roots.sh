@@ -12,6 +12,17 @@
 #Root2\tFormatted\tInfo2\n
 #FAR extracts root, replaces \t with vertical lines and 
 #adds resulting string to menu
+#---------------------------------------------------------
+#If you want just to add some 'favorites' - don't edit this
+#Instead, create ~/far2l/favorites text file with lines:
+#
+#path1<TAB>label1
+#path2<TAB>label2
+#-<TAB>label_separator
+#path3<TAB>label3
+#
+#You also may create executable ~/far2l/favorites.sh
+#That should produce similar text on output
 ##########################################################
 
 current=$1
@@ -24,6 +35,15 @@ tab=$'\t'
 
 dfout=`df -T | awk "-F " '{ print $NF "\t" $2 }'`
 dfout+=$eol
+if [ -f ~/.far2l/favorites ]; then
+	dfout+=`grep "^[^#]" ~/.far2l/favorites`
+	dfout+=$eol
+fi
+if [ -e ~/.far2l/favorites.sh ]; then
+	dfout+=`~/.far2l/favorites.sh`
+	dfout+=$eol
+fi
+
 allow=0
 
 root=""
@@ -92,12 +112,16 @@ done
 for line in "${lines[@]}" ; do
 	path="${line%$tab*}"
 	comment="${line##*$tab}"
-	unexpanded="$path"
-	while [ ${#path} -lt $max_len_path ]; do
-		path=" $path"
-	done
-	while [ ${#comment} -lt $max_len_comment ]; do
-		comment=" $comment"
-	done
-	echo "$unexpanded$tab$path$tab$comment"
+	if [ "$path" != "-" ]; then
+		unexpanded="$path"
+		while [ ${#path} -lt $max_len_path ]; do
+			path=" $path"
+		done
+		while [ ${#comment} -lt $max_len_comment ]; do
+			comment=" $comment"
+		done
+		echo "$unexpanded$tab$path$tab$comment"
+	else
+		echo "-$tab$comment"
+	fi
 done

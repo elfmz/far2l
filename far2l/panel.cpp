@@ -379,19 +379,6 @@ bool IsCharTrimmable(wchar_t c)
 }
 
 
-std::wstring ExtractTilTab(std::wstring &s)
-{
-	size_t p = s.find('\t');
-
-	std::wstring rv;
-	if (p!=std::wstring::npos) {
-		rv = s.substr(0, p);
-		s.erase(0, p + 1);
-	} else 
-		rv.swap(s);
-	return rv;
-}
-
 struct RootEntry
 {
 	FARString text;
@@ -512,11 +499,16 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			}
 
 			ChDiskItem.strName = f.text;
-
-			PanelMenuItem item;
-			item.bIsPlugin = false;
-			wcsncpy(item.root, f.root.CPtr(), sizeof(item.root)/sizeof(item.root[0]));
-			ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
+			if (f.root == L"-" ) {
+				ChDiskItem.Flags|= LIF_SEPARATOR;
+				ChDisk.AddItem(&ChDiskItem);
+				ChDiskItem.Flags&= ~LIF_SEPARATOR;
+			} else {
+				PanelMenuItem item;
+				item.bIsPlugin = false;
+				wcsncpy(item.root, f.root.CPtr(), sizeof(item.root)/sizeof(item.root[0]));
+				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
+			}
 			MenuLine++;
 		}
 

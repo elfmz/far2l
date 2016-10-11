@@ -825,7 +825,7 @@ int RemoveToRecycleBin(const wchar_t *Name)
 
 	unsigned int flags = EF_HIDEOUT;
 	if (sudo_client_is_required_for(name_mb.c_str(), true))
-		flags = EF_SUDO;
+		flags|= EF_SUDO;
 
 	int r = farExecuteA(script.c_str(), flags);
 	if (r==0)

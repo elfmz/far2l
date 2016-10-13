@@ -10,6 +10,7 @@
 #include <set>
 #include <vector>
 #include <mutex>
+#include <locale.h>
 #include "sudo_private.h"
 
 namespace Sudo 

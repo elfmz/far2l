@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-
+#include <sys/types.h>
 
 void Wide2MB(const wchar_t *src, std::string &dst);
 void MB2Wide(const char *src, std::wstring &dst);

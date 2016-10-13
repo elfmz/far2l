@@ -145,14 +145,30 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,FARString &strFullName)
 			AddEndSlash(RealPath);
 			RealPath += fdata->strFileName;
 
-			if (fdata->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
-				ConvertNameToReal(RealPath, RealPath);
 
 			//recursive symlinks guard
 			bool Recursion = false;
 
-			for (size_t i = 0; i < ScanItems.getCount() && !Recursion; i++)
-				Recursion = ScanItems.getItem(i)->RealPath == RealPath;
+			if (fdata->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) {
+				ConvertNameToReal(RealPath, RealPath);
+				//check if converted path points to same location is already scanned or to parent path of already scanned location
+				//NB: in original FAR here was exact-match check all pathes (not only symlinks)
+				//that caused excessive scan from FS root cuz in Linux links pointing to / are usual situation unlike Windows
+
+				const size_t RealPathLen = RealPath.GetLength();
+				for (size_t i = 0; i < ScanItems.getCount(); i++) {
+					FARString &IthPath = ScanItems.getItem(i)->RealPath;
+					const size_t IthPathLen = IthPath.GetLength();
+					if ( (IthPathLen >= RealPathLen && memcmp(IthPath.CPtr(), 
+							RealPath.CPtr(), RealPathLen * sizeof(wchar_t)) == 0) &&
+							(IthPathLen == RealPathLen || 
+							IthPath.At(RealPathLen) == GOOD_SLASH || 
+							RealPathLen == 1) ) {
+						Recursion = true;
+						break;
+					}
+				}
+			}
 
 			if (!Recursion)
 			{

@@ -297,7 +297,7 @@ void TreeList::DisplayTree(int Fast)
 
 			if (!J)
 			{
-				DisplayTreeName(L"/",J);
+				DisplayTreeName(L".",J);
 			}
 			else
 			{
@@ -661,7 +661,7 @@ void TreeList::GetRoot()
 	FARString strPanelDir;
 	Panel *RootPanel=GetRootPanel();
 	RootPanel->GetCurDir(strPanelDir);
-	strRoot = ExtractPathRoot(strPanelDir);
+	strRoot = strPanelDir;//ExtractPathRoot(strPanelDir);
 }
 
 

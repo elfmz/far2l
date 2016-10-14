@@ -297,7 +297,7 @@ void TreeList::DisplayTree(int Fast)
 
 			if (!J)
 			{
-				DisplayTreeName(L".",J);
+				DisplayTreeName(strRoot.CPtr(),J);
 			}
 			else
 			{

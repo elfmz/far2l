@@ -222,6 +222,7 @@ namespace Sudo
 	{
 		DIR *d;
 		bt.RecvPOD(d);
+		bt.RecvErrno();
 		struct dirent *de = g_dirs.Check(d) ? readdir(d) : nullptr;
 		if (de) {
 			bt.SendInt(0);
@@ -491,6 +492,7 @@ namespace Sudo
 			perror("open /dev/null");
 
 		setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
+		
 		sudo_dispatcher_with_pipes(pipe_request, pipe_reply);
 		close(pipe_request);
 		close(pipe_reply);

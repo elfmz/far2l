@@ -524,6 +524,7 @@ extern "C" __attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DI
 	try {
 		ClientTransaction ct(SUDO_CMD_READDIR);
 		ct.SendPOD(remote_dir);
+		ct.SendErrno();
 		int err = ct.RecvInt();
 		if (err==0) {
 			ct.RecvPOD(sudo_client_dirent);

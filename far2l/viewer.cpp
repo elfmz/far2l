@@ -357,7 +357,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		// пока что запретим переключать hex в UTF8/UTF32, ибо не работает.
 		if (VM.Hex && (VM.CodePage==CP_UTF8 || VM.CodePage==CP_UTF32LE || VM.CodePage==CP_UTF32BE))
 		{
-			VM.CodePage=Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
+			VM.CodePage=WINPORT(GetACP)();
 		}
 
 		if (!IsUnicodeOrUtfCodePage(VM.CodePage))
@@ -2811,7 +2811,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		{
 			for (int i=0; i<ConvertSize; i++)
 			{
-				Buf[i]=TmpBuf[i];
+				Buf[i]=(wchar_t)(unsigned char)TmpBuf[i];
 			}
 		}
 		else
@@ -3362,7 +3362,7 @@ int Viewer::ProcessHexMode(int newMode, bool isRedraw)
 	// Ибо сейчас это не просмотр, а генератор однотипных унылых багрепортов.
 	if (VM.CodePage==CP_UTF8 && newMode)
 	{
-		VM.CodePage=WINPORT(GetOEMCP)(); //Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
+		VM.CodePage=WINPORT(GetACP)();
 	}
 
 	int oldHex=VM.Hex;

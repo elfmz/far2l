@@ -471,7 +471,7 @@ int TreeList::ReadTree()
 	int FirstCall=TRUE, AscAbort=FALSE;
 	TreeStartTime = GetProcessUptimeMSec();
 	RefreshFrameManager frref(ScrX,ScrY,TreeStartTime,FALSE);//DontRedrawFrame);
-	ScTree.SetFindPath(strRoot, L"*", 0);
+	ScTree.SetFindPath(strRoot, L"*", FSCANTREE_NOFILES | FSCANTREE_NODEVICES);
 	LastScrX = ScrX;
 	LastScrY = ScrY;
 	wakeful W;

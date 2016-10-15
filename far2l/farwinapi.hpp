@@ -105,7 +105,7 @@ struct FAR_FIND_DATA_EX
 class FindFile: private NonCopyable
 {
 public:
-	FindFile(LPCWSTR Object, bool ScanSymLink = true);
+	FindFile(LPCWSTR Object, bool ScanSymLink = true, bool ScanDirs = true, bool ScanFiles = true, bool ScanDevices = true);
 	~FindFile();
 	bool Get(FAR_FIND_DATA_EX& FindData);
 

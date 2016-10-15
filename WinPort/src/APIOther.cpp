@@ -234,6 +234,7 @@ extern "C" {
 			case ENOENT: gle = ERROR_FILE_NOT_FOUND; break;
 			case EACCES: case EPERM: gle = ERROR_ACCESS_DENIED; break;
 			case ETXTBSY: gle = ERROR_SHARING_VIOLATION; break;
+			case EINVAL: gle = ERROR_INVALID_PARAMETER; break;
 			//case EROFS: gle = ; break;
 			default:
 				gle = 20000 + errno;

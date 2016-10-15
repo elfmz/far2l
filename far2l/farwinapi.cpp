@@ -47,7 +47,7 @@ struct PSEUDO_HANDLE
 	ULONG BufferSize;
 };
 
-void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
+static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
 {
 	FindData.dwFileAttributes = wfd.dwFileAttributes;
 	FindData.ftCreationTime = wfd.ftCreationTime;
@@ -64,17 +64,7 @@ void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
 	FindData.strFileName = wfd.cFileName;
 }
 
-HANDLE FindFirstFileInternal(LPCWSTR Name, FAR_FIND_DATA_EX& FindData)
-{
-	WIN32_FIND_DATA wfd = {0};
-	HANDLE Result = WINPORT(FindFirstFile)(Name, &wfd);
-	if (Result!=INVALID_HANDLE_VALUE)
-		TranslateFindFile(wfd, FindData);
-
-	return Result;
-}
-
-bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
+static bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
 {
 	WIN32_FIND_DATA wfd = {0};
 	if (!WINPORT(FindNextFile)(Find, &wfd))
@@ -84,46 +74,32 @@ bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
 	return TRUE;
 }
 
-bool FindCloseInternal(HANDLE Find)
-{
-	return (WINPORT(FindClose)(Find)!=FALSE);
-}
-
-FindFile::FindFile(LPCWSTR Object, bool ScanSymLink):
+FindFile::FindFile(LPCWSTR Object, bool ScanSymLinks, bool ScanDirs, bool ScanFiles, bool ScanDevices):
 	Handle(INVALID_HANDLE_VALUE),
 	empty(false)
 {
 	FARString strName(NTPath(Object).Get());
 
-	// temporary disable elevation to try "real" name first
-	DWORD OldElevationMode = Opt.ElevationMode;
-	Opt.ElevationMode = 0;
-	Handle = FindFirstFileInternal(strName, Data);
-	Opt.ElevationMode = OldElevationMode;
+	DWORD flags = FIND_FILE_FLAG_NO_CUR_UP;
+	if (!ScanSymLinks) flags|= FIND_FILE_FLAG_NO_LINKS;
+	if (!ScanDirs) flags|= FIND_FILE_FLAG_NO_DIRS;
+	if (!ScanFiles) flags|= FIND_FILE_FLAG_NO_FILES;
+	if (!ScanDevices) flags|= FIND_FILE_FLAG_NO_DEVICES;
 
-	if (Handle == INVALID_HANDLE_VALUE && WINPORT(GetLastError)() == ERROR_ACCESS_DENIED)
-	{
-		if(ScanSymLink)
-		{
-			FARString strReal(strName);
-			// only links in path should be processed, not the object name itself
-			CutToSlash(strReal);
-			ConvertNameToReal(strReal, strReal);
-			AddEndSlash(strReal);
-			strReal+=PointToName(Object);
-			strReal = NTPath(strReal);
-			Handle = FindFirstFileInternal(strReal, Data);
-		}
-
-	}
-	empty = Handle == INVALID_HANDLE_VALUE;
+	WIN32_FIND_DATA wfd = {0};
+	Handle = WINPORT(FindFirstFileWithFlags)(strName, &wfd, flags);
+	if (Handle!=INVALID_HANDLE_VALUE) {
+		TranslateFindFile(wfd, Data);
+	} else
+		empty = true;
 }
 
 FindFile::~FindFile()
 {
 	if(Handle != INVALID_HANDLE_VALUE)
 	{
-		FindCloseInternal(Handle);
+		if (!WINPORT(FindClose)(Handle))
+			fprintf(stderr, "FindFile::~FindFile: FindClose failed\n");
 	}
 }
 
@@ -145,7 +121,8 @@ bool FindFile::Get(FAR_FIND_DATA_EX& FindData)
 		// хитрый способ - у виртуальных папок не бывает SFN, в отличие от.
 		((FindData.strFileName.At(1) == L'.' && !FindData.strFileName.At(2)) || !FindData.strFileName.At(1)))
 	{
-		Result = Get(FindData);
+		abort(); //FIND_FILE_FLAG_NO_CUR_UP should handle this
+		//Result = Get(FindData);
 	}
 	return Result;
 }

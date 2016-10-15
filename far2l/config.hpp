@@ -642,7 +642,6 @@ struct Options
 	bool IsUserAdmin;
 	FARString strTitleAddons;
 
-	int ElevationMode;
 	BOOL WindowMode;
 };
 

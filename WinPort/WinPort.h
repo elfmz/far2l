@@ -140,6 +140,14 @@ extern "C" {
 
 	WINPORT_DECL(GetFileAttributes, DWORD, (LPCWSTR lpFileName));
 	WINPORT_DECL(SetFileAttributes, DWORD, (LPCWSTR lpFileName, DWORD dwAttributes));
+	
+#define FIND_FILE_FLAG_NO_DIRS		0x01
+#define FIND_FILE_FLAG_NO_FILES		0x02
+#define FIND_FILE_FLAG_NO_LINKS		0x04
+#define FIND_FILE_FLAG_NO_DEVICES	0x08
+#define FIND_FILE_FLAG_NO_CUR_UP	0x10 //skip virtual . and ..
+	
+	WINPORT_DECL(FindFirstFileWithFlags, HANDLE, (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags));
 	WINPORT_DECL(FindFirstFile, HANDLE, (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData));
 	WINPORT_DECL(FindNextFile, BOOL, (HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData));
 	WINPORT_DECL(FindClose, BOOL, (HANDLE hFindFile));

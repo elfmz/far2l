@@ -45,23 +45,31 @@ ParseCache::~ParseCache()
 };
 ParseCache *ParseCache::searchLine(int ln, ParseCache **cache)
 {
-ParseCache *r1, *r2, *tmp = this;
-  *cache = null;
-  while(tmp){
+  ParseCache *r1 = nullptr;
+  ParseCache *r2 = nullptr;
+  ParseCache *tmp = this;
+
+  *cache = nullptr;
+  while(tmp != nullptr)
+  {
     CLR_TRACE("TPCache", "  searchLine() tmp:%s,%d-%d", tmp->scheme->getName()->getChars(), tmp->sline, tmp->eline);
     if (tmp->sline <=ln && tmp->eline >= ln){
-      r1 = tmp->children->searchLine(ln, &r2);
-      if (r1){
-        *cache = r2;
-        return r1;
-      };
-      *cache = r2; // last child
-      return tmp;
+        if(tmp->children != nullptr)
+        {
+            r1 = tmp->children->searchLine(ln, &r2);
+        }
+        if (r1)
+        {
+            *cache = r2;
+            return r1;
+        };
+        *cache = r2; // last child
+        return tmp;
     };
     if (tmp->sline <= ln) *cache = tmp;
     tmp = tmp->next;
   };
-  return null;
+  return nullptr;
 };
 
 /////////////////////////////////////////////////////////////////////////

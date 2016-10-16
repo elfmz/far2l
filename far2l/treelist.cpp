@@ -2110,25 +2110,36 @@ void TreeList::SetTitle()
 
 */
 
-// TODO: Файлы "Tree.Far" для локальных дисков должны храниться в "Local AppData\Far"
-// TODO: Файлы "Tree.Far" для сетевых дисков должны храниться в "%HOMEDRIVE%\%HOMEPATH%",
-//                        если эти переменные среды не определены, то "%APPDATA%\Far"
-// хpаним "X.tree" (где 'X'  - буква диска, если не сетевой путь)
-// хpаним "server.share.tree" - для сетевого диска без буквы
+static void MkTreeName(FARString &out, const wchar_t *RootDir, const char *ext)
+{
+	struct stat s = {};
+	int r = sdc_stat(Wide2MB(RootDir).c_str(), &s);
+	if (r == 0) {
+		char tmp[128];
+		sprintf(tmp, "tmp/tree/%llx-%llx.%s", 
+			(unsigned long long)s.st_rdev, (unsigned long long)s.st_ino, ext);
+		out = InMyProfile(tmp);
+	} else {
+		std::string tmp = InMyProfile("tmp/tree/wtf-");
+		const std::string &RootMB = Wide2MB(RootDir);
+		for (char c : RootMB) {
+			tmp+= (c==GOOD_SLASH) ? '@' : c;
+		}
+		tmp+= '.';
+		tmp+= ext;
+		out = tmp;
+	}
+}
+
 FARString &TreeList::MkTreeFileName(const wchar_t *RootDir,FARString &strDest)
 {
-	strDest = RootDir;
-	AddEndSlash(strDest);
-	strDest += L"tree2.far";
+	MkTreeName(strDest, RootDir, "far");
 	return strDest;
 }
 
-// TODO: этому каталогу (Tree.Cache) место не в FarPath, а в "Local AppData\Far\"
 FARString &TreeList::MkTreeCacheFolderName(const wchar_t *RootDir,FARString &strDest)
 {
-	strDest = RootDir;
-	AddEndSlash(strDest);
-	strDest += L"tree2.cache";
+	MkTreeName(strDest, RootDir, "cache");
 	return strDest;
 }
 

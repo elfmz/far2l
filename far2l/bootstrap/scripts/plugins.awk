@@ -21,7 +21,7 @@ BEGIN {
     $0=gensub(/<%YEAR%>/,strftime("%Y"),"g");
 
   if(index($0,"<%VERSION%>"))
-    $0=gensub(/<%VERSION%>/,sprintf("%d.%d build %d",p1,p2,p4),"g");
+    $0=gensub(/<%VERSION%>/,sprintf("%d.%d build %s",p1,p2,p4),"g");
 
   if(index(toupper(FILENAME),".HPP") > 0)
   {
@@ -56,8 +56,6 @@ BEGIN {
           printf "#define FARMANAGERVERSION_MAJOR %d\n",p1
         else if (index($0,"MINOR") > 0)
           printf "#define FARMANAGERVERSION_MINOR %d\n",p2
-        else if (index($0,"BUILD") > 0)
-          printf "#define FARMANAGERVERSION_BUILD %d\n",p4
       }
       else
         print $0
@@ -85,7 +83,7 @@ BEGIN {
       }
       else if(index($0,"FARMANAGERVERSION :=") > 0)
       {
-        printf "  FARMANAGERVERSION := MakeFarVersion (%d,%d,%d);\n",p1,p2,p4
+        printf "  FARMANAGERVERSION := MakeFarVersion (%d,%d);\n",p1,p2
       }
       else
         print $0

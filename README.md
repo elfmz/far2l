@@ -1,7 +1,7 @@
 # far2l
 Linux port of FAR v2 (http://farmanager.com/)
-PRE-ALPHA VERSION.
-**Currently interesting only for programmers!!!**
+ALPHA VERSION.
+**Currently interesting only for entusiasts!!!**
 
 Currently working plugins: colorer, multiarc, farftp, tmppanel
 

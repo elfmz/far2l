@@ -556,8 +556,8 @@ bool PluginA::SetStartupInfo(bool &bUnloaded)
 static void ShowMessageAboutIllegalPluginVersion(const wchar_t* plg,int required)
 {
 	FARString strMsg1, strMsg2;
-	strMsg1.Format(MSG(MPlgRequired),(WORD)HIBYTE(LOWORD(required)),(WORD)LOBYTE(LOWORD(required)),HIWORD(required));
-	strMsg2.Format(MSG(MPlgRequired2),(WORD)HIBYTE(LOWORD(FAR_VERSION)),(WORD)LOBYTE(LOWORD(FAR_VERSION)),HIWORD(FAR_VERSION));
+	strMsg1.Format(MSG(MPlgRequired),(WORD)HIWORD(required),(WORD)LOWORD(required));
+	strMsg2.Format(MSG(MPlgRequired2),(WORD)HIWORD(FAR_VERSION),(WORD)LOWORD(FAR_VERSION));
 	Message(MSG_WARNING,1,MSG(MError),MSG(MPlgBadVers),plg,strMsg1,strMsg2,MSG(MOk));
 }
 

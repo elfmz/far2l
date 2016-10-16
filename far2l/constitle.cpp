@@ -63,8 +63,8 @@ static const FARString& GetFarTitleAddons()
 	if (bFirstRun)
 	{
 		bFirstRun = false;
-		strVer<<HIBYTE(LOWORD(FAR_VERSION))<<L"."<<LOBYTE(LOWORD(FAR_VERSION));
-		strBuild<<HIWORD(FAR_VERSION);
+		strVer << HIWORD(FAR_VERSION) << L"." << LOWORD(FAR_VERSION);
+		strBuild << MB2Wide(FAR_BUILD).c_str();
 	}
 
 	ReplaceStrings(strTitleAddons,L"%Ver",strVer,-1,true);

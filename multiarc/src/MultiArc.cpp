@@ -22,8 +22,8 @@ BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 
 SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)
 {
-	#define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
-  return MAKEFARVERSION(2, 0, 0);
+	#define MAKEFARVERSION(major,minor) ( ((major)<<16) | (minor))
+  return MAKEFARVERSION(2, 1);
 }
 
 SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *Info)

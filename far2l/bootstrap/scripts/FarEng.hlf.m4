@@ -1,4 +1,4 @@
-﻿m4_include(`farversion.m4')m4_dnl
+m4_include(`farversion.m4')m4_dnl
 .Language=English,English
 .Options CtrlColorChar=\
 .Options CtrlStartPosChar=^<wrap>

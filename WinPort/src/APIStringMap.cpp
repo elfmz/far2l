@@ -68,7 +68,7 @@ WINPORT_DECL(LCMapStringEx, INT, (LPCWSTR name, DWORD flags, LPCWSTR src, INT sr
 			return 0;
 		}
 
-		if (srclen < 0) srclen = strlenW(src);
+		if (srclen < 0) srclen = wcslen(src);
 
 		ret = wine_get_sortkey(flags, src, srclen, (char *)dst, dstlen);
 		if (ret == 0)
@@ -85,7 +85,7 @@ WINPORT_DECL(LCMapStringEx, INT, (LPCWSTR name, DWORD flags, LPCWSTR src, INT sr
 		return 0;
 	}
 
-	if (srclen < 0) srclen = strlenW(src) + 1;
+	if (srclen < 0) srclen = wcslen(src) + 1;
 
 
 	if (!dst) /* return required string length */
@@ -179,8 +179,8 @@ INT WINAPI WINPORT(CompareStringEx)(LPCWSTR locale, DWORD flags, LPCWSTR str1, I
 		return 0;
 	}
 
-	if (len1 < 0) len1 = strlenW(str1);
-	if (len2 < 0) len2 = strlenW(str2);
+	if (len1 < 0) len1 = wcslen(str1);
+	if (len2 < 0) len2 = wcslen(str2);
 
 	ret = wine_compare_string(flags, str1, len1, str2, len2);
 
@@ -229,7 +229,7 @@ static BOOL WINPORT(GetStringType)( DWORD type, LPCWSTR src, INT count, LPWORD c
 		return FALSE;
 	}
 
-	if (count == -1) count = strlenW(src) + 1;
+	if (count == -1) count = wcslen(src) + 1;
 	switch(type)
 	{
 	case CT_CTYPE1:

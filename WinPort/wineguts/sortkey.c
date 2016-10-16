@@ -60,7 +60,7 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
 
                 if (flags & NORM_IGNORECASE) wch = tolowerW(wch);
 
-                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                ce = collation_table[collation_table[((USHORT)wch) >> 8] + (wch & 0xff)];
                 if (ce != (unsigned int)-1)
                 {
                     if (ce >> 16) key_len[0] += 2;
@@ -117,7 +117,7 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
 
                 if (flags & NORM_IGNORECASE) wch = tolowerW(wch);
 
-                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                ce = collation_table[collation_table[((USHORT)wch) >> 8] + (wch & 0xff)];
                 if (ce != (unsigned int)-1)
                 {
                     WCHAR key;
@@ -210,13 +210,13 @@ static inline int compare_unicode_weights(int flags, const WCHAR *str1, int len1
             }
         }
 
-        ce1 = collation_table[collation_table[*str1 >> 8] + (*str1 & 0xff)];
-        ce2 = collation_table[collation_table[*str2 >> 8] + (*str2 & 0xff)];
+        ce1 = collation_table[collation_table[((USHORT)*str1) >> 8] + (*str1 & 0xff)];
+        ce2 = collation_table[collation_table[((USHORT)*str2) >> 8] + (*str2 & 0xff)];
 
         if (ce1 != (unsigned int)-1 && ce2 != (unsigned int)-1)
             ret = (ce1 >> 16) - (ce2 >> 16);
         else
-            ret = *str1 - *str2;
+            ret = ((USHORT)*str1) - ((USHORT)*str2);
 
         if (ret) return ret;
 
@@ -269,13 +269,13 @@ static inline int compare_diacritic_weights(int flags, const WCHAR *str1, int le
             if (skip) continue;
         }
 
-        ce1 = collation_table[collation_table[*str1 >> 8] + (*str1 & 0xff)];
-        ce2 = collation_table[collation_table[*str2 >> 8] + (*str2 & 0xff)];
+        ce1 = collation_table[collation_table[((USHORT)*str1) >> 8] + (*str1 & 0xff)];
+        ce2 = collation_table[collation_table[((USHORT)*str2) >> 8] + (*str2 & 0xff)];
 
         if (ce1 != (unsigned int)-1 && ce2 != (unsigned int)-1)
             ret = ((ce1 >> 8) & 0xff) - ((ce2 >> 8) & 0xff);
         else
-            ret = *str1 - *str2;
+            ret = ((USHORT)*str1) - ((USHORT)*str2);
 
         if (ret) return ret;
 
@@ -328,13 +328,13 @@ static inline int compare_case_weights(int flags, const WCHAR *str1, int len1,
             if (skip) continue;
         }
 
-        ce1 = collation_table[collation_table[*str1 >> 8] + (*str1 & 0xff)];
-        ce2 = collation_table[collation_table[*str2 >> 8] + (*str2 & 0xff)];
+        ce1 = collation_table[collation_table[((USHORT)*str1) >> 8] + (*str1 & 0xff)];
+        ce2 = collation_table[collation_table[((USHORT)*str2) >> 8] + (*str2 & 0xff)];
 
         if (ce1 != (unsigned int)-1 && ce2 != (unsigned int)-1)
             ret = ((ce1 >> 4) & 0x0f) - ((ce2 >> 4) & 0x0f);
         else
-            ret = *str1 - *str2;
+            ret = ((USHORT)*str1) - ((USHORT)*str2);
 
         if (ret) return ret;
 

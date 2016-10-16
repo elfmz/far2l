@@ -41,7 +41,7 @@ bool TWinSCPPlugin::HandlesFunction(THandlesFunction Function) const
 
 intptr_t TWinSCPPlugin::GetMinFarVersion() const
 {
-  return MAKEFARVERSION(2, 0, 1667);
+  return MAKEFARVERSION(2, 1);
 }
 
 void TWinSCPPlugin::SetStartupInfo(const struct PluginStartupInfo * Info)

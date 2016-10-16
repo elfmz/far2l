@@ -56,6 +56,7 @@ extern int CloseFAR, CloseFARMenu;
 extern int DisablePluginsOutput;
 
 extern const DWORD FAR_VERSION;
+extern const char *FAR_BUILD;
 
 extern BOOL IsProcessAssignMacroKey;
 extern BOOL IsRedrawFramesInProcess;

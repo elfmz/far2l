@@ -2,6 +2,10 @@
 cmake_minimum_required (VERSION 3.2.2)
 project (FAR)
 
+if(NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC -Wno-unused-function -Wno-c++11-narrowing") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function") #  -fsanitize=address
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2")

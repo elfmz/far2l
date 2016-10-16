@@ -17,7 +17,32 @@
 #include "PathHelpers.h"
 #include "sudo.h"
 
+//todo: use this everywhere else. Likely sdc_ is better place for that.
+template<class V, V BADV, typename ... ARGS> 
+	static V os_call_v(V (*pfn)(ARGS ... args), ARGS ... args)
+{
+	for (unsigned char i = 0;; ++i) {
+		V r = pfn(args ...);
+		if (r == BADV && errno == EAGAIN) {
+			if (i==0)
+				fprintf(stderr, "os_call_v(%p): EAGAIN\n", pfn);
+			usleep(10000);
+		} else
+			return r;
+	}
+};
 
+template<class V, typename ... ARGS> 
+	static V *os_call_pv(V *(*pfn)(ARGS ... args), ARGS ... args)
+{
+	return os_call_v<V *, nullptr>(pfn, args ... );
+};
+
+template<typename ... ARGS> 
+	static int os_call_int(int (*pfn)(ARGS ... args), ARGS ... args)
+{
+	return os_call_v<int, -1>(pfn, args ... );
+};
 
 
 template <class CHAR_T>
@@ -60,7 +85,9 @@ extern "C"
 
 		virtual ~WinPortHandleFile()
 		{
-			sdc_close(fd);
+			if (os_call_int(sdc_close, fd) == -1 ){
+				fprintf(stderr, "~WinPortHandleFile: error %u closing fd %d", errno, fd);
+			}	
 		}
 		int fd;
 	};
@@ -70,11 +97,12 @@ extern "C"
 	
 	WINPORT_DECL(CreateDirectory, BOOL, (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes ))
 	{
-		std::string path = ConsumeWinPath(lpPathName);
-		int r = sdc_mkdir(path.c_str(), 0775);
-		if (r==-1) {
+		const std::string &path = ConsumeWinPath(lpPathName);
+		int r = os_call_int(sdc_mkdir, path.c_str(), (mode_t)0775);
+			
+		if (r == -1) {
 			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to create directory: %s errno %u\n", path.c_str(), errno);
+			fprintf(stderr, "Failed to create directory: '%s' errno %u\n", path.c_str(), errno);
 			return FALSE;
 		}
 		
@@ -84,28 +112,36 @@ extern "C"
 
 	BOOL WINPORT(RemoveDirectory)( LPCWSTR lpDirName)
 	{
-		std::string path = ConsumeWinPath(lpDirName);
-		int r = sdc_rmdir(path.c_str());
-		if (r==-1) {
+		const std::string &path = ConsumeWinPath(lpDirName);
+		int r = os_call_int(sdc_rmdir, path.c_str());
+
+		if (r == -1){
 			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to remove directory: %s errno %u\n", path.c_str(),errno);
+			fprintf(stderr, "Failed to remove directory: '%s' errno %u\n", path.c_str(),errno);
 			return FALSE;
 		}
+		
 		return TRUE;
 	}
 
 	BOOL WINPORT(DeleteFile)( LPCWSTR lpFileName)
 	{
-		std::string path = ConsumeWinPath(lpFileName);
-		int r = sdc_remove(path.c_str());
-		if (r==-1) {
+		const std::string &path = ConsumeWinPath(lpFileName);
+		int r = os_call_int(sdc_remove, path.c_str());
+
+		if (r == -1) {
 			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to remove file: %s errno %u\n", path.c_str(), errno);
+			fprintf(stderr, "Failed to remove file: '%s' errno %u\n", path.c_str(), errno);
 			return FALSE;
 		}
+		
 		return TRUE;
 	}
 
+	static int open_all_args(const char* pathname, int flags, mode_t mode)
+	{
+		return sdc_open(pathname, flags, mode);
+	}
 
 	HANDLE WINPORT(CreateFile)( LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 		LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
@@ -138,8 +174,9 @@ extern "C"
 		case OPEN_EXISTING: break;
 		case TRUNCATE_EXISTING: flags|= O_TRUNC; break;
 		}
-		std::string path = ConsumeWinPath(lpFileName);
-		int r = sdc_open(path.c_str(), flags, (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644);		
+		const std::string &path = ConsumeWinPath(lpFileName);
+		mode_t mode = (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644;
+		int r = os_call_int(open_all_args, path.c_str(), flags, mode);		
 		if (r==-1) {
 			WINPORT(TranslateErrno)();
 
@@ -170,12 +207,12 @@ extern "C"
 	BOOL WINPORT(MoveFile)(LPCWSTR ExistingFileName, LPCWSTR NewFileName )
 	{
 		struct stat s;
-		if (sdc_stat(ConsumeWinPath(NewFileName).c_str(), &s)==0) {
+		if (os_call_int(sdc_stat, ConsumeWinPath(NewFileName).c_str(), &s)==0) {
 			WINPORT(SetLastError)(ERROR_ALREADY_EXISTS);
 			return false;			
 		}
 			
-		return (sdc_rename(ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
+		return (os_call_int(sdc_rename, ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
 	}
 
 	BOOL WINPORT(MoveFileEx)(LPCWSTR ExistingFileName, LPCWSTR NewFileName,DWORD dwFlags)
@@ -183,7 +220,7 @@ extern "C"
 		if ((dwFlags&MOVEFILE_REPLACE_EXISTING)==0)
 			return WINPORT(MoveFile)(ExistingFileName, NewFileName);
 
-		return (sdc_rename(ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
+		return (os_call_int(sdc_rename, ConsumeWinPath(ExistingFileName).c_str(), ConsumeWinPath(NewFileName).c_str())==0);
 	}
 
 	DWORD WINPORT(GetCurrentDirectory)( DWORD  nBufferLength, LPWSTR lpBuffer)
@@ -201,7 +238,7 @@ extern "C"
 	BOOL WINPORT(SetCurrentDirectory)(LPCWSTR lpPathName)
 	{
 		const std::string &path = ConsumeWinPath(lpPathName);
-		int r = sdc_chdir(path.c_str());
+		int r = os_call_int(sdc_chdir, path.c_str());
 		if (r == 0)
 			return TRUE;
 
@@ -222,7 +259,7 @@ extern "C"
 		lpFileSize->QuadPart = len;
 #else
 		struct stat s = {0};
-		if (sdc_fstat(wph->fd,  &s)<0)
+		if (os_call_int(sdc_fstat, wph->fd,  &s) == -1)
 			return FALSE;
 		lpFileSize->QuadPart = s.st_size;
 #endif
@@ -255,7 +292,7 @@ extern "C"
 		ssize_t done = 0, remain = nNumberOfBytesToRead;
 		for (;;) {
 			if (!remain) break;
-			ssize_t r = sdc_read(wph->fd, lpBuffer, remain);
+			ssize_t r = os_call_v<ssize_t, -1>(sdc_read, wph->fd, lpBuffer, (size_t)remain);
 			if (r < 0) {
 				if (done==0)
 					return FALSE;
@@ -287,7 +324,7 @@ extern "C"
 			fprintf(stderr, "WINPORT(WriteFile) with lpOverlapped\n");
 		}
 
-		ssize_t r = sdc_write(wph->fd, lpBuffer, nNumberOfBytesToWrite);
+		ssize_t r = os_call_v<ssize_t, -1>(sdc_write, wph->fd, lpBuffer, (size_t)nNumberOfBytesToWrite);
 		if (r < 0)
 			return FALSE;
 
@@ -312,7 +349,7 @@ extern "C"
 			return INVALID_SET_FILE_POINTER;
 		}
 
-		off_t r = sdc_lseek(wph->fd, liDistanceToMove.QuadPart, whence);
+		off_t r = os_call_v<off_t, -1>(sdc_lseek, wph->fd, (off_t)liDistanceToMove.QuadPart, whence);
 		if (r==(off_t)-1)
 			return FALSE;
 		if (lpNewFilePointer) lpNewFilePointer->QuadPart = r;
@@ -346,7 +383,7 @@ extern "C"
 			return FALSE;
 		}
 		struct stat s = {0};
-		if (sdc_fstat(wph->fd, &s) < 0)
+		if (os_call_int(sdc_fstat, wph->fd, &s) < 0)
 			return FALSE;
 			
 		WINPORT(FileTime_UnixToWin32)(s.st_mtim, lpLastWriteTime);
@@ -368,14 +405,14 @@ extern "C"
 	
 	static int stat_symcheck(const char *path, struct stat &s, DWORD &symattr)
 	{
-		if (sdc_lstat(path, &s) < 0) {
+		if (os_call_int(sdc_lstat, path, &s) < 0) {
 			fprintf(stderr, "stat_symcheck: lstat failed for %s\n", path);
 			return -1;
 		}
 		
 		if ((s.st_mode & S_IFMT) == S_IFLNK) {
 			struct stat sdst = {0};
-			if (sdc_stat(path, &sdst) == 0) {
+			if (os_call_int(sdc_stat, path, &sdst) == 0) {
 				s = sdst;
 				symattr = FILE_ATTRIBUTE_REPARSE_POINT;
 			} else {
@@ -417,10 +454,10 @@ extern "C"
 			return FALSE;
 		}
 
-		off_t pos = sdc_lseek(wph->fd, 0, SEEK_CUR);
+		off_t pos = os_call_v<off_t, -1>(sdc_lseek, wph->fd, (off_t)0, SEEK_CUR);
 		if (pos==(off_t)-1)
 			return FALSE;
-		if (sdc_ftruncate(wph->fd, pos) == -1)
+		if (os_call_int(sdc_ftruncate, wph->fd, pos) == -1)
 			return FALSE;
 
 		return TRUE;
@@ -447,7 +484,7 @@ extern "C"
 		return FILE_TYPE_DISK;//::GetFileType(hFile);
 #else
 		struct stat s;
-		if (sdc_fstat(wph->fd, &s) == 0) {
+		if (os_call_int(sdc_fstat, wph->fd, &s) == 0) {
 
 			switch (s.st_mode & S_IFMT) {
 			case S_IFCHR: return FILE_TYPE_CHAR;
@@ -509,7 +546,7 @@ extern "C"
 #else
 			if (_root.size() > 1 && _root[_root.size()-1]==GOOD_SLASH)
 				_root.resize(_root.size()-1);
-			_d = sdc_opendir(_root.c_str());
+			_d = os_call_pv<DIR>(sdc_opendir, _root.c_str());
 			if (!_d) {
 				fprintf(stderr, "opendir failed on %s\n", _root.c_str());
 			}
@@ -521,7 +558,7 @@ extern "C"
 #ifdef _WIN32
 			if (_h!=INVALID_HANDLE_VALUE) ::FindClose(_h);
 #else
-			if (_d) sdc_closedir(_d);
+			if (_d) os_call_int(sdc_closedir, _d);
 #endif
 		}
 
@@ -549,11 +586,11 @@ extern "C"
 			for (;;) {
 				if (!_d)
 					return false;
-
-				de = sdc_readdir(_d);
-				if (!de) {
+				
+				errno = 0;
+				de = os_call_pv<struct dirent>(sdc_readdir, _d);
+				if (!de)
 					return false;
-				}
 
 				if ( PreMatchDType(de->d_type) && MatchName(de->d_name) ) {
 					if (MatchAttributesAndFillWFD(de->d_name, lpFindFileData))
@@ -681,7 +718,7 @@ extern "C"
 
 		UnixFindFile *uff = new UnixFindFile(root, mask, dwFlags);
 		if (!uff->Iterate(lpFindFileData)) {
-			WINPORT(TranslateErrno)();
+			//WINPORT(TranslateErrno)();
 			delete uff;
 			//fprintf(stderr, "find mask: %s (for %ls) FAILED\n", mask.c_str(), lpFileName);
 			WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);

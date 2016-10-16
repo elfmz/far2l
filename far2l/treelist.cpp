@@ -305,12 +305,12 @@ void TreeList::DisplayTree(int Fast)
 
 				for (int i=0; i<CurPtr->Depth-1 && WhereX()+3*i<X2-6; i++)
 				{
-					strOutStr+=TreeLineSymbol[CurPtr->Last[i]?0:1];
+					strOutStr+=TreeLineSymbol[CurPtr->Last[i] ? 0 : 1];
 				}
 
-				strOutStr+=TreeLineSymbol[CurPtr->Last[CurPtr->Depth-1]?2:3];
+				strOutStr+=TreeLineSymbol[CurPtr->Last[CurPtr->Depth-1] ? 2 : 3];
 				BoxText(strOutStr);
-				const wchar_t *ChPtr=LastSlash(CurPtr->strName);
+				const wchar_t *ChPtr = LastSlash(CurPtr->strName);
 
 				if (ChPtr)
 					DisplayTreeName(ChPtr+1,J);
@@ -750,47 +750,54 @@ int TreeList::MsgReadTree(int TreeCount,int &FirstCall)
 
 bool TreeList::FillLastData()
 {
-	int Last,PathLength,SubDirPos,I,J;
-	size_t Pos,Depth;
-	size_t RootLength = strRoot.IsEmpty()?0:strRoot.GetLength()-1;
+	const size_t RootLength = 
+		strRoot.IsEmpty() ? 0 : strRoot.GetLength() - 1;
 
-	for (I=1; I<TreeCount; I++)
+	for (int I = 1; I < TreeCount; I++)
 	{
+		int PathLength;
+		size_t Pos, Depth ;
+		
 		if (ListData[I]->strName.RPos(Pos,GOOD_SLASH))
-			PathLength=(int)Pos+1;
+			PathLength = (int)Pos+1;
 		else
-			PathLength=0;
+			PathLength = 0;
 
-		Depth=ListData[I]->Depth=CountSlash(ListData[I]->strName.CPtr()+RootLength);
+		ListData[I]->Depth = Depth = 
+			CountSlash(ListData[I]->strName.CPtr()+RootLength);
 
 		if (!Depth)
 			return false;
 
-		for (J=I+1,SubDirPos=I,Last=1; J<TreeCount; J++)
+		bool Last;
+		int J, SubDirPos;
+		for (J = I + 1, SubDirPos = I, Last = true; J < TreeCount; J++)
 		{
 			if (CountSlash(ListData[J]->strName.CPtr()+RootLength)>Depth)
 			{
-				SubDirPos=J;
+				SubDirPos = J;
 				continue;
 			}
 			else
 			{
-				if (!StrCmpNI(ListData[I]->strName,ListData[J]->strName,PathLength))
-					Last=0;
+				if (!StrCmpNI(ListData[I]->strName, ListData[J]->strName, PathLength))
+					Last = false;
 
 				break;
 			}
 		}
 
-		for (J=I; J<=SubDirPos; J++)
+		for (int J = I; J <= SubDirPos; J++)
 		{
-			if (Depth>ListData[J]->LastCount)
-			{
-				ListData[J]->LastCount<<=1;
-				ListData[J]->Last=static_cast<int*>(xf_realloc(ListData[J]->Last,ListData[J]->LastCount*sizeof(int)));
-			}
+			TreeItem::LastT &JLast = ListData[J]->Last;
+			if (Depth == JLast.size()) {
+				JLast.push_back(Depth);
+			} else {
+				if (Depth > JLast.size())
+					JLast.resize(Depth);
 
-			ListData[J]->Last[Depth-1]=Last;
+				JLast[Depth - 1] = Last;
+			}
 		}
 	}
 
@@ -1955,7 +1962,7 @@ int TreeCmp(const wchar_t *Str1, const wchar_t *Str2, int Numeric, int CaseSensi
 	static CMPFUNC funcs[2][2] = { {StrCmpNN, StrCmpNNI}, {NumStrCmpN, NumStrCmpNI} };
 	CMPFUNC cmpfunc = funcs[Numeric?1:0][CaseSensitive?0:1];
 
-	if (*Str1 == GOOD_SLASH && *Str1 == *Str2)
+	if (*Str1 == GOOD_SLASH && *Str2 == GOOD_SLASH)
 	{
 		Str1++;
 		Str2++;

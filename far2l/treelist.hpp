@@ -45,38 +45,21 @@ enum
 struct TreeItem
 {
 	FARString strName;
-	int *Last;
-	size_t LastCount;
+	struct LastT : std::vector<bool> {} Last;
 	int Depth;             // уровень вложенности
 
 	TreeItem()
 	{
-		LastCount=MAX_PATH/2;
-		Last=static_cast<int*>(xf_malloc(LastCount*sizeof(int)));
 		Clear();
-	}
-	~TreeItem()
-	{
-		xf_free(Last);
 	}
 
 	void Clear()
 	{
 		strName.Clear();
-		memset(Last, 0, LastCount * sizeof(*Last));
-		Depth = 0;
-	}
-
-	TreeItem& operator=(const TreeItem &tiCopy)
-	{
-		if (this != &tiCopy)
-		{
-			strName=tiCopy.strName;
-			*Last=*tiCopy.Last;
-			Depth=tiCopy.Depth;
+		for (LastT::iterator i = Last.begin(); i!=Last.end(); ++i) {
+			*i = false;
 		}
-
-		return *this;
+		Depth = 0;
 	}
 };
 

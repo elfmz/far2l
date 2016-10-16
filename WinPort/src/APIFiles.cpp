@@ -686,7 +686,7 @@ extern "C"
 	{
 	} g_unix_find_files;
 
-	static UnixFindFile g_unix_found_file_dummy;
+	static volatile int g_unix_found_file_dummy = 0xfeedd00d;
 
 	HANDLE WINPORT(FindFirstFileWithFlags)(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags)
 	{
@@ -738,9 +738,9 @@ extern "C"
 	BOOL WINPORT(FindNextFile)(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 	{
 		//return ::FindNextFile(hFindFile, lpFindFileData);
-		UnixFindFile *uff = (UnixFindFile *)hFindFile;
-		if (uff==&g_unix_found_file_dummy)
+		if (hFindFile == (HANDLE)&g_unix_found_file_dummy)
 			return FALSE;
+		UnixFindFile *uff = (UnixFindFile *)hFindFile;
 		std::lock_guard<std::mutex> lock(g_unix_find_files);
 		if (g_unix_find_files.find(uff)==g_unix_find_files.end())
 			return FALSE;
@@ -758,9 +758,10 @@ extern "C"
 	BOOL WINPORT(FindClose)(HANDLE hFindFile)
 	{
 		//return ::FindClose(hFindFile);
-		UnixFindFile *uff = (UnixFindFile *)hFindFile;
-		if (uff==&g_unix_found_file_dummy)
+		if (hFindFile == (HANDLE)&g_unix_found_file_dummy)
 			return TRUE;
+
+		UnixFindFile *uff = (UnixFindFile *)hFindFile;
 		{
 			std::lock_guard<std::mutex> lock(g_unix_find_files);
 			if (g_unix_find_files.erase(uff)==0)

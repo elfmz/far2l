@@ -155,20 +155,16 @@ static bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
 	return TRUE;
 }
 
-FindFile::FindFile(LPCWSTR Object, bool ScanSymLinks, bool NoSymLinks, bool NoDirs, bool NoFiles, bool NoDevices):
+FindFile::FindFile(LPCWSTR Object, bool ScanSymLinks, DWORD WinPortFindFlags) :
 	Handle(INVALID_HANDLE_VALUE),
 	empty(false)
 {
 	FARString strName(NTPath(Object).Get());
 
-	DWORD flags = FIND_FILE_FLAG_NO_CUR_UP;
-	if (NoSymLinks) flags|= FIND_FILE_FLAG_NO_LINKS;
-	if (NoDirs) flags|= FIND_FILE_FLAG_NO_DIRS;
-	if (NoFiles) flags|= FIND_FILE_FLAG_NO_FILES;
-	if (NoDevices) flags|= FIND_FILE_FLAG_NO_DEVICES;
+	WinPortFindFlags|= FIND_FILE_FLAG_NO_CUR_UP;
 
 	WIN32_FIND_DATA wfd = {0};
-	Handle = WINPORT(FindFirstFileWithFlags)(strName, &wfd, flags);
+	Handle = WINPORT(FindFirstFileWithFlags)(strName, &wfd, WinPortFindFlags);
 	if (Handle!=INVALID_HANDLE_VALUE) {
 		TranslateFindFile(wfd, Data);
 	} else
@@ -557,9 +553,9 @@ void apiFreeFindData(FAR_FIND_DATA *pData)
 	xf_free(pData->lpwszFileName);
 }
 
-BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink)
+BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink, DWORD WinPortFindFlags)
 {
-	FindFile Find(lpwszFileName, ScanSymLink);
+	FindFile Find(lpwszFileName, ScanSymLink, WinPortFindFlags);
 	if(Find.Get(FindData))
 	{
 		return TRUE;
@@ -581,7 +577,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 		}
 	}
 
-	fprintf(stderr, "apiGetFindDataEx: FAILED - %ls", lpwszFileName);		
+	fprintf(stderr, "apiGetFindDataEx: FAILED - %ls\n", lpwszFileName);		
 
 	FindData.Clear();
 	FindData.dwFileAttributes = INVALID_FILE_ATTRIBUTES; //BUGBUG

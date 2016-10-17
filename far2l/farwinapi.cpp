@@ -155,17 +155,17 @@ static bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
 	return TRUE;
 }
 
-FindFile::FindFile(LPCWSTR Object, bool ScanSymLinks, bool ScanDirs, bool ScanFiles, bool ScanDevices):
+FindFile::FindFile(LPCWSTR Object, bool ScanSymLinks, bool NoSymLinks, bool NoDirs, bool NoFiles, bool NoDevices):
 	Handle(INVALID_HANDLE_VALUE),
 	empty(false)
 {
 	FARString strName(NTPath(Object).Get());
 
 	DWORD flags = FIND_FILE_FLAG_NO_CUR_UP;
-	if (!ScanSymLinks) flags|= FIND_FILE_FLAG_NO_LINKS;
-	if (!ScanDirs) flags|= FIND_FILE_FLAG_NO_DIRS;
-	if (!ScanFiles) flags|= FIND_FILE_FLAG_NO_FILES;
-	if (!ScanDevices) flags|= FIND_FILE_FLAG_NO_DEVICES;
+	if (NoSymLinks) flags|= FIND_FILE_FLAG_NO_LINKS;
+	if (NoDirs) flags|= FIND_FILE_FLAG_NO_DIRS;
+	if (NoFiles) flags|= FIND_FILE_FLAG_NO_FILES;
+	if (NoDevices) flags|= FIND_FILE_FLAG_NO_DEVICES;
 
 	WIN32_FIND_DATA wfd = {0};
 	Handle = WINPORT(FindFirstFileWithFlags)(strName, &wfd, flags);

@@ -55,7 +55,8 @@ enum
 	// здесь те флаги, которые могут выставляться в 3-м параметре SetFindPath()
 	FSCANTREE_FILESFIRST       = 0x00010000, // Сканирование каталга за два прохода. Сначала файлы, затем каталоги
 	FSCANTREE_NOFILES          = 0x00020000, // Don't return files
-	FSCANTREE_NODEVICES        = 0x00040000 // Don't return devices
+	FSCANTREE_NODEVICES        = 0x00040000, // Don't return devices
+	FSCANTREE_NOLINKS          = 0x00080000 // Don't return symlinks
 };
 
 struct ScanTreeData

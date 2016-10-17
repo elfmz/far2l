@@ -9,6 +9,7 @@
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
 #include <utils.h>
+#include <pwd.h>
 
 #ifndef _WIN32
 # include <dlfcn.h>
@@ -130,14 +131,41 @@ extern "C" {
 
 	WINPORT_DECL(GetComputerName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize))
 	{
-		fprintf(stderr, "TODO: GetComputerName\n");
-		return 0;
+		char buf[0x100] = {};
+		if (gethostname(&buf[0], ARRAYSIZE(buf) - 1) != 0) {
+			WINPORT(TranslateErrno)();
+			return FALSE;
+		}
+		const std::wstring &str = MB2Wide(buf);
+		if (*nSize <= str.size()) {
+			*nSize = (DWORD)str.size() + 1;
+			WINPORT(SetLastError)(ERROR_BUFFER_OVERFLOW);
+			return FALSE;
+		}
+
+		wcscpy(lpBuffer, str.c_str());
+		*nSize = (DWORD)str.size();
+		return TRUE;
 	}
 
 	WINPORT_DECL(GetUserName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize))
 	{
-		fprintf(stderr, "TODO: GetUserName\n");
-		return 0;
+		struct passwd *pw = getpwuid(getuid());
+		if (!pw || !pw->pw_name) {
+			WINPORT(TranslateErrno)();
+			return FALSE;
+		}
+
+		const std::wstring &str = MB2Wide(pw->pw_name);
+		if (*nSize <= str.size()) {
+			*nSize = (DWORD)str.size() + 1;
+			WINPORT(SetLastError)(ERROR_BUFFER_OVERFLOW);
+			return FALSE;
+		}
+
+		wcscpy(lpBuffer, str.c_str());
+		*nSize = (DWORD)str.size();
+		return TRUE;
 	}
 
 	WINPORT_DECL(GetEnvironmentVariable, DWORD, (LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize))

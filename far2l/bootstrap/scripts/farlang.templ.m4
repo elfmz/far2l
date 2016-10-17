@@ -9809,23 +9809,23 @@ MInfoMemoryFree
 "Wolna pamięć"
 "Memoria libre"
 
-MInfoVirtualTotal
-"Всего вирт. памяти"
-"Total virtual"
-"Celkem virtuální"
-"Virtueller Speicher gesamt"
-"Összes virtuális"
-"Całkowita wirtualna"
-"Total virtual"
+MInfoSharedMemory
+"Разделяемая память"
+"Shared memory"
+upd:"Shared RAM"
+upd:"Shared RAM"
+upd:"Shared RAM"
+upd:"Shared RAM"
+upd:"Shared RAM"
 
-MInfoVirtualFree
-"Свободно вирт. памяти"
-"Free virtual"
-"Volná virtuální"
-"Virtueller Speicher frei"
-"Szabad virtuális"
-"Wolna wirtualna"
-"Virtual libre"
+MInfoBufferMemory
+"Буферизованная память"
+"Buffer memory"
+upd:"Buffer RAM"
+upd:"Buffer RAM"
+upd:"Buffer RAM"
+upd:"Buffer RAM"
+upd:"Buffer RAM"
 
 MInfoPageFileTotal
 "Всего файла подкачки"

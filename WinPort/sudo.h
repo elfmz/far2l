@@ -1,5 +1,7 @@
 #pragma once
 #include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/statfs.h>
 #include <dirent.h>
 
 #ifdef __cplusplus
@@ -32,6 +34,8 @@ extern "C" {
  __attribute__ ((visibility("default"))) off_t sdc_lseek(int fd, off_t offset, int whence);
  __attribute__ ((visibility("default"))) ssize_t sdc_write(int fd, const void *buf, size_t count);
  __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void *buf, size_t count);
+ __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf);
+ __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf);
  __attribute__ ((visibility("default"))) int sdc_stat(const char *path, struct stat *buf);
  __attribute__ ((visibility("default"))) int sdc_lstat(const char *path, struct stat *buf);
  __attribute__ ((visibility("default"))) int sdc_fstat(int fd, struct stat *buf);

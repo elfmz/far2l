@@ -35,7 +35,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/statfs.h>
+#ifdef __APPLE__
+  #include <sys/mount.h>
+#else
+  #include <sys/statfs.h>
+#endif
 #include "pathmix.hpp"
 #include "mix.hpp"
 #include "ctrlobj.hpp"
@@ -155,10 +159,15 @@ static bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
 	return TRUE;
 }
 
-FindFile::FindFile(LPCWSTR Object, bool ScanSymLinks, DWORD WinPortFindFlags) :
+FindFile::FindFile(LPCWSTR Object, bool ScanSymLink, DWORD WinPortFindFlags) :
 	Handle(INVALID_HANDLE_VALUE),
 	empty(false)
 {
+	//Strange things happen with ScanSymLink in original code:
+	//looks like tricky attempt to resolve symlinks in path without elevation
+	//while elevation required to perform actual FindFile operation.
+	//It seems this is not necesary for Linux,
+	//if confirmed: ScanSymLink should be removed from here and apiGetFindDataEx
 	FARString strName(NTPath(Object).Get());
 
 	WinPortFindFlags|= FIND_FILE_FLAG_NO_CUR_UP;

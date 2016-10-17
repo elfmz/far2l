@@ -1,7 +1,11 @@
 #pragma once
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/statfs.h>
+#ifdef __APPLE__
+  #include <sys/mount.h>
+#else
+  #include <sys/statfs.h>
+#endif
 #include <dirent.h>
 
 #ifdef __cplusplus

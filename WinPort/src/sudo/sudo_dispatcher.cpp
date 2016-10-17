@@ -6,7 +6,11 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/statfs.h>
+#ifdef __APPLE__
+  #include <sys/mount.h>
+#else
+  #include <sys/statfs.h>
+#endif
 #include <sys/statvfs.h>
 #include <sys/time.h>
 #include <set>

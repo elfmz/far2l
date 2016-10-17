@@ -60,6 +60,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "execute.hpp"
 
+#ifdef __APPLE__
+  #include <errno.h>
+#endif
+
 static void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent);
 static int AskDeleteReadOnly(const wchar_t *Name,DWORD Attr,int Wipe);
 static int ShellRemoveFile(const wchar_t *Name,int Wipe);

@@ -105,7 +105,7 @@ struct FAR_FIND_DATA_EX
 class FindFile: private NonCopyable
 {
 public:
-	FindFile(LPCWSTR Object, bool ScanSymLink = true, bool NoSymLinks = false, bool NoDirs = false, bool NoFiles = false, bool NoDevices = false);
+	FindFile(LPCWSTR Object, bool ScanSymLink = true, DWORD WinPortFindFlags = FIND_FILE_FLAG_NO_CUR_UP); //FIND_FILE_FLAG_NO_CUR_UP is enforced
 	~FindFile();
 	bool Get(FAR_FIND_DATA_EX& FindData);
 
@@ -187,7 +187,8 @@ void apiFreeFindData(
 BOOL apiGetFindDataEx(
     const wchar_t *lpwszFileName,
     FAR_FIND_DATA_EX& FindData,
-    bool ScanSymLink=true);
+    bool ScanSymLink = true,
+    DWORD WinPortFindFlags = 0);
 
 bool apiGetFileSizeEx(
     HANDLE hFile,

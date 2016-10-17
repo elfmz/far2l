@@ -651,8 +651,13 @@ extern "C"
 					}
 				}
 			}
+			if (_mask.empty())
+				return true;
 			
-			return (_mask.empty() || MatchWildcard(name, _mask.c_str()));
+			if ((_flags & FIND_FILE_FLAG_CASE_INSENSITIVE) != 0)
+				return MatchWildcardICE(name, _mask.c_str());
+
+			return MatchWildcard(name, _mask.c_str());
 		}
 		
 #ifdef _WIN32
@@ -701,7 +706,8 @@ extern "C"
 		}
 
 		if (mask=="*" || mask=="*.*") mask.clear();
-		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos) {
+		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos &&
+			(dwFlags & FIND_FILE_FLAG_CASE_INSENSITIVE) == 0 ) {
 
 			struct stat s = { };
 			DWORD symattr = 0;

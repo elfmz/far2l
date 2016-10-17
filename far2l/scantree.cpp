@@ -73,8 +73,13 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,FARString &strFullName)
 	{
 		if (!ScanItems.lastItem()->Find)
 		{
-			ScanItems.lastItem()->Find = new FindFile(strFindPath, Flags.Check(FSCANTREE_SCANSYMLINK),
-				Flags.Check(FSCANTREE_NOLINKS), false, Flags.Check(FSCANTREE_NOFILES), Flags.Check(FSCANTREE_NODEVICES));
+			DWORD WinPortFindFlags = 0;
+			if (Flags.Check(FSCANTREE_NOLINKS)) WinPortFindFlags|= FIND_FILE_FLAG_NO_LINKS;
+			if (Flags.Check(FSCANTREE_NOFILES)) WinPortFindFlags|= FIND_FILE_FLAG_NO_FILES;
+			if (Flags.Check(FSCANTREE_NODEVICES)) WinPortFindFlags|= FIND_FILE_FLAG_NO_DEVICES;
+			if (Flags.Check(FSCANTREE_CASE_INSENSITIVE)) WinPortFindFlags|= FIND_FILE_FLAG_CASE_INSENSITIVE;
+			ScanItems.lastItem()->Find = new FindFile(strFindPath, Flags.Check(FSCANTREE_SCANSYMLINK), WinPortFindFlags);
+				
 		}
 		Done=!ScanItems.lastItem()->Find->Get(*fdata);
 

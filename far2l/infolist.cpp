@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "mix.hpp"
+ #include <sys/sysinfo.h>
 
 static int LastDizWrapMode = -1;
 static int LastDizWrapType = -1;
@@ -99,7 +100,7 @@ void InfoList::DisplayObject()
 	FARString strTitle;
 	FARString strOutStr;
 	Panel *AnotherPanel;
-	FARString strDriveRoot;
+//	FARString strDriveRoot;
 	FARString strVolumeName, strFileSystemName;
 	DWORD MaxNameLength,FileSystemFlags,VolumeNumber;
 	FARString strDiskNumber;
@@ -137,8 +138,8 @@ void InfoList::DisplayObject()
 		PrintText(MInfoCompName);
 		PrintInfo(strComputerName);
 
-		wchar_t *UserName = strUserName.GetBuffer(dwSize);
 		dwSize = 256;
+		wchar_t *UserName = strUserName.GetBuffer(dwSize);
 		WINPORT(GetUserName)(UserName, &dwSize);
 		strUserName.ReleaseBuffer();
 
@@ -173,15 +174,15 @@ void InfoList::DisplayObject()
 			GetPathRoot(strJuncName,strDriveRoot); //"\??\D:\Junc\Src\"
 		}
 	}
-	else*/
-		GetPathRoot(strCurDir, strDriveRoot);
-
-	if (apiGetVolumeInformation(strDriveRoot,&strVolumeName,
+	else
+		GetPathRoot(strCurDir, strDriveRoot);*/
+	fprintf(stderr, "apiGetVolumeInformation: %ls\n", strCurDir.CPtr());
+	if (apiGetVolumeInformation(strCurDir,&strVolumeName,
 	                            &VolumeNumber,&MaxNameLength,&FileSystemFlags,
 	                            &strFileSystemName))
 	{
 		int IdxMsgID=-1;
-		int DriveType=FAR_GetDriveType(strDriveRoot,nullptr,TRUE);
+		int DriveType=FAR_GetDriveType(strCurDir,nullptr,TRUE);
 
 		switch (DriveType)
 		{
@@ -224,7 +225,8 @@ void InfoList::DisplayObject()
 		}
 
 
-		strTitle=FARString(L" ")+DiskType+L" "+MSG(MInfoDisk)+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
+//		strTitle=FARString(L" ")+DiskType+L" "+MSG(MInfoDisk)+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
+		strTitle=FARString(L" ")+L" ("+strFileSystemName+L") ";
 
 /*		switch(DriveType)
 		{
@@ -246,7 +248,7 @@ void InfoList::DisplayObject()
 		strDiskNumber.Format(L"%04X-%04X",VolumeNumber>>16,VolumeNumber & 0xffff);
 	}
 	else // Error!
-		strTitle = strDriveRoot;
+		strTitle = strCurDir;//strDriveRoot;
 
 	TruncStr(strTitle,X2-X1-3);
 	GotoXY(X1+(X2-X1+1-(int)strTitle.GetLength())/2,CurY++);
@@ -271,11 +273,13 @@ void InfoList::DisplayObject()
 
 	/* #4 - disk info: label & SN */
 
-	GotoXY(X1+2,CurY++);
-	PrintText(MInfoDiskLabel);
-	PrintInfo(strVolumeName);
+	if (!strVolumeName.IsEmpty()) {
+		GotoXY(X1+2,CurY++);
+		PrintText(MInfoDiskLabel);
+		PrintInfo(strVolumeName);
+	}
 
-    GotoXY(X1+2,CurY++);
+	GotoXY(X1+2,CurY++);
 	PrintText(MInfoDiskNumber);
 	PrintInfo(strDiskNumber);
 
@@ -289,47 +293,47 @@ void InfoList::DisplayObject()
 	GotoXY(X1+(X2-X1+1-(int)strTitle.GetLength())/2,CurY++);
 	PrintText(strTitle);
 
-	/*MEMORYSTATUSEX ms={sizeof(ms)};
-	if (GlobalMemoryStatusEx(&ms))
+	struct sysinfo si = {};
+	if (sysinfo(&si) == 0)
 	{
-		if (!ms.dwMemoryLoad)
-			ms.dwMemoryLoad=100-ToPercent64(ms.ullAvailPhys+ms.ullAvailPageFile,ms.ullTotalPhys+ms.ullTotalPageFile);
+		DWORD dwMemoryLoad = 100 - 
+			ToPercent64(si.freeram + si.freeswap, si.totalram + si.totalswap);
 
 		GotoXY(X1+2,CurY++);
 		PrintText(MInfoMemoryLoad);
-		strOutStr.Format(L"%d%%",ms.dwMemoryLoad);
+		strOutStr.Format(L"%d%%", dwMemoryLoad);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
 		PrintText(MInfoMemoryTotal);
-		InsertCommas(ms.ullTotalPhys,strOutStr);
+		InsertCommas(si.totalram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
 		PrintText(MInfoMemoryFree);
-		InsertCommas(ms.ullAvailPhys,strOutStr);
+		InsertCommas(si.freeram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoVirtualTotal);
-		InsertCommas(ms.ullTotalVirtual,strOutStr);
+		PrintText(MInfoSharedMemory);
+		InsertCommas(si.sharedram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoVirtualFree);
-		InsertCommas(ms.ullAvailVirtual,strOutStr);
+		PrintText(MInfoBufferMemory);
+		InsertCommas(si.bufferram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
 		PrintText(MInfoPageFileTotal);
-		InsertCommas(ms.ullTotalPageFile,strOutStr);
+		InsertCommas(si.totalswap,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
 		PrintText(MInfoPageFileFree);
-		InsertCommas(ms.ullAvailPageFile,strOutStr);
+		InsertCommas(si.freeswap,strOutStr);
 		PrintInfo(strOutStr);
-	}*/
+	}
 
 	/* #5 - description */
 

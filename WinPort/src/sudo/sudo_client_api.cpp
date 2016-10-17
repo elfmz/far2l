@@ -356,7 +356,8 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void
 	}
 }
 
-static int common_stat(SudoCommand cmd, const char *path, struct stat *buf)
+template <class STAT_STRUCT>
+	static int common_stat(SudoCommand cmd, const char *path, STAT_STRUCT *buf)
 {
 	try {
 		ClientTransaction ct(cmd);
@@ -371,6 +372,34 @@ static int common_stat(SudoCommand cmd, const char *path, struct stat *buf)
 		fprintf(stderr, "sudo_client: common_stat(%u, '%s') - error %s\n", cmd, path, what);
 		return -1;
 	}
+}
+
+extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	int r = statfs(path, buf);
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection(false)) {
+		r = common_stat(SUDO_CMD_STATFS, path, buf);
+		if (r==0)
+			errno = saved_errno;
+	}
+
+	return r;
+}
+
+extern "C"  __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	int r = statvfs(path, buf);
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection(false)) {
+		r = common_stat(SUDO_CMD_STATVFS, path, buf);
+		if (r==0)
+			errno = saved_errno;
+	}
+
+	return r;
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_stat(const char *path, struct stat *buf)

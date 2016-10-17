@@ -499,7 +499,7 @@ BOOL apiGetVolumeInformation(
 {
 	struct statvfs svfs = {};
 	const std::string &path = Wide2MB(lpwszRootPathName);
-	if (statvfs(path.c_str(), &svfs) != 0) {
+	if (sdc_statvfs(path.c_str(), &svfs) != 0) {
 		WINPORT(TranslateErrno)();
 		return FALSE;
 	}
@@ -514,7 +514,7 @@ BOOL apiGetVolumeInformation(
 		pFileSystemName->Clear();
 
 	struct statfs sfs = {};
-	if (statfs(path.c_str(), &sfs) == 0) {
+	if (sdc_statfs(path.c_str(), &sfs) == 0) {
 		for (size_t i = 0; i < ARRAYSIZE(s_fs_magics); ++i) {
 			if (sfs.f_type == s_fs_magics[i].magic) {
 				*pFileSystemName = s_fs_magics[i].name;

@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/statvfs.h>
 #include <sys/time.h>
 #include <set>
 #include <vector>
@@ -147,11 +149,12 @@ namespace Sudo
 	}
 	
 	
-	static void OnSudoDispatch_StatCommon(int (*pfn)(const char *path, struct stat *buf), BaseTransaction &bt)
+	template <class STAT_STRUCT>
+		static void OnSudoDispatch_StatCommon(int (*pfn)(const char *path, STAT_STRUCT *buf), BaseTransaction &bt)
 	{		
 		std::string path;
 		bt.RecvStr(path);
-		struct stat s;
+		STAT_STRUCT s = {};
 		int r = pfn(path.c_str(), &s);
 		bt.SendPOD(r);
 		if (r==0)
@@ -376,12 +379,20 @@ namespace Sudo
 				OnSudoDispatch_Read(bt);
 				break;
 				
+			case SUDO_CMD_STATFS:
+				OnSudoDispatch_StatCommon<struct statfs>(&statfs, bt);
+				break;
+				
+			case SUDO_CMD_STATVFS:
+				OnSudoDispatch_StatCommon<struct statvfs>(&statvfs, bt);
+				break;
+				
 			case SUDO_CMD_STAT:
-				OnSudoDispatch_StatCommon(&stat, bt);
+				OnSudoDispatch_StatCommon<struct stat>(&stat, bt);
 				break;
 				
 			case SUDO_CMD_LSTAT:
-				OnSudoDispatch_StatCommon(&lstat, bt);
+				OnSudoDispatch_StatCommon<struct stat>(&lstat, bt);
 				break;
 				
 			case SUDO_CMD_FSTAT:

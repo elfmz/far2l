@@ -97,13 +97,11 @@ int TestFolder(const wchar_t *Path)
 	// первая проверка - че-нить считать можем?
 	FAR_FIND_DATA_EX fdata;
 	FindFile Find(strFindPath);
-
 	bool bFind = false;
 	if(Find.Get(fdata))
 	{
 		return TSTFLD_NOTEMPTY;
 	}
-
 	if (!bFind)
 	{
 		GuardLastError lstError;
@@ -122,7 +120,6 @@ int TestFolder(const wchar_t *Path)
 			{
 				if (lstError.Get() == ERROR_ACCESS_DENIED)
 					return TSTFLD_NOTACCESS;
-
 				return TSTFLD_EMPTY;
 			}
 		}

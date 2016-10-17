@@ -743,7 +743,7 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 			struct stat s = {};
 			if (sdc_lstat(Wide2MB(Name).c_str(), &s)==0 && (s.st_mode & S_IFMT)==S_IFLNK )
 			{
-				if (apiDeleteFile(Name))
+				if (sdc_unlink(Wide2MB(Name).c_str()) == 0) //if (apiDeleteFile(Name))
 					break;
 			}
 			if (apiRemoveDirectory(Name))

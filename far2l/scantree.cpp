@@ -74,7 +74,7 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,FARString &strFullName)
 		if (!ScanItems.lastItem()->Find)
 		{
 			ScanItems.lastItem()->Find = new FindFile(strFindPath, Flags.Check(FSCANTREE_SCANSYMLINK),
-				true, !Flags.Check(FSCANTREE_NOFILES), !Flags.Check(FSCANTREE_NODEVICES));
+				Flags.Check(FSCANTREE_NOLINKS), false, Flags.Check(FSCANTREE_NOFILES), Flags.Check(FSCANTREE_NODEVICES));
 		}
 		Done=!ScanItems.lastItem()->Find->Get(*fdata);
 

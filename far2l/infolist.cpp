@@ -53,7 +53,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "mix.hpp"
- #include <sys/sysinfo.h>
+#ifdef __APPLE__
+//# include <sys/sysctl.h>
+# include <mach/mach_host.h>
+# include <mach/vm_statistics.h>
+#else
+# include <sys/sysinfo.h>
+#endif
+ 
+
 
 static int LastDizWrapMode = -1;
 static int LastDizWrapType = -1;
@@ -293,6 +301,52 @@ void InfoList::DisplayObject()
 	GotoXY(X1+(X2-X1+1-(int)strTitle.GetLength())/2,CurY++);
 	PrintText(strTitle);
 
+#ifdef __APPLE__
+        unsigned long long totalram;
+        vm_size_t page_size;
+        unsigned long long freeram;
+        size_t ulllen = sizeof(totalram);
+        int ret_sc;
+
+        //ret_sc =  (sysctlbyname("hw.memsize", &totalram, &ulllen, NULL, 0) ? 1 : 0);
+        ret_sc = ( KERN_SUCCESS !=_host_page_size(mach_host_self(), &page_size)  ? 1 : 0);
+
+        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+        vm_statistics_data_t vmstat;
+
+        ret_sc += (KERN_SUCCESS != host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) ? 1 : 0);
+        totalram = (vmstat.wire_count + vmstat.active_count + vmstat.inactive_count + vmstat.free_count) * page_size;
+        freeram  = vmstat.free_count * page_size;
+
+        //double total = vmstat.wire_count + vmstat.active_count + vmstat.inactive_count + vmstat.free_count;
+        //double wired = vmstat.wire_count;
+        //double active = vmstat.active_count;
+        //double inactive = vmstat.inactive_count;
+        //double free = vmstat.free_count;
+
+	if (!ret_sc)
+	{
+		DWORD dwMemoryLoad = 100 - 
+			ToPercent64(freeram, totalram);
+
+		GotoXY(X1+2,CurY++);
+		PrintText(MInfoMemoryLoad);
+		strOutStr.Format(L"%d%%", dwMemoryLoad);
+		PrintInfo(strOutStr);
+
+		GotoXY(X1+2,CurY++);
+		PrintText(MInfoMemoryTotal);
+		InsertCommas(totalram,strOutStr);
+		PrintInfo(strOutStr);
+
+		GotoXY(X1+2,CurY++);
+		PrintText(MInfoMemoryFree);
+		InsertCommas(freeram,strOutStr);
+		PrintInfo(strOutStr);
+	}
+
+
+#else
 	struct sysinfo si = {};
 	if (sysinfo(&si) == 0)
 	{
@@ -334,7 +388,7 @@ void InfoList::DisplayObject()
 		InsertCommas(si.freeswap,strOutStr);
 		PrintInfo(strOutStr);
 	}
-
+#endif
 	/* #5 - description */
 
 	ShowDirDescription(CurY);
@@ -352,6 +406,7 @@ int64_t InfoList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		case MCODE_C_EMPTY:
 			return 1;
 	}
+#endif
 
 	return 0;
 }

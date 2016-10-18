@@ -15,9 +15,11 @@ KeyFileHelper::KeyFileHelper(const char *filename, bool load)
 {
 	GError *err = NULL;
 	g_key_file_helper_mutex.lock();
-	g_key_file_load_from_file(_kf, _filename.c_str(), G_KEY_FILE_NONE, &err);
+	if (!g_key_file_load_from_file(_kf, _filename.c_str(), G_KEY_FILE_NONE, &err)) {
+		//fprintf(stderr, "KeyFileHelper(%s, %d) err=%p\n", _filename.c_str(), load, err);
+	}
 	g_key_file_helper_mutex.unlock();
-	fprintf(stderr, "KeyFileHelper(%s, %d) err=%p\n", _filename.c_str(), load, err);
+	
 }
 
 KeyFileHelper::~KeyFileHelper()
@@ -25,10 +27,12 @@ KeyFileHelper::~KeyFileHelper()
 	if (_dirty) {
 		GError *err = NULL;
 		g_key_file_helper_mutex.lock();
-		g_key_file_save_to_file(_kf, _filename.c_str(), &err);
+		if (!g_key_file_save_to_file(_kf, _filename.c_str(), &err)) {
+			//fprintf(stderr, "~KeyFileHelper(%s) err=%p\n", _filename.c_str(),  err);
+		}
 		g_key_file_helper_mutex.unlock();
-		fprintf(stderr, "~KeyFileHelper(%s) err=%p\n", _filename.c_str(),  err);
 	}
+	g_key_file_free(_kf);
 }
 
 std::vector<std::string> KeyFileHelper::EnumSections()

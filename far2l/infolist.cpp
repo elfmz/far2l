@@ -406,7 +406,6 @@ int64_t InfoList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		case MCODE_C_EMPTY:
 			return 1;
 	}
-#endif
 
 	return 0;
 }

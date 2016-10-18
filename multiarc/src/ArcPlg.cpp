@@ -1,6 +1,8 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
 
+extern std::string gMultiArcPluginPath;
+
 typedef int (__cdecl *FCMP)(const void *, const void *);
 
 bool ArcPlugins::AddPluginItem(const char *name,
@@ -27,7 +29,7 @@ bool ArcPlugins::AddPluginItem(const char *name,
 	item.pGetSFXPos = pGetSFXPos; 
 
 	if (pLoadFormatModule)
-		pLoadFormatModule(name);
+		pLoadFormatModule(gMultiArcPluginPath.c_str());
 
 	if (pSetFarInfo) {
 		// Дабы FMT не испортил оригинальный PluginStartupInfo дадим ему
@@ -63,8 +65,8 @@ ArcPlugins::ArcPlugins(const char *ModuleName) : PluginsData(NULL), PluginsCount
 	AddPluginItem("HA", HA_IsArchive, HA_OpenArchive, HA_GetArcItem, NULL, 
 		HA_CloseArchive, HA_GetFormatName, HA_GetDefaultCommands, HA_SetFarInfo, NULL);
 
-	//AddPluginItem("CUSTOM", CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule, 
-	//	CUSTOM_CloseArchive, CUSTOM_GetFormatName, CUSTOM_GetDefaultCommands, CUSTOM_SetFarInfo, CUSTOM_GetSFXPos);
+	AddPluginItem("CUSTOM", CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule, 
+		CUSTOM_CloseArchive, CUSTOM_GetFormatName, CUSTOM_GetDefaultCommands, CUSTOM_SetFarInfo, CUSTOM_GetSFXPos);
 
 	AddPluginItem("ARJ", ARJ_IsArchive, ARJ_OpenArchive, ARJ_GetArcItem, NULL, 
 		ARJ_CloseArchive, ARJ_GetFormatName, ARJ_GetDefaultCommands, NULL, ARJ_GetSFXPos);

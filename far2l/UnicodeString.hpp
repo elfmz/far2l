@@ -164,7 +164,7 @@ class UnicodeString
 		UnicodeString& Append(const UnicodeString& Str) { return Append(Str.CPtr(), Str.GetLength()); }
 		UnicodeString& Append(const wchar_t* Str) { return Append(Str, StrLength(NullToEmpty(Str))); }
 		UnicodeString& Append(wchar_t Ch) { return Append(&Ch, 1); }
-		UnicodeString& Append(const char *lpszAdd, UINT CodePage=CP_OEMCP);
+		UnicodeString& Append(const char *lpszAdd, UINT CodePage=CP_UTF8);
 
 		UnicodeString& Insert(size_t Pos, const wchar_t* Str, size_t StrLen) { return Replace(Pos, 0, Str, StrLen); }
 		UnicodeString& Insert(size_t Pos, const UnicodeString& Str) { return Insert(Pos, Str.CPtr(), Str.GetLength()); }

@@ -157,7 +157,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 	if(!Pos)
 	{
 		if (!GetFileFormat(MenuFile,MenuCP))
-			MenuCP=CP_OEMCP;
+			MenuCP=CP_UTF8;
 	}
 
 	LPWSTR MenuStr = nullptr;
@@ -166,6 +166,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 
 	while(GetStr.GetString(&MenuStr, MenuCP, MenuStrLength))
 	{
+		fprintf(stderr, "MENUSTR: '%ls'\n", std::wstring(*MenuStr, MenuStrLength).c_str());
 		FARString strItemKey;
 
 		if (!SingleItemMenu)

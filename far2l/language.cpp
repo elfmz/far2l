@@ -210,7 +210,7 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 		if (!LangFile)
 			continue;
 
-		UINT nCodePage=CP_OEMCP;
+		UINT nCodePage=CP_UTF8;
 		OldGetFileFormat(LangFile, nCodePage, nullptr, false);
 		FARString strLangName, strLangDescr;
 
@@ -312,7 +312,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 	GuardLastError gle;
 	LastError = LERROR_SUCCESS;
 	m_bUnicode = bUnicode;
-	UINT nCodePage = CP_OEMCP;
+	UINT nCodePage = CP_UTF8;
 	//fprintf(stderr, "Opt.strLanguage=%ls\n", Opt.strLanguage.CPtr());
 	FARString strLangName=Opt.strLanguage;
 	FILE *LangFile=OpenLangFile(Path,LangFileMask,Opt.strLanguage,strMessageFile, nCodePage,FALSE, &strLangName);
@@ -357,6 +357,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 		}
 		else
 		{
+			DestLength = pack(WINPORT(WideCharToMultiByte)(CP_UTF8, 0, strDestStr, -1, nullptr, 0, nullptr, nullptr));
 			if (!(MsgListA = (char*)xf_realloc(MsgListA, (MsgSize+DestLength)*sizeof(char))))
 			{
 				fclose(LangFile);
@@ -364,7 +365,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 			}
 
 			*(int*)&MsgListA[MsgSize+DestLength-_PACK] = 0;
-			WINPORT(WideCharToMultiByte)(CP_OEMCP, 0, strDestStr, -1, MsgListA+MsgSize, DestLength, nullptr, nullptr);
+			WINPORT(WideCharToMultiByte)(CP_UTF8, 0, strDestStr, -1, MsgListA+MsgSize, DestLength, nullptr, nullptr);
 		}
 
 		MsgSize+=DestLength;

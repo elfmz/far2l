@@ -136,11 +136,13 @@ UnicodeString& UnicodeString::Append(const char *lpszAdd, UINT CodePage)
 {
 	if (lpszAdd && *lpszAdd)
 	{
-		size_t nAddSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszAdd,-1,nullptr,0);
-		size_t nNewLength = m_pData->GetLength() + nAddSize - 1;
-		Inflate(nNewLength + 1);
-		WINPORT(MultiByteToWideChar)(CodePage,0,lpszAdd,(int)nAddSize,m_pData->GetData() + m_pData->GetLength(),(int)m_pData->GetSize());
-		m_pData->SetLength(nNewLength);
+		int nAddSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszAdd,-1,nullptr,0);
+		if (nAddSize > 0) {
+			size_t nNewLength = m_pData->GetLength() + nAddSize - 1;
+			Inflate(nNewLength + 1);
+			WINPORT(MultiByteToWideChar)(CodePage, 0, lpszAdd, -1, m_pData->GetData() + m_pData->GetLength(), nAddSize);
+			m_pData->SetLength(nNewLength);
+		}
 	}
 
 	return *this;
@@ -168,10 +170,13 @@ UnicodeString& UnicodeString::Copy(const char *lpszData, UINT CodePage)
 	}
 	else
 	{
-		size_t nSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,-1,nullptr,0);
-		m_pData = new UnicodeStringData(nSize);
-		WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,-1,m_pData->GetData(),(int)m_pData->GetSize());
-		m_pData->SetLength(nSize - 1);
+		int nSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,-1,nullptr,0);
+		if (nSize > 0) {
+			m_pData = new UnicodeStringData(nSize);
+			WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,-1,m_pData->GetData(),(int)m_pData->GetSize());
+			m_pData->SetLength(nSize - 1);
+		} else 
+			m_pData = new UnicodeStringData;
 	}
 
 	return *this;

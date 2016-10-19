@@ -50,13 +50,14 @@ FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 		result = L"0";
 	} else {
 		size_t i = 0;
-		do {
+		for (;;) {
 			--part;
 			result.Insert(0, *part);
+			if (part == Src) break;
 			++i;
 			if ((i % 3)==0)
 				result.Insert(0, L' ');
-		} while (part != Src);
+		}
 	}
 	if (dot) {
 		result.Append(dot, std::min(wcslen(dot), (size_t)NumDigits + 1) );

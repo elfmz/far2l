@@ -7,7 +7,8 @@ m4_include(`farversion.m4')m4_dnl
 $^#Программа управления файлами и архивами#
 `$^#'FULLVERSIONNOBRACES`#'
 $^#Copyright (C) 1996-2000 Eugene Roshal#
-`$^#Copyright (C)' COPYRIGHTYEARS `FAR Group#'
+$^#Copyright (C) 2000-2016 FAR Group
+`$^#Copyright (C)' COPYRIGHTYEARS `FAR People'
    ~Индекс файла помощи~@Index@
    ~Как пользоваться помощью~@Help@
 

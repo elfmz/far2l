@@ -729,9 +729,9 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 				Width=0;
 
 			if (Economic)
-				strDestStr.Format(L"%*.*ls%1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
+				strDestStr.Format(L"%*.*ls%1.1ls",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
 			else
-				strDestStr.Format(L"%*.*ls %1.1s",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
+				strDestStr.Format(L"%*.*ls %1.1ls",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
 		}
 		else
 			strDestStr.Format(L"%*.*ls",Width,Width,strStr.CPtr());

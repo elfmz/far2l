@@ -330,9 +330,10 @@ bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 */
 void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 {
+	char buf[PATH_MAX + 1];
+	std::string s = Wide2MB(Src);
 	if (*Src==GOOD_SLASH) {
-		std::string s = Wide2MB(Src), cutoff;
-		char buf[PATH_MAX + 1];
+		std::string cutoff;
 		for (;;) {
 			if (sdc_realpath(s.c_str(), buf)) {
 				buf[sizeof(buf)-1] = 0;
@@ -349,6 +350,11 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 			if (p==std::string::npos || p==0) break;
 			cutoff.insert(0, s.c_str() + p);
 			s.resize(p);
+		}
+	} else {
+		if (sdc_realpath(s.c_str(), buf) && strcmp(buf, s.c_str()) != 0) {
+			strDest = buf;
+			return;
 		}
 	}
 	strDest = Src;

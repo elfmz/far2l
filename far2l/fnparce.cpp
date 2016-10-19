@@ -671,7 +671,7 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 		File ListFile;
 		if (ListFile.Open(strListFileName,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,CREATE_ALWAYS))
 		{
-			UINT CodePage=CP_OEMCP;
+			UINT CodePage=CP_UTF8;
 			LPCVOID Eol = NATIVE_EOL;
 			DWORD EolSize = strlen(NATIVE_EOL);
 

@@ -14,7 +14,7 @@ unsigned char Hex2Byte(const char *hex);
 
 std::string EscapeQuotas(std::string str);
 
-std::string InMyProfile(const char *subpath = NULL);
+std::string InMyProfile(const char *subpath = NULL, bool create_path = true);
 
 
 void CheckedCloseFD(int &fd);

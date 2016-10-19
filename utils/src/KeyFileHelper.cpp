@@ -52,7 +52,7 @@ std::vector<std::string> KeyFileHelper::EnumSections()
 std::string KeyFileHelper::GetString(const char *section, const char *name, const char *def)
 {
 	std::string rv;
-	char *v = g_key_file_get_string(_kf, "FarFTP", "Version", NULL);
+	char *v = g_key_file_get_string(_kf, section, name, NULL);
 	if (v) {
 		rv.assign(v);
 		free(v);

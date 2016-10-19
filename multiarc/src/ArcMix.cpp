@@ -240,7 +240,7 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int NeedSudo,i
 	DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
 	if (NeedSudo)
 		flags|= EF_SUDO;
-	
+
 	if (*expanded_cmd_mb.c_str()=='^') {
 		LastError = ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), 
 						"BuiltinMain", expanded_cmd_mb.c_str() + 1, flags);

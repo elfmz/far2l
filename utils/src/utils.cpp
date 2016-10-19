@@ -194,7 +194,7 @@ std::string EscapeQuotas(std::string str)
 	return str;
 }
 	
-std::string InMyProfile(const char *subpath)
+std::string InMyProfile(const char *subpath, bool create_path)
 {
 #ifdef _WIN32
 	std::string path = "D:\\.far2l";
@@ -203,14 +203,14 @@ std::string InMyProfile(const char *subpath)
 	std::string path = home ? home : "/tmp";
 	path+= "/.far2l";
 #endif
-	
-	mkdir(path.c_str(), 0777);
+	if (create_path)
+		mkdir(path.c_str(), 0770);
 	if (subpath) {
 		if (*subpath != GOOD_SLASH) 
 			path+= GOOD_SLASH;
 		for (const char *p = subpath; *p; ++p) {
-			if (*p == GOOD_SLASH)
-				mkdir(path.c_str(), 0777);
+			if (*p == GOOD_SLASH && create_path)
+				mkdir(path.c_str(), 0770);
 			path+= *p;
 		}
 	}

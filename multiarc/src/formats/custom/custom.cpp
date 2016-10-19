@@ -61,8 +61,11 @@ typedef union {
 
 int GetString(char *Str, int MaxSize);
 int HexCharToNum(int HexChar);
-int GetSectionName(int Num, char *Name, int MaxSize);
 
+bool GetSectionName(int Num, std::string &Name);
+bool GetSectionName(int Num, char *Name, int MaxSize);
+
+void GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault, std::string &out);
 DWORD GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault,LPSTR lpReturnedString,DWORD nSize);
 UINT GetIniInt(LPCSTR lpAppName,LPCSTR lpKeyName,INT lpDefault);
 
@@ -317,10 +320,9 @@ int     CurType = 0;
 char    *OutData = nullptr;
 DWORD   OutDataPos = 0, OutDataSize = 0;
 
-char    FormatFileName[NM],UserFormatFileName[NM];
+static std::string FormatFileName, UserFormatFileName;
 
-
-char    StartText[PROF_STR_LEN], EndText[PROF_STR_LEN];
+static std::string StartText, EndText;
 
 CustomStringList *Format = 0;
 CustomStringList *IgnoreStrings = 0;
@@ -345,39 +347,59 @@ void WINAPI _export CUSTOM_SetFarInfo(const struct PluginStartupInfo *Info)
     MkTemp = Info->FSF->MkTemp;
 }
 
+static bool HasCustomIni()
+{
+	struct stat s;
+	if (stat(FormatFileName.c_str(), &s) == 0)
+		return true;
+		
+	if (stat(UserFormatFileName.c_str(), &s) == 0)
+		return true;
+		
+	return false;
+}
+
 DWORD WINAPI _export CUSTOM_LoadFormatModule(const char *ModuleName)
 {
-    strcpy(FormatFileName, ModuleName);
-    strcpy(strrchr(FormatFileName, '/') + 1, "custom.ini");
-    strcpy(UserFormatFileName,FormatFileName);
-    strcpy(strrchr(UserFormatFileName,'.'),"_user.ini");
-
+	FormatFileName = ModuleName;
+	size_t p = FormatFileName.rfind(GOOD_SLASH);
+	if (p != std::string::npos)
+		FormatFileName.resize(p + 1);
+	else
+		FormatFileName = "/etc/multiarc/";
+	FormatFileName+= "custom.ini";
+	
+	UserFormatFileName = InMyProfile("multiarc/custom.ini", false);
     return (0);
 }
 
-BOOL WINAPI _export CUSTOM_IsArchive(const char *Name, const unsigned char *Data, int DataSize)
+BOOL WINAPI _export CUSTOM_IsArchive(const char *FName, const unsigned char *Data, int DataSize)
 {
-    char *Dot = strrchr((char *) Name, '.');
+	if (!HasCustomIni())//just for optimization
+		return FALSE;
+		
+    char *Dot = strrchr((char *) FName, '.');
 
+	std::string TypeName, Name, Ext, ID;
     for(int I = 0;; I++)
     {
-        char TypeName[NM], Name[NM], Ext[NM], ID[512];
         int IDPos;
 
-        if(!GetSectionName(I, TypeName, sizeof(TypeName)))
+        if(!GetSectionName(I, TypeName))
             break;
 
-        GetIniString(TypeName, Str_TypeName, TypeName, Name, sizeof(Name));
+        GetIniString(TypeName.c_str(), Str_TypeName, TypeName.c_str(), Name);
 
-        if(*Name == 0)
+        if (Name.empty())
             break;
 
-        GetIniString(TypeName, "ID", "", ID, sizeof(ID));
-        IDPos = GetIniInt(TypeName, "IDPos", -1);
+        GetIniString(TypeName.c_str(), "ID", "", ID);
+        IDPos = GetIniInt(TypeName.c_str(), "IDPos", -1);
 
-        if(*ID)
+        if (!ID.empty())
         {
-            unsigned char IDData[256], *CurID = (unsigned char *) &ID[0];
+            unsigned char IDData[256];
+			const unsigned char *CurID = (const unsigned char *) ID.c_str();
             int IDLength = 0;
 
             while(1)
@@ -406,7 +428,7 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *Name, const unsigned char *Data
             }
             if(Found)
             {
-                if(GetIniInt(TypeName, "IDOnly", 0))
+                if(GetIniInt(TypeName.c_str(), "IDOnly", 0))
                 {
                     CurType = I;
                     return (TRUE);
@@ -416,9 +438,9 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *Name, const unsigned char *Data
                 continue;
         }
 
-        GetIniString(TypeName, "Extension", "", Ext, sizeof(Ext));
+        GetIniString(TypeName.c_str(), "Extension", "", Ext);
 
-        if(Dot != NULL && *Ext != 0 && strcasecmp(Dot + 1, Ext) == 0)
+        if(Dot != NULL && !Ext.empty() && strcasecmp(Dot + 1, Ext.c_str()) == 0)
         {
             CurType = I;
             return (TRUE);
@@ -435,17 +457,18 @@ DWORD WINAPI _export CUSTOM_GetSFXPos(void)
 
 BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
 {
-    char TypeName[NM], Command[512];
+	std::string TypeName;
+    char Command[512] = {};
 
-    if(!GetSectionName(CurType, TypeName, sizeof(TypeName)))
+    if(!GetSectionName(CurType, TypeName))
         return (FALSE);
 
-    GetIniString(TypeName, "List", "", Command, sizeof(Command));
+    GetIniString(TypeName.c_str(), "List", "", Command, sizeof(Command));
 
     if(*Command == 0)
         return (FALSE);
 
-    IgnoreErrors = GetIniInt(TypeName, "IgnoreErrors", 0);
+    IgnoreErrors = GetIniInt(TypeName.c_str(), "IgnoreErrors", 0);
     *Type = CurType;
 
     ArcChapters = -1;
@@ -486,7 +509,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
 
     if(ExitCode)
     {
-        ExitCode = (ExitCode < GetIniInt(TypeName, "Errorlevel", 1000));
+        ExitCode = (ExitCode < GetIniInt(TypeName.c_str(), "Errorlevel", 1000));
     } else {
 		ExitCode = 1;
 	}
@@ -522,7 +545,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
     WINPORT(SetConsoleMode)(NULL, ConsoleMode);
 
 	sdc_remove(TempName);
-    FillFormat(TypeName);
+    FillFormat(TypeName.c_str());
 
     if(ExitCode && OutDataSize == 0)
     {
@@ -549,37 +572,37 @@ int WINAPI _export CUSTOM_GetArcItem(struct PluginPanelItem *Item, struct ArcIte
     {
         RegExp re;
 
-        if(*StartText)
+        if(!StartText.empty())
         {
-            if(re.compile(StartText))
+            if(re.compile(StartText.c_str()))
             {
                 if(re.match(Str))
-                    *StartText = 0;
+                    StartText.clear();
             }
             else
             {
-                if((*StartText == '^' && strncmp(Str, StartText + 1, strlen(StartText + 1)) == 0) ||
-                   (*StartText != '^' && strstr(Str, StartText) != NULL))
+                if((StartText[0] == '^' && strncmp(Str, StartText.c_str() + 1, StartText.size() - 1) == 0) ||
+                   (StartText[0] != '^' && strstr(Str, StartText.c_str()) != NULL))
                 {
-                    *StartText = 0;
+                    StartText.clear();
                 }
             }
             continue;
         }
 
-        if(*EndText)
+        if(!EndText.empty())
         {
-            if(re.compile(EndText))
+            if(re.compile(EndText.c_str()))
             {
                 if(re.match(Str))
                     break;
             }
-            else if(*EndText == '^')
+            else if(EndText[0] == '^')
             {
-                if(strncmp(Str, EndText + 1, strlen(EndText + 1)) == 0)
+                if(strncmp(Str, EndText.c_str() + 1, EndText.size() - 1) == 0)
                     break;
             }
-            else if(strstr(Str, EndText) != NULL)
+            else if(strstr(Str, EndText.c_str()) != NULL)
                 break;
 
         }
@@ -659,13 +682,13 @@ BOOL WINAPI _export CUSTOM_CloseArchive(struct ArcInfo * Info)
 
 BOOL WINAPI _export CUSTOM_GetFormatName(int Type, char *FormatName, char *DefaultExt)
 {
-    char TypeName[NM];
+    std::string TypeName;
 
-    if(!GetSectionName(Type, TypeName, sizeof(TypeName)))
+    if(!GetSectionName(Type, TypeName))
         return (FALSE);
 
-    GetIniString(TypeName, Str_TypeName, TypeName, FormatName, 64);
-    GetIniString(TypeName, "Extension", "", DefaultExt, NM);
+    GetIniString(TypeName.c_str(), Str_TypeName, TypeName.c_str(), FormatName, 64);
+    GetIniString(TypeName.c_str(), "Extension", "", DefaultExt, NM);
 
     return (*FormatName != 0);
 }
@@ -673,14 +696,14 @@ BOOL WINAPI _export CUSTOM_GetFormatName(int Type, char *FormatName, char *Defau
 
 BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, char *Dest)
 {
-    char TypeName[NM], FormatName[NM];
+	std::string TypeName, FormatName;
 
-    if(!GetSectionName(Type, TypeName, sizeof(TypeName)))
+    if(!GetSectionName(Type, TypeName))
         return (FALSE);
 
-    GetIniString(TypeName, Str_TypeName, TypeName, FormatName, 64);
+    GetIniString(TypeName.c_str(), Str_TypeName, TypeName.c_str(), FormatName);
 
-    if(*FormatName == 0)
+    if (FormatName.empty())
         return (FALSE);
 
     static const char *CmdNames[] = { "Extract", "ExtractWithoutPath", "Test", "Delete",
@@ -690,7 +713,7 @@ BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, char *Dest)
 
     if(Command < (int)(ARRAYSIZE(CmdNames)))
     {
-        GetIniString(TypeName, CmdNames[Command], "", Dest, 512);
+        GetIniString(TypeName.c_str(), CmdNames[Command], "", Dest, 512);
         return (TRUE);
     }
 
@@ -712,52 +735,71 @@ int HexCharToNum(int HexChar)
 }
 
 
-
-int GetSectionName(int Num, char *Name, int MaxSize)
+bool GetSectionName(int Num, std::string &Name)
 {
 	{
-		KeyFileHelper kfh(FormatFileName);
+		KeyFileHelper kfh(FormatFileName.c_str());
 		const std::vector<std::string> &sections = kfh.EnumSections();
 		if (Num < (int)sections.size()) {
-			strncpy(Name, sections[Num].c_str(), MaxSize);
-			return TRUE;		
+			Name = sections[Num];
+			return true;		
 		}
 		Num-= sections.size();
 	}
+	
 	{
-		KeyFileHelper kfh(UserFormatFileName);
+		KeyFileHelper kfh(UserFormatFileName.c_str());
 		const std::vector<std::string> &sections = kfh.EnumSections();
 		if (Num < (int)sections.size()) {
-			strncpy(Name, sections[Num].c_str(), MaxSize);
-			return TRUE;		
+			Name = sections[Num];
+			return true;		
 		}
 	}
 
-	return FALSE;
+	return false;
+
+}
+
+bool GetSectionName(int Num, char *Name, int MaxSize)
+{
+	std::string s;
+	if (!GetSectionName(Num, s))
+		return false;
+
+	strncpy(Name, s.c_str(), MaxSize);
+	return true;
+}
+
+void GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault, std::string &out)
+{
+	out = KeyFileHelper(FormatFileName.c_str()).GetString(lpAppName,lpKeyName, lpDefault);
+	out = KeyFileHelper(UserFormatFileName.c_str()).GetString(lpAppName,lpKeyName, out.c_str());
+	size_t len = out.size();
+	if (len >= 2 && out[0] == '\"' && out[len - 1] == '\"') {
+		out.resize(len - 1);
+		out.erase(0, 1);
+	}
 }
 
 DWORD GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault,LPSTR lpReturnedString,DWORD nSize)
 {
-	KeyFileHelper(FormatFileName).GetChars(lpReturnedString, nSize, lpAppName,lpKeyName, lpDefault);
-	KeyFileHelper(UserFormatFileName).GetChars(lpReturnedString, nSize, lpAppName,lpKeyName, lpReturnedString);
-	DWORD len = strlen(lpReturnedString);
-	if (len >= 2 && lpReturnedString[0] == '\"' && lpReturnedString[len - 1] == '\"') {
-		len-= 2;
-		memmove(&lpReturnedString[0], &lpReturnedString[1], len);
-		lpReturnedString[len] = 0;
-	}
-	return len;
+	std::string s;
+	GetIniString(lpAppName, lpKeyName, lpDefault, s);
+	strncpy(lpReturnedString, s.c_str(), nSize);
+	lpReturnedString[nSize - 1] = 0;
+	return strlen(lpReturnedString);
 }
 
 UINT GetIniInt(LPCSTR lpAppName,LPCSTR lpKeyName,INT lpDefault)
 {
-	return KeyFileHelper(FormatFileName).GetInt(lpAppName,lpKeyName, KeyFileHelper(UserFormatFileName).GetInt(lpAppName,lpKeyName, lpDefault) );
+	return KeyFileHelper(FormatFileName.c_str()).GetInt(lpAppName,lpKeyName, 
+		KeyFileHelper(UserFormatFileName.c_str()).GetInt(lpAppName,lpKeyName, lpDefault) );
 }
 
 void FillFormat(const char *TypeName)
 {
-    GetIniString(TypeName, "Start", "", StartText, sizeof(StartText));
-    GetIniString(TypeName, "End", "", EndText, sizeof(EndText));
+    GetIniString(TypeName, "Start", "", StartText);
+    GetIniString(TypeName, "End", "", EndText);
 
     int FormatNumber = 0;
 
@@ -790,6 +832,7 @@ void FillFormat(const char *TypeName)
 
 int GetString(char *Str, int MaxSize)
 {
+	//memset(Str, 0, MaxSize);
     if(OutDataPos >= OutDataSize)
         return (FALSE);
 

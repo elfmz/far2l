@@ -19,7 +19,7 @@ namespace VTLog
 		std::deque<std::string> _memories;
 		
 		enum {
-			LIMIT_NOT_IMPORTANT	= 100,
+			LIMIT_NOT_IMPORTANT	= 1000,
 			LIMIT_IMPORTANT = 5000
 		};
 		

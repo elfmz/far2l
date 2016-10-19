@@ -19231,13 +19231,13 @@ MKBTreeCtrlAltShiftF12
 
 MCopyTimeInfo
 l:
-"Время: %8.8s    Осталось: %8.8s    %8.8sб/с"
-"Time: %8.8s    Remaining: %8.8s    %8.8sb/s"
-"Čas: %8.8s      Zbývá: %8.8s      %8.8sb/s"
-"Zeit: %8.8s   Verbleibend: %8.8s   %8.8sb/s"
-"Eltelt: %8.8s    Maradt: %8.8s    %8.8sb/s"
-"Czas: %8.8s    Pozostało: %8.8s    %8.8sb/s"
-"Tiempo: %8.8s    Restante: %8.8s    %8.8sb/s"
+"Время: %8.8ls    Осталось: %8.8ls    %8.8lsб/с"
+"Time: %8.8ls    Remaining: %8.8ls    %8.8lsb/s"
+"Čas: %8.8ls      Zbývá: %8.8ls      %8.8lsb/s"
+"Zeit: %8.8ls   Verbleibend: %8.8ls   %8.8lsb/s"
+"Eltelt: %8.8ls    Maradt: %8.8ls    %8.8lsb/s"
+"Czas: %8.8ls    Pozostało: %8.8ls    %8.8lsb/s"
+"Tiempo: %8.8ls    Restante: %8.8ls    %8.8lsb/s"
 
 MKeyESCWasPressed
 l:

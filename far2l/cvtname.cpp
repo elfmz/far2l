@@ -47,115 +47,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define IsSlashForward(str)  (str == L'/')
 #define IsQuestion(str)      (str == L'?')
 
-enum PATH_PFX_TYPE
-{
-	PPT_NONE,
-	PPT_DRIVE,
-	PPT_ROOT,
-	PPT_PREFIX,
-	PPT_NT
-};
-
-PATH_PFX_TYPE Point2Root(LPCWSTR stPath, size_t& PathOffset)
-{
-	if (stPath)
-	{
-		PATH_PFX_TYPE nPrefix = PPT_NONE;
-		LPCWSTR pstPath=stPath;
-
-		//Skip root entry, network share, device, nt notation or symlink prefix: "\", "\\", "\\.\", "\\?\", "\??\"
-		//prefix "\" or "/"
-		if (IsSlash(*pstPath))
-		{
-			pstPath++;
-			nPrefix = PPT_ROOT;
-
-			//prefix "\"
-			if (IsSlashForward(pstPath[-1]))
-			{
-				//prefix "\\" - network
-				if (IsSlashForward(pstPath[0]))
-				{
-					pstPath++;
-					nPrefix = PPT_PREFIX;
-
-					//prefix "\\.\" - device
-					if (IsDot(pstPath[0]) && IsSlashForward(pstPath[1]))
-					{
-						pstPath += 2;
-					}
-					else
-					{
-						//prefix "\\?\" - nt notation
-						if (IsQuestion(pstPath[0]) && IsSlashForward(pstPath[1]))
-						{
-							pstPath += 2;
-							nPrefix = PPT_NT;
-
-							//prefix "\\?\UNC\" - nt notation (UNC)
-							if (!StrCmpN(pstPath, L"UNC/", 4))
-							{
-								pstPath += 4;
-							}
-						}
-					}
-				}
-				else
-				{
-					if (IsQuestion(pstPath[0]) && IsQuestion(pstPath[1]) && IsSlashForward(pstPath[2]))    //prefix "\??\" symlink
-					{
-						pstPath += 3;
-						nPrefix = PPT_NT;
-					};
-				}
-			}
-		}
-
-		//Skip path to next slash (or path end) if was "special" prefix
-		if (nPrefix == PPT_PREFIX || nPrefix == PPT_NT)
-		{
-			while (*pstPath)
-			{
-				if (IsSlash(*pstPath))
-				{
-					pstPath++;
-					break;
-				}
-
-				pstPath++;
-			}
-		}
-		else
-		{
-			//Skip logical drive letter name
-			if (pstPath[0] && IsColon(pstPath[1]))
-			{
-				pstPath += 2;
-				nPrefix = PPT_DRIVE;
-
-				//Skip root slash
-				if (IsSlash(*pstPath))
-				{
-					pstPath++;
-					nPrefix = PPT_PREFIX;
-				}
-			}
-		}
-
-		PathOffset=pstPath-stPath;
-		return (nPrefix);
-	}
-
-	return (PPT_NONE);
-}
-
 void MixToFullPath(FARString& strPath)
 {
 	//Skip all path to root (with slash if exists)
 	LPWSTR pstPath=strPath.GetBuffer();
 	size_t PathOffset=0;
-	Point2Root(pstPath,PathOffset);
-	pstPath+=PathOffset;
+//	Point2Root(pstPath,PathOffset);
+//	pstPath+=PathOffset;
 
 	//Process "." and ".." if exists
 	for (int m = 0; pstPath[m];)
@@ -169,7 +67,7 @@ void MixToFullPath(FARString& strPath)
 			switch (pstPath[m + 1])
 			{
 					//fragment ".\"
-				case L'\\':
+				//case L'\\':
 					//fragment "./"
 				case L'/':
 				{
@@ -233,6 +131,49 @@ void MixToFullPath(FARString& strPath)
 
 bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 {
+	if (stPath && *stPath == GOOD_SLASH) {
+		strDest = stPath;
+		MixToFullPath(strDest);
+		return true;
+	}
+
+	strDest.Clear();
+	
+	if (stCurrentDir && *stCurrentDir) {
+		strDest = stCurrentDir;
+	}
+	
+	if (strDest.IsEmpty()) {
+		apiGetCurrentDirectory(strDest);
+		if (strDest.IsEmpty()) {
+			strDest = L"." WGOOD_SLASH;
+		}
+		if (strDest.IsEmpty()) { //wtf
+			perror("MixToFullPath");
+			return false;
+		}
+	}
+	
+	if (strDest.At(strDest.GetLength() - 1) != GOOD_SLASH)
+		strDest+= GOOD_SLASH;
+		
+	if (stPath) {
+		while (stPath[0]=='.' && (!stPath[1] || stPath[1]==GOOD_SLASH)) {
+			++stPath;
+			if (*stPath==GOOD_SLASH)
+				++stPath;
+		}
+		strDest+= stPath;
+	}
+	
+	MixToFullPath(strDest);
+	return true;
+	
+	
+	
+	
+	
+	/*
 	size_t lPath=wcslen(NullToEmpty(stPath)),
 	       lCurrentDir=wcslen(NullToEmpty(stCurrentDir)),
 	       lFullPath=lPath+lCurrentDir;
@@ -320,7 +261,7 @@ bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 		return true;
 	}
 
-	return false;
+	return false;*/
 }
 
 
@@ -368,7 +309,7 @@ FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 
 	if (!strPath.IsEmpty())
 	{
-		if (strPath.At(1)==L':' || (strPath.At(0)==L'/' && strPath.At(1)==L'/'))
+/*		if (strPath.At(1)==L':' || (strPath.At(0)==L'/' && strPath.At(1)==L'/'))
 		{
 			bool DoubleSlash = strPath.At(1)==L'/';
 			while(ReplaceStrings(strPath,L"//",L"/"));
@@ -467,7 +408,7 @@ FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 			}
 
 			strPath.ReleaseBuffer(strPath.GetLength());
-		}
+		}*/
 	}
 
 	return strPath;

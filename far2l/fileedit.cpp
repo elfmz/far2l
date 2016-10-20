@@ -1274,23 +1274,17 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				return TRUE;
 			}
 			case KEY_F8:
-			{
-				if (!IsFileModified() || IsFixedSingleCharCodePage(m_codepage))
-				{
-					SetCodePage(m_codepage==WINPORT(GetACP)()?WINPORT(GetOEMCP)():WINPORT(GetACP)());
-					Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
-					ChangeEditKeyBar();
-				}
-
-				return TRUE;
-			}
 			case KEY_SHIFTF8:
 			{
-				int codepage = SelectCodePage(m_codepage, false, true);
+				int codepage;
+				if (Key==KEY_F8) {
+					codepage = (m_codepage==WINPORT(GetACP)()?WINPORT(GetOEMCP)():WINPORT(GetACP)());
+				} else
+					codepage = SelectCodePage(m_codepage, false, true);
 				if (codepage != -1 && codepage != (int)m_codepage) {
 					const bool need_reload = 0
 //								|| IsFixedSingleCharCodePage(m_codepage) != IsFixedSingleCharCodePage(codepage)
-//								|| (!IsUTF8(m_codepage) &&8IsUTF7(codepage))
+								|| IsUTF8(m_codepage) != IsUTF8(codepage)
 								|| IsUTF7(m_codepage) != IsUTF7(codepage)
 								|| IsUTF16(m_codepage) != IsUTF16(codepage)
 								|| IsUTF32(m_codepage) != IsUTF32(codepage);
@@ -1302,6 +1296,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 							SaveToCache();
 							LoadFile(strLoadedFileName, UserBreak);
 						}
+						ChangeEditKeyBar();
 					} else
 						Message(0, 1, MSG(MEditTitle), L"Save file before changing this codepage", MSG(MHOk), nullptr);
 				}

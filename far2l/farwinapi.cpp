@@ -509,21 +509,26 @@ BOOL apiGetVolumeInformation(
 		return FALSE;
 	}
 
-	*lpMaximumComponentLength = svfs.f_namemax;
-	*lpVolumeSerialNumber = (DWORD)svfs.f_fsid;
-	*lpFileSystemFlags = 0;//TODO: svfs.f_flags;
+	if (lpMaximumComponentLength)
+		*lpMaximumComponentLength = svfs.f_namemax;
+	if (lpVolumeSerialNumber)
+		*lpVolumeSerialNumber = (DWORD)svfs.f_fsid;
+	if (lpFileSystemFlags)
+		*lpFileSystemFlags = 0;//TODO: svfs.f_flags;
 
 	if (pVolumeName)
 		pVolumeName->Clear();
-	if (pFileSystemName)
+
+	if (pFileSystemName) {
 		pFileSystemName->Clear();
 
-	struct statfs sfs = {};
-	if (sdc_statfs(path.c_str(), &sfs) == 0) {
-		for (size_t i = 0; i < ARRAYSIZE(s_fs_magics); ++i) {
-			if (sfs.f_type == s_fs_magics[i].magic) {
-				*pFileSystemName = s_fs_magics[i].name;
-				break;
+		struct statfs sfs = {};
+		if (sdc_statfs(path.c_str(), &sfs) == 0) {
+			for (size_t i = 0; i < ARRAYSIZE(s_fs_magics); ++i) {
+				if (sfs.f_type == s_fs_magics[i].magic) {
+					*pFileSystemName = s_fs_magics[i].name;
+					break;
+				}
 			}
 		}
 	}

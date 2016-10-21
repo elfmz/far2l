@@ -145,12 +145,8 @@ bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 	
 	if (strDest.IsEmpty()) {
 		apiGetCurrentDirectory(strDest);
-		if (strDest.IsEmpty()) {
-			strDest = L"." WGOOD_SLASH;
-		}
 		if (strDest.IsEmpty()) { //wtf
-			perror("MixToFullPath");
-			return false;
+			strDest = L"." WGOOD_SLASH;
 		}
 	}
 	

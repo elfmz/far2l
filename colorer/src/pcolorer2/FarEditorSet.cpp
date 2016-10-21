@@ -227,7 +227,6 @@ FileTypeImpl* FarEditorSet::getFileTypeByIndex(int idx)
 {
   FileType *type = NULL;
   const String *group = NULL;
-
   for (int i = 0; idx>=0; idx--, i++){
     type = hrcParser->enumerateFileTypes(i);
 
@@ -799,9 +798,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
 
   SString *tpath;
   if (!catalogPathS || !catalogPathS->length()){
-	  fprintf(stderr, "zz1 %p", PluginPath);
     StringBuffer *path=new StringBuffer(PluginPath);
-	fprintf(stderr, "zz2");
     path->append(DString(FarCatalogXml));
     tpath = path;
   }
@@ -1191,9 +1188,9 @@ bool FarEditorSet::checkConEmu()
   return conemu;*/
 }
 
-bool FarEditorSet::checkFarTrueMod()
+bool FarEditorSet::checkFarTrueMod() //TODO
 {
-	  return false;
+  return false;
   /*EditorAnnotation ea;
   ea.StringNumber = 1;
   ea.StartPos = 1;
@@ -1307,7 +1304,7 @@ FarList *FarEditorSet::buildHrcList()
     }
 
     hrcList[i].Text = new wchar_t[255];
-    swprintf((wchar_t*)hrcList[i].Text, 255, L"%ls: %s", groupChars, type->getDescription()->getWChars());
+    swprintf((wchar_t*)hrcList[i].Text, 255, L"%ls: %ls", groupChars, type->getDescription()->getWChars());
   };
 
   hrcList[0].Flags=LIF_SELECTED;
@@ -1722,6 +1719,7 @@ void FarEditorSet::configureHrc()
 
   dialogFirstFocus = true;
   HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 59, 23, L"confighrc", fdi, ARRAY_SIZE(fdi), 0, 0, SettingHrcDialogProc, (LONG_PTR)this);
+  Info.DialogRun(hDlg); //int i = 
   
   for (int idx = 0; idx < l->ItemsNumber; idx++){
     if (l->Items[idx].Text){

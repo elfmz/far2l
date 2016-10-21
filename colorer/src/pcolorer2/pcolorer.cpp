@@ -13,7 +13,6 @@ SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
       int pos = module.lastIndexOf('/');
       pos = module.lastIndexOf('/',pos);
       PluginPath=new StringBuffer(DString(module, 0, pos));	
-	  printf("Colorer startup: %s\n", path);
 }
 //todo:
 /**

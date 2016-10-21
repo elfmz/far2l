@@ -114,7 +114,7 @@ int Encodings::toBytes(int encoding, wchar wc, byte *dest){
     dest[0] = (wc>>8)&0xFF;
     return 2;
   };
-#if 0 // impossible for 16-bit wchar
+#if (__WCHAR_MAX__ > 0xffff) // impossible for 16-bit wchar
   if (encoding == ENC_UTF32){
     dest[0] = wc&0xFF;
     dest[1] = (wc>>8)&0xFF;

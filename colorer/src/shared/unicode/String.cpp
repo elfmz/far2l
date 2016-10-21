@@ -5,6 +5,8 @@
 #ifdef __unix__
 extern "C" int stricmp(const char *c1, const char *c2)
 {
+  return strcasecmp(c1, c2);
+/*
 	unsigned int i1, i2;
   while(*c1 || *c2){
     i1 = (unsigned short)Character::toLowerCase(*c1);
@@ -16,11 +18,13 @@ extern "C" int stricmp(const char *c1, const char *c2)
     c1++;
     c2++;
   };
-  return 0;
+  return 0;*/
 }
 
 extern "C" int strnicmp(const char *c1, const char *c2, unsigned int len)
 {
+  return strncasecmp(c1, c2, len);
+/*
 unsigned int i1, i2;
   while((*c1 || *c2) && len){
     i1 = Character::toLowerCase(*c1);
@@ -33,7 +37,7 @@ unsigned int i1, i2;
     c2++;
     len--;
   };
-  return 0;
+  return 0;*/
 }
 #endif
 

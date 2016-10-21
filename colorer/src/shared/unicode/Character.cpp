@@ -3,18 +3,17 @@
 #include<unicode/x_tables.h>
 #include<unicode/x_defines.h>
 #include<unicode/x_charcategory_names.h>
-
 wchar Character::toLowerCase(wchar c){
   unsigned long c1 = CHAR_PROP(c);
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Ll) return c;
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lt) return c+1;
-  return c - wchar(c1>>16);
+  return (wchar)(unsigned short)(c - wchar(c1>>16));
 }
 wchar Character::toUpperCase(wchar c){
   unsigned long c1 = CHAR_PROP(c);
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lu) return c;
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lt) return c-1;
-  return c - wchar(c1>>16);
+  return (wchar)(unsigned short)(c - wchar(c1>>16));
 }
 wchar Character::toTitleCase(wchar c){
   unsigned long c1 = CHAR_PROP(c);

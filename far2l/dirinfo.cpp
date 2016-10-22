@@ -120,8 +120,9 @@ int GetDirInfo(const wchar_t *Title,
 	strCurDirName.Clear();
 	DirCount=FileCount=0;
 	FileSize=CompressedFileSize=RealSize = 0;
-	ScTree.SetFindPath(DirName, L"*", FSCANTREE_UNIQUES);
-	
+	ScTree.SetFindPath(DirName, L"*", 0);
+	ScannedINodes scanned_inodes;
+
 	struct stat s = {0};
 	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
 		FileSize = s.st_size;//include size of root dir's node
@@ -174,6 +175,15 @@ int GetDirInfo(const wchar_t *Title,
 			OldTitle.Set(L"%ls %ls",MSG(MScanningFolder), ShowDirName); // покажем заголовок консоли
 			SetCursorType(FALSE,0);
 			DrawGetDirInfoMsg(Title,ShowDirName,FileSize);
+		}
+		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			//include own size of symlink's to total size
+			if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
+				FileSize+= s.st_size;
+			}
+		}
+		if (!scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
+			continue;
 		}
 
 		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)

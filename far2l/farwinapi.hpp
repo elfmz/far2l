@@ -41,7 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct FAR_FIND_DATA_EX
 {
-	DWORD    dwFileAttributes;
 	union {
 		FILETIME ftLastAccessTime;
 		FILETIME ftUnixAccessTime;
@@ -57,6 +56,10 @@ struct FAR_FIND_DATA_EX
 	FILETIME ftChangeTime;
 	uint64_t nFileSize;
 	uint64_t nPackSize;
+	dev_t UnixDevice;
+	ino_t UnixNode;
+
+	DWORD dwFileAttributes;
 	DWORD dwUnixMode;
 	struct
 	{
@@ -78,6 +81,8 @@ struct FAR_FIND_DATA_EX
 		dwReserved0=0;
 		dwReserved1=0;
 		dwUnixMode=0;
+		UnixDevice=0;
+		UnixNode=0;
 		strFileName.Clear();
 	}
 
@@ -92,6 +97,8 @@ struct FAR_FIND_DATA_EX
 			ftChangeTime=ffdexCopy.ftChangeTime;
 			nFileSize=ffdexCopy.nFileSize;
 			nPackSize=ffdexCopy.nPackSize;
+			UnixDevice=ffdexCopy.UnixDevice;
+			UnixNode=ffdexCopy.UnixNode;
 			dwUnixMode=ffdexCopy.dwUnixMode;
 			dwReserved0=ffdexCopy.dwReserved0;
 			dwReserved1=ffdexCopy.dwReserved1;

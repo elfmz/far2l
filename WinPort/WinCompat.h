@@ -86,6 +86,10 @@ typedef unsigned __int64 uint64_t;
 # include <linux/limits.h>
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 static int _wtoi(const wchar_t *w)
 {
 	wchar_t *endptr = 0;
@@ -395,27 +399,31 @@ typedef struct _SYSTEMTIME {
 
 
 typedef struct _WIN32_FIND_DATAA {
-    DWORD dwFileAttributes;
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
+    DWORD dwFileAttributes;
     DWORD nFileSizeHigh;
     DWORD nFileSizeLow;
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
+    dev_t UnixDevice;
+    ino_t UnixNode;
     CHAR   cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 typedef struct _WIN32_FIND_DATAW {
-    DWORD dwFileAttributes;
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
+    DWORD dwFileAttributes;
     DWORD nFileSizeHigh;
     DWORD nFileSizeLow;
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
+    dev_t UnixDevice;
+    ino_t UnixNode;
     WCHAR  cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
 

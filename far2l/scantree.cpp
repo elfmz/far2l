@@ -82,6 +82,12 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata,FARString &strFullName)
 				
 		}
 		Done=!ScanItems.lastItem()->Find->Get(*fdata);
+		
+		if (!Done && Flags.Check(FSCANTREE_UNIQUES) && fdata->UnixNode != 0 && 
+			!Uniques.Inspect(fdata->UnixDevice, fdata->UnixNode)) {
+			continue;
+		}
+		
 
 		if (Flags.Check(FSCANTREE_FILESFIRST))
 		{

@@ -37,6 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "bitflags.hpp"
 #include "array.hpp"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <map>
+#include <set>
+
 
 enum
 {
@@ -57,7 +63,8 @@ enum
 	FSCANTREE_NOFILES          = 0x00020000, // Don't return files
 	FSCANTREE_NODEVICES        = 0x00040000, // Don't return devices
 	FSCANTREE_NOLINKS          = 0x00080000, // Don't return symlinks
-	FSCANTREE_CASE_INSENSITIVE = 0x00100000, // currently affects only english characters
+	FSCANTREE_CASE_INSENSITIVE = 0x00100000, // Currently affects only english characters
+	FSCANTREE_UNIQUES          = 0x00200000, // Don't scan same inodes more than once (in additional to recursion guard)
 };
 
 struct ScanTreeData
@@ -80,6 +87,15 @@ class ScanTree
 	private:
 		BitFlags Flags;
 		TPointerArray<ScanTreeData> ScanItems;
+		class UniquesStore
+		{
+			struct Map : std::map<dev_t, std::set<ino_t> > {} _map;
+		public:
+			bool Inspect(dev_t d, ino_t ino)
+			{
+				return _map[d].insert(ino).second;
+			}
+		} Uniques;
 
 		FARString strFindPath;
 		FARString strFindMask;

@@ -110,4 +110,6 @@ class ScanTree
 		void SkipDir();
 		int IsDirSearchDone() {return Flags.Check(FSCANTREE_SECONDDIRNAME);};
 		int InsideJunction()   {return Flags.Check(FSCANTREE_INSIDEJUNCTION);};
+		
+		bool IsSymlinksScanEnabled() {return Flags.Check(FSCANTREE_SCANSYMLINK); }
 };

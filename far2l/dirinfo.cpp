@@ -110,7 +110,7 @@ int GetDirInfo(const wchar_t *Title,
 
 	ConsoleTitle OldTitle;
 	RefreshFrameManager frref(ScrX,ScrY,MsgWaitTime,Flags&GETDIRINFO_DONTREDRAWFRAME);
-	DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
+	//DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
 
 	//todo if (GetDiskFreeSpace(strDriveRoot,&SectorsPerCluster,&BytesPerSector,&FreeClusters,&Clusters))
 	//	ClusterSize=SectorsPerCluster*BytesPerSector;
@@ -181,6 +181,8 @@ int GetDirInfo(const wchar_t *Title,
 			if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
 				FileSize+= s.st_size;
 			}
+			if (!ScTree.IsSymlinksScanEnabled())
+				continue;
 		}
 		if (!scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
 			continue;

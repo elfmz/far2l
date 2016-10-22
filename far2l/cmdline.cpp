@@ -204,7 +204,14 @@ int CommandLine::ProcessKey(int Key)
 	}
 	
 	if ( Key==KEY_F4) { 
+		++ProcessShowClock;
+		ShowBackground();
+		Redraw();
+		ScrBuf.Flush();
 		const std::string &histfile = VTLog::GetAsFile();
+		--ProcessShowClock;
+		Redraw();
+		ScrBuf.Flush();
 		if (histfile.empty())
 			return TRUE;
 			

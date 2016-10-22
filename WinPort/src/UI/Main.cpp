@@ -66,7 +66,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	wxInitialize();
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
-	g_wx_con_out.WriteString(L"Hello", 5);
+//	g_wx_con_out.WriteString(L"Hello", 5);
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new WinPortAppThread(argc, argv, AppMain);
 		if (!g_winport_app_thread)

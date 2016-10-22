@@ -416,6 +416,7 @@ extern "C"
 				s = sdst;
 				symattr = FILE_ATTRIBUTE_REPARSE_POINT;
 			} else {
+				s.st_size = 0;
 				//fprintf(stderr, "stat_symcheck: stat failed for %s\n", path);
 				symattr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
 			}

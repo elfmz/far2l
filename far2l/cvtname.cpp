@@ -51,7 +51,7 @@ void MixToFullPath(FARString& strPath)
 {
 	//Skip all path to root (with slash if exists)
 	LPWSTR pstPath=strPath.GetBuffer();
-	size_t PathOffset=0;
+	//size_t PathOffset=0;
 //	Point2Root(pstPath,PathOffset);
 //	pstPath+=PathOffset;
 
@@ -110,9 +110,14 @@ void MixToFullPath(FARString& strPath)
 							*pstDst = 0;
 						}
 						//fragment ".." at the end
-						else
+						else if (n > 0)
 						{
 							pstPath[n] = 0;
+						}
+						else
+						{//dont go to nowhere
+							pstPath[0] = GOOD_SLASH;
+							pstPath[1] = 0;
 						}
 
 						m = n;

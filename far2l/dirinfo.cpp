@@ -119,8 +119,16 @@ int GetDirInfo(const wchar_t *Title,
 	strLastDirName.Clear();
 	strCurDirName.Clear();
 	DirCount=FileCount=0;
-	FileSize=CompressedFileSize=RealSize=0;
+	FileSize=CompressedFileSize=RealSize = 0;
 	ScTree.SetFindPath(DirName, L"*", FSCANTREE_UNIQUES);
+	
+	struct stat s = {0};
+	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
+		FileSize = s.st_size;//include size of root dir's node
+		ClusterSize = s.st_blksize;//TODO: check if its best thing to be used here
+	} else {
+		ClusterSize = 512;//
+	}
 
 	while (ScTree.GetNextName(&FindData,strFullName))
 	{
@@ -173,13 +181,20 @@ int GetDirInfo(const wchar_t *Title,
 			// Счётчик каталогов наращиваем только если не включен фильтр,
 			// в противном случае это будем делать в подсчёте количества файлов
 			if (!(Flags&GETDIRINFO_USEFILTER))
+			{
 				DirCount++;
+				FileSize+= FindData.nFileSize;
+			}
 			else
 			{
 				// Если каталог не попадает под фильтр то его надо полностью
 				// пропустить - иначе при включенном подсчёте total
 				// он учтётся (mantis 551)
-				if (!Filter->FileInFilter(FindData))
+				if (Filter->FileInFilter(FindData))
+				{
+					FileSize+= FindData.nFileSize;//TODO: add size at same condifion as DirCount increment
+				}
+				else
 					ScTree.SkipDir();
 			}
 		}

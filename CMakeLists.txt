@@ -6,6 +6,12 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+#if(NOT CMAKE_INSTALL_PREFIX)
+   set(CMAKE_INSTALL_PREFIX "/opt")
+#endif()
+
+
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC -Wno-unused-function -Wno-c++11-narrowing") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function") #  -fsanitize=address
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2")
@@ -41,3 +47,19 @@ add_subdirectory (farftp)
 add_subdirectory (colorer)
 add_subdirectory (multiarc)
 add_subdirectory (tmppanel)
+
+
+install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING PATTERN "*")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#TODO
+else()
+    INSTALL(FILES ${INSTALL_DIR}/far2l.desktop DESTINATION "/usr/share/applications")
+
+#    find_program(XDG-DESKTOP-MENU_EXECUTABLE xdg-desktop-menu)
+#   INSTALL(CODE "
+#      execute_process(COMMAND ${XDG-DESKTOP-MENU_EXECUTABLE} install --novendor /opt/far2l/far2l.desktop)
+#      "
+#    )
+endif()
+

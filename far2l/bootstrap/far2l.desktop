@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=far2l
+GenericName=far2l
+Comment=File and archieve manager
+Exec=/opt/far2l/far2l
+TryExec=/opt/far2l/far2l
+Terminal=false
+Categories=Utility;FileManager;
+Icon=/opt/far2l/far2l.svg
+StartupNotify=true

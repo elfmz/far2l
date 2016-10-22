@@ -344,6 +344,12 @@ int ArcCommand::ReplaceVar(char *Command,int &Length)
         }
       }
       break;
+    case 'r':
+      *Command=0;
+      if (RealArcDir && *RealArcDir) {
+        FSF.sprintf(Command,"%s/",RealArcDir);
+      }
+      break;
     case 'R':
       strcpy(Command,RealArcDir);
       if (UseSlash)

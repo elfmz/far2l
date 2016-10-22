@@ -665,7 +665,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     GetRegKey(pdd.ArcFormat,CmdNames[CommandType],Command,Command,sizeof(Command));
     ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CMD_ALLFILESMASK,AllFilesMask);
     GetRegKey(pdd.ArcFormat,"AllFilesMask",AllFilesMask,AllFilesMask,sizeof(AllFilesMask));
-    if (*CurDir && strstr(Command,"%%R")==NULL)
+    if (*CurDir && strstr(Command,"%%R")==NULL && strstr(Command,"%%r")==NULL)
     {
       const char *MsgItems[]={GetMsg(MWarning),GetMsg(MCannotPutToFolder),
                         GetMsg(MPutToRoot),GetMsg(MOk),GetMsg(MCancel)};

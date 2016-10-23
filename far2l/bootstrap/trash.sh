@@ -1,6 +1,6 @@
 #!/bin/sh
 ##########################################################
-#This script used by FAR's to move files to Trash
+#This script used by FAR to move files to Trash
 ##########################################################
 
 set -e

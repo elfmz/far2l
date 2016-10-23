@@ -1937,6 +1937,17 @@ upd:"AutoComplete settings"
 upd:"AutoComplete settings"
 "Opciones de autocompletar"
 
+MConfigAutoCompleteExceptions
+l:
+"Шаблоны &исключений"
+"&Exceptions wildcards:"
+upd:"&Exceptions wildcards:"
+upd:"&Exceptions wildcards:"
+upd:"&Exceptions wildcards:"
+upd:"&Exceptions wildcards:"
+upd:"&Exceptions wildcards:"
+
+
 MConfigAutoCompleteShowList
 l:
 "Показывать &список"

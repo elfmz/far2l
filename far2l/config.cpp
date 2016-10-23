@@ -274,6 +274,10 @@ void AutoCompleteSettings()
 	ModalModeCheck->Indent(4);
 	Builder.AddCheckbox(MConfigAutoCompleteAutoAppend, &Opt.AutoComplete.AppendCompletion);
 	Builder.LinkFlags(ListCheck, ModalModeCheck, DIF_DISABLE);
+
+	Builder.AddText(MConfigAutoCompleteExceptions);
+	Builder.AddEditField(&Opt.AutoComplete.Exceptions, 47);
+	
 	Builder.AddOKCancel();
 	Builder.ShowDialog();
 }
@@ -574,6 +578,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyInterface, L"CopyShowTotal",&Opt.CMOpt.CopyShowTotal,1, 0},
 	{1, REG_DWORD,  NKeyInterface,L"DelShowTotal",&Opt.DelOpt.DelShowTotal,0, 0},
 	{1, REG_SZ,     NKeyInterface,L"TitleAddons",&Opt.strTitleAddons, 0, L"%Ver %Build %Platform %Admin"},
+	{1, REG_SZ,     NKeyInterfaceCompletion,L"Exceptions",&Opt.AutoComplete.Exceptions, 0, L"git*reset*--hard; ftp://*:*@*"},
 	{1, REG_DWORD,  NKeyInterfaceCompletion,L"ShowList",&Opt.AutoComplete.ShowList, 1, 0},
 	{1, REG_DWORD,  NKeyInterfaceCompletion,L"ModalList",&Opt.AutoComplete.ModalList, 0, 0},
 	{1, REG_DWORD,  NKeyInterfaceCompletion,L"Append",&Opt.AutoComplete.AppendCompletion, 0, 0},

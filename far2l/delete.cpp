@@ -158,7 +158,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 	Ret=1;
 	
-	if (Ret && (Opt.Confirm.Delete || SelCount>1 || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
+	if (Ret && (Opt.Confirm.Delete || SelCount>1))// || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
 	{
 		const wchar_t *DelMsg;
 		const wchar_t *TitleMsg=MSG(Wipe?MDeleteWipeTitle:MDeleteTitle);

@@ -104,7 +104,7 @@ char *get_current_dir_name();
 
 std::string MakeFullName(const char *name)
 {
-	if (name[0]=='.'=='/')
+	if (name[0]=='/')
 		return name;
 	
 	std::string out;

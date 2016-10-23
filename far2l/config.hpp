@@ -95,6 +95,7 @@ struct AutoCompleteOptions
 	int ShowList;
 	int ModalList;
 	int AppendCompletion;
+	FARString Exceptions;
 };
 
 

@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "dialog.hpp"
 #include "interf.hpp"
+#include "FileMasksProcessor.hpp"
 
 History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t *RegKey, const int *EnableSave, bool SaveType):
 	strRegKey(RegKey),
@@ -64,13 +65,29 @@ History::~History()
 {
 }
 
+static bool IsAllowedForHistory(const wchar_t *Str)
+{
+	if (!Str || !*Str)
+		return false;
+
+	FileMasksProcessor fmp;
+	fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMPF_ADDASTERISK);
+	if (!fmp.IsEmpty() && fmp.Compare(Str)) {
+		fprintf(stderr, "IsAllowedForHistory: block '%ls'\n", Str);
+		return false;
+	}
+	
+	return true;
+}
+
+
 /*
    SaveForbid - принудительно запретить запись добавляемой строки.
                 Используется на панели плагина
 */
 void History::AddToHistory(const wchar_t *Str, int Type, const wchar_t *Prefix, bool SaveForbid)
 {
-	if (!EnableAdd)
+	if (!EnableAdd || !IsAllowedForHistory(Str))
 		return;
 
 	AddToHistoryLocal(Str,Prefix,Type);
@@ -900,7 +917,7 @@ bool History::GetAllSimilar(VMenu &HistoryMenu,const wchar_t *Str)
 	int Length=StrLength(Str);
 	for (HistoryRecord *HistoryItem=HistoryList.Last();HistoryItem;HistoryItem=HistoryList.Prev(HistoryItem))
 	{
-		if (!StrCmpNI(Str,HistoryItem->strName,Length) && StrCmp(Str,HistoryItem->strName))
+		if (!StrCmpNI(Str,HistoryItem->strName,Length) && StrCmp(Str,HistoryItem->strName) && IsAllowedForHistory(HistoryItem->strName.CPtr()))
 		{
 			HistoryMenu.AddItem(HistoryItem->strName);
 		}

@@ -73,7 +73,6 @@ static bool IsAllowedForHistory(const wchar_t *Str)
 	FileMasksProcessor fmp;
 	fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMPF_ADDASTERISK);
 	if (!fmp.IsEmpty() && fmp.Compare(Str)) {
-		fprintf(stderr, "IsAllowedForHistory: block '%ls'\n", Str);
 		return false;
 	}
 	
@@ -87,8 +86,13 @@ static bool IsAllowedForHistory(const wchar_t *Str)
 */
 void History::AddToHistory(const wchar_t *Str, int Type, const wchar_t *Prefix, bool SaveForbid)
 {
-	if (!EnableAdd || !IsAllowedForHistory(Str))
+	if (!EnableAdd)
 		return;
+		
+	if (!IsAllowedForHistory(Str)) {
+		fprintf(stderr, "AddToHistory - disallowed: '%ls'\n", Str);
+		return;
+	}
 
 	AddToHistoryLocal(Str,Prefix,Type);
 

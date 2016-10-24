@@ -1110,20 +1110,24 @@ typedef void *HKL;
 #define ARRAYSIZE(A) (sizeof(A)/sizeof((A)[0]))
 
 #define REG_NONE                    ( 0 )   // No value type
-#define REG_SZ                      ( 1 )   // Unicode nul terminated string
-#define REG_EXPAND_SZ               ( 2 )   // Unicode nul terminated string
+#define REG_SZ                      ( 1 )   // Wide nul terminated string
+#define REG_EXPAND_SZ               ( 2 )   // Wide nul terminated string
                                             // (with environment variable references)
 #define REG_BINARY                  ( 3 )   // Free form binary
 #define REG_DWORD                   ( 4 )   // 32-bit number
 #define REG_DWORD_LITTLE_ENDIAN     ( 4 )   // 32-bit number (same as REG_DWORD)
 #define REG_DWORD_BIG_ENDIAN        ( 5 )   // 32-bit number
 #define REG_LINK                    ( 6 )   // Symbolic Link (unicode)
-#define REG_MULTI_SZ                ( 7 )   // Multiple Unicode strings
+#define REG_MULTI_SZ                ( 7 )   // Multiple Wide strings
 #define REG_RESOURCE_LIST           ( 8 )   // Resource list in the resource map
 #define REG_FULL_RESOURCE_DESCRIPTOR ( 9 )  // Resource list in the hardware description
 #define REG_RESOURCE_REQUIREMENTS_LIST ( 10 )
 #define REG_QWORD                   ( 11 )  // 64-bit number
 #define REG_QWORD_LITTLE_ENDIAN     ( 11 )  // 64-bit number (same as REG_QWORD)
+
+#define REG_SZ_MB                    ( 101 )   // UTF8 nul terminated string
+#define REG_EXPAND_SZ_MB             ( 102 )   // UTF8 nul terminated string
+#define REG_MULTI_SZ_MB              ( 107 )   // Multiple UTF8 strings
 
 
 #define WAIT_TIMEOUT                     258L    // dderror

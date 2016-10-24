@@ -6,7 +6,7 @@ HKEY OpenRegKey(HKEY hRoot,const char *Key);
 void SetRegKey(HKEY hRoot,const char *Key,const char *ValueName,char *ValueData)
 {
   HKEY hKey=CreateRegKey(hRoot,Key);
-  WINPORT(RegSetValueEx)(hKey,MB2Wide(ValueName).c_str(),0,REG_SZ,(BYTE*)ValueData,strlen(ValueData)+1);
+  WINPORT(RegSetValueEx)(hKey,MB2Wide(ValueName).c_str(),0,REG_SZ_MB,(BYTE*)ValueData,strlen(ValueData)+1);
   WINPORT(RegCloseKey)(hKey);
 }
 

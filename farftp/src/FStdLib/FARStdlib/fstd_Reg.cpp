@@ -238,7 +238,7 @@ BOOL WINAPI FP_SetRegKey(LPCSTR Key,LPCSTR ValueName,LPCSTR ValueData)
 {
 	HKEY hKey=FP_CreateRegKey(Key);
 	BOOL rc = hKey &&
-	          WINPORT(RegSetValueEx)(hKey,MB2Wide(ValueName).c_str(),0,REG_SZ,(const BYTE *)ValueData,(int)strlen(ValueData)+1) == ERROR_SUCCESS;
+	          WINPORT(RegSetValueEx)(hKey,MB2Wide(ValueName).c_str(),0,REG_SZ_MB,(const BYTE *)ValueData,(int)strlen(ValueData)+1) == ERROR_SUCCESS;
 	WINPORT(RegCloseKey)(hKey);
 	return rc;
 }

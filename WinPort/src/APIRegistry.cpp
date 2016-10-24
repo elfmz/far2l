@@ -272,13 +272,19 @@ static LONG RegValueDeserialize(const std::string &s, LPDWORD lpType, LPBYTE lpD
 			*lpType = REG_EXPAND_SZ;
 		return RegValueDeserializeWide(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
 	}
-			
+
+	if ( (prefix = StrStartsFrom(s, "BIN:")) != 0 ) {
+		if (lpType)
+			*lpType = REG_BINARY;
+		return RegValueDeserializeMB(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
+	}
+
 	if ( (prefix = StrStartsFrom(s, "SZ_MB:")) != 0 ) {
 		if (lpType)
 			*lpType = REG_SZ_MB;
 		return RegValueDeserializeMB(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
 	}
-		
+
 	if ( (prefix = StrStartsFrom(s, "MULTI_SZ_MB:")) != 0 ) {
 		if (lpType)
 			*lpType = REG_MULTI_SZ_MB;
@@ -340,12 +346,13 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 		} break;
 
 		
-		case REG_SZ_MB: case REG_MULTI_SZ_MB: case REG_EXPAND_SZ_MB:
+		//case REG_BINARY: case REG_SZ_MB: case REG_MULTI_SZ_MB: case REG_EXPAND_SZ_MB: 
 		default: {
 			std::string s((const char *)lpData, cbData);
 			RegEscape(s);
 			
 			switch (Type) {
+				case REG_BINARY: os << "BIN:" << s; break;
 				case REG_SZ_MB: os << "SZ_MB:" << s; break;
 				case REG_MULTI_SZ_MB: os << "MULTI_SZ_MB:" << s; break;
 				case REG_EXPAND_SZ_MB: os << "EXPAND_SZ_MB:" << s; break;

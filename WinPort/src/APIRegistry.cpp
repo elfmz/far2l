@@ -31,7 +31,7 @@ struct WinPortHandleReg : WinPortHandle
 
 static std::string GetRegistrySubroot(const char *sub)
 {
-	static std::string s_root = InMyProfile();
+	static std::string s_root = InMyProfile("REG");
 	std::string rv = s_root;
 	rv+= sub;
 	return rv;
@@ -159,7 +159,13 @@ static void RegEscape(std::string &s)
 				 case '\\': /*i = '\\';*/ break;
 				 case '\r': *i = 'r'; break;
 				 case '\n': *i = 'n'; break;
-				 case 0: *i = '0'; break;
+				 case 0: 
+					*i = '0';
+					if (i + 1 != s.end()) {
+						++i;
+						i = s.insert(i, '\n');
+					}
+				 break;
 				 default: abort();
 			 }
 		}
@@ -168,9 +174,10 @@ static void RegEscape(std::string &s)
 	
 static void RegUnescape(std::string &s)
 {
-	for (std::string::iterator i = s.begin(); i != s.end(); ++i) {
+	for (std::string::iterator i = s.begin(); i != s.end(); ) {
 		if (*i == '\\') {
 			i = s.erase(i);
+			if (i == s.end()) break;
 			switch (*i) {
 				case '\\': /*i = '\\';*/ break;
 				case 'r': *i = '\r'; break;
@@ -179,7 +186,11 @@ static void RegUnescape(std::string &s)
 				default: 
 					fprintf(stderr, "RegUnescape: unexpected escape code 0x%x\n", (unsigned int)(unsigned char)*i);
 			}
-		}
+			++i;
+		} else if (*i == '\r' || *i == '\n' || *i == 0) {
+			i = s.erase(i);
+		} else
+			++i;
 	}
 }
 	
@@ -235,98 +246,109 @@ template <class INT_T>
 	}
 	return ERROR_SUCCESS;
 }
-		
-static LONG RegValueDeserialize(const std::string &s, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+
+static LONG RegValueDeserializeBinary(const char *s, LPBYTE lpData, LPDWORD lpcbData)
+{
+	DWORD cbData = *lpcbData;
+	*lpcbData = 0;
+	for (;;) {
+		while (s[0]=='\n' || s[0]=='\r' || s[0]==' ') ++s;
+		if (!s[0] || !s[1]) break;
+		if (lpData && *lpcbData < cbData) {
+			char tmp[] = {s[0], s[1], 0};
+			unsigned int v = 0;
+			sscanf(tmp, "%x", &v);
+			lpData[*lpcbData] = (BYTE)v;
+		}
+		(*lpcbData)++;
+		s+= 2;
+	}
+	return (!lpData || *lpcbData <= cbData) ? ERROR_SUCCESS : ERROR_MORE_DATA;
+}
+
+static LONG RegValueDeserialize(const std::string &tip, const std::string &s, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
 	static_assert(sizeof(DWORD) == sizeof(unsigned int ), "bad DWORD size");
 	static_assert(sizeof(DWORD64) == sizeof(long unsigned int ), "bad DWORD64 size");
 				
-	size_t prefix;
-		
-	if ( (prefix = StrStartsFrom(s, "DWORD:")) != 0 ) {
+	if ( tip == "DWORD") {
 		if (lpType)
 			*lpType = REG_QWORD;
-		return RegValueDeserializeINT<unsigned int> (s.c_str() + prefix, "%x", lpData, lpcbData);
+		return RegValueDeserializeINT<unsigned int> (s.c_str(), "%x", lpData, lpcbData);
 	}
 		
-	if ( (prefix = StrStartsFrom(s, "QWORD:")) != 0 ) {
+	if ( tip == "QWORD") {
 		if (lpType)
 			*lpType = REG_QWORD;
-		return RegValueDeserializeINT<long unsigned int> (s.c_str() + prefix, "%lx", lpData, lpcbData);
+		return RegValueDeserializeINT<long unsigned int> (s.c_str() , "%lx", lpData, lpcbData);
 	}
 
-	if ( (prefix = StrStartsFrom(s, "SZ:")) != 0 ) {
+	if ( tip == "SZ") {
 		if (lpType)
 			*lpType = REG_SZ;
-		return RegValueDeserializeWide(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
+		return RegValueDeserializeWide(s.c_str(), s.size(), lpData, lpcbData);
 	}
 		
-	if ( (prefix = StrStartsFrom(s, "MULTI_SZ:")) != 0 ) {
+	if ( tip == "MULTI_SZ") {
 		if (lpType)
 			*lpType = REG_MULTI_SZ;
-		return RegValueDeserializeWide(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
+		return RegValueDeserializeWide(s.c_str(), s.size(), lpData, lpcbData);
 	}
 		
-	if ( (prefix = StrStartsFrom(s, "EXPAND_SZ:")) != 0 ) {
+	if ( tip == "EXPAND_SZ") {
 		if (lpType)
 			*lpType = REG_EXPAND_SZ;
-		return RegValueDeserializeWide(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
+		return RegValueDeserializeWide(s.c_str(), s.size(), lpData, lpcbData);
 	}
 
-	if ( (prefix = StrStartsFrom(s, "BIN:")) != 0 ) {
-		if (lpType)
-			*lpType = REG_BINARY;
-		return RegValueDeserializeMB(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
-	}
-
-	if ( (prefix = StrStartsFrom(s, "SZ_MB:")) != 0 ) {
+	if ( tip == "SZ_MB") {
 		if (lpType)
 			*lpType = REG_SZ_MB;
-		return RegValueDeserializeMB(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
+		return RegValueDeserializeMB(s.c_str(), s.size(), lpData, lpcbData);
 	}
 
-	if ( (prefix = StrStartsFrom(s, "MULTI_SZ_MB:")) != 0 ) {
+	if ( tip == "MULTI_SZ_MB") {
 		if (lpType)
 			*lpType = REG_MULTI_SZ_MB;
-		return RegValueDeserializeMB(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
+		return RegValueDeserializeMB(s.c_str(), s.size(), lpData, lpcbData);
 	}
 		
-	if ( (prefix = StrStartsFrom(s, "EXPAND_SZ_MB:")) != 0 ) {
+	if ( tip == "EXPAND_SZ_MB") {
 		if (lpType)
 			*lpType = REG_EXPAND_SZ_MB;
-		return RegValueDeserializeMB(s.c_str() + prefix, s.size() - prefix, lpData, lpcbData);
+		return RegValueDeserializeMB(s.c_str(), s.size(), lpData, lpcbData);
+	}
+	
+	if ( tip == "BINARY") {
+		if (lpType)
+			*lpType = REG_BINARY;
+		return RegValueDeserializeBinary(s.c_str(), lpData, lpcbData);
 	}
 
-	size_t p = s.find(':');
-	if (p==std::string::npos) {
-		fprintf(stderr, "RegValueDeserialize = untyped: '%s'\n", s.c_str());
-		return ERROR_READ_FAULT;
-	}
-		
 	if (lpType)
-		*lpType = atoi(s.substr(0, p).c_str());
+		*lpType = atoi(tip.c_str());
 		
-	return RegValueDeserializeMB(s.c_str() + p + 1, s.size() - p - 1, lpData, lpcbData);
+	return RegValueDeserializeMB(s.c_str(), s.size(), lpData, lpcbData);
 }
 	
 static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData, DWORD cbData)
 {
 	static_assert(sizeof(DWORD) == sizeof(unsigned int ), "bad DWORD size");
 	static_assert(sizeof(DWORD64) == sizeof(long unsigned int ), "bad DWORD64 size");
-		
+
 	switch (Type) {
 		case REG_DWORD: {
 			if (cbData != sizeof(DWORD))
 				fprintf(stderr, "RegValueSerialize: DWORD but cbData=%u\n", cbData);
-					
-			os << "DWORD:" << std::hex << (unsigned int)*(const DWORD *)lpData;
+
+			os << "DWORD" << std::endl << std::hex << (unsigned int)*(const DWORD *)lpData;
 		} break;
 
 		case REG_QWORD: {
 			if (cbData != sizeof(DWORD64))
 				fprintf(stderr, "RegValueSerialize: QWORD but cbData=%u\n", cbData);
 				
-			os << "QWORD:" << std::hex << (long unsigned int)*(const DWORD64 *)lpData;
+			os << "QWORD" << std::endl << std::hex << (long unsigned int)*(const DWORD64 *)lpData;
 		} break;
 				
 		case REG_SZ: case REG_MULTI_SZ: case REG_EXPAND_SZ: {
@@ -336,12 +358,21 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 			std::string s;
 			StrWide2MB( std::wstring((const wchar_t *)lpData, cbData / sizeof(wchar_t)), s);
 			RegEscape(s);
-				
+			
 			switch (Type) {
-				case REG_SZ: os << "SZ:" << s; break;
-				case REG_MULTI_SZ: os << "MULTI_SZ:" << s; break;
-				case REG_EXPAND_SZ: os << "EXPAND_SZ:" << s; break;
+				case REG_SZ: os << "SZ" << std::endl << s; break;
+				case REG_MULTI_SZ: os << "MULTI_SZ" << std::endl  << s; break;
+				case REG_EXPAND_SZ: os << "EXPAND_SZ" << std::endl << s; break;
 				default: abort();
+			}
+		} break;
+		
+		case REG_BINARY: {
+			os << "BINARY" << std::endl << std::hex;
+			char tmp[8];
+			for (DWORD i = 0; i < cbData; ++i) {
+				sprintf(tmp, "%02x ", lpData[i]);
+				os << tmp;
 			}
 		} break;
 
@@ -352,11 +383,10 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 			RegEscape(s);
 			
 			switch (Type) {
-				case REG_BINARY: os << "BIN:" << s; break;
-				case REG_SZ_MB: os << "SZ_MB:" << s; break;
-				case REG_MULTI_SZ_MB: os << "MULTI_SZ_MB:" << s; break;
-				case REG_EXPAND_SZ_MB: os << "EXPAND_SZ_MB:" << s; break;
-				default: os << std::hex << Type << ":" << s;
+				case REG_SZ_MB: os << "SZ_MB" << std::endl << s; break;
+				case REG_MULTI_SZ_MB: os << "MULTI_SZ_MB" << std::endl << s; break;
+				case REG_EXPAND_SZ_MB: os << "EXPAND_SZ_MB" << std::endl << s; break;
+				default: os << std::hex << Type << std::endl << s;
 			}				
 		} break;
 	}
@@ -495,7 +525,7 @@ extern "C" {
 	LONG CommonQueryValue(const std::string &root, const std::string &prefixed_name,
 		LPWSTR  lpValueName, LPDWORD lpcchValueName, LPDWORD lpType, LPBYTE  lpData, LPDWORD lpcbData)
 	{
-		std::string name, s;
+		std::string name, tip, s;
 		std::ifstream is;
 		std::string path = root; 
 		path+= GOOD_SLASH;
@@ -508,7 +538,8 @@ extern "C" {
 		}
 		
 		getline (is, name);
-		getline (is, s);
+		getline (is, tip);
+		getline (is, s, (char)0);
 		//fprintf(stderr, "RegQueryValue: '%s' '%s' '%s' %p\n", prefixed_name.c_str(), type.c_str(), value.c_str(), lpData);
 		LONG out = ERROR_SUCCESS;
 		const std::wstring &namew = StrMB2Wide(name);
@@ -521,7 +552,7 @@ extern "C" {
 		if (lpcchValueName)
 			*lpcchValueName = namew.size();
 		
-		LONG out2 = RegValueDeserialize(s, lpType, lpData, lpcbData);
+		LONG out2 = RegValueDeserialize(tip, s, lpType, lpData, lpcbData);
 		return (out2 == ERROR_SUCCESS) ? out : out2;
 	}
 

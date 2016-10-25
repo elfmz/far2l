@@ -2556,7 +2556,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			ConvertNameToFull(strSetDir, strFullNewDir);
 
 			if (StrCmp(strFullNewDir, strCurDir))
-				CtrlObject->FolderHistory->AddToHistory(strCurDir);
+				CtrlObject->FolderHistory->AddToHistory(strFullNewDir);//see #174 strCurDir);
 		}
 
 		if (dot2Present)

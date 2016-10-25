@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <locale.h>
 #include <fcntl.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -301,21 +302,26 @@ int MainProcessSEH(FARString& strEditName,FARString& strViewName,FARString& Dest
 static void SetupFarPath(int argc, char **argv)
 {
 	InitCurrentDirectory();
-	//todo if (apiGetModuleFileName(nullptr, g_strFarModuleName)) todo
-	{
-		apiGetCurrentDirectory(g_strFarModuleName);
+	char buf[PATH_MAX + 1] = {};
+	ssize_t buf_sz = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+	if (buf_sz <= 0 || buf_sz >= (ssize_t)sizeof(buf) - 1 || buf[0] != GOOD_SLASH) {
 		if (argv[0][0]!=GOOD_SLASH) {
+			apiGetCurrentDirectory(g_strFarModuleName);
 			if (argv[0][0]=='.') {
-				g_strFarModuleName+= argv[0]+1;
+				g_strFarModuleName+= argv[0] + 1;
 			} else {
 				g_strFarModuleName+= GOOD_SLASH;
 				g_strFarModuleName+= argv[0];
 			}
 		} else
-			g_strFarModuleName = argv[0];
-		fprintf(stderr, "g_strFarModuleName=%ls\n", g_strFarModuleName.CPtr());
-		PrepareDiskPath(g_strFarModuleName);
+			g_strFarModuleName = argv[0];			
+	} else {
+		buf[buf_sz] = 0;
+		g_strFarModuleName = buf;
 	}
+			
+	fprintf(stderr, "g_strFarModuleName='%ls' (argv[0]='%s')\n", g_strFarModuleName.CPtr(), argv[0]);
+	PrepareDiskPath(g_strFarModuleName);
 }
 
 int FarAppMain(int argc, char **argv)

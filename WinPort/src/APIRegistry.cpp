@@ -319,15 +319,29 @@ static LONG RegValueDeserialize(const std::string &tip, const std::string &s, LP
 		return RegValueDeserializeMB(s.c_str(), s.size(), lpData, lpcbData);
 	}
 	
-	if ( tip == "BINARY") {
-		if (lpType)
-			*lpType = REG_BINARY;
-	} else if (lpType)
-		*lpType = atoi(tip.c_str());
+	if (lpType) {
+		*lpType = REG_BINARY;
+		if ( tip != "BINARY") {
+			sscanf(tip.c_str(), "%x", (unsigned int *)lpType);
+		}
+	}
 		
 	return RegValueDeserializeBinary(s.c_str(), lpData, lpcbData);
 }
 	
+static void RegValueSerializeBinary(std::ofstream &os, const BYTE *lpData, DWORD cbData)
+{
+	os << std::hex;
+	char tmp[8];
+	for (DWORD i = 0; i < cbData; ++i) {
+		if (i != 0 && (i % 16) == 0) {
+			os << std::endl;
+		}
+		sprintf(tmp, "%02x ", (unsigned int)(unsigned char)lpData[i]);
+		os << tmp;
+	}
+}
+
 static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData, DWORD cbData)
 {
 	static_assert(sizeof(DWORD) == sizeof(unsigned int ), "bad DWORD size");
@@ -376,21 +390,13 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 		} break;
 		
 		case REG_BINARY: {
-			os << "BINARY" << std::endl << std::hex;
-			char tmp[8];
-			for (DWORD i = 0; i < cbData; ++i) {
-				sprintf(tmp, "%02x ", lpData[i]);
-				os << tmp;
-			}
+			os << "BINARY" << std::endl;
+			RegValueSerializeBinary(os, lpData, cbData);
 		} break;
 
 		default: {
-			os << std::hex << Type << std::endl << std::hex;
-			char tmp[8];
-			for (DWORD i = 0; i < cbData; ++i) {
-				sprintf(tmp, "%02x ", lpData[i]);
-				os << tmp;
-			}	
+			os << std::hex << Type << std::endl;
+			RegValueSerializeBinary(os, lpData, cbData);
 		}
 	}
 }

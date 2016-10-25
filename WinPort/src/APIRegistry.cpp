@@ -322,13 +322,10 @@ static LONG RegValueDeserialize(const std::string &tip, const std::string &s, LP
 	if ( tip == "BINARY") {
 		if (lpType)
 			*lpType = REG_BINARY;
-		return RegValueDeserializeBinary(s.c_str(), lpData, lpcbData);
-	}
-
-	if (lpType)
+	} else if (lpType)
 		*lpType = atoi(tip.c_str());
 		
-	return RegValueDeserializeMB(s.c_str(), s.size(), lpData, lpcbData);
+	return RegValueDeserializeBinary(s.c_str(), lpData, lpcbData);
 }
 	
 static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData, DWORD cbData)
@@ -367,6 +364,17 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 			}
 		} break;
 		
+		case REG_SZ_MB: case REG_MULTI_SZ_MB: case REG_EXPAND_SZ_MB: {
+			std::string s((const char *)lpData, cbData);
+			RegEscape(s);
+			
+			switch (Type) {
+				case REG_SZ_MB: os << "SZ_MB" << std::endl << s; break;
+				case REG_MULTI_SZ_MB: os << "MULTI_SZ_MB" << std::endl << s; break;
+				case REG_EXPAND_SZ_MB: os << "EXPAND_SZ_MB" << std::endl << s; break;
+			}				
+		} break;
+		
 		case REG_BINARY: {
 			os << "BINARY" << std::endl << std::hex;
 			char tmp[8];
@@ -376,19 +384,14 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 			}
 		} break;
 
-		
-		//case REG_BINARY: case REG_SZ_MB: case REG_MULTI_SZ_MB: case REG_EXPAND_SZ_MB: 
 		default: {
-			std::string s((const char *)lpData, cbData);
-			RegEscape(s);
-			
-			switch (Type) {
-				case REG_SZ_MB: os << "SZ_MB" << std::endl << s; break;
-				case REG_MULTI_SZ_MB: os << "MULTI_SZ_MB" << std::endl << s; break;
-				case REG_EXPAND_SZ_MB: os << "EXPAND_SZ_MB" << std::endl << s; break;
-				default: os << std::hex << Type << std::endl << s;
-			}				
-		} break;
+			os << std::hex << Type << std::endl << std::hex;
+			char tmp[8];
+			for (DWORD i = 0; i < cbData; ++i) {
+				sprintf(tmp, "%02x ", lpData[i]);
+				os << tmp;
+			}	
+		}
 	}
 }
 	

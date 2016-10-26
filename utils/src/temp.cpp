@@ -21,7 +21,7 @@ static void GetTempRoot(std::string &path)
 		return;
 	}
 
-	char *temp = getenv("TEMP");
+	const char *temp = getenv("TEMP");
 	if (!temp || stat(temp, &s) == -1 || (s.st_mode & S_IFMT) != S_IFDIR) {
 		temp = "/tmp";
 		if (stat(temp, &s) == -1 || (s.st_mode & S_IFMT) != S_IFDIR) {
@@ -41,32 +41,36 @@ static void GetTempRoot(std::string &path)
 		path = temp;
 		path+= GOOD_SLASH;
 		char buf[128];
-		sprintf(buf, "%llx_%u", (unsigned long long)geteuid(), i);
+		sprintf(buf, "far2l_%llx_%u", (unsigned long long)geteuid(), i);
 		path+= buf;
 		mkdir(path.c_str(), 0700);
-		if (stat(temp, &s) == 0 && (s.st_mode & S_IFMT) == S_IFDIR && s.st_uid == geteuid()) {
+		if (stat(path.c_str(), &s) == 0 && 
+			(s.st_mode & S_IFMT) == S_IFDIR && 
+			s.st_uid == geteuid()) {
 			break;
 		}
 
 		if (i == (unsigned int)-1) {
-			perror("Can't create temp!");
+			perror("Can't init temp!");
 			return;
 		}
 	}
-	s_in_prof_temp = path;
+	s_ready_temp = path;
 	
 }
 
-std::string InTemp(const char *subpath = NULL)
+std::string InTemp(const char *subpath)
 {
 	std::string path;
 	GetTempRoot(path);
-	out+= GOOD_SLASH;
-	for (;*subpath; ++subpath) {
-		if (*subpath == GOOD_SLASH) {
-			mkdir(path.c_str(), 0700);
+	path+= GOOD_SLASH;
+	if (subpath) {
+		for (;*subpath; ++subpath) {
+			if (*subpath == GOOD_SLASH) {
+				mkdir(path.c_str(), 0700);
+			}
+			path+= *subpath;
 		}
-		path+= subpath;
 	}
 
 	return path;

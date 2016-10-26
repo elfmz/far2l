@@ -21,6 +21,7 @@ size_t StrStartsFrom(const std::string &haystack, const char *needle);
 std::string EscapeQuotas(std::string str);
 
 std::string InMyProfile(const char *subpath = NULL, bool create_path = true);
+std::string InTemp(const char *subpath = NULL);
 
 
 void CheckedCloseFD(int &fd);

@@ -2116,11 +2116,11 @@ static void MkTreeName(FARString &out, const wchar_t *RootDir, const char *ext)
 	int r = sdc_stat(Wide2MB(RootDir).c_str(), &s);
 	if (r == 0) {
 		char tmp[128];
-		sprintf(tmp, "tmp/tree/%llx-%llx.%s", 
+		sprintf(tmp, "tree/%llx-%llx.%s", 
 			(unsigned long long)s.st_rdev, (unsigned long long)s.st_ino, ext);
-		out = InMyProfile(tmp);
+		out = InTemp(tmp);
 	} else {
-		std::string tmp = InMyProfile("tmp/tree/wtf-");
+		std::string tmp = InTemp("tree/wtf-");
 		const std::string &RootMB = Wide2MB(RootDir);
 		for (char c : RootMB) {
 			tmp+= (c==GOOD_SLASH) ? '@' : c;

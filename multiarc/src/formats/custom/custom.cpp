@@ -369,7 +369,7 @@ DWORD WINAPI _export CUSTOM_LoadFormatModule(const char *ModuleName)
 		FormatFileName = "/etc/multiarc/";
 	FormatFileName+= "custom.ini";
 	
-	UserFormatFileName = InMyProfile("multiarc/custom.ini", false);
+	UserFormatFileName = InMyConfig("multiarc/custom.ini", false);
     return (0);
 }
 

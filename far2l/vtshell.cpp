@@ -472,11 +472,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		std::string rc_src, rc_dst, rc_arg;
 		if (strstr(shell, "/bash")) {
 			rc_src = std::string(home) + "/.bashrc";
-			rc_dst = InTemp("vtcmd/init.bash");
+			rc_dst = InMyTemp("vtcmd/init.bash");
 			rc_arg = "--rcfile";
 		}/* else if (strstr(shell, "/zsh")) {
 			rc_src = std::string(home) + "/.zshrc";
-			rc_dst = InTemp("vtcmd/init.zsh");
+			rc_dst = InMyTemp("vtcmd/init.zsh");
 			rc_arg = "--rcs";
 		}*/
 		
@@ -681,7 +681,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 	{
 		char name[128]; 
 		sprintf(name, "vtcmd/%x_%p", getpid(), this);
-		std::string cmd_script = InTemp(name);
+		std::string cmd_script = InMyTemp(name);
 		FILE *f = fopen(cmd_script.c_str(), "wt");
 		if (!f)
 			return std::string();

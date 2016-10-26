@@ -19,7 +19,7 @@ static const char *vtc_inputrc = "set completion-query-items 0\n"
 
 
 VTCompletor::VTCompletor()
-	: _vtc_inputrc(InTemp("vtc_inputrc")),
+	: _vtc_inputrc(InMyTemp("vtc_inputrc")),
 	_pipe_stdin(-1), _pipe_stdout(-1), _pid(-1)
 {
 	int fd = open(_vtc_inputrc.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0622);

@@ -9,6 +9,42 @@
 #include <errno.h>
 
 
+std::string InMyConfig(const char *subpath, bool create_path)
+{
+	std::string path;
+#ifdef _WIN32
+	path = "D:\\far2l";
+#else	
+	const char *home = getenv("HOME");
+	if (home) {
+		path = home;
+		path+= "/.config";
+	} else {
+		char tmp[128];
+		sprintf(tmp, "/tmp/far2l_%llx_cfg", (unsigned long long)geteuid());
+		path = tmp;
+	}
+	if (create_path)
+		mkdir(path.c_str(), 0700);
+	path+= "/far2l";
+#endif
+	if (create_path)
+		mkdir(path.c_str(), 0700);
+	if (subpath) {
+		if (*subpath != GOOD_SLASH) 
+			path+= GOOD_SLASH;
+		for (const char *p = subpath; *p; ++p) {
+			if (*p == GOOD_SLASH && create_path)
+				mkdir(path.c_str(), 0700);
+			path+= *p;
+		}
+	}
+	
+	return path;
+	
+}
+
+
 static std::string s_ready_temp;
 static std::mutex s_ready_temp_mutex;
 
@@ -27,7 +63,7 @@ static void GetTempRoot(std::string &path)
 		if (stat(temp, &s) == -1 || (s.st_mode & S_IFMT) != S_IFDIR) {
 			temp = "/var/tmp";
 			if (stat(temp, &s) == -1 || (s.st_mode & S_IFMT) != S_IFDIR) {
-				static std::string s_in_prof_temp = InMyProfile("tmp");
+				static std::string s_in_prof_temp = InMyConfig("tmp");
 				temp = s_in_prof_temp.c_str();
 				if (stat(temp, &s) == -1 || (s.st_mode & S_IFMT) != S_IFDIR) {
 					perror("Can't get temp!");
@@ -59,7 +95,7 @@ static void GetTempRoot(std::string &path)
 	
 }
 
-std::string InTemp(const char *subpath)
+std::string InMyTemp(const char *subpath)
 {
 	std::string path;
 	GetTempRoot(path);

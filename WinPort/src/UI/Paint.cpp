@@ -66,7 +66,7 @@ public:
 
 static void InitializeFont(wxWindow *parent, wxFont& font)
 {
-	const std::string &path = InMyProfile("font");
+	const std::string &path = InMyConfig("font");
 	wxTextFile file(path);
 	if (file.Exists() && file.Open()) {
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
@@ -175,7 +175,7 @@ ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 		
 	if (font.IsFixedWidth() && !is_unstable) {
 		struct stat s = {0};
-		if (stat(InMyProfile("nobuffering").c_str(), &s)!=0)
+		if (stat(InMyConfig("nobuffering").c_str(), &s)!=0)
 			_buffered_paint = true;
 	}
 	_fonts.push_back(font);

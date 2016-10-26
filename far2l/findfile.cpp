@@ -730,9 +730,12 @@ void SetPluginDirectory(const wchar_t *DirName,HANDLE hPlugin,bool UpdatePanel=f
 					CtrlObject->Plugins.FreeFindData(hPlugin,PanelData,FileCount);
 				}
 			}
-
+			
 			if (*DirPtr)
 			{
+				if (*DirPtr != GOOD_SLASH)//fix #182
+					CtrlObject->Plugins.SetDirectory(hPlugin,L"/",OPM_SILENT);
+
 				CtrlObject->Plugins.SetDirectory(hPlugin,DirPtr,OPM_SILENT);
 			}
 			else
@@ -3006,7 +3009,6 @@ bool FindFilesProcess(Vars& v)
 
 					if (StrCmp(strFileName, strDirTmp))
 						FindPanel->SetCurDir(strFileName,TRUE);
-
 					if (!strSetName.IsEmpty())
 						FindPanel->GoToFile(strSetName);
 

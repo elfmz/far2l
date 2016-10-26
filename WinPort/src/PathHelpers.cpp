@@ -178,7 +178,7 @@ bool MatchWildcardICE(const char *string, const char *wild) {
 void WinPortInitWellKnownEnv()
 {
 	if (!getenv("TEMP")) {
-		const std::string &temp = InTemp();
+		const std::string &temp = InMyTemp();
 		mkdir(temp.c_str(), 0777);
 		setenv("TEMP", temp.c_str(), 1);
 	}

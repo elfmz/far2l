@@ -2118,9 +2118,9 @@ static void MkTreeName(FARString &out, const wchar_t *RootDir, const char *ext)
 		char tmp[128];
 		sprintf(tmp, "tree/%llx-%llx.%s", 
 			(unsigned long long)s.st_rdev, (unsigned long long)s.st_ino, ext);
-		out = InTemp(tmp);
+		out = InMyTemp(tmp);
 	} else {
-		std::string tmp = InTemp("tree/wtf-");
+		std::string tmp = InMyTemp("tree/wtf-");
 		const std::string &RootMB = Wide2MB(RootDir);
 		for (char c : RootMB) {
 			tmp+= (c==GOOD_SLASH) ? '@' : c;

@@ -84,7 +84,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 static void SaveSize(unsigned int width, unsigned int height)
 {
 	std::ofstream os;
-	os.open(InMyProfile("consolesize").c_str());
+	os.open(InMyConfig("consolesize").c_str());
 	if (os.is_open()) {
 		os << width << std::endl;
 		os << height << std::endl;
@@ -94,7 +94,7 @@ static void SaveSize(unsigned int width, unsigned int height)
 static void LoadSize(unsigned int &width, unsigned int &height)
 {
 	std::ifstream is;
-	is.open(InMyProfile("consolesize").c_str());
+	is.open(InMyConfig("consolesize").c_str());
 	if (is.is_open()) {
 		std::string str;
 		getline (is, str);
@@ -262,7 +262,7 @@ wxEND_EVENT_TABLE()
 void WinPortFrame::OnShow(wxShowEvent &show)
 {
 	struct stat s;
-	if (stat(InMyProfile("nomenu").c_str(), &s)!=0) {
+	if (stat(InMyConfig("nomenu").c_str(), &s)!=0) {
 		//workaround for non-working with non-latin input language Ctrl+? hotkeys 
 		_menu_bar = new wxMenuBar(wxMB_DOCKABLE);
 		wxMenu *menu = new wxMenu;

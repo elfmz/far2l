@@ -31,7 +31,7 @@ struct WinPortHandleReg : WinPortHandle
 
 static std::string GetRegistrySubroot(const char *sub)
 {
-	static std::string s_root = InMyProfile("REG");
+	static std::string s_root = InMyConfig("REG");
 	std::string rv = s_root;
 	rv+= sub;
 	return rv;

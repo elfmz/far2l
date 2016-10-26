@@ -215,21 +215,31 @@ std::string EscapeQuotas(std::string str)
 	
 std::string InMyProfile(const char *subpath, bool create_path)
 {
+	std::string path;
 #ifdef _WIN32
-	std::string path = "D:\\.far2l";
+	path = "D:\\far2l";
 #else	
 	const char *home = getenv("HOME");
-	std::string path = home ? home : "/tmp";
-	path+= "/.far2l";
+	if (home) {
+		path = home;
+		path+= "/.config";
+	} else {
+		char tmp[128];
+		sprintf(tmp, "/tmp/far2l_%llx_cfg", (unsigned long long)geteuid());
+		path = tmp;
+	}
+	if (create_path)
+		mkdir(path.c_str(), 0700);
+	path+= "/far2l";
 #endif
 	if (create_path)
-		mkdir(path.c_str(), 0770);
+		mkdir(path.c_str(), 0700);
 	if (subpath) {
 		if (*subpath != GOOD_SLASH) 
 			path+= GOOD_SLASH;
 		for (const char *p = subpath; *p; ++p) {
 			if (*p == GOOD_SLASH && create_path)
-				mkdir(path.c_str(), 0770);
+				mkdir(path.c_str(), 0700);
 			path+= *p;
 		}
 	}

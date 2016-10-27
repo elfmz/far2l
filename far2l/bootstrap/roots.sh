@@ -14,14 +14,14 @@
 #adds resulting string to menu
 #---------------------------------------------------------
 #If you want just to add some 'favorites' - don't edit this
-#Instead, create ~/far2l/favorites text file with lines:
+#Instead, create ~/.config/far2l/favorites text file with lines:
 #
 #path1<TAB>label1
 #path2<TAB>label2
 #-<TAB>label_separator
 #path3<TAB>label3
 #
-#You also may create executable ~/far2l/favorites.sh
+#You also may create executable ~/.config/far2l/favorites.sh
 #That should produce similar text on output
 ##########################################################
 
@@ -35,12 +35,12 @@ tab=$'\t'
 
 dfout=`df -T | awk "-F " '{ print $NF "\t" $2 }'`
 dfout+=$eol
-if [ -f ~/.far2l/favorites ]; then
-	dfout+=`grep "^[^#]" ~/.far2l/favorites`
+if [ -f ~/.config/far2l/favorites ]; then
+	dfout+=`grep "^[^#]" ~/.config/far2l/favorites`
 	dfout+=$eol
 fi
-if [ -e ~/.far2l/favorites.sh ]; then
-	dfout+=`~/.far2l/favorites.sh`
+if [ -e ~/.config/far2l/favorites.sh ]; then
+	dfout+=`~/.config/far2l/favorites.sh`
 	dfout+=$eol
 fi
 

@@ -54,3 +54,4 @@ int TestFolder(const wchar_t *Name);
 int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent=FALSE);
 
 void CreatePath(FARString &strPath);
+std::string GetMyScriptQuoted(const char *name);

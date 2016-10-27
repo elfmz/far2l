@@ -392,9 +392,7 @@ static void EnumRoots(RootEntries &out, const FARString &curdir, const FARString
 	RootEntry re;
 	
 	out.clear();
-	std::string roots_script = "\"";
-	roots_script+= EscapeQuotas(g_strFarPath.GetMB());
-	roots_script+= "roots.sh\"";
+	std::string roots_script = GetMyScriptQuoted("roots.sh");
 	roots_script+= " \"";
 	roots_script+= EscapeQuotas(Wide2MB(curdir));
 	roots_script+= "\" \"";

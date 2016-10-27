@@ -2,22 +2,15 @@
 ############################################################
 #This script used by FAR to open files by other applications
 ############################################################
+#$1= [exec|dir|other] wher:
+#  exec - execute given command in other terminal
+#  dir - open given directory witg GUI
+#  other - open given file witg GUI
 
 what=$1
 shift
 
-if [ "$what" = "dir" ]; then
-	if command -v thunar >/dev/null 2>/dev/null ; then
-		thunar "$@" >/dev/null 2>/dev/null &
-		exit 0
-	elif command -v caja >/dev/null 2>/dev/null ; then
-		caja "$@" >/dev/null 2>/dev/null &
-		exit 0
-	elif command -v nautilus >/dev/null 2>/dev/null ; then
-		nautilus "$@" >/dev/null 2>/dev/null &
-		exit 0
-	fi
-elif [ "$what" = "exec" ]; then
+if [ "$what" = "exec" ]; then
 	if command -v xterm >/dev/null 2>/dev/null ; then
 		xterm -e "$@" >/dev/null 2>/dev/null &
 		exit 0

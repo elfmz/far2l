@@ -71,10 +71,10 @@ static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
 {
-	bool _file, _executable, _backround;
-  std::string _cmd;
+	bool _dir, _file, _executable, _script, _backround;
+	std::string _cmd;
 	
-	bool IsExecutableByExtension(const char *s)
+	bool IsScriptByExtension(const char *s)
 	{
 		s = strrchr(s, '.');
 		if (!s || strchr(s, GOOD_SLASH))
@@ -85,7 +85,7 @@ class ExecClassifier
 	
 public:
 	ExecClassifier(const char *cmd) 
-		: _file(false), _executable(false), _backround(false)
+		: _dir(false), _file(false), _executable(false), _script(false), _backround(false)
 	{
 		const char *bg_suffix = strrchr(cmd, '&');
 		if (bg_suffix && bg_suffix!=cmd && *(bg_suffix-1)!='\\') {
@@ -99,40 +99,53 @@ public:
 			return;
 		}
 		_cmd = argv[0];
+
+		struct stat s = {0};
+		if (stat(_cmd.c_str(),  &s) == -1) {
+			fprintf(stderr, "ExecClassifier('%s') - stat error %u\n", cmd, errno);
+			return;
+		}
+		if (S_ISDIR(s.st_mode)) {
+			_dir = true;
+			return;
+		}
+		if (!S_ISREG(s.st_mode)) {
+			fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not regular mode=0x%x\n", cmd, s.st_mode);
+			return;
+		}
+
 		int f = open(_cmd.c_str(), O_RDONLY);
 		if (f==-1) {
 			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
 			return;
 		}
 		
-		struct stat s = {0};
-		if (fstat(f, &s)==0 && S_ISREG(s.st_mode)) {//todo: handle S_ISLNK(s.st_mode)
-			_file = true;
-			if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0) {
-				char buf[8] = { 0 };
-				int r = read(f, buf, sizeof(buf));
-				if (r > 4 && buf[0]==0x7f && buf[1]=='E' && buf[2]=='L' && buf[3]=='F') {
-					fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
-					_executable = true;
-				} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
-					fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
-					_executable = true;
-				} else {
-					_executable = IsExecutableByExtension(cmd);
-					fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
-						cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3], _executable ? "" : "not ");
-				}
-			} else
+		_file = true;
+		if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0) {
+			char buf[8] = { 0 };
+			int r = read(f, buf, sizeof(buf));
+			if (r > 4 && buf[0]==0x7f && buf[1]=='E' && buf[2]=='L' && buf[3]=='F') {
+				fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
+				_executable = true;
+			} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
+				fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
+				_executable = _script = true;
+			} else {
+				_executable = _script = IsScriptByExtension(cmd);
+				fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
+					cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3], _executable ? "" : "not ");
+			}
+		} else
 				fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not executable mode=0x%x\n", cmd, s.st_mode);	
-		} else 
-			fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not regular mode=0x%x\n", cmd, s.st_mode);
 	
 		close(f);
 	}
 	
 	const std::string& cmd() const {return _cmd; }
 	bool IsFile() const {return _file; }
+	bool IsDir() const {return _dir; }
 	bool IsExecutable() const {return _executable; }
+	bool IsScript() const {return _script; }
 	bool IsBackground() const {return _backround; }
 };
 
@@ -248,25 +261,37 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 	int r = -1;
 	ExecClassifier ec(CmdStr);
 	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : 0;
-	if (ec.IsFile()) {
-		std::string tmp;
-		if (!ec.IsExecutable())
-			tmp+= "xdg-open ";
-
-  	if (ec.cmd()[0]!='/' && ec.cmd()[0]!='.')
-			tmp+= "./"; // it is ok to prefix ./ even to a quoted string
-		tmp += CmdStr;
-
-		if (!ec.IsExecutable()) {
-			r = farExecuteA(tmp.c_str(), flags | EF_NOWAIT);
-			if (r!=0) {
-				fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
-				//TODO: nicely report if xdg-open exec failed
+	std::string tmp;
+	if (ec.IsDir() && SeparateWindow) {
+		tmp = GetMyScriptQuoted("open.sh");
+		tmp+= " dir ";
+	} else if (ec.IsFile()) {
+		if (ec.IsExecutable()) {
+			if (SeparateWindow && ec.IsScript()) {
+				tmp= GetMyScriptQuoted("open.sh");
+				tmp+= " exec ";
 			}
-		} else
-			r = farExecuteA(tmp.c_str(), flags);
-	} else 
-		r = farExecuteA(CmdStr, flags);
+		} else {
+			tmp= GetMyScriptQuoted("open.sh");
+			tmp+= " other ";
+		}
+	} else
+		return farExecuteA(CmdStr, flags);
+
+	if (!tmp.empty()) {
+		flags|= EF_NOWAIT | EF_HIDEOUT; //open.sh doesnt print anything
+		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
+	}
+	if (ec.cmd()[0]!='/' && ec.cmd()[0]!='.')
+		tmp+= "./"; // it is ok to prefix ./ even to a quoted string
+	tmp += CmdStr;
+
+	r = farExecuteA(tmp.c_str(), flags);
+	if (r!=0) {
+		fprintf(stderr, "ClassifyAndRun: status %d errno %d for %s\n", r, errno, tmp.c_str() );
+		//TODO: nicely report if xdg-open exec failed
+	}
+
 	return r;
 }
 

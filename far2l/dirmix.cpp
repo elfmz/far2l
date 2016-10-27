@@ -243,3 +243,14 @@ void CreatePath(FARString &strPath)
 
 	strPath.ReleaseBuffer();
 }
+
+
+std::string GetMyScriptQuoted(const char *name)
+{
+	std::string out = "\"";
+	out+= EscapeQuotas(g_strFarPath.GetMB());
+	out+= name;
+	out+= "\"";
+	return out;
+}
+

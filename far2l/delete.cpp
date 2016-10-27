@@ -820,9 +820,7 @@ DWORD SHErrorToWinError(DWORD SHError)
 int RemoveToRecycleBin(const wchar_t *Name)
 {
 	const std::string &name_mb = Wide2MB(Name);
-	std::string script = "\"";
-	script+= EscapeQuotas(g_strFarPath.GetMB());
-	script+= "trash.sh\"";
+	std::string script = GetMyScriptQuoted("trash.sh");
 	script+= " \"";
 	script+= name_mb;
 	script+= '\"';

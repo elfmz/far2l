@@ -71,10 +71,10 @@ static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
 {
-	bool _dir, _file, _executable, _script, _backround;
+	bool _dir, _file, _executable, _backround;
 	std::string _cmd;
 	
-	bool IsScriptByExtension(const char *s)
+	bool IsExecutableByExtension(const char *s)
 	{
 		s = strrchr(s, '.');
 		if (!s || strchr(s, GOOD_SLASH))
@@ -85,7 +85,7 @@ class ExecClassifier
 	
 public:
 	ExecClassifier(const char *cmd) 
-		: _dir(false), _file(false), _executable(false), _script(false), _backround(false)
+		: _dir(false), _file(false), _executable(false), _backround(false)
 	{
 		const char *bg_suffix = strrchr(cmd, '&');
 		if (bg_suffix && bg_suffix!=cmd && *(bg_suffix-1)!='\\') {
@@ -129,9 +129,9 @@ public:
 				_executable = true;
 			} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
 				fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
-				_executable = _script = true;
+				_executable = true;
 			} else {
-				_executable = _script = IsScriptByExtension(cmd);
+				_executable = IsExecutableByExtension(cmd);
 				fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
 					cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3], _executable ? "" : "not ");
 			}
@@ -145,7 +145,6 @@ public:
 	bool IsFile() const {return _file; }
 	bool IsDir() const {return _dir; }
 	bool IsExecutable() const {return _executable; }
-	bool IsScript() const {return _script; }
 	bool IsBackground() const {return _backround; }
 };
 
@@ -256,6 +255,15 @@ int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const cha
 	return farExecuteA(actual_cmd.c_str(), ExecFlags);
 }
 
+static std::string GetOpenShVerb(const char *verb)
+{
+	std::string out = GetMyScriptQuoted("open.sh");
+	out+= ' ';
+	out+= verb;
+	out+= ' ';
+	return out;
+}
+
 static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
 	int r = -1;
@@ -263,18 +271,17 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : 0;
 	std::string tmp;
 	if (ec.IsDir() && SeparateWindow) {
-		tmp = GetMyScriptQuoted("open.sh");
-		tmp+= " dir ";
+		tmp = GetOpenShVerb("dir");
 	} else if (ec.IsFile()) {
 		if (ec.IsExecutable()) {
-			if (SeparateWindow && ec.IsScript()) {
-				tmp= GetMyScriptQuoted("open.sh");
-				tmp+= " exec ";
+			if (SeparateWindow) {
+				tmp = GetOpenShVerb("exec");
 			}
 		} else {
-			tmp= GetMyScriptQuoted("open.sh");
-			tmp+= " other ";
+			tmp = GetOpenShVerb("other");
 		}
+	} else if (SeparateWindow) {
+		tmp = GetOpenShVerb("exec");
 	} else
 		return farExecuteA(CmdStr, flags);
 
@@ -282,9 +289,9 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 		flags|= EF_NOWAIT | EF_HIDEOUT; //open.sh doesnt print anything
 		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
 	}
-	if (ec.cmd()[0]!='/' && ec.cmd()[0]!='.')
+	if ( (ec.IsFile() || ec.IsDir()) && ec.cmd()[0] != '/' && (ec.cmd()[0] != '.' || ec.cmd()[0] != '/'))
 		tmp+= "./"; // it is ok to prefix ./ even to a quoted string
-	tmp += CmdStr;
+	tmp+= CmdStr;
 
 	r = farExecuteA(tmp.c_str(), flags);
 	if (r!=0) {

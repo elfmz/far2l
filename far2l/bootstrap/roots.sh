@@ -39,7 +39,7 @@ if [ -f ~/.config/far2l/favorites ]; then
 	dfout+=`grep "^[^#]" ~/.config/far2l/favorites`
 	dfout+=$eol
 fi
-if [ -e ~/.config/far2l/favorites.sh ]; then
+if [ -x ~/.config/far2l/favorites.sh ]; then
 	dfout+=`~/.config/far2l/favorites.sh`
 	dfout+=$eol
 fi

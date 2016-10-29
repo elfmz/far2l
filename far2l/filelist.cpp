@@ -2293,11 +2293,11 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 		if (PluginMode)
 		{
 			FARString strTempDir;
+			PrepareTemporaryOpenPath(strTempDir);
+//			if (!FarMkTempEx(strTempDir))
+//				return;
+//			apiCreateDirectory(strTempDir,nullptr);
 
-			if (!FarMkTempEx(strTempDir))
-				return;
-
-			apiCreateDirectory(strTempDir,nullptr);
 			PluginPanelItem PanelItem;
 			FileListToPluginItem(CurPtr,&PanelItem);
 			int Result=CtrlObject->Plugins.GetFile(hPlugin,&PanelItem,strTempDir,strFileName,OPM_SILENT|OPM_VIEW);
@@ -2337,7 +2337,8 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			CtrlObject->CmdLine->ExecString(strFileName, PluginMode, SeparateWindow, true, false, false, RunAs);
 
 			if (PluginMode)
-				DeleteFileWithFolder(strFileName);
+				apiDeleteFile(strFileName);
+//				DeleteFileWithFolder(strFileName);
 		}
 		else if (SetCurPath())
 		{
@@ -2350,9 +2351,8 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			   )
 			{
 				if (PluginMode)
-				{
-					DeleteFileWithFolder(strFileName);
-				}
+					apiDeleteFile(strFileName);
+//					DeleteFileWithFolder(strFileName);
 
 				return;
 			}
@@ -2367,10 +2367,8 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 						ProcessGlobalFileTypes(strFileName, PluginMode, RunAs);
 					}
 
-				if (PluginMode)
-				{
-					DeleteFileWithFolder(strFileName);
-				}
+//				if (PluginMode)
+//					DeleteFileWithFolder(strFileName);
 			}
 
 			return;

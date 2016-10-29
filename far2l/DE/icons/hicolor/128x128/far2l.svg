@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.2" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="32px" height="32px" viewBox="0 0 32 32" xml:space="preserve">
+	<defs>
+		<linearGradient id="far">
+			<stop style="stop-color:#00f" offset="0"/>
+			<stop style="stop-color:#008" offset="1"/>
+		</linearGradient>
+		<linearGradient	xlink:href="#far" id="gradient" x1="1" y1="1" x2="31" y2="31" gradientUnits="userSpaceOnUse"/>
+	</defs>
+	<rect style="fill:url(#gradient)" width="32" height="32" x="0" y="0"/>
+	<rect style="fill:#0ff" width="1" height="28" x="0" y="0"/>
+	<rect style="fill:#ff0" width="6" height="1" x="3" y="2"/>
+	<rect style="fill:#0ff" width="8" height="1" x="2" y="4"/>
+	<rect style="fill:#0ff" width="8" height="1" x="2" y="6"/>
+	<rect style="fill:#0ff" width="8" height="1" x="2" y="8"/>
+	<rect style="fill:#0ff" width="8" height="1" x="2" y="10"/>
+	<rect style="fill:#0ff" width="8" height="1" x="2" y="12"/>
+	<rect style="fill:#0ff" width="1" height="24" x="11" y="0"/>
+	<rect style="fill:#ff0" width="2" height="1" x="13" y="2"/>
+	<rect style="fill:#0ff" width="2" height="1" x="13" y="4"/>
+	<rect style="fill:#0ff" width="2" height="1" x="13" y="6"/>
+	<rect style="fill:#0ff" width="2" height="1" x="13" y="8"/>
+	<rect style="fill:#0ff" width="2" height="1" x="13" y="10"/>
+	<rect style="fill:#0ff" width="2" height="1" x="13" y="12"/>
+	<rect style="fill:#0ff" width="1" height="28" x="16" y="0"/>
+	<rect style="fill:#ff0" width="5" height="1" x="19" y="2"/>
+	<rect style="fill:#0ff" width="7" height="1" x="18" y="4"/>
+	<rect style="fill:#0ff" width="7" height="1" x="18" y="6"/>
+	<rect style="fill:#0ff" width="7" height="1" x="18" y="8"/>
+	<rect style="fill:#0ff" width="1" height="24" x="26" y="0"/>
+	<rect style="fill:#ff0" width="2" height="1" x="28" y="2"/>
+	<rect style="fill:#0ff" width="2" height="1" x="28" y="4"/>
+	<rect style="fill:#0ff" width="2" height="1" x="28" y="6"/>
+	<rect style="fill:#0ff" width="2" height="1" x="28" y="8"/>
+	<rect style="fill:#0ff" width="1" height="28" x="31" y="0"/>
+	<rect style="fill:#0ff" width="32" height="1" x="0" y="0"/>
+	<rect style="fill:#0ff" width="32" height="1" x="0" y="23"/>
+	<rect style="fill:#0ff" width="7" height="1" x="2" y="25"/>
+	<rect style="fill:#0ff" width="1" height="1" x="10" y="25"/>
+	<rect style="fill:#0ff" width="3" height="1" x="12" y="25"/>
+	<rect style="fill:#0ff" width="6" height="1" x="18" y="25"/>
+	<rect style="fill:#0ff" width="1" height="1" x="25" y="25"/>
+	<rect style="fill:#0ff" width="3" height="1" x="27" y="25"/>
+	<rect style="fill:#0ff" width="32" height="1" x="0" y="27"/>
+	<rect style="fill:#000" width="32" height="4" x="0" y="28"/>
+	<rect style="fill:#088" width="3" height="2" x="1" y="30"/>
+	<rect style="fill:#088" width="3" height="2" x="5" y="30"/>
+	<rect style="fill:#088" width="3" height="2" x="9" y="30"/>
+	<rect style="fill:#088" width="3" height="2" x="13" y="30"/>
+	<rect style="fill:#088" width="3" height="2" x="17" y="30"/>
+	<rect style="fill:#088" width="3" height="2" x="21" y="30"/>
+	<rect style="fill:#088" width="3" height="2" x="25" y="30"/>
+	<rect style="fill:#088" width="3" height="2" x="29" y="30"/>
+	<rect style="fill:#fff" width="1" height="2" x="0" y="28"/>
+	<rect style="fill:#fff" width="2" height="1" x="0" y="29"/>
+</svg>

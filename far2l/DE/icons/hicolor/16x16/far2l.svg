@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.2" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="16px" height="16px" viewBox="0 0 16 16" xml:space="preserve">
+	<defs>
+		<linearGradient id="far">
+			<stop style="stop-color:#00f" offset="0"/>
+			<stop style="stop-color:#008" offset="1"/>
+		</linearGradient>
+		<linearGradient	xlink:href="#far" id="gradient" x1="1" y1="1" x2="15" y2="15" gradientUnits="userSpaceOnUse"/>
+	</defs>
+    <rect style="fill:url(#gradient)" width="16" height="16" x="0" y="0"/>
+    <rect style="fill:#0ff" width="1" height="12" x="0" y="0"/>
+    <rect style="fill:#ff0" width="3" height="1" x="3" y="2"/>
+    <rect style="fill:#0ff" width="5" height="1" x="2" y="4"/>
+    <rect style="fill:#0ff" width="5" height="1" x="2" y="6"/>
+    <rect style="fill:#0ff" width="5" height="1" x="2" y="8"/>
+    <rect style="fill:#0ff" width="1" height="12" x="8" y="0"/>
+    <rect style="fill:#ff0" width="2" height="1" x="11" y="2"/>
+    <rect style="fill:#0ff" width="4" height="1" x="10" y="4"/>
+    <rect style="fill:#0ff" width="4" height="1" x="10" y="6"/>
+    <rect style="fill:#0ff" width="1" height="12" x="15" y="0"/>
+    <rect style="fill:#0ff" width="16" height="1" x="0" y="0"/>
+    <rect style="fill:#0ff" width="16" height="1" x="0" y="11"/>
+    <rect style="fill:#000" width="16" height="4" x="0" y="12"/>
+    <rect style="fill:#088" width="3" height="2" x="1" y="14"/>
+    <rect style="fill:#088" width="3" height="2" x="5" y="14"/>
+    <rect style="fill:#088" width="3" height="2" x="9" y="14"/>
+    <rect style="fill:#088" width="3" height="2" x="13" y="14"/>
+    <rect style="fill:#fff" width="1" height="2" x="0" y="12"/>
+    <rect style="fill:#fff" width="2" height="1" x="0" y="13"/>
+</svg>

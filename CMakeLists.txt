@@ -51,19 +51,7 @@ add_subdirectory (tmppanel)
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING PATTERN "*")
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#TODO
-else()
-    INSTALL(FILES ${INSTALL_DIR}/far2l.desktop DESTINATION "/usr/share/applications")
-    INSTALL(CODE "
+install(CODE "
       execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/far2l/far2l /bin/far2l)
       "
     )
-
-#    find_program(XDG-DESKTOP-MENU_EXECUTABLE xdg-desktop-menu)
-#   INSTALL(CODE "
-#      execute_process(COMMAND ${XDG-DESKTOP-MENU_EXECUTABLE} install --novendor /opt/far2l/far2l.desktop)
-#      "
-#    )
-endif()
-

@@ -182,3 +182,11 @@ add_custom_command(TARGET far2l POST_BUILD
    COMMAND rm ${INSTALL_DIR}/far2l_sudoapp || echo ""
    COMMAND ln -s far2l ${INSTALL_DIR}/far2l_askpass
    COMMAND ln -s far2l ${INSTALL_DIR}/far2l_sudoapp)
+
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#TODO
+else()
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/DE/icons" DESTINATION "/usr/share" USE_SOURCE_PERMISSIONS FILES_MATCHING PATTERN "*")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l.desktop" DESTINATION "/usr/share/applications")
+endif()

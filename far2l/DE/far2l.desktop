@@ -7,5 +7,5 @@ Exec=/opt/far2l/far2l
 TryExec=/opt/far2l/far2l
 Terminal=false
 Categories=Utility;FileManager;
-Icon=/opt/far2l/far2l.svg
+Icon=far2l
 StartupNotify=true

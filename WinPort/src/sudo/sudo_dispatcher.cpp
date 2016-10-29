@@ -13,6 +13,8 @@
 #endif
 #include <sys/statvfs.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/xattr.h>
 #include <set>
 #include <vector>
 #include <mutex>
@@ -352,6 +354,73 @@ namespace Sudo
 		}
 	}
 	
+	static void OnSudoDispatch_FListXAttr(BaseTransaction &bt)
+	{
+		int fd;
+		size_t size;
+		bt.RecvPOD(fd);
+		bt.RecvPOD(size);
+		std::vector<char> buf(size + 1);
+		
+#ifdef __APPLE__
+		ssize_t r = g_fds.Check(fd) ? flistxattr(fd, &buf[0], size, 0) : -1;
+#else
+		ssize_t r = g_fds.Check(fd) ? flistxattr(fd, &buf[0], size) : -1;
+#endif
+		bt.SendPOD(r);
+		if (r > 0 ) {
+			bt.SendBuf(&buf[0], r);
+		} else if (r < 0)
+			bt.SendErrno();
+	}
+
+	static void OnSudoDispatch_FGetXAttr(BaseTransaction &bt)
+	{
+		int fd;
+		std::string name;
+		size_t size;
+		bt.RecvPOD(fd);
+		bt.RecvStr(name);
+		bt.RecvPOD(size);
+		std::vector<char> buf(size + 1);
+#ifdef __APPLE__
+		ssize_t r = g_fds.Check(fd) ? fgetxattr(fd, name.c_str(), &buf[0], size, 0, 0) : -1;
+#else
+		ssize_t r = g_fds.Check(fd) ? fgetxattr(fd, name.c_str(), &buf[0], size) : -1;
+#endif
+		bt.SendPOD(r);
+		if (r > 0 ) {
+			bt.SendBuf(&buf[0], r);
+		} else if (r < 0)
+			bt.SendErrno();
+	}
+			
+	static void OnSudoDispatch_FSetXAttr(BaseTransaction &bt)
+	{
+		int fd;
+		std::string name;
+		size_t size;
+		int flags;
+		bt.RecvPOD(fd);
+		bt.RecvStr(name);
+		bt.RecvPOD(size);
+		std::vector<char> buf(size + 1);
+		bt.RecvBuf(&buf[0], size);
+		bt.RecvPOD(flags);
+		
+#ifdef __APPLE__
+		int r = g_fds.Check(fd) ? fsetxattr(fd, name.c_str(), &buf[0], size, 0, flags) : -1;
+#else
+		int r = g_fds.Check(fd) ? fsetxattr(fd, name.c_str(), &buf[0], size, flags) : -1;
+#endif
+
+		bt.SendPOD(r);
+		if (r == -1 )
+			bt.SendErrno();
+	}
+	
+	
+	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt)
 	{
 		//fprintf(stderr, "OnSudoDispatch: %u\n", cmd);
@@ -469,6 +538,18 @@ namespace Sudo
 
 			case SUDO_CMD_REALPATH:
 				OnSudoDispatch_RealPath(bt);
+				break;
+				
+			case SUDO_CMD_FLISTXATTR:
+				OnSudoDispatch_FListXAttr(bt);
+				break;
+			
+			case SUDO_CMD_FGETXATTR:
+				OnSudoDispatch_FGetXAttr(bt);
+				break;
+			
+			case SUDO_CMD_FSETXATTR:
+				OnSudoDispatch_FSetXAttr(bt);
 				break;
 			
 			default:

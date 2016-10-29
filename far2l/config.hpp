@@ -390,10 +390,11 @@ struct TreeOptions
 struct CopyMoveOptions
 {
 	int WriteThrough;          // disable write caching
+	int CopyXAttr;             // copy extended attributes if any
+	int CopyAccessMode;        // copy files access mode
 	int CopyOpened;            // копировать открытые на запись файлы
 	int CopyShowTotal;         // показать общий индикатор копирования
 	int MultiCopy;             // "разрешить мультикопирование/перемещение/создание связей"
-	DWORD CopySecurityOptions; // для операции Move - что делать с опцией "Copy access rights"
 	int CopyTimeRule;          // $ 30.01.2001 VVM  Показывает время копирования,оставшееся время и среднюю скорость
 };
 

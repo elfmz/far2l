@@ -89,17 +89,6 @@ enum
 	COPY_RULE_FILES  = 0x0002,
 };
 
-enum COPYSECURITYOPTIONS
-{
-	CSO_MOVE_SETCOPYSECURITY       = 0x00000001,  // Move: по умолчанию выставлять опцию "Copy access rights"?
-	CSO_MOVE_SETINHERITSECURITY    = 0x00000003,  // Move: по умолчанию выставлять опцию "Inherit access rights"?
-	CSO_MOVE_SESSIONSECURITY       = 0x00000004,  // Move: сохранять состояние "access rights" внутри сессии?
-	CSO_COPY_SETCOPYSECURITY       = 0x00000008,  // Copy: по умолчанию выставлять опцию "Copy access rights"?
-	CSO_COPY_SETINHERITSECURITY    = 0x00000018,  // Copy: по умолчанию выставлять опцию "Inherit access rights"?
-	CSO_COPY_SESSIONSECURITY       = 0x00000020,  // Copy: сохранять состояние "access rights" внутри сессии?
-};
-
-
 static int TotalFiles,TotalFilesToProcess;
 
 static clock_t CopyStartTime;
@@ -111,8 +100,6 @@ static uint64_t CurCopiedSize;                  // Текущий индикат
 static uint64_t TotalSkippedSize;               // Общий размер пропущенных файлов
 static uint64_t TotalCopiedSizeEx;
 static size_t   CountTarget;                    // всего целей.
-static int CopySecurityCopy=-1;
-static int CopySecurityMove=-1;
 static bool ShowTotalCopySize;
 static FARString strTotalCopySizeText;
 
@@ -120,6 +107,25 @@ static FileFilter *Filter;
 static int UseFilter=FALSE;
 
 static BOOL ZoomedState,IconicState;
+
+class FileExtendedAttributesCopy
+{
+	FileExtendedAttributes _xattr;
+	bool _apply;
+
+	public:
+	FileExtendedAttributesCopy(File &f)
+	{
+		_apply = (f.QueryFileExtendedAttributes(_xattr) != FB_NO && !_xattr.empty());
+	}
+
+	void ApplyToCopied(File &f)
+	{
+		if (_apply) {
+			f.SetFileExtendedAttributes(_xattr);
+		}
+	}
+};
 
 struct CopyDlgParam
 {
@@ -129,7 +135,6 @@ struct CopyDlgParam
 	int SelCount;
 	bool FolderPresent;
 	bool FilesPresent;
-	int CopySecurity;
 	FARString strPluginFormat;
 	bool AskRO;
 };
@@ -140,13 +145,10 @@ enum enumShellCopy
 	ID_SC_TARGETTITLE,
 	ID_SC_TARGETEDIT,
 	ID_SC_SEPARATOR1,
-	ID_SC_ACTITLE,
-	ID_SC_ACLEAVE,
-	ID_SC_ACCOPY,
-	ID_SC_ACINHERIT,
-	ID_SC_SEPARATOR2,
 	ID_SC_COMBOTEXT,
 	ID_SC_COMBO,
+	ID_SC_COPYACCESSMODE,
+	ID_SC_COPYXATTR,
 	ID_SC_COPYSYMLINK,
 	ID_SC_MULTITARGET,
 	ID_SC_WRITETHROUGH,
@@ -663,13 +665,10 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		DI_TEXT,        5, 2, 0, 2,0,0,MSG(Link?MCMLTargetIN:MCMLTargetTO),
 		DI_EDIT,        5, 3,70, 3,reinterpret_cast<DWORD_PTR>(L"Copy"),DIF_FOCUS|DIF_HISTORY|DIF_EDITEXPAND|DIF_USELASTHISTORY|DIF_EDITPATH,L"",
 		DI_TEXT,        3, 4, 0, 4,0,DIF_SEPARATOR,L"",
-		DI_TEXT,        5, 5, 0, 5,0,0,MSG(MCopySecurity),
-		DI_RADIOBUTTON, 5, 5, 0, 5,0,DIF_GROUP,MSG(MCopySecurityLeave),
-		DI_RADIOBUTTON, 5, 5, 0, 5,0,0,MSG(MCopySecurityCopy),
-		DI_RADIOBUTTON, 5, 5, 0, 5,0,0,MSG(MCopySecurityInherit),
-		DI_TEXT,        3, 6, 0, 6,0,DIF_SEPARATOR,L"",
-		DI_TEXT,        5, 7, 0, 7,0,0,MSG(MCopyIfFileExist),
-		DI_COMBOBOX,   29, 7,70, 7,0,DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L"",
+		DI_TEXT,        5, 5, 0, 5,0,0,MSG(MCopyIfFileExist),
+		DI_COMBOBOX,   29, 5,70, 5,0,DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L"",
+		DI_CHECKBOX,    5, 6, 0, 6,0,0,MSG(MCopyAccessMode),
+		DI_CHECKBOX,    5, 7, 0, 7,0,0,MSG(MCopyXAttr),
 		DI_CHECKBOX,    5, 8, 0, 8,0,0,MSG(MCopySymLinkContents),
 		DI_CHECKBOX,    5, 9, 0, 9,0,0,MSG(MCopyMultiActions),
 		DI_CHECKBOX,    5, 10, 0, 10,0,0,MSG(MCopyWriteThrough),
@@ -685,84 +684,22 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	MakeDialogItemsEx(CopyDlgData,CopyDlg);
 	CopyDlg[ID_SC_MULTITARGET].Selected=Opt.CMOpt.MultiCopy;
 	CopyDlg[ID_SC_WRITETHROUGH].Selected=Opt.CMOpt.WriteThrough;
-	{
-		const wchar_t *Str = MSG(MCopySecurity);
-		CopyDlg[ID_SC_ACLEAVE].X1 = CopyDlg[ID_SC_ACTITLE].X1 + StrLength(Str) - (wcschr(Str, L'&')?1:0) + 1;
-		Str = MSG(MCopySecurityLeave);
-		CopyDlg[ID_SC_ACCOPY].X1 = CopyDlg[ID_SC_ACLEAVE].X1 + StrLength(Str) - (wcschr(Str, L'&')?1:0) + 5;
-		Str = MSG(MCopySecurityCopy);
-		CopyDlg[ID_SC_ACINHERIT].X1 = CopyDlg[ID_SC_ACCOPY].X1 + StrLength(Str) - (wcschr(Str, L'&')?1:0) + 5;
-	}
+	CopyDlg[ID_SC_COPYACCESSMODE].Selected=Opt.CMOpt.CopyAccessMode;
+	CopyDlg[ID_SC_COPYXATTR].Selected=Opt.CMOpt.CopyXAttr;
 
 	if (Link)
 	{
 		CopyDlg[ID_SC_COMBOTEXT].strData=MSG(MLinkType);
 		CopyDlg[ID_SC_COPYSYMLINK].Selected=0;
 		CopyDlg[ID_SC_COPYSYMLINK].Flags|=DIF_DISABLE|DIF_HIDDEN;
-		CDP.CopySecurity=1;
 	}
 	else if (Move) // секция про перенос
 	{
 		CopyDlg[ID_SC_MULTITARGET].Selected = 0;
 		CopyDlg[ID_SC_MULTITARGET].Flags |= DIF_DISABLE;
-
-		//   2 - Default
-		//   1 - Copy access rights
-		//   0 - Inherit access rights
-		CDP.CopySecurity=2;
-
-		// ставить опцию "Inherit access rights"?
-		// CSO_MOVE_SETINHERITSECURITY - двухбитный флаг
-		if ((Opt.CMOpt.CopySecurityOptions&CSO_MOVE_SETINHERITSECURITY) == CSO_MOVE_SETINHERITSECURITY)
-			CDP.CopySecurity=0;
-		else if (Opt.CMOpt.CopySecurityOptions&CSO_MOVE_SETCOPYSECURITY)
-			CDP.CopySecurity=1;
-
-		// хотели сессионное запоминание?
-		if (CopySecurityMove != -1 && (Opt.CMOpt.CopySecurityOptions&CSO_MOVE_SESSIONSECURITY))
-			CDP.CopySecurity=CopySecurityMove;
-		else
-			CopySecurityMove=CDP.CopySecurity;
 	}
 	else // секция про копирование
 	{
-		//   2 - Default
-		//   1 - Copy access rights
-		//   0 - Inherit access rights
-		CDP.CopySecurity=2;
-
-		// ставить опцию "Inherit access rights"?
-		// CSO_COPY_SETINHERITSECURITY - двухбитный флаг
-		if ((Opt.CMOpt.CopySecurityOptions&CSO_COPY_SETINHERITSECURITY) == CSO_COPY_SETINHERITSECURITY)
-			CDP.CopySecurity=0;
-		else if (Opt.CMOpt.CopySecurityOptions&CSO_COPY_SETCOPYSECURITY)
-			CDP.CopySecurity=1;
-
-		// хотели сессионное запоминание?
-		if (CopySecurityCopy != -1 && Opt.CMOpt.CopySecurityOptions&CSO_COPY_SESSIONSECURITY)
-			CDP.CopySecurity=CopySecurityCopy;
-		else
-			CopySecurityCopy=CDP.CopySecurity;
-	}
-
-	// вот теперь выставляем
-	if (CDP.CopySecurity)
-	{
-		if (CDP.CopySecurity == 1)
-		{
-			Flags|=FCOPY_COPYSECURITY;
-			CopyDlg[ID_SC_ACCOPY].Selected=1;
-		}
-		else
-		{
-			Flags|=FCOPY_LEAVESECURITY;
-			CopyDlg[ID_SC_ACLEAVE].Selected=1;
-		}
-	}
-	else
-	{
-		Flags&=~(FCOPY_COPYSECURITY|FCOPY_LEAVESECURITY);
-		CopyDlg[ID_SC_ACINHERIT].Selected=1;
 	}
 
 	FARString strCopyStr;
@@ -937,22 +874,10 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 
 	if (Link) // рулесы по поводу линков (предварительные!)
 	{
-		// задисаблим опцию про копирование права.
-		CopyDlg[ID_SC_ACTITLE].Flags|=DIF_DISABLE|DIF_HIDDEN;
-		CopyDlg[ID_SC_ACCOPY].Flags|=DIF_DISABLE|DIF_HIDDEN;
-		CopyDlg[ID_SC_ACINHERIT].Flags|=DIF_DISABLE|DIF_HIDDEN;
-		CopyDlg[ID_SC_ACLEAVE].Flags|=DIF_DISABLE|DIF_HIDDEN;
-		CopyDlg[ID_SC_SEPARATOR2].Flags|=DIF_HIDDEN;
-
-		for(int i=ID_SC_SEPARATOR2;i<=ID_SC_COMBO;i++)
-		{
-			CopyDlg[i].Y1-=2;
-			CopyDlg[i].Y2-=2;
-		}
 		for(int i=ID_SC_MULTITARGET;i<=ID_SC_BTNCANCEL;i++)
 		{
-			CopyDlg[i].Y1-=3;
-			CopyDlg[i].Y2-=3;
+			CopyDlg[i].Y1-=1;
+			CopyDlg[i].Y2-=1;
 		}
 		CopyDlg[ID_SC_TITLE].Y2-=3;
 		DLG_HEIGHT-=3;
@@ -1050,6 +975,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 					Opt.CMOpt.MultiCopy=CopyDlg[ID_SC_MULTITARGET].Selected;
 				}
 				Opt.CMOpt.WriteThrough=CopyDlg[ID_SC_WRITETHROUGH].Selected;
+				Opt.CMOpt.CopyAccessMode=CopyDlg[ID_SC_COPYACCESSMODE].Selected;
+				Opt.CMOpt.CopyXAttr=CopyDlg[ID_SC_COPYXATTR].Selected;
 
 				if (!CopyDlg[ID_SC_MULTITARGET].Selected || !wcspbrk(strCopyDlgValue,L",;")) // отключено multi*
 				{
@@ -1087,39 +1014,21 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	// *** Стадия подготовки данных после диалога
 	// ***********************************************************************
-	Flags&=~FCOPY_COPYPARENTSECURITY;
-
-	if (CopyDlg[ID_SC_ACCOPY].Selected)
-	{
-		Flags|=FCOPY_COPYSECURITY;
-	}
-	else if (CopyDlg[ID_SC_ACINHERIT].Selected)
-	{
-		Flags&=~(FCOPY_COPYSECURITY|FCOPY_LEAVESECURITY);
-	}
-	else
-	{
-		Flags|=FCOPY_LEAVESECURITY;
-	}
-
 	if (Opt.CMOpt.WriteThrough)
 		Flags|=FCOPY_WRITETHROUGH;
 	else
 		Flags&=~FCOPY_WRITETHROUGH;
 
-	if (!(Flags&(FCOPY_COPYSECURITY|FCOPY_LEAVESECURITY)))
-		Flags|=FCOPY_COPYPARENTSECURITY;
+	if (Opt.CMOpt.CopyAccessMode)
+		Flags|=FCOPY_COPYACCESSMODE;
+	else
+		Flags&=~FCOPY_COPYACCESSMODE;
 
-	CDP.CopySecurity=Flags&FCOPY_COPYSECURITY?1:(Flags&FCOPY_LEAVESECURITY?2:0);
+	if (Opt.CMOpt.CopyXAttr)
+		Flags|=FCOPY_COPYXATTR;
+	else
+		Flags&=~FCOPY_COPYXATTR;
 
-	// в любом случае сохраняем сессионное запоминание (не для Link, т.к. для Link временное состояние - "ВСЕГДА!")
-	if (!Link)
-	{
-		if (Move)
-			CopySecurityMove=CDP.CopySecurity;
-		else
-			CopySecurityCopy=CDP.CopySecurity;
-	}
 
 	ReadOnlyDelMode=ReadOnlyOvrMode=OvrMode=SkipEncMode=SkipMode=SkipDeleteMode=-1;
 
@@ -2295,8 +2204,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 	CP->SetProgressValue(0,0);
 	CP->SetNames(Src,strDestPath);
 
-	int IsSetSecuty=FALSE;
-
 	if (!(Flags&FCOPY_COPYTONUL))
 	{
 		// проверка очередного монстрика на потоки
@@ -2339,12 +2246,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 				FARString strSrcFullName,strDestFullName;
 				ConvertNameToFull(Src,strSrcFullName);
 
-				// для Move нам необходимо узнать каталог родитель, чтобы получить его секьюрити
-				if (!(Flags&(FCOPY_COPYSECURITY|FCOPY_LEAVESECURITY)))
-				{
-					IsSetSecuty=FALSE;
-				}
-
 				// Пытаемся переименовать, пока не отменят
 				for (;;)
 				{
@@ -2372,8 +2273,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 							case 0:  continue;
 							case 1:
 							{
-								int CopySecurity = Flags&FCOPY_COPYSECURITY;
-								CopySecurity = FALSE;
 
 								if (apiCreateDirectory(strDestPath, nullptr))
 								{
@@ -2594,19 +2493,6 @@ COPY_CODES ShellCopy::ShellCopyOneFile(
 
 					if (NWFS_Attr)
 						apiSetFileAttributes(strSrcFullName,SrcData.dwFileAttributes&(~FILE_ATTRIBUTE_READONLY));
-
-					IsSetSecuty=FALSE;
-
-					// для Move нам необходимо узнать каталог родитель, чтобы получить его секьюрити
-					if (Rename && !(Flags&(FCOPY_COPYSECURITY|FCOPY_LEAVESECURITY)))
-					{
-						if (CmpFullPath(Src,strDest)) // в пределах одного каталога ничего не меняем
-							IsSetSecuty=FALSE;
-						else if (apiGetFileAttributes(strDest) == INVALID_FILE_ATTRIBUTES) // если каталога нет...
-						{
-							FARString strDestFullName;
-						}
-					}
 
 					if (!StrCmp(strDestFSName,L"NWFS"))
 						MoveCode=apiMoveFile(strSrcFullName,strDestPath);
@@ -2981,6 +2867,11 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		return COPY_FAILURE;
 	}
 
+	std::unique_ptr<FileExtendedAttributesCopy> XAttrCopyPtr;
+	if (((Flags & FCOPY_COPYXATTR) != 0))
+		XAttrCopyPtr.reset(new FileExtendedAttributesCopy(SrcFile));
+
+
 	File DestFile;
 	int64_t AppendPos=0;
 
@@ -3026,7 +2917,11 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 			_LOGCOPYR(SysLog(L"return COPY_FAILURE -> %d CreateFile=-1, LastError=%d (0x%08X)",__LINE__,_localLastError,_localLastError));
 			return COPY_FAILURE;
 		}
-		DestFile.Chmod(SrcData.dwUnixMode);
+		if (XAttrCopyPtr)
+			XAttrCopyPtr->ApplyToCopied(DestFile);
+
+		if (((Flags & FCOPY_COPYACCESSMODE) != 0))
+			DestFile.Chmod(SrcData.dwUnixMode);
 
 		FARString strDriveRoot;
 		GetPathRoot(strDestName,strDriveRoot);
@@ -3327,8 +3222,10 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 								DestFile.Close();
 								return COPY_FAILURE;
 							}
-							DestFile.Chmod(SrcData.dwUnixMode);
-							fprintf(stderr, "chmode 0x%x\n", SrcData.dwUnixMode);
+							if (XAttrCopyPtr)
+								XAttrCopyPtr->ApplyToCopied(DestFile);
+							if (((Flags & FCOPY_COPYACCESSMODE) != 0))
+								DestFile.Chmod(SrcData.dwUnixMode);
 						}
 						else
 						{

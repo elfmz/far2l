@@ -37,8 +37,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "scantree.hpp"
+#include "panel.hpp"
+#include "delete.hpp"
 #include <time.h>
 #include <sys/time.h>
+#include <atomic>
 
 NTPath::NTPath(LPCWSTR Src)
 {
@@ -671,7 +674,7 @@ void PrepareTemporaryOpenPath(FARString &Path)
 
 	std::vector<FARString> outdated;
 
-	ScanTree scan_tree(0);
+	ScanTree scan_tree(0, 0);
 	scan_tree.SetFindPath(Path.CPtr(), L"*", 0);
 	FAR_FIND_DATA_EX found_data;
 	FARString found_name;
@@ -690,9 +693,14 @@ void PrepareTemporaryOpenPath(FARString &Path)
 		}
 	};
 
-	for (const auto &f : outdated) {
-		if (!apiDeleteFile(f.CPtr()))
-			apiRemoveDirectory(f.CPtr());
+	for (const auto &p : outdated) {
+		DeleteDirTree(p.CPtr());
 	}
+	apiCreateDirectory(Path, nullptr);
+	
+	static std::atomic<unsigned short>	s_counter;
+	char tmp[64]; sprintf(tmp, "%c%u_%u", GOOD_SLASH, (unsigned int)getpid(), (unsigned int)++s_counter);
+	
+	Path+= tmp;
 	apiCreateDirectory(Path, nullptr);
 }

@@ -285,6 +285,83 @@ bool File::Chmod(DWORD dwUnixMode)
 	return true;
 }
 
+FemaleBool File::QueryFileExtendedAttributes(FileExtendedAttributes &xattr)
+{
+	xattr.clear();
+
+	int fd = WINPORT(GetFileDescriptor)(Handle);
+	if (fd == -1)
+		return FB_NO;
+
+	std::vector<char> buf(0x100);
+	for (;;) {
+		ssize_t r = sdc_flistxattr(fd, &buf[0], buf.size() - 1);
+		if (r == -1) {
+			if (errno != ERANGE)
+				return FB_NO;
+			buf.resize(buf.size() * 2);
+		} else if (r == 0) {
+			return FB_YES;
+		} else {
+			buf.resize(r);
+			break;
+		}
+	}
+
+	const char *p = &buf[0];
+	const char *e = p + buf.size();
+	while ( p < e ) {
+		const std::string name(p);
+		xattr[name];
+		p+= (name.size() + 1);
+	}
+
+	bool any_ok = false, any_failed = false;
+	for (FileExtendedAttributes::iterator i = xattr.begin(); i != xattr.end(); ) {
+		for (;;) {
+			ssize_t r = sdc_fgetxattr(fd, i->first.c_str(), &buf[0], buf.size() - 1);
+			if (r >= 0) {
+				buf.resize(r);
+				i->second.swap(buf);
+				buf.resize(0x100);
+				++i;
+				any_ok = true;
+				break;
+			} else if (errno != ERANGE) {
+				fprintf(stderr, "File::QueryFileExtendedAttributes: err=%u for '%s'\n", errno, i->first.c_str());
+				i = xattr.erase(i);
+				any_failed = true;
+				break;
+			} else {
+				buf.resize(buf.size() * 2);
+			}
+		}
+	}
+	return any_failed ? ( any_ok ? FB_MAYBE : FB_NO) : FB_YES;
+}
+
+FemaleBool File::SetFileExtendedAttributes(const FileExtendedAttributes &xattr)
+{
+	int fd = WINPORT(GetFileDescriptor)(Handle);
+	if (fd == -1)
+		return FB_NO;
+
+	bool any_ok = false, any_failed = false;
+	for (FileExtendedAttributes::const_iterator i = xattr.begin(); i != xattr.end(); ++i) {
+		int r;
+		if (i->second.empty()) {
+			r = sdc_fsetxattr(fd, i->first.c_str(), "", 0, 0);
+		} else
+			r = sdc_fsetxattr(fd, i->first.c_str(), &i->second[0], i->second.size(), 0);
+		if (r == -1) {
+			fprintf(stderr, "File::SetFileExtendedAttributes: err=%u for '%s'\n", errno, i->first.c_str());
+			any_failed = true;
+		} else
+			any_ok = true;
+	}
+	return any_failed ? ( any_ok ? FB_MAYBE : FB_NO) : FB_YES;
+}
+
 bool File::Close()
 {
 	bool Result=true;

@@ -1364,6 +1364,15 @@ upd:"Disable &write cache"
 upd:"Disable &write cache"
 upd:"Disable &write cache"
 
+MCopyXAttr
+"Копировать расширенные а&ттрибуты"
+"Copy extended a&ttributes"
+upd:"Copy extended a&ttributes"
+upd:"Copy extended a&ttributes"
+upd:"Copy extended a&ttributes"
+upd:"Copy extended a&ttributes"
+upd:"Copy extended a&ttributes"
+
 MConfigCopySharing
 "Копировать открытые для &записи файлы"
 "Copy files opened for &writing"
@@ -2552,41 +2561,14 @@ MLinkDlgTitle
 "Dowiąż"
 "Enlace"
 
-MCopySecurity
-"П&рава доступа:"
-"&Access rights:"
-"&Přístupová práva:"
-"Zugriffsrecht&e:"
-"Hozzáférési &jogok:"
-"&Prawa dostępu:"
-"&Permisos de acceso:"
-
-MCopySecurityCopy
-"Копироват&ь"
-"Co&py"
-"&Kopírovat"
-"Ko&pieren"
-"Más&ol"
-"Kopiu&j"
-"Co&piar"
-
-MCopySecurityInherit
-"Нас&ледовать"
-"&Inherit"
-"&Zdědit"
-"Ve&rerben"
-"Ö&rököl"
-"&Dziedzicz"
-"&Heredar"
-
-MCopySecurityLeave
-"По умол&чанию"
-"Defau&lt"
-"Vých&ozí"
-"A&utomat."
-"Ala&pért."
-"Do&myślne"
-"Por defecto"
+MCopyAccessMode
+"Копировать &режим доступа к файлам"
+"Copy files &access mode"
+upd:"Copy files &access mode"
+upd:"Copy files &access mode"
+upd:"Copy files &access mode"
+upd:"Copy files &access mode"
+upd:"Copy files &access mode"
 
 MCopyIfFileExist
 "Уже су&ществующие файлы:"

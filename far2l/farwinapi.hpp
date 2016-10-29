@@ -37,6 +37,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UnicodeString.hpp"
 #include "noncopyable.hpp"
 #include <string.h>
+#include <map>
+#include <vector>
+
 #define NT_MAX_PATH 32768
 
 struct FAR_FIND_DATA_EX
@@ -122,6 +125,8 @@ private:
 	FAR_FIND_DATA_EX Data;
 };
 
+typedef std::map<std::string, std::vector<char> > FileExtendedAttributes;
+
 class File: private NonCopyable
 {
 public:
@@ -138,6 +143,8 @@ public:
 	bool GetSize(UINT64& Size);
 	bool FlushBuffers();
 	bool Chmod(DWORD dwUnixMode);
+	FemaleBool QueryFileExtendedAttributes(FileExtendedAttributes &xattr);
+	FemaleBool SetFileExtendedAttributes(const FileExtendedAttributes &xattr);
 	bool Close();
 	bool Eof();
 	bool Opened() const {return Handle != INVALID_HANDLE_VALUE;}

@@ -159,7 +159,7 @@ extern "C"
 		flags|= O_CLOEXEC;
 #ifdef __linux__
 		if ((dwFlagsAndAttributes & FILE_FLAG_WRITE_THROUGH) != 0)
-			flags|= O_SYNC;
+			flags|= O_DSYNC;
 
 		if ((dwFlagsAndAttributes & FILE_FLAG_NO_BUFFERING) != 0)
 			flags|= O_DIRECT;

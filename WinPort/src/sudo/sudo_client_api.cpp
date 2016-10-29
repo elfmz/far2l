@@ -8,6 +8,8 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/xattr.h>
 #include <map>
 #include <mutex>
 #include "sudo_private.h"
@@ -821,6 +823,102 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, s
 		return buf;
 
 	return getcwd(buf, size);
+}
+
+
+extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd, char *namebuf, size_t size)
+{
+	int remote_fd = s_c2s_fd.Lookup(fd);
+	if (remote_fd == -1) {
+#ifdef __APPLE__
+		return flistxattr(fd, namebuf, size, 0);
+#else
+		return flistxattr(fd, namebuf, size);
+#endif
+	}
+
+	try {
+		ClientTransaction ct(SUDO_CMD_FLISTXATTR);
+		ct.SendPOD(remote_fd);
+		ct.SendPOD(size);
+		
+		ssize_t r;
+		ct.RecvPOD(r);
+		if (r > 0) {
+			if ((size_t)r > size)
+				throw "too big r";
+			ct.RecvBuf(namebuf, r);
+		} else if (r < 0)
+			ct.RecvErrno();
+
+		return r;
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: flistxattr(0x%x) - error %s\n", fd, what);
+		return -1;
+	}	
+}
+
+extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd, const char *name,void *value, size_t size)
+{
+	int remote_fd = s_c2s_fd.Lookup(fd);
+	if (remote_fd == -1) {
+#ifdef __APPLE__
+		return fgetxattr(fd, name, value, size, 0, 0);
+#else
+		return fgetxattr(fd, name, value, size);
+#endif
+	}
+
+	try {
+		ClientTransaction ct(SUDO_CMD_FGETXATTR);
+		ct.SendPOD(remote_fd);
+		ct.SendStr(name);
+		ct.SendPOD(size);
+		
+		ssize_t r;
+		ct.RecvPOD(r);
+		if (r > 0) {
+			if ((size_t)r > size)
+				throw "too big r";
+			ct.RecvBuf(value, r);
+		} else if (r < 0)
+			ct.RecvErrno();
+
+		return r;
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: fgetxattr(0x%x) - error %s\n", fd, what);
+		return -1;
+	}	
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, const char *name, const void *value, size_t size, int flags)
+{
+	int remote_fd = s_c2s_fd.Lookup(fd);
+	if (remote_fd == -1) {
+#ifdef __APPLE__
+		return fsetxattr(fd, name, value, size, 0, flags);
+#else
+		return fsetxattr(fd, name, value, size, flags);
+#endif
+	}
+
+	try {
+		ClientTransaction ct(SUDO_CMD_FSETXATTR);
+		ct.SendPOD(remote_fd);
+		ct.SendStr(name);
+		ct.SendPOD(size);
+		ct.SendBuf(value, size);
+		ct.SendPOD(flags);
+
+		int r = ct.RecvInt();
+		if (r == -1) 
+			ct.RecvErrno();
+
+		return r;
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: fsetxattr(0x%x) - error %s\n", fd, what);
+		return -1;
+	}
 }
 
 

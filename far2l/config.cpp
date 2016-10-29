@@ -669,7 +669,8 @@ static struct FARConfig
 
 
 	{1, REG_DWORD,  NKeySystem,L"WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
-	{0, REG_DWORD,  NKeySystem,L"CopySecurityOptions",&Opt.CMOpt.CopySecurityOptions,0, 0},
+	{1, REG_DWORD,  NKeySystem,L"CopyXAttr",&Opt.CMOpt.CopyXAttr, 0, 0},
+	{0, REG_DWORD,  NKeySystem,L"CopyAccessMode",&Opt.CMOpt.CopyAccessMode,1, 0},
 	{1, REG_DWORD,  NKeySystem,L"CopyOpened",&Opt.CMOpt.CopyOpened,1, 0},
 	{1, REG_DWORD,  NKeySystem, L"MultiCopy",&Opt.CMOpt.MultiCopy,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"CopyTimeRule",  &Opt.CMOpt.CopyTimeRule, 3, 0},

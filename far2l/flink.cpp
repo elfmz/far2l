@@ -71,7 +71,7 @@ static std::string SymSubject(const wchar_t *ExistingName)
 {
 	if (*ExistingName==GOOD_SLASH)
 		return Wide2MB(ExistingName);
-		
+//todo: use ConvertNameToReal
 	if (ExistingName[0]=='.' && ExistingName[1]==GOOD_SLASH)
 		ExistingName+= 2;
 

@@ -2661,13 +2661,22 @@ MLinkTypeSymlinkDirectory
 "enlace simbólico (&directorios)"
 
 MCopySymLinkContents
-"Копировать содерж&имое символических ссылок"
-"Cop&y contents of symbolic links"
-"Kopírovat obsah sym&bolických linků"
-"Inhalte von s&ymbolischen Links kopieren"
-"Sz&imbolikus linkek másolása"
-"&Kopiuj zawartość linków symbolicznych"
-"Copiar contenidos de enlaces simbólicos"
+"Копировать содерж&имое всех символических ссылок"
+"Cop&y contents of all symbolic links"
+upd:"Kopírovat obsah sym&bolických linků"
+upd:"Inhalte von s&ymbolischen Links kopieren"
+upd:"Sz&imbolikus linkek másolása"
+upd:"&Kopiuj zawartość linków symbolicznych"
+upd:"Copiar contenidos de enlaces simbólicos"
+
+MCopySymLinkContentsOuter
+"Копировать содержимое &внешних символических ссылок"
+"Copy contents of oute&r symbolic links"
+upd:"Copy contents of oute&r symbolic links"
+upd:"Copy contents of oute&r symbolic links"
+upd:"Copy contents of oute&r symbolic links"
+upd:"Copy contents of oute&r symbolic links"
+upd:"Copy contents of oute&r symbolic links"
 
 MCopyMultiActions
 "Обр&абатывать несколько имён файлов"

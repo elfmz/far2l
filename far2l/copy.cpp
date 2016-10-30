@@ -98,7 +98,6 @@ static int OrigScrX,OrigScrY;
 static uint64_t TotalCopySize, TotalCopiedSize; // Общий индикатор копирования
 static uint64_t CurCopiedSize;                  // Текущий индикатор копирования
 static uint64_t TotalSkippedSize;               // Общий размер пропущенных файлов
-static uint64_t TotalCopiedSizeEx;
 static size_t   CountTarget;                    // всего целей.
 static bool ShowTotalCopySize;
 static FARString strTotalCopySizeText;
@@ -485,7 +484,7 @@ CopyProgress *CP;
    dest=path\filename (раньше возвращала 2 - т.е. сигнал об ошибке).
 */
 
-int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
+static int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 {
 	FARString strSrcFullName = Src, strDestFullName = Dest;
 
@@ -496,22 +495,31 @@ int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 	return !StrCmp(strSrcFullName,strDestFullName);
 }
 
-bool CheckNulOrCon(const wchar_t *Src)
+static bool CheckNulOrCon(const wchar_t *Src)
 {
-	if (HasPathPrefix(Src))
-		Src+=4;
+	size_t l = wcslen(Src);
+	const wchar_t *dev_null = L"/dev/null";
+	if (l < wcslen(dev_null))
+		return false;
 
-	return (!StrCmpNI(Src,L"nul",3) || !StrCmpNI(Src,L"con",3)) && (IsSlash(Src[3])||!Src[3]);
+	if (memcmp(Src, dev_null, l * sizeof(wchar_t)) != 0)
+		return false;
+	
+	l = wcslen(dev_null);
+	if (Src[l] && Src[l]!=GOOD_SLASH)
+		return false;
+
+	return true;
 }
 
-FARString& GetParentFolder(const wchar_t *Src, FARString &strDest)
+static FARString& GetParentFolder(const wchar_t *Src, FARString &strDest)
 {
 	strDest = Src;
 	CutToSlash(strDest,true);
 	return strDest;
 }
 
-int CmpFullPath(const wchar_t *Src, const wchar_t *Dest)
+static int CmpFullPath(const wchar_t *Src, const wchar_t *Dest)
 {
 	FARString strSrcFullName, strDestFullName;
 
@@ -2144,6 +2152,7 @@ COPY_CODES ShellCopy::DumbCopySymLink(const wchar_t *Target, const wchar_t *NewN
 			Flags&= ~FCOPY_COPYSYMLINKCONTENTSOUTER;
 			Flags|= FCOPY_COPYSYMLINKCONTENTS;
 			return COPY_RETRY;
+
 		case 1: 
 			return COPY_FAILURE;
 

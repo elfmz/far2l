@@ -3073,6 +3073,15 @@ MCopyCannotCreateJunctionToFile
 "Nie można utworzyć połączenia - plik już istnieje:"
 "No se puede unir. El archivo ya existe:"
 
+MCopyCannotCreateSymlinkAskCopyContents
+"Невозможно создать связь. Копировать данные вместо связей?"
+"Cannot create symlink. Copy contents instead?"
+upd:"Cannot create symlink. Copy contents instead?"
+upd:"Cannot create symlink. Copy contents instead?"
+upd:"Cannot create symlink. Copy contents instead?"
+upd:"Cannot create symlink. Copy contents instead?"
+upd:"Cannot create symlink. Copy contents instead?"
+
 MCopyCannotCreateVolMount
 l:
 "Ошибка монтирования диска"

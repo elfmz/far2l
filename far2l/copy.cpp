@@ -650,7 +650,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	SelectedFolderNameLength=0;
 	int DestPlugin=ToPlugin;
 	ToPlugin=FALSE;
-	SrcDriveType=0;
 	this->SrcPanel=SrcPanel;
 	DestPanel=CtrlObject->Cp()->GetAnotherPanel(SrcPanel);
 	DestPanelMode=DestPlugin ? DestPanel->GetMode():NORMAL_PANEL;
@@ -1674,8 +1673,6 @@ ShellCopy::~ShellCopy()
 }
 
 
-
-
 COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -1684,7 +1681,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	FARString strSelName;
 	int Length;
 	DWORD FileAttr;
-
+	
 	if (!(Length=StrLength(Dest)) || !StrCmp(Dest,L"."))
 		return COPY_FAILURE; //????
 
@@ -1782,13 +1779,6 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					ConvertWildcards(strSelName, strDest, SelectedFolderNameLength);
 
 				DestAttr=apiGetFileAttributes(strDest);
-
-				// получим данные о месте назначения
-				if (strDestDriveRoot.IsEmpty())
-				{
-					GetPathRoot(strDest,strDestDriveRoot);
-					DestDriveType=FAR_GetDriveType(wcschr(strDest, '/') ? strDestDriveRoot.CPtr():nullptr);
-				}
 			}
 
 			FARString strDestPath = strDest;
@@ -1796,16 +1786,13 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			int CopyCode=COPY_SUCCESS,KeepPathPos;
 			Flags&=~FCOPY_OVERWRITENEXT;
 
-			if (strSrcDriveRoot.IsEmpty() || StrCmpNI(strSelName,strSrcDriveRoot,(int)strSrcDriveRoot.GetLength()))
-			{
-				GetPathRoot(strSelName,strSrcDriveRoot);
-				SrcDriveType=FAR_GetDriveType(wcschr(strSelName,L'/') ? strSrcDriveRoot.CPtr():nullptr);
-			}
 
-			// "замочим" к едрене фени симлинк - копируем полный контент, независимо от опции
-			// (но не для случая переименования линка по сети)
-			if ((DestDriveType == DRIVE_REMOTE || SrcDriveType == DRIVE_REMOTE) && StrCmp(strSrcDriveRoot,strDestDriveRoot))
+/*			if (!AreSymlinksSupported(Wide2MB(Dest).c_str()) && AreSymlinksSupported(Wide2MB(Src).c_str())) {
+				// "замочим" к едрене фени симлинк - копируем полный контент, независимо от опции
+				// (но не для случая переименования линка)
+				Flags&= ~FCOPY_COPYSYMLINKCONTENTSOUTER;
 				Flags|=FCOPY_COPYSYMLINKCONTENTS;
+			}*/
 
 			KeepPathPos=(int)(PointToName(strSelName)-strSelName.CPtr());
 
@@ -2121,29 +2108,64 @@ static bool IsOuterTarget(const wchar_t *Root, const wchar_t *SymLink)
 	return false;
 }
 
-static int DumbCopySymLink(const wchar_t *Target, const wchar_t *NewName, DWORD Flags)
+COPY_CODES ShellCopy::DumbCopySymLink(const wchar_t *Target, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData)
 {
 	int r = sdc_symlink( Wide2MB(Target).c_str() , Wide2MB(NewName).c_str() );
 	if (r == 0) 
-		return 1;
-		
-	if (!(Flags&FCOPY_NOSHOWMSGLINK)) {
-		Message(MSG_WARNING,1,MSG(MError),
-				MSG(MCopyCannotCreateJunctionToFile),
-				NewName, MSG(MOk));
+		return COPY_SUCCESS;
+
+	if (errno == EEXIST ) {
+		int RetCode = 0, Append = 0;
+		FARString strNewName = NewName;
+		if (AskOverwrite(SrcData, Target, NewName, 0, 0, 0, 0, Append, strNewName, RetCode)) {
+			if (strNewName == NewName) {
+				fprintf(stderr, 
+					"DumbCopySymLink('%ls', '%ls') - overwriting and strNewName='%ls'\n", 
+					Target, NewName, strNewName.CPtr());
+				sdc_remove(strNewName.GetMB().c_str() );
+				sdc_rmdir(strNewName.GetMB().c_str() );
+			} else {
+				fprintf(stderr, 
+					"DumbCopySymLink('%ls', '%ls') - renaming and strNewName='%ls'\n", 
+					Target, NewName, strNewName.CPtr());
+			}
+			return DumbCopySymLink(Target, strNewName.CPtr(), SrcData);
+		}
+			
+		return (COPY_CODES)RetCode;
+	} 
+	
+	
+	switch (Message(MSG_WARNING, 3 ,MSG(MError),
+			MSG(MCopyCannotCreateSymlinkAskCopyContents),
+			NewName, MSG(MYes), MSG(MSkip), MSG(MCancel)   ))
+	{
+		case 0: 
+			Flags&= ~FCOPY_COPYSYMLINKCONTENTSOUTER;
+			Flags|= FCOPY_COPYSYMLINKCONTENTS;
+			return COPY_RETRY;
+		case 1: 
+			return COPY_FAILURE;
+
+		case 2: default:
+			return COPY_CANCEL;
 	}
-	return 0;
 }
 
-static int CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, DWORD Flags)
+COPY_CODES ShellCopy::CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, 
+						const wchar_t *NewName, ReparsePointTypes LinkType, const FAR_FIND_DATA_EX &SrcData)
 {
 	//fprintf(stderr, "CopySymLink('%ls', '%ls', '%ls')\n", Root, ExistingName, NewName);
+	FARString strRealName;
+	ConvertNameToReal(ExistingName, strRealName);
+	
 	if (IsOuterTarget(Root, ExistingName))  {
-		return MkSymLink(ExistingName, NewName, LinkType, Flags);
+		FARString strNewName;
+		ConvertNameToFull(ExistingName, strNewName);
+		return DumbCopySymLink(strRealName.CPtr(), strNewName.CPtr(), SrcData);
 	}
 
-	FARString strRealName, strExistingName;
-	ConvertNameToReal(ExistingName, strRealName);
+	FARString strExistingName;
 	ConvertNameToFull(ExistingName, strExistingName);
 	
 	std::wstring relative_name;
@@ -2168,7 +2190,7 @@ static int CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, const w
 	}
 	assert(!relative_name.empty());
 
-	return DumbCopySymLink(relative_name.c_str(), NewName, Flags);
+	return DumbCopySymLink(relative_name.c_str(), NewName, SrcData);
 }
 
 
@@ -2402,15 +2424,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 			// [ ] Copy contents of symbolic links
 			if (copy_sym_link)
 			{
-				switch (CopySymLink(Root, Src, strDestPath, RPT, 0))//MkSymLink(Src, strDestPath,RPT,0))
-				{
-					case 2:
-						return COPY_CANCEL;
-					case 1:
-						break;
-					case 0:
-						return COPY_FAILURE;
-				}
+				COPY_CODES CopyRetCode = CopySymLink(Root, Src, strDestPath, RPT, SrcData);
+				if (CopyRetCode != COPY_SUCCESS && CopyRetCode != COPY_SUCCESS_MOVE)
+					return CopyRetCode;
 			}
 			TreeList::AddTreeName(strDestPath);
 			return COPY_SUCCESS;

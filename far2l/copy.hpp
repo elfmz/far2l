@@ -79,8 +79,6 @@ class ShellCopy
 		Panel *SrcPanel,*DestPanel;
 		int SrcPanelMode,DestPanelMode;
 		int SrcDriveType,DestDriveType;
-		FARString strSrcDriveRoot;
-		FARString strDestDriveRoot;
 		FARString strDestFSName;
 		char   *sddata; // Security
 		DizList DestDiz;
@@ -128,6 +126,10 @@ class ShellCopy
 		bool CalcTotalSize();
 		bool ShellSetAttr(const wchar_t *Dest,DWORD Attr);
 		void CheckUpdatePanel(); // выставляет флаг FCOPY_UPDATEPPANEL
+		
+		COPY_CODES DumbCopySymLink(const wchar_t *Target, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
+		COPY_CODES CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, 
+					const wchar_t *NewName, ReparsePointTypes LinkType, const FAR_FIND_DATA_EX &SrcData);
 	public:
 		ShellCopy(Panel *SrcPanel,int Move,int Link,int CurrentOnly,int Ask,
 		          int &ToPlugin, const wchar_t *PluginDestPath, bool ToSubdir=false);

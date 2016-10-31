@@ -131,7 +131,7 @@ public:
 				fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
 				_executable = true;
 			} else {
-				_executable = IsExecutableByExtension(cmd);
+				_executable = IsExecutableByExtension(_cmd.c_str());
 				fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
 					cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3], _executable ? "" : "not ");
 			}

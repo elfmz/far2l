@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #ifdef __APPLE__
+  #include <errno.h>
   #include <sys/mount.h>
 #else
   #include <sys/statfs.h>

@@ -81,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "mix.hpp"
 #include "constitle.hpp"
+#include "plugapi.hpp"
 
 extern PanelViewSettings ViewSettingsArray[];
 extern size_t SizeViewSettingsArray;
@@ -4790,9 +4791,8 @@ int FileList::PluginPanelHelp(HANDLE hPlugin)
 	PluginHandle *ph = (PluginHandle*)hPlugin;
 	strPath = ph->pPlugin->GetModuleName();
 	CutToSlash(strPath);
-	UINT nCodePage = CP_OEMCP;
+	UINT nCodePage = CP_UTF8;
 	FILE *HelpFile=OpenLangFile(strPath,HelpFileMask,Opt.strHelpLanguage,strFileName, nCodePage);
-
 	if (!HelpFile)
 		return FALSE;
 
@@ -4893,3 +4893,4 @@ void FileList::ClearAllItem()
 		}
 	}
 }
+

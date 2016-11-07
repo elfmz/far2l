@@ -2,10 +2,8 @@
 
 void FarHrcSettings::readProfile()
 {
-  StringBuffer *path=new StringBuffer(PluginPath);
-  path->append(DString(FarProfileXml));
+  StringBuffer *path = GetConfigPath(DString(FarProfileXml));
   readXML(path, false);
-
   delete path;
 }
 

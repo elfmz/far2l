@@ -405,7 +405,14 @@ void PluginManager::LoadPlugins()
 		// сначала подготовим список
 		if (Opt.LoadPlug.MainPluginDir) // только основные и персональные?
 		{
-			strPluginsDir=g_strFarPath+PluginsFolderName;
+			strPluginsDir = g_strFarPath + PluginsFolderName;
+			PluginPathList.AddItem(strPluginsDir);
+
+			strPluginsDir = L"/lib/far2l/";
+			strPluginsDir+= PluginsFolderName;
+			PluginPathList.AddItem(strPluginsDir);
+
+			strPluginsDir.Insert(0, L"/usr");
 			PluginPathList.AddItem(strPluginsDir);
 
 			// ...а персональные есть?

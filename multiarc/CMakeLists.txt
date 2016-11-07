@@ -148,7 +148,7 @@ target_compile_definitions(multiarc PRIVATE -DRARDLL -D_7ZIP_ST)
 
 set_target_properties(multiarc
   PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/multiarc/bin"
+    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/multiarc/plug"
     PREFIX ""
     SUFFIX ".far-plug-mb")
 

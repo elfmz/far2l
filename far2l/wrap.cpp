@@ -1068,10 +1068,12 @@ const char * WINAPI FarGetMsgFnA(INT_PTR PluginHandle,int MsgId)
 	FARString strPath = pPlugin->GetModuleName();
 	CutToSlash(strPath);
 //	fprintf(stderr,"FarGetMsgFnA: strPath=%ls\n", strPath.CPtr());
-	if (pPlugin->InitLang(strPath))
-		return pPlugin->GetMsgA(MsgId);
 
-	return "";
+	if (!pPlugin->InitLang(strPath)) {
+		return "";
+	}
+
+	return pPlugin->GetMsgA(MsgId);
 }
 
 int WINAPI FarMenuFnA(INT_PTR PluginNumber,int X,int Y,int MaxHeight,DWORD Flags,const char *Title,const char *Bottom,const char *HelpTopic,const int *BreakKeys,int *BreakCode,const oldfar::FarMenuItem *Item,int ItemsNumber)

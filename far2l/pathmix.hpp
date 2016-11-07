@@ -101,5 +101,3 @@ bool TestCurrentDirectory(const wchar_t *TestDir);
 FARString ExtractPathRoot(const FARString &Path);
 FARString ExtractFileName(const FARString &Path);
 FARString ExtractFilePath(const FARString &Path);
-
-void PrepareTemporaryOpenPath(FARString &Path);

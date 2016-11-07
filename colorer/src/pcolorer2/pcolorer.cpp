@@ -14,6 +14,22 @@ SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
       pos = module.lastIndexOf('/',pos);
       PluginPath=new StringBuffer(DString(module, 0, pos));	
 }
+
+StringBuffer *GetConfigPath(const DString &sub)
+{
+  struct stat s;
+  StringBuffer *path=new StringBuffer(PluginPath);
+  path->append(sub);
+  if (stat(path->getChars(), &s) == 0) {
+    return path;
+  }
+  path->setLength(0);
+  path->append(DString(L"/etc/far2l/Plugins/colorer/"));
+  path->append(sub);
+  return path;
+}
+
+
 //todo:
 /**
   Returns message from FAR current language.
@@ -118,6 +134,8 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
 {
   return editorSet->editorInput(ir);
 }
+
+
 
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1

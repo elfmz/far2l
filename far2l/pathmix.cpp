@@ -36,12 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "pathmix.hpp"
 #include "strmix.hpp"
-#include "scantree.hpp"
 #include "panel.hpp"
-#include "delete.hpp"
 #include <time.h>
 #include <sys/time.h>
-#include <atomic>
 
 NTPath::NTPath(LPCWSTR Src)
 {
@@ -666,41 +663,4 @@ bool PathStartsWith(const FARString &Path, const FARString &Start)
 	FARString PathPart(Start);
 	DeleteEndSlash(PathPart, true);
 	return Path.Equal(0, PathPart) && (Path.GetLength() == PathPart.GetLength() || IsSlash(Path[PathPart.GetLength()]));
-}
-
-void PrepareTemporaryOpenPath(FARString &Path)
-{
-	Path = InMyTemp("open");
-
-	std::vector<FARString> outdated;
-
-	ScanTree scan_tree(0, 0);
-	scan_tree.SetFindPath(Path.CPtr(), L"*", 0);
-	FAR_FIND_DATA_EX found_data;
-	FARString found_name;
-	time_t now = time(nullptr);
-	while (scan_tree.GetNextName(&found_data, found_name)) {
-		struct timespec ts_mod = {}, ts_change = {};
-		WINPORT(FileTimeToLocalFileTime)(&found_data.ftUnixModificationTime, &found_data.ftUnixModificationTime);
-		WINPORT(FileTimeToLocalFileTime)(&found_data.ftUnixStatusChangeTime, &found_data.ftUnixStatusChangeTime);
-		WINPORT(FileTime_Win32ToUnix)(&found_data.ftUnixModificationTime, &ts_mod);
-		WINPORT(FileTime_Win32ToUnix)(&found_data.ftUnixStatusChangeTime, &ts_change);
-		time_t delta = std::min(now - ts_mod.tv_sec, now - ts_change.tv_sec);
-		if (delta > 60) {//one minute ought be enouht to open anything (c)
-			outdated.push_back(found_name);
-			fprintf(stderr, "PrepareTemporaryOpenPath: delta=%u for '%ls'\n", 
-				(unsigned int)delta, found_name.CPtr());
-		}
-	};
-
-	for (const auto &p : outdated) {
-		DeleteDirTree(p.CPtr());
-	}
-	apiCreateDirectory(Path, nullptr);
-	
-	static std::atomic<unsigned short>	s_counter;
-	char tmp[64]; sprintf(tmp, "%c%u_%u", GOOD_SLASH, (unsigned int)getpid(), (unsigned int)++s_counter);
-	
-	Path+= tmp;
-	apiCreateDirectory(Path, nullptr);
 }

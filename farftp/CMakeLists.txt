@@ -114,7 +114,7 @@ target_include_directories(farftp PRIVATE ../far2l/Include)
 
 set_target_properties(farftp
   PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/farftp/bin"
+    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/farftp/plug"
     PREFIX ""
     SUFFIX ".far-plug-mb")
 

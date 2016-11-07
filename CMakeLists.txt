@@ -7,7 +7,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 #if(NOT CMAKE_INSTALL_PREFIX)
-   set(CMAKE_INSTALL_PREFIX "/opt")
+   set(CMAKE_INSTALL_PREFIX "/usr")
 #endif()
 
 
@@ -49,9 +49,21 @@ add_subdirectory (multiarc)
 add_subdirectory (tmppanel)
 
 
-install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING PATTERN "*")
+install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
+
+install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
+	PATTERN "colorer/base" EXCLUDE 
+	PATTERN "*.far-plug-*")
+
+install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "/etc/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
+	PATTERN "far2l" EXCLUDE 
+	PATTERN "far2l_askpass" EXCLUDE 
+	PATTERN "far2l_sudoapp" EXCLUDE 
+	PATTERN "*.far-plug-*" EXCLUDE 
+	PATTERN "*")
 
 install(CODE "
-      execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/far2l/far2l /bin/far2l)
+      execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_askpass)
+      execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_sudoapp)
       "
     )

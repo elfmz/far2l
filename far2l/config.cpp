@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "stddlg.hpp"
 #include "pathmix.hpp"
+#include "dirmix.hpp"
 #include "panelmix.hpp"
 #include "strmix.hpp"
 #include "udlist.hpp"
@@ -115,11 +116,8 @@ const wchar_t *constBatchExt=L".BAT;.CMD;";
 
 static void ApplySudoConfiguration()
 {
- 	std::string sudo_app = g_strFarPath.GetMB(); 
-	std::string askpass_app = g_strFarPath.GetMB(); 
-	
-	sudo_app+= "/far2l_sudoapp";
-	askpass_app+= "/far2l_askpass";
+ 	const std::string &sudo_app = GetHelperPathName("far2l_sudoapp");
+	const std::string &askpass_app = GetHelperPathName("far2l_askpass");
 
 	SudoClientMode mode;
 	if (Opt.SudoEnabled) {

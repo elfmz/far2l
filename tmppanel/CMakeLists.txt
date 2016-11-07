@@ -25,7 +25,7 @@ target_include_directories(tmppanel PRIVATE ../WinPort)
 
 set_target_properties(tmppanel
   PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/tmppanel/bin"
+    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/tmppanel/plug"
     PREFIX ""
     SUFFIX ".far-plug-wide")
 

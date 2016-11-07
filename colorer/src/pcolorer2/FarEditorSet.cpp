@@ -798,12 +798,10 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
 
   SString *tpath;
   if (!catalogPathS || !catalogPathS->length()){
-    StringBuffer *path=new StringBuffer(PluginPath);
-    path->append(DString(FarCatalogXml));
-    tpath = path;
+    tpath = GetConfigPath(DString(FarCatalogXml));
   }
   else{
-    tpath=catalogPathS;
+    tpath = catalogPathS;
   }
 
   try{
@@ -1117,9 +1115,7 @@ void FarEditorSet::ReadSettings()
   sCatalogPathExp = PathToFullS(catalogPath,false);
   if (!sCatalogPathExp || !sCatalogPathExp->length()){
     delete sCatalogPathExp;
-    StringBuffer *path=new StringBuffer(PluginPath);
-    path->append(DString(FarCatalogXml));
-    sCatalogPathExp = path;
+    sCatalogPathExp = GetConfigPath(DString(FarCatalogXml));
   }
 
   sUserHrdPath = new SString(userHrdPath);

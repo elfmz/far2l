@@ -1167,10 +1167,11 @@ const wchar_t* WINAPI FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
 	FARString strPath = pPlugin->GetModuleName();
 	CutToSlash(strPath);
 
-	if (pPlugin->InitLang(strPath))
-		return pPlugin->GetMsg(MsgId);
+	if (!pPlugin->InitLang(strPath)) {
+		return L"";
+	}
 
-	return L"";
+	return pPlugin->GetMsg(MsgId);
 }
 
 int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopic,

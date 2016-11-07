@@ -12,7 +12,7 @@
 #define MAX_VALUE_NAME 50 // in msdn 16383 , but we have enough 50
 
 const wchar_t FarCatalogXml[]=L"/base/catalog.xml";
-const wchar_t FarProfileXml[]=L"/bin/hrcsettings.xml";
+const wchar_t FarProfileXml[]=L"/plug/hrcsettings.xml";
 
 
 class FarHrcSettingsException : public Exception{

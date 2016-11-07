@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "config.hpp"
 #include "strmix.hpp"
+#include "pathmix.hpp"
 #include "filestr.hpp"
 #include "interf.hpp"
 #include "lasterror.hpp"
@@ -58,7 +59,7 @@ const wchar_t LangFileMask[] = L"*.lng";
 Language Lang;
 Language OldLang;
 
-FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang,FARString *pstrLangName)
+static FILE* TryOpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang,FARString *pstrLangName)
 {
 	strFileName.Clear();
 	FILE *LangFile=nullptr;
@@ -121,6 +122,26 @@ FILE* OpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Langua
 	return(LangFile);
 }
 
+FILE* OpenLangFile(FARString strPath,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang,FARString *pstrLangName)
+{
+	FILE* out = TryOpenLangFile(strPath, Mask, Language, strFileName, nCodePage, StrongLang, pstrLangName);
+	if (!out) {
+		bool alternated = false;
+
+		if (PathStartsWith(strPath, L"/usr/lib/")) {
+			strPath.Replace(1, 7, L"etc");
+			alternated = true;
+		} else if (PathStartsWith(strPath, L"/lib/")) {
+			strPath.Replace(1, 3, L"etc");
+			alternated = true;
+		}
+
+		if (alternated) {
+			out = TryOpenLangFile(strPath, Mask, Language, strFileName, nCodePage, StrongLang, pstrLangName);
+		}
+	}
+	return out;
+}
 
 int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FARString *strParam2, UINT nCodePage)
 {
@@ -591,3 +612,4 @@ const char* Language::GetMsgA(int nID) const
 
 	return MsgAddrA[nID];
 }
+

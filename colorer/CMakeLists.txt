@@ -90,7 +90,7 @@ target_include_directories(colorer PRIVATE src/zlib)
 
 set_target_properties(colorer
   PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/colorer/bin"
+    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/colorer/plug"
     PREFIX ""
     SUFFIX ".far-plug-wide")
 

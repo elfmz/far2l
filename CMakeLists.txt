@@ -26,6 +26,7 @@ if(CMAKE_VERSION VERSION_GREATER "3.3")
   cmake_policy(SET CMP0063 NEW)
 endif()
 
+
 include_directories(utils/include)
 
 add_subdirectory (farlng)
@@ -48,12 +49,11 @@ add_subdirectory (colorer)
 add_subdirectory (multiarc)
 add_subdirectory (tmppanel)
 
-
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
 	PATTERN "colorer/base" EXCLUDE 
-	PATTERN "*.far-plug-*")
+	PATTERN "plug/*.far-plug-*")
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "/etc/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
 	PATTERN "far2l" EXCLUDE 

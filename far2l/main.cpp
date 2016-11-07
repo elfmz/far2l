@@ -367,19 +367,8 @@ int FarAppMain(int argc, char **argv)
 	g_strFarPath = g_strFarModuleName;
 	CutToSlash(g_strFarPath, true);
 
-	if ( PathStartsWith(g_strFarPath, L"/usr/bin") ||
-			PathStartsWith(g_strFarPath, L"/usr/sbin") ||
-			PathStartsWith(g_strFarPath, L"/bin") ||
-			PathStartsWith(g_strFarPath, L"/sbin")){
+	if ( IsPathInBin(g_strFarPath.CPtr())){
 		g_strFarPath = "/etc/far2l/";
-		/* struct stat s;
-		if (stat("/etc/far2l", &s) == 0) {
-			g_strFarPath = "/etc/far2l/";
-		} else if (stat("/usr/lib/far2l", &s) == 0) {
-			g_strFarPath = "/usr/lib/far2l/";
-		} else if (stat("/lib/far2l", &s) == 0) {
-			g_strFarPath = "/lib/far2l/";
-		} */
 	}
 
 	WINPORT(SetEnvironmentVariable)(L"FARHOME", g_strFarPath);

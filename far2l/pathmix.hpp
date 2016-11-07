@@ -66,7 +66,6 @@ bool IsLocalVolumeRootPath(const wchar_t *Path);
 bool IsAbsolutePath(const wchar_t *Path);
 bool IsRootPath(const FARString &Path);
 bool HasPathPrefix(const wchar_t *Path);
-bool PathStartsWith(const FARString &Path, const FARString &Start);
 bool PathCanHoldRegularFile(const wchar_t *Path);
 bool IsPluginPrefixPath(const wchar_t *Path);
 

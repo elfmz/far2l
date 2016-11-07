@@ -497,21 +497,7 @@ static int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 
 static bool CheckNulOrCon(const wchar_t *Src)
 {
-	const wchar_t *dev_null = L"/dev/null";
-	
-	const size_t src_len = wcslen(Src);
-	const size_t dev_null_len = wcslen(dev_null);
-	
-	if (src_len < dev_null_len)
-		return false;
-
-	if (memcmp(Src, dev_null, src_len * sizeof(wchar_t)) != 0)
-		return false;
-	
-	if (Src[dev_null_len] && Src[dev_null_len]!=GOOD_SLASH)
-		return false;
-
-	return true;
+	return IsPathIn(Src, L"/dev/null");
 }
 
 static FARString& GetParentFolder(const wchar_t *Src, FARString &strDest)

@@ -259,4 +259,43 @@ int pipe_cloexec(int pipedes[2])
 #endif	
 }
 
+bool IsPathIn(const wchar_t *path, const wchar_t *root)
+{	
+	const size_t path_len = wcslen(path);
+	size_t root_len = wcslen(root);
 
+	while (root_len > 1 && root[root_len - 1] == GOOD_SLASH)
+		--root_len;
+
+	if (path_len < root_len)
+		return false;
+
+	if (memcmp(path, root, root_len * sizeof(wchar_t)) != 0)
+		return false;
+	
+	if (root_len > 1 && path[root_len] && path[root_len] != GOOD_SLASH)
+		return false;
+
+	return true;
+}
+
+bool IsPathInBin(const wchar_t *path)
+{
+	return (IsPathIn(path, L"/bin") || IsPathIn(path, L"/usr/bin") ||
+		IsPathIn(path, L"/sbin") || IsPathIn(path, L"/usr/sbin") );
+}
+
+bool IsPathInLib(const wchar_t *path)
+{
+	return (IsPathIn(path, L"/lib") || IsPathIn(path, L"/usr/lib"));
+}
+
+bool IsPathInLib(const char *path)
+{
+	return IsPathInLib(MB2Wide(path).c_str());
+}
+
+bool IsPathInEtc(const wchar_t *path)
+{
+	return (IsPathIn(path, L"/etc"));
+}

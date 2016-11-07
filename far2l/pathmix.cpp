@@ -658,9 +658,3 @@ bool IsRootPath(const FARString &Path)
 	return false;
 }
 
-bool PathStartsWith(const FARString &Path, const FARString &Start)
-{
-	FARString PathPart(Start);
-	DeleteEndSlash(PathPart, true);
-	return Path.Equal(0, PathPart) && (Path.GetLength() == PathPart.GetLength() || IsSlash(Path[PathPart.GetLength()]));
-}

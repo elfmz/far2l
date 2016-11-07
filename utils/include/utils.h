@@ -23,6 +23,12 @@ std::string EscapeQuotas(std::string str);
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
 std::string InMyTemp(const char *subpath = NULL);
 
+bool IsPathIn(const wchar_t *path, const wchar_t *root);
+bool IsPathInBin(const wchar_t *path);
+bool IsPathInLib(const wchar_t *path);
+bool IsPathInLib(const char *path);
+bool IsPathInEtc(const wchar_t *path);
+
 
 void CheckedCloseFD(int &fd);
 void CheckedCloseFDPair(int *fd);

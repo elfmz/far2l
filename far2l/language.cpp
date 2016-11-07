@@ -128,10 +128,10 @@ FILE* OpenLangFile(FARString strPath,const wchar_t *Mask,const wchar_t *Language
 	if (!out) {
 		bool alternated = false;
 
-		if (PathStartsWith(strPath, L"/usr/lib/")) {
+		if (IsPathIn(strPath, L"/usr/lib/")) {
 			strPath.Replace(1, 7, L"etc");
 			alternated = true;
-		} else if (PathStartsWith(strPath, L"/lib/")) {
+		} else if (IsPathIn(strPath, L"/lib/")) {
 			strPath.Replace(1, 3, L"etc");
 			alternated = true;
 		}

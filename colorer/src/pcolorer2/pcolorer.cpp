@@ -1,6 +1,7 @@
-#include"pcolorer.h"
-#include"tools.h"
-#include"FarEditorSet.h"
+#include "pcolorer.h"
+#include "tools.h"
+#include "FarEditorSet.h"
+#include <utils.h>
 
 FarEditorSet *editorSet = NULL;
 PluginStartupInfo Info;
@@ -20,12 +21,11 @@ StringBuffer *GetConfigPath(const DString &sub)
   struct stat s;
   StringBuffer *path=new StringBuffer(PluginPath);
   path->append(sub);
-  if (stat(path->getChars(), &s) == 0) {
-    return path;
+  if (stat(path->getChars(), &s) == -1 && IsPathInLib(path->getWChars())) {
+	  path->setLength(0);
+	  path->append(DString(L"/etc/far2l/Plugins/colorer/"));
+	  path->append(sub);
   }
-  path->setLength(0);
-  path->append(DString(L"/etc/far2l/Plugins/colorer/"));
-  path->append(sub);
   return path;
 }
 

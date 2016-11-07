@@ -258,14 +258,16 @@ std::string GetHelperPathName(const char *name)
 	if (stat(out.c_str(), &s) == 0)
 		return out;
 
-	out = "/lib/far2l/";
-	out+= name;	
-	if (stat(out.c_str(), &s) == 0)
-		return out;
+	if (IsPathInBin(g_strFarPath) || IsPathInEtc(g_strFarPath)) {
+		out = "/lib/far2l/";
+		out+= name;	
+		if (stat(out.c_str(), &s) == 0)
+			return out;
 
-	out.insert(0, "/usr");
-	if (stat(out.c_str(), &s) == 0)
-		return out;
+		out.insert(0, "/usr");
+		if (stat(out.c_str(), &s) == 0)
+			return out;
+	}
 
 	fprintf(stderr, "GetHelperPathName('%s') - not found\n", name);
 	return out;

@@ -16,6 +16,9 @@
 #include <sys/wait.h>
 #include <pluginold.hpp>
 #include <KeyFileHelper.h>
+#include <utils.h>
+#include <string>
+#include <list>
 using namespace oldfar;
 #include "fmt.hpp"
 #include <errno.h>
@@ -320,7 +323,7 @@ int     CurType = 0;
 char    *OutData = nullptr;
 DWORD   OutDataPos = 0, OutDataSize = 0;
 
-static std::string FormatFileName, EtcFormatFileName, UserFormatFileName;
+static std::list<std::string> FormatFileNames;
 
 static std::string StartText, EndText;
 
@@ -350,30 +353,29 @@ void WINAPI _export CUSTOM_SetFarInfo(const struct PluginStartupInfo *Info)
 static bool HasCustomIni()
 {
 	struct stat s;
-	if (!FormatFileName.empty() && stat(FormatFileName.c_str(), &s) == 0)
-		return true;
-		
-	if (stat(EtcFormatFileName.c_str(), &s) == 0)
-		return true;
-		
-	if (stat(UserFormatFileName.c_str(), &s) == 0)
-		return true;
+	for (const auto &n : FormatFileNames) {
+		if (stat(n.c_str(), &s) == 0)
+			return true;
+	}
 		
 	return false;
 }
 
 DWORD WINAPI _export CUSTOM_LoadFormatModule(const char *ModuleName)
 {
-	FormatFileName = ModuleName;
-	size_t p = FormatFileName.rfind(GOOD_SLASH);
+	std::string s = ModuleName;
+	size_t p = s.rfind(GOOD_SLASH);
 	if (p != std::string::npos) {
-		FormatFileName.resize(p + 1);
-		FormatFileName+= "custom.ini";
-	} else
-		FormatFileName.clear();
+		s.resize(p + 1);
+		s+= "custom.ini";
+		FormatFileNames.emplace_back(s);
+	}
 
-	EtcFormatFileName = "/etc/far2l/Plugins/multiarc/custom.ini";
-	UserFormatFileName = InMyConfig("multiarc/custom.ini", false);
+	if (IsPathInLib(s.c_str())) {
+		FormatFileNames.emplace_back("/etc/far2l/Plugins/multiarc/custom.ini");
+	}
+
+	FormatFileNames.emplace_back(InMyConfig("multiarc/custom.ini", false));
 	return (0);
 }
 
@@ -753,31 +755,23 @@ static bool GetSectionName(const std::string &FileName, int &Num, std::string &N
 
 bool GetSectionName(int Num, std::string &Name)
 {
-	if (GetSectionName(FormatFileName, Num, Name))
-		return true;
-	if (GetSectionName(EtcFormatFileName, Num, Name))
-		return true;
-	if (GetSectionName(UserFormatFileName, Num, Name))
-		return true;
+	for (const auto &n : FormatFileNames) {
+		if (GetSectionName(n, Num, Name))
+			return true;
+	}
 	return false;
 
 }
 
-bool GetSectionName(int Num, char *Name, int MaxSize)
-{
-	std::string s;
-	if (!GetSectionName(Num, s))
-		return false;
-
-	strncpy(Name, s.c_str(), MaxSize);
-	return true;
-}
 
 void GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault, std::string &out)
 {
-	out = KeyFileHelper(FormatFileName.c_str()).GetString(lpAppName,lpKeyName, lpDefault);
-	out = KeyFileHelper(EtcFormatFileName.c_str()).GetString(lpAppName,lpKeyName, out.c_str());
-	out = KeyFileHelper(UserFormatFileName.c_str()).GetString(lpAppName,lpKeyName, out.c_str());
+	out = lpDefault;
+
+	for (const auto &n : FormatFileNames) {
+		out = KeyFileHelper(n.c_str()).GetString(lpAppName,lpKeyName, out.c_str());
+	}
+
 	size_t len = out.size();
 	if (len >= 2 && out[0] == '\"' && out[len - 1] == '\"') {
 		out.resize(len - 1);
@@ -796,9 +790,10 @@ DWORD GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault,LPSTR lpRe
 
 UINT GetIniInt(LPCSTR lpAppName,LPCSTR lpKeyName,INT lpDefault)
 {
-	UINT v = KeyFileHelper(FormatFileName.c_str()).GetInt(lpAppName,lpKeyName, lpDefault);
-	v = KeyFileHelper(EtcFormatFileName.c_str()).GetInt(lpAppName,lpKeyName, v);
-	v = KeyFileHelper(UserFormatFileName.c_str()).GetInt(lpAppName,lpKeyName, v);
+	UINT v = lpDefault;
+	for (const auto &n : FormatFileNames) {
+		v = KeyFileHelper(n.c_str()).GetInt(lpAppName, lpKeyName, v);
+	}
 	return v;
 }
 

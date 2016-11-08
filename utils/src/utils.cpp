@@ -279,23 +279,48 @@ bool IsPathIn(const wchar_t *path, const wchar_t *root)
 	return true;
 }
 
-bool IsPathInBin(const wchar_t *path)
+
+template <class C> 
+	static bool TranslateInstallPath(std::basic_string<C> &path, const C *dir_from, const C *dir_to)
 {
-	return (IsPathIn(path, L"/bin") || IsPathIn(path, L"/usr/bin") ||
-		IsPathIn(path, L"/sbin") || IsPathIn(path, L"/usr/sbin") );
+	const size_t fl = tzlen(dir_from);
+
+	for (size_t i = path.find(dir_from); i != std::basic_string<C>::npos; i = path.find(dir_from, i + 1)) {
+		if ( i > 0 && path[i - 1] == GOOD_SLASH && ((i + fl) == path.size() || path[i + fl] == GOOD_SLASH) ) {
+			path.replace(i, fl, dir_to);
+			return true;
+		}
+	}
+
+	return false;
 }
 
-bool IsPathInLib(const wchar_t *path)
+bool TranslateInstallPath_Bin2Share(std::wstring &path)
 {
-	return (IsPathIn(path, L"/lib") || IsPathIn(path, L"/usr/lib"));
+	return (TranslateInstallPath(path, L"bin", L"share") || TranslateInstallPath(path, L"sbin", L"share"));
 }
 
-bool IsPathInLib(const char *path)
+bool TranslateInstallPath_Bin2Share(std::string &path)
 {
-	return IsPathInLib(MB2Wide(path).c_str());
+	return (TranslateInstallPath(path, "bin", "share") || TranslateInstallPath(path, "sbin", "share"));
 }
 
-bool IsPathInEtc(const wchar_t *path)
+bool TranslateInstallPath_Lib2Share(std::wstring &path)
 {
-	return (IsPathIn(path, L"/etc"));
+	return TranslateInstallPath(path, L"lib", L"share");
+}
+
+bool TranslateInstallPath_Lib2Share(std::string &path)
+{
+	return TranslateInstallPath(path, "lib", "share");
+}
+
+bool TranslateInstallPath_Share2Lib(std::wstring &path)
+{
+	return TranslateInstallPath(path, L"share", L"lib");
+}
+
+bool TranslateInstallPath_Share2Lib(std::string &path)
+{
+	return TranslateInstallPath(path, "share", "lib");
 }

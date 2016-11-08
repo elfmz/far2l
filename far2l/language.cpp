@@ -126,17 +126,7 @@ FILE* OpenLangFile(FARString strPath,const wchar_t *Mask,const wchar_t *Language
 {
 	FILE* out = TryOpenLangFile(strPath, Mask, Language, strFileName, nCodePage, StrongLang, pstrLangName);
 	if (!out) {
-		bool alternated = false;
-
-		if (IsPathIn(strPath, L"/usr/lib/")) {
-			strPath.Replace(1, 7, L"etc");
-			alternated = true;
-		} else if (IsPathIn(strPath, L"/lib/")) {
-			strPath.Replace(1, 3, L"etc");
-			alternated = true;
-		}
-
-		if (alternated) {
+		if (TranslateFarString<TranslateInstallPath_Lib2Share>(strPath)) {
 			out = TryOpenLangFile(strPath, Mask, Language, strFileName, nCodePage, StrongLang, pstrLangName);
 		}
 	}

@@ -408,12 +408,7 @@ void PluginManager::LoadPlugins()
 			strPluginsDir = g_strFarPath + PluginsFolderName;
 			PluginPathList.AddItem(strPluginsDir);
 
-			if (IsPathInBin(g_strFarPath) || IsPathInEtc(g_strFarPath)) {
-				strPluginsDir = L"/lib/far2l/";
-				strPluginsDir+= PluginsFolderName;
-				PluginPathList.AddItem(strPluginsDir);
-
-				strPluginsDir.Insert(0, L"/usr");
+			if (TranslateFarString<TranslateInstallPath_Share2Lib>(strPluginsDir)) {
 				PluginPathList.AddItem(strPluginsDir);
 			}
 

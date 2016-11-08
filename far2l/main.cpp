@@ -365,12 +365,13 @@ int FarAppMain(int argc, char **argv)
 	Opt.LoadPlug.PluginsCacheOnly=FALSE;
 
 	g_strFarPath = g_strFarModuleName;
-	CutToSlash(g_strFarPath, true);
-
-	if ( IsPathInBin(g_strFarPath.CPtr())){
-		g_strFarPath = "/etc/far2l/";
-	}
-
+	
+	if (!TranslateFarString<TranslateInstallPath_Bin2Share>(g_strFarPath)) {
+		CutToSlash(g_strFarPath, true);
+	} /*else {
+		/usr/bin/far2l -> /usr/share/far2l
+	}*/
+		
 	WINPORT(SetEnvironmentVariable)(L"FARHOME", g_strFarPath);
 	AddEndSlash(g_strFarPath);
 

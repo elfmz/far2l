@@ -14,6 +14,7 @@ class ConsoleOutputListener
 		virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos) = 0;
 		virtual COORD OnConsoleGetLargestWindowSize() = 0;
 		virtual void OnConsoleAdhocQuickEdit() = 0;
+		virtual void OnConsoleExit() = 0;
 };
 
 class ConsoleOutput

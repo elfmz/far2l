@@ -262,8 +262,13 @@ extern "C" {
 
 	WINPORT_DECL(GenerateConsoleCtrlEvent, BOOL, (DWORD dwCtrlEvent, DWORD dwProcessGroupId ))
 	{
-		if (gHandlerRoutine)
-			gHandlerRoutine(dwCtrlEvent);
+		if (!gHandlerRoutine || !gHandlerRoutine(dwCtrlEvent)) {
+			if (dwCtrlEvent == CTRL_CLOSE_EVENT) {
+				fprintf(stderr, "GenerateConsoleCtrlEvent(%u) - exiting\n", dwCtrlEvent);
+				exit(0);
+			}
+		}
+		fprintf(stderr, "GenerateConsoleCtrlEvent(%u)\n", dwCtrlEvent);
 		return TRUE;
 	}
 

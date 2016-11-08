@@ -64,3 +64,20 @@ WinPortHandle *WinPortHandle_Reference(HANDLE h)
 	return wph;
 }
 
+
+void WinPortHandle_FinalizeApp()
+{
+	std::vector<WinPortHandle *> wphv;
+	{
+		std::lock_guard<std::mutex> lock(g_winport_handles);
+		for (auto h : g_winport_handles) {
+			h->Reference();
+			wphv.push_back(h);
+		}
+	}
+	
+	for (auto h : wphv) {
+		h->OnFinalizeApp();
+		h->Dereference();
+	}
+}

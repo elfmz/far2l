@@ -269,18 +269,18 @@ static LONG RegValueDeserializeBinary(const char *s, LPBYTE lpData, LPDWORD lpcb
 static LONG RegValueDeserialize(const std::string &tip, const std::string &s, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
 	static_assert(sizeof(DWORD) == sizeof(unsigned int ), "bad DWORD size");
-	static_assert(sizeof(DWORD64) == sizeof(long unsigned int ), "bad DWORD64 size");
+	static_assert(sizeof(DWORD64) == sizeof(unsigned long long), "bad DWORD64 size");
 				
 	if ( tip == "DWORD") {
 		if (lpType)
-			*lpType = REG_QWORD;
+			*lpType = REG_DWORD;
 		return RegValueDeserializeINT<unsigned int> (s.c_str(), "%x", lpData, lpcbData);
 	}
 		
 	if ( tip == "QWORD") {
 		if (lpType)
 			*lpType = REG_QWORD;
-		return RegValueDeserializeINT<long unsigned int> (s.c_str() , "%lx", lpData, lpcbData);
+		return RegValueDeserializeINT<unsigned long long> (s.c_str() , "%llx", lpData, lpcbData);
 	}
 
 	if ( tip == "SZ") {
@@ -345,7 +345,7 @@ static void RegValueSerializeBinary(std::ofstream &os, const BYTE *lpData, DWORD
 static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData, DWORD cbData)
 {
 	static_assert(sizeof(DWORD) == sizeof(unsigned int ), "bad DWORD size");
-	static_assert(sizeof(DWORD64) == sizeof(long unsigned int ), "bad DWORD64 size");
+	static_assert(sizeof(DWORD64) == sizeof(unsigned long long), "bad DWORD64 size");
 
 	switch (Type) {
 		case REG_DWORD: {
@@ -359,7 +359,7 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 			if (cbData != sizeof(DWORD64))
 				fprintf(stderr, "RegValueSerialize: QWORD but cbData=%u\n", cbData);
 				
-			os << "QWORD" << std::endl << std::hex << (long unsigned int)*(const DWORD64 *)lpData;
+			os << "QWORD" << std::endl << std::hex << (unsigned long long)*(const DWORD64 *)lpData;
 		} break;
 				
 		case REG_SZ: case REG_MULTI_SZ: case REG_EXPAND_SZ: {

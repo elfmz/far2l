@@ -5,6 +5,7 @@
 #include "PathHelpers.h"
 #include "Paint.h"
 #include "utils.h"
+#include "WinPortHandle.h"
 
 #include <wx/wx.h>
 #include <wx/display.h>
@@ -17,6 +18,7 @@
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
 bool g_broadway = false;
+static int g_exit_code = 0;
 enum
 {
     TIMER_ID_PERIODIC = 10
@@ -36,24 +38,30 @@ class WinPortAppThread : public wxThread
 {
 public:
 	WinPortAppThread(int argc, char **argv, int(*appmain)(int argc, char **argv))
-		: wxThread(wxTHREAD_DETACHED), _argv(argv), _argc(argc), _appmain(appmain)  {  }
+		: wxThread(wxTHREAD_DETACHED), _listener(nullptr), _argv(argv), _argc(argc), _appmain(appmain)  {  }
+
+	wxThreadError Start(ConsoleOutputListener *listener)
+	{
+		_listener = listener;
+		return Run();
+	}
 
 protected:
 	virtual ExitCode Entry()
 	{
-		_r = _appmain(_argc, _argv);
-		exit(_r);
+		g_exit_code = _appmain(_argc, _argv);
+		_listener->OnConsoleExit();
+		//exit(_r);
 		return 0;
 	}
 
 private:
 	WinPortAppThread() = delete;
 	WinPortAppThread(const WinPortAppThread&) = delete;
-	
+	ConsoleOutputListener *_listener;
 	char **_argv;
 	int _argc;
 	int(*_appmain)(int argc, char **argv);
-	int _r;
 } *g_winport_app_thread = NULL;
 
 
@@ -75,7 +83,8 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 	wxEntry(argc, argv);
 	wxUninitialize();
-	return 0;
+	WinPortHandle_FinalizeApp();
+	return g_exit_code;
 }
 
 ///////////////
@@ -129,6 +138,7 @@ wxDEFINE_EVENT(WX_CONSOLE_WINDOW_MOVED, EventWithRect);
 wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
 
 
@@ -158,6 +168,7 @@ protected:
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
 	virtual COORD OnConsoleGetLargestWindowSize();
 	virtual void OnConsoleAdhocQuickEdit();
+	virtual void OnConsoleExit();
 	
 private:
 	void CheckForResizePending();
@@ -169,6 +180,7 @@ private:
 	void OnConsoleResizedSync( wxCommandEvent& event );
 	void OnTitleChangedSync( wxCommandEvent& event );
 	void OnConsoleAdhocQuickEditSync( wxCommandEvent& event );
+	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
 	void OnPaint( wxPaintEvent& event );
@@ -226,6 +238,7 @@ public:
 	void OnShow(wxShowEvent &show);
 	
 protected: 
+	void OnClose(wxCloseEvent &show);
 private:
 	enum {
 		ID_CTRL_BASE = 1,
@@ -253,6 +266,7 @@ private:
 wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 	EVT_PAINT(WinPortFrame::OnPaint)
 	EVT_SHOW(WinPortFrame::OnShow)
+	EVT_CLOSE(WinPortFrame::OnClose)
 	EVT_ERASE_BACKGROUND(WinPortFrame::OnEraseBackground)
 	EVT_CHAR(WinPortFrame::OnChar)
 	EVT_MENU_RANGE(ID_CTRL_BASE, ID_CTRL_BASE + ('Z' - 'A'), WinPortFrame::OnAccelerator_Ctrl)
@@ -295,6 +309,14 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 			wxQueueEvent(_panel, event);		
 	}
 }	
+
+void WinPortFrame::OnClose(wxCloseEvent &event)
+{
+	//WinPortHandle_FinalizeApp();
+	if (WINPORT(GenerateConsoleCtrlEvent)(CTRL_CLOSE_EVENT, 0)) {
+		event.Veto();
+	}
+}
 
 WinPortFrame::WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
         : wxFrame(NULL, wxID_ANY, title, pos, size), _shown(false), 
@@ -359,6 +381,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_RESIZED, WinPortPanel::OnConsoleResizedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChangedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
 	
 	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
 	EVT_KEY_UP(WinPortPanel::OnKeyUp)
@@ -436,7 +459,7 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	if (g_winport_app_thread) {
 		WinPortAppThread *tmp = g_winport_app_thread;
 		g_winport_app_thread = NULL;
-		if (tmp->Run() != wxTHREAD_NO_ERROR)
+		if (tmp->Start(this) != wxTHREAD_NO_ERROR)
 			delete tmp;
 	}
 }
@@ -925,6 +948,21 @@ void WinPortPanel::OnConsoleAdhocQuickEditSync( wxCommandEvent& event )
 void WinPortPanel::OnConsoleAdhocQuickEdit()
 {
 	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_ADHOC_QEDIT);
+	if (event)
+		wxQueueEvent(this, event);
+}
+
+void WinPortPanel::OnConsoleExitSync( wxCommandEvent& event )
+{
+	fprintf(stderr, "OnConsoleExitSync\n");
+	wxTheApp->SetExitOnFrameDelete(true);
+	_frame->Destroy();
+	//wxTheApp->ExitMainLoop();
+}
+
+void WinPortPanel::OnConsoleExit()
+{
+	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_EXIT);
 	if (event)
 		wxQueueEvent(this, event);
 }

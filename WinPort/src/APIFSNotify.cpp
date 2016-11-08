@@ -122,6 +122,34 @@ class WinPortFSNotify : public WinPortEvent
 #endif
 	}
 
+	virtual void OnFinalizeApp()
+	{
+		fprintf(stderr, "WinPortFSNotify(%p)::OnFinalizeApp\n", this);
+		StopWatching();
+		WinPortEvent::OnFinalizeApp();
+	}
+	
+	void StopWatching()
+	{
+#ifndef __APPLE__
+		if (_fd!=-1) {
+			if (_watching) {
+				_watching = false;
+				if (write(_pipe[1], &_watching, sizeof(_watching))!=sizeof(_watching))
+					fprintf(stderr, "~WinPortFSNotify - pipe write error %u\n", errno);
+					
+				pthread_join(_watcher, NULL);
+				close(_pipe[0]);
+				close(_pipe[1]);
+			}
+			for (auto w : _watches)
+				inotify_rm_watch(_fd, w);
+			close(_fd);
+			_fd = -1;
+		}
+#endif
+	}
+	
 public:
 	WinPortFSNotify(LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter)
 		: WinPortEvent(true, false), _watcher(0),
@@ -155,22 +183,7 @@ public:
 
 	~WinPortFSNotify()
 	{
-#ifndef __APPLE__
-		if (_fd!=-1) {
-			if (_watching) {
-				_watching = false;
-				if (write(_pipe[1], &_watching, sizeof(_watching))!=sizeof(_watching))
-					fprintf(stderr, "~WinPortFSNotify - pipe write error %u\n", errno);
-					
-				pthread_join(_watcher, NULL);
-				close(_pipe[0]);
-				close(_pipe[1]);
-			}
-			for (auto w : _watches)
-				inotify_rm_watch(_fd, w);
-			close(_fd);
-		}
-#endif
+		StopWatching();
 	}
 
 };

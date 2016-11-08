@@ -10,6 +10,8 @@ bool WinPortHandle_Deregister(HANDLE h);
 
 WinPortHandle *WinPortHandle_Reference(HANDLE h);
 
+void WinPortHandle_FinalizeApp();
+
 
 class WinPortHandle
 {
@@ -19,6 +21,7 @@ public:
 	
 	virtual bool WaitHandle(DWORD msec) {return true; }
 	virtual void OnReleased() {delete this; };
+	virtual void OnFinalizeApp() {};
 
 	void Reference();
 	void Dereference();

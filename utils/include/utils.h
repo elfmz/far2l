@@ -2,6 +2,15 @@
 #include <string>
 #include <sys/types.h>
 
+template <class C> static size_t tzlen(const C *ptz)
+{
+	const C *etz;
+	for (etz = ptz; *etz; ++etz);
+	return (etz - ptz);
+}
+
+
+
 void Wide2MB(const wchar_t *src, std::string &dst);
 void MB2Wide(const char *src, std::wstring &dst);
 std::string Wide2MB(const wchar_t *src);
@@ -24,10 +33,14 @@ std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
 std::string InMyTemp(const char *subpath = NULL);
 
 bool IsPathIn(const wchar_t *path, const wchar_t *root);
-bool IsPathInBin(const wchar_t *path);
-bool IsPathInLib(const wchar_t *path);
-bool IsPathInLib(const char *path);
-bool IsPathInEtc(const wchar_t *path);
+
+bool TranslateInstallPath_Bin2Share(std::wstring &path);
+bool TranslateInstallPath_Bin2Share(std::string &path);
+bool TranslateInstallPath_Lib2Share(std::wstring &path);
+bool TranslateInstallPath_Lib2Share(std::string &path);
+bool TranslateInstallPath_Share2Lib(std::wstring &path);
+bool TranslateInstallPath_Share2Lib(std::string &path);
+
 
 
 void CheckedCloseFD(int &fd);

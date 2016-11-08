@@ -21,10 +21,12 @@ StringBuffer *GetConfigPath(const DString &sub)
   struct stat s;
   StringBuffer *path=new StringBuffer(PluginPath);
   path->append(sub);
-  if (stat(path->getChars(), &s) == -1 && IsPathInLib(path->getWChars())) {
-	  path->setLength(0);
-	  path->append(DString(L"/etc/far2l/Plugins/colorer/"));
-	  path->append(sub);
+  if (stat(path->getChars(), &s) == -1) {
+          std::wstring str(path->getWChars());
+          if (TranslateInstallPath_Lib2Share(str) ) {
+            path->setLength(0);
+            path->append(DString(str.c_str()));
+          }
   }
   return path;
 }

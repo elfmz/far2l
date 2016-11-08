@@ -369,10 +369,10 @@ DWORD WINAPI _export CUSTOM_LoadFormatModule(const char *ModuleName)
 		s.resize(p + 1);
 		s+= "custom.ini";
 		FormatFileNames.emplace_back(s);
-	}
 
-	if (IsPathInLib(s.c_str())) {
-		FormatFileNames.emplace_back("/etc/far2l/Plugins/multiarc/custom.ini");
+		if (TranslateInstallPath_Lib2Share(s)) {
+			FormatFileNames.emplace_back(s);
+		}
 	}
 
 	FormatFileNames.emplace_back(InMyConfig("multiarc/custom.ini", false));

@@ -402,28 +402,28 @@ typedef struct _WIN32_FIND_DATAA {
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
+    DWORD64 UnixDevice;
+    DWORD64 UnixNode;
     DWORD dwFileAttributes;
     DWORD nFileSizeHigh;
     DWORD nFileSizeLow;
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
-    dev_t UnixDevice;
-    ino_t UnixNode;
     CHAR   cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 typedef struct _WIN32_FIND_DATAW {
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
+    DWORD64 UnixDevice;
+    DWORD64 UnixNode;
     DWORD dwFileAttributes;
     DWORD nFileSizeHigh;
     DWORD nFileSizeLow;
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
-    dev_t UnixDevice;
-    ino_t UnixNode;
     WCHAR  cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
 

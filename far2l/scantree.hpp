@@ -83,9 +83,9 @@ struct ScanTreeData
 
 class ScannedINodes
 {
-	struct Map : std::map<dev_t, std::set<ino_t> > {} _map;
+	struct Map : std::map<uint64_t, std::set<uint64_t> > {} _map;
 public:
-	bool Put(dev_t d, ino_t ino)
+	bool Put(uint64_t d, uint64_t ino)
 	{
 		return _map[d].insert(ino).second;
 	}

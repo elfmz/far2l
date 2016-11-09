@@ -59,8 +59,8 @@ struct FAR_FIND_DATA_EX
 	FILETIME ftChangeTime;
 	uint64_t nFileSize;
 	uint64_t nPackSize;
-	dev_t UnixDevice;
-	ino_t UnixNode;
+	uint64_t UnixDevice;
+	uint64_t UnixNode;
 
 	DWORD dwFileAttributes;
 	DWORD dwUnixMode;

@@ -223,7 +223,7 @@ private:
 	COORD _mouse_qedit_start, _mouse_qedit_last;
 	
 	int _last_valid_display;
-	
+	DWORD _refresh_rects_throttle;
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 };
 
@@ -419,7 +419,8 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_paint_context(this), _frame(frame), _periodic_timer(NULL),  
 		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
-		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0)
+		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0),
+		_refresh_rects_throttle(0)
 {
 	g_wx_con_out.SetListener(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
@@ -519,20 +520,58 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	_paint_context.ToggleCursor();
 }
 
+static int ProcessAllEvents()
+{
+	wxApp *app  =wxTheApp;
+	if (app) {
+		while (app->Pending())
+			app->Dispatch();
+	}
+	return 0;
+}
+
 void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT &area)
 {
-	bool should_queue_event;
+	enum {
+		A_NOTHING,
+		A_QUEUE,
+		A_THROTTLE
+	} action;
+	
 	{
 		SMALL_RECT norm_area = area;
 		NormalizeArea(norm_area);
 		std::lock_guard<std::mutex> lock(_refresh_rects);
-		should_queue_event = _refresh_rects.empty();
-		_refresh_rects.emplace_back(norm_area);
+		if (_refresh_rects.empty()) {
+			action = A_QUEUE;
+		} else if (_refresh_rects_throttle != (DWORD)-1 && 
+				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500) {
+			action = A_THROTTLE;
+			_refresh_rects_throttle = (DWORD)-1;
+		} else {
+			action = A_NOTHING;
+		}
+		
+		_refresh_rects.emplace_back(norm_area);		
 	}
-	if (should_queue_event) {
-		wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_REFRESH);
-		if (event)
-			wxQueueEvent	(this, event);
+	
+	switch (action) {
+		case A_QUEUE: {
+			wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_REFRESH);
+			if (event)
+				wxQueueEvent	(this, event);
+		} break;
+		
+		case A_THROTTLE: {
+			auto fn = std::bind(&ProcessAllEvents);
+			CallInMain<int>(fn);
+			std::lock_guard<std::mutex> lock(_refresh_rects);
+			_refresh_rects_throttle = WINPORT(GetTickCount)();
+			if (_refresh_rects_throttle == (DWORD)-1)
+				_refresh_rects_throttle = 0;			
+		} break;
+		
+		case A_NOTHING: break;
 	}
 }
 

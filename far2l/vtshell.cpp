@@ -712,7 +712,7 @@ static bool shown_tip_exit = false;
 			shown_tip_ctrl_alc_c = true;
 		}
 		if (need_sudo) {
-			fprintf(f, "sudo sh -c \"cd '%s' && %s\"\n", EscapeQuotas(cd).c_str(), cmd);
+			fprintf(f, "sudo sh -c \"cd '%s' && %s\"\n", EscapeQuotas(cd).c_str(), EscapeQuotas(cmd).c_str());
 		} else {
 			fprintf(f, "cd '%s' && %s\n", EscapeQuotas(cd).c_str(), cmd);
 		}

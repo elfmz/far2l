@@ -545,7 +545,8 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT &area)
 		if (_refresh_rects.empty()) {
 			action = A_QUEUE;
 		} else if (_refresh_rects_throttle != (DWORD)-1 && 
-				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500) {
+				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500 && 
+				!wxIsMainThread()) {
 			action = A_THROTTLE;
 			_refresh_rects_throttle = (DWORD)-1;
 		} else {

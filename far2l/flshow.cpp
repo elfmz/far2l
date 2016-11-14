@@ -566,6 +566,26 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 
 int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLength,int RightAlign,int ShowStatus,DWORD FileAttr)
 {
+	if (ShowStatus && PanelMode==NORMAL_PANEL && (FileAttr&FILE_ATTRIBUTE_REPARSE_POINT) != 0 
+			&& !strCurDir.IsEmpty() && strCurDir[0] == GOOD_SLASH) {
+		
+		FARString strTemp;
+		if (MixToFullPath(SrcName, strTemp, strCurDir) ) {
+			char LinkDest[MAX_PATH + 1] = {0};
+			ssize_t r = sdc_readlink(strTemp.GetMB().c_str(), LinkDest, ARRAYSIZE(LinkDest) - 1);
+			if (r > 0 && r < (ssize_t)ARRAYSIZE(LinkDest) ) {
+				LinkDest[r] = 0;
+				strTemp = SrcName;
+				strTemp+= L" ->";
+				strTemp+= LinkDest;
+				return ConvertName(strTemp, strDest, MaxLength, RightAlign, 
+					ShowStatus, FileAttr & (~(DWORD)FILE_ATTRIBUTE_REPARSE_POINT));
+			} else {
+				fprintf(stderr, "sdc_readlink errno %u\n", errno);
+			}
+		}
+	}
+
 	wchar_t *lpwszDest = strDest.GetBuffer(MaxLength+1);
 	wmemset(lpwszDest,L' ',MaxLength);
 	int SrcLength=StrLength(SrcName);
@@ -604,6 +624,7 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	}
 
 	strDest.ReleaseBuffer(MaxLength);
+	
 	return(SrcLength>MaxLength);
 }
 
@@ -1050,7 +1071,6 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 							FARString strName;
 							int TooLong=ConvertName(NamePtr, strName, Width, RightAlign,ShowStatus,ListData[ListPos]->FileAttr);
-
 							if (CurLeftPos)
 								LeftBracket=TRUE;
 

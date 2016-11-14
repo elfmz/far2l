@@ -814,6 +814,31 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_realpath(const char
 	return r;
 }
 
+extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_readlink(const char *path, char *buf, size_t bufsiz)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	ssize_t r = readlink(path, buf, bufsiz);
+	if (r <= 0 && IsAccessDeniedErrno() && TouchClientConnection(false)) {
+		try {
+			ClientTransaction ct(SUDO_CMD_READLINK);
+			ct.SendStr(path);
+			ct.SendPOD(bufsiz);
+			ct.RecvPOD(r);
+			if (r >= 0 && r <= (ssize_t)bufsiz) {
+				ct.RecvBuf(buf, r);
+				errno = saved_errno;
+			} else
+				ct.RecvErrno();
+		} catch(const char *what) {
+			fprintf(stderr, "sudo_client: sdc_readlink('%s') - error %s\n", path, what);
+			r = -1;
+		}
+	}
+	return r;
+}
+
+
 extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, size_t size)
 {
 	if (!ClientCurDirOverrideQuery(buf, size))

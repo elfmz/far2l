@@ -342,7 +342,7 @@ namespace Sudo
 	
 	static void OnSudoDispatch_RealPath(BaseTransaction &bt)
 	{
-		std::string path;		
+		std::string path;
 		bt.RecvStr(path);
 		char resolved_path[PATH_MAX + 1] = { 0 };
 		if (realpath(path.c_str(), resolved_path)) {
@@ -352,6 +352,21 @@ namespace Sudo
 			int err = errno;
 			bt.SendInt( err ? err : -1 );
 		}
+	}
+	
+	static void OnSudoDispatch_ReadLink(BaseTransaction &bt)
+	{
+		std::string path;
+		size_t bufsiz;
+		bt.RecvStr(path);
+		bt.RecvPOD(bufsiz);
+		std::vector<char> buf(bufsiz + 1);
+		ssize_t r = readlink(path.c_str(), &buf[0], bufsiz);
+		bt.SendPOD(r);
+		if (r >= 0 && r<= (ssize_t)bufsiz) {
+			bt.SendBuf(&buf[0], r);
+		} else
+			bt.SendErrno();
 	}
 	
 	static void OnSudoDispatch_FListXAttr(BaseTransaction &bt)
@@ -538,6 +553,10 @@ namespace Sudo
 
 			case SUDO_CMD_REALPATH:
 				OnSudoDispatch_RealPath(bt);
+				break;
+
+			case SUDO_CMD_READLINK:
+				OnSudoDispatch_ReadLink(bt);
 				break;
 				
 			case SUDO_CMD_FLISTXATTR:

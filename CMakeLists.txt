@@ -48,6 +48,7 @@ add_subdirectory (farftp)
 add_subdirectory (colorer)
 add_subdirectory (multiarc)
 add_subdirectory (tmppanel)
+add_subdirectory (SimpleIndent)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

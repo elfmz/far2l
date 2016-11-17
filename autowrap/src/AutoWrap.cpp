@@ -19,7 +19,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   FSF=*Info->FSF;
   ::Info.FSF=&FSF;
   lstrcpy(PluginRootKey,Info->RootKey);
-  lstrcat(PluginRootKey,_T("\\AutoWrap"));
+  lstrcat(PluginRootKey,_T("/AutoWrap"));
   Opt.Wrap=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("Wrap"),0);
   Opt.RightMargin=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("RightMargin"),75);
   GetRegKey(HKEY_CURRENT_USER,_T(""),_T("FileMasks"),Opt.FileMasks,_T("*.*"),sizeof(Opt.FileMasks));

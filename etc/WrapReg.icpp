@@ -65,7 +65,7 @@ HKEY CreateRegKey(HKEY hRoot,const TCHAR *Key)
   lstrcpy(FullKeyName,PluginRootKey);
   if (*Key)
   {
-    lstrcat(FullKeyName,_T("\\"));
+    lstrcat(FullKeyName,_T("/"));
     lstrcat(FullKeyName,Key);
   }
   WINPORT(RegCreateKeyEx)(hRoot,FullKeyName,0,NULL,0,KEY_WRITE,NULL,
@@ -81,7 +81,7 @@ HKEY OpenRegKey(HKEY hRoot,const TCHAR *Key)
   lstrcpy(FullKeyName,PluginRootKey);
   if (*Key)
   {
-    lstrcat(FullKeyName,_T("\\"));
+    lstrcat(FullKeyName,_T("/"));
     lstrcat(FullKeyName,Key);
   }
   if (WINPORT(RegOpenKeyEx)(hRoot,FullKeyName,0,KEY_QUERY_VALUE,&hKey)!=ERROR_SUCCESS)

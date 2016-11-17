@@ -28,7 +28,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   ::Info=*Info;
   ::FSF=*Info->FSF;
   ::Info.FSF=&::FSF;
-  FSF.snprintf(PluginRootKey, ARRAYSIZE(PluginRootKey), _T("%s\\EditCase"),Info->RootKey);
+  FSF.snprintf(PluginRootKey, ARRAYSIZE(PluginRootKey), _T("%s/EditCase"),Info->RootKey);
   WordDivLen=(int)::Info.AdvControl(::Info.ModuleNumber, ACTL_GETSYSWORDDIV, WordDiv);
   TCHAR AddWordDiv[sizeof(WordDiv)];
   GetRegKey(HKEY_CURRENT_USER,_T(""),_T("AddWordDiv"),AddWordDiv,_T("#"),sizeof(AddWordDiv));

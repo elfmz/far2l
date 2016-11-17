@@ -54,7 +54,7 @@ wxColour ConsoleBackground2wxColor(USHORT attributes)
 
 ////////////////////
 
-int wxKeyCode2WinKeyCode(int code)
+static int wxKeyCode2WinKeyCode(int code)
 {
 	switch (code) {
 	case WXK_BACK: return  VK_BACK;
@@ -192,6 +192,17 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
 	
+#ifdef wxHAS_RAW_KEY_CODES 
+#ifdef __APPLE__
+//todo
+#else
+		if (Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && event.GetRawKeyFlags() == 0x69) {
+			Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
+		}
+#endif		
+		
+#endif	
+	
 	if (IsEnhancedKey(event.GetKeyCode()))
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	
@@ -214,4 +225,6 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 
 	if (event.ControlDown())
 		Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+		
+		
 }

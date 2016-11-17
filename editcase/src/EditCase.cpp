@@ -2,8 +2,7 @@
 // or current (nearest) word in the internal editor.
 // This plugin can change case to: lower case, Title Case, UPPER CASE and tOGGLE cASE
 // Besides, it has ability of cyclic case change like MS Word by ShiftF3
-#include "plugin.hpp"
-#include <windows.h>
+#include "../../etc/plugs.h"
 #if defined(__GNUC__) || defined (_MSC_VER)
 #include <limits.h>
 #undef MAXINT
@@ -15,12 +14,8 @@
 #include "EditLng.hpp"
 #include "EditCase.hpp"
 // Registry operations
-#include "WrapReg.icpp"
+#include "../../etc/WrapReg.icpp"
 #include <functional>
-
-#define EXP_NAME(p) _export p ## W
-#define _tmemcpy(t,s,c) wmemcpy(t,s,c)
-#define _tmemchr(b,c,n) wmemchr(b,c,n)
 
 
 SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()

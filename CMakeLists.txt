@@ -50,6 +50,7 @@ add_subdirectory (multiarc)
 add_subdirectory (tmppanel)
 add_subdirectory (SimpleIndent)
 add_subdirectory (editcase)
+add_subdirectory (align)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

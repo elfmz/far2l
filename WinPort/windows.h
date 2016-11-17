@@ -27,6 +27,7 @@
 # define lstrcat wcscat
 # define lstrcpyn wcsncpy
 # define lstrcmpi wcscasecmp
+# define _istspace iswspace
 #endif
 
 #define    GetConsoleFontSize			WINPORT(GetConsoleFontSize)

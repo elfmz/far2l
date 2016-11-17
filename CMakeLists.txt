@@ -52,6 +52,7 @@ add_subdirectory (SimpleIndent)
 add_subdirectory (editcase)
 add_subdirectory (align)
 add_subdirectory (autowrap)
+add_subdirectory (drawline)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

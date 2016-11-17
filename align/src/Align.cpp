@@ -31,7 +31,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   ::FSF=*Info->FSF;
   ::Info.FSF=&::FSF;
   lstrcpy(PluginRootKey,Info->RootKey);
-  lstrcat(PluginRootKey,_T("\\Align"));
+  lstrcat(PluginRootKey,_T("/Align"));
 }
 
 

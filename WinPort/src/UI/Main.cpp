@@ -210,6 +210,7 @@ private:
 	
 	WinPortFrame *_frame;
 	wxTimer* _periodic_timer;
+	bool _right_control;
 	bool _last_keydown_enqueued;
 	bool _initialized;
 	bool _adhoc_quickedit;
@@ -418,7 +419,7 @@ bool WinPortApp::OnInit()
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_paint_context(this), _frame(frame), _periodic_timer(NULL),  
-		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
+		_right_control(false), _last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0),
 		_refresh_rects_throttle(0)
 {
@@ -705,7 +706,7 @@ static bool IsForcedCharTranslation(int code)
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyDown: %x %x %u %lu\n", 
+	fprintf(stderr, "OnKeyDown: %x %x %x %u %lu\n", event.GetRawKeyFlags(), 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 		
 	if (event.GetSkipped() || (event.GetTimestamp() && 
@@ -733,8 +734,17 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
 		wx2INPUT_RECORD ir(event, TRUE);
 		_pressed_keys.insert(event.GetKeyCode());
+
+		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL)
+			_right_control = true;
+			
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+		
+		if (_right_control && (ir.Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED) != 0) {
+			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
+			ir.Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
+		}
 		g_wx_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
@@ -743,7 +753,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyUp: %x %x %d %lu\n", 
+	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyFlags(), 
 	event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	if (event.GetSkipped())
 		return;
@@ -752,6 +762,11 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		wx2INPUT_RECORD ir(event, FALSE);
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	
+			
+		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL 
+		|| ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL) {
+			_right_control = false;
+		}
 	
 		g_wx_con_in.Enqueue(&ir, 1);
 	}
@@ -780,6 +795,11 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			}
 		}
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
+
+		if (_right_control && (ir.Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED) != 0) {
+			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
+			ir.Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
+		}
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		g_wx_con_in.Enqueue(&ir, 1);
@@ -1038,6 +1058,7 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 		g_wx_con_in.Enqueue(&ir, 1);		
 	}
 	_pressed_keys.clear();
+	_right_control = false;
 	
 	if (_mouse_qedit_pending) {
 		_mouse_qedit_pending = false;

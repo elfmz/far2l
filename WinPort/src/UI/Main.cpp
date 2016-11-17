@@ -544,11 +544,15 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT &area)
 		std::lock_guard<std::mutex> lock(_refresh_rects);
 		if (_refresh_rects.empty()) {
 			action = A_QUEUE;
+#ifndef __APPLE__
 		} else if (_refresh_rects_throttle != (DWORD)-1 && 
 				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500 && 
 				!wxIsMainThread()) {
 			action = A_THROTTLE;
 			_refresh_rects_throttle = (DWORD)-1;
+#else
+//TODO: fix stuck
+#endif
 		} else {
 			action = A_NOTHING;
 		}

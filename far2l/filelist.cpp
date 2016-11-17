@@ -925,6 +925,11 @@ int FileList::ProcessKey(int Key)
 		{
 			ExecShortcutFolder(Key-KEY_RCTRL0);
 			return TRUE;
+		}//wxWidgets doesn't distinguish right/left modifiers, so here is alternative shortcuts:
+		else if (Key>=KEY_CTRLALT0 && Key<=KEY_CTRLALT9)
+		{
+			ExecShortcutFolder(Key-KEY_CTRLALT0);
+			return TRUE;
 		}
 	}
 

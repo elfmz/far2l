@@ -179,7 +179,9 @@ static int ShowFolderShortcutMenu(int Pos)
 					strFolderName = MSG(MShortcutPlugin);
 			}
 
-			ListItem.strName.Format(L"%ls+&%d   %ls", MSG(MRightCtrl),I,strFolderName.CPtr());
+//wxWidgets doesn't distinguish right/left modifiers
+//			ListItem.strName.Format(L"%ls+&%d   %ls", MSG(MRightCtrl),I,strFolderName.CPtr());
+			ListItem.strName.Format(L"%ls+&%d   %ls", L"Ctrl+Alt",I,strFolderName.CPtr());
 			ListItem.SetSelect(I == Pos);
 			FolderList.AddItem(&ListItem);
 		}

@@ -195,8 +195,10 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 #ifdef wxHAS_RAW_KEY_CODES 
 #ifdef __APPLE__
 //todo
-#else
-		if (Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && event.GetRawKeyFlags() == 0x69) {
+#elif __linux__
+//#define GDK_KEY_Control_L 0xffe3
+//#define GDK_KEY_Control_R 0xffe4	
+		if (Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
 			Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
 		}
 #endif		

@@ -706,7 +706,7 @@ static bool IsForcedCharTranslation(int code)
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyDown: %x %x %x %u %lu\n", event.GetRawKeyFlags(), 
+	fprintf(stderr, "OnKeyDown: %x %x %x %u %lu\n", event.GetRawKeyCode(), 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 		
 	if (event.GetSkipped() || (event.GetTimestamp() && 
@@ -753,7 +753,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyFlags(), 
+	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyCode(), 
 	event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	if (event.GetSkipped())
 		return;

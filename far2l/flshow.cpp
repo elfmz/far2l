@@ -31,8 +31,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "headers.hpp"
+#include <errno.h>
 
+#include "headers.hpp"
 
 #include "filelist.hpp"
 #include "colors.hpp"

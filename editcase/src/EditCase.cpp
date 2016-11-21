@@ -16,7 +16,7 @@
 // Registry operations
 #include "../../etc/WrapReg.icpp"
 #include <functional>
-
+#include <algorithm>
 
 SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()
 {

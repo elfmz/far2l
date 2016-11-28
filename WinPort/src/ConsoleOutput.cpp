@@ -151,6 +151,12 @@ COORD ConsoleOutput::GetLargestConsoleWindowSize()
 	return rv;
 }
 
+void ConsoleOutput::SetWindowMaximized(bool maximized)
+{
+	if (_listener)
+		_listener->OnConsoleSetMaximized(maximized);
+}
+
 void ConsoleOutput::SetWindowInfo(bool absolute, const SMALL_RECT &rect)
 {
 	SetSize(rect.Right - rect.Left + 1, rect.Bottom - rect.Top + 1);

@@ -225,6 +225,7 @@ void ChangeVideoMode(int Maximized)
 
 	if (Maximized)
 	{
+		WINPORT(SetConsoleWindowMaximized)(TRUE);
 		//SendMessage(Console.GetWindow(),WM_SYSCOMMAND,SC_MAXIMIZE,0);
 		coordScreen = Console.GetLargestWindowSize();
 		coordScreen.X+=Opt.ScrSize.DeltaXY.X;
@@ -232,6 +233,7 @@ void ChangeVideoMode(int Maximized)
 	}
 	else
 	{
+		WINPORT(SetConsoleWindowMaximized)(FALSE);
 		//SendMessage(Console.GetWindow(),WM_SYSCOMMAND,SC_RESTORE,0);
 		coordScreen = InitSize;
 	}

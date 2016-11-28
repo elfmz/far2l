@@ -51,6 +51,7 @@ extern "C" {
 	
 	WINPORT_DECL(SetConsoleDisplayMode,BOOL,(DWORD ModeFlags));
 	WINPORT_DECL(GetConsoleDisplayMode,BOOL,(LPDWORD lpModeFlags));
+	WINPORT_DECL(SetConsoleWindowMaximized,VOID,(BOOL Maximized));
 
 	//WINPORT_DECL(AddConsoleAlias, BOOL,( LPCWSTR Source, LPCWSTR Target, LPCWSTR ExeName));
 	WINPORT_DECL(GetConsoleAlias, DWORD,(LPWSTR lpSource, LPWSTR lpTargetBuffer, DWORD TargetBufferLength, LPWSTR lpExeName));

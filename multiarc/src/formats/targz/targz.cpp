@@ -518,7 +518,7 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
      { // BZ_FORMAT
        "bzip2 -cd %%A >%%fq",
        "bzip2 -cd %%A >%%fq",
-       "bzip2 -cd %%A >nul",
+       "bzip2 -cd %%A >/dev/null",
        "",
        "",
        "",

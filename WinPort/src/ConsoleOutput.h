@@ -14,6 +14,7 @@ class ConsoleOutputListener
 		virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos) = 0;
 		virtual COORD OnConsoleGetLargestWindowSize() = 0;
 		virtual void OnConsoleAdhocQuickEdit() = 0;
+		virtual void OnConsoleSetMaximized(bool maximized) = 0;
 		virtual void OnConsoleExit() = 0;
 };
 
@@ -78,6 +79,7 @@ public:
 	void GetSize(unsigned int &width, unsigned int &height);
 
 	COORD GetLargestConsoleWindowSize();
+	void SetWindowMaximized(bool maximized);
 
 	void SetWindowInfo(bool absolute, const SMALL_RECT &rect);
 	void SetTitle(const WCHAR *title);

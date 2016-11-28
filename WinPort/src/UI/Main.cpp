@@ -117,26 +117,37 @@ static void LoadSize(unsigned int &width, unsigned int &height)
 	}
 }
 
-struct EventWithRect : wxCommandEvent
+template <class COOKIE_T>
+struct EventWith : wxCommandEvent
 {
-	EventWithRect(const SMALL_RECT &rect_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
-		:wxCommandEvent(commandType, winid) , rect(rect_)
-	{
-		NormalizeArea(rect);
-	}
+	EventWith(const COOKIE_T &cookie_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
+		:wxCommandEvent(commandType, winid), cookie(cookie_) { }
 
-	virtual wxEvent *Clone() const { return new EventWithRect(*this); }
+	virtual wxEvent *Clone() const { return new EventWith<COOKIE_T>(*this); }
 
-	SMALL_RECT rect;
+	COOKIE_T cookie;
 };
+
+
+struct EventWithRect : EventWith<SMALL_RECT>
+{
+	EventWithRect(const SMALL_RECT &cookie_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
+		:EventWith<SMALL_RECT>(cookie_, commandType, winid)
+	{
+		NormalizeArea(cookie);
+	}
+};
+
+typedef EventWith<bool> EventWithBool;
 
 ///////////////////////////////////////////
 
 wxDEFINE_EVENT(WX_CONSOLE_INITIALIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_REFRESH, wxCommandEvent);
-wxDEFINE_EVENT(WX_CONSOLE_WINDOW_MOVED, EventWithRect);
+wxDEFINE_EVENT(WX_CONSOLE_WINDOW_MOVED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_SET_MAXIMIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
@@ -167,6 +178,7 @@ protected:
 	virtual void OnConsoleOutputTitleChanged();
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
 	virtual COORD OnConsoleGetLargestWindowSize();
+	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleAdhocQuickEdit();
 	virtual void OnConsoleExit();
 	
@@ -179,12 +191,13 @@ private:
 	void OnRefreshSync( wxCommandEvent& event );
 	void OnConsoleResizedSync( wxCommandEvent& event );
 	void OnTitleChangedSync( wxCommandEvent& event );
+	void OnSetMaximizedSync( wxCommandEvent& event );
 	void OnConsoleAdhocQuickEditSync( wxCommandEvent& event );
 	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
 	void OnPaint( wxPaintEvent& event );
-    void OnEraseBackground( wxEraseEvent& event );
+	void OnEraseBackground( wxEraseEvent& event );
 	void OnSize(wxSizeEvent &event);
 	void OnMouse( wxMouseEvent &event );
 	void OnMouseNormal( wxMouseEvent &event, COORD pos_char);
@@ -381,6 +394,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_WINDOW_MOVED, WinPortPanel::OnWindowMovedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_RESIZED, WinPortPanel::OnConsoleResizedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChangedSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_MAXIMIZED, WinPortPanel::OnSetMaximizedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
 	
@@ -631,17 +645,30 @@ COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 	return size;
 }
 
+void WinPortPanel::OnConsoleSetMaximized(bool maximized)
+{
+	EventWithBool *event = new EventWithBool(maximized, WX_CONSOLE_SET_MAXIMIZED);
+	if (event)
+		wxQueueEvent(this, event);
+}
+
 void WinPortPanel::OnWindowMovedSync( wxCommandEvent& event )
 {
 	EventWithRect *e = (EventWithRect *)&event;
-	int x = e->rect.Left, y = e->rect.Top;
+	int x = e->cookie.Left, y = e->cookie.Top;
 	x*= _paint_context.FontWidth(); y*= _paint_context.FontHeight();
-	if (!e->rect.Right) {
+	if (!e->cookie.Right) {
 		int dx = 0, dy = 0;
 		GetPosition(&dx, &dy);
 		x+= dx; y+= dy;
 	}
 	Move(x, y);
+}
+
+void WinPortPanel::OnSetMaximizedSync( wxCommandEvent& event )
+{
+	EventWithBool *e = (EventWithBool *)&event;
+	_frame->Maximize(e->cookie);
 }
 
 void WinPortPanel::OnRefreshSync( wxCommandEvent& event )

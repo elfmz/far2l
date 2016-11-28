@@ -76,6 +76,11 @@ extern "C" {
 		return g_wx_con_out.Scroll(lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill) ? TRUE : FALSE;
 	}
 
+	WINPORT_DECL(SetConsoleWindowMaximized,VOID,(BOOL Maximized))
+	{
+		g_wx_con_out.SetWindowMaximized(Maximized!=FALSE);
+	}
+
 
 	WINPORT_DECL(GetConsoleScreenBufferInfo,BOOL,(HANDLE hConsoleOutput,CONSOLE_SCREEN_BUFFER_INFO *lpConsoleScreenBufferInfo))
 	{

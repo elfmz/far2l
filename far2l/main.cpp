@@ -620,6 +620,40 @@ static int libexec(const char *lib, const char *symbol, int argc, char *argv[])
 	return libexec_main(argc, argv);
 }
 
+static std::string GetStdPath(const char *env1, const char *env2)
+{
+	const char *path = getenv(env1);
+	if (!path)
+		path = getenv(env2);
+	if (path) {
+		std::string s;
+		if (*path == '~') {
+			const char *home = getenv("HOME");
+			s = home ? home : "/tmp";
+			s+= path + 1;
+		} else
+			s = path;
+
+		return s;
+	}
+
+	return "/dev/null";
+}
+
+static void SetupStdHandles()
+{
+	const std::string &out = GetStdPath("FAR2L_STDOUT", "FAR2L_STD");
+	const std::string &err = GetStdPath("FAR2L_STDERR", "FAR2L_STD");
+	if (!out.empty() && out != "-") {
+		if (!freopen(out.c_str(), "a", stdout))
+			perror("freopen stdout");
+	}
+	if (!err.empty() && err != "-") {
+		if (!freopen(err.c_str(), "a", stderr))
+			perror("freopen stderr");
+	}
+}
+
 int _cdecl main(int argc, char *argv[])
 {
 	char *name = strrchr(argv[0], GOOD_SLASH);
@@ -634,6 +668,8 @@ int _cdecl main(int argc, char *argv[])
 				return libexec(argv[2], argv[3], argc - 4, argv + 4);
 		}
 	}
+
+	SetupStdHandles();
 
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
 	SetupFarPath(argc, argv);

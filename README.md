@@ -3,7 +3,7 @@ Linux port of FAR v2 (http://farmanager.com/)
 ALPHA VERSION.
 **Currently interesting only for entusiasts!!!**
 
-Currently working plugins: colorer, multiarc, farftp, tmppanel
+Currently working plugins: colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
 
 [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 

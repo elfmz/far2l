@@ -245,7 +245,7 @@ int PluginClass::SelectFormat(char *ArcFormat,int AddOnly)
         strncpy(MenuItems[MenuItemsNumber].Text.Text,Format,sizeof(MenuItems[MenuItemsNumber].Text.Text));
         MenuItems[MenuItemsNumber].Flags=((MenuItemsNumber==0 &&
                                           *ArcFormat==0) ||
-                                          strcasecmp(ArcFormat,Format))?
+                                          !strcasecmp(ArcFormat,Format))?
                                           MIF_SELECTED:0;
         #ifdef _NEW_ARC_SORT_
         if(SortMode)

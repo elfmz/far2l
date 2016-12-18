@@ -738,7 +738,7 @@ static bool shown_tip_exit = false;
 			UpdateTerminalSize(_fd_out);
 		
 		
-		std::string cmd_str = ". ";
+		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
 		cmd_str+= EscapeQuotas(cmd_script);
 		cmd_str+= ';';
 		cmd_str+= _completion_marker.EchoCommand();

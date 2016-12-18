@@ -281,18 +281,38 @@ bool IsPathIn(const wchar_t *path, const wchar_t *root)
 
 
 template <class C> 
-	static bool TranslateInstallPath(std::basic_string<C> &path, const C *dir_from, const C *dir_to)
+	static bool TranslateInstallPathT(std::basic_string<C> &path, const C *dir_from, const C *dir_to, const C* prefix)
 {
-	const size_t fl = tzlen(dir_from);
+	if (!prefix || !*prefix)
+		return false;
 
-	for (size_t i = path.find(dir_from); i != std::basic_string<C>::npos; i = path.find(dir_from, i + 1)) {
-		if ( i > 0 && path[i - 1] == GOOD_SLASH && ((i + fl) == path.size() || path[i + fl] == GOOD_SLASH) ) {
-			path.replace(i, fl, dir_to);
-			return true;
-		}
-	}
+	const size_t prefix_len = tzlen(prefix);
+	const size_t dir_from_len = tzlen(dir_from);
 
-	return false;
+	if (path.size() < (prefix_len + dir_from_len))
+		return false;
+
+	if (memcmp(path.c_str(), prefix, prefix_len * sizeof(C)) != 0)
+		return false;
+	
+	if (memcmp(path.c_str() + prefix_len, dir_from, dir_from_len * sizeof(C)) != 0)
+		return false;
+
+	if (path.size() > (prefix_len + dir_from_len) && path[prefix_len + dir_from_len] != GOOD_SLASH)
+		return false;
+
+	path.replace(prefix_len, dir_from_len, dir_to);
+	return true;
+}
+
+static bool TranslateInstallPath(std::wstring &path, const wchar_t *dir_from, const wchar_t *dir_to)
+{
+	return TranslateInstallPathT(path, dir_from, dir_to,GetPathTranslationPrefix());
+}
+
+static bool TranslateInstallPath(std::string &path, const char *dir_from, const char *dir_to)
+{
+	return TranslateInstallPathT(path, dir_from, dir_to, GetPathTranslationPrefixA());
 }
 
 bool TranslateInstallPath_Bin2Share(std::wstring &path)

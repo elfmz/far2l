@@ -320,7 +320,19 @@ static void SetupFarPath(int argc, char **argv)
 		g_strFarModuleName = buf;
 	}
 			
-	fprintf(stderr, "g_strFarModuleName='%ls' (argv[0]='%s')\n", g_strFarModuleName.CPtr(), argv[0]);
+	
+
+	FARString dir = g_strFarModuleName;
+	CutToSlash(dir, true);
+	const wchar_t *last_element = PointToName(dir);
+	if (last_element && wcscmp(last_element, L"bin") == 0) {
+		CutToSlash(dir, false);
+		SetPathTranslationPrefix(dir);
+	}
+
+	fprintf(stderr, "argv[0]='%s' g_strFarModuleName='%ls' translation_prefix='%ls'\n", 
+		argv[0], g_strFarModuleName.CPtr(), GetPathTranslationPrefix());
+
 	PrepareDiskPath(g_strFarModuleName);
 }
 

@@ -308,7 +308,7 @@ void ConsoleTools::forward(){
     else outputFile = new StreamWriter(stdout, outputEncodingIndex, bomOutput);
   }catch(Exception &e){
     fprintf(stderr, "can't open file '%s' for writing:", outputFileName->getChars());
-    fprintf(stderr, e.getMessage()->getChars());
+    fprintf(stderr, "%s", e.getMessage()->getChars());
     return;
   }
 
@@ -362,7 +362,7 @@ void ConsoleTools::genOutput(bool useTokens){
       else escapedWriter = commonWriter;
     }catch(Exception &e){
       fprintf(stderr, "can't open file '%s' for writing:\n", outputFileName->getChars());
-      fprintf(stderr, e.getMessage()->getChars());
+      fprintf(stderr, "%s", e.getMessage()->getChars());
       return;
     }
 

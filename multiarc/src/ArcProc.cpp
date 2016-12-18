@@ -316,7 +316,7 @@ int PluginClass::FormatToPlugin(char *Format, int &PluginNumber, int &PluginType
   return FALSE;
 }
 
-int WINAPI _export Configure(int ItemNumber);
+SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber);
 
 int PluginClass::ProcessKey(int Key,unsigned int ControlState)
 {

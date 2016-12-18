@@ -95,6 +95,7 @@ src/FStdLib/FARStdlib/fstd_Arg.cpp
 src/FStdLib/FARStdlib/fstd_FMsg.cpp
 src/FStdLib/FARStdlib/fstd_exSPS.cpp
 src/FStdLib/FARStdlib/fstd_FUtils.cpp
+src/FStdLib/FARStdlib/fstd_ClpS.cpp
 )
 
 add_library (farftp MODULE ${SOURCES})

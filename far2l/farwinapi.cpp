@@ -526,7 +526,7 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 	strCurrentDirectory()=strDir;
 
 	// try to synchronize far cur dir with process cur dir
-	if(CtrlObject && CtrlObject->Plugins.GetOemPluginsCount())
+	//WTF??? if(CtrlObject && CtrlObject->Plugins.GetOemPluginsCount())
 	{
 		if (!WINPORT(SetCurrentDirectory)(strCurrentDirectory())) {
 			fprintf(stderr, "apiSetCurrentDirectory: set curdir error %u for %ls\n", WINPORT(GetLastError()), lpPathName);

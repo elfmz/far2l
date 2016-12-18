@@ -262,7 +262,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
         {
           bTruncated=true;
           NextPosition.QuadPart=SFXSize.QuadPart;
-          return(GetArcItem(Item,Info));
+          return(ZIP_GetArcItem(Item,Info));
         }
       }
       else

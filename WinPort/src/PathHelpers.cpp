@@ -184,3 +184,23 @@ void WinPortInitWellKnownEnv()
 	}
 }
 
+
+static std::wstring g_path_translation_prefix;
+static std::string g_path_translation_prefix_a;
+
+SHAREDSYMBOL void SetPathTranslationPrefix(const wchar_t *prefix)
+{
+	g_path_translation_prefix = prefix;
+	g_path_translation_prefix_a = Wide2MB(prefix);
+}
+
+SHAREDSYMBOL const wchar_t *GetPathTranslationPrefix()
+{
+	return g_path_translation_prefix.c_str();
+}
+
+SHAREDSYMBOL const char *GetPathTranslationPrefixA()
+{
+	return g_path_translation_prefix_a.c_str();
+}
+

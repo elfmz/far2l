@@ -256,7 +256,10 @@ extern "C" {
 	SHAREDSYMBOL int swprintf_ws2ls (wchar_t* ws, size_t len, const wchar_t* format, ...);
 
 
+	SHAREDSYMBOL void SetPathTranslationPrefix(const wchar_t *prefix);
 
+	SHAREDSYMBOL const wchar_t *GetPathTranslationPrefix();
+	SHAREDSYMBOL const char *GetPathTranslationPrefixA();
 #ifdef __cplusplus
 }
 

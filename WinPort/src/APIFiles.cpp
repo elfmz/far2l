@@ -71,8 +71,11 @@ static DWORD EvaluateAttributesT(uint32_t unix_mode, const CHAR_T *name)
 			rv|= FILE_ATTRIBUTE_HIDDEN;
 	}
 
-	if ((unix_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0)
+	if ((unix_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
 		rv|= FILE_ATTRIBUTE_EXECUTABLE;
+
+	if ((unix_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
+		rv|= FILE_ATTRIBUTE_READONLY;
 
 	return rv;
 }

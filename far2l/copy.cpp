@@ -2027,8 +2027,9 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 								if (ScTree.IsDirSearchDone() ||
 								        ((SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) && !(Flags&FCOPY_COPYSYMLINKCONTENTS)))
 								{
-									if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-										apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
+									TemporaryMakeWritable tmw(strFullName);
+									//if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+									//	apiMakeWritable(strFullName); //apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
 
 									if (apiRemoveDirectory(strFullName))
 										TreeList::DelTreeName(strFullName);
@@ -2047,8 +2048,9 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 				if ((Flags&FCOPY_MOVE) && CopyCode==COPY_SUCCESS)
 				{
-					if (FileAttr & FILE_ATTRIBUTE_READONLY)
-						apiSetFileAttributes(strSelName,FILE_ATTRIBUTE_NORMAL);
+					TemporaryMakeWritable tmw(strSelName);
+					//if (FileAttr & FILE_ATTRIBUTE_READONLY)
+					//	apiMakeWritable(strSelName); //apiSetFileAttributes(strSelName,FILE_ATTRIBUTE_NORMAL);
 
 					if (apiRemoveDirectory(strSelName))
 					{
@@ -2719,8 +2721,10 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 				return(COPY_CANCEL);
 		}
 
-		apiSetFileAttributes(Name,FILE_ATTRIBUTE_NORMAL);
+		//apiSetFileAttributes(Name,FILE_ATTRIBUTE_NORMAL);
 	}
+	
+	TemporaryMakeWritable tmw(Name);
 
 	while ((Attr&FILE_ATTRIBUTE_DIRECTORY)?!apiRemoveDirectory(Name):!apiDeleteFile(Name))
 	{
@@ -2969,7 +2973,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 					if (!Append)
 					{
-						apiSetFileAttributes(strDestName,FILE_ATTRIBUTE_NORMAL);
+						TemporaryMakeWritable tmw(strDestName); //apiSetFileAttributes(strDestName,FILE_ATTRIBUTE_NORMAL);
 						apiDeleteFile(strDestName); //BUGBUG
 					}
 
@@ -3002,7 +3006,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 						if (!Append)
 						{
-							apiSetFileAttributes(strDestName,FILE_ATTRIBUTE_NORMAL);
+							TemporaryMakeWritable tmw(strDestName); //apiSetFileAttributes(strDestName,FILE_ATTRIBUTE_NORMAL);
 							apiDeleteFile(strDestName); //BUGBUG
 						}
 					}
@@ -3166,7 +3170,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 							if (!Append)
 							{
-								apiSetFileAttributes(strDestName,FILE_ATTRIBUTE_NORMAL);
+								TemporaryMakeWritable tmw(strDestName); //apiSetFileAttributes(strDestName,FILE_ATTRIBUTE_NORMAL);
 								apiDeleteFile(strDestName); //BUGBUG
 							}
 
@@ -3645,7 +3649,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 		}
 
 		if (!SameName && (DestAttr & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM)))
-			apiSetFileAttributes(DestName,FILE_ATTRIBUTE_NORMAL);
+			apiMakeWritable(DestName); //apiSetFileAttributes(DestName,FILE_ATTRIBUTE_NORMAL);
 	}
 
 	return TRUE;

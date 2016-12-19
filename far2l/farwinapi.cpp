@@ -774,6 +774,59 @@ BOOL apiSetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
 
 }
 
+IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
+{
+	struct UnmakeWritable : IUnmakeWritable
+	{
+		std::string target, dir;
+		mode_t target_mode, dir_mode;
+		UnmakeWritable() : target_mode(0), dir_mode(0)
+		{
+		}
+		
+		virtual void Unmake()
+		{
+			if (target_mode) {
+				chmod(target.c_str(), target_mode);
+			}
+
+			if (dir_mode) {
+				chmod(dir.c_str(), dir_mode);
+			}
+		}
+	} *um = new UnmakeWritable;
+	
+	//dont want to trigger sudo from here so use sdc_* api
+	um->target = Wide2MB(lpFileName);
+	struct stat s = {};
+
+	if (um->target.size() > 1) {
+		um->dir = um->target;
+		size_t p = um->dir.rfind(GOOD_SLASH, um->dir.size() - 2);
+		if (p != std::string::npos) {
+			um->dir.resize(p);
+			if (stat(um->dir.c_str(), &s) == 0 && (s.st_mode & S_IWUSR) != S_IWUSR) {
+				if (chmod(um->dir.c_str(), s.st_mode | S_IWUSR) == 0) {
+					um->dir_mode = s.st_mode;
+				}
+			}
+		}
+	}
+
+	if (stat(um->target.c_str(), &s) == 0 && (s.st_mode & S_IWUSR) != S_IWUSR) {
+		if (chmod(um->target.c_str(), s.st_mode | S_IWUSR) == 0) {
+			um->target_mode = s.st_mode;
+		}
+	}
+	
+	if (um->target_mode == 0 && um->dir_mode == 0) {
+		delete um;
+		um = nullptr;
+	}
+	
+	return IUnmakeWritablePtr(um);
+}
+
 bool apiCreateSymbolicLink(LPCWSTR lpSymlinkFileName,LPCWSTR lpTargetFileName,DWORD dwFlags)
 {
 	return false;//todo

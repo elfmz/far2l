@@ -407,7 +407,7 @@ FileEditor::~FileEditor()
 				DeleteFileWithFolder(strFullFileName);
 			else
 			{
-				apiSetFileAttributes(strFullFileName,FILE_ATTRIBUTE_NORMAL);
+				apiMakeWritable(strFullFileName);//apiSetFileAttributes(strFullFileName,FILE_ATTRIBUTE_NORMAL);
 				apiDeleteFile(strFullFileName); //BUGBUG
 			}
 		}
@@ -467,8 +467,6 @@ void FileEditor::Init(
 	m_editor->SetCodePage(m_codepage);
 	*AttrStr=0;
 	CurrentEditor=this;
-	FileAttributes=INVALID_FILE_ATTRIBUTES;
-	FileAttributesModified=false;
 	SetTitle(Title);
 	EditNamesList = nullptr;
 	KeyBarVisible = Opt.EdOpt.ShowKeyBar;
@@ -1661,9 +1659,9 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 	}
 
 	int NewFile=TRUE;
-	FileAttributesModified=false;
 
-	if ((FileAttributes=apiGetFileAttributes(Name))!=INVALID_FILE_ATTRIBUTES)
+	DWORD FileAttributes=EditorGetFileAttributes(Name);
+	if (FileAttributes!=INVALID_FILE_ATTRIBUTES)
 	{
 		// Проверка времени модификации...
 		if (!Flags.Check(FFILEEDIT_SAVEWQUESTIONS))
@@ -1711,14 +1709,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 			if (AskOverwrite)
 				return SAVEFILE_CANCEL;
 
-			apiSetFileAttributes(Name,FileAttributes & ~FILE_ATTRIBUTE_READONLY); // сняты атрибуты
-			FileAttributesModified=true;
-		}
-
-		if (FileAttributes & (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM))
-		{
-			apiSetFileAttributes(Name,FILE_ATTRIBUTE_NORMAL);
-			FileAttributesModified=true;
+			FileUnmakeWritable = apiMakeWritable(Name);// apiSetFileAttributes(Name,FileAttributes & ~FILE_ATTRIBUTE_READONLY); // сняты атрибуты
 		}
 	}
 	else
@@ -2040,9 +2031,11 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 end:
 
-	if (FileAttributes!=INVALID_FILE_ATTRIBUTES && FileAttributesModified)
+	if (FileUnmakeWritable)
 	{
-		apiSetFileAttributes(Name,FileAttributes|FILE_ATTRIBUTE_ARCHIVE);
+		FileUnmakeWritable->Unmake();
+		FileUnmakeWritable.reset();
+//		apiSetFileAttributes(Name,FileAttributes|FILE_ATTRIBUTE_ARCHIVE);
 	}
 
 	apiGetFindDataEx(Name, FileInfo);
@@ -2334,7 +2327,7 @@ void FileEditor::ShowStatus()
 DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 {
 	SudoClientRegion sdc_rgn;
-	FileAttributes=apiGetFileAttributes(Name);
+	DWORD FileAttributes=apiGetFileAttributes(Name);
 	int ind=0;
 
 	if (FileAttributes!=INVALID_FILE_ATTRIBUTES)
@@ -2345,7 +2338,7 @@ DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 
 		if (FileAttributes&FILE_ATTRIBUTE_HIDDEN) AttrStr[ind++]=L'H';
 	}
-
+	struct stat s = {};
 	AttrStr[ind]=0;
 	return FileAttributes;
 }

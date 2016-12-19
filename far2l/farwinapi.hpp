@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <map>
 #include <vector>
+#include <memory>
 
 #define NT_MAX_PATH 32768
 
@@ -281,6 +282,33 @@ BOOL apiSetFileAttributes(
     LPCWSTR lpFileName,
     DWORD dwFileAttributes
 );
+
+struct IUnmakeWritable
+{
+	virtual ~IUnmakeWritable() {} 
+	virtual void Unmake() = 0;
+};
+
+typedef std::unique_ptr<IUnmakeWritable>	IUnmakeWritablePtr;
+
+IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName);
+
+class TemporaryMakeWritable
+{
+	IUnmakeWritablePtr _unmake;
+
+public:
+	inline TemporaryMakeWritable(LPCWSTR lpFileName) 
+		: _unmake(apiMakeWritable(lpFileName))
+	{
+	}
+	
+	inline ~TemporaryMakeWritable()
+	{
+		if (_unmake)
+			_unmake->Unmake();
+	}
+};
 
 void InitCurrentDirectory();
 

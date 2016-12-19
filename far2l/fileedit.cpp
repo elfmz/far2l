@@ -1660,6 +1660,20 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 	int NewFile=TRUE;
 
+	FileUnmakeWritable = apiMakeWritable(Name);
+	if (FileUnmakeWritable.get())
+	{
+			//BUGBUG
+		int AskOverwrite=Message(MSG_WARNING,2,MSG(MEditTitle),Name,MSG(MEditRO),
+		                         MSG(MEditOvr),MSG(MYes),MSG(MNo));
+
+		if (AskOverwrite) {
+			FileUnmakeWritable->Unmake();
+			FileUnmakeWritable.reset();
+			return SAVEFILE_CANCEL;
+		}
+	}
+
 	DWORD FileAttributes=EditorGetFileAttributes(Name);
 	if (FileAttributes!=INVALID_FILE_ATTRIBUTES)
 	{
@@ -1699,18 +1713,6 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 		Flags.Clear(FFILEEDIT_SAVEWQUESTIONS);
 		NewFile=FALSE;
-
-		if (FileAttributes & FILE_ATTRIBUTE_READONLY)
-		{
-			//BUGBUG
-			int AskOverwrite=Message(MSG_WARNING,2,MSG(MEditTitle),Name,MSG(MEditRO),
-			                         MSG(MEditOvr),MSG(MYes),MSG(MNo));
-
-			if (AskOverwrite)
-				return SAVEFILE_CANCEL;
-
-			FileUnmakeWritable = apiMakeWritable(Name);// apiSetFileAttributes(Name,FileAttributes & ~FILE_ATTRIBUTE_READONLY); // сняты атрибуты
-		}
 	}
 	else
 	{

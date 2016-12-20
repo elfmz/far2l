@@ -2092,6 +2092,7 @@ static bool IsOuterTarget(const wchar_t *Root, const wchar_t *SymLink)
 	FARString strRoot, strTarget;
 	ConvertNameToReal(Root, strRoot);
 	ConvertNameToReal(SymLink, strTarget);
+	
 	if (strTarget.GetLength() < strRoot.GetLength())
 		return true;
 
@@ -2154,13 +2155,14 @@ COPY_CODES ShellCopy::DumbCopySymLink(const wchar_t *Target, const wchar_t *NewN
 COPY_CODES ShellCopy::CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, 
 						const wchar_t *NewName, ReparsePointTypes LinkType, const FAR_FIND_DATA_EX &SrcData)
 {
-	//fprintf(stderr, "CopySymLink('%ls', '%ls', '%ls')\n", Root, ExistingName, NewName);
 	FARString strRealName;
 	ConvertNameToReal(ExistingName, strRealName);
-	
+
+	//fprintf(stderr, "CopySymLink('%ls', '%ls', '%ls') '%ls'\n", Root, ExistingName, NewName, strRealName.CPtr());
+
 	if (IsOuterTarget(Root, ExistingName))  {
 		FARString strNewName;
-		ConvertNameToFull(ExistingName, strNewName);
+		ConvertNameToFull(NewName, strNewName);
 		return DumbCopySymLink(strRealName.CPtr(), strNewName.CPtr(), SrcData);
 	}
 
@@ -2406,7 +2408,6 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 					} /* else */
 				} /* while */
 			} // if (Rename)
-
 			if (RPT!=RP_SYMLINKFILE && 
 				(SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) == FILE_ATTRIBUTE_DIRECTORY)
 			{
@@ -2459,7 +2460,6 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 					}
 				}
 			}
-
 			int RetCode=0;
 			FARString strNewName;
 

@@ -294,9 +294,18 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 			s.resize(p);
 		}
 	} else {
-		if (sdc_realpath(s.c_str(), buf) && strcmp(buf, s.c_str()) != 0) {
-			strDest = buf;
-			return;
+		if (sdc_realpath(s.c_str(), buf)) {
+			if (strcmp(buf, s.c_str()) != 0) {
+				strDest = buf;
+				return;
+			}
+		} else {
+			ssize_t r = sdc_readlink(s.c_str(), buf, sizeof(buf) - 1);
+			if (r > 0 && r < (ssize_t)sizeof(buf) && buf[0]) {
+				buf[r] = 0;
+				strDest = buf;
+				return;
+			}
 		}
 	}
 	strDest = Src;

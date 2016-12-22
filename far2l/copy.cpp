@@ -669,7 +669,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		DI_CHECKBOX,    5, 8, 0, 8,0,0,MSG(MCopyMultiActions),
 		DI_CHECKBOX,    5, 9, 0, 9,0,0,MSG(MCopyWriteThrough),
 		DI_TEXT,        3,10, 0,10,0,DIF_SEPARATOR,L"",		
-		DI_CHECKBOX,    5, 11, 0, 11,0,0,MSG(MCopySymLinkContents),
+		DI_CHECKBOX,    5, 11, 0, 11,0, Move ? DIF_DISABLE : 0, MSG(MCopySymLinkContents),
 		DI_CHECKBOX,    5, 12, 0, 12,0,0,MSG(MCopySymLinkContentsOuter),
 		DI_TEXT,        3,13, 0,13,0,DIF_SEPARATOR,L"",
 		DI_CHECKBOX,    5,14, 0,14,UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED,DIF_AUTOMATION,(wchar_t *)MCopyUseFilter,
@@ -1748,14 +1748,15 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	}
 
 	// Выставим признак "Тот же диск"
-	bool SameDisk=false;
+	bool AllowMoveByOS=false;
 
-	if (Flags&FCOPY_MOVE)
+	if ( (Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER|FCOPY_MOVE)) == FCOPY_MOVE)
 	{
 		FARString strTmpSrcDir;
 		SrcPanel->GetCurDir(strTmpSrcDir);
-		SameDisk=(CheckDisksProps(strTmpSrcDir,Dest,CHECKEDPROPS_ISSAMEDISK))!=0;
+		AllowMoveByOS=(CheckDisksProps(strTmpSrcDir,Dest,CHECKEDPROPS_ISSAMEDISK))!=0;
 	}
+	
 
 	// Основной цикл копирования одной порции.
 	SrcPanel->GetSelNameCompat(nullptr,FileAttr);
@@ -1834,15 +1835,19 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			if ((Flags&FCOPY_MOVE))
 			{
 				// Тыкс, а как на счет "тот же диск"?
-				if (KeepPathPos && PointToName(strDest)==strDest)
+				if (KeepPathPos && PointToName(strDest)==strDest &&
+					(Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER)) == 0)
 				{
 					strDestPath = strSelName;
 					strDestPath.SetLength(KeepPathPos);
 					strDestPath += strDest;
-					SameDisk=true;
+					AllowMoveByOS=true;
 				}
 
-				if ((UseFilter || !SameDisk) || ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) && (Flags&FCOPY_COPYSYMLINKCONTENTS)))
+				if ((UseFilter || !AllowMoveByOS) || //can't move across different devices
+				//if any symlinks copy may occur - parse whole tree
+					( (SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT|FILE_ATTRIBUTE_DIRECTORY)) != 0 && 
+						(Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER)) != 0 ) ) 
 				{
 					CopyCode=COPY_FAILURE;
 				}
@@ -1960,7 +1965,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					{
 						int AttemptToMove=FALSE;
 
-						if ((Flags&FCOPY_MOVE) && (!UseFilter && SameDisk) && !(SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+						if ((Flags&FCOPY_MOVE) && (!UseFilter && AllowMoveByOS) && !(SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 						{
 							AttemptToMove=TRUE;
 							int Ret=COPY_SUCCESS;
@@ -2266,7 +2271,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 		if (apiGetFindDataEx(strDestPath,DestData))
 			DestAttr=DestData.dwFileAttributes;
 	}
-
+	
 	int SameName=0, Append=0;
 
 	if (DestAttr!=INVALID_FILE_ATTRIBUTES && (DestAttr & FILE_ATTRIBUTE_DIRECTORY))
@@ -2332,7 +2337,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 			SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT && 
 			!(Flags&FCOPY_COPYSYMLINKCONTENTS) &&
 			(!(Flags&FCOPY_COPYSYMLINKCONTENTSOUTER) || !IsOuterTarget(Root, Src))  );
-
+		
 		if (SrcData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY || copy_sym_link)
 		{
 			if (!Rename)

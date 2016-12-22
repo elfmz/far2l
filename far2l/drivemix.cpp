@@ -42,22 +42,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static int StatForPathOrItsParent(const wchar_t *path, struct stat &s)
 {
-	std::string mb = Wide2MB(path);
-	int r = stat(mb.c_str(), &s);
-	if (r == 0)
-		return 0;
-	
+	std::string mb;
+	if (*path != GOOD_SLASH) {
+		FARString strSrcFullName;
+		ConvertNameToFull(path, strSrcFullName);
+		if (!strSrcFullName.IsEmpty())
+			mb = strSrcFullName.GetMB();
+	}
+	if (mb.empty())
+		mb = Wide2MB(path);
+
 	for (;;) {
-		size_t slash = mb.rfind(mb, GOOD_SLASH);		
+		int r = sdc_stat(mb.c_str(), &s);
+		if (r == 0 || mb.size() < 2)
+			return r;
+
+		size_t slash = mb.rfind(GOOD_SLASH);		
 		if (slash==std::string::npos || slash==0)
 			return -1;
 		
-		bool stop = (slash!=mb.size()-1);	
-		mb.resize(mb.size()-1);
-		if (stop) break;
+		mb.resize(slash);
 	}
-	
-	return stat(mb.c_str(), &s);
 }
 
 int CheckDisksProps(const wchar_t *SrcPath,const wchar_t *DestPath,int CheckedType)

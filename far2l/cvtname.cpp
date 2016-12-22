@@ -303,7 +303,13 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 			ssize_t r = sdc_readlink(s.c_str(), buf, sizeof(buf) - 1);
 			if (r > 0 && r < (ssize_t)sizeof(buf) && buf[0]) {
 				buf[r] = 0;
-				strDest = buf;
+				if (buf[0] != GOOD_SLASH) {
+					strDest = s;
+					CutToSlash(strDest);
+					strDest+= buf;
+				} else
+					strDest = buf;
+				ConvertNameToFull(strDest);
 				return;
 			}
 		}
@@ -439,3 +445,8 @@ void ConvertNameToFull(const wchar_t *lpwszSrc, FARString &strDest)
 	MixToFullPath(strSrc,strDest,strCurDir);
 }
 
+
+void ConvertNameToFull(FARString &strSrcDest)
+{
+	ConvertNameToFull(strSrcDest, strSrcDest);
+}

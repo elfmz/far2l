@@ -111,3 +111,5 @@ void Transform(FARString &strBuffer,const wchar_t *ConvStr,wchar_t TransformType
 wchar_t GetDecimalSeparator();
 
 FARString ReplaceBrackets(const FARString& SearchStr,const FARString& ReplaceStr,RegExpMatch* Match,int Count);
+
+int FaultTolerantMultiByteToWideChar( UINT CodePage, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);

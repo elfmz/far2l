@@ -104,7 +104,7 @@ namespace FailTolerantUTF8
 	}
 }
 
-static void Wide2MBInternal(const wchar_t *src, size_t src_len, std::string &dst)
+static void Wide2MB(const wchar_t *src, size_t src_len, std::string &dst)
 {
 #if (__WCHAR_MAX__ > 0xffff)
 	FailTolerantUTF8::FromWide<UTF32>(src, src_len, dst, CalcSpaceUTF32toUTF8, ConvertUTF32toUTF8);
@@ -113,7 +113,7 @@ static void Wide2MBInternal(const wchar_t *src, size_t src_len, std::string &dst
 #endif	
 }
 
-static void MB2WideInternal(const char *src, size_t src_len, std::wstring &dst)
+void MB2Wide(const char *src, size_t src_len, std::wstring &dst)
 {
 #if (__WCHAR_MAX__ > 0xffff)
 	FailTolerantUTF8::ToWide<UTF32>(src, src_len, dst, CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32);
@@ -126,12 +126,12 @@ static void MB2WideInternal(const char *src, size_t src_len, std::wstring &dst)
 
 void Wide2MB(const wchar_t *src, std::string &dst)
 {
-	Wide2MBInternal(src, wcslen(src), dst);
+	Wide2MB(src, wcslen(src), dst);
 }
 
 void MB2Wide(const char *src, std::wstring &dst)
 {
-	MB2WideInternal(src, strlen(src), dst);
+	MB2Wide(src, strlen(src), dst);
 }
 /////////////////////
 
@@ -152,23 +152,23 @@ std::wstring MB2Wide(const char *src)
 
 void StrWide2MB(const std::wstring &src, std::string &dst) 
 {
-	Wide2MBInternal(src.c_str(), src.size(), dst);
+	Wide2MB(src.c_str(), src.size(), dst);
 }
 std::string StrWide2MB(const std::wstring &src) 
 {
 	std::string dst;
-	Wide2MBInternal(src.c_str(), src.size(), dst);
+	Wide2MB(src.c_str(), src.size(), dst);
 	return dst;
 }
 
 void StrMB2Wide(const std::string &src, std::wstring &dst) 
 {
-	MB2WideInternal(src.c_str(), src.size(), dst);
+	MB2Wide(src.c_str(), src.size(), dst);
 }
 std::wstring StrMB2Wide(const std::string &src) 
 {
 	std::wstring dst;
-	MB2WideInternal(src.c_str(), src.size(), dst);
+	MB2Wide(src.c_str(), src.size(), dst);
 	return dst;
 }
 

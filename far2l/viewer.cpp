@@ -2816,7 +2816,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		}
 		else
 		{
-			ReadSize = WINPORT(MultiByteToWideChar)(VM.CodePage, 0, TmpBuf, ConvertSize, Buf, Count);
+			ReadSize = FaultTolerantMultiByteToWideChar(VM.CodePage, TmpBuf, ConvertSize, Buf, Count);
 		}
 
 		xf_free(TmpBuf);

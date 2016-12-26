@@ -63,6 +63,7 @@ FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 		result.Append(dot, std::min(wcslen(dot), (size_t)NumDigits + 1) );
 	}
 	strDest = result;
+	return strDest;
 
 	/*
 	static bool first = true;
@@ -1363,3 +1364,26 @@ FARString ReplaceBrackets(const FARString& SearchStr,const FARString& ReplaceStr
 
 	return result;
 }
+
+
+int FaultTolerantMultiByteToWideChar( UINT CodePage, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar)
+{
+	if (cbMultiByte == -1)
+		cbMultiByte = strlen(lpMultiByteStr) + 1;
+
+	WINPORT(SetLastError)(0);
+	int r = WINPORT(MultiByteToWideChar)(CodePage, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
+
+	if (CodePage == CP_UTF8 && WINPORT(GetLastError)() == ERROR_NO_UNICODE_TRANSLATION) {
+		std::wstring ws;
+		MB2Wide(lpMultiByteStr, cbMultiByte, ws);
+		if (lpWideCharStr) {
+			if (ws.size() > (size_t)cchWideChar)
+				ws.resize(cchWideChar);
+			memcpy(lpWideCharStr, &ws[0], ws.size());
+		}
+		r = ws.size();
+	}
+	return r;
+}
+

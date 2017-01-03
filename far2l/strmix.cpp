@@ -1380,7 +1380,7 @@ int FaultTolerantMultiByteToWideChar( UINT CodePage, LPCSTR lpMultiByteStr, int 
 		if (lpWideCharStr) {
 			if (ws.size() > (size_t)cchWideChar)
 				ws.resize(cchWideChar);
-			memcpy(lpWideCharStr, &ws[0], ws.size() * sizeof(wchar_t));
+			memcpy(lpWideCharStr, ws.c_str(), ws.size() * sizeof(wchar_t));
 		}
 		r = ws.size();
 	}

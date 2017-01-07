@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "console.hpp"
 #include "wakeful.hpp"
+#include "../utils/include/ConvertUTF.h"
 
 static void PR_ViewerSearchMsg();
 static void ViewerSearchMsg(const wchar_t *Name,int Percent);
@@ -2224,6 +2225,21 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 	PreRedraw.SetParam(preRedrawItem.Param);
 }
 
+int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* end)
+{
+	int distance = -1;
+	if (begin > end) return distance;
+	if (IsFullWideCodePage(CodePage))
+		distance = (end - begin) * sizeof(wchar_t);
+	else if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE))
+		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
+	else if (CodePage == CP_UTF8)
+		CalcSpaceUTF32toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
+	else // one-byte code page?
+		distance = end - begin;
+	return distance;
+}
+
 /* $ 27.01.2003 VVM
    + Параметр Next может принимать значения:
    0 - Новый поиск
@@ -2256,7 +2272,7 @@ void Viewer::Search(int Next,int FirstChar)
 	FARString strSearchStr;
 	FARString strMsgStr;
 	int64_t MatchPos=0;
-	int SearchLength,Case,WholeWords,ReverseSearch,Match,SearchRegexp;
+	int SearchLength,Case,WholeWords,ReverseSearch,Match,SearchRegexp,SearchDistance;
 
 	if (!ViewFile.Opened() || (Next && strLastSearchStr.IsEmpty()))
 		return;
@@ -2336,6 +2352,7 @@ void Viewer::Search(int Next,int FirstChar)
 
 	if (!(SearchLength=(int)strSearchStr.GetLength()))
 		return;
+	SearchDistance = CalcByteDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
 
 	{
 		TPreRedrawFuncGuard preRedrawFuncGuard(PR_ViewerSearchMsg);
@@ -2352,6 +2369,7 @@ void Viewer::Search(int Next,int FirstChar)
 		{
 			Transform(strSearchStr,strSearchStr,L'S');
 			SearchLength=(int)strSearchStr.GetLength();
+			SearchDistance = CalcByteDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
 			WholeWords=0;
 		}
 
@@ -2367,23 +2385,28 @@ void Viewer::Search(int Next,int FirstChar)
 				SearchFlags.Set(SEARCH_MODE2);
 				LastSelPos = ReverseSearch?FileSize:0;
 			}
+#if 0
 			else
 			{
 				LastSelPos = SelectPos + (ReverseSearch?-1:1);
 			}
+#endif
 		}
 		else
 		{
 			LastSelPos = FilePos;
 
 			if (!LastSelPos || LastSelPos == FileSize)
+			{
 				SearchFlags.Set(SEARCH_MODE2);
+				LastSelPos = ReverseSearch?FileSize:0;
+			}
 		}
 
 		vseek(LastSelPos,SEEK_SET);
 		Match=0;
 
-		if (SearchLength>0 && (!ReverseSearch || LastSelPos>0))
+		if (SearchLength>0 && (!ReverseSearch || LastSelPos>=0))
 		{
 			wchar_t Buf[8192];
 			int64_t CurPos=LastSelPos;
@@ -2394,10 +2417,13 @@ void Viewer::Search(int Next,int FirstChar)
 				/* $ 01.08.2000 KM
 				   Изменёно вычисление CurPos с учётом Whole words
 				*/
+#if 0
 				if (WholeWords)
 					CurPos-=ARRAYSIZE(Buf)-SearchLength+1;
 				else
 					CurPos-=ARRAYSIZE(Buf)-SearchLength;
+#endif
+				CurPos -= ARRAYSIZE(Buf) - SearchLength + !!WholeWords;
 
 				if (CurPos<0)
 					BufSize+=(int)CurPos;
@@ -2512,12 +2538,19 @@ void Viewer::Search(int Next,int FirstChar)
 
 					if (Match)
 					{
+#if 0
 						MatchPos=CurPos+I;
+#endif
+						MatchPos = CurPos + CalcByteDistance(VM.CodePage, Buf, Buf + I);
 						break;
 					}
 				}
 
+				ReadSize = CalcByteDistance(VM.CodePage, Buf, Buf + ReadSize);
+#if 0
 				if ((ReverseSearch && CurPos <= 0) || (!ReverseSearch && ReadSize < BufSize))
+#endif
+				if ((ReverseSearch && CurPos <= 0) || (!ReverseSearch && CurPos + ReadSize >= FileSize))
 					break;
 
 				if (ReverseSearch)
@@ -2525,17 +2558,23 @@ void Viewer::Search(int Next,int FirstChar)
 					/* $ 01.08.2000 KM
 					   Изменёно вычисление CurPos с учётом Whole words
 					*/
+#if 0
 					if (WholeWords)
 						CurPos-=ARRAYSIZE(Buf)-SearchLength+1;
 					else
 						CurPos-=ARRAYSIZE(Buf)-SearchLength;
+#endif
+					CurPos -= ReadSize - SearchDistance + !!WholeWords;
 				}
 				else
 				{
+#if 0
 					if (WholeWords)
 						CurPos+=ARRAYSIZE(Buf)-SearchLength+1;
 					else
 						CurPos+=ARRAYSIZE(Buf)-SearchLength;
+#endif
+					CurPos += ReadSize - SearchDistance + !!WholeWords;
 				}
 			}
 		}
@@ -2547,7 +2586,10 @@ void Viewer::Search(int Next,int FirstChar)
 		   ! По окончании поиска отступим от верха экрана на
 		     треть отображаемой высоты.
 		*/
+#if 0
 		SelectText(MatchPos,SearchLength,ReverseSearch?0x2:0);
+#endif
+		SelectText(MatchPos,SearchDistance,ReverseSearch?0x2:0);
 		// Покажем найденное на расстоянии трети экрана от верха.
 		int FromTop=(ScrY-(Opt.ViOpt.ShowKeyBar?2:1))/4;
 
@@ -3095,6 +3137,7 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 	SelectFlags=Flags;
 
 //  LastSelPos=SelectPos+((Flags&0x2) ? -1:1);
+	LastSelPos = SelectPos + SearchLength * ((Flags & 0x2) ? -1 : 1);
 	if (VM.Hex)
 	{
 		size_t len = 8;

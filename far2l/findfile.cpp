@@ -2485,7 +2485,10 @@ void DoScanTree(HANDLE hDlg, FARString& strRoot)
 					itd.SetFindMessage(strFullName);
 				}
 
-				if (IsFileIncluded(nullptr,strFullStreamName,FindData.dwFileAttributes))
+				if ( (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) && !Opt.FindOpt.FindSymLinks)
+				{
+				}
+				else if (IsFileIncluded(nullptr,strFullStreamName,FindData.dwFileAttributes))
 				{
 					if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 					{

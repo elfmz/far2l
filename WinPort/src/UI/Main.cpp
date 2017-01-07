@@ -762,15 +762,17 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		wx2INPUT_RECORD ir(event, TRUE);
 		_pressed_keys.insert(event.GetKeyCode());
 
-		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL)
+		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
 			_right_control = true;
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
+		}
 			
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 		
 		if (_right_control && (ir.Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED) != 0) {
 			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
-			ir.Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
+			ir.Event.KeyEvent.dwControlKeyState|= (RIGHT_CTRL_PRESSED | ENHANCED_KEY);
 		}
 		g_wx_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
@@ -790,9 +792,12 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	
 			
-		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL 
-		|| ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL) {
+		if (_right_control && (
+		ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL 
+		|| ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL) ) {
 			_right_control = false;
+			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
 		}
 	
 		g_wx_con_in.Enqueue(&ir, 1);
@@ -825,7 +830,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 		if (_right_control && (ir.Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED) != 0) {
 			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
-			ir.Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
+			ir.Event.KeyEvent.dwControlKeyState|= (RIGHT_CTRL_PRESSED | ENHANCED_KEY);
 		}
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;

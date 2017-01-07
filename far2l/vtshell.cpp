@@ -720,6 +720,7 @@ static bool shown_tip_exit = false;
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
 		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
 		//fprintf(f, "stty -echo\n");
+		fprintf(f, "echo\n");
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());//second time - prevent user from shooting own leg
 		fclose(f);
 		return cmd_script;

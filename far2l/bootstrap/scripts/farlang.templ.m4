@@ -1373,14 +1373,14 @@ upd:"Copy extended a&ttributes"
 upd:"Copy extended a&ttributes"
 upd:"Copy extended a&ttributes"
 
-MConfigCopySharing
-"Копировать открытые для &записи файлы"
-"Copy files opened for &writing"
-"Kopírovat soubory otevřené pro &zápis"
-"Zum Schreiben geöffnete Dateien &kopieren"
-"Írásra megnyitott &fájlok másolhatók"
-"Kopiuj pliki otwarte do zap&isu"
-"Copiar archivos abiertos para &escritura"
+MConfigOnlyFilesSize
+"Учитывать только размер файлов"
+"Use only files size in estimation"
+upd:"Use only files size in estimation"
+upd:"Use only files size in estimation"
+upd:"Use only files size in estimation"
+upd:"Use only files size in estimation"
+upd:"Use only files size in estimation"
 
 MConfigScanJunction
 "Ск&анировать символические ссылки"

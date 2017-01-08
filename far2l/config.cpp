@@ -154,8 +154,8 @@ void SystemSettings()
 
 //	Builder.AddCheckbox(MSudoParanoic, &Opt.SudoParanoic);
 //	Builder.AddCheckbox(CopyWriteThrough, &Opt.CMOpt.WriteThrough);
-	Builder.AddCheckbox(MConfigCopySharing, &Opt.CMOpt.CopyOpened);
 	Builder.AddCheckbox(MConfigScanJunction, &Opt.ScanJunction);
+	Builder.AddCheckbox(MConfigOnlyFilesSize, &Opt.OnlyFilesSize);
 
 	DialogItemEx *InactivityExit = Builder.AddCheckbox(MConfigInactivity, &Opt.InactivityExit);
 	DialogItemEx *InactivityExitTime = Builder.AddIntEditField(&Opt.InactivityExitTime, 2);
@@ -665,11 +665,9 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem,L"SudoConfirmModify",&Opt.SudoConfirmModify,1, 0},
 	{1, REG_DWORD,  NKeySystem,L"SudoPasswordExpiration",&Opt.SudoPasswordExpiration,15*60, 0},
 
-
 	{1, REG_DWORD,  NKeySystem,L"WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
 	{1, REG_DWORD,  NKeySystem,L"CopyXAttr",&Opt.CMOpt.CopyXAttr, 0, 0},
 	{0, REG_DWORD,  NKeySystem,L"CopyAccessMode",&Opt.CMOpt.CopyAccessMode,1, 0},
-	{1, REG_DWORD,  NKeySystem,L"CopyOpened",&Opt.CMOpt.CopyOpened,1, 0},
 	{1, REG_DWORD,  NKeySystem, L"MultiCopy",&Opt.CMOpt.MultiCopy,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"CopyTimeRule",  &Opt.CMOpt.CopyTimeRule, 3, 0},
 
@@ -718,6 +716,7 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeySystem,L"CASRule",&Opt.CASRule,0xFFFFFFFFU, 0},
 	{0, REG_DWORD,  NKeySystem,L"AllCtrlAltShiftRule",&Opt.AllCtrlAltShiftRule,0x0000FFFF, 0},
 	{1, REG_DWORD,  NKeySystem,L"ScanJunction",&Opt.ScanJunction,1, 0},
+	{1, REG_DWORD,  NKeySystem,L"OnlyFilesSize",&Opt.OnlyFilesSize, 0, 0},
 	{0, REG_DWORD,  NKeySystem,L"UsePrintManager",&Opt.UsePrintManager,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"WindowMode",&Opt.WindowMode, 0, 0},
 

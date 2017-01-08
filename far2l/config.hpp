@@ -616,6 +616,7 @@ struct Options
 	DWORD PluginMaxReadData;
 	int UseNumPad;
 	int ScanJunction;
+	int OnlyFilesSize;
 
 	DWORD ShowTimeoutDelFiles; // тайаут в процессе удаления (в ms)
 	DWORD ShowTimeoutDACLFiles;

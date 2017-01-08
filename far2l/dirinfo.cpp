@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "wakeful.hpp"
+#include "config.hpp"
 
 static void DrawGetDirInfoMsg(const wchar_t *Title,const wchar_t *Name,const UINT64 Size)
 {
@@ -125,7 +126,8 @@ int GetDirInfo(const wchar_t *Title,
 
 	struct stat s = {0};
 	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
-		FileSize = s.st_size;//include size of root dir's node
+		if (!Opt.OnlyFilesSize)
+			FileSize = s.st_size;//include size of root dir's node
 		ClusterSize = s.st_blksize;//TODO: check if its best thing to be used here
 	} else {
 		ClusterSize = 512;//
@@ -178,7 +180,7 @@ int GetDirInfo(const wchar_t *Title,
 		}
 		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
 			//include own size of symlink's to total size
-			if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
+			if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0 && !Opt.OnlyFilesSize) {
 				FileSize+= s.st_size;
 			}
 			if (!ScTree.IsSymlinksScanEnabled())
@@ -195,7 +197,8 @@ int GetDirInfo(const wchar_t *Title,
 			if (!(Flags&GETDIRINFO_USEFILTER))
 			{
 				DirCount++;
-				FileSize+= FindData.nFileSize;
+				if (!Opt.OnlyFilesSize)
+					FileSize+= FindData.nFileSize;
 			}
 			else
 			{
@@ -204,7 +207,8 @@ int GetDirInfo(const wchar_t *Title,
 				// он учтётся (mantis 551)
 				if (Filter->FileInFilter(FindData))
 				{
-					FileSize+= FindData.nFileSize;//TODO: add size at same condifion as DirCount increment
+					if (!Opt.OnlyFilesSize)
+						FileSize+= FindData.nFileSize;//TODO: add size at same condifion as DirCount increment
 				}
 				else
 					ScTree.SkipDir();

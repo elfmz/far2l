@@ -2779,23 +2779,8 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		}
 	}
 
-	int OpenMode=FILE_SHARE_READ;
-
-	if (Opt.CMOpt.CopyOpened)
-		OpenMode|=FILE_SHARE_WRITE;
-
 	File SrcFile;
-	bool Opened = SrcFile.Open(SrcName, GENERIC_READ, OpenMode, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN);
-
-	if (!Opened && Opt.CMOpt.CopyOpened)
-	{
-		_localLastError=WINPORT(GetLastError)();
-
-		if (_localLastError == ERROR_SHARING_VIOLATION)
-		{
-			Opened = SrcFile.Open(SrcName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN);
-		}
-	}
+	bool Opened = SrcFile.Open(SrcName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN);
 
 	if (!Opened)
 	{

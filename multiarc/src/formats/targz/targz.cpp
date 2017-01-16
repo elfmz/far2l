@@ -122,7 +122,7 @@ typedef union block {
 
 #endif
 
-enum {TAR_FORMAT,GZ_FORMAT,Z_FORMAT,BZ_FORMAT};
+enum {TAR_FORMAT,GZ_FORMAT,Z_FORMAT,BZ_FORMAT,XZ_FORMAT};
 
 typedef union {
   int64_t i64;
@@ -184,6 +184,8 @@ BOOL WINAPI _export TARGZ_IsArchive(const char *Name,const unsigned char *Data,i
     ArcType=Z_FORMAT;
   else if (Data[0]=='B' && Data[1]=='Z')
     ArcType=BZ_FORMAT;
+  else if (DataSize>=6 && memcmp(Data, "\xFD\x37\x7A\x58\x5A\x00", 6) == 0)
+    ArcType=XZ_FORMAT;
   else
     return(FALSE);
 
@@ -230,22 +232,24 @@ int WINAPI _export TARGZ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemI
   {
     if (*ZipName)
     {
-      if (ArcType==BZ_FORMAT)
+      switch (ArcType)
       {
-        Item->PackSize=Item->FindData.nFileSizeLow=FileSize.Part.LowPart;
-        Item->PackSizeHigh=Item->FindData.nFileSizeHigh=FileSize.Part.HighPart;
-        strncpy(Item->FindData.cFileName,ZipName,ARRAYSIZE(Item->FindData.cFileName)-1);
-        *ZipName=0;
-        return(GETARC_SUCCESS);
+		  case BZ_FORMAT: case XZ_FORMAT:
+			Item->PackSize=Item->FindData.nFileSizeLow=FileSize.Part.LowPart;
+			Item->PackSizeHigh=Item->FindData.nFileSizeHigh=FileSize.Part.HighPart;
+			strncpy(Item->FindData.cFileName,ZipName,ARRAYSIZE(Item->FindData.cFileName)-1);
+			*ZipName=0;
+			return(GETARC_SUCCESS);
+
+		  default:
+		    return GetArcItemGZIP(Item,Info);
       }
-      return GetArcItemGZIP(Item,Info);
     }
     else
       return(GETARC_EOF);
   }
   return GetArcItemTAR(Item,Info);
 }
-
 
 int GetArcItemGZIP(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
 {
@@ -437,11 +441,12 @@ BOOL WINAPI _export TARGZ_CloseArchive(struct ArcInfo *Info)
 
 BOOL WINAPI _export TARGZ_GetFormatName(int Type,char *FormatName,char *DefaultExt)
 {
-  static const char * const FmtAndExt[4][2]={
+  static const char * const FmtAndExt[5][2]={
     {"TAR","tar"},
     {"GZip","gz"},
     {"Z(Unix)","z"},
     {"BZip","bz2"},
+    {"XZip","xz"},
   };
   switch(Type)
   {
@@ -449,6 +454,7 @@ BOOL WINAPI _export TARGZ_GetFormatName(int Type,char *FormatName,char *DefaultE
     case GZ_FORMAT:
     case Z_FORMAT:
     case BZ_FORMAT:
+	case XZ_FORMAT:
       strcpy(FormatName,FmtAndExt[Type][0]);
       strcpy(DefaultExt,FmtAndExt[Type][1]);
       return(TRUE);
@@ -459,7 +465,7 @@ BOOL WINAPI _export TARGZ_GetFormatName(int Type,char *FormatName,char *DefaultE
 
 BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
 {
-   static const char * Commands[4][15]=
+   static const char * Commands[5][15]=
    {
      { // TAR_FORMAT
        "tar --force-local -xf %%A %%FSq32768",
@@ -532,8 +538,25 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
        "bzip2 %%fq",
        "*"
      },
+     { // BZ_FORMAT
+       "xz -cd %%A >%%fq",
+       "xz -cd %%A >%%fq",
+       "xz -cd %%A >/dev/null",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "xz -c %%fq >%%A",
+       "xz %%fq",
+       "xz -c %%fq >%%A",
+       "xz %%fq",
+       "*"
+     },
    };
-   if (Type >= TAR_FORMAT && Type <= BZ_FORMAT && Command < (int)(ARRAYSIZE(Commands[Type])))
+   if (Type >= TAR_FORMAT && Type <= XZ_FORMAT && Command < (int)(ARRAYSIZE(Commands[Type])))
    {
      strcpy(Dest,Commands[Type][Command]);
      return(TRUE);

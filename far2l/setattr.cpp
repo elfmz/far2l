@@ -1251,9 +1251,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 									}
 
 									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, 
-										SkipMode, strSelName, strInitOwner, DlgParam.OSubfoldersState)) break;
+										SkipMode, strFullName, strInitOwner, DlgParam.OSubfoldersState)) break;
 									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, 
-										SkipMode, strSelName, strInitGroup, DlgParam.OSubfoldersState)) break;									
+										SkipMode, strFullName, strInitGroup, DlgParam.OSubfoldersState)) break;									
 
 									SetAccessTime=     DlgParam.OAccessTime  && 
 										ReadFileTime(0,strFullName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);

@@ -1,5 +1,10 @@
 #include "headers.hpp"
 #include "clipboard.hpp"
+#include "ctrlobj.hpp"
+#include "scrbuf.hpp"
+#include "cmdline.hpp"
+#include "fileedit.hpp"
+#include "interf.hpp"
 #include <signal.h>
 #include <pthread.h>
 #include <mutex>
@@ -12,6 +17,7 @@
 #include <sys/wait.h> 
 #include <condition_variable>
 #include "vtansi.h"
+#include "vtlog.h"
 #define __USE_BSD 
 #include <termios.h> 
 
@@ -185,7 +191,7 @@ public:
 	struct IProcessor
 	{
 		virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) = 0;
-		virtual void OnInputResized() = 0;
+		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
 	};
 	
 	VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
@@ -214,8 +220,6 @@ private:
 	
 	virtual void *ThreadProc()
 	{
-		INPUT_RECORD last_window_info_ir = {0};
-		
 		while (!_stop) {
 			INPUT_RECORD ir = {0};
 			DWORD dw = 0;
@@ -225,14 +229,8 @@ private:
 			}else if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
 				_processor->OnInputKeyDown(ir.Event.KeyEvent);
 			} else if (ir.EventType==WINDOW_BUFFER_SIZE_EVENT) {
-				last_window_info_ir = ir;
-				_processor->OnInputResized();
+				_processor->OnInputResized(ir);
 			}
-		}
-
-		if (last_window_info_ir.EventType==WINDOW_BUFFER_SIZE_EVENT) { //handover this event to far
-			DWORD dw = 0;
-			WINPORT(WriteConsoleInput)(NULL, &last_window_info_ir, 1, &dw);
 		}
 
 		return nullptr;
@@ -331,6 +329,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 	std::string _slavename;
 	CompletionMarker _completion_marker;
 	bool _skipping_line;
+	std::mutex _output_lock;
+	INPUT_RECORD _last_window_info_ir;
 	
 	
 	int ForkAndAttachToSlave(bool shell)
@@ -525,6 +525,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
+		std::lock_guard<std::mutex> lock(_output_lock);
 		std::string s(buf, len);
 		DbgPrintEscaped("OUTPUT", s);
 		while (_skipping_line) {
@@ -549,10 +550,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		return true;
 	}
 	
-	virtual void OnInputResized() //called from worker thread
+	virtual void OnInputResized(const INPUT_RECORD &ir) //called from worker thread
 	{
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+
+		_last_window_info_ir = ir;
 	}
 
 	virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
@@ -590,6 +593,36 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		}
 	}
 	
+	void OnConsoleLog()
+	{
+		std::lock_guard<std::mutex> lock(_output_lock);	
+		const std::string &histfile = VTLog::GetAsFile();
+		if (histfile.empty())
+			return;
+		
+		ScrBuf.FillBuf();
+		CtrlObject->CmdLine->SaveBackground();
+		
+		DWORD saved_mode = 0;
+		CONSOLE_SCREEN_BUFFER_INFO saved_csbi = {0};
+		WINPORT(GetConsoleScreenBufferInfo)( NULL, &saved_csbi );
+		WINPORT(GetConsoleMode)(NULL, &saved_mode);
+		
+		ScrBuf.FillBuf();
+		SetFarConsoleMode(TRUE);
+		DeliverPendingWindowInfo();
+		EraseAndEditFile(histfile);
+		
+		CtrlObject->CmdLine->ShowBackground();
+		CtrlObject->CmdLine->Redraw();
+		ScrBuf.Flush();
+		
+		WINPORT(SetConsoleMode)(NULL, saved_mode);
+		WINPORT(SetConsoleCursorPosition)( NULL, saved_csbi.dwCursorPosition );
+		if (!_slavename.empty())
+			UpdateTerminalSize(_fd_out);
+	}
+	
 	std::string StringFromClipboard()
 	{
 		std::string out;
@@ -624,6 +657,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 				OnCtrlC(alt);
 			} 
 			
+			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F4) {
+				OnConsoleLog();
+			} 
+
 			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift);
 			if (spec)
 				return spec;
@@ -659,23 +696,15 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		}
 	}
 	
-	public:
-	VTShell() :
-		_fd_out(-1), _fd_in(-1), 
-		_pipes_fallback_in(-1), _pipes_fallback_out(-1), 
-		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false)
-	{		
-		if (!Startup())
-			return;
+	void DeliverPendingWindowInfo()
+	{
+		if (_last_window_info_ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
+			DWORD dw = 0;
+			WINPORT(WriteConsoleInput)(NULL, &_last_window_info_ir, 1, &dw);
+			_last_window_info_ir.EventType = 0;
+		}
 	}
 	
-	~VTShell()
-	{
-		fprintf(stderr, "~VTShell\n");
-		Shutdown();
-		CheckedCloseFD(_pipes_fallback_in);
-		CheckedCloseFD(_pipes_fallback_out);
-	}
 	
 	std::string GenerateExecuteCommandScript(const char *cmd, bool need_sudo)
 	{
@@ -686,7 +715,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		if (!f)
 			return std::string();
 
-static bool shown_tip_ctrl_alc_c = false;
+static bool shown_tip_init = false;
 static bool shown_tip_exit = false;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
@@ -707,9 +736,10 @@ static bool shown_tip_exit = false;
 				shown_tip_exit ? "" : " TIP: To close FAR - type 'exit far'.");
 			shown_tip_exit = true;
 
-		} else if (!shown_tip_ctrl_alc_c) {
-			fprintf(f, "echo \"TIP: If you feel stuck - use Ctrl+Alt+C to terminate everything in this shell.\"\n");
-			shown_tip_ctrl_alc_c = true;
+		} else if (!shown_tip_init) {
+			fprintf(f, "echo \"Ctrl+Alt+C - terminate everything in this shell.\"\n");
+			fprintf(f, "echo \"Ctrl+Shift+F4 - pause output and open editor with console log.\"\n");
+			shown_tip_init = true;
 		}
 		if (need_sudo) {
 			fprintf(f, "sudo sh -c \"cd '%s' && %s\"\n", EscapeQuotas(cd).c_str(), EscapeQuotas(cmd).c_str());
@@ -725,6 +755,27 @@ static bool shown_tip_exit = false;
 		fclose(f);
 		return cmd_script;
 	}
+
+
+	public:
+	VTShell() :
+		_fd_out(-1), _fd_in(-1), 
+		_pipes_fallback_in(-1), _pipes_fallback_out(-1), 
+		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false)
+	{
+		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
+		if (!Startup())
+			return;
+	}
+	
+	~VTShell()
+	{
+		fprintf(stderr, "~VTShell\n");
+		Shutdown();
+		CheckedCloseFD(_pipes_fallback_in);
+		CheckedCloseFD(_pipes_fallback_out);
+	}
+
 	
 	int ExecuteCommand(const char *cmd, bool force_sudo)
 	{
@@ -754,20 +805,20 @@ static bool shown_tip_exit = false;
 		_completion_marker.ScanReset();
 		_skipping_line = true;
 		
-		VTOutputReader output_reader(this, _fd_out);
-		VTInputReader input_reader(this);
-		output_reader.WaitDeactivation();
-
-		
-		if (_shell_pid!=-1) {
-			int status;
-			if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
-				_shell_pid = -1;
+		{
+			VTOutputReader output_reader(this, _fd_out);
+			VTInputReader input_reader(this);
+			output_reader.WaitDeactivation();
+			if (_shell_pid!=-1) {
+				int status;
+				if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
+					_shell_pid = -1;
+				}
 			}
 		}
-		
 		remove(cmd_script.c_str());
 
+		DeliverPendingWindowInfo();
 		return _completion_marker.LastExitCode();
 	}	
 

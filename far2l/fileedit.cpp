@@ -2853,3 +2853,17 @@ bool FileEditor::AskOverwrite(const FARString& FileName)
 
 	return result;
 }
+
+void EraseAndEditFile(const std::string &pathname)
+{
+	FileEditor *ShellEditor=new FileEditor(StrMB2Wide(pathname).c_str(), 
+		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW, std::numeric_limits<int>::max() );
+	unlink(pathname.c_str());
+	if (ShellEditor) {
+		DWORD editorExitCode = ShellEditor->GetExitCode();
+		if (editorExitCode != XC_LOADING_INTERRUPTED && editorExitCode != XC_OPEN_ERROR) {
+			FrameManager->ExecuteModal();
+		} else
+			delete ShellEditor;
+	}
+}

@@ -174,3 +174,4 @@ class FileEditor : public Frame
 };
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
+void EraseAndEditFile(const std::string &pathname);

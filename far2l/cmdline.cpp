@@ -188,6 +188,20 @@ void CommandLine::ProcessCompletion(bool possibilities)
 	}	
 }
 
+void CommandLine::EditConsoleLog()
+{
+	++ProcessShowClock;
+	ShowBackground();
+	Redraw();
+	ScrBuf.Flush();
+	const std::string &histfile = VTLog::GetAsFile();
+	--ProcessShowClock;
+	Redraw();
+	ScrBuf.Flush();
+	if (!histfile.empty())
+		EraseAndEditFile(histfile);
+}
+
 int CommandLine::ProcessKey(int Key)
 {
 	const wchar_t *PStr;
@@ -203,28 +217,8 @@ int CommandLine::ProcessKey(int Key)
 		return TRUE;
 	}
 	
-	if ( Key==KEY_F4) { 
-		++ProcessShowClock;
-		ShowBackground();
-		Redraw();
-		ScrBuf.Flush();
-		const std::string &histfile = VTLog::GetAsFile();
-		--ProcessShowClock;
-		Redraw();
-		ScrBuf.Flush();
-		if (histfile.empty())
-			return TRUE;
-			
-		FileEditor *ShellEditor=new FileEditor(StrMB2Wide(histfile).c_str(), CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW, std::numeric_limits<int>::max() );
-		unlink(histfile.c_str());
-		if (ShellEditor) {
-			DWORD editorExitCode = ShellEditor->GetExitCode();
-			if (editorExitCode != XC_LOADING_INTERRUPTED && editorExitCode != XC_OPEN_ERROR) {
-				FrameManager->ExecuteModal();
-			} else
-				delete ShellEditor;
-		}
-		
+	if ( Key==KEY_CTRLSHIFTF4 || Key==KEY_F4) { 
+		EditConsoleLog();
 		return TRUE;
 	}
 	

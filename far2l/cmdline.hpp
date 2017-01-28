@@ -81,6 +81,7 @@ class CommandLine:public ScreenObject
 
 		virtual void ResizeConsole();
 
+		void EditConsoleLog();
 		int GetCurDir(FARString &strCurDir);
 		BOOL SetCurDir(const wchar_t *CurDir);
 

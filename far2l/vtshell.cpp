@@ -608,13 +608,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 		WINPORT(GetConsoleScreenBufferInfo)( NULL, &saved_csbi );
 		WINPORT(GetConsoleMode)(NULL, &saved_mode);
 		
-		ScrBuf.FillBuf();
 		SetFarConsoleMode(TRUE);
 		DeliverPendingWindowInfo();
 		EraseAndEditFile(histfile);
 		
 		CtrlObject->CmdLine->ShowBackground();
-		CtrlObject->CmdLine->Redraw();
 		ScrBuf.Flush();
 		
 		WINPORT(SetConsoleMode)(NULL, saved_mode);

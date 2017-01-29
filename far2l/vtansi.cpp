@@ -1322,7 +1322,7 @@ struct VTAnsiState
 		WINPORT(SetConsoleMode)( con, mode );
 		WINPORT(SetConsoleCursorInfo)( con, &cci );
 		WINPORT(SetConsoleTextAttribute)( con, csbi.wAttributes );
-		WINPORT(SetConsoleCursorPosition)( NULL, csbi.dwCursorPosition );
+		WINPORT(SetConsoleCursorPosition)( con, csbi.dwCursorPosition );
 	}
 };
 

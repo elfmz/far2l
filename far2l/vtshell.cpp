@@ -329,7 +329,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 	std::string _slavename;
 	CompletionMarker _completion_marker;
 	bool _skipping_line;
-	std::mutex _output_lock;
 	INPUT_RECORD _last_window_info_ir;
 	
 	
@@ -525,7 +524,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
-		std::lock_guard<std::mutex> lock(_output_lock);
 		std::string s(buf, len);
 		DbgPrintEscaped("OUTPUT", s);
 		while (_skipping_line) {
@@ -595,30 +593,27 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 	
 	void OnConsoleLog()
 	{
-		std::lock_guard<std::mutex> lock(_output_lock);	
-		const std::string &histfile = VTLog::GetAsFile();
-		if (histfile.empty())
+		struct VTAnsiState *ansi_state = _vta.Pause();
+		if (!ansi_state)
 			return;
+
+		const std::string &histfile = VTLog::GetAsFile();
+		if (!histfile.empty()) {
+			ScrBuf.FillBuf();
+			CtrlObject->CmdLine->SaveBackground();
 		
-		ScrBuf.FillBuf();
-		CtrlObject->CmdLine->SaveBackground();
-		
-		DWORD saved_mode = 0;
-		CONSOLE_SCREEN_BUFFER_INFO saved_csbi = {0};
-		WINPORT(GetConsoleScreenBufferInfo)( NULL, &saved_csbi );
-		WINPORT(GetConsoleMode)(NULL, &saved_mode);
-		
-		SetFarConsoleMode(TRUE);
-		DeliverPendingWindowInfo();
-		EraseAndEditFile(histfile);
-		
-		CtrlObject->CmdLine->ShowBackground();
-		ScrBuf.Flush();
-		
-		WINPORT(SetConsoleMode)(NULL, saved_mode);
-		WINPORT(SetConsoleCursorPosition)( NULL, saved_csbi.dwCursorPosition );
-		if (!_slavename.empty())
-			UpdateTerminalSize(_fd_out);
+			SetFarConsoleMode(TRUE);
+			DeliverPendingWindowInfo();
+			EraseAndEditFile(histfile);
+
+			CtrlObject->CmdLine->ShowBackground();
+			ScrBuf.Flush();
+
+			if (!_slavename.empty())
+				UpdateTerminalSize(_fd_out);
+		}
+
+		_vta.Continue(ansi_state);
 	}
 	
 	std::string StringFromClipboard()

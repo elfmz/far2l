@@ -104,4 +104,4 @@ extern FormatScreen FS;
 
 extern DWORD ErrorMode;
 
-#define FAR_BASENAME "far2l"
+#define FAR_BASENAME L"far2l"

@@ -7,7 +7,7 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 {
 	if (data->EventType == KEY_EVENT) {
 		fprintf(stderr, "ConsoleInput::Enqueue: %lc %x %x %x %s\n", 
-			data->Event.KeyEvent.uChar.UnicodeChar,
+			data->Event.KeyEvent.uChar.UnicodeChar ? data->Event.KeyEvent.uChar.UnicodeChar : '#',
 			data->Event.KeyEvent.uChar.UnicodeChar,
 			data->Event.KeyEvent.wVirtualKeyCode,
 			data->Event.KeyEvent.dwControlKeyState,

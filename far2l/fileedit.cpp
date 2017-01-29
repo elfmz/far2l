@@ -140,6 +140,13 @@ bool dlgOpenEditor(FARString &strFileName, UINT &codepage)
 	if (Dlg.GetExitCode() == ID_OE_OK)
 	{
 		strFileName = EditDlg[ID_OE_FILENAME].strData;
+		if (strFileName.GetLength() > 1 && strFileName[0] == L'~' && strFileName[1] == GOOD_SLASH) {
+			const char * home = getenv("HOME");
+			if (!home)
+				home = "/tmp";
+
+			strFileName.Replace(0, 1, FARString(home));
+		}
 		return true;
 	}
 

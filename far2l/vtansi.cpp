@@ -175,9 +175,6 @@ jadoxa@yahoo.com.au
 // ========== Global variables and constants
 
 static HANDLE	  hConOut;		// handle to CONOUT$
-static WORD	  orgattr;		// original attributes
-static DWORD	  orgmode;		// original mode
-static CONSOLE_CURSOR_INFO orgcci;	// original cursor state
 
 #define ESC	'\x1B'          // ESCape character
 #define BEL	'\x07'
@@ -1272,12 +1269,6 @@ BOOL ParseAndPrintString( HANDLE hDev,
 }
 
 
-static std::mutex vt_ansi_mutex;
-static struct {
-	SHORT top, bottom;
-} s_initial_scr_rgn = {0};
-
-
 static void ResetState()
 {
 	nCharInBuffer = 0;
@@ -1302,25 +1293,52 @@ static void ResetState()
 
 #include "vtlog.h"
 
+struct VTAnsiState
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CONSOLE_CURSOR_INFO cci;
+	DWORD mode;
+	WORD attr;
+	SHORT scroll_top;
+	SHORT scroll_bottom;
+
+	VTAnsiState() : mode(0), attr(0), scroll_top(0), scroll_bottom(0)
+	{
+		memset(&csbi, 0, sizeof(csbi));
+		memset(&cci, 0, sizeof(cci));
+	}
+	
+	void InitFromConsole(HANDLE con)
+	{
+		WINPORT(GetConsoleScreenBufferInfo)( con, &csbi );
+		WINPORT(GetConsoleCursorInfo)( con, &cci );
+		WINPORT(GetConsoleMode)( con, &mode );
+		WINPORT(GetConsoleScrollRegion)(con, &scroll_top, &scroll_bottom);
+	}
+
+	void ApplyToConsole(HANDLE con)
+	{
+		WINPORT(SetConsoleScrollRegion)(con, scroll_top, scroll_bottom);
+		WINPORT(SetConsoleMode)( con, mode );
+		WINPORT(SetConsoleCursorInfo)( con, &cci );
+		WINPORT(SetConsoleTextAttribute)( con, csbi.wAttributes );
+		WINPORT(SetConsoleCursorPosition)( NULL, csbi.dwCursorPosition );
+	}
+};
+
+
+static VTAnsiState g_saved_state;
+static std::mutex g_vt_ansi_mutex, g_vt_ansi_output_mutex;
+
 VTAnsi::VTAnsi()
 {
-	vt_ansi_mutex.lock();	
+	g_vt_ansi_mutex.lock();	
 	ResetState();
-
-
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )) {
-		orgattr = csbi.wAttributes;
-		ansiState.bold = csbi.wAttributes & FOREGROUND_INTENSITY;
-		ansiState.underline = csbi.wAttributes & BACKGROUND_INTENSITY;
-	} else {
-		orgattr = 7;
-	}
-	ansiState.foreground = attr2ansi[orgattr & 7];
-	ansiState.background = attr2ansi[(orgattr >> 4) & 7];
-	WINPORT(GetConsoleMode)( NULL, &orgmode );
-	WINPORT(GetConsoleCursorInfo)( NULL, &orgcci );
-	WINPORT(GetConsoleScrollRegion)(NULL, &s_initial_scr_rgn.top, &s_initial_scr_rgn.bottom);
+	g_saved_state.InitFromConsole(NULL);
+	ansiState.bold = g_saved_state.csbi.wAttributes & FOREGROUND_INTENSITY;
+	ansiState.underline = g_saved_state.csbi.wAttributes & BACKGROUND_INTENSITY;
+	ansiState.foreground = attr2ansi[g_saved_state.csbi.wAttributes & 7];
+	ansiState.background = attr2ansi[(g_saved_state.csbi.wAttributes >> 4) & 7];
 	
 	VTLog::Start();
 	
@@ -1330,16 +1348,31 @@ VTAnsi::VTAnsi()
 VTAnsi::~VTAnsi()
 {
 	VTLog::Stop();
-	WINPORT(SetConsoleScrollRegion)(NULL, s_initial_scr_rgn.top, s_initial_scr_rgn.bottom);
-	WINPORT(SetConsoleMode)( NULL, orgmode );
-	WINPORT(SetConsoleCursorInfo)( NULL, &orgcci );
-	WINPORT(SetConsoleTextAttribute)( NULL, orgattr );
+	g_saved_state.ApplyToConsole(NULL);
 	WINPORT(FlushConsoleInputBuffer)(NULL);
-	vt_ansi_mutex.unlock();
+	g_vt_ansi_mutex.unlock();
+}
+
+
+struct VTAnsiState *VTAnsi::Pause()
+{
+	g_vt_ansi_output_mutex.lock();
+	VTAnsiState *out = new VTAnsiState;
+	out->InitFromConsole(NULL);
+	g_saved_state.ApplyToConsole(NULL);
+	return out;
+}
+
+void VTAnsi::Continue(struct VTAnsiState* state)
+{
+	state->ApplyToConsole(NULL);
+	delete state;
+	g_vt_ansi_output_mutex.unlock();
 }
 
 size_t VTAnsi::Write(const WCHAR *str, size_t len)
 {
+	std::lock_guard<std::mutex> lock(g_vt_ansi_output_mutex);	
 	DWORD processed = 0;
 	if (!ParseAndPrintString(NULL, str, len, &processed))
 		return 0;

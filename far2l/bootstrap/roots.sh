@@ -33,7 +33,9 @@ eol=$'\n'
 tab=$'\t'
 
 
-dfout=`df -T | awk "-F " '{ print $NF "\t" $2 }'`
+#FIXME: pathes that contain repeated continuos spaces
+dfout=`df -T | awk "-F " '{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; print $n "\t" $2 }'`
+#dfout=`df -T | awk "-F " '{ print $NF "\t" $2 }'`
 dfout+=$eol
 if [ -f ~/.config/far2l/favorites ]; then
 	dfout+=`grep "^[^#]" ~/.config/far2l/favorites`

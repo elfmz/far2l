@@ -377,12 +377,13 @@ int FarAppMain(int argc, char **argv)
 	Opt.LoadPlug.PluginsCacheOnly=FALSE;
 
 	g_strFarPath = g_strFarModuleName;
-	
-	if (!TranslateFarString<TranslateInstallPath_Bin2Share>(g_strFarPath)) {
-		CutToSlash(g_strFarPath, true);
-	} /*else {
-		/usr/bin/far2l -> /usr/share/far2l
-	}*/
+
+	bool translated = TranslateFarString<TranslateInstallPath_Bin2Share>(g_strFarPath);
+	CutToSlash(g_strFarPath, true);
+	if (translated) {
+		// /usr/bin/something -> /usr/share/far2l
+		g_strFarPath+= L"/" FAR_BASENAME;
+	}
 		
 	WINPORT(SetEnvironmentVariable)(L"FARHOME", g_strFarPath);
 	AddEndSlash(g_strFarPath);

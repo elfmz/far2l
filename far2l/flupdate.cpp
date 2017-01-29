@@ -224,10 +224,10 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	ListData=nullptr;
 	int ReadOwners=IsColumnDisplayed(OWNER_COLUMN);
 	int ReadGroups=IsColumnDisplayed(GROUP_COLUMN);
-	int ReadPacked=IsColumnDisplayed(PACKED_COLUMN);
+	//int ReadPacked=IsColumnDisplayed(PACKED_COLUMN);
 	int ReadNumLinks=IsColumnDisplayed(NUMLINK_COLUMN);
-	int ReadNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
-	int ReadStreamsSize=IsColumnDisplayed(STREAMSSIZE_COLUMN);
+	//int ReadNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
+	//int ReadStreamsSize=IsColumnDisplayed(STREAMSSIZE_COLUMN);
 	FARString strComputerName;
 
 

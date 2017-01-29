@@ -181,14 +181,13 @@ namespace VTLog
 	
 	std::string GetAsFile(bool append_screen_lines)
 	{
-		const char *home = getenv("HOME");
-		std::string path = home ? home : "/tmp";
 		char name[128];
 		SYSTEMTIME st;
 		WINPORT(GetLocalTime)(&st);
-		sprintf(name, "/farvt_%u-%u-%u_%u-%u-%u.log", 
+		sprintf(name, "farvt_%u-%u-%u_%u-%u-%u.log", 
 			st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-		path+= name;
+
+		std::string path = InMyTemp(name);
 				
 		std::string s;
 		GetAsString(s, append_screen_lines);

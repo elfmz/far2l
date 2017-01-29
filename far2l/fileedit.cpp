@@ -472,7 +472,7 @@ void FileEditor::Init(
 	KeyBarVisible = Opt.EdOpt.ShowKeyBar;
 	TitleBarVisible = Opt.EdOpt.ShowTitleBar;
 	// $ 17.08.2001 KM - Добавлено для поиска по AltF7. При редактировании найденного файла из архива для клавиши F2 сделать вызов ShiftF2.
-	Flags.Change(FFILEEDIT_SAVETOSAVEAS,(BlankFileName?TRUE:FALSE));
+	Flags.Change(FFILEEDIT_SAVETOSAVEAS, (InitFlags&FFILEEDIT_SAVETOSAVEAS) == FFILEEDIT_SAVETOSAVEAS || BlankFileName != 0);
 
 	if (!*Name)
 	{
@@ -2340,7 +2340,6 @@ DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 
 		if (FileAttributes&FILE_ATTRIBUTE_HIDDEN) AttrStr[ind++]=L'H';
 	}
-	struct stat s = {};
 	AttrStr[ind]=0;
 	return FileAttributes;
 }
@@ -2857,7 +2856,7 @@ bool FileEditor::AskOverwrite(const FARString& FileName)
 void EraseAndEditFile(const std::string &pathname)
 {
 	FileEditor *ShellEditor=new FileEditor(StrMB2Wide(pathname).c_str(), 
-		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW, std::numeric_limits<int>::max() );
+		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW | FFILEEDIT_SAVETOSAVEAS, std::numeric_limits<int>::max() );
 	unlink(pathname.c_str());
 	if (ShellEditor) {
 		DWORD editorExitCode = ShellEditor->GetExitCode();

@@ -1225,8 +1225,8 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 bool IsFullscreen()
 {
 	bool Result=false;
-	DWORD ModeFlags=0;
-	/*if(Console.GetDisplayMode(ModeFlags) && ModeFlags&CONSOLE_FULLSCREEN_HARDWARE)
+	/*DWORD ModeFlags=0;
+	if(Console.GetDisplayMode(ModeFlags) && ModeFlags&CONSOLE_FULLSCREEN_HARDWARE)
 	{
 		Result=true;
 	}*/

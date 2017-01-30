@@ -15,6 +15,11 @@
 #include "sudo_private.h"
 #include "sudo.h"
 
+#ifndef __APPLE__
+# include <sys/ioctl.h>
+# include <linux/fs.h>
+#endif
+
 namespace Sudo {
 
 template <class LOCAL, class REMOTE> class Client2Server
@@ -945,6 +950,75 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 		return -1;
 	}
 }
+
+
+ extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_get(const char *path, int *flags)
+ {
+#ifdef __APPLE__
+	//TODO
+	*flags = 0;
+	return 0;
+#else
+	int r = -1;
+	int fd = open(path, O_RDONLY);
+	if (fd != -1) {
+		r = ioctl(fd, FS_IOC_GETFLAGS, flags);
+		close(fd);
+	}
+	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(false))
+		return r;
+	 
+	try {
+		ClientTransaction ct(SUDO_CMD_FSFLAGSGET);
+		ct.SendStr(path);
+
+		r = ct.RecvInt();
+		if (r == 0)
+			*flags = ct.RecvInt();
+		else
+			ct.RecvErrno();
+
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: sdc_fs_flags_get('%s') - error %s\n", path, what);
+		r = -1;
+	}
+#endif
+	return r;
+ }
+ 
+ extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, int flags)
+ {
+#ifdef __APPLE__
+	//TODO
+	return 0;
+#else
+	int r = -1;
+	int fd = open(path, O_RDONLY);
+	if (fd != -1) {
+		r = ioctl(fd, FS_IOC_SETFLAGS, &flags);
+		close(fd);
+	}
+	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(true))
+		return r;
+	 
+	try {
+		ClientTransaction ct(SUDO_CMD_FSFLAGSSET);
+		ct.SendStr(path);
+		ct.SendInt(flags);
+
+		r = ct.RecvInt();
+		if (r != 0)
+			ct.RecvErrno();
+			
+
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: sdc_fs_flags_set('%s', 0x%x) - error %s\n", path, flags, what);
+		r = -1;
+	}
+	 
+	return r;
+#endif
+ }
 
 
 } //namespace Sudo

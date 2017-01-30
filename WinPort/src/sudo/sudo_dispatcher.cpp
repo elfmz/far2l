@@ -10,6 +10,8 @@
   #include <sys/mount.h>
 #else
   #include <sys/statfs.h>
+  #include <sys/ioctl.h>
+  #include <linux/fs.h>
 #endif
 #include <sys/statvfs.h>
 #include <sys/time.h>
@@ -434,7 +436,49 @@ namespace Sudo
 			bt.SendErrno();
 	}
 	
+	static void OnSudoDispatch_FSFlagsGet(BaseTransaction &bt)
+	{
+#ifndef __APPLE__
+		std::string path;
+		bt.RecvStr(path);
+		int r = -1;
+		int fd = open(path.c_str(), O_RDONLY);
+		if (fd != -1) {
+			int flags = 0;
+			r = ioctl(fd, FS_IOC_GETFLAGS, &flags);
+			close(fd);
+			if (r == 0) {
+				bt.SendInt(0);
+				bt.SendInt(flags);
+				return;
+			}
+		}
+		bt.SendInt(-1);
+		bt.SendErrno();
+#endif
+	}
 	
+	static void OnSudoDispatch_FSFlagsSet(BaseTransaction &bt)
+	{
+#ifndef __APPLE__
+		std::string path;
+		bt.RecvStr(path);
+		int flags = bt.RecvInt();
+		
+		int r = -1;
+		int fd = open(path.c_str(), O_RDONLY);
+		if (fd != -1) {
+			r = ioctl(fd, FS_IOC_SETFLAGS, &flags);
+			close(fd);
+			if (r == 0) {
+				bt.SendInt(0);
+				return;
+			}
+		}
+		bt.SendInt(-1);
+		bt.SendErrno();
+#endif
+	}
 	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt)
 	{
@@ -571,6 +615,14 @@ namespace Sudo
 				OnSudoDispatch_FSetXAttr(bt);
 				break;
 			
+			case SUDO_CMD_FSFLAGSGET:
+				OnSudoDispatch_FSFlagsGet(bt);
+				break;
+				
+			case SUDO_CMD_FSFLAGSSET:
+				OnSudoDispatch_FSFlagsSet(bt);
+				break;
+				
 			default:
 				throw "OnSudoDispatch - bad command";
 		}

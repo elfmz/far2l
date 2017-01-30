@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #include <sys/mount.h>
 #else
   #include <sys/statfs.h>
+  #include <linux/fs.h>
 #endif
 #include "pathmix.hpp"
 #include "mix.hpp"
@@ -780,7 +781,10 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 	{
 		std::string target, dir;
 		mode_t target_mode, dir_mode;
-		UnmakeWritable() : target_mode(0), dir_mode(0)
+		int target_flags, dir_flags;
+		bool target_flags_modified, dir_flags_modified;
+		UnmakeWritable() : 
+			target_mode(0), dir_mode(0), target_flags_modified(false), dir_flags_modified(false)
 		{
 		}
 		
@@ -793,10 +797,18 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 			if (dir_mode) {
 				chmod(dir.c_str(), dir_mode);
 			}
+
+			if (target_flags_modified) {
+				sdc_fs_flags_set(target.c_str(), target_flags);
+			}
+
+			if (dir_flags_modified) {
+				sdc_fs_flags_set(dir.c_str(), dir_flags);
+			}
 		}
 	} *um = new UnmakeWritable;
-	
-	//dont want to trigger sudo from here so use sdc_* api
+
+	//dont want to trigger sudo due to missing +w so use sdc_* for chmod
 	um->target = Wide2MB(lpFileName);
 	struct stat s = {};
 
@@ -818,8 +830,26 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 			um->target_mode = s.st_mode;
 		}
 	}
+
+#ifdef __APPLE__
+//TODO: handle chattr +i
+#else
+	if (!um->dir.empty() && sdc_fs_flags_get(um->dir.c_str(), &um->dir_flags) != -1 
+	&& (um->dir_flags & FS_IMMUTABLE_FL) != 0) {
+		if (sdc_fs_flags_set(um->dir.c_str(), um->dir_flags & ~FS_IMMUTABLE_FL) != -1) {
+			um->dir_flags_modified = true;
+		}
+	}
+
+	if (sdc_fs_flags_get(um->target.c_str(), &um->target_flags) != -1 
+	&& (um->target_flags & FS_IMMUTABLE_FL) != 0) {
+		if (sdc_fs_flags_set(um->target.c_str(), um->target_flags & ~FS_IMMUTABLE_FL) != -1) {
+			um->target_flags_modified = true;
+		}
+	}
+#endif
 	
-	if (um->target_mode == 0 && um->dir_mode == 0) {
+	if (um->target_mode == 0 && um->dir_mode == 0 && !um->target_flags_modified && !um->dir_flags_modified) {
 		delete um;
 		um = nullptr;
 	}

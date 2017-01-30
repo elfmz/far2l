@@ -602,7 +602,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		}
 	}
 	
-	void OnConsoleLog()
+	void OnConsoleLog()//NB: called not from main thread!
 	{
 		struct VTAnsiState *ansi_state = _vta.Pause();
 		if (!ansi_state)
@@ -627,7 +627,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		_vta.Continue(ansi_state);
 	}
 
-	virtual int OnApplicationProtocolCommand(const char *str)
+	virtual int OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
 	{//called from _vta in input callback context
 	//_vta already paused now
 		_input_reader.Stop();

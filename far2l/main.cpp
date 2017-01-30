@@ -757,17 +757,18 @@ int _cdecl main(int argc, char *argv[])
 		}
 	}
 
+	if (argc > 2 && getenv("FARVTMARKER")) {
+		//In case of Edit/View requested in FAR's VT - handover request to VT-controlling FAR
+		if (strstr(argv[1], "/e") == argv[1] || strstr(argv[1], "/v") == argv[1])
+			return SendAnsiApplicationProgramCommand(argv[1] + 1, argv[2]);
+	}
+
 	if (argc < 2 || (strcmp(argv[1], "/?") != 0 && strcmp(argv[1], "--help") != 0) ) {
 		SetupStdHandles();
 	}
 
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
 
-	if (argc > 2 && getenv("FARVTMARKER")) {
-		//In case of Edit/View requested in FAR's VT - handover request to VT-controlling FAR
-		if (strstr(argv[1], "/e") == argv[1] || strstr(argv[1], "/v") == argv[1])
-			return SendAnsiApplicationProgramCommand(argv[1] + 1, argv[2]);
-	}
 
 	SetupFarPath(argc, argv);
 

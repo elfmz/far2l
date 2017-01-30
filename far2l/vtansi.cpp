@@ -174,22 +174,64 @@ jadoxa@yahoo.com.au
 
 // ========== Global variables and constants
 
+
+#include "vtlog.h"
+
+struct VTAnsiState
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CONSOLE_CURSOR_INFO cci;
+	DWORD mode;
+	WORD attr;
+	SHORT scroll_top;
+	SHORT scroll_bottom;
+
+	VTAnsiState() : mode(0), attr(0), scroll_top(0), scroll_bottom(0)
+	{
+		memset(&csbi, 0, sizeof(csbi));
+		memset(&cci, 0, sizeof(cci));
+	}
+	
+	void InitFromConsole(HANDLE con)
+	{
+		WINPORT(GetConsoleScreenBufferInfo)( con, &csbi );
+		WINPORT(GetConsoleCursorInfo)( con, &cci );
+		WINPORT(GetConsoleMode)( con, &mode );
+		WINPORT(GetConsoleScrollRegion)(con, &scroll_top, &scroll_bottom);
+	}
+
+	void ApplyToConsole(HANDLE con)
+	{
+		WINPORT(SetConsoleScrollRegion)(con, scroll_top, scroll_bottom);
+		WINPORT(SetConsoleMode)( con, mode );
+		WINPORT(SetConsoleCursorInfo)( con, &cci );
+		WINPORT(SetConsoleTextAttribute)( con, csbi.wAttributes );
+		WINPORT(SetConsoleCursorPosition)( con, csbi.dwCursorPosition );
+	}
+};
+
+static CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
+static VTAnsiState g_saved_state;
+static std::mutex g_vt_ansi_mutex, g_vt_ansi_output_mutex;
+IVTAnsiCommands *g_vt_ansi_commands = nullptr;
+
 static HANDLE	  hConOut;		// handle to CONOUT$
 
 #define ESC	'\x1B'          // ESCape character
 #define BEL	'\x07'
 #define SO	'\x0E'          // Shift Out
 #define SI	'\x0F'          // Shift In
+#define ST	'\x9c'
 
 #define MAX_ARG 16		// max number of args in an escape sequence
 static int   state;			// automata state
-static TCHAR prefix;			// escape sequence prefix ( '[', ']' or '(' );
-static TCHAR prefix2;			// secondary prefix ( '?' or '>' );
-static TCHAR suffix;			// escape sequence suffix
-static TCHAR suffix2;			// escape sequence secondary suffix
+static char  prefix;			// escape sequence prefix ( '[', ']' or '(' );
+static char  prefix2;			// secondary prefix ( '?' or '>' );
+static char  suffix;			// escape sequence suffix
+static char  suffix2;			// escape sequence secondary suffix
 static int   es_argc;			// escape sequence args count
 static int   es_argv[MAX_ARG]; 	// escape sequence args
-static TCHAR Pt_arg[MAX_PATH*2];	// text parameter for Operating System Command
+static char  Pt_arg[MAX_PATH*2];	// text parameter for Operating System Command
 static int   Pt_len;
 static BOOL  shifted;
 static int   screen_top = -1;		// initial window top when cleared
@@ -451,22 +493,33 @@ void PushBuffer( WCHAR c )
 // Send the string to the input buffer.
 //-----------------------------------------------------------------------------
 
-void SendSequence( LPCWSTR seq )
+void SendSequence( const char *seq )
 {
-	DWORD out;
-	INPUT_RECORD in;
-	HANDLE hStdIn = NULL;//WINPORT(GetStdHandle)( STD_INPUT_HANDLE );
-	fprintf(stderr, "VT: SendSequence - '%ls'\n", seq);
-	in.EventType = KEY_EVENT;
-	in.Event.KeyEvent.bKeyDown = TRUE;
-	in.Event.KeyEvent.wRepeatCount = 1;
-	in.Event.KeyEvent.wVirtualKeyCode = 0;
-	in.Event.KeyEvent.wVirtualScanCode = 0;
-	in.Event.KeyEvent.dwControlKeyState = 0;
-	for (; *seq; ++seq) {
-		in.Event.KeyEvent.uChar.UnicodeChar = *seq;
-		WINPORT(WriteConsoleInput)( hStdIn, &in, 1, &out );
+	if (!*seq)
+		return;
+	
+	fprintf(stderr, "VT: SendSequence - '%s'\n", seq);
+	if (g_vt_ansi_commands) {
+		g_vt_ansi_commands->WriteRawInput(seq);
+		return;
 	}
+
+
+	std::vector<INPUT_RECORD> irs(strlen(seq));
+	for (size_t i = 0; i < irs.size(); ++i) {
+		INPUT_RECORD &ir = irs[i];
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.bKeyDown = TRUE;
+		ir.Event.KeyEvent.wRepeatCount = 1;
+		ir.Event.KeyEvent.wVirtualKeyCode = 0;
+		ir.Event.KeyEvent.wVirtualScanCode = 0;
+		ir.Event.KeyEvent.dwControlKeyState = 0;
+		ir.Event.KeyEvent.uChar.UnicodeChar = seq[i];
+	}
+
+	HANDLE hStdIn = NULL;//WINPORT(GetStdHandle)( STD_INPUT_HANDLE );
+	DWORD out;
+	WINPORT(WriteConsoleInput)( hStdIn, &irs[0], irs.size(), &out );
 }
 
 // ========== Print functions
@@ -977,12 +1030,12 @@ void InterpretEscSeq( void )
 			if (es_argc != 1) return; // ESC[n == ESC[0n -> ignored
 			switch (es_argv[0]) {
 			case 5:		// ESC[5n Report status
-				SendSequence( L"\33[0n" ); // "OK"
+				SendSequence( "\33[0n" ); // "OK"
 				return;
 
 			case 6: {	// ESC[6n Report cursor position
-				TCHAR buf[32] = {0};
-				swprintf( buf, 31, L"\33[%d;%dR", CUR.Y - TOP + 1, CUR.X + 1);
+				char buf[64] = {0};
+				sprintf( buf, "\33[%d;%dR", CUR.Y - TOP + 1, CUR.X + 1);
 				SendSequence( buf );
 			}
 			return;
@@ -994,16 +1047,18 @@ void InterpretEscSeq( void )
 		case 't':                 // ESC[#t Window manipulation
 			if (es_argc != 1) return;
 			if (es_argv[0] == 21) {	// ESC[21t Report xterm window's title
-				TCHAR buf[MAX_PATH*2];
-				DWORD len = WINPORT(GetConsoleTitle)( buf+3, ARRAYSIZE(buf)-3-2 );
+				TCHAR buf[MAX_PATH*2] = {0};
+				WINPORT(GetConsoleTitle)( buf, ARRAYSIZE(buf) - 1 );
+				std::string seq;
+				seq.reserve(wcslen(buf) + 8);
 				// Too bad if it's too big or fails.
-				buf[0] = ESC;
-				buf[1] = ']';
-				buf[2] = 'l';
-				buf[3+len] = ESC;
-				buf[3+len+1] = '\\';
-				buf[3+len+2] = '\0';
-				SendSequence( buf );
+				seq+= ESC;
+				seq+= ']';
+				seq+= 'l';
+				seq+= Wide2MB(buf);
+				seq+= ESC;
+				seq+= '\\';
+				SendSequence( seq.c_str() );
 			}
 			return;
 
@@ -1038,9 +1093,24 @@ void InterpretEscSeq( void )
 
 		if (es_argc == 1 && (es_argv[0] == 0 || // ESC]0;titleST - icon (ignored) &
 		                     es_argv[0] == 2)) { // ESC]2;titleST - window
-			WINPORT(SetConsoleTitle)( Pt_arg );
+			WINPORT(SetConsoleTitle)( MB2Wide(Pt_arg).c_str() );
 		}
 	}
+}
+
+static void InterpretControlString()
+{
+	if (prefix == '_' && g_vt_ansi_commands) {//Application Program Command
+		VTAnsiState paused_state;
+		paused_state.InitFromConsole(NULL);
+		g_saved_state.ApplyToConsole(NULL);
+		int r = g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
+		paused_state.ApplyToConsole(NULL);
+		char reply[64] = {0};
+		sprintf( reply, "%c_%d%c\n", ESC, r, BEL);
+		SendSequence(reply);
+	}
+	Pt_len = 0;
 }
 
 static void PartialLineDown()
@@ -1100,7 +1170,8 @@ static void ResetTerminal()
 }
 
 
-static CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
+
+
 static void SaveCursor()
 {
 	FlushBuffer();
@@ -1163,6 +1234,8 @@ BOOL ParseAndPrintString( HANDLE hDev,
 			           *s == '^' ||     // PM  Privacy Message
 			           *s == '_') {     // APC Application Program Command
 				*Pt_arg = '\0';
+				Pt_len = 0;
+				prefix = *s;
 				state = 6;
 			} else  {
 				switch (*s) {
@@ -1172,7 +1245,7 @@ BOOL ParseAndPrintString( HANDLE hDev,
 					case 'M': ReverseIndex(); break;
 					case 'C': ResetTerminal(); break;
 					case '7': SaveCursor(); break;
-					case '8': RestoreCursor(); break;			
+					case '8': RestoreCursor(); break;
 				}
 				state = 1;
 			}
@@ -1220,22 +1293,28 @@ BOOL ParseAndPrintString( HANDLE hDev,
 				InterpretEscSeq();
 				state = 1;
 			}
-		} else if (state == 5) {
-			if (*s == BEL) {
+		} else if (state == 5 || state == 6) {
+			bool done = false;
+			//by standard '6' should stop with 0x9c (ST), but this doesnt work 
+			//due to UTF8 processing, so use BEL for both kinds
+			//if (state == 6) fprintf(stderr, "<<%x>>\n", *s);
+			if ( *s == BEL) {
 				Pt_arg[Pt_len] = '\0';
-				InterpretEscSeq();
-				state = 1;
+				done = true;
 			} else if (*s == '\\' && Pt_len > 0 && Pt_arg[Pt_len-1] == ESC) {
 				Pt_arg[--Pt_len] = '\0';
-				InterpretEscSeq();
-				state = 1;
+				done = true;
 			} else if (Pt_len < (int)ARRAYSIZE(Pt_arg)-1)
 				Pt_arg[Pt_len++] = *s;
-		} else if (state == 6) {
-			if (*s == BEL || (*s == '\\' && *Pt_arg == ESC))
+
+			if (done) {
+				if (state == 6) 
+					InterpretControlString();					
+				else
+					InterpretEscSeq();
 				state = 1;
-			else
-				*Pt_arg = *s;
+			}
+
 		} else if (state == 7) {
 			if (*s == '[') state = 8;
 			else {
@@ -1291,48 +1370,11 @@ static void ResetState()
 }
 
 
-#include "vtlog.h"
 
-struct VTAnsiState
-{
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	CONSOLE_CURSOR_INFO cci;
-	DWORD mode;
-	WORD attr;
-	SHORT scroll_top;
-	SHORT scroll_bottom;
-
-	VTAnsiState() : mode(0), attr(0), scroll_top(0), scroll_bottom(0)
-	{
-		memset(&csbi, 0, sizeof(csbi));
-		memset(&cci, 0, sizeof(cci));
-	}
-	
-	void InitFromConsole(HANDLE con)
-	{
-		WINPORT(GetConsoleScreenBufferInfo)( con, &csbi );
-		WINPORT(GetConsoleCursorInfo)( con, &cci );
-		WINPORT(GetConsoleMode)( con, &mode );
-		WINPORT(GetConsoleScrollRegion)(con, &scroll_top, &scroll_bottom);
-	}
-
-	void ApplyToConsole(HANDLE con)
-	{
-		WINPORT(SetConsoleScrollRegion)(con, scroll_top, scroll_bottom);
-		WINPORT(SetConsoleMode)( con, mode );
-		WINPORT(SetConsoleCursorInfo)( con, &cci );
-		WINPORT(SetConsoleTextAttribute)( con, csbi.wAttributes );
-		WINPORT(SetConsoleCursorPosition)( con, csbi.dwCursorPosition );
-	}
-};
-
-
-static VTAnsiState g_saved_state;
-static std::mutex g_vt_ansi_mutex, g_vt_ansi_output_mutex;
-
-VTAnsi::VTAnsi()
+VTAnsi::VTAnsi(IVTAnsiCommands *ansi_commands)
 {
 	g_vt_ansi_mutex.lock();	
+	g_vt_ansi_commands = ansi_commands;
 	ResetState();
 	g_saved_state.InitFromConsole(NULL);
 	ansiState.bold = g_saved_state.csbi.wAttributes & FOREGROUND_INTENSITY;
@@ -1350,6 +1392,7 @@ VTAnsi::~VTAnsi()
 	VTLog::Stop();
 	g_saved_state.ApplyToConsole(NULL);
 	WINPORT(FlushConsoleInputBuffer)(NULL);
+	g_vt_ansi_commands = nullptr;
 	g_vt_ansi_mutex.unlock();
 }
 

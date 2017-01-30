@@ -1387,3 +1387,36 @@ int FaultTolerantMultiByteToWideChar( UINT CodePage, LPCSTR lpMultiByteStr, int 
 	return r;
 }
 
+std::string EscapeUnprintable(const std::string &str)
+{
+	std::string out;
+	out.reserve(str.size());
+	for (std::string::const_iterator i = str.begin(); i != str.end(); ++i) {
+		unsigned char c = (unsigned char)*i;
+		if (c <= 0x20 || c > 0x7e || c=='\\') {
+			char buf[32];
+			sprintf(buf, "\\x%02x", c);
+			out+= buf;
+		} else
+			out+= c;
+	}
+	return out;
+}
+
+std::string UnescapeUnprintable(const std::string &str)
+{
+	std::string out;
+	out.reserve(str.size());
+	for (size_t i = 0; i < str.size(); ++i) {
+		char c = str[i];
+		if (c == '\\' && (i + 3) < str.size() && str[i+1] == 'x') {
+			char tmp[4] = {str[i+2], str[i+3]};
+			unsigned int x = 0;
+			sscanf(tmp, "%x", &x);
+			c = (unsigned char)x;
+			i+= 3;
+		}
+		out+= c;
+	}
+	return out;
+}

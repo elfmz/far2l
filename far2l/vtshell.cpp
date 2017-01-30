@@ -23,6 +23,7 @@
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad = 0);
 
+int FarDispatchAnsiApplicationProtocolCommand(const char *str);
 
 #if 0 //change to 1 to enable verbose I/O reports to stderr
 static void DbgPrintEscaped(const char *info, const std::string &s)
@@ -196,10 +197,17 @@ public:
 	
 	VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
 	{
-		Start();
 	}
 	
-	~VTInputReader()
+	void Start()
+	{
+		if (!_started) {
+			_stop = false;
+			WithThread::Start();
+		}
+	}
+
+	void Stop()
 	{
 		if (_started) {
 			_stop = true;
@@ -212,6 +220,8 @@ public:
 			Join();
 		}
 	}
+	
+	
 
 private:
 	pid_t _pid;
@@ -320,9 +330,10 @@ public:
 	}
 };
 	
-class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
+class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCommands
 {
 	VTAnsi _vta;
+	VTInputReader _input_reader;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _shell_pid, _forked_proc_pid;
@@ -615,6 +626,37 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor
 
 		_vta.Continue(ansi_state);
 	}
+
+	virtual int OnApplicationProtocolCommand(const char *str)
+	{//called from _vta in input callback context
+	//_vta already paused now
+		_input_reader.Stop();
+		fprintf(stderr, "VTShell::OnApplicationProtocolCommand: '%s'\n", str);
+		ScrBuf.FillBuf();
+		CtrlObject->CmdLine->SaveBackground();
+		
+		SetFarConsoleMode(TRUE);
+		DeliverPendingWindowInfo();
+		int r = FarDispatchAnsiApplicationProtocolCommand(str);
+
+		CtrlObject->CmdLine->ShowBackground();
+		ScrBuf.Flush();
+
+		_input_reader.Start();
+
+		if (!_slavename.empty())
+			UpdateTerminalSize(_fd_out);
+		
+		return r;
+	}
+	
+	virtual void WriteRawInput(const char *str)
+	{
+		size_t l = strlen(str);
+		if (write(_fd_in, str, l) != (int)l) {
+				fprintf(stderr, "VT: WriteRawInput failed\n");
+		}
+	}
 	
 	std::string StringFromClipboard()
 	{
@@ -751,8 +793,7 @@ static bool shown_tip_exit = false;
 
 
 	public:
-	VTShell() :
-		_fd_out(-1), _fd_in(-1), 
+	VTShell() : _vta(this), _input_reader(this), _fd_out(-1), _fd_in(-1), 
 		_pipes_fallback_in(-1), _pipes_fallback_out(-1), 
 		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false)
 	{
@@ -800,7 +841,7 @@ static bool shown_tip_exit = false;
 		
 		{
 			VTOutputReader output_reader(this, _fd_out);
-			VTInputReader input_reader(this);
+			_input_reader.Start();
 			output_reader.WaitDeactivation();
 			if (_shell_pid!=-1) {
 				int status;
@@ -808,6 +849,7 @@ static bool shown_tip_exit = false;
 					_shell_pid = -1;
 				}
 			}
+			_input_reader.Stop();
 		}
 		remove(cmd_script.c_str());
 

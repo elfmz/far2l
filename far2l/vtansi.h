@@ -1,10 +1,15 @@
 #pragma once
 
+struct IVTAnsiCommands
+{
+	virtual int OnApplicationProtocolCommand(const char *str) = 0;
+	virtual void WriteRawInput(const char *str) = 0;
+};
 
-class VTAnsi 
+class VTAnsi
 {
 	public:
-	VTAnsi();
+	VTAnsi(IVTAnsiCommands *ansi_commands);
 	~VTAnsi();
 	
 	size_t Write(const WCHAR *str, size_t len);

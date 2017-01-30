@@ -126,8 +126,9 @@ namespace Sudo
 			close(pipe_reply);
 			dup2(pipe_request, STDIN_FILENO);
 			close(pipe_request);
-	
-			//if process doesn't hav terminal then sudo caches password per parent pid
+			if (chdir("/bin") == -1)  //avoid locking arbitrary current dir
+				perror("chdir");
+			//if process doesn't have terminal then sudo caches password per parent pid
 			//so don't use intermediate shell for running it!
 			r = execlp("sudo", "-n", "-A", "-k", g_sudo_app.c_str(), NULL);
 			perror("execl");

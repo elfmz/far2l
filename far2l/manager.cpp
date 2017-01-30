@@ -304,6 +304,7 @@ void Manager::ExecuteModal(Frame *Executed)
 
 	if (!Executed && !ExecutedFrame)
 	{
+		fprintf(stderr, "ExecuteModal1\n");
 		return;
 	}
 
@@ -311,6 +312,7 @@ void Manager::ExecuteModal(Frame *Executed)
 	{
 		if (ExecutedFrame)
 		{
+			fprintf(stderr, "ExecuteModal2\n");
 			_MANAGER(SysLog(L"WARNING! Попытка в одном цикле запустить в модальном режиме два фрейма. Executed=%p, ExecitedFrame=%p",Executed, ExecutedFrame));
 			return;// nullptr; //?? Определить, какое значение правильно возвращать в этом случае
 		}

@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "fileedit.hpp"
 #include "fileview.hpp"
+#include "exitcode.hpp"
 #include "lockscrn.hpp"
 #include "hilight.hpp"
 #include "manager.hpp"
@@ -106,7 +107,8 @@ static void show_help()
 	    L" /xd  Enable exception handling.\n"
 #endif
 		;
-	Console.Write(HelpMsg, ARRAYSIZE(HelpMsg)-1);
+	printf("%ls\n", HelpMsg);
+	//Console.Write(HelpMsg, ARRAYSIZE(HelpMsg)-1);
 }
 
 static int MainProcess(
@@ -667,6 +669,79 @@ static void SetupStdHandles()
 	}
 }
 
+
+int FarDispatchAnsiApplicationProtocolCommand(const char *str)
+{
+	const char *space = strchr(str, ' ');
+	if (!space)
+		return -1;
+
+	DWORD r;
+	std::string command(str, space - str);
+	std::string argument(UnescapeUnprintable(space + 1));
+	if (command.find("v") == 0) {
+		FileViewer Viewer(StrMB2Wide(argument).c_str(), FALSE);
+		Viewer.SetDynamicallyBorn(false);
+		FrameManager->EnterModalEV();
+		FrameManager->ExecuteModal();
+		FrameManager->ExitModalEV();
+		r = Viewer.GetExitCode();
+		
+		r = 0;
+	} else if (command.find("e") == 0) {
+		int StartLine = 0, StartChar = 0;
+		if (command.size() > 1 && isdigit(command[1])) {
+			StartLine = atoi(command.c_str() + 1);
+			size_t p = command.find(':');
+			if (p != std::string::npos)
+				StartChar = atoi(command.c_str() + p + 1);
+		}
+		FileEditor *Editor=new FileEditor(StrMB2Wide(argument).c_str(), CP_AUTODETECT, 
+			FFILEEDIT_DISABLEHISTORY | FFILEEDIT_SAVETOSAVEAS | FFILEEDIT_CANNEWFILE, StartLine, StartChar);
+		r = Editor->GetExitCode();
+		if (r != XC_LOADING_INTERRUPTED && r != XC_OPEN_ERROR) {
+			FrameManager->ExecuteModal();
+			//abort();
+		} else
+			delete Editor;
+		r = 0;
+	} else {
+		r = -1;
+	}
+	
+	return r;
+}
+
+static int SendAnsiApplicationProgramCommand(const char *command, const char *argument)
+{
+	std::string str = "\x1b_";
+	str+= command;
+	str+= ' ';
+	str+= EscapeUnprintable(argument);
+	str+= '\x07';
+	fwrite(str.c_str(), str.size(), 1, stdout);
+	fflush(stdout);
+	
+	str.clear();
+	for (;;) {
+		char buf[0x100] = {0};
+		if (!fgets(buf, sizeof(buf) - 1, stdin)) {
+			return -1;
+		}
+		str+= buf;
+		
+		size_t p = str.find("\x1b_");
+		if (p!=std::string::npos) {
+			str.erase(0, p);
+			p = str.find('\x07');
+			if (p!=std::string::npos) {
+				str.resize(p);
+				return atoi(str.c_str() + p + 3);
+			}
+		}
+	}
+}
+
 int _cdecl main(int argc, char *argv[])
 {
 	char *name = strrchr(argv[0], GOOD_SLASH);
@@ -682,9 +757,18 @@ int _cdecl main(int argc, char *argv[])
 		}
 	}
 
-	SetupStdHandles();
+	if (argc < 2 || (strcmp(argv[1], "/?") != 0 && strcmp(argv[1], "--help") != 0) ) {
+		SetupStdHandles();
+	}
 
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
+
+	if (argc > 2 && getenv("FARVTMARKER")) {
+		//In case of Edit/View requested in FAR's VT - handover request to VT-controlling FAR
+		if (strstr(argv[1], "/e") == argv[1] || strstr(argv[1], "/v") == argv[1])
+			return SendAnsiApplicationProgramCommand(argv[1] + 1, argv[2]);
+	}
+
 	SetupFarPath(argc, argv);
 
 	apiEnableLowFragmentationHeap();

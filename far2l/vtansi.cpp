@@ -202,17 +202,26 @@ struct VTAnsiState
 
 	void ApplyToConsole(HANDLE con)
 	{
-		WINPORT(SetConsoleScrollRegion)(con, scroll_top, scroll_bottom);
 		WINPORT(SetConsoleMode)( con, mode );
 		WINPORT(SetConsoleCursorInfo)( con, &cci );
 		WINPORT(SetConsoleTextAttribute)( con, csbi.wAttributes );
 		WINPORT(SetConsoleCursorPosition)( con, csbi.dwCursorPosition );
+		if (scroll_bottom >= csbi.srWindow.Bottom) {
+			//window could be expanded bigger than before making previous
+			//scrolling region to not cover whole area, so correct this case
+			CONSOLE_SCREEN_BUFFER_INFO current_csbi;
+			WINPORT(GetConsoleScreenBufferInfo)( con, &current_csbi );
+			if (scroll_bottom < current_csbi.srWindow.Bottom) {
+				scroll_bottom = current_csbi.srWindow.Bottom;
+			}
+		}
+		WINPORT(SetConsoleScrollRegion)(con, scroll_top, scroll_bottom);
 	}
 };
 
 static CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
 static VTAnsiState g_saved_state;
-static std::mutex g_vt_ansi_mutex, g_vt_ansi_output_mutex;
+static std::mutex g_vt_ansi_mutex;
 IVTAnsiCommands *g_vt_ansi_commands = nullptr;
 
 static HANDLE	  hConOut;		// handle to CONOUT$
@@ -1101,11 +1110,7 @@ void InterpretEscSeq( void )
 static void InterpretControlString()
 {
 	if (prefix == '_' && g_vt_ansi_commands) {//Application Program Command
-		VTAnsiState paused_state;
-		paused_state.InitFromConsole(NULL);
-		g_saved_state.ApplyToConsole(NULL);
 		int r = g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
-		paused_state.ApplyToConsole(NULL);
 		char reply[64] = {0};
 		sprintf( reply, "%c_%d%c\n", ESC, r, BEL);
 		SendSequence(reply);
@@ -1397,27 +1402,29 @@ VTAnsi::~VTAnsi()
 }
 
 
-struct VTAnsiState *VTAnsi::Pause()
+struct VTAnsiState *VTAnsi::Suspend()
 {
-	g_vt_ansi_output_mutex.lock();
 	VTAnsiState *out = new VTAnsiState;
-	out->InitFromConsole(NULL);
-	g_saved_state.ApplyToConsole(NULL);
+	if (out) {
+		out->InitFromConsole(NULL);
+		g_saved_state.ApplyToConsole(NULL);
+	} else
+		perror("VTAnsi::Suspend");
+
 	return out;
 }
 
-void VTAnsi::Continue(struct VTAnsiState* state)
+void VTAnsi::Resume(struct VTAnsiState* state)
 {
 	state->ApplyToConsole(NULL);
 	delete state;
-	g_vt_ansi_output_mutex.unlock();
 }
 
-size_t VTAnsi::Write(const WCHAR *str, size_t len)
+size_t VTAnsi::Write(const char *str, size_t len)
 {
-	std::lock_guard<std::mutex> lock(g_vt_ansi_output_mutex);	
+	MB2Wide(str, len, _ws);
 	DWORD processed = 0;
-	if (!ParseAndPrintString(NULL, str, len, &processed))
+	if (!ParseAndPrintString(NULL, _ws.c_str(), _ws.size(), &processed))
 		return 0;
 	//fprintf(stderr, "VTAnsi::Write: %u processed: %u\n", len, processed);
 	return processed;

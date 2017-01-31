@@ -26,10 +26,11 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
 
 #if 0 //change to 1 to enable verbose I/O reports to stderr
-static void DbgPrintEscaped(const char *info, const std::string &s)
+static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 {
 	std::string msg;
-	for (auto c : s) {
+	for (;l;++s, --l) {
+		char c = *s;
 		if (c=='\\') {
 			msg+= "\\\\";
 		} else if (c <= 32 || c > 127) {
@@ -41,11 +42,24 @@ static void DbgPrintEscaped(const char *info, const std::string &s)
 	fprintf(stderr, "VT %s: '%s'\n", info, msg.c_str());
 }
 #else
-# define DbgPrintEscaped(info, s)
+# define DbgPrintEscaped(i, s, l) 
 #endif
 
 
-
+template <class T> 
+class StopAndStart
+{
+	T &_t;
+public:
+	StopAndStart(T &t) : _t(t)
+	{
+		_t.Stop();
+	}
+	~StopAndStart()
+	{
+		_t.Start();
+	}	
+};
 
 class WithThread
 {
@@ -102,57 +116,68 @@ public:
 		virtual bool OnProcessOutput(const char *buf, int len) = 0;
 	};
 	
-	VTOutputReader(IProcessor *processor, int fd_out) 
-		: _processor(processor), _fd_out(fd_out), _thread_exited(false)
+	VTOutputReader(IProcessor *processor) 
+		: _processor(processor), _fd_out(-1), _deactivated(false)
 	{
-		if (pipe_cloexec(_pipe)==-1) {
-			perror("VTOutputReader: pipe_cloexec");
-			return;
-		} 
-
-		if (!Start()) {
-			CheckedCloseFDPair(_pipe);
-		}
+		_pipe[0] = _pipe[1] = -1;
 	}
 	
 	virtual ~VTOutputReader()
 	{
+		Stop();
+		CheckedCloseFDPair(_pipe);
+	}
+	
+	void Start(int fd_out = -1)
+	{
+		if (fd_out != -1 ) {
+			_fd_out = fd_out;
+			std::unique_lock<std::mutex> locker(_mutex);
+			_deactivated = false;
+		}
+
+		if (_pipe[0] == -1) {
+			if (pipe_cloexec(_pipe)==-1) {
+				perror("VTOutputReader: pipe_cloexec 1");
+				_pipe[0] = _pipe[1] = -1;
+				return;
+			}
+		}
+
+		if (!WithThread::Start()) {
+			perror("VTOutputReader::Start");
+		}
+	}
+	
+	void Stop()
+	{
 		if (_started) {
 			char c = 0;
 			if (write(_pipe[1], &c, sizeof(c)) != sizeof(c))
-				perror("VTOutputReader: write");
+				perror("VTOutputReader::Stop - write");
 				
 			Join();
 			CheckedCloseFDPair(_pipe);
-		}		
+		}
 	}
 
 	void WaitDeactivation()
 	{
-		if (_started) {
-			for (;;) {
-				std::unique_lock<std::mutex> locker(_mutex);
-				if (_thread_exited) break;
-				_cond.wait(locker);
-			}
+		for (;;) {
+			std::unique_lock<std::mutex> locker(_mutex);
+			if (_deactivated) break;
+			_cond.wait(locker);
 		}
 	}
 	
-	bool IsActive()
-	{
-		std::unique_lock<std::mutex> locker(_mutex);
-		return (_started && !_thread_exited);
-	}
 	
 private:
 	IProcessor *_processor;
 	int _fd_out, _pipe[2];
-	bool _thread_exited;
-	
 	std::mutex _mutex;
 	std::condition_variable _cond;
+	bool _deactivated;
 	
-
 	virtual void *ThreadProc()
 	{
 		char buf[0x1000];
@@ -169,19 +194,25 @@ private:
 				r = read(_fd_out, buf, sizeof(buf));
 				if (r <= 0) break;
 				if (!_processor->OnProcessOutput(buf, r)) break;
-			} else {
-				if (FD_ISSET(_pipe[0], &rfds)) {
-					r = read(_pipe[0], buf, sizeof(buf));
-					if (r <= 0) break;
+			} else if (FD_ISSET(_pipe[0], &rfds)) {
+				r = read(_pipe[0], buf, sizeof(buf));
+				if (r < 0) {
+					perror("VTOutputReader read pipe[0]");
+					break;
 				}
-				if (!_started) break;
+				if (!_started)
+					return NULL; //stop thread requested
+
+			} else {
+				perror("VTOutputReader select");
+				break;
 			}
 		}
 
+		//thread stopped due to output deactivated
 		std::unique_lock<std::mutex> locker(_mutex);
-		_thread_exited = true;
+		_deactivated = true;
 		_cond.notify_all();
-
 		return NULL;
 	}
 };
@@ -334,6 +365,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 {
 	VTAnsi _vta;
 	VTInputReader _input_reader;
+	VTOutputReader _output_reader;
+	std::mutex _inout_control_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _shell_pid, _forked_proc_pid;
@@ -535,28 +568,30 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
-		std::string s(buf, len);
-		DbgPrintEscaped("OUTPUT", s);
-		while (_skipping_line) {
-			if (s.empty()) break;
-			if (s[0]=='\n') _skipping_line = false;
-			s.erase(0, 1);
-		}
-		if (!s.empty()) {
-			const std::wstring &ws = MB2Wide(s.c_str());
-			_vta.Write(ws.c_str(), ws.size());
-		}
-		
+		DbgPrintEscaped("OUTPUT", buf, len);
+
 		//_completion_marker is not thread safe generically,
 		//but while OnProcessOutput called from single thread .
 		//and can't overlap with ScanReset() - its ok.
 		//But if it will be called from several threads - this 
 		//calls must be guarded by mutex.
-		if (_completion_marker.Scan(buf, len)) {
-			return false;
+		bool out = !_completion_marker.Scan(buf, len);
+		
+		if (_skipping_line) {
+			for (; len > 0; ++buf, --len) {
+				if (*buf == '\n') {
+					_skipping_line = false;
+					++buf;
+					--len;
+					break;
+				}
+			}
 		}
 		
-		return true;
+		if (len > 0)
+			_vta.Write(buf, len);
+	
+		return out;
 	}
 	
 	virtual void OnInputResized(const INPUT_RECORD &ir) //called from worker thread
@@ -575,7 +610,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			if (_slavename.empty() && KeyEvent.uChar.UnicodeChar) {//pipes fallback
 				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
-			DbgPrintEscaped("INPUT", translated.c_str());
+			DbgPrintEscaped("INPUT", translated.c_str(), translated.size());
 			if (write(_fd_in, translated.c_str(), translated.size())!=(int)translated.size()) {
 				fprintf(stderr, "VT: write failed\n");
 			}
@@ -604,34 +639,51 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	
 	void OnConsoleLog()//NB: called not from main thread!
 	{
-		struct VTAnsiState *ansi_state = _vta.Pause();
-		if (!ansi_state)
+		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
+		if (!lock) {
+			fprintf(stderr, "VTShell::OnConsoleLog: SKIPPED\n");
 			return;
-
-		const std::string &histfile = VTLog::GetAsFile();
-		if (!histfile.empty()) {
-			ScrBuf.FillBuf();
-			CtrlObject->CmdLine->SaveBackground();
-		
-			SetFarConsoleMode(TRUE);
-			DeliverPendingWindowInfo();
-			EraseAndEditFile(histfile);
-
-			CtrlObject->CmdLine->ShowBackground();
-			ScrBuf.Flush();
-
-			if (!_slavename.empty())
-				UpdateTerminalSize(_fd_out);
 		}
 
-		_vta.Continue(ansi_state);
+		//called in input thread context
+		//we're input, stop output and remember _vta state
+		
+		StopAndStart<VTOutputReader> sas(_output_reader);
+		VTAnsiSuspend vta_suspend(_vta);
+		if (!vta_suspend)
+			return;
+		
+		const std::string &histfile = VTLog::GetAsFile();
+		if (histfile.empty())
+			return;
+
+		ScrBuf.FillBuf();
+		CtrlObject->CmdLine->SaveBackground();
+
+		SetFarConsoleMode(TRUE);
+		DeliverPendingWindowInfo();
+		EraseAndEditFile(histfile);
+
+		CtrlObject->CmdLine->ShowBackground();
+		ScrBuf.Flush();
+
+		if (!_slavename.empty())
+			UpdateTerminalSize(_fd_out);
 	}
 
 	virtual int OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
-	{//called from _vta in input callback context
-	//_vta already paused now
-		_input_reader.Stop();
-		fprintf(stderr, "VTShell::OnApplicationProtocolCommand: '%s'\n", str);
+	{
+		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
+		if (!lock) {
+			fprintf(stderr, "VTShell::OnApplicationProtocolCommand: SKIPPED '%s'\n", str);
+			return -1;
+		}
+
+		//called from _vta in output thread context
+		//we're output, stop input and remember _vta state
+		StopAndStart<VTInputReader> sas(_input_reader);
+		VTAnsiSuspend vta_suspend(_vta);
+		
 		ScrBuf.FillBuf();
 		CtrlObject->CmdLine->SaveBackground();
 		
@@ -641,8 +693,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 		CtrlObject->CmdLine->ShowBackground();
 		ScrBuf.Flush();
-
-		_input_reader.Start();
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
@@ -793,8 +843,8 @@ static bool shown_tip_exit = false;
 
 
 	public:
-	VTShell() : _vta(this), _input_reader(this), _fd_out(-1), _fd_in(-1), 
-		_pipes_fallback_in(-1), _pipes_fallback_out(-1), 
+	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
+		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1), 
 		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
@@ -840,16 +890,23 @@ static bool shown_tip_exit = false;
 		_skipping_line = true;
 		
 		{
-			VTOutputReader output_reader(this, _fd_out);
+			std::lock_guard<std::mutex> lock(_inout_control_mutex);
+			_output_reader.Start(_fd_out);
 			_input_reader.Start();
-			output_reader.WaitDeactivation();
-			if (_shell_pid!=-1) {
-				int status;
-				if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
-					_shell_pid = -1;
-				}
+		}
+		
+		_output_reader.WaitDeactivation();
+		if (_shell_pid!=-1) {
+			int status;
+			if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
+				_shell_pid = -1;
 			}
+		}
+
+		{
+			std::lock_guard<std::mutex> lock(_inout_control_mutex);
 			_input_reader.Stop();
+			_output_reader.Stop();
 		}
 		remove(cmd_script.c_str());
 

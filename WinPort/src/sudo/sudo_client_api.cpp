@@ -982,8 +982,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 		fprintf(stderr, "sudo_client: sdc_fs_flags_get('%s') - error %s\n", path, what);
 		r = -1;
 	}
-#endif
 	return r;
+#endif
  }
  
  extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, int flags)

@@ -4,6 +4,7 @@
 #include "scrbuf.hpp"
 #include "cmdline.hpp"
 #include "fileedit.hpp"
+#include "fileview.hpp"
 #include "interf.hpp"
 #include <signal.h>
 #include <pthread.h>
@@ -189,12 +190,16 @@ private:
 			FD_SET(_pipe[0], &rfds);
 			
 			int r = select(std::max(_fd_out, _pipe[0]) + 1, &rfds, NULL, NULL, NULL);
-			
+			if (r <= 0) {
+				perror("VTOutputReader select");
+				break;
+			}
 			if (FD_ISSET(_fd_out, &rfds)) {
 				r = read(_fd_out, buf, sizeof(buf));
 				if (r <= 0) break;
 				if (!_processor->OnProcessOutput(buf, r)) break;
-			} else if (FD_ISSET(_pipe[0], &rfds)) {
+			}
+			if (FD_ISSET(_pipe[0], &rfds)) {
 				r = read(_pipe[0], buf, sizeof(buf));
 				if (r < 0) {
 					perror("VTOutputReader read pipe[0]");
@@ -203,9 +208,6 @@ private:
 				if (!_started)
 					return NULL; //stop thread requested
 
-			} else {
-				perror("VTOutputReader select");
-				break;
 			}
 		}
 
@@ -637,7 +639,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		}
 	}
 	
-	void OnConsoleLog()//NB: called not from main thread!
+	void OnConsoleLog(bool edit)//NB: called not from main thread!
 	{
 		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
 		if (!lock) {
@@ -662,7 +664,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 		SetFarConsoleMode(TRUE);
 		DeliverPendingWindowInfo();
-		EraseAndEditFile(histfile);
+		if (edit)
+			ModalEditTempFile(histfile, true);
+		else
+			ModalViewTempFile(histfile, true);
 
 		CtrlObject->CmdLine->ShowBackground();
 		ScrBuf.Flush();
@@ -743,7 +748,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			} 
 			
 			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F4) {
-				OnConsoleLog();
+				OnConsoleLog(true);
+			} 
+
+			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F3) {
+				OnConsoleLog(false);
 			} 
 
 			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift);
@@ -823,7 +832,8 @@ static bool shown_tip_exit = false;
 
 		} else if (!shown_tip_init) {
 			fprintf(f, "echo \"Ctrl+Alt+C - terminate everything in this shell.\"\n");
-			fprintf(f, "echo \"Ctrl+Shift+F4 - pause output and open editor with console log.\"\n");
+			fprintf(f, "echo \"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
+			fprintf(f, "echo --------------------------------------------------------------------\n");
 			shown_tip_init = true;
 		}
 		if (need_sudo) {

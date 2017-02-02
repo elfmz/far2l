@@ -680,13 +680,7 @@ int FarDispatchAnsiApplicationProtocolCommand(const char *str)
 	std::string command(str, space - str);
 	std::string argument(UnescapeUnprintable(space + 1));
 	if (command.find("v") == 0) {
-		FileViewer Viewer(StrMB2Wide(argument).c_str(), FALSE);
-		Viewer.SetDynamicallyBorn(false);
-		FrameManager->EnterModalEV();
-		FrameManager->ExecuteModal();
-		FrameManager->ExitModalEV();
-		r = Viewer.GetExitCode();
-		
+		ModalViewFile(argument, false);
 		r = 0;
 	} else if (command.find("e") == 0) {
 		int StartLine = 0, StartChar = 0;
@@ -696,8 +690,10 @@ int FarDispatchAnsiApplicationProtocolCommand(const char *str)
 			if (p != std::string::npos)
 				StartChar = atoi(command.c_str() + p + 1);
 		}
+		//FIXME: modality doesn't work with this FFILEEDIT_ENABLEF6! (see abort after loop)
 		FileEditor *Editor=new FileEditor(StrMB2Wide(argument).c_str(), CP_AUTODETECT, 
-			FFILEEDIT_DISABLEHISTORY | FFILEEDIT_SAVETOSAVEAS | FFILEEDIT_CANNEWFILE, StartLine, StartChar);
+			FFILEEDIT_DISABLEHISTORY | FFILEEDIT_SAVETOSAVEAS | FFILEEDIT_CANNEWFILE,
+			StartLine, StartChar);
 		r = Editor->GetExitCode();
 		if (r != XC_LOADING_INTERRUPTED && r != XC_OPEN_ERROR) {
 			FrameManager->ExecuteModal();

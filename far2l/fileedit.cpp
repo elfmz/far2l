@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
+#include <limits>
 #include "fileedit.hpp"
 #include "keyboard.hpp"
 #include "codepage.hpp"
@@ -2860,10 +2860,11 @@ bool FileEditor::AskOverwrite(const FARString& FileName)
 	return result;
 }
 
-void EraseAndEditFile(const std::string &pathname)
+void ModalEditTempFile(const std::string &pathname, bool scroll_to_end)
 {
 	FileEditor *ShellEditor=new FileEditor(StrMB2Wide(pathname).c_str(), 
-		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW | FFILEEDIT_SAVETOSAVEAS, std::numeric_limits<int>::max() );
+		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW | FFILEEDIT_SAVETOSAVEAS, 
+		scroll_to_end ? std::numeric_limits<int>::max() : 0 );
 	unlink(pathname.c_str());
 	if (ShellEditor) {
 		DWORD editorExitCode = ShellEditor->GetExitCode();

@@ -105,3 +105,6 @@ class FileViewer:public Frame
 		int64_t GetViewFilePos() const;
 		void ShowStatus();
 };
+
+void ModalViewFile(const std::string &pathname, bool scroll_to_end);
+void ModalViewTempFile(const std::string &pathname, bool scroll_to_end);//erases file internally

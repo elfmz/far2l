@@ -1300,9 +1300,6 @@ BOOL ParseAndPrintString( HANDLE hDev,
 			}
 		} else if (state == 5 || state == 6) {
 			bool done = false;
-			//by standard '6' should stop with 0x9c (ST), but this doesnt work 
-			//due to UTF8 processing, so use BEL for both kinds
-			//if (state == 6) fprintf(stderr, "<<%x>>\n", *s);
 			if ( *s == BEL) {
 				Pt_arg[Pt_len] = '\0';
 				done = true;

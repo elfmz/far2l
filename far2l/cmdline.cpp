@@ -188,7 +188,7 @@ void CommandLine::ProcessCompletion(bool possibilities)
 	}	
 }
 
-void CommandLine::EditConsoleLog()
+std::string CommandLine::GetConsoleLog()
 {
 	++ProcessShowClock;
 	ShowBackground();
@@ -198,8 +198,7 @@ void CommandLine::EditConsoleLog()
 	--ProcessShowClock;
 	Redraw();
 	ScrBuf.Flush();
-	if (!histfile.empty())
-		EraseAndEditFile(histfile);
+	return histfile;
 }
 
 int CommandLine::ProcessKey(int Key)
@@ -217,8 +216,17 @@ int CommandLine::ProcessKey(int Key)
 		return TRUE;
 	}
 	
+	if ( Key==KEY_CTRLSHIFTF3 || Key==KEY_F3) { 
+		const std::string &histfile = GetConsoleLog();
+		if (!histfile.empty()) 
+			ModalViewTempFile(histfile, true);
+		return TRUE;
+	}
+	
 	if ( Key==KEY_CTRLSHIFTF4 || Key==KEY_F4) { 
-		EditConsoleLog();
+		const std::string &histfile = GetConsoleLog();
+		if (!histfile.empty()) 
+			ModalEditTempFile(histfile, true);
 		return TRUE;
 	}
 	

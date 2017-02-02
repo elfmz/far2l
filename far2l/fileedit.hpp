@@ -174,4 +174,4 @@ class FileEditor : public Frame
 };
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
-void EraseAndEditFile(const std::string &pathname);
+void ModalEditTempFile(const std::string &pathname, bool scroll_to_end);//erases file internally

@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
+#include <limits>
 #include "fileview.hpp"
 #include "lang.hpp"
 #include "keys.hpp"
@@ -503,4 +503,28 @@ void FileViewer::OnChangeFocus(int focus)
 	CtrlObject->Plugins.CurViewer=&View;
 	int FCurViewerID=View.ViewerID;
 	CtrlObject->Plugins.ProcessViewerEvent(focus?VE_GOTFOCUS:VE_KILLFOCUS,&FCurViewerID);
+}
+
+static void ModalViewFileInternal(const std::string &pathname, 
+			int DisableHistory, int DisableEdit, bool scroll_to_end)
+{
+	FileViewer Viewer(StrMB2Wide(pathname).c_str(), FALSE, DisableHistory, DisableEdit);
+	Viewer.SetDynamicallyBorn(false);
+	if (scroll_to_end)
+		Viewer.ProcessKey(KEY_END);
+	FrameManager->EnterModalEV();
+	FrameManager->ExecuteModal();
+	FrameManager->ExitModalEV();
+	Viewer.GetExitCode();	
+}
+
+void ModalViewFile(const std::string &pathname, bool scroll_to_end)
+{
+	ModalViewFileInternal(pathname, FALSE, FALSE, scroll_to_end);
+}
+
+void ModalViewTempFile(const std::string &pathname, bool scroll_to_end)
+{
+	ModalViewFileInternal(pathname, TRUE, TRUE, scroll_to_end);
+	unlink(pathname.c_str());
 }

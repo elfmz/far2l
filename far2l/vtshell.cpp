@@ -205,10 +205,9 @@ private:
 					perror("VTOutputReader read pipe[0]");
 					break;
 				}
-				if (!_started)
-					return NULL; //stop thread requested
-
 			}
+			if (!_started)
+				return NULL; //stop thread requested
 		}
 
 		//thread stopped due to output deactivated

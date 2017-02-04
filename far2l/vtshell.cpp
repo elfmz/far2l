@@ -133,7 +133,7 @@ public:
 	{
 		if (fd_out != -1 ) {
 			_fd_out = fd_out;
-			std::unique_lock<std::mutex> locker(_mutex);
+			std::lock_guard<std::mutex> locker(_mutex);
 			_deactivated = false;
 		}
 
@@ -368,6 +368,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	VTInputReader _input_reader;
 	VTOutputReader _output_reader;
 	std::mutex _inout_control_mutex;
+	std::mutex _fd_in_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _shell_pid, _forked_proc_pid;
@@ -612,6 +613,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
 			DbgPrintEscaped("INPUT", translated.c_str(), translated.size());
+			std::lock_guard<std::mutex> lock(_fd_in_mutex);
 			if (write(_fd_in, translated.c_str(), translated.size())!=(int)translated.size()) {
 				fprintf(stderr, "VT: write failed\n");
 			}
@@ -707,8 +709,26 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	virtual void WriteRawInput(const char *str)
 	{
 		size_t l = strlen(str);
+		
+		std::lock_guard<std::mutex> lock(_fd_in_mutex);
+		tcdrain(_fd_in);
+		usleep(1000);//drain seems not drainy enough...
+		struct termios ts = {0};
+		int ra = tcgetattr(_fd_in, &ts);
+		if (ra == 0) {
+			struct termios ts2 = ts;
+			cfmakeraw(&ts2);
+			tcsetattr( _fd_in, TCSADRAIN, &ts2 );
+		}
+
 		if (write(_fd_in, str, l) != (int)l) {
-				fprintf(stderr, "VT: WriteRawInput failed\n");
+			fprintf(stderr, "VT: WriteRawInput failed\n");
+		}
+		tcdrain(_fd_in);
+		usleep(1000);
+		
+		if (ra == 0) {
+			tcsetattr( _fd_in, TCSADRAIN, &ts );
 		}
 	}
 	
@@ -889,10 +909,13 @@ static bool shown_tip_exit = false;
 		cmd_str+= _completion_marker.EchoCommand();
 		cmd_str+= '\n';
 		
-		int r = write(_fd_in, cmd_str.c_str(), cmd_str.size());
-		if (r != (int)cmd_str.size()) {
-			fprintf(stderr, "VT: write failed\n");
-			return -1;
+		{
+			std::lock_guard<std::mutex> lock(_fd_in_mutex);
+			int r = write(_fd_in, cmd_str.c_str(), cmd_str.size());
+			if (r != (int)cmd_str.size()) {
+				fprintf(stderr, "VT: write failed\n");
+				return -1;
+			}
 		}
 		
 		_completion_marker.ScanReset();

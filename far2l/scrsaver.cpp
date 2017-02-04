@@ -43,10 +43,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "scrsaver.hpp"
 #include "console.hpp"
+#include <time.h>
 
-
-#define randomize() srand(67898)
-#define random(x) ((int)(((x)*rand())/(RAND_MAX+1)))
+#define randomize() srand(time(NULL))
+#define random(x) (rand() % (x) )
 
 enum {STAR_NONE,STAR_NORMAL,STAR_PLANET};
 

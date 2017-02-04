@@ -737,43 +737,6 @@ static bool IsForcedCharTranslation(int code)
 		|| code==WXK_NUMPAD_SEPARATOR || code==WXK_NUMPAD_EQUAL || code==WXK_NUMPAD_ADD
 		|| code==WXK_NUMPAD_MULTIPLY || code==WXK_NUMPAD_SUBTRACT || code==WXK_NUMPAD_DIVIDE);
 }
-/*
-static int grab_counter = 0;
-void Grab(void *widget)
-{
-	if (grab_counter==0) {
-		typedef int (*gdk_keyboard_grab_t)(void *widget, int, uint32_t);
-		gdk_keyboard_grab_t grab = (gdk_keyboard_grab_t)dlsym(RTLD_DEFAULT, "gdk_keyboard_grab");
-		int r = grab ? grab(widget, 0, 0) : -1;//(1 << 10) | (1 << 11)
-		fprintf(stderr, " widget=%p grab=%p -> %d\n", widget, grab, r);		
-	}
-	++grab_counter;
-}
-
-void Ungrab()
-{
-	if (grab_counter) {
-		grab_counter = 0;
-
-		typedef int (*gdk_keyboard_ungrab_t)(uint32_t);
-		gdk_keyboard_ungrab_t ungrab = (gdk_keyboard_ungrab_t)dlsym(RTLD_DEFAULT, "gdk_keyboard_ungrab");
-		int r = ungrab ? ungrab(0) : -1;
-		fprintf(stderr, " ungrab=%p -> %d\n", ungrab, r);
-	}
-}
-static bool ShouldGrabOnKeyEvent(wxKeyEvent& event)
-{
-	if (event.GetKeyCode()==WXK_CONTROL)
-		return true;
-		
-	if (event.GetKeyCode()==WXK_ALT)  {
-		if (event.GetRawKeyCode() != 0xffe9 && event.GetRawKeyCode() != 0xffea) {
-			return true;
-		}
-	}
-	return false;
-}
-*/
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	

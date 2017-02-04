@@ -209,7 +209,7 @@ void FlushInputBuffer()
 
 void SetVideoMode()
 {
-	if (!IsFullscreen() && Opt.AltF9)
+	if (!IsFullscreen())
 	{
 		ChangeVideoMode(InitSize.X==CurSize.X && InitSize.Y==CurSize.Y);
 	}

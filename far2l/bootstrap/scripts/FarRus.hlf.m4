@@ -2295,10 +2295,6 @@ $ #Настройка интерфейса#
   - для сетевых дисков вызовет плагин Network (если плагин есть)
 или меню выбора дисков (если плагин Network отсутствует).
 
-  #ClearType friendly redraw#
-  Redraw the window in such a way that ClearType related artifacts do not appear.
-  #Attention!#: Enabling this option can considerably slow down the redraw speed.
-
   #Far window title addons#
   Дополнительная информация, выводимая в заголовке окна консоли.
 Может содержать любой текст, включая следующие переменные:

@@ -1735,15 +1735,6 @@ MConfigPgUpChangeDisk
 "Użyj Ctrl-Pg&Up do zmiany napędu"
 "Usar Ctrl-Pg&Up para cambiar unidad"
 
-MConfigClearType
-upd:"ClearType friendly redraw (can be slow)"
-"ClearType friendly redraw (can be slow)"
-upd:"ClearType friendly redraw (can be slow)"
-upd:"ClearType friendly redraw (can be slow)"
-upd:"ClearType friendly redraw (can be slow)"
-upd:"ClearType friendly redraw (can be slow)"
-"Limpiar rediseño (puede ser lento)"
-
 MConfigTitleAddons
 upd:"Far window title addons:"
 "Far window title addons:"

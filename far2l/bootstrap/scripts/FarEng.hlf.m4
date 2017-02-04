@@ -2259,10 +2259,6 @@ to calculate the total files count.
   - for network drives - activates the Network plugin (if it is available)
 or the drive selection menu (if the Network plugin is not available).
 
-  #ClearType friendly redraw#
-  Redraw the window in such a way that ClearType related artifacts do not appear.
-  #Attention!#: Enabling this option can considerably slow down the redraw speed.
-
   #Far window title addons#
   Дополнительная информация, выводимая в заголовке окна консоли.
 Может содержать любой текст, включая следующие переменные:

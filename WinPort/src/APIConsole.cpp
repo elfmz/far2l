@@ -319,4 +319,10 @@ extern "C" {
 		g_wx_con_out.AdhocQuickEdit();
 		return TRUE;
 	}
+
+	WINPORT_DECL(SetExclusiveKeyTriggers, BOOL, (DWORD triggers_mask))
+	{
+		return g_wx_con_out.SetExclusiveKeyTriggers(triggers_mask) ? TRUE : FALSE;
+	}
+
 }

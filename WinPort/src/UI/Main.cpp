@@ -10,6 +10,7 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 #include <wx/clipbrd.h>
+#include "ExclusiveHotkeys.h"
 #include <set>
 #include <fstream>
 #include <vector>
@@ -139,6 +140,7 @@ struct EventWithRect : EventWith<SMALL_RECT>
 };
 
 typedef EventWith<bool> EventWithBool;
+typedef EventWith<DWORD> EventWithDWORD;
 
 ///////////////////////////////////////////
 
@@ -149,8 +151,8 @@ wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_SET_MAXIMIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_SET_EXCLUSIVE_KEY_TRIGGERS, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
-
 
 
 
@@ -180,6 +182,7 @@ protected:
 	virtual COORD OnConsoleGetLargestWindowSize();
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleAdhocQuickEdit();
+	virtual bool OnConsoleSetExclusiveKeyTriggers(DWORD triggers_mask);
 	virtual void OnConsoleExit();
 	
 private:
@@ -193,6 +196,7 @@ private:
 	void OnTitleChangedSync( wxCommandEvent& event );
 	void OnSetMaximizedSync( wxCommandEvent& event );
 	void OnConsoleAdhocQuickEditSync( wxCommandEvent& event );
+	void OnConsoleSetExclusiveKeyTriggersSync( wxCommandEvent& event );
 	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
@@ -220,6 +224,7 @@ private:
 	wxKeyEvent _last_keydown;
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
+	ExclusiveHotkeys _exclusive_hotkeys;
 	
 	WinPortFrame *_frame;
 	wxTimer* _periodic_timer;
@@ -396,6 +401,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChangedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_MAXIMIZED, WinPortPanel::OnSetMaximizedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_EXCLUSIVE_KEY_TRIGGERS, WinPortPanel::OnConsoleSetExclusiveKeyTriggersSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
 	
 	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
@@ -448,6 +454,7 @@ WinPortPanel::~WinPortPanel()
 	delete _periodic_timer;
 	g_wx_con_out.SetListener(NULL);
 }
+
 
 void WinPortPanel::OnInitialized( wxCommandEvent& event )
 {
@@ -730,12 +737,50 @@ static bool IsForcedCharTranslation(int code)
 		|| code==WXK_NUMPAD_SEPARATOR || code==WXK_NUMPAD_EQUAL || code==WXK_NUMPAD_ADD
 		|| code==WXK_NUMPAD_MULTIPLY || code==WXK_NUMPAD_SUBTRACT || code==WXK_NUMPAD_DIVIDE);
 }
+/*
+static int grab_counter = 0;
+void Grab(void *widget)
+{
+	if (grab_counter==0) {
+		typedef int (*gdk_keyboard_grab_t)(void *widget, int, uint32_t);
+		gdk_keyboard_grab_t grab = (gdk_keyboard_grab_t)dlsym(RTLD_DEFAULT, "gdk_keyboard_grab");
+		int r = grab ? grab(widget, 0, 0) : -1;//(1 << 10) | (1 << 11)
+		fprintf(stderr, " widget=%p grab=%p -> %d\n", widget, grab, r);		
+	}
+	++grab_counter;
+}
+
+void Ungrab()
+{
+	if (grab_counter) {
+		grab_counter = 0;
+
+		typedef int (*gdk_keyboard_ungrab_t)(uint32_t);
+		gdk_keyboard_ungrab_t ungrab = (gdk_keyboard_ungrab_t)dlsym(RTLD_DEFAULT, "gdk_keyboard_ungrab");
+		int r = ungrab ? ungrab(0) : -1;
+		fprintf(stderr, " ungrab=%p -> %d\n", ungrab, r);
+	}
+}
+static bool ShouldGrabOnKeyEvent(wxKeyEvent& event)
+{
+	if (event.GetKeyCode()==WXK_CONTROL)
+		return true;
+		
+	if (event.GetKeyCode()==WXK_ALT)  {
+		if (event.GetRawKeyCode() != 0xffe9 && event.GetRawKeyCode() != 0xffea) {
+			return true;
+		}
+	}
+	return false;
+}
+*/
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
-{
+{	
 	fprintf(stderr, "OnKeyDown: %x %x %x %u %lu\n", event.GetRawKeyCode(), 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
-		
+	_exclusive_hotkeys.OnKeyDown(event, _frame);
+
 	if (event.GetSkipped() || (event.GetTimestamp() && 
 		_last_keydown.GetKeyCode()==event.GetKeyCode() &&
 		_last_keydown.GetTimestamp()==event.GetTimestamp())) {
@@ -783,7 +828,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
 	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyCode(), 
-	event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
+		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
+	_exclusive_hotkeys.OnKeyUp(event);
 	if (event.GetSkipped())
 		return;
 		
@@ -1048,6 +1094,27 @@ void WinPortPanel::OnConsoleAdhocQuickEdit()
 		wxQueueEvent(this, event);
 }
 
+void WinPortPanel::OnConsoleSetExclusiveKeyTriggersSync( wxCommandEvent& event )
+{
+	EventWithDWORD *e = (EventWithDWORD *)&event;
+	_exclusive_hotkeys.SetTriggerKeys( (e->cookie & EXCLUSIVE_CTRL_LEFT) != 0,
+		(e->cookie & EXCLUSIVE_CTRL_RIGHT) != 0, (e->cookie & EXCLUSIVE_ALT_LEFT) != 0,
+		(e->cookie & EXCLUSIVE_ALT_RIGHT) != 0,  (e->cookie & EXCLUSIVE_WIN_LEFT) != 0,
+		(e->cookie & EXCLUSIVE_WIN_RIGHT) != 0);
+}
+
+bool WinPortPanel::OnConsoleSetExclusiveKeyTriggers(DWORD triggers_mask)
+{
+	if (!_exclusive_hotkeys.Available())
+		return false;
+
+	EventWithDWORD *event = new EventWithDWORD(triggers_mask, WX_CONSOLE_SET_EXCLUSIVE_KEY_TRIGGERS);
+	if (event)
+		wxQueueEvent(this, event);
+
+	return true;
+}
+
 void WinPortPanel::OnConsoleExitSync( wxCommandEvent& event )
 {
 	fprintf(stderr, "OnConsoleExitSync\n");
@@ -1096,6 +1163,8 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 		_mouse_qedit_pending = false;
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 	}
+	
+	_exclusive_hotkeys.Reset();
 }
 
 bool ConfirmationDialog(const char *title, const char *text)

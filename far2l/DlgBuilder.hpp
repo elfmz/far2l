@@ -398,6 +398,28 @@ class DialogBuilderBase
 			return Item;
 		}
 
+		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
+		T *AddCheckboxAfter(T *RelativeTo, int TextMessageId, BOOL *Value, int Mask=0)
+		{
+			T *Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
+			Item->X2 = Item->X1 + ItemWidth(*Item);
+			
+			Item->Y1 = Item->Y2 = RelativeTo->Y1;
+			Item->X1 = RelativeTo->X2 + 2;
+			if (!Mask)
+				Item->Selected = *Value;
+			else
+				Item->Selected = (*Value & Mask) ;
+			SetLastItemBinding(CreateCheckBoxBinding(Value, Mask));
+
+			DialogItemBinding<T> *Binding = FindBinding(RelativeTo);
+			if (Binding)
+				Binding->AfterLabelID = GetItemID(Item);
+
+			return Item;
+		}
+
+
 		// Добавляет группу радиокнопок.
 		void AddRadioButtons(int *Value, int OptionCount, int MessageIDs[])
 		{

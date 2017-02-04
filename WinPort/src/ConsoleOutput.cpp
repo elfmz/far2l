@@ -554,3 +554,12 @@ void ConsoleOutput::AdhocQuickEdit()
 	if (_listener)
 		_listener->OnConsoleAdhocQuickEdit();
 }
+
+bool ConsoleOutput::SetExclusiveKeyTriggers(DWORD triggers_mask)
+{
+	if (!_listener)
+		return false;
+
+	return _listener->OnConsoleSetExclusiveKeyTriggers(triggers_mask);
+}
+

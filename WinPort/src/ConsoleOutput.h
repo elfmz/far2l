@@ -14,6 +14,7 @@ class ConsoleOutputListener
 		virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos) = 0;
 		virtual COORD OnConsoleGetLargestWindowSize() = 0;
 		virtual void OnConsoleAdhocQuickEdit() = 0;
+		virtual bool OnConsoleSetExclusiveKeyTriggers(DWORD triggers_mask) = 0;
 		virtual void OnConsoleSetMaximized(bool maximized) = 0;
 		virtual void OnConsoleExit() = 0;
 };
@@ -106,6 +107,7 @@ public:
 	void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
 	
 	void AdhocQuickEdit();
+	bool SetExclusiveKeyTriggers(DWORD triggers_mask);
 };
 
 

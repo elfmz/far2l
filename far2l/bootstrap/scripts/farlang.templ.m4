@@ -1699,6 +1699,69 @@ MConfigSaverMinutes
 "m&inut"
 "minutos"
 
+MConfigExclusiveKeys
+"Экслюзивная обработка нажатий, включающих:"
+"Exclusively handle hotkeys that include:"
+upd:"Exclusively handle hotkeys that include:"
+upd:"Exclusively handle hotkeys that include:"
+upd:"Exclusively handle hotkeys that include:"
+upd:"Exclusively handle hotkeys that include:"
+upd:"Exclusively handle hotkeys that include:"
+
+MConfigExclusiveCtrlLeft
+"Левый Ctrl"
+"Left Ctrl"
+upd:"Left Ctrl"
+upd:"Left Ctrl"
+upd:"Left Ctrl"
+upd:"Left Ctrl"
+upd:"Left Ctrl"
+
+MConfigExclusiveCtrlRight
+"Правый Ctrl"
+"Right Ctrl"
+upd:"Right Ctrl"
+upd:"Right Ctrl"
+upd:"Right Ctrl"
+upd:"Right Ctrl"
+upd:"Right Ctrl"
+
+MConfigExclusiveAltLeft
+"Левый Alt "
+"Left Alt "
+upd:"Left Alt "
+upd:"Left Alt "
+upd:"Left Alt "
+upd:"Left Alt "
+upd:"Left Alt "
+
+MConfigExclusiveAltRight
+"Правый Alt "
+"Right Alt "
+upd:"Right Alt "
+upd:"Right Alt "
+upd:"Right Alt "
+upd:"Right Alt "
+upd:"Right Alt "
+
+MConfigExclusiveWinLeft
+"Левый Win "
+"Left Win "
+upd:"Left Win "
+upd:"Left Win "
+upd:"Left Win "
+upd:"Left Win "
+upd:"Left Win "
+
+MConfigExclusiveWinRight
+"Правый Win "
+"Right Win "
+upd:"Right Win "
+upd:"Right Win "
+upd:"Right Win "
+upd:"Right Win "
+upd:"Right Win "
+
 MConfigCopyTotal
 "Показывать &общий индикатор копирования"
 "Show &total copy progress indicator"

@@ -114,6 +114,18 @@ const wchar_t NKeyVMenu[]=L"VMenu";
 
 const wchar_t *constBatchExt=L".BAT;.CMD;";
 
+static bool ApplyExclusiveKeys()
+{
+	DWORD triggers_mask = 0;
+	if (Opt.ExclusiveCtrlLeft) triggers_mask|= EXCLUSIVE_CTRL_LEFT;
+	if (Opt.ExclusiveCtrlRight) triggers_mask|= EXCLUSIVE_CTRL_RIGHT;
+	if (Opt.ExclusiveAltLeft) triggers_mask|= EXCLUSIVE_ALT_LEFT;
+	if (Opt.ExclusiveAltRight) triggers_mask|= EXCLUSIVE_ALT_RIGHT;
+	if (Opt.ExclusiveWinLeft) triggers_mask|= EXCLUSIVE_WIN_LEFT;
+	if (Opt.ExclusiveWinRight) triggers_mask|= EXCLUSIVE_WIN_RIGHT;
+	return (WINPORT(SetExclusiveKeyTriggers)(triggers_mask) != FALSE);;
+}
+
 static void ApplySudoConfiguration()
 {
  	const std::string &sudo_app = GetHelperPathName("far2l_sudoapp");
@@ -245,6 +257,26 @@ void InterfaceSettings()
 	Builder.AddCheckbox(MConfigCopyTimeRule, &Opt.CMOpt.CopyTimeRule);
 	Builder.AddCheckbox(MConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
 	Builder.AddCheckbox(MConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
+
+
+	int ExclusiveKeysFlags = ApplyExclusiveKeys() ? 0 : DIF_DISABLE;
+
+	Builder.AddText(MConfigExclusiveKeys);
+	DialogItemEx *Item = Builder.AddCheckbox(MConfigExclusiveCtrlLeft, &Opt.ExclusiveCtrlLeft);
+	Item->Flags|= ExclusiveKeysFlags;
+	Item->Indent(4);
+	Builder.AddCheckboxAfter(Item, MConfigExclusiveCtrlRight, &Opt.ExclusiveCtrlRight)->Flags|= ExclusiveKeysFlags;
+
+	Item = Builder.AddCheckbox(MConfigExclusiveAltLeft, &Opt.ExclusiveAltLeft);
+	Item->Flags|= ExclusiveKeysFlags;
+	Item->Indent(4);
+	Builder.AddCheckboxAfter(Item, MConfigExclusiveAltRight, &Opt.ExclusiveAltRight)->Flags|= ExclusiveKeysFlags;
+
+	Item = Builder.AddCheckbox(MConfigExclusiveWinLeft, &Opt.ExclusiveWinLeft);
+	Item->Flags|= ExclusiveKeysFlags;
+	Item->Indent(4);
+	Builder.AddCheckboxAfter(Item, MConfigExclusiveWinRight, &Opt.ExclusiveWinRight)->Flags|= ExclusiveKeysFlags;
+
 	Builder.AddText(MConfigTitleAddons);
 	Builder.AddEditField(&Opt.strTitleAddons, 47);
 	Builder.AddOKCancel();
@@ -260,6 +292,7 @@ void InterfaceSettings()
 		CtrlObject->Cp()->SetScreenPosition();
 		// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
 		CtrlObject->Cp()->Redraw();
+		ApplyExclusiveKeys();
 	}
 }
 
@@ -567,6 +600,14 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeyInterface, L"CursorSize4",&Opt.CursorSize[3],99, 0},
 	{0, REG_DWORD,  NKeyInterface, L"ShiftsKeyRules",&Opt.ShiftsKeyRules,1, 0},
 	{1, REG_DWORD,  NKeyInterface, L"CtrlPgUp",&Opt.PgUpChangeDisk, 1, 0},
+
+	{1, REG_DWORD,  NKeyInterface, L"ExclusiveCtrlLeft",&Opt.ExclusiveCtrlLeft, 0, 0},
+	{1, REG_DWORD,  NKeyInterface, L"ExclusiveCtrlRight",&Opt.ExclusiveCtrlRight, 0, 0},
+	{1, REG_DWORD,  NKeyInterface, L"ExclusiveAltLeft",&Opt.ExclusiveAltLeft, 0, 0},
+	{1, REG_DWORD,  NKeyInterface, L"ExclusiveAltRight",&Opt.ExclusiveAltRight, 0, 0},
+	{1, REG_DWORD,  NKeyInterface, L"ExclusiveWinLeft",&Opt.ExclusiveWinLeft, 0, 0},
+	{1, REG_DWORD,  NKeyInterface, L"ExclusiveWinRight",&Opt.ExclusiveWinRight, 0, 0},
+
 	{0, REG_DWORD,  NKeyInterface, L"ShowTimeoutDelFiles",&Opt.ShowTimeoutDelFiles, 50, 0},
 	{0, REG_DWORD,  NKeyInterface, L"ShowTimeoutDACLFiles",&Opt.ShowTimeoutDACLFiles, 50, 0},
 	{0, REG_DWORD,  NKeyInterface, L"FormatNumberSeparators",&Opt.FormatNumberSeparators, 0, 0},
@@ -1004,6 +1045,7 @@ void ReadConfig()
 	}
 
 	ApplySudoConfiguration();
+	ApplyExclusiveKeys();
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 

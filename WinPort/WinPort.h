@@ -63,8 +63,14 @@ extern "C" {
 
 	typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Top, unsigned int Width, CHAR_INFO *Charss);
 	WINPORT_DECL(SetConsoleScrollCallback, VOID, (HANDLE hConsoleOutput, PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext));
-	
-	WINPORT_DECL(BeginConsoleAdhocQuickEdit, BOOL, ());
+	WINPORT_DECL(BeginConsoleAdhocQuickEdit, BOOL, ());	
+	WINPORT_DECL(SetExclusiveKeyTriggers, BOOL, (DWORD triggers_mask));
+#define EXCLUSIVE_CTRL_LEFT			0x0001
+#define EXCLUSIVE_CTRL_RIGHT		0x0002
+#define EXCLUSIVE_ALT_LEFT			0x0004
+#define EXCLUSIVE_ALT_RIGHT			0x0008
+#define EXCLUSIVE_WIN_LEFT			0x0010
+#define EXCLUSIVE_WIN_RIGHT			0x0020
 
 	///Registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));
@@ -246,7 +252,6 @@ extern "C" {
 	WINPORT_DECL(VkKeyScan, SHORT, (WCHAR ch));
 	WINPORT_DECL(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState, 
 		LPWSTR pwszBuff, int cchBuff, UINT wFlags, HKL dwhkl));
-	
 	
 	WINPORT_DECL(WSAGetLastError, DWORD, ());
 

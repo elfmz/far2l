@@ -34,6 +34,7 @@ src/WinPortSynch.cpp
 src/PathHelpers.cpp
 src/UI/Paint.cpp
 src/UI/Main.cpp
+src/UI/ExclusiveHotkeys.cpp
 src/UI/wxWinTranslations.cpp
 src/sudo/sudo_common.cpp
 src/sudo/sudo_client.cpp

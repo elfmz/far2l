@@ -497,6 +497,7 @@ struct Options
 	int FormatNumberSeparators;
 	int CleanAscii;
 	int NoGraphics;
+	int ExclusiveCtrlLeft, ExclusiveCtrlRight, ExclusiveAltLeft, ExclusiveAltRight, ExclusiveWinLeft, ExclusiveWinRight;
 
 	Confirmation Confirm;
 	PluginConfirmation PluginConfirm;

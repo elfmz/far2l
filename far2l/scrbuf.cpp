@@ -356,33 +356,6 @@ void ScreenBuf::Flush()
 			{
 				PCHAR_INFO PtrBuf=Buf,PtrShadow=Shadow;
 
-				if (Opt.ClearType)
-				{
-					//Для полного избавления от артефактов ClearType будем перерисовывать на всю ширину.
-					//Чревато тормозами/миганием в зависимости от конфигурации системы.
-					SMALL_RECT WriteRegion={0,0,(SHORT)(BufX-1),0};
-
-					for (SHORT I=0; I<BufY; I++, PtrBuf+=BufX, PtrShadow+=BufX)
-					{
-						WriteRegion.Top=I;
-						WriteRegion.Bottom=I-1;
-
-						while (I<BufY && !AreSameCharInfoBuffers(PtrBuf, PtrShadow, BufX))
-						{
-							I++;
-							PtrBuf+=BufX;
-							PtrShadow+=BufX;
-							WriteRegion.Bottom++;
-						}
-
-						if (WriteRegion.Bottom >= WriteRegion.Top)
-						{
-							WriteList.Push(&WriteRegion);
-							Changes=true;
-						}
-					}
-				}
-				else
 				{
 					bool Started=false;
 					SMALL_RECT WriteRegion={(SHORT)(BufX-1),(SHORT)(BufY-1),0,0};

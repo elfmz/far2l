@@ -245,7 +245,6 @@ void InterfaceSettings()
 	Builder.AddCheckbox(MConfigCopyTimeRule, &Opt.CMOpt.CopyTimeRule);
 	Builder.AddCheckbox(MConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
 	Builder.AddCheckbox(MConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
-	Builder.AddCheckbox(MConfigClearType, &Opt.ClearType);
 	Builder.AddText(MConfigTitleAddons);
 	Builder.AddEditField(&Opt.strTitleAddons, 47);
 	Builder.AddOKCancel();
@@ -567,9 +566,7 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeyInterface, L"CursorSize3",&Opt.CursorSize[2],99, 0},
 	{0, REG_DWORD,  NKeyInterface, L"CursorSize4",&Opt.CursorSize[3],99, 0},
 	{0, REG_DWORD,  NKeyInterface, L"ShiftsKeyRules",&Opt.ShiftsKeyRules,1, 0},
-	{0, REG_DWORD,  NKeyInterface, L"AltF9",&Opt.AltF9, 1, 0},
 	{1, REG_DWORD,  NKeyInterface, L"CtrlPgUp",&Opt.PgUpChangeDisk, 1, 0},
-	{1, REG_DWORD,  NKeyInterface, L"ClearType",&Opt.ClearType, 0, 0},
 	{0, REG_DWORD,  NKeyInterface, L"ShowTimeoutDelFiles",&Opt.ShowTimeoutDelFiles, 50, 0},
 	{0, REG_DWORD,  NKeyInterface, L"ShowTimeoutDACLFiles",&Opt.ShowTimeoutDACLFiles, 50, 0},
 	{0, REG_DWORD,  NKeyInterface, L"FormatNumberSeparators",&Opt.FormatNumberSeparators, 0, 0},

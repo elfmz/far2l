@@ -140,13 +140,7 @@ bool dlgOpenEditor(FARString &strFileName, UINT &codepage)
 	if (Dlg.GetExitCode() == ID_OE_OK)
 	{
 		strFileName = EditDlg[ID_OE_FILENAME].strData;
-		if (strFileName.GetLength() > 1 && strFileName[0] == L'~' && strFileName[1] == GOOD_SLASH) {
-			const char * home = getenv("HOME");
-			if (!home)
-				home = "/tmp";
-
-			strFileName.Replace(0, 1, FARString(home));
-		}
+		ConvertHomePrefixInPath(strFileName);
 		return true;
 	}
 
@@ -292,6 +286,7 @@ bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage,bool 
 	if ((Dlg.GetExitCode() == ID_SF_OK) && !EditDlg[ID_SF_FILENAME].strData.IsEmpty())
 	{
 		strFileName = EditDlg[ID_SF_FILENAME].strData;
+		ConvertHomePrefixInPath(strFileName);
 		AddSignature=EditDlg[ID_SF_SIGNATURE].Selected!=0;
 
 		if (EditDlg[ID_SF_DONOTCHANGE].Selected)

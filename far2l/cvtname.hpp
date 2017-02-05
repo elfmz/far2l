@@ -42,3 +42,4 @@ void ConvertNameToFull(FARString &strSrcDest);
 
 void GetPathRoot(const wchar_t *Path, FARString &strRoot);
 
+void ConvertHomePrefixInPath(FARString &strFileName);

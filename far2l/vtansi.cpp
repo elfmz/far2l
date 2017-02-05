@@ -1112,7 +1112,7 @@ static void InterpretControlString()
 	if (prefix == '_' && g_vt_ansi_commands) {//Application Program Command
 		int r = g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
 		char reply[64] = {0};
-		sprintf( reply, "%c_%d%c\n", ESC, r, BEL);
+		sprintf( reply, "%c_%d%c", ESC, r, BEL);
 		SendSequence(reply);
 	}
 	Pt_len = 0;
@@ -1198,10 +1198,9 @@ static void RestoreCursor()
 // the last arguments are processed (no es_argv[] overflow).
 //-----------------------------------------------------------------------------
 
-BOOL ParseAndPrintString( HANDLE hDev,
+void ParseAndPrintString( HANDLE hDev,
                           LPCVOID lpBuffer,
-                          DWORD nNumberOfBytesToWrite,
-                          LPDWORD lpNumberOfBytesWritten)
+                          DWORD nNumberOfBytesToWrite)
 {
 	DWORD   i;
 	LPCWSTR s;
@@ -1344,9 +1343,7 @@ BOOL ParseAndPrintString( HANDLE hDev,
 		}
 	}
 	FlushBuffer();
-	if (lpNumberOfBytesWritten != NULL)
-		*lpNumberOfBytesWritten = nNumberOfBytesToWrite - i;
-	return (i == 0);
+	assert(i == 0);
 }
 
 
@@ -1417,13 +1414,28 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 	delete state;
 }
 
-size_t VTAnsi::Write(const char *str, size_t len)
+void VTAnsi::Write(const char *str, size_t len)
 {
-	MB2Wide(str, len, _ws);
-	DWORD processed = 0;
-	if (!ParseAndPrintString(NULL, _ws.c_str(), _ws.size(), &processed))
-		return 0;
-	//fprintf(stderr, "VTAnsi::Write: %u processed: %u\n", len, processed);
-	return processed;
+	if (!_buf.empty()) {
+		_buf.append(str, len);
+		size_t translated_len = MB2Wide_HonorIncomplete(_buf.c_str(), _buf.size(), _ws);
+		if (translated_len == 0)
+			return;
+
+		if (translated_len < _buf.size()) {
+			_buf.erase(0, translated_len);
+		} else
+			_buf.clear();
+
+	} else {
+		size_t translated_len = MB2Wide_HonorIncomplete(str, len, _ws);
+		if ( translated_len < len) {
+			_buf.append(&str[translated_len], len - translated_len);
+			if (translated_len == 0)
+				return;
+		}
+	}
+
+	ParseAndPrintString(NULL, _ws.c_str(), _ws.size());
 }
 

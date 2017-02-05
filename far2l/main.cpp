@@ -720,11 +720,11 @@ static int SendAnsiApplicationProgramCommand(const char *command, const char *ar
 	
 	str.clear();
 	for (;;) {
-		char buf[0x100] = {0};
-		if (!fgets(buf, sizeof(buf) - 1, stdin)) {
+		int r = fgetc(stdin);
+		if (r == -1)
 			return -1;
-		}
-		str+= buf;
+
+		str+= (char)(unsigned char)r;
 		
 		size_t p = str.find("\x1b_");
 		if (p!=std::string::npos) {

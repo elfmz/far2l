@@ -57,17 +57,18 @@ namespace FailTolerantUTF8
 		}
 	}
 
-	template <class WIDE_UTF>
-		static void ToWide(const char *src, size_t src_len, std::wstring &dst,
+	template <class WIDE_UTF, bool HONOR_INCOMPLETE = false>
+		static size_t ToWide(const char *src, size_t src_len, std::wstring &dst,
 			ConversionResult (*pCalcSpace)(int *, const UTF8**, const UTF8*, ConversionFlags),
 			ConversionResult (*pConvert)(const UTF8**, const UTF8*, WIDE_UTF**, WIDE_UTF*, ConversionFlags) )
 	{
 		static_assert(sizeof(WIDE_UTF) == sizeof(wchar_t), "ToWide: bad WIDE_UTF");
 		if (!src_len) {
 			dst.clear();
-			return;
+			return 0;
 		}
-	
+		
+		const UTF8 *src_begin = (const UTF8*)src;
 		const UTF8 *src_end = (const UTF8*)(src + src_len);
 		size_t dst_len = 0;
 		wchar_t wz[16];
@@ -93,14 +94,18 @@ namespace FailTolerantUTF8
 					len++;
 				}
 				dst_len+= len;
-			} else {
+			} else if (!HONOR_INCOMPLETE || ((const char*)src_end - src) >= 6) {
 				swprintf(wz, ARRAYSIZE(wz), L"%c%02x", ESCAPE_CHAR, *(unsigned char *)src);
 				dst.resize(dst_len);
 				dst+= wz;
 				dst_len = dst.size();
 				src++;
+			} else {
+				break;
 			}
 		} while (src!=(const char *)src_end);
+
+		return src - (const char*)src_begin;
 	}
 }
 
@@ -119,6 +124,16 @@ void MB2Wide(const char *src, size_t src_len, std::wstring &dst)
 	FailTolerantUTF8::ToWide<UTF32>(src, src_len, dst, CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32);
 #else
 	FailTolerantUTF8::ToWide<UTF16>(src, src_len, dst, CalcSpaceUTF8toUTF16, ConvertUTF8toUTF16);
+#endif	
+}
+
+
+size_t MB2Wide_HonorIncomplete(const char *src, size_t src_len, std::wstring &dst)
+{
+#if (__WCHAR_MAX__ > 0xffff)
+	return FailTolerantUTF8::ToWide<UTF32, true>(src, src_len, dst, CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32);
+#else
+	return FailTolerantUTF8::ToWide<UTF16, true>(src, src_len, dst, CalcSpaceUTF8toUTF16, ConvertUTF8toUTF16);
 #endif	
 }
 

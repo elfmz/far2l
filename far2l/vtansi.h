@@ -9,12 +9,13 @@ struct IVTAnsiCommands
 
 class VTAnsi
 {
+	std::string _buf;
 	std::wstring _ws;
 	public:
 	VTAnsi(IVTAnsiCommands *ansi_commands);
 	~VTAnsi();
 	
-	size_t Write(const char *str, size_t len);
+	void Write(const char *str, size_t len);
 	
 	struct VTAnsiState *Suspend();
 	void Resume(struct VTAnsiState* state);

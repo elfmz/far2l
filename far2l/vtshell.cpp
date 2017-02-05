@@ -197,7 +197,18 @@ private:
 			if (FD_ISSET(_fd_out, &rfds)) {
 				r = read(_fd_out, buf, sizeof(buf));
 				if (r <= 0) break;
+#if 1 //set to 0 to test extremely fragmented output processing 
 				if (!_processor->OnProcessOutput(buf, r)) break;
+#else 
+				for (int i = 0; r > 0;) {
+					int n = 1 + (rand()%7);
+					if (n > r) n = r;
+					if (!_processor->OnProcessOutput(&buf[i], n)) break;
+					i+= n;
+					r-= n;
+				}
+				if (r) break;
+#endif
 			}
 			if (FD_ISSET(_pipe[0], &rfds)) {
 				r = read(_pipe[0], buf, sizeof(buf));

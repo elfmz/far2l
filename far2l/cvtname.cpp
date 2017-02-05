@@ -450,3 +450,15 @@ void ConvertNameToFull(FARString &strSrcDest)
 {
 	ConvertNameToFull(strSrcDest, strSrcDest);
 }
+
+
+void ConvertHomePrefixInPath(FARString &strFileName)
+{
+	if (strFileName.GetLength() > 1 && strFileName[0] == L'~' && strFileName[1] == GOOD_SLASH) {
+		const char * home = getenv("HOME");
+		if (!home)
+			home = "/tmp";
+		strFileName.Replace(0, 1, FARString(home));
+	}
+}
+

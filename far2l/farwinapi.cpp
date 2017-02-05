@@ -248,7 +248,19 @@ bool File::Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfByt
 
 bool File::SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMethod)
 {
-	return WINPORT(SetFilePointerEx)(Handle, *reinterpret_cast<PLARGE_INTEGER>(&DistanceToMove), reinterpret_cast<PLARGE_INTEGER>(NewFilePointer), MoveMethod) != FALSE;
+	BOOL r;
+	LARGE_INTEGER li;
+	li.QuadPart = DistanceToMove;
+	if (NewFilePointer) {
+		LARGE_INTEGER li_new;
+		li_new.QuadPart = *NewFilePointer;
+		r = WINPORT(SetFilePointerEx)(Handle, li, &li_new, MoveMethod);
+		*NewFilePointer = li_new.QuadPart;
+	} else {
+		r = WINPORT(SetFilePointerEx)(Handle, li, NULL, MoveMethod);
+	}
+	
+	return r != FALSE;
 }
 
 bool File::SetEnd()
@@ -503,7 +515,7 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 	FARString strDir=lpPathName;
 	if (lpPathName[0]!='/' || lpPathName[1]!=0) 
 		DeleteEndSlash(strDir);
-	LPCWSTR CD=strDir;
+	//LPCWSTR CD=strDir;
 //	int Offset=HasPathPrefix(CD)?4:0;
 ///	if ((CD[Offset] && CD[Offset+1]==L':' && !CD[Offset+2]) || IsLocalVolumeRootPath(CD))
 		//AddEndSlash(strDir);

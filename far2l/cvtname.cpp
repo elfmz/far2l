@@ -42,10 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include <set>
 
-#define IsColon(str)         (str == L':')
 #define IsDot(str)           (str == L'.')
-#define IsSlashForward(str)  (str == L'/')
-#define IsQuestion(str)      (str == L'?')
 
 void MixToFullPath(FARString& strPath)
 {
@@ -132,6 +129,9 @@ void MixToFullPath(FARString& strPath)
 	}
 
 	strPath.ReleaseBuffer();
+
+	if (strPath.GetLength() > 1 && strPath[strPath.GetLength() - 1] == GOOD_SLASH)
+		strPath.SetLength(strPath.GetLength() - 1);// #249
 }
 
 bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)

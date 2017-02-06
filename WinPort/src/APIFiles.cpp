@@ -409,7 +409,6 @@ extern "C"
 	static int stat_symcheck(const char *path, struct stat &s, DWORD &symattr)
 	{
 		if (os_call_int(sdc_lstat, path, &s) < 0) {
-			fprintf(stderr, "stat_symcheck: lstat failed for %s\n", path);
 			return -1;
 		}
 		
@@ -439,6 +438,7 @@ extern "C"
 		DWORD symattr = 0;
 		if (stat_symcheck(path.c_str(), s, symattr) < 0 ) {
 			WINPORT(TranslateErrno)();
+			fprintf(stderr, "GetFileAttributes: stat_symcheck failed for '%s'\n", path.c_str());
 			return INVALID_FILE_ATTRIBUTES;			
 		}
 		
@@ -582,7 +582,7 @@ extern "C"
 					return false;
 
 				if ( MatchName(wfd.cFileName) ) {
-					if (MatchAttributesAndFillWFD(wfd.cFileName, lpFindFileData)) {
+					if (MatchAttributesAndFillWFD(false, wfd.cFileName, lpFindFileData)) {
 						break;
 					}
 				}
@@ -599,7 +599,18 @@ extern "C"
 					return false;
 
 				if ( PreMatchDType(de->d_type) && MatchName(de->d_name) ) {
-					if (MatchAttributesAndFillWFD(de->d_name, lpFindFileData))
+					mode_t hint_mode_type;
+					switch (de->d_type) {
+						case DT_DIR: hint_mode_type = S_IFDIR; break;
+						case DT_REG: hint_mode_type = S_IFREG; break;
+						case DT_LNK: hint_mode_type = S_IFLNK; break;
+						case DT_BLK: hint_mode_type = S_IFBLK; break;
+						case DT_FIFO: hint_mode_type = S_IFIFO; break;
+						case DT_CHR: hint_mode_type = S_IFCHR; break;
+						case DT_SOCK: hint_mode_type = S_IFSOCK; break;
+						default: hint_mode_type = 0; 
+					}
+					if (MatchAttributesAndFillWFD(hint_mode_type, de->d_name, lpFindFileData))
 						return true;
 				}
 			}
@@ -607,18 +618,22 @@ extern "C"
 		}
 
 	private:
-	
-		bool MatchAttributesAndFillWFD(const char *name, LPWIN32_FIND_DATAW lpFindFileData)
+		bool MatchAttributesAndFillWFD(mode_t hint_mode_type, const char *name, LPWIN32_FIND_DATAW lpFindFileData)
 		{
 			_tmp.path = _root;
 			if (_tmp.path.empty() || _tmp.path[_tmp.path.size()-1] != GOOD_SLASH) 
 				_tmp.path+= GOOD_SLASH;
-			
+
+			SudoSilentQueryRegion ssqr(hint_mode_type && (_flags & FIND_FILE_FLAG_NOT_ANNOYING) != 0);
+
 			_tmp.path+= name;
 			struct stat s = { };
 			DWORD symattr = 0;
 			if (stat_symcheck(_tmp.path.c_str(), s, symattr) < 0 ) {
-				fprintf(stderr, "UnixFindFile: stat failed for %s\n", _tmp.path.c_str());
+				fprintf(stderr, "UnixFindFile: stat_symcheck failed for '%s'\n", _tmp.path.c_str());
+				symattr|= FILE_ATTRIBUTE_BROKEN;
+				if (hint_mode_type)
+					s.st_mode = hint_mode_type;
 			}
 			MB2Wide(name, _tmp.wide_name);
 			FillWFD((const wchar_t *)_tmp.wide_name.c_str(), s, lpFindFileData, symattr);
@@ -719,6 +734,7 @@ extern "C"
 			DWORD symattr = 0;
 			if (stat_symcheck((root + mask).c_str(), s, symattr) < 0 ) {
 				WINPORT(TranslateErrno)();
+				fprintf(stderr, "FindFirstFileWithFlags: stat_symcheck failed for '%s' / '%s'\n", root.c_str(), mask.c_str());
 				return INVALID_HANDLE_VALUE;			
 			}
 			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);

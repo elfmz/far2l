@@ -3013,6 +3013,7 @@ static void FilteredAddToMenu(VMenu &menu, const FARString &filter, const FARStr
 
 void EditControl::PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strFilter)
 {
+	SudoSilentQueryRegion ssqr;
 	if (pCustomCompletionList)
 	{
 		for (const auto &possibility : *pCustomCompletionList) 

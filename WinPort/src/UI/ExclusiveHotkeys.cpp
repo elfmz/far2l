@@ -38,9 +38,9 @@ bool ExclusiveHotkeys::IsTriggeringKeyEvent(wxKeyEvent& event)
 	//event.GetRawKeyCode() is GDK_KEY_ contant
 	return (_alt_left && event.GetRawKeyCode() == 0xffe9)
 		|| (_alt_right && event.GetRawKeyCode() == 0xffea)
-		|| (_ctrl_right && event.GetRawKeyCode() == 0xffe3)
+		|| (_ctrl_left && event.GetRawKeyCode() == 0xffe3)
 		|| (_ctrl_right && event.GetRawKeyCode() == 0xffe4)
-		|| (_win_right && event.GetRawKeyCode() == 0xffeb)
+		|| (_win_left && event.GetRawKeyCode() == 0xffeb)
 		|| (_win_right && event.GetRawKeyCode() == 0xffec);
 }
 

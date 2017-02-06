@@ -1241,7 +1241,7 @@ int FileList::ProcessKey(int Key)
 		}
 		case KEY_CTRLR:
 		{
-			Update(UPDATE_KEEP_SELECTION);
+			Update(UPDATE_KEEP_SELECTION|UPDATE_CAN_BE_ANNOYING);
 			Redraw();
 			{
 				Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);

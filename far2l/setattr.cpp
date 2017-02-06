@@ -690,6 +690,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		{
 			SrcPanel->GetSelName(nullptr,FileAttr, FileMode);
 			SrcPanel->GetSelName(&strSelName,FileAttr, FileMode,&FindData);
+/*			if (!FileMode) {
+				FAR_FIND_DATA_EX FindData2;
+				if (apiGetFindDataEx(strSelName, FindData2) && FindData2.dwUnixMode) {
+					FindData = FindData2;
+					FileAttr = FindData.dwFileAttributes;
+					FileMode = FindData.dwUnixMode;
+				}
+			}*/
 		}
 		else
 		{

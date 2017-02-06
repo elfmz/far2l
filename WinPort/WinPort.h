@@ -154,6 +154,7 @@ extern "C" {
 #define FIND_FILE_FLAG_NO_DEVICES	0x08
 #define FIND_FILE_FLAG_NO_CUR_UP	0x10 //skip virtual . and ..
 #define FIND_FILE_FLAG_CASE_INSENSITIVE	0x1000 //currently affects only english characters
+#define FIND_FILE_FLAG_NOT_ANNOYING	0x2000 //avoid sudo prompt if can't query some not very important information without it
 	
 	WINPORT_DECL(FindFirstFileWithFlags, HANDLE, (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags));
 	WINPORT_DECL(FindFirstFile, HANDLE, (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData));

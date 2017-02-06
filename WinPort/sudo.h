@@ -32,6 +32,8 @@ extern "C" {
 
  __attribute__ ((visibility("default"))) void sudo_client_region_enter();
  __attribute__ ((visibility("default"))) void sudo_client_region_leave();
+ __attribute__ ((visibility("default"))) void sudo_silent_query_region_enter();
+ __attribute__ ((visibility("default"))) void sudo_silent_query_region_leave();
 
  __attribute__ ((visibility("default"))) int sdc_close(int fd);
  __attribute__ ((visibility("default"))) int sdc_open(const char* pathname, int flags, ...);
@@ -80,6 +82,32 @@ struct SudoClientRegion
 	inline ~SudoClientRegion()
 	{
 		sudo_client_region_leave();
+	}
+};
+
+class SudoSilentQueryRegion
+{
+	bool _entered;
+
+public:
+	inline SudoSilentQueryRegion(bool enter = true) : _entered(enter)
+	{
+		if (enter)
+			sudo_silent_query_region_enter();
+	}
+	
+	inline void Enter()
+	{
+		if (!_entered) {
+			_entered = true;
+			sudo_silent_query_region_enter();
+		}
+	}
+
+	inline ~SudoSilentQueryRegion()
+	{
+		if (_entered)
+			sudo_silent_query_region_leave();
 	}
 };
 #endif

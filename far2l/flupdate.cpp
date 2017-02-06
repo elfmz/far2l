@@ -72,7 +72,7 @@ void FileList::Update(int Mode)
 		switch (PanelMode)
 		{
 			case NORMAL_PANEL:
-				ReadFileNames(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE,Mode & UPDATE_DRAW_MESSAGE);
+				ReadFileNames(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE,Mode & UPDATE_DRAW_MESSAGE,Mode & UPDATE_CAN_BE_ANNOYING);
 				break;
 			case PLUGIN_PANEL:
 			{
@@ -81,7 +81,7 @@ void FileList::Update(int Mode)
 				ProcessPluginCommand();
 
 				if (PanelMode!=PLUGIN_PANEL)
-					ReadFileNames(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE,Mode & UPDATE_DRAW_MESSAGE);
+					ReadFileNames(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE,Mode & UPDATE_DRAW_MESSAGE,Mode & UPDATE_CAN_BE_ANNOYING);
 				else if ((Info.Flags & OPIF_REALNAMES) ||
 				         CtrlObject->Cp()->GetAnotherPanel(this)->GetMode()==PLUGIN_PANEL ||
 				         !(Mode & UPDATE_SECONDARY))
@@ -121,7 +121,7 @@ static void PR_ReadFileNamesMsg()
 // ЭТО ЕСТЬ УЗКОЕ МЕСТО ДЛЯ СКОРОСТНЫХ ХАРАКТЕРИСТИК Far Manager
 // при считывании дирректории
 
-void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage)
+void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying)
 {
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ReadFileNamesMsg);
 
@@ -253,7 +253,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 	FileCount = 0;
 	//BUGBUG!!! // что это?
-	::FindFile Find(L"*",true);
+	::FindFile Find(L"*",true, CanBeAnnoying ? FIND_FILE_FLAG_NO_CUR_UP : FIND_FILE_FLAG_NO_CUR_UP | FIND_FILE_FLAG_NOT_ANNOYING);
 	DWORD FindErrorCode = ERROR_SUCCESS;
 	bool UseFilter=Filter->IsEnabledOnPanel();
 	bool ReadCustomData=IsColumnDisplayed(CUSTOM_COLUMN0)!=0;
@@ -322,18 +322,20 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 			NewPtr->SortGroup=DEFAULT_SORT_GROUP;
 
-			if (ReadOwners)
-			{
-				FARString strOwner;
-				GetFileOwner(strComputerName, NewPtr->strName,strOwner);
-				NewPtr->strOwner = strOwner;
-			}
+			if (ReadOwners || ReadGroups) {
+				SudoSilentQueryRegion ssqr(!CanBeAnnoying);
 
-			if (ReadGroups)
-			{
-				FARString strGroup;
-				GetFileGroup(strComputerName, NewPtr->strName, strGroup);
-				NewPtr->strGroup = strGroup;
+				if (ReadOwners) {
+					FARString strOwner;
+					GetFileOwner(strComputerName, NewPtr->strName,strOwner);
+					NewPtr->strOwner = strOwner;
+				}
+
+				if (ReadGroups) {
+					FARString strGroup;
+					GetFileGroup(strComputerName, NewPtr->strName, strGroup);
+					NewPtr->strGroup = strGroup;
+				}
 			}
 
 			NewPtr->NumberOfStreams=NewPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY?0:1;

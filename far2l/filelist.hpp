@@ -246,7 +246,7 @@ class FileList:public Panel
 		/* $ 19.03.2002 DJ
 		   IgnoreVisible - обновить, даже если панель невидима
 		*/
-		void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage);
+		void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying);
 		void UpdatePlugin(int KeepSelection, int IgnoreVisible);
 
 		void MoveSelection(FileListItem **FileList,long FileCount,FileListItem **OldList,long OldFileCount);

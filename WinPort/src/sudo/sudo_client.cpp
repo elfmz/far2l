@@ -33,11 +33,12 @@ namespace Sudo
 	struct ThreadRegionCounter
 	{
 		int count;
+		int silent_query;
 		ModifyState modify;
 		bool cancelled;
 	};
 	
-	thread_local ThreadRegionCounter thread_client_region_counter = { 0, MODIFY_UNDEFINED, false };
+	thread_local ThreadRegionCounter thread_client_region_counter = { 0, 0, MODIFY_UNDEFINED, false };
 	static int global_client_region_counter = 0;
 	static SudoClientMode client_mode = SCM_DISABLE;
 	static time_t client_password_expiration = 0;
@@ -310,6 +311,16 @@ namespace Sudo
 			CheckForCloseClientConnection();
 		}
 		
+		 __attribute__ ((visibility("default"))) void sudo_silent_query_region_enter()
+		{
+			thread_client_region_counter.silent_query++;
+		}
+
+		 __attribute__ ((visibility("default"))) void sudo_silent_query_region_leave()
+		{
+			thread_client_region_counter.silent_query--;
+		}
+
 	}
 	
 
@@ -331,6 +342,9 @@ namespace Sudo
 			return false;
 
 		if (s_client_pipe_send==-1 || s_client_pipe_recv==-1) {
+			if (thread_client_region_counter.silent_query > 0 && !want_modify)
+				return false;
+
 			CloseClientConnection();
 			if (!OpenClientConnection())
 				return false;

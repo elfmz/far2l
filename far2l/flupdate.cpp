@@ -332,7 +332,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 					NewPtr->strOwner = cached_owners.Lookup(fdata.UnixOwner);
 
 				if (ReadGroups)
-					NewPtr->strGroup = cached_owners.Lookup(fdata.UnixGroup);
+					NewPtr->strGroup = cached_groups.Lookup(fdata.UnixGroup);
 			}
 
 			NewPtr->NumberOfStreams=NewPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY?0:1;

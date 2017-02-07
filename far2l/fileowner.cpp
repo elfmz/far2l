@@ -41,16 +41,37 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pwd.h>
 #include <grp.h>
 
+const char *OwnerNameByID(uid_t id)
+{
+	struct passwd *pw = getpwuid(id);
+	if (!pw) {
+		perror("OwnerNameByID");
+		return NULL;
+	}
+	return pw->pw_name;
+}
+
+const char *GroupNameByID(gid_t id)
+{
+	struct group *gr = getgrgid(id);
+	if (!gr) {
+		perror("GroupNameByID");
+		return NULL;
+	}
+	return gr->gr_name;	
+}
+
+
+
 bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner)
 {
 	struct stat s = {};
 	if (sdc_stat(Wide2MB(Name).c_str(), &s)==0) {
-		struct passwd *pw = getpwuid(s.st_uid);
-		if (pw) {
-			strOwner = pw->pw_name;
+		const char *sz = OwnerNameByID(s.st_uid);
+		if (sz) {
+			strOwner = sz;
 			return true;
-		} else
-			perror("getpwuid");
+		}
 	}
 	
 	WINPORT(TranslateErrno)();
@@ -61,12 +82,11 @@ bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString 
 {
 	struct stat s = {};
 	if (sdc_stat(Wide2MB(Name).c_str(), &s)==0) {
-		struct group  *gr = getgrgid(s.st_gid);
-		if (gr) {
-			strGroup = gr->gr_name;
+		const char *sz = GroupNameByID(s.st_uid);
+		if (sz) {
+			strGroup = sz;
 			return true;
-		} else
-			perror("getgrgid");
+		}
 	}
 
 	WINPORT(TranslateErrno)();
@@ -98,3 +118,5 @@ bool SetGroup(LPCWSTR Object, LPCWSTR Group)
 	WINPORT(TranslateErrno)();
 	return false;
 }
+
+

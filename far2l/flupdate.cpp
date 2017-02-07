@@ -258,6 +258,9 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	bool UseFilter=Filter->IsEnabledOnPanel();
 	bool ReadCustomData=IsColumnDisplayed(CUSTOM_COLUMN0)!=0;
 
+	CachedFileOwnerLookup cached_owners;
+	CachedFileGroupLookup cached_groups;
+	
 	DWORD StartTime = WINPORT(GetTickCount)();
 
 	while (Find.Get(fdata))
@@ -325,17 +328,11 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			if (ReadOwners || ReadGroups) {
 				SudoSilentQueryRegion ssqr(!CanBeAnnoying);
 
-				if (ReadOwners) {
-					FARString strOwner;
-					GetFileOwner(strComputerName, NewPtr->strName,strOwner);
-					NewPtr->strOwner = strOwner;
-				}
+				if (ReadOwners)
+					NewPtr->strOwner = cached_owners.Lookup(fdata.UnixOwner);
 
-				if (ReadGroups) {
-					FARString strGroup;
-					GetFileGroup(strComputerName, NewPtr->strName, strGroup);
-					NewPtr->strGroup = strGroup;
-				}
+				if (ReadGroups)
+					NewPtr->strGroup = cached_owners.Lookup(fdata.UnixGroup);
 			}
 
 			NewPtr->NumberOfStreams=NewPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY?0:1;

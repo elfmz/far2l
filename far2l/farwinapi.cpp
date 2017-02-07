@@ -136,7 +136,6 @@ struct PSEUDO_HANDLE
 
 static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
 {
-	FindData.dwFileAttributes = wfd.dwFileAttributes;
 	FindData.ftCreationTime = wfd.ftCreationTime;
 	FindData.ftLastAccessTime = wfd.ftLastAccessTime;
 	FindData.ftLastWriteTime = wfd.ftLastWriteTime;
@@ -150,6 +149,9 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& Find
 	FindData.dwUnixMode = wfd.dwUnixMode;
 	FindData.UnixDevice = wfd.UnixDevice;
 	FindData.UnixNode = wfd.UnixNode;
+	FindData.UnixOwner = wfd.UnixOwner;
+	FindData.UnixGroup = wfd.UnixGroup;
+	FindData.dwFileAttributes = wfd.dwFileAttributes;
 	FindData.strFileName = wfd.cFileName;
 }
 
@@ -642,6 +644,8 @@ void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest)
 	pDest->dwUnixMode = pSrc->dwUnixMode;
 	pDest->UnixDevice = 0;
 	pDest->UnixNode = 0;
+	pDest->UnixOwner = 0;
+	pDest->UnixGroup = 0;
 	pDest->strFileName = pSrc->lpwszFileName;
 }
 
@@ -682,6 +686,8 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 			FindData.dwUnixMode = s.st_mode;
 			FindData.UnixDevice = s.st_dev;
 			FindData.UnixNode = s.st_ino;
+			FindData.UnixOwner = s.st_uid;
+			FindData.UnixGroup = s.st_gid;
 			FindData.dwReserved0 = FindData.dwReserved1 = 0;
 			FindData.strFileName = PointToName(lpwszFileName);
 			return TRUE;

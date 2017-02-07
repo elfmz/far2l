@@ -62,6 +62,8 @@ struct FAR_FIND_DATA_EX
 	uint64_t nPackSize;
 	uint64_t UnixDevice;
 	uint64_t UnixNode;
+	uid_t UnixOwner;
+	gid_t UnixGroup;
 
 	DWORD dwFileAttributes;
 	DWORD dwUnixMode;
@@ -75,18 +77,20 @@ struct FAR_FIND_DATA_EX
 
 	void Clear()
 	{
-		dwFileAttributes=0;
-		memset(&ftCreationTime,0,sizeof(ftCreationTime));
 		memset(&ftLastAccessTime,0,sizeof(ftLastAccessTime));
 		memset(&ftLastWriteTime,0,sizeof(ftLastWriteTime));
+		memset(&ftCreationTime,0,sizeof(ftCreationTime));
 		memset(&ftChangeTime,0,sizeof(ftChangeTime));
 		nFileSize=0;
 		nPackSize=0;
-		dwReserved0=0;
-		dwReserved1=0;
-		dwUnixMode=0;
 		UnixDevice=0;
 		UnixNode=0;
+		UnixOwner = 0;
+		UnixGroup = 0;
+		dwFileAttributes=0;
+		dwUnixMode=0;
+		dwReserved0=0;
+		dwReserved1=0;
 		strFileName.Clear();
 	}
 
@@ -94,15 +98,17 @@ struct FAR_FIND_DATA_EX
 	{
 		if (this != &ffdexCopy)
 		{
-			dwFileAttributes=ffdexCopy.dwFileAttributes;
-			ftCreationTime=ffdexCopy.ftCreationTime;
 			ftLastAccessTime=ffdexCopy.ftLastAccessTime;
 			ftLastWriteTime=ffdexCopy.ftLastWriteTime;
+			ftCreationTime=ffdexCopy.ftCreationTime;
 			ftChangeTime=ffdexCopy.ftChangeTime;
 			nFileSize=ffdexCopy.nFileSize;
 			nPackSize=ffdexCopy.nPackSize;
 			UnixDevice=ffdexCopy.UnixDevice;
 			UnixNode=ffdexCopy.UnixNode;
+			UnixOwner=ffdexCopy.UnixOwner;
+			UnixGroup=ffdexCopy.UnixGroup;
+			dwFileAttributes=ffdexCopy.dwFileAttributes;
 			dwUnixMode=ffdexCopy.dwUnixMode;
 			dwReserved0=ffdexCopy.dwReserved0;
 			dwReserved1=ffdexCopy.dwReserved1;

@@ -33,6 +33,33 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <map>
+
+template <class ID, const char *(*UNCACHED_LOOKUP)(ID)>
+class CachedFileLookupT
+{
+	struct Cache : std::map<ID, FARString> {} _cache;
+	
+public:
+	const FARString &Lookup(ID id)
+	{
+		FARString &s = _cache[id];
+		if (s.IsEmpty()) {
+			const char *sz = UNCACHED_LOOKUP(id);
+			if (sz)
+				s = sz;
+		}
+		return s;
+	}
+};
+
+const char *OwnerNameByID(uid_t id);
+const char *GroupNameByID(gid_t id);
+
+typedef CachedFileLookupT<uid_t, &OwnerNameByID> CachedFileOwnerLookup;
+typedef CachedFileLookupT<uid_t, &GroupNameByID> CachedFileGroupLookup;
+
+
 bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner);
 bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString &strGroup);
 

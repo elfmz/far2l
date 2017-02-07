@@ -528,6 +528,8 @@ extern "C"
 		lpFindFileData->dwReserved1 = 0;
 		lpFindFileData->UnixDevice = s.st_dev;
 		lpFindFileData->UnixNode = s.st_ino;
+		lpFindFileData->UnixOwner = s.st_uid;
+		lpFindFileData->UnixGroup = s.st_gid;
 		lpFindFileData->dwUnixMode = s.st_mode;
 		wcsncpy(lpFindFileData->cFileName, name, MAX_NAME - 1);
 	}
@@ -582,7 +584,7 @@ extern "C"
 					return false;
 
 				if ( MatchName(wfd.cFileName) ) {
-					if (MatchAttributesAndFillWFD(false, wfd.cFileName, lpFindFileData)) {
+					if (MatchAttributesAndFillWFD(0, wfd.cFileName, lpFindFileData)) {
 						break;
 					}
 				}
@@ -624,7 +626,7 @@ extern "C"
 			if (_tmp.path.empty() || _tmp.path[_tmp.path.size()-1] != GOOD_SLASH) 
 				_tmp.path+= GOOD_SLASH;
 
-			SudoSilentQueryRegion ssqr(hint_mode_type && (_flags & FIND_FILE_FLAG_NOT_ANNOYING) != 0);
+			SudoSilentQueryRegion ssqr(hint_mode_type !=0 && (_flags & FIND_FILE_FLAG_NOT_ANNOYING) != 0);
 
 			_tmp.path+= name;
 			struct stat s = { };

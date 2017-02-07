@@ -404,6 +404,8 @@ typedef struct _WIN32_FIND_DATAA {
     FILETIME ftLastWriteTime;
     DWORD64 UnixDevice;
     DWORD64 UnixNode;
+    uid_t UnixOwner;
+    gid_t UnixGroup;
     DWORD dwFileAttributes;
     DWORD nFileSizeHigh;
     DWORD nFileSizeLow;
@@ -418,6 +420,8 @@ typedef struct _WIN32_FIND_DATAW {
     FILETIME ftLastWriteTime;
     DWORD64 UnixDevice;
     DWORD64 UnixNode;
+    uid_t UnixOwner;
+    gid_t UnixGroup;
     DWORD dwFileAttributes;
     DWORD nFileSizeHigh;
     DWORD nFileSizeLow;

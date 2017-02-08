@@ -620,7 +620,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	
 	virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	{
-		fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
+		//fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
 		if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
 			if (HIWORD(MouseEvent.dwButtonState) > 0) {
 				OnConsoleLog(CLK_VIEW_AUTOCLOSE);

@@ -82,7 +82,7 @@ bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString 
 {
 	struct stat s = {};
 	if (sdc_stat(Wide2MB(Name).c_str(), &s)==0) {
-		const char *sz = GroupNameByID(s.st_uid);
+		const char *sz = GroupNameByID(s.st_gid);
 		if (sz) {
 			strGroup = sz;
 			return true;

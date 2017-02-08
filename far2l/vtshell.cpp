@@ -234,6 +234,7 @@ class VTInputReader : protected WithThread
 public:
 	struct IProcessor
 	{
+		virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent) = 0;
 		virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) = 0;
 		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
 	};
@@ -279,9 +280,11 @@ private:
 			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) {
 				perror("VT: ReadConsoleInput");
 				usleep(100000);
-			}else if (ir.EventType==KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
+			} else if (ir.EventType == MOUSE_EVENT) {
+				_processor->OnInputMouse(ir.Event.MouseEvent);
+			} else if (ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
 				_processor->OnInputKeyDown(ir.Event.KeyEvent);
-			} else if (ir.EventType==WINDOW_BUFFER_SIZE_EVENT) {
+			} else if (ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
 				_processor->OnInputResized(ir);
 			}
 		}
@@ -614,6 +617,19 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 		_last_window_info_ir = ir;
 	}
+	
+	virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
+	{
+		fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
+		if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
+			if (HIWORD(MouseEvent.dwButtonState) > 0) {
+				OnConsoleLog(CLK_VIEW_AUTOCLOSE);
+			}
+		} else if ( (MouseEvent.dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED) != 0 &&
+			(MouseEvent.dwEventFlags & (MOUSE_HWHEELED|MOUSE_MOVED|DOUBLE_CLICK)) == 0 ) {
+			WINPORT(BeginConsoleAdhocQuickEdit)();
+		}
+	}
 
 	virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
 	{
@@ -650,8 +666,15 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				kill(_forked_proc_pid, SIGINT);
 		}
 	}
+
+	enum ConsoleLogKind
+	{
+		CLK_EDIT,
+		CLK_VIEW,
+		CLK_VIEW_AUTOCLOSE
+	};
 	
-	void OnConsoleLog(bool edit)//NB: called not from main thread!
+	void OnConsoleLog(ConsoleLogKind kind)//NB: called not from main thread!
 	{
 		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
 		if (!lock) {
@@ -676,10 +699,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 		SetFarConsoleMode(TRUE);
 		DeliverPendingWindowInfo();
-		if (edit)
+		if (kind == CLK_EDIT)
 			ModalEditTempFile(histfile, true);
 		else
-			ModalViewTempFile(histfile, true);
+			ModalViewTempFile(histfile, true, kind == CLK_VIEW_AUTOCLOSE);
 
 		CtrlObject->CmdLine->ShowBackground();
 		ScrBuf.Flush();
@@ -778,11 +801,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			} 
 			
 			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F4) {
-				OnConsoleLog(true);
+				OnConsoleLog(CLK_EDIT);
 			} 
 
 			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F3) {
-				OnConsoleLog(false);
+				OnConsoleLog(CLK_VIEW);
 			} 
 
 			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift);
@@ -863,6 +886,7 @@ static bool shown_tip_exit = false;
 		} else if (!shown_tip_init) {
 			fprintf(f, "echo \"Ctrl+Alt+C - terminate everything in this shell.\"\n");
 			fprintf(f, "echo \"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
+			fprintf(f, "echo \"Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
 			fprintf(f, "echo --------------------------------------------------------------------\n");
 			shown_tip_init = true;
 		}

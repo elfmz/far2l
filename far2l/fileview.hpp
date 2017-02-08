@@ -46,6 +46,7 @@ class FileViewer:public Frame
 		Viewer View;
 		int RedrawTitle;
 		KeyBar ViewKeyBar;
+		bool AutoClose;
 		bool F3KeyOnly;
 		int FullScreen;
 		int DisableEdit;
@@ -104,7 +105,8 @@ class FileViewer:public Frame
 		int64_t GetViewFileSize() const;
 		int64_t GetViewFilePos() const;
 		void ShowStatus();
+		void SetAutoClose(bool AC) { AutoClose = AC;}
 };
 
 void ModalViewFile(const std::string &pathname, bool scroll_to_end);
-void ModalViewTempFile(const std::string &pathname, bool scroll_to_end);//erases file internally
+void ModalViewTempFile(const std::string &pathname, bool scroll_to_end, bool autoclose = false);//erases file internally

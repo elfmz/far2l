@@ -57,7 +57,7 @@ const char *OwnerNameByID(uid_t id);
 const char *GroupNameByID(gid_t id);
 
 typedef CachedFileLookupT<uid_t, &OwnerNameByID> CachedFileOwnerLookup;
-typedef CachedFileLookupT<uid_t, &GroupNameByID> CachedFileGroupLookup;
+typedef CachedFileLookupT<gid_t, &GroupNameByID> CachedFileGroupLookup;
 
 
 bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner);

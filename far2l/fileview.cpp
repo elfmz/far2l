@@ -145,7 +145,8 @@ void FileViewer::Init(const wchar_t *name,int EnableSwitch,int disableHistory, /
 		ViewKeyBar.Hide0();
 
 	ShowConsoleTitle();
-	F3KeyOnly=true;
+	AutoClose = false;
+	F3KeyOnly = true;
 
 	if (EnableSwitch)
 	{
@@ -374,9 +375,27 @@ int FileViewer::ProcessKey(int Key)
 			if (!CtrlObject->Macro.IsExecuting())
 				if (Opt.ViOpt.ShowKeyBar)
 					ViewKeyBar.Show();
+			
+				
+			if (!ViewKeyBar.ProcessKey(Key)) {
 
-			if (!ViewKeyBar.ProcessKey(Key))
-				return(View.ProcessKey(Key));
+				if (AutoClose) {
+					if (Key == (KEY_MSWHEEL_DOWN | KEY_CTRL | KEY_SHIFT) )
+						Key = KEY_MSWHEEL_DOWN;
+					else if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT) )
+						Key = KEY_MSWHEEL_UP;
+						
+					if (Key == KEY_MSWHEEL_DOWN || Key == (KEY_MSWHEEL_DOWN | KEY_ALT)) {
+						int64_t FilePosBefore = View.GetFilePos();
+						BOOL rv = View.ProcessKey(Key);
+						if (FilePosBefore == View.GetFilePos())
+							ProcessKey(KEY_ESC);
+						return rv;
+					}
+				}
+
+				return View.ProcessKey(Key);
+			}
 		}
 		return TRUE;
 	}
@@ -505,13 +524,15 @@ void FileViewer::OnChangeFocus(int focus)
 	CtrlObject->Plugins.ProcessViewerEvent(focus?VE_GOTFOCUS:VE_KILLFOCUS,&FCurViewerID);
 }
 
-static void ModalViewFileInternal(const std::string &pathname, 
-			int DisableHistory, int DisableEdit, bool scroll_to_end)
+static void ModalViewFileInternal(const std::string &pathname, int DisableHistory, 
+	int DisableEdit, bool scroll_to_end, bool autoclose)
 {
 	FileViewer Viewer(StrMB2Wide(pathname).c_str(), FALSE, DisableHistory, DisableEdit);
 	Viewer.SetDynamicallyBorn(false);
 	if (scroll_to_end)
 		Viewer.ProcessKey(KEY_END);
+	if (autoclose)
+		Viewer.SetAutoClose(true);
 	FrameManager->EnterModalEV();
 	FrameManager->ExecuteModal();
 	FrameManager->ExitModalEV();
@@ -520,11 +541,11 @@ static void ModalViewFileInternal(const std::string &pathname,
 
 void ModalViewFile(const std::string &pathname, bool scroll_to_end)
 {
-	ModalViewFileInternal(pathname, FALSE, FALSE, scroll_to_end);
+	ModalViewFileInternal(pathname, FALSE, FALSE, scroll_to_end, false);
 }
 
-void ModalViewTempFile(const std::string &pathname, bool scroll_to_end)
+void ModalViewTempFile(const std::string &pathname, bool scroll_to_end, bool autoclose)
 {
-	ModalViewFileInternal(pathname, TRUE, TRUE, scroll_to_end);
+	ModalViewFileInternal(pathname, TRUE, TRUE, scroll_to_end, autoclose);
 	unlink(pathname.c_str());
 }

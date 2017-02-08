@@ -216,6 +216,14 @@ int CommandLine::ProcessKey(int Key)
 		return TRUE;
 	}
 	
+	if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT))
+	{
+		const std::string &histfile = GetConsoleLog();
+		if (!histfile.empty())
+			ModalViewTempFile(histfile, true, true);
+		return TRUE;
+	}
+
 	if ( Key==KEY_CTRLSHIFTF3 || Key==KEY_F3) { 
 		const std::string &histfile = GetConsoleLog();
 		if (!histfile.empty()) 

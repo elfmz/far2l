@@ -66,16 +66,21 @@ namespace Sudo
 			if (bt.IsFailed() || cmd!=SUDO_CMD_PING)
 				throw "ping failed";
 				
-			if (!g_curdir_override.empty()) {
+			std::string cwd = g_curdir_override;
+			if (cwd.empty()) {
+				char buf[PATH_MAX + 1] = {0};
+				if (getcwd(buf, PATH_MAX))
+					cwd = buf;
+			}
+			if (!cwd.empty()) {
 				cmd = SUDO_CMD_CHDIR;
 				bt.SendPOD(cmd);
-				bt.SendStr(g_curdir_override.c_str());
+				bt.SendStr(cwd.c_str());
 				int r = bt.RecvInt();
 				if (r == -1) {
 					bt.RecvErrno();
 				} else {
-					std::string str;
-					bt.RecvStr(str);
+					bt.RecvStr(cwd);
 				}
 				
 				bt.RecvPOD(cmd);
@@ -92,8 +97,11 @@ namespace Sudo
 			return false;
 		}
 		
+		
 		return true;
 	}
+	
+
 	
 	static bool ClientConfirm()
 	{

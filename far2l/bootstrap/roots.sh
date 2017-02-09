@@ -111,11 +111,22 @@ for line in "${lines[@]}" ; do
 done
 #echo "max_len_path=$max_len_path max_len_comment=$max_len_comment"
 
+#limit maximum length
+if [ $max_len_path -gt 48 ]; then
+	max_len_path=48
+fi
+
 for line in "${lines[@]}" ; do
 	path="${line%$tab*}"
 	comment="${line##*$tab}"
 	if [ "$path" != "-" ]; then
 		unexpanded="$path"
+		if [ ${#path} -gt $max_len_path ]; then
+			#truncate too long path with ... in the middle
+			begin_len=$((max_len_path / 4))
+			end_len=$(($max_len_path - begin_len - 3))
+			path="${path:0:$begin_len}...${path:${#path}-$end_len:$end_len}"
+		fi
 		while [ ${#path} -lt $max_len_path ]; do
 			path=" $path"
 		done

@@ -124,7 +124,7 @@ for line in "${lines[@]}" ; do
 		if [ ${#path} -gt $max_len_path ]; then
 			#truncate too long path with ... in the middle
 			begin_len=$((max_len_path / 4))
-			end_len=$(($max_len_path - begin_len - 3))
+			end_len=$((max_len_path - begin_len - 3))
 			path="${path:0:$begin_len}...${path:${#path}-$end_len:$end_len}"
 		fi
 		while [ ${#path} -lt $max_len_path ]; do

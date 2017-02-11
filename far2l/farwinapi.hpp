@@ -67,6 +67,7 @@ struct FAR_FIND_DATA_EX
 
 	DWORD dwFileAttributes;
 	DWORD dwUnixMode;
+	DWORD nHardLinks;
 	struct
 	{
 		DWORD dwReserved0;
@@ -81,16 +82,17 @@ struct FAR_FIND_DATA_EX
 		memset(&ftLastWriteTime,0,sizeof(ftLastWriteTime));
 		memset(&ftCreationTime,0,sizeof(ftCreationTime));
 		memset(&ftChangeTime,0,sizeof(ftChangeTime));
-		nFileSize=0;
-		nPackSize=0;
-		UnixDevice=0;
-		UnixNode=0;
+		nFileSize = 0;
+		nPackSize = 0;
+		UnixDevice = 0;
+		UnixNode = 0;
 		UnixOwner = 0;
 		UnixGroup = 0;
-		dwFileAttributes=0;
-		dwUnixMode=0;
-		dwReserved0=0;
-		dwReserved1=0;
+		dwFileAttributes = 0;
+		dwUnixMode = 0;
+		nHardLinks = 0;
+		dwReserved0 = 0;
+		dwReserved1 = 0;
 		strFileName.Clear();
 	}
 
@@ -110,6 +112,7 @@ struct FAR_FIND_DATA_EX
 			UnixGroup=ffdexCopy.UnixGroup;
 			dwFileAttributes=ffdexCopy.dwFileAttributes;
 			dwUnixMode=ffdexCopy.dwUnixMode;
+			nHardLinks = ffdexCopy.nHardLinks;;
 			dwReserved0=ffdexCopy.dwReserved0;
 			dwReserved1=ffdexCopy.dwReserved1;
 			strFileName=ffdexCopy.strFileName;

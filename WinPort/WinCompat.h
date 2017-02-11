@@ -412,6 +412,7 @@ typedef struct _WIN32_FIND_DATAA {
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
+    DWORD nHardLinks;
     CHAR   cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 typedef struct _WIN32_FIND_DATAW {
@@ -428,6 +429,7 @@ typedef struct _WIN32_FIND_DATAW {
     DWORD dwReserved0;
     DWORD dwReserved1;
     DWORD dwUnixMode;
+    DWORD nHardLinks;
     WCHAR  cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
 

@@ -531,6 +531,7 @@ extern "C"
 		lpFindFileData->UnixOwner = s.st_uid;
 		lpFindFileData->UnixGroup = s.st_gid;
 		lpFindFileData->dwUnixMode = s.st_mode;
+		lpFindFileData->nHardLinks = (DWORD)s.st_nlink;
 		wcsncpy(lpFindFileData->cFileName, name, MAX_NAME - 1);
 	}
 

@@ -147,6 +147,7 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& Find
 	FindData.dwReserved0 = wfd.dwReserved0;
 	FindData.dwReserved1 = wfd.dwReserved1;
 	FindData.dwUnixMode = wfd.dwUnixMode;
+	FindData.nHardLinks = wfd.nHardLinks;
 	FindData.UnixDevice = wfd.UnixDevice;
 	FindData.UnixNode = wfd.UnixNode;
 	FindData.UnixOwner = wfd.UnixOwner;
@@ -642,6 +643,7 @@ void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest)
 	pDest->nFileSize = pSrc->nFileSize;
 	pDest->nPackSize = pSrc->nPackSize;
 	pDest->dwUnixMode = pSrc->dwUnixMode;
+	pDest->nHardLinks = 1;
 	pDest->UnixDevice = 0;
 	pDest->UnixNode = 0;
 	pDest->UnixOwner = 0;
@@ -684,6 +686,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 			FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, lpwszFileName);
 			FindData.nFileSize = s.st_size;
 			FindData.dwUnixMode = s.st_mode;
+			FindData.nHardLinks = (DWORD)s.st_nlink;
 			FindData.UnixDevice = s.st_dev;
 			FindData.UnixNode = s.st_ino;
 			FindData.UnixOwner = s.st_uid;

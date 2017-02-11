@@ -2323,7 +2323,7 @@ MViewConfigPersistentSelection
 "Selección &persistente"
 
 MViewConfigUTF8CodePageAsDefault
-"&Использовать кодовую страницу UTF-&8 по умолчанию"
+"&Использовать кодовую страницу UTF-8 по умолчанию"
 "Use UTF-&8 code page by default"
 upd:"Automaticky otevírat soubory ve UTF-&8 kódování"
 upd:"Dateien standardmäßig mit UTF-&8-Kod&ierung öffnen"
@@ -2533,7 +2533,7 @@ upd:"Pick &up the word"
 "Pick &up the word"
 
 MEditConfigUTF8CodePageAsDefault
-"&Использовать кодовую страницу UTF-&8 по умолчанию"
+"&Использовать кодовую страницу UTF-8 по умолчанию"
 "Use UTF-&8 code page by default"
 upd:"Automaticky otevírat soubory ve UTF-&8 kódování"
 upd:"Dateien standardmäßig mit UTF-&8-Kod&ierung öffnen"

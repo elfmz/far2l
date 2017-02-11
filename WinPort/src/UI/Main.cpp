@@ -261,7 +261,11 @@ protected:
 private:
 	enum {
 		ID_CTRL_BASE = 1,
-		ID_CTRL_SHIFT_BASE = 32
+		ID_CTRL_END = ID_CTRL_BASE + 'Z' - 'A' + 1,
+		ID_CTRL_SHIFT_BASE,
+		ID_CTRL_SHIFT_END = ID_CTRL_SHIFT_BASE + 'Z' - 'A' + 1,
+		ID_ALT_BASE,
+		ID_ALT_END = ID_ALT_BASE + 'Z' - 'A' + 1
 	};
 	WinPortPanel		*_panel;
 	bool _shown;
@@ -273,8 +277,7 @@ private:
 		_panel->OnChar(event);
 	}
 	
-	void OnAccelerator_Ctrl(wxCommandEvent& event);
-	void OnAccelerator_CtrlShift(wxCommandEvent& event);
+	void OnAccelerator(wxCommandEvent& event);
 	void OnPaint( wxPaintEvent& event ) {}
 	void OnEraseBackground( wxEraseEvent& event ) {}
 	
@@ -288,8 +291,9 @@ wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 	EVT_CLOSE(WinPortFrame::OnClose)
 	EVT_ERASE_BACKGROUND(WinPortFrame::OnEraseBackground)
 	EVT_CHAR(WinPortFrame::OnChar)
-	EVT_MENU_RANGE(ID_CTRL_BASE, ID_CTRL_BASE + ('Z' - 'A'), WinPortFrame::OnAccelerator_Ctrl)
-	EVT_MENU_RANGE(ID_CTRL_SHIFT_BASE, ID_CTRL_SHIFT_BASE + ('Z' - 'A'), WinPortFrame::OnAccelerator_CtrlShift)
+	EVT_MENU_RANGE(ID_CTRL_BASE, ID_CTRL_END, WinPortFrame::OnAccelerator)
+	EVT_MENU_RANGE(ID_CTRL_SHIFT_BASE, ID_CTRL_SHIFT_END, WinPortFrame::OnAccelerator)
+	EVT_MENU_RANGE(ID_ALT_BASE, ID_ALT_END, WinPortFrame::OnAccelerator)
 wxEND_EVENT_TABLE()
 
 void WinPortFrame::OnShow(wxShowEvent &show)
@@ -298,20 +302,28 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 	if (stat(InMyConfig("nomenu").c_str(), &s)!=0) {
 		//workaround for non-working with non-latin input language Ctrl+? hotkeys 
 		_menu_bar = new wxMenuBar(wxMB_DOCKABLE);
+		char str[128];
+		
 		wxMenu *menu = new wxMenu;
 		for (char c = 'A'; c<='Z'; ++c) {
-			char str[128]; 
 			sprintf(str, "Ctrl + %c\tCtrl+%c", c, c);
 			menu->Append(ID_CTRL_BASE + (c - 'A'), wxString(str));
 		}
 		_menu_bar->Append(menu, _T("Ctrl + ?"));
+		
 		menu = new wxMenu;
-		for (char c = 'A'; c<='Z'; ++c) {
-			char str[128]; 
+		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Ctrl + Shift + %c\tCtrl+Shift+%c", c, c);
 			menu->Append(ID_CTRL_SHIFT_BASE + (c - 'A'), wxString(str));
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
+
+		menu = new wxMenu;
+		for (char c = 'A'; c <= 'Z'; ++c) {
+			sprintf(str, "Alt + %c\tAlt+%c", c, c);
+			menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
+		}
+		_menu_bar->Append(menu, _T("Alt + ?"));
 		SetMenuBar(_menu_bar);
 		
 		//now hide menu bar just like it gets hidden during fullscreen transition
@@ -355,38 +367,36 @@ WinPortFrame::~WinPortFrame()
 }
 
 	
-void WinPortFrame::OnAccelerator_Ctrl(wxCommandEvent& event)
+void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.bKeyDown = TRUE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
-	ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_BASE);
-	ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
+	if (event.GetId() >= ID_CTRL_BASE && event.GetId() < ID_CTRL_END) {
+		ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
+		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_BASE);
 		
-	fprintf(stderr, "OnAccelerator_Ctrl_%c (%u)\n", ir.Event.KeyEvent.wVirtualKeyCode, event.GetId() );
+	} else if (event.GetId() >= ID_CTRL_SHIFT_BASE && event.GetId() < ID_CTRL_SHIFT_BASE) {
+		ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED | SHIFT_PRESSED;
+		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
+		
+	} else if (event.GetId() >= ID_ALT_BASE && event.GetId() < ID_ALT_END) {
+		ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
+		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
+
+	} else {
+		fprintf(stderr, "OnAccelerator: bad ID=%u\n", event.GetId());
+		return;
+	}
+	
+	fprintf(stderr, "OnAccelerator: ID=%u ControlKeyState=0x%x Key=0x%x '%c'\n", 
+		event.GetId(), ir.Event.KeyEvent.dwControlKeyState, ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualKeyCode );
 		
 	g_wx_con_in.Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	g_wx_con_in.Enqueue(&ir, 1);
 }
-
-void WinPortFrame::OnAccelerator_CtrlShift(wxCommandEvent& event)
-{
-	INPUT_RECORD ir = {};
-	ir.EventType = KEY_EVENT;
-	ir.Event.KeyEvent.bKeyDown = TRUE;
-	ir.Event.KeyEvent.wRepeatCount = 1;
-	ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
-	ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED | SHIFT_PRESSED;
-		
-	fprintf(stderr, "OnAccelerator_CtrlShift_%c (%u)\n", ir.Event.KeyEvent.wVirtualKeyCode, event.GetId() );
-		
-	g_wx_con_in.Enqueue(&ir, 1);
-	ir.Event.KeyEvent.bKeyDown = FALSE;
-	g_wx_con_in.Enqueue(&ir, 1);
-}
-
 
 ////////////////////////////
 
@@ -765,7 +775,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 	
-	if (event.HasModifiers() || _pressed_keys.simulate_alt() || event.GetKeyCode()==WXK_DELETE ||
+	if ( (event.HasModifiers() && event.GetUnicodeKey() < 32) || 
+		_pressed_keys.simulate_alt() || event.GetKeyCode()==WXK_DELETE ||
 		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
 		wx2INPUT_RECORD ir(event, TRUE);
 		_pressed_keys.insert(event.GetKeyCode());
@@ -1141,3 +1152,4 @@ bool ConfirmationDialog(const char *title, const char *text)
 		wxCENTRE | wxOK | wxCANCEL);
 	return ( dlg.ShowModal() == wxID_OK );
 }
+

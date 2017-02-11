@@ -292,7 +292,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			NewPtr->UnpSize = fdata.nFileSize;
 			NewPtr->strName = fdata.strFileName;
 			NewPtr->Position=FileCount++;
-			NewPtr->NumberOfLinks=1;
+			NewPtr->NumberOfLinks=fdata.nHardLinks;
 
 			if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
 			{
@@ -316,7 +316,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 					NewPtr->PackSize = fdata.nFileSize;
 
 				if (ReadNumLinks)
-					NewPtr->NumberOfLinks=1;//todoGetNumberOfLinks(fdata.strFileName);
+					NewPtr->NumberOfLinks=fdata.nHardLinks;//todoGetNumberOfLinks(fdata.strFileName);
 			}
 			else
 			{

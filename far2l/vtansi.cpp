@@ -1124,7 +1124,7 @@ static void InterpretControlString()
 	FlushBuffer();
 	if (prefix == '_' && g_vt_ansi_commands) {//Application Program Command
 		if (strstr(Pt_arg, "set-blank=") == Pt_arg)  {
-			blank_character = Pt_arg[10] ? L' ' : Pt_arg[10];
+			blank_character = Pt_arg[10] ? Pt_arg[10] : L' ';
 
 		} else if (strcmp(Pt_arg, "push-attr") == 0)  {
 			CONSOLE_SCREEN_BUFFER_INFO csbi;

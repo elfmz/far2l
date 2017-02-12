@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dirmix.hpp"
 #include "cmdline.hpp"
 #include "console.hpp"
+#include "vtshell.h"
 #include <string>
 #include <sys/stat.h>
 #include <locale.h>
@@ -585,6 +586,7 @@ int FarAppMain(int argc, char **argv)
 
 	EmptyInternalClipboard();
 	doneMacroVarTable(1);
+	VTShell_Shutdown();//ensure VTShell deinitialized before statics destructors called
 	_OT(SysLog(L"[[[[[Exit of FAR]]]]]]]]]"));
 	return Result;
 }

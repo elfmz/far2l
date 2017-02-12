@@ -1006,3 +1006,8 @@ int VTShell_Execute(const char *cmd, bool need_sudo)
 	return r;
 }
 
+void VTShell_Shutdown()
+{
+	std::lock_guard<std::mutex> lock(g_vts_mutex);
+	g_vts.reset();
+}

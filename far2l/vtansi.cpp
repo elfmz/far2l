@@ -224,7 +224,7 @@ static VTAnsiState g_saved_state;
 static std::mutex g_vt_ansi_mutex;
 IVTAnsiCommands *g_vt_ansi_commands = nullptr;
 
-static HANDLE	  hConOut;		// handle to CONOUT$
+static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 
 #define ESC	'\x1B'          // ESCape character
 #define BEL	'\x07'
@@ -244,6 +244,7 @@ static char  Pt_arg[MAX_PATH*2];	// text parameter for Operating System Command
 static int   Pt_len;
 static BOOL  shifted;
 static int   screen_top = -1;		// initial window top when cleared
+static TCHAR blank_character = L' ';
 
 // DEC Special Graphics Character Set from
 // http://vt100.net/docs/vt220-rm/table2-4.html
@@ -474,7 +475,7 @@ void PushBuffer( WCHAR c )
 					r.Right = s.X - 1;
 					r.Top = r.Bottom = csbi.dwCursorPosition.Y;
 					WINPORT(ReadConsoleOutput)( hConOut, row, s, c, &r );
-					blank.Char.UnicodeChar = ' ';
+					blank.Char.UnicodeChar = blank_character;
 					blank.Attributes = csbi.wAttributes;
 					while (*(PDWORD)&row[c.X] == *(PDWORD)&blank)
 						if (++c.X == s.X) {
@@ -568,7 +569,7 @@ void InterpretEscSeq( void )
 #define RIGHT  (WIDTH - 1)
 
 #define FillBlank( len, Pos )  \
-	WINPORT(FillConsoleOutputCharacter)( hConOut, ' ', len, Pos, &NumberOfCharsWritten );\
+	WINPORT(FillConsoleOutputCharacter)( hConOut, blank_character, len, Pos, &NumberOfCharsWritten );\
 	WINPORT(FillConsoleOutputAttribute)( hConOut, Info.wAttributes, len, Pos, \
 	                                     &NumberOfCharsWritten )
 
@@ -741,7 +742,7 @@ void InterpretEscSeq( void )
 						Rect.Top = CUR.Y - TOP;
 						Rect.Bottom = CUR.Y - 1;
 						Pos.X = Pos.Y = 0;
-						CharInfo.Char.UnicodeChar = ' ';
+						CharInfo.Char.UnicodeChar = blank_character;
 						CharInfo.Attributes = Info.wAttributes;
 						WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
 					}
@@ -800,7 +801,7 @@ void InterpretEscSeq( void )
 			Rect.Bottom = BOTTOM;
 			Pos.X = LEFT;
 			Pos.Y = CUR.Y + es_argv[0];
-			CharInfo.Char.UnicodeChar = ' ';
+			CharInfo.Char.UnicodeChar = blank_character;
 			CharInfo.Attributes = Info.wAttributes;
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &WIN, Pos, &CharInfo );
 			// Technically should home the cursor, but perhaps not expeclted.
@@ -823,7 +824,7 @@ void InterpretEscSeq( void )
 				Rect.Bottom = std::min(BOTTOM, scroll_bottom);
 				SMALL_RECT clip = {Rect.Left, Pos.Y, Rect.Right, Rect.Bottom};
 			
-				CharInfo.Char.UnicodeChar = ' ';
+				CharInfo.Char.UnicodeChar = blank_character;
 				CharInfo.Attributes = Info.wAttributes;
 				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &clip, Pos, &CharInfo );
 			}
@@ -847,7 +848,7 @@ void InterpretEscSeq( void )
 
 				SMALL_RECT clip = {Rect.Left, Rect.Top, Rect.Right, std::min(BOTTOM, scroll_bottom) };
 				
-				CharInfo.Char.UnicodeChar = ' ';
+				CharInfo.Char.UnicodeChar = blank_character;
 				CharInfo.Attributes = Info.wAttributes;
 				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &clip, Pos, &CharInfo );
 			}
@@ -863,7 +864,7 @@ void InterpretEscSeq( void )
 			Rect.Top    = CUR.Y + es_argv[0];
 			Pos.X = LEFT;
 			Pos.Y = TOP = CUR.Y;
-			CharInfo.Char.UnicodeChar = ' ';
+			CharInfo.Char.UnicodeChar = blank_character;
 			CharInfo.Attributes = Info.wAttributes;
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &WIN, Pos, &CharInfo );
 			// Technically should home the cursor, but perhaps not expected.
@@ -878,7 +879,7 @@ void InterpretEscSeq( void )
 			Pos.Y	    =
 			    Rect.Top    =
 			        Rect.Bottom = CUR.Y;
-			CharInfo.Char.UnicodeChar = ' ';
+			CharInfo.Char.UnicodeChar = blank_character;
 			CharInfo.Attributes = Info.wAttributes;
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &WIN, Pos, &CharInfo );
 			return;
@@ -892,7 +893,7 @@ void InterpretEscSeq( void )
 			Pos.Y	    =
 			    Rect.Top    =
 			        Rect.Bottom = CUR.Y;
-			CharInfo.Char.UnicodeChar = ' ';
+			CharInfo.Char.UnicodeChar = blank_character;
 			CharInfo.Attributes = Info.wAttributes;
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &WIN, Pos, &CharInfo );
 			return;
@@ -1107,13 +1108,47 @@ void InterpretEscSeq( void )
 	}
 }
 
+struct AttrStackEntry
+{
+	AttrStackEntry(TCHAR blank_character_, WORD attributes_ )
+		: blank_character(blank_character_), attributes(attributes_) {}
+
+	TCHAR blank_character;
+	WORD attributes;
+};
+
+static struct AttrStack : std::vector<AttrStackEntry > {} g_attr_stack;
+
 static void InterpretControlString()
 {
+	FlushBuffer();
 	if (prefix == '_' && g_vt_ansi_commands) {//Application Program Command
-		int r = g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
-		char reply[64] = {0};
-		sprintf( reply, "%c_%d%c", ESC, r, BEL);
-		SendSequence(reply);
+		if (strstr(Pt_arg, "set-blank=") == Pt_arg)  {
+			blank_character = Pt_arg[10] ? L' ' : Pt_arg[10];
+
+		} else if (strcmp(Pt_arg, "push-attr") == 0)  {
+			CONSOLE_SCREEN_BUFFER_INFO csbi;
+			if (WINPORT(GetConsoleScreenBufferInfo)( hConOut, &csbi ) ) {
+				g_attr_stack.emplace_back(blank_character, csbi.wAttributes);
+				if (g_attr_stack.size() > 0x1000) {
+					fprintf(stderr, "InterpretControlString: too many pushed attributes\n");
+					g_attr_stack.erase(g_attr_stack.begin(), g_attr_stack.begin() + g_attr_stack.size()/4);
+				}
+			}
+
+		} else if (strcmp(Pt_arg, "pop-attr") == 0)  {
+			if (!g_attr_stack.empty()) {
+				blank_character = g_attr_stack.back().blank_character;
+				WINPORT(SetConsoleTextAttribute)( hConOut, g_attr_stack.back().attributes );
+				g_attr_stack.pop_back();
+			}
+
+		} else {
+			int r = g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
+			char reply[64] = {0};
+			sprintf( reply, "%c_%d%c", ESC, r, BEL);
+			SendSequence(reply);
+		}
 	}
 	Pt_len = 0;
 }
@@ -1163,7 +1198,7 @@ static void ReverseIndex()
 	SMALL_RECT Rect = {info.srWindow.Left, scroll_top, info.srWindow.Right, (SHORT)(scroll_bottom - 1) };
 	COORD Pos = {0, (SHORT) (scroll_top + 1) };
 	CHAR_INFO  CharInfo;
-	CharInfo.Char.UnicodeChar = ' ';
+	CharInfo.Char.UnicodeChar = blank_character;
 	CharInfo.Attributes = info.wAttributes;
 	WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
 }

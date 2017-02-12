@@ -15,6 +15,12 @@
 
 #define DYNAMIC_FONTS
 
+#ifdef __APPLE__
+# define DEFAULT_FONT_SIZE	20
+#else
+# define DEFAULT_FONT_SIZE	16
+#endif
+
 extern ConsoleOutput g_wx_con_out;
 
 static unsigned int DivCeil(unsigned int v, unsigned int d)
@@ -26,7 +32,7 @@ static unsigned int DivCeil(unsigned int v, unsigned int d)
 
 /////////////////////////////////////////////////////////////////////////////////
 static const char *g_known_good_fonts[] = { "Ubuntu", "Terminus", "DejaVu", 
-											"Liberation", "Droid", "Monospace", 
+											"Liberation", "Droid", "Monospace", "PT Mono", "Menlo",
 											NULL};
 	
 
@@ -43,14 +49,14 @@ class FixedFontLookup : wxFontEnumerator
 		}
 		
 		/* unfortunatelly following code gives nothing interesting
-		wxFont f(wxFontInfo(16).Underlined().FaceName(face_name));
+		wxFont f(wxFontInfo(DEFAULT_FONT_SIZE).Underlined().FaceName(face_name));
 		if (f.IsOk()) {
 			fprintf(stderr, "FONT family %u encoding %u face_name='%ls' \n", 
 				(unsigned int)f.GetFamily(), (unsigned int)f.GetEncoding(), face_name.wc_str());
 		} else {
 			fprintf(stderr, "BAD FONT: face_name='%ls'\n", face_name.wc_str());
 		} */
-		return false;
+		return true;
 	}
 public:
 
@@ -83,7 +89,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 		FixedFontLookup ffl;
 		wxString fixed_font = ffl.Query();
 		if (!fixed_font.empty()) {
-			font = wxFont(16, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, fixed_font);
+			font = wxFont(DEFAULT_FONT_SIZE, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, fixed_font);
 		}
 		if (fixed_font.empty() || !font.IsOk())
 			font = wxFont(wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT));

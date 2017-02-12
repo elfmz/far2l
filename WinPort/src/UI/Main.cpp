@@ -775,21 +775,21 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 	
-	if ( (event.HasModifiers() && event.GetUnicodeKey() < 32) || 
-		_pressed_keys.simulate_alt() || event.GetKeyCode()==WXK_DELETE ||
-		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
-		wx2INPUT_RECORD ir(event, TRUE);
-		_pressed_keys.insert(event.GetKeyCode());
+	wx2INPUT_RECORD ir(event, TRUE);
+	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
+		_right_control = true;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
+	}
 
-		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
-			_right_control = true;
-			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
-		}
-			
+	if ( (event.HasModifiers() && event.GetUnicodeKey() < 32) || _right_control || 
+		_pressed_keys.simulate_alt() || event.GetKeyCode() == WXK_DELETE ||
+		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
+
+		_pressed_keys.insert(event.GetKeyCode());
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 		
-		if (_right_control && (ir.Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED) != 0) {
+		if (_right_control) {
 			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
 			ir.Event.KeyEvent.dwControlKeyState|= (RIGHT_CTRL_PRESSED | ENHANCED_KEY);
 		}
@@ -813,8 +813,8 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	
 			
 		if (_right_control && (
-		ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL 
-		|| ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL) ) {
+				ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL 
+				|| ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL) ) {
 			_right_control = false;
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
@@ -848,7 +848,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		}
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
-		if (_right_control && (ir.Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED) != 0) {
+		if (_right_control) {
 			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
 			ir.Event.KeyEvent.dwControlKeyState|= (RIGHT_CTRL_PRESSED | ENHANCED_KEY);
 		}

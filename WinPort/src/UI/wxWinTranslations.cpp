@@ -72,6 +72,9 @@ static int wxKeyCode2WinKeyCode(int code)
     case WXK_SHIFT: return VK_SHIFT;
     case WXK_ALT: return VK_MENU;
     case WXK_CONTROL: return VK_CONTROL;
+#ifdef __WXMAC__
+    case WXK_RAW_CONTROL: return VK_RCONTROL;
+#endif
     case WXK_MENU: return VK_APPS;
     case WXK_PAUSE: return VK_PAUSE;
     case WXK_CAPITAL: return VK_CAPITAL;

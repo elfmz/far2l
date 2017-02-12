@@ -884,10 +884,11 @@ static bool shown_tip_exit = false;
 			shown_tip_exit = true;
 
 		} else if (!shown_tip_init) {
+			fprintf(f, "echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
 			fprintf(f, "echo \"Ctrl+Alt+C - terminate everything in this shell.\"\n");
 			fprintf(f, "echo \"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
 			fprintf(f, "echo \"Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
-			fprintf(f, "echo --------------------------------------------------------------------\n");
+			fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
 			shown_tip_init = true;
 		}
 		if (need_sudo) {
@@ -898,8 +899,11 @@ static bool shown_tip_exit = false;
 
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
 		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
-		//fprintf(f, "stty -echo\n");
-		fprintf(f, "echo\n");
+		fprintf(f, "if [ $FARVTRESULT -eq 0 ]; then\n");
+		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[J\x1b_pop-attr\x07\"\n");
+		fprintf(f, "else\n");
+		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[J\x1b_pop-attr\x07\"\n");
+		fprintf(f, "fi\n");
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());//second time - prevent user from shooting own leg
 		fclose(f);
 		return cmd_script;

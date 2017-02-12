@@ -13,16 +13,28 @@
 #include <wx/evtloop.h>
 #include <wx/apptrait.h>
 
+#ifdef __WXMAC__
+#include <Carbon/Carbon.h>
+extern "C" { void CPSEnableForegroundOperation(ProcessSerialNumber* psn); }
+#endif
+
 static int sudo_askpass_to_pipe(int pipe_sendpass)
 {
+#ifdef __WXMAC__
+	ProcessSerialNumber psn;
+	GetCurrentProcess( &psn );
+	CPSEnableForegroundOperation( &psn );
+	SetFrontProcess( &psn );
+#endif
 	wxInitialize();
+
 	const char *title = getenv(SDC_ENV_TITLE);
 	const char *prompt = getenv(SDC_ENV_PROMPT);
 	if (!title)
 		title = "sudo";
 	if (!prompt)
 		prompt = "Enter sudo password:";
-	
+
 	wxPasswordEntryDialog dlg(nullptr, prompt, title, 
 		wxString(), wxCENTRE | wxOK | wxCANCEL);
 
@@ -54,6 +66,5 @@ extern "C" int sudo_main_askpass()
 
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
 	int r = sudo_askpass_to_pipe(pipe_sendpass);
-	close(fd);
 	return r;
 }

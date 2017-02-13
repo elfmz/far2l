@@ -583,7 +583,7 @@ void InterpretEscSeq( void )
 				return;
 
 			case 7:
-				mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WINDOW_INPUT;
+				mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
 				if (suffix == 'h')
 					mode |= ENABLE_WRAP_AT_EOL_OUTPUT;
 				WINPORT(SetConsoleMode)( hConOut, mode );

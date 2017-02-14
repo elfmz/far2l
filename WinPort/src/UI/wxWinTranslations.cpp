@@ -5,50 +5,54 @@
 
 extern bool g_broadway;
 
-wxColour ConsoleForeground2wxColorInternal(USHORT attributes)
+static WinPortRGB InternalConsoleForeground2RGB(USHORT attributes)
 {
-	wxColour::ChannelType r = 0, g = 0, b = 0;
+	WinPortRGB out;
+
 	if (attributes & FOREGROUND_RED)
-		r = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
+		out.r = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
 	if (attributes & FOREGROUND_BLUE)
-		b = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
+		out.b = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
 	if (attributes & FOREGROUND_GREEN)
-		g = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
+		out.g = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
 	if ((attributes & 0x0f) == FOREGROUND_INTENSITY)
-            r = g = b = 0x80;
+		out.r = out.g = out.b = 0x80;
 	if ((attributes & 0x0f) == (FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED))
-            r = g = b = 0xc0;
-	return wxColour(r, g, b);
+		out.r = out.g = out.b = 0xc0;
+
+	return out;
 }
 
-wxColour ConsoleBackground2wxColorInternal(USHORT attributes)
+static WinPortRGB InternalConsoleBackground2RGB(USHORT attributes)
 {
-	wxColour::ChannelType r = 0, g = 0, b = 0;
+	WinPortRGB out;
+
 	if (attributes & BACKGROUND_RED)
-		r = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
+		out.r = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
 	if (attributes & BACKGROUND_BLUE)
-		b = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
+		out.b = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
 	if (attributes & BACKGROUND_GREEN)
-		g = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
+		out.g = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
 	if ((attributes & 0xf0) == BACKGROUND_INTENSITY)
-            r = g = b = 0x80;
+		out.r = out.g = out.b = 0x80;
 	if ((attributes & 0xf0) == (BACKGROUND_BLUE|BACKGROUND_GREEN|BACKGROUND_RED))
-            r = g = b = 0xc0;
-	return wxColour(r, g, b);
+		out.r = out.g = out.b = 0xc0;
+
+	return out;
 }
 
-wxColour ConsoleForeground2wxColor(USHORT attributes)
+WinPortRGB ConsoleForeground2RGB(USHORT attributes)
 {
 	return (attributes & COMMON_LVB_REVERSE_VIDEO) ?
-		ConsoleBackground2wxColorInternal(attributes) :
-		ConsoleForeground2wxColorInternal(attributes);
+		InternalConsoleBackground2RGB(attributes) :
+		InternalConsoleForeground2RGB(attributes);
 }
 
-wxColour ConsoleBackground2wxColor(USHORT attributes)
+WinPortRGB ConsoleBackground2RGB(USHORT attributes)
 {
 	return (attributes & COMMON_LVB_REVERSE_VIDEO) ?
-		ConsoleForeground2wxColorInternal(attributes) :
-		ConsoleBackground2wxColorInternal(attributes);
+		InternalConsoleForeground2RGB(attributes) :
+		InternalConsoleBackground2RGB(attributes);
 }
 
 

@@ -158,11 +158,11 @@ class FontSizeInspector
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), 
-	_buffered_paint(false), _cursor_state(false)
+	_buffered_paint(false), _cursor_state(false), _ugly_fast(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
-	
+
 	_window->SetBackgroundColour(*wxBLACK);
 	wxFont font;
 	InitializeFont(_window, font);
@@ -181,8 +181,10 @@ ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 		
 	if (font.IsFixedWidth() && !is_unstable) {
 		struct stat s = {0};
-		if (stat(InMyConfig("nobuffering").c_str(), &s)!=0)
+		if (stat(InMyConfig("nobuffering").c_str(), &s) != 0)
 			_buffered_paint = true;
+		if (stat(InMyConfig("uglyfast").c_str(), &s) == 0)
+			_ugly_fast = true;
 	}
 	_fonts.push_back(font);
 }
@@ -242,6 +244,10 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
 	wxPaintDC dc(_window);
+	if (_ugly_fast) {
+		dc.GetGraphicsContext()->SetInterpolationQuality(wxINTERPOLATION_FAST);
+		dc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_NONE);
+	}
 	unsigned int cw, ch; g_wx_con_out.GetSize(cw, ch);
 	if (cw > MAXSHORT) cw = MAXSHORT;
 	if (ch > MAXSHORT) ch = MAXSHORT;
@@ -267,14 +273,17 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		COORD data_pos = {0, 0};
 		SMALL_RECT screen_rect = {area.Left, (SHORT)cy, area.Right, (SHORT)cy};
 
-		if (rgn.Contains(0, cy * _font_height, cw * _font_width, _font_height)==wxOutRegion) {
+		wxRegionContain lc = rgn.Contains(0, cy * _font_height, cw * _font_width, _font_height);
+
+		if (lc == wxOutRegion) {
 			continue;
 		}
 		g_wx_con_out.Read(&_line[area.Left], data_size, data_pos, screen_rect);
-
+//		if (lc == wxPartRegion) abort();
 		painter.LineBegin(cy);
 		for (unsigned int cx = (unsigned)area.Left; cx <= (unsigned)area.Right; ++cx) {
-			if (rgn.Contains(cx * _font_width, cy * _font_height, _font_width, _font_height)==wxOutRegion) {
+			if (lc == wxPartRegion &&
+			  rgn.Contains(cx * _font_width, cy * _font_height, _font_width, _font_height) == wxOutRegion) {
 				painter.LineFlush(cx);
 				continue;
 			}
@@ -337,16 +346,16 @@ ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxSt
 }
 	
 	
-void ConsolePainter::SetBackgroundColor(wxColour clr)
+void ConsolePainter::SetBackgroundColor(const WinPortRGB &clr)
 {
-	if (_brush.Change(clr)) {
-		wxBrush* brush = wxTheBrushList->FindOrCreateBrush(clr);
+	if (_brush_clr.Change(clr)) {
+		wxBrush* brush = wxTheBrushList->FindOrCreateBrush(wxColour(clr.r, clr.g, clr.b));
 		_dc.SetBrush(*brush);
 		_dc.SetBackground(*brush);
 	}		
 }
 	
-void ConsolePainter::PrepareBackground(unsigned int cx, wxColour clr)
+void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
 {
 	const bool cursor_here = (_cursor_props.visible && cx==_cursor_props.x && _start_cy==_cursor_props.y) ;
 
@@ -368,7 +377,8 @@ void ConsolePainter::PrepareBackground(unsigned int cx, wxColour clr)
 	if (h==0) h = 1;
 	unsigned int fill_height = _context->FontHeight() - h;
 	if (fill_height > _context->FontHeight()) fill_height = _context->FontHeight();
-	SetBackgroundColor(wxColour(clr.Red()^0xff, clr.Green()^0xff, clr.Blue()^0xff));
+	WinPortRGB clr_xored(clr.r ^ 0xff, clr.g ^ 0xff, clr.b ^ 0xff);
+	SetBackgroundColor(clr_xored);
 	_dc.DrawRectangle(x, _start_y + fill_height, _context->FontWidth(), h);				
 
 	if (fill_height) {
@@ -391,7 +401,7 @@ void ConsolePainter::FlushBackground(unsigned int cx)
 void ConsolePainter::FlushText()
 {
 	if (!_buffer.empty()) {
-		_dc.SetTextForeground(_clr_text);
+		_dc.SetTextForeground(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
 		_dc.DrawText(_buffer, _start_cx * _context->FontWidth(), _start_y);
 		_buffer.Empty();
 	}
@@ -407,12 +417,12 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		FlushText();
 	}
 
-	PrepareBackground(cx, ConsoleBackground2wxColor(attributes));
+	PrepareBackground(cx, ConsoleBackground2RGB(attributes));
 
 	if (!c || c == L' ') 
 		return;
 
-	wxColour clr_text = ConsoleForeground2wxColor(attributes);
+	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
 	
 	uint8_t fit_font_index = _context->CharFitTest(_dc, c);
 	

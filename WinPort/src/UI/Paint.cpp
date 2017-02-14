@@ -245,8 +245,10 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
 	wxPaintDC dc(_window);
 	if (_ugly_fast) {
+#ifdef __WXOSX__
 		dc.GetGraphicsContext()->SetInterpolationQuality(wxINTERPOLATION_FAST);
 		dc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_NONE);
+#endif
 	}
 	unsigned int cw, ch; g_wx_con_out.GetSize(cw, ch);
 	if (cw > MAXSHORT) cw = MAXSHORT;

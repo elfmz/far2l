@@ -10,5 +10,24 @@ struct wx2INPUT_RECORD : INPUT_RECORD
 	wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown);
 };
 
-wxColour ConsoleForeground2wxColor(USHORT attributes);
-wxColour ConsoleBackground2wxColor(USHORT attributes);
+struct WinPortRGB
+{
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
+
+	inline WinPortRGB(unsigned char r_ = 0, unsigned char g_ = 0, unsigned char b_ = 0) : r(r_), g(g_), b(b_) {}
+
+	inline bool operator == (const WinPortRGB &rgb) const
+	{
+		return r == rgb.r && g == rgb.g && b == rgb.b;
+	}
+
+	inline bool operator != (const WinPortRGB &rgb) const
+	{
+		return r != rgb.r || g != rgb.g || b != rgb.b;
+	}
+};
+
+WinPortRGB ConsoleForeground2RGB(USHORT attributes);
+WinPortRGB ConsoleBackground2RGB(USHORT attributes);

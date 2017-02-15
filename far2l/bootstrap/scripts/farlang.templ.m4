@@ -1699,6 +1699,24 @@ MConfigSaverMinutes
 "m&inut"
 "minutos"
 
+MConfigConsoleChangeFont
+"Выбрать шри&фт"
+"Change &font"
+upd:"Change &font"
+upd:"Change &font"
+upd:"Change &font"
+upd:"Change &font"
+upd:"Change &font"
+
+MConfigConsolePaintSharp
+"Отключить сглаживание"
+"Disable antialiasing"
+upd:"Disable antialiasing"
+upd:"Disable antialiasing"
+upd:"Disable antialiasing"
+upd:"Disable antialiasing"
+upd:"Disable antialiasing"
+
 MConfigExclusiveKeys
 "Экслюзивная обработка нажатий, включающих:"
 "Exclusively handle hotkeys that include:"

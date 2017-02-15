@@ -515,6 +515,22 @@ class DialogBuilderBase
 			NextY++;
 		}
 
+		// Добавляет кнопку
+		T *AddButton(int MessageId, int &id, T *After = nullptr)
+		{
+			T *Button = AddDialogItem(DI_BUTTON, GetLangString(MessageId));
+			if (After) {
+				Button->X1 = After->X2 + 2;
+				Button->Y1 = Button->Y2 = NextY - 1;
+			} else {
+				SetNextY(Button);
+			}
+			Button->X2 = Button->X1 + 20;//TODO: FIXME: ItemWidth(*Button);
+			
+			id = DialogItemsCount - 1;
+			return Button;
+		}
+
 		// Добавляет сепаратор.
 		void AddSeparator(int MessageId=-1)
 		{
@@ -540,11 +556,13 @@ class DialogBuilderBase
 			CancelButton->Y1 = CancelButton->Y2 = OKButton->Y1;
 		}
 
-		bool ShowDialog()
+		bool ShowDialog(int *id = nullptr)
 		{
 			UpdateBorderSize();
 			UpdateSecondColumnPosition();
 			int Result = DoShowDialog();
+			if (id)
+				*id = Result;
 			if (Result == OKButtonID)
 			{
 				SaveValues();

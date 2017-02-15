@@ -555,11 +555,16 @@ void ConsoleOutput::AdhocQuickEdit()
 		_listener->OnConsoleAdhocQuickEdit();
 }
 
-bool ConsoleOutput::SetExclusiveKeyTriggers(DWORD triggers_mask)
+DWORD ConsoleOutput::SetConsoleTweaks(DWORD tweaks)
 {
 	if (!_listener)
-		return false;
+		return 0;
 
-	return _listener->OnConsoleSetExclusiveKeyTriggers(triggers_mask);
+	return _listener->OnConsoleSetTweaks(tweaks);
 }
 
+void ConsoleOutput::ConsoleChangeFont()
+{
+	if (_listener)
+		_listener->OnConsoleChangeFont();
+}

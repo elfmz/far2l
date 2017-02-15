@@ -5,7 +5,7 @@ class ConsolePaintContext
 	std::vector<wxFont> _fonts;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height;
-	bool _buffered_paint, _cursor_state, _ugly_fast;
+	bool _buffered_paint, _cursor_state, _sharp;
 	struct {
 		std::vector<bool> checked;
 		std::vector<uint8_t> result;
@@ -14,14 +14,18 @@ class ConsolePaintContext
 	std::vector<CHAR_INFO> _line;
 	wxString _buffer;
 	
+	void SetFont(wxFont font);
 public:
 	ConsolePaintContext(wxWindow *window);
+	void ShowFontDialog();
 	
 	uint8_t CharFitTest(wxPaintDC &dc, wchar_t c);
 	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
 	void OnPaint(SMALL_RECT *qedit = NULL);	
 	void RefreshArea( const SMALL_RECT &area );
 	void ToggleCursor();
+	void SetSharp(bool sharp);
+	bool IsSharpSupported();
 	
 	inline bool IsPaintBuffered() const { return _buffered_paint; }
 	inline bool GetCursorState() const { return _cursor_state; }

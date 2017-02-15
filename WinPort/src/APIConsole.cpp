@@ -320,9 +320,13 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(SetExclusiveKeyTriggers, BOOL, (DWORD triggers_mask))
+	WINPORT_DECL(SetConsoleTweaks, DWORD, (DWORD tweaks))
 	{
-		return g_wx_con_out.SetExclusiveKeyTriggers(triggers_mask) ? TRUE : FALSE;
+		return g_wx_con_out.SetConsoleTweaks(tweaks);
 	}
 
+	WINPORT_DECL(ConsoleChangeFont, VOID, ())
+	{
+		return g_wx_con_out.ConsoleChangeFont();
+	}
 }

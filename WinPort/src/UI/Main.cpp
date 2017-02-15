@@ -151,7 +151,8 @@ wxDEFINE_EVENT(WX_CONSOLE_RESIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_TITLE_CHANGED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_SET_MAXIMIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
-wxDEFINE_EVENT(WX_CONSOLE_SET_EXCLUSIVE_KEY_TRIGGERS, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_SET_TWEAKS, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_CHANGE_FONT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
 
@@ -182,7 +183,8 @@ protected:
 	virtual COORD OnConsoleGetLargestWindowSize();
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleAdhocQuickEdit();
-	virtual bool OnConsoleSetExclusiveKeyTriggers(DWORD triggers_mask);
+	virtual DWORD OnConsoleSetTweaks(DWORD tweaks);
+	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleExit();
 	
 private:
@@ -196,7 +198,8 @@ private:
 	void OnTitleChangedSync( wxCommandEvent& event );
 	void OnSetMaximizedSync( wxCommandEvent& event );
 	void OnConsoleAdhocQuickEditSync( wxCommandEvent& event );
-	void OnConsoleSetExclusiveKeyTriggersSync( wxCommandEvent& event );
+	void OnConsoleSetTweaksSync( wxCommandEvent& event );
+	void OnConsoleChangeFontSync(wxCommandEvent& event);
 	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
@@ -411,7 +414,8 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_TITLE_CHANGED, WinPortPanel::OnTitleChangedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_MAXIMIZED, WinPortPanel::OnSetMaximizedSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_EXCLUSIVE_KEY_TRIGGERS, WinPortPanel::OnConsoleSetExclusiveKeyTriggersSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_TWEAKS, WinPortPanel::OnConsoleSetTweaksSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_CHANGE_FONT, WinPortPanel::OnConsoleChangeFontSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
 	
 	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
@@ -1068,26 +1072,49 @@ void WinPortPanel::OnConsoleAdhocQuickEdit()
 		wxQueueEvent(this, event);
 }
 
-void WinPortPanel::OnConsoleSetExclusiveKeyTriggersSync( wxCommandEvent& event )
+void WinPortPanel::OnConsoleSetTweaksSync( wxCommandEvent& event )
 {
 	EventWithDWORD *e = (EventWithDWORD *)&event;
 	_exclusive_hotkeys.SetTriggerKeys( (e->cookie & EXCLUSIVE_CTRL_LEFT) != 0,
 		(e->cookie & EXCLUSIVE_CTRL_RIGHT) != 0, (e->cookie & EXCLUSIVE_ALT_LEFT) != 0,
 		(e->cookie & EXCLUSIVE_ALT_RIGHT) != 0,  (e->cookie & EXCLUSIVE_WIN_LEFT) != 0,
 		(e->cookie & EXCLUSIVE_WIN_RIGHT) != 0);
+
+	_paint_context.SetSharp( (e->cookie & CONSOLE_PAINT_SHARP) != 0);
 }
 
-bool WinPortPanel::OnConsoleSetExclusiveKeyTriggers(DWORD triggers_mask)
+DWORD WinPortPanel::OnConsoleSetTweaks(DWORD tweaks)
 {
-	if (!_exclusive_hotkeys.Available())
-		return false;
+	DWORD out = 0;
 
-	EventWithDWORD *event = new EventWithDWORD(triggers_mask, WX_CONSOLE_SET_EXCLUSIVE_KEY_TRIGGERS);
+	if (_paint_context.IsSharpSupported())
+		out|= TWEAK_STATUS_SUPPORT_PAINT_SHARP;
+		
+	if (_exclusive_hotkeys.Available())
+		out|= TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS;
+
+	EventWithDWORD *event = new EventWithDWORD(tweaks, WX_CONSOLE_SET_TWEAKS);
 	if (event)
 		wxQueueEvent(this, event);
 
-	return true;
+	return out;
 }
+
+void WinPortPanel::OnConsoleChangeFontSync(wxCommandEvent& event)
+{
+	_paint_context.ShowFontDialog();
+	_resize_pending = RP_INSTANT;
+	CheckForResizePending();
+	Refresh();
+}
+
+void WinPortPanel::OnConsoleChangeFont()
+{
+	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_CHANGE_FONT);
+	if (event)
+		wxQueueEvent(this, event);
+}
+
 
 void WinPortPanel::OnConsoleExitSync( wxCommandEvent& event )
 {

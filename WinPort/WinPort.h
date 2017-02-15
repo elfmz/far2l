@@ -64,13 +64,18 @@ extern "C" {
 	typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Top, unsigned int Width, CHAR_INFO *Charss);
 	WINPORT_DECL(SetConsoleScrollCallback, VOID, (HANDLE hConsoleOutput, PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext));
 	WINPORT_DECL(BeginConsoleAdhocQuickEdit, BOOL, ());	
-	WINPORT_DECL(SetExclusiveKeyTriggers, BOOL, (DWORD triggers_mask));
-#define EXCLUSIVE_CTRL_LEFT			0x0001
-#define EXCLUSIVE_CTRL_RIGHT		0x0002
-#define EXCLUSIVE_ALT_LEFT			0x0004
-#define EXCLUSIVE_ALT_RIGHT			0x0008
-#define EXCLUSIVE_WIN_LEFT			0x0010
-#define EXCLUSIVE_WIN_RIGHT			0x0020
+	WINPORT_DECL(SetConsoleTweaks, DWORD, (DWORD tweaks));
+#define EXCLUSIVE_CTRL_LEFT			0x00000001
+#define EXCLUSIVE_CTRL_RIGHT		0x00000002
+#define EXCLUSIVE_ALT_LEFT			0x00000004
+#define EXCLUSIVE_ALT_RIGHT			0x00000008
+#define EXCLUSIVE_WIN_LEFT			0x00000010
+#define EXCLUSIVE_WIN_RIGHT			0x00000020
+#define CONSOLE_PAINT_SHARP			0x00010000
+#define TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS	0x1
+#define TWEAK_STATUS_SUPPORT_PAINT_SHARP	0x2
+
+	WINPORT_DECL(ConsoleChangeFont, VOID, ());
 
 	///Registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));

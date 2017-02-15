@@ -4,6 +4,7 @@
 #include <wx/fontdlg.h>
 #include <wx/fontenum.h>
 #include <wx/textfile.h>
+#include <wx/graphics.h>
 #include "Paint.h"
 #include "PathHelpers.h"
 #include "utils.h"
@@ -28,6 +29,7 @@ static unsigned int DivCeil(unsigned int v, unsigned int d)
 	unsigned int r = v / d;
 	return (r * d == v) ? r : r + 1;
 }
+
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +72,7 @@ public:
 	}	
 };
 
-static void InitializeFont(wxWindow *parent, wxFont& font)
+static bool LoadFontFromSettings(wxFont& font)
 {
 	const std::string &path = InMyConfig("font");
 	wxTextFile file(path);
@@ -78,12 +80,37 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
 			font.SetNativeFontInfo(str);
 			if (font.IsOk()) {
-				printf("InitializeFont: used %ls\n", str.wc_str());
-				return;				
+				printf("LoadFontFromSettings: used %ls\n", str.wc_str());
+				return true;				
 			}
 		}
-	} else 
+	} 
+	
+	return false;
+}
+
+static bool ChooseFontAndSaveToSettings(wxWindow *parent, wxFont& font)
+{
+	font = wxGetFontFromUser(parent, font);
+	if (font.IsOk()) {
+		const std::string &path = InMyConfig("font");
+		unlink(path.c_str());
+		wxTextFile file;
 		file.Create(path);
+
+		file.InsertLine(font.GetNativeFontInfoDesc(), 0);
+		file.Write();
+		return true;
+	}
+	
+	return false;
+}
+
+static void InitializeFont(wxWindow *parent, wxFont& font)
+{
+	if (LoadFontFromSettings(font))
+		return;
+	
 	
 	for (;;) {
 		FixedFontLookup ffl;
@@ -93,13 +120,23 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 		}
 		if (fixed_font.empty() || !font.IsOk())
 			font = wxFont(wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT));
-		font = wxGetFontFromUser(parent, font);
-		if (font.IsOk()) {
-			file.InsertLine(font.GetNativeFontInfoDesc(), 0);
-			file.Write();
+			
+		if (ChooseFontAndSaveToSettings(parent, font))
 			return;
-		}
 	}
+}
+
+ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
+	_window(window), _font_width(12), _font_height(16), 
+	_buffered_paint(false), _cursor_state(false), _sharp(false)
+{
+	_char_fit_cache.checked.resize(0xffff);
+	_char_fit_cache.result.resize(0xffff);
+
+	_window->SetBackgroundColour(*wxBLACK);
+	wxFont font;
+	InitializeFont(_window, font);
+	SetFont(font);
 }
 
 
@@ -156,16 +193,9 @@ class FontSizeInspector
 };
 
 
-ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
-	_window(window), _font_width(12), _font_height(16), 
-	_buffered_paint(false), _cursor_state(false), _ugly_fast(false)
-{
-	_char_fit_cache.checked.resize(0xffff);
-	_char_fit_cache.result.resize(0xffff);
 
-	_window->SetBackgroundColour(*wxBLACK);
-	wxFont font;
-	InitializeFont(_window, font);
+void ConsolePaintContext::SetFont(wxFont font)
+{
 	FontSizeInspector fsi(font);
 	fsi.InspectChars(L" 1234567890-=!@#$%^&*()_+qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?");
 	//fsi.InspectChars(L"QWERTYUIOPASDFGHJKL");
@@ -183,10 +213,23 @@ ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 		struct stat s = {0};
 		if (stat(InMyConfig("nobuffering").c_str(), &s) != 0)
 			_buffered_paint = true;
-		if (stat(InMyConfig("uglyfast").c_str(), &s) == 0)
-			_ugly_fast = true;
 	}
+	_fonts.clear();
 	_fonts.push_back(font);
+}
+
+void ConsolePaintContext::ShowFontDialog()
+{
+	wxFont font;
+	if (!_fonts.empty()) {
+		font = _fonts.front();
+		if (!ChooseFontAndSaveToSettings(_window, font))
+			return;
+
+	} else
+		InitializeFont(_window, font);
+		
+	SetFont(font);
 }
 	
 uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
@@ -199,8 +242,8 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
 	uint32_t font_index;
 	const wchar_t wz[2] = { c, 0};
 	wxSize char_size = dc.GetTextExtent(wz);
-	if ((unsigned)char_size.GetWidth()==_font_width 
-		&& (unsigned)char_size.GetHeight()==_font_height) {
+	if ((unsigned)char_size.GetWidth() == _font_width 
+		&& (unsigned)char_size.GetHeight() == _font_height) {
 		font_index = 0;
 	} else {
 		font_index = 0xff;
@@ -244,12 +287,15 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
 	wxPaintDC dc(_window);
-	if (_ugly_fast) {
-#ifdef __WXOSX__
+#if wxUSE_GRAPHICS_CONTEXT
+	if (_sharp) {
 		dc.GetGraphicsContext()->SetInterpolationQuality(wxINTERPOLATION_FAST);
 		dc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_NONE);
-#endif
+	} else {
+		dc.GetGraphicsContext()->SetInterpolationQuality(wxINTERPOLATION_DEFAULT);
+		dc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_DEFAULT);
 	}
+#endif
 	unsigned int cw, ch; g_wx_con_out.GetSize(cw, ch);
 	if (cw > MAXSHORT) cw = MAXSHORT;
 	if (ch > MAXSHORT) ch = MAXSHORT;
@@ -311,7 +357,7 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 	rc.SetRight(((int)area.Right + 1) * _font_width);
 	rc.SetTop(((int)area.Top) * _font_height);
 	rc.SetBottom(((int)area.Bottom + 1) * _font_height);
-	_window->Refresh(false, &rc);	
+	_window->Refresh(false, &rc);
 }
 
 
@@ -323,6 +369,22 @@ void ConsolePaintContext::ToggleCursor()
 	RefreshArea( area );
 }
 
+void ConsolePaintContext::SetSharp(bool sharp) 
+{
+	if (_sharp != sharp) {
+		_sharp = sharp; 
+		_window->Refresh();
+	}
+}
+
+bool ConsolePaintContext::IsSharpSupported()
+{
+#if wxUSE_GRAPHICS_CONTEXT
+	return true;
+#else
+	return false;
+#endif
+}
 
 /////////////////////////////
 

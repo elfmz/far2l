@@ -114,16 +114,17 @@ const wchar_t NKeyVMenu[]=L"VMenu";
 
 const wchar_t *constBatchExt=L".BAT;.CMD;";
 
-static bool ApplyExclusiveKeys()
+static DWORD ApplyConsoleTweaks()
 {
-	DWORD triggers_mask = 0;
-	if (Opt.ExclusiveCtrlLeft) triggers_mask|= EXCLUSIVE_CTRL_LEFT;
-	if (Opt.ExclusiveCtrlRight) triggers_mask|= EXCLUSIVE_CTRL_RIGHT;
-	if (Opt.ExclusiveAltLeft) triggers_mask|= EXCLUSIVE_ALT_LEFT;
-	if (Opt.ExclusiveAltRight) triggers_mask|= EXCLUSIVE_ALT_RIGHT;
-	if (Opt.ExclusiveWinLeft) triggers_mask|= EXCLUSIVE_WIN_LEFT;
-	if (Opt.ExclusiveWinRight) triggers_mask|= EXCLUSIVE_WIN_RIGHT;
-	return (WINPORT(SetExclusiveKeyTriggers)(triggers_mask) != FALSE);;
+	DWORD tweaks = 0;
+	if (Opt.ExclusiveCtrlLeft) tweaks|= EXCLUSIVE_CTRL_LEFT;
+	if (Opt.ExclusiveCtrlRight) tweaks|= EXCLUSIVE_CTRL_RIGHT;
+	if (Opt.ExclusiveAltLeft) tweaks|= EXCLUSIVE_ALT_LEFT;
+	if (Opt.ExclusiveAltRight) tweaks|= EXCLUSIVE_ALT_RIGHT;
+	if (Opt.ExclusiveWinLeft) tweaks|= EXCLUSIVE_WIN_LEFT;
+	if (Opt.ExclusiveWinRight) tweaks|= EXCLUSIVE_WIN_RIGHT;
+	if (Opt.ConsolePaintSharp) tweaks|= CONSOLE_PAINT_SHARP;
+	return WINPORT(SetConsoleTweaks)(tweaks);
 }
 
 static void ApplySudoConfiguration()
@@ -239,60 +240,79 @@ void PanelSettings()
 */
 void InterfaceSettings()
 {
-	DialogBuilder Builder(MConfigInterfaceTitle, L"InterfSettings");
-
-	Builder.AddCheckbox(MConfigClock, &Opt.Clock);
-	Builder.AddCheckbox(MConfigViewerEditorClock, &Opt.ViewerEditorClock);
-	Builder.AddCheckbox(MConfigMouse, &Opt.Mouse);
-	Builder.AddCheckbox(MConfigKeyBar, &Opt.ShowKeyBar);
-	Builder.AddCheckbox(MConfigMenuBar, &Opt.ShowMenuBar);
-	DialogItemEx *SaverCheckbox = Builder.AddCheckbox(MConfigSaver, &Opt.ScreenSaver);
-
-	DialogItemEx *SaverEdit = Builder.AddIntEditField(&Opt.ScreenSaverTime, 2);
-	SaverEdit->Indent(4);
-	Builder.AddTextAfter(SaverEdit, MConfigSaverMinutes);
-	Builder.LinkFlags(SaverCheckbox, SaverEdit, DIF_DISABLE);
-
-	Builder.AddCheckbox(MConfigCopyTotal, &Opt.CMOpt.CopyShowTotal);
-	Builder.AddCheckbox(MConfigCopyTimeRule, &Opt.CMOpt.CopyTimeRule);
-	Builder.AddCheckbox(MConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
-	Builder.AddCheckbox(MConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
-
-
-	int ExclusiveKeysFlags = ApplyExclusiveKeys() ? 0 : DIF_DISABLE;
-
-	Builder.AddText(MConfigExclusiveKeys);
-	DialogItemEx *Item = Builder.AddCheckbox(MConfigExclusiveCtrlLeft, &Opt.ExclusiveCtrlLeft);
-	Item->Flags|= ExclusiveKeysFlags;
-	Item->Indent(4);
-	Builder.AddCheckboxAfter(Item, MConfigExclusiveCtrlRight, &Opt.ExclusiveCtrlRight)->Flags|= ExclusiveKeysFlags;
-
-	Item = Builder.AddCheckbox(MConfigExclusiveAltLeft, &Opt.ExclusiveAltLeft);
-	Item->Flags|= ExclusiveKeysFlags;
-	Item->Indent(4);
-	Builder.AddCheckboxAfter(Item, MConfigExclusiveAltRight, &Opt.ExclusiveAltRight)->Flags|= ExclusiveKeysFlags;
-
-	Item = Builder.AddCheckbox(MConfigExclusiveWinLeft, &Opt.ExclusiveWinLeft);
-	Item->Flags|= ExclusiveKeysFlags;
-	Item->Indent(4);
-	Builder.AddCheckboxAfter(Item, MConfigExclusiveWinRight, &Opt.ExclusiveWinRight)->Flags|= ExclusiveKeysFlags;
-
-	Builder.AddText(MConfigTitleAddons);
-	Builder.AddEditField(&Opt.strTitleAddons, 47);
-	Builder.AddOKCancel();
-
-	if (Builder.ShowDialog())
-	{
-		if (Opt.CMOpt.CopyTimeRule)
-			Opt.CMOpt.CopyTimeRule = 3;
-
-		SetFarConsoleMode();
-		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
-		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
-		CtrlObject->Cp()->SetScreenPosition();
-		// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
-		CtrlObject->Cp()->Redraw();
-		ApplyExclusiveKeys();
+	for (;;) {
+		DialogBuilder Builder(MConfigInterfaceTitle, L"InterfSettings");
+		
+		Builder.AddCheckbox(MConfigClock, &Opt.Clock);
+		Builder.AddCheckbox(MConfigViewerEditorClock, &Opt.ViewerEditorClock);
+		Builder.AddCheckbox(MConfigMouse, &Opt.Mouse);
+		Builder.AddCheckbox(MConfigKeyBar, &Opt.ShowKeyBar);
+		Builder.AddCheckbox(MConfigMenuBar, &Opt.ShowMenuBar);
+		DialogItemEx *SaverCheckbox = Builder.AddCheckbox(MConfigSaver, &Opt.ScreenSaver);
+		
+		DialogItemEx *SaverEdit = Builder.AddIntEditField(&Opt.ScreenSaverTime, 2);
+		SaverEdit->Indent(4);
+		Builder.AddTextAfter(SaverEdit, MConfigSaverMinutes);
+		Builder.LinkFlags(SaverCheckbox, SaverEdit, DIF_DISABLE);
+		
+		Builder.AddCheckbox(MConfigCopyTotal, &Opt.CMOpt.CopyShowTotal);
+		Builder.AddCheckbox(MConfigCopyTimeRule, &Opt.CMOpt.CopyTimeRule);
+		Builder.AddCheckbox(MConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
+		Builder.AddCheckbox(MConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
+		
+		
+		DWORD supported_tweaks = ApplyConsoleTweaks();
+		int ChangeFontID = -1;
+		DialogItemEx *Item = Builder.AddButton(MConfigConsoleChangeFont, ChangeFontID);
+		
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_PAINT_SHARP) {
+			Builder.AddCheckboxAfter(Item, MConfigConsolePaintSharp, &Opt.ConsolePaintSharp);
+		}
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS) {
+			Builder.AddText(MConfigExclusiveKeys);
+			Item = Builder.AddCheckbox(MConfigExclusiveCtrlLeft, &Opt.ExclusiveCtrlLeft);
+			Item->Indent(4);
+			Builder.AddCheckboxAfter(Item, MConfigExclusiveCtrlRight, &Opt.ExclusiveCtrlRight);
+		
+			Item = Builder.AddCheckbox(MConfigExclusiveAltLeft, &Opt.ExclusiveAltLeft);
+			Item->Indent(4);
+			Builder.AddCheckboxAfter(Item, MConfigExclusiveAltRight, &Opt.ExclusiveAltRight);
+		
+			Item = Builder.AddCheckbox(MConfigExclusiveWinLeft, &Opt.ExclusiveWinLeft);
+			Item->Indent(4);
+			Builder.AddCheckboxAfter(Item, MConfigExclusiveWinRight, &Opt.ExclusiveWinRight);
+		}
+		
+		Builder.AddText(MConfigTitleAddons);
+		Builder.AddEditField(&Opt.strTitleAddons, 47);
+		
+		//OKButton->Flags = DIF_CENTERGROUP;
+		//OKButton->DefaultButton = TRUE;
+		//OKButton->Y1 = OKButton->Y2 = NextY++;
+		//OKButtonID = DialogItemsCount-1;
+		
+		
+		Builder.AddOKCancel();
+		
+		int clicked_id = -1;
+		if (Builder.ShowDialog(&clicked_id)) {
+			if (Opt.CMOpt.CopyTimeRule)
+				Opt.CMOpt.CopyTimeRule = 3;
+		
+			SetFarConsoleMode();
+			CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->SetScreenPosition();
+			// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
+			CtrlObject->Cp()->Redraw();
+			ApplyConsoleTweaks();
+			break;
+		}
+		
+		if (clicked_id != ChangeFontID)
+			break;
+		
+		WINPORT(ConsoleChangeFont)();
 	}
 }
 
@@ -601,6 +621,7 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeyInterface, L"ShiftsKeyRules",&Opt.ShiftsKeyRules,1, 0},
 	{1, REG_DWORD,  NKeyInterface, L"CtrlPgUp",&Opt.PgUpChangeDisk, 1, 0},
 
+	{1, REG_DWORD,  NKeyInterface, L"ConsolePaintSharp",&Opt.ConsolePaintSharp, 0, 0},
 	{1, REG_DWORD,  NKeyInterface, L"ExclusiveCtrlLeft",&Opt.ExclusiveCtrlLeft, 0, 0},
 	{1, REG_DWORD,  NKeyInterface, L"ExclusiveCtrlRight",&Opt.ExclusiveCtrlRight, 0, 0},
 	{1, REG_DWORD,  NKeyInterface, L"ExclusiveAltLeft",&Opt.ExclusiveAltLeft, 0, 0},
@@ -1045,7 +1066,7 @@ void ReadConfig()
 	}
 
 	ApplySudoConfiguration();
-	ApplyExclusiveKeys();
+	ApplyConsoleTweaks();
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 

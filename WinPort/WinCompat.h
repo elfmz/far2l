@@ -1577,3 +1577,5 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 # error Cannot define thread_local
 #endif
 
+#define DEVNULL		"/dev/null"
+#define DEVNULLW	L"/dev/null"

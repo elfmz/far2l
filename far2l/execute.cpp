@@ -162,11 +162,11 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 	if (NeedSudo) {
 		return sudo_client_execute(CmdStr, false, NoWait);
 	}
-	int fdr = open("/dev/null", O_RDONLY);
-	if (fdr==-1) perror("open stdin error");
+	int fdr = open(DEVNULL, O_RDONLY);
+	if (fdr==-1) perror("stdin error opening " DEVNULL);
 	
 	//let debug out go to console
-	int fdw = open("/dev/null", O_WRONLY);
+	int fdw = open(DEVNULL, O_WRONLY);
 	//if (fdw==-1) perror("open stdout error");
 	int pid = fork();
 	if (pid==0) {

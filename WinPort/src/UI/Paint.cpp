@@ -288,13 +288,14 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
 	wxPaintDC dc(_window);
 #if wxUSE_GRAPHICS_CONTEXT
-	if (dc.GetGraphicsContext()) {
+	wxGraphicsContext* gctx = dc.GetGraphicsContext();
+	if (gctx) {
 		if (_sharp) {
-			dc.GetGraphicsContext()->SetInterpolationQuality(wxINTERPOLATION_FAST);
-			dc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_NONE);
+			gctx->SetInterpolationQuality(wxINTERPOLATION_FAST);
+			gctx->SetAntialiasMode(wxANTIALIAS_NONE);
 		} else {
-			dc.GetGraphicsContext()->SetInterpolationQuality(wxINTERPOLATION_DEFAULT);
-			dc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+			gctx->SetInterpolationQuality(wxINTERPOLATION_DEFAULT);
+			gctx->SetAntialiasMode(wxANTIALIAS_DEFAULT);
 		}
 	}
 #endif

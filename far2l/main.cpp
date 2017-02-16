@@ -32,7 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
+#include <sys/ioctl.h>
+#include <signal.h>
 
 #include "lang.hpp"
 #include "keys.hpp"
@@ -654,20 +655,33 @@ static std::string GetStdPath(const char *env1, const char *env2)
 		return s;
 	}
 
-	return "/dev/null";
+	return DEVNULL;
 }
 
 static void SetupStdHandles()
 {
 	const std::string &out = GetStdPath("FAR2L_STDOUT", "FAR2L_STD");
 	const std::string &err = GetStdPath("FAR2L_STDERR", "FAR2L_STD");
+	unsigned char reopened = 0;
 	if (!out.empty() && out != "-") {
-		if (!freopen(out.c_str(), "a", stdout))
+		if (freopen(out.c_str(), "a", stdout)) {
+			reopened|= 1;
+		} else
 			perror("freopen stdout");
 	}
 	if (!err.empty() && err != "-") {
-		if (!freopen(err.c_str(), "a", stderr))
+		if (freopen(err.c_str(), "a", stderr)) {
+			reopened|= 2;
+		} else
 			perror("freopen stderr");
+	}
+	
+	if ( reopened == 3 && out == DEVNULL && err == DEVNULL) {
+		ioctl(0, TIOCNOTTY, NULL);
+		if (!freopen(DEVNULL, "r", stdin)) {
+			perror("freopen stdin");
+		}
+		signal(SIGHUP, SIG_IGN);
 	}
 }
 

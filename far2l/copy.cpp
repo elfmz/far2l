@@ -497,7 +497,7 @@ static int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 
 static bool CheckNulOrCon(const wchar_t *Src)
 {
-	return IsPathIn(Src, L"/dev/null");
+	return IsPathIn(Src, DEVNULLW);
 }
 
 static FARString& GetParentFolder(const wchar_t *Src, FARString &strDest)

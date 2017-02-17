@@ -60,15 +60,9 @@
 #endif
 
 #ifdef UNICODE
-#ifndef __LINUX
 #define rechar wchar_t
 #define prechar wchar_t*
 #define RECHAR wchar_t
-#else
-#define rechar unsigned short
-#define prechar unsigned short*
-#define RECHAR unsigned short
-#endif
 #else
 //! Used to avoid problems when mapping string chars
 #define rechar unsigned char
@@ -76,7 +70,6 @@
 #define prechar unsigned char*
 #define RECHAR char
 #endif
-#define RE_CHAR_COUNT (1<<sizeof(rechar)*8)
 
 //! Possible compile and runtime errors returned by LastError.
 enum REError

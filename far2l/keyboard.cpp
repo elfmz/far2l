@@ -1827,7 +1827,7 @@ BOOL WINAPI KeyToText(int Key0, FARString &strKeyText0)
 
 					if (FKey >= L'A' && FKey <= L'Z')
 					{
-						if (Key&(KEY_RCTRL|KEY_CTRL|KEY_ALT|KEY_RCTRL)) // ??? а если есть другие модификаторы ???
+						if (Key&(KEY_RCTRL|KEY_CTRL|KEY_ALT|KEY_RALT)) // ??? а если есть другие модификаторы ???
 							KeyText[0]=(wchar_t)FKey; // для клавиш с модификаторами подставляем "латиницу" в верхнем регистре
 						else
 							KeyText[0]=(wchar_t)(Key&0xFFFF);

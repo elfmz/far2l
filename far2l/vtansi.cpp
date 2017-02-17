@@ -592,7 +592,7 @@ void InterpretEscSeq( void )
 		}
 		// Ignore any other private sequences.
 		if (prefix2 != 0) {
-			fprintf(stderr, "Ignoring: %lc %lc %u %u\n", prefix2, suffix, es_argc, es_argv[0]);
+			fprintf(stderr, "Ignoring: %c %c %u %u\n", prefix2, suffix, es_argc, es_argv[0]);
 			return;			
 		}
 

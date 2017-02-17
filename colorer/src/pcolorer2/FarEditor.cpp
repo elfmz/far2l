@@ -824,7 +824,7 @@ void FarEditor::showOutliner(Outliner *outliner)
 
           wchar_t cls = Character::toLowerCase((*region)[region->indexOf(':')+1]);
 
-          si += swprintf(menuItem+si, 255-si, L"%c ", cls);
+          si += swprintf(menuItem+si, 255-si, L"%lc ", cls);
 
           int labelLength = item->token->length();
 

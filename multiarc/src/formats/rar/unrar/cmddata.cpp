@@ -254,7 +254,7 @@ void CommandData::ReadConfig()
         if (C0=='R' && (C1=='R' || C1=='V'))
           Cmd[2]=0;
         wchar SwName[16+ASIZE(Cmd)];
-        swprintf(SwName,ASIZE(SwName),L"switches_%s=",Cmd);
+        swprintf(SwName,ASIZE(SwName),L"switches_%ls=",Cmd);
         size_t Length=wcslen(SwName);
         if (wcsnicomp(Str,SwName,Length)==0)
           ProcessSwitchesString(Str+Length);

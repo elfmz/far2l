@@ -199,8 +199,8 @@ BOOL WINAPI _export SEVENZ_OpenArchive(const char *Name,int *Type)
 {
 	Traverser *t = new Traverser(Name);
 	if (!t->Valid()) {
-		return FALSE;
 		delete t;
+		return FALSE;
 	}
 	
 	delete s_selected_traverser;

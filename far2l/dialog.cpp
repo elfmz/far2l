@@ -3823,9 +3823,9 @@ int Dialog::Do_ProcessSpace()
 	{
 		int OldSelected=Item[FocusPos]->Selected;
 
-		if (Item[FocusPos]->Flags&DIF_3STATE)
-			(++Item[FocusPos]->Selected)%=3;
-		else
+		if (Item[FocusPos]->Flags&DIF_3STATE) {
+			Item[FocusPos]->Selected = (Item[FocusPos]->Selected + 1) % 3;
+		} else
 			Item[FocusPos]->Selected = !Item[FocusPos]->Selected;
 
 		OldFocusPos=FocusPos;

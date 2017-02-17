@@ -4816,7 +4816,7 @@ done:
 			if (Key == MCODE_F_BM_GET)
 				VMStack.Pop(p2);
 
-			if (Key == MCODE_F_BM_GET || Key == MCODE_F_BM_DEL || Key == MCODE_F_BM_GET || Key == MCODE_F_BM_GOTO)
+			if (Key == MCODE_F_BM_STAT || Key == MCODE_F_BM_DEL || Key == MCODE_F_BM_GET || Key == MCODE_F_BM_GOTO)//MCODE_F_BM_STAT added accotding to #255
 				VMStack.Pop(p1);
 
 			int64_t Result=0;

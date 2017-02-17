@@ -288,7 +288,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !\       Текущий путь
 	// !/       Короткое имя текущего пути
 	// Ниже идет совмещение кода для разбора как !\ так и !/
-	if (!StrCmpN(CurStr,L"!/",2) || !StrCmpN(CurStr,L"!=/",3) || !StrCmpN(CurStr,L"!/",2) || !StrCmpN(CurStr,L"!=/",3))
+	if (!StrCmpN(CurStr,L"!/",2) || !StrCmpN(CurStr,L"!=/",3))//!StrCmpN(CurStr,L"!\\",2) || !StrCmpN(CurStr,L"!=\\",3) || 
 	{
 		FARString strCurDir;
 		int RealPath= CurStr[1]==L'='?1:0;

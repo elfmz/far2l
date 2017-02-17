@@ -352,10 +352,10 @@ void FTP::AddToQueque(FAR_FIND_DATA* FileName, LPCSTR Path, BOOL Download)
 	p->Error.Null();
 	p->DestPath = Path;
 
-	if(Download)
+//	if(Download)
 		m = strrchr(FileName->cFileName, '/');
-	else
-		m = strrchr(FileName->cFileName, '/');
+//	else
+//		m = strrchr(FileName->cFileName, '\\');
 
 	if(m)
 	{

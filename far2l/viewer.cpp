@@ -71,7 +71,7 @@ static void ViewerSearchMsg(const wchar_t *Name,int Percent);
 
 static int InitHex=FALSE,SearchHex=FALSE;
 
-static int ViewerID=0;
+static int NextViewerID=0;
 
 Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	ViOpt(Opt.ViOpt),
@@ -114,7 +114,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	memset(UndoData,0xff,sizeof(UndoData));
 	LastKeyUndo=FALSE;
 	InternalKey=FALSE;
-	Viewer::ViewerID=::ViewerID++;
+	ViewerID=::NextViewerID++;
 	CtrlObject->Plugins.CurViewer=this;
 	OpenFailed=false;
 	HostFileViewer=nullptr;
@@ -3198,7 +3198,7 @@ int Viewer::ViewerControl(int Command,void *Param)
 			{
 				ViewerInfo *Info=(ViewerInfo *)Param;
 				memset(&Info->ViewerID,0,Info->StructSize-sizeof(Info->StructSize));
-				Info->ViewerID=Viewer::ViewerID;
+				Info->ViewerID=ViewerID;
 				Info->FileName=strFullFileName;
 				Info->WindowSizeX=ObjWidth;
 				Info->WindowSizeY=Y2-Y1+1;

@@ -2090,7 +2090,7 @@ void TreeList::SetTitle()
 	{
 		FARString strTitleDir(L"{");
 
-		const wchar_t *Ptr=ListData?ListData[CurFile]->strName:L"";
+		const wchar_t *Ptr = ListData ? ListData[CurFile]->strName.CPtr() : L"";
 
 		if (*Ptr)
 		{

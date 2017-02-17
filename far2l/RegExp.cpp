@@ -164,6 +164,12 @@ rechar* RegExp::charbits=(rechar*)RegExp::icharbits;
 
 #define ISTYPE(c,t) isType(c,t)
 
+#if WCHAR_MAX > 0xffff
+# define RE_CHAR_COUNT 0x10000
+#else
+# define RE_CHAR_COUNT (1<<sizeof(rechar)*8)
+#endif
+
 int isType(rechar chr,int type)
 {
 	switch (type)
@@ -321,6 +327,9 @@ struct UniSet
 	}
 	bool GetBit(rechar chr) const
 	{
+		if (chr >= RE_CHAR_COUNT )//workaround
+			chr = RE_CHAR_COUNT - 1;
+
 		if (types)
 		{
 			int t=TYPE_ALPHACHAR;
@@ -366,6 +375,9 @@ struct UniSet
 	}
 	void SetBit(rechar  chr)
 	{
+		if (chr >= RE_CHAR_COUNT )//workaround
+			chr = RE_CHAR_COUNT - 1;
+
 		unsigned char h=(chr&0xff00)>>8;
 
 		if (!high[h])
@@ -378,6 +390,9 @@ struct UniSet
 	}
 	void ClearBit(rechar  chr)
 	{
+		if (chr >= RE_CHAR_COUNT )//workaround
+			chr = RE_CHAR_COUNT - 1;
+
 		unsigned char h=(chr&0xff00)>>8;
 
 		if (!high[h])

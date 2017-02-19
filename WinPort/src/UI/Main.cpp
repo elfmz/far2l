@@ -810,8 +810,16 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	_exclusive_hotkeys.OnKeyUp(event);
 	if (event.GetSkipped())
 		return;
-		
+
+#ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns
+	if (!_pressed_keys.erase(event.GetKeyCode())) {
+		OnKeyDown(event);
+		_pressed_keys.erase(event.GetKeyCode());
+	}
+#else
 	if (_pressed_keys.erase(event.GetKeyCode())) {
+#endif
+	{
 		wx2INPUT_RECORD ir(event, FALSE);
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	

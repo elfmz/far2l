@@ -817,7 +817,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		_pressed_keys.erase(event.GetKeyCode());
 	}
 #else
-	if (_pressed_keys.erase(event.GetKeyCode())) {
+	if (_pressed_keys.erase(event.GetKeyCode()))
 #endif
 	{
 		wx2INPUT_RECORD ir(event, FALSE);

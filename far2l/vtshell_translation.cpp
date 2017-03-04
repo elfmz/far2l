@@ -345,9 +345,9 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		case 'X': return "\x18";
 		case 'Y': return "\x19";
 		case 'Z': return "\x1a";
-		case '[': return "\x1b";
-		case '\\': return "\x1c";
-		case ']': return "\x1d";
+		case VK_OEM_4: return "\x1b";//'['
+		case VK_OEM_5: return "\x1c";//'\\'
+		case VK_OEM_6: return "\x1d";//']'
 		}
 	}
 	

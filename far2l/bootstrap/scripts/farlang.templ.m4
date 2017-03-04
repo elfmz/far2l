@@ -19726,6 +19726,24 @@ MFileFilterAttrVirtual
 "&Wirtualny"
 "&Virtual"
 
+MFileFilterAttrExecutable
+"Исполняемый"
+"E&xecutable"
+upd:"E&xecutable"
+upd:"E&xecutable"
+upd:"E&xecutable"
+upd:"E&xecutable"
+upd:"E&xecutable"
+
+MFileFilterAttrBroken
+"Неисправный"
+"&Broken"
+upd:"&Broken"
+upd:"&Broken"
+upd:"&Broken"
+upd:"&Broken"
+upd:"&Broken"
+
 MFileFilterReset
 "Очистит&ь"
 "Reset"

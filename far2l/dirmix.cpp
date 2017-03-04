@@ -313,3 +313,16 @@ void PrepareTemporaryOpenPath(FARString &Path)
 	apiCreateDirectory(Path, nullptr);
 }
 
+
+FARString DefaultPanelInitialDirectory()
+{
+	FARString out;
+	const char *home = getenv("HOME");
+	if (home && *home) {
+		out = home;
+	} else
+		out = g_strFarPath;
+	
+	DeleteEndSlash(out);
+	return out;
+}

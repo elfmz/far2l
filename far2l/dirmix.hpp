@@ -59,3 +59,4 @@ std::string GetHelperPathName(const char *name);
 std::string GetMyScriptQuoted(const char *name);
 
 void PrepareTemporaryOpenPath(FARString &Path);
+FARString DefaultPanelInitialDirectory();

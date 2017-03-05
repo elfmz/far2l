@@ -696,18 +696,14 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 							strDestStr += strDateTime;
 							break;
 						}
-						case L'N': // $N - Current drive
-						{
-							if (IsLocalPath(strCurDir) && IsSlash(strCurDir.At(2)))
-								strDestStr += Upper(strCurDir.At(0));
-							else
-								strDestStr += L'?';
-
-							break;
-						}
 						case L'P': // $P - Current drive and path
 						{
 							strDestStr += strCurDir;
+							break;
+						}
+						case L'#': // # or $ - depending of user root or not
+						{
+							strDestStr += Opt.IsUserAdmin ? L"#" : L"$";
 							break;
 						}
 					}
@@ -721,7 +717,7 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 			}
 		}
 	}
-	else // default prompt = "$p$g"
+	else // default prompt = "$p$# "
 	{
 		strDestStr = strCurDir;
 		strDestStr += Opt.IsUserAdmin ? L"# " : L"$ ";

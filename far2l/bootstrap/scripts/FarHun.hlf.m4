@@ -2219,7 +2219,7 @@ jeleníthet meg.
      $g - > karakter
      $h - törli az előző karaktert
      $l - < karakter
-     $n - az aktuális meghajtó betűjele
+     $## - ## character if user is root, otherwise $
      $p - az aktuális meghajtó és elérési út
      $q - = karakter
      $s - szóköz

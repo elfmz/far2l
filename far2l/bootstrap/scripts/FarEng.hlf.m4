@@ -2410,7 +2410,7 @@ code words:
      $g - the > character
      $h - delete the previous character
      $l - the < character
-     $n - drive letter of the current drive
+     $## - ## character if user is root, otherwise $
      $p - current drive and path
      $q - the = character
      $s - space

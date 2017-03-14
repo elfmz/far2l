@@ -591,6 +591,8 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			if (!SetUpMenuPos)
 				MenuItem.SetSelect(CurrentItem==HistoryItem || (!CurrentItem && HistoryItem==HistoryList.Last()));
 
+			//NB: here is really should be used sizeof(HistoryItem), not sizeof(*HistoryItem)
+			//cuz sizeof(void *) has special meaning in SetUserData!
 			HistoryMenu.SetUserData(HistoryItem,sizeof(HistoryItem),HistoryMenu.AddItem(&MenuItem));
 		}
 

@@ -591,7 +591,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			if (!SetUpMenuPos)
 				MenuItem.SetSelect(CurrentItem==HistoryItem || (!CurrentItem && HistoryItem==HistoryList.Last()));
 
-			HistoryMenu.SetUserData(HistoryItem,sizeof(*HistoryItem),HistoryMenu.AddItem(&MenuItem));
+			HistoryMenu.SetUserData(HistoryItem,sizeof(HistoryItem),HistoryMenu.AddItem(&MenuItem));
 		}
 
 		//MenuItem.Clear ();

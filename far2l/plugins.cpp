@@ -679,7 +679,7 @@ HANDLE PluginManager::OpenFilePlugin(
 				PluginHandle *handle = items.getItem(i);
 				mitem.Clear();
 				mitem.strName = PointToName(handle->pPlugin->GetModuleName());
-				//NB: here is really should be used sizeof(handle), not sizeof(*HistoryItem) 
+				//NB: here is really should be used sizeof(handle), not sizeof(*handle) 
 				//cuz sizeof(void *) has special meaning in SetUserData!
 				menu.SetUserData(handle, sizeof(handle), menu.AddItem(&mitem));
 			}

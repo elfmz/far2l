@@ -52,9 +52,7 @@ enum HEADER_TYPE {
 
 static const char * const RarOS[]={"DOS","OS/2","Windows","Unix","MacOS","BeOS"};
 
-static HANDLE ArcHandle;
-static DWORD NextPosition,SFXSize,FileSize,FileSizeHigh,Flags;
-static long NextPositionHigh;
+static DWORD SFXSize,Flags;
 
 static HANDLE hArcData;
 static int RHCode,PFCode;
@@ -168,12 +166,30 @@ int WINAPI _export RAR_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
          return GETARC_READERROR;//GETARC_BROKEN;
       return GETARC_EOF;	  
   }
-  
   UnicodeToOEM(HeaderData.FileNameW,Item->FindData.cFileName,ARRAYSIZE(Item->FindData.cFileName)-1);
   //strcpyn(Item->FindData.cFileName,HeaderData.FileName,sizeof(Item->FindData.cFileName)-1);
   
   Item->FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(HeaderData.FileAttr, HeaderData.FileNameW);
   Item->FindData.dwUnixMode = HeaderData.FileAttr;
+  
+  //HeaderData.FileAttr is unreliable - sometimes its a UNIX mode, sometimes Windows attributes
+  //so sync with directory attribute in HeaderData.Flags
+  if (HeaderData.Flags & RHDF_DIRECTORY) {
+	  Item->FindData.dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
+	  switch (Item->FindData.dwUnixMode & S_IFMT) {
+		  case S_IFREG: case 0:
+			Item->FindData.dwUnixMode&= ~S_IFMT;
+			Item->FindData.dwUnixMode|= S_IFDIR;
+	  }
+  } else {
+	  Item->FindData.dwFileAttributes&= ~FILE_ATTRIBUTE_DIRECTORY;
+	  switch (Item->FindData.dwUnixMode & S_IFMT) {
+		  case S_IFDIR: case 0:
+			Item->FindData.dwUnixMode&= ~S_IFMT;
+			Item->FindData.dwUnixMode|= S_IFREG;
+	  }
+  }
+  
   Item->FindData.nFileSizeLow=HeaderData.UnpSize;
   Item->FindData.nFileSizeHigh=HeaderData.UnpSizeHigh;
   Item->PackSizeHigh=HeaderData.PackSizeHigh;

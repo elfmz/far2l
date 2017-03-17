@@ -200,12 +200,14 @@ struct VTAnsiState
 		WINPORT(GetConsoleScrollRegion)(con, &scroll_top, &scroll_bottom);
 	}
 
-	void ApplyToConsole(HANDLE con)
+	void ApplyToConsole(HANDLE con, bool including_cursor_pos = true)
 	{
 		WINPORT(SetConsoleMode)( con, mode );
 		WINPORT(SetConsoleCursorInfo)( con, &cci );
 		WINPORT(SetConsoleTextAttribute)( con, csbi.wAttributes );
-		WINPORT(SetConsoleCursorPosition)( con, csbi.dwCursorPosition );
+		if (including_cursor_pos) {
+			WINPORT(SetConsoleCursorPosition)( con, csbi.dwCursorPosition );
+		}
 		if (scroll_bottom >= csbi.srWindow.Bottom) {
 			//window could be expanded bigger than before making previous
 			//scrolling region to not cover whole area, so correct this case
@@ -1455,7 +1457,8 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 
 void VTAnsi::Reset()
 {
-	g_saved_state.ApplyToConsole(NULL);
+	g_saved_state.ApplyToConsole(NULL, false);
+	ResetState();
 	SetDefaultAnsiState();
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
 	_buf.clear();

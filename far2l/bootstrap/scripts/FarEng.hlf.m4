@@ -2420,16 +2420,15 @@ code words:
 
      $@@xx - ^<wrap>"Администратор", если FAR Manager запущен от имени администратора.
 Вместо 'xx' необходимо указать два символа, которые будут обрамлять слово "Администратор".
-Например, #$@@{}$s$p$g# будет представлен как "{Администратор} C:\>"
+Например, #$@@{}$s$p$### будет представлен как "{Администратор} C:\>"
 
    By default the #$p$g# sequence is used - current drive and
 path ("C:\>").
 
    Examples.
 
-   1. ^<wrap>A prompt of the following format #[%COMPUTERNAME%]$S$P$G#
+   1. ^<wrap>A prompt of the following format #[%HOSTNAME%]$S$P$G#
 will contain the computer name, current drive and path
-(the %COMPUTERNAME% environment variable must be defined)
 
    2. ^<wrap>A prompt of the following format #[$T$H$H$H]$S$P$G# will
 display the current time in HH:MM format before the current

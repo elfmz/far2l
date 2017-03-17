@@ -168,6 +168,17 @@ extern "C" {
 		return TRUE;
 	}
 
+	static char *GetHostNameCached()
+	{
+		static char s_out[0x100] = {0};
+		if (!s_out[0]) {
+			gethostname(&s_out[1], 0xfe);
+			s_out[0] = 1;
+		}
+		return &s_out[1];
+	}
+
+
 	WINPORT_DECL(GetEnvironmentVariable, DWORD, (LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize))
 	{
 #ifdef _WIN32
@@ -175,8 +186,12 @@ extern "C" {
 #else
 		char *value = getenv(Wide2MB(lpName).c_str());
 		if (!value) {
-			WINPORT(SetLastError)(ERROR_ENVVAR_NOT_FOUND);
-			return 0;
+			if (lpName && wcscmp(lpName, L"HOSTNAME") == 0)
+				value = GetHostNameCached();
+			if (!value) {
+				WINPORT(SetLastError)(ERROR_ENVVAR_NOT_FOUND);
+				return 0;
+			}
 		}
 		std::wstring wide = MB2Wide(value);
 		if (wide.size() >= nSize)

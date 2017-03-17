@@ -933,7 +933,7 @@ static bool shown_tip_exit = false;
 	{
 		if (_shell_pid==-1)
 			return -1;
-		
+
 		const std::string &cmd_script = GenerateExecuteCommandScript(cmd, force_sudo);
 		if (cmd_script.empty())
 			return -1;
@@ -981,6 +981,7 @@ static bool shown_tip_exit = false;
 		}
 		remove(cmd_script.c_str());
 
+		_vta.Reset();
 		DeliverPendingWindowInfo();
 		return _completion_marker.LastExitCode();
 	}	

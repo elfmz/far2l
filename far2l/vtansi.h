@@ -19,6 +19,8 @@ class VTAnsi
 	
 	struct VTAnsiState *Suspend();
 	void Resume(struct VTAnsiState* state);
+
+	void Reset();
 };
 
 class VTAnsiSuspend

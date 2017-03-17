@@ -1404,6 +1404,13 @@ static void ResetState()
 }
 
 
+static void SetDefaultAnsiState()
+{
+	ansiState.bold = g_saved_state.csbi.wAttributes & FOREGROUND_INTENSITY;
+	ansiState.underline = g_saved_state.csbi.wAttributes & BACKGROUND_INTENSITY;
+	ansiState.foreground = attr2ansi[g_saved_state.csbi.wAttributes & 7];
+	ansiState.background = attr2ansi[(g_saved_state.csbi.wAttributes >> 4) & 7];
+}
 
 VTAnsi::VTAnsi(IVTAnsiCommands *ansi_commands)
 {
@@ -1411,10 +1418,7 @@ VTAnsi::VTAnsi(IVTAnsiCommands *ansi_commands)
 	g_vt_ansi_commands = ansi_commands;
 	ResetState();
 	g_saved_state.InitFromConsole(NULL);
-	ansiState.bold = g_saved_state.csbi.wAttributes & FOREGROUND_INTENSITY;
-	ansiState.underline = g_saved_state.csbi.wAttributes & BACKGROUND_INTENSITY;
-	ansiState.foreground = attr2ansi[g_saved_state.csbi.wAttributes & 7];
-	ansiState.background = attr2ansi[(g_saved_state.csbi.wAttributes >> 4) & 7];
+	SetDefaultAnsiState();
 	
 	VTLog::Start();
 	
@@ -1447,6 +1451,14 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 {
 	state->ApplyToConsole(NULL);
 	delete state;
+}
+
+void VTAnsi::Reset()
+{
+	g_saved_state.ApplyToConsole(NULL);
+	SetDefaultAnsiState();
+	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
+	_buf.clear();
 }
 
 void VTAnsi::Write(const char *str, size_t len)

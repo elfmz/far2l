@@ -2231,9 +2231,8 @@ jeleníthet meg.
 
    Példák:
 
-   1. ^<wrap>A #[%COMPUTERNAME%]$S$P$G# formátumú prompt a számítógép nevét,
-az aktuális meghajtó betűjelét és az elérési utat tartalmazza (ehhez a
-%COMPUTERNAME% környezeti változónak is definiáltnak kell lennie).
+   1. ^<wrap>A #[%HOSTNAME%]$S$P$### formátumú prompt a számítógép nevét,
+az aktuális meghajtó betűjelét és az elérési utat tartalmazza.
 
    2. ^<wrap>A #[$T$H$H$H]$S$P$G# formátumú promptban az aktuális idő
 (óó:pp) után a meghajtó betűjele és az elérési út áll.

@@ -900,9 +900,9 @@ static bool shown_tip_exit = false;
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
 		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
 		fprintf(f, "if [ $FARVTRESULT -eq 0 ]; then\n");
-		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[J\x1b_pop-attr\x07\"\n");
+		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[K\x1b_pop-attr\x07\"\n");
 		fprintf(f, "else\n");
-		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[J\x1b_pop-attr\x07\"\n");
+		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[K\x1b_pop-attr\x07\"\n");
 		fprintf(f, "fi\n");
 		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());//second time - prevent user from shooting own leg
 		fclose(f);

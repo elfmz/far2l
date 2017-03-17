@@ -120,9 +120,12 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 		}
 		if (fixed_font.empty() || !font.IsOk())
 			font = wxFont(wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT));
-			
+#if defined(__WXOSX__) && !wxCHECK_VERSION(3, 1, 0)
+		return;//older (not sure what exactly version) wxwidgets crashes in wxGetFontFromUser under OSX, this allows at least to start
+#else
 		if (ChooseFontAndSaveToSettings(parent, font))
 			return;
+#endif
 	}
 }
 

@@ -215,3 +215,5 @@ WINPORT_DECL(FindCloseChangeNotification, BOOL, (HANDLE hChangeHandle))
 	return TRUE;
 }
 
+////01-04
+

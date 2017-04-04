@@ -907,7 +907,5 @@ bool GetFileTimeEx(HANDLE Object, LPFILETIME CreationTime, LPFILETIME LastAccess
 
 bool SetFileTimeEx(HANDLE Object, const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime)
 {
-	bool Result = false;
-//todo
-	return Result;
+	return WINPORT(SetFileTime)(Object, CreationTime, LastAccessTime, LastWriteTime) != FALSE;
 }

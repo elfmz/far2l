@@ -51,7 +51,7 @@ static void TM2Systemtime(LPSYSTEMTIME lpSystemTime, const struct tm *ptm)
 	lpSystemTime->wMilliseconds = 0;
 }
 		
-static void Systemtime2TM2(const SYSTEMTIME *lpSystemTime, struct tm *ptm)
+static void Systemtime2TM(const SYSTEMTIME *lpSystemTime, struct tm *ptm)
 {
 	ptm->tm_sec = lpSystemTime->wSecond;
 	ptm->tm_min = lpSystemTime->wMinute;
@@ -94,10 +94,14 @@ WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTi
 WINPORT_DECL(FileTime_Win32ToUnix, VOID, (const FILETIME *lpFileTime, struct timespec *ts))
 {
 	if (!lpFileTime || !ts) return;
+	FILETIME ftm2 = {0};
+	if (!WINPORT(FileTimeToLocalFileTime)(lpFileTime, &ftm2))
+		return;
+
 	SYSTEMTIME sys_time = {};
-	WINPORT(FileTimeToSystemTime)(lpFileTime, &sys_time);
+	WINPORT(FileTimeToSystemTime)(&ftm2, &sys_time);
 	struct tm tm = {};	
-	Systemtime2TM2(&sys_time, &tm);
+	Systemtime2TM(&sys_time, &tm);
 	ts->tv_sec = mktime(&tm);
 	ts->tv_nsec = sys_time.wMilliseconds;
 	ts->tv_nsec*= 1000000;

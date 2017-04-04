@@ -146,6 +146,8 @@ extern "C" {
 		LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod));
 	WINPORT_DECL(GetFileTime, BOOL, ( HANDLE hFile, LPFILETIME lpCreationTime, 
 		LPFILETIME lpLastAccessTime, LPFILETIME lpLastWriteTime));
+	WINPORT_DECL(SetFileTime, BOOL, ( HANDLE hFile, const FILETIME *lpCreationTime, 
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime));
 	WINPORT_DECL(SetEndOfFile, BOOL, ( HANDLE hFile));
 	WINPORT_DECL(FlushFileBuffers, BOOL, ( HANDLE hFile));
 	WINPORT_DECL(GetFileType, DWORD, ( HANDLE hFile));

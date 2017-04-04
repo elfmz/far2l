@@ -747,6 +747,30 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_utimes(const char *fi
 	return r;	
 }
 
+extern "C" __attribute__ ((visibility("default"))) int sdc_futimes(int fd, const struct timeval tv[2])
+{
+	int remote_fd = s_c2s_fd.Lookup(fd);
+	if (remote_fd==-1)
+		return futimes(fd, tv);
+
+
+	try {
+		ClientTransaction ct(SUDO_CMD_FUTIMES);
+		ct.SendPOD(remote_fd);
+		ct.SendPOD(tv[0]);
+		ct.SendPOD(tv[1]);
+
+		int r = ct.RecvInt();
+		if (r == -1)
+			ct.RecvErrno();
+
+		return r;
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: futimes(0x%x) - error %s\n", fd, what);
+		return -1;
+	}
+}
+
 static int common_two_pathes(SudoCommand cmd, 
 	int (*pfn)(const char *, const char *), const char *path1, const char *path2, bool modify)
 {

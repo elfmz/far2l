@@ -394,6 +394,28 @@ extern "C"
 		WINPORT(FileTime_UnixToWin32)(s.st_atim, lpLastAccessTime);
 		return TRUE;
 	}
+
+	BOOL WINPORT(SetFileTime)( HANDLE hFile, const FILETIME *lpCreationTime, 
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
+	{
+		AutoWinPortHandle<WinPortHandleFile> wph(hFile);
+		if (!wph) {
+			return FALSE;
+		}
+
+		struct timespec ts[2] = {0};
+		if (lpLastAccessTime) {
+			WINPORT(FileTime_Win32ToUnix)(lpLastAccessTime, &ts[0]);
+		}
+		if (lpLastWriteTime) {
+			WINPORT(FileTime_Win32ToUnix)(lpLastWriteTime, &ts[1]);
+		}
+		const struct timeval tv[2] = { {ts[0].tv_sec, ts[0].tv_nsec / 1000}, {ts[1].tv_sec, ts[1].tv_nsec / 1000}};
+		if (os_call_int(sdc_futimes, wph->fd, tv) < 0)
+			return FALSE;
+
+		return TRUE;
+	}
 	
 
 	DWORD WINPORT(EvaluateAttributes)(uint32_t unix_mode, const WCHAR *name)

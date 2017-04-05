@@ -770,6 +770,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	if (event.GetKeyCode()==WXK_RETURN 
 		&& (event.AltDown() || _pressed_keys.simulate_alt()) 
 		&& !event.ShiftDown() && !event.ControlDown() ) {
+		_pressed_keys.insert(event.GetKeyCode());
 		_resize_pending = RP_INSTANT;
 		//fprintf(stderr, "RP_INSTANT\n");
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
@@ -811,7 +812,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	if (event.GetSkipped())
 		return;
 
-#ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns
+#ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns, except RETURN to avoi
 	if (!_pressed_keys.erase(event.GetKeyCode())) {
 		OnKeyDown(event);
 		_pressed_keys.erase(event.GetKeyCode());
@@ -844,7 +845,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		_last_keydown.GetTimestamp(), _last_keydown_enqueued);
 	if (event.GetSkipped())
 		return;
-		
+
 	if (event.GetUnicodeKey()!=WXK_NONE && 
 		(!_last_keydown_enqueued || _last_keydown.GetTimestamp()!=event.GetTimestamp())) {
 		INPUT_RECORD ir = {0};

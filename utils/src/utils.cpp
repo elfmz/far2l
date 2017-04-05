@@ -359,3 +359,8 @@ bool TranslateInstallPath_Share2Lib(std::string &path)
 {
 	return TranslateInstallPath(path, "share", "lib");
 }
+
+bool isCombinedUTF32(wchar_t c)
+{
+	return c >= 0x0300 && c <= 0x036F;
+}

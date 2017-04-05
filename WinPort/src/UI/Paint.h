@@ -68,11 +68,12 @@ class ConsolePainter
 	
 	ConsolePaintContext *_context;
 	wxPaintDC &_dc;
+	wxString &_buffer;
 	CursorProps _cursor_props;
+	WinPortRGB _clr_text, _clr_back;
 	unsigned int _start_cx, _start_cy, _start_back_cx;
 	unsigned int _start_y;
-	WinPortRGB _clr_text, _clr_back;
-	wxString &_buffer;
+	uint8_t _prev_fit_font_index;
 	
 	void SetBackgroundColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr);

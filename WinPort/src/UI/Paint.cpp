@@ -406,8 +406,8 @@ CursorProps::CursorProps(bool state) : visible(false), height(1)
 //////////////////////
 
 ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer) : 
-	_context(context), _dc(dc), _cursor_props(context->GetCursorState()),
-	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _buffer(buffer)
+	_context(context), _dc(dc), _buffer(buffer), _cursor_props(context->GetCursorState()),
+	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0)
 {
 	wxPen *trans_pen = wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT);
 	_dc.SetPen(*trans_pen);
@@ -476,6 +476,7 @@ void ConsolePainter::FlushText()
 		_buffer.Empty();
 	}
 	_start_cx = (unsigned int)-1;
+	_prev_fit_font_index = 0;
 }
 
 
@@ -493,14 +494,17 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		return;
 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
+
+	uint8_t fit_font_index = isCombinedUTF32(c) ? // workaround for 
+		_prev_fit_font_index : _context->CharFitTest(_dc, c);
 	
-	uint8_t fit_font_index = _context->CharFitTest(_dc, c);
-	
-	if (fit_font_index==0 && _context->IsPaintBuffered() && 
-		_start_cx != (unsigned int) -1 && _clr_text == clr_text) {
+	if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
+		&& _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
 		_buffer+= c;
 		return;
 	}
+
+	_prev_fit_font_index = fit_font_index;
 
 	FlushBackground(cx + 1);
 	FlushText();

@@ -92,8 +92,12 @@ static int wxKeyCode2WinKeyCode(int code)
     case WXK_PRINT: return VK_PRINT;
     case WXK_EXECUTE: return VK_EXECUTE;
     case WXK_SNAPSHOT: return VK_SNAPSHOT;
-    case WXK_INSERT: return VK_INSERT;
+#ifdef __WXOSX__
+    case WXK_HELP: return VK_INSERT; //Or its hackintosh bug? If so - remove this ifdef.
+#else
     case WXK_HELP: return VK_HELP;
+#endif
+    case WXK_INSERT: return VK_INSERT;
     case WXK_NUMPAD0: return VK_NUMPAD0;
     case WXK_NUMPAD1: return VK_NUMPAD1;
     case WXK_NUMPAD2: return VK_NUMPAD2;

@@ -576,28 +576,37 @@ void InterpretEscSeq( void )
 	                                     &NumberOfCharsWritten )
 
 	if (prefix == '[') {
-		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l') && es_argc == 1) {
-			switch (es_argv[0]) {
-			case 25:
-				WINPORT(GetConsoleCursorInfo)( hConOut, &CursInfo );
-				CursInfo.bVisible = (suffix == 'h');
-				WINPORT(SetConsoleCursorInfo)( hConOut, &CursInfo );
-				return;
+		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
+			for (i = 0; i < es_argc; ++i) {
+				switch (es_argv[i]) {
+				case 25:
+					WINPORT(GetConsoleCursorInfo)( hConOut, &CursInfo );
+					CursInfo.bVisible = (suffix == 'h');
+					WINPORT(SetConsoleCursorInfo)( hConOut, &CursInfo );
+					break;
 
-			case 7:
-				mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
-				if (suffix == 'h')
-					mode |= ENABLE_WRAP_AT_EOL_OUTPUT;
-				WINPORT(SetConsoleMode)( hConOut, mode );
-				return;
-			}
+				case 7:
+					mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
+					if (suffix == 'h')
+						mode |= ENABLE_WRAP_AT_EOL_OUTPUT;
+					WINPORT(SetConsoleMode)( hConOut, mode );
+					break;
+
+				case 1:
+					if (g_vt_ansi_commands)
+						g_vt_ansi_commands->OnKeypadChange((suffix == 'h') ? 1 : 0);
+					break;
+
+				default:
+					fprintf(stderr, "Ignoring: %c %c %u %u\n", prefix2, suffix, es_argc, es_argv[i]);
+			} }
+			return;
 		}
 		// Ignore any other private sequences.
 		if (prefix2 != 0) {
 			fprintf(stderr, "Ignoring: %c %c %u %u\n", prefix2, suffix, es_argc, es_argv[0]);
 			return;			
 		}
-
 
 		WINPORT(GetConsoleScreenBufferInfo)( hConOut, &Info );
 		//fprintf(stderr, "suffix: %c argc: %u argv: %u %u\n", suffix, es_argc, es_argv[0], es_argv[1]);

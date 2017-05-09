@@ -4,7 +4,7 @@
 //See: 
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm:
     
-const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad)
+const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad)
 {
 	if (key==VK_CONTROL || key==VK_MENU || key==VK_SHIFT)
 		return ""; //modifiers should not be sent as keys
@@ -25,8 +25,8 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1bO2P";
 			if (alt) return "\x1bO3P";
 			if (ctrl) return "\x1bO5P";
-			if (keypad==2) return "\x1b[11~";
-			if (keypad==1) return "\x1b[[A";
+			//if (keypad==2) return "\x1b[11~";
+			//if (keypad==1) return "\x1b[[A";
 			return "\x1bOP";
 
 		case VK_F2: /*
@@ -39,8 +39,8 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1bO2Q";
 			if (alt) return "\x1bO3Q";
 			if (ctrl) return "\x1bO5Q";
-			if (keypad==2) return "\x1b[12~";
-			if (keypad==1) return "\x1b[[B";
+			//if (keypad==2) return "\x1b[12~";
+			//if (keypad==1) return "\x1b[[B";
 			return "\x1bOQ";
 			
 
@@ -54,8 +54,8 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1bO2R";
 			if (alt) return "\x1bO3R";
 			if (ctrl) return "\x1bO5R";
-			if (keypad==2) return "\x1b[13~";
-			if (keypad==1) return "\x1b[[C";
+			//if (keypad==2) return "\x1b[13~";
+			//if (keypad==1) return "\x1b[[C";
 			return "\x1bOR";
 
 
@@ -69,8 +69,8 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1bO2S";
 			if (alt) return "\x1bO3S";
 			if (ctrl) return "\x1bO5S";
-			if (keypad==2) return "\x1b[14~";
-			if (keypad==1) return "\x1b[[D";
+			//if (keypad==2) return "\x1b[14~";
+			//if (keypad==1) return "\x1b[[D";
 			return "\x1bOS";
 
 		case VK_F5: /*
@@ -82,7 +82,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1b[15;2~";
 			if (alt) return "\x1b[15;3~";
 			if (ctrl) return "\x1b[15;5~";
-			if (keypad==1 || keypad==2) return "\x1b[[E";
+			//if (keypad==1 || keypad==2) return "\x1b[[E";
 			return "\x1b[15~";
 			
 
@@ -194,7 +194,8 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1b[2H";
 			if (alt) return "\x1b[3H";
 			if (ctrl) return "\x1b[5H";
-			return "\x1b[1~";
+			return "\x1bOH";
+			//return "\x1b[1~";
 		
 		case VK_END: /*
         End                \x1b[4~
@@ -214,7 +215,8 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1b[2F";
 			if (alt) return "\x1b[3F";
 			if (ctrl) return "\x1b[5F";
-			return "\x1b[4~";
+			return "\x1bOF";
+			//return "\x1b[4~";
 		
 		case VK_PRIOR: /*
         PgUp               \x1b[5~
@@ -245,7 +247,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Up       Alt       \x1b[1;3A
         Up       Ctrl      \x1b[5A
         Up       Ctrl      \x1b[1;5A */
-			if (keypad > 0) {
+			if (keypad == 0) {
 				if (shift) return "\x1b[1;2A";
 				if (alt) return "\x1b[1;3A";
 				if (ctrl) return "\x1b[1;5A";
@@ -265,7 +267,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Down     Alt       \x1b[1;3B
         Down     Ctrl      \x1b[5B
         Down     Ctrl      \x1b[1;5B */
-			if (keypad > 0) {
+			if (keypad == 0) {
 				if (shift) return "\x1b[1;2B";
 				if (alt) return "\x1b[1;3B";
 				if (ctrl) return "\x1b[1;5B";
@@ -285,7 +287,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Left     Alt       \x1b[1;3D
         Left     Ctrl      \x1b[5D
         Left     Ctrl      \x1b[1;5D */
-			if (keypad > 0) {
+			if (keypad == 0) {
 				if (shift) return "\x1b[1;2D";
 				if (alt) return "\x1b[1;3D";
 				if (ctrl) return "\x1b[1;5D";
@@ -305,7 +307,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Right    Alt       \x1b[1;3C
         Right    Ctrl      \x1b[5C
         Right    Ctrl      \x1b[1;5C */
-			if (keypad > 0) {
+			if (keypad == 0) {
 				if (shift) return "\x1b[1;2C";
 				if (alt) return "\x1b[1;3C";
 				if (ctrl) return "\x1b[1;5C";

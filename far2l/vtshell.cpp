@@ -22,7 +22,7 @@
 #define __USE_BSD 
 #include <termios.h> 
 
-const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, char keypad = 0);
+const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0);
 
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
 
@@ -383,12 +383,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	VTOutputReader _output_reader;
 	std::mutex _inout_control_mutex;
 	std::mutex _fd_in_mutex;
+	std::mutex _keypad_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _shell_pid, _forked_proc_pid;
 	std::string _slavename;
 	CompletionMarker _completion_marker;
 	bool _skipping_line;
+	unsigned char _keypad;
 	INPUT_RECORD _last_window_info_ir;
 	
 	
@@ -711,6 +713,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			UpdateTerminalSize(_fd_out);
 	}
 
+	virtual void OnKeypadChange(unsigned char keypad)
+	{
+//		fprintf(stderr, "VTShell::OnKeypadChange: %u\n", keypad);
+		std::lock_guard<std::mutex> lock(_keypad_mutex);
+		_keypad = keypad;
+	}
+
 	virtual int OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
 	{
 		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
@@ -808,7 +817,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				OnConsoleLog(CLK_VIEW);
 			} 
 
-			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift);
+			std::lock_guard<std::mutex> lock(_keypad_mutex);
+			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad);
 			if (spec)
 				return spec;
 		}
@@ -913,7 +923,7 @@ static bool shown_tip_exit = false;
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
 		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1), 
-		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false)
+		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())
@@ -982,6 +992,7 @@ static bool shown_tip_exit = false;
 		remove(cmd_script.c_str());
 
 		_vta.Reset();
+		OnKeypadChange(0);
 		DeliverPendingWindowInfo();
 		return _completion_marker.LastExitCode();
 	}	

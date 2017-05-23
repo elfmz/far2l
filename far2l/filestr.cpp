@@ -878,6 +878,8 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 		{
 			file.SetPointer(0, nullptr, FILE_BEGIN);
 		}
+	} else {
+		file.SetPointer(0, nullptr, FILE_BEGIN);
 	}
 
 	if (bSignatureFound)

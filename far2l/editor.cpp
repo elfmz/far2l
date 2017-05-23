@@ -1691,7 +1691,7 @@ int Editor::ProcessKey(int Key)
 
 				if (EdOpt.BSLikeDel)
 				{
-					if (!Pasting && EdOpt.DelRemovesBlocks && (BlockStart || VBlockStart))
+					if (!Pasting && EdOpt.DelRemovesBlocks && (BlockStart || (VBlockStart && /* #279 */ VBlockSizeX > 0 && VBlockSizeY > 0)) )
 						IsDelBlock=TRUE;
 				}
 				else

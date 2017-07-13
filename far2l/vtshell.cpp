@@ -902,9 +902,9 @@ static bool shown_tip_exit = false;
 			shown_tip_init = true;
 		}
 		if (need_sudo) {
-			fprintf(f, "sudo sh -c \"cd '%s' && %s\"\n", EscapeQuotas(cd).c_str(), EscapeQuotas(cmd).c_str());
+			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s\"\n", EscapeEscapes(EscapeQuotas(cd)).c_str(), EscapeEscapes(cmd).c_str());
 		} else {
-			fprintf(f, "cd '%s' && %s\n", EscapeQuotas(cd).c_str(), cmd);
+			fprintf(f, "cd \"%s\" && %s\n", EscapeQuotas(cd).c_str(), cmd);
 		}
 
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside

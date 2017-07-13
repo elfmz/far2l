@@ -29,6 +29,7 @@ unsigned char Hex2Byte(const char *hex);
 
 size_t StrStartsFrom(const std::string &haystack, const char *needle);
 
+std::string EscapeEscapes(std::string str);
 std::string EscapeQuotas(std::string str);
 
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);

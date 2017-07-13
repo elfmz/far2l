@@ -227,6 +227,18 @@ std::string EscapeQuotas(std::string str)
 	}
 	return str;
 }
+
+std::string EscapeEscapes(std::string str)
+{
+	for (size_t p = 0; (p + 1) < str.size(); ) {
+		if (str[p] == '\\' && (str[p + 1] == '\"' || str[p + 1] == '\\' || str[ p + 1] == '\t') ) {
+			str.insert(p, 2, '\\');
+			p+= 4;
+		} else
+			++p;
+	}
+	return str;
+}
 	
 ////////////////////////////////////////////////////////////////
 

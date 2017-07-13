@@ -4567,7 +4567,7 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	SortFileList(TRUE);
 	ShowFileList(TRUE);
 	CtrlObject->Cp()->Redraw();
-	CreateChangeNotification(TRUE);
+	CreateChangeNotification(FALSE);//initially here was TRUE, but size is actually recursively recalculated on deep change, so changing this to FALSE should not break anything, however give MUCH better performance due to inotify is slow on multiple directories
 }
 
 

@@ -84,4 +84,4 @@ script:
   - mkdir build
   - cd build
   - cmake -G Ninja .. && ninja -j4 -v
-
+  - cd install && zip -r ../far2l-$TRAVIS_COMMIT.zip * && cd -

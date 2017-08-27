@@ -329,4 +329,9 @@ extern "C" {
 	{
 		return g_wx_con_out.ConsoleChangeFont();
 	}
+
+	WINPORT_DECL(IsConsoleActive, BOOL, ())
+	{
+		return g_wx_con_out.IsActive() ? TRUE : FALSE;
+	}
 }

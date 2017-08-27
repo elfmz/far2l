@@ -797,6 +797,7 @@ int PluginA::ProcessEditorEvent(
 		es.id = EXCEPT_PROCESSEDITOREVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessEditorEvent(Event, Param), es);
+		(void)es; // supress 'set but not used' warning
 	}
 
 	return 0; //oops!
@@ -813,6 +814,7 @@ int PluginA::ProcessViewerEvent(
 		es.id = EXCEPT_PROCESSVIEWEREVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessViewerEvent(Event, Param), es);
+		(void)es; // supress 'set but not used' warning
 	}
 
 	return 0; //oops, again!
@@ -883,6 +885,7 @@ void PluginA::FreeVirtualFindData(
 		es.id = EXCEPT_FREEVIRTUALFINDDATA;
 		EXECUTE_FUNCTION(pFreeVirtualFindData(hPlugin, pVFDPanelItemA, ItemsNumber), es);
 		pVFDPanelItemA = nullptr;
+		(void)es; // supress 'set but not used' warning
 	}
 }
 
@@ -1121,6 +1124,7 @@ void PluginA::FreeFindData(
 		es.id = EXCEPT_FREEFINDDATA;
 		EXECUTE_FUNCTION(pFreeFindData(hPlugin, pFDPanelItemA, ItemsNumber), es);
 		pFDPanelItemA = nullptr;
+		(void)es; // supress 'set but not used' warning
 	}
 }
 
@@ -1154,6 +1158,7 @@ void PluginA::ClosePlugin(
 		ExecuteStruct es;
 		es.id = EXCEPT_CLOSEPLUGIN;
 		EXECUTE_FUNCTION(pClosePlugin(hPlugin), es);
+		(void)es; // supress 'set but not used' warning
 	}
 
 	FreeOpenPluginInfo();
@@ -1292,6 +1297,7 @@ void PluginA::GetOpenPluginInfo(
 		oldfar::OpenPluginInfo InfoA={0};
 		EXECUTE_FUNCTION(pGetOpenPluginInfo(hPlugin, &InfoA), es);
 		ConvertOpenPluginInfo(InfoA,pInfo);
+		(void)es; // supress 'set but not used' warning
 	}
 }
 
@@ -1419,6 +1425,7 @@ void PluginA::ExitFAR()
 		ExecuteStruct es;
 		es.id = EXCEPT_EXITFAR;
 		EXECUTE_FUNCTION(pExitFAR(), es);
+		(void)es; // supress 'set but not used' warning
 	}
 }
 

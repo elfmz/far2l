@@ -848,6 +848,7 @@ int PluginW::ProcessEditorEvent(
 		es.id = EXCEPT_PROCESSEDITOREVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessEditorEventW(Event, Param), es);
+		(void)es; // supress 'set but not used' warning
 	}
 
 	return 0; //oops!
@@ -864,6 +865,7 @@ int PluginW::ProcessViewerEvent(
 		es.id = EXCEPT_PROCESSVIEWEREVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessViewerEventW(Event, Param), es);
+		(void)es; // supress 'set but not used' warning
 	}
 
 	return 0; //oops, again!
@@ -899,6 +901,7 @@ int PluginW::ProcessSynchroEvent(
 		es.id = EXCEPT_PROCESSSYNCHROEVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessSynchroEventW(Event, Param), es);
+		(void)es; // supress 'set but not used' warning
 	}
 
 	return 0; //oops, again!
@@ -961,6 +964,7 @@ void PluginW::FreeVirtualFindData(
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEVIRTUALFINDDATA;
 		EXECUTE_FUNCTION(pFreeVirtualFindDataW(hPlugin, PanelItem, ItemsNumber), es);
+		(void)es; // supress 'set but not used' warning
 	}
 }
 
@@ -1155,6 +1159,7 @@ void PluginW::FreeFindData(
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEFINDDATA;
 		EXECUTE_FUNCTION(pFreeFindDataW(hPlugin, PanelItem, ItemsNumber), es);
+		(void)es; // supress 'set but not used' warning
 	}
 }
 
@@ -1188,6 +1193,7 @@ void PluginW::ClosePlugin(
 		ExecuteStruct es;
 		es.id = EXCEPT_CLOSEPLUGIN;
 		EXECUTE_FUNCTION(pClosePluginW(hPlugin), es);
+		(void)es; // supress 'set but not used' warning
 	}
 
 //	m_pManager->m_pCurrentPlugin = (Plugin*)-1;
@@ -1228,6 +1234,7 @@ void PluginW::GetOpenPluginInfo(
 		ExecuteStruct es;
 		es.id = EXCEPT_GETOPENPLUGININFO;
 		EXECUTE_FUNCTION(pGetOpenPluginInfoW(hPlugin, pInfo), es);
+		(void)es; // supress 'set but not used' warning
 	}
 }
 
@@ -1290,6 +1297,7 @@ void PluginW::FreeCustomData(wchar_t *CustomData)
 		ExecuteStruct es;
 		es.id = EXCEPT_FREECUSTOMDATA;
 		EXECUTE_FUNCTION(pFreeCustomDataW(CustomData), es);
+		(void)es; // supress 'set but not used' warning
 	}
 }
 
@@ -1300,6 +1308,7 @@ void PluginW::ExitFAR()
 		ExecuteStruct es;
 		es.id = EXCEPT_EXITFAR;
 		EXECUTE_FUNCTION(pExitFARW(), es);
+		(void)es; // supress 'set but not used' warning
 	}
 }
 

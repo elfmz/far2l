@@ -1344,6 +1344,11 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	DestPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
 	DestPanel->Redraw();
 #endif
+
+	if (Opt.NotifOpt.OnFileOperation) {
+		DisplayNotification(MSG(MFileOperationComplete), strSelName); // looks like strSelName is best choice
+	}
+
 }
 
 

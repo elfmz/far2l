@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scantree.hpp"
 #include "config.hpp"
 #include "pathmix.hpp"
+#include "dirmix.hpp"
 
 int ToPercent(uint32_t N1,uint32_t N2)
 {
@@ -175,4 +176,29 @@ FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix, BOOL WithTempP
 
 	strDest.ReleaseBuffer();
 	return strDest;
+}
+
+void DisplayNotification(const wchar_t *action, const char *object)
+{
+	if (Opt.NotifOpt.OnlyIfBackground && WINPORT(IsConsoleActive)() != FALSE) {
+		return;
+	}
+
+	const std::string &str_script = GetHelperPathName("notify.sh");
+	const std::string &str_action = Wide2MB(action);
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		execl(str_script.c_str(), str_script.c_str(), str_action.c_str(), object, NULL);
+		perror("DisplayNotification - execl");
+		_exit(0);
+		exit(0);
+
+	} else if (pid != -1)
+		PutZombieUnderControl(pid);
+}
+
+void DisplayNotification(const wchar_t *action, const wchar_t *object)
+{
+	DisplayNotification(action, Wide2MB(object).c_str());
 }

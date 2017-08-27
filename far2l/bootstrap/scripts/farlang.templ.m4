@@ -2568,6 +2568,61 @@ upd:"Neue Dateien mit UTF-8-Ko&dierung erstellen"
 "&Twórz nowe pliki w kodowaniu UTF-8"
 "Usar código UTF-8 al c&rear archivos nuevos"
 
+MNotifConfigTitle
+l:
+"Уведомления"
+"Notifications"
+"Notifications"
+"Notifications"
+"Notifications"
+"Notifications"
+"Notifications"
+
+MNotifConfigOnFileOperation
+"Уведомлять о завершении &файловой операции"
+"Notify on &file operation completion"
+upd:"Notify on &file operation completion"
+upd:"Notify on &file operation completion"
+upd:"Notify on &file operation completion"
+upd:"Notify on &file operation completion"
+upd:"Notify on &file operation completion"
+
+MNotifConfigOnConsole
+"Уведомлять о завершении &консольной команды"
+"Notify on &console command completion"
+upd:"Notify on &console command completion"
+upd:"Notify on &console command completion"
+upd:"Notify on &console command completion"
+upd:"Notify on &console command completion"
+upd:"Notify on &console command completion"
+
+MNotifConfigOnlyIfBackground
+"Уведомлять только когда в &фоне"
+"Notify only if in &background"
+upd:"Notify only if in &background"
+upd:"Notify only if in &background"
+upd:"Notify only if in &background"
+upd:"Notify only if in &background"
+upd:"Notify only if in &background"
+
+MConsoleCommandComplete
+"Консольная команда выполнена"
+"Console command complete"
+upd:"Console command complete"
+upd:"Console command complete"
+upd:"Console command complete"
+upd:"Console command complete"
+upd:"Console command complete"
+
+MFileOperationComplete
+"Файловая операция выполнена"
+"File operation complete"
+upd:"File operation complete"
+upd:"File operation complete"
+upd:"File operation complete"
+upd:"File operation complete"
+upd:"File operation complete"
+
 MSaveSetupTitle
 l:
 "Конфигурация"
@@ -11006,6 +11061,15 @@ MMenuEditor
 "&Szerkesztő beállítások"
 "Ustawienia &edytora"
 "&Editor "
+
+MMenuNotifications
+"Настройки &уведомлений"
+"No&tifications settings"
+upd:"No&tifications settings"
+upd:"No&tifications settings"
+upd:"No&tifications settings"
+upd:"No&tifications settings"
+upd:"No&tifications settings"
 
 MMenuCodePages
 "Кодов&ые страницы"

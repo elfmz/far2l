@@ -85,6 +85,7 @@ const wchar_t NKeyInterfaceCompletion[]=L"Interface/Completion";
 const wchar_t NKeyViewer[]=L"Viewer";
 const wchar_t NKeyDialog[]=L"Dialog";
 const wchar_t NKeyEditor[]=L"Editor";
+const wchar_t NKeyNotifications[]=L"Notifications";
 const wchar_t NKeyXLat[]=L"XLat";
 const wchar_t NKeySystem[]=L"System";
 const wchar_t NKeySystemExecutor[]=L"System/Executor";
@@ -565,6 +566,21 @@ void EditorConfig(EditorOptions &EdOpt,bool Local)
 }
 
 
+void NotificationsConfig(NotificationsOptions &NotifOpt)
+{
+	DialogBuilder Builder(MNotifConfigTitle, L"NotificationsSettings");
+
+	Builder.AddCheckbox(MNotifConfigOnFileOperation, &NotifOpt.OnFileOperation);
+	Builder.AddCheckbox(MNotifConfigOnConsole, &NotifOpt.OnConsole);
+	Builder.AddCheckbox(MNotifConfigOnlyIfBackground, &NotifOpt.OnlyIfBackground);
+	Builder.AddOKCancel();
+
+	if (Builder.ShowDialog())
+	{
+	}
+}
+
+
 void SetFolderInfoFiles()
 {
 	FARString strFolderInfoFiles;
@@ -697,6 +713,10 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyEditor,L"SearchRegexp",&Opt.EdOpt.SearchRegexp,0, 0},
 	{1, REG_DWORD,  NKeyEditor,L"SearchPickUpWord",&Opt.EdOpt.SearchPickUpWord,0, 0},
 	{1, REG_DWORD,  NKeyEditor,L"ShowWhiteSpace",&Opt.EdOpt.ShowWhiteSpace,0, 0},
+
+	{1, REG_DWORD,  NKeyNotifications,L"OnFileOperation",&Opt.NotifOpt.OnFileOperation,1, 0},
+	{1, REG_DWORD,  NKeyNotifications,L"OnConsole",&Opt.NotifOpt.OnConsole,1, 0},
+	{1, REG_DWORD,  NKeyNotifications,L"OnlyIfBackground",&Opt.NotifOpt.OnlyIfBackground,1, 0},
 
 	{0, REG_DWORD,  NKeyXLat,L"Flags",&Opt.XLat.Flags,(DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE, 0},
 	{0, REG_SZ,     NKeyXLat,L"Table1",&Opt.XLat.Table[0],0,L""},

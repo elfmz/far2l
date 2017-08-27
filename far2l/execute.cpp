@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dirmix.hpp"
 #include "strmix.hpp"
 #include "panelmix.hpp"
+#include "mix.hpp"
 #include "syslog.hpp"
 #include "constitle.hpp"
 #include "console.hpp"
@@ -227,6 +228,9 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 		} else {
 			r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0);
 		}
+		if ((ExecFlags & EF_NOTIFY) && Opt.NotifOpt.OnConsole) {
+			DisplayNotification(MSG(MConsoleCommandComplete), CmdStr);
+		}
 		WINPORT(SetConsoleMode)( NULL, saved_mode | 
 			ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
@@ -268,7 +272,7 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 {
 	int r = -1;
 	ExecClassifier ec(CmdStr);
-	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : 0;
+	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : ( (Silent || SeparateWindow) ? 0 : EF_NOTIFY );
 	std::string tmp;
 	if (ec.IsDir() && SeparateWindow) {
 		tmp = GetOpenShVerb("dir");

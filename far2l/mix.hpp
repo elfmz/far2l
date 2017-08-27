@@ -51,3 +51,5 @@ extern "C"
 #endif
 
 FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix=nullptr, BOOL WithTempPath=TRUE, const wchar_t *UserTempPath=nullptr);
+void DisplayNotification(const wchar_t *action, const char *object);
+void DisplayNotification(const wchar_t *action, const wchar_t *object);

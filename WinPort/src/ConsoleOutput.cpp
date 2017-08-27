@@ -568,3 +568,8 @@ void ConsoleOutput::ConsoleChangeFont()
 	if (_listener)
 		_listener->OnConsoleChangeFont();
 }
+
+bool ConsoleOutput::IsActive()
+{
+	return _listener ? _listener->OnConsoleIsActive() : false;
+}

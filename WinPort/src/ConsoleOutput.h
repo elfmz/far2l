@@ -18,6 +18,7 @@ class ConsoleOutputListener
 		virtual void OnConsoleChangeFont() = 0;
 		virtual void OnConsoleSetMaximized(bool maximized) = 0;
 		virtual void OnConsoleExit() = 0;
+		virtual bool OnConsoleIsActive() = 0;
 };
 
 class ConsoleOutput
@@ -110,6 +111,7 @@ public:
 	void AdhocQuickEdit();
 	DWORD SetConsoleTweaks(DWORD tweaks);
 	void ConsoleChangeFont();
+	bool IsActive();
 };
 
 

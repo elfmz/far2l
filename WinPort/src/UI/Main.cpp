@@ -15,6 +15,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <atomic>
 
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
@@ -186,6 +187,7 @@ protected:
 	virtual DWORD OnConsoleSetTweaks(DWORD tweaks);
 	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleExit();
+	virtual bool OnConsoleIsActive();
 	
 private:
 	void CheckForResizePending();
@@ -209,6 +211,7 @@ private:
 	void OnMouse( wxMouseEvent &event );
 	void OnMouseNormal( wxMouseEvent &event, COORD pos_char);
 	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char);
+	void OnSetFocus( wxFocusEvent &event );
 	void OnKillFocus( wxFocusEvent &event );
 	COORD TranslateMousePosition( wxMouseEvent &event );
 	void DamageAreaBetween(COORD c1, COORD c2);
@@ -228,6 +231,7 @@ private:
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
+	std::atomic<bool> _has_focus;
 	
 	WinPortFrame *_frame;
 	wxTimer* _periodic_timer;
@@ -425,6 +429,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_ERASE_BACKGROUND(WinPortPanel::OnEraseBackground)
 	EVT_SIZE(WinPortPanel::OnSize)
 	EVT_MOUSE_EVENTS(WinPortPanel::OnMouse )
+	EVT_SET_FOCUS(WinPortPanel::OnSetFocus )
 	EVT_KILL_FOCUS(WinPortPanel::OnKillFocus )
 
 wxEND_EVENT_TABLE()
@@ -452,7 +457,7 @@ bool WinPortApp::OnInit()
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
-		_paint_context(this), _frame(frame), _periodic_timer(NULL),  
+		_paint_context(this), _has_focus(true), _frame(frame), _periodic_timer(NULL),
 		_right_control(false), _last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0),
 		_refresh_rects_throttle(0)
@@ -1109,6 +1114,12 @@ DWORD WinPortPanel::OnConsoleSetTweaks(DWORD tweaks)
 	return out;
 }
 
+
+bool WinPortPanel::OnConsoleIsActive()
+{
+	return _has_focus;
+}
+
 void WinPortPanel::OnConsoleChangeFontSync(wxCommandEvent& event)
 {
 	_paint_context.ShowFontDialog();
@@ -1154,10 +1165,15 @@ void WinPortPanel::CheckPutText2CLip()
 	}	
 }
 
+void WinPortPanel::OnSetFocus( wxFocusEvent &event )
+{
+	_has_focus = true;
+}
 
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 {
 	fprintf(stderr, "OnKillFocus\n");
+	_has_focus = false;
 
 	for (auto k : _pressed_keys) {
 		INPUT_RECORD ir = {0};

@@ -76,6 +76,7 @@ extern "C" {
 #define TWEAK_STATUS_SUPPORT_PAINT_SHARP	0x2
 
 	WINPORT_DECL(ConsoleChangeFont, VOID, ());
+	WINPORT_DECL(IsConsoleActive, BOOL, ());
 
 	///Registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));

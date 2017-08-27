@@ -85,6 +85,22 @@ enum enumOpenEditor
 	ID_OE_CANCEL,
 };
 
+static const wchar_t *EOLName(const wchar_t *eol)
+{
+	if (wcscmp(eol, L"\n") == 0)
+		return L"LF";
+
+	if (wcscmp(eol, L"\r") == 0)
+		return L"CR";
+
+	if (wcscmp(eol, L"\r\n") == 0)
+		return L"CRLF";
+
+	if (wcscmp(eol, L"\r\r\n") == 0)
+		return L"CRRLF";
+
+	return eol;//L"WTF";
+}
 
 LONG_PTR __stdcall hndOpenEditor(
     HANDLE hDlg,
@@ -2277,6 +2293,7 @@ void FileEditor::ShowStatus()
 	(m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"':L' ')<<
+	fmt::Width(5)<<EOLName(m_editor->GlobalEOL)<<L' '<<
 	fmt::Width(5)<<m_codepage<<L' '<<fmt::Width(7)<<MSG(MEditStatusLine)<<L' '<<
 	fmt::Width(SizeLineStr)<<fmt::Precision(SizeLineStr)<<strLineStr<<L' '<<
 	fmt::Width(5)<<MSG(MEditStatusCol)<<L' '<<

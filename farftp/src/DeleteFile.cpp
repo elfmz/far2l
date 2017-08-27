@@ -65,8 +65,10 @@ BOOL idDeleteCB(PluginPanelItem* p,LPVOID dt)
 
 //===============================
 //Hosts
-	if(((DeleteData*)dt)->ShowHosts)
+	if(((DeleteData*)dt)->ShowHosts) {
+		RegWipeScope reg_wipe_scope;
 		return FP_DeleteRegKeyAll(h->RegKey);
+	}
 
 //===============================
 //FTP

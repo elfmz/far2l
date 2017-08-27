@@ -100,6 +100,9 @@ extern "C" {
 		LPDWORD lpcValues, LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen,
 		LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime));
 
+	WINPORT_DECL(RegWipeBegin, VOID, ());
+	WINPORT_DECL(RegWipeEnd, VOID, ());
+
 //other
 	WINPORT_DECL(TranslateErrno, VOID, ());
 	WINPORT_DECL(GetLastError, DWORD, ());
@@ -276,13 +279,25 @@ extern "C" {
 #ifdef __cplusplus
 }
 
-
 struct __attribute__ ((visibility("default"))) WINPORT(LastErrorGuard)
 {
 	DWORD value;
 	
 	WINPORT(LastErrorGuard)();
 	~ WINPORT(LastErrorGuard)();
+};
+
+
+struct RegWipeScope
+{
+	inline RegWipeScope()
+	{
+		WINPORT(RegWipeBegin)();
+	}
+	inline ~RegWipeScope()
+	{
+		WINPORT(RegWipeEnd)();
+	}
 };
 #endif
 

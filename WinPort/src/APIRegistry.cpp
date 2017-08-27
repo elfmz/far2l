@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <atomic>
 
 #include <wx/wx.h>
 #include <wx/display.h>
@@ -14,7 +15,11 @@
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
 #include <utils.h>
+#include "os_call.h"
 
+
+
+static std::atomic<int>	s_reg_wipe_count(0);
 
 struct WinPortHandleReg : WinPortHandle
 {
@@ -60,6 +65,71 @@ static std::string HKDir(HKEY hKey)
 	return out;
 }
 
+static int try_open_rw(const char *path)
+{
+	return open(path, O_RDWR);
+}
+
+static std::string LitterFile(const char *path)
+{
+	int fd = os_call_int(try_open_rw, path);
+	if (fd == -1) {
+		if (errno != ENOENT)
+			perror("LitterFile - open");
+		return path;
+	}
+
+	struct stat s = {};
+	if (fstat(fd, &s) != 0)
+		s.st_size = 0x10000;
+
+	srand(fd ^ time(NULL));
+
+	unsigned char garbage[128];
+	for (off_t i = 0; i < s.st_size;) {
+		const size_t piece = (s.st_size - i > (off_t)sizeof(garbage))
+			? sizeof(garbage) : (size_t) (s.st_size - i);
+		for (size_t j = 0; j < piece; ++j) {
+			garbage[j] = rand() % 0xff;
+		}
+
+		if (os_call_v<ssize_t, -1>(write, fd,
+			(const void *)&garbage[0], piece) != (ssize_t)piece) {
+			perror("LitterFile - write");
+		}
+		i+= piece;
+	}
+	//fprintf(stderr, "LitterFile - WRITTEN: '%s'\n", path);
+	os_call_int(fsync, fd);
+	os_call_int(close, fd);
+
+	std::string garbage_path = path;
+	size_t p = garbage_path.rfind('/');
+	if (p != std::string::npos) {
+		size_t l = garbage_path.size();
+		garbage_path.resize(p + 1);
+		for (size_t i = p + 1; i < l; ++i) {
+			garbage_path+= 'a' + (rand() % ('z' - 'a' + 1));
+		}
+	}
+	if (os_call_int(rename, path, garbage_path.c_str()) == 0) {
+		//fprintf(stderr, "LitterFile - RENAMED: '%s' -> '%s'\n", path, garbage_path.c_str());
+		return garbage_path;
+	}
+
+	return path;
+}
+
+static int RemoveRegistryFile(const char *path)
+{
+	if (s_reg_wipe_count) {
+		std::string garbage_path = LitterFile(path);
+		garbage_path = LitterFile(garbage_path.c_str());
+		garbage_path = LitterFile(garbage_path.c_str());
+		return os_call_int(remove, garbage_path.c_str());
+	}
+	return os_call_int(remove, path);
+}
 
 LONG RegXxxKeyEx(
 	bool create,
@@ -457,7 +527,8 @@ extern "C" {
 			if (name.empty())
 				break;
 			std::string file = dir + "/" + name;
-			if (remove(file.c_str())) return ERROR_PATH_NOT_FOUND;
+			if (RemoveRegistryFile(file.c_str()) != 0)
+				return ERROR_PATH_NOT_FOUND;
 		}
 
 		if (rmdir(dir.c_str())!=0) {
@@ -481,7 +552,7 @@ extern "C" {
 		std::string path = wph->dir; 
 		path+= WINPORT_REG_DIV_VALUE;
 		if (lpValueName) path+= Wide2MB(lpValueName);
-		return (remove(path.c_str())==0) ? ERROR_SUCCESS : ERROR_PATH_NOT_FOUND;
+		return (remove(path.c_str()) == 0) ? ERROR_SUCCESS : ERROR_PATH_NOT_FOUND;
 	}
 
 
@@ -685,6 +756,17 @@ extern "C" {
 		return ERROR_SUCCESS;
 	}
 
+
+	WINPORT_DECL(RegWipeBegin, VOID, ())
+	{
+		++s_reg_wipe_count;
+	}
+	
+	WINPORT_DECL(RegWipeEnd, VOID, ())
+	{
+		--s_reg_wipe_count;
+		assert(s_reg_wipe_count >= 0);
+	}
 
 	void WinPortInitRegistry()
 	{

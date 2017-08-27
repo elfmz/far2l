@@ -1,6 +1,7 @@
 #pragma once
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 
 template<class RV, class FN>
 	class InMainCaller

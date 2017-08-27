@@ -285,5 +285,5 @@ extern "C" {
 		}
 		
 		WINPORT(SetLastError)(gle);
-	}	
+	}
 }

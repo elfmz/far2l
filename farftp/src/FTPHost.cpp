@@ -510,6 +510,8 @@ BOOL FTPHost::Write(LPCSTR nm)
 		return FALSE;
 
 	Log(("RegKey=[%s]",RegKey));
+
+	RegWipeScope reg_wipe_scope;
 	FP_DeleteRegKey(RegKey);
 
 	if(!RegKey[0] || oldFmt)

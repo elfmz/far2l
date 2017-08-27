@@ -101,7 +101,7 @@ void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, i
 	{
 		wmemset(lpwszUnicodeString, 0, nLength);
 		WINPORT(LastErrorGuard) leg;
-		int r = WINPORT(MultiByteToWideChar)(CodePage,0,lpszAnsiString,nLength,lpwszUnicodeString,nLength);
+		WINPORT(MultiByteToWideChar)(CodePage,0,lpszAnsiString,nLength,lpwszUnicodeString,nLength);
 	}
 }
 

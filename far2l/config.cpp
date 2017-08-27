@@ -572,6 +572,7 @@ void NotificationsConfig(NotificationsOptions &NotifOpt)
 
 	Builder.AddCheckbox(MNotifConfigOnFileOperation, &NotifOpt.OnFileOperation);
 	Builder.AddCheckbox(MNotifConfigOnConsole, &NotifOpt.OnConsole);
+	Builder.AddEmptyLine();
 	Builder.AddCheckbox(MNotifConfigOnlyIfBackground, &NotifOpt.OnlyIfBackground);
 	Builder.AddOKCancel();
 

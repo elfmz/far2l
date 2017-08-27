@@ -164,6 +164,7 @@ enum enumOptionsMenu
 	MENU_OPTIONS_SEPARATOR2,
 	MENU_OPTIONS_VIEWERSETTINGS,
 	MENU_OPTIONS_EDITORSETTINGS,
+	MENU_OPTIONS_NOTIFICATIONSSETTINGS,
 	MENU_OPTIONS_CODEPAGESSETTINGS,
 	MENU_OPTIONS_SEPARATOR3,
 	MENU_OPTIONS_COLORS,
@@ -294,6 +295,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		L"",LIF_SEPARATOR,0,
 		MSG(MMenuViewer),0,0,
 		MSG(MMenuEditor),0,0,
+		MSG(MMenuNotifications),0,0,
 		MSG(MMenuCodePages),0,0,
 		L"",LIF_SEPARATOR,0,
 		MSG(MMenuColors),0,0,
@@ -620,6 +622,9 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 					break;
 				case MENU_OPTIONS_EDITORSETTINGS:  // Editor settings
 					EditorConfig(Opt.EdOpt);
+					break;
+				case MENU_OPTIONS_NOTIFICATIONSSETTINGS:  // Notifications settings
+					NotificationsConfig(Opt.NotifOpt);
 					break;
 				case MENU_OPTIONS_CODEPAGESSETTINGS: // Code pages
 					SelectCodePage(CP_AUTODETECT, true, true, true);

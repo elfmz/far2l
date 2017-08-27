@@ -1580,6 +1580,9 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 		ConsoleTitle::SetFarTitle(strMessage);
 		v->Finalized=true;
+		if (Opt.NotifOpt.OnFileOperation) {
+			DisplayNotification(MSG(MFileOperationComplete), strMessage);
+		}
 	}
 
 	switch (Msg)
@@ -3045,7 +3048,6 @@ FindFiles::FindFiles()
 	strSearchFromRoot = MSG(MSearchFromRootFolder);
 
 	Vars v;
-
 	do
 	{
 		v.Clear();
@@ -3234,7 +3236,6 @@ FindFiles::FindFiles()
 			Editor::SetReplaceMode(FALSE);
 	}
 	while (FindFilesProcess(v));
-
 	CtrlObject->Cp()->ActivePanel->SetTitle();
 }
 

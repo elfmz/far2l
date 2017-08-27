@@ -171,6 +171,14 @@ struct CodeXLAT
 	// [2] "если предыдущий символ не рус/lat"
 };
 
+struct NotificationsOptions
+{
+	int OnFileOperation;
+	int OnConsole;
+
+	int OnlyIfBackground;
+};
+
 struct EditorOptions
 {
 	int TabSize;
@@ -460,6 +468,7 @@ struct Options
 
 	FARString strExternalEditor;
 	EditorOptions EdOpt;
+	NotificationsOptions NotifOpt;
 	FARString strExternalViewer;
 	ViewerOptions ViOpt;
 
@@ -650,6 +659,7 @@ void PluginsManagerSettings();
 void SetDizConfig();
 void ViewerConfig(ViewerOptions &ViOpt,bool Local=false);
 void EditorConfig(EditorOptions &EdOpt,bool Local=false);
+void NotificationsConfig(NotificationsOptions &NotifOpt);
 void ReadConfig();
 void SaveConfig(int Ask);
 void SetFolderInfoFiles();

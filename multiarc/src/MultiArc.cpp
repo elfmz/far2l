@@ -70,7 +70,7 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
 }
 
 
-SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigned char *Data,int DataSize)
+SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigned char *Data,int DataSize,int OpMode)
 {
   if (ArcPlugin==NULL)
     return INVALID_HANDLE_VALUE;
@@ -156,7 +156,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPlugin(int OpenFrom, INT_PTR Item)
         free(data);
         return INVALID_HANDLE_VALUE;
       }
-      h = OpenFilePlugin(filename.c_str(), data, datasize);
+      h = OpenFilePlugin(filename.c_str(), data, datasize, OPM_COMMANDS);
       free(data);
       if ((h==(HANDLE)-2) || h==INVALID_HANDLE_VALUE)
         return INVALID_HANDLE_VALUE;

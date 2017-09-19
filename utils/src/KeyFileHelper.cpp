@@ -49,6 +49,20 @@ std::vector<std::string> KeyFileHelper::EnumSections()
 	return out;
 }
 
+std::vector<std::string> KeyFileHelper::EnumKeys(const char *section)
+{
+	std::vector<std::string> out;
+	
+	gchar **r = g_key_file_get_keys(_kf, section, NULL, NULL);
+	if (r) {
+		for (gchar **p = r; *p; ++p) 
+			out.push_back(*p);
+		g_strfreev(r);
+	}
+	
+	return out;
+}
+
 std::string KeyFileHelper::GetString(const char *section, const char *name, const char *def)
 {
 	std::string rv;

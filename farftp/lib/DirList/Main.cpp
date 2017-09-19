@@ -97,8 +97,6 @@ WORD NET_MonthNo(LPCSTR month)
 
 BOOL CorrectTime(SYSTEMTIME& st,Time_t& dt, FILETIME *wdt)
 {
-	SYSTEMTIME ftm;
-
 	if(dt == NOT_TIME)
 		memset(wdt, 0, sizeof(*wdt));
 	else if(dt == 0)
@@ -113,10 +111,12 @@ BOOL CorrectTime(SYSTEMTIME& st,Time_t& dt, FILETIME *wdt)
 	}
 	else
 	{
-		FILETIME ttm, ltm, t1;
+		FILETIME ttm, ltm;
 		WINPORT(SystemTimeToFileTime)(&st, &ttm);
 		WINPORT(LocalFileTimeToFileTime)(&ttm, &ltm);
 #if 0 //todo: fix infinite loop
+		SYSTEMTIME ftm;
+		FILETIME t1;
 		while(WINPORT(CompareFileTime)(wdt, &ltm) > 0)
 		{
 			fprintf(stderr, "*");

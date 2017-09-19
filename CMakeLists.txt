@@ -32,6 +32,7 @@ include_directories(utils/include)
 add_subdirectory (farlng)
 add_subdirectory (WinPort)
 add_subdirectory (utils)
+add_subdirectory (FARStdlib)
 add_subdirectory (far2l)
 add_dependencies (far2l farlng)
 
@@ -53,6 +54,10 @@ add_subdirectory (editcase)
 add_subdirectory (align)
 add_subdirectory (autowrap)
 add_subdirectory (drawline)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	add_subdirectory (objinfo)
+endif()
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

@@ -721,7 +721,7 @@ HANDLE PluginA::OpenFilePlugin(
 		if (Name)
 			NameA = UnicodeToAnsi(Name);
 
-		EXECUTE_FUNCTION_EX(pOpenFilePlugin(NameA, Data, DataSize), es);
+		EXECUTE_FUNCTION_EX(pOpenFilePlugin(NameA, Data, DataSize, OpMode), es);
 
 		if (NameA) xf_free(NameA);
 

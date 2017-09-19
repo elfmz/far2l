@@ -2163,6 +2163,8 @@ enum OPERATION_MODES
 	OPM_TOPLEVEL   =0x0010,
 	OPM_DESCR      =0x0020,
 	OPM_QUICKVIEW  =0x0040,
+	OPM_PGDN       =0x0080,
+	OPM_COMMANDS   =0x0100,
 };
 
 struct OpenPluginInfo

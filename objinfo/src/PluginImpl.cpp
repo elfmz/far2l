@@ -131,12 +131,6 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	Info->PanelTitle = _panel_title;
 }
 
-int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
-{
-	fprintf(stderr, "ObjInfo::DeleteFiles\n");
-	return FALSE;
-}
-
 int PluginImpl::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
 	fprintf(stderr, "ObjInfo::ProcessHostFile\n");
@@ -150,18 +144,18 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		return FALSE;
 
 	BOOL out = TRUE;
-	std::string dst;
+	std::string data_file;
 	for (int i = 0; i < ItemsNumber; ++i) {
-		dst = DestPath;
-		if (!dst.empty() && dst[dst.size() - 1] != '/') {
-			dst+= '/';
+		data_file = DestPath;
+		if (!data_file.empty() && data_file[data_file.size() - 1] != '/') {
+			data_file+= '/';
 		}
-		dst+= PanelItem[i].FindData.cFileName;
+		data_file+= PanelItem[i].FindData.cFileName;
 		if (_dir.empty()) {
-			Root::Query(PanelItem[i].FindData.cFileName, _name, dst);
+			Root::Query(PanelItem[i].FindData.cFileName, _name, data_file);
 
 		} else if (_dir == "/" STR_DISASM ) {
-			Disasm::Query(_machine, PanelItem[i].FindData.cFileName, _name, dst);
+			Disasm::Query(_machine, PanelItem[i].FindData.cFileName, _name, data_file);
 		}
 		fprintf(stderr, "ObjInfo::GetFiles[%i]: %s\n", i, PanelItem[i].FindData.cFileName);
 	}
@@ -169,13 +163,55 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	return out;
 }
 
+
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
 {
-	fprintf(stderr, "ObjInfo::PutFiles: _dir='%s'\n", _dir.c_str());
 	if (ItemsNumber == 0 || Move)
 		return FALSE;
 
-	return FALSE;
+	BOOL out = TRUE;
+	char cd[0x1000] = {};
+	sdc_getcwd(cd, sizeof(cd) - 1);
+	std::string data_file;
+	for (int i = 0; i < ItemsNumber; ++i) {
+		if (PanelItem[i].FindData.cFileName[0] != '/') {
+			data_file = cd;
+			data_file+= '/';
+			data_file+= PanelItem[i].FindData.cFileName;
+		} else
+			data_file = PanelItem[i].FindData.cFileName;
+
+		if (_dir.empty()) {
+				Root::Store(PanelItem[i].FindData.cFileName, _name, data_file);
+
+		} else if (_dir == "/" STR_DISASM ) {
+				Disasm::Store(_machine, PanelItem[i].FindData.cFileName, _name, data_file);
+		}
+
+		fprintf(stderr, "ObjInfo::PutFiles[%i]: %s\n", i, PanelItem[i].FindData.cFileName);
+	}
+
+	return out;
+}
+
+int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
+{
+	if (ItemsNumber == 0 )
+		return FALSE;
+
+	BOOL out = TRUE;
+	for (int i = 0; i < ItemsNumber; ++i) {
+		if (_dir.empty()) {
+			Root::Clear(PanelItem[i].FindData.cFileName, _name);
+
+		} else if (_dir == "/" STR_DISASM ) {
+			Disasm::Clear(_machine, PanelItem[i].FindData.cFileName, _name);
+		}
+
+		fprintf(stderr, "ObjInfo::DeleteFiles[%i]: %s\n", i, PanelItem[i].FindData.cFileName);
+	}
+
+	return out;
 }
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
@@ -183,5 +219,3 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 	fprintf(stderr, "ObjInfo::ProcessKey\n");
 	return FALSE;
 }
-
-

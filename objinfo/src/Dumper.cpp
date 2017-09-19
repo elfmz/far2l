@@ -1,5 +1,6 @@
 #include "Dumper.h"
 #include "Globals.h"
+#include "Storage.h"
 #include <KeyFileHelper.h>
 #include <utils.h>
 #include <sudo.h>
@@ -18,7 +19,7 @@ static void ExecuteCommand(const std::string &cmd, const std::string &name, cons
 	}
 
 	fprintf(stderr, "EXECUTING: %s\n", expanded_cmd.c_str());
-	int fdo = sdc_open(result_file.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0644);
+	int fdo = sdc_open(result_file.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0640);
 	if (fdo != -1) {
 		FILE *fi = popen(expanded_cmd.c_str(), "r");
 		if (fi) {
@@ -59,11 +60,39 @@ namespace Common
 			KeyFileHelper kfh(config.c_str());
 			const std::string &cmd = kfh.GetString(section, command.c_str());
 			if (!cmd.empty()) {
-				ExecuteCommand(cmd, name, result_file);
+				if (!Storage::Get(name, cmd, result_file)) {
+					ExecuteCommand(cmd, name, result_file);
+				}
 				return;
 			}
 		}
 		fprintf(stderr, "Common::Query('%s', '%s'): no command\n", section, command.c_str());
+	}
+
+	void Store(const char *section, const std::string &command, const std::string &name, const std::string &result_file)
+	{
+		for (const auto &config : G.configs) {
+			KeyFileHelper kfh(config.c_str());
+			const std::string &cmd = kfh.GetString(section, command.c_str());
+			if (!cmd.empty()) {
+				Storage::Put(name, cmd, result_file);
+				return;
+			}
+		}
+		fprintf(stderr, "Common::Put('%s', '%s'): no command\n", section, command.c_str());
+	}
+
+	void Clear(const char *section, const std::string &command, const std::string &name)
+	{
+		for (const auto &config : G.configs) {
+			KeyFileHelper kfh(config.c_str());
+			const std::string &cmd = kfh.GetString(section, command.c_str());
+			if (!cmd.empty()) {
+				Storage::Clear(name, cmd);
+				return;
+			}
+		}
+		fprintf(stderr, "Common::Clear('%s', '%s'): no command\n", section, command.c_str());
 	}
 }
 
@@ -77,6 +106,16 @@ namespace Root
 	void Query(const std::string &command, const std::string &name, const std::string &result_file)
 	{
 		Common::Query("Root", command, name, result_file);
+	}
+
+	void Store(const std::string &command, const std::string &name, const std::string &result_file)
+	{
+		Common::Store("Root", command, name, result_file);
+	}
+
+	void Clear(const std::string &command, const std::string &name)
+	{
+		Common::Clear("Root", command, name);
 	}
 }
 
@@ -98,5 +137,15 @@ namespace Disasm
 
 	void Store(uint16_t machine, const std::string &command, const std::string &name, const std::string &result_file)
 	{
+		char section[256] = {};
+		snprintf(section, sizeof(section) - 1, "Disasm_%u", (unsigned)machine);
+		Common::Store(section, command, name, result_file);
+	}
+
+	void Clear(uint16_t machine, const std::string &command, const std::string &name)
+	{
+		char section[256] = {};
+		snprintf(section, sizeof(section) - 1, "Disasm_%u", (unsigned)machine);
+		Common::Clear(section, command, name);
 	}
 }

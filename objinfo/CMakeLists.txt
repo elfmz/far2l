@@ -6,6 +6,7 @@ set(SOURCES
     src/Globals.cpp
     src/PluginImpl.cpp
     src/Dumper.cpp
+    src/Storage.cpp
 
 )
 

@@ -9,6 +9,7 @@ set(SOURCES
   src/InMy.cpp
   src/ZombieControl.cpp
   src/ConvertUTF.c
+  src/crc64.c
 )
 
 add_library (utils ${SOURCES})

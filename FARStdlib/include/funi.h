@@ -169,7 +169,7 @@ extern LPCSTR WINAPI FP_GetPluginName(void);
 #define FFDI_MASK      0xFFUL
 
 // ------------------------------------------------------------------------
-#include <FARStdlib/fstd_String.h>
+#include "fstd_String.h"
 
 // ------------------------------------------------------------------------
 extern int WINAPI FP_Message(unsigned int Flags,LPCSTR HelpTopic,LPCSTR *Items,int ItemsNumber,int ButtonsNumber, LPBOOL Delayed = NULL);

@@ -548,7 +548,7 @@ void ShowMenuFromList(TCHAR *Name)
 #define _CONST const
 #define _OPARG ,int
 #endif
-SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenFilePlugin)(_CONST TCHAR *Name,const unsigned char *,int DataSize _OPARG)
+SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenFilePlugin)(_CONST TCHAR *Name,const unsigned char *,int DataSize,int OpMode)
 #undef _OPARG
 #undef _CONST
 {

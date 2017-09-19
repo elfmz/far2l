@@ -576,6 +576,8 @@ HANDLE PluginManager::OpenFilePlugin(
 	}
 
 	bool ShowMenu = Opt.PluginConfirm.OpenFilePlugin==BSTATE_3STATE? !(Type == OFP_NORMAL || Type == OFP_SEARCH) : Opt.PluginConfirm.OpenFilePlugin != 0;
+	if (Type==OFP_ALTERNATIVE) OpMode|= OPM_PGDN;
+	if (Type==OFP_COMMANDS) OpMode|= OPM_COMMANDS;
 
 	Plugin *pPlugin = nullptr;
 

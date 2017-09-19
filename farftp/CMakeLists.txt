@@ -62,40 +62,6 @@ lib/Progress/cbFmt.cpp
 lib/Progress/TraficCB.cpp
 lib/Progress/Main.cpp
 lib/Progress/Utils.cpp
-src/FStdLib/FARStdlib/fstd_scr.cpp
-src/FStdLib/FARStdlib/fstd_stdlibCS.cpp
-src/FStdLib/FARStdlib/fstd_asrt.cpp
-src/FStdLib/FARStdlib/fstd_Patt.cpp
-src/FStdLib/FARStdlib/fstd_OEM.cpp
-src/FStdLib/FARStdlib/fstd_SText.cpp
-src/FStdLib/FARStdlib/fstd_exSCHC.cpp
-src/FStdLib/FARStdlib/fstd_Reg.cpp
-src/FStdLib/FARStdlib/fstd_plg.cpp
-src/FStdLib/FARStdlib/fstd_Con.cpp
-src/FStdLib/FARStdlib/fstd_exSCPY.cpp
-src/FStdLib/FARStdlib/fstd_menu.cpp
-src/FStdLib/FARStdlib/fstd_exSCAT.cpp
-src/FStdLib/FARStdlib/fstd_log.cpp
-src/FStdLib/FARStdlib/fstd_mklog.cpp
-src/FStdLib/FARStdlib/fstd_String.cpp
-src/FStdLib/FARStdlib/fstd_err.cpp
-src/FStdLib/FARStdlib/fstd_mesg.cpp
-src/FStdLib/FARStdlib/fstd_SCol.cpp
-src/FStdLib/FARStdlib/fstd_Msg.cpp
-src/FStdLib/FARStdlib/fstd_exSCMP.cpp
-src/FStdLib/FARStdlib/fstd_exSPCH.cpp
-src/FStdLib/FARStdlib/fstd_crc32.cpp
-src/FStdLib/FARStdlib/fstd_exit.cpp
-src/FStdLib/FARStdlib/fstd_exSNCH.cpp
-src/FStdLib/FARStdlib/fstd_Dialog.cpp
-src/FStdLib/FARStdlib/fstd_per.cpp
-src/FStdLib/FARStdlib/fstd_Utils.cpp
-src/FStdLib/FARStdlib/fstd_ilist.cpp
-src/FStdLib/FARStdlib/fstd_Arg.cpp
-src/FStdLib/FARStdlib/fstd_FMsg.cpp
-src/FStdLib/FARStdlib/fstd_exSPS.cpp
-src/FStdLib/FARStdlib/fstd_FUtils.cpp
-src/FStdLib/FARStdlib/fstd_ClpS.cpp
 )
 
 add_library (farftp MODULE ${SOURCES})
@@ -104,11 +70,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
 endif()
 
-target_link_libraries(farftp utils)
+target_link_libraries(farftp utils FARStdlib)
 
 target_include_directories(farftp PRIVATE .)
 target_include_directories(farftp PRIVATE src)
-target_include_directories(farftp PRIVATE src/FStdLib)
+target_include_directories(farftp PRIVATE ../FARStdlib/include)
 target_include_directories(farftp PRIVATE ../WinPort)
 target_include_directories(farftp PRIVATE ../far2l)
 target_include_directories(farftp PRIVATE ../far2l/Include)

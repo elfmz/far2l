@@ -50,7 +50,7 @@ typedef void (WINAPI *PLUGINGETOPENPLUGININFO)(HANDLE hPlugin,oldfar::OpenPlugin
 typedef void (WINAPI *PLUGINGETPLUGININFO)(oldfar::PluginInfo *Info);
 typedef int (WINAPI *PLUGINGETVIRTUALFINDDATA)(HANDLE hPlugin,oldfar::PluginPanelItem **pPanelItem,int *pItemsNumber,const char *Path);
 typedef int (WINAPI *PLUGINMAKEDIRECTORY)(HANDLE hPlugin,char *Name,int OpMode);
-typedef HANDLE(WINAPI *PLUGINOPENFILEPLUGIN)(char *Name,const unsigned char *Data,int DataSize);
+typedef HANDLE(WINAPI *PLUGINOPENFILEPLUGIN)(char *Name,const unsigned char *Data,int DataSize,int OpMode);
 typedef HANDLE(WINAPI *PLUGINOPENPLUGIN)(int OpenFrom,INT_PTR Item);
 typedef int (WINAPI *PLUGINPROCESSEDITOREVENT)(int Event,void *Param);
 typedef int (WINAPI *PLUGINPROCESSEDITORINPUT)(const INPUT_RECORD *Rec);

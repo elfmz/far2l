@@ -55,7 +55,7 @@ using namespace oldfar;
 #endif
 
 // --------------------------------------------------------------
-#include <FARStdlib/funi.h>
+#include "funi.h"
 
 // ------------------------------------------------------------------------
 #if defined(__FILELOG__)
@@ -338,11 +338,12 @@ struct FP_ItemList
 		BOOL Realloc(int DeltaSize);
 	public:
 		FP_ItemList(BOOL NeedToDelete = TRUE);
-		~FP_ItemList() { Free(); }
+		~FP_ItemList() { Clear(); }
 
+		PluginPanelItem *Add(int cn = 1);                        //Add a `cn` zero-filled items to list
 		PluginPanelItem *Add(const PluginPanelItem *src,int cn);                           ///<Add a `cn` items to list
 		PluginPanelItem *Add(const PluginPanelItem *src)  { return Add(src,1); }
-		void             Free(void);                                                       //Clear list
+		void             Clear(void);                                                       //Clear list
 
 		PluginPanelItem *Items(void)                      { return List; }
 		int              Count(void)                      { return ItemsCount; }

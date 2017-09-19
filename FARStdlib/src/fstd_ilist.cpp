@@ -38,17 +38,6 @@ BOOL FP_ItemList::Realloc(int NewSize)
 	return TRUE;
 }
 
-PluginPanelItem *FP_ItemList::Add(int icn)
-{
-	if(!Realloc(ItemsCount+icn))
-		return NULL;
-
-	PluginPanelItem *p = List + ItemsCount; //!! Do not use Item(ItemsCount) because we need point after last element
-	memset(p, 0, icn * sizeof(PluginPanelItem));
-	ItemsCount += icn;
-	return p;
-}
-
 PluginPanelItem *FP_ItemList::Add(const PluginPanelItem *pi,int icn)
 {
 	if(!Realloc(ItemsCount+icn))

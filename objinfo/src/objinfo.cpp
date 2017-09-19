@@ -5,7 +5,7 @@
 SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
 {
 	G.plugin_path = path;
-	fprintf(stderr, "ObjInfo::WINPORT_DllStartup\n");
+//	fprintf(stderr, "ObjInfo::WINPORT_DllStartup\n");
 }
 
 SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)
@@ -18,14 +18,14 @@ SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)
 SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *Info)
 {
 	G.Startup(Info);
-	fprintf(stderr, "ObjInfo::SetStartupInfo\n");
+//	fprintf(stderr, "ObjInfo::SetStartupInfo\n");
 }
 
 #define MINIMAL_LEN	0x34
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsigned char *Data, int DataSize, int OpMode)
 {
-	fprintf(stderr, "ObjInfo::OpenFilePlugin OpMode=%u\n",OpMode);
+//	fprintf(stderr, "ObjInfo::OpenFilePlugin OpMode=%u\n",OpMode);
 	if ( (OpMode & (OPM_PGDN|OPM_COMMANDS)) == 0 || !G.IsStarted())
 		return INVALID_HANDLE_VALUE;
 	//FAR reads at least 0x1000 bytes if possible, so may assume full ELF header available

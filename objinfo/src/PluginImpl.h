@@ -5,17 +5,19 @@
 #include <all_far.h>
 #include <fstdlib.h>
 
+struct ELFInfo;
+
 class PluginImpl
 {
 	std::string _name, _dir;
-	uint16_t _machine;
+	std::shared_ptr<ELFInfo> _elf_info;
 	char _panel_title[512];
 
 	bool GetFindData_ROOT(FP_SizeItemList &il, int OpMode);
 	bool GetFindData_DISASM(FP_SizeItemList &il, int OpMode);
 
   public:
-	PluginImpl(uint16_t machine, const char *name);
+	PluginImpl(const char *name, uint8_t bitness, uint8_t endianess);
 	~PluginImpl();
 
 	int GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode);

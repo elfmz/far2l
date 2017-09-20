@@ -1,13 +1,59 @@
 #include "Globals.h"
 #include "PluginImpl.h"
 #include "Dumper.h"
+#include "ELFInfo.h"
+
 
 #define STR_DISASM		"Disassembly"
-	
-PluginImpl::PluginImpl(uint16_t machine, const char *name)
-	: _name(name), _machine(machine)
+#define STR_SECTIONS	"Sections"
+#define STR_PHDRS		"ProgramHeaders"
+#define STR_TAIL		"TailData"
+
+static bool AddUnsized(FP_SizeItemList &il, const char *name, DWORD attrs)
 {
-	fprintf(stderr, "ObjInfo::PluginImpl(0x%x, %s)\n", machine, name);
+	PluginPanelItem tmp = {};
+	strncpy(tmp.FindData.cFileName, name, sizeof(tmp.FindData.cFileName) - 1 );
+	tmp.FindData.dwFileAttributes = attrs;
+	tmp.Description = tmp.FindData.cFileName;
+	return il.Add(&tmp);
+}
+
+
+static bool AddBinFile(FP_SizeItemList &il, const char *prefix, uint64_t ofs, uint64_t len)
+{
+	PluginPanelItem tmp = {};
+	snprintf(tmp.FindData.cFileName, sizeof(tmp.FindData.cFileName) - 1,
+		"%s@%llx.bin", prefix, (unsigned long long)ofs);
+	tmp.FindData.nFileSizeLow = (DWORD)len;
+	tmp.FindData.nFileSizeHigh = (DWORD) (len >> 32);
+	tmp.Description = tmp.FindData.cFileName;
+	return il.Add(&tmp);
+}
+
+static bool IsBinFile(const char *name)
+{
+	size_t l = strlen(name);
+	return (l > 5 && strcmp(name + l - 4, ".bin") == 0 && strchr(name, '@') != nullptr);
+}
+
+
+PluginImpl::PluginImpl(const char *name, uint8_t bitness, uint8_t endianess)
+	: _name(name), _elf_info(new ELFInfo)
+{
+	if (bitness == 2) {
+		if (endianess == 2) {
+			FillELFInfo<ELF_EndianessReverse, Elf64_Ehdr, Elf64_Phdr, Elf64_Shdr>(*_elf_info, name);
+		} else {
+			FillELFInfo<ELF_EndianessSame, Elf64_Ehdr, Elf64_Phdr, Elf64_Shdr>(*_elf_info, name);
+		}
+	} else {
+		if (endianess== 2) {
+			FillELFInfo<ELF_EndianessReverse, Elf32_Ehdr, Elf32_Phdr, Elf32_Shdr>(*_elf_info, name);
+		} else {
+			FillELFInfo<ELF_EndianessSame, Elf32_Ehdr, Elf32_Phdr, Elf32_Shdr>(*_elf_info, name);
+		}
+	}
+	fprintf(stderr, "ObjInfo::PluginImpl('%s', %d, %d)\n", name, bitness, endianess);
 }
 
 PluginImpl::~PluginImpl()
@@ -16,37 +62,44 @@ PluginImpl::~PluginImpl()
 
 bool PluginImpl::GetFindData_ROOT(FP_SizeItemList &il, int OpMode)
 {
-	PluginPanelItem tmp;
-	std::set<std::string> commands;
-	Root::Commands(commands);
-	for (const auto &command : commands) {
-		memset(&tmp, 0, sizeof(tmp));
-		strncpy(tmp.FindData.cFileName, command.c_str(), sizeof(tmp.FindData.cFileName) - 1);
-		tmp.Description = tmp.FindData.cFileName;
-		if (!il.Add(&tmp))
+	if (!AddUnsized(il, STR_DISASM, FILE_ATTRIBUTE_DIRECTORY))
+		return false;
+	if (!_elf_info->sections.empty() && !AddUnsized(il, STR_SECTIONS, FILE_ATTRIBUTE_DIRECTORY))
+		return false;
+	if (!_elf_info->phdrs.empty() && !AddUnsized(il, STR_PHDRS, FILE_ATTRIBUTE_DIRECTORY))
+		return false;
+
+	if (_elf_info->total_length > _elf_info->elf_length) {
+		if (!AddBinFile(il, STR_TAIL, _elf_info->elf_length, _elf_info->total_length - _elf_info->elf_length))
 			return false;
 	}
 
-	memset(&tmp, 0, sizeof(tmp));
-	strncpy(tmp.FindData.cFileName, STR_DISASM, sizeof(tmp.FindData.cFileName) - 1);
-	tmp.Description = tmp.FindData.cFileName;
-	tmp.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-	if (!il.Add(&tmp))
-		return false;
+	std::set<std::string> commands;
+	Root::Commands(commands);
+	for (const auto &command : commands) {
+		if (!AddUnsized(il, command.c_str(), 0))
+			return false;
+	}
 
 	return true;
 }
 
 bool PluginImpl::GetFindData_DISASM(FP_SizeItemList &il, int OpMode)
 {
-	PluginPanelItem tmp;
 	std::set<std::string> commands;
-	Disasm::Commands(_machine, commands);
+	Disasm::Commands(_elf_info->machine, commands);
 	for (const auto &command : commands) {
-		memset(&tmp, 0, sizeof(tmp));
-		strncpy(tmp.FindData.cFileName, command.c_str(), sizeof(tmp.FindData.cFileName) - 1);
-		tmp.Description = tmp.FindData.cFileName;
-		if (!il.Add(&tmp))
+		if (!AddUnsized(il, command.c_str(), 0))
+			return false;
+	}
+
+	return true;
+}
+
+static bool GetFindData_REGIONS(FP_SizeItemList &il, ELFInfo::Regions &rgns)
+{
+	for (const auto &r : rgns) {
+		if (!AddBinFile(il, r.info.c_str(), r.begin, r.length))
 			return false;
 	}
 
@@ -78,9 +131,13 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 	}
 
 	if (_dir.empty()) {
-		out = out && GetFindData_ROOT(il, OpMode); 
+		out = out && GetFindData_ROOT(il, OpMode);
 	} else if (_dir == "/" STR_DISASM) {
-		out = out && GetFindData_DISASM(il, OpMode); 
+		out = out && GetFindData_DISASM(il, OpMode);
+	} else if (_dir == "/" STR_SECTIONS) {
+		out = out && GetFindData_REGIONS(il, _elf_info->sections);
+	} else if (_dir == "/" STR_PHDRS) {
+		out = out && GetFindData_REGIONS(il, _elf_info->phdrs);
 	} else {
 	}
 
@@ -151,11 +208,19 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 			data_file+= '/';
 		}
 		data_file+= PanelItem[i].FindData.cFileName;
-		if (_dir.empty()) {
+		if (IsBinFile(PanelItem[i].FindData.cFileName)) {
+			unsigned long long ofs = 0, len = 0;
+			sscanf(strrchr(PanelItem[i].FindData.cFileName, '@'), "@%llx.bin", &ofs);
+			len = PanelItem[i].FindData.nFileSizeHigh;
+			len<<= 32;
+			len|= PanelItem[i].FindData.nFileSizeLow;
+			Binary::Query(ofs, len, _name, data_file);
+
+		} else if (_dir.empty()) {
 			Root::Query(PanelItem[i].FindData.cFileName, _name, data_file);
 
 		} else if (_dir == "/" STR_DISASM ) {
-			Disasm::Query(_machine, PanelItem[i].FindData.cFileName, _name, data_file);
+			Disasm::Query(_elf_info->machine, PanelItem[i].FindData.cFileName, _name, data_file);
 		}
 		fprintf(stderr, "ObjInfo::GetFiles[%i]: %s\n", i, PanelItem[i].FindData.cFileName);
 	}
@@ -174,6 +239,11 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	sdc_getcwd(cd, sizeof(cd) - 1);
 	std::string data_file;
 	for (int i = 0; i < ItemsNumber; ++i) {
+		fprintf(stderr, "ObjInfo::PutFiles[%i]: %s\n", i, PanelItem[i].FindData.cFileName);
+		if (IsBinFile(PanelItem[i].FindData.cFileName)) {
+			out = FALSE;
+			continue;
+		}
 		if (PanelItem[i].FindData.cFileName[0] != '/') {
 			data_file = cd;
 			data_file+= '/';
@@ -185,10 +255,8 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 				Root::Store(PanelItem[i].FindData.cFileName, _name, data_file);
 
 		} else if (_dir == "/" STR_DISASM ) {
-				Disasm::Store(_machine, PanelItem[i].FindData.cFileName, _name, data_file);
+				Disasm::Store(_elf_info->machine, PanelItem[i].FindData.cFileName, _name, data_file);
 		}
-
-		fprintf(stderr, "ObjInfo::PutFiles[%i]: %s\n", i, PanelItem[i].FindData.cFileName);
 	}
 
 	return out;
@@ -199,19 +267,18 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	if (ItemsNumber == 0 )
 		return FALSE;
 
-	BOOL out = TRUE;
 	for (int i = 0; i < ItemsNumber; ++i) {
 		if (_dir.empty()) {
 			Root::Clear(PanelItem[i].FindData.cFileName, _name);
 
 		} else if (_dir == "/" STR_DISASM ) {
-			Disasm::Clear(_machine, PanelItem[i].FindData.cFileName, _name);
+			Disasm::Clear(_elf_info->machine, PanelItem[i].FindData.cFileName, _name);
 		}
 
 		fprintf(stderr, "ObjInfo::DeleteFiles[%i]: %s\n", i, PanelItem[i].FindData.cFileName);
 	}
 
-	return out;
+	return TRUE;
 }
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)

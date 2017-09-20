@@ -1,6 +1,8 @@
 #include "Globals.h"
 #include "PluginImpl.h"
 #include <fcntl.h>
+#include <elf.h>
+#include <sudo.h>
 
 SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
 {
@@ -23,32 +25,34 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
 
 #define MINIMAL_LEN	0x34
 
+
 SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsigned char *Data, int DataSize, int OpMode)
 {
-//	fprintf(stderr, "ObjInfo::OpenFilePlugin OpMode=%u\n",OpMode);
-	if ( (OpMode & (OPM_PGDN|OPM_COMMANDS)) == 0 || !G.IsStarted())
+	if (!G.IsStarted())
 		return INVALID_HANDLE_VALUE;
-	//FAR reads at least 0x1000 bytes if possible, so may assume full ELF header available
+
+	//FAR reads at least 0x1000 bytes if possible, so may assume full ELF header available if its there
 	if (DataSize < MINIMAL_LEN || Data[0] != 0x7F || Data[1] != 'E'|| Data[2] != 'L'|| Data[3] != 'F')
 		return INVALID_HANDLE_VALUE;
 	if (Data[4] != 1 && Data[4] != 2) // Bitness: 32/64
 		return INVALID_HANDLE_VALUE;
-	if (Data[5] != 0 && Data[5] != 1 && Data[5] != 2) // Endianess: None/LSB/MSB
+	if (Data[5] != 0 && Data[5] != 1 && Data[5] != 2) // Endianess: None(?)/LSB/MSB
 		return INVALID_HANDLE_VALUE;
 	if (Data[6] != 1) // Version: 1
 		return INVALID_HANDLE_VALUE;
-	uint16_t machine;
-	if (Data[5] == 2) {
-		machine = Data[0x12];
-		machine<<= 8;
-		machine|= Data[0x13];
-	} else {
-		machine = Data[0x13];
-		machine<<= 8;
-		machine|= Data[0x12];
+
+	// Well, it really looks like valid ELF file
+	// If used called us with Ctrl+PgDn - then proceed
+	// Otherwise check if file is eXecutable and proceed only if its not, to allow user execute it by Enter
+	if ((OpMode & (OPM_PGDN|OPM_COMMANDS)) == 0) {
+		struct stat s = {};
+		if (sdc_stat(Name, &s) == -1) // in case of any uncertainlity...
+			return INVALID_HANDLE_VALUE;
+		if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
+			return INVALID_HANDLE_VALUE;
 	}
 
-	PluginImpl *out = new PluginImpl(machine, Name);
+	PluginImpl *out = new PluginImpl(Name, Data[4], Data[5]);
 	return out ? (HANDLE)out : INVALID_HANDLE_VALUE;
 }
 

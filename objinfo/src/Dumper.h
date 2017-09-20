@@ -17,3 +17,8 @@ namespace Disasm
 	void Store(uint16_t machine, const std::string &command, const std::string &name, const std::string &result_file);
 	void Clear(uint16_t machine, const std::string &command, const std::string &name);
 }
+
+namespace Binary
+{
+	void Query(unsigned long long ofs, unsigned long long len, const std::string &name, const std::string &result_file);
+}

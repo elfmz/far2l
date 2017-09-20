@@ -149,3 +149,28 @@ namespace Disasm
 		Common::Clear(section, command, name);
 	}
 }
+
+namespace Binary
+{
+	void Query(unsigned long long ofs, unsigned long long len, const std::string &name, const std::string &result_file)
+	{
+		int fdo = sdc_open(result_file.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0640);
+		if (fdo != -1) {
+			int fdi = sdc_open(name.c_str(), O_RDONLY);
+			if (fdi != -1) {
+				if (sdc_lseek(fdi, (off_t)ofs, SEEK_SET) != -1) {
+					char buf[0x1000];
+					while (len) {
+						size_t piece = (sizeof(buf) < len) ? sizeof(buf) : (size_t)len;
+						ssize_t r = sdc_read(fdi, buf, piece);
+						if (r <= 0) break;
+						if (sdc_write(fdo, buf, r) != r) break;
+						len-= r;
+					}
+				}
+				sdc_close(fdi);
+			}
+			sdc_close(fdo);
+		}
+	}
+}

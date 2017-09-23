@@ -326,7 +326,7 @@ void FarEditorSet::chooseType()
  
   wchar_t bottom[20];
   swprintf(bottom, 20, GetMsg(mTotalTypes), hrcParser->getFileTypesCount());
-  int BreakKeys[3]={VK_INSERT,VK_DELETE,VK_F4};
+  int BreakKeys[4]={VK_INSERT,VK_DELETE,VK_F4,0};
   int BreakCode,i;
   while (1) {
     i = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT | FMENU_USEEXT,

@@ -237,6 +237,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     ZipHeader.UnpVer=ZipHd1.UnpVer;
     ZipHeader.UnpOS=ZipHd1.UnpOS;
     ZipHeader.Flags=ZipHd1.Flags;
+    ZipHeader.Method=ZipHd1.Method;
     ZipHeader.ftime=ZipHd1.ftime;
     ZipHeader.PackSize=ZipHd1.PackSize;
     ZipHeader.UnpSize=ZipHd1.UnpSize;
@@ -310,8 +311,8 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     strncpy(Info->HostOS,ZipOS[ZipHeader.PackOS],ARRAYSIZE(Info->HostOS)-1);
 
 //  if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
-
-  if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
+  if (ZipHeader.Flags&0x800) { // Bit 11 - language encoding flag (EFS) - means filename&comment fields are UTF8
+  } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
     CPToUTF8(CP_ACP, Item->FindData.cFileName,Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
   else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0)
     CPToUTF8(CP_OEMCP, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));

@@ -5,6 +5,8 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 
+int wxKeyCode2WinKeyCode(int code);
+
 struct wx2INPUT_RECORD : INPUT_RECORD
 {
 	wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown);

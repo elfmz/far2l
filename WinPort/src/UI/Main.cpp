@@ -205,6 +205,7 @@ private:
 	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
+	void CheckForSuddenKeyUp( wxKeyCode keycode );
 	void OnPaint( wxPaintEvent& event );
 	void OnEraseBackground( wxEraseEvent& event );
 	void OnSize(wxSizeEvent &event);
@@ -809,6 +810,32 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	event.Skip();
 }
 
+void WinPortPanel::CheckForSuddenKeyUp( wxKeyCode keycode)
+{ // workaround for layout switch hotkey conflict with enabled exclusive mode, see #281
+	if (wxGetKeyState(keycode))
+		return;
+
+	if (!_pressed_keys.erase(keycode))
+		return;
+
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.bKeyDown = FALSE;
+	ir.Event.KeyEvent.wRepeatCount = 1;
+	ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(keycode);
+	ir.Event.KeyEvent.wVirtualScanCode = 0;
+	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
+	ir.Event.KeyEvent.dwControlKeyState = 0;
+	if (keycode == WXK_CONTROL && _right_control) {
+		_right_control = false;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
+		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+	}
+	g_wx_con_in.Enqueue(&ir, 1);
+	_exclusive_hotkeys.Reset();
+}
+
+
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
 	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyCode(), 
@@ -840,6 +867,9 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	
 		g_wx_con_in.Enqueue(&ir, 1);
 	}
+	CheckForSuddenKeyUp(WXK_CONTROL);
+	CheckForSuddenKeyUp(WXK_ALT);
+	CheckForSuddenKeyUp(WXK_SHIFT);
 	//event.Skip();
 }
 

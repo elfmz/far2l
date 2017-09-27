@@ -73,7 +73,11 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	if (gdk_backend && strcmp(gdk_backend, "broadway")==0)
 		g_broadway = true;
 
-	wxInitialize();
+	if (!wxInitialize() ) {
+		fprintf(stderr, "wxInitialize failed\n");
+		return -1;
+	}
+
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
 //	g_wx_con_out.WriteString(L"Hello", 5);

@@ -128,6 +128,7 @@ execute_oscmd.cpp
 vtshell_translation.cpp
 vtlog.cpp
 vtcompletor.cpp
+SharedResource.cpp
 UCD/CharDistribution.cpp
 UCD/JpCntx.cpp
 UCD/LangBulgarianModel.cpp

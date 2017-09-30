@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "DList.hpp"
+#include "SharedResource.hpp"
 
 class Dialog;
 class VMenu;
@@ -86,9 +87,9 @@ class History
 		enumHISTORYTYPE TypeHistory;
 		size_t HistoryCount;
 		const int *EnableSave;
-
 		DList<HistoryRecord> HistoryList;
 		HistoryRecord *CurrentItem;
+		SharedResource SharedRes;
 
 	private:
 		void AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int Type);
@@ -113,4 +114,5 @@ class History
 		bool GetAllSimilar(VMenu &HistoryMenu,const wchar_t *Str);
 		void SetAddMode(bool EnableAdd, int RemoveDups, bool KeepSelectedPos);
 		void ResetPosition() { CurrentItem = nullptr; }
+		void SyncChanges();
 };

@@ -46,7 +46,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "dialog.hpp"
 #include "interf.hpp"
+#include <crc64.h>
 #include "FileMasksProcessor.hpp"
+
+static uint64_t RegKey2ID(const FARString &str)
+{
+	const std::string &s = str.GetMB();
+	return crc64(0, (const unsigned char *)s.c_str(), s.size());
+}
 
 History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t *RegKey, const int *EnableSave, bool SaveType):
 	strRegKey(RegKey),
@@ -57,7 +64,8 @@ History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t
 	TypeHistory(TypeHistory),
 	HistoryCount(HistoryCount),
 	EnableSave(EnableSave),
-	CurrentItem(nullptr)
+	CurrentItem(nullptr),
+	SharedRes(RegKey2ID(strRegKey))
 {
 }
 
@@ -94,6 +102,7 @@ void History::AddToHistory(const wchar_t *Str, int Type, const wchar_t *Prefix, 
 		return;
 	}
 
+	SyncChanges();
 	AddToHistoryLocal(Str,Prefix,Type);
 
 	if (*EnableSave && !SaveForbid)
@@ -161,6 +170,7 @@ bool History::SaveHistory()
 	if (!*EnableSave)
 		return true;
 
+	SharedResource::Writer w(SharedRes, 30);
 	if (!HistoryList.Count())
 	{
 		DeleteRegKey(strRegKey);
@@ -323,6 +333,7 @@ bool History::ReadLastItem(const wchar_t *RegKey, FARString &strStr)
 
 bool History::ReadHistory(bool bOnlyLines)
 {
+	SharedResource::Reader w(SharedRes, 10);
 	HKEY hKey=OpenRegKey(strRegKey);
 
 	if (!hKey)
@@ -491,6 +502,16 @@ end:
 	return ret;
 }
 
+void History::SyncChanges()
+{
+	if (SharedRes.IsModified()) {
+		fprintf(stderr, "History::SyncChanges: %ls\n", strRegKey.CPtr());
+		CurrentItem = nullptr;
+		HistoryList.Clear();
+		ReadHistory();
+	}
+}
+
 const wchar_t *History::GetTitle(int Type)
 {
 	switch (Type)
@@ -550,6 +571,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 	bool Done=false;
 	bool SetUpMenuPos=false;
 
+	SyncChanges();
 	if (TypeHistory == HISTORYTYPE_DIALOG && HistoryList.Empty())
 		return 0;
 
@@ -864,8 +886,10 @@ void History::GetPrev(FARString &strStr)
 {
 	CurrentItem=HistoryList.Prev(CurrentItem);
 
-	if (!CurrentItem)
+	if (!CurrentItem) {
+		SyncChanges();
 		CurrentItem=HistoryList.First();
+	}
 
 	if (CurrentItem)
 		strStr = CurrentItem->strName;
@@ -878,6 +902,8 @@ void History::GetNext(FARString &strStr)
 {
 	if (CurrentItem)
 		CurrentItem=HistoryList.Next(CurrentItem);
+	else
+		SyncChanges();
 
 	if (CurrentItem)
 		strStr = CurrentItem->strName;
@@ -888,6 +914,7 @@ void History::GetNext(FARString &strStr)
 
 bool History::GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend)
 {
+	SyncChanges();
 	int Length=(int)strStr.GetLength();
 
 	if (LastCmdPartLength!=-1 && LastCmdPartLength<Length)
@@ -920,6 +947,7 @@ bool History::GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend)
 
 bool History::GetAllSimilar(VMenu &HistoryMenu,const wchar_t *Str)
 {
+	SyncChanges();
 	int Length=StrLength(Str);
 	for (HistoryRecord *HistoryItem=HistoryList.Last();HistoryItem;HistoryItem=HistoryList.Prev(HistoryItem))
 	{
@@ -942,3 +970,4 @@ bool History::EqualType(int Type1, int Type2)
 {
 	return Type1 == Type2 || (TypeHistory == HISTORYTYPE_VIEW && ((Type1 == 4 && Type2 == 1) || (Type1 == 1 && Type2 == 4)))?true:false;
 }
+

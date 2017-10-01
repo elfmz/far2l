@@ -300,26 +300,21 @@ class CompletionMarker
 	size_t _marker_start;
 	int _exit_code;
 	bool _active;
-	
+
+	void ScanReset()
+	{
+		_active = false;
+		_marker_start = (size_t)-1;
+		_backlog.clear();
+	}
+
 public:
 	CompletionMarker() : _exit_code(-1)
 	{
-		ScanReset();
 		srand(time(NULL));
-		for (size_t l = 8 + (rand()%9); l; --l) {
-			char c;
-			switch (rand() % 3) {
-				case 0: c = 'A' + (rand() % ('Z' + 1 - 'A')); break;
-				case 1: c = 'a' + (rand() % ('z' + 1 - 'a')); break;
-				case 2: c = '0' + (rand() % ('9' + 1 - '0')); break;
-			}
-			_marker+= c;
-		}
-		_marker+= "\x1b[1K";
-		//setenv("FARVTMARKER", _marker.c_str(), 1);
-		fprintf(stderr, "CompletionMarker: '%s'\n", _marker.c_str());
+		Reset();
 	}
-		
+
 	std::string SetEnvCommand() const
 	{
 		std::string out = "export FARVTMARKER=";
@@ -336,12 +331,24 @@ public:
 	{
 		return _exit_code;
 	}
-		
-	void ScanReset()
+
+	void Reset()
 	{
-		_active = false;
-		_marker_start = (size_t)-1;
-		_backlog.clear();
+		_marker.clear();
+		for (size_t l = 8 + (rand()%9); l; --l) {
+			char c;
+			switch (rand() % 3) {
+				case 0: c = 'A' + (rand() % ('Z' + 1 - 'A')); break;
+				case 1: c = 'a' + (rand() % ('z' + 1 - 'a')); break;
+				case 2: c = '0' + (rand() % ('9' + 1 - '0')); break;
+			}
+			_marker+= c;
+		}
+		_marker+= "\x1b[1K";
+		//setenv("FARVTMARKER", _marker.c_str(), 1);
+		//fprintf(stderr, "CompletionMarker: '%s'\n", _marker.c_str());
+
+		ScanReset();
 	}
 
 	bool Scan(const char *buf, int len)
@@ -967,7 +974,6 @@ static bool shown_tip_exit = false;
 			}
 		}
 		
-		_completion_marker.ScanReset();
 		_skipping_line = true;
 		
 		{
@@ -994,6 +1000,7 @@ static bool shown_tip_exit = false;
 		_vta.Reset();
 		OnKeypadChange(0);
 		DeliverPendingWindowInfo();
+		_completion_marker.Reset();
 		return _completion_marker.LastExitCode();
 	}	
 

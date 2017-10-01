@@ -106,7 +106,7 @@ bool SharedResource::IsModified()
 
 	uint64_t modify_id = 0;
 	if (pread(_fd, &modify_id, sizeof(modify_id), 0) != sizeof(modify_id)) {
-		perror("SharedResource::IsModified: pread");
+//		perror("SharedResource::IsModified: pread");
 		return false;
 	}
 

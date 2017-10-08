@@ -1117,84 +1117,59 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
 //   WordDiv  - набор разделителей слова в кодировке OEM
   возвращает указатель на начало слова
 */
+
 const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End, const wchar_t *WordDiv0)
 {
-	int I, J, StartWPos, EndWPos;
-	DWORD DistLeft, DistRight;
-	int StrSize=StrLength(Str);
+	int StartWPos, EndWPos;
 
-	if (CurPos >= StrSize)
+	const int StrSize = StrLength(Str);
+
+	if (CurPos < 0 || CurPos >= StrSize)
 		return nullptr;
 
-	FARString strWordDiv(WordDiv0);
-	strWordDiv += L" \t\n\r";
-
-	if (IsWordDiv(strWordDiv,Str[CurPos]))
+	if (IsWordDivSTNR(WordDiv0, Str[CurPos]))
 	{
 		// вычисляем дистанцию - куда копать, где ближе слово - слева или справа
-		I=J=CurPos;
+		int L, R;
+
 		// копаем влево
-		DistLeft=-1;
-
-		while (I >= 0 && IsWordDiv(strWordDiv,Str[I]))
-		{
-			DistLeft++;
-			I--;
-		}
-
-		if (I < 0)
-			DistLeft=-1;
+		for (L = CurPos - 1; (L >= 0 && IsWordDivSTNR(WordDiv0, Str[L])); --L);
 
 		// копаем вправо
-		DistRight=-1;
+		for (R = CurPos + 1; (R < StrSize && IsWordDivSTNR(WordDiv0, Str[R])); ++R);
 
-		while (J < StrSize && IsWordDiv(strWordDiv,Str[J]))
-		{
-			DistRight++;
-			J++;
+		if ( L < 0) {
+			if (R >= StrSize)
+				return nullptr;
+
+			StartWPos = EndWPos = R;
+
+		} else if (R >= StrSize) {
+			if ( L < 0)
+				return nullptr;
+
+			StartWPos = EndWPos = L;
+
+		} else if (CurPos - L > R - CurPos) { // ?? >=
+			EndWPos = StartWPos = R;
+
+		} else {
+			StartWPos = EndWPos = L;
 		}
 
-		if (J >= StrSize)
-			DistRight=-1;
-
-		if (DistLeft > DistRight) // ?? >=
-			EndWPos=StartWPos=J;
-		else
-			EndWPos=StartWPos=I;
-	}
-	else // здесь все оби, т.е. стоим на буковке
-		EndWPos=StartWPos=CurPos;
-
-	if (StartWPos < StrSize)
-	{
-		while (StartWPos >= 0)
-			if (IsWordDiv(strWordDiv,Str[StartWPos]))
-			{
-				StartWPos++;
-				break;
-			}
-			else
-				StartWPos--;
-
-		while (EndWPos < StrSize)
-			if (IsWordDiv(strWordDiv,Str[EndWPos]))
-			{
-				EndWPos--;
-				break;
-			}
-			else
-				EndWPos++;
+	} else {// здесь все оби, т.е. стоим на буковке
+		EndWPos = StartWPos = CurPos;
 	}
 
-	if (StartWPos < 0)
-		StartWPos=0;
+	for ( ; (StartWPos > 0 && !IsWordDivSTNR(WordDiv0, Str[StartWPos - 1])); --StartWPos);
 
-	if (EndWPos >= StrSize)
-		EndWPos=StrSize;
+	for ( ; (EndWPos + 1 < StrSize && !IsWordDivSTNR(WordDiv0, Str[EndWPos + 1])); ++EndWPos);
 
-	*Start=StartWPos;
-	*End=EndWPos;
-	return Str+StartWPos;
+
+	*Start = StartWPos;
+	*End = EndWPos;
+
+	return Str + StartWPos;
 }
 
 

@@ -229,7 +229,7 @@ typedef uint64_t UINT64, *PUINT64;
 typedef int64_t LONG64, *PLONG64;
 typedef uint64_t ULONG64, *PULONG64;
 
-#if defined(__x86_64__) || defined(__arm64__) || defined(__ppc64__)
+#if defined(__x86_64__) || defined(__arm64__) || defined(__aarch64__) || defined(__ppc64__)
 typedef INT64 INT_PTR;
 typedef UINT64 UINT_PTR;
 typedef DWORD64 DWORD_PTR;

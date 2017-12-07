@@ -74,7 +74,7 @@ static const FARString& GetFarTitleAddons()
 	L"x64",
 #elif defined(__ppc64__)
 	L"ppc64",
-#elif defined(__arm64__)
+#elif defined(__arm64__) || defined(__aarch64__)
 	L"arm64",
 #elif defined(__arm__)
 	L"arm",

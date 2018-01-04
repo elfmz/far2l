@@ -24,7 +24,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
     memset(Info, 0, sizeof(*Info));
     Info->StructSize = sizeof(*Info);
-    Info->Flags = PF_EDITOR | PF_DISABLEPANELS;
+    Info->Flags = /*PF_EDITOR |*/ PF_DISABLEPANELS;
 
     Info->PluginConfigStringsNumber = 1;
     Info->PluginConfigStrings = title;
@@ -76,7 +76,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param) {
             } else {
                 if (Event == EE_REDRAW) {
                     editor->updateWords();
-                    editor->putSuggestion();
+                    editor->processSuggestion();
                 } else if (Event == EE_SAVE) {
                     //?
                 }

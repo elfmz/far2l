@@ -30,6 +30,7 @@ private:
     EditorInfo previousEditorInfo = {0};
     std::wstring previousEditorInfoLine;
     int previousEditorInfoLineIndex = -1;
+    void putSuggestion();
 
 public:
     explicit Editor(int id, PluginStartupInfo& info, FarStandardFunctions& fsf);
@@ -45,7 +46,7 @@ public:
     void updateWords();
     void doHighlight(int row, int col, int size);
     void undoHighlight(int row, int col, int size);
-    void putSuggestion();
+    void processSuggestion();
     bool isSeparator(wchar_t c);
 
     void on();

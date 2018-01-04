@@ -202,64 +202,67 @@ upper_bound(const std::set<std::wstring> &a, const std::set<std::wstring> &b, co
 }
 
 void Editor::putSuggestion() {
-    if (state == DO_PUT) {
-        EditorInfo ei = getInfo();
-        EditorGetString egs = getString(ei.CurLine);
+    EditorInfo ei = getInfo();
+    EditorGetString egs = getString(ei.CurLine);
 
-        if (egs.SelStart == -1 && (ei.CurPos >= egs.StringLength || isSeparator(egs.StringText[ei.CurPos]))
-            && ei.CurPos > 0 && ei.CurPos < egs.StringLength + 1 && !isSeparator(egs.StringText[ei.CurPos - 1])) {
-            int from = ei.CurPos - 1;
-            while (from >= 0 && !isSeparator(egs.StringText[from]))
-                from--;
-            from++;
+    if (egs.SelStart == -1 && (ei.CurPos >= egs.StringLength || isSeparator(egs.StringText[ei.CurPos]))
+        && ei.CurPos > 0 && ei.CurPos < egs.StringLength + 1 && !isSeparator(egs.StringText[ei.CurPos - 1])) {
+        int from = ei.CurPos - 1;
+        while (from >= 0 && !isSeparator(egs.StringText[from]))
+            from--;
+        from++;
 
-            if (ei.CurPos - from >= 2) {
-                std::wstring prefix(egs.StringText + from, egs.StringText + ei.CurPos);
+        if (ei.CurPos - from >= 2) {
+            std::wstring prefix(egs.StringText + from, egs.StringText + ei.CurPos);
 
-                auto i = upper_bound(words_current_line, words_wo_current_line, prefix);
-                if (!i.empty() && lcp(prefix, i) == prefix.length()) {
-                    auto fi = i;
-                    size_t cp = i.length();
+            auto i = upper_bound(words_current_line, words_wo_current_line, prefix);
+            if (!i.empty() && lcp(prefix, i) == prefix.length()) {
+                auto fi = i;
+                size_t cp = i.length();
 
-                    while (true) {
-                        auto pi = i;
-                        i = upper_bound(words_current_line, words_wo_current_line, pi);
-                        if (i.empty()) {
-                            break;
-                        }
-
-                        size_t ccp = lcp(pi, i);
-                        if (ccp < prefix.length()) {
-                            break;
-                        }
-                        cp = std::min(cp, ccp);
+                while (true) {
+                    auto pi = i;
+                    i = upper_bound(words_current_line, words_wo_current_line, pi);
+                    if (i.empty()) {
+                        break;
                     }
 
-                    if (cp > prefix.length()) {
-                        this->suggestion = fi.substr(prefix.length(), cp - prefix.length());
-                        this->suggestionRow = ei.CurLine;
-                        this->suggestionCol = ei.CurPos;
-                        info.EditorControl(ECTL_INSERTTEXT, (void *) suggestion.c_str());
+                    size_t ccp = lcp(pi, i);
+                    if (ccp < prefix.length()) {
+                        break;
+                    }
+                    cp = std::min(cp, ccp);
+                }
+
+                if (cp > prefix.length()) {
+                    this->suggestion = fi.substr(prefix.length(), cp - prefix.length());
+                    this->suggestionRow = ei.CurLine;
+                    this->suggestionCol = ei.CurPos;
+                    info.EditorControl(ECTL_INSERTTEXT, (void *) suggestion.c_str());
 
 #if defined(DEBUG_EDITORCOMP)
-                        debug("Added suggestion of length '" + std::to_string(suggestion.length()) +
-                              " at the position ("
-                              + std::to_string(ei.CurLine) + ", " + std::to_string(ei.CurPos) + ").");
+                    debug("Added suggestion of length " + std::to_string(suggestion.length()) +
+                          " at the position ("
+                          + std::to_string(ei.CurLine) + ", " + std::to_string(ei.CurPos) + ")");
 #endif
-                        state = DO_COLOR;
-                        info.EditorControl(ECTL_REDRAW, nullptr);
-                    }
+                    state = DO_COLOR;
+                    info.EditorControl(ECTL_REDRAW, nullptr);
                 }
             }
         }
+    }
+}
 
+void Editor::processSuggestion() {
+    if (state == DO_PUT) {
+        putSuggestion();
     } else if (state == DO_COLOR) {
         doHighlight(suggestionRow, suggestionCol, static_cast<int>(suggestion.length()));
 
 #if defined(DEBUG_EDITORCOMP)
-        debug("Highlighted suggestion of length '" + std::to_string(suggestion.length()) +
+        debug("Highlighted suggestion of length " + std::to_string(suggestion.length()) +
               " at the position ("
-              + std::to_string(suggestionRow) + ", " + std::to_string(suggestionCol) + ").");
+              + std::to_string(suggestionRow) + ", " + std::to_string(suggestionCol) + ")");
 #endif
         state = DO_ACTION;
         info.EditorControl(ECTL_REDRAW, nullptr);
@@ -286,13 +289,13 @@ void Editor::confirmSuggestion() {
         info.EditorControl(ECTL_SETPOSITION, &esp);
 
 #if defined(DEBUG_EDITORCOMP)
-        debug("Declined suggestion of length '" + std::to_string(suggestion.length()) + ".");
+        debug("Confirmed suggestion of length " + std::to_string(suggestion.length()) + "");
 #endif
         suggestion = L"";
         suggestionRow = 0;
         suggestionCol = 0;
 
-        state = OFF;
+        state = DO_PUT;
         info.EditorControl(ECTL_REDRAW, nullptr);
     }
 }
@@ -339,7 +342,7 @@ void Editor::declineSuggestion() {
         }
 
 #if defined(DEBUG_EDITORCOMP)
-        debug("Declined suggestion of length '" + std::to_string(suggestion.length()) + ".");
+        debug("Declined suggestion of length " + std::to_string(suggestion.length()) + "");
 #endif
         suggestion = L"";
         suggestionRow = 0;
@@ -353,7 +356,7 @@ void Editor::declineSuggestion() {
 void Editor::on() {
     if (state == OFF) {
 #if defined(DEBUG_EDITORCOMP)
-        debug("Editor::on.");
+        debug("Editor::on");
 #endif
         state = DO_PUT;
         info.EditorControl(ECTL_REDRAW, nullptr);

@@ -54,23 +54,24 @@ add_subdirectory (editcase)
 add_subdirectory (align)
 add_subdirectory (autowrap)
 add_subdirectory (drawline)
+add_subdirectory (editorcomp)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	add_subdirectory (objinfo)
+    add_subdirectory (objinfo)
 endif()
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
-	PATTERN "colorer/base" EXCLUDE 
-	PATTERN "plug/*.far-plug-*")
+    PATTERN "colorer/base" EXCLUDE 
+    PATTERN "plug/*.far-plug-*")
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
-	PATTERN "far2l" EXCLUDE 
-	PATTERN "far2l_askpass" EXCLUDE 
-	PATTERN "far2l_sudoapp" EXCLUDE 
-	PATTERN "*.far-plug-*" EXCLUDE 
-	PATTERN "*")
+    PATTERN "far2l" EXCLUDE 
+    PATTERN "far2l_askpass" EXCLUDE 
+    PATTERN "far2l_sudoapp" EXCLUDE 
+    PATTERN "*.far-plug-*" EXCLUDE 
+    PATTERN "*")
 
 install(CODE "
       execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_askpass)

@@ -50,22 +50,44 @@ cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ../far2l
 ninja -j4
 ```
 
-#### Macos build
+#### macOS build
 
- * Run brew install glib gawk cmake pkg-config
+ * Install Homebrew:
+```sh
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
 
- * Build latest wxWidgets (brew version is not good one).
-Sample configuration: ./configure --disable-shared --disable-debug CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++ -std=c++11" OBJCXXFLAGS="-stdlib=libc++ -std=c++11" LDFLAGS=-stdlib=libc++ --enable-monolithic --enable-unicode
+ * Install required packages:
+```sh
+brew install glib gawk cmake pkg-config wget
+```
 
- * Run cmake -G "Unix Makefiles"
+ * Download and build latest source from https://wxWidgets.org (brew version is too old?). Example: 
+```sh
+wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.0/wxWidgets-3.1.0.tar.bz2
+bunzip2 wxWidgets-3.1.0.tar.bz2
+tar xvf wxWidgets-3.1.0.tar
+cd wxWidgets-3.1.0
+./configure --disable-shared --disable-debug CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++ -std=c++11" OBJCXXFLAGS="-stdlib=libc++ -std=c++11" LDFLAGS=-stdlib=libc++ --enable-monolithic --enable-unicode
+make -j4
+make install
+```
 
- * Run make
+ * Download, generate makefiles and build far2l:
+```sh
+git clone https://github.com/elfmz/far2l
+cd far2l
+cmake -G "Unix Makefiles"
+make -j4
+```
+
+
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite or any other, which supports cmake or cmake is able to generate projects for
 
  * **QtCreator**: Select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
- * **CodeLite**: use this guide to setup a project: http://codelite.org/LiteEditor/WorkingWithCMake. Don't create workspace inside far2l directory, so you don't polute your source tree.
+ * **CodeLite**: use this guide to setup a project: http://codelite.org/LiteEditor/WorkingWithCMake. Don't create workspace inside far2l directory, so you don't pollute your source tree.
 
 
 
@@ -74,7 +96,7 @@ You can import the project into your favourite IDE like QtCreator, CodeLite or a
 
 ## Notes on porting
 
-I implemented/borrowed from Wine some commonly used WinAPI functions. They all declared in WinPort/WinPort.h corresponding defines can be found in WinPort/WinCompat.h. Both included by WinPort/windows.h. Note that this stuff may not be 1-to-1 to corresponding Win32 functionality also doesn't provide full-UNIX functionality, but it simplifies porting and can be considered as temporary scaffold.
+I implemented/borrowed from Wine some commonly used WinAPI functions. They are all declared in WinPort/WinPort.h and corresponding defines can be found in WinPort/WinCompat.h. Both included by WinPort/windows.h. Note that this stuff may not be 1-to-1 to corresponding Win32 functionality also doesn't provide full-UNIX functionality, but it simplifies porting and can be considered as temporary scaffold.
 
 However only main executable linked statically to WinPort, it also _exports_ WinPort functionality, so plugins use it without neccessity to bring own copy of its code. So plugin binary should not statically link to WinPort!
 

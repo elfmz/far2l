@@ -52,6 +52,11 @@ ninja -j4
 
 #### macOS build
 
+ * Supported compiler: ```AppleClang 8.0.0.x``` or newer. Check your version, and install/update XCode if necessary.
+ ```sh
+ clang++ -v
+ ```
+
  * Install Homebrew:
 ```sh
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"

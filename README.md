@@ -94,6 +94,10 @@ You can import the project into your favourite IDE like QtCreator, CodeLite or a
  * **QtCreator**: Select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
  * **CodeLite**: use this guide to setup a project: http://codelite.org/LiteEditor/WorkingWithCMake. Don't create workspace inside far2l directory, so you don't pollute your source tree.
 
+#### Useful add-ons
+
+ * A collection of macros: https://github.com/corporateshark/far2l-macros
+
 
 
 

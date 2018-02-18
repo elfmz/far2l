@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "execute.hpp"
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
   #include <errno.h>
 #endif
 

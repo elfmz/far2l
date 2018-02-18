@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __GNUC__
 #include <cctype>
 #include <climits>
-#ifndef __APPLE__
+#if !defined(__APPLE__) and !defined(__FreeBSD__)
 #include <malloc.h>
 #endif
 #endif //__GNUC__
@@ -150,7 +150,7 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 # define SIGN_WIDE_BE	SIGN_UTF16BE
 #endif
 
-#if (defined(__GNUC__)) || (defined(_MSC_VER) && _MSC_VER<1600)
+#if !defined(__FreeBSD__) && ((defined(__GNUC__)) || (defined(_MSC_VER) && _MSC_VER<1600))
 #define nullptr NULL
 #endif
 

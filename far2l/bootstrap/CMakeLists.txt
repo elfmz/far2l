@@ -19,7 +19,11 @@ set(DIRBIT 64)
 
 # set(RM rm) actually not needed: use $(CMAKE_COMMAND) -E remove
 set(GAWK gawk)
-set(M4 m4 -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  set(M4 gm4 -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
+else()
+  set(M4 m4 -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
 
 set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")

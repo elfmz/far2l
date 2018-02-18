@@ -82,6 +82,8 @@ typedef unsigned __int64 uint64_t;
 # define st_ctim st_ctimespec
 # define st_atim st_atimespec
 # include <sys/syslimits.h>
+#elif __FreeBSD__
+# include <sys/syslimits.h>
 #else
 # include <linux/limits.h>
 #endif

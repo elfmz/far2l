@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //# include <sys/sysctl.h>
 # include <mach/mach_host.h>
 # include <mach/vm_statistics.h>
-#else
+#elif !defined(__FreeBSD__)
 # include <sys/sysinfo.h>
 #endif
  
@@ -346,7 +346,7 @@ void InfoList::DisplayObject()
 	}
 
 
-#else
+#elif !defined(__FreeBSD__)
 	struct sysinfo si = {};
 	if (sysinfo(&si) == 0)
 	{

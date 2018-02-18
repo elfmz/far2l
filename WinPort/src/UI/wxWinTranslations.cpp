@@ -206,6 +206,8 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 #ifdef wxHAS_RAW_KEY_CODES 
 #ifdef __APPLE__
 //todo
+#elif __FreeBSD__
+//todo
 #elif __linux__
 //#define GDK_KEY_Control_L 0xffe3
 //#define GDK_KEY_Control_R 0xffe4	

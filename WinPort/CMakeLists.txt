@@ -3,6 +3,10 @@ project(WinPort)
 
 
 find_package(PkgConfig REQUIRED)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk2u-3.0-config")
+endif()
 find_package(wxWidgets REQUIRED net core base)
 
 pkg_check_modules(GLIB2 glib-2.0)

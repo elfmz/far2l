@@ -164,7 +164,11 @@ extern "C"
 
 #ifndef __linux__
 		if ((dwFlagsAndAttributes & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
+#ifdef __FreeBSD__
+			fcntl(r, O_DIRECT, 1);
+#elif
 			fcntl(r, F_NOCACHE, 1);
+#endif
 		}
 #endif
 		/*nobody cares.. if ((dwFlagsAndAttributes&FILE_FLAG_BACKUP_SEMANTICS)==0) {

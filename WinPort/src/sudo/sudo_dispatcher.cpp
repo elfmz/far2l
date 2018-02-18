@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
   #include <sys/mount.h>
 #else
   #include <sys/statfs.h>
@@ -16,7 +16,9 @@
 #include <sys/statvfs.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/xattr.h>
+#ifndef __FreeBSD__
+# include <sys/xattr.h>
+#endif
 #include <set>
 #include <vector>
 #include <mutex>
@@ -387,6 +389,9 @@ namespace Sudo
 	
 	static void OnSudoDispatch_FListXAttr(BaseTransaction &bt)
 	{
+#ifdef __FreeBSD__
+		return;
+#else
 		int fd;
 		size_t size;
 		bt.RecvPOD(fd);
@@ -403,10 +408,14 @@ namespace Sudo
 			bt.SendBuf(&buf[0], r);
 		} else if (r < 0)
 			bt.SendErrno();
+#endif
 	}
 
 	static void OnSudoDispatch_FGetXAttr(BaseTransaction &bt)
 	{
+#ifdef __FreeBSD__
+		return;
+#else
 		int fd;
 		std::string name;
 		size_t size;
@@ -424,10 +433,14 @@ namespace Sudo
 			bt.SendBuf(&buf[0], r);
 		} else if (r < 0)
 			bt.SendErrno();
+#endif
 	}
 			
 	static void OnSudoDispatch_FSetXAttr(BaseTransaction &bt)
 	{
+#ifdef __FreeBSD__
+		return;
+#else
 		int fd;
 		std::string name;
 		size_t size;
@@ -448,11 +461,12 @@ namespace Sudo
 		bt.SendPOD(r);
 		if (r == -1 )
 			bt.SendErrno();
+#endif
 	}
 	
 	static void OnSudoDispatch_FSFlagsGet(BaseTransaction &bt)
 	{
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
 		std::string path;
 		bt.RecvStr(path);
 		int r = -1;
@@ -474,7 +488,7 @@ namespace Sudo
 	
 	static void OnSudoDispatch_FSFlagsSet(BaseTransaction &bt)
 	{
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
 		std::string path;
 		bt.RecvStr(path);
 		int flags = bt.RecvInt();

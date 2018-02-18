@@ -9,13 +9,15 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/xattr.h>
+#ifndef __FreeBSD__
+# include <sys/xattr.h>
+#endif
 #include <map>
 #include <mutex>
 #include "sudo_private.h"
 #include "sudo.h"
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) and !defined(__FreeBSD__)
 # include <sys/ioctl.h>
 # include <linux/fs.h>
 #endif
@@ -380,7 +382,7 @@ template <class STAT_STRUCT>
 		return -1;
 	}
 }
-
+#ifndef __FreeBSD__
 extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf)
 {
 	int saved_errno = errno;
@@ -394,7 +396,7 @@ extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *p
 
 	return r;
 }
-
+#endif
 extern "C"  __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf)
 {
 	int saved_errno = errno;
@@ -882,6 +884,9 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, s
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd, char *namebuf, size_t size)
 {
+#ifdef __FreeBSD__
+	return -1;
+#else
 	int remote_fd = s_c2s_fd.Lookup(fd);
 	if (remote_fd == -1) {
 #ifdef __APPLE__
@@ -909,11 +914,15 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd
 	} catch(const char *what) {
 		fprintf(stderr, "sudo_client: flistxattr(0x%x) - error %s\n", fd, what);
 		return -1;
-	}	
+	}
+#endif
 }
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd, const char *name,void *value, size_t size)
 {
+#ifdef __FreeBSD__
+    return -1;
+#else
 	int remote_fd = s_c2s_fd.Lookup(fd);
 	if (remote_fd == -1) {
 #ifdef __APPLE__
@@ -942,11 +951,15 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd,
 	} catch(const char *what) {
 		fprintf(stderr, "sudo_client: fgetxattr(0x%x) - error %s\n", fd, what);
 		return -1;
-	}	
+	}
+#endif
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, const char *name, const void *value, size_t size, int flags)
 {
+#ifdef __FreeBSD__
+    return -1;
+#else
 	int remote_fd = s_c2s_fd.Lookup(fd);
 	if (remote_fd == -1) {
 #ifdef __APPLE__
@@ -973,12 +986,13 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 		fprintf(stderr, "sudo_client: fsetxattr(0x%x) - error %s\n", fd, what);
 		return -1;
 	}
+#endif
 }
 
 
  extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_get(const char *path, int *flags)
  {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
 	//TODO
 	*flags = 0;
 	return 0;
@@ -1012,7 +1026,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
  
  extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, int flags)
  {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
 	//TODO
 	return 0;
 #else

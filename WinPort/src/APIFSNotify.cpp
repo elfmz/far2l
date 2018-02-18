@@ -4,7 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <condition_variable>
-#ifndef __APPLE__
+#if !defined(__APPLE__) and !defined(__FreeBSD__)
 #include <sys/inotify.h>
 #endif
 #include <pthread.h>
@@ -32,7 +32,7 @@ class WinPortFSNotify : public WinPortEvent
 	void AddWatch(const char *path)
 	{
 		int w = -1;
-#ifndef __APPLE__
+#if !defined(__APPLE__) and !defined(__FreeBSD__)
 		uint32_t mask = 0;
 		
 		//TODO: be smarter with filtering
@@ -86,7 +86,7 @@ class WinPortFSNotify : public WinPortEvent
 
 	void WatcherProc()
 	{
-#ifndef __APPLE__
+#if !defined(__APPLE__) and !defined(__FreeBSD__)
 		union {
 			struct inotify_event ie;
 			char space[ sizeof(struct inotify_event) + NAME_MAX + 10 ];
@@ -131,7 +131,7 @@ class WinPortFSNotify : public WinPortEvent
 	
 	void StopWatching()
 	{
-#ifndef __APPLE__
+#if !defined(__APPLE__) and !defined(__FreeBSD__)
 		if (_fd!=-1) {
 			if (_watching) {
 				_watching = false;
@@ -155,7 +155,7 @@ public:
 		: WinPortEvent(true, false), _watcher(0),
 		_filter(dwNotifyFilter), _watching(false)
 	{
-#ifndef __APPLE__
+#if !defined(__APPLE__) and !defined(__FreeBSD__)
 		_fd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
 		if (_fd==-1)
 			return;

@@ -1,8 +1,11 @@
 #include <string>
-#ifdef __APPLE__
-#include <malloc/malloc.h>
+#if __FreeBSD__
+# include <stdlib.h>
+# include <malloc_np.h>
+#elif __APPLE__
+# include <malloc/malloc.h>
 #else
-#include <malloc.h>
+# include <malloc.h>
 #endif
 #include <locale> 
 #include <map>

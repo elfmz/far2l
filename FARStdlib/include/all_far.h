@@ -8,8 +8,8 @@
 
 #include <signal.h>             // SIGxxx
 #include <sys/stat.h>           // stat
-#ifndef __APPLE__
-#include <malloc.h>             // alloc,NULL
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
+# include <malloc.h>             // alloc,NULL
 #endif
 #include <math.h>               // sqrt
 #include <ctype.h>              // isprint

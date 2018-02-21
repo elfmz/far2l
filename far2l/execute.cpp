@@ -67,6 +67,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wordexp.h>
 #include <set>
 #include <sys/wait.h>
+#ifdef __FreeBSD__
+# include <signal.h>
+#endif
 
 static WCHAR eol[2] = {'\r', '\n'};
 

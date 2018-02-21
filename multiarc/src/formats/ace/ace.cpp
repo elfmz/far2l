@@ -10,7 +10,7 @@
 #include <windows.h>
 #include <utils.h>
 #include <string.h>
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
 #include <malloc.h>
 #endif
 #include <stddef.h>

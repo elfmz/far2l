@@ -3,7 +3,7 @@
 #include <sys/statvfs.h>
 #ifdef __APPLE__
   #include <sys/mount.h>
-#else
+#elif !defined(__FreeBSD__)
   #include <sys/statfs.h>
 #endif
 #include <dirent.h>
@@ -40,7 +40,9 @@ extern "C" {
  __attribute__ ((visibility("default"))) off_t sdc_lseek(int fd, off_t offset, int whence);
  __attribute__ ((visibility("default"))) ssize_t sdc_write(int fd, const void *buf, size_t count);
  __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void *buf, size_t count);
+#ifndef __FreeBSD__
  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf);
+#endif
  __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf);
  __attribute__ ((visibility("default"))) int sdc_stat(const char *path, struct stat *buf);
  __attribute__ ((visibility("default"))) int sdc_lstat(const char *path, struct stat *buf);

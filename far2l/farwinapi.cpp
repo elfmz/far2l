@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
   #include <errno.h>
   #include <sys/mount.h>
 #else
@@ -617,9 +617,13 @@ BOOL apiGetVolumeInformation(
 
 	if (pFileSystemName) {
 		pFileSystemName->Clear();
-
+#ifndef __FreeBSD__
 		struct statfs sfs = {};
 		if (sdc_statfs(path.c_str(), &sfs) == 0) {
+#else
+		struct statfs sfs;
+		if (statfs(path.c_str(), &sfs) == 0) {
+#endif
 			for (size_t i = 0; i < ARRAYSIZE(s_fs_magics); ++i) {
 				if (sfs.f_type == s_fs_magics[i].magic) {
 					*pFileSystemName = s_fs_magics[i].name;
@@ -852,7 +856,7 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 		}
 	}
 
-#ifdef __APPLE__
+#if defined(__APPLE__) or defined(__FreeBSD__)
 //TODO: handle chattr +i
 #else
 	if (!um->dir.empty() && sdc_fs_flags_get(um->dir.c_str(), &um->dir_flags) != -1 

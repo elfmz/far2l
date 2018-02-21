@@ -98,7 +98,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigne
   return hPlugin;
 }
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
 char *get_current_dir_name();
 #endif
 

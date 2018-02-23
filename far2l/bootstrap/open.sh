@@ -26,4 +26,9 @@ if [ "$what" = "exec" ]; then
 	fi
 fi
 
-xdg-open "$@"
+if command -v xdg-open >/dev/null 2>&1; then #GNOME
+	xdg-open "$@"
+
+elif command -v open >/dev/null 2>&1; then #OSX
+	xdg-open "$@"
+fi

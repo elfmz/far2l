@@ -2614,6 +2614,15 @@ upd:"Console command complete"
 upd:"Console command complete"
 upd:"Console command complete"
 
+MConsoleCommandFailed
+"Консольная команда завершена с ошибкой"
+"Console command failed"
+upd:"Console command failed"
+upd:"Console command failed"
+upd:"Console command failed"
+upd:"Console command failed"
+upd:"Console command failed"
+
 MFileOperationComplete
 "Файловая операция выполнена"
 "File operation complete"

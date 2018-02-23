@@ -232,7 +232,7 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 			r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0);
 		}
 		if ((ExecFlags & EF_NOTIFY) && Opt.NotifOpt.OnConsole) {
-			DisplayNotification(MSG(MConsoleCommandComplete), CmdStr);
+			DisplayNotification( (r == 0) ? MSG(MConsoleCommandComplete) : MSG(MConsoleCommandFailed), CmdStr);
 		}
 		WINPORT(SetConsoleMode)( NULL, saved_mode | 
 			ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT );

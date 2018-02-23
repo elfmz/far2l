@@ -1570,6 +1570,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 	if(!v->Finalized && WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0))
 	{
+		v->Finalized=true;
 		FARString strMessage;
 		strMessage.Format(MSG(MFindDone),itd.GetFileCount(), itd.GetDirCount());
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
@@ -1579,7 +1580,6 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, FD_BUTTON_STOP, reinterpret_cast<LONG_PTR>(MSG(MFindCancel)));
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 		ConsoleTitle::SetFarTitle(strMessage);
-		v->Finalized=true;
 		if (Opt.NotifOpt.OnFileOperation) {
 			DisplayNotification(MSG(MFileOperationComplete), strMessage);
 		}

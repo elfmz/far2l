@@ -166,11 +166,12 @@ extern "C"
 		if ((dwFlagsAndAttributes & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
 #ifdef __FreeBSD__
 			fcntl(r, O_DIRECT, 1);
-#elif
+#else
 			fcntl(r, F_NOCACHE, 1);
-#endif
+#endif // __FreeBSD__
 		}
-#endif
+#endif // __linux__
+
 		/*nobody cares.. if ((dwFlagsAndAttributes&FILE_FLAG_BACKUP_SEMANTICS)==0) {
 			struct stat s = { };
 			sdc_fstat(r, &s);

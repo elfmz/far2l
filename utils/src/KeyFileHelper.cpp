@@ -11,15 +11,18 @@
 static std::mutex g_key_file_helper_mutex;
 
 KeyFileHelper::KeyFileHelper(const char *filename, bool load)
-	: _kf(g_key_file_new()),  _filename(filename), _dirty(!load)
+	: _kf(g_key_file_new()),  _filename(filename), _dirty(!load), _loaded(false)
 {
 	GError *err = NULL;
-	g_key_file_helper_mutex.lock();
-	if (!g_key_file_load_from_file(_kf, _filename.c_str(), G_KEY_FILE_NONE, &err)) {
-		//fprintf(stderr, "KeyFileHelper(%s, %d) err=%p\n", _filename.c_str(), load, err);
+	if (load) {
+		g_key_file_helper_mutex.lock();
+		if (!g_key_file_load_from_file(_kf, _filename.c_str(), G_KEY_FILE_NONE, &err)) {
+			//fprintf(stderr, "KeyFileHelper(%s, %d) err=%p\n", _filename.c_str(), load, err);
+		} else {
+			_loaded = true;
+		}
+		g_key_file_helper_mutex.unlock();
 	}
-	g_key_file_helper_mutex.unlock();
-	
 }
 
 KeyFileHelper::~KeyFileHelper()

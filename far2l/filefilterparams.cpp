@@ -272,9 +272,9 @@ void FileFilterParams::GetColors(HighlightDataColor *Colors) const
 	*Colors=FHighlight.Colors;
 }
 
-int FileFilterParams::GetMarkChar() const
+wchar_t FileFilterParams::GetMarkChar() const
 {
-	return FHighlight.Colors.MarkChar;
+	return (wchar_t)(FHighlight.Colors.MarkChar & 0xffff); // higher half used for something else
 }
 
 bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTime)
@@ -405,7 +405,7 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTim
 void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType, const wchar_t *FMask, const wchar_t *Title)
 {
 	const wchar_t AttrC[] = L"RAHSDCEI$TLOVXB";
-	const DWORD   AttrF[] =
+	const DWORD   AttrF[ARRAYSIZE(AttrC) - 1] =
 	{
 		FILE_ATTRIBUTE_READONLY,
 		FILE_ATTRIBUTE_ARCHIVE,
@@ -445,7 +445,7 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 	}
 	else
 	{
-		MarkChar[1]=(wchar_t)FF->GetMarkChar();
+		MarkChar[1] = FF->GetMarkChar();
 
 		if (!MarkChar[1])
 			*MarkChar=0;

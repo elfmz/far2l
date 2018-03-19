@@ -33,3 +33,5 @@ struct WinPortRGB
 
 WinPortRGB ConsoleForeground2RGB(USHORT attributes);
 WinPortRGB ConsoleBackground2RGB(USHORT attributes);
+
+void InitPalettes();

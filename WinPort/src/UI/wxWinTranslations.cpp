@@ -1,43 +1,124 @@
 #include "wxWinTranslations.h"
+#include "INIReader.h"
+#include "WinCompat.h"
+#include "ConsoleOutput.h"
 
 #include <wx/wx.h>
 #include <wx/display.h>
+#include <stdlib.h>
+#include <wchar.h>
+#include <iostream>
+#include <fstream>
 
 extern bool g_broadway;
+extern ConsoleOutput g_wx_con_out;
+
+/*
+    Foreground/Background color palettes are 16 (r,g,b) values.
+    More words here from Miotio...
+*/
+static int backgroundPalette[16*3];
+static int foregroundPalette[16*3];
+
+static void InitDefaultPalette() {
+    for (int i=0; i<16; i++) {
+        foregroundPalette[i*3] = i & FOREGROUND_RED? i & FOREGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
+        foregroundPalette[i*3+1] = i & FOREGROUND_GREEN? i & FOREGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
+        foregroundPalette[i*3+2] = i & FOREGROUND_BLUE? i & FOREGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
+        backgroundPalette[i*3] = (i<<4) & BACKGROUND_RED? i & BACKGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
+        backgroundPalette[i*3+1] = (i<<4) & BACKGROUND_GREEN? i & BACKGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
+        backgroundPalette[i*3+2] = (i<<4) & BACKGROUND_BLUE? i & BACKGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
+    }
+}
+
+static void SaveDefaultPalette(char* path) {
+    std::ofstream palette_out(path);
+    palette_out << "[foreground]" << std::endl;
+    for (int i=0; i<16; i++) {
+        char col_str[8];
+        sprintf(col_str, "#%02X%02X%02X", foregroundPalette[i*3], foregroundPalette[i*3 + 1], foregroundPalette[i*3 + 2]);
+        palette_out << i << " = " << col_str << std::endl;
+    }
+    palette_out << std::endl << "[background]" << std::endl;
+    for (int i=0; i<16; i++) {
+        char col_str[8];
+        sprintf(col_str, "#%02X%02X%02X", backgroundPalette[i*3], backgroundPalette[i*3 + 1], backgroundPalette[i*3 + 2]);
+        palette_out << i << " = " << col_str << std::endl;
+    }
+    palette_out.close();
+
+}
+
+static void LoadPalette(INIReader* reader) {
+    const char* val;
+    char i_str[3];
+    int col;
+    // foreground palette
+    for (int i=0; i<16; i++) {
+        itoa(i, i_str, 10);
+        val = reader->Get("foreground", i_str, "#000000").c_str();
+        sscanf(val, "#%x", &col);
+        // r,g,b
+        foregroundPalette[i*3] = (col & 0xff0000) >> 16;
+        foregroundPalette[i*3+1] = (col & 0x00ff00) >> 8;
+        foregroundPalette[i*3+2] = (col & 0x0000ff);
+    }
+    // background palette
+    for (int i=0; i<16; i++) {
+        itoa(i, i_str, 10);
+        val = reader->Get("background", i_str, "#000000").c_str();
+        sscanf(val, "#%x", &col);
+        // r,g,b
+        backgroundPalette[i*3] = (col & 0xff0000) >> 16;
+        backgroundPalette[i*3 + 1] = (col & 0x00ff00) >> 8;
+        backgroundPalette[i*3 + 2] = (col & 0x0000ff);
+    }
+}
+
+void InitPalettes() {
+	char palette_path[250];
+    sprintf(palette_path, "%s/.config/far2l/palette.ini", getenv("HOME"));
+    INIReader reader(palette_path);
+    int err_code = reader.ParseError();
+    switch (err_code) {
+        case -1:  // New file
+            InitDefaultPalette();
+            SaveDefaultPalette(palette_path);
+            break;
+        case 0:  // OK
+            LoadPalette(&reader);
+            break;
+        default:
+            InitDefaultPalette();
+            uint xc,yc;
+            g_wx_con_out.GetSize(xc, yc);
+            g_wx_con_out.SetCursor({(xc>>1) - 5, yc>>1});
+            WCHAR msg[] = L"ERROR IN PALETTE FILE";
+            g_wx_con_out.WriteString(msg, wcslen(msg));
+            break;
+    }
+}
+
 
 static WinPortRGB InternalConsoleForeground2RGB(USHORT attributes)
 {
 	WinPortRGB out;
+    int color_index = (attributes & 0x0f);
 
-	if (attributes & FOREGROUND_RED)
-		out.r = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
-	if (attributes & FOREGROUND_BLUE)
-		out.b = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
-	if (attributes & FOREGROUND_GREEN)
-		out.g = (attributes & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
-	if ((attributes & 0x0f) == FOREGROUND_INTENSITY)
-		out.r = out.g = out.b = 0x80;
-	if ((attributes & 0x0f) == (FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED))
-		out.r = out.g = out.b = 0xc0;
-
+    out.r = (char)foregroundPalette[color_index*3];
+    out.g = (char)foregroundPalette[color_index*3 + 1];
+    out.b = (char)foregroundPalette[color_index*3 + 2];
 	return out;
 }
 
 static WinPortRGB InternalConsoleBackground2RGB(USHORT attributes)
 {
 	WinPortRGB out;
+    int color_index = (attributes & 0xf0) >> 4;
 
-	if (attributes & BACKGROUND_RED)
-		out.r = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
-	if (attributes & BACKGROUND_BLUE)
-		out.b = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
-	if (attributes & BACKGROUND_GREEN)
-		out.g = (attributes & BACKGROUND_INTENSITY) ? 0xff : 0x80;
-	if ((attributes & 0xf0) == BACKGROUND_INTENSITY)
-		out.r = out.g = out.b = 0x80;
-	if ((attributes & 0xf0) == (BACKGROUND_BLUE|BACKGROUND_GREEN|BACKGROUND_RED))
-		out.r = out.g = out.b = 0xc0;
-
+    out.r = (char)backgroundPalette[color_index*3];
+    out.g = (char)backgroundPalette[color_index*3 + 1];
+    out.b = (char)backgroundPalette[color_index*3 + 2];
 	return out;
 }
 

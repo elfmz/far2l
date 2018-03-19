@@ -83,7 +83,14 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 //      g_wx_con_out.WriteString(L"Hello", 5);
 
 	
-	InitPalettes();
+	if (!InitPalettes()) {
+		uint xc,yc;
+		g_wx_con_out.GetSize(xc, yc);
+		g_wx_con_out.SetCursor( COORD {SHORT((xc>>1) - 5), SHORT(yc>>1)});
+		WCHAR msg[] = L"ERROR IN PALETTE FILE";
+		g_wx_con_out.WriteString(msg, wcslen(msg));
+	}
+
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new WinPortAppThread(argc, argv, AppMain);
 		if (!g_winport_app_thread)

@@ -10,7 +10,6 @@ set(SOURCES
   src/ZombieControl.cpp
   src/ConvertUTF.c
   src/crc64.c
-  src/INIReader.cpp
   src/ini.c
 )
 

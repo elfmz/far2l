@@ -1,17 +1,12 @@
 #include "wxWinTranslations.h"
-#include "INIReader.h"
+#include "KeyFileHelper.h"
+#include "utils.h"
 #include "WinCompat.h"
-#include "ConsoleOutput.h"
 
 #include <wx/wx.h>
 #include <wx/display.h>
-#include <stdlib.h>
-#include <wchar.h>
-#include <iostream>
-#include <fstream>
 
 extern bool g_broadway;
-extern ConsoleOutput g_wx_con_out;
 
 /*
     Foreground/Background color palettes are 16 (r,g,b) values.
@@ -19,7 +14,7 @@ extern ConsoleOutput g_wx_con_out;
 */
 static WinPortRGB g_palette_background[16];
 static WinPortRGB g_palette_foreground[16];
-
+#define PALETTE_CONFIG "palette.ini"
 
 static void InitDefaultPalette() {
     for ( unsigned int i = 0; i < 16; ++i) {
@@ -68,73 +63,67 @@ static void InitDefaultPalette() {
 	}
 }
 
-static void SaveDefaultPalette(char* path) {
-    std::ofstream palette_out(path);
-	char col_str[8];
-    palette_out << "[foreground]" << std::endl;
-    for (int i=0; i<16; i++) {
-        sprintf(col_str, "#%02X%02X%02X", g_palette_foreground[i].r,
-			g_palette_foreground[i].g, g_palette_foreground[i].b);
-        palette_out << i << " = " << col_str << std::endl;
-    }
-    palette_out << std::endl << "[background]" << std::endl;
-    for (int i=0; i<16; i++) {
-        sprintf(col_str, "#%02X%02X%02X", g_palette_background[i].r,
-			g_palette_background[i].g, g_palette_background[i].b);
-        palette_out << i << " = " << col_str << std::endl;
-    }
-    palette_out.close();
+static bool LoadPaletteEntry(KeyFileHelper &kfh, const char *section, const char *name, WinPortRGB &result)
+{
+	const std::string &str = kfh.GetString(section, name, "#000000");
+	if (str.empty() || str[0] != '#')
+		return false;
 
+	unsigned int value = 0;
+	sscanf(str.c_str(), "#%x", &value);
+	result.r = (value & 0xff0000) >> 16;
+	result.g = (value & 0x00ff00) >> 8;
+	result.b = (value & 0x0000ff);
+	return true;
 }
 
-static void LoadPalette(INIReader* reader) {
-    const char* val;
-    char i_str[3];
-    int col;
-    // foreground palette
-    for (int i=0; i<16; i++) {
-        itoa(i, i_str, 10);
-        val = reader->Get("foreground", i_str, "#000000").c_str();
-        sscanf(val, "#%x", &col);
-        // r,g,b
-        g_palette_foreground[i].r = (col & 0xff0000) >> 16;
-        g_palette_foreground[i].g = (col & 0x00ff00) >> 8;
-        g_palette_foreground[i].b = (col & 0x0000ff);
-    }
-    // background palette
-    for (int i=0; i<16; i++) {
-        itoa(i, i_str, 10);
-        val = reader->Get("background", i_str, "#000000").c_str();
-        sscanf(val, "#%x", &col);
-        // r,g,b
-        g_palette_background[i].r = (col & 0xff0000) >> 16;
-        g_palette_background[i].g = (col & 0x00ff00) >> 8;
-        g_palette_background[i].b = (col & 0x0000ff);
+static bool LoadPalette(KeyFileHelper &kfh)
+{
+	char name[16];
+	bool out = true;
+	for (unsigned int i = 0; i < 16; ++i) {
+		snprintf(name, sizeof(name), "%d", i);
+
+		if (!LoadPaletteEntry(kfh, "foreground", name, g_palette_foreground[i])
+		|| !LoadPaletteEntry(kfh, "background", name, g_palette_background[i])) {
+			out = false;
+		}
+	}
+	return out;
+}
+
+static void SavePalette(KeyFileHelper &kfh)
+{
+	char name[16], value[16];
+	for (int i=0; i<16; i++) {
+		snprintf(name, sizeof(name), "%d", i);
+
+        snprintf(value, sizeof(value), "#%02X%02X%02X",
+			g_palette_foreground[i].r, g_palette_foreground[i].g, g_palette_foreground[i].b);
+		kfh.PutString("foreground", name, value);
+
+        snprintf(value, sizeof(value), "#%02X%02X%02X",
+			g_palette_background[i].r, g_palette_background[i].g, g_palette_background[i].b);
+		kfh.PutString("background", name, value);
     }
 }
 
-void InitPalettes() {
-	char palette_path[250];
-    sprintf(palette_path, "%s/.config/far2l/palette.ini", getenv("HOME"));
-    INIReader reader(palette_path);
-    int err_code = reader.ParseError();
-    switch (err_code) {
-        case -1:  // New file
-            InitDefaultPalette();
-            SaveDefaultPalette(palette_path);
-            break;
-        case 0:  // OK
-            LoadPalette(&reader);
-            break;
-        default:
-            InitDefaultPalette();
-            uint xc,yc;
-            g_wx_con_out.GetSize(xc, yc);
-            g_wx_con_out.SetCursor({(xc>>1) - 5, yc>>1});
-            WCHAR msg[] = L"ERROR IN PALETTE FILE";
-            g_wx_con_out.WriteString(msg, wcslen(msg));
-            break;
-    }
+bool InitPalettes()
+{
+	const std::string &palette_file = InMyConfig(PALETTE_CONFIG);
+	KeyFileHelper kfh(palette_file.c_str());
+	if (!kfh.IsLoaded()) {
+		InitDefaultPalette();
+		SavePalette(kfh);
+		return true;
+	}
+
+	if (LoadPalette(kfh))
+		return true;
+
+	fprintf(stderr, "InitPalettes: failed to load from %s\n", palette_file.c_str());
+	InitDefaultPalette();
+	return false;
 }
 
 
@@ -143,7 +132,7 @@ static const WinPortRGB &InternalConsoleForeground2RGB(USHORT attributes)
 	return g_palette_foreground[(attributes & 0x0f)];
 }
 
-static WinPortRGB InternalConsoleBackground2RGB(USHORT attributes)
+static const WinPortRGB &InternalConsoleBackground2RGB(USHORT attributes)
 {
 	return g_palette_background[(attributes & 0xf0) >> 4];
 }

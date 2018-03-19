@@ -6,10 +6,12 @@ class KeyFileHelper
 {
 	struct _GKeyFile *_kf;
 	std::string _filename;
-	bool _dirty;
+	bool _dirty, _loaded;
 public:
 	KeyFileHelper(const char *filename, bool load = true) ;
 	~KeyFileHelper();
+
+	bool IsLoaded() const { return _loaded; }
 	
 	std::string GetString(const char *section, const char *name, const char *def = "");
 	void GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def = "");

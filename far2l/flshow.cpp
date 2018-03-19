@@ -1005,7 +1005,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 							if (ListData[ListPos]->Colors.MarkChar && Opt.Highlight && Width>1)
 							{
 								Width--;
-								OutCharacter[0]=(wchar_t)ListData[ListPos]->Colors.MarkChar;
+								OutCharacter[0]=(wchar_t)(ListData[ListPos]->Colors.MarkChar & 0xffff);
 								int OldColor=GetColor();
 
 								if (!ShowStatus)

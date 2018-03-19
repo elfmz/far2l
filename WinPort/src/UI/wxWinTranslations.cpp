@@ -17,32 +17,70 @@ extern ConsoleOutput g_wx_con_out;
     Foreground/Background color palettes are 16 (r,g,b) values.
     More words here from Miotio...
 */
-static int backgroundPalette[16*3];
-static int foregroundPalette[16*3];
+static WinPortRGB g_palette_background[16];
+static WinPortRGB g_palette_foreground[16];
+
 
 static void InitDefaultPalette() {
-    for (int i=0; i<16; i++) {
-        foregroundPalette[i*3] = i & FOREGROUND_RED? i & FOREGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
-        foregroundPalette[i*3+1] = i & FOREGROUND_GREEN? i & FOREGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
-        foregroundPalette[i*3+2] = i & FOREGROUND_BLUE? i & FOREGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
-        backgroundPalette[i*3] = (i<<4) & BACKGROUND_RED? i & BACKGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
-        backgroundPalette[i*3+1] = (i<<4) & BACKGROUND_GREEN? i & BACKGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
-        backgroundPalette[i*3+2] = (i<<4) & BACKGROUND_BLUE? i & BACKGROUND_INTENSITY? 0xff: 0xa0: 0x00; 
-    }
+    for ( unsigned int i = 0; i < 16; ++i) {
+
+		switch (i) {
+			case FOREGROUND_INTENSITY: {
+				g_palette_foreground[i].r =
+					g_palette_foreground[i].g =
+						g_palette_foreground[i].b = 0x80;
+			} break;
+
+			case (FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED): {
+				g_palette_foreground[i].r =
+					g_palette_foreground[i].g =
+						g_palette_foreground[i].b = 0xc0;
+			} break;
+
+			default: {
+					const unsigned char lvl = (i & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
+					g_palette_foreground[i].r = (i & FOREGROUND_RED) ? lvl : 0;
+					g_palette_foreground[i].g = (i & FOREGROUND_GREEN) ? lvl : 0;
+					g_palette_foreground[i].b = (i & FOREGROUND_BLUE) ? lvl : 0;
+				}
+			}
+
+		switch (i) {
+			case (BACKGROUND_INTENSITY >> 4): {
+				g_palette_background[i].r =
+					g_palette_background[i].g =
+						g_palette_background[i].b = 0x80;
+			} break;
+
+			case (BACKGROUND_BLUE|BACKGROUND_GREEN|BACKGROUND_RED) >> 4: {
+				g_palette_background[i].r =
+					g_palette_background[i].g =
+						g_palette_background[i].b = 0xc0;
+			} break;
+
+			default: {
+					const unsigned char lvl = (i & (BACKGROUND_INTENSITY>>4)) ? 0xff : 0x80;
+					g_palette_background[i].r = (i & (BACKGROUND_RED>>4)) ? lvl : 0;
+					g_palette_background[i].g = (i & (BACKGROUND_GREEN>>4)) ? lvl : 0;
+					g_palette_background[i].b = (i & (BACKGROUND_BLUE>>4)) ? lvl : 0;
+			}
+		}
+	}
 }
 
 static void SaveDefaultPalette(char* path) {
     std::ofstream palette_out(path);
+	char col_str[8];
     palette_out << "[foreground]" << std::endl;
     for (int i=0; i<16; i++) {
-        char col_str[8];
-        sprintf(col_str, "#%02X%02X%02X", foregroundPalette[i*3], foregroundPalette[i*3 + 1], foregroundPalette[i*3 + 2]);
+        sprintf(col_str, "#%02X%02X%02X", g_palette_foreground[i].r,
+			g_palette_foreground[i].g, g_palette_foreground[i].b);
         palette_out << i << " = " << col_str << std::endl;
     }
     palette_out << std::endl << "[background]" << std::endl;
     for (int i=0; i<16; i++) {
-        char col_str[8];
-        sprintf(col_str, "#%02X%02X%02X", backgroundPalette[i*3], backgroundPalette[i*3 + 1], backgroundPalette[i*3 + 2]);
+        sprintf(col_str, "#%02X%02X%02X", g_palette_background[i].r,
+			g_palette_background[i].g, g_palette_background[i].b);
         palette_out << i << " = " << col_str << std::endl;
     }
     palette_out.close();
@@ -59,9 +97,9 @@ static void LoadPalette(INIReader* reader) {
         val = reader->Get("foreground", i_str, "#000000").c_str();
         sscanf(val, "#%x", &col);
         // r,g,b
-        foregroundPalette[i*3] = (col & 0xff0000) >> 16;
-        foregroundPalette[i*3+1] = (col & 0x00ff00) >> 8;
-        foregroundPalette[i*3+2] = (col & 0x0000ff);
+        g_palette_foreground[i].r = (col & 0xff0000) >> 16;
+        g_palette_foreground[i].g = (col & 0x00ff00) >> 8;
+        g_palette_foreground[i].b = (col & 0x0000ff);
     }
     // background palette
     for (int i=0; i<16; i++) {
@@ -69,9 +107,9 @@ static void LoadPalette(INIReader* reader) {
         val = reader->Get("background", i_str, "#000000").c_str();
         sscanf(val, "#%x", &col);
         // r,g,b
-        backgroundPalette[i*3] = (col & 0xff0000) >> 16;
-        backgroundPalette[i*3 + 1] = (col & 0x00ff00) >> 8;
-        backgroundPalette[i*3 + 2] = (col & 0x0000ff);
+        g_palette_background[i].r = (col & 0xff0000) >> 16;
+        g_palette_background[i].g = (col & 0x00ff00) >> 8;
+        g_palette_background[i].b = (col & 0x0000ff);
     }
 }
 
@@ -100,26 +138,14 @@ void InitPalettes() {
 }
 
 
-static WinPortRGB InternalConsoleForeground2RGB(USHORT attributes)
+static const WinPortRGB &InternalConsoleForeground2RGB(USHORT attributes)
 {
-	WinPortRGB out;
-    int color_index = (attributes & 0x0f);
-
-    out.r = (char)foregroundPalette[color_index*3];
-    out.g = (char)foregroundPalette[color_index*3 + 1];
-    out.b = (char)foregroundPalette[color_index*3 + 2];
-	return out;
+	return g_palette_foreground[(attributes & 0x0f)];
 }
 
 static WinPortRGB InternalConsoleBackground2RGB(USHORT attributes)
 {
-	WinPortRGB out;
-    int color_index = (attributes & 0xf0) >> 4;
-
-    out.r = (char)backgroundPalette[color_index*3];
-    out.g = (char)backgroundPalette[color_index*3 + 1];
-    out.b = (char)backgroundPalette[color_index*3 + 2];
-	return out;
+	return g_palette_background[(attributes & 0xf0) >> 4];
 }
 
 WinPortRGB ConsoleForeground2RGB(USHORT attributes)

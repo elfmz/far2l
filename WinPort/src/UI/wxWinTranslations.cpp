@@ -17,7 +17,7 @@ static WinPortRGB g_palette_foreground[16];
 #define PALETTE_CONFIG "palette.ini"
 
 static void InitDefaultPalette() {
-    for ( unsigned int i = 0; i < 16; ++i) {
+	for ( unsigned int i = 0; i < 16; ++i) {
 
 		switch (i) {
 			case FOREGROUND_INTENSITY: {
@@ -33,12 +33,12 @@ static void InitDefaultPalette() {
 			} break;
 
 			default: {
-					const unsigned char lvl = (i & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
-					g_palette_foreground[i].r = (i & FOREGROUND_RED) ? lvl : 0;
-					g_palette_foreground[i].g = (i & FOREGROUND_GREEN) ? lvl : 0;
-					g_palette_foreground[i].b = (i & FOREGROUND_BLUE) ? lvl : 0;
-				}
+				const unsigned char lvl = (i & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
+				g_palette_foreground[i].r = (i & FOREGROUND_RED) ? lvl : 0;
+				g_palette_foreground[i].g = (i & FOREGROUND_GREEN) ? lvl : 0;
+				g_palette_foreground[i].b = (i & FOREGROUND_BLUE) ? lvl : 0;
 			}
+		}
 
 		switch (i) {
 			case (BACKGROUND_INTENSITY >> 4): {
@@ -54,10 +54,10 @@ static void InitDefaultPalette() {
 			} break;
 
 			default: {
-					const unsigned char lvl = (i & (BACKGROUND_INTENSITY>>4)) ? 0xff : 0x80;
-					g_palette_background[i].r = (i & (BACKGROUND_RED>>4)) ? lvl : 0;
-					g_palette_background[i].g = (i & (BACKGROUND_GREEN>>4)) ? lvl : 0;
-					g_palette_background[i].b = (i & (BACKGROUND_BLUE>>4)) ? lvl : 0;
+				const unsigned char lvl = (i & (BACKGROUND_INTENSITY>>4)) ? 0xff : 0x80;
+				g_palette_background[i].r = (i & (BACKGROUND_RED>>4)) ? lvl : 0;
+				g_palette_background[i].g = (i & (BACKGROUND_GREEN>>4)) ? lvl : 0;
+				g_palette_background[i].b = (i & (BACKGROUND_BLUE>>4)) ? lvl : 0;
 			}
 		}
 	}
@@ -98,11 +98,11 @@ static void SavePalette(KeyFileHelper &kfh)
 	for (int i=0; i<16; i++) {
 		snprintf(name, sizeof(name), "%d", i);
 
-        snprintf(value, sizeof(value), "#%02X%02X%02X",
+		snprintf(value, sizeof(value), "#%02X%02X%02X",
 			g_palette_foreground[i].r, g_palette_foreground[i].g, g_palette_foreground[i].b);
 		kfh.PutString("foreground", name, value);
 
-        snprintf(value, sizeof(value), "#%02X%02X%02X",
+		snprintf(value, sizeof(value), "#%02X%02X%02X",
 			g_palette_background[i].r, g_palette_background[i].g, g_palette_background[i].b);
 		kfh.PutString("background", name, value);
     }
@@ -165,108 +165,108 @@ int wxKeyCode2WinKeyCode(int code)
 	case WXK_DELETE: return VK_DELETE;
 	case WXK_START: return 0;
 	case WXK_LBUTTON: return VK_LBUTTON;
-    case WXK_RBUTTON: return VK_RBUTTON;
-    case WXK_CANCEL: return VK_CANCEL;
-    case WXK_MBUTTON: return VK_MBUTTON;
-    case WXK_CLEAR: return VK_CLEAR;
-    case WXK_SHIFT: return VK_SHIFT;
-    case WXK_ALT: return VK_MENU;
-    case WXK_CONTROL: return VK_CONTROL;
+	case WXK_RBUTTON: return VK_RBUTTON;
+	case WXK_CANCEL: return VK_CANCEL;
+	case WXK_MBUTTON: return VK_MBUTTON;
+	case WXK_CLEAR: return VK_CLEAR;
+	case WXK_SHIFT: return VK_SHIFT;
+	case WXK_ALT: return VK_MENU;
+	case WXK_CONTROL: return VK_CONTROL;
 #ifdef __WXMAC__
-    case WXK_RAW_CONTROL: return VK_RCONTROL;
+	case WXK_RAW_CONTROL: return VK_RCONTROL;
 #endif
-    case WXK_MENU: return VK_APPS;
-    case WXK_PAUSE: return VK_PAUSE;
-    case WXK_CAPITAL: return VK_CAPITAL;
-    case WXK_END: return VK_END;
-    case WXK_HOME: return VK_HOME;
-    case WXK_LEFT: return VK_LEFT;
-    case WXK_UP: return VK_UP;
-    case WXK_RIGHT: return VK_RIGHT;
-    case WXK_DOWN: return VK_DOWN;
-    case WXK_SELECT: return VK_SELECT;
-    case WXK_PRINT: return VK_PRINT;
-    case WXK_EXECUTE: return VK_EXECUTE;
-    case WXK_SNAPSHOT: return VK_SNAPSHOT;
+	case WXK_MENU: return VK_APPS;
+	case WXK_PAUSE: return VK_PAUSE;
+	case WXK_CAPITAL: return VK_CAPITAL;
+	case WXK_END: return VK_END;
+	case WXK_HOME: return VK_HOME;
+	case WXK_LEFT: return VK_LEFT;
+	case WXK_UP: return VK_UP;
+	case WXK_RIGHT: return VK_RIGHT;
+	case WXK_DOWN: return VK_DOWN;
+	case WXK_SELECT: return VK_SELECT;
+	case WXK_PRINT: return VK_PRINT;
+	case WXK_EXECUTE: return VK_EXECUTE;
+	case WXK_SNAPSHOT: return VK_SNAPSHOT;
 #ifdef __WXOSX__
-    case WXK_HELP: return VK_INSERT; //Or its hackintosh bug? If so - remove this ifdef.
+	case WXK_HELP: return VK_INSERT; //Or its hackintosh bug? If so - remove this ifdef.
 #else
-    case WXK_HELP: return VK_HELP;
+	case WXK_HELP: return VK_HELP;
 #endif
-    case WXK_INSERT: return VK_INSERT;
-    case WXK_NUMPAD0: return VK_NUMPAD0;
-    case WXK_NUMPAD1: return VK_NUMPAD1;
-    case WXK_NUMPAD2: return VK_NUMPAD2;
-    case WXK_NUMPAD3: return VK_NUMPAD3;
-    case WXK_NUMPAD4: return VK_NUMPAD4;
-    case WXK_NUMPAD5: return VK_NUMPAD5;
-    case WXK_NUMPAD6: return VK_NUMPAD6;
-    case WXK_NUMPAD7: return VK_NUMPAD7;
-    case WXK_NUMPAD8: return VK_NUMPAD8;
-    case WXK_NUMPAD9: return VK_NUMPAD9;
-    case WXK_MULTIPLY: return VK_MULTIPLY;
-    case WXK_ADD: return VK_ADD;
-    case WXK_SEPARATOR: return VK_SEPARATOR;
-    case WXK_SUBTRACT: return VK_SUBTRACT;
-    case WXK_DECIMAL: return VK_DECIMAL;
-    case WXK_DIVIDE: return VK_DIVIDE;
-    case WXK_F1: return VK_F1;
-    case WXK_F2: return VK_F2;
-    case WXK_F3: return VK_F3;
-    case WXK_F4: return VK_F4;
-    case WXK_F5: return VK_F5;
-    case WXK_F6: return VK_F6;
-    case WXK_F7: return VK_F7;
-    case WXK_F8: return VK_F8;
-    case WXK_F9: return VK_F9;
-    case WXK_F10: return VK_F10;
-    case WXK_F11: return VK_F11;
-    case WXK_F12: return VK_F12;
-    case WXK_F13: return VK_F13;
-    case WXK_F14: return VK_F14;
-    case WXK_F15: return VK_F15;
-    case WXK_F16: return VK_F16;
-    case WXK_F17: return VK_F17;
-    case WXK_F18: return VK_F18;
-    case WXK_F19: return VK_F19;
-    case WXK_F20: return VK_F20;
-    case WXK_F21: return VK_F21;
-    case WXK_F22: return VK_F22;
-    case WXK_F23: return VK_F23;
-    case WXK_F24: return VK_F24;
-    case WXK_NUMLOCK: return VK_NUMLOCK;
-    case WXK_SCROLL: return VK_SCROLL;
-    case WXK_PAGEUP: return VK_PRIOR;
-    case WXK_PAGEDOWN: return VK_NEXT;
-    case WXK_NUMPAD_SPACE: return VK_SPACE;
-    case WXK_NUMPAD_TAB: return VK_TAB;
-    case WXK_NUMPAD_ENTER: return VK_RETURN;
-    case WXK_NUMPAD_F1: return VK_F1;
-    case WXK_NUMPAD_F2: return VK_F2;
-    case WXK_NUMPAD_F3: return VK_F3;
-    case WXK_NUMPAD_F4: return VK_F4;
-    case WXK_NUMPAD_HOME: return VK_HOME;
-    case WXK_NUMPAD_LEFT: return VK_LEFT;
-    case WXK_NUMPAD_UP: return VK_UP;
-    case WXK_NUMPAD_RIGHT: return VK_RIGHT;
-    case WXK_NUMPAD_DOWN: return VK_DOWN;
-    case WXK_NUMPAD_PAGEUP: return VK_PRIOR;
-    case WXK_NUMPAD_PAGEDOWN: return VK_NEXT;
-    case WXK_NUMPAD_END: return VK_END;
-    case WXK_NUMPAD_BEGIN: return VK_CLEAR;
-    case WXK_NUMPAD_INSERT: return VK_INSERT;
-    case WXK_NUMPAD_DELETE: return VK_DELETE;
-    case WXK_NUMPAD_EQUAL: return VK_ADD;
-    case WXK_NUMPAD_MULTIPLY: return VK_MULTIPLY;
-    case WXK_NUMPAD_ADD: return VK_ADD;
-    case WXK_NUMPAD_SEPARATOR: return VK_SEPARATOR;
-    case WXK_NUMPAD_SUBTRACT: return VK_SUBTRACT;
-    case WXK_NUMPAD_DECIMAL: return VK_DECIMAL;
-    case WXK_NUMPAD_DIVIDE: return VK_DIVIDE;
+	case WXK_INSERT: return VK_INSERT;
+	case WXK_NUMPAD0: return VK_NUMPAD0;
+	case WXK_NUMPAD1: return VK_NUMPAD1;
+	case WXK_NUMPAD2: return VK_NUMPAD2;
+	case WXK_NUMPAD3: return VK_NUMPAD3;
+	case WXK_NUMPAD4: return VK_NUMPAD4;
+	case WXK_NUMPAD5: return VK_NUMPAD5;
+	case WXK_NUMPAD6: return VK_NUMPAD6;
+	case WXK_NUMPAD7: return VK_NUMPAD7;
+	case WXK_NUMPAD8: return VK_NUMPAD8;
+	case WXK_NUMPAD9: return VK_NUMPAD9;
+	case WXK_MULTIPLY: return VK_MULTIPLY;
+	case WXK_ADD: return VK_ADD;
+	case WXK_SEPARATOR: return VK_SEPARATOR;
+	case WXK_SUBTRACT: return VK_SUBTRACT;
+	case WXK_DECIMAL: return VK_DECIMAL;
+	case WXK_DIVIDE: return VK_DIVIDE;
+	case WXK_F1: return VK_F1;
+	case WXK_F2: return VK_F2;
+	case WXK_F3: return VK_F3;
+	case WXK_F4: return VK_F4;
+	case WXK_F5: return VK_F5;
+	case WXK_F6: return VK_F6;
+	case WXK_F7: return VK_F7;
+	case WXK_F8: return VK_F8;
+	case WXK_F9: return VK_F9;
+	case WXK_F10: return VK_F10;
+	case WXK_F11: return VK_F11;
+	case WXK_F12: return VK_F12;
+	case WXK_F13: return VK_F13;
+	case WXK_F14: return VK_F14;
+	case WXK_F15: return VK_F15;
+	case WXK_F16: return VK_F16;
+	case WXK_F17: return VK_F17;
+	case WXK_F18: return VK_F18;
+	case WXK_F19: return VK_F19;
+	case WXK_F20: return VK_F20;
+	case WXK_F21: return VK_F21;
+	case WXK_F22: return VK_F22;
+	case WXK_F23: return VK_F23;
+	case WXK_F24: return VK_F24;
+	case WXK_NUMLOCK: return VK_NUMLOCK;
+	case WXK_SCROLL: return VK_SCROLL;
+	case WXK_PAGEUP: return VK_PRIOR;
+	case WXK_PAGEDOWN: return VK_NEXT;
+	case WXK_NUMPAD_SPACE: return VK_SPACE;
+	case WXK_NUMPAD_TAB: return VK_TAB;
+	case WXK_NUMPAD_ENTER: return VK_RETURN;
+	case WXK_NUMPAD_F1: return VK_F1;
+	case WXK_NUMPAD_F2: return VK_F2;
+	case WXK_NUMPAD_F3: return VK_F3;
+	case WXK_NUMPAD_F4: return VK_F4;
+	case WXK_NUMPAD_HOME: return VK_HOME;
+	case WXK_NUMPAD_LEFT: return VK_LEFT;
+	case WXK_NUMPAD_UP: return VK_UP;
+	case WXK_NUMPAD_RIGHT: return VK_RIGHT;
+	case WXK_NUMPAD_DOWN: return VK_DOWN;
+	case WXK_NUMPAD_PAGEUP: return VK_PRIOR;
+	case WXK_NUMPAD_PAGEDOWN: return VK_NEXT;
+	case WXK_NUMPAD_END: return VK_END;
+	case WXK_NUMPAD_BEGIN: return VK_CLEAR;
+	case WXK_NUMPAD_INSERT: return VK_INSERT;
+	case WXK_NUMPAD_DELETE: return VK_DELETE;
+	case WXK_NUMPAD_EQUAL: return VK_ADD;
+	case WXK_NUMPAD_MULTIPLY: return VK_MULTIPLY;
+	case WXK_NUMPAD_ADD: return VK_ADD;
+	case WXK_NUMPAD_SEPARATOR: return VK_SEPARATOR;
+	case WXK_NUMPAD_SUBTRACT: return VK_SUBTRACT;
+	case WXK_NUMPAD_DECIMAL: return VK_DECIMAL;
+	case WXK_NUMPAD_DIVIDE: return VK_DIVIDE;
 
-    case WXK_WINDOWS_LEFT: return VK_LWIN;
-    case WXK_WINDOWS_RIGHT: return VK_RWIN;
-    case WXK_WINDOWS_MENU: return VK_MENU;
+	case WXK_WINDOWS_LEFT: return VK_LWIN;
+	case WXK_WINDOWS_RIGHT: return VK_RWIN;
+	case WXK_WINDOWS_MENU: return VK_MENU;
 	case L'.': return VK_OEM_PERIOD;
 	case L',': return VK_OEM_COMMA;
 	case L'-': return VK_OEM_MINUS;

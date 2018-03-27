@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileowner.hpp"
 #include "wakeful.hpp"
 #include "DlgGuid.hpp"
-#include <list>
+#include "execute.hpp"
 
 
 enum SETATTRDLG
@@ -525,35 +525,15 @@ void PR_ShellSetFileAttributesMsg()
 
 static void SystemProperties(const FARString &strSelName)
 {
+	std::vector<std::wstring> lines;
+
 	std::string cmd = "file \"";
 	cmd+= EscapeQuotas(Wide2MB(strSelName.CPtr()));
 	cmd+= '\"';
-	FILE *f = popen(cmd.c_str(), "r");
-	if (!f) {
-		perror("SystemProperties: popen");
-		return;
-	}
 
-	std::list<std::wstring> lines;
-	char buf[0x400] = { };
-	while (fgets(buf, sizeof(buf)-1, f)) {
-		size_t l = strlen(buf);
-		while (l && (buf[l-1]=='\r' || buf[l-1]=='\n')) --l;
-		if (l) {
-			buf[l] = 0;
-			std::wstring line = MB2Wide(buf);
-			while (line.size() > 40) {
-				size_t p = line.find(L',' , 30);
-				if (p==std::string::npos) break;
-				lines.push_back( line.substr(0, p) );
-				line.erase(0, p + 1);
-			}
-			
-			if (!line.empty()) lines.push_back( line );
-		}
-	}
-	pclose(f);
-	
+	if (!POpen(lines, cmd.c_str()))
+		return;
+
 	if (lines.empty())
 		return;
 		

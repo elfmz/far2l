@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "mix.hpp"
+#include "execute.hpp"
 #ifdef __APPLE__
 //# include <sys/sysctl.h>
 # include <mach/mach_host.h>
@@ -607,11 +608,38 @@ void InfoList::ShowDirDescription(int YPos)
 
 	if (AnotherPanel->GetMode()==FILE_PANEL)
 	{
-		FARString strDizDir;
-		AnotherPanel->GetCurDir(strDizDir);
+		FARString strDir;
+		AnotherPanel->GetCurDir(strDir);
 
-		if (!strDizDir.IsEmpty())
-			AddEndSlash(strDizDir);
+		do {
+			FARString strGit = strDir + L"/.git";
+			struct stat s;
+			if (stat(strGit.GetMB().c_str(), &s) == 0)
+			{
+				fprintf(stderr, "GIT: %ls\n", strGit.CPtr());
+				std::vector<std::wstring> lines;
+				std::string cmd = "git -C \"";
+				cmd+= EscapeQuotas(Wide2MB(strDir.CPtr()));
+				cmd+= "\" status";
+
+				if (POpen(lines, cmd.c_str()))
+				{
+					for (const auto &l : lines)
+					{
+						GotoXY(X1 + 2, ++YPos);
+						PrintText(l.c_str());
+					}
+					DrawSeparator(++YPos);
+				}
+				break;
+			}
+		} while (CutToSlash(strDir, true));
+
+
+		AnotherPanel->GetCurDir(strDir);
+
+		if (!strDir.IsEmpty())
+			AddEndSlash(strDir);
 
 		FARString strArgName;
 		const wchar_t *NamePtr = Opt.InfoPanel.strFolderInfoFiles;
@@ -619,7 +647,7 @@ void InfoList::ShowDirDescription(int YPos)
 		while ((NamePtr=GetCommaWord(NamePtr,strArgName)))
 		{
 			FARString strFullDizName;
-			strFullDizName = strDizDir;
+			strFullDizName = strDir;
 			strFullDizName += strArgName;
 			FAR_FIND_DATA_EX FindData;
 
@@ -848,3 +876,4 @@ void InfoList::DynamicUpdateKeyBar()
 	KB->ReadRegGroup(L"Info",Opt.strLanguage);
 	KB->SetAllRegGroup();
 }
+

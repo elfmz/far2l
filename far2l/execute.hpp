@@ -42,3 +42,7 @@ const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 bool ProcessOSAliases(FARString &strStr);
 
 std::vector<std::string> ExplodeCmdLine(std::string cmd_line);
+
+bool POpen(std::vector<std::wstring> &result, const char *command);
+
+

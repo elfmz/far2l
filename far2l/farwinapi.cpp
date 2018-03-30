@@ -866,7 +866,8 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 		}
 	}
 
-	if (sdc_fs_flags_get(um->target.c_str(), &um->target_flags) != -1 
+	if ( (s.st_mode & S_IFMT) == S_IFREG // calling sdc_fs_flags_get on special files useless and may stuck
+	&& sdc_fs_flags_get(um->target.c_str(), &um->target_flags) != -1
 	&& (um->target_flags & FS_IMMUTABLE_FL) != 0) {
 		if (sdc_fs_flags_set(um->target.c_str(), um->target_flags & ~FS_IMMUTABLE_FL) != -1) {
 			um->target_flags_modified = true;

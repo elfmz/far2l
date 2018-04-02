@@ -152,6 +152,13 @@ public:
 	bool IsBackground() const {return _backround; }
 };
 
+
+bool IsExecutableFilePath(const char *path)
+{
+	ExecClassifier ec(path);
+	return ec.IsExecutable();
+}
+
 static void CallExec(const char *CmdStr) 
 {
 	int r = execl("/bin/sh", "sh", "-c", CmdStr, NULL);

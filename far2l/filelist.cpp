@@ -2326,14 +2326,8 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 		}
 
 		ExtPtr=wcsrchr(strFileName,L'.');
-		int ExeType=FALSE,BatType=FALSE;
 
-		if (ExtPtr) 
-		{
-			ExeType = (!StrCmpI(ExtPtr,L".sh") || !StrCmpI(ExtPtr,L".py") || !StrCmpI(ExtPtr,L".pl"));//TODO: detect executable bit
-		}
-
-		if (EnableExec && (ExeType || BatType))
+		if (EnableExec && IsExecutableFilePath(strFileName.GetMB().c_str()))
 		{
 			EscapeSpace(strFileName);
 

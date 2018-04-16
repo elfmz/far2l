@@ -150,9 +150,9 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 # define SIGN_WIDE_BE	SIGN_UTF16BE
 #endif
 
-#if !defined(__FreeBSD__) && ((defined(__GNUC__)) || (defined(_MSC_VER) && _MSC_VER<1600))
-#define nullptr NULL
-#endif
+//#if !defined(__FreeBSD__) && ((defined(__GNUC__)) || (defined(_MSC_VER) && _MSC_VER<1600))
+// #define nullptr NULL
+//#endif
 
 #include "farrtl.hpp"
 #include "UnicodeString.hpp"

@@ -69,10 +69,10 @@ brew install glib gawk cmake pkg-config wget
 
  * Download and build latest source from https://wxWidgets.org (brew version is too old?). Example: 
 ```sh
-wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.0/wxWidgets-3.1.0.tar.bz2
-bunzip2 wxWidgets-3.1.0.tar.bz2
-tar xvf wxWidgets-3.1.0.tar
-cd wxWidgets-3.1.0
+wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2
+bunzip2 wxWidgets-3.1.1.tar.bz2
+tar xvf wxWidgets-3.1.1.tar
+cd wxWidgets-3.1.1
 ./configure --disable-shared --disable-debug CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++ -std=c++11" OBJCXXFLAGS="-stdlib=libc++ -std=c++11" LDFLAGS=-stdlib=libc++ --enable-monolithic --enable-unicode
 make -j4
 make install

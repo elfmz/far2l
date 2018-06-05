@@ -1,6 +1,7 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
 #include <string>
+#include <unistd.h>
 
 #if defined(__GNUC__)
 #ifdef __cplusplus
@@ -98,27 +99,22 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigne
   return hPlugin;
 }
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
-char *get_current_dir_name();
-#endif
-
 std::string MakeFullName(const char *name)
 {
 	if (name[0]=='/')
 		return name;
 	
 	std::string out;
-	char *cd = get_current_dir_name();
-	if (cd) {
-		if (name[0]=='.' && name[1]=='/') {
-			name+=2 ;
+	char cd[PATH_MAX];
+	if (getcwd(cd, sizeof(cd))) {
+		if (name[0] == '.' && name[1] == '/') {
+			name += 2;
 		}
 		out = cd;
-		free(cd);
-		out+= '/';
+		out += '/';
 	}
 	
-	out+= name;
+	out += name;
 	return out;
 }
 

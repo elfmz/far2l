@@ -10,7 +10,7 @@ class SharedResource
 
 		SharedResource(const SharedResource&) = delete;
 
-		void GetUnmodifiedCount();
+		void GenerateModifyId();
 		bool Lock(int op, int timeout);
 
 	public:

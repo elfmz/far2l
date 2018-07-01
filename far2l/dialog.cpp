@@ -4212,7 +4212,6 @@ BOOL Dialog::SelectFromEditHistory(DialogItemEx *CurItem,
 	FARString strRegKey=fmtSavedDialogHistory;
 	strRegKey+=HistoryName;
 	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey, &Opt.Dialogs.EditHistory, false);
-	DlgHist.ReadHistory();
 	DlgHist.ResetPosition();
 	{
 		// создание пустого вертикального меню
@@ -4256,7 +4255,6 @@ int Dialog::AddToEditHistory(const wchar_t *AddStr,const wchar_t *HistoryName)
 	FARString strRegKey=fmtSavedDialogHistory;
 	strRegKey+=HistoryName;
 	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey, &Opt.Dialogs.EditHistory, false);
-	DlgHist.ReadHistory();
 	DlgHist.AddToHistory(AddStr);
 	return TRUE;
 }

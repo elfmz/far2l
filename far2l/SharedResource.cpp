@@ -17,8 +17,7 @@ SharedResource::SharedResource(uint64_t id) :
 	char buf[64];
 	snprintf(buf, sizeof(buf) - 1, "sr/%llx", (unsigned long long)id);
 
-	const std::string &path = InMyTemp(buf);
-	_fd = open(InMyTemp(buf).c_str(), O_CREAT | O_RDWR, 0640);
+	_fd = open(InMyConfig(buf).c_str(), O_CREAT | O_RDWR, 0640);
 	if (_fd == -1) {
 		perror("SharedResource::SharedResource: open");
 
@@ -33,6 +32,16 @@ SharedResource::~SharedResource()
 		close(_fd);
 }
 
+void SharedResource::GenerateModifyId()
+{
+	++_modify_counter;
+	_modify_id = (uint64_t)(((uintptr_t)this) & 0xffff000) << 12;
+	_modify_id^= getpid();
+	_modify_id<<= 32;
+	_modify_id^= (uint64_t)time(NULL);
+	_modify_id+= _modify_counter;
+}
+
 bool SharedResource::Lock(int op, int timeout)
 {
 	if (_fd == -1)
@@ -44,9 +53,13 @@ bool SharedResource::Lock(int op, int timeout)
 			out = flock(_fd, op | LOCK_NB) != -1;
 			if (out)
 				break;
+
 			const time_t tn = time(NULL);
-			if (tn - ts >= timeout)
+			if (tn - ts >= timeout) {
+				fprintf(stderr,
+					"SharedResource::Lock(%d, %d): timeout\n", op, timeout);
 				break;
+			}
 			if (tn - ts > 1) {
 				sleep(1);
 			} else if (tn - ts == 1) {
@@ -78,7 +91,7 @@ void SharedResource::UnlockRead()
 {
 	if (_fd != -1) {
 		if (pread(_fd, &_modify_id, sizeof(_modify_id), 0) != sizeof(_modify_id)) {
-			perror("SharedResource::UnlockWrite: pread");
+			perror("SharedResource::UnlockRead: pread");
 			_modify_id = 0;
 		}
 		flock(_fd, LOCK_UN);
@@ -88,9 +101,7 @@ void SharedResource::UnlockRead()
 void SharedResource::UnlockWrite()
 {
 	if (_fd != -1) {
-		_modify_id = ++_modify_counter;
-		_modify_id<<= 32;
-		_modify_id^= (uint64_t)getpid();
+		GenerateModifyId();
 		if (pwrite(_fd, &_modify_id, sizeof(_modify_id), 0) != sizeof(_modify_id)) {
 			perror("SharedResource::UnlockWrite: pwrite");
 			_modify_id = 0;

@@ -75,7 +75,6 @@ DlgEdit::DlgEdit(Dialog* pOwner,unsigned Index,DLGEDITTYPE Type):
 					FARString strHistory = fmtSavedDialogHistory;
 					strHistory+=CurItem->strHistory;
 					iHistory=new History(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strHistory, &Opt.Dialogs.EditHistory, false);
-					iHistory->ReadHistory(true);
 				}
 				if(CurItem->Type == DI_COMBOBOX)
 				{

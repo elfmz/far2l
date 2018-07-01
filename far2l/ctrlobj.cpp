@@ -70,15 +70,6 @@ ControlObject::ControlObject():
 	ViewHistory=new History(HISTORYTYPE_VIEW,Opt.ViewHistoryCount,L"SavedViewHistory",&Opt.SaveViewHistory,true);
 	FolderHistory->SetAddMode(true,2,true);
 	ViewHistory->SetAddMode(true, 1, true);
-
-	if (Opt.SaveHistory)
-		CmdHistory->ReadHistory();
-
-	if (Opt.SaveFoldersHistory)
-		FolderHistory->ReadHistory();
-
-	if (Opt.SaveViewHistory)
-		ViewHistory->ReadHistory();
 }
 
 

@@ -67,6 +67,8 @@ History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t
 	CurrentItem(nullptr),
 	SharedRes(RegKey2ID(strRegKey))
 {
+	if (*EnableSave)
+		ReadHistory();
 }
 
 History::~History()
@@ -170,9 +172,9 @@ bool History::SaveHistory()
 	if (!*EnableSave)
 		return true;
 
-	SharedResource::Writer w(SharedRes, 30);
 	if (!HistoryList.Count())
 	{
+		SharedResource::Writer w(SharedRes, 30);
 		DeleteRegKey(strRegKey);
 		return true;
 	}
@@ -233,8 +235,8 @@ bool History::SaveHistory()
 	if (SaveType)
 		wmemset(TypesBuffer,0,HistoryList.Count()+1);
 
-	bool ret = false;
 	HKEY hKey = nullptr;
+	bool ret = false;
 	wchar_t *BufferLines=nullptr, *PtrBuffer;
 	size_t SizeLines=0, SizeTypes=0, SizeLocks=0, SizeTimes=0;
 	int Position = -1;
@@ -270,6 +272,7 @@ bool History::SaveHistory()
 
 	if (hKey)
 	{
+		SharedResource::Writer w(SharedRes, 30);
 		WINPORT(RegSetValueEx)(hKey,L"Lines",0,REG_MULTI_SZ,(unsigned char *)BufferLines,static_cast<DWORD>(SizeLines*sizeof(wchar_t)));
 
 		if (SaveType) {
@@ -333,7 +336,7 @@ bool History::ReadLastItem(const wchar_t *RegKey, FARString &strStr)
 
 bool History::ReadHistory(bool bOnlyLines)
 {
-	SharedResource::Reader w(SharedRes, 10);
+	SharedResource::Reader r(SharedRes, 30);
 	HKEY hKey=OpenRegKey(strRegKey);
 
 	if (!hKey)

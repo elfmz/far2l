@@ -4,6 +4,7 @@
 #include <plugin.hpp>
 #include "../../etc/plugs.h"
 #include <algorithm>
+#include <ctype.h>
 
 #ifndef UNICODE
 #define _cFileName    cFileName

@@ -57,10 +57,7 @@ add_subdirectory (align)
 add_subdirectory (autowrap)
 add_subdirectory (drawline)
 add_subdirectory (editorcomp)
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    add_subdirectory (objinfo)
-endif()
+add_subdirectory (inside)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 
@@ -75,8 +72,10 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
     PATTERN "*.far-plug-*" EXCLUDE 
     PATTERN "*")
 
+# setup some symlinks and remove deprecated stuff from previous installation
 install(CODE "
       execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_askpass)
       execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_sudoapp)
+      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb)
       "
     )

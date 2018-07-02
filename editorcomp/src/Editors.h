@@ -12,7 +12,7 @@ private:
     static constexpr const wchar_t *ENABLED_REGISTRY_ENTRY = L"Enabled";
 
     static constexpr const wchar_t *FILE_MASKS_ENTRY = L"fileMasks";
-    static constexpr const wchar_t *DEFAULT_FILE_MASKS = L"*.c;*.cpp;*.cxx;*.h;*.s;*.asm;*.pl;*.py;*.js;*.json";
+    static constexpr const wchar_t *DEFAULT_FILE_MASKS = L"*.c;*.cpp;*.cxx;*.h;*.s;*.asm;*.pl;*.py;*.js;*.json;*.sh";
 
     PluginStartupInfo info;
     FarStandardFunctions fsf;

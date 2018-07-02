@@ -1,4 +1,4 @@
-#include "utils.h"
+#pragma once
 
 template <class CHAR_T, class CHAR_COMPARE>
 	bool MatchWildcardT(const CHAR_T *str, const CHAR_T *wild)
@@ -62,13 +62,13 @@ template <class CHAR_T>
 /////////////////////////
 
 template <class CHAR_T>
-	bool MatchWildcard(const CHAR_T *str, const CHAR_T *wild)
+	bool MatchWildcard(const CHAR_T *str, const CHAR_T *wild) // case sensitive
 {
 	return MatchWildcardT<CHAR_T, CharComparePlain<CHAR_T> >(str, wild);
 }
 
 template <class CHAR_T>
-	bool MatchWildcardICE(const CHAR_T *str, const CHAR_T *wild)
+	bool MatchWildcardICE(const CHAR_T *str, const CHAR_T *wild)  // case-insensitive for english chars
 {
 	return MatchWildcardT<CHAR_T, CharCompareICE<CHAR_T> >(str, wild);
 }

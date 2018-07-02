@@ -26,12 +26,7 @@ private:
     int suggestionRow = 0;
     int suggestionCol = 0;
     State state = DO_PUT;
-
-    enum ActivationState {
-        AS_UNDECIDED = 0,
-        AS_ACTIVE = 1,
-        AS_INACTIVE = 2
-    } activationState = AS_UNDECIDED;
+    bool isEnabled = false;
 
     EditorInfo previousEditorInfo = {0};
     std::wstring previousEditorInfoLine;
@@ -39,14 +34,14 @@ private:
     void putSuggestion();
 
 public:
-    explicit Editor(int id, PluginStartupInfo& info, FarStandardFunctions& fsf);
+    explicit Editor(int id, PluginStartupInfo& info, FarStandardFunctions& fsf, const std::wstring &autoEnableMasks);
 
     int getId();
     State getState();
     EditorInfo getInfo();
 
-    bool isActive(const std::wstring &fileMasks);
-    void setActive(bool active);
+    bool getEnabled();
+    void setEnabled(bool enabled);
 
     EditorGetString getString(int line = -1);
     int getSuggestionLength();

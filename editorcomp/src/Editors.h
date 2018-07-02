@@ -17,7 +17,8 @@ private:
     PluginStartupInfo info;
     FarStandardFunctions fsf;
     std::wstring registryRootKey, fileMasks;
-    bool enabled;
+    const std::wstring emptyString;
+    bool autoEnabling;
 
     std::map<int, Editor *> editors;
 
@@ -28,8 +29,8 @@ public:
 
     PluginStartupInfo &getInfo();
 
-    void setEnabled(bool enabled);
-    bool getEnabled();
+    void setAutoEnabling(bool enabled);
+    bool getAutoEnabling();
 
     void setFileMasks(const std::wstring &masks);
     const std::wstring &getFileMasks();

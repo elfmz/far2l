@@ -3,7 +3,7 @@
 
 #include <plugin.hpp>
 #include "../../etc/plugs.h"
-#include <functional>
+#include <algorithm>
 
 #ifndef UNICODE
 #define _cFileName    cFileName

@@ -2,7 +2,9 @@
 #include "elf/PluginImplELF.h"
 #include "pdf/PluginImplPDF.h"
 #include <fcntl.h>
-#include <elf.h>
+#ifndef __APPLE__
+# include <elf.h>
+#endif
 #include <sudo.h>
 
 SHAREDSYMBOL void WINPORT_DllStartup(const char *path)

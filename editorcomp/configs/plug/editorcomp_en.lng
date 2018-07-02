@@ -2,6 +2,8 @@
 
 "Editor Autocomplete"
 "Use Tab to confirm a suggestion"
-"Enabled"
+"&Enabled"
 "Ok"
 "Cancel"
+"&File masks:"
+"&Enabled for this editing session"

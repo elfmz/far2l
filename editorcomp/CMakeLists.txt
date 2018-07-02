@@ -3,7 +3,7 @@ project(editorcomp)
 
 set(SOURCES
     src/editorcomp.cpp
-        src/Editor.cpp src/Editor.h src/Editors.cpp src/Editors.h)
+        src/Editor.cpp src/Editor.h src/Editors.cpp src/Editors.h src/Registry.cpp src/Registry.h)
 
 add_library (editorcomp MODULE ${SOURCES})
 

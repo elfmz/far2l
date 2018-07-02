@@ -1,4 +1,5 @@
 #include <plugin.hpp>
+#include <utils.h>
 #include "Editor.h"
 
 Editor::Editor(int id, PluginStartupInfo &info, FarStandardFunctions &fsf) : id(id), info(info), fsf(fsf) {}
@@ -11,6 +12,51 @@ EditorInfo Editor::getInfo() {
     EditorInfo ei = {0};
     info.EditorControl(ECTL_GETINFO, &ei);
     return ei;
+}
+
+bool Editor::isActive(const std::wstring &fileMasks) {
+    if (activationState == AS_UNDECIDED) {
+        std::wstring fileName;
+        size_t fileNameSize = info.EditorControl(ECTL_GETFILENAME, NULL);
+
+        if (fileNameSize > 1) {
+            fileName.resize(fileNameSize + 1);
+            info.EditorControl(ECTL_GETFILENAME, &fileName[0]);
+            fileName.resize(fileNameSize - 1);
+
+        } else
+            fileName.clear();
+
+        for (std::wstring tmp = fileMasks;;) {
+            size_t i = tmp.rfind(';');
+            if (i == std::wstring::npos) {
+                i = 0;
+            } else
+                ++i;
+
+            if (i < tmp.size() && MatchWildcardICE(fileName.c_str(), tmp.c_str() + i)) {
+                activationState = AS_ACTIVE;
+                break;
+            }
+            if (i <= 1) {
+                activationState = AS_INACTIVE;
+                break;
+            }
+            tmp.resize(i - 1);
+        }
+    }
+
+    return (activationState == AS_ACTIVE);
+}
+
+void Editor::setActive(bool active)
+{
+    if (!active) {
+        declineSuggestion();
+        activationState = AS_INACTIVE;
+
+    } else
+        activationState = AS_ACTIVE;
 }
 
 EditorGetString Editor::getString(int line) {

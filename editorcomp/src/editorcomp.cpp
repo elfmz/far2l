@@ -24,7 +24,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
     memset(Info, 0, sizeof(*Info));
     Info->StructSize = sizeof(*Info);
-    Info->Flags = /*PF_EDITOR |*/ PF_DISABLEPANELS;
+    Info->Flags = PF_EDITOR | PF_DISABLEPANELS;
 
     Info->PluginConfigStringsNumber = 1;
     Info->PluginConfigStrings = title;
@@ -36,30 +36,68 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
     PluginStartupInfo &info = editors->getInfo();
 
     int w = 47;
-    int h = 10;
+    int h = 12;
 
     struct FarDialogItem fdi[] = {
             {DI_DOUBLEBOX, 1,  1, w - 2, h - 2, 0,     0, 0, 0,    getMsg(info, 0)},
             {DI_TEXT,      3,  2, 0,     h - 1, FALSE, 0, 0, 0,    getMsg(info, 1)},
-            {DI_CHECKBOX,  3,  4, 0,     0,     TRUE,  0, 0, 0,    getMsg(info, 2)},
-            {DI_SINGLEBOX, 2,  6, w - 3, 6,     FALSE, 0, 0, 0,    L""},
-            {DI_BUTTON,    11, 7, 0,     0,     FALSE, 0, 0, TRUE, getMsg(info, 3)},
-            {DI_BUTTON,    26, 7, 0,     0,     FALSE, 0, 0, 0,    getMsg(info, 4)}
+            {DI_TEXT,      3,  4, 0,     0,     FALSE, 0, 0, 0,    getMsg(info, 5)},
+            {DI_EDIT,      3,  5, w - 4, 0,     0,  0,  0, 0},
+            {DI_CHECKBOX,  3,  7, 0,     0,     TRUE,  0, 0, 0,    getMsg(info, 2)},
+            {DI_SINGLEBOX, 2,  8, 0,     0,     FALSE, 0, 0, 0,    L""},
+            {DI_BUTTON,    11, 9, 0,     0,     FALSE, 0, 0, TRUE, getMsg(info, 3)},
+            {DI_BUTTON,    26, 9, 0,     0,     FALSE, 0, 0, 0,    getMsg(info, 4)}
     };
 
     unsigned int size = sizeof(fdi) / sizeof(fdi[0]);
-    fdi[2].Param.Selected = editors->getEnabled();
+    fdi[3].PtrData = (TCHAR*)editors->getFileMasks().c_str();
+    fdi[4].Param.Selected = editors->getEnabled();
+
     HANDLE hDlg = info.DialogInit(info.ModuleNumber, -1, -1, w, h, L"config", fdi, size, 0, 0, nullptr, 0);
 
     int runResult = info.DialogRun(hDlg);
-    if (runResult == int(size) - 2)
-        editors->setEnabled(info.SendDlgMessage(hDlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
+    if (runResult == int(size) - 2) {
+        editors->setEnabled(info.SendDlgMessage(hDlg, DM_GETCHECK, 4, 0) == BSTATE_CHECKED);
+        editors->setFileMasks(((const TCHAR *)info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,3,0)));
+    }
 
     info.DialogFree(hDlg);
     return 1;
 }
 
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
+    Editor *editor = editors->getEditor();
+    if (!editor)
+        return INVALID_HANDLE_VALUE;
+
+    PluginStartupInfo &info = editors->getInfo();
+
+    int w = 47;
+    int h = 7;
+
+    struct FarDialogItem fdi[] = {
+            {DI_DOUBLEBOX, 1,  1, w - 2, h - 2, 0,     0, 0, 0,    getMsg(info, 0)},
+            {DI_CHECKBOX,  3,  3, 0,     0,     TRUE,  0, 0, 0,    getMsg(info, 6)},
+            {DI_SINGLEBOX, 2,  4, 0,     0,     FALSE, 0, 0, 0,    L""},
+            {DI_BUTTON,    11, 5, 0,     0,     FALSE, 0, 0, TRUE, getMsg(info, 3)},
+            {DI_BUTTON,    26, 5, 0,     0,     FALSE, 0, 0, 0,    getMsg(info, 4)}
+    };
+
+    bool active = editor->isActive(editors->getFileMasks());
+    unsigned int size = sizeof(fdi) / sizeof(fdi[0]);
+    fdi[1].Param.Selected = active;
+
+    HANDLE hDlg = info.DialogInit(info.ModuleNumber, -1, -1, w, h, L"config", fdi, size, 0, 0, nullptr, 0);
+
+    int runResult = info.DialogRun(hDlg);
+    if (runResult == int(size) - 2) {
+        bool checked = (info.SendDlgMessage(hDlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
+        if (checked != active) {
+            editor->setActive(checked);
+        }
+    }
+
+    info.DialogFree(hDlg);
     return INVALID_HANDLE_VALUE;
 };
 
@@ -70,7 +108,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param) {
     } else {
         Editor *editor = editors->getEditor();
 
-        if (editors->getEnabled()) {
+        if (editors->getEnabled() && editor->isActive(editors->getFileMasks())) {
             if (Event == EE_READ) {
                 //
             } else {
@@ -98,6 +136,8 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
         return 0;
 
     Editor *editor = editors->getEditor();
+    if (!editor->isActive(editors->getFileMasks()))
+        return 0;
 
     // Is regular key event?
     if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.dwControlKeyState == 0

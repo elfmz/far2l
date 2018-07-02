@@ -802,6 +802,26 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
+void Editor::ProcessPasteEvent()
+{
+	if (Flags.Check(FEDITOR_LOCKMODE))
+		return;
+
+	Pasting++;
+	if (!EdOpt.PersistentBlocks && !VBlockStart)
+		DeleteBlock();
+
+	Paste();
+	// MarkingBlock=!VBlockStart;
+	Flags.Change(FEDITOR_MARKINGBLOCK,!VBlockStart);
+	Flags.Clear(FEDITOR_MARKINGVBLOCK);
+
+	if (!EdOpt.PersistentBlocks)
+		UnmarkBlock();
+
+	Pasting--;
+	Show();
+}
 
 int Editor::ProcessKey(int Key)
 {
@@ -1560,24 +1580,7 @@ int Editor::ProcessKey(int Key)
 		case KEY_CTRLV:
 		case KEY_SHIFTINS: case KEY_SHIFTNUMPAD0:
 		{
-			if (Flags.Check(FEDITOR_LOCKMODE))
-				return TRUE;
-
-			Pasting++;
-
-			if (!EdOpt.PersistentBlocks && !VBlockStart)
-				DeleteBlock();
-
-			Paste();
-			// MarkingBlock=!VBlockStart;
-			Flags.Change(FEDITOR_MARKINGBLOCK,!VBlockStart);
-			Flags.Clear(FEDITOR_MARKINGVBLOCK);
-
-			if (!EdOpt.PersistentBlocks)
-				UnmarkBlock();
-
-			Pasting--;
-			Show();
+			ProcessPasteEvent();
 			return TRUE;
 		}
 		case KEY_LEFT: case KEY_NUMPAD4:
@@ -2937,6 +2940,12 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 
 		Show();
+	}
+
+	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED
+	&& (MouseEvent->dwEventFlags & (DOUBLE_CLICK | MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED)) == 0)
+	{
+		ProcessPasteEvent();
 	}
 
 	if (CurLine->ProcessMouse(MouseEvent))

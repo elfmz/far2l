@@ -175,7 +175,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 
 	Info->Flags = PF_FULLCMDLINE;
 	static const char *PluginCfgStrings[1];
-	PluginCfgStrings[0] = (char*)G.GetMsg(MCfgLine0);
+	PluginCfgStrings[0] = (char*)G.GetMsg(MTitle);
 	Info->PluginConfigStrings = PluginCfgStrings;
 	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
 
@@ -192,7 +192,7 @@ SHAREDSYMBOL void WINAPI _export GetOpenPluginInfo(HANDLE hPlugin,struct OpenPlu
 
 SHAREDSYMBOL int WINAPI _export ProcessHostFile(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode)
 {
-  return ((PluginImplELF *)hPlugin)->ProcessHostFile(PanelItem, ItemsNumber, OpMode);
+	return ((PluginImplELF *)hPlugin)->ProcessHostFile(PanelItem, ItemsNumber, OpMode);
 }
 
 SHAREDSYMBOL int WINAPI _export ProcessKey(HANDLE hPlugin,int Key,unsigned int ControlState)
@@ -202,5 +202,19 @@ SHAREDSYMBOL int WINAPI _export ProcessKey(HANDLE hPlugin,int Key,unsigned int C
 
 SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 {
-	return FALSE;
+	if (!G.IsStarted())
+		return 0;
+
+	struct FarDialogItem fdi[] = {
+            {DI_DOUBLEBOX,  3,  1,  70, 5,  0,0,0,0, 0},
+            {DI_TEXT,      -1,  2,  0,  2,  0,0,0,0, 0},
+            {DI_BUTTON,     34, 4,  0,  4,  0,0,0,0, 0}
+	};
+
+	strncpy(fdi[0].Data, G.GetMsg(MTitle), sizeof(fdi[0].Data));
+	strncpy(fdi[1].Data, G.GetMsg(MDescription), sizeof(fdi[1].Data));
+	strncpy(fdi[2].Data, G.GetMsg(MOK), sizeof(fdi[2].Data));
+
+	G.info.Dialog(G.info.ModuleNumber, -1, -1, 74, 7, NULL, fdi, ARRAYSIZE(fdi));
+	return 1;
 }

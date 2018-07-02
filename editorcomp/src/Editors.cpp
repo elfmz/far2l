@@ -14,7 +14,7 @@ Editors::Editors(const PluginStartupInfo &info, const FarStandardFunctions &fsf)
     this->registryRootKey += PLUGIN_REGISTRY_BRANCH;
 
     Registry reg(this->registryRootKey);
-    this->enabled = reg.read(ENABLED_REGISTRY_ENTRY, DEFAULT_ENABLED);
+    this->autoEnabling = reg.read(ENABLED_REGISTRY_ENTRY, DEFAULT_ENABLED);
     this->fileMasks = DEFAULT_FILE_MASKS;
     reg.read(FILE_MASKS_ENTRY, this->fileMasks);
 }
@@ -28,7 +28,7 @@ Editor *Editors::getEditor(void *params) {
 
     Editor *editor = editors[id];
     if (editor == nullptr) {
-        editor = new Editor(id, info, fsf);
+        editor = new Editor(id, info, fsf, getAutoEnabling() ? getFileMasks() : emptyString);
         editors[id] = editor;
     }
 
@@ -47,14 +47,14 @@ PluginStartupInfo &Editors::getInfo() {
     return info;
 }
 
-void Editors::setEnabled(bool enabled) {
+void Editors::setAutoEnabling(bool enabled) {
     Registry reg(this->registryRootKey);
     if (reg.write(ENABLED_REGISTRY_ENTRY, enabled))
-        this->enabled = enabled;
+        this->autoEnabling = enabled;
 }
 
-bool Editors::getEnabled() {
-    return this->enabled;
+bool Editors::getAutoEnabling() {
+    return this->autoEnabling;
 }
 
 void Editors::setFileMasks(const std::wstring &masks) {

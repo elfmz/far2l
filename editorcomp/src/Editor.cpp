@@ -2,20 +2,10 @@
 #include <utils.h>
 #include "Editor.h"
 
-Editor::Editor(int id, PluginStartupInfo &info, FarStandardFunctions &fsf) : id(id), info(info), fsf(fsf) {}
+Editor::Editor(int id, PluginStartupInfo &info, FarStandardFunctions &fsf, const std::wstring &autoEnableMasks)
+        : id(id), info(info), fsf(fsf) {
 
-int Editor::getId() {
-    return this->id;
-}
-
-EditorInfo Editor::getInfo() {
-    EditorInfo ei = {0};
-    info.EditorControl(ECTL_GETINFO, &ei);
-    return ei;
-}
-
-bool Editor::isActive(const std::wstring &fileMasks) {
-    if (activationState == AS_UNDECIDED) {
+    if (!autoEnableMasks.empty()) {
         std::wstring fileName;
         size_t fileNameSize = info.EditorControl(ECTL_GETFILENAME, NULL);
 
@@ -27,7 +17,7 @@ bool Editor::isActive(const std::wstring &fileMasks) {
         } else
             fileName.clear();
 
-        for (std::wstring tmp = fileMasks;;) {
+        for (std::wstring tmp = autoEnableMasks;;) {
             size_t i = tmp.rfind(';');
             if (i == std::wstring::npos) {
                 i = 0;
@@ -35,28 +25,38 @@ bool Editor::isActive(const std::wstring &fileMasks) {
                 ++i;
 
             if (i < tmp.size() && MatchWildcardICE(fileName.c_str(), tmp.c_str() + i)) {
-                activationState = AS_ACTIVE;
+                isEnabled = true;
                 break;
             }
-            if (i <= 1) {
-                activationState = AS_INACTIVE;
+            if (i <= 1)
                 break;
-            }
+
             tmp.resize(i - 1);
         }
     }
-
-    return (activationState == AS_ACTIVE);
 }
 
-void Editor::setActive(bool active)
-{
-    if (!active) {
-        declineSuggestion();
-        activationState = AS_INACTIVE;
+int Editor::getId() {
+    return this->id;
+}
 
-    } else
-        activationState = AS_ACTIVE;
+EditorInfo Editor::getInfo() {
+    EditorInfo ei = {0};
+    info.EditorControl(ECTL_GETINFO, &ei);
+    return ei;
+}
+
+bool Editor::getEnabled()
+{
+	return isEnabled;
+}
+
+void Editor::setEnabled(bool enabled)
+{
+    if (!enabled && isEnabled)
+        declineSuggestion();
+
+    isEnabled = enabled;
 }
 
 EditorGetString Editor::getString(int line) {

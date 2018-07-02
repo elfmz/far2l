@@ -45,13 +45,17 @@ int GetRegKey(HKEY hRoot,const TCHAR *Key,const TCHAR *ValueName,DWORD Default)
 int GetRegKey(HKEY hRoot,const TCHAR *Key,const TCHAR *ValueName,TCHAR *ValueData,const TCHAR *Default,DWORD DataSize)
 {
   HKEY hKey=OpenRegKey(hRoot,Key);
-  DWORD Type;
-  int ExitCode=WINPORT(RegQueryValueEx)(hKey,ValueName,0,&Type,(LPBYTE)ValueData,&DataSize);
+  DWORD Type, QueriedDataSize = DataSize;
+  int ExitCode=WINPORT(RegQueryValueEx)(hKey,ValueName,0,&Type,(LPBYTE)ValueData, &QueriedDataSize);
   WINPORT(RegCloseKey)(hKey);
   if (hKey==NULL || ExitCode!=ERROR_SUCCESS)
   {
     lstrcpy(ValueData,Default);
     return(FALSE);
+  }
+  else if (QueriedDataSize + sizeof(TCHAR) <= DataSize)
+  {
+    ValueData[QueriedDataSize/sizeof(TCHAR)] = 0;
   }
   return(TRUE);
 }

@@ -27,6 +27,12 @@ private:
     int suggestionCol = 0;
     State state = DO_PUT;
 
+    enum ActivationState {
+        AS_UNDECIDED = 0,
+        AS_ACTIVE = 1,
+        AS_INACTIVE = 2
+    } activationState = AS_UNDECIDED;
+
     EditorInfo previousEditorInfo = {0};
     std::wstring previousEditorInfoLine;
     int previousEditorInfoLineIndex = -1;
@@ -38,6 +44,10 @@ public:
     int getId();
     State getState();
     EditorInfo getInfo();
+
+    bool isActive(const std::wstring &fileMasks);
+    void setActive(bool active);
+
     EditorGetString getString(int line = -1);
     int getSuggestionLength();
 
@@ -52,6 +62,7 @@ public:
     void on();
     void confirmSuggestion();
     void declineSuggestion();
+
 };
 
 #endif //FAR_EDITOR_H

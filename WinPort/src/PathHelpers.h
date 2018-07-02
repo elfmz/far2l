@@ -12,7 +12,5 @@ std::string FromUTF16(const wchar_t *pw);*/
 void RectifyPath(std::string &s);
 std::string ConsumeWinPath(const wchar_t *pw);
 void AppendAndRectifyPath(std::string &s, const char *div, LPCWSTR append);
-bool MatchWildcard(const char *string, const char *wild);
-bool MatchWildcardICE(const char *string, const char *wild);//english-only IC
 
 void WinPortInitWellKnownEnv();

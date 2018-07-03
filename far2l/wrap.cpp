@@ -422,6 +422,7 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 		(*PanelItemW)[i].UserData = PanelItemA[i].UserData;
 		(*PanelItemW)[i].CRC32 = PanelItemA[i].CRC32;
 		(*PanelItemW)[i].FindData.dwFileAttributes = PanelItemA[i].FindData.dwFileAttributes;
+		(*PanelItemW)[i].FindData.dwUnixMode = PanelItemA[i].FindData.dwUnixMode;
 		(*PanelItemW)[i].FindData.ftCreationTime = PanelItemA[i].FindData.ftCreationTime;
 		(*PanelItemW)[i].FindData.ftLastAccessTime = PanelItemA[i].FindData.ftLastAccessTime;
 		(*PanelItemW)[i].FindData.ftLastWriteTime = PanelItemA[i].FindData.ftLastWriteTime;

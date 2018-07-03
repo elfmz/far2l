@@ -61,7 +61,11 @@ static const char *DetectPlainKind(const char *Name, const unsigned char *Data, 
 			return "DOC";
 		}
 
-		if (strcasecmp(ext, ".xls") == 0) { // disinct from excel/ppt etc
+		if (strcasecmp(ext, ".ppt") == 0) {
+			return "PPT";
+		}
+
+		if (strcasecmp(ext, ".xls") == 0) {
 			return "XLS";
 		}
 

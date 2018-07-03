@@ -5,6 +5,8 @@
 #include "Commands.h"
 #include <sudo.h>
 
+#define ELF_ROOT "ELFRoot"
+#define ELF_DASM "Disasm_%u"
 
 namespace CommandsELF
 {
@@ -50,22 +52,22 @@ namespace Root
 {
 	void Commands(std::set<std::string> &out)
 	{
-		Commands::Enum("Root", out);
+		Commands::Enum(ELF_ROOT, out);
 	}
 
 	void Query(const std::string &command, const std::string &name, const std::string &result_file)
 	{
-		CommandsELF::Query("Root", command, name, result_file);
+		CommandsELF::Query(ELF_ROOT, command, name, result_file);
 	}
 
 	void Store(const std::string &command, const std::string &name, const std::string &result_file)
 	{
-		CommandsELF::Store("Root", command, name, result_file);
+		CommandsELF::Store(ELF_ROOT, command, name, result_file);
 	}
 
 	void Clear(const std::string &command, const std::string &name)
 	{
-		CommandsELF::Clear("Root", command, name);
+		CommandsELF::Clear(ELF_ROOT, command, name);
 	}
 }
 
@@ -74,28 +76,28 @@ namespace Disasm
 	void Commands(uint16_t machine, std::set<std::string> &out)
 	{
 		char section[256] = {};
-		snprintf(section, sizeof(section) - 1, "Disasm_%u", (unsigned)machine);
+		snprintf(section, sizeof(section) - 1, ELF_DASM, (unsigned)machine);
 		Commands::Enum(section, out);
 	}
 
 	void Query(uint16_t machine, const std::string &command, const std::string &name, const std::string &result_file)
 	{
 		char section[256] = {};
-		snprintf(section, sizeof(section) - 1, "Disasm_%u", (unsigned)machine);
+		snprintf(section, sizeof(section) - 1, ELF_DASM, (unsigned)machine);
 		CommandsELF::Query(section, command, name, result_file);
 	}
 
 	void Store(uint16_t machine, const std::string &command, const std::string &name, const std::string &result_file)
 	{
 		char section[256] = {};
-		snprintf(section, sizeof(section) - 1, "Disasm_%u", (unsigned)machine);
+		snprintf(section, sizeof(section) - 1, ELF_DASM, (unsigned)machine);
 		CommandsELF::Store(section, command, name, result_file);
 	}
 
 	void Clear(uint16_t machine, const std::string &command, const std::string &name)
 	{
 		char section[256] = {};
-		snprintf(section, sizeof(section) - 1, "Disasm_%u", (unsigned)machine);
+		snprintf(section, sizeof(section) - 1, ELF_DASM, (unsigned)machine);
 		CommandsELF::Clear(section, command, name);
 	}
 }

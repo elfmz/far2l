@@ -61,8 +61,12 @@ static const char *DetectPlainKind(const char *Name, const unsigned char *Data, 
 			return "DOC";
 		}
 
+		if (strcasecmp(ext, ".xls") == 0) { // disinct from excel/ppt etc
+			return "XLS";
+		}
+
 	} else if (DataSize >= 8 && Data[0] == '{' && Data[1] == '\\' && Data[2] == 'r' && Data[3] == 't' && Data[4] == 'f') {
-		if (!ext || strcasecmp(ext, ".rtf") == 0) { // ensure
+		if (ext && strcasecmp(ext, ".rtf") == 0) { // ensure
 			return "RTF";
 		}
 	}

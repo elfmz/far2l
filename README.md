@@ -16,7 +16,6 @@ Currently working plugins: colorer, multiarc, farftp, tmppanel, align, autowrap,
 * ANSICON
 * Portable UnRAR
 * 7z ANSI-C Decoder
-* XPDF
 
 ## Contributing, Hacking
 #### Required dependencies

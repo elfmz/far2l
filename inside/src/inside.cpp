@@ -69,8 +69,12 @@ static const char *DetectPlainKind(const char *Name, const unsigned char *Data, 
 		if (ext && strcasecmp(ext, ".rtf") == 0) { // ensure
 			return "RTF";
 		}
-	}
 
+	} else if (DataSize >= 8 && Data[0] == 0xff && Data[1] == 0xd8 && Data[2] == 0xff) {
+		if (ext && (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)) { // ensure
+			return "JPG";
+		}
+	}
 	return nullptr;
 }
 
@@ -90,7 +94,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsign
 	// If user called us with Ctrl+PgDn - then proceed for any file
 	// Otherwise proceed only for ELF file and only if its not eXecutable, to allow user execute it by Enter
 	if ((OpMode & (OPM_PGDN|OPM_COMMANDS)) == 0) {
-		if (!plain)
+		if (!elf)
 			return INVALID_HANDLE_VALUE;
 
 		struct stat s = {};
@@ -145,45 +149,45 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPlugin(int OpenFrom, INT_PTR Item)
 
 SHAREDSYMBOL void WINAPI _export ClosePlugin(HANDLE hPlugin)
 {
-	delete (PluginImplELF *)hPlugin;
+	delete (PluginImpl *)hPlugin;
 }
 
 
 SHAREDSYMBOL int WINAPI _export GetFindData(HANDLE hPlugin,struct PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode)
 {
-	return ((PluginImplELF *)hPlugin)->GetFindData(pPanelItem, pItemsNumber, OpMode);
+	return ((PluginImpl *)hPlugin)->GetFindData(pPanelItem, pItemsNumber, OpMode);
 }
 
 
 SHAREDSYMBOL void WINAPI _export FreeFindData(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber)
 {
-	((PluginImplELF *)hPlugin)->FreeFindData(PanelItem, ItemsNumber);
+	((PluginImpl *)hPlugin)->FreeFindData(PanelItem, ItemsNumber);
 }
 
 
 SHAREDSYMBOL int WINAPI _export SetDirectory(HANDLE hPlugin,const char *Dir,int OpMode)
 {
- 	return ((PluginImplELF *)hPlugin)->SetDirectory(Dir, OpMode);
+	return ((PluginImpl *)hPlugin)->SetDirectory(Dir, OpMode);
 }
 
 
 SHAREDSYMBOL int WINAPI _export DeleteFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode)
 {
-	return ((PluginImplELF *)hPlugin)->DeleteFiles(PanelItem, ItemsNumber, OpMode);
+	return ((PluginImpl *)hPlugin)->DeleteFiles(PanelItem, ItemsNumber, OpMode);
 }
 
 
 SHAREDSYMBOL int WINAPI _export GetFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,
                    int ItemsNumber,int Move,char *DestPath,int OpMode)
 {
-	return ((PluginImplELF *)hPlugin)->GetFiles(PanelItem, ItemsNumber, Move, DestPath, OpMode);
+	return ((PluginImpl *)hPlugin)->GetFiles(PanelItem, ItemsNumber, Move, DestPath, OpMode);
 }
 
 
 SHAREDSYMBOL int WINAPI _export PutFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,
                    int ItemsNumber,int Move,int OpMode)
 {
-	return ((PluginImplELF *)hPlugin)->PutFiles(PanelItem, ItemsNumber, Move, OpMode);
+	return ((PluginImpl *)hPlugin)->PutFiles(PanelItem, ItemsNumber, Move, OpMode);
 }
 
 
@@ -209,18 +213,17 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 
 SHAREDSYMBOL void WINAPI _export GetOpenPluginInfo(HANDLE hPlugin,struct OpenPluginInfo *Info)
 {
-	((PluginImplELF *)hPlugin)->GetOpenPluginInfo(Info);
+	((PluginImpl *)hPlugin)->GetOpenPluginInfo(Info);
 }
-
 
 SHAREDSYMBOL int WINAPI _export ProcessHostFile(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode)
 {
-	return ((PluginImplELF *)hPlugin)->ProcessHostFile(PanelItem, ItemsNumber, OpMode);
+	return ((PluginImpl *)hPlugin)->ProcessHostFile(PanelItem, ItemsNumber, OpMode);
 }
 
 SHAREDSYMBOL int WINAPI _export ProcessKey(HANDLE hPlugin,int Key,unsigned int ControlState)
 {
-	return ((PluginImplELF *)hPlugin)->ProcessKey(Key, ControlState);
+	return ((PluginImpl *)hPlugin)->ProcessKey(Key, ControlState);
 }
 
 SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)

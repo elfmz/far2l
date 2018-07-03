@@ -78,6 +78,13 @@ static const char *DetectPlainKind(const char *Name, const unsigned char *Data, 
 		if (ext && (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)) { // ensure
 			return "JPG";
 		}
+
+	}
+	else if (DataSize >= 8 && Data[0] == 'A' && Data[1] == 'T' && Data[2] == '&' && Data[3] == 'T' &&
+		Data[4] == 'F' && Data[5] == 'O' && Data[6] == 'R' && Data[7] == 'M') {
+		if (ext || strcasecmp(ext, ".djvu") == 0) { // Ensure
+			return "DJVU";
+		}
 	}
 	return nullptr;
 }

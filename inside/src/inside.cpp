@@ -69,23 +69,36 @@ static const char *DetectPlainKind(const char *Name, const unsigned char *Data, 
 			return "XLS";
 		}
 
-	} else if (DataSize >= 8 && Data[0] == '{' && Data[1] == '\\' && Data[2] == 'r' && Data[3] == 't' && Data[4] == 'f') {
-		if (ext && strcasecmp(ext, ".rtf") == 0) { // ensure
+	} else if (DataSize >= 8 && Data[0] == '{' && Data[1] == '\\' && Data[2] == 'r' && Data[3] == 't' && Data[4] == 'f'
+			&& ext && strcasecmp(ext, ".rtf") == 0) { // ensure
 			return "RTF";
-		}
 
-	} else if (DataSize >= 8 && Data[0] == 0xff && Data[1] == 0xd8 && Data[2] == 0xff) {
-		if (ext && (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)) { // ensure
+	} else if (DataSize >= 8 && Data[0] == 0xff && Data[1] == 0xd8 && Data[2] == 0xff
+		&& ext && (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)) {
 			return "JPG";
-		}
 
+	} else if (DataSize >= 8 && Data[0] == 'A' && Data[1] == 'T' && Data[2] == '&' && Data[3] == 'T'
+		&& Data[4] == 'F' && Data[5] == 'O' && Data[6] == 'R' && Data[7] == 'M'
+		&& ext && strcasecmp(ext, ".djvu") == 0) { // Ensure
+
+		return "DJVU";
+
+	} else if (DataSize >= 8 && ext && strcasecmp(ext, ".mp3") == 0) {
+		return "MP3";
+
+	} else if (DataSize >= 8 && Data[0] == 'M' && Data[1] == 'A' && Data[2] == 'C'
+		&& ext && strcasecmp(ext, ".ape") == 0) {
+		return "APE";
+
+	} else if (DataSize >= 8 && Data[0] == 'w' && Data[1] == 'v' && Data[2] == 'p' && Data[3] == 'k'
+		&& ext && strcasecmp(ext, ".vw") == 0) {
+		return "WV";
+
+	} else if (DataSize >= 8 && Data[0] == 'f' && Data[1] == 'L' && Data[2] == 'a' && Data[3] == 'C'
+		&& ext && strcasecmp(ext, ".flac") == 0) {
+		return "FLAC";
 	}
-	else if (DataSize >= 8 && Data[0] == 'A' && Data[1] == 'T' && Data[2] == '&' && Data[3] == 'T' &&
-		Data[4] == 'F' && Data[5] == 'O' && Data[6] == 'R' && Data[7] == 'M') {
-		if (ext || strcasecmp(ext, ".djvu") == 0) { // Ensure
-			return "DJVU";
-		}
-	}
+
 	return nullptr;
 }
 

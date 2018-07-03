@@ -1,0 +1,679 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+   <type name="lss">
+      <!--
+      include this lines in colorer.hrc
+  <prototype name="lss" group="Scripts" description="LotusScript">
+    <location link="lss.hrc"/>
+    <filename>/\.lss$/i</filename>
+  </prototype>
+
+      -->
+      <import type="def"/>
+
+      <region name="vbString" parent="String"/>
+      <region name="vbComment" parent="Comment"/>
+      <region name="vbSymb" parent="Symbol"/>
+      <region name="vbWord" parent="Keyword"/>
+      <region name="vbNumb" parent="Number"/>
+      <region name="vbId" parent="Var"/>
+      <region name="vbLabel" parent="Label"/>
+      <region name="ClassOutline" parent="Outlined"/>
+      <region name="SubOutline" parent="Outlined"/>
+      <region name="FunctionOutline" parent="Outlined"/>
+      <region name="PublicConstOutline" parent="Outlined"/>
+      
+      <scheme name="Outlines">
+         <block start="/^\s*((Public\s+|Private\s+)?(Sub))\s+([_\w]+)/ix" 
+         		 end="/^\s*(End\s+Sub)/ix" 
+         		 scheme="lss" 
+         		 region01="PairStart" 
+         		 region02="vbWord" 
+         		 region03="vbWord" 
+         		 region04="SubOutline" 
+         		 region10="vbWord" 
+         		 region11="PairEnd" 
+         		 />
+
+         <block start="/^\s*((Public\s+|Private\s+)?(Function))\s+([_\w]+)/ix" 
+         		 end="/^\s*(End\s+(Function))/ix" 
+         		 scheme="lss" 
+         		 region01="PairStart" 
+         		 region02="vbWord" 
+         		 region03="vbWord" 
+         		 region04="FunctionOutline" 
+         		 region11="vbWord" 
+         		 region10="PairEnd" 
+         		 />
+
+         <block start="/^\s*((Public\s+|Private\s+)?\s*(Class)\s+(([_\w]+(\s*as\s+\w+)?)))/ix" 
+                end="/^\s*(End\s+Class)/ix" 
+                scheme="lss" 
+                region01="PairStart" 
+                region02="vbWord" 
+                region03="vbWord" 
+                region04="ClassOutline" 
+                region11="vbWord" 
+                region10="PairEnd" 
+                />
+      </scheme>
+      
+      
+      <scheme name="Str" />
+
+      <scheme name="lss">
+      <inherit scheme="Outlines"/>
+<!-- Comments -->
+         <regexp match="/'.*$/" region="vbComment" priority="low"/>
+         <!--regexp match="/\brem\B.*$/ix" region="vbComment" priority="low"/-->
+         <block start="/^(%REM)/" end="/^(%END\s*REM)/" scheme="Comment" region="vbComment" region00="vbLabel" region01="def:PairStart" region10="vbLabel" region11="def:PairEnd" priority="low"/>
+<!-- Strings -->
+         <regexp match="/&#34;.*?&#34;/" region="vbString" priority="low"/>
+         <block start="/(\|)/" 
+         		 end="/(\|)/" 
+         		 scheme="Str"
+         		 region="String"
+         		 region00="PairStart" 
+         		 region10="PairEnd" 
+         		 priority="low"/>
+         <block start="/(\{)/" 
+         		 end="/(\})/" 
+         		 scheme="Str"
+         		 region="String"
+         		 region00="PairStart" 
+         		 region10="PairEnd" 
+         		 priority="low"/>
+
+<!-- Numbers  -->
+         <regexp match="/(\c\$[\da-fA-F]+\B)/" region="vbNumb" priority="low"/>
+         <regexp match="/(\c&amp;H[\da-fA-F]+\B)/" region="vbNumb" priority="low"/>
+         <regexp match="/(\b[0-9.]+(e|E[\-+]?\d+)?\B)/" region="vbNumb" priority="low"/>
+<!-- Line continuation -->
+         <regexp match="/\b(_)$/" region="vbWord" priority="low"/>
+         <block start="/(\()/" end="/(\))/" scheme="lss" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd" priority="low"/>
+         <block start="/(\[)/" end="/(\])/" scheme="lss" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd" priority="low"/>
+<!-- Identifiers -->
+
+<!--block start="/^\s*((Public\s+|Private\s+)?\s+((Type)\s+([_\w]+)))/ix" 
+   		 end="/^\s*(End\s+Type)/ix" scheme="lss"
+  			 region01="def:PairStart"   
+  			 region02="vbWord"   
+  			 region03="dFunction"   
+  			 region04="vbWord"
+			 region11="vbWord" 
+			 region10="def:PairEnd"/-->
+<!-- Labels -->
+         <regexp match="/^\w+(:)$/" region="vbLabel" region1="vbSymb" priority="low"/>
+         <regexp match="/\s+(Goto)\s+(\w+)\s*$/ix" region1="vbWord" region2="vbLabel" priority="low"/>
+         <regexp match="/\s+(Resume)\s+(\w+)\s*$/ix" region1="vbWord" region2="vbLabel" priority="low"/>
+<!-- Symbols -->
+         <keywords region="vbSymb" ignorecase="yes">
+            <symb name="="/>
+            <symb name="^"/>
+            <symb name="+"/>
+            <symb name="&lt;"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=";"/>
+            <symb name=":"/>
+            <symb name="("/>
+            <symb name="."/>
+            <symb name="&gt;"/>
+            <symb name="#"/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="&amp;"/>
+         </keywords>
+<!-- Words -->
+         <keywords ignorecase="yes" region="vbWord">
+            <word name="Abs"/>
+            <word name="Access"/>
+            <word name="ACos"/>
+            <word name="ActivateApp"/>
+            <word name="Alias"/>
+            <word name="And"/>
+            <word name="Any"/>
+            <word name="AppActivate"/>
+            <word name="Append"/>
+            <word name="ArrayAppend"/>
+            <word name="ArrayGetIndex"/>
+            <word name="ArrayReplace"/>
+            <word name="ArrayUnique"/>
+            <word name="As"/>
+            <word name="Asc"/>
+            <word name="ASin"/>
+            <word name="Atn"/>
+            <word name="Atn2"/>
+            <word name="Base"/>
+            <word name="Beep"/>
+            <word name="Bin"/>
+            <word name="Bin$"/>
+            <word name="Binary"/>
+            <word name="Bind"/>
+            <word name="Boolean"/>
+            <word name="Byte"/>
+            <word name="ByVal"/>
+            <word name="Call"/>
+            <word name="Case"/>
+            <word name="CBool"/>
+            <word name="CByte"/>
+            <word name="CCur"/>
+            <word name="CDat"/>
+            <word name="CDbl"/>
+            <word name="ChDir"/>
+            <word name="ChDrive"/>
+            <word name="Chr"/>
+            <word name="Chr$"/>
+            <word name="CInt"/>
+            <word name="Class"/>
+            <word name="CLng"/>
+            <word name="Close"/>
+            <word name="CodeLock"/>
+            <word name="CodeLockCheck"/>
+            <word name="CodeUnlock"/>
+            <word name="Command"/>
+            <word name="Command$"/>
+            <word name="Compare"/>
+            <word name="Const"/>
+            <word name="Cos"/>
+            <word name="CreateLock"/>
+            <word name="CSng"/>
+            <word name="CStr"/>
+            <word name="CurDir"/>
+            <word name="CurDir$"/>
+            <word name="CurDrive"/>
+            <word name="CurDrive$"/>
+            <word name="Currency"/>
+            <word name="CVar"/>
+            <word name="CVDate"/>
+            <word name="DataType"/>
+            <word name="Date"/>
+            <word name="Date$"/>
+            <word name="DateNumber"/>
+            <word name="DateSerial"/>
+            <word name="DateValue"/>
+            <word name="Day"/>
+            <word name="Declare"/>
+            <word name="DefBool"/>
+            <word name="DefByte"/>
+            <word name="DefCur"/>
+            <word name="DefDbl"/>
+            <word name="DefInt"/>
+            <word name="DefLng"/>
+            <word name="DefSng"/>
+            <word name="DefStr"/>
+            <word name="DefVar"/>
+            <word name="Delete"/>
+            <word name="DestroyLock"/>
+            <word name="Dim"/>
+            <word name="Dir"/>
+            <word name="Dir$"/>
+            <word name="Do"/>
+            <word name="DoEvents"/>
+            <word name="Double"/>
+            <word name="Else"/>
+            <word name="Else"/>
+            <word name="ElseIf"/>
+            <word name="ElseIf"/>
+            <word name="End"/>
+            <word name="End"/>
+            <word name="Environ"/>
+            <word name="Environ$"/>
+            <word name="EOF"/>
+            <word name="Eqv"/>
+            <word name="Erase"/>
+            <word name="Erl"/>
+            <word name="Err"/>
+            <word name="Error"/>
+            <word name="Error$"/>
+            <word name="Evaluate"/>
+            <word name="Event"/>
+            <word name="Execute"/>
+            <word name="Exit"/>
+            <word name="Exp"/>
+            <word name="Explicit"/>
+            <word name="FALSE"/>
+            <word name="FileAttr"/>
+            <word name="FileCopy"/>
+            <word name="FileDateTime"/>
+            <word name="FileLen"/>
+            <word name="Fix"/>
+            <word name="For"/>
+            <word name="ForAll"/>
+            <word name="Format"/>
+            <word name="Format$"/>
+            <word name="Fraction"/>
+            <word name="FreeFile"/>
+            <word name="From"/>
+            <word name="FullTrim"/>
+            <word name="Function"/>
+            <word name="Get"/>
+            <word name="GetAttr"/>
+            <word name="GetFileAttr"/>
+            <word name="GetThreadInfo"/>
+            <word name="GoSub"/>
+            <word name="GoTo"/>
+            <word name="Hex"/>
+            <word name="Hex$"/>
+            <word name="Hour"/>
+            <word name="If%"/>
+            <word name="If"/>
+            <word name="IMESetMode"/>
+            <word name="IMEStatus"/>
+            <word name="Imp"/>
+            <word name="Implode"/>
+            <word name="Implode$"/>
+            <word name="In%"/>
+            <word name="Include"/>
+            <word name="Input"/>
+            <word name="Input$"/>
+            <word name="InputB"/>
+            <word name="InputB$"/>
+            <word name="InputBox"/>
+            <word name="InputBox$"/>
+            <word name="InputBP"/>
+            <word name="InputBP$"/>
+            <word name="InStr"/>
+            <word name="InStrB"/>
+            <word name="InStrBP"/>
+            <word name="InStrC"/>
+            <word name="Int"/>
+            <word name="Integer"/>
+            <word name="Is"/>
+            <word name="IsA"/>
+            <word name="IsArray"/>
+            <word name="IsDate"/>
+            <word name="IsElement"/>
+            <word name="IsEmpty"/>
+            <word name="IsList"/>
+            <word name="IsNull"/>
+            <word name="IsNumeric"/>
+            <word name="IsObject"/>
+            <word name="IsScalar"/>
+            <word name="IsUnknown"/>
+            <word name="Join"/>
+            <word name="Kill"/>
+            <word name="LBound"/>
+            <word name="LCase"/>
+            <word name="LCase$"/>
+            <word name="Left"/>
+            <word name="Left$"/>
+            <word name="LeftB"/>
+            <word name="LeftB$"/>
+            <word name="LeftBP"/>
+            <word name="LeftBP$"/>
+            <word name="LeftC"/>
+            <word name="LeftC$"/>
+            <word name="Len"/>
+            <word name="LenB"/>
+            <word name="LenBP"/>
+            <word name="LenC"/>
+            <word name="Let"/>
+            <word name="Lib"/>
+            <word name="Like"/>
+            <word name="Line"/>
+            <word name="List"/>
+            <word name="ListTag"/>
+            <word name="LMBCS"/>
+            <word name="LOC"/>
+            <word name="Lock"/>
+            <word name="LOF"/>
+            <word name="Log"/>
+            <word name="Long"/>
+            <word name="Loop"/>
+            <word name="LSet"/>
+            <word name="LSI_Info"/>
+            <word name="LSServer"/>
+            <word name="LTrim"/>
+            <word name="LTrim$"/>
+            <word name="Me"/>
+            <word name="MessageBox"/>
+            <word name="Mid"/>
+            <word name="Mid$"/>
+            <word name="MidB"/>
+            <word name="MidB$"/>
+            <word name="MidBP"/>
+            <word name="MidBP$"/>
+            <word name="MidC"/>
+            <word name="MidC$"/>
+            <word name="Minus"/>
+            <word name="Minute"/>
+            <word name="MkDir"/>
+            <word name="Mod"/>
+            <word name="Month"/>
+            <word name="MsgBox"/>
+            <word name="Name"/>
+            <word name="New"/>
+            <word name="Next"/>
+            <word name="NoCase"/>
+            <word name="NoPitch"/>
+            <word name="Not"/>
+            <word name="NOTHING"/>
+            <word name="Now"/>
+            <word name="NULL"/>
+            <word name="Oct"/>
+            <word name="Oct$"/>
+            <word name="On"/>
+            <word name="Open"/>
+            <word name="Option"/>
+            <word name="Or"/>
+            <word name="Output"/>
+            <word name="PI"/>
+            <word name="Pitch"/>
+            <word name="Plus"/>
+            <word name="Preserve"/>
+            <word name="Print"/>
+            <word name="Private"/>
+            <word name="Property"/>
+            <word name="Public"/>
+            <word name="Published"/>
+            <word name="Put"/>
+            <word name="Random"/>
+            <word name="Randomize"/>
+            <word name="Read"/>
+            <word name="ReDim"/>
+            <word name="Rem"/>
+            <word name="Remove"/>
+            <word name="Replace"/>
+            <word name="Reset"/>
+            <word name="Resume"/>
+            <word name="Return"/>
+            <word name="Right"/>
+            <word name="Right$"/>
+            <word name="RightB"/>
+            <word name="RightB$"/>
+            <word name="RightBP"/>
+            <word name="RightBP$"/>
+            <word name="RightC"/>
+            <word name="RightC$"/>
+            <word name="RmDir"/>
+            <word name="Rnd"/>
+            <word name="Round"/>
+            <word name="RSet"/>
+            <word name="RTrim"/>
+            <word name="RTrim$"/>
+            <word name="Second"/>
+            <word name="Seek"/>
+            <word name="Select"/>
+            <word name="SendKeys"/>
+            <word name="Set"/>
+            <word name="SetAttr"/>
+            <word name="SetFileAttr"/>
+            <word name="Sgn"/>
+            <word name="Shared"/>
+            <word name="Shell"/>
+            <word name="Sin"/>
+            <word name="Single"/>
+            <word name="Sleep"/>
+            <word name="Space"/>
+            <word name="Space$"/>
+            <word name="Spc"/>
+            <word name="Split"/>
+            <word name="Sqr"/>
+            <word name="Static"/>
+            <word name="Step"/>
+            <word name="Stop"/>
+            <word name="Str"/>
+            <word name="Str$"/>
+            <word name="StrComp"/>
+            <word name="StrCompare"/>
+            <word name="StrConv"/>
+            <word name="String"/>
+            <word name="String$"/>
+            <word name="StrLeft"/>
+            <word name="StrLeft$"/>
+            <word name="StrLeftBack"/>
+            <word name="StrLeftBack$"/>
+            <word name="StrRight"/>
+            <word name="StrRight$"/>
+            <word name="StrRightBack"/>
+            <word name="StrRightBack$"/>
+            <word name="StrToken"/>
+            <word name="StrToken$"/>
+            <word name="Sub"/>
+            <word name="Tab"/>
+            <word name="Tan"/>
+            <word name="Text"/>
+            <word name="Then"/>
+            <word name="Time"/>
+            <word name="Time$"/>
+            <word name="TimeNumber"/>
+            <word name="Timer"/>
+            <word name="TimeSerial"/>
+            <word name="TimeValue"/>
+            <word name="To"/>
+            <word name="Today"/>
+            <word name="Trim"/>
+            <word name="Trim$"/>
+            <word name="TRUE"/>
+            <word name="Type"/>
+            <word name="TypeName"/>
+            <word name="UBound"/>
+            <word name="UCase"/>
+            <word name="UCase$"/>
+            <word name="UChr"/>
+            <word name="UChr$"/>
+            <word name="Uni"/>
+            <word name="Unicode"/>
+            <word name="Unlock"/>
+            <word name="Until"/>
+            <word name="Use"/>
+            <word name="UseLSX"/>
+            <word name="UString"/>
+            <word name="UString$"/>
+            <word name="Val"/>
+            <word name="Variant"/>
+            <word name="VarType"/>
+            <word name="Weekday"/>
+            <word name="Wend"/>
+            <word name="While"/>
+            <word name="Width"/>
+            <word name="With"/>
+            <word name="Write"/>
+            <word name="Xor"/>
+            <word name="Year"/>
+            <word name="Yield"/>
+         </keywords>
+         <keywords ignorecase="yes" region="KeywordStrong">
+            <word name="ACL"/>
+            <word name="ACLEntry"/>
+            <word name="Agent"/>
+            <word name="AgentBase"/>
+            <word name="AgentContext"/>
+            <word name="AppletBase"/>
+            <word name="Button"/>
+            <word name="Collection"/>
+            <word name="Container"/>
+            <word name="Database"/>
+            <word name="DateRange"/>
+            <word name="DateTime"/>
+            <word name="DbDirectory"/>
+            <word name="Derived"/>
+            <word name="Document"/>
+            <word name="DocumentCollection"/>
+            <word name="Domino"/>
+            <word name="EmbeddedObject"/>
+            <word name="Field"/>
+            <word name="Form"/>
+            <word name="MIMEEntity"/>
+            <word name="MIMEEntity"/>
+            <word name="Navigator"/>
+            <word name="Newsletter"/>
+            <word name="Notes"/>
+            <word name="NotesACL"/>
+            <word name="NotesACLEntry"/>
+            <word name="NotesAgent"/>
+            <word name="NotesAppletContext"/>
+            <word name="NotesDatabase"/>
+            <word name="NotesDateRange"/>
+            <word name="NotesDateTime"/>
+            <word name="NotesDbDirectory"/>
+            <word name="NotesDocument"/>
+            <word name="NotesDocumentCollection"/>
+            <word name="NotesEmbeddedObject"/>
+            <word name="NotesError"/>
+            <word name="NotesException"/>
+            <word name="NotesFactory"/>
+            <word name="NotesForm"/>
+            <word name="NotesInternational"/>
+            <word name="NotesItem"/>
+            <word name="NotesLog"/>
+            <word name="NotesLog"/>
+            <word name="NotesMIMEEntity"/>
+            <word name="NotesName"/>
+            <word name="NotesNewsletter"/>
+            <word name="NotesOutline"/>
+            <word name="NotesOutlineEntry"/>
+            <word name="NotesRegistration"/>
+            <word name="NotesReplication"/>
+            <word name="NotesRichTextItem"/>
+            <word name="NotesRichTextParagraphStyle"/>
+            <word name="NotesRichTextStyle"/>
+            <word name="NotesRichTextTab"/>
+            <word name="NotesSession"/>
+            <word name="NotesThread"/>
+            <word name="NotesTimer"/>
+            <word name="NotesUIDatabase"/>
+            <word name="NotesUIDocument"/>
+            <word name="NotesUIView"/>
+            <word name="NotesUIWorkspace"/>
+            <word name="NotesView"/>
+            <word name="NotesViewColumn"/>
+            <word name="NotesViewEntry"/>
+            <word name="NotesViewEntryCollection"/>
+            <word name="NotesViewNavigator"/>
+            <word name="ODBCConnection"/>
+            <word name="ODBCQuery"/>
+            <word name="ODBCResultSet"/>
+            <word name="PrintWriter"/>
+            <word name="RichTextItem"/>
+            <word name="RichTextParagraphStyle"/>
+            <word name="RichTextStyle"/>
+            <word name="RichTextTab"/>
+            <word name="Servlet"/>
+            <word name="Session"/>
+            <word name="XSLTResultTarget"/>
+            <word name="Button"/>
+            <word name="Field"/>
+            <word name="Navigator"/>
+            <word name="NotesACL"/>
+            <word name="NotesACLEntry"/>
+            <word name="NotesAdministrationProcess"/>
+            <word name="NotesAgent"/>
+            <word name="NotesColorObject"/>
+            <word name="NotesDatabase"/>
+            <word name="NotesDateRange"/>
+            <word name="NotesDateTime"/>
+            <word name="NotesDbDirectory"/>
+            <word name="NotesDocument"/>
+            <word name="NotesDocumentCollection"/>
+            <word name="NotesDOMAttributeNode"/>
+            <word name="NotesDOMCDATASectionNode"/>
+            <word name="NotesDOMCharacterDataNode"/>
+            <word name="NotesDOMCommentNode"/>
+            <word name="NotesDOMDocumentFragmentNode"/>
+            <word name="NotesDOMDocumentNode"/>
+            <word name="NotesDOMDocumentTypeNode"/>
+            <word name="NotesDOMElementNode"/>
+            <word name="NotesDOMEntityNode"/>
+            <word name="NotesDOMEntityReferenceNode"/>
+            <word name="NotesDOMNamedNodeMap"/>
+            <word name="NotesDOMNode"/>
+            <word name="NotesDOMNodeList"/>
+            <word name="NotesDOMNotationNode"/>
+            <word name="NotesDOMParser"/>
+            <word name="NotesDOMProcessingInstructionNode"/>
+            <word name="NotesDOMTextNode"/>
+            <word name="NotesDOMXMLDeclNode"/>
+            <word name="NotesDXLExporter"/>
+            <word name="NotesDXLImporter"/>
+            <word name="NotesEmbeddedObject"/>
+            <word name="NotesForm"/>
+            <word name="NotesInternational"/>
+            <word name="NotesItem"/>
+            <word name="NotesLog"/>
+            <word name="NotesMIMEEntity"/>
+            <word name="NotesMIMEHeader"/>
+            <word name="NotesName"/>
+            <word name="NotesNewsletter"/>
+            <word name="NotesNoteCollection"/>
+            <word name="NotesOutline"/>
+            <word name="NotesOutlineEntry"/>
+            <word name="NotesRegistration"/>
+            <word name="NotesReplication"/>
+            <word name="NotesReplicationEntry"/>
+            <word name="NotesRichTextDocLink"/>
+            <word name="NotesRichTextItem"/>
+            <word name="NotesRichTextNavigator"/>
+            <word name="NotesRichTextParagraphStyle"/>
+            <word name="NotesRichTextRange"/>
+            <word name="NotesRichTextSection"/>
+            <word name="NotesRichTextStyle"/>
+            <word name="NotesRichTextTab"/>
+            <word name="NotesRichTextTable"/>
+            <word name="NotesSAXAttributeList"/>
+            <word name="NotesSAXException"/>
+            <word name="NotesSAXParser"/>
+            <word name="NotesSession"/>
+            <word name="NotesStream"/>
+            <word name="NotesTimer"/>
+            <word name="NotesUIDatabase"/>
+            <word name="NotesUIDocument"/>
+            <word name="NotesUIScheduler"/>
+            <word name="NotesUIView"/>
+            <word name="NotesUIWorkspace"/>
+            <word name="NotesView"/>
+            <word name="NotesViewColumn"/>
+            <word name="NotesViewEntry"/>
+            <word name="NotesViewEntryCollection"/>
+            <word name="NotesViewNavigator"/>
+            <word name="NotesXMLProcessor"/>
+            <word name="NotesXSLTranformer"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - nike000.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

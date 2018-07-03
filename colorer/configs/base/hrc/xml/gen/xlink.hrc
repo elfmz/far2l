@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="xlink" group="group" description="xlink" targetNamespace="http://www.w3.org/1999/xlink">
+    <location link="xlink.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="xlink">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'xlink'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://www.w3.org/1999/xlink
+             hrctype                     : xlink
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : (?{}(?{}xlink|xl)(?{}:))
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:
+  Note this schema is NOT a normative schema - -
+
+  It contains attribute types derived from all the attribute
+  definitions found in the XLink Recommendation available at
+        http://www.w3.org/TR/2001/REC-xlink-20010627
+
+  Section 4.1 (http://www.w3.org/TR/2001/REC-xlink-20010627/#N1238)
+  provides a summary of the element types on which the global
+  attributes are allowed, with an indication of whether a value is
+  required or optional.
+      </documentation>
+         <contributors><![CDATA[None]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value="(?{}(?{}xlink|xl)(?{}:))"/>
+      <entity name="nsprefix" value="(?{}(?{}xlink|xl)(?{}:))"/>
+      <entity name="attr-nsprefix" value="(?{}(?{}xlink|xl)(?{Attribute.nscolon}:))"/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from '../../src/xlink/src/custom.xlink.xml'--><!--end custom--><scheme name="type-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(type)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e11-AttributeContent"/>
+      </scheme>
+      <scheme name="href-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(href)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+      </scheme>
+      <scheme name="arcrole-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(arcrole)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+      </scheme>
+      <scheme name="role-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(role)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+      </scheme>
+      <scheme name="title-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(title)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+      </scheme>
+      <scheme name="show-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(show)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e40-AttributeContent"/>
+      </scheme>
+      <scheme name="actuate-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(actuate)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e51-AttributeContent"/>
+      </scheme>
+      <scheme name="label-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(label)\M([\s\=]|$)/x"
+                scheme="xmlschema:NCName-AttributeContent"/>
+      </scheme>
+      <scheme name="from-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(from)\M([\s\=]|$)/x"
+                scheme="xmlschema:NCName-AttributeContent"/>
+      </scheme>
+      <scheme name="to-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(to)\M([\s\=]|$)/x"
+                scheme="xmlschema:NCName-AttributeContent"/>
+      </scheme>
+      <!--
+        parent: type
+-->
+<scheme name="_hrc_int_d12e11-content">
+         <regexp region="Enumeration" match="/simple/"/>
+         <regexp region="Enumeration" match="/extended/"/>
+         <regexp region="Enumeration" match="/locator/"/>
+         <regexp region="Enumeration" match="/arc/"/>
+         <regexp region="Enumeration" match="/resource/"/>
+         <regexp region="Enumeration" match="/title/"/>
+         <regexp region="Enumeration" match="/none/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e11-content-error">
+         <inherit scheme="_hrc_int_d12e11-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e11-Attributes"/>
+      <scheme name="_hrc_int_d12e11-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e11-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: show
+-->
+<scheme name="_hrc_int_d12e40-content">
+         <regexp region="Enumeration" match="/new/"/>
+         <regexp region="Enumeration" match="/replace/"/>
+         <regexp region="Enumeration" match="/embed/"/>
+         <regexp region="Enumeration" match="/other/"/>
+         <regexp region="Enumeration" match="/none/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e40-content-error">
+         <inherit scheme="_hrc_int_d12e40-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e40-Attributes"/>
+      <scheme name="_hrc_int_d12e40-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e40-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: actuate
+-->
+<scheme name="_hrc_int_d12e51-content">
+         <regexp region="Enumeration" match="/onLoad/"/>
+         <regexp region="Enumeration" match="/onRequest/"/>
+         <regexp region="Enumeration" match="/other/"/>
+         <regexp region="Enumeration" match="/none/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e51-content-error">
+         <inherit scheme="_hrc_int_d12e51-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e51-Attributes"/>
+      <scheme name="_hrc_int_d12e51-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e51-content-error"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="xlink-root"/>
+      <scheme name="xlink-root-addref">
+         <inherit scheme="xlink-root"/>
+      </scheme>
+      <scheme name="xlink">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="xlink-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="xml">
+    <annotation>
+     <documentation>
+       xml1.0/1.1 syntax.
+       Basic W3C Recommendation implementation (Well-Formedness)
+
+       Well-Formedness loose cases:
+         - Attributes list poor check
+         - No DTD ELEMENT strict content check
+         - XMLDecl limitations (single string), no attributes order check
+       Goals and ideas:
+         - Any WF document has to be shown without visible errors
+         - Most non-WF documents have to be shown with WF-violations
+         - Not all WF constrains could be checked. Checks affect most
+           syntax rules but not logical. The most common check loose is
+           the order of productions. This model can't be reduced to colorer's
+           line-based context model.
+     </documentation>
+     <documentation><![CDATA[
+      Contributors:
+       Max Belugin <belugin@mail.ru>
+       Alexey Vasilyev <servent@fis.lv>
+       Yury Finkel <yura@mv.ru>
+       Alexander Gutman <gutman@math.nsc.ru>
+       Dmitry Kirsanov <dmitry@kirsanov.com>
+       Eugene Efremov <4mirror@mail.ru>
+     ]]></documentation>
+     <appinfo>
+     	<mime type='text/xml'/>
+     	<mime type='application/xml'/>
+    </appinfo></annotation>
+
+    <!--import type="def"/-->
+
+<!-- xml1.1 entity defines -->
+    <entity name="Char" value="\x{1}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}"/>
+
+    <entity name="NameStartChar" value=":A-Z_a-z\x{C0}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{2027}\x{202A}-\x{218F}\x{2800}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDE0}-\x{FFEF}\x{10000}-\x{10FFFF}"/>
+    <entity name="NameChar" value="%NameStartChar;\-.0-9\xB7\x{0300}-\x{036F}"/>
+
+    <entity name="NCNameStartChar" value="%NameStartChar;-[:]"/>
+    <entity name="NCNameChar" value="%NameChar;-[:]"/>
+<!--
+        [13]   PubidChar   ::=   #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%]
+-->
+    <entity name="PubidChar" value="\x{20}\x{0D}\x{0A}a-zA-Z0-9\-'\(\)+,./:=?;!*#@$_%"/>
+
+    <entity name="Name" value="[%NameStartChar;][%NameChar;]*"/>
+    <entity name="NCName" value="[%NCNameStartChar;][%NCNameChar;]*"/>
+    <entity name="QName" value="(?{}%NCName;\:)?%NCName;"/>
+
+    <entity name="Nmtoken" value="[%NameChar;]+"/>
+
+
+
+
+    <region name="badChar"       parent="def:Error" description="bad stream"/>
+
+    <region name="Comment"       parent="def:Comment" description="Comment body"/>
+    <region name="Comment.start" parent="def:Comment" description="Comment start [&lt;!--]"/>
+    <region name="Comment.end"   parent="def:Comment" description="Comment end [-->]"/>
+
+    <region name="CharRef"       parent="def:Parameter" description="Character Reference"/>
+    <region name="EntityRef"     parent="def:ParameterStrong" description="XML Entity Reference"/>
+    
+    <region name="nsprefix" parent="uri:nsprefix"/>
+    <region name="nscolon"  parent="uri:nscolon"/>
+
+    <region name="element.start.name" parent="def:Tag"/>
+    <region name="element.start.lt"   parent="def:OpenTag"/>
+    <region name="element.start.gt"   parent="def:OpenTag"/>
+    <region name="element.end.name"   parent="def:Tag"/>
+    <region name="element.end.lt"     parent="def:CloseTag"/>
+    <region name="element.end.gt"     parent="def:CloseTag"/>
+    <region name="element.nsprefix"   parent="nsprefix"/>
+    <region name="element.nscolon"    parent="nscolon"/>
+                                              
+    <region name="element.defined.start.name" parent="def:Keyword"/>
+    <region name="element.defined.end.name"   parent="def:Keyword"/>
+    <region name="element.defined.nsprefix"   parent="def:Keyword"/>
+
+    <region name="Attribute.name"             parent="def:ParameterUnknown"/>
+    <region name="Attribute.defined.name"     parent="def:Parameter"/>
+    <region name="Attribute.nsprefix"         parent="def:PrefixStrong"/>
+    <region name="Attribute.defined.nsprefix" parent="nsprefix"/>
+    <region name="Attribute.nscolon"          parent="nscolon"/>
+    <region name="Attribute.eq"               parent="def:Symbol"/>
+    <region name="Attribute.xmlns"            parent="Attribute.defined.nsprefix"/> 
+    <region name="Attribute.xmlns.syffix"     parent="Attribute.defined.name"/>
+
+    <region name="AttValue"          parent="def:String"/>
+    <region name="AttValue.start"    parent="def:StringEdge"/>
+    <region name="AttValue.end"      parent="def:StringEdge"/>
+
+    <region name="AttValue.defined"       parent="AttValue"/>
+    <region name="AttValue.defined.start" parent="AttValue.start"/>
+    <region name="AttValue.defined.end"   parent="AttValue.end"/>
+
+
+    <region name="decl"         parent="def:default" description="Directives like &lt;! ... gt;"/>
+    <region name="decl.start"   parent="def:DirectiveEdge"/>
+    <region name="decl.end"     parent="def:DirectiveEdge"/>
+    <region name="decl.name"    parent="def:Directive"/>
+    <region name="decl.content" parent="def:DirectiveContent"/>
+
+    
+    <region name="PI.start"   parent="decl.start"   description="Processing Instruction [&lt;?]"/>
+    <region name="PI.name"    parent="decl.name"    description="Processing Instruction Name"/>
+    <region name="PI.content" parent="decl.content" description="Processing Instruction Content"/>
+    <region name="PI.end"     parent="decl.end"     description="Processing Instruction [?&gt;]"/> 
+
+    
+    <region name="CDStart" parent="decl.start"/>
+    <region name="CData"   parent="def:default"/>
+    <region name="CDEnd"   parent="decl.end"/>
+
+    
+    <!-- autogenrateted PI ... -->
+    <region name="PI.name.defined"  parent="element.defined.start.name"/>
+    <region name="PI.start.defined" parent="PI.start"/>
+    <region name="PI.end.defined"   parent="PI.end"/>
+
+    
+    <region name="XMLDecl" parent="PI.content"/>
+    <region name="XMLDecl.start" parent="PI.start.defined"/>
+    <region name="XMLDecl.name"  parent="PI.name.defined"/>
+    <region name="XMLDecl.end"   parent="PI.end.defined"/>
+    <!--
+    <region name="XMLDecl.eq"    parent="Attribute.eq"/>
+    -->
+
+    <region name="VersionInfo"   parent="def:DirectiveContent"/>
+    <region name="VersionNum"    parent="def:Number"/>
+    <region name="EncodingDecl"  parent="def:DirectiveContent"/>
+    <region name="EncName"       parent="AttValue"/>
+    <region name="SDDecl"        parent="def:DirectiveContent"/>
+    <region name="SDDecl.yn"     parent="AttValue"/>
+    
+    <!-- QNames -->
+    <region name="QName.nsprefix" parent="nsprefix"/>
+    <region name="QName.nscolon"  parent="nscolon"/>
+    <region name="QName.name" parent="def:String"/>
+    
+    
+
+
+    <!-- Enumeration -->
+    <region name="Enumeration"        parent="def:Constant"/>
+    
+    <!-- Outlines -->
+    <region name='XMLTagOutline' parent='def:Outlined'/>
+    
+    
+    <!-- Other -->
+    <region name='PairStart' parent='def:PairStart'/>
+    <region name='PairEnd'   parent='def:PairEnd'/>
+    
+
+
+      <scheme name="xmlns-attribute">
+         <block start="/(\s?#1|^)(xmlns)((:)(%NCName;))?\M([\s\=]|$)/" end="/[&#34;']?#1/"
+                region02="Attribute.xmlns" region04="Attribute.nscolon" region05="Attribute.xmlns.syffix"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+      </scheme>
+      
+      <!-- move to xsi package -->
+      <scheme name="xsi-attributeGroup">
+         <inherit scheme='xsi:xsi-attributeGroup'/>
+      </scheme>
+
+      <!-- EE: move attributes to package and ':' fixed -->
+      <scheme name="specialAttrs-attributeGroup">
+         <inherit scheme="xmlns:specialAttrs-attributeGroup"/>
+         <inherit scheme="id-attribute"/>
+      </scheme>
+      <scheme name="id-attribute">
+         <inherit scheme="xmlns:id-attribute"/>
+      </scheme>
+
+
+
+    <scheme name="badChar">
+      <regexp match="/\S/" region="badChar" priority="low"/>
+    </scheme>
+    <scheme name="badLiter"><!-- EE: used in xsd2hrc -->
+      <regexp match="/[&lt;&amp;[^%Char;]]/" region="badChar"/>
+    </scheme>
+    <scheme name="badCDLiter"><!-- EE: used in xsd2hrc -->
+      <regexp match="/[^%Char;]/" region="badChar"/>
+    </scheme>
+
+    <scheme name="reference.content">
+     <keywords region="CharRef" worddiv="[&amp;\;]">
+      <word name="lt"/>
+      <word name="gt"/>
+      <word name="amp"/>
+      <word name="quot"/>
+      <word name="apos"/>
+     </keywords>
+    </scheme>
+    
+    <scheme name="Reference">
+      <annotation><documentation><![CDATA[
+        [66]   CharRef     ::=   '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
+        [67]   Reference   ::=   EntityRef | CharRef
+        [68]   EntityRef   ::=   '&' Name ';'
+      ]]></documentation></annotation>
+      <regexp match="/&amp;\#[0-9]+\;/" region0="CharRef"/>
+      <regexp match="/&amp;\#x[0-9a-fA-F]+\;/" region0="CharRef"/>
+      <block start="/&amp;\M%Name;\;/" end="/~%Name;\m\;/"
+       region="EntityRef" scheme="reference.content"
+       region00="CharRef" region10="CharRef"
+      />
+    </scheme>
+
+    <scheme name="Comment">
+      <annotation><documentation><![CDATA[
+        [15]   Comment   ::=   '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
+      ]]></documentation></annotation>
+      <block start="/(&lt;!--)/" end="/(--&gt;)/" scheme="Comment.content"
+             region="Comment" region00="Comment.start" region10="Comment.end"
+             region01="PairStart" region11="PairEnd"/>
+    </scheme>
+    <scheme name="Comment.content">
+      <regexp match="/ - ( [%Char;-[\-]] |$)/x"/>
+      <regexp match="/[\-[^%Char;]]/" region="badChar" priority="low"/>
+      <inherit scheme="def:Comment"/>
+    </scheme>
+
+
+    <scheme name="PI">
+      <annotation><documentation><![CDATA[
+        [16]   PI   ::=   '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
+        [17]   PITarget   ::=   Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
+      ]]></documentation></annotation>
+
+      <regexp region="xml:badChar" match="/&lt;\?xml\M(\s|$)/i"/>
+      <inherit scheme="xmlns:xml-stylesheet-processing-instruction"/>
+
+      <block start="/(?{PI.start}&lt;\?)(?{PI.name}%Name;)/" end="/(?{PI.end}\?&gt;)/"
+             scheme="PI.content" region="PI.content"
+             region00="PairStart" region10="PairEnd"/>
+    </scheme>
+
+    <scheme name="PI.content">
+    </scheme>
+
+    <scheme name="CDSect">
+      <annotation><documentation>
+        [18]   CDSect   ::=   CDStart CData CDEnd
+        [19]   CDStart  ::=   '&lt;![CDATA['
+        [20]   CData    ::=   (Char* - (Char* ']]&gt;' Char*))
+        [21]   CDEnd    ::=   ']]&gt;'
+      </documentation></annotation>
+      <block start="/(&lt;!\[CDATA\[)/" end="/(\]\]&gt;)/"
+             scheme="CDSect.content"
+             region="CData" region00="CDStart" region01="PairStart"
+             region10="CDEnd" region11="PairEnd"/>
+    </scheme>
+    <scheme name="CDSect.content.stream"/>
+    <scheme name="CDSect.content">
+      <inherit scheme="CDSect.content.stream"/>
+      <inherit scheme="badCDLiter"/>
+      <!--regexp match="/[^%Char;]+/" region="badChar"/-->
+    </scheme>
+
+
+    <scheme name="Misc">
+      <annotation><documentation><![CDATA[
+        [27]   Misc   ::=   Comment | PI | S
+      ]]></documentation></annotation>
+
+      <inherit scheme="Comment"/>
+      <inherit scheme="PI"/>
+      <regexp  match="/\s+/"/>
+    </scheme>
+
+
+    <scheme name="AttValue">
+      <annotation><documentation><![CDATA[
+        [10]   AttValue   ::=   '"' ([^<&"] | Reference)* '"' | "'" ([^<&'] | Reference)* "'"
+      ]]></documentation></annotation>
+      <block start="/(&quot;)/" end="/(\y1)/"
+             region00="PairStart" region10="PairEnd"
+             region01="AttValue.start" region11="AttValue.end"
+             scheme="AttValue.content.quot" region="AttValue"/>
+      <block start="/(&apos;)/" end="/(\y1)/"
+             region00="PairStart" region10="PairEnd"
+             region01="AttValue.start" region11="AttValue.end"
+             scheme="AttValue.content.apos" region="AttValue"/>
+    </scheme>
+    <scheme name="AttValue.content.stream"/>
+    <scheme name="AttValue.content">
+      <inherit scheme="Reference"/>
+      <inherit scheme="badLiter"/>
+      <!--regexp match="/[&lt;&amp;[^%Char;]]/" region="badChar"/-->
+      <inherit scheme="AttValue.content.stream"/>
+    </scheme>
+    <scheme name="AttValue.content.quot">
+      <regexp match="/&quot;/" region="badChar" priority="low"/>
+      <inherit scheme="AttValue.content"/>
+    </scheme>
+    <scheme name="AttValue.content.apos">
+      <regexp match="/&apos;/" region="badChar" priority="low"/>
+      <inherit scheme="AttValue.content"/>
+    </scheme>
+
+
+
+
+    <scheme name="Attribute">
+      <annotation><documentation><![CDATA[
+        [41]   Attribute   ::=   Name Eq AttValue
+      ]]></documentation></annotation>
+      <inherit scheme="Attribute.common"/>
+      <inherit scheme="Attribute.any"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+    <scheme name="Attribute.common">
+      <inherit scheme="specialAttrs-attributeGroup"/>
+      <inherit scheme="xmlns-attribute"/>
+      <inherit scheme="xsi-attributeGroup"/>
+    </scheme>
+    <scheme name="Attribute.any">
+      <!-- FIX bounds !!! -->
+      <block start="/(\s?#1|^)(((%NCName;)(:))?%Name;)\M([\s\=]|$)/" 
+             region03='Attribute.nsprefix' region05='Attribute.nscolon'
+             end="/[&quot;&apos;]?#1/" scheme="AttributeContent"
+             region02="Attribute.name"/>
+    </scheme>
+    <scheme name="AttributeContent">
+      <block start="/\=/" end="/[&quot;&apos;]?#1/" scheme="AttributeContent2"
+             region00="Attribute.eq"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+    <scheme name="AttributeContent2">
+      <inherit scheme="AttValue"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+
+
+    <scheme name="element">
+      <annotation><documentation><![CDATA[
+        [39]   element   ::=   EmptyElemTag | STag content ETag
+      ]]></documentation></annotation>
+      <block start="/\M &lt; (%Name; ([\s\/&gt;]|$) )/x"
+             end="/ &gt; /x"
+             scheme="elementContent"/>
+    </scheme>
+
+    <scheme name="element.root">
+      <annotation><documentation>
+       Single root element scheme
+      </documentation></annotation>
+      <block start="/~\M &lt; (%Name; ([\s\/&gt;]|$) )/x"
+             end="/ &gt;?#1 /x"
+             scheme="element"/>
+      <inherit scheme="Misc"/>
+      <regexp match="/\S+/" region0="badChar"/>
+    </scheme>
+
+    <scheme name="elementContent">
+      <annotation><documentation><![CDATA[
+        [40]   STag           ::=   '<' Name (S Attribute)* S? '>'
+        [42]   ETag           ::=   '</' Name S? '>'
+        [44]   EmptyElemTag   ::=   '<' Name (S Attribute)* S? '/>'
+      ]]></documentation></annotation>
+      <!-- <block start="/~( (&lt;) ((?{XMLTagOutline}  ((%xml:NCName;) (:) )? (%xml:Name;) )) \M &gt;?   )/x" -->
+      <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+             end="/( (&lt;\/) (\y3 (?{}\s|$|\>)?= )?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)
+              | (\/ \M &gt;) )/x"
+             region01="PairStart" region02="element.start.lt"
+             region05="element.nsprefix" region06="element.nscolon" region07="element.start.name"
+             region11="PairEnd" region12="element.end.lt" region15="element.nsprefix" region16="element.nscolon"
+             region17="element.end.name" region18="element.end.gt" region19="element.start.gt"
+             scheme="xml:elementContent2"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+
+    <scheme name="elementContent2">
+      <block start="/>/" end="/ \M ( &lt;/%Name; ) /x"
+             region00="element.start.gt"
+             scheme="content"/>
+      <inherit scheme="Attribute"/>
+    </scheme>
+
+    <scheme name="content">
+      <annotation><documentation><![CDATA[
+        [43]   content    ::=   CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
+        [14]   CharData   ::=   [^<&]* - ([^<&]* ']]]]><![CDATA[>' [^<&]*)
+      ]]></documentation></annotation>
+
+      <inherit scheme="element"/>
+      <inherit scheme="content.other"/>
+      <inherit scheme="content.cdata"/>
+      <regexp match="/\]\]\>/" region="badChar"/>
+      <regexp match="/[&lt;&amp;[^%Char;]]+/" region="badChar" priority="low"/>
+    </scheme>
+
+    <scheme name="content.other">
+      <inherit scheme="PI"/>
+      <inherit scheme="Comment"/>
+      <inherit scheme="Reference"/>
+    </scheme>
+
+    <scheme name="content.cdata.stream"/>
+    <scheme name="content.cdata">
+      <inherit scheme="CDSect"/><!-- CDADA -->
+      <inherit scheme="content.cdata.stream"/>
+
+      <!-- ???  EE: it's produced some bugs...
+      <regexp match="/[%Char;-[&lt;&amp;]]+/" priority="low"/>-->
+
+    </scheme>
+
+    <scheme name="XMLDecl">
+      <annotation><documentation><![CDATA[
+        [23]   XMLDecl       ::=   '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
+      ]]></documentation></annotation>
+      
+      <block start="/(&lt;\?)(?{XMLDecl.name}xml)\M(\s|$)/" end="/(\?&gt;)/" 
+        region11="XMLDecl.end" region10="def:PairEnd" 
+        region01="XMLDecl.start" region00="def:PairStart" 
+        region="XMLDecl" scheme="xmlns:xml-piContent" 
+      />
+    </scheme>
+
+    <!--scheme name="XMLDecl.content" 
+       - removed. Now used xmlns:xml-piContent -->
+
+    
+
+
+
+
+    <scheme name="core">
+      <annotation><documentation><![CDATA[
+        [1]    document      ::=   prolog element Misc*
+        [22]   prolog        ::=   XMLDecl? Misc* (doctypedecl Misc*)?
+      ]]></documentation></annotation>
+
+      <inherit scheme="XMLDecl"/>
+      <inherit scheme="dtd:doctypedecl"/>
+      <inherit scheme="Misc"/>
+    </scheme>
+
+    <scheme name="singleroot">
+      <annotation><documentation><![CDATA[
+        This adds one root element check.
+        Have to be disabled for external parsed entities
+      ]]></documentation></annotation>
+      <inherit scheme="core"/>
+      <block start="/\M(&lt; (%Name; ([\s\/&gt;]|$) ) )/x"
+                end="/%def:neverMatch;/x"
+                scheme="element.root"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+
+
+    <scheme name="xml">
+      <!--
+      <inherit scheme="singleroot"/>
+      -->
+      <!---->
+      <inherit scheme="core"/>
+      <inherit scheme="content"/>
+      <!---->
+    </scheme>
+
+
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  Alexander Gutman <gutman@math.nsc.ru>
+   -  Alexey Vasilyev <servent@fis.lv>
+   -  Dmitry Kirsanov <dmitry@kirsanov.com>
+   -  Eugene Efremov <4mirror@mail.ru>
+   -  Max Belugin <belugin@mail.ru>
+   -  Yury Finkel <yura@mv.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

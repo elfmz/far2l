@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+   CUP Files Syntax
+
+   Made by Ostrovskiy Alex<ostrov@rain.ifmo.ru>
+-->
+
+	<type name="cup">
+		<import type="def"/>
+		<import type="java"/>
+
+		<region name="cupText" parent="default"/>
+		<region name="cupComment" parent="Comment"/>
+		<region name="cupCommentEx" parent="CommentContent"/>
+		<region name="cupSymb" parent="Keyword"/>
+		<region name="cupSymbEx" parent="Directive"/>
+		<region name="cupSymbEx0" parent="Constant"/>
+		<region name="cupSymbEx1" parent="VarStrong"/>
+		
+
+		<scheme name="CupComments">
+			<regexp match="/(\/\/.*$)/" region0="cupComment"/>
+			<block start="/\/\*/" end="/\*\//" scheme="Comment" region="cupComment" region00="PairStart" region10="PairEnd"/>
+		</scheme>
+
+		
+	  <scheme name="Blocks">
+         <inherit scheme="CupComments"/>
+<!-- embedded java block -->
+         <block start="/(\{\:)/" end="/(\:\})/" scheme="java:TypeDeclaration" />
+         
+         <inherit scheme="CupSymbols"/>
+         <regexp match="/([A-Z]+(\ |\,|\;|\|))/" region0="cupSymbEx0"/>
+         <regexp match="/(\:(\s)*(\w)+)/" region0="cupSymbEx"/>
+      </scheme>
+
+		
+		<scheme name="cup">
+			<inherit scheme="Blocks"/>
+		</scheme>
+		
+		<scheme name="CupSymbols">
+         <keywords region="cupSymbEx">
+            <symb name="precedence"/>
+            <symb name="left"/>
+            <symb name="right"/>
+            <symb name="terminal"/>
+            <symb name="non"/>            
+            <symb name="parser code"/> 
+            <symb name="action code"/> 
+            <symb name="scan with"/> 
+         </keywords>
+		<keywords region="cupSymb">
+			<symb name="|"/>
+			<symb name=";"/>
+			<symb name=":"/>
+			<symb name="::="/> 
+		</keywords>
+      </scheme>
+      
+	</type>
+
+</hrc>

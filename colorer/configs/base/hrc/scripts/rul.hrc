@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    InstallShield Script Syntax (RUL)
+    Andy Kiselev <k_i_s_a@mail.ru>
+    Version 2.0
+-->
+   <type name="isScripts">
+
+      <import type="def"/>
+
+      <region name="isString" parent="String"/>
+      <region name="isResStrings" parent="Identifier"/>
+      <region name="isComment" parent="Comment"/>
+      <region name="isCommentEx" parent="CommentContent"/>
+      <region name="isFunc" parent="Function"/>
+      <region name="isSymb" parent="Symbol"/>
+      <region name="isOperators" parent="Operator"/>
+      <region name="isStructOp" parent="SymbolStrong"/>
+      <region name="isWord" parent="Keyword"/>
+      <region name="isResFunc" parent="KeywordStrong"/>
+      <region name="isLabel" parent="Label"/>
+      <region name="isConstant" parent="Constant"/>
+      <region name="isSysType" parent="TypeKeyword"/>
+      <region name="isPreProc" parent="Directive"/>
+      <region name="isPrePrWord" parent="Directive"/>
+      <region name="isNumb" parent="Number"/>
+
+
+      <scheme name="isComment">
+<!-- Linear Comments-->
+         <block start="/\/\//" end="/$/" scheme="Comment" region="isComment"/>
+         <block start="/\/\*/" end="/\*\//" scheme="Comment" region="isComment" region00="PairStart" region10="PairEnd"/>
+      </scheme>
+
+      <scheme name="isStrings">
+         <regexp match="/([Ll]?&#34;((\\.)|[^\\&#34;])*?&#34;)/" region0="isString"/>
+         <regexp match="/([Ll]?'((\\.)|[^\\']){0,4}')/" region0="isString"/>
+      </scheme>
+
+      <scheme name="isPrePro">
+         <inherit scheme="isComment"/>
+         <inherit scheme="isStrings"/>
+         <regexp match="/(&lt;[\w\d\.\-\\/]*&gt;)/" region0="isString"/>
+         <regexp match="/\b (error) \s (.*)/x" region1="isCommentEx" region2="isPrePrWord"/>
+<!-- Standard C/C++ Symbols -->
+         <keywords region="isSymb">
+            <symb name="="/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="!"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="#"/>
+         </keywords>
+         <keywords region="isPrePrWord">
+            <word name="defined"/>
+            <word name="ifdef"/>
+            <word name="ifndef"/>
+            <word name="define"/>
+            <word name="endif"/>
+            <word name="include"/>
+            <word name="if"/>
+            <word name="undef"/>
+            <word name="elif"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="isScripts">
+<!-- paired block -->
+         <block start="/(\()/" end="/(\))/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+         <block start="/(\bbegin\b)/" end="/(\bend;)/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+         <block start="/(\bfor\b)/" end="/(\bendfor;)/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+         <block start="/(\bwhile\b)/" end="/(\bendwhile;)/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+         <block start="/(\bswitch\b)/" end="/(\bendswitch;)/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+         <block start="/(\bif\b)/" end="/((\bendif\b)|(goto\s+[\w_]+\s*;))/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+         <block start="/(\bthen\b)/" end="/(\b\Mendif;|\belse\b\M|\belseif\b\M)/" scheme="isScripts" region00="isSymb" region01="PairStart" region10="isSymb" region11="PairEnd"/>
+<!-- Numbers -->
+         <inherit scheme="CHexNumber"/>
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+         <inherit scheme="isStrings"/>
+         <inherit scheme="isComment"/>
+<!-- IS Preprocessor -->
+         <block start="/^\s*#/" end="/(^|[^\\]?#1) $/x" scheme="isPrePro" region="isPreProc"/>
+         <regexp match="/\M\bfunction\b\s*([\w_]+)\s*\([^;]*\)/x" region1="isFunc"/>
+<!-- IS's Operators -->
+         <keywords region="isOperators">
+            <symb name="^"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+         </keywords>
+<!-- Labels -->
+         <regexp match="/([\w_]+):/" region0="isLabel"/>
+<!-- Resource Strings -->
+         <regexp match="/(@[\w_]+)/" region0="isResStrings"/>
+<!-- IS's Symbols -->
+         <keywords region="isSymb">
+            <symb name=";"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+         </keywords>
+         <keywords region="Error">
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="("/>
+            <symb name=")"/>
+         </keywords>
+<!-- IS's Operators -->
+         <keywords region="isSymb">
+            <word name="AND"/>
+            <word name="OR"/>
+         </keywords>
+<!-- IS's system Types -->
+         <keywords region="isSysType">
+            <word name="BOOL"/>
+            <word name="BYREF"/>
+            <word name="CHAR"/>
+            <word name="GDI"/>
+            <word name="HWND"/>
+            <word name="INT"/>
+            <word name="KERNEL"/>
+            <word name="LIST"/>
+            <word name="LONG"/>
+            <word name="NUMBER"/>
+            <word name="POINTER"/>
+            <word name="SHORT"/>
+            <word name="STRING"/>
+            <word name="USER"/>
+         </keywords>
+<!-- IS's system variables -->
+         <keywords region="isConstant">
+            <word name="BATCH_INSTALL"/>
+            <word name="CMDLINE"/>
+            <word name="COMMONFILES"/>
+            <word name="ERRORFILENAME"/>
+            <word name="FALSE"/>
+            <word name="FOLDER_DESKTOP"/>
+            <word name="FOLDER_PROGRAMS"/>
+            <word name="FOLDER_STARTMENU"/>
+            <word name="FOLDER_STARTUP"/>
+            <word name="INFOFILENAME"/>
+            <word name="isRES"/>
+            <word name="isUSER"/>
+            <word name="isVERSION"/>
+            <word name="MEDIA"/>
+            <word name="MODE"/>
+            <word name="PROGRAMFILES"/>
+            <word name="SELECTED_LANGUAGE"/>
+            <word name="SHELL_OBJECT_FOLDER"/>
+            <word name="SRCDIR"/>
+            <word name="SRCDISK"/>
+            <word name="SUPPORTDIR"/>
+            <word name="TARGETDIR"/>
+            <word name="TARGETDISK"/>
+            <word name="TRUE"/>
+            <word name="UNINST"/>
+            <word name="WINDIR"/>
+            <word name="WINDISK"/>
+            <word name="WINSYSDIR"/>
+            <word name="WINSYSDISK"/>
+            <word name="HOURGLASS"/>
+            <word name="LOGGING"/>
+            <word name="REMOVE"/>
+         </keywords>
+<!-- IIS KeyWords -->
+         <keywords region="isWord">
+            <word name="abort"/>
+            <word name="typedef"/>
+            <word name="if"/>
+            <word name="then"/>
+            <word name="else"/>
+            <word name="elseif"/>
+            <word name="endif"/>
+            <word name="switch"/>
+            <word name="case"/>
+            <word name="default"/>
+            <word name="endswitch"/>
+            <word name="for"/>
+            <word name="to"/>
+            <word name="downto"/>
+            <word name="step"/>
+            <word name="endfor"/>
+            <word name="repeat"/>
+            <word name="until"/>
+            <word name="program"/>
+            <word name="endprogram"/>
+            <word name="exit"/>
+            <word name="while"/>
+            <word name="endwhile"/>
+            <word name="prototype"/>
+            <word name="function"/>
+            <word name="begin"/>
+            <word name="goto"/>
+            <word name="return"/>
+            <word name="end"/>
+         </keywords>
+<!-- Functions - Category - Component -->
+         <keywords region="isResFunc">
+            <word name="XCopyFile"/>
+            <word name="WriteProfString"/>
+            <word name="WriteLine"/>
+            <word name="WriteBytes"/>
+            <word name="Welcome"/>
+            <word name="WaitOnDialog"/>
+            <word name="VerUpdateFile"/>
+            <word name="VerSearchAndUpdateFile"/>
+            <word name="VerGetFileVersion"/>
+            <word name="VerFindFileVersion"/>
+            <word name="VerCompare"/>
+            <word name="VarSave"/>
+            <word name="VarRestore"/>
+            <word name="UseDLL"/>
+            <word name="UnUseDLL"/>
+            <word name="System"/>
+            <word name="StrToUpper"/>
+            <word name="StrToNum"/>
+            <word name="StrToLower"/>
+            <word name="StrSub"/>
+            <word name="StrRemoveLastSlash"/>
+            <word name="StrLength"/>
+            <word name="StrGetTokens"/>
+            <word name="StrFind"/>
+            <word name="StrCompare"/>
+            <word name="StatusUpdate"/>
+            <word name="SprintfBox"/>
+            <word name="Sprintf"/>
+            <word name="SizeWindow"/>
+            <word name="SilentWriteData"/>
+            <word name="SilentReadData"/>
+            <word name="ShowProgramFolder"/>
+            <word name="ShowGroup"/>
+            <word name="SetupType"/>
+            <word name="SetTitle"/>
+            <word name="SetStatusWindow"/>
+            <word name="SetFont"/>
+            <word name="SetFileInfo"/>
+            <word name="SetErrorTitle"/>
+            <word name="SetErrorMsg"/>
+            <word name="SetDisplayEffect"/>
+            <word name="SetDialogTitle"/>
+            <word name="SetColor"/>
+            <word name="SendMessage"/>
+            <word name="SelectFolder"/>
+            <word name="SelectDir"/>
+            <word name="SeekBytes"/>
+            <word name="SdWelcome"/>
+            <word name="SdStartCopy"/>
+            <word name="SdShowMsg"/>
+            <word name="SdShowInfoList"/>
+            <word name="SdShowFileMods"/>
+            <word name="SdShowDlgEdit3"/>
+            <word name="SdShowDlgEdit2"/>
+            <word name="SdShowDlgEdit1"/>
+            <word name="SdShowAnyDialog"/>
+            <word name="SdSetupTypeEx"/>
+            <word name="SdSetupType"/>
+            <word name="SdSelectFolder"/>
+            <word name="SdRegisterUserEx"/>
+            <word name="SdRegisterUser"/>
+            <word name="SdProductName"/>
+            <word name="SdOptionsButtons"/>
+            <word name="SdMakeName"/>
+            <word name="SdLicense"/>
+            <word name="SdInit"/>
+            <word name="SdFinishReboot"/>
+            <word name="SdFinish"/>
+            <word name="SdDisplayTopics"/>
+            <word name="SdConfirmRegistration"/>
+            <word name="SdConfirmNewDir"/>
+            <word name="SdComponentMult"/>
+            <word name="SdComponentDialogAdv"/>
+            <word name="SdComponentDialog2"/>
+            <word name="SdComponentDialog"/>
+            <word name="SdBitmap"/>
+            <word name="SdAskOptionsList"/>
+            <word name="SdAskOptions"/>
+            <word name="SdAskDestPath"/>
+            <word name="ReplaceProfString"/>
+            <word name="ReplaceFolderIcon"/>
+            <word name="RenameFile"/>
+            <word name="ReloadProgGroup"/>
+            <word name="ReleaseDialog"/>
+            <word name="RegDBSetKeyValueEx"/>
+            <word name="RegDBSetItem"/>
+            <word name="RegDBSetDefaultRoot"/>
+            <word name="RegDBSetAppInfo"/>
+            <word name="RegDBQueryKey"/>
+            <word name="RegDBKeyExist"/>
+            <word name="RegDBGetKeyValueEx"/>
+            <word name="RegDBGetItem"/>
+            <word name="RegDBGetAppInfo"/>
+            <word name="RegDBDisConnectRegistry"/>
+            <word name="RegDBDeleteValue"/>
+            <word name="RegDBDeleteKey"/>
+            <word name="RegDBCreateKeyEx"/>
+            <word name="RegDBConnectRegistry"/>
+            <word name="RebootDialog"/>
+            <word name="ReadBytes"/>
+            <word name="QueryShellMgr"/>
+            <word name="QueryProgItem"/>
+            <word name="QueryProgGroup"/>
+            <word name="ProgDefGroupType"/>
+            <word name="PlayMMedia"/>
+            <word name="PlaceWindow"/>
+            <word name="PlaceBitmap"/>
+            <word name="PathSet"/>
+            <word name="PathMove"/>
+            <word name="PathGet"/>
+            <word name="PathFind"/>
+            <word name="PathDelete"/>
+            <word name="PathAdd"/>
+            <word name="ParsePath"/>
+            <word name="OpenFileMode"/>
+            <word name="OpenFile"/>
+            <word name="NumToStr"/>
+            <word name="MessageBox"/>
+            <word name="MessageBeep"/>
+            <word name="LongPathToShortPath"/>
+            <word name="LongPathToQuote"/>
+            <word name="LongPathFromShortPath"/>
+            <word name="ListWriteToFile"/>
+            <word name="ListSetIndex"/>
+            <word name="ListSetCurrentString"/>
+            <word name="ListSetCurrentItem"/>
+            <word name="ListReadFromFile"/>
+            <word name="ListGetNextString"/>
+            <word name="ListGetNextItem"/>
+            <word name="ListGetFirstString"/>
+            <word name="ListGetFirstItem"/>
+            <word name="ListFinString"/>
+            <word name="ListFindItem"/>
+            <word name="ListDestroy"/>
+            <word name="ListDeleteString"/>
+            <word name="ListDeleteItem"/>
+            <word name="ListCurrentString"/>
+            <word name="ListCurrentItem"/>
+            <word name="ListCreate"/>
+            <word name="ListCount"/>
+            <word name="ListAdString"/>
+            <word name="ListAddItem"/>
+            <word name="LaunchAppAndWait"/>
+            <word name="LaunchApp"/>
+            <word name="LOWORD"/>
+            <word name="Is"/>
+            <word name="InstallationInfo"/>
+            <word name="ISCompareServicePack"/>
+            <word name="Handler"/>
+            <word name="HIWORD"/>
+            <word name="GetWindowHandle"/>
+            <word name="GetValidDrivesList"/>
+            <word name="GetSystemInfo"/>
+            <word name="GetProfString"/>
+            <word name="GetProfInt"/>
+            <word name="GetMode"/>
+            <word name="GetMemFree"/>
+            <word name="GetLine"/>
+            <word name="GetItemNameList"/>
+            <word name="GetGroupNameList"/>
+            <word name="GetFont"/>
+            <word name="GetFolderNameList"/>
+            <word name="GetFileInfo"/>
+            <word name="GetExtents"/>
+            <word name="GetEnvVar"/>
+            <word name="GetDiskSpaceEx"/>
+            <word name="GetDiskSpace"/>
+            <word name="GetDisk"/>
+            <word name="GetDir"/>
+            <word name="FindWindow"/>
+            <word name="FindFile"/>
+            <word name="FindAllFiles"/>
+            <word name="FindAllDirs"/>
+            <word name="FileInsertLine"/>
+            <word name="FileGrep"/>
+            <word name="FileDeleteLine"/>
+            <word name="FileCompare"/>
+            <word name="EzDefineDialog"/>
+            <word name="EzConfigSetValue"/>
+            <word name="EzConfigGetValue"/>
+            <word name="EzConfigAdString"/>
+            <word name="EzConfigAddDriver"/>
+            <word name="EzBatchReplace"/>
+            <word name="EzBatchAdString"/>
+            <word name="EzBatchAddPath"/>
+            <word name="ExitProgMan"/>
+            <word name="ExistsDisk"/>
+            <word name="ExistsDir"/>
+            <word name="EnterDisk"/>
+            <word name="EndDialog"/>
+            <word name="Enable"/>
+            <word name="DoInstall"/>
+            <word name="Do"/>
+            <word name="Disable"/>
+            <word name="DialogSetInfo"/>
+            <word name="DeleteProgramFolder"/>
+            <word name="DeleteFolderIcon"/>
+            <word name="DeleteFile"/>
+            <word name="DeleteDir"/>
+            <word name="Delay"/>
+            <word name="DeinstallStart"/>
+            <word name="DeinstallSetReference"/>
+            <word name="DefineDialog"/>
+            <word name="CtrlSetText"/>
+            <word name="CtrlSetState"/>
+            <word name="CtrlSetMultCurSel"/>
+            <word name="CtrlSetMLEText"/>
+            <word name="CtrlSetList"/>
+            <word name="CtrlSetFont"/>
+            <word name="CtrlSetCurSel"/>
+            <word name="CtrlSelectText"/>
+            <word name="CtrlPGroups"/>
+            <word name="CtrlGetText"/>
+            <word name="CtrlGetSubCommand"/>
+            <word name="CtrlGetState"/>
+            <word name="CtrlGetMultCurSel"/>
+            <word name="CtrlGetMLEText"/>
+            <word name="CtrlGetCurSel"/>
+            <word name="CtrlDir"/>
+            <word name="CtrlClear"/>
+            <word name="CreateShellObjects"/>
+            <word name="CreateRegistrySet"/>
+            <word name="CreateProgramFolder"/>
+            <word name="CreateFile"/>
+            <word name="CreateDir"/>
+            <word name="CopyFile"/>
+            <word name="CopyBytes"/>
+            <word name="ConfigSetInt"/>
+            <word name="ConfigSetFileName"/>
+            <word name="ConfigMove"/>
+            <word name="ConfigGetInt"/>
+            <word name="ConfigGetFileName"/>
+            <word name="ConfigFind"/>
+            <word name="ConfigFileSave"/>
+            <word name="ConfigFileLoad"/>
+            <word name="ConfigDelete"/>
+            <word name="ConfigAdd"/>
+            <word name="ComponentValidate"/>
+            <word name="ComponentTotalSize"/>
+            <word name="ComponentSetupTypeSet"/>
+            <word name="ComponentSetupTypeGetData"/>
+            <word name="ComponentSetupTypeEnum"/>
+            <word name="ComponentSetTarget"/>
+            <word name="ComponentSetData"/>
+            <word name="ComponentSelectItem"/>
+            <word name="ComponentMoveData"/>
+            <word name="ComponentListItems"/>
+            <word name="ComponentIsItemSelected"/>
+            <word name="ComponentInitialize"/>
+            <word name="ComponentGetItemSize"/>
+            <word name="ComponentGetData"/>
+            <word name="ComponentFilterOS"/>
+            <word name="ComponentFilterLanguage"/>
+            <word name="ComponentFileInfo"/>
+            <word name="ComponentFileEnum"/>
+            <word name="ComponentError"/>
+            <word name="ComponentDialog"/>
+            <word name="ComponentCompareSizeRequired"/>
+            <word name="ComponentAddItem"/>
+            <word name="CommitSharedFiles"/>
+            <word name="CmdGetHwndDlg"/>
+            <word name="CloseFile"/>
+            <word name="ChangeDirectory"/>
+            <word name="CallDLLFx"/>
+            <word name="BatchSetFileName"/>
+            <word name="BatchMoveEx"/>
+            <word name="BatchGetFileName"/>
+            <word name="BatchFind"/>
+            <word name="BatchFileSave"/>
+            <word name="BatchFileLoad"/>
+            <word name="BatchDeleteEx"/>
+            <word name="BatchAdd"/>
+            <word name="AskYesNo"/>
+            <word name="AskText"/>
+            <word name="AskPath"/>
+            <word name="AskOptions"/>
+            <word name="AskDestPath"/>
+            <word name="AppCommand"/>
+            <word name="AddProfString"/>
+            <word name="AddFolderIcon"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

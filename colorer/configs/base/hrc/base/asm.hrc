@@ -1,0 +1,1355 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+  
+  <type name="asm">
+    <annotation><documentation>
+      Assembler Syntax v2.0
+    </documentation><contributors><![CDATA[
+      KiLL Zlotnikoff <e1a29df@quake.ru>
+      Ilgar Veliev <sigma@ntgres.pssr.ru>
+      Dmitriy Volkov <werewolf@atnet.ru>
+      Timur Safin <timur@lanit.ru>
+      cail: rearranged with schemes, added
+      cyrix, amd, NASM (Netwide Assembler) features.
+      Nosov Konstantin <k_nosov@chat.ru>
+      NASM has a WWW page at http://www.cryogen.com/Nasm
+      Alexander Voronenko <Alexander.Voronenko@p47.f100.n452.z2.fidonet.org>
+    ]]></contributors></annotation>
+
+    <import type="def"/>
+
+    <region name="asmString"  parent="String"/>
+    <region name="asmComment" parent="Comment"/>
+    <region name="asmToDo"    parent="TODO"/>
+    <region name="asmDefinition" parent="Directive"/>
+    <region name="asmDirective"  parent="Directive"/>
+    <region name="asmMnemonics"  parent="Keyword"/>
+    <region name="asmLabel"  parent="Label"/>
+    <region name="LabelOutline"  parent="Outlined"/>
+    <region name="asmSymbol" parent="def:Symbol"/>
+    <region name="asmNumBin" parent="NumberBin"/>
+    <region name="asmNumHex" parent="NumberHex"/>
+    <region name="asmNumDec" parent="NumberDec"/>
+    <region name="asmNumOct" parent="NumberOct"/>
+    <region name="asmRegister" parent="Register"/>
+    <region name="asmiBase" parent="asmMnemonics"/>
+    <region name="asmiProt" parent="asmMnemonics"/>
+    <region name="asmiFPU" parent="asmMnemonics"/>
+    <region name="asmiMMX" parent="asmMnemonics"/>
+    <region name="asmiSSE" parent="asmMnemonics"/>
+    <region name="asmiCyrix" parent="KeywordStrong"/>
+    <region name="asmi3dnow" parent="KeywordStrong"/>
+    <region name="asmiAMD" parent="KeywordStrong"/>
+    <region name="asmiUndoc" parent="KeywordStrong"/>
+
+    <scheme name="asm_registers">
+      <regexp match="/\b(st(\(\s*([0-7])\s*\))?)\b/i" region0="asmRegister" region3="asmNumDec"/>
+      <regexp match="/\b[dtc]r[0-7]\b/i" region0="asmRegister"/>
+      <regexp match="/\bx?mm[0-7]\b/i" region0="asmRegister"/>
+      <keywords ignorecase="yes" region="asmRegister">
+        <word name="eax"/>
+        <word name="ax"/>
+        <word name="al"/>
+        <word name="ah"/>
+        <word name="ebx"/>
+        <word name="bx"/>
+        <word name="bl"/>
+        <word name="bh"/>
+        <word name="ecx"/>
+        <word name="cx"/>
+        <word name="cl"/>
+        <word name="ch"/>
+        <word name="edx"/>
+        <word name="dx"/>
+        <word name="dl"/>
+        <word name="dh"/>
+        <word name="esi"/>
+        <word name="si"/>
+        <word name="edi"/>
+        <word name="di"/>
+        <word name="ebp"/>
+        <word name="bp"/>
+        <word name="esp"/>
+        <word name="sp"/>
+        <word name="cs"/>
+        <word name="ds"/>
+        <word name="es"/>
+        <word name="ss"/>
+        <word name="gs"/>
+        <word name="fs"/>
+      </keywords>
+    </scheme>
+    <scheme name="asm_shared">
+      <keywords ignorecase="yes" region="asmDefinition">
+        <word name="align"/>
+        <word name="db"/>
+        <word name="dd"/>
+        <word name="dq"/>
+        <word name="dw"/>
+        <word name="df"/>
+        <word name="dt"/>
+        <word name="equ"/>
+        <word name="dup"/>
+        <word name="label"/>
+        <word name="public"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmMnemonics">
+        <word name="byte"/>
+        <word name="dword"/>
+        <word name="fword"/>
+        <word name="near"/>
+        <word name="far"/>
+        <word name="near16"/>
+        <word name="far16"/>
+        <word name="near32"/>
+        <word name="far32"/>
+        <word name="offset"/>
+        <word name="short"/>
+        <word name="ptr"/>
+        <word name="qword"/>
+        <word name="tword"/>
+        <word name="returns"/>
+        <word name="word"/>
+      </keywords>
+    </scheme>
+    <scheme name="asm_tasm">
+      <regexp match="/\?debug.*$/" region0="asmComment"/>
+      <regexp match="/[\.p]\d{1,2}86[pPcC]?/" region0="asmDefinition"/>
+      <keywords ignorecase="yes" region="asmDefinition">
+        <word name="%pnct"/>
+        <word name=".alpha"/>
+        <word name=".break"/>
+        <word name=".code"/>
+        <word name=".const"/>
+        <word name=".continue"/>
+        <word name=".cref"/>
+        <word name=".data"/>
+        <word name=".data?"/>
+        <word name=".dosseg"/>
+        <word name=".else"/>
+        <word name=".elseif"/>
+        <word name=".endif"/>
+        <word name=".endw"/>
+        <word name=".err"/>
+        <word name=".err1"/>
+        <word name=".err2"/>
+        <word name=".errb"/>
+        <word name=".errdef"/>
+        <word name=".errdif"/>
+        <word name=".errdifi"/>
+        <word name=".erre"/>
+        <word name=".erridn"/>
+        <word name=".erridni"/>
+        <word name=".errnb"/>
+        <word name=".errndef"/>
+        <word name=".errnz"/>
+        <word name=".exit"/>
+        <word name=".fardata"/>
+        <word name=".fardata?"/>
+        <word name=".if"/>
+        <word name=".lall"/>
+        <word name=".lfcond"/>
+        <word name=".list"/>
+        <word name=".listall"/>
+        <word name=".listif"/>
+        <word name=".listmacro"/>
+        <word name=".listmacroall"/>
+        <word name=".mmx"/>
+        <word name=".model"/>
+        <word name=".nocref"/>
+        <word name=".nolist"/>
+        <word name=".nolistif"/>
+        <word name=".nolistmacro"/>
+        <word name=".nommx"/>
+        <word name=".radix"/>
+        <word name=".repeat"/>
+        <word name=".sall"/>
+        <word name=".seq"/>
+        <word name=".sfcond"/>
+        <word name=".stack"/>
+        <word name=".startup"/>
+        <word name=".tfcond"/>
+        <word name=".type"/>
+        <word name=".until"/>
+        <word name=".untilcxz"/>
+        <word name=".while"/>
+        <word name=".xall"/>
+        <word name=".xcref"/>
+        <word name=".xlist"/>
+        <word name="??date"/>
+        <word name="??filename"/>
+        <word name="??time"/>
+        <word name="??version"/>
+        <word name="@code"/>
+        <word name="@codesize"/>
+        <word name="@cpu"/>
+        <word name="@curseg"/>
+        <word name="@data"/>
+        <word name="@datasize"/>
+        <word name="@fardata"/>
+        <word name="@fardata?"/>
+        <word name="@filename"/>
+        <word name="@model"/>
+        <word name="@startua"/>
+        <word name="@wordsize"/>
+        <word name="abs"/>
+        <word name="addr"/>
+        <word name="alias"/>
+        <word name="arg"/>
+        <word name="assume"/>
+        <word name="basic"/>
+        <word name="byte"/>
+        <word name="c"/>
+        <word name="carry?"/>
+        <word name="casemap"/>
+        <word name="catstr"/>
+        <word name="code"/>
+        <word name="codeptr"/>
+        <word name="codeseg"/>
+        <word name="comm"/>
+        <word name="comment"/>
+        <word name="common"/>
+        <word name="compact"/>
+        <word name="const"/>
+        <word name="cpp"/>
+        <word name="curseg"/>
+        <word name="data"/>
+        <word name="dataptr"/>
+        <word name="dataseg"/>
+        <word name="display"/>
+        <word name="dosseg"/>
+        <word name="dword"/>
+        <word name="echo"/>
+        <word name="elif"/>
+        <word name="else"/>
+        <word name="elseif"/>
+        <word name="elseif1"/>
+        <word name="elseif2"/>
+        <word name="elseifb"/>
+        <word name="elseifdef"/>
+        <word name="elseifdif"/>
+        <word name="elseifdifi"/>
+        <word name="elseife"/>
+        <word name="elseifidn"/>
+        <word name="elseifidni"/>
+        <word name="elseifnb"/>
+        <word name="elseifndef"/>
+        <word name="emul"/>
+        <word name="end"/>
+        <word name="endif"/>
+        <word name="endm"/>
+        <word name="endp"/>
+        <word name="ends"/>
+        <word name="endstruc"/>
+        <word name="enterd"/>
+        <word name="enterw"/>
+        <word name="enum"/>
+        <word name="eq"/>
+        <word name="equ"/>
+        <word name="err"/>
+        <word name="errdif"/>
+        <word name="errdifi"/>
+        <word name="erre"/>
+        <word name="erridn"/>
+        <word name="erridni"/>
+        <word name="errif"/>
+        <word name="errif1"/>
+        <word name="errif2"/>
+        <word name="errifb"/>
+        <word name="errifdef"/>
+        <word name="errifdif"/>
+        <word name="errifdifi"/>
+        <word name="errife"/>
+        <word name="errifidn"/>
+        <word name="errifidni"/>
+        <word name="errifnb"/>
+        <word name="errifndef"/>
+        <word name="errnb"/>
+        <word name="errndef"/>
+        <word name="errnz"/>
+        <word name="even"/>
+        <word name="evendata"/>
+        <word name="exitcode"/>
+        <word name="exitm"/>
+        <word name="export"/>
+        <word name="extern"/>
+        <word name="externdef"/>
+        <word name="extrn"/>
+        <word name="false"/>
+        <word name="far"/>
+        <word name="far16"/>
+        <word name="far32"/>
+        <word name="fardata"/>
+        <word name="fastimul"/>
+        <word name="flat"/>
+        <word name="fldenvd"/>
+        <word name="fldenvw"/>
+        <word name="flipflag"/>
+        <word name="fnldenv"/>
+        <word name="fnrstor"/>
+        <word name="fnsaved"/>
+        <word name="fnsavew"/>
+        <word name="fnstenvd"/>
+        <word name="fnstenvw"/>
+        <word name="for"/>
+        <word name="forc"/>
+        <word name="fortran"/>
+        <word name="frstord"/>
+        <word name="frstorw"/>
+        <word name="fsaved"/>
+        <word name="fsavew"/>
+        <word name="fstenvd"/>
+        <word name="fstenvw"/>
+        <word name="fword"/>
+        <word name="ge"/>
+        <word name="getfield"/>
+        <word name="global"/>
+        <word name="goto"/>
+        <word name="group"/>
+        <word name="gt"/>
+        <word name="high"/>
+        <word name="huge"/>
+        <word name="ideal"/>
+        <word name="if"/>
+        <word name="if0"/>
+        <word name="if1"/>
+        <word name="if2"/>
+        <word name="ifb"/>
+        <word name="ifdef"/>
+        <word name="ifdif"/>
+        <word name="ifdifi"/>
+        <word name="ifdifs"/>
+        <word name="ife"/>
+        <word name="ifeq"/>
+        <word name="ifidn"/>
+        <word name="ifidni"/>
+        <word name="iflow"/>
+        <word name="ifnb"/>
+        <word name="ifndef"/>
+        <word name="ifneq"/>
+        <word name="ifnidn"/>
+        <word name="include"/>
+        <word name="includelib"/>
+        <word name="instr"/>
+        <word name="invoke"/>
+        <word name="iretdf"/>
+        <word name="iretf"/>
+        <word name="iretw"/>
+        <word name="irp"/>
+        <word name="irpc"/>
+        <word name="label"/>
+        <word name="large"/>
+        <word name="largestack"/>
+        <word name="le"/>
+        <word name="leaved"/>
+        <word name="leavew"/>
+        <word name="length"/>
+        <word name="local"/>
+        <word name="locals"/>
+        <word name="looped"/>
+        <word name="loopew"/>
+        <word name="loopned"/>
+        <word name="loopnew"/>
+        <word name="loopnzd"/>
+        <word name="loopnzw"/>
+        <word name="loopzd"/>
+        <word name="loopzw"/>
+        <word name="low"/>
+        <word name="lt"/>
+        <word name="macro"/>
+        <word name="macro"/>
+        <word name="mask"/>
+        <word name="maskflag"/>
+        <word name="masm"/>
+        <word name="masm51"/>
+        <word name="medium"/>
+        <word name="memory"/>
+        <word name="method"/>
+        <word name="model"/>
+        <word name="multerrs"/>
+        <word name="name"/>
+        <word name="ne"/>
+        <word name="near"/>
+        <word name="near16"/>
+        <word name="near32"/>
+        <word name="noemul"/>
+        <word name="nojumps"/>
+        <word name="nolanguage"/>
+        <word name="nolocals"/>
+        <word name="nomasm51"/>
+        <word name="nomulterrs"/>
+        <word name="none"/>
+        <word name="normal"/>
+        <word name="nosmart"/>
+        <word name="nothing"/>
+        <word name="nowarn"/>
+        <word name="oddfar"/>
+        <word name="oddnear"/>
+        <word name="option"/>
+        <word name="org"/>
+        <word name="overflow?"/>
+        <word name="page"/>
+        <word name="para"/>
+        <word name="parity?"/>
+        <word name="pascal"/>
+        <word name="pmmx"/>
+        <word name="pnommx"/>
+        <word name="popaw"/>
+        <word name="popfw"/>
+        <word name="popstate"/>
+        <word name="private"/>
+        <word name="proc"/>
+        <word name="procdesc"/>
+        <word name="proctype"/>
+        <word name="prolog"/>
+        <word name="proto"/>
+        <word name="publicdll"/>
+        <word name="purge"/>
+        <word name="pushaw"/>
+        <word name="pushd"/>
+        <word name="pushfw"/>
+        <word name="pushstate"/>
+        <word name="pushw"/>
+        <word name="pword"/>
+        <word name="quirks"/>
+        <word name="qword"/>
+        <word name="radix"/>
+        <word name="real10"/>
+        <word name="real4"/>
+        <word name="real8"/>
+        <word name="record"/>
+        <word name="repeat"/>
+        <word name="rept"/>
+        <word name="retcode"/>
+        <word name="returns"/>
+        <word name="sbyte"/>
+        <word name="sbyte"/>
+        <word name="sdword"/>
+        <word name="seg"/>
+        <word name="segment"/>
+        <word name="setfield"/>
+        <word name="setflag"/>
+        <word name="sign?"/>
+        <word name="sign?"/>
+        <word name="size"/>
+        <word name="sizestr"/>
+        <word name="small"/>
+        <word name="smallstack"/>
+        <word name="smart"/>
+        <word name="stack"/>
+        <word name="stackalign"/>
+        <word name="stackunalign"/>
+        <word name="startupcode"/>
+        <word name="stdcall"/>
+        <word name="struc"/>
+        <word name="struct"/>
+        <word name="substr"/>
+        <word name="subtitle"/>
+        <word name="subttl"/>
+        <word name="sword"/>
+        <word name="symtype"/>
+        <word name="syscall"/>
+        <word name="table"/>
+        <word name="tblinit"/>
+        <word name="tblptr"/>
+        <word name="tbyte"/>
+        <word name="tchuge"/>
+        <word name="testflag"/>
+        <word name="textequ"/>
+        <word name="this"/>
+        <word name="tiny"/>
+        <word name="title"/>
+        <word name="tpascal"/>
+        <word name="true"/>
+        <word name="type"/>
+        <word name="typedef"/>
+        <word name="udataseg"/>
+        <word name="ufardata"/>
+        <word name="unicode"/>
+        <word name="union"/>
+        <word name="unknown"/>
+        <word name="use16"/>
+        <word name="use32"/>
+        <word name="uses"/>
+        <word name="version"/>
+        <word name="warn"/>
+        <word name="while"/>
+        <word name="width"/>
+        <word name="windows"/>
+        <word name="with"/>
+        <word name="word"/>
+        <word name="zero?"/>
+      </keywords>
+    </scheme>
+    <scheme name="asm_nasm">
+      <keywords ignorecase="yes" region="asmDefinition">
+        <word name="resb"/>
+        <word name="resw"/>
+        <word name="resd"/>
+        <word name="resq"/>
+        <word name="rest"/>
+        <word name="incbin"/>
+        <word name="times"/>
+        <word name="struc"/>
+        <word name="endstruc"/>
+        <word name="istruc"/>
+        <word name="iend"/>
+        <word name="at"/>
+        <word name="align"/>
+        <word name="alignb"/>
+        <word name="bits"/>
+        <word name="section"/>
+        <word name="segment"/>
+        <word name="__SECT__"/>
+        <word name="absolute"/>
+        <word name="extern"/>
+        <word name="global"/>
+        <word name="common"/>
+        <word name="uppercase"/>
+        <word name="import"/>
+        <word name="export"/>
+      </keywords>
+    </scheme>
+    <scheme name="asm_jumps">
+      <regexp match="/(\s+(near|short|far))/i" region0="asmMnemonics"/>
+      <keywords ignorecase="yes" region="asmiBase">
+        <word name="JA"/>
+        <word name="JAE"/>
+        <word name="JB"/>
+        <word name="JBE"/>
+        <word name="JC"/>
+        <word name="JCXZ"/>
+        <word name="JE"/>
+        <word name="JECXZ"/>
+        <word name="JG"/>
+        <word name="JGE"/>
+        <word name="JL"/>
+        <word name="JLE"/>
+        <word name="JMP"/>
+        <word name="JNA"/>
+        <word name="JNAE"/>
+        <word name="JNB"/>
+        <word name="JNBE"/>
+        <word name="JNC"/>
+        <word name="JNE"/>
+        <word name="JNG"/>
+        <word name="JNGE"/>
+        <word name="JNL"/>
+        <word name="JNLE"/>
+        <word name="JNO"/>
+        <word name="JNP"/>
+        <word name="JNS"/>
+        <word name="JNZ"/>
+        <word name="JO"/>
+        <word name="JP"/>
+        <word name="JPE"/>
+        <word name="JPO"/>
+        <word name="JS"/>
+        <word name="JZ"/>
+        <word name="JCXZ"/>
+        <word name="JECXZ"/>
+        <word name="JMP"/>
+        <word name="CALL"/>
+        <word name='LOOP'/>
+        <word name='LOOPE'/>
+        <word name='LOOPNE'/>
+        <word name='LOOPNZ'/>
+        <word name='LOOPZ'/>
+      </keywords>
+    </scheme>
+
+    <scheme name="asm_base">
+      <!-- cail: this enables labels highlighting with all
+       jump-like instructions. really hard -->
+      <block start="/\M \b(j[ABCEGLMNOPSUXZabceglmnopsuxz]+?|call|loop[EeNnZz]{,2}) \s*
+                     (near|far|short|) \s+
+                     (near|far|short)?![\w\$\~\@\#\%\?\.\-\+]+/xi"
+             end="/\s+ ([\w\$\~\@\#\%\?\.\-\+]+)/x" scheme="asm_jumps"
+             region11="asmLabel"/>
+      <keywords ignorecase="yes" region="asmiBase">
+        <word name="AAA"/>
+        <word name="AAD"/>
+        <word name="AAM"/>
+        <word name="AAS"/>
+        <word name="ADC"/>
+        <word name="ADD"/>
+        <word name="AND"/>
+        <word name="BOUND"/>
+        <word name="BSF"/>
+        <word name="BSR"/>
+        <word name="BSWAP"/>
+        <word name="BT"/>
+        <word name="BTC"/>
+        <word name="BTR"/>
+        <word name="BTS"/>
+        <word name="CBW"/>
+        <word name="CDQ"/>
+        <word name="CLC"/>
+        <word name="CLD"/>
+        <word name="CLI"/>
+        <word name="CMC"/>
+        <word name="CMOVA"/>
+        <word name="CMOVAE"/>
+        <word name="CMOVB"/>
+        <word name="CMOVBE"/>
+        <word name="CMOVC"/>
+        <word name="CMOVE"/>
+        <word name="CMOVG"/>
+        <word name="CMOVGE"/>
+        <word name="CMOVL"/>
+        <word name="CMOVLE"/>
+        <word name="CMOVNA"/>
+        <word name="CMOVNAE"/>
+        <word name="CMOVNB"/>
+        <word name="CMOVNBE"/>
+        <word name="CMOVNC"/>
+        <word name="CMOVNE"/>
+        <word name="CMOVNG"/>
+        <word name="CMOVNGE"/>
+        <word name="CMOVNL"/>
+        <word name="CMOVNLE"/>
+        <word name="CMOVNO"/>
+        <word name="CMOVNP"/>
+        <word name="CMOVNS"/>
+        <word name="CMOVNZ"/>
+        <word name="CMOVO"/>
+        <word name="CMOVP"/>
+        <word name="CMOVPE"/>
+        <word name="CMOVPO"/>
+        <word name="CMOVS"/>
+        <word name="CMOVZ"/>
+        <word name="CMP"/>
+        <word name="CMPSB"/>
+        <word name="CMPSD"/>
+        <word name="CMPSW"/>
+        <word name="CMPXCHG"/>
+        <word name="CMPXCHG8B"/>
+        <word name="CPUID"/>
+        <word name="CWD"/>
+        <word name="CWDE"/>
+        <word name="DAA"/>
+        <word name="DAS"/>
+        <word name="DB"/>
+        <word name="DD"/>
+        <word name="DEC"/>
+        <word name="DIV"/>
+        <word name="DQ"/>
+        <word name="DT"/>
+        <word name="DW"/>
+        <word name="ENTER"/>
+        <word name="EQU"/>
+        <word name="IDIV"/>
+        <word name="IMUL"/>
+        <word name="IN"/>
+        <word name="INC"/>
+        <word name="INCBIN"/>
+        <word name="INSB"/>
+        <word name="INSD"/>
+        <word name="INSW"/>
+        <word name="INT"/>
+        <word name="INT1"/>
+        <word name="INT3"/>
+        <word name="INTO"/>
+        <word name="IRET"/>
+        <word name="IRETD"/>
+        <word name="IRETW"/>
+        <!-- really you can enable this
+    <word name="JA"/>
+    <word name="JAE"/>
+    <word name="JB"/>
+    <word name="JBE"/>
+    <word name="JC"/>
+    <word name="JCXZ"/>
+    <word name="JE"/>
+    <word name="JECXZ"/>
+    <word name="JG"/>
+    <word name="JGE"/>
+    <word name="JL"/>
+    <word name="JLE"/>
+    <word name="JMP"/>
+    <word name="JNA"/>
+    <word name="JNAE"/>
+    <word name="JNB"/>
+    <word name="JNBE"/>
+    <word name="JNC"/>
+    <word name="JNE"/>
+    <word name="JNG"/>
+    <word name="JNGE"/>
+    <word name="JNL"/>
+    <word name="JNLE"/>
+    <word name="JNO"/>
+    <word name="JNP"/>
+    <word name="JNS"/>
+    <word name="JNZ"/>
+    <word name="JO"/>
+    <word name="JP"/>
+    <word name="JPE"/>
+    <word name="JPO"/>
+    <word name="JS"/>
+    <word name="JZ"/>
+    <word name='JCXZ'/>
+    <word name='JECXZ'/>
+    <word name='JMP'/>
+-->
+        <word name="LAHF"/>
+        <word name="LDS"/>
+        <word name="LEA"/>
+        <word name="LEAVE"/>
+        <word name="LES"/>
+        <word name="LFS"/>
+        <word name="LGS"/>
+        <word name="LODSB"/>
+        <word name="LODSD"/>
+        <word name="LODSW"/>
+        <word name="LOOP"/>
+        <word name="LOOPE"/>
+        <word name="LOOPNE"/>
+        <word name="LOOPNZ"/>
+        <word name="LOOPZ"/>
+        <word name="LSS"/>
+        <word name="MOV"/>
+        <word name="MOVS"/>
+        <word name="MOVUPS"/>
+        <word name="MOVSB"/>
+        <word name="MOVSD"/>
+        <word name="MOVSW"/>
+        <word name="MOVSX"/>
+        <word name="MOVZX"/>
+        <word name="MUL"/>
+        <word name="NEG"/>
+        <word name="NOP"/>
+        <word name="NOT"/>
+        <word name="OR"/>
+        <word name="OUT"/>
+        <word name="OUTSB"/>
+        <word name="OUTSD"/>
+        <word name="OUTSW"/>
+        <word name="POP"/>
+        <word name="POPA"/>
+        <word name="POPAD"/>
+        <word name="POPAW"/>
+        <word name="POPF"/>
+        <word name="POPFD"/>
+        <word name="POPFW"/>
+        <word name="PREFETCHNTA"/>
+        <word name="PREFETCHT0"/>
+        <word name="PREFETCHT1"/>
+        <word name="PREFETCHT2"/>
+        <word name="PUSH"/>
+        <word name="PUSHA"/>
+        <word name="PUSHAD"/>
+        <word name="PUSHAW"/>
+        <word name="PUSHF"/>
+        <word name="PUSHFD"/>
+        <word name="PUSHFW"/>
+        <word name="RCL"/>
+        <word name="RCR"/>
+        <word name="RDPMC"/>
+        <word name="RDTSC"/>
+        <word name="REP"/>
+        <word name="REPE"/>
+        <word name="REPNE"/>
+        <word name="REPNZ"/>
+        <word name="REPZ"/>
+        <word name="RESB"/>
+        <word name="RESD"/>
+        <word name="RESQ"/>
+        <word name="REST"/>
+        <word name="RESW"/>
+        <word name="RET"/>
+        <word name="RETF"/>
+        <word name="RETN"/>
+        <word name="ROL"/>
+        <word name="ROR"/>
+        <word name="SAHF"/>
+        <word name="SAR"/>
+        <word name="SBB"/>
+        <word name="SCASB"/>
+        <word name="SCASD"/>
+        <word name="SCASW"/>
+        <word name="SETA"/>
+        <word name="SETAE"/>
+        <word name="SETB"/>
+        <word name="SETBE"/>
+        <word name="SETC"/>
+        <word name="SETE"/>
+        <word name="SETG"/>
+        <word name="SETGE"/>
+        <word name="SETL"/>
+        <word name="SETLE"/>
+        <word name="SETNA"/>
+        <word name="SETNAE"/>
+        <word name="SETNB"/>
+        <word name="SETNBE"/>
+        <word name="SETNC"/>
+        <word name="SETNE"/>
+        <word name="SETNG"/>
+        <word name="SETNGE"/>
+        <word name="SETNL"/>
+        <word name="SETNLE"/>
+        <word name="SETNO"/>
+        <word name="SETNP"/>
+        <word name="SETNS"/>
+        <word name="SETNZ"/>
+        <word name="SETO"/>
+        <word name="SETP"/>
+        <word name="SETPE"/>
+        <word name="SETPO"/>
+        <word name="SETS"/>
+        <word name="SETZ"/>
+        <word name="SFENCE"/>
+        <word name="SGDT"/>
+        <word name="SHL"/>
+        <word name="SHLD"/>
+        <word name="SHR"/>
+        <word name="SHRD"/>
+        <word name="SIDT"/>
+        <word name="SLDT"/>
+        <word name="SMSW"/>
+        <word name="STC"/>
+        <word name="STD"/>
+        <word name="STI"/>
+        <word name="STOS"/>
+        <word name="STOSB"/>
+        <word name="STOSD"/>
+        <word name="STOSW"/>
+        <word name="SUB"/>
+        <word name="SYSENTER"/>
+        <word name="TEST"/>
+        <word name="UD2"/>
+        <word name="WAIT"/>
+        <word name="XADD"/>
+        <word name="XCHG"/>
+        <word name="XLATB"/>
+        <word name="XOR"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmiProt">
+        <word name="ARPL"/>
+        <word name="CLTS"/>
+        <word name="HLT"/>
+        <word name="INVD"/>
+        <word name="INVLPG"/>
+        <word name="LAR"/>
+        <word name="LGDT"/>
+        <word name="LIDT"/>
+        <word name="LLDT"/>
+        <word name="LMSW"/>
+        <word name="LSL"/>
+        <word name="LTR"/>
+        <word name="RDMSR"/>
+        <word name="RSM"/>
+        <word name="STR"/>
+        <word name="SYSEXIT"/>
+        <word name="SYSRET"/>
+        <word name="VERR"/>
+        <word name="VERW"/>
+        <word name="WBINVD"/>
+        <word name="WRMSR"/>
+      </keywords>
+    </scheme>
+    <scheme name="asm_fpu">
+      <keywords ignorecase="yes" region="asmiFPU">
+        <word name="F2XM1"/>
+        <word name="FABS"/>
+        <word name="FADD"/>
+        <word name="FADDP"/>
+        <word name="FBLD"/>
+        <word name="FBSTP"/>
+        <word name="FCHS"/>
+        <word name="FCLEX"/>
+        <word name="FCMOVB"/>
+        <word name="FCMOVBE"/>
+        <word name="FCMOVE"/>
+        <word name="FCMOVNB"/>
+        <word name="FCMOVNBE"/>
+        <word name="FCMOVNE"/>
+        <word name="FCMOVNU"/>
+        <word name="FCMOVU"/>
+        <word name="FCOM"/>
+        <word name="FCOMI"/>
+        <word name="FCOMIP"/>
+        <word name="FCOMP"/>
+        <word name="FCOMPP"/>
+        <word name="FCOS"/>
+        <word name="FDECSTP"/>
+        <word name="FDISI"/>
+        <word name="FDIV"/>
+        <word name="FDIVP"/>
+        <word name="FDIVR"/>
+        <word name="FDIVRP"/>
+        <word name="FENI"/>
+        <word name="FFREE"/>
+        <word name="FIADD"/>
+        <word name="FICOM"/>
+        <word name="FICOMP"/>
+        <word name="FIDIV"/>
+        <word name="FIDIVR"/>
+        <word name="FILD"/>
+        <word name="FIMUL"/>
+        <word name="FINCSTP"/>
+        <word name="FINIT"/>
+        <word name="FIST"/>
+        <word name="FISTP"/>
+        <word name="FISUB"/>
+        <word name="FISUBR"/>
+        <word name="FLD"/>
+        <word name="FLD1"/>
+        <word name="FLDCW"/>
+        <word name="FLDENV"/>
+        <word name="FLDL2E"/>
+        <word name="FLDL2T"/>
+        <word name="FLDLG2"/>
+        <word name="FLDLN2"/>
+        <word name="FLDPI"/>
+        <word name="FLDZ"/>
+        <word name="FMUL"/>
+        <word name="FMULP"/>
+        <word name="FNCLEX"/>
+        <word name="FNDISI"/>
+        <word name="FNENI"/>
+        <word name="FNINIT"/>
+        <word name="FNOP"/>
+        <word name="FNSAVE"/>
+        <word name="FNSTCW"/>
+        <word name="FNSTENV"/>
+        <word name="FNSTSW"/>
+        <word name="FPATAN"/>
+        <word name="FPREM"/>
+        <word name="FPREM1"/>
+        <word name="FPTAN"/>
+        <word name="FRNDINT"/>
+        <word name="FRSTOR"/>
+        <word name="FSAVE"/>
+        <word name="FSCALE"/>
+        <word name="FSETPM"/>
+        <word name="FSIN"/>
+        <word name="FSINCOS"/>
+        <word name="FSQRT"/>
+        <word name="FST"/>
+        <word name="FSTCW"/>
+        <word name="FSTENV"/>
+        <word name="FSTP"/>
+        <word name="FSTSW"/>
+        <word name="FSUB"/>
+        <word name="FSUBP"/>
+        <word name="FSUBR"/>
+        <word name="FSUBRP"/>
+        <word name="FTST"/>
+        <word name="FUCOM"/>
+        <word name="FUCOMI"/>
+        <word name="FUCOMIP"/>
+        <word name="FUCOMP"/>
+        <word name="FUCOMPP"/>
+        <word name="FXAM"/>
+        <word name="FXCH"/>
+        <word name="FXTRACT"/>
+        <word name="FYL2X"/>
+        <word name="FYL2XP1"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmiMMX">
+        <word name="EMMS"/>
+        <word name="MASKMOVQ"/>
+        <word name="MOVD"/>
+        <word name="MOVNTQ"/>
+        <word name="MOVQ"/>
+        <word name="PACKSSDW"/>
+        <word name="PACKSSWB"/>
+        <word name="PACKUSWB"/>
+        <word name="PADDB"/>
+        <word name="PADDD"/>
+        <word name="PADDSB"/>
+        <word name="PADDSW"/>
+        <word name="PADDUSB"/>
+        <word name="PADDUSW"/>
+        <word name="PADDW"/>
+        <word name="PAND"/>
+        <word name="PANDN"/>
+        <word name="PAVGB"/>
+        <word name="PAVGW"/>
+        <word name="PCMPEQB"/>
+        <word name="PCMPEQD"/>
+        <word name="PCMPEQW"/>
+        <word name="PCMPGTB"/>
+        <word name="PCMPGTD"/>
+        <word name="PCMPGTW"/>
+        <word name="PEXTRW"/>
+        <word name="PINSRW"/>
+        <word name="PMADDWD"/>
+        <word name="PMAXSW"/>
+        <word name="PMAXUB"/>
+        <word name="PMINSW"/>
+        <word name="PMINUB"/>
+        <word name="PMOVMSKB"/>
+        <word name="PMULHUW"/>
+        <word name="PMULHW"/>
+        <word name="PMULLW"/>
+        <word name="POR"/>
+        <word name="PSADBW"/>
+        <word name="PSHUFW"/>
+        <word name="PSLLD"/>
+        <word name="PSLLQ"/>
+        <word name="PSLLW"/>
+        <word name="PSRAD"/>
+        <word name="PSRAW"/>
+        <word name="PSRLD"/>
+        <word name="PSRLQ"/>
+        <word name="PSRLW"/>
+        <word name="PSUBB"/>
+        <word name="PSUBD"/>
+        <word name="PSUBSB"/>
+        <word name="PSUBSW"/>
+        <word name="PSUBUSB"/>
+        <word name="PSUBUSW"/>
+        <word name="PSUBW"/>
+        <word name="PUNPCKHBW"/>
+        <word name="PUNPCKHDQ"/>
+        <word name="PUNPCKHWD"/>
+        <word name="PUNPCKLBW"/>
+        <word name="PUNPCKLDQ"/>
+        <word name="PUNPCKLWD"/>
+        <word name="PXOR"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmiSSE">
+        <word name="ADDPS"/>
+        <word name="ADDSS"/>
+        <word name="ANDNPS"/>
+        <word name="ANDPS"/>
+        <word name="CMPEQPS"/>
+        <word name="CMPEQSS"/>
+        <word name="CMPLEPS"/>
+        <word name="CMPLESS"/>
+        <word name="CMPLTPS"/>
+        <word name="CMPLTSS"/>
+        <word name="CMPNEQPS"/>
+        <word name="CMPNEQSS"/>
+        <word name="CMPNLEPS"/>
+        <word name="CMPNLESS"/>
+        <word name="CMPNLTPS"/>
+        <word name="CMPNLTSS"/>
+        <word name="CMPORDPS"/>
+        <word name="CMPORDSS"/>
+        <word name="CMPPS"/>
+        <word name="CMPSS"/>
+        <word name="CMPUNORDPS"/>
+        <word name="CMPUNORDSS"/>
+        <word name="COMISS"/>
+        <word name="CVTPI2PS"/>
+        <word name="CVTPS2PI"/>
+        <word name="CVTSI2SS"/>
+        <word name="CVTSS2SI"/>
+        <word name="CVTTPS2PI"/>
+        <word name="CVTTSS2SI"/>
+        <word name="DIVPS"/>
+        <word name="DIVSS"/>
+        <word name="FXRSTOR"/>
+        <word name="FXSAVE"/>
+        <word name="LDMXCSR"/>
+        <word name="MAXPS"/>
+        <word name="MAXSS"/>
+        <word name="MINPS"/>
+        <word name="MINSS"/>
+        <word name="MOVAPS"/>
+        <word name="MOVHLPS"/>
+        <word name="MOVHPS"/>
+        <word name="MOVLHPS"/>
+        <word name="MOVLPS"/>
+        <word name="MOVMSKPS"/>
+        <word name="MOVNTPS"/>
+        <word name="MOVSS"/>
+        <word name="MOVUPS"/>
+        <word name="MULPS"/>
+        <word name="MULSS"/>
+        <word name="ORPS"/>
+        <word name="RCPPS"/>
+        <word name="RCPSS"/>
+        <word name="RSQRTPS"/>
+        <word name="RSQRTSS"/>
+        <word name="SHUFPS"/>
+        <word name="SQRTPS"/>
+        <word name="SQRTSS"/>
+        <word name="STMXCSR"/>
+        <word name="SUBPS"/>
+        <word name="SUBSS"/>
+        <word name="UCOMISS"/>
+        <word name="UNPCKHPS"/>
+        <word name="UNPCKLPS"/>
+        <word name="XORPS"/>
+      </keywords>
+    </scheme>
+    <scheme name="asm_extens">
+      <keywords ignorecase="yes" region="asmiCyrix">
+        <word name="PADDSIW"/>
+        <word name="PAVEB"/>
+        <word name="PDISTIB"/>
+        <word name="PMACHRIW"/>
+        <word name="PMAGW"/>
+        <word name="PMULHRIW"/>
+        <word name="PMULHRWC"/>
+        <word name="PMVGEZB"/>
+        <word name="PMVLZB"/>
+        <word name="PMVNZB"/>
+        <word name="PMVZB"/>
+        <word name="PSUBSIW"/>
+        <word name="RDSHR"/>
+        <word name="RSDC"/>
+        <word name="RSLDT"/>
+        <word name="SMINT"/>
+        <word name="SMINTOLD"/>
+        <word name="SVDC"/>
+        <word name="SVLDT"/>
+        <word name="SVTS"/>
+        <word name="WRSHR"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmi3dnow">
+        <word name="FEMMS"/>
+        <word name="PAVGUSB"/>
+        <word name="PF2ID"/>
+        <word name="PFACC"/>
+        <word name="PFADD"/>
+        <word name="PFCMPEQ"/>
+        <word name="PFCMPGE"/>
+        <word name="PFCMPGT"/>
+        <word name="PFMAX"/>
+        <word name="PFMIN"/>
+        <word name="PFMUL"/>
+        <word name="PFRCP"/>
+        <word name="PFRCPIT1"/>
+        <word name="PFRCPIT2"/>
+        <word name="PFRSQIT1"/>
+        <word name="PFRSQRT"/>
+        <word name="PFSUB"/>
+        <word name="PFSUBR"/>
+        <word name="PI2FD"/>
+        <word name="PMULHRWA"/>
+        <word name="PREFETCH"/>
+        <word name="PREFETCHW"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmiAMD">
+        <word name="SYSCALL"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmiUndoc">
+        <word name="CMPXCHG486"/>
+        <word name="IBTS"/>
+        <word name="ICEBP"/>
+        <word name="INT01"/>
+        <word name="INT03"/>
+        <word name="LOADALL"/>
+        <word name="LOADALL286"/>
+        <word name="SAL"/>
+        <word name="SALC"/>
+        <word name="SMI"/>
+        <word name="UD1"/>
+        <word name="UMOV"/>
+        <word name="XBTS"/>
+      </keywords>
+    </scheme>
+    <scheme name="asm_core">
+      <!-- numbers - hex -->
+      <regexp match="/\b(\d[0-9a-fA-F]*h)\b/i" region0="asmNumHex"/>
+      <!-- numbers - Rct +nasm -->
+      <regexp match="/\b([0-7]+[oO])\b/" region0="asmNumHex"/>
+      <!-- numbers - IEEE -->
+      <regexp match="/\b(\d[0-9a-fA-F]*[rR])\b/" region0="asmNumHex"/>
+      <!-- numbers - dec -->
+      <regexp match="/\b([0-9]+[dD]?)\b/" region0="asmNumDec"/>
+      <!-- numbers - bin -->
+      <regexp match="/\b([01]+[bB])\b/" region0="asmNumBin"/>
+      <!-- numbers - exp -->
+      <regexp match="/\c[\-+]?\d*\.?\d+([eE][\-+]?\d+)?\b/" region0="asmNumDec" region1="NumberSuffix"/>
+      <!-- strings -->
+      <regexp match="/(&#34;.*?&#34;)/" region0="asmString"/>
+      <regexp match="/('.*?')/" region0="asmString"/>
+      <!-- labels -->
+      <regexp match="/(^\s*?\@?\@?[\w\$\#\%\@\~\.\?]+?\s*:)/"
+              region0="LabelOutline" region1="asmLabel"/>
+      <regexp match="/\B(\@\@[\w\$\#\%\@\~\.\?]*)/" region0="asmLabel"/>
+      <regexp match="/^ \s* \M proc\s+([\w_\@]+)/ix" region1="Function"/>
+      <regexp match="/^ \s* \M ([\w_\@]+) \s+ proc/ix" region1="Function"/>
+      <keywords region="asmSymbol">
+        <symb name=";"/>
+        <symb name="="/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="/"/>
+        <symb name="*"/>
+        <symb name="|"/>
+        <symb name="^"/>
+        <symb name="("/>
+        <symb name=")"/>
+        <symb name="["/>
+        <symb name="]"/>
+        <symb name=","/>
+        <symb name=":"/>
+        <symb name="!"/>
+        <symb name="~"/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+        <symb name="%"/>
+        <symb name="{"/>
+        <symb name="}"/>
+        <symb name="?"/>
+      </keywords>
+    </scheme>
+    <scheme name="baseasm">
+      <inherit scheme="asm_core"/>
+      <!-- NASM numbers -->
+      <regexp match="/\b([0-7]+q)\b/" region0="asmNumOct"/>
+      <regexp match="/\B(\$\d[0-9a-fA-F]*\b)/" region0="asmNumHex"/>
+      <regexp match="/\b(0x[0-9a-fA-F]+)\b/i" region0="asmNumHex"/>
+      <inherit scheme="asm_shared"/>
+      <inherit scheme="asm_registers"/>
+      <inherit scheme="asm_base"/>
+      <inherit scheme="asm_fpu"/>
+      <inherit scheme="asm_extens"/>
+    </scheme>
+    <scheme name="asm">
+      <!-- Comments -->
+      <regexp match="/;\!\!.*$/" region0="asmToDo"/>
+      <regexp match="/;\?\?.*$/" region0="asmToDo"/>
+      <regexp match="/;.*$/" region0="asmComment"/>
+      <!-- NASM macros -->
+      <block start="/^\s*(\%i?macro)\s+(\w+)([^;]*)/" end="/^\s*(\%endm(acro)?)/" scheme="nasm_mac" region="Insertion" region01="Directive" region02="asmMnemonics" region03="asmLabel" region11="Directive" region00="PairStart" region10="PairEnd"/>
+      <block start="/^\s*\M(\%endm)?!\%\w+/" end="/$/" scheme="nasm_prepr" region="Directive"/>
+      <!-- Primitive directives -->
+      <regexp match="/^\[.*?\]/" region0="asmDirective"/>
+      <block start="/(COMMENT) (.)/i" end="/\y2/" scheme="Comment" region="asmComment" region01="asmDefinition" region02="asmDefinition" region00="PairStart" region10="PairEnd"/>
+      <inherit scheme="baseasm"/>
+      <inherit scheme="asm_tasm"/>
+      <inherit scheme="asm_nasm"/>
+    </scheme>
+    <scheme name="nasm_kw">
+      <regexp match="/(\%\d+)/" region0="Directive"/>
+      <regexp match="/(\%\{\d+?\})/" region0="Directive"/>
+      <regexp match="/(\%[\%\$][\w\$\#\@\~\.\?]+)/" region0="Directive"/>
+      <keywords ignorecase="yes" region="Directive">
+        <word name="%assign"/>
+        <word name="%bin"/>
+        <word name="%conds"/>
+        <word name="%cref"/>
+        <word name="%crefall"/>
+        <word name="%crefref"/>
+        <word name="%crefuref"/>
+        <word name="%ctls"/>
+        <word name="%define"/>
+        <word name="%depth"/>
+        <word name="%elif"/>
+        <word name="%elifctx"/>
+        <word name="%elifdef"/>
+        <word name="%elifid"/>
+        <word name="%elifidn"/>
+        <word name="%elifidni"/>
+        <word name="%elifnctx"/>
+        <word name="%elifndef"/>
+        <word name="%elifnid"/>
+        <word name="%elifnidn"/>
+        <word name="%elifnidni"/>
+        <word name="%elifnnum"/>
+        <word name="%elifnstr"/>
+        <word name="%elifnum"/>
+        <word name="%elifstr"/>
+        <word name="%else"/>
+        <word name="%endif"/>
+        <word name="%endrep"/>
+        <word name="%error"/>
+        <word name="%exitrep"/>
+        <word name="%if"/>
+        <word name="%ifctx"/>
+        <word name="%ifdef"/>
+        <word name="%ifid"/>
+        <word name="%ifidn"/>
+        <word name="%ifidni"/>
+        <word name="%ifnctx"/>
+        <word name="%ifndef"/>
+        <word name="%ifnid"/>
+        <word name="%ifnidn"/>
+        <word name="%ifnidni"/>
+        <word name="%ifnnum"/>
+        <word name="%ifnstr"/>
+        <word name="%ifnum"/>
+        <word name="%ifstr"/>
+        <word name="%incl"/>
+        <word name="%include"/>
+        <word name="%linum"/>
+        <word name="%list"/>
+        <word name="%macs"/>
+        <word name="%newpage"/>
+        <word name="%noconds"/>
+        <word name="%nocref"/>
+        <word name="%noctls"/>
+        <word name="%noincl"/>
+        <word name="%nolist"/>
+        <word name="%nomacs"/>
+        <word name="%nosyms"/>
+        <word name="%notoc"/>
+        <word name="%notrunc"/>
+        <word name="%out"/>
+        <word name="%pagesize"/>
+        <word name="%pcnt"/>
+        <word name="%pop"/>
+        <word name="%poplctl"/>
+        <word name="%push"/>
+        <word name="%pushlctl"/>
+        <word name="%rep"/>
+        <word name="%repl"/>
+        <word name="%rotate"/>
+        <word name="%subttl"/>
+        <word name="%syms"/>
+        <word name="%tabsize"/>
+        <word name="%text"/>
+        <word name="%title"/>
+        <word name="%toc"/>
+        <word name="%trunc"/>
+        <word name="%undef"/>
+      </keywords>
+    </scheme>
+    <scheme name="nasm_mac">
+      <regexp match="/(;.*$)/" region0="asmComment"/>
+      <!-- Macro locals & parameters -->
+      <inherit scheme="nasm_kw"/>
+      <inherit scheme="asm"/>
+    </scheme>
+    <scheme name="nasm_prepr">
+      <regexp match="/(;.*$)/" region0="asmComment"/>
+      <inherit scheme="nasm_kw"/>
+    </scheme>
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

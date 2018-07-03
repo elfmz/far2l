@@ -1,0 +1,308 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="graphviz">
+
+    <region name="GraphOutline" parent="def:Outlined"/>
+    <region name="Node" parent="def:String"/>
+    <region name="LabelContent" parent="def:StringContent"/>
+    <region name="LabelTAG" parent="def:StringContent"/>
+
+    <entity name="ID" value="([a-zA-Z_][a-zA-Z_0-9]*)"/>
+
+
+<!--
+|(&quot;([^&quot;\\]|\\.)+&quot;)
+-->
+    <scheme name="graphviz">
+
+      <!--
+      graph  	:  	[ strict ] (graph | digraph) [ ID ] '{' stmt_list '}'
+      -->
+      <block start="/(?{def:PairStart} \{ )/ix"
+             end="/(?{def:PairEnd} \} )/ix"
+             scheme="graph" region00="def:Symbol" region10="def:Symbol"/>
+
+      <regexp match="/ \M (graph|digraph) \s+ (?{GraphOutline}%ID;) /ix"/>
+
+      <inherit scheme="core"/>
+
+      <keywords ignorecase="yes" region="def:Keyword">
+        <word name="graph"/>
+        <word name="digraph"/>
+        <word name="strict"/>
+      </keywords>
+
+    </scheme>
+
+
+
+    <scheme name="core">
+		<regexp match="/\/\/.*$/" region="def:Comment"/>
+		<block start="/\/\*/" end="/\*\//" scheme="def:empty"
+			region="def:Comment" region00="def:PairStart" region10="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="id_content">
+        <regexp match="/\\./" region="LabelContent"/>
+        <regexp match="/\\n/" region="LabelContent"/>
+        <regexp match="/\}/" region="LabelContent"/>
+        <regexp match="/\|?[\{\|]\s*&lt;[\w]+&gt;/" region="LabelContent"/>
+    </scheme>
+
+    <scheme name="id_content_html">
+        <regexp match="/&lt;\/?(\w+).*?&gt;/" region1="LabelTAG"/>
+        <regexp match="/\\n/" region="LabelContent"/>
+    </scheme>
+
+    <scheme name="node_label">
+      <!--regexp match="/ (?{Node}%ID;) /ix"/-->
+      <block  start='/&lt;/ix' end='/&gt;/ix' scheme="id_content_html"
+              region="Node" region00="def:PairStart" region10="def:PairEnd"/>
+      <block  start='/"/ix' end='/"/ix' scheme="id_content"
+              region="Node" region00="def:PairStart" region10="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="graph">
+
+      <inherit scheme="core"/>
+
+      <!--
+      subgraph  	:  	[ subgraph [ ID ] ] '{' stmt_list '}'
+       -->
+      <regexp match="/ \M (subgraph) \s+ (?{GraphOutline}%ID;) /ix"/>
+      <block start="/(?{def:PairStart} \{ )/ix"
+             end="/(?{def:PairEnd} \} )/ix"
+             scheme="graph" region00="def:Symbol" region10="def:Symbol"/>
+
+      <keywords ignorecase="yes" region="def:Keyword">
+        <word name="graph"/>
+        <word name="node"/>
+        <word name="edge"/>
+        <word name="subgraph"/>
+        <symb name=";"/>
+        <symb name="->"/>
+        <symb name="--"/>
+      </keywords>
+
+      <regexp match="/: (?{Node}%ID;) /ix"/>
+
+      <inherit scheme="node_label"/>
+
+      <!--
+      attr_list  	:  	'[' [ a_list ] ']' [ attr_list ]
+      a_list 		: 	ID [ '=' ID ] [ ',' ] [ a_list ]
+      -->
+      <block start="/(?{def:PairStart} \[ )/ix"
+             end="/(?{def:PairEnd} \] )/ix"
+             scheme="attr_list" region00="def:Symbol" region10="def:Symbol"/>
+
+    </scheme>
+
+    <scheme name="attr_list">
+      <keywords ignorecase="yes" region="def:Keyword">
+        <word name="Damping"/>
+        <word name="K"/>
+        <word name="URL"/>
+        <word name="arrowhead"/>
+        <word name="arrowsize"/>
+        <word name="arrowtail"/>
+        <word name="aspect"/>
+        <word name="bb"/>
+        <word name="bgcolor"/>
+        <word name="center"/>
+        <word name="charset"/>
+        <word name="clusterrank"/>
+        <word name="color"/>
+        <word name="colorscheme"/>
+        <word name="comment"/>
+        <word name="compound"/>
+        <word name="concentrate"/>
+        <word name="constraint"/>
+        <word name="decorate"/>
+        <word name="defaultdist"/>
+        <word name="dim"/>
+        <word name="dimen"/>
+        <word name="dir"/>
+        <word name="diredgeconstraints"/>
+        <word name="distortion"/>
+        <word name="dpi"/>
+        <word name="edgeURL"/>
+        <word name="edgehref"/>
+        <word name="edgetarget"/>
+        <word name="edgetooltip"/>
+        <word name="epsilon"/>
+        <word name="esep"/>
+        <word name="fillcolor"/>
+        <word name="fixedsize"/>
+        <word name="fontcolor"/>
+        <word name="fontname"/>
+        <word name="fontnames"/>
+        <word name="fontpath"/>
+        <word name="fontsize"/>
+        <word name="group"/>
+        <word name="headURL"/>
+        <word name="headclip"/>
+        <word name="headhref"/>
+        <word name="headlabel"/>
+        <word name="headport"/>
+        <word name="headtarget"/>
+        <word name="headtooltip"/>
+        <word name="height"/>
+        <word name="href"/>
+        <word name="id"/>
+        <word name="image"/>
+        <word name="imagescale"/>
+        <word name="label"/>
+        <word name="labelURL"/>
+        <word name="labelangle"/>
+        <word name="labeldistance"/>
+        <word name="labelfloat"/>
+        <word name="labelfontcolor"/>
+        <word name="labelfontname"/>
+        <word name="labelfontsize"/>
+        <word name="labelhref"/>
+        <word name="labeljust"/>
+        <word name="labelloc"/>
+        <word name="labelloc"/>
+        <word name="labeltarget"/>
+        <word name="labeltooltip"/>
+        <word name="landscape"/>
+        <word name="layer"/>
+        <word name="layers"/>
+        <word name="layersep"/>
+        <word name="layout"/>
+        <word name="len"/>
+        <word name="levels"/>
+        <word name="levelsgap"/>
+        <word name="lhead"/>
+        <word name="lp"/>
+        <word name="ltail"/>
+        <word name="margin"/>
+        <word name="maxiter"/>
+        <word name="mclimit"/>
+        <word name="mindist"/>
+        <word name="minlen"/>
+        <word name="mode"/>
+        <word name="model"/>
+        <word name="mosek"/>
+        <word name="nodesep"/>
+        <word name="nojustify"/>
+        <word name="normalize"/>
+        <word name="nslimit"/>
+        <word name="nslimit1"/>
+        <word name="ordering"/>
+        <word name="orientation"/>
+        <word name="orientation"/>
+        <word name="outputorder"/>
+        <word name="overlap"/>
+        <word name="overlap_scaling"/>
+        <word name="pack"/>
+        <word name="packmode"/>
+        <word name="pad"/>
+        <word name="page"/>
+        <word name="pagedir"/>
+        <word name="pencolor"/>
+        <word name="penwidth"/>
+        <word name="peripheries"/>
+        <word name="pin"/>
+        <word name="pos"/>
+        <word name="quadtree"/>
+        <word name="quantum"/>
+        <word name="rank"/>
+        <word name="rankdir"/>
+        <word name="ranksep"/>
+        <word name="ratio"/>
+        <word name="rects"/>
+        <word name="regular"/>
+        <word name="remincross"/>
+        <word name="repulsiveforce"/>
+        <word name="resolution"/>
+        <word name="root"/>
+        <word name="rotate"/>
+        <word name="samehead"/>
+        <word name="sametail"/>
+        <word name="samplepoints"/>
+        <word name="searchsize"/>
+        <word name="sep"/>
+        <word name="shape"/>
+        <word name="shapefile"/>
+        <word name="showboxes"/>
+        <word name="sides"/>
+        <word name="size"/>
+        <word name="skew"/>
+        <word name="smoothing"/>
+        <word name="sortv"/>
+        <word name="splines"/>
+        <word name="start"/>
+        <word name="style"/>
+        <word name="stylesheet"/>
+        <word name="tailURL"/>
+        <word name="tailclip"/>
+        <word name="tailhref"/>
+        <word name="taillabel"/>
+        <word name="tailport"/>
+        <word name="tailtarget"/>
+        <word name="tailtooltip"/>
+        <word name="target"/>
+        <word name="tooltip"/>
+        <word name="truecolor"/>
+        <word name="vertices"/>
+        <word name="viewport"/>
+        <word name="voro_margin"/>
+        <word name="weight"/>
+        <word name="width"/>
+        <word name="z"/>
+        <symb name=","/>
+        <symb name="="/>
+      </keywords>
+      <inherit scheme="def:Number"/>
+      <inherit scheme="node_label"/>
+
+    </scheme>
+
+
+  </type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Igor Russkih
+   - Portions created by the Initial Developer are Copyright (C) 2008
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -   Thanks to Daniel Podolsky for project support
+   -   Roman Kuzmin updated for Graphviz 2.28
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

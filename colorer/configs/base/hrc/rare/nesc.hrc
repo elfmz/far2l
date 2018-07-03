@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="nesc">
+   
+   <import type="def"/>
+   
+      <annotation>
+         <documentation><![CDATA[
+           nesC Syntax
+           <filename>/\.nc$/i</filename>
+         ]]></documentation>
+         <contributors>
+           Rasmus Ulslev Pedersen (rasmus.ulslev.pedersen@gmail.com)
+         </contributors>
+      </annotation>
+
+      <region name="String" parent="def:String"/>
+      
+      <region name="Types" parent="def:KeywordStrong"/>   
+      <region name="NetworkTypes" parent="def:KeywordStrong"/>
+            
+
+      <region name="Keyword" parent="def:Keyword"/>
+      <region name="KeywordANSI" parent="def:Keyword"/>
+      
+      <region name="Symbol" parent="def:Symbol"/>
+      <region name="SymbolStrong" parent="def:SymbolStrong"/>
+
+      <region name="LineComment" parent="def:LineComment"/>
+      <region name="Comment" parent="def:Comment"/>
+      
+      <region name="InterfaceOutline" parent="def:Outlined"/>
+      <region name="ConfigurationOutline" parent="def:Outlined"/>
+      <region name="ModuleOutline" parent="def:Outlined"/>
+      <region name="CommandOutline" parent="def:Outlined"/>
+      <region name="ImplementationOutline" parent="def:Outlined"/>          
+
+       
+      <scheme name="nesc">
+         <regexp match="/\/\/.*$/" region0="Comment"/>
+ 
+         <block start="/\/\*/" end="/\*\//" scheme="Comment"
+                region="Comment" region00="PairStart" region10="PairEnd"/>              
+
+         <block start="/(\{)/" end="/(\})/" scheme="nesc"
+                region00="SymbolStrong" region01="PairStart" region10="SymbolStrong" region11="PairEnd"/>
+
+         <!--inherit scheme="PairedBrackets"/-->
+         <inherit scheme="Outlines"/>
+
+         <inherit scheme="Keywords"/>
+         
+         <keywords region="Symbol">
+            <symb name=";" region="SymbolStrong"/>
+            <symb name="="/>
+            <symb name="+"/><symb name="-"/>
+            <symb name="/"/><symb name="*"/>
+            <symb name="&amp;"/><symb name="^"/>
+            <symb name="|"/><symb name=":"/>
+            <symb name="("/><symb name=")"/>
+            <symb name="["/><symb name="]"/>
+            <symb name=","/><symb name="."/>
+            <symb name="!"/><symb name="~"/>
+            <symb name="&lt;"/><symb name="&gt;"/>
+            <symb name="%"/><symb name="?"/>
+            <symb name="{"/><symb name="}"/>
+            <symb name="#"/><symb name="@"/>
+         </keywords>
+        
+      </scheme> 
+      
+      <scheme name="Keywords">
+         <keywords region="Keyword">
+            <word name="as"/>
+            <word name="attribute"/>
+            <word name="call"/>
+            <word name="command"/>
+            <word name="component"/>
+            <word name="components"/>
+            <word name="configuration"/>
+            <word name="default"/>
+            <word name="event"/>
+            <word name="external"/>
+            <word name="generic"/>
+            <word name="implementation"/>
+            <word name="interface"/>
+            <word name="module"/>
+            <word name="provides"/>
+            <word name="signal"/>
+            <word name="task"/>
+            <word name="uses"/>
+         </keywords>    
+         
+         <!-- nesC Keywords: datatypes -->
+         <keywords region="Types">
+            <word name="char"/>
+            <word name="const"/>
+            <word name="double"/>
+            <word name="float"/>
+            <word name="int"/>
+            <word name="long"/>
+            <word name="short"/>
+            <word name="signed"/>
+            <word name="unsigned"/>
+            <word name="void"/>
+            <word name="int8_t"/>
+            <word name="uint8_t"/>
+            <word name="int16_t"/>
+            <word name="uint16_t"/>
+            <word name="int32_t"/>
+            <word name="uint32_t"/>
+            <word name="int64_t"/>
+            <word name="uint64_t"/>
+         </keywords>
+         
+         <!-- nesC Keywords: network types-->
+         <keywords region="NetworkTypes">
+            <word name="nx_int8_t"/>
+            <word name="nx_int16_t"/>
+            <word name="nx_int32_t"/>
+            <word name="nx_int64_t"/>
+            <word name="nx_uint8_t"/>
+            <word name="nx_uint16_t"/>
+            <word name="nx_uint32_t"/>
+            <word name="nx_uint64_t"/>
+            <word name="nxle_int8_t"/>
+            <word name="nxle_int16_t"/>
+            <word name="nxle_int32_t"/>
+            <word name="nxle_int64_t"/>
+            <word name="nxle_uint8_t"/>
+            <word name="nxle_uint16_t"/>
+            <word name="nxle_uint32_t"/>
+            <word name="nxle_uint64_t"/>  
+         </keywords>  
+         
+          <!-- See c.hrc -->
+         <keywords region="KeywordANSI">
+            <word name="asm"/>
+            <word name="auto"/>
+            <word name="break"/>
+            <word name="case"/>
+            <word name="cdecl"/>
+            <word name="continue"/>
+            <word name="default"/>
+            <word name="defined"/>
+            <word name="do"/>
+            <word name="else"/>
+            <word name="enum"/>
+            <word name="explicit"/>
+            <word name="export"/>
+            <word name="extern"/>
+            <word name="far"/>
+            <word name="fastcall"/>
+            <word name="finally"/>
+            <word name="for"/>
+            <word name="fortran"/>
+            <word name="huge"/>
+            <word name="if"/>
+            <word name="import"/>
+            <word name="inline"/>
+            <word name="interrupt"/>
+            <word name="near"/>
+            <word name="pascal"/>
+            <word name="register"/>
+            <word name="return"/>
+            <word name="sizeof"/>
+            <word name="static"/>
+            <word name="stdcall"/>
+            <word name="struct"/>
+            <word name="switch"/>
+            <word name="this"/>
+            <word name="typedef"/>
+            <word name="union"/>
+            <word name="using"/>
+            <word name="volatile"/>
+            <word name="while"/>
+            <word name="_cdecl"/>
+            <word name="_export"/>
+            <word name="_fastcall"/>
+            <word name="_import"/>
+            <word name="_pascal"/>
+            <word name="_stdcall"/>
+            <word name="__cdecl"/>
+            <word name="__declspec"/>
+            <word name="__except"/>
+            <word name="__export"/>
+            <word name="__far"/>
+            <word name="__far16"/>
+            <word name="__fastcall"/>
+            <word name="__finally"/>
+            <word name="__fortran"/>
+            <word name="__huge"/>
+            <word name="__import"/>
+            <word name="__inline"/>
+            <word name="__interrupt"/>
+            <word name="__leave"/>
+            <word name="__loadds"/>
+            <word name="__near"/>
+            <word name="__nounwind"/>
+            <word name="__pascal"/>
+            <word name="__property"/>
+            <word name="__ptr64"/>
+            <word name="__published"/>
+            <word name="__restrict"/>
+            <word name="__resume"/>
+            <word name="__rtti"/>
+            <word name="__saveregs"/>
+            <word name="__segment"/>
+            <word name="__segname"/>
+            <word name="__stdcall"/>
+            <word name="__sysapi"/>
+            <word name="__syscall"/>
+            <word name="__thiscall"/>
+            <word name="__thread"/>
+            <word name="__try"/>
+            <word name="__unaligned"/>
+         </keywords>
+      </scheme>   
+
+      <scheme name="Outlines">
+         <annotation>
+          <documentation>
+           nc outlines.
+          </documentation>
+          <appinfo></appinfo>
+         </annotation>
+      
+         <regexp><![CDATA[
+             /^ \M \s* module \s+ (?{ModuleOutline} [\w_:<>\s]+ ) /x
+         ]]></regexp>
+
+         <regexp><![CDATA[
+             /^ \M \s* interface \s+ (?{InterfaceOutline} [\w_:<>\s]+ ) \{ /x
+         ]]></regexp>
+
+         <regexp><![CDATA[
+             /^ \M \s* configuration \s+ (?{ConfigurationOutline} [\w_:<>\s]+ ) /x
+         ]]></regexp>
+
+         <regexp><![CDATA[
+             /^ \M \s* command \s+ (?{CommandOutline} [\w_:<>\s]+ ) /x
+         ]]></regexp>
+         
+         <regexp><![CDATA[
+             /^ \M \s* (?{ImplementationOutline} implementation \s+ ) /x
+         ]]></regexp>
+           
+      </scheme>
+      
+   </type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Rasmus Ulslev Pedersen.
+   - Portions created by the Initial Developer are Copyright (C) 2008
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

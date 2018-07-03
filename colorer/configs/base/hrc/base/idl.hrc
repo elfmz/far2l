@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  Colorer sheme file for IDL (Inderface Description Language)
+  by Dennis Trachuk (dennis.trachuk@nm.ru)
+  fixed by Maximus5
+-->
+   <type name="idl">
+
+      <import type="def"/>
+
+      <region name="idlWord" parent="Keyword"/>
+      <region name="idlUuid" parent="KeywordStrong"/>
+      <region name="idlMods" parent="Parameter"/>
+      <region name="idlPrefId" parent="Directive"/>
+      <region name="InterfaceOutline" parent="def:Outlined"/>
+      <region name="EnumOutline" parent="def:Outlined"/>
+      <region name="FuncOutline" parent="def:Outlined"/>
+
+
+      <scheme name="inIdlPaired">
+         <keywords region="idlMods">
+            <word name="in"/>
+            <word name="out"/>
+            <word name="retval"/>
+            <word name="default"/>
+            <word name="source"/>
+         </keywords>
+
+         <inherit scheme="cpp:Expression">
+            <virtual scheme="cpp:Expression" subst-scheme="inIdlPaired"/>
+         </inherit>
+
+         <regexp match="/ (uuid) \s*? (\() \s*? ([\-0-9a-fA-F]{36}) \s*? (\)) /x" region1="idlWord" region2="Symbol" region3="idlUuid" region4="Symbol"/>
+         <regexp match="/ (lcid) \s*? (\() \s*? ([\-0-9a-fA-F]{36}) \s*? (\)) /x" region1="idlWord" region2="Symbol" region3="idlUuid" region4="Symbol"/>
+<!-- idl keywords -->
+         <keywords region="idlWord">
+            <word name="aggregatable"/>
+            <word name="appobject"/>
+            <word name="bindable"/>
+            <word name="call_as"/>
+            <word name="control"/>
+            <word name="defaultbind"/>
+            <word name="defaultcollelem"/>
+            <word name="displaybind"/>
+            <word name="dllname"/>
+            <word name="dual"/>
+            <word name="helpcontext"/>
+            <word name="helpfile"/>
+            <word name="helpstring"/>
+            <word name="helpstringcontext"/>
+            <word name="helpstringdll"/>
+            <word name="hidden"/>
+            <word name="id"/>
+            <word name="immediatebind"/>
+            <word name="module"/>
+            <word name="licensed"/>
+            <word name="local"/>
+            <word name="nonbrowsable"/>
+            <word name="noncreatable"/>
+            <word name="nonextensible"/>
+            <word name="object"/>
+            <word name="odl"/>
+            <word name="oleautomation"/>
+            <word name="optional"/>
+            <word name="pointer_default"/>
+            <word name="propget"/>
+            <word name="propput"/>
+            <word name="replaceable"/>
+            <word name="requestedit"/>
+            <word name="restricted"/>
+            <word name="source"/>
+            <word name="uidefault"/>
+            <word name="unique"/>
+            <word name="v1_enum"/>
+            <word name="version"/>
+         </keywords>
+         <keywords region="idlPrefId">
+            <word name="DISPID_UNKNOWN"/>
+            <word name="DISPID_VALUE"/>
+            <word name="DISPID_PROPERTYPUT"/>
+            <word name="DISPID_NEWENUM"/>
+            <word name="DISPID_EVALUATE"/>
+            <word name="DISPID_CONSTRUCTOR"/>
+            <word name="DISPID_DESTRUCTOR"/>
+            <word name="DISPID_COLLECT"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="Outlines">
+			<regexp><![CDATA[
+				/^ \M \s*
+				((typedef) \s+)?
+				(
+				 (?{EnumOutline} (enum) \s* \w*)
+				)\s*;?!
+				($|\{)/x
+			]]></regexp>
+
+			<regexp><![CDATA[
+				/^ \M \s* (\}) \s*
+				(
+				 (?{EnumOutline} \w+)
+				)\s*;
+				/x
+			]]></regexp>
+
+			<regexp><![CDATA[
+				/^ \M \s*
+				(
+				 (?{InterfaceOutline} (interface|dispinterface|coclass) \s) \s* (?{InterfaceOutline} \w+)
+				 (\s* [:]{1} \s* \w*)?
+				)\s*;?!
+				($|\{)/x
+			]]></regexp>
+
+			<regexp><![CDATA[
+				/^ \M \s* 
+				\w+ \s+
+
+				((_stdcall) \s+)*?
+
+				(?{FuncOutline}
+				 (\w+)
+				)
+
+				($|\()/x
+			]]></regexp>
+      </scheme>
+
+      <scheme name="idl">
+         <block start="/(\[)/" end="/(\])/" scheme="inIdlPaired" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <inherit scheme="cpp:cpp">
+            <virtual scheme="cpp:cpp" subst-scheme="idl"/>
+            <virtual scheme="cpp:Outlines" subst-scheme="Outlines"/>
+         </inherit>
+<!-- idl keywords -->
+         <keywords region="idlWord">
+             <word name="coclass"/>
+             <word name="cpp_quote"/>
+             <word name="dispinterface"/>
+             <word name="importlib"/>
+             <word name="interface"/>
+             <word name="library"/>
+             <word name="methods"/>
+             <word name="properties"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

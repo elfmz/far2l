@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+
+	<type name="less">
+		<annotation>
+			<documentation>
+				LessCss (http://lesscss.org)
+			</documentation>
+			<contributors>
+				Eugene Myronchuk
+			</contributors>
+			<appinfo>
+				<prototype name="less" group="inet" description="Less css">
+					<location link="less.hrc"/>
+					<filename>/\.(less)$/</filename>
+				</prototype>
+			</appinfo>
+		</annotation>
+
+		<import type="def"/>
+
+	    <region name="Variable" parent="def:VarStrong"/>
+	    <region name="KnownVariable" parent="def:VarStrong"/>
+	    <region name="Mixing" parent="def:StringEdge"/>
+
+
+		<scheme name="Comment">
+			<regexp match="/\/\/.*?$/" region="Comment"/>
+			<inherit scheme="css:Comment" />
+		</scheme>
+
+		<scheme name="EscapedVar">
+			<regexp match="/\@((\{))[a-zA-Z0-9_]+((\}))/" region="Variable"
+				region1="PairStart" region2="SymbolStrong"
+				region3="PairEnd" region4="SymbolStrong"
+			/>
+		</scheme>
+
+		<scheme name="StringContent">
+			<regexp match="/\\&quot;/" region="SymbolStrong" />
+			<inherit scheme="EscapedVar" />
+		</scheme>
+		<scheme name="StringContentJS">
+			<inherit scheme="StringContent"/>
+			<inherit scheme="jScript:String"/>
+		</scheme>
+
+		<scheme name="StringValue">
+			<block start="/([&quot;&apos;])/" end="/(\y1)/"
+				region00="PairStart" region01="StringEdge"
+				region10="PairEnd" region11="StringEdge"
+				region="String"
+				scheme="StringContent"
+			/>
+		</scheme>
+		<scheme name="VariableDef">
+			<block start="/(\@+(media|import|charset|namespace|(-webkit-|-moz-)?keyframes|-moz-document)?![-\w]+)\s*(:)\s*/" end="/;/"
+				scheme="Property"
+				region01="Variable" region04="def:Symbol"
+				region10="def:SymbolStrong"
+			/>
+		</scheme>
+
+		<scheme name="LessFunctions">
+			<inherit scheme="css:CssFunctions" />
+			<keywords region="def:Keyword">
+				<word name="acos" />
+				<word name="alpha" />
+				<word name="asin" />
+				<word name="atan" />
+				<word name="ceil" />
+				<word name="color" />
+				<word name="cos" />
+				<word name="darken" />
+				<word name="desaturate" />
+				<word name="extract" />
+				<word name="fade" />
+				<word name="fadein" />
+				<word name="fadeout" />
+				<word name="floor" />
+				<word name="hsl" />
+				<word name="hsvhue" />
+				<word name="hsvsaturation" />
+				<word name="hsvvalue" />
+				<word name="hue" />
+				<word name="iscolor" />
+				<word name="isem" />
+				<word name="iskeyword" />
+				<word name="isnumber" />
+				<word name="ispercentage" />
+				<word name="ispixl" />
+				<word name="isstring" />
+				<word name="isurl" />
+				<word name="lighten" />
+				<word name="lightness" />
+				<word name="luma" />
+				<word name="mix" />
+				<word name="mod" />
+				<word name="percentage" />
+				<word name="pi" />
+				<word name="pow" />
+				<word name="round" />
+				<word name="saturate" />
+				<word name="saturation" />
+				<word name="sin" />
+				<word name="spin" />
+				<word name="sqrt" />
+				<word name="tan" />
+			</keywords>
+		</scheme>
+
+		<scheme name="jScript">
+			<inherit scheme="jScript:jScript">
+				<virtual scheme="jScript:String" subst-scheme="StringContentJS" />
+			</inherit>
+		</scheme>
+		<scheme name="Property">
+			<keywords region="SymbolStrong">
+				<symb name="~"/>
+			</keywords>
+			<inherit scheme="StringValue" />
+			<block start="/(`)/" end="/(`)/"
+				region00="PairStart" region01="SymbolStrong"
+				region10="PairEnd" region11="SymbolStrong"
+				scheme="jScript"
+			/>
+			<inherit scheme="css:urlFunc"/>
+			<block start="/\M[\w\-]+(\s*\()?=/" end="/\M\(/" 
+				scheme="LessFunctions"
+			/>
+			<block start="/(\()/" end="/(\))/"
+				scheme="Property"
+				region00="def:Symbol" region01="PairStart"
+				region10="def:Symbol" region11="PairEnd"
+			/>
+			<inherit scheme="css:Property">
+				<virtual scheme="css:PropertyValue" subst-scheme="html-css:PropertyValue"/>
+				<virtual scheme="css:CustomColors" subst-scheme="html-css:CustomColors"/>
+			</inherit>
+			<regexp match="/(\@)arguments/" region="KnownVariable" region1="Variable" />
+			<regexp match="/\@+[\w-]+/" region="Variable" />
+			<keywords region="Symbol">
+				<symb name="+"/>
+				<symb name="-"/>
+				<symb name="*"/>
+				<symb name="/"/>
+				<symb name="="/>
+				<symb name="&lt;="/>
+				<symb name="&gt;="/>
+				<symb name="&lt;"/>
+				<symb name="&gt;"/>
+			</keywords>
+			<keywords region="SymbolStrong">
+				<symb name=":"/>
+			</keywords>
+		</scheme>
+
+		<scheme name="MixingProperty">
+		    <regexp match="/\.{3}[ \)]?=/" region="def:SymbolStrong" />
+			<keywords region="SymbolStrong">
+				<symb name=";"/>
+			</keywords>
+			<inherit scheme="Property"/>
+		</scheme>
+
+		<scheme name="Mixing">
+			<regexp match="/((#[\w-]+\s*\>\s*)*\.[\w-]+)(\s*[\(;])?=/" region1="Mixing" region3="SymbolStrong" />
+			<block start="/(\()/" end="/(\))/"
+				scheme="MixingProperty"
+				region00="PairStart" region01="def:Symbol"
+				region10="PairEnd" region11="Symbol"
+			/>
+			<regexp match="/\)?#1 \s* (when) \s* \(?=/x" region1="Keyword" />
+			<keywords ignorecase="yes" region="css:ImportantValue">
+				 <word name="!important"/>
+			</keywords>
+			<keywords region="SymbolStrong">
+				<symb name=";"/>
+			</keywords>
+		</scheme>
+
+		<scheme name="Combinator">
+			<regexp match="/&amp;/" region="def:Keyword" />
+		</scheme>
+
+		<scheme name="PropertyWrapper">
+			<inherit scheme="css:PropertyWrapper">
+				<virtual scheme="css:Property" subst-scheme="less:Property"/>
+				<virtual scheme="css:PropertyNames" subst-scheme="html-css:PropertyNames"/>
+				<virtual scheme="css:PropertyFunc" subst-scheme="html-css:PropertyFunc"/>
+				<virtual scheme="css:CustomColors" subst-scheme="html-css:CustomColors"/>
+			</inherit>
+		</scheme>
+
+		<scheme name="RuleContent">
+			<inherit scheme="Combinator" />
+			<!--block start="/\M([\w\d\-]+)?\s*(:)(.*;)?=/s" end="/\M[\;\}\x22\x27]/"
+				scheme="PropertyWrapper" region02="Symbol"
+			/-->
+			<block start="/\M ([\w\d\-]+) \s* (:)(.*\{)?!/x" end="/(;|\})?=/"
+				scheme="PropertyWrapper" region02="Symbol"
+			/>
+
+			<!-- EE: add ";" -->
+			<keywords region="def:SymbolStrong">
+				<symb name=";"/>
+			</keywords>
+
+			<inherit scheme="RulesList"/>
+		</scheme>
+
+		<scheme name="RulesList">
+		    <inherit scheme="Comment" />
+			<inherit scheme="VariableDef" />
+			<inherit scheme="Combinator" />
+			<inherit scheme="Mixing"/>
+			<inherit scheme="EscapedVar" />
+			<inherit scheme="css:RulesList">
+				<virtual scheme="css:TagNames" subst-scheme="html-css:cssTag"/>
+				<virtual scheme="css:AttrNames" subst-scheme="html-css:cssAttr"/>
+
+				<virtual scheme="css:Comment" subst-scheme="Comment"/>
+				<virtual scheme="css:Property" subst-scheme="Property"/>
+				<virtual scheme="css:RuleContent" subst-scheme="RuleContent"/>
+				<virtual scheme="css:RulesList" subst-scheme="RulesList"/>
+			</inherit>
+		</scheme>
+
+		<scheme name="less">
+			<inherit scheme="html-css:css">
+				<virtual scheme="html-css:css" subst-scheme="less"/>
+				<virtual scheme="css:Comment" subst-scheme="Comment"/>
+
+				<virtual scheme="css:Property" subst-scheme="Property"/>
+				<virtual scheme="css:RuleContent" subst-scheme="RuleContent"/>
+				<virtual scheme="css:RulesList" subst-scheme="RulesList"/>
+			</inherit>
+		</scheme>
+
+	</type>
+
+</hrc>

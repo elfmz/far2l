@@ -1,14 +1,14 @@
   <!--  quorum languages  -->
   <prototype name="dii" group="rare.quorum" description="Quorum Dictionaries">
-    <location link="jar:common.jar!rare/qrm/dii.hrc"/>
+    <location link="rare/qrm/dii.hrc"/>
     <filename>/\.dii$/i</filename>
   </prototype>
   <prototype name="atl" group="rare.quorum" description="Quorum Atlantis v1.5">
-    <location link="jar:common.jar!rare/qrm/atl.hrc"/>
+    <location link="rare/qrm/atl.hrc"/>
     <filename>/\.(vip|atl|def|rc)$/i</filename>
   </prototype>
   <prototype name="rpt" group="rare.quorum" description="Quorum Reporter">
-    <location link="jar:common.jar!rare/qrm/rpt.hrc"/>
+    <location link="rare/qrm/rpt.hrc"/>
     <filename>/(^int_\d{0,3}\.\d{0,3})|(\.(rpt|prc|dlg|for))$/i</filename>
   </prototype>
   

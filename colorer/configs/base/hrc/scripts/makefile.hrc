@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name="makefile">
+	<annotation><documentation>
+		GNU Make Files Syntax
+		Microsoft NMake Syntax
+	</documentation><contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+	]]></contributors>
+	<appinfo><todo>
+		GNU:
+			- vars defines in rules
+		MS:
+			- inlinetext «[KEEP | NOKEEP]
+			- check "IF-bla-bla" for correct...
+		ALL:
+			- regions revision
+	</todo></appinfo>
+</annotation>
+
+<!--
+<scheme name="makefile">
+	<inherit scheme='gnumake'/>
+	<inherit scheme='old-makefile'/>
+</scheme>
+
+<scheme name="old-makefile" unless='gnu'>
+	<inherit scheme='old-makefile:makefile'/>
+</scheme>
+-->
+
+
+<region name='symbs' parent='def:Symbol'/>
+<region name='symbs-rare' parent='regexp:Operator'/>
+
+<region name='quoted' parent='def:CommentEdge'/><!-- def:StringContent'/>-->
+
+<region name='rule-tag' parent='def:Label'/>
+<region name='rule-tag-spec' parent='def:LabelStrong'/>
+<region name='rule-tag-colon' parent='symbs-rare'/>
+<region name='rule-tag-quote' parent='symbs-rare'/>
+
+<region name='rule-string' parent='def:String'/>
+<region name='var' parent='def:Var'/>
+<region name='var-ref' parent='def:SymbolStrong'/>
+<region name='var-names' parent='def:Keyword'/>
+<region name='var-func' parent='def:KeywordStrong'/>
+<region name='var-equ' parent='symbs'/>
+<region name='var-content' parent='def:VarStrong'/>
+
+<region name='template' parent='def:Directive'/>
+<region name='path-symb' parent='def:Symbol'/>
+<region name='path-wldcrg' parent='regexp:Operator'/>
+<region name='silent' parent='def:KeywordStrong'/>
+
+<region name='keyword' parent='def:Directive'/>
+
+<region name='override' parent='keyword'/>
+<region name='in-directive' parent='def:String'/>
+
+<region name='rule-outline' parent='def:Outlined'/>
+<region name='include-outline' parent='def:Outlined'/>
+
+<region name='if.op' parent='symbs'/>
+<region name='if.content' parent='rule-string'/>
+
+<!--region name='foreign' parent='def:Debug' description="other makefiles minimal support"/-->
+
+
+
+
+<scheme name='comments'>
+	<block start='/\^?~1\#/' end='/$/' scheme='def:Comment' region='def:Comment'/>
+</scheme>
+
+
+<scheme name='quote.v'/>
+<scheme name='quote'>
+	<block scheme='quote.v'>
+		<start match='/(")/' region0='symbs' region1='def:PairStart' />
+		<end   match='/(")/' region0='symbs' region1='def:PairEnd' />
+	</block>
+	<block scheme='quote.v'>
+		<start match="/(')/" region0='symbs' region1='def:PairStart' />
+		<end   match="/(')/" region0='symbs' region1='def:PairEnd' />
+	</block>
+</scheme>
+
+<scheme name='quote.ms' unless='gnu'>
+	<inherit scheme='quote'/>
+</scheme>
+
+
+<scheme name='specvars.ms' unless='gnu'>
+	<regexp match='/\${2}\@/' region='var'/>
+	<regexp match='/\$\*{2}/' region='var'/>
+	<regexp match='/\$\((([@*?&lt;]|\$\@|\*{2})[FDBR])\)/' region0='var' region1='var-names'/>
+</scheme>
+
+<scheme name='specvars'>
+	<inherit scheme='specvars.ms'/>
+	<regexp match='/\${2}/' region='quoted'/>
+	<regexp match='/\$[\%@&lt;\?\^\+\*\w]/' region='var'/>
+	<regexp match='/\$\(([@*%&lt;\^\+\?][FD])\)/' region0='var' region1='var-names'/>
+</scheme>
+
+
+<scheme name='template.gnu' if='gnu'>
+	<regexp match='/\\(.|$)/' region='quoted'/>
+</scheme>
+
+<scheme name='template.ms' unless='gnu'>
+	<regexp match='/\\$/' region='quoted'/>
+	<regexp match='/\^[:;#()$\^\\{}!@\—]/' region='quoted'/>
+	<regexp match='/%{2,}/' region='quoted'/>
+	<regexp match='/%(s|\|[dpfe]{0,4}F)/' region='template'/>
+	<regexp match='/&lt;{2}/' region='template'/>
+</scheme>
+
+<scheme name='template'>
+	<inherit scheme='template.gnu'/>
+	<inherit scheme='template.ms'/>
+	<regexp match='/%/' region='template'/>
+	
+	<regexp match='/[\.\/]/' region0='path-symb'/>
+	<regexp match='/:/' region0='path-symb' priority='low'/>
+	<regexp match='/[\*\?\~]/' region0='path-wldcrg'/>
+	<regexp match='/(\[)(.+?)(\])/' 
+		region0='path-wldcrg' region2='path-symb'
+		region1='def:PairStart' region3='def:PairEnd'
+	/>
+</scheme>
+
+
+
+<!--
+ !
+ ! var
+ !
+ !-->
+
+<entity name='var-name' value='[^\s:=#\(\)]+'/>
+<scheme name='var-names'>
+	<keywords region='var-names'>
+		<word name='.LIBPATTERNS'/>
+		<word name='MAKEFILES'/>
+		<word name='MAKESHELL'/>
+		<word name='MAKELEVEL'/>
+		<word name='MAKEFLAGS'/>
+		<word name='MAKECMDGOALS'/>
+		<word name='MAKEDIR'/>
+		<word name='MAKEFLAGS'/>
+		<word name='MAKE'/>
+		<word name='VPATH'/>
+		<word name='SHELL'/>
+		<word name='CURDIR'/>
+		<word name='SUFFIXES'/>
+	</keywords>
+</scheme>
+
+<scheme name='var-func'>
+	<keywords region='var-func'>
+		<word name='subst'/>
+		<word name='patsubst'/>
+		<word name='strip'/>
+		<word name='findstring'/>
+		<word name='filter'/>
+		<word name='filter-out'/>
+		<word name='sort'/>
+		<word name='word'/>
+		<word name='words'/>
+		<word name='firstword'/>
+		<word name='lastword'/>
+		<word name='wordlist'/>
+		<word name='dir'/>
+		<word name='notdir'/>
+		<word name='suffix'/>
+		<word name='basename'/>
+		<word name='addsuffix'/>
+		<word name='addprefix'/>
+		<word name='join'/>
+		<word name='wildcard'/>
+		<word name='error'/>
+		<word name='warning'/>
+		<word name='shell'/>
+		<word name='origin'/>
+		<word name='foreach'/>
+		<word name='call'/>
+		<word name='if'/>
+		<word name='realpath'/>
+		<word name='abspath'/>
+		<word name='or'/>
+		<word name='and'/>
+		<word name='value'/>
+		<word name='eval'/>
+		<word name='flavor'/>
+		<word name='error'/>
+		<word name='warning'/>
+		<word name='info'/>
+	</keywords>
+</scheme>
+
+<scheme name='var'>
+	<inherit scheme='var-names'/>
+	<inherit scheme='vars'/>
+	
+	<regexp match='/,/' region0='symbs'/>
+	
+	
+	<block scheme='template'>
+		<start match='/~\s*(%var-name;)(:)\M.*?(?{symbs-rare}=)/' 
+			region1='var' region2='symbs-rare'
+		/>
+		<end match='/\)?=/' />
+	</block>
+	
+	<block scheme='var-func' region='var'>
+		<start match='/~\s*\M%var-name;\s+/' />
+		<end match='/~%var-name;\m/' />
+	</block>
+	<regexp match='/~\s*%var-name;/' region0='var' priority='low'/>
+</scheme>
+
+
+<scheme name='vars.msq' unless='gnu'>
+	<inherit scheme='quote'>
+		<virtual scheme='quote.v' subst-scheme='vars.all'/>
+	</inherit>
+</scheme>
+
+<scheme name='vars.all'>
+	<inherit scheme='specvars'/>
+	<block scheme='var' region='var-content'>
+		<start match="/(\$\()/" region0='var-ref' region1='def:PairStart'/>
+		<end match="/(\))/" region0='var-ref' region1='def:PairEnd'/>
+	</block>
+	<inherit scheme='template'/>
+	<!--regexp match='/\$\S+/' region='var'-->
+</scheme>
+
+<scheme name='vars'>
+	<inherit scheme='vars.all'/>
+	<inherit scheme='vars.msq'/>
+	<inherit scheme='keywords-cond'>
+		<virtual scheme='makefile' subst-scheme='vars'/>
+	</inherit>
+</scheme>
+
+<entity name='var-equ' value='[=:?+]?\=' />
+<scheme name='var-defs'>
+	<block scheme='var-names' region='var'>
+		<start match='/~\s*(override|export)?/' region1='override'/>
+		<end match='/%var-equ;/' region0='var-equ'/>
+	</block>
+	<inherit scheme='vars'/>
+	<inherit scheme='comments'/>
+</scheme>
+
+
+
+
+<!--
+ !
+ ! rule
+ !
+ !-->
+
+<scheme name='rule-tag-spec'>
+	<keywords region='rule-tag-spec'>
+		<word name='.PHONY'/>
+		<word name='.SUFFIXES'/>
+		<word name='.DEFAULT'/>
+		<word name='.PRECIOUS'/>
+		<word name='.INTERMEDIATE'/>
+		<word name='.SECONDARY'/>
+		<word name='.DELETE_ON_ERROR'/>
+		<word name='.IGNORE'/>
+		<word name='.SILENT'/>
+		<word name='.EXPORT_ALL_VARIABLES'/>
+		<word name='.NOTPARALLEL'/>
+	</keywords>
+	<!--regexp match='/\w+/' region0='def:Error' priority='low'/-->
+</scheme>
+
+<scheme name='rule-tag-dir.content'>
+	<keywords region='symbs'>
+		<symb name=';'/>
+		<symb name='\'/>
+	</keywords>
+	<inherit scheme='vars'/>
+</scheme>
+
+<scheme name='rule-tag-dir' unless='gnu'>
+	<block scheme='rule-tag-dir.content' region='def:Path'>
+		<start match="/(\{)/" region0='rule-tag-quote' region1='def:PairStart'/>
+		<end   match="/(\})/" region0='rule-tag-quote' region1='def:PairEnd'/>
+	</block>
+	<keywords region='symbs'>
+		<symb name='\'/>
+	</keywords>
+</scheme>
+
+<scheme name='rule-tag.ms' unless='gnu'>
+	<inherit scheme='quote'>
+		<virtual scheme='quote.v' subst-scheme='rule-tag.all'/>
+	</inherit>
+</scheme>
+
+<scheme name='rule-tag.all'>
+	<inherit scheme='rule-tag-spec'/>
+	<inherit scheme='rule-tag-dir'/>
+	<inherit scheme='vars'/>
+</scheme>
+
+<scheme name='rule-tag'>
+	<inherit scheme='rule-tag.all'/>
+	<inherit scheme='rule-tag.ms'/>
+</scheme>
+
+
+
+<scheme name='rule-string.ms' unless='gnu'>
+	<inherit scheme='quote'>
+		<virtual scheme='quote.v' subst-scheme='rule-string.all'/>
+	</inherit>
+</scheme>
+
+<scheme name='rule-string.all'>
+	<inherit scheme='comments'/>
+	<inherit scheme='vars'/>
+	<!-- rule string here -->
+</scheme>
+
+<scheme name='rule-string'>
+	<block scheme='rule-tag' region="rule-tag">
+		<start match="/~/"/>
+		<end match="/:{1,2}/" region0='rule-tag-colon'/>
+	</block>
+	<inherit scheme='rule-string.all'/>
+	<inherit scheme='rule-string.ms'/>
+</scheme>
+
+
+
+<scheme name='rule-content.ms' unless='gnu'>
+	<regexp match='/!/' region0='silent' priority='low'/>
+	<regexp match='/-(\[)(\d+)(\])/' 
+		region='silent' region2='def:Number'
+		region1='def:PairStart' region3='def:PairEnd'
+	/>
+</scheme>
+
+<scheme name='rule-content.msq' unless='gnu'>
+	<inherit scheme='quote'>
+		<virtual scheme='quote.v' subst-scheme='rule-content.all'/>
+	</inherit>
+</scheme>
+
+<scheme name='rule-content.all'>
+	<inherit scheme='comments'/>
+	<inherit scheme='vars'/>
+	<inherit scheme='rule-content.ms'/>
+	<regexp match='/@/' region0='silent'/>
+	<regexp match='/;/' region0='rule-tag-colon'/>
+</scheme>
+
+<scheme name='rule-content'>
+	<inherit scheme='rule-content.all'/>
+	<inherit scheme='rule-content.msq'/>
+	<inherit scheme='keywords-cond'>
+		<virtual scheme='makefile' subst-scheme='rule-content'/>
+	</inherit>
+</scheme>
+
+
+
+<scheme name='rule'>
+	<block scheme='rule-string' region="rule-string">
+		<start match="/~/"/>
+		<end match="/;?=|\\?~1$/"/>
+	</block>
+	
+	<inherit scheme='rule-content'/>
+	<block start='/\\?#1$/' end='/^\s*/' scheme='def:empty'/>
+	<inherit scheme='rule-err'/>
+	<!-- rule defs here -->
+</scheme>
+
+<scheme name='rule-err' if='gnu'>
+	<regexp match='/^\t?!\s+/' region0='def:Error' priority='low'/>
+</scheme>
+
+
+
+
+<!--
+ !
+ ! keywords
+ !
+ !-->
+
+
+<entity name='k-pre' value="(?{foreign}!)?"/>
+
+<scheme name='keyword-if-head'>
+	<block scheme='vars'>
+		<start match='/~\s*((\())\M.*?(?{symbs},)/'
+			region1='symbs' region2='def:PairStart'
+		/>
+		<end match='/(\))/' region0='symbs' region1='def:PairEnd'/>
+	</block>
+	<inherit scheme='quote'>
+		<virtual scheme='quote.v' subst-scheme='vars.all'/>
+	</inherit>
+	<inherit scheme='comments'/>
+</scheme>
+
+<scheme name='keyword-if-content'>
+	<regexp match='/^\s*else\b/' region0='keyword'/>
+	<inherit scheme='makefile'/>
+</scheme>
+
+<scheme name='keyword-if'>
+	<block scheme='keyword-if-head' region='in-directive'>
+		<start match="/~/"/>
+		<end match="/$/"/>
+	</block>
+	<inherit scheme='keyword-if-content'/>
+</scheme>
+
+
+<scheme name='keywords'>
+	<block scheme='rule-content'>
+		<start match='/^\s*(override|export)?\s*(define)\s+(%var-name;)/' 
+			region0='keyword' region2='def:PairStart' 
+			region1='override' region3='var'
+		/>
+		<end match='/^\s*(endef)/' 
+			region0='keyword' region1='def:PairEnd'
+		/>
+	</block>
+	
+	<regexp match="/^\s*unexport\s+(%var-name;)/" region0='keyword' region1='var'/>
+	<block start='/^\s*vpath\b/' end='/\\?~1$/' 
+		region00='keyword' scheme='template' region='in-directive'
+	/>
+	<block start='/^\s*([\-s])?include\M\s+(?{include-outline}.+?)\s*$/' 
+		end='/$/' region00='keyword' scheme='vars' region='in-directive'
+	/>
+	
+	<inherit scheme='keywords.ms'/>
+	<inherit scheme='keywords-cond'/>
+</scheme>
+
+<scheme name='keywords-cond'>
+	<block scheme='keyword-if'>
+		<start match='/^\s*(ifn?eq)\b/'
+			region0='keyword' region1='def:PairStart'
+		/>
+		<end match='/^\s*(endif)/' 
+			region0='keyword' region1='def:PairEnd'
+		/>
+	</block>
+	
+	<block scheme='keyword-if-content'>
+		<start match='/^\s*(ifn?def)\s+(%var-name;)/'
+			region0='keyword' region1='def:PairStart' region2='var'
+		/>
+		<end match='/^\s*(endif)/' 
+			region0='keyword' region1='def:PairEnd'
+		/>
+	</block>
+	<inherit scheme='keywords-cond.ms'/>
+	<inherit scheme='comments'/>
+</scheme>
+
+
+
+<!-- keywors.ms -->
+
+<scheme name='keywords.ms.content'>
+	<inherit scheme='vars.all'/>
+</scheme>
+
+<scheme name='keywords.ms.include'>
+	<inherit scheme='keywords.ms.content'/>
+	<block scheme='keywords.ms.content' >
+		<start match='/(&lt;)/' region0='symbs' region1='def:PairStart' />
+		<end   match='/(&gt;)/' region0='symbs' region1='def:PairEnd' />
+	</block>
+</scheme>
+
+<scheme name='keywords.ms' unless='gnu'>
+	<block scheme='keywords.ms.content' region='in-directive'>
+		<start match='/!(CMDSWITCHES|ERROR|MESSAGE)\b/i' region0='keyword'/>
+		<end match='/$/'/>
+	</block>
+	<block scheme='keywords.ms.content' region='var'>
+		<start match='/!UNDEF\b/i' region0='keyword'/>
+		<end match='/$/'/>
+	</block>
+	
+	<block scheme='keywords.ms.include' region='in-directive'>
+		<start match='/(!INCLUDE)\M\s+(?{include-outline}.+?)\s*$/i' region1='keyword'/>
+		<end match='/$/'/>
+	</block>
+</scheme>
+
+
+
+<scheme name='keywords-cond.ms.if.expr'>
+	<block scheme='keywords-cond.ms.if.def' region='var'>
+		<start match='/\b(DEFINED)\s*(\()/i' region0='symbs' region1='keyword' region2='def:PairStart'/>
+		<end match='/(\))/' region0='symbs' region1='def:PairEnd'/>
+	</block>
+	
+	<block scheme='rule-tag-dir.content' region='def:Path'>
+		<start match='/\b(EXISTS?)\s*(\()/i' region0='symbs' region1='keyword' region2='def:PairStart'/>
+		<end match='/(\))/' region0='symbs' region1='def:PairEnd'/>
+	</block>
+	
+	<inherit scheme='vars.msq'/>
+	
+	<keywords region='if.op'>
+		<symb name='!'/>
+		<symb name='~'/>
+		<symb name='-'/>
+		
+		<symb name='&amp;'/>
+		<symb name='&lt;'/>
+		<symb name='&gt;'/>
+		<symb name='='/>
+		<symb name='+'/>
+		<symb name='*'/>
+		<symb name='/'/>
+		<symb name='%'/>
+		<symb name='|'/>
+		<symb name='^'/>
+		<symb name=''/>
+		<symb name=''/>
+	</keywords>
+</scheme>
+
+
+
+<scheme name='keywords-cond.ms.if.def'>
+	<inherit scheme='comments'/>
+</scheme>
+
+
+<scheme name='keywords-cond.ms.if.content'>
+	<block scheme='keywords-cond.ms.if.expr' region='if.content'>
+		<start match='/~(IF)\b/i' region0='keyword' region1='def:PairStart'/>
+		<end match='/$/'/>
+	</block>
+	<block scheme='keywords-cond.ms.if.def' region='var'>
+		<start match='/~(IFN?DEF)\b/i' region0='keyword' region1='def:PairStart'/>
+		<end match='/$/'/>
+	</block>
+	
+	<regexp match='/!(ELSE)\b/i' region='keyword' priority='low'/>
+	<inherit scheme='makefile'/>
+</scheme>
+
+<scheme name='keywords-cond.ms.if'>
+	<block scheme='keywords-cond.ms.if.content'  >
+		<start match='/~\M(IF\w*)\b/i'/>
+		<end match='/\M((!ENDIF)\b|(!ELSE)\s*IF\w*)/i' />
+	</block>
+	
+	<block scheme='keywords-cond.ms.if.content'>
+		<start match='/!(ELSE)\s*\M(IF\w*)\b/i' region0='keyword' region1='def:PairEnd'/>
+		<end match='/\M((!ENDIF)\b|(!ELSE)\s*IF\w*)/i' />
+	</block>
+	
+	<regexp match='/!(ENDIF)\b/i' region='keyword' region1='def:PairEnd'/>
+	
+</scheme>
+
+<scheme name='keywords-cond.ms' unless='gnu'>
+	<block scheme='keywords-cond.ms.if'>
+		<start match='/!\MIF\w*\b/i' region0='keyword'/>
+		<end match='/!ENDIF\m/i'/>
+	</block>
+</scheme>
+
+
+<!--scheme name="gnumake" if='gnu'-->
+
+<!--
+ !
+ ! main
+ !
+ !-->
+
+<entity name='rule-name' value='[\w_.%$"\{].*?'/>
+
+<scheme name="makefile">
+	<inherit scheme='keywords'/>
+	<block scheme='var-defs'  region='var-content'>
+		<start match='/^\M\s*(override|export)?\s*%var-name;\s*%var-equ;/' />
+		<end match='/(endif)?~5[\\\^]?~1$/i'/>
+	</block>
+	
+	<block scheme='rule'>
+		<start match="/^\M(?{rule-outline}%rule-name;):/"/>
+		<end match="/^\s?!/"/>
+		<!--end match="/^\M[^\s#]/"/  ^\s*$|-->
+	</block>
+	<block scheme='rule-tag' region="rule-tag">
+		<start match="/^\M(%rule-name;)\\$/"/>
+		<end match="/\\?#1$/"/>
+	</block>
+	
+	<inherit scheme='var'/>
+	<inherit scheme='comments'/>
+	<regexp match='/\S/' region='def:Error' priority='low'/>
+</scheme>
+
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

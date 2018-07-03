@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="email">
+   <annotation> 
+    <documentation>
+      E-Mail highlighting for colorer
+    </documentation>
+    <contributors> <![CDATA[
+      ANR Daemon, Hell Corp <anrdaemon@hell.corp.mtu-net.ru> 
+       2:5020/877.24@FIDO
+      honeyman <honeyman@uic.nnov.ru>
+      Artem Zankovich <z_artem@yahoo.com> 
+       (16.12.2001, 09.06.2003)
+      Eugene Efremov <4mirror@mail.ru>
+       split into three types: msg, ftn and e-mail (18.11.2003)
+    ]]> </contributors>
+   </annotation>
+
+      <!--import type="def"/-->
+      
+      <region name="head.word" parent="msg:header.word"/>
+      <region name="head.word2" parent="msg:kludge"/>
+      <region name="head.content" parent="msg:header"/>
+      <region name="head.name" parent="msg:header.name"/>
+      <region name="head.content2" parent="msg:kludge.unknow"/>
+      <region name="boundary" parent="def:Label"/>
+
+      <entity name="mesTE" value="^\M(\S|$)"/>
+
+      <scheme name="messages_heads">
+
+         <!-- (C) by Honeyman starts-->
+         <regexp match="/^(X\-FTN\-Origin\:)\s(.*)$/" region0="head.word2" region2="msg:origin"/>
+         <regexp match="/^(From\s\-)\s(.*)$/" region0="head.word2" region2="head.content2"/> <!--region3="Comment"-->
+         <regexp match="/^(Approved\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Cache\-Post\-Path\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Content\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Distribution\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Followup\-To\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(In\-Reply\-To\:)\s(.*)$/i" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Lines\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Mime\-Version\:)\s(.*)$/i" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(NNTP\-Posting\-.*?\b\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Newsgroups\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Path\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <!-- artem: multiline -->
+         <block start="/^(References\:)/i" end="/%mesTE;/" scheme="def:empty" region="head.content2" region01="head.word2"/>
+         <regexp match="/^(Reply\-To\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Return\-Receipt\-To\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Sender\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Xref\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(FL\-Build\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <!-- artem: multiline -->
+         <block start="/^(X\-[\w\-]+\:)/i" end="/%mesTE;/" 
+          scheme="msg:uri" region01="head.word2" region="head.content2"/>
+         <!-- (C) by Honeyman ends-->
+         <!-- artem: oбходитесь в Fido без From: и Subject:, обойдетесь и без To:
+         <regexp match="/\b(To\s*:)(.*)$/i" region0="Keyword" region2="String"/> -->
+         <!-- EE: FTN вынесен в отдельный тип, так что вопрос отпадает. -->
+         <block start="/^(To\:)/i" end="/%mesTE;/" 
+          scheme="msg:uri" region="head.name" region01="head.word"/>
+         <block start="/^(B?CC\:)/i" end="/%mesTE;/" 
+          scheme="msg:uri" region="head.name" region01="head.word"/>
+         <regexp match="/^(Date\:)(.*)$/i" 
+          region0="head.word" region2="def:Date"/>
+         <block start="/^(From\:)/i" end="/%mesTE;/" 
+          scheme="msg:uri" region="head.name" region01="head.word"/>
+         <block start="/^(Subject\:)/i" end="/%mesTE;/" 
+          scheme="msg:subj" region="head.content" region01="head.word"/>
+         <block start="/^(Organization\:)/i" end="/%mesTE;/" 
+          scheme="msg:uri" region="head.content" region01="head.word"/>
+
+         <!-- artem: applying mNetAddresses sheme causes too slow work when
+                     many addresses are in Received: field -->
+         <block start="/^(Received(-SPF)?\:)/i" end="/%mesTE;/" scheme="def:Comment" region01="head.word2" region="head.content2"/>
+         <block start="/^(Authentication-Results\:)/i" end="/%mesTE;/" scheme="def:Comment" region01="head.word2" region="head.content2"/>
+         <regexp match="/^(Message\-Id\:)(.*)$/i" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Status\:)(.*)$/i" region0="head.word2" region2="head.content2"/>
+         <!-- cail: really it is better to use scheme "empty" -
+                    it much faster than "Comment" :) -->
+         <block start="/^(Content\-Type\:)/i" end="/%mesTE;/" scheme="def:empty" region01="head.word2" region="head.content2"/>
+
+         <!-- (C) by Artem Zankovich starts-->
+         <block start="/^(Content\-[dD]isposition\:)/" end="/%mesTE;/" scheme="def:Comment" region01="head.word2" region="head.content2"/>
+         <regexp match="/^(Content\-(transfer\-encoding|Description|Language|ID|Class)\:)(.*)$/i" region0="head.word2" region3="head.content2"/>
+         <regexp match="/^(Mailing\-[lL]ist\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Subscribed\-as\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(List\-(I[dD]|Help|Owner|Subscribe|Unsubscribe|Archive|Post)\:)\s(.*)$/" region0="head.word2" region3="head.content2"/>
+         <regexp match="/^(Errors\-[tT]o\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Delivered\-[tT]o\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Delivery\-[dD]ate\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Envelope\-[tT]o\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Precedence\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Disposition\-[nN]otification\-[tT]o\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Auto\-[sS]ubmitted\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Return\-[pP]ath\:)(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Importance\:)(.*)$/i" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Thread\-(Topic|Index)\:)(.*)$/i" region0="head.word2" region3="head.content2"/>
+         <regexp match="/^(Resent\-(From|Date|To|Message\-Id|Reply\-To|Cc|Bcc)\:)(.*)$/i" region0="head.word2" region3="head.content2"/>
+         <regexp match="/^(User\-[aA]gent\:)(.*)$/" region0="head.word2" region2="head.content2"/>
+         <!-- Rarelly used RFC822 fields -->
+         <regexp match="/^(Keywords\:)(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Comments\:)(.*)$/" region0="head.word2" region2="head.content2"/>
+         <regexp match="/^(Encrypted\:)(.*)$/" region0="head.word2" region2="head.content2"/>
+         <!-- (C) by Artem Zankovich ends-->
+         
+      </scheme>
+      <scheme name="messages_base">
+         <inherit scheme="messages_heads"/>
+         <inherit scheme="msg:msg"/>
+      </scheme>
+
+
+      <!--scheme name="eml_body_text">
+         <!- prevent koi8 highlighting ->
+         <regexp match="/\=[0-9a-fA-F]{2}/" region="default"/>
+         <!- Quotes ->
+         <regexp match="/^\s*(\w+)?(\&gt;\&gt;)+(([^\&gt;].*$)|$)/" region0="pktQuote2"/>
+         <regexp match="/^\s*(\w+)?(\&gt;)+.*$/" region0="pktQuote"/>
+         <inherit scheme="text"/>
+      </scheme-->
+
+      <scheme name="emt-QP">
+         <inherit scheme="messages_base">
+          <virtual scheme="msg:quote" subst-scheme="msg:quote.printable"/>
+         </inherit>
+      </scheme>
+      <scheme name="eml_message_text">
+         <block start="/\M^Content\-Transfer\-Encoding\:\s+base64/"
+          end="/\M^--/" scheme="emo-64"/>
+         <block start="/\M^Content\-Transfer\-Encoding\:\s+quoted\-printable/i"
+          end="/\M^--/" scheme="emt-QP"/>
+         <!--block start="/^$^/x" end="/\M^- -/" scheme="msg:msg"/-->
+         <inherit scheme="messages_base"/>
+      </scheme>
+
+      <scheme name="eml_message_html">
+         <block start="/^$^/x" end="/\M^--/" scheme="html:html"/>
+         <inherit scheme="messages_base"/>
+      </scheme>
+
+      <scheme name="eml_message_rtf">
+        <block start="/^$^/x" end="/\M^--/" scheme="rtf:rtf"/>
+        <inherit scheme="messages_base"/>
+      </scheme>
+
+      <scheme name="eml_message_headers">
+         <inherit scheme="messages_heads"/>
+      </scheme>
+
+      <entity name="bound" value="[\d\w_&apos;\(\)\+\-\,\.\/\:\?\=]"/>
+      <entity name="bounds" value="[\s\d\w_&apos;\(\)\+\-\,\.\/\:\?\=]"/>
+      <entity name="boundary" value="%bounds;+%bound;"/>
+      
+      <scheme name="eml_message_multipart">
+         <regexp match="/(Content\-Type\:)\s+multipart\/\w+\;/"
+          region1="head.word2" region="head.content2"
+         />
+         <block start="/boundary=(&quot;?)(%boundary;)(\1)/"
+          end="/\M^--\y2/" scheme="messages_heads"
+          region00="head.content2" region02="boundary"
+         />
+         <block start="/^--(%boundary;)/x" end="/\M\y0/" scheme="switch"
+          region00="head.content2" region01="boundary"
+         />
+      </scheme>
+
+      <scheme name="eml_message_delivery">
+        <regexp match="/^(Reporting\-MTA\:)\s(.*)$/i" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Received\-From\-MTA\:)\s(.*)$/i" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Remote\-MTA\:)\s(.*)$/i" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Arrival\-[dD]ate\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Final\-[rR]ecipient\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Action\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Status\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Last\-[aA]ttempt\-[dD]ate\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Original\-(Recipient|Envelope-Id)\:)\s(.*)$/i" region0="head.word2" region2="head.content2"/>
+        <block  start="/^(Diagnostic\-[cC]ode\:)/" end="/%mesTE;/" scheme="def:empty" region01="head.word2" region="head.content2"/>
+        <inherit scheme="messages_base"/>
+      </scheme>
+
+      <scheme name="eml_disposition_notification">
+        <regexp match="/^(Reporting\-UA\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Final\-[rR]ecipient\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Original\-Message\-Id\:)\s(.*)$/i" region0="head.word2" region2="head.content2"/>
+        <regexp match="/^(Disposition\:)\s(.*)$/" region0="head.word2" region2="head.content2"/>
+        <inherit scheme="messages_base"/>
+      </scheme>
+
+      <scheme name="emo-64">
+         <inherit scheme="messages_heads"/>
+         <inherit scheme="msg:quote.64"/>
+      </scheme>
+      <scheme name="eml_message_other">
+         <block start="/\M^Content\-Transfer\-Encoding\:\s+base64/"
+          end="/\M^--/" scheme="emo-64"/>
+         <inherit scheme="messages_heads"/>
+         <block start="/^$^/x" end="/\M^--/" scheme="def:empty"/>
+      </scheme>
+
+      <scheme name="switch">
+         <block start="/\M^Content\-Type:\s+multipart/i" end="/\M^--/" scheme="eml_message_multipart"/>
+         <block start="/\M^Content\-Type:\s+text\/plain/i" end="/\M^--/" scheme="eml_message_text"/>
+         <block start="/\M^Content\-Type:\s+text\/html/i" end="/\M^--/" scheme="eml_message_html"/>
+         <block start="/\M^Content\-Type:\s+text\/richtext/i" end="/\M^--/" scheme="eml_message_rtf"/>
+         <block start="/\M^Content\-Type:\s+text\/rfc822\-headers/i" end="/\M^--/" scheme="eml_message_headers"/>
+         <block start="/\M^Content\-Type:\s+message\/delivery\-status/i" end="/\M^--/" scheme="eml_message_delivery"/>
+         <block start="/\M^Content\-Type:\s+message\/disposition\-notification/i" end="/\M^--/" scheme="eml_disposition_notification"/>         
+         <block start="/\M^Content\-Type:\s+./i" end="/\M^--/" scheme="eml_message_other" priority="low"/>
+         <inherit scheme="messages_heads"/>
+      </scheme>
+      <scheme name="email">
+         <regexp match="/^(from)\s+ ([\w\d_\.]+\@[\w\d_\.]+)\s+
+          ((\w{3}\s+){2}\d{1,2}\s+(\d{2}\:\d{2}\:\d{2})\s+\d{4})$/ix"
+          region1="msg:header.word" region2="def:EMail" 
+          region3="def:Date" region5="def:Time"
+         />
+         <inherit scheme="switch"/>
+         <inherit scheme="messages_base"/>
+         <!--inherit scheme="messages_FTN"/-->
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  ANR Daemon, Hell Corp <anrdaemon@hell.corp.mtu-net.ru>
+   -  Artem Zankovich <z_artem@yahoo.com> 
+   -  Eugene Efremov <4mirror@mail.ru>
+   -  honeyman <honeyman@uic.nnov.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

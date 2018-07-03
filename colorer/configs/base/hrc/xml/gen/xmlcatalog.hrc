@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="xmlcatalog" group="group" description="xmlcatalog" targetNamespace="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <location link="xmlcatalog.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="xmlcatalog">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'xmlcatalog'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : urn:oasis:names:tc:entity:xmlns:xml:catalog
+             hrctype                     : xmlcatalog
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : (?{}(?{}e|er)(?{}:))?
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:</documentation>
+         <contributors><![CDATA[Eugene Efremov]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value="(?{}(?{}e|er)(?{}:))"/>
+      <entity name="nsprefix" value="(?{}(?{}e|er)(?{}:))?"/>
+      <entity name="attr-nsprefix" value="(?{}(?{}e|er)(?{Attribute.nscolon}:))"/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from '../../src/xmlcatalog/src/custom.catalog.xml'--><scheme name="publicIdentifier-content">
+         <inherit scheme="uri:FPI"/>
+         <!--inherit scheme="pubIdChars-content"/--></scheme>
+      <scheme name="publicIdentifier-content-error">
+         <inherit scheme="publicIdentifier-content"/>
+         <!--inherit scheme="xml:badChar"/--></scheme>
+      <!--end custom--><scheme name="catalog-element">
+         <block start="/\M &lt; (%nsprefix;catalog ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="catalog-elementContent"/>
+      </scheme>
+      <scheme name="public-element">
+         <block start="/\M &lt; (%nsprefix;public ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="public-elementContent"/>
+      </scheme>
+      <scheme name="system-element">
+         <block start="/\M &lt; (%nsprefix;system ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="system-elementContent"/>
+      </scheme>
+      <scheme name="uri-element">
+         <block start="/\M &lt; (%nsprefix;uri ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="uri-elementContent"/>
+      </scheme>
+      <scheme name="rewriteSystem-element">
+         <block start="/\M &lt; (%nsprefix;rewriteSystem ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rewriteSystem-elementContent"/>
+      </scheme>
+      <scheme name="rewriteURI-element">
+         <block start="/\M &lt; (%nsprefix;rewriteURI ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rewriteURI-elementContent"/>
+      </scheme>
+      <scheme name="delegatePublic-element">
+         <block start="/\M &lt; (%nsprefix;delegatePublic ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="delegatePublic-elementContent"/>
+      </scheme>
+      <scheme name="delegateSystem-element">
+         <block start="/\M &lt; (%nsprefix;delegateSystem ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="delegateSystem-elementContent"/>
+      </scheme>
+      <scheme name="delegateURI-element">
+         <block start="/\M &lt; (%nsprefix;delegateURI ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="delegateURI-elementContent"/>
+      </scheme>
+      <scheme name="nextCatalog-element">
+         <block start="/\M &lt; (%nsprefix;nextCatalog ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="nextCatalog-elementContent"/>
+      </scheme>
+      <scheme name="group-element">
+         <block start="/\M &lt; (%nsprefix;group ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="group-elementContent"/>
+      </scheme>
+      <scheme name="pubIdChars-content"><!--
+    Warning: RE pattern used. Possible compatibility faults
+    Original RE: [a-zA-Z0-9-'()+,./:=?;!*#@$_%]*--><regexp region="Enumeration" priority="low"
+                 match="/[a-zA-Z0-9-'()+,.\/:\=?;!*\#@$_\%]*/"/>
+      </scheme>
+      <scheme name="pubIdChars-content-error">
+         <inherit scheme="pubIdChars-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="pubIdChars-content-cdsect">
+         <inherit scheme="pubIdChars-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="pubIdChars-Attributes"/>
+      <scheme name="pubIdChars-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream" subst-scheme="pubIdChars-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="pubIdChars-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="pubIdChars-content-cdsect"/>
+            <virtual scheme="xml:content.cdata.stream" subst-scheme="pubIdChars-content-error"/>
+            <virtual scheme="xml:element" subst-scheme="def:empty"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="pubIdChars-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="publicIdentifier-content-old">
+         <inherit scheme="pubIdChars-content"/>
+      </scheme>
+      <scheme name="publicIdentifier-content-error-old">
+         <inherit scheme="publicIdentifier-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="publicIdentifier-content-cdsect">
+         <inherit scheme="publicIdentifier-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="publicIdentifier-Attributes"/>
+      <scheme name="publicIdentifier-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="publicIdentifier-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="publicIdentifier-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:CDSect.content.stream"
+                     subst-scheme="publicIdentifier-content-cdsect"/>
+            <virtual scheme="xml:content.cdata.stream" subst-scheme="publicIdentifier-content-error"/>
+            <virtual scheme="xml:element" subst-scheme="def:empty"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="publicIdentifier-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="partialPublicIdentifier-content">
+         <inherit scheme="pubIdChars-content"/>
+      </scheme>
+      <scheme name="partialPublicIdentifier-content-error">
+         <inherit scheme="partialPublicIdentifier-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="partialPublicIdentifier-content-cdsect">
+         <inherit scheme="partialPublicIdentifier-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="partialPublicIdentifier-Attributes"/>
+      <scheme name="partialPublicIdentifier-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="partialPublicIdentifier-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="partialPublicIdentifier-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:CDSect.content.stream"
+                     subst-scheme="partialPublicIdentifier-content-cdsect"/>
+            <virtual scheme="xml:content.cdata.stream"
+                     subst-scheme="partialPublicIdentifier-content-error"/>
+            <virtual scheme="xml:element" subst-scheme="def:empty"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="partialPublicIdentifier-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="systemOrPublic-content">
+         <regexp region="Enumeration" match="/system/"/>
+         <regexp region="Enumeration" match="/public/"/>
+      </scheme>
+      <scheme name="systemOrPublic-content-error">
+         <inherit scheme="systemOrPublic-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="systemOrPublic-content-cdsect">
+         <inherit scheme="systemOrPublic-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="systemOrPublic-Attributes"/>
+      <scheme name="systemOrPublic-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="systemOrPublic-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="systemOrPublic-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="systemOrPublic-content-cdsect"/>
+            <virtual scheme="xml:content.cdata.stream" subst-scheme="systemOrPublic-content-error"/>
+            <virtual scheme="xml:element" subst-scheme="def:empty"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="systemOrPublic-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="catalog-content">
+         <inherit scheme="public-element"/>
+         <inherit scheme="system-element"/>
+         <inherit scheme="uri-element"/>
+         <inherit scheme="rewriteSystem-element"/>
+         <inherit scheme="rewriteURI-element"/>
+         <inherit scheme="delegatePublic-element"/>
+         <inherit scheme="delegateSystem-element"/>
+         <inherit scheme="delegateURI-element"/>
+         <inherit scheme="nextCatalog-element"/>
+         <inherit scheme="group-element"/>
+         <regexp match="/ &lt; (%ns-real-prefix;%xml:NCName; ([\s\/&gt;]|$) )/x" region="def:Error"/>
+         <inherit scheme="xml:element"/>
+      </scheme>
+      <scheme name="catalog-content-error">
+         <inherit scheme="catalog-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="catalog-content-cdsect">
+         <inherit scheme="catalog-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="catalog-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(prefer)\M([\s\=]|$)/x"
+                scheme="systemOrPublic-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="catalog-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="catalog-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="catalog-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="public-content"/>
+      <scheme name="public-content-error">
+         <inherit scheme="public-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="public-content-cdsect">
+         <inherit scheme="public-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="public-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(publicId)\M([\s\=]|$)/x"
+                scheme="publicIdentifier-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(uri)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="public-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="public-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="public-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="public-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="system-content"/>
+      <scheme name="system-content-error">
+         <inherit scheme="system-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="system-content-cdsect">
+         <inherit scheme="system-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="system-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(systemId)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(uri)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="system-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="system-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="system-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="system-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="uri-content"/>
+      <scheme name="uri-content-error">
+         <inherit scheme="uri-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="uri-content-cdsect">
+         <inherit scheme="uri-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="uri-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(uri)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="uri-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="uri-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="uri-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="uri-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="rewriteSystem-content"/>
+      <scheme name="rewriteSystem-content-error">
+         <inherit scheme="rewriteSystem-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="rewriteSystem-content-cdsect">
+         <inherit scheme="rewriteSystem-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="rewriteSystem-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(systemIdStartString)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(rewritePrefix)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="rewriteSystem-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="rewriteSystem-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="rewriteSystem-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="rewriteSystem-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="rewriteURI-content"/>
+      <scheme name="rewriteURI-content-error">
+         <inherit scheme="rewriteURI-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="rewriteURI-content-cdsect">
+         <inherit scheme="rewriteURI-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="rewriteURI-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(uriIdStartString)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(rewritePrefix)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="rewriteURI-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="rewriteURI-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="rewriteURI-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="rewriteURI-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="delegatePublic-content"/>
+      <scheme name="delegatePublic-content-error">
+         <inherit scheme="delegatePublic-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="delegatePublic-content-cdsect">
+         <inherit scheme="delegatePublic-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="delegatePublic-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(publicIdStartString)\M([\s\=]|$)/x"
+                scheme="partialPublicIdentifier-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(catalog)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="delegatePublic-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="delegatePublic-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="delegatePublic-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="delegatePublic-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="delegateSystem-content"/>
+      <scheme name="delegateSystem-content-error">
+         <inherit scheme="delegateSystem-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="delegateSystem-content-cdsect">
+         <inherit scheme="delegateSystem-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="delegateSystem-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(systemIdStartString)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(catalog)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="delegateSystem-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="delegateSystem-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="delegateSystem-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="delegateSystem-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="delegateURI-content"/>
+      <scheme name="delegateURI-content-error">
+         <inherit scheme="delegateURI-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="delegateURI-content-cdsect">
+         <inherit scheme="delegateURI-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="delegateURI-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(uriStartString)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(catalog)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="delegateURI-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="delegateURI-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="delegateURI-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="delegateURI-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="nextCatalog-content"/>
+      <scheme name="nextCatalog-content-error">
+         <inherit scheme="nextCatalog-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="nextCatalog-content-cdsect">
+         <inherit scheme="nextCatalog-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="nextCatalog-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(catalog)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xmlschema:anyType-Attributes"/>
+      </scheme>
+      <scheme name="nextCatalog-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="nextCatalog-content"/>
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="nextCatalog-content-cdsect"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="nextCatalog-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="group-content">
+         <inherit scheme="public-element"/>
+         <inherit scheme="system-element"/>
+         <inherit scheme="uri-element"/>
+         <inherit scheme="rewriteSystem-element"/>
+         <inherit scheme="rewriteURI-element"/>
+         <inherit scheme="delegatePublic-element"/>
+         <inherit scheme="delegateSystem-element"/>
+         <inherit scheme="delegateURI-element"/>
+         <inherit scheme="nextCatalog-element"/>
+         <regexp match="/ &lt; (%ns-real-prefix;%xml:NCName; ([\s\/&gt;]|$) )/x" region="def:Error"/>
+         <inherit scheme="xml:element"/>
+      </scheme>
+      <scheme name="group-content-error">
+         <inherit scheme="group-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="group-content-cdsect">
+         <inherit scheme="group-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="group-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(prefer)\M([\s\=]|$)/x"
+                scheme="systemOrPublic-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="group-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="group-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="group-Attributes"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="xmlcatalog-root">
+         <annotation>
+            <documentation>
+               You can replace these elements with needed single root element
+               with customizing HRC generation process.
+              </documentation>
+         </annotation>
+         <inherit scheme="catalog-element"/>
+         <inherit scheme="public-element"/>
+         <inherit scheme="system-element"/>
+         <inherit scheme="uri-element"/>
+         <inherit scheme="rewriteSystem-element"/>
+         <inherit scheme="rewriteURI-element"/>
+         <inherit scheme="delegatePublic-element"/>
+         <inherit scheme="delegateSystem-element"/>
+         <inherit scheme="delegateURI-element"/>
+         <inherit scheme="nextCatalog-element"/>
+         <inherit scheme="group-element"/>
+      </scheme>
+      <scheme name="xmlcatalog-root-addref">
+         <inherit scheme="xmlcatalog-root"/>
+      </scheme>
+      <scheme name="xmlcatalog">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="xmlcatalog-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

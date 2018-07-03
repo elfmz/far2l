@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    REXX Syntax 4ever
+    3dcraze version was made by Vladimir Komarov <doublew@iname.com>
+
+    Upgrade for Colorer4u and 4ever Igor Paikin <exemok@mail.ru>
+                with help of Vladimir Komarov <doublew@iname.com>:
+    1) adding some more keywords
+    2) do .. end works as brackets
+    3) also added (modified?) odinary brackets - [..] and (..)
+    4) Nested comments support (is it really works?)
+    5) Unneeded end's are in error color
+    6) Inserted functions - thanks to Vladimir Komarov
+
+    Thanks to:
+    IBM - for that stupid language REXX
+    Eugene Roshal and Far group - for FAR
+    cail lomecb - for colorer and some help in writing of this file
+    Vladimir Komarov <doublew@iname.com> - author of 3dcraze version of REXX syntax
+                                           and soauthor of 4u and 4ever version
+    You - that are use (or read, modify and send me notes) this hrc file
+-->
+   <type name="rexx">
+
+      <import type="def"/>
+
+      <region name="rString" parent="String"/>
+      <region name="rComment" parent="Comment"/>
+      <region name="rSymb" parent="Symbol"/>
+      <region name="rWord" parent="Keyword"/>
+      <region name="rWord2" parent="Keyword"/>
+      <region name="rFunc" parent="Keyword"/>
+
+
+      <scheme name="rexx">
+<!-- Comments -->
+         <inherit scheme="cNestedComment"/>
+<!-- Strings -->
+         <regexp match="/('(.*?[^\'])??'x*)/" region0="rString"/>
+         <regexp match="/(\&#34;(.*?[^\&#34;])??\&#34;)/" region0="rString"/>
+<!-- Numbers  -->
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+<!-- begins and ends -->
+         <block start="/\b(do|select)\b/i" end="/\b(end)\b/i" scheme="rexx" region00="rWord2" region10="rWord2" region01="PairStart" region11="PairEnd"/>
+<!-- Brackets -->
+         <block start="/(\()/" end="/(\))/" scheme="rexx" region00="rSymb" region01="PairStart" region10="rSymb" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="rexx" region00="rSymb" region01="PairStart" region10="rSymb" region11="PairEnd"/>
+         <keywords ignorecase="yes" region="Error">
+            <word name="end"/>
+<!--no begin for this end -->
+            <word name="*/"/>
+<!-- no open comment for this close comment -->
+         </keywords>
+<!-- Symbols -->
+         <keywords region="rSymb">
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="!"/>
+            <symb name="|"/>
+         </keywords>
+<!-- Words -->
+         <keywords ignorecase="yes" region="rWord">
+            <word name="address"/>
+            <word name="arg"/>
+            <word name="call"/>
+            <word name="drop"/>
+            <word name="else"/>
+            <word name="error"/>
+            <word name="exit"/>
+            <word name="expose"/>
+            <word name="forever"/>
+            <word name="if"/>
+            <word name="interpret"/>
+            <word name="iterate"/>
+            <word name="leave"/>
+            <word name="otherwise"/>
+            <word name="parse"/>
+            <word name="procedure"/>
+            <word name="pull"/>
+            <word name="push"/>
+            <word name="queue"/>
+            <word name="return"/>
+            <word name="say"/>
+            <word name="signal"/>
+            <word name="source"/>
+            <word name="syntax"/>
+            <word name="then"/>
+            <word name="to"/>
+            <word name="until"/>
+            <word name="upper"/>
+            <word name="value"/>
+            <word name="var"/>
+            <word name="when"/>
+            <word name="while"/>
+         </keywords>
+         <keywords ignorecase="yes" region="rFunc">
+            <word name="abbrev"/>
+            <word name="abs"/>
+            <word name="bitand"/>
+            <word name="bitor"/>
+            <word name="bitxor"/>
+            <word name="center"/>
+            <word name="centre"/>
+            <word name="changestr"/>
+            <word name="charin"/>
+            <word name="charout"/>
+            <word name="chars"/>
+            <word name="compare"/>
+            <word name="condition"/>
+            <word name="copies"/>
+            <word name="countstr"/>
+            <word name="datatype"/>
+            <word name="date"/>
+            <word name="delstr"/>
+            <word name="delword"/>
+            <word name="digits"/>
+            <word name="errortext"/>
+            <word name="form"/>
+            <word name="format"/>
+            <word name="fuzz"/>
+            <word name="insert"/>
+            <word name="lastpos"/>
+            <word name="left"/>
+            <word name="length"/>
+            <word name="linein"/>
+            <word name="lineout"/>
+            <word name="lines"/>
+            <word name="max"/>
+            <word name="min"/>
+            <word name="max"/>
+            <word name="overlay"/>
+            <word name="pos"/>
+            <word name="queued"/>
+            <word name="random"/>
+            <word name="reverse"/>
+            <word name="right"/>
+            <word name="sign"/>
+            <word name="sourceline"/>
+            <word name="space"/>
+            <word name="stream"/>
+            <word name="strip"/>
+            <word name="substr"/>
+            <word name="subword"/>
+            <word name="symbol"/>
+            <word name="time"/>
+            <word name="translate"/>
+            <word name="trunc"/>
+            <word name="verify"/>
+            <word name="word"/>
+            <word name="wordindex"/>
+            <word name="wordlength"/>
+            <word name="wordpos"/>
+            <word name="words"/>
+            <word name="xrange"/>
+         </keywords>
+         <regexp match="/\b \M (\w+ \:)/x" region1="Function"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

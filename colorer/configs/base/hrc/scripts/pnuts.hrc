@@ -1,0 +1,1181 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation><documentation>
+	Pnuts Files
+</documentation><contributors><![CDATA[
+	Nathan Sweet <misc@n4te.com>
+	JULY <lubimovi@usa.net>
+	Eugene Efremov <4mirror@mail.ru>
+]]></contributors>
+</annotation>
+
+<type name="pnuts">
+
+	<import type="def"/>
+
+	<region name='PackageOutline' parent='def:Outlined'/>
+	<region name='ImportOutline' parent='def:Outlined'/>
+
+	<region name='ClassOutline' parent='def:Outlined'/>
+	<region name='InnerClassOutline' parent='def:Outlined'/>
+	<region name='InterfaceOutline' parent='def:Outlined'/>
+	<region name='MethodOutline' parent='def:Outlined'/>
+	<region name='NativeOutline' parent='def:Outlined'/>
+
+	<region name='StringEscape' parent='def:StringContent'/>
+	<region name='KeywordModifier' parent='def:Keyword'/>
+
+	<scheme name="TabsAsErrors" if="tabs-as-errors">
+		<regexp match="/\t+/" region='def:Error'/>
+	</scheme>
+
+	<scheme name="SpacesAsErrors" if="spaces-as-errors">
+		<regexp match="/\x20+$/" region='def:Error'/>
+	</scheme>
+
+	<scheme name="package">
+		<keywords region="def:Symbol">
+			<symb name="."/>
+			<symb name="$"/>
+		</keywords>
+		<regexp match="/[^\w\s]/" region="def:Error" priority="low"/>
+		<inherit scheme="TabsAsErrors"/>
+		<inherit scheme="SpacesAsErrors"/>
+	</scheme>
+
+	<scheme name="import">
+		<regexp match="/[\.\s]?#1(\*)[\.]?=/" region1="def:Keyword"/>
+		<inherit scheme="package"/>
+	</scheme>
+
+	<scheme name="pnuts">
+		<inherit scheme="PnutsComments"/>
+		<regexp match="/ \b (?{Keyword}interface) \s+ (?{InterfaceOutline}[\w_]+ [\w_:\$]*?) /x"/>
+		<regexp match="/ \b (?{Keyword}class) \s+ (?{ClassOutline}[\w_]+ [\w_:\$]*?) /x"/>
+		<regexp match="/ \b (?{Keyword}new) \s+ (?{InnerClassOutline}[\w_]+ [\w_:\$]*?) \M \s*\([^\(\)]*\) \s* ([\{]|$) /x"/>
+		<!--
+		<regexp match="/ \M\b native .+? (?{NativeOutline}[\w_]+ [\w_:\$]*?) \s*\( /x"/>
+		-->
+
+		<inherit scheme="def:PairedBrackets">
+			<virtual scheme="def:PairedBrackets" subst-scheme="pnuts"/>
+		</inherit>
+
+		<!-- numbers -->
+		<inherit scheme="def:CHexNumber"/>
+		<inherit scheme="def:FloatNumber"/>
+		<inherit scheme="def:DecNumber"/>
+
+		<!-- strings -->
+		<block start="/&#34;/" end="/&#34;|$/" scheme="StringContent" region="String"/>
+		<block start="/`/" end="/`/" scheme="LiteralStringContent" region="String"/>
+
+		<regexp match="/' \\u[\da-fA-F]{1,4} '/ix" region="Character"/>
+		<inherit scheme="c:Character"/>
+
+		<inherit scheme="TabsAsErrors"/>
+		<inherit scheme="SpacesAsErrors"/>
+
+		<keywords region="def:Error">
+			<symb name="["/><symb name="]"/>
+			<symb name="{"/><symb name="}"/>
+			<symb name="("/><symb name=")"/>
+			<symb name="*/"/>
+		</keywords>
+		<keywords region="def:Symbol">
+			<symb name=";" region="def:SymbolStrong"/>
+			<symb name="="/><symb name="+"/><symb name="-"/>
+			<symb name="/"/><symb name="*"/>
+			<symb name="&amp;"/><symb name="^"/>
+			<symb name="|"/><symb name=":"/>
+			<symb name=","/><symb name="."/>
+			<symb name="!"/><symb name="~"/>
+			<symb name="&lt;"/><symb name="&gt;"/>
+			<symb name="%"/><symb name="?"/>
+			<symb name="#"/><symb name="@"/>
+		</keywords>
+		<keywords region="Keyword">
+          <word name="super"/>
+          <word name="this"/>
+          <!-- Built-in keywords. -->
+          <word name="function"/>
+          <word name="if"/>
+          <word name="else"/>
+          <word name="while"/>
+          <word name="do"/>
+          <word name="for"/>
+          <word name="foreach"/>
+          <word name="switch"/>
+          <word name="case"/>
+          <word name="default"/>
+          <word name="break"/>
+          <word name="new"/>
+          <word name="yield"/>
+          <word name="null"/>
+          <word name="try"/>
+          <word name="catch"/>
+          <word name="finally"/>
+          <word name="continue"/>
+          <word name="return"/>
+          <word name="true"/>
+          <word name="false"/>
+          <word name="instanceof"/>
+          <word name="class"/>
+          <word name="import"/>
+          <word name="macro"/>
+          <word name="throw"/>
+          <word name="static"/>
+          <!-- Built-in functions. -->
+          <word name="import"/>
+          <word name="package"/>
+          <word name="getContext"/>
+          <word name="class"/>
+          <word name="throw"/>
+          <word name="catch"/>
+          <word name="finally"/>
+          <word name="use"/>
+          <word name="unuse"/>
+          <word name="load"/>
+          <word name="autoload"/>
+          <word name="require"/>
+          <word name="loadFile"/>
+          <word name="eval"/>
+          <word name="defined"/>
+          <word name="quit"/>
+		</keywords>
+       <!-- Java keywords. -->
+		<keywords region="KeywordModifier">
+			<word name='abstract'/>
+			<word name='final'/>
+			<word name='private'/>
+			<word name='protected'/>
+			<word name='public'/>
+			<word name='static'/>
+			<word name='strictfp'/>
+			<word name="throws"/>
+			<word name="extends"/>
+			<word name="implements"/>
+		</keywords>
+		<keywords region="KeywordModifier">
+			<word name='native'/>
+			<word name='synchronized'/>
+			<word name='threadsafe'/>
+			<word name='volatile'/>
+			<word name='transient'/>
+		</keywords>
+		<keywords region="def:TypeKeyword">
+			<word name='boolean'/>
+			<word name='byte'/>
+			<word name='char'/>
+			<word name='double'/>
+			<word name='float'/>
+			<word name='int'/>
+			<word name='long'/>
+			<word name='short'/>
+			<word name='void'/>
+		</keywords>
+
+		<inherit scheme="Keywords-j2seClasses"/>
+		<inherit scheme="Keywords-pnutsModules"/>
+
+		<regexp match="/\M \b (?{MethodOutline}[\:\w_*&amp;~]+?) \s* \( [^\)\(]*? \) [\w\s\{]*? $/x"/>
+		<!-- return new Object(...) -->
+		<regexp match="/^\s* \M \b ([\:\w_*&amp;~]+?\s+)+ (?{MethodOutline}[\:\w_*&amp;~]+?) \s* \( [^\)\(]*? \) \s* ; \s* $/x"/>
+	</scheme>
+
+	<scheme name="StringContent">
+		<regexp match="/\\[^uU0-7]/" region0="StringEscape"/>
+		<regexp match="/\\$/" region0="StringEscape"/>
+		<regexp match="/\\[uU][\da-fA-F]{1,8}/" region0="StringEscape"/>
+		<regexp match="/\\[0-7]{1,12}/" region0="StringEscape"/>
+		<regexp match="/[^\\\&#34;]$/" region0="Error"/>
+	</scheme>
+
+	<scheme name="LiteralStringContent">
+		<regexp match="/\\[^uU0-7]/" region0="StringEscape"/>
+		<regexp match="/\\$/" region0="StringEscape"/>
+		<regexp match="/\\[uU][\da-fA-F]{1,8}/" region0="StringEscape"/>
+		<regexp match="/\\[0-7]{1,12}/" region0="StringEscape"/>
+		<regexp match="/[\\\&#34;]/" region0="Error"/>
+	</scheme>
+
+	<scheme name="DocumentationComment">
+		<!--!!!
+		<inherit scheme="htmlTagCall">
+			<virtual scheme="htmlPairs" subst-scheme="empty"/>
+		</inherit>
+		-->
+		<inherit scheme="NetAddresses"/>
+		<regexp match="/~\*{3,}/"/>
+		<keywords region="CommentContent">
+			<symb name="*"/><symb name=","/>
+			<symb name=":"/><symb name=";"/>
+			<symb name="+"/><symb name="-"/>
+			<symb name="/"/>
+		</keywords>
+		<regexp match="/ &lt; \/? \w+ &gt; /x" region0="CommentContent"/>
+		<regexp match="/ \b ([0-9\.]+) \b /x" region0="Number"/>
+		<regexp match="/(\@author)\s+(\S.*)/x" region1="CommentContent" region2="CommentContent"/>
+
+		<inherit scheme="TabsAsErrors"/>
+		<inherit scheme="SpacesAsErrors"/>
+
+		<!--regexp match="/(\@)(\w+)/" region1="Symbol"-->
+		<keywords region="CommentContent">
+			<word name="@beaninfo"/>
+			<word name="@deprecated"/>
+			<word name="@exception"/>
+			<word name="@param"/>
+			<word name="@return"/>
+			<word name="@see"/>
+			<word name="@seealso"/>
+			<word name="@serial"/>
+			<word name="@since"/>
+			<word name="@modified"/>
+			<word name="@throws"/>
+			<word name="@version"/>
+			<symb name="@(#)"/>
+			<symb name="#"/>
+			<symb name="@"/>
+		</keywords>
+	</scheme>
+
+	<scheme name="PnutsComments">
+		<regexp match="/\/\*\*\//" region="Comment"/>
+		<block start="/\/\//" end="/$/" scheme="Comment" region="LineComment"/>
+		<block start="/\/\*\*/" end="/\*\//" scheme="DocumentationComment"
+			region="CommentDoc" region00="PairStart" region10="PairEnd"/>
+		<block start="/\/\*/" end="/\*\//" scheme="Comment"
+			region="Comment" region00="PairStart" region10="PairEnd"/>
+	</scheme>
+
+	<scheme name="Keywords-pnutsModules" if="pnuts-modules">
+		<keywords region="def:ClassKeyword">
+          <!-- Pnuts module functions. -->
+          <word name="$"/>
+          <word name="acos"/>
+          <word name="addClassPath"/>
+          <word name="addCookie"/>
+          <word name="addDay"/>
+          <word name="addHour"/>
+          <word name="addMillisecond"/>
+          <word name="addMinute"/>
+          <word name="addMonth"/>
+          <word name="addSecond"/>
+          <word name="addShutdownHook"/>
+          <word name="addWeek"/>
+          <word name="addYear"/>
+          <word name="aggregateMode"/>
+          <word name="applyFunction"/>
+          <word name="applyTemplate"/>
+          <word name="arraycopy"/>
+          <word name="asin"/>
+          <word name="async"/>
+          <word name="atan"/>
+          <word name="atan2"/>
+          <word name="base64decode"/>
+          <word name="base64encode"/>
+          <word name="basename"/>
+          <word name="beanclass"/>
+          <word name="binarySearch"/>
+          <word name="bind"/>
+          <word name="call"/>
+          <word name="canRead"/>
+          <word name="canWrite"/>
+          <word name="cat"/>
+          <word name="ceil"/>
+          <word name="charset"/>
+          <word name="charsets"/>
+          <word name="chdir"/>
+          <word name="classGenerator"/>
+          <word name="collect"/>
+          <word name="compile"/>
+          <word name="console"/>
+          <word name="constant"/>
+          <word name="convertDynamicPage"/>
+          <word name="copy"/>
+          <word name="cos"/>
+          <word name="count"/>
+          <word name="createPackage"/>
+          <word name="createTempFile"/>
+          <word name="createThread"/>
+          <word name="cropImage"/>
+          <word name="currentThread"/>
+          <word name="currentTimeMillis"/>
+          <word name="dataInput"/>
+          <word name="dataOutput"/>
+          <word name="date"/>
+          <word name="debug"/>
+          <word name="decodeBean"/>
+          <word name="decodeURL"/>
+          <word name="decrypt"/>
+          <word name="defineKey"/>
+          <word name="defineTags"/>
+          <word name="delete"/>
+          <word name="diffDay"/>
+          <word name="diffHour"/>
+          <word name="diffMinute"/>
+          <word name="diffMonth"/>
+          <word name="diffSecond"/>
+          <word name="diffWeek"/>
+          <word name="diffYear"/>
+          <word name="dirname"/>
+          <word name="dumpclass"/>
+          <word name="element"/>
+          <word name="emailAddress"/>
+          <word name="encodeBean"/>
+          <word name="encodeURL"/>
+          <word name="encrypt"/>
+          <word name="escape"/>
+          <word name="error"/>
+          <word name="events"/>
+          <word name="exists"/>
+          <word name="exit"/>
+          <word name="exp"/>
+          <word name="extractZip"/>
+          <word name="filter"/>
+          <word name="filterImage"/>
+          <word name="findPackage"/>
+          <word name="flush"/>
+          <word name="fork"/>
+          <word name="format"/>
+          <word name="formatCurrency"/>
+          <word name="formatDate"/>
+          <word name="formatDateTime"/>
+          <word name="formatMessage"/>
+          <word name="formatNumber"/>
+          <word name="formatPercent"/>
+          <word name="formatTemplate"/>
+          <word name="formatTime"/>
+          <word name="frame"/>
+          <word name="generateBeanClass"/>
+          <word name="getBeanProperties"/>
+          <word name="getByteArray"/>
+          <word name="getCharacterEncoding"/>
+          <word name="getCharArray"/>
+          <word name="getClassPath"/>
+          <word name="getClipboard"/>
+          <word name="getCookie"/>
+          <word name="getDayOfMonth"/>
+          <word name="getDayOfWeek"/>
+          <word name="getDayOfYear"/>
+          <word name="getErrorWriter"/>
+          <word name="getFile"/>
+          <word name="getFile (servlet)"/>
+          <word name="getHour"/>
+          <word name="getInetAddress"/>
+          <word name="getInitParameter"/>
+          <word name="getKeyStore"/>
+          <word name="getKeyStroke"/>
+          <word name="getLocale"/>
+          <word name="getLocalHost"/>
+          <word name="getLocalizedResource"/>
+          <word name="getMatch"/>
+          <word name="getMatches"/>
+          <word name="getMatchStart"/>
+          <word name="getMatchEnd"/>
+          <word name="getMatchCount"/>
+          <word name="getMaxDayOfMonth"/>
+          <word name="getMaxDayOfYear"/>
+          <word name="getMenuItem"/>
+          <word name="getMessages"/>
+          <word name="getMillisecond"/>
+          <word name="getMinute"/>
+          <word name="getMonth"/>
+          <word name="getNumberOfGroups"/>
+          <word name="getPackage"/>
+          <word name="getParameter"/>
+          <word name="getPriority"/>
+          <word name="getPrivateKey"/>
+          <word name="getProperty"/>
+          <word name="getPublicKey"/>
+          <word name="getRequest"/>
+          <word name="getResource"/>
+          <word name="getResourceBundle"/>
+          <word name="getResponse"/>
+          <word name="getSecond"/>
+          <word name="getSecretKey"/>
+          <word name="getSession"/>
+          <word name="getSessionMap"/>
+          <word name="getTimeZone"/>
+          <word name="getToolkit"/>
+          <word name="getURL"/>
+          <word name="getURL (servlet)"/>
+          <word name="getWriter"/>
+          <word name="getYear"/>
+          <word name="gzip"/>
+          <word name="hashTable"/>
+          <word name="hex"/>
+          <word name="IEEEremainder"/>
+          <word name="include"/>
+          <word name="includeFile"/>
+          <word name="interface"/>
+          <word name="isAbstract"/>
+          <word name="isArray"/>
+          <word name="isCompiled"/>
+          <word name="isDirectory"/>
+          <word name="isEmpty"/>
+          <word name="isFunction"/>
+          <word name="isGenerator"/>
+          <word name="isInterface"/>
+          <word name="isJava2"/>
+          <word name="isLocalHost"/>
+          <word name="isPrivate"/>
+          <word name="isProtected"/>
+          <word name="isPublic"/>
+          <word name="isStatic"/>
+          <word name="iterable"/>
+          <word name="javaAdapter"/>
+          <word name="join"/>
+          <word name="layout"/>
+          <word name="list"/>
+          <word name="listMailFolders"/>
+          <word name="listenerMethodNames"/>
+          <word name="listenerType"/>
+          <word name="loadProperties"/>
+          <word name="log"/>
+          <word name="loopEnum"/>
+          <word name="LRUcache"/>
+          <word name="ls"/>
+          <word name="makeImage"/>
+          <word name="makeProxy"/>
+          <word name="makeQueryString"/>
+          <word name="manifest"/>
+          <word name="map"/>
+          <word name="mapFile"/>
+          <word name="mapFunction"/>
+          <word name="mapget"/>
+          <word name="mapput"/>
+          <word name="match"/>
+          <word name="matchAll"/>
+          <word name="max"/>
+          <word name="md5"/>
+          <word name="memcache"/>
+          <word name="menu"/>
+          <word name="menubar"/>
+          <word name="mergeZip"/>
+          <word name="methods"/>
+          <word name="mimepart"/>
+          <word name="min"/>
+          <word name="mkdir"/>
+          <word name="mutex"/>
+          <word name="newDocument"/>
+          <word name="nodeAccess"/>
+          <word name="nodeEdit"/>
+          <word name="nonPublicMemberAccess"/>
+          <word name="open"/>
+          <word name="openByteArray"/>
+          <word name="openCharArray"/>
+          <word name="openJDBC"/>
+          <word name="openJDO"/>
+          <word name="openMailFolder"/>
+          <word name="openMailStore"/>
+          <word name="openURL"/>
+          <word name="openZip"/>
+          <word name="pack200"/>
+          <word name="parse"/>
+          <word name="parseQueryString"/>
+          <word name="parseXML"/>
+          <word name="permissions"/>
+          <word name="pipe"/>
+          <word name="pnutool"/>
+          <word name="pop"/>
+          <word name="pow"/>
+          <word name="print"/>
+          <word name="printAll"/>
+          <word name="printf"/>
+          <word name="println"/>
+          <word name="project"/>
+          <word name="properties"/>
+          <word name="publicMemberAccess"/>
+          <word name="push"/>
+          <word name="pwd"/>
+          <word name="random"/>
+          <word name="rangeEnum"/>
+          <word name="read"/>
+          <word name="readBoolean"/>
+          <word name="readBytes"/>
+          <word name="readChar"/>
+          <word name="readDocument"/>
+          <word name="readDouble"/>
+          <word name="readDynamicPage"/>
+          <word name="readFloat"/>
+          <word name="readGetParameters"/>
+          <word name="readImage"/>
+          <word name="readInt"/>
+          <word name="readLine"/>
+          <word name="readLines"/>
+          <word name="readLong"/>
+          <word name="readMultipartRequest"/>
+          <word name="readObject"/>
+          <word name="readParameters"/>
+          <word name="readPostParameters"/>
+          <word name="readShort"/>
+          <word name="readText"/>
+          <word name="readURL"/>
+          <word name="readUTF"/>
+          <word name="readUnsignedByte"/>
+          <word name="readUnsignedShort"/>
+          <word name="reader"/>
+          <word name="readZip"/>
+          <word name="readZipEntries"/>
+          <word name="reduce"/>
+          <word name="regex"/>
+          <word name="removePackage"/>
+          <word name="removeShutdownHook"/>
+          <word name="renameTo"/>
+          <word name="requestPath"/>
+          <word name="requestScope"/>
+          <word name="resizeImage"/>
+          <word name="reverse"/>
+          <word name="rint"/>
+          <word name="rootScope"/>
+          <word name="round"/>
+          <word name="rsort"/>
+          <word name="run"/>
+          <word name="scanLines"/>
+          <word name="schedule"/>
+          <word name="sealObject"/>
+          <word name="secureFunc"/>
+          <word name="selectNodeList"/>
+          <word name="selectSingleNode"/>
+          <word name="sendEmail"/>
+          <word name="sendPostRequest"/>
+          <word name="sendRedirect"/>
+          <word name="set"/>
+          <word name="setBeanProperties"/>
+          <word name="setCharacterEncoding"/>
+          <word name="setClassPath"/>
+          <word name="setClipboard"/>
+          <word name="setFinalizer"/>
+          <word name="setLocale"/>
+          <word name="setMailCharset"/>
+          <word name="setPriority"/>
+          <word name="setProperty"/>
+          <word name="setTimeZone"/>
+          <word name="setupActions"/>
+          <word name="setupPages"/>
+          <word name="setVerbose"/>
+          <word name="sha"/>
+          <word name="shellExpand"/>
+          <word name="shift"/>
+          <word name="showImage"/>
+          <word name="signObject"/>
+          <word name="sin"/>
+          <word name="size"/>
+          <word name="sleep"/>
+          <word name="sort"/>
+          <word name="split"/>
+          <word name="sprintf"/>
+          <word name="sqrt"/>
+          <word name="string"/>
+          <word name="stringReader"/>
+          <word name="stringToUnicode"/>
+          <word name="stringWriter"/>
+          <word name="subclass"/>
+          <word name="substitute"/>
+          <word name="supertypes"/>
+          <word name="sync"/>
+          <word name="system"/>
+          <word name="tan"/>
+          <word name="template"/>
+          <word name="textGrab"/>
+          <word name="threadGroup"/>
+          <word name="threadLocal"/>
+          <word name="threadPool"/>
+          <word name="toDegrees"/>
+          <word name="toLowerCase"/>
+          <word name="toRadius"/>
+          <word name="toUpperCase"/>
+          <word name="transformXSL"/>
+          <word name="translate"/>
+          <word name="traverseDocument"/>
+          <word name="unbind"/>
+          <word name="unescape"/>
+          <word name="unicodeToString"/>
+          <word name="unpack200"/>
+          <word name="unparse"/>
+          <word name="unsealObject"/>
+          <word name="unshift"/>
+          <word name="updateZip"/>
+          <word name="useEventThread"/>
+          <word name="uudecode"/>
+          <word name="uuencode"/>
+          <word name="vector"/>
+          <word name="verifyObject"/>
+          <word name="versionInfo"/>
+          <word name="walkDirectory"/>
+          <word name="whichRegexAPI"/>
+          <word name="write"/>
+          <word name="writeBoolean"/>
+          <word name="writeBytes"/>
+          <word name="writeChar"/>
+          <word name="writeChars"/>
+          <word name="writeDocument"/>
+          <word name="writeDouble"/>
+          <word name="writeFloat"/>
+          <word name="writeImage"/>
+          <word name="writeInt"/>
+          <word name="writeLong"/>
+          <word name="writeObject"/>
+          <word name="writer"/>
+          <word name="writeShort"/>
+          <word name="writeText"/>
+          <word name="writeUTF"/>
+          <word name="writeZip"/>
+          <word name="writeZipEntries"/>
+          <word name="zcat"/>
+		</keywords>
+	</scheme>
+
+	<scheme name="Keywords-j2seClasses" if="j2se-classes">
+		<keywords region="def:ClassKeyword">
+			<word name="AbstractMethoError"/>
+			<word name="AccessException"/>
+			<word name="Acl"/>
+			<word name="AclEntry"/>
+			<word name="AclNotFoundException"/>
+			<word name="ActionEvent"/>
+			<word name="ActionListener"/>
+			<word name="Adjustable"/>
+			<word name="AdjustmentEvent"/>
+			<word name="AdjustmentListener"/>
+			<word name="Adler32"/>
+			<word name="AlreadyBoundException"/>
+			<word name="Applet"/>
+			<word name="AppletContext"/>
+			<word name="AppletStub"/>
+			<word name="AreaAveragingScaleFilter"/>
+			<word name="ArithmeticException"/>
+			<word name="Array"/>
+			<word name="ArrayIndexOutOfBoundsException"/>
+			<word name="ArrayStoreException"/>
+			<word name="AudioClip"/>
+			<word name="AWTError"/>
+			<word name="AWTEvent"/>
+			<word name="AWTEventMulticaster"/>
+			<word name="AWTException"/>
+			<word name="BeanDescriptor"/>
+			<word name="BeanInfo"/>
+			<word name="Beans"/>
+			<word name="BigDecimal"/>
+			<word name="BigInteger"/>
+			<word name="BindException"/>
+			<word name="BitSet"/>
+			<word name="BooleanConstant"/>
+			<word name="BorderLayout"/>
+			<word name="BreakIterator"/>
+			<word name="BufferedInputStream"/>
+			<word name="BufferedOutputStream"/>
+			<word name="BufferedReader"/>
+			<word name="BufferedWriter"/>
+			<word name="Button"/>
+			<word name="ButtonPeer"/>
+			<word name="Byte"/>
+			<word name="ByteArrayInputStream"/>
+			<word name="ByteArrayOutputStream"/>
+			<word name="Calendar"/>
+			<word name="CallableStatement"/>
+			<word name="Canvas"/>
+			<word name="CanvasPeer"/>
+			<word name="CardLayout"/>
+			<word name="Certificate"/>
+			<word name="Character"/>
+			<word name="CharacterIterator"/>
+			<word name="CharArrayReader"/>
+			<word name="CharArrayWriter"/>
+			<word name="CharConversionException"/>
+			<word name="Checkbox"/>
+			<word name="CheckboxGroup"/>
+			<word name="CheckboxMenuItem"/>
+			<word name="CheckboxMenuItemPeer"/>
+			<word name="CheckboxPeer"/>
+			<word name="CheckedInputStream"/>
+			<word name="CheckedOutputStream"/>
+			<word name="Checksum"/>
+			<word name="Choice"/>
+			<word name="ChoiceFormat"/>
+			<word name="ChoicePeer"/>
+			<word name="Class"/>
+			<word name="ClassCastException"/>
+			<word name="ClassCircularityError"/>
+			<word name="ClassFormatError"/>
+			<word name="ClassLoader"/>
+			<word name="ClassNotFoundException"/>
+			<word name="Clipboard"/>
+			<word name="ClipboardOwner"/>
+			<word name="Cloneable"/>
+			<word name="CloneNotSupportedException"/>
+			<word name="CollationElementIterator"/>
+			<word name="CollationKey"/>
+			<word name="Collator"/>
+			<word name="Collection"/>
+			<word name="Color"/>
+			<word name="ColorModel"/>
+			<word name="Compiler"/>
+			<word name="Component"/>
+			<word name="ComponentAdapter"/>
+			<word name="ComponentEvent"/>
+			<word name="ComponentListener"/>
+			<word name="ComponentPeer"/>
+			<word name="ConnectException"/>
+			<word name="ConnectIOException"/>
+			<word name="Connection"/>
+			<word name="Constructor"/>
+			<word name="Container"/>
+			<word name="ContainerAdapter"/>
+			<word name="ContainerEvent"/>
+			<word name="ContainerListener"/>
+			<word name="ContainerPeer"/>
+			<word name="ContentHandler"/>
+			<word name="ContentHandlerFactory"/>
+			<word name="CRC32"/>
+			<word name="CropImageFilter"/>
+			<word name="Cursor"/>
+			<word name="Customizer"/>
+			<word name="DatabaseMetaData"/>
+			<word name="DataFlavor"/>
+			<word name="DataFormatException"/>
+			<word name="DatagramPacket"/>
+			<word name="DatagramSocket"/>
+			<word name="DatagramSocketImpl"/>
+			<word name="DataInput"/>
+			<word name="DataInputStream"/>
+			<word name="DataOutput"/>
+			<word name="DataOutputStream"/>
+			<word name="DataTruncation"/>
+			<word name="Date"/>
+			<word name="DateFormat"/>
+			<word name="DateFormatSymbols"/>
+			<word name="DecimalFormat"/>
+			<word name="DecimalFormatSymbols"/>
+			<word name="Deflater"/>
+			<word name="DeflaterOutputStream"/>
+			<word name="DGC"/>
+			<word name="Dialog"/>
+			<word name="DialogPeer"/>
+			<word name="Dictionary"/>
+			<word name="DigestException"/>
+			<word name="DigestInputStream"/>
+			<word name="DigestOutputStream"/>
+			<word name="Dimension"/>
+			<word name="DirectColorModel"/>
+			<word name="Double"/>
+			<word name="Driver"/>
+			<word name="DriverManager"/>
+			<word name="DriverPropertyInfo"/>
+			<word name="DSAKey"/>
+			<word name="DSAKeyPairGenerator"/>
+			<word name="DSAParams"/>
+			<word name="DSAPrivateKey"/>
+			<word name="DSAPublicKey"/>
+			<word name="EmptyStackException"/>
+			<word name="Enumeration"/>
+			<word name="EOFException"/>
+			<word name="Error"/>
+			<word name="Event"/>
+			<word name="EventListener"/>
+			<word name="EventObject"/>
+			<word name="EventQueue"/>
+			<word name="EventSetDescriptor"/>
+			<word name="Exception"/>
+			<word name="ExceptionInInitializerError"/>
+			<word name="ExportException"/>
+			<word name="FeatureDescriptor"/>
+			<word name="Field"/>
+			<word name="FieldPosition"/>
+			<word name="File"/>
+			<word name="FileDescriptor"/>
+			<word name="FileDialog"/>
+			<word name="FileDialogPeer"/>
+			<word name="FileInputStream"/>
+			<word name="FilenameFilter"/>
+			<word name="FileNameMap"/>
+			<word name="FileNotFoundException"/>
+			<word name="FileOutputStream"/>
+			<word name="FileReader"/>
+			<word name="FileWriter"/>
+			<word name="FilteredImageSource"/>
+			<word name="FilterInputStream"/>
+			<word name="FilterOutputStream"/>
+			<word name="FilterReader"/>
+			<word name="FilterWriter"/>
+			<word name="Float"/>
+			<word name="FlowLayout"/>
+			<word name="FocusAdapter"/>
+			<word name="FocusEvent"/>
+			<word name="FocusListener"/>
+			<word name="Font"/>
+			<word name="FontMetrics"/>
+			<word name="FontPeer"/>
+			<word name="Format"/>
+			<word name="Frame"/>
+			<word name="FramePeer"/>
+			<word name="Graphics"/>
+			<word name="GregorianCalendar"/>
+			<word name="GridBagConstraints"/>
+			<word name="GridBagLayout"/>
+			<word name="GridLayout"/>
+			<word name="Group"/>
+			<word name="GZIPInputStream"/>
+			<word name="GZIPOutputStream"/>
+			<word name="Hashtable"/>
+			<word name="HttpURLConnection"/>
+			<word name="Identity"/>
+			<word name="IdentityScope"/>
+			<word name="IllegalAccessError"/>
+			<word name="IllegalAccessException"/>
+			<word name="IllegalArgumentException"/>
+			<word name="IllegalComponentStateException"/>
+			<word name="IllegalMonitorStateException"/>
+			<word name="IllegalStateException"/>
+			<word name="IllegalThreadStateException"/>
+			<word name="Image"/>
+			<word name="ImageConsumer"/>
+			<word name="ImageFilter"/>
+			<word name="ImageObserver"/>
+			<word name="ImageProducer"/>
+			<word name="IncompatibleClassChangeError"/>
+			<word name="IndexColorModel"/>
+			<word name="IndexedPropertyDescriptor"/>
+			<word name="IndexOutOfBoundsException"/>
+			<word name="InetAddress"/>
+			<word name="Inflater"/>
+			<word name="InflaterInputStream"/>
+			<word name="InputEvent"/>
+			<word name="InputStream"/>
+			<word name="InputStreamReader"/>
+			<word name="Insets"/>
+			<word name="InstantiationError"/>
+			<word name="InstantiationException"/>
+			<word name="Integer"/>
+			<word name="InternalError"/>
+			<word name="InterruptedException"/>
+			<word name="InterruptedIOException"/>
+			<word name="IntrospectionException"/>
+			<word name="Introspector"/>
+			<word name="InvalidClassException"/>
+			<word name="InvalidKeyException"/>
+			<word name="InvalidObjectException"/>
+			<word name="InvalidParameterException"/>
+			<word name="InvocationTargetException"/>
+			<word name="IOException"/>
+			<word name="ItemEvent"/>
+			<word name="ItemListener"/>
+			<word name="ItemSelectable"/>
+			<word name="Key"/>
+			<word name="KeyAdapter"/>
+			<word name="KeyEvent"/>
+			<word name="KeyException"/>
+			<word name="KeyListener"/>
+			<word name="KeyManagementException"/>
+			<word name="KeyPair"/>
+			<word name="KeyPairGenerator"/>
+			<word name="Label"/>
+			<word name="LabelPeer"/>
+			<word name="LastOwnerException"/>
+			<word name="LayoutManager"/>
+			<word name="LayoutManager2"/>
+			<word name="Lease"/>
+			<word name="LightweightPeer"/>
+			<word name="LineNumberInputStream"/>
+			<word name="LineNumberReader"/>
+			<word name="LinkageError"/>
+			<word name="List"/>
+			<word name="ListPeer"/>
+			<word name="ListResourceBundle"/>
+			<word name="LoaderHandler"/>
+			<word name="Locale"/>
+			<word name="LocateRegistry"/>
+			<word name="LogStream"/>
+			<word name="Long"/>
+			<word name="MalformedURLException"/>
+			<word name="MarshalException"/>
+			<word name="Math"/>
+			<word name="MediaTracker"/>
+			<word name="Member"/>
+			<word name="MemoryImageSource"/>
+			<word name="Menu"/>
+			<word name="MenuBar"/>
+			<word name="MenuBarPeer"/>
+			<word name="MenuComponent"/>
+			<word name="MenuComponentPeer"/>
+			<word name="MenuContainer"/>
+			<word name="MenuItem"/>
+			<word name="MenuItemPeer"/>
+			<word name="MenuPeer"/>
+			<word name="MenuShortcut"/>
+			<word name="MessageDigest"/>
+			<word name="MessageFormat"/>
+			<word name="Method"/>
+			<word name="MethodDescriptor"/>
+			<word name="MissingResourceException"/>
+			<word name="Modifier"/>
+			<word name="MouseAdapter"/>
+			<word name="MouseEvent"/>
+			<word name="MouseListener"/>
+			<word name="MouseMotionAdapter"/>
+			<word name="MouseMotionListener"/>
+			<word name="MulticastSocket"/>
+			<word name="Naming"/>
+			<word name="NegativeArraySizeException"/>
+			<word name="NoClassDefFounError"/>
+			<word name="NoRouteToHostException"/>
+			<word name="NoSuchAlgorithmException"/>
+			<word name="NoSuchElementException"/>
+			<word name="NoSuchFielError"/>
+			<word name="NoSuchFieldException"/>
+			<word name="NoSuchMethoError"/>
+			<word name="NoSuchMethodException"/>
+			<word name="NoSuchObjectException"/>
+			<word name="NoSuchProviderException"/>
+			<word name="NotActiveException"/>
+			<word name="NotBoundException"/>
+			<word name="NotOwnerException"/>
+			<word name="NotSerializableException"/>
+			<word name="NullPointerException"/>
+			<word name="Number"/>
+			<word name="NumberFormat"/>
+			<word name="NumberFormatException"/>
+			<word name="Object"/>
+			<word name="ObjectInput"/>
+			<word name="ObjectInputStream"/>
+			<word name="ObjectInputValidation"/>
+			<word name="ObjectOutput"/>
+			<word name="ObjectOutputStream"/>
+			<word name="ObjectStreamClass"/>
+			<word name="ObjectStreamException"/>
+			<word name="ObjID"/>
+			<word name="Observable"/>
+			<word name="Observer"/>
+			<word name="Operation"/>
+			<word name="OptionalDataException"/>
+			<word name="OutOfMemoryError"/>
+			<word name="OutputStream"/>
+			<word name="OutputStreamWriter"/>
+			<word name="Owner"/>
+			<word name="PaintEvent"/>
+			<word name="Panel"/>
+			<word name="PanelPeer"/>
+			<word name="ParameterDescriptor"/>
+			<word name="ParseException"/>
+			<word name="ParsePosition"/>
+			<word name="Permission"/>
+			<word name="PipedInputStream"/>
+			<word name="PipedOutputStream"/>
+			<word name="PipedReader"/>
+			<word name="PipedWriter"/>
+			<word name="PixelGrabber"/>
+			<word name="Point"/>
+			<word name="Polygon"/>
+			<word name="PopupMenu"/>
+			<word name="PopupMenuPeer"/>
+			<word name="PreparedStatement"/>
+			<word name="Principal"/>
+			<word name="PrintGraphics"/>
+			<word name="PrintJob"/>
+			<word name="PrintStream"/>
+			<word name="PrintWriter"/>
+			<word name="PrivateKey"/>
+			<word name="Process"/>
+			<word name="Properties"/>
+			<word name="PropertyChangeEvent"/>
+			<word name="PropertyChangeListener"/>
+			<word name="PropertyChangeSupport"/>
+			<word name="PropertyDescriptor"/>
+			<word name="PropertyEditor"/>
+			<word name="PropertyEditorManager"/>
+			<word name="PropertyEditorSupport"/>
+			<word name="PropertyResourceBundle"/>
+			<word name="PropertyVetoException"/>
+			<word name="ProtocolException"/>
+			<word name="Provider"/>
+			<word name="ProviderException"/>
+			<word name="PublicKey"/>
+			<word name="PushbackInputStream"/>
+			<word name="PushbackReader"/>
+			<word name="Random"/>
+			<word name="RandomAccessFile"/>
+			<word name="Reader"/>
+			<word name="Rectangle"/>
+			<word name="Registry"/>
+			<word name="RegistryHandler"/>
+			<word name="Remote"/>
+			<word name="RemoteCall"/>
+			<word name="RemoteException"/>
+			<word name="RemoteObject"/>
+			<word name="RemoteRef"/>
+			<word name="RemoteServer"/>
+			<word name="RemoteStub"/>
+			<word name="ReplicateScaleFilter"/>
+			<word name="ResourceBundle"/>
+			<word name="ResultSet"/>
+			<word name="ResultSetMetaData"/>
+			<word name="RGBImageFilter"/>
+			<word name="RMIClassLoader"/>
+			<word name="RMIFailureHandler"/>
+			<word name="RMISecurityException"/>
+			<word name="RMISecurityManager"/>
+			<word name="RMISocketFactory"/>
+			<word name="RuleBasedCollator"/>
+			<word name="Runnable"/>
+			<word name="Runtime"/>
+			<word name="RuntimeException"/>
+			<word name="Scrollbar"/>
+			<word name="ScrollbarPeer"/>
+			<word name="ScrollPane"/>
+			<word name="ScrollPanePeer"/>
+			<word name="SecureRandom"/>
+			<word name="Security"/>
+			<word name="SecurityException"/>
+			<word name="SecurityManager"/>
+			<word name="SequenceInputStream"/>
+			<word name="Serializable"/>
+			<word name="ServerCloneException"/>
+			<word name="ServerError"/>
+			<word name="ServerException"/>
+			<word name="ServerNotActiveException"/>
+			<word name="ServerRef"/>
+			<word name="ServerRuntimeException"/>
+			<word name="ServerSocket"/>
+			<word name="Shape"/>
+			<word name="Short"/>
+			<word name="Signature"/>
+			<word name="SignatureException"/>
+			<word name="Signer"/>
+			<word name="SimpleBeanInfo"/>
+			<word name="SimpleDateFormat"/>
+			<word name="SimpleTimeZone"/>
+			<word name="Skeleton"/>
+			<word name="SkeletonMismatchException"/>
+			<word name="SkeletonNotFoundException"/>
+			<word name="Socket"/>
+			<word name="SocketException"/>
+			<word name="SocketImpl"/>
+			<word name="SocketImplFactory"/>
+			<word name="SocketSecurityException"/>
+			<word name="SQLException"/>
+			<word name="SQLWarning"/>
+			<word name="Stack"/>
+			<word name="StackOverflowError"/>
+			<word name="Statement"/>
+			<word name="StreamCorruptedException"/>
+			<word name="StreamTokenizer"/>
+			<word name="String"/>
+			<word name="StringBuffer"/>
+			<word name="StringBufferInputStream"/>
+			<word name="StringCharacterIterator"/>
+			<word name="StringIndexOutOfBoundsException"/>
+			<word name="StringReader"/>
+			<word name="StringSelection"/>
+			<word name="StringTokenizer"/>
+			<word name="StringWriter"/>
+			<word name="StubNotFoundException"/>
+			<word name="SyncFailedException"/>
+			<word name="System"/>
+			<word name="SystemColor"/>
+			<word name="TextArea"/>
+			<word name="TextAreaPeer"/>
+			<word name="TextComponent"/>
+			<word name="TextComponentPeer"/>
+			<word name="TextEvent"/>
+			<word name="TextField"/>
+			<word name="TextFieldPeer"/>
+			<word name="TextListener"/>
+			<word name="Thread"/>
+			<word name="ThreadDeath"/>
+			<word name="ThreadGroup"/>
+			<word name="Throwable"/>
+			<word name="Time"/>
+			<word name="Timestamp"/>
+			<word name="TimeZone"/>
+			<word name="Toolkit"/>
+			<word name="TooManyListenersException"/>
+			<word name="Transferable"/>
+			<word name="Types"/>
+			<word name="UID"/>
+			<word name="UnexpectedException"/>
+			<word name="UnicastRemoteObject"/>
+			<word name="UnknownError"/>
+			<word name="UnknownHostException"/>
+			<word name="UnknownServiceException"/>
+			<word name="UnmarshalException"/>
+			<word name="Unreferenced"/>
+			<word name="UnsatisfiedLinkError"/>
+			<word name="UnsupportedEncodingException"/>
+			<word name="UnsupportedFlavorException"/>
+			<word name="URL"/>
+			<word name="URLConnection"/>
+			<word name="URLEncoder"/>
+			<word name="URLStreamHandler"/>
+			<word name="URLStreamHandlerFactory"/>
+			<word name="UTFDataFormatException"/>
+			<word name="Vector"/>
+			<word name="VerifyError"/>
+			<word name="VetoableChangeListener"/>
+			<word name="VetoableChangeSupport"/>
+			<word name="VirtualMachineError"/>
+			<word name="Visibility"/>
+			<word name="VMID"/>
+			<word name="Void"/>
+			<word name="Window"/>
+			<word name="WindowAdapter"/>
+			<word name="WindowEvent"/>
+			<word name="WindowListener"/>
+			<word name="WindowPeer"/>
+			<word name="WriteAbortedException"/>
+			<word name="Writer"/>
+			<word name="ZipEntry"/>
+			<word name="ZipException"/>
+			<word name="ZipFile"/>
+			<word name="ZipInputStream"/>
+			<word name="ZipOutputStream"/>
+		</keywords>
+	</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+	- Version: MPL 1.1/GPL 2.0/LGPL 2.1
+	-
+	- The contents of this file are subject to the Mozilla Public License Version
+	- 1.1 (the "License"); you may not use this file except in compliance with
+	- the License. You may obtain a copy of the License at
+	- http://www.mozilla.org/MPL/
+	-
+	- Software distributed under the License is distributed on an "AS IS" basis,
+	- WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+	- for the specific language governing rights and limitations under the
+	- License.
+	-
+	- The Original Code is the Colorer Library.
+	-
+	- The Initial Developer of the Original Code is
+	- Cail Lomecb <cail@nm.ru>.
+	- Portions created by the Initial Developer are Copyright (C) 1999-2005
+	- the Initial Developer. All Rights Reserved.
+	-
+	- Contributor(s):
+	-  Nathan Sweet <misc@n4te.com>
+	-  Eugene Efremov <4mirror@mail.ru>
+	-  Evgeny Stepanischev <se@e-kazan.ru>
+	-
+	- Alternatively, the contents of this file may be used under the terms of
+	- either the GNU General Public License Version 2 or later (the "GPL"), or
+	- the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+	- in which case the provisions of the GPL or the LGPL are applicable instead
+	- of those above. If you wish to allow use of your version of this file only
+	- under the terms of either the GPL or the LGPL, and not to allow others to
+	- use your version of this file under the terms of the MPL, indicate your
+	- decision by deleting the provisions above and replace them with the notice
+	- and other provisions required by the LGPL or the GPL. If you do not delete
+	- the provisions above, a recipient may use your version of this file under
+	- the terms of any one of the MPL, the GPL or the LGPL.
+	-
+	- ***** END LICENSE BLOCK ***** -->

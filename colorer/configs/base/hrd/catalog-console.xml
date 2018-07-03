@@ -1,6 +1,9 @@
     <hrd class="console" name="default" description="Aqua on blue">
       <location link="&hrd;/console/default.hrd"/>
     </hrd>
+    <hrd class="console" name="black"   description="Black colors">
+      <location link="&hrd;/console/black.hrd"/>
+    </hrd>
     <hrd class="console" name="blue" description="Blue colors">
       <location link="&hrd;/console/blue.hrd"/>
     </hrd>
@@ -9,9 +12,6 @@
     </hrd>
     <hrd class="console" name="white" description="White colors">
       <location link="&hrd;/console/white.hrd"/>
-    </hrd>
-    <hrd class="console" name="black"   description="Black colors">
-      <location link="&hrd;/console/black.hrd"/>
     </hrd>
     <hrd class="console" name="hack"  description="Matrix/Hack">
       <location link="&hrd;/console/hack.hrd"/>
@@ -30,10 +30,10 @@
       <location link="&hrd;/console/mirror.hrd"/>
     </hrd>
 
-    <hrd class="console" name="ocean" description="Ocean Vladimir Fonarev">
+    <hrd class="console" name="ocean" description="Ocean by Vladimir Fonarev">
       <location link="&hrd;/console/contrib/ocean.hrd"/>
     </hrd>
-    <hrd class="console" name="black_ay" description="Black from Alex Yaroslavsky">
+    <hrd class="console" name="black_ay" description="Black by Alex Yaroslavsky">
       <location link="&hrd;/console/contrib/black_ay.hrd"/>
     </hrd>
     <hrd class="console" name="black_sezal" description="Black Sezal">
@@ -42,10 +42,10 @@
     <hrd class="console" name="graypult" description="Gray (pult)">
       <location link="&hrd;/console/contrib/gray_pult.hrd"/>
     </hrd>
-    <hrd class="console" name="classic" description="'Classic' by Tim Sobolev">
+    <hrd class="console" name="classic" description="Classic by Tim Sobolev">
       <location link="&hrd;/console/contrib/classic.hrd"/>
     </hrd>
-    <hrd class="console" name="Cyberpunk" description="Cyberpunk black from 4ekucT">
+    <hrd class="console" name="Cyberpunk" description="Cyberpunk black by 4ekucT">
       <location link="&hrd;/console/contrib/cyberpunk.hrd"/>
     </hrd>
     <hrd class="console" name="visual" description="Visual by Roman Kuzmin">
@@ -55,6 +55,6 @@
       <location link="&hrd;/console/contrib/take4.hrd"/>
     </hrd>
     
-    <hrd class="console" name="mirror-conemu" description="Support ConEmu extends">
+    <hrd class="console" name="mirror-conemu" description="ConEmu Extending">
       <location link="&hrd;/console/emu/mirror.hrd"/>
     </hrd>

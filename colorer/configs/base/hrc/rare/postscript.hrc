@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="postscript">
+
+ <annotation><documentation>
+   PostScript languare
+ </documentation><contributors><![CDATA[
+   Eugene Efremov <4mirror@mail.ru>
+ ]]></contributors></annotation>
+
+
+<region name="br" parent="def:SymbolStrong"/>
+<region name="var" parent="def:Var"/>
+<region name="var.name" parent="def:Outlined"/>
+
+<region name="comdir" parent="def:Comment"/>
+<region name="comdir.name" parent="def:VarStrong"/>
+<region name="comdir.cont" parent="def:KeywordStrong"/>
+<region name="stdir" parent="comdir"/>
+<region name="stdir.cont" parent="comdir.cont"/>
+
+<region name="string" parent="def:String"/>
+<region name="string.esc" parent="def:StringContent"/>
+<region name="string.br" parent="string"/><!--def:StringEdge -->
+<region name="string2" parent="def:ParameterUnknown"/>
+
+<region name="number" parent="def:Number"/>
+<region name="number.type" parent="def:NumberPrefix"/>
+<region name="number.sgn" parent="def:NumberPrefix"/>
+<region name="number.exp" parent="def:NumberSuffix"/>
+<region name="number.float" parent="def:NumberFloat"/>
+
+<region name="words" parent="def:Keyword"/>
+<region name="words.op" parent="def:Operator"/>
+<region name="words.0" parent="words" description="Stack operators"/>
+<region name="words.1" parent="words.op" description="Math operators"/>
+<region name="words.2" parent="words" description="Array operators"/>
+<region name="words.3" parent="words" description="Dictionary operators"/>
+<region name="words.4" parent="words" description="String operators"/>
+<region name="words.5" parent="words.op" description="Compare operators"/>
+<region name="words.6" parent="words" description="Process operators"/>
+<region name="words.7" parent="words" description="Typename operators"/>
+<region name="words.8" parent="words" description="File operators"/>
+<region name="words.9" parent="words" description="Memory operators"/>
+<region name="words.10" parent="words" description="Other operators"/>
+<region name="words.11" parent="words" description="Graphic operators"/>
+
+
+<scheme name="postscript">
+ <block start="/(\{)/" end="/(\})/" scheme="postscript"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="br" region11="br"
+ />
+ <block start="/(\[)/" end="/(\])/" scheme="postscript"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="br" region11="br"
+ />
+ <inherit scheme="comment"/>
+ <inherit scheme="var"/>
+ <inherit scheme="string"/>
+ <inherit scheme="types"/>
+ <inherit scheme="words"/>
+</scheme>
+
+<scheme name="var">
+ <regexp match="/\/([\w\.\-\/\$]+)/" region="var" region1="var.name"/>
+</scheme>
+
+<scheme name="comment">
+ <regexp match="/^\%\!(.*)$/" region="stdir" region1="stdir.cont"/>
+ <regexp match="/^\%\%(\w+(\:)?)(.*)$/" region="comdir" region1="comdir.name" region3="comdir.cont"/>
+ <block start="/\%/" end="/$/" region="def:Comment" scheme="def:Comment"/>
+</scheme>
+
+<scheme name="string.content">
+ <regexp match="/\\[rntbf\\\(\)]/" region="string.esc"/>
+ <regexp match="/\\[0-7]{3}/" region="string.esc"/>
+ <regexp match="/\\./" region="def:Error"/>
+</scheme>
+
+<scheme name="string">
+ <block start="/(\()/" end="/(\))/"
+  region="string" scheme="string.content"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="string.br" region11="string.br"
+ />
+ <regexp match="/&quot;[^&quot;]&quot;/" region="string2"/>
+ <block start="/&lt;/" end="/&gt;/"
+  region="string2" scheme="def:def"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+</scheme>
+
+<scheme name="types">
+ <inherit scheme="types.auto"/>
+
+ <regexp match="/([\-+])?\b\d+\b/"  region="number" region1="number.sgn"/>
+ <regexp match="/([\-+])?(\d+)?(\.)?\b\d+(([Ee])([\-+])?\d+)?\M(\W|$)/"
+  region="number.float" region1="number.sgn"
+  region5="number.exp" region6="number.sgn"
+ />
+</scheme>
+
+<scheme name="types.auto">
+ <regexp match="/\b(2\#)[0-1]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(3\#)[0-2]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(4\#)[0-3]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(5\#)[0-4]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(6\#)[0-5]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(7\#)[0-6]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(8\#)[0-7]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(9\#)[0-8]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(10\#)\d+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(11\#)[\dAa]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(12\#)[\dABab]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(13\#)[\dA-Ca-c]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(14\#)[\dA-Da-d]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(15\#)[\dA-Ea-e]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(16\#)[\dA-Fa-f]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(17\#)[\dA-Ga-g]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(18\#)[\dA-Ha-h]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(19\#)[\dA-Ia-i]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(20\#)[\dA-Ja-j]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(21\#)[\dA-Ka-k]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(22\#)[\dA-La-l]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(23\#)[\dA-Ma-m]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(24\#)[\dA-Na-n]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(25\#)[\dA-Oa-o]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(26\#)[\dA-Pa-p]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(27\#)[\dA-Qa-q]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(28\#)[\dA-Ra-r]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(29\#)[\dA-Sa-s]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(30\#)[\dA-Ta-t]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(31\#)[\dA-Ua-u]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(32\#)[\dA-Va-v]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(33\#)[\dA-Wa-w]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(34\#)[\dA-Xa-x]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(35\#)[\dA-Ya-y]+\b/" region="number" region1="number.type"/>
+ <regexp match="/\b(36\#)[\dA-Za-z]+\b/" region="number" region1="number.type"/>
+
+ <regexp match="/\b\d+\#\w+\b/" region="def:Error"/>
+</scheme>
+
+
+<scheme name="words">
+
+ <keywords region='words.0'>
+  <symb name='=='/>
+  <word name='clear'/>
+  <word name='cleartomark'/>
+  <word name='copy'/>
+  <word name='count'/>
+  <word name='counttomark'/>
+  <word name='dup'/>
+  <word name='exch'/>
+  <word name='index'/>
+  <word name='mark'/>
+  <word name='pop'/>
+  <word name='pstack'/>
+  <word name='roll'/>
+
+ </keywords>
+ <keywords region='words.1'>
+  <word name='abs'/>
+  <word name='add'/>
+  <word name='atan'/>
+  <word name='ceiling'/>
+  <word name='cos'/>
+  <word name='div'/>
+  <word name='exp'/>
+  <word name='floor'/>
+  <word name='idiv'/>
+  <word name='ln'/>
+  <word name='log'/>
+  <word name='mod'/>
+  <word name='mul'/>
+  <word name='neg'/>
+  <word name='rand'/>
+  <word name='round'/>
+  <word name='rrand'/>
+  <word name='sin'/>
+  <word name='sqrt'/>
+  <word name='srand'/>
+  <word name='sub'/>
+  <word name='truncate'/>
+
+ </keywords>
+ <keywords region='words.2'>
+  <word name='['/>
+  <word name=']'/>
+  <word name='aload'/>
+  <word name='array'/>
+  <word name='astore'/>
+  <word name='copy'/>
+  <word name='forall'/>
+  <word name='get'/>
+  <word name='getinterval'/>
+  <word name='length'/>
+  <word name='put'/>
+  <word name='putinterval'/>
+
+ </keywords>
+ <keywords region='words.3'>
+  <word name='begin'/>
+  <word name='copy'/>
+  <word name='countdictstack'/>
+  <word name='currentdict'/>
+  <word name='def'/>
+  <word name='dict'/>
+  <word name='dictstack'/>
+  <word name='end'/>
+  <word name='errordict'/>
+  <word name='forall'/>
+  <word name='get'/>
+  <word name='known'/>
+  <word name='length'/>
+  <word name='load'/>
+  <word name='maxlength'/>
+  <word name='put'/>
+  <word name='store'/>
+  <word name='systemdict'/>
+  <word name='userdict'/>
+  <word name='where'/>
+
+ </keywords>
+ <keywords region='words.4'>
+  <word name='anchorsearch'/>
+  <word name='copy'/>
+  <word name='forall'/>
+  <word name='get'/>
+  <word name='getinterval'/>
+  <word name='length'/>
+  <word name='put'/>
+  <word name='putinterval'/>
+  <word name='search'/>
+  <word name='string'/>
+  <word name='token'/>
+
+ </keywords>
+ <keywords region='words.5'>
+  <word name='and'/>
+  <word name='bitshift'/>
+  <word name='eq'/>
+  <word name='false'/>
+  <word name='ge'/>
+  <word name='gt'/>
+  <word name='le'/>
+  <word name='lt'/>
+  <word name='ne'/>
+  <word name='not'/>
+  <word name='or'/>
+  <word name='true'/>
+  <word name='xor'/>
+
+ </keywords>
+ <keywords region='words.6'>
+  <word name='countexecstack'/>
+  <word name='exec'/>
+  <word name='execstack'/>
+  <word name='exit'/>
+  <word name='for'/>
+  <word name='if'/>
+  <word name='ifelse'/>
+  <word name='loop'/>
+  <word name='quit'/>
+  <word name='repeat'/>
+  <word name='start'/>
+  <word name='stop'/>
+  <word name='stopped'/>
+
+ </keywords>
+ <keywords region='words.7'>
+  <word name='cvi'/>
+  <word name='cvlit'/>
+  <word name='cvn'/>
+  <word name='cvr'/>
+  <word name='cvrs'/>
+  <word name='cvs'/>
+  <word name='cvx'/>
+  <word name='executeonly'/>
+  <word name='noaccess'/>
+  <word name='rcheck'/>
+  <word name='readonly'/>
+  <word name='type'/>
+  <word name='wcheck'/>
+  <word name='xcheck'/>
+
+ </keywords>
+ <keywords region='words.8'>
+  <symb name='='/>
+  <symb name='=='/>
+  <word name='bytesavailable'/>
+  <word name='close'/>
+  <word name='currentfile'/>
+  <word name='echo'/>
+  <word name='file'/>
+  <word name='flush'/>
+  <word name='flushfile'/>
+  <word name='print'/>
+  <word name='prompt'/>
+  <word name='pstack'/>
+  <word name='read'/>
+  <word name='readhexstring'/>
+  <word name='readline'/>
+  <word name='readstring'/>
+  <word name='resetfile'/>
+  <word name='run'/>
+  <word name='stack'/>
+  <word name='status'/>
+  <word name='token'/>
+  <word name='write'/>
+  <word name='writehexstring'/>
+  <word name='writestring'/>
+
+ </keywords>
+ <keywords region='words.9'>
+  <word name='restore'/>
+  <word name='save'/>
+  <word name='vmstatus'/>
+
+ </keywords>
+ <keywords region='words.10'>
+  <word name='bind'/>
+  <word name='null'/>
+  <word name='realtime'/>
+  <word name='usertime'/>
+  <word name='version'/>
+
+ </keywords>
+ <keywords region='words.11'>
+  <word name='currentdash'/>
+  <word name='currentflat'/>
+  <word name='currentgray'/>
+  <word name='currenthsbcolor'/>
+  <word name='currentlinecap'/>
+  <word name='currentlinejoin'/>
+  <word name='currentlinewidth'/>
+  <word name='currentmiterlimit'/>
+  <word name='currentrgbcolor'/>
+  <word name='currentscreen'/>
+  <word name='currenttransfer'/>
+  <word name='grestore'/>
+  <word name='grestoreall'/>
+  <word name='gsave'/>
+  <word name='initgraphics'/>
+  <word name='setdash'/>
+  <word name='setflat'/>
+  <word name='setgray'/>
+  <word name='sethsbcolor'/>
+  <word name='setlinecap'/>
+  <word name='setlinejoin'/>
+  <word name='setlinewidth'/>
+  <word name='setmiterlimit'/>
+  <word name='setrgbcolor'/>
+  <word name='setscreen'/>
+  <word name='settransfer'/>
+
+ </keywords>
+</scheme>
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the postscript hrc type.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

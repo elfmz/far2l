@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd"[
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+>
+
+  <type name='rust'>
+    <annotation>
+      <documentation>Rust syntax description</documentation>
+      <contributors>
+        <![CDATA[
+        Maksim Galkin <maksim.galkin@gmail.com>
+      ]]>
+      </contributors>
+    </annotation>
+
+    <!-- 
+    This file is based on the language grammar described here:
+            http://doc.rust-lang.org/1.0.0-beta.2/grammar.html 
+    -->
+
+    <scheme name="rust">
+      <regexp match="/\/\*\*\//" region="def:CommentDoc"/>
+      <block start="/\/\/\//" end="/$/" scheme="doxygen:doxygen" region="def:CommentDoc"/>
+      <block start="/\/\*\*/" end="/\*\//" scheme="doxygen:doxygen" region="def:CommentDoc"
+             region00="def:PairStart" region10="def:PairEnd"/>
+
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="def:LineComment"/>
+      <block scheme="def:Comment" region="def:Comment">
+        <start region0="def:PairStart"><![CDATA[/\/\*/]]></start>
+        <end region0="def:PairEnd"><![CDATA[/\*\//]]></end>
+      </block>
+
+      <inherit scheme="def:Number"/>
+
+      <block start="/^\s*(#\[)/" end="/(\])/" scheme="rust" region="def:Directive"
+             region00="def:DirectiveEdge" region10="def:DirectiveEdge"/>
+
+      <keywords region="def:Keyword">
+        <word name='abstract'/>
+        <word name='alignof'/>
+        <word name='as'/>
+        <word name='become'/>
+        <word name='box'/>
+        <word name='break'/>
+        <word name='const'/>
+        <word name='continue'/>
+        <word name='crate'/>
+        <word name='do'/>
+        <word name='else'/>
+        <word name='enum'/>
+        <word name='extern'/>
+        <word name='false'/>
+        <word name='final'/>
+        <word name='fn'/>
+        <word name='for'/>
+        <word name='if'/>
+        <word name='impl'/>
+        <word name='in'/>
+        <word name='let'/>
+        <word name='loop'/>
+        <word name='match'/>
+        <word name='mod'/>
+        <word name='move'/>
+        <word name='mut'/>
+        <word name='offsetof'/>
+        <word name='once'/>
+        <word name='override'/>
+        <word name='priv'/>
+        <word name='proc'/>
+        <word name='pub'/>
+        <word name='pure'/>
+        <word name='ref'/>
+        <word name='return'/>
+        <word name='sizeof'/>
+        <word name='static'/>
+        <word name='self'/>
+        <word name='struct'/>
+        <word name='super'/>
+        <word name='true'/>
+        <word name='trait'/>
+        <word name='type'/>
+        <word name='typeof'/>
+        <word name='unsafe'/>
+        <word name='unsized'/>
+        <word name='use'/>
+        <word name='virtual'/>
+        <word name='where'/>
+        <word name='while'/>
+        <word name='yield'/>
+      </keywords>
+
+      <keywords region="def:Symbol">
+        <symb name="::" />
+        <symb name="->" />
+        <symb name="#" />
+        <symb name="[" />
+        <symb name="]" />
+        <symb name="(" />
+        <symb name=")" />
+        <symb name="{" />
+        <symb name="}" />
+        <symb name="," />
+        <symb name=";" />
+      </keywords>
+
+    </scheme>
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - Contributor(s):
+   - Maksim Galkin <maksim.galkin@gmail.com>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

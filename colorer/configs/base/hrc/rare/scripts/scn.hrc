@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Scn (MNTrack scripts)
+With help of:
+    Evgeniy Zaitsev <Evgeniy.Zaitsev@f2005.n5020.z2.fidonet.org>
+-->
+   <type name="mntrackscript">
+
+      <import type="def"/>
+
+      <region name="SString" parent="String"/>
+      <region name="SComment" parent="Comment"/>
+      <region name="SSymb" parent="Comment"/>
+      <region name="SWord" parent="Keyword"/>
+      <region name="SNumb" parent="NumberBin"/>
+      <region name="SNumh" parent="NumberHex"/>
+      <region name="SNumd" parent="NumberDec"/>
+      <region name="SDirec" parent="Directive"/>
+      <region name="SLabel" parent="Label"/>
+
+
+      <scheme name="mntrackscript">
+<!-- Comment  ;..... -->
+         <regexp match="/(;.*)/" region0="SComment"/>
+<!-- String '......' -->
+         <regexp match="/(\'.*?\')/" region0="SString"/>
+<!-- Numbers - Bin -->
+         <regexp match="/\b([01]+b)\b/" region0="SNumb"/>
+<!-- Numbers - Hex -->
+         <regexp match="/\b([0-9a-fA-F]+h)\b/" region0="SNumh"/>
+<!-- Numbers - Dec -->
+         <regexp match="/\b([0-9.]+([eE][-+]?\d+)?)\b/" region0="SNumd"/>
+<!-- Labels -->
+         <regexp match="/^\s*?(:.*$)/" region0="SLabel"/>
+<!-- Symbols -->
+         <keywords region="SSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="$"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="?"/>
+         </keywords>
+<!-- MNTrack KeyWords -->
+         <keywords ignorecase="yes" region="SWord">
+            <word name="INTL"/>
+            <word name="ZON"/>
+            <word name="DIR"/>
+            <word name="LOK"/>
+            <word name="KFS"/>
+            <word name="CFM"/>
+            <word name="XMA"/>
+            <word name="IMM"/>
+            <word name="TFS"/>
+            <word name="A/S"/>
+            <word name="HUB"/>
+            <word name="OUTLOG"/>
+            <word name="LOGSTART"/>
+            <word name="LOGEND"/>
+            <word name="LOGDROP"/>
+            <word name="QUIT"/>
+            <word name="GOTO"/>
+            <word name="JMP"/>
+            <word name="JE"/>
+            <word name="JNE"/>
+            <word name="SUBJ"/>
+            <word name="INSUBJ"/>
+            <word name="TONAME"/>
+            <word name="FROMNAME"/>
+            <word name="FROMADR"/>
+            <word name="FROMADR3D"/>
+            <word name="TOADR"/>
+            <word name="TOADR3D"/>
+            <word name="TOZONE"/>
+            <word name="TONET"/>
+            <word name="TONODE"/>
+            <word name="TOPOINT"/>
+            <word name="FROMZONE"/>
+            <word name="FROMNET"/>
+            <word name="FROMNODE"/>
+            <word name="FROMPOINT"/>
+            <word name="LOOP"/>
+            <word name="DUPE"/>
+            <word name="MSGID"/>
+            <word name="TOLISTED"/>
+            <word name="FROMLISTED"/>
+            <word name="EMPTY"/>
+            <word name="INBODY"/>
+            <word name="MSGSIZE"/>
+            <word name="UUE"/>
+            <word name="PVT"/>
+            <word name="CRA"/>
+            <word name="RCV"/>
+            <word name="SNT"/>
+            <word name="ATT"/>
+            <word name="TRS"/>
+            <word name="ORP"/>
+            <word name="K/S"/>
+            <word name="LOC"/>
+            <word name="HLD"/>
+            <word name="FRQ"/>
+            <word name="RRQ"/>
+            <word name="RRC"/>
+            <word name="ARQ"/>
+            <word name="URQ"/>
+            <word name="MOVE"/>
+            <word name="COPY"/>
+            <word name="SEMAPHORE"/>
+            <word name="DELETE"/>
+            <word name="DELETEATTACH"/>
+            <word name="WRITETOJAMECHO"/>
+            <word name="BOUNCE"/>
+            <word name="FORWARD"/>
+            <word name="MAKEMSG"/>
+            <word name="SETPVT"/>
+            <word name="CLEARPVT"/>
+            <word name="SETCRA"/>
+            <word name="CLEARCRA"/>
+            <word name="SETRCV"/>
+            <word name="CLEARRCV"/>
+            <word name="SETSNT"/>
+            <word name="CLEARSNT"/>
+            <word name="SETATT"/>
+            <word name="CLEARATT"/>
+            <word name="SETTRS"/>
+            <word name="CLEARTRS"/>
+            <word name="SETORP"/>
+            <word name="CLEARORP"/>
+            <word name="SETK/S"/>
+            <word name="CLEARK/S"/>
+            <word name="SETLOC"/>
+            <word name="CLEARLOC"/>
+            <word name="SETHLD"/>
+            <word name="CLEARHLD"/>
+            <word name="SETFRQ"/>
+            <word name="CLEARFRQ"/>
+            <word name="SETRRQ"/>
+            <word name="CLEARRRQ"/>
+            <word name="SETRRC"/>
+            <word name="CLEARRRC"/>
+            <word name="SETARQ"/>
+            <word name="CLEARARQ"/>
+            <word name="SETURQ"/>
+            <word name="CLEARURQ"/>
+            <word name="BUSYSYSTEMCHECK"/>
+            <word name="BUSYSYSTEMSET"/>
+            <word name="BUSYSYSTEMUNSET"/>
+            <word name="PACK"/>
+            <word name="PACKPKT"/>
+            <word name="FREQ"/>
+            <word name="SETSUBJ"/>
+            <word name="SETFROMNAME"/>
+            <word name="SETTONAME"/>
+            <word name="INFROMNAME"/>
+            <word name="INTONAME"/>
+            <word name="MAKEPKT"/>
+            <word name="VIA"/>
+            <word name="EXEC"/>
+            <word name="WRITETOFILE"/>
+            <word name="EXISTATTACH"/>
+            <word name="APPENDTOFILE"/>
+            <word name="SECOND"/>
+            <word name="MINUTE"/>
+            <word name="HOUR"/>
+            <word name="STRIPPATH"/>
+         </keywords>
+<!-- MNTrack Directives -->
+         <keywords ignorecase="yes" region="SDirec">
+            <word name="BREAK"/>
+            <word name="NOBREAK"/>
+            <word name="UPCASE"/>
+            <word name="NOCASE"/>
+            <word name="REALCASE"/>
+            <word name="BUSYSYSTEMFLAGS"/>
+            <word name="NOBUSYSYSTEMFLAGS"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

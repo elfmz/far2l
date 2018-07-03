@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc SYSTEM "../hrc.dtd">
+<?xml-stylesheet type="text/xsl" href="../hrc.xsl"?>
+<!--
+    Airplay SDK MKB/MKF File Defs
+With help of:
+    Vsevolod Novikov <nnseva@mail.ru>
+-->
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<type name="mkb">
+  <annotation><documentation>
+    Project build file syntax for Airplay SDK
+  </documentation><contributors><![CDATA[
+    Vsevolod Novikov <nnseva@mail.ru>
+  ]]></contributors></annotation>
+
+  <import type="def"/>
+
+  <region name="mkbString" parent="String"/>
+  <region name="mkbComment" parent="Comment"/>
+  <region name="mkbSymb" parent="Symbol"/>
+  <region name="mkbWord" parent="Keyword"/>
+
+  <scheme name="mkbBase">
+    <regexp match="/(\#.*$)/" region0="mkbComment"/>
+    <!-- Strings -->
+    <regexp match="/(?{PairStart}&#34;)[^&#34;].*(?{PairEnd}&#34;)/" region0="mkbString"/>
+  </scheme>
+
+  <scheme name="mkbSection">
+    <inherit scheme="mkbBase"/>
+  </scheme>
+  <scheme name="mkbDirectory">
+    <inherit scheme="mkbBase"/>
+  </scheme>
+  <scheme name="mkbFilename">
+    <inherit scheme="mkbBase"/>
+  </scheme>
+  <scheme name="mkbCondition">
+    <inherit scheme="def:Number"/>
+
+    <keywords  region="mkbWord">
+    <word name="defined"/>
+    <symb name="=="/>
+    <symb name="!="/>
+    <symb name=">"/>
+    <symb name="&lt;"/>
+    <symb name=">="/>
+    <symb name="&lt;="/>
+    <word name="and"/>
+    <word name="or"/>
+    <word name="not"/>
+    </keywords>
+  </scheme>
+  
+  <scheme name="mkbBlock">
+  
+    <inherit scheme="mkbBase"/>
+
+    <inherit scheme="def:Number"/>
+
+    <block start="/(\()/" end="/(\))/" scheme="mkbDirectory"
+              region00="mkbWord"
+              region10="mkbWord"
+      region11="PairEnd" region01="PairStart"
+      />
+
+    <block start="/(\[)/" end="/(\])/" scheme="mkbSection"
+              region00="mkbWord"
+              region10="mkbWord"
+      region11="PairEnd" region01="PairStart"
+      />
+
+    <block start="/(\&lt;include)/" end="/(\>)/" scheme="mkbFilename"
+              region00="mkbWord"
+              region10="mkbWord"/>
+
+    <keywords  region="mkbWord">
+      <word name="assets"/>
+      <word name="debug_defines"/>
+      <word name="defines"/>
+      <word name="undefines"/>
+      <word name="deployments"/>
+      <word name="files"/>
+      <word name="includepaths"/>
+      <word name="librarys"/>
+      <word name="librarypaths"/>
+      <word name="options"/>
+      <word name="subprojects"/>
+      <word name="asset"/>
+      <word name="debug_define"/>
+      <word name="define"/>
+      <word name="undefine"/>
+      <word name="deployment"/>
+      <word name="file"/>
+      <word name="includepath"/>
+      <word name="library"/>
+      <word name="librarypath"/>
+      <word name="option"/>
+      <word name="subproject"/>
+      <word name="if"/>
+      <word name="elif"/>
+      <word name="else"/>
+      <word name="target"/>
+    </keywords>
+  </scheme>
+
+  <scheme name="mkb">
+    <inherit scheme="mkbBase"/>
+
+    <inherit scheme="def:Number"/>
+
+    <block start="/(\()/" end="/(\))/" scheme="mkbDirectory"
+           region00="mkbSymb"
+           region10="mkbSymb"
+           region11="PairEnd" region01="PairStart"
+    />
+
+    <block start="/(\[)/" end="/(\])/" scheme="mkbSection"
+           region00="mkbSymb"
+           region10="mkbSymb"
+           region11="PairEnd" region01="PairStart"
+    />
+
+    <block start="/((\&lt;))[ \t]*(include)/" end="/(\>)/" scheme="mkbFilename"
+           region01="mkbSymb" region03="mkbWord"
+           region10="mkbSymb"
+           region11="PairEnd" region02="PairStart"
+    />
+
+    <block start="/(\{\{)/" end="/(\}\})/" scheme="mkbCondition"
+         region00="mkbSymb" region10="mkbSymb" 
+         region11="PairEnd" region01="PairStart"
+    />
+
+    <block start="/(\{)/" end="/(\})/" scheme="mkb"
+         region00="mkbSymb" region10="mkbSymb" 
+         region11="PairEnd" region01="PairStart"
+    />
+
+    <regexp match="/assets?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/debug_defines?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/defines?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/undefines?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/deployments?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/files?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/includepaths?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/librarys?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/librarypaths?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/options?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/subprojects?([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/if([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/elif([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/else([ \t]|$)/" region0="mkbWord"/>
+    <regexp match="/target([ \t]|$)/" region0="mkbWord"/>
+  </scheme>
+
+</type>
+
+</hrc>

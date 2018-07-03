@@ -1,0 +1,144 @@
+<!-- extended schemes -->
+
+<region name="sql.ins" parent="def:Insertion" description="Insert sql"/>
+
+<scheme name="commands">
+
+ <!--inherit scheme="comgen"/-->
+
+ <!--
+ <block start="/(rem)?#3(\{)/" end="/(\})/"
+  scheme="commands.comment" region="def:Comment"
+  region00="struct-symbol" region02="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />-->
+
+ <!--
+ <block start="/(sql)?#3(\{)/" end="/(\})/"
+  scheme="commands.sql" region="sql.ins"
+  region00="struct-symbol" region02="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />-->
+
+ <!--
+ <block start="/(match)?#5(\[)/" end="/(\])((\[)([ixsmg&apos;]*)(\]))?/"
+  scheme="commands.re" region="string" region14="regexp:SpecArea"
+  region00="regexp:SpecQuote" region02="def:PairStart"
+  region10="regexp:SpecQuote" region11="def:PairEnd"
+  region13="def:PairStart" region15="def:PairEnd"
+ /> -->
+
+
+ <block start="/(\{)\M\s*&lt;\?xml/" end="/(\})/"
+  scheme="commands.xml"
+  region00="struct-symbol" region01="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />
+ <block start="/(\[)\M\s*&lt;\?xml/" end="/(\])/"
+  scheme="commands.xml"
+  region00="struct-symbol" region01="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />
+
+ <!--
+ <block start="/((select)?#6|(ect(Single|String|Number)|electBool)?#9)(\[)/"
+  end="/(\])/" scheme="xslt:expr-content" region="string"
+  region05="def:PairStart" region00="struct-symbol"
+  region10="struct-symbol" region11="def:PairEnd"
+ />-->
+
+
+ <!-- (xdoc::create)?#12 (or ?#c) cannot work :-(  limit is 9 :-( -->
+ <!--
+ <block start="/(create)?#6((\[)(.+?)(\]))?(\{)/" end="/(\})/"
+  scheme="commands.xml" region04="def:Path"
+  region03="def:PairStart" region05="def:PairEnd"
+  region00="struct-symbol" region06="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />-->
+</scheme>
+
+<scheme name="commands.connect">
+ <regexp region="def:URL">
+  <![CDATA[
+  /\b
+   \w+ \:\/\/
+   [\[\]\@\%\:\+\w\.\/\~\?\-\*=_#&;]+\b\/?
+  /ix
+ ]]></regexp>
+
+ <inherit scheme="def:NetURL"/>
+</scheme>
+
+<scheme name="commands.comment">
+ <inherit scheme="def:Comment"/>
+</scheme>
+
+
+
+<scheme name="commands.sql">
+ <inherit scheme="mysql:embed-sql">
+  <virtual scheme="mysql:sqlStringCore" subst-scheme="sql.string"/>
+  <virtual scheme="mysql:sqlExpr" subst-scheme="sql.expr"/>
+ </inherit>
+</scheme>
+
+<scheme name="sql.string">
+ <inherit scheme="script"/>
+ <inherit scheme="mysql:sqlStringCore"/>
+</scheme>
+
+<scheme name="sql.expr">
+ <inherit scheme="script"/>
+ <inherit scheme="mysql:sqlExpr">
+  <virtual scheme="mysql:sqlExpr" subst-scheme="sql.expr"/>
+ </inherit>
+</scheme>
+
+
+
+<scheme name="commands.re">
+ <block start="/\{\M[^\d]+/" end="/\}/" scheme="commands.re"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+ <inherit scheme="regexp:pcre.regexp">
+  <virtual scheme="regexp:string" subst-scheme="re.string"/>
+  <!--<virtual scheme="regexp:code" subst-scheme="script"/>-->
+  <virtual scheme="regexp:pcre.regexp" subst-scheme="commands.re"/>
+ </inherit>
+</scheme>
+
+<scheme name="re.string">
+ <regexp match="/\\\^[\^\(\)\{\}\[\]\$\;\:\#&quot;]/" region="regexp:Symbol"/>
+ <regexp match="/\^[\$\^]/" region="regexp:MetaSymb"/>
+ <inherit scheme="script">
+  <virtual scheme="script.bracket" subst-scheme="def:empty"/>
+ </inherit>
+</scheme>
+
+
+
+<scheme name="commands.xml">
+ <inherit scheme="xml">
+  <!-- if usable references, then parser3 usable too! -->
+  <virtual scheme="xml:Reference" subst-scheme="xml.reference"/>
+ </inherit>
+</scheme>
+
+<scheme name="xml">
+ <inherit scheme="xslt:xslt-root"/>
+ <inherit scheme="xml:xml"/>
+</scheme>
+
+<scheme name="xml.reference">
+ <inherit scheme="script"/>
+ <inherit scheme="xml:Reference"/>
+</scheme>
+
+
+<scheme name="commands.xpath">
+ <inherit scheme="xpath:Expr">
+  <virtual scheme="xpath:AposLiteralContent" subst-scheme="script"/>
+  <virtual scheme="xpath:QuotLiteralContent" subst-scheme="script"/>
+ </inherit>
+</scheme>

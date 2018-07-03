@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   
+   <type name="farhelp">
+ 
+      <annotation><documentation>
+        Far Help Sources
+      </documentation><contributors><![CDATA[
+        Stas Mehanoshin <rampitec@tu.spb.ru>
+        Eugene Efremov <4mirror@mail.ru>
+      ]]></contributors></annotation>
+
+      <region name="Page" parent="def:Outlined"/>
+      <region name="link" parent="def:URI"/>
+      <region name="linkname" parent="msg:emu.u"/>
+      <region name="color" parent="def:Insertion"/>
+      <region name="color.quot" parent="def:StringEdge"/>
+      <region name="insert" parent="msg:emu.b" description="#text#"/>
+      <region name="frame" parent="msg:emu.iu" description="$text"/>
+      <region name="frame.insert" parent="msg:emu.i"/>
+      <region name="metachar" parent="def:SymbolStrong"/>
+
+      <scheme name="FarHelpStr">
+         <regexp match="/\@\@|\~\~|\$|\^|\#\#|\%\%/" region="def:String"/>
+      </scheme>
+      <scheme name="FarHelpColor">
+       <regexp match="/[^\s\w][0-9A-F]{2}/" region="color.quot"/>
+      </scheme>
+      <scheme name="header">
+         <keywords region="def:Keyword">
+            <word name="Language"/>
+            <word name="PluginContents"/>
+            <symb name="=" region="def:Symbol"/>
+         </keywords>
+         <regexp match="/Options\s+(CtrlColorChar|TabSize)/" 
+          region="def:Keyword" region1="def:KeywordStrong"/>      
+      </scheme>
+
+       
+      <scheme name="linkancor">
+      	<regexp match="/~\M(?{Page}[\w\.]+)/" />
+       <keywords region="def:Keyword">
+            <word name="Contents"/>
+            <word name="Config"/>
+            <word name="Editor"/>
+            <word name="Viewer"/>
+       </keywords>
+       <!--regexp match="/\w+/" region="link" priority="low"/-->
+      </scheme>
+      
+      
+      <scheme name="dblshar">
+       <regexp match="/([\@\#\~])(\1){1,3}/" region="metachar"/>
+      </scheme>
+      
+      <scheme name="error">
+       <regexp match="/\@/" region="def:Error" priority="low"/>
+      </scheme>
+      <scheme name="path">
+       <inherit scheme="dblshar"/>
+       <inherit scheme="error"/>
+       <inherit scheme="def:Path"/>
+      </scheme>
+      <scheme name="linkname">
+       <block start="/~(&lt;)/" end="/(&gt;)/" scheme="path"
+        region00="metachar" region10="metachar"
+        region01="def:PairStart" region11="def:PairEnd"
+       />
+       <inherit scheme="dblshar"/>
+       <inherit scheme="error"/>
+       <inherit scheme="def:NetURL"/>
+      </scheme>
+      
+      <scheme name="languare">
+       <inherit scheme="dblshar"/>
+       <block start="/(\#)/" end="/(\#|$)/"
+        scheme="string" region="insert"
+        region01="def:PairStart" region11="def:PairEnd"
+       />
+       <inherit scheme="string"/>
+       <!--inherit scheme="error"/-->
+       <!--regexp match="/[\~\#]/" region="def:Error"/-->
+      </scheme>
+      <scheme name="string">
+       <inherit scheme="dblshar"/>
+       <block start="/([^\s\w])[0-9A-F]{2}\M.+\1\-/" end="/\y1\-/" 
+          region="color" scheme="FarHelpColor"
+          region00="color.quot" region10="color.quot"/>
+      </scheme> 
+      
+      <scheme name="frame">
+       <inherit scheme="dblshar"/>
+       <block start="/(\#)/" end="/(\#|$)/"
+        scheme="string" region="frame.insert"
+        region01="def:PairStart" region11="def:PairEnd"
+       />
+       <inherit scheme="string"/>      
+      </scheme> 
+
+      <scheme name="farhelp">
+       <block start="/^\./" end="/$/" scheme="header"
+          region="def:Directive" region00="def:SymbolStrong"/>
+          
+       <block start="/^(\$\^?)/" end="/$/" region="frame"
+         scheme="frame"/><!--region01="metachar" -->
+       <regexp match="/^(\^|\@[\+\-])/" region="metachar"/>
+       <block start="/^(\@)/" end="/$/" scheme="linkancor" 
+        region01="link" region="link"/>
+       <inherit scheme="dblshar"/>
+       <block start="/(\~)/" end="/(\~)\M\@/"
+        scheme="languare" region="linkname"
+        region01="def:PairStart" region11="def:PairEnd"
+       />
+       <block start="/\~?#1(\@)/" end="/(\@)/"
+        scheme="linkname" region="link"
+        region01="def:PairStart" region11="def:PairEnd"
+       />
+       <inherit scheme="languare"/>
+      </scheme> 
+       <!--
+         <regexp match="/^\s* \M \@ ([\@\$\^\w\s]+)  /x" region1="Page"/>
+         <regexp match="/\b([0-9]+)\b/" region0="Number"/>
+         <regexp match="/((\@)[^\@]+?(\@|$))/" region0="link" region2="PairStart" region3="PairEnd"/>
+         <regexp match="/^(\$.+?$)/" region0="String"/>
+         <inherit scheme="FarHelpStr"/>
+         <block start="/(\#)/" end="/(\#|$)/" scheme="FarHelpStr" region="Number" region00="PairStart" region11="PairEnd"/>
+         <regexp match="/((\~)[^\~]+?(\~))/" region0="linkname" region2="PairStart" region3="PairEnd"/>
+         <block start="/^\./" end="/$/" scheme="header"
+          region="Directive" region00="SymbolStrong"/>
+         <block start="/([^\s\w])[0-9A-F]{2}\M.+\1\-/" end="/\y1\-/" 
+          region="color" scheme="FarHelpColor"
+          region00="color.quot" region10="color.quot"/>
+      </scheme>-->
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Eugene Efremov <4mirror@mail.ru>
+   - Stas Mehanoshin <rampitec@tu.spb.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

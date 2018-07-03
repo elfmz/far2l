@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY perl-brackets SYSTEM "gen/perl-brackets.ent.hrc">
+<!ENTITY perl-vars     SYSTEM "perl-vars.ent.hrc">
+<!ENTITY perl-heredoc  SYSTEM "perl-heredoc.ent.hrc">
+<!ENTITY perl-keywords SYSTEM "perl-keywords.ent.hrc">
+<!ENTITY perl-keywordp SYSTEM "perl-keyword-pack.ent.hrc">
+
+]>
+
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+   
+<package name="perl-vars-ex">
+  <location link="perl-vars.pkg.hrc"/>
+</package>
+<package name="perl-vars">
+  <location link="perl-vars.pkg.hrc"/>
+</package>
+
+
+<type name="perl">
+
+<annotation>
+ <documentation>
+    Perl Syntax Description
+ </documentation>
+
+ <contributors>
+  <![CDATA[
+   alexander smishlajev <als@turnhere.com>
+   JULY <lubimovi@usa.net>
+   Timur Safin <timur@lanit.ru>
+   Cail Lomecb <cail@nm.ru>:
+       now using different schemes for
+       different paired limiters, fulll s()() support
+       needs complex variables parsing - using refs, hashs and lists
+       also to correct constructions as    s@  foo  @  @bar  @ix;
+   Eugene Efremov <4mirror@mail.ru>:
+     - add full regexp support
+     - add format support
+     - changed names for take5-like style
+     - any other fixs and addons...
+  ]]>
+ </contributors>
+
+ <appinfo>
+  <prototype ref="perl.prot.hrc"/>
+
+ <todo>
+ <![CDATA[
+  Возможные проблемы в реализации поддержки регулярных выражений:
+
+  В колорере на текищий момент не существует возможности распознать
+  ключ 'e' в конце регэкспа. По этому использется следущее
+  соглашение:
+   * если используется запись вида s{}{},s()() и т.п то вторая скобка
+   трактуется как код перл.
+   * если используется запись вида s///,s||| и т.п. то вторая строка
+   трактуется как строка.
+
+  Иными словами:
+ - выражения типа s{s1}{s2} (где '{' - скобка любого типа) трактуются как:
+   *s1* первая скобка - регулярное выражение;
+   *s2* вторая скобка - выражение на perl'е;
+ - выражения типа s/s1/s2/ (где '/' - \W любого типа) тарктуются как:
+   *s1* первая скобка - регулярное выражение;
+   *s2* первая скобка - обычная perl-строка.
+ - выражения типа q{str},qw{str},qq{str} трактуются как строки.
+
+ - выражения типа m{str}, qr{str} etc. трактуются как регулярные выражения
+
+ ]]>
+ </todo>
+ <fixed>
+ <![CDATA[
+ + выражения типа tr{s1}{s2} трактовались как регулярные выражения
+ ]]>
+ </fixed>
+ </appinfo>
+</annotation>
+
+      <region name="String" parent="def:String"/>
+      <region name="StringEdge" parent="regexp:SpecQuote"/>
+      <region name="Comment" parent="def:Comment"/>
+      <region name="Symb" parent="def:Symbol"/>
+      <region name="MainSymb" parent="def:SymbolStrong"/>
+      <region name="Word" parent="def:Keyword"/>
+      <region name="WordExt" parent="def:KeywordStrong"/>
+      <region name="Numb" parent="def:Number"/>
+      <region name="Stream" parent="def:Path"/>
+      <region name="Rare" parent="def:DeprecatedKeyword"/>
+      <region name="Slash" parent="def:StringContent"/>
+      <region name="Var" parent="def:Var"/>
+      <region name="Var2" parent="def:VarStrong"/>
+      <region name="Pod" parent="def:CommentDoc"/>
+      <region name="PodSym" parent="def:Symbol"/>
+      <region name="PodText" parent="def:default"/>
+      <region name="PodSel" parent="def:Label"/>
+      <region name="PodExample" parent="def:String"/>
+      <region name="DataName" parent="def:LabelStrong"/>
+
+      <region name="SubProt" parent="Var"/>
+      <region name="SubOutline" parent="def:Outlined"/>
+      <region name="PackageOutline" parent="def:Outlined"/>
+      <region name="UseOutline" parent="def:Outlined"/>
+      <region name="DataOutline" parent="def:Outlined"/>
+      <region name="PodOutline" parent="def:Outlined"/>
+
+      <region name="EvalText" parent="def:default"/>
+      <region name="ReModif" parent="regexp:SpecArea"/>
+      <region name="ReType" parent="Word"/><!-- StringEdge-->
+      <region name="HereDoc" parent="String"/>
+      <region name="HereDocName" parent="def:Label"/>
+      <region name="HereDocLt" parent="StringEdge"/>
+
+      <region name="FormatDoc" parent="HereDoc"/>
+      <region name="Warning" parent="def:DeprecatedKeyword"/>
+
+      <!-- Note: This region insert ` ` strings (system commands)
+                    If you don't want it, change "def:Insertion" to "String"
+      -->
+      <region name="SystemExec" parent="def:Insertion"/>
+
+      &perl-vars;
+
+      <scheme name="Pod">
+         <inherit scheme="def:NetAddresses"/>
+         <regexp match="/^\s+$/" region0="def:Error"/>
+         <regexp match="/^\s+\S+.*$/" region0="PodExample"/>
+         <regexp match="/^=(pod|cut)/" region0="PodSym"/>
+         <regexp match="/^(=head[1234])\s(.*)$/" region1="PodSym" region0="PodText" region2="PodOutline"/>
+         <regexp match="/^=(item|back|end)/" region0="PodSym"/>
+         <regexp match="/^=over\s+(\d+)/" region0="PodSym" region1="Numb"/>
+         <regexp match="/[IBSCLFXZE]&lt;.*?&gt;/" region0="PodSel"/>
+      </scheme>
+
+      <scheme name="BinNumb">
+         <regexp match="/\b 0[bB][01]+ /ix" region0="def:NumberBin"/>
+      </scheme>
+
+      <scheme name="META"/>
+
+      <scheme name="String">
+         <inherit scheme="META"/>
+<!-- Non-interpolated string ignore all escape-sequences except \' and \\ -->
+         <regexp match="/\\['\\\/]/" region0="Slash"/>
+      </scheme>
+
+      <!-- New schemes: strings for blocks -->
+      <scheme name="ClassString">
+       <inherit scheme="String"/>
+       <inherit scheme="regexp:perl.string"/>
+       <regexp match="/(\-)?~1\-($)?!/" region="Word" priority="low"/>
+      </scheme>
+      <scheme name="StringForRegExp">
+       <inherit scheme="String"/>
+       <inherit scheme="regexp:perl.string"/>
+       <inherit scheme="VarsEx"/>
+      </scheme>
+
+
+      <scheme name="InterpolateString">
+         <inherit scheme="META"/>
+         <inherit scheme="def:NetAddresses"/>
+         <regexp match="/\b0[xX][\da-fA-F]+\b/" region0="Numb"/>
+         <inherit scheme="def:FloatNumber"/>
+         <inherit scheme="def:DecNumber"/>
+         <inherit scheme="BinNumb"/>
+<!-- cail: problems with s@ foo @ bar @ix;
+              @ix is not a list :(( -->
+         <inherit scheme="StringForRegExp"/>
+         <inherit scheme="regexp:perl.quote"/>
+         <regexp match="/\\[LUluQE]/" region0="Slash"/>
+<!-- <inherit scheme="BuildinVars"/> -->
+         <regexp match="/\\[xX]0*[\da-fA-F]{1,2}/" region0="Slash"/>
+         <regexp match="/\\[^xX0-7]/" region0="Slash"/>
+      </scheme>
+
+      <!-- sprintf support - not conflict with hash now... -->
+      <entity name="pfn" value="(?{Var}\d+\$)?"/>
+      <entity name="sf" value="(\d+|(?{Symb}\*)%pfn;)"/>
+      <scheme name="PrintfString">
+       <regexp match="/\%{2}/" region="Slash"/>
+       <regexp region="Var2">
+        /\%
+         %pfn;
+         [\s\+\d\-\#]?
+         %sf;?
+         ((?{Symb}\.)%sf;)?
+         ([duoxXbiDUO]|l{1,2})?
+         [csduoxefgXEGbpniDUOF]
+        /x
+       </regexp>
+      </scheme>
+
+      <scheme name="Stringf">
+        <inherit scheme="String"/>
+         <inherit scheme="PrintfString"/>
+      </scheme>
+      <scheme name="InterpolateStringf">
+        <inherit scheme="InterpolateString"/>
+        <inherit scheme="PrintfString"/>
+      </scheme>
+
+      <scheme name="SubstComment">
+<!-- are we need here  lowpriority="lowpriority" ??? -->
+         <regexp match="/(^\s*|\s{2,}|\t)(\#\s.*$)/" region0="Comment"/>
+      </scheme>
+
+      <scheme name="SubstElements">
+         <inherit scheme="InterpolateString"/>
+         <inherit scheme="SubstComment"/>
+      </scheme>
+
+      <!-- regexps -->
+      <scheme name="RegExpString">
+       <inherit scheme="regexp:perl.regexp">
+        <virtual scheme="regexp:string" subst-scheme="StringForRegExp"/>
+        <virtual scheme="regexp:code" subst-scheme="perl"/>
+        <virtual scheme="regexp:perl.regexp" subst-scheme="RegExpString"/>
+       </inherit>
+      </scheme>
+
+
+      <!-- scheme bracket -->
+      &perl-brackets;
+      <!-- scheme heredoc -->
+      &perl-heredoc;
+
+
+      <entity name="PerlData" value="__(?{}END|DATA)__|[\x1A\x04]"/>
+      
+      <scheme name="PerlDataOn" if="data-code">
+        <block start="/%PerlData;/" end="/$never^/"
+                region00="DataName" scheme="perl"
+        />
+      </scheme>
+      <scheme name="PerlDataOff" unless="data-code">
+        <block start="/%PerlData;/" end="/$never^/"
+                scheme="PerlDataOff" region="Comment"
+                region00="DataName" 
+        />
+        <block start="/\M^=/" end="/^=(head|cut)\m/" scheme="Pod" region="Pod" region10="PodSym"/>
+        <inherit scheme="def:Comment"/>
+      </scheme>
+      <scheme name="PerlDATA">
+        <regexp match='/\M(?{DataOutline}%PerlData;)/'/>
+        <inherit scheme="PerlDataOn"/>
+        <inherit scheme="PerlDataOff"/>
+      </scheme>
+      
+      <!-- scheme for documet format -->
+      <scheme name="FormatText">
+       <inherit scheme="InterpolateString"/>
+       <regexp match="/([\@\^])(\*|[&lt;&gt;\|]+)/"
+        region1="def:SymbolStrong" region2="def:Symbol"/>
+       <regexp match="/([\@\^])(\#+(\.\#+)?)/"
+        region1="def:SymbolStrong" region2="def:VarStrong"/>
+      </scheme>
+      
+      <!-- rhomb -->
+      <scheme name="Stream">
+        <inherit scheme="Vars"/>
+        <inherit scheme="shell:regexp"/>
+      </scheme>
+      
+      <scheme name="Comment">
+         <block start="/(^|\$?~1)\#/" end="/$/" 
+                region="Comment" scheme="def:Comment"
+         />
+      </scheme>
+
+
+      <scheme name="perl">
+         <inherit scheme="def:unixCommentDirective"/>
+
+         <inherit scheme="Comment"/>
+         <inherit scheme="heredoc"/>
+         <inherit scheme="perl-core"/>
+         
+         <keywords region="def:Error">
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+         </keywords>
+      </scheme>
+      
+      <scheme name='v-strings'>
+      	<regexp match='/\./' region='StringEdge'/>
+      	<regexp match='/[^\d]/' region='def:Error' priority='low'/>
+      </scheme>
+
+      <scheme name="perl-core">
+<!-- Variables -->
+         <inherit scheme="Vars"/>
+         
+         
+         <regexp match="/\M \b(sub) \s+ (?{SubOutline}[\w_:']+) /x" />
+         
+         <block start="/\b(sub)\s+[^\(\{#]*\s*((\())/" 
+                end="/(\))/" scheme="SubProt"
+                region01="Word" region02="Symb" region03="def:PairStart"
+                region10="Symb" region11="def:PairEnd"
+         /><!-- ([%@])? region11="SubProt" -->
+        
+         
+         <!--
+         <regexp match="/\b(sub) \s+ \M (?{SubOutline}[\w_']+) /x" region="Word"/>
+         <regexp match="/\b(package) \s+ \M (?{PackageOutline}[\w_':]+) /x" region="Word"/>
+         -->
+         
+         <inherit scheme='outlines'/>
+
+<!-- linear comments -->
+         <inherit scheme="Comment"/>
+
+<!-- module::var -->
+         <!--
+         <regexp match="/\b\w[\w\d]*\s*(::)\s*\w[\w\d]*\b/" region="WordExt" region1="Symb"/>
+         -->
+
+
+<!-- perl 5.6.0 number-encoded strings -->
+         <block start="/\b(v)\M(\d+)\b/" end="/~(\d+)(\.\d+)*\b\m/" 
+         	region="String" scheme='v-strings' 
+         	region01="ReType"
+         />
+         <block start="/\b\M(\d+)(\.\d+){2,}\b/" end="/~(\d+)(\.\d+)*\b\m/" 
+         	region="String" scheme='v-strings' 
+         />
+         
+<!-- perl numbers  -->
+         <inherit scheme="BinNumb"/>
+         <regexp match="/\b0[xX][\da-fA-F_]+/" region0="Numb"/>
+         <regexp match="/\b\d[\d_]*\.\M[^.]/" region0="Numb"/>
+         <regexp match="/\c[\d_]*\.?\d[\d_]*([eE][\-+]?[\d_]+)?/" region0="Numb"/>
+         <regexp match="/(\b|x?#1)\d[\d_]*/" region0="Numb"/>
+<!-- strings -->
+         <block start="/(`)/" end="/(`)/"
+          scheme="InterpolateString" region="SystemExec"
+          region00="def:PairStart" region10="def:PairEnd"
+          region01="String" region11="String"
+         />
+         <block start="/&quot;/" end="/&quot;/" scheme="InterpolateStringf" region="String" region00="def:PairStart" region10="def:PairEnd"/>
+         <block start="/&apos;/" end="/&apos;/" scheme="Stringf" region="String" region00="def:PairStart" region10="def:PairEnd"/>
+         <!-- cail: fixes intermixed paired regions:  (eval <<'END_MULTIPART'); 
+         EE: It's not solution. What about {... printf(<<TEXT, $var);} ?- ->
+         <regexp> 
+           /(?{def:PairStart}(?{def:Symbol}\()) \M [^&lt;\(\)]*? &lt;&lt;
+           ([&quot;&apos;]?) [a-zA-Z_][\w_]* \1
+           (?{def:PairEnd}(?{def:Symbol}\)))/x
+         </regexp><!- - -->
+<!-- cail: paired block for matching -->
+         <inherit scheme="def:PairedBrackets">
+            <virtual scheme="def:PairedBrackets" subst-scheme="perl"/>
+         </inherit>
+<!-- cail: this block cracks the constructions
+     $var = $var / $var / $var;
+     $var =~ / $var /;
+     if (/ $var /){};
+     and so on...
+
+     can't use ?regexp? - it conflicts with  $a = $b ? 1 : 2;
+     really ?this? is deprecated construction in perl5, so...
+   -->
+
+
+<!-- move ~ to separated block (s{}{/... - '/' no regexp ) -->
+         <block start="/(
+                  (\=|\! \~) |
+                  [^&lt;\]\}\)\+\-\w\s\/] |
+                  (\bif) | (\bunless) | (\bsplit) | (\bor) | \bgrep | \band | \bnot |^ )
+                 \s*
+                 ((?{def:PairStart}\/))
+                /x"
+           end="/(\y7([cmiogxes]*) )/x"
+           scheme="RegExpString"
+           region="String" region01="Symb" region07="StringEdge"
+           region10="StringEdge" region11="def:PairEnd" region12="ReModif"/>
+         <block start="/([\)\}\]\>])?~2(~)
+                 \s*
+                 ((\/))
+                /x"
+          end="/(\y3([cmiogxes]*) )/x" scheme="RegExpString"
+          region="String" region01="Symb"
+          region03="StringEdge" region04="def:PairStart"
+          region10="StringEdge" region11="def:PairEnd" region12="ReModif"/>
+
+<!-- formatted output -->
+         <block start="/^\s* \m (format)\s*(\s\w*)\s*(\=) /x" end="/^(\.)/"
+          scheme="FormatText" region="FormatDoc"
+          region01="Word" region02="Var" region03="Symb"
+          region00="def:PairStart" region10="def:PairEnd" region11="StringEdge"
+         />
+<!-- <<out -->
+<!-- cail: perl in perl :)
+   <block start="/(eval)\s+<<'([^']+)'/i" end="/^(\y2)$/" scheme="def:Perl" region1="def:Inserts" region2="Word" region3="Word" region4="Word"-->
+<!-- pod stuff -->
+         <block start="/\M^=/" end="/^=(head|cut)\m/" scheme="Pod" region="Pod" region10="PodSym"/>
+         
+         <inherit scheme="PerlDATA"/>
+<!-- streams and globs with html </script> hack -->
+
+         <block start="/(&lt;) \M (\/script)?! [^\s\%\@\{\}]*? &gt;/ix"
+                end="/&gt;/" region="Stream" scheme="Stream"
+                region01="def:PairStart" region10="def:PairEnd"
+         />
+         <!--regexp match="/&lt; (\/script)?! [^\s\%]*? \&gt;/ix" region0="Stream"/-->
+         <regexp match="/\B \- [ABCMORSTWXbcdefgkloprstuwxz]\b/x" region0="Word"/>
+         <regexp match="/\b[\w_]+\s*(=&gt;)/" region="Var" region1="Symb"/>
+         
+         <!--regexp match="/x(\d+)/x" region0="Word" region1="Numb"/-->
+
+
+
+         <annotation><documentation>
+
+        in reallity  s'foo'bar' does no interpolation - but i thing this
+          isn't so important :)
+        currently this subst will not work in such cases:
+         s        # here we can't know which of schemes was called :(
+         {        #
+          foo
+         }        # but such form is works :)
+         {        #
+          bar
+         }ix;
+        but i think this is real perversion :)
+
+        The next included scheme was created by my script 'bracket.xml'
+
+         </documentation></annotation>
+
+         <inherit scheme="bracket"/>
+
+<!-- operators -->
+         <keywords region="Symb" worddiv="[\s\W\d]">
+            <word name="x"/>
+         </keywords>
+         <keywords region="Symb">
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="\"/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="."/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=".."/>
+            <symb name="%"/>
+            <word name="lt"/>
+            <word name="gt"/>
+            <word name="le"/>
+            <word name="ge"/>
+            <word name="eq"/>
+            <word name="ne"/>
+            <word name="cmp"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="?"/>
+            <symb name=":"/>
+            <symb name=","/>
+            <symb name="="/>
+            <word name="and"/>
+            <word name="not"/>
+            <word name="or"/>
+            <word name="xor"/>
+            <symb name="-&gt;"/>
+            <symb name="&gt;"/>
+            <symb name="&lt;"/>
+            <symb name=";" region="MainSymb"/>
+<!--            
+            <symb name="{" region="def:Error"/>
+            <symb name="}" region="def:Error"/>
+            <symb name="(" region="def:Error"/>
+            <symb name=")" region="def:Error"/>
+            <symb name="[" region="def:Error"/>
+            <symb name="]" region="def:Error"/>
+            -->
+         </keywords>
+
+         <inherit scheme="Keywords"/>
+         <!-- labels -->
+         <regexp match="/^\s*(\w+\:)\M(\s|$)/" region1="def:Label"/>
+         <!-- Against Ada maniacs -->
+         <regexp match="/\c(&amp;|\w+)'[\w_']+\b/" region0="WordExt"/>
+
+      </scheme>
+
+    &perl-keywords;
+    &perl-keywordp;
+<!--    &perl-genkeywords-->
+
+   </type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2003
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - alexander smishlajev <als@turnhere.com>
+   - Eugene Efremov <4mirror@mail.ru>
+   - JULY <lubimovi@usa.net>
+   - Timur Safin <timur@lanit.ru>
+
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

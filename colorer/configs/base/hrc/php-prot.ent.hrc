@@ -400,3 +400,15 @@
        value="true"/>
 <param xmlns="http://colorer.sf.net/2003/hrc" name="Include-PDO" description="XXX. PDO"
        value="true"/>
+<param xmlns="http://colorer.sf.net/2003/hrc" name="Include-Hash"
+       description="XXX. Hash Functions"
+       value="true"/>
+<param xmlns="http://colorer.sf.net/2003/hrc" name="Include-APC"
+       description="XXX. APC Functions"
+       value="true"/>
+<param xmlns="http://colorer.sf.net/2003/hrc" name="Include-Memcache"
+       description="XXX. Memcache Functions"
+       value="true"/>
+<param xmlns="http://colorer.sf.net/2003/hrc" name="Include-Memcached"
+       description="XXX. Memcached Functions"
+       value="true"/>

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="TeX">
+
+      <annotation><documentation>
+        TeX definitions
+      </documentation>
+      <contributors><![CDATA[
+        Vasiliy Bublik <bublik@itam.nsc.ru>
+        Sergei Remizov <remizov@mail.cplire.ru>
+        Mike Golub     <golub@aha.ru>
+        Sergiy Zuban <sezal@ukr.net>
+      ]]></contributors>
+      </annotation>
+
+      <import type="def"/>
+
+      <region name="Formula" parent="Insertion"/>
+      <region name="Comment" parent="Comment"/>
+      <region name="Symb" parent="Symbol"/>
+      <region name="Word" parent="Keyword"/>
+      <region name="Numb" parent="Number"/>
+      <region name="Bracket"/>
+      <region name="LargeBracket" parent="Label"/>
+
+
+      <scheme name="Symbols">
+         <keywords region="Symb">
+            <symb name="\"/>
+            <symb name="#"/>
+            <symb name="$"/>
+            <symb name="&amp;"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="_"/>
+            <symb name="^"/>
+            <symb name="~"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="eqn">
+<!-- cail: nothing difficult :)) -->
+         <block start="/(\\(begin)\s*\{((math))\})/" end="/(\\(end)\s*\{((math))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((displaymath))\})/" end="/(\\(end)\s*\{((displaymath))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((equation))\})/" end="/(\\(end)\s*\{((equation))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((equation\*))\})/" end="/(\\(end)\s*\{((equation\*))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((gather))\})/" end="/(\\(end)\s*\{((gather))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((gather\*))\})/" end="/(\\(end)\s*\{((gather\*))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((multline))\})/" end="/(\\(end)\s*\{((multline))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((multline\*))\})/" end="/(\\(end)\s*\{((multline\*))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((align))\})/" end="/(\\(end)\s*\{((align))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((align\*))\})/" end="/(\\(end)\s*\{((align\*))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((flalign))\})/" end="/(\\(end)\s*\{((flalign))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((flalign\*))\})/" end="/(\\(end)\s*\{((flalign\*))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((alignat))\})/" end="/(\\(end)\s*\{((alignat))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((alignat\*))\})/" end="/(\\(end)\s*\{((alignat\*))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((eqnarray))\})/" end="/(\\(end)\s*\{((eqnarray))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/(\\(begin)\s*\{((eqnarray\*))\})/" end="/(\\(end)\s*\{((eqnarray\*))\})/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region02="Word" region03="Bracket" region11="Symb" region12="Word" region13="Bracket"/>
+         <block start="/\\\[/" end="/\\\]/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd"/>
+         <block start="/\\\(/" end="/\\\)/x" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd"/>
+      </scheme>
+
+      <scheme name="quoters">
+<!-- TeX commands -->
+         <regexp match="/(\\)([A-Za-z@]+)/" region1="Symb" region2="Word" priority="low"/>
+<!-- \% is not a comment! \$ is not a math shift! -->
+         <regexp match="/(\\\$)/" region="Symb"/>
+         <regexp match="/(\\\%)/" region="Symb"/>
+<!-- comment -->
+         <regexp match="/(\%.*$)/" region="Comment"/>
+<!-- numbers -->
+         <regexp match="/(\-?\d*\.?\d+)/" region="Numb"/>
+      </scheme>
+
+      <scheme name="Formula">
+         <inherit scheme="eqn"/>
+         <block start="/\\left[\s]*\b
+                      ((\\\{)|(\\lfloor)|(\\\})|(\\rfloor)|(\\lceil)|(\\rceil)|
+                      (\\langle)|(\\rangle)|(\\backslash)|(\\\|)|
+                      (\\uparrow)|(\\downarrow)|(\\updownarrow)|
+                      (\\Uparrow)|(\\Downarrow)|(\\Updownarrow)|
+                      [\.\(\[\/\|\)\]]{0,1})/x"
+                end="/\\right[\s]*
+                      ((\\\{)|(\\lfloor)|(\\\})|(\\rfloor)|(\\lceil)|(\\rceil)|
+                      (\\langle)|(\\rangle)|(\\backslash)|(\\\|)|
+                      (\\uparrow)|(\\downarrow)|(\\updownarrow)|
+                      (\\Uparrow)|(\\Downarrow)|(\\Updownarrow)|
+                      [\.\(\[\/\|\)\]]{0,1})/x"
+                scheme="Formula" region="LargeBracket" region00="PairStart" region10="PairEnd"/>
+         <inherit scheme="quoters"/>
+         <inherit scheme="Symbols"/>
+      </scheme>
+
+      <scheme name="TeX">
+         <inherit scheme="eqn"/>
+
+         <regexp match="/(\\)(verb\*?)([^\sa-zA-Z])(.*?)(\3)/" region1="Symb"
+                 region2="Word" region3="Symb" region4="BooleanConstant" region5="Symb"/>
+
+         <regexp match="/\M\\(?{def:Outlined}(label|(sub){0,2}section|(sub)?paragraph|appendix|part|chapter).*)/x"/>
+         <regexp match="/\M\\bibitem\s*\{\s*(?{def:Outlined}\S+)\s*\}/x"/>
+
+         <block  start="/\\begin\{comment\}/" end="/\\end\{comment\}/" scheme="Comment"
+                 region="Comment" region00="PairStart" region10="PairEnd"/>
+         
+         <block start="/(\\begin\s*\{)(verbatim)(\})/" end="/(\\end\s*\{)(verbatim)(\})/x" scheme="def:Comment" region="Bracket"
+                region00="PairStart" region10="PairEnd"
+                region01="Word" region11="Word"
+                region02="LargeBracket" region12="LargeBracket"
+                region03="Word" region13="Word"/>
+
+         <block start="/((\\(begin)\s*\{(lstlisting)\}))/" end="/(\\(end)\s*\{(lstlisting)\})/x"
+                scheme="def:Comment" region="BooleanConstant"
+                region01="PairStart" region10="PairEnd"
+                region02="Word" region03="Word" region04="Label"
+                region05="Text"
+                region11="Word" region12="Word" region13="Label"/>
+
+         <block start="/(\\begin\s*\{)([\w]+)(\})/" end="/(\\end\s*\{)(\y2)(\})/x" scheme="TeX" region="Bracket"
+                region00="PairStart" region10="PairEnd"
+                region01="Word" region11="Word"
+                region02="LargeBracket" region12="LargeBracket"
+                region03="Word" region13="Word"/>
+         <inherit scheme="quoters"/>
+         <block start="/(\$\$)/" end="/(\$\$)/" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region11="Symb"/>
+         <block start="/(\$)/" end="/(\$)/" scheme="Formula" region="Formula" region00="PairStart" region10="PairEnd" region01="Symb" region11="Symb"/>
+         <block start="/(\\\\\[)/" end="/(\])/x" scheme="TeX" region="Bracket" region00="PairStart" region10="PairEnd" region01="Symb" region11="Symb"/>
+         <block start="/(\{)/" end="/(\})/" scheme="TeX" region="Bracket" region00="PairStart" region10="PairEnd" region01="Symb" region11="Symb"/>
+         <block start="/(\[)/" end="/(\])/" scheme="TeX" region="Bracket" region00="PairStart" region10="PairEnd" region01="Symb" region11="Symb"/>
+         <inherit scheme="Symbols"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

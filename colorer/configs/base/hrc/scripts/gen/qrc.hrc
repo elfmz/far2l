@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="qrc" group="group" description="qrc" targetNamespace="urn:RCC">
+    <location link="qrc.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="qrc">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'qrc'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : urn:RCC
+             hrctype                     : qrc
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : 
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:
+		Simple scheme for support QT resource files (*.qrc) in colorer
+		
+		Note! urn:RCC is fictive namespace
+	</documentation>
+         <contributors><![CDATA[Eugene Efremov <4mirror@mail.ru>]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value=""/>
+      <entity name="nsprefix" value=""/>
+      <entity name="attr-nsprefix" value=""/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from '../../src/qrc/src/custom.qrc.xml'--><scheme name="path-content">
+         <regexp match="/(\/?)[^/?#:*|,&lt;&gt;\s]*/" region="uri:path" region1="uri:delit"
+                 priority="low"/>
+      </scheme>
+      <!--end custom--><scheme name="RCC-element">
+         <block start="/\M &lt; (%nsprefix;RCC ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e8-elementContent"/>
+      </scheme>
+      <scheme name="qresource-element">
+         <block start="/\M &lt; (%nsprefix;qresource ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e13-elementContent"/>
+      </scheme>
+      <scheme name="file-element">
+         <block start="/\M &lt; (%nsprefix;file ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e19-elementContent"/>
+      </scheme>
+      <!--
+		Simple scheme for support QT resource files (*.qrc) in colorer
+		
+		Note! urn:RCC is fictive namespace
+	
+-->
+<scheme name="path-content-old">
+         <inherit scheme="xmlschema:anyURI-content"/>
+      </scheme>
+      <scheme name="path-content-error">
+         <inherit scheme="path-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="path-content-cdsect">
+         <inherit scheme="path-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="path-Attributes"/>
+      <scheme name="path-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream" subst-scheme="path-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="path-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="path-content-cdsect"/>
+            <virtual scheme="xml:content.cdata.stream" subst-scheme="path-content-error"/>
+            <virtual scheme="xml:element" subst-scheme="def:empty"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="path-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: RCC
+-->
+<scheme name="_hrc_int_d12e8-content">
+         <inherit scheme="qresource-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e8-content-error">
+         <inherit scheme="_hrc_int_d12e8-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e8-content-cdsect">
+         <inherit scheme="_hrc_int_d12e8-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e8-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(version)\M([\s\=]|$)/x"
+                scheme="xmlschema:decimal-AttributeContent"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e8-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e8-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e8-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: qresource
+-->
+<scheme name="_hrc_int_d12e13-content">
+         <inherit scheme="file-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e13-content-error">
+         <inherit scheme="_hrc_int_d12e13-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e13-content-cdsect">
+         <inherit scheme="_hrc_int_d12e13-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e13-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(prefix)\M([\s\=]|$)/x"
+                scheme="path-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(lang)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e13-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e13-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e13-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: file
+-->
+<scheme name="_hrc_int_d12e19-content">
+         <inherit scheme="path-content"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e19-content-error">
+         <inherit scheme="_hrc_int_d12e19-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e19-content-cdsect">
+         <inherit scheme="_hrc_int_d12e19-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e19-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(alias)\M([\s\=]|$)/x"
+                scheme="path-AttributeContent"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e19-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:CDSect.content.stream"
+                     subst-scheme="_hrc_int_d12e19-content-cdsect"/>
+            <virtual scheme="xml:content.cdata.stream" subst-scheme="_hrc_int_d12e19-content-error"/>
+            <virtual scheme="xml:element" subst-scheme="def:empty"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e19-Attributes"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="qrc-root">
+         <inherit scheme="RCC-element"/>
+      </scheme>
+      <scheme name="qrc-root-addref">
+         <inherit scheme="qrc-root"/>
+      </scheme>
+      <scheme name="qrc">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="qrc-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

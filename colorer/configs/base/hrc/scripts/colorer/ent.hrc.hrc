@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="ent.hrc" group="group" description="ent.hrc" targetNamespace="http://colorer.sf.net/2003/hrc-aliac">
+    <location link="ent.hrc.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="ent.hrc">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'ent.hrc'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://colorer.sf.net/2003/hrc-aliac
+             hrctype                     : ent.hrc
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : no
+             default prefixes            : 
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:</documentation>
+         <contributors><![CDATA[None]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value=""/>
+      <entity name="nsprefix" value=""/>
+      <entity name="attr-nsprefix" value=""/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from 'custom.default.xml'--><!--end custom--><scheme name="hrc-element">
+         <block start="/\M &lt; (%nsprefix;hrc ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:hrc-elementContent"/>
+      </scheme>
+      <scheme name="annotation-element">
+         <block start="/\M &lt; (%nsprefix;annotation ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:annotation-elementContent"/>
+      </scheme>
+      <scheme name="prototype-element">
+         <block start="/\M &lt; (%nsprefix;prototype ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:prototype-elementContent"/>
+      </scheme>
+      <scheme name="package-element">
+         <block start="/\M &lt; (%nsprefix;package ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:package-elementContent"/>
+      </scheme>
+      <scheme name="type-element">
+         <block start="/\M &lt; (%nsprefix;type ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:type-elementContent"/>
+      </scheme>
+      <scheme name="location-element">
+         <block start="/\M &lt; (%nsprefix;location ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:location-elementContent"/>
+      </scheme>
+      <scheme name="filename-element">
+         <block start="/\M &lt; (%nsprefix;filename ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:filename-elementContent"/>
+      </scheme>
+      <scheme name="firstline-element">
+         <block start="/\M &lt; (%nsprefix;firstline ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:firstline-elementContent"/>
+      </scheme>
+      <scheme name="parameters-element">
+         <block start="/\M &lt; (%nsprefix;parameters ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:parameters-elementContent"/>
+      </scheme>
+      <scheme name="import-element">
+         <block start="/\M &lt; (%nsprefix;import ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:import-elementContent"/>
+      </scheme>
+      <scheme name="region-element">
+         <block start="/\M &lt; (%nsprefix;region ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:region-elementContent"/>
+      </scheme>
+      <scheme name="entity-element">
+         <block start="/\M &lt; (%nsprefix;entity ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:entity-elementContent"/>
+      </scheme>
+      <scheme name="scheme-element">
+         <block start="/\M &lt; (%nsprefix;scheme ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:scheme-elementContent"/>
+      </scheme>
+      <scheme name="regexp-element">
+         <block start="/\M &lt; (%nsprefix;regexp ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:regexp-elementContent"/>
+      </scheme>
+      <scheme name="block-element">
+         <block start="/\M &lt; (%nsprefix;block ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:block-elementContent"/>
+      </scheme>
+      <scheme name="keywords-element">
+         <block start="/\M &lt; (%nsprefix;keywords ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:keywords-elementContent"/>
+      </scheme>
+      <scheme name="inherit-element">
+         <block start="/\M &lt; (%nsprefix;inherit ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:inherit-elementContent"/>
+      </scheme>
+      <scheme name="start-element">
+         <block start="/\M &lt; (%nsprefix;start ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:blockInner-elementContent"/>
+      </scheme>
+      <scheme name="end-element">
+         <block start="/\M &lt; (%nsprefix;end ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:blockInner-elementContent"/>
+      </scheme>
+      <scheme name="virtual-element">
+         <block start="/\M &lt; (%nsprefix;virtual ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:virtual-elementContent"/>
+      </scheme>
+      <scheme name="word-element">
+         <block start="/\M &lt; (%nsprefix;word ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:word-elementContent"/>
+      </scheme>
+      <scheme name="symb-element">
+         <block start="/\M &lt; (%nsprefix;symb ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc:symb-elementContent"/>
+      </scheme>
+
+      <scheme name="ent.hrc-root">
+         <annotation>
+            <documentation>
+               You can replace these elements with needed single root element
+               with customizing HRC generation process.
+              </documentation>
+         </annotation>
+         <inherit scheme="hrc-element"/>
+         <inherit scheme="annotation-element"/>
+         <inherit scheme="prototype-element"/>
+         <inherit scheme="package-element"/>
+         <inherit scheme="type-element"/>
+         <inherit scheme="location-element"/>
+         <inherit scheme="filename-element"/>
+         <inherit scheme="firstline-element"/>
+         <inherit scheme="parameters-element"/>
+         <inherit scheme="import-element"/>
+         <inherit scheme="region-element"/>
+         <inherit scheme="entity-element"/>
+         <inherit scheme="scheme-element"/>
+         <inherit scheme="regexp-element"/>
+         <inherit scheme="block-element"/>
+         <inherit scheme="keywords-element"/>
+         <inherit scheme="inherit-element"/>
+         <inherit scheme="start-element"/>
+         <inherit scheme="end-element"/>
+         <inherit scheme="virtual-element"/>
+         <inherit scheme="word-element"/>
+         <inherit scheme="symb-element"/>
+      </scheme>
+      <scheme name="ent.hrc-root-addref">
+         <inherit scheme="ent.hrc-root"/>
+      </scheme>
+      <scheme name="ent.hrc">
+         <inherit scheme="xml:xml">
+            <virtual scheme="xml:element" subst-scheme="ent.hrc-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

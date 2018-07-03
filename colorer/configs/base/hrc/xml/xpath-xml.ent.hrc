@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<annotation><documentation>
+    Colorer HRC packages group for
+        XSLT, XPath and XQuery
+        
+    This is HRC fragment for support 
+        using XPath 1-2 in XML context
+    
+    Included in: xpath.hrc, xpath2.hrc
+    
+</documentation><contributors><![CDATA[
+    Eugene Efremov <4mirror@mail.ru>
+]]></contributors></annotation>
+
+
+<!-- Literal: virtualization -->
+
+<scheme name="StringLiteral">
+    <inherit scheme="AposLiteral"/>
+    <inherit scheme="QuotLiteral"/>
+</scheme>
+
+<scheme name="AposLiteral">
+    <block start="/(')/" end="/(')/" 
+        scheme="AposLiteralContent" region="literal"
+        region00="def:PairStart" region01="literal.quote"
+        region10="def:PairEnd"   region11="literal.quote"
+    />
+</scheme>
+<scheme name="QuotLiteral">
+    <block start='/(")/' end='/(")/' 
+        scheme="QuotLiteralContent" region="literal"
+        region00="def:PairStart" region01="literal.quote"
+        region10="def:PairEnd"   region11="literal.quote"
+    />
+</scheme>
+
+<scheme name="AposLiteralContent">
+    <inherit scheme="DefaultStringContent"/>
+</scheme>
+<scheme name="QuotLiteralContent">
+    <inherit scheme="DefaultStringContent"/>
+</scheme>
+<scheme name="DefaultStringContent"/>
+
+
+<!-- XML support  -->
+
+
+
+<scheme name="XML.AposLiteralContent">
+    <inherit scheme="xml:AttValue.content.quot"/>
+    <inherit scheme="DefaultStringContent"/>
+</scheme>
+<scheme name="XML.QuotLiteralContent">
+    <inherit scheme="xml:AttValue.content.apos"/>
+    <inherit scheme="DefaultStringContent"/>
+</scheme>
+
+<scheme name="XML.AposLiteral">
+    <inherit scheme="AposLiteral">
+        <virtual scheme="AposLiteralContent" subst-scheme="XML.AposLiteralContent"/>
+    </inherit>
+</scheme>
+<scheme name="XML.QuotLiteral">
+    <inherit scheme="QuotLiteral">
+        <virtual scheme="QuotLiteralContent" subst-scheme="XML.QuotLiteralContent"/>
+    </inherit>
+</scheme>
+
+
+<scheme name="XML.Expr">
+    <inherit scheme="Expr">
+        <virtual scheme="Expr" subst-scheme="XML.Expr"/>
+        <virtual scheme="Regexp" subst-scheme="XML.Regexp"/>
+        <virtual scheme="xpath-lt.internal.hack:expr-op" subst-scheme="xpath-xml-lt.internal.hack:expr-op"/>
+        <virtual scheme="xpath-lt.internal.hack:expr-op2" subst-scheme="xpath-xml-lt.internal.hack:expr-op2"/>
+    </inherit>
+</scheme>
+
+
+<scheme name="AposXML.Expr">
+    <inherit scheme="xml:AttValue.content"/>
+    <inherit scheme="XML.Expr">
+        <virtual scheme="XML.Expr" subst-scheme="AposXML.Expr"/>
+        <virtual scheme="StringLiteral" subst-scheme="XML.AposLiteral"/>
+    </inherit>
+</scheme>
+<scheme name="QuotXML.Expr">
+    <inherit scheme="xml:AttValue.content"/>
+    <inherit scheme="XML.Expr">
+        <virtual scheme="XML.Expr" subst-scheme="QuotXML.Expr"/>
+        <virtual scheme="StringLiteral" subst-scheme="XML.QuotLiteral"/>
+    </inherit>
+</scheme>
+
+
+<scheme name="AposXML.Pattern">
+    <inherit scheme="xml:AttValue.content"/>
+    <inherit scheme="Pattern">
+        <virtual scheme="Expr" subst-scheme="AposXML.Expr"/>
+        <virtual scheme="StringLiteral" subst-scheme="XML.AposLiteral"/>
+    </inherit>
+</scheme>
+<scheme name="QuotXML.Pattern">
+    <inherit scheme="xml:AttValue.content"/>
+    <inherit scheme="Pattern">
+        <virtual scheme="Expr" subst-scheme="QuotXML.Expr"/>
+        <virtual scheme="StringLiteral" subst-scheme="XML.QuotLiteral"/>
+    </inherit>
+</scheme>
+
+
+
+<!-- Embedded code -->
+
+
+<scheme name="EmbeddedExpr">
+    <regexp match="/\{{2}|\}{2}/" region="embedded.ignore"/>
+    <block start="/(\{)/" end="/(\})/"
+        region="embedded.content" scheme="Expr"
+        region00="embedded.quote" region10="embedded.quote"
+        region01="def:PairStrongStart" region11="def:PairStrongEnd"
+    />
+    <regexp match="/\}/" region="def:Error"/>
+</scheme>
+
+
+<scheme name="XML.EmbeddedExpr">
+<!-- 'virtual-region' not support, duplicate code... :-(
+Если когда-нибудь такое будет поддерживатся, 
+содержимое схемы следует заменить этим:
+    
+    <inherit scheme="EmbeddedExpr">
+        <virtual scheme="Expr" subst-scheme="XML.Expr"/>
+        <virtual-region region="embedded.content" subst-region="embedded.conetnt.xml"/>
+        <virtual-region region="embedded.quote" subst-region="embedded.qoute.xml"/>
+    </inherit>
+-->
+    <regexp match="/\{{2}|\}{2}/" region="embedded.ignore"/>
+    <block start="/(\{)/" end="/(\})/"
+        region="embedded.content.xml" scheme="XML.Expr"
+        region00="embedded.quote.xml" region10="embedded.quote.xml"
+            region01="def:PairStrongStart" region11="def:PairStrongEnd"
+    />
+    <regexp match="/\}/" region="def:Error"/>
+</scheme>
+
+
+<scheme name="AposXML.EmbeddedExpr">
+    <inherit scheme="XML.EmbeddedExpr">
+        <virtual scheme="XML.Expr" subst-scheme="AposXML.Expr"/>
+    </inherit>
+    <inherit scheme="xml:AttValue.content.quot"/>
+</scheme>
+<scheme name="QuotXML.EmbeddedExpr">
+    <inherit scheme="XML.EmbeddedExpr">
+        <virtual scheme="XML.Expr" subst-scheme="QuotXML.Expr"/>
+    </inherit>
+    <inherit scheme="xml:AttValue.content.apos"/>
+</scheme>
+

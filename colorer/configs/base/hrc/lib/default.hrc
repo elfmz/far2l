@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="def">
+    <annotation><documentation>
+      Shared macro-schemes, Common Region definitions,
+    </documentation></annotation>
+
+    <region name="default" description="Transparent region"/>
+    <region name="Text" description="Background text"/>
+
+    <region name="Syntax" description="Syntax check region"/>
+    <region name="Special" description="Invisible region"/>
+    <region name="Outlined" parent="Special" description="Outlined region"/>
+
+    <region name="PairStart" parent="Special" description="Paired struct start"/>
+    <region name="PairEnd"  parent="Special" description="Paired struct end"/>
+    <region name="PairStrongStart" parent="PairStart" description="Blocked pair start"/>
+    <region name="PairStrongEnd" parent="PairEnd" description="Blocked pair end"/>
+
+    <region name="Number" description="Common Number"/>
+    <region name="NumberDec" parent="Number" description="Decimal Number"/>
+    <region name="NumberHex" parent="Number" description="Hexadecimal Number"/>
+    <region name="NumberBin" parent="Number" description="Binary Number"/>
+    <region name="NumberOct" parent="Number" description="Octal Number"/>
+    <region name="NumberFloat" parent="Number" description="Float Number"/>
+    <region name="NumberSuffix" parent="Number" description="Number Suffix"/>
+    <region name="NumberPrefix" parent="Number" description="Number Prefix"/>
+
+    <region name="String" description="Common string"/>
+    <region name="StringContent" parent="String" description="Tokens in String Content"/>
+    <region name="StringEdge" parent="String" description="String edges"/>
+    <region name="Character" parent="String" description="Single character"/>
+    <region name="CharacterContent" parent="Character" description="Character Content"/>
+
+    <region name="Comment" parent="Syntax"  description="Comment"/>
+    <region name="CommentContent" parent="Comment" description="Comment Content"/>
+    <region name="LineComment" parent="Comment"  description="Single Line Comment"/>
+    <region name="CommentEdge" parent="Comment" description="Comment edges"/>
+    <region name="CommentDoc" parent="Comment" description="In-Source Documentation comments"/>
+    <region name="CommentDocContent" parent="CommentDoc" description="In-Source Documentation Elements"/>
+    <region name="CommentDocEdge" parent="CommentDoc" description="In-Source Documentation Edges"/>
+
+    <region name="Symbol" description="Symbol"/>
+    <region name="SymbolStrong" parent="Symbol" description="Strong Symbol"/>
+    <region name="Operator" parent="Symbol" description="Symbolic or Literal Operator"/>
+    <region name="Prefix" description="Prefix"/>
+    <region name="PrefixStrong" parent="Prefix" description="Other prefix"/>
+
+    <region name="Keyword"  description="Common Keyword"/>
+    <region name="KeywordStrong" parent="Keyword" description="Strong Keyword"/>
+    <region name="TypeKeyword"   parent="Keyword" description="Simple type object declaration Keywords"/>
+    <region name="ClassKeyword"   parent="Keyword" description="Class object Keywords"/>
+    <region name="StructKeyword"   parent="Keyword" description="Structure object Keywords"/>
+    <region name="FunctionKeyword"  parent="Keyword" description="Function object Keyword"/>
+    <region name="InterfaceKeyword"  parent="Keyword" description="Interface object Keywords"/>
+    <region name="DeprecatedKeyword"  parent="Keyword" description="Deprecate Keyword"/>
+
+    <region name="Constant"   parent="Keyword" description="Constant declaration"/>
+    <region name="BooleanConstant" parent="Constant" description="Boolean Constant declaration"/>
+    <region name="Identifier" description="Identifier"/>
+
+    <!-- DEPRECATED!!! -->
+    <region name="Function" parent="Outlined" description="Function definition"/>
+
+    <region name="Register"   description="Assembler register"/>
+    <region name="Var"  description="Variable reference"/>
+    <region name="VarStrong"  parent="Var" description="Strong Variable reference"/>
+
+    <region name="Directive" description="Compiler/Preprocessor directive"/>
+    <region name="DirectiveContent" parent="Directive" description="Internal directive text"/>
+    <region name="DirectiveEdge"    parent="DirectiveContent" description="Directive edges"/>
+
+    <region name="Parameter" description="Parameter declaration"/>
+    <region name="ParameterStrong" parent="Parameter" description="Special parameter"/>
+    <region name="ParameterUnknown" parent="ParameterStrong" description="Undefined parameter"/>
+
+    <region name="Tag" description="XML/HTML/SGML tag"/>
+    <region name="OpenTag" parent="Tag" description="Opening tag"/>
+    <region name="CloseTag" parent="Tag" description="Closing tag"/>
+
+    <region name="EmbeddedTag" parent="Tag" description="Tag for embedded structures (asp, etc.)"/>
+
+    <region name="Label" description="Label"/>
+    <region name="LabelStrong" parent="Label" description="High contrast Label"/>
+
+    <region name="Insertion" description="Insertion source code"/>
+    <region name="InsertionStart" parent="Insertion" description="Source Insertion start"/>
+    <region name="InsertionEnd" parent="Insertion" description="Source Insertion end"/>
+    <region name="InsertionEmbed" parent="Insertion" description="Insertion embedded code"/>
+
+    <region name="URI" description="URI Address"/>
+    <region name="URL"  parent="URI" description="URL Address"/>
+    <region name="Path" parent="URI" description="File Path"/>
+    <region name="EMail" parent="URI" description="EMail Address"/>
+    <region name="Date" description="Date"/>
+    <region name="Time" description="Time"/>
+
+    <region name="Error" description="Syntax error"/>
+    <region name="ErrorText" parent="Error" description="Potentially bad text"/>
+
+    <region name="TODO" parent="Error" description="TODO notes"/>
+    <region name="Debug" parent="Error" description="DEBUG notes"/>
+
+
+    <entity name="neverMatch" value="$neverMore^"/>
+
+
+    <scheme name="empty"/>
+    <scheme name="def"/>
+
+    <scheme name="CString">
+      <regexp match="/ (?{StringEdge}&#34;) (?{String} ( \\. | [^\\&#34;] )*?) (?{StringEdge}&#34;) /x"/>
+    </scheme>
+
+    <scheme name="BinNumber">
+      <regexp match="/\b 0(?{NumberSuffix}[bB])[01]+ /ix" region0="NumberBin"/>
+    </scheme>
+
+    <scheme name="CHexNumber">
+      <regexp match="/\b 0x[\da-fA-F]+ (?{NumberSuffix}ul{0,2}|l{1,2}u?|(i64)|(i128))? \b/ix" region="NumberHex"/>
+    </scheme>
+
+    <scheme name="FloatNumber">
+      <regexp match="/\B \. \d+ ([eE][\-+]?\d+)? ([lLfF]?)\b/x" region0="NumberFloat" region2="NumberSuffix"/>
+      <regexp match="/\b \d+\.\d* ([eE][\-+]?\d+)? ([lLfF]?)\b/x" region0="NumberFloat" region2="NumberSuffix"/>
+      <regexp match="/\b \d+ ([eE][\-+]?\d+) ([lLfF]?)\b/x" region0="NumberFloat" region2="NumberSuffix"/>
+    </scheme>
+
+    <scheme name="DecNumber">
+      <regexp match="/\b\d+ (ul{0,2}|l{1,2}u?|i64|i128)?\b/ix" region0="NumberDec" region1="NumberSuffix"/>
+    </scheme>
+
+    <scheme name="Number">
+      <inherit scheme="CHexNumber"/>
+      <inherit scheme="FloatNumber"/>
+      <inherit scheme="DecNumber"/>
+    </scheme>
+
+    <scheme name="BadHex">
+      <regexp match="/\b(0x[\da-fA-F]*?([^\s\W\da-fA-F]).*?)\b/i" region0="Error"/>
+    </scheme>
+
+    <scheme name="StandardString">
+      <regexp match="/(?{StringEdge}&#34;) (?{String}.*?) (?{StringEdge}&#34;)/ix"/>
+      <regexp match="/(?{StringEdge}') (?{String}.*?) (?{StringEdge}')/ix"/>
+    </scheme>
+
+    <scheme name="Apost">
+      <regexp match="/\w(')[avDLSTMdstml]/" region1="String"/>
+    </scheme>
+
+    <scheme name="NetURL">
+      <regexp priority="low" region="URL"><![CDATA[
+       /\b ((about|castanet|ftp|git|gopher|https?|javascript|news|nntp|sop|wais|wysiwyg)
+           \:\/\/  | (www|ftp|fido[0-9]*)\.)
+           [\[\]\@\%\:\+\w\.\/\~\?\-\*=_#&;]+\b\/?/ix]]>
+      </regexp>
+    </scheme>
+
+    <scheme name="NetEMail">
+<!-- Mail address -->
+      <regexp region1="EMail" region3="String" region4="String" priority="low"><![CDATA[
+           /( (\b mailto\s*\:\s*)? (<?) [A-Za-z\d][\w\.\~\-_#]*
+            \@[\w\~\-_#]+? \. [\?\=\w\.\~\-_#]+ (>?) ) /x]]>
+      </regexp>
+      <regexp match="/p\d{0,3}\.f\d\.n\d{0,4}\.z\d\.fidonet\.org/" region="EMail"/>
+    </scheme>
+
+    <scheme name="NetFTN">
+<!-- FTN address 2:5080/80.66 -->
+      <regexp region0="EMail" priority="low"><![CDATA[
+        /\b [1-9]\d* \: \d+\/\d+ (\.\d+)? (\@\w[\w\.\-]+)? \b/x]]>
+      </regexp>
+    </scheme>
+
+    <scheme name="NetAddresses">
+      <inherit scheme="NetEMail"/>
+      <inherit scheme="NetURL"/>
+      <inherit scheme="NetFTN"/>
+    </scheme>
+
+    <scheme name="Path">
+<!-- full path -->
+      <regexp region="Path"><![CDATA[
+        /\b ([A-Za-z]\: | [\w_\~\-\.`'!@#&\$\^\{\}\(\)]*\\)
+        [\w_\~\-\\\.`'!@#&\$\^\{\}\(\)]+ /x]]>
+      </regexp>
+<!-- file name only - disabled
+  <regexp match="/\b([A-Za-z0-9_\~\-`'!#&\$\^\{\}]+\.[A-Za-z0-9_\~\-`'!@#&\$\^\{\}]{1,5})\b/" region0="Path"/-->
+<!-- unix path
+  <regexp match="/\.?\/?([\w\.\-]+\/)+[\w\.\-]*/" region0="Path"/ -->
+    </scheme>
+
+    <scheme name="Date">
+      <regexp match="/\b[0-3]?\d[\/\.\-][0-1]?\d[\/\.\-]\d\d(\d\d)?\b/" region="Date"/>
+      <regexp match="/\b\d{4}-(0\d|1[012])-([012]\d|3[01])\b/" region="def:Date"/>
+    </scheme>
+
+    <scheme name="Time">
+      <regexp region="Time"><![CDATA[/\b[0-2]?\d:[0-5]\d(:[0-5]\d)?(\s?(am|pm))?\b/i]]></regexp>
+    </scheme>
+
+    <scheme name="RCS">
+      <regexp region="Directive"><![CDATA[
+        /\$(Archive|Author|Date|Header|Id|Locker|Log|RCSfile|Revision|Source|State)(: .*?)?\$/]]>
+      </regexp>
+      <regexp match="/^&lt;{7,}.*$/" region="TODO"/>
+      <regexp match="/^={7,}$/" region="TODO"/>
+      <regexp match="/^&gt;{7,}.*$/" region="TODO"/>
+    </scheme>
+
+    <scheme name="Comment">
+<!-- just add http and e-mail highlighting -->
+      <inherit scheme="NetEMail"/>
+      <inherit scheme="NetURL"/>
+      <inherit scheme="RCS"/>
+      <regexp  region="TODO">/[\!\?]{2,}/</regexp>
+<!--<regexp  region="TODO">/[\w\-\_]{1,20} \s{,2} [\!\?]{2,}/x</regexp>-->
+      <regexp  region="TODO" priority='low'>/\b((FIXME|TODO|BUG|FIX)\b.*$)/xi</regexp>
+
+    </scheme>
+
+    <scheme name="cNestedComment-internal">
+      <inherit scheme="Comment"/>
+      <block scheme="cNestedComment-internal" region="Comment">
+        <start region="PairStart">/\/\*/</start>
+        <end region="PairEnd">/\*\//</end>
+      </block>
+    </scheme>
+
+    <scheme name="cNestedComment">
+      <block scheme="cNestedComment-internal" region="Comment">
+        <start region="PairStart">/\/\*/</start>
+        <end region="PairEnd">/\*\//</end>
+      </block>
+    </scheme>
+
+    
+    <scheme name="unixCommentDirective">
+      <regexp match="/^#!\s*([\S]+)( .*)?$/" 
+        region0="Comment" region1="VarStrong" region2="KeywordStrong" 
+      />
+    </scheme>
+    <scheme name="unixCommentFirstline"> <!-- first line in file only -->
+      <inherit scheme='unixCommentDirective'/>
+      <block start="//" end="/%neverMatch;/" scheme="def"/>
+    </scheme>
+    
+    
+    <scheme name="PairedBrackets">
+<!-- paired block -->
+      <block start="/(\{)/" end="/(\})/" scheme="PairedBrackets" region00="SymbolStrong" region01="PairStart" region10="SymbolStrong" region11="PairEnd"/>
+      <block start="/(\()/" end="/(\))/" scheme="PairedBrackets" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="PairedBrackets" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+    </scheme>
+
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Igor Russkih <irusskih at gmail dot com>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2007
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

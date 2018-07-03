@@ -1,0 +1,172 @@
+<scheme name="keywords">
+<!-- Blocks -->
+<!--     <block start="/&lt;&lt;(EO\w+)/" end="/^\y1/" scheme="Comment" region="CommentContent" region00="PairStart" region10="PairEnd"/>
+<!- - Linear Comments - ->
+     <regexp match="/(\#.*$)/" region0="Comment"/>
+<!- - Strings - - >
+     <regexp match="/(&#34;(.*?(\\\\)|[^\\])??&#34;)/" region0="String"/>
+     <regexp match="/('(.*?(\\\\)|[^\\])??')/" region0="String"/>
+     <regexp match="/(`.*?`)/" region0="String"/>
+<!- - Numbers - ->
+     <regexp match="/\b(0[xX][\da-fA-F]+)\b/" region0="Number"/>
+     <regexp match="/\b([0-9]+)\b/" region0="Number"/>
+     <keywords region="Label">
+<!- - control operators and redirection - - >
+        <symb name="`"/>
+        <symb name="&amp;"/>
+        <symb name="("/>
+        <symb name=")"/>
+        <symb name="|"/>
+        <symb name="&gt;"/>
+        <symb name="&lt;"/>
+     </keywords>-->
+<!-- reserved words -->
+     <keywords region="command">
+        <symb name="."/>
+        <word name="case"/>
+        <word name="do"/>
+        <word name="done"/>
+        <word name="elif"/>
+        <word name="else"/>
+        <word name="esac"/>
+        <word name="fi"/>
+        <word name="for"/>
+        <word name="function"/>
+        <word name="if"/>
+        <word name="in"/>
+        <word name="select"/>
+        <word name="then"/>
+        <word name="until"/>
+        <word name="while"/>
+        <word name="time"/>
+        <symb name="!"/>
+        <symb name="{"/>
+        <symb name="}"/>
+        <symb name="[["/>
+        <symb name="]]"/>
+     </keywords>
+<!-- shell variables -->
+     <keywords region="var">
+        <symb name="$"/>
+        <word name="$@"/>
+        <word name="$#"/>
+        <word name="$?"/>
+        <word name="$-"/>
+        <word name="$$"/>
+        <word name="$!"/>
+        <word name="$0"/>
+        <word name="$PPID"/>
+        <word name="$PWD"/>
+        <word name="$OLDPWD"/>
+        <word name="$REPLY"/>
+        <word name="$UID"/>
+        <word name="$EUID"/>
+        <word name="$GROUPS"/>
+        <word name="$BASH"/>
+        <word name="$BASH_VERSION"/>
+        <word name="$BASH_VERSINFO"/>
+        <word name="$SHLVL"/>
+        <word name="$RANDOM"/>
+        <word name="SECONDS"/>
+        <word name="$LINENO"/>
+        <word name="$HISTCMD"/>
+        <word name="$DIRSTACK"/>
+        <word name="$OPTARG"/>
+        <word name="$OPTIND"/>
+        <word name="$HOSTNAME"/>
+        <word name="$HOSTTYPE"/>
+        <word name="$OSTYPE"/>
+        <word name="$MACHTYPE"/>
+        <word name="$SHELLOPTS"/>
+<!-- well-known variables -->
+        <word name="IFS"/>
+        <word name="PATH"/>
+        <word name="HOME"/>
+        <word name="CDPATH"/>
+        <word name="BASH_ENV"/>
+        <word name="MAIL"/>
+        <word name="MAILCHECK"/>
+        <word name="MAILPATH"/>
+        <word name="PS1"/>
+        <word name="PS2"/>
+        <word name="PS3"/>
+        <word name="FIGNORE"/>
+        <word name="PS4"/>
+        <word name="TIMEFORMAT"/>
+        <word name="HISTFILE"/>
+        <word name="HISTFILESIZE"/>
+        <word name="OPTERR"/>
+        <word name="LANG"/>
+        <word name="LC_ALL"/>
+        <word name="LC_COLLATE"/>
+        <word name="LC_MESSAGES"/>
+        <word name="PROMPT_COMMAND"/>
+        <word name="IGNOREEOF"/>
+        <word name="TMOUT"/>
+        <word name="FCEDIT"/>
+        <word name="GLOBIGNORE"/>
+        <word name="INPUTRC"/>
+        <word name="HISTCONTROL"/>
+        <word name="HISTIGNORE"/>
+        <word name="histchars"/>
+        <word name="HOSTFILE"/>
+        <word name="auto_resume"/>
+        <word name="GLOBIGNORE"/>
+     </keywords>
+<!-- test conditions -->
+
+<!-- builtin commands -->
+    <keywords region="command.sys">
+       <word name="sed"/>
+       <word name="alias"/>
+       <word name="bg"/>
+       <word name="bind"/>
+       <word name="break"/>
+       <word name="builtin"/>
+       <word name="cd"/>
+       <word name="command"/>
+       <word name="continue"/>
+       <word name="declare"/>
+       <word name="typeset"/>
+       <word name="dirs"/>
+       <word name="disown"/>
+       <word name="echo"/>
+       <word name="enable"/>
+       <word name="eval"/>
+       <word name="exec"/>
+       <word name="exit"/>
+       <word name="export"/>
+       <word name="fc"/>
+       <word name="fg"/>
+       <word name="getopts"/>
+       <word name="hash"/>
+       <word name="help"/>
+       <word name="history"/>
+       <word name="jobs"/>
+       <word name="kill"/>
+       <word name="let"/>
+       <word name="local"/>
+       <word name="logout"/>
+       <word name="popd"/>
+       <word name="printf"/>
+       <word name="pushd"/>
+       <word name="pwd"/>
+       <word name="read"/>
+       <word name="readonly"/>
+       <word name="return"/>
+       <word name="set"/>
+       <word name="shift"/>
+       <word name="shopt"/>
+       <word name="suspend"/>
+       <word name="test"/>
+       <word name="times"/>
+       <word name="trap"/>
+       <word name="type"/>
+       <word name="type"/>
+       <word name="ulimit"/>
+       <word name="umask"/>
+       <word name="unalias"/>
+       <word name="unset"/>
+       <word name="wait"/>
+    </keywords>
+</scheme>

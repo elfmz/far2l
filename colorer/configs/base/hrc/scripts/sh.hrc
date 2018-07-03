@@ -1,0 +1,276 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY sh-keywords SYSTEM "sh-keywords.ent.hrc">
+<!ENTITY sh-brackets SYSTEM "gen/sh-brackets.ent.hrc">
+]>
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="shell">
+
+ <annotation><documentation>
+   Shell Scripts
+ </documentation><contributors><![CDATA[
+   alexander smishlajev <als@turnhere.com>
+   Eugene Efremov <4mirror@mail.ru>
+ ]]></contributors>
+
+  <appinfo>
+   <prototype name="shell" group="scripts" description="sh/ksh/bash script">
+     <location link="scripts/sh.hrc"/>
+     <filename>/\.(sh)$/i</filename>
+     <firstline weight='2'>/^\#(!\s*.+sh\b)/</firstline>
+   </prototype>
+   <require>
+    <package name="regexp"/>
+    <type name="perl"/>
+   </require>
+  </appinfo>
+ </annotation>
+
+
+<region name="command" parent="def:Keyword"/>
+<region name="command.sys" parent="def:KeywordStrong"/>
+<region name="op" parent="def:Operator"/>
+<region name="symb" parent="def:Symbol"/>
+<region name="symb.struct" parent="def:SymbolStrong"/>
+<region name="symb.inout" parent="def:Label"/>
+<region name="var" parent="def:Var"/>
+<region name="var.slash" parent="def:VarStrong"/>
+<region name="slash" parent="def:StringContent"/>
+<region name="string" parent="def:String"/>
+<region name="string.eval" parent="def:Insertion"/>
+<region name="path" parent="def:Path"/>
+
+<entity name="var" value="[\w_][\w\d_\-\.]*"/>
+
+<scheme name="string.eval">
+ <block start="/`/" end="/`/"
+  scheme="shell.in" region="string.eval"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+</scheme>
+<scheme name="shell">
+<inherit scheme="def:unixCommentDirective"/>
+<block start="/\#/" end="/$/" region="def:Comment" scheme="def:Comment"/>
+ <inherit scheme="string.eval"/>
+ <inherit scheme="shell.in"/>
+</scheme>
+
+<scheme name="shell.in">
+ <block start="/\#/" end="/$/" region="def:Comment" scheme="def:Comment"/>
+
+<!-- { ... } -->
+ <block start="/(\{)/" end="/(\})/" scheme="shell"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb.struct" region11="symb.struct"
+ />
+<!-- ${ ... } -->
+ <block start="/(\$\{[!#]?)/" end="/(\})/" scheme="shell.in"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="var" region11="var"
+ />
+<!-- fn() -->
+ <regexp match="/^(%var;)(\(\))/" region1="def:Outlined" region2="symb"/>
+<!-- $(( ... )) -->
+ <block start="/(\$?\(\()/" end="/(\)\))/" scheme="shell.in"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb.struct" region11="symb.struct"
+ />
+<!-- $( ... ) -->
+<!-- <( ... ) -->
+<!-- >( ... ) -->
+ <block start="/([&lt;&gt;$]?\()/" end="/(\))/" scheme="shell"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb.struct" region11="symb.struct"
+ />
+<!-- [[ ... ]] -->
+ <block start="/(?:^|\s)(\[\[) /" end="/ (\]\])/" scheme="shell.in"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb" region11="symb"
+ />
+<!-- [ ... ] -->
+ <block start="/(?:^|\s)(\[) /" end="/ (\])/" scheme="shell.in"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb" region11="symb"
+ />
+ <block start="/(\bif\b)/" end="/(\bfi\b)/" scheme="shell"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="command" region11="command"
+ />
+ <block start="/(\bdo\b)/" end="/(\bdone\b)/" scheme="shell"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="command" region11="command"
+ />
+ <block start="/(\bcase\b)/" end="/(\besac\b)/" scheme="case"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="command" region11="command"
+ />
+
+ <inherit scheme="def:CHexNumber"/>
+ <inherit scheme="def:DecNumber"/>
+ <inherit scheme="regexp"/>
+ <inherit scheme="string"/>
+ <inherit scheme="group"/>
+ <inherit scheme="var"/>
+ <inherit scheme="keywords"/>
+<!-- <inherit scheme=""/>
+ <inherit scheme=""/>
+ <inherit scheme=""/>-->
+
+
+</scheme>
+
+<scheme name="case">
+ <block start="/(\))/" end="/(\;\;)/" scheme="shell"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb.inout" region11="symb.inout"
+ />
+ <inherit scheme="shell"/>
+</scheme>
+
+<scheme name="regexp">
+ <keywords region="regexp:MetaSymb">
+  <symb name='*'/>
+  <symb name='?'/>
+ </keywords>
+ <block start="/(\[)/" end="/([^\\]\[)?~2((\]))/x"
+  scheme="regexp:posix.class" region="string"
+  region00="regexp:Quote" region01="def:PairStart"
+  region12="regexp:Quote" region13="def:PairEnd"
+ /> <!-- It's real?? -->
+</scheme>
+
+&sh-brackets;
+
+<scheme name="s.re.blocks.r">
+ <inherit scheme="s.re.blocks"/> <!-- in bkt -->
+ <regexp match="/\;/" region="symb"/>
+</scheme>
+
+<scheme name="str.cont">
+ <inherit scheme="string.eval"/>
+ <inherit scheme="var"/>
+</scheme>
+
+<scheme name="string">
+<!-- Do support of single-quoted heredoc delimiter: common form is <<-? '?HEREDOC'? -->
+ <block start="/(&lt;&lt;-\s*\\?)('?)([\w-]+)\2/" end="/^\s*(\y3)/"
+  scheme="slash" region="perl:HereDoc"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="perl:HereDocLt" region03="perl:HereDocName"
+  region11="perl:HereDocName"
+ />
+ <block start="/(&lt;&lt;\s*\\?)('?)([\w-]+)\2/" end="/^(\y3)/"
+  scheme="slash" region="perl:HereDoc"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="perl:HereDocLt" region03="perl:HereDocName"
+  region11="perl:HereDocName"
+ />
+
+ <block start="/(&apos;|&quot;)\Ms[^\w\s]/" end="/\y1/"
+  scheme="s.re.blocks.r" region="string"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+
+ <block start="/&apos;/" end="/&apos;/"
+  scheme="def:def" region="string"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+ <block start="/&quot;/" end="/&quot;/"
+  scheme="str.cont" region="string"
+  region00="def:PairStart" region10="def:PairEnd"
+  />
+ <block start="/(grep) (\-\w+)?\s*(&apos;)/" end="/(&apos;)/"
+  scheme="regexp:pcre.regexp" region="string"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="command.sys" region02="op"
+  region03="def:StringEdge" region11="def:StringEdge"
+ />
+ <!--block start="/(echo) (\-\w+)?\s*\M[^&quot;&apos;`;\)\}]+/"
+  end="/$/" priority="low" content-priority="low"
+  scheme="var" region="string"
+  region01="command" region02="op"
+ /-->
+</scheme>
+
+<scheme name="slash">
+ <regexp match="/\\(.|$)/" region="slash"/>
+</scheme>
+<scheme name="var">
+ <regexp match="/\\\$%var;/" region="var.slash"/>
+ <inherit scheme="slash"/>
+ <regexp match="/\$%var;/" region="var"/>
+ <regexp match="/\$\{%var;\}/" region="var"/>
+ <regexp match="/(%var;)(\=)/" region1="var" region2="symb"/>
+ <regexp match="/(%var;)?(\/%var;)+/" region="path"/>
+ <regexp match="/\S?#1\//" region="path"/>
+</scheme>
+
+<scheme name="group">
+ <keywords region="symb.struct">
+  <symb name=":" region="symb"/>
+  <symb name=";"/>
+  <symb name="&amp;"/>
+  <symb name="&amp;&amp;"/>
+  <symb name="||"/>
+ </keywords>
+ <regexp match="/&gt;&amp;\d+/" region="symb.inout"/>
+ <keywords region="symb.inout">
+  <symb name="&lt;"/>
+  <symb name="&gt;"/>
+  <symb name="|"/>
+ </keywords>
+
+ <keywords region="op">
+  <word name="true"/>
+  <word name="false"/>
+ </keywords>
+ <keywords region="op" worddiv="[\s]">
+  <word name="-a"/>
+  <word name="-b"/>
+  <word name="-c"/>
+  <word name="-d"/>
+  <word name="-e"/>
+  <word name="-f"/>
+  <word name="-g"/>
+  <word name="-k"/>
+  <word name="-p"/>
+  <word name="-r"/>
+  <word name="-s"/>
+  <word name="-t"/>
+  <word name="-u"/>
+  <word name="-v"/>
+  <word name="-w"/>
+  <word name="-x"/>
+  <word name="-O"/>
+  <word name="-G"/>
+  <word name="-L"/>
+  <word name="-S"/>
+  <word name="-N"/>
+  <word name="-nt"/>
+  <word name="-ot"/>
+  <word name="-ef"/>
+  <word name="-o"/>
+  <word name="-z"/>
+  <word name="-n"/>
+  <word name="="/>
+  <word name="=="/>
+  <word name="!="/>
+  <word name="-eq"/>
+  <word name="-ne"/>
+  <word name="-lt"/>
+  <word name="-le"/>
+  <word name="-gt"/>
+  <word name="-ge"/>
+ </keywords>
+</scheme>
+
+&sh-keywords;
+
+</type>
+</hrc>

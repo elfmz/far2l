@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+ <type name="doxygen">
+  <annotation><documentation>
+    Doxygen documentation system
+  </documentation><contributors><![CDATA[
+    c.hrc contributors, before split:
+     Vladimir Tarasov <tsoftgroup@chat.ru>
+     Timur Safin <timur@lanit.ru>
+     cail: split into two schemes: c and cpp
+     Stanislav V. Mekhanoshin <stas@titania.spb.su>
+     Eugene Efremov <4mirror@mail.ru>:
+  ]]></contributors>
+  </annotation>
+
+
+  <scheme name="doc-comment" if="doxygen-comments">
+   <inherit scheme="def:NetAddresses"/>
+   <inherit scheme="def:Comment"/>
+   <keywords region="def:CommentContent">
+    <word name="\a"/><word name="@a"/>
+    <word name="\addindex"/><word name="@addindex"/>
+    <word name="\addtogroup"/><word name="@addtogroup"/>
+    <word name="\anchor"/><word name="@anchor"/>
+    <word name="\arg"/><word name="@arg"/>
+    <word name="\attention"/><word name="@attention"/>
+    <word name="\author"/><word name="@author"/>
+    <word name="\b"/><word name="@b"/>
+    <word name="\brief"/><word name="@brief"/>
+    <word name="\bug"/><word name="@bug"/>
+    <word name="\c"/><word name="@c"/>
+    <word name="\class"/><word name="@class"/>
+    <word name="\code"/><word name="@code"/>
+    <word name="\copydoc"/><word name="@copydoc"/>
+    <word name="\date"/><word name="@date"/>
+    <word name="\def"/><word name="@def"/>
+    <word name="\defgroup"/><word name="@defgroup"/>
+    <word name="\deprecated"/><word name="@deprecated"/>
+    <word name="\dontinclude"/><word name="@dontinclude"/>
+    <word name="\dotfile"/><word name="@dotfile"/>
+    <word name="\e"/><word name="@e"/>
+    <word name="\else"/><word name="@else"/>
+    <word name="\elseif"/><word name="@elseif"/>
+    <word name="\em"/><word name="@em"/>
+    <word name="\endcode"/><word name="@endcode"/>
+    <word name="\endhtmlonly"/><word name="@endhtmlonly"/>
+    <word name="\endif"/><word name="@endif"/>
+    <word name="\endlatexonly"/><word name="@endlatexonly"/>
+    <word name="\endlink"/><word name="@endlink"/>
+    <word name="\endverbatim"/><word name="@endverbatim"/>
+    <word name="\enum"/><word name="@enum"/>
+    <word name="\example"/><word name="@example"/>
+    <word name="\exception"/><word name="@exception"/>
+    <word name="\f$"/><word name="@f$"/>
+    <word name="\f["/><word name="@f["/>
+    <word name="\f]"/><word name="@f]"/>
+    <word name="\file"/><word name="@file"/>
+    <word name="\fn"/><word name="@fn"/>
+    <word name="\hideinitializer"/><word name="@hideinitializer"/>
+    <word name="\htmlinclude"/><word name="@htmlinclude"/>
+    <word name="\htmlonly"/><word name="@htmlonly"/>
+    <word name="\if"/><word name="@if"/>
+    <word name="\ifnot"/><word name="@ifnot"/>
+    <word name="\image"/><word name="@image"/>
+    <word name="\include"/><word name="@include"/>
+    <word name="\ingroup"/><word name="@ingroup"/>
+    <word name="\internal"/><word name="@internal"/>
+    <word name="\invariant"/><word name="@invariant"/>
+    <word name="\interface"/><word name="@interface"/>
+    <word name="\latexonly"/><word name="@latexonly"/>
+    <word name="\li"/><word name="@li"/>
+    <word name="\line"/><word name="@line"/>
+    <word name="\link"/><word name="@link"/>
+    <word name="\mainpage"/><word name="@mainpage"/>
+    <word name="\n"/><word name="@n"/>
+    <word name="\name"/><word name="@name"/>
+    <word name="\namespace"/><word name="@namespace"/>
+    <word name="\nosubgrouping"/><word name="@nosubgrouping"/>
+    <word name="\note"/><word name="@note"/>
+    <word name="\overload"/><word name="@overload"/>
+    <word name="\p"/><word name="@p"/>
+    <word name="\package"/><word name="@package"/>
+    <word name="\page"/><word name="@page"/>
+    <word name="\par"/><word name="@par"/>
+    <word name="\param"/><word name="@param"/>
+    <word name="\post"/><word name="@post"/>
+    <word name="\pre"/><word name="@pre"/>
+    <word name="\ref"/><word name="@ref"/>
+    <word name="\relates"/><word name="@relates"/>
+    <word name="\remarks"/><word name="@remarks"/>
+    <word name="\return"/><word name="@return"/>
+    <word name="\retval"/><word name="@retval"/>
+    <word name="\sa"/><word name="@sa"/>
+    <word name="\section"/><word name="@section"/>
+    <word name="\showinitializer"/><word name="@showinitializer"/>
+    <word name="\since"/><word name="@since"/>
+    <word name="\skip"/><word name="@skip"/>
+    <word name="\skipline"/><word name="@skipline"/>
+    <word name="\struct"/><word name="@struct"/>
+    <word name="\subsection"/><word name="@subsection"/>
+    <word name="\subsubsection"/><word name="@subsubsection"/>
+    <word name="\test"/><word name="@test"/>
+    <word name="\throw"/><word name="@throw"/>
+    <word name="\todo"/><word name="@todo"/>
+    <word name="\typedef"/><word name="@typedef"/>
+    <word name="\union"/><word name="@union"/>
+    <word name="\until"/><word name="@until"/>
+    <word name="\var"/><word name="@var"/>
+    <word name="\verbatim"/><word name="@verbatim"/>
+    <word name="\verbinclude"/><word name="@verbinclude"/>
+    <word name="\version"/><word name="@version"/>
+    <word name="\warning"/><word name="@warning"/>
+    <word name="\weakgroup"/><word name="@weakgroup"/>
+    <symb name="@$"/><symb name="\$"/>
+    <symb name="@@"/><symb name="\@"/>
+    <symb name="@#"/><symb name="\#"/>
+    <symb name="\\"/><symb name="@\"/>
+    <symb name="\&amp;"/><symb name="@&amp;"/>
+    <symb name="\~"/><symb name="@~"/>
+    <symb name="\&lt;"/><symb name="@&lt;"/>
+    <symb name="\>"/><symb name="@>"/>
+    <symb name="\%"/><symb name="@%"/>
+    <symb name="\{"/><symb name="@{"/>
+    <symb name="\}"/><symb name="@}"/>
+   </keywords>
+   <regexp match="/[\\\@]\w+/"/>
+   <regexp match="/[\\\@]/" region="def:Error"/>
+  </scheme>
+
+  
+  <scheme name='doxygen'>
+   <!-- Doxygen Comments -->
+   <regexp match="/\/\*\*\//" region="def:CommentDoc"/>
+   <block start="/\/\/\//" end="/$/" scheme="doc-comment" region="def:CommentDoc"/>
+   <block start="/\/\*[\*\!]/" end="/\*\//" scheme="doc-comment" region="def:CommentDoc"
+          region00="def:PairStart" region10="def:PairEnd"/>
+  </scheme>
+  
+	</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2008
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Eugene Efremov <4mirror@mail.ru>
+   - Stanislav V. Mekhanoshin <stas@titania.spb.su>
+   - Timur Safin <timur@lanit.ru>
+   - Vladimir Tarasov <tsoftgroup@chat.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

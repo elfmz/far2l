@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="coldfusion">
+
+    <annotation>
+     <documentation>
+      ColdFusion Markup Language
+     </documentation>
+     <contributors><![CDATA[
+     ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name='Tag' parent='def:Keyword' description='CF tag'/>
+    <region name='Expr' parent='def:VarStrong' description='CF expression'/>
+    
+    <scheme name='Tags'>
+      <inherit scheme='html:htmlCoreTags'/>
+
+      <keywords region='Tag' ignorecase='yes'>
+        <word name='CFAPPLET'/>
+        <word name='CFAPPLICATION'/>
+        <word name='CFARGUMENT'/>
+        <word name='CFASSOCIATE'/>
+        <word name='CFAUTHENTICATE'/>
+        <word name='CFBREAK'/>
+        <word name='CFCACHE'/>
+        <word name='CFCASE'/>
+        <word name='CFCATCH'/>
+        <word name='CFCHART'/>
+        <word name='CFCHARTDATA'/>
+        <word name='CFCHARTSERIES'/>
+        <word name='CFCOL'/>
+        <word name='CFCOLLECTION'/>
+        <word name='CFCOMPONENT'/>
+        <word name='CFCONTENT'/>
+        <word name='CFCOOKIE'/>
+        <word name='CFDEFAULTCASE'/>
+        <word name='CFDIRECTORY'/>
+        <word name='CFDUMP'/>
+        <word name='CFELSE'/>
+        <word name='CFELSEIF'/>
+        <word name='CFERROR'/>
+        <word name='CFEXECUTE'/>
+        <word name='CFEXIT'/>
+        <word name='CFFILE'/>
+        <word name='CFFLUSH'/>
+        <word name='CFFORM'/>
+        <word name='CFFTP'/>
+        <word name='CFFUNCTION'/>
+        <word name='CFGRAPH'/>
+        <word name='CFGRAPHDATA'/>
+        <word name='CFGRIDCOLUMN'/>
+        <word name='CFGRIDROW'/>
+        <word name='CFGRIDUPDATE'/>
+        <word name='CFHEADER'/>
+        <word name='CFHTMLHEAD'/>
+        <word name='CFHTTP'/>
+        <word name='CFHTTPPARAM'/>
+        <word name='CFIF'/>
+        <word name='CFIMPERSONATE'/>
+        <word name='CFIMPORT'/>
+        <word name='CFINCLUDE'/>
+        <word name='CFINDEX'/>
+        <word name='CFINPUT'/>
+        <word name='CFINSERT'/>
+        <word name='CFINVOKE'/>
+        <word name='CFINVOKEARGUMENT'/>
+        <word name='CFLDAP'/>
+        <word name='CFLOCATION'/>
+        <word name='CFLOCK'/>
+        <word name='CFLOG'/>
+        <word name='CFLOGIN'/>
+        <word name='CFLOGINUSER'/>
+        <word name='CFLOGOUT'/>
+        <word name='CFLOOP'/>
+        <word name='CFMAIL'/>
+        <word name='CFMAILPARAM'/>
+        <word name='CFMAILPART'/>
+        <word name='CFMODULE'/>
+        <word name='CFOBJECT'/>
+        <word name='CFOBJECTCACHE'/>
+        <word name='CFOUTPUT'/>
+        <word name='CFPARAM'/>
+        <word name='CFPOP'/>
+        <word name='CFPROCESSINGDIRECTIVE'/>
+        <word name='CFPROCPARAM'/>
+        <word name='CFPROCRESULT'/>
+        <word name='CFPROPERTY'/>
+        <word name='CFQUERY'/>
+        <word name='CFQUERYPARAM'/>
+        <word name='CFREGISTRY'/>
+        <word name='CFREPORT'/>
+        <word name='CFRETHROW'/>
+        <word name='CFRETURN'/>
+        <word name='CFSAVECONTENT'/>
+        <word name='CFSCHEDULE'/>
+        <word name='CFSCRIPT'/>
+        <word name='CFSEARCH'/>
+        <word name='CFSELECT'/>
+        <word name='CFSERVLET'/>
+        <word name='CFSERVLETPARAM'/>
+        <word name='CFSET'/>
+        <word name='CFSETTING'/>
+        <word name='CFSILENT'/>
+        <word name='CFSLIDER'/>
+        <word name='CFSTOREDPROC'/>
+        <word name='CFSWITCH'/>
+        <word name='CFTABLE'/>
+        <word name='CFTEXTINPUT'/>
+        <word name='CFTHROW'/>
+        <word name='CFTRACE'/>
+        <word name='CFTRANSACTION'/>
+        <word name='CFTREE'/>
+        <word name='CFTREEITEM'/>
+        <word name='CFTRY'/>
+        <word name='CFUPDATE'/>
+        <word name='CFWDDX'/>
+        <word name='CFXML'/>
+      </keywords>
+
+    </scheme>
+
+    <scheme name="cfcode">
+      <keywords region='Tag' ignorecase='yes'>
+        <word name='DateFormat'/>
+        <word name='Now'/>
+        <word name='jsStringformat'/>
+      </keywords>
+    </scheme>
+    
+    <scheme name="cf-html">
+      <block start="/&lt;!---/" end="/---&gt;/" scheme="def:Comment"
+             region="def:Comment" region00="def:PairStart" region10="def:PairEnd"/>
+
+      <block start="/(?{def:OpenTag}&lt;(?{Tag}cfscript)&gt;)/i" end="/(?{def:OpenTag}&lt;\/(?{Tag}cfscript)&gt;)/"
+             scheme="jScript:jScript" region00="def:PairStart" region10="def:PairEnd"/>
+
+      <regexp match="/\#\#/"/>
+
+      <block start="/#/" end="/#/" scheme="cfcode"
+             region="Expr" region00="def:PairStart" region10="def:PairEnd"/>
+
+      <inherit scheme="html:html">
+        <virtual scheme='html:html' subst-scheme='cf-html'/>
+        <virtual scheme='html:htmlCoreTags' subst-scheme='Tags'/>
+      </inherit>
+    </scheme>
+
+
+    <scheme name="coldfusion">
+      <inherit scheme="html:html">
+        <virtual scheme='html:html' subst-scheme='cf-html'/>
+        <virtual scheme='html:htmlCoreTags' subst-scheme='Tags'/>
+      </inherit>
+    </scheme>
+
+
+
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s): 
+   - Christopher Wigginton <c_wigginton@yahoo.com> added additional tags
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+

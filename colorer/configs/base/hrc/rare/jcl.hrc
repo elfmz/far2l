@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="jcl">
+      <annotation>
+         <documentation>
+            JCL Syntax description
+         </documentation>
+      </annotation>
+
+      <region name="Comment" parent="def:Comment"/>
+      <region name="Symbol" parent="def:Symbol"/>
+      <region name="Statement" parent="def:ParameterStrong"/>
+      <region name="Keyword" parent="def:Keyword"/>
+      <region name="Error" parent="def:Error"/>
+
+      <region name="start" parent="def:PairStart"/>
+      <region name="end"   parent="def:PairEnd"/>
+
+      <entity name="char" value="A-Z\$\#\@\xA7"/> <!-- alphabetic + national -->
+      <entity name="name" value="(?:[%char;][%char;0-9]*)"/>
+
+      <scheme name="jcl">
+         <!-- Null statement (end of job) -->
+         <regexp match="/^\/\/\ *$/" region0="def:LabelStrong"/>
+         <!-- JES2 statement -->
+         <regexp match="/^(\/\*(JOBPARAM|MESSAGE|METACCT|NOTIFY|OUTPUT|PRIORITY|ROUTE|SETUP|SIGNOFF|SIGNON|XEQ|XMIT))\b.*$/" region1="Statement"/>
+         <!-- Delimiter statement -->
+         <regexp match="/^(\/\*)(.*)$/" region1="Symbol" region2="Comment"/>
+         <!-- JES3 statement -->
+         <regexp match="/^(\/\/\*(DATASET|ENDDATASET|ENDPROCESS|FORMAT\ PR|FORMAT\ PU|MAIN|NET|NETACCT|OPERATOR|\*PAUSE|PROCESS|ROUTE\ XEQ))\b.*$/" region1="Statement"/>
+         <!-- Comment -->
+         <regexp match="/^\/\/\*.*$/" region0="Comment"/>
+         <!-- Instream data -->
+         <regexp match="/^[^\/].*$/" region0="def:CommentDoc"/>
+         <!-- JCL statement, format: //[name] operation [parameters [comment]] -->
+         <block start="/^\/\//"
+                end="/(?:%name;?\ +(?:COMMAND|DD|EXEC|INCLUDE|JCLLIB|PROC|SET|XMIT)\ +\S+ |
+                         %name;?\ +IF\ +\S+\ +THEN(?:\ +|$)                               |
+                         %name;?\ +(?:ELSE|ENDIF|ENDCNTL|PROC|PEND)(?:\ +|$)              |
+                         %name; \ +(?:CNTL|JOB|OUTPUT)\ +\S+                              |
+                         %name; \ +(?:CNTL|DD|JOB)(?:\ +|$)                               |
+                                \ +\S+                                                     )\m(.*)$/x"
+                scheme="jclline" region00="Symbol" region11="Comment"/>
+      </scheme>
+
+      <scheme name="jclline">
+         <!-- Paired brackets -->
+         <block start="/(?{start}\()/" end="/((?{end}\))|(?{Error}^\/\/\S?=))/"
+                scheme="jclline" region00="Symbol" region10="Symbol" inner-region="yes"/>
+         <!-- Strings -->
+         <block start="/(?{start}\')/" end="/((?{end}\')|(?{Error}^\/\/))/"
+                scheme="def:empty" region="def:String"/>
+         <!-- Numbers -->
+         <regexp match="/\b\d+(K|M|G)?\b/" region0="def:Number"/>
+         <!-- Symbols -->
+         <keywords region="Symbol">
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="+"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=","/>
+            <symb name="="/>
+            <symb name="&amp;"/>
+         </keywords>
+         <!-- Statements -->
+         <keywords region="Statement" worddiv="[\ ]">
+	    <word name="COMMAND"/>
+	    <word name="CNTL"/>
+            <word name="DD"/>
+	    <word name="ENDCNTL"/>
+            <word name="EXEC"/>
+	    <word name="IF"/>
+	    <word name="ELSE"/>
+	    <word name="THEN"/>
+	    <word name="ENDIF"/>
+	    <word name="INCLUDE"/>
+	    <word name="JCLLIB"/>
+            <word name="JOB"/>
+            <word name="OUTPUT"/>
+	    <word name="PEND"/>
+	    <word name="PROC"/>
+	    <word name="SET"/>
+	    <word name="XMIT"/>
+         </keywords>
+         <!-- Special DD statements -->
+         <keywords region="def:Text" worddiv="[\ \/]"> <!-- TODO: Keyword ?? -->
+            <word name="JOBLIB"/>
+            <word name="STEPLIB"/>
+            <word name="SYSABEND"/>
+            <word name="SYSMDUMP"/>
+            <word name="SYSUDUMP"/>
+            <word name="SYSCHK"/>
+            <word name="SYSCKEOV"/>
+            <word name="SYSIN"/>
+            <!-- ...and some very often used -->
+            <word name="SYSOUT"/>
+            <word name="SYSPRINT"/>
+            <word name="SYSTSPRT"/>
+            <word name="CEEDUMP"/>
+         </keywords>
+         <!-- Parameters -->
+         <keywords region="Keyword" worddiv="[\ ,=\(\)]">
+            <!-- DD statement -->
+	    <word name="ACCODE"/>
+	    <word name="AMP"/>
+            <word name="AVGREC"/>
+	    <word name="BLKSIZE"/>
+	    <word name="BLKSZLIM"/>
+	    <word name="BURST"/>
+	    <word name="CCSID"/>
+            <word name="CHARS"/>
+            <word name="CHKPT"/>
+            <word name="CNTL"/>
+            <word name="COPIES"/>
+            <word name="DATA"/>
+            <word name="DATACLAS"/>
+            <word name="DCB"/>
+            <word name="DDNAME"/>
+            <word name="DEST"/>
+            <word name="DISP"/>
+            <word name="DLM"/>
+            <word name="DSID"/>
+            <word name="DSNAME"/><word name="DSN"/>
+            <word name="DSNTYPE"/>
+            <word name="DSORG"/>
+            <word name="DUMMY"/>
+            <word name="DYNAM"/>
+            <word name="EXPDT"/>
+            <word name="FCB"/>
+            <word name="FILEDATA"/>
+            <word name="FLASH"/>
+            <word name="FREE"/>
+            <word name="HOLD"/>
+            <word name="KEYLEN"/>
+            <word name="KEYOFF"/>
+            <word name="LABEL"/>
+            <word name="LGSTREAM"/>
+            <word name="LIKE"/>
+            <word name="LRECL"/>
+            <word name="MGMTCLAS"/>
+            <word name="MODIFY"/>
+            <word name="OUTLIM"/>
+            <word name="OUTPUT"/>
+            <word name="PATH"/>
+            <word name="PATHDISP"/>
+            <word name="PATHMODE"/>
+            <word name="PATHOPTS"/>
+            <word name="PROTECT"/>
+            <word name="QNAME"/>
+            <word name="RECFM"/>
+            <word name="RECORG"/>
+            <word name="REFDD"/>
+            <word name="RETPD"/>
+            <word name="RLS"/>
+            <word name="SECMODEL"/>
+            <word name="SEGMENT"/>
+            <word name="SPACE"/>
+            <word name="SPIN"/>
+            <word name="STORCLAS"/>
+            <word name="SUBSYS"/>
+            <word name="SYSOUT"/>
+            <word name="TERM"/>
+            <word name="UCS"/>
+            <word name="UNIT"/>
+            <word name="VOLUME"/><word name="VOL"/>
+            <!-- EXEC statement -->
+            <word name="ACCT"/>
+	    <word name="ADDRSPC"/>
+	    <word name="CCSID"/>
+	    <word name="COND"/>
+	    <word name="DYNAMNBR"/>
+            <word name="MEMLIMIT"/>
+	    <word name="PARM"/>
+ 	    <word name="PERFORM"/>
+            <word name="PGM"/>
+            <word name="PROC"/>
+	    <word name="RD"/>
+            <word name="REGION"/>
+            <word name="RLSTMOUT"/>
+	    <word name="TIME"/>
+            <!-- INCLUDE statement -->
+	    <word name="MEMBER"/>
+            <!-- JCLLIB statement -->
+            <word name="ORDER"/>
+            <!-- JOB statement -->
+            <word name="ADDRSPC"/>
+            <word name="BYTES"/>
+	    <word name="CARDS"/>
+	    <word name="CCSID"/>
+            <word name="CLASS"/>
+            <word name="COND"/>
+	    <word name="GROUP"/>
+            <word name="JESLOG"/>
+            <word name="LINES"/>
+            <word name="MEMLIMIT"/>
+            <word name="MSGCLASS"/>
+            <word name="MSGLEVEL"/>
+            <word name="NOTIFY"/>
+            <word name="PAGES"/>
+            <word name="PASSWORD"/>
+            <word name="PERFORM"/>
+            <word name="PRTY"/>
+            <word name="RD"/>
+            <word name="REGION"/>
+	    <word name="RESTART"/>
+	    <word name="SECLABEL"/>
+	    <word name="SCHENV"/>
+            <word name="TYPRUN"/>
+	    <word name="USER"/>
+            <!-- OUTPUT JCL statement -->
+	    <word name="ADDRESS"/>
+	    <word name="AFPSTATS"/>
+	    <word name="BUILDING"/>
+	    <word name="BURST"/>
+	    <word name="CHARS"/>
+	    <word name="CKPTLINE"/>
+	    <word name="CKPTPAGE"/>
+	    <word name="CKPTSEC"/>
+	    <word name="CLASS"/>
+	    <word name="COLORMAP"/>
+	    <word name="COMPACT"/>
+	    <word name="COMSETUP"/>
+	    <word name="CONTROL"/>
+	    <word name="DATACK"/>
+	    <word name="DEFAULT"/>
+	    <word name="DEPT"/>
+	    <word name="DEST"/>
+	    <word name="DPAGELBL"/>
+	    <word name="DUPLEX"/>
+	    <word name="FCB"/>
+	    <word name="FLASH"/>
+	    <word name="FORMDEF"/>
+	    <word name="FORMLEN"/>
+	    <word name="FORMS"/>
+ 	    <word name="FSSDATA"/>
+	    <word name="GROUPID"/>
+	    <word name="INDEX"/>
+            <word name="INTRAY"/>
+	    <word name="JESDS"/>
+	    <word name="LINDEX"/>
+	    <word name="LINECT"/>
+	    <word name="MAILBCC"/>
+	    <word name="MAILCC"/>
+            <word name="MAILFROM"/>
+            <word name="MAILTO"/>
+            <word name="MAILFILE"/>
+	    <word name="MODIFY"/>
+            <word name="NAME"/>
+            <word name="NOTIFY"/>
+            <word name="OFTSETXB"/>
+            <word name="OFTSETXF"/>
+            <word name="OFTSETYB"/>
+            <word name="OFTSETYF"/>
+            <word name="OUTBIN"/>
+            <word name="OUTDISP"/>
+            <word name="OVERLAYB"/>
+            <word name="OVERLAYF"/>
+            <word name="OVFL"/>
+            <word name="PAGEDEF"/>
+            <word name="PIMSG"/>
+            <word name="PORTNO"/>
+            <word name="PRMODE"/>
+            <word name="PRTATTRS"/>
+            <word name="PRTERROR"/>
+            <word name="PRTOPTNS"/>
+            <word name="PRTQUEUE"/>
+            <word name="PRTY"/>
+            <word name="REPLYTO"/>
+            <word name="RESFMT"/>
+            <word name="RETAINS"/>
+            <word name="RETAINF"/>
+            <word name="RETRYL"/>
+            <word name="RETRYT"/>
+            <word name="ROOM"/>
+            <word name="SYSAREA"/>
+            <word name="THRESHLD"/>
+            <word name="TITLE"/>
+            <word name="TRC"/>
+            <word name="UCS"/>
+            <word name="USERDATA"/>
+            <word name="USERLIB"/>
+            <word name="USERPATH"/>
+            <word name="WRITER"/>
+            <!-- XMIT JCL statement -->
+            <word name="DEST"/>
+            <word name="DLM"/>
+            <word name="SUBCHARS"/>
+         </keywords>
+         <!-- Selected subparameters of Statement:Parameter -->
+         <keywords region="Keyword" worddiv="[\ ,=\(\)]">
+            <!-- DD:DISP -->
+            <word name="NEW"/>
+            <word name="OLD"/>
+            <word name="SHR"/>
+            <word name="MOD"/>
+            <word name="DELETE"/>
+            <word name="KEEP"/>
+            <word name="PASS"/>
+            <word name="CATLG"/>
+            <word name="UNCATLG"/>
+            <!-- DD:DSNTYPE -->
+            <word name="LIBRARY"/>
+            <word name="HFS"/>
+            <word name="PDS"/>
+            <word name="PIPE"/>
+            <word name="EXTREQ"/>
+            <word name="EXTPREF"/>
+            <word name="LARGE"/>
+            <word name="BASIC"/>
+            <!-- DD:DSORG -->
+            <word name="PS"/>
+            <word name="DA"/>
+            <word name="IS"/>
+            <word name="PO"/>
+            <word name="CX"/>
+            <word name="GS"/>
+            <!-- DD:RECFM -->
+            <word name="U"/>
+            <word name="V"/>
+            <word name="VB"/>
+            <word name="F"/>
+            <word name="FB"/>
+            <!-- DD:SPACE -->
+            <word name="TRK"/>
+            <word name="CYL"/>
+            <word name="RLSE"/>
+            <word name="CONTIG"/>
+            <word name="MXIG"/>
+            <word name="ALX"/>
+            <word name="ROUND"/>
+            <word name="ABSTR"/>
+            <!-- DD:VOLUME -->
+            <word name="SER"/>
+            <word name="REF"/>
+            <word name="PRIVATE"/>
+            <word name="RETAIN"/>
+            <!-- EXEC:COND  -->
+ 	    <word name="EVEN"/>
+ 	    <word name="ONLY"/>
+         </keywords>
+         <!-- Operators in COND parameter of EXEC or JOB statement -->
+         <keywords region="def:VarStrong" worddiv="[,\)]">
+ 	    <word name="GT"/>
+ 	    <word name="GE"/>
+ 	    <word name="EQ"/>
+ 	    <word name="LT"/>
+ 	    <word name="LE"/>
+ 	    <word name="NE"/>
+         </keywords>
+      </scheme>
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  Pavel Pleva
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Visual Basic.NET Syntax description
+With help of:
+    Alexey Drugobitskiy <msfun@rambler.ru>
+-->
+   <type name="vbnet">
+
+      <import type="def"/>
+      <import type="vbasic"/>
+
+
+
+      <scheme name="vbnet">
+         <inherit scheme="vbasic">
+            <virtual scheme="vbasic" subst-scheme="vbnet"/>
+         </inherit>
+         <keywords ignorecase="yes" region="vbWord">
+            <word name="addhandler"/>
+            <word name="addressof"/>
+            <word name="alias"/>
+            <word name="and"/>
+            <word name="ansi"/>
+            <word name="assembly"/>
+            <word name="auto"/>
+            <word name="binary"/>
+            <word name="bitand"/>
+            <word name="bitor"/>
+            <word name="bitxor"/>
+            <word name="byref"/>
+            <word name="catch"/>
+            <word name="cdec"/>
+            <word name="char"/>
+            <word name="cobj"/>
+            <word name="cshort"/>
+            <word name="ctype"/>
+            <word name="decimal"/>
+            <word name="declare"/>
+            <word name="default"/>
+            <word name="delegate"/>
+            <word name="enum"/>
+            <word name="event"/>
+            <word name="externalsource"/>
+            <word name="false"/>
+            <word name="finally"/>
+            <word name="friend"/>
+            <word name="gettype"/>
+            <word name="handles"/>
+            <word name="implements"/>
+            <word name="imports"/>
+            <word name="in"/>
+            <word name="inherits"/>
+            <word name="interface"/>
+            <word name="is"/>
+            <word name="lib"/>
+            <word name="like"/>
+            <word name="mod"/>
+            <word name="mustinherit"/>
+            <word name="mustoverride"/>
+            <word name="mybase"/>
+            <word name="myclass"/>
+            <word name="namespace"/>
+            <word name="notinheritable"/>
+            <word name="notoverridable"/>
+            <word name="off"/>
+            <word name="optional"/>
+            <word name="or"/>
+            <word name="overloads"/>
+            <word name="overridable"/>
+            <word name="overrides"/>
+            <word name="paramarray"/>
+            <word name="preserve"/>
+            <word name="protected"/>
+            <word name="raiseevent"/>
+            <word name="readonly"/>
+            <word name="removehandler"/>
+            <word name="shadows"/>
+            <word name="shared"/>
+            <word name="short"/>
+            <word name="step"/>
+            <word name="strict"/>
+            <word name="structure"/>
+            <word name="synclock"/>
+            <word name="text"/>
+            <word name="throw"/>
+            <word name="true"/>
+            <word name="try"/>
+            <word name="typeof"/>
+            <word name="unicode"/>
+            <word name="when"/>
+            <word name="withevents"/>
+            <word name="writeonly"/>
+            <word name="xor"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    UniBasic Syntax description
+    Pete Howell <peterhowell@sigtrading.co.uk>
+    Based on the VB Syntax description by:
+    Igor Kovalev <ig@te.net.ua>
+    Valery Tsyplenkov <gorilla800lbs@hotmail.com>
+    Alexey Yatsenko <Alexey.Yatsenko@p52.f9.n5060.z2.fidonet.org>
+-->
+   <type name="ubasic">
+
+      <import type="def"/>
+
+      <region name="ubString" parent="String"/>
+      <region name="ubComment" parent="Comment"/>
+      <region name="ubSymb" parent="Symbol"/>
+      <region name="ubWord" parent="Keyword"/>
+      <region name="ubFunc" parent="FunctionKeyword"/>
+      <region name="ubNumb" parent="Number"/>
+      <region name="ubId" parent="Var"/>
+      <region name="ubLabel" parent="Label"/>
+      <region name="ubDirective" parent="Directive"/>
+
+      <region name="LabelOutline" parent="Outlined"/>
+      <region name="CallOutline" parent="Outlined"/>
+      <region name="GosubOutline" parent="Outlined"/>
+      <region name="ProgramOutline" parent="Outlined"/>
+      <region name="SubroutineOutline" parent="Outlined"/>
+      <region name="ExternalFunctionOutline" parent="Outlined"/>
+      <region name="FunctionOutline" parent="Outlined"/>
+
+	  <entity name="label" value="^[\w.]+(:)(\s*(\!|\*|REM).*)?$" />
+
+      <scheme name="Outlines">
+      
+      	 <regexp match="/^\s*\M PROGRAM \s+([\w\d.]+)\s*$/x" region1="ProgramOutline"/>
+      	 <regexp match="/^\s*\M SUBROUTINE \s+([\w\d.]+)\s*(\(|$)/x" region1="SubroutineOutline"/>
+      	 <regexp match="/^\s*\M EXTERNALFUNCTION \s+([\w\d.]+)\s*(\(|$)/x" region1="ExternalFunctionOutline"/>
+         <regexp match="/^([\w\d.]+):(\s*(\!|\*|REM).*)?$/x" region1="LabelOutline" region2="ubComment"/>
+         <regexp match="/(^|;)\s*\M CALL \s+([\w\d.]+)/x" region2="CallOutline"/>
+         <regexp match="/(^|;)\s*(ON\s+)?\M GOSUB \s+(([\w\d.]+\s*,\s*)*([\w\d.]+))/x" region3="GosubOutline"/>
+         <regexp match="/(^|;)\s*\M FUNCTION \s+([\w\d.]+)/x" region2="FunctionOutline"/>
+
+      </scheme>
+
+      <scheme name="PairedConstructions">
+         <!--regexp match="/\bend\s+if\b/i" region0="Error" lowpriority="lowpriority"/-->
+        <!--
+         <regexp match="/\bEND\s+ELSE\b/" region0="ubWord" priority="low"/>
+        -->
+        <!--
+         <regexp match="/\b(IF|(MAT)?READ(V|U|VU|NEXT)?|(MAT)?WRITEIF)\b.*?(\b(THEN)\b\s+\w.*?(\b(ELSE)\b\s+\w.*$)?|\b(ELSE)\b\s+\w.*$)/" 
+                 region1="ubWord" region6="ubWord" region8="ubWord" region9="ubWord"/>
+        -->
+        
+         <block start="/\b(IF|OPEN|PROCREAD|REWIND|(MAT)?READ(V|U|VU)?|READ(T|TX|NEXT|PREVIOUS)|MATWRITE(U)?(IF)?|WRITE(V|VU|U)?(IF)?|DELETEIF|INPUTIF|COPYLIST|GIVELIST|SAVELIST|KEY|ROOT|LOCATE|SEND(X|BREAK)?|UCLOSE|UCREATE|UOPEN|UREAD(LINE)?|UUNLINK|UWRITE|WEOF)\b\M (.*\b(THEN|ELSE|LOCKED)\b\s*($|\;\s*(REM|\!|\*).*$))?=/x" 
+         		end="/\M \b(END)\b(\s+(THEN|ELSE)\b)?!/x"
+                scheme="PairedConstructions" 
+                region00="ubWord" region10="ubWord"
+                region01="PairStart" region11="PairEnd"/>
+        
+        <block start="/\b(ULOCK)\b\M.*\b(ELSE)\b\s*$/" end="/\b(END)\b/"
+               scheme="PairedConstructions" region00="ubWord" region10="ubWord" region01="PairStart" region11="PairEnd" />
+               
+        <block start="/\b(LOCKED)\b\M \s+\d{1,3}\s+\b(ELSE)\b\s*$/" end="/\b(END)\b/x"
+               scheme="PairedConstructions" region00="ubWord" region10="ubWord" region01="PairStart" region11="PairEnd" />
+        
+        <!--
+         <block start="/^([\w\d.]+)(:)(\s*(\!|\*|REM).*)?$/x" end="/\b(RETURN)\b/"
+                scheme="PairedConstructions" region00="ubLabel" region02="ubSymb" region03="ubComment" 
+                region10="ubWord" region01="PairStart" region11="PairEnd"/>
+		-->
+         <block start="/\b(FOR)\b\M(.*\bNEXT\b)?!/" end="/\b(NEXT)\b/"
+                scheme="PairedConstructions" region00="ubWord" 
+                region10="ubWord" region01="PairStart" region11="PairEnd"/>
+		<!--                
+         <block start="/\b((FOR)(.+\bSTEP)?(.+\bUNTIL)?)\b)/" end="/([^\S]+|^)\m(\bNEXT)\b/"
+                scheme="PairedConstructions" region01="ubWord" region02="ubWord" region03="ubWord" 
+                region10="ubWord" region01="PairStart" region12="PairEnd"/>
+        -->        
+         <block start="/\b(LOOP)\b/" end="/\b(REPEAT)\b/"
+                scheme="PairedConstructions" region00="ubWord" region10="ubWord" region01="PairStart" region11="PairEnd"/>
+        
+         <block start="/\b(BEGIN\b\s+\bCASE)\b/" end="/\b(END\b\s+\bCASE)\b/"
+                scheme="PairedConstructions" region00="ubWord" region10="ubWord" region01="PairStart" region11="PairEnd"/>
+                
+         <block start="/(^|;)\s*\M \b(FUNCTION)\b/x" end="/(^|;)\s*\M \b(RETURNING)\b/x"
+                scheme="PairedConstructions" region00="ubWord" region10="ubWord" region02="PairStart" region12="PairEnd"/>
+                
+         <regexp match="/(\b(CONVERT)\b\s.*\s\b(TO)\b\s.*)?#\b(IN)\b\s/" 
+         		 region2="ubWord" region3="ubWord" region4="ubWord"/>
+         
+         <regexp match="/\b(DIM)\b\s+((\w[\w\d.]+)(\()((\d+)|(,))+(\))(,)?)+/x" 
+         		 region1="ubWord" region3="ubId" region4="ubSymb" 
+         		 region6="ubNumb" region7="ubSymb" region8="ubSymb" region9="ubSymb"/>
+         
+         <regexp match="/\b(\w[\w\d\._]+)\b\M(&lt;.*&gt;)? \s*(:|\+|\-|)?(\=|\#)\s*\w/x"
+         		 region1="ubId" />
+         
+         <regexp match="/^\s*(\$(?:\*|CHAIN|INCLUDE|INSERT))\b\s+(\w[\w\d._]+)(?:\s+(\w[\w\d._]+))?/"
+                 region1="ubDirective" region2="ubId" region3="ubId" />
+         
+         <!--
+         <block start="/\b(if)\b/i" end="/\b((then\s+exit\s+(function|sub|property|for|do))|((then)(\s+[^'\s]+.*$)?=)|(end([\s])+\Y1))\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <regexp match="/(\bExit\s+(function|sub|property|for|do)\b)/i" region0="Keyword"/>
+
+         <regexp match="/(\bproperty\b)?#8(\s+\b(let|set|get)\b)/i" region2="Keyword"/>
+         <regexp match="/\.(class|property)\b/i"/>
+         <block start="/\b(with|function|sub|class|property)\b/i" end="/\b(end([\s])+\Y1)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/((\bselect\b)\s+\bcase\b)/i" end="/\b(end([\s])+\Y2)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(do(\s+(while|until))?)\b/i" end="/\b(loop(\s+(while|until))?)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(while)\b/i" end="/\b(wend)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <regexp match="/(\bOn\s+Error\s+(Resume\s+Next)|(Goto\s+0)\b)/i" region0="Keyword"/>
+         -->
+      </scheme>
+
+      <scheme name="ubasic">
+<!-- Comments -->
+         <regexp match="/^\s*(\!|\*|REM).*$/" region0="ubComment"/>
+         <regexp match="/(\;|:)\s*((\!|\*|REM).*)$/" region2="ubComment"/>
+<!-- Strings -->
+         <regexp match="/((&#34;)(.*?)(&#34;)|(')(.*?)('))/" region0="ubString"
+                 region2="StringEdge" region3="StringContent" region4="StringEdge"
+                 region5="StringEdge" region6="StringContent" region7="StringEdge"/>
+<!-- Numbers  -->
+         <regexp match="/\B\$[\da-fA-F]+\b/" region0="ubNumb"/>
+         <regexp match="/\b[0-9.]+([eE][\-+]?\d+)?\b/" region0="ubNumb"/>
+
+         <inherit scheme="PairedConstructions">
+           <virtual scheme="PairedConstructions" subst-scheme="ubasic"/>
+         </inherit>
+
+         <inherit scheme="Outlines"/>
+
+<!-- Labels -->
+         <regexp match="/^([\w\d.]+)(:) \M/x" 
+         		 region0="ubLabel" region2="ubSymb"/>
+         		 
+<!-- Symbols -->
+         <keywords ignorecase="no" region="ubSymb">
+            <symb name="="/>
+            <symb name="^"/>
+            <symb name="+"/>
+            <symb name="&lt;"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=";"/>
+            <symb name=":"/>
+            <symb name="("/>
+            <symb name="."/>
+            <symb name="&gt;"/>
+            <symb name="#"/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="&amp;"/>
+         </keywords>
+
+<!-- Words - Functions -->
+         <keywords ignorecase="no" region="ubFunc">
+            <word name="@AM"/>
+            <word name="@NULL"/>
+            <word name="@SM"/>
+            <word name="@VM"/>
+            <word name="ABS"/>
+            <word name="ALPHA"/>
+            <word name="AM"/>
+            <word name="AND"/>
+            <word name="ASCII"/>
+            <word name="ASSIGNED"/>
+            <word name="CAPHUSH"/>
+            <word name="CAPTURE"/>
+            <word name="CHAR"/>
+            <word name="COL1"/>
+            <word name="COL2"/>
+            <word name="CONNECT"/>
+            <word name="COS"/>
+            <word name="COUNT"/>
+            <word name="DATE"/>
+            <word name="DCOUNT"/>
+            <word name="DELETE"/>
+            <word name="DISCONNECT"/>
+            <word name="DTX"/>
+            <word name="EBCDIC"/>
+            <word name="ENTRIES"/>
+            <word name="EXP"/>
+            <word name="EXTRACT"/>
+            <word name="FIELD"/>
+            <word name="FINDFIELD"/>
+            <word name="FINDPAIR"/>
+            <word name="FMT"/>
+            <word name="FOLD"/>
+            <word name="FUNCTION"/>
+            <word name="GETBYTES"/>
+            <word name="GETLONG"/>
+            <word name="GETSTRING"/>
+            <word name="ICONV"/>
+            <word name="IN"/>
+            <word name="INDEX"/>
+            <word name="INSERT"/>
+            <word name="INT"/>
+            <word name="LEN"/>
+            <word name="LINESTATUS"/>
+            <word name="LN"/>
+            <word name="LOCATE"/>
+            <word name="MOD"/>
+            <word name="NEXTPAIR"/>
+            <word name="NODUPLICATES"/>
+            <word name="NOT"/>
+            <word name="NULL"/>
+            <word name="NUM"/>
+            <word name="OCONV"/>
+            <word name="OR"/>
+            <word name="PWR"/>
+            <word name="REM"/>
+            <word name="REPLACE"/>
+            <word name="RND"/>
+            <word name="SEEK"/>
+            <word name="SENDBYTES"/>
+            <word name="SENDLONG"/>
+            <word name="SENDSTRING"/>
+            <word name="SENTENCE"/>
+            <word name="SEQ"/>
+            <word name="SETPAIR"/>
+            <word name="SIN"/>
+            <word name="SORT"/>
+            <word name="SOUNDEX"/>
+            <word name="SPACE"/>
+            <word name="SQRT"/>
+            <word name="STR"/>
+            <word name="SUM"/>
+            <word name="SVM"/>
+            <word name="SYSTEM"/>
+            <word name="TA"/>
+            <word name="TAN"/>
+            <word name="TIME"/>
+            <word name="TIMEDATE"/>
+            <word name="TRIM"/>
+            <word name="TRIMB"/>
+            <word name="TRIMF"/>
+            <word name="UERROR"/>
+            <word name="ULSEEK"/>
+            <word name="UVCONNECT"/>
+            <word name="UVLOGTO"/>
+            <word name="UVRUNJOB"/>
+            <word name="VM"/>
+            <word name="VARTYPE"/>
+            <word name="XTD"/>
+         </keywords>
+<!-- Words - Statements -->
+         <keywords ignorecase="no" region="ubWord">
+            <word name="QVStrue" region="BooleanConstant"/>
+            <word name="QVSfalse" region="BooleanConstant"/>
+            <word name="$*"/>
+            <word name="$CHAIN"/>
+            <word name="$INCLUDE"/>
+            <word name="$INSERT"/>
+            <word name="ABORT"/>
+            <word name="BEFORE"/>
+            <word name="BEGIN"/>
+            <word name="BREAK"/>
+            <word name="CALL"/>
+            <word name="CAP-HUSH-OFF"/>
+            <word name="CAP-HUSH-ON"/>
+            <word name="CAPTURING"/>
+            <word name="CASE"/>
+            <word name="CASING"/>
+            <word name="CHAIN"/>
+            <word name="CLEAR"/>
+            <word name="CLEARFILE"/>
+            <word name="CLOSE"/>
+            <word name="COMMON"/>
+            <word name="CONVERT"/>
+            <word name="COPYLIST"/>
+            <word name="CRT"/>
+            <word name="CTRL"/>
+            <word name="DATA"/>
+            <word name="DEBUG"/>
+            <word name="DEL"/>
+            <word name="DELETEIF"/>
+            <word name="DIM"/>
+            <word name="DIMENSION"/>
+            <word name="DISPLAY"/>
+            <word name="DO"/>
+            <word name="ECHO"/>
+            <word name="ELSE"/>
+            <word name="END"/>
+            <word name="ENTER"/>
+            <word name="EQU"/>
+            <word name="EQUATE"/>
+            <word name="EXCEPTIONS"/>
+            <word name="EXECUTE"/>
+            <word name="EXIT"/>
+            <word name="EXTERNALFUNCTION"/>
+            <word name="EXTERNFUNC"/>
+            <word name="FOOTING"/>
+            <word name="FOR"/>
+            <word name="FROM"/>
+            <word name="FUNCTION"/>
+            <word name="GET"/>
+            <word name="GETX"/>
+            <word name="GIVELIST"/>
+            <word name="GO"/>
+            <word name="GOSUB"/>
+            <word name="GOTO"/>
+            <word name="HEADING"/>
+            <word name="IF"/>
+            <word name="INPUT"/>
+            <word name="INPUTCLEAR"/>
+            <word name="INPUTERR"/>
+            <word name="INPUTIF"/>
+            <word name="INPUTNULL"/>
+            <word name="INPUTTRAP"/>
+            <word name="INS"/>
+            <word name="KEY"/>
+            <word name="LOCK"/>
+            <word name="LOOP"/>
+            <word name="MAT"/>
+            <word name="MATBUILD"/>
+            <word name="MATPARSE"/>
+            <word name="MATREAD"/>
+            <word name="MATREADU"/>
+            <word name="MATWRITE"/>
+            <word name="MATWRITEIF"/>
+            <word name="MATWRITEU"/>
+            <word name="MATWRITEUIF"/>
+            <word name="NET1"/>
+            <word name="NET2"/>
+            <word name="NETWORKING"/>
+            <word name="NEXT"/>
+            <word name="OFF"/>
+            <word name="ON"/>
+            <word name="OPEN"/>
+            <word name="PAGE"/>
+            <word name="PASSLIST"/>
+            <word name="PRECISION"/>
+            <word name="PRINT"/>
+            <word name="PRINTER"/>
+            <word name="PRINTERR"/>
+            <word name="PRINTFORMQ"/>
+            <word name="PROCREAD"/>
+            <word name="PROCWRITE"/>
+            <word name="PROGRAM"/>
+            <word name="PROMPT"/>
+            <word name="READ"/>
+            <word name="READNEXT"/>
+            <word name="READPREVIOUS"/>
+            <word name="READT"/>
+            <word name="READTX"/>
+            <word name="READU"/>
+            <word name="READV"/>
+            <word name="READVU"/>
+            <word name="RELEASE"/>
+            <word name="REPEAT"/>
+            <word name="RETURN"/>
+            <word name="RETURNING"/>
+            <word name="REWIND"/>
+            <word name="ROOT"/>
+            <word name="RQM"/>
+            <word name="RTNLIST"/>
+            <word name="SAVELIST"/>
+            <word name="SELECT"/>
+            <word name="SELECTAPPEND"/>
+            <word name="SELECTINDEX"/>
+            <word name="SEND"/>
+            <word name="SENDBREAK"/>
+            <word name="SENDX"/>
+            <word name="SLEEP"/>
+            <word name="STOP"/>
+            <word name="SUBROUTINE"/>
+            <word name="THEN"/>
+            <word name="TO"/>
+            <word name="UCLOSE"/>
+            <word name="UCREATE"/>
+            <word name="ULOCK"/>
+            <word name="UNLOCK"/>
+            <word name="UNTIL"/>
+            <word name="UOPEN"/>
+            <word name="UREAD"/>
+            <word name="UREADLINE"/>
+            <word name="UUNLINK"/>
+            <word name="UWRITE"/>
+            <word name="WEOF"/>
+            <word name="WHILE"/>
+            <word name="WRITE"/>
+            <word name="WRITEIF"/>
+            <word name="WRITET"/>
+            <word name="WRITEU"/>
+            <word name="WRITEUIF"/>
+            <word name="WRITEV"/>
+            <word name="WRITEVIF"/>
+            <word name="WRITEVU"/>
+            <word name="WRITEVUIF"/>
+            <word name="LT"/>
+            <word name="GT"/>
+            <word name="EQ"/>
+            <word name="LE"/>
+            <word name="GE"/>
+            <word name="NE"/>
+         </keywords>
+<!-- Function and Subroutine names -->
+         <regexp match="/\b(\w[\d\w.]+)(\()/" region1="ubFunc" region2="ubSymb"/>
+<!--
+         <regexp match="/\b(\w+)\(((((@)?\w[\w\d]+)|((&#34;)(.*?)(&#34;)|(')(.*?)(')))(,)?\s?){0,99}\)/" 
+                 region1="ubFunc" priority="low"
+                 region5="ubId" region7="ubString"
+                 region8="StringEdge" region9="StringContent" regionA="StringEdge"
+                 regionB="StringEdge" regionC="StringContent" regionD="StringEdge"
+                 regionE="ubSymb"/>
+-->
+
+<!-- Variable names -->
+         <regexp match="/\b(\w[\d\w._]+)\b/" region0="ubId" priority="low"/>
+         
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

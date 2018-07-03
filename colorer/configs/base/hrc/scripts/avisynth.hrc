@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+   <annotation>
+    <documentation>
+       AviSynth video frameserver script syntax file for Colorer plugin for FAR Manager 
+    </documentation>
+    <contributors><![CDATA[
+       SweetLow <sweetlow@tut.by>  old "forever" version
+       Fizick <bag@hotmail.ru>     "take5" version, keywords
+    ]]></contributors>
+   </annotation>
+
+<!-- Use prototype file avisynth_proto.hrc with a declaration:
+  <prototype name="avisynth" group="scripts" description="AviSynth">
+    <location link="avisynth.hrc"/>
+    <filename>/\.(avs|avsi)$/i</filename>
+  </prototype>
+You must put both files to C:\Program Files\Far\Plugins\Colorer\hrc\auto
+-->
+
+   <type name="avisynth">
+
+      <import type="def"/>
+
+      <region name="AvsString" parent="String"/>
+      <region name="AvsComment" parent="Comment"/>
+      <region name="AvsSymb" parent="Symbol"/>
+      <region name="AvsNumb" parent="Number"/>
+      <region name="AvsWord" parent="Keyword"/>
+      <region name="AvsType" parent="TypeKeyword"/>
+      <region name="AvsIntrinsic" parent="Directive"/>
+      <region name="AvsFilter" parent="ParameterStrong"/>
+      <region name="AvsPlugin" parent="ParameterStrong"/>
+
+
+      <scheme name="avisynth">
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="avisynth"/>
+         </inherit>
+<!-- Linear Comments -->
+         <regexp match="/#.*$/" region0="AvsComment"/>
+<!-- Numbers -->
+   <regexp match="/\c(\$[\da-fA-F]+)\b/" region0="AvsNumb"/>
+   <regexp match="/\c(\$[\da-fA-F]*?([^\s\W\da-fA-F]).*?)\B/" region0="Error"/>
+   <regexp match="/\b[0-9]*[.]?[0-9]*\b/" region0="AvsNumb"/>
+<!-- Strings -->
+         <regexp match='/".*?"/' region0="AvsString"/>
+<!--  -->
+         <keywords ignorecase="yes" region="AvsSymb">
+      <symb name=";"/><symb name="="/><symb name="+"/><symb name="-"/>
+      <symb name="/"/><symb name="*"/><symb name="&amp;"/><symb name="|"/>
+<!-- <symb name="^"/><symb name="["/><symb name="]"/>
+ <symb name="~"/> <symb name="@"/>  disabled  -->
+      <symb name=","/><symb name="."/><symb name=":"/>
+      <symb name="!"/>
+      <symb name="&lt;"/><symb name="&gt;"/>
+      <symb name="%"/><symb name="?"/>
+      <symb name="#"/><symb name="\"/>
+         </keywords>
+         <keywords ignorecase="yes" region="AvsWord">
+     <!-- general -->
+      <word name="default"/>
+      <word name="end"/>
+      <word name="return"/>
+      <word name="global"/>
+      <word name="function"/>
+      <word name="last"/>
+      <word name="true"/>
+      <word name="false"/>
+      <word name="try"/>
+      <word name="catch"/>
+         </keywords>
+         <keywords ignorecase="yes" region="AvsType">
+         <!-- types -->
+      <word name="clip"/>
+      <word name="int"/>
+      <word name="bool"/>
+      <word name="float"/>
+      <word name="string"/>
+         </keywords>
+         <keywords ignorecase="yes" region="AvsIntrinsic">
+         <!-- numeric functions -->
+      <word name="Floor"/>
+      <word name="Ceil"/>
+      <word name="Round"/>
+      <word name="Sin"/>
+      <word name="Cos"/>
+      <word name="Pi"/>
+      <word name="Log"/>
+      <word name="Exp"/>
+      <word name="Pow"/>
+      <word name="Sqrt"/>
+      <word name="Abs"/>
+      <word name="Sign"/>
+      <word name="Int"/>
+      <word name="Frac"/>
+      <word name="Float"/>
+      <word name="Value"/>
+      <word name="HexValue"/>
+      <word name="Rand"/>
+      <word name="MulDiv"/> 
+      <word name="Spline"/>
+        <!-- String Functions -->
+      <word name="LCase"/>
+      <word name="UCase"/>
+      <word name="StrLen"/>
+      <word name="RevStr"/>
+      <word name="LeftStr"/>
+      <word name="RightStr"/>
+      <word name="MidStr"/>
+      <word name="FindStr"/>
+        <!-- String (already internal word -->
+      <word name="Chr"/> 
+      <word name="Time"/>
+        <!-- Version Checking Functions -->
+      <word name="VersionNumber"/>
+      <word name="VersionString"/>
+        <!-- Variable Type and File Checking Functions -->
+      <word name="IsBool"/>
+      <word name="IsInt"/>
+      <word name="IsFloat"/>
+      <word name="IsString"/>
+      <word name="IsClip"/>
+      <word name="Exist"/>
+      <word name="Defined"/>
+        <!--    "Default"/> -->
+      <word name="Eval"/>
+      <word name="Import"/>
+      <word name="Assert"/>
+      <word name="AssertEval"/>
+      <word name="Select"/> 
+      <word name="NOP"/>  
+      <word name="Apply"/> 
+      <word name="SetMemoryMax"/>
+      <word name="SetPlanarLegacyAlignment"/>
+        <!-- Plugin Functions -->
+      <word name="LoadPlugin"/>
+      <word name="LoadVirtualDubPlugin"/>
+      <word name="LoadVFAPIPlugin"/>
+      <word name="LoadCPlugin"/>
+      <word name="Load_Stdcall_Plugin"/>
+        <!-- clip properties -->
+      <word name="Width"/>
+      <word name="Height"/>
+      <word name="Framecount"/>
+      <word name="Framerate"/>
+      <word name="FramerateNumerator"/>
+      <word name="FramerateDenominator"/>
+      <word name="Audiorate"/>
+      <word name="Audiolength"/>
+      <word name="AudiolengthF"/>
+      <word name="Audiochannels"/>
+      <word name="Audiobits"/>
+      <word name="IsAudioFloat"/>
+      <word name="IsAudioInt"/>
+      <word name="IsRGB"/>
+      <word name="IsRGB24"/>
+      <word name="IsRGB32"/>
+      <word name="IsYUY2"/>
+      <word name="IsYV12"/>
+      <word name="IsYUV"/>
+      <word name="IsPlanar"/>
+      <word name="IsInterleaved"/>
+      <word name="IsFieldBased"/>
+      <word name="IsFrameBased"/>
+      <word name="GetParity"/>
+      <word name="HasAudio"/>
+      <word name="HasVideo"/>
+         </keywords>
+
+         <keywords ignorecase="yes" region="AvsFilter">
+        <!-- Source filters for producing a clip -->
+      <word name="AviSource"/>
+      <word name="OpenDMLSource"/>
+      <word name="AviFileSource"/>
+      <word name="WavSource"/>
+      <word name="DirectShowSource"/>
+      <word name="SegmentedAviSource"/>
+      <word name="SegmentedDirectShowSource"/>
+      <word name="BlankClip"/>
+      <word name="Blackness"/>
+      <word name="ImageReader"/>
+      <word name="ImageSource"/>
+        <!-- Filters for image processing -->
+      <word name="AddBorders"/>
+      <word name="Blur"/>
+      <word name="Sharpen"/>
+      <word name="ColorYUV"/>
+      <word name="ConvertBackToYUY2"/>
+      <word name="ConvertToRGB"/>
+      <word name="ConvertToRGB24"/>
+      <word name="ConvertToRGB32"/>
+      <word name="ConvertToYUY2"/>
+      <word name="ConvertToYV12"/>
+      <word name="Crop"/>
+      <word name="CropBottom"/>
+      <word name="GeneralConvolution"/>
+      <word name="GreyScale"/>
+      <word name="HSIAdjust"/>
+      <word name="Layer"/>
+      <word name="Mask"/>
+      <word name="ResetMask"/>
+      <word name="ColorKeyMask"/>
+      <word name="Letterbox"/>
+      <word name="Levels"/>
+      <word name="Limiter"/>
+      <word name="MergeARGB"/> 
+      <word name="MergeRGB"/> 
+      <word name="Merge"/> 
+      <word name="MergeChroma"/>
+      <word name="MergeLuma"/>
+      <word name="ReduceBy2"/>
+      <word name="HorizontalReduceBy2"/>
+      <word name="VerticalReduceBy2"/>
+      <word name="RGBAdjust"/>
+      <word name="BicubicResize"/>
+      <word name="BilinearResize"/>
+      <word name="LanczosResize"/>
+      <word name="Lanczos4Resize"/> 
+      <word name="PointResize"/>
+      <word name="SpatialSoften"/>
+      <word name="TemporalSoften"/>
+      <word name="SwapUV"/>
+      <word name="UToY"/>
+      <word name="VToY"/>
+      <word name="YToUV"/>
+      <word name="Tweak"/>
+      <word name="ShowAlpha"/>
+      <word name="ShowRed"/>
+      <word name="ShowGreen"/>
+      <word name="ShowBlue"/>
+        <!-- Filters for Editing -->
+      <word name="AlignedSplice"/>
+      <word name="UnalignedSplice"/>
+      <word name="AssumeFPS"/>
+      <word name="ChangeFPS"/>
+      <word name="ConvertFPS"/>
+      <word name="DeleteFrame"/>
+      <word name="Dissolve"/>
+      <word name="DuplicateFrame"/>
+      <word name="FadeIn"/>
+      <word name="FadeIn2"/>
+      <word name="FadeOut"/>
+      <word name="FadeOut2"/>
+      <word name="FadeIn0"/>
+      <word name="FadeOut0"/>
+      <word name="FadeIO0"/>
+      <word name="FadeIO"/>
+      <word name="FidaIO2"/>
+      <word name="FreezeFrame"/>
+      <word name="Loop"/>
+      <word name="SelectEven"/>
+      <word name="SelectOdd"/>
+      <word name="SelectEvery"/>
+      <word name="SelectRangeEvery"/>
+      <word name="Trim"/>
+        <!-- Filters for treating interlaced video -->
+      <word name="AssumeFrameBased"/>
+      <word name="AssumeFieldBased"/>
+      <word name="AssumeBFF"/>
+      <word name="AssumeTFF"/>
+      <word name="Bob"/>
+      <word name="ComplementParity"/>
+      <word name="DoubleWeave"/>
+      <word name="Interleave"/>
+      <word name="Pulldown"/>
+      <word name="SeparateFields"/>
+      <word name="SwapFields"/>
+      <word name="Weave"/>
+        <!-- Audio filters -->
+      <word name="Amplify"/>
+      <word name="AmplifydB"/>
+      <word name="AssumeSampleRate"/>
+      <word name="AudioDub"/>
+      <word name="AudioLength"/>
+      <word name="ConvertAudioTo8bit"/>
+      <word name="ConvertAudioTo16bit"/>
+      <word name="ConvertAudioTo24bit"/>
+      <word name="ConvertAudioTo32bit"/>
+      <word name="ConvertAudioToFloat"/>
+      <word name="ConvertToMono"/>
+      <word name="DelayAudio"/>
+      <word name="EnsureVBRMP3Sync"/>
+      <word name="GetChannel"/>
+      <word name="GetLeftChannel"/>
+      <word name="GetRightChannel"/>
+      <word name="KillAudio"/>
+      <word name="LowPassAudio"/>
+      <word name="HighPassAudio"/>
+      <word name="MergeChannels"/>
+      <word name="MixAudio"/>
+      <word name="MonoToStereo"/>
+      <word name="Normalize"/>
+      <word name="ResampleAudio"/>
+      <word name="SSRC"/> 
+      <word name="SuperEQ"/>
+      <word name="TimeStretch"/>
+      <word name="Tone"/>
+        <!-- Special and exotic filters -->
+      <word name="Animate"/>
+      <word name="ApplyRange"/>
+      <word name="FixBrokenChromaUpsampling"/>
+      <word name="FixLuminance"/>
+      <word name="FlipHorizontal"/>
+      <word name="FlipVertical"/>
+      <word name="ImageWriter"/>
+      <word name="PeculiarBlend"/>
+      <word name="Reverse"/>
+      <word name="Subtitle"/>
+      <word name="TurnLeft"/>
+      <word name="TurnRight"/>
+      <word name="ConditionalFilter"/> 
+      <word name="ConditionalReader"/> 
+      <word name="FrameEvaluate"/> 
+      <word name="ScriptClip"/>
+      <word name="Turn180"/>
+      <word name="WriteFile"/>
+      <word name="WriteFileIf"/> 
+      <word name="WriteFileStart"/>
+      <word name="WriteFileEnd"/> 
+        <!-- Debug filters -->
+      <word name="ColorBars"/>
+      <word name="Compare"/>
+      <word name="Histogram"/>
+      <word name="Info"/>
+      <word name="MessageClip"/>
+      <word name="ShowFiveVersions"/>
+      <word name="ShowFrameNumber"/>
+      <word name="ShowSMPTE"/>
+      <word name="StackHorizontal"/>
+      <word name="StackVertical"/>
+      <word name="Subtract"/>
+      <word name="Version"/>
+         </keywords>
+
+         <keywords ignorecase="yes" region="AvsPlugin">
+        <!-- my own (Fizick) plugins -->
+      <word name="Defliker"/>
+      <word name="Defreq"/>
+      <word name="Degrainmedian"/>
+      <word name="Depan"/>
+      <word name="DepanEstimate"/>
+      <word name="DepanInterleave"/>
+      <word name="DepanStabilize"/>
+      <word name="Descratch"/>
+      <word name="Despot"/>
+      <word name="FFT3DFilter"/>
+      <word name="HotSpot"/>
+      <word name="GetDups"/>
+      <word name="VagueDenoiser"/>
+      <word name="MVAnalyse"/>
+      <word name="MVCompensate"/>
+      <word name="MVMask"/>
+      <word name="MVShow"/>
+      <word name="MVDePan"/>
+      <word name="MVFlow"/>
+      <word name="MVFlowInter"/>
+      <word name="MVFlowFps"/>
+      <word name="MVFlowFps2"/>
+      <word name="MVFlowBlur"/>
+      <word name="MVDenoise"/>
+      <word name="MVChangeCompensate"/>
+      <word name="DeBlock"/>
+      <word name="Corrector"/>
+        <!-- some plugins -->
+      <word name="Telecide"/>
+      <word name="Decimate"/>
+      <word name="FieldDeinterlace"/>
+      <word name="DGBob"/>
+      <word name="FDecimate"/>
+      <word name="GreedyHMA"/>
+      <word name="IBob"/>
+      <word name="KernelDeint"/>
+      <word name="LeakKernelDeint"/>
+      <word name="MultiDecimate"/>
+      <word name="SmartDecimate"/>
+      <word name="TDeint"/>
+      <word name="TFM"/>
+      <word name="TDecimate"/>
+      <word name="TomsMoComp"/>
+
+      <word name="Convolution3D"/>
+      <word name="Deen"/>
+      <word name="FluxSmoothT"/>
+      <word name="FluxSmoothST"/>
+      <word name="NoMoSmooth"/>
+      <word name="MipSmooth"/>
+      <word name="PeachSmoother"/>
+      <word name="STMedianFilter"/>
+
+      <word name="MSmooth"/>
+      <word name="SmoothUV"/>
+      <word name="TBilateral"/>
+      <word name="CNR2"/>
+      <word name="GrapeSmoother"/>
+
+      <word name="RemoveDirt"/>
+      <word name="TTempSmooth"/>
+
+      <word name="aSharp"/>
+      <word name="aWarpSharp"/>
+      <word name="MSharpen"/>
+      <word name="TUnsharp"/>
+      <word name="UnFilter"/>
+      <word name="WarpSharp"/>
+      <word name="XSharpen"/>
+
+      <word name="BicublinResize"/>
+      <word name="SimpleResize"/>
+      <word name="WarpedResize"/>
+      <word name="YV12InterlacedReduceBy2"/>
+
+      <word name="VSFilter"/>
+
+      <word name="MPEG2Source"/>
+      <word name="LumaYV12"/>
+      <word name="BlindPP"/>
+
+      <word name="MPASource"/>
+      <word name="NicAudio"/>
+
+      <word name="SSIM"/>
+
+      <word name="AutoCrop"/>
+      <word name="BorderControl"/>
+      <word name="FillMargins"/>
+      <word name="GuavaComb"/>
+      <word name="Reinterpolate411"/>
+      <word name="TComb"/>
+      <word name="AddGrain"/>
+      <word name="AudioGraph"/>
+      <word name="MonitorFilter"/>
+      <word name="BlockBuster"/>
+      <word name="ChromaShift"/>
+      <word name="ColorMatrix"/>
+      <word name="DCTFilter"/>
+      <word name="Dup"/>
+      <word name="DVInfo"/>
+      <word name="ffavisynth"/>
+      <word name="ReverseFildDominance"/>
+      <word name="TMonitor"/>
+      <word name="Undot"/>
+      <word name="VideoScope"/>
+
+      <word name="Binarize"/>
+      <word name="CombMask"/>
+      <word name="EdgeMask"/>
+      <word name="DEdgeMask"/>
+      <word name="DEdgeMask2"/>
+      <word name="Expand"/>
+      <word name="Inpand"/>
+      <word name="FitY2UV"/>
+      <word name="FitY2U"/>
+      <word name="FitY2V"/>
+      <word name="FitU2Y"/>
+      <word name="FitV2Y"/>
+      <word name="FitU2V"/>
+      <word name="FitV2U"/>
+      <word name="Inflate"/>
+      <word name="Deflate"/>
+      <word name="Invert"/>
+      <word name="Logic"/>
+      <word name="RGBLUT"/>
+      <word name="YUY2LUT"/>
+      <word name="YV12LUT"/>
+      <word name="YV12LUTxy"/>
+      <word name="MaskedMerge"/>
+      <word name="MotionMask"/>
+      <word name="YV12Convolution"/>
+      <word name="YV12Subtract"/>
+
+      <word name="RawSource"/>
+      <word name="Removegrain"/>
+      <word name="Clense"/>
+      <word name="Repair"/>
+      <word name="TemporalRepair"/>
+      <word name="Repair"/>
+      <word name="SSIQ"/>
+      <word name="FixVHSOverSharp"/>
+      <word name="FixVHSOverSharpL"/>
+      <word name="FanFilter"/>
+
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+       SweetLow, Fizick
+   - Portions created by the Initial Developer are Copyright (C) 2006
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

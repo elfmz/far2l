@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    PageMaker 6.5 Scripts Syntax Description
+With help of:
+    Sergey M. Litvinov <sergey@smsm.sebastopol.ua>
+-->
+   <type name="pagemakerscript">
+
+      <import type="def"/>
+
+      <region name="SPText" parent="Keyword"/>
+      <region name="SPString" parent="String"/>
+      <region name="SPComment" parent="Comment"/>
+      <region name="SPSymb" parent="Symbol"/>
+      <region name="SPWord" parent="Keyword"/>
+      <region name="SPFunct" parent="Keyword"/>
+      <region name="SPSFunct" parent="Parameter"/>
+      <region name="SPNumb" parent="Number"/>
+
+
+      <scheme name="pagemakerscript">
+         <regexp match="/\b(\w+\.\w+)\b/" region0="SPText"/>
+<!-- Comments -->
+         <regexp match="/(\-\-.*$)/" region0="SPComment"/>
+         <regexp match="/(\/\/.*$)/" region0="SPComment"/>
+         <regexp match="/^\s*(REM\s+.*$)/i" region0="SPComment"/>
+<!-- Strings -->
+         <regexp match="/(&#34;((\\.)|[^\\&#34;])*?&#34;)/" region0="SPString"/>
+<!-- Numbers  -->
+         <regexp match="/\b([0-9.]+([eE][\-+]?\d+)?)\b/" region0="SPNumb"/>
+<!-- Symbols -->
+         <keywords region="SPSymb">
+            <symb name="=&gt;"/>
+            <symb name="^"/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=";"/>
+            <symb name=":"/>
+            <symb name="="/>
+            <symb name="("/>
+            <symb name="&gt;&gt;"/>
+            <symb name="#"/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name="&gt;"/>
+            <symb name="&lt;"/>
+            <symb name="%"/>
+            <symb name="+story"/>
+            <symb name="-story"/>
+            <symb name="+char"/>
+            <symb name="-char"/>
+            <symb name="+textblock"/>
+            <symb name="-textblock"/>
+            <word name="on"/>
+         </keywords>
+<!-- Words -->
+         <keywords ignorecase="yes" region="SPWord">
+            <word name="Caseof"/>
+            <word name="DialogBegin"/>
+            <word name="DialogEnd"/>
+            <word name="Else"/>
+            <word name="Elseif"/>
+            <word name="Endif"/>
+            <word name="Endloop"/>
+            <word name="Endsub"/>
+            <word name="Endswitch"/>
+            <word name="EndWhile"/>
+            <word name="Gosub"/>
+            <word name="Goto"/>
+            <word name="If"/>
+            <word name="Label"/>
+            <word name="LogBegin"/>
+            <word name="LogEnd"/>
+            <word name="Loop"/>
+            <word name="ReadBegin"/>
+            <word name="ReadEnd"/>
+            <word name="Repeat"/>
+            <word name="Return"/>
+            <word name="Set"/>
+            <word name="Sub"/>
+            <word name="Switch"/>
+            <word name="Try"/>
+            <word name="Until"/>
+            <word name="While"/>
+         </keywords>
+<!-- Standard Functions -->
+         <keywords ignorecase="yes" region="SPSFunct">
+            <word name="Abs"/>
+            <word name="Arctan"/>
+            <word name="Cos"/>
+            <word name="Empty"/>
+            <word name="Exp"/>
+            <word name="IsNumber"/>
+            <word name="Len"/>
+            <word name="List"/>
+            <word name="Log"/>
+            <word name="Max"/>
+            <word name="Min"/>
+            <word name="Not"/>
+            <word name="Path"/>
+            <word name="Quote"/>
+            <word name="Rand"/>
+            <word name="Sin"/>
+            <word name="SpecialCharacter"/>
+            <word name="Sqrt"/>
+            <word name="Str"/>
+            <word name="SubStr"/>
+            <word name="ToLower"/>
+            <word name="ToUpper"/>
+            <word name="Trunc"/>
+            <word name="Unlist"/>
+            <word name="Unquote"/>
+            <word name="Val"/>
+            <word name="Zstrip"/>
+         </keywords>
+<!-- Functions -->
+         <keywords ignorecase="yes" region="SPFunct">
+            <word name="Addition"/>
+            <word name="AddPrinterStyle"/>
+            <word name="AddWord"/>
+            <word name="Alignment"/>
+            <word name="AppendVertices"/>
+            <word name="AssignLayer"/>
+            <word name="AttachContent"/>
+            <word name="Autoflow"/>
+            <word name="BasedOn"/>
+            <word name="BlackAttributes"/>
+            <word name="Book"/>
+            <word name="Box"/>
+            <word name="BreakLinks"/>
+            <word name="BringForward"/>
+            <word name="BringToFront"/>
+            <word name="Cascade"/>
+            <word name="Case"/>
+            <word name="Change"/>
+            <word name="ChangeAll"/>
+            <word name="ChangeEnv"/>
+            <word name="ChangeNext"/>
+            <word name="ChangeParaAttr"/>
+            <word name="ChangeTypeAttr1"/>
+            <word name="ChangeTypeAttr2"/>
+            <word name="ChangeWindow"/>
+            <word name="Clear"/>
+            <word name="Close"/>
+            <word name="CloseStory"/>
+            <word name="Color"/>
+            <word name="ColorPalette"/>
+            <word name="ColumnGuides"/>
+            <word name="ControlPalette"/>
+            <word name="ConvertEnhMetafile"/>
+            <word name="Copy"/>
+            <word name="CreateIndex"/>
+            <word name="CreatePolygon"/>
+            <word name="CreateTOC"/>
+            <word name="Crop"/>
+            <word name="Cut"/>
+            <word name="DefaultDir"/>
+            <word name="DefaultPrintClrSpace"/>
+            <word name="DefineColor"/>
+            <word name="DefineInk"/>
+            <word name="DefineMasterPage"/>
+            <word name="DeleteContent"/>
+            <word name="Delete"/>
+            <word name="DeleteHoriz"/>
+            <word name="DeleteLayer"/>
+            <word name="DeleteUnusedLayers"/>
+            <word name="DeleteMasterPage"/>
+            <word name="DeletePrivateData"/>
+            <word name="DeleteRulerGuides"/>
+            <word name="DeleteVert"/>
+            <word name="Deselect"/>
+            <word name="Dictionary"/>
+            <word name="DisplayNonPrinting"/>
+            <word name="DisplaySpecial"/>
+            <word name="DisplayStyleNames"/>
+            <word name="DownLoadWebContent"/>
+            <word name="DragSelect"/>
+            <word name="DragSelectExtend"/>
+            <word name="EditLayout"/>
+            <word name="EditOriginal"/>
+            <word name="EditStory"/>
+            <word name="Exit"/>
+            <word name="Export"/>
+            <word name="FillAndLine"/>
+            <word name="FillStyle"/>
+            <word name="Find"/>
+            <word name="FindNext"/>
+            <word name="FindParaAttr"/>
+            <word name="FindTypeAttr1"/>
+            <word name="FindTypeAttr2"/>
+            <word name="FindWindow"/>
+            <word name="Font"/>
+            <word name="FontDrawing"/>
+            <word name="FrameContentPos"/>
+            <word name="FrameInset"/>
+            <word name="GetAdditions"/>
+            <word name="GetAdditionsDir"/>
+            <word name="GetAlignment"/>
+            <word name="GetAutoflow"/>
+            <word name="GetBasedOn"/>
+            <word name="GetBlackAttributes"/>
+            <word name="GetBook"/>
+            <word name="GetCase"/>
+            <word name="GetChangeParaAttr"/>
+            <word name="GetChangeTypeAttr1"/>
+            <word name="GetChangeTypeAttr2"/>
+            <word name="GetChangeWindow"/>
+            <word name="GetCMSOn bState"/>
+            <word name="GetColor"/>
+            <word name="GetColorInfo"/>
+            <word name="GetColorNames"/>
+            <word name="GetColorPalette"/>
+            <word name="GetColumnGuides"/>
+            <word name="GetControlPalette"/>
+            <word name="GetConvertStr"/>
+            <word name="GetConvertTwips"/>
+            <word name="GetCropRect"/>
+            <word name="GetDefaultPrintClrSpace"/>
+            <word name="GetDefaultDir"/>
+            <word name="GetDictionary"/>
+            <word name="GetDisplayNonPrinting"/>
+            <word name="GetDisplaySpecial"/>
+            <word name="GetDisplayStyleNames"/>
+            <word name="GetExportFilters"/>
+            <word name="GetFillAndLine"/>
+            <word name="GetFillStyle"/>
+            <word name="GetFindParaAttr"/>
+            <word name="GetFindTypeAttr1"/>
+            <word name="GetFindTypeAttr2"/>
+            <word name="GetFindWindow"/>
+            <word name="GetFont"/>
+            <word name="GetFontDrawing"/>
+            <word name="GetFontList"/>
+            <word name="GetFrameContentPos"/>
+            <word name="GetFrameContentType"/>
+            <word name="GetFrameInset"/>
+            <word name="GetGroupList"/>
+            <word name="GetGuides"/>
+            <word name="GetHorizGuides"/>
+            <word name="GetHyperLinkPalette"/>
+            <word name="GetHyphenation"/>
+            <word name="GetImageFrame"/>
+            <word name="GetImportFilters"/>
+            <word name="GetIndents"/>
+            <word name="GetInkInfo"/>
+            <word name="GetInkNames"/>
+            <word name="GetInkND"/>
+            <word name="GetIsFrame"/>
+            <word name="GetKernText"/>
+            <word name="GetLastError"/>
+            <word name="GetLastErrorStr"/>
+            <word name="GetLayAdjOpts"/>
+            <word name="GetLayerFromID"/>
+            <word name="GetLayerList"/>
+            <word name="GetLayerPalette"/>
+            <word name="GetLayerOptions"/>
+            <word name="GetLeading"/>
+            <word name="GetLetterSpace"/>
+            <word name="GetLineBreak"/>
+            <word name="GetLineBreakLoc"/>
+            <word name="GetLineStyle"/>
+            <word name="GetLinkInfo"/>
+            <word name="GetLinkOptions"/>
+            <word name="GetLinks"/>
+            <word name="GetLockGuides"/>
+            <word name="GetLock"/>
+            <word name="GetMasterItems"/>
+            <word name="GetMasterPage"/>
+            <word name="GetMasterPageInfo"/>
+            <word name="GetMasterPageList"/>
+            <word name="GetMasterPageName"/>
+            <word name="GetMasterPagePalette"/>
+            <word name="GetMeasureUnits"/>
+            <word name="GetMultPasteOffset"/>
+            <word name="GetNextFrame"/>
+            <word name="GetNextStyle"/>
+            <word name="GetNoBreak"/>
+            <word name="GetNonPrinting"/>
+            <word name="GetObjectIDList"/>
+            <word name="GetObjectIDListTop"/>
+            <word name="GetObjectList"/>
+            <word name="GetObjectLoc"/>
+            <word name="GetPageHistory"/>
+            <word name="GetPageID"/>
+            <word name="GetPageImage"/>
+            <word name="GetPageImage"/>
+            <word name="GetPageMargins"/>
+            <word name="GetPageNumber"/>
+            <word name="GetPageNumberByID"/>
+            <word name="GetPageNumbers"/>
+            <word name="GetPageOptions"/>
+            <word name="GetPageRect"/>
+            <word name="GetPages"/>
+            <word name="GetPageSize"/>
+            <word name="GetPaperSizes"/>
+            <word name="GetPaperSources"/>
+            <word name="GetParaOptions"/>
+            <word name="GetParaSpace"/>
+            <word name="GetPasteRemembers"/>
+            <word name="GetPickers"/>
+            <word name="GetPMInfo"/>
+            <word name="GetPMLanguage"/>
+            <word name="GetPMState"/>
+            <word name="GetPolygonAttribs"/>
+            <word name="GetPolygonMiterLimit"/>
+            <word name="GetPolygonType"/>
+            <word name="GetPolygonVertices"/>
+            <word name="GetPPDFontLocation"/>
+            <word name="GetPreferences"/>
+            <word name="GetPrintCaps"/>
+            <word name="GetPrintColor"/>
+            <word name="GetPrintDoc"/>
+            <word name="GetPrinter"/>
+            <word name="GetPrinterList"/>
+            <word name="GetPrinterResol"/>
+            <word name="GetPrinterStyles"/>
+            <word name="GetPrintEPSPreviews"/>
+            <word name="GetPrintFeature"/>
+            <word name="GetPrintFeatureItems"/>
+            <word name="GetPrintFeatureTitles"/>
+            <word name="GetPrintInk"/>
+            <word name="GetPrintOptions"/>
+            <word name="GetPrintOptionsPS"/>
+            <word name="GetPrintPaperPS"/>
+            <word name="GetPrintPPDs"/>
+            <word name="GetPrintPS"/>
+            <word name="GetPrintScreens"/>
+            <word name="GetPrintScreenRGBs"/>
+            <word name="GetPrintTo"/>
+            <word name="GetPrivateData"/>
+            <word name="GetPrivateList"/>
+            <word name="GetPrivateString"/>
+            <word name="GetPubName"/>
+            <word name="GetPubWindowRect"/>
+            <word name="GetPubWindows"/>
+            <word name="GetRoundedCorners"/>
+            <word name="GetRuleAbove"/>
+            <word name="GetRuleBelow"/>
+            <word name="GetRuleOptions"/>
+            <word name="GetRulers"/>
+            <word name="GetSaveStatus"/>
+            <word name="GetScrollbars"/>
+            <word name="GetSelectIDList"/>
+            <word name="GetSelectIDListTop"/>
+            <word name="GetSelectInfo"/>
+            <word name="GetSelectList"/>
+            <word name="GetShowErrorAlert"/>
+            <word name="GetSize"/>
+            <word name="GetSnapToGuides"/>
+            <word name="GetSnapToRulers"/>
+            <word name="GetSpaceOptions"/>
+            <word name="GetSpellResult"/>
+            <word name="GetSpellWindow"/>
+            <word name="GetStoryEditPref"/>
+            <word name="GetStoryID"/>
+            <word name="GetStoryIDList"/>
+            <word name="GetStoryList"/>
+            <word name="GetStoryText"/>
+            <word name="GetStyle"/>
+            <word name="GetStyleNames"/>
+            <word name="GetStylePalette"/>
+            <word name="GetSuppressAutosave"/>
+            <word name="GetSuppressPalDraw"/>
+            <word name="GetTabs"/>
+            <word name="GetTargetLayer"/>
+            <word name="GetTextCursor"/>
+            <word name="GetTextLocation"/>
+            <word name="GetTextRun"/>
+            <word name="GetTextWrap"/>
+            <word name="GetTextWrapPoly"/>
+            <word name="GetTint"/>
+            <word name="GetTOCIndexID"/>
+            <word name="GetTool"/>
+            <word name="GetToolbox"/>
+            <word name="GetTrack"/>
+            <word name="GetTransform"/>
+            <word name="GetTrapSettings"/>
+            <word name="GetTypeOptions"/>
+            <word name="GetTypePosition"/>
+            <word name="GetTypeStyle"/>
+            <word name="GetVertGuides"/>
+            <word name="GetView"/>
+            <word name="GetWidth"/>
+            <word name="GetWordSpace"/>
+            <word name="GetZeroLock"/>
+            <word name="GetZeroPoint"/>
+            <word name="GoBack"/>
+            <word name="GoForward"/>
+            <word name="Group"/>
+            <word name="GuideHoriz"/>
+            <word name="Guides"/>
+            <word name="GuideVert"/>
+            <word name="HyperJump"/>
+            <word name="HyperLinkPalette"/>
+            <word name="Hyphenation"/>
+            <word name="ImageSaveAs"/>
+            <word name="ImageSaveForSep"/>
+            <word name="Import"/>
+            <word name="Indents"/>
+            <word name="IndexAuto"/>
+            <word name="IndexAutoName"/>
+            <word name="IndexFormat"/>
+            <word name="InkND"/>
+            <word name="InsertPages"/>
+            <word name="InvalidateRect"/>
+            <word name="KernText"/>
+            <word name="LayAdjOpts"/>
+            <word name="LayerOptions"/>
+            <word name="LayerPalette"/>
+            <word name="Leading"/>
+            <word name="LetterSpace"/>
+            <word name="Line"/>
+            <word name="LineStyle"/>
+            <word name="LinkFrames"/>
+            <word name="LinkOptions"/>
+            <word name="LockLayers"/>
+            <word name="Lock"/>
+            <word name="LockGuides"/>
+            <word name="ManualKerning"/>
+            <word name="Mask"/>
+            <word name="MasterGuides"/>
+            <word name="MasterItems"/>
+            <word name="MasterPage"/>
+            <word name="MasterPagePalette"/>
+            <word name="MeasureUnits"/>
+            <word name="MiniSave"/>
+            <word name="MoveLayer"/>
+            <word name="Move"/>
+            <word name="MoveColumn"/>
+            <word name="MultiplePaste"/>
+            <word name="MultPasteOffset"/>
+            <word name="NewLayer"/>
+            <word name="New"/>
+            <word name="NewStory"/>
+            <word name="NewStorySized"/>
+            <word name="NextStyle"/>
+            <word name="NoBreak"/>
+            <word name="NonPrinting"/>
+            <word name="Nudge"/>
+            <word name="Open"/>
+            <word name="OpenStory"/>
+            <word name="Oval"/>
+            <word name="Page"/>
+            <word name="PageMargins"/>
+            <word name="PageNumbers"/>
+            <word name="PageOptions"/>
+            <word name="PageSize"/>
+            <word name="ParaOptions"/>
+            <word name="ParaSpace"/>
+            <word name="Paste"/>
+            <word name="PasteLink"/>
+            <word name="PasteRemembers"/>
+            <word name="PasteSpecial"/>
+            <word name="PickColor"/>
+            <word name="Place"/>
+            <word name="PlaceNext"/>
+            <word name="PlaceSized"/>
+            <word name="Polygon"/>
+            <word name="PolygonAttribs"/>
+            <word name="PolygonJoin"/>
+            <word name="PolygonMiterLimit"/>
+            <word name="PolygonType"/>
+            <word name="PolygonVertices"/>
+            <word name="Position"/>
+            <word name="Preferences"/>
+            <word name="Print"/>
+            <word name="PrintColor"/>
+            <word name="PrintDeviceIndpntcolor"/>
+            <word name="PrintDoc"/>
+            <word name="PrinterResol"/>
+            <word name="PrintEPSPreviews"/>
+            <word name="PrintScreenRGBs"/>
+            <word name="PrinterStyle"/>
+            <word name="PrintFeature"/>
+            <word name="PrintInk"/>
+            <word name="PrintOptions"/>
+            <word name="PrintOptionsPS"/>
+            <word name="PrintPaperPS"/>
+            <word name="PrintTo"/>
+            <word name="PrivateData"/>
+            <word name="PrivateString"/>
+            <word name="Quit"/>
+            <word name="Redraw"/>
+            <word name="Reflect"/>
+            <word name="Relink"/>
+            <word name="RemoveColor"/>
+            <word name="RemovePages"/>
+            <word name="RemovePrinterStyle"/>
+            <word name="RemoveStyle"/>
+            <word name="RemoveUnusedColors"/>
+            <word name="RemoveWord"/>
+            <word name="RenameMasterPage"/>
+            <word name="RenderClip"/>
+            <word name="Resize"/>
+            <word name="ResizePct"/>
+            <word name="RestoreColor"/>
+            <word name="ReversePolyVertices"/>
+            <word name="Revert"/>
+            <word name="Rotate"/>
+            <word name="RoundedCorners"/>
+            <word name="RuleAbove"/>
+            <word name="RuleBelow"/>
+            <word name="RuleOptions"/>
+            <word name="Rulers"/>
+            <word name="Save"/>
+            <word name="SaveAs"/>
+            <word name="SaveAsMasterPage"/>
+            <word name="SaveStatusOff"/>
+            <word name="Scroll"/>
+            <word name="Scrollbars"/>
+            <word name="Select"/>
+            <word name="SelectAll"/>
+            <word name="SelectExtend"/>
+            <word name="SelectExtend"/>
+            <word name="SelectID"/>
+            <word name="SelectIDExtend"/>
+            <word name="SelectLayer"/>
+            <word name="SendBackward"/>
+            <word name="SendToBack"/>
+            <word name="SendToPage"/>
+            <word name="SeparateContent"/>
+            <word name="SetTextCursor"/>
+            <word name="SetWidth"/>
+            <word name="ShowErrorAlert"/>
+            <word name="ShowLayers"/>
+            <word name="ShowPages"/>
+            <word name="Size"/>
+            <word name="SizeBump"/>
+            <word name="Skew"/>
+            <word name="SnapToGuides"/>
+            <word name="SnapToRulers"/>
+            <word name="SpaceOptions"/>
+            <word name="Spell"/>
+            <word name="SpellWindow"/>
+            <word name="StoryEditPref"/>
+            <word name="Style"/>
+            <word name="StyleBegin"/>
+            <word name="StyleEnd"/>
+            <word name="StylePalette"/>
+            <word name="SuppressAutosave"/>
+            <word name="SuppressPalDraw"/>
+            <word name="SuppressPI"/>
+            <word name="Tabs"/>
+            <word name="TargetLayer"/>
+            <word name="TextCursor"/>
+            <word name="TextEdit"/>
+            <word name="TextEnter"/>
+            <word name="TextSelect"/>
+            <word name="TextWrap"/>
+            <word name="TextWrapPoly"/>
+            <word name="Tile"/>
+            <word name="TintSelection"/>
+            <word name="ToggleFrame"/>
+            <word name="Tool"/>
+            <word name="Toolbox"/>
+            <word name="Track"/>
+            <word name="TrapSettings"/>
+            <word name="TypeOptions"/>
+            <word name="TypeStyle"/>
+            <word name="Ungroup"/>
+            <word name="Unlink"/>
+            <word name="Unmask"/>
+            <word name="Unselect"/>
+            <word name="UnselectID"/>
+            <word name="View"/>
+            <word name="Window"/>
+            <word name="WordSpace"/>
+            <word name="ZeroLock"/>
+            <word name="ZeroPoint"/>
+            <word name="ZeroPointReset"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

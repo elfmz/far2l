@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" 
+    "http://colorer.sf.net/2003/hrc.dtd"[
+    <!ENTITY xpath-internal-hack  SYSTEM "xpath.internal.hack.ent.hrc">
+    <!ENTITY xpath-xml  SYSTEM "xpath-xml.ent.hrc">
+]>
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd" version="take5">
+
+<!-- hack for < > used in xml for xpath 1-2 -->
+
+<package name="xpath-lt.internal.hack"/>
+<package name="xpath-xml-lt.internal.hack"/>
+
+<type name="xpath-lt.internal.hack">
+    <entity name="lt" value="&lt;"/>
+    <entity name="gt" value=">"/>
+    
+    &xpath-internal-hack;
+</type>
+
+<type name="xpath-xml-lt.internal.hack">
+    <entity name="lt" value="(?{}&amp;lt;)"/>
+    <entity name="gt" value="(?{}&amp;gt;|>)"/>
+    
+    &xpath-internal-hack;
+</type>
+
+
+<type name="xpath">
+
+<annotation><documentation>
+    Colorer HRC packages group for
+        XSLT, XPath and XQuery
+        
+    This is HRC package for
+        XML Path Language (XPath) Version 1.0
+        W3C Recommendation 16 November 1999
+        http://www.w3.org/TR/xpath
+    
+</documentation><contributors><![CDATA[
+    Eugene Efremov <4mirror@mail.ru>
+]]></contributors></annotation>
+
+
+<region name="path.separator" parent="uri:delit"/>
+<region name="path.or" parent="def:SymbolStrong"/><!-- ? -->
+
+<region name="expr.quote" parent="def:Symbol"/>
+<region name="expr.op" parent="def:Operator" />
+
+<region name="func.name" parent="def:FunctionKeyword"/>
+<region name="func.quote" parent="def:Symbol"/>
+
+
+<region name="axis" parent="def:Label"/>
+<region name="axis.abbr" parent="def:SymbolStrong"/>
+<region name="axis.name" parent="axis"/><!-- ? -->
+<region name="axis.separator" parent="uri:delit"/>
+
+<region name="node.type" parent="def:TypeKeyword"/>
+<region name="node.type.abbr" parent="def:Symbol"/>
+<region name="node.name" parent="uri:path"/> <!-- "def:String,  def:Text ?" -->
+<region name="node.name.all" parent="expr.op"/><!-- == 'mul' :-( -->
+<region name="node.nsprefix" parent="uri:nsprefix"/>
+<region name="node.nscolon" parent="uri:nscolon"/>
+
+
+<region name="var" parent="def:Var"/>
+<region name="var.nsprefix" parent="xml:QName.nsprefix"/>
+<region name="var.nscolon"  parent="xml:QName.nscolon"/>
+
+<region name="literal" parent="def:String"/>
+<region name="literal.quote" parent="def:StringEdge"/>
+
+<!-- 'embedded' regions used for { expr }  in xsl, xpath -->
+<region name="embedded.quote" parent="def:EmbeddedTag"/>
+<region name="embedded.content" parent="def:InsertionEmbed"/>
+<region name="embedded.ignore" parent="def:StringContent"/>
+
+<region name="embedded.quote.xml" parent="embedded.quote"/>
+<region name="embedded.content.xml" parent="embedded.content"/>
+
+
+
+
+<!-- Virualization -->
+
+<scheme name="Literal">
+    <inherit scheme="StringLiteral"/>
+</scheme>
+
+
+
+<!-- Expression -->
+
+<scheme name="Expr">
+    
+    <inherit scheme="xpath-lt.internal.hack:expr-op"/>
+
+    <keywords region="expr.op" worddiv="[\s]">
+        <word name="or"/>
+        <word name="and"/>
+        <word name="div"/>
+        <word name="mod"/>
+        <symb name="|" region="path.or"/>
+    </keywords>
+    
+    <inherit scheme="NodeType"/>
+    <inherit scheme="PrimaryExpr"/>
+    <inherit scheme="LocationPath"/>
+    
+    <regexp match="/\S/" region="def:Error" priority="low"/>
+</scheme>
+
+
+<scheme name="PrimaryExpr">
+    <block start="/\M%xml:QName;\(/" end="/\)?#1/" 
+        scheme="FunctionCall"/>
+    <block start="/(\()/" end="/(\))/" scheme="Expr" 
+        region00="def:PairStart" region01="expr.op"
+        region10="def:PairEnd"   region11="expr.op"
+    />
+    <inherit scheme="VariableReference"/>
+    <inherit scheme="Literal"/>
+    <inherit scheme="Number"/>
+</scheme>
+
+
+<scheme name="Number">
+    <regexp match="/\d*(\.\d+)?/" region="def:Number"/>
+</scheme>
+
+
+<scheme name="VariableReference">
+    <regexp match="/\$(%xml:NCName;(\:))?%xml:NCName;\b/"
+        region0="var" region1="var.nsprefix" region2="var.nscolon"
+    />
+</scheme>
+
+
+
+<!-- Function -->
+
+<scheme name="FunctionCall">
+    <inherit scheme="FunctionName"/>
+    <inherit scheme="xmlschema:QName-content"/>
+    <block start="/(\()/" end="/(\))/" scheme="FunctionValue" 
+        region00="def:PairStart" region01="func.quote"
+        region10="def:PairEnd"   region11="func.quote"
+    />
+</scheme>
+
+
+<scheme name="FunctionValue">
+    <regexp match="/,/" region="func.quote"/>
+    <inherit scheme="Expr"/>
+</scheme>
+
+
+<scheme name="FunctionName">
+    <keywords region="func.name">
+        <!-- node-set -->
+        <word name="last"/>
+        <word name="position"/>
+        <word name="count"/>
+        <word name="local-name"/>
+        <word name="namespace-uri"/>
+        <word name="name"/>
+        <word name="id"/>
+        <!-- bool -->       
+        <word name="not"/>
+        <word name="boolean"/>
+        <word name="true"/>
+        <word name="false"/>
+        <word name="lang"/>
+        <!-- number -->     
+        <word name="number"/>
+        <word name="sum"/>
+        <word name="floor"/>
+        <word name="ceiling"/>
+        <word name="round"/>
+        <!-- string -->
+        <word name="string"/>
+        <word name="starts-with"/>
+        <word name="contains"/>
+        <word name="string-length"/>
+        <word name="concat"/>
+        <word name="substring"/>
+        <word name="substring-before"/>
+        <word name="substring-after"/>
+        <word name="normalize-space"/>
+        <word name="translate"/>
+    </keywords>
+</scheme>
+
+
+<!-- path -->
+
+<scheme name="LocationPath">
+    <regexp match="/\/{1,2}/" region="path.separator"/>
+    
+    <inherit scheme="AxisSpecifier"/>
+    <inherit scheme="NodeTest"/>
+    <block start="/(\[)/" end="/(\])/" scheme="Expr" 
+        region00="def:PairStart" region01="expr.quote"
+        region10="def:PairEnd"   region11="expr.quote"
+    />
+</scheme>
+
+
+<scheme name="NodeTest">
+    <inherit scheme="NodeType"/>
+    <inherit scheme="NameTest"/>
+</scheme>
+
+<scheme name="NodeType">
+    <regexp region1="node.type" region2="node.type.abbr" 
+        region3="def:PairStart" region4="def:PairEnd"
+     >
+        <![CDATA[/\b(comment
+            |text
+            |node)
+        \s*((\()\s*(\)))/x]]>
+    </regexp>
+    <block start="/\b(processing-instruction)\s*(\()/" end="/\)/"
+        region01="node.type" region="node.type.abbr" 
+        region02="def:PairStart" region10="def:PairEnd"
+        scheme="Literal"
+    />
+</scheme>
+
+<scheme name="NameTest">
+    <regexp match="/(\b%xml:NCName;(\:))?(\b%xml:NCName;\b|(\*))/ix" 
+        region1="node.nsprefix" region2="node.nscolon" 
+        region0="node.name" region4="node.name.all"/>
+</scheme>
+
+
+
+<!-- Axis -->
+
+<scheme name="ForwardAxis">
+    <keywords region="axis.name">
+        <word name="child"/>
+        <word name="descendant-or-self"/>
+        <word name="descendant"/>
+        <word name="self"/>
+        <word name="attribute"/>
+        <word name="following-sibling"/>
+        <word name="following"/>
+        <word name="namespace"/>
+    </keywords>
+</scheme>
+<scheme name="ReverseAxis">
+    <keywords region="axis.name">
+        <word name="parent"/>
+        <word name="ancestor-or-self"/>
+        <word name="ancestor"/>
+        <word name="preceding-sibling"/>
+        <word name="preceding"/>
+    </keywords>
+</scheme>
+
+<scheme name="AxisNameList">
+    <inherit scheme="ForwardAxis"/>
+    <inherit scheme="ReverseAxis"/>
+</scheme>
+
+
+<scheme name="AxisName-content">
+    <inherit scheme="AxisNameList"/>
+    <regexp match="/\S/" region="def:Error" priority="low"/>
+</scheme>
+<scheme name="AxisName">
+    <block start="/\b\M\w[\w\-]+\s*::/" end="/~\w[\w\-]+\s*\m(::)/"
+        region11="axis.separator"
+        scheme="AxisName-content"
+    />
+</scheme>
+
+
+
+
+<scheme name="AxisSpecifier">
+    <regexp match="/([.:]?~1|^)\.{1,2}\M\s*([.:@$]?!|$)/" region="axis.abbr"/>
+    <regexp match="/([.:]?~1|^)@\M\s*[\w\*]/" region="axis.abbr"/>
+    
+    <inherit scheme="AxisName"/>
+    <!--
+    <regexp match="/(\.)(\/)/" region1="axis.abbr" 
+        region2="path.separator"/><! - - bug ??? - ->
+    
+    <keywords region="axis.abbr" worddiv="[\w\s\/&quot;&apos;\|\*\[\]\{\}\(\)\,]">
+        <symb name="."/>
+        <word name=".."/>
+        <word name="@"/>
+    </keywords>
+    <inherit scheme="AxisName"/>-->
+</scheme>
+
+
+
+<!-- Patterns -->
+
+<scheme name="Pattern">
+    <regexp match="/\|/" region="path.or"/>
+    
+    <!-- !!! Not work. Predicates//* MUST NOT virtualise!
+    <inherit scheme="LocationPath">
+        <virtual scheme="NodeType" subst-scheme="IdKeyPattern"/>
+        <virtual scheme="AxisName" subst-scheme="ChildOrAttribute"/>
+    </inherit>-->
+    
+    <!-- "virtual" LocationPatch begin here -->
+    <regexp match="/\/{1,2}/" region="path.separator"/>
+    
+    <inherit scheme="AxisSpecifier">
+        <virtual scheme="AxisName" subst-scheme="ChildOrAttribute"/>
+    </inherit>
+    <inherit scheme="NodeTest">
+        <virtual scheme="NodeType" subst-scheme="IdKeyPattern"/>
+    </inherit>
+    <block start="/(\[)/" end="/(\])/" scheme="Expr" 
+        region00="def:PairStart" region01="expr.quote"
+        region10="def:PairEnd"   region11="expr.quote"
+    />
+    <!-- "virtual" LocationPatch end here -->
+    
+    <regexp match="/\S/" region="def:Error" priority="low"/>
+</scheme>
+
+
+<scheme name="IdKeyPattern">
+    <inherit scheme="NodeType"/>
+    <block start="/\b(id)(\()/" end="/\)/"
+        region01="node.type" region="node.type.abbr" 
+        region02="def:PairStart" region10="def:PairEnd"
+        scheme="Literal"
+    />
+    <block start="/\b(key)(\()/" end="/\)/"
+        region01="node.type" region="node.type.abbr" 
+        region02="def:PairStart" region10="def:PairEnd"
+        scheme="KeyPatternValue"
+    />
+</scheme>
+
+
+<scheme name="KeyPatternValue">
+    <inherit scheme="FunctionValue">
+        <virtual scheme="Expr" subst-scheme="Literal"/>
+    </inherit>
+</scheme>
+
+
+<scheme name="ChildOrAttributeList">
+    <keywords region="axis.name">
+        <word name="attribute"/>
+        <word name="child"/>
+    </keywords>
+</scheme>
+
+<scheme name="ChildOrAttribute">
+    <inherit scheme="AxisName">
+        <virtual scheme="AxisNameList" subst-scheme="ChildOrAttributeList"/>
+    </inherit>
+</scheme>
+
+
+<!-- Shared XML support -->
+<scheme name="Regexp"/><!-- empty -->
+<scheme name="XML.Regexp"/><!-- empty -->
+&xpath-xml;
+
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer HRC packages group 
+   - for XSLT, XPath and XQuery.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

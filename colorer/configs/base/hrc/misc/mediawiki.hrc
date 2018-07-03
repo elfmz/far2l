@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name="mediawiki">
+	<annotation><documentation>
+		MediaWiki syntax description
+		http://www.mediawiki.org/wiki/Help:Formatting
+
+		Small parts based on markdown.hrc by Roman Kuzmin
+	</documentation><contributors><![CDATA[
+		Vladimir Panteleev <thecybershadow@gmail.com>
+	]]></contributors></annotation>
+
+	<region name="Italic"        parent="def:StringEdge"     description="''Italic'' text"/>
+	<region name="Bold"          parent="def:TypeKeyword"    description="''Bold'' text"/>
+	<region name="ItalicBold"    parent="def:Label"          description="'''''Bold and italic''''' text"/>
+	<region name="Heading"       parent="def:Keyword"        description="== Heading text =="/>
+	<region name="ListText"      parent="def:Number"         description="* List text"/>
+	<region name="Preformatted"  parent="def:Directive"      description="Preformatted text"/>
+	<region name="LinkText"      parent="def:Tag"            description="[[Wiki|link]] or [http://external link]"/>
+	<region name="Template"      parent="def:Label"          description="{{Template}}"/>
+	<region name="Parameter"     parent="def:Number"         description="{{{TemplateParameter}}}"/>
+
+	<region name="Symbol"        parent="def:Keyword"        description="Markup syntax"/>
+	<region name="ListMark"      parent="Symbol"             description="*, #, ;, :"/>
+	<region name="Rule"          parent="Symbol"             description="----"/>
+	<region name="PlainTag"      parent="Symbol"             description="&lt;pre&gt; or &lt;nowiki&gt; tags"/>
+	<region name="HeadMark"      parent="Symbol"             description="== ... =="/>
+	<region name="LinkMark"      parent="Symbol"             description="[...], [[...]]"/>
+	<region name="TemplateMark"  parent="Symbol"             description="{{...}}"/>
+	<region name="ParameterMark" parent="Symbol"             description="{{{...}}}"/>
+	<region name="TableMark"     parent="Symbol"             description="{|...|}"/>
+
+	<region name="TableCaption"  parent="Italic"             description="|+ Table caption"/>
+	<region name="TableHeader"   parent="Italic"             description="! Table header cell"/>
+
+	<region name="start"         parent="def:PairStart"/>
+	<region name="end"           parent="def:PairEnd"  />
+
+<scheme name="htmlCoreParams">
+	<inherit scheme="html:htmlCoreParams"/>
+</scheme>
+
+<scheme name="html">
+	<inherit scheme="mediawiki">
+		<virtual scheme="html" subst-scheme="def:empty"/>
+		<virtual scheme="CloseHTMLTags" subst-scheme="def:empty"/>
+	</inherit>
+	<inherit scheme="html:html">
+		<virtual scheme="html:htmlCoreParams" subst-scheme="htmlCoreParams"/>
+		<virtual scheme="html:html" subst-scheme="html"/>
+	</inherit>
+</scheme>
+
+<scheme name="LinkCaption">
+	<!-- use link parent's region -->
+	<inherit scheme="Text"/>
+</scheme>
+
+<scheme name="Link">
+	<block start="/(?{def:Keyword}\|)/" end="/\M\]\]/" scheme="LinkCaption"/>
+	<regexp match="/~(?{LinkText}File|Image|Media)(?{def:Keyword}:)(?{def:URI}[^|\]]+)/i" />
+	<keywords region='def:Keyword'>
+		<symb name=':'/>
+	</keywords>
+	<regexp match="/[^\]\|:]+/" region="LinkText" />
+</scheme>
+
+<scheme name="TemplateParameter">
+	<inherit scheme="Text"/>
+</scheme>
+
+<scheme name="TemplateParameters">
+	<block start="/(?{def:Keyword}\|)/" end="/\M\}\}/" scheme="TemplateParameters"/>
+	<block start="/~(?{Parameter}\w+(?{def:Keyword}=))?/" end="/\M[\||\}\}]/" scheme="TemplateParameter" />
+</scheme>
+
+<scheme name="Template">
+	<block start="/(?{def:Keyword}\|)/" end="/\M\}\}/" scheme="TemplateParameters"/>
+	<regexp match="/~(?{def:Keyword}subst|safesubst|msgnw)\M:/i" />
+	<keywords region='def:Keyword'>
+		<symb name=':'/>
+	</keywords>
+	<regexp match="/[^\}\|:]+/" region="Template" />
+</scheme>
+
+<scheme name="ParameterDefault">
+	<inherit scheme="Text"/>
+</scheme>
+
+<scheme name="Parameter">
+	<block start="/(?{def:Keyword}\|)/" end="/\M\}\}\}/" scheme="ParameterDefault"/>
+	<regexp match="/[^\}\|]+/" region="Parameter" />
+</scheme>
+
+<scheme name="PreformattedTag">
+	<block start="/~(?{html:htmlTagBr}&lt;)(?{html:htmlOpenTag}\w+)/" end="/(?{html:htmlTagBr}&gt;)/" scheme="html:htmlCoreParams" />
+</scheme>
+
+<scheme name="CloseHTMLTags">
+	<block start="/\M(&lt;\/)([\w\:\-]+)&gt;/i" end="/(&gt;)\m/" scheme="html:htmlTagCall" />
+</scheme>
+
+<scheme name="Math">
+	<inherit scheme="PreformattedTag" />
+	<inherit scheme="TeX:TeX" />
+</scheme>
+
+<entity name="SyntaxHighlightOTagEnd" value="['&quot;][^/&gt;]*?&gt;" />
+<entity name="SyntaxHighlightCTag" value="&lt;\/syntaxhighlight&gt;" />
+
+<scheme name="SyntaxHighlightSelect">
+	<block scheme="php:php.lang"   start="/~php%SyntaxHighlightOTagEnd;/" end="/\M%SyntaxHighlightCTag;/" content-priority="low"  />
+	<block scheme="d:d.lang"       start="/~d%SyntaxHighlightOTagEnd;/"   end="/\M%SyntaxHighlightCTag;/" content-priority="low"  />
+
+<!--
+	Complete isolation (forced cut-off at "</syntaxhighlight>") is not possible with Colorer.
+	Thus, each language will need a case-by-case approach.
+
+	GeSHi           Colorer
+	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	abap            abap4
+	actionscript    actionscript
+	ada             ada
+	apache          apache
+	applescript
+	asm             asm
+	asp             asp
+	autoit          AutoIt
+	bash            shell
+	basic4gl
+	bf
+	blitzbasic
+	bnf
+	c               c
+	c_mac           c
+	caddcl
+	cadlisp         lisp
+	cfdg
+	cfm             coldfusion
+	cil
+	cobol           cobol
+	cpp-qt          cpp
+	cpp             cpp
+	csharp          csharp
+	css             css
+	d               d
+	delphi          pascal
+	diff            diff
+	div
+	dos             Batch
+	dot             graphviz
+	eiffel          eiffel
+	fortran         fortran
+	freebasic
+	gambas
+	genero
+	gettext
+	glsl
+	gml
+	gnuplot
+	groovy
+	haskell
+	hq9plus
+	html4strict     html
+	html5           html
+	idl             idl
+	ini             config
+	inno            iss
+	intercal
+	io
+	java            java
+	java5           java
+	javascript      jScript
+	kixtart
+	klonec
+	klonecpp
+	latex           TeX
+	lisp            lisp
+	lolcode
+	lotusscript
+	lua             lua
+	m68k
+	make            makefile
+	matlab          matlab
+	mirc
+	mxml            xml
+	mpasm
+	mysql           mysql
+	nsis            nsi
+	objc
+	ocaml-brief     ocaml
+	ocaml           ocaml
+	oobas
+	oracle8         sql
+	oracle11        sql
+	pascal          pascal
+	per
+	perl            perl
+	php-brief       php
+	php             php
+	pixelbender
+	plsql           sql
+	povray
+	powershell      powershell
+	progress
+	prolog          turboProlog
+	providex
+	python          python
+	qbasic
+	rails
+	reg
+	robots
+	ruby            ruby
+	sas
+	scala           scala
+	scheme
+	scilab
+	sdlbasic
+	smalltalk
+	smarty
+	sql             sql
+	tcl             tcltk
+	teraterm
+	text            text
+	thinbasic
+	tsql            sql
+	typoscript
+	vala
+	vb              vbasic
+	vbnet           vbnet
+	verilog         verilog
+	vhdl            vhdl
+	vim
+	visualfoxpro    foxpro
+	visualprolog    turboProlog
+	whitespace
+	winbatch        Batch
+	xml             xml
+	xorg_conf       config
+	xpp
+	z80             z80
+-->
+
+</scheme>
+
+<scheme name="SyntaxHighlight">
+	<block scheme="SyntaxHighlightSelect" start="/(?{start}(?{html:htmlTagBr}&lt;(?{html:htmlOpenTag}syntaxhighlight)\b[^/&gt;]*?\blang=(['&quot;])\M\w+\1[^/&gt;]*?&gt;))/" end="/(?{end}(?{html:htmlTagBr}&lt;\/(?{html:htmlCloseTag}syntaxhighlight)&gt;))/" content-priority="low" />
+</scheme>
+
+<scheme name="Text">
+	<!-- nowiki -->
+	<block scheme="PreformattedTag"
+	start="/\M(?{start}&lt;nowiki\b[^/&gt;]*?&gt;)/" end="/(?{end}(?{html:htmlTagBr}&lt;\/(?{html:htmlCloseTag}nowiki)&gt;))/"/>
+
+	<!-- pre -->
+	<block scheme="PreformattedTag" region="Preformatted"
+	start="/\M(?{start}&lt;pre\b[^/&gt;]*?&gt;)/"    end="/(?{end}(?{html:htmlTagBr}&lt;\/(?{html:htmlCloseTag}pre)&gt;))/"/>
+
+	<!-- math -->
+	<block scheme="Math"
+	start="/\M(?{start}&lt;math\b[^/&gt;]*?&gt;)/"   end="/(?{end}(?{html:htmlTagBr}&lt;\/(?{html:htmlCloseTag}math)&gt;))/"/>
+
+	<!-- syntaxhighlight -->
+	<inherit scheme="SyntaxHighlight" />
+
+	<!-- HTML with MediaWiki formatting -->
+	<block scheme="html" start="/\M&lt;(?:!--|\d?!\w+(?:\s|\/?&gt;|$))/" end="//"/>
+
+	<!-- Closing unknown HTML tags. Must be repeated here due to the low-priority block in the html:htmlTagCall scheme -->
+	<inherit scheme="CloseHTMLTags" />
+
+	<!-- HTML entities -->
+	<block scheme="html-entity:html-entity" start="/\M&amp;/" end="//"/>
+
+	<!-- Links -->
+	<block start="/(?{start}\[\[)/" end="/(?{end}\]\])/" region00="LinkMark" region10="LinkMark" scheme="Link" />
+	<block start="/(?{start}\[)(?{def:URI}([\/\{]|[^\s\]]+:)[^\s\]]+)/" end="/(?{end}\])/" region00="LinkMark" region10="LinkMark" scheme="Text" />
+	<inherit scheme="def:NetURL"/>
+
+	<!-- Templates -->
+	<block start="/(?{start}\{\{\{)/" end="/(?{end}\}\}\})/" region00="ParameterMark" region10="ParameterMark" scheme="Parameter" />
+	<block start="/(?{start}\{\{)/" end="/(?{end}\}\})/" region00="TemplateMark" region10="TemplateMark" scheme="Template" />
+</scheme>
+
+<scheme name="Preformatted">
+	<inherit scheme="mediawiki">
+		<virtual scheme="mediawiki" subst-scheme="Preformatted"/>
+	</inherit>
+</scheme>
+
+<scheme name="TableAttributes">
+	<inherit scheme="Text">
+		<virtual scheme="Text" subst-scheme="htmlCoreParams"/>
+	</inherit>
+	<inherit scheme="htmlCoreParams"/>
+</scheme>
+
+<scheme name="TableRow">
+	<block start="/^(?{TableMark}[|!])\M[^|]*\|([^|]|$)/" end="/(?{TableMark}\|)/" scheme="TableAttributes" priority="low" />
+
+	<regexp match="/^[!|](\M[^!|}]|$)/" region="TableMark" />
+	<regexp match="/\|\||\!\!/" region="TableMark" />
+	
+	<inherit scheme="mediawiki" />
+</scheme>
+
+<scheme name="TableRows">
+	<regexp match="/^\|-$/" region="TableMark"/>
+	<block start="/^\M!/"          end="/$/" scheme="TableRow" region="TableHeader" />
+	<block start="/^\M\|([^}]|$)/" end="/$/" scheme="TableRow" />
+
+	<!-- row continuation -->
+	<inherit scheme="mediawiki" />
+</scheme>
+
+<scheme name="TableCaption">
+	<inherit scheme="mediawiki" />
+</scheme>
+
+<scheme name="TableBody">
+	<block start="/\M~(?{TableMark}\|\+)/" end="/\M^[|!]([^+]|$)/" scheme="TableCaption" region="TableCaption"/>
+	<block start="/\M^[|!]/" end="/\M^\|\}/" scheme="TableRows"/>
+</scheme>
+
+<scheme name="Table">
+	<block start="/\M^[|!]/" end="/\M^\|\}/" scheme="TableBody"/>
+	<block start="/\M~/" end="/\M^[|!]/" scheme="TableAttributes"/>
+</scheme>
+
+<!--
+               Plain
+                / \
+               /   \
+              /     \
+            Bold  Italic
+              \     /
+               \   /
+                \ /
+                Both
+
+Plain''Italic'''Both''Bold'''Plain
+============ parent ==============
+     ======= italic =========
+             ===== both =====
+                    = bold ==
+
+Parent region must be preserved, thus we can't simply recurse until $.
+Instead, use end="//" to unwind stack when going from any state to "Plain".
+For that to work, our blocks must match all characters.
+X2Y bridge schemes are used for that purpose.
+-->
+
+<!-- only single quotes allowed -->
+<entity name="NoQuotes" value="('?([^']|$))*" />
+<!-- exactly two quotes (after %NoQuotes;) -->
+<entity name="TwoQuotes" value="''([^']|$)" />
+
+<scheme name="ItalicBold.Init">
+	<!-- switch order in ''''' so that ''''' pairs would match -->
+	<block scheme="ItalicBold.Italic" region="Italic"
+			start="/(?{start}'')\M'''/" end="//" />
+
+	<block scheme="ItalicBold.Bold" region="Bold"
+			start="/(?{start}''')/" end="//" />
+	<block scheme="ItalicBold.Italic" region="Italic"
+			start="/(?{start}'')/" end="//" />
+</scheme>
+
+<scheme name="ItalicBold.Bold">
+	<!-- simple case -->
+	<block scheme="Text"
+			start="/~\M%NoQuotes;('''|$)/" end="/(?{end}'''|$)/" />
+	<!-- '' in ''' -->
+	<block scheme="ItalicBold.Bold2Both"
+			start="/~\M.*?''/" end="//" />
+	<inherit scheme="Text" />
+</scheme>
+
+<scheme name="ItalicBold.Italic">
+	<!-- simple case -->
+	<block scheme="Text"
+			start="/~\M%NoQuotes;(%TwoQuotes;|$)/" end="/(?{end}''|$)/" />
+	<!-- ''' in '' -->
+	<block scheme="ItalicBold.Italic2Both"
+			start="/~\M.*?'''/" end="//" />
+	<inherit scheme="Text" />
+</scheme>
+
+<scheme name="ItalicBold.Bold2Both">
+	<block scheme="Text" 
+			start="/~/" end="/\M''/" />
+	<block scheme="ItalicBold.Both" region="ItalicBold"
+			start="/(?{start}'')/" end="//" />
+	<inherit scheme="Text" />
+</scheme>
+
+<scheme name="ItalicBold.Italic2Both">
+	<block scheme="Text" 
+			start="/~/" end="/\M'''/" />
+	<block scheme="ItalicBold.Both" region="ItalicBold"
+			start="/(?{start}''')/" end="//" />
+	<inherit scheme="Text" />
+</scheme>
+
+<scheme name="ItalicBold.Both">
+	<!-- end with ''' or ''''' or EOL -->
+	<block scheme="ItalicBold.Both2Italic"
+			start="/~\M%NoQuotes;('''|$)/" end="//" />
+	<!-- end with '' -->
+	<block scheme="ItalicBold.Both2Bold"
+			start="/~\M%NoQuotes;''/" end="//" />
+	<inherit scheme="Text" />
+</scheme>
+
+<scheme name="ItalicBold.Both2Bold">
+	<block scheme="Text" 
+			start="/~/" end="/\M''/" />
+	<block scheme="ItalicBold.Bold" region="Bold" inner-region="yes"
+			start="/(?{end}'')/" end="//" />
+	<inherit scheme="Text" />
+</scheme>
+
+<scheme name="ItalicBold.Both2Italic">
+	<block scheme="Text" 
+			start="/~/" end="/\M('''|$)/" />
+	<block scheme="ItalicBold.Italic" region="Italic" inner-region="yes"
+			start="/(?{end}'''|$)/" end="//" />
+	<inherit scheme="Text" />
+</scheme>
+
+<scheme name="Content">
+	<!-- Horizontal rule -->
+
+		<regexp match="/(?{Rule}^-{4,}$)/"/>
+
+	<!-- Bold/italic -->
+
+		<inherit scheme="ItalicBold.Init" />
+
+	<!-- Preformatted blocks -->
+
+		<block scheme="Preformatted" region="Preformatted"
+			start="/^(?{start}\s)/" end="/(?{end}$)/" />
+
+	<!-- Lists -->
+
+		<block scheme="mediawiki" region="ListText"
+			start="/(?{ListMark}^(?{start}[#*:;]+))/" end="/(?{end}^)/" />
+
+	<!-- Tables -->
+
+		<block start="/(?{start}(?{TableMark}^\{\|))/" end="/(?{end}(?{TableMark}^\|\}))/" scheme="Table"/>
+
+	<inherit scheme="Text"/>
+</scheme>
+
+<entity name="HeadingTail" value="\s*(?{def:Outlined}(?{Heading}.*))\s*(?{HeadMark}(?{end}\1))$"/>
+
+<scheme name="Heading1">
+	<inherit scheme="Heading2"/>
+	<block start="/^((?{HeadMark}(?{start}={1})))%HeadingTail;/" end="/\M^={1,1}[^=]/" scheme="Heading2"/>
+</scheme>
+
+<scheme name="Heading2">
+	<inherit scheme="Heading3"/>
+	<block start="/^((?{HeadMark}(?{start}={2})))%HeadingTail;/" end="/\M^={1,2}[^=]/" scheme="Heading3"/>
+</scheme>
+
+<scheme name="Heading3">
+	<inherit scheme="Heading4"/>
+	<block start="/^((?{HeadMark}(?{start}={3})))%HeadingTail;/" end="/\M^={1,3}[^=]/" scheme="Heading4"/>
+</scheme>
+
+<scheme name="Heading4">
+	<inherit scheme="Heading5"/>
+	<block start="/^((?{HeadMark}(?{start}={4})))%HeadingTail;/" end="/\M^={1,4}[^=]/" scheme="Heading5"/>
+</scheme>
+
+<scheme name="Heading5">
+	<inherit scheme="Heading6"/>
+	<block start="/^((?{HeadMark}(?{start}={5})))%HeadingTail;/" end="/\M^={1,5}[^=]/" scheme="Heading6"/>
+</scheme>
+
+<scheme name="Heading6">
+	<inherit scheme="Content"/>
+	<block start="/^((?{HeadMark}(?{start}={6})))%HeadingTail;/" end="/\M^={1,6}[^=]/" scheme="Content"/>
+</scheme>
+
+<scheme name="mediawiki">
+	<inherit scheme="Heading1"/>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Vladimir Panteleev <thecybershadow@gmail.com>
+   - Portions created by the Initial Developer are Copyright (C) 2013
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

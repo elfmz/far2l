@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<scheme name="perl-hd">
+ <regexp match="/(&lt;&lt;)([&quot;&apos;`]?)([a-zA-Z_][\w_]*)(\2)/"
+  region="HereDoc" region1="HereDocLt" region3="HereDocName"
+  region2="def:PairStart" region4="def:PairEnd"
+ />
+ 
+ <inherit scheme="perl-core">
+  <virtual scheme="perl-core" subst-scheme="perl-hd"/>
+  <virtual scheme="def:PairedBrackets" subst-scheme="def:empty"/>
+ </inherit>
+ <regexp match="/([\]\)])|(\})/" region="def:PairEnd"
+  region1="def:Symbol" region2="def:SymbolStrong"
+ />
+ <regexp match="/([\[\(])|(\{)/" region="def:PairStart"
+  region1="def:Symbol" region2="def:SymbolStrong"
+ />
+</scheme>
+
+<scheme name="hd.shell">
+ <block start="/~/" end="/$/" scheme="perl-hd" region="def:Text"/>
+ <inherit scheme="String"/>
+</scheme>
+
+<scheme name="hd.shell.is">
+ <inherit scheme="hd.shell">
+  <virtual scheme="String" subst-scheme="InterpolateString"/>
+ </inherit>
+</scheme>
+<scheme name="hd.shell.ex">
+ <inherit scheme="hd.shell.is"/>
+ <block start="/^\M.*?/" end="/$/" region="SystemExec" scheme="InterpolateString"/>
+</scheme>
+
+<scheme name="heredoc">
+ <!--Disabled: problems with nested structures...
+ <block start="/\M&lt;&lt;([&quot;]?)((?{def:PairStart}[a-zA-Z_][\w_]*))\1/" end="/^((?{def:PairEnd}\y2))$/"
+  scheme="hd.shell.is" region="HereDoc" priority="low"
+  region11="HereDocName"
+ />
+ <block start="/\M&lt;&lt;(`)((?{def:PairStart}[a-zA-Z_][\w_]*))\1/" end="/^((?{def:PairEnd}\y2))$/"
+  scheme="hd.shell.is" region="SystemExec" priority="low"
+  region11="HereDocName"
+ />
+ <block start="/\M&lt;&lt;(&apos;)((?{def:PairStart}[a-zA-Z_][\w_]*))\1/" end="/^((?{def:PairEnd}\y2))$/"
+  scheme="hd.shell" region="HereDoc" priority="low"
+  region11="HereDocName"
+ />-->
+ 
+ <block start="/^\M[^#]*&lt;&lt;([&quot;]?)([a-zA-Z_][\w_]*)\1/" end="/^(\y2)$/"
+  scheme="hd.shell.is" region="HereDoc" priority="low"
+  region11="HereDocName"
+ />
+ <block start="/^\M[^#]*&lt;&lt;(`)([a-zA-Z_][\w_]*)\1/" end="/^(\y2)$/"
+  scheme="hd.shell.is" region="SystemExec" priority="low"
+  region11="HereDocName"
+ />
+ <block start="/^\M[^#]*&lt;&lt;(&apos;)([a-zA-Z_][\w_]*)\1/" end="/^(\y2)$/"
+  scheme="hd.shell" region="HereDoc" priority="low"
+  region11="HereDocName"
+ />
+</scheme>

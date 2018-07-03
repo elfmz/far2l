@@ -1,0 +1,680 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  Inno Setup Script (http://www.innosetup.com)
+  with ISX (http://www.wintax.nl/isx)
+  and ISPP (http://yackimoff.cjb.net/ispp) support
+
+  by Alex Yackimoff (http://yackimoff.cjb.net)
+     Denis Rybakov (http://aquaticat.narod.ru/far/)
+
+  Last changes - 21 Apr 2005
+  Last supported verision of Inno Setup - 5.1.2-beta (2005-04-14)
+-->
+   <type name="iss">
+
+      <import type="def"/>
+      <import type="pascal"/>
+
+      <region name="issSection" parent="Label"/>
+      <region name="issParameter" parent="Keyword"/>
+      <region name="issString" parent="Text"/>
+      <region name="issSymb" parent="SymbolStrong"/>
+      <region name="issFlags" parent="TypeKeyword"/>
+      <region name="issComment" parent="Comment"/>
+      <region name="issConst" parent="VarStrong"/>
+      <region name="issTasks" parent="Text"/>
+      <region name="issXconst" parent="CommentContent"/>
+      <region name="issChar" parent="Character"/>
+      <region name="issPreProc" parent="Directive"/>
+      <region name="issPrePrWord" parent="Directive"/>
+      <region name="issPreFunc" parent="Keyword"/>
+      <region name="issPreString" parent="SymbolStrong"/>
+
+      <scheme name="issNestedConsts">
+         <block start="/\{/" end="/\}/" scheme="issEmpty" region="issConst" region00="PairStart" region10="PairEnd"/>
+      </scheme>
+
+      <scheme name="issRegConst">
+         <keywords ignorecase="yes" region="issConst">
+            <word name="HKCU"/>
+            <word name="HKLM"/>
+            <word name="HKCC"/>
+            <word name="HKU"/>
+         </keywords>
+         <keywords region="issSymb">
+            <symb name=","/>
+            <symb name="|"/>
+         </keywords>
+         <block start="/(\{(reg|ini|param):)/" end="/(\})/" region00="issConst" region10="issConst" region01="PairStart" region11="PairEnd" scheme="issRegConst" region="issXconst"/>
+
+         <inherit scheme="issNestedConsts"/>
+      </scheme>
+
+      <scheme name="issCommonPre">
+         <block start="/(\{(reg|ini|param):)/" end="/(\})/" region00="issConst" region10="issConst" region01="PairStart" region11="PairEnd" scheme="issRegConst" region="issXconst"/>
+         <regexp match="/\%([\dA-F]){2}/i" region0="issChar"/>
+
+         <inherit scheme="issNestedConsts"/>
+      </scheme>
+
+      <scheme name="issCommon">
+         <inherit scheme="issCommonPre"/>
+
+         <block start="/(\&#34;)/" end="/(\&#34;)/" scheme="issCommonPre"/>
+         <regexp match="/^(\s*?\;.*$)/" region0="issComment"/>
+         <regexp match="/^(\s*?\/\/.*$)/" region0="issComment"/>
+         <keywords region="issSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name=":"/>
+         </keywords>
+
+         <inherit scheme="issPrePro"/>
+      </scheme>
+
+      <scheme name="issPrePro">
+         <block start="/^\s*#/" end="/(^|[^\\]?#1) $/x" scheme="issPrePro" region="issPreProc"/>
+         <regexp match="/(\&#34;.*?\&#34;)/" region0="issPreString"/>
+         <keywords region="issSymb">
+            <symb name="="/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="!"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="#"/>
+         </keywords>
+         <keywords region="issPrePrWord">
+            <word name="append"/>
+            <word name="define"/>
+            <word name="dim"/>
+            <word name="endif"/>
+            <word name="elif"/>
+            <word name="emit"/>
+            <word name="ifdef"/>
+            <word name="ifndef"/>
+            <word name="include"/>
+            <word name="if"/>
+            <word name="ifexist"/>
+            <word name="ifnexist"/>
+            <word name="file"/>
+            <word name="pragma"/>
+            <word name="undef"/>
+         </keywords>
+         <keywords region="issPreFunc">
+            <word name="Defined"/>
+            <word name="TypeOf"/>
+            <word name="GetFileVersion"/>
+            <word name="Int"/>
+            <word name="Str"/>
+            <word name="FileExists"/>
+            <word name="FileSize"/>
+            <word name="ReadIni"/>
+            <word name="WriteIni"/>
+            <word name="Exec"/>
+            <word name="Copy"/>
+            <word name="Pos"/>
+            <word name="RPos"/>
+            <word name="Len"/>
+            <word name="SaveToFile"/>
+            <word name="Find"/>
+            <word name="SetupSetting"/>
+            <word name="SetSetupSetting"/>
+            <word name="LowerCase"/>
+            <word name="EntryCount"/>
+            <word name="GetEnv"/>
+            <word name="DeleteFile"/>
+            <word name="CopyFile"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issSetupSection">
+         <regexp match="/(\=)\s*?([0-1]\s*$)/" region1="issSymb" region2="issFlags"/>
+         <regexp match="/(\=)\s*?(yes|no|true|false|append|new|overwrite)\s*$/i" region1="issSymb" region2="issFlags"/>
+         <regexp match="/(\=)\s*?(compiler\:)/i" region1="issSymb" region2="issConst"/>
+         <inherit scheme="issCommon"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="ArchitecturesAllowed"/>
+            <word name="ArchitecturesInstallIn64BitMode"/>
+            <word name="AppendDefaultDirName"/>
+            <word name="AppendDefaultGroupName"/>
+            <word name="AppComments"/>
+            <word name="AppContact"/>
+            <word name="AppName"/>
+            <word name="AppVername"/>
+            <word name="AppModifyPath"/>
+            <word name="AppReadmeFile"/>
+            <word name="DefaultDirname"/>
+            <word name="CodeFile"/>
+            <word name="InternalCompressLevel"/>
+            <word name="DiskClusterSize"/>
+            <word name="DiskSize"/>
+            <word name="DiskSpanning"/>
+            <word name="DontMergeDuplicateFiles"/>
+            <word name="MergeDuplicateFiles"/>
+            <word name="Encryption"/>
+            <word name="OutputBaseFilename"/>
+            <word name="OutputDir"/>
+            <word name="ReserveBytes"/>
+            <word name="SourceDir"/>
+            <word name="UseSetupLdr"/>
+            <word name="AdminPrivilegesRequired"/>
+            <word name="AllowNoIcons"/>
+            <word name="AllowRootDirectory"/>
+            <word name="AllowCancelDuringInstall"/>
+            <word name="AlwaysCreateUninstallIcon"/>
+            <word name="AlwaysRestart"/>
+            <word name="AlwaysShowComponentsList"/>
+            <word name="AlwaysShowDirOnReadyPage"/>
+            <word name="AlwaysShowGroupOnReadyPage"/>
+            <word name="AlwaysUsePersonalGroup"/>
+            <word name="AppId"/>
+            <word name="AppMutex"/>
+            <word name="AppPublisher"/>
+            <word name="AppPublisherURL"/>
+            <word name="AppSupportURL"/>
+            <word name="AppUpdatesURL"/>
+            <word name="AppVersion"/>
+            <word name="ChangesAssociations"/>
+            <word name="ChangesEnvironment"/>
+            <word name="CreateAppDir"/>
+            <word name="CreateUninstallRegKey"/>
+            <word name="Compression"/>
+            <word name="DefaultGroupname"/>
+            <word name="DetectLanguageUsingLocale"/>
+            <word name="DirExistsWarning"/>
+            <word name="DisableAppendDir"/>
+            <word name="DisableDirPage"/>
+            <word name="DisableFinishedPage"/>
+            <word name="DisableProgramGroupPage"/>
+            <word name="DisableReadyMemo"/>
+            <word name="DisableReadyPage"/>
+            <word name="DisablestartupPrompt"/>
+            <word name="EnableDirDoesntExistWarning"/>
+            <word name="ExtraDiskSpaceRequired"/>
+            <word name="InfoAfterFile"/>
+            <word name="InfoBeforeFile"/>
+            <word name="LanguageDetectionMethod"/>
+            <word name="LicenseFile"/>
+            <word name="MessagesFile"/>
+            <word name="MinVersion"/>
+            <word name="OnlyBelowVersion"/>
+            <word name="Password"/>
+            <word name="TimeStampsInUTC"/>
+            <word name="TimeStampRounding"/>
+            <word name="Uninstallable"/>
+            <word name="UninstallDisplayIcon"/>
+            <word name="UninstallDisplayname"/>
+            <word name="UninstallFilesDir"/>
+            <word name="UninstallIconname"/>
+            <word name="UninstallLogMode"/>
+            <word name="UpdateUninstallLogAppname"/>
+            <word name="UsePreviousAppDir"/>
+            <word name="UsePreviousGroup"/>
+            <word name="UsePreviousSetupType"/>
+            <word name="UsePreviousTasks"/>
+            <word name="AppCopyright"/>
+            <word name="BackColor"/>
+            <word name="BackColor2"/>
+            <word name="BackColorDirection"/>
+            <word name="BackSolid"/>
+            <word name="FlatComponentsList"/>
+            <word name="ShowComponentSizes"/>
+            <word name="ShowLanguageDialog"/>
+            <word name="SolidCompression"/>
+            <word name="WindowShowCaption"/>
+            <word name="WindowstartMaximized"/>
+            <word name="WindowResizable"/>
+            <word name="WindowVisible"/>
+            <word name="WizardImageBackregion"/>
+            <word name="WizardImageFile"/>
+            <word name="WizardSmallImageFile"/>
+            <word name="WizardStyle"/>
+            <word name="Bits"/>
+            <word name="DisableDirExistsWarning"/>
+            <word name="OverwriteUninstRegEntries"/>
+            <word name="VersionInfoVersion"/>
+            <word name="VersionInfoCompany"/>
+            <word name="VersionInfoDescription"/>
+            <word name="VersionInfoTextVersion"/>
+            <word name="SetupIconFile"/>
+            <word name="WizardImageStretch"/>
+            <word name="WizardImageBackColor"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issCommonParams">
+         <inherit scheme="issCommon"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="MinVersion"/>
+            <word name="OnlyBelowVersion"/>
+            <word name="Permission"/>
+            <word name="Check"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issEmpty"/>
+
+      <scheme name="issCommonParams2">
+         <inherit scheme="issCommonParams"/>
+
+         <block start="/(Tasks)(:)/i" end="/(;)|$/" region01="issParameter" region02="issSymb" region11="issSymb" scheme="issEmpty" region="issTasks"/>
+         <block start="/(Components)(:)/i" end="/(;)|$/" region01="issParameter" region02="issSymb" region11="issSymb" scheme="issEmpty" region="issTasks"/>
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="Components"/>
+            <word name="Tasks"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issFilesSection">
+         <inherit scheme="issCommonParams2"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="AfterInstall"/>
+            <word name="BeforeInstall"/>
+            <word name="Source"/>
+            <word name="DestDir"/>
+            <word name="Destname"/>
+            <word name="Excludes"/>
+            <word name="CopyMode"/>
+            <word name="Attribs"/>
+            <word name="FontInstall"/>
+            <word name="Flags"/>
+            <word name="Permissions"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+<!--CopyMode-->
+            <word name="dontcopy"/>
+            <word name="normal"/>
+            <word name="onlyifdoesntexist"/>
+            <word name="alwaysoverwrite"/>
+            <word name="alwaysskipifsameorolder"/>
+<!--Attribs-->
+            <word name="readonly"/>
+            <word name="hidden"/>
+            <word name="system"/>
+<!--Flags-->
+            <word name="comparetimestampalso"/>
+            <word name="confirmoverwrite"/>
+            <word name="createallsubdirs"/>
+            <word name="deleteafterinstall"/>
+            <word name="dontverifychecksum"/>
+            <word name="external"/>
+            <word name="fontisnttruetype"/>
+            <word name="ignoreversion"/>
+            <word name="isreadme"/>
+            <word name="nocompression"/>
+            <word name="noregerror"/>
+            <word name="noencryption"/>
+            <word name="onlyifdestfileexists"/>
+            <word name="overwritereadonly"/>
+            <word name="recursesubdirs"/>
+            <word name="regserver"/>
+            <word name="regtypelib"/>
+            <word name="replacesameversion"/>
+            <word name="restartreplace"/>
+            <word name="sharedfile"/>
+            <word name="skipifsourcedoesntexist"/>
+            <word name="sortfilesbyextension"/>
+            <word name="uninsneveruninstall"/>
+            <word name="uninsnosharedfileprompt"/>
+            <word name="uninsrestartdelete"/>
+            <word name="32bit"/>
+            <word name="64bit"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="nameFlags">
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="name"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="Flags"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="nameDescFlags">
+         <inherit scheme="nameFlags"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="Description"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issLanguagesSection">
+         <inherit scheme="issCommonParams"/>
+         <inherit scheme="nameDescFlags"/>
+
+         <block start="/(Name)(:)/i" end="/(;)|$/" scheme="issEmpty" region00="issTasks" region01="issParameter" region02="issSymb" region11="issSymb"/>
+         <block start="/(MessagesFile)(:)/i" end="/(;)|$/" scheme="issEmpty" region00="issTasks" region01="issParameter" region02="issSymb" region11="issSymb"/>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="iscustom"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issTypesSection">
+         <inherit scheme="issCommonParams"/>
+         <inherit scheme="nameDescFlags"/>
+
+         <block start="/(Name)(:)/i" end="/(;)|$/" scheme="issEmpty" region00="issTasks" region01="issParameter" region02="issSymb" region11="issSymb"/>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="iscustom"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issCompsSection">
+         <inherit scheme="issCommonParams"/>
+         <inherit scheme="nameDescFlags"/>
+
+         <block start="/(Types)(:)/i" end="/(;)|$/" scheme="issEmpty" region00="issTasks" region01="issParameter" region02="issSymb" region11="issSymb"/>
+         <block start="/(Name)(:)/i" end="/(;)|$/" scheme="issEmpty" region00="issTasks" region01="issParameter" region02="issSymb" region11="issSymb"/>
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="Types"/>
+            <word name="ExtraDiskSpaceRequired"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="checkablealone"/>
+            <word name="fixed"/>
+            <word name="restart"/>
+            <word name="disablenouninstallwarning"/>
+            <word name="dontinheritcheck"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issTasksSection">
+         <inherit scheme="issCommonParams"/>
+
+         <block start="/(Components)(:)/i" end="/(;)|$/" scheme="issEmpty" region01="issParameter" region02="issSymb" region11="issSymb" region="issTasks"/>
+         <block start="/(name)(:)/i" end="/(;)|$/" scheme="issEmpty" region01="issParameter" region02="issSymb" region11="issSymb" region="issTasks"/>
+         <inherit scheme="nameDescFlags"/>
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="GroupDescription"/>
+            <word name="Components"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="exclusive"/>
+            <word name="checkablealone"/>
+            <word name="restart"/>
+            <word name="unchecked"/>
+            <word name="dontinheritcheck"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issDirsSection">
+         <inherit scheme="issCommonParams2"/>
+         <inherit scheme="nameFlags"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="AfterInstall"/>
+            <word name="BeforeInstall"/>
+            <word name="Permissions"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="deleteafterinstall"/>
+            <word name="uninsalwaysuninstall"/>
+            <word name="uninsneveruninstall"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issIconsSection">
+         <inherit scheme="issCommonParams2"/>
+         <inherit scheme="nameFlags"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="Filename"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="AfterInstall"/>
+            <word name="BeforeInstall"/>
+            <word name="Parameters"/>
+            <word name="WorkingDir"/>
+            <word name="Comment"/>
+            <word name="IconFilename"/>
+            <word name="IconIndex"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="closeonexit"/>
+            <word name="createonlyiffileexists"/>
+            <word name="dontcloseonexit"/>
+            <word name="foldershortcut"/>
+            <word name="runmaximized"/>
+            <word name="runminimized"/>
+            <word name="uninsneveruninstall"/>
+            <word name="useapppaths"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issINISection">
+         <inherit scheme="issCommonParams2"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="AfterInstall"/>
+            <word name="BeforeInstall"/>
+            <word name="Filename"/>
+            <word name="Section"/>
+            <word name="Key"/>
+            <word name="String"/>
+            <word name="Flags"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="createkeyifdoesntexist"/>
+            <word name="uninsdeleteentry"/>
+            <word name="uninsdeletesection"/>
+            <word name="uninsdeletesectionifempty"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issUninstallDeleteSection">
+         <inherit scheme="issCommonParams2"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="AfterInstall"/>
+            <word name="BeforeInstall"/>
+            <word name="Type"/>
+            <word name="name"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="files"/>
+            <word name="filesandordirs"/>
+            <word name="dirifempty"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issRegSection">
+         <inherit scheme="issCommonParams2"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="AfterInstall"/>
+            <word name="BeforeInstall"/>
+            <word name="Root"/>
+            <word name="Subkey"/>
+            <word name="valueType"/>
+            <word name="valuename"/>
+            <word name="valueData"/>
+            <word name="Flags"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+<!--Root-->
+            <word name="HKCR"/>
+            <word name="HKCU"/>
+            <word name="HKLM"/>
+            <word name="HKU"/>
+            <word name="HKCC"/>
+            <word name="name"/>
+<!--valueType-->
+            <word name="none"/>
+            <word name="string"/>
+            <word name="expandsz"/>
+            <word name="multisz"/>
+            <word name="dword"/>
+            <word name="binary"/>
+<!--Flags-->
+            <word name="createvalueifdoesntexist"/>
+            <word name="deletevalue"/>
+            <word name="deletekey"/>
+            <word name="dontcreatekey"/>
+            <word name="noerror"/>
+            <word name="preservestringtype"/>
+            <word name="uninsclearvalue"/>
+            <word name="uninsdeletevalue"/>
+            <word name="uninsdeletekey"/>
+            <word name="uninsdeletekeyifempty"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issUninstallRunSection">
+         <inherit scheme="issCommonParams2"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="Filename"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="Description"/>
+            <word name="Parameters"/>
+            <word name="WorkingDir"/>
+            <word name="StatusMsg"/>
+            <word name="RunOnceId"/>
+            <word name="Flags"/>
+         </keywords>
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="nowait"/>
+            <word name="shellexec"/>
+            <word name="skipifdoesntexist"/>
+            <word name="runmaximized"/>
+            <word name="runminimized"/>
+            <word name="waituntilidle"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issRunSection">
+         <inherit scheme="issUninstallRunSection"/>
+
+         <keywords ignorecase="yes" region="issFlags">
+            <word name="hidewizard"/>
+            <word name="postinstall"/>
+            <word name="shellexec"/>
+            <word name="skipifsilent"/>
+            <word name="skipifnotsilient"/>
+            <word name="unchecked"/>
+            <word name="waituntilterminated"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issLangOptionsSection">
+         <inherit scheme="issCommon"/>
+
+         <keywords ignorecase="yes" region="issParameter">
+            <word name="LanguageCodePage"/>
+            <word name="LanguageName"/>
+            <word name="LanguageID"/>
+            <word name="DialogFontName"/>
+            <word name="DialogFontSize"/>
+            <word name="DialogFontStandardHeight"/>
+            <word name="TitleFontName"/>
+            <word name="TitleFontSize"/>
+            <word name="WelcomeFontName"/>
+            <word name="WelcomeFontSize"/>
+            <word name="CopyrightFontName"/>
+            <word name="CopyrightFontSize"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="issMessagesSection">
+         <inherit scheme="issCommon"/>
+
+         <regexp match="/^\s*?([A-Za-z_0-9]+?)\s*?(\=)\s*?(.*$)/" region1="issParameter" region2="issSymb" region3="issString"/>
+      </scheme>
+
+      <scheme name="issGlobal">
+         <block start="/^\s*(\[Setup\])/i" end="/^\M\[/" scheme="issSetupSection" region01="issSection"/>
+         <block start="/^\s*(\[Files\])/i" end="/^\M\[/" scheme="issFilesSection" region01="issSection"/>
+         <block start="/^\s*(\[Languages\])/i" end="/^\M\[/" scheme="issLanguagesSection" region01="issSection"/>
+         <block start="/^\s*(\[Types\])/i" end="/^\M\[/" scheme="issTypesSection" region01="issSection"/>
+         <block start="/^\s*(\[Components\])/i" end="/^\M\[/" scheme="issCompsSection" region01="issSection"/>
+         <block start="/^\s*(\[Tasks\])/i" end="/^\M\[/" scheme="issTasksSection" region01="issSection"/>
+         <block start="/^\s*(\[Dirs\])/i" end="/^\M\[/" scheme="issDirsSection" region01="issSection"/>
+         <block start="/^\s*(\[Icons\])/i" end="/^\M\[/" scheme="issIconsSection" region01="issSection"/>
+         <block start="/^\s*(\[INI\])/i" end="/^\M\[/" scheme="issINISection" region01="issSection"/>
+         <block start="/^\s*(\[InstallDelete\])/i" end="/^\M\[/" scheme="issUninstallDeleteSection" region01="issSection"/>
+         <block start="/^\s*(\[UninstallDelete\])/i" end="/^\M\[/" scheme="issUninstallDeleteSection" region01="issSection"/>
+         <block start="/^\s*(\[Registry\])/i" end="/^\M\[/" scheme="issRegSection" region01="issSection"/>
+         <block start="/^\s*(\[UninstallRun\])/i" end="/^\M\[/" scheme="issUninstallRunSection" region01="issSection"/>
+         <block start="/^\s*(\[Run\])/i" end="/^\M\[/" scheme="issRunSection" region01="issSection"/>
+         <block start="/^\s*(\[LangOptions\])/i" end="/^\M\[/" scheme="issLangOptionsSection" region01="issSection"/>
+         <block start="/^\s*(\[Messages\])/i" end="/^\M\[/" scheme="issMessagesSection" region01="issSection"/>
+
+         <inherit scheme="issCommon"/>
+      </scheme>
+
+      <scheme name="issCodeSection">
+         <inherit scheme="issPrePro"/>
+         <inherit scheme="issGlobal"/>
+         <keywords ignorecase="yes" region="issConst">
+            <word name="ssInstall"/>
+            <word name="ssPostInstall"/>
+            <word name="ssDone"/>
+            <word name="wpWelcome"/>
+            <word name="wpLicense"/>
+            <word name="wpPassword"/>
+            <word name="wpInfoBefore"/>
+            <word name="wpUserInfo"/>
+            <word name="wpSelectDir"/>
+            <word name="wpSelectComponents"/>
+            <word name="wpSelectProgramGroup"/>
+            <word name="wpSelectTasks"/>
+         </keywords>
+         <inherit scheme="pascal"/>
+      </scheme>
+
+      <scheme name="iss">
+         <inherit scheme="issGlobal"/>
+
+         <block start="/^\s*(\[Code\])/i" end="/^\M\[/" scheme="issCodeSection" region01="issSection"/>
+         <block start="/^\s*(\[.*?\])/i" end="/^\M\[/" scheme="issCommon" region01="issSection"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Alex Yackimoff (http://yackimoff.cjb.net), Denis Rybakov (http://aquaticat.narod.ru/far/)
+   - Portions created by the Initial Developer are Copyright (C) 1999-2003
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

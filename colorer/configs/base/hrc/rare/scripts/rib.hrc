@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+Syntax coloring for RIB (*.rib)
+files for FAR plugins Colorer
+ 1.  3.2 RI Spec
+ 2.  Adding Ri and Rt pref. for C debuging
+
+With help of:
+    Contributed by |J|H|P| - <grimm@chat.ru>
+    cail - ported into 4ever
+-->
+   <type name="rib">
+
+      <import type="def"/>
+
+      <region name="ribComment" parent="Comment"/>
+      <region name="ribArg" parent="StringContent"/>
+      <region name="ribNumb" parent="Number"/>
+      <region name="ribString" parent="String"/>
+      <region name="ribSymb" parent="Symbol"/>
+      <region name="ribPatterns" parent="StringContent"/>
+      <region name="ribConst" parent="Constant"/>
+      <region name="ribControl" parent="Parameter"/>
+      <region name="ribIOstat" parent="Parameter"/>
+      <region name="ribIOredir" parent="Directive"/>
+      <region name="ribArithmetic" parent="Operator"/>
+      <region name="ribStrFunc" parent="Keyword"/>
+      <region name="ribFunctions" parent="Keyword"/>
+
+
+      <scheme name="rib">
+<!-- Linear Comments -->
+         <regexp match="/(\#.*$)/" region0="ribComment"/>
+<!-- Argument -->
+         <regexp match="/(\$\w+?)\b/" region0="ribArg"/>
+<!-- Numbers -->
+         <inherit scheme="CHexNumber"/>
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+<!-- Strings -->
+         <inherit scheme="CString"/>
+         <regexp match="/('((\\.)|[^\\'])*?')/" region0="ribString"/>
+         <keywords region="ribSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="?"/>
+            <symb name="&#34;&#34;" region="ribString"/>
+            <symb name="$" region="ribArg"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ribPatterns">
+<!-- two special kinds of  patterns -->
+            <word name="float"/>
+            <word name="string"/>
+            <word name="color"/>
+            <word name="point"/>
+            <word name="vector"/>
+            <word name="normal"/>
+            <word name="matrix"/>
+            <word name="void"/>
+            <word name="varying"/>
+            <word name="uniform"/>
+            <word name="output"/>
+            <word name="extern"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ribConst">
+<!-- built-in variables -->
+            <word name="RiBegin"/>
+            <word name="RiEnd"/>
+            <word name="Begin"/>
+            <word name="End"/>
+            <word name="RtContextHandle"/>
+            <word name="RiContext"/>
+            <word name="ContextHandle"/>
+            <word name="Context"/>
+            <word name="RiFrameBegin"/>
+            <word name="RiFrameEnd"/>
+            <word name="FrameBegin"/>
+            <word name="FrameEnd"/>
+            <word name="RiWorldBegin"/>
+            <word name="RiWorldEnd"/>
+            <word name="WorldBegin"/>
+            <word name="WorldEnd"/>
+            <word name="RiSolidBegin"/>
+            <word name="RiSolidEnd"/>
+            <word name="SolidBegin"/>
+            <word name="SolidEnd"/>
+            <word name="RiMotionBegin"/>
+            <word name="RiMotionEnd"/>
+            <word name="MotionBegin"/>
+            <word name="MotionEnd"/>
+            <word name="RiObjectBegin"/>
+            <word name="RiObjectEnd"/>
+            <word name="ObjectBegin"/>
+            <word name="ObjectEnd"/>
+            <word name="RiFormat"/>
+            <word name="Format"/>
+            <word name="RiFrameAspectRatio"/>
+            <word name="FrameAspectRatio"/>
+            <word name="RiScreenWindow"/>
+            <word name="ScreenWindow"/>
+            <word name="RiCropWindow"/>
+            <word name="CropWindow"/>
+            <word name="RiProjection"/>
+            <word name="Projection"/>
+            <word name="RiClipping"/>
+            <word name="Clipping"/>
+            <word name="RiClippingPlane"/>
+            <word name="ClippingPlane"/>
+            <word name="RiDepthOfField"/>
+            <word name="DepthOfField"/>
+            <word name="RiShutter"/>
+            <word name="Shutter"/>
+            <word name="RiPixelVariance"/>
+            <word name="PixelVariance"/>
+            <word name="RiPixelSamples"/>
+            <word name="PixelSamples"/>
+            <word name="RiPixelFilter"/>
+            <word name="PixelFilter"/>
+            <word name="RiTriangleFilter"/>
+            <word name="RiCatmullRomFilter"/>
+            <word name="RiGaussianFilter"/>
+            <word name="RiSincFilter"/>
+            <word name="RiExposure"/>
+            <word name="Exposure"/>
+            <word name="RiImager"/>
+            <word name="Imager"/>
+            <word name="RiQuantize"/>
+            <word name="Quantize"/>
+            <word name="RiDisplay"/>
+            <word name="Display"/>
+            <word name="RiHider"/>
+            <word name="Hider"/>
+            <word name="RiColorSamples"/>
+            <word name="ColorSamples"/>
+            <word name="RiRelativeDetail"/>
+            <word name="RelativeDetail"/>
+            <word name="RiOption"/>
+            <word name="Option"/>
+            <word name="RiAttributeBegin"/>
+            <word name="RiAttributeEnd"/>
+            <word name="AttributeBegin"/>
+            <word name="AttributeEnd"/>
+            <word name="RiColor"/>
+            <word name="Color"/>
+            <word name="RiOpacity"/>
+            <word name="Opacity"/>
+            <word name="RiTextureCoordinates"/>
+            <word name="TextureCoordinates"/>
+            <word name="RtLightHandle"/>
+            <word name="RiLightSource"/>
+            <word name="LightSource"/>
+            <word name="RiAreaLightSource"/>
+            <word name="AreaLightSource"/>
+            <word name="RiIlluminate"/>
+            <word name="Illuminate"/>
+            <word name="RiSurface"/>
+            <word name="Surface"/>
+            <word name="RiDisplacement"/>
+            <word name="Displacement"/>
+            <word name="RiAtmosphere"/>
+            <word name="Atmosphere"/>
+            <word name="RiInterior"/>
+            <word name="Interior"/>
+            <word name="RiExterior"/>
+            <word name="Exterior"/>
+            <word name="RiShadingRate"/>
+            <word name="ShadingRate"/>
+            <word name="RiShadingInterpolation"/>
+            <word name="ShadingInterpolation"/>
+            <word name="RiMatte"/>
+            <word name="Matte"/>
+            <word name="RiBound"/>
+            <word name="Bound"/>
+            <word name="RiDetail"/>
+            <word name="Detail"/>
+            <word name="RiDetailRange"/>
+            <word name="DetailRange"/>
+            <word name="RiGeometricApproximation"/>
+            <word name="GeometricApproximation"/>
+            <word name="RiOrientation"/>
+            <word name="Orientation"/>
+            <word name="RiReverseOrientation"/>
+            <word name="ReverseOrientation"/>
+            <word name="RiSides"/>
+            <word name="Sides"/>
+            <word name="RiIdentity"/>
+            <word name="Identity"/>
+            <word name="RiTransform"/>
+            <word name="Transform"/>
+            <word name="RiConcatTransform"/>
+            <word name="ConcatTransform"/>
+            <word name="RiPerspective"/>
+            <word name="Perspective"/>
+            <word name="RiTranslate"/>
+            <word name="Translate"/>
+            <word name="RiRotate"/>
+            <word name="Rotate"/>
+            <word name="RiScale"/>
+            <word name="Scale"/>
+            <word name="RiSkew"/>
+            <word name="Skew"/>
+            <word name="RiCoordinateSystem"/>
+            <word name="CoordinateSystem"/>
+            <word name="RiCoordSysTransform"/>
+            <word name="CoordSysTransform"/>
+            <word name="RiTransformPoints"/>
+            <word name="TransformPoints"/>
+            <word name="RiTransformBegin"/>
+            <word name="RiTransformEnd"/>
+            <word name="TransformBegin"/>
+            <word name="TransformEnd"/>
+            <word name="RiAttribute"/>
+            <word name="Attribute"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ribControl">
+<!-- control statements -->
+            <word name="RiPolygon"/>
+            <word name="RiPolygon"/>
+            <word name="RiGeneralPolygon"/>
+            <word name="GeneralPolygon"/>
+            <word name="RiPointsPolygons"/>
+            <word name="PointsPolygons"/>
+            <word name="RiPointsGeneralPolygons"/>
+            <word name="PointsGeneralPolygons"/>
+            <word name="RiBasis"/>
+            <word name="Basis"/>
+            <word name="RiBezierBasis"/>
+            <word name="RiBSplineBasis"/>
+            <word name="RiCatmullRomBasis"/>
+            <word name="RiHermiteBasis"/>
+            <word name="RiPowerBasis"/>
+            <word name="RiPatch"/>
+            <word name="Patch"/>
+            <word name="RiPatchMesh"/>
+            <word name="PatchMesh"/>
+            <word name="RiNuPatch"/>
+            <word name="NuPatch"/>
+            <word name="RiTrimCurve"/>
+            <word name="TrimCurve"/>
+            <word name="RiSubdivisionMesh"/>
+            <word name="SubdivisionMesh"/>
+            <word name="RiSphere"/>
+            <word name="Sphere"/>
+            <word name="RiCone"/>
+            <word name="Cone"/>
+            <word name="RiCylinder"/>
+            <word name="Cylinder"/>
+            <word name="RiHyperboloid"/>
+            <word name="Hyperboloid"/>
+            <word name="RiParaboloid"/>
+            <word name="Paraboloid"/>
+            <word name="RiDisk"/>
+            <word name="Disk"/>
+            <word name="RiTorus"/>
+            <word name="Torus"/>
+            <word name="RiPoints"/>
+            <word name="Points"/>
+            <word name="RiCurves"/>
+            <word name="Curves"/>
+            <word name="RiBlobby"/>
+            <word name="Blobby"/>
+            <word name="RiProcedural"/>
+            <word name="Procedural"/>
+            <word name="RiProcDelayedReadArchive"/>
+            <word name="DelayedReadArchive"/>
+            <word name="RiProcRunProgram"/>
+            <word name="RunProgram"/>
+            <word name="RiProcDynamicLoad"/>
+            <word name="DynamicLoad"/>
+            <word name="RiGeometry"/>
+            <word name="Geometry"/>
+            <word name="RiSolidBegin"/>
+            <word name="RiSolidEnd"/>
+            <word name="SolidBegin"/>
+            <word name="SolidEnd"/>
+            <word name="RtObjectHandle"/>
+            <word name="RiObjectBegin"/>
+            <word name="RiObjectEnd"/>
+            <word name="ObjectBegin"/>
+            <word name="ObjectEnd"/>
+            <word name="RiObjectInstance"/>
+            <word name="ObjectInstance"/>
+         </keywords>
+         <keywords region="ribIOstat">
+<!-- input/output statements -->
+            <word name="RiMotionBegin"/>
+            <word name="RiMotionEnd"/>
+            <word name="MotionBegin"/>
+            <word name="MotionEnd"/>
+         </keywords>
+         <keywords region="ribArithmetic">
+<!-- pre-defined arithmetic functions -->
+            <word name="RiMakeTexture"/>
+            <word name="MakeTexture"/>
+            <word name="RiMakeLatLongEnvironment"/>
+            <word name="RiMakeCubeFaceEnvironment"/>
+            <word name="MakeLatLongEnvironment"/>
+            <word name="MakeCubeFaceEnvironment"/>
+            <word name="RiMakeShadow"/>
+            <word name="MakeShadow"/>
+            <word name="ErrorHandler"/>
+            <word name="RiArchiveRecord"/>
+            <word name="ArchiveRecord"/>
+            <word name="RiReadArchive"/>
+            <word name="ReadArchive"/>
+         </keywords>
+         <keywords region="ribStrFunc">
+<!-- pre-defined string functions -->
+            <word name="Deformation"/>
+            <word name="MakeBump"/>
+         </keywords>
+         <keywords region="ribFunctions">
+<!-- Functions -->
+            <word name="worldp"/>
+            <word name="worldv"/>
+            <word name="visibility"/>
+            <word name="rayhittest"/>
+            <word name="fulltrace"/>
+            <word name="fulltrace"/>
+            <word name="raylevel"/>
+            <word name="isshadowray"/>
+            <word name="raysphere"/>
+            <word name="ReflMap"/>
+            <word name="Environment"/>
+            <word name="RayTrace"/>
+            <word name="SampleEnvironment"/>
+            <word name="bilerp"/>
+            <word name="cylinmap"/>
+            <word name="planemap"/>
+            <word name="sphermap"/>
+            <word name="automap"/>
+            <word name="decalmap"/>
+            <word name="MATERIAL_ash"/>
+            <word name="MATERIAL_asphalt"/>
+            <word name="MATERIAL_beach_grass"/>
+            <word name="MATERIAL_blue_sky"/>
+            <word name="MATERIAL_brass"/>
+            <word name="MATERIAL_brass2"/>
+            <word name="MATERIAL_breaking_wave"/>
+            <word name="MATERIAL_bronze"/>
+            <word name="MATERIAL_carbon"/>
+            <word name="MATERIAL_china_clay"/>
+            <word name="MATERIAL_clayey_loam"/>
+            <word name="MATERIAL_clear_blue_sky"/>
+            <word name="MATERIAL_concrete"/>
+            <word name="MATERIAL_cool_white_fluorescent_lamp"/>
+            <word name="MATERIAL_copper"/>
+            <word name="MATERIAL_d5500"/>
+            <word name="MATERIAL_d6500"/>
+            <word name="MATERIAL_d7500"/>
+            <word name="MATERIAL_dark_loam"/>
+            <word name="MATERIAL_daylight_fluorescent_lamp"/>
+            <word name="MATERIAL_dead_leaves"/>
+            <word name="MATERIAL_deuteranope"/>
+            <word name="MATERIAL_direct_sunlight"/>
+            <word name="MATERIAL_elm"/>
+            <word name="MATERIAL_gold"/>
+            <word name="MATERIAL_gold_coating"/>
+            <word name="MATERIAL_grass_and_dead_leaves"/>
+            <word name="MATERIAL_hemlock"/>
+            <word name="MATERIAL_lawn"/>
+            <word name="MATERIAL_lichen"/>
+            <word name="MATERIAL_lunar_dust"/>
+            <word name="MATERIAL_lunar_rock"/>
+            <word name="MATERIAL_maple"/>
+            <word name="MATERIAL_mixed_woods"/>
+            <word name="MATERIAL_mulberry"/>
+            <word name="MATERIAL_nickel"/>
+            <word name="MATERIAL_north_45_degree_sky"/>
+            <word name="MATERIAL_obsidian"/>
+            <word name="MATERIAL_olive_drab"/>
+            <word name="MATERIAL_overcast_sky"/>
+            <word name="MATERIAL_partly_cloudy_sky"/>
+            <word name="MATERIAL_pine"/>
+            <word name="MATERIAL_protanope"/>
+            <word name="MATERIAL_red_brick"/>
+            <word name="MATERIAL_red_clouds"/>
+            <word name="MATERIAL_ruby"/>
+            <word name="MATERIAL_rust"/>
+            <word name="MATERIAL_sand"/>
+            <word name="MATERIAL_sandy_loam"/>
+            <word name="MATERIAL_silver"/>
+            <word name="MATERIAL_sparse_lawn"/>
+            <word name="MATERIAL_steel"/>
+            <word name="MATERIAL_sun_airmass0"/>
+            <word name="MATERIAL_sun_airmass1"/>
+            <word name="MATERIAL_sun_airmass2"/>
+            <word name="MATERIAL_sun_airmass3"/>
+            <word name="MATERIAL_sun_airmass4"/>
+            <word name="MATERIAL_sun_airmass5"/>
+            <word name="MATERIAL_sun_plus_horizontal_sky"/>
+            <word name="MATERIAL_teflon"/>
+            <word name="MATERIAL_tin"/>
+            <word name="MATERIAL_tritanope"/>
+            <word name="MATERIAL_tungsten"/>
+            <word name="MATERIAL_vinyl"/>
+            <word name="MATERIAL_warm_white_fluorescent_lamp"/>
+            <word name="MATERIAL_water"/>
+            <word name="MATERIAL_white_fluorescent_lamp"/>
+            <word name="MATERIAL_wild_cherry"/>
+            <word name="MATERIAL_willow"/>
+            <word name="MATERIAL_zenith_sky"/>
+            <word name="MATERIAL_zirconium_lamp"/>
+            <word name="MATERIAL_barco_r"/>
+            <word name="MATERIAL_barco_g"/>
+            <word name="MATERIAL_barco_b"/>
+            <word name="MATERIAL_barcolp_r"/>
+            <word name="MATERIAL_barcolp_g"/>
+            <word name="MATERIAL_barcolp_b"/>
+            <word name="MATERIAL_ramtek_r"/>
+            <word name="MATERIAL_ramtek_g"/>
+            <word name="MATERIAL_ramtek_b"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ribIOredir">
+<!-- I/O redirection -->
+            <word name="param"/>
+            <word name="local"/>
+            <word name="mulFv"/>
+            <word name="ftov"/>
+            <word name="ftoc"/>
+            <word name="vdot"/>
+            <word name="cross"/>
+            <word name="negf"/>
+            <word name="negv"/>
+            <word name="negc"/>
+            <word name="xyz_to_rgb"/>
+            <word name="hsv_to_rgb"/>
+            <word name="yiq_to_rgb"/>
+            <word name="vtransform2s"/>
+            <word name="ntransform2s"/>
+            <word name="ctransform2s"/>
+            <word name="transform2s"/>
+            <word name="illuminate3"/>
+            <word name="illuminate1"/>
+            <word name="solar2"/>
+            <word name="solar0"/>
+            <word name="illuminance_start"/>
+            <word name="illuminance3"/>
+            <word name="illuminance_start"/>
+            <word name="illuminance1"/>
+            <word name="atan2"/>
+            <word name="pushif"/>
+            <word name="splineb"/>
+            <word name="pointsplineb"/>
+            <word name="colorsplineb"/>
+            <word name="pushif"/>
+            <word name="pnoise"/>
+            <word name="pointpnoise"/>
+            <word name="colorpnoise"/>
+            <word name="filterstep3"/>
+            <word name="filterstep2"/>
+            <word name="ftexture"/>
+            <word name="ctexture"/>
+            <word name="fenvironment"/>
+            <word name="cenvironment"/>
+            <word name="dsdu"/>
+            <word name="dsdv"/>
+            <word name="STREE_beaten"/>
+            <word name="STREE_brushed"/>
+            <word name="luminence"/>
+            <word name="STREE_cartoon"/>
+            <word name="STREE_cloudy"/>
+            <word name="STREE_dented"/>
+            <word name="STREE_feathery"/>
+            <word name="snoiseV"/>
+            <word name="STREE_furry"/>
+            <word name="STREE_glow"/>
+            <word name="STREE_granite"/>
+            <word name="SQRT3"/>
+            <word name="fuzzy"/>
+            <word name="STREE_hexagonals"/>
+            <word name="STREE_marbled"/>
+            <word name="_STREE_E"/>
+            <word name="_STREE_LOG2E"/>
+            <word name="_STREE_LOG10E"/>
+            <word name="_STREE_LN2"/>
+            <word name="_STREE_LN10"/>
+            <word name="_STREE_PI"/>
+            <word name="_STREE_PI_2"/>
+            <word name="_STREE_PI_4"/>
+            <word name="_STREE_1_PI"/>
+            <word name="_STREE_2_PI"/>
+            <word name="_STREE_2_SQRTPI"/>
+            <word name="_STREE_SQRT2"/>
+            <word name="_STREE_SQRT1_2"/>
+            <word name="_STREE_PI2"/>
+            <word name="STREE_rust"/>
+            <word name="STREE_smokeyvolume"/>
+            <word name="STREE_streaked"/>
+            <word name="STREE_turbulence"/>
+            <word name="STREE_twistedP"/>
+            <word name="snoiseP"/>
+            <word name="STREE_VLNoise"/>
+            <word name="STREE_wispy"/>
+            <word name="pxslFloatBias"/>
+            <word name="pxslColorBias"/>
+            <word name="pxslFloatGain"/>
+            <word name="pxslColorGain"/>
+            <word name="pxslFilterWidth"/>
+            <word name="pxslFilteredFNoise"/>
+            <word name="pxslFilteredCNoise"/>
+            <word name="pxslFilteredVNoise"/>
+            <word name="pxslBimix"/>
+            <word name="pxslVaryColor"/>
+            <word name="R"/>
+            <word name="c"/>
+            <word name="d"/>
+            <word name="r"/>
+            <word name="l"/>
+            <word name="Ia"/>
+            <word name="Id"/>
+            <word name="Is"/>
+            <word name="Ir"/>
+            <word name="It"/>
+            <word name="If"/>
+            <word name="S"/>
+            <word name="H"/>
+            <word name="e"/>
+            <word name="Dd"/>
+            <word name="Gg"/>
+            <word name="Ff"/>
+            <word name="nh"/>
+            <word name="nh2"/>
+            <word name="HALF_PI"/>
+            <word name="waliasAmbient"/>
+            <word name="waliasTranslucence"/>
+            <word name="waliasPhong"/>
+            <word name="waliasBlinn"/>
+            <word name="WALIAS_GLOWPARMS"/>
+            <word name="clipSuperellipse"/>
+            <word name="ShapeLightVolume"/>
+            <word name="BlockerContribution"/>
+            <word name="ABS"/>
+            <word name="XYZ_ADD"/>
+            <word name="XYZ_SUB"/>
+            <word name="XYZ_MULT"/>
+            <word name="XYZ_DIV"/>
+            <word name="XYZ_INC"/>
+            <word name="XYZ_DEC"/>
+            <word name="XYZ_ADDC"/>
+            <word name="XYZ_SUBC"/>
+            <word name="XYZ_MULTC"/>
+            <word name="XYZ_DIVC"/>
+            <word name="XYZ_COPY"/>
+            <word name="XYZ_COPYC"/>
+            <word name="DOT_XYZ"/>
+            <word name="CROSS_XYZ"/>
+            <word name="CROSS_3"/>
+            <word name="NORMALIZE_XYZ"/>
+            <word name="R_NORMALIZE_XYZ"/>
+            <word name="RGB_ADD"/>
+            <word name="RGB_SUB"/>
+            <word name="RGB_MULT"/>
+            <word name="RGB_ADDC"/>
+            <word name="RGB_SUBC"/>
+            <word name="RGB_MULTC"/>
+            <word name="RGB_DIVC"/>
+            <word name="RGB_COPY"/>
+            <word name="RGB_COPYC"/>
+            <word name="MIN"/>
+            <word name="MAX"/>
+            <word name="MAX_OCTAVES"/>
+            <word name="EGG_SHAPE"/>
+            <word name="JITTERING"/>
+            <word name="TRUE"/>
+            <word name="FALSE"/>
+            <word name="EPSILON"/>
+            <word name="M_1_2PI"/>
+            <word name="LOG2E"/>
+            <word name="LOG2"/>
+            <word name="DEGTORAD"/>
+            <word name="RADTODEG"/>
+            <word name="FABS"/>
+            <word name="NORM"/>
+            <word name="CROSS"/>
+            <word name="SMULT"/>
+            <word name="DOT"/>
+            <word name="VECADD"/>
+            <word name="VECSUB"/>
+            <word name="SCALARPROD"/>
+            <word name="COLORSCALE"/>
+            <word name="RAYPOS"/>
+            <word name="DELTA"/>
+            <word name="DELTA_INV"/>
+            <word name="B"/>
+            <word name="BM"/>
+            <word name="NP"/>
+            <word name="NM"/>
+            <word name="at3"/>
+            <word name="at2"/>
+            <word name="setup"/>
+            <word name="RES"/>
+            <word name="LENGTH"/>
+            <word name="VADD"/>
+            <word name="SMULT"/>
+            <word name="Multicolor"/>
+            <word name="Wrinkled"/>
+            <word name="VecNoise"/>
+            <word name="Noise3"/>
+            <word name="VecNoise3"/>
+            <word name="init"/>
+            <word name="CopyMatrix"/>
+            <word name="MultMatrix"/>
+            <word name="RotateX"/>
+            <word name="RotateY"/>
+            <word name="RotateZ"/>
+            <word name="VectTransform"/>
+            <word name="Multifractal"/>
+            <word name="Cyclone"/>
+            <word name="GIT"/>
+            <word name="DesertTexture"/>
+            <word name="CraterRays"/>
+            <word name="Crater"/>
+            <word name="fBm"/>
+            <word name="multifractal"/>
+            <word name="VLNoise3"/>
+            <word name="Hetero_Terrain"/>
+            <word name="HybridMultifractal"/>
+            <word name="RidgedMultifractal"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

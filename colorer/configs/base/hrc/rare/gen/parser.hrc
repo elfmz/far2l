@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY parser-brackets SYSTEM "parser-brackets.ent.hrc">
+<!ENTITY parser-ex SYSTEM "parser-ex.ent.hrc">
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="parser">
+
+<annotation>
+ <documentation>
+  Colorer-take5 HRC scheme
+  for Parser3 (http://parser.ru)
+ </documentation>
+
+ <contributors>
+ <![CDATA[
+  Eugene Efremov <4mirror@mail.ru>
+ ]]>
+ </contributors>
+</annotation>
+
+<region name="keyword" parent="def:Keyword"/>
+<region name="keyword.class" parent="keyword"/>
+<region name="keyword.method" parent="keyword"/>
+<region name="keyword.var" parent="keyword"/>
+
+<region name="directive" parent="def:Directive"/>
+<region name="name" parent="def:KeywordStrong" description="Class and functions names"/>
+<region name="symbol" parent="def:Symbol"/>
+<region name="strong-symbol" parent="def:SymbolStrong"/>
+<region name="struct-symbol" parent="asp:Tag"/>
+<region name="op" parent="def:Operator"/>
+<region name="var" parent="def:Var"/>
+<region name="tmpl" parent="def:VarStrong" description="printf-like constructions"/>
+<region name="char" parent="def:StringContent"/>
+<region name="string" parent="def:String"/>
+
+<region name="default" parent="def:default"/>
+<region name="out" parent="def:Outlined" description="base outliner"/>
+<region name="function-out" parent="out"/>
+<region name="class-out" parent="out"/>
+
+
+<entity name="nname" value=";\[\{\(\]\}\)&quot;&lt;&gt;#\+\*\/\%&amp;\|\=\!&apos;,\?\s"/> <!-- \- -->
+<entity name="back" value="[\]\)\}]"/>
+
+<scheme name="literal">
+ <regexp match="/\^[\dA-F]{2}\b/" region="char"/>
+ <regexp match="/\^[\^\(\)\{\}\[\]\$\;\:\#&quot;]/" region="char"/>
+ <inherit scheme="def:Number"/>
+</scheme>
+
+
+<scheme name="format">
+ <regexp match="/\%(\d+)?(\.\d+)?[duoxXf]/" region="tmpl"/>
+</scheme>
+
+
+<scheme name="operator">
+ <keywords region="op">
+  <symb name="!||"/>
+  <symb name="!="/>
+  <symb name="!"/>
+  <symb name="~"/>
+  <symb name="-"/>
+  <symb name="*"/>
+  <symb name="/"/>
+  <symb name="\"/>
+  <symb name="%"/>
+  <symb name="+"/>
+  <symb name="-"/>
+  <symb name="&lt;&lt;"/>
+  <symb name="&gt;&gt;"/>
+  <symb name="&amp;&amp;"/>
+  <symb name="&amp;"/>
+  <symb name="!|"/>
+  <symb name="|"/>
+  <word name="is"/>
+  <word name="def"/>
+  <word name="in"/>
+  <word name="-f"/>
+  <word name="-d"/>
+  <symb name="=="/>
+  <word name="eq"/>
+  <word name="ne"/>
+  <symb name="&lt;="/>
+  <symb name="&gt;="/>
+  <symb name="&lt;"/>
+  <symb name="&gt;"/>
+  <word name="lt"/>
+  <word name="gt"/>
+  <word name="le"/>
+  <word name="ge"/>
+  <symb name="||"/>
+ </keywords>
+ <regexp match="/[\!\~]/" region="op"/>
+</scheme>
+
+
+
+<!-- names -->
+
+<scheme name="name">
+ <keywords region="symbol">
+  <symb name="."/>
+  <symb name=":"/>
+  <symb name="^"/>
+ </keywords>
+
+ <keywords region="keyword.class" worddiv="[\$\^\:]">
+  <word name="cookie"/>
+  <word name="date"/>
+  <word name="env"/>
+  <word name="file"/>
+  <word name="form"/>
+  <word name="hashfile"/>
+  <word name="hash"/>
+  <word name="int"/>
+  <word name="double"/>
+  <word name="image"/>
+  <word name="mail"/>
+  <word name="math"/>
+  <word name="string"/>
+  <word name="table"/>
+  <word name="void"/>
+  <word name="request"/>
+  <word name="response"/>
+  <word name="xdoc"/>
+  <word name="xnode"/>
+  <word name="junction"/>
+  <word name="status"/>
+  <word name="memory"/>
+  <word name="console"/>
+ </keywords>
+</scheme>
+
+<scheme name="name.var">
+ <inherit scheme="name"/>
+ <keywords region="keyword.var">
+  <word name="self"/>
+  <word name="result"/>
+<!--  <word name="MIME-TYPES"/>-->
+ </keywords>
+</scheme>
+
+
+<scheme name="name.method.base">
+ <inherit scheme="name"/>
+
+ <keywords region="keyword.method">
+  <word name="conf"/>
+  <word name="create"/>
+  <word name="auto"/>
+  <word name="unhandled_exception"/>
+ <!-- <word name="sql"/>
+  <word name="match"/>
+  <word name="format"/>
+  <word name="file"/>
+  <word name="load"/>
+  <word name="search-namespaces"/>
+  <word name="select"/>
+  <word name="selectSingle"/>
+  <word name="selectString"/>
+  <word name="selectNumber"/>
+  <word name="selectBool"/>-->
+  <!-- other methods (we realy need to create it???) -->
+ </keywords>
+</scheme>
+
+<scheme name="name.method">
+ <inherit scheme="name.method.base"/>
+
+ <keywords region="keyword">
+  <word name="if"/>
+  <word name="switch"/>
+  <word name="case"/>
+  <word name="for"/>
+  <word name="while"/>
+  <word name="connect"/>
+  <word name="use"/>
+  <word name="process"/>
+  <word name="cache"/>
+  <word name="rem"/>
+  <word name="taint"/>
+  <word name="untaint"/>
+  <word name="try"/>
+  <word name="throw"/>
+ </keywords>
+ <!--nherit scheme="name.commands"/-->
+</scheme>
+
+
+<scheme name="class">
+ <inherit scheme="def:NetURL"/>
+ <inherit scheme="def:Path"/>
+ <regexp match="/^\w+/" region="class-out"/>
+</scheme>
+
+<scheme name="string.function">
+ <regexp match="/\]\[/" region="symbol"/>
+ <regexp match="/\w+/" region="var"/>
+ <keywords region="strong-symbol">
+  <symb name=";"/>
+ </keywords>
+</scheme>
+
+
+<!-- basic -->
+
+<scheme name="script">
+ <inherit scheme="literal"/>
+ <inherit scheme="format"/>
+ <block start="/(^|\s)\#/" end="/$/" scheme="def:Comment" region="def:Comment"/>
+ <keywords region="strong-symbol">
+  <symb name=";"/>
+ </keywords>
+
+
+ <block start="/^(\@)(CLASS|BASE|USE)/" end="/^\s*$/"
+  scheme="class" region="name"
+  region00="directive" region01="strong-symbol"
+  />
+
+ <block start="/^(\@)(?{function-out}[\w\-]+)((\[))/" end="/(\])/"
+  scheme="string.function"
+  region00="name" region01="strong-symbol"
+  region02="symbol" region03="def:PairStart"
+  region10="symbol" region11="def:PairEnd"
+ />
+
+ <block start="/\$(\{)/" end="/(\})/"
+  scheme="name.var" region="var"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+ <!--
+ <block start="/\M[\$\^][^%nname;]+?[\(\{\[]/" end="/[\}\)\]]\m\M([^\[\(\{]|$)/" scheme="script.bracket"/>
+ -->
+ <inherit scheme="bracket"/>
+ <inherit scheme="script.bracket"/>
+ <inherit scheme="script.names"/>
+
+<!-- <regexp match="/[\}\]\)]/" priority="low" region="def:Error"/>-->
+</scheme>
+
+<scheme name="script.names">
+ <block start="/(%back;?#1[\.\:]|\^)\M[^%nname;]+/" end="/~[^%nname;]+\m/"
+  scheme="name.method" region="name" region00="symbol"
+ />
+ <block start="/\$\M[^%nname;]+/" end="/~[^%nname;]+\m/"
+  scheme="name.var" region="var"
+ />
+</scheme>
+
+
+<scheme name="script.bracket">
+ <!-- <inherit scheme="script"/>-->
+
+ <inherit scheme="commands"/>
+
+ <block start="/%back;?#1(\{)/" end="/(\})/" scheme="parser"
+  region00="struct-symbol" region01="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />
+ <block start="/%back;?#1(\[)/" end="/(\])/" scheme="parser"
+  region00="struct-symbol" region01="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />
+ <block start="/%back;?#1(\()/" end="/(\))/" scheme="expr"
+  region00="struct-symbol" region01="def:PairStart"
+  region10="struct-symbol" region11="def:PairEnd"
+ />
+
+<!--
+ <inherit scheme="script.names"/>-->
+</scheme>
+
+
+<scheme name="recursion">
+ <block start="/\{/" end="/\}/" scheme="recursion"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+ <block start="/\[/" end="/\]/" scheme="recursion"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+ <block start="/\(/" end="/\)/" scheme="recursion"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+</scheme>
+
+
+<scheme name="expr">
+ <inherit scheme="operator"/>
+ <block start="/(\()/" end="/(\))/" scheme="expr"
+  region00="symbol" region01="def:PairStart"
+  region10="symbol" region11="def:PairEnd"
+ />
+
+ <inherit scheme="script"/>
+ <regexp match="/[%nname;]?#1\w+\b/" region="string"/>
+ <block start="/&quot;/" end="/&quot;/" scheme="literal" region="string"
+  region00="def:PairStart" region10="def:PairEnd"
+ />
+
+ <inherit scheme="recursion">
+  <virtual scheme="recursion" subst-scheme="expr"/>
+ </inherit>
+</scheme>
+
+
+<scheme name="parser">
+ <inherit scheme="asp:html">
+  <virtual scheme="asp:Insertion" subst-scheme="script"/>
+ </inherit>
+ <inherit scheme="recursion">
+  <virtual scheme="recursion" subst-scheme="parser"/>
+ </inherit>
+
+</scheme>
+
+&parser-ex;
+
+&parser-brackets;
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Parser3 Colorer-take5 HRC scheme.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2004
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

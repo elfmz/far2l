@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+  
+  <type name="llvm">
+    <annotation><documentation>
+      LLVM IR
+    </documentation><contributors><![CDATA[
+		alex.drom@gmail.com
+    ]]></contributors></annotation>
+
+    <import type="def"/>
+
+    <region name="llvmString"    parent="String"/>
+    <region name="llvmComment"   parent="Comment"/>
+    <region name="llvmMnemonics" parent="Keyword"/>
+    <region name="llvmLabel"     parent="Label"/>
+    <region name="llvmSymb"      parent="Symbol"/>
+    <region name="llvmNumber"    parent="Number"/>
+    <region name="llvmNumBin"    parent="NumberBin"/>
+    <region name="llvmNumHex"    parent="NumberHex"/>
+    <region name="llvmNumDec"    parent="NumberDec"/>
+    <region name="llvmNumOct"    parent="NumberOct"/> 
+    <region name="LabelOutline"  parent="Outlined"/>
+
+    <scheme name="llvm">
+      <!-- labels -->
+      <regexp match="/(^\s*?\@?\@?[\w\$\#\%\@\~\.\?]+?\s*:)/"
+              region0="LabelOutline" region1="llvmLabel"/>
+      <!-- Comments -->
+      <regexp match="/;.*$/" region0="llvmComment"/>
+      <!-- numbers - dec -->
+      <regexp match="/\b([0-9]+[dD]?)\b/" region0="llvmNumDec"/>
+      <!-- numbers - bin -->
+      <regexp match="/\b([01]+[bB])\b/" region0="llvmNumBin"/>
+      <!-- numbers - constants -->
+      <keywords ignorecase="yes" region="llvmNumber">
+        <word name="undef"/>
+        <word name="true"/>
+        <word name="false"/>
+        <word name="null"/>
+      </keywords>
+      <!-- keywords -->
+      <keywords ignorecase="yes" region="llvmString">
+        <word name="i1"/>
+        <word name="i2"/>
+        <word name="i3"/>
+        <word name="i4"/>
+        <word name="i8"/>
+        <word name="i16"/>
+        <word name="i32"/>
+        <word name="i64"/>
+      </keywords>
+
+      <keywords ignorecase="yes" region="llvmMnemonics">
+        <word name="zeroinitializer"/>
+        <word name="signext"/>
+        <word name="type"/>
+        <word name="external"/>
+        <word name="constant"/>
+        <word name="target"/>
+        <word name="alias"/>
+        <word name="align"/>
+        <word name="noalias"/>
+        <word name="nounwind"/>
+        <word name="monotonic"/>
+        <word name="weak"/>
+        <word name="global"/>
+        <word name="declare"/>
+        <word name="metadata"/>
+        <word name="nocapture"/>
+        <word name="inbounds"/>
+        <word name="xchg"/>
+        <word name="uwtable"/>
+        <word name="ssp"/>
+        <word name="byval"/>
+
+        <word name="eq"/>
+        <word name="ne"/>
+        <word name="sgt"/>
+        <word name="sge"/>
+        <word name="slt"/>
+        <word name="sle"/>
+
+        <word name="false"/>
+        <word name="oeq"/>
+        <word name="ogt"/>
+        <word name="oge"/>
+        <word name="olt"/>
+        <word name="ole"/>
+        <word name="one"/>
+        <word name="ord"/>
+        <word name="ueq"/>
+        <word name="ugt"/>
+        <word name="uge"/>
+        <word name="ult"/>
+        <word name="ule"/>
+        <word name="une"/>
+        <word name="uno"/>
+        <word name="true"/>
+
+<!--Terminator Instructions-->
+        <word name="ret"/>
+        <word name="br"/>
+        <word name="switch"/>
+        <word name="indirectbr"/>
+        <word name="invoke"/>
+        <word name="unwind"/>
+        <word name="resume"/>
+        <word name="unreachable"/>
+<!-- Binary Operations -->
+        <word name="add"/>
+        <word name="fadd"/>
+        <word name="sub"/>
+        <word name="fsub"/>
+        <word name="mul"/>
+        <word name="fmul"/>
+        <word name="rudivet"/>
+        <word name="sdiv"/>
+        <word name="fdiv"/>
+        <word name="urem"/>
+        <word name="srem"/>
+        <word name="frem"/>
+<!-- Bitwise Binary Operations -->
+        <word name="shl"/>
+        <word name="lshr"/>
+        <word name="ashr"/>
+        <word name="and"/>
+        <word name="or"/>
+        <word name="xor"/>
+<!-- Vector Operations -->
+        <word name="extractelement"/>
+        <word name="insertelement"/>
+        <word name="shufflevector"/>
+<!-- Aggregate Operations -->
+        <word name="extractvalue"/>
+        <word name="insertvalue"/>
+<!-- Memory Access and Addressing Operations -->
+        <word name="alloca"/>
+        <word name="load"/>
+        <word name="store"/>
+        <word name="fence"/>
+        <word name="cmpxchg"/>
+        <word name="atomicrmw"/>
+        <word name="getelementptr"/>
+<!-- Conversion Operations -->
+        <word name="trunc"/>
+        <word name="zext"/>
+        <word name="sext"/>
+        <word name="fptrunc"/>
+        <word name="fpext"/>
+        <word name="fptoui"/>
+        <word name="fptosi"/>
+        <word name="uitofp"/>
+        <word name="sitofp"/>
+        <word name="ptrtoint"/>
+        <word name="inttoptr"/>
+        <word name="bitcast"/>
+
+        <word name="to"/>
+<!-- Other Operations -->
+        <word name="icmp"/>
+        <word name="fcmp"/>
+        <word name="phi"/>
+        <word name="select"/>
+        <word name="call"/>
+        <word name="va_arg"/>
+        <word name="landingpad"/>
+
+        <word name="define"/>
+
+<!-- floating point -->
+        <word name="half"/>
+        <word name="float"/>
+        <word name="double"/>
+        <word name="x86_fp80"/>
+        <word name="fp128"/>
+        <word name="ppc_fp128"/>
+<!-- primitive -->
+        <word name="label"/>
+        <word name="void"/>
+      </keywords>
+
+    </scheme>
+
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Aliaksei Chapyzhenka <alex.drom@gmail.com>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

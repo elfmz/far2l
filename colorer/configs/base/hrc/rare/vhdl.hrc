@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Language: VHDL (Very high speed integrated circuits Hardware Description Language) Syntax
+    URL: http://www.vhdl.org
+    Maintainer: Artem Zankovich <z_artem@yahoo.com>
+    Credits: Czo <Olivier.Sirol@lip6.fr> (vim syntax)
+    Last Change:  4 Dec 2001
+
+    Uses standards:
+      ANSI/IEEE Std 1076-1987 (VHDL'87)
+      ANSI/IEEE Std 1076-1993 (VHDL'93)
+      STD.standard package
+      STD.textio package
+      IEEE.std_logic_1164 package
+-->
+   <type name="vhdl">
+
+      <import type="def"/>
+
+      <region name="vhdlComment" parent="Comment"/>
+      <region name="vhdlSymb" parent="Symbol"/>
+      <region name="vhdlSymb2" parent="SymbolStrong"/>
+      <region name="vhdlAttr" parent="Parameter"/>
+      <region name="vhdlWord" parent="Keyword"/>
+      <region name="vhdlNumb" parent="Number"/>
+      <region name="vhdlString" parent="String"/>
+      <region name="vhdlBoolean" parent="BooleanConstant"/>
+      <region name="vhdlTime" parent="Number"/>
+      <region name="vhdlType" parent="TypeKeyword"/>
+      <region name="vhdlConst" parent="Constant"/>
+      <region name="vhdlNone" parent="default"/>
+
+      <entity name="vhdlWD" value="[^\w_\\]"/>
+
+      <scheme name="vhdlCore">
+<!-- Comments -->
+         <regexp match="/(--.*$)/" region0="vhdlComment"/>
+<!-- Functions list -->
+         <regexp match="/^\s*\M(procedure|function|entity|architecture|configuration)\s+(?{Function}[_\w]+|\&#34;.*?\&#34;)/i"/>
+<!-- Paired -->
+         <block start="/(\()/" end="/(\))/" scheme="vhdl" region00="vhdlSymb" region01="PairStart" region10="vhdlSymb" region11="PairEnd"/>
+<!-- Strings -->
+         <regexp match="/\bx&#34;[0-9a-fA-F]+[0-9a-fA-F_]*&#34;/i" region0="vhdlString"/>
+         <regexp match="/\bo&#34;[0-7]+[0-7_]*&#34;/i" region0="vhdlString"/>
+         <regexp match="/\bb&#34;[01]+[01_]*&#34;/i" region0="vhdlString"/>
+         <regexp match="/&#34;.*?&#34;/" region0="vhdlString"/>
+         <regexp match="/'.'/" region0="vhdlString"/>
+<!--
+   <regexp match="/\b(nul|soh|stx|etx|eot|enq|ack|bel|bs|ht|lf|vt|ff|cr|so|si|dle|dc1|dc2|dc3|dc4|nak|syn|etb|can|em|sub|esc|fsp|gsp|rsp|usp|DEL)\b/i" region0="vhdlString"/>
+-->
+<!-- Boolean -->
+         <keywords region="vhdlBoolean" worddiv="%vhdlWD;">
+            <word name="true"/>
+            <word name="false"/>
+         </keywords>
+<!-- Time -->
+         <regexp match="/\b\d+(\.\d+)*\s*((f|p|n|u|m)s|sec|min|hr)\b/i" region="vhdlTime"/>
+<!-- Floating numbers -->
+         <regexp match="/\b0*16#[0-9a-fA-F]+[0-9a-fA-F_]*\.[0-9a-fA-F_]+#(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+         <regexp match="/\b0*8#[0-7]+[0-7_]*\.[0-7_]+#(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+         <regexp match="/\b0*2#[01]+[01_]*\.[01_]+#(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+         <regexp match="/\b\d+[\d_]*\.\d+(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+<!--  Integer numbers -->
+         <regexp match="/\b0*16#[0-9a-fA-F]+[0-9a-fA-F_]*#(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+         <regexp match="/\b0*8#[0-7]+[0-7_]*#(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+         <regexp match="/\b0*2#[01]+[01_]*#(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+         <regexp match="/\b\d+[\d_]*(e[+\-]?\d+)?/i" region0="vhdlNumb"/>
+<!-- Symbols -->
+         <keywords region="vhdlSymb">
+            <symb name="&amp;"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="*"/>
+            <symb name="+"/>
+            <symb name="?"/>
+            <symb name="-"/>
+            <symb name="."/>
+            <symb name=","/>
+            <symb name="/"/>
+            <symb name=":"/>
+            <symb name=";" region="vhdlSymb2"/>
+            <symb name="&lt;"/>
+            <symb name="="/>
+            <symb name="&gt;"/>
+            <symb name="|"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="vhdl87">
+         <inherit scheme="vhdlCore"/>
+<!-- "else if" shouldn't be highlighted -->
+         <regexp match="/\belse\s+if\b/i" region0="vhdlNone"/>
+<!-- Attributes -->
+<!-- Array attributes -->
+         <regexp match="/\w?#1(\'(asceding|high|left|length|low|range|reverse_range|right))\b/i" region1="vhdlAttr"/>
+<!-- Block attributes -->
+         <regexp match="/\w?#1(\'(behaviour|structure|simple_name|instance_name|path_name))\b/i" region1="vhdlAttr"/>
+<!-- Signal attributes -->
+         <regexp match="/\w?#1(\'(active|delayed|event|last_active|last_event|last_value|quiet|stable|transaction|driving|driving_value))\b/i" region1="vhdlAttr"/>
+<!-- Type attributes -->
+         <regexp match="/\w?#1(\'(base|high|left|leftof|low|pos|pred|right|rightof|succ|val|image|value))\b/i" region1="vhdlAttr"/>
+<!-- Words -->
+         <keywords ignorecase="yes" region="vhdlWord" worddiv="%vhdlWD;">
+            <word name="abs"/>
+            <word name="access"/>
+            <word name="after"/>
+            <word name="alias"/>
+            <word name="all"/>
+            <word name="and"/>
+            <word name="architecture"/>
+            <word name="array"/>
+            <word name="assert"/>
+            <word name="attribute"/>
+            <word name="begin"/>
+            <word name="block"/>
+            <word name="body"/>
+            <word name="buffer"/>
+            <word name="bus"/>
+            <word name="case"/>
+            <word name="component"/>
+            <word name="configuration"/>
+            <word name="constant"/>
+            <word name="disconnect"/>
+            <word name="downto"/>
+            <word name="else"/>
+            <word name="elsif"/>
+            <word name="end"/>
+            <word name="entity"/>
+            <word name="exit"/>
+            <word name="file"/>
+            <word name="for"/>
+            <word name="function"/>
+            <word name="generate"/>
+            <word name="generic"/>
+            <word name="guarded"/>
+            <word name="if"/>
+            <word name="in"/>
+            <word name="inout"/>
+            <word name="is"/>
+            <word name="label"/>
+            <word name="library"/>
+            <word name="linkage"/>
+            <word name="loop"/>
+            <word name="map"/>
+            <word name="mod"/>
+            <word name="nand"/>
+            <word name="new"/>
+            <word name="next"/>
+            <word name="nor"/>
+            <word name="not"/>
+            <word name="null"/>
+            <word name="of"/>
+            <word name="on"/>
+            <word name="open"/>
+            <word name="or"/>
+            <word name="others"/>
+            <word name="out"/>
+            <word name="package"/>
+            <word name="port"/>
+            <word name="procedure"/>
+            <word name="process"/>
+            <word name="range"/>
+            <word name="record"/>
+            <word name="register"/>
+            <word name="rem"/>
+            <word name="report"/>
+            <word name="return"/>
+            <word name="select"/>
+            <word name="severity"/>
+            <word name="signal"/>
+            <word name="subtype"/>
+            <word name="then"/>
+            <word name="to"/>
+            <word name="transport"/>
+            <word name="type"/>
+            <word name="units"/>
+            <word name="until"/>
+            <word name="use"/>
+            <word name="variable"/>
+            <word name="wait"/>
+            <word name="when"/>
+            <word name="while"/>
+            <word name="with"/>
+            <word name="xor"/>
+         </keywords>
+<!-- STANDARD package -->
+         <keywords ignorecase="yes" region="vhdlType" worddiv="%vhdlWD;">
+            <word name="bit"/>
+            <word name="bit_vector"/>
+            <word name="character"/>
+            <word name="boolean"/>
+            <word name="integer"/>
+            <word name="time"/>
+            <word name="string"/>
+            <word name="severity_level"/>
+            <word name="positive"/>
+            <word name="natural"/>
+         </keywords>
+         <regexp match="/\b(note|warning|error|failure)\b/i" region0="vhdlConst"/>
+<!-- TEXTIO package -->
+         <keywords ignorecase="yes" region="vhdlType" worddiv="%vhdlWD;">
+            <word name="line"/>
+            <word name="text"/>
+         </keywords>
+<!-- STD_LOGIC_1164 package -->
+         <keywords ignorecase="yes" region="vhdlType" worddiv="%vhdlWD;">
+            <word name="std_logic"/>
+            <word name="std_logic_vector"/>
+            <word name="std_ulogic"/>
+            <word name="std_ulogic_vector"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="vhdl93">
+         <inherit scheme="vhdl87"/>
+<!-- STDANDARD package -->
+         <keywords ignorecase="yes" region="vhdlType" worddiv="%vhdlWD;">
+            <word name="real"/>
+            <word name="signed"/>
+            <word name="unsigned"/>
+            <word name="delay_length"/>
+            <word name="file_open_status"/>
+            <word name="file_open_kind"/>
+         </keywords>
+         <regexp match="/\w?#1(\'(foreign))\b/i" region1="vhdlAttr"/>
+         <keywords ignorecase="yes" region="vhdlConst" worddiv="%vhdlWD;">
+            <word name="read_mode"/>
+            <word name="write_mode"/>
+            <word name="append_mode"/>
+         </keywords>
+         <keywords ignorecase="yes" region="vhdlConst" worddiv="%vhdlWD;">
+            <word name="open_ok"/>
+            <word name="status_error"/>
+            <word name="name_error"/>
+            <word name="mode_error"/>
+         </keywords>
+<!-- Words -->
+         <keywords ignorecase="yes" region="vhdlWord" worddiv="%vhdlWD;">
+            <word name="group"/>
+            <word name="impure"/>
+            <word name="inertial"/>
+            <word name="literal"/>
+            <word name="postponed"/>
+            <word name="pure"/>
+            <word name="reject"/>
+            <word name="rol"/>
+            <word name="ror"/>
+            <word name="shared"/>
+            <word name="sla"/>
+            <word name="sll"/>
+            <word name="sra"/>
+            <word name="srl"/>
+            <word name="unaffected"/>
+            <word name="xnor"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="vhdl">
+         <inherit scheme="vhdl93"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Artem Zankovich <z_artem@yahoo.com>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

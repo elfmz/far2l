@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="xmlns" group="group" description="xmlns" targetNamespace="http://www.w3.org/XML/1998/namespace">
+    <location link="xmlns.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="xmlns">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'xmlns'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://www.w3.org/XML/1998/namespace
+             hrctype                     : xmlns
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : (?{}(?{}xml)(?{}:))
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:
+   See http://www.w3.org/XML/1998/namespace.html and
+   http://www.w3.org/TR/REC-xml for information about this namespace.
+
+    This schema document describes the XML namespace, in a form
+    suitable for import by other schema documents.  
+
+    Note that local names in this namespace are intended to be defined
+    only by the World Wide Web Consortium or its subgroups.  The
+    following names are currently defined in this namespace and should
+    not be used with conflicting semantics by any Working Group,
+    specification, or document instance:
+
+    base (as an attribute name): denotes an attribute whose value
+         provides a URI to be used as the base for interpreting any
+         relative URIs in the scope of the element on which it
+         appears; its value is inherited.  This name is reserved
+         by virtue of its definition in the XML Base specification.
+
+    id   (as an attribute name): denotes an attribute whose value
+         should be interpreted as if declared to be of type ID.
+         The xml:id specification is not yet a W3C Recommendation,
+         but this attribute is included here to facilitate experimentation
+         with the mechanisms it proposes.  Note that it is _not_ included
+         in the specialAttrs attribute group.
+
+    lang (as an attribute name): denotes an attribute whose value
+         is a language code for the natural language of the content of
+         any element; its value is inherited.  This name is reserved
+         by virtue of its definition in the XML specification.
+  
+    space (as an attribute name): denotes an attribute whose
+         value is a keyword indicating what whitespace processing
+         discipline is intended for the content of the element; its
+         value is inherited.  This name is reserved by virtue of its
+         definition in the XML specification.
+
+    Father (in any context at all): denotes Jon Bosak, the chair of 
+         the original XML Working Group.  This name is reserved by 
+         the following decision of the W3C XML Plenary and 
+         XML Coordination groups:
+
+             In appreciation for his vision, leadership and dedication
+             the W3C XML Plenary on this 10th day of February, 2000
+             reserves for Jon Bosak in perpetuity the XML name
+             xml:Father
+  </documentation>
+         <contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+	]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value="(?{}(?{}xml)(?{}:))"/>
+      <entity name="nsprefix" value="(?{}(?{}xml)(?{}:))"/>
+      <entity name="attr-nsprefix" value="(?{}(?{}xml)(?{Attribute.nscolon}:))"/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <scheme name="hVersion-content-old"/>
+      <scheme name="hVersion-content-error">
+         <inherit scheme="hVersion-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="hVersion-Attributes"/>
+      <scheme name="hVersion-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream" subst-scheme="hVersion-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="hYesNo-content-old"/>
+      <scheme name="hYesNo-content-error">
+         <inherit scheme="hYesNo-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="hYesNo-Attributes"/>
+      <scheme name="hYesNo-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream" subst-scheme="hYesNo-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="hEncoding-content-old"/>
+      <scheme name="hEncoding-content-error">
+         <inherit scheme="hEncoding-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="hEncoding-Attributes"/>
+      <scheme name="hEncoding-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream" subst-scheme="hEncoding-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: xml
+-->
+<scheme name="_hrc_int_d14e14-content"/>
+      <scheme name="_hrc_int_d14e14-content-error">
+         <inherit scheme="_hrc_int_d14e14-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d14e14-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(version)\M([\s\=]|$)/x"
+                scheme="hVersion-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(encoding)\M([\s\=]|$)/x"
+                scheme="hEncoding-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(standalone)\M([\s\=]|$)/x"
+                scheme="hYesNo-AttributeContent"/>
+      </scheme>
+      <scheme name="xml-piContent">
+         <inherit scheme="_hrc_int_d14e14-Attributes"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="xml-processing-instruction">
+         <block start="/(&lt;\?)(?{xml:PI.name.defined}xml)\M(\s|$)/" end="/(\?&gt;)/"
+                scheme="xml-piContent"
+                region="xml:PI.content"
+                region00="def:PairStart"
+                region01="xml:PI.start.defined"
+                region10="def:PairEnd"
+                region11="xml:PI.end.defined"/>
+      </scheme>
+      <!--
+        parent: xml-stylesheet
+-->
+<scheme name="_hrc_int_d14e22-content"/>
+      <scheme name="_hrc_int_d14e22-content-error">
+         <inherit scheme="_hrc_int_d14e22-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d14e22-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(href)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(type)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(title)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(media)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(charset)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(alternate)\M([\s\=]|$)/x"
+                scheme="hYesNo-AttributeContent"/>
+      </scheme>
+      <scheme name="xml-stylesheet-piContent">
+         <inherit scheme="_hrc_int_d14e22-Attributes"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="xml-stylesheet-processing-instruction">
+         <block start="/(&lt;\?)(?{xml:PI.name.defined}xml-stylesheet)\M(\s|$)/" end="/(\?&gt;)/"
+                scheme="xml-stylesheet-piContent"
+                region="xml:PI.content"
+                region00="def:PairStart"
+                region01="xml:PI.start.defined"
+                region10="def:PairEnd"
+                region11="xml:PI.end.defined"/>
+      </scheme>
+      <!--custom schemes from '../../src/xml/src/custom.xml.xml'--><scheme name="hVersion-content">
+         <regexp match="/~[a-zA-Z0-9_.:\-]+/" region="def:Constant"/>
+         <inherit scheme="hBad"/>
+      </scheme>
+      <scheme name="hYesNo-content">
+         <regexp match="/~(yes|no)\b/" region="def:BooleanConstant"/>
+         <inherit scheme="hBad"/>
+      </scheme>
+      <scheme name="hEncoding-content">
+         <regexp match="/~[A-Za-z][A-Za-z0-9._\-]*/" region="def:String"/>
+         <inherit scheme="hBad"/>
+      </scheme>
+      <scheme name="hBad">
+         <regexp match="/~[&#34;']/" region="xml:badChar"/>
+         <regexp match="/./" region="xml:badChar" priority="low"/>
+      </scheme>
+      <!--end custom--><scheme name="lang-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(lang)\M([\s\=]|$)/x"
+                scheme="xmlschema:language-AttributeContent"/>
+      </scheme>
+      <scheme name="space-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(space)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e16-AttributeContent"/>
+      </scheme>
+      <scheme name="base-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(base)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+      </scheme>
+      <scheme name="id-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(id)\M([\s\=]|$)/x"
+                scheme="xmlschema:ID-AttributeContent"/>
+      </scheme>
+      <scheme name="specialAttrs-attributeGroup">
+         <inherit scheme="base-attribute"/>
+         <inherit scheme="lang-attribute"/>
+         <inherit scheme="space-attribute"/>
+      </scheme>
+      <!--
+        parent: space
+-->
+<scheme name="_hrc_int_d12e16-content">
+         <regexp region="Enumeration" match="/default/"/>
+         <regexp region="Enumeration" match="/preserve/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e16-content-error">
+         <inherit scheme="_hrc_int_d12e16-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e16-Attributes"/>
+      <scheme name="_hrc_int_d12e16-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e16-content-error"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="xmlns-root"/>
+      <scheme name="PI">
+         <regexp match="/&lt;\?xml\M(\s|$)/i" region="xml:badChar"/>
+         <inherit scheme="xml-processing-instruction"/>
+         <inherit scheme="xml-stylesheet-processing-instruction"/>
+         <inherit scheme="xml:PI"/>
+      </scheme>
+      <scheme name="xmlns-root-addref">
+         <inherit scheme="xmlns-root">
+            <virtual scheme="xml:PI" subst-scheme="PI"/>
+         </inherit>
+      </scheme>
+      <scheme name="xmlns">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="xmlns-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

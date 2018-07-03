@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY entity-lat1 SYSTEM "html-entity-lat1.ent.hrc">
+<!ENTITY entity-special SYSTEM "html-entity-special.ent.hrc">
+<!ENTITY entity-symbol SYSTEM "html-entity-symbol.ent.hrc">
+]>
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+ <type name="html-entity">
+  <annotation><documentation>
+   Package for support entities/references in (x)html
+
+   Usable in: html 4+, all xhtml
+
+ </documentation><contributors><![CDATA[
+  Eugene Efremov <4mirror@mail.ru>
+ ]]></contributors><appinfo>
+  <package name="html-entity" description="(x)html entities">
+   <location link="inet/lib/entity.hrc"/>
+  </package>
+  <reqiere>
+   <type name="xml"/>
+  </reqiere>
+ </appinfo></annotation>
+
+  &entity-lat1;
+  &entity-special;
+  &entity-symbol;
+
+  <!--scheme name="reference-content">
+   <inherit scheme="xml:reference.content"/>
+   <inherit scheme="html-addref"/>
+  </scheme-->
+
+  <!-- public part -->
+
+  <scheme name="html-addref">
+   <annotation><documentation>
+    Use this scheme for include entities to xhtml via ent2hrc
+   </documentation></annotation>
+
+   <inherit scheme="xhtml-lat1"/>
+   <inherit scheme="xhtml-special"/>
+   <inherit scheme="xhtml-symbol"/>
+  </scheme>
+
+  <scheme name="html-entity">
+   <annotation><documentation>
+    Use this scheme for manualy include entities to html
+   </documentation></annotation>
+
+   <inherit scheme="xml:Reference">
+    <virtual scheme="xml:reference.content" subst-scheme="html-addref"/>
+   </inherit>
+  </scheme>
+ </type>
+</hrc>

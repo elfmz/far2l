@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Icon Syntax Description
+With Help of:
+    Victor P Zhumatii <viz@rl.odessa.ua> <viz@mail.od.ua> <viz@ibis.odessa.ua>
+-->
+   <type name="icon">
+
+      <import type="def"/>
+
+      <region name="iconString" parent="String"/>
+      <region name="iconComment" parent="Comment"/>
+      <region name="iconSymb" parent="Symbol"/>
+      <region name="iconStructOp" parent="SymbolStrong"/>
+      <region name="iconWord" parent="Keyword"/>
+      <region name="iconOther" parent="Directive"/>
+      <region name="iconNumb" parent="Number"/>
+      <region name="iconPreProc" parent="Directive"/>
+
+
+      <scheme name="iconPrePro">
+         <regexp match="/(\#.*$)/" region0="iconComment"/>
+         <inherit scheme="CString"/>
+         <keywords region="iconSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="?"/>
+            <symb name="\"/>
+            <symb name="@"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="icon">
+<!-- comments -->
+         <regexp match="/\#.*$/" region0="iconComment"/>
+         <inherit scheme="Path"/>
+         <inherit scheme="NetAddresses"/>
+         <regexp match="/^ \s* \M procedure \s+ ([\w_]+)/ix" region1="Function"/>
+<!-- paired block -->
+         <block start="/\b(procedure)\b/" end="/\b(end)\b/" scheme="icon" region00="iconWord" region01="PairStart" region10="iconWord" region11="PairEnd"/>
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="icon"/>
+         </inherit>
+<!-- Numbers -->
+         <regexp match="/\b\d*[\,\.]?\d+([eE][\-\+]?\d+)?\b/" region="iconNumb"/>
+         <block start="/^\s*\$/" end="/(^|[^\\]?#1) $/x" scheme="iconPrePro" region="iconPreProc"/>
+         <inherit scheme="Apost"/>
+         <inherit scheme="StandardString"/>
+         <keywords region="iconSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="?"/>
+            <symb name="\"/>
+            <symb name="@"/>
+         </keywords>
+         <keywords region="iconWord">
+            <word name="link"/>
+            <word name="procedure"/>
+            <word name="end"/>
+            <word name="global"/>
+            <word name="local"/>
+            <word name="static"/>
+            <word name="not"/>
+            <word name="break"/>
+            <word name="case"/>
+            <word name="of"/>
+            <word name="default"/>
+            <word name="every"/>
+            <word name="do"/>
+            <word name="fail"/>
+            <word name="if"/>
+            <word name="then"/>
+            <word name="else"/>
+            <word name="next"/>
+            <word name="repeat"/>
+            <word name="return"/>
+            <word name="suspend"/>
+            <word name="until"/>
+            <word name="while"/>
+         </keywords>
+         <keywords region="iconWord">
+            <word name="null"/>
+            <word name="string"/>
+            <word name="co-expression"/>
+            <word name="table"/>
+            <word name="integer"/>
+            <word name="cset"/>
+            <word name="procedure"/>
+            <word name="set"/>
+            <word name="real"/>
+            <word name="file"/>
+            <word name="list"/>
+            <word name="record"/>
+         </keywords>
+         <keywords region="iconWord">
+            <word name="&amp;allocated"/>
+            <word name="&amp;ascii"/>
+            <word name="&amp;clock"/>
+            <word name="&amp;collections"/>
+            <word name="&amp;cset"/>
+            <word name="&amp;current"/>
+            <word name="&amp;date"/>
+            <word name="&amp;dateline"/>
+            <word name="&amp;digits"/>
+            <word name="&amp;dump"/>
+            <word name="&amp;e"/>
+            <word name="&amp;error"/>
+            <word name="&amp;errornumber"/>
+            <word name="&amp;errortext"/>
+            <word name="&amp;errorvalue"/>
+            <word name="&amp;errout"/>
+            <word name="&amp;fail"/>
+            <word name="&amp;features"/>
+            <word name="&amp;file"/>
+            <word name="&amp;host"/>
+            <word name="&amp;input"/>
+            <word name="&amp;lcase"/>
+            <word name="&amp;letters"/>
+            <word name="&amp;level"/>
+            <word name="&amp;line"/>
+            <word name="&amp;main"/>
+            <word name="&amp;null"/>
+            <word name="&amp;output"/>
+            <word name="&amp;phi"/>
+            <word name="&amp;pi"/>
+            <word name="&amp;pos"/>
+            <word name="&amp;progname"/>
+            <word name="&amp;random"/>
+            <word name="&amp;regions"/>
+            <word name="&amp;source"/>
+            <word name="&amp;storage"/>
+            <word name="&amp;subject"/>
+            <word name="&amp;time"/>
+            <word name="&amp;trace"/>
+            <word name="&amp;ucase"/>
+            <word name="&amp;version"/>
+            <word name="&amp;window"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

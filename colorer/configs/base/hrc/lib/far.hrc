@@ -1,0 +1,1436 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY far-macro-string SYSTEM "far-macro-string.ent.hrc">
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+ 
+<package name="far.macro.string.internal"/>
+<package name="far.macro.string-quot.internal"/>
+<package name="far.macro.string-xml-noquot.internal"/>
+<package name="far.macro.string-xml-noapos.internal"/>
+
+
+<!-- win-registry -->
+
+<type name="far.macro.string.internal">
+	<entity name="quote" value="&quot;"/>
+	<entity name="slash" value="\\"/>
+	<entity name="apos" value="&apos;"/>
+	<region name="vbString" parent="def:String"/>
+
+	
+	&far-macro-string;
+
+	<scheme name="verbatim-string">
+		<block start="/@(%quote;)/" end="/.*?(%quote;)?~1\m(%quote;)\M(%quote;)?!/"
+			region="vbString" scheme="vbstring.content"
+			region00='string.quote' region01="def:PairStart"
+			region10='string.quote' region12="def:PairEnd"		
+		/>
+	</scheme>
+</type>
+
+<type name="far.macro.string-quot.internal">
+	<entity name="quote" value="\\&quot;"/>
+	<entity name="slash" value="\\\\"/>
+	<entity name="apos" value="\\&apos;"/>
+	<region name="vbString" parent="def:String"/>
+
+	
+	&far-macro-string;
+
+	<scheme name="verbatim-string">
+		<block start="/@(%quote;)/" end="/.*?(%quote;)?~2\m(%quote;)\M(%quote;)?!/"
+			region="vbString" scheme="vbstring.content"
+			region00='string.quote' region01="def:PairStart"
+			region10='string.quote' region12="def:PairEnd"		
+		/>
+	</scheme>
+</type>
+
+
+<!-- for xml -->
+
+<type name="far.macro.string-xml-noquot.internal">
+	<entity name="quote" value="&amp;quot;"/>
+	<entity name="slash" value="\\"/>
+	<entity name="apos" value="(?{}&amp;apos;|')"/>
+	
+	&far-macro-string;
+	<scheme name="verbatim-string">
+	</scheme>
+
+</type>
+
+<type name="far.macro.string-xml-noapos.internal">
+	<entity name="quote" value='(?{}&amp;quot;|")'/>
+	<entity name="slash" value="\\"/>
+	<entity name="apos" value="&amp;apos;"/>
+	
+	&far-macro-string;
+	<scheme name="verbatim-string">
+	</scheme>
+</type>
+
+
+
+<!-- Far package begin here... -->
+ 
+<type name="far">
+
+<annotation>
+ <documentation> 
+ FAR package: FAR Manager common expressions.
+ 
+ mask.*  - file masks
+ macro.* - key makros
+ </documentation><contributors><![CDATA[
+  Eugene Efremov <4mirror@mail.ru> 
+ ]]></contributors>
+</annotation>
+
+
+<region name="date" parent="def:VarStrong"/>
+<region name="command" parent="def:Keyword"/>
+<region name="oper" parent="def:Symbol"/>
+<region name="struct" parent="def:SymbolStrong"/>
+<region name="var" parent="def:Var"/>
+<region name="func" parent="def:FunctionKeyword"/>
+<region name="flag" parent="def:Parameter"/>
+<region name="flag.dot" parent="struct"/>
+<region name="selmacroBlocks"     parent="def:LabelStrong"/>
+
+<region name="farConst"   parent="def:Constant"/>
+<region name="farConstUser"   parent="farConst"/>
+
+<!-- macro key -->
+<region name="macro.key" parent="def:Label"/>
+
+<!-- strings -->
+
+<scheme name="macro.string">
+	<inherit scheme="far.macro.string.internal:string"/>
+</scheme>
+
+<scheme name="macro.date">
+	<inherit scheme="macro.string">
+		<virtual scheme="far.macro.string.internal:string.content" 
+			subst-scheme="macro.date.conetnt"
+		/>
+	</inherit>
+</scheme>
+
+<scheme name="macro.date.conetnt">
+	<inherit scheme="far.macro.string.internal:string.content"/>
+	<regexp match="/\%m[0h]?/" region="date"/>
+	<regexp match="/\%[\%aAbBcCdDehHIjklLMnprRStTUvVwWxXyYZ]/" region="date"/>	
+</scheme>
+
+
+
+<!-- operators -->
+
+<scheme name='far.oper.logical'>
+	<!-- logical -->
+  <keywords region="oper">
+     <symb name="=="/>
+     <symb name="!="/>
+     <symb name="&lt;"/>
+     <symb name="&gt;"/>
+     <symb name="&lt;="/>
+     <symb name="&gt;="/>
+     <symb name="&amp;&amp;"/>
+     <symb name="||"/>
+  </keywords>
+
+</scheme>
+
+
+<scheme name='far.oper.arithmetic'>
+  <!-- arithmetic -->
+  <keywords region="oper">
+      <symb name="+"/>
+      <symb name="-"/>
+      <symb name="*"/>
+      <symb name="/"/>
+      <symb name="&amp;"/>
+      <symb name="^"/>
+      <symb name="|"/>
+      <symb name="!"/>
+  </keywords>
+</scheme>
+
+<scheme name='far.oper'>
+	<inherit scheme="far.oper.logical"/>	
+	<inherit scheme="far.oper.arithmetic"/>	
+	<regexp match="/,/" region="oper"/>
+
+</scheme>
+
+
+<scheme name="macro.expr">
+	<block start="/(\()/" end="/(\))/" scheme="macro.expr"
+		region00="oper" region01="def:PairStart"
+		region10="oper" region11="def:PairEnd"
+	/>
+	<regexp match="/^\s*;;.*?$/" region="def:Comment"/>
+
+	<inherit scheme="macro.func"/>	
+	<inherit scheme="far.oper"/>
+	<regexp match="/\#*\%{1,2}[\w\._]+\b/" region="var"/>
+	<regexp match="/\b0x[\dA-Fa-f]+\b/" region="def:NumberHex"/>
+	<regexp match="/\b0[0-7]+\b/" region="def:NumberOct"/>
+	<regexp match="/\b\d+\b/" region="def:NumberDec"/>
+	<inherit scheme="macro.string"/>
+	<inherit scheme="macro.const"/>
+	<inherit scheme="macro.flags"/>
+
+	<regexp match="/\S{2,}/" region="def:Error" priority="low"/>
+</scheme>
+
+
+<!-- macrocommands -->
+
+<scheme name="macro.command.expr">
+	<block start="/~(\()/" end="/(\))/" scheme="macro.expr"
+		region00="oper" region01="def:PairStart"
+		region10="oper" region11="def:PairEnd"
+	/>
+</scheme>
+
+
+<scheme name="macro.command.rep">
+	<inherit scheme="macro.command.expr"/>
+	<inherit scheme="macro.sequense"/>
+</scheme>
+
+
+<scheme name="macro.command.text">
+	<inherit scheme="macro.expr"/>
+	<inherit scheme="macro.string"/>
+</scheme>
+
+
+<scheme name="macro.command">
+
+	<block start="/(\$(Rep|While|If)\b)\s*/i" end="/(\$End\b)/i"
+		scheme="macro.command.rep" 
+		region00="command" region01="def:PairStart"
+		region10="command" region11="def:PairEnd"
+	/>
+		
+	<block start="/\$\M\w+/" end="/~\w+\b\m/" priority="low"
+		scheme="macro.command.names" region00="command"
+	/>
+
+	<!-- vars -->
+	<block start="/(\%{1,2}[\w\._]+)\s*(=)/" end="/;/" scheme="macro.expr"
+		region01="var" region02="oper" region10="struct"
+	/>
+</scheme>
+
+
+<scheme name="macro.sequense">
+	<regexp match="/^\s*;;.*?$/" region="def:Comment"/>
+	<regexp match="/^\$-start/" region="selmacroBlocks"/>  
+	<regexp match="/^\$-end/" region="selmacroBlocks"/>  
+	<regexp match="/\$Continue/i" region="command"/>
+	<inherit scheme="macro.command"/>
+	<inherit scheme="macro.expr"/>	
+
+	<regexp match="/\S{2,}/" region="def:Error" priority="low"/>	
+</scheme>
+
+
+<scheme name="macro.sequense-qoute">
+	<inherit scheme="macro.sequense">
+		<virtual scheme="macro.sequense" subst-scheme="macro.sequense-qoute"/>
+		<virtual 
+			scheme="far.macro.string.internal:string" 
+			subst-scheme="far.macro.string-quot.internal:string"
+		/>
+		<virtual 
+			scheme="far.macro.string.internal:string.content" 
+			subst-scheme="far.macro.string-quot.internal:string.content"
+		/>
+		<virtual 
+			scheme="far.macro.string.internal:macro.key.addon" 
+			subst-scheme="far.macro.string-quot.internal:macro.key.addon"
+		/>
+	</inherit>
+</scheme>
+
+<scheme name="macro.sequense-qoute.xml.apos">
+	<inherit scheme="macro.sequense">
+		<virtual scheme="macro.sequense" subst-scheme="macro.sequense-qoute"/>
+		<virtual 
+			scheme="far.macro.string.internal:string" 
+			subst-scheme="far.macro.string-xml-noquot.internal:string"
+		/>
+		<virtual 
+			scheme="far.macro.string.internal:string.content" 
+			subst-scheme="far.macro.string-xml-noquot.internal:string.content"
+		/>
+	</inherit>
+</scheme>
+
+<scheme name="macro.sequense-qoute.xml.quot">
+	<inherit scheme="macro.sequense">
+		<virtual scheme="macro.sequense" subst-scheme="macro.sequense-qoute"/>
+		<virtual 
+			scheme="far.macro.string.internal:string" 
+			subst-scheme="far.macro.string-xml-noapos.internal:string"
+		/>
+		<virtual 
+			scheme="far.macro.string.internal:string.content" 
+			subst-scheme="far.macro.string-xml-noapos.internal:string.content"
+		/>
+	</inherit>
+</scheme>
+
+
+<!-- XML (ESC) support  -->
+<scheme name='QuotMacro'> <!-- 'macro', quot allow -->
+	<inherit scheme="macro.sequense-qoute.xml.quot"/>
+</scheme>
+
+<scheme name='AposMacro'> <!-- "macro", quot deny -->
+	<inherit scheme="macro.sequense-qoute.xml.apos"/>
+</scheme>
+
+
+
+<scheme name="macro.func">
+	<keywords region="func" ignorecase="yes">
+		<word name="abs"/>
+		<word name="max"/>
+		<word name="min"/>
+		<word name="mod"/>
+		<word name="int"/>
+		<word name="index"/>
+		<word name="rindex"/>
+		<word name="replace"/>
+		<word name="asc"/>
+		<word name="chr"/>
+		<word name="itoa"/>
+		<word name="atoi"/>
+		<word name="len"/>
+		<word name="string"/>
+		<word name="substr"/>
+		<word name="trim"/>
+		<word name="xlat"/>
+		<word name="lcase"/>
+		<word name="ucase"/>
+		<word name="date"/>
+		<word name="fsplit"/>
+		<word name="fexist"/>
+		<word name="fattr"/>
+		<word name="panel.fattr"/>
+		<word name="panel.fexist"/>
+		<word name="panel.item"/>
+		<word name="panel.select"/>
+		<word name="panel.setpath"/>
+		<word name="panel.setpos"/>
+		<word name="panel.setposidx"/>
+		<word name="PanelItem"/>
+		<word name="iif"/>
+		<word name="env"/>
+		<word name="msave"/>
+		<word name="mmode"/>
+		<word name="akey"/>
+		<word name="clip"/>
+		<word name="flock"/>
+		<word name="sleep"/>
+		<word name="waitkey"/>
+		<word name="key"/>
+		<word name="eval"/>
+		<word name="msgbox"/>
+		<word name="prompt"/>
+		<word name="gethotkey"/>
+		<word name="checkhotkey"/>
+		<word name="Menu.ItemStatus"/>
+		<word name="Menu.Filter"/>
+		<word name="Menu.FilterStr"/>
+		<word name="Menu.GetValue"/>
+		<word name="Menu.Select"/>
+		<word name="Menu.Show"/>
+		<word name="Menu.Value"/>
+		<word name="Dlg.SetFocus"/>
+		<word name="Dlg.GetValue"/>
+		<word name="Editor.Pos"/>
+		<word name="Editor.Sel"/>
+		<word name="Editor.Set"/>
+		<word name="Editor.SetTitle"/>
+		<word name="Editor.Undo"/>
+		<word name="BM.Add"/>
+		<word name="BM.Clear"/>
+		<word name="BM.Del"/>
+		<word name="BM.Get"/>
+		<word name="BM.Next"/>
+		<word name="BM.Prev"/>
+		<word name="BM.Stat"/>
+		<word name="BM.Push"/>
+		<word name="BM.Pop"/>
+		<word name="BM.First"/>
+		<word name="BM.Last"/>
+		<word name="BM.Goto"/>
+		<word name="callplugin"/>
+		<word name="date"/>
+		<word name="print"/>
+		<word name="testfolder"/>
+		<word name="Plugin.Load"/>
+		<word name="Plugin.Unload"/>
+		<word name="Plugin.Call"/>
+		<word name="Plugin.Config"/>
+		<word name="Plugin.Prefix"/>
+		<word name="Plugin.Menu"/>
+		<word name="Plugin.Exist"/>
+		<word name="history.enable"/>
+		<word name="FMatch"/>
+		<word name="Keybar.Show"/>
+		<word name="Beep"/>
+		<word name="kbdLayoutBeep"/>
+		<word name="Size2Str"/>
+		<word name="StrWrap"/>
+		<word name="Far.Cfg.Get"/>
+	</keywords>
+</scheme>
+
+
+<scheme name="macro.command.names">
+	<keywords region="command" ignorecase="yes" worddiv="[\$\s]">
+		<word name="AKey"/>
+		<word name="Exit"/>
+		<word name="XLat"/>
+		<word name="KbdSwitch"/>
+		<word name="SelWord"/>
+		<word name="Else"/>
+	</keywords>
+	
+	<regexp match="/\S/" region="def:Error" priority="low"/>	
+</scheme>
+
+<!-- flags -->
+
+<scheme name="macro.flags">
+	<block start="/[APap]Panel(\.)\M\w+/i" end="/~[\w\.]+\m/" 
+		scheme="macro.flags.panel" 
+		region00="flag" region01="flag.dot"
+	/>
+	<block start="/CmdLine(\.)\M\w+/i" end="/~[\w\.]+\m/" 
+		scheme="macro.flags.cmd" 
+		region00="flag" region01="flag.dot"
+	/>
+	<block start="/Menu(\.)\M\w+/i" end="/~[\w\.]+\m/" 
+		scheme="macro.flags.menu" 
+		region00="flag" region01="flag.dot"
+	/>
+	<block start="/Dlg(\.)\M\w+/i" end="/~[\w\.]+\m/" 
+		scheme="macro.flags.dlg" 
+		region00="flag" region01="flag.dot"
+	/>
+	<block start="/Editor(\.)\M\w+/i" end="/~[\w\.]+\m/" 
+		scheme="macro.flags.edit" 
+		region00="flag" region01="flag.dot"
+	/>
+	<block start="/Viewer(\.)\M\w+/i" end="/~[\w\.]+\m/"
+		scheme="macro.flags.view"
+		region00="flag" region01="flag.dot"
+	/>
+	<inherit scheme="macro.flags.common"/>
+	<inherit scheme="macro.flags.registry"/>
+	<keywords region="flag" ignorecase="yes">
+		<word name="MacroArea"/>
+		<word name="ItemCount"/>
+		<word name="CurPos"/>
+		<word name="Title"/>
+		<word name="Far.Width"/>
+		<word name="Far.Height"/>
+		<word name="Far.Title"/>
+		<word name="Help.FileName"/>
+		<word name="MsX"/>
+		<word name="MsY"/>
+		<word name="Help.Topic"/>
+		<word name="Help.SelTopic"/>
+		<word name="MsButton"/>
+		<word name="MsCtrlState"/>
+		<word name="MsEventState"/>
+		<word name="IsUserAdmin"/>
+		<word name="RCounter"/>
+		<word name="Far.Pid"/>
+		<word name="Far.UpTime"/>
+		<word name="Far.Cfg.Err"/>
+	</keywords>
+	<inherit scheme="macro.flags.ns"/>
+	<inherit scheme="macro.keys"/>
+	<regexp match="/\S+/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.flags.common">
+	<keywords region="flag" ignorecase="yes">
+		<word name="Selected"/>
+		<word name="Eof"/>
+		<word name="Bof"/>
+		<word name="Empty"/>
+	</keywords> 
+</scheme>
+
+<scheme name="macro.flags.dlg">
+	<keywords region="flag" ignorecase="yes">
+		<word name="CurPos"/>
+		<word name="ItemCount"/>
+		<word name="ItemType"/>
+		<word name="Info.Id"/>
+		<word name="Info.Owner"/>
+		<word name="PrevPos"/>
+	</keywords> 
+	<regexp match="/\S+/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.flags.edit">
+	<keywords region="flag" ignorecase="yes">
+		<word name="CurPos"/>
+		<word name="State"/>
+		<word name="Lines"/>
+		<word name="CurLine"/>
+		<word name="RealPos"/>
+		<word name="FileName"/>
+		<word name="Value"/>
+	</keywords> 
+	<regexp match="/\S+/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.flags.cmd">
+	<inherit scheme="macro.flags.common"/>
+	<keywords region="flag" ignorecase="yes">
+		<word name="CurPos"/>
+		<word name="ItemCount"/>
+		<word name="Value"/>
+	</keywords> 
+	<regexp match="/\S+/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.flags.menu">
+	<keywords region="flag" ignorecase="yes">
+		<word name="Value"/>
+		<word name="Info.Id"/>
+	</keywords> 
+	<regexp match="/\S+/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.flags.view">
+	<keywords region="flag" ignorecase="yes">
+		<word name="State"/>
+		<word name="FileName"/>
+	</keywords>
+	<regexp match="/\S+/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.flags.panel">
+	<inherit scheme="macro.flags.common"/>
+	<keywords region="flag" ignorecase="yes">
+		<word name="OPIFlags"/>
+		<word name="Width"/>
+		<word name="Height"/>
+		<word name="UNCPath"/>
+		<word name="Path"/>
+		<word name="SelCount"/>
+		<word name="Current"/>
+		<word name="CurPos"/>
+		<word name="DriveType"/>
+		<word name="ItemCount"/>
+		<word name="Type"/>
+		<word name="Left"/>
+		<word name="Folder"/>
+		<word name="FilePanel"/>
+		<word name="Plugin"/>
+		<word name="Visible"/>
+		<word name="Root"/>
+		<word name="Filter"/>
+		<word name="HostFile"/>
+		<word name="Prefix"/>
+		<word name="Path0"/>
+		<word name="Format"/>
+	</keywords>
+	<regexp match="/\S+/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.flags.registry">
+	<keywords region="flag">
+		<word name="NoSendKeysToPlugins"/>
+		<word name="ReuseMacro"/>
+		<word name="NoPSelection"/>
+		<word name="PSelection"/>
+		<word name="NoPFiles"/>
+		<word name="NoPFolders"/>
+		<word name="NoPluginPPanels"/>
+		<word name="NoFilePPanels"/>
+		<word name="NoSelection"/>
+		<word name="Selection"/>
+		<word name="NoFiles"/>
+		<word name="NoFolders"/>
+		<word name="NoPluginPanels"/>
+		<word name="NoFilePanels"/>
+		<word name="NoEVSelection"/>
+		<word name="EVSelection"/>
+		<word name="NotEmptyCommandLine"/>
+		<word name="EmptyCommandLine"/>
+		<word name="RunAfterFARStart"/>
+		<word name="DisableOutput"/>
+	</keywords> 
+</scheme>
+
+<scheme name="macro.flags.ns">
+        <regexp match="/(Dialog|Shell)\.AutoCompletion/" region="flag"/>
+	<keywords region="flag" ignorecase="yes">
+		<word name="Shell"/>
+		<word name="Viewer"/>
+		<word name="Editor"/>
+		<word name="Dialog"/>
+		<word name="Search"/>
+		<word name="Disks"/>
+		<word name="MainMenu"/>
+		<word name="Menu"/>
+		<word name="Help"/>
+		<word name="Info"/>
+		<word name="QView"/>
+		<word name="Tree"/>
+		<word name="FindFolder"/>
+		<word name="Other"/>
+		<word name="UserMenu"/>
+	</keywords> 
+</scheme>
+
+
+
+<!-- ALL KEYS!!! -->
+
+<scheme name="macro.keys">
+	<keywords region="macro.key" ignorecase="yes" worddiv="[\s&quot;&apos;\(\)=]">
+		<word name="Alt"/>
+		<word name="Ctrl"/>
+		<word name="RCtrl"/>
+		<word name="RAlt"/>
+		<word name="Shift"/>
+		<word name="BackSlash"/>
+		<word name="BS"/>
+		<word name="Tab"/>
+		<word name="Enter"/>
+		<word name="Esc"/>
+		<word name="Space"/>
+		<word name="Break"/>
+		<word name="PgUp"/>
+		<word name="PgDn"/>
+		<word name="End"/>
+		<word name="Home"/>
+		<word name="Left"/>
+		<word name="Up"/>
+		<word name="Right"/>
+		<word name="Down"/>
+		<word name="Ins"/>
+		<word name="Del"/>
+		<word name="LWin"/>
+		<word name="RWin"/>
+		<word name="Apps"/>
+		<word name="Num0"/>
+		<word name="Num1"/>
+		<word name="Num2"/>
+		<word name="Num3"/>
+		<word name="Num4"/>
+		<word name="Num5"/>
+		<word name="Num6"/>
+		<word name="Num7"/>
+		<word name="Num8"/>
+		<word name="Num9"/>
+		<word name="NumEnter"/>
+		<word name="Multiply"/>
+		<word name="Add"/>
+		<word name="Subtract"/>
+		<word name="Divide"/>
+		<word name="F1"/>
+		<word name="F2"/>
+		<word name="F3"/>
+		<word name="F4"/>
+		<word name="F5"/>
+		<word name="F6"/>
+		<word name="F7"/>
+		<word name="F8"/>
+		<word name="F9"/>
+		<word name="F10"/>
+		<word name="F11"/>
+		<word name="F12"/>
+		<word name="`"/>
+		<word name="@"/>
+		<word name="#"/>
+		<word name="$"/>
+		<word name="%"/>
+		<word name="="/>
+		<word name="("/>
+		<word name=")"/>
+		<word name="["/>
+		<word name="]"/>
+		<word name="{"/>
+		<word name="}"/>
+		<word name="?"/>
+		<word name="|"/>
+		<word name="*"/>
+		<word name="+"/>
+		<word name="-"/>
+		<word name="."/>
+		<word name=","/>
+		<word name=";"/>
+		<word name=":"/>
+		<word name="'"/>
+		<word name="~"/>
+		<word name="/"/>
+		<!--word name="\"/-->
+		<word name="MsWheelUp"/>
+		<word name="MsWheelDown"/>
+		
+		<word name="CtrlAltShiftPress"/>
+		<word name="CtrlAltShiftRelease"/>
+		<word name="CtrlShift"/>
+		<word name="AltShift"/>
+		<word name="CtrlAlt"/>
+		<word name="Ctrl0"/>
+		<word name="Ctrl1"/>
+		<word name="Ctrl2"/>
+		<word name="Ctrl3"/>
+		<word name="Ctrl4"/>
+		<word name="Ctrl5"/>
+		<word name="Ctrl6"/>
+		<word name="Ctrl7"/>
+		<word name="Ctrl8"/>
+		<word name="Ctrl9"/>
+		<word name="RCtrl0"/>
+		<word name="RCtrl1"/>
+		<word name="RCtrl2"/>
+		<word name="RCtrl3"/>
+		<word name="RCtrl4"/>
+		<word name="RCtrl5"/>
+		<word name="RCtrl6"/>
+		<word name="RCtrl7"/>
+		<word name="RCtrl8"/>
+		<word name="RCtrl9"/>
+		<word name="CtrlA"/>
+		<word name="CtrlB"/>
+		<word name="CtrlC"/>
+		<word name="CtrlD"/>
+		<word name="CtrlE"/>
+		<word name="CtrlF"/>
+		<word name="CtrlG"/>
+		<word name="CtrlH"/>
+		<word name="CtrlI"/>
+		<word name="CtrlJ"/>
+		<word name="CtrlK"/>
+		<word name="CtrlL"/>
+		<word name="CtrlM"/>
+		<word name="CtrlN"/>
+		<word name="CtrlO"/>
+		<word name="CtrlP"/>
+		<word name="CtrlQ"/>
+		<word name="CtrlR"/>
+		<word name="CtrlS"/>
+		<word name="CtrlT"/>
+		<word name="CtrlU"/>
+		<word name="CtrlV"/>
+		<word name="CtrlW"/>
+		<word name="CtrlX"/>
+		<word name="CtrlY"/>
+		<word name="CtrlZ"/>
+		<word name="Alt0"/>
+		<word name="Alt1"/>
+		<word name="Alt2"/>
+		<word name="Alt3"/>
+		<word name="Alt4"/>
+		<word name="Alt5"/>
+		<word name="Alt6"/>
+		<word name="Alt7"/>
+		<word name="Alt8"/>
+		<word name="Alt9"/>
+		<word name="AltAdd"/>
+		<word name="AltMultiply"/>
+		<word name="AltA"/>
+		<word name="AltB"/>
+		<word name="AltC"/>
+		<word name="AltD"/>
+		<word name="AltE"/>
+		<word name="AltF"/>
+		<word name="AltG"/>
+		<word name="AltH"/>
+		<word name="AltI"/>
+		<word name="AltJ"/>
+		<word name="AltK"/>
+		<word name="AltL"/>
+		<word name="AltM"/>
+		<word name="AltN"/>
+		<word name="AltO"/>
+		<word name="AltP"/>
+		<word name="AltQ"/>
+		<word name="AltR"/>
+		<word name="AltS"/>
+		<word name="AltT"/>
+		<word name="AltU"/>
+		<word name="AltV"/>
+		<word name="AltW"/>
+		<word name="AltX"/>
+		<word name="AltY"/>
+		<word name="AltZ"/>
+		<word name="CtrlShiftAdd"/>
+		<word name="CtrlShiftSubtract"/>
+		<word name="CtrlShift0"/>
+		<word name="CtrlShift1"/>
+		<word name="CtrlShift2"/>
+		<word name="CtrlShift3"/>
+		<word name="CtrlShift4"/>
+		<word name="CtrlShift5"/>
+		<word name="CtrlShift6"/>
+		<word name="CtrlShift7"/>
+		<word name="CtrlShift8"/>
+		<word name="CtrlShift9"/>
+		<word name="RCtrlShift0"/>
+		<word name="RCtrlShift1"/>
+		<word name="RCtrlShift2"/>
+		<word name="RCtrlShift3"/>
+		<word name="RCtrlShift4"/>
+		<word name="RCtrlShift5"/>
+		<word name="RCtrlShift6"/>
+		<word name="RCtrlShift7"/>
+		<word name="RCtrlShift8"/>
+		<word name="RCtrlShift9"/>
+		<word name="CtrlShiftA"/>
+		<word name="CtrlShiftB"/>
+		<word name="CtrlShiftC"/>
+		<word name="CtrlShiftD"/>
+		<word name="CtrlShiftE"/>
+		<word name="CtrlShiftF"/>
+		<word name="CtrlShiftG"/>
+		<word name="CtrlShiftH"/>
+		<word name="CtrlShiftI"/>
+		<word name="CtrlShiftJ"/>
+		<word name="CtrlShiftK"/>
+		<word name="CtrlShiftL"/>
+		<word name="CtrlShiftM"/>
+		<word name="CtrlShiftN"/>
+		<word name="CtrlShiftO"/>
+		<word name="CtrlShiftP"/>
+		<word name="CtrlShiftQ"/>
+		<word name="CtrlShiftR"/>
+		<word name="CtrlShiftS"/>
+		<word name="CtrlShiftT"/>
+		<word name="CtrlShiftU"/>
+		<word name="CtrlShiftV"/>
+		<word name="CtrlShiftW"/>
+		<word name="CtrlShiftX"/>
+		<word name="CtrlShiftY"/>
+		<word name="CtrlShiftZ"/>
+		<word name="CtrlShiftBackSlash"/>
+		<word name="AltShift0"/>
+		<word name="AltShift1"/>
+		<word name="AltShift2"/>
+		<word name="AltShift3"/>
+		<word name="AltShift4"/>
+		<word name="AltShift5"/>
+		<word name="AltShift6"/>
+		<word name="AltShift7"/>
+		<word name="AltShift8"/>
+		<word name="AltShift9"/>
+		<word name="AltShiftA"/>
+		<word name="AltShiftB"/>
+		<word name="AltShiftC"/>
+		<word name="AltShiftD"/>
+		<word name="AltShiftE"/>
+		<word name="AltShiftF"/>
+		<word name="AltShiftG"/>
+		<word name="AltShiftH"/>
+		<word name="AltShiftI"/>
+		<word name="AltShiftJ"/>
+		<word name="AltShiftK"/>
+		<word name="AltShiftL"/>
+		<word name="AltShiftM"/>
+		<word name="AltShiftN"/>
+		<word name="AltShiftO"/>
+		<word name="AltShiftP"/>
+		<word name="AltShiftQ"/>
+		<word name="AltShiftR"/>
+		<word name="AltShiftS"/>
+		<word name="AltShiftT"/>
+		<word name="AltShiftU"/>
+		<word name="AltShiftV"/>
+		<word name="AltShiftW"/>
+		<word name="AltShiftX"/>
+		<word name="AltShiftY"/>
+		<word name="AltShiftZ"/>
+		<word name="CtrlAlt0"/>
+		<word name="CtrlAlt1"/>
+		<word name="CtrlAlt2"/>
+		<word name="CtrlAlt3"/>
+		<word name="CtrlAlt4"/>
+		<word name="CtrlAlt5"/>
+		<word name="CtrlAlt6"/>
+		<word name="CtrlAlt7"/>
+		<word name="CtrlAlt8"/>
+		<word name="CtrlAlt9"/>
+		<word name="CtrlAltA"/>
+		<word name="CtrlAltB"/>
+		<word name="CtrlAltC"/>
+		<word name="CtrlAltD"/>
+		<word name="CtrlAltE"/>
+		<word name="CtrlAltF"/>
+		<word name="CtrlAltG"/>
+		<word name="CtrlAltH"/>
+		<word name="CtrlAltI"/>
+		<word name="CtrlAltJ"/>
+		<word name="CtrlAltK"/>
+		<word name="CtrlAltL"/>
+		<word name="CtrlAltM"/>
+		<word name="CtrlAltN"/>
+		<word name="CtrlAltO"/>
+		<word name="CtrlAltP"/>
+		<word name="CtrlAltQ"/>
+		<word name="CtrlAltR"/>
+		<word name="CtrlAltS"/>
+		<word name="CtrlAltT"/>
+		<word name="CtrlAltU"/>
+		<word name="CtrlAltV"/>
+		<word name="CtrlAltW"/>
+		<word name="CtrlAltX"/>
+		<word name="CtrlAltY"/>
+		<word name="CtrlAltZ"/>
+		<word name="CtrlF1"/>
+		<word name="CtrlF2"/>
+		<word name="CtrlF3"/>
+		<word name="CtrlF4"/>
+		<word name="CtrlF5"/>
+		<word name="CtrlF6"/>
+		<word name="CtrlF7"/>
+		<word name="CtrlF8"/>
+		<word name="CtrlF9"/>
+		<word name="CtrlF10"/>
+		<word name="CtrlF11"/>
+		<word name="CtrlF12"/>
+		<word name="ShiftF1"/>
+		<word name="ShiftF2"/>
+		<word name="ShiftF3"/>
+		<word name="ShiftF4"/>
+		<word name="ShiftF5"/>
+		<word name="ShiftF6"/>
+		<word name="ShiftF7"/>
+		<word name="ShiftF8"/>
+		<word name="ShiftF9"/>
+		<word name="ShiftF10"/>
+		<word name="ShiftF11"/>
+		<word name="ShiftF12"/>
+		<word name="AltF1"/>
+		<word name="AltF2"/>
+		<word name="AltF3"/>
+		<word name="AltF4"/>
+		<word name="AltF5"/>
+		<word name="AltF6"/>
+		<word name="AltF7"/>
+		<word name="AltF8"/>
+		<word name="AltF9"/>
+		<word name="AltF10"/>
+		<word name="AltF11"/>
+		<word name="AltF12"/>
+		<word name="CtrlShiftF1"/>
+		<word name="CtrlShiftF2"/>
+		<word name="CtrlShiftF3"/>
+		<word name="CtrlShiftF4"/>
+		<word name="CtrlShiftF5"/>
+		<word name="CtrlShiftF6"/>
+		<word name="CtrlShiftF7"/>
+		<word name="CtrlShiftF8"/>
+		<word name="CtrlShiftF9"/>
+		<word name="CtrlShiftF10"/>
+		<word name="CtrlShiftF11"/>
+		<word name="CtrlShiftF12"/>
+		<word name="AltShiftF1"/>
+		<word name="AltShiftF2"/>
+		<word name="AltShiftF3"/>
+		<word name="AltShiftF4"/>
+		<word name="AltShiftF5"/>
+		<word name="AltShiftF6"/>
+		<word name="AltShiftF7"/>
+		<word name="AltShiftF8"/>
+		<word name="AltShiftF9"/>
+		<word name="AltShiftF10"/>
+		<word name="AltShiftF11"/>
+		<word name="AltShiftF12"/>
+		<word name="CtrlAltF1"/>
+		<word name="CtrlAltF2"/>
+		<word name="CtrlAltF3"/>
+		<word name="CtrlAltF4"/>
+		<word name="CtrlAltF5"/>
+		<word name="CtrlAltF6"/>
+		<word name="CtrlAltF7"/>
+		<word name="CtrlAltF8"/>
+		<word name="CtrlAltF9"/>
+		<word name="CtrlAltF10"/>
+		<word name="CtrlAltF11"/>
+		<word name="CtrlAltF12"/>
+		<word name="CtrlHome"/>
+		<word name="CtrlUp"/>
+		<word name="CtrlPgUp"/>
+		<word name="CtrlLeft"/>
+		<word name="CtrlRight"/>
+		<word name="CtrlEnd"/>
+		<word name="CtrlDown"/>
+		<word name="CtrlPgDn"/>
+		<word name="CtrlIns"/>
+		<word name="CtrlDel"/>
+		<word name="ShiftHome"/>
+		<word name="ShiftUp"/>
+		<word name="ShiftPgUp"/>
+		<word name="ShiftLeft"/>
+		<word name="ShiftRight"/>
+		<word name="ShiftEnd"/>
+		<word name="ShiftDown"/>
+		<word name="ShiftPgDn"/>
+		<word name="ShiftIns"/>
+		<word name="ShiftDel"/>
+		<word name="AltHome"/>
+		<word name="AltUp"/>
+		<word name="AltPgUp"/>
+		<word name="AltLeft"/>
+		<word name="AltRight"/>
+		<word name="AltEnd"/>
+		<word name="AltDown"/>
+		<word name="AltPgDn"/>
+		<word name="AltIns"/>
+		<word name="AltDel"/>
+		<word name="CtrlShiftHome"/>
+		<word name="CtrlShiftUp"/>
+		<word name="CtrlShiftPgUp"/>
+		<word name="CtrlShiftLeft"/>
+		<word name="CtrlShiftRight"/>
+		<word name="CtrlShiftEnd"/>
+		<word name="CtrlShiftDown"/>
+		<word name="CtrlShiftPgDn"/>
+		<word name="CtrlShiftIns"/>
+		<word name="CtrlShiftDel"/>
+		<word name="AltShiftHome"/>
+		<word name="AltShiftUp"/>
+		<word name="AltShiftPgUp"/>
+		<word name="AltShiftLeft"/>
+		<word name="AltShiftRight"/>
+		<word name="AltShiftEnd"/>
+		<word name="AltShiftDown"/>
+		<word name="AltShiftPgDn"/>
+		<word name="AltShiftIns"/>
+		<word name="AltShiftDel"/>
+		<word name="CtrlAltHome"/>
+		<word name="CtrlAltUp"/>
+		<word name="CtrlAltPgUp"/>
+		<word name="CtrlAltLeft"/>
+		<word name="CtrlAltRight"/>
+		<word name="CtrlAltEnd"/>
+		<word name="CtrlAltDown"/>
+		<word name="CtrlAltPgDn"/>
+		<word name="CtrlAltIns"/>
+		<word name="CtrlNum0"/>
+		<word name="CtrlNum1"/>
+		<word name="CtrlNum2"/>
+		<word name="CtrlNum3"/>
+		<word name="CtrlNum4"/>
+		<word name="CtrlNum5"/>
+		<word name="CtrlNum6"/>
+		<word name="CtrlNum7"/>
+		<word name="CtrlNum8"/>
+		<word name="CtrlNum9"/>
+		<word name="CtrlNumEnter"/>
+		<word name="ShiftNum0"/>
+		<word name="ShiftNum1"/>
+		<word name="ShiftNum2"/>
+		<word name="ShiftNum3"/>
+		<word name="ShiftNum4"/>
+		<word name="ShiftNum5"/>
+		<word name="ShiftNum6"/>
+		<word name="ShiftNum7"/>
+		<word name="ShiftNum8"/>
+		<word name="ShiftNum9"/>
+		<word name="ShiftNumEnter"/>
+		<word name="CtrlShiftNum0"/>
+		<word name="CtrlShiftNum1"/>
+		<word name="CtrlShiftNum2"/>
+		<word name="CtrlShiftNum3"/>
+		<word name="CtrlShiftNum4"/>
+		<word name="CtrlShiftNum5"/>
+		<word name="CtrlShiftNum6"/>
+		<word name="CtrlShiftNum7"/>
+		<word name="CtrlShiftNum8"/>
+		<word name="CtrlShiftNum9"/>
+		<word name="CtrlShiftNumEnter"/>
+		<word name="CtrlAltNum0"/>
+		<word name="CtrlAltNum1"/>
+		<word name="CtrlAltNum2"/>
+		<word name="CtrlAltNum3"/>
+		<word name="CtrlAltNum4"/>
+		<word name="CtrlAltNum5"/>
+		<word name="CtrlAltNum6"/>
+		<word name="CtrlAltNum7"/>
+		<word name="CtrlAltNum8"/>
+		<word name="CtrlAltNum9"/>
+		<word name="CtrlAltNumEnter"/>
+		<word name="AltShiftNum0"/>
+		<word name="AltShiftNum1"/>
+		<word name="AltShiftNum2"/>
+		<word name="AltShiftNum3"/>
+		<word name="AltShiftNum4"/>
+		<word name="AltShiftNum5"/>
+		<word name="AltShiftNum6"/>
+		<word name="AltShiftNum7"/>
+		<word name="AltShiftNum8"/>
+		<word name="AltShiftNum9"/>
+		<word name="AltShiftNumEnter"/>
+		<word name="CtrlBackSlash"/>
+		<word name="CtrlClear"/>
+		<word name="CtrlAdd"/>
+		<word name="ShiftAdd"/>
+		<word name="CtrlSubtract"/>
+		<word name="AltSubtract"/>
+		<word name="ShiftSubtract"/>
+		<word name="CtrlMultiply"/>
+		<word name="CtrlBS"/>
+		<word name="AltBS"/>
+		<word name="CtrlShiftBS"/>
+		<word name="ShiftBS"/>
+		<word name="CtrlShiftTab"/>
+		<word name="CtrlTab"/>
+		<word name="ShiftTab"/>
+		<word name="CtrlEnter"/>
+		<word name="ShiftEnter"/>
+		<word name="AltShiftEnter"/>
+		<word name="CtrlAltEnter"/>
+		<word name="AltEnter"/>
+		<word name="CtrlShiftEnter"/>
+		<word name="CtrlApps"/>
+		<word name="AltApps"/>
+		<word name="ShiftApps"/>
+		<word name="CtrlShiftApps"/>
+		<word name="AltShiftApps"/>
+		<word name="CtrlAltApps"/>
+		<word name="CtrlSpace"/>
+		<word name="ShiftSpace"/>
+		<word name="CtrlShiftSpace"/>
+
+		<word name="AltShiftMsWheelDown"/>
+		<word name="CtrlAltMsWheelDown"/>
+		<word name="CtrlShiftMsWheelDown"/>
+		<word name="AltMsWheelDown"/>
+		<word name="ShiftMsWheelDown"/>
+		<word name="CtrlMsWheelDown"/>
+		<word name="AltShiftMsWheelUp"/>
+		<word name="CtrlAltMsWheelUp"/>
+		<word name="CtrlShiftMsWheelUp"/>
+		<word name="AltMsWheelUp"/>
+		<word name="CtrlMsWheelUp"/>
+		<word name="MsRClick"/>
+		<word name="MsLClick"/>
+	</keywords>  
+	<inherit scheme='far.macro.string.internal:macro.key.addon'/>
+	<regexp match="/\b(Ctrl|Alt|Shift){1,3}[`@\#\$\%\=\(\)\[\]\{\}?\|*+\-.,;:'~\/]/" region="macro.key"/>
+	<regexp match="/\b\w\b/" region="macro.key"/>
+	
+	<regexp match="/\S/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="macro.const">
+   <!-- Constants -->
+	<keywords ignorecase="yes" region="farConst">
+     <word name="ACTIVEPANEL"/>
+     <word name="PASSIVEPANEL"/>
+     <word name="ERROR"/>
+
+     <word name="AKEY_HOTKEYCODE"/>
+     <word name="AKEY_HOTKEYNAME"/>
+
+     <word name="MENUSELECT_MATCH_ENTIRE"/>
+     <word name="MENUSELECT_MATCH_HEAD"/>
+     <word name="MENUSELECT_MATCH_TAIL"/>
+     <word name="MENUSELECT_MATCH_SUBSTR"/>
+
+     <word name="DLGGETVALUE_SELF_ID"/>
+
+     <word name="DLGGETVALUE_SELF_COUNT"/>
+     <word name="DLGGETVALUE_SELF_X1"/>
+     <word name="DLGGETVALUE_SELF_Y1"/>
+     <word name="DLGGETVALUE_SELF_X2"/>
+     <word name="DLGGETVALUE_SELF_Y2"/>
+     <word name="DLGGETVALUE_SELF_CURRENT"/>
+
+     <word name="DLGGETVALUE_VALUE"/>
+     <word name="DLGGETVALUE_TYPE"/>
+     <word name="DLGGETVALUE_X1"/>
+     <word name="DLGGETVALUE_Y1"/>
+     <word name="DLGGETVALUE_X2"/>
+     <word name="DLGGETVALUE_Y2"/>
+     <word name="DLGGETVALUE_FOCUSED"/>
+     <word name="DLGGETVALUE_STATE"/>
+     <word name="DLGGETVALUE_FLAGS"/>
+     <word name="DLGGETVALUE_IS_DEFAULT"/>
+     <word name="DLGGETVALUE_TEXT"/>
+
+     <word name="FSPLIT_DISK"/>
+     <word name="FSPLIT_PATH"/>
+     <word name="FSPLIT_NAME"/>
+     <word name="FSPLIT_EXT"/>
+
+     <word name="PROMPT_ENABLEEMPTY"/>
+     <word name="PROMPT_PASSWORD"/>
+     <word name="PROMPT_EXPANDENV"/>
+     <word name="PROMPT_NOUSELASTHISTORY"/>
+     <word name="PROMPT_BUTTONS"/>
+     <word name="PROMPT_NOAMPERSAND"/>
+
+     <word name="MSGBOX_WARNING"/>
+     <word name="MSGBOX_DOWN"/>
+     <word name="MSGBOX_LEFTALIGN"/>
+     <word name="MSGBOX_MB_OK"/>
+     <word name="MSGBOX_MB_OKCANCEL"/>
+     <word name="MSGBOX_MB_ABORTRETRYIGNORE"/>
+     <word name="MSGBOX_MB_YESNO"/>
+     <word name="MSGBOX_MB_YESNOCANCEL"/>
+     <word name="MSGBOX_MB_RETRYCANCEL"/>
+
+     <word name="FLOCK_NUMLOCK"/>
+     <word name="FLOCK_CAPSLOCK"/>
+     <word name="FLOCK_SCROLLLOCK"/>
+     <word name="FLOCK_GETSTATE"/>
+     <word name="FLOCK_OFF"/>
+     <word name="FLOCK_ON"/>
+     <word name="FLOCK_FLIP"/>
+
+     <word name="EDITORSET_GET"/>
+     <word name="EDITORSET_TABSIZE"/>
+     <word name="EDITORSET_EXPANDTABS"/>
+     <word name="EDITORSET_PERSISTENTBLOCKS"/>
+     <word name="EDITORSET_DELREMOVESBLOCKS"/>
+     <word name="EDITORSET_AUTOINDENT"/>
+     <word name="EDITORSET_AUTODETECTTABLE"/>
+     <word name="EDITORSET_ANSITABLEFORNEWFILE"/>
+     <word name="EDITORSET_CURSORBEYONDEOL"/>
+     <word name="EDITORSET_BSLIKEDEL"/>
+     <word name="EDITORSET_CHARCODEBASE"/>
+     <word name="EDITORSET_SAVEPOS"/>
+     <word name="EDITORSET_SAVESHORTPOS"/>
+     <word name="EDITORSET_CHAR_WORDDIV"/>
+     <word name="EDITORSET_F7RULES"/>
+     <word name="EDITORSET_ALLOWEMPTYSPACEAFTEREOF"/>
+
+     <word name="CLIP_GET"/>
+     <word name="CLIP_PUT"/>
+     <word name="CLIP_ADD"/>
+     <word name="CLIP_WIN2INT"/>
+     <word name="CLIP_INT2WIN"/>
+
+     <word name="PANELITEM_NAME"/>
+     <word name="PANELITEM_SHORTNAME"/>
+     <word name="PANELITEM_FILEATTR"/>
+     <word name="PANELITEM_CREATIONTIME"/>
+     <word name="PANELITEM_ACCESSTIME"/>
+     <word name="PANELITEM_WRITETIME"/>
+     <word name="PANELITEM_UNPSIZE"/>
+     <word name="PANELITEM_PACKSIZE"/>
+     <word name="PANELITEM_SELECTED"/>
+     <word name="PANELITEM_NUMBEROFLINKS"/>
+     <word name="PANELITEM_SORTGROUP"/>
+     <word name="PANELITEM_DIZTEXT"/>
+     <word name="PANELITEM_OWNER"/>
+     <word name="PANELITEM_CRC32"/>
+     <word name="PANELITEM_POSITION"/>
+     <word name="PANELITEM_CREATIONTIME_BIN"/>
+     <word name="PANELITEM_ACCESSTIME_BIN"/>
+     <word name="PANELITEM_WRITETIME_BIN"/>
+
+     <word name="FATTR_READONLY"/>
+     <word name="FATTR_HIDDEN"/>
+     <word name="FATTR_SYSTEM"/>
+     <word name="FATTR_DIRECTORY"/>
+     <word name="FATTR_ARCHIVE"/>
+     <word name="FATTR_NORMAL"/>
+     <word name="FATTR_TEMPORARY"/>
+     <word name="FATTR_SPARSE_FILE"/>
+     <word name="FATTR_REPARSE_POINT"/>
+     <word name="FATTR_COMPRESSED"/>
+     <word name="FATTR_OFFLINE"/>
+     <word name="FATTR_NOT_CONTENT_INDEXED"/>
+     <word name="FATTR_ENCRYPTED"/>
+     <word name="FATTR_VIRTUAL"/>
+
+     <word name="PANELTYPE_FILES"/>
+     <word name="PANELTYPE_TREE"/>
+     <word name="PANELTYPE_QVIEW"/>
+     <word name="PANELTYPE_INFO"/>
+
+     <word name="PANELDRIVETYPE_PLUGIN"/>
+     <word name="PANELDRIVETYPE_UNKNOWN"/>
+     <word name="PANELDRIVETYPE_REMOVABLE"/>
+     <word name="PANELDRIVETYPE_HARDDRIVE"/>
+     <word name="PANELDRIVETYPE_NETWORK"/>
+     <word name="PANELDRIVETYPE_CD_DVD"/>
+     <word name="PANELDRIVETYPE_VIRTUAL"/>
+     <word name="PANELDRIVETYPE_SUBST"/>
+
+     <word name="EDITORSTATE_IN_MEMORY"/>
+     <word name="EDITORSTATE_VIEWABLE"/>
+     <word name="EDITORSTATE_TEMPORARY"/>
+     <word name="EDITORSTATE_UNSAVED"/>
+     <word name="EDITORSTATE_STREAM_SELECT"/>
+     <word name="EDITORSTATE_VERTICAL_BLOCK"/>
+     <word name="EDITORSTATE_MODIFIED"/>
+     <word name="EDITORSTATE_OVERTYPE"/>
+     <word name="EDITORSTATE_PLUGIN_POSITION"/>
+     <word name="EDITORSTATE_LOCKED"/>
+     <word name="EDITORSTATE_PERSISTENT_BLOCKS"/>
+     <word name="EDITORSTATE_MODAL"/>
+     <word name="EDITORSTATE_FAR_AS_EDITOR"/>
+
+     <word name="VIEWERSTATE_CHAR_TABLE_AUTO"/>
+     <word name="VIEWERSTATE_ENCODING_ANSI"/>
+     <word name="VIEWERSTATE_ENCODING_UNICODE"/>
+     <word name="VIEWERSTATE_WRAP_LINES"/>
+     <word name="VIEWERSTATE_WORD_WRAP"/>
+     <word name="VIEWERSTATE_HEX_MODE"/>
+     <word name="VIEWERSTATE_MODAL"/>
+     <word name="VIEWERSTATE_FAR_AS_VIEWER"/>
+
+     <word name="DLGITEMTYPE_ERROR"/>
+     <word name="DLGITEMTYPE_TEXT"/>
+     <word name="DLGITEMTYPE_VTEXT"/>
+     <word name="DLGITEMTYPE_SINGLEBOX"/>
+     <word name="DLGITEMTYPE_DOUBLEBOX"/>
+     <word name="DLGITEMTYPE_EDIT"/>
+     <word name="DLGITEMTYPE_PSWEDIT"/>
+     <word name="DLGITEMTYPE_FIXEDIT"/>
+     <word name="DLGITEMTYPE_BUTTON"/>
+     <word name="DLGITEMTYPE_CHECKBOX"/>
+     <word name="DLGITEMTYPE_RADIOBUTTON"/>
+     <word name="DLGITEMTYPE_COMBOBOX"/>
+     <word name="DLGITEMTYPE_LISTBOX"/>
+     <word name="DLGITEMTYPE_USERCONTROL"/>
+     <word name="DLGITEMTYPE_HIST_EDIT"/>
+     <word name="DLGITEMTYPE_HIST_COMBO"/>
+
+     <word name="PANEL_OPIFLAGS_REGULAR"/>
+     <word name="PANEL_OPIFLAGS_USEFILTER"/>
+     <word name="PANEL_OPIFLAGS_USESORTGROUPS"/>
+     <word name="PANEL_OPIFLAGS_USEHIGHLIGHTING"/>
+     <word name="PANEL_OPIFLAGS_RAWSELECTION"/>
+     <word name="PANEL_OPIFLAGS_REALNAMES"/>
+     <word name="PANEL_OPIFLAGS_SHOWNAMESONLY"/>
+     <word name="PANEL_OPIFLAGS_RIGHTALIGNNAMES"/>
+     <word name="PANEL_OPIFLAGS_PRESERVECASE"/>
+
+     <word name="TSTFLD_NOTFOUND"/>
+     <word name="TSTFLD_NOTEMPTY"/>
+     <word name="TSTFLD_EMPTY"/>
+     <word name="TSTFLD_NOTACCESS"/>
+     <word name="TSTFLD_ERROR"/>
+
+     <word name="DOUBLE_CLICK"/>
+     <word name="MOUSE_HWHEELED"/>
+     <word name="MOUSE_MOVED"/>
+     <word name="MOUSE_WHEELED"/>
+	</keywords>
+	
+	<keywords ignorecase="yes" region="farConstUser">
+		<word name='PanelTabs'/>
+		<word name="ConEmu"/>
+	</keywords>
+
+</scheme>
+
+<!-- 
+	-
+	- masks !!
+	-
+	-->
+
+
+<region name="Quote" parent="regexp:Quote"/>
+<region name="MetaSymb" parent="regexp:MetaSymb"/>
+<region name="MetaSymbStrong" parent="regexp:MetaSymbStrong"/>
+
+<scheme name="bat.var">
+	<regexp match="/(\%)[^\[\]]*?(\%)/" 
+		region0="def:Var" region1="def:PairStart" region2="def:PairEnd"
+	/>
+</scheme>
+
+
+<scheme name="mask.class">
+	<regexp match="/[\-\,]/" region="MetaSymb"/> 
+</scheme>
+
+<scheme name="mask.string">
+	<regexp match="/\,/" region="def:Symbol"/>
+	<regexp match="/[\*\?]/" region="MetaSymb"/>
+	<regexp match="/\|/" region="MetaSymbStrong"/>
+	<block start="/(\[)/" end="/(\])/" scheme="mask.class"
+		region00="Quote" region01="def:PairStart"
+		region10="Quote" region11="def:PairEnd"
+	/>     
+	<inherit scheme="bat.var"/>
+</scheme>
+
+
+
+
+<!-- заглушка для создания типа -->
+
+<scheme name="far">
+	<annotation>
+		<documentation>
+		 This scheme need for colorer versions, 
+		 then don't support packages.
+		</documentation>
+	</annotation>
+	<inherit scheme="def:Path"/>
+	<inherit scheme="mask.string"/>
+	<inherit scheme="macro.string"/>
+</scheme>
+
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the far.hrc package.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2003-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

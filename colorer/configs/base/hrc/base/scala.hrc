@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+  <annotation><documentation>
+    Scala Files
+  </documentation><contributors><![CDATA[
+    Eishay Smith <eishay@gmail.com>
+    JULY <lubimovi@usa.net>
+    Eugene Efremov <4mirror@mail.ru>
+  ]]></contributors>
+  </annotation>
+
+
+  <type name="scala">
+
+    <import type="def"/>
+
+    <region name='PackageOutline' parent='def:Outlined'/>
+    <region name='ImportOutline' parent='def:Outlined'/>
+
+    <region name='ClassOutline' parent='def:Outlined'/>
+    <region name='InnerClassOutline' parent='def:Outlined'/>
+    <region name='InterfaceOutline' parent='def:Outlined'/>
+    <region name='MethodOutline' parent='def:Outlined'/>
+    <region name='NativeOutline' parent='def:Outlined'/>
+
+    <region name='StringEscape' parent='def:StringContent'/>
+    <region name='KeywordModifier' parent='def:Keyword'/>
+
+
+    <scheme name="TabsAsErrors" if="tabs-as-errors">
+      <regexp match="/\t+/" region='def:Error'/>
+    </scheme>
+
+    <scheme name="SpacesAsErrors" if="spaces-as-errors">
+      <regexp match="/\x20+$/" region='def:Error'/>
+    </scheme>
+
+    <scheme name="package">
+     <keywords region="def:Symbol">
+      <symb name="."/>
+      <symb name="$"/>
+     </keywords>
+     <regexp match="/[^\w\s]/" region="def:Error" priority="low"/>
+     <inherit scheme="TabsAsErrors"/>
+     <inherit scheme="SpacesAsErrors"/>
+    </scheme>
+
+    <scheme name="import">
+     <regexp match="/[\.\s]?#1(\*)[\.\\]?=/" region1="def:Keyword"/>
+     <inherit scheme="package"/>
+    </scheme>
+
+
+    <scheme name="scala">
+       <block start="/^ \s* (package) \s* \M ([\w\$\.]+)?/x" end="/$/"
+        scheme="package" region="def:Directive"
+        region01='def:Keyword' region02='PackageOutline'
+        region10="def:SymbolStrong"
+       />
+       <block start="/^ \s* (import) \s* (.+)?/x" end="/$/"
+        scheme="import" region="def:Directive"
+        region01='def:Keyword' region02='ImportOutline'
+        region10="def:SymbolStrong"
+       />
+
+       <inherit scheme="ScalaComments"/>
+       <regexp match="/ \b (?{Keyword}interface) \s+ (?{InterfaceOutline}[\w_]+ [\w_:\$]*?) /x"/>
+       <regexp match="/ \b (?{Keyword}class) \s+ (?{ClassOutline}[\w_]+ [\w_:\$]*?) /x"/>
+
+       <keywords region="KeywordModifier">
+          <word name='def'/>
+          <word name='var'/>
+          <word name='Type'/>
+          <word name='val'/>
+          <word name='implicit'/>
+          <word name='abstract'/>
+          <word name='final'/>
+          <word name='private'/>
+          <word name='protected'/>
+          <word name='public'/>
+          <word name='static'/>
+          <word name='strictfp'/>
+          <word name="throws"/>
+          <word name="extends"/>
+          <word name="implements"/>
+       </keywords>
+
+       <block start="/(\{)/" end="/(\})/" scheme="TypeDeclaration"
+              region00="def:SymbolStrong" region01="def:PairStart"
+              region10="def:SymbolStrong" region11="def:PairEnd"/>
+
+       <inherit scheme="TabsAsErrors"/>
+       <inherit scheme="SpacesAsErrors"/>
+
+       <!-- EE: ; -->
+       <keywords region="def:Symbol">
+        <symb name=";"/>
+       </keywords>
+    </scheme>
+
+
+    <scheme name="StringContent">
+       <regexp match="/\\[^uU0-7]/" region0="StringEscape"/>
+       <regexp match="/\\$/" region0="StringEscape"/>
+       <regexp match="/\\[uU][\da-fA-F]{1,8}/" region0="StringEscape"/>
+       <regexp match="/\\[0-7]{1,12}/" region0="StringEscape"/>
+       <regexp match="/[^\\\&#34;]$/" region0="Error"/>
+    </scheme>
+
+    <scheme name="DocumentationComment">
+       <!--!!!
+       <inherit scheme="htmlTagCall">
+          <virtual scheme="htmlPairs" subst-scheme="empty"/>
+       </inherit>
+       -->
+       <inherit scheme="NetAddresses"/>
+       <regexp match="/~\*{3,}/" priority="low"/>
+       <keywords region="CommentContent">
+          <symb name="*"/><symb name=","/>
+          <symb name=":"/><symb name=";"/>
+          <symb name="+"/><symb name="-"/>
+          <symb name="/"/>
+       </keywords>
+       <regexp match="/ &lt; \/? \w+ &gt; /x" region0="CommentContent"/>
+       <regexp match="/ \b ([0-9\.]+) \b /x" region0="Number"/>
+       <regexp match="/(\@author)\s+(\S.*)/x" region1="CommentContent" region2="CommentContent"/>
+
+       <inherit scheme="TabsAsErrors"/>
+       <inherit scheme="SpacesAsErrors"/>
+
+       <!--regexp match="/(\@)(\w+)/" region1="Symbol"-->
+       <keywords region="CommentContent">
+          <word name="@author"/>
+          <word name="@beaninfo"/>
+          <word name="@history"/>
+          <word name="@bug"/>
+          <word name="@review"/>
+          <word name="@todo"/>
+          <word name="@idea"/>
+          <word name="@pre"/>
+          <word name="@requires"/>
+          <word name="@post"/>
+          <word name="@ensures"/>
+          <word name="@generates"/>
+          <word name="@modifies"/>
+          <word name="@invariant"/>
+          <word name="@exception"/>
+          <word name="@hides"/>
+          <word name="@overrides"/>
+          <word name="@equivalent"/>
+          <word name="@bon"/>
+          <word name="@access"/>
+          <word name="@example"/>
+          <word name="@design"/>
+          <word name="@serial"/>
+          <word name="@references"/>
+          <word name="@uses"/>
+          <word name="@guard"/>
+          <word name="@values"/>
+          <word name="@complexity"/>
+          <word name="@deprecated"/>
+          <word name="@docRoot"/>
+          <word name="@exception"/>
+          <word name="@link"/>
+          <word name="@param"/>
+          <word name="@return"/>
+          <word name="@see"/>
+          <word name="@serialData"/>
+          <word name="@serialField"/>
+          <word name="@since"/>
+          <word name="@throws"/>
+          <word name="@version"/>
+          <word name="@spec"/>
+          <symb name="@(#)"/>
+          <symb name="#"/>
+          <symb name="@"/>
+       </keywords>
+    </scheme>
+
+    <scheme name="ScalaComments">
+       <regexp match="/\/\*\*\//" region="Comment"/>
+       <block start="/\/\//" end="/$/" scheme="Comment" region="LineComment"/>
+       <block start="/\/\*\*/" end="/\*\//" scheme="DocumentationComment"
+              region="CommentDoc" region00="PairStart" region10="PairEnd"/>
+       <block start="/\/\*/" end="/\*\//" scheme="Comment"
+              region="Comment" region00="PairStart" region10="PairEnd"/>
+    </scheme>
+
+
+    <scheme name="TypeDeclaration">
+
+       <inherit scheme="ScalaComments"/>
+
+       <regexp match="/ \b (?{Keyword}new) \s+ (?{InnerClassOutline}[\w_]+ [\w_:\$]*?) \M \s*\([^\(\)]*\) \s* ([\{]|$) /x"/>
+       <!--
+       <regexp match="/ \M\b native .+? (?{NativeOutline}[\w_]+ [\w_:\$]*?) \s*\( /x"/>
+       -->
+
+       <regexp match="/ \b (?{Keyword}interface) \s+ (?{InterfaceOutline}[\w_]+ [\w_:\$]*?) /x"/>
+       <regexp match="/ \b (?{Keyword}class) \s+ (?{ClassOutline}[\w_]+ [\w_:\$]*?) /x"/>
+
+       <inherit scheme="def:PairedBrackets">
+          <virtual scheme="def:PairedBrackets" subst-scheme="TypeDeclaration"/>
+       </inherit>
+
+       <!-- numbers -->
+       <inherit scheme="def:CHexNumber"/>
+       <inherit scheme="def:FloatNumber"/>
+       <inherit scheme="def:DecNumber"/>
+
+       <!-- strings -->
+       <block start="/&#34;/" end="/&#34;|$/" scheme="StringContent" region="String"/>
+       <regexp match="/' \\u[\da-fA-F]{1,4} '/ix" region="Character"/>
+       <inherit scheme="c:Character"/>
+
+       <inherit scheme="TabsAsErrors"/>
+       <inherit scheme="SpacesAsErrors"/>
+
+       <!-- Standard Symbols -->
+       <keywords region="def:Error">
+          <symb name="["/><symb name="]"/>
+          <symb name="{"/><symb name="}"/>
+          <symb name="("/><symb name=")"/>
+          <symb name="*/"/>
+       </keywords>
+       <keywords region="def:Symbol">
+          <symb name=";" region="def:SymbolStrong"/>
+          <symb name="="/><symb name="+"/><symb name="-"/>
+          <symb name="/"/><symb name="*"/>
+          <symb name="&amp;"/><symb name="^"/>
+          <symb name="|"/><symb name=":"/>
+          <symb name=","/><symb name="."/>
+          <symb name="!"/><symb name="~"/>
+          <symb name="&lt;"/><symb name="&gt;"/>
+          <symb name="%"/><symb name="?"/>
+          <symb name="#"/><symb name="@"/>
+          <symb name="_"/>
+       </keywords>
+       <keywords region="def:Keyword">
+          <word name="break"/>
+          <word name="catch"/>
+          <word name="case"/>
+          <word name="continue"/>
+          <word name="default"/>
+          <word name="do"/>
+          <word name="else"/>
+          <word name="false"/>
+          <word name="for"/>
+          <word name="finally"/>
+          <word name="if"/>
+          <word name="interface"/>
+          <word name="instanceof"/>
+          <word name="new"/>
+          <word name="null"/>
+          <word name="return"/>
+          <word name="switch"/>
+          <word name="match"/>
+          <word name="super"/>
+          <word name="try"/>
+          <word name="true"/>
+          <word name="this"/>
+          <word name="throw"/>
+          <word name="while"/>
+       </keywords>
+       <keywords region="KeywordModifier">
+          <word name="abstract"/>
+          <word name="case"/>
+          <word name="catch"/>
+          <word name="class"/>
+          <word name="def"/>
+          <word name="do"/>
+          <word name="else"/>
+          <word name="extends"/>
+          <word name="final"/>
+          <word name="finally"/>
+          <word name="for"/>
+          <word name="forSome"/>
+          <word name="if"/>
+          <word name="implicit"/>
+          <word name="import"/>
+          <word name="lazy"/>
+          <word name="match"/>
+          <word name="new"/>
+          <word name="object"/>
+          <word name="override"/>
+          <word name="package"/>
+          <word name="private"/>
+          <word name="protected"/>
+          <word name="requires"/>
+          <word name="return"/>
+          <word name="sealed"/>
+          <word name="throw"/>
+          <word name="trait"/>
+          <word name="try"/>
+          <word name="type"/>
+          <word name="val"/>
+          <word name="var"/>
+          <word name="with"/>
+          <word name="while"/>
+          <word name="yield"/>
+          <word name="=&gt;"/>
+       </keywords>
+       <keywords region="KeywordModifier">
+          <word name='native'/>
+          <word name='synchronized'/>
+          <word name='threadsafe'/>
+          <word name='volatile'/>
+          <word name='transient'/>
+       </keywords>
+       <keywords region="def:TypeKeyword">
+      <!-- java.lang.* wrapper types -->
+          <word name="Character"/>
+          <word name="Integer"/>
+
+      <!-- scala.* primitive types -->
+          <word name="Boolean"/>
+          <word name="boolean"/>
+          <word name="Byte"/>
+          <word name="byte"/>
+          <word name="Char"/>
+          <word name="char"/>
+          <word name="Double"/>
+          <word name="double"/>
+          <word name="Float"/>
+          <word name="float"/>
+          <word name="Int"/>
+          <word name="int"/>
+          <word name="Long"/>
+          <word name="long"/>
+          <word name="Short"/>
+          <word name="short"/>
+          <word name="Unit"/>
+          <word name="unit"/>
+
+       </keywords>
+
+       <keywords region="def:ClassKeyword">
+      <!-- scala.* predefined types -->
+          <word name="Actor"/>
+          <word name="ActorProxy"/>
+          <word name="ActorTask"/>
+          <word name="ActorThread"/>
+          <word name="AllRef"/>
+          <word name="Any"/>
+          <word name="AnyRef"/>
+          <word name="Application"/>
+          <word name="AppliedType"/>
+          <word name="Array"/>
+          <word name="ArrayBuffer"/>
+          <word name="Attribute"/>
+          <word name="BoxedArray"/>
+          <word name="BoxedBooleanArray"/>
+          <word name="BoxedByteArray"/>
+          <word name="BoxedCharArray"/>
+          <word name="Buffer"/>
+          <word name="BufferedIterator"/>
+          <word name="Enumeration"/>
+          <word name="Fluid"/>
+          <word name="Function"/>
+          <word name="IScheduler"/>
+          <word name="ImmutableMapAdaptor"/>
+          <word name="ImmutableSetAdaptor"/>
+          <word name="Iterable"/>
+          <word name="List"/>
+          <word name="Option"/>
+          <word name="Pair"/>
+          <word name="PartialFunction"/>
+          <word name="Pid"/>
+          <word name="PriorityQueue"/>
+          <word name="PriorityQueueProxy"/>
+          <word name="Reaction"/>
+          <word name="Ref"/>
+          <word name="Responder"/>
+          <word name="RichInt"/>
+          <word name="RichString"/>
+          <word name="Rule"/>
+          <word name="RuleTransformer"/>
+          <word name="Script"/>
+          <word name="Some"/>
+          <word name="Stream"/>
+          <word name="String"/>
+          <word name="Symbol"/>
+          <word name="TcpService"/>
+          <word name="TcpServiceWorker"/>
+          <word name="WorkerThread"/>
+
+          <word name="Console"/>
+          <word name="Nil"/>
+          <word name="None"/>
+          <word name="Predef"/>
+          <word name="RemoteActor"/>
+          <word name="SUnit"/>
+          <word name="ScalaRunTime"/>
+          <word name="Scheduler"/>
+          <word name="TIMEOUT"/>
+          <word name="TimerThread"/>
+       </keywords>
+
+       <regexp match="/\M \b (?{MethodOutline}[\:\w_*&amp;~]+?) \s* \( [^\)\(]*? \) [\w\s\{]*? $/x"/>
+       <!-- return new Object(...) -->
+       <regexp match="/^\s* \M \b ([\:\w_*&amp;~]+?\s+)+ (?{MethodOutline}[\:\w_*&amp;~]+?) \s* \( [^\)\(]*? \) \s* ; \s* $/x"/>
+
+    </scheme>
+
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Igor Russkih <irusskih at gmail>
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Eishay Smith <eishay@gmail.com>
+   - JULY <lubimovi@usa.net>
+   - Eugene Efremov <4mirror@mail.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

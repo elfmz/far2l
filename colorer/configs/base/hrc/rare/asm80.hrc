@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  Z80 Assembler syntax 2.0
+
+  Supported formats:
+    .a80 (Mednonogov's asm80);
+    .za  (Evdokimov's z80asm).
+
+  By Alex Smith <thims@inbox.ru>
+                <flame@baltnet.ru>
+                <Alex.Kuznetsov@p9.f33.n478.z2.fidonet.org (2:478/33.9)>
+-->
+   <type name="asm80">
+
+      <import type="def"/>
+      <import type="z80"/>
+
+      <scheme name="BaseAsm80">
+         <inherit scheme="z80BaseAsm"/>
+         <inherit scheme="BaseZ80"/>
+<!-- Labels -->
+         <regexp match="/^([a-zA-Z\$_][\w\$]*)/i" region0="aLabel"/>
+<!-- Commands -->
+         <regexp match="/^(\*\u.*)$/" region0="aCommand"/>
+<!-- Z80 mnemonics -->
+         <keywords ignorecase="yes" region="aMnemonic">
+            <word name="sli"/>
+         </keywords>
+<!-- Directives -->
+         <keywords ignorecase="yes" region="aDirective">
+            <word name="DEFR"/>
+            <word name="DISP"/>
+            <word name="ENDD"/>
+            <word name="ENT"/>
+            <word name="TIME"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="asm80Mac">
+         <inherit scheme="BaseAsm80"/>
+         <regexp match="/\=.\b/" region0="aLabel"/>
+      </scheme>
+
+      <scheme name="asm80">
+         <inherit scheme="BaseAsm80"/>
+<!-- Macroses -->
+         <block start="/\bMAC\b/i" end="/\bENDM\b/i" scheme="asm80Mac"/>
+      </scheme>
+
+      <scheme name="NameDir">
+         <inherit scheme="BaseTyp"/>
+<!-- Strings -->
+         <regexp match="/('.*?')/" region0="aString"/>
+<!-- Basic tokens -->
+         <regexp match="/\{[A-Za-z&lt;\&gt;](\=|\&gt;|[A-Za-z]+ ?([A-Za-z]+\$?)|\#)\}/" region="aToken"/>
+<!-- Basic operators -->
+         <keywords ignorecase="yes" region="aToken">
+            <word name="AT"/>
+            <word name="BRIGHT"/>
+            <word name="CHR$"/>
+            <word name="FLASH"/>
+            <word name="INK"/>
+            <word name="INVERSE"/>
+            <word name="OVER"/>
+            <word name="PAPER"/>
+            <word name="TAB"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Alex Smith <thims@inbox.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

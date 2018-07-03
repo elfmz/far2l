@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<annotation><documentation>
+ На выходе юзаются две схемы:
+ Vars - для всего.
+ VarsEx - для строк.
+ Остальное - internal.
+ 
+ SubProt - отдельная песня: прототип ф-ций
+</documentation></annotation>
+
+<scheme name="SubProt">
+	<keywords region="SubProt">
+		<word name="&amp;"/>
+		<word name="*"/>
+		<word name="$"/>
+		<word name="\&amp;"/>
+		<word name="\%"/>
+		<word name="\@"/>
+		<word name="\*"/>
+		<word name="\$"/>
+		<word name=";" region="Symb"/>
+	</keywords>
+	<regexp match="/[@%]\M\)/" region="SubProt"/>
+	<regexp match="/\S/" region="def:Error" priority="low"/>
+</scheme>
+
+
+
+<entity name="varname" value="\dA-Za-z_:&apos;" /> 
+
+<scheme name="VarBrakContent">
+	<regexp match="/~\s*\w+\s*(\})?=/" region="Var"/>
+	<inherit scheme="perl-core"/>
+</scheme>
+
+
+<scheme name="VarBrakFirst">
+	<block start="/~(\{)/" end="/(\})/" scheme="VarBrakContent"
+		region00="Var" 
+		region10="Var" region11="def:PairEnd"
+	/><!--region01="def:PairStart" -->
+</scheme>
+
+<scheme name="VarBrak">
+	<block start="/(\{)/" end="/(\})/" scheme="VarBrakContent"
+		region00="Symb" region01="def:PairStart"
+		region10="Symb" region11="def:PairEnd"
+	/>
+	<block start="/(\[)/" end="/(\])/" scheme="perl-core"
+		region00="Symb" region01="def:PairStart"
+		region10="Symb" region11="def:PairEnd"
+	/>
+</scheme>
+
+<scheme name="VarBrakEx">
+	<inherit scheme="VarBrakFirst"/>
+	<inherit scheme="VarBrak"/>
+</scheme>
+
+
+<scheme name="Vars">
+	<inherit scheme="BuildinVars"/>
+	<inherit scheme="BuildinConst"/>
+	<inherit scheme="perl-vars:vars"/>
+</scheme>
+
+
+
+<scheme name="VarsEx">
+	<inherit scheme="BuildinVars"/>
+	<inherit scheme="perl-vars-ex:vars"/>
+</scheme>
+
+<!--Conetnt
+<scheme name="VarsEx">
+	<block start="/\M[$@][$#@]*([\w\{]|::)+/" end="//" scheme="VarsExConetnt" 
+		priority="low" 
+	/>
+</scheme>
+-->
+
+<!-- Defines... -->
+
+<scheme name="BuildinVars">
+	<keywords region="Var" priority="low">
+		<word name="$&amp;"/>
+		<word name="$&#34;"/>
+		<word name="$'"/>
+		<word name="$`"/>
+		<word name="$]"/>
+		<word name="$["/>
+		<word name="$+"/>
+		<word name="$*"/>
+		<word name="$,"/>
+		<word name="$/"/>
+		<word name="$|"/>
+		<word name="$."/>
+		<word name="$\"/>
+		<word name="$;"/>
+		<word name="$%"/>
+		<word name="$="/>
+		<word name="$-"/>
+		<word name="$~"/>
+		<word name="$?"/>
+		<!--word name="$:"/-->
+		<word name="$!"/>
+		<word name="$@"/>
+		<word name="$&lt;"/>
+		<word name="$&gt;"/>
+		<word name="$("/>
+		<word name="$)"/>
+		<!--word name="$_"/-->
+		<word name="$^L"/>
+		<!--word name="$$"/-->
+		<word name="$^A"/>
+		<word name="$^E"/>
+		<word name="$^F"/>
+		<word name="$^C"/>
+		<word name="$^D"/>
+		<word name="$^V"/>
+		<word name="$^H"/>
+		<word name="$^M"/>
+		<word name="$^O"/>
+		<word name="$^R"/>
+		<word name="$^S"/>
+		<word name="$^X"/>
+		<word name="$^I"/>
+		<word name="$^P"/>
+		<word name="$^T"/>
+		<word name="$^W"/>
+	</keywords>
+	<regexp match="/\$\d{1,2}/" region0="Var"/>
+	<regexp match="/\$\:\M([^\:]|$)/x" region0="Var" priority="low"/>
+	<regexp match="/\$\$\M([^%varname;\[\$\#\{]|$)/x" region0="Var"/>
+</scheme>
+
+<scheme name="BuildinConst">
+	<keywords region="Var">
+		<word name="DATA"/>
+		<word name="__FILE__"/>
+		<word name="__PACKAGE__"/>
+		<word name="__LINE__"/>
+		<word name="__DIE__"/>
+		<word name="__WARN__"/>
+		<word name="ARGVOUT"/>
+	</keywords>
+	<keywords region="Var" ignorecase="yes">
+		<word name="STDIN"/>
+		<word name="STDOUT"/>
+		<word name="STDERR"/>
+	</keywords>
+</scheme>

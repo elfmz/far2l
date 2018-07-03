@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+
+<annotation><documentation>
+    Colorer HRC packages group for
+        XSLT, XPath and XQuery
+        
+    This is HRC fragment for
+        XQuery 1.0 and XPath 2.0 Functions and Operators
+        W3C Working Draft 29 October 2004
+        http://www.w3.org/TR/xpath-functions/
+    
+</documentation><contributors><![CDATA[
+    Eugene Efremov <4mirror@mail.ru>
+]]></contributors></annotation>
+
+
+<entity name="func-wd" value="[^\w\-\:]"/>
+
+<scheme name='FunctionName-error'>
+    <keywords region='def:Error' worddiv="%func-wd;">
+        <word name='attribute'/>
+        <word name='comment'/>
+        <word name='document-node'/>
+        <word name='element'/>
+        <!-- <word name='empty'/> ???
+        Specifications conflict: 
+        'empty' is reserved keyword in 'xpath 2.0', 
+        but function empty defined in 'xpath-functions'
+        -->
+        <word name='if'/>
+        <word name='item'/>
+        <word name='node'/>
+        <word name='processing-instruction'/>
+        <word name='schema-attribute'/>
+        <word name='schema-element'/>
+        <word name='text'/>
+        <word name='typeswitch'/>
+    </keywords>
+</scheme>
+
+<scheme name='FunctionName-op'>
+    <keywords region='func.name' worddiv="%func-wd;">
+        <word name='NOTATION-equal'/>
+        <word name='QName-equal'/>
+        <word name='add-dayTimeDuration-to-date'/>
+        <word name='add-dayTimeDuration-to-dateTime'/>
+        <word name='add-dayTimeDuration-to-time'/>
+        <word name='add-dayTimeDurations'/>
+        <word name='add-yearMonthDuration-to-date'/>
+        <word name='add-yearMonthDuration-to-dateTime'/>
+        <word name='add-yearMonthDurations'/>
+        <word name='anyURI-equal'/>
+        <word name='base64Binary-equal'/>
+        <word name='boolean-equal'/>
+        <word name='boolean-greater-than'/>
+        <word name='boolean-less-than'/>
+        <word name='concatenate'/>
+        <word name='date-equal'/>
+        <word name='date-greater-than'/>
+        <word name='date-less-than'/>
+        <word name='dateTime-equal'/>
+        <word name='dateTime-greater-than'/>
+        <word name='dateTime-less-than'/>
+        <word name='dayTimeDuration-equal'/>
+        <word name='dayTimeDuration-greater-than'/>
+        <word name='dayTimeDuration-less-than'/>
+        <word name='divide-dayTimeDuration'/>
+        <word name='divide-dayTimeDuration-by-dayTimeDuration'/>
+        <word name='divide-yearMonthDuration'/>
+        <word name='divide-yearMonthDuration-by-yearMonthDuration'/>
+        <word name='except'/>
+        <word name='gDay-equal'/>
+        <word name='gMonth-equal'/>
+        <word name='gMonthDay-equal'/>
+        <word name='gYear-equal'/>
+        <word name='gYearMonth-equal'/>
+        <word name='hexBinary-equal'/>
+        <word name='intersect'/>
+        <word name='is-same-node'/>
+        <word name='multiply-dayTimeDuration'/>
+        <word name='multiply-yearMonthDuration'/>
+        <word name='node-after'/>
+        <word name='node-before'/>
+        <word name='numeric-add'/>
+        <word name='numeric-divide'/>
+        <word name='numeric-equal'/>
+        <word name='numeric-greater-than'/>
+        <word name='numeric-integer-divide'/>
+        <word name='numeric-less-than'/>
+        <word name='numeric-mod'/>
+        <word name='numeric-multiply'/>
+        <word name='numeric-subtract'/>
+        <word name='numeric-unary-minus'/>
+        <word name='numeric-unary-plus'/>
+        <word name='subtract-dateTimes-yielding-dayTimeDuration'/>
+        <word name='subtract-dates-yielding-dayTimeDuration'/>
+        <word name='subtract-dayTimeDuration-from-date'/>
+        <word name='subtract-dayTimeDuration-from-dateTime'/>
+        <word name='subtract-dayTimeDuration-from-time'/>
+        <word name='subtract-dayTimeDurations'/>
+        <word name='subtract-times'/>
+        <word name='subtract-yearMonthDuration-from-date'/>
+        <word name='subtract-yearMonthDuration-from-dateTime'/>
+        <word name='subtract-yearMonthDurations'/>
+        <word name='time-equal'/>
+        <word name='time-greater-than'/>
+        <word name='time-less-than'/>
+        <word name='to'/>
+        <word name='union'/>
+        <word name='yearMonthDuration-equal'/>
+        <word name='yearMonthDuration-greater-than'/>
+        <word name='yearMonthDuration-less-than'/>
+    </keywords>
+</scheme>
+
+<scheme name='FunctionName-fn'>
+    <keywords region='func.name' worddiv="%func-wd;">
+        <word name='QName'/>
+        <word name='abs'/>
+        <word name='adjust-date-to-timezone'/>
+        <word name='adjust-dateTime-to-timezone'/>
+        <word name='adjust-time-to-timezone'/>
+        <word name='avg'/>
+        <word name='base-uri'/>
+        <word name='boolean'/>
+        <word name='ceiling'/>
+        <word name='codepoints-to-string'/>
+        <word name='collection'/>
+        <word name='compare'/>
+        <word name='concat'/>
+        <word name='contains'/>
+        <word name='count'/>
+        <word name='current-date'/>
+        <word name='current-dateTime'/>
+        <word name='current-time'/>
+        <word name='data'/>
+        <word name='dateTime'/>
+        <word name='day-from-date'/>
+        <word name='day-from-dateTime'/>
+        <word name='days-from-duration'/>
+        <word name='deep-equal'/>
+        <word name='default-collation'/>
+        <word name='distinct-values'/>
+        <word name='doc'/>
+        <word name='document-uri'/>
+        <word name='empty'/><!-- ???????????? -->
+        <word name='ends-with'/>
+        <word name='error'/>
+        <word name='escape-uri'/>
+        <word name='exactly-one'/>
+        <word name='exists'/>
+        <word name='false'/>
+        <word name='floor'/>
+        <word name='hours-from-dateTime'/>
+        <word name='hours-from-duration'/>
+        <word name='hours-from-time'/>
+        <word name='id'/>
+        <word name='idref'/>
+        <word name='implicit-timezone'/>
+        <word name='in-scope-prefixes'/>
+        <word name='index-of'/>
+        <word name='insert-before'/>
+        <word name='lang'/>
+        <word name='last'/>
+        <word name='local-name'/>
+        <word name='local-name-from-QName'/>
+        <word name='lower-case'/>
+        <word name='matches'/>
+        <word name='max'/>
+        <word name='min'/>
+        <word name='minutes-from-dateTime'/>
+        <word name='minutes-from-duration'/>
+        <word name='minutes-from-time'/>
+        <word name='month-from-date'/>
+        <word name='month-from-dateTime'/>
+        <word name='months-from-duration'/>
+        <word name='name'/>
+        <word name='namespace-uri'/>
+        <word name='namespace-uri-for-prefix'/>
+        <word name='namespace-uri-from-QName'/>
+        <word name='nilled'/>
+        <word name='node-name'/>
+        <word name='normalize-space'/>
+        <word name='normalize-unicode'/>
+        <word name='not'/>
+        <word name='number'/>
+        <word name='one-or-more'/>
+        <word name='position'/>
+        <word name='remove'/>
+        <word name='replace'/>
+        <word name='resolve-QName'/>
+        <word name='resolve-uri'/>
+        <word name='reverse'/>
+        <word name='root'/>
+        <word name='round'/>
+        <word name='round-half-to-even'/>
+        <word name='seconds-from-dateTime'/>
+        <word name='seconds-from-duration'/>
+        <word name='seconds-from-time'/>
+        <word name='starts-with'/>
+        <word name='static-base-uri'/>
+        <word name='string'/>
+        <word name='string-join'/>
+        <word name='string-length'/>
+        <word name='string-to-codepoints'/>
+        <word name='subsequence'/>
+        <word name='substring'/>
+        <word name='substring-after'/>
+        <word name='substring-before'/>
+        <word name='sum'/>
+        <word name='timezone-from-date'/>
+        <word name='timezone-from-dateTime'/>
+        <word name='timezone-from-time'/>
+        <word name='tokenize'/>
+        <word name='trace'/>
+        <word name='translate'/>
+        <word name='true'/>
+        <word name='unordered'/>
+        <word name='upper-case'/>
+        <word name='year-from-date'/>
+        <word name='year-from-dateTime'/>
+        <word name='years-from-duration'/>
+        <word name='zero-or-one'/>
+    </keywords>
+</scheme>
+

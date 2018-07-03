@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+   Kixtart Script Syntax description
+Created by:
+   Valerie Ivanov <vi@ippe.obninsk.ru>
+-->
+   <type name="kixtart">
+
+      <import type="def"/>
+
+      <region name="kixComment" parent="Comment"/>
+      <region name="kixLabel" parent="Label"/>
+      <region name="kixString" parent="String"/>
+      <region name="kixNumb" parent="Number"/>
+      <region name="kixSymb" parent="Symbol"/>
+      <region name="kixFunc" parent="Keyword"/>
+      <region name="kixKey" parent="Parameter"/>
+      <region name="kixReser" parent="Keyword"/>
+      <region name="kixVar" parent="VarStrong"/>
+      <region name="kixIdent" parent="Identifier"/>
+
+
+      <scheme name="kixtart">
+<!-- Linear Comments-->
+         <regexp match="/(\;.*$)/" region0="kixComment"/>
+         <inherit scheme="CString"/>
+         <inherit scheme="def:Number"/>
+<!-- Labels -   ...: -->
+         <regexp match="/(^:[\w\s]+)/" region0="kixLabel"/>
+<!-- Kixtart variables -->
+         <regexp match="/(\$\w*)/" region0="kixVar"/>
+<!-- Enviroment Identifier -->
+         <regexp match="/\@(\$\w*)/" region0="kixIdent"/>
+<!-- Functions -->
+         <keywords ignorecase="yes" region="kixFunc">
+            <word name="AT"/>
+            <word name="CD"/>
+            <word name="DO"/>
+            <word name="GO"/>
+            <word name="IF"/>
+            <word name="LM"/>
+            <word name="MD"/>
+            <word name="ON"/>
+            <word name="OR"/>
+            <word name="AND"/>
+            <word name="ASC"/>
+            <word name="BIG"/>
+            <word name="BOX"/>
+            <word name="CHR"/>
+            <word name="CLS"/>
+            <word name="DAY"/>
+            <word name="DEL"/>
+            <word name="DOS"/>
+            <word name="GET"/>
+            <word name="KIX"/>
+            <word name="LEN"/>
+            <word name="NOT"/>
+            <word name="OFF"/>
+            <word name="RAS"/>
+            <word name="RUN"/>
+            <word name="SET"/>
+            <word name="SID"/>
+            <word name="USE"/>
+            <word name="VAL"/>
+            <word name="BEEP"/>
+            <word name="CALL"/>
+            <word name="CASE"/>
+            <word name="COPY"/>
+            <word name="DATE"/>
+            <word name="ELSE"/>
+            <word name="EXIT"/>
+            <word name="GETS"/>
+            <word name="GOTO"/>
+            <word name="LOOP"/>
+            <word name="OPEN"/>
+            <word name="PLAY"/>
+            <word name="PRIV"/>
+            <word name="QUIT"/>
+            <word name="SETL"/>
+            <word name="SETM"/>
+            <word name="TIME"/>
+            <word name="YEAR"/>
+            <word name="BREAK"/>
+            <word name="CLOSE"/>
+            <word name="COLOR"/>
+            <word name="ENDIF"/>
+            <word name="ERROR"/>
+            <word name="EXIST"/>
+            <word name="GOSUB"/>
+            <word name="INSTR"/>
+            <word name="INWIN"/>
+            <word name="LCASE"/>
+            <word name="LTRIM"/>
+            <word name="MONTH"/>
+            <word name="PWAGE"/>
+            <word name="RTRIM"/>
+            <word name="SHELL"/>
+            <word name="SLEEP"/>
+            <word name="SMALL"/>
+            <word name="UCASE"/>
+            <word name="UNTIL"/>
+            <word name="WHILE"/>
+            <word name="WKSTA"/>
+            <word name="ADDKEY"/>
+            <word name="CURDIR"/>
+            <word name="DELKEY"/>
+            <word name="DOMAIN"/>
+            <word name="LDRIVE"/>
+            <word name="LOGOFF"/>
+            <word name="MDAYNO"/>
+            <word name="RETURN"/>
+            <word name="SELECT"/>
+            <word name="SERROR"/>
+            <word name="SUBSTR"/>
+            <word name="USERID"/>
+            <word name="WDAYNO"/>
+            <word name="YDAYNO"/>
+            <word name="ADDRESS"/>
+            <word name="COMMENT"/>
+            <word name="COOKIE1"/>
+            <word name="DELTREE"/>
+            <word name="DISPLAY"/>
+            <word name="ENUMKEY"/>
+            <word name="FLUSHKB"/>
+            <word name="HOMEDIR"/>
+            <word name="HOMESHR"/>
+            <word name="INGROUP"/>
+            <word name="LANROOT"/>
+            <word name="LDOMAIN"/>
+            <word name="LOADKEY"/>
+            <word name="LSERVER"/>
+            <word name="MONTHNO"/>
+            <word name="RSERVER"/>
+            <word name="SAVEKEY"/>
+            <word name="SETTIME"/>
+            <word name="SYSLANG"/>
+            <word name="WUSERID"/>
+            <word name="DELVALUE"/>
+            <word name="EXISTKEY"/>
+            <word name="FULLNAME"/>
+            <word name="HOSTNAME"/>
+            <word name="LOADHIVE"/>
+            <word name="MAXPWAGE"/>
+            <word name="PASSWORD"/>
+            <word name="READLINE"/>
+            <word name="READTYPE"/>
+            <word name="SHUTDOWN"/>
+            <word name="STARTDIR"/>
+            <word name="USERLANG"/>
+            <word name="ENDSELECT"/>
+            <word name="ENUMGROUP"/>
+            <word name="ENUMVALUE"/>
+            <word name="HOMEDRIVE"/>
+            <word name="IPADDRESS"/>
+            <word name="READVALUE"/>
+            <word name="SCRIPTDIR"/>
+            <word name="WRITELINE"/>
+            <word name="MESSAGEBOX"/>
+            <word name="SETCONSOLE"/>
+            <word name="UNLOADHIVE"/>
+            <word name="WRITEVALUE"/>
+            <word name="LONGHOMEDIR"/>
+            <word name="OLECALLFUNC"/>
+            <word name="OLECALLPROC"/>
+            <word name="SENDMESSAGE"/>
+            <word name="OLEGETOBJECT"/>
+            <word name="PRIMARYGROUP"/>
+            <word name="SETWALLPAPER"/>
+            <word name="ADDPROGRAMITEM"/>
+            <word name="DELPROGRAMITEM"/>
+            <word name="ENUMLOCALGROUP"/>
+            <word name="GETFILEVERSION"/>
+            <word name="OLEGETPROPERTY"/>
+            <word name="OLEPUTPROPERTY"/>
+            <word name="REDIRECTOUTPUT"/>
+            <word name="ADDPROGRAMGROUP"/>
+            <word name="DELPROGRAMGROUP"/>
+            <word name="OLECREATEOBJECT"/>
+            <word name="OLEGETSUBOBJECT"/>
+            <word name="COMPAREFILETIMES"/>
+            <word name="OLERELEASEOBJECT"/>
+            <word name="SHOWPROGRAMGROUP"/>
+            <word name="READPROFILESTRING"/>
+            <word name="SETDEFAULTPRINTER"/>
+            <word name="WRITEPROFILESTRING"/>
+            <word name="ADDPRINTERCONNECTION"/>
+            <word name="DELPRINTERCONNECTION"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

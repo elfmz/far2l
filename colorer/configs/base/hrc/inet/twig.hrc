@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+    "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+
+	<type name="twig">
+		<annotation>
+			<documentation>
+				Twig PHP Templates (http://twig.sensiolabs.org)
+			</documentation>
+			<contributors>
+				Eugene Myronchuk
+			</contributors>
+			<appinfo>
+				<prototype name="twig" group="inet" description="Twig PHP Templates">
+					<location link="twig.hrc"/>
+					<filename weight="10">/\.(twig)$/</filename>
+				</prototype>
+			</appinfo>
+		</annotation>
+
+		<import type="def"/>
+
+		<region name="Insertion" parent="asp:Insertion"/>
+		<region name="OpenTag"   parent="asp:OpenTag"/>
+		<region name="CloseTag"  parent="asp:CloseTag"/>
+
+		<entity  name="TwigOpenTag" value="(?:(?:\{%)?#2|(?:\{%-)?#3)\s+"/>
+		<scheme name="twigComment">
+			<block start="/\{#/" end="/#\}/" scheme="Comment"
+				region="def:Comment"
+			/>
+		</scheme>
+
+
+
+		<scheme name="Keywords">
+			<keywords region="def:Keyword">
+				<word name="and"/>
+				<word name="as"/>
+				<word name="defined"/>
+				<word name="empty"/>
+				<word name="false"/>
+				<word name="import"/>
+				<word name="in"/>
+				<word name="is"/>
+				<word name="not"/>
+				<word name="null"/>
+				<word name="or"/>
+				<word name="same"/>
+				<word name="true"/>
+				<word name="with"/>
+			</keywords>
+		</scheme>
+		<scheme name="Parenthes">
+			<block start="/(\()/" end="/(\))/" scheme="Expressions"
+				region00="PairStart" region10="PairEnd"
+				region01="Symbol"    region11="Symbol"
+			/>
+			<block start="/(\[)/" end="/(\])/" scheme="Expressions"
+				region00="PairStart" region10="PairEnd"
+				region01="Symbol"    region11="Symbol"
+			/>
+			<block start="/(\{)/" end="/(\})/" scheme="Expressions"
+				region00="PairStart"    region10="PairEnd"
+				region01="SymbolStrong" region11="SymbolStrong"
+			/>
+			<keywords region="def:Error">
+				<symb name=")"/>
+				<symb name="]"/>
+				<symb name="}"/>
+			</keywords>
+		</scheme>
+		<scheme name="Strings">
+			<regexp match="/(([&quot;&apos;])) (.*?) ((\1))/x"
+				region1="PairStart" region5="PairEnd"
+				region2="StringEdge" region4="StringEdge"
+				region="String"
+			/>
+		</scheme>
+
+		<scheme name="Expressions">
+			<regexp match="/(-(\d|\.\d)?=)?\d*(\.\d+)?/" region="def:Number"/>
+			<inherit scheme="Strings" />
+			<keywords region="Symbol">
+				<symb name="-"/>
+				<symb name="%"/>
+				<symb name="*"/>
+				<symb name=","/>
+				<symb name="."/>
+				<symb name="/"/>
+				<symb name=":"/>
+				<symb name="?"/>
+				<symb name="+"/>
+				<symb name="="/>
+			</keywords>
+			<keywords region="SymbolStrong">
+				<symb name="|"/>
+			</keywords>
+			<regexp match="/(attribute|block|convert_encoding|constant|cycle|date|dump|e|include|join|parent|random|range|template_from_string)(\s*\()?=/" region1="def:Keyword" />
+			<inherit scheme="Keywords" />
+			<inherit scheme="Parenthes" />
+		</scheme>
+		<scheme name="Script">
+			<block start="/%TwigOpenTag;((autoescape|block|filter|for|macro|spaceless))/" end="/((end\Y2))/"
+				region01="PairStart"   region11="PairEnd"
+				region02="def:Keyword" region12="def:Keyword"
+				scheme="Script" priority="low"
+			/>
+			<block start="/((%TwigOpenTag;if|(el)?#2se|(else)?#4if))/" end="/%TwigOpenTag; ((else(if)?=|el(se)?=|endif))/x"
+				region01="PairStart" region11="PairEnd"
+				region02="def:Keyword" region12="def:Keyword"
+				scheme="Script" priority="low"
+			/>
+			<regexp match="/%TwigOpenTag; (extends|from|import|include|set)/x"
+				region1="def:Keyword"
+			/>
+			<inherit scheme="Expressions" />
+			<regexp match="/%TwigOpenTag; (endautoescape|else|elseif|endblock|endif|endfilter|endfor|endif|endmacro|endspaceless) /x" region2="def:Error" priority="low" />
+		</scheme>
+
+
+		<scheme name="Insertion">
+			<inherit scheme="twigComment" />
+			<block start="/(\{\{-?)\s?=/" end="/\s?#1(-?\}\})/"
+				region00="PairStart" region10="OpenTag" 
+				region01="OpenTag" region11="PairEnd" 
+				scheme="Expressions" region="def:Text"
+			/>
+			<block start="/\{%-?\s?=/" end="/\s?#1-?%\}/" 
+				priority="low" content-priority="low"
+				scheme="twigScript" region="Insertion" 
+				region00="OpenTag" region10="OpenTag" 
+			/>
+		</scheme>
+
+
+		<scheme name="InverseInsertion">
+			<block start="/(\s?#1-?%\})/" end="/(\{%-?\s?=)/" scheme="html"
+				priority="low" region="Text" inner-region="yes"
+				region00="Insertion" region10="Insertion" 
+				region01="OpenTag"   region11="OpenTag" 
+			/>
+		</scheme>
+
+		<scheme name="twigScript">
+			<inherit scheme="InverseInsertion"/>
+			<inherit scheme="Script">
+				<virtual scheme="Script" subst-scheme="twigScript"/>
+			</inherit>
+		</scheme>
+
+		<scheme name="html">
+			<inherit scheme="asp:html">
+				<virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+			</inherit>
+		</scheme>
+		<scheme name="twig">
+			<inherit scheme="asp:html">
+				<virtual scheme="asp:InverseInsertion" subst-scheme="InverseInsertion"/>
+				<virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+				<virtual scheme="asp:targetLanguage" subst-scheme="twigScript"/>
+				<virtual scheme="asp:html" subst-scheme="html"/>
+			</inherit>
+		</scheme>
+	</type>
+</hrc>

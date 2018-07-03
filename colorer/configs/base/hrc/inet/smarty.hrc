@@ -1,0 +1,323 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+    "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+
+	<type name="smarty">
+		<annotation>
+			<documentation>
+				Smarty PHP Templates (http://www.smarty.net/)
+			</documentation>
+			<contributors>
+				Eugene Myronchuk
+			</contributors>
+			<appinfo>
+				<prototype name="smarty" group="inet" description="Smarty PHP Templates">
+					<location link="inet/smarty.hrc"/>
+					<filename weight="10">/\.(smarty)$/</filename>
+				</prototype>
+			</appinfo>
+		</annotation>
+
+		<import type="def"/>
+
+		<region name="Insertion" parent="asp:Insertion"/>
+		<region name="OpenTag"   parent="asp:OpenTag"/>
+		<region name="CloseTag"  parent="asp:CloseTag"/>
+
+		<scheme name="smartyEscape">
+			<regexp match="/\x20[\{\}]\x20/" region="def:Text"/>
+		</scheme>
+		<scheme name="smartyCommentInner">
+			<block start="/\{\*/" end="/\*\}/"
+				content-priority="low"
+				region="def:Comment" scheme="Comment"
+				region00="PairStart" region10="PairEnd"
+			/>
+		</scheme>
+		<scheme name="smartyComment">
+			<block start="/\M\{\*/" end="/(\*\})?#2/" scheme="smartyCommentInner"
+				region="Insertion" content-priority="low"
+			/>
+		</scheme>
+
+
+
+		<scheme name="Parenthes">
+			<block start="/(\()/" end="/(\))/" scheme="Expressions"
+				region00="PairStart" region10="PairEnd"
+				region01="Symbol"    region11="Symbol"
+			/>
+			<block start="/(\[)/" end="/(\])/" scheme="Expressions"
+				region00="PairStart" region10="PairEnd"
+				region01="Symbol"    region11="Symbol"
+			/>
+			<block start="/(\{)/" end="/(\})/" scheme="Expressions"
+				region00="PairStart"    region10="PairEnd"
+				region01="SymbolStrong" region11="SymbolStrong"
+			/>
+			<keywords region="def:Error">
+				<symb name=")"/>
+				<symb name="]"/>
+				<symb name="}"/>
+			</keywords>
+		</scheme>
+		<scheme name="Strings">
+			<regexp match="/(([&quot;&apos;])) (.*?) ((\1))/x"
+				region1="PairStart" region5="PairEnd"
+				region2="StringEdge" region4="StringEdge"
+				region="String"
+			/>
+		</scheme>
+
+		<!-- by bigvax -->
+		<scheme name="smartyParams">
+			<keywords ignorecase="yes" region="def:Parameter">
+				<word name="above"/>
+				<word name="all_extra"/>
+				<word name="assign"/>
+				<word name="autostatus"/>
+				<word name="autostatuscap"/>
+				<word name="background"/>
+				<word name="below"/>
+				<word name="bgbackground"/>
+				<word name="bgcolor"/>
+				<word name="border"/>
+				<word name="caparray"/>
+				<word name="capicon"/>
+				<word name="caption"/>
+				<word name="captionfont"/>
+				<word name="captionsize"/>
+				<word name="center"/>
+				<word name="closecolor"/>
+				<word name="closefont"/>
+				<word name="closesize"/>
+				<word name="closetext"/>
+				<word name="day_extra"/>
+				<word name="day_format"/>
+				<word name="day_size"/>
+				<word name="delay"/>
+				<word name="detection"/>
+				<word name="display_days"/>
+				<word name="display_hours"/>
+				<word name="display_meridian"/>
+				<word name="display_minutes"/>
+				<word name="display_months"/>
+				<word name="display_seconds"/>
+				<word name="display_years"/>
+				<word name="end_year"/>
+				<word name="equation"/>
+				<word name="fgbackground"/>
+				<word name="fgcolor"/>
+				<word name="field_array"/>
+				<word name="field_extra"/>
+				<word name="field_separator"/>
+				<word name="file"/>
+				<word name="fixx"/>
+				<word name="fixy"/>
+				<word name="format"/>
+				<word name="frame"/>
+				<word name="from"/>
+				<word name="fullhtml"/>
+				<word name="hauto"/>
+				<word name="height"/>
+				<word name="id"/>
+				<word name="inarray"/>
+				<word name="item"/>
+				<word name="left"/>
+				<word name="loop"/>
+				<word name="minute_interval"/>
+				<word name="month_format"/>
+				<word name="month_size"/>
+				<word name="name"/>
+				<word name="noclose"/>
+				<word name="offsetx"/>
+				<word name="offsety"/>
+				<word name="options"/>
+				<word name="output"/>
+				<word name="padx"/>
+				<word name="pady"/>
+				<word name="prefix"/>
+				<word name="print"/>
+				<word name="reverse_years"/>
+				<word name="right"/>
+				<word name="seconds_interval"/>
+				<word name="selected"/>
+				<word name="skip"/>
+				<word name="snapx"/>
+				<word name="snapy"/>
+				<word name="start"/>
+				<word name="start_year"/>
+				<word name="status"/>
+				<word name="sticky"/>
+				<word name="text"/>
+				<word name="textcolor"/>
+				<word name="textfont"/>
+				<word name="textsize"/>
+				<word name="time"/>
+				<word name="timeout"/>
+				<word name="trigger"/>
+				<word name="value"/>
+				<word name="values"/>
+				<word name="var"/>
+				<word name="vauto"/>
+				<word name="width"/>
+			</keywords>
+		</scheme>
+
+		<scheme name="smartyFilters">
+			<keywords ignorecase="yes" region="def:Keyword">
+				<word name="capitalize"/>
+				<word name="cat"/>
+				<word name="count_characters"/>
+				<word name="count_paragraphs"/>
+				<word name="count_sentences"/>
+				<word name="count_words"/>
+				<word name="date_format"/>
+				<word name="default"/>
+				<word name="escape"/>
+				<word name="from_charset"/>
+				<word name="indent"/>
+				<word name="lower"/>
+				<word name="nl2br"/>
+				<word name="regex_replace"/>
+				<word name="replace"/>
+				<word name="spacify"/>
+				<word name="string_format"/>
+				<word name="strip"/>
+				<word name="strip_tags"/>
+				<word name="to_charset"/>
+				<word name="truncate"/>
+				<word name="unescape"/>
+				<word name="upper"/>
+				<word name="wordwrap"/>
+			</keywords>
+		</scheme>
+
+		<!-- /by bigvax -->
+		<scheme name="smartyVars">
+			<regexp match="/\$(smarty)\b/" region="def:Var" region1="def:Constant"/>
+			<regexp match="/\$(\w+)\b/" region="def:Var"/>
+			<regexp match="/(-&gt;)?#2(\w+)\b/" region="def:Var"/>
+			<regexp match="/\.?#1(\w+)\b/" region="def:Var"/>
+		</scheme>
+		<scheme name="Expressions">
+			<regexp match="/(-(\d|\.\d)?=)?\d*(\.\d+)?/" region="def:Number"/>
+			<inherit scheme="Strings" />
+			<keywords region="Symbol">
+				<symb name="-"/>
+				<symb name="%"/>
+				<symb name="*"/>
+				<symb name=","/>
+				<symb name="."/>
+				<symb name="/"/>
+				<symb name=":"/>
+				<symb name="?"/>
+				<symb name="+"/>
+				<symb name="="/>
+				<symb name="&amp;&amp;"/>
+				<symb name="||"/>
+				<symb name="-&gt;"/>
+			</keywords>
+			<keywords region="SymbolStrong">
+				<symb name="|"/>
+			</keywords>
+			<block start="/\|?#1\M\w+\b/" end="/[^\w]?=/" scheme="smartyFilters" />
+			<inherit scheme="smartyVars"/>
+			<inherit scheme="Parenthes" />
+			<block start="/\M\b\w+=?=/" end="/\M=/" scheme="smartyParams"/>
+		</scheme>
+
+		<scheme name="Script">
+			<block start="/\s*\b((block|capture|function|for\b|literal|nocache|setfilter|strip|while))\b/" end="/(\/\Y2)/"
+				region01="PairStart"   region10="PairEnd"
+				region02="def:Keyword" region11="def:Keyword"
+				scheme="Script" priority="low"
+			/>
+			<block start="/((\{?#1\s*foreach|(\{foreach)?#8else))\b/x" end="/\{?#1\s*((foreach(else\b)?=|\/foreach\b))/x"
+				region01="PairStart" region11="PairEnd"
+				region02="def:Keyword" region12="def:Keyword"
+				scheme="Script" priority="low"
+			/>
+			<block start="/((\{?#1\s*section|(\{section)?#8else))\b/x" end="/\{?#1\s*((section(else\b)?=|\/section\b))/x"
+				region01="PairStart" region11="PairEnd"
+				region02="def:Keyword" region12="def:Keyword"
+				scheme="Script" priority="low"
+			/>
+			<block start="/((\{?#1\s*if|(\{el)?#3se|(\{else)?#5if))\b/" end="/\{?#1\s*((else(if\b)?=|el(se\b)?=|\/if\b))/"
+				region01="PairStart" region11="PairEnd"
+				region02="def:Keyword" region12="def:Keyword"
+				scheme="Script" priority="low"
+			/>
+			<regexp match="/\{?#1 (append|assign|call|config_load|debug|extends|include|include_php|insert|[lr]delim)/x"
+				region1="def:Keyword"
+			/>
+
+			<inherit scheme="Expressions" />
+			<regexp match="/(\{\/)?#2(block|capture|function|for|if|literal|nocache|php|setfilter|strip|while)\b/x" region="def:Error" priority="low" />
+			<regexp match="/\{?#1\s*(else|elseif)\b /x" region="def:Error" priority="low" />
+		</scheme>
+
+
+		<scheme name="smartyPhpInsertion">
+			<block start="/(\{(php)\})/" end="/(\{(\/php)\})/" scheme="smarty"
+				priority="low" content-priority="low"
+				region="Insertion"
+				region00="OpenTag"       region10="CloseTag"
+				region01="def:PairStart" region11="def:PairEnd"
+				region02="def:Keyword"   region12="def:Keyword"
+			/>
+		</scheme>
+		<scheme name="smartyPhpInverseInsertion"></scheme>
+		<scheme name="smartyPhp">
+			<inherit scheme="php:phpScript">
+				<virtual scheme="php:Insertion" subst-scheme="smartyPhpInsertion" />
+				<virtual scheme="php:InverseInsertion" subst-scheme="smartyPhpInverseInsertion" />
+			</inherit>
+		</scheme>
+
+		<scheme name="Insertion">
+			<inherit scheme="smartyEscape" />
+			<inherit scheme="smartyComment" />
+			<inherit scheme="smartyPhpInsertion"/>
+
+			<block start="/(\{)/" end="/(\})/" 
+				priority="low" content-priority="low"
+				scheme="smartyScript" region="Insertion" 
+				region00="OpenTag" region10="OpenTag" 
+			/>
+		</scheme>
+
+		<scheme name="InverseInsertion">
+			<block start="/(\})/" end="/(\{)/" scheme="html"
+				priority="low" region="Text" inner-region="yes"
+				region00="Insertion" region10="Insertion" 
+				region01="OpenTag"   region11="OpenTag" 
+			/>
+		</scheme>
+
+		<scheme name="smartyScript">
+			<inherit scheme="InverseInsertion"/>
+			<inherit scheme="Script">
+				<virtual scheme="Script" subst-scheme="smartyScript"/>
+			</inherit>
+		</scheme>
+
+		<scheme name="html">
+			<inherit scheme="asp:html">
+				<virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+			</inherit>
+		</scheme>
+		<scheme name="smarty">
+			<inherit scheme="asp:html">
+				<virtual scheme="asp:InverseInsertion" subst-scheme="InverseInsertion"/>
+				<virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+				<virtual scheme="asp:targetLanguage" subst-scheme="smartyScript"/>
+				<virtual scheme="asp:html" subst-scheme="html"/>
+			</inherit>
+		</scheme>
+	</type>
+</hrc>

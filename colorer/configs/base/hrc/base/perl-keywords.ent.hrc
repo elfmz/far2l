@@ -1,0 +1,375 @@
+
+<region name="WordFun" parent="def:FunctionKeyword"/>
+<region name="packages" parent="WordExt"/>
+<region name="packages.pragmas" parent="Word"/>
+<region name="packages.user" parent="def:Directive"/>
+
+
+<scheme name='outlines'>
+	<regexp match="/\M\b(package)\s+(?{PackageOutline}[\w_':]+)/"/>
+	<block start="/\b(package)\s+/"
+		end='/;/' scheme='package.content'
+		region01="Word" region10="MainSymb"
+	/>
+	<regexp match="/\M\b(use|no|require)\s+(?{UseOutline}[\w_':]+)/"/>
+	<block start="/\b(use|no|require)\s+/"
+		end='/;/' scheme='use.content'
+		region01="Word" region10="MainSymb"
+	/>
+</scheme>
+
+<scheme name='package.content'>
+	<inherit scheme='packages.any.ex'/>
+	<regexp match="/\b\w[\w\d]*\b/" region="packages.user"/>
+	<regexp match='/\S/' region='def:Error' priority='low'/>
+</scheme>
+
+<scheme name='use.content'>
+	<inherit scheme='pragmas'/>
+	<inherit scheme='perl-core'>
+		<virtual scheme='packages.any' subst-scheme='packages.any.ex'/>
+	</inherit>
+	<inherit scheme='packages.any.ex'/>
+</scheme>
+
+
+<scheme name='packages.any'>
+	<regexp match="/\b\w[\w\d]*(::)\M\w[\w\d]*\b/" region="packages" region1="Symb"/>
+	<regexp match="/(::)?#2\w[\w\d]*\b(\s*\()?!/" region="packages"/>
+</scheme>
+
+<scheme name='packages.any.ex'>
+	<regexp match="/\b\w[\w\d]*(::)\M\w[\w\d]*\b/" region="packages.user" region1="Symb" priority='low'/>
+	<regexp match="/(::)?#2\w[\w\d]*\b/" region="packages.user"  priority='low'/>
+</scheme>
+
+
+
+<scheme name='pragmas'>
+   <keywords region="packages.pragmas">
+      <word name="strict"/>
+      <word name="subs"/>
+      <word name="vars"/>
+      <word name="refs"/>
+      <word name="diagnostics"/>
+      <word name="integer"/>
+      
+      <word name='autouse'/>
+      <word name='butes'/>
+      <word name='charnames'/>
+      <word name='constant'/>
+      <word name='filetest'/>
+      <word name='open'/>
+      
+      <word name="attributes"/>
+      <word name="base"/>
+      <word name="blib"/>
+      <word name="diagnostics"/>
+      <word name="feature"/>
+      <word name="fields"/>
+      <word name="less"/>
+      <word name="lib"/>
+      <word name="locale"/>
+      <word name="mro"/>
+      <word name="overload"/>
+      <word name="re"/>
+      <word name="sigtrap"/>
+      <word name="sort"/>
+      <word name="strict"/>
+      <word name="threads"/>
+      <word name="var"/>
+      <word name="warnings"/>
+   </keywords>
+   <keywords region="packages">
+      <word name="ex::constant::vars"/>
+      <word name="ex::implements"/>
+      <word name="ex::interface"/>
+      <word name="ex::override"/>
+   </keywords>
+   
+   <!--inherit scheme='all-packages'/-->
+</scheme>
+
+
+<scheme name="Keywords">
+   <!-- base syntax -->
+   
+   <keywords region="Word">
+      <word name="bless"/>
+      <word name="caller"/>
+      <word name="continue"/>
+      <word name="defined"/>
+      <word name="die"/>
+      <word name="do"/>
+      <word name="dump"/>
+      <word name="each"/>
+      <word name="else"/>
+      <word name="elsif"/>
+      <word name="exec"/>
+      <word name="exit"/>
+      <!--word name="exist"/-->
+      <word name="eval"/>
+      <word name="fork"/>
+      <word name="foreach"/>
+      <word name="for"/>
+      <word name="goto" region="Rare"/>
+      <word name="grep"/>
+      <word name="glob"/>
+      <word name="if"/>
+      <word name="join"/>
+      <word name="keys"/>
+      <word name="last"/>
+      <word name="local"/>
+      <word name="my"/>
+      <word name="map"/>
+      <word name="next"/>
+      <word name="no"/>
+      <word name="our"/>
+      <word name="package"/>
+      <word name="pack"/>
+      <word name="print"/>
+      <word name="return"/>
+      <word name="redo"/>
+      <word name="ref"/>
+      <word name="require"/>
+      <word name="sub"/>
+      <word name="split"/>
+      <word name="tie"/>
+      <word name="tied"/>
+      <word name="untie"/>
+      <word name="until"/>
+      <word name="unless"/>
+      <word name="unpack"/>
+      <word name="use"/>
+      <word name="while"/>
+      
+      <word name="UNIVERSAL" region='packages'/>
+      <word name="AUTOLOAD"/>
+      <word name="BEGIN"/>
+      <word name="INIT"/>
+      <word name="INITCHECK"/>
+      <word name="CHECK"/>
+      <word name="CORE"/>
+      <word name="DESTROY"/>
+      <word name="END"/>
+      <word name="SUPER"/>
+      
+      <!-- named unary opreators -->
+		<word name='alarm'/>
+		<word name='chdir'/>
+		<word name='chroot'/>
+		<word name='cos'/>
+		<word name='delete'/>
+		<word name='exists'/>
+		<word name='gethostbyname'/>
+		<word name='getnetbyname'/>
+		<word name='getpgrp'/>
+		<word name='getprotobyname'/>
+		<word name='gmtime'/>
+		<word name='hex'/>
+		<word name='int'/>
+		<word name='lc'/>
+		<word name='lcfirst'/>
+		<word name='length'/>
+		<word name='localtime'/>
+		<word name='lock'/>
+		<word name='log'/>
+		<word name='lstat'/>
+		<word name='oct'/>
+		<word name='ord'/>
+		<word name='quotemeta'/>
+		<word name='rand'/>
+		<word name='readlink'/>
+		<word name='rmdir'/>
+		<word name='scalar'/>
+		<word name='sin'/>
+		<word name='sleep'/>
+		<word name='sqrt'/>
+		<word name='srand'/>
+		<word name='stat'/>
+		<word name='uc'/>
+		<word name='ucfirst'/>
+		<word name='umask'/>
+		<word name='undef'/>
+   
+   </keywords>
+   
+   
+   <keywords region="WordFun">
+      <word name="abs"/>
+      <word name="accept"/>
+      <word name="alarm"/>
+      <word name="atan2"/>
+      <word name="bind"/>
+      <word name="binmode"/>
+      <word name="chdir"/>
+      <word name="chmod"/>
+      <word name="chomp"/>
+      <word name="chop"/>
+      <word name="chown"/>
+      <word name="chr"/>
+      <word name="chroot"/>
+      <word name="close"/>
+      <word name="closedir"/>
+      <word name="connect"/>
+      <word name="croak"/>
+      <word name="cos"/>
+      <word name="crypt"/>
+      <word name="dbmclose"/>
+      <word name="dbmopen"/>
+      <word name="delete"/>
+      <word name="endgrent"/>
+      <word name="endhostent"/>
+      <word name="endnetent"/>
+      <word name="endprotoent"/>
+      <word name="endpwent"/>
+      <word name="endservent"/>
+      <word name="eof"/>
+      <word name="exp"/>
+      <word name="fcntl"/>
+      <word name="fileno"/>
+      <word name="flock"/>
+      <word name="formline"/>
+      <word name="getc"/>
+      <word name="getgrent"/>
+      <word name="getgrgid"/>
+      <word name="getgrname"/>
+      <word name="gethostbyaddr"/>
+      <word name="gethostbyname"/>
+      <word name="gethostent"/>
+      <word name="getlogin"/>
+      <word name="getnetbyaddr"/>
+      <word name="getnetbyname"/>
+      <word name="getnetent"/>
+      <word name="getpeername"/>
+      <word name="getpgrp"/>
+      <word name="getppid"/>
+      <word name="getpriority"/>
+      <word name="getprotobyname"/>
+      <word name="getprotobynumber"/>
+      <word name="getprotoent"/>
+      <word name="getpwent"/>
+      <word name="getpwnam"/>
+      <word name="getpwuid"/>
+      <word name="getservbyname"/>
+      <word name="getservbyport"/>
+      <word name="getservent"/>
+      <word name="getsockname"/>
+      <word name="getsockopt"/>
+      <word name="glob"/>
+      <word name="gmtime"/>
+      <word name="hex"/>
+      <word name="index"/>
+      <word name="int"/>
+      <word name="ioctl"/>
+      <word name="kill"/>
+      <word name="lc"/>
+      <word name="lcfirst"/>
+      <word name="length"/>
+      <word name="link"/>
+      <word name="listen"/>
+      <word name="localtime"/>
+      <word name="log"/>
+      <word name="lstat"/>
+      <word name="mkdir"/>
+      <word name="msgctl"/>
+      <word name="msgget"/>
+      <word name="msgrcv"/>
+      <word name="msgsnd"/>
+      <word name="oct"/>
+      <word name="open"/>
+      <word name="opendir"/>
+      <word name="ord"/>
+      <word name="pack"/>
+      <word name="pipe"/>
+      <word name="pop"/>
+      <word name="pos"/>
+      <word name="printf"/>
+      <word name="push"/>
+      <word name="quotemeta"/>
+      <word name="rand"/>
+      <word name="read"/>
+      <word name="readdir"/>
+      <word name="readline"/>
+      <word name="readlink"/>
+      <word name="recv"/>
+      <word name="rename"/>
+      <word name="reset"/>
+      <word name="reverse"/>
+      <word name="rewindir"/>
+      <word name="rindex"/>
+      <word name="rmdir"/>
+      <word name="scalar"/>
+      <word name="seek"/>
+      <word name="seekdir"/>
+      <word name="select"/>
+      <word name="semctl"/>
+      <word name="semgett"/>
+      <word name="semop"/>
+      <word name="send"/>
+      <word name="setgrent"/>
+      <word name="sethostent"/>
+      <word name="setnetent"/>
+      <word name="setpgrp"/>
+      <word name="setpriority"/>
+      <word name="setprotoent"/>
+      <word name="setpwent"/>
+      <word name="setservent"/>
+      <word name="setsockopt"/>
+      <word name="shift"/>
+      <word name="shmctl"/>
+      <word name="shmget"/>
+      <word name="shmread"/>
+      <word name="shmwrite"/>
+      <word name="shutdown"/>
+      <word name="sin"/>
+      <word name="sleep"/>
+      <word name="socket"/>
+      <word name="socketpair"/>
+      <word name="sort"/>
+      <word name="splice"/>
+      <word name="sprintf"/>
+      <word name="sqrt"/>
+      <word name="srand"/>
+      <word name="stat"/>
+      <word name="study"/>
+      <word name="substr"/>
+      <word name="symlink"/>
+      <word name="syscall"/>
+      <word name="sysopen"/>
+      <word name="sysread"/>
+      <word name="system"/>
+      <word name="syswrite"/>
+      <word name="tell"/>
+      <word name="telldir"/>
+      <word name="exists"/>
+      <word name="rewinddir"/>
+      <word name="semget"/>
+      <word name="lock"/>
+      <word name="readpipe"/>
+      <word name="prototype"/>
+      <word name="sysseek"/>
+      <word name="getgrnam"/>
+      <word name="time"/>
+      <word name="times"/>
+      <word name="truncate"/>
+      <word name="uc"/>
+      <word name="ucfirst"/>
+      <word name="umask"/>
+      <word name="undef"/>
+      <word name="unlink"/>
+      <word name="unpack"/>
+      <word name="unshift"/>
+      <word name="utime"/>
+      <word name="values"/>
+      <word name="vec"/>
+      <word name="wait"/>
+      <word name="waitpid"/>
+      <word name="wantarray"/>
+      <word name="warn"/>
+      <word name="write"/>
+      <word name="x"/>
+   </keywords>
+   
+   <inherit scheme="all-packages"/>
+</scheme>

@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    1C Syntax by Walery Studennikov <hqsoftware@mail.ru>
+-->
+
+   <type name="c1c">
+
+      <import type="def"/>
+
+      <region name="c1cString" parent="String"/>
+      <region name="c1cComment" parent="Comment"/>
+      <region name="c1cSymb" parent="Symbol"/>
+      <region name="c1cWord" parent="Keyword"/>
+      <region name="c1cWord2" parent="Keyword"/>
+      <region name="c1cVar" parent="VarStrong"/>
+
+
+      <scheme name="c1c">
+<!-- Comments -->
+         <block start="/\/\//" end="/$/" scheme="Comment" region="c1cComment"/>
+<!-- Strings -->
+         <regexp match="/(&#34;.*?&#34;)/" region0="c1cString"/>
+<!-- Numbers  -->
+         <regexp match="/\b[0-9.]+\b/" region0="Number"/>
+         <regexp match="/\b\M((Функция|Function|Процедура|Procedure) \s* \w+)/" region1="Function"/>
+         <block start="/\b(Функция|Function)\b/i" end="/\b(КонецФункции|EndFunction)\b/i" scheme="c1c" region00="PairStart" region10="PairEnd" region01="c1cWord" region11="c1cWord"/>
+         <block start="/\b(Процедура|Procedure)\b/i" end="/\b(КонецПроцедуры|EndProcedure)\b/i" scheme="c1c" region00="PairStart" region10="PairEnd" region01="c1cWord" region11="c1cWord"/>
+<!-- paired block -->
+         <block start="/(\()/" end="/(\))/" scheme="c1c" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="c1c" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+<!-- Symbols -->
+         <keywords region="c1cSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name=","/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="?"/>
+            <symb name="[" region="Error"/>
+            <symb name="]" region="Error"/>
+            <symb name="(" region="Error"/>
+            <symb name=")" region="Error"/>
+         </keywords>
+<!-- 1C KeyWords -->
+         <keywords ignorecase="yes" region="c1cWord">
+            <word name="Процедура"/>
+            <word name="КонецПроцедуры"/>
+            <word name="Procedure"/>
+            <word name="EndProcedure"/>
+            <word name="Функция"/>
+            <word name="КонецФункции"/>
+            <word name="Function"/>
+            <word name="EndFunction"/>
+            <word name="Если"/>
+            <word name="Тогда"/>
+            <word name="КонецЕсли"/>
+            <word name="If"/>
+            <word name="Then"/>
+            <word name="EndIf"/>
+            <word name="ИначеЕсли"/>
+            <word name="ElsIf"/>
+            <word name="Иначе"/>
+            <word name="Else"/>
+            <word name="Пока"/>
+            <word name="Цикл"/>
+            <word name="КонецЦикла"/>
+            <word name="While"/>
+            <word name="Do"/>
+            <word name="EndDo"/>
+            <word name="Для"/>
+            <word name="По"/>
+            <word name="по"/>
+            <word name="For"/>
+            <word name="To"/>
+            <word name="Попытка"/>
+            <word name="Исключение"/>
+            <word name="КонецПопытки"/>
+            <word name="Try"/>
+            <word name="Except"/>
+            <word name="EndTry"/>
+            <word name="Перейти"/>
+            <word name="Goto"/>
+            <word name="Продолжить"/>
+            <word name="Continue"/>
+            <word name="Прервать"/>
+            <word name="Break"/>
+            <word name="Возврат"/>
+            <word name="Return"/>
+            <word name="ВызватьИсключение"/>
+            <word name="Raise"/>
+            <word name="ЗагрузитьИзФайла"/>
+            <word name="LoadFromFile"/>
+            <word name="Далее"/>
+            <word name="Forward"/>
+            <word name="Перем"/>
+            <word name="Var"/>
+            <word name="Экспорт"/>
+            <word name="Export"/>
+         </keywords>
+<!-- 1C Standard Functions -->
+         <keywords ignorecase="yes" region="c1cWord2">
+            <word name="Окр"/>
+            <word name="Round"/>
+            <word name="Цел"/>
+            <word name="Int"/>
+            <word name="Мин"/>
+            <word name="Min"/>
+            <word name="Макс"/>
+            <word name="Max"/>
+            <word name="Лог10"/>
+            <word name="Log10"/>
+            <word name="Лог"/>
+            <word name="Ln"/>
+            <word name="СтрДлина"/>
+            <word name="StrLen"/>
+            <word name="ПустаяСтрока"/>
+            <word name="IsBlankString"/>
+            <word name="СокрЛ"/>
+            <word name="TrimL"/>
+            <word name="СокрП"/>
+            <word name="TrimAll"/>
+            <word name="СокрЛП"/>
+            <word name="TrimR"/>
+            <word name="Лев"/>
+            <word name="Left"/>
+            <word name="Прав"/>
+            <word name="Right"/>
+            <word name="Сред"/>
+            <word name="Mid"/>
+            <word name="Найти"/>
+            <word name="Find"/>
+            <word name="СтрЗаменить"/>
+            <word name="StrReplace"/>
+            <word name="СтрЧислоВхождений"/>
+            <word name="StrCountOccur"/>
+            <word name="СтрКоличествоСтрок"/>
+            <word name="StrLineCount"/>
+            <word name="СтрПолучитьСтроку"/>
+            <word name="StrGetLine"/>
+            <word name="Врег"/>
+            <word name="Upper"/>
+            <word name="Нрег"/>
+            <word name="Lower"/>
+            <word name="OemToAnsi"/>
+            <word name="AnsiToOem"/>
+            <word name="Симв"/>
+            <word name="Chr"/>
+            <word name="КодСимв"/>
+            <word name="Asc"/>
+<!-- Работа с датой / временем -->
+            <word name="РабочаяДата"/>
+            <word name="WorkingDate"/>
+            <word name="ТекущаяДата"/>
+            <word name="CurDate"/>
+            <word name="ДобавитьМесяц"/>
+            <word name="AddMonth"/>
+            <word name="НачМесяца"/>
+            <word name="BegOfMonth"/>
+            <word name="КонМесяца"/>
+            <word name="EndOfMonth"/>
+            <word name="НачКвартала"/>
+            <word name="BegOfQuart"/>
+            <word name="КонКвартала"/>
+            <word name="EndOfQuart"/>
+            <word name="НачГода"/>
+            <word name="BegOfYear"/>
+            <word name="КонГода"/>
+            <word name="EndOfYear"/>
+            <word name="НачНедели"/>
+            <word name="BegOfWeek"/>
+            <word name="КонНедели"/>
+            <word name="EndOfWeek"/>
+            <word name="ДатаГод"/>
+            <word name="GetYear"/>
+            <word name="ДатаМесяц"/>
+            <word name="GetMonth"/>
+            <word name="ДатаЧисло"/>
+            <word name="GetDay"/>
+            <word name="НомерНеделиГода"/>
+            <word name="GetWeekOfYear"/>
+            <word name="НомерДняГода"/>
+            <word name="GetDayOfYear"/>
+            <word name="НомерДняНедели"/>
+            <word name="GetDayOfWeek"/>
+            <word name="ПериодСтр"/>
+            <word name="PeriodStr"/>
+            <word name="НачалоСтандартногоИнтервала"/>
+            <word name="BegOfStandardRange"/>
+            <word name="КонецСтандартногоИнтервала"/>
+            <word name="EndOfStandardRange"/>
+            <word name="ТекущееВремя"/>
+            <word name="CurrentTime"/>
+<!-- Работа с позицией документа -->
+            <word name="СформироватьПозициюДокумента"/>
+            <word name="MakeDocPosition"/>
+            <word name="РазобратьПозициюДокумента"/>
+            <word name="SplitDocPosition"/>
+<!-- Преобразование типов -->
+            <word name="Дата"/>
+            <word name="Date"/>
+            <word name="Строка"/>
+            <word name="String"/>
+            <word name="Число"/>
+            <word name="Number"/>
+            <word name="Пропись"/>
+            <word name="Spelling"/>
+            <word name="Формат"/>
+            <word name="Format"/>
+            <word name="Шаблон"/>
+            <word name="Template"/>
+            <word name="ФиксШаблон"/>
+            <word name="FixTemplate"/>
+<!-- Диалог ввода -->
+            <word name="ВвестиЗначение"/>
+            <word name="InputValue"/>
+            <word name="ВвестиЧисло"/>
+            <word name="InputNumeric"/>
+            <word name="ВвестиСтроку"/>
+            <word name="InputString"/>
+            <word name="ВвестиДату"/>
+            <word name="InputDate"/>
+            <word name="ВвестиПериод"/>
+            <word name="ВвестиПериод"/>
+            <word name="ВвестиПеречисление"/>
+            <word name="InputEnum"/>
+<!-- Общего назначения -->
+            <word name="Вопрос"/>
+            <word name="DoQueryBox"/>
+            <word name="Предупреждение"/>
+            <word name="DoMessageBox"/>
+            <word name="Сообщить"/>
+            <word name="Message"/>
+            <word name="ОчиститьОкноСообщений"/>
+            <word name="ClearMessageWindow"/>
+            <word name="Состояние"/>
+            <word name="Status"/>
+            <word name="Сигнал"/>
+            <word name="Beep"/>
+            <word name="Разм"/>
+            <word name="Dim"/>
+<!-- Среда исполнения -->
+            <word name="ЗаголовокСистемы"/>
+            <word name="SystemCaption"/>
+            <word name="ИмяКомпьютера"/>
+            <word name="ComputerName"/>
+            <word name="ИмяПользователя"/>
+            <word name="UserName"/>
+            <word name="ПолноеИмяПользователя"/>
+            <word name="UserFullName"/>
+            <word name="НазваниеНабораПрав"/>
+            <word name="RightName"/>
+            <word name="ПравоДоступа"/>
+            <word name="AccessRight"/>
+            <word name="НазваниеИнтерфейса"/>
+            <word name="UserInterfaceName"/>
+            <word name="КаталогПользователя"/>
+            <word name="UserDir"/>
+            <word name="КаталогИБ"/>
+            <word name="IBDir"/>
+            <word name="КаталогПрограммы"/>
+            <word name="BinDir"/>
+            <word name="КаталогВременныхФайлов"/>
+            <word name="TempFilesDir"/>
+            <word name="МонопольныйРежим"/>
+            <word name="ExclusiveMode"/>
+            <word name="ОсновнойЯзык"/>
+            <word name="GeneralLanguage"/>
+            <word name="НачатьТранзакцию"/>
+            <word name="BeginTransaction"/>
+            <word name="ЗафиксироватьТранзакцию"/>
+            <word name="CommitTransation"/>
+            <word name="ОтменитьТранзакцию"/>
+            <word name="RollBackTransaction"/>
+<!-- Обработка значений -->
+            <word name="ЗначениеВСтрокуВнутр"/>
+            <word name="ValueToStringInternal"/>
+            <word name="ЗначениеИзСтрокиВнутр"/>
+            <word name="ValueFromStringInternal"/>
+            <word name="ЗначениеВСтроку"/>
+            <word name="ValueToString"/>
+            <word name="ЗначениеИзСтроки"/>
+            <word name="ValueFromString"/>
+            <word name="ЗначениеВФайл"/>
+            <word name="ValueToFile"/>
+            <word name="ЗначениеИзФайла"/>
+            <word name="ValueFromFile"/>
+            <word name="СохранитьЗначение"/>
+            <word name="SaveValue"/>
+            <word name="ВосстановитьЗначение"/>
+            <word name="RestoreValue"/>
+<!-- Оперативный учет -->
+            <word name="ПолучитьТА"/>
+            <word name="GetAP"/>
+            <word name="ПолучитьДатуТА"/>
+            <word name="GetDateOfAP"/>
+            <word name="ПолучитьВремяТА"/>
+            <word name="GetTimeOfAP"/>
+            <word name="ПолучитьДокументТА"/>
+            <word name="GetDocOfAP"/>
+            <word name="ПолучитьПозициюТА"/>
+            <word name="GetAPPosition"/>
+            <word name="УстановитьТАна"/>
+            <word name="SetAPToBeg"/>
+            <word name="УстановитьТАпо"/>
+            <word name="SetAPToEnd"/>
+            <word name="РассчитатьРегистрыНа"/>
+            <word name="CalcRegsOnBeg"/>
+            <word name="РассчитатьРегистрыПо"/>
+            <word name="CalcRegsOnEnd"/>
+<!-- Бухгалтерский учет -->
+            <word name="ВыбранныйПланСчетов"/>
+            <word name="DefaultChartOfAccounts"/>
+            <word name="ОсновнойПланСчетов"/>
+            <word name="MainChartOfAccounts"/>
+            <word name="СчетПоКоду"/>
+            <word name="AccountByCode"/>
+            <word name="НачалоПериодаБИ"/>
+            <word name="BeginOfPeriodBT"/>
+            <word name="КонецПериодаБИ"/>
+            <word name="EndOfPeriodBT"/>
+            <word name="КонецРассчитанногоПериодаБИ"/>
+            <word name="EndOfCalculatedPeriodBT"/>
+            <word name="МаксимальноеКоличествоСубконто"/>
+            <word name="EndOfCalculatedPeriodBT"/>
+            <word name="НазначитьСчет"/>
+            <word name="SetAccount"/>
+            <word name="ВвестиПланСчетов"/>
+            <word name="InputChartOfAccounts"/>
+            <word name="ВвестиВидСубконто"/>
+            <word name="InputSubcontoKind"/>
+            <word name="ОсновнойЖурналРасчетов"/>
+            <word name="BasicCalcJournal"/>
+<!-- Специальные -->
+            <word name="СоздатьОбъект"/>
+            <word name="CreateObject"/>
+            <word name="СтатусВозврата"/>
+            <word name="ReturnStatus"/>
+            <word name="ТипЗначения"/>
+            <word name="ValueType"/>
+            <word name="ТипЗначенияСтр"/>
+            <word name="ValueTypeStr"/>
+            <word name="ПустоеЗначение"/>
+            <word name="EmptyValue"/>
+            <word name="ПолучитьПустоеЗначение"/>
+            <word name="GetEmptyValue"/>
+            <word name="НазначитьВид"/>
+            <word name="SetKind"/>
+            <word name="ПрефиксАвтоНумерации"/>
+            <word name="AutoNumPrefix"/>
+            <word name="ПолучитьЗначенияОтбора"/>
+            <word name="GetSelectionValues"/>
+            <word name="ЗаписьЖурналаРегистрации"/>
+            <word name="LogMessageWrite"/>
+            <word name="КомандаСистемы"/>
+            <word name="System"/>
+            <word name="ЗапуститьПриложение"/>
+            <word name="RunApp"/>
+            <word name="ЗавершитьРаботуСистемы"/>
+            <word name="ExitSystem"/>
+            <word name="НайтиПомеченныеНаУдаление"/>
+            <word name="FindMarkedForDelete"/>
+            <word name="НайтиСсылки"/>
+            <word name="FindReferences"/>
+            <word name="УдалитьОбъекты"/>
+            <word name="DeleteObjects"/>
+            <word name="ОбработкаОжидания"/>
+            <word name="IdleProcessing"/>
+            <word name="ОткрытьФорму"/>
+            <word name="OpenForm"/>
+            <word name="ОткрытьФормуМодально"/>
+            <word name="OpenFormModal"/>
+         </keywords>
+<!-- 1C Standard Variables and Objects -->
+         <keywords ignorecase="yes" region="c1cVar">
+            <word name="РазделительСтраниц"/>
+            <word name="PageBreak"/>
+            <word name="РазделительСтрок"/>
+            <word name="LineBreak"/>
+            <word name="СимволТабуляции"/>
+            <word name="TabSymbol"/>
+<!-- STD OBJECTS -->
+            <word name="Константа"/>
+            <word name="Const"/>
+            <word name="Перечисление"/>
+            <word name="ПланыСчетов"/>
+            <word name="ChartsOfAccounts"/>
+<!-- STD VARIABLES -->
+            <word name="НомерСтроки"/>
+            <word name="LineNum"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

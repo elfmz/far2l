@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    ADSP-21xx assembler Syntax description v2.666 (3/08/99)
+With help of:
+    Alexander Trush  http://adsp.da.ru  <trush@ropnet.ru>  2:5020/392.40
+-->
+   <type name="adsp">
+
+      <import type="def"/>
+
+      <region name="aString" parent="String"/>
+      <region name="aComment" parent="Comment"/>
+      <region name="adDef" parent="Parameter"/>
+      <region name="adLabel" parent="Label"/>
+      <region name="adMnemonic" parent="Keyword"/>
+      <region name="adReg" parent="Keyword"/>
+      <region name="adWord" parent="Keyword"/>
+      <region name="adSymbol" parent="Symbol"/>
+      <region name="adPrefix" parent="Prefix"/>
+      <region name="adFlags" parent="Parameter"/>
+      <region name="aNumberb" parent="NumberBin"/>
+      <region name="aNumberh" parent="NumberHex"/>
+      <region name="aNumbero" parent="NumberOct"/>
+      <region name="aNumberd" parent="NumberDec"/>
+      <region name="adConditions" parent="Directive"/>
+
+
+      <scheme name="adsp">
+<!-- Numbers - Dec -->
+         <regexp match="/\b(\d+)\b/" region0="aNumberd"/>
+<!-- Numbers - Hex -->
+         <regexp match="/\b([0Hh][xX#][0-9a-fA-F]+)\b/" region0="aNumberh"/>
+<!-- Numbers - Bin -->
+         <regexp match="/\b([bB]#[01]+)\b/" region0="aNumberb"/>
+<!-- Numbers - Octal -->
+         <regexp match="/\b(0[0-7]+)\b/" region0="aNumbero"/>
+<!-- Strings -->
+         <regexp match="/('.*?')/" region0="aString"/>
+         <regexp match="/(&#34;.*?&#34;)/" region0="aString"/>
+<!-- Linear Comments -->
+         <regexp match="/\/\/.*$/" region0="aComment"/>
+         <block start="/\/\*/" end="/\*\//" scheme="Comment" region="aComment" region00="PairStart" region10="PairEnd"/>
+         <block start="/\{/" end="/\}/" scheme="Comment" region="aComment" region00="PairStart" region10="PairEnd"/>
+<!-- Labels -->
+         <regexp match="/(^\s*?(\@\@)?\w*?:)/i" region0="adLabel"/>
+         <regexp match="/(JUMP|CALL|DO)\s*?(\b\w*?\b)/i" region1="adMnemonic" region2="adLabel"/>
+         <regexp match="/(JUMP|CALL)\s*?(\(I[4567]\))/i" region1="adMnemonic" region2="adLabel"/>
+<!-- Base adr & length of label     x=%label; y=^label; -->
+         <regexp match="/([\%^])(\b\w*?\b)/" region1="adPrefix" region2="adLabel"/>
+<!-- Symbols -->
+         <keywords region="adSymbol">
+            <symb name="="/>
+            <symb name=";"/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name="$"/>
+            <symb name="|"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="?"/>
+            <symb name="(" region="adMnemonic"/>
+            <symb name=")" region="adMnemonic"/>
+         </keywords>
+<!-- #include <...> -->
+         <regexp match="/(\.include)\s*([&lt;&#34;].*?[&gt;&#34;])/" region1="adDef" region2="aString"/>
+         <keywords ignorecase="yes" region="adDef">
+            <word name="#include"/>
+            <word name="#define"/>
+            <word name="#undef"/>
+            <word name="#if"/>
+            <word name="#ifdef"/>
+            <word name="#ifndef"/>
+            <word name="#else"/>
+            <word name="#endif"/>
+            <word name="#elif"/>
+            <word name="#pragma"/>
+            <word name="#error"/>
+            <word name="#line"/>
+            <word name="#endinclude"/>
+         </keywords>
+<!-- Flags -->
+         <regexp match="/\bFL[123]\b/i" region0="adFlags"/>
+         <keywords ignorecase="yes" region="adFlags">
+            <word name="FLAG_IN"/>
+            <word name="NOT FLAG_IN"/>
+            <word name="FLAG_OUT"/>
+         </keywords>
+<!-- Conditions -->
+         <keywords ignorecase="yes" region="adConditions">
+            <word name="EQ"/>
+            <word name="NE"/>
+            <word name="LT"/>
+            <word name="GE"/>
+            <word name="LE"/>
+            <word name="GT"/>
+            <word name="AC"/>
+            <word name="NOT AC"/>
+            <word name="AV"/>
+            <word name="NOT AV"/>
+            <word name="MV"/>
+            <word name="NOT MV"/>
+            <word name="NEG"/>
+            <word name="POS"/>
+            <word name="CE"/>
+            <word name="FOREVER"/>
+         </keywords>
+<!-- Asm KeyWords -->
+         <keywords ignorecase="yes" region="adDef">
+            <word name=".CONST"/>
+            <word name=".MODULE"/>
+            <word name=".ENDMOD"/>
+            <word name=".SYSTEM"/>
+            <word name=".ENDSYS"/>
+            <word name=".ENTRY"/>
+            <word name=".EXTERNAL"/>
+            <word name=".GLOBAL"/>
+            <word name=".LOCAL"/>
+            <word name=".PORT"/>
+            <word name="SEG"/>
+            <word name=".DMSEG"/>
+            <word name=".SEGMENT"/>
+            <word name=".VAR"/>
+            <word name=".INIT"/>
+            <word name=".INIT24"/>
+            <word name=".PAGE"/>
+            <word name=".NEWPAGE"/>
+            <word name=".MACRO"/>
+            <word name=".ENDMACRO"/>
+            <word name=".PAGELENGTH"/>
+            <word name=".LEFTMARGIN"/>
+            <word name=".INDENT"/>
+            <word name=".PAGEWIDTH"/>
+            <word name="BM"/>
+            <word name="BOOT"/>
+            <word name="CODE"/>
+            <word name="DATA"/>
+            <word name="CIRC"/>
+            <word name="NAME"/>
+            <word name="RAM"/>
+            <word name="ROM"/>
+            <word name="STATIC"/>
+            <word name="INTERNAL"/>
+            <word name=".ADSP2100"/>
+            <word name=".ADSP2100P"/>
+            <word name=".ADSP2101"/>
+            <word name=".ADSP2101P"/>
+            <word name=".ADSP2101MV"/>
+            <word name=".ADSP2102"/>
+            <word name=".ADSP2105"/>
+            <word name=".ADSP2105P"/>
+            <word name=".ADSP2111"/>
+            <word name=".ADSP2159"/>
+            <word name=".ADSP2159P"/>
+            <word name=".ADSP2159MV"/>
+            <word name=".ADSP2171"/>
+            <word name=".ADSP2171P"/>
+            <word name=".ADSP2171MV"/>
+            <word name=".ADSP2111P"/>
+            <word name=".ADSP2150"/>
+            <word name=".ADSP2150P"/>
+            <word name=".ADSP2151"/>
+            <word name=".ADSP2151P"/>
+            <word name=".ADSP2181"/>
+            <word name=".EMU"/>
+            <word name=".EMULATOR"/>
+            <word name=".MMAP0"/>
+            <word name=".MMAP1"/>
+            <word name=".MMAP"/>
+         </keywords>
+         <keywords ignorecase="yes" region="adMnemonic">
+            <word name="ABS"/>
+            <word name="PASS"/>
+            <word name="AND"/>
+            <word name="OR"/>
+            <word name="XOR"/>
+            <word name="NOT"/>
+            <word name="ASHIFT"/>
+            <word name="LSHIFT"/>
+            <word name="SHIFT"/>
+            <word name="EXP"/>
+            <word name="EXPADJ"/>
+            <word name="NORM"/>
+            <word name="BY"/>
+            <word name="HI"/>
+            <word name="HIX"/>
+            <word name="LO"/>
+            <word name="DIVS"/>
+            <word name="DIVQ"/>
+            <word name="DM"/>
+            <word name="PM"/>
+            <word name="IO"/>
+            <word name="MODIFY"/>
+            <word name="DO"/>
+            <word name="UNTIL"/>
+            <word name="ENA"/>
+            <word name="DIS"/>
+            <word name="NOP"/>
+            <word name="TRAP"/>
+            <word name="IDLE"/>
+            <word name="IF"/>
+            <word name="JUMP"/>
+            <word name="POP"/>
+            <word name="PUSH"/>
+            <word name="RND"/>
+            <word name="SAT"/>
+            <word name="CALL"/>
+            <word name="RTI"/>
+            <word name="RTS"/>
+            <word name="SET"/>
+            <word name="RESET"/>
+            <word name="TOGGLE"/>
+            <word name="TSTBIT"/>
+            <word name="SETBIT"/>
+            <word name="CLRBIT"/>
+            <word name="TGLBIT"/>
+            <word name="SS"/>
+            <word name="SU"/>
+            <word name="US"/>
+            <word name="UU"/>
+         </keywords>
+<!-- Asm Registers -->
+         <regexp match="/\b([aAmM][xXyY][01])\b/i" region0="adReg"/>
+         <regexp match="/\b([aAmM][fFrR])\b/i" region0="adReg"/>
+         <regexp match="/\b([iImMlL][0-7])\b/i" region0="adReg"/>
+         <regexp match="/\b(MR[012])\b/i" region0="adReg"/>
+         <regexp match="/\b(SR[01])\b/i" region0="adReg"/>
+         <regexp match="/\b(S[bBeEiIrR])\b/i" region0="adReg"/>
+         <regexp match="/\b([rRtT]X[01])\b/i" region0="adReg"/>
+         <regexp match="/\b([aAmMsS]STAT)\b/i" region0="adReg"/>
+         <keywords ignorecase="yes" region="adReg">
+            <word name="CNTR"/>
+            <word name="ICNTL"/>
+            <word name="OWRCNTR"/>
+            <word name="IFC"/>
+            <word name="IMASK"/>
+            <word name="PC"/>
+            <word name="C"/>
+            <word name="PX"/>
+            <word name="TOPPCSTACK"/>
+            <word name="DMOVLAY"/>
+            <word name="PMOVLAY"/>
+            <word name="NONE"/>
+            <word name="LOOP"/>
+<!-- Loop stack    -->
+            <word name="STS"/>
+<!-- Status stacks -->
+         </keywords>
+         <keywords ignorecase="yes" region="adDef">
+            <word name="ALT_REG"/>
+            <word name="SEC_REG"/>
+            <word name="AR_SAT"/>
+            <word name="TIMER"/>
+            <word name="M_MODE"/>
+            <word name="G_MODE"/>
+            <word name="AV_LATCH"/>
+            <word name="BIT_REV"/>
+         </keywords>
+<!--
+System bulder
+~~~~~~~~~~~~
+ABS CODE CONST DATA ENDSYS PM PORT RAM ROM INTERNAL SEG
+SYSTEM TARGET BOOT PAGESIZE
+
+Asm21:
+~~~~~~~
+AUX CACHE CLR CLRBIT INTS LOOP NAME NEWPAGE OF INDENT REGBANK SETBIT SEGMENT
+SHIFT SS DMSEG PMSEG PMDATASEG STS TGLBIT TRUE TSTBIT  E_MODE M_MODE TIMER
+FI FO IFC OWRCNTR PAGE BOOT STATIC SET SETDATA RESET TOGGLE
+-->
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

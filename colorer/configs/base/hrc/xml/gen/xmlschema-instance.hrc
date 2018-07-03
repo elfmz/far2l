@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="xsi" group="group" description="xsi" targetNamespace="http://www.w3.org/2001/XMLSchema-instance">
+    <location link="xsi.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="xsi">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'xsi'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://www.w3.org/2001/XMLSchema-instance
+             hrctype                     : xsi
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : (?{}(?{}xsi)(?{}:))
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:XML Schema instance namespaceSee the XML Schema
+       Recommendation for an introduction
+    $Date: 2001/03/16 20:25:57 $
+    $Id: XMLSchema-instance.xsd,v 1.4 2001/03/16 20:25:57 ht Exp $
+  </documentation>
+         <contributors><![CDATA[Eugene Efremov]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value="(?{}(?{}xsi)(?{}:))"/>
+      <entity name="nsprefix" value="(?{}(?{}xsi)(?{}:))"/>
+      <entity name="attr-nsprefix" value="(?{}(?{}xsi)(?{Attribute.nscolon}:))"/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from '../../src/xmlschema/src/custom.xsd.xml'--><!--end custom--><scheme name="nil-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(nil)\M([\s\=]|$)/x"
+                scheme="xmlschema:boolean-AttributeContent"/>
+      </scheme>
+      <scheme name="type-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(type)\M([\s\=]|$)/x"
+                scheme="xmlschema:QName-AttributeContent"/>
+      </scheme>
+      <scheme name="schemaLocation-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(schemaLocation)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e36-AttributeContent"/>
+      </scheme>
+      <scheme name="noNamespaceSchemaLocation-attribute">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(noNamespaceSchemaLocation)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+      </scheme>
+      <scheme name="xsi-attributeGroup">
+         <inherit scheme="nil-attribute"/>
+         <inherit scheme="type-attribute"/>
+         <inherit scheme="schemaLocation-attribute"/>
+         <inherit scheme="noNamespaceSchemaLocation-attribute"/>
+      </scheme>
+      <!--
+        parent: schemaLocation
+-->
+<scheme name="_hrc_int_d12e36-content"><!--list:--><inherit scheme="xmlschema:anyURI-content"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e36-content-error">
+         <inherit scheme="_hrc_int_d12e36-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e36-Attributes"/>
+      <scheme name="_hrc_int_d12e36-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e36-content-error"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="xsi-root"/>
+      <scheme name="xsi-root-addref">
+         <inherit scheme="xsi-root"/>
+      </scheme>
+      <scheme name="xsi">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="xsi-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

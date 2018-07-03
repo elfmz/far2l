@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!--
+<entity name="var" value="[$@%*&amp;]"/>
+<entity name="var" value="[$@]"/>
+-->
+
+<entity name="varl" value="%var;[\$\#]*"/>
+
+<entity name="name" value="([A-Za-z_&apos;][\dA-Za-z_&apos;]*\b|::)" />
+<entity name="endbr" value="[\]\}]?#1(\s*[\{\[])?!"/>
+
+
+<scheme name="vars">
+	<block start="/(%varl;\s*\M\{) [^&quot;]*? \}/x" end="/%endbr;/"
+		scheme="perl:VarBrakEx" 
+		region00="perl:Var" region01="def:PairStart"
+	/>
+	<block start="/%varl;%name;+\s*\M[\{\[] [^&quot;]*? [\]\}]/x" end="/%endbr;/"
+		scheme="perl:VarBrak" region00="perl:Var" 
+	/>
+	<block start="/(-&gt;)?#2\s*\M[\{\[] [^&quot;]*? [\]\}]/x" end="/%endbr;/"
+		scheme="perl:VarBrak" 
+	/>
+	<regexp match="/(&amp;)?!%varl;%name;+/" region="perl:Var" priority="low"/>
+</scheme>
+

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="haxe">
+
+    <annotation><documentation>
+        Haxe
+        Based on: ActionScript
+    </documentation></annotation>
+
+    <import type="def"/>
+
+    <region name="Code" parent="def:Text"/> <!-- ??? -->
+    <region name="StringEscape" parent="def:StringContent"/>
+    <region name='Package' parent='def:Directive'/>
+    <region name='PackageOutline' parent='def:Outlined'/>
+    <region name='Import' parent='def:Directive'/>
+    <region name='ImportOutline' parent='def:Outlined'/>
+    <region name='Annotation' parent='def:Label'/>
+    <region name='Interpolation' parent='def:StringEdge'/>
+    <region name="Ident" parent="def:Identifier"/>
+    <region name="LiteralKeyword" parent="def:Keyword"/>
+    <region name="XmlContent" parent="def:String"/>
+    <region name="StandardType" parent="def:Keyword"/>
+    <region name="StandardProperty" parent="def:Identifier"/>
+
+    <region name="Preproc"     parent="def:DirectiveContent"/>
+    <region name="PreprocPref" parent="def:DirectiveEdge"/> <!-- # -->
+    <region name="PreprocWord" parent="def:Directive"/> <!-- !!EE: def:Keyword -->
+
+
+    <scheme name="String">
+      <regexp match="/\\[xX]0*[\da-fA-F]{1,2}/" region0="StringEscape"/>
+      <regexp match="/\\[^xX0-7]/"              region0="StringEscape"/>
+    </scheme>
+
+    <scheme name="InterpolateString">
+      <regexp match="/\\[xX]0*[\da-fA-F]{1,2}/" region0="StringEscape"/>
+      <regexp match="/\\[^xX0-7]/"              region0="StringEscape"/>
+
+      <block start="/(\$\{)/" end="/(\})/" scheme="haxe" region="Code" region00="Interpolation" region01="PairStart" region10="Interpolation" region11="PairEnd"/>
+      <regexp match="/(\$)(\w[\w\d]*)/" region1="Interpolation" region2="Code"/>
+    </scheme>
+
+    <scheme name="RegexString">
+      <regexp match="/\\[xX]0*[\da-fA-F]{1,2}/" region0="StringEscape"/>
+      <regexp match="/\\[^xX0-7]/"              region0="StringEscape"/>
+    </scheme>
+      
+
+    <scheme name="PreprocParams">
+      <block start="/(\()/" end="/(\))/" scheme="PreprocParams" region01="PairStart" region11="PairEnd"/>
+    </scheme>
+
+    <scheme name="Preproc">
+      <block  start="/(#if|#elseif|#error)\s*(!\s*)?(\()/" end="/(\))/"     scheme="PreprocParams" region="Preproc" region01="PreprocWord" region03="PairStart" region11="PairEnd"/>
+      <block  start="/(#if|#elseif|#error)\s*(&quot;)/"    end="/(&quot;)/" scheme="String"        region="String"  region01="PreprocWord" region02="PairStart" region11="PairEnd"/>
+      <regexp match="/(#if|#elseif|#error)\s+(!\s*)?([\w\d]+)/"                                    region="Preproc" region1="PreprocWord"/>
+      <regexp match="/(#else|#end)/"                                                               region="Preproc" region1="PreprocWord"/>
+      <regexp match="/\#/" region='def:Error'/>
+    </scheme>
+
+    <scheme name="AnnotationParams">
+      <inherit scheme="haxe"/>
+    </scheme>
+
+    <scheme name="Annotation">
+       <block start="/ (@:? [\w\$\.]+) \s* (\() /x" end="/(\))/" scheme="AnnotationParams" region="Annotation" region02="PairStart" region11="PairEnd"/>
+       <regexp match="/ (@:? [\w\$\.]+) /x" region0="Annotation"/>
+      <regexp match="/\@/" region='def:Error'/>
+    </scheme>
+
+    <scheme name="HaxeIdent">
+      <regexp match="/[\w$][\w\d]*/"   region0="Ident"/>
+    </scheme>
+
+    <scheme name="haxe">
+
+      <inherit scheme="def:unixCommentDirective"/>
+      <regexp match="/\/\*\*\//" region="Comment"/>
+      <block start="/\/\*\*/" end="/\*\//"  scheme="Comment" region="CommentDoc" region00="PairStart" region10="PairEnd"/>
+      <block start="/\/\*/"   end="/\*\//"  scheme="Comment" region="Comment"    region00="PairStart" region10="PairEnd"/>
+      <block start="/\/\//"   end="/$/"     scheme="Comment" region="Comment"/>
+
+      <inherit scheme="Preproc"/>
+      <inherit scheme="Annotation"/>
+
+      <regexp match="/(package)\s+\m(([\w\._]+))/"        region1="Keyword" region2="Package" region3="PackageOutline"/>
+      <regexp match="/(import|using)\s+\m(([\w\._\*]+))/" region1="Keyword" region2="Import"  region3="ImportOutline"/>
+
+      <block start="/(\{)/"   end="/(\})/"   scheme="haxe" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+      <block start="/(\()/"   end="/(\))/"   scheme="haxe" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+      <block start="/(\[)/"   end="/(\])/"   scheme="haxe" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+
+
+<!-- Strings -->
+      <block start="/(&quot;)/" end="/(&quot;)/"    scheme="String"            region="String" region00="def:StringEdge" region01="def:PairStart" region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/(&apos;)/" end="/(&apos;)/"    scheme="InterpolateString" region="String" region00="def:StringEdge" region01="def:PairStart" region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/(\~\/)/"   end="/(\/[gxms]?)/" scheme="RegexString"       region="String" region00="def:Label"      region01="def:PairStart" region10="def:Label"      region11="def:PairEnd"/>
+
+
+      <keywords region="Keyword">
+        <word name="abstract"/>
+<!--    <word name="as"/>  kw only in "import A as B" -->
+        <word name="break"/>
+        <word name="case"/>
+        <word name="catch"/>
+        <word name="class"/>
+        <word name="continue"/>
+        <word name="default"/>
+        <word name="dynamic"/>
+<!--    <word name="never"/> in getter/setter -->
+        <word name="do"/>
+        <word name="enum"/>
+        <word name="else"/>
+        <word name="extends"/>
+        <word name="extern"/>
+        <word name="finally"/>
+        <word name="for"/>
+        <word name="function"/>
+        <word name="if"/>
+        <word name="implements"/>
+        <word name="import"/>
+        <word name="in"/>
+        <word name="interface"/>
+        <word name="inline"/>
+        <word name="new"/>
+        <word name="override"/>
+        <word name="package"/>
+        <word name="private"/>
+        <word name="public"/>
+        <word name="return"/>
+        <word name="static"/>
+        <word name="super"/>
+        <word name="switch"/>
+        <word name="this"/>
+        <word name="throw"/>
+        <word name="try"/>
+        <word name="typedef"/>
+        <word name="untyped"/>
+        <word name="var"/>
+        <word name="while"/>
+        <word name="_"/>
+      </keywords>
+      <keywords region="Label">
+        <word name="cast"/>
+        <word name="macro"/>
+      </keywords>
+      <keywords region="Symbol">
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="!"/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+        <symb name="?"/>
+        <symb name="~"/>
+        <symb name="&amp;"/>
+        <symb name="^"/>
+        <symb name="|"/>
+        <symb name="="/>
+        <symb name=","/>
+        <symb name="."/>
+        <symb name=":"/>
+        <symb name=";"/>
+      </keywords>
+      <keywords region="LiteralKeyword">
+        <word name="true"/>
+        <word name="false"/>
+        <word name="null"/>
+      </keywords>
+      <keywords region="StandardType">
+        <word name="Any"/>
+        <word name="Array"/>
+        <word name="Bool"/>
+        <word name="Dynamic"/>
+        <word name="EReg"/>
+        <word name="Float"/>
+        <word name="Int"/>
+        <word name="Map"/>
+        <word name="Null"/>
+        <word name="String"/>
+<!--    <word name="UInt"/> -->
+        <word name="Void"/>
+      </keywords>
+      <inherit scheme="def:Number"/>
+      <inherit scheme="HaxeIdent"/>
+
+      <regexp match="/[^\)\}\]&gt;\s]/" region='def:Error'/>
+    </scheme>
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Ralf Bokelberg <eclipse_colorer@bokelberg.de>
+   - Vladimir Panteleev <vladimi@thecybershadow.net>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<type name="go">
+
+ <annotation>
+ <documentation>
+    Go syntax description
+    
+    https://golang.org/ref/spec
+ </documentation><contributors><![CDATA[
+    Mikhail Kupchik <Mikhail.Kupchik@gmail.com>
+    anatoly techtonik <techtonik@gmail.com>
+ ]]></contributors>
+ </annotation>
+
+  <import type="def"/>
+
+  <region name="Character" parent="def:Character"/>
+  <region name="String" parent="def:String"/>
+  <region name="StringEscape" parent="def:StringContent"/>
+  <region name="StringFormat" parent="def:VarStrong"/>
+  <region name="StringContent" parent="def:StringContent"/>
+
+  <region name="LineComment" parent="def:LineComment"/>
+  <region name="Comment" parent="def:Comment"/>
+
+  <region name="Symbol" parent="def:Symbol"/>
+
+  <region name="Keywords" parent="def:Keyword"/>
+
+
+  <scheme name="Character">
+   <regexp match="/[Ll]?'(\\\D | \\[0-7]{1,3} | \\x[\da-fA-F]{2} | [^\\']){1,4}'/x" region="Character"/>
+   <regexp match="/'.*?'/" region="def:Error"/>
+  </scheme>
+
+  <scheme name="String">
+   <block start="/(?{def:StringEdge}[Ll]?&#34;)/" end="/(?{def:StringEdge}&#34;)/"
+          scheme="StringContent" region="String" inner-region="yes"
+          region00='def:PairStart' region10='def:PairEnd'
+   />
+  </scheme>
+
+  <entity name='format' value='[\-\+\#0]*?[\d\*]*(?{}\.[\d\*]+)?[Ll]?[a-z]'/>
+  <scheme name="StringContent">
+   <regexp match="/\\\\$/" region="def:Error"/>
+	 <regexp match="/((\%)[\dA-Z_]{2,}(\%))(%format;|%)?!/" region1="def:Var" region2="def:PairStart" region3="def:PairEnd"/>
+   <regexp match="/\\[^xX\d]/" region="StringEscape"/>
+   <regexp match="/\\$/" region="StringEscape"/>
+   <regexp match="/\\x[\da-fA-F]{1,8}/i" region="StringEscape"/>
+   <regexp match="/\\[0-7]{1,12}/" region="StringEscape"/>
+   <regexp match="/\%(%format;|\%)/" region="StringFormat"/>
+   <regexp match="/[^\\\&#34;]$/" region="def:Error"/>
+   <inherit scheme="TabsAsErrors"/>
+  </scheme>
+
+  <!-- https://golang.org/ref/spec#String_literals -->
+  <scheme name="RawString">
+    <block start="/(`)/" end="/(`)/" scheme="def:empty" region="def:String" region01="def:PairStart" region10="def:PairEnd"/>
+  </scheme>
+
+  <scheme name="TabsAsErrors" if="tabs-as-errors">
+    <regexp match="/\t+/" region='def:Error'/>
+  </scheme>
+
+  <scheme name="go">
+   <inherit scheme="Expression"/>
+  </scheme>
+
+  <scheme name="Expression">
+
+   <block start="/(\()/" end="/(\))/" scheme="Expression"
+          region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+   <block start="/(\[)/" end="/(\])/" scheme="Expression"
+          region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+   <block start="/(\{)/" end="/(\})/" scheme="Expression"
+          region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+   
+   <inherit scheme="Character"/>
+   <inherit scheme="String"/>
+   <inherit scheme="RawString"/>
+
+   <!-- Numbers -->
+   <inherit scheme="def:Number"/>
+   <inherit scheme="def:BadHex"/>
+
+   <!-- Doxygen Comments -->
+   <regexp match="/\/\*\*\//" region="def:CommentDoc"/>
+   <block start="/\/\/\//" end="/$/" scheme="doxygen:doxygen" region="def:CommentDoc"/>
+   <block start="/\/\*\*/" end="/\*\//" scheme="doxygen:doxygen" region="def:CommentDoc"
+          region00="def:PairStart" region10="def:PairEnd"/>
+
+   <!-- Comments -->
+   <block start="/\/\//" end="/$/" scheme="def:Comment" region="LineComment"/>
+   <block scheme="def:Comment" region="Comment">
+      <start region0="def:PairStart"><![CDATA[/\/\*/]]></start>
+      <end region0="def:PairEnd"><![CDATA[/\*\//]]></end>
+   </block>
+
+   
+   <!-- Go keywords -->
+   <keywords region="Keywords">
+      <word name="break" />
+      <word name="case" />
+      <word name="chan" />
+      <word name="const" />
+      <word name="continue" />
+      <word name="default" />    
+      <word name="defer" />      
+      <word name="else" />       
+      <word name="fallthrough" />
+      <word name="for" />        
+      <word name="func" />  
+      <word name="go" />    
+      <word name="goto" />  
+      <word name="if" />    
+      <word name="import" />
+      <word name="interface" />
+      <word name="map" />      
+      <word name="package" />  
+      <word name="range" />    
+      <word name="return" />   
+      <word name="select" />
+      <word name="struct" />
+      <word name="switch" />
+      <word name="type" />  
+      <word name="var" />   
+   </keywords>
+
+   <keywords region="Symbol">
+      <symb name="+" />
+      <symb name="=" />
+      <symb name="-" />
+      <symb name="|" />
+      <symb name="!" />
+      <symb name="&amp;" />
+      <symb name="&lt;" />
+      <symb name="[" />
+      <symb name="]" />
+      <symb name="*" />
+      <symb name="^" />
+      <symb name="&gt;" />
+      <symb name="{" />
+      <symb name="}" />
+      <symb name="/" />
+      <symb name=":" />
+      <symb name="," />
+      <symb name=";" />
+      <symb name="%" />
+      <symb name="." />
+      <symb name=":" />
+   </keywords>
+
+  </scheme>
+
+</type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2008
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Mikhail Kupchik <Mikhail.Kupchik@gmail.com>.
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

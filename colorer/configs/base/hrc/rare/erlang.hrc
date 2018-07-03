@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+	<type name="erlang">
+		<annotation>
+			<documentation><![CDATA[
+			Erlang language syntax
+			http://www.erlang.org
+			]]></documentation>
+			<contributors>
+			Nick Linker xlcr@mail.ru
+			</contributors>
+		</annotation>
+
+		<!-- exact parent -->
+		<region name="Comment" parent="def:Comment"/>
+		<region name="Error" parent="def:Error"/>
+		<region name="Keyword" parent="def:Keyword"/>
+		<region name="Number" parent="def:Number"/>
+		<region name="PairStart" parent="def:PairStart"/>
+		<region name="PairEnd" parent="def:PairEnd"/>
+		<region name="Symbol" parent="def:Symbol"/>
+		<region name="String" parent="def:String"/>
+		<region name="StringEdge" parent="def:StringEdge"/>
+		<!-- similar parent -->
+		<region name="Atom" parent="def:Identifier"/>
+		<region name="BuiltInFunction" parent="def:FunctionKeyword"/>
+		<region name="Directive" parent="def:ParameterStrong"/>
+		<region name="FunctionDecl" parent="def:Directive"/>
+		<region name="StringEscape" parent="def:StringContent"/>
+		<region name="Variable" parent="def:Parameter"/>
+
+		<scheme name="Comment">
+			<regexp match="/(\%.*$)/" region="Comment"/>
+		</scheme>
+
+		<scheme name="Directive">
+			<!--<regexp match="/atom/number/"/>-->
+			<keywords region="Directive">
+				<word name="-compile"/>
+				<word name="-define"/>
+				<word name="-else"/>
+				<word name="-endif"/>
+				<word name="-export"/>
+				<word name="-file"/>
+				<word name="-ifdef"/>
+				<word name="-ifndef"/>
+				<word name="-import"/>
+				<word name="-include"/>
+				<word name="-include_lib"/>
+				<word name="-module"/>
+				<word name="-record"/>
+				<word name="-undef"/>
+				<word name="-author"/>
+				<word name="-copyright"/>
+				<word name="-doc"/>
+			</keywords>
+		</scheme>
+
+		<scheme name="String">
+			<block start="/(?{StringEdge}&#34;)/" end="/(?{StringEdge}&#34;)/"
+				scheme="StringContent" region="String" inner-region="yes"/>
+		</scheme>
+
+		<scheme name="Atom">
+			<!-- Reserved words -->
+			<keywords region="Keyword">
+				<word name="after"/>
+				<word name="begin"/>
+				<word name="case"/>
+				<word name="catch"/>
+				<word name="cond"/>
+				<word name="end"/>
+				<word name="fun"/>
+				<word name="if"/>
+				<word name="let"/>
+				<word name="of"/>
+				<word name="query"/>
+				<word name="receive"/>
+				<word name="when"/>
+			</keywords>
+			<!-- Built-in functions -->
+			<keywords region="BuiltInFunction">
+				<!--math module-->
+				<word name="acos"/>
+				<word name="asin"/>
+				<word name="atan"/>
+				<word name="atan2"/>
+				<word name="cos"/>
+				<word name="cosh"/>
+				<word name="exp"/>
+				<word name="log"/>
+				<word name="log10"/>
+				<word name="pi"/>
+				<word name="pow"/>
+				<word name="power"/>
+				<word name="sin"/>
+				<word name="sinh"/>
+				<word name="sqrt"/>
+				<word name="tan"/>
+				<word name="tanh"/>
+				<word name="abs"/>
+				<word name="alive"/>
+				<word name="apply"/>
+				<word name="atom_to_list"/>
+				<word name="binary_to_list"/>
+				<word name="binary_to_term"/>
+				<word name="concat_binary"/>
+				<word name="date"/>
+				<word name="disconnect_node"/>
+				<word name="element"/>
+				<word name="erase"/>
+				<word name="exit"/>
+				<word name="float"/>
+				<word name="float_to_list"/>
+				<word name="get"/>
+				<word name="get_keys"/>
+				<word name="group_leader"/>
+				<word name="halt"/>
+				<word name="hd"/>
+				<word name="integer_to_list"/>
+				<word name="is_alive"/>
+				<word name="length"/>
+				<word name="link"/>
+				<word name="list_to_atom"/>
+				<word name="list_to_binary"/>
+				<word name="list_to_float"/>
+				<word name="list_to_integer"/>
+				<word name="list_to_pid"/>
+				<word name="list_to_tuple"/>
+				<word name="load_module"/>
+				<word name="make_ref"/>
+				<word name="monitor_node"/>
+				<word name="node"/>
+				<word name="nodes"/>
+				<word name="now"/>
+				<word name="open_port"/>
+				<word name="pid_to_list"/>
+				<word name="process_flag"/>
+				<word name="process_info"/>
+				<word name="process"/>
+				<word name="put"/>
+				<word name="register"/>
+				<word name="registered"/>
+				<word name="round"/>
+				<word name="self"/>
+				<word name="setelement"/>
+				<word name="size"/>
+				<word name="spawn"/>
+				<word name="spawn_link"/>
+				<word name="split_binary"/>
+				<word name="statistics"/>
+				<word name="term_to_binary"/>
+				<word name="throw"/>
+				<word name="time"/>
+				<word name="tl"/>
+				<word name="trunc"/>
+				<word name="tuple_to_list"/>
+				<word name="unlink"/>
+				<word name="unregister"/>
+				<word name="whereis"/>
+				<word name="atom"/>
+				<word name="binary"/>
+				<word name="constant"/>
+				<word name="function"/>
+				<word name="integer"/>
+				<word name="list"/>
+				<word name="number"/>
+				<word name="pid"/>
+				<word name="ports"/>
+				<word name="port_close"/>
+				<word name="port_info"/>
+				<word name="reference"/>
+				<word name="record"/>
+				<!--erlang module-->
+				<word name="check_process_code"/>
+				<word name="delete_module"/>
+				<word name="get_cookie"/>
+				<word name="hash"/>
+				<word name="math"/>
+				<word name="module_loaded"/>
+				<word name="preloaded"/>
+				<word name="processes"/>
+				<word name="purge_module"/>
+				<word name="set_cookie"/>
+				<word name="set_node"/>
+				<word name="call"/>
+				<word name="module_info"/>
+				<word name="parse_transform"/>
+				<word name="undefined_function"/>
+				<!--peculiar modules-->
+				<word name="erlang"/>
+				<word name="error_handler"/>
+			</keywords>
+			<!-- more than just an identifier... -->
+			<regexp match="/[a-z][_a-zA-Z01-9]*/" region="Atom"/>
+			<block start="/'/" end="/'/"
+				scheme="StringContent" region="Atom" inner-region="yes"/>
+		</scheme>
+
+		<scheme name="Variable">
+			<!-- in Erlang an underscore is considered as a capital letter -->
+			<regexp match="/[_A-Z][a-zA-Z01-9]*/" region="Variable"/>
+		</scheme>
+
+		<scheme name="StringContent">
+			<regexp match="/\\\\$/" region="Error"/>
+			<regexp match="/\\[bdefnrtv]/" region="StringEscape"/>
+			<regexp match="/\\\^[A-Z]/" region="StringEscape"/>
+			<regexp match="/\\$/" region="StringEscape"/>
+			<regexp match="/\\[0-7]{3}/" region="StringEscape"/>
+			<regexp match="/\\&#34;/" region="StringEscape"/>
+			<regexp match="/\\'/" region="StringEscape"/>
+			<!--<regexp match="/[^\\&#34;]$/" region="Error"/>-->
+		</scheme>
+
+		<scheme name="Number">
+			<!-- Erlang character -->
+			<regexp match="/\$[a-zA-Z]/" region="Number"/>
+			<!-- Erlang any-radix-numbers -->
+			<regexp match="/\$\\./" region="Number"/>
+			<regexp match="/\$./" region="Number"/>
+			<regexp match="/\b(\d{1,2}\#[\da-fA-F]+)\b/" region="Number"/>
+			<inherit scheme="def:FloatNumber"/>
+			<inherit scheme="def:DecNumber"/>
+		</scheme>
+
+		<scheme name="PairedBrackets">
+			<!-- yellow braces is not good, this is because I am not using inherited def:PairedBrackets -->
+			<!--<inherit scheme="def:PairedBrackets" subst-scheme="PairedBrackets"/>-->
+			<block start="/(\{)/" end="/(\})/" scheme="erlang" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+			<block start="/(\()/" end="/(\))/" scheme="erlang" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+			<block start="/(\[)/" end="/(\])/" scheme="erlang" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+		</scheme>
+
+		<!-- the main "exported" scheme -->
+		<scheme name="erlang">
+			<inherit scheme="Comment"/>
+			<inherit scheme="Atom"/>
+			<inherit scheme="String"/>
+			<inherit scheme="Variable"/>
+			<inherit scheme="Number"/>
+			<inherit scheme="Directive"/>
+			<inherit scheme="PairedBrackets"/>
+
+			<!-- Symbols -->
+			<keywords region="Symbol">
+				<!--operators-->
+				<symb name="=="/>
+				<symb name="/="/>
+				<symb name="=:="/>
+				<symb name="=/="/>
+				<symb name="&lt;"/>
+				<symb name="=&lt;"/>
+				<symb name="&gt;"/>
+				<symb name="&gt;="/>
+				<symb name="++"/>
+				<symb name="--"/>
+				<symb name="&lt;-"/>
+				<symb name="+"/>
+				<symb name="-"/>
+				<symb name="*"/>
+				<symb name="/"/>
+				<symb name="="/>
+				<symb name="!"/>
+				<word name="div"/>
+				<word name="rem"/>
+				<word name="or"/>
+				<word name="xor"/>
+				<word name="bor"/>
+				<word name="bxor"/>
+				<word name="bsl"/>
+				<word name="bsr"/>
+				<word name="and"/>
+				<word name="band"/>
+				<word name="not"/>
+				<word name="bnot"/>
+				<!--separators and others-->
+				<symb name=":"/>
+				<symb name="_"/>
+				<symb name="@"/>
+				<symb name="\"/>
+				<symb name="."/>
+				<symb name="("/>
+				<symb name=")"/>
+				<symb name="["/>
+				<symb name="]"/>
+				<symb name="{"/>
+				<symb name="}"/>
+				<symb name="|"/>
+				<symb name="||"/>
+				<symb name=";"/>
+				<symb name=","/>
+				<symb name="?"/>
+				<symb name="-&gt;"/>
+				<symb name="#"/>
+			</keywords>
+		</scheme>
+	</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

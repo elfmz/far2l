@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<annotation>
+ <documentation>
+  Extended CSS for HTML
+ </documentation>
+ <contributors>
+ <![CDATA[
+  Eugene Efremov <4mirror@mail.ru>
+ ]]>
+ </contributors>
+ <appinfo>
+ <!-- insert this define into HRC base catalog file
+  (AFTER definition of type "css"):-->
+  <prototype name="html-css" group="inet" description="css for html">
+    <location link="inet/html-css.hrc"/>
+    <filename>/\.(css)$/i</filename>
+  </prototype>
+  <require>
+    <type name="css"/>
+    <type name="css"/>
+    <type name="html"/>
+    <type name="jScript"/>
+  </require>     
+ 
+ <todo>
+ <![CDATA[
+  Hа текущий момент нет отдельного варината для xhtml, который бы
+  запрещал тэги в верхнем регистре.
+ ]]>
+ </todo></appinfo>
+
+</annotation>
+
+
+<type name="html-css">
+
+<region name="msie" parent="def:DeprecatedKeyword"/>
+<region name="PropertyValue" parent="def:Parameter"/>
+
+<scheme name="PropertyNames"> 
+ <inherit scheme="css:PropertyNames"/>
+</scheme>
+
+<scheme name="PropertyValue">
+ <inherit scheme="css:PropertyValue"/>
+</scheme>
+
+
+
+<scheme name="cssTag">
+ <inherit scheme="html:htmlCoreTags"/>
+</scheme>
+<scheme name="cssAttr">
+ <inherit scheme="html:htmlParams"/>
+</scheme>
+
+<scheme name="PropertyFunc">
+ <inherit scheme="css:PropertyFunc"/>
+ <inherit scheme="iePropertyFunc"/>
+</scheme>
+
+<scheme name="iePropertyFunc">
+ <block start="/\b(expression)(\s)*((\())/" end="/(\))/" scheme="jScript:jScript"
+  region01="css:DeprecatedPropertyFunc" region03="def:PairStart" region04="css:Symbol"
+  region10="def:PairEnd"  region11="css:Symbol"
+ />
+  
+</scheme>
+
+
+<scheme name="QuotRuleContent">
+ <inherit scheme="css:QuotRuleContent">
+  <virtual scheme="css:PropertyNames" subst-scheme="PropertyNames"/>
+  <virtual scheme="css:PropertyValue" subst-scheme="PropertyValue"/>
+  <virtual scheme="css:PropertyFunc" subst-scheme="PropertyFunc"/>
+  <virtual scheme="css:CustomColors" subst-scheme="CustomColors"/>
+ </inherit>
+</scheme>
+
+<scheme name="AposRuleContent">
+ <inherit scheme="css:AposRuleContent">
+  <virtual scheme="css:PropertyNames" subst-scheme="PropertyNames"/>
+  <virtual scheme="css:PropertyValue" subst-scheme="PropertyValue"/>
+  <virtual scheme="css:PropertyFunc" subst-scheme="PropertyFunc"/>
+  <virtual scheme="css:CustomColors" subst-scheme="CustomColors"/>
+ </inherit>
+</scheme>
+
+
+<scheme name="css">
+ <inherit scheme="css:css-r">
+  <virtual scheme="css:css-r" subst-scheme="css"/>
+  <virtual scheme="css:PropertyNames" subst-scheme="PropertyNames"/>
+  <virtual scheme="css:PropertyValue" subst-scheme="PropertyValue"/>
+  <virtual scheme="css:PropertyFunc" subst-scheme="PropertyFunc"/>
+  <virtual scheme="css:CustomColors" subst-scheme="CustomColors"/>
+  <virtual scheme="css:TagNames" subst-scheme="cssTag"/>
+  <virtual scheme="css:AttrNames" subst-scheme="cssAttr"/>
+ </inherit>
+</scheme>
+
+<scheme name="html-css">
+ <inherit scheme="css"/>
+</scheme>
+
+<scheme name="Colors">
+ <inherit scheme="css:Colors">
+  <virtual scheme="css:CustomColors" subst-scheme="CustomColors"/>
+ </inherit>
+</scheme>
+
+
+    <scheme name="CustomColors">
+      <annotation>
+       <documentation>
+        WARNING!
+        This colors posible used in MSIE or Mozilla,
+        but it's NOT valid CSS level 1 or 2!
+       </documentation>
+      </annotation>
+      <keywords region="css:baseColors" ignorecase="yes" worddiv='%css:worddiv-class;'>
+        <word name="aliceblue"/>
+        <word name="antuquewhite"/>
+        <word name="aquamarine"/>
+        <word name="azure"/>
+        <word name="beige"/>
+        <word name="bisque"/>
+        <word name="blanchedalmond"/>
+        <word name="blueviolet"/>
+        <word name="brown"/>
+        <word name="burlywood"/>
+        <word name="cadetblue"/>
+        <word name="chartreuse"/>
+        <word name="chocolate"/>
+        <word name="coral"/>
+        <word name="cornflowerblue"/>
+        <word name="cornsilk"/>
+        <word name="crimson"/>
+        <word name="cyan"/>
+        <word name="darkblue"/>
+        <word name="darkcyan"/>
+        <word name="darkgoldenrod"/>
+        <word name="darkgray"/>
+        <word name="darkgrey"/>
+        <word name="darkgreen"/>
+        <word name="darkkhaki"/>
+        <word name="darkmagenta"/>
+        <word name="darkolivegreen"/>
+        <word name="darkorange"/>
+        <word name="darkorchid"/>
+        <word name="darkred"/>
+        <word name="darksalmon"/>
+        <word name="darkseagreen"/>
+        <word name="darkslateblue"/>
+        <word name="darkslategray"/>
+        <word name="darkslategrey"/>
+        <word name="darkturquoise"/>
+        <word name="darkviolet"/>
+        <word name="deeppink"/>
+        <word name="deepskyblue"/>
+        <word name="dimgray"/>
+        <word name="dimgrey"/>
+        <word name="dodgerblue"/>
+        <word name="firebrick"/>
+        <word name="floralwhite"/>
+        <word name="forestgreen"/>
+        <word name="gainsboro"/>
+        <word name="ghostwhite"/>
+        <word name="gold"/>
+        <word name="goldenrod"/>
+        <word name="greenyellow"/>
+        <word name="grey"/>
+        <word name="honeydew"/>
+        <word name="hotpink"/>
+        <word name="indianred"/>
+        <word name="indigo"/>
+        <word name="ivory"/>
+        <word name="khaki"/>
+        <word name="lavender"/>
+        <word name="lavenderblush"/>
+        <word name="lawngreen"/>
+        <word name="lemonchiffon"/>
+        <word name="lightblue"/>
+        <word name="lightcoral"/>
+        <word name="lightcyan"/>
+        <word name="LightGoldenRodYellow"/>
+        <word name="lightgray"/>
+        <word name="lightgrey"/>
+        <word name="lightgreen"/>
+        <word name="lightpink"/>
+        <word name="lightsalmon"/>
+        <word name="lightseagreen"/>
+        <word name="lightskyblue"/>
+        <word name="lightslategray"/>
+        <word name="lightslategrey"/>
+        <word name="lightsteelblue"/>
+        <word name="lightyellow"/>
+        <word name="limegreen"/>
+        <word name="lime"/>
+        <word name="linen"/>
+        <word name="magenta"/>
+        <word name="mediumaquamarine"/>
+        <word name="mediumblue"/>
+        <word name="mediumorchid"/>
+        <word name="mediumpurple"/>
+        <word name="mediumseagreen"/>
+        <word name="mediumslateblue"/>
+        <word name="mediumspringgreen"/>
+        <word name="mediumturquoise"/>
+        <word name="mediumvioletred"/>
+        <word name="midnightblue"/>
+        <word name="mintcream"/>
+        <word name="mistyrose"/>
+        <word name="moccasin"/>
+        <word name="navajowhite"/>
+        <word name="oldlace"/>
+        <word name="olivedrab"/>
+        <word name="olive"/>
+        <word name="orangered"/>
+        <word name="orange"/>
+        <word name="orchid"/>
+        <word name="palegoldenrod"/>
+        <word name="palegreen"/>
+        <word name="paleturquoise"/>
+        <word name="plaevioletred"/>
+        <word name="papayawhip"/>
+        <word name="peachpuff"/>
+        <word name="peru"/>
+        <word name="pink"/>
+        <word name="plum"/>
+        <word name="powderblue"/>
+        <word name="rosybrown"/>
+        <word name="royalblue"/>
+        <word name="saddlebrown"/>
+        <word name="salmon"/>
+        <word name="sandybrown"/>
+        <word name="seagreen"/>
+        <word name="seashell"/>
+        <word name="sienna"/>
+        <word name="skyblue"/>
+        <word name="slateblue"/>
+        <word name="slategray"/>
+        <word name="slategrey"/>
+        <word name="snow"/>
+        <word name="springgreen"/>
+        <word name="steelblue"/>
+        <word name="tan"/>
+        <word name="teal"/>
+        <word name="thistle"/>
+        <word name="tomato"/>
+        <word name="turquoise"/>
+        <word name="violet"/>
+        <word name="wheat"/>
+        <word name="whitesmoke"/>
+        <word name="yellowgreen"/>
+      </keywords>
+    </scheme>
+
+</type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   -   Eugene Efremov <4mirror@mail.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

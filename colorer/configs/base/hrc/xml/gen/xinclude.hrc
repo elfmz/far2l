@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="xinclude" group="group" description="xinclude" targetNamespace="http://www.w3.org/2001/XInclude">
+    <location link="xinclude.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="xinclude">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'xinclude'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://www.w3.org/2001/XInclude
+             hrctype                     : xinclude
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : (?{}(?{}xi|xinc|xinclude)(?{}:))
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:</documentation>
+         <contributors><![CDATA[None]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value="(?{}(?{}xi|xinc|xinclude)(?{}:))"/>
+      <entity name="nsprefix" value="(?{}(?{}xi|xinc|xinclude)(?{}:))"/>
+      <entity name="attr-nsprefix" value="(?{}(?{}xi|xinc|xinclude)(?{Attribute.nscolon}:))"/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from '../../src/xlink/src/custom.xlink.xml'--><!--end custom--><scheme name="include-element">
+         <block start="/\M &lt; (%nsprefix;include ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="includeType-elementContent"/>
+      </scheme>
+      <scheme name="fallback-element">
+         <block start="/\M &lt; (%nsprefix;fallback ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="fallbackType-elementContent"/>
+      </scheme>
+      <scheme name="includeType-content">
+         <inherit scheme="fallback-element"/>
+         <regexp match="/ &lt; (%ns-real-prefix;%xml:NCName; ([\s\/&gt;]|$) )/x" region="def:Error"/>
+         <inherit scheme="xml:element"/>
+         <inherit scheme="xml:element"/>
+      </scheme>
+      <scheme name="includeType-content-error">
+         <inherit scheme="includeType-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="includeType-content-cdsect">
+         <inherit scheme="includeType-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="includeType-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(href)\M([\s\=]|$)/x"
+                scheme="xmlschema:anyURI-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(parse)\M([\s\=]|$)/x"
+                scheme="parseType-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(encoding)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="includeType-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="includeType-content"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="includeType-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="parseType-content">
+         <regexp region="Enumeration" match="/xml/"/>
+         <regexp region="Enumeration" match="/text/"/>
+      </scheme>
+      <scheme name="parseType-content-error">
+         <inherit scheme="parseType-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="parseType-content-cdsect">
+         <inherit scheme="parseType-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="parseType-Attributes"/>
+      <scheme name="parseType-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream" subst-scheme="parseType-content-error"/>
+         </inherit>
+      </scheme>
+      <scheme name="parseType-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:CDSect.content.stream" subst-scheme="parseType-content-cdsect"/>
+            <virtual scheme="xml:content.cdata.stream" subst-scheme="parseType-content-error"/>
+            <virtual scheme="xml:element" subst-scheme="def:empty"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="parseType-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="fallbackType-content">
+         <inherit scheme="include-element"/>
+         <regexp match="/ &lt; (%ns-real-prefix;%xml:NCName; ([\s\/&gt;]|$) )/x" region="def:Error"/>
+         <inherit scheme="xml:element"/>
+         <inherit scheme="xml:element"/>
+      </scheme>
+      <scheme name="fallbackType-content-error">
+         <inherit scheme="fallbackType-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="fallbackType-content-cdsect">
+         <inherit scheme="fallbackType-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="fallbackType-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="fallbackType-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="fallbackType-content"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="fallbackType-Attributes"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="xinclude-root"/>
+      <scheme name="xinclude-root-addref">
+         <inherit scheme="xinclude-root"/>
+      </scheme>
+      <scheme name="xinclude">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="xinclude-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

@@ -1756,7 +1756,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 								DisablePluginsOutput=TRUE;
 								{
 									CriticalSectionLock Lock(PluginCS);
-									ArcItem.hPlugin = CtrlObject->Plugins.OpenFilePlugin(strFindArcName, 0, OFP_SEARCH);
+									ArcItem.hPlugin = CtrlObject->Plugins.OpenFilePlugin(strFindArcName, OPM_FIND, OFP_SEARCH);
 								}
 								itd.SetArcListItem(FindItem.ArcIndex, ArcItem);
 								DisablePluginsOutput=SavePluginsOutput;

@@ -73,16 +73,19 @@ int PluginImpl::SetDirectory(const char *Dir,int OpMode)
 			return FALSE;
 		_dir.resize(n);
 
-	} else {
+	} else if (Dir[0] != '/') {
 		_dir+='/';
 		_dir+= Dir;
-	}
+
+	} else
+		_dir = Dir + 1; // skip root slash
+
 	return TRUE;
 }
 
 void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 {
-	fprintf(stderr, "Inside::GetOpenPluginInfo\n");
+	fprintf(stderr, "Inside::GetOpenPluginInfo: '%s' '%s'\n", _dir.c_str(), _name.c_str());
 	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 	          " Inside: %s@%s ", _dir.c_str(), _name.c_str());
 

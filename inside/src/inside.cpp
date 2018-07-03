@@ -87,19 +87,29 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsign
 	const bool elf = HasElvenEars(Data, DataSize);
 	const char *plain = elf ? nullptr : DetectPlainKind(Name, Data, DataSize);
 
+//	fprintf(stderr, "Inside: OpenFilePlugin('%s' .. 0x%x): %s %s\n", Name, OpMode, elf ? "ELF" : "", plain ? plain : "");
+
 	if (!elf && !plain)
 		return INVALID_HANDLE_VALUE;
 
 	// Well, it really looks like valid ELF or some plain document file
-	// If user called us with Ctrl+PgDn - then proceed for any file
-	// Otherwise proceed only for ELF file and only if its not eXecutable, to allow user execute it by Enter
-	if ((OpMode & (OPM_PGDN|OPM_COMMANDS)) == 0) {
+
+	if ( (OpMode & OPM_FIND) != 0) {
+		// In case of open from find file dialog - allow digging into plain document files,
+		// but not ELFs - there is nothing interesting to search inside of disasm etc.
+		if (elf)
+			return INVALID_HANDLE_VALUE;
+
+	} else if ((OpMode & (OPM_PGDN | OPM_COMMANDS)) == 0) {
+		// If user called us with Ctrl+PgDn - then proceed for any file
+		// Otherwise proceed only for ELF file and only if its not eXecutable, to allow user execute it by Enter
 		if (!elf)
 			return INVALID_HANDLE_VALUE;
 
 		struct stat s = {};
 		if (sdc_stat(Name, &s) == -1) // in case of any uncertainlity...
 			return INVALID_HANDLE_VALUE;
+
 		if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
 			return INVALID_HANDLE_VALUE;
 	}

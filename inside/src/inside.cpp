@@ -1,6 +1,6 @@
 #include "Globals.h"
 #include "elf/PluginImplELF.h"
-#include "pdf/PluginImplPDF.h"
+#include "plain/PluginImplPlain.h"
 #include <fcntl.h>
 #ifndef __APPLE__
 # include <elf.h>
@@ -47,11 +47,27 @@ static bool HasElvenEars(const unsigned char *Data, int DataSize)
 #endif
 }
 
-static bool HasPDFHeader(const unsigned char *Data, int DataSize)
+static const char *DetectPlainKind(const char *Name, const unsigned char *Data, int DataSize)
 {
+	const char *ext = strrchr(Name, '.');
 	// %PDF-1.2
-	return DataSize >= 8 && Data[0] == '%' && Data[1] == 'P' && Data[2] == 'D' && Data[3] == 'F' &&
-		Data[4] == '-' && Data[5] >= '0' && Data[5] <= '9' && Data[6] == '.' && Data[7] >= '0' && Data[7] <= '9';
+	if (DataSize >= 8 && Data[0] == '%' && Data[1] == 'P' && Data[2] == 'D' && Data[3] == 'F' &&
+		Data[4] == '-' && Data[5] >= '0' && Data[5] <= '9' && Data[6] == '.' && Data[7] >= '0' && Data[7] <= '9') {
+		return "PDF";
+
+	} else if (DataSize >= 8 && Data[0] == 0xd0 && Data[1] == 0xcf && Data[2] == 0x11 && Data[3] == 0xE0 &&
+		Data[4] == 0xA1 && Data[5] == 0xB1 && Data[6] == 0x1A && Data[7] == 0xE1) {
+		if (!ext || strcasecmp(ext, ".doc") == 0) { // disinct from excel/ppt etc
+			return "DOC";
+		}
+
+	} else if (DataSize >= 8 && Data[0] == '{' && Data[1] == '\\' && Data[2] == 'r' && Data[3] == 't' && Data[4] == 'f') {
+		if (!ext || strcasecmp(ext, ".rtf") == 0) { // ensure
+			return "RTF";
+		}
+	}
+
+	return nullptr;
 }
 
 
@@ -61,13 +77,16 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsign
 		return INVALID_HANDLE_VALUE;
 
 	const bool elf = HasElvenEars(Data, DataSize);
-	const bool pdf = !elf && HasPDFHeader(Data, DataSize);
+	const char *plain = elf ? nullptr : DetectPlainKind(Name, Data, DataSize);
 
-	// Well, it really looks like valid ELF or PDF file
-	// If used called us with Ctrl+PgDn - then proceed
-	// Otherwise check if file is eXecutable and proceed only if its not, to allow user execute it by Enter
+	if (!elf && !plain)
+		return INVALID_HANDLE_VALUE;
+
+	// Well, it really looks like valid ELF or some plain document file
+	// If user called us with Ctrl+PgDn - then proceed for any file
+	// Otherwise proceed only for ELF file and only if its not eXecutable, to allow user execute it by Enter
 	if ((OpMode & (OPM_PGDN|OPM_COMMANDS)) == 0) {
-		if (!elf)
+		if (!plain)
 			return INVALID_HANDLE_VALUE;
 
 		struct stat s = {};
@@ -84,8 +103,8 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsign
 
 	} else 
 #endif
-	if (pdf) {
-		out = new PluginImplPDF(Name);
+	if (plain) {
+		out = new PluginImplPlain(Name, plain);
 
 	} else
 		abort();

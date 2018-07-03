@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+     Clipper 5.01 syntax parsing scheme (.prg, .ch)
+     Designed for "Colorer 4ever.patch2"
+     Alexey V. Yatsenko, Taganrog, <alv@hotbox.ru>
+     Last revised on 17-Dec-2001
+-->
+   <type name="Clipper">
+
+      <import type="def"/>
+
+      <region name="clipperText" parent="default"/>
+      <region name="clipperString" parent="String"/>
+      <region name="clipperComment" parent="Comment"/>
+      <region name="clipperSymb" parent="Syntax"/>
+      <region name="clipperWord" parent="Keyword"/>
+      <region name="clipperCompilerDir" parent="Directive"/>
+      <region name="clipperNumb" parent="Number"/>
+      <region name="clipperFuncProcName" parent="Function"/>
+      <region name="clipperError" parent="Error"/>
+      <region name="clipperOpenStruct" parent="PairStart"/>
+      <region name="clipperCloseStruct" parent="PairEnd"/>
+      <region name="clipperOpenTag" parent="PairStrongStart"/>
+      <region name="clipperCloseTag" parent="PairStrongEnd"/>
+
+
+      <scheme name="Strings">
+<!-- Strings -->
+         <regexp match="/(?{clipperString}\&#34;.*?\&#34;)/"/>
+         <regexp match="/(?{clipperString}\'.*?\')/"/>
+      </scheme>
+
+      <scheme name="Comments">
+<!-- Linear comments -->
+         <regexp match="/(?{clipperComment}&amp;&amp;.*$)/"/>
+         <regexp match="/(?{clipperComment}\/\/.*$)/"/>
+         <regexp match="/^(?{clipperComment}\s*\*.*$)/"/>
+<!-- Block comments -->
+         <block start="/\/\*/" end="/\*\//" scheme="Comment" region="clipperComment" region00="clipperOpenTag" region10="clipperCloseTag"/>
+      </scheme>
+
+      <scheme name="Preprocessor">
+         <block start="/^\s*\#(else|endif)(\s+(?{clipperError}\S+.*?)?\s*)?\M$/i" end="/~$/" scheme="Clipper" region01="clipperCompilerDir"/>
+         <block start="/^\s*\#(command|translate|define|error|ifdef|ifndef|include|undef|xcommand|xtranslate)\s+/i" end="/$/" scheme="Clipper" region01="clipperCompilerDir"/>
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="Clipper"/>
+         </inherit>
+         <inherit scheme="Strings"/>
+         <inherit scheme="Comments"/>
+         <regexp match="/(?{clipperError}\S+)/"/>
+      </scheme>
+
+      <scheme name="Clipper">
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="Clipper"/>
+         </inherit>
+         <inherit scheme="Strings"/>
+         <inherit scheme="Comments"/>
+<!-- Numbers -->
+         <regexp match="/(?{clipperNumb}\b(\d+(\.\d+)?)\b)/"/>
+<!-- Functions' and procedures' names -->
+         <regexp match="/\M(^|;)\s*(func(tion)?|proc(edure)?)\s+(?{clipperFuncProcName}[\w_]+)/i"/>
+<!-- Compiler directives (the thing is crazy) -->
+         <block start="/\M^\s*(?{clipperSymb}\#)\s*[\w_]+/" end="/~^\s*(\#)\s*[\w_]+.*$\m/" scheme="Preprocessor"/>
+<!-- function - return, procedure - return -->
+         <block start="/(^|;)\s*((func(tion)?|proc(edure)?))\b/i" end="/(^|;)\s*((return))\b/i" scheme="Clipper" region02="clipperWord" region03="clipperOpenTag" region12="clipperWord" region13="clipperCloseTag"/>
+<!-- begin sequence - end sequence -->
+         <block start="/(^|;)\s*(begin\s+sequence)\b/i" end="/\b(end(sequence|\s+.*)?)\b/i" scheme="clSequence" region00="clipperWord" region02="clipperOpenTag" region10="clipperWord" region11="clipperCloseTag"/>
+<!-- while - end -->
+         <block start="/(^|;)\s*((do\s+)?(while))\b/i" end="/\b(end(do|\s+.*)?)\b/i" scheme="clWhileFor" region00="clipperWord" region02="clipperOpenTag" region10="clipperWord" region11="clipperCloseTag"/>
+<!-- for - next -->
+         <block start="/(^|;)\s*(for)\b/i" end="/\b(next|end(for|\s+.*)?)\b/i" scheme="clWhileFor" region00="clipperWord" region02="clipperOpenTag" region10="clipperWord" region11="clipperCloseTag"/>
+<!-- if - endif -->
+         <block start="/(^|;)\s*(if)\b/i" end="/(^|;)\s*(end(if|\s+.*)?)\b/i" scheme="clIf" region00="clipperWord" region02="clipperOpenTag" region10="clipperWord" region12="clipperCloseTag"/>
+<!-- do case - endcase -->
+         <block start="/(^|;)\s*(do\s+case)\b/i" end="/\b(end(case|\s+.*)?)\b/i" scheme="clCase" region00="clipperWord" region02="clipperOpenTag" region10="clipperWord" region11="clipperCloseTag"/>
+<!-- Treat "!" as keyword ".NOT.", not as symbol -->
+         <regexp match="/(?{clipperWord}\!)\M[^\=]/"/>
+<!-- Boolean operators and constants -->
+         <regexp match="/(?{clipperWord}\.and\.)/i"/>
+         <regexp match="/(?{clipperWord}\.or\.)/i"/>
+         <regexp match="/(?{clipperWord}\.not\.)/i"/>
+         <regexp match="/(?{clipperWord}\.t\.)/i"/>
+         <regexp match="/(?{clipperWord}\.f\.)/i"/>
+<!-- Symbols -->
+         <keywords region="clipperSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="#"/>
+            <symb name="!="/>
+         </keywords>
+         <keywords ignorecase="yes" region="clipperWord">
+<!-- Clipper functions -->
+            <word name="AADD"/>
+            <word name="ABS"/>
+            <word name="ACHOICE"/>
+            <word name="ACLONE"/>
+            <word name="ACOPY"/>
+            <word name="ADEL"/>
+            <word name="ADIR"/>
+            <word name="AEVAL"/>
+            <word name="AFIELDS"/>
+            <word name="AFILL"/>
+            <word name="AINS"/>
+            <word name="ALERT"/>
+            <word name="ALIAS"/>
+            <word name="ALLTRIM"/>
+            <word name="ALTD"/>
+            <word name="ARRAY"/>
+            <word name="ASC"/>
+            <word name="ASCAN"/>
+            <word name="ASIZE"/>
+            <word name="ASORT"/>
+            <word name="AT"/>
+            <word name="ATAIL"/>
+            <word name="BIN2I"/>
+            <word name="BIN2L"/>
+            <word name="BIN2W"/>
+            <word name="BOF"/>
+            <word name="BROWSE"/>
+            <word name="CDOW"/>
+            <word name="CHR"/>
+            <word name="CMONTH"/>
+            <word name="COL"/>
+            <word name="CTOD"/>
+            <word name="CURDIR"/>
+            <word name="DATE"/>
+            <word name="DAY"/>
+            <word name="DBAPPEND"/>
+            <word name="DBCLEARFIL"/>
+            <word name="DBCLEARIND"/>
+            <word name="DBCLEARREL"/>
+            <word name="DBCLOSEALL"/>
+            <word name="DBCLOSEAREA"/>
+            <word name="DBCOMMIT"/>
+            <word name="DBCOMMITALL"/>
+            <word name="DBCREATE"/>
+            <word name="DBCREATEIND"/>
+            <word name="DBDELETE"/>
+            <word name="DBEDIT"/>
+            <word name="DBEVAL"/>
+            <word name="DBFILTER"/>
+            <word name="DBGOBOTTOM"/>
+            <word name="DBGOTO"/>
+            <word name="DBGOTOP"/>
+            <word name="DBRECALL"/>
+            <word name="DBREINDEX"/>
+            <word name="DBRELATION"/>
+            <word name="DBRSELECT"/>
+            <word name="DBSEEK"/>
+            <word name="DBSELECTAR"/>
+            <word name="DBSETDRIVER"/>
+            <word name="DBSETFILTER"/>
+            <word name="DBSETINDEX"/>
+            <word name="DBSETORDER"/>
+            <word name="DBSETRELAT"/>
+            <word name="DBSKIP"/>
+            <word name="DBSTRUCT"/>
+            <word name="DBUNLOCK"/>
+            <word name="DBUNLOCKALL"/>
+            <word name="DBUSEAREA"/>
+            <word name="DELETED"/>
+            <word name="DESCEND"/>
+            <word name="DEVOUT"/>
+            <word name="DEVPOS"/>
+            <word name="DIRECTORY"/>
+            <word name="DISKSPACE"/>
+            <word name="DISPBEGIN"/>
+            <word name="DISPBOX"/>
+            <word name="DISPEND"/>
+            <word name="DISPOUT"/>
+            <word name="DOSERROR"/>
+            <word name="DOW"/>
+            <word name="DTOC"/>
+            <word name="DTOS"/>
+            <word name="EMPTY"/>
+            <word name="EOF"/>
+            <word name="ERRORBLOCK"/>
+            <word name="ERRORLEVEL"/>
+            <word name="EVAL"/>
+            <word name="EXP"/>
+            <word name="FCLOSE"/>
+            <word name="FCOUNT"/>
+            <word name="FCREATE"/>
+            <word name="FERASE"/>
+            <word name="FERROR"/>
+            <word name="FIELDBLOCK"/>
+            <word name="FIELDGET"/>
+            <word name="FIELDNAME"/>
+            <word name="FIELDPOS"/>
+            <word name="FIELDPUT"/>
+            <word name="FIELDWBLOCK"/>
+            <word name="FILE"/>
+            <word name="FKLABEL"/>
+            <word name="FKMAX"/>
+            <word name="FLOCK"/>
+            <word name="FOPEN"/>
+            <word name="FOUND"/>
+            <word name="FREAD"/>
+            <word name="FREADSTR"/>
+            <word name="FRENAME"/>
+            <word name="FSEEK"/>
+            <word name="FWRITE"/>
+            <word name="GETACTIVE"/>
+            <word name="GETENV"/>
+            <word name="HARDCR"/>
+            <word name="HEADER"/>
+            <word name="IF"/>
+            <word name="IIF"/>
+            <word name="INDEXEXT"/>
+            <word name="INDEXKEY"/>
+            <word name="INDEXORD"/>
+            <word name="INKEY"/>
+            <word name="INT"/>
+            <word name="ISALPHA"/>
+            <word name="ISCOLOR"/>
+            <word name="ISDIGIT"/>
+            <word name="ISLOWER"/>
+            <word name="ISPRINTER"/>
+            <word name="ISUPPER"/>
+            <word name="I2BIN"/>
+            <word name="LASTKEY"/>
+            <word name="LASTREC"/>
+            <word name="LEFT"/>
+            <word name="LEN"/>
+            <word name="LOG"/>
+            <word name="LOWER"/>
+            <word name="LTRIM"/>
+            <word name="LUPDATE"/>
+            <word name="L2BIN"/>
+            <word name="MAX"/>
+            <word name="MAXCOL"/>
+            <word name="MAXROW"/>
+            <word name="MEMOEDIT"/>
+            <word name="MEMOLINE"/>
+            <word name="MEMOREAD"/>
+            <word name="MEMORY"/>
+            <word name="MEMOTRAN"/>
+            <word name="MEMOWRIT"/>
+            <word name="MEMVARBLOCK"/>
+            <word name="MIN"/>
+            <word name="MLCOUNT"/>
+            <word name="MLCTOPOS"/>
+            <word name="MLPOS"/>
+            <word name="MOD"/>
+            <word name="MONTH"/>
+            <word name="MPOSTOLC"/>
+            <word name="NETERR"/>
+            <word name="NETNAME"/>
+            <word name="NEXTKEY"/>
+            <word name="NOSNOW"/>
+            <word name="OS"/>
+            <word name="OUTERR"/>
+            <word name="OUTSTD"/>
+            <word name="PADC"/>
+            <word name="PADL"/>
+            <word name="PADR"/>
+            <word name="PCOL"/>
+            <word name="PCOUNT"/>
+            <word name="PROCLINE"/>
+            <word name="PROCNAME"/>
+            <word name="PROW"/>
+            <word name="QOUT"/>
+            <word name="QQOUT"/>
+            <word name="RAT"/>
+            <word name="READEXIT"/>
+            <word name="READINSERT"/>
+            <word name="READKEY"/>
+            <word name="READMODAL"/>
+            <word name="READVAR"/>
+            <word name="RECCOUNT"/>
+            <word name="RECNO"/>
+            <word name="RECSIZE"/>
+            <word name="REPLICATE"/>
+            <word name="RESTSCREEN"/>
+            <word name="RIGHT"/>
+            <word name="RLOCK"/>
+            <word name="ROUND"/>
+            <word name="ROW"/>
+            <word name="RTRIM"/>
+            <word name="SAVESCREEN"/>
+            <word name="SCROLL"/>
+            <word name="SECONDS"/>
+            <word name="SELECT"/>
+            <word name="SET"/>
+            <word name="SETBLINK"/>
+            <word name="SETCANCEL"/>
+            <word name="SETCOLOR"/>
+            <word name="SETCURSOR"/>
+            <word name="SETKEY"/>
+            <word name="SETMODE"/>
+            <word name="SETPOS"/>
+            <word name="SETPRC"/>
+            <word name="SOUNDEX"/>
+            <word name="SPACE"/>
+            <word name="SQRT"/>
+            <word name="STR"/>
+            <word name="STRTRAN"/>
+            <word name="STUFF"/>
+            <word name="SUBSTR"/>
+            <word name="TIME"/>
+            <word name="TONE"/>
+            <word name="TRANSFORM"/>
+            <word name="TYPE"/>
+            <word name="UPDATED"/>
+            <word name="UPPER"/>
+            <word name="USED"/>
+            <word name="VAL"/>
+            <word name="VALTYPE"/>
+            <word name="VERSION"/>
+            <word name="WORD"/>
+            <word name="YEAR"/>
+<!-- Clipper commands and its' parts (TO, FROM, etc.) -->
+            <symb name="?"/>
+            <symb name="??"/>
+            <symb name="@"/>
+            <word name="ACCEPT"/>
+            <word name="APPEND"/>
+            <word name="AVERAGE"/>
+            <word name="BOX"/>
+            <word name="CALL"/>
+            <word name="CANCEL"/>
+            <word name="CLEAR"/>
+            <word name="CLOSE"/>
+            <word name="CLS"/>
+            <word name="COMMIT"/>
+            <word name="CONTINUE"/>
+            <word name="COPY"/>
+            <word name="COUNT"/>
+            <word name="CREATE"/>
+            <word name="DELETE"/>
+            <word name="DIR"/>
+            <word name="DISPLAY"/>
+            <word name="EJECT"/>
+            <word name="ERASE"/>
+            <word name="FIND"/>
+            <word name="FOR"/>
+            <word name="FROM"/>
+            <word name="GET"/>
+            <word name="GO"/>
+            <word name="INDEX"/>
+            <word name="INPUT"/>
+            <word name="JOIN"/>
+            <word name="KEYBOARD"/>
+            <word name="LABEL FORM"/>
+            <word name="LIST"/>
+            <word name="LOCATE"/>
+            <word name="MENU TO"/>
+            <word name="NOTE"/>
+            <word name="ON"/>
+            <word name="OFF"/>
+            <word name="PACK"/>
+            <word name="PROMPT"/>
+            <word name="QUIT"/>
+            <word name="READ"/>
+            <word name="RECALL"/>
+            <word name="REINDEX"/>
+            <word name="RELEASE"/>
+            <word name="RENAME"/>
+            <word name="REPLACE"/>
+            <word name="REPORT FORM"/>
+            <word name="RESTORE"/>
+            <word name="RUN"/>
+            <word name="SAVE"/>
+            <word name="SAY"/>
+            <word name="SEEK"/>
+            <word name="SELECT"/>
+            <word name="SKIP"/>
+            <word name="SORT"/>
+            <word name="STORE"/>
+            <word name="SUM"/>
+            <word name="TEXT"/>
+            <word name="TO"/>
+            <word name="TOTAL"/>
+            <word name="TYPE"/>
+            <word name="UNLOCK"/>
+            <word name="UPDATE"/>
+            <word name="USE"/>
+            <word name="WAIT"/>
+            <word name="WHILE"/>
+            <word name="ZAP"/>
+<!-- Clipper Operators -->
+            <word name="DECLARE"/>
+            <word name="DO"/>
+            <word name="END"/>
+            <word name="EXTERNAL"/>
+            <word name="FIELD"/>
+            <word name="LOCAL"/>
+            <word name="MEMVAR"/>
+            <word name="OTHERWISE"/>
+            <word name="PARAMETERS"/>
+            <word name="PRIVATE"/>
+            <word name="PUBLIC"/>
+            <word name="RETURN"/>
+            <word name="STATIC"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="clCase">
+         <inherit scheme="Clipper"/>
+         <keywords ignorecase="yes" region="clipperWord">
+            <word name="case"/>
+            <word name="otherwise"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="clIf">
+         <inherit scheme="Clipper"/>
+         <keywords ignorecase="yes" region="clipperWord">
+            <word name="else"/>
+            <word name="elseif"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="clWhileFor">
+         <inherit scheme="Clipper"/>
+         <keywords ignorecase="yes" region="clipperWord">
+            <word name="exit"/>
+            <word name="loop"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="clSequence">
+         <inherit scheme="Clipper"/>
+         <keywords ignorecase="yes" region="clipperWord">
+            <word name="break"/>
+         </keywords>
+         <regexp match="/\brecover(\s+using)?\b/i" region0="clipperWord"/>
+      </scheme>
+
+      <scheme name="Errors">
+         <regexp match="/\S+/" region0="Error" priority="low"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

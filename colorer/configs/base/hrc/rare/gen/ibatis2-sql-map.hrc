@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+     
+<type name="ibatis2-sql-map">
+
+<region name='var' parent='def:Var'/>
+<region name='symb' parent='def:Symbol'/>
+
+<scheme name='noxml-content'>
+	<inherit scheme="sql-content"/>
+	<inherit scheme="sql:noxml-content"/>
+</scheme>
+
+<scheme name='sql-content'>
+	<regexp match='/#\w+(\[\])?#/' region='var' region1='symb'/>
+	<regexp match='/\$\w+(\[\])?\$/' region='var' region1='symb'/>
+	
+	<inherit scheme="sql:sql-content">
+		<virtual scheme="sql:plSqlKeywords" subst-scheme="def:empty"/>
+	</inherit>
+	
+	<!-- strings not found in exaples
+	<inherit scheme="mysql:sqlStringBlock"/>
+	-->
+</scheme>
+
+
+<scheme name="ibatis2-sql-map">
+	<inherit scheme="ibatis2-sql-map-pack:ibatis2-sql-map-pack">
+		<virtual scheme="xml:content.cdata.stream" subst-scheme="sql-content"/>
+		<virtual scheme="xml:CDSect.content.stream" subst-scheme="noxml-content"/>
+	</inherit>
+</scheme>
+
+</type>
+</hrc>

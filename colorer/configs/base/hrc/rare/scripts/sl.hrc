@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+RenderMan Shading Language
+files for FAR plugins Colorer
+ 1.  3.1 RI Spec
+ 2. 3.2 RI Spec
+ 3. Full define list from Renderman Notes Functions by Steve May (smay@pixar.com)
+ 4. Full define list from BMRT 2.6 (c)Copyright 1990-2000 Exluna, Inc. and Larry Gritz. (lg@exlune.com) and "Advanced RenderMan: Creating CGI for Motion Picture" by Anthony A. Apodaca and Larry Gritz, Morgan Kaufmann, 1999
+ 5. Full define list from PRman 3.9.1, Copyright (c) 1999 PIXAR. All Rights Reserved (rmancusp@pixar.com)
+ 6. Fraction define list from ShadeTree 1.32, Copyright (c) 1996 Cinema Graphics, Inc. All Rights Reserved.(support@cinegrfx.com)
+ 7. Fraction define list from RAT 4.1, Copyright (c) 1999 PIXAR. All Rights Reserved (rmancusp@pixar.com)
+ 8. Fraction define list from "Texturing and Modeling: A Procedural Approach, Second Edition" by Ebert, Musgrave, Peachey, Perlin, and Worley (copyright 1998 AP Professional)
+
+With help of:
+    Contributed by |J|H|P| - <grimm@chat.ru>
+    cail - ported into 4ever
+-->
+   <type name="sl">
+
+      <import type="def"/>
+
+      <region name="slComment" parent="Comment"/>
+      <region name="slArg" parent="StringContent"/>
+      <region name="slNumb" parent="Number"/>
+      <region name="slString" parent="String"/>
+      <region name="slSymb" parent="Symbol"/>
+      <region name="slPatterns" parent="StringEdge"/>
+      <region name="slConst" parent="Constant"/>
+      <region name="slControl" parent="Parameter"/>
+      <region name="slIOstat" parent="Parameter"/>
+      <region name="slIOredir" parent="Directive"/>
+      <region name="slArithmetic" parent="Operator"/>
+      <region name="slStrFunc" parent="Keyword"/>
+      <region name="slFunctions" parent="Keyword"/>
+
+
+      <scheme name="sl">
+<!-- Linear Comments -->
+         <regexp match="/(\#.*$)/" region0="slComment"/>
+<!-- Argument -->
+         <regexp match="/(\$\w+?)\b/" region0="slArg"/>
+<!-- Numbers -->
+         <inherit scheme="CHexNumber"/>
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+<!-- Strings -->
+         <inherit scheme="CString"/>
+         <regexp match="/('((\\.)|[^\\'])*?')/" region0="slString"/>
+         <keywords region="slSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="?"/>
+            <symb name="&#34;&#34;" region="slString"/>
+            <symb name="$" region="slArg"/>
+         </keywords>
+         <keywords ignorecase="yes" region="slPatterns">
+<!-- two special kinds of  patterns -->
+            <word name="float"/>
+            <word name="string"/>
+            <word name="color"/>
+            <word name="point"/>
+            <word name="vector"/>
+            <word name="normal"/>
+            <word name="matrix"/>
+            <word name="void"/>
+            <word name="varying"/>
+            <word name="uniform"/>
+            <word name="output"/>
+            <word name="extern"/>
+         </keywords>
+         <keywords ignorecase="yes" region="slConst">
+<!-- built-in variables -->
+            <word name="Cs"/>
+            <word name="Os"/>
+            <word name="Cl"/>
+            <word name="Ol"/>
+            <word name="Ci"/>
+            <word name="Oi"/>
+            <word name="P"/>
+            <word name="N"/>
+            <word name="Ng"/>
+            <word name="s"/>
+            <word name="t"/>
+            <word name="u"/>
+            <word name="v"/>
+            <word name="dPdu"/>
+            <word name="dPdv"/>
+            <word name="du"/>
+            <word name="dv"/>
+            <word name="L"/>
+            <word name="E"/>
+            <word name="I"/>
+            <word name="Ps"/>
+            <word name="ncomps"/>
+            <word name="alpha"/>
+            <word name="time"/>
+         </keywords>
+         <keywords region="slControl">
+<!-- control statements -->
+            <word name="if"/>
+            <word name="else"/>
+            <word name="while"/>
+            <word name="for"/>
+            <word name="solar"/>
+            <word name="illuminate"/>
+            <word name="illuminance"/>
+            <word name="break"/>
+            <word name="continue"/>
+         </keywords>
+         <keywords region="slIOstat">
+<!-- input/output statements -->
+            <word name="light"/>
+            <word name="surface"/>
+            <word name="volume"/>
+            <word name="displacement"/>
+            <word name="transformation"/>
+            <word name="imager"/>
+         </keywords>
+         <keywords region="slArithmetic">
+<!-- pre-defined arithmetic functions -->
+            <word name="radians"/>
+            <word name="degrees"/>
+            <word name="sin"/>
+            <word name="asin"/>
+            <word name="cos"/>
+            <word name="acos"/>
+            <word name="tan"/>
+            <word name="atan"/>
+            <word name="pow"/>
+            <word name="exp"/>
+            <word name="sqrt"/>
+            <word name="inversesqrt"/>
+            <word name="log"/>
+            <word name="mod"/>
+            <word name="abs"/>
+            <word name="sign"/>
+            <word name="min"/>
+            <word name="max"/>
+            <word name="clamp"/>
+            <word name="mix"/>
+            <word name="floor"/>
+            <word name="ceil"/>
+            <word name="round"/>
+            <word name="step"/>
+            <word name="smoothstep"/>
+            <word name="filterstep"/>
+            <word name="spline"/>
+            <word name="Du"/>
+            <word name="Dv"/>
+            <word name="Deriv"/>
+            <word name="random"/>
+            <word name="noise"/>
+            <word name="pnoise"/>
+            <word name="cellnoise"/>
+         </keywords>
+         <keywords region="slStrFunc">
+<!-- pre-defined string functions -->
+            <word name="xcomp"/>
+            <word name="ycomp"/>
+            <word name="zcomp"/>
+            <word name="setxcomp"/>
+            <word name="setycomp"/>
+            <word name="setzcomp"/>
+            <word name="length"/>
+            <word name="normalize"/>
+            <word name="distance"/>
+            <word name="ptlined"/>
+            <word name="rotate"/>
+            <word name="area"/>
+            <word name="faceforward"/>
+            <word name="reflect"/>
+            <word name="refract"/>
+            <word name="fresnel"/>
+            <word name="transform"/>
+            <word name="ntransform"/>
+            <word name="vtransform"/>
+            <word name="depht"/>
+            <word name="calculatenormal"/>
+            <word name="comp"/>
+            <word name="setcomp"/>
+            <word name="ctransform"/>
+            <word name="determinant"/>
+            <word name="translate"/>
+            <word name="rotate"/>
+            <word name="scale "/>
+            <word name="concat"/>
+            <word name="printf"/>
+            <word name="format"/>
+            <word name="match"/>
+            <word name="ambient"/>
+            <word name="diffuse"/>
+            <word name="specular"/>
+            <word name="specularbrdf"/>
+            <word name="phong"/>
+            <word name="trace"/>
+            <word name="filterstep"/>
+            <word name="texture"/>
+            <word name="environment"/>
+            <word name="shadow"/>
+            <word name="textureinfo"/>
+            <word name="incident"/>
+            <word name="opposite"/>
+            <word name="attribute"/>
+            <word name="option"/>
+            <word name="rendererinfo"/>
+            <word name="shadername"/>
+            <word name="Dtime"/>
+            <word name="bump"/>
+         </keywords>
+         <keywords region="slFunctions">
+<!-- Functions -->
+            <word name="boxstep"/>
+            <word name="repeat"/>
+            <word name="odd"/>
+            <word name="even"/>
+            <word name="whichtile"/>
+            <word name="rotate2d"/>
+            <word name="topolar2d"/>
+            <word name="intersection"/>
+            <word name="union"/>
+            <word name="difference"/>
+            <word name="complement"/>
+            <word name="blend"/>
+            <word name="lerp"/>
+            <word name="snoise2"/>
+            <word name="udn"/>
+            <word name="udn2"/>
+            <word name="MINDERIV"/>
+            <word name="filterwidth_point"/>
+            <word name="Displace"/>
+            <word name="MINFILTERWIDTH"/>
+            <word name="filterwidth"/>
+            <word name="filterwidthp"/>
+            <word name="fadeout"/>
+            <word name="LocIllumOrenNayar"/>
+            <word name="LocIllumWardAnisotropic"/>
+            <word name="LocIllumGlossy"/>
+            <word name="MaterialPlastic"/>
+            <word name="MaterialMatte"/>
+            <word name="MaterialRoughMetal"/>
+            <word name="MaterialThinPlastic"/>
+            <word name="MaterialShinyPlastic"/>
+            <word name="MaterialShinyMetal"/>
+            <word name="MaterialClay"/>
+            <word name="MaterialBrushedMetal"/>
+            <word name="MaterialCeramic"/>
+            <word name="MaterialGlass"/>
+            <word name="snoise"/>
+            <word name="snoisexy"/>
+            <word name="vsnoise"/>
+            <word name="filteredsnoise"/>
+            <word name="filteredvsnoise"/>
+            <word name="fBm"/>
+            <word name="fBm_default"/>
+            <word name="vfBm"/>
+            <word name="vfBm_default"/>
+            <word name="VLNoise"/>
+            <word name="filteredVLNoise"/>
+            <word name="VLfBm"/>
+            <word name="VLfBm_default"/>
+            <word name="turbulence"/>
+            <word name="turbulence_default"/>
+            <word name="voronoi_f1_3d"/>
+            <word name="voronoi_f1f2_3d"/>
+            <word name="voronoi_f1_2d"/>
+            <word name="voronoi_f1f2_2d"/>
+            <word name="oaktexture"/>
+            <word name="sqr"/>
+            <word name="filteredabs"/>
+            <word name="filteredsmoothstep"/>
+            <word name="pulse"/>
+            <word name="filteredpulse"/>
+            <word name="pulsetrain"/>
+            <word name="filteredpulsetrain"/>
+            <word name="smoothpulse"/>
+            <word name="filteredsmoothpulse"/>
+            <word name="smoothpulsetrain"/>
+            <word name="varyEach"/>
+            <word name="tilepattern"/>
+            <word name="basicbrick"/>
+            <word name="spherical_projection"/>
+            <word name="cylindrical_projection"/>
+            <word name="ProjectTo2D"/>
+            <word name="GetColorTextureAndAlpha"/>
+            <word name="GetFloatTextureAndAlpha"/>
+            <word name="ApplyColorTextureOver"/>
+            <word name="ApplyFloatTextureOver"/>
+            <word name="array_to_mx"/>
+            <word name="USE_PREF"/>
+            <word name="UNINITIALIZED_PREF"/>
+            <word name="PSHAD_PARAMS"/>
+            <word name="GET_PSHAD"/>
+            <word name="PSHAD_PARAMS"/>
+            <word name="GET_PSHAD"/>
+            <word name="DEFAULT_PSHAD_PARAMS"/>
+            <word name="worldp"/>
+            <word name="worldv"/>
+            <word name="visibility"/>
+            <word name="rayhittest"/>
+            <word name="fulltrace"/>
+            <word name="fulltrace"/>
+            <word name="raylevel"/>
+            <word name="isshadowray"/>
+            <word name="raysphere"/>
+            <word name="ReflMap"/>
+            <word name="Environment"/>
+            <word name="RayTrace"/>
+            <word name="ENVPARAMS"/>
+            <word name="DECLARE_ENVPARAMS"/>
+            <word name="DECLARE_DEFAULTED_ENVPARAMS"/>
+            <word name="SampleEnvironment"/>
+            <word name="bilerp"/>
+            <word name="cylinmap"/>
+            <word name="planemap"/>
+            <word name="sphermap"/>
+            <word name="automap"/>
+            <word name="decalmap"/>
+            <word name="MATERIAL_ash"/>
+            <word name="MATERIAL_asphalt"/>
+            <word name="MATERIAL_beach_grass"/>
+            <word name="MATERIAL_blue_sky"/>
+            <word name="MATERIAL_brass"/>
+            <word name="MATERIAL_brass2"/>
+            <word name="MATERIAL_breaking_wave"/>
+            <word name="MATERIAL_bronze"/>
+            <word name="MATERIAL_carbon"/>
+            <word name="MATERIAL_china_clay"/>
+            <word name="MATERIAL_clayey_loam"/>
+            <word name="MATERIAL_clear_blue_sky"/>
+            <word name="MATERIAL_concrete"/>
+            <word name="MATERIAL_cool_white_fluorescent_lamp"/>
+            <word name="MATERIAL_copper"/>
+            <word name="MATERIAL_d5500"/>
+            <word name="MATERIAL_d6500"/>
+            <word name="MATERIAL_d7500"/>
+            <word name="MATERIAL_dark_loam"/>
+            <word name="MATERIAL_daylight_fluorescent_lamp"/>
+            <word name="MATERIAL_dead_leaves"/>
+            <word name="MATERIAL_deuteranope"/>
+            <word name="MATERIAL_direct_sunlight"/>
+            <word name="MATERIAL_elm"/>
+            <word name="MATERIAL_gold"/>
+            <word name="MATERIAL_gold_coating"/>
+            <word name="MATERIAL_grass_and_dead_leaves"/>
+            <word name="MATERIAL_hemlock"/>
+            <word name="MATERIAL_lawn"/>
+            <word name="MATERIAL_lichen"/>
+            <word name="MATERIAL_lunar_dust"/>
+            <word name="MATERIAL_lunar_rock"/>
+            <word name="MATERIAL_maple"/>
+            <word name="MATERIAL_mixed_woods"/>
+            <word name="MATERIAL_mulberry"/>
+            <word name="MATERIAL_nickel"/>
+            <word name="MATERIAL_north_45_degree_sky"/>
+            <word name="MATERIAL_obsidian"/>
+            <word name="MATERIAL_olive_drab"/>
+            <word name="MATERIAL_overcast_sky"/>
+            <word name="MATERIAL_partly_cloudy_sky"/>
+            <word name="MATERIAL_pine"/>
+            <word name="MATERIAL_protanope"/>
+            <word name="MATERIAL_red_brick"/>
+            <word name="MATERIAL_red_clouds"/>
+            <word name="MATERIAL_ruby"/>
+            <word name="MATERIAL_rust"/>
+            <word name="MATERIAL_sand"/>
+            <word name="MATERIAL_sandy_loam"/>
+            <word name="MATERIAL_silver"/>
+            <word name="MATERIAL_sparse_lawn"/>
+            <word name="MATERIAL_steel"/>
+            <word name="MATERIAL_sun_airmass0"/>
+            <word name="MATERIAL_sun_airmass1"/>
+            <word name="MATERIAL_sun_airmass2"/>
+            <word name="MATERIAL_sun_airmass3"/>
+            <word name="MATERIAL_sun_airmass4"/>
+            <word name="MATERIAL_sun_airmass5"/>
+            <word name="MATERIAL_sun_plus_horizontal_sky"/>
+            <word name="MATERIAL_teflon"/>
+            <word name="MATERIAL_tin"/>
+            <word name="MATERIAL_tritanope"/>
+            <word name="MATERIAL_tungsten"/>
+            <word name="MATERIAL_vinyl"/>
+            <word name="MATERIAL_warm_white_fluorescent_lamp"/>
+            <word name="MATERIAL_water"/>
+            <word name="MATERIAL_white_fluorescent_lamp"/>
+            <word name="MATERIAL_wild_cherry"/>
+            <word name="MATERIAL_willow"/>
+            <word name="MATERIAL_zenith_sky"/>
+            <word name="MATERIAL_zirconium_lamp"/>
+            <word name="MATERIAL_barco_r"/>
+            <word name="MATERIAL_barco_g"/>
+            <word name="MATERIAL_barco_b"/>
+            <word name="MATERIAL_barcolp_r"/>
+            <word name="MATERIAL_barcolp_g"/>
+            <word name="MATERIAL_barcolp_b"/>
+            <word name="MATERIAL_ramtek_r"/>
+            <word name="MATERIAL_ramtek_g"/>
+            <word name="MATERIAL_ramtek_b"/>
+         </keywords>
+         <keywords ignorecase="yes" region="slIOredir">
+<!-- I/O redirection -->
+            <word name="param"/>
+            <word name="local"/>
+            <word name="mulFv"/>
+            <word name="ftov"/>
+            <word name="ftoc"/>
+            <word name="vdot"/>
+            <word name="cross"/>
+            <word name="negf"/>
+            <word name="negv"/>
+            <word name="negc"/>
+            <word name="xyz_to_rgb"/>
+            <word name="hsv_to_rgb"/>
+            <word name="yiq_to_rgb"/>
+            <word name="vtransform2s"/>
+            <word name="ntransform2s"/>
+            <word name="ctransform2s"/>
+            <word name="transform2s"/>
+            <word name="illuminate3"/>
+            <word name="illuminate1"/>
+            <word name="solar2"/>
+            <word name="solar0"/>
+            <word name="illuminance_start"/>
+            <word name="illuminance3"/>
+            <word name="illuminance_start"/>
+            <word name="illuminance1"/>
+            <word name="atan2"/>
+            <word name="pushif"/>
+            <word name="splineb"/>
+            <word name="pointsplineb"/>
+            <word name="colorsplineb"/>
+            <word name="pushif"/>
+            <word name="pnoise"/>
+            <word name="pointpnoise"/>
+            <word name="colorpnoise"/>
+            <word name="filterstep3"/>
+            <word name="filterstep2"/>
+            <word name="ftexture"/>
+            <word name="ctexture"/>
+            <word name="fenvironment"/>
+            <word name="cenvironment"/>
+            <word name="dsdu"/>
+            <word name="dsdv"/>
+            <word name="STREE_beaten"/>
+            <word name="STREE_brushed"/>
+            <word name="luminence"/>
+            <word name="STREE_cartoon"/>
+            <word name="STREE_cloudy"/>
+            <word name="STREE_dented"/>
+            <word name="STREE_feathery"/>
+            <word name="snoiseV"/>
+            <word name="STREE_furry"/>
+            <word name="STREE_glow"/>
+            <word name="STREE_granite"/>
+            <word name="SQRT3"/>
+            <word name="fuzzy"/>
+            <word name="STREE_hexagonals"/>
+            <word name="STREE_marbled"/>
+            <word name="_STREE_E"/>
+            <word name="_STREE_LOG2E"/>
+            <word name="_STREE_LOG10E"/>
+            <word name="_STREE_LN2"/>
+            <word name="_STREE_LN10"/>
+            <word name="_STREE_PI"/>
+            <word name="_STREE_PI_2"/>
+            <word name="_STREE_PI_4"/>
+            <word name="_STREE_1_PI"/>
+            <word name="_STREE_2_PI"/>
+            <word name="_STREE_2_SQRTPI"/>
+            <word name="_STREE_SQRT2"/>
+            <word name="_STREE_SQRT1_2"/>
+            <word name="_STREE_PI2"/>
+            <word name="STREE_rust"/>
+            <word name="STREE_smokeyvolume"/>
+            <word name="STREE_streaked"/>
+            <word name="STREE_turbulence"/>
+            <word name="STREE_twistedP"/>
+            <word name="snoiseP"/>
+            <word name="STREE_VLNoise"/>
+            <word name="STREE_wispy"/>
+            <word name="pxslFloatBias"/>
+            <word name="pxslColorBias"/>
+            <word name="pxslFloatGain"/>
+            <word name="pxslColorGain"/>
+            <word name="pxslFilterWidth"/>
+            <word name="pxslFilteredFNoise"/>
+            <word name="pxslFilteredCNoise"/>
+            <word name="pxslFilteredVNoise"/>
+            <word name="pxslBimix"/>
+            <word name="pxslVaryColor"/>
+            <word name="R"/>
+            <word name="c"/>
+            <word name="d"/>
+            <word name="r"/>
+            <word name="l"/>
+            <word name="Ia"/>
+            <word name="Id"/>
+            <word name="Is"/>
+            <word name="Ir"/>
+            <word name="It"/>
+            <word name="If"/>
+            <word name="S"/>
+            <word name="H"/>
+            <word name="e"/>
+            <word name="Dd"/>
+            <word name="Gg"/>
+            <word name="Ff"/>
+            <word name="nh"/>
+            <word name="nh2"/>
+            <word name="HALF_PI"/>
+            <word name="waliasAmbient"/>
+            <word name="waliasTranslucence"/>
+            <word name="waliasPhong"/>
+            <word name="waliasBlinn"/>
+            <word name="WALIAS_GLOWPARMS"/>
+            <word name="clipSuperellipse"/>
+            <word name="ShapeLightVolume"/>
+            <word name="BlockerContribution"/>
+            <word name="ABS"/>
+            <word name="XYZ_ADD"/>
+            <word name="XYZ_SUB"/>
+            <word name="XYZ_MULT"/>
+            <word name="XYZ_DIV"/>
+            <word name="XYZ_INC"/>
+            <word name="XYZ_DEC"/>
+            <word name="XYZ_ADDC"/>
+            <word name="XYZ_SUBC"/>
+            <word name="XYZ_MULTC"/>
+            <word name="XYZ_DIVC"/>
+            <word name="XYZ_COPY"/>
+            <word name="XYZ_COPYC"/>
+            <word name="DOT_XYZ"/>
+            <word name="CROSS_XYZ"/>
+            <word name="CROSS_3"/>
+            <word name="NORMALIZE_XYZ"/>
+            <word name="R_NORMALIZE_XYZ"/>
+            <word name="RGB_ADD"/>
+            <word name="RGB_SUB"/>
+            <word name="RGB_MULT"/>
+            <word name="RGB_ADDC"/>
+            <word name="RGB_SUBC"/>
+            <word name="RGB_MULTC"/>
+            <word name="RGB_DIVC"/>
+            <word name="RGB_COPY"/>
+            <word name="RGB_COPYC"/>
+            <word name="MIN"/>
+            <word name="MAX"/>
+            <word name="MAX_OCTAVES"/>
+            <word name="EGG_SHAPE"/>
+            <word name="JITTERING"/>
+            <word name="TRUE"/>
+            <word name="FALSE"/>
+            <word name="EPSILON"/>
+            <word name="M_1_2PI"/>
+            <word name="LOG2E"/>
+            <word name="LOG2"/>
+            <word name="DEGTORAD"/>
+            <word name="RADTODEG"/>
+            <word name="FABS"/>
+            <word name="NORM"/>
+            <word name="CROSS"/>
+            <word name="SMULT"/>
+            <word name="DOT"/>
+            <word name="VECADD"/>
+            <word name="VECSUB"/>
+            <word name="SCALARPROD"/>
+            <word name="COLORSCALE"/>
+            <word name="RAYPOS"/>
+            <word name="DELTA"/>
+            <word name="DELTA_INV"/>
+            <word name="B"/>
+            <word name="BM"/>
+            <word name="NP"/>
+            <word name="NM"/>
+            <word name="at3"/>
+            <word name="at2"/>
+            <word name="setup"/>
+            <word name="RES"/>
+            <word name="LENGTH"/>
+            <word name="VADD"/>
+            <word name="SMULT"/>
+            <word name="Multicolor"/>
+            <word name="Wrinkled"/>
+            <word name="VecNoise"/>
+            <word name="Noise3"/>
+            <word name="VecNoise3"/>
+            <word name="init"/>
+            <word name="CopyMatrix"/>
+            <word name="MultMatrix"/>
+            <word name="RotateX"/>
+            <word name="RotateY"/>
+            <word name="RotateZ"/>
+            <word name="VectTransform"/>
+            <word name="Multifractal"/>
+            <word name="Cyclone"/>
+            <word name="GIT"/>
+            <word name="DesertTexture"/>
+            <word name="CraterRays"/>
+            <word name="Crater"/>
+            <word name="fBm"/>
+            <word name="multifractal"/>
+            <word name="VLNoise3"/>
+            <word name="Hetero_Terrain"/>
+            <word name="HybridMultifractal"/>
+            <word name="RidgedMultifractal"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

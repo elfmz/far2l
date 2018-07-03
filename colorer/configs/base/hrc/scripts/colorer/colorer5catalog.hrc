@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="colorer5catalog" group="group" description="colorer5catalog" targetNamespace="http://colorer.sf.net/2003/catalog">
+    <location link="colorer5catalog.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="colorer5catalog">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'colorer5catalog'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://colorer.sf.net/2003/catalog
+             hrctype                     : colorer5catalog
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : false
+             default prefixes            : 
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:</documentation>
+         <contributors><![CDATA[None]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value=""/>
+      <entity name="nsprefix" value=""/>
+      <entity name="attr-nsprefix" value=""/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from 'custom.default.xml'--><!--end custom--><scheme name="catalog-element">
+         <block start="/\M &lt; (%nsprefix;catalog ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="catalog-elementContent"/>
+      </scheme>
+      <scheme name="catalog-content">
+         <block start="/\M &lt; (%nsprefix;hrc-sets ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrc-sets-elementContent"/>
+         <block start="/\M &lt; (%nsprefix;hrd-sets ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrd-sets-elementContent"/>
+      </scheme>
+      <scheme name="catalog-content-error">
+         <inherit scheme="catalog-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="catalog-content-cdsect">
+         <inherit scheme="catalog-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="catalog-Attributes"/>
+      <scheme name="catalog-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="catalog-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="catalog-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="hrc-sets-content">
+         <block start="/\M &lt; (%nsprefix;location ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="location-elementContent"/>
+      </scheme>
+      <scheme name="hrc-sets-content-error">
+         <inherit scheme="hrc-sets-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="hrc-sets-content-cdsect">
+         <inherit scheme="hrc-sets-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="hrc-sets-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(log-location)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+      </scheme>
+      <scheme name="hrc-sets-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="hrc-sets-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="hrc-sets-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="hrd-sets-content">
+         <block start="/\M &lt; (%nsprefix;hrd ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="hrd-entry-elementContent"/>
+      </scheme>
+      <scheme name="hrd-sets-content-error">
+         <inherit scheme="hrd-sets-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="hrd-sets-content-cdsect">
+         <inherit scheme="hrd-sets-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="hrd-sets-Attributes"/>
+      <scheme name="hrd-sets-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="hrd-sets-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="hrd-sets-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="hrd-entry-content">
+         <block start="/\M &lt; (%nsprefix;location ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="location-elementContent"/>
+      </scheme>
+      <scheme name="hrd-entry-content-error">
+         <inherit scheme="hrd-entry-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="hrd-entry-content-cdsect">
+         <inherit scheme="hrd-entry-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="hrd-entry-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:NMTOKEN-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:NMTOKEN-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(description)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+      </scheme>
+      <scheme name="hrd-entry-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="hrd-entry-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="hrd-entry-Attributes"/>
+         </inherit>
+      </scheme>
+      <scheme name="location-content"/>
+      <scheme name="location-content-error">
+         <inherit scheme="location-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="location-content-cdsect">
+         <inherit scheme="location-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="location-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(link)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+      </scheme>
+      <scheme name="location-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="location-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="location-Attributes"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="colorer5catalog-root">
+         <annotation>
+            <documentation>
+               You can replace these elements with needed single root element
+               with customizing HRC generation process.
+              </documentation>
+         </annotation>
+         <inherit scheme="catalog-element"/>
+      </scheme>
+      <scheme name="colorer5catalog-root-addref">
+         <inherit scheme="colorer5catalog-root"/>
+      </scheme>
+      <scheme name="colorer5catalog">
+         <inherit scheme="xml:xml">
+            <virtual scheme="xml:element" subst-scheme="colorer5catalog-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<annotation><documentation>
+    Colorer HRC packages group for
+        XSLT, XPath and XQuery
+        
+    This is HRC fragment for support 
+        regexp in XPath 2.0
+    
+    See http://www.w3.org/TR/xpath-functions/#regex-syntax
+    
+</documentation><contributors><![CDATA[
+    Eugene Efremov <4mirror@mail.ru>
+]]></contributors></annotation>
+
+
+<scheme name="FunctionCall-regexp">
+    
+    <block start="/~(matches|replace|tokenize)\s*(\()/" end="/(\))/" 
+        scheme="function-regexp-switcher" region01="func.name"
+        region02="def:PairStart" region00="func.quote"
+        region11="def:PairEnd"   region10="func.quote"
+    />
+</scheme>
+
+<scheme name="function-regexp-switcher">
+    <!-- TODO: it's catch only simple cases...-->
+    <block start="/~\(?#1\s*\M[^,]+\s*,\s*([&quot;&apos;])/" end="/\y1?#1/"
+        scheme="function-regexp-switcher2" 
+    />
+    <inherit scheme="Expr"/>
+</scheme>
+
+<scheme name="function-regexp-switcher2">
+    <block start="/,?#1\s*([&quot;&apos;])/" end="/(\y1)/"
+        scheme="Regexp"  region="literal" 
+        region01="def:PairStart" region00="literal.quote"
+        region11="def:PairEnd"   region10="literal.quote"
+    />
+    <inherit scheme="Expr"/>
+</scheme>
+
+
+<!-- not work
+<scheme name="RegexpString">
+    <inherit scheme="StringLiteral">
+        <virtual scheme="AposLiteralConetnt" subst-scheme="Regexp"/>
+        <virtual scheme="QuotLiteralConetnt" subst-scheme="Regexp"/>
+    </inherit>
+</scheme>
+-->
+
+<scheme name="Regexp">
+    <!-- TODO: apos/quot not check now -->
+    <inherit scheme="regexp:xsd.regexp">
+        <virtual scheme="regexp:xsd.regexp" subst-scheme="Regexp"/>
+    </inherit>
+    <regexp match="/[\$\^]/" region="regexp:MetaSymb" priority="low"/>
+</scheme>
+
+<scheme name="XML.Regexp.String">
+    <inherit scheme="xml:Reference"/>
+    <regexp match="/&amp;/" region="def:Error"/>
+</scheme>
+
+<scheme name="XML.Regexp">
+    <inherit scheme="Regexp">
+        <virtual scheme="regexp:string" subst-scheme="XML.Regexp.String"/>
+    </inherit>
+</scheme>

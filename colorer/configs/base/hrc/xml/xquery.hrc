@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" 
+    "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+    xmlns="http://colorer.sf.net/2003/hrc" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+
+<type name="xquery">
+
+<annotation><documentation>
+    Colorer HRC packages group for
+        XSLT, XPath and XQuery
+        
+    This is HRC for
+        XQuery 1.0: An XML Query Language
+        W3C Working Draft 11 February 2005
+        http://www.w3.org/TR/xquery/
+    
+</documentation><contributors><![CDATA[
+    Eugene Efremov <4mirror@mail.ru>
+]]></contributors></annotation>
+
+<region name="keyword" parent="def:Keyword"/>
+<region name="directive" parent="xml:PI.name"/>
+<region name="directive.attr" parent="xml:PI.content"/>
+<region name="directive.eq" parent="xml:Attribute.eq"/>
+
+<region name="sep" parent="def:SymbolStrong"/>
+<region name="sep.eq" parent="directive.eq"/>
+
+<region name="outline" parent="def:Outlined"/>
+<region name="module.outline" parent="outline"/>
+<region name="import.outline" parent="outline"/>
+<region name="declare.outline" parent="outline"/>
+
+<region name="pragma" parent="xml:PI.name"/>
+<region name="pragma.content" parent="xml:PI.content"/>
+
+<region name="constructor" parent="xpath:node.type"/>
+<region name="constructor.name" parent="def:Text"/> <!--def:Tag -->
+<region name="constructor.quasi" parent="directive"/>
+
+<region name="xml" parent="def:Text"/> <!-- or def:Insertion ??? -->
+
+<entity name="QName" value="%xpath2:QName;"/>
+<entity name="chk-str" value="(?{chk-str-q}[&quot;&apos;]).+?\p{chk-str-q}"/>
+
+
+<!--
+ !
+ ! start
+ !
+ !-->
+
+<scheme name="xquery">
+    <block start="/^\s*xquery\M(\s+version\b|\s*$)/" end="/;/"
+        region00="directive" region10="sep" scheme="VersionDecl"
+    />
+    <block start="/\M\bmodule(\s+namespace\b|\s*$)/" 
+        end="/$never^/" scheme="LibraryModule"
+    />
+    <inherit scheme="MainModule"/>
+</scheme>
+
+
+<scheme name="namespace.attr">
+    <block 
+        start="/\b(namespace\s+)?(%xml:NCName;)\s*(=)\s*\M([&quot;&apos;])/" 
+        end="/\y4?#1/" scheme="UriLiteral" 
+        region01="keyword" 
+        region02="directive.attr" region03="directive.eq" 
+    />
+    <regexp match="/\bnamespace\b/" region="keyword"/>
+</scheme>
+
+
+<scheme name="LibraryModule">
+    <block start="/~module\M(\s+namespace\b|\s*$)/" end="/;/"
+        region00="directive" region10="sep" 
+        scheme="ModuleDecl" region="module.outline"
+    />
+    <inherit scheme="Prolog"/>
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+<scheme name="MainModule">
+    <inherit scheme="Prolog"/>
+    <inherit scheme="QueryBody"/>
+</scheme>
+
+
+<scheme name="VersionDecl">
+    <regexp match="/(~|^)\s*version\b/" region="keyword"/>
+    <keywords region="keyword">
+        <!--word name="version"/-->
+        <word name="encoding"/>
+    </keywords>
+    <inherit scheme="StringLiteral"/>
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+<scheme name="ModuleDecl">
+    <regexp 
+        match="/\M(namespace\s+)?(?{module.outline}\b%xml:NCName;\s*=\s*%chk-str;)/" 
+        priority="low"
+    />
+    <inherit scheme="namespace.attr"/>
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+
+
+<scheme name="Prolog">
+    <block start="/\bimport\M(\s+(schema|module)\b|\s*$)/" end="/;/"
+        region00="directive" region10="sep" scheme="Import"
+    />
+    <block start="/\bdeclare\M(\s+[\w\-]+\b|\s*$)/" end="/;/"
+        region00="directive" region10="sep" scheme="Declare"
+    />
+</scheme>
+
+
+<scheme name="QueryBody">
+    <inherit scheme="Expr"/>
+</scheme>
+
+
+<!--
+ !
+ ! Import
+ !
+ !-->
+
+<scheme name="Import">
+    <regexp 
+        match="/\M(?{import.outline}.*?%chk-str;|[^&quot;&apos;;\(]+)/"
+        priority="low"
+    />
+    <block start="/(~|^)\s*schema\b/" end="/\M\;/"
+        region00="directive"  scheme="SchemaImport"
+    />
+    <block start="/(~|^)\s*module\b/" end="/\M\;/"
+        region00="directive"  scheme="ModuleImport"
+    />
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+<scheme name="SchemaImport">
+    <keywords region="keyword">
+        <word name="default"/>
+        <word name="element"/>
+    </keywords>
+    <inherit scheme="ModuleImport"/>
+</scheme>
+<scheme name="ModuleImport">
+    <inherit scheme="namespace.attr"/>
+    
+    <keywords region="directive.eq">
+        <word name="at" region="keyword"/>
+        <symb name="="/>
+        <symb name=","/>
+    </keywords>
+    <inherit scheme="UriLiteral"/>
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+
+
+<!--
+ !
+ ! Declare
+ !
+ !-->
+
+<scheme name="Declare">
+    <regexp 
+        match="/\M~\s*(?{declare.outline}.+?%chk-str;|.+?([&quot;&apos;;\{]|\(:|:=|$)?=)/"
+    
+    /><!--  priority="low" -->
+    
+    <block start="/(~|^)\s*function\b/" end="/\M;/"
+        region00="keyword" scheme="FunctionDecl" 
+    />
+    <block start="/(~|^)\s*variable\b/" end="/\M;/"
+        region00="keyword" scheme="VarDecl" 
+    />
+    <block start="/(~|^)\s*namespace\b/" end="/\M;/"
+        region00="keyword" scheme="NamespaceDecl" 
+    />
+    <block start="/(~|^)\s*option\b/" end="/\M;/"
+        region00="keyword" scheme="OptionDecl" 
+    />
+    
+    <block start="/(~|^)\s*default\b/" end="/\M;/"
+        region00="directive" scheme="DefaultDecl" 
+    />
+    <block start="/(~|^)\s*base-uri\s+\M([&quot;&apos;])/" end="/\y2\m/"
+        region00="keyword" scheme="UriLiteral" 
+    />
+    
+    <regexp match="/(~|^)\s*(boundary-space|construction)\s+(preserve|strip)\b/s"
+        region2="directive" region3="keyword"
+    />
+    <regexp match="/(~|^)\s*(ordering)\s+((un)?ordered)\b/s"
+        region2="directive" region3="keyword"
+    />
+    <regexp match="/(~|^)\s*(copy-namespaces)\s+(no-)?preserve\s*(,)\s*(no-)?inherit\b/s"
+        region2="directive" region="keyword" region4="sep.eq"
+    />
+    
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+ 
+
+<scheme name="FunctionDecl">
+    <block start="/(~|^)\s*(%xpath2:QName;)?\s*(\()/" end="/(\))/" scheme="ParamList" 
+        region00="xpath2:func.quote" region03="def:PairStart"
+        region10="xpath2:func.quote" region11="def:PairEnd"
+        region02="xpath2:qn.name"
+    />
+    
+    <block start="/(\{)/" end="/(\})/" scheme="Expr"
+        region00="sep" region01="def:PairStart"
+        region10="sep" region11="def:PairEnd"
+    />
+    <regexp match="/\bexternal\b/" region="keyword"/>
+    
+    <inherit scheme="TypeDeclaration"/>
+</scheme>
+
+
+<scheme name="VarDecl">
+    <block start="/:=/" end="/\M;/" 
+        region00="sep.eq" scheme="ExprSingle"
+    />
+    <regexp match="/\bexternal\b/" region="keyword"/>
+    
+    <inherit scheme="Param"/>
+</scheme>
+
+
+<scheme name="NamespaceDecl">
+    <inherit scheme="namespace.attr"/>
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+<scheme name="OptionDecl">
+    <inherit scheme="xpath2:QName"/>
+    <inherit scheme="StringLiteral"/>
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+<scheme name="DefaultDecl">
+    <keywords region="keyword">
+        <word name="element"/>
+        <word name="function"/>
+        <word name="order" region="directive"/>
+    </keywords>
+    <block start="/\bnamespace\s+\M([&quot;&apos;])/" end="/\y1?#1/" 
+        region00="keyword" scheme="UriLiteral"
+    />
+    <inherit scheme="OrderModifier"/>
+    <inherit scheme="WhiteSpace"/>
+</scheme>
+
+
+
+<!--
+ !
+ ! Expr
+ !
+ !-->
+ 
+<scheme name="Expr">
+    <inherit scheme="xpath2:Expr">
+        <virtual scheme="xpath2:ExprSingle" subst-scheme="ExprSingle"/>
+    </inherit>
+</scheme>
+
+<scheme name="ExprSingle">
+    <block start="/\blet\b/" end="/:=/" scheme="Param"
+        region00="xpath2:expr.key" region10="sep.eq"
+    />
+    <block start="/\M\$%QName;\s+(as\s+.+?)?:=/" end="/:=/"
+        region10="sep.eq" scheme="Param"
+    />
+    <block start="/\bas\s+\M%QName;/" end="//"
+        region00="xpath2:expr.key" scheme="xpath2:SequenceType"
+    />
+    <block start="/\bcase\s+\M(\$%QName;\s+as\s+)?%QName;/" end="//" 
+        scheme="Param" region00="xpath2:expr.key"
+    />
+    <keywords region="xpath2:expr.key">
+        <word name="where"/>
+        <word name="stable"/>
+        <word name="typeswitch"/>
+        <word name="case"/>
+        <word name="default"/>
+        <!--<word name=""/>
+        <word name=""/>
+        <word name=""/>
+        <word name=""/>-->
+    </keywords>
+    <regexp match="/\border\s+by/" region="xpath2:expr.key"/>
+    <keywords region="xpath2:expr.key" worddiv="[\s]">
+        <word name="at"/>
+        <word name="ascending"/>
+        <word name="descending"/>
+    </keywords>
+    <inherit scheme="OrderModifier"/>
+    
+    
+    <!--block start="/\b(case|default)\b/" end="/\breturn\b/" 
+        content-priority="low" 
+        scheme="Param" region00="xpath2:expr.key" region10="xpath2:expr.key"
+    /-->
+    
+    <inherit scheme="Constructor"/>
+    
+    <inherit scheme="xpath2:ExprSingle">
+        <virtual scheme="xpath2:ExprSingle" subst-scheme="ExprSingle"/>
+        <virtual scheme="xpath2:Regexp" subst-scheme="xpath2:XML.Regexp"/>
+        <virtual scheme="xpath2:DefaultStringContent" subst-scheme="StringLiteralContent"/>
+    </inherit>
+</scheme>
+
+<scheme name="OrderModifier">
+    <regexp match="/\bempty\s+(greate|lea)st\b/" region="keyword"/>
+    <block start="/\bcollation\s+\M([&quot;&apos;])/" end="/\y1?#1/"
+        region00="keyword" scheme="UriLiteral"
+    />
+</scheme>
+
+
+
+<scheme name="ParamList">
+    <keywords region="xpath2:expr.op">
+        <symb name=","/>
+    </keywords>
+    <inherit scheme="Param"/>
+</scheme>
+
+<scheme name="Param">
+    <inherit scheme="xpath2:VarRef"/>
+    <inherit scheme="TypeDeclaration"/>
+</scheme>
+
+<scheme name="TypeDeclaration">
+    <keywords region="xpath2:expr.key" worddiv="[\s]">
+        <word name="as"/>
+    </keywords>
+    <inherit scheme="xpath2:SequenceType"/>
+</scheme>
+
+
+
+<!--
+ !
+ ! Constructor
+ !
+ !-->
+
+
+<scheme name="Constructor">
+    <inherit scheme="ComputedConstructor"/>
+    <block start="/(\{)/" end="/(\})/" scheme="Expr"
+        region00="sep" region01="def:PairStart"
+        region10="sep" region11="def:PairEnd"
+    />
+    
+    <inherit scheme="DirectConstructor"/>
+</scheme>
+
+
+<entity name="cc-valid-end" value="\s*\M($|\{|\(:)"/>
+
+<scheme name="ComputedConstructor">
+    <inherit scheme="QuasiComputedConstructor"/>
+    
+    <regexp match="/\b(element|attribute)(\s+%QName;)?%cc-valid-end;/"
+        region1="constructor" region2="constructor.name"
+    />
+    <regexp match="/\b(processing-instruction)(\s+%xml:NCName;)?%cc-valid-end;/"
+        region1="constructor" region2="constructor.name"
+    />
+    <regexp match="/\b(text|comment|document)%cc-valid-end;/"
+        region1="constructor" 
+    />
+</scheme>
+
+<scheme name="QuasiComputedConstructor">
+    <regexp match="/\b((un)?oredered)%cc-valid-end;/"
+        region1="constructor.quasi" 
+    />
+    <regexp match="/\b(validate)(\s+(lax|strict))?%cc-valid-end;/"
+        region1="constructor.quasi" region3="keyword"
+    />
+    
+    <block start="/(\(#)\s*%QName;/" end="/(#\))/" 
+        scheme="def:empty" region="pragma.content"
+        region00="pragma" region01="def:PairStart"
+        region10="pragma" region11="def:PairEnd"
+    />
+</scheme>
+
+
+<scheme name="DirectConstructor">
+    <block start="/\s*\M&lt;%xml:QName;/" end="/(&gt;)?#1/" 
+        scheme="DirElemConstructor" region="xml" inner-region="yes"
+    />
+    <block start="/\s*\M&lt;!--/" end="/(--&gt;)?#3/" 
+        scheme="DirCommentConstructor" region="xml" inner-region="yes"
+    />
+    <block start="/\s*\M\&lt;\?%xml:Name;/" end="/(\?&gt;)?#2/" 
+        scheme="DirPIConstructor" region="xml" inner-region="yes"
+    />
+</scheme> 
+
+
+<scheme name="DirElemConstructor">
+    <inherit scheme="xml:element">
+        <virtual scheme="xml:content.cdata.stream" subst-scheme="CommonContent"/>
+        <virtual scheme="xml:AttValue.content.stream" subst-scheme="CommonContent"/>
+    </inherit>
+</scheme>
+<scheme name="DirPIConstructor">
+    <inherit scheme="xml:PI">
+        <!-- we don't need this...-->
+        <virtual scheme="xmlns:xml-stylesheet-processing-instruction" subst-scheme="def:empty"/>
+    </inherit>
+</scheme>
+<scheme name="DirCommentConstructor">
+    <inherit scheme="xml:Comment"/>
+</scheme>
+
+<scheme name="CommonContent">
+    <inherit scheme="xpath2:EmbeddedExpr">
+        <virtual scheme="xpath2:Expr" subst-scheme="Expr"/>
+    </inherit>
+</scheme>
+
+
+<!--
+ !
+ ! Literals
+ !
+ !-->
+
+<scheme name="StringLiteral">
+    <inherit scheme="xpath2:StringLiteral">
+        <virtual scheme="xpath2:DefaultStringContent" subst-scheme="StringLiteralContent"/>
+    </inherit>
+</scheme>
+<scheme name="StringLiteralContent">
+    <inherit scheme="xml:Reference"/>
+    <regexp match="/&amp;/" region="def:Error"/>
+</scheme>
+
+<scheme name="UriLiteral">
+    <inherit scheme="xpath2:StringLiteral">
+        <virtual scheme="xpath2:DefaultStringContent" subst-scheme="UriLiteralContent"/>
+    </inherit>
+</scheme>
+<scheme name="UriLiteralContent">
+    <inherit scheme="uri:uri"/>
+    <inherit scheme="StringLiteralContent"/>
+</scheme>
+
+<scheme name="WhiteSpace">
+    <inherit scheme="xpath2:WhiteSpace"/>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer HRC packages group 
+   - for XSLT, XPath and XQuery.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

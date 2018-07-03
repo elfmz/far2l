@@ -1,0 +1,1189 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name="ie.tp2">
+	<annotation><documentation>
+		WeiDu tp2 script syntax
+	</documentation><contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+	]]></contributors>
+	<appinfo><todo>
+		- Problem with BEGIN - END at start of string...
+		- Problem with ACTION_IF ... ELSE at start of string...
+		- More regexp detection...
+	</todo></appinfo>
+</annotation>
+
+<region name='key' parent='ie.d:key'/>
+<region name='key.bra' parent='def:OpenTag'/>
+<region name='key.oper' parent='ie.baf:symb'/> <!-- 'def:KeywordStrong' -->
+
+<region name='key.core' parent='key'/>
+<region name='key.flag' parent='def:Directive'/>
+<region name='key.core.dir' parent='key.flag'/>
+<region name='key.flag.cnt' parent='def:DirectiveContent'/>
+
+
+<region name='key.act' parent='key'/>
+<region name='key.act.oper' parent='key.act'/>
+
+<region name='key.opt' parent='def:Parameter'/>
+<region name='key.when' parent='key.opt'/>
+
+
+<region name='key.macro' parent='key'/>
+<region name='key.macro.head' parent='key.macro'/>
+
+
+<region name='key.patch' parent='def:KeywordStrong'/>
+<region name='key.patch.oper' parent='key.patch'/>
+<region name='key.patch.pred' parent='key.opt'/>
+
+
+
+<region name="heredoc" parent="perl:HereDoc"/>
+<region name="heredoc.name" parent="perl:HereDocName"/>
+<region name="heredoc.lt" parent="def:EmbeddedTag"/>
+
+
+<region name='int' parent='ie.d:int'/>
+
+<region name='symb' parent='ie.baf:symb'/>
+<region name='symb.s' parent='def:SymbolStrong'/>
+<region name='sep' parent='symb.s'/>
+
+
+<region name='var' parent='def:Var'/>
+<region name='var.eval' parent='def:VarStrong'/>
+
+
+<region name='out' parent='ie.d:out'/>
+<region name='heredoc.out' parent='out'/>
+<region name='macro.out' parent='out'/>
+<region name='fun.out' parent='out'/>
+<region name='lang.out' parent='out'/>
+<region name='component.out' parent='out'/>
+
+
+<region name='constant' parent='ie.baf:ids'/>
+
+
+
+<scheme name='int'>
+	<regexp match="/\b0x[\da-fA-F]+\b/" region='int'/>
+	<regexp match="/\b0o[0-7]+\b/" region='int'/>
+	<regexp match="/\b0b[01]+\b/" region='int'/>
+	
+	<regexp match="/\b(0x[\da-fA-F]*?([^\s\W\da-fA-F]).*?)\b/i" region="def:Error"/>
+	<regexp match="/\b(0o[0-7]*?([^\s\W0-7]).*?)\b/i" region="def:Error"/>
+	<regexp match="/\b(0b[01]*?([^\s\W01]).*?)\b/i" region="def:Error"/>
+	
+	<inherit scheme='ie.d:int'/>
+</scheme>
+
+
+<scheme name='string.subst'>
+	<regexp match='/%%\w+%%/' region='var.eval'/>
+	<regexp match='/%\w+%/' region='var'/>
+</scheme>
+
+<scheme name='string'>
+	<inherit scheme='int'/>
+	<inherit scheme='ie.d:string'>
+		<virtual scheme="ie.baf:subst" subst-scheme="string.subst"/>
+	</inherit>
+</scheme>
+
+<scheme name='string.re'>
+	<inherit scheme='ie.d:regexp.string'>
+		<virtual scheme="ie.baf:subst" subst-scheme="string.subst"/>
+	</inherit>
+</scheme>
+
+
+
+
+<!-- value -->
+
+<scheme name='value.sws'>
+	<inherit scheme='value'/>
+	<regexp match='/\bIN\b/' region='key.oper'/>
+</scheme>
+
+<scheme name='value'>
+	<inherit scheme='int'/>
+	<inherit scheme='ie.baf:comment'/>
+	
+	<block start='/\*\*\s*(\()/' end='/(\))/' scheme='int'
+		region00='symb' region01='def:PairStart'
+		region10='symb' region11='def:PairEnd'
+	/>
+	
+	<block start='/\bSTATE_WHICH_SAYS\b/' end='/\bFROM\b/' scheme='value.sws'
+		region00='key.oper' region10='key.oper'
+	/>
+	
+	<block start='/\bFILE_CONTAINS_EVALUATED\s*((\())/' end='/(\))/' 
+		scheme='string' region00='key.oper'
+		region01='symb' region02='def:PairStart'
+		region10='symb' region11='def:PairEnd'
+	/>
+	
+	
+	<block start='/(\()/' end='/(\))/' scheme='value'
+		region00='symb' region01='def:PairStart'
+		region10='symb' region11='def:PairEnd'
+	/>
+	
+	<inherit scheme='oper'/>
+	
+	<block start='/\$\w+\s*((\())/' end='/(\))/' 
+		scheme='string' region00='var'
+		region01='symb' region02='def:PairStart'
+		region10='symb' region11='def:PairEnd'
+	/>
+	
+	<regexp match='/%(WEIDU_ARCH|WEIDU_OS|COMPONENT_NUMBER|INTERACTIVE)%/' region='var' region1='key'/>
+	
+	<inherit scheme='constants'/>
+	<inherit scheme='string'/>
+	
+</scheme>
+
+
+
+<!-- basic blocks -->
+
+<scheme name='block.content'/>
+
+<scheme name='block'>
+	<block start='/\b(BEGIN)\b/' end='/\b(END)\b/' scheme='block.content'
+		region00='key.bra' region01='def:PairStart'
+		region10='key.bra' region11='def:PairEnd'
+	/>
+</scheme>
+
+<scheme name='block.each'>
+	<inherit scheme='string'/>
+	<inherit scheme='int'/>
+	<keywords region="key"> 
+		<word name='AS'/>
+		<word name='IN'/>
+		<symb name='=&gt;' region='symb'/>
+	</keywords>
+	
+	<inherit scheme='block'/>
+</scheme>
+
+
+<scheme name='block.for.content'>
+	<regexp match='/;/' region='sep'/>
+	<inherit scheme='patch-in'/>
+</scheme>
+
+<scheme name='block.for'>
+	<inherit scheme='ie.baf:comment'/>
+	<block start='/(\()/' end='/(\))/' scheme='block.for.content'
+		region00='symb' region01='def:PairStart'
+		region10='symb' region11='def:PairEnd'
+	/>
+	
+	<inherit scheme='block'/>
+</scheme>
+
+
+<scheme name='block.bash'>
+	<inherit scheme='directory-file-regexp'/>
+	
+	<inherit scheme='block'/>
+</scheme>
+
+
+
+
+<!-- patch -->
+<scheme name='patch.block'>
+	<inherit scheme='block'>
+		<virtual scheme='block.content' subst-scheme='patch-in'/>
+	</inherit>
+</scheme>
+
+
+<scheme name='patch.each'>
+	<inherit scheme='block.each'>
+		<virtual scheme='block.content' subst-scheme='patch-in'/>
+	</inherit>
+</scheme>
+
+<scheme name='patch.for'>
+	<inherit scheme='block.for'>
+		<virtual scheme='block.content' subst-scheme='patch-in'/>
+	</inherit>
+</scheme>
+
+<scheme name='patch.bash'>
+	<inherit scheme='block.bash'>
+		<virtual scheme='block.content' subst-scheme='patch-in'/>
+	</inherit>
+</scheme>
+
+
+<scheme name='patch.re.eval'>
+	<inherit scheme='string.re'/>
+	<inherit scheme='opt.case'/>
+	
+	<inherit scheme='patch.block'/>
+</scheme>
+
+<!--scheme name='patch.re'>
+	<inherit scheme='opt'/>
+	<inherit scheme='string.re'/>
+</scheme-->
+
+
+
+<scheme name='inner-act'>
+	<block start='/\bINNER_ACTION\b/' end='/(END)?#3/'
+		region00='key.patch' scheme='action.block'
+	/>
+</scheme>
+
+<scheme name='patch-out'>
+	<inherit scheme='inner-act'/>
+	<block start='/\S?#1\s+((BEGIN))\b/' end='/\b(END)\b/' scheme='patch-in'
+		region01='key.bra' region02='def:PairStart'
+		region10='key.bra' region11='def:PairEnd'
+	/>
+	<inherit scheme='patch'/>
+</scheme>
+
+<scheme name='patch-in'>
+	<inherit scheme='inner-act'/>
+	<inherit scheme='patch.block'/>
+	<inherit scheme='patch'/>
+</scheme>
+
+
+
+<scheme name='patch'>
+	
+	<block start='/\bFOR\b/' end='/(END)?#3/'
+		region00='key.patch' scheme='patch.for'
+	/>
+	
+	<block start='/\bPATCH_BASH_FOR\b/' end='/(END)?#3/'
+		region00='key.patch' scheme='patch.bash'
+	/>
+	
+	<block start='/\bPATCH_(PHP|FOR)_EACH\b/' end='/(END)?#3/'
+		region00='key.patch' scheme='patch.each'
+	/>
+	
+	<block start='/\bREPLACE_EVALUATE\b/' end='/(END)?#3/'
+		region00='key.patch' scheme='patch.re.eval'
+	/>
+	
+	<!--
+	<block start='/\bREPLACE(_TEXTUALLY)?\b/' end='/([~"])?#1/'
+		region00='key.patch' scheme='patch.re'
+	/>-->
+	
+	
+	
+	<!-- TODO: -->
+	
+	<inherit scheme='fun.call.patch'/>
+	<inherit scheme='patch.key'/>
+	
+	<keywords region="key.patch.oper"> 
+		<word name='AS'/>
+		<word name='IN'/>
+		<word name='THEN'/>
+		<word name='ELSE'/>
+	</keywords>
+	
+	<keywords region="key.patch.pred"> 
+		<word name='NULL'/>
+		
+		<word name='FIRST'/>
+		<word name='LAST'/>
+		<word name='AFTER'/>
+		<word name='BEFORE'/>
+		
+		<word name='EQUIP'/>
+		<word name='TWOHANDED'/>
+	</keywords>
+	
+	<inherit scheme='opt'/>
+	<inherit scheme='value'/>
+</scheme>
+
+
+
+<!-- dir/opt -->
+
+<scheme name='directory-file-regexp'>
+	<inherit scheme='string.re'/> 
+	<inherit scheme='opt.exact'/>
+</scheme>
+
+
+<scheme name='opt.case'>
+	<keywords region="key.opt"> 
+		<word name='CASE_SENSITIVE'/>
+		<word name='CASE_INSENSITIVE'/>
+	</keywords>
+</scheme>
+
+<scheme name='opt.exact'>
+	<keywords region="key.opt"> 
+		<word name='EXACT_MATCH'/>
+		<word name='EVALUATE_REGEXP'/>
+	</keywords>
+</scheme>
+
+<scheme name='opt'>
+	<inherit scheme='opt.case'/>
+	<inherit scheme='opt.exact'/>
+</scheme>
+
+
+
+<scheme name='when'>
+	<block start='/\b(IF|UNLESS)\s+\M([~"])/' end='/(\y2)?#1/'
+		region01='key.when' scheme='string.re'
+	/>
+	
+	<keywords region="key.when"> 
+		<word name='IF_SIZE_IS'/>
+		<word name='I_S_I'/>
+		<word name='IF'/>
+		<word name='UNLESS'/>
+		<word name='BUT_ONLY_IF_IT_CHANGES'/>
+		<word name='BUT_ONLY'/>
+	</keywords>
+	
+</scheme>
+
+
+
+<!-- heredoc -->
+
+<scheme name='heredoc.base.content'>
+	<inherit scheme='string.subst'/>
+</scheme>
+
+<scheme name='heredoc.base'>
+	<block 
+		start='/^\s*(&lt;{8})\s*((\S+))/'
+		end='/^\s*(&gt;{8})/' scheme='heredoc.base.content'
+		region00='def:PairStart' region01='heredoc.lt' 
+		region02='heredoc.name'  region03='heredoc.out'
+		region10='def:PairEnd'   region11='heredoc.lt' 
+	/>
+</scheme>
+
+
+<scheme name='heredoc.baf.content'>
+	<inherit scheme='ie.baf:ie.baf'>
+		<virtual scheme='ie.baf:subst' subst-scheme='string.subst'/>
+	</inherit>
+</scheme>
+<scheme name='heredoc.baf'>
+	<inherit scheme='heredoc.base'>
+		<virtual scheme='heredoc.base.content' subst-scheme='heredoc.baf.content'/>
+	</inherit>
+</scheme>
+
+<scheme name='heredoc.dlg.content'>
+	<inherit scheme='ie.d:ie.d'>
+		<virtual scheme='ie.baf:subst' subst-scheme='string.subst'/>
+	</inherit>
+</scheme>
+<scheme name='heredoc.dlg'>
+	<inherit scheme='heredoc.base'>
+		<virtual scheme='heredoc.base.content' subst-scheme='heredoc.dlg.content'/>
+	</inherit>
+</scheme>
+
+<scheme name='heredoc.tra.content'>
+	<inherit scheme='ie.tra:ie.tra'>
+		<virtual scheme='ie.baf:subst' subst-scheme='string.subst'/>
+	</inherit>
+</scheme>
+<scheme name='heredoc.tra'>
+	<inherit scheme='heredoc.base'>
+		<virtual scheme='heredoc.base.content' subst-scheme='heredoc.tra.content'/>
+	</inherit>
+</scheme>
+
+
+<scheme name='heredoc'> 
+	
+	<block 
+		start='/^\M\s*(&lt;{8})\s*(\S+\.baf)\b/'
+		end='/(&gt;{8})?#8/' scheme='heredoc.baf'
+	/>
+	
+	<block 
+		start='/^\M\s*(&lt;{8})\s*(\S+\.d)\b/'
+		end='/(&gt;{8})?#8/' scheme='heredoc.dlg'
+	/>
+	
+	<block 
+		start='/^\M\s*(&lt;{8})\s*(\S+\.tra)\b/'
+		end='/(&gt;{8})?#8/' scheme='heredoc.tra'
+	/>
+	
+	<inherit scheme='heredoc.base'/>
+</scheme>
+
+
+
+<!-- action -->
+
+<scheme name='action.biff'>
+	<inherit scheme='string'/>
+	<inherit scheme='block'>
+		<virtual scheme='block.content' subst-scheme='directory-file-regexp'/>
+	</inherit>
+</scheme>
+
+
+<scheme name='action.block'>
+	<inherit scheme='value'/>
+	<inherit scheme='block'>
+		<virtual scheme='block.content' subst-scheme='action'/>
+	</inherit>
+</scheme>
+
+<scheme name='action.if'>
+	<keywords region="key.act.oper"> 
+		<word name='THEN'/>
+		<word name='ELSE'/>
+		<word name='ACTION_IF' region='key.act'/>
+	</keywords>
+	
+	<inherit scheme='action.block'/>
+</scheme>
+
+
+<scheme name='action.for'>
+	<inherit scheme='block.for'>
+		<virtual scheme='block.content' subst-scheme='action'/>
+	</inherit>
+</scheme>
+
+<scheme name='action.bash'>
+	<inherit scheme='block.bash'>
+		<virtual scheme='block.content' subst-scheme='action'/>
+	</inherit>
+</scheme>
+
+<scheme name='action.each'>
+	<inherit scheme='block.each'>
+		<virtual scheme='block.content' subst-scheme='action'/>
+	</inherit>
+</scheme>
+
+
+<scheme name='action'>
+	
+	<!-- special actions -->
+	<block start='/\b(MAKE_)?BIFF\b/' end='/(END)?#3/'
+		region00='key.act' scheme='action.biff'
+	/>
+	
+	<block start='/\bACTION_IF\b/' end='/(END)?#3(\s+ELSE)?!/s'
+		region00='key.act' scheme='action.if'
+	/> <!-- BUG: not support ELSE in next line... -->
+	
+	<block start='/\bOUTER_WHILE\b/' end='/(END)?#3/'
+		region00='key.act' scheme='action.block'
+	/>
+	
+	<block start='/\bOUTER_FOR\b/' end='/(END)?#3/'
+		region00='key.act' scheme='action.for'
+	/>
+	
+	<block start='/\bACTION_BASH_FOR\b/' end='/(END)?#3/'
+		region00='key.act' scheme='action.bash'
+	/>
+	
+	<block start='/\bACTION_(PHP|FOR)_EACH\b/' end='/(END)?#3/'
+		region00='key.act' scheme='action.each'
+	/>
+	
+	
+	<block start='/\b(COPY_EXISTING_REGEXP)\s+([\+\-]\s+)?(GLOB\s+)?\M([~"])/' end='/(\y4)?#1/'
+		region01='key.act' region02='symb' region03='key.act.oper' scheme='string.re'
+	/>
+	
+	<inherit scheme='heredoc'/>
+	<inherit scheme='fun'/>
+	<inherit scheme='macro'/> 
+	
+	<!-- common actions -->
+	<inherit scheme='fun.call.action'/>
+	<inherit scheme='action.key'/>
+	
+	<inherit scheme='patch-out'/>
+	<inherit scheme='when'/>
+</scheme>
+
+
+
+<!-- macro -->
+
+<scheme name='macro.action.content'>
+	<inherit scheme='macro.key'/>
+	<inherit scheme='action'/>
+</scheme>
+
+<scheme name='macro.patch.content'>
+	<inherit scheme='macro.key'/>
+	<inherit scheme='patch-in'/>
+</scheme>
+
+
+<scheme name='macro.action'>
+	<inherit scheme='string'/>
+	<inherit scheme='block'>
+		<virtual scheme='block.content' subst-scheme='macro.action.content'/>
+	</inherit>
+</scheme>
+
+<scheme name='macro.patch'>
+	<inherit scheme='string'/>
+	<inherit scheme='block'>
+		<virtual scheme='block.content' subst-scheme='macro.patch.content'/>
+	</inherit>
+</scheme>
+
+
+
+<scheme name='macro'>
+	<block start='/\b(DEFINE_ACTION_MACRO)\M\s+(?{macro.out}\S+)/' end='/(END)?#3/'
+		region01='key.macro.head' scheme='macro.action'
+	/>
+	
+	<block start='/\b(DEFINE_PATCH_MACRO)\M\s+(?{macro.out}\S+)/' end='/(END)?#3/'
+		region00='key.macro.head' scheme='macro.patch'
+	/>
+</scheme>
+
+
+
+<!--functions -->
+
+<scheme name='fun.call.content'>
+	<inherit scheme='value'/>
+	
+	<keywords region='key.macro'>
+		<word name='INT_VAR'/>
+		<word name='STR_VAR'/>
+		<word name='RET'/>
+	</keywords>
+</scheme>
+
+<scheme name='fun.call.action'>
+	<block start='/\b(LAUNCH_ACTION_FUNCTION)\b/' end='/\b(END)\b/' scheme='fun.call.content'
+		region00='key.act' region01='def:PairStart'
+		region10='key.bra' region11='def:PairEnd'
+	/>
+</scheme>
+
+<scheme name='fun.call.patch'>
+	<block start='/\b(LAUNCH_PATCH_FUNCTION)\b/' end='/\b(END)\b/' scheme='fun.call.content'
+		region00='key.patch' region01='def:PairStart'
+		region10='key.bra' region11='def:PairEnd'
+	/>
+</scheme>
+
+
+<scheme name='fun.action'>
+	<inherit scheme='fun.call.content'/>
+	<inherit scheme='action.block'/>
+</scheme>
+
+<scheme name='fun.patch'>
+	<inherit scheme='fun.call.content'/>
+	<inherit scheme='patch.block'/>
+</scheme>
+
+
+<scheme name='fun'>
+	<block start='/\b(DEFINE_ACTION_FUNCTION)\M\s+(?{fun.out}\S+)/' end='/(END)?#3/'
+		region01='key.macro.head' scheme='fun.action'
+	/>
+	
+	<block start='/\b(DEFINE_PATCH_FUNCTION)\M\s+(?{fun.out}\S+)/' end='/(END)?#3/'
+		region00='key.macro.head' scheme='fun.patch'
+	/>
+</scheme>
+
+
+
+
+<!-- component -->
+
+<scheme name='component.flag'>
+	<keywords region="key.flag">
+		<word name='DEPRECATED'/>
+		<word name='REQUIRE_COMPONENT'/>
+		<word name='FORBID_COMPONENT'/>
+		<word name='REQUIRE_PREDICATE'/>
+		<word name='SUBCOMPONENT'/>
+		<word name='FORCED_SUBCOMPONENT'/>
+		<word name='GROUP'/>
+		<word name='INSTALL_BY_DEFAULT'/>
+		<word name='DESIGNATED'/>
+		<word name='NO_LOG_RECORD'/>
+	</keywords>
+	
+	<inherit scheme='value'/>
+</scheme>
+
+
+<scheme name='component.content'>
+	<inherit scheme='action'/>
+	<inherit scheme='component.flag'/>
+	
+</scheme>
+
+<scheme name='component'>
+	<block 
+		start='/^\s*(BEGIN)\M\s+(?{component.out}\S+)/' 
+		end='/^\M\s*BEGIN\s+\S+/' 
+		scheme='component.content' region01='key.core'
+	/>
+</scheme>
+
+
+
+<!-- TP2 core -->
+
+<scheme name='tp2.style'>
+	<keywords region="key.flag.cnt">
+		<word name='BG'/>
+		<word name='PST'/>
+		<word name='IWD1'/>
+		<word name='IWD2'/>
+	</keywords>
+</scheme>
+
+<scheme name='tp2.flag'>
+	<keywords region="key.flag">
+		<word name='AUTO_TRA'/>
+		<word name='ALLOW_MISSING'/>
+		<word name='ASK_EVERY_COMPONENT'/>
+		<word name='README'/>
+		<word name='MODDER'/>
+		<word name='VERSION'/>
+		<word name='NO_IF_EVAL_BUG'/>
+	</keywords>
+	
+	<block start='/^\s*SCRIPT_STYLE\b/' end='/$/' 
+		scheme='tp2.style' region00='key.flag'/>
+	
+	<block start='/\b(ALWAYS)\b/' end='/\b(END)\b/' scheme='action'
+		region00='key.core' region01='def:PairStart'
+		region10='key.bra' region11='def:PairEnd'
+	/>
+	
+	<inherit scheme='macro'/>
+	<inherit scheme='string'/>
+</scheme>
+
+
+
+<scheme name='tp2.lang.content'>
+	<inherit scheme='string'/>
+</scheme>
+
+<scheme name='tp2.lang'>
+	<block 
+		start='/^\s*(LANGUAGE)\M(\s+(?{lang.out}\S+))?/' 
+		end='/^\M\s*(LANGUAGE|BEGIN)/' 
+		scheme='tp2.lang.content' region01='key.core'
+	/>
+</scheme>
+
+
+
+<scheme name='ie.tp2'>
+	<block start='/^\s*BACKUP\b/' end='/$/' 
+		scheme='string' region00='key.core.dir'/>
+	<block start='/^\s*AUTHOR\b/' end='/$/' 
+		scheme='string' region00='key.core.dir'/>
+		
+	<inherit scheme='tp2.flag'/>
+	<inherit scheme='tp2.lang'/>
+	
+	<inherit scheme='component'/>
+</scheme>
+
+
+
+
+
+
+<!-- wordlists  -->
+
+<scheme name='oper'>
+	<keywords region="symb">
+		<symb name='='/>
+		<symb name='+'/>
+		<symb name='-'/>
+		<symb name='*'/>
+		<symb name='/'/>
+		<symb name='|'/>
+		<symb name='&lt;'/>
+		<symb name='&gt;'/>
+		<symb name='&amp;'/>
+		<symb name='^'/>
+		<symb name='!'/>
+		<symb name='`'/>
+		<symb name='?' region='symb.s'/>
+		<symb name=':' region='symb.s'/>
+		<!--
+		<symb name=''/>
+		-->
+		<word name='BYTE_AT'/>
+		<word name='SBYTE_AT'/>
+		<word name='SHORT_AT'/>
+		<word name='SSHORT_AT'/>
+		<word name='LONG_AT'/>
+		<word name='SLONG_AT'/>
+		<word name='NOT'/>
+		<word name='BNOT'/>
+		<word name='ABS'/>
+		<word name='OR'/>
+		<word name='AND'/>
+		<word name='BOR'/>
+		<word name='BXOR'/>
+		<word name='BAND'/>
+		<word name='BLSL'/>
+		<word name='BLSR'/>
+		<word name='BASR'/>
+		
+		<word name='STR_CMP'/> 
+		
+		<word name='BUFFER_LENGTH'/>
+		<word name='STRING_LENGTH'/>
+	</keywords>
+	<regexp match='/\bSTRING_((COMPARE|EQUAL)(_CASE)?|(MATCHES|COMPARE|CONTAINS)_REGEXP)\b/' region='symb'/>
+	
+	<keywords region="key.oper"> <!-- region? -->
+		<word name='GAME_IS'/>
+		<word name='ENGINE_IS'/>
+		<word name='IDS_OF_SYMBOL'/>
+		<word name='VARIABLE_IS_SET'/>
+		<word name='IS_AN_INT'/>
+		<word name='MOD_IS_INSTALLED'/>
+		
+		<word name='RANDOM'/>
+		<word name='FILE_CONTAINS'/>
+		<word name='FILE_EXISTS'/>
+		<word name='FILE_EXISTS_IN_GAME'/>
+		<word name='FILE_MD5'/>
+		<word name='FILE_SIZE'/>
+		<word name='EVALUATE_BUFFER' region='key'/>
+	</keywords>
+</scheme>
+
+
+
+
+<scheme name='macro.key'>
+	<keywords region="key.macro">
+		<word name='LOCAL_SPRINT'/>
+		<word name='LOCAL_SET'/>
+	</keywords>
+</scheme>
+
+
+
+
+<scheme name='action.key'>
+	<keywords region="key.act"> <!-- macro -->
+		<word name='LAUNCH_ACTION_MACRO'/>
+		<word name='LAUNCH_MACRO_ACTION'/> <!-- is valid? -->
+	</keywords>
+	
+	<keywords region="key.act.oper">
+		<word name='GLOB'/>
+		<word name='EVALUATE_BUFFER'/>
+		<word name='EXACT'/>
+		<word name='USING'/>
+	</keywords>
+	
+	<keywords region="key.act">
+		<word name='COPY'/>
+		<word name='COPY_EXISTING'/>
+		<word name='COPY_EXISTING_REGEXP'/>
+		<word name='COPY_LARGE'/>
+		<word name='COPY_RANDOM'/>
+		<word name='COPY_ALL_GAM_FILES'/>
+		<word name='COMPILE'/>
+		<word name='CLEAR_MEMORY'/>
+		<word name='CLEAR_IDS_MAP'/>
+		<word name='ACTION_CLEAR_ARRAY'/>
+		<word name='SILENT'/>
+		<word name='VERBOSE'/>
+		<word name='MKDIR'/>
+		<word name='RANDOM_SEED'/>
+		<word name='ACTION_READLN'/>
+		<word name='APPEND'/>
+		<word name='APPEND_OUTER'/>
+		<word name='APPEND_COL'/>
+		<word name='EXTEND_TOP'/>
+		<word name='EXTEND_BOTTOM'/>
+		<word name='EXTEND_TOP_REGEXP'/>
+		<word name='EXTEND_BOTTOM_REGEXP'/>
+		<!--word name='ACTION_IF'/-->
+		<word name='AT_EXIT'/>
+		<word name='AT_INTERACTIVE_EXIT'/>
+		<word name='AT_UNINSTALL'/>
+		<word name='AT_INTERACTIVE_UNINSTALL'/>
+		<word name='AT_NOW'/>
+		<word name='AT_INTERACTIVE_NOW'/>
+		<!--word name='MAKE_BIFF'/-->
+		<word name='LOAD_TRA'/>
+		<word name='UNINSTALL'/>
+		<word name='COPY_KIT'/>
+		<word name='ADD_KIT'/>
+		<word name='ADD_MUSIC'/>
+		<word name='ADD_PROJECTILE'/>
+		<word name='ADD_SPELL'/>
+		<word name='STRING_SET'/>
+		<word name='STRING_SET_EVALUATE'/>
+		<word name='STRING_SET_RANGE'/>
+		<word name='ALTER_TLK_RANGE'/>
+		<word name='ALTER_TLK_LIST'/>
+		<word name='ALTER_TLK'/>
+		<word name='REQUIRE_FILE'/>
+		<word name='FORBID_FILE'/>
+		<word name='FAIL'/>
+		<word name='PRINT'/>
+		<word name='OUTER_SPRINT'/>
+		<word name='OUTER_TEXT_SPRINT'/>
+		<word name='OUTER_SET'/>
+		<word name='OUTER_INNER_PATCH'/>
+		<word name='OUTER_PATCH'/>
+		<word name='OUTER_INNER_PATCH_SAVE'/>
+		<word name='OUTER_PATCH_SAVE'/>
+		<!--word name='OUTER_WHILE'/>
+		<word name='OUTER_FOR'/>
+		<word name='ACTION_BASH_FOR'/-->
+		
+		<word name='ACTION_DEFINE_ARRAY'/>
+		<word name='ACTION_DEFINE_ASSOCIATIVE_ARRAY'/>
+		
+		<!--word name='ACTION_FOR_EACH'/>
+		<word name='ACTION_PHP_EACH'/-->
+		<word name='INCLUDE'/>
+		<word name='ACTION_INCLUDE'/>
+		<word name='REINCLUDE'/>
+		<word name='ACTION_REINCLUDE'/>
+		
+		<word name='ADD_GAM_NPC'/> <!-- ??? -->
+		<word name='ADD_GAME_NPC'/> 
+		<word name='PATCH_GAM'/> 
+	</keywords>
+</scheme>
+
+
+
+
+<scheme name='patch.key'>
+	<keywords region="key.patch"> <!-- macro -->
+		<word name='LAUNCH_PATCH_MACRO'/>
+		<word name='LAUNCH_MACRO_PATCH'/> <!-- is valid? -->
+	</keywords>
+	
+	<keywords region="key.patch">
+		
+		<word name='SAY'/>
+		<word name='PATCH_PRINT'/>
+		<word name='SAY_EVALUATED'/>
+		<word name='TO_UPPER'/>
+		<word name='TO_LOWER'/>
+		<word name='SPRINT'/>
+		<word name='TEXT_SPRINT'/>
+		<word name='SNPRINT'/>
+		<word name='SPACES'/>
+		<word name='QUOTE'/>
+		<word name='REPLACE'/>
+		<word name='REPLACE_TEXTUALLY'/>
+		<word name='EVALUATE_BUFFER_SPECIAL'/>
+		<word name='EVALUATE_BUFFER'/>
+		<word name='APPLY_BCS_PATCH'/>
+		<word name='A_B_P'/>
+		<word name='APPLY_BCS_PATCH_OR_COPY'/>
+		<word name='WRITE_BYTE'/>
+		<word name='WRITE_SHORT'/>
+		<word name='WRITE_LONG'/>
+		
+		<word name='WRITE_ASCII'/>
+		<word name='WRITE_ASCIIT'/>
+		<word name='WRITE_ASCII_TERMINATE'/>
+		<word name='WRITE_ASCII_TERMINATED'/>
+		<word name='WRITE_ASCIIE'/>
+		<word name='WRITE_EVALUATED_ASCII'/>
+		
+		<word name='WRITE_FILE'/>
+		<word name='INSERT_FILE'/>
+		<word name='APPEND_FILE'/>
+		<word name='APPEND_FILE_EVALUATE'/>
+		
+		<word name='REPLACE_BCS_BLOCK'/>
+		<word name='REPLACE_BCS_BLOCK_REGEXP'/>
+		<word name='R_B_B'/>
+		<word name='R_B_B_RE'/>
+		
+		<word name='INSERT_BYTES'/>
+		<word name='DELETE_BYTES'/>
+		<word name='READ_BYTE'/>
+		<word name='READ_SBYTE'/>
+		<word name='READ_SHORT'/>
+		<word name='READ_SSHORT'/>
+		<word name='READ_LONG'/>
+		<word name='READ_SLONG'/>
+		<word name='READ_ASCII'/>
+		<word name='READ_STRREF'/>
+		<word name='GET_OFFSET_ARRAY'/>
+		<word name='GET_STRREF'/>
+		<word name='SET'/>
+		<word name='WHILE'/>
+		<word name='FOR'/>
+		<word name='PATCH_BASH_FOR'/>
+		
+		<word name='DEFINE_ARRAY'/>
+		<word name='DEFINE_ASSOCIATIVE_ARRAY'/>
+		
+		
+		<word name='PATCH_DEFINE_ARRAY'/>
+		<word name='PATCH_FOR_EACH'/>
+		<word name='PHP_EACH'/>
+		<word name='PATCH_PHP_EACH'/>
+		<word name='CLEAR_ARRAY'/>
+		<word name='PATCH_CLEAR_ARRAY'/>
+		<word name='PATCH_IF'/>
+		<word name='PATCH_INCLUDE'/>
+		<word name='PATCH_REINCLUDE'/>
+		<word name='PATCH_READLN'/>
+		<word name='PATCH_RANDOM_SEED'/>
+		<word name='ADD_STORE_ITEM'/>
+		<word name='REMOVE_STORE_ITEM'/>
+		<word name='COUNT_REGEXP_INSTANCES'/>
+		<word name='LOOKUP_IDS_SYMBOL_OF_INT'/>
+		<word name='SET_IDS_SYMBOL_OF_INT'/>
+		<word name='COMPILE_BAF_TO_BCS'/>
+		<word name='DECOMPILE_BCS_TO_BAF'/>
+		<word name='DECOMPILE_DLG_TO_D'/>
+		<word name='COMPILE_D_TO_DLG'/>
+		<word name='REPLACE_EVALUATE'/>
+		<word name='ADD_MAP_NOTE'/>
+		<word name='ADD_KNOWN_SPELL'/>
+		<word name='ADD_MEMORIZED_SPELL'/>
+		<word name='REMOVE_KNOWN_SPELL'/>
+		<word name='REMOVE_MEMORIZED_SPELL'/>
+		<word name='ADD_CRE_ITEM'/>
+		<word name='REPLACE_CRE_ITEM'/>
+		<word name='REMOVE_CRE_ITEM'/>
+		<word name='REMOVE_CRE_ITEMS'/>
+		<word name='REMOVE_CRE_EFFECTS'/>
+		<word name='REMOVE_KNOWN_SPELLS'/>
+		<word name='REMOVE_MEMORIZED_SPELLS'/>
+		<word name='PATCH_SILENT'/>
+		<word name='PATCH_VERBOSE'/>
+		<word name='INNER_PATCH'/>
+		<word name='INNER_PATCH_SAVE'/>
+		<word name='INNER_PATCH_FILE'/>
+		<word name='INNER_ACTION'/>
+		<word name='DECOMPRESS_REPLACE_FILE'/>
+		<word name='DECOMPRESS_INTO_FILE'/>
+		<word name='DECOMPRESS_INTO_VAR'/>
+		<word name='COMPRESS_REPLACE_FILE'/>
+		<word name='COMPRESS_INTO_FILE'/>
+		<word name='COMPRESS_INTO_VAR'/>
+		
+		<word name='GET_OFFSET_ARRAY2'/>
+		<word name='SET_2DA_ENTRY'/>
+		<word name='SET_2DA_ENTRY_LATER'/>
+		<word name='SET_2DA_ENTRIES_NOW'/>
+		<word name='PRETTY_PRINT_2DA'/>
+		<word name='PRETTY_PRINT_2DA'/>
+		<word name='INSERT_2DA_ROW'/>
+		<word name='REMOVE_2DA_ROW'/>
+		<word name='READ_2DA_ENTRY'/>
+		<word name='READ_2DA_ENTRIES_NOW'/>
+		<word name='READ_2DA_ENTRY_FORMER'/>
+		<word name='COUNT_2DA_ROWS'/>
+		<word name='COUNT_2DA_COLS'/>
+		<word name='SET_BG2_PROFICIENCY'/>
+		
+		
+		<!-- has no documentation: -->
+		<word name='EXTEND_MOS'/>
+		<word name='EDIT_SAV_FILE'/>
+		<word name='GET_DIRECTORY_ARRAY'/>
+		<word name='GET_FILE_ARRAY'/>
+		<word name='REMOVE_2DA_ROW'/>
+		<word name='REPLACE_BCS_BLOCK_REGEXP'/>
+		<word name='IF_EVAL'/>
+		
+	</keywords>
+</scheme>
+
+
+
+<scheme name='constants'>
+	<keywords region="var">
+		<word name='SOURCE_DIRECTORY'/>
+		<word name='SOURCE_FILESPEC'/>
+		<word name='SOURCE_RES'/>
+		<word name='DEST_DIRECTORY'/>
+		<word name='DEST_FILE'/>
+		<word name='SOURCE_SIZE'/>
+	</keywords>
+	
+	<keywords region="constant">
+		<word name='AREA_CITY'/> <!-- 0252 -->
+		<word name='AREA_DAY'/> <!-- 0260 -->
+		<word name='AREA_DUNGEON'/> <!-- 0256 -->
+		<word name='AREA_FOREST'/> <!-- 0248 -->
+		<word name='AREA_NIGHT'/> <!-- 0264 -->
+		<word name='ATTACK1'/> <!-- 0220 -->
+		<word name='ATTACK2'/> <!-- 0224 -->
+		<word name='ATTACK3'/> <!-- 0228 -->
+		<word name='ATTACK4'/> <!-- 0232 -->
+		<word name='BATTLE_CRY1'/> <!-- 0200 -->
+		<word name='BATTLE_CRY2'/> <!-- 0204 -->
+		<word name='BATTLE_CRY3'/> <!-- 0208 -->
+		<word name='BATTLE_CRY4'/> <!-- 0212 -->
+		<word name='BATTLE_CRY5'/> <!-- 0216 -->
+		<word name='BIO'/> <!-- 0x1cc -->
+		<word name='BORED'/> <!-- 0196 -->
+		<word name='COMPLIMENT1'/> <!-- 0352 -->
+		<word name='COMPLIMENT2'/> <!-- 0356 -->
+		<word name='COMPLIMENT3'/> <!-- 0360 -->
+		<word name='CRITICAL_HIT'/> <!-- 0424 -->
+		<word name='CRITICAL_MISS'/> <!-- 0428 -->
+		<word name='DAMAGE'/> <!-- 0236 -->
+		<word name='DESC'/> <!-- 0x54 -->
+		<word name='DIALOGUE_DEFAULT'/> <!-- 0412 -->
+		<word name='DIALOGUE_HOSTILE'/> <!-- 0408 -->
+		<word name='DYING'/> <!-- 0240 -->
+		<word name='EXISTANCE1'/> <!-- 0444 -->
+		<word name='EXISTANCE2'/> <!-- 0448 -->
+		<word name='EXISTANCE3'/> <!-- 0452 -->
+		<word name='EXISTANCE4'/> <!-- 0456 -->
+		<word name='EXISTANCE5'/> <!-- 0460 -->
+		<word name='HAPPY'/> <!-- 0172 -->
+		<word name='HURT'/> <!-- 0244 -->
+		<word name='IDENTIFIED_DESC'/> <!-- 0x54 -->
+		<word name='INITIAL_MEETING'/> <!-- 0164 -->
+		<word name='INSULT'/> <!-- 0340 -->
+		<word name='INTERACTION1'/> <!-- 0320 -->
+		<word name='INTERACTION2'/> <!-- 0324 -->
+		<word name='INTERACTION3'/> <!-- 0328 -->
+		<word name='INTERACTION4'/> <!-- 0332 -->
+		<word name='INTERACTION5'/> <!-- 0336 -->
+		<word name='INVENTORY_FULL'/> <!-- 0436 -->
+		<word name='LEADER'/> <!-- 0188 -->
+		<word name='MISCELLANEOUS'/> <!-- 0384 -->
+		<word name='MORALE'/> <!-- 0168 -->
+		<word name='NAME1'/> <!-- 8 -->
+		<word name='NAME2'/> <!-- 12 -->
+		<word name='PICKED_POCKET'/> <!-- 0440 -->
+		<word name='REACT_TO_DIE_GENERAL'/> <!-- 0376 -->
+		<word name='REACT_TO_DIE_SPECIFIC'/> <!-- 0380 -->
+		<word name='RESPONSE_TO_COMPLIMENT2'/> <!-- 0388 -->
+		<word name='RESPONSE_TO_COMPLIMENT3'/> <!-- 0392 -->
+		<word name='RESPONSE_TO_INSULT1'/> <!-- 0396 -->
+		<word name='RESPONSE_TO_INSULT2'/> <!-- 0400 -->
+		<word name='RESPONSE_TO_INSULT3'/> <!-- 0404 -->
+		<word name='SELECT_ACTION1'/> <!-- 0292 -->
+		<word name='SELECT_ACTION2'/> <!-- 0296 -->
+		<word name='SELECT_ACTION3'/> <!-- 0300 -->
+		<word name='SELECT_ACTION4'/> <!-- 0304 -->
+		<word name='SELECT_ACTION5'/> <!-- 0308 -->
+		<word name='SELECT_ACTION6'/> <!-- 0312 -->
+		<word name='SELECT_ACTION7'/> <!-- 0316 -->
+		<word name='SELECT_COMMON1'/> <!-- 0268 -->
+		<word name='SELECT_COMMON2'/> <!-- 0272 -->
+		<word name='SELECT_COMMON3'/> <!-- 0276 -->
+		<word name='SELECT_COMMON4'/> <!-- 0280 -->
+		<word name='SELECT_COMMON5'/> <!-- 0284 -->
+		<word name='SELECT_COMMON6'/> <!-- 0288 -->
+		<word name='SELECT_RARE1'/> <!-- 0416 -->
+		<word name='SELECT_RARE2'/> <!-- 0420 -->
+		<word name='SPECIAL1'/> <!-- 0364 -->
+		<word name='SPECIAL2'/> <!-- 0368 -->
+		<word name='SPECIAL3'/> <!-- 0372 -->
+		<word name='TARGET_IMMUNE'/> <!-- 0432 -->
+		<word name='TIRED'/> <!-- 0192 -->
+		<word name='UNHAPPY_ANNOYED'/> <!-- 0176 -->
+		<word name='UNHAPPY_BREAKING'/> <!-- 0184 -->
+		<word name='UNHAPPY_SERIOUS'/> <!-- 0180 -->
+		<word name='UNIDENTIFIED_DESC'/> <!-- 0080 -->
+		<word name='HIDDEN_IN_SHADOWS'/> <!-- 0444 -->
+		<word name='SPELL_DISRUPTED'/> <!-- 0448 -->
+		<word name='SET_A_TRAP'/> <!-- 0452 -->
+		<word name='STORE_NAME'/> <!-- 12 -->
+		
+		<word name='SCRIPT_OVERRIDE'/> <!-- 0x248 -->
+		<word name='SCRIPT_CLASS'/> <!-- 0x250 -->
+		<word name='SCRIPT_RACE'/> <!-- 0x258 -->
+		<word name='SCRIPT_GENERAL'/> <!-- 0x260 -->
+		<word name='SCRIPT_DEFAULT'/> <!-- 0x268 -->
+		<word name='DEATHVAR'/> <!-- 0x280 -->
+		<word name='DIALOG'/> <!-- 0x2cc -->
+		<word name='AREA_SCRIPT'/> <!-- 0x94 -->
+	</keywords>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the HRC schemes for Infinite Engine/WeiDU scripts.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2009
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

@@ -1,0 +1,1633 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY d1-phobos SYSTEM "d1-phobos.ent.hrc">
+<!ENTITY d1-tango SYSTEM "d1-tango.ent.hrc">
+<!ENTITY d2-phobos SYSTEM "d2-phobos.ent.hrc">
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name='d'>
+	<annotation><documentation>
+		D syntax description
+	</documentation><contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+		Vladimir Panteleev <thecybershadow@gmail.com>
+	]]></contributors>
+	<appinfo><todo>
+		No known issues.
+	</todo></appinfo>
+</annotation>
+
+<region name='comment' parent='def:Comment'/>
+<region name='comment.delim' parent='comment'/>
+<region name='ddoc' parent='def:CommentDoc'/>
+<region name='ddoc.delim' parent='ddoc'/>
+<region name='ddoc.keyword' parent='def:Comment'/>
+
+<region name='char.esc' parent='c:StringEscape'/>
+<region name='char' parent='c:Character'/>
+<region name='string' parent='def:String'/>
+<region name='string.delim' parent='def:StringEdge'/>
+<region name='string.pref' parent='regexp:SpecArea'/>
+<region name='string.format' parent='def:VarStrong'/>
+<region name='string.token' parent='def:Text'/>
+<region name='string.delimited' parent='perl:HereDoc'/>
+<region name='string.delimited.name' parent='perl:HereDocName'/>
+
+<region name='prefix' parent='def:NumberPrefix'/>
+<region name='postfix' parent='def:NumberSuffix'/>
+<region name='suffix' parent='def:NumberSuffix'/>
+
+<region name='symb' parent='c:Symbol'/>
+<region name='symb.op' parent='symb'/>
+<region name='symb.struct' parent='c:StructureSymbol'/>
+<region name='symb.tpl' parent='symb.struct'/>
+
+<region name='key' parent='def:Keyword'/>
+<region name='key.bool' parent='key'/>
+<region name='key.type' parent='def:Keyword'/>
+<region name='key.spec' parent='def:Constant'/>
+<region name='key.over' parent='key'/>
+<region name='key.var' parent='def:Var'/>
+<region name='key.prop' parent='def:KeywordStrong'/>
+
+<region name='key.lib.alias' parent='def:Keyword'/>
+<region name='key.lib.typedef' parent='def:Keyword'/>
+<region name='key.lib.template' parent='def:Keyword'/>
+<region name='key.lib.struct' parent='def:StructKeyword'/>
+<region name='key.lib.union' parent='def:StructKeyword'/>
+<region name='key.lib.class' parent='def:ClassKeyword'/>
+<region name='key.lib.interface' parent='def:InterfaceKeyword'/>
+<region name='key.lib.enum' parent='def:TypeKeyword'/>
+<region name='key.lib.enum-member' parent='def:Constant'/>
+<region name='key.lib.variable' parent='def:Constant'/>
+<region name='key.lib.function' parent='def:FunctionKeyword'/>
+
+<region name='key.fun.main' parent='key.lib.function'/>
+
+<region name='decl.module' parent='def:Directive'/>
+<region name='decl' parent='def:Directive'/>
+
+<region name='label' parent='def:Label'/>
+<region name='label.mark' parent='def:Label'/>
+<region name='label.const' parent='def:Constant'/>
+
+<region name='out' parent='def:Outlined'/>
+<region name='module.out' parent='java:PackageOutline'/>
+<region name='import.out' parent='java:ImportOutline'/>
+<region name='class.out' parent='cpp:ClassOutline'/>
+<region name='struct.out' parent='c:StructOutline'/>
+<region name='tpl.out' parent='struct.out'/>
+<region name='iface.out' parent='class.out'/>
+<region name='enum.out' parent='c:EnumOutline'/>
+<region name='version.out' parent='out'/>
+<region name='fun.out' parent='c:FuncOutline'/>
+
+
+<entity name='id' value='\b[\w-[\d]]\w*\b'/>
+<entity name='hex' value='[\dA-Fa-f]'/>
+
+<!-- error -->
+
+<scheme name='error'>
+	<regexp match='/\S/' region='def:Error' priority='low'/>
+</scheme>
+
+<scheme name='error.strong'>
+	<regexp match='/./' region='def:Error' priority='low'/>
+</scheme>
+
+
+<!-- comments/DDoc -->
+
+<scheme name='comment.content'>
+	<inherit scheme='def:Comment'/>
+</scheme>
+
+<entity name='ddoc.lead' value='(^|~)\s*(?{ddoc.delim}[*+]\s*)?'/>
+
+<scheme name='ddoc.lead'>
+	<regexp match='/^\s*([*+]|\/{3,})/' region1='ddoc.delim'/>
+</scheme>
+
+<scheme name='ddoc.content'>
+	<inherit scheme='ddoc:content'>
+		<virtual scheme='ddoc:lead' subst-scheme='ddoc.lead'/>
+	</inherit>
+</scheme>
+
+<scheme name='ddoc.rec'>
+	<inherit scheme='ddoc'/>
+	<inherit scheme='comment.rec.block'/>
+</scheme>
+
+<scheme name='ddoc'>
+	<regexp match='/~\+*\s*(ditto)\b/i' region1='ddoc.keyword'/>
+	<regexp match='/%ddoc.lead;\m\w+:($|\s)/' region='ddoc:sectiontitle'/>
+	<inherit scheme='ddoc.content'/>
+</scheme>
+
+<scheme name='comment.rec.block'>
+	<block scheme='ddoc.rec' region='ddoc'>
+		<start match='/(\/\++\M\+)/' region0='ddoc.delim' region1='def:PairStart'/>
+		<end   match='/(\++\/)/' region0='ddoc.delim' region1='def:PairEnd'/>
+	</block>
+	<block scheme='comment.rec' region='comment'>
+		<start match='/(\/\+)/' region0='comment.delim' region1='def:PairStart'/>
+		<end   match='/(\+\/)/' region0='comment.delim' region1='def:PairEnd'/>
+	</block>
+</scheme>
+
+<scheme name='comment.rec'>
+	<inherit scheme='comment.content'/>
+	<inherit scheme='comment.rec.block'/>
+</scheme>
+
+<scheme name='comment'>
+	<block start='/(\/\/\/)/' end='/$/'
+		scheme='ddoc' region='ddoc' region00='ddoc.delim'
+	/>
+	<block scheme='ddoc' region='ddoc'>
+		<start match='/(\/\*+\M\*)/' region0='ddoc.delim' region1='def:PairStart'/>
+		<end   match='/(\*+\/)/' region0='ddoc.delim' region1='def:PairEnd'/>
+	</block>
+	<inherit scheme='comment.rec.block'/>
+
+	<block start='/(\/\/)/' end='/$/'
+		scheme='comment.content' region='comment' region00='comment.delim'
+	/>
+	<block scheme='comment.content' region='comment'>
+		<start match='/(\/\*)/' region0='comment.delim' region1='def:PairStart'/>
+		<end   match='/(\*\/)/' region0='comment.delim' region1='def:PairEnd'/>
+	</block>
+</scheme>
+
+<scheme name='comment.flat.parens'>
+	<block start='/(\()/' end='/(\))/' scheme='comment.flat.parens'
+		region00='def:PairStart'
+		region10='def:PairEnd'
+	/>
+	<block start='/[^()\*\/]\m/' end='/\M([()\*\/]|$)/' scheme='comment.content'/>
+</scheme>
+
+<scheme name='comment.flat'>
+	<block start='/(\/\/\/)/' end='/\M($|\))/'
+		scheme='comment.flat.parens' region='ddoc' region00='ddoc.delim'
+	/>
+	<block scheme='comment.flat.parens' region='ddoc'>
+		<start match='/(\/\*+\M\*)/' region0='ddoc.delim' region1='def:PairStart'/>
+		<end   match='/(\*+\/|\M\))/' region0='ddoc.delim' region1='def:PairEnd'/>
+	</block>
+
+	<block start='/(\/\/)/' end='/\M($|\))/'
+		scheme='comment.flat.parens' region='comment' region00='comment.delim'
+	/>
+	<block scheme='comment.flat.parens' region='comment'>
+		<start match='/(\/\*)/' region0='comment.delim' region1='def:PairStart'/>
+		<end   match='/(\*\/|\)?=)/' region0='comment.delim' region1='def:PairEnd'/>
+	</block>
+
+	<inherit scheme='comment.rec.block'/>
+</scheme>
+
+
+
+<!-- char/string -->
+<entity name='str.post' value='(?{postfix}[cwd]?)'/>
+
+<scheme name='char.entity'>
+	<inherit scheme='html-entity:html-addref'/>
+	<inherit scheme='error.strong'/>
+</scheme>
+
+<scheme name='char.delim'>
+	<block start='/(\\)&amp;\M\w+;/' end='/~\w+\m;/'
+		scheme='char.entity' region='xml:CharRef'
+		region01='char.esc'
+	/>
+	<regexp match='/\\[&apos;&quot;?\\abfnrtv]/' region='char.esc'/>
+	<regexp match='/\\x%hex;{2}/' region='char.esc'/>
+	<regexp match='/\\u%hex;{4}/' region='char.esc'/>
+	<regexp match='/\\U%hex;{8}/' region='char.esc'/>
+	<regexp match='/\\[0-7]{1,3}/' region='char.esc'/>
+	<regexp match='/\\./' region='def:Error'/>
+</scheme>
+
+<scheme name='char.content'>
+	<inherit scheme='char.delim'/>
+	<inherit scheme='error.strong'/>
+</scheme>
+
+<scheme name='char'>
+	<regexp match="/(')([^'\\])(')/" region='string.delim'
+		region1='def:PairStart' region2='string' region3='def:PairEnd'
+	/>
+	<block scheme='char.content' region='string'>
+		<start match="/(')\M\\/" region0='string.delim' region1='def:PairStart'/>
+		<end   match="/(')/"     region0='string.delim' region1='def:PairEnd'/>
+	</block>
+	<inherit scheme='char.delim'/>
+</scheme>
+
+<scheme name='string.format' if='format-str'>
+	<regexp match='/\%{2}/' region='char.esc'/>
+	<regexp match='/\%[\-+#0 ]?(\d+|\*)?(\.(\d+|\*)?)?[sbdoxXeEfFgGaA|]/' region='string.format'/>
+	<block start='/(\%-?\()/' end='/(\%\))/' scheme='string.format'
+		region00='string.format' region01='def:PairStart'
+		region10='string.format' region11='def:PairEnd'
+	/>
+</scheme>
+
+<scheme name='string.content'>
+	<inherit scheme='char.delim'/>
+	<inherit scheme='string.format'/>
+</scheme>
+
+<scheme name='string.hex'>
+	<regexp match='/%hex;/' region='char.esc'/>
+	<inherit scheme='error'/>
+</scheme>
+
+<scheme name='string.all'>
+	<!-- regex -->
+	<block scheme='regexp:hrc.regexp' region='string'>
+		<start match='/(?:regex\()?#6(r)(")/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart'
+		/>
+		<end match='/(")%str.post;/' region0='string.delim' region1='def:PairEnd'/>
+	</block>
+	<block scheme='regexp:hrc.regexp' region='string'>
+		<start match='/(?:regex\()?#6(`)/' region0='string.delim' region1='def:PairStart'/>
+		<end   match='/(`)%str.post;/' region0='string.delim' region1='def:PairEnd'/>
+	</block>
+
+	<block scheme='def:empty' region='string'>
+		<start match='/(r)(")/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart'
+		/>
+		<end match='/(")%str.post;/' region0='string.delim' region1='def:PairEnd'/>
+	</block>
+	<block scheme='def:empty' region='string'>
+		<start match='/(`)/' region0='string.delim' region1='def:PairStart'/>
+		<end   match='/(`)%str.post;/' region0='string.delim' region1='def:PairEnd'/>
+	</block>
+
+	<block scheme='string.hex' region='string'>
+		<start match='/(x)(")/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart'
+		/>
+		<end match='/(")%str.post;/' region0='string.delim' region1='def:PairEnd'/>
+	</block>
+
+	<inherit scheme='string.all.d2'/>
+
+	<block scheme='string.content' region='string'>
+		<start match='/(")/' region0='string.delim' region1='def:PairStart'/>
+		<end match='/(")%str.post;/' region0='string.delim' region1='def:PairEnd'/>
+	</block>
+</scheme>
+
+<scheme name='string.all.d2.nest'>
+	<block scheme='d.lang.nest' region='string.token'>
+		<start match='/((q)\{)/'
+			region0='string.delim'  region1='def:PairStart' region2='string.pref'
+		/>
+		<end match='/(\})/' region0='string.delim' region1='def:PairEnd'/>
+	</block>
+</scheme>
+
+<scheme name='string.all.d2.flat'>
+	<regexp match='/((q)\{)/'
+			region0='string.delim' region2='string.pref'/>
+	<regexp match='/(\})/' region0='string.delim'/>
+</scheme>
+
+<scheme name='nest.paren'  ><block scheme='nest.paren'   start='/\(/'   end='/\)/'   region00='def:PairStart' region10='def:PairEnd'/></scheme>
+<scheme name='nest.bracket'><block scheme='nest.bracket' start='/\[/'   end='/\]/'   region00='def:PairStart' region10='def:PairEnd'/></scheme>
+<scheme name='nest.brace'  ><block scheme='nest.brace'   start='/\{/'   end='/\}/'   region00='def:PairStart' region10='def:PairEnd'/></scheme>
+<scheme name='nest.angular'><block scheme='nest.angular' start='/&lt;/' end='/&gt;/' region00='def:PairStart' region10='def:PairEnd'/></scheme>
+
+<scheme name='string.all.d2' if='d2'>
+	<inherit scheme='string.all.d2.nest' />
+
+	<block scheme='def:empty' region='string.delimited'>
+		<start match='/(q)("(%id;))$/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart' region3='string.delimited.name'
+		/>
+		<end match='/^((\y3)")%str.post;/' region0='string.delim' region1='def:PairEnd' region2='string.delimited.name'/>
+	</block>
+
+	<block scheme='nest.paren' region='string.delimited'>
+		<start match='/(q)("(\())/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart' region3='string.delimited.name'
+		/>
+		<end match='/((\))")%str.post;/' region0='string.delim' region1='def:PairEnd' region2='string.delimited.name'/>
+	</block>
+
+	<block scheme='nest.bracket' region='string.delimited'>
+		<start match='/(q)("(\[))/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart' region3='string.delimited.name'
+		/>
+		<end match='/((\])")%str.post;/' region0='string.delim' region1='def:PairEnd' region2='string.delimited.name'/>
+	</block>
+
+	<block scheme='nest.brace' region='string.delimited'>
+		<start match='/(q)("(\{))/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart' region3='string.delimited.name'
+		/>
+		<end match='/((\})")%str.post;/' region0='string.delim' region1='def:PairEnd' region2='string.delimited.name'/>
+	</block>
+
+	<block scheme='nest.angular' region='string.delimited'>
+		<start match='/(q)("(&lt;))/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart' region3='string.delimited.name'
+		/>
+		<end match='/((&gt;)")%str.post;/' region0='string.delim' region1='def:PairEnd' region2='string.delimited.name'/>
+	</block>
+
+	<block scheme='def:empty' region='string.delimited'>
+		<start match='/(q)("(\S))/'
+			region0='string.delim' region1='string.pref' region2='def:PairStart' region3='string.delimited.name'
+		/>
+		<end match='/((\y3)")%str.post;/' region0='string.delim' region1='def:PairEnd' region2='string.delimited.name'/>
+	</block>
+</scheme>
+
+<scheme name='string'>
+	<inherit scheme='char'/>
+	<inherit scheme='string.all'/>
+</scheme>
+
+
+<!-- literal -->
+
+<!-- Numeric literal grammar, according to http://www.d-programming-language.org/lex.html and http://www.digitalmars.com/d/1.0/lex.html -->
+
+<!--entity name='DecimalDigit' value='(0|%NonZeroDigit;|_)'/-->
+<entity name='DecimalDigit' value='[0-9_]'/>
+<entity name='DecimalDigits' value='%DecimalDigit;+'/>
+<entity name='BinaryDigit' value='[01_]'/>
+<entity name='BinaryDigits' value='%BinaryDigit;+'/>
+<entity name='OctalDigit' value='[0-7_]'/>
+<entity name='OctalDigits' value='%OctalDigit;+'/>
+<!--entity name='HexDigit' value='(%DecimalDigit;|a|b|c|d|e|f|A|B|C|D|E|F)'/-->
+<entity name='HexDigit' value='[0-9a-fA-F_]'/>
+<entity name='HexDigits' value='%HexDigit;+'/>
+<entity name='NonZeroDigit' value='[1-9]'/>
+<!--entity name='DecimalInteger' value='(0|%NonZeroDigit;|%NonZeroDigit;%DecimalDigits;)'/-->
+<entity name='DecimalInteger' value='(0|%NonZeroDigit;%DecimalDigit;*)'/>
+<entity name='BinaryInteger' value='(0(?{prefix}[bB])%BinaryDigits;)'/>
+<entity name='OctalInteger' value='(0%OctalDigits;)'/>
+<entity name='HexadecimalInteger' value='(0(?{prefix}[xX])%HexDigits;)'/>
+<!--entity name='IntegerSuffix' value='(?{postfix}(L|u|U|Lu|LU|uL|UL))'/-->
+<entity name='IntegerSuffix' value='(?{postfix}L[uU]?|[uU]L?)'/>
+<entity name='Integer' value='(%DecimalInteger;|%BinaryInteger;|%OctalInteger;|%HexadecimalInteger;)'/>
+<!--entity name='IntegerLiteral' value='(%Integer;%IntegerSuffix;?)'/-->
+
+<entity name='LeadingDecimal' value='(%DecimalInteger;|0%DecimalDigits;)'/>
+<entity name='FloatSuffix' value='[fF]'/>
+<!--entity name='RealSuffix' value='L'/-->
+<entity name='PrecisionSuffix' value='[fFL]'/>
+<entity name='ImaginarySuffix' value='i'/>
+<!--entity name='Suffix' value='(%FloatSuffix;|%RealSuffix;|%ImaginarySuffix;|%FloatSuffix;%ImaginarySuffix;|%RealSuffix;%ImaginarySuffix;)'/-->
+<entity name='SuffixOpt' value='(%PrecisionSuffix;?%ImaginarySuffix;?)'/>
+<entity name='HexExponent' value='((?{suffix}[pP][\+\-]?)%DecimalDigits;)'/>
+<entity name='HexPrefix' value='(0(?{prefix}[xX]))'/>
+<!--entity name='HexFloat' value='(%HexPrefix;%HexDigits;\.%HexDigits;%HexExponent;|%HexPrefix;\.%HexDigits;%HexExponent;|%HexPrefix;%HexDigits;%HexExponent;)'/-->
+<entity name='HexFloat' value='(%HexPrefix;((%HexDigits;?\.)?%HexDigits;)%HexExponent;)'/>
+<entity name='DecimalExponent' value='((?{suffix}[eE][\+\-]?)%DecimalDigits;)'/>
+<!--entity name='DecimalFloat' value='(%LeadingDecimal;\.|%LeadingDecimal;\.%DecimalDigits;|%DecimalDigits;\.%DecimalDigits;%DecimalExponent;|\.%DecimalInteger;|\.%DecimalInteger;%DecimalExponent;|%LeadingDecimal;%DecimalExponent;)'/-->
+<entity name='DecimalFloat' value='(%LeadingDecimal;\.%DecimalDigits;?|%DecimalDigits;\.%DecimalDigits;%DecimalExponent;|\.%DecimalInteger;%DecimalExponent;?|%LeadingDecimal;%DecimalExponent;)'/>
+<entity name='Float' value='(%DecimalFloat;|%HexFloat;)'/>
+<!--entity name='FloatLiteral' value='(%Float;|%Float;%Suffix;|%Integer;%ImaginarySuffix;|%Integer;%FloatSuffix;%ImaginarySuffix;|%Integer;%RealSuffix;%ImaginarySuffix;)'/-->
+<!-- spec bug: http://d.puremagic.com/issues/show_bug.cgi?id=9958 -->
+<entity name='FloatLiteral' value='(%Float;(?{postfix}%SuffixOpt;)|%Integer;(?{postfix}%PrecisionSuffix;?%ImaginarySuffix;)|%DecimalInteger;(?{postfix}%FloatSuffix;))'/>
+
+<scheme name='literal.int.octal.d1' unless='d2'>
+	<regexp match='/\b%OctalInteger;%IntegerSuffix;?\b/' region='def:NumberOct'/>
+</scheme>
+
+<scheme name='literal.int.octal.d2' if='d2'>
+	<!-- octal literals are deprecated - only allow cases when decimal and octal values are the same -->
+	<regexp match='/\b0+[1-7]%IntegerSuffix;?\b/' region='def:NumberDec'/>
+</scheme>
+
+<scheme name='literal.int'>
+	<regexp match='/\b%DecimalInteger;%IntegerSuffix;?\b/' region='def:NumberDec'/>
+	<regexp match='/\b%BinaryInteger;%IntegerSuffix;?\b/' region='def:NumberBin'/>
+	<inherit scheme='literal.int.octal.d1'/>
+	<inherit scheme='literal.int.octal.d2'/>
+	<regexp match='/\b%HexadecimalInteger;%IntegerSuffix;?\b/' region='def:NumberHex'/>
+</scheme>
+
+<scheme name='literal.float'>
+	<regexp match='/\b%FloatLiteral;\b/' region='def:NumberFloat'/>
+</scheme>
+
+<scheme name='literal.bool'>
+	<keywords region='key.bool'>
+		<word name='true'/>
+		<word name='false'/>
+
+		<word name='__ctfe'/>
+	</keywords>
+</scheme>
+
+<scheme name='literal.error'>
+	<regexp match='/\b\d+/' region='def:Error'/>
+</scheme>
+
+<scheme name='literal'>
+	<inherit scheme='literal.float'/>
+	<inherit scheme='literal.int'/>
+	<inherit scheme='literal.bool'/>
+	<inherit scheme='literal.error'/>
+</scheme>
+
+
+<scheme name='op.nest'>
+	<block scheme='d.expr'>
+		<start match='/(\?)/'
+			region0='symb.struct' region1='def:PairStart'
+		/>
+		<end match='/(\:)/'
+			region0='symb.struct' region1='def:PairEnd'
+		/>
+	</block>
+
+	<!-- __traits -->
+	<block scheme='decl.attr.traits'>
+		<start match='/\b__traits\s*((\())/'
+			region0='key' region1='symb' region2='def:PairStart'
+		/>
+		<end match='/((\)))\s*:?/'
+			region0='label.mark' region1='symb' region2='def:PairEnd'
+		/>
+	</block>
+</scheme>
+
+<scheme name='op'>
+	<inherit scheme='op.nest' />
+
+	<keywords region='symb.op'>
+		<symb name='/'/>
+		<symb name='/='/>
+		<symb name='.'/>
+		<symb name='..'/>
+		<symb name='...'/>
+		<symb name='&amp;'/>
+		<symb name='&amp;='/>
+		<symb name='&amp;&amp;'/>
+		<symb name='|'/>
+		<symb name='|='/>
+		<symb name='||'/>
+		<symb name='-'/>
+		<symb name='-='/>
+		<symb name='--'/>
+		<symb name='+'/>
+		<symb name='+='/>
+		<symb name='++'/>
+		<symb name='&lt;'/>
+		<symb name='&lt;='/>
+		<symb name='&lt;&lt;'/>
+		<symb name='&lt;&lt;='/>
+		<symb name='&lt;>'/>
+		<symb name='&lt;>='/>
+		<symb name='>'/>
+		<symb name='>='/>
+		<symb name='>>='/>
+		<symb name='>>>='/>
+		<symb name='>>'/>
+		<symb name='>>>'/>
+		<symb name='!'/> <!-- ?? not work -->
+		<symb name='!='/>
+		<symb name='!=='/>
+		<symb name='!&lt;>'/>
+		<symb name='!&lt;>='/>
+		<symb name='!&lt;'/>
+		<symb name='!&lt;='/>
+		<symb name='!>'/>
+		<symb name='!>='/>
+		<symb name='!~'/>
+		<symb name='$' region='def:Var'/>
+		<symb name='='/>
+		<symb name='=='/>
+		<symb name='==='/>
+		<symb name='*'/>
+		<symb name='*='/>
+		<symb name='%'/>
+		<symb name='%='/>
+		<symb name='^'/>
+		<symb name='^='/>
+		<symb name='~'/>
+		<symb name='~='/>
+		<symb name='~~'/>
+		<symb name='@'/>
+		<word name='is'/>
+	</keywords>
+	<regexp match='/\!/' region='symb.op'/>
+</scheme>
+
+<!-- types -->
+
+<scheme name='type.arr'>
+	<inherit scheme='literal.int'/>
+	<inherit scheme='type'/>
+</scheme>
+
+<scheme name='type.nest'>
+	<block scheme='type.arr'>
+		<start match='/(\[)/'
+			region0='symb' region1='def:PairStart'
+		/>
+		<end match='/(\])/'
+			region0='symb' region1='def:PairEnd'
+		/>
+	</block>
+	<block scheme='type'>
+		<start match='/(\()/'
+			region0='symb' region1='def:PairStart'
+		/>
+		<end match='/(\))/'
+			region0='symb' region1='def:PairEnd'
+		/>
+	</block>
+	<block scheme='d.expr'>
+		<start match='/\b(function|delegate|typeof)\s*((\())/'
+			region1='key' region2='symb' region3='def:PairStart'
+		/>
+		<end match='/((\)))/'
+			region1='symb' region2='def:PairEnd'
+		/>
+	</block>
+</scheme>
+
+<scheme name='type'>
+	<keywords region='key.type'>
+		<word name='void'/>
+		<word name='bool'/>
+		<word name='byte'/>
+		<word name='ubyte'/>
+		<word name='short'/>
+		<word name='ushort'/>
+		<word name='int'/>
+		<word name='uint'/>
+		<word name='long'/>
+		<word name='ulong'/>
+		<word name='cent'/>
+		<word name='ucent'/>
+		<word name='float'/>
+		<word name='double'/>
+		<word name='real'/>
+		<word name='ifloat'/>
+		<word name='idouble'/>
+		<word name='ireal'/>
+		<word name='cfloat'/>
+		<word name='cdouble'/>
+		<word name='creal'/>
+		<word name='char'/>
+		<word name='wchar'/>
+		<word name='dchar'/>
+
+		<word name='size_t'/>
+		<word name='sizediff_t'/>
+		<word name='hash_t'/>
+
+		<word name='string'/>
+		<word name='wstring'/>
+		<word name='dstring'/>
+
+		<word name='auto'/>
+		<word name='alias'/>
+
+		<!-- type class -->
+	</keywords>
+
+	<keywords region='symb'>
+		<symb name='*'/>
+		<symb name='!'/>
+		<symb name='.'/>
+	</keywords>
+
+	<inherit scheme='type.nest'/>
+
+	<keywords region='key.type'>
+		<word name='typedef'/>
+		<word name='struct'/>
+		<word name='union'/>
+		<word name='class'/>
+		<word name='interface'/>
+		<word name='enum'/>
+		<word name='function'/>
+		<word name='delegate'/>
+		<word name='return'/>
+		<word name='this'/>
+	</keywords>
+
+	<inherit scheme='type.d2'/>
+</scheme>
+
+<scheme name='type.d2' if='d2'>
+	<keywords region='key.type'>
+		<word name='const'/>
+		<word name='immutable'/>
+		<word name='inout'/>
+	</keywords>
+</scheme>
+
+
+
+
+<!-- templates -->
+
+
+<scheme name='tpl'>
+	<block scheme='type'>
+		<start match='/\bcast\s*((\())/'
+			region0='key' region1='symb.struct' region2='def:PairStart'
+		/>
+		<end match='/(\))/'
+			region0='symb.struct' region1='def:PairEnd'
+		/>
+	</block>
+
+	<inherit scheme='tpl.tpl'/>
+</scheme>
+
+
+<scheme name='tpl.fun.proxy'>
+	<block scheme='tpl.fun.proxy.content'>
+		<start match='/~/'/>
+		<end   match='/\)?#1/' />
+	</block>
+</scheme>
+
+<scheme name='tpl.fun.proxy.content'>
+	<inherit scheme='keys'/>
+	<inherit scheme='decl.fun.keywords'/>
+	<block scheme='decl.class.tpl'>
+		<start match='/\)?~1(\()/' region0='symb.tpl' region1='def:PairStart' />
+		<end   match='/(\))/' region0='symb.tpl' region1='def:PairEnd'   />
+	</block>
+</scheme>
+
+<scheme name='tpl.tpl.proxy'>
+	<block scheme='d.expr'>
+		<start match='/(!\()/' region0='symb.tpl' region1='def:PairStart' />
+		<end   match='/(\))/'  region0='symb.tpl' region1='def:PairEnd'   />
+	</block>
+	<inherit scheme='keys'/>
+</scheme>
+
+<scheme name='tpl.tpl'>
+	<block scheme='tpl.tpl.proxy' start='/\M%id;\s*!\(/' end='/\)?#1/' />
+</scheme>
+
+
+
+<!-- declares -->
+<!-- decl.module -->
+
+<scheme name='decl.module.content'>
+	<regexp match='/%id;(\.)\M%id;/' region='decl.module' region1='symb'/>
+	<regexp match='/%id;/' region='decl.module'/>
+	<inherit scheme='comment'/>
+	<inherit scheme='error'/>
+</scheme>
+
+<scheme name='decl.module'>
+	<block start='/^\s*module\M\s+([\w\.]*)/' end='/;/' scheme='decl.module.content'
+		region00='key' region10='symb.struct'
+	/>
+</scheme>
+<scheme name='decl.module.out'>
+	<regexp match='/\M\bmodule\s+([\w\.]*)/' region1='module.out' />
+</scheme>
+
+
+<!-- decl.import -->
+
+<scheme name='decl.import.content'>
+	<keywords region='symb'>
+		<symb name=','/>
+		<symb name='='/>
+		<symb name=':'/>
+	</keywords>
+	<inherit scheme='decl.module.content'/>
+</scheme>
+
+<entity name='decl.import.path' value='\b[\w\.\s\,\:\=]*' />
+<scheme name='decl.import'>
+	<block start='/\bimport\M\s+(%decl.import.path;)/' end='/;/' scheme='decl.import.content'
+		region00='key' region10='symb.struct'
+	/>
+</scheme>
+<scheme name='decl.import.out'>
+	<regexp match='/\M\bimport\s+(%decl.import.path;)/' region1='import.out' />
+</scheme>
+
+
+<!-- decl.attr -->
+
+<scheme name='decl.attr.extern'>
+	<keywords region='decl'>
+		<symb name='C++'/>
+		<word name='C'/>
+		<word name='D'/>
+		<word name='Windows'/>
+		<word name='Pascal'/>
+		<word name='System'/>
+	</keywords>
+	<inherit scheme='error'/>
+</scheme>
+
+<scheme name='decl.attr.align'>
+	<inherit scheme='literal.int'/>
+	<inherit scheme='error'/>
+</scheme>
+
+<scheme name='decl.attr.pragma'>
+	<regexp match='/~\s*(msg|lib|startaddress)\b/' region='decl'/>
+	<inherit scheme='d.expr'/>
+</scheme>
+
+<scheme name='decl.attr.vd'>
+	<regexp match='/%id;/' region='decl'/>
+	<inherit scheme='decl.attr.align'/>
+</scheme>
+
+<scheme name='decl.attr.traits'>
+	<regexp region='decl'>
+		/ ~ \s* ( isAbstractClass
+				| isArithmetic
+				| isAssociativeArray
+				| isFinalClass
+				| isPOD
+				| isNested
+				| isFloating
+				| isIntegral
+				| isScalar
+				| isStaticArray
+				| isUnsigned
+				| isVirtualFunction
+				| isVirtualMethod
+				| isAbstractFunction
+				| isFinalFunction
+				| isStaticFunction
+				| isRef
+				| isOut
+				| isLazy
+				| hasMember
+				| identifier
+				| getAttributes
+				| getMember
+				| getOverloads
+				| getProtection
+				| getVirtualFunctions
+				| getVirtualMethods
+				| parent
+				| classInstanceSize
+				| allMembers
+				| derivedMembers
+				| isSame
+				| compiles
+		)\b/x
+	</regexp>
+	<inherit scheme='d.expr'/>
+</scheme>
+
+
+<scheme name='decl.version.out'>
+	<regexp match='/\M\bversion\s*\((\w+)\s*\)/' region1='version.out' />
+</scheme>
+
+<scheme name='decl.attr'>
+
+	<!-- extern -->
+	<block scheme='decl.attr.extern'>
+		<start match='/\bextern\s*((\())/'
+			region0='key' region1='symb' region2='def:PairStart'
+		/>
+		<end match='/((\)))\s*:?/'
+			region0='label.mark' region1='symb' region2='def:PairEnd'
+		/>
+	</block>
+
+	<!-- align -->
+	<block scheme='decl.attr.align'>
+		<start match='/\balign\s*((\())/'
+			region0='key' region1='symb' region2='def:PairStart'
+		/>
+		<end match='/((\)))\s*:?/'
+			region0='label.mark' region1='symb' region2='def:PairEnd'
+		/>
+	</block>
+
+	<!-- version -->
+	<block scheme='decl.attr.vd'><!-- \M(\s*\w+ -->
+		<start match='/\bversion\s*((\())\M(\s*\w+)/'
+			region0='key' region1='symb' region2='def:PairStart'
+		/>
+		<end match='/((\)))\s*:?/'
+			region0='label.mark' region1='symb' region2='def:PairEnd'
+		/>
+	</block>
+
+	<!-- pragma -->
+	<block scheme='decl.attr.pragma'>
+		<start match='/\bpragma\s*((\())/'
+			region0='key' region1='symb' region2='def:PairStart'
+		/>
+		<end match='/((\)))\s*:?/'
+			region0='label.mark' region1='symb' region2='def:PairEnd'
+		/>
+	</block>
+
+	<!-- debug -->
+	<block scheme='decl.attr.vd'>
+		<start match='/\b(debug)\s*((\())/'
+			region1='key' region2='symb' region3='def:PairStart'
+		/>
+		<end match='/((\)))\s*:?/'
+			region0='label.mark' region1='symb' region2='def:PairEnd'
+		/>
+	</block>
+
+
+	<regexp region1='key' region2='label.mark'>
+		/\b ( extern
+			| align
+			| deprecated
+			| private
+			| package
+			| protected
+			| public
+			| export
+			| static
+			| final
+			| override
+			| abstract
+			| const
+			| auto
+			| debug
+		)\b\s*(:)?/x</regexp>
+
+	<inherit scheme='decl.attr.d2'/>
+</scheme>
+
+<scheme name='decl.attr.d2' if='d2'>
+	<regexp region1='key' region2='label.mark'>
+		/\b ( pure
+			| nothrow
+			| shared
+			| immutable
+			| __gshared
+			| __traits
+		)\b\s*(:)?/x</regexp>
+	<regexp region1='key' region3='label.mark'>
+		/(@ ( property
+			| safe
+			| trusted
+			| system
+			| disable
+			| nogc
+		))\b\s*(:)?/x</regexp>
+</scheme>
+
+
+<!-- decl.class -->
+
+<scheme name='decl.class.decl'>
+	<block scheme='decl.class.tpl'>
+		<start match='/(\()/' region0='def:PairStart' region1='symb.tpl'/>
+		<end match='/(\))/' region0='def:PairEnd' region1='symb.tpl'/>
+	</block>
+	<inherit scheme='comment'/>
+	<inherit scheme='keys'/>
+	<!--regexp match='/\S/' region='def:Error' priority='low'/-->
+</scheme>
+
+
+<scheme name='decl.class.tpl'>
+	<inherit scheme='d.expr'/>
+	<inherit scheme='tpl.tpl'/>
+</scheme>
+
+<entity name='enumtype' value='[^:(\{=;\s][\w\[\]]*' />
+
+<scheme name='decl.class'>
+	<!-- Heuristics template/outline search  -->
+	<!-- <block> seems to cause an unwanted indentation in the outliner, use <regexp> for outlining and <block> for highlighting -->
+
+	<regexp region1='key' region2='class.out' match="/\M\b(class)\s+(%id;)/" />
+	<block scheme='decl.class.decl'><!-- (\s*\(.+?\))? -->
+		<start match='/\b(class)\s+\M(%id;(\s*\(.+?(\)|$))?)/' />
+		<end match='/[:\{;]?=/'/>
+	</block>
+
+	<regexp region1='key' region2='struct.out' match="/\M\b(struct|union)\s+(%id;)/" />
+	<block scheme='decl.class.decl'>
+		<start match='/\b(struct|union)\s+\M(%id;(\s*\(.+?(\)|$))?)/' />
+		<end match='/[\{;]?=/'/>
+	</block>
+
+	<regexp region1='key' region2='tpl.out' match="/\M\b(template)\s+(%id;)/" />
+	<block scheme='decl.class.decl'>
+		<start match='/\b(template)\s+\M(%id;\s*\(.+?(\)|$))/' />
+		<end match='/\{?=/'/>
+	</block>
+
+	<!-- enum [ [VALUE-TYPE] NAME] [':' ENUM-TYPE] ['(' TEMPLATEOPTS ')'] { '{' VALUES... '}' | ['=' VALUE] ';' } -->
+	<regexp region1='key' region3='enum.out' match="/\M\b(enum)\s+(%enumtype;\s)?(%id;)\s*($|[:(\{=;])/" />
+	<block scheme='type'>
+		<start match='/\b(enum)\s+\M(%enumtype;\s)%id;\s*($|[:(\{=;])/' />
+		<end   match='/%id;\s*\M($|[:(\{=;])/'/>
+	</block>
+	<block scheme='decl.class.decl'>
+		<start match='/\b(enum)\s+(%enumtype;\s)?%id;\M(\s*\(.+?(\)|$))/' />
+		<end match='/[:=;\{]?=/'/>
+	</block>
+
+	<regexp region1='key' region2='iface.out' match="/\M\b(interface)\s+(%id;)/" />
+	<block scheme='decl.class.decl'>
+		<start match='/\b(interface)\b\s+\M(%id;)/' />
+		<end match='/[:\{]?=/' region1='symb.struct'/>
+	</block>
+
+	<block scheme='decl.class.decl'>
+		<start match='/\b(alias)\b\s+\M(%id;)\s*\(.*\)\s*=/' region1='key' />
+		<end match='/[=\{;]?=/' region1='symb.struct'/>
+	</block>
+</scheme>
+
+
+<!-- decl.cong -->
+
+<scheme name='decl.cong'>
+	<keywords region='key'>
+		<word name='invariant'/>
+		<word name='unittest'/>
+	</keywords>
+</scheme>
+
+
+
+<entity name='noparens' value='[^()]*' />
+<entity name='nestedparens3' value='(?:%noparens;(?:\(%noparens;     \)%noparens;)*)' />
+<entity name='nestedparens2' value='(?:%noparens;(?:\(%nestedparens3;\)%noparens;)*)' />
+<entity name='nestedparens'  value='(?:%noparens;(?:\(%nestedparens2;\)%noparens;)*)' />
+
+<entity name='typeseparator' value='[\s\*\[\]]' />
+<entity name='argument'      value='\w%nestedparens;%typeseparator;+\w+\s*(=\s*%nestedparens;)?' />
+
+<entity name='decl.fun.params' value='
+	(
+		\s*
+		\(
+		%nestedparens;
+		\)
+	)?
+	(
+		\s* \( \s*
+		(
+			%argument;
+			\s* , \s*
+		)*
+		(
+			%argument;
+			\s*
+		)?
+		(\.\.\.)?
+		(\)|$)
+	)
+	[^;?:\{,()\/]*
+	($|\{|\bif\b|\/[\/\*\+])
+'/>
+
+<scheme name='decl.fun'>
+	<!-- Functions -->
+	<regexp>
+		/
+			\M
+			^
+			(
+				\s*
+				(
+					(
+						struct\b
+					|
+						class\b
+					|
+						template\b
+					|
+						enum\b
+					|
+						debug\b
+					|
+						return\b
+					|
+						new\b
+					)?!
+					\w*
+
+					(
+						\/[\/\*\+]
+					|
+						=
+					)?!
+					\W
+				)+
+			)?
+			(?{fun.out}
+				(\b(out|this|if|for|foreach|foreach_reverse|assert)\b)?!
+				%id;
+			)
+			%decl.fun.params;
+		/x
+	</regexp>
+
+	<!-- Constructors -->
+	<regexp>
+		/
+			\M
+			^
+			\s*
+			(
+				(
+					\/[\/\*\+]
+				|
+					static
+				)?!
+				\S+
+				\s+
+			)*
+			(?{fun.out}
+				(static\s+)?
+				(\~? this | new | delete)
+			)
+			%decl.fun.params;
+		/x
+	</regexp>
+
+	<block scheme='tpl.fun.proxy'>
+		<start match='/\M%id;\s*\([^\(\);]*?\)\s*\([^\);]*?\)[^;]*($|[;\{])/'/>
+		<end match='//'/>
+	</block>
+
+	<inherit scheme='decl.fun.keywords' />
+</scheme>
+
+<scheme name='decl.fun.flat'>
+	<inherit scheme='decl.fun.keywords' />
+</scheme>
+
+<scheme name='decl.fun.keywords'>
+	<keywords region='key.over'>
+		<word name='opPos'/>
+		<word name='opNeg'/>
+		<word name='opCom'/>
+		<word name='opAdd'/>
+		<word name='opAdd_r'/>
+		<word name='opSub'/>
+		<word name='opSub_r'/>
+		<word name='opMul'/>
+		<word name='opMul_r'/>
+		<word name='opDiv'/>
+		<word name='opDiv_r'/>
+		<word name='opMod'/>
+		<word name='opMod_r'/>
+		<word name='opEquals'/>
+		<word name='opCmp'/>
+		<word name='opAnd'/>
+		<word name='opAnd_r'/>
+		<word name='opOr'/>
+		<word name='opOr_r'/>
+		<word name='opXor'/>
+		<word name='opXor_r'/>
+		<word name='opShl'/>
+		<word name='opShl_r'/>
+		<word name='opShr'/>
+		<word name='opShr_r'/>
+		<word name='opUShr'/>
+		<word name='opUShr_r'/>
+		<word name='opCat'/>
+		<word name='opCat_r'/>
+		<word name='opAssign'/>
+		<word name='opAddAssign'/>
+		<word name='opSubAssign'/>
+		<word name='opMulAssign'/>
+		<word name='opDivAssign'/>
+		<word name='opModAssign'/>
+		<word name='opAndAssign'/>
+		<word name='opOrAssign'/>
+		<word name='opXorAssign'/>
+		<word name='opShlAssign'/>
+		<word name='opShrAssign'/>
+		<word name='opUShrAssign'/>
+		<word name='opCatAssign'/>
+		<word name='opPostInc'/>
+		<word name='opPostDec'/>
+		<word name='opIndex'/>
+		<word name='opIndexAssign'/>
+		<word name='opSlice'/>
+		<word name='opSliceAssign'/>
+		<word name='opCall'/>
+		<word name='opCast'/>
+		<word name='opMatch'/>
+		<word name='opNext'/>
+		<word name='opIn'/>
+		<word name='opIn_r'/>
+		<word name='opApply'/>
+		<word name='opApplyReverse'/>
+	</keywords>
+	<inherit scheme='decl.fun.keywords.d2'/>
+
+	<!-- from Vladimir Panteleev's d.hrc -->
+	<keywords region='key.fun.main'>
+		<word name='main'/>
+		<word name='WinMain'/>
+		<word name='DllMain'/>
+	</keywords>
+</scheme>
+
+<scheme name='decl.fun.keywords.d2' if='d2'>
+	<keywords region='key.over'>
+		<word name='opStar'/>
+		<word name='opDot'/>
+		<word name='opDispatch'/>
+		<word name='opUnary'/>
+		<word name='opIndexUnary'/>
+		<word name='opSliceUnary'/>
+		<word name='opBinary'/>
+		<word name='opBinaryRight'/>
+		<word name='opOpAssign'/>
+		<word name='opIndexOpAssign'/>
+		<word name='opSliceOpAssign'/>
+		<word name='opPow'/>
+		<word name='opPow_r'/>
+		<word name='opPowAssign'/>
+	</keywords>
+</scheme>
+
+
+
+
+<!-- statement -->
+
+<scheme name='asmcode'>
+	<regexp match='/[\{;]/' region='symb.struct'/>
+	<inherit scheme='comment'/>
+	<inherit scheme='asm:baseasm'/>
+</scheme>
+
+<scheme name='asmstart'>
+	<inherit scheme='comment'/>
+	<block start='/(\{)/' end='/\M((\}))/' scheme='asmcode'
+		region01='symb.struct'   region11='symb.struct'
+		region00='def:PairStart' region12='def:PairEnd' />
+	<inherit scheme='error'/>
+</scheme>
+
+
+<scheme name='d.statement'>
+	<block scheme='d.expr'>
+		<start match='/\b(for|foreach(_reverse)?|if|while|with|switch|catch|synchronized|assert|type(id|of)|sizeof)\s*((\())/'
+			region1='key' region4='symb' region5='def:PairStart'
+		/>
+		<end match='/(\))/'
+			region0='symb' region1='def:PairEnd'
+		/>
+	</block>
+	<regexp match='/\b(scope)\s*(\()\s*(exit|success|failure)\s*(\))/'
+		region0='symb' region1='key' region3='decl'
+		region2='def:PairStart' region4='def:PairEnd'
+	/>
+
+	<block start='/\basm\b/' end='/\}/' scheme='asmstart'
+		region00='key'
+	/>
+
+<!--
+	<block start='/\basm\b/' end='/\}?#1/' scheme='asm.content' region00='key' />
+-->
+	<regexp match='/\b(goto(\s+(case|default))?!|continue|break)\s+(%id;)/'
+		region1='key' region4='label'
+	/>
+
+	<block scheme='d.expr' region='label.const'>
+		<start match='/\b\M(goto)\s+(case|default)\b/'
+			region1='key' region2='key'
+		/>
+		<end match='/;\m/'/>
+	</block>
+
+	<block scheme='d.expr' region='label.const'>
+		<start match='/\b(case|default)\b/'
+			region1='key' region2='symb' region3='def:PairStart'
+		/>
+		<end match='/:/' region0='label.mark'/>
+	</block>
+
+	<keywords region='key'>
+		<word name='body'/>
+		<word name='break'/>
+		<word name='catch'/>
+		<word name='case'/>
+		<word name='continue'/>
+		<word name='default'/>
+		<word name='do'/>
+		<word name='else'/>
+		<word name='enum'/>
+		<word name='finally'/>
+		<word name='for'/>
+		<word name='foreach'/>
+		<word name='foreach_reverse'/>
+		<word name='goto'/>
+		<word name='if'/>
+		<word name='mixin'/>
+		<word name='override'/>
+		<word name='return'/>
+		<word name='synchronized'/>
+		<word name='throw'/>
+		<word name='try'/>
+		<word name='typedef'/>
+	</keywords>
+
+	<regexp match='/(enum\s)?~5%id;\s*(:)/x' region0='label' region2='label.mark'/>
+</scheme>
+
+
+<scheme name='d.decldef'>
+	<inherit scheme='decl.module'/>
+	<inherit scheme='decl.import'/>
+	<inherit scheme='decl.fun'/>
+	<inherit scheme='decl.attr'/>
+	<inherit scheme='decl.class'/>
+	<inherit scheme='decl.cong'/>
+	<inherit scheme='d.statement'/>
+	<!--inherit scheme='tpl'/-->
+	<inherit scheme='tpl'/>
+
+	<inherit scheme='def:PairedBrackets'>
+		<virtual scheme='def:PairedBrackets' subst-scheme='d.decldef'/>
+	</inherit>
+
+	<inherit scheme='d.expr'/>
+</scheme>
+
+<scheme name='d.expr.nest'>
+	<inherit scheme='def:PairedBrackets'>
+		<virtual scheme='def:PairedBrackets' subst-scheme='d.expr'/>
+	</inherit>
+</scheme>
+
+<scheme name='d.expr'>
+	<inherit scheme='d.expr.nest'/>
+
+	<inherit scheme='comment'/>
+	<inherit scheme='string'/>
+	<inherit scheme='literal'/>
+	<regexp match='/;/' region='symb.struct'/>
+	<regexp match='/,/' region='symb'/>
+	<regexp match='/:/' region='symb' priority='low'/>
+	<regexp match='/\$/' region='symb'/>
+	<inherit scheme='op'/>
+	<inherit scheme='tpl'/>
+	<inherit scheme='type'/>
+	<inherit scheme='keys'/>
+	<inherit scheme='tokens.spec'/>
+	<inherit scheme='tokens.bad'/>
+</scheme>
+
+<!-- special tokens -->
+
+<scheme name='tokens.spec.pre'>
+	<inherit scheme='comment'/>
+	<inherit scheme='c:PreprocLine'/>
+	<inherit scheme='error'/>
+</scheme>
+
+<scheme name='d.pre'>
+	<block start='/#/' end='/$/'  scheme='tokens.spec.pre' region='c:Preproc'/>
+</scheme>
+
+<scheme name='tokens.spec'>
+	<keywords region='key.spec'>
+		<!-- http://dlang.org/traits.html#specialkeywords -->
+		<word name='__FILE__'/>
+		<word name='__MODULE__'/>
+		<word name='__LINE__'/>
+		<word name='__FUNCTION__'/>
+		<word name='__PRETTY_FUNCTION__'/>
+
+		<!-- http://dlang.org/traits.html#specialkeywords -->
+		<word name='__DATE__'/>
+		<word name='__EOF__'/>
+		<word name='__TIME__'/>
+		<word name='__TIMESTAMP__'/>
+		<word name='__VENDOR__'/>
+		<word name='__VERSION__'/>
+	</keywords>
+	<inherit scheme='d.pre'/>
+</scheme>
+
+
+<scheme name='tokens.bad'>
+	<keywords region='def:Error'>
+		<symb name='{'/>
+		<symb name='}'/>
+		<symb name='('/>
+		<symb name=')'/>
+		<symb name='['/>
+		<symb name=']'/>
+		<symb name='"'/>
+		<symb name="'"/>
+		<symb name='`'/>
+	</keywords>
+</scheme>
+
+
+<scheme name='d.lang.nest'>
+	<!-- Nested declarations. Some things do not appear in outliner. -->
+	<inherit scheme='comment'/>
+	<inherit scheme='d.decldef'/>
+</scheme>
+
+<scheme name='d.lang.top'>
+	<!-- Top-level declarations. Everything appears in outliner. -->
+	<inherit scheme='decl.module.out'/>
+	<inherit scheme='decl.import.out'/>
+	<inherit scheme='decl.version.out'/>
+	<inherit scheme='d.lang.nest'/>
+</scheme>
+
+<scheme name='d.lang'>
+	<inherit scheme='d.lang.top'/>
+</scheme>
+
+<scheme name='d'>
+	<inherit scheme='def:unixCommentFirstline'>
+		<virtual scheme='def:def' subst-scheme='d.lang'/>
+	</inherit>
+</scheme>
+
+<scheme name='symb.flat'>
+	<keywords region='symb'>
+		<symb name='('/>
+		<symb name=')'/>
+		<symb name='['/>
+		<symb name=']'/>
+		<symb name='?'/>
+		<symb name=':'/>
+		<symb name='\'/>
+	</keywords>
+	<keywords region='symb.struct'>
+		<symb name='{'/>
+		<symb name='}'/>
+	</keywords>
+</scheme>
+
+<scheme name='d.flat.parens'>
+	<block start='/(\()/' end='/(\))/' scheme='d.flat'
+		region00='def:PairStart' region01='symb'
+		region10='def:PairEnd'   region11='symb'
+	/>
+</scheme>
+
+<scheme name='d.flat'>
+	<annotation><documentation>
+		Simpler, error-tolerable variant which does not nest, for DDoc code / examples.
+	</documentation></annotation>
+
+	<!-- Round parens should be the only allowed block -->
+	<inherit scheme='d.flat.parens'/>
+
+	<inherit scheme='d.lang.nest'>
+		<virtual scheme='def:PairedBrackets' subst-scheme='symb.flat' />
+		<virtual scheme='d.expr.nest'        subst-scheme='def:empty' />
+		<virtual scheme='op.nest'            subst-scheme='def:empty' />
+		<virtual scheme='type.nest'          subst-scheme='symb.flat' />
+		<virtual scheme='string.all.d2.nest' subst-scheme='string.all.d2.flat' />
+		<virtual scheme='tpl.tpl'            subst-scheme='symb.flat' />
+		<virtual scheme='d.statement'        subst-scheme='def:empty' />
+		<virtual scheme='literal.error'      subst-scheme='def:DecNumber' />
+		<virtual scheme='d.pre'              subst-scheme='def:empty' />
+		<virtual scheme='decl.class'         subst-scheme='def:empty' />
+		<virtual scheme='decl.fun'           subst-scheme='decl.fun.flat' />
+		<virtual scheme='comment'            subst-scheme='comment.flat' />
+	</inherit>
+</scheme>
+
+<!-- http://dlang.org/property.html -->
+<entity name='d.property.common'   value='init|sizeof|alignof|mangleof|stringof'/>
+<entity name='d.property.integer'  value='max|min'/>
+<entity name='d.property.floating' value='infinity|nan|dig|epsilon|mant_dig|max_10_exp|max_exp|min_10_exp|min_exp|min_normal|re|im'/>
+<entity name='d.property.class'    value='classinfo'/>
+<!-- http://dlang.org/arrays.html#array-properties -->
+<entity name='d.property.array'    value='length|ptr|dup|idup|reverse|sort'/>
+<!-- http://dlang.org/hash-map.html -->
+<entity name='d.property.assoc'    value='keys|values|rehash'/>
+
+<scheme name='d.property'>
+	<!-- Use only common properties, to avoid false positives with custom types -->
+	<regexp match='/(\.)?#1(%d.property.common;)\b/' region='key.prop' />
+
+	<keywords region='key.var'>
+		<word name='_argptr'/>
+		<word name='_arguments'/>
+	</keywords>
+</scheme>
+
+
+<scheme name='keys.custom'>
+	<inherit scheme='d.property'/>
+	<keywords region='key.lib.function'>
+		<word name='toString'/>
+		<word name='toHash'/>
+	</keywords>
+
+	<inherit scheme='key.phobos'/>
+</scheme>
+
+
+<scheme name='key.phobos' if='use_phobos'>
+	<inherit scheme='key.phobos.d1'/>
+	<inherit scheme='key.phobos.d2'/>
+</scheme>
+
+<!-- https://github.com/CyberShadow/json2colorer -->
+
+<scheme name='key.phobos.d1' unless='d2'>
+	&d1-phobos;
+</scheme>
+
+<scheme name='key.phobos.d2' if='d2'>
+	&d2-phobos;
+</scheme>
+
+<scheme name='key.tango' if='use_tango'>
+	&d1-tango;
+</scheme>
+
+<scheme name='keys.d2' if='d2'>
+	<keywords region='key'>
+		<word name='__gshared'/>
+		<word name='__overloadset'/>
+		<word name='__traits'/>
+		<word name='__vector'/>
+		<word name='immutable'/>
+		<word name='nothrow'/>
+		<word name='pure'/>
+		<word name='shared'/>
+	</keywords>
+</scheme>
+
+<scheme name='keys'>
+	<inherit scheme='keys.custom'/>
+	<inherit scheme='keys.d2'/>
+	<keywords region='key'>
+		<word name='__argTypes'/>
+		<word name='__parameters'/>
+		<word name='abstract'/>
+		<word name='alias'/>
+		<word name='align'/>
+		<word name='asm'/>
+		<word name='assert'/>
+		<word name='auto'/>
+		<word name='body'/>
+		<word name='bool'/>
+		<word name='break'/>
+		<word name='byte'/>
+		<word name='case'/>
+		<word name='cast'/>
+		<word name='catch'/>
+		<word name='cdouble'/>
+		<word name='cent'/>
+		<word name='cfloat'/>
+		<word name='char'/>
+		<word name='class'/>
+		<word name='const'/>
+		<word name='continue'/>
+		<word name='creal'/>
+		<word name='dchar'/>
+		<word name='debug'/>
+		<word name='default'/>
+		<word name='delegate'/>
+		<word name='delete'/>
+		<word name='deprecated'/>
+		<word name='do'/>
+		<word name='double'/>
+		<word name='else'/>
+		<word name='enum'/>
+		<word name='export'/>
+		<word name='extern'/>
+		<word name='false'/>
+		<word name='final'/>
+		<word name='finally'/>
+		<word name='float'/>
+		<word name='for'/>
+		<word name='foreach'/>
+		<word name='foreach_reverse'/>
+		<word name='function'/>
+		<word name='goto'/>
+		<word name='idouble'/>
+		<word name='if'/>
+		<word name='ifloat'/>
+		<word name='import'/>
+		<word name='in'/>
+		<word name='inout'/>
+		<word name='int'/>
+		<word name='interface'/>
+		<word name='invariant'/>
+		<word name='ireal'/>
+		<word name='is'/>
+		<word name='lazy'/>
+		<word name='long'/>
+		<word name='macro'/>
+		<word name='mixin'/>
+		<word name='module'/>
+		<word name='new'/>
+		<word name='null'/>
+		<word name='out'/>
+		<word name='override'/>
+		<word name='package'/>
+		<word name='pragma'/>
+		<word name='private'/>
+		<word name='protected'/>
+		<word name='public'/>
+		<word name='real'/>
+		<word name='ref'/>
+		<word name='return'/>
+		<word name='scope'/>
+		<word name='short'/>
+		<word name='static'/>
+		<word name='struct'/>
+		<word name='super'/>
+		<word name='switch'/>
+		<word name='synchronized'/>
+		<word name='template'/>
+		<word name='this'/>
+		<word name='throw'/>
+		<word name='true'/>
+		<word name='try'/>
+		<word name='typedef'/>
+		<word name='typeid'/>
+		<word name='typeof'/>
+		<word name='ubyte'/>
+		<word name='ucent'/>
+		<word name='uint'/>
+		<word name='ulong'/>
+		<word name='union'/>
+		<word name='unittest'/>
+		<word name='ushort'/>
+		<word name='version'/>
+		<word name='void'/>
+		<word name='volatile'/>
+		<word name='wchar'/>
+		<word name='while'/>
+		<word name='with'/>
+	</keywords>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2006-2008
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Vladimir Panteleev <thecybershadow@gmail.com>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

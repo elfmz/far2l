@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  Z80 Assembler syntax 2.0
+
+  Supported formats:
+    .a80 (Mednonogov's asm80);
+    .za  (Evdokimov's z80asm).
+
+  By Alex Smith <thims@inbox.ru>
+                <flame@baltnet.ru>
+                <Alex.Kuznetsov@p9.f33.n478.z2.fidonet.org (2:478/33.9)>
+-->
+   <type name="z80">
+
+      <import type="def"/>
+
+      <region name="aCommand" parent="Label"/>
+      <region name="aDirective" parent="Directive"/>
+      <region name="aLabel" parent="Label"/>
+      <region name="aMnemonic" parent="Operator"/>
+      <region name="aToken" parent="Label"/>
+      <region name="aRegister" parent="Register"/>
+      <region name="aLComment" parent="Comment"/>
+      <region name="aBComment" parent="Comment"/>
+      <region name="aSymbol" parent="Symbol"/>
+      <region name="aString" parent="String"/>
+      <region name="aNumDec" parent="NumberDec"/>
+      <region name="aNumHex" parent="NumberHex"/>
+      <region name="aNumBin" parent="NumberBin"/>
+      <region name="aChapter" parent="Label"/>
+      <region name="aTopicNum" parent="NumberHex"/>
+      <region name="aTopicName" parent="String"/>
+
+
+      <scheme name="zxChapter">
+         <regexp match="/\xB3(.{4})\xB3(.*$)/" region0="Function" region1="aTopicNum" region2="aTopicName"/>
+      </scheme>
+
+      <scheme name="zxFormat">
+<!-- Topics -->
+         <regexp match="/^(\#[0-9a-fA-F]{4}\:) (.+)$/i" region1="aTopicNum" region2="aTopicName"/>
+         <regexp match="/^\s+?(\+[0-9a-fA-F]{2}\:) (.+)$/i" region1="aTopicNum" region2="aTopicName"/>
+<!-- Numbers -->
+         <regexp match="/\b\d+\b/" region0="aNumDec"/>
+         <regexp match="/\#[0-9a-fA-F]+\b/i" region0="aNumHex"/>
+         <regexp match="/\%[01]+\b/" region0="aNumBin"/>
+<!-- E-Mails and URLs -->
+         <regexp match="/\b[\w\.]+\@\w+(\.\w+)+\b/" region0="EMail"/>
+         <regexp match="/\b(ht|f)tp\:\/\/(\w+(\.\w+)*\/?)+/i" region0="URL"/>
+<!-- Chapter header:
+    ?????????
+    ? 00 ? Topic Name
+    ??????????????????????????????????????????????????????????????
+  -->
+         <block start="/^\s*?\xC9\xCD\xC4\xC4\xCD\xCB\xCD\xC4\xC4$/x" end="/^.+\xCD\xCD\xC4\xC4$/x" scheme="zxChapter" region="aChapter"/>
+      </scheme>
+
+      <scheme name="BaseZ80">
+<!-- Z80 mnemonics -->
+         <keywords ignorecase="yes" region="aMnemonic">
+            <word name="adc"/>
+            <word name="add"/>
+            <word name="and"/>
+            <word name="bit"/>
+            <word name="call"/>
+            <word name="ccf"/>
+            <word name="cp"/>
+            <word name="cpl"/>
+            <word name="cpd"/>
+            <word name="cpdr"/>
+            <word name="cpi"/>
+            <word name="cpir"/>
+            <word name="daa"/>
+            <word name="dec"/>
+            <word name="di"/>
+            <word name="djnz"/>
+            <word name="ei"/>
+            <word name="ex"/>
+            <word name="exx"/>
+            <word name="halt"/>
+            <word name="im"/>
+            <word name="in"/>
+            <word name="inc"/>
+            <word name="ind"/>
+            <word name="indr"/>
+            <word name="inf"/>
+            <word name="ini"/>
+            <word name="inir"/>
+            <word name="jp"/>
+            <word name="jr"/>
+            <word name="ld"/>
+            <word name="ldd"/>
+            <word name="lddr"/>
+            <word name="ldi"/>
+            <word name="ldir"/>
+            <word name="neg"/>
+            <word name="nop"/>
+            <word name="exx"/>
+            <word name="or"/>
+            <word name="otdr"/>
+            <word name="otir"/>
+            <word name="out"/>
+            <word name="outd"/>
+            <word name="outi"/>
+            <word name="pop"/>
+            <word name="push"/>
+            <word name="res"/>
+            <word name="ret"/>
+            <word name="reti"/>
+            <word name="retn"/>
+            <word name="rl"/>
+            <word name="rla"/>
+            <word name="rlc"/>
+            <word name="rlca"/>
+            <word name="rld"/>
+            <word name="rr"/>
+            <word name="rra"/>
+            <word name="rrc"/>
+            <word name="rrca"/>
+            <word name="rrd"/>
+            <word name="rst"/>
+            <word name="sbc"/>
+            <word name="scf"/>
+            <word name="set"/>
+            <word name="sla"/>
+            <word name="sra"/>
+            <word name="srl"/>
+            <word name="sub"/>
+            <word name="xor"/>
+         </keywords>
+<!-- Z80 registers -->
+         <keywords ignorecase="yes" region="aRegister">
+            <word name="hl"/>
+            <word name="h"/>
+            <word name="l"/>
+            <word name="de"/>
+            <word name="d"/>
+            <word name="e"/>
+            <word name="bc"/>
+            <word name="b"/>
+            <word name="c"/>
+            <word name="af"/>
+            <word name="af'"/>
+            <word name="a"/>
+            <word name="ix"/>
+            <word name="iy"/>
+            <word name="sp"/>
+            <word name="i"/>
+            <word name="r"/>
+         </keywords>
+<!-- Z80 flags -->
+         <keywords ignorecase="yes" region="aMnemonic">
+            <word name="z"/>
+            <word name="nz"/>
+            <word name="nc"/>
+            <word name="po"/>
+            <word name="pe"/>
+            <word name="p"/>
+            <word name="m"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="BaseTyp">
+<!-- Numbers - Dec -->
+         <regexp match="/\b\d+\b/" region0="aNumDec"/>
+<!-- Numbers - Hex -->
+         <regexp match="/\#[0-9a-fA-F]+\b/" region0="aNumHex"/>
+<!-- Numbers - Bin -->
+         <regexp match="/\%[01]+\b/" region0="aNumBin"/>
+<!-- Comments -->
+         <regexp match="/\;.*$/" region0="aLComment"/>
+<!-- Strings -->
+         <regexp match="/&#34;.*?&#34;/" region0="aString"/>
+      </scheme>
+
+      <scheme name="z80BaseAsm">
+         <inherit scheme="BaseTyp"/>
+<!-- Add flag 'c' to 'ret' mnemonic ... -->
+         <regexp match="/\bret\s+?c\b/i" region0="aMnemonic"/>
+<!-- ... and other appropriate places with coloring the labels in jump instructions -->
+         <regexp match="/\b (?{aMnemonic}          djnz\s+? |          (jp|call)\s+? ((n?[zc]|m|po|e?) \s*? (?{aSymbol},) \s*?)? )          (?{aSymbol}[^\s\;\(\-\+]+)/ix"/>
+         <regexp match="/\b(jr)\s+?((n?[zc])\s*?(,)\s*?)?([^\s\;\-\+]+)/i" region1="aMnemonic" region3="aMnemonic" region4="aSymbol" region5="aLabel"/>
+<!-- Symbols -->
+         <keywords region="aSymbol">
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name=","/>
+            <symb name="&amp;"/>
+            <symb name="%"/>
+            <symb name="$"/>
+         </keywords>
+         <keywords ignorecase="yes" region="aDirective">
+            <word name="DEFB"/>
+            <word name="DEFM"/>
+            <word name="DEFS"/>
+            <word name="DEFW"/>
+            <word name="ELSE"/>
+            <word name="ENDIF"/>
+            <word name="ENDM"/>
+            <word name="EQU"/>
+            <word name="IF"/>
+            <word name="MAC"/>
+            <word name="ORG"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="NameDir">
+         <inherit scheme="BaseTyp"/>
+<!-- Strings -->
+         <regexp match="/('.*?')/" region0="aString"/>
+<!-- Basic tokens -->
+         <regexp match="/\{[A-Za-z&lt;\&gt;](\=|\&gt;|[A-Za-z]+ ?([A-Za-z]+\$?)|\#)\}/" region="aToken"/>
+<!-- Basic operators -->
+         <keywords ignorecase="yes" region="aToken">
+            <word name="AT"/>
+            <word name="BRIGHT"/>
+            <word name="CHR$"/>
+            <word name="FLASH"/>
+            <word name="INK"/>
+            <word name="INVERSE"/>
+            <word name="OVER"/>
+            <word name="PAPER"/>
+            <word name="TAB"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="z80">
+         <inherit scheme="z80BaseAsm"/>
+         <inherit scheme="BaseZ80"/>
+<!-- Strings -->
+         <regexp match="/('.*?')/" region0="aString"/>
+<!-- Block comments -->
+         <block start="/\b(COMMENT)\s+(.)(.*$)/i" end="/^\s*\y2.*$/" scheme="Comment" region="aBComment" region01="aDirective"/>
+<!-- Labels, Functions and Macroses -->
+         <regexp match="/^\s*([A-Za-z\@\_\!\?\^\~\\\|\`][\w\@\!\?\^\~\\\|\`\#\$\%]*)(\:|\s+(PROC|MAC|ENDP|EQU))/i" region1="aLabel" region2="aLabel" region4="Function" region5="aDirective" region6="aDirective" region7="aDirective"/>
+         <regexp match="/^\s*?(\S+)\s+?(D([BW]|EF[BSWM]))\s/i" region1="aLabel" region2="aDirective"/>
+<!-- Includes -->
+         <regexp match="/^\s*?(INCLUDE(BIN|(LIB)?))\s+?(.*$)/i" region1="aDirective" region4="aString"/>
+<!-- Commands -->
+         <regexp match="/^\s*\$(c|l|s\+|\-)/i" region="aCommand"/>
+<!-- NAME directive with Basic tokens -->
+         <block start="/^\s*?(NAME)\s/i" end="/$/" scheme="NameDir" region00="aDirective"/>
+<!-- Z80 mnemonics -->
+         <keywords ignorecase="yes" region="aMnemonic">
+            <word name="sll"/>
+         </keywords>
+<!-- Z80 registers -->
+         <keywords ignorecase="yes" region="aRegister">
+            <word name="ixh"/>
+            <word name="ixl"/>
+            <word name="iyh"/>
+            <word name="iyl"/>
+         </keywords>
+<!-- Operators -->
+         <keywords ignorecase="yes" region="aSymbol">
+            <word name="HIGH"/>
+            <word name="LOW"/>
+            <word name="NOT"/>
+            <word name="MOD"/>
+            <word name="SHL"/>
+            <word name="SHR"/>
+<!--word name="AND"/>
+    <word name="XOR"/>
+    <word name="OR"-->
+         </keywords>
+<!-- Directives -->
+         <keywords ignorecase="yes" region="aDirective">
+            <word name="DB"/>
+            <word name="DW"/>
+            <word name="DUP"/>
+            <word name="ECHO"/>
+            <word name="END"/>
+            <word name="ENDP"/>
+            <word name="EXPORT"/>
+            <word name="EXTRN"/>
+            <word name="FLOAT"/>
+<!-- Inline macro -->
+            <word name="IF1"/>
+            <word name="IF2"/>
+            <word name="IFB"/>
+            <word name="IFDEF"/>
+            <word name="IFNB"/>
+            <word name="IFNDEF"/>
+            <word name="IFIDN"/>
+            <word name="IFDIF"/>
+            <word name="INCLUDE"/>
+            <word name="INCLUDEBIN"/>
+            <word name="INCLUDELIB"/>
+            <word name="LOCAL"/>
+            <word name="LOCALS"/>
+            <word name="LIB"/>
+            <word name="MODULE"/>
+            <word name="NOLOCALS"/>
+            <word name="NAME"/>
+            <word name="PROC"/>
+            <word name="PUBLIC"/>
+            <word name="STKDATA"/>
+<!-- Inline macro -->
+            <word name="USERERR"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Alex Smith <thims@inbox.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+   DSSP
+With Help of
+   Loktev Nikola <loktev@niisi.msk.ru>
+-->
+   <type name="dssp">
+
+      <import type="def"/>
+
+      <region name="dsspString" parent="String"/>
+      <region name="dsspComment" parent="Comment"/>
+      <region name="dsspNumber" parent="Number"/>
+      <region name="dsspWord" parent="Keyword"/>
+      <region name="dsspError" parent="Error"/>
+      <region name="dsspExpr" parent="Directive"/>
+      <region name="dsspParam" parent="Parameter"/>
+      <region name="dsspConstr" parent="Insertion"/>
+
+
+      <scheme name="dsspNestComm">
+         <block start="/0 \%IF/" end="/\%FI/" scheme="dsspNestComm" region="dsspComment" region00="PairStart" region10="PairEnd"/>
+      </scheme>
+
+      <scheme name="dssp">
+<!-- Linear Comments -->
+         <regexp match="/^;.*$/" region0="dsspComment"/>
+         <block start="/\[/" end="/\]/" scheme="Comment" region="dsspComment" region00="PairStart" region10="PairEnd"/>
+         <inherit scheme="dsspNestComm"/>
+<!-- Strings -->
+         <block start="/\.??&#34;/" end="/&#34;/" scheme="Comment" region="dsspString" region00="PairStart" region10="PairEnd"/>
+         <regexp match="/(\s\.*?&#34;\r??\n??.*?\&#34;)/" region0="dsspString"/>
+         <regexp match="/\B(#.)\M\s/" region0="default"/>
+<!-- Numbers -->
+         <inherit scheme="def:Number"/>
+         <inherit scheme="BadHex"/>
+<!-- too slow? no? you can enable/disable these regexps... -->
+         <regexp match="/(\bON(\s+\S+\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="Insertion" region2="dsspConstr"/>
+         <regexp match="/(\bEON(\s+\S+\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="Insertion" region2="dsspConstr"/>
+         <regexp match="/(\bEONW(\s+\S+\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="Insertion" region2="dsspConstr"/>
+         <regexp match="/(\bDO(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspConstr" region2="dsspExpr"/>
+         <regexp match="/(\bRP(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspConstr" region2="dsspExpr"/>
+         <regexp match="/(\bIF0(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspConstr" region2="dsspExpr"/>
+         <regexp match="/(\bIF\+(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspConstr" region2="dsspExpr"/>
+         <regexp match="/(\bIF-(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspConstr" region2="dsspExpr"/>
+         <regexp match="/(\bBRS(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]* \s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]* \s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspWord" region2="dsspExpr"/>
+         <regexp match="/(\bBR0(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]* \s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspWord" region2="dsspExpr"/>
+         <regexp match="/(\bBR-(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]* \s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspWord" region2="dsspExpr"/>
+         <regexp match="/(\bBR\+(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]* \s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region0="dsspWord" region2="dsspExpr"/>
+         <regexp match="/(\bCOPYW+\s+\S+\s+\S+)/" region0="dsspWord"/>
+         <regexp match="/(\bELSE\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*)/x" region0="dsspWord"/>
+         <regexp match="/(\bBR(.*?)\sELSE(\s+[^\s\&#34;]*(\&#34;.*?\&#34;)?[^\s\&#34;]*))/x" region1="dsspWord" region2="dsspExpr" region3="dsspExpr"/>
+         <regexp match="/(\bSTRUCT:\s.*?\s;STRUCT)/" region0="dsspWord"/>
+         <regexp match="/(\b\S\(\s.*?\s\))/" region0="dsspExpr"/>
+         <regexp match="/(\bPROGRAM\s+\S+)/" region0="dsspExpr"/>
+         <regexp match="/(\bFORGET\s+\S+)/" region0="dsspExpr"/>
+         <regexp match="/(\bCLEAR\s+\S+)/" region0="dsspExpr"/>
+         <regexp match="/(\bGROW\s+\S+)/" region0="dsspExpr"/>
+         <regexp match="/(\bONLY\s+\S+)/" region0="dsspExpr"/>
+         <regexp match="/(\bSHUT\s+\S+)/" region0="dsspExpr"/>
+         <regexp match="/(\bCHANNEL\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bTRAP\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bVAR\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bVCTR\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bREFVCTR\s+\S+\s+\S+\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bARR\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bSTRING\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bCNST\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bVALUE\s+\S+)/" region0="dsspParam"/>
+         <regexp match="/(\bTEXT\s+\S+)/" region0="dsspParam"/>
+<!-- these -->
+         <keywords ignorecase="yes" region="dsspParam">
+            <word name="ACT"/>
+            <word name="ARR"/>
+            <word name="B10"/>
+            <word name="B16"/>
+            <word name="B2"/>
+            <word name="B8"/>
+            <word name="BYTE"/>
+            <word name="COPYW"/>
+            <word name="FIX"/>
+            <word name="FORGET"/>
+            <word name="HEAD"/>
+            <word name="LONG"/>
+            <word name="PROGRAM"/>
+            <word name="TRAP"/>
+            <word name="UNDEF"/>
+            <word name="VAR"/>
+            <word name="VCTR"/>
+            <word name="WORD"/>
+            <word name="!"/>
+            <word name="!!!"/>
+            <word name="!T"/>
+            <word name="!TB"/>
+            <word name="@"/>
+            <word name="!SB"/>
+            <word name="!MB"/>
+            <word name="D"/>
+            <word name="DD"/>
+            <word name="DDD"/>
+            <word name="DDDD"/>
+            <word name="E2"/>
+            <word name="E2D"/>
+            <word name="E3"/>
+            <word name="E4"/>
+            <word name="C"/>
+            <word name="C2"/>
+            <word name="C3"/>
+            <word name="C4"/>
+            <word name="SRCHB"/>
+            <word name="SEG"/>
+            <word name="NOP"/>
+            <word name="CR"/>
+            <word name="SP"/>
+            <word name="SWW"/>
+            <word name="SWB"/>
+            <word name="&gt;"/>
+            <word name="&lt;"/>
+            <word name="="/>
+            <word name="&amp;"/>
+            <word name="'+'"/>
+            <word name="/"/>
+            <word name="*"/>
+            <word name="!0"/>
+            <word name="!1"/>
+            <word name="!1+"/>
+            <word name="!1-"/>
+            <word name="INTERR"/>
+            <word name="RAX"/>
+            <word name="RDX"/>
+            <word name="RCX"/>
+            <word name="TRB"/>
+            <word name="TIB"/>
+            <word name="TOB"/>
+            <word name="TOS"/>
+            <word name="LOADWIN"/>
+            <word name="SAVEWIN"/>
+            <word name="GENUNF"/>
+            <word name="GENMENU"/>
+            <word name="HS"/>
+            <word name="WS"/>
+            <word name="MIN"/>
+            <word name="MAX"/>
+            <word name="T0"/>
+            <word name="T1"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

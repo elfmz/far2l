@@ -1,0 +1,1309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="log4j" group="group" description="log4j" targetNamespace="http://jakarta.apache.org/log4j/">
+    <location link="log4j.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="log4j">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'log4j'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://jakarta.apache.org/log4j/
+             hrctype                     : log4j
+             allow-common-attr           : yes
+             allow-any-attr              : yes
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : 
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:</documentation>
+         <contributors><![CDATA[Kasatkin Konstantin, Eugene Efremov]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <entity name="ns-real-prefix" value=""/>
+      <entity name="nsprefix" value=""/>
+      <entity name="attr-nsprefix" value=""/>
+      <entity name="nsprefix-configuration" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-eventSet" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-event" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-message" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-NDC" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-throwable" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-locationInfo" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-properties" value="(?{}(?{}log4j)(?{}:))"/>
+      <entity name="nsprefix-data" value="(?{}(?{}log4j)(?{}:))"/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from '../../src/log4j/src/custom.log4j.xml'--><!--end custom--><scheme name="configuration-element">
+         <block start="/\M &lt; (%nsprefix-configuration;configuration ([\s\/&gt;]|$) )/x"
+                end="/ &gt; /x"
+                scheme="_hrc_int_d12e3-elementContent"/>
+      </scheme>
+      <scheme name="renderer-element">
+         <block start="/\M &lt; (%nsprefix;renderer ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e39-elementContent"/>
+      </scheme>
+      <scheme name="appender-element">
+         <block start="/\M &lt; (%nsprefix;appender ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e43-elementContent"/>
+      </scheme>
+      <scheme name="layout-element">
+         <block start="/\M &lt; (%nsprefix;layout ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e56-elementContent"/>
+      </scheme>
+      <scheme name="filter-element">
+         <block start="/\M &lt; (%nsprefix;filter ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e61-elementContent"/>
+      </scheme>
+      <scheme name="errorHandler-element">
+         <block start="/\M &lt; (%nsprefix;errorHandler ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e66-elementContent"/>
+      </scheme>
+      <scheme name="root-ref-element">
+         <block start="/\M &lt; (%nsprefix;root-ref ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e74-elementContent"/>
+      </scheme>
+      <scheme name="logger-ref-element">
+         <block start="/\M &lt; (%nsprefix;logger-ref ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e76-elementContent"/>
+      </scheme>
+      <scheme name="param-element">
+         <block start="/\M &lt; (%nsprefix;param ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e79-elementContent"/>
+      </scheme>
+      <scheme name="priority-element">
+         <block start="/\M &lt; (%nsprefix;priority ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e83-elementContent"/>
+      </scheme>
+      <scheme name="level-element">
+         <block start="/\M &lt; (%nsprefix;level ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e89-elementContent"/>
+      </scheme>
+      <scheme name="category-element">
+         <block start="/\M &lt; (%nsprefix;category ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e96-elementContent"/>
+      </scheme>
+      <scheme name="logger-element">
+         <block start="/\M &lt; (%nsprefix;logger ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e111-elementContent"/>
+      </scheme>
+      <scheme name="categoryFactory-element">
+         <block start="/\M &lt; (%nsprefix;categoryFactory ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e122-elementContent"/>
+      </scheme>
+      <scheme name="loggerFactory-element">
+         <block start="/\M &lt; (%nsprefix;loggerFactory ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e127-elementContent"/>
+      </scheme>
+      <scheme name="appender-ref-element">
+         <block start="/\M &lt; (%nsprefix;appender-ref ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e132-elementContent"/>
+      </scheme>
+      <scheme name="plugin-element">
+         <block start="/\M &lt; (%nsprefix;plugin ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e135-elementContent"/>
+      </scheme>
+      <scheme name="connectionSource-element">
+         <block start="/\M &lt; (%nsprefix;connectionSource ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e142-elementContent"/>
+      </scheme>
+      <scheme name="dataSource-element">
+         <block start="/\M &lt; (%nsprefix;dataSource ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e148-elementContent"/>
+      </scheme>
+      <scheme name="triggeringPolicy-element">
+         <block start="/\M &lt; (%nsprefix;triggeringPolicy ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e153-elementContent"/>
+      </scheme>
+      <scheme name="rollingPolicy-element">
+         <block start="/\M &lt; (%nsprefix;rollingPolicy ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e160-elementContent"/>
+      </scheme>
+      <scheme name="root-element">
+         <block start="/\M &lt; (%nsprefix;root ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e166-elementContent"/>
+      </scheme>
+      <scheme name="eventSet-element">
+         <block start="/\M &lt; (%nsprefix-eventSet;eventSet ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e175-elementContent"/>
+      </scheme>
+      <scheme name="event-element">
+         <block start="/\M &lt; (%nsprefix-event;event ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e189-elementContent"/>
+      </scheme>
+      <scheme name="message-element">
+         <block start="/\M &lt; (%nsprefix-message;message ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e202-elementContent"/>
+      </scheme>
+      <scheme name="NDC-element">
+         <block start="/\M &lt; (%nsprefix-NDC;NDC ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e204-elementContent"/>
+      </scheme>
+      <scheme name="throwable-element">
+         <block start="/\M &lt; (%nsprefix-throwable;throwable ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e206-elementContent"/>
+      </scheme>
+      <scheme name="locationInfo-element">
+         <block start="/\M &lt; (%nsprefix-locationInfo;locationInfo ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e208-elementContent"/>
+      </scheme>
+      <scheme name="properties-element">
+         <block start="/\M &lt; (%nsprefix-properties;properties ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e214-elementContent"/>
+      </scheme>
+      <scheme name="data-element">
+         <block start="/\M &lt; (%nsprefix-data;data ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="_hrc_int_d12e218-elementContent"/>
+      </scheme>
+      <!--
+        parent: configuration
+-->
+<scheme name="_hrc_int_d12e3-content">
+         <inherit scheme="renderer-element"/>
+         <inherit scheme="appender-element"/>
+         <inherit scheme="plugin-element"/>
+         <inherit scheme="category-element"/>
+         <inherit scheme="logger-element"/>
+         <inherit scheme="root-element"/>
+         <inherit scheme="categoryFactory-element"/>
+         <inherit scheme="loggerFactory-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e3-content-error">
+         <inherit scheme="_hrc_int_d12e3-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e3-content-cdsect">
+         <inherit scheme="_hrc_int_d12e3-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e3-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(threshold)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e16-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(debug)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e28-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(reset)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e34-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e3-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e3-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e3-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: threshold
+-->
+<scheme name="_hrc_int_d12e16-content">
+         <regexp region="Enumeration" match="/all/"/>
+         <regexp region="Enumeration" match="/trace/"/>
+         <regexp region="Enumeration" match="/debug/"/>
+         <regexp region="Enumeration" match="/info/"/>
+         <regexp region="Enumeration" match="/warn/"/>
+         <regexp region="Enumeration" match="/error/"/>
+         <regexp region="Enumeration" match="/fatal/"/>
+         <regexp region="Enumeration" match="/off/"/>
+         <regexp region="Enumeration" match="/null/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e16-content-error">
+         <inherit scheme="_hrc_int_d12e16-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e16-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e16-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e16-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: debug
+-->
+<scheme name="_hrc_int_d12e28-content">
+         <regexp region="Enumeration" match="/true/"/>
+         <regexp region="Enumeration" match="/false/"/>
+         <regexp region="Enumeration" match="/null/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e28-content-error">
+         <inherit scheme="_hrc_int_d12e28-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e28-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e28-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e28-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: reset
+-->
+<scheme name="_hrc_int_d12e34-content">
+         <regexp region="Enumeration" match="/true/"/>
+         <regexp region="Enumeration" match="/false/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e34-content-error">
+         <inherit scheme="_hrc_int_d12e34-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e34-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e34-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e34-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: renderer
+-->
+<scheme name="_hrc_int_d12e39-content"/>
+      <scheme name="_hrc_int_d12e39-content-error">
+         <inherit scheme="_hrc_int_d12e39-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e39-content-cdsect">
+         <inherit scheme="_hrc_int_d12e39-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e39-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(renderedClass)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(renderingClass)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e39-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e39-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e39-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: appender
+-->
+<scheme name="_hrc_int_d12e43-content">
+         <inherit scheme="errorHandler-element"/>
+         <inherit scheme="param-element"/>
+         <inherit scheme="rollingPolicy-element"/>
+         <inherit scheme="triggeringPolicy-element"/>
+         <inherit scheme="connectionSource-element"/>
+         <inherit scheme="layout-element"/>
+         <inherit scheme="filter-element"/>
+         <inherit scheme="appender-ref-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e43-content-error">
+         <inherit scheme="_hrc_int_d12e43-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e43-content-cdsect">
+         <inherit scheme="_hrc_int_d12e43-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e43-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e43-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e43-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e43-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: layout
+-->
+<scheme name="_hrc_int_d12e56-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e56-content-error">
+         <inherit scheme="_hrc_int_d12e56-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e56-content-cdsect">
+         <inherit scheme="_hrc_int_d12e56-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e56-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e56-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e56-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e56-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: filter
+-->
+<scheme name="_hrc_int_d12e61-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e61-content-error">
+         <inherit scheme="_hrc_int_d12e61-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e61-content-cdsect">
+         <inherit scheme="_hrc_int_d12e61-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e61-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e61-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e61-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e61-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: errorHandler
+-->
+<scheme name="_hrc_int_d12e66-content">
+         <inherit scheme="param-element"/>
+         <inherit scheme="root-ref-element"/>
+         <inherit scheme="logger-ref-element"/>
+         <inherit scheme="appender-ref-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e66-content-error">
+         <inherit scheme="_hrc_int_d12e66-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e66-content-cdsect">
+         <inherit scheme="_hrc_int_d12e66-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e66-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e66-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e66-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e66-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: root-ref
+-->
+<scheme name="_hrc_int_d12e74-content"/>
+      <scheme name="_hrc_int_d12e74-content-error">
+         <inherit scheme="_hrc_int_d12e74-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e74-content-cdsect">
+         <inherit scheme="_hrc_int_d12e74-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e74-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e74-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e74-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e74-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: logger-ref
+-->
+<scheme name="_hrc_int_d12e76-content"/>
+      <scheme name="_hrc_int_d12e76-content-error">
+         <inherit scheme="_hrc_int_d12e76-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e76-content-cdsect">
+         <inherit scheme="_hrc_int_d12e76-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e76-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(ref)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e76-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e76-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e76-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: param
+-->
+<scheme name="_hrc_int_d12e79-content"/>
+      <scheme name="_hrc_int_d12e79-content-error">
+         <inherit scheme="_hrc_int_d12e79-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e79-content-cdsect">
+         <inherit scheme="_hrc_int_d12e79-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e79-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(value)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e79-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e79-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e79-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: priority
+-->
+<scheme name="_hrc_int_d12e83-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e83-content-error">
+         <inherit scheme="_hrc_int_d12e83-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e83-content-cdsect">
+         <inherit scheme="_hrc_int_d12e83-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e83-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(value)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e83-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e83-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e83-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: level
+-->
+<scheme name="_hrc_int_d12e89-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e89-content-error">
+         <inherit scheme="_hrc_int_d12e89-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e89-content-cdsect">
+         <inherit scheme="_hrc_int_d12e89-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e89-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(value)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e89-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e89-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e89-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: category
+-->
+<scheme name="_hrc_int_d12e96-content">
+         <inherit scheme="param-element"/>
+         <inherit scheme="priority-element"/>
+         <inherit scheme="level-element"/>
+         <inherit scheme="appender-ref-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e96-content-error">
+         <inherit scheme="_hrc_int_d12e96-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e96-content-cdsect">
+         <inherit scheme="_hrc_int_d12e96-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e96-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(additivity)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e106-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e96-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e96-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e96-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: additivity
+-->
+<scheme name="_hrc_int_d12e106-content">
+         <regexp region="Enumeration" match="/true/"/>
+         <regexp region="Enumeration" match="/false/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e106-content-error">
+         <inherit scheme="_hrc_int_d12e106-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e106-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e106-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e106-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: logger
+-->
+<scheme name="_hrc_int_d12e111-content">
+         <inherit scheme="level-element"/>
+         <inherit scheme="appender-ref-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e111-content-error">
+         <inherit scheme="_hrc_int_d12e111-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e111-content-cdsect">
+         <inherit scheme="_hrc_int_d12e111-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e111-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(additivity)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e117-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e111-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e111-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e111-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: additivity
+-->
+<scheme name="_hrc_int_d12e117-content">
+         <regexp region="Enumeration" match="/true/"/>
+         <regexp region="Enumeration" match="/false/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e117-content-error">
+         <inherit scheme="_hrc_int_d12e117-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e117-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e117-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e117-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: categoryFactory
+-->
+<scheme name="_hrc_int_d12e122-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e122-content-error">
+         <inherit scheme="_hrc_int_d12e122-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e122-content-cdsect">
+         <inherit scheme="_hrc_int_d12e122-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e122-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e122-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e122-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e122-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: loggerFactory
+-->
+<scheme name="_hrc_int_d12e127-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e127-content-error">
+         <inherit scheme="_hrc_int_d12e127-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e127-content-cdsect">
+         <inherit scheme="_hrc_int_d12e127-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e127-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e127-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e127-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e127-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: appender-ref
+-->
+<scheme name="_hrc_int_d12e132-content"/>
+      <scheme name="_hrc_int_d12e132-content-error">
+         <inherit scheme="_hrc_int_d12e132-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e132-content-cdsect">
+         <inherit scheme="_hrc_int_d12e132-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e132-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name" start="/(\s?#1|^)(ref)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e132-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e132-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e132-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: plugin
+-->
+<scheme name="_hrc_int_d12e135-content">
+         <inherit scheme="param-element"/>
+         <inherit scheme="connectionSource-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e135-content-error">
+         <inherit scheme="_hrc_int_d12e135-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e135-content-cdsect">
+         <inherit scheme="_hrc_int_d12e135-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e135-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e135-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e135-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e135-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: connectionSource
+-->
+<scheme name="_hrc_int_d12e142-content">
+         <inherit scheme="dataSource-element"/>
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e142-content-error">
+         <inherit scheme="_hrc_int_d12e142-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e142-content-cdsect">
+         <inherit scheme="_hrc_int_d12e142-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e142-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e142-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e142-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e142-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: dataSource
+-->
+<scheme name="_hrc_int_d12e148-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e148-content-error">
+         <inherit scheme="_hrc_int_d12e148-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e148-content-cdsect">
+         <inherit scheme="_hrc_int_d12e148-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e148-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e148-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e148-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e148-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: triggeringPolicy
+-->
+<scheme name="_hrc_int_d12e153-content">
+         <inherit scheme="param-element"/>
+         <inherit scheme="filter-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e153-content-error">
+         <inherit scheme="_hrc_int_d12e153-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e153-content-cdsect">
+         <inherit scheme="_hrc_int_d12e153-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e153-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e153-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e153-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e153-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: rollingPolicy
+-->
+<scheme name="_hrc_int_d12e160-content">
+         <inherit scheme="param-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e160-content-error">
+         <inherit scheme="_hrc_int_d12e160-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e160-content-cdsect">
+         <inherit scheme="_hrc_int_d12e160-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e160-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e160-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e160-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e160-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: root
+-->
+<scheme name="_hrc_int_d12e166-content">
+         <inherit scheme="param-element"/>
+         <inherit scheme="priority-element"/>
+         <inherit scheme="level-element"/>
+         <inherit scheme="appender-ref-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e166-content-error">
+         <inherit scheme="_hrc_int_d12e166-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e166-content-cdsect">
+         <inherit scheme="_hrc_int_d12e166-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e166-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e166-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e166-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e166-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: eventSet
+-->
+<scheme name="_hrc_int_d12e175-content">
+         <inherit scheme="event-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e175-content-error">
+         <inherit scheme="_hrc_int_d12e175-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e175-content-cdsect">
+         <inherit scheme="_hrc_int_d12e175-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e175-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(version)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e179-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(includesLocationInfo)\M([\s\=]|$)/x"
+                scheme="_hrc_int_d12e184-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e175-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e175-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e175-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: version
+-->
+<scheme name="_hrc_int_d12e179-content">
+         <regexp region="Enumeration" match="/1\.1/"/>
+         <regexp region="Enumeration" match="/1\.2/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e179-content-error">
+         <inherit scheme="_hrc_int_d12e179-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e179-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e179-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e179-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: includesLocationInfo
+-->
+<scheme name="_hrc_int_d12e184-content">
+         <regexp region="Enumeration" match="/true/"/>
+         <regexp region="Enumeration" match="/false/"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e184-content-error">
+         <inherit scheme="_hrc_int_d12e184-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e184-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e184-AttributeContent">
+         <inherit scheme="AttributeContent">
+            <virtual scheme="xml:AttValue.content.stream"
+                     subst-scheme="_hrc_int_d12e184-content-error"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: event
+-->
+<scheme name="_hrc_int_d12e189-content">
+         <inherit scheme="message-element"/>
+         <inherit scheme="NDC-element"/>
+         <inherit scheme="throwable-element"/>
+         <inherit scheme="locationInfo-element"/>
+         <inherit scheme="properties-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e189-content-error">
+         <inherit scheme="_hrc_int_d12e189-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e189-content-cdsect">
+         <inherit scheme="_hrc_int_d12e189-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e189-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(logger)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(level)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(thread)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(timestamp)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(time)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e189-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e189-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e189-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: message
+-->
+<scheme name="_hrc_int_d12e202-content"/>
+      <scheme name="_hrc_int_d12e202-content-error">
+         <inherit scheme="_hrc_int_d12e202-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e202-content-cdsect">
+         <inherit scheme="_hrc_int_d12e202-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e202-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e202-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e202-content"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e202-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: NDC
+-->
+<scheme name="_hrc_int_d12e204-content"/>
+      <scheme name="_hrc_int_d12e204-content-error">
+         <inherit scheme="_hrc_int_d12e204-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e204-content-cdsect">
+         <inherit scheme="_hrc_int_d12e204-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e204-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e204-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e204-content"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e204-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: throwable
+-->
+<scheme name="_hrc_int_d12e206-content"/>
+      <scheme name="_hrc_int_d12e206-content-error">
+         <inherit scheme="_hrc_int_d12e206-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e206-content-cdsect">
+         <inherit scheme="_hrc_int_d12e206-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e206-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e206-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e206-content"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e206-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: locationInfo
+-->
+<scheme name="_hrc_int_d12e208-content"/>
+      <scheme name="_hrc_int_d12e208-content-error">
+         <inherit scheme="_hrc_int_d12e208-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e208-content-cdsect">
+         <inherit scheme="_hrc_int_d12e208-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e208-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(method)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(file)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(line)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e208-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e208-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e208-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: properties
+-->
+<scheme name="_hrc_int_d12e214-content">
+         <inherit scheme="data-element"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e214-content-error">
+         <inherit scheme="_hrc_int_d12e214-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e214-content-cdsect">
+         <inherit scheme="_hrc_int_d12e214-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e214-Attributes">
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e214-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e214-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e214-Attributes"/>
+         </inherit>
+      </scheme>
+      <!--
+        parent: data
+-->
+<scheme name="_hrc_int_d12e218-content"/>
+      <scheme name="_hrc_int_d12e218-content-error">
+         <inherit scheme="_hrc_int_d12e218-content"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e218-content-cdsect">
+         <inherit scheme="_hrc_int_d12e218-content-error">
+            <virtual scheme="xml:badLiter" subst-scheme="xml:badCDLiter"/>
+            <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
+         </inherit>
+      </scheme>
+      <scheme name="_hrc_int_d12e218-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(value)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <inherit scheme="xml:Attribute.any"/>
+      </scheme>
+      <scheme name="_hrc_int_d12e218-elementContent">
+         <inherit scheme="_hrc_int_elementContent">
+            <virtual scheme="xml:element" subst-scheme="_hrc_int_d12e218-content"/>
+            <virtual scheme="xml:content.cdata" subst-scheme="xml:badChar"/>
+            <virtual scheme="xml:Attribute.any" subst-scheme="_hrc_int_d12e218-Attributes"/>
+         </inherit>
+      </scheme>
+
+      <scheme name="log4j-root">
+         <inherit scheme="configuration-element"/>
+      </scheme>
+      <scheme name="log4j-root-addref">
+         <inherit scheme="log4j-root"/>
+      </scheme>
+      <scheme name="log4j">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="log4j-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

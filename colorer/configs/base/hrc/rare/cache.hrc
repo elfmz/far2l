@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Cache/Open-M Syntax description
+Made By:
+    Timur Safin <timur@lanit.ru><timur@intersystems.ru>
+-->
+   <type name="cache">
+
+      <import type="def"/>
+      <import type="config"/>
+
+      <region name="mString" parent="String"/>
+      <region name="mComment" parent="Comment"/>
+      <region name="mCommentEx" parent="Comment"/>
+      <region name="mSymb" parent="Symbol"/>
+      <region name="mWord" parent="Symbol"/>
+      <region name="mPreProc" parent="Directive"/>
+      <region name="mPrePrWord" parent="Directive"/>
+      <region name="mTagLabel" parent="Label"/>
+
+
+      <scheme name="MPairBlock">
+<!-- paired block -->
+<!-- block start="/(\{)/" end="/(\})/" scheme="cache"
+          region00="mSymb" region01="PairStart"
+          region10="mSymb" region11="PairEnd"/ -->
+         <block start="/(\()/" end="/(\))/" scheme="cache" region00="mSymb" region01="PairStart" region10="mSymb" region11="PairEnd"/>
+      </scheme>
+
+      <scheme name="MPrePro">
+         <block start="/\;/" end="/$/" scheme="Comment" region="mComment"/>
+         <regexp match="/(&lt;[\w\d\.\-\\/]*&gt;)/" region0="mString"/>
+         <regexp match="/(&#34;(\\.|[^\\&#34;])*?&#34;)/" region0="mString"/>
+<!-- inherit scheme="PairBlock"/ -->
+         <block start="/(\()/" end="/(\))/" scheme="MPrePro" region00="mSymb" region01="PairStart" region10="mSymb" region11="PairEnd"/>
+         <keywords region="mSymb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="_"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="?"/>
+            <symb name="#"/>
+            <symb name="@"/>
+         </keywords>
+         <keywords ignorecase="yes" region="mPrePrWord">
+            <word name="defined"/>
+            <word name="sizeof"/>
+            <word name="ifdef"/>
+            <word name="ifndef"/>
+            <word name="define"/>
+            <word name="endif"/>
+            <word name="pragma"/>
+            <word name="else"/>
+            <word name="include"/>
+            <word name="if"/>
+            <word name="elif"/>
+            <word name="undef"/>
+            <word name="class"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="CacheCore">
+         <block start="/\;/" end="/$/" scheme="Comment" region="mComment"/>
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+         <regexp match="/(&#34;(\\.|[^\\&#34;])*?&#34;)/" region="mString"/>
+         <regexp match="/(\$[a-zA-Z\%][a-zA-Z\d]*)/" region="mWord"/>
+         <regexp match="/(\$\$[a-zA-Z\%][a-zA-Z\d]*)/" region="mTagLabel"/>
+         <regexp match="/(\$\$\$[a-zA-Z\%][a-zA-Z\d]*)/" region="mPreProc"/>
+<!-- inherit scheme="PairBlock"/ -->
+         <block start="/(\()/" end="/(\))/" scheme="CacheCore" region00="mSymb" region01="PairStart" region10="mSymb" region11="PairEnd"/>
+         <keywords region="mSymb">
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="_"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="?"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="'"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="^"/>
+            <symb name="#"/>
+            <symb name="\"/>
+            <symb name="{"/>
+            <symb name="}"/>
+         </keywords>
+         <keywords ignorecase="yes" region="mWord">
+            <word name="for"/>
+            <word name="f"/>
+            <word name="if"/>
+            <word name="i"/>
+            <word name="while"/>
+            <word name="else"/>
+            <word name="e"/>
+            <word name="quit"/>
+            <word name="q"/>
+            <word name="set"/>
+            <word name="s"/>
+            <word name="do"/>
+            <word name="d"/>
+            <word name="new"/>
+            <word name="n"/>
+            <word name="kill"/>
+            <word name="k"/>
+            <word name="read"/>
+            <word name="r"/>
+            <word name="write"/>
+            <word name="w"/>
+            <word name="view"/>
+            <word name="v"/>
+            <word name="use"/>
+            <word name="u"/>
+            <word name="open"/>
+            <word name="o"/>
+            <word name="close"/>
+            <word name="c"/>
+            <word name="goto"/>
+            <word name="g"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="cache">
+         <block start="/^\s*#/" end="/$/x" scheme="MPrePro" region="mPreProc"/>
+         <regexp match="/^[^\^]+\^(IN[TC]|MAC)[^\^]*\^.*$/i" region0="StringEdge"/>
+         <block start="/^([a-zA-Z\%][\da-zA-Z\%]*|\d\d*)/" end="/$/" region01="mTagLabel" scheme="CacheCore"/>
+         <block start="/^\s/" end="/$/" scheme="CacheCore"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Timur Safin <timur@lanit.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="AutoIt">
+      <annotation>
+         <documentation><![CDATA[
+           AutoIt 2.x Script Syntax description
+           <filename>/\.(ml|mli|mlp)$/i</filename>
+         ]]></documentation>
+         <contributors>
+           Created by:
+              Peter Valach &lt;pvalach@gmx.net&gt;
+           Versions tested:
+              Colorer 3.0
+              AutoIt 2.32
+           Updated by:
+              Valerie Ivanov &lt;vi@ippe.obninsk.ru&gt;
+              for AutoIt 2.42
+           Updated by:
+              Eugene Kotlyarov http://ekot.narod.ru/far
+              for AutoIt 2.64
+         </contributors>
+      </annotation>
+      <import type="def"/>
+
+      <region name="aiComment" parent="Comment"/>
+      <region name="aiLabel" parent="Label"/>
+      <region name="aiSymb" parent="Symbol"/>
+      <region name="aiFunc" parent="String"/>
+      <region name="aiKey" parent="Parameter"/>
+      <region name="aiReser" parent="Keyword"/>
+      <region name="aiVar" parent="Var"/>
+
+
+      <scheme name="AutoItSend">
+<!-- Special & Multiple Keys -->
+         <regexp match="/([\!\+\^]*?\{.*?\})/" region0="aiKey"/>
+<!-- Alt/Ctrl/Shift Key Combinations -->
+         <regexp match="/([\!\+\^]+?\w)/" region0="aiKey"/>
+<!-- Key delimiter -->
+         <keywords region="aiSymb">
+            <symb name="#"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="AutoItIfMsg">
+<!-- KeyWords -->
+         <keywords ignorecase="yes" region="aiReser">
+            <word name="ABORT"/>
+            <word name="CANCEL"/>
+            <word name="IGNORE"/>
+            <word name="NO"/>
+            <word name="OK"/>
+            <word name="RETRY"/>
+            <word name="YES"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="AutoIt">
+<!-- Linear Comments-->
+         <regexp match="/^(;.*$)/" region0="aiComment"/>
+<!-- Labels -   :... -->
+         <regexp match="/^([A-Za-z]\w*?\:)/" region0="aiLabel"/>
+<!-- Send Command Special Syntax -->
+         <block start="/(^|\,)\s*?(send)\s*?(\,)/i" end="/($)/" scheme="AutoItSend" region01="aiSymb" region02="aiFunc" region03="aiSymb"/>
+<!-- IfMsgBox Command Special Syntax -->
+         <block start="/(^|\,)\s*?(ifmsgbox)\s*?(\,)/i" end="/(\,)?#0/" scheme="AutoItIfMsg" region01="aiSymb" region02="aiFunc" region03="aiSymb" region10="aiSymb"/>
+<!-- Enviroment variables -->
+         <regexp match="/(\%.*?\%)/" region0="aiVar"/>
+<!-- Symbols -->
+         <regexp match="/[^\\](\\[nt])/" region0="aiSymb"/>
+         <keywords region="aiSymb">
+            <symb name=","/>
+            <symb name="#"/>
+         </keywords>
+<!-- ADLIB section -->
+         <keywords region="aiLabel">
+            <word name="[ADLIB]"/>
+         </keywords>
+<!-- Functions -->
+<!-- Updated by VI for new version of AutoIt 2.42 -->
+         <keywords ignorecase="yes" region="aiFunc">
+            <word name="AdlibOn"/>
+            <word name="AdlibOff"/>
+            <word name="BlockInput"/>
+            <word name="Break"/>
+            <word name="DetectHiddenText"/>
+            <word name="EnvAdd"/>
+            <word name="EnvDiv"/>
+            <word name="EnvMult"/>
+            <word name="EndRepeat"/>
+            <word name="EnvSub"/>
+            <word name="Exit"/>
+            <word name="FileAppend"/>
+            <word name="FileCopy"/>
+            <word name="FileDelete"/>
+            <word name="FileCreateDir"/>
+            <word name="FileReadLine"/>
+            <word name="FileRemoveDir"/>
+            <word name="FileSelectFile"/>
+            <word name="Gosub"/>
+            <word name="Goto"/>
+            <word name="HideAutoItDebug"/>
+            <word name="HideAutoItWin"/>
+            <word name="IfInString"/>
+            <word name="IfNotInString"/>
+            <word name="IfWinExist"/>
+            <word name="IfWinNotExist"/>
+            <word name="IfWinActive"/>
+            <word name="IfWinNotActive"/>
+            <word name="IfEqual"/>
+            <word name="IfGreater"/>
+            <word name="IfGreaterOrEqual"/>
+            <word name="IfLess"/>
+            <word name="IfLessOrEqual"/>
+            <word name="IfNotEqual"/>
+            <word name="IfExist"/>
+            <word name="IfNotExist"/>
+            <word name="IfMsgBox"/>
+            <word name="IniDelete"/>
+            <word name="IniRead"/>
+            <word name="IniWrite"/>
+            <word name="InputBox"/>
+            <word name="LeftClick"/>
+            <word name="LeftClickDrag"/>
+            <word name="MouseGetPos"/>
+            <word name="MouseMove"/>
+            <word name="MsgBox"/>
+            <word name="RegRead"/>
+            <word name="RegWrite"/>
+            <word name="RegDelete"/>
+            <word name="Repeat"/>
+            <word name="Return"/>
+            <word name="RightClick"/>
+            <word name="RightClickDrag"/>
+            <word name="Run"/>
+            <word name="RunWait"/>
+            <word name="Send"/>
+            <word name="ShutDown"/>
+            <word name="Sleep"/>
+            <word name="SetBatchLines"/>
+            <word name="SetCapsLockState"/>
+            <word name="SetKeyDelay"/>
+            <word name="SetEnv"/>
+            <word name="SetStoreCapsLockMode"/>
+            <word name="SetTitleMatchMode"/>
+            <word name="SetWinDelay"/>
+            <word name="SplashTextOn"/>
+            <word name="SplashTextOff"/>
+            <word name="StringGetPos"/>
+            <word name="StringLeft"/>
+            <word name="StringLen"/>
+            <word name="StringMid"/>
+            <word name="StringReplace"/>
+            <word name="StringRight"/>
+            <word name="StringTrimLeft"/>
+            <word name="StringTrimRight"/>
+            <word name="WinGetActiveTitle"/>
+            <word name="WinKill"/>
+            <word name="WinMinimizeAllUnder"/>
+            <word name="WinMinimizeAllUndo"/>
+            <word name="WinWait"/>
+            <word name="WinWaitClose"/>
+            <word name="WinWaitActive"/>
+            <word name="WinWaitNotActive"/>
+            <word name="WinGetActiveStats"/>
+            <word name="WinHide"/>
+            <word name="WinShow"/>
+            <word name="WinRestore"/>
+            <word name="WinMinimize"/>
+            <word name="WinMaximize"/>
+            <word name="WinActivate"/>
+            <word name="WinClose"/>
+            <word name="WinMinimizeAll"/>
+            <word name="WinMove"/>
+            <word name="WinSetTitle"/>
+            <word name="WinGetActiveTitle"/>
+         </keywords>
+      </scheme>
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Peter Valach <pvalach@gmx.net>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

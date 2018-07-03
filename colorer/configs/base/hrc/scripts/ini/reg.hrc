@@ -1,0 +1,267 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="reg">
+
+<region name="group.name" parent="ini:group.name.defined"/>
+<region name="param.name" parent="ini:param.name.defined"/>
+<region name="param.quote" parent="ini:param.name"/>
+<region name="param.content" parent="ini:param.content.defined"/>
+
+<region name="type" parent="def:Prefix"/>
+<region name="type.dword" parent="def:NumberHex"/>
+<region name="type.hex" parent="def:NumberHex"/>
+<region name="type.string" parent="def:String"/>
+<region name="slash" parent="def:KeywordStrong"/>
+
+
+<scheme name="group">
+ <block start="/\M^\[HKEY.*\\Software\\Far.*\]/i" end="/\M^\[[^\]]+\]/" scheme="group-far"/>  
+ <block start="/\M^\[HKEY.*\]/" end="/\M^\[[^\]]+\]/" scheme="group-add"/>  
+ <block start="/\M^\[\-HKEY.*\]/" end="/\M^\[[^\]]+\]/" scheme="group-del"/>  
+ <inherit scheme="ini:comment"/>
+ <inherit scheme="ini:error"/>
+</scheme>
+
+<scheme name="group.name">
+ <inherit scheme="ini:group.name">
+ 	<virtual scheme='ini:group.name.error' subst-scheme='def:empty'/>
+ </inherit>
+ <!-- 
+ 	todo: this must be realised via ini:group.name.content
+ 	all concept must be revised....
+ -->
+ 
+ <regexp match="/\[?#1(\-)\MHKEY.*?\\/" region1="def:SymbolStrong"/>
+ <keywords region="group.name" ignorecase="no" worddiv="[\[\-\\]">
+  <word name="HKEY_LOCAL_MACHINE"/>
+  <word name="HKEY_CURRENT_USER"/>
+  <word name="HKEY_CLASSES_ROOT"/>
+  <word name="HKEY_USERS"/>
+  <word name="HKEY_CURRENT_CONFIG"/>
+  <word name="HKEY_DYN_DATA"/>
+  <symb name="\" region="def:SymbolStrong"/>
+ </keywords>
+ <inherit scheme="ini:clsid"/>
+</scheme>
+
+
+<!-- del -->
+
+<scheme name="group-del">
+ <inherit scheme="group-add">
+  <virtual scheme="param" subst-scheme="ini:error"/>
+  <virtual scheme="ini:item.content" subst-scheme="ini:error"/>
+ </inherit> 
+</scheme>
+
+
+
+<!-- add -->
+
+<scheme name="group-add">
+ <inherit scheme="ini:group">
+  <virtual scheme="ini:group.name" subst-scheme="group.name"/>
+  <virtual scheme="ini:param" subst-scheme="param"/> 
+ </inherit> 
+</scheme>
+
+
+<scheme name="param">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param.content"/>
+ </inherit>
+</scheme>
+
+
+
+<!-- param.* -->
+
+<scheme name="param.name">
+ <regexp match="/@/" region="param.name"/>
+ <block start='/(&quot;)/' end='/(&quot;)/'
+  scheme="param.name.content" region="ini:String"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="param.quote" region11="param.quote" 
+ />
+ <inherit scheme="ini:error"/>
+</scheme>
+
+ 	<scheme name="param.name.content">
+ 		<inherit scheme="ini:clsid"/>
+		<inherit scheme="string.path"/>
+		<inherit scheme="escape.word"/>
+ 	</scheme>
+
+ 	<scheme name="string.path">
+ 		<regexp match="/\M(((([a-zA-Z])\:)|(\\\\\\\\[a-z0-9\?]+))\\\\([^\:\*\?\\\/&quot;&gt;&lt;\|]*\\\\)*([^\:\*\?\\\/&quot;&gt;&lt;\|]*))/" 
+ 			region1="def:Path"
+ 		/>
+ 	</scheme>
+
+ 	<scheme name="escape.word">
+		<regexp match="/\\[&quot;\\]/" region0="def:StringContent"/>
+		<regexp match="/(\\)([^\\&quot;])/" region0="def:Error"/>
+ 	</scheme>
+
+<entity name="end" value="\M($|;)"/>
+
+<scheme name="param.content">
+ <regexp match="/hex(\(([\db])\))?(:)\M\s*$/" region="type.hex"
+  region0="type" region3="ini:SymbolStrong"
+  region1="ini:Symbol" region2="ini:Number"
+ />
+ <block start="/hex(\(([\db])\))?(:)/" end="/%ini:hex;{1,2}\s*\m%end;/" scheme="type.hex"
+  region00="type" region03="ini:SymbolStrong"
+  region01="ini:Symbol" region02="ini:Number"
+  
+ />
+ <regexp match="/(dword)(:)%ini:hex;{1,8}\s*%end;/" region="type.dword"
+  region1="type" region2="ini:SymbolStrong"
+ />
+ <block start='/(&quot;)\M.*(&quot;)/' end='/(&quot;)/'
+  scheme="group.param.content.string" region="type.string"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="def:StringEdge" region11="def:StringEdge" 
+ /> 
+ <regexp match="/\-\s*$/" region="type.dword"/>
+ <inherit scheme="ini:comment"/>
+ <inherit scheme="ini:error"/>
+</scheme>
+
+
+<!-- types -->
+
+	<scheme name="group.param.content.string">
+ 		<inherit scheme="param.content.escape.word"/>
+ 		<inherit scheme="ini:option"/>
+ 		<inherit scheme="param.content.var"/>
+ 		<inherit scheme="ini:clsid"/>
+ 		<inherit scheme="string.path"/>
+ 	</scheme>
+
+ 	<scheme name="param.content.escape.word">
+		<regexp match="/\\[\\&quot;]/" region0="def:StringContent"/>
+		<regexp match="/\\[^\\&quot;]/" region0="def:Error"/>
+ 	</scheme>
+
+ 	<scheme name="param.content.var">
+ 		<regexp match="/(%)\w*(%)/" 
+ 			region0="def:Var" region1="def:PairStart" region2="def:PairEnd"
+ 		/>
+ 	</scheme>
+
+
+<scheme name="type.hex">
+ <regexp match="/\b%ini:hex;{1,2}\b/" region="type.hex"/>
+ <regexp match="/%ini:hex;?#1\,\M(%ini:hex;|\\)/" region="ini:Symbol"/>
+ <regexp match="/,?#1\\\s*%end;/" region="slash"/>
+</scheme>
+
+
+
+<!-- far support -->
+
+<scheme name="group-far">
+ <inherit scheme="group-add">
+  <virtual scheme="param" subst-scheme="param-far"/> 
+ </inherit> 
+</scheme>
+
+<scheme name="param-far">
+ <block start='/\M\s*&quot;(Mask(s|\d*)|UpperGroup\d*)&quot;/i' end="/$/" scheme="param-far.mask"/>
+ <block start='/\M\s*&quot;Sequence&quot;/i' end="/$/" scheme="param-far.macro"/>
+ <inherit scheme="param"/>
+</scheme>
+
+
+<scheme name="param-far.mask">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-far.content-mask"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-far.content-mask">
+ <inherit scheme="param.content">
+  <virtual scheme="group.param.content.string" subst-scheme="type-far.string-mask"/>
+ </inherit>
+</scheme>
+
+<scheme name="type-far.string-mask">
+ <inherit scheme="far:mask.string"/>
+</scheme>
+
+
+<scheme name="param-far.macro">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-far.content-macro"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-far.content-macro">
+ <inherit scheme="param.content">
+  <virtual scheme="group.param.content.string" subst-scheme="type-far.string-macro"/>
+ </inherit>
+</scheme>
+
+<scheme name="type-far.string-macro">
+ <inherit scheme="far:macro.sequense-qoute"/>
+ <regexp match="/\\[\\nr&quot;&apos;]/" region="def:StringContent"/>
+</scheme>
+
+
+
+<!-- final -->
+
+<scheme name="reg">
+ <regexp match="/^(REGEDIT4|FARREG\d\d|Windows Registry Editor Version \d\.\d\d)\s*$/" 
+  region="def:Label"
+ />
+ <!--block start="/\M^\[[^\]]+\]/" end="/\M^\[[^\]]+\]/" scheme="group"/--> 
+ <inherit scheme="group"/>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 2003-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

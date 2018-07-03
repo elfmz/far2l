@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+
+	<type name="ss">
+		<annotation>
+			<documentation>
+				SilverStripe (http://silverstripe.org)
+			</documentation>
+			<contributors>
+				Eugene Myronchuk
+			</contributors>
+			<appinfo>
+				<prototype name="ss" group="inet" description="SilverStripe">
+					<location link="ss.hrc"/>
+					<filename weight="10">/\.(ss)$/</filename>
+				</prototype>
+			</appinfo>
+		</annotation>
+
+		<import type="def"/>
+
+		<region name="Insertion" parent="asp:Insertion"/>
+		<region name="OpenTag"   parent="asp:OpenTag"/>
+		<region name="CloseTag"  parent="asp:CloseTag"/>
+
+		<region name="Var" parent="def:Var" />
+		<region name="KnownVar" parent="def:VarStrong" />
+		<region name="ssTagName" parent="def:Keyword" />
+		<region name="ssCondition" parent="def:Keyword" />
+		<region name="IncludeFile" parent="SymbolStrong" />
+
+		<entity name="var" value="[a-zA-Z0-9_]+" />
+
+		<scheme name="ssComment">
+			<regexp match="/&lt;%-- (.(--%&gt;)?!)* $/x"
+				region="def:Error"
+			/>
+			<block start="/(&lt;%--)/" end="/(--%&gt;)/" scheme="Comment"
+				region01="PairStart"
+				region11="PairEnd"
+				region="def:Comment"
+			/>
+		</scheme>
+
+		
+		<scheme name="KnownVars">
+			<keywords region="KnownVar">
+				<word name="AbsoluteLink" />
+				<word name="AllNewsletters" />
+				<word name="Aggregate" />
+				<word name="ATT_val" />
+				<word name="BaseHref" />
+				<word name="Breadcrumbs" />
+				<word name="ChildrenOf" />
+				<word name="ClassName" />
+				<word name="CMSTreeClasses" />
+				<word name="Comments" />
+				<word name="ContentSource" />
+				<word name="Content" />
+				<word name="CopyContentFromID" />
+				<word name="Created" />
+				<word name="CurrentMember" />
+				<word name="CurrentPage" />
+				<word name="Debug" />
+				<word name="ElementName" />
+				<word name="EmailOnSubmit" />
+				<word name="EmailTo" />
+				<word name="ErrorCode" />
+				<word name="Even" />
+				<word name="EvenOdd" />
+				<word name="ExternalURL" />
+				<word name="FirstLast" />
+				<word name="First" />
+				<word name="Form" />
+				<word name="HasBrokenFile" />
+				<word name="HasBrokenLink" />
+				<word name="HomePageForDomain" />
+				<word name="ID" />
+				<word name="Iteration" />
+				<word name="InSection" />
+				<word name="JS_val" />
+				<word name="LastEdited" />
+				<word name="Last" />
+				<word name="Layout" />
+				<word name="LegacyURL" />
+				<word name="Level" />
+				<word name="LinkedPageID" />
+				<word name="LinkingMode" />
+				<word name="LinkOrCurrent" />
+				<word name="LinkOrSection" />
+				<word name="LinkToID" />
+				<word name="LinkTo" />
+				<word name="Link" />
+				<word name="LoginForm" />
+				<word name="MetaDescription" />
+				<word name="MetaKeywords" />
+				<word name="MetaTags" />
+				<word name="MetaTitle" />
+				<word name="MenuTitle" />
+				<word name="Menu" />
+				<word name="Me" />
+				<word name="MiddleString" />
+				<word name="Middle" />
+				<word name="MultipleParents" />
+				<word name="NestedTitle" />
+				<word name="NextPageLink" />
+				<word name="Now" />
+				<word name="Odd" />
+				<word name="OnCompleteMessage" />
+				<word name="PageComments" />
+				<word name="Page" />
+				<word name="PastMember" />
+				<word name="PastVisitor" />
+				<word name="ParentID" />
+				<word name="Pos" />
+				<word name="ProvideComments" />
+				<word name="RAW_val" />
+				<word name="RecordClassName" />
+				<word name="RedirectionType" />
+				<word name="RelativeLink" />
+				<word name="RepostClass" />
+				<word name="Root" />
+				<word name="SearchForm" />
+				<word name="SearchResults" />
+				<word name="Section2" />
+				<word name="ShowInMenus" />
+				<word name="ShowInSearch" />
+				<word name="SiteConfig" />
+				<word name="SilverStripeNavigator" />
+				<word name="Sort" />
+				<word name="SQL_val" />
+				<word name="Status" />
+				<word name="Subject" />
+				<word name="SubmitButtonText" />
+				<word name="Subscribe" />
+				<word name="Title" />
+				<word name="ThemeDir" />
+				<word name="Top" />
+				<word name="TotalItems" />
+				<word name="TreeTitle" />
+				<word name="URLSegment" />
+				<word name="VersionID" />
+				<word name="Version" />
+				<word name="XML_val" />
+			</keywords>
+		</scheme>
+		<scheme name="Conditions">
+			<keywords region="ssCondition">
+				<word name="if" />
+				<word name="unless" />
+			</keywords>
+		</scheme>
+
+		<scheme name="ss_t">
+			<regexp match="/(([&quot;&apos;])) (.*?) ((\1))/x"
+				region1="PairStart" region5="PairEnd"
+				region="String"
+			/>
+			<keywords region="Symbol">
+				<symb name=","/>
+			</keywords>
+		</scheme>
+		<scheme name="ssParenthes">
+			<regexp match="/~\s*,|,\s*\)?=/" region="def:Error"/>
+			<regexp match="/\d+/" region="def:Number" />
+			<inherit scheme="KnownVars" />
+			<keywords region="Symbol">
+				<symb name=","/>
+			</keywords>
+		</scheme>
+		<scheme name="Script">
+			<block start="/(&lt;%)?#2\s*((cached|control|with|loop|uncached))/" end="/(end_\Y3)/"
+				region02="PairStart" region10="PairEnd"
+				region03="ssTagName" region11="ssTagName"
+				scheme="Script" priority="low"
+			/>
+			<block start="/(((&lt;%)?#2\s*if|(el)?#2se|(else)?#4_if))/" end="/(&lt;%)?#2\s*((else(_if)?=|el(se)?=|end_if))/"
+				region01="PairStart" region12="PairEnd"
+				region02="ssTagName" region13="ssTagName"
+				scheme="Script" priority="low"
+			/>
+			<block start="/(&lt;%)?#2\s* (_t) ((\())/x" end="/(\))/x"
+				scheme="ss_t"
+				region02="ssTagName"
+				region03="PairStart" region10="PairEnd"
+				region04="Symbol" region11="Symbol"
+			/>
+			<block start="/(&lt;%)?#2\s* (sprintf) ((\()) (_t) ((\())/x" end="/((\))) (,) ([^\)]+) ((\)))/x"
+				scheme="ss_t"
+				region02="ssTagName"
+				region03="PairStart" region11="PairEnd"
+				region04="Symbol" region12="Symbol"
+				region05="ssTagName"
+				region13="Symbol"
+				region14="Var"
+				region06="PairStart" region15="PairEnd"
+				region07="Symbol" region16="Symbol"
+			/>
+			<block start="/(&lt;%)?#2\s* (require) \s+ (\w+) \s* ((\())/x" end="/(\))/x"
+				scheme="ss_t"
+				region02="ssTagName"
+				region04="PairStart" region10="PairEnd"
+				region05="Symbol" region11="Symbol"
+			/>
+			<regexp match="/(&lt;%)?#2\s* (include|require) \s+ ([\w]+)/x" region2="ssTagName" region3="IncludeFile" />
+			<regexp match="/(&lt;%)?#2\s* (base_tag|current_page) /x" region2="ssTagName" />
+			<regexp match="/(&lt;%)?#2\s* (end_(cached|control|loop|if|uncached|width)) /x" region2="def:Error" priority="low" />
+			<keywords region="Symbol">
+				<symb name="||"/>
+				<symb name="&amp;&amp;"/>
+				<symb name="."/>
+				<symb name=","/>
+				<symb name="!="/>
+				<symb name="=="/>
+				<symb name="="/>
+			</keywords>
+			<inherit scheme="KnownVars"/>
+			<inherit scheme="Conditions"/>
+			<regexp match="/\d+/" region="Number" />
+			<keywords region="def:Error">
+				<symb name="," />
+				<symb name="[" />
+				<symb name="]" />
+			</keywords>
+			<block start="/(\()/" end="/(\))/" scheme="ssParenthes"
+				region00="PairStart" region10="PairEnd"
+				region01="Symbol" region11="Symbol"
+			/>
+			<regexp match="/((&quot;))[^&quot;]*((&quot;))/" region="def:String"
+				region1="PairStart"  region3="PairEnd"
+				region2="StringEdge" region4="StringEdge"
+			/>
+			<regexp match="/((&apos;))[^&apos;]*((&apos;))/" region="def:String"
+				region1="PairStart"  region3="PairEnd"
+				region2="StringEdge" region4="StringEdge"
+			/>
+		</scheme>
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<scheme name="Var">
+			<regexp match="/~\./" region="def:Error" />
+			<regexp match="/\.\./" region="def:Error" />
+			<regexp match="/\./" region="Symbol" />
+			<inherit scheme="KnownVars" />
+			<block start="/\w/" end="/(\W)?=/"
+				region="Var" scheme="KnownVars"
+			/>
+			<!--regexp match="/\.[\w_]+/" region="Var" /-->
+			<block start="/(\()/" end="/(\))/" scheme="ssParenthes"
+				region00="PairStart" region10="PairEnd"
+				region01="Symbol" region11="Symbol"
+			/>
+			<!--regexp match="/((\()) ([^)]*) ((\)))/x"
+				region1="PairStart" region2="Symbol" region3="SymbolStrong" region4="Symbol" region5="PairEnd"
+			/-->
+		</scheme>
+		<scheme name="Variables">
+			<block start="/((\{))\$/" end="/(\})/"
+				region="Var" region01="PairStart" region02="SymbolStrong" region10="SymbolStrong" region11="PairEnd"
+				scheme="Var" region00="Var"
+			/>
+			<block start="/\$ \w?=/x" end="/(\W)?=/"
+				scheme="Var" region00="Var"
+			/>
+		</scheme>
+
+
+
+		<scheme name="Insertion">
+			<inherit scheme="ssComment" />
+			<inherit scheme="Variables" />
+			<block start="/(&lt;%)/" end="/(%&gt;)/" 
+				priority="low" content-priority="low"
+				scheme="ssScript" region="Insertion" 
+				region00="OpenTag" region10="OpenTag" 
+			/>
+		</scheme>
+
+
+		<scheme name="InverseInsertion">
+			<block start="/(%&gt;)/" end="/(&lt;%)/" scheme="html"
+				priority="low" region="Text" inner-region="yes"
+				region00="Insertion" region10="Insertion" 
+				region01="OpenTag"   region11="OpenTag" 
+			/>
+		</scheme>
+
+		<scheme name="ssScript">
+			<inherit scheme="InverseInsertion"/>
+			<inherit scheme="Script">
+				<virtual scheme="Script" subst-scheme="ssScript"/>
+			</inherit>
+		</scheme>
+
+		<scheme name="html">
+			<inherit scheme="asp:html">
+				<virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+			</inherit>
+		</scheme>
+		<scheme name="ss">
+			<inherit scheme="asp:html">
+				<virtual scheme="asp:InverseInsertion" subst-scheme="InverseInsertion"/>
+				<virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+				<virtual scheme="asp:targetLanguage" subst-scheme="ssScript"/>
+				<virtual scheme="asp:html" subst-scheme="html"/>
+			</inherit>
+		</scheme>
+	</type>
+</hrc>

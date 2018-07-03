@@ -1,0 +1,633 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+   <type name="apache">
+
+    <annotation><documentation>
+      Language: Apache configuration
+       (httpd.conf, srm.conf, access.conf, .htaccess)
+      URL: http://www.apache.org/
+    </documentation><contributors><![CDATA[
+     Maintainer: Artem Zankovich <z_artem@yahoo.com>
+     Credits:
+      David Ne\v{c}as (Yeti) <yeti@physics.muni.cz> (vim syntax)
+      Eugene Efremov <4mirror@mail.ru>
+     Last Change: 5 Mar 2004
+    ]]></contributors></annotation>
+
+
+      <import type="def"/>
+
+      <region name="ApacheString" parent="String"/>
+      <region name="ApacheSymbol" parent="Symbol"/>
+      <region name="ApacheOpenTag" parent="OpenTag"/>
+      <region name="ApacheCloseTag" parent="CloseTag"/>
+      <region name="ApacheNumber" parent="Number"/>
+      <region name="ApacheComment" parent="Comment"/>
+      <region name="ApacheWord" parent="Keyword"/>
+      <region name="ApacheOption" parent="Parameter"/>
+      <region name="ApacheModeWord" parent="Var"/>
+
+      <entity name="apWD" value="[\s,]"/>
+      <entity name="apSWD" value="[\s]"/>
+      <entity name="apSWDT" value="[\s&gt;]"/>
+
+      <scheme name="ApacheCore">
+<!-- Comments -->
+         <regexp match="/\s*(#.*$)/" region0="ApacheComment"/>
+<!-- Strings -->
+         <regexp match="/\&#34;.*?[^\\]?#1\&#34;/" region0="ApacheString"/>
+         <block start="/\&#34;/" end="/[^\\]?#1\&#34;/" scheme="Comment" region="ApacheString" region00="PairStart" region10="PairEnd"/>
+<!-- Numbers -->
+         <regexp match="/\b\d+\b/" region0="ApacheNumber"/>
+<!-- Paired -->
+         <block start="/(\()/" end="/(\))/" scheme="apache" region00="ApacheSymbol" region01="PairStart" region10="ApacheSymbol" region11="PairEnd"/>
+         <keywords region="ApacheSymbol">
+            <symb name=","/>
+            <symb name="+"/>
+            <symb name="-"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="apache">
+<!-- Functions list -->
+         <regexp match="/^\M\s*(?{Function}\#\#\# Section \d+)/i"/>
+         <inherit scheme="ApacheCore"/>
+         <inherit scheme="NetAddresses"/>
+         <block
+          start="/^\s*((&lt;)
+           (Directory(Match)?|Files(Match)?|IfModule|IfDefine|Location(Match)?|VirtualHost))
+           \s+(?{ApacheString}.*?)(?{ApacheOpenTag}&gt;)
+          /ix"
+          end="/^\s*((&lt;\/)(\s*\y3)\s*(&gt;))/"
+          scheme="apache" region01="PairStart"
+          region02="ApacheOpenTag" region03="ApacheWord"
+          region11="PairEnd" region12="ApacheCloseTag"
+          region13="ApacheWord" region14="ApacheCloseTag"
+         />
+         <block start="/^\s*((&lt;) (Limit(Except)?))/ix"
+          end="/^\s*((&lt;\/)(\s*\y3)\s*(&gt;))/" scheme="apache"
+          region01="PairStart" region02="ApacheOpenTag" region03="ApacheWord"
+          region11="PairEnd" region12="ApacheCloseTag"
+          region13="ApacheWord" region14="ApacheCloseTag"
+         />
+         <regexp match="/[\w\s]?#1&gt;/" region="ApacheCloseTag"/>
+
+         <block start="/^\s*(AuthType)\s+/i" end="/$/" scheme="ApacheAuthType" region00="ApacheWord"/>
+         <block start="/^\s*(AllowOverride)/i" end="/$/" scheme="ApacheAllowOverride" region00="ApacheWord"/>
+         <block start="/^\s*(Limit(Except)?)\s+/i" end="/$/" scheme="ApacheLimit" region00="ApacheWord" region10="ApacheWord"/>
+         <block start="/^\s*((Allow|Deny)\s+(from))\s+/i" end="/$/" scheme="ApacheAllowDeny" region01="ApacheWord" region10="ApacheWord"/>
+         <block start="/^\s*(Order)\s+/i" end="/$/" scheme="ApacheOrder" region00="ApacheWord" region10="ApacheWord"/>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AccessConfig"/>
+            <word name="AccessFileName"/>
+            <word name="AddDefaultCharset"/>
+            <word name="AddModule"/>
+            <word name="AuthName"/>
+            <word name="AuthType"/>
+            <word name="BindAddress"/>
+            <word name="BS2000Account"/>
+            <word name="ClearModuleList"/>
+            <word name="ContentDigest"/>
+            <word name="CoreDumpDirectory"/>
+            <word name="DefaultType"/>
+            <word name="DocumentRoot"/>
+            <word name="ErrorDocument"/>
+            <word name="ErrorLog"/>
+            <word name="Group"/>
+            <word name="HostNameLookups"/>
+            <word name="IdentityCheck"/>
+            <word name="Include"/>
+            <word name="KeepAlive"/>
+            <word name="KeepAliveTimeout"/>
+            <word name="LimitRequestBody"/>
+            <word name="LimitRequestFields"/>
+            <word name="LimitRequestFieldsize"/>
+            <word name="LimitRequestLine"/>
+            <word name="Listen"/>
+            <word name="ListenBacklog"/>
+            <word name="LockFile"/>
+            <word name="LogLevel"/>
+            <word name="MaxClients"/>
+            <word name="MaxKeepAliveRequests"/>
+            <word name="MaxRequestsPerChild"/>
+            <word name="MaxSpareServers"/>
+            <word name="MinSpareServers"/>
+            <word name="NameVirtualHost"/>
+            <word name="Options"/>
+            <word name="PidFile"/>
+            <word name="Port"/>
+            <word name="require"/>
+            <word name="ResourceConfig"/>
+            <word name="RLimitCPU"/>
+            <word name="RLimitMEM"/>
+            <word name="RLimitNPROC"/>
+            <word name="Satisfy"/>
+            <word name="ScoreBoardFile"/>
+            <word name="ScriptInterpreterSource"/>
+            <word name="SendBufferSize"/>
+            <word name="ServerAdmin"/>
+            <word name="ServerAlias"/>
+            <word name="ServerName"/>
+            <word name="ServerPath"/>
+            <word name="ServerRoot"/>
+            <word name="ServerSignature"/>
+            <word name="ServerTokens"/>
+            <word name="ServerType"/>
+            <word name="StartServers"/>
+            <word name="ThreadsPerChild"/>
+            <word name="ThreadStackSize"/>
+            <word name="TimeOut"/>
+            <word name="UseCanonicalName"/>
+            <word name="User"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="Any"/>
+            <word name="All"/>
+            <word name="On"/>
+            <word name="Off"/>
+            <word name="Double"/>
+            <word name="EMail"/>
+            <word name="DNS"/>
+            <word name="Min"/>
+            <word name="Minimal"/>
+            <word name="OS"/>
+            <word name="Prod"/>
+            <word name="ProductOnly"/>
+            <word name="Full"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="emerg"/>
+            <word name="alert"/>
+            <word name="crit"/>
+            <word name="error"/>
+            <word name="warn"/>
+            <word name="notice"/>
+            <word name="info"/>
+            <word name="debug"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="registry"/>
+            <word name="script"/>
+            <word name="inetd"/>
+            <word name="standalone"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="ExecCGI"/>
+            <word name="FollowSymLinks"/>
+            <word name="Includes"/>
+            <word name="IncludesNoExec"/>
+            <word name="Indexes"/>
+            <word name="MultiViews"/>
+            <word name="SymLinksIfOwnerMatch"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="user"/>
+            <word name="group"/>
+            <word name="valid-user"/>
+         </keywords>
+         <keywords region="ApacheModeWord" worddiv="%apSWDT;">
+            <word name="GET"/>
+            <word name="POST"/>
+            <word name="PUT"/>
+            <word name="DELETE"/>
+            <word name="CONNECT"/>
+            <word name="OPTIONS"/>
+            <word name="TRACE"/>
+            <word name="PATCH"/>
+            <word name="PROPFIND"/>
+            <word name="PROPPATCH"/>
+            <word name="MKCOL"/>
+            <word name="COPY"/>
+            <word name="MOVE"/>
+            <word name="LOCK"/>
+            <word name="UNLOCK"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="permanent"/>
+            <word name="temp"/>
+            <word name="seeother"/>
+            <word name="gone"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="none"/>
+            <word name="auth"/>
+            <word name="auth-int"/>
+            <word name="MD5"/>
+            <word name="MD5-sess"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="DescriptionWidth"/>
+            <word name="FancyIndexing"/>
+            <word name="FoldersFirst"/>
+            <word name="IconHeight"/>
+            <word name="IconsAreLinks"/>
+            <word name="IconWidth"/>
+            <word name="NameWidth"/>
+            <word name="ScanHTMLTitles"/>
+            <word name="SuppressColumnSorting"/>
+            <word name="SuppressDescription"/>
+            <word name="SuppressHTMLPreamble"/>
+            <word name="SuppressLastModified"/>
+            <word name="SuppressSize"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="Ascending"/>
+            <word name="Descending"/>
+            <word name="Name"/>
+            <word name="Date"/>
+            <word name="Size"/>
+            <word name="Description"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="set"/>
+            <word name="unset"/>
+            <word name="append"/>
+            <word name="add"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="nocontent"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="on"/>
+            <word name="off"/>
+            <word name="full"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="block"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="inherit"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="StdEnvVars"/>
+            <word name="CompatEnvVars"/>
+            <word name="ExportCertData"/>
+            <word name="FakeBasicAuth"/>
+            <word name="StrictRequire"/>
+            <word name="OptRenegotiate"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="builtin"/>
+            <word name="sem"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="file:"/>
+            <word name="exec:"/>
+            <word name="egd:"/>
+            <word name="dbm:"/>
+            <word name="shm:"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="SSLv2"/>
+            <word name="SSLv3"/>
+            <word name="TLSv1"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="optional"/>
+            <word name="require"/>
+            <word name="optional_no_ca"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="syn"/>
+            <word name="keyword"/>
+            <word name="apacheOption"/>
+            <word name="none"/>
+            <word name="formatted"/>
+            <word name="semiformatted"/>
+            <word name="unformatted"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="Action"/>
+            <word name="Script"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="Alias"/>
+            <word name="AliasMatch"/>
+            <word name="Redirect"/>
+            <word name="RedirectMatch"/>
+            <word name="RedirectTemp"/>
+            <word name="RedirectPermanent"/>
+            <word name="ScriptAlias"/>
+            <word name="ScriptAliasMatch"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AuthGroupFile"/>
+            <word name="AuthUserFile"/>
+            <word name="AuthAuthoritative"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="Anonymous"/>
+            <word name="Anonymous_Authoritative"/>
+            <word name="Anonymous_LogEmail"/>
+            <word name="Anonymous_MustGiveEmail"/>
+            <word name="Anonymous_NoUserID"/>
+            <word name="Anonymous_VerifyEmail"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AuthDBGroupFile"/>
+            <word name="AuthDBUserFile"/>
+            <word name="AuthDBAuthoritative"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AuthDBMGroupFile"/>
+            <word name="AuthDBMUserFile"/>
+            <word name="AuthDBMAuthoritative"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AuthDigestFile"/>
+            <word name="AuthDigestGroupFile"/>
+            <word name="AuthDigestQop"/>
+            <word name="AuthDigestNonceLifetime"/>
+            <word name="AuthDigestNonceFormat"/>
+            <word name="AuthDigestNcCheck"/>
+            <word name="AuthDigestAlgorithm"/>
+            <word name="AuthDigestDomain"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AddAlt"/>
+            <word name="AddAltByEncoding"/>
+            <word name="AddAltByType"/>
+            <word name="AddDescription"/>
+            <word name="AddIcon"/>
+            <word name="AddIconByEncoding"/>
+            <word name="AddIconByType"/>
+            <word name="DefaultIcon"/>
+            <word name="FancyIndexing"/>
+            <word name="HeaderName"/>
+            <word name="IndexIgnore"/>
+            <word name="IndexOptions"/>
+            <word name="IndexOrderDefault"/>
+            <word name="ReadmeName"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="BrowserMatch"/>
+            <word name="BrowserMatchNoCase"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="MetaFiles"/>
+            <word name="MetaDir"/>
+            <word name="MetaSuffix"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="ScriptLog"/>
+            <word name="ScriptLogLength"/>
+            <word name="ScriptLogBuffer"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="Define"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AuthDigestFile"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="DirectoryIndex"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="PassEnv"/>
+            <word name="SetEnv"/>
+            <word name="UnsetEnv"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="Example"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="ExpiresActive"/>
+            <word name="ExpiresByType"/>
+            <word name="ExpiresDefault"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="Header"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="ImapMenu"/>
+            <word name="ImapDefault"/>
+            <word name="ImapBase"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="XBitHack"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AddModuleInfo"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="ISAPIReadAheadBuffer"/>
+            <word name="ISAPILogNotSupported"/>
+            <word name="ISAPIAppendLogToErrors"/>
+            <word name="ISAPIAppendLogToQuery"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AgentLog"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="CookieLog"/>
+            <word name="CustomLog"/>
+            <word name="LogFormat"/>
+            <word name="TransferLog"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="RefererIgnore"/>
+            <word name="RefererLog"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="AddCharset"/>
+            <word name="AddEncoding"/>
+            <word name="AddHandler"/>
+            <word name="AddLanguage"/>
+            <word name="AddType"/>
+            <word name="DefaultLanguage"/>
+            <word name="ForceType"/>
+            <word name="RemoveEncoding"/>
+            <word name="RemoveHandler"/>
+            <word name="RemoveType"/>
+            <word name="SetHandler"/>
+            <word name="TypesConfig"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="MimeMagicFile"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="MMapFile"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="CacheNegotiatedDocs"/>
+            <word name="LanguagePriority"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="ProxyRequests"/>
+            <word name="ProxyRemote"/>
+            <word name="ProxyPass"/>
+            <word name="ProxyPassReverse"/>
+            <word name="ProxyBlock"/>
+            <word name="AllowCONNECT"/>
+            <word name="ProxyReceiveBufferSize"/>
+            <word name="NoProxy"/>
+            <word name="ProxyDomain"/>
+            <word name="ProxyVia"/>
+            <word name="CacheRoot"/>
+            <word name="CacheSize"/>
+            <word name="CacheMaxExpire"/>
+            <word name="CacheDefaultExpire"/>
+            <word name="CacheLastModifiedFactor"/>
+            <word name="CacheGcInterval"/>
+            <word name="CacheDirLevels"/>
+            <word name="CacheDirLength"/>
+            <word name="CacheForceCompletion"/>
+            <word name="NoCache"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="RewriteEngine"/>
+            <word name="RewriteOptions"/>
+            <word name="RewriteLog"/>
+            <word name="RewriteLogLevel"/>
+            <word name="RewriteLock"/>
+            <word name="RewriteMap"/>
+            <word name="RewriteBase"/>
+            <word name="RewriteCond"/>
+            <word name="RewriteRule"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="RoamingAlias"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="BrowserMatch"/>
+            <word name="BrowserMatchNoCase"/>
+            <word name="SetEnvIf"/>
+            <word name="SetEnvIfNoCase"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="LoadFile"/>
+            <word name="LoadModule"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="CheckSpelling"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="SSLPassPhraseDialog"/>
+            <word name="SSLMutex"/>
+            <word name="SSLRandomSeed"/>
+            <word name="SSLSessionCache"/>
+            <word name="SSLSessionCacheTimeout"/>
+            <word name="SSLEngine"/>
+            <word name="SSLProtocol"/>
+            <word name="SSLCipherSuite"/>
+            <word name="SSLCertificateFile"/>
+            <word name="SSLCertificateKeyFile"/>
+            <word name="SSLCertificateChainFile"/>
+            <word name="SSLCACertificatePath"/>
+            <word name="SSLCACertificateFile"/>
+            <word name="SSLCARevocationPath"/>
+            <word name="SSLCARevocationFile"/>
+            <word name="SSLVerifyClient"/>
+            <word name="SSLVerifyDepth"/>
+            <word name="SSLLog"/>
+            <word name="SSLLogLevel"/>
+            <word name="SSLOptions"/>
+            <word name="SSLRequireSSL"/>
+            <word name="SSLRequire"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="ExtendedStatus"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="UserDir"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="CookieExpires"/>
+            <word name="CookieName"/>
+            <word name="CookieTracking"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ApacheWord" worddiv="%apSWD;">
+            <word name="VirtualDocumentRoot"/>
+            <word name="VirtualDocumentRootIP"/>
+            <word name="VirtualScriptAlias"/>
+            <word name="VirtualScriptAliasIP"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="ApacheAuthType">
+         <inherit scheme="ApacheCore"/>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="Basic"/>
+            <word name="Digest"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="ApacheAllowOverride">
+         <inherit scheme="ApacheCore"/>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="All"/>
+            <word name="AuthConfig"/>
+            <word name="FileInfo"/>
+            <word name="Indexes"/>
+            <word name="None"/>
+            <word name="Limit"/>
+            <word name="Options"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="ApacheLimit">
+         <inherit scheme="ApacheCore"/>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="Limit"/>
+            <word name="LimitExcept"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="ApacheAllowDeny">
+         <inherit scheme="ApacheCore"/>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="All"/>
+            <word name="None"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="ApacheOrder">
+         <inherit scheme="ApacheCore"/>
+         <keywords ignorecase="yes" region="ApacheOption" worddiv="%apWD;">
+            <word name="Deny"/>
+            <word name="Allow"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

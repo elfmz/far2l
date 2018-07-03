@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="ocaml">
+      <annotation>
+         <documentation><![CDATA[
+           OCaml Syntax  http://www.ocaml.org
+           <filename>/\.(ml|mli|mlp)$/i</filename>
+           Depends on Standard ML and C schemes
+         ]]></documentation>
+         <contributors>
+           Eugene Kotlyarov 2:5058/26.9@fidonet.org http://ekot.narod.ru/far
+         </contributors>
+      </annotation>
+
+      <region name="String" parent="def:String"/>
+      <region name="Comment" parent="def:Comment"/>
+      <region name="Directive" parent="def:Directive"/>
+      <region name="Symbol" parent="def:Symbol"/>
+      <region name="Keyword" parent="def:Keyword"/>
+      <region name="Number" parent="def:Number"/>
+      <region name="PairStart" parent="def:PairStart"/>
+      <region name="PairEnd" parent="def:PairEnd"/>
+      <region name="StringEscape" parent="c:StringEscape"/>
+
+      <scheme name="StringContent">
+       <regexp match="/\\\\$/" region="def:Error"/>
+       <regexp match="/\\[^xX\d]/" region="StringEscape"/>
+       <regexp match="/\\$/" region="StringEscape"/>
+       <regexp match="/\\x[\da-fA-F]{1,8}/i" region="StringEscape"/>
+       <regexp match="/\\[0-9]{1,3}/" region="StringEscape"/>
+       <regexp match="/\%[\-\+\#0]*?[\d\*]*(\.[\d\*]+)?[Ll]?[SsCcsuidopxXnEefgG]/" region="StringEscape"/>
+       <regexp match="/[^\\\&#34;]$/" region="def:Error"/>
+      </scheme>
+      <scheme name="String">
+       <block start="/&#34;/" end="/&#34;/" scheme="StringContent" region="String"/>
+      </scheme>
+
+      <scheme name="ocaml">
+         <inherit scheme="String"/>
+<!-- Comments -->
+         <block start="/\(\*/" end="/\*\)/" scheme="sml:NestedComment" region="Comment" region00="PairStart" region10="PairEnd"/>
+<!-- paired -->
+         <block start="/(\[&lt;)/" end="/(&gt;\])/" scheme="ocaml" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\()/" end="/(\))/" scheme="ocaml" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[\|)/" end="/(\|\])/" scheme="ocaml" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="ocaml" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\{&lt;)/" end="/(&gt;\})/" scheme="ocaml" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\{)/" end="/(\})/" scheme="ocaml" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/\b(while|for)\b/" end="/\b(done)\b/" scheme="ocaml"
+           region01="Keyword" region00="PairStart"
+           region10="Keyword" region11="PairEnd"/>
+         <block start="/\b(try)\b/" end="/\b(with)\b/" scheme="ocaml"
+           region01="Keyword" region00="PairStart"
+           region10="Keyword" region11="PairEnd"/>
+         <block start="/\b(declare|sig|object|struct|begin)\b/" end="/\b(end)\b/" scheme="ocaml"
+           region01="Keyword" region00="PairStart"
+           region10="Keyword" region11="PairEnd"/>
+<!-- paired CamlP4-->
+         <block start="/\b(EXTEND)\b/" end="/\b(END)\b/" scheme="ocaml"
+           region01="Keyword" region00="PairStart"
+           region10="Keyword" region11="PairEnd"/>
+
+<!-- Top level let-bindings are listed as functions -->
+         <regexp match="/^\M (let) (\s+rec)? \s+ (?{def:Function}[_\w]+)/ix"/>
+<!-- Directive -->
+         <regexp match='/^#[ ]*[0-9]+ [ ]*".*"[\s]*$/' region="Directive"/>
+         <regexp match="/^#[ ]*[0-9]+$/" region="Directive"/>
+<!-- Character constants  -->
+         <regexp match="/'((\\.)|[^\\']){0,8}'/" region0="String"/>
+<!-- Integer literals   -->
+         <regexp match="/\b[\-]?(\d+ | 0x[\da-f_]+| 0o[0-7_]+ | 0b[01_]+)\b/ix" region0="Number"/>
+<!-- Floating-point literals [-]{0...9}+[.{0...9}][(e|E)[+|-] {0...9}+] -->
+         <regexp match="/\b([0-9_.]+(E|e[\-+]?\d+)?)\b/" region0="Number"/>
+<!-- Symbols -->
+         <keywords region="Symbol">
+            <symb name="?"/>
+            <symb name="`"/>
+            <symb name="'"/>
+            <symb name="!"/>
+            <symb name=","/>
+            <symb name=":"/>
+            <symb name=":&gt;"/>
+            <symb name=";"/>
+            <symb name="..."/>
+            <symb name="|"/>
+            <symb name="="/>
+            <symb name="=&gt;"/>
+            <symb name="-&gt;"/>
+            <symb name="#"/>
+            <symb name="*"/>
+<!-- other -->
+            <symb name="+"/>
+            <symb name="^"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+         </keywords>
+         <keywords region="Keyword">
+<!-- reserved words -->
+           <word name="and"/>
+           <word name="as"/>
+           <word name="assert"/>
+           <word name="asr"/>
+           <word name="begin"/>
+           <word name="class"/>
+           <word name="closed"/>
+           <word name="constraint"/>
+           <word name="do"/>
+           <word name="done"/>
+           <word name="downto"/>
+           <word name="else"/>
+           <word name="end"/>
+           <word name="exception"/>
+           <word name="external"/>
+           <word name="false"/>
+           <word name="for"/>
+           <word name="fun"/>
+           <word name="function"/>
+           <word name="functor"/>
+           <word name="if"/>
+           <word name="in"/>
+           <word name="include"/>
+           <word name="inherit"/>
+           <word name="land"/>
+           <word name="lazy"/>
+           <word name="let"/>
+           <word name="lor"/>
+           <word name="lsl"/>
+           <word name="lsr"/>
+           <word name="lxor"/>
+           <word name="match"/>
+           <word name="method"/>
+           <word name="mod"/>
+           <word name="module"/>
+           <word name="mutable"/>
+           <word name="new"/>
+           <word name="None"/>
+           <word name="of"/>
+           <word name="open"/>
+           <word name="or"/>
+           <word name="parser"/>
+           <word name="private"/>
+           <word name="raise"/>
+           <word name="rec"/>
+           <word name="ref"/>
+           <word name="sig"/>
+           <word name="Some"/>
+           <word name="struct"/>
+           <word name="then"/>
+           <word name="to"/>
+           <word name="true"/>
+           <word name="try"/>
+           <word name="type"/>
+           <word name="virtual"/>
+           <word name="when"/>
+           <word name="while"/>
+           <word name="with"/>
+<!-- Built-in types -->
+           <word name="array"/>
+           <word name="bool"/>
+           <word name="char"/>
+           <word name="int"/>
+           <word name="list"/>
+           <word name="real"/>
+           <word name="string"/>
+           <word name="unit"/>
+           <word name="vector"/>
+           <word name="word"/>
+<!-- CamlP4 -->
+           <word name="False"/>
+           <word name="True"/>
+           <word name="val"/>
+           <word name="value"/>
+           <word name="AFTER"/>
+           <word name="ANTIQUOT"/>
+           <word name="BEFORE"/>
+           <word name="CHAR"/>
+           <word name="DELETE_RULE"/>
+           <word name="END"/>
+           <word name="EOI"/>
+           <word name="EXTEND"/>
+           <word name="FIRST"/>
+           <word name="FLOAT"/>
+           <word name="GLOBAL"/>
+           <word name="INT"/>
+           <word name="LAST"/>
+           <word name="LEFTA"/>
+           <word name="LEVEL"/>
+           <word name="LIDENT"/>
+           <word name="LIST0"/>
+           <word name="LIST1"/>
+           <word name="LOCATE"/>
+           <word name="NEXT"/>
+           <word name="NONA"/>
+           <word name="OPT"/>
+           <word name="QUOTATION"/>
+           <word name="RIGHTA"/>
+           <word name="SELF"/>
+           <word name="SEP"/>
+           <word name="STRING"/>
+           <word name="UIDENT"/>
+         </keywords>
+      </scheme>
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

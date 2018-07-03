@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="dtd">
+
+    <annotation><documentation>
+      XML DTD basic syntax
+    </documentation><appinfo>
+    	<mime type='application/xml-dtd'/>
+    </appinfo></annotation>
+    
+    
+    <entity name="PEReference" value="\%%xml:Name;\;"/>
+    
+    
+    <region name="badChar"       parent="xml:badChar" description="bad stream"/>
+
+    <region name="PEReference"   parent="xml:EntityRef" description="XML Parameter Entity Reference"/>
+    <region name="EntityValue"   parent="def:String"/>
+    
+    
+    <region name="doctypedecl"        parent="xml:decl"/>
+    <region name="doctypedecl.start"  parent="xml:decl.start"/>
+    <region name="doctypedecl.end"    parent="xml:decl.end"/>
+    <region name="doctypedecl.tag"    parent="def:Keyword"/> <!-- xml:decl.name -->
+    
+    <region name="doctypedecl.name"   parent="def:KeywordStrong"/>
+    <region name="doctypedecl.attr"   parent="xml:decl.name"/>
+
+   
+    <region name='Literal'            parent="xml:AttValue"/>
+    <region name='Literal.start'      parent="xml:AttValue.start"/>
+    <region name='Literal.end'        parent="xml:AttValue.end"/>
+    
+    
+    <region name="ExternalID"         parent="doctypedecl.attr"/>
+    <region name="ExternalID.SYSTEM"  parent="ExternalID"/>
+    <region name="ExternalID.PUBLIC"  parent="ExternalID"/>
+    
+
+    <region name="markupdecl"         parent="def:default"/>
+    <region name="markupdecl.start"   parent="xml:element.start.lt"/>
+    <region name="markupdecl.end"     parent="xml:element.start.gt"/>
+
+    <!--
+      *.tag             - tag name
+      *.start, *.end    - declaration start and end brackets
+      *.name            - element name declaration
+      *.spec            - type specifier declaration
+    -->
+    <!-- full element -->
+    <region name="elementdecl"        parent="doctypedecl"/>
+    <!-- element name -->
+    <region name="elementdecl.name"   parent="doctypedecl.name"/>
+    
+    <!-- internal element names -->
+    <region name="elementdecl.value"  parent="markupdecl"/>
+    <region name="elementdecl.valref" parent="PEReference"/>
+    
+    <!-- ELEMENT -->
+    <region name="elementdecl.tag"    parent="doctypedecl.tag"/>
+    <!-- <! > -->
+    <region name="elementdecl.start"  parent="doctypedecl.start"/>
+    <region name="elementdecl.end"    parent="doctypedecl.end"/>
+
+    <!-- EMPTY ANY #PCDATA -->
+    <region name="contentspec.spec"   parent="doctypedecl.attr"/>
+    <region name="contentspec.value"  parent="elementdecl.value"/>
+    <!-- ( ) -->
+    <region name="contentspec.start"  parent="def:Symbol"/>
+    <region name="contentspec.end"    parent="def:Symbol"/>
+    <!-- | , + * ? -->
+    <region name="contentspec.op"     parent="def:Operator"/>
+
+
+    <region name="conditionalSect"       parent="doctypedecl"/>
+    <region name="conditionalSect.spec"  parent="def:Keyword"/>
+    <region name="conditionalSect.start" parent="doctypedecl.start"/>
+    <region name="conditionalSect.end"   parent="doctypedecl.end"/>
+
+
+    <region name="AttlistDecl"        parent="doctypedecl"/>
+    <!-- element name -->
+    <region name="AttlistDecl.name"   parent="doctypedecl.name"/>
+    <!-- <! > -->
+    <region name="AttlistDecl.start"  parent="doctypedecl.start"/>
+    <region name="AttlistDecl.end"    parent="doctypedecl.end"/>
+    <!-- ATTLIST -->
+    <region name="AttlistDecl.tag"    parent="doctypedecl.tag"/>
+
+    <!-- attr name -->
+    <region name="AttDef.name"        parent="AttlistDecl.name"/>
+    <!-- ID, IDREF ... -->
+    <region name="AttType.spec"       parent="doctypedecl.attr"/>
+    <!-- NOTATION -->
+    <region name="NotationType.spec"  parent="AttType.spec"/>
+    <!-- #REQUIRED #IMPLIED #FIXED -->
+    <region name="DefaultDecl.spec"   parent="AttType.spec"/>
+
+    
+    <region name="Enumeration"        parent="xml:Enumeration"/>
+    <!-- (yes|no|moo) -->
+    <region name="Enumeration.spec"   parent="Enumeration"/>
+    <!-- | -->
+    <region name="Enumeration.op"     parent="contentspec.op"/>
+    <!-- ( ) -->
+    <region name="Enumeration.start"  parent="contentspec.start"/>
+    <region name="Enumeration.end"    parent="contentspec.end"/>
+
+
+    <!-- <!ENTITY name PUBLIC "aaa"> -->
+    <region name="EntityDecl"         parent="doctypedecl"/>
+    <region name="EntityDecl.name"    parent="doctypedecl.name"/>
+    <region name="EntityDecl.start"   parent="doctypedecl.start"/>
+    <region name="EntityDecl.tag"     parent="doctypedecl.tag"/>
+    <region name="EntityDecl.end"     parent="doctypedecl.end"/>
+    <!-- % -->
+    <region name="EntityDecl.PE"      parent="contentspec.op"/>
+    <!-- NDATA -->
+    <region name="NDataDecl"          parent="doctypedecl.attr"/>
+
+    <!-- <!NOTATION name PUBLIC "aaa"> -->
+    <region name="NotationDecl"       parent="doctypedecl"/>
+    <region name="NotationDecl.name"  parent="doctypedecl.name"/>
+    <region name="NotationDecl.start" parent="doctypedecl.start"/>
+    <region name="NotationDecl.tag"   parent="doctypedecl.tag"/>
+    <region name="NotationDecl.end"   parent="doctypedecl.end"/>
+    
+    
+    <!--
+     ElementOutlined - conflick with  'EntityOutlined'
+    -->
+    <region name='TagElementOutlined' parent='def:Outlined' description='DTD Element'/>
+    <region name='AttlistOutlined'    parent='def:Outlined' description='DTD Element Attlist'/>
+    <region name='EntityOutlined'     parent='def:Outlined' description='DTD Entity'/>
+    <region name='NotationOutlined'   parent='def:Outlined' description='DTD Notation'/>
+
+    
+    <!-- Other -->
+    <region name='PairStart' parent='def:PairStart'/>
+    <region name='PairEnd'   parent='def:PairEnd'/>
+    
+    
+    
+    
+    <scheme name="badChar">
+      <inherit scheme="xml:badChar"/>
+    </scheme>
+    
+    
+    <scheme name="PEReference">
+      <annotation><documentation><![CDATA[
+        [69]   PEReference ::=   '%' Name ';'
+      ]]></documentation></annotation>
+      <regexp match="/%PEReference;/x" region="PEReference"/>
+    </scheme>
+
+
+
+    
+    <!--  doctype: used in xml only -->
+    
+    <scheme name="doctypedecl">
+      <annotation><documentation><![CDATA[
+        [28]   doctypedecl  ::=   '<!DOCTYPE' S Name (S ExternalID)? S? ('[' (markupdecl | DeclSep)* ']' S?)? '>'
+      ]]></documentation></annotation>
+      <block start="/(&lt;!)(DOCTYPE\b)/"
+             end="/(>)/" scheme="doctypedecl.content"
+             region="doctypedecl"
+             region00="PairStart" region01="doctypedecl.start" region02="doctypedecl.tag"
+             region10="PairEnd" region11="doctypedecl.end"/>
+    </scheme>
+    <scheme name="doctypedecl.content">
+      <inherit scheme="ExternalID"/>
+      <regexp match="/\b%xml:Name;\b/" region="doctypedecl.name"/>
+      <block start="/(\[)/" end="/(\])/" scheme="markupdecl"
+             region="markupdecl"
+             region00="PairStart" region01="markupdecl.start"
+             region10="PairEnd" region11="markupdecl.end"/>
+      <regexp match="/\S+/" region0="badChar" priority="low"/>
+    </scheme>
+
+
+
+    <!-- dtd+doctype  -->
+    
+    <scheme name="SystemLiteral">
+      <annotation><documentation><![CDATA[
+        [11]   SystemLiteral   ::=   ('"' [^"]* '"') | ("'" [^']* "'")
+      ]]></documentation></annotation>
+      
+      <inherit scheme='dtdcatalog:FSI.literal'/>
+    </scheme>
+
+    
+    <scheme name="PubidLiteral">
+      <annotation><documentation><![CDATA[
+        [12]   PubidLiteral    ::=   '"' PubidChar* '"' | "'" (PubidChar - "'")* "'"
+      ]]></documentation></annotation>
+      
+      <inherit scheme='dtdcatalog:FPI.literal'/>
+    </scheme>
+
+    
+    <scheme name="ExternalID">
+      <annotation><documentation><![CDATA[
+        [75]   ExternalID      ::=   'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral S SystemLiteral
+      ]]></documentation></annotation>
+      
+      <!--regexp match="/\bSYSTEM\b/" region="ExternalID.SYSTEM"/-->
+      <block  start="/\bPUBLIC\b(\s+%)?!/" end="/[&quot;&apos;]?#1/"
+              scheme="PubidLiteral" region00="ExternalID.PUBLIC"/>
+      <block  start="/\bSYSTEM\b(\s+%)?!/" end="/[&quot;&apos;]?#1/"
+              scheme="SystemLiteral" region00="ExternalID.SYSTEM"/>
+              
+      <regexp match='/\bPUBLIC\b/' region='ExternalID.PUBLIC'/>
+      <regexp match='/\bSYSTEM\b/' region='ExternalID.SYSTEM'/>
+      
+      <!-- PUBLIC, arg 2 (cannot intercept) -->
+      <inherit scheme="SystemLiteral"/>
+    </scheme>
+
+
+    
+    <!-- dtd internal -->
+    
+
+    <scheme name="conditionalSect">
+      <annotation><documentation><![CDATA[
+[61]   conditionalSect      ::=   includeSect | ignoreSect
+[62]   includeSect          ::=   '<![' S? 'INCLUDE' S? '[' extSubsetDecl ']]]]><![CDATA[>'
+[63]   ignoreSect           ::=   '<![' S? 'IGNORE' S? '[' ignoreSectContents* ']]]]><![CDATA[>'
+[64]   ignoreSectContents   ::=   Ignore ('<![' ignoreSectContents ']]]]><![CDATA[>' Ignore)*
+[65]   Ignore               ::=   Char* - (Char* ('<![' | ']]]]><![CDATA[>') Char*)
+      ]]></documentation></annotation>
+      <block start="/(&lt;!\[)/" end="/\](\]&gt;)/"
+             scheme="conditionalSect.content" region="conditionalSect"
+             region00="PairStart" region01="conditionalSect.start"
+             region10="PairEnd" region11="conditionalSect.end"/>
+    </scheme>
+
+    <scheme name="conditionalSect.content">
+      <inherit scheme="conditionalSect.keywords"/>
+      <inherit scheme="PEReference"/>
+      <block start="/(\[)/" end="/\M((\]))\]\>/"
+             scheme="extSubsetDecl"
+             region00="PairStart" region01="markupdecl.start"
+             region11="PairEnd"   region12="markupdecl.end"
+      />
+    </scheme>
+    
+    <scheme name="conditionalSect.keywords">
+      <regexp match="/\b(INCLUDE|IGNORE)\b/" region="conditionalSect.spec"/>
+    </scheme>
+    
+    
+
+    <scheme name="markupdecl">
+      <annotation><documentation><![CDATA[
+        [28a]  DeclSep       ::=   PEReference | S
+        [29]   markupdecl    ::=   elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment
+      ]]></documentation></annotation>
+      <inherit scheme="PEReference"/>
+
+
+      <regexp match="/\M&lt;!ELEMENT \s* (\S+)/x" region1="TagElementOutlined"/>
+      <regexp match="/\M&lt;!ATTLIST \s* (\S+)/x" region1="AttlistOutlined"/>
+      <regexp match="/\M&lt;!ENTITY \s* \% \s* (%xml:Name;)/x" region1="EntityOutlined"/>
+      <regexp match="/\M&lt;!NOTATION \s* (%xml:Name;)/x" region1="NotationOutlined"/>
+
+      <block start="/(&lt;!)(ELEMENT)/" end="/(&gt;)/"
+             scheme="elementdecl" region="elementdecl"
+             region00="PairStart" region01="elementdecl.start" region02="elementdecl.tag"
+             region10="PairEnd" region11="elementdecl.end"/>
+      <block start="/(&lt;!)(ATTLIST)/" end="/(&gt;)/"
+             scheme="AttlistDecl" region="AttlistDecl"
+             region00="PairStart" region01="AttlistDecl.start" region02="AttlistDecl.tag"
+             region10="PairEnd" region11="AttlistDecl.end"/>
+             
+      <block start="/(&lt;!)(ENTITY)\M\s+\%/" end="/(&gt;)/"
+             scheme="EntityDecl.PE" region="EntityDecl"
+             region00="PairStart" region01="EntityDecl.start" region02="EntityDecl.tag"
+             region10="PairEnd" region11="EntityDecl.end"/>
+      <block start="/(&lt;!)(ENTITY)/" end="/(&gt;)/"
+             scheme="EntityDecl" region="EntityDecl"
+             region00="PairStart" region01="EntityDecl.start" region02="EntityDecl.tag"
+             region10="PairEnd" region11="EntityDecl.end"/>
+             
+      <block start="/(&lt;!)(NOTATION)/" end="/(&gt;)/"
+             scheme="NotationDecl" region="NotationDecl"
+             region00="PairStart" region01="NotationDecl.start" region02="NotationDecl.tag"
+             region10="PairEnd" region11="NotationDecl.end"/>
+      <inherit scheme="xml:PI"/>
+      <inherit scheme="xml:Comment"/>
+      <regexp match="/\S+/" region0="badChar" priority="low"/>
+    </scheme>
+
+    <scheme name="extSubsetDecl">
+      <annotation><documentation><![CDATA[
+        [31]   extSubsetDecl   ::=   ( markupdecl | conditionalSect | DeclSep)*
+      ]]></documentation></annotation>
+      <inherit scheme="conditionalSect"/>
+      <inherit scheme="markupdecl"/>
+    </scheme>
+
+    <scheme name="extSubset">
+      <annotation><documentation><![CDATA[
+        [30]   extSubset       ::=   TextDecl? extSubsetDecl
+      ]]></documentation></annotation>
+      <inherit scheme="xml:XMLDecl"/>
+      <inherit scheme="extSubsetDecl"/>
+    </scheme>
+
+    <scheme name="elementdecl">
+      <annotation><documentation><![CDATA[
+        [45]   elementdecl   ::=   '<!ELEMENT' S Name S contentspec S? '>'
+      ]]></documentation></annotation>
+      <block start="/(\b%xml:Name;\b|%PEReference;)/" end="/\M\>/" scheme="contentspec"
+             region01="elementdecl.name"/>
+      <regexp match="/\S+/" region0="badChar" priority="low"/>
+    </scheme>
+
+    <scheme name="contentspec">
+      <annotation><documentation><![CDATA[
+        [46]   contentspec   ::=   'EMPTY' | 'ANY' | Mixed | children
+        [47]   children      ::=   (choice | seq) ('?' | '*' | '+')?
+      ]]></documentation></annotation>
+      <inherit scheme='contentspec.keywords'/>
+      <inherit scheme='contentspec.markup'/>
+      <inherit scheme="PEReference"/>
+      <regexp match="/\s+/"/>
+      <regexp match="/\S+/" region0="badChar" priority="low"/>
+    </scheme>
+    
+    <scheme name='contentspec.keywords'>
+      <regexp match="/\b(EMPTY|ANY)\b/" region="contentspec.spec"/>
+    </scheme>
+    
+
+    <scheme name="contentspec.markup">
+      <block start="/(\()/" end="/(\)([\?\*\+]?))/" scheme="Mixed-childred"
+             region00="PairStart" region10="PairEnd"
+             region01="contentspec.start" region11="contentspec.end" region12="contentspec.op"/>
+    </scheme>
+    
+    
+    <scheme name="choice-seq">
+      <annotation><documentation><![CDATA[
+        [48]   cp            ::=   (Name | choice | seq) ('?' | '*' | '+')?
+        [49]   choice        ::=   '(' S? cp ( S? '|' S? cp )+ S? ')'
+        [50]   seq           ::=   '(' S? cp ( S? ',' S? cp )* S? ')'
+      ]]></documentation></annotation>
+      <block start="/(\()/" end="/(\)([\?\*\+]?))/x" scheme="choice-seq"
+             region00="PairStart" region10="PairEnd"
+             region01="contentspec.start" region11="contentspec.end"
+             region12="contentspec.op"/>
+      <regexp match="/(\b(%xml:Name;)\b|(%PEReference;))([\?\*\+]?)/"
+              region2="elementdecl.value" region3='elementdecl.valref' region4="contentspec.op"/>
+              
+      <!--inherit scheme="PEReference"/> <!- - ???? -->
+      <inherit scheme="choice-seq.op"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+    
+    <scheme name='choice-seq.op'>
+      <regexp match="/[\,\|]/" region="contentspec.op"/>
+    </scheme>
+
+    <scheme name="Mixed-childred">
+      <regexp match="/(\#PCDATA)\M\s*\)([&quot;&apos;&gt;\s]|$)/" region1="contentspec.spec"/>
+      <block start="/\#PCDATA\b/" end="/\M\)\*/x" scheme="Mixed"
+             region00="contentspec.spec"/>
+      <inherit scheme="choice-seq"/>
+    </scheme>
+
+    <scheme name="Mixed">
+      <annotation><documentation><![CDATA[
+        [51]   Mixed         ::=   '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')'
+      ]]></documentation></annotation>
+      <!-- Conflicts with PEs
+      <block start="/\|/" end="/(\b%xml:Name;\b)|(%PEReference;)/x" scheme="Mixed.content"
+             region00="contentspec.op" region11="elementdecl.spec" region12="PEReference"/>
+      -->
+      <regexp match="/\|/" region="contentspec.op"/>
+      <regexp match="/\b%xml:Name;\b/" region="contentspec.value"/>
+      <inherit scheme="PEReference"/>
+
+      <inherit scheme="badChar"/>
+    </scheme>
+
+    <scheme name="Mixed.content">
+      <inherit scheme="badChar"/>
+    </scheme>
+
+
+
+    <scheme name="AttlistDecl">
+      <annotation><documentation><![CDATA[
+        [52]   AttlistDecl    ::=   '<!ATTLIST' S Name AttDef* S? '>'
+      ]]></documentation></annotation>
+      <block start="/(\b%xml:Name;\b|%PEReference;)\M(\s|$)/" end="/\M\>/" scheme="AttDef"
+             region01="AttlistDecl.name"/><!--  -->
+      <inherit scheme="badChar"/>
+    </scheme>
+
+    <scheme name="AttDef">
+      <annotation><documentation><![CDATA[
+        [53]   AttDef         ::=   S Name S AttType S DefaultDecl
+        [54]   AttType        ::=   StringType | TokenizedType | EnumeratedType
+        [55]   StringType     ::=   'CDATA'
+        [56]   TokenizedType  ::=   'ID' | 'IDREF' | 'IDREFS' | 'ENTITY' | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
+        [57]   EnumeratedType ::=   NotationType | Enumeration
+        [58]   NotationType   ::=   'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')'
+        [59]   Enumeration    ::=   '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
+        [60]   DefaultDecl    ::=   '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
+      ]]></documentation></annotation>
+      <inherit scheme="AttDef.keywords"/>
+      <regexp match="/\b%xml:Name;\b/" region="AttDef.name"/>
+      <inherit scheme="PEReference"/>
+      <block start="/(\()/" end="/(\))/" scheme="Enumeration"
+             region00="PairStart" region10="PairEnd"
+             region01="Enumeration.start" region11="Enumeration.end"/>
+      <inherit scheme="AttValue"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+    
+    <scheme name='AttDef.keywords'>
+      <keywords region="AttType.spec">
+        <word name="CDATA"/>
+        <word name="ID"/>
+        <word name="IDREF"/>
+        <word name="IDREFS"/>
+        <word name="ENTITY"/>
+        <word name="ENTITIES"/>
+        <word name="NMTOKEN"/>
+        <word name="NMTOKENS"/>
+        <word name="NOTATION" region="NotationType.spec"/>
+      </keywords>
+      <keywords region="DefaultDecl.spec">
+        <word name="#REQUIRED"/>
+        <word name="#IMPLIED"/>
+        <word name="#FIXED"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="AttValue">
+    	<inherit scheme="xml:AttValue">
+    		<virtual scheme='xml:AttValue.content.stream' subst-scheme='PEReference'/>
+    	</inherit>
+    </scheme>
+    
+    
+    <scheme name="Enumeration">
+      <regexp match="/%xml:Nmtoken;/" region="Enumeration.spec"/>
+      <regexp match="/\|/" region="Enumeration.op"/>
+      <inherit scheme="PEReference"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+
+
+
+    
+    <scheme name="EntityDecl">
+      <annotation><documentation><![CDATA[
+        [70]   EntityDecl    ::=   GEDecl | PEDecl
+        [71]   GEDecl        ::=   '<!ENTITY' S Name S EntityDef S? '>'
+        [72]   PEDecl        ::=   '<!ENTITY' S '%' S Name S PEDef S? '>'
+        [73]   EntityDef     ::=   EntityValue | (ExternalID NDataDecl?)
+        [74]   PEDef         ::=   EntityValue | ExternalID
+        [76]   NDataDecl     ::=   S 'NDATA' S Name
+      ]]></documentation></annotation>
+      <inherit scheme="PEReference"/>
+      
+      
+      <inherit scheme="EntityValue"/>
+      <regexp match="/\%/" region="EntityDecl.PE"/>
+      
+      <inherit scheme="ExternalID"/>
+      <regexp match="/\bNDATA\b/" region="NDataDecl"/>
+      <regexp match="/\b%xml:Name;\b/" region="EntityDecl.name"/>
+
+      <inherit scheme="badChar"/>
+    </scheme>
+
+    <scheme name="EntityDecl.PE">
+    	<inherit scheme='EntityDecl'>
+    		<virtual scheme='EntityValue.content' subst-scheme='EntityValue.content.markup'/>
+    	</inherit>
+    </scheme>
+    
+    
+    <scheme name="EntityValue">
+      <annotation><documentation><![CDATA[
+        [9]    EntityValue  ::=   '"' ([^%&"] | PEReference | Reference)* '"' | "'" ([^%&'] | PEReference | Reference)* "'"
+      ]]></documentation></annotation>
+      <block start="/([&quot;&apos;])/" end="/(\y1)/"
+             region00='Literal.start' region01='PairStart'
+             region10='Literal.end'   region11='PairEnd'
+             scheme="EntityValue.content" region="EntityValue"/>
+    </scheme>
+    
+    
+    <scheme name="EntityValue.content">
+      <inherit scheme="xml:Reference"/>
+      <inherit scheme="PEReference"/>
+      <regexp match="/[&amp;\%[^%xml:Char;]]/" region="badChar"/>
+    </scheme>
+    
+    <scheme name="EntityValue.content.markup">
+      <annotation><documentation>
+         * REC-XML:
+           Validity constraint: Proper Declaration/PE Nesting
+            
+            Parameter-entity replacement text MUST be properly nested
+            with markup declarations. That is to say, if either the
+            first character or the last character of a markup
+            declaration (markupdecl above) is contained in the
+            replacement text for a parameter-entity reference, both
+            MUST be contained in the same replacement text.
+            
+         * Morale: 
+           Brackets must be paired.
+      </documentation></annotation>
+      
+      <inherit scheme='EntityValue.content'/>
+      <inherit scheme='contentspec.markup'> <!-- paired brackets -->
+          <virtual scheme='badChar' subst-scheme='Enumeration'/> <!-- hack for attrs -->
+      </inherit>
+      <inherit scheme="AttDef.keywords"/>
+      <inherit scheme='contentspec.keywords'/>
+      <inherit scheme="choice-seq.op"/>
+      <inherit scheme="conditionalSect.keywords"/>
+    </scheme>
+
+
+    
+    
+    <scheme name="NotationDecl">
+      <annotation><documentation><![CDATA[
+        [82]   NotationDecl  ::=   '<!NOTATION' S Name S (ExternalID | PublicID) S? '>'
+        [83]   PublicID      ::=   'PUBLIC' S PubidLiteral
+      ]]></documentation></annotation>
+      <inherit scheme="PEReference"/>
+      <inherit scheme="ExternalID"/>
+      <regexp match="/\b%xml:Name;\b/" region="NotationDecl.name"/>
+      <inherit scheme="badChar"/>
+    </scheme>
+
+
+
+    <scheme name="dtd">
+      <inherit scheme="extSubset"/>
+    </scheme>
+    
+    </type>
+    
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  Eugene Efremov <4mirror@mail.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

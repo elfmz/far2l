@@ -1,0 +1,804 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+
+<type name="mysql">
+
+ <annotation><documentation>
+  Support SQL languare for MySQL version 3.23.53.
+ </documentation><contributors><![CDATA[
+  Eugene Efremov <4mirror@mail.ru>:
+ ]]></contributors>
+  <appinfo>
+
+   <prototype name="mysql" group="database" description="MySQL">
+    <location link="db/mysql.hrc"/>
+    <filename>/\.sql$/i</filename>
+   </prototype>
+   <require>
+    <package name="regexp"/>
+   </require>     
+  </appinfo>
+ </annotation>
+
+
+<!--
+<include name="base/regexp.hrc"/>
+<include name="rare/mysqlwrd.hrc"/>
+-->
+<!-- defined at mysqlwrd.hrc-->
+<region name="sqlKeyWord" parent="def:Keyword"/>
+<region name="sqlFunctionName" parent="def:FunctionKeyword"/>
+<region name="sqlColumnAttrib" parent="def:Parameter"/>
+<region name="sqlColumnType" parent="def:TypeKeyword"/>
+<!-- -->
+
+<region name="sqlOutline" parent="def:Outlined"/>
+<region name="createOutline" parent="sqlOutline"/>
+<region name="insertOutline" parent="sqlOutline"/>
+
+
+<region name="sqlComment" parent="def:Comment"/>
+<region name="sqlText" parent="def:Text"/>
+<region name="sqlQuote" parent="def:StringEdge"/>
+<region name="sqlSymb" parent="def:Symbol"/>
+<region name="sqlBaseSymb" parent="def:SymbolStrong"/>
+<region name="sqlVariable" parent="def:Var"/>
+<region name="sqlString" parent="def:String"/>
+<region name="sqlStringEsc" parent="def:StringContent"/>
+<region name="sqlStringVar" parent="def:VarStrong"/>
+
+
+<!-- !! Comment -->
+
+<scheme name="sqlComment">
+ <block start="/\-\-/" end="/$/" scheme="def:Comment" region="sqlComment"/>
+ <block start="/\#/" end="/$/" scheme="def:Comment" region="sqlComment"/>
+ <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="sqlComment" 
+  region00="def:PairStart" region10="def:PairEnd"/>
+</scheme>
+
+
+<!-- !! String -->
+
+<scheme name="sqlStringCore">
+ <regexp match="/\\[0bnrtz\\\%\_\x22\x27]/" region0="sqlStringEsc"/>
+</scheme>
+<scheme name="sqlStringMQ">
+ <inherit scheme="sqlStringCore"/>
+ <regexp match='/"/' region0="sqlStringEsc"/>
+</scheme>
+<scheme name="sqlStringDQ">
+ <inherit scheme="sqlStringCore"/>
+ <regexp match="/'/" region0="sqlStringEsc"/>
+</scheme>
+
+<scheme name="sqlStringBlock">
+ <block start="/'/" end="/'/" scheme="sqlStringMQ" region="sqlString" 
+  region00="def:PairStart" region10="def:PairEnd"/> 
+ <block start='/"/' end='/"/' scheme="sqlStringDQ" region="sqlString" 
+  region00="def:PairStart" region10="def:PairEnd"/> 
+</scheme>
+
+<scheme name="sqlNoKeywordName">
+ <regexp match="/(\`)\w*(\`)/" region0="sqlText" 
+  region1="sqlQuote" region2="sqlQuote"/>
+</scheme>
+
+
+<!-- !! Val and Var -->
+
+<scheme name="sqlValue">
+ <inherit scheme="def:CHexNumber"/>
+ <inherit scheme="def:FloatNumber"/>
+ <inherit scheme="def:DecNumber"/>
+</scheme>
+
+<scheme name="sqlVariable">
+ <regexp match="/(\@\w+)\s*(\:\=)/" region1="sqlVariable" region2="sqlSymb"/>
+ <regexp match="/\@\w+/" region0="sqlVariable"/>
+ <keywords region="sqlVariable">
+  <word name="_seq"/>
+  <word name="_round"/>
+  <word name="_timestamp"/>
+  <word name="_sysdate"/>
+  <word name="_user"/>
+ </keywords>
+</scheme>
+
+
+<!-- !! Operatrors -->
+
+<scheme name="sqlOperators">
+ <keywords region="sqlSymb" worddiv="[\w\s\(\)\[\]\{\}\`\x22\x27\@]">
+  <word name="!="/>
+  <word name="&amp;&amp;"/>
+  <word name="&amp;"/>
+  <word name="&lt;&lt;"/>
+  <word name="&lt;="/>
+  <word name="&lt;"/>
+  <word name="&lt;=&gt;"/>
+  <word name="&lt;&gt;"/>
+  <word name="="/>
+  <word name="&gt;="/>
+  <word name="&gt;"/>
+  <word name="&gt;&gt;"/>
+  <word name="||"/>
+  <word name="|"/>
+  <word name="^"/>
+  <word name="~"/>
+  <word name="*"/>
+  <word name="/"/>
+  <word name="%"/>
+  <word name="-"/>
+  <word name="+"/>
+  <word name="/"/>
+  <word name="!"/>
+  <!-- 
+  ?? What it does? (':','\','?')
+  <word name=":"/> 
+  <word name="\"/>
+  <word name="?"/>
+  -->
+ </keywords>
+ <keywords region="sqlSymb" ignorecase="yes">
+  <word name="NOT"/>
+  <word name="NULL"/>
+  <word name="AND"/>
+  <word name="OR"/>
+ </keywords>
+ <regexp match="/[\-\!\/\^\~\*&amp;\%\+&lt;&gt;\=\|]/" 
+  region0="def:Error" priority="low"/>
+</scheme>
+
+
+<!-- !! SQL base expr. -->
+
+<scheme name="sqlExpr">
+ <block start="/(\()/" end="/(\))/" scheme="sqlExpr"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="sqlSymb" region11="sqlSymb"
+ />
+ <regexp match="/(\.)(\*)/" region1="sqlSymb" region2="sqlBaseSymb"/> 
+ <keywords region="sqlSymb">
+  <symb name=";" region="sqlBaseSymb"/>
+  <symb name="."/>
+  <symb name="," region="sqlBaseSymb"/>
+ </keywords>
+ <regexp match="/(\*)\M(\.)/" region1="sqlBaseSymb"/> 
+ <regexp match="/(\*)\s+\M\bFROM\b/i" region1="sqlBaseSymb"/>
+ <regexp match="/(\()?#1\s*(\*)\s*(\))?=/" region2="sqlBaseSymb"/>
+ 
+ <block start="/\b(C?LIKE)\b\s*(\bBINARY\b)?\s*(([\x22\x27]))/i" end="/(\y4)/"
+  scheme="sqlLike" region="sqlString"
+  region01="sqlFunctionName" region02="sqlColumnAttrib"
+  region03="def:PairStart" region10="def:PairEnd"
+  region04="sqlQuote" region11="sqlQuote" 
+ />
+ <block start="/\b((REGEXP)|(RLIKE))\b\s*(\bBINARY\b)?\s*(([\x22\x27]))/i" end="/(\y6)/"
+  scheme="sqlRegExp" region="sqlString"
+  region01="sqlFunctionName" region04="sqlColumnAttrib"
+  region05="def:PairStart" region10="def:PairEnd"
+  region06="sqlQuote" region11="sqlQuote" 
+ />
+ <block start="/\b(DATE_FORMAT)\b\s*((\())/i" end="/(\))/"
+  scheme="sqlDateFun"  region01="sqlFunctionName"
+  region02="def:PairStart" region10="def:PairEnd"
+  region03="sqlSymb" region11="sqlSymb" 
+ />
+
+ <inherit scheme="sqlStringBlock"/>
+ <inherit scheme="sqlNoKeywordName"/>
+ <inherit scheme="sqlComment"/>
+ <inherit scheme="sqlValue"/>
+ <inherit scheme="sqlVariable"/>
+ <inherit scheme="sqlOperators"/>
+ <inherit scheme="sqlFunctionName"/> 
+</scheme>
+
+
+<!-- !! Special string formats support (date_format, like, regexp) -->
+
+<scheme name="sqlDateFun">
+ <block start="/(,)\s*(([\x22\x27]))/" end="/(\y3)/"
+  scheme="sqlDateFormat" region="sqlString"
+  region01="sqlSymb"
+  region02="def:PairStart" region10="def:PairEnd"
+  region03="sqlQuote" region11="sqlQuote" 
+ />
+ <inherit scheme="sqlExpr"/>
+</scheme>
+
+<scheme name="sqlDateFormat">
+ <inherit scheme="sqlStringCore"/>
+ <regexp match="/\%[MWDYyXxademcbjHkhIlirTSspwUuVv\%]/" region0="sqlStringVar"/> 
+</scheme>
+<scheme name="sqlLike">
+ <inherit scheme="sqlStringCore"/>
+ <regexp match="/[\%\_]/" region0="sqlStringVar"/>
+</scheme>
+
+<scheme name="sqlRegExp">
+ <inherit scheme="regexp:posix.regexp">
+  <virtual scheme="regexp:posix.regexp" subst-scheme="sqlRegExp"/>
+  <virtual scheme="regexp:string" subst-scheme="sqlStringCore"/>
+ </inherit>
+</scheme>
+
+
+<!-- !! Typenames or keywords priority -->
+
+<scheme name="sqlTypedefHere">
+ <inherit scheme="sqlExpr">
+  <virtual scheme="sqlExpr" subst-scheme="sqlTypedefHere"/>
+ </inherit>
+ <inherit scheme="sqlColumnType"/>
+ <inherit scheme="sqlColumnAttrib"/>
+ <inherit scheme="sqlKeyWord"/>
+</scheme>
+
+<scheme name="sqlOpHere">
+ <inherit scheme="sqlExpr">
+  <virtual scheme="sqlExpr" subst-scheme="sqlOpHere"/>
+ </inherit>
+ <inherit scheme="sqlKeyWord"/>
+ <inherit scheme="sqlColumnType"/>
+ <inherit scheme="sqlColumnAttrib"/>
+</scheme>
+
+
+<!-- !! sql base functions -->
+
+<scheme name="sqlCreate">
+ <block start="/(\()/" end="/(\))/" 
+  scheme="sqlTypedefHere" 
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="sqlBaseSymb" region11="sqlBaseSymb"
+ />
+ <inherit scheme="sqlOpHere"/>
+</scheme>
+
+<scheme name="sqlInsert">
+ <block start="/\bVALUES\b/i" end="/\M[\;\}]/" 
+  scheme="sqlInsertValues" region00="sqlKeyWord"
+ />
+ <inherit scheme="sqlOpHere"/>
+</scheme>
+<scheme name="sqlInsertValues">
+ <block start="/(\()/" end="/(\))/" 
+  scheme="sqlOpHere"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="sqlBaseSymb" region11="sqlBaseSymb"
+ />
+ <keywords region="sqlBaseSymb">
+  <symb name=","/>
+ </keywords>
+ <regexp match="/\S/" region0="def:Error" priority="low"/>
+</scheme>
+
+
+<!-- !! sql -->
+
+<scheme name="mysql">
+ <block start="/\b\MCREATE\s+\w+\s+(?{createOutline}\w+)\b/i" end="/\;\m/" 
+  scheme="sqlCreate"   
+ />
+ <block start="/\b\MINSERT\s+\w+\s+(?{insertOutline}\w+)\b/i" end="/\;\m/" 
+  scheme="sqlInsert" 
+ />
+ <block start="/\b((?{sqlOutline}BEGIN))\b\s*(\;)/" end="/\b(COMMIT)\b\s*(\;)/"
+  scheme="mysql" 
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="sqlKeyWord" region02="sqlBaseSymb"
+  region11="sqlKeyWord" region12="sqlBaseSymb"
+ />
+ <inherit scheme="sqlOpHere">
+  <virtual scheme="sqlOpHere" subst-scheme="mysql"/>
+ </inherit>
+</scheme>
+
+<scheme name="embed-sql">
+ <inherit scheme="sqlInsert"/>
+ <inherit scheme="sqlOpHere">
+  <virtual scheme="sqlOpHere" subst-scheme="embed-sql"/>
+ </inherit>
+</scheme>
+
+
+<!-- Includes  -->
+
+<scheme name="sqlFunctionName">
+ <keywords ignorecase="yes" region="sqlFunctionName">
+  <word name='ABS' />
+  <word name='ACOS' />
+  <word name='ADDDATE' />
+  <word name='ASCII' />
+  <word name='ASIN' />
+  <word name='ATAN' />
+  <word name='ATAN2' />
+  <word name='AVG' />
+  <word name='BENCHMARK' />
+  <word name='BIN' />
+  <word name='BIT_AND' />
+  <word name='BIT_COUNT' />
+  <word name='BIT_OR' />
+  <word name='CEILING' />
+  <word name='CHARACTER_LENGTH' />
+  <word name='CHAR_LENGTH' />
+  <word name='COALESCE' />
+  <word name='CONCAT' />
+  <word name='CONCAT_WS' />
+  <word name='CONNECTION_ID' />
+  <word name='CONV' />
+  <word name='COS' />
+  <word name='COT' />
+  <word name='COUNT' />
+  <word name='CURDATE' />
+  <word name='CURRENT_DATE' />
+  <word name='CURRENT_TIME' />
+  <word name='CURRENT_TIMESTAMP' />
+  <word name='CURTIME' />
+  <word name='DATABASE' />
+  <word name='DATE_ADD' />
+  <word name='DATE_FORMAT' />
+  <word name='DATE_SUB' />
+  <word name='DAYNAME' />
+  <word name='DAYOFMONTH' />
+  <word name='DAYOFWEEK' />
+  <word name='DAYOFYEAR' />
+  <word name='DECODE' />
+  <word name='DEGREES' />
+  <word name='ELT' />
+  <word name='ENCODE' />
+  <word name='ENCRYPT' />
+  <word name='EXP' />
+  <word name='EXPORT_SET' />
+  <word name='EXTRACT' />
+  <word name='FIELD' />
+  <word name='FIND_IN_SET' />
+  <word name='FLOOR' />
+  <word name='FORMAT' />
+  <word name='FROM_DAYS' />
+  <word name='FROM_UNIXTIME' />
+  <word name='GET_LOCK' />
+  <word name='GREATEST' />
+  <word name='GROUP_UNIQUE_USERS' />
+  <word name='HEX' />
+  <word name='IFNULL' />
+  <word name='INET_ATON' />
+  <word name='INET_NTOA' />
+  <word name='INSTR' />
+  <word name='INTERVAL' />
+  <word name='ISNULL' />
+  <word name='LAST_INSERT_ID' />
+  <word name='LCASE' />
+  <word name='LEAST' />
+  <word name='LEFT' />
+  <word name='LENGTH' />
+  <word name='LOAD_FILE' />
+  <word name='LOCATE' />
+  <word name='LOG' />
+  <word name='LOG10' />
+  <word name='LOWER' />
+  <word name='LPAD' />
+  <word name='LTRIM' />
+  <word name='MAKE_SET' />
+  <word name='MASTER_POS_WAIT' />
+  <word name='MAX' />
+  <word name='MD5' />
+  <word name='MID' />
+  <word name='MIN' />
+  <word name='MOD' />
+  <word name='MONTHNAME' />
+  <word name='NOW' />
+  <word name='NULLIF' />
+  <word name='OCT' />
+  <word name='OCTET_LENGTH' />
+  <word name='ORD' />
+  <word name='PASSWORD' />
+  <word name='PERIOD_ADD' />
+  <word name='PERIOD_DIFF' />
+  <word name='PI' />
+  <word name='POSITION' />
+  <word name='POW' />
+  <word name='POWER' />
+  <word name='QUARTER' />
+  <word name='RADIANS' />
+  <word name='RAND' />
+  <word name='RELEASE_LOCK' />
+  <word name='REPEAT' />
+  <word name='REVERSE' />
+  <word name='RIGHT' />
+  <word name='ROUND' />
+  <word name='RPAD' />
+  <word name='RTRIM' />
+  <word name='SEC_TO_TIME' />
+  <word name='SESSION_USER' />
+  <word name='SIGN' />
+  <word name='SIN' />
+  <word name='SOUNDEX' />
+  <word name='SPACE' />
+  <word name='SQRT' />
+  <word name='STD' />
+  <word name='STDDEV' />
+  <word name='STRCMP' />
+  <word name='SUBDATE' />
+  <word name='SUBSTRING' />
+  <word name='SUBSTRING_INDEX' />
+  <word name='SUM' />
+  <word name='SYSDATE' />
+  <word name='SYSTEM_USER' />
+  <word name='TAN' />
+  <word name='TIME_FORMAT' />
+  <word name='TIME_TO_SEC' />
+  <word name='TO_DATE' />
+  <word name='TO_DAYS' />
+  <word name='TRIM' />
+  <word name='UCASE' />
+  <word name='UNIQUE_USERS' />
+  <word name='UNIX_TIMESTAMP' />
+  <word name='UPPER' />
+  <word name='USER' />
+  <word name='VERSION' />
+  <word name='WEEK' />
+  <word name='WEEKDAY' />
+  <word name='YEARWEEK'/>
+ </keywords>
+</scheme>
+
+<scheme name="sqlColumnAttrib">
+ <keywords ignorecase="yes" region="sqlColumnAttrib">
+  <word name='AUTO_INCREMENT' />
+  <word name='BDB' />
+  <word name='BERKELEYDB' />
+  <word name='BINARY' />
+  <word name='DEFAULT' />
+  <word name='INNOBASE' />
+  <word name='INNODB' />
+  <word name='ISAM' />
+  <word name='MRG_MYISAM' />
+  <word name='MYISAM' />
+  <word name='NATIONAL' />
+  <word name='PRECISION' />
+  <word name='UNSIGNED' />
+  <word name='VARYING' />
+  <word name='ZEROFILL'/>
+ </keywords>
+</scheme>
+
+<scheme name="sqlColumnType">
+ <keywords ignorecase="yes" region="sqlColumnType">
+  <word name='BIGINT' />
+  <word name='BIT' />
+  <word name='BLOB' />
+  <word name='BOOL' />
+  <word name='CHAR' />
+  <word name='CHARACTER' />
+  <word name='DATE' />
+  <word name='DATETIME' />
+  <word name='DEC' />
+  <word name='DECIMAL' />
+  <word name='DOUBLE' />
+  <word name='ENUM' />
+  <word name='FLOAT' />
+  <word name='FLOAT4' />
+  <word name='FLOAT8' />
+  <word name='INT' />
+  <word name='INT1' />
+  <word name='INT2' />
+  <word name='INT3' />
+  <word name='INT4' />
+  <word name='INT8' />
+  <word name='INTEGER' />
+  <word name='LONG' />
+  <word name='LONGBLOB' />
+  <word name='LONGTEXT' />
+  <word name='MEDIUMBLOB' />
+  <word name='MEDIUMINT' />
+  <word name='MEDIUMTEXT' />
+  <word name='MIDDLEINT' />
+  <word name='NCHAR' />
+  <word name='NUMERIC' />
+  <word name='REAL' />
+  <word name='SET' />
+  <word name='SMALLINT' />
+  <word name='TEXT' />
+  <word name='TIME' />
+  <word name='TIMESTAMP' />
+  <word name='TINYBLOB' />
+  <word name='TINYINT' />
+  <word name='TINYTEXT' />
+  <word name='VARBINARY' />
+  <word name='VARCHAR' />
+  <word name='YEAR'/>
+ </keywords>
+</scheme>
+
+<scheme name="sqlKeyWord">
+ <keywords ignorecase="yes" region="sqlKeyWord">
+  <word name='require' />
+  <word name='SET' />
+  <word name='ACTION' />
+  <word name='ADD' />
+  <word name='AFTER' />
+  <word name='AGAINST' />
+  <word name='AGGREGATE' />
+  <word name='ALL' />
+  <word name='ALTER' />
+  <word name='ANALYSE' />
+  <word name='ANALYZE' />
+  <word name='AND' />
+  <word name='AS' />
+  <word name='ASC' />
+  <word name='AUTOCOMMIT' />
+  <word name='AVG_ROW_LENGTH' />
+  <word name='BACKUP' />
+  <word name='BEGIN' />
+  <word name='BETWEEN' />
+  <word name='BOTH' />
+  <word name='BY' />
+  <word name='CASCADE' />
+  <word name='CASE' />
+  <word name='CHANGE' />
+  <word name='CHANGED' />
+  <word name='CHECK' />
+  <word name='CHECKSUM' />
+  <word name='COLUMN' />
+  <word name='COLUMNS' />
+  <word name='COMMENT' />
+  <word name='COMMIT' />
+  <word name='COMMITTED' />
+  <word name='COMPRESSED' />
+  <word name='CONCURRENT' />
+  <word name='CONSTRAINT' />
+  <word name='CREATE' />
+  <word name='CROSS' />
+  <word name='DATA' />
+  <word name='DATABASE' />
+  <word name='DATABASES' />
+  <word name='DAY' />
+  <word name='DAY_HOUR' />
+  <word name='DAY_MINUTE' />
+  <word name='DAY_SECOND' />
+  <word name='DELAYED' />
+  <word name='DELAY_KEY_WRITE' />
+  <word name='DELETE' />
+  <word name='DESC' />
+  <word name='DESCRIBE' />
+  <word name='DISTINCT' />
+  <word name='DISTINCTROW' />
+  <word name='DO' />
+  <word name='DROP' />
+  <word name='DUMPFILE' />
+  <word name='DYNAMIC' />
+  <word name='ELSE' />
+  <word name='ENCLOSED' />
+  <word name='END' />
+  <word name='ESCAPE' />
+  <word name='ESCAPED' />
+  <word name='EXISTS' />
+  <word name='EXPLAIN' />
+  <word name='EXTENDED' />
+  <word name='FAST' />
+  <word name='FIELDS' />
+  <word name='FILE' />
+  <word name='FIRST' />
+  <word name='FIXED' />
+  <word name='FLUSH' />
+  <word name='FOR' />
+  <word name='FOREIGN' />
+  <word name='FROM' />
+  <word name='FULL' />
+  <word name='FULLTEXT' />
+  <word name='FUNCTION' />
+  <word name='GEMINI' />
+  <word name='GEMINI_SPIN_RETRIES' />
+  <word name='GLOBAL' />
+  <word name='GRANT' />
+  <word name='GRANTS' />
+  <word name='GROUP' />
+  <word name='HAVING' />
+  <word name='HEAP' />
+  <word name='HIGH_PRIORITY' />
+  <word name='HOSTS' />
+  <word name='HOUR' />
+  <word name='HOUR_MINUTE' />
+  <word name='HOUR_SECOND' />
+  <word name='IDENTIFIED' />
+  <word name='IF' />
+  <word name='IGNORE' />
+  <word name='IN' />
+  <word name='INDEX' />
+  <word name='INFILE' />
+  <word name='INNER' />
+  <word name='INSERT' />
+  <word name='INSERT_ID' />
+  <word name='INSERT_METHOD' />
+  <word name='INTO' />
+  <word name='IS' />
+  <word name='ISOLATION' />
+  <word name='JOIN' />
+  <word name='KEY' />
+  <word name='KEYS' />
+  <word name='KILL' />
+  <word name='LAST_INSERT_ID' />
+  <word name='LEADING' />
+  <word name='LEFT' />
+  <word name='LEVEL' />
+  <word name='LIKE' />
+  <word name='LIMIT' />
+  <word name='LINES' />
+  <word name='LOAD' />
+  <word name='LOCAL' />
+  <word name='LOCK' />
+  <word name='LOCKS' />
+  <word name='LOGS' />
+  <word name='LOW_PRIORITY' />
+  <word name='MASTER' />
+  <word name='MASTER_CONNECT_RETRY' />
+  <word name='MASTER_HOST' />
+  <word name='MASTER_LOG_FILE' />
+  <word name='MASTER_LOG_POS' />
+  <word name='MASTER_PASSWORD' />
+  <word name='MASTER_PORT' />
+  <word name='MASTER_USER' />
+  <word name='MATCH' />
+  <word name='MAX_ROWS' />
+  <word name='MEDIUM' />
+  <word name='MERGE' />
+  <word name='MIN_ROWS' />
+  <word name='MINUTE' />
+  <word name='MINUTE_SECOND' />
+  <word name='MODE' />
+  <word name='MODIFY' />
+  <word name='MONTH' />
+  <word name='MRG_MYISAM' />
+  <word name='MYISAM' />
+  <word name='NATURAL' />
+  <word name='NO' />
+  <word name='NOT' />
+  <word name='NULL' />
+  <word name='ON' />
+  <word name='OPEN' />
+  <word name='OPTIMIZE' />
+  <word name='OPTION' />
+  <word name='OPTIONALLY' />
+  <word name='OR' />
+  <word name='ORDER' />
+  <word name='OUTER' />
+  <word name='OUTFILE' />
+  <word name='PACK_KEYS' />
+  <word name='PARTIAL' />
+  <word name='PASSWORD' />
+  <word name='PRIMARY' />
+  <word name='PRIVILEGES' />
+  <word name='PROCEDURE' />
+  <word name='PROCESS' />
+  <word name='PROCESSLIST' />
+  <word name='PURGE' />
+  <word name='QUICK' />
+  <word name='RAID0' />
+  <word name='RAID_CHUNKS' />
+  <word name='RAID_CHUNKSIZE' />
+  <word name='RAID_TYPE' />
+  <word name='READ' />
+  <word name='REFERENCES' />
+  <word name='REGEXP' />
+  <word name='RELOAD' />
+  <word name='RENAME' />
+  <word name='REPAIR' />
+  <word name='REPEATABLE' />
+  <word name='REPLACE' />
+  <word name='RESET' />
+  <word name='RESTORE' />
+  <word name='RESTRICT' />
+  <word name='RETURNS' />
+  <word name='REVOKE' />
+  <word name='RIGHT' />
+  <word name='RLIKE' />
+  <word name='ROLLBACK' />
+  <word name='ROW' />
+  <word name='ROW_FORMAT' />
+  <word name='ROWS' />
+  <word name='SECOND' />
+  <word name='SELECT' />
+  <word name='SERIALIZABLE' />
+  <word name='SESSION' />
+  <word name='SHARE' />
+  <word name='SHOW' />
+  <word name='SHUTDOWN' />
+  <word name='SLAVE' />
+  <word name='SONAME' />
+  <word name='SQL_AUTO_IS_NULL' />
+  <word name='SQL_BIG_RESULT' />
+  <word name='SQL_BIG_SELECTS' />
+  <word name='SQL_BIG_TABLES' />
+  <word name='SQL_BUFFER_RESULT' />
+  <word name='SQL_LOG_BIN' />
+  <word name='SQL_LOG_OFF' />
+  <word name='SQL_LOG_UPDATE' />
+  <word name='SQL_LOW_PRIORITY_UPDATES' />
+  <word name='SQL_MAX_JOIN_SIZE' />
+  <word name='SQL_QUOTE_SHOW_CREATE' />
+  <word name='SQL_SAFE_UPDATES' />
+  <word name='SQL_SELECT_LIMIT' />
+  <word name='SQL_SLAVE_SKIP_COUNTER' />
+  <word name='SQL_SMALL_RESULT' />
+  <word name='SQL_WARNINGS' />
+  <word name='START' />
+  <word name='STARTING' />
+  <word name='STATUS' />
+  <word name='STOP' />
+  <word name='STRAIGHT_JOIN' />
+  <word name='STRING' />
+  <word name='STRIPED' />
+  <word name='TABLE' />
+  <word name='TABLES' />
+  <word name='TEMPORARY' />
+  <word name='TERMINATED' />
+  <word name='THEN' />
+  <word name='TO' />
+  <word name='TRAILING' />
+  <word name='TRANSACTION' />
+  <word name='TRUNCATE' />
+  <word name='TYPE' />
+  <word name='UNCOMMITTED' />
+  <word name='UNION' />
+  <word name='UNIQUE' />
+  <word name='UNLOCK' />
+  <word name='UPDATE' />
+  <word name='USAGE' />
+  <word name='USE' />
+  <word name='USING' />
+  <word name='VALUES' />
+  <word name='VARIABLES' />
+  <word name='WHEN' />
+  <word name='WHERE' />
+  <word name='WITH' />
+  <word name='WORK' />
+  <word name='WRITE' />
+  <word name='YEAR_MONTH'/>
+ </keywords>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the mysql.hrc type.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

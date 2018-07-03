@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+   Lemon Files Syntax
+   The Lemon Parser Generator http://www.hwaci.com/sw/lemon/lemon.html
+
+   Made by Aleksey Dobrunov <ctapmex@gmail.com>
+
+  <prototype name="lemon" group="scripts" description="Lemon">
+    <location link="lemon.hrc"/>
+    <filename weight='3'>/\.y$/i</filename>
+  </prototype>
+
+-->
+
+	<type name="lemon">
+		
+		<scheme name='Directive'>
+			<keywords region='def:Var'>
+				<word name='destructor'/>
+				<word name='extra_argument'/>
+				<word name='left'/>
+				<word name='include'/>
+				<word name='name'/>
+				<word name='nonassoc'/>
+				<word name='parse_accept'/>
+				<word name='parse_failure'/>
+				<word name='right'/>
+				<word name='stack_overflow'/>
+				<word name='stack_size'/>
+				<word name='start_symbol'/>
+				<word name='syntax_error'/>
+				<word name='token_destructor'/>
+				<word name='token_prefix'/>
+				<word name='token_type'/>
+				<word name='type'/>
+			</keywords>
+		</scheme>
+		
+		<scheme name="Action">
+			<inherit scheme="cpp:cpp"/>      
+		</scheme>
+
+		<scheme name="lemon">
+			<regexp match="/\/\/.*$/" region0="def:Comment"/>
+			<block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="def:Comment"
+          region00="def:PairStart" region10="def:PairEnd"/>
+			<block start="/\%/" end="/\s/" scheme="Directive" region="def:StringEdge"/>
+			<block start="/(\{)/" end="/(\})/" scheme="Action" 
+				region00="def:SymbolStrong" region10="def:SymbolStrong"
+				region01="def:PairStart" region11="def:PairEnd"
+			/>
+			<regexp match="/\l+(\((\S+)\))?\s*(\:\:=)?/" region="def:Var"
+				region2="def:Symbol" region3="def:Operator"
+			/>
+			<regexp match="/\u+/" region="def:Keyword"/>
+		</scheme>
+	</type>
+
+</hrc>

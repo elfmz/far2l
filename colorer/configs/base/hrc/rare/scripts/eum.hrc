@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<!--================================================================
+   COLORER Schema for the EditorUserMenu plugin
+   Author: Juriy Bakunin aka jbak <bakunin@bk.ru>
+   I hope, that this code working!
+=================================================================-->
+
+   <type name="umc">
+      <import type="def"/>
+      <region name="Section" parent="Outlined"/>
+<!--================================================================
+          UmcInstructions
+=================================================================-->
+    <scheme name="UmcInstructions">
+        <regexp match="/\s*(\.help)=/" region0="Outlined" region1="SymbolStrong"/>
+        <regexp match="/\s*(\.title)=/" region0="Outlined" region1="SymbolStrong"/>
+        <regexp match="/\s*(\.footer)=/" region0="Outlined" region1="SymbolStrong"/>
+    </scheme>           
+<!--================================================================
+          EumInstructions
+=================================================================-->
+    <scheme name="EumInstructions">
+        <!-- This is function -->
+        <regexp match="/\s*(\.macro)=(.*?)? .*$/"    region0="Outlined" region1="SymbolStrong" region2="String"/>
+        <regexp match="/\s*(\.ed_\w+)=.*$/"          region1="SymbolStrong"/>
+        <regexp match="/\s*(\.mask)=.*$/"            region1="SymbolStrong"/>
+        <regexp match="/\s*(\.pmask)=.*$/"           region1="SymbolStrong"/>
+        <regexp match="/\s*(\.inherit_start)=.*$/"   region1="SymbolStrong"/>
+        <regexp match="/\s*(\.inherit_end)=.*$/"     region1="SymbolStrong"/>
+    </scheme>           
+<!--================================================================
+          EumComments
+=================================================================-->
+    <scheme name="EumComments"> 
+<!-- Comments -->
+        <regexp match="/^\s*\#{1}([^\#].*?)?$/"  region0="Comment"/>
+    </scheme>    
+
+<!--================================================================
+      Doubled Symbols  
+=================================================================-->
+    <scheme name="Doubled">
+        <keywords region="Number">
+            <symb name="$$"/>            
+        </keywords>
+        <regexp match="/^\s*[\{\}\:\.]{2}/" region="Number"/> 
+    </scheme>
+<!--================================================================
+      Predefined buffers  
+=================================================================-->      
+    <scheme name="EumBuffers">
+        
+        <inherit scheme="Doubled"/>
+        <regexp match="/\$input\d+/" region="URL"/> 
+        <keywords region="URL">
+            <symb name="$curword"/>
+            <symb name="$curline"/>
+            <symb name="$cursel"/>
+            <symb name="$sellines"/>
+            <symb name="$filename"/>
+            <symb name="$fileext"/>
+            <symb name="$filepath"/>
+            <symb name="$dirpath"/>
+            <symb name="$dirname"/>
+            <symb name="$numline"/>
+            <symb name="$numposition"/>
+            <symb name="$p"/>
+        </keywords>        
+    </scheme>
+
+
+<!--================================================================
+    Dialog Blocks
+=================================================================-->
+    <scheme name="DialogBlocks">
+        <inherit scheme="EumBuffers"/>
+        <inherit scheme="Curdate_BLOCK"/>
+        <keywords region="URL">
+            <symb name='""'/>
+        </keywords>
+    </scheme>
+
+<!--================================================================
+      Scheme for $curdate 
+=================================================================-->
+      <scheme name="Curdate">
+        <inherit scheme="EumBuffers"/>
+        <keywords region="Comment">
+            <symb name="%a"/>
+            <symb name="%A"/>
+            <symb name="%b"/>
+            <symb name="%B"/>
+            <symb name="%c"/>
+            <symb name="%d"/>
+            <symb name="%H"/>
+            <symb name="%I"/>
+            <symb name="%j"/>
+            <symb name="%m"/>
+            <symb name="%M"/>
+            <symb name="%p"/>
+            <symb name="%S"/>
+            <symb name="%U"/>
+            <symb name="%w"/>
+            <symb name="%W"/>
+            <symb name="%x"/>
+            <symb name="%X"/>
+            <symb name="%y"/>
+            <symb name="%Y"/>
+            <symb name="%z"/>
+            <symb name="%Z"/>
+            <symb name="%%"/>
+        </keywords>        
+        <keywords region="Error">
+            <symb name="%"/>
+        </keywords>        
+            
+      </scheme>  
+<!--================================================================
+    Dialog Items      
+=================================================================-->
+    <scheme name="DialogItems">
+    <!-- $txt and $chk block-->
+        <block start='/(\$(txt)|(chk))(\")/' end='/(((.[^$"])|\"\")?#2(\")([^"]|$)?=)|$/' scheme="DialogBlocks" region="Insertion" 
+                            region00="PairStrongStart" region10="PairStrongEnd" region01="URL" region04="URL" region14="URL"/>
+    <!-- $pwd block-->      
+        <block start='/(\$pwd)\"/' end='/(([^$])?#1\")|$/' scheme="DialogBlocks" region="Insertion" 
+                            region00="PairStart" region10="PairEnd" region01="URL"/>
+    </scheme>
+<!--================================================================
+      Scheme for $curdate block 
+=================================================================-->    
+    <scheme name="Curdate_BLOCK">
+        <block start='/(\$curdate)\"/' end='/([^$])?#1\"/' scheme="Curdate" region="TODO" 
+                            region00="PairStart" region10="PairEnd" region01="URL"/>
+        <inherit scheme="EumBuffers"/>
+    </scheme>
+
+      
+<!--================================================================
+    FormatLinesVals. For eum only
+=================================================================-->
+    <scheme name="FormatLinesVals">
+         <regexp match='/\$counter\"(\d+[+-]\d+)\"/' region0="URL" region1="Number"/>
+        <keywords region="URL">
+            <symb name="$line"/>
+            <symb name="$tline"/>
+        </keywords>
+        <inherit scheme="EumBuffers"/>
+        <inherit scheme="Curdate"/>
+        <inherit scheme="DialogItems"/>
+    </scheme>
+    
+<!--================================================================
+    FormatLines
+=================================================================-->
+    <scheme name="FormatLines">
+        <!--Not correct. But working -->
+         <regexp match="/\s/" region0='Function'/>
+         
+         <regexp match='/\$counter\"(\d+[+-]\d+)\"/' region0="URL" region1="Number"/>
+        <keywords region="URL">
+            <symb name="$line"/>
+            <symb name="$tline"/>
+        </keywords>
+        <inherit scheme="EumBuffers"/>
+        <inherit scheme="Curdate"/>
+        <inherit scheme="DialogItems"/>
+    </scheme>
+
+
+<!--================================================================
+          UmcCommandsFunc
+=================================================================-->    
+    <scheme name="UmcCommandsFunc">
+        <!--
+            These expressoins are functions for umc-file.
+            But not for eum-file 
+        -->
+        <regexp match="/\s*(replace(x?):)/" region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(macro:)/"       region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(help:)/"        region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(viewcmd:)/"     region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(editcmd:)/"     region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(runcmd:)/"      region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(edit:)/"        region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(editmodal:)/"   region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(view:)/"        region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(viewmodal:)/"   region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(fromfile:)/"    region0="Outlined" region1="Symbol"/>
+        <regexp match="/\s*(fillbuffers:)/" region0="Outlined" region1="Symbol"/>
+        <block start="/\s*(formatlines:)/" end="/$/" scheme="FormatLines" region="Syntax" region01="Symbol"/>
+    </scheme>
+<!--================================================================
+          UmcCommandsExpr
+=================================================================-->    
+    <scheme name="UmcCommandsExpr">
+        <!--
+            These expressoins are not functions for eum-file.
+        -->
+        <regexp match="/\s*(replace(x?):)/"  region1="Symbol"/>
+        <regexp match="/\s*(macro:)/"        region1="Symbol"/>
+        <regexp match="/\s*(help:)/"         region1="Symbol"/>
+        <regexp match="/\s*(viewcmd:)/"      region1="Symbol"/>
+        <regexp match="/\s*(editcmd:)/"      region1="Symbol"/>
+        <regexp match="/\s*(runcmd:)/"       region1="Symbol"/>
+        <regexp match="/\s*(edit:)/"         region1="Symbol"/>
+        <regexp match="/\s*(editmodal:)/"    region1="Symbol"/>
+        <regexp match="/\s*(view:)/"         region1="Symbol"/>
+        <regexp match="/\s*(viewmodal:)/"    region1="Symbol"/>
+        <regexp match="/\s*(fromfile:)/"     region1="Symbol"/>
+        <regexp match="/\s*(fillbuffers:)/"  region1="Symbol"/>
+        <block start="/\s*(formatlines:)/" end="/$/" scheme="FormatLinesVals" region="Syntax" region01="Symbol"/>
+        <regexp match="/\s*(\.help)/"       region1="SymbolStrong"/>
+        <regexp match="/\s*(\.title)/"      region1="SymbolStrong"/>
+        <regexp match="/\s*(\.footer)/"     region1="SymbolStrong"/>
+    </scheme>
+    
+<!--================================================================
+              All for the umc
+=================================================================-->
+    <scheme name="UmcScheme">
+        <inherit scheme="EumComments"/>
+        <inherit scheme="Doubled"/>
+        <inherit scheme="DialogItems"/>
+        <inherit scheme="EumBuffers"/>
+        <inherit scheme="Curdate_BLOCK"/>
+    </scheme>
+    
+<!--================================================================
+    ================================================================
+     UMC_SCHEME !!!
+     Scheme for the EditorUserMenu config file
+=================================================================-->      
+    <scheme name="umc">  
+        <inherit scheme ="UmcScheme"/>
+        <!--
+            ... And some differences for the umc-file
+        -->
+        <inherit scheme="UmcInstructions"/>
+        <!--
+            Show all commands as functions
+        -->
+        <inherit scheme="UmcCommandsFunc"/>
+        <!-- 
+            If not doubled, these symbols are errors in umc-file
+        -->
+        <regexp match="/^\s*[\{\}\.\:]{1}/" region0="Error"/>
+    </scheme>
+   </type>
+<!--================================================================
+    ================================================================
+     EUM_SCHEME !!!
+     Scheme for the EditorUserMenu config file
+=================================================================-->      
+   <type name="eum">
+      <import type="def"/>
+      <import type="umc"/>
+      <region name="Section" parent="def:Outlined"/>
+        <scheme name="eum">
+           <inherit scheme="UmcScheme"/>
+        <inherit scheme="UmcCommandsExpr"/>
+        <!--
+            ... And some differences for the eum-file
+        -->
+        <inherit scheme="EumInstructions"/>
+          <!-- Labels-->
+          <regexp match="/^(\s*([A-zА-я_0-9\.!@#$%^*\(\)])?:[^:]?.*)$/" region0="Register" region1="Outlined"/>
+         <inherit scheme="def:PairedBrackets">
+            <virtual scheme="def:PairedBrackets" subst-scheme="eum"/>
+         </inherit>
+        </scheme>  
+   </type>
+</hrc>
+    
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Juriy Bakunin aka jbak <bakunin@bk.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

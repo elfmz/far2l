@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+
+	<type name="solution">
+		<annotation>
+			<contributors>
+				Eugene Myronchuk
+			</contributors>
+			<appinfo>
+				<prototype name="solution" group="scripts" description="Microsoft Visual Studio Solution File">
+					<location link="scripts/solution.hrc"/>
+					<filename>/\.sln/</filename>
+				</prototype>
+			</appinfo>
+			<documentation>
+				Microsoft Visual Studio Solution File
+			</documentation>
+		</annotation>
+
+		<import type="def"/>
+
+		<scheme name="Constants">
+			<keywords region="def:Constant">
+			    <word name="ProjectConfigurationPlatforms"/>
+				<word name="SolutionConfigurationPlatforms"/>
+				<word name="ProjectDependencies"/>
+				<word name="SolutionProperties"/>
+				<word name="preProject"/>
+				<word name="postProject"/>
+				<word name="preSolution"/>
+				<word name="postSolution"/>
+				<word name="HideSolutionNode"/>
+			</keywords>
+			<keywords region="def:BooleanConstant">
+				<word name="TRUE"/>
+				<word name="FALSE"/>
+			</keywords>
+		</scheme>
+
+		<scheme name="Header">
+			<regexp match="/^Microsoft Visual Studio Solution File, Format Version (\d+\.\d+)/" region="def:Label" region1="def:Number" />
+		</scheme>
+		<scheme name="Comments">
+			<regexp match="/#.*$/" region="def:Comment"/>
+		</scheme>
+
+		<scheme name="GUID">
+			<regexp match="/(\{) [0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12} (\})/ix"
+				region="def:Number" region1="def:SymbolStrong" region2="def:SymbolStrong"
+			/>
+		</scheme>
+		<scheme name="Numbers">
+			<regexp match="/\b\d+\b/" region="def:Number"/>
+		</scheme>
+
+		<scheme name="Configuration">
+			<regexp match="/[\w\d+-]+(\|)[\w]+/"
+				region="def:Tag" region1="def:SymbolStrong"
+			/>
+		</scheme>
+
+		<scheme name="StringContent">
+			<inherit scheme="GUID"/>
+		</scheme>
+
+		<scheme name="Strings">
+			<block start="/(&quot;)/" end="/(&quot;)/" scheme="StringContent" region="def:String"
+				region00="def:StringEdge"  region10="def:StringEdge"
+				region01="def:PairStart"   region11="def:PairEnd"
+			/>
+		</scheme>
+
+		<scheme name="ParenthesContent"/>
+		<scheme name="Parenthes">
+			<block start="/(\()/" end="/(\))/" scheme="ParenthesContent"
+				region00="def:Symbol"    region10="def:Symbol"
+				region01="def:PairStart" region11="def:PairEnd"
+			/>
+		</scheme>
+
+		<scheme name="ProjectSectionContent">
+			<inherit scheme="SectionContent"/>
+		</scheme>
+		<scheme name="ProjectContent">
+			<inherit scheme="Strings"/>
+			<keywords region="def:Symbol">
+				<symb name="="/>
+				<symb name=","/>
+			</keywords>
+			<inherit scheme="Parenthes">
+				<virtual scheme="ParenthesContent" subst-scheme="ProjectContent"/>
+			</inherit>
+			<block start="/(\bProjectSection\b)/" end="/(\bEndProjectSection\b)/" scheme="ProjectSectionContent"
+				region00="def:Keyword"     region10="def:Keyword"
+				region01="def:PairStart"   region11="def:PairEnd"
+			/>
+		</scheme>
+		<scheme name="Project">
+			<block start="/(\bProject\b)/" end="/(\bEndProject\b)/" scheme="ProjectContent"
+				region00="def:Keyword"     region10="def:Keyword"
+				region01="def:PairStart"   region11="def:PairEnd"
+			/>
+		</scheme>
+
+		<scheme name="GlobalSectionContent">
+			<inherit scheme="SectionContent"/>
+		</scheme>
+
+		<scheme name="CustomSectionContent"/>
+		<scheme name="SectionContent">
+			<inherit scheme="Parenthes">
+				<virtual scheme="ParenthesContent" subst-scheme="Constants"/>
+			</inherit>
+			<inherit scheme="Constants"/>
+			<inherit scheme="GUID"/>
+			<keywords region="def:Symbol">
+				<word name="="/>
+			</keywords>
+			<regexp match="/\./" region="def:Symbol" />
+			<inherit scheme="CustomSectionContent"/>
+			<inherit scheme="Configuration"/>
+			<inherit scheme="Numbers"/>
+		</scheme>
+		<scheme name="GlobalContent">
+			<block start="/(\bGlobalSection\b)/" end="/(\bEndGlobalSection\b)/" scheme="GlobalSectionContent"
+				region00="def:Keyword"     region10="def:Keyword"
+				region01="def:PairStart"   region11="def:PairEnd"
+			/>
+		</scheme>
+		<scheme name="Global">
+			<block start="/(\bGlobal\b)/" end="/(\bEndGlobal\b)/" scheme="GlobalContent"
+				region00="def:Keyword"     region10="def:Keyword"
+				region01="def:PairStart"   region11="def:PairEnd"
+			/>
+		</scheme>
+
+		<scheme name="solution">
+			<inherit scheme="Header"/>
+			<inherit scheme="Comments"/>
+			<inherit scheme="Project"/>
+			<inherit scheme="Global"/>
+		</scheme>
+	</type>
+
+</hrc>

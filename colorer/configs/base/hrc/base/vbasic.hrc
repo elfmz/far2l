@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    VB Syntax description
+With help of:
+    Igor Kovalev <ig@te.net.ua>
+    Valery Tsyplenkov <gorilla800lbs@hotmail.com>
+    Alexey Yatsenko <Alexey.Yatsenko@p52.f9.n5060.z2.fidonet.org>
+-->
+   <type name="vbasic">
+
+      <import type="def"/>
+
+      <region name="vbString" parent="String"/>
+      <region name="vbComment" parent="Comment"/>
+      <region name="vbSymb" parent="Symbol"/>
+      <region name="vbWord" parent="Keyword"/>
+      <region name="vbNumb" parent="Number"/>
+      <region name="vbId" parent="Var"/>
+      <region name="vbLabel" parent="Label"/>
+
+      <region name="ClassOutline" parent="Outlined"/>
+
+      <region name="DimPublicOutline" parent="Outlined"/>
+      <region name="DimPrivateOutline" parent="Outlined"/>
+      <region name="ConstPublicOutline" parent="Outlined"/>
+      <region name="ConstPrivateOutline" parent="Outlined"/>
+
+      <region name="FunctionOutline" parent="Outlined"/>
+      <region name="FunctionPublicOutline" parent="FunctionOutline"/>
+      <region name="FunctionPrivateOutline" parent="FunctionOutline"/>
+      <region name="SubOutline" parent="FunctionOutline"/>
+      <region name="SubPublicOutline" parent="SubOutline"/>
+      <region name="SubPrivateOutline" parent="SubOutline"/>
+
+      <region name="PropertyOutline" parent="Outlined"/>
+      <region name="PropertyGetOutline" parent="PropertyOutline"/>
+      <region name="PropertySetOutline" parent="PropertyOutline"/>
+      <region name="PropertyLetOutline" parent="PropertyOutline"/>
+
+      <scheme name="Outlines">
+         <regexp match="/\b\M Class\s+(\w+)/ix" region1="ClassOutline"/>
+
+         <regexp match="/^\s*\M Public \s+ Function\s+(\w+)/ix" region1="FunctionPublicOutline"/>
+         <regexp match="/^\s*\M Private\s+Function\s+(\w+)/ix" region1="FunctionPrivateOutline"/>
+         <regexp match="/^\s*\M Function\s+(\w+)/ix" region1="FunctionPublicOutline"/>
+
+         <regexp match="/^\s*\M Public \s+Sub\s+(\w+)/ix" region1="SubPublicOutline"/>
+         <regexp match="/^\s*\M Private\s+Sub\s+(\w+)/ix" region1="SubPrivateOutline"/>
+         <regexp match="/^\s*\M Sub\s+(\w+)/ix" region1="SubPublicOutline"/>
+
+         <regexp match="/^\s*\M Property\s+Get\s+(\w+)/ix" region1="PropertyGetOutline"/>
+         <regexp match="/^\s*\M Property\s+Set\s+(\w+)/ix" region1="PropertySetOutline"/>
+         <regexp match="/^\s*\M Property\s+Let\s+(\w+)/ix" region1="PropertyLetOutline"/>
+         <regexp match="/^\s*\M Property \s+ \w+ \s+(\w+)/ix" region1="PropertyOutline"/>
+
+         <regexp match="/^\s*\M (Private\s+)?Dim\s+(\w+)/ix" region2="DimPrivateOutline"/>
+         <regexp match="/^\s*\M Public\s+Dim\s+(\w+)/ix" region1="DimPublicOutline"/>
+
+         <regexp match="/^\s*\b\M (Private\s+)?Const\s+(\w+)/ix" region2="ConstPrivateOutline"/>
+         <regexp match="/^\s*\b\M Public\s+Const\s+(\w+)/ix" region1="ConstPublicOutline"/>
+      </scheme>
+
+      <scheme name="PairedConstructions">
+         <!--regexp match="/\bend\s+if\b/i" region0="Error" lowpriority="lowpriority"/-->
+         <regexp match="/\bend\s+if\b/i" region0="vbWord" priority="low"/>
+         <block start="/\b(if)\b/i" end="/\b((then\s+exit\s+(function|sub|property|for|do))|((then)(\s+[^'\s]+.*$)?=)|(end([\s])+\Y1))\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <regexp match="/(\bExit\s+(function|sub|property|for|do)\b)/i" region0="Keyword"/>
+
+         <regexp match="/(\bproperty\b)?#8(\s+\b(let|set|get)\b)/i" region2="Keyword"/>
+         <regexp match="/\.(class|property)\b/i"/>
+         <block start="/\b(with|function|sub|class|property)\b/i" end="/\b(end([\s])+\Y1)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/((\bselect\b)\s+\bcase\b)/i" end="/\b(end([\s])+\Y2)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(for(\s+each)?)\b/i" end="/([^\S]+|^)\m(\bnext)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region12="PairEnd"/>
+         <block start="/\b(do(\s+(while|until))?)\b/i" end="/\b(loop(\s+(while|until))?)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(while)\b/i" end="/\b(wend)\b/i"
+                scheme="PairedConstructions" region00="vbWord" region10="vbWord" region01="PairStart" region11="PairEnd"/>
+         <regexp match="/(\bOn\s+Error\s+(Resume\s+Next)|(Goto\s+0)\b)/i" region0="Keyword"/>
+      </scheme>
+
+      <scheme name="vbasic">
+<!-- Comments -->
+         <regexp match="/'.*$/" region0="vbComment"/>
+         <regexp match="/\brem\b.*$/ix" region0="vbComment"/>
+<!-- Strings -->
+         <regexp match="/&#34;.*?&#34;/" region0="vbString"/>
+<!-- Numbers  -->
+         <regexp match="/\B\$[\da-fA-F]+\b/" region0="vbNumb"/>
+         <regexp match="/\B&amp;H[\da-fA-F]+\b/" region0="vbNumb"/>
+         <regexp match="/\b[0-9.]+([eE][\-+]?\d+)?\b/" region0="vbNumb"/>
+<!-- Line continuation -->
+         <regexp match="/\b(_)\s*$/" region0="vbWord"/>
+         <block start="/(\()/" end="/(\))/" scheme="vbasic" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="vbasic" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+
+         <inherit scheme="Outlines"/>
+    <!--     <inherit scheme="PairedConstructions">
+           <virtual scheme="PairedConstructions" subst-scheme="vbasic"/>
+         </inherit>    -->
+
+<!-- Labels -->
+         <regexp match="/^\w+(:)$/" region0="vbLabel" region1="vbSymb"/>
+<!-- Symbols -->
+         <keywords region="vbSymb">
+            <symb name="="/>
+            <symb name="^"/>
+            <symb name="+"/>
+            <symb name="&lt;"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=";"/>
+            <symb name=":"/>
+            <symb name="("/>
+            <symb name="."/>
+            <symb name="&gt;"/>
+            <symb name="#"/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="&amp;"/>
+         </keywords>
+<!-- Words -->
+         <keywords ignorecase="yes" region="vbWord">
+            <word name="true" region="BooleanConstant"/>
+            <word name="false" region="BooleanConstant"/>
+            <word name="abs"/>
+            <word name="appactivate"/>
+            <word name="array"/>
+            <word name="as"/>
+            <word name="asc"/>
+            <word name="atn"/>
+            <word name="attribute"/>
+            <word name="begin"/>
+            <word name="beep"/>
+            <word name="boolean"/>
+            <word name="byte"/>
+            <word name="byval"/>
+            <word name="call"/>
+            <word name="case"/>
+            <word name="cbool"/>
+            <word name="cbyte"/>
+            <word name="ccur"/>
+            <word name="cdate"/>
+            <word name="cdate"/>
+            <word name="cdbl"/>
+            <word name="chdir"/>
+            <word name="chdrive"/>
+            <word name="chr"/>
+            <word name="chr"/>
+            <word name="cint"/>
+            <word name="circle"/>
+            <word name="class"/>
+            <word name="clear"/>
+            <word name="clng"/>
+            <word name="clng"/>
+            <word name="close"/>
+            <word name="command"/>
+            <word name="compare"/>
+            <word name="const"/>
+            <word name="cos"/>
+            <word name="createobject"/>
+            <word name="csng"/>
+            <word name="cstr"/>
+            <word name="curdir"/>
+            <word name="currency"/>
+            <word name="cvar"/>
+            <word name="cverr"/>
+            <word name="date"/>
+            <word name="dateadd"/>
+            <word name="datediff"/>
+            <word name="datepart"/>
+            <word name="dateserial"/>
+            <word name="datevalue"/>
+            <word name="ddb"/>
+            <word name="deftype"/>
+            <word name="dim"/>
+            <word name="dir"/>
+            <word name="do"/>
+            <word name="doevents"/>
+            <word name="double"/>
+            <word name="each"/>
+            <word name="else"/>
+            <word name="elseif"/>
+            <word name="empty"/>
+            <word name="end"/>
+            <word name="environ"/>
+            <word name="eof"/>
+            <word name="erase"/>
+            <word name="err"/>
+            <word name="error"/>
+            <word name="exit"/>
+            <word name="exp"/>
+            <word name="explicit"/>
+            <word name="fileattr"/>
+            <word name="fileattr"/>
+            <word name="filecopy"/>
+            <word name="filedatetime"/>
+            <word name="filelen"/>
+            <word name="fix"/>
+            <word name="for"/>
+            <word name="format"/>
+            <word name="form"/>
+            <word name="freefile"/>
+            <word name="function"/>
+            <word name="fv"/>
+            <word name="get"/>
+            <word name="getattr"/>
+            <word name="getobject"/>
+            <word name="gosub"/>
+            <word name="goto"/>
+            <word name="hex"/>
+            <word name="hour"/>
+            <word name="if"/>
+            <word name="iif"/>
+            <word name="input"/>
+            <word name="input #"/>
+            <word name="instr"/>
+            <word name="int"/>
+            <word name="integer"/>
+            <word name="ipmt"/>
+            <word name="irr"/>
+            <word name="isarray"/>
+            <word name="isdate"/>
+            <word name="isempty"/>
+            <word name="iserror"/>
+            <word name="ismissing"/>
+            <word name="isnull"/>
+            <word name="isnumeric"/>
+            <word name="isobject"/>
+            <word name="kill"/>
+            <word name="lbound"/>
+            <word name="lcase"/>
+            <word name="left"/>
+            <word name="len"/>
+            <word name="let"/>
+            <word name="line"/>
+            <word name="line input #"/>
+            <word name="loc"/>
+            <word name="lock"/>
+            <word name="lof"/>
+            <word name="log"/>
+            <word name="long"/>
+            <word name="loop"/>
+            <word name="lset"/>
+            <word name="ltrim"/>
+            <word name="me"/>
+            <word name="mid"/>
+            <word name="minute"/>
+            <word name="mirr"/>
+            <word name="mkdir"/>
+            <word name="module"/>
+            <word name="month"/>
+            <word name="msgbox"/>
+            <word name="name"/>
+            <word name="name"/>
+            <word name="new"/>
+            <word name="next"/>
+            <word name="now"/>
+            <word name="not"/>
+            <word name="nothing"/>
+            <word name="nper"/>
+            <word name="npv"/>
+            <word name="object"/>
+            <word name="oct"/>
+            <word name="on"/>
+            <word name="open"/>
+            <word name="option"/>
+            <word name="option base"/>
+            <word name="option explicit"/>
+            <word name="pmt"/>
+            <word name="ppmt"/>
+            <word name="print"/>
+            <word name="print #"/>
+            <word name="private"/>
+            <word name="property"/>
+            <word name="pset"/>
+            <word name="public"/>
+            <word name="put"/>
+            <word name="pv"/>
+            <word name="qbcolor"/>
+            <word name="raise"/>
+            <word name="randomize"/>
+            <word name="rate"/>
+            <word name="redim"/>
+            <word name="reset"/>
+            <word name="resume"/>
+            <word name="return"/>
+            <word name="rgb"/>
+            <word name="right"/>
+            <word name="rmdir"/>
+            <word name="rnd"/>
+            <word name="rset"/>
+            <word name="rtrim"/>
+            <word name="second"/>
+            <word name="seek"/>
+            <word name="seek"/>
+            <word name="select"/>
+            <word name="sendkeys"/>
+            <word name="set"/>
+            <word name="setattr"/>
+            <word name="sgn"/>
+            <word name="shell"/>
+            <word name="sin"/>
+            <word name="single"/>
+            <word name="sln"/>
+            <word name="space"/>
+            <word name="spc"/>
+            <word name="sqr"/>
+            <word name="static"/>
+            <word name="stop"/>
+            <word name="str"/>
+            <word name="strcomp"/>
+            <word name="strconv"/>
+            <word name="string"/>
+            <word name="sub"/>
+            <word name="switch"/>
+            <word name="syd"/>
+            <word name="system"/>
+            <word name="tab"/>
+            <word name="tan"/>
+            <word name="then"/>
+            <word name="time"/>
+            <word name="timer"/>
+            <word name="timeserial"/>
+            <word name="timevalue"/>
+            <word name="to"/>
+            <word name="trim"/>
+            <word name="typename"/>
+            <word name="ubound"/>
+            <word name="ucase"/>
+            <word name="unlock"/>
+            <word name="until"/>
+            <word name="val"/>
+            <word name="variant"/>
+            <word name="vartype"/>
+            <word name="vbwizard"/>
+            <word name="version"/>
+            <word name="weekday"/>
+            <word name="wend"/>
+            <word name="while"/>
+            <word name="width #"/>
+            <word name="with"/>
+            <word name="write #"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

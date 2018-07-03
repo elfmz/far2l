@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Config Files
+With help of:
+    Vladimir Tarasov <tsoftgroup@chat.ru>
+    Safin Timur <timur@lanit.ru>
+    Alexander Polosow/Александр Полозов 2:5025/54.32 aka 38.89
+-->
+   <type name="config">
+
+      <import type="def"/>
+
+
+
+      <scheme name="ConfCore">
+         <inherit scheme="NetAddresses"/>
+<!-- Path -->
+         <inherit scheme="Path"/>
+         <regexp match="/^\s* \M \[ (.*?) \]/x" region1="Function"/>
+         <regexp match="/\%[\w\.]+\%/" region0="Var"/>
+         <regexp match="/\{[\da-fA-F]{8}\-[\da-fA-F]{4}\-[\da-fA-F]{4}\-[\da-fA-F]{4}\-[\da-fA-F]{12}\}/" region0="Number"/>
+         <regexp match="/\-[\w\s]{4,}?\-/" region0="String"/>
+         <block start="/\{(\|.*?\|)/" end="/\}/" scheme="config" region="Insertion" region01="StringContent"/>
+         <keywords ignorecase="yes" region="Symbol">
+<!--symb name="."-->
+            <symb name=","/>
+         </keywords>
+      </scheme>
+
+      <scheme name="ConfKeywords">
+         <keywords ignorecase="yes" region="Var">
+            <word name="ON"/>
+            <word name="OFF"/>
+            <word name="YES"/>
+            <word name="NO"/>
+         </keywords>
+<!-- some popular fido and other keywords -->
+         <keywords ignorecase="yes" region="Keyword">
+            <word name="ABORT"/>
+            <word name="ACCEPT"/>
+            <word name="ACCES"/>
+            <word name="ADD"/>
+            <word name="ADDRESS"/>
+            <word name="ADRES"/>
+            <word name="AKA"/>
+            <word name="ALIAS"/>
+            <word name="ALIASES"/>
+            <word name="ALL"/>
+            <word name="ANSWER"/>
+            <word name="AREA"/>
+            <word name="AREAS"/>
+            <word name="ARHIVER"/>
+            <word name="AUDIT"/>
+            <word name="AUTO"/>
+            <word name="BAD"/>
+            <word name="BAUD"/>
+            <word name="BBS"/>
+            <word name="BEGIN"/>
+            <word name="BIND"/>
+            <word name="BOUND"/>
+            <word name="BOX"/>
+            <word name="BOXES"/>
+            <word name="BREAK"/>
+            <word name="BUFFER"/>
+            <word name="BUFFERS"/>
+            <word name="BUSY"/>
+            <word name="CALL"/>
+            <word name="CARBON"/>
+            <word name="CHAT"/>
+            <word name="CLASS"/>
+            <word name="COLOR"/>
+            <word name="COMPRESS"/>
+            <word name="CONFIRM"/>
+            <word name="CONNECT"/>
+            <word name="COPI"/>
+            <word name="COPY"/>
+            <word name="COUNTRY"/>
+            <word name="CREATE"/>
+            <word name="DATA"/>
+            <word name="DAY"/>
+            <word name="DEFAULT"/>
+            <word name="DEVICE"/>
+            <word name="DIAL"/>
+            <word name="DIR"/>
+            <word name="DIRECT"/>
+            <word name="DISABLE"/>
+            <word name="DOS"/>
+            <word name="DRIVE"/>
+            <word name="DRIVPARM"/>
+            <word name="DUPE"/>
+            <word name="DUPES"/>
+            <word name="ECHO"/>
+            <word name="EMPTY"/>
+            <word name="ENABLE"/>
+            <word name="END"/>
+            <word name="ERROR"/>
+            <word name="EVENT"/>
+            <word name="EVENTS"/>
+            <word name="EXCLUDE"/>
+            <word name="EXIT"/>
+            <word name="EXTENSION"/>
+            <word name="EXTERNAL"/>
+            <word name="EXTRACT"/>
+            <word name="FAX"/>
+            <word name="FCBS"/>
+            <word name="FILE"/>
+            <word name="FILES"/>
+            <word name="FIX"/>
+            <word name="FLAG"/>
+            <word name="FLAGS"/>
+            <word name="FOR"/>
+            <word name="FORCE"/>
+            <word name="FORWARD"/>
+            <word name="FREQ"/>
+            <word name="FROM"/>
+            <word name="GROUP"/>
+            <word name="HELP"/>
+            <word name="HIDE"/>
+            <word name="HIGH"/>
+            <word name="HOLD"/>
+            <word name="HUMAN"/>
+            <word name="IDENT"/>
+            <word name="IGNORE"/>
+            <word name="IN"/>
+            <word name="INCLUDE"/>
+            <word name="INIT"/>
+            <word name="INSTALL"/>
+            <word name="INTERVAL"/>
+            <word name="ITEM"/>
+            <word name="KEY"/>
+            <word name="KILL"/>
+            <word name="LAST"/>
+            <word name="LEVEL"/>
+            <word name="LIGHT"/>
+            <word name="LINK"/>
+            <word name="LINKS"/>
+            <word name="LIST"/>
+            <word name="LOAD"/>
+            <word name="LOADING"/>
+            <word name="LOCAL"/>
+            <word name="LOCK"/>
+            <word name="LOG"/>
+            <word name="MACRO"/>
+            <word name="MAIL"/>
+            <word name="MAILER"/>
+            <word name="MANAGER"/>
+            <word name="MAX"/>
+            <word name="MENU"/>
+            <word name="MIN"/>
+            <word name="MODE"/>
+            <word name="MODEM"/>
+            <word name="MONTH"/>
+            <word name="MOVE"/>
+            <word name="MULTI"/>
+            <word name="NAME"/>
+            <word name="NAME"/>
+            <word name="NET"/>
+            <word name="NODE"/>
+            <word name="NORMAL"/>
+            <word name="NUMBER"/>
+            <word name="ORDER"/>
+            <word name="ORIGIN"/>
+            <word name="OS2"/>
+            <word name="OUT"/>
+            <word name="PACK"/>
+            <word name="PACKET"/>
+            <word name="PACKETS"/>
+            <word name="PASS"/>
+            <word name="PATH"/>
+            <word name="PHONE"/>
+            <word name="PLACE"/>
+            <word name="POLL"/>
+            <word name="PORT"/>
+            <word name="PRE"/>
+            <word name="PROCESS"/>
+            <word name="PROTOCOL"/>
+            <word name="PUT"/>
+            <word name="REG"/>
+            <word name="RE"/>
+            <word name="RING"/>
+            <word name="ROUTE"/>
+            <word name="ROUTING"/>
+            <word name="SAVER"/>
+            <word name="SCAN"/>
+            <word name="SCREEN"/>
+            <word name="SECURITY"/>
+            <word name="SEMAPHORE"/>
+            <word name="SEND"/>
+            <word name="SENT"/>
+            <word name="SESSION"/>
+            <word name="SET"/>
+            <word name="SHELL"/>
+            <word name="SIZE"/>
+            <word name="SOUND"/>
+            <word name="SOUNDOF"/>
+            <word name="STACKS"/>
+            <word name="STRING"/>
+            <word name="STYLE"/>
+            <word name="SUB"/>
+            <word name="SUBJ"/>
+            <word name="SUBST"/>
+            <word name="SUFFIX"/>
+            <word name="SWAP"/>
+            <word name="SWITCHES"/>
+            <word name="SYS"/>
+            <word name="SYSOP"/>
+            <word name="TASK"/>
+            <word name="TEMP"/>
+            <word name="TEMPLATE"/>
+            <word name="TERMINAL"/>
+            <word name="TERMINATE"/>
+            <word name="TICK"/>
+            <word name="TIME"/>
+            <word name="TRACK"/>
+            <word name="TRANSIT"/>
+            <word name="TWIT"/>
+            <word name="UN"/>
+            <word name="UP"/>
+            <word name="USER"/>
+            <word name="VIEW"/>
+            <word name="W32"/>
+            <word name="WARNING"/>
+            <word name="WEEK"/>
+            <word name="WORD"/>
+            <word name="WORK"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="ConfCommonRight">
+<!-- Linear Comments -->
+         <block start="/(^|\s*)(;|\#|\/\/)/" end="/$/" scheme="Comment" region="Comment"/>
+         <regexp match="/(^|\s{3,})(&amp;&amp;.*$)/" region2="Comment"/>
+         <regexp match="/(^|\s{3,})(\*.*$)/" region2="Comment"/>
+         <inherit scheme="ConfCore"/>
+      </scheme>
+
+      <scheme name="ConfCommon">
+         <inherit scheme="ConfCommonRight"/>
+         <inherit scheme="ConfKeywords"/>
+      </scheme>
+
+      <scheme name="ConfStrings">
+<!-- Strings -->
+         <block start="/'/" end="/'|$/" scheme="ConfString" region="String"/>
+         <block start="/&#34;/" end="/&#34;|$/" scheme="ConfString" region="String"/>
+      </scheme>
+
+      <scheme name="ConfString">
+<!--inherit scheme="ConfCore"-->
+         <regexp match="/(&#34;&#34;|\\\\|\\&#34;)/" region0="StringContent"/>
+      </scheme>
+
+      <scheme name="ConfRight">
+         <inherit scheme="ConfStrings"/>
+<!-- Numbers -->
+<!--Timur: Hack justt for ignore 'pseudo' hex digits as "Add", "dbf" etc..-->
+         <regexp match="/\b([A-Fa-f]+[^\d])?!(0x)?[\da-fA-F]+\b/i" region0="Number"/>
+         <inherit scheme="ConfCommonRight"/>
+         <keywords ignorecase="yes" region="Comment">
+            <word name="DWord"/>
+            <word name="Hex"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="config">
+         <inherit scheme="ConfCommon"/>
+         <regexp match="/^\s*\[.*?\]/" region0="CommentContent"/>
+<!-- Apache conf stuff -->
+         <regexp match="/^\s*(&lt;.*?\&gt;)\s*$/" region0="CommentContent"/>
+         <block start="/(=)/" end="/(^ | [^\\]?#1) $/x" scheme="ConfRight" region00="Symbol"/>
+         <inherit scheme="ConfStrings"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

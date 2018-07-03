@@ -31,7 +31,7 @@
 
   <!--  main languages  -->
   <prototype name="c" group="main" description="C">
-    <location link="jar:common.jar!base/c.hrc"/>
+    <location link="base/c.hrc"/>
     <filename>/\.c$/i</filename>
     <parameters>
       <param name="ansi-defines" value="true" description="Use ANSI C standard library keywords"/>
@@ -45,7 +45,7 @@
     </parameters>
   </prototype>
   <prototype name="cpp" group="main" description="C++">
-    <location link="jar:common.jar!base/cpp.hrc"/>
+    <location link="base/cpp.hrc"/>
     <filename>/\.(cpp|cxx|cc|hpp|h)$/i</filename>
     <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
     <firstline>/\#include/</firstline>
@@ -63,12 +63,12 @@
     </parameters>
   </prototype>
   <package name="cpp-qt" description="C++ + Qt">
-   <location link="jar:common.jar!base/cpp-qt.hrc"/>
+   <location link="base/cpp-qt.hrc"/>
   </package>
   <prototype name="d" group="main" description="D">
-    <location link="jar:common.jar!base/d.hrc"/>
+    <location link="base/d.hrc"/>
     <filename>/\.di?$/i</filename>
-    <firstline>/^\s*(module|import)\b/xi</firstline>
+    <firstline>/^\s*(module|import) .*;/</firstline>
     <parameters>
       <param name="format-str" value="true" description="Highlight printf-like %format in strings"/>
       <param name="use_phobos" value="true" description="Use Phobos library keywords"/>
@@ -81,12 +81,12 @@
   </prototype>
 
   <prototype name="asm" group="main" description="ASM">
-    <location link="jar:common.jar!base/asm.hrc"/>
+    <location link="base/asm.hrc"/>
     <filename>/\.(mac|asm|inc|i32|cod)$/i</filename>
     <firstline>/^\s*;/</firstline>
   </prototype>
   <prototype name="perl" group="main" description="Perl">
-    <location link="jar:common.jar!base/perl.hrc"/>
+    <location link="base/perl.hrc"/>
     <filename>/\.(pl[sx]?|pm|pod|t|ph)$/i</filename>
     <firstline weight='2'>/^\#!\s*.+perl\b/</firstline>
     <firstline>/perl/i</firstline>
@@ -96,7 +96,7 @@
     </parameters>
   </prototype>
   <prototype name="java" group="main" description="Java">
-    <location link="jar:common.jar!base/java.hrc"/>
+    <location link="base/java.hrc"/>
     <filename>/\.ja(va|v|d)$/i</filename>
     <firstline weight='2'>/^\/\/ Decompiled by Jad/</firstline>
     <parameters>
@@ -111,85 +111,107 @@
     </parameters>
   </prototype>
   <prototype name="idl" group="main" description="IDL">
-    <location link="jar:common.jar!base/idl.hrc"/>
+    <location link="base/idl.hrc"/>
     <filename>/\.(hvs|[io]dl)$/i</filename>
     <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
     <firstline>/\#include/</firstline>
   </prototype>
   <prototype name="pascal" group="main" description="Pascal">
-    <location link="jar:common.jar!base/pascal.hrc"/>
+    <location link="base/pascal.hrc"/>
     <filename>/\.(\~?pas|dpr|dpk|inc|int|pp)$/i</filename>
     <firstline>/^(\{|\/\/|resourcestring|program|library|unit|package)/i</firstline>
   </prototype>
   <prototype name="csharp" group="main" description="C#">
-    <location link="jar:common.jar!base/csharp.hrc"/>
+    <location link="base/csharp.hrc"/>
     <filename>/\.cs$/i</filename>
   </prototype>
+  <prototype name="fsharp" group="main" description="F#">
+    <location link="base/fsharp.hrc"/>
+    <filename weight="9">/\.fs(i|l|x|y|script)?$/i</filename>
+  </prototype>
   <prototype name="jsnet" group="main" description="JS.NET">
-    <location link="jar:common.jar!base/js.net.hrc"/>
+    <location link="base/js.net.hrc"/>
     <filename weight="0.5">/\.js$/i</filename>
   </prototype>
   <prototype name="vbnet" group="main" description="VB.NET">
-    <location link="jar:common.jar!base/vb.net.hrc"/>
+    <location link="base/vb.net.hrc"/>
     <filename>/\.vb$/i</filename>
   </prototype>
   <!-- warning!! extensions conflict with Fortran -->
   <prototype name="forth" group="main" description="Forth">
-    <location link="jar:common.jar!base/forth.hrc"/>
+    <location link="base/forth.hrc"/>
     <filename>/\.(fth|f32|f|spf)$/i</filename>
   </prototype>
   <prototype name="fortran" group="main" description="Fortran">
-    <location link="jar:common.jar!base/fortran.hrc"/>
-    <filename>/\.(for|f(90)?)$/i</filename>
+    <location link="base/fortran.hrc"/>
+    <filename>/\.(for|f90|f95|f3?)$/i</filename>
   </prototype>
   <prototype name="vbasic" group="main" description="Visual Basic">
-    <location link="jar:common.jar!base/vbasic.hrc"/>
+    <location link="base/vbasic.hrc"/>
     <filename>/\.(bas|vbp|frm|cls)$/i</filename>
     <firstline>/^(VERSION|VBWIZARD) \d+.\d+/</firstline>
   </prototype>
   <prototype name="python" group="main" description="Python">
-    <location link="jar:common.jar!base/python.hrc"/>
+    <location link="base/python.hrc"/>
     <filename>/\.(py|pyw|pys)$/i</filename>
     <firstline weight='2'>/^\#!\S*.+python/</firstline>
+    <firstline>/^("""|import)/</firstline>
   </prototype>
   <prototype name="lua" group="main" description="Lua">
-    <location link="jar:common.jar!base/lua.hrc"/>
+    <location link="base/lua.hrc"/>
     <filename>/\.(w?lua)$/i</filename>
   </prototype>
   <prototype name="ruby" group="main" description="Ruby">
-    <location link="jar:common.jar!base/ruby.hrc"/>
+    <location link="base/ruby.hrc"/>
     <filename>/\.(rb|rbw|ruby|rake)$/i</filename>
     <filename>/Rakefile$/i</filename>
     <firstline weight='4'>/-\*- ruby -\*-/i</firstline>
     <firstline>/bin\/ruby/i</firstline>
   </prototype>
+  <prototype name="nix" group="main" description="Nix">
+    <location link="base/nix.hrc"/>
+    <filename>/\.(nix)$/i</filename>
+    <parameters>
+      <param name="tabs-as-errors" value="true" description="Shows tabulation symbol as error"/>
+      <param name="spaces-as-errors" value="true" description="Shows trailing spaces as error"/>
+    </parameters>
+  </prototype>
+  <prototype name="haxe" group="main" description="Haxe">
+    <location link="base/haxe.hrc"/>
+    <filename>/\.hx$/i</filename>
+  </prototype>
   <prototype name="scala" group="main" description="Scala">
-    <location link="jar:common.jar!base/scala.hrc"/>
-    <filename>/\.scala$/i</filename>
+    <location link="base/scala.hrc"/>
+    <filename>/\.(scala|sc|sbt)$/i</filename>
   </prototype>
   <prototype name="tcltk" group="main" description="Tcl/Tk/Expect">
-    <location link="jar:common.jar!base/tcltk.hrc"/>
+    <location link="base/tcltk.hrc"/>
     <filename>/\.(tcl|tk|exp)$/i</filename>
     <firstline>/^\#(!\s*.+(tcl|wi)?sh\b)/</firstline>
   </prototype>
   <prototype name="go" group="main" description="Go">
-    <location link="jar:common.jar!base/go.hrc"/>
+    <location link="base/go.hrc"/>
     <filename>/\.go$/i</filename>
     <parameters>
       <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
     </parameters>
   </prototype>
   <prototype name="kotlin" group="main" description="Kotlin">
-    <location link="jar:common.jar!base/kotlin.hrc"/>
+    <location link="base/kotlin.hrc"/>
     <filename>/\.kt$/i</filename>
+  </prototype>
+
+  <prototype name="rust" group="main" description="Rust">
+    <location link="base/rust.hrc"/>
+    <filename>/\.rs$/i</filename>
   </prototype>
 
   <!--  inet languages  -->
   <package name="html-entity" description="(x)html entities">
-   <location link="jar:common.jar!inet/gen/html-entity.hrc"/>
+   <location link="inet/gen/html-entity.hrc"/>
   </package>
   <prototype name="html" group="inet" description="html">
-    <location link="jar:common.jar!inet/html.hrc"/>
+    <location link="inet/html.hrc"/>
     <filename>/\.[^ptr]??html?$/i</filename>
     <firstline>/^\s*&lt;((!DOCTYPE\s+)?HTML|!\-\-)/i</firstline>
     <parameters>
@@ -199,7 +221,7 @@
   </prototype>
 
   <prototype name="css" group="inet" description="css">
-    <location link="jar:common.jar!inet/css.hrc"/>
+    <location link="inet/css.hrc"/>
     <filename>/\.css$/i</filename>
     <parameters>
      <param name="html-css" value="true" description="Default use css for HTML"/>
@@ -207,54 +229,54 @@
     </parameters>
   </prototype>
   <prototype name="html-css" group="inet" description="css for html">
-    <location link="jar:common.jar!inet/html-css.hrc"/>
+    <location link="inet/html-css.hrc"/>
     <filename weight="0">/\.css$/i</filename>
   </prototype>
   <prototype name="svg-css" group="inet" description="css for svg">
-    <location link="jar:common.jar!inet/svg-css.hrc"/>
+    <location link="inet/svg-css.hrc"/>
     <filename weight="0">/\.css$/i</filename>
   </prototype>
   <prototype name="sass" group="inet" description="SASS">
-    <location link="jar:common.jar!inet/sass.hrc"/>
+    <location link="inet/sass.hrc"/>
     <filename>/\.sass$/i</filename>
   </prototype>
   <prototype name="less" group="inet" description="Less css">
-    <location link="jar:common.jar!inet/less.hrc"/>
+    <location link="inet/less.hrc"/>
     <filename>/\.less$/</filename>
   </prototype>
   <prototype name="smarty" group="inet" description="Smarty PHP Templates">
-    <location link="jar:common.jar!inet/smarty.hrc"/>
+    <location link="inet/smarty.hrc"/>
     <filename weight="10">/\.smarty$/</filename>
   </prototype>
   <prototype name="ss" group="inet" description="SilverStripe">
-    <location link="jar:common.jar!inet/ss.hrc"/>
+    <location link="inet/ss.hrc"/>
     <filename weight="10">/\.ss$/</filename>
   </prototype>
   <prototype name="twig" group="inet" description="Twig PHP Templates">
-    <location link="jar:common.jar!inet/twig.hrc"/>
+    <location link="inet/twig.hrc"/>
     <filename weight="10">/\.twig$/</filename>
   </prototype>
 
   <prototype name="haml" group="inet" description="HAML">
-    <location link="jar:common.jar!inet/haml.hrc"/>
+    <location link="inet/haml.hrc"/>
     <filename>/\.haml$/i</filename>
   </prototype>
   <prototype name="shpaml" group="inet" description="SHPAML">
-    <location link="jar:common.jar!inet/shpaml.hrc"/>
+    <location link="inet/shpaml.hrc"/>
     <filename>/\.shpaml$/i</filename>
   </prototype>
   <prototype name="erb" group="inet" description="ERB">
-    <location link="jar:common.jar!inet/erb.hrc"/>
+    <location link="inet/erb.hrc"/>
     <filename weight='4'>/\.(erb|rhtml|html\.erb)$/i</filename>
   </prototype>
 
   <prototype name="jsp" group="inet" description="jsp">
-    <location link="jar:common.jar!inet/jsp.hrc"/>
+    <location link="inet/jsp.hrc"/>
     <filename>/\.(jspf?|tag)$/i</filename>
   </prototype>
 
   <prototype name="php" group="inet" description="php">
-    <location link="jar:common.jar!inet/php.hrc"/>
+    <location link="inet/php.hrc"/>
     <filename>/\.(php\d?|phtml|thtml|inc)$/i</filename>
     <firstline>/^&lt;\?(php)/</firstline>
     <firstline weight='2'>/^#!\S*(php)/</firstline>
@@ -267,21 +289,21 @@
   </prototype>
 
   <prototype name="xhtml-trans" group="inet" description="xhtml transitional" targetNamespace="http://www.w3.org/1999/xhtml">
-    <location link="jar:common.jar!inet/gen/xhtml-trans.hrc"/>
+    <location link="inet/gen/xhtml-trans.hrc"/>
     <filename>/\.html?$/ix</filename>
     <filename>/\.xhtml?$/ix</filename>
     <firstline weight='0.5'>/^&lt;\?xml/</firstline>
     <firstline weight='2'>/DTD XHTML.*?Transitional/i</firstline>
   </prototype>
   <prototype name="xhtml-strict" group="inet" description="xhtml strict" targetNamespace="http://www.w3.org/1999/xhtml">
-    <location link="jar:common.jar!inet/gen/xhtml-strict.hrc"/>
+    <location link="inet/gen/xhtml-strict.hrc"/>
     <filename>/\.html?$/ix</filename>
     <filename>/\.xhtml?$/ix</filename>
     <firstline weight='0.5'>/^&lt;\?xml/</firstline>
     <firstline weight='2'>/DTD XHTML.*?Strict/i</firstline>
   </prototype>
   <prototype name="xhtml-frameset" group="inet" description="xhtml frameset" targetNamespace="http://www.w3.org/1999/xhtml">
-    <location link="jar:common.jar!inet/gen/xhtml-frameset.hrc"/>
+    <location link="inet/gen/xhtml-frameset.hrc"/>
     <filename>/\.html?$/ix</filename>
     <filename>/\.xhtml?$/ix</filename>
     <firstline weight='0.5'>/^&lt;\?xml/</firstline>
@@ -289,81 +311,81 @@
   </prototype>
 
   <package name="asp" description="Active Server Pages">
-   <location link="jar:common.jar!inet/asp.hrc"/>
+   <location link="inet/asp.hrc"/>
   </package>
   <prototype name="asp.vb" group="inet" description="asp - VBScript">
-    <location link="jar:common.jar!inet/asp.vb.hrc"/>
+    <location link="inet/asp.vb.hrc"/>
     <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
     <firstline weight='2'>/language\s*=.*vbscript/i</firstline>
     <firstline>/&lt;\%/i</firstline>
   </prototype>
   <prototype name="asp.js" group="inet" description="asp - JavaScript">
-    <location link="jar:common.jar!inet/asp.js.hrc"/>
+    <location link="inet/asp.js.hrc"/>
     <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
     <firstline weight='2'>/language\s*=.*j(ava)?script/i</firstline>
   </prototype>
   <prototype name="asp.ps" group="inet" description="asp - PerlScript">
-    <location link="jar:common.jar!inet/asp.ps.hrc"/>
+    <location link="inet/asp.ps.hrc"/>
     <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
     <firstline weight='2'>/language\s*=.*perlscript/i</firstline>
   </prototype>
   <prototype name="adp" group="inet" description="AOLserver Dynamic Pages">
-    <location link="jar:common.jar!inet/adp.hrc"/>
+    <location link="inet/adp.hrc"/>
     <filename>/\.adp$/i</filename>
     <firstline weight='2'>/language\s*=.*tcltk/i</firstline>
     <firstline>/&lt;\%/i</firstline>
   </prototype>
   <prototype name="svg" group="inet" description="SVG 1.0" targetNamespace="http://www.w3.org/2000/svg">
-    <location link="jar:common.jar!inet/gen/svg.hrc"/>
+    <location link="inet/gen/svg.hrc"/>
     <filename>/\.svg/ix</filename>
   </prototype>
   <prototype name="coldfusion" group="inet" description="ColdFusion">
-    <location link="jar:common.jar!inet/coldfusion.hrc"/>
+    <location link="inet/coldfusion.hrc"/>
     <filename>/\.cf[mc]$/i</filename>
   </prototype>
   <prototype name="jScript" group="inet" description="JavaScript">
-    <location link="jar:common.jar!inet/jscript.hrc"/>
+    <location link="inet/jscript.hrc"/>
     <filename>/\.(js|mocha)$/i</filename>
   </prototype>
   <prototype name="actionscript" group="inet" description="ActionScript">
-    <location link="jar:common.jar!inet/actionscript.hrc"/>
+    <location link="inet/actionscript.hrc"/>
     <filename>/\.(as|jsfl)$/i</filename>
   </prototype>
   <prototype name="vbScript" group="inet" description="VBScript">
-    <location link="jar:common.jar!inet/vbscript.hrc"/>
+    <location link="inet/vbscript.hrc"/>
     <filename>/\.vbs$/i</filename>
   </prototype>
 
   <prototype name="rss" group="inet" description="rss" targetNamespace="http://purl.org/rss/1.0/">
-    <location link="jar:common.jar!inet/gen/rss.hrc"/>
+    <location link="inet/gen/rss.hrc"/>
     <filename>/\.rss$/i</filename>
     <filename weight='1.5'>/^rss/i</filename>
     <firstline>/xmlns="http:\/\/purl\.org\/rss\/1\.0\/"/</firstline>
     <firstline>/&lt;rss version="0\.91"&gt;/</firstline>
   </prototype>
   <prototype name="htc" group="inet" description="HTC">
-    <location link="jar:common.jar!inet/gen/htc.hrc"/>
+    <location link="inet/gen/htc.hrc"/>
     <filename weight='3'>/\.htc$/i</filename>
   </prototype>
   <prototype name="xbl" group="inet" description="Mozilla XBL" targetNamespace="http://www.mozilla.org/xbl">
-    <location link="jar:common.jar!inet/gen/xbl.hrc"/>
+    <location link="inet/gen/xbl.hrc"/>
     <filename weight='0.5'>/\.xml$/i</filename>
     <firstline weight="5">/\bxmlns\s*=\s*(["'])http:\/\/www\.mozilla\.org\/xbl\1/</firstline>
   </prototype>
   <prototype name="wml" group="inet" description="wml" targetNamespace="http://www.wapforum.org/2001/wml">
-    <location link="jar:common.jar!inet/gen/wml.hrc"/>
+    <location link="inet/gen/wml.hrc"/>
     <filename>/\.wml$/i</filename>
   </prototype>
   <prototype name="mxml" group="inet" description="MXML">
-    <location link="jar:common.jar!inet/mxml.hrc"/>
+    <location link="inet/mxml.hrc"/>
     <filename>/\.mxml$/i</filename>
   </prototype>
 
 
   <!--  xml types  -->
   <prototype name="xml" group="xml" description="xml">
-    <location link="jar:common.jar!xml/xml.hrc"/>
-    <filename>/\.(xml|gi2|gpr|ui)$/i</filename>
+    <location link="xml/xml.hrc"/>
+    <filename>/\.(xml|\w*proj|gi2|gpr|ui)$/i</filename>
     <filename>/\.(wxs|fb2)$/i</filename>
     <firstline>/^&lt;\?xml | &lt;\!DOCTYPE | xmlns /x</firstline>
     <firstline>/^\s*&lt;\w+&gt;\s*/</firstline><!-- (\s+\w+\s*=\*([&quot;&apos;]).+?\2)*\s* -->
@@ -375,33 +397,33 @@
 
   </prototype>
   <package name="xmlns" description="xml namespace" targetNamespace="http://www.w3.org/XML/1998/namespace">
-    <location link="jar:common.jar!xml/gen/xmlns.hrc"/>
+    <location link="xml/gen/xmlns.hrc"/>
   </package>
   <package name="xlink" description="xlink" targetNamespace="http://www.w3.org/1999/xlink">
-    <location link="jar:common.jar!xml/gen/xlink.hrc"/>
+    <location link="xml/gen/xlink.hrc"/>
   </package>
   <package name="xinclude" description="xinclude" targetNamespace="http://www.w3.org/1999/xinclude">
-    <location link="jar:common.jar!xml/gen/xinclude.hrc"/>
+    <location link="xml/gen/xinclude.hrc"/>
   </package>
   <package name="xpath" description="xpath 1.0">
-    <location link="jar:common.jar!xml/xpath.hrc"/>
+    <location link="xml/xpath.hrc"/>
   </package>
   <package name="xpath2" description="xpath 2.0">
-    <location link="jar:common.jar!xml/xpath2.hrc"/>
+    <location link="xml/xpath2.hrc"/>
   </package>
 
 
   <prototype name="dtd" group="xml" description="dtd">
-    <location link="jar:common.jar!xml/dtd.hrc"/>
+    <location link="xml/dtd.hrc"/>
     <filename>/\.(dtd|ent|mod)$/i</filename>
   </prototype>
   <prototype name="dtdcatalog" group="xml" description="dtd/sgml catalog">
-    <location link="jar:common.jar!xml/dtdcatalog.hrc"/>
+    <location link="xml/dtdcatalog.hrc"/>
     <filename>/\.(cat|soc)$/i</filename>
   </prototype>
 
   <prototype name="xslt" group="xml" description="xslt 1.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
-    <location link="jar:common.jar!xml/gen/xslt.hrc"/>
+    <location link="xml/gen/xslt.hrc"/>
     <filename>/\.xslt?$/i</filename>
     <firstline>/ xsl:stylesheet /x</firstline>
     <firstline>/ XSL\/Transform /x</firstline>
@@ -413,69 +435,69 @@
   </prototype>
   <!-- targetNamespace duplicate. It's not good... -->
   <prototype name="xslt2" group="xml" description="xslt 2.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
-    <location link="jar:common.jar!xml/gen/xslt2.hrc"/>
+    <location link="xml/gen/xslt2.hrc"/>
     <filename>/\.xslt?2?$/i</filename>
     <firstline weight="3">/\b(stylesheet|transform)\s+ .* \bversion\s*=\s*([&quot;&apos;])2\.0\2 /sx</firstline>
   </prototype>
   <prototype name="xquery" group="xml" description="xquery 1.0">
-    <location link="jar:common.jar!xml/xquery.hrc"/>
+    <location link="xml/xquery.hrc"/>
     <filename>/\.xq$/i</filename>
     <firstline weight="2">/^\s*xquery\s+version\b/x</firstline>
   </prototype>
   <prototype name="xslfo" group="xml" description="xslfo 1.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
-    <location link="jar:common.jar!xml/gen/xslfo.hrc"/>
+    <location link="xml/gen/xslfo.hrc"/>
     <filename>/\.(xslfo?|fo)$/i</filename>
   </prototype>
 
   <prototype name="xmlschema" group="xml" description="XML Schema" targetNamespace="http://www.w3.org/2001/XMLSchema">
-    <location link="jar:common.jar!xml/gen/xmlschema.hrc"/>
+    <location link="xml/gen/xmlschema.hrc"/>
     <filename>/\.xsd?$/i</filename>
   </prototype>
   <package name="xsi" description="XML Schema instance" targetNamespace="http://www.w3.org/2001/XMLSchema-instance">
-    <location link="jar:common.jar!xml/gen/xmlschema-instance.hrc"/>
+    <location link="xml/gen/xmlschema-instance.hrc"/>
   </package>
 
   <prototype name="relaxng" group="xml" description="Relax NG" targetNamespace="http://relaxng.org/ns/structure/1.0">
-    <location link="jar:common.jar!xml/gen/relaxng.hrc"/>
+    <location link="xml/gen/relaxng.hrc"/>
     <filename>/\.rng$/ix</filename>
   </prototype>
   <prototype name="schematron" group="xml" description="schematron" targetNamespace="http://www.ascc.net/xml/schematron">
-    <location link="jar:common.jar!xml/gen/schematron.hrc"/>
+    <location link="xml/gen/schematron.hrc"/>
     <filename>/\.sch$/ix</filename>
   </prototype>
 
 
   <package name="wsdl-soap" description="wsdl soap binding" targetNamespace="http://schemas.xmlsoap.org/wsdl/soap/">
-    <location link="jar:common.jar!xml/gen/wsdl-soap.hrc"/>
+    <location link="xml/gen/wsdl-soap.hrc"/>
   </package>
   <prototype name="wsdl" group="xml" description="wsdl 1.1" targetNamespace="http://schemas.xmlsoap.org/wsdl/">
-    <location link="jar:common.jar!xml/gen/wsdl.hrc"/>
+    <location link="xml/gen/wsdl.hrc"/>
     <filename>/\.wsdl$/ix</filename>
   </prototype>
 
   <package name="rdfs" description="RDF schema" targetNamespace="http://www.w3.org/2000/01/rdf-schema#">
-    <location link="jar:common.jar!xml/gen/rdfs.hrc"/>
+    <location link="xml/gen/rdfs.hrc"/>
   </package>
   <prototype name="rdf" group="xml" description="RDF" targetNamespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-    <location link="jar:common.jar!xml/gen/rdf.hrc"/>
+    <location link="xml/gen/rdf.hrc"/>
     <filename>/\.rdf$/ix</filename>
   </prototype>
 
 
   <prototype name="xmlcatalog" group="xml" description="XML Catalog" targetNamespace="urn:oasis:names:tc:entity:xmlns:xml:catalog">
-    <location link="jar:common.jar!xml/gen/xmlcatalog.hrc"/>
+    <location link="xml/gen/xmlcatalog.hrc"/>
     <filename>/\.xml$/ix</filename>
     <firstline weight='5'>/-\/{2}OASIS\/{2}DTD Entity Resolution XML Catalog V1\.0\/{2}EN/</firstline>
   </prototype>
   <prototype name="docbook" group="xml" description="DocBook 4.2">
-    <location link="jar:common.jar!xml/gen/docbook.hrc"/>
+    <location link="xml/gen/docbook.hrc"/>
     <filename>/\.(dbk?|docbook)$/i</filename>
     <firstline weight='3'>/DOCTYPE article/</firstline>
     <firstline weight='3'>/DocBook XML/</firstline>
     <firstline weight='3'>/&lt;(article|book)/s</firstline>
   </prototype>
   <prototype name="mathml" group="xml" description="MathML2">
-    <location link="jar:common.jar!xml/gen/mathml.hrc"/>
+    <location link="xml/gen/mathml.hrc"/>
     <filename>/\.(math?|mml)$/i</filename>
     <firstline weight='3'>/MathML/</firstline>
   </prototype>
@@ -483,37 +505,37 @@
 
   <!--  database languages  -->
   <prototype name="clarion" group="database" description="Clarion">
-    <location link="jar:common.jar!db/clarion.hrc"/>
+    <location link="db/clarion.hrc"/>
     <filename>/\.cl[aw]$/i</filename>
   </prototype>
   <!-- warning!! extensions conflict with Clipper -->
   <prototype name="Clipper" group="database" description="Clipper">
-    <location link="jar:common.jar!db/clipper.hrc"/>
+    <location link="db/clipper.hrc"/>
     <filename>/\.(ch|prg)$/i</filename>
     <firstline>/\#include/</firstline>
     <firstline>/\#define|\#if/</firstline>
   </prototype>
   <prototype name="foxpro" group="database" description="FoxPro">
-    <location link="jar:common.jar!db/foxpro.hrc"/>
+    <location link="db/foxpro.hrc"/>
     <filename>/\.(prg|spr|mpr)$/i</filename>
   </prototype>
   <prototype name="sqlj" group="database" description="SQLJ (Java sql)">
-    <location link="jar:common.jar!db/sqlj.hrc"/>
+    <location link="db/sqlj.hrc"/>
     <filename>/\.sqlj$/i</filename>
   </prototype>
   <prototype name="paradox" group="database" description="Paradox">
-    <location link="jar:common.jar!db/paradox.hrc"/>
+    <location link="db/paradox.hrc"/>
     <filename>/\.sc$/i</filename>
   </prototype>
   <prototype name="sql" group="database" description="SQL, PL/SQL">
-    <location link="jar:common.jar!db/sql.hrc"/>
+    <location link="db/sql.hrc"/>
     <filename>/\.sql$/i</filename>
       <parameters>
         <param name="backslash_escapes" value="true" description="Treat \' in character literals as an escaped '"/>
       </parameters>
   </prototype>
   <prototype name="mysql" group="database" description="MySQL">
-   <location link="jar:common.jar!db/mysql.hrc"/>
+   <location link="db/mysql.hrc"/>
    <filename>/\.sql$/i</filename>
   </prototype>
 
@@ -521,44 +543,46 @@
   &scripts-ini-protos;
 
   <prototype name="Batch" group="scripts" description="Batch/Config.sys/NTcmd">
-    <location link="jar:common.jar!scripts/batch.hrc"/>
+    <location link="scripts/batch.hrc"/>
     <filename>/\.(Cmd|Bat|nt|btm|sys)$/i</filename>
   </prototype>
   <prototype name="apache" group="scripts" description="Apache httpd.conf">
-    <location link="jar:common.jar!scripts/apache.hrc"/>
+    <location link="scripts/apache.hrc"/>
     <filename weight="3">/(httpd\.conf|srm\.conf|access\.conf|\.htaccess|apache\.conf)$/i</filename>
   </prototype>
   <prototype name="shell" group="scripts" description="sh/ksh/bash script">
-    <location link="jar:common.jar!scripts/sh.hrc"/>
+    <location link="scripts/sh.hrc"/>
     <filename>/\.(sh|spec)$/i</filename>
     <filename>/^PKGBUILD$/i</filename>
+    <filename>/\.(bash_|z)?profile/</filename>
+    <filename>/\.(ba|k|z)?shrc/</filename>
     <firstline weight='2'>/^\#(!\s*.+sh\b)/</firstline>
   </prototype>
   <prototype name="avisynth" group="scripts" description="AviSynth">
-    <location link="jar:common.jar!scripts/avisynth.hrc"/>
+    <location link="scripts/avisynth.hrc"/>
     <filename>/\.avsi?$/i</filename>
   </prototype>
   <prototype name="config" group="scripts" description="Config, INI and CTL">
-    <location link="jar:common.jar!scripts/config.hrc"/>
+    <location link="scripts/config.hrc"/>
     <filename>/\.(ctl|tpl|ini|cfg|inf|srg|conf|types|tab|dof|dsk|lng)$/i</filename>
     <firstline>/^[;\[\#]/</firstline>
   </prototype>
   <prototype name="awk" group="scripts" description="AWK">
-    <location link="jar:common.jar!scripts/awk.hrc"/>
+    <location link="scripts/awk.hrc"/>
     <filename weight='5'>/\.awk$/i</filename>
     <firstline>/^# gawk/i</firstline>
   </prototype>
   <prototype name="powershell" group="scripts" description="PowerShell">
-    <filename>/\.(ps[dDmM]?1|psfconsole)$/i</filename>
-    <location link="jar:common.jar!scripts/powershell.hrc"/>
+    <filename>/\.ps(m|d)?1$/i</filename>
+    <location link="scripts/powershell.hrc"/>
   </prototype>
   <prototype name="r" group="scripts" description="R">
     <filename>/\.(R|Rhistory|Rprofile)$/i</filename>
-    <location link="jar:common.jar!scripts/r.hrc"/>
+    <location link="scripts/r.hrc"/>
   </prototype>
   <prototype name="markdown" group="scripts" description="markdown">
     <filename>/\.(text|md|markdown)$/i</filename>
-    <location link="jar:common.jar!misc/markdown.hrc"/>
+    <location link="misc/markdown.hrc"/>
   </prototype>
 
 
@@ -568,7 +592,7 @@
 
 
   <prototype name="makefile" group="scripts" description="makefile">
-    <location link="jar:common.jar!scripts/makefile.hrc"/>
+    <location link="scripts/makefile.hrc"/>
     <filename>/(makefile | tools\.ini) | \.(mak|gmk|ds(p|w)|bp(k|r|g))$/ix</filename>
     <filename weight='3'>/\.mk$/i</filename>
     <!--firstline>/Microsoft Developer Studio Project File/i</firstline>
@@ -579,26 +603,26 @@
     </parameters>
   </prototype>
   <prototype name="qmake" group="scripts" description="Qt qmake">
-    <location link="jar:common.jar!scripts/qmake.hrc"/>
+    <location link="scripts/qmake.hrc"/>
     <filename>/\.pr[oif]$/i</filename>
   </prototype>
   <prototype name="solution" group="scripts" description="Microsoft Visual Studio Solution File">
-    <location link="jar:common.jar!scripts/solution.hrc"/>
+    <location link="scripts/solution.hrc"/>
     <filename>/\.sln$/</filename>
   </prototype>
 
   <prototype name="mkb" group="scripts" description="Project build file for Airplay SDK">
     <filename>/\.mk[bf]$/i</filename>
-    <location link="jar:common.jar!scripts/mkb.hrc"/>
+    <location link="scripts/mkb.hrc"/>
   </prototype>
   <prototype name="ant" group="scripts" description="Ant's build.xml" targetNamespace="http://jakarta.apache.org/ant/">
-    <location link="jar:common.jar!scripts/gen/ant.hrc"/>
+    <location link="scripts/gen/ant.hrc"/>
     <filename weight='4'>/\bbuild\.xml$/ix</filename>
     <firstline weight='5'>/&lt;project\b/</firstline>
   </prototype>
 
   <prototype name="acapella" group="scripts" description="Acapella">
-    <location link="jar:common.jar!scripts/acapella/acapella.hrc"/>
+    <location link="scripts/acapella/acapella.hrc"/>
     <filename>/\.(script|proc|param|parameter)$/i</filename>
     <parameters>
       <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
@@ -607,61 +631,61 @@
   </prototype>
 
   <prototype name="qrc" group="scripts" description="qrc">
-    <location link="jar:common.jar!scripts/gen/qrc.hrc"/>
+    <location link="scripts/gen/qrc.hrc"/>
     <filename>/\.qrc$/ix</filename>
   </prototype>
 
  <prototype name="m4" group="scripts" description="M4">
-    <location link="jar:common.jar!scripts/m4.hrc"/>
+    <location link="scripts/m4.hrc"/>
     <filename>/\.m4$/i</filename>
   </prototype>
   <prototype name="linkdef" group="scripts" description="Link Defines">
-    <location link="jar:common.jar!scripts/linkdef.hrc"/>
+    <location link="scripts/linkdef.hrc"/>
     <filename weight='3'>/\.def$/i</filename>
   </prototype>
   <prototype name="resources" group="scripts" description="Resources">
-    <location link="jar:common.jar!scripts/resrc.hrc"/>
+    <location link="scripts/resrc.hrc"/>
     <filename>/\.(rc|dlg)$/i</filename>
   </prototype>
 
   <prototype name="javacc" group="scripts" description="Java Compiler Compiler">
-    <location link="jar:common.jar!scripts/javacc.hrc"/>
+    <location link="scripts/javacc.hrc"/>
     <filename>/\.jjt?$/i</filename>
   </prototype>
   <prototype name="javaProperties" group="scripts" description="Java properties">
-    <location link="jar:common.jar!scripts/javaprop.hrc"/>
+    <location link="scripts/javaprop.hrc"/>
     <filename>/\.pro(p(erties)?)?$/i</filename>
   </prototype>
   <prototype name="javapolicy" group="scripts" description="Java policy">
-    <location link="jar:common.jar!scripts/javapolicy.hrc"/>
+    <location link="scripts/javapolicy.hrc"/>
     <filename>/\.policy$/i</filename>
   </prototype>
   <prototype name="asn1" group="scripts" description="ASN.1/ECN">
-    <location link="jar:common.jar!scripts/asn1.hrc"/>
+    <location link="scripts/asn1.hrc"/>
     <filename>/\.(asn|asn1|ecn|edm|elm|mib)$/i</filename>
     <filename>/-mib$/i</filename>
   </prototype>
   <prototype name="lex" group="scripts" description="Lex">
-    <location link="jar:common.jar!scripts/lex.hrc"/>
+    <location link="scripts/lex.hrc"/>
     <filename>/\.(l|f?lex)+$/i</filename>
   </prototype>
   <prototype name="yacc" group="scripts" description="YACC">
-    <location link="jar:common.jar!scripts/yacc.hrc"/>
+    <location link="scripts/yacc.hrc"/>
     <filename>/\.y+$/i</filename>
   </prototype>
   <prototype name="lemon" group="scripts" description="Lemon">
-    <location link="jar:common.jar!scripts/lemon.hrc"/>
+    <location link="scripts/lemon.hrc"/>
     <!-- warning!! extensions conflict with YACC -->
     <filename weight='1'>/\.y$/i</filename>
   </prototype>
 
 
   <prototype name="delphiform" group="scripts" description="Delphi form">
-    <location link="jar:common.jar!scripts/dfm.hrc"/>
+    <location link="scripts/dfm.hrc"/>
     <filename>/\.dfm$/i</filename>
   </prototype>
   <prototype name="pnuts" group="scripts" description="Java: Pnuts">
-    <location link="jar:common.jar!scripts/pnuts.hrc"/>
+    <location link="scripts/pnuts.hrc"/>
     <filename>/\.pnut$/i</filename>
     <parameters>
       <param name="pnuts-modules" value="true" description="Use some common Pnuts module function names"/>
@@ -672,59 +696,59 @@
   </prototype>
 
     <prototype name="scons" group="scripts" description="SCons">
-    <location link="jar:common.jar!scripts/scons.hrc"/>
+    <location link="scripts/scons.hrc"/>
     <filename>/SCons(truct|cript)$/i</filename>
   </prototype>
   <prototype name="rtf" group="scripts" description="RTF text">
-    <location link="jar:common.jar!scripts/rtf.hrc"/>
+    <location link="scripts/rtf.hrc"/>
     <filename>/\.rtf$/i</filename>
   </prototype>
   <prototype name="TeX" group="scripts" description="TeX">
-    <location link="jar:common.jar!scripts/tex.hrc"/>
+    <location link="scripts/tex.hrc"/>
     <filename>/\.(tex|cls|sty|ltx|ltr|dtx)$/i</filename>
   </prototype>
   <prototype name="graphviz" group="scripts" description="GraphViz dot">
-    <location link="jar:common.jar!scripts/graphviz.hrc"/>
+    <location link="scripts/graphviz.hrc"/>
     <filename>/\.dot+$/i</filename>
   </prototype>
   <prototype name="dcl" group="scripts" description="OpenVMS DCL">
-    <location link="jar:common.jar!scripts/dcl.hrc"/>
+    <location link="scripts/dcl.hrc"/>
     <filename>/\.com$/i</filename>
   </prototype>
   <prototype name="vrml" group="scripts" description="VRML">
-    <location link="jar:common.jar!scripts/vrml.hrc"/>
+    <location link="scripts/vrml.hrc"/>
     <filename>/\.wrl$/i</filename>
   </prototype>
 
   <prototype name="wsc" group="scripts" description="wsc" targetNamespace="uri:wsc">
     <!-- NOTE! 'targetNamespace' is fictive, used only for xsd2hrc -->
-    <location link="jar:common.jar!scripts/gen/wsc.hrc"/>
+    <location link="scripts/gen/wsc.hrc"/>
     <filename>/\.wsc$/i</filename>
   </prototype>
   <prototype name="wsf" group="scripts" description="wsf">
-    <location link="jar:common.jar!scripts/gen/wsf.hrc"/>
+    <location link="scripts/gen/wsf.hrc"/>
     <filename>/\.wsf$/i</filename>
   </prototype>
   <prototype name="squirrel" group="scripts" description="squirrel">
-    <location link="jar:common.jar!scripts/squirrel.hrc"/>
+    <location link="scripts/squirrel.hrc"/>
     <filename>/\.nut$/i</filename>
   </prototype>
 
 
   <prototype name="rarscript" group="scripts.install" description="RAR Install Script">
-    <location link="jar:common.jar!scripts/rarscrpt.hrc"/>
+    <location link="scripts/rarscrpt.hrc"/>
     <filename>/\.s$/i</filename>
   </prototype>
   <prototype name="nsi" group="scripts.install" description="Nullsoft Install Script">
-    <location link="jar:common.jar!scripts/nsi.hrc"/>
+    <location link="scripts/nsi.hrc"/>
     <filename>/\.ns[ih]$/i</filename>
   </prototype>
   <prototype name="iss" group="scripts.install" description="InnoSetup script">
-    <location link="jar:common.jar!scripts/iss.hrc"/>
+    <location link="scripts/iss.hrc"/>
     <filename>/\.iss$/i</filename>
   </prototype>
   <prototype name="isScripts" group="scripts.install" description="IS script">
-    <location link="jar:common.jar!scripts/rul.hrc"/>
+    <location link="scripts/rul.hrc"/>
     <filename>/\.rul$/i</filename>
   </prototype>
 
@@ -737,200 +761,204 @@
   &rare-ie-weidu-protos;
 
   <prototype name="c1c" group="rare" description="1C">
-    <location link="jar:common.jar!rare/1c.hrc"/>
+    <location link="rare/1c.hrc"/>
     <filename>/\.1c$/i</filename>
   </prototype>
   <prototype name="ada" group="rare" description="Ada">
-    <location link="jar:common.jar!rare/ada.hrc"/>
+    <location link="rare/ada.hrc"/>
     <filename>/\.ad[sbc]$/i</filename>
   </prototype>
   <prototype name="abap4" group="rare" description="ABAP/4">
-    <location link="jar:common.jar!rare/abap4.hrc"/>
+    <location link="rare/abap4.hrc"/>
     <filename>/\.abap4?$/i</filename>
   </prototype>
   <prototype name="asasm" group="rare" description="ASASM">
-    <location link="jar:common.jar!rare/asasm.hrc"/>
+    <location link="rare/asasm.hrc"/>
     <filename>/\.asasm$/i</filename>
   </prototype>
   <prototype name="AutoIt" group="rare" description="AutoIt 2.x">
-    <location link="jar:common.jar!rare/autoit.hrc"/>
+    <location link="rare/autoit.hrc"/>
     <filename>/\.aut$/i</filename>
   </prototype>
 
   <!--  !! you may wish to swap next two types
   because of collision with extensions  -->
   <prototype name="dssp" group="rare" description="Dssp">
-    <location link="jar:common.jar!rare/dssp.hrc"/>
+    <location link="rare/dssp.hrc"/>
     <filename>/\.dsp$/i</filename>
     <firstline>/PROGRAM/si</firstline>
   </prototype>
   <prototype name="adsp" group="rare" description="ADSP-21xx Asm">
-    <location link="jar:common.jar!rare/adsp.hrc"/>
+    <location link="rare/adsp.hrc"/>
     <filename>/\.(dsp|sys)$/i</filename>
   </prototype>
   <prototype name="Baan" group="rare" description="Baan">
-    <location link="jar:common.jar!rare/baan.hrc"/>
+    <location link="rare/baan.hrc"/>
     <filename>/\.cln$/i</filename>
   </prototype>
   <prototype name="cobol" group="rare" description="Cobol Fixed format">
-    <location link="jar:common.jar!rare/cobol.hrc"/>
+    <location link="rare/cobol.hrc"/>
     <filename>/\.(cob|cbl)$/i</filename>
   </prototype>
   <prototype name="cobolfr" group="rare" description="Cobol Free format">
-    <location link="jar:common.jar!rare/cobolfr.hrc"/>
+    <location link="rare/cobolfr.hrc"/>
     <firstline>/SOURCEFORMAT\"FREE\"/i</firstline>
     <firstline>/^IDENTIFICATION/i</firstline>
     <filename>/\.(cob|cbl)$/i</filename>
   </prototype>
   <prototype name="cache" group="rare" description="Cache/Open-M">
-    <location link="jar:common.jar!rare/cache.hrc"/>
+    <location link="rare/cache.hrc"/>
     <filename>/\.(rsa|ro|rtn|inc|int|mac|cdl)$/i</filename>
     <firstline>/^(Cache|OpenM)[^\^]+\^(IN[TC]|MAC)[^\^]*\^.*$/i</firstline>
   </prototype>
   <prototype name="cup" group="rare" description="CUP">
-    <location link="jar:common.jar!rare/cup.hrc"/>
+    <location link="rare/cup.hrc"/>
     <filename>/\.cup$/i</filename>
   </prototype>
   <prototype name="diet" group="rare" description="Vibe.d Diet Templates">
-    <location link="jar:common.jar!rare/diet.hrc"/>
+    <location link="rare/diet.hrc"/>
     <filename>/\.dt$/i</filename>
   </prototype>
   <prototype name="eiffel" group="rare" description="Eiffel">
-    <location link="jar:common.jar!rare/eiffel.hrc"/>
+    <location link="rare/eiffel.hrc"/>
     <filename>/\.e$/i</filename>
   </prototype>
   <prototype name="erlang" group="rare" description="Erlang">
-    <location link="jar:common.jar!rare/erlang.hrc"/>
+    <location link="rare/erlang.hrc"/>
     <filename>/\.[eh]rl$/i</filename>
   </prototype>
   <prototype name="icon" group="rare" description="Icon">
-    <location link="jar:common.jar!rare/icon.hrc"/>
+    <location link="rare/icon.hrc"/>
     <filename>/\.icn$/i</filename>
   </prototype>
   <prototype name="lisp" group="rare" description="Lisp">
-    <location link="jar:common.jar!rare/lisp.hrc"/>
+    <location link="rare/lisp.hrc"/>
     <filename>/\.(lsp|lisp|scm|elc|el)$/i</filename>
   </prototype>
   <prototype name="mako" group="rare" description="Mako templates">
-    <location link="jar:common.jar!rare/mako.hrc"/>
+    <location link="rare/mako.hrc"/>
     <!-- extension conflicts with Makefile, hence weight is less than 2 -->
     <filename weight="1.5">/\.mako?$/i</filename>
     <firstline>/\&lt;%/</firstline>
   </prototype>
   <prototype name="matlab" group="rare" description="MatLab">
-    <location link="jar:common.jar!rare/matlab.hrc"/>
+    <location link="rare/matlab.hrc"/>
     <filename>/\.m$/i</filename>
   </prototype>
   <!-- warning!! extensions conflict with link defines -->
   <prototype name="modula2" group="rare" description="Modula2 and Oberon2">
-    <location link="jar:common.jar!rare/modula.hrc"/>
+    <location link="rare/modula.hrc"/>
     <filename>/\.(mod|ob2|odf|def)$/i</filename>
     <firstline>/\(\*|MODULE|DEFINITION|IMPLEMENTATION|&lt;\*/</firstline>
   </prototype>
   <prototype name="nesc" group="rare" description="nesC">
-    <location link="jar:common.jar!rare/nesc.hrc"/>
+    <location link="rare/nesc.hrc"/>
     <filename>/\.nc$/i</filename>
   </prototype>
   <prototype name="picasm" group="rare" description="PicAsm">
-    <location link="jar:common.jar!rare/picasm.hrc"/>
+    <location link="rare/picasm.hrc"/>
     <filename>/\.(asm|pic)$/i</filename>
   </prototype>
   <prototype name="pl1" group="rare" description="PL1">
-    <location link="jar:common.jar!rare/pl1.hrc"/>
+    <location link="rare/pl1.hrc"/>
     <filename>/\.pl[1i]$/i</filename>
   </prototype>
   <prototype name="rexx" group="rare" description="Rexx">
-    <location link="jar:common.jar!rare/rexx.hrc"/>
+    <location link="rare/rexx.hrc"/>
     <filename>/\.(rex|cmd)$/i</filename>
     <firstline>/(REM)\/\*/i</firstline>
     <firstline>/^# regina/i</firstline>
     <firstline weight='2'>/^\/\*\s*REXX\s*\*\//i</firstline>
   </prototype>
  <prototype name="jcl" group="rare" description="JCL">
-    <location link="jar:common.jar!rare/jcl.hrc"/>
+    <location link="rare/jcl.hrc"/>
     <filename>/\.jcl$/i</filename>
   </prototype>
 
   <prototype name="sml" group="rare" description="Standard ML">
-    <location link="jar:common.jar!rare/sml.hrc"/>
+    <location link="rare/sml.hrc"/>
     <filename>/\.(sml|sig)$/i</filename>
   </prototype>
+  <prototype name="haskell" group="rare" description="Haskell">
+    <location link="rare/haskell.hrc"/>
+    <filename>/\.hs$/i</filename>
+  </prototype>
   <prototype name="ocaml" group="rare" description="OCaml">
-    <location link="jar:common.jar!rare/ocaml.hrc"/>
+    <location link="rare/ocaml.hrc"/>
     <filename>/\.ml[ilpy]?$/i</filename>
   </prototype>
   <prototype name="sicstusProlog" group="rare" description="Sicstus Prolog">
-    <location link="jar:common.jar!rare/sprolog.hrc"/>
+    <location link="rare/sprolog.hrc"/>
     <filename>/\.pl$/i</filename>
   </prototype>
   <prototype name="stata" group="rare" description="STATA">
-    <location link="jar:common.jar!rare/stata.hrc"/>
+    <location link="rare/stata.hrc"/>
     <filename>/\.a?do$/i</filename>
   </prototype>
   <prototype name="turboProlog" group="rare" description="Turbo Prolog">
-    <location link="jar:common.jar!rare/tprolog.hrc"/>
+    <location link="rare/tprolog.hrc"/>
     <filename>/\.tpl$/i</filename>
   </prototype>
   <prototype name="verilog" group="rare" description="Verilog HDL">
-    <location link="jar:common.jar!rare/verilog.hrc"/>
+    <location link="rare/verilog.hrc"/>
     <filename weight='3'>/\.g?v$/i</filename>
   </prototype>
   <prototype name="vhdl" group="rare" description="VHDL">
-    <location link="jar:common.jar!rare/vhdl.hrc"/>
+    <location link="rare/vhdl.hrc"/>
     <filename>/\.vhdl?$/i</filename>
   </prototype>
  <prototype name="ahdl" group="rare" description="AHDL">
-   <location link="jar:common.jar!rare/ahdl.hrc"/>
+   <location link="rare/ahdl.hrc"/>
    <filename>/\.(tdf|tdo|ahdl)$/i</filename>
  </prototype>
   <prototype name="ubasic" group="rare" description="UniVision Basic">
-    <location link="jar:common.jar!rare/ubasic.hrc"/>
+    <location link="rare/ubasic.hrc"/>
     <filename>/\.uvbasic$/i</filename>
     <firstline>/^(PROGRAM\s+\w+$|(SUBROUTINE|EXTERNALFUNCTION)\s+\w+(\s+)?(\(.*\))?$)/</firstline>
   </prototype>
   <prototype name="z80" group="rare" description="z80asm">
-    <location link="jar:common.jar!rare/z80.hrc"/>
+    <location link="rare/z80.hrc"/>
     <filename>/\.za$/i</filename>
   </prototype>
   <prototype name="asm80" group="rare" description="asm80">
-    <location link="jar:common.jar!rare/asm80.hrc"/>
+    <location link="rare/asm80.hrc"/>
     <filename>/\.a80$/i</filename>
   </prototype>
   <prototype name="a51" group="rare" description="8051 asm">
-    <location link="jar:common.jar!rare/a51-5.hrc"/>
+    <location link="rare/a51-5.hrc"/>
     <filename>/\.a5[12]$/i</filename>
   </prototype>
   <prototype name="avr" group="rare" description="AVR asm">
-    <location link="jar:common.jar!rare/avr-5.hrc"/>
+    <location link="rare/avr-5.hrc"/>
     <filename>/\.(asm|inc|avr)$/i</filename>
     <firstline>/^\s*;/</firstline>
   </prototype>
   <prototype name="mason" group="rare" description="mason">
-    <location link="jar:common.jar!rare/mason.hrc"/>
+    <location link="rare/mason.hrc"/>
     <filename>/\.mc$/i</filename>
   </prototype>
   <prototype name="postscript" group="rare" description="PostScript">
-    <location link="jar:common.jar!rare/postscript.hrc"/>
+    <location link="rare/postscript.hrc"/>
     <filename>/\.(e?ps|pfa|gsf)$/i</filename>
     <firstline weight="3">/^\%\!PS/</firstline>
     <firstline>/^\%\!/</firstline>
   </prototype>
   <!-- flex extension conflicts -->
   <prototype name="flex" group="rare" description="FlexScript">
-    <location link="jar:common.jar!rare/flex.hrc"/>
+    <location link="rare/flex.hrc"/>
     <filename>/\.(src|inc|inf)$/i</filename>
     <firstline>/\*{10}/</firstline>
   </prototype>
    <prototype name="llvm" group="rare" description="LLVM IR">
-    <location link="jar:common.jar!rare/llvm.hrc"/>
+    <location link="rare/llvm.hrc"/>
     <filename weight='3'>/\.ll$/i</filename>
    </prototype>
    <prototype name="json" group="rare" description="JSON">
-    <location link="jar:common.jar!rare/json.hrc"/>
+    <location link="rare/json.hrc"/>
     <filename weight='3'>/\.json$/i</filename>
    </prototype>
    <prototype name="yaml" group="rare" description="YAML">
-     <location link="jar:common.jar!rare/yaml.hrc"/>
+     <location link="rare/yaml.hrc"/>
      <filename weight="10">/\.ya?ml$/</filename>
    </prototype>
 
@@ -938,20 +966,20 @@
   &scripts-msg-protos;
 
   <prototype name="ass" group="other" description="(Advanced) SubStation Alpha script">
-    <location link="jar:common.jar!misc/assa.hrc"/>
+    <location link="misc/assa.hrc"/>
     <filename>/\.(ssa|ass)$/</filename>
     <firstline weight='2'>/^(...)?\[Script Info\]/</firstline>
   </prototype>
   <prototype name="srt" group="other" description="SRT subs">
-    <location link="jar:common.jar!misc/srt.hrc"/>
+    <location link="misc/srt.hrc"/>
     <filename weight="10">/\.srt$/</filename>
   </prototype>
   <prototype name="cue" group="other" description="Cue sheet">
-    <location link="jar:common.jar!misc/cue.hrc"/>
+    <location link="misc/cue.hrc"/>
     <filename>/\.cue$/</filename>
   </prototype>
   <prototype name="ddoc" group="other" description="Ddoc">
-    <location link="jar:common.jar!misc/ddoc.hrc"/>
+    <location link="misc/ddoc.hrc"/>
     <filename>/\.dd(oc)?$/i</filename>
     <firstline weight="3">/^Ddoc/x</firstline>
     <parameters>
@@ -961,15 +989,18 @@
     </parameters>
   </prototype>
   <prototype name="filesbbs" group="other" description="files.bbs">
-    <location link="jar:common.jar!misc/filesbbs.hrc"/>
+    <location link="misc/filesbbs.hrc"/>
     <filename>/(files\.bbs|descript\.ion|file_id.diz)/i</filename>
   </prototype>
   <prototype name="diff" group="other" description="Diff/Patch">
-    <location link="jar:common.jar!misc/diff.hrc"/>
+    <location link="misc/diff.hrc"/>
     <filename>/\.(diff.*|patch|rej(ect)?)$/i</filename>
     <firstline weight='2'>/^(diff|Index|---|\+\+\+|\*\*\*)/si</firstline>
     <firstline>/^(\d+,\d+\w\d+ | \d+\w\d+)/i</firstline>
-    <firstline>/^cvs/i</firstline>
+     <!-- mercurial `hg inc -p` format detection -->
+    <firstline>/^comparing with/</firstline>
+     <!-- mercurial `hg log -p` -->
+    <firstline>/^changeset:/</firstline>
     <parameters>
       <param name="trailing-space"      value="false" description="Mark trailing spaces as errors"/>
       <param name="space-before-tab"    value="false" description="Mark leading spaces before tabs as errors"/>
@@ -978,11 +1009,11 @@
     </parameters>
   </prototype>
   <prototype name="mediawiki" group="other" description="MediaWiki">
-    <location link="jar:common.jar!misc/mediawiki.hrc"/>
+    <location link="misc/mediawiki.hrc"/>
     <filename>/\.(mw|mediawiki)$/i</filename>
   </prototype>
   <prototype name="text" group="other" description="plain text">
-    <location link="jar:common.jar!misc/text.hrc"/>
+    <location link="misc/text.hrc"/>
     <filename>/(read\.?me|\.txt$|\.rus|\.nfo|\.log|.*install.*|.*ChangeLog.*|AUTHORS|COPYING|FAQ|LICENSE|TODO$)/i</filename>
     <filename>/\.spo/ix</filename>
   </prototype>
@@ -1002,25 +1033,25 @@
   <!--  packages  -->
 
   <package name="def" description="core definitions">
-    <location link="jar:common.jar!lib/default.hrc"/>
+    <location link="lib/default.hrc"/>
   </package>
   <package name="uri" description="URI (RFC 2396)">
-    <location link="jar:common.jar!lib/uri.hrc"/>
+    <location link="lib/uri.hrc"/>
   </package>
   <package name="ole" description="OLE Commons">
-    <location link="jar:common.jar!lib/ole.hrc"/>
+    <location link="lib/ole.hrc"/>
   </package>
   <package name="regexp" description="Regexp common library">
-    <location link="jar:common.jar!lib/regexp.hrc"/>
+    <location link="lib/regexp.hrc"/>
   </package>
   <package name="far" description="FAR Manager common expressions">
-    <location link="jar:common.jar!lib/far.hrc"/>
+    <location link="lib/far.hrc"/>
   </package>
   <package name="msg" description="message package">
-    <location link="jar:common.jar!lib/message.hrc"/>
+    <location link="lib/message.hrc"/>
   </package>
   <package name="doxygen" description="Doxygen">
-   <location link="jar:common.jar!lib/doxygen.hrc"/>
+   <location link="lib/doxygen.hrc"/>
   </package>
 
 </hrc>

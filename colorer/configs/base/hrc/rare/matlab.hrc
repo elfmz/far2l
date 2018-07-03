@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    MatLab Syntax description
+    Walery Studennikov <hqsoftware@mail.ru>
+-->
+   <type name="matlab">
+
+      <import type="def"/>
+
+      <region name="mlString" parent="SymbolStrong"/>
+      <region name="mlComment" parent="Comment"/>
+      <region name="mlSymb" parent="Symbol"/>
+      <region name="mlKeyWord" parent="Keyword"/>
+      <region name="mlStdFunc" parent="TypeKeyword"/>
+      <region name="mlNumb" parent="Number"/>
+      <region name="mlId" parent="Var"/>
+      <region name="mlLabel" parent="Label"/>
+
+
+      <scheme name="matlab">
+<!-- Comments -->
+         <block start="/\%/" end="/$/" scheme="Comment" region="mlComment"/>
+<!-- Strings -->
+         <regexp match="/&#34;.*?&#34;/" region0="mlString"/>
+         <regexp match="/'.*?'/" region0="mlString"/>
+         <inherit scheme="FloatNumber"/>
+         <block start="/(\()/" end="/(\))/" scheme="matlab" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="matlab" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+<!-- Operator brackets -->
+         <block start="/(\bfor\b)/" end="/(\bend\b)/" scheme="matlab" region00="mlKeyWord" region01="PairStart" region10="mlKeyWord" region11="PairEnd"/>
+         <block start="/(\bif\b)/" end="/(\bend\b)/" scheme="matlab" region00="mlKeyWord" region01="PairStart" region10="mlKeyWord" region11="PairEnd"/>
+         <block start="/(\bwhile\b)/" end="/(\bend\b)/" scheme="matlab" region00="mlKeyWord" region01="PairStart" region10="mlKeyWord" region11="PairEnd"/>
+         <block start="/(\bswitch\b)/" end="/(\bend\b)/" scheme="matlab" region00="mlKeyWord" region01="PairStart" region10="mlKeyWord" region11="PairEnd"/>
+         <block start="/(\btry\b)/" end="/(\bend\b)/" scheme="matlab" region00="mlKeyWord" region01="PairStart" region10="mlKeyWord" region11="PairEnd"/>
+<!-- Symbols -->
+         <keywords region="mlSymb">
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name="\"/>
+            <symb name="^"/>
+            <symb name="'"/>
+            <symb name="."/>
+            <symb name="="/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="~"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name=";"/>
+            <symb name=":"/>
+            <symb name="%"/>
+            <symb name=","/>
+            <symb name="!"/>
+         </keywords>
+<!-- KeyWords -->
+         <keywords ignorecase="yes" region="mlKeyWord">
+            <word name="script"/>
+            <word name="function"/>
+            <word name="global"/>
+            <word name="persistent"/>
+            <word name="for"/>
+            <word name="end"/>
+            <word name="while"/>
+            <word name="if"/>
+            <word name="else"/>
+            <word name="elseif"/>
+            <word name="break"/>
+            <word name="switch"/>
+            <word name="case"/>
+            <word name="otherwise"/>
+            <word name="try"/>
+            <word name="catch"/>
+            <word name="end"/>
+         </keywords>
+<!-- General functions -->
+         <keywords ignorecase="yes" region="mlStdFunc">
+            <word name="info"/>
+            <word name="whatsnew"/>
+            <word name="hostid"/>
+            <word name="help"/>
+            <word name="lookfor"/>
+            <word name="what"/>
+            <word name="which"/>
+            <word name="type"/>
+            <word name="edit"/>
+            <word name="pcode"/>
+            <word name="quit"/>
+            <word name="exit"/>
+            <word name="who"/>
+            <word name="whos"/>
+            <word name="save"/>
+            <word name="load"/>
+            <word name="memory"/>
+            <word name="clear"/>
+            <word name="pack"/>
+            <word name="workspace"/>
+            <word name="pathdef"/>
+            <word name="path"/>
+            <word name="addpath"/>
+            <word name="echo"/>
+            <word name="format"/>
+            <word name="diary"/>
+            <word name="pwd"/>
+            <word name="cd"/>
+            <word name="dir"/>
+         </keywords>
+<!-- Data/Type functions -->
+         <keywords ignorecase="yes" region="mlStdFunc">
+            <word name="logical"/>
+            <word name="isnumeric"/>
+            <word name="islogical"/>
+            <word name="isempty"/>
+            <word name="isequal"/>
+            <word name="reshape"/>
+            <word name="repmat"/>
+            <word name="find"/>
+            <word name="length"/>
+            <word name="size"/>
+            <word name="cross"/>
+            <word name="kron"/>
+            <word name="linspace"/>
+            <word name="logspace"/>
+            <word name="meshgrid"/>
+            <word name="zeros"/>
+            <word name="ones"/>
+            <word name="rand"/>
+            <word name="randn"/>
+            <word name="end"/>
+            <word name="ind2sub"/>
+            <word name="sub2ind"/>
+            <word name="repmat"/>
+            <word name="cat"/>
+            <word name="ndims"/>
+            <word name="ndgrid"/>
+            <word name="permute"/>
+            <word name="ipermute"/>
+            <word name="shiftdim"/>
+            <word name="flipdim"/>
+            <word name="squeeze"/>
+            <word name="struct"/>
+            <word name="fieldnames"/>
+            <word name="getfield"/>
+            <word name="setfield"/>
+            <word name="rmfield"/>
+            <word name="isfield"/>
+            <word name="isstruct"/>
+            <word name="cell"/>
+            <word name="celldisp"/>
+            <word name="cellplot"/>
+            <word name="cellstr"/>
+            <word name="deal"/>
+            <word name="iscell"/>
+            <word name="num2cell"/>
+            <word name="cell2struct"/>
+            <word name="struct2cell"/>
+            <word name="lists"/>
+            <word name="varargin"/>
+            <word name="varargout"/>
+            <word name="inline"/>
+            <word name="argnames"/>
+            <word name="formula"/>
+            <word name="char"/>
+            <word name="vectorsize"/>
+            <word name="class"/>
+            <word name="isa"/>
+            <word name="isobject"/>
+            <word name="methods"/>
+            <word name="inferioto"/>
+            <word name="superioto"/>
+            <word name="horzcat"/>
+            <word name="vertcat"/>
+            <word name="subsref"/>
+            <word name="subsasgn"/>
+            <word name="subsindex"/>
+         </keywords>
+<!-- Misc functions -->
+         <keywords ignorecase="yes" region="mlStdFunc">
+            <word name="ans"/>
+            <word name="inf"/>
+            <word name="NaN"/>
+            <word name="Pi"/>
+            <word name="eps"/>
+            <word name="log2"/>
+            <word name="pow2"/>
+            <word name="realmin"/>
+            <word name="realmax"/>
+            <word name="all"/>
+            <word name="any"/>
+            <word name="exist"/>
+            <word name="bitset"/>
+            <word name="bitget"/>
+            <word name="bitmax"/>
+            <word name="bitcmp"/>
+            <word name="bitand"/>
+            <word name="bitor"/>
+            <word name="bitxor"/>
+            <word name="bitshift"/>
+            <word name="ismember"/>
+            <word name="unique"/>
+            <word name="union"/>
+            <word name="intersect"/>
+            <word name="setdiff"/>
+            <word name="setxor"/>
+            <word name="eval"/>
+            <word name="feval"/>
+            <word name="builtin"/>
+            <word name="assignin"/>
+            <word name="evalin"/>
+            <word name="run"/>
+            <word name="nargchk"/>
+            <word name="nargin"/>
+            <word name="nargout"/>
+            <word name="inputname"/>
+            <word name="input"/>
+            <word name="pause"/>
+            <word name="error"/>
+            <word name="warning"/>
+            <word name="lasterr"/>
+            <word name="lastwarn"/>
+            <word name="disp"/>
+            <word name="fprintf"/>
+            <word name="sprintf"/>
+         </keywords>
+<!-- Math functions -->
+         <keywords ignorecase="yes" region="mlStdFunc">
+            <word name="abs"/>
+            <word name="angle"/>
+            <word name="real"/>
+            <word name="imag"/>
+            <word name="conj"/>
+            <word name="cplxpair"/>
+            <word name="ceil"/>
+            <word name="fix"/>
+            <word name="floor"/>
+            <word name="round"/>
+            <word name="mod"/>
+            <word name="rem"/>
+            <word name="sign"/>
+            <word name="factor"/>
+            <word name="primes"/>
+            <word name="gcd"/>
+            <word name="lcm"/>
+            <word name="rat"/>
+            <word name="rats"/>
+            <word name="perms"/>
+            <word name="nchoosek"/>
+            <word name="sqrt"/>
+            <word name="exp"/>
+            <word name="log"/>
+            <word name="pow2"/>
+            <word name="nextpow"/>
+            <word name="log2"/>
+            <word name="log10"/>
+            <word name="sin"/>
+            <word name="sinh"/>
+            <word name="asin"/>
+            <word name="asinh"/>
+            <word name="csc"/>
+            <word name="csch"/>
+            <word name="ascc"/>
+            <word name="ascch"/>
+            <word name="cos"/>
+            <word name="cosh"/>
+            <word name="acos"/>
+            <word name="acosh"/>
+            <word name="sec"/>
+            <word name="sech"/>
+            <word name="asec"/>
+            <word name="asech"/>
+            <word name="tan"/>
+            <word name="tanh"/>
+            <word name="atan"/>
+            <word name="atan2"/>
+            <word name="atanh"/>
+            <word name="cot"/>
+            <word name="coth"/>
+            <word name="acot"/>
+            <word name="acoth"/>
+            <word name="cart2pol"/>
+            <word name="cart2sph"/>
+            <word name="pol2cartsph2cart"/>
+            <word name="besselj"/>
+            <word name="bessely"/>
+            <word name="besseli"/>
+            <word name="besselk"/>
+            <word name="besselh"/>
+            <word name="airy"/>
+            <word name="beta"/>
+            <word name="betainc"/>
+            <word name="betaln"/>
+            <word name="ellipj"/>
+            <word name="ellipke"/>
+            <word name="erf"/>
+            <word name="erfc"/>
+            <word name="erfcx"/>
+            <word name="erfinv"/>
+            <word name="gamma"/>
+            <word name="gammainc"/>
+            <word name="gammaln"/>
+            <word name="expint"/>
+            <word name="legendre"/>
+         </keywords>
+<!-- Matrix functions -->
+         <keywords ignorecase="yes" region="mlStdFunc">
+            <word name="eye"/>
+            <word name="diag"/>
+            <word name="tril"/>
+            <word name="triu"/>
+            <word name="fliplr"/>
+            <word name="flipud"/>
+            <word name="rot90"/>
+            <word name="compan"/>
+            <word name="cond"/>
+            <word name="normest"/>
+            <word name="norm"/>
+            <word name="det"/>
+            <word name="see"/>
+            <word name="rank"/>
+            <word name="trace"/>
+            <word name="null"/>
+            <word name="orth"/>
+            <word name="inv"/>
+            <word name="lu"/>
+            <word name="qr"/>
+            <word name="svd"/>
+            <word name="gsvd"/>
+            <word name="roots"/>
+            <word name="poly"/>
+         </keywords>
+<!-- Data analize functions -->
+         <keywords ignorecase="yes" region="mlStdFunc">
+            <word name="sum"/>
+            <word name="cumsum"/>
+            <word name="prod"/>
+            <word name="cumprod"/>
+            <word name="sort"/>
+            <word name="sortrows"/>
+            <word name="max"/>
+            <word name="min"/>
+            <word name="median"/>
+            <word name="mean"/>
+            <word name="std"/>
+            <word name="cov"/>
+            <word name="corrcoef"/>
+            <word name="diff"/>
+            <word name="gradient"/>
+            <word name="polyfit"/>
+            <word name="interpft"/>
+            <word name="spline"/>
+            <word name="ppval"/>
+            <word name="fft"/>
+            <word name="ifft"/>
+            <word name="fft2"/>
+            <word name="ifft2"/>
+            <word name="fftn"/>
+            <word name="ifftn"/>
+            <word name="filter"/>
+            <word name="filter2"/>
+         </keywords>
+<!-- Plotting functions -->
+         <keywords ignorecase="yes" region="mlStdFunc">
+            <word name="root"/>
+            <word name="figure"/>
+            <word name="axes"/>
+            <word name="line"/>
+            <word name="patch"/>
+            <word name="surface"/>
+            <word name="text"/>
+            <word name="plot"/>
+            <word name="fplot"/>
+            <word name="ezplot"/>
+            <word name="loglog"/>
+            <word name="semilogx"/>
+            <word name="semilogy"/>
+            <word name="polar"/>
+            <word name="piotyy"/>
+            <word name="plot3"/>
+            <word name="meshgrid"/>
+            <word name="mesh"/>
+            <word name="meshc"/>
+            <word name="meshz"/>
+            <word name="axis"/>
+            <word name="hold"/>
+            <word name="grid"/>
+            <word name="bar"/>
+            <word name="barh"/>
+            <word name="pie"/>
+            <word name="subplot"/>
+            <word name="zoom"/>
+            <word name="colormap"/>
+            <word name="label"/>
+            <word name="legend"/>
+            <word name="errorbar"/>
+            <word name="hist"/>
+            <word name="stem"/>
+            <word name="stairs"/>
+            <word name="scatter"/>
+            <word name="roze"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

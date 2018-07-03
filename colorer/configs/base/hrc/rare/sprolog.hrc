@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Sicstus Prolog Highlighting Scheme for Colorer
+    $Id$
+    Created by : Alexios Palinginis <palingin@inf.ethz.ch>
+-->
+   <type name="sicstusProlog">
+
+      <import type="def"/>
+
+      <region name="spComment" parent="Comment"/>
+      <region name="spKeyword" parent="Keyword"/>
+      <region name="spSicstusKeyword" parent="Keyword"/>
+      <region name="spDeprKeyword" parent="DeprecatedKeyword"/>
+      <region name="spSymbol" parent="Symbol"/>
+      <region name="spNumber" parent="Number"/>
+      <region name="spString" parent="String"/>
+      <region name="spAtom" parent="Identifier"/>
+      <region name="spVariable" parent="VarStrong"/>
+
+
+      <scheme name="sicstusProlog">
+<!-- Comments -->
+         <block start="/\/\*/" end="/\*\//" scheme="Comment" region="spComment" region00="PairStart" region10="PairEnd"/>
+         <block start="/%/" end="/$/" scheme="Comment" region="spComment"/>
+<!-- Strings -->
+         <regexp match="/([Ll]?&#34;(\\.|[^\\&#34;])*?&#34;)/" region0="spString"/>
+         <regexp match="/([Ll]?'(\\.|[^\\'])*?')/" region0="spAtom"/>
+<!-- Numbers -->
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+         <regexp match="/\\x([A-F]|[a-f]|[0-9])+/" region0="NumberHex"/>
+         <regexp match="/\\[0-7]+/" region0="NumberOct"/>
+         <regexp match="/\\\^([A-Z]|[a-z])/" region0="spString"/>
+         <regexp match="/0b[0-1]+/" region0="NumberBin"/>
+         <regexp match="/0o[0-7]+/" region0="NumberOct"/>
+         <regexp match="/0x([A-F]|[a-f]|[0-9])+/" region0="NumberHex"/>
+         <regexp match="/0'./" region0="NumberDec"/>
+
+<!-- Variables -->
+<!-- Если keywords/имена предикатов начинаются с большой буквы , то облом ;(
+      будут выделены как переменные -->
+         <regexp match="/\b(_|[A-Z])\w*/" region="spVariable"/>
+
+
+<!-- Parenthesis Pairs -->
+         <block start="/(\()/" end="/(\))/" scheme="sicstusProlog" region00="spSymbol" region01="PairStart" region10="spSymbol" region11="PairEnd"/>
+         <block start="/(\{)/" end="/(\})/" scheme="sicstusProlog" region00="spSymbol" region01="PairStart" region10="spSymbol" region11="PairEnd"/>
+<!-- Lists -->
+         <block start="/(\[)/" end="/(\])/" scheme="sicstusProlog" region00="spSymbol" region01="PairStart" region10="spSymbol" region11="PairEnd"/>
+
+
+<!-- symbols -->
+
+     <keywords region="spSymbol">
+            <symb name=":-"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name=","/>
+            <symb name=";"/>
+            <symb name="::"/>
+            <symb name="=.."/>
+            <symb name="=:="/>
+            <symb name="=\="/>
+            <symb name="\="/>
+            <symb name="\+"/>
+            <symb name="="/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="&lt;&gt;"/>
+            <symb name="-"/>
+            <symb name="+"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name="."/>
+            <symb name="["/>
+            <symb name="|"/>
+            <symb name="]"/>
+            <symb name="!"/>
+            <symb name="--&gt;"/>
+            <symb name="-&gt;"/>
+            <symb name="mod"/>
+            <symb name="div"/>
+         </keywords>
+<!-- Build-In Predicates -->
+         <keywords region="BooleanConstant">
+            <word name="fail"/>
+            <word name="false"/>
+            <word name="true"/>
+         </keywords>
+
+         <keywords region="spKeyword">
+
+<!-- SUMMARY OF PROGRAM SECTIONS -->
+            <word name="'SU_messages':generate_message"/>
+            <word name="'SU_messages':query_abbreviation"/>
+            <word name="'SU_messages':query_class"/>
+            <word name="'SU_messages':query_input"/>
+            <word name="'SU_messages':query_map"/>
+
+            <word name="abolish"/>
+            <word name="abort"/>
+            <word name="absolute_file_name"/>
+            <word name="append"/>
+            <word name="arg"/>
+            <word name="asd"/>
+            <word name="assert"/>
+            <word name="asserta"/>
+            <word name="assertz"/>
+            <word name="at_end_of_line"/>
+            <word name="at_end_of_stream"/>
+            <word name="atom"/>
+            <word name="atom_codes"/>
+            <word name="atom_concat"/>
+            <word name="atom_length"/>
+            <word name="atom_to_chars"/>
+            <word name="atomic"/>
+
+            <word name="bagof"/>
+            <word name="break"/>
+            <word name="call"/>
+            <word name="callable"/>
+            <word name="catch"/>
+            <word name="char_code"/>
+            <word name="character_count"/>
+            <word name="clause"/>
+            <word name="close"/>
+            <word name="compound"/>
+            <word name="copy_term"/>
+            <word name="current_db"/>
+            <word name="current_host"/>
+            <word name="current_input"/>
+            <word name="current_op"/>
+            <word name="current_output"/>
+
+            <word name="current_stream"/>
+            <word name="datime"/>
+            <word name="db_buffering"/>
+            <word name="db_close"/>
+            <word name="db_erase"/>
+            <word name="db_fetch"/>
+            <word name="db_findall"/>
+            <word name="db_open"/>
+            <word name="db_store"/>
+            <word name="delete"/>
+            <word name="delete_file"/>
+            <word name="directory_files"/>
+            <word name="display"/>
+            <word name="dynamic"/>
+            <word name="environ"/>
+            <word name="erase"/>
+
+            <word name="exec"/>
+            <word name="expand_term"/>
+            <word name="file_exists"/>
+            <word name="file_property"/>
+            <word name="file_search_path"/>
+            <word name="fileerrors"/>
+            <word name="findall"/>
+            <word name="float"/>
+            <word name="flush_output"/>
+            <word name="format"/>
+            <word name="format_to_chars"/>
+            <word name="functor"/>
+            <word name="garbage_collect"/>
+            <word name="gc"/>
+
+            <word name="get_byte"/>
+            <word name="get_char"/>
+            <word name="get_code"/>
+            <word name="get_default_db"/>
+            <word name="getrand"/>
+            <word name="ground"/>
+            <word name="halt"/>
+            <word name="help"/>
+            <word name="host_id"/>
+            <word name="host_name"/>
+            <word name="hostname_address"/>
+            <word name="if"/>
+            <word name="initialization"/>
+            <word name="instance"/>
+            <word name="integer"/>
+            <word name="is"/>
+
+            <word name="is_list"/>
+            <word name="is_mutable"/>
+            <word name="kill"/>
+            <word name="last"/>
+            <word name="length"/>
+            <word name="library_directory"/>
+            <word name="line_count"/>
+            <word name="line_position"/>
+            <word name="make_directory"/>
+            <word name="max_list"/>
+            <word name="member"/>
+            <word name="memberchk"/>
+            <word name="meta_predicate"/>
+            <word name="min_list"/>
+            <word name="mktemp"/>
+            <word name="module"/>
+            <word name="multifile"/>
+
+            <word name="nextto"/>
+            <word name="nl"/>
+            <word name="no_doubles"/>
+            <word name="nofileerrors"/>
+            <word name="nogc"/>
+            <word name="non_member"/>
+            <word name="nonvar"/>
+            <word name="nth"/>
+            <word name="nth0"/>
+            <word name="number"/>
+            <word name="number_codes"/>
+            <word name="number_to_chars"/>
+            <word name="numbervars"/>
+            <word name="once"/>
+            <word name="op"/>
+            <word name="open"/>
+
+            <word name="open_chars_stream"/>
+            <word name="open_null_stream"/>
+            <word name="otherwise"/>
+            <word name="peek_byte"/>
+            <word name="peek_code"/>
+            <word name="permutation"/>
+            <word name="pid"/>
+            <word name="popen"/>
+            <word name="portray"/>
+            <word name="portray_clause"/>
+            <word name="portray_message"/>
+            <word name="predicate_property"/>
+            <word name="prefix"/>
+            <word name="print"/>
+            <word name="print_message"/>
+            <word name="prompt"/>
+
+            <word name="put_byte"/>
+            <word name="put_code"/>
+            <word name="random"/>
+            <word name="randseq"/>
+            <word name="randset"/>
+            <word name="read"/>
+            <word name="read_from_chars"/>
+            <word name="read_term"/>
+            <word name="reinitialise"/>
+            <word name="remove_duplicates"/>
+            <word name="rename_file"/>
+            <word name="repeat"/>
+            <word name="retract"/>
+            <word name="retractall"/>
+            <word name="reverse"/>
+            <word name="same_length"/>
+
+            <word name="save"/>
+            <word name="see"/>
+            <word name="seeing"/>
+            <word name="seek"/>
+            <word name="seen"/>
+            <word name="select"/>
+            <word name="set_default_db"/>
+            <word name="set_input"/>
+            <word name="set_output"/>
+            <word name="set_prolog_flag"/>
+            <word name="set_stream_position"/>
+            <word name="setof"/>
+            <word name="setrand"/>
+            <word name="shell"/>
+            <word name="simple"/>
+            <word name="skip_line"/>
+            <word name="sleep"/>
+
+            <word name="socket"/>
+            <word name="socket_accept"/>
+            <word name="socket_bind"/>
+            <word name="socket_buffering"/>
+            <word name="socket_close"/>
+            <word name="socket_connect"/>
+            <word name="socket_listen"/>
+            <word name="socket_select"/>
+            <word name="sort"/>
+            <word name="statistics"/>
+            <word name="stream_interrupt"/>
+            <word name="stream_position"/>
+            <word name="stream_select"/>
+            <word name="sub_atom"/>
+            <word name="sublist"/>
+            <word name="substitute"/>
+
+            <word name="suffix"/>
+            <word name="sum_list"/>
+            <word name="system"/>
+            <word name="tcl_eval"/>
+            <word name="tell"/>
+            <word name="telling"/>
+            <word name="throw"/>
+            <word name="time_out"/>
+            <word name="tmpnam"/>
+            <word name="told"/>
+            <word name="undo"/>
+            <word name="unknown_predicate_handler"/>
+            <word name="use_module"/>
+            <word name="user:file_search_path"/>
+            <word name="user:library_directory"/>
+            <word name="user:portray"/>
+            <word name="user:portray_message"/>
+
+            <word name="user:unknown_predicate_handler"/>
+            <word name="user:user_help"/>
+            <word name="user_help"/>
+            <word name="var"/>
+            <word name="version"/>
+            <word name="wait"/>
+            <word name="with_output_to_chars"/>
+            <word name="working_directory"/>
+            <word name="write"/>
+            <word name="write_canonical"/>
+            <word name="write_term"/>
+            <word name="write_to_chars"/>
+            <word name="writeq"/>
+         </keywords>
+
+
+
+<!-- Unbiques/Depricated/Obsolescent -->
+         <keywords region="spDeprKeyword">
+            <word name="current_key"/>
+            <word name="foreign_file"/>
+            <word name="get"/>
+            <word name="get0"/>
+            <word name="incore"/>
+            <word name="load_foreign_files"/>
+            <word name="name"/>
+            <word name="on_exception"/>
+            <word name="put"/>
+            <word name="raise_exception"/>
+            <word name="reconsult"/>
+            <word name="recorda"/>
+            <word name="recorded"/>
+            <word name="recordz"/>
+            <word name="skip"/>
+            <word name="tab"/>
+          </keywords>
+<!-- Sicstus only mode -->
+
+         <keywords region="spSicstusKeyword">
+      <word name="atom_chars"/>
+            <word name="ceiling"/>
+            <word name="floor"/>
+            <word name="mod"/>
+            <word name="number_chars"/>
+            <word name="peek_char"/>
+            <word name="round"/>
+            <word name="truncate"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

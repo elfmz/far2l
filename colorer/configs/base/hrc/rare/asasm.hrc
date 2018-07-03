@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="asasm">
+    <annotation><documentation>
+      ActionScript Assembler Syntax (RABCDAsm variant)
+    </documentation><contributors><![CDATA[
+      Vladimir Panteleev <vladimir@thecybershadow.net>
+    ]]></contributors></annotation>
+
+    <region name="EscapeSequence" parent="def:StringContent"/>
+    <region name="ASType" parent="def:Keyword"/>
+    <region name="Mnemonic" parent="def:Keyword"/>
+
+    <scheme name="StringContent">
+     <regexp match="/\\[&#34;\\nr]/" region="EscapeSequence"/>
+     <regexp match="/\\x[\da-fA-F]{2}/" region="EscapeSequence"/>
+     <regexp match="/\\./" region="def:Error"/>
+    </scheme>
+
+    <scheme name="asasm">
+      <!-- Comments -->
+      <regexp match="/;.*$/" region0="def:Comment"/>
+
+      <!-- String literals -->
+      <block start="/(?{def:StringEdge}&#34;)/"  end="/(?{def:StringEdge}&#34;)/" scheme="StringContent"    region="def:String" inner-region="yes" region00="def:PairStart" region10="def:PairEnd"/>
+
+      <!-- Decimal numbers -->
+      <regexp match="/\b[0-9]+\b/" region0="def:NumberDec"/>
+
+      <!-- Paired brackets -->
+      <block start="/(\()/" end="/(\))/" scheme="asasm" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="asasm" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(&lt;)/" end="/(&gt;)/" scheme="asasm" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+
+      <!-- Outliner for refids -->
+      <!--regexp match="/(\brefid\b)\s*((?{def:StringEdge}&#34;))((?{def:String}[^&#34;]*))((?{def:StringEdge}&#34;))/" region1="def:Keyword" region2="def:PairStart" region3="def:Outlined" region4="def:PairEnd"/--> <!-- BUG: does not support escape sequences -->
+      <regexp
+        match="/(\brefid\b)\M\s*&#34;(.*)&#34;$/"
+        region1="def:Keyword"
+        region2="def:Outlined"/>
+      <!--block start="/(\brefid\b)\s*(?{def:StringEdge}&#34;)/" end="/(?{def:StringEdge}&#34;)/" scheme="StringContent" region="def:Outlined" inner-region="yes" region00="def:PairStart" region10="def:PairEnd"/-->
+
+      <!-- Symbol/keyword highlighting below -->
+
+      <keywords region="def:Symbol">
+        <symb name=","/>
+      </keywords>
+
+      <keywords ignorecase="no" region="def:Directive">
+        <word name="#call"/>
+        <word name="#get"/>
+        <word name="#include"/>
+        <word name="#mixin"/>
+        <word name="#privatens"/>
+        <word name="#set"/>
+        <word name="#unset"/>
+        <word name="#version"/>
+      </keywords>
+
+      <keywords ignorecase="no" region="def:Keyword">
+        <word name="body"/>
+        <word name="cinit"/>
+        <word name="class"/>
+        <word name="code"/>
+        <word name="const"/>
+        <word name="dispid"/>
+        <word name="end"/>
+        <word name="extends"/>
+        <word name="flag"/>
+        <word name="from"/>
+        <word name="function"/>
+        <word name="getter"/>
+        <word name="iinit"/>
+        <word name="implements"/>
+        <word name="initscopedepth"/>
+        <word name="instance"/>
+        <word name="item"/>
+        <word name="localcount"/>
+        <word name="majorversion"/>
+        <word name="maxscopedepth"/>
+        <word name="maxstack"/>
+        <word name="metadata"/>
+        <word name="method"/>
+        <word name="minorversion"/>
+        <word name="name"/>
+        <word name="null"/>
+        <word name="optional"/>
+        <word name="param"/>
+        <word name="paramname"/>
+        <word name="program"/>
+        <word name="protectedns"/>
+        <word name="refid"/>
+        <word name="returns"/>
+        <word name="script"/>
+        <word name="setter"/>
+        <word name="sinit"/>
+        <word name="slot"/>
+        <word name="slotid"/>
+        <word name="target"/>
+        <word name="to"/>
+        <word name="trait"/>
+        <word name="try"/>
+        <word name="type"/>
+        <word name="value"/>
+      </keywords>
+
+      <keywords ignorecase="no" region="ASType">
+        <word name="Void"/>
+        <word name="Utf8"/>
+        <word name="Decimal"/>
+        <word name="Integer"/>
+        <word name="UInteger"/>
+        <word name="PrivateNamespace"/>
+        <word name="Double"/>
+        <word name="QName"/>
+        <word name="Namespace"/>
+        <word name="Multiname"/>
+        <word name="False"/>
+        <word name="True"/>
+        <word name="Null"/>
+        <word name="QNameA"/>
+        <word name="MultinameA"/>
+        <word name="RTQName"/>
+        <word name="RTQNameA"/>
+        <word name="RTQNameL"/>
+        <word name="RTQNameLA"/>
+        <word name="???"/>
+        <word name="???"/>
+        <word name="Namespace_Set"/>
+        <word name="PackageNamespace"/>
+        <word name="PackageInternalNs"/>
+        <word name="ProtectedNamespace"/>
+        <word name="ExplicitNamespace"/>
+        <word name="StaticProtectedNs"/>
+        <word name="MultinameL"/>
+        <word name="MultinameLA"/>
+        <word name="TypeName"/>
+      </keywords>
+
+      <keywords ignorecase="no" region="Mnemonic">
+        <word name="bkpt"/>
+        <word name="nop"/>
+        <word name="throw"/>
+        <word name="getsuper"/>
+        <word name="setsuper"/>
+        <word name="dxns"/>
+        <word name="dxnslate"/>
+        <word name="kill"/>
+        <word name="label"/>
+        <word name="ifnlt"/>
+        <word name="ifnle"/>
+        <word name="ifngt"/>
+        <word name="ifnge"/>
+        <word name="jump"/>
+        <word name="iftrue"/>
+        <word name="iffalse"/>
+        <word name="ifeq"/>
+        <word name="ifne"/>
+        <word name="iflt"/>
+        <word name="ifle"/>
+        <word name="ifgt"/>
+        <word name="ifge"/>
+        <word name="ifstricteq"/>
+        <word name="ifstrictne"/>
+        <word name="lookupswitch"/>
+        <word name="pushwith"/>
+        <word name="popscope"/>
+        <word name="nextname"/>
+        <word name="hasnext"/>
+        <word name="pushnull"/>
+        <word name="pushundefined"/>
+        <word name="pushuninitialized"/>
+        <word name="nextvalue"/>
+        <word name="pushbyte"/>
+        <word name="pushshort"/>
+        <word name="pushtrue"/>
+        <word name="pushfalse"/>
+        <word name="pushnan"/>
+        <word name="pop"/>
+        <word name="dup"/>
+        <word name="swap"/>
+        <word name="pushstring"/>
+        <word name="pushint"/>
+        <word name="pushuint"/>
+        <word name="pushdouble"/>
+        <word name="pushscope"/>
+        <word name="pushnamespace"/>
+        <word name="hasnext2"/>
+        <word name="pushdecimal"/>
+        <word name="pushdnan"/>
+        <word name="li8"/>
+        <word name="li16"/>
+        <word name="li32"/>
+        <word name="lf32"/>
+        <word name="lf64"/>
+        <word name="si8"/>
+        <word name="si16"/>
+        <word name="si32"/>
+        <word name="sf32"/>
+        <word name="sf64"/>
+        <word name="newfunction"/>
+        <word name="call"/>
+        <word name="construct"/>
+        <word name="callmethod"/>
+        <word name="callstatic"/>
+        <word name="callsuper"/>
+        <word name="callproperty"/>
+        <word name="returnvoid"/>
+        <word name="returnvalue"/>
+        <word name="constructsuper"/>
+        <word name="constructprop"/>
+        <word name="callsuperid"/>
+        <word name="callproplex"/>
+        <word name="callinterface"/>
+        <word name="callsupervoid"/>
+        <word name="callpropvoid"/>
+        <word name="sxi1"/>
+        <word name="sxi8"/>
+        <word name="sxi16"/>
+        <word name="applytype"/>
+        <word name="newobject"/>
+        <word name="newarray"/>
+        <word name="newactivation"/>
+        <word name="newclass"/>
+        <word name="getdescendants"/>
+        <word name="newcatch"/>
+        <word name="deldescendants"/>
+        <word name="findpropstrict"/>
+        <word name="findproperty"/>
+        <word name="finddef"/>
+        <word name="getlex"/>
+        <word name="setproperty"/>
+        <word name="getlocal"/>
+        <word name="setlocal"/>
+        <word name="getglobalscope"/>
+        <word name="getscopeobject"/>
+        <word name="getproperty"/>
+        <word name="getpropertylate"/>
+        <word name="initproperty"/>
+        <word name="setpropertylate"/>
+        <word name="deleteproperty"/>
+        <word name="deletepropertylate"/>
+        <word name="getslot"/>
+        <word name="setslot"/>
+        <word name="getglobalslot"/>
+        <word name="setglobalslot"/>
+        <word name="convert_s"/>
+        <word name="esc_xelem"/>
+        <word name="esc_xattr"/>
+        <word name="convert_i"/>
+        <word name="convert_u"/>
+        <word name="convert_d"/>
+        <word name="convert_b"/>
+        <word name="convert_o"/>
+        <word name="checkfilter"/>
+        <word name="convert_m"/>
+        <word name="convert_m_p"/>
+        <word name="coerce"/>
+        <word name="coerce_b"/>
+        <word name="coerce_a"/>
+        <word name="coerce_i"/>
+        <word name="coerce_d"/>
+        <word name="coerce_s"/>
+        <word name="astype"/>
+        <word name="astypelate"/>
+        <word name="coerce_u"/>
+        <word name="coerce_o"/>
+        <word name="negate_p"/>
+        <word name="negate"/>
+        <word name="increment"/>
+        <word name="inclocal"/>
+        <word name="decrement"/>
+        <word name="declocal"/>
+        <word name="typeof"/>
+        <word name="not"/>
+        <word name="bitnot"/>
+        <word name="concat"/>
+        <word name="add_d"/>
+        <word name="increment_p"/>
+        <word name="inclocal_p"/>
+        <word name="decrement_p"/>
+        <word name="declocal_p"/>
+        <word name="add"/>
+        <word name="subtract"/>
+        <word name="multiply"/>
+        <word name="divide"/>
+        <word name="modulo"/>
+        <word name="lshift"/>
+        <word name="rshift"/>
+        <word name="urshift"/>
+        <word name="bitand"/>
+        <word name="bitor"/>
+        <word name="bitxor"/>
+        <word name="equals"/>
+        <word name="strictequals"/>
+        <word name="lessthan"/>
+        <word name="lessequals"/>
+        <word name="greaterthan"/>
+        <word name="greaterequals"/>
+        <word name="instanceof"/>
+        <word name="istype"/>
+        <word name="istypelate"/>
+        <word name="in"/>
+        <word name="add_p"/>
+        <word name="subtract_p"/>
+        <word name="multiply_p"/>
+        <word name="divide_p"/>
+        <word name="modulo_p"/>
+        <word name="increment_i"/>
+        <word name="decrement_i"/>
+        <word name="inclocal_i"/>
+        <word name="declocal_i"/>
+        <word name="negate_i"/>
+        <word name="add_i"/>
+        <word name="subtract_i"/>
+        <word name="multiply_i"/>
+        <word name="getlocal0"/>
+        <word name="getlocal1"/>
+        <word name="getlocal2"/>
+        <word name="getlocal3"/>
+        <word name="setlocal0"/>
+        <word name="setlocal1"/>
+        <word name="setlocal2"/>
+        <word name="setlocal3"/>
+        <word name="debug"/>
+        <word name="debugline"/>
+        <word name="debugfile"/>
+        <word name="bkptline"/>
+        <word name="timestamp"/>
+      </keywords>
+    </scheme>
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Vladimir Panteleev <vladimir@thecybershadow.net>.
+   - Portions created by the Initial Developer are Copyright (C) 2010-2013
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

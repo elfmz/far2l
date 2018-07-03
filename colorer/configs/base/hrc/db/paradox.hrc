@@ -1,0 +1,665 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+   Paradox For DOS 4.5 Scripts (*.sc)
+   Made by Sergey Gorchakov <sgorchakov@newmail.ru> (C) 2001
+-->
+   <type name="paradox">
+
+      <import type="def"/>
+
+      <region name="pMenus" parent="LabelStrong"/>
+
+
+      <scheme name="pString">
+         <regexp match="/(\\.)/" region0="StringContent"/>
+      </scheme>
+
+      <scheme name="paradox">
+<!-- String including Symbols with slash like \" in it -->
+         <block start="/[Ll]?&#34;/" end="/&#34;/" scheme="pString" region="String"/>
+<!-- Date, Time -->
+         <inherit scheme="Date"/>
+         <inherit scheme="Time"/>
+<!-- Numbers -->
+         <regexp match="/\b(\d*[\,\.]?\d+([eE][\-\+]?\d+)?)\b/" region0="Number"/>
+<!-- Comments -->
+         <regexp match="/;.*?$/" region0="Comment"/>
+<!-- Paradox menus -->
+         <regexp match="/\{.*?\}/" region0="pMenus"/>
+         <block start="/(\()/" end="/(\))/" scheme="paradox" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="paradox" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <keywords region="Symbol">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="?"/>
+            <symb name="\"/>
+         </keywords>
+<!--Internal Functions, Procedures and other reserved words-->
+         <keywords ignorecase="yes" region="Keyword">
+            <symb name="@"/>
+            <symb name="?"/>
+            <symb name="??"/>
+            <word name="proc"/>
+            <word name="abs"/>
+            <word name="accept"/>
+            <word name="Acceptdialog"/>
+            <word name="Acos"/>
+            <word name="Add"/>
+            <word name="All"/>
+            <word name="Altspace"/>
+            <word name="And"/>
+            <word name="Appendarray"/>
+            <word name="Array"/>
+            <word name="Arraysize"/>
+            <word name="Asc"/>
+            <word name="Asin"/>
+            <word name="Atan"/>
+            <word name="Atan2"/>
+            <word name="Atfirst"/>
+            <word name="Atlast"/>
+            <word name="Attribute"/>
+            <word name="Attributes"/>
+            <word name="Aux"/>
+            <word name="Backspace"/>
+            <word name="Bandinfo"/>
+            <word name="Bar"/>
+            <word name="Beep"/>
+            <word name="Big"/>
+            <word name="Blankdate"/>
+            <word name="Blanknum"/>
+            <word name="Blink"/>
+            <word name="Border"/>
+            <word name="Bot"/>
+            <word name="Both"/>
+            <word name="Box"/>
+            <word name="By"/>
+            <word name="Calcdebug"/>
+            <word name="Canceldialog"/>
+            <word name="Canceledit"/>
+            <word name="Canvas"/>
+            <word name="Case"/>
+            <word name="Caverage"/>
+            <word name="Ccount"/>
+            <word name="Charwaiting"/>
+            <word name="Check"/>
+            <word name="Checkboxes"/>
+            <word name="Checkdescending"/>
+            <word name="Checkmarkstatus"/>
+            <word name="Checkplus"/>
+            <word name="Chr"/>
+            <word name="Clear"/>
+            <word name="Clearall"/>
+            <word name="Clearimage"/>
+            <word name="Clearpulldown"/>
+            <word name="Clearspeedbar"/>
+            <word name="Clipcopy"/>
+            <word name="Clipcut"/>
+            <word name="Clippaste"/>
+            <word name="Close"/>
+            <word name="Close Printer"/>
+            <word name="Closed"/>
+            <word name="Cmax"/>
+            <word name="Cmin"/>
+            <word name="Cnpv"/>
+            <word name="Coedit"/>
+            <word name="Coeditkey"/>
+            <word name="Col"/>
+            <word name="Colno"/>
+            <word name="Com1"/>
+            <word name="Controlvalue"/>
+            <word name="Convertlib"/>
+            <word name="Copy"/>
+            <word name="Copyform"/>
+            <word name="Copyfromarray"/>
+            <word name="Copyfromdynarray"/>
+            <word name="Copyreport"/>
+            <word name="Copytoarray"/>
+            <word name="Copytodynarray"/>
+            <word name="Cos"/>
+            <word name="Create"/>
+            <word name="Createlib"/>
+            <word name="Crosstabkey"/>
+            <word name="Cstd"/>
+            <word name="Csum"/>
+            <word name="Ctrlbackspace"/>
+            <word name="Ctrlbreak"/>
+            <word name="Ctrlend"/>
+            <word name="Ctrlhome"/>
+            <word name="Ctrlleft"/>
+            <word name="Ctrlpgdn"/>
+            <word name="Ctrlpgup"/>
+            <word name="Ctrlright"/>
+            <word name="Currency"/>
+            <word name="Cursor"/>
+            <word name="Cursorattr"/>
+            <word name="Cursorchar"/>
+            <word name="Cursorline"/>
+            <word name="Cvar"/>
+            <word name="Dateval"/>
+            <word name="Day"/>
+            <word name="Debug"/>
+            <word name="Default"/>
+            <word name="Del"/>
+            <word name="Delete"/>
+            <word name="Deleteline"/>
+            <word name="Deleteword"/>
+            <word name="Directory"/>
+            <word name="Direxists"/>
+            <word name="Ditto"/>
+            <word name="Dos"/>
+            <word name="Dosbig"/>
+            <word name="Dow"/>
+            <word name="Down"/>
+            <word name="Downimage"/>
+            <word name="Do_it!"/>
+            <word name="Drivespace"/>
+            <word name="Drivestatus"/>
+            <word name="Dynarray"/>
+            <word name="Dynarraysize"/>
+            <word name="Echo"/>
+            <word name="Edit"/>
+            <word name="Editkey"/>
+            <word name="Editlog"/>
+            <word name="Editor"/>
+            <word name="Editor Goto"/>
+            <word name="Editor Info"/>
+            <word name="Editor Insert"/>
+            <word name="Editor New"/>
+            <word name="Editor Open"/>
+            <word name="Editor Read"/>
+            <word name="Editor Replace"/>
+            <word name="Editor Select"/>
+            <word name="Editor Write"/>
+            <word name="Else"/>
+            <word name="Empty"/>
+            <word name="End"/>
+            <word name="Enddialog"/>
+            <word name="Endfor"/>
+            <word name="Endif"/>
+            <word name="EndMenu"/>
+            <word name="Endproc"/>
+            <word name="Endquery"/>
+            <word name="Endscan"/>
+            <word name="Endswitch"/>
+            <word name="Endtext"/>
+            <word name="Endwhile"/>
+            <word name="Enter"/>
+            <word name="Eol"/>
+            <word name="Eosclear"/>
+            <word name="Eot"/>
+            <word name="Errorcode"/>
+            <word name="Errorinfo"/>
+            <word name="Errormessage"/>
+            <word name="Erroruser"/>
+            <word name="Esc"/>
+            <word name="Example"/>
+            <word name="Execevent"/>
+            <word name="Execproc"/>
+            <word name="Execute"/>
+            <word name="Exit"/>
+            <word name="Exp"/>
+            <word name="Extract"/>
+            <word name="False"/>
+            <word name="Familyrights"/>
+            <word name="Familysize"/>
+            <word name="Fast"/>
+            <word name="Field"/>
+            <word name="Fieldinfo"/>
+            <word name="Fieldno"/>
+            <word name="Fieldrights"/>
+            <word name="Fieldstr"/>
+            <word name="Fieldtype"/>
+            <word name="Fieldview"/>
+            <word name="File"/>
+            <word name="Fileread"/>
+            <word name="Filesize"/>
+            <word name="Fileversion"/>
+            <word name="Filewrite"/>
+            <word name="Fill"/>
+            <word name="Find"/>
+            <word name="Findnext"/>
+            <word name="Firstshow"/>
+            <word name="For"/>
+            <word name="Foreach"/>
+            <word name="Form"/>
+            <word name="Format"/>
+            <word name="Formkey"/>
+            <word name="Formtables"/>
+            <word name="Formtype"/>
+            <word name="Frame"/>
+            <word name="From"/>
+            <word name="Fullfilename"/>
+            <word name="Fv"/>
+            <word name="Getcanvas"/>
+            <word name="Getchar"/>
+            <word name="Getcolors"/>
+            <word name="Getevent"/>
+            <word name="Getkeyboardstate"/>
+            <word name="Getmenuselection"/>
+            <word name="Getrecord"/>
+            <word name="Getwindow"/>
+            <word name="Globalizeevent"/>
+            <word name="Graphkey"/>
+            <word name="Graphtype"/>
+            <word name="Groupby"/>
+            <word name="Height"/>
+            <word name="Help"/>
+            <word name="Helpmode"/>
+            <word name="Home"/>
+            <word name="If"/>
+            <word name="Iif"/>
+            <word name="Imagecaverage"/>
+            <word name="Imageccount"/>
+            <word name="Imagecmax"/>
+            <word name="Imagecmin"/>
+            <word name="Imagecsum"/>
+            <word name="Imageno"/>
+            <word name="Imageorder"/>
+            <word name="Imagerights"/>
+            <word name="Imagetype"/>
+            <word name="Immediate"/>
+            <word name="Index"/>
+            <word name="Indexorder"/>
+            <word name="Infolib"/>
+            <word name="Ins"/>
+            <word name="Instantplay"/>
+            <word name="Instantreport"/>
+            <word name="Int"/>
+            <word name="Intense"/>
+            <word name="Isassigned"/>
+            <word name="Isblank"/>
+            <word name="Isblankzero"/>
+            <word name="Isempty"/>
+            <word name="Isencrypted"/>
+            <word name="Isfieldview"/>
+            <word name="Isfile"/>
+            <word name="Isformview"/>
+            <word name="Isinsertmode"/>
+            <word name="Islinklocked"/>
+            <word name="Ismaster"/>
+            <word name="Ismultiform"/>
+            <word name="Ismultireport"/>
+            <word name="Isonworkspace"/>
+            <word name="Isproc"/>
+            <word name="Isruntime"/>
+            <word name="Issharedisspace"/>
+            <word name="Issql"/>
+            <word name="Istable"/>
+            <word name="Isvalid"/>
+            <word name="Iswindow"/>
+            <word name="Keydisable"/>
+            <word name="Keyenable"/>
+            <word name="Keylookup"/>
+            <word name="Keyname"/>
+            <word name="Keypress"/>
+            <word name="Keyto"/>
+            <word name="Label"/>
+            <word name="Left"/>
+            <word name="Len"/>
+            <word name="Like"/>
+            <word name="Linktype"/>
+            <word name="Ln"/>
+            <word name="Localizeevent"/>
+            <word name="Locate"/>
+            <word name="Locate Indexorder"/>
+            <word name="Lock"/>
+            <word name="Lockkey"/>
+            <word name="Lockrecord"/>
+            <word name="Lockstatus"/>
+            <word name="Log"/>
+            <word name="Loop"/>
+            <word name="Lower"/>
+            <word name="Lpt1"/>
+            <word name="Ltrim"/>
+            <word name="Maintained"/>
+            <word name="Mark"/>
+            <word name="Masterimageno"/>
+            <word name="Match"/>
+            <word name="Max"/>
+            <word name="Memleft"/>
+            <word name="Menu"/>
+            <word name="Menuchoice"/>
+            <word name="Menudisable"/>
+            <word name="Menuenable"/>
+            <word name="Menuprompt"/>
+            <word name="Message"/>
+            <word name="Min"/>
+            <word name="Miniedit"/>
+            <word name="Mod"/>
+            <word name="Monitor"/>
+            <word name="Month"/>
+            <word name="Mouse Click"/>
+            <word name="Mouse Doubleclick"/>
+            <word name="Mouse Drag"/>
+            <word name="Mouse Hide"/>
+            <word name="Mouse Show"/>
+            <word name="Moveto"/>
+            <word name="Moy"/>
+            <word name="Nettype"/>
+            <word name="Newdialogspec"/>
+            <word name="Newwaitspec"/>
+            <word name="Next"/>
+            <word name="Nfields"/>
+            <word name="Nimagerecords"/>
+            <word name="Nimages"/>
+            <word name="Nkeyfields"/>
+            <word name="Noext"/>
+            <word name="Norefresh"/>
+            <word name="Norestore"/>
+            <word name="Normal"/>
+            <word name="Noshell"/>
+            <word name="Not"/>
+            <word name="Npages"/>
+            <word name="Nrecords"/>
+            <word name="Nrows"/>
+            <word name="Numeric"/>
+            <word name="Numval"/>
+            <word name="Off"/>
+            <word name="On"/>
+            <word name="Open"/>
+            <word name="Open Printer"/>
+            <word name="Or"/>
+            <word name="Ordertable"/>
+            <word name="Otherwise"/>
+            <word name="Pageno"/>
+            <word name="Pagewidth"/>
+            <word name="Paintcanvas"/>
+            <word name="Parsefilename"/>
+            <word name="Password"/>
+            <word name="Pattern"/>
+            <word name="Permanent"/>
+            <word name="Pgdn"/>
+            <word name="Pgup"/>
+            <word name="Pi"/>
+            <word name="Pickarray"/>
+            <word name="Pickdynarray"/>
+            <word name="Pickdynarrayindex"/>
+            <word name="Pickfile"/>
+            <word name="Pickform"/>
+            <word name="Picktable"/>
+            <word name="Picture"/>
+            <word name="Play"/>
+            <word name="Pmt"/>
+            <word name="Postrecord"/>
+            <word name="Pow"/>
+            <word name="Print"/>
+            <word name="Print File"/>
+            <word name="Printer"/>
+            <word name="Printerstatus"/>
+            <word name="Private"/>
+            <word name="Privdir"/>
+            <word name="Privtables"/>
+            <word name="Proc"/>
+            <word name="Proc Closed"/>
+            <word name="Procs"/>
+            <word name="Prompt"/>
+            <word name="Protect"/>
+            <word name="Pushbutton"/>
+            <word name="Pushevents"/>
+            <word name="Pushkeys"/>
+            <word name="Pv"/>
+            <word name="Query"/>
+            <word name="Queryorder"/>
+            <word name="Quit"/>
+            <word name="Quitloop"/>
+            <word name="Quotestring"/>
+            <word name="Radiobuttons"/>
+            <word name="Rand"/>
+            <word name="Readlib"/>
+            <word name="Readonly"/>
+            <word name="Recno"/>
+            <word name="Record"/>
+            <word name="Recordstatus"/>
+            <word name="Refresh"/>
+            <word name="Refreshcontrol"/>
+            <word name="Refreshdialog"/>
+            <word name="Relativefilename"/>
+            <word name="Release"/>
+            <word name="Release Procs"/>
+            <word name="Release Vars"/>
+            <word name="Rename"/>
+            <word name="Repaintdialog"/>
+            <word name="Replace"/>
+            <word name="Replacefields"/>
+            <word name="Replacenext"/>
+            <word name="Report"/>
+            <word name="Reporttables"/>
+            <word name="Required"/>
+            <word name="Requiredcheck"/>
+            <word name="Reset"/>
+            <word name="Resynccontrol"/>
+            <word name="Resyncdialog"/>
+            <word name="Resynckey"/>
+            <word name="Retryperiod"/>
+            <word name="Return"/>
+            <word name="Reverse"/>
+            <word name="Reversetab"/>
+            <word name="Revert"/>
+            <word name="Right"/>
+            <word name="Rmemleft"/>
+            <word name="Rotate"/>
+            <word name="Round"/>
+            <word name="Row"/>
+            <word name="Rowno"/>
+            <word name="Rtrim"/>
+            <word name="Run"/>
+            <word name="Savetables"/>
+            <word name="Savevars"/>
+            <word name="Scan"/>
+            <word name="Scrollpress"/>
+            <word name="Sdir"/>
+            <word name="Search"/>
+            <word name="Searchfrom"/>
+            <word name="Select"/>
+            <word name="Selectcontrol"/>
+            <word name="Setautosave"/>
+            <word name="Setbatch"/>
+            <word name="Setbw"/>
+            <word name="Setcanvas"/>
+            <word name="Setcolors"/>
+            <word name="Setdir"/>
+            <word name="Sethighlight"/>
+            <word name="Setkey"/>
+            <word name="Setkeyboardstate"/>
+            <word name="Setmargin"/>
+            <word name="Setmaxsize"/>
+            <word name="Setnegcolor"/>
+            <word name="Setprinter"/>
+            <word name="Setprivdir"/>
+            <word name="Setqueryorder"/>
+            <word name="Setrecordposition"/>
+            <word name="Setrestartcount"/>
+            <word name="Setretryperiod"/>
+            <word name="Setswap"/>
+            <word name="Setsysmenu"/>
+            <word name="Setuimode"/>
+            <word name="Setusername"/>
+            <word name="Shiftpress"/>
+            <word name="Showarray"/>
+            <word name="Showdialog"/>
+            <word name="Showfiles"/>
+            <word name="Showmenu"/>
+            <word name="Showpopup"/>
+            <word name="Showpulldown"/>
+            <word name="Showsql"/>
+            <word name="Showtables"/>
+            <word name="Sin"/>
+            <word name="Size"/>
+            <word name="Skip"/>
+            <word name="Sleep"/>
+            <word name="Slider"/>
+            <word name="Slow"/>
+            <word name="Sort"/>
+            <word name="Sortorder"/>
+            <word name="Sound"/>
+            <word name="Spaces"/>
+            <word name="Speedbar"/>
+            <word name="Sql"/>
+            <word name="Sqlautocommit"/>
+            <word name="Sqlbreakconnect"/>
+            <word name="Sqlclearconnect"/>
+            <word name="Sqlcommit"/>
+            <word name="Sqlconnectinfo"/>
+            <word name="Sqlerrorcode"/>
+            <word name="Sqlerrormessage"/>
+            <word name="Sqlfetch"/>
+            <word name="Sqlisconnect"/>
+            <word name="Sqlisreplica"/>
+            <word name="Sqlmakeconnect"/>
+            <word name="Sqlmapinfo"/>
+            <word name="Sqlrelease"/>
+            <word name="Sqlrestoreconnect"/>
+            <word name="Sqlrollback"/>
+            <word name="Sqlsaveconnect"/>
+            <word name="Sqlselectconnect"/>
+            <word name="Sqlsetinterrupt"/>
+            <word name="Sqlstarttrans"/>
+            <word name="Sqlval"/>
+            <word name="Sqrt"/>
+            <word name="Step"/>
+            <word name="Strim"/>
+            <word name="Strval"/>
+            <word name="Style"/>
+            <word name="Style Attribute"/>
+            <word name="Substr"/>
+            <word name="Subtract"/>
+            <word name="Switch"/>
+            <word name="Synccursor"/>
+            <word name="Syscolor"/>
+            <word name="Sysinfo"/>
+            <word name="Sysinfo Config"/>
+            <word name="Sysmode"/>
+            <word name="Tab"/>
+            <word name="Table"/>
+            <word name="Tableinfo"/>
+            <word name="Tablelist"/>
+            <word name="Tableorder"/>
+            <word name="Tablerights"/>
+            <word name="Tag"/>
+            <word name="Tan"/>
+            <word name="Text"/>
+            <word name="Then"/>
+            <word name="Ticks"/>
+            <word name="Time"/>
+            <word name="To"/>
+            <word name="Today"/>
+            <word name="Togglepalette"/>
+            <word name="Toqpro"/>
+            <word name="True"/>
+            <word name="Type"/>
+            <word name="Typein"/>
+            <word name="Undo"/>
+            <word name="Unlock"/>
+            <word name="Unlockrecord"/>
+            <word name="Unpassword"/>
+            <word name="Unprotect"/>
+            <word name="Until"/>
+            <word name="Up"/>
+            <word name="Update"/>
+            <word name="Upimage"/>
+            <word name="Upper"/>
+            <word name="Usdate"/>
+            <word name="Username"/>
+            <word name="Usevars"/>
+            <word name="Value"/>
+            <word name="Varassign"/>
+            <word name="Vars"/>
+            <word name="Varval"/>
+            <word name="Version"/>
+            <word name="Vertruler"/>
+            <word name="View"/>
+            <word name="Wait"/>
+            <word name="Whereami"/>
+            <word name="While"/>
+            <word name="Width"/>
+            <word name="Winclose"/>
+            <word name="Window"/>
+            <word name="Window Close"/>
+            <word name="Window Create"/>
+            <word name="Window Destroy"/>
+            <word name="Window Echo"/>
+            <word name="Window Getattributes"/>
+            <word name="Window Getcolors"/>
+            <word name="Window Handle"/>
+            <word name="Window List"/>
+            <word name="Window Maximize"/>
+            <word name="Window Move"/>
+            <word name="Window Resize"/>
+            <word name="Window Scroll"/>
+            <word name="Window Select"/>
+            <word name="Window Setattributes"/>
+            <word name="Window Setcolors"/>
+            <word name="Windowat"/>
+            <word name="Windowtype"/>
+            <word name="Winmax"/>
+            <word name="Winnext"/>
+            <word name="Winresize"/>
+            <word name="Writelib"/>
+            <word name="Xtrim"/>
+            <word name="Year"/>
+            <word name="Zoom"/>
+            <word name="Zoomnext"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

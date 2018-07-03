@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+   <type name="dcl">
+      <annotation><documentation>
+        HP OpenVMS DCL (Digital Command-line Language)
+      </documentation><contributors><![CDATA[
+        Maintained by Ondrej Brablc <colorer@brablc.com>
+      ]]></contributors></annotation>
+
+      <import type="def"/>
+
+      <region name='SubroutineOutline' parent='def:Outlined'/>
+      <region name='LabelOutline' parent='def:Outlined'/>
+
+      <region name="String" parent="String"/>
+      <region name="Comment" parent="Comment"/>
+      <region name="Symb" parent="Symbol"/>
+      <region name="Word" parent="Keyword"/>
+      <region name="Other" parent="Keyword"/>
+      <region name="Numb" parent="Number"/>
+      <region name="Func" parent="URL"/>
+      <region name="Symbol" parent="Number"/>
+      <region name="Logical" parent="Number"/>
+      <region name="FirstChar" parent="ErrorText"/>
+      <region name="Label" parent="Label"/>
+      <region name="SQL" parent="default"/>
+      <region name="Params" parent="def:Parameter"/>
+
+      <scheme name="SQL">
+         <inherit scheme="sql:sql"/>
+      </scheme>
+
+      <scheme name="dcl">
+<!-- Paired block -->
+         <block start="/(then)\s*$/i" end="/(endif)\s*$/i" scheme="dcl" region00="Word" region01="def:PairStart" region10="Word" region11="def:PairEnd" priority="low"/>
+         <block start="/\s* \b ((?{SubroutineOutline}[\w_^:]+ ))\: \s* (subroutine)+/ix" end="/(endsubroutine)\s*$/i" scheme="dcl" region00="Word" region01="Label" region02="def:PairStart" region10="Word" region11="def:PairEnd" priority="low"/>
+         <block start="/(\s*sql)\s*$/i" end="/^(\$)/x" scheme="SQL" region01="Word" region11="FirstChar" region="SQL" priority="low"/>
+         <block start="/!/" end="/$/" scheme="Comment" region="Comment" priority="low"/>
+
+<!-- Numbers -->
+         <regexp match="/\b([0-9\.]+([eE][-+]?\d+)?)\b/" region0="Numb"/>
+         <regexp match="/\b(0[xX][\da-fA-F]+)\b/" region0="Numb"/>
+
+<!-- Strings -->
+         <regexp match="/(&#34;((\\.)|[^\\&#34;])*?&#34;)/" region0="String"/>
+         <regexp match="/(''\w+')/" region0="Symbol"/>
+         <regexp match="/(f\$[\w_]+)/i" region0="Func"/>
+         <regexp match="/([\w_]+\$[\w_]+)/" region0="Logical"/>
+         <regexp match="/(\w{3}[_\$]\w{3}:)/" region0="Logical"/>
+         <regexp match="/(\.[\w]+\.)/" region0="Word"/>
+
+<!-- Other -->
+         <regexp match="/\s* \b ((?{LabelOutline}[\w_]+ ))\: \s* $/x" region1="Label"/>
+         <regexp match="/^\${1}/" region0="FirstChar"/>
+
+<!-- Symbols -->
+         <keywords region="Symb">
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name=":"/>
+            <symb name="?"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="@"/>
+         </keywords>
+<!-- Key words-->
+         <keywords ignorecase="yes" region="Word">
+            <word name="."/>
+            <word name="APPEND"/>
+            <word name="ATTACH"/>
+            <word name="CALL"/>
+            <word name="CD"/>
+            <word name="CLS"/>
+            <word name="CLOSE"/>
+            <word name="CO"/>
+            <word name="COMMIT"/>
+            <word name="COPY"/>
+            <word name="CREATE"/>
+            <word name="DATE"/>
+            <word name="DEASSIGN"/>
+            <word name="DEFAULT"/>
+            <word name="DEFINE"/>
+            <word name="DELETE"/>
+            <word name="DEVICE"/>
+            <word name="DIR"/>
+            <word name="DO"/>
+            <word name="ECHO"/>
+            <word name="ELSE"/>
+            <word name="ELSIF"/>
+            <word name="END"/>
+            <word name="ENDIF"/>
+            <word name="ENDSUBROUTINE"/>
+            <word name="EOF"/>
+            <word name="ERROR"/>
+            <word name="EXIT"/>
+            <word name="EXPAND"/>
+            <word name="GET_SYMBOL"/>
+            <word name="GOTO"/>
+            <word name="HELP"/>
+            <word name="HOME"/>
+            <word name="IF"/>
+            <word name="IMAGE"/>
+            <word name="INCLUDE"/>
+            <word name="LOGOUT"/>
+            <word name="LOOP"/>
+            <word name="MC"/>
+            <word name="MMS"/>
+            <word name="MODULE"/>
+            <word name="ON"/>
+            <word name="OPEN"/>
+            <word name="PRINT"/>
+            <word name="PROCEDURE"/>
+            <word name="PROGRAM"/>
+            <word name="PROMPT"/>
+            <word name="PUT"/>
+            <word name="PURGE"/>
+            <word name="QUEUE"/>
+            <word name="READ"/>
+            <word name="RENAME"/>
+            <word name="RETURN"/>
+            <word name="RUN"/>
+            <word name="SD"/>
+            <word name="SELECT"/>
+            <word name="SET"/>
+            <word name="SET_SYMBOL"/>
+            <word name="SH"/>
+            <word name="SHOW"/>
+            <word name="SL"/>
+            <word name="SM"/>
+            <word name="SPAWN"/>
+            <word name="SQL"/>
+            <word name="SS"/>
+            <word name="STATUS"/>
+            <word name="SU"/>
+            <word name="SUBROUTINE"/>
+            <word name="SUBMIT"/>
+            <word name="SV"/>
+            <word name="THEN"/>
+            <word name="TO"/>
+            <word name="TYPE"/>
+            <word name="WAIT"/>
+            <word name="WARNING"/>
+            <word name="WRITE"/>
+         </keywords>
+<!-- Other key words-->
+         <keywords ignorecase="yes" region="Params">
+            <word name="/END_OF_FILE"/>
+            <word name="/APPEND"/>
+            <word name="/READ"/>
+            <word name="/WRITE"/>
+            <word name="/PRIVILEGES"/>
+            <word name="/PROCESS"/>
+            <word name="/OUTPUT"/>
+            <word name="/NOWAIT"/>
+            <word name="/WAIT"/>
+            <word name="/JOB"/>
+            <word name="/GROUP"/>
+         </keywords>
+      </scheme>
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

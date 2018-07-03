@@ -1,0 +1,1598 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name="ie.baf">
+	<annotation><documentation>
+		Infinity Engine
+		BAF script syntax
+	</documentation><contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+	]]></contributors>
+	<appinfo><todo>
+		- support more IDS constatns
+	</todo>
+	<note>
+		Ugly constructs like "foo(bar(baz)" -- NOT supportred.
+		Please close your brackets correctly!
+	</note>
+	</appinfo>
+</annotation>
+
+
+<region name='key' parent='def:Keyword'/>
+<region name='key.names' parent='key'/>
+
+<region name='key.action' parent='def:KeywordStrong'/>
+<region name='key.trigger' parent='key.action'/>
+
+<region name='int' parent='def:Number'/>
+<region name='int.pre' parent='def:NumberPrefix'/>
+
+<region name='symb' parent='def:Symbol'/>
+<region name='symb.dot' parent='def:SymbolStrong'/>
+
+<region name='string' parent='def:String'/>
+<region name='ids' parent='def:Constant'/>
+
+<region name='var' parent='def:Var'/>
+<region name='var.outer' parent='def:VarStrong'/>
+
+<region name='area' parent='def:VarStrong'/> <!-- ParameterStrong Tag -->
+
+<scheme name='subst'>
+	<!-- WeiDu vars, etc -->
+	<!--regexp match='/%\w+%/' region='var.outer'/-->
+</scheme>
+
+
+
+<scheme name='comment.content'>
+	<inherit scheme='def:cNestedComment-internal'>
+		<virtual scheme="def:cNestedComment-internal" subst-scheme="comment.content"/>
+	</inherit>
+	<inherit scheme='subst'/>
+</scheme>
+
+<scheme name='comment'>
+	<block start='/\/\//' end='/$/' scheme='comment.content' region='def:Comment'/>
+	
+	<block start='/\/\*/' end='/\*\//' 
+		scheme='comment.content' region='def:Comment'
+		region00='def:PairStart' region10='def:PairEnd'
+	/>
+</scheme>
+
+
+<scheme name='content.all'>
+	<regexp match='/\d+/' region='int'/>
+	<inherit scheme='ids'/>
+	<inherit scheme='subst'/>
+</scheme>
+
+
+<scheme name='content.index'>
+	<keywords region="symb.dot">
+		<symb name='.'/>
+	</keywords>
+	
+	<inherit scheme='comment'/>
+	<inherit scheme='content.all'/>
+</scheme>
+
+<scheme name="content.str">
+	<inherit scheme='subst'/>
+	
+	<keywords region="area">
+		<word name='GLOBAL'/>
+		<word name='LOCALS'/>
+		<word name='MYAREA'/>
+	</keywords>
+</scheme>
+
+
+
+<scheme name='content.call'>
+	<keywords region="symb">
+		<symb name=','/>
+	</keywords>
+	
+	<block start='/(\[)/' end='/(\])/' scheme='content.index'
+		region00='symb' region01='def:PairStart'
+		region10='symb' region11='def:PairEnd'
+	/>
+	
+	
+	<block start='/"/' end='/"/'
+		scheme='content.str' region='string'
+		region00='def:PairStart' region10='def:PairEnd'
+	/>
+	
+	<regexp match='/\b(Player[1-6]|Myself|Nothing)\b/' region='key.names'/>
+	<inherit scheme='content.all'/>
+	<inherit scheme='acts'/>
+	<inherit scheme='subact.list'/>
+</scheme>
+
+
+<scheme name='content'>
+	<inherit scheme='comment'/>
+	
+	<block start='/(\()/' end='/(\))/' scheme='content.call'
+		region00='symb' region01='def:PairStart'
+		region10='symb' region11='def:PairEnd'
+	/>
+	
+</scheme>
+
+
+<scheme name='triggers'>
+	<regexp match='/\bOR\s*((\()(\d+)(\)))/' 
+		region0='key' region1='symb' region3='int'
+		region2='def:PairStart' region4='def:PairEnd'
+		/>
+	<regexp match='/\bHotKey\s*((\()([A-Z])(\)))/' 
+		region0='key.trigger' region1='symb' region3='string'
+		region2='def:PairStart' region4='def:PairEnd'
+		/>
+	<regexp match='/!/' region='symb'/>
+	<inherit scheme='trigger.list'/>
+	<inherit scheme='content'/>
+</scheme>
+
+
+<scheme name='acts'>
+	<inherit scheme='act.list'/>
+	<inherit scheme='content'/>
+</scheme>
+
+
+
+<scheme name='response'>
+	<inherit scheme='comment'/>
+	
+	<block start='/\bRESPONSE (#)(\d+)/' end='/\M\b(END|RESPONSE)\b/'
+		scheme='acts' region00='key'
+		region01='int.pre' region02='int'
+	/>
+</scheme>
+
+<scheme name='block'>
+	<inherit scheme='triggers'/>
+	
+	<block start='/\bTHEN\b/' end='/\M\bEND\b/'
+		scheme='response' region00='key'
+	/>
+</scheme>
+
+
+<scheme name='ie.baf'>
+	<inherit scheme='comment'/>
+	
+	<block start='/\b(IF)\b/' end='/\b(END)\b/' scheme='block'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+</scheme>
+
+
+
+<!--  
+	Listing schemes
+	TODO: add all IDS
+-->
+
+<scheme name='trigger.list'>
+	<!-- http://iesdp.gibberlings3.net/scripting/triggers/bg2triggers.htm -->
+	<keywords region="key.trigger" ignorecase='yes'>
+		<word name='Acquired'/>
+		<word name='AttackedBy'/>
+		<word name='Help'/>
+		<word name='Joins'/>
+		<word name='Leaves'/>
+		<word name='ReceivedOrder'/>
+		<word name='Said'/>
+		<word name='TurnedBy'/>
+		<word name='Unusable'/>
+		<word name='Alignment'/>
+		<word name='Allegiance'/>
+		<word name='Class'/>
+		<word name='Exists'/>
+		<word name='General'/>
+		<word name='Global'/>
+		<word name='HP'/>
+		<word name='HPGT'/>
+		<word name='HPLT'/>
+		<word name='LOS'/>
+		<word name='Morale'/>
+		<word name='MoraleGT'/>
+		<word name='MoraleLT'/>
+		<word name='Race'/>
+		<word name='Range'/>
+		<word name='Reputation'/>
+		<word name='ReputationGT'/>
+		<word name='ReputationLT'/>
+		<word name='See'/>
+		<word name='Specifics'/>
+		<word name='Time'/>
+		<word name='TimeOfDay'/>
+		<word name='HitBy'/>
+		<word name='HotKey'/>
+		<word name='TimerExpired'/>
+		<word name='True'/>
+		<word name='Trigger'/>
+		<word name='Die'/>
+		<word name='TargetUnreachable'/>
+		<word name='Delay'/>
+		<word name='NumCreature'/>
+		<word name='NumCreatureLT'/>
+		<word name='NumCreatureGT'/>
+		<word name='ActionListEmpty'/>
+		<word name='HPPercent'/>
+		<word name='HPPercentLT'/>
+		<word name='HPPercentGT'/>
+		<word name='Heard'/>
+		<word name='False'/>
+		<word name='HaveSpell'/>
+		<word name='HaveAnySpells'/>
+		<word name='BecameVisible'/>
+		<word name='GlobalGT'/>
+		<word name='GlobalLT'/>
+		<word name='OnCreation'/>
+		<word name='StateCheck'/>
+		<word name='NotStateCheck'/>
+		<word name='NumTimesTalkedTo'/>
+		<word name='NumTimesTalkedToGT'/>
+		<word name='NumTimesTalkedToLT'/>
+		<word name='Reaction'/>
+		<word name='ReactionGT'/>
+		<word name='ReactionLT'/>
+		<word name='GlobalTimerExact'/>
+		<word name='GlobalTimerExpired'/>
+		<word name='GlobalTimerNotExpired'/>
+		<word name='PartyHasItem'/>
+		<word name='InParty'/>
+		<word name='CheckStat'/>
+		<word name='CheckStatGT'/>
+		<word name='CheckStatLT'/>
+		<word name='RandomNum'/>
+		<word name='RandomNumGT'/>
+		<word name='RandomNumLT'/>
+		<word name='Died'/>
+		<word name='Killed'/>
+		<word name='Entered'/>
+		<word name='Gender'/>
+		<word name='PartyGold'/>
+		<word name='PartyGoldGT'/>
+		<word name='PartyGoldLT'/>
+		<word name='Dead'/>
+		<word name='Opened'/>
+		<word name='Closed'/>
+		<word name='Detected'/>
+		<word name='Reset'/>
+		<word name='Disarmed'/>
+		<word name='Unlocked'/>
+		<word name='OutOfAmmo'/>
+		<word name='NumTimesInteracted'/>
+		<word name='NumTimesInteractedGT'/>
+		<word name='NumTimesInteractedLT'/>
+		<word name='BreakingPoint'/>
+		<word name='PickPocketFailed'/>
+		<word name='StealFailed'/>
+		<word name='DisarmFailed'/>
+		<word name='PickLockFailed'/>
+		<word name='HasItem'/>
+		<word name='InteractingWith'/>
+		<word name='InWeaponRange'/>
+		<word name='HasWeaponEquiped'/>
+		<word name='Happiness'/>
+		<word name='HappinessGT'/>
+		<word name='HappinessLT'/>
+		<word name='TimeGT'/>
+		<word name='TimeLT'/>
+		<word name='NumInParty'/>
+		<word name='NumInPartyGT'/>
+		<word name='NumInPartyLT'/>
+		<word name='UnselectableVariable'/>
+		<word name='UnselectableVariableGT'/>
+		<word name='UnselectableVariableLT'/>
+		<word name='Clicked'/>
+		<word name='NumberOfTimesTalkedTo'/>
+		<word name='NumDead'/>
+		<word name='NumDeadGT'/>
+		<word name='NumDeadLT'/>
+		<word name='Detect'/>
+		<word name='Contains'/>
+		<word name='OpenState'/>
+		<word name='NumItems'/>
+		<word name='NumItemsGT'/>
+		<word name='NumItemsLT'/>
+		<word name='NumItemsParty'/>
+		<word name='NumItemsPartyGT'/>
+		<word name='NumItemsPartyLT'/>
+		<word name='IsOverMe'/>
+		<word name='AreaCheck'/>
+		<word name='HasItemEquiped'/>
+		<word name='NumCreatureVsParty'/>
+		<word name='NumCreatureVsPartyLT'/>
+		<word name='NumCreatureVsPartyGT'/>
+		<word name='CombatCounter'/>
+		<word name='CombatCounterLT'/>
+		<word name='CombatCounterGT'/>
+		<word name='AreaType'/>
+		<word name='TrapTriggered'/>
+		<word name='PartyMemberDied'/>
+		<!-- word name='OR'/ -->
+		<word name='InPartySlot'/>
+		<word name='SpellCast'/>
+		<word name='InLine'/>
+		<word name='PartyRested'/>
+		<word name='Level'/>
+		<word name='LevelGT'/>
+		<word name='LevelLT'/>
+		<word name='Summoned'/>
+		<word name='GlobalsEqual'/>
+		<word name='GlobalsGT'/>
+		<word name='GlobalsLT'/>
+		<word name='LocalsEqual'/>
+		<word name='LocalsGT'/>
+		<word name='LocalsLT'/>
+		<word name='ObjectActionListEmpty'/>
+		<word name='OnScreen'/>
+		<word name='InActiveArea'/>
+		<word name='SpellCastOnMe'/>
+		<word name='CalanderDay'/>
+		<word name='CalanderDayGT'/>
+		<word name='CalanderDayLT'/>
+		<word name='Name'/>
+		<word name='SpellCastPriest'/>
+		<word name='SpellCastInnate'/>
+		<word name='IsValidForPartyDialog'/>
+		<word name='IfValidForPartyDialog'/>
+		<word name='IsValidForPartyDialogue'/>
+		<word name='IfValidForPartyDialogue'/>
+		<word name='PartyHasItemIdentified'/>
+		<word name='HasBounceEffects'/>
+		<word name='HasImmunityEffects'/>
+		<word name='HasItemSlot'/>
+		<word name='PersonalSpaceDistance'/>
+		<word name='InMyGroup'/>
+		<word name='RealGlobalTimerExact'/>
+		<word name='RealGlobalTimerExpired'/>
+		<word name='RealGlobalTimerNotExpired'/>
+		<word name='NumInPartyAlive'/>
+		<word name='NumInPartyAliveGT'/>
+		<word name='NumInPartyAliveLT'/>
+		<word name='Kit'/>
+		<word name='IsGabber'/>
+		<word name='IsActive'/>
+		<word name='CharName'/>
+		<word name='FallenRanger'/>
+		<word name='FallenPaladin'/>
+		<word name='InventoryFull'/>
+		<word name='HasItemEquipedReal'/>
+		<word name='XP'/>
+		<word name='XPGT'/>
+		<word name='XPLT'/>
+		<word name='G'/>
+		<word name='GGT'/>
+		<word name='GLT'/>
+		<word name='ModalState'/>
+		<word name='InMyArea'/>
+		<word name='TookDamage'/>
+		<word name='DamageTaken'/>
+		<word name='DamageTakenGT'/>
+		<word name='DamageTakenLT'/>
+		<word name='Difficulty'/>
+		<word name='DifficultyGT'/>
+		<word name='DifficultyLT'/>
+		<word name='InPartyAllowDead'/>
+		<word name='AreaCheckObject'/>
+		<word name='ActuallyInCombat'/>
+		<word name='WalkedToTrigger'/>
+		<word name='LevelParty'/>
+		<word name='LevelPartyGT'/>
+		<word name='LevelPartyLT'/>
+		<word name='HaveSpellParty'/>
+		<word name='HaveSpellRES'/>
+		<word name='AmIInWatchersKeepPleaseIgnoreTheLackOfApostophe'/>
+		<word name='InWatchersKeep'/>
+	</keywords>
+</scheme>
+
+
+<scheme name='act.list'>
+	<!-- http://iesdp.gibberlings3.net/scripting/actions/bg2actions.htm  -->
+	<keywords region="key.action" ignorecase='yes'>
+		<word name='NoAction'/> <!-- 0 -->
+		<word name='ActionOverride'/> <!-- 1 -->
+		<word name='AddWayPoint'/> <!-- 2 -->
+		<word name='Attack'/> <!-- 3 -->
+		<word name='BackStab'/> <!-- 5 -->
+		<word name='CreateCreature'/> <!-- 7 -->
+		<word name='Dialogue'/> <!-- 8 -->
+		<word name='DropItem'/> <!-- 9 -->
+		<word name='Enemy'/> <!-- 10 -->
+		<word name='EquipItem'/> <!-- 11 -->
+		<word name='FindTraps'/> <!-- 13 -->
+		<word name='GetItem'/> <!-- 14 -->
+		<word name='GiveItem'/> <!-- 15 -->
+		<word name='GiveOrder'/> <!-- 16 -->
+		<word name='Help'/> <!-- 17 -->
+		<word name='Hide'/> <!-- 18 -->
+		<word name='JoinParty'/> <!-- 19 -->
+		<word name='LayHands'/> <!-- 20 -->
+		<word name='LeaveParty'/> <!-- 21 -->
+		<word name='MoveToObject'/> <!-- 22 -->
+		<word name='MoveToPoint'/> <!-- 23 -->
+		<word name='Panic'/> <!-- 24 -->
+		<word name='PickPockets'/> <!-- 25 -->
+		<word name='PlaySound'/> <!-- 26 -->
+		<word name='ProtectPoint'/> <!-- 27 -->
+		<word name='RemoveTraps'/> <!-- 28 -->
+		<word name='RunAwayFrom'/> <!-- 29 -->
+		<word name='SetGlobal'/> <!-- 30 -->
+		<word name='Spell'/> <!-- 31 -->
+		<word name='SpellRES'/> <!-- 31 -->
+		<word name='Turn'/> <!-- 33 -->
+		<word name='UseItem'/> <!-- 34 -->
+		<word name='Continue'/> <!-- 36 -->
+		<word name='FollowPath'/> <!-- 37 -->
+		<word name='Swing'/> <!-- 38 -->
+		<word name='Recoil'/> <!-- 39 -->
+		<word name='PlayDead'/> <!-- 40 -->
+		<word name='Formation'/> <!-- 47 -->
+		<word name='JumpToPoint'/> <!-- 48 -->
+		<word name='MoveViewPoint'/> <!-- 49 -->
+		<word name='MoveViewObject'/> <!-- 50 -->
+		<word name='ClickLButtonPoint'/> <!-- 51 -->
+		<word name='ClickLButtonObject'/> <!-- 52 -->
+		<word name='ClickRButtonPoint'/> <!-- 53 -->
+		<word name='ClickRButtonObject'/> <!-- 54 -->
+		<word name='DoubleClickLButtonPoint'/> <!-- 55 -->
+		<word name='DoubleClickLButtonObject'/> <!-- 56 -->
+		<word name='DoubleClickRButtonPoint'/> <!-- 57 -->
+		<word name='DoubleClickRButtonObject'/> <!-- 58 -->
+		<word name='MoveCursorPoint'/> <!-- 59 -->
+		<word name='ChangeAIScript'/> <!-- 60 -->
+		<word name='StartTimer'/> <!-- 61 -->
+		<word name='SendTrigger'/> <!-- 62 -->
+		<word name='Wait'/> <!-- 63 -->
+		<word name='UndoExplore'/> <!-- 64 -->
+		<word name='Explore'/> <!-- 65 -->
+		<word name='DayNight'/> <!-- 66 -->
+		<word name='Weather'/> <!-- 67 -->
+		<word name='CallLightning'/> <!-- 68 -->
+		<word name='VEquip'/> <!-- 69 -->
+		<word name='NIDSpecial1'/> <!-- 70 -->
+		<word name='CreateItem'/> <!-- 82 -->
+		<word name='SmallWait'/> <!-- 83 -->
+		<word name='Face'/> <!-- 84 -->
+		<word name='RandomWalk'/> <!-- 85 -->
+		<word name='SetInterrupt'/> <!-- 86 -->
+		<word name='ProtectObject'/> <!-- 87 -->
+		<word name='Leader'/> <!-- 88 -->
+		<word name='Follow'/> <!-- 89 -->
+		<word name='MoveToPointNoRecticle'/> <!-- 90 -->
+		<word name='LeaveArea'/> <!-- 91 -->
+		<word name='SelectWeaponAbility'/> <!-- 92 -->
+		<word name='GroupAttack'/> <!-- 94 -->
+		<word name='SpellPoint'/> <!-- 95 -->
+		<word name='SpellPointRES'/> <!-- 95 -->
+		<word name='Rest'/> <!-- 96 -->
+		<word name='UseItemPoint'/> <!-- 97 -->
+		<word name='AttackNoSound'/> <!-- 98 -->
+		<word name='RandomFly'/> <!-- 100 -->
+		<word name='MoraleSet'/> <!-- 102 -->
+		<word name='MoraleInc'/> <!-- 103 -->
+		<word name='MoraleDec'/> <!-- 104 -->
+		<word name='AttackOneRound'/> <!-- 105 -->
+		<word name='Shout'/> <!-- 106 -->
+		<word name='MoveToOffset'/> <!-- 107 -->
+		<word name='EscapeArea'/> <!-- 108 -->
+		<word name='IncrementGlobal'/> <!-- 109 -->
+		<word name='LeaveAreaLUA'/> <!-- 110 -->
+		<word name='DestroySelf'/> <!-- 111 -->
+		<word name='UseContainer'/> <!-- 112 -->
+		<word name='ForceSpell'/> <!-- 113 -->
+		<word name='ForceSpellPoint'/> <!-- 114 -->
+		<word name='SetGlobalTimer'/> <!-- 115 -->
+		<word name='TakePartyItem'/> <!-- 116 -->
+		<word name='TakePartyGold'/> <!-- 117 -->
+		<word name='GivePartyGold'/> <!-- 118 -->
+		<word name='DropInventory'/> <!-- 119 -->
+		<word name='StartCutScene'/> <!-- 120 -->
+		<word name='StartCutSceneMode'/> <!-- 121 -->
+		<word name='EndCutSceneMode'/> <!-- 122 -->
+		<word name='ClearAllActions'/> <!-- 123 -->
+		<word name='Berserk'/> <!-- 124 -->
+		<word name='Deactivate'/> <!-- 125 -->
+		<word name='Activate'/> <!-- 126 -->
+		<word name='CutSceneId'/> <!-- 127 -->
+		<word name='AnkhegEmerge'/> <!-- 128 -->
+		<word name='AnkhegHide'/> <!-- 129 -->
+		<word name='RandomTurn'/> <!-- 130 -->
+		<word name='Kill'/> <!-- 131 -->
+		<word name='VerbalConstant'/> <!-- 132 -->
+		<word name='ClearActions'/> <!-- 133 -->
+		<word name='AttackReevaluate'/> <!-- 134 -->
+		<word name='LockScroll'/> <!-- 135 -->
+		<word name='UnlockScroll'/> <!-- 136 -->
+		<word name='StartDialog'/> <!-- 137 -->
+		<word name='SetDialog'/> <!-- 138 -->
+		<word name='PlayerDialog'/> <!-- 139 -->
+		<word name='PlayerDialogue'/> <!-- 139 -->
+		<word name='GiveItemCreate'/> <!-- 140 -->
+		<word name='GivePartyGoldGlobal'/> <!-- 141 -->
+		<word name='UseDoor'/> <!-- 142 -->
+		<word name='OpenDoor'/> <!-- 143 -->
+		<word name='CloseDoor'/> <!-- 144 -->
+		<word name='PickLock'/> <!-- 145 -->
+		<word name='Polymorph'/> <!-- 146 -->
+		<word name='RemoveSpell'/> <!-- 147 -->
+		<word name='RemoveSpellRES'/> <!-- 147 -->
+		<word name='BashDoor'/> <!-- 148 -->
+		<word name='EquipMostDamagingMelee'/> <!-- 149 -->
+		<word name='StartStore'/> <!-- 150 -->
+		<word name='DisplayString'/> <!-- 151 -->
+		<word name='ChangeAIType'/> <!-- 152 -->
+		<word name='ChangeEnemyAlly'/> <!-- 153 -->
+		<word name='ChangeGeneral'/> <!-- 154 -->
+		<word name='ChangeRace'/> <!-- 155 -->
+		<word name='ChangeClass'/> <!-- 156 -->
+		<word name='ChangeSpecifics'/> <!-- 157 -->
+		<word name='ChangeGender'/> <!-- 158 -->
+		<word name='ChangeAlignment'/> <!-- 159 -->
+		<word name='ApplySpell'/> <!-- 160 -->
+		<word name='ApplySpellRES'/> <!-- 160 -->
+		<word name='IncrementChapter'/> <!-- 161 -->
+		<word name='ReputationSet'/> <!-- 162 -->
+		<word name='ReputationInc'/> <!-- 163 -->
+		<word name='AddexperienceParty'/> <!-- 164 -->
+		<word name='AddExperiencePartyGlobal'/> <!-- 165 -->
+		<word name='SetNumTimesTalkedTo'/> <!-- 166 -->
+		<word name='StartMovie'/> <!-- 167 -->
+		<word name='Interact'/> <!-- 168 -->
+		<word name='DestroyItem'/> <!-- 169 -->
+		<word name='RevealAreaOnMap'/> <!-- 170 -->
+		<word name='GiveGoldForce'/> <!-- 171 -->
+		<word name='ChangeTileState'/> <!-- 172 -->
+		<word name='AddJournalEntry'/> <!-- 173 -->
+		<word name='EquipRanged'/> <!-- 174 -->
+		<word name='SetLeavePartyDialogFile'/> <!-- 175 -->
+		<word name='EscapeAreaDestroy'/> <!-- 176 -->
+		<word name='TriggerActivation'/> <!-- 177 -->
+		<word name='BreakInstants'/> <!-- 178 -->
+		<word name='DialogInterrupt'/> <!-- 179 -->
+		<word name='DialogueInterrupt'/> <!-- 179 -->
+		<word name='MoveToObjectFollow'/> <!-- 180 -->
+		<word name='ReallyForceSpell'/> <!-- 181 -->
+		<word name='ReallyForceSpellRES'/> <!-- 181 -->
+		<word name='MakeUnselectable'/> <!-- 182 -->
+		<word name='MultiPlayerSync'/> <!-- 183 -->
+		<word name='RunAwayFromNoInterrupt'/> <!-- 184 -->
+		<word name='SetMasterArea'/> <!-- 185 -->
+		<word name='EndCredits'/> <!-- 186 -->
+		<word name='StartMusic'/> <!-- 187 -->
+		<word name='TakePartyItemAll'/> <!-- 188 -->
+		<word name='LeaveAreaLUAPanic'/> <!-- 189 -->
+		<word name='SaveGame'/> <!-- 190 -->
+		<word name='SpellNoDec'/> <!-- 191 -->
+		<word name='SpellPointNoDec'/> <!-- 192 -->
+		<word name='TakePartyItemRange'/> <!-- 193 -->
+		<word name='ChangeAnimation'/> <!-- 194 -->
+		<word name='Lock'/> <!-- 195 -->
+		<word name='Unlock'/> <!-- 196 -->
+		<word name='MoveGlobal'/> <!-- 197 -->
+		<word name='StartDialogueNoSet'/> <!-- 198 -->
+		<word name='StartDialogNoSet'/> <!-- 198 -->
+		<word name='TextScreen'/> <!-- 199 -->
+		<word name='RandomWalkContinuous'/> <!-- 200 -->
+		<word name='DetectSecretDoor'/> <!-- 201 -->
+		<word name='FadeToColor'/> <!-- 202 -->
+		<word name='FadeFromColor'/> <!-- 203 -->
+		<word name='TakePartyItemNum'/> <!-- 204 -->
+		<word name='WaitWait'/> <!-- 205 -->
+		<word name='MoveToPointNoInterrupt'/> <!-- 207 -->
+		<word name='MoveToObjectNoInterrupt'/> <!-- 208 -->
+		<word name='SpawnPtActivate'/> <!-- 209 -->
+		<word name='SpawnPtDeactivate'/> <!-- 210 -->
+		<word name='SpawnPtSpawn'/> <!-- 211 -->
+		<word name='GlobalShout'/> <!-- 212 -->
+		<word name='StaticStart'/> <!-- 213 -->
+		<word name='StaticStop'/> <!-- 214 -->
+		<word name='FollowObjectFormation'/> <!-- 215 -->
+		<word name='AddFamiliar'/> <!-- 216 -->
+		<word name='RemoveFamiliar'/> <!-- 217 -->
+		<word name='PauseGame'/> <!-- 218 -->
+		<word name='ChangeAnimationNoEffect'/> <!-- 219 -->
+		<word name='TakeItemListParty'/> <!-- 220 -->
+		<word name='SetMoraleAI'/> <!-- 221 -->
+		<word name='IncMoraleAI'/> <!-- 222 -->
+		<word name='DestroyAllEquipment'/> <!-- 223 -->
+		<word name='GivePartyAllEquipment'/> <!-- 224 -->
+		<word name='MoveBetweenAreas'/> <!-- 225 -->
+		<word name='TakeItemListPartyNum'/> <!-- 226 -->
+		<word name='CreateCreatureObject'/> <!-- 227 -->
+		<word name='CreateCreatureImpassable'/> <!-- 228 -->
+		<word name='FaceObject'/> <!-- 229 -->
+		<word name='RestParty'/> <!-- 230 -->
+		<word name='CreateCreatureDoor'/> <!-- 231 -->
+		<word name='CreateCreatureObjectDoor'/> <!-- 232 -->
+		<word name='CreateCreatureObjectOffScreen'/> <!-- 233 -->
+		<word name='MoveGlobalObjectOffScreen'/> <!-- 234 -->
+		<word name='SetQuestDone'/> <!-- 235 -->
+		<word name='StorePartyLocations'/> <!-- 236 -->
+		<word name='RestorePartyLocations'/> <!-- 237 -->
+		<word name='CreateCreatureOffScreen'/> <!-- 238 -->
+		<word name='MoveToCenterOfScreen'/> <!-- 239 -->
+		<word name='ReallyForceSpellDead'/> <!-- 240 -->
+		<word name='Calm'/> <!-- 241 -->
+		<word name='Ally'/> <!-- 242 -->
+		<word name='RestNoSpells'/> <!-- 243 -->
+		<word name='SaveLocation'/> <!-- 244 -->
+		<word name='SaveObjectLocation'/> <!-- 245 -->
+		<word name='CreateCreatureAtLocation'/> <!-- 246 -->
+		<word name='SetToken'/> <!-- 247 -->
+		<word name='SetTokenObject'/> <!-- 248 -->
+		<word name='SetGabber'/> <!-- 249 -->
+		<word name='CreateCreatureObjectCopy'/> <!-- 250 -->
+		<word name='HideAreaOnMap'/> <!-- 251 -->
+		<word name='CreateCreatureObjectOffset'/> <!-- 252 -->
+		<word name='ContainerEnable'/> <!-- 253 -->
+		<word name='ScreenShake'/> <!-- 254 -->
+		<word name='AddGlobals'/> <!-- 255 -->
+		<word name='CreateItemNumGlobal'/> <!-- 256 -->
+		<word name='PickUpItem'/> <!-- 257 -->
+		<word name='FillSlot'/> <!-- 258 -->
+		<word name='AddXPObject'/> <!-- 259 -->
+		<word name='DestroyGold'/> <!-- 260 -->
+		<word name='SetHomeLocation'/> <!-- 261 -->
+		<word name='DisplayStringNoName'/> <!-- 262 -->
+		<word name='EraseJournalEntry'/> <!-- 263 -->
+		<word name='CopyGroundPilesTo'/> <!-- 264 -->
+		<word name='DialogueForceInterrupt'/> <!-- 265 -->
+		<word name='DialogForceInterrupt'/> <!-- 265 -->
+		<word name='StartDialogInterrupt'/> <!-- 266 -->
+		<word name='StartDialogueInterrupt'/> <!-- 266 -->
+		<word name='StartDialogueNoSetInterrupt'/> <!-- 267 -->
+		<word name='StartDialogNoSetInterrupt'/> <!-- 267 -->
+		<word name='RealSetGlobalTimer'/> <!-- 268 -->
+		<word name='DisplayStringHead'/> <!-- 269 -->
+		<word name='PolymorphCopy'/> <!-- 270 -->
+		<word name='VerbalConstantHead'/> <!-- 271 -->
+		<word name='CreateVisualEffect'/> <!-- 272 -->
+		<word name='CreateVisualEffectObject'/> <!-- 273 -->
+		<word name='AddKit'/> <!-- 274 -->
+		<word name='MoveBetweenAreasEffect'/> <!-- 225 -->
+		<word name='StartCombatCounter'/> <!-- 275 -->
+		<word name='EscapeAreaNoSee'/> <!-- 276 -->
+		<word name='EscapeAreaObject'/> <!-- 277 -->
+		<word name='EscapeAreaObjectMove'/> <!-- 277 -->
+		<word name='TakeItemReplace'/> <!-- 278 -->
+		<word name='AddSpecialAbility'/> <!-- 279 -->
+		<word name='DestroyAllDestructableEquipment'/> <!-- 280 -->
+		<word name='RemovePaladinHood'/> <!-- 281 -->
+		<word name='RemoveRangerHood'/> <!-- 282 -->
+		<word name='RegainPaladinHood'/> <!-- 283 -->
+		<word name='RegainRangerHood'/> <!-- 284 -->
+		<word name='PolymorphCopyBase'/> <!-- 285 -->
+		<word name='HideGUI'/> <!-- 286 -->
+		<word name='UnhideGUI'/> <!-- 287 -->
+		<word name='SetName'/> <!-- 288 -->
+		<word name='AddSuperKit'/> <!-- 289 -->
+		<word name='PlayDeadInterruptable'/> <!-- 290 -->
+		<word name='PlayDeadInterruptible'/> <!-- 290 -->
+		<word name='MoveGlobalObject'/> <!-- 291 -->
+		<word name='DisplayStringHeadOwner'/> <!-- 292 -->
+		<word name='StartDialogOverride'/> <!-- 293 -->
+		<word name='StartDialogOverrideInterrupt'/> <!-- 294 -->
+		<word name='CreateCreatureCopyPoint'/> <!-- 295 -->
+		<word name='BattleSong'/> <!-- 296 -->
+		<word name='MoveToSavedLocation'/> <!-- 297 -->
+		<word name='MoveToSavedLocationn'/> <!-- 297 -->
+		<word name='ApplyDamage'/> <!-- 298 -->
+		<word name='BanterBlockTime'/> <!-- 299 -->
+		<word name='BanterBlockFlag'/> <!-- 300 -->
+		<word name='AmbientActivate'/> <!-- 301 -->
+		<word name='AttachTransitionToDoor'/> <!-- 302 -->
+		<word name='DeathMatchPositionGlobal'/> <!-- 303 -->
+		<word name='DeathMatchPositionArea'/> <!-- 304 -->
+		<word name='DeathMatchPositionLocal'/> <!-- 305 -->
+		<word name='ApplyDamagePercent'/> <!-- 306 -->
+		<word name='SG'/> <!-- 307 -->
+		<word name='AddMapNote'/> <!-- 308 -->
+		<word name='DemoEnd'/> <!-- 309 -->
+		<word name='MoveGlobalsTo'/> <!-- 310 -->
+		<word name='DisplayStringWait'/> <!-- 311 -->
+		<word name='StateOverrideTime'/> <!-- 312 -->
+		<word name='StateOverrideFlag'/> <!-- 313 -->
+		<word name='SetRestEncounterProbabilityDay'/> <!-- 314 -->
+		<word name='SetRestEncounterProbabilityNight'/> <!-- 315 -->
+		<word name='SoundActivate'/> <!-- 316 -->
+		<word name='PlaySong'/> <!-- 317 -->
+		<word name='ForceSpellRange'/> <!-- 318 -->
+		<word name='ForceSpellPointRange'/> <!-- 319 -->
+		<word name='SetPlayerSound'/> <!-- 320 -->
+		<word name='SetAreaRestFlag'/> <!-- 321 -->
+		<word name='FakeEffectExpiryCheck'/> <!-- 322 -->
+		<word name='CreateCreatureImpassableAllowOverlap'/> <!-- 323 -->
+		<word name='SetBeenInPartyFlags'/> <!-- 324 -->
+		<word name='GoToStartScreen'/> <!-- 325 -->
+		<word name='ExitPocketPlane'/> <!-- 326 -->
+		<word name='AddXP2DA'/> <!-- 327 -->
+		<word name='RemoveMapNote'/> <!-- 328 -->
+		<word name='TriggerWalkTo'/> <!-- 329 -->
+		<word name='AddAreaType'/> <!-- 330 -->
+		<word name='RemoveAreaType'/> <!-- 331 -->
+		<word name='AddAreaFlags'/> <!-- 332 -->
+		<word name='RemoveAreaFlags'/> <!-- 333 -->
+		<word name='StartDialogNoName'/> <!-- 334 -->
+		<word name='SetTokenGlobal'/> <!-- 335 -->
+		<word name='MakeGlobal'/> <!-- 336 -->
+		<word name='ReallyForceSpellPoint'/> <!-- 337 -->
+		<word name='SetCutSceneLite'/> <!-- 338 -->
+		<word name='CutAllowScripts'/> <!-- 338 -->
+		<word name='SetCursorState'/> <!-- 338 -->
+		<word name='SwingOnce'/> <!-- 339 -->
+		<word name='StaticSequence'/> <!-- 340 -->
+		<word name='StaticPalette'/> <!-- 341 -->
+		<word name='DisplayStringHeadDead'/> <!-- 342 -->
+		<word name='MoveToExpansion'/> <!-- 343 -->
+		<word name='StartRainNow'/> <!-- 344 -->
+		<word name='SetSequence'/> <!-- 345 -->
+		<word name='DisplayStringNoNameHead'/> <!-- 346 -->
+		<word name='SetEncounterProbability'/> <!-- 347 -->
+		<word name='SetupWish'/> <!-- 348 -->
+		<word name='SetupWishObject'/> <!-- 349 -->
+		<word name='LeaveAreaLUAEntry'/> <!-- 350 -->
+		<word name='LeaveAreaLUAPanicEntry'/> <!-- 351 -->
+	</keywords>
+</scheme>
+
+
+<scheme name='subact.list'>
+	<!-- http://iesdp.gibberlings3.net/files/ids/bg2/object.htm -->
+	<keywords region="key.action" ignorecase='yes'>
+		<word name='LeaderOf'/>
+		<word name='GroupOf'/>
+		<word name='WeakestOf'/>
+		<word name='StrongestOf'/>
+		<word name='MostDamagedOf'/>
+		<word name='LeastDamagedOf'/>
+		<word name='ProtectedBy'/>
+		<word name='ProtectorOf'/>
+		<word name='LastAttackerOf'/>
+		<word name='LastTargetedBy'/>
+		<word name='NearestEnemyOf'/>
+		<word name='LastCommandedBy'/>
+		<word name='Nearest'/>
+		<word name='LastHitter'/>
+		<word name='LastHelp'/>
+		<word name='LastTrigger'/>
+		<word name='LastSeenBy'/>
+		<word name='LastTalkedToBy'/>
+		<word name='LastHeardBy'/>
+		<!--word name='Player1'/>
+		<word name='Player2'/>
+		<word name='Player3'/>
+		<word name='Player4'/>
+		<word name='Player5'/>
+		<word name='Player6'/-->
+		<word name='Protagonist'/>
+		<word name='StrongestOfMale'/>
+		<word name='SecondNearestEnemyOf'/>
+		<word name='ThirdNearestEnemyOf'/>
+		<word name='FourthNearestEnemyOf'/>
+		<word name='FifthNearestEnemyOf'/>
+		<word name='SixthNearestEnemyOf'/>
+		<word name='SeventhNearestEnemyOf'/>
+		<word name='EigthNearestEnemyOf'/>
+		<word name='NinthNearestEnemyOf'/>
+		<word name='TenthNearestEnemyOf'/>
+		<word name='SecondNearest'/>
+		<word name='ThirdNearest'/>
+		<word name='FourthNearest'/>
+		<word name='FifthNearest'/>
+		<word name='SixthNearest'/>
+		<word name='SeventhNearest'/>
+		<word name='EighthNearest'/>
+		<word name='NinthNearest'/>
+		<word name='TenthNearest'/>
+		<word name='WorstAC'/>
+		<word name='BestAC'/>
+		<word name='LastSummonerOf'/>
+		<word name='NearestEnemyOfType'/>
+		<word name='SecondNearestEnemyOfType'/>
+		<word name='ThirdNearestEnemyOfType'/>
+		<word name='FourthNearestEnemyOfType'/>
+		<word name='FifthNearestEnemyOfType'/>
+		<word name='SixthNearestEnemyOfType'/>
+		<word name='SeventhNearestEnemyOfType'/>
+		<word name='EigthNearestEnemyOfType'/>
+		<word name='NinthNearestEnemyOfType'/>
+		<word name='TenthNearestEnemyOfType'/>
+		<word name='NearestMyGroupOfType'/>
+		<word name='SecondNearestMyGroupOfType'/>
+		<word name='ThirdNearestMyGroupOfType'/>
+		<word name='FourthNearestMyGroupOfType'/>
+		<word name='FifthNearestMyGroupOfType'/>
+		<word name='SixthNearestMyGroupOfType'/>
+		<word name='SeventhNearestMyGroupOfType'/>
+		<word name='EigthNearestMyGroupOfType'/>
+		<word name='NinthNearestMyGroupOfType'/>
+		<word name='TenthNearestMyGroupOfType'/>
+		<word name='Player1Fill'/>
+		<word name='Player2Fill'/>
+		<word name='Player3Fill'/>
+		<word name='Player4Fill'/>
+		<word name='Player5Fill'/>
+		<word name='Player6Fill'/>
+		<word name='NearestDoor'/>
+		<word name='SecondNearestDoor'/>
+		<word name='ThirdNearestDoor'/>
+		<word name='FourthNearestDoor'/>
+		<word name='FifthNearestDoor'/>
+		<word name='SixthNearestDoor'/>
+		<word name='SeventhNearestDoor'/>
+		<word name='EighthNearestDoor'/>
+		<word name='NinthNearestDoor'/>
+		<word name='TenthNearestDoor'/>
+	</keywords>
+</scheme>
+
+
+<scheme name='ids'>
+	<keywords region="ids">
+		<word name='FALSE'/>
+		<word name='TRUE'/> 
+		<word name='DEFAULT'/> 
+		<word name='ANYONE'/> 
+		
+		<!-- align.ids -->
+		<word name='NONE'/> <!-- 0x0 -->
+		<word name='LAWFUL_GOOD'/> <!-- 0x11 -->
+		<word name='LAWFUL_NEUTRAL'/> <!-- 0x12 -->
+		<word name='LAWFUL_EVIL'/> <!-- 0x13 -->
+		<word name='NEUTRAL_GOOD'/> <!-- 0x21 -->
+		<word name='NEUTRAL'/> <!-- 0x22 -->
+		<word name='NEUTRAL_EVIL'/> <!-- 0x23 -->
+		<word name='CHAOTIC_GOOD'/> <!-- 0x31 -->
+		<word name='CHAOTIC_NEUTRAL'/> <!-- 0x32 -->
+		<word name='CHAOTIC_EVIL'/> <!-- 0x33 -->
+		<word name='MASK_GOOD'/> <!-- 0x1 -->
+		<word name='MASK_GENEUTRAL'/> <!-- 0x2 -->
+		<word name='MASK_EVIL'/> <!-- 0x3 -->
+		<word name='MASK_LAWFUL'/> <!-- 0x10 -->
+		<word name='MASK_LCNEUTRAL'/> <!-- 0x20 -->
+		<word name='MASK_CHAOTIC'/> <!-- 0x30 -->
+		
+		<!-- area.ids -->
+		<word name='OUTDOOR'/> <!-- 1 -->
+		<word name='DAYNIGHT'/> <!-- 2 -->
+		<word name='WEATHER'/> <!-- 4 -->
+		<word name='CITY'/> <!-- 8 -->
+		<word name='FOREST'/> <!-- 16 -->
+		<word name='DUNGEON'/> <!-- 32 -->
+		<word name='EXTENDEDNIGHT'/> <!-- 64 -->
+		<word name='CANRESTOTHER'/> <!-- 128 -->
+		
+		<!-- ea.ids -->
+		<word name='INANIMATE'/> <!-- 1 -->
+		<word name='PC'/> <!-- 2 -->
+		<word name='FAMILIAR'/> <!-- 3 -->
+		<word name='ALLY'/> <!-- 4 -->
+		<word name='CONTROLLED'/> <!-- 5 -->
+		<word name='CHARMED'/> <!-- 6 -->
+		<word name='GOODBUTRED'/> <!-- 28 -->
+		<word name='GOODBUTBLUE'/> <!-- 29 -->
+		<word name='GOODCUTOFF'/> <!-- 30 -->
+		<word name='NOTGOOD'/> <!-- 31 -->
+		<word name='ANYTHING'/> <!-- 126 -->
+		<word name='NEUTRAL'/> <!-- 128 -->
+		<word name='NOTEVIL'/> <!-- 199 -->
+		<word name='EVILCUTOFF'/> <!-- 200 -->
+		<word name='EVILBUTGREEN'/> <!-- 201 -->
+		<word name='EVILBUTBLUE'/> <!-- 202 -->
+		<word name='ENEMY'/> <!-- 255 -->
+		
+		<!-- dmgtype.ids -->
+		<word name='ACID'/> <!-- 0x10000 -->
+		<word name='COLD'/> <!-- 0x20000 -->
+		<word name='CRUSHING'/> <!-- 0x0 -->
+		<word name='ELECTRICITY'/> <!-- 0x40000 -->
+		<word name='FIRE'/> <!-- 0x80000 -->
+		<word name='PIERCING'/> <!-- 0x100000 -->
+		<word name='POISON'/> <!-- 0x200000 -->
+		<word name='MAGIC'/> <!-- 0x400000 -->
+		<word name='MISSILE'/> <!-- 0x800000 -->
+		<word name='SLASHING'/> <!-- 0x1000000 -->
+		<word name='MAGICFIRE'/> <!-- 0x2000000 -->
+		<word name='MAGICCOLD'/> <!-- 0x4000000 -->
+		<word name='STUNNING'/> <!-- 0x8000000 -->
+		
+		<!-- class.ids -->
+		<word name='MAGE'/> <!-- 1 -->
+		<word name='FIGHTER'/> <!-- 2 -->
+		<word name='CLERIC'/> <!-- 3 -->
+		<word name='THIEF'/> <!-- 4 -->
+		<word name='BARD'/> <!-- 5 -->
+		<word name='PALADIN'/> <!-- 6 -->
+		<word name='FIGHTER_MAGE'/> <!-- 7 -->
+		<word name='FIGHTER_CLERIC'/> <!-- 8 -->
+		<word name='FIGHTER_THIEF'/> <!-- 9 -->
+		<word name='FIGHTER_MAGE_THIEF'/> <!-- 10 -->
+		<word name='DRUID'/> <!-- 11 -->
+		<word name='RANGER'/> <!-- 12 -->
+		<word name='MAGE_THIEF'/> <!-- 13 -->
+		<word name='CLERIC_MAGE'/> <!-- 14 -->
+		<word name='CLERIC_THIEF'/> <!-- 15 -->
+		<word name='FIGHTER_DRUID'/> <!-- 16 -->
+		<word name='FIGHTER_MAGE_CLERIC'/> <!-- 17 -->
+		<word name='CLERIC_RANGER'/> <!-- 18 -->
+		<word name='SORCERER'/> <!-- 19 -->
+		<word name='MONK'/> <!-- 20 -->
+		<word name='ANKHEG'/> <!-- 101 -->
+		<word name='BASILISK'/> <!-- 102 -->
+		<word name='BASILISK_GREATER'/> <!-- 103 -->
+		<word name='BEAR_BLACK'/> <!-- 104 -->
+		<word name='BEAR_BROWN'/> <!-- 105 -->
+		<word name='BEAR_CAVE'/> <!-- 106 -->
+		<word name='BEAR_POLAR'/> <!-- 107 -->
+		<word name='CARRIONCRAWLER'/> <!-- 108 -->
+		<word name='DOG_WILD'/> <!-- 109 -->
+		<word name='DOG_WAR'/> <!-- 110 -->
+		<word name='DOPPLEGANGER'/> <!-- 111 -->
+		<word name='DOPPLEGANGER_GREATER'/> <!-- 112 -->
+		<word name='DRIZZT'/> <!-- 113 -->
+		<word name='ELMINSTER'/> <!-- 114 -->
+		<word name='ETTERCAP'/> <!-- 115 -->
+		<word name='GHOUL'/> <!-- 116 -->
+		<word name='GHOUL_REVEANT'/> <!-- 117 -->
+		<word name='GHOUL_GHAST'/> <!-- 118 -->
+		<word name='GIBBERLING'/> <!-- 119 -->
+		<word name='GNOLL'/> <!-- 120 -->
+		<word name='HOBGOBLIN'/> <!-- 121 -->
+		<word name='KOBOLD'/> <!-- 122 -->
+		<word name='KOBOLD_TASLOI'/> <!-- 123 -->
+		<word name='KOBOLD_XVART'/> <!-- 124 -->
+		<word name='OGRE'/> <!-- 125 -->
+		<word name='OGRE_MAGE'/> <!-- 126 -->
+		<word name='OGRE_HALFOGRE'/> <!-- 127 -->
+		<word name='OGRE_OGRILLON'/> <!-- 128 -->
+		<word name='SAREVOK'/> <!-- 129 -->
+		<word name='FAIRY_SIRINE'/> <!-- 130 -->
+		<word name='FAIRY_DRYAD'/> <!-- 131 -->
+		<word name='FAIRY_NEREID'/> <!-- 132 -->
+		<word name='FAIRY_NYMPH'/> <!-- 133 -->
+		<word name='SKELETON'/> <!-- 134 -->
+		<word name='SKELETON_WARRIOR'/> <!-- 135 -->
+		<word name='SKELETON_BANEGUARD'/> <!-- 136 -->
+		<word name='SPIDER_GIANT'/> <!-- 137 -->
+		<word name='SPIDER_HUGE'/> <!-- 138 -->
+		<word name='SPIDER_PHASE'/> <!-- 139 -->
+		<word name='SPIDER_SWORD'/> <!-- 140 -->
+		<word name='SPIDER_WRAITH'/> <!-- 141 -->
+		<word name='VOLO'/> <!-- 142 -->
+		<word name='WOLF'/> <!-- 143 -->
+		<word name='WOLF_WORG'/> <!-- 144 -->
+		<word name='WOLF_DIRE'/> <!-- 145 -->
+		<word name='WOLF_WINTER'/> <!-- 146 -->
+		<word name='WOLF_VAMPIRIC'/> <!-- 147 -->
+		<word name='WOLF_DREAD'/> <!-- 148 -->
+		<word name='WYVERN'/> <!-- 149 -->
+		<word name='OLIVE_SLIME'/> <!-- 150 -->
+		<word name='MUSTARD_JELLY'/> <!-- 151 -->
+		<word name='OCRE_JELLY'/> <!-- 152 -->
+		<word name='GREY_OOZE'/> <!-- 153 -->
+		<word name='GREEN_SLIME'/> <!-- 154 -->
+		<word name='INNOCENT'/> <!-- 155 -->
+		<word name='FLAMING_FIST'/> <!-- 156 -->
+		<word name='WEREWOLF'/> <!-- 157 -->
+		<word name='WOLFWERE'/> <!-- 158 -->
+		<word name='DEATHKNIGHT'/> <!-- 159 -->
+		<word name='TANARI'/> <!-- 160 -->
+		<word name='BEHOLDER'/> <!-- 161 -->
+		<word name='MIND_FLAYER'/> <!-- 162 -->
+		<word name='VAMPIRE'/> <!-- 163 -->
+		<word name='VAMPYRE'/> <!-- 164 -->
+		<word name='OTYUGH'/> <!-- 165 -->
+		<word name='RAKSHASA'/> <!-- 166 -->
+		<word name='TROLL'/> <!-- 167 -->
+		<word name='UMBERHULK'/> <!-- 168 -->
+		<word name='SAHUAGIN'/> <!-- 169 -->
+		<word name='SHADOW'/> <!-- 170 -->
+		<word name='SPECTRE'/> <!-- 171 -->
+		<word name='WRAITH'/> <!-- 172 -->
+		<word name='KUO'/> <!-- 173 -->
+		<word name='MIST'/> <!-- 174 -->
+		<word name='CAT'/> <!-- 175 -->
+		<word name='DUERGAR'/> <!-- 176 -->
+		<word name='MEPHIT'/> <!-- 177 -->
+		<word name='MIMIC'/> <!-- 178 -->
+		<word name='IMP'/> <!-- 179 -->
+		<word name='GIANT'/> <!-- 180 -->
+		<word name='ORC'/> <!-- 181 -->
+		<word name='GOLEM_IRON'/> <!-- 182 -->
+		<word name='GOLEM_FLESH'/> <!-- 183 -->
+		<word name='GOLEM_STONE'/> <!-- 184 -->
+		<word name='GOLEM_CLAY'/> <!-- 185 -->
+		<word name='ELEMENTAL_AIR'/> <!-- 186 -->
+		<word name='ELEMENTAL_FIRE'/> <!-- 187 -->
+		<word name='ELEMENTAL_EARTH'/> <!-- 188 -->
+		<word name='SPIDER_CENTEOL'/> <!-- 189 -->
+		<word name='RED_DRAGON'/> <!-- 190 -->
+		<word name='SHADOW_DRAGON'/> <!-- 191 -->
+		<word name='SILVER_DRAGON'/> <!-- 192 -->
+		<word name='GENIE_DJINNI'/> <!-- 193 -->
+		<word name='GENIE_DAO'/> <!-- 194 -->
+		<word name='GENIE_EFREETI'/> <!-- 195 -->
+		<word name='GENIE_NOBLE_DJINNI'/> <!-- 196 -->
+		<word name='GENIE_NOBLE_EFREETI'/> <!-- 197 -->
+		<word name='ZOMBIE_NORMAL'/> <!-- 198 -->
+		<word name='FOOD_CREATURE'/> <!-- 199 -->
+		<word name='HUNTER_CREATURE'/> <!-- 200 -->
+		<word name='NO_CLASS'/> <!-- 255 -->
+		<word name='LONG_SWORD'/> <!-- 201 -->
+		<word name='LONG_BOW'/> <!-- 202 -->
+		<word name='MAGE_ALL'/> <!-- 202 -->
+		<word name='FIGHTER_ALL'/> <!-- 203 -->
+		<word name='CLERIC_ALL'/> <!-- 204 -->
+		<word name='THIEF_ALL'/> <!-- 205 -->
+		<word name='BARD_ALL'/> <!-- 206 -->
+		<word name='PALADIN_ALL'/> <!-- 207 -->
+		<word name='DRUID_ALL'/> <!-- 208 -->
+		<word name='RANGER_ALL'/> <!-- 209 -->
+		<word name='WIZARD_EYE'/> <!-- 210 -->
+		
+		<!-- general.ids -->
+		<word name='HUMANOID'/> <!-- 1 -->
+		<word name='ANIMAL'/> <!-- 2 -->
+		<word name='DEAD'/> <!-- 3 -->
+		<word name='UNDEAD'/> <!-- 4 -->
+		<word name='GIANTHUMANOID'/> <!-- 5 -->
+		<word name='FROZEN'/> <!-- 6 -->
+		<word name='MONSTER'/> <!-- 255 -->
+		<word name='WEAPON'/> <!-- 101 -->
+		<word name='ARMOR'/> <!-- 102 -->
+		<word name='AMULET'/> <!-- 103 -->
+		<word name='BELT'/> <!-- 104 -->
+		<word name='BOOTS'/> <!-- 105 -->
+		<word name='AMMO'/> <!-- 106 -->
+		<word name='GENERAL_ITEM'/> <!-- 0 -->
+		<word name='HELMET'/> <!-- 107 -->
+		<word name='KEY'/> <!-- 108 -->
+		<word name='POTION'/> <!-- 109 -->
+		<word name='RING'/> <!-- 110 -->
+		<word name='SCROLL'/> <!-- 111 -->
+		<word name='SHIELD'/> <!-- 112 -->
+		<word name='GLOVES'/> <!-- 113 -->
+		
+		<!-- gender.ids -->
+		<word name='MALE'/> <!-- 1 -->
+		<word name='FEMALE'/> <!-- 2 -->
+		<word name='OTHER'/> <!-- 3 -->
+		<word name='NIETHER'/> <!-- 4 -->
+		<word name='BOTH'/> <!-- 5 -->
+		<word name='SUMMONED'/> <!-- 6 -->
+		<word name='ILLUSIONARY'/> <!-- 7 -->
+		<word name='EXTRA'/> <!-- 8 -->
+		<word name='SUMMONED_DEMON'/> <!-- 9 -->
+		<word name='EXTRA2'/> <!-- 10 -->
+		<word name='EXTRA3'/> <!-- 11 -->
+		<word name='EXTRA4'/> <!-- 12 -->
+		<word name='EXTRA5'/> <!-- 13 -->
+		<word name='EXTRA6'/> <!-- 14 -->
+		<word name='EXTRA7'/> <!-- 15 -->
+		<word name='EXTRA8'/> <!-- 16 -->
+		<word name='EXTRA9'/> <!-- 17 -->
+		<word name='EXTRA10'/> <!-- 18 -->
+		
+		<!-- fireball.ids -->
+		<word name='FIRE'/> <!-- 0 -->
+		<word name='CLOUD'/> <!-- 1 -->
+		<word name='CLOUDKILL'/> <!-- 2 -->
+		<word name='STORM'/> <!-- 3 -->
+		<word name='GREASE'/> <!-- 4 -->
+		<word name='WEB'/> <!-- 5 -->
+		<word name='METEOR'/> <!-- 6 -->
+		<word name='WILTING'/> <!-- 7 -->
+		<word name='WEIRD'/> <!-- 8 -->
+		<word name='ENTANGLE'/> <!-- 9 -->
+		<word name='COLORSPRAY'/> <!-- 10 -->
+		<word name='CONECOLD'/> <!-- 11 -->
+		<word name='HOLYSMITE'/> <!-- 12 -->
+		<word name='UNHOLYSMITE'/> <!-- 13 -->
+		<word name='PRISMATICSPRAY'/> <!-- 14 -->
+		<word name='DRAGONFIRE'/> <!-- 15 -->
+		<word name='STORMOFVENGEANCE'/> <!-- 16 -->
+		
+		<!-- gmtimes.ids -->
+		<word name='ONE_DAY'/> <!-- 7200 -->
+		<word name='TWO_DAYS'/> <!-- 14400 -->
+		<word name='THREE_DAYS'/> <!-- 21600 -->
+		<word name='FOUR_DAYS'/> <!-- 28800 -->
+		<word name='FIVE_DAYS'/> <!-- 36000 -->
+		<word name='SIX_DAYS'/> <!-- 43200 -->
+		<word name='SEVEN_DAYS'/> <!-- 50400 -->
+		<word name='EIGHT_DAYS'/> <!-- 57600 -->
+		<word name='NINE_DAYS'/> <!-- 64800 -->
+		<word name='TEN_DAYS'/> <!-- 72000 -->
+		<word name='ELEVEN_DAYS'/> <!-- 79200 -->
+		<word name='TWELVE_DAYS'/> <!-- 86400 -->
+		<word name='THIRTEEN_DAYS'/> <!-- 93600 -->
+		<word name='FOURTEEN_DAYS'/> <!-- 100800 -->
+		<word name='FIFTEEN_DAYS'/> <!-- 108000 -->
+		<word name='THIRTY_DAYS'/> <!-- 216000 -->
+		<word name='FIFTY_DAYS'/> <!-- 360000 -->
+		
+		<!-- happy.ids -->
+		<word name='UNHAPPY_BREAKING_BOUNDARY'/> <!-- -300 -->
+		<word name='UNHAPPY_ANGRY_BOUNDARY'/> <!-- -160 -->
+		<word name='UNHAPPY_ANNOYED_BOUNDARY'/> <!-- -80 -->
+		<word name='HAPPY_HAPPY_BOUNDARY'/> <!-- 80 -->
+		
+		<!-- jointype.ids -->
+		<word name='USER'/> <!-- 0x0000 -->
+		<word name='QUEST'/> <!-- 0x0001 -->
+		<word name='QUEST_DONE'/> <!-- 0x0002 -->
+		<word name='INFO'/> <!-- 0x0004 -->
+		
+		<!-- kit.ids -->
+		<word name='SPECIAL_CLASS'/> <!-- 0x0000 -->
+		<word name='BARBARIAN'/> <!-- 0x0000 -->
+		<word name='WILDMAGE'/> <!-- 0x0000 -->
+		<word name='MAGESCHOOL_ABJURER'/> <!-- 0x0040 -->
+		<word name='MAGESCHOOL_CONJURER'/> <!-- 0x0080 -->
+		<word name='MAGESCHOOL_DIVINER'/> <!-- 0x0100 -->
+		<word name='MAGESCHOOL_ENCHANTER'/> <!-- 0x0200 -->
+		<word name='MAGESCHOOL_ILLUSIONIST'/> <!-- 0x0400 -->
+		<word name='MAGESCHOOL_INVOKER'/> <!-- 0x0800 -->
+		<word name='MAGESCHOOL_NECROMANCER'/> <!-- 0x1000 -->
+		<word name='MAGESCHOOL_TRANSMUTER'/> <!-- 0x2000 -->
+		<word name='TRUE_CLASS'/> <!-- 0x4000 -->
+		<word name='BERSERKER'/> <!-- 0x4001 -->
+		<word name='WIZARDSLAYER'/> <!-- 0x4002 -->
+		<word name='KENSAI'/> <!-- 0x4003 -->
+		<word name='CAVALIER'/> <!-- 0x4004 -->
+		<word name='INQUISITOR'/> <!-- 0x4005 -->
+		<word name='UNDEADHUNTER'/> <!-- 0x4006 -->
+		<word name='FERALAN'/> <!-- 0x4007 -->
+		<word name='STALKER'/> <!-- 0x4008 -->
+		<word name='BEASTMASTER'/> <!-- 0x4009 -->
+		<word name='ASSASIN'/> <!-- 0x400A -->
+		<word name='BOUNTYHUNTER'/> <!-- 0x400B -->
+		<word name='SWASHBUCKLER'/> <!-- 0x400C -->
+		<word name='BLADE'/> <!-- 0x400D -->
+		<word name='JESTER'/> <!-- 0x400E -->
+		<word name='SKALD'/> <!-- 0x400F -->
+		<word name='TOTEMIC'/> <!-- 0x4010 -->
+		<word name='SHAPESHIFTER'/> <!-- 0x4011 -->
+		<word name='BEASTFRIEND'/> <!-- 0x4012 -->
+		<word name='GODTALOS'/> <!-- 0x4013 -->
+		<word name='GODHELM'/> <!-- 0x4014 -->
+		<word name='GODLATHANDER'/> <!-- 0x4015 -->
+		
+		<!-- mflags.ids -->
+		<word name='FORCE'/> <!-- 1 -->
+		<word name='PLAY'/> <!-- 2 -->
+		<word name='QUICK_FADE'/> <!-- 3 -->
+		<word name='SLOW_FADE'/> <!-- 4 -->
+		
+		<!-- modal.ids -->
+		<word name='NONE'/> <!-- 0 -->
+		<word name='BATTLESONG'/> <!-- 1 -->
+		<word name='DETECTTRAPS'/> <!-- 2 -->
+		<word name='STEALTH'/> <!-- 3 -->
+		<word name='TURNUNDEAD'/> <!-- 4 -->
+		
+		<!-- race.ids -->
+		<word name='HUMAN'/> <!-- 1 -->
+		<word name='ELF'/> <!-- 2 -->
+		<word name='HALF_ELF'/> <!-- 3 -->
+		<word name='DWARF'/> <!-- 4 -->
+		<word name='HALFLING'/> <!-- 5 -->
+		<word name='GNOME'/> <!-- 6 -->
+		<word name='HALFORC'/> <!-- 7 -->
+		<word name='ANKHEG'/> <!-- 101 -->
+		<word name='BASILISK'/> <!-- 102 -->
+		<word name='BEAR'/> <!-- 103 -->
+		<word name='CARRIONCRAWLER'/> <!-- 104 -->
+		<word name='DOG'/> <!-- 105 -->
+		<word name='DOPPLEGANGER'/> <!-- 106 -->
+		<word name='ETTERCAP'/> <!-- 107 -->
+		<word name='GHOUL'/> <!-- 108 -->
+		<word name='GIBBERLING'/> <!-- 109 -->
+		<word name='GNOLL'/> <!-- 110 -->
+		<word name='HOBGOBLIN'/> <!-- 111 -->
+		<word name='KOBOLD'/> <!-- 112 -->
+		<word name='OGRE'/> <!-- 113 -->
+		<word name='SKELETON'/> <!-- 115 -->
+		<word name='SPIDER'/> <!-- 116 -->
+		<word name='WOLF'/> <!-- 117 -->
+		<word name='WYVERN'/> <!-- 118 -->
+		<word name='SLIME'/> <!-- 119 -->
+		<word name='FAIRY'/> <!-- 120 -->
+		<word name='DEMONIC'/> <!-- 121 -->
+		<word name='LYCANTHROPE'/> <!-- 122 -->
+		<word name='BEHOLDER'/> <!-- 123 -->
+		<word name='MIND_FLAYER'/> <!-- 124 -->
+		<word name='VAMPIRE'/> <!-- 125 -->
+		<word name='VAMPYRE'/> <!-- 126 -->
+		<word name='OTYUGH'/> <!-- 127 -->
+		<word name='RAKSHASA'/> <!-- 128 -->
+		<word name='TROLL'/> <!-- 129 -->
+		<word name='UMBERHULK'/> <!-- 130 -->
+		<word name='SAHUAGIN'/> <!-- 131 -->
+		<word name='SHADOW'/> <!-- 132 -->
+		<word name='SPECTRE'/> <!-- 133 -->
+		<word name='WRAITH'/> <!-- 134 -->
+		<word name='KUO'/> <!-- 135 -->
+		<word name='MIST'/> <!-- 136 -->
+		<word name='CAT'/> <!-- 137 -->
+		<word name='DUERGAR'/> <!-- 138 -->
+		<word name='MEPHIT'/> <!-- 139 -->
+		<word name='MIMIC'/> <!-- 140 -->
+		<word name='IMP'/> <!-- 141 -->
+		<word name='GIANT'/> <!-- 142 -->
+		<word name='ORC'/> <!-- 143 -->
+		<word name='GOLEM'/> <!-- 144 -->
+		<word name='ELEMENTAL'/> <!-- 145 -->
+		<word name='DRAGON'/> <!-- 146 -->
+		<word name='GENIE'/> <!-- 147 -->
+		<word name='ZOMBIE'/> <!-- 148 -->
+		<word name='SHADOW'/> <!-- 149 -->
+		<word name='LICH'/> <!-- 150 -->
+		<word name='RABBIT'/> <!-- 151 -->
+		<word name='GITHYANKI'/> <!-- 152 -->
+		<word name='TIEFLING'/> <!-- 153 -->
+		<word name='YUANTI'/> <!-- 154 -->
+		<word name='DEMILICH'/> <!-- 155 -->
+		<word name='SOLAR'/> <!-- 156 -->
+		<word name='ANTISOLAR'/> <!-- 157 -->
+		<word name='PLANATAR'/> <!-- 158 -->
+		<word name='DARKPLANATAR'/> <!-- 159 -->
+		<word name='NO_RACE'/> <!-- 255 -->
+		<word name='SWORD'/> <!-- 201 -->
+		<word name='BOW'/> <!-- 202 -->
+		<word name='XBOW'/> <!-- 203 -->
+		<word name='STAFF'/> <!-- 204 -->
+		<word name='SLING'/> <!-- 205 -->
+		<word name='MACE'/> <!-- 206 -->
+		<word name='DAGGER'/> <!-- 207 -->
+		<word name='SPEAR'/> <!-- 208 -->
+		<word name='FIST'/> <!-- 209 -->
+		<word name='HAMMER'/> <!-- 210 -->
+		<word name='MORNINGSTAR'/> <!-- 211 -->
+		<word name='ROBES'/> <!-- 212 -->
+		<word name='LEATHER'/> <!-- 213 -->
+		<word name='CHAIN'/> <!-- 214 -->
+		<word name='PLATE'/> <!-- 215 -->
+		
+		<!-- reaction.ids -->
+		<word name='FRIENDLY_LOWER'/> <!-- 15 -->
+		<word name='FRIENDLY_UPPER'/> <!-- 20 -->
+		<word name='NEUTRAL_UPPER'/> <!-- 14 -->
+		<word name='NEUTRAL_LOWER'/> <!-- 8 -->
+		<word name='HOSTILE_UPPER'/> <!-- 7 -->
+		<word name='HOSTILE_LOWER'/> <!-- 2 -->
+		
+		<!-- slot.ids -->
+		<word name='SLOT_AMULET'/> <!-- 0 -->
+		<word name='SLOT_ARMOR'/> <!-- 1 -->
+		<word name='SLOT_BELT'/> <!-- 2 -->
+		<word name='SLOT_BOOTS'/> <!-- 3 -->
+		<word name='SLOT_CLOAK'/> <!-- 4 -->
+		<word name='SLOT_GAUNTLETS'/> <!-- 5 -->
+		<word name='SLOT_HELMET'/> <!-- 6 -->
+		<word name='SLOT_RING_LEFT'/> <!-- 7 -->
+		<word name='SLOT_RING_RIGHT'/> <!-- 8 -->
+		<word name='SLOT_SHIELD'/> <!-- 9 -->
+		<word name='SLOT_FIST'/> <!-- 10 -->
+		<word name='SLOT_AMMO'/> <!-- 11 -->
+		<word name='SLOT_MISC'/> <!-- 15 -->
+		<word name='SLOT_WEAPON'/> <!-- 35 -->
+		<word name='SLOT_AMMO0'/> <!-- 11 -->
+		<word name='SLOT_AMMO1'/> <!-- 12 -->
+		<word name='SLOT_AMMO2'/> <!-- 13 -->
+		<word name='SLOT_AMMO3'/> <!-- 14 -->
+		<word name='SLOT_MISC0'/> <!-- 15 -->
+		<word name='SLOT_MISC1'/> <!-- 16 -->
+		<word name='SLOT_MISC2'/> <!-- 17 -->
+		<word name='SLOT_MISC3'/> <!-- 18 -->
+		<word name='SLOT_MISC4'/> <!-- 19 -->
+		<word name='SLOT_MISC5'/> <!-- 20 -->
+		<word name='SLOT_MISC6'/> <!-- 21 -->
+		<word name='SLOT_MISC7'/> <!-- 22 -->
+		<word name='SLOT_MISC8'/> <!-- 23 -->
+		<word name='SLOT_MISC9'/> <!-- 24 -->
+		<word name='SLOT_MISC10'/> <!-- 25 -->
+		<word name='SLOT_MISC11'/> <!-- 26 -->
+		<word name='SLOT_MISC12'/> <!-- 27 -->
+		<word name='SLOT_MISC13'/> <!-- 28 -->
+		<word name='SLOT_MISC14'/> <!-- 29 -->
+		<word name='SLOT_MISC15'/> <!-- 30 -->
+		<word name='SLOT_MISC16'/> <!-- 31 -->
+		<word name='SLOT_MISC17'/> <!-- 32 -->
+		<word name='SLOT_MISC18'/> <!-- 33 -->
+		<word name='SLOT_MISC19'/> <!-- 34 -->
+		<word name='SLOT_WEAPON0'/> <!-- 35 -->
+		<word name='SLOT_WEAPON1'/> <!-- 36 -->
+		<word name='SLOT_WEAPON2'/> <!-- 37 -->
+		<word name='SLOT_WEAPON3'/> <!-- 38 -->
+		
+		<!-- state.ids -->
+		<word name='STATE_NORMAL'/> <!-- 0x00000000 -->
+		<word name='STATE_DEAD'/> <!-- 0x800 -->
+		<word name='STATE_ACID_DEATH'/> <!-- 0x400 -->
+		<word name='STATE_FLAME_DEATH'/> <!-- 0x200 -->
+		<word name='STATE_EXPLODING_DEATH'/> <!-- 0x100 -->
+		<word name='STATE_STONE_DEATH'/> <!-- 0x80 -->
+		<word name='STATE_FROZEN_DEATH'/> <!-- 0x40 -->
+		<word name='STATE_HELPLESS'/> <!-- 0x20 -->
+		<word name='STATE_INVISIBLE'/> <!-- 0x10 -->
+		<word name='STATE_STUNNED'/> <!-- 0x8 -->
+		<word name='STATE_PANIC'/> <!-- 0x4 -->
+		<word name='STATE_BERSERK'/> <!-- 0x2 -->
+		<word name='STATE_SLEEPING'/> <!-- 0x1 -->
+		<word name='STATE_SILENCED'/> <!-- 0x1000 -->
+		<word name='STATE_CHARMED'/> <!-- 0x2000 -->
+		<word name='STATE_POISONED'/> <!-- 0x4000 -->
+		<word name='STATE_HASTED'/> <!-- 0x8000 -->
+		<word name='STATE_SLOWED'/> <!-- 0x10000 -->
+		<word name='STATE_INFRAVISION'/> <!-- 0x20000 -->
+		<word name='STATE_BLIND'/> <!-- 0x40000 -->
+		<word name='STATE_DISEASED'/> <!-- 0x80000 -->
+		<word name='STATE_FEEBLEMINDED'/> <!-- 0x100000 -->
+		<word name='STATE_NONDETECTION'/> <!-- 0x200000 -->
+		<word name='STATE_IMPROVEDINVISIBILITY'/> <!-- 0x400000 -->
+		<word name='STATE_BLESS'/> <!-- 0x800000 -->
+		<word name='STATE_CHANT'/> <!-- 0x1000000 -->
+		<word name='STATE_DRAWUPONHOLYMIGHT'/> <!-- 0x2000000 -->
+		<word name='STATE_LUCK'/> <!-- 0x4000000 -->
+		<word name='STATE_AID'/> <!-- 0x8000000 -->
+		<word name='STATE_CHANTBAD'/> <!-- 0x10000000 -->
+		<word name='STATE_BLUR'/> <!-- 0x20000000 -->
+		<word name='STATE_MIRRORIMAGE'/> <!-- 0x40000000 -->
+		<word name='STATE_CONFUSED'/> <!-- 0x80000000 -->
+		<word name='STATE_HARMLESS'/> <!-- 0x00102029 -->
+		<word name='STATE_RANGED_TARGET'/> <!-- 0x80040004 -->
+		<word name='STATE_OUT_OF_ACTION'/> <!-- 0x8014202D -->
+		<word name='STATE_NOT_VISIBLE'/> <!-- 0x00400010 -->
+		<word name='STATE_ENCHANTED'/> <!-- 0x63C08010 -->
+		<word name='STATE_ILLUSIONS'/> <!-- 0x60400010 -->
+		<word name='STATE_INVALID'/> <!-- 0x8000380F -->
+		
+		<!-- stats.ids -->
+		<word name='MAXHITPOINTS'/> <!-- 1 -->
+		<word name='ARMORCLASS'/> <!-- 2 -->
+		<word name='ACCRUSHINGMOD'/> <!-- 3 -->
+		<word name='ACMISSILEMOD'/> <!-- 4 -->
+		<word name='ACPIERCINGMOD'/> <!-- 5 -->
+		<word name='ACSLASHINGMOD'/> <!-- 6 -->
+		<word name='THAC0'/> <!-- 7 -->
+		<word name='NUMBEROFATTACKS'/> <!-- 8 -->
+		<word name='SAVEVSDEATH'/> <!-- 9 -->
+		<word name='SAVEVSWANDS'/> <!-- 10 -->
+		<word name='SAVEVSPOLY'/> <!-- 11 -->
+		<word name='SAVEVSBREATH'/> <!-- 12 -->
+		<word name='SAVEVSSPELL'/> <!-- 13 -->
+		<word name='RESISTFIRE'/> <!-- 14 -->
+		<word name='RESISTCOLD'/> <!-- 15 -->
+		<word name='RESISTELECTRICITY'/> <!-- 16 -->
+		<word name='RESISTACID'/> <!-- 17 -->
+		<word name='RESISTMAGIC'/> <!-- 18 -->
+		<word name='RESISTMAGICFIRE'/> <!-- 19 -->
+		<word name='RESISTMAGICCOLD'/> <!-- 20 -->
+		<word name='RESISTSLASHING'/> <!-- 21 -->
+		<word name='RESISTCRUSHING'/> <!-- 22 -->
+		<word name='RESISTPIERCING'/> <!-- 23 -->
+		<word name='RESISTMISSILE'/> <!-- 24 -->
+		<word name='LORE'/> <!-- 25 -->
+		<word name='LOCKPICKING'/> <!-- 26 -->
+		<word name='STEALTH'/> <!-- 27 -->
+		<word name='TRAPS'/> <!-- 28 -->
+		<word name='PICKPOCKET'/> <!-- 29 -->
+		<word name='FATIGUE'/> <!-- 30 -->
+		<word name='INTOXICATION'/> <!-- 31 -->
+		<word name='LUCK'/> <!-- 32 -->
+		<word name='TRACKING'/> <!-- 33 -->
+		<word name='LEVEL'/> <!-- 34 -->
+		<word name='SEX'/> <!-- 35 -->
+		<word name='STR'/> <!-- 36 -->
+		<word name='STREXTRA'/> <!-- 37 -->
+		<word name='INT'/> <!-- 38 -->
+		<word name='WIS'/> <!-- 39 -->
+		<word name='DEX'/> <!-- 40 -->
+		<word name='CON'/> <!-- 41 -->
+		<word name='CHR'/> <!-- 42 -->
+		<word name='XPVALUE'/> <!-- 43 -->
+		<word name='XP'/> <!-- 44 -->
+		<word name='GOLD'/> <!-- 45 -->
+		<word name='MORALEBREAK'/> <!-- 46 -->
+		<word name='MORALERECOVERYTIME'/> <!-- 47 -->
+		<word name='REPUTATION'/> <!-- 48 -->
+		<word name='HATEDRACE'/> <!-- 49 -->
+		<word name='DAMAGEBONUS'/> <!-- 50 -->
+		<word name='SPELLFAILUREMAGE'/> <!-- 51 -->
+		<word name='SPELLFAILUREPRIEST'/> <!-- 52 -->
+		<word name='SPELLDURATIONMODMAGE'/> <!-- 53 -->
+		<word name='SPELLDURATIONMODPRIEST'/> <!-- 54 -->
+		<word name='TURNUNDEADLEVEL'/> <!-- 55 -->
+		<word name='BACKSTABDAMAGEMULTIPLIER'/> <!-- 56 -->
+		<word name='LAYONHANDSAMOUNT'/> <!-- 57 -->
+		<word name='HELD'/> <!-- 58 -->
+		<word name='POLYMORPHED'/> <!-- 59 -->
+		<word name='TRANSLUCENT'/> <!-- 60 -->
+		<word name='IDENTIFYMODE'/> <!-- 61 -->
+		<word name='ENTANGLE'/> <!-- 62 -->
+		<word name='SANCTUARY'/> <!-- 63 -->
+		<word name='MINORGLOBE'/> <!-- 64 -->
+		<word name='SHIELDGLOBE'/> <!-- 65 -->
+		<word name='GREASE'/> <!-- 66 -->
+		<word name='WEB'/> <!-- 67 -->
+		<word name='LEVEL2'/> <!-- 68 -->
+		<word name='LEVEL3'/> <!-- 69 -->
+		<word name='CasterHold'/> <!-- 70 -->
+		<word name='ENCUMBERANCE'/> <!-- 71 -->
+		<word name='MISSILETHAC0BONUS'/> <!-- 72 -->
+		<word name='MAGICDAMAGERESISTANCE'/> <!-- 73 -->
+		<word name='RESISTPOISON'/> <!-- 74 -->
+		<word name='DONOTJUMP'/> <!-- 75 -->
+		<word name='AURACLEANSING'/> <!-- 76 -->
+		<word name='MENTALSPEED'/> <!-- 77 -->
+		<word name='PHYSICALSPEED'/> <!-- 78 -->
+		<word name='CASTINGLEVELBONUSMAGE'/> <!-- 79 -->
+		<word name='CASTINGLEVELBONUSCLERIC'/> <!-- 80 -->
+		<word name='SEEINVISIBLE'/> <!-- 81 -->
+		<word name='IGNOREDIALOGPAUSE'/> <!-- 82 -->
+		<word name='MINHITPOINTS'/> <!-- 83 -->
+		<word name='THAC0BONUSRIGHT'/> <!-- 84 -->
+		<word name='THAC0BONUSLEFT'/> <!-- 85 -->
+		<word name='DAMAGEBONUSRIGHT'/> <!-- 86 -->
+		<word name='DAMAGEBONUSLEFT'/> <!-- 87 -->
+		<word name='STONESKINS'/> <!-- 88 -->
+		<word name='PROFICIENCYBASTARDSWORD'/> <!-- 89 -->
+		<word name='PROFICIENCYLONGSWORD'/> <!-- 90 -->
+		<word name='PROFICIENCYSHORTSWORD'/> <!-- 91 -->
+		<word name='PROFICIENCYAXE'/> <!-- 92 -->
+		<word name='PROFICIENCYTWOHANDEDSWORD'/> <!-- 93 -->
+		<word name='PROFICIENCYKATANA'/> <!-- 94 -->
+		<word name='PROFICIENCYSCIMITARWAKISASHININJATO'/> <!-- 95 -->
+		<word name='PROFICIENCYDAGGER'/> <!-- 96 -->
+		<word name='PROFICIENCYWARHAMMER'/> <!-- 97 -->
+		<word name='PROFICIENCYSPEAR'/> <!-- 98 -->
+		<word name='PROFICIENCYHALBERD'/> <!-- 99 -->
+		<word name='PROFICIENCYFLAILMORNINGSTAR'/> <!-- 100 -->
+		<word name='PROFICIENCYMACE'/> <!-- 101 -->
+		<word name='PROFICIENCYQUARTERSTAFF'/> <!-- 102 -->
+		<word name='PROFICIENCYCROSSBOW'/> <!-- 103 -->
+		<word name='PROFICIENCYLONGBOW'/> <!-- 104 -->
+		<word name='PROFICIENCYSHORTBOW'/> <!-- 105 -->
+		<word name='PROFICIENCYDART'/> <!-- 106 -->
+		<word name='PROFICIENCYSLING'/> <!-- 107 -->
+		<word name='PROFICIENCYBLACKJACK'/> <!-- 108 -->
+		<word name='PROFICIENCYGUN'/> <!-- 109 -->
+		<word name='PROFICIENCYMARTIALARTS'/> <!-- 110 -->
+		<word name='PROFICIENCY2HANDED'/> <!-- 111 -->
+		<word name='PROFICIENCYSWORDANDSHIELD'/> <!-- 112 -->
+		<word name='PROFICIENCYSINGLEWEAPON'/> <!-- 113 -->
+		<word name='PROFICIENCY2WEAPON'/> <!-- 114 -->
+		<word name='EXTRAPROFICIENCY1'/> <!-- 115 -->
+		<word name='EXTRAPROFICIENCY2'/> <!-- 116 -->
+		<word name='EXTRAPROFICIENCY3'/> <!-- 117 -->
+		<word name='EXTRAPROFICIENCY4'/> <!-- 118 -->
+		<word name='EXTRAPROFICIENCY5'/> <!-- 119 -->
+		<word name='EXTRAPROFICIENCY6'/> <!-- 120 -->
+		<word name='EXTRAPROFICIENCY7'/> <!-- 121 -->
+		<word name='EXTRAPROFICIENCY8'/> <!-- 122 -->
+		<word name='EXTRAPROFICIENCY9'/> <!-- 123 -->
+		<word name='EXTRAPROFICIENCY10'/> <!-- 124 -->
+		<word name='EXTRAPROFICIENCY11'/> <!-- 125 -->
+		<word name='EXTRAPROFICIENCY12'/> <!-- 126 -->
+		<word name='EXTRAPROFICIENCY13'/> <!-- 127 -->
+		<word name='EXTRAPROFICIENCY14'/> <!-- 128 -->
+		<word name='EXTRAPROFICIENCY15'/> <!-- 129 -->
+		<word name='EXTRAPROFICIENCY16'/> <!-- 130 -->
+		<word name='EXTRAPROFICIENCY17'/> <!-- 131 -->
+		<word name='EXTRAPROFICIENCY18'/> <!-- 132 -->
+		<word name='EXTRAPROFICIENCY19'/> <!-- 133 -->
+		<word name='EXTRAPROFICIENCY20'/> <!-- 134 -->
+		<word name='HIDEINSHADOWS'/> <!-- 135 -->
+		<word name='DETECTILLUSIONS'/> <!-- 136 -->
+		<word name='SETTRAPS'/> <!-- 137 -->
+		<word name='PUPPETMASTERID'/> <!-- 138 -->
+		<word name='PUPPETMASTERTYPE'/> <!-- 139 -->
+		<word name='PUPPETTYPE'/> <!-- 140 -->
+		<word name='PUPPETID'/> <!-- 141 -->
+		<word name='CHECKFORBERSERK'/> <!-- 142 -->
+		<word name='BERSERKSTAGE1'/> <!-- 143 -->
+		<word name='BERSERKSTAGE2'/> <!-- 144 -->
+		<word name='DAMAGELUCK'/> <!-- 145 -->
+		<word name='CRITICALHITBONUS'/> <!-- 146 -->
+		<word name='VISUALRANGE'/> <!-- 147 -->
+		<word name='EXPLORE'/> <!-- 148 -->
+		<word name='THRULLCHARM'/> <!-- 149 -->
+		<word name='SUMMONDISABLE'/> <!-- 150 -->
+		<word name='HITBONUS'/> <!-- 151 -->
+		<word name='KIT'/> <!-- 152 -->
+		<word name='FORCESURGE'/> <!-- 153 -->
+		<word name='SURGEMOD'/> <!-- 154 -->
+		<word name='IMPROVEDHASTE'/> <!-- 155 -->
+		<word name='SCRIPTINGSTATE1'/> <!-- 156 -->
+		<word name='SCRIPTINGSTATE2'/> <!-- 157 -->
+		<word name='SCRIPTINGSTATE3'/> <!-- 158 -->
+		<word name='SCRIPTINGSTATE4'/> <!-- 159 -->
+		<word name='SCRIPTINGSTATE5'/> <!-- 160 -->
+		<word name='SCRIPTINGSTATE6'/> <!-- 161 -->
+		<word name='SCRIPTINGSTATE7'/> <!-- 162 -->
+		<word name='SCRIPTINGSTATE8'/> <!-- 163 -->
+		<word name='SCRIPTINGSTATE9'/> <!-- 164 -->
+		<word name='SCRIPTINGSTATE10'/> <!-- 165 -->
+		<word name='STONESKINSGOLEM'/> <!-- 199 -->
+		<word name='LEVELDRAIN'/> <!-- 200 -->
+		
+		<!-- time.ids -->
+		<word name='MIDNIGHT'/> <!-- 0 -->
+		<word name='NOON'/> <!-- 12 -->
+		<word name='DAWN_START'/> <!-- 6 -->
+		<word name='DAWN_END'/> <!-- 7 -->
+		<word name='DUSK_START'/> <!-- 21 -->
+		<word name='DUSK_END'/> <!-- 22 -->
+		
+		<!-- timeoday.ids -->
+		<word name='DAY'/> <!-- 0 -->
+		<word name='DUSK'/> <!-- 1 -->
+		<word name='NIGHT'/> <!-- 2 -->
+		<word name='MORNING'/> <!-- 3 -->
+		
+		<!-- weather.ids -->
+		<word name='NOWEATHER'/> <!-- 0 -->
+		<word name='RAIN'/> <!-- 1 -->
+		<word name='SNOW'/> <!-- 2 -->
+		<word name='FOG'/> <!-- 3 -->
+	</keywords>
+</scheme>
+
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the HRC schemes for Infinite Engine/WeiDU scripts.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2009
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

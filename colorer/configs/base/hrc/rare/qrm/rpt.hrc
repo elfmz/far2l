@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Atlantis 1.5 Syntax by Vladimir Fonarev <vol@quorum.ru>
+                                            [2:5020/2160]
+-->
+
+  <type name="rpt">
+
+    <region name="RptPreProc"   parent="atl:QrmPreproc"/>
+    <region name="RptPrePrWord" parent="atl:QrmPreprocWord"/>
+    <region name="RptWord"      parent="def:Keyword"/>
+    <region name="RptDlgWord"   parent="def:Keyword"/>
+    <region name="RptFormWord"  parent="def:Keyword"/>
+    <region name="RptTypeWord"  parent="def:TypeKeyword"/>
+    <region name="RptBool"      parent="def:BooleanConstant"/>
+    <region name="RptLabel"     parent="def:Label"/>
+    <region name="CallOutlined" parent="def:Outlined"/>
+
+    <scheme name="RptAny">
+      <inherit scheme="atl:qrmBase"/>
+      <keywords ignorecase="yes" region="RptTypeWord">
+        <word name="STRING"/>
+        <word name="POINTER"/>
+        <word name="LONGINT"/>
+        <word name="INT64"/>
+        <word name="DOUBLE"/>
+        <word name="WORD"/>
+        <word name="INTEGER"/>
+        <word name="BYTE"/>
+        <word name="SINGLE"/>
+        <word name="DATE"/>
+        <word name="TIME"/>
+        <word name="CHAR"/>
+        <word name="EXTENDED"/>
+        <word name="BOOLEAN"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="RptPrePro">
+  <!-- Rpt preprocessor -->
+      <block start="/^\s*#\b((ifdef|ifndef|define|undefine|endif|else|include))\b/i" end="/$/" scheme="RptPrePro" region="RptPreProc" region00="RptPrePrWord"/>
+      <keywords ignorecase="yes" region="RptPrePrWord">
+      </keywords>
+    </scheme>
+
+    <scheme name="RptInDlg">
+  <!-- paired -->
+      <block start="/(&lt;&lt;)/" end="/(&gt;&gt;)/" scheme="RptAny" region00="RptWord" region10="RptWord" region01="def:PairStart" region11="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="RptDlg">
+      <inherit scheme="RptInDlg"/>
+      <inherit scheme="RptAny"/>
+      <keywords ignorecase="yes" region="RptDlgWord">
+        <word name="FIELDS"/>
+        <word name="BUTTONS"/>
+        <word name="DEFAULT"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="RptFnc">
+      <inherit scheme="RptPrePro">
+        <virtual scheme="RptPrePro" subst-scheme="RptFnc"/>
+      </inherit>
+  <!-- paired block -->
+      <inherit scheme="atl:qrmPairedBrackets">
+        <virtual scheme="atl:qrmPairedBrackets" subst-scheme="RptFnc"/>
+      </inherit>
+  <!-- Labels -->
+      <regexp match="/^:\s*[A-Za-z]\w*\s*$/" region0="RptLabel"/>
+  <!-- GOTO command -->
+      <regexp match="/(goto)\s+([A-Za-z_]\w*\b)/i" region1="RptWord" region2="RptLabel"/>
+      <regexp match="/(goto)\s+([\w\S]*\b)/i" region1="RptWord" region2="def:ErrorText"/>
+      <regexp match="/(call)\s+([A-Za-z_]\w*\b)/i" region1="RptWord" region2="RptLabel"/>
+      <regexp match="/(call)\s+([\w\S]*\b)/i" region1="RptWord" region2="def:ErrorText"/>
+      <keywords ignorecase="yes" region="RptWord">
+        <word name="IF"/>
+        <word name="IN"/>
+        <word name="NOT"/>
+        <word name="AND"/>
+        <word name="XOR"/>
+        <word name="OR"/>
+        <word name="ELSE"/>
+        <word name="DO"/>
+        <word name="WHILE"/>
+        <word name="BREAK"/>
+        <word name="CONTINUE"/>
+        <word name="RESULT"/>
+        <word name="EXIT"/>
+        <word name="HALT"/>
+        <word name="WRITE"/>
+        <word name="PUTEVENT"/>
+        <word name="FLUSH"/>
+      </keywords>
+      <keywords ignorecase="yes" region="RptTypeWord">
+        <word name="TRUE" region="RptBool"/>
+        <word name="FALSE" region="RptBool"/>
+      </keywords>
+      <inherit scheme="RptAny"/>
+    </scheme>
+
+    <scheme name="RptForm">
+      <!--inherit scheme="RptPrePro">
+        <virtual scheme="RptPrePro" subst="RptForm"/>
+      </inherit-->
+  <!-- linear comments -->
+      <regexp match="/(^!.*$)/" region0="def:Comment"/>
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="def:Comment" region00="def:PairStart" region10="def:PairEnd"/>
+  <!-- paired block -->
+      <block start="/(\.\{)/" end="/(\.\})/" scheme="RptForm" region00="def:SymbolStrong" region01="def:PairStart" region10="def:SymbolStrong" region11="def:PairEnd"/>
+      <block start="/(\.if)/i" end="/(\.end)/i" scheme="RptForm" region00="def:SymbolStrong" region01="def:PairStart" region10="def:SymbolStrong" region11="def:PairEnd"/>
+      <keywords region="def:Symbol">
+        <symb name="&amp;" region="def:SymbolStrong"/>
+        <symb name="@" region="def:SymbolStrong"/>
+        <symb name="^" region="def:SymbolStrong"/>
+      </keywords>
+      <keywords ignorecase="yes" region="RptFormWord">
+        <word name=".ELSE" region="def:SymbolStrong"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="RptBr">
+      <inherit scheme="RptAny"/>
+      <keywords ignorecase="yes" region="RptWord">
+        <word name="READONLY"/>
+        <word name="NORMAL"/>
+        <word name="NOOPEN"/>
+        <word name="BUILD"/>
+        <word name="NEW"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="rpt">
+      <inherit scheme="RptPrePro">
+        <virtual scheme="RptPrePro" subst-scheme="RptFnc"/>
+      </inherit>
+  <!-- paired block -->
+      <inherit scheme="atl:qrmPairedBlock">
+        <virtual scheme="atl:qrmPairedBlock" subst-scheme="RptFnc"/>
+      </inherit>
+      <inherit scheme="atl:qrmPairedBrackets">
+        <virtual scheme="atl:qrmPairedBrackets" subst-scheme="RptBr"/>
+      </inherit>
+  <!-- objects -->
+      <regexp match="/(\b(procedure|function)(\s*$|\s+\w*))?=/ix" region1="atl:FunctionOutline"/>
+      <regexp match="/(\b(dialog)(\s*$|\s+\w*))?=/ix" region1="atl:DialogOutline"/>
+      <regexp match="/(\b(dialog|procedure|function)\b[^\s])/ix" region0="def:ErrorText"/>
+      <regexp match="/(\bformula\b)?=/ix" region1="atl:FunctionOutline"/>
+  <!-- paired -->
+      <block start="/\b((dialog))\b\M[\s\/]+/i" end="/\b(end)\b/i" scheme="RptDlg" region00="RptWord" region01="def:PairStart" region10="RptWord" region11="def:PairEnd"/>
+      <block start="/^\b(form)\b/i" end="/^\b(endform)\b/i" scheme="RptForm" region00="RptWord" region10="RptWord" region01="def:PairStart" region11="def:PairEnd"/>
+      <inherit scheme="RptAny"/>
+      <keywords ignorecase="yes" region="RptWord">
+        <word name="TABLES"/>
+        <word name="DIALOGS"/>
+        <word name="VAR"/>
+        <word name="CONST"/>
+        <word name="PROCEDURE"/>
+        <word name="FUNCTION"/>
+        <word name="FORMULA"/>
+      </keywords>
+      <regexp match="/\b([A-Za-z_]\w*)\b\M\s*(\/\*|\/\/|\{|begin|$)/i" region0="rpt:CallOutlined" region1="RptLabel"/>
+
+    </scheme>
+
+  </type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Vladimir Fonarev <vol@quorum.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

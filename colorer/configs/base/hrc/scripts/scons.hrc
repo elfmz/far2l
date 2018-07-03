@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="scons">
+      <annotation>
+       <documentation>
+         SCons software construction tool - superior alternative to the classic "Make".
+
+         http://www.scons.org/
+       </documentation>
+       <contributors>
+       <![CDATA[
+          anatoly techtonik <techtonik@gmail.com>
+       ]]>
+       </contributors>
+       <appinfo>
+        <require>
+         <type name="python"/>
+        </require>     
+       </appinfo>
+      </annotation>
+
+
+      <import type="python"/>
+
+
+      <region name="Builder" parent="def:FunctionKeyword"/>
+      <region name="Environment" parent="def:FunctionKeyword"/>
+      <region name="Method" parent="def:FunctionKeyword"/>
+      <region name="Variables" parent="def:Keyword"/>
+
+ 
+      <scheme name="scons">
+        <inherit scheme="python"/>
+
+        <keywords region="Builder">
+          <word name="Builder"/>
+          <word name="CFile"/>
+          <word name="Command"/>
+          <word name="CXXFile"/>
+          <word name="DVI"/>
+          <word name="Install"/>
+          <word name="InstallAs"/>
+          <word name="Jar"/>
+          <word name="Java"/>
+          <word name="JavaH"/>
+          <word name="Library"/>
+          <word name="LoadableModule"/>
+          <word name="M4"/>
+          <word name="Moc"/>
+          <word name="MSVSProject"/>
+          <word name="MSVSSolution"/>
+          <word name="Object"/>
+          <word name="Package"/>
+          <word name="PCH"/>
+          <word name="PDF"/>
+          <word name="PostScript"/>
+          <word name="Program"/>
+          <word name="RES"/>
+          <word name="RMIC"/>
+          <word name="RPCGenClient"/>
+          <word name="RPCGenHeader"/>
+          <word name="RPCGenService"/>
+          <word name="RPCGenXDR"/>
+          <word name="SharedLibrary"/>
+          <word name="SharedObject"/>
+          <word name="StaticLibrary"/>
+          <word name="StaticObject"/>
+          <word name="Substfile"/>
+          <word name="Tar"/>
+          <word name="Textfile"/>
+          <word name="TypeLibrary"/>
+          <word name="Uic"/>
+          <word name="Zip"/>
+        </keywords>
+        <keywords region="Environment">
+          <word name="AddMethod"/>
+          <word name="Append"/>
+          <word name="AppendENVPath"/>
+          <word name="AppendUnique"/>
+          <word name="Clone"/>
+          <word name="DefaultEnvironment"/>
+          <word name="Dictionary"/>
+          <word name="Dump"/>
+          <word name="Environment"/>
+          <word name="Export"/>
+          <word name="Import"/>
+          <word name="MergeFlags"/>
+          <word name="ParseConfig"/>
+          <word name="ParseFlags"/>
+          <word name="Prepend"/>
+          <word name="PrependENVPath"/>
+          <word name="PrependUnique"/>
+          <word name="Replace"/>
+          <word name="SetDefault"/>
+          <word name="subst"/>
+        </keywords>
+        <keywords region="Method">
+          <word name="AddOption"/>
+          <word name="Alias"/>
+          <word name="CacheDir"/>
+          <word name="Chmod"/>
+          <word name="Clean"/>
+          <word name="Configure"/>
+          <word name="Copy"/>
+          <word name="Decider"/>
+          <word name="Default"/>
+          <word name="Delete"/>
+          <word name="Depends"/>
+          <word name="Dir"/>
+          <word name="EnsurePythonVersion"/>
+          <word name="EnsureSConsVersion"/>
+          <word name="Entry"/>
+          <word name="Execute"/>
+          <word name="Exit"/>
+          <word name="File"/>
+          <word name="FindFile"/>
+          <word name="Flatten"/>
+          <word name="GetBuildFailures"/>
+          <word name="GetLaunchDir"/>
+          <word name="GetOption"/>
+          <word name="Glob"/>
+          <word name="Help"/>
+          <word name="Ignore"/>
+          <word name="Mkdir"/>
+          <word name="Move"/>
+          <word name="NoCache"/>
+          <word name="NoClean"/>
+          <word name="ParseDepends"/>
+          <word name="Precious"/>
+          <word name="Repository"/>
+          <word name="Requires"/>
+          <word name="Return"/>
+          <word name="Scanner"/>
+          <word name="SConscript"/>
+          <word name="SetOption"/>
+          <word name="SideEffect"/>
+          <word name="SourceSignatures"/>
+          <word name="Split"/>
+          <word name="TargetSignatures"/>
+          <word name="Touch"/>
+          <word name="VariantDir"/>
+        </keywords>
+        <keywords region="Variables">
+          <word name="BoolVariable"/>
+          <word name="EnumVariable"/>
+          <word name="ListVariable"/>
+          <word name="PathVariable"/>
+          <word name="PackageVariable"/>
+          <word name="Variables"/>
+          <word name="UnknownVariables"/>
+        </keywords>
+
+      </scheme>
+
+   </type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   -     Igor Russkih <irusskih at gmail dot com>
+   -
+   - Portions created by the Initial Developer are Copyright (C) 1999-2010
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -     anatoly techtonik <techtonik at gmail dot com>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

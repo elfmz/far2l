@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name="ie.d">
+	<annotation><documentation>
+		Infinity Engine / WeiDu
+		dialog script syntax
+	</documentation><contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+	]]></contributors>
+	<appinfo><todo>
+		- LABEL/FILEREF syntax is valid?
+		- REGEXP/PROCESS not detected
+		- CHAIN2 content not support (syntax unknow)
+		- it ignored BEGIN action after ALTER_TRANS
+		- ALTER_TRANS: problem at start of line...
+	</todo>
+	<bug>
+		Problem with single '~'-quote in string. 
+		It's colorer hardcoded bug???
+	</bug>
+	</appinfo>
+</annotation>
+
+
+<region name='key' parent='ie.baf:key'/>
+<region name='key.check' parent='def:Operator'/>
+
+<region name='int'     parent='ie.baf:int'/>
+<region name='int.pre' parent='ie.baf:int.pre'/>
+
+<region name='symb' parent='ie.baf:symb'/>
+
+<region name='label' parent='def:Label'/>
+
+<region name='string'      parent='def:String'/>
+<region name='string.quot' parent='def:StringEdge'/>
+
+<region name='link' parent='def:Path'/>
+
+<region name='out' parent='def:Outlined'/>
+<region name='label.out' parent='out'/>
+<region name='chain.out' parent='out'/>
+<region name='begin.out' parent='out'/>
+<region name='append.out' parent='out'/>
+<region name='replace.out' parent='out'/>
+<region name='inter.out' parent='out'/>
+<region name='extend.out' parent='out'/>
+<region name='direct.out' parent='out'/>
+<region name='alter.out' parent='out'/>
+
+
+<entity name='action' value='\s*(&gt;{8}|(BEGIN|APPEND|CHAIN|INTERJECT|EXTEND|ADD|REPLACE|ALTER|SET_WEIGHT|[RA]_[ST]_T|R_A_T|I_C)(\b|_[A-Z]+))'/>
+<entity name='action1' value='\s*(&gt;{8}|(APPEND|CHAIN|INTERJECT|EXTEND|ADD|REPLACE|ALTER|SET_WEIGHT|[RA]_[ST]_T|R_A_T|I_C)(\b|_[A-Z]+))'/>
+
+<entity name='weight' value='\bWEIGHT\s+(?{int.pre}#)(?{int}-?\d+)'/>
+<entity name='label' value='\w[\w#_!%]*'/>
+
+<scheme name='int'>
+	<regexp match='/([#@!]-?)\d+/' region0='int' region1='int.pre'/>
+	<regexp match='/\b\d+/' region0='int'/>
+	<regexp match='/(@)\M[\[\%]/' region1='int.pre'/>
+	<inherit scheme='ie.baf:subst'/>
+</scheme>
+
+
+<scheme name='soundref'>
+	<regexp match='/((\[))%label;((\]))/' region='link'
+		region1='string.quot' region2='def:PairStart'
+		region3='string.quot' region4='def:PairEnd'
+	/>
+</scheme>
+
+
+
+<!-- string -->
+
+<scheme name='string.content.simple'>
+	<inherit scheme='soundref'/>
+	
+	<!-- FIXME: is't not ie.baf:ids  -->
+	<block start='/(&lt;)\M[\w_]+&gt;/' end='/~[\w_]+\m(&gt;)/' 
+		region='link' scheme='ie.baf:ids'
+		region01='def:PairStart' region11='def:PairEnd'
+	/>
+</scheme>
+
+<scheme name='string.content'>
+	<inherit scheme='string.content.simple'/>
+	<inherit scheme='ie.baf:subst'/>
+</scheme>
+
+
+<scheme name='string'>
+	
+	<inherit scheme='ie.baf:comment'/>
+	
+	<block start='/(\~{5})/' end='/(\y1)/' 
+		scheme='string.content' region='string'
+		region00='string.quot' region01='def:PairStart'
+		region10='string.quot' region11='def:PairEnd'
+	/>
+	<block start='/([\~"])/' end='/(\y1)/' 
+		scheme='string.content' region='string'
+		region00='string.quot' region01='def:PairStart'
+		region10='string.quot' region11='def:PairEnd'
+	/>
+	<block start='/(%)/' end='/(\y1)/' 
+		scheme='string.content.simple' region='string'
+		region00='string.quot' region01='def:PairStart'
+		region10='string.quot' region11='def:PairEnd'
+	/>
+	<!--inherit scheme='soundref'/-->
+</scheme>
+
+<scheme name='trigger.string'>
+	<inherit scheme='string'>
+		<virtual scheme="string.content" subst-scheme="ie.baf:triggers"/>
+	</inherit>
+</scheme>
+
+<scheme name='action.string'>
+	<inherit scheme='string'>
+		<virtual scheme="string.content" subst-scheme="ie.baf:acts"/>
+	</inherit>
+</scheme>
+
+
+
+<!-- regexp -->
+
+<region name='re.or' parent='regexp:MetaSymbStrong'/>
+<region name='re.op' parent='regexp:Operator'/>
+<region name='re.op.s' parent='regexp:SpecOperator'/>
+<region name='re.quot' parent='regexp:Quote'/>
+<region name='re.esc' parent='regexp:Symbol'/>
+
+<annotation><documentation>
+	It's very different from PCRE. 
+	We cannot use standart library...
+</documentation></annotation>
+
+
+<scheme name='regexp.base'>
+	<inherit scheme='ie.baf:subst'/>
+	<regexp match='/\\[\$\^\.\*\+\?\[\]\\]/' region='re.esc'/>
+</scheme>
+
+<scheme name='regexp.class'>
+	<regexp match='/[\^\-]|\\b/' region='re.op'/>
+	<inherit scheme='regexp.base'/>
+</scheme>
+
+<scheme name='regexp'>
+	<block start='/(\[)/' end='/(\])/' scheme='regexp.class'
+		region00='re.quot' region01='def:PairStart'
+		region10='re.quot' region11='def:PairEnd'
+	/>
+	<block start='/(\\\()/' end='/(\\\))/' scheme='regexp'
+		region00='re.quot' region01='def:PairStart'
+		region10='re.quot' region11='def:PairEnd'
+	/>
+	<regexp match='/[\*\.\+\?\^\$]|\\b/' region='re.op'/>
+	<regexp match='/\\\d/' region='re.op.s'/>
+	<regexp match='/\\\|/' region='re.or'/>
+	<inherit scheme='regexp.base'/>
+</scheme>
+
+
+<scheme name='regexp.string'>
+	<inherit scheme='string'>
+		<virtual scheme="string.content" subst-scheme="regexp"/>
+	</inherit>
+</scheme>
+
+
+
+
+<!-- transition -->
+
+<scheme name='blocklist'>
+	<block start='/\b((BEGIN))\s+\M(\d+\s+)+END\b/' end='/~(\d+\s+)+\m((END))\b/'
+		scheme='int'
+		region01='key' region02='def:PairStart'
+		region12='key' region13='def:PairEnd'
+	/>
+</scheme>
+
+
+<scheme name='transition'>
+	<inherit scheme='ie.baf:comment'/>
+	
+	<!-- breakpoint. Uncomment it for schema debugging -->
+	
+	<!-- BREAK!! - -> 
+	<regexp match='/GBDF/' region='def:Debug'/>
+	<!- - BREAK!! --> 
+	
+	<block start='/\bIF\b/' end='/[~"]?#1/' 
+		scheme='trigger.string' region00='key' 
+	/>
+	<block start='/\bDO\b/' end='/[~"]?#1/' 
+		scheme='action.string' region00='key' 
+	/>
+	
+	<regexp match='/\M\bBEGIN\s+(?{label.out}%label;)/' />
+	
+	<regexp match='/(\b(GOTO|BEGIN\s)|\+|==)\s*(%label;)/' 
+		region1='key' region3='label'
+	/>
+	<block start='/(\+)/' end='/(\+)/' scheme='trigger.string'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+	
+	<keywords region="key">
+		<word name='THEN'/>
+		<word name='REPLY'/>
+		<word name='JOURNAL'/>
+		<word name='SOLVED_JOURNAL'/>
+		<word name='UNSOLVED_JOURNAL'/>
+		<word name='FLAGS'/>
+		<word name='EXIT'/>
+		<word name='EXTERN'/>
+		<word name='SAY'/>
+		<word name='COPY_TRANS'/>
+		<word name='IF_FILE_EXISTS' region='key.check'/>
+		<symb name='='/>
+	</keywords>
+	
+	<inherit scheme='string'/>
+	<inherit scheme='int'/>
+	
+</scheme>
+
+
+
+<!-- state -->
+
+<scheme name='state.if'>
+	<block start='/~(\s+%weight;)?/' end='/([~"])?#1/' 
+		scheme='trigger.string' region00='key' 
+	/>
+	<inherit scheme='transition'/>
+</scheme>
+
+
+<scheme name='state'>
+	<block start='/\b(IF)\b/' end='/\b(END)\b/' scheme='state.if'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+	
+	<block start='/\b((APPENDI))(\s+IF_FILE_EXIST)?\s+\M(?{append.out}[\S]+)/' end='/\b(END)\b/' 
+		scheme='state' region='def:DeprecatedKeyword'
+		region01='key' region02='def:PairStart' region03='key.check'
+		region10='key' region11='def:PairEnd'
+	/>
+	
+	<!-- 
+		TODO: CHAIN2 not real support
+	-->
+	<block start='/\b(CHAIN2)\b/' end='/\b(END|EXTERN|COPY_TRANS|EXIT)\b/' 
+		scheme='chain.content' region='def:DeprecatedKeyword'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+	
+	
+	<inherit scheme='string'/>
+	<inherit scheme='int'/>
+</scheme>
+
+
+
+<!-- chain -->
+
+<scheme name='chain.head'>
+	<inherit scheme='ie.baf:comment'/>
+	<block start='/\b(IF)(\s+%weight;)?\b/' end='/\b(THEN)\b/' scheme='trigger.string'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/><!-- \M\s+%label;/'  -->
+</scheme>
+
+
+<scheme name='chain.content'>
+	<regexp match='/(==)\s*(IF_FILE_EXIST\s+)?(%label;)/' 
+		region1='key' region2='key.check' region3='label'
+	/>
+	
+	<inherit scheme='transition'/>
+</scheme>
+
+
+<scheme name='chain.branch'>
+	<inherit scheme='trigger.string'/>
+	<block start='/\b(BEGIN)\b/' end='/\b(END)\b/' scheme='chain.content'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+</scheme>
+
+
+<scheme name='chain.text'>
+	<!--regexp match='/~\s*(IF|BARNCH)?!%label;\s+(?{chain.out}%label;)/' region='label'/ - CRASH COLORER  -->
+	
+	<block start='/\bBRANCH\b/' end='/(END)?#3/' 
+		scheme='chain.branch' region00='key' 
+	/>
+	
+	<inherit scheme='chain.content'/>
+	<keywords region="key">
+		<word name='END'/>
+	</keywords>
+</scheme>
+
+
+<scheme name='chain'>
+	<block start='/~/' end='/(THEN)?#4(\s+(IF_FILE_EXISTS\s+)?%label;\s+(?{chain.out}%label;))?/s'
+		scheme='chain.head' region13='key.check' region12='label'
+	/>
+	 <!-- (\s*($|\M\/[\*\\])|(\s+%label;\s+(?{chain.out}%label;)))/' -->
+	<inherit scheme='chain.text'/>
+	
+</scheme>
+
+
+
+<!-- alter_trans -->
+
+<entity name='altercmd' value='\s*(?{q1}[~"%])(?{}TRIGGER|ACTION|REPLY|(?{}(?{}UN)?SOLVED_)?JOURNAL|EPILOGUE|FLAGS)\p{q1}'/>
+
+
+<scheme name='alter.string.reply.content'>
+	<inherit scheme='string.content'/>
+	<inherit scheme='int'/>
+</scheme>
+
+<scheme name='alter.string.reply'>
+	<inherit scheme='string.content'/>
+	<inherit scheme='string'>
+		<virtual scheme="string.content" subst-scheme="alter.string.reply.content"/>
+	</inherit>
+</scheme>
+
+<scheme name='alter.string.epilogue.content'>
+	<inherit scheme='common.block'/>
+	<keywords region="key">
+		<word name='GOTO'/>
+		<word name='EXTERN'/>
+		<word name='EXIT'/>
+	</keywords>
+</scheme>
+
+<scheme name='alter.string.epilogue'>
+	<inherit scheme='string'>
+		<virtual scheme="string.content" subst-scheme="alter.string.epilogue.content"/>
+	</inherit>
+</scheme>
+
+
+<scheme name='alter.block'>
+	<block start='/(([~"%]))TRIGGER((\1))/' end='/\M(%altercmd;|END)/' 
+		scheme='trigger.string' region00='key' 
+		region01='string.quot' region02='def:PairStart'
+		region03='string.quot' region04='def:PairEnd'
+	/>
+	<block start='/(([~"%]))ACTION((\1))/' end='/\M(%altercmd;|END)/' 
+		scheme='action.string' region00='key' 
+		region01='string.quot' region02='def:PairStart'
+		region03='string.quot' region04='def:PairEnd'
+	/>
+	<block start='/(([~"%]))(?{}REPLY|(?{}(?{}UN)?SOLVED_)?JOURNAL|FLAGS)((\1))/' end='/\M(%altercmd;|END)/' 
+		scheme='alter.string.reply' region00='key' 
+		region01='string.quot' region02='def:PairStart'
+		region03='string.quot' region04='def:PairEnd'
+	/>
+	<block start='/(([~"%]))EPILOGUE((\1))/' end='/\M(%altercmd;|END)/' 
+		scheme='alter.string.epilogue' region00='key' 
+		region01='string.quot' region02='def:PairStart'
+		region03='string.quot' region04='def:PairEnd'
+	/>
+	
+	<inherit scheme='common.block'/>
+</scheme>
+
+
+<scheme name='alter'>
+	<inherit scheme='blocklist'/>
+	<block start='/\b(BEGIN)\b/' end='/\b(END)\b/' scheme='alter.block'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+	<inherit scheme='string'/>
+</scheme>
+
+
+
+<!-- other -->
+
+<scheme name='common'>
+	
+	<!--block start='/\b(BEGIN)\b/' end='/\b(END)\b/' scheme='common.block'
+		region00='key' region01='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/-->
+	<inherit scheme='blocklist'/>
+	<keywords region="key">
+		<word name='DO'/>
+	</keywords>
+	
+	<inherit scheme='string'/>
+	<inherit scheme='int'/>
+</scheme>
+
+<scheme name='trigger.common'>
+	<inherit scheme='common'>
+		<virtual scheme="string.content" subst-scheme="ie.baf:triggers"/>
+	</inherit>
+</scheme>
+
+<scheme name='action.common'>
+	<inherit scheme='common'>
+		<virtual scheme="string.content" subst-scheme="ie.baf:acts"/>
+	</inherit>
+</scheme>
+
+
+<scheme name='common.short'>
+	<inherit scheme='string'/>
+	<inherit scheme='int'/>
+</scheme>
+
+<scheme name='common.block'>
+	<inherit scheme='ie.baf:comment'/>
+	<inherit scheme='int'/>
+</scheme>
+
+
+
+<!-- actions -->
+
+<scheme name='actions'>
+	<!--block start='/\bBEGIN\b/' end='/%def:neverMatch;/' 
+		scheme='state' region00='key'
+	/-->
+	
+	<block start='/\b(BEGIN)\s+\M(?{begin.out}[\S]+)/' region01='key'
+		end='/^\M%action;/' scheme='state'
+	/>
+	
+	<block start='/\b((APPEND(_EARLY)?))(\s+IF_FILE_EXIST)?\s+\M(?{append.out}[\S]+)/' 
+		end='/\b(END)\b/' scheme='state'
+		region01='key' region02='def:PairStart' region04='key.check'
+		region10='key' region11='def:PairEnd'
+	/>
+	
+	<block start='/\b(CHAIN)\s+(IF\s+)?!(IF_FILE_EXISTS\s+)?(%label;\s+(?{chain.out}%label;))/' end='/^\M%action;/' scheme='chain.text'
+		region01='key' region03='key.check' region04='label'
+	/>
+	
+	<block start='/\bCHAIN\b/' end='/^\M%action;/' scheme='chain'
+		region00='key'
+	/>
+	
+	<block start='/\b(INTERJECT(_COPY_TRANS[234]?)?|I_C_T[234]?)\s+\M(?{inter.out}[\S]+)/' 
+		end='/^\M%action;/' scheme='chain.text'
+		region01='key'
+	/>
+	
+	<!-- BUG: not support 'BEGIN' block after 'ALTER_TRANS' block -->
+	<block start='/\b(ALTER_TRANS)\s+\M(?{alter.out}[\S]+)/'
+		end='/^\M%action1;/' scheme='alter'
+		region01='key'
+	/> 
+	
+	
+	<!-- is valid ? -->
+	<block start='/\b((EXTEND(_TOP|_BOTTOM)?))\s+\M(?{extend.out}[\S]+)/' end='/\b(END)\b/' scheme='transition'
+		region01='key' region02='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+	
+	
+	<block start='/\b((REPLACE|ADD)_(STATE|TRANS)_TRIGGER|REPLACE_TRIGGER_TEXT(_REGEXP)?|[RA]_[ST]_T)\s+\M(?{replace.out}[\S]+)/' 
+		end='/^\M%action;/' scheme='trigger.common'
+		region01='key'
+	/>
+	<block start='/\b((REPLACE|ADD)_TRANS_ACTION|REPLACE_ACTION_TEXT(_PROCESS)?(_REGEXP)?|R_A_T(_P_R)?)\s+\M(?{replace.out}[\S]+)/' 
+		end='/^\M%action;/' scheme='action.common'
+		region01='key' 
+	/>
+	
+	
+	<block start='/\b((REPLACE))\s+\M(?{replace.out}[\S]+)/' end='/\b(END)\b/' scheme='state'
+		region01='key' region02='def:PairStart'
+		region10='key' region11='def:PairEnd'
+	/>
+	
+	<block start='/\b(REPLACE_SAY|SET_WEIGHT)\s+\M(?{direct.out}[\S]+)/' 
+		end='/^\M%action;/' scheme='common.short'
+		region01='key' 
+	/>
+	
+	
+</scheme>
+
+
+
+<scheme name='ie.d'>
+	<inherit scheme='ie.baf:comment'/>
+	<inherit scheme='actions'/>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the HRC schemes for Infinite Engine/WeiDU scripts.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2009
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

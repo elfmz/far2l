@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!--
+    Language: vim scripts
+    URL: http://www.vim.org
+    Maintainer: ??
+    Credits: Artem Zankovich <z_artem@yahoo.com>
+    Last Change:  28 Nov 2001
+-->
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="vim">
+
+      <import type="def"/>
+
+
+
+      <scheme name="vim">
+         <inherit scheme="DecNumber"/>
+         <regexp match="/^\:?\s*\&#34;.*$/" region0="Comment"/>
+         <regexp match="/\\&#34;/" region0="String"/>
+         <regexp match="/\&#34;{2,2}/" region0="String"/>
+         <regexp match="/\&#34;.*?[^\\]\&#34;/" region0="String"/>
+         <regexp match="/\'.*?[^\\]\'/" region0="String"/>
+         <regexp match="/\+.*?[^\\\s]\+/" region0="String"/>
+         <regexp match="/\/.*?[^\\\s]\//" region0="String"/>
+         <regexp match="/\$\w*/" region0="Var"/>
+         <regexp match="/\s?#1(\&#34;.*)$/" region1="Comment"/>
+         <regexp match="/\M^\:?\s*((fu(n(c(tion)?)?)?)\!?)\s+(.+)/" region6="Function"/>
+         <block start="/^\:?\s*((if|while))\b/" end="/^\:?\s*(end\y1)\b/" scheme="vim" region00="Keyword" region01="PairStart" region10="Keyword" region11="PairEnd"/>
+         <block start="/^\:?\s*((fu(n(c(tion)?)?)?)\!?)\s+/" end="/^\:?\s*(end(fu(n(c(tion)?)?)?))\b/" scheme="vim" region00="Keyword" region01="PairStart" region10="Keyword" region11="PairEnd"/>
+         <block start="/(\()/" end="/(\))/" scheme="vim" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <keywords region="Keyword">
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="!"/>
+            <symb name="="/>
+            <word name="syn"/>
+            <word name="cluster"/>
+            <word name="command"/>
+            <word name="delcommand"/>
+            <word name="let"/>
+            <word name="unlet"/>
+            <word name="au"/>
+            <word name="augroup"/>
+            <word name="hi"/>
+            <word name="call"/>
+            <word name="return"/>
+            <word name="echo"/>
+            <word name="exe"/>
+            <word name="exec"/>
+            <word name="execute"/>
+            <word name="set"/>
+            <word name="map"/>
+         </keywords>
+         <keywords region="Parameter">
+            <word name="contained"/>
+            <word name="nextgroup"/>
+            <word name="transparent"/>
+            <word name="contains"/>
+            <word name="oneline"/>
+            <word name="start"/>
+            <word name="skip"/>
+            <word name="end"/>
+            <word name="matchgroup"/>
+            <word name="nextgroup"/>
+            <word name="add"/>
+            <word name="remove"/>
+            <word name="keepend"/>
+            <word name="excludenl"/>
+         </keywords>
+         <keywords region="Keyword">
+            <word name="else"/>
+            <word name="elseif"/>
+            <word name="if"/>
+            <word name="endif"/>
+            <word name="fu"/>
+            <word name="fun"/>
+            <word name="func"/>
+            <word name="funct"/>
+            <word name="function"/>
+            <word name="endfu"/>
+            <word name="endfun"/>
+            <word name="endfunc"/>
+            <word name="endfunct"/>
+            <word name="endfunction"/>
+            <word name="delfun"/>
+         </keywords>
+<!-- if nothing found-->
+         <regexp match="/\W?#1\:\w*/" region0="Keyword" priority="low"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

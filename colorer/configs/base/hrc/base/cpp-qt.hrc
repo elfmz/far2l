@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name="cpp-qt">
+	<annotation><documentation>
+		Qt C++ expanded syntax
+	</documentation><contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+	]]></contributors>
+</annotation>
+
+<region name="declare" parent="def:Directive"/>
+<region name="declare-content" parent="def:Text"/>
+<region name="class" parent="c:KeywordStructure"/>
+<region name="glob-fun" parent="c:KeywordLibFunctions"/>
+
+<scheme name="Labels">
+	<regexp match="/(private|public|protected)\s+slots\s*(:)/" 
+		region="c:KeywordANSI" region2="c:Label"
+	/>
+</scheme>
+
+
+<scheme name="Expression">
+	<keywords region="c:KeywordANSI">
+		<word name='foreach'/>
+		<word name='forever'/>
+		<word name='signals'/>
+		<word name='slots'/>
+		<word name='emit'/>
+		<word name='connect' region='c:KeywordLibFunctions'/>
+		<word name='disconnect' region='c:KeywordLibFunctions'/>
+		<word name='METHOD'/>
+		<word name='SIGNAL'/>
+		<word name='SLOT'/>
+		<word name='qobject_cast'/>
+		<word name='qvariant_cast'/>
+		<word name='qgraphicsitem_cast'/>
+	</keywords>
+	
+	<inherit scheme="Declares"/>
+	<inherit scheme="Classes"/>
+	<inherit scheme="Globals"/>
+</scheme>
+
+
+<scheme name="qProp">
+	<keywords region='def:Error'>
+		<symb name=','/>
+		<symb name=';'/>
+	</keywords>
+	
+	<keywords region='c:KeywordANSI'>
+		<word name='READ'/>
+		<word name='WRITE'/>
+		<word name='RESET'/>
+		<word name='DESIGNABLE'/>
+		<word name='SCRIPTABLE'/>
+		<word name='STORED'/>
+		<word name='USER'/>
+		
+		<word name='true'/>
+		<word name='false'/>
+		<word name='bool'/>
+	</keywords>
+	
+	<inherit scheme="Classes"/>
+	<inherit scheme="c:Expression"/>
+</scheme>
+
+<scheme name="qDecl">
+	<regexp match="/[^\w\s]/" region="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="Declares">
+	<block start="/\b(Q_PROPERTY)\s*((\())/" end="/(\))/"
+		scheme="qProp" region="declare-content"
+		region00="def:Symbol" region10="def:Symbol"
+		region02="def:PairStart" region11="def:PairEnd"
+		region01="declare"
+	/>
+	<block start="/\b(Q_(ENUM|FLAG|INTERFACE)S)\s*((\())/" end="/(\))/"
+		scheme="qProp" region="declare-content"
+		region00="def:Symbol" region10="def:Symbol"
+		region03="def:PairStart" region11="def:PairEnd"
+		region01="declare"
+	/>
+	
+	
+	<keywords region="declare">
+		<!-- QObject -->
+		<word name="Q_OBJECT" /> <!-- region="declare-strong" -->
+		<word name="Q_CLASSINFO"/>
+		<word name="Q_DISABLE_COPY"/>
+		<word name="Q_ENUMS"/>
+		<word name="Q_FLAGS"/>
+		<word name="Q_INTERFACES"/>
+		<word name="Q_PROPERTY"/> 
+		<!-- plugins -->
+		<word name="Q_DECLARE_INTERFACE"/> <!-- todo: iface string -->
+		<word name="Q_EXPORT_PLUGIN2"/>
+		<word name="Q_IMPORT_PLUGIN"/>
+		<word name=""/>
+	</keywords>
+</scheme>
+
+<scheme name="Globals">
+	<keywords region="glob-fun">
+		<word name="tr"/>
+		<word name="arg"/>
+		
+		<word name='qFindChildren'/>
+		<word name='qAbs'/>
+		<word name='qBound'/>
+		<word name='qCritical'/>
+		<word name='qDebug'/>
+		<word name='qFatal'/>
+		<word name='qFromBigEndian'/>
+		<word name='qFromLittleEndian'/>
+		<word name='qFuzzyCompare'/>
+		<word name='qInstallMsgHandler'/>
+		<word name='qMacVersion'/>
+		<word name='qMax'/>
+		<word name='qMin'/>
+		<word name='qint64'/>
+		<word name='qRound'/>
+		<word name='qToBigEndian'/>
+		<word name='qToLittleEndian'/>
+		<word name='qVersion'/>
+		<word name='qWarning'/>
+		<word name='qrand'/>
+		<word name='qsrand'/>
+		<word name='qt_set_sequence_auto_mnemonic'/>
+	</keywords>
+	
+	<keywords region="c:KeywordMacro">
+		<!-- internal -->
+		<word name='Q_DECL_EXPORT'/>
+		<word name='Q_DECL_IMPORT'/>
+		
+		<!-- QObject -->
+		<word name="Q_SIGNALS"/>
+		<word name="Q_SLOTS"/>
+		<word name="Q_EMIT"/>
+		
+		<!-- QDir -->
+		<word name="Q_CLEANUP_RESOURCE"/>
+		<word name="Q_INIT_RESOURCE"/>
+		
+		<!-- QtGlobal -->
+		<word name='Q_ASSERT'/>
+		<word name='Q_ASSERT_X'/>
+		<word name='Q_BIG_ENDIAN'/>
+		<word name='Q_BYTE_ORDER'/>
+		<word name='Q_CC_BOR'/>
+		<word name='Q_CC_CDS'/>
+		<word name='Q_CC_COMEAU'/>
+		<word name='Q_CC_DEC'/>
+		<word name='Q_CC_EDG'/>
+		<word name='Q_CC_GHS'/>
+		<word name='Q_CC_GNU'/>
+		<word name='Q_CC_HIGHC'/>
+		<word name='Q_CC_HPACC'/>
+		<word name='Q_CC_INTEL'/>
+		<word name='Q_CC_KAI'/>
+		<word name='Q_CC_MIPS'/>
+		<word name='Q_CC_MSVC'/>
+		<word name='Q_CC_MWERKS'/>
+		<word name='Q_CC_OC'/>
+		<word name='Q_CC_PGI'/>
+		<word name='Q_CC_SUN'/>
+		<word name='Q_CC_SYM'/>
+		<word name='Q_CC_USLC'/>
+		<word name='Q_CC_WAT'/>
+		<word name='Q_CHECK_PTR'/>
+		<word name='Q_DECLARE_TYPEINFO'/>
+		<word name='Q_FOREACH'/>
+		<word name='Q_FOREVER'/>
+		<word name='Q_FUNC_INFO'/>
+		<word name='Q_INT64_C'/>
+		<word name='Q_LITTLE_ENDIAN'/>
+		<word name='Q_OS_AIX'/>
+		<word name='Q_OS_BSD4'/>
+		<word name='Q_OS_BSDI'/>
+		<word name='Q_OS_CYGWIN'/>
+		<word name='Q_OS_DARWIN'/>
+		<word name='Q_OS_DGUX'/>
+		<word name='Q_OS_DYNIX'/>
+		<word name='Q_OS_FREEBSD'/>
+		<word name='Q_OS_HPUX'/>
+		<word name='Q_OS_HURD'/>
+		<word name='Q_OS_IRIX'/>
+		<word name='Q_OS_LINUX'/>
+		<word name='Q_OS_LYNX'/>
+		<word name='Q_OS_MSDOS'/>
+		<word name='Q_OS_NETBSD'/>
+		<word name='Q_OS_OS2'/>
+		<word name='Q_OS_OPENBSD'/>
+		<word name='Q_OS_OS2EMX'/>
+		<word name='Q_OS_OSF'/>
+		<word name='Q_OS_QNX6'/>
+		<word name='Q_OS_QNX'/>
+		<word name='Q_OS_RELIANT'/>
+		<word name='Q_OS_SCO'/>
+		<word name='Q_OS_SOLARIS'/>
+		<word name='Q_OS_ULTRIX'/>
+		<word name='Q_OS_UNIX'/>
+		<word name='Q_OS_UNIXWARE'/>
+		<word name='Q_OS_WIN32'/>
+		<word name='Q_OS_WINCE'/>
+		<word name='Q_UINT64_C'/>
+		<word name='Q_UNUSED'/>
+		<word name='Q_WS_X11'/>
+		<word name='Q_WS_MAC'/>
+		<word name='Q_WS_QWS'/>
+		<word name='Q_WS_WIN'/>
+	</keywords>
+</scheme>
+
+
+<scheme name="Classes">
+	<keywords region="class">
+		<word name='Qt' region="cpp:KeywordNamespace"/>
+		
+		<word name='QAbstractButton'/>
+		<word name='QFontComboBox'/>
+		<word name='QMutexLocker'/>
+		<word name='QStyleOptionRubberBand'/>
+		<word name='QAbstractEventDispatcher'/>
+		<word name='QFontDatabase'/>
+		<word name='QNetworkAccessManager'/>
+		<word name='QStyleOptionSizeGrip'/>
+		<word name='QAbstractExtensionFactory'/>
+		<word name='QFontDialog'/>
+		<word name='QNetworkAddressEntry'/>
+		<word name='QStyleOptionSlider'/>
+		<word name='QAbstractExtensionManager'/>
+		<word name='QFontInfo'/>
+		<word name='QNetworkCookie'/>
+		<word name='QStyleOptionSpinBox'/>
+		<word name='QAbstractFileEngine'/>
+		<word name='QFontMetrics'/>
+		<word name='QNetworkCookieJar'/>
+		<word name='QStyleOptionTab'/>
+		<word name='QAbstractFileEngineHandler'/>
+		<word name='QFontMetricsF'/>
+		<word name='QNetworkInterface'/>
+		<word name='QStyleOptionTabBarBase'/>
+		<word name='QAbstractFileEngineIterator'/>
+		<word name='QFormBuilder'/>
+		<word name='QNetworkProxy'/>
+		<word name='QStyleOptionTabV2'/>
+		<word name='QAbstractFormBuilder'/>
+		<word name='QFormLayout'/>
+		<word name='QNetworkReply'/>
+		<word name='QStyleOptionTabWidgetFrame'/>
+		<word name='QAbstractGraphicsShapeItem'/>
+		<word name='QFrame'/>
+		<word name='QNetworkRequest'/>
+		<word name='QStyleOptionTitleBar'/>
+		<word name='QAbstractItemDelegate'/>
+		<word name='QFSFileEngine'/>
+		<word name='QStyleOptionToolBar'/>
+		<word name='QAbstractItemModel'/>
+		<word name='QFtp'/>
+		<word name='QObject'/>
+		<word name='QStyleOptionToolBox'/>
+		<word name='QAbstractItemView'/>
+		<word name='QFuture'/>
+		<word name='QObjectCleanupHandler'/>
+		<word name='QStyleOptionToolBoxV2'/>
+		<word name='QAbstractListModel'/>
+		<word name='QFutureIterator'/>
+		<word name='QStyleOptionToolButton'/>
+		<word name='QAbstractMessageHandler'/>
+		<word name='QFutureSynchronizer'/>
+		<word name='QPaintDevice'/>
+		<word name='QStyleOptionViewItem'/>
+		<word name='QAbstractPrintDialog'/>
+		<word name='QFutureWatcher'/>
+		<word name='QPaintEngine'/>
+		<word name='QStyleOptionViewItemV2'/>
+		<word name='QAbstractProxyModel'/>
+		<word name='QGenericArgument'/>
+		<word name='QPaintEngineState'/>
+		<word name='QStyleOptionViewItemV4'/>
+		<word name='QAbstractScrollArea'/>
+		<word name='QGenericReturnArgument'/>
+		<word name='QPainter'/>
+		<word name='QStylePainter'/>
+		<word name='QAbstractSlider'/>
+		<word name='QGLColormap'/>
+		<word name='QPainterPath'/>
+		<word name='QStylePlugin'/>
+		<word name='QAbstractSocket'/>
+		<word name='QGLContext'/>
+		<word name='QPainterPathStroker'/>
+		<word name='QSvgGenerator'/>
+		<word name='QAbstractSpinBox'/>
+		<word name='QGLFormat'/>
+		<word name='QPaintEvent'/>
+		<word name='QSvgRenderer'/>
+		<word name='QAbstractTableModel'/>
+		<word name='QGLFramebufferObject'/>
+		<word name='QPair'/>
+		<word name='QSvgWidget'/>
+		<word name='QAbstractTextDocumentLayout'/>
+		<word name='QPalette'/>
+		<word name='QSyntaxHighlighter'/>
+		<word name='QAbstractUriResolver'/>
+		<word name='QGLPixelBuffer'/>
+		<word name='QSysInfo'/>
+		<word name='QAbstractXmlNodeModel'/>
+		<word name='QGLWidget'/>
+		<word name='QPen'/>
+		<word name='QSystemLocale'/>
+		<word name='QAbstractXmlReceiver'/>
+		<word name='QGradient'/>
+		<word name='QPersistentModelIndex'/>
+		<word name='QSystemSemaphore'/>
+		<word name='QAccessible'/>
+		<word name='QGraphicsEllipseItem'/>
+		<word name='QPicture'/>
+		<word name='QSystemTrayIcon'/>
+		<word name='QAccessibleBridge'/>
+		<word name='QGraphicsGridLayout'/>
+		<word name='QPictureFormatPlugin'/>
+		<word name='QTabBar'/>
+		<word name='QAccessibleBridgePlugin'/>
+		<word name='QGraphicsItem'/>
+		<word name='QPictureIO'/>
+		<word name='QTabletEvent'/>
+		<word name='QAccessibleEvent'/>
+		<word name='QGraphicsItemAnimation'/>
+		<word name='QPixmap'/>
+		<word name='QTableView'/>
+		<word name='QAccessibleInterface'/>
+		<word name='QGraphicsItemGroup'/>
+		<word name='QPixmapCache'/>
+		<word name='QTableWidget'/>
+		<word name='QAccessibleObject'/>
+		<word name='QGraphicsLayout'/>
+		<word name='QPlainTextDocumentLayout'/>
+		<word name='QTableWidgetItem'/>
+		<word name='QAccessiblePlugin'/>
+		<word name='QGraphicsLayoutItem'/>
+		<word name='QPlainTextEdit'/>
+		<word name='QTableWidgetSelectionRange'/>
+		<word name='QAccessibleWidget'/>
+		<word name='QGraphicsLinearLayout'/>
+		<word name='QPlastiqueStyle'/>
+		<word name='QTabWidget'/>
+		<word name='QAction'/>
+		<word name='QGraphicsLineItem'/>
+		<word name='QPluginLoader'/>
+		<word name='QTcpServer'/>
+		<word name='QActionEvent'/>
+		<word name='QGraphicsPathItem'/>
+		<word name='QPoint'/>
+		<word name='QTcpSocket'/>
+		<word name='QActionGroup'/>
+		<word name='QGraphicsPixmapItem'/>
+		<word name='QPointer'/>
+		<word name='QTemporaryFile'/>
+		<word name='QApplication'/>
+		<word name='QGraphicsPolygonItem'/>
+		<word name='QPointF'/>
+		<word name='QTestEventList'/>
+		<word name='QAssistantClient'/>
+		<word name='QGraphicsProxyWidget'/>
+		<word name='QPolygon'/>
+		<word name='QTextBlock'/>
+		<word name='QAtomicInt'/>
+		<word name='QGraphicsRectItem'/>
+		<word name='QPolygonF'/>
+		<word name='QTextBlockFormat'/>
+		<word name='QAtomicPointer'/>
+		<word name='QGraphicsScene'/>
+		<word name='QPrintDialog'/>
+		<word name='QTextBlockGroup'/>
+		<word name='QGraphicsSceneContextMenuEvent'/>
+		<word name='QPrintEngine'/>
+		<word name='QTextBlockUserData'/>
+		<word name='QAuthenticator'/>
+		<word name='QGraphicsSceneDragDropEvent'/>
+		<word name='QPrinter'/>
+		<word name='QTextBoundaryFinder'/>
+		<word name='QBasicTimer'/>
+		<word name='QGraphicsSceneEvent'/>
+		<word name='QPrinterInfo'/>
+		<word name='QTextBrowser'/>
+		<word name='QBitArray'/>
+		<word name='QGraphicsSceneHelpEvent'/>
+		<word name='QPrintPreviewDialog'/>
+		<word name='QTextCharFormat'/>
+		<word name='QBitmap'/>
+		<word name='QGraphicsSceneHoverEvent'/>
+		<word name='QPrintPreviewWidget'/>
+		<word name='QTextCodec'/>
+		<word name='QBoxLayout'/>
+		<word name='QGraphicsSceneMouseEvent'/>
+		<word name='QProcess'/>
+		<word name='QTextCodecPlugin'/>
+		<word name='QBrush'/>
+		<word name='QGraphicsSceneMoveEvent'/>
+		<word name='QProgressBar'/>
+		<word name='QTextCursor'/>
+		<word name='QBuffer'/>
+		<word name='QGraphicsSceneResizeEvent'/>
+		<word name='QProgressDialog'/>
+		<word name='QTextDecoder'/>
+		<word name='QButtonGroup'/>
+		<word name='QGraphicsSceneWheelEvent'/>
+		<word name='QProxyModel'/>
+		<word name='QTextDocument'/>
+		<word name='QByteArray'/>
+		<word name='QGraphicsSimpleTextItem'/>
+		<word name='QPushButton'/>
+		<word name='QTextDocumentFragment'/>
+		<word name='QByteArrayMatcher'/>
+		<word name='QGraphicsSvgItem'/>
+		<word name='QQueue'/>
+		<word name='QTextEdit'/>
+		<word name='QCache'/>
+		<word name='QGraphicsTextItem'/>
+		<word name='QRadialGradient'/>
+		<word name='QTextEncoder'/>
+		<word name='QCalendarWidget'/>
+		<word name='QGraphicsView'/>
+		<word name='QRadioButton'/>
+		<word name='QTextFormat'/>
+		<word name='QCDEStyle'/>
+		<word name='QGraphicsWidget'/>
+		<word name='QRasterPaintEngine'/>
+		<word name='QTextFragment'/>
+		<word name='QChar'/>
+		<word name='QGridLayout'/>
+		<word name='QReadLocker'/>
+		<word name='QTextFrame'/>
+		<word name='QCheckBox'/>
+		<word name='QGroupBox'/>
+		<word name='QReadWriteLock'/>
+		<word name='QTextFrameFormat'/>
+		<word name='QChildEvent'/>
+		<word name='QHash'/>
+		<word name='QRect'/>
+		<word name='QTextImageFormat'/>
+		<word name='QCleanlooksStyle'/>
+		<word name='QHashIterator'/>
+		<word name='QRectF'/>
+		<word name='QTextInlineObject'/>
+		<word name='QClipboard'/>
+		<word name='QHBoxLayout'/>
+		<word name='QRegExp'/>
+		<word name='QTextItem'/>
+		<word name='QCloseEvent'/>
+		<word name='QHeaderView'/>
+		<word name='QRegExpValidator'/>
+		<word name='QTextLayout'/>
+		<word name='QColor'/>
+		<word name='QHelpContentItem'/>
+		<word name='QRegion'/>
+		<word name='QTextLength'/>
+		<word name='QColorDialog'/>
+		<word name='QHelpContentModel'/>
+		<word name='QResizeEvent'/>
+		<word name='QTextLine'/>
+		<word name='QColormap'/>
+		<word name='QHelpContentWidget'/>
+		<word name='QResource'/>
+		<word name='QTextList'/>
+		<word name='QColumnView'/>
+		<word name='QHelpEngine'/>
+		<word name='QRubberBand'/>
+		<word name='QTextListFormat'/>
+		<word name='QComboBox'/>
+		<word name='QHelpEngineCore'/>
+		<word name='QRunnable'/>
+		<word name='QTextObject'/>
+		<word name='QCommandLinkButton'/>
+		<word name='QHelpEvent'/>
+		<word name='QScriptable'/>
+		<word name='QTextOption'/>
+		<word name='QCommonStyle'/>
+		<word name='QHelpIndexModel'/>
+		<word name='QScriptClass'/>
+		<word name='QTextStream'/>
+		<word name='QCompleter'/>
+		<word name='QHelpIndexWidget'/>
+		<word name='QScriptClassPropertyIterator'/>
+		<word name='QTextTable'/>
+		<word name='QConicalGradient'/>
+		<word name='QHelpSearchEngine'/>
+		<word name='QScriptContext'/>
+		<word name='QTextTableCell'/>
+		<word name='QContextMenuEvent'/>
+		<word name='QHelpSearchQuery'/>
+		<word name='QScriptContextInfo'/>
+		<word name='QTextTableCellFormat'/>
+		<word name='QCoreApplication'/>
+		<word name='QHelpSearchQueryWidget'/>
+		<word name='QScriptEngine'/>
+		<word name='QTextTableFormat'/>
+		<word name='QCryptographicHash'/>
+		<word name='QHelpSearchResultWidget'/>
+		<word name='QScriptEngineAgent'/>
+		<word name='QThread'/>
+		<word name='QCursor'/>
+		<word name='QHideEvent'/>
+		<word name='QScriptExtensionPlugin'/>
+		<word name='QThreadPool'/>
+		<word name='QCustomRasterPaintDevice'/>
+		<word name='QHostAddress'/>
+		<word name='QScriptString'/>
+		<word name='QThreadStorage'/>
+		<word name='QDataStream'/>
+		<word name='QHostInfo'/>
+		<word name='QScriptValue'/>
+		<word name='QTime'/>
+		<word name='QDataWidgetMapper'/>
+		<word name='QHoverEvent'/>
+		<word name='QScriptValueIterator'/>
+		<word name='QTimeEdit'/>
+		<word name='QDate'/>
+		<word name='QHttp'/>
+		<word name='QScrollArea'/>
+		<word name='QTimeLine'/>
+		<word name='QDateEdit'/>
+		<word name='QHttpHeader'/>
+		<word name='QScrollBar'/>
+		<word name='QTimer'/>
+		<word name='QDateTime'/>
+		<word name='QHttpRequestHeader'/>
+		<word name='QTimerEvent'/>
+		<word name='QDateTimeEdit'/>
+		<word name='QHttpResponseHeader'/>
+		<word name='QSemaphore'/>
+		<word name='QToolBar'/>
+		<word name='QDBusAbstractAdaptor'/>
+		<word name='QIcon'/>
+		<word name='QSessionManager'/>
+		<word name='QToolBox'/>
+		<word name='QDBusAbstractInterface'/>
+		<word name='QIconDragEvent'/>
+		<word name='QSet'/>
+		<word name='QToolButton'/>
+		<word name='QDBusArgument'/>
+		<word name='QIconEngine'/>
+		<word name='QSetIterator'/>
+		<word name='QToolTip'/>
+		<word name='QDBusConnection'/>
+		<word name='QIconEnginePlugin'/>
+		<word name='QSettings'/>
+		<word name='QTransform'/>
+		<word name='QDBusConnectionInterface'/>
+		<word name='QIconEnginePluginV2'/>
+		<word name='QSharedData'/>
+		<word name='QTranslator'/>
+		<word name='QDBusContext'/>
+		<word name='QIconEngineV2'/>
+		<word name='QSharedDataPointer'/>
+		<word name='QTreeView'/>
+		<word name='QDBusError'/>
+		<word name='QImage'/>
+		<word name='QSharedMemory'/>
+		<word name='QTreeWidget'/>
+		<word name='QDBusInterface'/>
+		<word name='QImageIOHandler'/>
+		<word name='QShortcut'/>
+		<word name='QTreeWidgetItem'/>
+		<word name='QDBusMessage'/>
+		<word name='QImageIOPlugin'/>
+		<word name='QShortcutEvent'/>
+		<word name='QTreeWidgetItemIterator'/>
+		<word name='QDBusObjectPath'/>
+		<word name='QImageReader'/>
+		<word name='QShowEvent'/>
+		<word name='QUdpSocket'/>
+		<word name='QDBusReply'/>
+		<word name='QImageWriter'/>
+		<word name='QSignalMapper'/>
+		<word name='QUiLoader'/>
+		<word name='QDBusServer'/>
+		<word name='QInputContext'/>
+		<word name='QSignalSpy'/>
+		<word name='QUndoCommand'/>
+		<word name='QDBusSignature'/>
+		<word name='QInputContextFactory'/>
+		<word name='QSimpleXmlNodeModel'/>
+		<word name='QUndoGroup'/>
+		<word name='QDBusVariant'/>
+		<word name='QInputContextPlugin'/>
+		<word name='QSize'/>
+		<word name='QUndoStack'/>
+		<word name='QDesignerActionEditorInterface'/>
+		<word name='QInputDialog'/>
+		<word name='QSizeF'/>
+		<word name='QUndoView'/>
+		<word name='QDesignerContainerExtension'/>
+		<word name='QInputEvent'/>
+		<word name='QSizeGrip'/>
+		<word name='QDesignerCustomWidgetCollectionInterface'/>
+		<word name='QInputMethodEvent'/>
+		<word name='QSizePolicy'/>
+		<word name='QUrl'/>
+		<word name='QDesignerCustomWidgetInterface'/>
+		<word name='QIntValidator'/>
+		<word name='QSlider'/>
+		<word name='QUrlInfo'/>
+		<word name='QDesignerDynamicPropertySheetExtension'/>
+		<word name='QIODevice'/>
+		<word name='QSocketNotifier'/>
+		<word name='QUuid'/>
+		<word name='QDesignerFormEditorInterface'/>
+		<word name='QItemDelegate'/>
+		<word name='QSortFilterProxyModel'/>
+		<word name='QValidator'/>
+		<word name='QDesignerFormWindowCursorInterface'/>
+		<word name='QItemEditorCreator'/>
+		<word name='QSound'/>
+		<word name='QVariant'/>
+		<word name='QDesignerFormWindowInterface'/>
+		<word name='QItemEditorCreatorBase'/>
+		<word name='QSourceLocation'/>
+		<word name='QVarLengthArray'/>
+		<word name='QDesignerFormWindowManagerInterface'/>
+		<word name='QItemEditorFactory'/>
+		<word name='QSpacerItem'/>
+		<word name='QVBoxLayout'/>
+		<word name='QDesignerMemberSheetExtension'/>
+		<word name='QItemSelection'/>
+		<word name='QSpinBox'/>
+		<word name='QVector'/>
+		<word name='QDesignerObjectInspectorInterface'/>
+		<word name='QItemSelectionModel'/>
+		<word name='QSplashScreen'/>
+		<word name='QVectorIterator'/>
+		<word name='QDesignerPropertyEditorInterface'/>
+		<word name='QItemSelectionRange'/>
+		<word name='QSplitter'/>
+		<word name='QDesignerPropertySheetExtension'/>
+		<word name='QKeyEvent'/>
+		<word name='QSplitterHandle'/>
+		<word name='QDesignerTaskMenuExtension'/>
+		<word name='QKeySequence'/>
+		<word name='QSqlDatabase'/>
+		<word name='QDesignerWidgetBoxInterface'/>
+		<word name='QLabel'/>
+		<word name='QSqlDriver'/>
+		<word name='QWaitCondition'/>
+		<word name='QDesktopServices'/>
+		<word name='QLatin1Char'/>
+		<word name='QSqlDriverCreator'/>
+		<word name='QWebFrame'/>
+		<word name='QDesktopWidget'/>
+		<word name='QLatin1String'/>
+		<word name='QSqlDriverCreatorBase'/>
+		<word name='QWebHistory'/>
+		<word name='QDial'/>
+		<word name='QLayout'/>
+		<word name='QSqlDriverPlugin'/>
+		<word name='QWebHistoryInterface'/>
+		<word name='QDialog'/>
+		<word name='QLayoutItem'/>
+		<word name='QSqlError'/>
+		<word name='QWebHistoryItem'/>
+		<word name='QDialogButtonBox'/>
+		<word name='QLCDNumber'/>
+		<word name='QSqlField'/>
+		<word name='QWebHitTestResult'/>
+		<word name='QDir'/>
+		<word name='QLibrary'/>
+		<word name='QSqlIndex'/>
+		<word name='QWebPage'/>
+		<word name='QDirIterator'/>
+		<word name='QLibraryInfo'/>
+		<word name='QSqlQuery'/>
+		<word name='QWebPluginFactory'/>
+		<word name='QDirModel'/>
+		<word name='QLine'/>
+		<word name='QSqlQueryModel'/>
+		<word name='QWebSettings'/>
+		<word name='QDockWidget'/>
+		<word name='QLinearGradient'/>
+		<word name='QSqlRecord'/>
+		<word name='QWebView'/>
+		<word name='QDomAttr'/>
+		<word name='QLineEdit'/>
+		<word name='QSqlRelation'/>
+		<word name='QWhatsThis'/>
+		<word name='QDomCDATASection'/>
+		<word name='QLineF'/>
+		<word name='QSqlRelationalDelegate'/>
+		<word name='QWhatsThisClickedEvent'/>
+		<word name='QDomCharacterData'/>
+		<word name='QLinkedList'/>
+		<word name='QSqlRelationalTableModel'/>
+		<word name='QWheelEvent'/>
+		<word name='QDomComment'/>
+		<word name='QLinkedListIterator'/>
+		<word name='QSqlResult'/>
+		<word name='QWidget'/>
+		<word name='QDomDocument'/>
+		<word name='QList'/>
+		<word name='QSqlTableModel'/>
+		<word name='QWidgetAction'/>
+		<word name='QDomDocumentFragment'/>
+		<word name='QListIterator'/>
+		<word name='QSslCertificate'/>
+		<word name='QWidgetItem'/>
+		<word name='QDomDocumentType'/>
+		<word name='QListView'/>
+		<word name='QSslCipher'/>
+		<word name='QWindowsMime'/>
+		<word name='QDomElement'/>
+		<word name='QListWidget'/>
+		<word name='QSslConfiguration'/>
+		<word name='QWindowsStyle'/>
+		<word name='QDomEntity'/>
+		<word name='QListWidgetItem'/>
+		<word name='QSslError'/>
+		<word name='QWindowStateChangeEvent'/>
+		<word name='QDomEntityReference'/>
+		<word name='QLocale'/>
+		<word name='QSslKey'/>
+		<word name='QWindowsVistaStyle'/>
+		<word name='QDomImplementation'/>
+		<word name='QLocalServer'/>
+		<word name='QSslSocket'/>
+		<word name='QWindowsXPStyle'/>
+		<word name='QDomNamedNodeMap'/>
+		<word name='QLocalSocket'/>
+		<word name='QStack'/>
+		<word name='QWizard'/>
+		<word name='QDomNode'/>
+		<word name='QMainWindow'/>
+		<word name='QStackedLayout'/>
+		<word name='QWizardPage'/>
+		<word name='QDomNodeList'/>
+		<word name='QMap'/>
+		<word name='QStackedWidget'/>
+		<word name='QWorkspace'/>
+		<word name='QDomNotation'/>
+		<word name='QMapIterator'/>
+		<word name='QStandardItem'/>
+		<word name='QWriteLocker'/>
+		<word name='QDomProcessingInstruction'/>
+		<word name='QMatrix'/>
+		<word name='QStandardItemEditorCreator'/>
+		<word name='QXmlAttributes'/>
+		<word name='QDomText'/>
+		<word name='QMdiArea'/>
+		<word name='QStandardItemModel'/>
+		<word name='QXmlContentHandler'/>
+		<word name='QDoubleSpinBox'/>
+		<word name='QMdiSubWindow'/>
+		<word name='QStatusBar'/>
+		<word name='QXmlDeclHandler'/>
+		<word name='QDoubleValidator'/>
+		<word name='QStatusTipEvent'/>
+		<word name='QXmlDefaultHandler'/>
+		<word name='QDrag'/>
+		<word name='QString'/>
+		<word name='QXmlDTDHandler'/>
+		<word name='QDragEnterEvent'/>
+		<word name='QStringList'/>
+		<word name='QXmlEntityResolver'/>
+		<word name='QDragLeaveEvent'/>
+		<word name='QStringListModel'/>
+		<word name='QXmlErrorHandler'/>
+		<word name='QDragMoveEvent'/>
+		<word name='QMenu'/>
+		<word name='QStringMatcher'/>
+		<word name='QXmlFormatter'/>
+		<word name='QDropEvent'/>
+		<word name='QMenuBar'/>
+		<word name='QStringRef'/>
+		<word name='QXmlInputSource'/>
+		<word name='QDynamicPropertyChangeEvent'/>
+		<word name='QMessageBox'/>
+		<word name='QStyle'/>
+		<word name='QXmlItem'/>
+		<word name='QMetaClassInfo'/>
+		<word name='QStyledItemDelegate'/>
+		<word name='QXmlLexicalHandler'/>
+		<word name='QMetaEnum'/>
+		<word name='QStyleFactory'/>
+		<word name='QXmlLocator'/>
+		<word name='QMetaMethod'/>
+		<word name='QStyleHintReturn'/>
+		<word name='QXmlName'/>
+		<word name='QErrorMessage'/>
+		<word name='QMetaObject'/>
+		<word name='QStyleHintReturnMask'/>
+		<word name='QXmlNamePool'/>
+		<word name='QEvent'/>
+		<word name='QMetaProperty'/>
+		<word name='QStyleHintReturnVariant'/>
+		<word name='QXmlNamespaceSupport'/>
+		<word name='QEventLoop'/>
+		<word name='QMetaType'/>
+		<word name='QStyleOption'/>
+		<word name='QXmlNodeModelIndex'/>
+		<word name='QMimeData'/>
+		<word name='QStyleOptionButton'/>
+		<word name='QXmlParseException'/>
+		<word name='QExplicitlySharedDataPointer'/>
+		<word name='QMimeSource'/>
+		<word name='QStyleOptionComboBox'/>
+		<word name='QXmlQuery'/>
+		<word name='QExtensionFactory'/>
+		<word name='QModelIndex'/>
+		<word name='QStyleOptionComplex'/>
+		<word name='QXmlReader'/>
+		<word name='QExtensionManager'/>
+		<word name='QMotifStyle'/>
+		<word name='QStyleOptionDockWidget'/>
+		<word name='QXmlResultItems'/>
+		<word name='QFile'/>
+		<word name='QMouseEvent'/>
+		<word name='QStyleOptionFocusRect'/>
+		<word name='QXmlSerializer'/>
+		<word name='QFileDialog'/>
+		<word name='QMoveEvent'/>
+		<word name='QStyleOptionFrame'/>
+		<word name='QXmlSimpleReader'/>
+		<word name='QFileIconProvider'/>
+		<word name='QMovie'/>
+		<word name='QStyleOptionFrameV2'/>
+		<word name='QXmlStreamAttribute'/>
+		<word name='QFileInfo'/>
+		<word name='QMultiHash'/>
+		<word name='QStyleOptionGraphicsItem'/>
+		<word name='QXmlStreamAttributes'/>
+		<word name='QFileOpenEvent'/>
+		<word name='QMultiMap'/>
+		<word name='QStyleOptionGroupBox'/>
+		<word name='QXmlStreamEntityDeclaration'/>
+		<word name='QFileSystemModel'/>
+		<word name='QMutableHashIterator'/>
+		<word name='QStyleOptionHeader'/>
+		<word name='QXmlStreamEntityResolver'/>
+		<word name='QFileSystemWatcher'/>
+		<word name='QMutableLinkedListIterator'/>
+		<word name='QStyleOptionMenuItem'/>
+		<word name='QXmlStreamNamespaceDeclaration'/>
+		<word name='QFlag'/>
+		<word name='QMutableListIterator'/>
+		<word name='QStyleOptionProgressBar'/>
+		<word name='QXmlStreamNotationDeclaration'/>
+		<word name='QFlags'/>
+		<word name='QMutableMapIterator'/>
+		<word name='QStyleOptionProgressBarV2'/>
+		<word name='QXmlStreamReader'/>
+		<word name='QFocusEvent'/>
+		<word name='QMutableSetIterator'/>
+		<word name='QStyleOptionQ3DockWindow'/>
+		<word name='QXmlStreamWriter'/>
+		<word name='QFocusFrame'/>
+		<word name='QMutableVectorIterator'/>
+		<word name='QStyleOptionQ3ListView'/>
+		<word name='QFont'/>
+		<word name='QMutex'/>
+		<word name='QStyleOptionQ3ListViewItem'/>
+	</keywords>
+</scheme>
+
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2008
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

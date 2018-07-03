@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<hrc version="take5"
+xmlns="http://colorer.sf.net/2003/hrc"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="markdown">
+<annotation><documentation><![CDATA[
+
+markdown.hrc by Roman Kuzmin, aka NightRoman, 2013-01-07
+
+* Inline HTML should be valid XML.
+* Opened spans are always colored.
+* Blockquote contents is not parsed.
+* List levels 4: only items are parsed.
+* List levels 5+: all is colored as code.
+* Indentation: 4/8/12 spaces, 1/2/3 tabs.
+
+Add to proto.hrc:
+
+<prototype name="markdown" group="rare.inet" description="markdown">
+<filename>/\.(text|md|markdown)$/i</filename>
+<location link="...\markdown.hrc"/>
+</prototype>
+
+]]></documentation></annotation>
+
+<region name="Anchor"        parent="def:LabelStrong"    description="{#Anchor}"/>
+<region name="Code"          parent="def:TypeKeyword"    description="`Code` spans, indented and fenced blocks."/>
+<region name="EmText"        parent="def:Label"          description="Emphasized text (*Text*, _Text_)."/>
+<region name="Escape"        parent="def:StringContent"  description="Escaping backslashes and escaped symbols."/>
+<region name="HeadText"      parent="def:URI"            description="Heading text (# Text, ## Text, ...)."/>
+<region name="LinkText"      parent="def:URI"            description="[Text](Address) or [Text][Ref] or [Ref]"/>
+<region name="ListText"      parent="def:Number"         description="List item text (* Text, + Text, - Text)."/>
+<region name="QuoteText"     parent="def:Prefix"         description="Blockquote text (> Text, >> Text, ...)."/>
+<region name="StrongText"    parent="def:StringEdge"     description="Strong text (**Text**, __Text__)."/>
+<region name="Wrap"          parent="def:LabelStrong"    description="Paragraph wraps (2+ end spaces)."/>
+
+<region name="ShownMark"     parent="def:Keyword"        description="Markup transformed and shown in HTML."/>
+<region name="ListMark"      parent="ShownMark"          description="*, +, -, :"/>
+<region name="Rule"          parent="ShownMark"          description="***, ---, ___"/>
+
+<region name="BlindMark"     parent="def:Tag"            description="Markup and information not visible in HTML."/>
+<region name="Abbreviation"  parent="BlindMark"          description="*[Abbreviation]: Text"/>
+<region name="FenceMark"     parent="BlindMark"          description="~~~"/>
+<region name="HeadMark"      parent="BlindMark"          description="#, ##, ..., ######"/>
+<region name="LinkMark"      parent="BlindMark"          description="[]() or [][] or []"/>
+<region name="QuoteMark"     parent="BlindMark"          description=">, >>, ..."/>
+<region name="Reference"     parent="BlindMark"          description="[Ref]: Address 'Title'"/>
+
+<region name="start" parent="def:PairStart"/>
+<region name="end" parent="def:PairEnd"/>
+
+<entity name="i3" value="^ {,3}"/>
+<entity name="i7" value="^(?: {,7}|\t)"/>
+<entity name="i11" value="^(?: {,11}|\t{1,2})"/>
+<entity name="i15" value="^(?: {,15}|\t{1,3})"/>
+<entity name="i19" value="^(?: {,19}|\t{1,4})"/>
+<entity name="s4" value="^(?: {4,7}|\t)"/>
+<entity name="s8" value="^(?: {8,11}|\t{2})"/>
+<entity name="s12" value="^(?: {12,15}|\t{3})"/>
+<entity name="x4" value="^(?: {4}|\t)"/>
+<entity name="x8" value="^(?: {8}|\t{2})"/>
+<entity name="x12" value="^(?: {12}|\t{3})"/>
+
+<entity name="Abbr" value=" {,3}\*\[[^\]]+\]:"/>
+<entity name="Email" value="[^@&gt;]+@[^.&gt;]+\.[^&gt;]+"/>
+<entity name="Fence" value="\~{3,}\s*$"/>
+<entity name="FenceMark" value="(?{FenceMark}\~{3,})\s*$"/>
+<entity name="Head" value="#{1,6}"/>
+<entity name="ID" value="[a-zA-Z][a-zA-Z0-9_\-:.]*"/>
+<entity name="List1" value="(?:[*+\-]|\d+\.)\s+\S"/>
+<entity name="List2" value="(?:[*+\-:]|\d+\.)\s+\S"/>
+<entity name="ListMark" value="(?{ListMark}[*+\-:]|\d+\.)\s+\S?="/>
+<entity name="Quote" value="&gt;"/>
+<entity name="QuoteMark" value="(?{QuoteMark}&gt;(?: *&gt;)*)"/>
+<entity name="Ref" value=" {,3}\[[^\]]+\]:"/>
+<entity name="Rule" value=" {,3}(?:(?:\*\s*){3,}$|(?:-\s*){3,}$|(?:_\s*){3,}$)"/>
+<entity name="URI" value="(?:http|https|ftp|file):\/\/[^&gt;]*"/>
+
+<entity name="Top" value="^(?:\s*$|%Rule;|%Head;|%Ref;|%Abbr;)"/>
+<entity name="LEnd" value="^(?:%Top;|\s*%List2;|%Fence;|%i3;%Quote;)?="/>
+<entity name="PEnd" value="^(?:%Top;| {,3}:\s+\S|%Fence;|%i3;%Quote;)?="/>
+
+<scheme name="Escape">
+	<regexp match="/(?{Escape}\\[\\\`\*\_\{\}\[\]\(\)&gt;\#\+\-\.\!:|=&lt;])/"/>
+</scheme>
+
+<scheme name="CodeSpan">
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}`+)/" end="/(?{end}\y{start})|%LEnd;/"/>
+</scheme>
+
+<scheme name="PCodeSpan">
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}`+)/" end="/(?{end}\y{start})|%PEnd;/"/>
+</scheme>
+
+<scheme name="Link">
+	<inherit scheme="Escape"/>
+
+	<block scheme="Escape" region="LinkText"
+	start="/\[/" end="/\]/"/>
+</scheme>
+
+<scheme name="LinkSpan">
+	<block scheme="Link" region="LinkText" priority="low"
+	start="/(?{start}(?{LinkMark}!?\[))/" end="/(?{end}(?{LinkMark}\](?:\([^)]*\)| ?\[[^\]]*\])?))|%LEnd;/"/>
+</scheme>
+
+<scheme name="PLinkSpan">
+	<block scheme="Link" region="LinkText" priority="low"
+	start="/(?{start}(?{LinkMark}!?\[))/" end="/(?{end}(?{LinkMark}\](?:\([^)]*\)| ?\[[^\]]*\])?))|%PEnd;/"/>
+</scheme>
+
+<scheme name="Base">
+	<inherit scheme="Escape"/>
+	<inherit scheme="CodeSpan"/>
+	<inherit scheme="LinkSpan"/>
+
+	<regexp match="/(?{LinkMark}&lt;)(?{LinkText}%URI;|%Email;)(?{LinkMark}&gt;)/"/>
+
+	<block scheme="xml:xml"
+	start="/\M&lt;(?:!--|\d?!\w+(?:\s|\/?&gt;|$))/" end="//"/>
+</scheme>
+
+<scheme name="EmSpan">
+	<block scheme="StrongSpan" region="EmText" priority="low"
+	start="/(?{start}\*)[^\s*]?=/" end="/[^\s*]?#1(?{end}\*)|%LEnd;/"/>
+
+	<block scheme="StrongSpan" region="EmText"
+	start="/(?:^|\s?#1)(?{start}_)[^\s_]?=/" end="/[^\s_]?#1(?{end}_)(?:$|\s?=)|%LEnd;/"/>
+
+	<inherit scheme="Base"/>
+</scheme>
+
+<scheme name="PEmSpan">
+	<block scheme="PStrongSpan" region="EmText" priority="low"
+	start="/(?{start}\*)[^\s*]?=/" end="/[^\s*]?#1(?{end}\*)|%PEnd;/"/>
+
+	<block scheme="PStrongSpan" region="EmText"
+	start="/(?:^|\s?#1)(?{start}_)[^\s_]?=/" end="/[^\s_]?#1(?{end}_)(?:$|\s?=)|%PEnd;/"/>
+
+	<inherit scheme="Base"/>
+</scheme>
+
+<scheme name="StrongSpan">
+	<block scheme="EmSpan" region="StrongText"
+	start="/(?{start}\*{2,3})[^\s*]?=/" end="/[^\s*]?#1(?{end}\y{start})|%LEnd;/"/>
+
+	<block scheme="EmSpan" region="StrongText"
+	start="/(?:^|\s?#1)(?{start}_{2,3})[^\s_]?=/" end="/[^\s_]?#1(?{end}\y{start})(?:$|\s?=)|%LEnd;/"/>
+
+	<inherit scheme="Base"/>
+</scheme>
+
+<scheme name="PStrongSpan">
+	<block scheme="PEmSpan" region="StrongText"
+	start="/(?{start}\*{2,3})[^\s*]?=/" end="/[^\s*]?#1(?{end}\y{start})|%PEnd;/"/>
+
+	<block scheme="PEmSpan" region="StrongText"
+	start="/(?:^|\s?#1)(?{start}_{2,3})[^\s_]?=/" end="/[^\s_]?#1(?{end}\y{start})(?:$|\s?=)|%PEnd;/"/>
+
+	<inherit scheme="Base"/>
+</scheme>
+
+<scheme name="Wrap">
+	<regexp match="/(\S )?#2(?{Wrap} +)$/"/>
+</scheme>
+
+<scheme name="Text">
+	<inherit scheme="Wrap"/>
+	<inherit scheme="Base"/>
+	<inherit scheme="EmSpan"/>
+	<inherit scheme="StrongSpan"/>
+</scheme>
+
+<scheme name="Para">
+	<inherit scheme="Text">
+		<virtual scheme="CodeSpan" subst-scheme="PCodeSpan"/>
+		<virtual scheme="LinkSpan" subst-scheme="PLinkSpan"/>
+		<virtual scheme="EmSpan" subst-scheme="PEmSpan"/>
+		<virtual scheme="StrongSpan" subst-scheme="PStrongSpan"/>
+	</inherit>
+</scheme>
+
+<scheme name="Head">
+	<regexp match="/(?{HeadMark}#*\s*)?(?{Anchor}\{#%ID;\})(?{HeadMark}\s*#*\s*)$/"/>
+	<regexp match="/(?{HeadMark}#+\s*)$/"/>
+
+	<inherit scheme="Base"/>
+	<inherit scheme="EmSpan"/>
+	<inherit scheme="StrongSpan"/>
+</scheme>
+
+<scheme name="Item3">
+	<block scheme="def:empty" region="QuoteText"
+	start="/(?{start}%s12;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,3}%Fence;|%i11;%Quote;)/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}%x12;%FenceMark;)/" end="/(?{end}%x12;(?{FenceMark}\y{FenceMark})\s*$)/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}^ {16,}|\t{4,})/" end="/(?{end})\M%i15;\S/"/>
+
+	<block scheme="Text" region="ListText"
+	start="/(?{start}%s12;%ListMark;)/" end="/(?{end})\M(?:%Top;|^\s*%List2;|%x4;{,3}%Fence;|%i19;%Quote;)/"/>
+
+	<block scheme="Text" region="ListText"
+	start="/\M(?{start}%s12;)\S/" end="/(?{end})\M(?:%Top;|^\s*%List2;|%x4;{,3}%Fence;|%i15;%Quote;)/"/>
+</scheme>
+
+<scheme name="List3">
+	<block scheme="Text" region="ListText"
+	start="/~/" end="/\M(?:%Top;|%i15;%List2;|%x4;{,3}%Fence;|%i15;%Quote;)/"/>
+
+	<block scheme="Item3"
+	start="//" end="/\M%i11;\S/"/>
+</scheme>
+
+<scheme name="Item2">
+	<block scheme="def:empty" region="QuoteText"
+	start="/(?{start}%s8;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,2}%Fence;|%i7;%Quote;)/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}%x8;%FenceMark;)/" end="/(?{end}%x8;(?{FenceMark}\y{FenceMark})\s*$)/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}^ {12,}|\t{3,})/" end="/(?{end})\M%i11;\S/"/>
+
+	<block scheme="List3"
+	start="/(?{start}%s8;%ListMark;)/" end="/(?{end})/"/>
+
+	<block scheme="Text" region="ListText"
+	start="/\M(?{start}%s8;)\S/" end="/(?{end})\M(?:%Top;|^\s*%List2;|%x4;{,2}%Fence;|%i11;%Quote;)/"/>
+</scheme>
+
+<scheme name="List2">
+	<block scheme="Text" region="ListText"
+	start="/~/" end="/\M(?:%Top;|%i11;%List2;|%x4;{,2}%Fence;|%i11;%Quote;)/"/>
+
+	<block scheme="Item2"
+	start="//" end="/\M%i7;\S/"/>
+</scheme>
+
+<scheme name="Item">
+	<block scheme="def:empty" region="QuoteText"
+	start="/(?{start}%s4;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;%Fence;|%i3;%Quote;)/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}%x4;%FenceMark;)/" end="/(?{end}%x4;(?{FenceMark}\y{FenceMark})\s*$)/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}^ {8,}|\t{2,})/" end="/(?{end})\M%i7;\S/"/>
+
+	<block scheme="List2"
+	start="/(?{start}%s4;%ListMark;)/" end="/(?{end})/"/>
+
+	<block scheme="Text" region="ListText"
+	start="/\M(?{start}%s4;)\S/" end="/(?{end})\M(?:%Top;|^\s*%List2;|%x4;{,1}%Fence;|%s4;%Quote;)/"/>
+</scheme>
+
+<scheme name="List">
+	<block scheme="Text" region="ListText"
+	start="/~/" end="/\M(?:%Top;|%i7;%List2;|%x4;{,1}%Fence;|%i7;%Quote;)/"/>
+
+	<block scheme="Item"
+	start="//" end="/\M%i3;\S/"/>
+</scheme>
+
+<scheme name="markdown">
+	<regexp match="/^(?{Rule}%Rule;)/"/>
+
+	<block scheme="Head" region="HeadText"
+	start="/^(?{HeadMark}#{4,6})/" end="/$/"/>
+
+	<block scheme="Head" region="HeadText"
+	start="/^(?{HeadMark}#{1,3})(?{def:Outlined}.*)?=/" end="/$/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}^ {4,}|\t+)\S.*/" end="/(?{end})\M%i3;\S/"/>
+
+	<block scheme="def:empty" region="Code"
+	start="/(?{start}^%FenceMark;)\s*$/" end="/(?{end}^(?{FenceMark}\y{FenceMark}))\s*$/"/>
+
+	<regexp match="/^(?{Reference}%Ref;.*)/"/>
+
+	<regexp match="/^(?{Abbreviation}%Abbr;.*)/"/>
+
+	<block scheme="def:empty" region="QuoteText"
+	start="/(?{start}%i3;%QuoteMark;)/" end="/(?{end})%LEnd;/"/>
+
+	<block scheme="List"
+	start="/(?{start}%i3;%ListMark;)/" end="/(?{end})/"/>
+
+	<block scheme="Para"
+	start="/\M(?{start}%i3;)\S/" end="/(?{end})%PEnd;/"/>
+</scheme>
+</type>
+</hrc>
+<!--
+LICENSE
+- Version: MPL 1.1/GPL 2.0/LGPL 2.1
+-
+- The contents of this file are subject to the Mozilla Public License Version
+- 1.1 (the "License"); you may not use this file except in compliance with
+- the License. You may obtain a copy of the License at
+- http://www.mozilla.org/MPL/
+-
+- Software distributed under the License is distributed on an "AS IS" basis,
+- WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- for the specific language governing rights and limitations under the
+- License.
+-
+- The Original Code is the Colorer Library.
+-
+- The Initial Developer of the Original Code is
+- Cail Lomecb <cail@nm.ru>.
+- Portions created by the Initial Developer are Copyright (C) 1999-2005
+- the Initial Developer. All Rights Reserved.
+-
+- Contributor(s):
+- Roman Kuzmin
+-
+- Alternatively, the contents of this file may be used under the terms of
+- either the GNU General Public License Version 2 or later (the "GPL"), or
+- the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- in which case the provisions of the GPL or the LGPL are applicable instead
+- of those above. If you wish to allow use of your version of this file only
+- under the terms of either the GPL or the LGPL, and not to allow others to
+- use your version of this file under the terms of the MPL, indicate your
+- decision by deleting the provisions above and replace them with the notice
+- and other provisions required by the LGPL or the GPL. If you do not delete
+- the provisions above, a recipient may use your version of this file under
+- the terms of any one of the MPL, the GPL or the LGPL.
+-->

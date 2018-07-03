@@ -1,0 +1,954 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY c-win32 SYSTEM "c-win32.ent.hrc">
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+ <type name="c">
+  <annotation><documentation>
+    C syntax description
+  </documentation><contributors><![CDATA[
+    Vladimir Tarasov <tsoftgroup@chat.ru>
+    Timur Safin <timur@lanit.ru>
+    cail: split into two schemes: c and cpp
+    Stanislav V. Mekhanoshin <stas@titania.spb.su>
+
+    Eugene Efremov <4mirror@mail.ru>:
+     - fixed non-begin-of-string outlines
+     - split c/c++ outlines
+     - add stdio.h keywords
+     - change regions routing
+     - add labels
+     - preproc: fix #include and add #if((n)def)-#endif pairs
+     - move win32 & doxygen to separate files
+    Mike Gorchak <mike@malva.ua>
+     - updated functions according to OpenGL 1.5, GLU 1.3, GLX 1.4
+  ]]></contributors>
+  </annotation>
+
+  <import type="def"/>
+
+  <region name="String" parent="def:String"/>
+  <region name="StringEscape" parent="def:StringContent"/>
+  <region name="StringFormat" parent="def:VarStrong"/>
+  <region name="Character" parent='def:Character'/>
+
+  <region name="LineComment" parent="def:LineComment"/>
+  <region name="Comment" parent="def:Comment"/>
+
+  <region name="Number" parent="def:Number"/>
+  <region name="Symbol" parent="def:Symbol"/>
+  <region name="StructureSymbol" parent="def:SymbolStrong"/>
+  <region name="PrefixSymbol" parent="def:SymbolStrong"/> <!-- !!EE: new -->
+
+  <region name="Preproc"     parent="def:DirectiveContent"/>
+  <region name="PreprocPref" parent="def:DirectiveEdge"/> <!-- # -->
+  <region name="PreprocSpec" parent="def:KeywordStrong"/>
+  <region name="PreprocWord" parent="def:Directive"/> <!-- !!EE: def:Keyword -->
+  <region name="PreprocInclude" parent="def:Path"/>
+  <region name="PreprocIncludeEdge" parent="def:StringEdge"/>
+  <region name="AsmCode" parent="def:Directive"/>
+
+  <region name="KeywordANSI" parent="def:Keyword"/>
+  <region name="KeywordANSI.typenames" parent="KeywordANSI"/>
+  <region name="KeywordConstant" parent="def:Constant"/>
+
+  <region name="KeywordLibFunctions" parent="def:FunctionKeyword"/>
+  <region name="KeywordStructure" parent="def:StructKeyword"/>
+
+  <region name="KeywordWin32" parent="KeywordLibFunctions"/>
+  <region name="KeywordOpenGL" parent="KeywordLibFunctions"/>
+  <region name="KeywordNetwork" parent="KeywordLibFunctions"/>
+  <region name="KeywordMacro" parent="KeywordStructure"/>
+  <region name="KeywordMFC" parent="KeywordStructure"/>
+  <region name="KeywordMFCFunc" parent="KeywordWin32"/>
+
+  <region name="KeywordStdio" parent="KeywordStructure"/>
+  <region name="KeywordDeprecated" parent="def:DeprecatedKeyword"/>
+
+  <region name="Label" parent="def:Label"/>
+
+  <region name="StructOutline" parent="def:Outlined"/>
+  <region name="UnionOutline" parent="StructOutline"/>
+  <region name="EnumOutline" parent="StructOutline"/>
+  <region name="FuncOutline" parent="def:Outlined"/>
+  <region name="DefineOutline" parent="def:Outlined"/>
+  <region name="IncludeOutline" parent="def:Outlined"/>
+
+  <scheme name="doxygen">
+   <inherit scheme="doxygen:doc-comment"/>
+   <inherit scheme="TabsAsErrors"/>
+   <inherit scheme="SpacesAsErrors"/>
+  </scheme>
+
+  <scheme name="doxygen-comments" if="doxygen-comments">
+   <!-- Doxygen Comments -->
+   <inherit scheme="doxygen:doxygen">
+    <virtual scheme="doxygen:doc-comment" subst-scheme="doxygen"/>
+   </inherit>
+  </scheme>
+  
+  
+  <scheme name="TabsAsErrors" if="tabs-as-errors">
+    <regexp match="/\t+/" region='def:Error'/>
+  </scheme>
+
+  <scheme name="SpacesAsErrors" if="spaces-as-errors">
+    <regexp match="/\x20+$/" region='def:Error'/>
+  </scheme>
+
+
+
+  <scheme name="AsmCode">
+   <regexp match="/\/\/.*$/" region0="Comment"/>
+   <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment"
+          region00="def:PairStart" region10="def:PairEnd"/>
+   <regexp match="/[Ll]?&#34;(\\.|[^\\&#34;])*?&#34;/" region0="String"/>
+   <inherit scheme="def:CHexNumber"/>
+   <inherit scheme="asm:baseasm"/>
+  </scheme>
+
+  <scheme name="GnuAsmCode">
+   <block start="/\(/" end="/\)/" scheme="GnuAsmCode" region00="def:PairStart" region10="def:PairEnd"/>
+   <inherit scheme="AsmCode"/>
+  </scheme>
+
+  <scheme name="PragmaText">
+   <block start="/\/\//" end="/$/" scheme="def:Comment" region="Comment"/>
+   <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment"
+          region00="def:PairStart" region10="def:PairEnd"/>
+   <regexp match="/&#34;(\\.|[^\\&#34;])*?&#34;/" region="String"/>
+  </scheme>
+  
+
+  <scheme name="Character">
+   <regexp match="/[Ll]?'(\\\D | \\[0-7]{1,3} | \\x[\da-fA-F]{2} | [^\\']){1,4}'/x" region="Character"/>
+   <regexp match="/'.*?'/" region="def:Error"/>
+  </scheme>
+
+  <scheme name="String">
+   <block start="/(?{def:StringEdge}[Ll]?&#34;)/" end="/(?{def:StringEdge}&#34;)/"
+          scheme="StringContent" region="String" inner-region="yes"
+          region00='def:PairStart' region10='def:PairEnd'
+   />
+  </scheme>
+
+  <entity name='format' value='[\-\+\#0\x20]*?[\d\*]*(?{}\.[\d\*]+)?(h|l|L|ll|I|I32|I64)?[SsCcsuidopxXnEefgGaAZ]'/>
+  <scheme name="StringContent">
+   <regexp match="/\\\\$/" region="def:Error"/>
+	 <regexp match="/((\%)[\dA-Z_]{2,}(\%))(%format;|%)?!/" region1="def:Var" region2="def:PairStart" region3="def:PairEnd"/>
+   <regexp match="/\\[^xX\d]/" region="StringEscape"/>
+   <regexp match="/\\$/" region="StringEscape"/>
+   <regexp match="/\\x[\da-fA-F]{1,8}/i" region="StringEscape"/>
+   <regexp match="/\\[0-7]{1,12}/" region="StringEscape"/>
+   <regexp match="/\%(%format;|\%)/" region="StringFormat"/>
+   <regexp match="/[^\\\&#34;]$/" region="def:Error"/>
+   <inherit scheme="TabsAsErrors"/>
+  </scheme>
+  
+  <scheme name="PreprocLine">
+   <block start='/line\s+(\d+)\s+(("))/' end='/(")/'
+    scheme="def:Path" region="PreprocInclude" 
+    region00="PreprocWord" region01="def:Number"
+    region02="PreprocIncludeEdge" region10="PreprocIncludeEdge"
+    region03="def:PairStart" region11="def:PairEnd"
+   /> 
+   <regexp match='/line\s+(\d+)/' 
+    region0="PreprocWord" region1="def:Number"
+   />
+  </scheme>
+
+  <scheme name='include.outline' if='include-in-outline'>
+    <regexp match="/~ \s* \M include \s* ([\w_&lt;&gt;\x22\x27\\\/\.]+) /x" region1="IncludeOutline"/>
+  </scheme>
+
+  <scheme name='define.outline' if='define-in-outline'>
+    <regexp match="/~ \s* \M define \s+ ([\w_]+) /x" region1="DefineOutline"/>
+  </scheme>
+
+  <scheme name="Preproc">
+   <block start="/\/\//" end="/$/" scheme="def:Comment" region="LineComment"/>
+   <block start="/\/\*/" end="/\*\//" scheme="def:Comment"
+          region="Comment" region00="def:PairStart" region10="def:PairEnd"/>
+   <!--
+   <regexp match="/(\x22)[\:\w\d\.\-\\\/]*?(\x22)/" region0="cString" region1="def:PairStart" region2="def:PairEnd"/>
+   -->
+   <!--regexp match="/(&lt;)[\w\d\.\-\\\/]*?(&gt;)/"
+           region0="String" region1="def:PairStart" region2="def:PairEnd"/-->
+   <inherit scheme="String"/>
+   <inherit scheme="Character"/>
+   <block start="/~ \s* (pragma | error | warning) \b/x" end="/$/" scheme="PragmaText" region="PreprocSpec" region00="PreprocWord"/>
+   <inherit scheme="PreprocLine"/>
+   
+   <inherit scheme="define.outline"/>
+   <inherit scheme="include.outline"/>
+
+   <!-- can make bugs
+   <inherit scheme="PairedBrackets">
+      <virtual scheme="PairedBrackets" subst-scheme="cPrePro"/>
+   </inherit>
+    -->
+
+   <block start="/include\s*((&lt;))/" end="/(&gt;)/"
+    scheme="def:Path" region="PreprocInclude" region00="PreprocWord"
+    region01="PreprocIncludeEdge" region10="PreprocIncludeEdge"
+    region02="def:PairStart" region11="def:PairEnd"
+   />
+   <block start="/include\s*((&quot;))/" end="/(&quot;)/"
+    scheme="def:Path" region="PreprocInclude" region00="PreprocWord"
+    region01="PreprocIncludeEdge" region10="PreprocIncludeEdge"
+    region02="def:PairStart" region11="def:PairEnd"
+   />
+
+   <!-- can introduce some bugs
+   <regexp match="/~\s*\M(if((n)?def)?)/" region1="def:PairStart"/>
+   <regexp match="/~\s*\M(endif)/" region1="def:PairEnd"/>
+   -->
+
+   <keywords region="Symbol">
+      <symb name=";"/><symb name="="/>
+      <symb name="+"/><symb name="-"/>
+      <symb name="/"/><symb name="*"/>
+      <symb name="&amp;"/><symb name="^"/>
+      <symb name="|"/><symb name=":"/>
+      <symb name="("/><symb name=")"/>
+      <symb name="["/><symb name="]"/>
+      <symb name=","/><symb name="."/>
+      <symb name="!"/><symb name="~"/>
+      <symb name="&lt;"/><symb name="&gt;"/>
+      <symb name="%"/><symb name="?"/>
+      <symb name="{"/><symb name="}"/>
+      <symb name="#"/><symb name="@"/>
+   </keywords>
+   <keywords region="PreprocWord">
+      <word name="define"/>
+      <word name="defined"/>
+      <word name="elif"/>
+      <word name="else"/>
+      <word name="endif"/>
+      <word name="error"/>
+      <word name="if"/>
+      <word name="ifdef"/>
+      <word name="ifndef"/>
+      <word name="include"/>
+      <word name="line"/>
+      <word name="pragma"/>
+      <word name="sizeof"/>
+      <word name="undef"/>
+   </keywords>
+   <inherit scheme="TabsAsErrors"/>
+   <inherit scheme="SpacesAsErrors"/>
+  </scheme>
+
+  <scheme name="PreprocComment">
+   <regexp match="/(\/\/.*$)/" region="LineComment"/>
+   <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment"/>
+   <block start="/^\s*(#)\s*if/" end="/^\s*\#\s*endif/" scheme="PreprocComment" region="Comment"/>
+  </scheme>
+
+  <scheme name="c">
+   <!-- c preprocessor -->
+   <block start="/^\s*\#\s*if\s+0\s*$/" end="/^\s*(?{Directive}\#\s*(endif|else))/"
+          scheme="PreprocComment" region00="def:Directive" region="def:Comment"/>
+   <block start="/^\s*(#)/" end="/(^ | [^\\]?#1) $/x"
+          scheme="Preproc" region="Preproc" region01='PreprocPref'/>
+
+
+   <block start="/(\{)/" end="/(\})/" scheme="c"
+          region00="SymbolStrong" region01="PairStart" region10="SymbolStrong" region11="PairEnd"/>
+
+   <!-- Assembler -->
+   <block start="/(\b_?_?asm)\s*?(\{|$)/" end="/(\})/" scheme="AsmCode"
+          region01="AsmCode" region02="StructureSymbol" region10="StructureSymbol" region00="def:PairStart" region11="def:PairEnd"/>
+   <!-- Gnu Assembler -->
+   <block start="/\b (asm) \s* \( /ix"    end="/ \) /ix" scheme="GnuAsmCode"
+          region01="AsmCode" region00="def:PairStart" region10="def:PairEnd"/>
+   <!-- Inline Assembler ? -->
+   <block start="/\b_?_?asm\b/" end="/$/" scheme="AsmCode" region00="AsmCode"/>
+
+   <inherit scheme="Outlines"/>
+   <inherit scheme="Labels"/>
+   <inherit scheme="Expression"/>
+
+  </scheme>
+
+
+  <!-- !!EE: new scheme - Labels -->
+  <scheme name="Labels">
+   <annotation>
+    <documentation>
+     Labels in C/C++
+     Note! We cannot include this code into Expression scheme. It crashes.
+    </documentation>
+    <appinfo> <todo> <![CDATA[
+     ":" после неименованых членов битовых полей имеет тип "Label",
+     если перед ней нету пробела.
+     И вообще, для этой схемы "int:", "default:" и, скажем, "for:"
+     абсолютно аналогичны друг другу, что не есть рулез...
+    ]]> </todo> </appinfo>
+   </annotation>
+   <!--  -->
+   <!--regexp match="/^\s*(default)(:)/"
+    region1="KeywordANSI" region2="Label"
+   /-->
+   <!--regexp match="/^\s*(\w+\:)\M(\s|$)/" region1="Label"/-->
+
+   <block start="/^\s*\M\w+\:([^\:]|$)/" end="/~\w+\m\:/"
+    region="Label" scheme="Expression"/>
+
+   <block start="/\bcase\s/" end="/\:?~1\:\M([^\:]|$)/"
+    scheme="Expression" region="KeywordConstant"
+    region00="KeywordANSI" region10="Label"
+   /><!-- end =".....\M(\s|$)" region="def:Constant" -->
+
+   <regexp match="/(\bgoto)\s+(\w+)\M(\W|$)/"
+    region1="KeywordDeprecated" region2="Label"
+   />
+  </scheme>
+
+  <!-- !!EE: two new schemes - Outlines -->
+  <scheme name="Outlines">
+   <annotation>
+    <documentation>
+     C only outlines.
+     Scheme must be replased for C++ operators.
+    </documentation>
+    <appinfo> <todo> <![CDATA[
+     Схема не проверялась на строгое соответствие ANSI C.
+     Классы я убрал, но, возможно, тут еще что-то лишнее...
+    ]]> </todo> </appinfo>
+   </annotation>
+
+   <regexp><![CDATA[
+     /^ \M \s* (\w[\w_*&~]+ \s [\s\w_*&~\"]*?)?
+     (?{FuncOutline} [\:\w_&~<>]+? )
+     (\sfor)?~4 (\sif)?~3 (\swhile)?~6 (\sswitch)?~7
+     \s* \( [^;]* ($|\{)/x
+   ]]></regexp>
+   
+  <regexp><![CDATA[
+    /^ \M \s*
+    (typedef\s+)?
+    (
+     (struct) \s+ (?{StructOutline} [\w_]+) | (?{StructOutline} struct )
+    )\s*;?!
+    ($|\{)/x
+  ]]></regexp>
+
+   <inherit scheme="SharedOutlines"/>
+  </scheme>
+
+  <scheme name="SharedOutlines">
+   <annotation>
+    <documentation>
+     C/C++ outlines.
+    </documentation>
+   </annotation>
+
+  <regexp><![CDATA[
+    /^ \M \s*
+    (typedef\s+)?
+    (
+     (union) \s+ (?{UnionOutline} [\w_]+) | (?{UnionOutline} union )
+    )\s*;?!
+    ($|\{)/x
+  ]]></regexp>
+ 
+  <regexp><![CDATA[
+    /^ \M \s*
+    (typedef\s+)?
+    (
+     (enum) \s+ (?{EnumOutline} [\w_]+) | (?{EnumOutline} enum )
+    )\s*;?!
+    ($|\{)/x
+  ]]></regexp>
+  
+   
+  </scheme>
+
+
+
+  <!-- !!EE: new scheme - Operators -->
+  <scheme name="Operators">
+   <annotation>
+    <documentation>
+     ANSI C keyword operators.
+     Scheme must be replased for C++ operators.
+    </documentation>
+    <appinfo> <todo> <![CDATA[
+
+     В принципе, каждый оператор следует обрабатывать
+     оттдельно (см. закомментированый фрагмент)
+     Hо это пораждает достаточно специфические проблемы.
+     Hапример как обрабатывать конструкции типа a+++*--b?
+     Я вижу два возможных решения и пока не знаю, который из них
+     предпочесть:
+      1. Для каждой группы операторов писать регэксп, который бы опредлял
+      аналог worddiv для начала и конца. (Это было бы предпочтительно,
+      но при стабильной работе \M\m):
+       <regexp match="/ worddiv1 \m (operator1|...|operatorN) \M worddiv2 /x"
+        region1="Symbol"/>
+      2. Распознавать подобный дурной стиль программирования как
+      ошибку.
+
+     Замечание. Если в синтаксис <keywords> внести изменение - это
+     может сильно упростить задачу:
+      <keywords region="Symbol" start="/worddiv1/" end="/wordiv2/">
+       <word name="operator1"/>
+       ...
+       <word name="operatorN"/>
+      </keywords>
+
+    ]]> </todo> </appinfo>
+   </annotation>
+
+   <!--
+   <keywords region="Symbol" worddiv="/[\w\s\(\)\]&gt;&lt;&quot;&apos;*&amp;]/">
+    <symb name="::" region="PrefixSymbol"/>
+    <symb name="::*" region="PrefixSymbol"/>
+    <word name="-&lt;"/>
+    <word name="-&lt;*"/>
+    ...
+   </keywords>
+   -->
+
+   <keywords region="Symbol">
+      <symb name="::" region="PrefixSymbol"/> <!-- !!EE it's prefix -->
+      <symb name="="/>
+      <symb name="+"/><symb name="-"/>
+      <symb name="/"/><symb name="*"/>
+      <symb name="&amp;"/><symb name="^"/>
+      <symb name="|"/>
+      <symb name=","/><symb name="."/>
+      <symb name="!"/><symb name="~"/>
+      <symb name="&lt;"/><symb name="&gt;"/>
+      <symb name="%"/>
+      <symb name="?" region="StructureSymbol"/>
+      <symb name=":" region="StructureSymbol"/>
+      <symb name="#"/>
+      <symb name="@"/>
+   </keywords>
+  </scheme>
+
+
+  <scheme name="DeclSpecs">
+    <keywords region="def:Directive">
+       <word name="align"/>
+       <word name="allocate"/>
+       <word name="appdomain"/>
+       <word name="deprecated"/>
+       <word name="dllimport"/>
+       <word name="dllexport"/>
+       <word name="jitintrinsic"/>
+       <word name="naked"/>
+       <word name="noalias"/>
+       <word name="noinline"/>
+       <word name="noreturn"/>
+       <word name="nothrow"/>
+       <word name="novtable"/>
+       <word name="process"/>
+       <word name="property"/>
+       <word name="restrict"/>
+       <word name="selectany"/>
+       <word name="thread"/>
+       <word name="uuid"/>
+    </keywords>
+    <block start="/(\()/" end="/(\))/" scheme="Expression"
+          region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+  </scheme>
+  <scheme name="Expression">
+
+   <block start="/(\()/" end="/(\))/" scheme="Expression"
+          region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+   <block start="/(\[)/" end="/(\])/" scheme="Expression"
+          region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+
+   <!-- EE - for this:
+  if(a==b
+  #ifndef BLA_BLA_BLA
+    || b==c
+  #endif
+    )
+   -->
+   <block start="/^\s*(#)/" end="/(^ | [^\\]?#1) $/x"
+          scheme="Preproc" region="Preproc" region01='PreprocPref'/>
+
+   <!-- Numbers -->
+   <inherit scheme="def:Number"/>
+   <inherit scheme="def:BadHex"/>
+
+   <!-- Bad tokens -->
+   <regexp match="/#\w+/" region="def:Error"/>
+   <regexp match="/\b[\d\$\`\@]\w+/i" region="def:Error"/>
+
+   <inherit scheme="TabsAsErrors"/>
+   <inherit scheme="SpacesAsErrors"/>
+
+   <inherit scheme="Character"/>
+   <!-- cail: extended strings. You may wish to disable multilines : end='/"|$/' -->
+   <inherit scheme="String"/>
+
+   <inherit scheme='doxygen-comments'/>
+   
+   <!-- Comments -->
+   <block start="/\/\//" end="/$/" scheme="def:Comment" region="LineComment"/>
+   <block scheme="def:Comment" region="Comment">
+      <start region0="def:PairStart"><![CDATA[/\/\*/]]></start>
+      <end   region0="def:PairEnd"  ><![CDATA[/\*\//]]></end>
+   </block>
+
+
+   <!-- Standard C/C++ symbols -->
+   <keywords region="StructureSymbol">
+      <symb name=";"/>
+   </keywords>
+   <inherit scheme="Operators"/>
+
+   <keywords region="def:Error">
+      <symb name="["/><symb name="]"/>
+      <symb name="{"/><symb name="}"/>
+      <symb name="("/><symb name=")"/>
+      <symb name="*/"/>
+   </keywords>
+
+
+
+   <!-- C Keywords: datatypes -->
+   <keywords region="KeywordANSI.typenames">
+      <word name="char"/>
+      <word name="const"/>
+      <word name="double"/>
+      <word name="float"/>
+      <word name="int"/>
+      <word name="long"/>
+      <word name="short"/>
+      <word name="signed"/>
+      <word name="unsigned"/>
+      <word name="void"/>
+      <word name="wchar_t"/>
+      <word name="__int128"/>
+      <word name="__int16"/>
+      <word name="__int32"/>
+      <word name="__int64"/>
+      <word name="__int8"/>
+      <word name="__wchar_t"/>
+   </keywords>
+
+   <block start="/(__declspec)\s*((\())/" end="/(\))/" scheme="DeclSpecs"
+       region01="KeywordANSI" region02="Symbol" region03="PairStart"
+       region10="Symbol" region11="PairEnd"
+   />
+   <!-- C Keywords -->
+   <keywords region="KeywordANSI">
+      <word name="asm"/>
+      <word name="auto"/>
+      <word name="break"/>
+      <word name="case"/>
+      <word name="cdecl"/>
+      <word name="continue"/>
+      <word name="default"/>
+      <word name="defined"/>
+      <word name="do"/>
+      <word name="else"/>
+      <word name="enum"/>
+      <word name="explicit"/>
+      <word name="export"/>
+      <word name="extern"/>
+      <word name="far"/>
+      <word name="fastcall"/>
+      <word name="finally"/>
+      <word name="for"/>
+      <word name="fortran"/>
+      <word name="goto" region="KeywordDeprecated"/>
+      <word name="huge"/>
+      <word name="if"/>
+      <word name="import"/>
+      <word name="inline"/>
+      <word name="interrupt"/>
+      <word name="near"/>
+      <word name="pascal"/>
+      <word name="register"/>
+      <word name="return"/>
+      <word name="sizeof"/>
+      <word name="static"/>
+      <word name="stdcall"/>
+      <word name="struct"/>
+      <word name="switch"/>
+      <word name="this"/>
+      <word name="typedef"/>
+      <word name="union"/>
+      <word name="using"/>
+      <word name="volatile"/>
+      <word name="while"/>
+      <word name="_cdecl"/>
+      <word name="_export"/>
+      <word name="_fastcall"/>
+      <word name="_import"/>
+      <word name="_pascal"/>
+      <word name="_stdcall"/>
+      <word name="__cdecl"/>
+      <word name="__declspec"/>
+      <word name="__except"/>
+      <word name="__export"/>
+      <word name="__far"/>
+      <word name="__far16"/>
+      <word name="__fastcall"/>
+      <word name="__finally"/>
+      <word name="__fortran"/>
+      <word name="__huge"/>
+      <word name="__import"/>
+      <word name="__inline"/>
+      <word name="__interrupt"/>
+      <word name="__leave"/>
+      <word name="__loadds"/>
+      <word name="__near"/>
+      <word name="__nounwind"/>
+      <word name="__pascal"/>
+      <word name="__property"/>
+      <word name="__ptr64"/>
+      <word name="__published"/>
+      <word name="__restrict"/>
+      <word name="__resume"/>
+      <word name="__rtti"/>
+      <word name="__saveregs"/>
+      <word name="__segment"/>
+      <word name="__segname"/>
+      <word name="__stdcall"/>
+      <word name="__sysapi"/>
+      <word name="__syscall"/>
+      <word name="__thiscall"/>
+      <word name="__thread"/>
+      <word name="__try"/>
+      <word name="__unaligned"/>
+   </keywords>
+
+   <keywords region='KeywordLibFunctions'>
+    <word name="main"/>
+   </keywords>
+
+   <!-- !!EE (add keywords): stdio.h -->
+   <keywords region="KeywordStdio">
+     <word name="NULL" region="KeywordConstant"/>
+     <word name="EOF" region="KeywordConstant"/>
+
+     <word name="intptr_t"/>
+     <word name="size_t"/>
+     <word name="ptrdiff_t"/>
+     <word name="wint_t"/>
+     <word name="wctype_t"/>
+     <word name="stdin"/>
+     <word name="stdout"/>
+     <word name="stderr"/>
+     <word name="FILE"/>
+   </keywords>
+   
+   <inherit scheme="Keyword-Stdlibs"/>
+
+   <inherit scheme="Keywords-win32"/>
+
+ </scheme>
+ 
+ <scheme name="Keyword-Stdlibs" if="ansi-defines">
+		<keywords region="KeywordStdio" worddiv="[^\d\w\.]">
+			<word name='isalnum'/>
+			<word name='isalpha'/>
+			<word name='iscntrl'/>
+			<word name='isdigit'/>
+			<word name='isgraph'/>
+			<word name='islower'/>
+			<word name='isprint'/>
+			<word name='ispunct'/>
+			<word name='isspace'/>
+			<word name='isupper'/>
+			<word name='isxdigit'/>
+			<word name='tolower'/>
+			<word name='toupper'/>
+			<word name='lconv'/>
+			<word name='setlocale'/>
+			<word name='localeconv'/>
+			<word name='acos'/>
+			<word name='asin'/>
+			<word name='atan'/>
+			<word name='atan2'/>
+			<word name='ceil'/>
+			<word name='cos'/>
+			<word name='cosh'/>
+			<word name='exp'/>
+			<word name='fabs'/>
+			<word name='floor'/>
+			<word name='fmod'/>
+			<word name='frexp'/>
+			<word name='ldexp'/>
+			<word name='log'/>
+			<word name='log10'/>
+			<word name='modf'/>
+			<word name='pow'/>
+			<word name='sin'/>
+			<word name='sinh'/>
+			<word name='sqrt'/>
+			<word name='tan'/>
+			<word name='tanh'/>
+			<word name='jmp_buf'/>
+			<word name='longjmp'/>
+			<word name='sig_atomic_t'/>
+			<word name='signal'/>
+			<word name='raise'/>
+			<word name='va_list'/>
+			<word name='va_arg'/>
+			<word name='va_start'/>
+			<word name='va_end'/>
+			<word name='va_copy'/>
+			<word name='ptrdiff_t'/>
+			<word name='size_t'/>
+			<word name='FILE'/>
+			<word name='fpos_t'/>
+			<word name='clearerr'/>
+			<word name='fclose'/>
+			<word name='feof'/>
+			<word name='ferror'/>
+			<word name='fflush'/>
+			<word name='fgetc'/>
+			<word name='fgetpos'/>
+			<word name='fgets'/>
+			<word name='fopen'/>
+			<word name='fprintf'/>
+			<word name='fputc'/>
+			<word name='fputs'/>
+			<word name='fread'/>
+			<word name='freopen'/>
+			<word name='fscanf'/>
+			<word name='fseek'/>
+			<word name='fsetpos'/>
+			<word name='ftell'/>
+			<word name='fwrite'/>
+			<word name='getc'/>
+			<word name='getchar'/>
+			<word name='gets'/>
+			<word name='perror'/>
+			<word name='printf'/>
+			<word name='putc'/>
+			<word name='putchar'/>
+			<word name='puts'/>
+			<word name='remove'/>
+			<word name='rename'/>
+			<word name='rewind'/>
+			<word name='scanf'/>
+			<word name='setbuf'/>
+			<word name='setvbuf'/>
+			<word name='sprintf'/>
+			<word name='sscanf'/>
+			<word name='tmpfile'/>
+			<word name='tmpnam'/>
+			<word name='ungetc'/>
+			<word name='vfprintf'/>
+			<word name='vprintf'/>
+			<word name='vsprintf'/>
+			<word name='snprintf'/>
+			<word name='vfscanf'/>
+			<word name='vscanf'/>
+			<word name='vsnprintf'/>
+			<word name='vsscanf'/>
+			<word name='div_t'/>
+			<word name='ldiv_t'/>
+			<word name='abort'/>
+			<word name='abs'/>
+			<word name='atexit'/>
+			<word name='atof'/>
+			<word name='atoi'/>
+			<word name='atol'/>
+			<word name='bsearch'/>
+			<word name='calloc'/>
+			<word name='div'/>
+			<word name='exit'/>
+			<word name='free'/>
+			<word name='getenv'/>
+			<word name='labs'/>
+			<word name='ldiv'/>
+			<word name='malloc'/>
+			<word name='mblen'/>
+			<word name='mbstowcs'/>
+			<word name='mbtowc'/>
+			<word name='qsort'/>
+			<word name='rand'/>
+			<word name='realloc'/>
+			<word name='srand'/>
+			<word name='strtod'/>
+			<word name='strtol'/>
+			<word name='strtoul'/>
+			<word name='system'/>
+			<word name='wcstombs'/>
+			<word name='wctomb'/>
+			<word name='lldiv_t'/>
+			<word name='_Exit'/>
+			<word name='atoll'/>
+			<word name='strtoll'/>
+			<word name='strtoull'/>
+			<word name='strtof'/>
+			<word name='strtold'/>
+			<word name='memcpy'/>
+			<word name='memmove'/>
+			<word name='strcpy'/>
+			<word name='strncpy'/>
+			<word name='strcat'/>
+			<word name='strncat'/>
+			<word name='memcmp'/>
+			<word name='strcmp'/>
+			<word name='strcoll'/>
+			<word name='strncmp'/>
+			<word name='strxfrm'/>
+			<word name='strcspn'/>
+			<word name='strspn'/>
+			<word name='strtok'/>
+			<word name='memset'/>
+			<word name='strerror'/>
+			<word name='strlen'/>
+			<word name='memchr'/>
+			<word name='strchr'/>
+			<word name='strpbrk'/>
+			<word name='strrchr'/>
+			<word name='strstr'/>
+			<word name='clock_t'/>
+			<word name='time_t'/>
+			<word name='tm'/>
+			<word name='clock'/>
+			<word name='difftime'/>
+			<word name='mktime'/>
+			<word name='time'/>
+			<word name='asctime'/>
+			<word name='ctime'/>
+			<word name='gmtime'/>
+			<word name='localtime'/>
+			<word name='strftime'/>
+			<word name='mbstate_t'/>
+			<word name='wint_t'/>
+			<word name='btowc'/>
+			<word name='fgetwc'/>
+			<word name='fgetws'/>
+			<word name='fputwc'/>
+			<word name='fputws'/>
+			<word name='fwide'/>
+			<word name='fwprintf'/>
+			<word name='fwscanf'/>
+			<word name='getwc'/>
+			<word name='getwchar'/>
+			<word name='mbrlen'/>
+			<word name='mbrtowc'/>
+			<word name='mbsinit'/>
+			<word name='mbsrtowcs'/>
+			<word name='putwc'/>
+			<word name='putwchar'/>
+			<word name='swprintf'/>
+			<word name='swscanf'/>
+			<word name='ungetwc'/>
+			<word name='vfwprintf'/>
+			<word name='vfwscanf'/>
+			<word name='vswprintf'/>
+			<word name='vswscanf'/>
+			<word name='vwprintf'/>
+			<word name='vwscanf'/>
+			<word name='wcrtomb'/>
+			<word name='wcscat'/>
+			<word name='wcscmp'/>
+			<word name='wcscoll'/>
+			<word name='wcscpy'/>
+			<word name='wcscspn'/>
+			<word name='wcsftime'/>
+			<word name='wcslen'/>
+			<word name='wcsncat'/>
+			<word name='wcsncmp'/>
+			<word name='wcsncpy'/>
+			<word name='wcsrtombs'/>
+			<word name='wcsspn'/>
+			<word name='wcstod'/>
+			<word name='wcstof'/>
+			<word name='wcstok'/>
+			<word name='wcstol'/>
+			<word name='wcstoul'/>
+			<word name='wcsxfrm'/>
+			<word name='wctob'/>
+			<word name='wmemcmp'/>
+			<word name='wmemcpy'/>
+			<word name='wmemmove'/>
+			<word name='wmemset'/>
+			<word name='wprintf'/>
+			<word name='wscanf'/>
+			<word name='wcschr'/>
+			<word name='wcspbrk'/>
+			<word name='wcsrchr'/>
+			<word name='wcsstr'/>
+			<word name='wmemchr'/>
+			<word name='wcstold'/>
+			<word name='wcstoll'/>
+			<word name='wcstoull'/>
+			<word name='wint_t'/>
+			<word name='wctype_t'/>
+			<word name='wctrans_t'/>
+			<word name='iswalnum'/>
+			<word name='iswalpha'/>
+			<word name='iswblank'/>
+			<word name='iswcntrl'/>
+			<word name='iswdigit'/>
+			<word name='iswgraph'/>
+			<word name='iswlower'/>
+			<word name='iswprint'/>
+			<word name='iswprint'/>
+			<word name='iswpunct'/>
+			<word name='iswspace'/>
+			<word name='iswupper'/>
+			<word name='iswxdigit'/>
+			<word name='iswctype'/>
+			<word name='towlower'/>
+			<word name='towupper'/>
+			<word name='towctrans'/>
+			<word name='wctrans'/>
+			<word name='wctype'/>
+		</keywords>
+	</scheme>
+	
+	&c-win32;
+	
+	</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2008
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Eugene Efremov <4mirror@mail.ru>
+   - Stanislav V. Mekhanoshin <stas@titania.spb.su>
+   - Timur Safin <timur@lanit.ru>
+   - Vladimir Tarasov <tsoftgroup@chat.ru>
+   - Mike Gorchak <mike@malva.ua>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

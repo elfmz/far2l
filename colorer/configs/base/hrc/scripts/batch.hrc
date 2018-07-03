@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Batch/WinNT CMD script files Syntax v 2.5
+With help of:
+    Vadim N. Zaharenko <zvn@msalt.belpak.gomel.by>, <Vadim.Zaharenko@GMail.com>
+    Vladimir Tarasov <tsoftgroup@chat.ru>
+    Alexander Lishansky <alex@i-sight.com>
+    Aleksey Pichugin <pichugin@hotpop.com>
+    Leszek ?Єхniak <ls9999@friko1.onet.pl>
+    Safin Timur <timur@lanit.ru>
+    Alexander Polosow <Alexander.Polosow@p89.f38.n5025.z2.fidonet.org>
+    really, the most popular language :)
+-->
+   <type name="Batch">
+
+      <import type="def"/>
+      <import type="perl"/>
+
+      <region name="ntCmd" parent="Keyword"/>
+      <region name="ntComment" parent="Comment"/>
+      <region name="ntExe" parent="Keyword"/>
+      <region name="ntLabel" parent="Label"/>
+      <region name="ntNumber" parent="Number"/>
+      <region name="ntSpec" parent="Symbol"/>
+      <region name="ntStr" parent="String"/>
+      <region name="ntVarEnv" parent="Var"/>
+
+      <region name="ntHereDoc" parent="String"/>
+
+      <entity name="label" value=":[\dA-Za-z]\w*"/>
+      <entity name="path-subst" value="(\~[fdpnxsatz]*(\$\w+\:)?)?"/>
+      <entity name="labelName" value="[a-zA-Z0-9`\-~@#$_\[\]\\\{\}'.\/]+"/>
+
+      <scheme name="BatchContent">
+         <regexp match="/\%\*/" region0="ntNumber"/>
+         <regexp match="/\%%path-subst;\d/i" region0="ntNumber"/>
+         <regexp match="/\%\%%path-subst;[a-z]/i" region0="ntNumber"/>
+      </scheme>
+
+      <scheme name="echo">
+         <regexp match="/\^(\||&amp;|&lt;|&gt;)/i" region0="ntStr"/>
+         <inherit scheme="BatchContent"/>
+         <inherit scheme="Comment"/>
+      </scheme>
+
+<!--
+
+Experimental feature: heredoc in the batch file
+
+http://stackoverflow.com/a/29329912/3627676
+http://forum.script-coding.com/viewtopic.php?id=10536
+
+External usage: call heredoc :LABEL & goto :LABEL
+Internal usage: call :heredoc :LABEL & goto :LABEL
+
+-->
+<scheme name="nt_heredoc">
+	<block
+		start="/^[\s@]*(call)\s+(:?heredoc\s+:?(%labelName;))/i" 
+		end="/^(:\y3)$/"
+		scheme="def:def"
+		region="ntHereDoc"
+		region00="def:PairStart" 
+		region01="ntCmd" 
+		region02="perl:HereDocName" 
+		region10="def:PairEnd"
+		region11="perl:HereDocName"
+	/>
+</scheme>
+
+      <scheme name="BatchInternal">
+      	<inherit scheme="nt_heredoc" />
+         <block start="/(\{)/" end="/(\})/" scheme="BatchInternal" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\()/" end="/(\))/" scheme="BatchInternal" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="BatchInternal" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+<!-- Labels -->
+         <regexp match="/^\s*:%labelName;\s*(.*)$/" region0="ntLabel" region1="ntComment"/>
+<!-- Linear Comments -->
+         <regexp match="/^\s*(REM\s+).*$/i" region0="ntComment" region1="ntCmd"/>
+         <regexp match="/^\s*::.*$/" region0="ntComment"/>
+         <regexp match="/^\s*;.*$/" region0="ntComment"/>
+<!-- Numbers -->
+         <regexp match="/\b\d[0-9a-fA-F]*\b/" region0="ntNumber"/>
+         <regexp match="/\%\@[^\[]+/" region0="ntNumber"/>
+         <inherit scheme="BatchContent"/>
+<!-- Strings -->
+         <regexp match="/\&#34;(\\.|[^\\&#34;])*?\&#34;/" region0="ntStr"/>
+<!--regexp match='/\%.*?\%/' region0="ntVarEnv"/-->
+         <regexp match="/([%!])[^\[\]]*?(\1)/" region0="ntVarEnv" region1="PairStart" region2="PairEnd"/>
+         <regexp match="/\[.*?\]/" region0="ntVarEnv"/>
+         <regexp match="/&lt;.*?\&gt;/" region0="ntVarEnv"/>
+<!-- ECHO command -->
+<!--regexp match="/\b(echo)((\s*?on\s*?(>|$))|(\s*?off\s*?(>|$)))/i" region1="Keywords" region2="Keywords" -->
+         <regexp match="/\becho(\s+on\s*|\s+off\s*)/i" region0="ntCmd"/>
+         <block start="/\becho\M\W/i" end="/\M'|`|&lt;|&gt;|\||&amp;|$/" scheme="echo" region="ntStr" region00="ntCmd"/>
+<!-- GOTO command -->
+         <regexp match="/goto\s*:EOF\b/i" region="ntCmd"/>
+         <regexp match="/(goto) ( (\s*:|\s+:?) %labelName;)/ix" region1="ntCmd" region2="ntLabel"/>
+<!-- CALL command with label -->
+         <regexp match="/(call) \s* (:%labelName;)/ix" region1="ntCmd" region2="ntLabel"/>
+
+         <block start="/^\s*(\@)/" end="/$/" scheme="Batch" region="ntComment" region01="ntSpec"/>
+         <keywords region="ntSpec">
+            <symb name="&lt;"/>
+            <symb name="="/>
+            <symb name=","/>
+            <symb name="&gt;"/>
+            <symb name="@"/>
+            <symb name="|"/>
+            <symb name=":"/>
+            <symb name="\"/>
+            <symb name=";"/>
+            <symb name="&amp;"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="?"/>
+            <symb name="^"/>
+         </keywords>
+         <regexp match="/setlocal(\s+(enable|disable)(extensions|delayedexpansion)\b)+/i" region0="ntCmd"/>
+         <keywords ignorecase="yes" region="ntCmd">
+            <word name="accdate"/>
+            <word name="assoc"/>
+            <word name="auto"/>
+            <word name="aux"/>
+            <word name="break"/>
+            <word name="buffers"/>
+            <word name="buffershigh"/>
+            <word name="call"/>
+            <word name="cd"/>
+            <word name="chdir"/>
+            <word name="cls"/>
+            <word name="cmdcmdline"/>
+            <word name="cmdextversion"/>
+            <word name="codepage"/>
+            <word name="color"/>
+            <word name="con"/>
+            <word name="com1"/>
+            <word name="com2"/>
+            <word name="com3"/>
+            <word name="com4"/>
+            <word name="copy"/>
+            <word name="country"/>
+            <word name="date"/>
+            <word name="defined"/>
+            <word name="del"/>
+            <word name="device"/>
+            <word name="devicehigh"/>
+            <word name="dir"/>
+            <word name="do"/>
+            <word name="dos"/>
+            <word name="dosonly"/>
+            <word name="driveparm"/>
+            <word name="drivparm"/>
+            <word name="echo"/>
+            <word name="echoconfig"/>
+            <word name="else"/>
+            <word name="endlocal"/>
+            <word name="eof"/>
+            <word name="equ"/>
+            <word name="erase"/>
+            <word name="errorlevel"/>
+            <word name="exist"/>
+            <word name="exit"/>
+            <word name="fcbs"/>
+            <word name="fcbshigh"/>
+            <word name="files"/>
+            <word name="fileshigh"/>
+            <word name="for"/>
+            <word name="ftype"/>
+            <word name="geq"/>
+            <word name="goto"/>
+            <word name="gtr"/>
+            <word name="high"/>
+            <word name="if"/>
+            <word name="in"/>
+            <word name="include"/>
+            <word name="install"/>
+            <word name="installhigh"/>
+            <word name="lastdrive"/>
+            <word name="lastdrivehigh"/>
+            <word name="leq"/>
+            <word name="lh"/>
+            <word name="libpath"/>
+            <word name="loadhigh"/>
+            <word name="logo"/>
+            <word name="low"/>
+            <word name="lpq"/>
+            <word name="lpr"/>
+            <word name="lpt1"/>
+            <word name="lpt2"/>
+            <word name="lpt3"/>
+            <word name="lpt4"/>
+            <word name="lss"/>
+            <word name="md"/>
+            <word name="menucolor"/>
+            <word name="menudefault"/>
+            <word name="menuitem"/>
+            <word name="mkdir"/>
+            <word name="move"/>
+            <word name="multitrack"/>
+            <word name="neq"/>
+            <word name="noauto"/>
+            <word name="not"/>
+            <word name="noumb"/>
+            <word name="ntcmdprompt"/>
+            <word name="nul"/>
+            <word name="numlock"/>
+            <word name="off"/>
+            <word name="on"/>
+            <word name="path"/>
+            <word name="pause"/>
+            <word name="popd"/>
+            <word name="prn"/>
+            <word name="prompt"/>
+            <word name="protshell"/>
+            <word name="pushd"/>
+            <word name="rcp"/>
+            <word name="rd"/>
+            <word name="rem"/>
+            <word name="ren"/>
+            <word name="rename"/>
+            <word name="rmdir"/>
+            <word name="set"/>
+            <word name="setlocal"/>
+            <word name="shell"/>
+            <word name="shift"/>
+            <word name="stacks"/>
+            <word name="stackshigh"/>
+            <word name="submenu"/>
+            <word name="switches"/>
+            <word name="time"/>
+            <word name="truename"/>
+            <word name="title"/>
+            <word name="type"/>
+            <word name="umb"/>
+            <word name="ver"/>
+            <word name="verify"/>
+            <word name="vol"/>
+         </keywords>
+         <keywords ignorecase="yes" region="ntExe">
+            <word name="accounts"/>
+            <word name="append"/>
+            <word name="arp"/>
+            <word name="at"/>
+            <word name="attrib"/>
+            <word name="backup"/>
+            <word name="cacls"/>
+            <word name="chcp"/>
+            <word name="chkdsk"/>
+            <word name="cmd"/>
+            <word name="compact"/>
+            <word name="computer"/>
+            <word name="config"/>
+            <word name="continue"/>
+            <word name="convert"/>
+            <word name="debug"/>
+            <word name="diskcomp"/>
+            <word name="diskcopy"/>
+            <word name="diskperf"/>
+            <word name="doskey"/>
+            <word name="edit"/>
+            <word name="edlin"/>
+            <word name="exe2bin"/>
+            <word name="expand"/>
+            <word name="fastopen"/>
+            <word name="fc"/>
+            <word name="file"/>
+            <word name="find"/>
+            <word name="findstr"/>
+            <word name="finger"/>
+            <word name="forcedos"/>
+            <word name="ftp"/>
+            <word name="graftabl"/>
+            <word name="graphics"/>
+            <word name="group"/>
+            <word name="help"/>
+            <word name="helpmsg"/>
+            <word name="hostname"/>
+            <word name="ipconfig"/>
+            <word name="ipxroute"/>
+            <word name="keyb"/>
+            <word name="label"/>
+            <word name="loadfix"/>
+            <word name="localgroup"/>
+            <word name="mem"/>
+            <word name="mode"/>
+            <word name="more"/>
+            <word name="name"/>
+            <word name="nbtstat"/>
+            <word name="net"/>
+            <word name="netstat"/>
+            <word name="nlsfunc"/>
+            <word name="nslookup"/>
+            <word name="ntbooks"/>
+            <word name="pause"/>
+            <word name="pax"/>
+            <word name="pentnt"/>
+            <word name="ping"/>
+            <word name="portuas"/>
+            <word name="print"/>
+            <word name="qbasic"/>
+            <word name="recover"/>
+            <word name="replace"/>
+            <word name="restore"/>
+            <word name="route"/>
+            <word name="rsh"/>
+            <word name="send"/>
+            <word name="session"/>
+            <word name="setver"/>
+            <word name="share"/>
+            <word name="share"/>
+            <word name="sort"/>
+            <word name="start"/>
+            <word name="statistics"/>
+            <word name="stop"/>
+            <word name="subst"/>
+            <word name="tftp"/>
+            <word name="tracert"/>
+            <word name="tree"/>
+            <word name="use"/>
+            <word name="user"/>
+            <word name="view"/>
+            <word name="xcopy"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="perl_bat">
+         <regexp match="/__END__/" priority="low"/>
+         <inherit scheme="perl"/>
+      </scheme>
+
+      <scheme name="Batch">
+<!-- Timur: builtin perl scripts -->
+<!--Block start="/\M^#!\s*[\w:\\/\-]*perl/i" end="/\M^:endofperl/i" scheme="Perl"-->
+<!--Block start="/^\@rem\s';\m/" end="/__END__\m/" scheme="Perl"-->
+         <block start="/^(\@rem.*?';)/" end="/(__END__\M|\M^:endofperl)/i" scheme="perl_bat" region00="ntCmd" region10="perl:Rare"/>
+<!-- oops! Continue Perl block -->
+         <block start="/\M^[=\#]/" end="/(__END__\M|\M^:endofperl)/i" scheme="perl_bat"/>
+         <inherit scheme="BatchInternal"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Igor Russkih <irusskih at gmail dot com>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2007
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

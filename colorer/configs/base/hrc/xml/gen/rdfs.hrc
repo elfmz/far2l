@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hrc
+  PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN" "http://colorer.sf.net/2003/hrc.dtd">
+<hrc xmlns="http://colorer.sf.net/2003/hrc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     version="take5"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+  insert this define into HRC base catalog file (colorer.hrc)
+
+  <prototype name="rdfs" group="group" description="rdfs" targetNamespace="http://www.w3.org/2000/01/rdf-schema#">
+    <location link="rdfs.hrc"/>
+    <filename>/\./ix</filename>
+  </prototype>
+--><type name="rdfs">
+      <annotation>
+         <documentation>
+           XSLT Generated HRC scheme for language 'rdfs'
+           from XML Schema with xsd2hrc.xsl version 0.9.4 
+            Copyright (C) 2002-04 Cail Lomecb
+            Portions copyright (C) 2004-06 Eugene Efremov
+
+           Scheme parameters:
+             targetNamespace             : http://www.w3.org/2000/01/rdf-schema#
+             hrctype                     : rdfs
+             allow-common-attr           : yes
+             allow-any-attr              : no
+             allow-unknown-elements      : no
+             allow-unknown-root-elements : no
+             force-single-root           : yes
+             default prefixes            : (?{}(?{}rdfs)(?{}:))
+               you can change them with entity 'nsprefix'
+             
+             </documentation>
+         <documentation>
+          Schema documentation:
+  
+   XML schema for RDF Schema
+   Written by Eugene Efremov &lt;4mirror@mail.ru&gt;
+  
+ </documentation>
+         <contributors><![CDATA[Eugene Efremov]]></contributors>
+      </annotation>
+      <import type="def"/>
+      <region name="element.start.name" parent="xml:element.defined.start.name"/>
+      <region name="element.end.name" parent="xml:element.defined.end.name"/>
+      <region name="element.start.lt" parent="xml:element.start.lt"/>
+      <region name="element.start.gt" parent="xml:element.start.gt"/>
+      <region name="element.end.lt" parent="xml:element.end.lt"/>
+      <region name="element.end.gt" parent="xml:element.end.gt"/>
+      <region name="element.nsprefix" parent="xml:element.defined.nsprefix"/>
+      <region name="element.nscolon" parent="xml:element.nscolon"/>
+      <region name="Attribute.name" parent="xml:Attribute.defined.name"/>
+      <region name="Attribute.nsprefix" parent="xml:Attribute.defined.nsprefix"/>
+      <region name="Attribute.nscolon" parent="xml:Attribute.nscolon"/>
+      <region name="AttValue" parent="xml:AttValue.defined"/>
+      <region name="AttValue.start" parent="xml:AttValue.defined.start"/>
+      <region name="AttValue.end" parent="xml:AttValue.defined.end"/>
+      <region name="Enumeration" parent="xml:Enumeration"
+              description="Enumerated type values"/>
+      <region name="ClassOutlined" description="RDF class description" parent="def:Outlined"/>
+      <entity name="ns-real-prefix" value="(?{}(?{}rdfs)(?{}:))"/>
+      <entity name="nsprefix" value="(?{}(?{}rdfs)(?{}:))"/>
+      <entity name="attr-nsprefix" value="(?{}(?{}rdfs)(?{Attribute.nscolon}:))"/>
+      <scheme name="_hrc_int_elementContent">
+         <block start="/~( (&lt;) (  ((%xml:NCName;) (:) )? (%xml:Name;) ) \M &gt;?   )/x"
+                end="/( (&lt;\/) (\y3\b)?= ( (%xml:NCName;) (:) )? (%xml:Name;) \b \M \s* (&gt;?)                   | (\/ \M &gt;) )/x"
+                region01="PairStart"
+                region02="element.start.lt"
+                region05="element.nsprefix"
+                region06="element.nscolon"
+                region07="element.start.name"
+                region11="PairEnd"
+                region12="element.end.lt"
+                region15="element.nsprefix"
+                region16="element.nscolon"
+                region17="element.end.name"
+                region18="element.end.gt"
+                region19="element.start.gt"
+                scheme="xml:elementContent2"/>
+         <inherit scheme="xml:badChar"/>
+      </scheme>
+      <scheme name="_hrc_int_AttValue">
+         <block start="/(&#34;)/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.quot"
+                region="AttValue"/>
+         <block start="/(')/" end="/(\y1)/" region00="PairStart" region10="PairEnd"
+                region01="AttValue.start"
+                region11="AttValue.end"
+                scheme="xml:AttValue.content.apos"
+                region="AttValue"/>
+      </scheme>
+      <scheme name="AttributeContent">
+         <inherit scheme="xml:AttributeContent">
+            <virtual scheme="xml:AttValue" subst-scheme="_hrc_int_AttValue"/>
+         </inherit>
+      </scheme>
+      <!--custom schemes from '../../src/rdf/src/custom.rdf.xml'--><!--end custom--><scheme name="Resource-element">
+         <block start="/\M &lt; (%nsprefix;Resource ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:nodeElement-elementContent"/>
+      </scheme>
+      <scheme name="Literal-element">
+         <block start="/\M &lt; (%nsprefix;Literal ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:nodeElement-elementContent"/>
+      </scheme>
+      <scheme name="Class-element">
+         <regexp match="/\M (&lt; %nsprefix;Class \b\s*.*? (([\x22\x27])(.*?)(\3))? )([\/&gt;\s]|$)/x"
+                 region1="ClassOutlined"/>
+         <block start="/\M &lt; (%nsprefix;Class ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:nodeElement-elementContent"/>
+      </scheme>
+      <scheme name="Datatype-element">
+         <block start="/\M &lt; (%nsprefix;Datatype ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:nodeElement-elementContent"/>
+      </scheme>
+      <scheme name="Container-element">
+         <block start="/\M &lt; (%nsprefix;Container ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:nodeElement-elementContent"/>
+      </scheme>
+      <scheme name="ContainerMembershipProperty-element">
+         <block start="/\M &lt; (%nsprefix;ContainerMembershipProperty ([\s\/&gt;]|$) )/x"
+                end="/ &gt; /x"
+                scheme="rdf:nodeElement-elementContent"/>
+      </scheme>
+      <scheme name="nodeElementURIs-group">
+         <inherit scheme="Resource-element"/>
+         <inherit scheme="Literal-element"/>
+         <inherit scheme="Class-element"/>
+         <inherit scheme="Datatype-element"/>
+         <inherit scheme="Container-element"/>
+         <inherit scheme="ContainerMembershipProperty-element"/>
+      </scheme>
+      <scheme name="subClassOf-element">
+         <block start="/\M &lt; (%nsprefix;subClassOf ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="subPropertyOf-element">
+         <block start="/\M &lt; (%nsprefix;subPropertyOf ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="domain-element">
+         <block start="/\M &lt; (%nsprefix;domain ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="range-element">
+         <block start="/\M &lt; (%nsprefix;range ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="label-element">
+         <block start="/\M &lt; (%nsprefix;label ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="comment-element">
+         <block start="/\M &lt; (%nsprefix;comment ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="member-element">
+         <block start="/\M &lt; (%nsprefix;member ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="seeAlso-element">
+         <block start="/\M &lt; (%nsprefix;seeAlso ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="isDefinedBy-element">
+         <block start="/\M &lt; (%nsprefix;isDefinedBy ([\s\/&gt;]|$) )/x" end="/ &gt; /x"
+                scheme="rdf:propertyElt-elementContent"/>
+      </scheme>
+      <scheme name="propertyElementURIs-group">
+         <inherit scheme="subClassOf-element"/>
+         <inherit scheme="subPropertyOf-element"/>
+         <inherit scheme="domain-element"/>
+         <inherit scheme="range-element"/>
+         <inherit scheme="label-element"/>
+         <inherit scheme="comment-element"/>
+         <inherit scheme="member-element"/>
+         <inherit scheme="seeAlso-element"/>
+         <inherit scheme="isDefinedBy-element"/>
+      </scheme>
+      <scheme name="propertyAttributeURIs-attributeGroup">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(subClassOf)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(subPropertyOf)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(domain)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(range)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(label)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(comment)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(member)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(seeAlso)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(?{Attribute.nsprefix}%attr-nsprefix;)(isDefinedBy)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+      </scheme>
+
+      <scheme name="rdfs-root"/>
+      <scheme name="rdfs-root-addref">
+         <inherit scheme="rdfs-root"/>
+      </scheme>
+      <scheme name="rdfs">
+         <inherit scheme="xml:singleroot">
+            <virtual scheme="xml:element" subst-scheme="rdfs-root-addref"/>
+         </inherit>
+      </scheme>
+   </type>
+</hrc>

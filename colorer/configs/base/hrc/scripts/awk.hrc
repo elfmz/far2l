@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="awk">
+      <!--
+          AWK Syntax description (for GAWK 3.1.6) Oct 3 2003
+      With help of:
+          Valentin Skirdin <vskirdin@mail.ru>
+      -->
+
+      <import type="def"/>
+
+      <region name="awkComment" parent="Comment"/>
+      <region name="awkArg" parent="Parameter"/>
+      <region name="awkNumb" parent="Number"/>
+      <region name="awkString" parent="String"/>
+      <region name="awkSymb" parent="Symbol"/>
+      <region name="awkStructOp" parent="SymbolStrong"/>
+      <region name="awkPatterns" parent="Label"/>
+      <region name="awkConst" parent="Parameter"/>
+      <region name="awkControl" parent="Keyword"/>
+      <region name="awkIOstat" parent="Keyword"/>
+      <region name="awkIOredir" parent="Parameter"/>
+      <region name="awkArithmetic" parent="Keyword"/>
+      <region name="awkStrFunc" parent="Keyword"/>
+      <region name="awkTimestampFunc" parent="Keyword"/>
+      <region name="awkFunctions" parent="Keyword"/>
+      <region name="awkBitFunc" parent="Keyword"/>
+      <region name="awkStrTransFunc" parent="Keyword"/>
+      <region name="awkExtFunc" parent="Keyword"/>
+      <region name="FuncOutline" parent="Outlined"/>
+      <region name="PattOutline" parent="Outlined"/>
+
+      <scheme name="awkComment">
+         <regexp match="/~\s+(gawk\b)( .*)?$/" 
+         	region0="def:Comment" region1="def:VarStrong" region2="def:KeywordStrong" 
+         />
+
+         <inherit scheme="Comment"/>
+         <!--inherit scheme="text"/ ??? -->
+      </scheme>
+
+
+      <scheme name="awk">
+         <!--inherit scheme="def:unixCommentDirective"/-->
+<!-- Outline lists -->
+         <regexp><![CDATA[
+            /^ \M \s* (?{PattOutline} (BEGIN) | (END) ) [\s\W] .*? $/x
+         ]]></regexp>
+         <regexp><![CDATA[
+            /^ \M \s* (?{PattOutline} (\/) ([^\\]|\\.)*? (\/) ) [\s\W] .*? $/x
+         ]]></regexp>
+         <regexp><![CDATA[
+            /^ \M \s* func(tion)? \s* (?{FuncOutline} \w+? ) \s* \( .*? $/x
+         ]]></regexp>
+<!-- Linear Comments -->
+         <block start="/\#/" end="/$/" scheme="awkComment" region="awkComment"/>
+<!-- I/O redirection -->
+         <regexp match="/'((\/dev\/(stderr|stdin|stdout|pid|ppid|pgrpid|user|(fd\/\d)))|(\/inet\/(tcp|udp|raw)\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?))'/" region="awkIOredir"/>
+         <regexp match="/&#34;((\/dev\/(stderr|stdin|stdout|pid|ppid|pgrpid|user|(fd\/\d)))|(\/inet\/(tcp|udp|raw)\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?))&#34;/" region="awkIOredir"/>
+<!-- Argument -->
+         <regexp match="/(\$[0-9]+)([^0-9\s\+\-\*\/\=\;\:\^&amp;\%\!\,\)\]]*)/" region0="awkArg" region2="Error"/>
+         <regexp match="/\$[a-zA-Z\_]+([a-zA-Z0-9\_]*)([^a-zA-Z0-9\_\s\+\-\*\/\=\;\:\^&amp;\%\!\,\)\]]*)/" region0="awkArg" region2="Error"/>
+         <regexp match="/\$[^a-zA-Z0-9\_]*/" region="Error"/>
+<!-- Numbers -->
+         <inherit scheme="CHexNumber"/>
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+<!-- Strings -->
+         <!--inherit scheme="CString"/-->
+         <block start='/(("))\M(\\.|[^\\"])*?"/' end='/(")/' 
+         	scheme='c:StringContent' region='awkString'
+         	region01="StringEdge" region02="def:PairStart"
+         	region10="StringEdge" region11="def:PairEnd"
+         />
+         
+         <regexp match="/('(\\.|[^\\'])*?')/" region="awkString"/> <!-- ??? -->
+         <!--regexp match="/(\/) ([^\\]|\\.)*? (\/)/x" region0="awkString" region1="StringEdge" region3="StringEdge"/-->
+         <block start='/((\/))\M ([^\\]|\\.)*? (\/)/x' end='/(\/)/'
+         	scheme='regexp:posix.regexp' region='awkString'
+         	region01="StringEdge" region02="def:PairStart"
+         	region10="StringEdge" region11="def:PairEnd"
+         />  <!-- todo: it's real POSIX regexp? -->
+         
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="awk"/>
+         </inherit>
+<!-- symbols -->
+         <keywords region="awkSymb">
+            <symb name="|&amp;" region="awkIOredir"/>
+            <symb name=";"/>
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="/"/>
+            <symb name="*"/>
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="^"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name="!"/>
+            <symb name="~"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="%"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="?"/>
+            <symb name="&#34;&#34;" region="awkString"/>
+         </keywords>
+         <keywords region="awkPatterns">
+<!-- two special kinds of  patterns -->
+            <word name="BEGIN"/>
+            <word name="END"/>
+         </keywords>
+         <keywords region="awkConst">
+<!-- built-in variables -->
+            <word name="ARGC"/>
+            <word name="ARGIND"/>
+            <word name="ARGV"/>
+            <word name="BINMODE"/>
+            <word name="CONVFMT"/>
+            <word name="ENVIRON"/>
+            <word name="ERRNO"/>
+            <word name="FIELDWIDTHS"/>
+            <word name="FILENAME"/>
+            <word name="FNR"/>
+            <word name="FS"/>
+            <word name="IGNORECASE"/>
+            <word name="LINT"/>
+            <word name="NF"/>
+            <word name="NR"/>
+            <word name="OFMT"/>
+            <word name="OFS"/>
+            <word name="ORS"/>
+            <word name="PROCINFO"/>
+            <word name="RLENGTH"/>
+            <word name="RS"/>
+            <word name="RSTART"/>
+            <word name="RT"/>
+            <word name="SUBSEP"/>
+            <word name="TEXTDOMAIN"/>
+         </keywords>
+         <keywords region="awkControl">
+<!-- control statements -->
+            <word name="break"/>
+            <word name="case"/>
+            <word name="continue"/>
+            <word name="default"/>
+            <word name="delete"/>
+            <word name="do"/>
+            <word name="else"/>
+            <word name="exit"/>
+            <word name="for"/>
+            <word name="if"/>
+            <word name="in"/>
+            <word name="switch"/>
+            <word name="while"/>
+         </keywords>
+         <keywords region="awkIOstat">
+<!-- input/output statements -->
+            <word name="close"/>
+            <word name="fflush"/>
+            <word name="getline"/>
+            <word name="next"/>
+            <word name="nextfile"/>
+            <word name="prev"/>
+            <word name="print"/>
+            <word name="system"/>
+            <word name="printf"/>
+         </keywords>
+         <keywords region="awkArithmetic">
+<!-- pre-defined arithmetic functions -->
+            <word name="atan2"/>
+            <word name="cos"/>
+            <word name="exp"/>
+            <word name="int"/>
+            <word name="log"/>
+            <word name="rand"/>
+            <word name="sin"/>
+            <word name="sqrt"/>
+            <word name="srand"/>
+         </keywords>
+         <keywords region="awkStrFunc">
+<!-- pre-defined string functions -->
+            <word name="asort"/>
+            <word name="asorti"/>
+            <word name="gsub"/>
+            <word name="gensub"/>
+            <word name="index"/>
+            <word name="length"/>
+            <word name="match"/>
+            <word name="split"/>
+            <word name="sprintf"/>
+            <word name="strtonum"/>
+            <word name="sub"/>
+            <word name="substr"/>
+            <word name="tolower"/>
+            <word name="toupper"/>
+         </keywords>
+         <keywords region="awkTimestampFunc">
+<!-- pre-defined Timestamp functions -->
+            <word name="mktime"/>
+            <word name="strftime"/>
+            <word name="systime"/>
+         </keywords>
+         <keywords region="awkBitFunc">
+<!-- pre-defined Timestamp functions -->
+            <word name="and"/>
+            <word name="compl"/>
+            <word name="lshift"/>
+            <word name="or"/>
+            <word name="rshift"/>
+            <word name="xor"/>
+         </keywords>
+         <keywords region="awkStrTransFunc">
+<!-- pre-defined String-Translation functions -->
+            <word name="bindtextdomain"/>
+            <word name="dcgettext"/>
+            <word name="dcngettext"/>
+         </keywords>
+         <keywords region="awkFunctions">
+<!-- Functions -->
+            <word name="func"/>
+            <word name="function"/>
+            <word name="return"/>
+         </keywords>
+         <keywords region="awkExtFunc">
+<!-- ExtFunc -->
+            <word name="adump"/>
+            <word name="stopme"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  Valentin Skirdin <vskirdin@mail.ru>
+   -  Eugene Efremov <4mirror@mail.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

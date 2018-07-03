@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<!--
+   Syntax highlighting for squirrel scripts
+   For installation put it into subdirectory hrc/auto of colorer (version take5)
+-->
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+   <type name="squirrel">
+      <import type="def"/>
+      <import type="c"/>
+
+      <scheme name="squirrel">
+         <inherit scheme="def:PairedBrackets">
+            <virtual scheme="def:PairedBrackets" subst-scheme="squirrel"/>
+         </inherit>
+         <block start="/\/\//" end="/$/" scheme="def:Comment" region="Comment"/>
+         <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment"
+                region00="def:PairStart" region10="def:PairEnd"/>
+         <inherit scheme="def:CHexNumber"/>
+         <inherit scheme="def:FloatNumber"/>
+         <inherit scheme="def:DecNumber"/>
+         <inherit scheme="c:String"/>
+         <inherit scheme="c:Character"/>
+         <keywords region="def:Error">
+            <symb name="["/><symb name="]"/>
+            <symb name="{"/><symb name="}"/>
+            <symb name="("/><symb name=")"/>
+            <symb name="*/"/>
+         </keywords>
+         <keywords region="def:Symbol">
+            <symb name=";" region="def:SymbolStrong"/>
+            <symb name="="/><symb name="+"/><symb name="-"/>
+            <symb name="/"/><symb name="*"/>
+            <symb name="&amp;"/><symb name="^"/>
+            <symb name="|"/><symb name=":"/>
+            <symb name=","/><symb name="."/>
+            <symb name="!"/><symb name="~"/>
+            <symb name="&lt;"/><symb name="&gt;"/>
+            <symb name="%"/><symb name="?"/>
+         </keywords>
+         <keywords region="def:Keyword">
+            <word name="break"/>
+            <word name="case"/>
+            <word name="catch"/>
+            <word name="class"/>
+            <word name="clone"/>
+            <word name="continue"/>
+            <word name="default"/>
+            <word name="delegate"/>
+            <word name="delete"/>
+            <word name="else"/>
+            <word name="extends"/>
+            <word name="for"/>
+            <word name="foreach"/>
+            <word name="function"/>
+            <word name="if"/>
+            <word name="in"/>
+            <word name="local"/>
+            <word name="null"/>
+            <word name="resume"/>
+            <word name="return"/>
+            <word name="switch"/>
+            <word name="this"/>
+            <word name="throw"/>
+            <word name="try"/>
+            <word name="typeof"/>
+            <word name="while"/>
+            <word name="parent"/>
+            <word name="yield"/>
+            <word name="constructor"/>
+            <word name="vargc"/>
+            <word name="vargv"/>
+            <word name="instanceof"/>
+            <word name="true"/>
+            <word name="false"/>
+         </keywords>
+      </scheme>
+   </type>
+</hrc>

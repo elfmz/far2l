@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="modula2">
+      <annotation>
+         <documentation><![CDATA[
+           Modula2 and Oberon2 Syntax
+           <filename>/\.(mod|ob2|odf|def)$/i</filename>
+           <firstline>/\(\*|MODULE|DEFINITION|IMPLEMENTATION|&lt;\*/</firstline>
+         ]]></documentation>
+         <contributors><![CDATA[
+           Eugene Kotlyarov 2:5058/26.9@fidonet.org http://ekot.narod.ru/far
+           Alexander Naumov <uranus@aha.ru>
+         ]]></contributors>
+      </annotation>
+
+      <region name="String" parent="def:String"/>
+      <region name="Comment" parent="def:Comment"/>
+      <region name="Symbol" parent="def:Symbol"/>
+      <region name="Keyword" parent="def:Keyword"/>
+      <region name="Number" parent="def:Number"/>
+      <region name="PairStart" parent="def:PairStart"/>
+      <region name="PairEnd" parent="def:PairEnd"/>
+
+      <scheme name="NestedComment">
+        <inherit scheme="def:Comment"/>
+        <block scheme="NestedComment" region="Comment">
+          <start region="PairStart">/\(\*/</start>
+          <end region="PairEnd">/\*\)/</end>
+        </block>
+      </scheme>
+
+      <scheme name="modula2">
+<!-- Comments -->
+         <block start="/\(\*/" end="/\*\)/" scheme="NestedComment" region="Comment" region00="PairStart" region10="PairEnd"/>
+         <block start="/&lt;\*/" end="/\*&gt;/" scheme="def:Comment" region="def:Directive" region00="PairStart" region10="PairEnd"/>
+         <block start="/--/" end="/$/" scheme="def:Comment" region="def:LineComment"/>
+<!-- paired -->
+         <block start="/(\()/" end="/(\))/" scheme="modula2" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="modula2" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/\b(BEGIN|IF|LOOP|CASE|WHILE|FOR|RECORD|WITH|DEFINITION)\b/" end="/\b(END)\b/" scheme="modula2" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <block start="/\b(REPEAT)\b/" end="/\b(UNTIL)\b/" scheme="modula2" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+         <regexp match="/^ \s* \M (procedure|function) (\s+\[.+\])? \s+ (?{def:Function}[_\w]+)/ix"/>
+         <block start="/\b(ASM)($|\W)/i" end="/(^|\s)(END)/i" scheme="asm:baseasm" region="def:Parameter" region00="Keyword" region01="PairStart" region10="Keyword" region12="PairEnd"/>
+<!-- Strings -->
+         <regexp match="/('.*?')/" region0="String"/>
+         <regexp match="/(&#34;.*?&#34;)/" region0="String"/>
+<!-- CHAR  -->
+         <regexp match="/\b(\d[\da-fA-F]+X)\b/" region0="String"/>
+<!-- Numbers  -->
+         <regexp match="/\b(\d[\da-fA-F]+H)\b/" region0="Number"/>
+         <regexp match="/\b([0-9.]+([ED][\-+]?\d+)?)\b/" region0="Number"/>
+<!-- symbols -->
+         <keywords region="Symbol">
+            <symb name="&lt;="/>
+            <symb name="&gt;="/>
+            <symb name="^"/>
+            <symb name="+"/>
+            <symb name="#"/>
+            <symb name="&amp;"/>
+            <symb name="~"/>
+            <symb name="|"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=";"/>
+            <symb name=":"/>
+            <symb name=":="/>
+            <symb name="="/>
+            <symb name="("/>
+            <symb name="#"/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name="&gt;"/>
+            <symb name="&lt;"/>
+            <symb name="}"/>
+            <symb name="{"/>
+         </keywords>
+<!-- Common words -->
+         <keywords region="Keyword">
+            <word name="ASM"/>
+            <word name="ARRAY"/>
+            <word name="BEGIN"/>
+            <word name="BY"/>
+            <word name="CASE"/>
+            <word name="CONST"/>
+            <word name="DEFINITION"/>
+            <word name="DIV"/>
+            <word name="DO"/>
+            <word name="ELSE"/>
+            <word name="ELSIF"/>
+            <word name="END"/>
+            <word name="EXIT"/>
+            <word name="FOR"/>
+            <word name="IF"/>
+            <word name="IMPORT"/>
+            <word name="IN"/>
+            <word name="LOOP"/>
+            <word name="MOD"/>
+            <word name="MODULE"/>
+            <word name="OF"/>
+            <word name="OR"/>
+            <word name="POINTER"/>
+            <word name="PROCEDURE"/>
+            <word name="RECORD"/>
+            <word name="REPEAT"/>
+            <word name="RETURN"/>
+            <word name="SET"/>
+            <word name="THEN"/>
+            <word name="TO"/>
+            <word name="TYPE"/>
+            <word name="UNTIL"/>
+            <word name="VAR"/>
+            <word name="WHILE"/>
+            <word name="WITH"/>
+<!-- Oberon2 words -->
+            <word name="IS"/>
+<!-- Modula2 words -->
+            <word name="AND"/>
+            <word name="EXCEPT"/>
+            <word name="EXPORT"/>
+            <word name="FINALLY"/>
+            <word name="FORWARD"/>
+            <word name="FROM"/>
+            <word name="IMPLEMENTATION"/>
+            <word name="NOT"/>
+            <word name="PACKEDSET"/>
+            <word name="QUALIFIED"/>
+            <word name="REM"/>
+            <word name="RETRY"/>
+<!-- Modula2 ISO ext words -->
+            <word name="AS"/>
+            <word name="ABSTRACT"/>
+            <word name="CLASS"/>
+            <word name="GUARD"/>
+            <word name="INHERIT"/>
+            <word name="OVERRIDE"/>
+            <word name="READONLY"/>
+            <word name="REVEAL"/>
+            <word name="TRACED"/>
+            <word name="UNSAFEGUARDED"/>
+            <word name="GENERIC"/>
+         </keywords>
+<!-- Modules -->
+         <keywords region="def:InterfaceKeyword">
+            <word name="SYSTEM"/>
+            <word name="EXCEPTIONS"/>
+            <word name="M2EXCEPTION"/>
+            <word name="COROUTINES"/>
+            <word name="TERMINATION"/>
+            <word name="M2OOEXCEPTION"/>
+            <word name="GARBAGECOLLECTION"/>
+         </keywords>
+<!-- Constants -->
+         <keywords region="def:Constant">
+            <word name="TRUE"/>
+            <word name="FALSE"/>
+            <word name="NIL"/>
+         </keywords>
+<!-- Types -->
+         <keywords region="def:TypeKeyword">
+            <word name="BOOLEAN"/>
+            <word name="CHAR"/>
+            <word name="CARDINAL"/>
+            <word name="INTEGER"/>
+            <word name="REAL"/>
+            <word name="LONGREAL"/>
+            <word name="BITSET"/>
+            <word name="COMPLEX"/>
+            <word name="LONGCOMPLEX"/>
+            <word name="WORD"/>
+            <word name="LOC"/>
+            <word name="BYTE"/>
+            <word name="SHORTINT"/>
+            <word name="LONGINT"/>
+            <word name="INT8"/>
+            <word name="INT16"/>
+            <word name="INT32"/>
+            <word name="CARD8"/>
+            <word name="CARD16"/>
+            <word name="CARD32"/>
+         </keywords>
+      </scheme>
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

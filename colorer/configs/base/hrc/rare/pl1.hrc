@@ -1,0 +1,754 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="pl1">
+      <annotation>
+         <documentation>
+           PL/I Syntax description
+
+           Known bugs:
+           1. Embedded EXEC area should not color column 1.
+           2. Column 1 should be always commented out.
+           3. More labels in one line are not colored correctly:
+              " l1: l2: l3:"
+           4. Label is recognized only on the same line as "its" keyword,
+              while this should work as well: " aa:\n proc;", " end\n aa;"
+         </documentation>
+      </annotation>
+
+      <region name="Comment"   parent="def:Comment"/>
+      <region name="Symbol"    parent="def:Symbol"/>
+      <region name="Semicolon" parent="def:SymbolStrong"/>
+      <region name="Keyword"   parent="def:Keyword"/>
+      <region name="Builtin"   parent="def:Keyword"/>
+      <region name="Prepro"    parent="def:Directive"/>
+      <region name="Label"     parent="def:Label"/>
+      <region name="Exec"      parent="def:StringEdge"/>
+      <region name="Number"    parent="def:Number"/>
+      <region name="Const"     parent="def:Number"/>
+      <region name="String"    parent="def:String"/>
+
+      <region name="start" parent="def:PairStart"/>
+      <region name="end"   parent="def:PairEnd"/>
+
+      <entity name="char" value="a-zA-Z\$\#\@\xA7\_"/> <!-- alphabetic + extralingual + break -->
+      <entity name="keywdelim" value="[^%char;0-9%]"/>
+      <entity name="b1" value="(?:%keywdelim;|^.)?#1"/> <!-- word start -->
+      <entity name="b2" value="(?:%keywdelim;|$)?="/> <!-- word end -->
+      <entity name="ident" value="(?:[%char;][%char;0-9]*)"/>
+      <entity name="label1" value="(?{Label}%ident;(?:\s*\(\w+\))?\s*:)\s*"/>
+      <entity name="label2" value="\s+(?{Label}%ident;)"/>
+
+
+      <scheme name="pl1">
+         <!-- Compiler options -->
+         <regexp match="/^[\*%]\ *PROCESS.*$/i" region0="Prepro"/>
+         <!-- Preprocessor statements -->
+         <inherit scheme="prepro"/>
+         <!-- PL/I statements -->
+         <inherit scheme="pli"/>
+      </scheme>
+
+
+      <scheme name="common">
+         <!-- Except *PROCESS, the character in 1st column is ignored -->
+         <regexp match="/^\M([^\s])/" region1="Comment"/>
+         <!-- Comments -->
+         <block start="/(?{start}\/\*)/" end="/(?{end}\*\/)/" scheme="def:empty" region="Comment"/>
+         <!-- Labels -->
+         <regexp match="/^\M.\s*%label1;/"/>
+         <!-- Paired brackets -->
+         <block start="/(?{start}\()/" end="/(?{end}\))/" scheme="pl1" region00="Symbol" region10="Symbol"/>
+         <block start="/(?{start}\[)/" end="/(?{end}\])/" scheme="pl1" region00="Symbol" region10="Symbol"/>
+         <!-- Numbers in PL/I may contain underscores -->
+         <regexp match="/%b1;\.\d[\d\_]*%b2;/" region0="Number"/>
+         <regexp match="/%b1;\d[\d\_]*(\.\d[\d\_]*)?%b2;/" region0="Number"/>
+         <!-- Numeric constants may also contain underscores -->
+         <regexp match="/(\x22|\')[\dA-F\_]*\1(B[X43]?|X[NU]?)%b2;/i" region0="Const"/>
+         <!-- Strings -->
+         <block start="/(?{start}(\x22|\'))/" end="/(?{end}\Y1)/" scheme="def:empty" region="String"/>
+         <!-- %-directives -->
+         <regexp match="/\%\s*(INCLUDE|LINE|NOPRINT|NOTE|PAGE|POP|PRINT|PUSH|SKIP)%b2;/i" region0="Prepro"/>
+         <!-- Symbols -->
+         <keywords region="Symbol">
+            <symb name="="/>
+            <symb name="+"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=";" region="Semicolon"/>
+            <symb name=":"/>
+            <symb name="&#xAC;"/> <!-- NOT -->
+            <symb name="&amp;"/>
+            <symb name="|"/>
+            <symb name="&gt;"/>
+            <symb name="&lt;"/>
+            <symb name="^"/> <!-- alternative NOT -->
+            <symb name="!"/> <!-- alternative OR -->
+         </keywords>
+      </scheme>
+
+
+      <!-- Preprocessor statements -->
+      <scheme name="prepro">
+         <inherit scheme="common"/>
+         <!-- Special preprocessor comments -->
+         <block start="/^.\s*(?{start}(\%\s*IF\s+0(?:\s*=\s*1)?\s+\%?\s*THEN\s+\%?\s*DO)(;)?)%b2;/i"
+                end="/^.\s*(?{end}\%\s*END)%b2;/i"
+                scheme="def:empty" region="Comment" region01="Prepro" region02="Semicolon" region10="Prepro"/>
+         <!-- %comment -->
+         <regexp match="/%b1;(\%)(\s*\/\*)?=/" region1="Prepro"/>
+         <!-- %assignment statement -->
+         <regexp match="/%b1;(\%)(\s*%ident;\s*=)?=/" region1="Prepro"/>
+         <!-- Statements with labels -->
+         <regexp match="/(\%)\s*(?:%label1;)?(DEACT(?:IVATE)?|IF|NOTE|REPLACE)%b2;/i" region1="Prepro" region2="Prepro"/>
+         <regexp match="/(\%)\s*(?:%label1;)?(GO\ *TO|ITERATE|LEAVE)(?:%label2;)?%b2;/i" region1="Prepro" region2="Prepro"/>
+         <!-- Statements with labels and paired -->
+         <block start="/(?{start}(\%)\s*(?:%label1;)?(DO|SELECT))%b2;/i"
+                end="/(?{end}(\%)\s*(?:%label1;)?(END)(?:%label2;)?)%b2;/i"
+                scheme="pl1" region01="Prepro" region02="Prepro" region11="Prepro" region12="Prepro"/>
+         <block start="/(?{start}(\%)\s*(?:%label1;)?(PROC(?:EDURE)?))%b2;/i"
+                end="/(?{end}(\%)\s*(?:%label1;)?(END)(?:%label2;)?)%b2;/i"
+                scheme="preproc" region01="Prepro" region02="Prepro" region03="def:LabelStrong" region11="Prepro" region12="Prepro"/>
+         <!-- %-statements (except those defined previously!) -->
+         <regexp match="/\%\s*(ACT(IVATE)?|DECLARE|DCL|THEN|ELSE|INCLUDE|INSCAN|WHEN|OTHERWISE|XINCLUDE|XINSCAN)%b2;/i" region0="Prepro"/>
+         <inherit scheme="prekey"/>
+         <inherit scheme="prefun"/>
+      </scheme>
+
+
+      <!-- Preprocessor procedures -->
+      <scheme name="preproc">
+         <inherit scheme="common"/>
+         <!-- Statements with labels -->
+         <regexp match="/%b1;(GO\ *TO|ITERATE|LEAVE)(?:%label2;)%b2;/i" region1="Prepro"/>
+         <!-- Paired statements -->
+         <block start="/%b1;(?{start}(DO|SELECT))%b2;/i" end="/%b1;(?{end}(END))%b2;/i"
+                scheme="preproc" region01="Prepro" region11="Prepro"/>
+         <!-- Macro statements -->
+         <keywords ignorecase="yes" region="Prepro" worddiv="%keywdelim;">
+            <word name="ANSWER"/><word name="ANS"/>
+            <word name="DECLARE"/><word name="DCL"/>
+            <word name="DO"/>
+            <word name="END"/>
+            <word name="GO TO"/><word name="GOTO"/>
+            <word name="IF"/>
+            <word name="THEN"/>
+            <word name="ELSE"/>
+            <word name="ITERATE"/>
+            <word name="LEAVE"/>
+            <word name="NOTE"/>
+            <word name="REPLACE"/>
+            <word name="RETURN"/>
+            <word name="SELECT"/>
+            <word name="WHEN"/>
+            <word name="OTHERWISE"/>
+         </keywords>
+         <inherit scheme="prekey"/>
+         <inherit scheme="prefun"/>
+      </scheme>
+
+
+      <!-- Keywords in %-statements and macro statements -->
+      <scheme name="prekey">
+         <keywords ignorecase="yes" region="Keyword" worddiv="%keywdelim;">
+            <!-- %ACTIVATE -->
+            <word name="NORESCAN"/>
+            <word name="RESCAN"/>
+            <word name="SCAN"/>
+            <!-- %DECLARE, DECLARE -->
+            <word name="BUILTIN"/>
+            <word name="ENTRY"/>
+            <word name="CHARACTER"/><word name="CHAR"/>
+            <word name="FIXED"/>
+            <word name="EXTERNAL"/>
+            <word name="INTERNAL"/>
+            <word name="NOSCAN"/>
+            <word name="RESCAN"/>
+            <word name="SCAN"/>
+            <!-- %DO, DO -->
+            <word name="SKIP"/>
+            <!-- %PROCEDURE -->
+            <word name="CHARACTER"/><word name="CHAR"/>
+            <word name="FIXED"/>
+            <word name="RETURNS"/>
+            <word name="STATEMENT"/>
+            <!-- %REPLACE, REPLACE -->
+            <word name="BY"/>
+            <word name="WITH"/>
+            <!-- ANSWER -->
+            <word name="COLUMN"/>
+            <word name="MARGINS"/>
+            <word name="PAGE"/>
+            <word name="SKIP"/>
+         </keywords>
+      </scheme>
+
+
+      <!-- Preprocessor built-in functions -->
+      <scheme name="prefun">
+         <keywords ignorecase="yes" region="Builtin" worddiv="%keywdelim;">
+            <word name="COLLATE"/>
+            <word name="COMMENT"/>
+            <word name="COMPILEDATE"/>
+            <word name="COMPILETIME"/>
+            <word name="COPY"/>
+            <word name="COUNTER"/>
+            <word name="DIMENSION"/><word name="DIM"/>
+            <word name="HBOUND"/>
+            <word name="INDEX"/>
+            <word name="LBOUND"/>
+            <word name="LENGTH"/>
+            <word name="LOWERCASE"/>
+            <word name="MACCOL"/>
+            <word name="MACLMAR"/>
+            <word name="MACNAME"/>
+            <word name="MACRMAR"/>
+            <word name="MAX"/>
+            <word name="MIN"/>
+            <word name="PARMSET"/> <!-- in preproc only -->
+            <word name="QUOTE"/>
+            <word name="REPEAT"/>
+            <word name="SUBSTR"/>
+            <word name="SYSPARM"/>
+            <word name="SYSTEM"/>
+            <word name="SYSVERSION"/>
+            <word name="TRANSLATE"/>
+            <word name="TRIM"/>
+            <word name="UPPERCASE"/>
+            <word name="VERIFY"/>
+         </keywords>
+      </scheme>
+
+
+      <!-- PL/I statements -->
+      <scheme name="pli">
+         <inherit scheme="common"/>
+         <!-- EXEC statement usually contains embedded SQL -->
+         <block start="/%b1;(?{start}EXEC)%b2;/i" end="/(?{end};)/"
+                scheme="sql:sql" region00="Exec" region10="Exec"/>
+         <!-- Statements with labels -->
+         <regexp match="/%b1;(GO\ *TO|ITERATE|LEAVE)(?:%label2;)/i" region1="Keyword"/>
+         <!-- Statements with labels and paired -->
+         <block start="/%b1;(?{start}(?:%label1;)?(PROC|PROCEDURE|BEGIN|DO|PACKAGE|SELECT))%b2;/i"
+                end="/%b1;(?{end}(END)(?:%label2;)?)%b2;/i"
+                scheme="pl1" region01="Keyword" region11="Keyword"/>
+         <!-- PL/I statements (incl. its attributes and options) -->
+         <keywords ignorecase="yes" region="Keyword" worddiv="%keywdelim;">
+            <word name="ABNORMAL"/>
+            <word name="ALIAS"/>
+            <word name="ALIGNED"/>
+            <word name="ALLOCATE"/><word name="ALLOC"/>
+            <word name="ANSWER"/><word name="ANS"/>
+            <word name="AREA"/>
+            <word name="ASSEMBLER"/><word name="ASM"/>
+            <word name="ASSIGNABLE"/><word name="ASGN"/>
+            <word name="ATTACH"/>
+            <word name="AUTOMATIC"/><word name="AUTO"/>
+            <word name="BASED"/>
+            <word name="BEGIN"/>
+            <word name="BIGENDIAN"/>
+            <word name="BINARY"/><word name="BIN"/>
+            <word name="BIT"/>
+            <word name="BUFFERED"/><word name="BUF"/>
+            <word name="BUILTIN"/>
+            <word name="BY"/>
+            <word name="BYADDR"/>
+            <word name="BYVALUE"/>
+            <word name="CALL"/>
+            <word name="CHARACTER"/><word name="CHAR"/>
+            <word name="CHARGRAPHIC"/><word name="CHARG"/>
+            <word name="CLOSE"/>
+            <word name="COBOL"/>
+            <word name="COLUMN"/><word name="COL"/>
+            <word name="COMPLEX"/><word name="CPLX"/>
+            <word name="CONDITION"/><word name="COND"/>
+            <word name="CONNECTED"/><word name="CONN"/>
+            <word name="CONTROLLED"/><word name="CTL"/>
+            <word name="COPY"/>
+            <word name="DATE"/>
+            <word name="DECIMAL"/><word name="DEC"/>
+            <word name="DECLARE"/><word name="DCL"/>
+            <word name="DEFAULT"/><word name="DFT"/>
+            <word name="DEFINE"/>
+            <word name="DEFINED"/><word name="DEF"/>
+            <word name="DELAY"/>
+            <word name="DELETE"/>
+            <word name="DESCRIPTOR"/>
+            <word name="DETACH"/>
+            <word name="DIMACCROSS"/>
+            <word name="DIMENSION"/><word name="DIM"/>
+            <word name="DIRECT"/>
+            <word name="DLLINTERNAL"/>
+            <word name="DO"/>
+            <word name="DOWNTHRU"/>
+            <word name="ELSE"/>
+            <word name="END"/>
+            <word name="ENTRY"/>
+            <word name="ENVIRONMENT"/><word name="ENV"/>
+            <word name="EXIT"/>
+            <word name="EXPORTS"/>
+            <word name="EXTERNAL"/><word name="EXT"/>
+            <word name="FETCH"/>
+            <word name="FETCHABLE"/>
+            <word name="FILE"/>
+            <word name="FIXED"/>
+            <word name="FLOAT"/>
+            <word name="FLUSH"/>
+            <word name="FORMAT"/>
+            <word name="FORTRAN"/>
+            <word name="FREE"/>
+            <word name="FROM"/>
+            <word name="FROMALIEN"/>
+            <word name="GENERIC"/>
+            <word name="GET"/>
+            <word name="GO TO"/><word name="GOTO"/>
+            <word name="GRAPHIC"/><word name="G"/>
+            <word name="HANDLE"/>
+            <word name="HEXADEC"/>
+            <word name="IEEE"/>
+            <word name="IF"/>
+            <word name="IGNORE"/>
+            <word name="IN"/>
+            <word name="INITIAL"/><word name="INIT"/>
+            <word name="INLINE"/>
+            <word name="INONLY"/>
+            <word name="INOUT"/>
+            <word name="INPUT"/>
+            <word name="INTERNAL"/><word name="INT"/>
+            <word name="INTO"/>
+            <word name="IRREDUCIBLE"/><word name="IRRED"/>
+            <word name="ITERATE"/>
+            <word name="KEY"/>
+            <word name="KEYED"/>
+            <word name="KEYFROM"/>
+            <word name="KEYTO"/>
+            <word name="LABEL"/>
+            <word name="LEAVE"/>
+            <word name="LIKE"/>
+            <word name="LIMITED"/>
+            <word name="LINE"/>
+            <word name="LINESIZE"/>
+            <word name="LINKAGE"/>
+            <word name="LIST"/>
+            <word name="LITTLEENDIAN"/>
+            <word name="LOCATE"/>
+            <word name="MAIN"/>
+            <word name="MARGINS"/><word name="MAR"/>
+            <word name="NOCHARGRAPHIC"/><word name="NOCHARG"/>
+            <word name="NODESCRIPTOR"/>
+            <word name="NOEXECOPS"/>
+            <word name="NOINIT"/>
+            <word name="NOINLINE"/>
+            <word name="NOMAP"/>
+            <word name="NOMAPIN"/>
+            <word name="NOMAPOUT"/>
+            <word name="NONASSIGNABLE"/><word name="NONASGN"/>
+            <word name="NONCONNECTED"/><word name="NONCONN"/>
+            <word name="NONVARYING"/><word name="NONVAR"/>
+            <word name="NORMAL"/>
+            <word name="OFFSET"/>
+            <word name="ON"/>
+            <word name="OPEN"/>
+            <word name="OPTIONAL"/>
+            <word name="OPTIONS"/>
+            <word name="ORDER"/>
+            <word name="ORDINAL"/>
+            <word name="OTHERWISE"/>
+            <word name="OUTONLY"/>
+            <word name="OUTPUT"/>
+            <word name="PACKAGE"/>
+            <word name="PAGE"/>
+            <word name="PAGESIZE"/>
+            <word name="PARAMETER"/><word name="PARM"/>
+            <word name="PICTURE"/><word name="PIC"/>
+            <word name="POINTER"/><word name="PTR"/>
+            <word name="POSITION"/><word name="POS"/>
+            <word name="PRECISION"/><word name="PREC"/>
+            <word name="PRINT"/>
+            <word name="PROCEDURE"/><word name="PROC"/>
+            <word name="PUT"/>
+            <word name="RANGE"/>
+            <word name="READ"/>
+            <word name="REAL"/>
+            <word name="RECORD"/>
+            <word name="RECURSIVE"/>
+            <word name="REDUCIBLE"/><word name="RED"/>
+            <word name="REENTRANT"/>
+            <word name="RELEASE"/>
+            <word name="REORDER"/>
+            <word name="REPEAT"/>
+            <word name="RESERVED"/>
+            <word name="RESERVES"/>
+            <word name="RESIGNAL"/>
+            <word name="RETCODE"/>
+            <word name="RETURN"/>
+            <word name="RETURNS"/>
+            <word name="REVERT"/>
+            <word name="REWRITE"/>
+            <word name="SELECT"/>
+            <word name="SEQUENTIAL"/><word name="SEQL"/>
+            <word name="SET"/>
+            <word name="SIGNAL"/>
+            <word name="SIGNED"/>
+            <word name="SKIP"/>
+            <word name="SNAP"/>
+            <word name="STATIC"/>
+            <word name="STOP"/>
+            <word name="STREAM"/>
+            <word name="STRING"/>
+            <word name="STRUCTURE"/><word name="STRUCT"/>
+            <word name="SUPPRESS"/>
+            <word name="SYSTEM"/>
+            <word name="TASK"/>
+            <word name="THEN"/>
+            <word name="THREAD"/>
+            <word name="TITLE"/>
+            <word name="TO"/>
+            <word name="TSTACK"/>
+            <word name="TYPE"/>
+            <word name="UNALIGNED"/><word name="UNAL"/>
+            <word name="UNBUFFERED"/><word name="UNBUF"/>
+            <word name="UNION"/><word name="CELL"/>
+            <word name="UNSIGNED"/>
+            <word name="UNTIL"/>
+            <word name="UPDATE"/>
+            <word name="UPTHRU"/>
+            <word name="VALUE"/>
+            <word name="VARIABLE"/>
+            <word name="VARYING"/><word name="VAR"/>
+            <word name="VARYINGZ"/><word name="VARZ"/>
+            <word name="WAIT"/>
+            <word name="WHEN"/>
+            <word name="WHILE"/>
+            <word name="WIDECHAR"/><word name="WCHAR"/>
+            <word name="WINMAIN"/>
+            <word name="WRITE"/>
+         </keywords>
+         <!-- Built-in functions and sub-routines -->
+         <keywords ignorecase="yes" region="Builtin" worddiv="%keywdelim;">
+            <word name="ABS"/>
+            <word name="ACOS"/>
+            <word name="ADD"/>
+            <word name="ADDR"/>
+            <word name="ADDRDATA"/>
+            <word name="ALL"/>
+            <word name="ALLOCATE"/><word name="ALLOC"/>
+            <word name="ALLOCATION"/><word name="ALLOCN"/>
+            <word name="ALLOCSIZE"/>
+            <word name="ANY"/>
+            <word name="ASIN"/>
+            <word name="ATAN"/>
+            <word name="ATAND"/>
+            <word name="ATANH"/>
+            <word name="AUTOMATIC"/><word name="AUTO"/>
+            <word name="AVAILABLEAREA"/>
+            <word name="BINARY"/><word name="BIN"/>
+            <word name="BINARYVALUE"/><word name="BINVALUE"/>
+            <word name="BIT"/>
+            <word name="BITLOCATION"/><word name="BITLOC"/>
+            <word name="BOOL"/>
+            <word name="BYTE"/>
+            <word name="CDS"/>
+            <word name="CEIL"/>
+            <word name="CENTERLEFT"/><word name="CENTRELEFT"/><word name="CENTER"/><word name="CENTRE"/>
+            <word name="CENTERRIGHT"/><word name="CENTRERIGHT"/>
+            <word name="CHARACTER"/><word name="CHAR"/>
+            <word name="CHARGRAPHIC"/><word name="CHARG"/>
+            <word name="CHARVAL"/>
+            <word name="CHECKSTG"/>
+            <word name="COLLATE"/>
+            <word name="COMPARE"/>
+            <word name="COMPLEX"/><word name="CPLX"/>
+            <word name="CONJG"/>
+            <word name="COPY"/>
+            <word name="COS"/>
+            <word name="COSD"/>
+            <word name="COSH"/>
+            <word name="COUNT"/>
+            <word name="CS"/>
+            <word name="CURRENTSIZE"/><word name="CSTG"/>
+            <word name="CURRENTSTORAGE"/>
+            <word name="DATAFIELD"/>
+            <word name="DATE"/>
+            <word name="DATETIME"/>
+            <word name="DAYS"/>
+            <word name="DAYSTODATE"/>
+            <word name="DAYSTOSECS"/>
+            <word name="DECIMAL"/><word name="DEC"/>
+            <word name="DIMENSION"/><word name="DIM"/>
+            <word name="DIVIDE"/>
+            <word name="EDIT"/>
+            <word name="EMPTY"/>
+            <word name="ENDFILE"/>
+            <word name="ENTRYADDR"/>
+            <word name="EPSILON"/>
+            <word name="ERF"/>
+            <word name="ERFC"/>
+            <word name="EXP"/>
+            <word name="EXPONENT"/>
+            <word name="FILEDDINT"/>
+            <word name="FILEDDTEST"/>
+            <word name="FILEDDWORD"/>
+            <word name="FILEID"/>
+            <word name="FILEOPEN"/>
+            <word name="FILEREAD"/>
+            <word name="FILESEEK"/>
+            <word name="FILETELL"/>
+            <word name="FILEWRITE"/>
+            <word name="FIXED"/>
+            <word name="FIXEDBIN"/>
+            <word name="FIXEDDEC"/>
+            <word name="FLOAT"/>
+            <word name="FLOATBIN"/>
+            <word name="FLOATDEC"/>
+            <word name="FLOOR"/>
+            <word name="GAMMA"/>
+            <word name="GETENV"/>
+            <word name="GRAPHIC"/>
+            <word name="HANDLE"/>
+            <word name="HBOUND"/>
+            <word name="HEX"/>
+            <word name="HEXIMAGE"/>
+            <word name="HIGH"/>
+            <word name="HUGE"/>
+            <word name="IAND"/>
+            <word name="IEOR"/>
+            <word name="IMAG"/>
+            <word name="INDEX"/>
+            <word name="INOT"/>
+            <word name="IOR"/>
+            <word name="ISFINITE"/>
+            <word name="ISIGNED"/>
+            <word name="ISLL"/>
+            <word name="ISMAIN"/>
+            <word name="ISNAN"/>
+            <word name="ISNORMAL"/>
+            <word name="ISRL"/>
+            <word name="ISZERO"/>
+            <word name="IUNSIGNED"/>
+            <word name="LBOUND"/>
+            <word name="LEFT"/>
+            <word name="LENGTH"/>
+            <word name="LINENO"/>
+            <word name="LOCATION"/><word name="LOC"/>
+            <word name="LOG"/>
+            <word name="LOG10"/>
+            <word name="LOG2"/>
+            <word name="LOGGAMMA"/>
+            <word name="LOW"/>
+            <word name="LOWER2"/>
+            <word name="LOWERCASE"/>
+            <word name="MAX"/>
+            <word name="MAXEXP"/>
+            <word name="MAXLENGTH"/>
+            <word name="MEMCONVERT"/>
+            <word name="MEMCU12"/>
+            <word name="MEMCU14"/>
+            <word name="MEMCU21"/>
+            <word name="MEMCU24"/>
+            <word name="MEMCU41"/>
+            <word name="MEMCU42"/>
+            <word name="MEMINDEX"/>
+            <word name="MEMSEARCH"/>
+            <word name="MEMSEARCHR"/>
+            <word name="MEMVERIFY"/>
+            <word name="MEMVERIFYR"/>
+            <word name="MIN"/>
+            <word name="MINEXP"/>
+            <word name="MOD"/>
+            <word name="MPSTR"/>
+            <word name="MULTIPLY"/>
+            <word name="NULL"/>
+            <word name="OFFSET"/>
+            <word name="OFFSETADD"/>
+            <word name="OFFSETDIFF"/>
+            <word name="OFFSETSUBTRACT"/>
+            <word name="OFFSETVALUE"/>
+            <word name="OMITTED"/>
+            <word name="ONAREA"/>
+            <word name="ONCHAR"/>
+            <word name="ONCODE"/>
+            <word name="ONCONDCOND"/>
+            <word name="ONCONDID"/>
+            <word name="ONCOUNT"/>
+            <word name="ONFILE"/>
+            <word name="ONGSOURCE"/>
+            <word name="ONKEY"/>
+            <word name="ONLINE"/>
+            <word name="ONLOC"/>
+            <word name="ONOFFSET"/>
+            <word name="ONSOURCE"/>
+            <word name="ONSUBCODE"/>
+            <word name="ONWCHAR"/>
+            <word name="ONWSOURCE"/>
+            <word name="ORDINALNAME"/>
+            <word name="ORDINALPRED"/>
+            <word name="ORDINALSUCC"/>
+            <word name="PACKAGENAME"/>
+            <word name="PAGENO"/>
+            <word name="PICSPEC"/>
+            <word name="PLACES"/>
+            <word name="PLIASCII"/>
+            <word name="PLICANC"/>
+            <word name="PLICKPT"/>
+            <word name="PLIDELETE"/>
+            <word name="PLIDUMP"/>
+            <word name="PLIEBCDIC"/>
+            <word name="PLIFILL"/>
+            <word name="PLIFREE"/>
+            <word name="PLIMOVE"/>
+            <word name="PLIOVER"/>
+            <word name="PLIREST"/>
+            <word name="PLIRETC"/>
+            <word name="PLIRETV"/>
+            <word name="PLISAXA"/>
+            <word name="PLISAXB"/>
+            <word name="PLISAXC"/>
+            <word name="PLISAXD"/>
+            <word name="PLISRTA"/>
+            <word name="PLISRTB"/>
+            <word name="PLISRTC"/>
+            <word name="PLISRTD"/>
+            <word name="PLITRAN11"/>
+            <word name="PLITRAN12"/>
+            <word name="PLITRAN21"/>
+            <word name="PLITRAN22"/>
+            <word name="POINTER"/><word name="PTR"/>
+            <word name="POINTERADD"/><word name="PTRADD"/>
+            <word name="POINTERDIFF"/><word name="PTRDIFF"/>
+            <word name="POINTERSUBTRACT"/><word name="PTRSUBTRACT"/>
+            <word name="POINTERVALUE"/><word name="PTRVALUE"/>
+            <word name="POLY"/>
+            <word name="PRECISION"/><word name="PREC"/>
+            <word name="PRED"/>
+            <word name="PRESENT"/>
+            <word name="PRIORITY"/>
+            <word name="PROCEDURENAME"/><word name="PROCNAME"/>
+            <word name="PROD"/>
+            <word name="PUTENV"/>
+            <word name="RADIX"/>
+            <word name="RAISE2"/>
+            <word name="RANDOM"/>
+            <word name="RANK"/>
+            <word name="REAL"/>
+            <word name="REG12"/>
+            <word name="REM"/>
+            <word name="REPATTERN"/>
+            <word name="REPEAT"/>
+            <word name="REVERSE"/>
+            <word name="RIGHT"/>
+            <word name="ROUND"/>
+            <word name="ROUNDDEC"/>
+            <word name="SAMEKEY"/>
+            <word name="SCALE"/>
+            <word name="SEARCH"/>
+            <word name="SEARCHR"/>
+            <word name="SECS"/>
+            <word name="SECSTODATE"/>
+            <word name="SECSTODAYS"/>
+            <word name="SIGN"/>
+            <word name="SIGNED"/>
+            <word name="SIN"/>
+            <word name="SIND"/>
+            <word name="SINH"/>
+            <word name="SIZE"/>
+            <word name="SOURCEFILE"/>
+            <word name="SOURCELINE"/>
+            <word name="SQRT"/>
+            <word name="SQRTF"/>
+            <word name="STACKADDR"/>
+            <word name="STATUS"/>
+            <word name="STORAGE"/><word name="STG"/>
+            <word name="STRING"/>
+            <word name="SUBSTR"/>
+            <word name="SUBTRACT"/>
+            <word name="SUCC"/>
+            <word name="SUM"/>
+            <word name="SYSNULL"/>
+            <word name="SYSTEM"/>
+            <word name="TALLY"/>
+            <word name="TAN"/>
+            <word name="TAND"/>
+            <word name="TANH"/>
+            <word name="THREADID"/>
+            <word name="TIME"/>
+            <word name="TINY"/>
+            <word name="TRANSLATE"/>
+            <word name="TRIM"/>
+            <word name="TRUNC"/>
+            <word name="TYPE"/>
+            <word name="ULENGTH"/>
+            <word name="ULENGTH16"/>
+            <word name="ULENGTH8"/>
+            <word name="UNALLOCATED"/>
+            <word name="UNSIGNED"/>
+            <word name="UNSPEC"/>
+            <word name="UPOS"/>
+            <word name="UPPERCASE"/>
+            <word name="USUBSTR"/>
+            <word name="USURROGATE"/>
+            <word name="UVALID"/>
+            <word name="UWIDTH"/>
+            <word name="VALID"/>
+            <word name="VALIDATE"/>
+            <word name="VARGLIST"/>
+            <word name="VARGSIZE"/>
+            <word name="VERIFY"/>
+            <word name="VERIFYR"/>
+            <word name="WCHARVAL"/>
+            <word name="WEEKDAY"/>
+            <word name="WHIGH"/>
+            <word name="WIDECHAR"/><word name="WCHAR"/>
+            <word name="WLOW"/>
+            <word name="XMLCHAR"/>
+            <word name="Y4DATE"/>
+            <word name="Y4JULIAN"/>
+            <word name="Y4YEAR"/>
+         </keywords>
+      </scheme>
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  Pavel Pleva
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

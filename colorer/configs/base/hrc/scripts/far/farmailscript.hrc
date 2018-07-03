@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="farmailscript">
+ <annotation><documentation>
+  This  coloring scheme is supplyed with Colorer starting from version
+  take5 beta 2.
+
+  <![CDATA[
+  Insert this define into HRC prototype file:
+
+  <prototype name="farmailscript" group="scripts.far" description="FARMail Script">
+    <location link="far/farmailscript.hrc"/>
+    <filename>/\.fms$/i</filename>
+  </prototype>
+  ]]>
+ </documentation><contributors><![CDATA[
+   Alex Yaroslavsky <at yandex.ru / trexinc>
+   Eugene Efremov <4mirror@mail.ru>
+ ]]></contributors></annotation>
+
+    <region name="fString" parent="def:String"/>
+    <region name="fStringContent" parent="def:StringContent"/>
+    <region name="fComment" parent="def:Comment"/>
+    <region name="fSymb" parent="def:Symbol"/>
+    <region name="fCmd" parent="def:Keyword"/>
+    <region name="fProc" parent="def:FunctionKeyword"/>
+    <region name="fNumb" parent="def:Number"/>
+    <region name="fOutline" parent="def:Outlined"/>
+
+    <scheme name="fString">
+      <block start='/"/' end='/"/' scheme="fStringCore" region="fString"
+       region00="def:PairStart" region10="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="fStringCore">
+      <regexp match='/\\\\$/' region0="def:Error"/>
+      <regexp match='/\\[^xX0-7]/' region0="fStringContent"/>
+      <regexp match='/\\$/' region0="fStringContent"/>
+      <regexp match='/\\x|X[\da-fA-F]{1,8}/' region0="fStringContent"/>
+      <regexp match='/\\[0-7]{1,12}/' region0="fStringContent"/>
+      <!-- <regexp match='/\%[\-\+\#0]*?[\d\*]*(\.[\d\*]+)?[Ll]?[SsCcsuidopxXnEefgG]/' region0="fStringContent"/> -->
+      <regexp match='/[^\\\"]$/' region0="def:Error"/>
+    </scheme>
+
+    <scheme name="fSymbol">
+      <regexp match="/(')(\\.|[^\\']){1,8}(')/" region0="fString"
+       region1="def:PairStart" region3="def:PairEnd"/>
+      <regexp match="/'.*?'/" region="def:Error"/>
+    </scheme>
+
+    <scheme name="farmailscript">
+<!-- Comments -->
+      <block start="/(^\s*|\W?#1)(rem\s)/i" end="/$/" region02="fCmd"
+        region="fComment" scheme="def:Comment"/>
+      <block start="/\/\//i" end="/$/" region="fComment" scheme="def:Comment"/>
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="fComment"
+        region00="def:PairStart" region10="def:PairEnd"/>
+<!-- Numbers  -->
+      <inherit scheme="def:DecNumber"/>
+<!-- Strings -->
+      <inherit scheme="fString"/>
+      <inherit scheme="fSymbol"/>
+
+   <!-- EE: block operators -->
+
+   <block start="/(\()/" end="/(\))/" scheme="farmailscript"
+          region00="fSymb" region01="def:PairStart"
+          region10="fSymb" region11="def:PairEnd"/>
+
+   <block start="/(\[)/" end="/(\])/" scheme="farmailscript"
+          region00="fSymb" region01="def:PairStart"
+          region10="fSymb" region11="def:PairEnd"/>
+
+   <block start="/\b(if)\b/" end="/\b(endif)\b/" scheme="farmailscript"
+          region00="fCmd" region01="def:PairStart"
+          region10="fCmd" region11="def:PairEnd"/>
+
+   <block start="/\b(while)\b/" end="/\b(wend)\b/" scheme="farmailscript"
+          region00="fCmd" region01="def:PairStart"
+          region10="fCmd" region11="def:PairEnd"/>
+
+   <block start="/\b(sub)\M\s+(?{fOutline}[\w_]+)/"
+          end="/\b(endsub)\b/" scheme="farmailscript"
+          region00="fCmd" region01="def:PairStart"
+          region10="fCmd" region11="def:PairEnd"/>
+
+   <!-- EE: end blocks -->
+
+
+<!-- Symbols -->
+      <keywords region="fSymb">
+        <symb name="&lt;="/>
+        <symb name="&gt;="/>
+        <symb name="&gt;"/>
+        <symb name="&lt;"/>
+        <symb name="&amp;&amp;"/>
+        <symb name="||"/>
+        <symb name="!="/>
+        <symb name="=="/>
+        <symb name="!"/>
+        <symb name="++"/>
+        <symb name="--"/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="="/>
+        <symb name="("/>
+        <symb name=")"/>
+        <symb name=","/>
+        <symb name="["/>
+        <symb name="]"/>
+      </keywords>
+      <regexp match="/\!\M\w+/" region="fSymb"/>
+
+<!-- Commands -->
+      <keywords ignorecase="yes" region="fCmd">
+        <word name="break"/>
+        <word name="else"/>
+        <word name="endif"/>
+        <word name="endsub"/>
+        <word name="gosub"/>
+        <word name="if"/>
+        <word name="rem"/>
+        <word name="sub"/>
+        <word name="wend"/>
+        <word name="while"/>
+      </keywords>
+<!-- Functions -->
+      <keywords ignorecase="yes" region="fProc">
+        <word name="addressbook"/>
+        <word name="blkstart"/>
+        <word name="blktype"/>
+        <word name="boundary"/>
+        <word name="char"/>
+        <word name="date"/>
+        <word name="delline"/>
+        <word name="exit"/>
+        <word name="filecount"/>
+        <word name="fileline"/>
+        <word name="header"/>
+        <word name="insline"/>
+        <word name="integer"/>
+        <word name="line"/>
+        <word name="nlines"/>
+        <word name="message"/>
+        <word name="random"/>
+        <word name="redirect"/>
+        <word name="selstart"/>
+        <word name="selend"/>
+        <word name="setline"/>
+        <word name="setpos"/>
+        <word name="string"/>
+        <word name="strlen"/>
+        <word name="strlwr"/>
+        <word name="strstr"/>
+        <word name="strupr"/>
+        <word name="substr"/>
+        <word name="time"/>
+        <word name="usrinput"/>
+        <word name="usrmenu"/>
+        <word name="version"/>
+        <word name="winampstate"/>
+        <word name="winampsong"/>
+        <!-- v 3.0 b 6 -->
+        <word name="sprintf"/>
+        <!-- v 3.0 b 7 -->
+        <word name="encodeheader"/>
+        <!-- v 3.0 b 8 -->
+        <word name="getini"/>
+        <!-- v 3.0 b 9 -->
+        <word name="setini"/>
+        <word name="setsel"/>
+        <word name="editorstate"/>
+      </keywords>
+    </scheme>
+
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is FARMail Script coloring scheme.
+   -
+   - The Initial Developer of the Original Code is
+   - Alex Yaroslavsky <at yandex.ru / trexinc>
+   - Portions created by the Initial Developer are Copyright (C) 2003-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Eugene Efremov <4mirror@mail.ru>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

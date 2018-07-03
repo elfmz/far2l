@@ -1,0 +1,797 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sourceforge.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sourceforge.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sourceforge.net/2003/hrc http://colorer.sourceforge.net/2003/hrc.xsd">
+<!--
+
+SubStation Alpha v4 (.ssa) and Advanced SubStation Alpha (.ass) scheme
+
+Written by ender <ender@deepthought.ena.si>
+
+This is the first time I've done anything with regex, so don't complain if it's
+slow or ugly ( it works fine for me, that's enough :) .
+
+-->
+<type name="ass">
+
+<region name="assSection" parent="def:Label" /><!-- [Script Info] etc -->
+<region name="assFontName" parent="def:Keyword" /><!-- in Styles -->
+<region name="assKeyword" parent="def:Keyword" /><!-- everything that looks remotely like keywords -->
+<region name="assSymb" parent="def:Symbol" />
+<region name="assColor" parent="def:Comment" /><!-- colors in Styles section -->
+<region name="assComment" parent="def:Comment" />
+<region name="assStyleOverrider" parent="def:Symbol" /><!-- {} -->
+<region name="assStyleOverrideSeparator" parent="def:ClassKeyword" /><!-- \ -->
+<region name="assLabel" parent="def:Label" /><!-- used in Styles section to visually group styles together -->
+<region name="assStyler" parent="def:EMail" /><!-- style override codes -->
+<region name="assStyle" parent="def:Comment" /><!-- style override parameters -->
+<region name="assBool" parent="def:Label" /><!-- used in Styles section for bold/italic/underline/strikeout -->
+<region name="assNumber" parent="def:Number" />
+<region name="assError" parent="def:Error" />
+<region name="assStyleName" parent="def:Path" /><!-- used in Styles and Events section to color the style name -->
+<region name="assMoreStyle" parent="def:Insertion" /><!-- last character in incomplete styles -->
+<region name="assFunctionStyleStart" parent="def:PairStart" /><!-- style override functions -->
+<region name="assFunctionStyleEnd" parent="def:PairEnd" />
+
+<scheme name="assEmpty" />
+
+<scheme name="assCommon">
+  <regexp match="/^(\s*?\;.*$)/" region0="assComment"/>
+</scheme>
+
+<!-- style overrides -->
+<scheme name="assStyleOverrides">
+  <regexp match="/\\[nN]/" region="assSymb" />
+  <block start="/\{/" end="/\}|$/"
+    scheme="assFunctionStyles"
+    region="assStyleOverrider" region00="def:PairStart" region10="def:PairEnd"
+  />
+</scheme>
+
+<!-- \t([<t1>,<t2>,][<accel>,]<style modifiers>) -->
+<scheme name="assStyleFunctT">
+  <block start="/\(?#1\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,/" end="/\)?=|$/"
+    scheme="assSimpleStyles"
+    region01="assStyle" region02="assStyle" region03="assStyle"
+  />
+  <block start="/\(?#1\s*(\d+)\s*,\s*(\d+)\s*,/" end="/\)?=|$/"
+    scheme="assSimpleStyles"
+    region01="assStyle" region02="assStyle"
+  />
+  <block start="/\(?#1[^\)]?=/" end="/\)?=|$/"
+    scheme="assSimpleStyles"
+  />
+</scheme>
+
+<!-- \move(<x1>,<y1>,<x2>,<y2>[,<t1>,<t2>]) -->
+<scheme name="assStyleFunctMove">
+  <regexp match="/\(?#1\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*\)?=/" region="assStyler"
+    region1="assStyle" region2="assStyle" region3="assStyle" region4="assStyle"
+  />
+  <regexp match="/\(?#1\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*,\s*(\d+(\.\d+)?)\s*,(\d+(\.\d+)?)\s*\)?=/" region="assStyler"
+    region1="assStyle" region2="assStyle" region3="assStyle" region4="assStyle" region5="assStyle" region6="assStyle"
+  />
+  <regexp match="/\(?#1[^\)]*/" region="assError" />
+</scheme>
+
+<!-- \fade(<a1>,<a2>,<a3>,<t1>,<t2>,<t3>,<t4>) -->
+<scheme name="assStyleFunctFade">
+  <regexp match="/\(?#1\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)?=/" region="assStyler"
+    region1="assStyle" region2="assStyle" region3="assStyle" region4="assStyle" region5="assStyle" region6="assStyle" region7="assStyle"
+  />
+  <regexp match="/\(?#1[^\)]*/" region="assError" />
+</scheme>
+
+<!-- \clip([<scale>,]<drawing commands>) -->
+<scheme name="assStyleFunctClip">
+  <regexp match="/\(?#1\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)?=/" region="assStyler"
+    region1="assStyle" region2="assStyle" region3="assStyle" region4="assStyle"
+  />
+  <block start="/\(?#1\s*(\d+)\s*,/" end="/\)?=|$/"
+    region01="assStyle"
+    scheme="assClipDrawing"
+  />
+  <block start="/\(?#1/" end="/\)?=|$/"
+    scheme="assClipDrawing"
+  />
+</scheme>
+
+<scheme name="assDrawing">
+  <regexp match="/[\}\s]?#1([mnlp])(\s+\d+\s+\d+)+(\{?=|\s|$)/"
+    region1="assKeyword" region="assNumber"
+  />
+  <regexp match="/[\}\s]?#1(c)(\{?=|\s|$)/"
+    region1="assKeyword" region="assNumber"
+  />
+  <regexp match="/[\}\s]?#1(b)(\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+))+(\{?=|\s|$)/"
+    region1="assKeyword" region="assNumber"
+  />
+  <regexp match="/[\}\s]?#1(s)(\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+)(\s+\d+\s+\d+)*(\{?=|\s|$)/"
+    region1="assKeyword" region="assNumber"
+  />
+  <regexp match="/[^\s]/" region="assError" priority="low" />
+</scheme>
+
+<scheme name="assClipDrawing">
+  <regexp match="/[,\(\s]?#1([mnlp])(\s+\d+\s+\d+)+(\)?=|\s|$)/"
+    region1="assStyler" region="assStyle"
+  />
+  <regexp match="/[,\(\s]?#1(c)(\)?=|\s|$)/"
+    region1="assStyler" region="assStyle"
+  />
+  <regexp match="/[,\(\s]?#1(b)(\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+)+(\)?=|\s|$)/"
+    region1="assStyler" region="assStyle"
+  />
+  <regexp match="/[,\(\s]?#1(s)(\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+)(\s+\d+\s+\d+)+(\)?=|\s|$)/"
+    region1="assStyler" region="assStyle"
+  />
+  <regexp match="/[^\s]/" region="assError" priority="low" />
+</scheme>
+
+<!-- \pos(<x>,<y>) -->
+<!-- \org(<x>,<y>) -->
+<!-- \fad(<x>,<y>) -->
+<scheme name="assStyleFunct2p">
+  <regexp match="/\(?#1\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*\)?=/" region="assStyler"
+    region1="assStyle" region2="assStyle" region3="assStyle" region4="assStyle"
+  />
+  <regexp match="/\(?#1[^\)]*/" region="assError" />
+</scheme>
+
+<!-- these styles can be embedded in \t -->
+<scheme name="assSimpleStyles">
+  <regexp match="/(\\)([ius]|be)([01][\\\}\)]?=)/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <regexp match="/(\\)(fn)([^\}\)\\]+)/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <regexp match="/(\\)(r)([^\}\\\)]*)/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <regexp match="/(\\)(bord|shad|fs|fscx)(\d+(\.\d+)?)[\\\}\)]?=/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+	/>
+  <regexp match="/(\\)(b|fscy|fsp|fe|[kK]|k[of])(\d+)[\\\}\)]?=/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <regexp match="/(\\)(fr[xyz]|fr)(-?\d+(\.\d+)?[\\\}\)]?=)/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <regexp match="/(\\)([1234]?c\&amp;)(H[\da-fA-F]{0,6})(\&amp;)[\\\}\)]?=/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle" region4="assStyler"
+  />
+  <regexp match="/(\\)([1234]a&amp;|alpha&amp;)(H[\da-fA-F]{1,2})(\&amp;)[\\\}\)]?=/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle" region4="assStyler"
+  />
+  <regexp match="/(\\)(q)([0-4])[\\\}\)]?=/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <regexp match="/(\\)(a)(1[01]|\d?)[\\\}\)]?=/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <regexp match="/(\\)(an)([1-9])[\\\}\)]?=/"
+    region1="assStyleOverrideSeparator" region2="assStyler" region3="assStyle"
+  />
+  <block start="/(\\)(clip)(\()/" end="/\)|$/"
+    scheme="assStyleFunctClip"
+    region01="assStyleOverrideSeparator" region02="assStyler" region00="assFunctionStyleStart" region10="assFunctionStyleEnd"
+  />
+  <regexp match="/\}\{/" region="def:ErrorText" /><!-- useless IMHO :) -->
+  <!-- if it doesn't match anything else, it's an error -->
+  <regexp match="/./" region="assError" priority="low" />
+</scheme>
+
+<!-- ?? are spaces around parameters allowed? vobsub doesn't complain, but I haven't actually seen any script with spaces -->
+<scheme name="assFunctionStyles">
+  <block start="/(\\)(t)(\()/" end="/\)|$/"
+    scheme="assStyleFunctT"
+    region02="assStyler" region00="assFunctionStyleStart" region10="assFunctionStyleEnd" region01="assStyleOverrideSeparator"
+  />
+  <block start="/(\\)(move)(\()/" end="/\)|$/"
+    scheme="assStyleFunctMove"
+    region01="assStyleOverrideSeparator" region02="assStyler" region00="assFunctionStyleStart" region10="assFunctionStyleEnd"
+  />
+  <block start="/(\\)(pos|org|fad)(\()/" end="/\)|$/"
+    scheme="assStyleFunct2p"
+    region01="assStyleOverrideSeparator" region02="assStyler" region00="assFunctionStyleStart" region10="assFunctionStyleEnd"
+  />
+  <block start="/(\\)(fade)(\()/" end="/\)|$/"
+    scheme="assStyleFunctFade"
+    region01="assStyleOverrideSeparator" region02="assStyler" region00="assFunctionStyleStart" region10="assFunctionStyleEnd"
+  />
+  <block start="/(\\)(p)([1-9]\d*)(\})/" end="/(\{)(\\)(p)(0)(\\|\})?=|$/"
+    scheme="assDrawing"
+    region00="assFunctionStyleStart" region10="assFunctionStyleEnd"
+    region01="assStyleOverrideSeparator" region02="assStyler" region03="assStyle" region04="assStyleOverrider"
+    region11="assStyleOverrider" region12="assStyleOverrideSeparator" region13="assStyler" region14="assStyle"
+  />
+  <inherit scheme="assSimpleStyles"/>
+</scheme>
+
+<entity name="Time" value=",?#1(\d(:[0-5][0-9]){2}\.\d\d),?=" />
+<entity name="Margin" value=",?#1(\d{4}),?=" />
+<entity name="Anything" value=",?#1([^,]*),?=" />
+
+<scheme name="assEventsSection">
+  <inherit scheme="assCommon"/>
+  <regexp match="/^(Format:)\s((Marked)|([^,]*)),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),(.*?)$/"
+    region1="assComment" region3="assKeyword" region4="assLabel" region5="assNumber" region6="assNumber"
+    region7="assStyleName" region8="assComment"
+    region9="assNumber" regiona="assNumber" regionb="assNumber"
+    regionc="assKeyword"
+  />
+  <!-- ??bug in colorer's hrc scheme? - regiona is colored as OK but doesn't actually work - have to use regionA etc. -->
+  <!-- I couldn't bother to do same style coloring of the last character as with Styles section -->
+  <block start="/(^((Dialogue:)|(Comment:))\s)((Marked=[01])|(\d+)|([^,]*)),?=/" end="/$/"
+    region03="assKeyword" region04="assComment" region06="assKeyword" region07="assLabel" region08="assError"
+    scheme="assES_Start"
+  />
+</scheme>
+<scheme name="assES_Start">
+  <block start="/%Time;/" end="/$/"
+    region01="assNumber"
+    scheme="assES_End"
+  />
+  <block start="/%Anything;/" end="/$/"
+    region01="assError"
+    scheme="assES_End"
+  />
+</scheme>
+<scheme name="assES_End">
+  <block start="/%Time;/" end="/$/"
+    region01="assNumber"
+    scheme="assES_Style"
+  />
+  <block
+    start="/%Anything;/" end="/$/"
+    region01="assError"
+    scheme="assES_Style"
+  />
+</scheme>
+<scheme name="assES_Style">
+  <block start="/%Anything;/" end="/$/"
+    region01="assStyleName"
+    scheme="assES_Actor"
+  />
+</scheme>
+<scheme name="assES_Actor">
+  <block start="/,?#1([^,]*),/" end="/$/"
+    region01="assComment"
+    scheme="assES_MarginL"
+  />
+</scheme>
+<scheme name="assES_MarginL">
+  <block start="/%Margin;/" end="/$/"
+    region01="assNumber"
+    scheme="assES_MarginR"
+  />
+  <block start="/%Anything;/" end="/$/"
+    region01="assError"
+    scheme="assES_MarginR"
+  />
+</scheme>
+<scheme name="assES_MarginR">
+  <block start="/%Margin;/" end="/$/"
+    region01="assNumber"
+    scheme="assES_MarginV"
+  />
+  <block start="/%Anything;/" end="/$/"
+    region01="assError"
+    scheme="assES_MarginV"
+  />
+</scheme>
+<scheme name="assES_MarginV">
+  <block start="/%Margin;/" end="/$/"
+    region01="assNumber"
+    scheme="assES_Effect"
+  />
+  <block start="/%Anything;/" end="/$/"
+    region01="assError"
+    scheme="assES_Effect"
+  />
+</scheme>
+<scheme name="assES_Effect">
+  <block start="/,?#1([^,]*),/" end="/$/"
+    region01="assKeyword"
+    scheme="assStyleOverrides"
+  />
+</scheme>
+
+<!-- all these check that correct value is entered, and if the entry is last in line, hilight the last character -->
+<entity name="Integer" value="(,)?#1(\s*-?\d*(\s+\d?!|))(,|[\d\s]$)" />
+<entity name="Real" value="(,)?#1(\s*-?\d+(\.\d+\.?!|\.\d?=)?(\s+[\.\d]?!|)|\s*,?!)(,|[\.\s\d]$)" />
+<!-- TODO: & by itself and &H without at least 1 digit must be treated as error if a comma follows -->
+<entity name="Color" value="(,)?#1(\s*(&amp;H[\da-fA-F]{0,8}|\d*)&amp;?(\s*[\da-fA-F&amp;H]?!|))([H&amp;]?~1,|[&amp;H\s\da-fA-F]$)" />
+<entity name="Bool" value="(,)?#1(\s*([01]\s*[-01]?!|-0?!|-1\s*[-01]?!)|\s*,?!)(,|[-01\s]$)" />
+<entity name="Int0-4" value="(,)?#1(\s*[0-4]\s*[0-4]?!|\s*,?!)(,|[0-4\s]$)" />
+<entity name="Error" value="(,)?#1([^,]*)(,?=|.$)" />
+
+<scheme name="assV4PlusMoreStyle">
+<!-- who says that 15 regions is enough? :) -->
+  <regexp match="/([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),(.*?)$/"
+    region1="assLabel" region2="assLabel"
+    region3="assKeyword" region4="assNumber" region5="assNumber"
+    region6="assLabel"
+    region7="assNumber" region8="assNumber" region9="assNumber"
+    regiona="assComment"
+  />
+</scheme>
+<scheme name="assV4PlusStylesSection">
+  <!--
+     Format: Name,FontName,FontSize,
+     PrimaryColour,SecondaryColour,OutlineColour,BackColour,
+     Bold,Italic,Underline,StrikeOut,
+     ScaleX,ScaleY,
+     Spacing,Angle,
+     BorderStyle,Outline,Shadow,
+     Alignment,
+     MarginL, MarginR, MarginV, Encoding
+     (all in a single line)
+  -->
+  <inherit scheme="assCommon"/>
+  <block
+    start="/^(Format:)\s([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),/"
+    end="/$/"
+    scheme="assV4PlusMoreStyle"
+    region01="assComment" region02="assStyleName" region03="assKeyword" region04="assNumber"
+    region05="assStyle" region06="assStyle" region07="assStyle" region08="assStyle"
+    region09="assBool" region0a="assBool" region0b="assBool" region0c="assBool"
+    region0d="assNumber" region0e="assNumber"
+  />
+  <regexp match="/^(Style:)\s/" region1="assKeyword" />
+  <!-- !!  is there a better way to check each parameter of this:
+    Style: str,str,num,clr,clr,clr,bool,bool,bool,bool,int,int,int,real,int,int,int,int,int,int,int,int,int,int
+
+    There must be exactly 24 parameters; when there are less, the last letter changes background to
+    indicate that the line isn't complete; some parameters only take a fixed set of values - this is
+    checked, too
+  -->
+  <block start="/(Style:\s)?#7([^,]*)(,|.$)/" end="/$/"
+    region03="assMoreStyle" region02="assStyleName"
+    scheme="assV4PS_FontName"
+  />
+</scheme>
+<scheme name="assV4PS_FontName">
+  <block start="/(,)?#1([^,]*)(,|.$)/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assFontName"
+    scheme="assV4PS_FontSize"
+  />
+</scheme>
+<scheme name="assV4PS_FontSize">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4PS_PrimaryColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_PrimaryColour"
+  />
+</scheme>
+<scheme name="assV4PS_PrimaryColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4PS_SecondaryColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_SecondaryColour"
+  />
+</scheme>
+<scheme name="assV4PS_SecondaryColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4PS_OutlineColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_OutlineColour"
+  />
+</scheme>
+<scheme name="assV4PS_OutlineColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4PS_BackColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_BackColour"
+  />
+</scheme>
+<scheme name="assV4PS_BackColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4PS_Bold"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Bold"
+  />
+</scheme>
+<scheme name="assV4PS_Bold">
+  <block start="/%Bool;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assBool"
+    scheme="assV4PS_Italic"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Italic"
+  />
+</scheme>
+<scheme name="assV4PS_Italic">
+  <block start="/%Bool;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assBool"
+    scheme="assV4PS_Underline"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Underline"
+  />
+</scheme>
+<scheme name="assV4PS_Underline">
+  <block start="/%Bool;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assBool"
+    scheme="assV4PS_StrikeOut"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_StrikeOut"
+  />
+</scheme>
+<scheme name="assV4PS_StrikeOut">
+  <block start="/%Bool;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assBool"
+    scheme="assV4PS_ScaleX"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_ScaleX"
+  />
+</scheme>
+<scheme name="assV4PS_ScaleX">
+  <block start="/%Real;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4PS_ScaleY"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_ScaleY"
+  />
+</scheme>
+<scheme name="assV4PS_ScaleY">
+  <block start="/%Real;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4PS_Spacing"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Spacing"
+  />
+</scheme>
+<scheme name="assV4PS_Spacing">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assLabel"
+    scheme="assV4PS_Angle"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Angle"
+  />
+</scheme>
+<scheme name="assV4PS_Angle">
+  <block start="/%Real;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assLabel"
+    scheme="assV4PS_BorderStyle"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_BorderStyle"
+  />
+</scheme>
+<scheme name="assV4PS_BorderStyle">
+  <block start="/%Int0-4;/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assKeyword"
+    scheme="assV4PS_Outline"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Outline"
+  />
+</scheme>
+<scheme name="assV4PS_Outline">
+  <block start="/%Real;/" end="/$/"
+		region05="assMoreStyle" region01="def:Text" region02="assLabel"
+    scheme="assV4PS_Shadow"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Shadow"
+  />
+</scheme>
+<scheme name="assV4PS_Shadow">
+  <block start="/%Real;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assLabel"
+    scheme="assV4PS_Alignment"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Alignment"
+  />
+</scheme>
+<scheme name="assV4PS_Alignment">
+  <block start="/(,)?#1(\s*[1-9]\s*[1-9]?!|\s*,?!)(,|[1-9\s]$)/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assLabel"
+    scheme="assV4PS_MarginL"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_MarginL"
+  />
+</scheme>
+<scheme name="assV4PS_MarginL">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4PS_MarginR"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_MarginR"
+  />
+</scheme>
+<scheme name="assV4PS_MarginR">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4PS_MarginV"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_MarginV"
+  />
+</scheme>
+<scheme name="assV4PS_MarginV">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4PS_Encoding"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4PS_Encoding"
+  />
+</scheme>
+<scheme name="assV4PS_Encoding"><!-- 0-255 -->
+  <regexp match="/(,)?#1\s*(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\s*$/" region2="assComment" region1="def:Text" />
+  <regexp match="/(,)?#1\s*(\s)$/" region1="def:Text" region2="assMoreStyle" />
+  <regexp match="/,?#1$/" region="assError" />
+  <regexp match="/(,)?#1(.+)$/" region1="def:Text" region2="assError" />
+</scheme>
+
+<!-- similar to assV4Plus*Style -->
+<scheme name="assV4MoreStyle">
+  <regexp match="/([^,]*),([^,]*),([^,]*),([^,]*),(.*?)$/"
+    region1="assNumber" region2="assNumber" region3="assNumber"
+    region4="assKeyword" region5="assStyle"
+  />
+</scheme>
+<scheme name="assV4StylesSection">
+  <!--
+     Format: Name, Fontname, Fontsize,
+     PrimaryColour, SecondaryColour, TertiaryColour, BackColour,
+     Bold, Italic,
+     BorderStyle, Outline, Shadow,
+     Alignment,
+     MarginL, MarginR, MarginV, AlphaLevel, Encoding
+     (all in a single line)
+  -->
+  <inherit scheme="assCommon"/>
+  <block
+    start="/^(Format:)\s([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),/"
+    end="/$/"
+    scheme="assV4MoreStyle"
+    region01="assComment" region02="assStyleName" region03="assKeyword" region04="assNumber"
+    region05="assStyle" region06="assStyle" region07="assStyle" region08="assStyle"
+    region09="assBool" region0a="assBool"
+    region0b="assKeyword" region0c="assNumber"
+    region0d="assNumber" region0e="assLabel"
+  />
+  <regexp match="/^(Style:)\s/" region1="assKeyword" />
+  <block start="/(Style:\s)?#7([^,]*)(,|.$)/" end="/$/"
+    region03="assMoreStyle" region02="assStyleName"
+    scheme="assV4S_FontName"
+  />
+</scheme>
+<scheme name="assV4S_FontName">
+  <block start="/(,)?#1([^,]*)(,|.$)/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assFontName"
+    scheme="assV4S_FontSize"
+  />
+</scheme>
+<scheme name="assV4S_FontSize">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4S_PrimaryColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_PrimaryColour"
+  />
+</scheme>
+<scheme name="assV4S_PrimaryColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4S_SecondaryColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_SecondaryColour"
+  />
+</scheme>
+<scheme name="assV4S_SecondaryColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4S_TertiaryColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_TertiaryColour"
+  />
+</scheme>
+<scheme name="assV4S_TertiaryColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4S_BackColour"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_BackColour"
+  />
+</scheme>
+<scheme name="assV4S_BackColour">
+  <block start="/%Color;/" end="/$/"
+    region05="assMoreStyle" region01="def:Text" region02="assColor"
+    scheme="assV4S_Bold"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_Bold"
+  />
+</scheme>
+<scheme name="assV4S_Bold">
+  <block start="/%Bool;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assBool"
+    scheme="assV4S_Italic"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_Italic"
+  />
+</scheme>
+<scheme name="assV4S_Italic">
+  <block start="/%Bool;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assBool"
+    scheme="assV4S_BorderStyle"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_BorderStyle"
+  />
+</scheme>
+<scheme name="assV4S_BorderStyle">
+  <block start="/%Int0-4;/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assKeyword"
+    scheme="assV4S_Outline"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_Outline"
+  />
+</scheme>
+<scheme name="assV4S_Outline">
+  <block start="/%Int0-4;/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4S_Shadow"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_Shadow"
+  />
+</scheme>
+<scheme name="assV4S_Shadow">
+  <block start="/%Int0-4;/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4S_Alignment"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_Alignment"
+  />
+</scheme>
+<scheme name="assV4S_Alignment">
+  <block start="/(,)?#1(\s*[1-9]\s*[1-9]?!|\s*,?!)(,|[1-9\s]$)/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assLabel"
+    scheme="assV4S_MarginL"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_MarginL"
+  />
+</scheme>
+<scheme name="assV4S_MarginL">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4S_MarginR"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_MarginR"
+  />
+</scheme>
+<scheme name="assV4S_MarginR">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4S_MarginV"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_MarginV"
+  />
+</scheme>
+<scheme name="assV4S_MarginV">
+  <block start="/%Integer;/" end="/$/"
+    region04="assMoreStyle" region01="def:Text" region02="assNumber"
+    scheme="assV4S_AlphaLevel"
+  />
+  <block start="/%Error;/" end="/$/"
+    region01="def:Text" region02="assError" region03="assError"
+    scheme="assV4S_AlphaLevel"
+  />
+</scheme>
+<scheme name="assV4S_AlphaLevel"><!-- manual says it's ignored, so let's just allow everything -->
+  <block start="/(,)?#1([^,]*)(,|.$)/" end="/$/"
+    region03="assMoreStyle" region01="def:Text" region02="assFontName"
+    scheme="assV4S_Encoding"
+  />
+</scheme>
+<scheme name="assV4S_Encoding"><!-- 0-255 -->
+  <regexp match="/(,)?#1\s*(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\s*$/" region2="assStyle" region1="def:Text" />
+  <regexp match="/(,)?#1\s*(\s)$/" region1="def:Text" region2="assMoreStyle" />
+  <regexp match="/,?#1$/" region="assError" />
+  <regexp match="/(,)?#1(.+)$/" region1="def:Text" region2="assError" />
+</scheme>
+
+
+<scheme name="assScriptInfoSection">
+  <inherit scheme="assCommon"/>
+  <keywords region="assComment">
+    <word name="!:"/>
+  </keywords>
+  <keywords region="assKeyword" ignorecase="yes">
+    <word name="Title:"/>
+    <word name="Original Script:"/>
+    <word name="Original Translation:"/>
+    <word name="Original Editing:"/>
+    <word name="Original Timing:"/>
+    <word name="Synch Point:"/>
+    <word name="Script Updated By:"/>
+    <word name="Update Details:"/>
+    <word name="ScriptType:"/>
+    <word name="Collisions:"/>
+    <word name="PlayResY:"/>
+    <word name="PlayResX:"/>
+    <word name="PlayDepth:"/>
+    <word name="Timer:"/>
+    <word name="WrapStyle:"/>
+  </keywords>
+</scheme>
+
+<scheme name="ass">
+  <block start="/(\[Script Info\])/i" end="/^\M\[/" scheme="assScriptInfoSection" region01="assSection"/>
+  <block start="/(\[V4\+ Styles\])/i" end="/^\M\[/" scheme="assV4PlusStylesSection" region01="assSection"/>
+  <block start="/(\[V4 Styles\])/i" end="/^\M\[/" scheme="assV4StylesSection" region01="assSection"/>
+  <block start="/(\[Events\])/i" end="/^\M\[/" scheme="assEventsSection" region01="assSection"/>
+</scheme>
+
+</type>
+
+</hrc>

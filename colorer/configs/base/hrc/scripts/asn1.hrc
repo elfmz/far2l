@@ -1,0 +1,1459 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+
+<!--
+ - @(#) asn1.hrc - Colorer scheme for ASN1/ECN specification.
+ - (c) 2002-2005 Ivan Maidanski <ivmai@mail.ru>
+ - This script is free. No warranties. All rights reserved.
+ - -
+ - Tested with: Colorer Library take5
+ - Author's project URL: http://ivmaiasn.sourceforge.net
+ - -->
+
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="asn1">
+
+<!--
+ ASN.1 - Abstract Syntax Notation One (ITU-T Rec. X.680).
+ ECN - Encoding Control Notation (ITU-T Rec. X.692).
+-->
+
+<!--
+ - Installation notes (if not installed yet):
+ In order to use this colorer scheme with "Colorer Library take5"
+ please place (copy) this file into "hrc/scripts" folder (create it
+ if it does not exist) of the installed Colorer Library (make sure
+ this file is not already present and installed in it), and then
+ insert the following 4 lines into "hrc/proto.hrc" file (of the
+ installed Colorer Library) just before the line containing "Lex"
+ word:
+
+  <prototype name="asn1" group="scripts" description="ASN.1/ECN">
+    <location link="scripts/asn1.hrc"/>
+    <filename>/\.((asn)|(asn1)|(ecn)|(edm)|(elm))$/i</filename>
+  </prototype>
+
+-->
+
+<!--
+ Normative references:
+   - ITU-T Recommendation X.680 (2002) | ISO/IEC 8824-1:2002,
+ Information technology - Abstract Syntax Notation One (ASN.1):
+ Specification of basic notation.
+   - ITU-T Recommendation X.680 (2002) Amendment 1 (10/2003),
+ Information technology - Abstract Syntax Notation One (ASN.1) -
+ Specification of basic notation. Amendment 1: to ITU-T Rec.
+ X.680 | ISO/IEC 8824-1.
+   - ITU-T Recommendation X.681 (2002) | ISO/IEC 8824-2:2002,
+ Information technology - Abstract Syntax Notation One (ASN.1):
+ Information object specification.
+   - ITU-T Recommendation X.681 (2002) Amendment 1 (10/2003),
+ Information technology - Abstract Syntax Notation One (ASN.1) -
+ Information object specification. Amendment 1: (to ITU-T Rec.
+ X.681 | ISO/IEC 8824-2) Support for EXTENDED-XER.
+   - ITU-T Recommendation X.682 (2002) | ISO/IEC 8824-3:2002,
+ Information technology - Abstract Syntax Notation One (ASN.1):
+ Constraint specification.
+   - ITU-T Recommendation X.683 (2002) | ISO/IEC 8824-4:2002,
+ Information technology - Abstract Syntax Notation One (ASN.1):
+ Parameterization of ASN.1 specifications.
+   - ITU-T Draft Recommendation X.692 (2002) | ISO/IEC 8825-3:2002,
+ Information technology - ASN.1 encoding rules: Specification
+ of Encoding Control Notation (ECN).
+   - ITU-T Recommendation X.693 (2001) Amendment 1 (10/2003),
+ Information technology - Abstract Syntax Notation One (ASN.1)
+ Amendment 1: (to ITU-T Rec. X.693 | ISO/IEC 8825-4) XER encoding
+ instructions and EXTENDED-XER.
+   - CCITT Recommendation X.208 (1988), Specification of abstract
+ syntax notation one (ASN.1).
+   - TeleManagement Forum. ASN.1/C++ Application Programming
+ Interface. - Part 1: Base Classes and Specific Interface.
+ Document TMF 040-1, Issue 1.1. - 2000.
+   - M. Sample. Snacc 1.2rj: A high performance ASN.1 to C/C++/IDL
+ compiler. - University of British Columbia, Vancouver. - 1995.
+   - A. Schade. Automatic Generation of Java Stubs for ASN.1. - IBM
+ Research Division, Zurich Research Laboratory, Switzerland. - 2001.
+   - J. Larmouth. ETSI ECN Tutorial (version 1.1). - University
+ of Salford. - 2000.
+-->
+
+<import type="def"/>
+
+<region name="dAsn1Assignment" parent="Outlined"/>
+<region name="dAsn1OpenStruct" parent="PairStart"/>
+<region name="dAsn1CloseStruct" parent="PairEnd"/>
+<region name="dAsn1OpenTag" parent="PairStrongStart"/>
+<region name="dAsn1CloseTag" parent="PairStrongEnd"/>
+
+<region name="dAsn1Error" parent="Error"/>
+<region name="dAsn1Todo" parent="TODO"/>
+
+<region name="dAsn1BlkComment" parent="Comment"/>
+<region name="dAsn1CommentEdge" parent="Comment"/>
+<region name="dAsn1LineComment" parent="LineComment"/>
+<region name="dAsn1NestComment" parent="CommentContent"/>
+<region name="dAsn1RegExpRefer" parent="CommentDoc"/>
+<region name="dAsn1AbsRefer" parent="CommentDoc"/>
+
+<region name="dAsn1Pragma" parent="Directive"/>
+<region name="dAsn1PragmaBody" parent="DirectiveContent"/>
+<region name="dAsn1PragmaWord" parent="Keyword"/>
+<region name="dAsn1PragmaNumb" parent="Number"/>
+<region name="dAsn1PragmaStr" parent="StringContent"/>
+<region name="dAsn1PragmaSymb" parent="DirectiveContent"/>
+
+<region name="dAsn1Keyword" parent="KeywordStrong"/>
+<region name="dAsn1BuiltinType" parent="TypeKeyword"/>
+<region name="dAsn1OIDKnownId" parent="Constant"/>
+
+<region name="dAsn1TagKeyword" parent="Label"/>
+<region name="dAsn1TagNumber" parent="Label"/>
+<region name="dAsn1TagBracket" parent="Label"/>
+
+<region name="dAsn1TypeRefer" parent="VarStrong"/>
+<region name="dAsn1EncClassRef" parent="Var"/>
+<region name="dAsn1Identifier" parent="Identifier"/>
+<region name="dAsn1FieldRefer" parent="ParameterStrong"/>
+<region name="dAsn1AtRefer" parent="Directive"/>
+<region name="dAsn1MProdRefer" parent="VarStrong"/>
+
+<region name="dAsn1StructSymb" parent="SymbolStrong"/>
+<region name="dAsn1OperatorSym" parent="Operator"/>
+<region name="dAsn1Symbol" parent="Symbol"/>
+
+<region name="dAsn1Number" parent="NumberDec"/>
+<region name="dAsn1BinHexStr" parent="NumberHex"/>
+<region name="dAsn1BinHexEdge" parent="NumberSuffix"/>
+<region name="dAsn1RealNumber" parent="NumberFloat"/>
+<region name="dAsn1String" parent="String"/>
+<region name="dAsn1StrQuote" parent="StringEdge"/>
+<region name="dAsn1StrWSpace" parent="Prefix"/>
+
+<region name="dAsn1XMLTagAlone" parent="Tag"/>
+<region name="dAsn1XMLTagBegin" parent="Tag"/>
+<region name="dAsn1XMLTagEnd" parent="Tag"/>
+<region name="dAsn1XMLEscaping" parent="StringContent"/>
+
+<scheme name="Asn1BlockComment">
+  <block start="/(\/\*)/" end="/(\*\/)/"
+         scheme="Asn1BlockComment" region="dAsn1NestComment"
+         region00="dAsn1OpenStruct" region01="dAsn1CommentEdge"
+         region10="dAsn1CloseStruct" region11="dAsn1CommentEdge"/>
+  <regexp match="/((\-\-)(\-?[^\-])*?\-?)\M((\/\*)|(\*\/))/"
+          region1="dAsn1NestComment" region2="dAsn1CommentEdge"
+          priority="low"/>
+  <regexp match="/(\-\-).*?((\-\-)|$)/"
+          region0="dAsn1NestComment" region1="dAsn1CommentEdge"
+          region3="dAsn1CommentEdge"
+          priority="low"/>
+  <regexp match="/(\!\!+)|(\?\?+)/" region0="dAsn1Todo"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1PragmaSnacc">
+  <keywords region="dAsn1PragmaWord">
+    <word name="cTypeName"/>
+    <word name="decodeRoutineName"/>
+    <word name="defaultFieldName"/>
+    <word name="encodeRoutineName"/>
+    <word name="freeRoutineName"/>
+    <word name="genDecodeRoutine"/>
+    <word name="genEncodeRoutine"/>
+    <word name="genFreeRoutine"/>
+    <word name="genPrintRoutine"/>
+    <word name="genTypeDef"/>
+    <word name="isEncDec"/>
+    <word name="isPdu"/>
+    <word name="isPtrForOpt"/>
+    <word name="isPtrForTypeDef"/>
+    <word name="isPtrForTypeRef"/>
+    <word name="isPtrInChoice"/>
+    <word name="optTestRoutineName"/>
+    <word name="printRoutineName"/>
+  </keywords>
+  <keywords region="dAsn1PragmaSymb">
+    <symb name=":"/>
+  </keywords>
+  <regexp match="/&quot;((TRUE)|(FALSE))&quot;/"
+          region0="dAsn1PragmaWord"/>
+  <regexp match="/&quot;((\\.)|[^\\&quot;])*&quot;/"
+          region0="dAsn1PragmaStr"
+          priority="low"/>
+  <regexp match="/&quot;((\\.)|[^\\&quot;])*([^&quot;])$/"
+          region0="dAsn1PragmaStr" region3="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1PragmaJavSnc">
+  <keywords region="dAsn1PragmaWord">
+    <word name="javaTypeName"/>
+    <word name="constructor"/>
+    <word name="encodeRoutine"/>
+    <word name="decodeRoutine"/>
+    <word name="printRoutine"/>
+  </keywords>
+  <keywords region="dAsn1PragmaSymb">
+    <symb name=":"/>
+    <symb name="="/>
+  </keywords>
+  <regexp match="/&quot;((\\.)|[^\\&quot;])*&quot;/"
+          region0="dAsn1PragmaStr"
+          priority="low"/>
+  <regexp match="/&quot;((\\.)|[^\\&quot;])*([^&quot;])$/"
+          region0="dAsn1PragmaStr" region3="dAsn1Error"
+          priority="low"/>
+  <regexp match="/'((\\.)|[^\\'])*'/"
+          region0="dAsn1PragmaStr"
+          priority="low"/>
+  <regexp match="/'((\\.)|[^\\'])*([^'])$/"
+          region0="dAsn1PragmaStr" region3="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1PragmaStd">
+  <regexp match="/^\s*\-\-/" region0="dAsn1NestComment"/>
+  <keywords region="dAsn1PragmaWord">
+    <word name="ASN1"/>
+    <word name="CMIS"/>
+    <word name="DSET"/>
+    <word name="GDMO"/>
+    <word name="HP"/>
+    <word name="IBM"/>
+    <word name="Motorola"/>
+    <word name="OSS"/>
+    <word name="OpenT"/>
+    <word name="SUN"/>
+    <word name="TCSI"/>
+    <word name="Vertel"/>
+    <word name="XMP"/>
+    <word name="XOM"/>
+  </keywords>
+  <keywords region="dAsn1PragmaWord">
+    <word name="AnyTypeTableRef"/>
+    <word name="ConstraintFunction"/>
+    <word name="DeferDecoding"/>
+    <word name="FileNameExtension"/>
+    <word name="FileNamePrefix"/>
+    <word name="FileNameSuffix"/>
+    <word name="HugeInteger"/>
+    <word name="Nickname"/>
+    <word name="PDU"/>
+    <word name="RealRepresentation"/>
+    <word name="Remove"/>
+    <word name="RetainEncoding"/>
+    <word name="ValueInFile"/>
+    <word name="Version"/>
+    <word name="WorkingSet"/>
+  </keywords>
+  <keywords region="dAsn1PragmaSymb">
+    <symb name="'"/>
+    <symb name="("/>
+    <symb name=")"/>
+    <symb name="*"/>
+    <symb name=","/>
+    <symb name="."/>
+    <symb name="{"/>
+    <symb name="}"/>
+  </keywords>
+  <regexp match="/\b\d+\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1PragmaNumb"/>
+  <regexp match="/&quot;((&quot;&quot;)|[^&quot;])*&quot;/"
+          region0="dAsn1PragmaStr"
+          priority="low"/>
+  <regexp match="/&quot;((&quot;&quot;)|[^&quot;])*([^&quot;])$/"
+          region0="dAsn1PragmaStr" region3="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1PragmaWord">
+    <word name="ALIGNMENT"/>
+    <word name="BMPSTRING"/>
+    <word name="CHARENUMSIZE"/>
+    <word name="CHARSIZE"/>
+    <word name="CODESEG"/>
+    <word name="COMMENT"/>
+    <word name="DOUBLESIZE"/>
+    <word name="FIELDNAME"/>
+    <word name="FLOATSIZE"/>
+    <word name="FUNCNAME"/>
+    <word name="GENERICENUMSIZE"/>
+    <word name="INCLUDES"/>
+    <word name="INT"/>
+    <word name="INTMAX"/>
+    <word name="INTMIN"/>
+    <word name="INTSIZE"/>
+    <word name="LENGTHSIZE"/>
+    <word name="LLONGSUFFIX"/>
+    <word name="LONG"/>
+    <word name="LONGENUMSIZE"/>
+    <word name="LONGLONGMAX"/>
+    <word name="LONGLONGMIN"/>
+    <word name="LONGLONGSIZE"/>
+    <word name="LONGMAX"/>
+    <word name="LONGMIN"/>
+    <word name="LONGSIZE"/>
+    <word name="MACHINETYPE"/>
+    <word name="MANDATORYOPTIONS"/>
+    <word name="OBJECTID"/>
+    <word name="OBJHANDLE"/>
+    <word name="OPERATINGSYSTEM"/>
+    <word name="POINTERSIZE"/>
+    <word name="PRAGMA"/>
+    <word name="ROOT"/>
+    <word name="RUNTIMEVERSION"/>
+    <word name="SHORT"/>
+    <word name="SHORTENNAMES"/>
+    <word name="SHORTENUMSIZE"/>
+    <word name="SHORTMAX"/>
+    <word name="SHORTMIN"/>
+    <word name="SHORTSIZE"/>
+    <word name="SUPPRESS"/>
+    <word name="TARGET"/>
+    <word name="TYPENAME"/>
+    <word name="UALIGN"/>
+    <word name="UCHARENUMSIZE"/>
+    <word name="UINTMAX"/>
+    <word name="ULLONGSUFFIX"/>
+    <word name="ULONGLONGMAX"/>
+    <word name="ULONGMAX"/>
+    <word name="UNIVERSALSTRING"/>
+    <word name="USHORTENUMSIZE"/>
+    <word name="USHORTMAX"/>
+    <word name="VALNAME"/>
+  </keywords>
+</scheme>
+
+<scheme name="Asn1PragmaOther">
+  <regexp match="/^\s*\-\-/" region0="dAsn1NestComment"/>
+  <keywords region="dAsn1PragmaSymb">
+    <symb name="&quot;"/>
+    <symb name="."/>
+    <symb name=","/>
+    <symb name="{"/>
+    <symb name="}"/>
+  </keywords>
+</scheme>
+
+<scheme name="Asn1LineComment">
+  <regexp match="/^\s*\-\-\M([^\w\$&lt;]|$)/"
+          region0="dAsn1NestComment"/>
+  <regexp match="/\-\-\-\-/" region0="dAsn1LineComment"/>
+  <regexp match="/\\\d+/" region0="dAsn1RegExpRefer"
+          priority="low"/>
+  <regexp match="/\c(\@\s*[A-Z]([\-_]?[A-Za-z\d])*
+                 (\s*\{[\s\w\-\(\)]+\})?(\s*\.\s*\#?[A-Za-z]
+                 ([\-_]?[A-Za-z\d])*(\s*\.\s*(\*|(\d+)|
+                 ((&amp;\#?)?[A-Za-z]([\-_]?[A-Za-z\d])*)))*)?)/x"
+          region0="dAsn1AbsRefer"
+          priority="low"/>
+  <inherit scheme="Comment"/>
+</scheme>
+
+<scheme name="Asn1Comments">
+  <block start="/(\/\*)/" end="/(\*\/)/"
+         scheme="Asn1BlockComment" region="dAsn1BlkComment"
+         region00="dAsn1OpenStruct" region01="dAsn1CommentEdge"
+         region10="dAsn1CloseStruct" region11="dAsn1CommentEdge"/>
+  <regexp match="/\-\-\s*(ROOT)\s*((\-\-)|$)/"
+          region0="dAsn1Pragma" region1="dAsn1PragmaWord"/>
+  <block start="/(\-\-snacc)\M([^\w\-]|(\-\-)|$)/" end="/(\-\-)|$/"
+         scheme="Asn1PragmaSnacc" region="dAsn1PragmaBody"
+         region00="dAsn1OpenStruct" region01="dAsn1Pragma"
+         region10="dAsn1CloseStruct" region11="dAsn1Pragma"/>
+  <block start="/(\-\-pragma)\M([^\w\-]|(\-\-)|$)/" end="/(\-\-)|$/"
+         scheme="Asn1PragmaJavSnc" region="dAsn1PragmaBody"
+         region00="dAsn1OpenStruct" region01="dAsn1Pragma"
+         region10="dAsn1CloseStruct" region11="dAsn1Pragma"/>
+  <block start="/(\-\-&lt;)/" end="/^|((&gt;\-\-)|(\-(\-)))/"
+         scheme="Asn1PragmaStd" region="dAsn1PragmaBody"
+         region00="dAsn1OpenStruct" region01="dAsn1Pragma"
+         region10="dAsn1CloseStruct" region11="dAsn1Pragma"
+         region14="dAsn1Error"/>
+  <block start="/(\-\-\$)/" end="/^|((\$\-\-)|(\-(\-)))/"
+         scheme="Asn1PragmaOther" region="dAsn1PragmaBody"
+         region00="dAsn1OpenStruct" region01="dAsn1Pragma"
+         region10="dAsn1CloseStruct" region11="dAsn1Pragma"
+         region14="dAsn1Error"/>
+  <block start="/(\-\-)/" end="/^|(\-\-)/"
+         scheme="Asn1LineComment" region="dAsn1LineComment"
+         region00="dAsn1OpenStruct" region01="dAsn1CommentEdge"
+         region10="dAsn1CloseStruct" region11="dAsn1CommentEdge"/>
+</scheme>
+
+<scheme name="Asn1ModHead">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((AUTOMATIC)|(EXPLICIT)|(EXTENSIBILITY)|
+                 (IMPLICIT)|(IMPLIED)|(INSTRUCTIONS)|(TAGS)|(XER))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1TagKeyword"/>
+  <regexp match="/\c(TAG)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Error"/>
+  <regexp match="/(\c[A-Z](\-?[A-Z\d])*)/"
+          region0="dAsn1EncClassRef"/>
+  <regexp match="/\S+/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1Empty">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\S+/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1BadNames">
+  <regexp match="/\c((ABSENT)|(ABSTRACT\-SYNTAX)|(ALL)|
+                 (APPLICATION)|(AUTOMATIC)|(BEGIN)|(BIT)|
+                 (BMPString)|(BOOLEAN)|(BY)|(CHARACTER)|(CHOICE)|
+                 (CLASS)|(COMPONENT)|(COMPONENTS)|(CONSTRAINED)|
+                 (CONTAINING)|(DEFAULT)|(DEFINITIONS)|(EMBEDDED)|
+                 (ENCODED)|(ENCODING\-CONTROL)|(END)|(ENUMERATED)|
+                 (EXCEPT)|(EXPLICIT)|(EXPORTS)|(EXTENSIBILITY)|
+                 (EXTERNAL)|(FALSE)|(FROM)|(GeneralString)|
+                 (GeneralizedTime)|(GraphicString)|(IA5String)|
+                 (IDENTIFIER)|(IMPLICIT)|(IMPLIED)|(IMPORTS)|
+                 (INCLUDES)|(INSTANCE)|(INTEGER)|(INTERSECTION)|
+                 (ISO646String)|(MAX)|(MIN)|(MINUS\-INFINITY)|
+                 (NULL)|(NumericString)|(OBJECT)|(OCTET)|(OF)|
+                 (OPTIONAL)|(ObjectDescriptor)|(PATTERN)|(PDV)|
+                 (PLUS\-INFINITY)|(PRESENT)|(PRIVATE)|
+                 (PrintableString)|(REAL)|(RELATIVE\-OID)|
+                 (SEQUENCE)|(SET)|(SIZE)|(STRING)|(SYNTAX)|
+                 (T61String)|(TAGS)|(TRUE)|(TYPE\-IDENTIFIER)|
+                 (TeletexString)|(UNION)|(UNIQUE)|(UNIVERSAL)|
+                 (UTCTime)|(UTF8String)|(UniversalString)|
+                 (VideotexString)|(VisibleString)|(WITH))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1Exports">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1Empty"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <regexp match="/\c(ALL)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <keywords region="dAsn1Symbol">
+    <symb name=","/>
+  </keywords>
+  <inherit scheme="Asn1BadNames"/>
+  <regexp match="/\c([a-z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1Identifier"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1TypeRefer"
+          priority="low"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1AssignedNum">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/(0|([1-9]\d*))\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1Number"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1OIDValue">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((administration)|(ccitt)|
+                 (identified\-organization)|(iso)|(itu\-t)|
+                 (joint\-iso\-ccitt)|(joint\-iso\-itu\-t)|
+                 (member\-body)|(network\-operator)|(question)|
+                 (recommendation)|(standard))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1OIDKnownId"/>
+  <regexp match="/(0|([1-9]\d*))\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1Number"/>
+  <regexp match="/\c([a-z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1Identifier"/>
+  <block start="/(\()/" end="/(\))/" scheme="Asn1AssignedNum"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1Imports">
+  <regexp match="/\c((ALL)|(FROM))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1OIDValue"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <inherit scheme="Asn1Exports"/>
+</scheme>
+
+<scheme name="Asn1TagSpec">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((APPLICATION)|(PRIVATE)|(UNIVERSAL))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1TagKeyword"/>
+  <regexp match="/(0|([1-9]\d*))\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1TagNumber"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 ([a-z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1Identifier"
+          priority="low"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1OpSyms">
+  <keywords region="dAsn1OperatorSym">
+    <symb name="|"/>
+  </keywords>
+  <keywords region="dAsn1Symbol">
+    <symb name=".."/>
+  </keywords>
+  <regexp match="/\c((ALL)|(EXCEPT)|(MAX)|(MIN)|(UNION))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+</scheme>
+
+<scheme name="Asn1CharString">
+  <regexp match="/(^\s*)|(\s*$)/" region0="dAsn1StrWSpace"/>
+  <regexp match="/((\s*([^&quot;\s]|(&quot;&quot;)))+|\s+)/"
+          region0="dAsn1String"/>
+</scheme>
+
+<scheme name="Asn1BHString">
+  <regexp match="/[\dA-F]+/" region0="dAsn1BinHexStr"/>
+  <regexp match="/\s+/" region0="dAsn1StrWSpace"/>
+  <regexp match="/[^\dA-F\s]+/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1SimpleValues">
+  <block start="/(&quot;)/" end="/(&quot;)/"
+         scheme="Asn1CharString" region="dAsn1String"
+         region00="dAsn1OpenStruct" region01="dAsn1StrQuote"
+         region10="dAsn1CloseStruct" region11="dAsn1StrQuote"/>
+  <block start="/(')/" end="/('([BH]|(.)))/"
+         scheme="Asn1BHString" region="dAsn1BinHexStr"
+         region00="dAsn1OpenStruct" region01="dAsn1BinHexEdge"
+         region10="dAsn1CloseStruct" region11="dAsn1BinHexEdge"
+         region13="dAsn1Error"/>
+  <regexp match="/(\-\s*)?(0|([1-9]\d*))((\.\d+([Ee](0|
+                 (\-?[1-9]\d*)))?)|(\.?[Ee](0|(\-?[1-9]\d*))))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region0="dAsn1RealNumber"/>
+  <regexp match="/(\-\s*)?(0|([1-9]\d*))\.\M([^\.]|(\.\.))/"
+          region0="dAsn1RealNumber"/>
+  <regexp match="/\-\s*0\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1RealNumber"/>
+  <regexp match="/(0|((\-\s*)?[1-9]\d*))\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1Number"/>
+  <regexp match="/\c((MINUS\-INFINITY)|(NOT\-A\-NUMBER)|
+                 (PLUS\-INFINITY))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1RealNumber"/>
+  <regexp match="/\c((FALSE)|(NULL)|(TRUE))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+</scheme>
+
+<scheme name="Asn1BasicDefs">
+  <inherit scheme="Asn1SimpleValues"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1InBraces"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <regexp match="/\c((EXPLICIT)|(IMPLICIT))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1TagKeyword"/>
+  <regexp match="/\c((BY)|(CHOICE)|(CONTAINING)|(OF)|(SEQUENCE)|
+                 (SET)|(SIZE)|(WITH))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <regexp match="/\c((ABSTRACT\-SYNTAX)|(TYPE\-IDENTIFIER))
+                 (\s*\.\s*&amp;((id)|(Type)|(property)))/x"
+          region0="dAsn1FieldRefer" region1="dAsn1Keyword"
+          priority="low"/>
+  <regexp match="/\c((ABSTRACT\-SYNTAX)|(ANY)|(BIT(\s+STRING)?)|
+                 (BMPString)|(BOOLEAN)|(CHARACTER(\s+STRING)?)|
+                 (DEFINED)|(EMBEDDED(\s+PDV)?)|(ENUMERATED)|
+                 (EXTERNAL)|(GeneralString)|(GeneralizedTime)|
+                 (GraphicString)|(IA5String)|(IDENTIFIER)|
+                 (INSTANCE(\s+OF)?)|(INTEGER)|(ISO646String)|
+                 (NULL)|(NumericString)|(OBJECT(\s+IDENTIFIER)?)|
+                 (OCTET(\s+STRING)?)|(ObjectDescriptor)|(PDV)|
+                 (PrintableString)|(REAL)|(RELATIVE\-OID)|(STRING)|
+                 (T61String)|(TYPE\-IDENTIFIER)|(TeletexString)|
+                 (UTCTime)|(UTF8String)|(UniversalString)|
+                 (VideotexString)|(VisibleString))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1BuiltinType"/>
+  <regexp match="/([\:&lt;](\s*[\:&lt;])+)/"
+          region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1Symbol">
+    <symb name=":"/>
+    <symb name="&lt;"/>
+  </keywords>
+</scheme>
+
+<scheme name="Asn1BasicRefers">
+  <regexp match="/((\c(([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 [A-Za-z]([\-_]?[A-Za-z\d])*)\s*\.\s*)?
+                 &amp;[A-Za-z]([\-_]?[A-Za-z\d])*(\s*\.\s*
+                 &amp;[A-Za-z]([\-_]?[A-Za-z\d])*)*)/x"
+          region0="dAsn1FieldRefer" region3="dAsn1TypeRefer"
+          priority="low"/>
+  <regexp match="/\c((\s*\.\s*&amp;[A-Za-z]([\-_]?[A-Za-z\d])*)*)/"
+          region0="dAsn1FieldRefer"
+          priority="low"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 ([a-z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1Identifier"
+          priority="low"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 ([A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1TypeRefer"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1DefsAndRefs">
+  <block start="/(\()/" end="/(\))/" scheme="Asn1Constraint"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <regexp match="/\c(END)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Error"
+          priority="low"/>
+  <regexp match="/(\:\:\=)|([\!\^\|\,](\s*[\!\^\|])+)|
+                 (\.\s*\.\s*\.(\s*\.)+)/x"
+          region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1OperatorSym">
+    <symb name="^"/>
+  </keywords>
+  <keywords region="dAsn1Symbol">
+    <symb name="..."/>
+    <symb name="!"/>
+    <symb name=","/>
+  </keywords>
+  <inherit scheme="Asn1OpSyms"/>
+  <regexp match="/\c((COMPONENT)|(COMPONENTS)|(FROM)|(INCLUDES)|
+                 (INTERSECTION))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1BasicDefs"/>
+  <inherit scheme="Asn1BasicRefers"/>
+</scheme>
+
+<scheme name="Asn1Constraint">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((CONSTRAINED)|(ENCODED)|(PATTERN)|(SIZE))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1DefsAndRefs"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1BracesCommon">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((ABSENT)|(DEFAULT)|(OPTIONAL)|(PRESENT)|
+                 (UNIQUE))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <regexp match="/\c(BY)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1TypeRefer"/>
+  <regexp match="/\c((administration)|(ccitt)|
+                 (identified\-organization)|(iso)|(itu\-t)|
+                 (joint\-iso\-ccitt)|(joint\-iso\-itu\-t)|
+                 (member\-body)|(network\-operator)|(question)|
+                 (recommendation)|(standard))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1OIDKnownId"/>
+  <regexp match="/(\@\s*(\.\s*)*([a-z]([\-_]?[A-Za-z\d])*
+                 (\s*\.\s*[a-z]([\-_]?[A-Za-z\d])*)*)?)/x"
+          region0="dAsn1AtRefer"/>
+  <regexp match="/(\[)\s*(((APPLICATION)|(PRIVATE)|(UNIVERSAL))\s+)?
+                 (0|([1-9]\d*))\s*(\])/x"
+         region1="dAsn1TagBracket" region3="dAsn1TagKeyword"
+         region7="dAsn1TagNumber" region9="dAsn1TagBracket"/>
+</scheme>
+
+<scheme name="Asn1EncodingControl">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((AFTER\-TAG)|(AFTER\-VALUE)|(ANY\-ATTRIBUTES)|
+                 (ANY\-ELEMENT)|(AS)|(ATTRIBUTE)|(BASE64)|
+                 (BEFORE\-TAG)|(BEFORE\-VALUE)|(CAPITALIZED)|
+                 (COLLAPSE)|(CONTROL\-NAMESPACE)|(DECIMAL)|
+                 (DEFAULT\-FOR\-EMPTY)|(ELEMENT)|(EMBED\-VALUES)|
+                 (GLOBAL\-DEFAULTS)|(IN)|(LIST)|(LOWERCASED)|
+                 (MODIFIED\-ENCODINGS)|(NAME)|(NAMESPACE)|(NOT)|
+                 (PI\-OR\-COMMENT)|(PREFIX)|(REPLACE)|(TAG)|(TEXT)|
+                 (UNCAPITALIZED)|(UNTAGGED)|(UPPERCASED)|(USE\-NIL)|
+                 (USE\-NUMBER)|(USE\-ORDER)|(USE\-QNAME)|
+                 (USE\-TYPE)|(USE\-UNION)|(WHITESPACE)|(XER))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1TagKeyword"/>
+  <regexp match="/\c((ENCODING\-CONTROL))\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1Keyword"
+          priority="low"/>
+  <inherit scheme="Asn1BasicDefs"/>
+  <inherit scheme="Asn1BasicRefers"/>
+  <keywords region="dAsn1Symbol">
+    <symb name="!"/>
+    <symb name="("/>
+    <symb name=")"/>
+    <symb name="*"/>
+    <symb name=","/>
+    <symb name="..."/>
+    <symb name=".."/>
+    <symb name="."/>
+    <symb name="::="/>
+    <symb name=":"/>
+    <symb name=";"/>
+    <symb name="^"/>
+    <symb name="|"/>
+  </keywords>
+</scheme>
+
+<scheme name="Asn1InBraces">
+  <inherit scheme="Asn1BracesCommon"/>
+  <block start="/(\[)/" end="/(\])/" scheme="Asn1InBraces"
+         region00="dAsn1OpenStruct" region01="dAsn1TagBracket"
+         region10="dAsn1CloseStruct" region11="dAsn1TagBracket"/>
+  <inherit scheme="Asn1DefsAndRefs"/>
+  <inherit scheme="Asn1EncodingControl"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1XMLDefs">
+  <regexp match="/(&lt;((NULL)|(SEQUENCE)|(SEQUENCE_OF)|
+                 (SET)|(SET_OF))\s*)(\/&gt;)/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Keyword" region8="dAsn1CloseTag"/>
+  <regexp match="/(&lt;((BIT_STRING)|(OCTET_STRING)|(IA5String)|
+                 (VisibleString)|(BMPString))\s*)(\/&gt;)/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1BuiltinType" region8="dAsn1CloseTag"/>
+  <regexp match="/(&lt;((NumericString)|(PrintableString)|
+                 (UTF8String)|(UniversalString))\s*)(\/&gt;)/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1BuiltinType" region7="dAsn1CloseTag"/>
+  <regexp match="/(&lt;((BOOLEAN)|(ENUMERATED)|(GeneralizedTime)|
+                  (INTEGER)|(OBJECT_IDENTIFIER))\s*)(\/&gt;)/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region8="dAsn1CloseTag"/>
+  <regexp match="/(&lt;((RELATIVE_OID)|(REAL)|(CHOICE)|(UTCTime))
+                  \s*)(\/&gt;)/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region7="dAsn1CloseTag"/>
+  <regexp match="/(&lt;(\s+)?(([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 [A-Z]([\-_]?[A-Za-z\d])*)(\s+[^\s\/\-&gt;&lt;]+)*
+                 \s*)((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region3="dAsn1TypeRefer"
+          region7="dAsn1Error" region8="dAsn1CloseTag"/>
+  <regexp match="/(&lt;(\s*\-?[\w\.]+(\s+[^\s\/\-&gt;&lt;]+)*)\s*)
+                 ((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region4="dAsn1CloseTag"
+          region6="dAsn1Error" region7="dAsn1Error"/>
+  <block start="/((&lt;)(\s+)?(NULL)((\s+[^\s\/\-&gt;]+)+)?
+                \s*(&gt;))/x"
+         end="/((&lt;(\s+)?\/)(\s+)?((NULL)|(\-?([\w\.]\-?)+))
+              ((\s+[^\s\/\-&gt;&lt;]+)+)?\s*(&gt;?))/x"
+         scheme="Asn1Empty"
+         region00="dAsn1OpenTag" region01="dAsn1XMLTagBegin"
+         region03="dAsn1Error" region04="dAsn1Keyword"
+         region05="dAsn1Error"
+         region10="dAsn1CloseTag" region11="dAsn1XMLTagEnd"
+         region13="dAsn1Error" region14="dAsn1Error"
+         region16="dAsn1Keyword" region17="dAsn1Error"
+         region19="dAsn1Error"/>
+  <block start="/((&lt;)(\s+)?((SEQUENCE)|(SEQUENCE_OF)|(SET)|
+                (SET_OF))((\s+[^\s\/\-&gt;]+)+)?\s*(&gt;))/x"
+         end="/((&lt;(\s+)?\/)(\s+)?((\y4)|(\-?([\w\.]\-?)+))
+              ((\s+[^\s\/\-&gt;&lt;]+)+)?\s*(&gt;?))/x"
+         scheme="Asn1XMLInside"
+         region00="dAsn1OpenTag" region01="dAsn1XMLTagBegin"
+         region03="dAsn1Error" region04="dAsn1Keyword"
+         region09="dAsn1Error"
+         region10="dAsn1CloseTag" region11="dAsn1XMLTagEnd"
+         region13="dAsn1Error" region14="dAsn1Error"
+         region16="dAsn1Keyword" region17="dAsn1Error"
+         region19="dAsn1Error"/>
+  <block start="/((&lt;)(\s+)?((BIT_STRING)|(BOOLEAN)|(ENUMERATED)|
+                (INTEGER)|(REAL)|(OBJECT_IDENTIFIER)|(RELATIVE_OID)|
+                (OCTET_STRING))((\s+[^\s\/\-&gt;]+)+)?\s*(&gt;))/x"
+         end="/((&lt;(\s+)?\/)(\s+)?((\y4)|(\-?([\w\.]\-?)+))
+              ((\s+[^\s\/\-&gt;&lt;]+)+)?\s*(&gt;?))/x"
+         scheme="Asn1XMLInside"
+         region00="dAsn1OpenTag" region01="dAsn1XMLTagBegin"
+         region03="dAsn1Error" region04="dAsn1BuiltinType"
+         region0d="dAsn1Error"
+         region10="dAsn1CloseTag" region11="dAsn1XMLTagEnd"
+         region13="dAsn1Error" region14="dAsn1Error"
+         region16="dAsn1BuiltinType" region17="dAsn1Error"
+         region19="dAsn1Error"/>
+  <block start="/((&lt;)(\s+)?((BMPString)|(IA5String)|(UTF8String)|
+                (NumericString)|(PrintableString)|(UniversalString)|
+                (VisibleString)|(GeneralizedTime)|(UTCTime))
+                \s*(&gt;))/x"
+         end="/((&lt;(\s+)?\/)(\s+)?((\y4)|(\-?([\w\.]\-?)+))
+              ((\s+[^\s\/\-&gt;&lt;]+)+)?\s*(&gt;?))/x"
+         scheme="Asn1XMLInside"
+         region00="dAsn1OpenTag" region01="dAsn1XMLTagBegin"
+         region03="dAsn1Error" region04="dAsn1BuiltinType"
+         region10="dAsn1CloseTag" region11="dAsn1XMLTagEnd"
+         region13="dAsn1Error" region14="dAsn1Error"
+         region16="dAsn1BuiltinType" region17="dAsn1Error"
+         region19="dAsn1Error"/>
+  <block start="/((&lt;)(\s+)?((([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                [A-Z]([\-_]?[A-Za-z\d])*)|(\-?([\w\.]\-?)+))
+                ((\s+[^\s\/\-&gt;]+)+)?\s*(&gt;))/x"
+         end="/((&lt;(\s+)?\/)(\s+)?((\y4)|(\-?([\w\.]\-?)+))
+              ((\s+[^\s\/\-&gt;&lt;]+)+)?\s*(&gt;?))/x"
+         scheme="Asn1XMLInside"
+         region00="dAsn1OpenTag" region01="dAsn1XMLTagBegin"
+         region03="dAsn1Error" region05="dAsn1TypeRefer"
+         region09="dAsn1Error" region0b="dAsn1Error"
+         region10="dAsn1CloseTag" region11="dAsn1XMLTagEnd"
+         region13="dAsn1Error" region14="dAsn1Error"
+         region16="dAsn1TypeRefer" region17="dAsn1Error"
+         region19="dAsn1Error"/>
+  <regexp match="/&lt;\-?([^\/\-&gt;&lt;]\-?)*
+                 ((\/\s+)|(\/?\s*&gt;))/x"
+          region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1XMLInside">
+  <regexp match="/(&lt;(\s+)?(MINUS\-INFINITY)((\s+
+                 [^\s\/\-&gt;&lt;]+)+)?\s*)((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region3="dAsn1Keyword"
+          region4="dAsn1Error" region6="dAsn1CloseTag"
+          region8="dAsn1Error" region9="dAsn1Error"/>
+  <regexp match="/(&lt;(\s+)?(NOT\-A\-NUMBER)((\s+
+                 [^\s\/\-&gt;&lt;]+)+)?\s*)((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region3="dAsn1Keyword"
+          region4="dAsn1Error" region6="dAsn1CloseTag"
+          region8="dAsn1Error" region9="dAsn1Error"/>
+  <regexp match="/(&lt;(\s+)?(PLUS\-INFINITY)((\s+
+                 [^\s\/\-&gt;&lt;]+)+)?\s*)((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region3="dAsn1Keyword"
+          region4="dAsn1Error" region6="dAsn1CloseTag"
+          region8="dAsn1Error" region9="dAsn1Error"/>
+  <regexp match="/(&lt;(\s+)?(false)((\s+[^\s\/\-&gt;&lt;]+)+)?\s*)
+                 ((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region3="dAsn1Keyword"
+          region4="dAsn1Error" region6="dAsn1CloseTag"
+          region8="dAsn1Error" region9="dAsn1Error"/>
+  <regexp match="/(&lt;(\s+)?(true)((\s+[^\s\/\-&gt;&lt;]+)+)?\s*)
+                 ((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region3="dAsn1Keyword"
+          region4="dAsn1Error" region6="dAsn1CloseTag"
+          region8="dAsn1Error" region9="dAsn1Error"/>
+  <regexp match="/(&lt;(\s+)?(([a-z]([\-_]?[A-Za-z\d])*)|
+                 ([a-z]\-?(\w\-?)*))(\s+[^\s\/\-&gt;&lt;]+)*\s*)
+                 ((\/(\s+)?&gt;)|(\/))/x"
+          region0="dAsn1XMLTagAlone" region1="dAsn1OpenTag"
+          region2="dAsn1Error" region4="dAsn1Identifier"
+          region6="dAsn1Error" region8="dAsn1Error"
+          region9="dAsn1CloseTag"/>
+  <block start="/((&lt;)(\s+)?(([a-z]([\-_]?[A-Za-z\d])*)|([a-z]\-?
+                (\w\-?)*))((\s+[^\s\/\-&gt;]+)+)?\s*(&gt;))/x"
+         end="/((&lt;(\s+)?\/)(\s+)?((\y4)|(\-?([\w\.]\-?)+))
+              ((\s+[^\s\/\-&gt;&lt;]+)+)?\s*(&gt;?))/x"
+         scheme="Asn1XMLInside"
+         region00="dAsn1OpenTag" region01="dAsn1XMLTagBegin"
+         region03="dAsn1Error" region05="dAsn1Identifier"
+         region07="dAsn1Error" region09="dAsn1Error"
+         region10="dAsn1CloseTag" region11="dAsn1XMLTagEnd"
+         region13="dAsn1Error" region14="dAsn1Error"
+         region16="dAsn1Identifier" region17="dAsn1Error"
+         region19="dAsn1Error"/>
+  <inherit scheme="Asn1XMLDefs"/>
+  <regexp match="/&amp;((lt)|(gt)|(amp)|(\#\d*)|
+                 (\#x[\dA-Fa-f]*))\;/x"
+          region0="dAsn1XMLEscaping"/>
+  <regexp match="/(&amp;([\w\#]*\;)?)|(\-\-)|(\/\*)|(\*\/)/"
+          region0="dAsn1Error"/>
+  <regexp match="/&lt;|&gt;/" region0="dAsn1Error"
+          priority="low"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1String"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1MacroPara">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((TYPE)|(VALUE)|(Update))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <block start="/(\[)/" end="/(\])/" scheme="Asn1TagSpec"
+         region00="dAsn1OpenStruct" region01="dAsn1TagBracket"
+         region10="dAsn1CloseStruct" region11="dAsn1TagBracket"/>
+  <block start="/(\()/" end="/(\))/" scheme="Asn1Constraint"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <inherit scheme="Asn1BasicDefs"/>
+  <inherit scheme="Asn1BadNames"/>
+  <regexp match="/\c([a-z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1Identifier"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 ([A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1TypeRefer"
+          priority="low"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1MacroEmbed">
+  <regexp match="/\:\:\=/" region0="dAsn1Symbol"/>
+  <inherit scheme="Asn1MacroPara"/>
+</scheme>
+
+<scheme name="Asn1MacroBody">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\:\:\=/" region0="dAsn1Symbol"/>
+  <regexp match="/\c((BEGIN)|(NOTATION)|(TYPE)|(VALUE)|(empty)|
+                 (identifier)|(number)|(string)|(type)|(value))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <regexp match="/(\|(\s*\|)+)/" region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1OperatorSym">
+    <symb name="|"/>
+  </keywords>
+  <block start="/(&quot;)/" end="/(&quot;)/"
+         scheme="Asn1CharString" region="dAsn1String"
+         region00="dAsn1OpenStruct" region01="dAsn1StrQuote"
+         region10="dAsn1CloseStruct" region11="dAsn1StrQuote"/>
+  <block start="/(\()/" end="/(\))/" scheme="Asn1MacroPara"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <block start="/(&lt;)/" end="/(&gt;)/" scheme="Asn1MacroEmbed"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <inherit scheme="Asn1BadNames"/>
+  <regexp match="/\c([a-z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1Identifier"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1MProdRefer"
+          priority="low"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1JointCommon">
+  <regexp match="/((\:\:\=)\M[^\=]*)/"
+          region1="dAsn1Assignment" region2="dAsn1Symbol"/>
+  <block start="/(\()/" end="/(\))/" scheme="Asn1Constraint"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <block start="/\c(((MACRO)))\M([^\w\-]|(\-\-)|$)/"
+         end="/(^|[^\w\-])\m((END))\M([^\w\-]|(\-\-)|$)/"
+         scheme="Asn1MacroBody" region01="dAsn1OpenStruct"
+         region02="dAsn1Assignment" region03="dAsn1Keyword"
+         region12="dAsn1CloseStruct" region13="dAsn1Keyword"/>
+  <regexp match="/\c((CLASS)|(SYNTAX))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1XMLDefs"/>
+  <inherit scheme="Asn1BasicDefs"/>
+  <regexp match="/(&amp;[A-Za-z]([\-_]?[A-Za-z\d])*
+                 (\s*\.\s*[A-Za-z]([\-_]?[A-Za-z\d])*)*)/x"
+          region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1TagEncSpec">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((APPLICATION)|(PRIVATE)|(UNIVERSAL))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1TagKeyword"/>
+  <regexp match="/(0|([1-9]\d*))\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1TagNumber"/>
+  <inherit scheme="Asn1EncodingControl"/>
+</scheme>
+
+<scheme name="Asn1BeginEnd">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/\c((IMPORTS))\M([^\w\-]|(\-\-)|$)/"
+         end="/(;)/" scheme="Asn1Imports"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/\c((EXPORTS))\M([^\w\-]|(\-\-)|$)/"
+         end="/(;)/" scheme="Asn1Exports"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/\c((ENCODING\-CONTROL))\M([^\w\-]|(\-\-)|$)/"
+         end="/(^|[^\w\-])\m\M((ENCODING\-CONTROL)|(END))
+              ([^\w\-]|(\-\-)|$)/x"
+         scheme="Asn1EncodingControl"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region12="dAsn1CloseStruct"/>
+  <block start="/(\[)/" end="/(\])/" scheme="Asn1TagEncSpec"
+         region00="dAsn1OpenStruct" region01="dAsn1TagBracket"
+         region10="dAsn1CloseStruct" region11="dAsn1TagBracket"/>
+  <regexp match="/(\;(\s*\;)+)/" region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1StructSymb">
+    <symb name=";"/>
+  </keywords>
+  <inherit scheme="Asn1JointCommon"/>
+  <inherit scheme="Asn1BadNames"/>
+  <inherit scheme="Asn1BasicRefers"/>
+  <regexp match="/\w+|((\S)\2*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1EcnBadNames">
+  <keywords region="dAsn1Error">
+    <symb name="::="/>
+  </keywords>
+  <regexp match="/\c((ALL)|(AS)|(BEGIN)|(BER)|(BITS)|(BY)|(CER)|
+                 (COMPLETED)|(DECODE)|(DER)|(DISTRIBUTION)|(ENCODE)|
+                 (ENCODE\-DECODE)|(ENCODING\-CLASS)|
+                 (ENCODING\-DEFINITIONS)|(END)|(EXCEPT)|(EXPORTS)|
+                 (FALSE)|(FIELDS)|(FROM)|(GENERATES)|(IF)|(IMPORTS)|
+                 (IN)|(LINK\-DEFINITIONS)|(MAPPING)|(MAX)|(MIN)|
+                 (MINUS\-INFINITY)|(NON\-ECN\-BEGIN)|
+                 (NON\-ECN\-END)|(NULL)|(OPTIONAL\-ENCODING)|
+                 (OPTIONS)|(ORDERED)|(OUTER)|(PER\-BASIC\-ALIGNED)|
+                 (PER\-BASIC\-UNALIGNED)|(PER\-CANONICAL\-ALIGNED)|
+                 (PER\-CANONICAL\-UNALIGNED)|(PLUS\-INFINITY)|
+                 (REFERENCE)|(REMAINDER)|(RENAMES)|(SIZE)|
+                 (STRUCTURE)|(STRUCTURED)|(TO)|(TRANSFORMS)|(TRUE)|
+                 (UNION)|(USE)|(USE\-SET)|(VALUES)|(WITH))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1EcnCommaSym">
+  <regexp match="/(\,(\s*\,)+)/" region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1Symbol">
+    <symb name=","/>
+  </keywords>
+  <inherit scheme="Asn1EcnBadNames"/>
+</scheme>
+
+<scheme name="Asn1EcnExpRefs">
+  <regexp match="/(\c[A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 (\#[A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1EncClassRef"
+          priority="low"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1TypeRefer"
+          priority="low"/>
+  <regexp match="/(&amp;?\#?\w+)|((\S)\3*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1EcnExports">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/(\{&lt;)/" end="/(&gt;\})/" scheme="Asn1Empty"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <regexp match="/\c(ALL)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1EcnCommaSym"/>
+  <regexp match="/\c([a-z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1Identifier"/>
+  <inherit scheme="Asn1EcnExpRefs"/>
+</scheme>
+
+<scheme name="Asn1EcnRenames">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1OIDValue"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <regexp match="/\c((ALL)|(AS)|(EXCEPT)|(FROM)|(GENERATES)|(IN)|
+                 (WITH))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1EcnCommaSym"/>
+  <regexp match="/(\c[A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 (\#[A-Z]([\-_]?[A-Za-z\d])*\s*\.
+                 (\s*[a-z]([\-_]?[A-Za-z\d])*
+                 (\s*\.\s*[a-z]([\-_]?[A-Za-z\d])*)*(\s*\.)?)?)/x"
+          region0="dAsn1EncClassRef" region5="dAsn1AtRefer"
+          priority="low"/>
+  <regexp match="/\c([a-z]([\-_]?[A-Za-z\d])*
+                 (\s*\.\s*[a-z]([\-_]?[A-Za-z\d])*)*(\s*\.)?)/x"
+          region0="dAsn1AtRefer"
+          priority="low"/>
+  <inherit scheme="Asn1EcnExpRefs"/>
+</scheme>
+
+<scheme name="Asn1EcnImports">
+  <regexp match="/\c((ALL)|(FROM))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1OIDValue"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <inherit scheme="Asn1EcnExports"/>
+</scheme>
+
+<scheme name="Asn1EcnOIDStrNum">
+  <block start="/(&quot;)/" end="/(&quot;)/"
+         scheme="Asn1CharString" region="dAsn1String"
+         region00="dAsn1OpenStruct" region01="dAsn1StrQuote"
+         region10="dAsn1CloseStruct" region11="dAsn1StrQuote"/>
+  <inherit scheme="Asn1EcnCommaSym"/>
+  <regexp match="/\c[A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*
+                 ([a-z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1Identifier"
+          priority="low"/>
+  <inherit scheme="Asn1OIDValue"/>
+</scheme>
+
+<scheme name="Asn1EcnValueSet">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1EcnOIDStrNum"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/(\()/" end="/(\))/" scheme="Asn1EcnValueSet"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <keywords region="dAsn1Error">
+    <symb name="::="/>
+  </keywords>
+  <regexp match="/([\:\|](\s*[\:\|])+)|(\.\s*\.(\s*\.)+)/"
+          region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1Symbol">
+    <symb name=":"/>
+  </keywords>
+  <inherit scheme="Asn1OpSyms"/>
+  <regexp match="/\c((FROM)|(SIZE))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1SimpleValues"/>
+  <regexp match="/\c([a-z]([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1Identifier"/>
+  <regexp match="/(&amp;?\#?\w+)|((\S)\3*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1Anything">
+</scheme>
+
+<scheme name="Asn1EcnBraces">
+  <block start="/(\{&lt;)/" end="/(&gt;\})/" scheme="Asn1EcnParams"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1EcnInBrace"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/\c((NON\-ECN\-BEGIN))\M([^\w\-]|(\-\-)|$)/"
+         end="/((NON\-ECN\-END))\M([^\w\-]|(\-\-)|$)/"
+         scheme="Asn1Anything"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region11="dAsn1CloseStruct" region12="dAsn1Keyword"/>
+  <regexp match="/(\#TAG)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1BuiltinType"/>
+</scheme>
+
+<scheme name="Asn1EcnAllBuilt">
+  <inherit scheme="Asn1EcnBraces"/>
+  <regexp match="/\c((BER)|(CER)|(DER)|(PER\-BASIC\-ALIGNED)|
+                 (PER\-BASIC\-UNALIGNED)|(PER\-CANONICAL\-ALIGNED)|
+                 (PER\-CANONICAL\-UNALIGNED))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1BuiltinType"/>
+  <regexp match="/(\#((ALTERNATIVES)|(BIT\-STRING)|(BITS)|
+                 (BMPString)|(BOOL)|(BOOLEAN)|(CHARACTER\-STRING)|
+                 (CHARS)|(CHOICE)|(CONCATENATION)|
+                 (CONDITIONAL\-INT)|(CONDITIONAL\-REPETITION)|
+                 (EMBEDDED\-PDV)|(ENCODINGS)|(ENUMERATED)|
+                 (EXTENSIONS)|(EXTERNAL)|(GeneralString)|
+                 (GeneralizedTime)|(GraphicString)|(IA5String)|
+                 (INT)|(INTEGER)|(NUL)|(NULL)|(NumericString)|
+                 (OBJECT\-IDENTIFIER)|(ObjectDescriptor)|
+                 (OCTET\-STRING)|(OCTETS)|(OPEN\-TYPE)|(OPTIONAL)|
+                 (OUTER)|(PAD)|(PrintableString)|(REAL)|
+                 (RELATIVE\-OID)|(REPETITION)|(SEQUENCE)|
+                 (SEQUENCE\-OF)|(SET)|(SET\-OF)|(TRANSFORM)|
+                 (TeletexString)|(UTCTime)|(UTF8String)|
+                 (UniversalString)|(VERSION\-BRACKET)|
+                 (VideotexString)|(VisibleString)))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1BuiltinType"/>
+</scheme>
+
+<scheme name="Asn1EcnObjRefs">
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 ([a-z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1Identifier"
+          priority="low"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 ([A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1TypeRefer"
+          priority="low"/>
+  <regexp match="/(&amp;?\#?\w+)|((\S)\3*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="Asn1EcnCommon">
+  <inherit scheme="Asn1EcnAllBuilt"/>
+  <inherit scheme="Asn1EcnBadNames"/>
+  <regexp match="/(\c[A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 (\#[A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1EncClassRef"
+          priority="low"/>
+  <inherit scheme="Asn1EcnObjRefs"/>
+</scheme>
+
+<scheme name="Asn1EcnParams">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/\c((REFERENCE)|(STRUCTURE)|(OUTER))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1SimpleValues"/>
+  <regexp match="/(\:\:\=)|([\,\:](\s*[\,\:])+)/"
+          region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1Symbol">
+    <symb name=","/>
+    <symb name=":"/>
+  </keywords>
+  <regexp match="/((\#[A-Z]([\-_]?[A-Za-z\d])*)(\s*\.\s*
+                 &amp;[A-Za-z]([\-_]?[A-Za-z\d])*)+)/x"
+          region0="dAsn1FieldRefer" region2="dAsn1BuiltinType"
+          priority="low"/>
+  <inherit scheme="Asn1EcnCommon"/>
+</scheme>
+
+<scheme name="Asn1EcnSetOrTag">
+  <block start="/(\()/" end="/(\))/" scheme="Asn1EcnValueSet"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <block start="/(\[)/" end="/(\])/" scheme="Asn1EcnTagSpec"
+         region00="dAsn1OpenStruct" region01="dAsn1TagBracket"
+         region10="dAsn1CloseStruct" region11="dAsn1TagBracket"/>
+  <regexp match="/\c((ENCODING\-CLASS)|(WITH))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+</scheme>
+
+<scheme name="Asn1EcnInBrace">
+  <inherit scheme="Asn1EcnSetOrTag"/>
+  <regexp match="/(\|(\s*\|)+)|(\.\s*\.(\s*\.)+)/"
+          region0="dAsn1Error"
+          priority="low"/>
+  <inherit scheme="Asn1OpSyms"/>
+  <regexp match="/\c((AS)|(BITS)|(BY)|(COMPLETED)|(DECODE)|
+                 (DEFAULT)|(DISTRIBUTION)|(ENCODE)|(ENCODE\-DECODE)|
+                 (FIELDS)|(IF)|(MAPPING)|(OPTIONAL)|
+                 (OPTIONAL\-ENCODING)|(OPTIONS)|(ORDERED)|
+                 (REMAINDER)|(STRUCTURED)|(TO)|(TRANSFORMS)|(USE)|
+                 (USE\-SET)|(VALUES))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <regexp match="/\c((administration)|(ccitt)|
+                 (identified\-organization)|(iso)|(itu\-t)|
+                 (joint\-iso\-ccitt)|(joint\-iso\-itu\-t)|
+                 (member\-body)|(network\-operator)|(question)|
+                 (recommendation)|(standard))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1OIDKnownId"/>
+  <regexp match="/\c((ENCODING\-DEFINITIONS)|(EXPORTS)|(FROM)|
+                 (GENERATES)|(IMPORTS)|(IN)|(LINK\-DEFINITIONS)|
+                 (RENAMES)|(SIZE))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1TypeRefer"/>
+  <regexp match="/(&amp;([a-z]|(\#?[A-Z]))([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1FieldRefer"/>
+  <inherit scheme="Asn1EcnParams"/>
+</scheme>
+
+<scheme name="Asn1EcnTagSpec">
+  <inherit scheme="Asn1Comments"/>
+  <inherit scheme="Asn1EcnBraces"/>
+  <block start="/(\()/" end="/(\))/" scheme="Asn1AssignedNum"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <block start="/(\[)/" end="/(\])/" scheme="Asn1EcnTagSpec"
+         region00="dAsn1OpenStruct" region01="dAsn1TagBracket"
+         region10="dAsn1CloseStruct" region11="dAsn1TagBracket"/>
+  <regexp match="/\c(USE\-SET)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <keywords region="dAsn1Error">
+    <symb name="::="/>
+  </keywords>
+  <regexp match="/(\#ENCODINGS)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Error"
+          priority="low"/>
+  <regexp match="/\c((BEGIN)|(BER)|(CER)|(DER)|(ENCODE)|
+                 (ENCODE\-DECODE)|(END)|(FALSE)|(MINUS\-INFINITY)|
+                 (NULL)|(OUTER)|(PER\-BASIC\-ALIGNED)|
+                 (PER\-BASIC\-UNALIGNED)|
+                 (PER\-CANONICAL\-UNALIGNED)|
+                 (PER\-CANONICAL\-UNALIGNED)|(PLUS\-INFINITY)|
+                 (TRUE)|(UNION)|(USE))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Error"
+          priority="low"/>
+  <regexp match="/\c([A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 ([a-z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1Identifier"
+          priority="low"/>
+  <regexp match="/(&amp;([a-z]|(\#?[A-Z]))([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1FieldRefer"/>
+  <inherit scheme="Asn1EcnExpRefs"/>
+</scheme>
+
+<scheme name="Asn1EcnDefsMod">
+  <inherit scheme="Asn1Comments"/>
+  <regexp match="/((\:\:\=)\M[^\=]*)/"
+          region1="dAsn1Assignment" region2="dAsn1Symbol"/>
+  <block start="/\c((EXPORTS))\M([^\w\-]|(\-\-)|$)/"
+         end="/(;)/" scheme="Asn1EcnExports"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/\c((GENERATES\-AND\-EXPORTS))\M([^\w\-]|(\-\-)|$)/"
+         end="/(;)/" scheme="Asn1EcnRenames"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/\c((RENAMES))\M([^\w\-]|(\-\-)|$)/"
+         end="/(;)/" scheme="Asn1EcnRenames"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/\c((IMPORTS))\M([^\w\-]|(\-\-)|$)/"
+         end="/(;)/" scheme="Asn1EcnImports"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <regexp match="/\c((BEGIN)|(BY)|(COMPLETED)|(SYNTAX))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1EcnSetOrTag"/>
+  <inherit scheme="Asn1EcnCommon"/>
+</scheme>
+
+<scheme name="Asn1EcnObjectSet">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/(\{&lt;)/" end="/(&gt;\})/" scheme="Asn1EcnParams"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <regexp match="/(\|(\s*\|)+)/" region0="dAsn1Error"
+          priority="low"/>
+  <keywords region="dAsn1OperatorSym">
+    <symb name="|"/>
+  </keywords>
+  <regexp match="/\c(UNION)\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <inherit scheme="Asn1EcnBadNames"/>
+  <inherit scheme="Asn1EcnObjRefs"/>
+</scheme>
+
+<scheme name="Asn1EcnLinksMod">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/(\:\:\=)/"
+         end="/\c((BEGIN))\M([^\w\-]|(\-\-)|$)/" scheme="Asn1Empty"
+         region00="dAsn1OpenStruct" region01="dAsn1Symbol"
+         region11="dAsn1CloseStruct" region12="dAsn1Keyword"/>
+  <block start="/\c((IMPORTS))\M([^\w\-]|(\-\-)|$)/"
+         end="/(;)/" scheme="Asn1EcnImports"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/(\{&lt;)/" end="/(&gt;\})/" scheme="Asn1EcnParams"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1EcnObjectSet"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <regexp match="/\c((ENCODE))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Assignment" region2="dAsn1Keyword"/>
+  <regexp match="/\c((BY)|(COMPLETED)|(WITH))\M([^\w\-]|(\-\-)|$)/"
+          region1="dAsn1Keyword"/>
+  <regexp match="/\c((BER)|(CER)|(DER)|(PER\-BASIC\-ALIGNED)|
+                 (PER\-BASIC\-UNALIGNED)|(PER\-CANONICAL\-ALIGNED)|
+                 (PER\-CANONICAL\-UNALIGNED))\M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1BuiltinType"/>
+  <inherit scheme="Asn1EcnBadNames"/>
+  <inherit scheme="Asn1EcnCommaSym"/>
+  <regexp match="/\c[A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*
+                 ([A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1TypeRefer"
+          priority="low"/>
+  <inherit scheme="Asn1EcnExpRefs"/>
+</scheme>
+
+<scheme name="Asn1JointTag">
+  <regexp match="/\c((APPLICATION)|(PRIVATE)|(UNIVERSAL))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1TagKeyword"/>
+  <regexp match="/(0|([1-9]\d*))\M([^\w\-]|(\-\-)|$)/"
+          region0="dAsn1TagNumber"/>
+  <inherit scheme="Asn1EncodingControl"/>
+  <inherit scheme="Asn1EcnTagSpec"/>
+</scheme>
+
+<scheme name="Asn1JointBrace">
+  <inherit scheme="Asn1BracesCommon"/>
+  <block start="/(\{&lt;)/" end="/(&gt;\})/" scheme="Asn1EcnParams"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1JointBrace"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/(\[)/" end="/(\])/" scheme="Asn1JointBrace"
+         region00="dAsn1OpenStruct" region01="dAsn1TagBracket"
+         region10="dAsn1CloseStruct" region11="dAsn1TagBracket"/>
+  <inherit scheme="Asn1EcnAllBuilt"/>
+  <regexp match="/(\c[A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 (\#[A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1EncClassRef"
+          priority="low"/>
+  <regexp match="/(&amp;([a-z]|(\#?[A-Z]))([\-_]?[A-Za-z\d])*)/"
+          region0="dAsn1FieldRefer"/>
+  <inherit scheme="Asn1DefsAndRefs"/>
+  <inherit scheme="Asn1EncodingControl"/>
+  <regexp match="/(&amp;?\#?\w+)|((\S)\3*)/" region0="dAsn1Error"
+          priority="low"/>
+</scheme>
+
+<scheme name="asn1">
+  <inherit scheme="Asn1Comments"/>
+  <block start="/\c(((DEFINITIONS)))\M([^\w\-]|(\-\-)|$)/"
+         end="/(\:\:\=)/" scheme="Asn1ModHead"
+         region01="dAsn1OpenStruct" region02="dAsn1Assignment"
+         region03="dAsn1Keyword"
+         region10="dAsn1CloseStruct" region11="dAsn1Symbol"/>
+  <block start="/\c((BEGIN))\M([^\w\-]|(\-\-)|$)/"
+         end="/(^|[^\w\-])\m((END))\M([^\w\-]|(\-\-)|$)/"
+         scheme="Asn1BeginEnd"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region12="dAsn1CloseStruct" region13="dAsn1Keyword"/>
+  <block start="/\c(((ENCODING\-DEFINITIONS))(\s*(\:\:\=)
+                (\s*(BEGIN))?)?)\M([^\w\-]|(\-\-)|$)/x"
+         end="/(^|[^\w\-])\m((END))\M([^\w\-]|(\-\-)|$)/"
+         scheme="Asn1EcnDefsMod"
+         region01="dAsn1OpenStruct" region02="dAsn1Assignment"
+         region03="dAsn1Keyword" region05="dAsn1Symbol"
+         region07="dAsn1Keyword"
+         region12="dAsn1CloseStruct" region13="dAsn1Keyword"/>
+  <block start="/\c(((LINK\-DEFINITIONS))(\s*(\:\:\=)\s*(BEGIN))?)
+                 \M([^\w\-]|(\-\-)|$)/x"
+         end="/(^|[^\w\-])\m((END))\M([^\w\-]|(\-\-)|$)/"
+         scheme="Asn1EcnLinksMod"
+         region01="dAsn1OpenStruct" region02="dAsn1Assignment"
+         region03="dAsn1Keyword" region05="dAsn1Symbol"
+         region06="dAsn1Keyword"
+         region12="dAsn1CloseStruct" region13="dAsn1Keyword"/>
+  <block start="/\c((ENCODING\-CONTROL))\M([^\w\-]|(\-\-)|$)/"
+         end="/(^|[^\w\-])\m((END))\M([^\w\-]|(\-\-)|$)/"
+         scheme="Asn1EncodingControl"
+         region01="dAsn1OpenStruct" region02="dAsn1Keyword"
+         region12="dAsn1CloseStruct" region13="dAsn1Keyword"/>
+  <regexp match="/\c((COMPLETED)|(ENCODING\-CLASS)|(END))
+                 \M([^\w\-]|(\-\-)|$)/x"
+          region1="dAsn1Keyword"/>
+  <block start="/(\[)/" end="/(\])/" scheme="Asn1JointTag"
+         region00="dAsn1OpenStruct" region01="dAsn1TagBracket"
+         region10="dAsn1CloseStruct" region11="dAsn1TagBracket"/>
+  <block start="/(\{&lt;)/" end="/(&gt;\})/" scheme="Asn1EcnParams"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <block start="/(\{)/" end="/(\})/" scheme="Asn1JointBrace"
+         region00="dAsn1OpenStruct" region01="dAsn1StructSymb"
+         region10="dAsn1CloseStruct" region11="dAsn1StructSymb"/>
+  <inherit scheme="Asn1JointCommon"/>
+  <inherit scheme="Asn1EcnAllBuilt"/>
+  <regexp match="/(\c[A-Z]([\-_]?[A-Za-z\d])*\s*\.\s*)?
+                 (\#[A-Z]([\-_]?[A-Za-z\d])*)/x"
+          region0="dAsn1EncClassRef"
+          priority="low"/>
+  <inherit scheme="Asn1BasicRefers"/>
+  <regexp match="/(&amp;?\#?\w+)|((\S)\3*)/" region0="dAsn1Error"/>
+</scheme>
+
+</type>
+</hrc>

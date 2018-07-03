@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="html">
+    <annotation><documentation><![CDATA[
+      HTML language syntax.
+      Use
+        <inherit scheme="htmlTagCall">
+          <virtual scheme="htmlPairs" subst="empty"/>
+        </inherit>
+      to safely include html-tags into your meta-html language
+    ]]></documentation><contributors><![CDATA[
+      JULY <lubimovi@usa.net>
+      Andrzej Novosiolov <andrzej@ukrnet.net>
+      Evgeny Stepanischev <se@e-kazan.ru>
+      Eugene Efremov <4mirror@mail.ru>
+    ]]></contributors>
+     <appinfo>
+      <prototype name="html" group="inet" description="html">
+        <location link="inet/html.hrc"/>
+        <filename>/\.[^p]??html?$/i</filename>
+        <firstline>/^\s*&lt;((!DOCTYPE\s+)?HTML|!\-\-)/i</firstline>
+      </prototype>
+      <require>
+       <package name="html-entity"/>
+       <type name="html-css"/>
+       <type name="perl"/>
+       <type name="vbScript"/>
+       <type name="jScript"/>
+      </require>     
+     </appinfo>    
+    </annotation>
+
+    <import type="def"/>
+    <import type="jScript"/>
+    <import type="vbScript"/>
+    <!--import type="perl"/ -->
+
+    <region name="htmlString" parent="String"/>
+    <region name="htmlNumb" parent="Number"/>
+    <region name="htmlComment" parent="Comment"/>
+    <region name="htmlDirective" parent="Directive"/>
+    <region name="htmlParam" parent="Parameter"/>
+    <region name="htmlUnknowParam" parent="ParameterUnknown"/>
+    <region name="htmlTT" parent="Insertion"/>
+
+    <region name="htmlTagBr" parent="OpenTag"/>
+    <region name="htmlOpenTag" parent="Keyword"/> 
+    <region name="htmlCloseTag" parent="htmlOpenTag"/>
+
+    <region name="htmlUnknowTag" parent="Tag"/> 
+    <region name="htmlTagEqu" parent="Symbol"/> 
+
+    <entity name="htmlscrStart" value="script [^&gt;]+ language\s*=\s*(?{q}[\x22\x27]?)"/>
+    <entity name="htmlscrEnd" value="(?{htmlTagBr}&lt; \/ (?{htmlCloseTag}script) \&gt; )"/>
+
+    <region name='Header1Outline' parent='def:Outlined' description='Header1 Element'/>
+    <region name='Header2Outline' parent='def:Outlined' description='Header2 Element'/>
+    <region name='Header3Outline' parent='def:Outlined' description='Header3 Element'/>
+
+    <region name="CCOperator" parent="def:Keyword" />
+    <region name="CCBool" parent="def:Keyword" />
+    <region name="CCVar" parent="def:VarStrong" />
+
+    <scheme name="xssi">
+      <block start="/(=)\s*&#34;/" end="/&#34;/" scheme="perl:InterpolateString" region="String" region01="Symbol" region00="PairStart" region10="PairEnd"/>
+      <keywords ignorecase="yes" region="htmlParam">
+        <word name="cgi"/>
+        <word name="cmd"/>
+        <word name="encoding"/>
+        <word name="errmsg"/>
+        <word name="expr"/>
+        <word name="file"/>
+        <word name="sizefmt"/>
+        <word name="timefmt"/>
+        <word name="value"/>
+        <word name="var"/>
+        <word name="virtual"/>
+      </keywords>
+      <keywords ignorecase="yes" region="htmlOpenTag">
+        <word name="#config"/>
+        <word name="#echo"/>
+        <word name="#elif"/>
+        <word name="#else"/>
+        <word name="#endif"/>
+        <word name="#exec"/>
+        <word name="#flastmod"/>
+        <word name="#fsize"/>
+        <word name="#if"/>
+        <word name="#include"/>
+        <word name="#printenv"/>
+        <word name="#set"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="htmlString"/>
+
+	<scheme name="htmlParams">
+		<keywords ignorecase="yes" region="htmlParam">
+			<word name="abbr"/>
+			<word name="above"/>
+			<word name="accept-charset"/>
+			<word name="accept"/>
+			<word name="accesskey"/>
+			<word name="action"/>
+			<word name="align"/>
+			<word name="alink"/>
+			<word name="alt"/>
+			<word name="archive"/>
+			<word name="autocomplete"/>
+			<word name="autofocus"/>
+			<word name="autoplay"/>
+			<word name="axis"/>
+			<word name="background"/>
+			<word name="balance"/>
+			<word name="behavior"/>
+			<word name="below"/>
+			<word name="bgcolor"/>
+			<word name="bgproperties"/>
+			<word name="border"/>
+			<word name="bordercolordark"/>
+			<word name="bordercolorlight"/>
+			<word name="bottommargin"/>
+			<word name="cellpadding"/>
+			<word name="cellspacing"/>
+			<word name="challenge"/>
+			<word name="char"/>
+			<word name="charoff"/>
+			<word name="charset"/>
+			<word name="checked"/>
+			<word name="cite"/>
+			<word name="class"/>
+			<word name="classid"/>
+			<word name="clear"/>
+			<word name="code"/>
+			<word name="codebase"/>
+			<word name="codetype"/>
+			<word name="color"/>
+			<word name="cols"/>
+			<word name="colspan"/>
+			<word name="compact"/>
+			<word name="content"/>
+			<word name="contenteditable"/>
+			<word name="contextmenu"/>
+			<word name="controls"/>
+			<word name="coords"/>
+			<word name="data"/>
+			<word name="datafld"/>
+			<word name="dataformatas"/>
+			<word name="datapagesize"/>
+			<word name="datasrc"/>
+			<word name="datetime"/>
+			<word name="declare"/>
+			<word name="defer"/>
+			<word name="dir"/>
+			<word name="direction"/>
+			<word name="disabled"/>
+			<word name="draggable"/>
+			<word name="dropzone"/>
+			<word name="dynsrc"/>
+			<word name="enctype"/>
+			<word name="face"/>
+			<word name="for"/>
+			<word name="form"/>
+			<word name="formaction"/>
+			<word name="formenctype"/>
+			<word name="formmethod"/>
+			<word name="formnovalidate"/>
+			<word name="formtarget"/>
+			<word name="frame"/>
+			<word name="frameborder"/>
+			<word name="framespacing"/>
+			<word name="headers"/>
+			<word name="height"/>
+			<word name="hidden"/>
+			<word name="high"/>
+			<word name="href"/>
+			<word name="hreflang"/>
+			<word name="hspace"/>
+			<word name="http-equiv"/>
+			<word name="id"/>
+			<word name="ismap"/>
+			<word name="label"/>
+			<word name="lang"/>
+			<word name="language"/>
+			<word name="left"/>
+			<word name="leftmargin"/>
+			<word name="link"/>
+			<word name="list"/>
+			<word name="longdesc"/>
+			<word name="loop"/>
+			<word name="loopdelay"/>
+			<word name="low"/>
+			<word name="mailto"/>
+			<word name="manifest"/>
+			<word name="marginheight"/>
+			<word name="marginwidth"/>
+			<word name="max"/>
+			<word name="maxlength"/>
+			<word name="media"/>
+			<word name="method"/>
+			<word name="min"/>
+			<word name="multiple"/>
+			<word name="name"/>
+			<word name="nohref"/>
+			<word name="noresize"/>
+			<word name="noshade"/>
+			<word name="novalidate"/>
+			<word name="nowrap"/>
+			<word name="object"/>
+			<word name="onabort"/>
+			<word name="onafterprint"/>
+			<word name="onbeforeonload"/>
+			<word name="onbeforeprint"/>
+			<word name="onblur"/>
+			<word name="oncanplay"/>
+			<word name="oncanplaythrough"/>
+			<word name="onchange"/>
+			<word name="onclick"/>
+			<word name="oncontextmenu"/>
+			<word name="ondblclick"/>
+			<word name="ondrag"/>
+			<word name="ondragend"/>
+			<word name="ondragenter"/>
+			<word name="ondragleave"/>
+			<word name="ondragover"/>
+			<word name="ondragstart"/>
+			<word name="ondrop"/>
+			<word name="ondurationchange"/>
+			<word name="onemptied"/>
+			<word name="onended"/>
+			<word name="onerror"/>
+			<word name="onerrorupdate"/>
+			<word name="onfilterchange"/>
+			<word name="onfocus"/>
+			<word name="onformchange"/>
+			<word name="onforminput"/>
+			<word name="onhaschange"/>
+			<word name="onhelp"/>
+			<word name="oninput"/>
+			<word name="oninvalid"/>
+			<word name="onkeydown"/>
+			<word name="onkeypress"/>
+			<word name="onkeyup"/>
+			<word name="onload"/>
+			<word name="onloadeddata"/>
+			<word name="onloadedmetadata"/>
+			<word name="onloadstart"/>
+			<word name="onmessage"/>
+			<word name="onmousedown"/>
+			<word name="onmousemove"/>
+			<word name="onmouseout"/>
+			<word name="onmouseover"/>
+			<word name="onmouseup"/>
+			<word name="onmousewheel"/>
+			<word name="onoffline"/>
+			<word name="ononline"/>
+			<word name="onpagehide"/>
+			<word name="onpageshow"/>
+			<word name="onpause"/>
+			<word name="onplay"/>
+			<word name="onplaying"/>
+			<word name="onpopstate"/>
+			<word name="onprogress"/>
+			<word name="onratechange"/>
+			<word name="onreadystatechange"/>
+			<word name="onredo"/>
+			<word name="onreset"/>
+			<word name="onresize"/>
+			<word name="onscroll"/>
+			<word name="onseeked"/>
+			<word name="onseeking"/>
+			<word name="onselect"/>
+			<word name="onselectstart"/>
+			<word name="onstalled"/>
+			<word name="onstorage"/>
+			<word name="onsubmit"/>
+			<word name="onsuspend"/>
+			<word name="ontimeupdate"/>
+			<word name="onundo"/>
+			<word name="onunload"/>
+			<word name="onvolumechange"/>
+			<word name="onwaiting"/>
+			<word name="optimum"/>
+			<word name="pattern"/>
+			<word name="placeholder"/>
+			<word name="pluginspage"/>
+			<word name="poster"/>
+			<word name="preload"/>
+			<word name="profile"/>
+			<word name="prompt"/>
+			<word name="pubdate"/>
+			<word name="readonly"/>
+			<word name="rel"/>
+			<word name="repeat"/>
+			<word name="required"/>
+			<word name="rev"/>
+			<word name="reversed"/>
+			<word name="rightmargin"/>
+			<word name="rows"/>
+			<word name="rowspan"/>
+			<word name="rules"/>
+			<word name="sandbox"/>
+			<word name="scheme"/>
+			<word name="scope"/>
+			<word name="scroll"/>
+			<word name="scrollamount"/>
+			<word name="scrolldelay"/>
+			<word name="scrolling"/>
+			<word name="seamless"/>
+			<word name="selected"/>
+			<word name="shape"/>
+			<word name="size"/>
+			<word name="sizes"/>
+			<word name="span"/>
+			<word name="spellcheck"/>
+			<word name="src"/>
+			<word name="srcdoc"/>
+			<word name="standby"/>
+			<word name="start"/>
+			<word name="step"/>
+			<word name="style"/>
+			<word name="summary"/>
+			<word name="tabindex"/>
+			<word name="target"/>
+			<word name="text"/>
+			<word name="title"/>
+			<word name="top"/>
+			<word name="topmargin"/>
+			<word name="truespeed"/>
+			<word name="type"/>
+			<word name="url"/>
+			<word name="usemap"/>
+			<word name="valign"/>
+			<word name="value"/>
+			<word name="valuetype"/>
+			<word name="version"/>
+			<word name="visibility"/>
+			<word name="vlink"/>
+			<word name="volume"/>
+			<word name="vrml"/>
+			<word name="vspace"/>
+			<word name="width"/>
+			<word name="wrap"/>
+			<word name="xmlns"/>
+			<word name="z-index"/>
+		</keywords>
+	</scheme>
+
+	<scheme name="htmlCoreTags">
+		<keywords ignorecase="yes" region="htmlOpenTag" worddiv="[^\w-]">
+			<word name="a"/>
+		</keywords>
+		<keywords ignorecase="yes" region="htmlOpenTag" worddiv="[^\w-]">
+			<!--word name="above"/-->
+			<!--word name="id"/-->
+			<!--word name="ilayer"/-->
+			<!--word name="layer"/-->
+			<!--word name="listing"/-->
+			<!--word name="multicol"/-->
+			<!--word name="nextid"/-->
+			<!--word name="nolayer"/-->
+			<word name="abbr"/>
+			<word name="acronym"/>
+			<word name="address"/>
+			<word name="applet"/>
+			<word name="area"/>
+			<word name="array"/>
+			<word name="article"/>
+			<word name="aside"/>
+			<word name="audio"/>
+			<word name="b"/>
+			<word name="base"/>
+			<word name="basefont"/>
+			<word name="bdi"/>
+			<word name="bdo"/>
+			<word name="bgsound"/>
+			<word name="big"/>
+			<word name="blink"/>
+			<word name="blink"/>
+			<word name="blockquote"/>
+			<word name="body"/>
+			<word name="box"/>
+			<word name="br"/>
+			<word name="button"/>
+			<word name="canvas"/>
+			<word name="caption"/>
+			<word name="center"/>
+			<word name="cite"/>
+			<word name="code"/>
+			<word name="col"/>
+			<word name="colgroup"/>
+			<word name="command"/>
+			<word name="comment"/>
+			<word name="datalist"/>
+			<word name="dd"/>
+			<word name="del"/>
+			<word name="details"/>
+			<word name="dfn"/>
+			<word name="dir"/>
+			<word name="div"/>
+			<word name="dl"/>
+			<word name="dt"/>
+			<word name="em"/>
+			<word name="embed"/>
+			<word name="fieldset"/>
+			<word name="fig"/>
+			<word name="figcaption"/>
+			<word name="figure"/>
+			<word name="font"/>
+			<word name="footer"/>
+			<word name="form"/>
+			<word name="frame"/>
+			<word name="frameset"/>
+			<word name="h1"/>
+			<word name="h2"/>
+			<word name="h3"/>
+			<word name="h4"/>
+			<word name="h5"/>
+			<word name="h6"/>
+			<word name="head"/>
+			<word name="header"/>
+			<word name="hgroup"/>
+			<word name="hr"/>
+			<word name="html"/>
+			<word name="i"/>
+			<word name="iframe"/>
+			<word name="img"/>
+			<word name="input"/>
+			<word name="ins"/>
+			<word name="isindex"/>
+			<word name="kbd"/>
+			<word name="keygen"/>
+			<word name="label"/>
+			<word name="legend"/>
+			<word name="li"/>
+			<word name="link"/>
+			<word name="map"/>
+			<word name="mark"/>
+			<word name="marquee"/>
+			<word name="menu"/>
+			<word name="meta"/>
+			<word name="meter"/>
+			<word name="nav"/>
+			<word name="nobr"/>
+			<word name="noembed"/>
+			<word name="noframes"/>
+			<word name="noscript"/>
+			<word name="note"/>
+			<word name="object"/>
+			<word name="ol"/>
+			<word name="optgroup"/>
+			<word name="option"/>
+			<word name="output"/>
+			<word name="p"/>
+			<word name="param"/>
+			<word name="pre"/>
+			<word name="progress"/>
+			<word name="q"/>
+			<word name="quote"/>
+			<word name="range"/>
+			<word name="root"/>
+			<word name="rp"/>
+			<word name="rt"/>
+			<word name="ruby"/>
+			<word name="s"/>
+			<word name="samp"/>
+			<word name="script"/>
+			<word name="section"/>
+			<word name="select"/>
+			<word name="small"/>
+			<word name="sound"/>
+			<word name="source"/>
+			<word name="spacer"/>
+			<word name="span"/>
+			<word name="sqrt"/>
+			<word name="strike"/>
+			<word name="strong"/>
+			<word name="style"/>
+			<word name="sub"/>
+			<word name="summary"/>
+			<word name="sup"/>
+			<word name="svg"/>
+			<word name="table"/>
+			<word name="tbody"/>
+			<word name="td"/>
+			<word name="text"/>
+			<word name="textarea"/>
+			<word name="tfoot"/>
+			<word name="th"/>
+			<word name="thead"/>
+			<word name="time"/>
+			<word name="title"/>
+			<word name="tr"/>
+			<word name="track"/>
+			<word name="tt"/>
+			<word name="u"/>
+			<word name="ul"/>
+			<word name="var"/>
+			<word name="video"/>
+			<word name="wbr"/>
+			<word name="xmp"/>
+		</keywords>
+	</scheme>
+
+    <scheme name="htmlCoreParams">
+      <block start='/\b(style)(\s)*(\=)(\s)*((\"))/i' end='/(\")/' scheme="html-css:AposRuleContent" 
+             region01="htmlParam" region03="htmlTagEqu" region05="def:PairStart" 
+             region06="htmlString" region10="def:PairEnd" region11="htmlString"
+      />
+      <block start="/\b(style)(\s)*(\=)(\s)*((\'))/i" end="/(\')/" scheme="html-css:QuotRuleContent" 
+             region01="htmlParam" region03="htmlTagEqu" region05="def:PairStart" 
+             region06="htmlString" region10="def:PairEnd" region11="htmlString"
+      />
+         
+      <inherit scheme="htmlParams"/>
+         
+      <regexp match="/ \c (0x|\#)  [\da-fA-F]+ \b /ix" region="htmlNumb"/>
+      <regexp match="/ \b [0-9\.]+ \%? /x" region="htmlNumb"/>
+      <block start="/([\x22\x27])/" end="/\y1/" scheme="htmlString" region="htmlString"/>
+      <regexp match="/\=/" region="htmlTagEqu"/>
+    </scheme>
+
+    <scheme name="htmlCore">
+      <block start="/~/" end="/[^\w\:\-]?=/" scheme="htmlCoreTags" region="htmlUnknowTag"/>
+
+      <inherit scheme="htmlCoreParams"/>
+    </scheme>
+
+	<scheme name="htmljScript">
+		<block start="/~/" end="/[?%]?~1(&gt;)/" 
+			scheme="htmlCore" region="htmlUnknowParam" region11="htmlTagBr"
+		/>
+		<inherit scheme="jScript" />
+	</scheme>
+    <scheme name="htmlScripts">
+      <block start="/ (?{htmlTagBr} &lt; (?{htmlOpenTag} %htmlscrStart;
+                      (?{htmlString} perlscript [\d\.]*) \p{q} [^&gt;]*) [\%\/\?]?~1 &gt;) /ix"
+             end="/%htmlscrEnd;/ix" scheme="perl:perl" region00="PairStrongStart" region10="PairStrongEnd"/>
+         
+      <block start="/ (?{htmlTagBr} &lt; (?{htmlOpenTag} %htmlscrStart;
+                      (?{htmlString} vbscript [\d\.]*) \p{q} [^&gt;]*) [\%\/\?]?~1 &gt;) /ix"
+             end="/%htmlscrEnd;/ix" scheme="vbScript" region00="PairStrongStart" region10="PairStrongEnd"/>
+
+		<block start="/ ((&lt;) \s* (script)\M\b \s* &gt;?)/ix" end="/(&lt;\/(script)\&gt;)/ix"
+			scheme="htmljScript"
+			region01="PairStrongStart" region10="PairStrongEnd"
+			region02="htmlTagBr" region03="htmlOpenTag" region11="htmlTagBr" region12="htmlCloseTag"/>
+         
+      <block start="/(@\[[\.\?\=]?)/" end="/(\]@)/" scheme="GenoPro"
+                region="Insertion" region01="Symbol" region11="Symbol" region00="PairStart" region10="PairEnd"/>
+    </scheme>
+
+    <scheme name="GenoPro">
+      <inherit scheme="def:Number"/>
+      <keywords region="Symbol">
+        <symb name="."/>
+        <symb name=","/>
+        <symb name="("/>
+        <symb name=")"/>
+      </keywords>
+      <regexp match="/\$[\w\d]+/" region="Keyword"/>
+    </scheme>
+
+    <entity name="pairedtags" value="
+    	a|abbr|acronym|address|applet|article|aside|audio|
+    	b|bdo|big|blink|blockquote|body|button|
+    	canvas|caption|center|cite|code|comment|
+    	datalist|del|details|dfn|dir|div|dd|dl|dt|
+    	em|
+    	fieldset|figcaption|figure|font|footer|form|frameset|
+    	h[1-6]|head|header|hgroup|html|
+    	i|iframe|ins|
+    	kbd|
+    	label|legend|li|listing|
+    	map|mark|marquee|menu|meter|multicol|
+    	nav|nobr|noembed|noframes|noscript|
+    	object|ol|optgroup|output|
+    	p|pre|progress|q|rp|rt|ruby|
+    	s|samp|script|section|select|small|span|strike|strong|style|sub|summary|sup|
+    	table|tbody|td|tr|th|tt|textarea|tfoot|thead|time|title|
+    	u|ul|
+    	video|
+    	xmp
+    "/>
+	<scheme name="htmlPairInside">
+		<block start="/~/" end="/\M(\/?&gt;|[\%\?]?~1&gt;)/" 
+			scheme="htmlCore" region="htmlUnknowParam"
+		/>
+		<regexp match="/&gt;/" region="htmlTagBr" />
+		<inherit scheme="html" />
+	</scheme>
+	<scheme name="htmlPairs" if="html-pairs">
+		<block start="/((&lt;) \s* \b(%pairedtags;)\M\b (\s* &gt;)?)/ixs" end="/((\/&gt;)|(&lt;\/)(\Y3)(&gt;)|(&lt;\/(%pairedtags;)\b)?=)/ixs"
+			scheme="htmlPairInside"
+			region01="PairStart" region11="PairEnd"
+			region02="htmlTagBr" region03="htmlOpenTag"
+
+			region12="htmlTagBr"
+			region13="htmlTagBr" region14="htmlCloseTag" region15="htmlTagBr"
+		/>
+    </scheme>
+
+
+    <scheme name="htmlTagCall">
+      <annotation><documentation>
+           This inherit let's other meta-html languages
+           to disable pair searching
+      </documentation></annotation>
+      <inherit scheme="htmlPairs"/>
+         
+      <block start="/(&lt;)\M([\w\:\-]+)/i" end="/(\/?&gt;)/" 
+             scheme="htmlCore" region="htmlUnknowParam"
+             region00="PairStart" region10="PairEnd" 
+             region01="htmlTagBr" region11="htmlTagBr"/>
+      <block start="/(&lt;\/)\M([\w\:\-]+)&gt;/i" end="/(&gt;)/" 
+             scheme="htmlCore" region="htmlUnknowParam"
+             region00="PairStart" region10="PairEnd" 
+             region01="htmlTagBr" region11="htmlTagBr" priority="low"/>
+    </scheme>
+
+
+      
+    <scheme name="IECommentsTag">
+    	<keywords region="CCVar">
+    		<word name="IE"/>
+    		<word name="WindowsEdition"/>
+    	</keywords>
+    	<keywords region="CCOperator">
+    		<symb name="!"/>
+    		<symb name="&amp;"/>
+    		<symb name="|"/>
+    		<word name="lte"/>
+    		<word name="lt"/>
+    		<word name="gte"/>
+    		<word name="gt"/>
+    	</keywords>
+    	<keywords region="CCBool">
+    		<word name="true"/>
+    		<word name="false"/>
+    	</keywords>
+    	<regexp match="/\d+/" region="Number"/>
+    	<block start="/(\()/" end="/(\))/" scheme="IECommentsTag"
+    		region00="CCOperator" region10="CCOperator"
+    		region01="PairStart" region11="PairEnd"
+    	/>
+    </scheme>
+	<scheme name="IECommentsInner">
+    	<block start="/~(\[)(if)/" end="/(\])&gt;/"
+			scheme="IECommentsTag" region="Text" inner-region="yes"
+			region01="PairStart" region11="PairEnd" region02="htmlOpenTag"
+    	/>
+    	<inherit scheme="html" />
+    </scheme>
+
+    <scheme name="IEComments" if="conditional-comments">
+		<block start="/~\M\[if[^\]]+\]&gt;/" end="/&lt;!\[(endif)\]/"
+			scheme="IECommentsInner" region11="htmlCloseTag"
+		/>
+    </scheme>
+
+    <scheme name="htmlComment">
+      <inherit scheme="IEComments"/>
+      <inherit scheme="Comment"/>
+    </scheme>
+
+    <scheme name="html">
+      <inherit scheme="htmlScripts"/>
+      <!-- EE: special css -->
+      <block start="/ (&lt;(style)\b.*?&gt;)/ix" end="/(&lt;\/(style)\&gt;)/i"
+             scheme="html-css:css" region00="PairStrongStart" region10="PairStrongEnd" 
+             region01="htmlTagBr" region02="htmlOpenTag" 
+             region11="htmlTagBr" region12="htmlOpenTag"
+      />
+      <block start="/\M&lt;\s*svg/ix" end="/(&lt;\/svg&gt;)?#6/ix"
+             scheme="svg:svg-root-addref" content-priority="low"
+      />
+
+
+      <regexp match="/ \b [0-9\.]+ /x" region0="htmlNumb"/>
+         
+      <regexp match="/\M &lt; (h1) [^&gt;]*? &gt; (?{Header1Outline}.*?)  &lt; \/\1 &gt;/ix"/>
+      <regexp match="/\M &lt; (h2) [^&gt;]*? &gt; (?{Header2Outline}.*?)  &lt; \/\1 &gt;/ix"/>
+      <regexp match="/\M &lt; (h\d) [^&gt;]*? &gt; (?{Header3Outline}.*?)  &lt; \/\1 &gt;/ix"/>
+         
+      <!-- Template-toolkit support -->
+      <regexp match="/\[\% .*? \%\]/x" region0="htmlTT"/>
+      <!-- HTML::Template support -->
+      <regexp match="/&lt;TMPL_\w+ .*? &gt;/x" region0="htmlTT"/>
+
+      <inherit scheme="htmlTagCall"/>
+         
+      <!-- comments -->
+      <block start="/&lt;!--\s*\M#/" end="/--&gt;/" scheme="xssi" region="htmlComment" region00="PairStart" region10="PairEnd"/>
+      <block start="/&lt;!--/" end="/--&gt;/" scheme="htmlComment" region="htmlComment" region00="PairStart" region10="PairEnd"/>
+      <block start="/&lt;\!\M\w/" end="/&gt;/" scheme="Comment" 
+             region00="PairStart" region10="PairEnd" region="htmlDirective"/>
+
+      <inherit scheme="html-entity:html-entity"/>
+    
+    </scheme>
+
+  </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -  Andrzej Novosiolov <andrzej@ukrnet.net>
+   -  Eugene Efremov <4mirror@mail.ru>
+   -  Evgeny Stepanischev <se@e-kazan.ru>
+   -  JULY <lubimovi@usa.net>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

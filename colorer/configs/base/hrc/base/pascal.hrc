@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+   <annotation>
+    <documentation>
+       Pascal/Delphi/Delphi.Net Syntax
+    </documentation>
+    <contributors><![CDATA[
+     Vladimir Tarasov <tsoftgroup@chat.ru>
+     Vadim V. Lopushansky <pult@ukr.net>
+     Timur Safin <timur@lanit.ru> completed Delphi4/5 support
+     Vadim Zenko <vzhome@nm.ru>
+    ]]></contributors>
+   </annotation>
+
+   <type name="pascal">
+
+      <import type="def"/>
+      <import type="asm"/>
+      <import type="c"/>
+
+      <region name="pString" parent="String"/>
+      <region name="pComment" parent="Comment"/>
+      <region name="pSymb" parent="Symbol"/>
+      <region name="pWord" parent="Keyword"/>
+      <region name="pWord2" parent="Keyword"/>
+      <region name="pConst" parent="Constant"/>
+      <region name="pType" parent="TypeKeyword"/>
+      <region name="pNetUnsafeWord" parent="pWord"/>
+      <region name="pNetUnsafeType" parent="pType"/>
+      <region name="pOther" parent="Directive"/>
+      <region name="pNumb" parent="Number"/>
+      <region name="pGUID" parent="Parameter"/>
+
+      <scheme name="PasAsm">
+<!-- Comments -->
+         <regexp match="/\/\/.*$/" region0="asmComment"/>
+         <block start="/\{/" end="/\}/" scheme="Comment" region="asmComment" region00="PairStart" region10="PairEnd"/>
+         <block start="/\(\*/" end="/\*\)/" scheme="Comment" region="asmComment" region00="PairStart" region10="PairEnd"/>
+         <inherit scheme="baseasm"/>
+      </scheme>
+
+      <scheme name="PasCore">
+<!-- Comments -->
+         <block start="/\/\//" end="/$/" scheme="Comment" region="pComment"/>
+         <block start="/\{\$/" end="/\}/" scheme="Comment" region="pOther" region00="PairStart" region10="PairEnd"/>
+         <block start="/\(\*\$/" end="/\*\)/" scheme="Comment" region="pOther" region00="PairStart" region10="PairEnd"/>
+         <block start="/\{/" end="/\}/" scheme="Comment" region="pComment" region00="PairStart" region10="PairEnd"/>
+         <block start="/\(\*/" end="/\*\)/" scheme="Comment" region="pComment" region00="PairStart" region10="PairEnd"/>
+<!-- paired -->
+         <block start="/(\()/" end="/(\))/" scheme="PasCore" region00="pSymb" region01="PairStart" region10="pSymb" region11="PairEnd"/>
+         <block start="/(\[)/" end="/(\])/" scheme="PasCore" region00="pSymb" region01="PairStart" region10="pSymb" region11="PairEnd"/>
+<!-- Strings -->
+         <regexp match="/'(\{[\da-fA-F]{8}\-[\da-fA-F]{4}\-[\da-fA-F]{4}\-[\da-fA-F]{4}\-[\da-fA-F]{12}\})'/" region0="pString" region1="pGUID"/>
+         <regexp match="/'(.*?[^\'])??'/" region0="pString"/>
+         <regexp match="/\#\d+?\b/" region0="pNumb"/>
+         <regexp match="/\#\$[\dA-Fa-f]+?\b/" region0="pNumb"/>
+         <regexp match="/\W\m\^[A-Z@]\M\W/" region0="pNumb"/>
+<!-- Numbers  -->
+         <regexp match="/\B(\$[\da-fA-F]+)\b/" region0="pNumb"/>
+         <inherit scheme="FloatNumber"/>
+         <inherit scheme="DecNumber"/>
+         <regexp match="/\B(\$[\da-fA-F]*?([^\s\W\da-fA-F]).*?)\b/" region0="Error"/>
+<!-- Symbols -->
+         <keywords region="pSymb">
+            <symb name="="/>
+            <symb name="@"/>
+            <symb name="^"/>
+            <symb name="+"/>
+            <symb name="&lt;"/>
+            <symb name="-"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name=".."/>
+            <symb name=":"/>
+            <symb name="("/>
+            <symb name="."/>
+            <symb name="&gt;"/>
+            <symb name="#"/>
+            <symb name=")"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name=","/>
+            <symb name=";" region="SymbolStrong"/>
+         </keywords>
+<!--
+  VADIM:
+  внутри скобок МОГУТ встерачаться бинарные операторы, а также
+  преобразование типов и список параметров (как внутри круглых
+  так и внутри квадратных)
+-->
+         <keywords ignorecase="yes" region="pWord">
+            <word name="and"/>
+            <word name="array"/>
+            <word name="as"/>
+            <word name="const"/>
+            <word name="div"/>
+            <word name="file"/>
+            <word name="in"/>
+            <word name="is"/>
+            <word name="mod"/>
+            <word name="not"/>
+            <word name="of"/>
+            <word name="or"/>
+            <word name="out"/>
+            <word name="shl"/>
+            <word name="shr"/>
+            <word name="threadvar"/>
+            <word name="var"/>
+            <word name="xor"/>
+         </keywords>
+         <keywords ignorecase="yes" region="pConst">
+            <word name="False"/>
+            <word name="True"/>
+            <word name="nil"/>
+            <word name="null"/>
+         </keywords>
+         <keywords ignorecase="yes" region="pType">
+<!-- Types -->
+            <word name="AnsiChar"/>
+            <word name="AnsiString"/>
+            <word name="Boolean"/>
+            <word name="Byte"/>
+            <word name="ByteBool"/>
+            <word name="Cardinal"/>
+            <word name="Comp"/>
+            <word name="Currency"/>
+            <word name="DWord"/>
+            <word name="Integer"/>
+            <word name="LongBool"/>
+            <word name="LongInt"/>
+            <word name="LongWord"/>
+            <word name="OleVariant"/>
+            <word name="OpenString"/>
+            <word name="PAnsiChar"/>
+            <word name="PWideChar"/>
+            <word name="ShortInt"/>
+            <word name="ShortString"/>
+            <word name="SmallInt"/>
+            <word name="TDateTime"/>
+            <word name="TextFile"/>
+            <word name="Variant"/>
+            <word name="WideChar"/>
+            <word name="WideString"/>
+            <word name="Word"/>
+            <word name="WordBool"/>
+            <word name="byte"/>
+            <word name="char"/>
+            <word name="double"/>
+            <word name="extended"/>
+            <word name="int64"/>
+            <word name="real"/>
+            <word name="single"/>
+            <word name="string"/>
+            <word name="text"/>
+            <word name="UINT"/>
+         </keywords>
+
+         <!-- .Net  -->
+         <keywords ignorecase="yes" region="pNetUnsafeType">
+            <word name="PChar"/>
+            <word name="Pointer"/>
+            <word name="real48"/>
+         </keywords>
+
+      </scheme>
+
+      <scheme name="pasProperty">
+         <inherit scheme="PasCore"/>
+         <keywords ignorecase="yes" region="pWord">
+            <!-- <word name="deprecated"/> -->
+            <word name="default"/>
+            <word name="implements"/>
+            <word name="index"/>
+            <word name="nodefault"/>
+            <!-- <word name="platform"/> -->
+            <word name="read"/>
+            <word name="readonly"/>
+            <word name="stored"/>
+            <word name="write"/>
+            <word name="writeonly"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="pasExport">
+         <inherit scheme="PasCore"/>
+         <keywords ignorecase="yes" region="pWord">
+            <word name="external"/>
+            <word name="name"/>
+            <word name="index"/>
+         </keywords>
+      </scheme>
+
+      <!-- class definition keywords -->
+      <scheme name="pasClass">
+         <inherit scheme="pascal"/>
+         <keywords ignorecase="yes" region="pWord">
+
+            <word name="private"/>
+            <word name="protected"/>
+            <word name="public"/>
+            <word name="published"/>
+
+            <word name="dynamic"/>
+            <word name="override"/>
+            <word name="reintroduce"/>
+            <word name="virtual"/>
+
+            <word name="default"/>
+            <word name="message"/>
+
+            <!-- .Net -->
+            <word name="strict"/>
+            <word name="helper"/>
+            <word name="sealed"/>
+            <word name="final"/>
+            <word name="static"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="pasRecord">
+         <inherit scheme="pascalwocase"/>
+         <!-- .Net -->
+         <keywords ignorecase="yes" region="pWord">
+            <word name="private"/>
+            <word name="protected"/>
+            <word name="public"/>
+            <word name="strict"/>
+            <word name="sealed"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="pascalwocase">
+<!-- paired -->
+         <block start="/\b((packed\s+?)??record)\b/i" end="/\b(end)\b/i" scheme="pasRecord" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(begin|package|library|implementation|object)\b/i" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region01="PairStart" region10="pWord2" region11="PairEnd"/>
+<!--
+  VADIM:
+  a COM-интерфейсы, значит, в паскале никогда не сущесвовали.
+  не согласен.
+-->
+         <block start="/\=\s*(interface|dispinterface) \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(class) \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pasClass" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+
+         <!-- .Net  -->
+         <block start="/\b(class\s+?(sealed|helper)) \s*\M /ix" end="/\b(end)\b/i" scheme="pasClass" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+
+         <block start="/\b(try)\b/i" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(repeat)\b/ix" end="/\b(until)\b/ix" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\(\*(\$HPPEMIT)\s\'/i" end="/$|\'\s\*\)/" scheme="Comment" region="pComment" region01="pOther"/>
+         <block start="/\{(\$HPPEMIT)\s\'/i" end="/$|\'\s\}/" scheme="Comment" region="pComment" region01="pOther"/>
+         <inherit scheme="PasCore">
+            <virtual scheme="PasCore" subst-scheme="pascal"/>
+         </inherit>
+
+         <block start="/\b(asm)\b/i" end="/(\s|^)(end)/i" scheme="PasAsm" region00="pWord" region10="pWord" region01="PairStart" region12="PairEnd"/>
+
+         <block start="/\b(property)\b/i" end="/(;)/" scheme="pasProperty" region01="pWord" region10="pSymb"/>
+
+         <block start="/\b(external|exports)\b/i" end="/(;)/i" scheme="pasExport" region01="pWord" region10="pSymb"/>
+<!-- Functions list -->
+         <regexp match="/^ \s* \M (class\s+)? (procedure|function|constructor|destructor) \s+ (?{Function}[_\w\.]+)/ix"/>
+<!-- cail: hacks foobar.Text bad coloring -->
+         <regexp match="/(\.)(\w+)/" region1="pSymb"/>
+<!-- Words -->
+         <keywords ignorecase="yes" region="pWord">
+            <word name="abstract"/>
+            <word name="asm"/>
+            <word name="assembler"/>
+            <word name="automated"/>
+            <word name="begin" region="Error"/>
+            <word name="break"/>
+            <word name="case"/>
+            <word name="cdecl"/>
+            <word name="class"/>
+            <word name="constructor"/>
+            <word name="contains"/>
+            <word name="continue"/>
+<!--Word name="default"-->
+            <word name="deprecated"/>
+            <word name="destructor"/>
+            <word name="dispid"/>
+            <word name="dispinterface"/>
+            <word name="do"/>
+            <word name="downto"/>
+            <word name="else"/>
+            <word name="end" region="Error"/>
+            <word name="except"/>
+            <word name="exit"/>
+            <word name="experimental"/> <!-- .Net -->
+            <word name="export"/>
+            <word name="exports"/>
+            <word name="external"/>
+            <word name="far"/>
+            <word name="finalization"/>
+            <word name="finally"/>
+            <word name="for"/>
+            <word name="forward"/>
+            <word name="function"/>
+            <word name="goto"/>
+            <word name="if"/>
+            <word name="implementation"/>
+            <word name="inherited"/>
+            <word name="initialization"/>
+            <word name="inline"/>
+            <word name="interface"/>
+            <word name="interrupt"/>
+            <word name="label"/>
+            <word name="library"/>
+            <word name="near"/>
+            <word name="object"/>
+            <word name="on"/>
+            <word name="operator"/> <!-- .Net  -->
+            <word name="overload"/>
+            <word name="package"/>
+            <word name="packed"/>
+            <word name="pascal"/>
+            <word name="platform"/>
+            <word name="procedure"/>
+            <word name="program"/>
+<!--Word name="property"-->
+            <word name="raise"/>
+<!--Word name="readonly"-->
+            <word name="record"/>
+            <word name="repeat"/>
+            <word name="requires"/>
+            <word name="resident"/>
+            <word name="result"/>
+            <word name="resourcestring"/>
+            <word name="safecall"/>
+            <word name="set"/>
+            <word name="self"/>
+            <word name="stdcall"/>
+            <word name="register"/>
+<!--Word name="nodefault"-->
+            <word name="then"/>
+            <word name="to"/>
+            <word name="try"/>
+            <word name="type"/>
+            <word name="unit"/>
+            <word name="until"/>
+            <word name="uses"/>
+            <word name="while"/>
+            <word name="with"/>
+<!--Word name="writeonly"-->
+         </keywords>
+         <!-- .Net -->
+         <keywords ignorecase="yes" region="pNetUnsafeWord">
+            <word name="absolute"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="pascal">
+<!-- paired -->
+         <block start="/\b(case)\b/i" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <inherit scheme="pascalwocase"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

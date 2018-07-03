@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd"[
+	<!ENTITY php-script SYSTEM "php-script.ent.hrc">
+	<!ENTITY php-gen SYSTEM "gen/php-gen.ent.hrc">
+]>
+<hrc version="take5" 
+	xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+  <type name="php">
+
+    <annotation><documentation>
+       PHP scheme
+    </documentation><contributors><![CDATA[
+        Zini nAlexei <zn@zn.mldnet.com>
+        Kirill Hryapin <kx@mail.ru>
+        Ondrej Brablc <colorer@brablc.com>
+        Eugene Efremov <4mirror@mail.ru>:
+         - correct strings and heredoc, new schemes for strings
+         - add regexp support (PCRE and ROSIX)
+         - any keywords/regions changed and other fixs...
+        Alexey Kupershtokh <wicked@ngs.ru>:
+         - add very many keywords
+    ]]></contributors> 
+    </annotation>
+
+    <import type="def"/>
+    <!--import type="asp"/-->
+
+    <region name="Insertion" parent="asp:Insertion"/>
+    <region name="OpenTag"   parent="asp:OpenTag"/>
+    <region name="CloseTag"  parent="asp:CloseTag"/>
+
+    &php-script;
+    &php-gen;
+     
+    <scheme name="Insertion">
+      <block start="/(&lt;\?(php\b)?)/" end="/(\?&gt;)/" 
+      	priority="low" content-priority="low"
+      	scheme="phpScript" region="Insertion" 
+      	region00="OpenTag" region10="OpenTag" 
+      	region01="def:PairStrongStart" region11="def:PairStrongEnd"
+      />
+      <block start="/(&lt;script\s+language\s*=\s*(php|'php'|&quot;php&quot;)\s*&gt;)/" 
+      	end="/(&lt;/script\s*&gt;)/" scheme="phpScript"
+      	priority="low" content-priority="low"
+      	region="Insertion" region00="OpenTag" region10="OpenTag" 
+      	region01="def:PairStrongStart" region11="def:PairStrongEnd"
+      />
+    </scheme>
+
+      
+    <scheme name="InverseInsertion">
+       <block start="/((\?&gt;))/" end="/((&lt;\?(php\b)?))/" scheme="html"
+        priority="low" region="Text" inner-region="yes"
+        region00="Insertion" region10="Insertion" 
+        region01="def:PairStrongStart" region11="def:PairStrongEnd"      
+        region02="OpenTag"   region12="OpenTag" 
+       />
+    </scheme>
+
+    
+    
+    <scheme name="htmlScripts">
+      <block start="/ (&lt;(script [^&gt;]+ (phpscript[\d\.]*) [^&gt;]*) &gt;) /ix" end="/(&lt;\/(script)&gt;)/i" scheme="phpScript-client"
+               region00="def:PairStrongStart" region10="def:PairStrongEnd"
+               region01="html:htmlTagBr" region02="OpenTag" region03="html:htmlString"
+               region11="html:htmlTagBr" region12="CloseTag"/>
+      <inherit scheme="asp:htmlScripts">
+        <virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="StringContent">
+      <inherit scheme="Insertion"/>
+      <inherit scheme="c:StringContent"/>
+    </scheme>
+
+    <scheme name="phpScript-client">
+      <inherit scheme="Insertion"/>
+      <inherit scheme="Script">
+        <virtual scheme="c:StringContent" subst-scheme="StringContent"/>
+        <virtual scheme="Script" subst-scheme="phpScript-client"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="phpScript">
+      <block start="/(\/\/|\#)/" end="/\M (\?&gt;|$)/ix" scheme="Comment" region="Comment"/>
+      <inherit scheme="InverseInsertion"/>
+      <inherit scheme="Script">
+        <virtual scheme="Script" subst-scheme="phpScript"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="html">
+      <inherit scheme="asp:html">
+        <virtual scheme="asp:htmlScripts" subst-scheme="htmlScripts"/>
+        <virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="php.lang">
+      <inherit scheme="asp:html">
+        <virtual scheme="asp:InverseInsertion" subst-scheme="InverseInsertion"/>
+        <virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+        <virtual scheme="asp:targetLanguage" subst-scheme="phpScript"/>
+        <virtual scheme="asp:html" subst-scheme="html"/>
+      </inherit>
+    </scheme>
+
+    <scheme name='php'>
+    	<inherit scheme='def:unixCommentFirstline'>
+    		<virtual scheme="def:def" subst-scheme="php.lang"/>
+    	</inherit>
+    </scheme>
+
+    
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2003
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Alexey Kupershtokh <wicked@ngs.ru>
+   - Eugene Efremov <4mirror@mail.ru>
+   - Kirill Hryapin <kx@mail.ru>
+   - Ondrej Brablc <colorer@brablc.com>
+   - Zini nAlexei <zn@zn.mldnet.com>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

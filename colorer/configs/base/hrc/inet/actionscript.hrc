@@ -1,0 +1,869 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+   <type name="actionscript">
+
+      <annotation><documentation>
+        ActionScript
+        Based on: JScript Files
+      </documentation></annotation>
+
+      <import type="def"/>
+
+      <region name='Package' parent='def:Directive'/>
+      <region name='PackageOutline' parent='def:Outlined'/>
+      <region name='Import' parent='def:Directive'/>
+      <region name='ImportOutline' parent='def:Outlined'/>
+      <region name='Class' parent='def:Outlined'/>
+      <region name="Preproc" parent="def:DirectiveContent"/>
+      <region name="LiteralKeyword" parent="def:Keyword"/>
+      <region name="XmlContent" parent="def:String"/>
+      <region name="StandardType" parent="def:Keyword"/>
+      <region name="StandardProperty" parent="def:Identifier"/>
+
+      <scheme name="jComment">
+         <keywords region="CommentContent">
+            <word name="@cc_on"/>
+            <word name="@cc_off"/>
+            <word name="@set"/>
+            <word name="@if"/>
+            <word name="@_alpha"/>
+            <word name="@_actionscript"/>
+            <word name="@_actionscript_build"/>
+            <word name="@_actionscript_version"/>
+            <word name="@_mac"/>
+            <word name="@_mc680x0"/>
+            <word name="@_PowerPC"/>
+            <word name="@_win16"/>
+            <word name="@_win32"/>
+            <word name="@_x86"/>
+            <word name="@_microsoft"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="jsMETA"/>
+
+      <scheme name="RE">
+         <regexp match="/\\./" region0="StringContent"/>
+         <inherit scheme="jsMETA"/>
+      </scheme>
+
+      <scheme name="actionscript">
+<!-- just ignore html comments -->
+         <regexp match="/^\s* &lt;!--/x" region0="Comment"/>
+         <regexp match="/^\s* --&gt;/x" region0="Comment"/>
+<!-- Linear Comments-->
+         <block start="/\/\//" end="/\M(&lt;\/scr|$)/" scheme="jComment" region="Comment"/>
+         <block start="/\/\*/" end="/\*\//" scheme="jComment" region="Comment" region00="PairStart" region10="PairEnd"/>
+
+         <regexp match="/(package)\s+\m(([\w\._]+))/" region1="Keyword" region2="Package" region3="PackageOutline"/>
+         <regexp match="/(import)\s+\m(([\w\._\*]+))/" region1="Keyword" region2="Import" region3="ImportOutline"/>
+         <regexp match="/(class)\s+\m([\w\._]+)/" region1="Keyword" region2="Class"/>
+         <regexp match="/(function)\s+\m(([gs]et\s+)?[\w_]+)/" region1="Keyword" region2="Function" region3="Keyword"/>
+         <regexp match="/([\w_]+)\M\s*(\:.*)?\=\s*function/" region1="Function"/>
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="actionscript"/>
+         </inherit>
+<!-- Numbers -->
+         <inherit scheme="def:Number"/>
+<!-- Strings -->
+         <inherit scheme="c:String"/>
+         <block start="/\x27/" end="/\x27/" scheme="RE" region="String"/>
+
+         <block start="/( [\=\!]\~ |
+                         [^&lt;\]\}\)\+\-\w\s\/] |
+                         \bif | ~)
+                         \s* ((\/)) [^\/]?= /x"
+                         end="/(\y2[cmiogxes]*)/x" scheme="RE"
+                         region="String" region01="Symbol" region02="StringEdge"
+                         region03="PairStart" region10="StringEdge" region11="PairEnd"/>
+
+<!-- Generics -->
+         <block start="/\.(&lt;)/" end="/(&gt;)/" scheme="actionscript" region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
+
+<!-- XML literal -->
+         <block start="/\M&lt;%xml:QName;(:?\s+%xml:QName;=(:?['&quot;]).*?\2)*\s*(:?\/?&gt;|$)/" end="//" scheme="xml:xml" region="XmlContent"/>
+
+<!-- faults with var1/var2 :(
+   <regexp match='/ \/ ( \\. | [^\\\/] )*? \/ /x' region="String"/>
+   -->
+         <regexp match="/\$[\d_*&amp;+`']/" region="Var"/>
+         <keywords region="Keyword">
+            <!-- Reserved words -->
+            <word name="as"/>
+            <word name="break"/>
+            <word name="case"/>
+            <word name="catch"/>
+            <word name="class"/>
+            <word name="const"/>
+            <word name="continue"/>
+            <word name="default"/>
+            <word name="delete"/>
+            <word name="do"/>
+            <word name="else"/>
+            <word name="extends"/>
+            <word name="finally"/>
+            <word name="for"/>
+            <word name="function"/>
+            <word name="if"/>
+            <word name="implements"/>
+            <word name="import"/>
+            <word name="in"/>
+            <word name="instanceof"/>
+            <word name="interface"/>
+            <word name="internal"/>
+            <word name="is"/>
+            <word name="native"/>
+            <word name="new"/>
+            <word name="package"/>
+            <word name="private"/>
+            <word name="protected"/>
+            <word name="public"/>
+            <word name="return"/>
+            <word name="super"/>
+            <word name="switch"/>
+            <word name="this"/>
+            <word name="throw"/>
+            <word name="to"/>
+            <word name="try"/>
+            <word name="typeof"/>
+            <word name="use"/>
+            <word name="var"/>
+            <word name="void"/>
+            <word name="while"/>
+            <word name="with"/>
+            <!-- Syntactic keywords. TODO: only highlight them in their corresponding context. -->
+            <word name="each"/>
+            <word name="get"/>
+            <word name="set"/>
+            <word name="namespace"/>
+            <word name="include"/>
+            <word name="dynamic"/>
+            <word name="final"/>
+            <word name="native"/>
+            <word name="override"/>
+            <word name="static"/>
+            <!-- Future reserved words -->
+            <word name="abstract"/>
+            <word name="boolean"/>
+            <word name="byte"/>
+            <word name="cast"/>
+            <word name="char"/>
+            <word name="debugger"/>
+            <word name="double"/>
+            <word name="enum"/>
+            <word name="export"/>
+            <word name="float"/>
+            <word name="goto"/>
+            <word name="intrinsic"/>
+            <word name="long"/>
+            <word name="prototype"/>
+            <word name="short"/>
+            <word name="synchronized"/>
+            <word name="throws"/>
+            <word name="to"/>
+            <word name="transient"/>
+            <word name="type"/>
+            <word name="virtual"/>
+            <word name="volatile"/>
+         </keywords>
+         <keywords region="Preproc">
+            <!-- Compiler directives -->
+            <word name="#include"/>
+            <word name="#initclip"/>
+            <word name="#endinitclip"/>
+         </keywords>
+         <keywords region="Symbol">
+<!-- Properties -->
+            <word name=".E"/>
+            <word name=".length"/>
+            <word name=".LN2"/>
+            <word name=".LN10"/>
+            <word name=".LOG2E"/>
+            <word name=".LOG10E"/>
+            <word name=".PI"/>
+            <word name=".SQRT1_2"/>
+            <word name=".SQRT2"/>
+         </keywords>
+         <keywords region="Symbol">
+<!-- Operators Computational  -->
+            <symb name="++"/>
+            <symb name="--"/>
+            <symb name="*"/>
+            <symb name="/"/>
+            <symb name="%"/>
+            <symb name="+"/>
+            <symb name="-"/>
+<!-- Operators Logical -->
+            <symb name="!"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+            <symb name="&lt;="/>
+            <symb name="&gt;="/>
+            <symb name="=="/>
+            <symb name="!="/>
+            <symb name="&amp;&amp;"/>
+            <symb name="||"/>
+            <symb name="?"/>
+<!-- Operators Bitwise -->
+            <symb name="~"/>
+            <symb name="&lt;&lt;"/>
+            <symb name="/&gt;&gt;"/>
+            <symb name="&gt;&gt;&gt;"/>
+            <symb name="&amp;"/>
+            <symb name="^"/>
+            <symb name="|"/>
+<!-- Operators Assignment -->
+            <symb name="==="/>
+            <symb name="!=="/>
+            <symb name="="/>
+            <symb name="+="/>
+            <symb name="-+"/>
+            <symb name="*="/>
+            <symb name="/="/>
+            <symb name="%="/>
+            <symb name="&lt;&lt;="/>
+            <symb name="/&gt;&gt;="/>
+            <symb name="&gt;&gt;&gt;="/>
+            <symb name="&amp;="/>
+            <symb name="|="/>
+            <symb name="^="/>
+<!-- Operators other?  -->
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name=";"/>
+         </keywords>
+         <keywords region="LiteralKeyword">
+            <word name="true"/>
+            <word name="false"/>
+            <word name="null"/>
+            <word name="undefined"/>
+         </keywords>
+         <keywords region="StandardType">
+            <!-- Primitive -->
+            <word name="String"/>
+            <word name="Number"/>
+            <word name="int"/>
+            <word name="uint"/>
+            <word name="Boolean"/>
+            <word name="Null"/>
+            <!-- Complex -->
+            <word name="Object"/>
+            <word name="Array"/>
+            <word name="Date"/>
+            <word name="Error"/>
+            <word name="Function"/>
+            <word name="RegExp"/>
+            <word name="XML"/>
+            <word name="XMLList"/>
+         </keywords>
+         <keywords region="Var">
+<!-- Objects -->
+            <word name="Accessibility"/>
+            <word name="BACKSPACE"/>
+            <word name="Button"/>
+            <word name="CAPSLOCK"/>
+            <word name="CONTROL"/>
+            <word name="Color"/>
+            <word name="DELETEKEY"/>
+            <word name="DOWN"/>
+            <word name="END"/>
+            <word name="ENTER"/>
+            <word name="ESCAPE"/>
+            <word name="FCheckBox"/>
+            <word name="FComboBox"/>
+            <word name="FListBox"/>
+            <word name="FPushButton"/>
+            <word name="FRadioButton"/>
+            <word name="FSCommand"/>
+            <word name="FScrollBar"/>
+            <word name="FScrollPane"/>
+            <word name="FStyleFormat"/>
+            <word name="HOME"/>
+            <word name="INSERT"/>
+            <word name="Infinity"/>
+            <word name="Key"/>
+            <word name="LEFT"/>
+            <word name="LN10"/>
+            <word name="LN2"/>
+            <word name="LOG10E"/>
+            <word name="LOG2E"/>
+            <word name="LoadVars"/>
+            <word name="MAX_VALUE"/>
+            <word name="MIN_VALUE"/>
+            <word name="Math"/>
+            <word name="Mouse"/>
+            <word name="MovieClip"/>
+            <word name="NEGATIVE_INFINITY"/>
+            <word name="NaN"/>
+            <word name="PGDN"/>
+            <word name="PGUP"/>
+            <word name="PI"/>
+            <word name="POSITIVE_INFINITY"/>
+            <word name="RIGHT"/>
+            <word name="SHIFT"/>
+            <word name="SPACE"/>
+            <word name="SQRT1_2"/>
+            <word name="SQRT2"/>
+            <word name="ScrollTrack"/>
+            <word name="Selection"/>
+            <word name="Sound"/>
+            <word name="Stage"/>
+            <word name="System"/>
+            <word name="TAB"/>
+            <word name="UP"/>
+            <word name="UTC"/>
+            <word name="XMLSocket"/>
+         </keywords>
+         <keywords region="StandardProperty">
+<!-- Methods -->
+            <word name="__proto__"/>
+            <word name="_alpha"/>
+            <word name="_currentframe"/>
+            <word name="_droptarget"/>
+            <word name="_focusrect"/>
+            <word name="_framesloaded"/>
+            <word name="_global"/>
+            <word name="_height"/>
+            <word name="_highquality"/>
+            <word name="_level"/>
+            <word name="_name"/>
+            <word name="_parent"/>
+            <word name="_quality"/>
+            <word name="_root"/>
+            <word name="_rotation"/>
+            <word name="_soundbuftime"/>
+            <word name="_target"/>
+            <word name="_totalframes"/>
+            <word name="_url"/>
+            <word name="_visible"/>
+            <word name="_width"/>
+            <word name="_x"/>
+            <word name="_xmouse"/>
+            <word name="_xscale"/>
+            <word name="_y"/>
+            <word name="_ymouse"/>
+            <word name="_yscale"/>
+            <word name="abs"/>
+            <word name="acos"/>
+            <word name="add"/>
+            <word name="add"/>
+            <word name="addItem"/>
+            <word name="addItemAt"/>
+            <word name="addListener"/>
+            <word name="addProperty"/>
+            <word name="align"/>
+            <word name="and"/>
+            <word name="appendChild"/>
+            <word name="apply"/>
+            <word name="applyChanges"/>
+            <word name="arguments"/>
+            <word name="arrow"/>
+            <word name="asfunction"/>
+            <word name="asin"/>
+            <word name="atan"/>
+            <word name="atan2"/>
+            <word name="attachMovie"/>
+            <word name="attachSound"/>
+            <word name="attributes"/>
+            <word name="autoSize"/>
+            <word name="background"/>
+            <word name="backgroundColor"/>
+            <word name="backgroundDisabled"/>
+            <word name="beginFill"/>
+            <word name="beginGradientFill"/>
+            <word name="blockIndent"/>
+            <word name="bold"/>
+            <word name="border"/>
+            <word name="borderColor"/>
+            <word name="bottomScroll"/>
+            <word name="break"/>
+            <word name="broadcastMessage"/>
+            <word name="bullet"/>
+            <word name="call"/>
+            <word name="callee"/>
+            <word name="caller"/>
+            <word name="capabilities"/>
+            <word name="case"/>
+            <word name="ceil"/>
+            <word name="charAt"/>
+            <word name="charCodeAt"/>
+            <word name="check"/>
+            <word name="childNodes"/>
+            <word name="chr"/>
+            <word name="chr"/>
+            <word name="clear"/>
+            <word name="clearInterval"/>
+            <word name="cloneNode"/>
+            <word name="close"/>
+            <word name="color"/>
+            <word name="concat"/>
+            <word name="connect"/>
+            <word name="constructor"/>
+            <word name="contentType"/>
+            <word name="continue"/>
+            <word name="cos"/>
+            <word name="createElement"/>
+            <word name="createEmptyMovieClip"/>
+            <word name="createTextField"/>
+            <word name="createTextNode"/>
+            <word name="curveTo"/>
+            <word name="darkshadow"/>
+            <word name="default"/>
+            <word name="delete"/>
+            <word name="do"/>
+            <word name="docTypeDecl"/>
+            <word name="duplicateMovieClip"/>
+            <word name="duration"/>
+            <word name="else"/>
+            <word name="embedFonts"/>
+            <word name="enabled"/>
+            <word name="endFill"/>
+            <word name="endinitclip"/>
+            <word name="eq"/>
+            <word name="escape"/>
+            <word name="eval"/>
+            <word name="evaluate"/>
+            <word name="exp"/>
+            <word name="face"/>
+            <word name="false"/>
+            <word name="firstChild"/>
+            <word name="floor"/>
+            <word name="focusEnabled"/>
+            <word name="focusRectInner"/>
+            <word name="focusRectOuter"/>
+            <word name="font"/>
+            <word name="for"/>
+            <word name="foregroundDisabled"/>
+            <word name="foregroundDisabled"/>
+            <word name="fromCharCode"/>
+            <word name="function"/>
+            <word name="ge"/>
+            <word name="get"/>
+            <word name="getAscii"/>
+            <word name="getBeginIndex"/>
+            <word name="getBounds"/>
+            <word name="getBytesLoaded"/>
+            <word name="getBytesTotal"/>
+            <word name="getCaretIndex"/>
+            <word name="getCode"/>
+            <word name="getData"/>
+            <word name="getDate"/>
+            <word name="getDay"/>
+            <word name="getDepth"/>
+            <word name="getEnabled"/>
+            <word name="getEndIndex"/>
+            <word name="getFocus"/>
+            <word name="getFontList"/>
+            <word name="getFullYear"/>
+            <word name="getGroupName"/>
+            <word name="getHours"/>
+            <word name="getItemAt"/>
+            <word name="getLabel"/>
+            <word name="getLength"/>
+            <word name="getMilliseconds"/>
+            <word name="getMinutes"/>
+            <word name="getMonth"/>
+            <word name="getNewTextFormat"/>
+            <word name="getPan"/>
+            <word name="getPaneHeight"/>
+            <word name="getPaneWidth"/>
+            <word name="getProperty"/>
+            <word name="getRGB"/>
+            <word name="getRowCount"/>
+            <word name="getScrollContent"/>
+            <word name="getScrollPosition"/>
+            <word name="getSeconds"/>
+            <word name="getSelectMultiple"/>
+            <word name="getSelectedIndex"/>
+            <word name="getSelectedIndices"/>
+            <word name="getSelectedItem"/>
+            <word name="getSelectedItems"/>
+            <word name="getState"/>
+            <word name="getTextExtent"/>
+            <word name="getTextFormat"/>
+            <word name="getTime"/>
+            <word name="getTimer"/>
+            <word name="getTimezoneOffset"/>
+            <word name="getTransform"/>
+            <word name="getURL"/>
+            <word name="getUTCDate"/>
+            <word name="getUTCDay"/>
+            <word name="getUTCFullYear"/>
+            <word name="getUTCHours"/>
+            <word name="getUTCMilliseconds"/>
+            <word name="getUTCMinutes"/>
+            <word name="getUTCMonth"/>
+            <word name="getUTCSeconds"/>
+            <word name="getValue"/>
+            <word name="getVersion"/>
+            <word name="getVolume"/>
+            <word name="getYear"/>
+            <word name="globalStyleFormat"/>
+            <word name="globalToLocal"/>
+            <word name="gotoAndPlay"/>
+            <word name="gotoAndStop"/>
+            <word name="gt"/>
+            <word name="hasAccessibility"/>
+            <word name="hasAudio"/>
+            <word name="hasAudioEncoder"/>
+            <word name="hasChildNodes"/>
+            <word name="hasMP3"/>
+            <word name="hasVideoEncoder"/>
+            <word name="height"/>
+            <word name="hide"/>
+            <word name="highlight"/>
+            <word name="highlight3D"/>
+            <word name="hitArea"/>
+            <word name="hitTest"/>
+            <word name="hscroll"/>
+            <word name="html"/>
+            <word name="htmlText"/>
+            <word name="if"/>
+            <word name="ifFrameLoaded"/>
+            <word name="ignoreWhite"/>
+            <word name="in"/>
+            <word name="include"/>
+            <word name="indent"/>
+            <word name="indexOf"/>
+            <word name="initclip"/>
+            <word name="insertBefore"/>
+            <word name="install"/>
+            <word name="instanceof"/>
+            <word name="isActive"/>
+            <word name="isDown"/>
+            <word name="isFinite"/>
+            <word name="isNaN"/>
+            <word name="isNaN"/>
+            <word name="isToggled"/>
+            <word name="italic"/>
+            <word name="italic"/>
+            <word name="join"/>
+            <word name="language"/>
+            <word name="lastChild"/>
+            <word name="lastIndexOf"/>
+            <word name="le"/>
+            <word name="leading"/>
+            <word name="leftMargin"/>
+            <word name="length"/>
+            <word name="length"/>
+            <word name="lineStyle"/>
+            <word name="lineTo"/>
+            <word name="list"/>
+            <word name="load"/>
+            <word name="loadMovie"/>
+            <word name="loadMovieNum"/>
+            <word name="loadScrollContent"/>
+            <word name="loadScrollContent"/>
+            <word name="loadSound"/>
+            <word name="loadVariables"/>
+            <word name="loadVariablesNum"/>
+            <word name="loaded"/>
+            <word name="log"/>
+            <word name="lt"/>
+            <word name="manufacturer"/>
+            <word name="max"/>
+            <word name="maxChars"/>
+            <word name="maxhscroll"/>
+            <word name="maxscroll"/>
+            <word name="mbchr"/>
+            <word name="mbchr"/>
+            <word name="mblength"/>
+            <word name="mblength"/>
+            <word name="mbord"/>
+            <word name="mbord"/>
+            <word name="mbsubstring"/>
+            <word name="mbsubstring"/>
+            <word name="min"/>
+            <word name="moveTo"/>
+            <word name="multiline"/>
+            <word name="ne"/>
+            <word name="new"/>
+            <word name="newline"/>
+            <word name="nextFrame"/>
+            <word name="nextScene"/>
+            <word name="nextSibling"/>
+            <word name="nodeName"/>
+            <word name="nodeType"/>
+            <word name="nodeValue"/>
+            <word name="not"/>
+            <word name="not"/>
+            <word name="null"/>
+            <word name="on"/>
+            <word name="onChanged"/>
+            <word name="onClipEvent"/>
+            <word name="onClose"/>
+            <word name="onConnect"/>
+            <word name="onData"/>
+            <word name="onDragOut"/>
+            <word name="onDragOver"/>
+            <word name="onEnterFrame"/>
+            <word name="onKeyDown"/>
+            <word name="onKeyUp"/>
+            <word name="onKillFocus"/>
+            <word name="onLoad"/>
+            <word name="onMouseDown"/>
+            <word name="onMouseMove"/>
+            <word name="onMouseUp"/>
+            <word name="onPress"/>
+            <word name="onRelease"/>
+            <word name="onReleaseOutside"/>
+            <word name="onResize"/>
+            <word name="onRollOut"/>
+            <word name="onRollOver"/>
+            <word name="onScroller"/>
+            <word name="onSetFocus"/>
+            <word name="onSort"/>
+            <word name="onSoundComplete"/>
+            <word name="onUnload"/>
+            <word name="onUpdate"/>
+            <word name="onXML"/>
+            <word name="or"/>
+            <word name="or"/>
+            <word name="ord"/>
+            <word name="ord"/>
+            <word name="os"/>
+            <word name="parentNode"/>
+            <word name="parseFloat"/>
+            <word name="parseInt"/>
+            <word name="parseXML"/>
+            <word name="password"/>
+            <word name="pixelAspectRatio"/>
+            <word name="play"/>
+            <word name="pop"/>
+            <word name="position"/>
+            <word name="pow"/>
+            <word name="prevFrame"/>
+            <word name="prevScene"/>
+            <word name="previousSibling"/>
+            <word name="print"/>
+            <word name="printAsBitmap"/>
+            <word name="printAsBitmapNum"/>
+            <word name="printNum"/>
+            <word name="prototype"/>
+            <word name="push"/>
+            <word name="radioDot"/>
+            <word name="random"/>
+            <word name="refreshPane"/>
+            <word name="registerClass"/>
+            <word name="registerSkinElement"/>
+            <word name="removeAll"/>
+            <word name="removeListener"/>
+            <word name="removeMovieClip"/>
+            <word name="removeNode"/>
+            <word name="removeTextField"/>
+            <word name="removeitemAt"/>
+            <word name="replaceItemAt"/>
+            <word name="replaceSel"/>
+            <word name="resolutionX"/>
+            <word name="resolutionY"/>
+            <word name="restrict"/>
+            <word name="return"/>
+            <word name="reverse"/>
+            <word name="rightMargin"/>
+            <word name="round"/>
+            <word name="scaleMode"/>
+            <word name="screenColor"/>
+            <word name="screenDPI"/>
+            <word name="screenResolution"/>
+            <word name="screenResolutionX"/>
+            <word name="screenResolutionY"/>
+            <word name="scroll"/>
+            <word name="selectable"/>
+            <word name="selection"/>
+            <word name="selectionDisabled"/>
+            <word name="selectionUnfocused"/>
+            <word name="send"/>
+            <word name="sendAndLoad"/>
+            <word name="set"/>
+            <word name="setAutoHideScrollBar"/>
+            <word name="setChangeHandler"/>
+            <word name="setClickHandler"/>
+            <word name="setData"/>
+            <word name="setDataProvider"/>
+            <word name="setDate"/>
+            <word name="setDragContent"/>
+            <word name="setEditable"/>
+            <word name="setEnabled"/>
+            <word name="setFocus"/>
+            <word name="setFullYear"/>
+            <word name="setGroupName"/>
+            <word name="setHScroll"/>
+            <word name="setHorizontal"/>
+            <word name="setHours"/>
+            <word name="setInterval"/>
+            <word name="setItemSymbol"/>
+            <word name="setLabel"/>
+            <word name="setLabelPlacement"/>
+            <word name="setLargeScroll"/>
+            <word name="setMask"/>
+            <word name="setMilliseconds"/>
+            <word name="setMinutes"/>
+            <word name="setMonth"/>
+            <word name="setNewTextFormat"/>
+            <word name="setPan"/>
+            <word name="setProperty"/>
+            <word name="setRGB"/>
+            <word name="setRowCount"/>
+            <word name="setScrollContent"/>
+            <word name="setScrollPosition"/>
+            <word name="setScrollProperties"/>
+            <word name="setScrollTarget"/>
+            <word name="setSeconds"/>
+            <word name="setSelectMultiple"/>
+            <word name="setSelectedIndex"/>
+            <word name="setSelectedIndices"/>
+            <word name="setSelection"/>
+            <word name="setSelectionIndex"/>
+            <word name="setSize"/>
+            <word name="setSmallScroll"/>
+            <word name="setState"/>
+            <word name="setStyleProperty"/>
+            <word name="setTextFormat"/>
+            <word name="setTime"/>
+            <word name="setTransform"/>
+            <word name="setUTCDate"/>
+            <word name="setUTCFullYear"/>
+            <word name="setUTCHours"/>
+            <word name="setUTCMilliseconds"/>
+            <word name="setUTCMinutes"/>
+            <word name="setUTCMonth"/>
+            <word name="setUTCSeconds"/>
+            <word name="setVScroll"/>
+            <word name="setValue"/>
+            <word name="setVolume"/>
+            <word name="setWidth"/>
+            <word name="setYear"/>
+            <word name="shadow"/>
+            <word name="shift"/>
+            <word name="show"/>
+            <word name="showMenu"/>
+            <word name="sin"/>
+            <word name="size"/>
+            <word name="slice"/>
+            <word name="sort"/>
+            <word name="sortItemsBy"/>
+            <word name="sortOn"/>
+            <word name="splice"/>
+            <word name="split"/>
+            <word name="sqrt"/>
+            <word name="start"/>
+            <word name="startDrag"/>
+            <word name="status"/>
+            <word name="stop"/>
+            <word name="stopAllSounds"/>
+            <word name="stopDrag"/>
+            <word name="substr"/>
+            <word name="substring"/>
+            <word name="substring"/>
+            <word name="super"/>
+            <word name="swapDepths"/>
+            <word name="switch"/>
+            <word name="tabChildren"/>
+            <word name="tabEnabled"/>
+            <word name="tabIndex"/>
+            <word name="tabStops"/>
+            <word name="tan"/>
+            <word name="target"/>
+            <word name="targetPath"/>
+            <word name="tellTarget"/>
+            <word name="text"/>
+            <word name="textAlign"/>
+            <word name="textBold"/>
+            <word name="textColor"/>
+            <word name="textDisabled"/>
+            <word name="textFont"/>
+            <word name="textHeight"/>
+            <word name="textIndent"/>
+            <word name="textItalic"/>
+            <word name="textLeftMargin"/>
+            <word name="textRightMargin"/>
+            <word name="textSelected"/>
+            <word name="textSize"/>
+            <word name="textUnderline"/>
+            <word name="textWidth"/>
+            <word name="toLowerCase"/>
+            <word name="toString"/>
+            <word name="toUpperCase"/>
+            <word name="toggleHighQuality"/>
+            <word name="toggleHighQuality"/>
+            <word name="trace"/>
+            <word name="trackAsMenu"/>
+            <word name="true"/>
+            <word name="type"/>
+            <word name="typeof"/>
+            <word name="undefined"/>
+            <word name="underline"/>
+            <word name="unescape"/>
+            <word name="uninstall"/>
+            <word name="unloadMovie"/>
+            <word name="unloadMovieNum"/>
+            <word name="unshift"/>
+            <word name="unwatch"/>
+            <word name="updateAfterEvent"/>
+            <word name="url"/>
+            <word name="useHandCursor"/>
+            <word name="valueOf"/>
+            <word name="var"/>
+            <word name="variable"/>
+            <word name="version"/>
+            <word name="void"/>
+            <word name="watch"/>
+            <word name="while"/>
+            <word name="width"/>
+            <word name="with"/>
+            <word name="wordWrap"/>
+            <word name="xmlDecl"/>
+         </keywords>
+      </scheme>
+
+   </type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Cail Lomecb <cail@nm.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Ralf Bokelberg <eclipse_colorer@bokelberg.de>
+   - Vladimir Panteleev <vladimi@thecybershadow.net>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

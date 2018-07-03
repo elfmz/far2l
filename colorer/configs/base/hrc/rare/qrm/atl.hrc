@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+<!--
+    Atlantis 1.5 Syntax by Vladimir Fonarev <vol@quorum.ru>
+                                            [2:5020/2160]
+-->
+  <type name="atl">
+
+    <region name="AtlWord"      parent="def:Keyword"/>
+    <region name="AtlDlgWord"   parent="def:Keyword"/>
+    <region name="AtlFormWord"  parent="def:Keyword"/>
+    <region name="AtlCmdWord"   parent="def:KeywordStrong"/>
+    <region name="AtlStdWord"   parent="def:KeywordStrong"/>
+    <region name="AtlTypeWord"  parent="def:TypeKeyword"/>
+    <region name="AtlBool"      parent="def:BooleanConstant"/>
+
+    <region name="InterfaceOutline" parent="def:Outlined"/>
+    <region name="DialogOutline"    parent="def:Outlined"/>
+    <region name="WindowOutline"    parent="def:Outlined"/>
+    <region name="BrowseOutline"    parent="def:Outlined"/>
+    <region name="FunctionOutline"  parent="def:Outlined"/>
+    <region name="StringsOutline"   parent="def:Outlined"/>
+    <region name="RepOutline"       parent="def:Outlined"/>
+
+    <region name="QrmPreproc" parent="def:Directive"/>
+    <region name="QrmPreprocWord" parent="def:Keyword"/>
+
+    <scheme name="qrmPairedBlock">
+      <block start="/(\{|\bbegin\b)/i" end="/(\}|\bend\b)/i" scheme="qrmPairedBlock" region00="def:PairStart" region01="def:Symbol" region10="def:PairEnd" region11="def:Symbol"/>
+    </scheme>
+
+    <scheme name="qrmPairedBrackets">
+      <inherit scheme="qrmPairedBlock">
+        <virtual scheme="qrmPairedBlock" subst-scheme="qrmPairedBrackets"/>
+      </inherit>
+<!-- paired block -->
+      <block start="/\(\*/" end="/\*\)/" scheme="def:Comment" region="def:Comment" region00="def:PairStart" region10="def:PairEnd"/>
+      <block start="/(\()/" end="/(\))/" scheme="qrmPairedBrackets" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="qrmPairedBrackets" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="qrmBase">
+<!-- linear comments -->
+      <regexp match="/(^!.*$)/" region0="def:Comment"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="def:Comment"/>
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="def:Comment" region00="def:PairStart" region10="def:PairEnd"/>
+      <block start="/\(\*/" end="/\*\)/" scheme="def:Comment" region="def:Comment" region00="def:PairStart" region10="def:PairEnd"/>
+<!-- strings -->
+      <regexp match='/(".*?")/' region0="def:String"/>
+      <regexp match="/('.*?')/" region0="def:String"/>
+      <regexp match="/\#\d+?\b/" region0="def:String"/>
+      <regexp match="/\#\$[\dA-Fa-f]+?\b/" region0="def:String"/>
+<!-- Numbers -->
+      <regexp match="/\c(\$[\da-fA-F]+)\b/" region0="def:Number"/>
+      <regexp match="/\c(\$[\da-fA-F]*?([^\s\W\da-fA-F]).*?)\b/" region0="def:ErrorText"/>
+      <inherit scheme="def:FloatNumber"/>
+      <inherit scheme="def:DecNumber"/>
+<!-- Symbols -->
+      <keywords region="def:Symbol">
+        <symb name="="/><symb name="^"/><symb name="+"/><symb name="&lt;"/>
+        <symb name="-"/><symb name="*"/><symb name="/"/><symb name=".."/>
+        <symb name=":"/><symb name="("/><symb name="."/><symb name="&gt;"/>
+        <symb name="#"/><symb name=")"/><symb name="["/><symb name="]"/>
+        <symb name=","/><symb name="|"/><symb name="\"/><symb name="%"/>
+        <symb name="@" region="def:SymbolStrong"/>
+        <symb name=";" region="def:SymbolStrong"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="qrmPrePro">
+<!-- Atl preprocessor -->
+      <block start="/^\s*#\b(ifdef|ifndef|define|undefine|endif|else|include|writeto|use|set)\b/i" end="/$/" scheme="qrmPrePro" region="QrmPreproc" region00="QrmPreprocWord"/>
+      <keywords ignorecase="yes" region="QrmPreprocWord">
+        <word name="project"/>
+        <word name="commands"/>
+        <word name="statuses"/>
+        <word name="helps"/>
+        <word name="start"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="AtlCore">
+      <inherit scheme="qrmBase"/>
+      <regexp match="/(\bimport\b)?#6(\s+\b[^\s\;]+\b)/i" region1="AtlWord" region2="QrmPreproc"/>
+      <keywords ignorecase="yes" region="AtlWord">
+        <word name="CASE"/>
+        <word name="HANDLEEVENT"/>
+        <word name="COMMONEVENT"/>
+        <word name="IF"/>
+        <word name="REPORT"/>
+        <word name="ELSE"/>
+        <word name="DO"/>
+        <word name="WHILE"/>
+        <word name="FOR"/>
+        <word name="BREAK"/>
+        <word name="CONTINUE"/>
+        <word name="CONST"/>
+        <word name="CURRENTVIEW"/>
+        <word name="RUNWINDOW"/>
+        <word name="RUNWINDOWMODAL"/>
+        <word name="SETFORMAT"/>
+        <word name="SETTITLE"/>
+        <word name="SETWINDOWTITLE"/>
+        <word name="TABLE"/>
+        <word name="PROTECT"/>
+        <word name="SKIP"/>
+        <word name="NOPROTECT"/>
+        <word name="SHOW"/>
+        <word name="AT"/>
+        <word name="SELECT"/>
+        <word name="CREATE"/>
+        <word name="LOCAL"/>
+        <word name="VIEW"/>
+        <word name="AS"/>
+        <word name="WHERE"/>
+        <word name="FROM"/>
+        <word name="VAR"/>
+        <word name="PROCEDURE"/>
+        <word name="FUNCTION"/>
+        <word name="PUBLIC"/>
+        <word name="MENU"/>
+        <word name="DEFAULT"/>
+        <word name="EXTERNAL"/>
+        <word name="FIELDS"/>
+        <word name="BUTTONS"/>
+        <word name="CENTERED"/>
+        <word name="ESCCLOSE"/>
+        <word name="CYAN"/>
+        <word name="LOADONCALL"/>
+        <word name="PRELOAD"/>
+        <word name="CACHE"/>
+        <word name="PERMANENT"/>
+        <word name="ALONE"/>
+        <word name="FORMAT"/>
+        <word name="SYNONYM"/>
+        <word name="READONLY"/>
+        <word name="MEMORY"/>
+        <word name="NOTOPEN"/>
+        <word name="BUILD"/>
+        <word name="PARAMETERS"/>
+        <word name="STATUSCTX"/>
+        <word name="STATUSLINE"/>
+        <word name="HELPLINE"/>
+      </keywords>
+      <keywords ignorecase="yes" region="AtlDlgWord">
+        <word name="ABSOLUTE"/>
+        <word name="LOADDATA"/>
+        <word name="STOREDATA"/>
+      </keywords>
+      <keywords ignorecase="yes" region="AtlCmdWord">
+        <word name="ECOMMAND"/>
+        <word name="EINFOWORD"/>
+        <word name="EINFOPTR"/>
+        <word name="EVCOMMAND"/>
+        <word name="EVMESSAGE"/>
+        <word name="EVBROADCAST"/>
+        <word name="EVKEYDOWN"/>
+        <word name="AND"/>
+        <word name="OR"/>
+        <word name="NOT"/>
+      </keywords>
+      <keywords ignorecase="yes" region="AtlTypeWord">
+        <word name="VOID"/>
+        <word name="STRING"/>
+        <word name="POINTER"/>
+        <word name="LONGINT"/>
+        <word name="INT64"/>
+        <word name="DOUBLE"/>
+        <word name="WORD"/>
+        <word name="INTEGER"/>
+        <word name="BYTE"/>
+        <word name="SINGLE"/>
+        <word name="ASTRING"/>
+        <word name="LVAR"/>
+        <word name="DATE"/>
+        <word name="TIME"/>
+        <word name="CHAR"/>
+        <word name="EXTENDED"/>
+        <word name="BOOLEAN"/>
+        <word name="TRUE" region="AtlBool"/>
+        <word name="FALSE" region="AtlBool"/>
+      </keywords>
+      <keywords ignorecase="yes" region="AtlStdWord">
+        <word name="UPDATETABLE"/>
+        <word name="SUBSTR"/>
+        <word name="UPPER"/>
+        <word name="DAY"/>
+        <word name="MONTH"/>
+        <word name="YEAR"/>
+        <word name="RETURN"/>
+        <word name="PFIELD"/>
+        <word name="TBL"/>
+        <word name="LNK"/>
+        <word name="GO"/>
+        <word name="NORECORDS"/>
+        <word name="FORWARD"/>
+        <word name="BACKWARD"/>
+        <word name="GETFIRSTIN"/>
+        <word name="GETNEXTIN"/>
+        <word name="GETPREVIN"/>
+        <word name="GETLASTIN"/>
+        <word name="REINITLINK"/>
+        <word name="STRMESSAGE"/>
+        <word name="ABORT"/>
+        <word name="STOP"/>
+        <word name="MAININTERFACE"/>
+        <word name="MESSAGE"/>
+        <word name="CREATEEVENT"/>
+        <word name="BOUNDS"/>
+        <word name="PUSHBOUNDS"/>
+        <word name="POPBOUNDS"/>
+        <word name="CONDITION"/>
+        <word name="PUSHLEAFCOND"/>
+        <word name="POPLEAFCOND"/>
+        <word name="RESCANPANEL"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="AtlForm">
+  <!-- linear comments -->
+      <regexp match="/(^!.*$)/" region0="def:Comment"/>
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="def:Comment" region00="def:PairStart" region10="def:PairEnd"/>
+  <!-- paired block -->
+      <block start="/(\.\{)/" end="/(\.\})/" scheme="AtlForm" region00="def:SymbolStrong" region01="def:PairStart" region10="def:SymbolStrong" region11="def:PairEnd"/>
+      <block start="/(\.if)/i" end="/(\.end)/i" scheme="AtlForm" region00="def:SymbolStrong" region01="def:PairStart" region10="def:SymbolStrong" region11="def:PairEnd"/>
+      <keywords region="def:Symbol">
+        <symb name="&amp;" region="def:SymbolStrong"/>
+        <symb name="@" region="def:SymbolStrong"/>
+        <symb name="^" region="def:SymbolStrong"/>
+      </keywords>
+      <keywords ignorecase="yes" region="AtlFormWord">
+        <word name=".ELSE" region="def:SymbolStrong"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="atlrep">
+
+      <inherit scheme="qrmPrePro">
+        <virtual scheme="qrmPrePro" subst-scheme="atlrep"/>
+      </inherit>
+<!-- paired block -->
+      <inherit scheme="qrmPairedBrackets">
+        <virtual scheme="qrmPairedBrackets" subst-scheme="atlrep"/>
+      </inherit>
+      <keywords ignorecase="yes" region="AtlWord">
+        <word name="OUTPUTNAME"/>
+        <word name="SETOUTPUTNAME"/>
+        <word name="SETPAGESIZE"/>
+        <word name="GONEXTPAGE"/>
+        <word name="FBEGINTRANSACTion"/>
+        <word name="FENDTRANSACTIOn"/>
+
+        <word name="STATUS"/>
+
+        <word name="MAXPAGESIZE"/>
+        <word name="PAGESIZE"/>
+        <word name="NUMPAGE"/>
+        <word name="NUMLINE"/>
+
+      </keywords>
+      <regexp match="/\M\b((procedure|function)(\s*$|\s+\w*))/i" region1="FunctionOutline"/>
+      <regexp match="/\M\b(form|init|done|run)\b/i" region1="RepOutline"/>
+
+      <regexp match="/\M\b(form)\b/i" region1="AtlStdWord"/>
+      <block start="/\M\b(form)\b/i" end="/(&gt;&gt;)/i"  scheme="AtlForm"/>
+
+      <keywords ignorecase="yes" region="AtlStdWord">
+        <word name="TITLE"/>
+        <word name="OUTPUT"/>
+        <word name="DEFAULTEXPRESSION"/>
+        <word name="DEFAULTSET"/>
+        <word name="DEFAULTMODIFIER"/>
+        <word name="FORM"/>
+        <word name="INIT"/>
+        <word name="DONE"/>
+        <word name="RUN"/>
+      </keywords>
+      <inherit scheme="AtlCore">
+        <virtual scheme="AtlCore" subst-scheme="atlrep"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="atl">
+
+      <inherit scheme="qrmPrePro">
+        <virtual scheme="qrmPrePro" subst-scheme="atl"/>
+      </inherit>
+<!-- paired block -->
+      <inherit scheme="qrmPairedBrackets">
+        <virtual scheme="qrmPairedBrackets" subst-scheme="atl"/>
+      </inherit>
+<!-- objects -->
+      <regexp match="/^\s*\M\b((interface|process|report)(\s*$|\s+\w*))/i" region1="InterfaceOutline"/>
+      <regexp match="/^\s*\M\b((dialog)(\s*$|\s+\w*))/i" region1="DialogOutline"/>
+      <regexp match="/\M\b((window)(\s*$|\s+\w*))/i" region1="WindowOutline"/>
+      <regexp match="/\M\b((browse|screen)(\s*$|\s+\w*))/i" region1="BrowseOutline"/>
+      <regexp match="/^\s*\M\b((menu|procedure|function)(\s*$|\s+\w*))/i" region1="FunctionOutline"/>
+      <regexp match="/^\s*\M\b((strings)(\s*$|\s+\w*))/i" region1="StringsOutline"/>
+<!-- paired -->
+      <block start="/\b(begin|window|browse|screen|interface|dialog|process|strings)\b\M(\s*$|\s+)/i" end="/\b(end)\b/i" scheme="atl" region00="AtlWord" region10="AtlWord" region01="def:PairStart" region11="def:PairEnd"/>
+      <block start="/^\s*\M\b(report)\b\M(\s*$|\s+)/i" end="/\b(end)\b/i" scheme="atlrep" region00="AtlWord" region10="AtlWord" region01="def:PairStart" region11="def:PairEnd"/>
+
+      <inherit scheme="AtlCore"/>
+    </scheme>
+
+  </type>
+
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Vladimir Fonarev <vol@quorum.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

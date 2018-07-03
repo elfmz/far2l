@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd" 
+	[
+		<!ENTITY uri-lang SYSTEM "uri.lang.ent.hrc">
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<type name="uri">
+	<annotation><documentation>
+		URI scheme, 
+		as defined in RFC 2396
+		
+		and related standarts
+		
+	</documentation><contributors><![CDATA[
+		Eugene Efremov <4mirror@mail.ru>
+	]]></contributors>
+</annotation>
+
+
+<region name="nsprefix" parent="def:Prefix"       description="Common prefix for namespace"/>
+<region name="nscolon"  parent="def:SymbolStrong" description="Separator ':' (namespace:content)"/>
+
+
+<region name="scheme" parent="nsprefix"/>
+<region name="delit" parent="def:Keyword"/>
+<region name="authority" parent="def:URL"/>
+<region name="path" parent="def:Path"/>
+<region name="query" parent="def:ParameterStrong"/>
+<region name="fragment" parent="def:Constant"/>
+
+
+<region name="FPI"             parent="def:String"/>
+<region name="FPI.own"         parent="def:Directive"/>
+<region name="FPI.sep"         parent="delit"/>
+<region name="FPI.own.content" parent="def:DirectiveContent"/>
+<region name="FPI.nonformal"   parent="def:ErrorText"/>
+<region name="FPI.w3s"         parent="def:Identifier"/>
+
+
+<region name='lang'      parent='authority'/>
+<region name='lang.name' parent='def:KeywordStrong' description="ISO 639 names"/>
+<region name='lang.sep'  parent='delit' description="-"/>
+
+
+<!-- uri itself -->
+
+<scheme name="uri">
+ <annotation><documentation><![CDATA[
+  ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
+        12            3  4          5    6   7      8  9
+
+   scheme    = $2
+   authority = $4
+   path      = $5
+   query     = $7
+   fragment  = $9
+
+ ]]></documentation></annotation>
+ 
+ <regexp
+   match="/ (([^:/?#\s]+):)? (//([^/?#\s]*))? ([^?#\s]*) (\?([^#\s]*))? (#(\S*))? /x"
+   region1="nscolon" region2="scheme"
+   region3="delit" region4="authority"
+   region5="path"
+   region6="delit" region7="query"
+   region8="delit" region9="fragment"
+   priority="low"
+  />
+</scheme>
+
+
+
+
+<!-- Formal public ID (SGML) -->
+
+<scheme name='FPI'>
+	<annotation><documentation><![CDATA[
+			(SGML FAQ):
+		[79] formal public identifier = owner identifier, "//", text identifier
+		[80] owner identifier = ISO owner identifier I registered owner identifier I unregistered 
+			owner identifier
+		[81] ISO owner identifier = minimum data
+		[82] registered owner identifier = "+//", minimum data
+		[83] unregistered owner identifier = "-//", minimum data
+		[84] text identifier = public text class, SPACE, unavailable text indicator'?, public text
+			description, "//", ( public text language I public text designating sequence), ("//", public text
+			display version)?
+	]]></documentation></annotation>
+	
+	<block start='/~(ISO)\M.+?\S\/{2}\S/' end='/~.+?\S\m(\/{2})\M\S/'
+		scheme='FPI.error' region='FPI.own.content'
+		region01='FPI.own' region11='FPI.sep'
+	/>
+	<regexp match='/~ISO/' region='FPI.own'/>
+	
+	<regexp match='/~[\-+]\M\/{2}\S/' region='FPI.own'/>
+	<regexp match='/\S?#1\/{2}\M\S/' region='FPI.sep'/>
+	<inherit scheme='FPI.w3s'/>
+	<regexp match='/~.+/' region0="FPI.nonformal" priority="low"/>
+	
+	<inherit scheme='FPI.error'/>
+</scheme>
+
+
+<scheme name='FPI.w3s'>
+	<annotation><documentation><![CDATA[
+		W3S used some non-normative 
+		strings for his FPIs
+	]]></documentation></annotation>
+	
+	<keywords region='FPI.w3s'>
+		<word name='datatypes'/>
+		<word name='structures'/>
+		<word name='http://www.w3.org/1999/XSL/Transform'/>
+		
+		<!-- They uses both. It's error? -->
+		<word name='REC-xml-1998-0210'/>
+		<word name='REC-xml-19980210'/>
+	</keywords>
+</scheme>
+
+
+<scheme name='FPI.error'>
+	<regexp match="/[^%xml:PubidChar;]+/" region0="def:Error" priority="low"/>
+</scheme>
+
+
+<!-- lang -->
+
+<scheme name='lang'>
+	<annotation><documentation><![CDATA[
+		ftp://ftp.rfc-editor.org/in-notes/bcp/bcp47.txt
+	]]></documentation></annotation>
+	
+	<block start='/~\M[a-zA-Z]{2,3}\b/' end='/~[a-zA-Z]{2,3}\b\m/'
+		region='lang' scheme='lang.names'
+	/>
+	
+	<regexp match='/(-)[a-zA-Z]{1,8}/' region0='lang' region1='lang.sep'/>
+	
+	<regexp match="/~(\b[iI](-)[a-zA-Z]+|[xX](-)[a-zA-Z]{1,8}\b)/ix"
+		 region0='lang' region2='lang.sep' region3='lang.sep'
+	/>
+	
+	<inherit scheme='lang.error'/>
+</scheme>
+
+<scheme name='lang.names'>
+	&uri-lang;
+	
+	<inherit scheme='lang.error'/>
+</scheme>
+
+<scheme name='lang.error'>
+	<regexp match='/./' region='def:Error' priority='low'/>
+</scheme>
+
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 2005-2009
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

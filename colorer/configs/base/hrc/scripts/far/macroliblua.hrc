@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+
+<type name="far.macroliblua">
+<annotation>
+ <contributors>
+   Eugene Myronchuk
+ </contributors>
+</annotation>
+
+
+<import type="def"/>
+<import type="lua"/>
+<!--import type="regexp:pcre.regexp"/-->
+
+<region name="mKeyWord" parent="Keyword"/>
+<region name="mParam" parent="FunctionKeyword"/>
+
+<scheme name="far.macroliblua">
+
+  <regexp match="/;;.*?$/" region="Comment"/>
+  <regexp match="/\/\/.*?$/" region="Comment"/>
+  <block start="/\/\*/" end="/\*\//" scheme="Comment" region="Comment" region00="PairStart" region10="PairEnd"/>
+
+  <keywords region="mKeyWord" ignorecase="yes">
+     <word name="macro"/>
+     <word name="farmacro"/>
+     <word name="$macro"/>
+     <word name="const"/>
+     <word name="include"/>
+  </keywords>    
+
+  <keywords region="mParam" ignorecase="yes">
+     <word name="name"/>
+     <word name="descr"/>
+     <word name="description"/>
+     <word name="area"/>
+     <word name="areas"/>
+     <word name="bind"/>
+     <word name="key"/>
+     <word name="keys"/>
+     <word name="hotkey"/>
+     <word name="hotkeys"/>
+     <word name="event"/>
+     <word name="events"/>
+     <word name="cond"/>
+     <word name="condition"/>
+     <word name="priority"/>
+     <word name="EatOnRun"/>
+     <word name="RunOnRelease"/>
+     <word name="DisableOutput"/>
+     <word name="SendToPlugin"/>
+  </keywords>
+
+  <block start="/(\{\{)/" end="/(\}\})/" scheme="body" 
+    region00="SymbolStrong" region01="PairStart" 
+    region10="SymbolStrong" region11="PairEnd"
+   />
+
+  <regexp match="/\b0x[\dA-Fa-f]+\b/" region="NumberHex"/>
+  <regexp match="/\b\d+\b/" region="NumberDec"/>
+
+  <block start="/((&quot;))((\/))/" end="/((\/))([isUmDAexXS]*)((&quot;))/" scheme="regexp:pcre.regexp"
+  	region="String" region01="PairStart" region02="StringEdge"  region03="Symbol"
+  	region11="Symbol" region13="Symbol" region14="StringEdge" region15="PairEnd"
+  />
+  <inherit scheme="far:macro.string"/>
+
+<!--  <regexp match="/\S{1,}/" region="Error" priority="low"/>	-->
+</scheme>
+
+<scheme name="MacrolibSubst">
+	<regexp match="/#%\w+\b/" region="def:Constant"/>
+</scheme>
+
+<scheme name="FarApi">
+	<keywords region="def:Keyword">
+		<word name="APanel"/>
+		<word name="Area"/>
+		<word name="BM"/>
+		<word name="CmdLine"/>
+		<word name="Dlg"/>
+		<word name="Drv"/>
+		<word name="Editor"/>
+		<word name="Far"/>
+		<word name="Help"/>
+		<word name="Keys"/>
+		<word name="Menu"/>
+		<word name="mf"/>
+		<word name="Mouse"/>
+		<word name="msgbox"/>
+		<word name="Object"/>
+		<word name="Panel"/>
+		<word name="Plugin"/>
+		<word name="PPanel"/>
+		<word name="Viewer"/>
+	</keywords>
+</scheme>
+
+<scheme name="LuaBody">
+	<inherit scheme="MacrolibSubst"/>
+	<inherit scheme="FarApi"/>
+	<inherit scheme="lua:LuaBody">
+		<virtual scheme="lua:LuaBody" subst-scheme="LuaBody" />
+	</inherit>
+</scheme>
+
+<scheme name="body">
+	<inherit scheme="LuaBody" />
+</scheme>
+
+
+</type>
+</hrc>

@@ -1,0 +1,203 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="msdossys">
+
+
+<region name="group.name" parent="ini:group.name.defined"/>
+<region name="param.name" parent="ini:param.name.defined"/>
+<region name="param.content" parent="ini:param.content.defined"/>
+
+<scheme name="group">
+ <block start="/\M^\[Paths\]/i" end="/\M^\[[^\]]+\]/" scheme="group-path"/>  
+ <block start="/\M^\[Options\]/i" end="/\M^\[[^\]]+\]/" scheme="group-option"/>  
+ <inherit scheme="ini:comment"/>
+ <inherit scheme="ini:error"/>
+ <!--inherit scheme="ini:group">
+  <virtual scheme="ini:group.name" subst-scheme="ini:error"/>
+  <virtual scheme="ini:item.content" subst-scheme="ini:error"/>
+ </inherit--> 
+</scheme>
+
+<scheme name="group.name">
+ <inherit scheme="ini:group.name"/>
+ <keywords region="group.name" ignorecase="yes">
+  <word name="Options"/>
+  <word name="Paths"/>
+ </keywords>
+</scheme>
+
+
+<!-- path -->
+
+<scheme name="group-path">
+ <inherit scheme="ini:group">
+  <virtual scheme="ini:group.name" subst-scheme="group.name"/>
+  <virtual scheme="ini:param" subst-scheme="param-path"/>
+ </inherit> 
+</scheme>
+
+<scheme name="param-path">
+ <block start="/\M\s*HostWinBootDrv/i" end="/$/" scheme="param-path.hwbd"/>
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param-path.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-path.content"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-path.name">
+ <keywords region="param.name" ignorecase="yes">
+  <word name="HostWinBootDrv"/>
+  <word name="WinBootDir"/>
+  <word name="WinDir"/>
+  <word name="UninstallDir"/>
+ </keywords> 
+</scheme>
+
+<scheme name="param-path.content">
+ <inherit scheme="def:Path"/>
+</scheme>
+
+<scheme name="param-path.hwbd">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param-path.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-path.content-hwbr"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-path.content-hwbr">
+ <regexp match="/\b[A-Z]\b/" region="param.content"/>
+</scheme>
+
+
+
+<!-- option -->
+
+<scheme name="group-option">
+ <inherit scheme="ini:group">
+  <virtual scheme="ini:group.name" subst-scheme="group.name"/>
+  <virtual scheme="ini:param" subst-scheme="param-option"/>
+ </inherit> 
+</scheme>
+
+<scheme name="param-option">
+ <block start="/\M\s*(BootDelay|BootMenuDefault|BootMenuDelay)/i" end="/$/" scheme="param-option.number"/>
+ <block start="/\M\s*Autoscan/i" end="/$/" scheme="param-option.two"/>
+ <block start="/\M\s*Winver/i" end="/$/" scheme="param-option.ver"/>
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param-option.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-option.content"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-option.name">
+ <keywords region="param.name" ignorecase="yes">
+  <word name="BootDelay"/>
+  <word name="BootGUI"/>
+  <word name="BootKeys"/>
+  <word name="BootMenu"/>
+  <word name="BootMenuDefault"/>
+  <word name="BootMenuDelay"/>
+  <word name="BootSave"/>
+  <word name="BootMulti"/>
+  <word name="BootWarn"/>
+  <word name="BootWin"/>
+  <word name="DblSpace"/>
+  <word name="DrvSpace"/>
+  <word name="DoubleBuffer"/>
+  <word name="LoadTop"/>
+  <word name="Logo"/>
+  <word name="NetWork"/>
+  <word name="DisableLog"/>
+  <word name="BootFailSafe"/>
+  <word name="AutoScan"/>
+  <word name="WinVer"/>
+ </keywords> 
+</scheme>
+
+<scheme name="param-option.content">
+ <regexp match="/\b[0-1]\b/" region="ini:Number"/>
+</scheme>
+
+<scheme name="param-option.number">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param-option.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-option.content-number"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-option.content-number">
+ <regexp match="/\b\d+\b/" region="ini:Number"/>
+</scheme>
+
+<scheme name="param-option.two">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param-option.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-option.content-two"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-option.content-two">
+ <regexp match="/\b[0-2]\b/" region="ini:Number"/>
+</scheme>
+
+<scheme name="param-option.ver">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param-option.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-option.content-ver"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-option.content-ver">
+ <regexp match="/\b\d+\.\d+\.\d+\b/" region="ini:Number"/>
+</scheme>
+
+
+<!-- final -->
+
+<scheme name="msdossys">
+ <!--block start="/\M^\[[^\]]+\]/" end="/\M^\[[^\]]+\]/" scheme="group"/--> 
+ <inherit scheme="group"/>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the Colorer Library.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>.
+   - Portions created by the Initial Developer are Copyright (C) 2003-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

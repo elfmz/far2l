@@ -1,0 +1,487 @@
+<?xml version="1.0"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc
+                         http://colorer.sf.net/2003/hrc.xsd">
+
+ <annotation>
+  <documentation>
+    Python syntax description for Colorer Library.
+    http://docs.python.org/ref/grammar.txt
+  </documentation>
+  <contributors><![CDATA[
+    anatoly techtonik <techtonik@php.net>
+  ]]></contributors>
+ </annotation>
+
+ <type name="python">
+  <region name="pyKeyword" parent="def:Keyword"/>
+  <region name="pyComment" parent="def:Comment"/>
+  <region name="pyString" parent="def:String"/>
+  <region name="pyStringEscape" parent="def:StringContent"/>
+  <region name="pyNumber" parent="def:Number"/>
+  <region name="pyNumberDec" parent="def:NumberDec"/>
+  <region name="pyNumberOct" parent="def:NumberOct"/>
+  <region name="pyNumberHex" parent="def:NumberHex"/>
+  <region name="pyNumberFloat" parent="def:NumberFloat"/>
+  <region name="pyNumberSuffix" parent="def:NumberSuffix"/>
+  <region name="pyOperator" parent="def:Operator"/>
+  <region name="pyDelimiter" parent="def:Symbol"/>
+  <region name="pyOutline" parent="def:Outlined"/>
+  <region name="pySpecialName" parent="def:ParameterStrong"/>
+  <region name="pyFunction" parent="def:FunctionKeyword"/>
+
+
+  <scheme name="RawStringSingle"> <!-- single-quoted strings should end with slash if span multiple lines -->
+    <regexp match="/[^\\']$/" region="def:Error" />   <!-- error if end of line is not quote or escape -->
+    <regexp match="/\\$/" region="pyStringEscape" />  <!-- highlight escape at end of line -->
+    <regexp match="/\\'/" region="pyStringEscape" />  <!-- highlight escape quoted in the middle -->
+  </scheme>
+  <scheme name="RawStringDouble">
+    <regexp match="/[^\\&quot;]$/" region="def:Error" />
+    <regexp match="/\\$/" region="pyStringEscape" />
+    <regexp match="/\\&quot;/" region="pyStringEscape" />
+  </scheme>
+  <!-- highlight non-raw string contents -->
+  <scheme name="StringCommon">
+    <regexp match="/\\./" region="pyStringEscape" />
+  </scheme>
+  <scheme name="StringSingle"> <!-- single-quoted strings should end with slash if span multiple lines -->
+    <regexp match="/(\\).$/" region="def:Error" region1="pyStringEscape" />
+    <inherit scheme="RawStringSingle" />
+    <inherit scheme="StringCommon" />
+  </scheme>
+  <scheme name="StringDouble"> <!-- double-quoted strings should also end with slash to span multiple lines -->
+    <regexp match="/(\\).$/" region="def:Error" region1="pyStringEscape" />
+    <inherit scheme="RawStringDouble" />
+    <inherit scheme="StringCommon" />
+  </scheme>
+
+
+  <scheme name="Keywords">
+   <!-- python keywords : http://docs.python.org/ref/keywords.html -->
+   <keywords ignorecase="no" region="pyKeyword">
+    <word name="and"/>
+    <word name="as"/>
+    <word name="assert"/>
+    <word name="break"/>
+    <word name="class"/>
+    <word name="continue"/>
+    <word name="def"/>
+    <word name="del"/>
+    <word name="elif"/>
+    <word name="else"/>
+    <word name="except"/>
+    <word name="exec"/>
+    <word name="finally"/>
+    <word name="for"/>
+    <word name="from"/>
+    <word name="global"/>
+    <word name="if"/>
+    <word name="import"/>
+    <word name="in"/>
+    <word name="is"/>
+    <word name="lambda"/>
+    <word name="not"/>
+    <word name="or"/>
+    <word name="pass"/>
+    <word name="print"/>
+    <word name="raise"/>
+    <word name="return"/>
+    <word name="try"/>
+    <word name="while"/>
+    <word name="with"/>
+    <word name="yield"/>
+   </keywords>
+  </scheme>
+
+
+  <scheme name="Functions">
+    <!-- TODO: consider changing region to something more colorful like
+               pySpecialName for good visual text anchoring    -->
+    <keywords ignorecase="no" region="pyFunction">
+      <!-- built-in functions -->
+      <word name="__import__"/>
+      <word name="abs"/>
+      <word name="all"/>
+      <word name="any"/>
+      <word name="basestring"/>
+      <word name="bool"/>
+      <word name="callable"/>
+      <word name="chr"/>
+      <word name="classmethod"/>
+      <word name="cmp"/>
+      <word name="compile"/>
+      <word name="complex"/>
+      <word name="delattr"/>
+      <word name="dict"/>
+      <word name="dir"/>
+      <word name="divmod"/>
+      <word name="enumerate"/>
+      <word name="eval"/>
+      <word name="execfile"/>
+      <word name="file"/>
+      <word name="filter"/>
+      <word name="float"/>
+      <word name="frozenset"/>
+      <word name="getattr"/>
+      <word name="globals"/>
+      <word name="hasattr"/>
+      <word name="hash"/>
+      <word name="help"/>
+      <word name="hex"/>
+      <word name="id"/>
+      <word name="input"/>
+      <word name="int"/>
+      <word name="isinstance"/>
+      <word name="issubclass"/>
+      <word name="iter"/>
+      <word name="len"/>
+      <word name="list"/>
+      <word name="locals"/>
+      <word name="long"/>
+      <word name="map"/>
+      <word name="max"/>
+      <word name="min"/>
+      <word name="object"/>
+      <word name="oct"/>
+      <word name="open"/>
+      <word name="ord"/>
+      <word name="pow"/>
+      <word name="property"/>
+      <word name="range"/>
+      <word name="raw_input"/>
+      <word name="reduce"/>
+      <word name="reload"/>
+      <word name="repr"/>
+      <word name="reversed"/>
+      <word name="round"/>
+      <word name="set"/>
+      <word name="setattr"/>
+      <word name="slice"/>
+      <word name="sorted"/>
+      <word name="staticmethod"/>
+      <word name="str"/>
+      <word name="sum"/>
+      <word name="super"/>
+      <word name="tuple"/>
+      <word name="type"/>
+      <word name="unichr"/>
+      <word name="unicode"/>
+      <word name="vars"/>
+      <word name="xrange"/>
+      <word name="zip"/>
+    </keywords>
+  </scheme>
+
+
+  <scheme name="SpecialNames">
+   <keywords ignorecase="no" region="pySpecialName">
+     <!-- Built-in Constants : http://docs.python.org/lib/node8.html -->
+     <word name="False"/>
+     <word name="True"/>
+     <word name="None"/>
+     <word name="NotImplemented"/>
+     <word name="Ellipsis"/>
+     <!-- Built-in Exceptions: http://docs.python.org/lib/module-exceptions.html -->
+     <word name="BaseException"/>
+     <word name="SystemExit"/>
+     <word name="KeyboardInterrupt"/>
+     <word name="Exception"/>
+     <word name="GeneratorExit"/>
+     <word name="StopIteration"/>
+     <word name="StandardError"/>
+     <word name="ArithmeticError"/>
+     <word name="FloatingPointError"/>
+     <word name="OverflowError"/>
+     <word name="ZeroDivisionError"/>
+     <word name="AssertionError"/>
+     <word name="AttributeError"/>
+     <word name="EnvironmentError"/>
+     <word name="IOError"/>
+     <word name="OSError"/>
+     <word name="WindowsError"/>
+     <word name="VMSError"/>
+     <word name="EOFError"/>
+     <word name="ImportError"/>
+     <word name="LookupError"/>
+     <word name="IndexError"/>
+     <word name="KeyError"/>
+     <word name="MemoryError"/>
+     <word name="NameError"/>
+     <word name="UnboundLocalError"/>
+     <word name="ReferenceError"/>
+     <word name="RuntimeError"/>
+     <word name="NotImplementedError"/>
+     <word name="SyntaxError"/>
+     <word name="IndentationError"/>
+     <word name="TabError"/>
+     <word name="SystemError"/>
+     <word name="TypeError"/>
+     <word name="ValueError"/>
+     <word name="UnicodeError"/>
+     <word name="UnicodeDecodeError"/>
+     <word name="UnicodeEncodeError"/>
+     <word name="UnicodeTranslateError"/>
+     <word name="Warning"/>
+     <word name="DeprecationWarning"/>
+     <word name="PendingDeprecationWarning"/>
+     <word name="RuntimeWarning"/>
+     <word name="SyntaxWarning"/>
+     <word name="UserWarning"/>
+     <word name="FutureWarning"/>
+     <word name="ImportWarning"/>
+     <word name="UnicodeWarning"/>
+   </keywords>
+
+   <!-- python magic -->
+   <keywords ignorecase="no" region="pySpecialName">
+     <!-- User-defined functions special attributes : http://docs.python.org/reference/datamodel.html -->
+     <word name="func_doc"/>
+     <word name="__doc__"/>
+     <word name="func_name"/>
+     <word name="__name__"/>
+     <word name="__module__"/>
+     <word name="func_defaults"/>
+     <word name="func_code"/>
+     <word name="func_globals"/>
+     <word name="func_dict"/>
+     <word name="func_closure"/>
+     <!-- User-defined methods special attributes -->
+     <word name="im_self"/>
+     <word name="im_func"/>
+     <word name="im_class"/>
+     <word name="__self__"/>
+     <word name="__func__"/>
+     <!-- Module attributes -->
+     <word name="__dict__"/>
+     <word name="__file__"/>
+     <!-- Class attributes -->
+     <word name="__module__"/>
+     <word name="__bases__"/>
+     <!-- Class instance attributes -->
+     <word name="__class__"/>
+     <!-- Special method names : http://docs.python.org/ref/specialnames.html -->
+     <word name="__new__"/>
+     <word name="__init__"/>
+     <word name="__del__"/>
+     <word name="__repr__"/>
+     <word name="__str__"/>
+     <word name="__lt__"/>
+     <word name="__le__"/>
+     <word name="__eq__"/>
+     <word name="__ne__"/>
+     <word name="__gt__"/>
+     <word name="__ge__"/>
+     <word name="__cmp__"/>
+     <word name="__hash__"/>
+     <word name="__nonzero__"/>
+     <word name="__unicode__"/>
+     <!-- Customized attribute access -->
+     <word name="__getattr__"/>
+     <word name="__setattr__"/>
+     <word name="__delattr__"/>
+     <word name="__getattribute__"/>
+     <!-- Implementing descriptors -->
+     <word name="__get__"/>
+     <word name="__set__"/>
+     <word name="__delete__"/>
+
+
+     <word name="__slots__"/>
+     <word name="__metaclass__"/>
+     <word name="__call__"/>
+
+
+     <!-- Emulating containers -->
+     <word name="__len__"/>
+     <word name="__getitem__"/>
+     <word name="__setitem__"/>
+     <word name="__delitem__"/>
+     <word name="__iter__"/>
+     <word name="__contains__"/>
+     <!-- Emulating numeric types -->
+     <word name="__add__"/>
+     <word name="__sub__"/>
+     <word name="__mul__"/>
+     <word name="__floordiv__"/>
+     <word name="__mod__"/>
+     <word name="__divmod__"/>
+     <word name="__pow__"/>
+     <word name="__lshift__"/>
+     <word name="__rshift__"/>
+     <word name="__and__"/>
+     <word name="__xor__"/>
+     <word name="__or__"/>
+
+     <word name="__div__"/>
+     <word name="__truediv__"/>
+
+     <word name="__radd__"/>
+     <word name="__rsub__"/>
+     <word name="__rmul__"/>
+     <word name="__rdiv__"/>
+     <word name="__rtruediv__"/>
+     <word name="__rfloordiv__"/>
+     <word name="__rmod__"/>
+     <word name="__rdivmod__"/>
+     <word name="__rpow__"/>
+     <word name="__rlshift__"/>
+     <word name="__rrshift__"/>
+     <word name="__rand__"/>
+     <word name="__rxor__"/>
+     <word name="__ror__"/>
+
+     <word name="__iadd__"/>
+     <word name="__isub__"/>
+     <word name="__imul__"/>
+     <word name="__idiv__"/>
+     <word name="__itruediv__"/>
+     <word name="__ifloordiv__"/>
+     <word name="__imod__"/>
+     <word name="__ipow__"/>
+     <word name="__ilshift__"/>
+     <word name="__irshift__"/>
+     <word name="__iand__"/>
+     <word name="__ixor__"/>
+     <word name="__ior__"/>
+
+     <word name="__neg__"/>
+     <word name="__pos__"/>
+     <word name="__abs__"/>
+     <word name="__invert__"/>
+
+     <word name="__complex__"/>
+     <word name="__int__"/>
+     <word name="__long__"/>
+     <word name="__float__"/>
+
+     <word name="__oct__"/>
+     <word name="__hex__"/>
+
+     <word name="__index__"/>
+
+     <word name="__coerce__"/>
+
+     <!-- With Statement Context Managers -->
+
+     <word name="__enter__"/>
+     <word name="__exit__"/>
+   </keywords>
+  </scheme>
+
+
+  <scheme name="python">
+   <!-- python outliner: class, def and __main__ -->
+   <regexp match="/\M(?{pyOutline}^\s*(class|def)\s+\w+)/" />
+   <regexp match="/\M(?{pyOutline}^if\s+__name__\s+==\s+(&apos;|&quot;)__main__\1)/x"/>
+
+   <inherit scheme="Keywords"/>
+   <inherit scheme="SpecialNames"/>
+   <inherit scheme="Functions"/>
+
+   <inherit scheme="def:PairedBrackets">
+      <virtual scheme="def:PairedBrackets" subst-scheme="python"/>
+   </inherit>
+
+   <!-- encoding declaration : http://docs.python.org/ref/encodings.html
+        todo - make it match only at file start -->
+   <regexp match="/^# (-\+- |vim:fileen)coding[=:]\s*(\w+).*/" region="pyComment" region2="pySpecialName"/>
+
+   <!-- python operators : http://docs.python.org/ref/keywords.html -->
+   <keywords region="pyOperator">
+    <symb name="+"/>
+    <symb name="-"/>
+    <symb name="*"/>
+    <symb name="**"/>
+    <symb name="/"/>
+    <symb name="//"/>
+    <symb name="%"/>
+    <symb name="&lt;&lt;"/>
+    <symb name=">>"/>
+    <symb name="&amp;"/>
+    <symb name="|"/>
+    <symb name="^"/>
+    <symb name="~"/>
+    <symb name="&lt;"/>
+    <symb name=">"/>
+    <symb name="&lt;="/>
+    <symb name=">="/>
+    <symb name="=="/>
+    <symb name="!="/>
+    <symb name="&lt;>"/>
+   </keywords>
+
+
+   <!-- basic python comment - consider it everything after # till the end of line -->
+   <block start="/#/" end="/$/" region="pyComment" scheme="def:Comment"/>
+
+   <!-- python strings : http://docs.python.org/ref/strings.html -->
+   <block start="/(u|U)?(r|R)?(&quot;{3}|&apos;{3})/" end="/\y3/"
+      region00="def:PairStart" region10="def:PairEnd"
+      scheme="def:Comment" region="pyComment" />
+      <!-- TODO: better scheme for multiline comments/docstrings -->
+      <!-- scheme="StringCommon" region="pyString" /> -->
+   <block start="/(u|U)?(&apos;)/"              end="/\y2/"
+      region00="def:PairStart" region10="def:PairEnd" scheme="StringSingle" region="pyString" />
+   <block start="/(u|U)?(&quot;)/"              end="/\y2/"
+      region00="def:PairStart" region10="def:PairEnd" scheme="StringDouble" region="pyString" />
+   <block start="/(u|U)?(r|R)(&apos;)/"  end="/\y3/"
+      region00="def:PairStart" region10="def:PairEnd" scheme="RawStringSingle" region="pyString" />
+   <block start="/(u|U)?(r|R)(&quot;)/"  end="/\y3/"
+      region00="def:PairStart" region10="def:PairEnd" scheme="RawStringDouble" region="pyString" />
+
+   <!-- python floats and imaginary numbers : http://docs.python.org/ref/floating.html -->
+   <!-- placed before integers to avoid confusion with octals, where exponent will get an error -->
+   <regexp match="/\B\.\d+([Ee][-+]?\d+)?([jJ])?(\w*)\b/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b\d+\.\d*([Ee][-+]?\d+)?([jJ])?(\w*)/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b\d+([jJ])(\w*)\b/" region0="pyNumber" region1="pyNumberSuffix" region2="def:Error" />
+
+
+   <!-- python integers : https://docs.python.org/2/reference/lexical_analysis.html#integer-and-long-integer-literals -->
+   <!-- hex -->
+   <regexp match="/\b(0[xX][0-9a-fA-F]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <!-- binary -->
+   <regexp match="/\b(0b[01]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <!-- octal -->
+   <regexp match="/\b(0o?[0-7]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <!-- decimal -->
+   <regexp match="/\b([1-9]\d*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+
+
+   <!-- python delimiters : http://docs.python.org/ref/delimiters.html -->
+   <keywords region="pyDelimiter">
+    <symb name="+"/>
+    <symb name="("/>
+    <symb name=")"/>
+    <symb name="["/>
+    <symb name="]"/>
+    <symb name="{"/>
+    <symb name="}"/>
+    <symb name="@"/>
+    <symb name=","/>
+    <symb name=":"/>
+    <symb name="."/>
+    <symb name="`"/>
+    <symb name="="/>
+    <symb name=";"/>
+    <symb name="+="/>
+    <symb name="-="/>
+    <symb name="*="/>
+    <symb name="/="/>
+    <symb name="//="/>
+    <symb name="%="/>
+    <symb name="&amp;="/>
+    <symb name="|="/>
+    <symb name="^="/>
+    <symb name=">>="/>
+    <symb name="&lt;&lt;="/>
+    <symb name="**="/>
+   </keywords>
+
+  </scheme>
+ </type>
+
+</hrc>

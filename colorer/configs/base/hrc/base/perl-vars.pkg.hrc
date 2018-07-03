@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY perl-vars-pkg  SYSTEM "perl-vars.pkg.ent.hrc">
+
+]>
+
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+   
+<!-- hack for string interpolation vars - using XML entities -->
+
+<type name="perl-vars">
+        <entity name="var" value="[$@%*&amp;]"/>
+
+        &perl-vars-pkg;
+</type>
+
+<type name="perl-vars-ex">
+        <entity name="var" value="[$@]"/>
+
+        &perl-vars-pkg;
+</type>
+
+
+</hrc>

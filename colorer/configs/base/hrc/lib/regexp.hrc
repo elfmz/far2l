@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding='Windows-1251'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="regexp">
+
+<annotation>
+ <documentation>
+ REGEXP package: any types of regular expressions.
+ std.*   - base schemes for all types of regexp
+ pcre.*  - schemes for PCRE (used in php, js, etc...)
+ posix.* - schemes for POSIX 1003.2 regexp (used in php, sql, etc...)
+ perl.*  - schemes for perl-like regexp (advansed PCRE)
+ xsd.*   - schemes for xml schema regexp (pattern/@value)
+ hrc.*   - schemes for colorer-like regexp (used in hrc)
+ </documentation>
+
+ <contributors>
+ <![CDATA[
+  Eugene Efremov <4mirror@mail.ru>
+ ]]>
+ </contributors>
+
+ <appinfo><todo>
+  <![CDATA[
+   1.Символы \b\B выделяются в posix. Это надо будет убрать.
+   2.Планируется добавить распознавание unicode (пока там заглушка).
+  ]]>
+ </todo></appinfo>
+
+</annotation>
+
+<region name="Symbol" description="ESC-Symbols: \(,\n,\r,etc" parent="def:StringContent"/>
+<region name="MetaSymb" description="Metasymbols: *,+,$,etc" parent="def:Symbol"/>
+<region name="MetaSymbStrong" description="Structrural metasymbols: |,etc" parent="def:SymbolStrong"/>
+<region name="SymbClass" description="Symbol's class: \d,\w,etc." parent="def:Var"/>
+<region name="Operator" description="Assertions and operators: \B, ?!, etc." parent="def:Keyword"/>
+<region name="SpecOperator" description="Special operators : \1, etc." parent="def:KeywordStrong"/>
+<region name="Quote" description="Qoutes: (),{},[]" parent="MetaSymb"/>
+<region name="SpecQuote" description="Special qoutes" parent="def:StringEdge"/>
+<region name="SpecArea" description="Special areas: (?i:), etc." parent="def:Keyword"/>
+<region name="InsertArea" description="Special areas: (?i:), etc." parent="def:Insertion"/>
+
+
+<entity name='hex' value="[0-9a-fA-F]"/>
+
+
+<scheme name="string"/>	<!-- Заглушка, на ее место подставлять строку языка -->
+
+<scheme name="code"> <!-- Заглушка, на ее место подставлять код языка -->
+ <regexp match="/./" region0="def:Error" priority="low"/>
+</scheme>
+
+<!-- Базовый модуль -->
+
+<scheme name="std.base.core">
+ <inherit scheme="string"/>
+ <regexp match="/\\[dsw]/" region0="SymbClass"/>   <!-- Классы символов -->
+ <regexp match="/\\[^a-z1-9]/" region0="Symbol"/> <!-- Квотирование -->
+ <regexp match="/\\[nrt]/" region0="Symbol"/> <!-- спецсимволы  -->
+</scheme>
+
+<scheme name="std.base"> <!-- Общее для всех частей регэкспа -->
+ <inherit scheme="string"/>
+ <regexp match="/[\^]/" region0="MetaSymb" priority="low"/><!-- Спецсимвол ^ -->
+ <regexp match="/\\x%hex;{2}/" region0="Symbol"/> <!-- hex число  -->
+ <regexp match="/\\[DSW]/" region0="SymbClass"/>   <!-- Классы символов -->
+ <inherit scheme="std.base.core"/>
+ <regexp match="/\\[0-9a-fA-F]/" region0="SpecOperator"/>	   <!-- Классы символов -->
+ <regexp match="/\\./" region0="def:Error"/>       <!-- таких символов нет  -->
+</scheme>
+
+<scheme name="std.class"> <!-- class [] -->
+ <inherit scheme="string"/>
+ <regexp match="/[\-]\M[^\]\-]/" region0="MetaSymb"/>	<!-- A-Z -->
+ <inherit scheme="std.base"/>
+</scheme>
+
+<scheme name="std.symbs">
+ <inherit scheme="string"/>
+ <regexp match="/[\.\*\+\$\?]/" region0="MetaSymb" priority="low"/> <!-- спецсимволы -->
+ <regexp match="/\|/" region0="MetaSymbStrong" priority="low"/> <!-- спецсимвол | -->
+ <regexp match="/\\[Bb]/i" region0="Operator"/> <!-- претензии (без \A\Z\z) -->
+</scheme>
+
+<scheme name="std.number">
+ <inherit scheme="string"/>
+ <regexp match="/\d/" region0="def:Number" />
+ <keywords region="def:Symbol">
+  <symb name=","/>
+  <symb name=" "/>
+ </keywords>
+ <regexp match='/./' region0="def:Error" priority="low"/>
+</scheme>
+
+
+
+<scheme name='std.regexp.include'>
+ <block start="/(\()/" end="/(\))/" scheme="std.regexp"
+  region00="Quote" region01="def:PairStart"
+  region10="Quote" region11="def:PairEnd"
+ />
+</scheme>
+
+<scheme name='std.class.include'>
+ <block start="/(\[)/" end="/([^\\]\[)?~2((\]))/x" scheme="std.class"
+  region00="Quote" region01="def:PairStart"
+  region12="Quote" region13="def:PairEnd"
+ />
+</scheme>
+
+<scheme name="std.regexp">
+ <inherit scheme="string"/>
+ <!--regexp match="/\\c\[/" region0="Symbol"/-->
+ <inherit scheme="std.regexp.include"/>
+ <inherit scheme="std.class.include"/>
+ 
+ <regexp match="/(\{)([\d\w\s\,]+)(\})/"
+  region0="Quote" region2="def:Number"
+  region1="def:PairStart" region3="def:PairEnd"
+ />
+ <block start="/\(?#1(\?\{)/" end="/(\})/" scheme="code" region="InsertArea"
+  region00="SpecQuote" region01="def:PairStart"
+  region10="SpecQuote" region11="def:PairEnd"
+ />
+ <inherit scheme="std.symbs"/>
+ <inherit scheme="std.base"/>
+</scheme>
+
+
+
+<!--      -->
+<!-- PCRE -->
+<!--      -->
+
+
+
+<scheme name="pcre.base">
+ <inherit scheme="string"/>
+ <regexp match="/\\o[0-7]{3}/" region0="Symbol"/> <!-- oct число  -->
+ <regexp match="/\\[aenrtfv]/" region0="Symbol"/> <!-- спецсимволы  -->
+ <regexp match="/\\c./" region0="Symbol"/>       <!-- спецсимволы  -->
+ <regexp match="/\\[0-9a-fA-F]{2}/" region0="SpecOperator"/>	   <!-- Классы символов -->
+ <inherit scheme="std.base"/>
+</scheme>
+
+<scheme name="pcre.symbs">
+ <inherit scheme="std.symbs"/>
+ <regexp match="/\\[BbZAa]/i" region0="Operator"/> <!-- претензии (\A\Z\z - в т.ч) -->
+</scheme>
+
+<scheme name="pcre.choise">
+ <regexp match="/~\s*%hex;{0,2}\s*/" region0="def:Number" />
+ <block start="/~(\?&lt;?[\=\!])/" end="/\M\)/"
+  scheme="pcre.regexp" region01="Operator"
+ />
+ <regexp match="/./" region0="def:Error" priority="low"/>
+</scheme>
+
+<scheme name="pcre.modif">
+ <keywords region="SpecArea">
+  <symb name="-" region="MetaSymb"/>
+  <symb name="i"/>
+  <symb name="m"/>
+  <symb name="n"/>
+  <symb name="s"/>
+  <symb name="x"/>
+ </keywords>
+ <regexp match="/./" region0="def:Error" priority="low"/>
+</scheme>
+
+
+<!-- Регексп в общем виде -->
+<scheme name="pcre.regexp">
+ <inherit scheme="string"/>
+ <block start="/(\()(\?&lt;?[\=\!])/" end="/(\))/" scheme="pcre.regexp"
+  region00="def:PairStart" region01="Quote" region02="Operator"
+  region10="def:PairEnd" region11="Quote"
+ />
+ <block start="/(\s\s+|\x09)\#/" end="/$/"
+  scheme="def:Comment" region="def:Comment"
+ />
+ <block start="/(\()(\?\#)/" end="/(\))/"
+  scheme="def:Comment" region="def:Comment"
+  region00="def:PairStart" region01="Quote" region02="SpecOperator"
+  region10="def:PairEnd" region11="Quote"
+ />
+ <block start="/\(?#1(\?)\M[\w\-]*\:/" end="/(\:)/"
+  scheme="pcre.modif" region="SpecArea"
+  region00="def:PairStart" region01="SpecQuote"
+  region10="def:PairEnd" region11="SpecQuote"
+ />
+ <block start="/(\()(\?)\M\w[\w\-]*\)/" end="/(\))/"
+  scheme="pcre.modif" region="SpecArea"
+  region00="def:PairStart" region01="SpecQuote" region02="SpecQuote"
+  region10="def:PairEnd" region11="SpecQuote"
+ />
+
+ <block start="/\(?#1(\?\()/" end="/(\))/" scheme="pcre.choise"
+  region00="SpecQuote" region01="def:PairStart"
+  region10="SpecQuote" region11="def:PairEnd"
+ />
+ <inherit scheme="std.regexp">
+  <virtual scheme="std.base" subst-scheme="pcre.base"/>
+  <virtual scheme="std.symbs" subst-scheme="pcre.symbs"/>
+  <virtual scheme="std.regexp" subst-scheme="pcre.regexp"/>
+ </inherit>
+</scheme>
+
+
+
+<!--      -->
+<!-- POSIX 1003.2 -->
+<!--      -->
+
+
+<scheme name="posix.liter.class">
+ <keywords region="SymbClass">
+  <word name="alpha"/>
+  <word name="alnum"/>
+  <word name="ascii"/>
+  <word name="blank"/>
+  <word name="cntrl"/>
+  <word name="digit"/>
+  <word name="graph"/>
+  <word name="lower"/>
+  <word name="print"/>
+  <word name="punct"/>
+  <word name="space"/>
+  <word name="upper"/>
+  <word name="word"/>
+  <word name="xdigit"/>
+ </keywords>
+ <regexp match="/\^/" region0="MetaSymb"/>
+ <regexp match="/(\:)?#1&gt;(\:)?=/" region0="Operator"/>
+ <regexp match="/(\:)?#1&lt;(\:)?=/" region0="Operator"/>
+</scheme>
+
+<scheme name="posix.liter.bracket">
+ <block start="/(\[\:) \M [\w&lt;&gt;\^]+?\:\]/x" end="/(\:\])/" scheme="posix.liter.class"
+  region00="def:PairStart" region01="Quote"
+  region10="def:PairEnd" region11="Quote" />
+</scheme>
+
+<scheme name="posix.class">
+ <regexp match="/[\^\-]/" region0="MetaSymb"/>
+ <inherit scheme="posix.liter.bracket"/>
+ <block start="/(\[\=)/" end="/(\=\])/" scheme="string"
+  region00="def:PairStart" region01="Quote"
+  region10="def:PairEnd" region11="Quote" />
+ <block start="/(\[\.)/" end="/(\.\])/" scheme="string"
+  region00="def:PairStart" region01="Quote"
+  region10="def:PairEnd" region11="Quote" />
+ <inherit scheme="std.class">
+  <virtual scheme="std.base" subst-scheme="std.base.core"/>
+  <virtual scheme="std.class" subst-scheme="posix.class"/>
+ </inherit>
+</scheme>
+
+
+<scheme name="posix.regexp">
+ <inherit scheme="std.regexp">
+  <virtual scheme="std.base" subst-scheme="std.base.core"/>
+  <virtual scheme="std.class" subst-scheme="posix.class"/>
+  <virtual scheme="std.regexp" subst-scheme="posix.regexp"/>
+ </inherit>
+</scheme>
+
+
+
+<!--      -->
+<!-- perl-like -->
+<!--      -->
+
+<scheme name="unicode.charter"/> <!-- Not realised -->
+
+<scheme name="perl.modif">
+ <inherit scheme="pcre.modif"/>
+</scheme>
+
+<scheme name="perl.posix.liter.class">
+ <keywords region="SymbClass">
+  <word name="IsAlpha"/>
+  <word name="IsAlnum"/>
+  <word name="IsASCII"/>
+  <word name="IsSpace"/>
+  <word name="IsCntrl"/>
+  <word name="IsDigit"/>
+  <word name="IsGraph"/>
+  <word name="IsLower"/>
+  <word name="IsPrint"/>
+  <word name="IsPunct"/>
+  <word name="IsSpace"/>
+  <word name="IsSpacePerl"/>
+  <word name="IsUpper"/>
+  <word name="IsWord"/>
+  <word name="IsXDigit"/>
+ </keywords>
+</scheme>
+
+<scheme name="perl.posix.liter.bracket">
+ <block start="/(\\[pP])(\{)/" end="/(\})/" scheme="perl.posix.liter.class"
+  region00="def:PairStart" region01="Operator" region02="Quote"
+  region10="def:PairEnd" region11="Quote" />
+</scheme>
+<scheme name="perl.unicode.liter.bracket">
+ <block start="/(\\N)(\{)/" end="/(\})/"
+  scheme="unicode.charter" region="def:CharacterContent"
+  region00="def:PairStart" region01="Operator" region02="Quote"
+  region10="def:PairEnd" region11="Quote" />
+ <regexp match="/(\\x)(\{)(%hex;+)(\})/"
+  region1="SymbClass" region2="Quote"
+  region3="def:NumberHex" region4="Quote"
+ />
+</scheme>
+<scheme name="perl.quote">
+ <regexp match="/(\\Q).*?(\\E)/s" region="def:String"
+  region1="Operator" region2="Operator" priority="low"
+ />
+ <!--block start="/(\\Q)/" end="/(\\E)/" scheme="string"
+  region00="def:PairStart"
+  region10="Operator" region11="def:PairEnd"
+ /-->
+</scheme>
+
+<scheme name="perl.string">
+ <!-- Сведено вместе то, что есть в строках  перла и убрано то, чего там нет -->
+ <inherit scheme="string"/>
+ <regexp match="/\\[nrtfbae]/" region0="Symbol"/> <!-- спецсимволы  -->
+ <inherit scheme="perl.unicode.liter.bracket"/>
+ <regexp match="/\\c./" region0="Symbol"/>       <!-- спецсимволы  -->
+ <regexp match="/\\x%hex;{2}/" region0="Symbol"/> <!-- hex число  -->
+ <regexp match="/\\o[0-7]*/" region0="def:Error"/> <!-- HЕ oct число  -->
+ <regexp match="/\\[0-7]{3}/" region0="Symbol"/> <!-- oct число  -->
+</scheme>
+
+<scheme name="perl.base">
+ <inherit scheme="perl.string"/>
+ <inherit scheme="perl.posix.liter.bracket"/>
+ <inherit scheme="posix.liter.bracket"/>
+ <inherit scheme="pcre.base"/>
+</scheme>
+
+<scheme name="perl.symbs">
+ <inherit scheme="std.symbs"/>
+ <regexp match="/\\[Pp]P/" region0="SymbClass" />
+ <regexp match="/\\[XC]/" region0="SymbClass" />
+ <regexp match="/\\[LlUuEzG]/" region0="Operator"/>
+</scheme>
+
+<scheme name="perl.regexp">
+ <inherit scheme="perl.string"/>
+ <inherit scheme="posix.liter.bracket"/>
+ <inherit scheme="perl.quote"/>
+ <block start="/(\()(\?&gt;)/" end="/(\))/" scheme="perl.regexp"
+  region00="def:PairStart" region01="Quote" region02="Operator"
+  region10="def:PairEnd" region11="Quote"
+ />
+ <block start="/\(?#1(\?{1,2}\{)/" end="/(\})/"
+  scheme="code" region="InsertArea"
+  region00="SpecQuote" region01="def:PairStart"
+  region10="SpecQuote" region11="def:PairEnd"
+ />
+ <inherit scheme="pcre.regexp">
+  <virtual scheme="pcre.base" subst-scheme="perl.base"/>
+  <virtual scheme="pcre.symbs" subst-scheme="perl.symbs"/>
+  <virtual scheme="pcre.modif" subst-scheme="perl.modif"/>
+  <virtual scheme="pcre.regexp" subst-scheme="perl.regexp"/>
+ </inherit>
+</scheme>
+
+
+<!-- XML schema, xsd -->
+
+
+<scheme name="xsd.base">
+ <inherit scheme="string"/>
+ <inherit scheme="perl.posix.liter.bracket">
+  <virtual scheme="perl.posix.liter.class" subst-scheme="unicode.charter"/>
+ </inherit>
+ <regexp match="/\\[CISDWcisdw]/" region0="SymbClass"/>   <!-- Классы символов -->
+ <regexp match="/&amp;\#(x?%hex;+|\d+)\;/" region="def:Number"/>
+ <regexp match="/\$/" region="def:String"/>
+ <regexp match="/\[?~1\^/" region="def:String"/>
+ <inherit scheme="std.base"/>
+</scheme>
+
+<scheme name='xsd.class'>
+ <inherit scheme='std.class.include'>
+  <virtual scheme="std.class" subst-scheme="xsd.class"/>
+ </inherit>
+ <inherit scheme="std.class">
+  <virtual scheme="std.base" subst-scheme="xsd.base"/>
+ </inherit>
+</scheme>
+
+<scheme name="xsd.regexp">
+ <inherit scheme="std.regexp">
+  <virtual scheme="std.class" subst-scheme="xsd.class"/>
+  <virtual scheme="std.base" subst-scheme="xsd.base"/>
+ </inherit>
+</scheme>
+
+
+<!-- Colorer HRC -->
+
+
+<scheme name="hrc.region.bracket">
+ <block start="/(\\[ypYP])(\{)/" end="/(\})/" scheme="code"
+  region00="def:PairStart" region01="SpecOperator" region02="Quote"
+  region10="def:PairEnd" region11="Quote" />
+</scheme>
+
+<scheme name="hrc.base">
+ <inherit scheme="string"/>
+ <regexp match="/\\x(\{)(%hex;+)(\})/" region0="Symbol"
+  region1="def:PairStart" region2="def:NumberHex" region3="def:PairEnd"
+ /> <!-- hex число  -->
+ <regexp match="/\\u%hex;{4}/" region0="Symbol"/>
+ <!--regexp match="/&amp;((lt)|(gt)|(amp)|(quot));/" region0="dParam2"/>
+ <regexp match="/&lt;|&amp;/" region0="def:Error"/-->
+ <regexp match="/\\[ul]/" region0="SymbClass"/>   <!-- Классы символов -->
+ <inherit scheme="std.base"/>
+</scheme>
+
+
+<scheme name="hrc.symbs">
+ <inherit scheme="string"/>
+ <inherit scheme="hrc.region.bracket"/>
+ <regexp match="/\\[ypYP]%hex;/i" region0="SpecOperator"/>  <!-- colorer operators -->
+ <regexp match="/\?[\#\~]\d+/" region0="Operator"/>  <!-- операторы просмотра -->
+ <regexp match="/\?[\!\=]/" region0="Operator"/>  <!-- операторы просмотра -->
+ <regexp match="/\~/" region0="SpecOperator"/>			 <!-- спецсимволы -->
+ <regexp match="/\\C/i" region0="SymbClass"/>	   <!-- Классы символов -->
+ <regexp match="/\\[mM]/i" region0="SpecOperator"/>  <!-- colorer operators -->
+
+ <!-- xml entities
+  ...к регекспам никакого отношения не имеют
+ <regexp match="/\\&amp;\#(x?%hex;+|\d+)\;/" region="def:Number"/>
+ <regexp match="/\\&amp;(%xml:NCName;)\;/" region="def:Number"/>
+
+ <regexp match="/\\?&amp;/" region="def:Error"/>   Xml errors -->
+ <inherit scheme="std.symbs"/>
+</scheme>
+
+<scheme name="hrc.class">
+ <inherit scheme="string"/>
+ <block start="/(\[\{)/" end="/(\}\])/" scheme="unicode.charter"
+  region00="Quote" region01="def:PairStart"
+  region10="Quote" region11="def:PairEnd"
+ />
+ 
+ <!-- is valid??? -->
+ <block start="/(\[)/" end="/(\])/" scheme="hrc.class"
+  region00="Quote" region01="def:PairStart"
+  region10="Quote" region11="def:PairEnd"
+ />
+ <regexp match="/&amp;&amp;\M[\{\[]/" region0="MetaSymb"/>
+ <inherit scheme="std.class"/>
+</scheme>
+
+<scheme name="hrc.regexp">
+ <inherit scheme="std.regexp">
+  <virtual scheme="std.base" subst-scheme="hrc.base"/>
+  <virtual scheme="std.symbs" subst-scheme="hrc.symbs"/>
+  <virtual scheme="std.class" subst-scheme="hrc.class"/>
+  <virtual scheme="std.regexp" subst-scheme="hrc.regexp"/>
+ </inherit>
+</scheme>
+
+</type>
+</hrc>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is the regexp.hrc package.
+   -
+   - The Initial Developer of the Original Code is
+   - Eugene Efremov <4mirror@mail.ru>
+   - Portions created by the Initial Developer are Copyright (C) 1999-2005
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->

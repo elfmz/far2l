@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY kotlin-std SYSTEM "kotlin-runtime.ent.hrc">
+<!ENTITY java-std SYSTEM "kotlin-jdk.ent.hrc">
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+  <annotation>
+    <documentation>
+      Kotlin Files
+    </documentation>
+    <contributors><![CDATA[
+      Alexander Udalov <dddenton@gmail.com>
+    ]]></contributors>
+  </annotation>
+
+  <type name="kotlin">
+    <scheme name="kotlin">
+      <inherit scheme="PairedBrackets">
+        <virtual scheme="PairedBrackets" subst-scheme="kotlin"/>
+      </inherit>
+      
+      <inherit scheme="def:Number"/>
+      <inherit scheme="java:JavaComments"/>
+      
+      <block start="/(?{def:StringEdge}&#34;&#34;&#34;)/" end="/(?{def:StringEdge}&#34;&#34;&#34;)/"
+             scheme="StringContent" region="def:String"/>
+      <block start="/(?{def:StringEdge}&#34;)/" end="/(?{def:StringEdge}&#34;)|$/"
+             scheme="LineStringContent" region="def:String"/>
+      <regexp match="/'\\[uU][\da-fA-F]{1,4}'/" region="def:Character"/>
+      <inherit scheme="c:Character"/>
+      
+      <regexp match="/`(.*?)`/" region="def:Identifier"/>
+      
+      <keywords region="def:Error">
+        <symb name="["/>
+        <symb name="]"/>
+        <symb name="{"/>
+        <symb name="}"/>
+        <symb name="("/>
+        <symb name=")"/>
+        <symb name="*/"/>
+      </keywords>
+      
+      <keywords region="def:Symbol">
+        <symb name=";" region="def:SymbolStrong"/>
+        <symb name="="/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="/"/>
+        <symb name="*"/>
+        <symb name="&amp;"/>
+        <symb name="^"/>
+        <symb name="|"/>
+        <symb name=":" region="def:SymbolStrong"/>
+        <symb name=","/>
+        <symb name="."/>
+        <symb name="!"/>
+        <symb name="~"/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+        <symb name="%"/>
+        <symb name="?"/>
+        <symb name="@"/>
+        <symb name="$"/>
+      </keywords>
+      
+      <inherit scheme="HardKeywords"/>
+      <inherit scheme="SoftKeywords"/>
+      <inherit scheme="TypeKeywords"/>
+    </scheme>
+    
+    <scheme name="PairedBrackets">
+      <!-- Disabled because &lt; and &gt; may also be used as operators (less/greater) -->
+      <!--block start="/(&lt;)/" end="/(&gt;)/" scheme="PairedBrackets"
+             region00="def:Symbol" region01="def:PairStart"
+             region10="def:Symbol" region11="def:PairEnd"/-->
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="PairedBrackets"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="StringContent">
+      <regexp match="/\\[^uU0-7]/" region0="def:StringContent"/>
+      <regexp match="/\\$/" region0="def:StringContent"/>
+      <regexp match="/\\[uU][\da-fA-F]{1,8}/" region0="def:StringContent"/>
+      <regexp match="/\\[0-7]{1,12}/" region0="def:StringContent"/>
+      <regexp match="/(\$\w+)/" region0="def:Insertion"/>
+      <block start="/(\$\{)/" end="/(\})/" scheme="kotlin" region="def:Insertion"
+             region00="def:InsertionStart" region01="def:PairStrongStart"
+             region10="def:InsertionEnd" region11="def:PairStrongEnd"/>
+    </scheme>
+    
+    <scheme name="LineStringContent">
+      <inherit scheme="StringContent"/>
+      <regexp match="/[^\\\&#34;]$/" region0="def:Error"/>
+    </scheme>
+    
+    <scheme name="HardKeywords">
+      <keywords region="def:Keyword">
+        <word name="as"/>
+        <word name="break"/>
+        <word name="class"/>
+        <word name="continue"/>
+        <word name="do"/>
+        <word name="else"/>
+        <word name="false"/>
+        <word name="for"/>
+        <word name="fun"/>
+        <word name="if"/>
+        <word name="in"/>
+        <word name="is"/>
+        <word name="null"/>
+        <word name="object"/>
+        <word name="package"/>
+        <word name="return"/>
+        <word name="super"/>
+        <word name="this"/>
+        <word name="This"/>
+        <word name="throw"/>
+        <word name="trait"/>
+        <word name="true"/>
+        <word name="try"/>
+        <word name="type"/>
+        <word name="val"/>
+        <word name="var"/>
+        <word name="when"/>
+        <word name="while"/>
+      </keywords>
+    </scheme>
+    
+    <scheme name="SoftKeywords">
+      <regexp match="/\b (?{def:Keyword}annotation) \s+ \M (\w+ \s+)* class/x"/>
+      <!-- 'data' is not a keyword per se, but needs special handling because it's a very common identifier name.
+           We highlight only those 'data' words which come before 'class' (data classes) -->
+      <regexp match="/\b (?{def:Keyword}data)       \s+ \M (\w+ \s+)* class/x"/>
+      <regexp match="/\b (?{def:Keyword}enum)       \s+ \M (\w+ \s+)* class/x"/>
+      
+      <regexp match="/\b (?{def:Keyword}inner)      \s+ \M (\w+ \s+)* class/x"/>
+      
+      <regexp match="/\b (?{def:Keyword}internal)   \s+ \M (\w+ \s+)* (class|trait|object|fun|val|var)/x"/>
+      <regexp match="/\b (?{def:Keyword}private)    \s+ \M (\w+ \s+)* (class|trait|object|fun|val|var)/x"/>
+      <regexp match="/\b (?{def:Keyword}protected)  \s+ \M (\w+ \s+)* (class|trait|object|fun|val|var)/x"/>
+      <regexp match="/\b (?{def:Keyword}public)     \s+ \M (\w+ \s+)* (class|trait|object|fun|val|var)/x"/>
+      
+      <regexp match="/\b (?{def:Keyword}abstract)   \s+ \M (\w+ \s+)* (class|trait|fun|val|var)/x"/>
+      <regexp match="/\b (?{def:Keyword}final)      \s+ \M (\w+ \s+)* (class|fun|val|var)/x"/>
+      <regexp match="/\b (?{def:Keyword}open)       \s+ \M (\w+ \s+)* (class|trait|fun|val|var)/x"/>
+      <regexp match="/\b (?{def:Keyword}override)   \s+ \M (\w+ \s+)* (class|trait|fun|val|var)/x"/>
+      
+      <regexp match="/\b (?{def:Keyword}catch) \s* \M \( .+ \) \s* \{/x"/>
+      <regexp match="/\b (?{def:Keyword}finally) \s* \M \{/x"/>
+      
+      <regexp match="/^ \s* (?{def:Keyword}import) \s* (?{def:VarStrong}\S+)/x"/>
+
+      <keywords region="def:Keyword">
+        <word name="by"/>
+        <word name="get"/>
+        <word name="out"/>
+        <word name="set"/>
+        <word name="vararg"/>
+        <word name="where"/>
+      </keywords>
+    </scheme>
+    
+    <scheme name="TypeKeywords">
+      <keywords region="def:TypeKeyword">
+        <word name="Any"/>
+        <word name="Hashable"/>
+        <word name="Char"/>
+        <word name="Int"/>
+        <word name="Nothing"/>
+        <word name="volatile"/>
+        <word name="atomic"/>
+        
+        <word name="Array"/>
+        <word name="ByteArray"/>
+        <word name="ShortArray"/>
+        <word name="IntArray"/>
+        <word name="LongArray"/>
+        <word name="FloatArray"/>
+        <word name="DoubleArray"/>
+        <word name="CharArray"/>
+        <word name="BooleanArray"/>
+        
+        <word name="MutableIterable"/>
+        <word name="MutableIterator"/>
+        <word name="MutableListIterator"/>
+        <word name="MutableCollection"/>
+        <word name="MutableList"/>
+        <word name="MutableSet"/>
+        <word name="MutableMap"/>
+        <word name="MutableEntry"/>
+        
+        <!-- TODO: also generate some inner classes -->
+        <word name="Entry"/>
+        
+        &kotlin-std;
+        &java-std;
+      </keywords>
+      
+      <!-- A hack to make default color scheme a little prettier (should've been def:Constant instead) -->
+      <regexp match="/\c[A-Z][A-Z_0-9]+\b/" region="def:VarStrong"/>
+    </scheme>
+    
+  </type>
+</hrc>

@@ -341,7 +341,7 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
     else
     {
       // TODO: GNUTYPE_LONGLINK
-      DWORD dwAddFileAttr=0;
+      DWORD dwAddFileAttr = 0, dwUnixMode = 0;
       SkipItem=FALSE;
       char *EndPos;
       if (LongName != NULL)
@@ -363,7 +363,8 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
       }
       strncpy(Item->FindData.cFileName,EndPos,sizeof(Item->FindData.cFileName));
       Item->FindData.nFileSizeHigh=0;
-      if(((DWORD)GetOctal(TAR_hdr.header.mode) & 0x4000) || ((TAR_hdr.header.typeflag-'0') & 4))
+      dwUnixMode = (DWORD)GetOctal(TAR_hdr.header.mode);
+      if((dwUnixMode & 0x4000) || ((TAR_hdr.header.typeflag-'0') & 4))
          dwAddFileAttr|=FILE_ATTRIBUTE_DIRECTORY;
 
       if(TAR_hdr.header.typeflag == SYMTYPE || TAR_hdr.header.typeflag == LNKTYPE)
@@ -386,7 +387,8 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
         }
       }
 
-      Item->FindData.dwFileAttributes=dwAddFileAttr;
+      Item->FindData.dwFileAttributes=WINPORT(EvaluateAttributesA)(dwUnixMode, Item->FindData.cFileName) | dwAddFileAttr;
+      Item->FindData.dwUnixMode=dwUnixMode;
 
       UnixTimeToFileTime((DWORD)GetOctal(TAR_hdr.header.mtime),&Item->FindData.ftLastWriteTime);
     }

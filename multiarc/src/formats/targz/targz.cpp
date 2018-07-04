@@ -301,9 +301,12 @@ int GetArcItemGZIP(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
 
   } else { // workaround for tar.gz archives that has original name set but without .tar extension
            // since tar archives detection relies on extension, it should be there (#173)
-    const char *ext = strrchr(ZipName, '.');
-    if (ext && strcasecmp(ext, ".tar") == 0 && strstr(Item->FindData.cFileName, ext) == NULL) {
-        strncat(Item->FindData.cFileName, ext, sizeof(Item->FindData.cFileName));
+    const char *ZipExt = strrchr(ZipName, '.');
+    if (ZipExt && strcasecmp(ZipExt, ".tar") == 0) {
+        const char *OrigExt = strrchr(Item->FindData.cFileName, '.');
+        if (!OrigExt || strcasecmp(OrigExt, ZipExt) != 0) {
+          strncat(Item->FindData.cFileName, ZipExt, sizeof(Item->FindData.cFileName));
+      }
     }
   }
 

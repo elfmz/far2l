@@ -49,7 +49,7 @@ static bool HasElvenEars(const unsigned char *Data, int DataSize)
 
 static const char *DetectPlainKind(const char *Name, const unsigned char *Data, int DataSize)
 {
-	const char *ext = strrchr(Name, '.');
+	const char *ext = Name ? strrchr(Name, '.') : nullptr;
 	// %PDF-1.2
 	if (DataSize >= 8 && Data[0] == '%' && Data[1] == 'P' && Data[2] == 'D' && Data[3] == 'F' &&
 		Data[4] == '-' && Data[5] >= '0' && Data[5] <= '9' && Data[6] == '.' && Data[7] >= '0' && Data[7] <= '9') {

@@ -348,6 +348,7 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
     if (ReadSize==0 || *TAR_hdr.header.name==0)
       return(GETARC_EOF);
 
+//    fprintf(stderr, "TAR_hdr.header.typeflag='%c' %x size=%s\n", TAR_hdr.header.typeflag, TAR_hdr.header.typeflag, TAR_hdr.header.size);
     if (TAR_hdr.header.typeflag == GNUTYPE_LONGLINK || TAR_hdr.header.typeflag == GNUTYPE_LONGNAME)
     {
       SkipItem=TRUE;
@@ -409,7 +410,8 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
     }
 
     FAR_INT64 TarItemSize;
-    TarItemSize.i64=Oct2Size(TAR_hdr.header.size,sizeof(TAR_hdr.header.size));
+    TarItemSize.i64 = (TAR_hdr.header.typeflag == DIRTYPE) ? 0 : // #348
+			Oct2Size(TAR_hdr.header.size,sizeof(TAR_hdr.header.size));
     Item->PackSize=Item->FindData.nFileSizeLow=TarItemSize.Part.LowPart;
     Item->PackSizeHigh=Item->FindData.nFileSizeHigh=TarItemSize.Part.HighPart;
 

@@ -26,10 +26,11 @@ Currently working plugins: colorer, multiarc, farftp, tmppanel, align, autowrap,
 * libwxgtk3.0-dev
 * cmake ( >= 3.2.2 )
 * g++
+* git (needed for downloading source code)
 
 #### Or simply on Ubuntu:
 ``` sh
-apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev cmake g++
+apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev cmake g++ git
 ```
 
 #### Clone and Build

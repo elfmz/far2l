@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <windows.h>
 #include <string>
+#include <vector>
 
 extern std::string gMultiArcPluginPath;
 
@@ -155,7 +156,7 @@ DWORD WINAPI ThreadWhatWaitingForKillListFile(LPVOID par)
 }
 /* tran 13.09.2000 $ */
 
-int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int NeedSudo,int ShowTitle,char *ListFileName)
+int Execute(HANDLE hPlugin,const std::string &CmdStr,int HideOutput,int Silent,int NeedSudo,int ShowTitle,char *ListFileName)
 {
  // STARTUPINFO si;
   //PROCESS_INFORMATION pi;
@@ -216,17 +217,21 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int NeedSudo,i
   WINPORT(SetConsoleMode)(StdInput,ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|
                  ENABLE_ECHO_INPUT|ENABLE_MOUSE_INPUT);
 
-  WCHAR ExpandedCmd[MAX_COMMAND_LENGTH];
-  WINPORT(ExpandEnvironmentStrings)(MB2Wide(CmdStr).c_str(), ExpandedCmd, sizeof(ExpandedCmd));
+  std::vector<WCHAR> ExpandedCmd(CmdStr.size() + 0x1000);
+  for (;;ExpandedCmd.resize(ExpandedCmd.size() + 0x1000))
+  {
+    if (WINPORT(ExpandEnvironmentStrings)(StrMB2Wide(CmdStr).c_str(), &ExpandedCmd[0], ExpandedCmd.size()) < ExpandedCmd.size())
+	  break;
+  }
   while (ExpandedCmd[0]==' ' || ExpandedCmd[0]=='\t') { //FSF.LTrim(ExpandedCmd); //$ AA 12.11.2001
-	  memmove(&ExpandedCmd[0], &ExpandedCmd[1], wcslen(ExpandedCmd) * sizeof(WCHAR));
+	  memmove(&ExpandedCmd[0], &ExpandedCmd[1], wcslen(&ExpandedCmd[0]) * sizeof(WCHAR));
   }
   
 
   WCHAR SaveTitle[512];
   WINPORT(GetConsoleTitle)(SaveTitle,sizeof(SaveTitle));
   if (ShowTitle)
-    WINPORT(SetConsoleTitle)(ExpandedCmd);
+    WINPORT(SetConsoleTitle)(&ExpandedCmd[0]);
 
   /* $ 14.02.2001 raVen
      делать окошку minimize, если в фоне */
@@ -236,7 +241,7 @@ int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int NeedSudo,i
     si.wShowWindow=SW_MINIMIZE;
   }*/
   /* raVen $ */
-	const std::string &expanded_cmd_mb = Wide2MB(ExpandedCmd);
+	const std::string &expanded_cmd_mb = Wide2MB(&ExpandedCmd[0]);
 	DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
 	if (NeedSudo)
 		flags|= EF_SUDO;
@@ -639,4 +644,11 @@ void NormalizePath(const char *lpcSrcName,char *lpDestName)
   }
 
   free(oSrcName);
+}
+
+void NormalizePath(std::string &path)
+{
+  std::vector<char> dest(std::max((size_t)MAX_PATH, path.size()) + 1);
+  NormalizePath(path.c_str(), &dest[0]);
+  path = &dest[0];
 }

@@ -25,7 +25,7 @@ using namespace oldfar;
 
 #define F_ENCRYPTED 1
 
-#define MAX_COMMAND_LENGTH 32768
+//#define MAX_COMMAND_LENGTH 32768
 #define MA_MAX_SIZE_COMMAND_NAME 512
 
 #define SUPER_PUPER_ZERO (0)
@@ -195,7 +195,7 @@ class ArcCommand
     char Password[NM];
     char AllFilesMask[NM];
     char TempPath[NM];
-    char NextFileName[NM];
+    std::string NextFileName;
     int NameNumber;
     int PrevFileNameNumber;
     char PrefixFileName[32];
@@ -208,12 +208,12 @@ class ArcCommand
     //HANDLE CommentFile; //$ AA 25.11.2001
 
   private:
-    int ProcessCommand(char *Command,int CommandType,int IgnoreErrors,char *ListFileName=0);
-    void DeleteBraces(char *Command);
-    int ReplaceVar(char *Command,int &Length);
-    int MakeListFile(char *ListFileName,int QuoteName,
-                     int UseSlash,int FolderName,int NameOnly,int PathOnly,
-                     int FolderMask,char *LocalAllFilesMask,int AnsiCode);
+    bool ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors, char *pcListFileName = nullptr);
+    void DeleteBraces(std::string &Command);
+    int ReplaceVar(std::string &Command);
+    int MakeListFile(char *ListFileName, int QuoteName,
+                     int UseSlash, int FolderName, int NameOnly, int PathOnly,
+                     int FolderMask, const char *LocalAllFilesMask);
 
   public:
     ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
@@ -317,7 +317,7 @@ int ConfigGeneral();
 int ConfigCommands(char *ArcFormat,int IDFocus=2,BOOL FastAccess=FALSE,int PluginNumber=0,int PluginType=0);
 
 const char *GetMsg(int MsgId);
-int Execute(HANDLE hPlugin,char *CmdStr,int HideOutput,int Silent,int NeedSudo,int ShowTitle,char *ListFileName=0);
+int Execute(HANDLE hPlugin,const std::string &CmdStr,int HideOutput,int Silent,int NeedSudo,int ShowTitle,char *ListFileName=0);
 char *SeekDefExtPoint(char *Name, char *DefExt=NULL, char **Ext=NULL); //$ AA 28.11.2001
 BOOL AddExt(char *Name, char *Ext);                               //$ AA 28.11.2001
 //void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list);
@@ -339,6 +339,7 @@ BOOL GoToFile(const char *Target, BOOL AllowChangeDir);
 BOOL FileExists(const char* Name);
 int GetScrX(void);
 void NormalizePath(const char *SrcName,char *DestName);
+void NormalizePath(std::string &path);
 
 void SetRegKey(HKEY hRoot,const char *Key,const char *ValueName,char *ValueData);
 void SetRegKey(HKEY hRoot,const char *Key,const char *ValueName,DWORD ValueData);

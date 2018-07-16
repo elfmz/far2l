@@ -239,6 +239,21 @@ std::string EscapeEscapes(std::string str)
 	}
 	return str;
 }
+
+void QuoteCmdArg(std::string &str)
+{
+	std::string tmp(1, '\"');
+	tmp+= EscapeQuotas(str);
+	tmp+= '\"';
+	str.swap(tmp);
+}
+
+void QuoteCmdArgIfNeed(std::string &str)
+{
+	if (str.find_first_of(" \"\'\r\n\t&|;,()") != std::string::npos) {
+		QuoteCmdArg(str);
+	}
+}
 	
 ////////////////////////////////////////////////////////////////
 

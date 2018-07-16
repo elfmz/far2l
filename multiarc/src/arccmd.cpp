@@ -36,15 +36,15 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
 		  NeedSudo = true;
 
   //char QPassword[NM+5],QTempPath[NM+5];
-  ArcCommand::PanelItem=PanelItem;
-  ArcCommand::ItemsNumber=ItemsNumber;
-  strcpy(ArcCommand::ArcName,ArcName);
-  strcpy(ArcCommand::ArcDir,ArcDir);
-  strcpy(ArcCommand::RealArcDir,RealArcDir ? RealArcDir:"");
-  FSF.QuoteSpaceOnly(strcpy(ArcCommand::Password,Password));
-  strcpy(ArcCommand::AllFilesMask,AllFilesMask);
+  ArcCommand::PanelItem = PanelItem;
+  ArcCommand::ItemsNumber = ItemsNumber;
+  ArcCommand::ArcName = ArcName;
+  ArcCommand::ArcDir = ArcDir;
+  ArcCommand::RealArcDir = RealArcDir ? RealArcDir : "";
+  ArcCommand::Password = Password; QuoteCmdArgIfNeed(ArcCommand::Password);
+  ArcCommand::AllFilesMask = AllFilesMask;
   //WINPORT(GetTempPath)(ARRAYSIZE(TempPath),TempPath);
-  strcpy(TempPath, "/tmp");//todo
+  ArcCommand::TempPath = InMyTemp();
   *PrefixFileName=0;
   *ListFileName=0;
   NameNumber=-1;
@@ -106,7 +106,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   if ((Hide == 1 && CommandType == 0) || CommandType == 2)
     Hide = 0;
 
-  ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, !*Password, ListFileName);
+  ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
   if (ExecCode==RETEXEC_ARCNOTFOUND)
     return false;
 
@@ -121,7 +121,8 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
       char NameMsg[NM];
       FSF.sprintf(ErrMsg,(char *)GetMsg(MArcNonZero),ExecCode);
       const char *MsgItems[]={GetMsg(MError),NameMsg,ErrMsg,GetMsg(MOk)};
-      FSF.TruncPathStr(strncpy(NameMsg,ArcName,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+
+      FSF.TruncPathStr(strncpy(NameMsg,ArcName.c_str(),sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
       Info.Message(Info.ModuleNumber,FMSG_WARNING,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
     }
     return false;
@@ -185,7 +186,7 @@ static void CutToPathOrSpace(std::string &Path)
 int ArcCommand::ReplaceVar(std::string &Command)
 {
   int MaxNamesLength = 0x10000;
-  const char *LocalAllFilesMask = AllFilesMask;
+  std::string LocalAllFilesMask = AllFilesMask;
   bool UseSlash = false;
   bool FolderMask = false;
   bool FolderName = false;
@@ -260,7 +261,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
 
     case 'L': case 'l':
       if (!MakeListFile(ListFileName, QuoteName, UseSlash, FolderName,
-         NameOnly, PathOnly, FolderMask, LocalAllFilesMask)) {
+         NameOnly, PathOnly, FolderMask, LocalAllFilesMask.c_str())) {
         return -1;
       }
       Command = ListFileName;
@@ -465,33 +466,26 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
     return FALSE;
   }
 
-  char CurArcDir[NM];
+  std::string CurArcDir, FileName, OutName;
   char Buf[3*NM];
 
-  if(NameOnly)
-    *CurArcDir=0;
-  else
-    strcpy( CurArcDir, ArcDir );
+  if (!NameOnly)
+    CurArcDir = ArcDir;
 
-  int Length=strlen(CurArcDir);
-  if (Length>0 && CurArcDir[Length-1]!='/')
-    strcat(CurArcDir,"/");
+  if (!CurArcDir.empty() && CurArcDir[CurArcDir.size() - 1] != GOOD_SLASH)
+    CurArcDir+= GOOD_SLASH;
 
 //  if (UseSlash);
 
   for (int I=0;I<ItemsNumber;I++)
   {
-    char FileName[NM];
-    strncpy(FileName,PanelItem[I].FindData.cFileName, ARRAYSIZE(FileName));
     if (NameOnly)
-    {
-      strncpy(FileName, FSF.PointToName(FileName), ARRAYSIZE(FileName));
-    }
-    if (PathOnly)
-    {
-      char *Ptr=(char*)FSF.PointToName(FileName);
-      *Ptr=0;
-    }
+      FileName = FSF.PointToName(PanelItem[I].FindData.cFileName);
+    else if (PathOnly)
+      FileName.assign(PanelItem[I].FindData.cFileName, FSF.PointToName(PanelItem[I].FindData.cFileName) - PanelItem[I].FindData.cFileName);
+    else
+      FileName = PanelItem[I].FindData.cFileName;
+
     int FileAttr=PanelItem[I].FindData.dwFileAttributes;
 
     *PrefixFileName=0;
@@ -503,41 +497,48 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
         if(aud->Prefix)
           strncpy(PrefixFileName,aud->Prefix,sizeof(PrefixFileName));
         if(aud->LinkName)
-           strncpy(FileName,aud->LinkName,sizeof(FileName));
+           FileName = aud->LinkName;
       }
     }
 
     int Error=FALSE;
     if (((FileAttr & FILE_ATTRIBUTE_DIRECTORY)==0 || FolderName))
     {
-      char OutName[NM];
       // CHECK for BUGS!!
-      if(*FileName == '/')
-        FSF.sprintf(OutName,"%s%s",PrefixFileName,FileName+1);
+      OutName = PrefixFileName;
+      if (*FileName.c_str() != '/')
+      {
+        OutName+= CurArcDir;
+        OutName+= FileName;
+      }
       else
-        FSF.sprintf(OutName,"%s%s%s",PrefixFileName,CurArcDir,FileName);
-      NormalizePath(OutName,OutName);
-      if (QuoteName==1)
-        FSF.QuoteSpaceOnly(OutName);
-      else
-        if (QuoteName==2)
-          QuoteText(OutName);
+        OutName+= FileName.c_str() + 1;
 
-      strcpy(Buf,OutName);strcat(Buf, NATIVE_EOL);
-      Error=WINPORT(WriteFile)(ListFile,Buf,strlen(Buf),&WriteSize,NULL) == FALSE;
+      NormalizePath(OutName);
+
+      if (QuoteName==1)
+        QuoteCmdArgIfNeed(OutName);
+      else if (QuoteName==2)
+        QuoteCmdArg(OutName);
+
+      OutName+= NATIVE_EOL;
+
+      Error=WINPORT(WriteFile)(ListFile, OutName.c_str(), OutName.size(), &WriteSize, NULL) == FALSE;
       //Error=fwrite(Buf,1,strlen(Buf),ListFile) != strlen(Buf);
     }
     if (!Error && (FileAttr & FILE_ATTRIBUTE_DIRECTORY) && FolderMask)
     {
-      char OutName[NM];
-      FSF.sprintf(OutName,"%s%s%s%c%s",PrefixFileName,CurArcDir,FileName,'/',LocalAllFilesMask); 
+      OutName = PrefixFileName;
+      OutName+= CurArcDir;
+      OutName+= FileName;
+      OutName+= '/';
+      OutName+= LocalAllFilesMask;
       if (QuoteName==1)
-        FSF.QuoteSpaceOnly(OutName);
-      else
-        if (QuoteName==2)
-          QuoteText(OutName);
-      strcpy(Buf,OutName); strcat(Buf, NATIVE_EOL);
-      Error=WINPORT(WriteFile)(ListFile,Buf,strlen(Buf),&WriteSize,NULL) == FALSE;
+        QuoteCmdArgIfNeed(OutName);
+      else if (QuoteName==2)
+        QuoteCmdArg(OutName);
+      OutName+= NATIVE_EOL;
+      Error=WINPORT(WriteFile)(ListFile, OutName.c_str(), OutName.size(), &WriteSize, NULL) == FALSE;
       //Error=fwrite(Buf,1,strlen(Buf),ListFile) != strlen(Buf);
     }
     if (Error)
@@ -577,3 +578,4 @@ ArcCommand::~ArcCommand() //$ AA 25.11.2001
     WINPORT(CloseHandle)(CommentFile);*/
     sdc_remove(CommentFileName);
 }
+

@@ -189,12 +189,12 @@ class ArcCommand
     bool NeedSudo;
     struct PluginPanelItem *PanelItem;
     int ItemsNumber;
-    char ArcName[NM];
-    char ArcDir[NM];
-    char RealArcDir[NM];
-    char Password[NM];
-    char AllFilesMask[NM];
-    char TempPath[NM];
+    std::string ArcName;
+    std::string ArcDir;
+    std::string RealArcDir;
+    std::string Password;
+    std::string AllFilesMask;
+    std::string TempPath;
     std::string NextFileName;
     int NameNumber;
     int PrevFileNameNumber;

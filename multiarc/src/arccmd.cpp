@@ -71,17 +71,26 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   DeleteBraces(FormatString);
 
 //  for (char *CurPtr=Command; *CurPtr;)
-  std::string tmp, Command;
+  std::string tmp, NonVar, Command;
   while (!FormatString.empty())
   {
     tmp = FormatString;
     int r = ReplaceVar(tmp);
-    if (r <= 0)
+    if (r < 0)
       return false;
+    if (r == 0) {
+      r = 1;
+      NonVar+= FormatString[0];
+    } else {
+      Command+= ExpandEnv(NonVar);
+      Command+= tmp;
+      NonVar.clear();
+    }
 
     FormatString.erase(0, r);
-    Command+= tmp;
   }
+  Command+= ExpandEnv(NonVar);
+  fprintf(stderr, "Command='%s'\n", Command.c_str());
 
   if (Command.empty())
   {
@@ -234,8 +243,6 @@ int ArcCommand::ReplaceVar(std::string &Command)
 
   if (!FolderMask && !FolderName)
     FolderName = true;
-
-  std::string SaveStr = Command.c_str() + VarLength;
 
 /////////////////////////////////
   switch(Command[2])
@@ -419,8 +426,6 @@ int ArcCommand::ReplaceVar(std::string &Command)
       return 0;
   }
 
-//  int Length = Command.size();
-//  Command+= SaveStr;
   return VarLength;
 }
 

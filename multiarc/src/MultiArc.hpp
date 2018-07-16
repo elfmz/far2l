@@ -317,7 +317,7 @@ int ConfigGeneral();
 int ConfigCommands(char *ArcFormat,int IDFocus=2,BOOL FastAccess=FALSE,int PluginNumber=0,int PluginType=0);
 
 const char *GetMsg(int MsgId);
-int Execute(HANDLE hPlugin,const std::string &CmdStr,int HideOutput,int Silent,int NeedSudo,int ShowTitle,char *ListFileName=0);
+int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo, int ShowTitle, char *ListFileName=0);
 char *SeekDefExtPoint(char *Name, char *DefExt=NULL, char **Ext=NULL); //$ AA 28.11.2001
 BOOL AddExt(char *Name, char *Ext);                               //$ AA 28.11.2001
 //void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list);
@@ -339,7 +339,8 @@ BOOL GoToFile(const char *Target, BOOL AllowChangeDir);
 BOOL FileExists(const char* Name);
 int GetScrX(void);
 void NormalizePath(const char *SrcName,char *DestName);
-void NormalizePath(std::string &path);
+std::string &ExpandEnv(std::string &str);
+std::string &NormalizePath(std::string &path);
 
 void SetRegKey(HKEY hRoot,const char *Key,const char *ValueName,char *ValueData);
 void SetRegKey(HKEY hRoot,const char *Key,const char *ValueName,DWORD ValueData);

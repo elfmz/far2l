@@ -250,7 +250,7 @@ void QuoteCmdArg(std::string &str)
 
 void QuoteCmdArgIfNeed(std::string &str)
 {
-	if (str.find_first_of(" \"\'\r\n\t&|;,") != std::string::npos) {
+	if (str.find_first_of(" \"\'\r\n\t&|;,()") != std::string::npos) {
 		QuoteCmdArg(str);
 	}
 }

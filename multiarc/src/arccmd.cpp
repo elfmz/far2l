@@ -76,6 +76,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   {
     tmp = FormatString;
     int r = ReplaceVar(tmp);
+//    fprintf(stderr, "ReplaceVar: %d  '%s' -> '%s'\n", r, FormatString.c_str(), tmp.c_str());
     if (r < 0)
       return false;
     if (r == 0) {
@@ -90,7 +91,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     FormatString.erase(0, r);
   }
   Command+= ExpandEnv(NonVar);
-  fprintf(stderr, "Command='%s'\n", Command.c_str());
+//  fprintf(stderr, "Command='%s'\n", Command.c_str());
 
   if (Command.empty())
   {
@@ -153,7 +154,7 @@ void ArcCommand::DeleteBraces(std::string &Command)
         NonEmptyVar = (ItemsNumber > 0);
         break;
       }
-      CheckStr.assign(Command.c_str() + i, right - i - 1);
+      CheckStr.assign(Command.c_str() + i, std::min((size_t)4, right - i));
       if (ReplaceVar(CheckStr) && CheckStr.size() > 0)
       {
         NonEmptyVar = true;
@@ -246,7 +247,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
     FolderName = true;
 
 /////////////////////////////////
-  switch(Command[2])
+  switch (Command[2])
   {
     case 'A': case 'a': /* deprecated: short name - works same as normal name */
       Command = ArcName;

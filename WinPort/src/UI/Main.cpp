@@ -320,6 +320,9 @@ wxEND_EVENT_TABLE()
 
 void WinPortFrame::OnShow(wxShowEvent &show)
 {
+// create accelerators to handle hotkeys (like Ctrl-O) when using non-latin layouts under Linux
+// under osx acceleratos seems not needed and only causes bugs
+#ifndef __APPLE__
 	struct stat s;
 	if (stat(InMyConfig("nomenu").c_str(), &s)!=0) {
 		//workaround for non-working with non-latin input language Ctrl+? hotkeys 
@@ -354,6 +357,7 @@ void WinPortFrame::OnShow(wxShowEvent &show)
         //    SetAcceleratorTable(table);		
 		_menu_bar->Show(false);
 	}
+#endif
 	
 	if (!_shown) {
 		_shown = true;
@@ -528,7 +532,9 @@ void WinPortPanel::CheckForResizePending()
 	if (_initialized && _resize_pending!=RP_NONE)
 #endif
 	{
+#ifndef __APPLE__
 		fprintf(stderr, "CheckForResizePending\n");
+#endif
 		DWORD conmode = 0;
 		if (WINPORT(GetConsoleMode)(NULL, &conmode) && (conmode&ENABLE_WINDOW_INPUT)!=0) {
 			unsigned int prev_width = 0, prev_height = 0;

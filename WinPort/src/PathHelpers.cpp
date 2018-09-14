@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <vector>
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "sudo.h"
@@ -108,6 +109,29 @@ void AppendAndRectifyPath(std::string &s, const char *div, LPCWSTR append)
 	}
 }
 
+bool POpen(std::vector<std::string> &result, const char *command)
+{
+	FILE *f = popen(command, "r");
+	if (!f) {
+		perror("POpen: popen");
+		return false;
+	}
+	
+	char buf[0x800] = { };
+	// TODO: Limitation: will break long strings by the length of buf.
+	while (fgets(buf, sizeof(buf)-1, f)) {
+		size_t len = strlen(buf);
+		while (len && (buf[len-1]=='\r' || buf[len-1]=='\n')) {
+			--len;
+		}
+
+		buf[len] = 0;
+		result.emplace_back(buf, len);
+	}
+	pclose(f);
+	return true;
+}
+
 void WinPortInitWellKnownEnv()
 {
 	if (!getenv("TEMP")) {
@@ -115,6 +139,30 @@ void WinPortInitWellKnownEnv()
 		mkdir(temp.c_str(), 0777);
 		setenv("TEMP", temp.c_str(), 1);
 	}
+
+#ifdef __APPLE__
+	std::vector<std::string> stdout;
+	if (POpen(stdout, "cat /etc/paths /etc/paths.d/* | tr '\\n' ':'")) {
+		std::string path;
+		
+		char *default_path = getenv("PATH");
+		if (default_path) {
+			path = default_path;
+			path += ':';
+		}
+		
+		if (!stdout[0].empty()) {
+			if (stdout[0].back() == ':') {
+				stdout[0].pop_back();
+			}
+			
+			path += ':';
+			path += stdout[0];
+		}
+		
+		setenv("PATH", strdup(path.c_str()), 1);
+	}
+#endif
 }
 
 

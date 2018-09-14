@@ -1,5 +1,6 @@
 #include <set>
 #include <string>
+#include <list>
 #include <locale> 
 #include <algorithm>
 #include <iostream>
@@ -109,29 +110,6 @@ void AppendAndRectifyPath(std::string &s, const char *div, LPCWSTR append)
 	}
 }
 
-bool POpen(std::vector<std::string> &result, const char *command)
-{
-	FILE *f = popen(command, "r");
-	if (!f) {
-		perror("POpen: popen");
-		return false;
-	}
-	
-	char buf[0x800] = { };
-	// TODO: Limitation: will break long strings by the length of buf.
-	while (fgets(buf, sizeof(buf)-1, f)) {
-		size_t len = strlen(buf);
-		while (len && (buf[len-1]=='\r' || buf[len-1]=='\n')) {
-			--len;
-		}
-
-		buf[len] = 0;
-		result.emplace_back(buf, len);
-	}
-	pclose(f);
-	return true;
-}
-
 void WinPortInitWellKnownEnv()
 {
 	if (!getenv("TEMP")) {
@@ -141,26 +119,63 @@ void WinPortInitWellKnownEnv()
 	}
 
 #ifdef __APPLE__
-	std::vector<std::string> stdout;
-	if (POpen(stdout, "cat /etc/paths /etc/paths.d/* | tr '\\n' ':'")) {
-		std::string path;
-		
-		char *default_path = getenv("PATH");
-		if (default_path) {
-			path = default_path;
-			path += ':';
+	std::list<std::string> pathfiles;
+	pathfiles.emplace_back("/etc/paths");
+	DIR *dir = opendir("/etc/paths.d");
+	std::string str;
+	if (dir) {
+		for (;;) {
+			struct dirent *de = readdir(dir);
+			if (!de) break;
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+				continue;
+
+			str = "/etc/paths.d/";
+			str+= de->d_name;
+			pathfiles.emplace_back(str);
 		}
-		
-		if (!stdout[0].empty()) {
-			if (stdout[0].back() == ':') {
-				stdout[0].pop_back();
+		closedir(dir);
+	}
+
+	const char *psz = getenv("PATH");
+	str = psz ? psz : "";
+	bool changed = false;
+	for (const auto &pathfile : pathfiles) {
+		FILE *f = fopen(pathfile.c_str(), "r");
+		if (f) {
+			char line[MAX_PATH + 1] = {};
+			while (fgets(line, sizeof(line) - 1, f)) {
+				char *crlf = strpbrk(line, "\r\n");
+				if (crlf)
+					*crlf = 0;
+
+				size_t l = strlen(line);
+				if (!l)
+					continue;
+
+				bool dup = false;
+				for (size_t p = str.find(line); p != std::string::npos; p = str.find(line, p + l)) {
+					if ( (p == 0 || str[p - 1] == ':') && ( p + l == str.size() || str[p + l] == ':')) {
+						dup = true;
+						break;
+					}
+				}
+
+				if (dup)
+					continue;
+
+				if (!str.empty() && str[str.size() - 1] != ':')
+					str+= ':';
+				str.append(line, l);
+				changed = true;
 			}
-			
-			path += ':';
-			path += stdout[0];
+			fclose(f);
 		}
-		
-		setenv("PATH", strdup(path.c_str()), 1);
+	}
+
+	if (changed) {
+		fprintf(stderr, "PATH:= '%s'\n", str.c_str());
+		setenv("PATH", str.c_str(), 1);
 	}
 #endif
 }

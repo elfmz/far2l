@@ -243,14 +243,14 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
 	}
 
 	uint32_t font_index;
-	const wchar_t wz[2] = { c, 0};
+	wxString wz = wxUniChar(c);
 	wxSize char_size = dc.GetTextExtent(wz);
 	if ((unsigned)char_size.GetWidth() == _font_width 
 		&& (unsigned)char_size.GetHeight() == _font_height) {
 		font_index = 0;
 	} else {
 		font_index = 0xff;
-#ifdef DYNAMIC_FONTS		
+#ifdef DYNAMIC_FONTS
 		for (uint8_t try_index = 1;;++try_index) {
 			if (try_index==0xff || (
 				(unsigned)char_size.GetWidth() <= _font_width && 
@@ -480,9 +480,13 @@ void ConsolePainter::FlushText()
 }
 
 
+// U+0000..U+D7FF, U+E000..U+10FFFF
+
+#define IS_VALID_WCHAR(c)    ( (((unsigned int)c) >= 0 && ((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
+
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {
-	if (!c || c == L' ') {
+	if (!c || c == L' ' || !IS_VALID_WCHAR(c)) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
 		FlushText();
@@ -490,7 +494,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 	PrepareBackground(cx, ConsoleBackground2RGB(attributes));
 
-	if (!c || c == L' ') 
+	if (!c || c == L' ' || !IS_VALID_WCHAR(c))
 		return;
 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);

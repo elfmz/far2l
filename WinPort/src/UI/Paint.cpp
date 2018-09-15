@@ -243,8 +243,8 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
 	}
 
 	uint32_t font_index;
-	wxString wz = wxUniChar(c);
-	wxSize char_size = dc.GetTextExtent(wz);
+	_cft_tmp = wxUniChar(c);
+	wxSize char_size = dc.GetTextExtent(_cft_tmp);
 	if ((unsigned)char_size.GetWidth() == _font_width 
 		&& (unsigned)char_size.GetHeight() == _font_height) {
 		font_index = 0;
@@ -267,7 +267,7 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
 				_fonts.emplace_back(smallest);
 			}
 			dc.SetFont(_fonts[try_index]);
-			char_size = dc.GetTextExtent(wz);
+			char_size = dc.GetTextExtent(_cft_tmp);
 			font_index = try_index;
 		}
 #endif		

@@ -13,6 +13,7 @@ class ConsolePaintContext
 
 	std::vector<CHAR_INFO> _line;
 	wxString _buffer;
+	wxString _cft_tmp;
 	
 	void SetFont(wxFont font);
 public:
@@ -64,7 +65,6 @@ class ConsolePainter
 		}
 		
 	} _brush_clr;
-	
 	
 	ConsolePaintContext *_context;
 	wxPaintDC &_dc;

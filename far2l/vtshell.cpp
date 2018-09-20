@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <mutex>
+#include <list>
 #include <atomic>
 #include <memory>
 #include <fcntl.h>
@@ -237,8 +238,9 @@ public:
 		virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent) = 0;
 		virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) = 0;
 		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
+		virtual void OnInputRaw(const std::string &str) = 0;
 	};
-	
+
 	VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
 	{
 	}
@@ -255,25 +257,40 @@ public:
 	{
 		if (_started) {
 			_stop = true;
-			//write some dommy console input to kick pending ReadConsoleInput
-			INPUT_RECORD ir = {0};
-			ir.EventType = FOCUS_EVENT;
-			ir.Event.FocusEvent.bSetFocus = TRUE;
-			DWORD dw = 0;
-			WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
+			KickInputThread();
 			Join();
 		}
 	}
-	
-	
+
+	void EnqueueRaw(const char *str, size_t len)
+	{
+		{
+			std::unique_lock<std::mutex> locker(_pending_raw_inputs_mutex);
+			_pending_raw_inputs.emplace_back(str, len);
+		}
+		KickInputThread();
+	}
 
 private:
 	pid_t _pid;
 	std::atomic<bool> _stop;
 	IProcessor *_processor;
-	
+	std::list<std::string> _pending_raw_inputs;
+	std::mutex _pending_raw_inputs_mutex;
+
+	void KickInputThread()
+	{
+		// write some dummy console input to kick pending ReadConsoleInput
+		INPUT_RECORD ir = {0};
+		ir.EventType = FOCUS_EVENT;
+		ir.Event.FocusEvent.bSetFocus = TRUE;
+		DWORD dw = 0;
+		WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
+	}
+
 	virtual void *ThreadProc()
 	{
+		std::list<std::string> pending_raw_inputs;
 		while (!_stop) {
 			INPUT_RECORD ir = {0};
 			DWORD dw = 0;
@@ -287,6 +304,14 @@ private:
 			} else if (ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
 				_processor->OnInputResized(ir);
 			}
+			{
+				std::unique_lock<std::mutex> locker(_pending_raw_inputs_mutex);
+				pending_raw_inputs.swap(_pending_raw_inputs);
+			}
+			for(const auto &pri : pending_raw_inputs) {
+				_processor->OnInputRaw(pri);
+			}
+			pending_raw_inputs.clear();
 		}
 
 		return nullptr;
@@ -389,7 +414,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	VTInputReader _input_reader;
 	VTOutputReader _output_reader;
 	std::mutex _inout_control_mutex;
-	std::mutex _fd_in_mutex;
 	std::mutex _keypad_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
@@ -640,6 +664,29 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		}
 	}
 
+	virtual void OnInputRaw(const std::string &str) //called from worker thread
+	{
+		tcdrain(_fd_in);
+		usleep(1000);//drain seems not drainy enough...
+		struct termios ts = {0};
+		int ra = tcgetattr(_fd_in, &ts);
+		if (ra == 0) {
+			struct termios ts2 = ts;
+			cfmakeraw(&ts2);
+			tcsetattr( _fd_in, TCSADRAIN, &ts2 );
+		}
+
+		if (write(_fd_in, str.c_str(), str.size()) != (int)str.size()) {
+			fprintf(stderr, "VT: OnInputRaw failed\n");
+		}
+		tcdrain(_fd_in);
+		usleep(1000);
+
+		if (ra == 0) {
+			tcsetattr( _fd_in, TCSADRAIN, &ts );
+		}
+	}
+
 	virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
 	{
 		DWORD dw;
@@ -649,7 +696,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
 			DbgPrintEscaped("INPUT", translated.c_str(), translated.size());
-			std::lock_guard<std::mutex> lock(_fd_in_mutex);
 			if (write(_fd_in, translated.c_str(), translated.size())!=(int)translated.size()) {
 				fprintf(stderr, "VT: write failed\n");
 			}
@@ -758,30 +804,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	
 	virtual void WriteRawInput(const char *str)
 	{
-		size_t l = strlen(str);
-		
-		std::lock_guard<std::mutex> lock(_fd_in_mutex);
-		tcdrain(_fd_in);
-		usleep(1000);//drain seems not drainy enough...
-		struct termios ts = {0};
-		int ra = tcgetattr(_fd_in, &ts);
-		if (ra == 0) {
-			struct termios ts2 = ts;
-			cfmakeraw(&ts2);
-			tcsetattr( _fd_in, TCSADRAIN, &ts2 );
-		}
-
-		if (write(_fd_in, str, l) != (int)l) {
-			fprintf(stderr, "VT: WriteRawInput failed\n");
-		}
-		tcdrain(_fd_in);
-		usleep(1000);
-		
-		if (ra == 0) {
-			tcsetattr( _fd_in, TCSADRAIN, &ts );
-		}
+		_input_reader.EnqueueRaw(str, strlen(str));
 	}
-	
+
 	std::string StringFromClipboard()
 	{
 		std::string out;
@@ -964,18 +989,15 @@ static bool shown_tip_exit = false;
 		cmd_str+= ';';
 		cmd_str+= _completion_marker.EchoCommand();
 		cmd_str+= '\n';
-		
-		{
-			std::lock_guard<std::mutex> lock(_fd_in_mutex);
-			int r = write(_fd_in, cmd_str.c_str(), cmd_str.size());
-			if (r != (int)cmd_str.size()) {
-				fprintf(stderr, "VT: write failed\n");
-				return -1;
-			}
+
+		int r = write(_fd_in, cmd_str.c_str(), cmd_str.size());
+		if (r != (int)cmd_str.size()) {
+			fprintf(stderr, "VT: write failed\n");
+			return -1;
 		}
-		
+
 		_skipping_line = true;
-		
+
 		{
 			std::lock_guard<std::mutex> lock(_inout_control_mutex);
 			_output_reader.Start(_fd_out);

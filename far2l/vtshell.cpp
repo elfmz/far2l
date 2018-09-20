@@ -683,8 +683,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 		DWORD now = WINPORT(GetTickCount)();
 		if ( (raw && _ts_mode == TM_NORMAL ) || (!raw && _ts_mode == TM_RAW )){
-			tcdrain(_fd_in);
 			if ( now < _last_write || now - _last_write < 50) {
+				tcdrain(_fd_in);
 				usleep(10000 );//drain seems not drainy enough...
 			}
 

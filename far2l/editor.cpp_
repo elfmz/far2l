@@ -2477,7 +2477,6 @@ int Editor::ProcessKey(int Key)
 			if (!Flags.Check(FEDITOR_LOCKMODE))
 			{
 				Pasting++;
-				AddUndoData(UNDO_BEGIN);
 				TextChanged(1);
 
 				if (!EdOpt.PersistentBlocks && BlockStart)
@@ -2489,7 +2488,6 @@ int Editor::ProcessKey(int Key)
 				AddUndoData(UNDO_EDIT,CurLine->GetStringAddr(),CurLine->GetEOL(),NumLine,CurLine->GetCurPos(),CurLine->GetLength());
 				CurLine->ProcessKey(Key);
 				Pasting--;
-				AddUndoData(UNDO_END);
 				Show();
 			}
 

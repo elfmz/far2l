@@ -162,12 +162,19 @@ void CommandLine::ProcessCompletion(bool possibilities)
 		VTCompletor vtc;		
 		if (possibilities) {
 			std::vector<std::string>  possibilities;
+			std::string last_cmd_word = cmd;
+			size_t last_space = last_cmd_word.rfind(' ');
+			if (last_space != std::string::npos)
+				last_cmd_word.erase(0, last_space + 1);
 			if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
 				std::sort(possibilities.begin(), possibilities.end());
 				fprintf(stderr, "Possibilities: ");
 				for(auto &p : possibilities) {
 					fprintf(stderr, "%s ", p.c_str());
-					if (p.find(cmd)!=0) {
+					if (!last_cmd_word.empty() && p.find(last_cmd_word) == 0) {
+						p.insert(0, cmd.substr(0, cmd.size() - last_cmd_word.size()));
+
+					} else if (p.find(cmd) != 0) {
 						/*if (p.find(' ') != 0 && !cmd.empty() && cmd[cmd.size()-1]!=' ') {
 							p.insert(0, 1, ' ');
 						}*/

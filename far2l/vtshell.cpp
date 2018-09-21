@@ -423,13 +423,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	bool _skipping_line;
 	unsigned char _keypad;
 	INPUT_RECORD _last_window_info_ir;
-	struct termios _ts, _ts_raw;
-	enum TSMode {
-		TM_PIPE = 0,
-		TM_NORMAL,
-		TM_RAW
-	} _ts_mode;
-	DWORD _last_write;
 	
 	
 	int ForkAndAttachToSlave(bool shell)
@@ -528,25 +521,20 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			_pipes_fallback_out = fd_out[1];
 			_fd_in = fd_in[1];
 			_fd_out = fd_out[0];
-			_ts_mode = TM_PIPE;
 
 		} else {
 			_pipes_fallback_in = _pipes_fallback_out = -1;
-			memset(&_ts, 0, sizeof(_ts));
-			if (tcgetattr(fd_term, &_ts)==0) {
-				_ts.c_lflag |= ISIG | ICANON | ECHO;
+			struct termios ts = {};
+			if (tcgetattr(fd_term, &ts) == 0) {
+				ts.c_lflag |= ISIG | ICANON | ECHO;
 				//ts.c_lflag&= ~ECHO;
-				_ts.c_cc[VINTR] = 3;
-				tcsetattr( fd_term, TCSAFLUSH, &_ts );
-				_ts_raw = _ts;
-				cfmakeraw(&_ts_raw);
-				_ts_mode = TM_NORMAL;
+				ts.c_cc[VINTR] = 3;
+				tcsetattr( fd_term, TCSAFLUSH, &ts );
 			}
 			_fd_in = fd_term;
 			_fd_out = dup(fd_term);
 			fcntl(_fd_out, F_SETFD, FD_CLOEXEC);
 		}
-		_last_write = 0;
 
 		return true;
 	}
@@ -676,34 +664,48 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		}
 	}
 
-	bool WriteTerm(bool raw, const char *str, size_t len)
+
+	bool WriteTerm(const char *str, size_t len)
 	{
 		if (len == 0)
 			return true;
 
-		DWORD now = WINPORT(GetTickCount)();
-		if ( (raw && _ts_mode == TM_NORMAL ) || (!raw && _ts_mode == TM_RAW )){
-			if ( now < _last_write || now - _last_write < 50) {
-				tcdrain(_fd_in);
-				usleep(10000 );//drain seems not drainy enough...
-			}
+		return (write(_fd_in, str, len) == (ssize_t)len);
+	}
 
-			if (raw) {
-				tcsetattr( _fd_in, TCSADRAIN, &_ts_raw );
-				_ts_mode = TM_RAW;
-			} else {
-				tcsetattr( _fd_in, TCSADRAIN, &_ts );
-				_ts_mode = TM_NORMAL;
+	bool WriteTermRaw(const char *str, size_t len)
+	{
+		if (len == 0)
+			return true;
+
+		struct termios ts = {};
+		int ra = tcgetattr(_fd_in, &ts);
+		if (ra == 0) {
+//			tcdrain(_fd_in);
+//			usleep(1000 );//drain seems not drainy enough...
+			struct termios ts_ne = ts;
+			ts_ne.c_lflag &= ~(ECHO | ECHONL);
+			if (tcsetattr( _fd_in, TCSADRAIN, &ts_ne ) != 0) {
+				perror("VT: WriteTermRaw - tcsetattr RAW");
 			}
 		}
 
-		_last_write = now;
-		return (write(_fd_in, str, len) == (ssize_t)len);
+		bool out = (write(_fd_in, str, len) == (ssize_t)len);
+
+		if (ra == 0) {
+//			tcdrain(_fd_in);
+//			usleep(1000 );//drain seems not drainy enough...
+			if (tcsetattr( _fd_in, TCSADRAIN, &ts ) != 0) {
+				perror("VT: WriteTermRaw - tcsetattr NORM");
+			}
+		}
+
+		return out;
 	}
 
 	virtual void OnInputRaw(const std::string &str) //called from worker thread
 	{
-		if (!WriteTerm(true, str.c_str(), str.size())) {
+		if (!WriteTermRaw(str.c_str(), str.size())) {
 			fprintf(stderr, "VT: OnInputRaw - write error %d\n", errno);
 		}
 	}
@@ -717,7 +719,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
 			DbgPrintEscaped("INPUT", translated.c_str(), translated.size());
-			if (!WriteTerm(false, translated.c_str(), translated.size())) {
+			if (!WriteTerm(translated.c_str(), translated.size())) {
 				fprintf(stderr, "VT: OnInputKeyDown - write error %d\n", errno);
 			}
 		} else {
@@ -1011,7 +1013,7 @@ static bool shown_tip_exit = false;
 		cmd_str+= _completion_marker.EchoCommand();
 		cmd_str+= '\n';
 
-		if (!WriteTerm(false, cmd_str.c_str(), cmd_str.size())) {
+		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
 			fprintf(stderr, "VT: write error %d\n", errno);
 			return -1;
 		}

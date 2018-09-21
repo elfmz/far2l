@@ -301,7 +301,10 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 			if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				TotalFileSize += NewPtr->UnpSize;
+				if ((fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0 || Opt.ScanJunction) {
+					TotalFileSize += NewPtr->UnpSize;
+				}
+
 				bool Compressed=false;
 
 /*				if (ReadPacked && ((fdata.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) || (fdata.dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE)))

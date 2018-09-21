@@ -967,16 +967,17 @@ COORD WinPortPanel::TranslateMousePosition( wxMouseEvent &event )
 {
 	wxClientDC dc(this);
 	wxPoint pos = event.GetLogicalPosition(dc);
+	if (pos.x < 0) pos.x = 0;
+	if (pos.y < 0) pos.y = 0;
+
 	COORD out;
-	out.X =(SHORT)(USHORT)(pos.x / _paint_context.FontWidth());
-	out.Y =(SHORT)(USHORT)(pos.y / _paint_context.FontHeight());
+	out.X = (SHORT)(USHORT)(pos.x / _paint_context.FontWidth());
+	out.Y = (SHORT)(USHORT)(pos.y / _paint_context.FontHeight());
 
 	unsigned int width = 80, height = 25;
 	g_wx_con_out.GetSize(width, height);
 	
-	if ( out.X < 0 ) out.X = 0;
 	if ( (USHORT)out.X >= width) out.X = width - 1;
-	if ( out.Y < 0 ) out.Y = 0;
 	if ( (USHORT)out.Y >= height) out.Y = height - 1;
 	return out;
 }

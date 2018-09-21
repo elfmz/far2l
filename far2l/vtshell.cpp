@@ -950,9 +950,13 @@ static bool shown_tip_exit = false;
 
 		} else if (!shown_tip_init) {
 			fprintf(f, "echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
-			fprintf(f, "echo \"Ctrl+Alt+C - terminate everything in this shell.\"\n");
-			fprintf(f, "echo \"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
-			fprintf(f, "echo \"Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
+			fprintf(f, "echo \"While typing command with panels off:\"\n");
+			fprintf(f, "echo \" F3, F4, F8 - viewer/editor/clear console log.\"\n");
+			fprintf(f, "echo \" Double Shift+TAB - bash-guided autocomplete.\"\n");
+			fprintf(f, "echo \"While executing command:\"\n");
+			fprintf(f, "echo \" Ctrl+Alt+C - terminate everything in this shell.\"\n");
+			fprintf(f, "echo \" Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
+			fprintf(f, "echo \" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
 			fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
 			shown_tip_init = true;
 		}

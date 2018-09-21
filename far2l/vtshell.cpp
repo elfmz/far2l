@@ -1006,6 +1006,8 @@ static bool shown_tip_exit = false;
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
 		
+		struct termios ts = {};
+		int ra = tcgetattr(_fd_in, &ts);
 		
 		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
 		cmd_str+= EscapeQuotas(cmd_script);
@@ -1045,6 +1047,10 @@ static bool shown_tip_exit = false;
 		OnKeypadChange(0);
 		DeliverPendingWindowInfo();
 		_completion_marker.Reset();
+
+		if (ra == 0)
+			tcsetattr(_fd_in, TCSADRAIN, &ts);
+
 		return _completion_marker.LastExitCode();
 	}	
 

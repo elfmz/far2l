@@ -220,6 +220,8 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 	int r;
 	if (ExecFlags & EF_HIDEOUT) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
+		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
+
 	} else {
 		ProcessShowClock++;
 		CtrlObject->CmdLine->ShowBackground();
@@ -301,10 +303,10 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 
 	if (!tmp.empty()) {
 		flags|= EF_NOWAIT | EF_HIDEOUT; //open.sh doesnt print anything
-		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
 	}
-	if ( (ec.IsFile() || ec.IsDir()) && ec.cmd()[0] != '/' && (ec.cmd()[0] != '.' || ec.cmd()[0] != '/'))
+	if ( (ec.IsFile() || ec.IsDir()) && ec.cmd()[0] != '/' && (ec.cmd()[0] != '.' || ec.cmd()[0] != '/')) {
 		tmp+= "./"; // it is ok to prefix ./ even to a quoted string
+	}
 	tmp+= CmdStr;
 
 	r = farExecuteA(tmp.c_str(), flags);

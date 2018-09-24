@@ -564,11 +564,37 @@ class AlternativeScreenBuffer
 		tmp.valid = true;
 
 		if (_other.valid) {
-			WINPORT(SetConsoleWindowInfo)(NULL, TRUE, &_other.info.srWindow);
-			COORD origin = {0, 0};
-			WINPORT(WriteConsoleOutput)(NULL, &_other[0], _other.info.dwSize, origin, &_other.info.srWindow);
+//			WINPORT(SetConsoleWindowInfo)(NULL, TRUE, &_other.info.srWindow);
+			COORD origin = {0, 0}, curpos = _other.info.dwCursorPosition;
+			SMALL_RECT outrect = _other.info.srWindow;
+			if (tmp.info.dwSize.Y < _other.info.dwSize.Y)
+				origin.Y = _other.info.dwSize.Y - tmp.info.dwSize.Y;
+			if (curpos.X >= tmp.info.dwSize.X)
+				curpos.X = (tmp.info.dwSize.X > 0) ? tmp.info.dwSize.X - 1 : 0;
+			if (curpos.X >= tmp.info.dwSize.X)
+				curpos.Y = (tmp.info.dwSize.Y > 0) ? tmp.info.dwSize.Y - 1 : 0;
+
+			WINPORT(WriteConsoleOutput)(NULL, &_other[0], _other.info.dwSize, origin, &outrect);
+
+			// if new screen bigger than saved - fill oversize with emptiness
+			if (tmp.info.dwSize.Y > _other.info.dwSize.Y) {
+				COORD pos = {0, 0};
+				for (pos.Y = _other.info.dwSize.Y + 1; pos.Y <= tmp.info.dwSize.Y; ++pos.Y) {
+					DWORD written = 0;
+					WINPORT(FillConsoleOutputCharacter)(NULL, ' ', tmp.info.dwSize.X, pos, &written);
+				}
+			}
+
+			if (tmp.info.dwSize.X > _other.info.dwSize.X) {
+				COORD pos = { SHORT(tmp.info.srWindow.Left + _other.info.dwSize.X + 1), 0};
+				for (pos.Y = 0; pos.Y <= tmp.info.dwSize.Y; ++pos.Y) {
+					DWORD written = 0;
+					WINPORT(FillConsoleOutputCharacter)(NULL, ' ', tmp.info.dwSize.X - _other.info.dwSize.X, pos, &written);
+				}
+			}
+
 			WINPORT(SetConsoleTextAttribute)(NULL, _other.info.wAttributes);
-			WINPORT(SetConsoleCursorPosition)(NULL, _other.info.dwCursorPosition);
+			WINPORT(SetConsoleCursorPosition)(NULL, curpos);
 //			fprintf(stderr, "AlternativeScreenBuffer: %d {%d, %d}\n", enable, _other.info.dwCursorPosition.X, _other.info.dwCursorPosition.Y);
 		} else {
 			COORD zero_pos = {};

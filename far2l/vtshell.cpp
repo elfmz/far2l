@@ -428,8 +428,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	int ForkAndAttachToSlave(bool shell)
 	{
 		int r = fork();
-		if (r!=0)
+		if (r != 0)
 			return r;
+
+		signal(SIGHUP, SIG_DFL);
+		signal(SIGINT, SIG_DFL);
+		signal(SIGQUIT, SIG_DFL);
+		signal(SIGTERM, SIG_DFL);
+		signal(SIGPIPE, SIG_DFL);
+		signal(SIGCHLD, SIG_DFL);
+		signal(SIGSTOP, SIG_DFL);
 			
 		if (shell) {
 			if (setsid()==-1)

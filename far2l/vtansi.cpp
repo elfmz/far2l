@@ -534,6 +534,62 @@ void SendSequence( const char *seq )
 	WINPORT(WriteConsoleInput)( hStdIn, &irs[0], irs.size(), &out );
 }
 
+
+class AlternativeScreenBuffer
+{
+	bool _enabled = false;
+	struct SavedScreenBuffer : std::vector<CHAR_INFO>
+	{
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		bool valid = false;
+	} _other;
+
+	public:
+
+	void Toggle(bool enable)
+	{
+		if (_enabled == enable)
+			return;
+
+		SavedScreenBuffer tmp;
+		if (!WINPORT(GetConsoleScreenBufferInfo)(NULL, &tmp.info)) {
+			fprintf(stderr, "AlternativeScreenBuffer: csbi failed\n");
+			return;
+		}
+		if (tmp.info.dwSize.Y > 0 && tmp.info.dwSize.X > 0) {
+			tmp.resize((size_t)tmp.info.dwSize.Y * (size_t)tmp.info.dwSize.X);
+			COORD origin = {0, 0};
+			WINPORT(ReadConsoleOutput)(NULL, &tmp[0], tmp.info.dwSize, origin, &tmp.info.srWindow);
+		}
+		tmp.valid = true;
+
+		if (_other.valid) {
+			WINPORT(SetConsoleWindowInfo)(NULL, TRUE, &_other.info.srWindow);
+			COORD origin = {0, 0};
+			WINPORT(WriteConsoleOutput)(NULL, &_other[0], _other.info.dwSize, origin, &_other.info.srWindow);
+			WINPORT(SetConsoleTextAttribute)(NULL, _other.info.wAttributes);
+			WINPORT(SetConsoleCursorPosition)(NULL, _other.info.dwCursorPosition);
+//			fprintf(stderr, "AlternativeScreenBuffer: %d {%d, %d}\n", enable, _other.info.dwCursorPosition.X, _other.info.dwCursorPosition.Y);
+		} else {
+			COORD zero_pos = {};
+			WINPORT(SetConsoleCursorPosition)(NULL, zero_pos);
+//			fprintf(stderr, "AlternativeScreenBuffer: %d XXX\n", enable);
+		}
+
+		std::swap(tmp, _other);
+
+		_enabled = enable;
+	}
+
+	void Reset()
+	{
+		Toggle(false);
+		_other.valid = false;
+	}
+
+} g_alternative_screen_buffer;
+
+
 // ========== Print functions
 
 //-----------------------------------------------------------------------------
@@ -579,6 +635,10 @@ void InterpretEscSeq( void )
 		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 			for (i = 0; i < es_argc; ++i) {
 				switch (es_argv[i]) {
+				case 1049:
+					g_alternative_screen_buffer.Toggle(suffix == 'h');
+					break;
+
 				case 25:
 					WINPORT(GetConsoleCursorInfo)( hConOut, &CursInfo );
 					CursInfo.bVisible = (suffix == 'h');
@@ -1466,6 +1526,7 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 
 void VTAnsi::Reset()
 {
+	g_alternative_screen_buffer.Reset();
 	g_saved_state.ApplyToConsole(NULL, false);
 	ResetState();
 	SetDefaultAnsiState();

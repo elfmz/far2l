@@ -272,7 +272,7 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 	
 	COORD tmp_pos = {0, 0};
 	
-	if (_scroll_callback.pfn) {
+	if (_scroll_callback.pfn && _scroll_region.top == 0) {
 		COORD line_size = {(SHORT)width, 1};
 		SMALL_RECT line_rect = {0, 0, (SHORT)(width - 1), 0};
 		_buf.Read(&_temp_chars[0], line_size, tmp_pos, line_rect);

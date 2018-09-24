@@ -118,8 +118,6 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 			ClearScreen(COL_COMMANDLINEUSERSCREEN);
 			SaveBackground();
 			VTLog::Reset();
-			PrintCommand = false;
-			return true;
 		}
 	} else if (ecl[0]=="cd") {
 		if (ecl.size() == 1 )

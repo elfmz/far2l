@@ -340,16 +340,17 @@ public:
 		Reset();
 	}
 
-	std::string SetEnvCommand() const
-	{
-		std::string out = "export FARVTMARKER=";
-		out+= _marker;
-		return out;
-	}
-	
 	std::string EchoCommand() const
 	{
-		return "echo -ne \"=$FARVTRESULT:$FARVTMARKER\"";
+		std::string out = "echo -ne \"=$FARVTRESULT:\"$\'";
+		char escaped[16];
+		for (const auto c : _marker) {
+			sprintf(escaped, "\\x%02x",
+				(unsigned int)(unsigned char)c);
+			out+= escaped;
+		}
+		out+= '\'';
+		return out;
 	}
 	
 	int LastExitCode() const
@@ -438,7 +439,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		signal(SIGPIPE, SIG_DFL);
 		signal(SIGCHLD, SIG_DFL);
 		signal(SIGSTOP, SIG_DFL);
-			
+
 		if (shell) {
 			if (setsid()==-1)
 				perror("VT: setsid");
@@ -896,10 +897,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	void SendSignalToShell(int sig)
 	{
 		pid_t grp = getpgid(_shell_pid);
-		
-		if (grp!=-1 && grp!=getpgid(getpid()))
+
+		if (grp!=-1 && grp!=getpgid(getpid())) {
 			killpg(grp, sig);
-		else
+		} else
 			kill(_shell_pid, sig);			
 	}
 	
@@ -949,7 +950,6 @@ static bool shown_tip_exit = false;
 
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
-		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
 			fprintf(f, "echo \"Closing back shell.%s\"\n", 
@@ -959,12 +959,13 @@ static bool shown_tip_exit = false;
 		} else if (!shown_tip_init) {
 			fprintf(f, "echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
 			fprintf(f, "echo \"While typing command with panels off:\"\n");
-			fprintf(f, "echo \" F3, F4, F8 - viewer/editor/clear console log.\"\n");
 			fprintf(f, "echo \" Double Shift+TAB - bash-guided autocomplete.\"\n");
+			fprintf(f, "echo \" F3, F4, F8 - viewer/editor/clear console log.\"\n");
+			fprintf(f, "echo \" Ctrl+Shift+MouseScrollUp - open autoclosing viewer with console log.\"\n");
 			fprintf(f, "echo \"While executing command:\"\n");
 			fprintf(f, "echo \" Ctrl+Alt+C - terminate everything in this shell.\"\n");
 			fprintf(f, "echo \" Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
-			fprintf(f, "echo \" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
+			fprintf(f, "echo \" MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
 			fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
 			shown_tip_init = true;
 		}
@@ -981,7 +982,6 @@ static bool shown_tip_exit = false;
 		fprintf(f, "else\n");
 		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[K\x1b_pop-attr\x07\"\n");
 		fprintf(f, "fi\n");
-		fprintf(f, "%s\n", _completion_marker.SetEnvCommand().c_str());//second time - prevent user from shooting own leg
 		fclose(f);
 		return cmd_script;
 	}
@@ -1018,9 +1018,6 @@ static bool shown_tip_exit = false;
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
 		
-		struct termios ts = {};
-		int ra = tcgetattr(_fd_in, &ts);
-		
 		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
 		cmd_str+= EscapeQuotas(cmd_script);
 		cmd_str+= ';';
@@ -1041,6 +1038,7 @@ static bool shown_tip_exit = false;
 		}
 		
 		_output_reader.WaitDeactivation();
+
 		if (_shell_pid!=-1) {
 			int status;
 			if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
@@ -1053,15 +1051,13 @@ static bool shown_tip_exit = false;
 			_input_reader.Stop();
 			_output_reader.Stop();
 		}
+
 		remove(cmd_script.c_str());
 
 		_vta.Reset();
 		OnKeypadChange(0);
 		DeliverPendingWindowInfo();
 		_completion_marker.Reset();
-
-		if (ra == 0)
-			tcsetattr(_fd_in, TCSADRAIN, &ts);
 
 		return _completion_marker.LastExitCode();
 	}	

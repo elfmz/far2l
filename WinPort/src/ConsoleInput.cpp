@@ -14,6 +14,18 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 			data->Event.KeyEvent.bKeyDown ? "DOWN" : "UP");
 	}
 	std::unique_lock<std::mutex> lock(_mutex);
+	if (data->EventType == MOUSE_EVENT && !_pending.empty()) {
+		// GUI frontend tends to flood with duplicated mouse events,
+		// cuz it reacts on screen coordinates movements, so avoid
+		// excessive mouse events by skipping event if it duplicates
+		// last queued but not not yet processed event (fix #369)
+		const INPUT_RECORD &last = _pending.back();
+		if (memcmp(&last, data, sizeof(last)) == 0) {
+//			fprintf(stderr, "ConsoleInput::Enqueue: mouse eaten - flags=0x%x state=0x%x\n",
+//				data->Event.MouseEvent.dwEventFlags, data->Event.MouseEvent.dwControlKeyState);
+			return;
+		}
+	}
 	for (DWORD i = 0; i < size; ++i)
 		_pending.push_back(data[i]);
 	if (size)

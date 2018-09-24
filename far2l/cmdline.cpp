@@ -246,7 +246,16 @@ int CommandLine::ProcessKey(int Key)
 	}
 	
 	if ( Key==KEY_F8) { 
-		CmdExecute(L"reset", true, false, true, false, false, false);
+		ClearScreen(COL_COMMANDLINEUSERSCREEN);
+		SaveBackground();
+		VTLog::Reset();
+		ShowBackground();
+		Redraw();
+//		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
+		if (Opt.ShowKeyBar)
+			CtrlObject->MainKeyBar->Show();
+
+//		CmdExecute(L"reset", true, false, true, false, false, false);
 		return TRUE;
 	}	
 		

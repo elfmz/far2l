@@ -8,7 +8,7 @@
 class ConsoleOutputListener
 {
 	public:
-		virtual void OnConsoleOutputUpdated(const SMALL_RECT &area) = 0;
+		virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count) = 0;
 		virtual void OnConsoleOutputResized() = 0;
 		virtual void OnConsoleOutputTitleChanged() = 0;
 		virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos) = 0;
@@ -55,7 +55,6 @@ class ConsoleOutput
 			SM_FILL_ATTR
 		} kind;
 		size_t count;
-		SMALL_RECT area;
 		union {
 			const WCHAR *str;
 			TCHAR chr;
@@ -63,7 +62,7 @@ class ConsoleOutput
 		};
 	};
 	
-	void ModifySequenceEntityAt(SequenceModifier &sm, COORD pos);
+	bool ModifySequenceEntityAt(SequenceModifier &sm, COORD pos);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
 	

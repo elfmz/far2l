@@ -123,7 +123,7 @@ namespace VTLog
 		}		
 	}
 	
-	void  OnConsoleScroll(PVOID pContext, unsigned int Top, unsigned int Width, CHAR_INFO *Chars)
+	void  OnConsoleScroll(PVOID pContext, unsigned int Width, CHAR_INFO *Chars)
 	{
 		g_lines.Add( ActualLineWidth(Width, Chars), Chars);
 	}

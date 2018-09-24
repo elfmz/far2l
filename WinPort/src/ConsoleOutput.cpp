@@ -73,7 +73,7 @@ void ConsoleOutput::SetCursor(COORD pos)
 	SMALL_RECT area[2];
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		if (_cursor.pos.X==pos.X && _cursor.pos.Y==pos.Y)
+		if (_cursor.pos.X == pos.X && _cursor.pos.Y == pos.Y)
 			return;
 
 		area[0].Left = area[0].Right = _cursor.pos.X;
@@ -83,8 +83,7 @@ void ConsoleOutput::SetCursor(COORD pos)
 		area[1].Top = area[1].Bottom = _cursor.pos.Y;
 	}
 	if (_listener) {
-		_listener->OnConsoleOutputUpdated(area[0]);
-		_listener->OnConsoleOutputUpdated(area[1]);
+		_listener->OnConsoleOutputUpdated(&area[0], 2);
 	}
 }
 
@@ -99,7 +98,7 @@ void ConsoleOutput::SetCursor(UCHAR height, bool visible)
 		area.Top = area.Bottom = _cursor.pos.Y;
 	}
 	if (_listener)
-		_listener->OnConsoleOutputUpdated(area);
+		_listener->OnConsoleOutputUpdated(&area, 1);
 }
 
 COORD ConsoleOutput::GetCursor()
@@ -211,7 +210,7 @@ void ConsoleOutput::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos
 		_buf.Write(data, data_size, data_pos, screen_rect);
 	}
 	if (_listener)
-		_listener->OnConsoleOutputUpdated(screen_rect);
+		_listener->OnConsoleOutputUpdated(&screen_rect, 1);
 }
 
 bool ConsoleOutput::Read(CHAR_INFO &data, COORD screen_pos)
@@ -233,7 +232,7 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 
 	if (_listener) {
 		SMALL_RECT area = {screen_pos.X, screen_pos.Y, screen_pos.X, screen_pos.Y};
-		_listener->OnConsoleOutputUpdated(area);
+		_listener->OnConsoleOutputUpdated(&area, 1);
 	}
 	return true;
 }
@@ -276,7 +275,7 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 		COORD line_size = {(SHORT)width, 1};
 		SMALL_RECT line_rect = {0, 0, (SHORT)(width - 1), 0};
 		_buf.Read(&_temp_chars[0], line_size, tmp_pos, line_rect);
-		_scroll_callback.pfn(_scroll_callback.context, _scroll_region.top, width, &_temp_chars[0]);
+		_scroll_callback.pfn(_scroll_callback.context, width, &_temp_chars[0]);
 	}
 	
 	COORD tmp_size = {(SHORT)width, (SHORT)(height - 1 - _scroll_region.top)};
@@ -306,7 +305,7 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 	AffectArea(area, scr_rect);
 }
 
-void ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
+bool ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
 {
 	CHAR_INFO ch;
 
@@ -320,32 +319,31 @@ void ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
 
 		case SequenceModifier::SM_FILL_CHAR:
 			if (!_buf.Read(ch, pos))
-				return;
+				return false;
 
 			ch.Char.UnicodeChar = sm.chr;
 			break;
 
 		case SequenceModifier::SM_FILL_ATTR:
 			if (!_buf.Read(ch, pos))
-				return;
+				return false;
 
 			ch.Attributes = sm.attr;
 			break;
 	}
 	
-	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED)
-		AffectArea(sm.area, pos.X, pos.Y);
+	return (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED);
 }
 
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 {
 	size_t rv = 0;
-	SMALL_RECT pos_areas[2];
+	SMALL_RECT areas[3]; // pos1, pos2, main
 	bool refresh_pos_areas = false;
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		pos_areas[0].Left = pos_areas[0].Right = pos.X;
-		pos_areas[0].Top = pos_areas[0].Bottom = pos.Y;
+		areas[0].Left = areas[0].Right = pos.X;
+		areas[0].Top = areas[0].Bottom = pos.Y;
 		
 		unsigned int width, height;
 		_buf.GetSize(width, height);
@@ -368,7 +366,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					pos.Y++;
 					if (pos.Y >= (int) scroll_edge) {
 						pos.Y--;
-						ScrollOutputOnOverflow(sm.area);
+						ScrollOutputOnOverflow(areas[2]);
 					}
 				} else
 					pos.X = width - 1;
@@ -386,10 +384,11 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				pos.Y++;
 				if (pos.Y >= (int)scroll_edge) {
 					pos.Y--;
-					ScrollOutputOnOverflow(sm.area);
+					ScrollOutputOnOverflow(areas[2]);
 				}
 			} else {
-				ModifySequenceEntityAt(sm, pos);
+				if (ModifySequenceEntityAt(sm, pos))
+					AffectArea(areas[2], pos.X, pos.Y);
 				pos.X++;
 			}
 			if (sm.kind==SequenceModifier::SM_WRITE_STR) {
@@ -404,26 +403,28 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			}
 		}
 		
-		if (&pos == &_cursor.pos && (pos_areas[0].Left!=pos.X || pos_areas[0].Top!=pos.Y)) {
+		if (&pos == &_cursor.pos && (areas[0].Left!=pos.X || areas[0].Top!=pos.Y)) {
 			refresh_pos_areas = true;
-			pos_areas[1].Left = pos_areas[1].Right = pos.X;
-			pos_areas[1].Top = pos_areas[1].Bottom = pos.Y;
+			areas[1].Left = areas[1].Right = pos.X;
+			areas[1].Top = areas[1].Bottom = pos.Y;
 		}
 	}
 	if (_listener) {
+		bool refresh_main_area = (areas[2].Left <= areas[2].Right
+			&& areas[2].Top <= areas[2].Bottom);
+
 		if (refresh_pos_areas) {
-			_listener->OnConsoleOutputUpdated(pos_areas[0]);
-			_listener->OnConsoleOutputUpdated(pos_areas[1]);
+			_listener->OnConsoleOutputUpdated(&areas[0], refresh_main_area ? 3 : 2);
+		} else if (refresh_main_area) {
+			_listener->OnConsoleOutputUpdated(&areas[2], 1);
 		}
-		if (sm.area.Right >= sm.area.Left && sm.area.Bottom >= sm.area.Top) 
-			_listener->OnConsoleOutputUpdated(sm.area);
 	}
 	return rv;
 }
 
 size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
 {
-	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count, {MAXSHORT, MAXSHORT, 0, 0} };
+	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count };
 	sm.str = data;
 	return ModifySequenceAt(sm, _cursor.pos);
 }
@@ -431,7 +432,7 @@ size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
 
 size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos)
 {
-	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count, {MAXSHORT, MAXSHORT, 0, 0} };
+	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count };
 	sm.str = data;
 	return ModifySequenceAt(sm, pos);
 }
@@ -439,7 +440,7 @@ size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos)
 
 size_t ConsoleOutput::FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos)
 {
-	SequenceModifier sm = {SequenceModifier::SM_FILL_CHAR, count, {MAXSHORT, MAXSHORT, 0, 0} };
+	SequenceModifier sm = {SequenceModifier::SM_FILL_CHAR, count };
 	sm.chr = cCharacter;
 	return ModifySequenceAt(sm, pos);
 }
@@ -447,7 +448,7 @@ size_t ConsoleOutput::FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos
 
 size_t ConsoleOutput::FillAttributeAt(WORD wAttribute, size_t count, COORD &pos)
 {
-	SequenceModifier sm = {SequenceModifier::SM_FILL_ATTR, count};
+	SequenceModifier sm = {SequenceModifier::SM_FILL_ATTR, count };
 	sm.attr = wAttribute;
 	return ModifySequenceAt(sm, pos);
 }
@@ -470,55 +471,61 @@ static void ClipRect(SMALL_RECT &rect, const SMALL_RECT &clip, COORD *offset = N
 bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle, 
 	const SMALL_RECT *lpClipRectangle,  COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
-	SMALL_RECT src_rect = *lpScrollRectangle;
-	if (src_rect.Right < src_rect.Left || src_rect.Bottom < src_rect.Top) 
+	union {
+		SMALL_RECT both[2];
+		struct {
+			SMALL_RECT dst; // must be first cuz it always updated
+			SMALL_RECT src; // updated only if lpFill is not NULL
+		} n;
+	} areas;
+
+	areas.n.src = *lpScrollRectangle;
+	if (areas.n.src.Right < areas.n.src.Left || areas.n.src.Bottom < areas.n.src.Top)
 		return false;
 
-	COORD data_size = {(SHORT)(src_rect.Right + 1 - src_rect.Left), (SHORT)(src_rect.Bottom + 1 - src_rect.Top)};
+	COORD data_size = {(SHORT)(areas.n.src.Right + 1 - areas.n.src.Left), (SHORT)(areas.n.src.Bottom + 1 - areas.n.src.Top)};
 	size_t total_chars = data_size.X;
 	total_chars*= data_size.Y;
 	COORD data_pos = {0, 0};
 		
 	_temp_chars.resize(total_chars);
-	SMALL_RECT dst_rect = {dwDestinationOrigin.X, dwDestinationOrigin.Y, 
+	areas.n.dst = {dwDestinationOrigin.X, dwDestinationOrigin.Y,
 		(SHORT)(dwDestinationOrigin.X + data_size.X - 1), (SHORT)(dwDestinationOrigin.Y + data_size.Y - 1)};
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		_buf.Read(&_temp_chars[0], data_size, data_pos, src_rect);
+		_buf.Read(&_temp_chars[0], data_size, data_pos, areas.n.src);
 
 		fprintf(stderr, "!!!!SCROLL:[%u %u %u %u] -> [%u %u %u %u]",
-			src_rect.Left, src_rect.Top, src_rect.Right, src_rect.Bottom,
-			dst_rect.Left, dst_rect.Top, dst_rect.Right, dst_rect.Bottom);
+			areas.n.src.Left, areas.n.src.Top, areas.n.src.Right, areas.n.src.Bottom,
+			areas.n.dst.Left, areas.n.dst.Top, areas.n.dst.Right, areas.n.dst.Bottom);
 	
 		if (lpClipRectangle) {
 			fprintf(stderr, " CLIP:[%u %u %u %u]",
 				lpClipRectangle->Left, lpClipRectangle->Top, lpClipRectangle->Right, lpClipRectangle->Bottom);
-			ClipRect(src_rect, *lpClipRectangle);
-			ClipRect(dst_rect, *lpClipRectangle, &data_pos);
+			ClipRect(areas.n.src, *lpClipRectangle);
+			ClipRect(areas.n.dst, *lpClipRectangle, &data_pos);
 
 			fprintf(stderr, " CLIPPED:[%u %u %u %u] -> [%u %u %u %u] DP=[%u %u]",
-				src_rect.Left, src_rect.Top, src_rect.Right, src_rect.Bottom,
-				dst_rect.Left, dst_rect.Top, dst_rect.Right, dst_rect.Bottom,
+				areas.n.src.Left, areas.n.src.Top, areas.n.src.Right, areas.n.src.Bottom,
+				areas.n.dst.Left, areas.n.dst.Top, areas.n.dst.Right, areas.n.dst.Bottom,
 				data_pos.X, data_pos.Y);
 		}
 		fprintf(stderr, "\n");
 		
 		if (lpFill) {
 			COORD fill_pos;
-			for (fill_pos.Y = src_rect.Top; fill_pos.Y <= src_rect.Bottom; fill_pos.Y++ )
-			for (fill_pos.X = src_rect.Left; fill_pos.X <= src_rect.Right; fill_pos.X++ ) {
+			for (fill_pos.Y = areas.n.src.Top; fill_pos.Y <= areas.n.src.Bottom; fill_pos.Y++ )
+			for (fill_pos.X = areas.n.src.Left; fill_pos.X <= areas.n.src.Right; fill_pos.X++ ) {
 				_buf.Write(*lpFill, fill_pos);
 			}
 		}
 
-		_buf.Write(&_temp_chars[0], data_size, data_pos, dst_rect);
+		_buf.Write(&_temp_chars[0], data_size, data_pos, areas.n.dst);
 	}
 
-	if (_listener) {
-		if (lpFill)
-			_listener->OnConsoleOutputUpdated(src_rect);
-		_listener->OnConsoleOutputUpdated(dst_rect);
-	}
+	if (_listener)
+		_listener->OnConsoleOutputUpdated(&areas.both[0], lpFill ? 2 : 1);
+
 	return true;
 }
 

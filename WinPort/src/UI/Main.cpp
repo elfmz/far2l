@@ -191,7 +191,7 @@ public:
 	void OnChar( wxKeyEvent& event );
 
 protected: 
-	virtual void OnConsoleOutputUpdated(const SMALL_RECT &area);
+	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
 	virtual void OnConsoleOutputResized();
 	virtual void OnConsoleOutputTitleChanged();
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
@@ -592,23 +592,23 @@ static int ProcessAllEvents()
 	return 0;
 }
 
-void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT &area)
+// #define AREAS_REDUCTION
+
+void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 {
 	enum {
 		A_NOTHING,
 		A_QUEUE,
 		A_THROTTLE
 	} action;
-	
+
 	{
-		SMALL_RECT norm_area = area;
-		NormalizeArea(norm_area);
 		std::lock_guard<std::mutex> lock(_refresh_rects);
 		if (_refresh_rects.empty()) {
 			action = A_QUEUE;
 #ifndef __APPLE__
-		} else if (_refresh_rects_throttle != (DWORD)-1 && 
-				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500 && 
+		} else if (_refresh_rects_throttle != (DWORD)-1 &&
+				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500 &&
 				!wxIsMainThread()) {
 			action = A_THROTTLE;
 			_refresh_rects_throttle = (DWORD)-1;
@@ -618,15 +618,76 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT &area)
 		} else {
 			action = A_NOTHING;
 		}
-		
-		_refresh_rects.emplace_back(norm_area);		
+		for (size_t i = 0; i < count; ++i) {
+#ifdef AREAS_REDUCTION
+			SMALL_RECT area = areas[i];
+			NormalizeArea(area);
+			bool add = true;
+			for (auto &pending : _refresh_rects) {
+/*				if (!(area.Left <= pending.Right && area.Right >= pending.Left &&
+					     area.Top <= pending.Bottom && area.Bottom >= pending.Top )) {
+					continue;
+				}*/
+
+				if (area.Left >= pending.Left && area.Right <= pending.Right
+				&& area.Top >= pending.Top && area.Bottom <= pending.Bottom) {
+					// new area completely inside of pending one
+					add = false;
+					break;
+				}
+
+				if (area.Left <= pending.Left && area.Right >= pending.Right
+				&& area.Top <= pending.Top && area.Bottom >= pending.Bottom) {
+					// pending area completely inside of new one
+					pending = area;
+					add = false;
+					break;
+				}
+
+				if (area.Left == pending.Left && area.Right == pending.Right) {
+					// top/bottom concat?
+					if (area.Bottom > pending.Bottom && area.Top <= pending.Bottom && area.Top >= pending.Top) {
+						pending.Bottom = area.Bottom;
+						add = false;
+						break;
+					}
+
+					if (area.Top < pending.Top && area.Bottom >= pending.Top && area.Bottom <= pending.Bottom) {
+						pending.Top = area.Top;
+						add = false;
+						break;
+					}
+
+				} else if (area.Top == pending.Top && area.Bottom == pending.Bottom) {
+					// left/right concat?
+
+					if (area.Right > pending.Right && area.Left <= pending.Right && area.Left >= pending.Left) {
+						pending.Right = area.Right;
+						add = false;
+						break;
+					}
+
+					if (area.Left < pending.Left && area.Right <= pending.Right && area.Right >= pending.Left) {
+						pending.Left = area.Left;
+						add = false;
+						break;
+					}
+				}
+			}
+			if (add)
+				_refresh_rects.emplace_back(area);
+#else // AREAS_REDUCTION
+			_refresh_rects.emplace_back(areas[i]);
+			NormalizeArea(_refresh_rects.back());
+#endif // AREAS_REDUCTION
+		}
 	}
 	
 	switch (action) {
 		case A_QUEUE: {
 			wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_REFRESH);
 			if (event)
-				wxQueueEvent	(this, event);
+				wxQueueEvent (this, event);
 		} break;
 		
 		case A_THROTTLE: {
@@ -1055,7 +1116,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 void WinPortPanel::DamageAreaBetween(COORD c1, COORD c2)
 {
 	SMALL_RECT area = {c1.X, c1.Y, c2.X, c2.Y};
-	OnConsoleOutputUpdated(area);
+	OnConsoleOutputUpdated(&area, 1);
 }
 
 void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )

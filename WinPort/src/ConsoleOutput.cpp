@@ -4,6 +4,7 @@
 #include <wx/display.h>
 
 #define TAB_WIDTH	8
+#define NO_AREA {MAXSHORT, MAXSHORT, 0, 0}
 
 template <class I>
 	static void ApplyConsoleSizeLimits(I &w, I &h)
@@ -338,7 +339,7 @@ bool ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 {
 	size_t rv = 0;
-	SMALL_RECT areas[3]; // pos1, pos2, main
+	SMALL_RECT areas[3] = {NO_AREA, NO_AREA, NO_AREA}; // pos1, pos2, main
 	bool refresh_pos_areas = false;
 	{
 		std::lock_guard<std::mutex> lock(_mutex);

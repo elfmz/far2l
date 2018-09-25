@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <atomic>
 
+#define AREAS_REDUCTION
+
 ConsoleOutput g_wx_con_out;
 ConsoleInput g_wx_con_in;
 bool g_broadway = false;
@@ -594,8 +596,6 @@ static int ProcessAllEvents()
 	return 0;
 }
 
-// #define AREAS_REDUCTION
-
 void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 {
 	enum {
@@ -646,21 +646,7 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 					break;
 				}
 
-				if (area.Left == pending.Left && area.Right == pending.Right) {
-					// top/bottom concat?
-					if (area.Bottom > pending.Bottom && area.Top <= pending.Bottom && area.Top >= pending.Top) {
-						pending.Bottom = area.Bottom;
-						add = false;
-						break;
-					}
-
-					if (area.Top < pending.Top && area.Bottom >= pending.Top && area.Bottom <= pending.Bottom) {
-						pending.Top = area.Top;
-						add = false;
-						break;
-					}
-
-				} else if (area.Top == pending.Top && area.Bottom == pending.Bottom) {
+				if (area.Top == pending.Top && area.Bottom == pending.Bottom) {
 					// left/right concat?
 
 					if (area.Right > pending.Right && area.Left <= pending.Right && area.Left >= pending.Left) {
@@ -674,6 +660,20 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 						add = false;
 						break;
 					}
+				} else if (area.Left == pending.Left && area.Right == pending.Right) {
+					// top/bottom concat?
+					if (area.Bottom > pending.Bottom && area.Top <= pending.Bottom && area.Top >= pending.Top) {
+						pending.Bottom = area.Bottom;
+						add = false;
+						break;
+					}
+
+					if (area.Top < pending.Top && area.Bottom >= pending.Top && area.Bottom <= pending.Bottom) {
+						pending.Top = area.Top;
+						add = false;
+						break;
+					}
+
 				}
 			}
 			if (add)

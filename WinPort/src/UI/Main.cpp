@@ -247,7 +247,9 @@ private:
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
 	std::atomic<bool> _has_focus;
-	
+	MOUSE_EVENT_RECORD _prev_mouse_event;
+	DWORD _prev_mouse_event_ts;
+
 	WinPortFrame *_frame;
 	wxTimer* _periodic_timer;
 	bool _right_control;
@@ -476,7 +478,7 @@ bool WinPortApp::OnInit()
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
-		_paint_context(this), _has_focus(true), _frame(frame), _periodic_timer(NULL),
+		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_right_control(false), _last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0),
 		_refresh_rects_throttle(0)
@@ -1110,7 +1112,18 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 			ir.Event.MouseEvent.dwEventFlags, ir.Event.MouseEvent.dwButtonState, 
 			ir.Event.MouseEvent.dwControlKeyState);
 	}
-	g_wx_con_in.Enqueue(&ir, 1);	
+
+	// GUI frontend tends to flood with duplicated mouse events,
+	// cuz it reacts on screen coordinates movements, so avoid
+	// excessive mouse events by skipping event if it duplicates
+	// most recently queued event (fix #369)
+	DWORD now = WINPORT(GetTickCount)();
+	if (_prev_mouse_event_ts + 500 <= now
+	|| memcmp(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event)) != 0) {
+		memcpy(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event));
+		_prev_mouse_event_ts = now;
+		g_wx_con_in.Enqueue(&ir, 1);
+	}
 }
 
 void WinPortPanel::DamageAreaBetween(COORD c1, COORD c2)

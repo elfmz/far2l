@@ -621,6 +621,11 @@ class AlternativeScreenBuffer
 
 		std::swap(tmp, _other);
 
+		if (enable) {
+			VTLog::Pause();
+		} else {
+			VTLog::Resume();
+		}
 		_enabled = enable;
 	}
 

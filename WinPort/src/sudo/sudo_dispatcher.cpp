@@ -473,7 +473,7 @@ namespace Sudo
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd != -1) {
 			int flags = 0;
-			r = ioctl(fd, FS_IOC_GETFLAGS, &flags);
+			r = bugaware_ioctl_pint(fd, FS_IOC_GETFLAGS, &flags);
 			close(fd);
 			if (r == 0) {
 				bt.SendInt(0);
@@ -496,7 +496,7 @@ namespace Sudo
 		int r = -1;
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd != -1) {
-			r = ioctl(fd, FS_IOC_SETFLAGS, &flags);
+			r = bugaware_ioctl_pint(fd, FS_IOC_SETFLAGS, &flags);
 			close(fd);
 			if (r == 0) {
 				bt.SendInt(0);

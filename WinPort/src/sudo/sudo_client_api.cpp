@@ -1000,7 +1000,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 	int r = -1;
 	int fd = open(path, O_RDONLY);
 	if (fd != -1) {
-		r = ioctl(fd, FS_IOC_GETFLAGS, flags);
+		r = bugaware_ioctl_pint(fd, FS_IOC_GETFLAGS, flags);
 		close(fd);
 	}
 	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(false))
@@ -1033,7 +1033,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 	int r = -1;
 	int fd = open(path, O_RDONLY);
 	if (fd != -1) {
-		r = ioctl(fd, FS_IOC_SETFLAGS, &flags);
+		r = bugaware_ioctl_pint(fd, FS_IOC_SETFLAGS, &flags);
 		close(fd);
 	}
 	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(true))

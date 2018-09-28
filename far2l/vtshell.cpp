@@ -950,6 +950,7 @@ static bool shown_tip_exit = false;
 
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
+		fprintf(f, "FARVTMARKER=far2l\n"); // tell far2l started inside that he's little brother
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
 			fprintf(f, "echo \"Closing back shell.%s\"\n", 

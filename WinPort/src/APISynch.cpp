@@ -1,98 +1,135 @@
 #include <mutex>
 #include <thread>
 
-#include <wx/wx.h>
-#include <wx/display.h>
-
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
 #include "WinPortSynch.h"
 
 
-class WinPortThreadEvent : public WinPortEvent
+static volatile LONG g_winport_thread_id = 0;
+
+static DWORD WinPortThreadIDGenerate()
 {
-	volatile DWORD _exit_code;
-	std::mutex _thread_mutex;
-	wxThread *_thread;
-public:
-	WinPortThreadEvent(wxThread *thread) 
-		: WinPortEvent(true, false), _thread(thread)
+	for (;;) {
+		DWORD out = (DWORD)WINPORT(InterlockedIncrement)(&g_winport_thread_id);
+		if (out != 0)
+			return out;
+
+		fprintf(stderr, "WinPortThreadIDGenerate: over zero\n");
+	}
+}
+
+static pthread_key_t WinPortThreadIDKey()
+{
+	static pthread_key_t s_key = 0;
+	static bool s_key_ready = false;
+	if (!s_key_ready) {
+		s_key_ready = (pthread_key_create(&s_key, nullptr) == 0);
+	}
+	return s_key_ready ? s_key : 0;
+}
+
+static void WinPortThreadID_Set(DWORD tid)
+{
+	pthread_setspecific(WinPortThreadIDKey(), (void *)(uintptr_t)tid);
+}
+
+static DWORD WinPortThreadID_Get()
+{
+	DWORD tid = (DWORD)(uintptr_t)pthread_getspecific(WinPortThreadIDKey());
+	if (tid == 0) {
+		tid = WinPortThreadIDGenerate();
+		WinPortThreadID_Set(tid);
+	}
+	return tid;
+}
+
+class WinPortThread : public WinPortEvent
+{
+	std::mutex _resume_mutex;
+	volatile LONG _exit_code;
+	volatile LONG _tid;
+	WINPORT_THREAD_START_ROUTINE _lpStartAddress;
+	LPVOID _lpParameter;
+	bool _started;
+
+	static void *sProc(void *p)
 	{
+		WinPortThread *it = (WinPortThread *)p;
+		void * out = (void *)(uintptr_t)it->Proc();
+		it->Set();
+		it->Dereference();
+		return out;
 	}
 
-	void OnThreadExited(DWORD exit_code)
+	DWORD Proc()
 	{
-		_exit_code = exit_code;
-		Set();
+		WinPortThreadID_Set(_tid);
+		DWORD out = _lpStartAddress(_lpParameter);
+		WINPORT(InterlockedExchange)(&_exit_code, (LONG)out);
+		return out;
 	}
+
+	bool InternalResume()
+	{
+		std::lock_guard<std::mutex> lock(_resume_mutex);
+		if (!_tid || _started)
+			return false;
+
+		_started = true;
+		pthread_t trd = 0;
+		if (pthread_create(&trd, NULL, sProc, this) != 0) {
+			_started = false;
+			return false;
+		}
+		pthread_detach(trd);
+		return true;
+	}
+	
+public:
+	WinPortThread(WINPORT_THREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, LPDWORD lpThreadId) 
+		: WinPortEvent(true, false), _exit_code(0), _tid(WinPortThreadIDGenerate()),
+		_lpStartAddress(lpStartAddress), _lpParameter(lpParameter), _started(false)
+	{
+		if (lpThreadId)
+			*lpThreadId = _tid;
+//		fprintf(stderr, "::WinPortThread: %p\n", this);
+	}
+/*
+	~WinPortThread()
+	{
+		fprintf(stderr, "::~WinPortThread: %p\n", this);
+	}
+*/
 
 	DWORD GetExitCode()
 	{
-		return _exit_code;
+		return (DWORD)WINPORT(InterlockedCompareExchange)(&_exit_code, 0, 0);
 	}
 	
 	bool Resume()
 	{
-		std::lock_guard<std::mutex> lock(_thread_mutex);
-		if (!_thread)
+		Reference();
+		if (!InternalResume()) {
+			Dereference();
 			return false;
-			
-		_thread->Run();
+		}
 		return true;
 	}
-
-	void OnThreadStarted()
-	{
-		std::lock_guard<std::mutex> lock(_thread_mutex);
-		_thread = 0;
-	}
 };
 
-class WinPortThread : public wxThread
-{
-	WINPORT_THREAD_START_ROUTINE _lpStartAddress;
-	LPVOID _lpParameter;
-	WinPortThreadEvent *_event;
-
-public:
-	WinPortThread(WINPORT_THREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter)
-		:wxThread(wxTHREAD_DETACHED),  
-		_lpStartAddress(lpStartAddress), _lpParameter(lpParameter), 
-		_event(new WinPortThreadEvent(this) )
-	{
-		_event->Reference();
-	}
-
-	virtual ~WinPortThread()
-	{
-		_event->Dereference();
-	}
-
-	WinPortThreadEvent *Event()
-	{
-		return _event;
-	}
-protected:
-
-	virtual ExitCode Entry()
-	{
-		_event->OnThreadStarted();
-		DWORD r = _lpStartAddress(_lpParameter);
-		_event->OnThreadExited(r);
-		return 0;
-	}
-};
 
 WINPORT_DECL(CreateThread, HANDLE, (LPSECURITY_ATTRIBUTES lpThreadAttributes, 
 	SIZE_T dwStackSize, WINPORT_THREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId))
 {
-	WinPortThread *wpt = new WinPortThread(lpStartAddress, lpParameter);
-	HANDLE h = WinPortHandle_Register(wpt->Event());
-	if ((dwCreationFlags&CREATE_SUSPENDED)!=CREATE_SUSPENDED) {
-		wpt->Run();
-	} else {
-		fprintf(stderr, "TODO: ResumeThread\n");
+	WinPortThread *wpt = new WinPortThread(lpStartAddress, lpParameter, lpThreadId);
+	HANDLE h = WinPortHandle_Register(wpt);
+	if ((dwCreationFlags&CREATE_SUSPENDED) != CREATE_SUSPENDED) {
+		if (!wpt->Resume()) {
+			WinPortHandle_Deregister(h);
+			h = NULL;
+		}
 	}
 
 	return h;
@@ -100,12 +137,12 @@ WINPORT_DECL(CreateThread, HANDLE, (LPSECURITY_ATTRIBUTES lpThreadAttributes,
 
 WINPORT_DECL(GetCurrentThreadId, DWORD, ())
 {
-	return wxThread::GetCurrentId();
+	return (DWORD)(uintptr_t)pthread_self();
 }
 
 WINPORT_DECL(ResumeThread, DWORD, (HANDLE hThread))
 {
-	AutoWinPortHandle<WinPortThreadEvent> wph(hThread);
+	AutoWinPortHandle<WinPortThread> wph(hThread);
 	if (!wph) {
 		return WAIT_FAILED;
 	}

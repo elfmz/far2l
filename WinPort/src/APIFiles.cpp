@@ -7,9 +7,10 @@
 #include <fstream>
 #include <mutex>
 #include <utils.h>
-
-#include <wx/wx.h>
-#include <wx/display.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "WinCompat.h"
 #include "WinPort.h"

@@ -6,9 +6,11 @@
 #include <fstream>
 #include <mutex>
 #include <atomic>
-
-#include <wx/wx.h>
-#include <wx/display.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <assert.h>
 
 #include "WinCompat.h"
 #include "WinPort.h"

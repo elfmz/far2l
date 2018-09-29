@@ -8,9 +8,10 @@
 #include <sys/inotify.h>
 #endif
 #include <pthread.h>
-
-#include <wx/wx.h>
-#include <wx/display.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "WinPortHandle.h"
 #include "WinCompat.h"

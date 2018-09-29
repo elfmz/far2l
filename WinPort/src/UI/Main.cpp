@@ -19,8 +19,8 @@
 
 #define AREAS_REDUCTION
 
-ConsoleOutput g_wx_con_out;
-ConsoleInput g_wx_con_in;
+ConsoleOutput g_winport_con_out;
+ConsoleInput g_winport_con_in;
 bool g_broadway = false;
 static int g_exit_code = 0;
 enum
@@ -82,15 +82,15 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
-//      g_wx_con_out.WriteString(L"Hello", 5);
+//      g_winport_con_out.WriteString(L"Hello", 5);
 
 	
 	if (!InitPalettes()) {
 		uint xc,yc;
-		g_wx_con_out.GetSize(xc, yc);
-		g_wx_con_out.SetCursor( COORD {SHORT((xc>>1) - 5), SHORT(yc>>1)});
+		g_winport_con_out.GetSize(xc, yc);
+		g_winport_con_out.SetCursor( COORD {SHORT((xc>>1) - 5), SHORT(yc>>1)});
 		WCHAR msg[] = L"ERROR IN PALETTE FILE";
-		g_wx_con_out.WriteString(msg, wcslen(msg));
+		g_winport_con_out.WriteString(msg, wcslen(msg));
 	}
 
 	if (AppMain && !g_winport_app_thread) {
@@ -423,9 +423,9 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 	fprintf(stderr, "OnAccelerator: ID=%u ControlKeyState=0x%x Key=0x%x '%c'\n", 
 		event.GetId(), ir.Event.KeyEvent.dwControlKeyState, ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualKeyCode );
 		
-	g_wx_con_in.Enqueue(&ir, 1);
+	g_winport_con_in.Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
-	g_wx_con_in.Enqueue(&ir, 1);
+	g_winport_con_in.Enqueue(&ir, 1);
 }
 
 ////////////////////////////
@@ -485,7 +485,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0),
 		_refresh_rects_throttle(0)
 {
-	g_wx_con_out.SetListener(this);
+	g_winport_con_out.SetListener(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
 	_periodic_timer->Start(500);
 	OnConsoleOutputTitleChanged();
@@ -494,7 +494,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 WinPortPanel::~WinPortPanel()
 {
 	delete _periodic_timer;
-	g_wx_con_out.SetListener(NULL);
+	g_winport_con_out.SetListener(NULL);
 }
 
 
@@ -504,15 +504,15 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	GetClientSize(&w, &h);
 	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
 	unsigned int cw, ch;
-	g_wx_con_out.GetSize(cw, ch);
+	g_winport_con_out.GetSize(cw, ch);
 	LoadSize(cw, ch);
 	wxDisplay disp(GetDisplayIndex());
 	wxRect rc = disp.GetClientArea();
 	if ((unsigned)rc.GetWidth() >= cw * _paint_context.FontWidth() 
 		&& (unsigned)rc.GetHeight() >= ch * _paint_context.FontHeight()) {
-		g_wx_con_out.SetSize(cw, ch);		
+		g_winport_con_out.SetSize(cw, ch);		
 	}
-	g_wx_con_out.GetSize(cw, ch);
+	g_winport_con_out.GetSize(cw, ch);
 	
 	cw*= _paint_context.FontWidth();
 	ch*= _paint_context.FontHeight();
@@ -544,7 +544,7 @@ void WinPortPanel::CheckForResizePending()
 			unsigned int prev_width = 0, prev_height = 0;
 			_resize_pending = RP_NONE;
 
-			g_wx_con_out.GetSize(prev_width, prev_height);
+			g_winport_con_out.GetSize(prev_width, prev_height);
 	
 			int width = 0, height = 0;
 			_frame->GetClientSize(&width, &height);
@@ -559,7 +559,7 @@ void WinPortPanel::CheckForResizePending()
 #ifdef __APPLE__
 				this->SetSize(width * _paint_context.FontWidth(), height * _paint_context.FontHeight());
 #endif
-				g_wx_con_out.SetSize(width, height);
+				g_winport_con_out.SetSize(width, height);
 				if (!_frame->IsFullScreen() && !_frame->IsMaximized() && _frame->IsShown()) {
 					SaveSize(width, height);
 				}
@@ -567,7 +567,7 @@ void WinPortPanel::CheckForResizePending()
 				ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
 				ir.Event.WindowBufferSizeEvent.dwSize.X = width;
 				ir.Event.WindowBufferSizeEvent.dwSize.Y = height;
-				g_wx_con_in.Enqueue(&ir, 1);
+				g_winport_con_in.Enqueue(&ir, 1);
 			}
 #ifndef __APPLE__
 			Refresh(false);
@@ -802,7 +802,7 @@ void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
 {
 	unsigned int width = 0, height = 0;
-	g_wx_con_out.GetSize(width, height);
+	g_winport_con_out.GetSize(width, height);
 	int prev_width = 0, prev_height = 0;
 	_frame->GetClientSize(&prev_width, &prev_height);
 	fprintf(stderr, "OnConsoleResized client size: %u %u\n", prev_width, prev_height);
@@ -825,7 +825,7 @@ void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
 
 void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 {
-	const std::wstring &title = g_wx_con_out.GetTitle();
+	const std::wstring &title = g_winport_con_out.GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
 	_frame->SetTitle(title.c_str());
 }
@@ -887,7 +887,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
 			ir.Event.KeyEvent.dwControlKeyState|= (RIGHT_CTRL_PRESSED | ENHANCED_KEY);
 		}
-		g_wx_con_in.Enqueue(&ir, 1);
+		g_winport_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
 	event.Skip();
@@ -914,7 +914,7 @@ void WinPortPanel::CheckForSuddenKeyUp( wxKeyCode keycode)
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
-	g_wx_con_in.Enqueue(&ir, 1);
+	g_winport_con_in.Enqueue(&ir, 1);
 	_exclusive_hotkeys.Reset();
 }
 
@@ -948,7 +948,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
 		}
 	
-		g_wx_con_in.Enqueue(&ir, 1);
+		g_winport_con_in.Enqueue(&ir, 1);
 	}
 	CheckForSuddenKeyUp(WXK_CONTROL);
 	CheckForSuddenKeyUp(WXK_ALT);
@@ -985,10 +985,10 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		}
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
-		g_wx_con_in.Enqueue(&ir, 1);
+		g_winport_con_in.Enqueue(&ir, 1);
 		
 		ir.Event.KeyEvent.bKeyDown = FALSE;
-		g_wx_con_in.Enqueue(&ir, 1);
+		g_winport_con_in.Enqueue(&ir, 1);
 		
 	}
 	//event.Skip();
@@ -1038,7 +1038,7 @@ COORD WinPortPanel::TranslateMousePosition( wxMouseEvent &event )
 	out.Y = (SHORT)(USHORT)(pos.y / _paint_context.FontHeight());
 
 	unsigned int width = 80, height = 25;
-	g_wx_con_out.GetSize(width, height);
+	g_winport_con_out.GetSize(width, height);
 	
 	if ( (USHORT)out.X >= width) out.X = width - 1;
 	if ( (USHORT)out.Y >= height) out.Y = height - 1;
@@ -1122,7 +1122,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 	|| memcmp(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event)) != 0) {
 		memcpy(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event));
 		_prev_mouse_event_ts = now;
-		g_wx_con_in.Enqueue(&ir, 1);
+		g_winport_con_in.Enqueue(&ir, 1);
 	}
 }
 
@@ -1162,7 +1162,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 					_text2clip+= NATIVE_EOLW;
 				for (pos.X = x1; pos.X<=x2; ++pos.X) {
 					CHAR_INFO ch;
-					if (g_wx_con_out.Read(ch, pos))
+					if (g_winport_con_out.Read(ch, pos))
 						_text2clip+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
 				}
 			}
@@ -1194,7 +1194,7 @@ void WinPortPanel::OnConsoleAdhocQuickEditSync( wxCommandEvent& event )
 		ir.EventType = MOUSE_EVENT;
 		ir.Event.MouseEvent.dwButtonState = _mouse_state;
 		ir.Event.MouseEvent.dwMousePosition = pos_char;
-		g_wx_con_in.Enqueue(&ir, 1);
+		g_winport_con_in.Enqueue(&ir, 1);
 		_last_mouse_event.SetEventType(wxEVT_LEFT_DOWN);
 		_last_mouse_event.SetLeftDown(true);
 		fprintf(stderr, "OnConsoleAdhocQuickEditSync: lbutton pressed, %u\n", _last_mouse_event.LeftIsDown());
@@ -1305,7 +1305,7 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
 		ir.Event.KeyEvent.wVirtualKeyCode = k;
-		g_wx_con_in.Enqueue(&ir, 1);		
+		g_winport_con_in.Enqueue(&ir, 1);		
 	}
 	_pressed_keys.clear();
 	_right_control = false;

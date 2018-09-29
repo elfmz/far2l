@@ -1,9 +1,6 @@
 
 #include "ConsoleBuffer.h"
 
-#include <wx/wx.h>
-#include <wx/display.h>
-
 ConsoleBuffer::ConsoleBuffer() : _width(0)
 {
 }

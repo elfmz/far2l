@@ -9,7 +9,6 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
-#include <wx/clipbrd.h>
 
 #include "WinCompat.h"
 #include "WinPort.h"

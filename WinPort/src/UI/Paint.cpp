@@ -22,7 +22,7 @@
 # define DEFAULT_FONT_SIZE	16
 #endif
 
-extern ConsoleOutput g_wx_con_out;
+extern ConsoleOutput g_winport_con_out;
 
 static unsigned int DivCeil(unsigned int v, unsigned int d)
 {
@@ -302,7 +302,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		}
 	}
 #endif
-	unsigned int cw, ch; g_wx_con_out.GetSize(cw, ch);
+	unsigned int cw, ch; g_winport_con_out.GetSize(cw, ch);
 	if (cw > MAXSHORT) cw = MAXSHORT;
 	if (ch > MAXSHORT) ch = MAXSHORT;
 
@@ -332,7 +332,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		if (lc == wxOutRegion) {
 			continue;
 		}
-		g_wx_con_out.Read(&_line[area.Left], data_size, data_pos, screen_rect);
+		g_winport_con_out.Read(&_line[area.Left], data_size, data_pos, screen_rect);
 //		if (lc == wxPartRegion) abort();
 		painter.LineBegin(cy);
 		for (unsigned int cx = (unsigned)area.Left; cx <= (unsigned)area.Right; ++cx) {
@@ -370,7 +370,7 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 void ConsolePaintContext::ToggleCursor() 
 {
 	_cursor_state = !_cursor_state; 
-	const COORD &pos = g_wx_con_out.GetCursor();
+	const COORD &pos = g_winport_con_out.GetCursor();
 	SMALL_RECT area = {pos.X, pos.Y, pos.X, pos.Y};
 	RefreshArea( area );
 }
@@ -397,7 +397,7 @@ bool ConsolePaintContext::IsSharpSupported()
 CursorProps::CursorProps(bool state) : visible(false), height(1)
 {
 	if (state) {
-		const COORD pos = g_wx_con_out.GetCursor(height, visible);
+		const COORD pos = g_winport_con_out.GetCursor(height, visible);
 		x = (unsigned int) pos.X;
 		y = (unsigned int) pos.Y;
 	}

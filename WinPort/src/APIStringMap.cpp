@@ -7,9 +7,6 @@
 #include <mutex>
 #include <vector>
 
-#include <wx/wx.h>
-#include <wx/display.h>
-
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "wineguts.h"

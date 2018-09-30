@@ -1,0 +1,230 @@
+#include <stdlib.h>
+#include <map>
+#include <algorithm>
+#if __FreeBSD__
+# include <malloc_np.h>
+#elif __APPLE__
+# include <malloc/malloc.h>
+#else
+# include <malloc.h>
+#endif
+#include <wx/wx.h>
+#include <wx/display.h>
+#include <wx/clipbrd.h>
+
+#include "wxClipboardBackend.h"
+#include "CallInMain.h"
+
+IClipboardBackend *WinPortClipboard_SetBackend(IClipboardBackend *clipboard_backend);
+
+
+static class CustomFormats : std::map<UINT, wxDataFormat>
+{
+	UINT _next_index;
+
+public:
+	CustomFormats() :_next_index(0)
+	{
+	}
+
+	UINT Register(LPCWSTR lpszFormat)
+	{
+		wxString format(lpszFormat);
+		for (const auto &i : *this) {
+			if (i.second.GetId() == format)
+				return i.first;
+		}
+
+		for (;;) {
+			_next_index++;
+			if (_next_index < 0xC000 || _next_index > 0xFFFF)
+				_next_index = 0xC000;
+			if (find(_next_index)==end()) {
+				insert(value_type(_next_index, wxDataFormat(format)));
+				return _next_index;
+			}
+		}
+	}
+		
+	const wxDataFormat *Lookup(UINT v) const
+	{
+		const_iterator i = find(v);
+		return ( i == end() ) ? nullptr : &i->second;
+	}
+
+} g_wx_custom_formats;
+
+static wxDataObjectComposite *g_wx_data_to_clipboard = nullptr;
+
+wxClipboardBackend::wxClipboardBackend()
+{
+	_default_backend = WinPortClipboard_SetBackend(this);
+}
+
+wxClipboardBackend::~wxClipboardBackend()
+{
+	WinPortClipboard_SetBackend(_default_backend);
+}
+
+bool wxClipboardBackend::OnClipboardOpen()
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::OnClipboardOpen, this);
+		return CallInMain<bool>(fn);
+	}
+		
+	if (!wxTheClipboard->Open()) {
+		fprintf(stderr, "OpenClipboard - FAILED\n");
+		return FALSE;
+	}
+	fprintf(stderr, "OpenClipboard\n");
+	return TRUE;
+}
+
+void wxClipboardBackend::OnClipboardClose()
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::OnClipboardClose, this);
+		CallInMainNoRet(fn);
+		return;
+	}
+	fprintf(stderr, "CloseClipboard\n");
+
+	if (g_wx_data_to_clipboard) {
+		wxTheClipboard->SetData( g_wx_data_to_clipboard);
+		g_wx_data_to_clipboard = nullptr;
+	}
+	wxTheClipboard->Flush();
+	wxTheClipboard->Close();
+}
+
+void wxClipboardBackend::OnClipboardEmpty()
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::OnClipboardEmpty, this);
+		CallInMainNoRet(fn);
+		return;
+	}
+
+	fprintf(stderr, "EmptyClipboard\n");
+	delete g_wx_data_to_clipboard;
+	g_wx_data_to_clipboard = nullptr;
+	wxTheClipboard->Clear();
+}
+
+bool wxClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::OnClipboardIsFormatAvailable, this, format);
+		return CallInMain<bool>(fn);
+	}
+		
+	if (format==CF_UNICODETEXT || format==CF_TEXT) {
+		return wxTheClipboard->IsSupported( wxDF_TEXT ) ? TRUE : FALSE;
+	} else {
+		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
+		if (!data_format) {
+			fprintf(stderr, "IsClipboardFormatAvailable(%u) - unrecognized format\n", format);
+			return FALSE;
+		}
+			
+		return wxTheClipboard->IsSupported(*data_format) ? TRUE : FALSE;
+	}
+}
+
+void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::OnClipboardSetData, this, format, data);
+		return CallInMain<void *>(fn);
+	}
+		
+#ifdef _WIN32
+	size_t len = _msize(mem);
+#elif defined(__APPLE__)
+	size_t len = malloc_size(mem);
+#else
+	size_t len = malloc_usable_size(data);
+#endif
+	fprintf(stderr, "SetClipboardData: %u\n", format);
+	if (!g_wx_data_to_clipboard) {
+		g_wx_data_to_clipboard = new wxDataObjectComposite;
+	}
+	if (format==CF_UNICODETEXT) {
+		g_wx_data_to_clipboard->Add(new wxTextDataObject((const wchar_t *)data), true);
+	} else if (format==CF_TEXT) {
+		g_wx_data_to_clipboard->Add(new wxTextDataObject((const char *)data));
+	} else {
+		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
+		if (!data_format) {
+			fprintf(stderr, 
+				"SetClipboardData(%u, %p [%u]) - unrecognized format\n", 
+				format, data, (unsigned int)len);
+		} else {
+			wxCustomDataObject *dos = new wxCustomDataObject(*data_format);
+			dos->SetData(len, data);		
+			g_wx_data_to_clipboard->Add(dos);
+		}
+	}
+
+	return data;
+}
+
+void *wxClipboardBackend::OnClipboardGetData(UINT format)
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::OnClipboardGetData, this, format);
+		return CallInMain<void *>(fn);
+	}
+
+	PVOID p = nullptr;		
+	if (format==CF_UNICODETEXT || format==CF_TEXT) {
+		wxTextDataObject data;
+		if (!wxTheClipboard->GetData( data ))
+			return nullptr;
+
+		p = (format==CF_UNICODETEXT) ? 
+			(void *)_wcsdup(data.GetText().wchar_str()) : 
+			(void *)_strdup(data.GetText().char_str());
+	} else {
+		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
+		if (!data_format) {
+			fprintf(stderr, "GetClipboardData(%u) - not registered format\n", format);
+			return nullptr;
+		}
+		
+		if (!wxTheClipboard->IsSupported(*data_format)) {
+			//fprintf(stderr, "GetClipboardData(%s) - not supported format\n", 
+			//	(const char *)data_format->GetId().char_str());
+			return nullptr;
+		}
+			
+		wxCustomDataObject data(*data_format);
+		if (!wxTheClipboard->GetData( data )) {
+			fprintf(stderr, "GetClipboardData(%s) - GetData failed\n", 
+				(const char *)data.GetFormat().GetId().char_str());
+			return nullptr;
+		}
+				
+		const size_t data_size = data.GetDataSize();
+		p = calloc(data_size + 1, 1); 
+		if (!p) {
+			fprintf(stderr, "GetClipboardData(%s) - cant alloc %u + 1\n", 
+				(const char *)data_format->GetId().char_str(), (unsigned int)data_size);
+			return nullptr;
+		}
+		data.GetDataHere(p);
+	}
+
+	return p;
+}
+
+UINT wxClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::OnClipboardRegisterFormat, this, lpszFormat);
+		return CallInMain<UINT>(fn);
+	}
+
+	return g_wx_custom_formats.Register(lpszFormat);
+}

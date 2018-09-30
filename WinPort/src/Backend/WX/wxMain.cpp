@@ -6,6 +6,7 @@
 #include "Paint.h"
 #include "utils.h"
 #include "WinPortHandle.h"
+#include "wxClipboardBackend.h"
 
 #include <wx/wx.h>
 #include <wx/display.h>
@@ -19,8 +20,8 @@
 
 #define AREAS_REDUCTION
 
-ConsoleOutput g_winport_con_out;
-ConsoleInput g_winport_con_in;
+extern ConsoleOutput g_winport_con_out;
+extern ConsoleInput g_winport_con_in;
 bool g_broadway = false;
 static int g_exit_code = 0;
 enum
@@ -28,8 +29,7 @@ enum
     TIMER_ID_PERIODIC = 10
 };
 
-extern "C" void WinPortInitRegistry();
-extern "C" bool WinPortIsClipboardBusy();
+bool WinPortClipboard_IsBusy();
 
 
 static void NormalizeArea(SMALL_RECT &area)
@@ -42,11 +42,11 @@ class WinPortAppThread : public wxThread
 {
 public:
 	WinPortAppThread(int argc, char **argv, int(*appmain)(int argc, char **argv))
-		: wxThread(wxTHREAD_DETACHED), _listener(nullptr), _argv(argv), _argc(argc), _appmain(appmain)  {  }
+		: wxThread(wxTHREAD_DETACHED), _backend(nullptr), _argv(argv), _argc(argc), _appmain(appmain)  {  }
 
-	wxThreadError Start(ConsoleOutputListener *listener)
+	wxThreadError Start(IConsoleOutputBackend *backend)
 	{
-		_listener = listener;
+		_backend = backend;
 		return Run();
 	}
 
@@ -54,7 +54,7 @@ protected:
 	virtual ExitCode Entry()
 	{
 		g_exit_code = _appmain(_argc, _argv);
-		_listener->OnConsoleExit();
+		_backend->OnConsoleExit();
 		//exit(_r);
 		return 0;
 	}
@@ -62,29 +62,23 @@ protected:
 private:
 	WinPortAppThread() = delete;
 	WinPortAppThread(const WinPortAppThread&) = delete;
-	ConsoleOutputListener *_listener;
+	IConsoleOutputBackend *_backend;
 	char **_argv;
 	int _argc;
 	int(*_appmain)(int argc, char **argv);
 } *g_winport_app_thread = NULL;
 
 
-extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
+bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
+	if (!wxInitialize())
+		return false;
+
 	const char *gdk_backend = getenv("GDK_BACKEND");
 	if (gdk_backend && strcmp(gdk_backend, "broadway")==0)
 		g_broadway = true;
 
-	if (!wxInitialize() ) {
-		fprintf(stderr, "wxInitialize failed\n");
-		return -1;
-	}
 
-	WinPortInitRegistry();
-	WinPortInitWellKnownEnv();
-//      g_winport_con_out.WriteString(L"Hello", 5);
-
-	
 	if (!InitPalettes()) {
 		uint xc,yc;
 		g_winport_con_out.GetSize(xc, yc);
@@ -93,16 +87,20 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		g_winport_con_out.WriteString(msg, wcslen(msg));
 	}
 
+	wxClipboardBackend clip_backend;
+
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new WinPortAppThread(argc, argv, AppMain);
-		if (!g_winport_app_thread)
-			return -1;		
+		if (!g_winport_app_thread) {
+			wxUninitialize();
+			return false;
+		}
 	}
 
 	wxEntry(argc, argv);
 	wxUninitialize();
-	WinPortHandle_FinalizeApp();
-	return g_exit_code;
+	*result = g_exit_code;
+	return true;
 }
 
 ///////////////
@@ -184,7 +182,7 @@ public:
 
 class WinPortFrame;
 
-class WinPortPanel: public wxPanel, protected ConsoleOutputListener
+class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 {
 public:
     WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);
@@ -485,7 +483,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0),
 		_refresh_rects_throttle(0)
 {
-	g_winport_con_out.SetListener(this);
+	g_winport_con_out.SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
 	_periodic_timer->Start(500);
 	OnConsoleOutputTitleChanged();
@@ -494,7 +492,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 WinPortPanel::~WinPortPanel()
 {
 	delete _periodic_timer;
-	g_winport_con_out.SetListener(NULL);
+	g_winport_con_out.SetBackend(NULL);
 }
 
 
@@ -1279,7 +1277,7 @@ void WinPortPanel::OnConsoleExit()
 void WinPortPanel::CheckPutText2CLip()
 {
 	if (!_text2clip.empty())  {
-		if (!WinPortIsClipboardBusy()) {
+		if (!WinPortClipboard_IsBusy()) {
 			if (wxTheClipboard->Open()) {
 				std::wstring text2clip; text2clip.swap(_text2clip);
 				wxTheClipboard->SetData( new wxTextDataObject(text2clip) );

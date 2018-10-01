@@ -137,7 +137,7 @@ WINPORT_DECL(CreateThread, HANDLE, (LPSECURITY_ATTRIBUTES lpThreadAttributes,
 
 WINPORT_DECL(GetCurrentThreadId, DWORD, ())
 {
-	return (DWORD)(uintptr_t)pthread_self();
+	return WinPortThreadID_Get();
 }
 
 WINPORT_DECL(ResumeThread, DWORD, (HANDLE hThread))

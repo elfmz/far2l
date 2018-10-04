@@ -42,6 +42,8 @@ src/Backend/WX/wxMain.cpp
 src/Backend/WX/wxClipboardBackend.cpp
 src/Backend/WX/ExclusiveHotkeys.cpp
 src/Backend/WX/wxWinTranslations.cpp
+src/Backend/TTY/TTYBackend.cpp
+src/Backend/TTY/TTYWriter.cpp
 src/sudo/sudo_common.cpp
 src/sudo/sudo_client.cpp
 src/sudo/sudo_client_api.cpp

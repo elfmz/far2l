@@ -220,13 +220,13 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 	int r;
 	if (ExecFlags & EF_HIDEOUT) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
-		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
+//		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
 
 	} else {
 		ProcessShowClock++;
 		CtrlObject->CmdLine->ShowBackground();
 		CtrlObject->CmdLine->Redraw();
-		CtrlObject->CmdLine->SetString(L"", TRUE);
+//		CtrlObject->CmdLine->SetString(L"", TRUE);
 		ScrBuf.Flush();
 		DWORD saved_mode = 0, dw;
 		WINPORT(GetConsoleMode)(NULL, &saved_mode);
@@ -364,6 +364,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 		
 		r = -1; 
 	} else {
+		CtrlObject->CmdLine->SetString(L"", TRUE);
 		r = Execute(CmdLine, AlwaysWaitFinish, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
 	}
 

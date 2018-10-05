@@ -1118,8 +1118,9 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 	// excessive mouse events by skipping event if it duplicates
 	// most recently queued event (fix #369)
 	DWORD now = WINPORT(GetTickCount)();
-	if (_prev_mouse_event_ts + 500 <= now
-	|| memcmp(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event)) != 0) {
+	if ( (ir.Event.MouseEvent.dwEventFlags & (MOUSE_HWHEELED|MOUSE_WHEELED)) != 0
+	 || _prev_mouse_event_ts + 500 <= now
+	 || memcmp(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event)) != 0) {
 		memcpy(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event));
 		_prev_mouse_event_ts = now;
 		g_winport_con_in.Enqueue(&ir, 1);

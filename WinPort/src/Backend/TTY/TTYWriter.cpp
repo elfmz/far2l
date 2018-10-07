@@ -1,6 +1,30 @@
 #include <stdarg.h>
+#include <assert.h>
+#include <string>
 #include "TTYWriter.h"
 #include "ConvertUTF.h"
+
+TTYWriter::Attributes::Attributes(WORD attributes) :
+	bold ( (attributes & FOREGROUND_INTENSITY) != 0),
+	underline( (attributes & BACKGROUND_INTENSITY) != 0),
+	foreground(0), background(0)
+{
+	if (attributes&FOREGROUND_RED) foreground|= 1;
+	if (attributes&FOREGROUND_GREEN) foreground|= 2;
+	if (attributes&FOREGROUND_BLUE) foreground|= 4;
+
+	if (attributes&BACKGROUND_RED) background|= 1;
+	if (attributes&BACKGROUND_GREEN) background|= 2;
+	if (attributes&BACKGROUND_BLUE) background|= 4;
+}
+
+bool TTYWriter::Attributes::operator ==(const Attributes &attr) const
+{
+	return (bold == attr.bold && underline == attr.underline
+		&& foreground == attr.foreground && background == attr.background);
+}
+
+///////////////////////
 
 bool TTYWriter::WriteRaw(const char *str, int len)
 {
@@ -48,7 +72,33 @@ bool TTYWriter::MoveCursor(unsigned int y, unsigned int x, bool force)
 
 bool TTYWriter::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
+	std::string tmp;
 	for (;cnt; ++ci,--cnt) {
+		Attributes attr(ci->Attributes);
+		if (_attr != attr) {
+			tmp = "\x1b[";
+			if (_attr.bold != attr.bold)
+				tmp+= attr.bold ? "1;" : "22;";
+			if (_attr.underline != attr.underline)
+				tmp+= attr.bold ? "4;" : "24;";
+			if (_attr.foreground != attr.foreground) {
+				tmp+= '3';
+				tmp+= '0' + attr.foreground;
+				tmp+= ';';
+			}
+			if (_attr.background != attr.background) {
+				tmp+= '4';
+				tmp+= '0' + attr.background;
+				tmp+= ';';
+			}
+			assert(tmp[tmp.size() - 1] == ';');
+			tmp[tmp.size() - 1] = 'm';
+			if (!WriteRaw(tmp.c_str(), tmp.size()))
+				return false;
+
+			_attr = attr;
+		}
+
 		if (ci->Char.UnicodeChar == 0 || ci->Char.UnicodeChar == ' ') {
 			if (!WriteRaw(" ", 1))
 				return false;

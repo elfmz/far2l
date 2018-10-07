@@ -8,7 +8,6 @@
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
 
-
 TTYBackend::~TTYBackend()
 {
 	if (_reader_trd) {
@@ -93,7 +92,7 @@ void TTYBackend::DispatchOutput()
 				 || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
 				 || cur_line[x].Attributes != last_line[x].Attributes) {
 					_tty_writer.MoveCursor(y, x);
-					_tty_writer.WriteLine(cur_line, 1);
+					_tty_writer.WriteLine(&cur_line[x], 1);
 				}
 			}
 		}

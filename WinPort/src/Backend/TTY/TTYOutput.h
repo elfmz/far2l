@@ -3,7 +3,7 @@
 #include <vector>
 #include <WinCompat.h>
 
-class TTYWriter
+class TTYOutput
 {
 	enum { AUTO_FLUSH_THRESHOLD = 0x1000 };
 
@@ -29,12 +29,14 @@ class TTYWriter
 		bool operator !=(const Attributes &attr) const {return !(operator ==(attr)); }
 	} _attr;
 
+	int _out;
 	std::vector<char> _rawbuf;
 	void WriteReally(const char *str, int len);
 
 	void Write(const char *str, int len);
 	void Format(const char *fmt, ...);
 public:
+	TTYOutput(int out);
 
 	void Flush();
 	void SetScreenBuffer(bool alternate);

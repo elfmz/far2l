@@ -7,7 +7,13 @@ class TTYWriter
 {
 	enum { AUTO_FLUSH_THRESHOLD = 0x1000 };
 
-	unsigned int _y = -1, _x = -1;
+	struct Cursor
+	{
+		unsigned int y = -1, x = -1;
+		bool visible = false;
+		unsigned char height = 0;
+	} _cursor;
+
 	struct Attributes
 	{
 		Attributes() = default;
@@ -31,7 +37,9 @@ class TTYWriter
 public:
 
 	void Flush();
+	void SetScreenBuffer(bool alternate);
 
+	void ChangeCursor(bool visible, unsigned char height, bool force = false);
 	void MoveCursor(unsigned int y, unsigned int x, bool force = false);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
 };

@@ -32,14 +32,14 @@ void TTYWriter::WriteReally(const char *str, int len)
 	for (size_t ofs = 0; len > 0;) {
 		ssize_t wr = write(1, str, len);
 		if (wr <= 0) {
-			throw std::runtime_error("TTYWriter::WriteRaw: write");
+			throw std::runtime_error("TTYWriter::WriteReally: write");
 		}
 		len-= wr;
 		ofs+= wr;
 	}
 }
 
-void TTYWriter::WriteRaw(const char *str, int len)
+void TTYWriter::Write(const char *str, int len)
 {
 	size_t prev_size = _rawbuf.size();
 	if (2 * len >= AUTO_FLUSH_THRESHOLD) {
@@ -53,7 +53,7 @@ void TTYWriter::WriteRaw(const char *str, int len)
 	}
 }
 
-void TTYWriter::FormatRaw(const char *fmt, ...)
+void TTYWriter::Format(const char *fmt, ...)
 {
 	size_t prev_size = _rawbuf.size();
 	_rawbuf.resize(prev_size + strlen(fmt) + 0x40);
@@ -64,7 +64,7 @@ void TTYWriter::FormatRaw(const char *fmt, ...)
 		va_end(va);
 		if (r < 0) {
 			_rawbuf.resize(prev_size);
-			throw std::runtime_error("TTYWriter::FormatRaw: bad format");
+			throw std::runtime_error("TTYWriter::Format: bad format");
 		}
 		if (r < _rawbuf.size()) {
 			_rawbuf.resize(prev_size + r);
@@ -76,11 +76,21 @@ void TTYWriter::FormatRaw(const char *fmt, ...)
 		Flush();
 }
 
+void TTYWriter::Flush()
+{
+	if (!_rawbuf.empty()) {
+		WriteReally(&_rawbuf[0], _rawbuf.size());
+		_rawbuf.resize(0);
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 void TTYWriter::MoveCursor(unsigned int y, unsigned int x, bool force)
 {
 	if (force || x != _x || y != _y) {
 // ESC[#;#H Moves cursor to line #, column #
-		FormatRaw("\x1b[%d;%dH", y, x);
+		Format("\x1b[%d;%dH", y, x);
 		_x = x;
 		_y = y;
 	}
@@ -109,16 +119,16 @@ void TTYWriter::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			}
 			assert(tmp[tmp.size() - 1] == ';');
 			tmp[tmp.size() - 1] = 'm';
-			WriteRaw(tmp.c_str(), tmp.size());
+			Write(tmp.c_str(), tmp.size());
 
 			_attr = attr;
 		}
 
 		if (ci->Char.UnicodeChar == 0 || ci->Char.UnicodeChar == ' ') {
-			WriteRaw(" ", 1);
+			Write(" ", 1);
 
 		} else if (ci->Char.UnicodeChar == 0x1b) {
-			WriteRaw("\x1b\x1b", 2);
+			Write("\x1b\x1b", 2);
 
 		} else {
 			UTF8 buf[16] = {};
@@ -127,19 +137,11 @@ void TTYWriter::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 
 			if (ConvertUTF32toUTF8 (&sourceStart, sourceStart + 1, &targetStart,
 				targetStart + sizeof(buf), lenientConversion) == conversionOK) {
-				WriteRaw((const char *)&buf[0], targetStart - &buf[0]);
+				Write((const char *)&buf[0], targetStart - &buf[0]);
 			} else {
-				WriteRaw("?", 1);
+				Write("?", 1);
 			}
 		}
 		++_x;
-	}
-}
-
-void TTYWriter::Flush()
-{
-	if (!_rawbuf.empty()) {
-		WriteReally(&_rawbuf[0], _rawbuf.size());
-		_rawbuf.resize(0);
 	}
 }

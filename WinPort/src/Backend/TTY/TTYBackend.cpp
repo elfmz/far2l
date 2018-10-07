@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
 #include "utils.h"
 #include "WinPortHandle.h"
 #include "ConsoleOutput.h"
@@ -7,6 +9,28 @@
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
+
+TTYBackend::TTYBackend() :
+	_stdin(dup(0)),
+	_stdout(dup(1)),
+	_tty_out(_stdout)
+{
+	fcntl(_stdin, F_SETFD, FD_CLOEXEC);
+	fcntl(_stdout, F_SETFD, FD_CLOEXEC);
+
+	memset(&_ts, 0 , sizeof(_ts));
+	_ts_r = tcgetattr(_stdout, &_ts);
+	if (_ts_r == 0) {
+		struct termios ts_ne = _ts;
+		//ts_ne.c_lflag &= ~(ECHO | ECHONL);
+		cfmakeraw(&ts_ne);
+		if (tcsetattr( _stdout, TCSADRAIN, &ts_ne ) != 0) {
+			perror("TTYBackend: tcsetattr");
+		}
+	} else {
+		perror("TTYBackend: tcgetattr");
+	}
+}
 
 TTYBackend::~TTYBackend()
 {
@@ -18,6 +42,13 @@ TTYBackend::~TTYBackend()
 		pthread_join(_writer_trd, nullptr);
 		_writer_trd = 0;
 	}
+	if (_ts_r == 0) {
+		if (tcsetattr( _stdout, TCSADRAIN, &_ts ) != 0) {
+			perror("~TTYBackend: tcsetattr");
+		}
+	}
+	close(_stdin);
+	close(_stdout);
 }
 
 bool TTYBackend::Startup()
@@ -44,8 +75,8 @@ bool TTYBackend::Startup()
 void TTYBackend::WriterThread()
 {
 	try {
-		_tty_writer.SetScreenBuffer(true);
-		_tty_writer.Flush();
+		_tty_out.SetScreenBuffer(true);
+		_tty_out.Flush();
 		while (!_exiting) {
 			AsyncEvent ae;
 			{
@@ -56,24 +87,29 @@ void TTYBackend::WriterThread()
 			if (ae.output)
 				DispatchOutput();
 
-			_tty_writer.Flush();
+			_tty_out.Flush();
 		}
-		_tty_writer.SetScreenBuffer(false);
-		_tty_writer.Flush();
+		_tty_out.SetScreenBuffer(false);
+		_tty_out.Flush();
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "WriterThread: %s\n", e.what());
-		_exiting = true;
+		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
 	}
+	_exiting = true;
 }
 
 void TTYBackend::ReaderThread()
 {
-	std::vector<char> buf;
-	while (!_exiting) {
-		char c = 0;
-		if (read(0, &c, 1) <= 0) break;
-		buf.emplace_back(c);
+	try {
+		while (!_exiting) {
+			char c = 0;
+			if (read(_stdin, &c, 1) <= 0) {
+				throw std::runtime_error("read failed");
+			}
+			_tty_in.OnChar(c);
+		}
+	} catch (std::exception &e) {
+		fprintf(stderr, "ReaderThread: %s <%d>\n", e.what(), errno);
 	}
 	_exiting = true;
 }
@@ -95,16 +131,16 @@ void TTYBackend::DispatchOutput()
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &output[y * _cur_width];
 		if (y >= _last_height) {
-			_tty_writer.MoveCursor(y, 0);
-			_tty_writer.WriteLine(cur_line, _cur_width);
+			_tty_out.MoveCursor(y, 0);
+			_tty_out.WriteLine(cur_line, _cur_width);
 		} else {
 			const CHAR_INFO *last_line = &_last_output[y * _last_width];
 			for (unsigned int x = 0; x < _cur_width; ++x) {
 				if (x >= _last_width
 				 || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
 				 || cur_line[x].Attributes != last_line[x].Attributes) {
-					_tty_writer.MoveCursor(y, x);
-					_tty_writer.WriteLine(&cur_line[x], 1);
+					_tty_out.MoveCursor(y, x);
+					_tty_out.WriteLine(&cur_line[x], 1);
 				}
 			}
 		}
@@ -113,8 +149,8 @@ void TTYBackend::DispatchOutput()
 #else
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &output[y * _cur_width];
-		_tty_writer.MoveCursor(y, 0);
-		_tty_writer.WriteLine(cur_line, _cur_width);
+		_tty_out.MoveCursor(y, 0);
+		_tty_out.WriteLine(cur_line, _cur_width);
 	}
 #endif
 	_last_width = _cur_width;
@@ -124,8 +160,8 @@ void TTYBackend::DispatchOutput()
 	UCHAR cur_height = 1;
 	bool cur_visible = false;
 	COORD cur_pos = g_winport_con_out.GetCursor(cur_height, cur_visible);
-	_tty_writer.MoveCursor(cur_pos.Y, cur_pos.X);
-	_tty_writer.ChangeCursor(cur_visible, cur_height);
+	_tty_out.MoveCursor(cur_pos.Y, cur_pos.X);
+	_tty_out.ChangeCursor(cur_visible, cur_height);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -144,7 +180,7 @@ void TTYBackend::OnConsoleOutputResized()
 
 void TTYBackend::OnConsoleOutputTitleChanged()
 {
-	//_tty_writer.SetWindowTitle(g_winport_con_out.GetTitle());
+	//_tty_out.SetWindowTitle(g_winport_con_out.GetTitle());
 	//ESC]2;titleST
 }
 

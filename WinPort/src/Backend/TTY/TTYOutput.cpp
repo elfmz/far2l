@@ -1,10 +1,10 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <string>
-#include "TTYWriter.h"
+#include "TTYOutput.h"
 #include "ConvertUTF.h"
 
-TTYWriter::Attributes::Attributes(WORD attributes) :
+TTYOutput::Attributes::Attributes(WORD attributes) :
 	bold ( (attributes & FOREGROUND_INTENSITY) != 0),
 	underline( (attributes & BACKGROUND_INTENSITY) != 0),
 	foreground(0), background(0)
@@ -18,7 +18,7 @@ TTYWriter::Attributes::Attributes(WORD attributes) :
 	if (attributes&BACKGROUND_BLUE) background|= 4;
 }
 
-bool TTYWriter::Attributes::operator ==(const Attributes &attr) const
+bool TTYOutput::Attributes::operator ==(const Attributes &attr) const
 {
 	return (bold == attr.bold && underline == attr.underline
 		&& foreground == attr.foreground && background == attr.background);
@@ -26,20 +26,23 @@ bool TTYWriter::Attributes::operator ==(const Attributes &attr) const
 
 ///////////////////////
 
+TTYOutput::TTYOutput(int out) : _out(out)
+{
+}
 
-void TTYWriter::WriteReally(const char *str, int len)
+void TTYOutput::WriteReally(const char *str, int len)
 {
 	for (size_t ofs = 0; len > 0;) {
-		ssize_t wr = write(1, str, len);
+		ssize_t wr = write(_out, str, len);
 		if (wr <= 0) {
-			throw std::runtime_error("TTYWriter::WriteReally: write");
+			throw std::runtime_error("TTYOutput::WriteReally: write");
 		}
 		len-= wr;
 		ofs+= wr;
 	}
 }
 
-void TTYWriter::Write(const char *str, int len)
+void TTYOutput::Write(const char *str, int len)
 {
 	size_t prev_size = _rawbuf.size();
 	if (2 * len >= AUTO_FLUSH_THRESHOLD) {
@@ -53,7 +56,7 @@ void TTYWriter::Write(const char *str, int len)
 	}
 }
 
-void TTYWriter::Format(const char *fmt, ...)
+void TTYOutput::Format(const char *fmt, ...)
 {
 	size_t prev_size = _rawbuf.size();
 	_rawbuf.resize(prev_size + strlen(fmt) + 0x40);
@@ -64,7 +67,7 @@ void TTYWriter::Format(const char *fmt, ...)
 		va_end(va);
 		if (r < 0) {
 			_rawbuf.resize(prev_size);
-			throw std::runtime_error("TTYWriter::Format: bad format");
+			throw std::runtime_error("TTYOutput::Format: bad format");
 		}
 		if (r < _rawbuf.size()) {
 			_rawbuf.resize(prev_size + r);
@@ -76,7 +79,7 @@ void TTYWriter::Format(const char *fmt, ...)
 		Flush();
 }
 
-void TTYWriter::Flush()
+void TTYOutput::Flush()
 {
 	if (!_rawbuf.empty()) {
 		WriteReally(&_rawbuf[0], _rawbuf.size());
@@ -86,24 +89,24 @@ void TTYWriter::Flush()
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-void TTYWriter::SetScreenBuffer(bool alternate)
+void TTYOutput::SetScreenBuffer(bool alternate)
 {
-		Format("\x1b[?1049%c", alternate ? 'h' : 'l');
+	Format("\x1b[?1049%c", alternate ? 'h' : 'l');
 }
 
-void TTYWriter::ChangeCursor(bool visible, unsigned char height, bool force)
+void TTYOutput::ChangeCursor(bool visible, unsigned char height, bool force)
 {
 	if (force || _cursor.visible != visible) {
 		Format("\x1b[?25%c", visible ? 'h' : 'l');
 		_cursor.visible = visible;
 	}
-	if (force || _cursor.height!= height) {
+	if (force || _cursor.height != height) {
 		//TODO: far2l VT extension
 		_cursor.height = height;
 	}
 }
 
-void TTYWriter::MoveCursor(unsigned int y, unsigned int x, bool force)
+void TTYOutput::MoveCursor(unsigned int y, unsigned int x, bool force)
 {
 	if (force || x != _cursor.x || y != _cursor.y) {
 // ESC[#;#H Moves cursor to line #, column #
@@ -113,7 +116,7 @@ void TTYWriter::MoveCursor(unsigned int y, unsigned int x, bool force)
 	}
 }
 
-void TTYWriter::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
+void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	std::string tmp;
 	for (;cnt; ++ci,--cnt) {
@@ -121,9 +124,11 @@ void TTYWriter::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 		if (_attr != attr) {
 			tmp = "\x1b[";
 			if (_attr.bold != attr.bold)
-				tmp+= attr.bold ? "1;" : "22;";
+				tmp+= attr.bold ? "1;" : "21;";
+
 			if (_attr.underline != attr.underline)
-				tmp+= attr.bold ? "4;" : "24;";
+				tmp+= attr.underline ? "4;" : "24;";
+
 			if (_attr.foreground != attr.foreground) {
 				tmp+= '3';
 				tmp+= '0' + attr.foreground;

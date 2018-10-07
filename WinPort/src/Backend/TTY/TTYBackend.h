@@ -1,18 +1,25 @@
 #pragma once
+//#define __USE_BSD 
+#include <termios.h> 
 #include <mutex>
 #include <condition_variable>
 #include "Backend.h"
-#include "TTYWriter.h"
+#include "TTYOutput.h"
+#include "TTYInput.h"
 
 class TTYBackend : IConsoleOutputBackend, IClipboardBackend
 {
 	std::mutex _output_mutex;
+	int _stdin = 0, _stdout = 1;
 	unsigned int _cur_width = 0, _cur_height = 0;
 	unsigned int _last_width = 0, _last_height = 0;
 	std::vector<CHAR_INFO> _last_output;
 
 
-	TTYWriter _tty_writer;
+	struct termios _ts;
+	int _ts_r = -1;
+	TTYOutput _tty_out;
+	TTYInput _tty_in;
 
 	pthread_t _reader_trd = 0, _writer_trd = 0;
 	volatile bool _exiting = false;
@@ -56,6 +63,7 @@ protected:
 	virtual UINT OnClipboardRegisterFormat(const wchar_t *lpszFormat);
 
 public:
+	TTYBackend();
 	~TTYBackend();
 	bool Startup();
 };

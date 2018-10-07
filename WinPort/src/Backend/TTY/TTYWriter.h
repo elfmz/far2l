@@ -26,11 +26,12 @@ class TTYWriter
 	std::vector<char> _rawbuf;
 	void WriteReally(const char *str, int len);
 
-	void WriteRaw(const char *str, int len);
-	void FormatRaw(const char *fmt, ...);
+	void Write(const char *str, int len);
+	void Format(const char *fmt, ...);
 public:
+
+	void Flush();
 
 	void MoveCursor(unsigned int y, unsigned int x, bool force = false);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
-	void Flush();
 };

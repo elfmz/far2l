@@ -53,6 +53,7 @@ void TTYBackend::WriterThread()
 			}
 			if (ae.output)
 				DispatchOutput();
+
 			_tty_writer.Flush();
 		}
 
@@ -115,6 +116,11 @@ void TTYBackend::DispatchOutput()
 	_last_width = _cur_width;
 	_last_height = _cur_height;
 	_last_output.swap(output);
+
+	UCHAR cur_height = 1;
+	bool cur_visible = false;
+	COORD cur_pos = g_winport_con_out.GetCursor(cur_height, cur_visible);
+	_tty_writer.MoveCursor(cur_pos.Y, cur_pos.X);
 }
 
 /////////////////////////////////////////////////////////////////////////

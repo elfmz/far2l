@@ -86,13 +86,30 @@ void TTYWriter::Flush()
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+void TTYWriter::SetScreenBuffer(bool alternate)
+{
+		Format("\x1b[?1049%c", alternate ? 'h' : 'l');
+}
+
+void TTYWriter::ChangeCursor(bool visible, unsigned char height, bool force)
+{
+	if (force || _cursor.visible != visible) {
+		Format("\x1b[?25%c", visible ? 'h' : 'l');
+		_cursor.visible = visible;
+	}
+	if (force || _cursor.height!= height) {
+		//TODO: far2l VT extension
+		_cursor.height = height;
+	}
+}
+
 void TTYWriter::MoveCursor(unsigned int y, unsigned int x, bool force)
 {
-	if (force || x != _x || y != _y) {
+	if (force || x != _cursor.x || y != _cursor.y) {
 // ESC[#;#H Moves cursor to line #, column #
 		Format("\x1b[%d;%dH", y, x);
-		_x = x;
-		_y = y;
+		_cursor.x = x;
+		_cursor.y = y;
 	}
 }
 
@@ -142,6 +159,7 @@ void TTYWriter::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 				Write("?", 1);
 			}
 		}
-		++_x;
+		++_cursor.x;
 	}
 }
+

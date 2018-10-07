@@ -44,6 +44,8 @@ bool TTYBackend::Startup()
 void TTYBackend::WriterThread()
 {
 	try {
+		_tty_writer.SetScreenBuffer(true);
+		_tty_writer.Flush();
 		while (!_exiting) {
 			AsyncEvent ae;
 			{
@@ -56,6 +58,8 @@ void TTYBackend::WriterThread()
 
 			_tty_writer.Flush();
 		}
+		_tty_writer.SetScreenBuffer(false);
+		_tty_writer.Flush();
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "WriterThread: %s\n", e.what());
@@ -121,6 +125,7 @@ void TTYBackend::DispatchOutput()
 	bool cur_visible = false;
 	COORD cur_pos = g_winport_con_out.GetCursor(cur_height, cur_visible);
 	_tty_writer.MoveCursor(cur_pos.Y, cur_pos.X);
+	_tty_writer.ChangeCursor(cur_visible, cur_height);
 }
 
 /////////////////////////////////////////////////////////////////////////

@@ -1,9 +1,12 @@
 #pragma once
+#include <stdexcept>
 #include <vector>
 #include <WinCompat.h>
 
 class TTYWriter
 {
+	enum { AUTO_FLUSH_THRESHOLD = 0x1000 };
+
 	unsigned int _y = -1, _x = -1;
 	struct Attributes
 	{
@@ -21,11 +24,13 @@ class TTYWriter
 	} _attr;
 
 	std::vector<char> _rawbuf;
-	bool WriteRaw(const char *str, int len);
-	bool FormatRaw(const char *fmt, ...);
+	void WriteReally(const char *str, int len);
+
+	void WriteRaw(const char *str, int len);
+	void FormatRaw(const char *fmt, ...);
 public:
 
-	bool MoveCursor(unsigned int y, unsigned int x, bool force = false);
-	bool WriteLine(const CHAR_INFO *ci, unsigned int cnt);
-
+	void MoveCursor(unsigned int y, unsigned int x, bool force = false);
+	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
+	void Flush();
 };

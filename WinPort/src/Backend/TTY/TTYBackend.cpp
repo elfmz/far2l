@@ -43,15 +43,22 @@ bool TTYBackend::Startup()
 
 void TTYBackend::WriterThread()
 {
-	for (;;) {
-		AsyncEvent ae;
-		{
-			std::unique_lock<std::mutex> lock(_async_mutex);
-			_async_cond.wait(lock);
-			std::swap(ae, _ae);
+	try {
+		while (!_exiting) {
+			AsyncEvent ae;
+			{
+				std::unique_lock<std::mutex> lock(_async_mutex);
+				_async_cond.wait(lock);
+				std::swap(ae, _ae);
+			}
+			if (ae.output)
+				DispatchOutput();
+			_tty_writer.Flush();
 		}
-		if (ae.output)
-			DispatchOutput();
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "WriterThread: %s\n", e.what());
+		_exiting = true;
 	}
 }
 

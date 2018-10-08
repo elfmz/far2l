@@ -19,12 +19,11 @@
 #include <sys/ioctl.h> 
 #include <sys/wait.h> 
 #include <condition_variable>
+#include "VTTranslation.h"
 #include "vtansi.h"
 #include "vtlog.h"
 #define __USE_BSD 
 #include <termios.h> 
-
-const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0);
 
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
 

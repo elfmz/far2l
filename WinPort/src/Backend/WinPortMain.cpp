@@ -74,7 +74,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		if (strcmp(argv[i], "--tty") == 0) {
 			tty = true;
 
-		} else if (strcmp(argv[i], "/?") == 0 || strcmp(argv[1], "--help") == 0){
+		} else if (strcmp(argv[i], "/?") == 0 || strcmp(argv[i], "--help") == 0){
 			help = true;
 		}
 	}

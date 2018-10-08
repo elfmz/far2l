@@ -1,13 +1,24 @@
 #pragma once
 #include <stdexcept>
 #include <vector>
+#include <map>
+#include <string>
 #include <WinCompat.h>
 
 class TTYInput
 {
-	std::vector<char> _buf;
+	struct Key
+	{
+//		wchar_t unicode_char;
+		WORD key_code;
+//		WORD scan_code;
+		DWORD control_keys;
+	};
 
-	void PostSimpleKeyEvent(wchar_t ch);
+	std::vector<char> _buf;
+	std::map<std::string, Key> _csi2key;
+
+	void PostCharEvent(wchar_t ch);
 
 	bool BufParseIterationSimple();
 	bool BufParseIterationCSI();
@@ -15,5 +26,6 @@ class TTYInput
 	void OnBufUpdated();
 
 public:
+	TTYInput();
 	void OnChar(char c);
 };

@@ -63,7 +63,7 @@ protected:
 	virtual UINT OnClipboardRegisterFormat(const wchar_t *lpszFormat);
 
 public:
-	TTYBackend();
+	TTYBackend(int std_in, int std_out);
 	~TTYBackend();
 	bool Startup();
 };

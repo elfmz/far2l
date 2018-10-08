@@ -1,6 +1,7 @@
 #include "TTYInput.h"
 #include "ConsoleInput.h"
 #include "ConvertUTF.h"
+#include "WinPort.h"
 
 extern ConsoleInput g_winport_con_in;
 
@@ -11,6 +12,8 @@ void TTYInput::PostSimpleKeyEvent(wchar_t ch)
 	ir.Event.KeyEvent.bKeyDown = TRUE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	ir.Event.KeyEvent.uChar.UnicodeChar = ch;
+	ir.Event.KeyEvent.wVirtualKeyCode = ch;
+	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(ch, MAPVK_VK_TO_VSC);
 	g_winport_con_in.Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	g_winport_con_in.Enqueue(&ir, 1);

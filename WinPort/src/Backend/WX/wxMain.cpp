@@ -68,7 +68,6 @@ private:
 	int(*_appmain)(int argc, char **argv);
 } *g_winport_app_thread = NULL;
 
-
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
 	if (!wxInitialize())
@@ -88,7 +87,6 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 	}
 
 	wxClipboardBackend clip_backend;
-
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new WinPortAppThread(argc, argv, AppMain);
 		if (!g_winport_app_thread) {

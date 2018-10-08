@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include "utils.h"
 #include "WinPortHandle.h"
 #include "ConsoleOutput.h"
@@ -10,14 +9,11 @@
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
 
-TTYBackend::TTYBackend() :
-	_stdin(dup(0)),
-	_stdout(dup(1)),
-	_tty_out(_stdout)
+TTYBackend::TTYBackend(int std_in, int std_out) :
+	_stdin(std_in),
+	_stdout(std_out),
+	_tty_out(std_out)
 {
-	fcntl(_stdin, F_SETFD, FD_CLOEXEC);
-	fcntl(_stdout, F_SETFD, FD_CLOEXEC);
-
 	memset(&_ts, 0 , sizeof(_ts));
 	_ts_r = tcgetattr(_stdout, &_ts);
 	if (_ts_r == 0) {
@@ -47,8 +43,6 @@ TTYBackend::~TTYBackend()
 			perror("~TTYBackend: tcsetattr");
 		}
 	}
-	close(_stdin);
-	close(_stdout);
 }
 
 bool TTYBackend::Startup()
@@ -258,9 +252,9 @@ UINT TTYBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 
 
 
-bool WinPortMainTTY(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(int std_in, int std_out, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend  vtb;
+	TTYBackend  vtb(std_in, std_out);
 	if (!vtb.Startup()) {
 		return false;
 	}

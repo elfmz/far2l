@@ -16,9 +16,11 @@ class TTYInput
 	};
 
 	std::vector<char> _buf;
-	std::map<std::string, Key> _csi2key;
+	std::map<std::string, Key>	_csi2key;
+	std::map<char, Key>		_spec_char2key;
 
 	void PostCharEvent(wchar_t ch);
+	void PostKeyEvent(const Key &k);
 
 	bool BufParseIterationSimple();
 	bool BufParseIterationCSI();

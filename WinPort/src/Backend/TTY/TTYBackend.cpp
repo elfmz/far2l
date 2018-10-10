@@ -126,7 +126,7 @@ void TTYBackend::DispatchOutput()
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &output[y * _cur_width];
 		if (y >= _last_height) {
-			_tty_out.MoveCursor(y, 0);
+			_tty_out.MoveCursor(y + 1, 1);
 			_tty_out.WriteLine(cur_line, _cur_width);
 		} else {
 			const CHAR_INFO *last_line = &_last_output[y * _last_width];
@@ -134,7 +134,7 @@ void TTYBackend::DispatchOutput()
 				if (x >= _last_width
 				 || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
 				 || cur_line[x].Attributes != last_line[x].Attributes) {
-					_tty_out.MoveCursor(y, x);
+					_tty_out.MoveCursor(y + 1, x + 1);
 					_tty_out.WriteLine(&cur_line[x], 1);
 				}
 			}

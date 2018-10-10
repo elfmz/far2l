@@ -37,8 +37,10 @@ class TTYBackend : IConsoleOutputBackend, IClipboardBackend
 	struct AsyncEvent
 	{
 		bool output = false;
+		bool term_resized = false;
 	} _ae;
 
+	void DispatchTermResized();
 	void DispatchOutput();
 
 protected:
@@ -65,6 +67,7 @@ protected:
 public:
 	TTYBackend(int std_in, int std_out);
 	~TTYBackend();
+	void OnTerminalSizeChanged();
 	bool Startup();
 };
 

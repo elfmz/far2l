@@ -42,6 +42,7 @@ TTYInput::TTYInput()
 
 	_spec_char2key['\x7f'] = Key{VK_BACK, 0};
 	_spec_char2key['\x0d'] = Key{VK_RETURN, 0};
+	_spec_char2key['\x09'] = Key{VK_TAB, 0};
 }
 
 void TTYInput::PostCharEvent(wchar_t ch)

@@ -39,6 +39,8 @@ TTYBackend::~TTYBackend()
 	if (g_vtb == this)
 		g_vtb =  nullptr;
 
+	OnConsoleExit();
+
 	if (_reader_trd) {
 		pthread_join(_reader_trd, nullptr);
 		_reader_trd = 0;
@@ -171,7 +173,7 @@ void TTYBackend::DispatchOutput()
 #else
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &output[y * _cur_width];
-		_tty_out.MoveCursor(y, 0);
+		_tty_out.MoveCursor(y + 1, 1);
 		_tty_out.WriteLine(cur_line, _cur_width);
 	}
 #endif
@@ -182,7 +184,7 @@ void TTYBackend::DispatchOutput()
 	UCHAR cur_height = 1;
 	bool cur_visible = false;
 	COORD cur_pos = g_winport_con_out.GetCursor(cur_height, cur_visible);
-	_tty_out.MoveCursor(cur_pos.Y, cur_pos.X);
+	_tty_out.MoveCursor(cur_pos.Y + 1, cur_pos.X + 1);
 	_tty_out.ChangeCursor(cur_visible, cur_height);
 }
 
@@ -243,7 +245,9 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 
 void TTYBackend::OnConsoleExit()
 {
+	std::unique_lock<std::mutex> lock(_async_mutex);
 	_exiting = true;
+	_async_cond.notify_all();
 }
 
 bool TTYBackend::OnConsoleIsActive()

@@ -9,9 +9,7 @@ class TTYInput
 {
 	struct Key
 	{
-//		wchar_t unicode_char;
 		WORD key_code;
-//		WORD scan_code;
 		DWORD control_keys;
 	};
 

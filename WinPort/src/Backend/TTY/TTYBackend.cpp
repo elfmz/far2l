@@ -100,6 +100,7 @@ void TTYBackend::ReaderThread()
 			if (read(_stdin, &c, 1) <= 0) {
 				throw std::runtime_error("read failed");
 			}
+			fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
 			_tty_in.OnChar(c);
 		}
 	} catch (std::exception &e) {

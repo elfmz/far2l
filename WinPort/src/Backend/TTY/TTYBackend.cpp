@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
+#include <sys/ioctl.h>
 #include "utils.h"
 #include "WinPortHandle.h"
 #include "ConsoleOutput.h"
@@ -8,6 +10,9 @@
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
+
+static TTYBackend *g_vtb = nullptr;
+
 
 TTYBackend::TTYBackend(int std_in, int std_out) :
 	_stdin(std_in),
@@ -26,10 +31,14 @@ TTYBackend::TTYBackend(int std_in, int std_out) :
 	} else {
 		perror("TTYBackend: tcgetattr");
 	}
+	g_vtb = this;
 }
 
 TTYBackend::~TTYBackend()
 {
+	if (g_vtb == this)
+		g_vtb =  nullptr;
+
 	if (_reader_trd) {
 		pthread_join(_reader_trd, nullptr);
 		_reader_trd = 0;
@@ -60,7 +69,7 @@ bool TTYBackend::Startup()
 	}
 	_cur_width =_cur_height = 64;
 	g_winport_con_out.GetSize(_cur_width, _cur_height);
-	OnConsoleOutputUpdated(NULL, 0);
+	OnTerminalSizeChanged();
 	g_winport_con_out.SetBackend(this);
 	return true;
 }
@@ -78,6 +87,8 @@ void TTYBackend::WriterThread()
 				_async_cond.wait(lock);
 				std::swap(ae, _ae);
 			}
+			if (ae.term_resized)
+				DispatchTermResized();
 			if (ae.output)
 				DispatchOutput();
 
@@ -110,6 +121,22 @@ void TTYBackend::ReaderThread()
 }
 
 /////////////////////////////////////////////////////////////////////////
+
+void TTYBackend::DispatchTermResized()
+{
+	struct winsize w = {};
+	if (ioctl(_stdout, TIOCGWINSZ, &w) == 0) {
+		_cur_width = w.ws_col;
+		_cur_height = w.ws_row;
+		g_winport_con_out.SetSize(_cur_width, _cur_height);
+		g_winport_con_out.GetSize(_cur_width, _cur_height);
+		INPUT_RECORD ir = {0};
+		ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+		ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
+		ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
+		g_winport_con_in.Enqueue(&ir, 1);
+	}
+}
 
 void TTYBackend::DispatchOutput()
 {
@@ -164,13 +191,21 @@ void TTYBackend::DispatchOutput()
 void TTYBackend::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 {
 	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.output  = true;
+	_ae.output = true;
 	_async_cond.notify_all();
 }
 
 void TTYBackend::OnConsoleOutputResized()
 {
 	OnConsoleOutputUpdated(NULL, 0);
+}
+
+void TTYBackend::OnTerminalSizeChanged()
+{
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	_ae.term_resized = true;
+	_ae.output = true;
+	_async_cond.notify_all();
 }
 
 void TTYBackend::OnConsoleOutputTitleChanged()
@@ -252,15 +287,21 @@ UINT TTYBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 }
 
 
+static void sigwinch_handler(int)
+{
+	if (g_vtb)
+		g_vtb->OnTerminalSizeChanged();
+}
+
 
 bool WinPortMainTTY(int std_in, int std_out, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
 	TTYBackend  vtb(std_in, std_out);
+	signal(SIGWINCH,  sigwinch_handler);
 	if (!vtb.Startup()) {
 		return false;
 	}
 
 	*result = AppMain(argc, argv);
-
 	return true;
 }

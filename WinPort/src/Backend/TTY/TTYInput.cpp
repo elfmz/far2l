@@ -10,26 +10,27 @@ extern ConsoleInput g_winport_con_in;
 static bool IsEnhancedKey(WORD code)
 {
 	return (code==VK_LEFT || code==VK_RIGHT || code==VK_UP || code==VK_DOWN
-		|| code==VK_HOME || code==VK_END);// || code==VK_PAGEDOWN || code==VK_PAGEUP );
+		|| code==VK_HOME || code==VK_END || code==VK_NEXT || code==VK_PRIOR );
 }
 
 
 TTYInput::TTYInput()
 {
+	for (int keypad = 0; keypad < 2; ++keypad) { // 0 ctrl alt shift
 	for (int controls = 0; controls < 4; ++controls) { // 0 ctrl alt shift
 	for (WORD key_code = 1; key_code <= 0xff; ++key_code) {
 
-		const char *csi = VT_TranslateSpecialKey(key_code, controls == 1, controls == 2, controls == 3, 0);
+		const char *csi = VT_TranslateSpecialKey(key_code, controls == 1, controls == 2, controls == 3, keypad);
 		if (csi != nullptr && *csi) {
 			Key k = {};
 			k.key_code = key_code;
 			switch (controls) {
-				case 1: k.control_keys = LEFT_CTRL_PRESSED; break;
-				case 2: k.control_keys = LEFT_ALT_PRESSED; break;
-				case 3: k.control_keys = SHIFT_PRESSED; break;
+				case 1: k.control_keys|= LEFT_CTRL_PRESSED; break;
+				case 2: k.control_keys|= LEFT_ALT_PRESSED; break;
+				case 3: k.control_keys|= SHIFT_PRESSED; break;
 			}
 			if (IsEnhancedKey(key_code))
-				k.control_keys = ENHANCED_KEY;
+				k.control_keys|= ENHANCED_KEY;
 			if (csi[1]) {
 				_csi2key.emplace(csi, k);
 
@@ -37,7 +38,10 @@ TTYInput::TTYInput()
 				_spec_char2key.emplace(csi[0], k);
 			}
 		}
-	} }
+	} } }
+
+	_spec_char2key['\x7f'] = Key{VK_BACK, 0};
+	_spec_char2key['\x0d'] = Key{VK_RETURN, 0};
 }
 
 void TTYInput::PostCharEvent(wchar_t ch)

@@ -5,8 +5,8 @@
 #include "ConvertUTF.h"
 
 TTYOutput::Attributes::Attributes(WORD attributes) :
-	bold ( (attributes & FOREGROUND_INTENSITY) != 0),
-	underline( (attributes & BACKGROUND_INTENSITY) != 0),
+	foreground_intensive( (attributes & FOREGROUND_INTENSITY) != 0),
+	background_intensive( (attributes & BACKGROUND_INTENSITY) != 0),
 	foreground(0), background(0)
 {
 	if (attributes&FOREGROUND_RED) foreground|= 1;
@@ -20,7 +20,8 @@ TTYOutput::Attributes::Attributes(WORD attributes) :
 
 bool TTYOutput::Attributes::operator ==(const Attributes &attr) const
 {
-	return (bold == attr.bold && underline == attr.underline
+	return (foreground_intensive == attr.foreground_intensive
+		&& background_intensive == attr.background_intensive
 		&& foreground == attr.foreground && background == attr.background);
 }
 
@@ -123,19 +124,24 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 		Attributes attr(ci->Attributes);
 		if (_attr != attr) {
 			tmp = "\x1b[";
-			if (_attr.bold != attr.bold)
-				tmp+= attr.bold ? "1;" : "21;";
+			if (_attr.foreground_intensive != attr.foreground_intensive)
+				tmp+= attr.foreground_intensive ? "1;" : "22;";
 
-			if (_attr.underline != attr.underline)
-				tmp+= attr.underline ? "4;" : "24;";
+//			if (_attr.underline != attr.underline)
+//				tmp+= attr.underline ? "4;" : "24;";
 
-			if (_attr.foreground != attr.foreground) {
-				tmp+= '3';
+			if (_attr.foreground != attr.foreground
+			 || _attr.foreground_intensive != attr.foreground_intensive) {
+				tmp+= attr.foreground_intensive ? '9' : '3';
 				tmp+= '0' + attr.foreground;
 				tmp+= ';';
 			}
-			if (_attr.background != attr.background) {
-				tmp+= '4';
+			if (_attr.background != attr.background
+			 || _attr.background_intensive != attr.background_intensive) {
+				if (attr.background_intensive) {
+					tmp+= "10";
+				} else
+					tmp+= '4';
 				tmp+= '0' + attr.background;
 				tmp+= ';';
 			}
@@ -168,3 +174,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 	}
 }
 
+void TTYOutput::ChangeKeypad(bool app)
+{
+	Format("\x1b[?1%c", app ? 'h' : 'l');
+}

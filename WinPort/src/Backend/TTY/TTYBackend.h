@@ -10,16 +10,17 @@
 class TTYBackend : IConsoleOutputBackend, IClipboardBackend
 {
 	std::mutex _output_mutex;
-	int _stdin = 0, _stdout = 1;
+	int _stdin = 0, _stdout = 1, _kickass[2] = {-1, -1};
 	unsigned int _cur_width = 0, _cur_height = 0;
-	unsigned int _last_width = 0, _last_height = 0;
-	std::vector<CHAR_INFO> _last_output;
+	unsigned int _prev_width = 0, _prev_height = 0;
+	std::vector<CHAR_INFO> _cur_output, _prev_output;
 
 
 	struct termios _ts;
 	int _ts_r = -1;
 	TTYOutput _tty_out;
 	TTYInput _tty_in;
+	long _terminal_size_change_id;
 
 	pthread_t _reader_trd = 0, _writer_trd = 0;
 	volatile bool _exiting = false;
@@ -36,8 +37,8 @@ class TTYBackend : IConsoleOutputBackend, IClipboardBackend
 
 	struct AsyncEvent
 	{
-		bool output = false;
 		bool term_resized = false;
+		bool output = false;
 	} _ae;
 
 	void DispatchTermResized();
@@ -67,7 +68,7 @@ protected:
 public:
 	TTYBackend(int std_in, int std_out);
 	~TTYBackend();
-	void OnTerminalSizeChanged();
+	void KickAss();
 	bool Startup();
 };
 

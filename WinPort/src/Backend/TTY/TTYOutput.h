@@ -20,8 +20,8 @@ class TTYOutput
 		Attributes(const Attributes &) = default;
 		Attributes(WORD attributes);
 
-		bool bold = false;
-		bool underline = false;
+		bool foreground_intensive = false;
+		bool background_intensive = false;
 		unsigned char foreground = -1;
 		unsigned char background = -1;
 
@@ -44,4 +44,5 @@ public:
 	void ChangeCursor(bool visible, unsigned char height, bool force = false);
 	void MoveCursor(unsigned int y, unsigned int x, bool force = false);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
+	void ChangeKeypad(bool app);
 };

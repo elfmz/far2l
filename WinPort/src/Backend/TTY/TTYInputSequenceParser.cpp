@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "TTYInputSequenceParser.h"
 
-//See: 
+//See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
 
@@ -23,7 +23,7 @@ template <typename First, typename Second, class ... Types>
 			}
 		}
 	}
-	
+
 	AssertNoConflictsBetween(second, others...);
 }
 
@@ -67,16 +67,12 @@ void TTYInputSequenceParser::AddStr(WORD vk, DWORD control_keys, const char *fmt
 				vk, control_keys, fmt, r);
 			abort();
 	}
-
-	
-
-	
 }
 
 void TTYInputSequenceParser::AddStrTilde(WORD vk, int code)
 {
 	AddStr(vk, 0, "[%d~", code);
-	for (int i = 0; i <= 7; ++i) {		
+	for (int i = 0; i <= 7; ++i) {
 		DWORD control_keys = 0;
 		if (i & 1) control_keys|= SHIFT_PRESSED;
 		if (i & 2) control_keys|= LEFT_ALT_PRESSED;
@@ -87,7 +83,7 @@ void TTYInputSequenceParser::AddStrTilde(WORD vk, int code)
 
 void TTYInputSequenceParser::AddStr_ControlsThenCode(WORD vk, const char *fmt, const char *code)
 {
-	for (int i = 0; i <= 7; ++i) {		
+	for (int i = 0; i <= 7; ++i) {
 		DWORD control_keys = 0;
 		if (i & 1) control_keys|= SHIFT_PRESSED;
 		if (i & 2) control_keys|= LEFT_ALT_PRESSED;
@@ -98,7 +94,7 @@ void TTYInputSequenceParser::AddStr_ControlsThenCode(WORD vk, const char *fmt, c
 
 void TTYInputSequenceParser::AddStr_CodeThenControls(WORD vk, const char *fmt, const char *code)
 {
-	for (int i = 0; i <= 7; ++i) {		
+	for (int i = 0; i <= 7; ++i) {
 		DWORD control_keys = 0;
 		if (i & 1) control_keys|= SHIFT_PRESSED;
 		if (i & 2) control_keys|= LEFT_ALT_PRESSED;
@@ -111,6 +107,7 @@ void TTYInputSequenceParser::AddStrF1F5(WORD vk, const char *code)
 {
 	AddStr(vk, 0, "O%s", code);
 	AddStr_ControlsThenCode(vk, "O%d%s", code);
+	AddStr_ControlsThenCode(vk, "[1;%d%s", code);
 }
 
 void TTYInputSequenceParser::AddStrCursors(WORD vk, const char *code)
@@ -146,7 +143,7 @@ TTYInputSequenceParser::TTYInputSequenceParser()
 	AddStrTilde(VK_F2, 12);
 	AddStrTilde(VK_F3, 13);
 	AddStrTilde(VK_F4, 14);
-	AddStrTilde(VK_F5, 16);
+	AddStrTilde(VK_F5, 15);
 	AddStrTilde(VK_F6, 17);
 	AddStrTilde(VK_F7, 18);
 	AddStrTilde(VK_F8, 19);
@@ -156,6 +153,7 @@ TTYInputSequenceParser::TTYInputSequenceParser()
 	AddStrTilde(VK_F12, 24);
 
 	AddStr(VK_ESCAPE, 0, "\x1b");
+	AddStr(VK_TAB, SHIFT_PRESSED, "[Z");
 
 	AssertNoConflicts();
 }

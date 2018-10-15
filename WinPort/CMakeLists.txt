@@ -43,6 +43,7 @@ src/Backend/WX/wxClipboardBackend.cpp
 src/Backend/WX/ExclusiveHotkeys.cpp
 src/Backend/WX/wxWinTranslations.cpp
 src/Backend/TTY/TTYInput.cpp
+src/Backend/TTY/TTYInputSequenceParser.cpp
 src/Backend/TTY/TTYOutput.cpp
 src/Backend/TTY/TTYBackend.cpp
 src/sudo/sudo_common.cpp

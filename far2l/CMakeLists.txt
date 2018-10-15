@@ -125,6 +125,7 @@ vtshell.cpp
 vtansi.cpp
 PluginA.cpp
 execute_oscmd.cpp
+vtshell_translation.cpp
 vtlog.cpp
 vtcompletor.cpp
 SharedResource.cpp

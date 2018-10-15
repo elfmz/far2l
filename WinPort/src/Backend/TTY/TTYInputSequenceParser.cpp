@@ -176,6 +176,12 @@ size_t TTYInputSequenceParser::Parse(TTYInputKey &k, const char *s, size_t l)
 				case 1: if (_nch2key1.Lookup(s, k)) return 1 + 1;
 			}
 
+			// be well-responsive on panic-escaping
+			for (size_t i = 0; (i + 1) < l; ++i) {
+				if (s[i] == 0x1b && s[i + 1] == 0x1b) {
+					return i + 1;
+				}
+			}
 			return (l >= 8) ? (size_t)-2 : 0;
 
 		case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07: case 0x08:

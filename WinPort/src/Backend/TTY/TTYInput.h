@@ -4,24 +4,17 @@
 #include <map>
 #include <string>
 #include <WinCompat.h>
+#include "TTYInputSequenceParser.h"
 
 class TTYInput
 {
-	struct Key
-	{
-		WORD key_code;
-		DWORD control_keys;
-	};
-
 	std::vector<char> _buf;
-	std::map<std::string, Key>	_csi2key;
-	std::map<char, Key>		_spec_char2key;
+	TTYInputSequenceParser _parser;
 
 	void PostCharEvent(wchar_t ch);
-	void PostKeyEvent(const Key &k);
+	void PostKeyEvent(const TTYInputKey &k);
 
-	bool BufParseIterationSimple();
-	bool BufParseIterationCSI();
+	size_t BufTryDecodeUTF8();
 
 	void OnBufUpdated();
 

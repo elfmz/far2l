@@ -7,7 +7,6 @@ set(SOURCES
   src/KeyFileHelper.cpp
   src/utils.cpp
   src/InMy.cpp
-  src/VTTranslation.cpp
   src/ZombieControl.cpp
   src/ConvertUTF.c
   src/crc64.c

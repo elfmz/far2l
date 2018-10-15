@@ -64,13 +64,14 @@ void TTYOutput::Format(const char *fmt, ...)
 	for (;;) {
 		va_list va;
 		va_start(va, fmt);
-		int r = vsnprintf (&_rawbuf[prev_size], _rawbuf.size() - prev_size, fmt, va);
+		size_t append_limit = _rawbuf.size() - prev_size;
+		int r = vsnprintf (&_rawbuf[prev_size], append_limit, fmt, va);
 		va_end(va);
 		if (r < 0) {
 			_rawbuf.resize(prev_size);
 			throw std::runtime_error("TTYOutput::Format: bad format");
 		}
-		if (r < _rawbuf.size()) {
+		if (r < append_limit) {
 			_rawbuf.resize(prev_size + r);
 			break;
 		}

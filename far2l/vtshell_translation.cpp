@@ -13,8 +13,13 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		fprintf(stderr, "VT_TranslateSpecialKey: too many modifiers: %u %u %u\n", ctrl, alt, shift);
 		return ""; 
 	}
+
+
 		
 	switch (key) {
+		case VK_RETURN:
+			return "\r";
+
 		case VK_F1: /*
         F1                 \x1bOP
         F1                 \x1b[[A

@@ -96,6 +96,7 @@ struct FileListItem
 		DizText = nullptr;
 		DeleteDiz = 0;
 		strOwner.Clear();
+		strGroup.Clear();
 		CustomColumnData = nullptr;
 		CustomColumnNumber = 0;
 		CRC32 = 0;
@@ -130,6 +131,7 @@ struct FileListItem
 			DizText = fliCopy.DizText;
 			DeleteDiz = fliCopy.DeleteDiz;
 			strOwner = fliCopy.strOwner;
+			strGroup = fliCopy.strGroup;
 			CustomColumnData = fliCopy.CustomColumnData;
 			CustomColumnNumber = fliCopy.CustomColumnNumber;
 			CRC32 = fliCopy.CRC32;

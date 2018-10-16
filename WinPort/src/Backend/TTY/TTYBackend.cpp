@@ -107,6 +107,7 @@ void TTYBackend::WriterThread()
 		tty_out.Flush();
 		while (!_exiting) {
 			AsyncEvent ae;
+			ae.all = 0;
 			do {
 				std::unique_lock<std::mutex> lock(_async_mutex);
 				if (_ae.all == 0) {

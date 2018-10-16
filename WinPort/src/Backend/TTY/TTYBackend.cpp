@@ -21,9 +21,22 @@ TTYBackend::TTYBackend(int std_in, int std_out) :
 	_tty_out(std_out)
 {
 	memset(&_ts, 0 , sizeof(_ts));
+#if !defined(__APPLE__)
 	if (pipe2(_kickass, O_CLOEXEC) == -1) {
 		_kickass[0] = _kickass[1] = -1;
 	}
+#else
+	if (pipe(_kickass) == -1) {
+		_kickass[0] = _kickass[1] = -1;
+	}
+	else if (fcntl(_kickass[0], F_SETFD, FD_CLOEXEC) != 0 || fcntl(_kickass[1], F_SETFD, FD_CLOEXEC) != 0)
+	{
+		close(_kickass[0]);
+		close(_kickass[1]);
+		_kickass[0] = _kickass[1] = -1;
+	}
+#endif
+
 	_ts_r = tcgetattr(_stdout, &_ts);
 	if (_ts_r == 0) {
 		struct termios ts_ne = _ts;

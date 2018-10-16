@@ -17,8 +17,7 @@ static TTYBackend * g_vtb = nullptr;
 
 TTYBackend::TTYBackend(int std_in, int std_out) :
 	_stdin(std_in),
-	_stdout(std_out),
-	_tty_out(std_out)
+	_stdout(std_out)
 {
 	memset(&_ts, 0 , sizeof(_ts));
 	if (pipe2(_kickass, O_CLOEXEC) == -1) {
@@ -80,7 +79,7 @@ bool TTYBackend::Startup()
 	g_winport_con_out.SetBackend(this);
 
 	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.term_resized = true;
+	_ae.flags.term_resized = true;
 	_async_cond.notify_all();
 	return true;
 }
@@ -89,31 +88,37 @@ bool TTYBackend::Startup()
 void TTYBackend::WriterThread()
 {
 	try {
-		_tty_out.SetScreenBuffer(true);
-		_tty_out.ChangeKeypad(true);
-		_tty_out.Flush();
+		TTYOutput tty_out(_stdout);
+		tty_out.SetScreenBuffer(true);
+		tty_out.ChangeKeypad(true);
+		tty_out.Flush();
 		while (!_exiting) {
 			AsyncEvent ae;
-			{
+			do {
 				std::unique_lock<std::mutex> lock(_async_mutex);
-				_async_cond.wait(lock);
-				std::swap(ae, _ae);
+				if (_ae.all == 0) {
+					_async_cond.wait(lock);
+				}
+				if (_ae.all != 0) {
+					std::swap(ae, _ae);
+					break;
+				}
+			} while (!_exiting);
+
+			if (ae.flags.term_resized) {
+				DispatchTermResized(tty_out);
+				ae.flags.output = true;
 			}
 
-			if (ae.term_resized) {
-				DispatchTermResized();
-				ae.output = true;
-			}
+			if (ae.flags.output)
+				DispatchOutput(tty_out);
 
-			if (ae.output)
-				DispatchOutput();
-
-			_tty_out.Flush();
+			tty_out.Flush();
 		}
-		_tty_out.ChangeCursor(true, 13);
-		_tty_out.ChangeKeypad(false);
-		_tty_out.SetScreenBuffer(false);
-		_tty_out.Flush();
+		tty_out.ChangeCursor(true, 13);
+		tty_out.ChangeKeypad(false);
+		tty_out.SetScreenBuffer(false);
+		tty_out.Flush();
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
@@ -124,6 +129,7 @@ void TTYBackend::WriterThread()
 void TTYBackend::ReaderThread()
 {
 	try {
+		TTYInput tty_in;
 		fd_set fds, fde;
 		while (!_exiting) {
 			int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
@@ -143,8 +149,8 @@ void TTYBackend::ReaderThread()
 				if (read(_stdin, &c, 1) <= 0) {
 					throw std::runtime_error("stdin read failed");
 				}
-				fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
-				_tty_in.OnChar(c);
+				//fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
+				tty_in.OnChar(c);
 			}
 
 			if (FD_ISSET(_stdin, &fde)) {
@@ -162,7 +168,7 @@ void TTYBackend::ReaderThread()
 				if (_terminal_size_change_id != terminal_size_change_id) {
 					_terminal_size_change_id = terminal_size_change_id;
 					std::unique_lock<std::mutex> lock(_async_mutex);
-					_ae.term_resized = true;
+					_ae.flags.term_resized = true;
 					_async_cond.notify_all();
 				}
 			}
@@ -176,7 +182,7 @@ void TTYBackend::ReaderThread()
 
 /////////////////////////////////////////////////////////////////////////
 
-void TTYBackend::DispatchTermResized()
+void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 {
 	struct winsize w = {};
 	if (ioctl(_stdout, TIOCGWINSZ, &w) == 0 &&
@@ -190,16 +196,15 @@ void TTYBackend::DispatchTermResized()
 		ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
 		ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
 		g_winport_con_in.Enqueue(&ir, 1);
-
 		std::vector<CHAR_INFO> tmp;
 		std::lock_guard<std::mutex> lock(_output_mutex);
-		_tty_out.MoveCursor(1, 1, true);
+		tty_out.MoveCursor(1, 1, true);
 		_prev_height = _prev_width = 0;
 		_prev_output.swap(tmp);// ensure memory released
 	}
 }
 
-void TTYBackend::DispatchOutput()
+void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 {
 	std::lock_guard<std::mutex> lock(_output_mutex);
 
@@ -210,20 +215,20 @@ void TTYBackend::DispatchOutput()
 	SMALL_RECT screen_rect = {0, 0, _cur_width - 1, _cur_height - 1};
 	g_winport_con_out.Read(&_cur_output[0], data_size, data_pos, screen_rect);
 
-#if 1
+#if 0
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
 		if (y >= _prev_height) {
-			_tty_out.MoveCursor(y + 1, 1);
-			_tty_out.WriteLine(cur_line, _cur_width);
+			tty_out.MoveCursor(y + 1, 1);
+			tty_out.WriteLine(cur_line, _cur_width);
 		} else {
 			const CHAR_INFO *last_line = &_prev_output[y * _prev_width];
 			for (unsigned int x = 0; x < _cur_width; ++x) {
 				if (x >= _prev_width
 				 || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
 				 || cur_line[x].Attributes != last_line[x].Attributes) {
-					_tty_out.MoveCursor(y + 1, x + 1);
-					_tty_out.WriteLine(&cur_line[x], 1);
+					tty_out.MoveCursor(y + 1, x + 1);
+					tty_out.WriteLine(&cur_line[x], 1);
 				}
 			}
 		}
@@ -232,8 +237,8 @@ void TTYBackend::DispatchOutput()
 #else
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
-		_tty_out.MoveCursor(y + 1, 1);
-		_tty_out.WriteLine(cur_line, _cur_width);
+		tty_out.MoveCursor(y + 1, 1);
+		tty_out.WriteLine(cur_line, _cur_width);
 	}
 #endif
 	_prev_width = _cur_width;
@@ -243,8 +248,8 @@ void TTYBackend::DispatchOutput()
 	UCHAR cursor_height = 1;
 	bool cursor_visible = false;
 	COORD cursor_pos = g_winport_con_out.GetCursor(cursor_height, cursor_visible);
-	_tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
-	_tty_out.ChangeCursor(cursor_visible, cursor_height);
+	tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
+	tty_out.ChangeCursor(cursor_visible, cursor_height);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -258,7 +263,7 @@ void TTYBackend::KickAss()
 void TTYBackend::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 {
 	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.output = true;
+	_ae.flags.output = true;
 	_async_cond.notify_all();
 }
 
@@ -269,7 +274,7 @@ void TTYBackend::OnConsoleOutputResized()
 
 void TTYBackend::OnConsoleOutputTitleChanged()
 {
-	//_tty_out.SetWindowTitle(g_winport_con_out.GetTitle());
+	//tty_out.SetWindowTitle(g_winport_con_out.GetTitle());
 	//ESC]2;titleST
 }
 

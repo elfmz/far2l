@@ -18,8 +18,6 @@ class TTYBackend : IConsoleOutputBackend, IClipboardBackend
 
 	struct termios _ts;
 	int _ts_r = -1;
-	TTYOutput _tty_out;
-	TTYInput _tty_in;
 	long _terminal_size_change_id;
 
 	pthread_t _reader_trd = 0, _writer_trd = 0;
@@ -35,14 +33,17 @@ class TTYBackend : IConsoleOutputBackend, IClipboardBackend
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
 
-	struct AsyncEvent
+	union AsyncEvent
 	{
-		bool term_resized = false;
-		bool output = false;
+		struct {
+			bool term_resized : 1;
+			bool output : 1;
+		} flags;
+		uint32_t all;
 	} _ae;
 
-	void DispatchTermResized();
-	void DispatchOutput();
+	void DispatchTermResized(TTYOutput &tty_out);
+	void DispatchOutput(TTYOutput &tty_out);
 
 protected:
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);

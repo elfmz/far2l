@@ -33,22 +33,23 @@ TTYOutput::TTYOutput(int out) : _out(out)
 
 void TTYOutput::WriteReally(const char *str, int len)
 {
-	for (size_t ofs = 0; len > 0;) {
+	while (len > 0) {
 		ssize_t wr = write(_out, str, len);
 		if (wr <= 0) {
 			throw std::runtime_error("TTYOutput::WriteReally: write");
 		}
 		len-= wr;
-		ofs+= wr;
+		str+= wr;
 	}
 }
 
 void TTYOutput::Write(const char *str, int len)
 {
-	size_t prev_size = _rawbuf.size();
+	const size_t prev_size = _rawbuf.size();
 	if (2 * len >= AUTO_FLUSH_THRESHOLD) {
 		Flush();
 		WriteReally(str, len);
+
 	} else if (len > 0) {
 		_rawbuf.resize(prev_size + len);
 		memcpy(&_rawbuf[prev_size], str, len);
@@ -59,7 +60,7 @@ void TTYOutput::Write(const char *str, int len)
 
 void TTYOutput::Format(const char *fmt, ...)
 {
-	size_t prev_size = _rawbuf.size();
+	const size_t prev_size = _rawbuf.size();
 	_rawbuf.resize(prev_size + strlen(fmt) + 0x40);
 	for (;;) {
 		va_list va;
@@ -71,7 +72,7 @@ void TTYOutput::Format(const char *fmt, ...)
 			_rawbuf.resize(prev_size);
 			throw std::runtime_error("TTYOutput::Format: bad format");
 		}
-		if (r < append_limit) {
+		if ((size_t)r < append_limit) {
 			_rawbuf.resize(prev_size + r);
 			break;
 		}
@@ -153,11 +154,8 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			_attr = attr;
 		}
 
-		if (ci->Char.UnicodeChar == 0 || ci->Char.UnicodeChar == ' ') {
+		if (ci->Char.UnicodeChar <= 0x1f || ci->Char.UnicodeChar == ' ' || ci->Char.UnicodeChar == 0x7f) {
 			Write(" ", 1);
-
-		} else if (ci->Char.UnicodeChar == 0x1b) {
-			Write("\x1b\x1b", 2);
 
 		} else {
 			UTF8 buf[16] = {};

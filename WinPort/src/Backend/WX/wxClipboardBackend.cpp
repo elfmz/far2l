@@ -140,9 +140,9 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	}
 		
 #ifdef _WIN32
-	size_t len = _msize(mem);
+	size_t len = _msize(data);
 #elif defined(__APPLE__)
-	size_t len = malloc_size(mem);
+	size_t len = malloc_size(data);
 #else
 	size_t len = malloc_usable_size(data);
 #endif

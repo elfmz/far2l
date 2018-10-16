@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <string>
 #include "TTYInputSequenceParser.h"
 
 //See:

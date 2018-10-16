@@ -229,7 +229,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	SMALL_RECT screen_rect = {0, 0, _cur_width - 1, _cur_height - 1};
 	g_winport_con_out.Read(&_cur_output[0], data_size, data_pos, screen_rect);
 
-#if 0
+#if 1
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
 		if (y >= _prev_height) {

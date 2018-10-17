@@ -106,10 +106,12 @@ UINT FSClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 	const std::string &str_format_name = Wide2MB(lpszFormat);
 	int id = _kfh->GetInt("Formats", str_format_name.c_str(), 0);
 	if (id == 0) {
-		id = _kfh->GetInt("Global", "NextFormatID", 0);
+		id = _kfh->GetInt("Global", "LastRegisteredFormat", 0);
 		++id;
 		if (id < 0xC000 || id> 0xFFFF)
 			id = 0xC000;
+
+		_kfh->PutInt("Global", "LastRegisteredFormat", id);
 
 		_kfh->PutInt("Formats", str_format_name.c_str(), id);
 	}

@@ -41,6 +41,7 @@ int String::vprintf(LPCSTR fmt,va_list list)
 	va_copy (list_copy, list);
 	int sz = vsnprintf(&tmp,0,fmt,list_copy);
 	Alloc(sz+1);
+	va_end(list_copy);
 	return len = vsnprintf(str, maxchar, fmt, list);
 }
 

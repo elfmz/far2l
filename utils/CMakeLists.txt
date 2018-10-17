@@ -4,6 +4,7 @@ project(utils)
 find_package(PkgConfig REQUIRED)
 
 set(SOURCES
+  src/SharedResource.cpp
   src/KeyFileHelper.cpp
   src/utils.cpp
   src/InMy.cpp

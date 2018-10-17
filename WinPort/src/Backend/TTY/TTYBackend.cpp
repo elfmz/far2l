@@ -100,6 +100,8 @@ bool TTYBackend::Startup()
 
 void TTYBackend::WriterThread()
 {
+	_clipboard_backend = std::make_shared<FSClipboardBackend>();
+
 	try {
 		TTYOutput tty_out(_stdout);
 		tty_out.SetScreenBuffer(true);
@@ -334,40 +336,6 @@ bool TTYBackend::OnConsoleIsActive()
 	return true;
 }
 
-//
-
-bool TTYBackend::OnClipboardOpen()
-{
-	return 0;
-}
-
-void TTYBackend::OnClipboardClose()
-{
-}
-
-void TTYBackend::OnClipboardEmpty()
-{
-}
-
-bool TTYBackend::OnClipboardIsFormatAvailable(UINT format)
-{
-	return 0;
-}
-
-void *TTYBackend::OnClipboardSetData(UINT format, void *data)
-{
-	return 0;
-}
-
-void *TTYBackend::OnClipboardGetData(UINT format)
-{
-	return 0;
-}
-
-UINT TTYBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
-{
-	return 0;
-}
 
 static void sigwinch_handler(int)
 {

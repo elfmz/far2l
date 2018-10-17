@@ -20,6 +20,8 @@ public:
 class IClipboardBackend
 {
 public:
+	virtual ~IClipboardBackend() {};
+
 	virtual bool OnClipboardOpen() = 0;
 	virtual void OnClipboardClose() = 0;
 	virtual void OnClipboardEmpty() = 0;
@@ -28,3 +30,5 @@ public:
 	virtual void *OnClipboardGetData(UINT format) = 0;
 	virtual UINT OnClipboardRegisterFormat(const wchar_t *lpszFormat) = 0;
 };
+
+IClipboardBackend *WinPortClipboard_SetBackend(IClipboardBackend *clipboard_backend);

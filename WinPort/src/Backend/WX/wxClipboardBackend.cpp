@@ -15,9 +15,6 @@
 #include "wxClipboardBackend.h"
 #include "CallInMain.h"
 
-IClipboardBackend *WinPortClipboard_SetBackend(IClipboardBackend *clipboard_backend);
-
-
 static class CustomFormats : std::map<UINT, wxDataFormat>
 {
 	UINT _next_index;

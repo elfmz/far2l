@@ -37,6 +37,7 @@ src/WinPortHandle.cpp
 src/WinPortSynch.cpp
 src/PathHelpers.cpp
 src/Backend/WinPortMain.cpp
+src/Backend/FSClipboardBackend.cpp
 src/Backend/WX/Paint.cpp
 src/Backend/WX/wxMain.cpp
 src/Backend/WX/wxClipboardBackend.cpp

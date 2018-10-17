@@ -1,4 +1,4 @@
-#include "SharedResource.hpp"
+#include "SharedResource.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -9,13 +9,13 @@
 #include <sys/types.h>
 #include <sys/file.h>
 
-SharedResource::SharedResource(uint64_t id) :
+SharedResource::SharedResource(const char *group, uint64_t id) :
 	_modify_id(0),
 	_modify_counter(0),
 	_fd(-1)
 {
-	char buf[64];
-	snprintf(buf, sizeof(buf) - 1, "sr/%llx", (unsigned long long)id);
+	char buf[128];
+	snprintf(buf, sizeof(buf) - 1, "sr/%s/%llx", group, (unsigned long long)id);
 
 	_fd = open(InMyConfig(buf).c_str(), O_CREAT | O_RDWR, 0640);
 	if (_fd == -1) {

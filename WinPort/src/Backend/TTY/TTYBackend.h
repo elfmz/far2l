@@ -6,8 +6,9 @@
 #include "Backend.h"
 #include "TTYOutput.h"
 #include "TTYInput.h"
+#include "../FSClipboardBackend.h"
 
-class TTYBackend : IConsoleOutputBackend, IClipboardBackend
+class TTYBackend : IConsoleOutputBackend
 {
 	std::mutex _output_mutex;
 	int _stdin = 0, _stdout = 1, _kickass[2] = {-1, -1};
@@ -45,6 +46,8 @@ class TTYBackend : IConsoleOutputBackend, IClipboardBackend
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 
+	std::shared_ptr<IClipboardBackend> _clipboard_backend;
+
 protected:
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
 	virtual void OnConsoleOutputResized();
@@ -57,14 +60,6 @@ protected:
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
-//
-	virtual bool OnClipboardOpen();
-	virtual void OnClipboardClose();
-	virtual void OnClipboardEmpty();
-	virtual bool OnClipboardIsFormatAvailable(UINT format);
-	virtual void *OnClipboardSetData(UINT format, void *data);
-	virtual void *OnClipboardGetData(UINT format);
-	virtual UINT OnClipboardRegisterFormat(const wchar_t *lpszFormat);
 
 public:
 	TTYBackend(int std_in, int std_out);

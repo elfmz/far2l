@@ -177,7 +177,7 @@ int FTP::GetHostFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move
 
 			if(dest_exists)
 			{
-				if(!unlink(DestName)<0) WriteFailed=TRUE;
+				if(unlink(DestName) == -1) WriteFailed=TRUE;
 //				if(!WINPORT(DeleteFile)(DestName))
 	//				if(!WINPORT(SetFileAttributes)(DestName,FILE_ATTRIBUTE_NORMAL) && !DeleteFile(DestName//))
 		//				WriteFailed=TRUE;

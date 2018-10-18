@@ -37,57 +37,63 @@ apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev cmake g++ git
 
 ``` sh
 git clone https://github.com/elfmz/far2l
+cd far2l
 mkdir build
 cd build
 ```
 _with make:_
 ``` sh
-cmake -DCMAKE_BUILD_TYPE=Release ../far2l
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ``` 
 _or with ninja (you need **ninja-build** package installed)_
 ``` sh
-cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ../far2l
+cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
 
-#### macOS build
+#### macOS install
 
  * Supported compiler: ```AppleClang 8.0.0.x``` or newer. Check your version, and install/update XCode if necessary.
  ```sh
  clang++ -v
  ```
 
- * Install Homebrew:
+ * Install Homebrew if you don't have it:
 ```sh
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
+##### One line macOS install
+
+* Install far2l via unofficial brew tap:
+```sh
+brew install yurikoles/yurikoles/far2l --HEAD
+```
+
+##### Hard way macOS install
  * Install required packages:
 ```sh
-brew install glib gawk cmake pkg-config wget
+brew install cmake gawk glib ninja pkg-config wget wxmac
 ```
 
- * Download and build latest source from https://wxWidgets.org (brew version is too old?). Example: 
-```sh
-wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2
-bunzip2 wxWidgets-3.1.1.tar.bz2
-tar xvf wxWidgets-3.1.1.tar
-cd wxWidgets-3.1.1
-./configure --disable-shared --disable-debug CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++ -std=c++11" OBJCXXFLAGS="-stdlib=libc++ -std=c++11" LDFLAGS=-stdlib=libc++ --enable-monolithic --enable-unicode
-make -j4
-make install
-```
-
- * Download, generate makefiles and build far2l:
-```sh
+ * Clone:
+``` sh
 git clone https://github.com/elfmz/far2l
 cd far2l
-cmake -G "Unix Makefiles"
-make -j4
+mkdir build
+cd build
 ```
-
-
+_with make:_
+``` sh
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j4
+``` 
+_or with ninja_
+``` sh
+cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
+ninja -j4
+```
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
@@ -98,11 +104,6 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
 #### Useful add-ons
 
  * A collection of macros: https://github.com/corporateshark/far2l-macros
-
-
-
-
-
 
 ## Notes on porting
 

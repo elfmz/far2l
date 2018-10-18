@@ -2429,7 +2429,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		/* $ 28.08.2007 YJH
 		+ У форточек сносит крышу на GetFileAttributes("..") при нахождении в
 		корне UNC пути. Приходится обходить в ручную */
-		if (dot2Present &&
+		/* if (dot2Present &&
 		        !StrCmpN(strCurDir, L"//?/", 4) && strCurDir.At(4) &&
 		        !StrCmpN(&strCurDir[5], L":/",2))
 		{
@@ -2442,7 +2442,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 				strSetDir = strCurDir;
 				CutToSlash(strSetDir);
 			}
-		}
+		} */
 
 		PrepareDiskPath(strSetDir);
 	}

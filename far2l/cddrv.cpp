@@ -157,10 +157,10 @@ UINT FAR_GetDriveType(const wchar_t *RootDir, CDROM_DeviceCapabilities *Caps, DW
 		FARString VolumePath = strRootDir;
 		DeleteEndSlash(VolumePath);
 
-		if (VolumePath.Equal(0, L"//?/"))
+		/* if (VolumePath.Equal(0, L"//?/"))
 			VolumePath.Replace(0, 4, L"//./");
 		else
-			VolumePath.Insert(0, L"//./");
+			VolumePath.Insert(0, L"//./"); */
 
 		File Device;
 		if(Device.Open(VolumePath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING))

@@ -11,3 +11,4 @@ install/
 tools/
 *.a
 far2l/bootstrap
+build/

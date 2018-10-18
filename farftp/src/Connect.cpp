@@ -118,7 +118,7 @@ Connection::Connection()
 	LoginComplete = FALSE;
 
 
-	SocketError      = (int)INVALID_SOCKET;
+	SocketError      = INVALID_SOCKET;
 	sendport         = -1;
 	cmd_peer         = INVALID_SOCKET;
 	data_peer        = INVALID_SOCKET;

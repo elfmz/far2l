@@ -8,7 +8,7 @@ BOOL Connection::Init(LPCSTR Host, LPCSTR Port, LPCSTR User, LPCSTR Password)
 	FP_Screen _scr;
 	PROC(("Connection::Init","[%s] [%s] [%s]",Host,User,Password))
 	//_fmode        = _O_BINARY; // This causes an error somewhere.
-	SocketError   = (int)INVALID_SOCKET;
+	SocketError = INVALID_SOCKET;
 	WINPORT(SetLastError)(ERROR_SUCCESS);
 	/* Set up defaults for FTP. */
 	type = TYPE_A;

@@ -578,7 +578,7 @@ size_t GetPathRootLength(const FARString &Path)
 		PrefixLen = 8;
 		IsUNC = true;
 	}
-	else if (Path.Equal(0,4,L"//?/",4) || Path.Equal(0,4,L"\/??\/",4) || Path.Equal(0,4,L"//./",4))
+	else if (Path.Equal(0,4,L"//?/",4) || Path.Equal(0,4,LR"(/??/)",4) || Path.Equal(0,4,L"//./",4))
 	{
 		PrefixLen = 4;
 	}

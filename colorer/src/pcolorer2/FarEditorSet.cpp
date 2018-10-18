@@ -4,7 +4,9 @@ int _snwprintf_s (wchar_t *string, size_t sizeInWords, size_t count, const wchar
 {
   va_list arglist;
   va_start(arglist, format);
-  return vswprintf(string, count, format, arglist);
+  int result = vswprintf(string, count, format, arglist);
+  va_end(arglist);
+  return result;
 }
 
 FarEditorSet::FarEditorSet()

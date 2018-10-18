@@ -54,7 +54,7 @@ float CharDistributionAnalysis::GetConfidence()
   //if we didn't receive any character in our consideration range, or the
   // number of frequent characters is below the minimum threshold, return
   // negative answer
-  if (mTotalChars <= 0 || mFreqChars <= MINIMUM_DATA_THRESHOLD)
+  if (mTotalChars == 0 || mFreqChars <= MINIMUM_DATA_THRESHOLD)
     return SURE_NO;
 
   if (mTotalChars != mFreqChars) {

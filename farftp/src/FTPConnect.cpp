@@ -102,7 +102,7 @@ BOOL FTP::DoFtpConnect(int blocked)
 		WINPORT(SetLastError)(hConnect->ErrorCode);
 
 		//!Init
-		if((UINT)hConnect->SocketError != INVALID_SOCKET)
+		if(hConnect->SocketError != INVALID_SOCKET)
 			hConnect->ConnectMessage(MWSANotInit,GetSocketErrorSTR(hConnect->SocketError),-MOk);
 		else
 

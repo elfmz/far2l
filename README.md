@@ -52,7 +52,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
 
-#### macOS install
+#### OSX install
 
  * Supported compiler: ```AppleClang 8.0.0.x``` or newer. Check your version, and install/update XCode if necessary.
  ```sh
@@ -64,14 +64,14 @@ ninja -j4
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-##### One line macOS install
+##### One line OSX install
 
 * Install far2l via unofficial brew tap:
 ```sh
 brew install yurikoles/yurikoles/far2l --HEAD
 ```
 
-##### Hard way macOS install
+##### Hard way OSX install - with building from sources:
  * Install required packages:
 ```sh
 brew install cmake gawk glib ninja pkg-config wget wxmac

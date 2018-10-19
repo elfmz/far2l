@@ -77,7 +77,7 @@ PreRedrawItem TPreRedrawFunc::SetParam(PreRedrawParamStruct Param)
 
 PreRedrawItem TPreRedrawFunc::Push(const PreRedrawItem &Source)
 {
-	current=new OneItem(Source,Top);
+	current=new(std::nothrow) OneItem(Source,Top);
 
 	if (current)
 	{

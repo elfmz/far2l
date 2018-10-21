@@ -321,10 +321,13 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 
 		case ' ': // left press
-			if (now - _mouse.left_ts <= 500)
+			if (now - _mouse.left_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+				_mouse.left_ts = 0;
+			} else
+				_mouse.left_ts = now;
 
-			_mouse.left_ts = now;
+			_mouse.middle_ts = _mouse.right_ts = 0;
 			_mouse.left = true;
 			break;
 
@@ -332,18 +335,24 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 
 		case '!': // middle press
-			if (now - _mouse.middle_ts <= 500)
+			if (now - _mouse.middle_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+				_mouse.middle_ts = 0;
+			} else
+				_mouse.middle_ts = now;
 
-			_mouse.middle_ts = now;
+			_mouse.left_ts = _mouse.right_ts = 0;
 			_mouse.middle = true;
 			break;
 
 		case '^': // right press
-			if (now - _mouse.right_ts <= 500)
+			if (now - _mouse.right_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+				_mouse.right_ts = 0;
+			} else
+				_mouse.right_ts = now;
 
-			_mouse.right_ts = now;
+			_mouse.left_ts = _mouse.middle_ts = 0;
 			_mouse.right = true;
 			break;
 

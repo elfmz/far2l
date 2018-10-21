@@ -1,10 +1,23 @@
 #include <stdarg.h>
 #include <string>
 #include "TTYInputSequenceParser.h"
+#include "ConsoleInput.h"
+#include "WinPort.h"
+
 
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
+
+extern ConsoleInput g_winport_con_in;
+
+static bool IsEnhancedKey(WORD code)
+{
+	return (code==VK_LEFT || code==VK_RIGHT || code==VK_UP || code==VK_DOWN
+		|| code==VK_HOME || code==VK_END || code==VK_NEXT || code==VK_PRIOR );
+}
+
+
 
 #if 1 // change to 1 to enable self-contradiction check on startup
 
@@ -159,23 +172,74 @@ TTYInputSequenceParser::TTYInputSequenceParser()
 	AssertNoConflicts();
 }
 
-size_t TTYInputSequenceParser::Parse(TTYInputKey &k, const char *s, size_t l)
+size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
+{
+	TTYInputKey k;
+	switch (l >= 8 ? 8 : l) {
+		case 8: if (_nch2key8.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 8;
+			}
+
+		case 7: if (_nch2key7.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 7;
+			}
+
+		case 6: if (_nch2key6.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 6;
+			}
+
+		case 5: if (_nch2key5.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 5;
+			}
+
+		case 4: if (_nch2key4.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 4;
+			}
+
+		case 3: if (_nch2key3.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 3;
+			}
+
+		case 2: if (_nch2key2.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 2;
+			}
+
+		case 1: if (_nch2key1.Lookup(s, k)) {
+				PostKeyEvent(k);
+				return 1;
+			}
+
+		default: ;
+	}
+
+	return 0;
+}
+
+size_t TTYInputSequenceParser::Parse(const char *s, size_t l)
 {
 	switch (*s) {
-		case 0x1b:
+		case 0x1b: {
 			++s;
 			--l;
 
-			switch (l >= 8 ? 8 : l) {
-				case 8: if (_nch2key8.Lookup(s, k)) return 8 + 1;
-				case 7: if (_nch2key7.Lookup(s, k)) return 7 + 1;
-				case 6: if (_nch2key6.Lookup(s, k)) return 6 + 1;
-				case 5: if (_nch2key5.Lookup(s, k)) return 5 + 1;
-				case 4: if (_nch2key4.Lookup(s, k)) return 4 + 1;
-				case 3: if (_nch2key3.Lookup(s, k)) return 3 + 1;
-				case 2: if (_nch2key2.Lookup(s, k)) return 2 + 1;
-				case 1: if (_nch2key1.Lookup(s, k)) return 1 + 1;
+			if (s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
+				if (l < 5)
+					return 0;
+
+				ParseMouse(s[2], s[3], s[4]);
+				return 6;
 			}
+
+			size_t r = ParseNChars2Key(s, l);
+			if (r != 0)
+				return r + 1;
 
 			// be well-responsive on panic-escaping
 			for (size_t i = 0; (i + 1) < l; ++i) {
@@ -183,37 +247,39 @@ size_t TTYInputSequenceParser::Parse(TTYInputKey &k, const char *s, size_t l)
 					return i + 1;
 				}
 			}
+
 			return (l >= 8) ? (size_t)-2 : 0;
+		}
 
 		case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07: case 0x08:
 		case 0x0a: case 0x0b: case 0x0c: case 0x0e: case 0x0f: case 0x10: case 0x11: case 0x12:
 		case 0x13: case 0x14: case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1a:
-			k = TTYInputKey{WORD('A' + (*s - 0x01)), LEFT_CTRL_PRESSED};
+			PostKeyEvent(TTYInputKey{WORD('A' + (*s - 0x01)), LEFT_CTRL_PRESSED});
 			return 1;
 
 		case 0x09:
-			k = TTYInputKey{VK_TAB, 0};
+			PostKeyEvent(TTYInputKey{VK_TAB, 0});
 			return 1;
 
 		case 0x0d:
-			k = TTYInputKey{VK_RETURN, 0};
+			PostKeyEvent(TTYInputKey{VK_RETURN, 0});
 			return 1;
 
 //		case 0x1b:
-//			k = TTYInputKey{VK_OEM_4, 0};
+//			PostKeyEvent(VK_OEM_4, 0);
 //			return 1;
 
 		case 0x1c:
-			k = TTYInputKey{VK_OEM_5, 0};
+			PostKeyEvent(TTYInputKey{VK_OEM_5, 0});
 			return 1;
 
 		case 0x1d:
-			k = TTYInputKey{VK_OEM_6, 0};
+			PostKeyEvent(TTYInputKey{VK_OEM_6, 0});
 			return 1;
 
 
 		case 0x7f:
-			k = TTYInputKey{VK_BACK, 0};
+			PostKeyEvent(TTYInputKey{VK_BACK, 0});
 			return 1;
 
 		default:
@@ -222,3 +288,114 @@ size_t TTYInputSequenceParser::Parse(TTYInputKey &k, const char *s, size_t l)
 
 	abort();
 }
+
+
+void TTYInputSequenceParser::PostKeyEvent(const TTYInputKey &k)
+{
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.wRepeatCount = 1;
+//	ir.Event.KeyEvent.uChar.UnicodeChar = i.second.unicode_char;
+	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
+	ir.Event.KeyEvent.dwControlKeyState = k.control_keys;
+	if (IsEnhancedKey(k.vk)) {
+		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+	}
+	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
+	ir.Event.KeyEvent.bKeyDown = TRUE;
+	g_winport_con_in.Enqueue(&ir, 1);
+	ir.Event.KeyEvent.bKeyDown = FALSE;
+	g_winport_con_in.Enqueue(&ir, 1);
+}
+
+void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
+{
+	INPUT_RECORD ir = {};
+	ir.EventType = MOUSE_EVENT;
+	ir.Event.MouseEvent.dwMousePosition.X = ((unsigned char)col - (unsigned char)'!');
+	ir.Event.MouseEvent.dwMousePosition.Y = ((unsigned char)raw - (unsigned char)'!');
+	DWORD now = WINPORT(GetTickCount)();
+
+	switch (action) {
+		case '0': // ctrl+left press
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case ' ': // left press
+			if (now - _mouse.left_ts <= 500)
+				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+
+			_mouse.left_ts = now;
+			_mouse.left = true;
+			break;
+
+		case '1': // ctrl+middle press
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case '!': // middle press
+			if (now - _mouse.middle_ts <= 500)
+				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+
+			_mouse.middle_ts = now;
+			_mouse.middle = true;
+			break;
+
+		case '^': // right press
+			if (now - _mouse.right_ts <= 500)
+				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+
+			_mouse.right_ts = now;
+			_mouse.right = true;
+			break;
+
+
+		case '3': // ctrl+* depress
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case '#': // * depress
+			_mouse.left = _mouse.middle = _mouse.right = false;
+			break;
+
+		case 'p':
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case '`':
+			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
+			ir.Event.MouseEvent.dwButtonState|= (0x0001 <<16);
+			break;
+
+		case 'q':
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case 'a':
+			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
+			ir.Event.MouseEvent.dwButtonState|= (0xffff << 16);
+			break;
+
+
+		case 'P': // ctrl + mouse mode
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case '@': // mouse mode
+			break;
+
+		default:
+			return;
+	}
+
+	if (_mouse.left)
+			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_1ST_BUTTON_PRESSED;
+
+	if (_mouse.middle)
+			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_2ND_BUTTON_PRESSED;
+
+	if (_mouse.right)
+			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_3RD_BUTTON_PRESSED;
+
+	g_winport_con_in.Enqueue(&ir, 1);
+
+}
+
+
+//////////////////
+
+

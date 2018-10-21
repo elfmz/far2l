@@ -45,4 +45,5 @@ public:
 	void MoveCursor(unsigned int y, unsigned int x, bool force = false);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
 	void ChangeKeypad(bool app);
+	void ChangeMouse(bool enable);
 };

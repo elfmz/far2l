@@ -12,7 +12,6 @@ class TTYInput
 	TTYInputSequenceParser _parser;
 
 	void PostCharEvent(wchar_t ch);
-	void PostKeyEvent(const TTYInputKey &k);
 
 	size_t BufTryDecodeUTF8();
 

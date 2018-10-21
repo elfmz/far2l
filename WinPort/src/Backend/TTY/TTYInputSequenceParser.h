@@ -8,7 +8,6 @@ struct TTYInputKey
 	DWORD control_keys;
 };
 
-
 template <size_t N>
 	struct NChars
 {
@@ -73,6 +72,16 @@ class TTYInputSequenceParser
 	NChars2Key<7> _nch2key7;
 	NChars2Key<8> _nch2key8;
 
+
+	struct {
+		bool left = false;
+		bool middle = false;
+		bool right = false;
+		DWORD left_ts = 0;
+		DWORD middle_ts = 0;
+		DWORD right_ts = 0;
+	} _mouse;
+
 	void AssertNoConflicts();
 
 	void AddStr(WORD vk, DWORD control_keys, const char *fmt, ...);
@@ -82,7 +91,12 @@ class TTYInputSequenceParser
 	void AddStrF1F5(WORD vk, const char *code);
 	void AddStrCursors(WORD vk, const char *code);
 
+	size_t ParseNChars2Key(const char *s, size_t l);
+	void ParseMouse(char action, char col, char raw);
+
+	void PostKeyEvent(const TTYInputKey &k);
+
 public:
 	TTYInputSequenceParser();
-	size_t Parse(TTYInputKey &k, const char *s, size_t l); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
+	size_t Parse(const char *s, size_t l); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
 };

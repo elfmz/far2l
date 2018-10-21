@@ -177,3 +177,10 @@ void TTYOutput::ChangeKeypad(bool app)
 {
 	Format("\x1b[?1%c", app ? 'h' : 'l');
 }
+
+void TTYOutput::ChangeMouse(bool enable)
+{
+	Format("\x1b[?1000%c", enable ? 'h' : 'l');
+	Format("\x1b[?1001%c", enable ? 'h' : 'l');
+	Format("\x1b[?1002%c", enable ? 'h' : 'l');
+}

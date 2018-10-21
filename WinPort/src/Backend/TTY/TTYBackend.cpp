@@ -106,7 +106,9 @@ void TTYBackend::WriterThread()
 		TTYOutput tty_out(_stdout);
 		tty_out.SetScreenBuffer(true);
 		tty_out.ChangeKeypad(true);
+		tty_out.ChangeMouse(true);
 		tty_out.Flush();
+
 		while (!_exiting) {
 			AsyncEvent ae;
 			ae.all = 0;
@@ -131,7 +133,9 @@ void TTYBackend::WriterThread()
 
 			tty_out.Flush();
 		}
+
 		tty_out.ChangeCursor(true, 13);
+		tty_out.ChangeMouse(false);
 		tty_out.ChangeKeypad(false);
 		tty_out.SetScreenBuffer(false);
 		tty_out.Flush();

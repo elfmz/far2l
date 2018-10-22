@@ -138,18 +138,16 @@ void String::cat(LPCSTR s,...)
 
 void String::vcat(LPCSTR s,va_list a)
 {
-	int slen, clen;
-
 	if(!s || !s[0]) return;
 
 	va_list a_copy;
 	va_copy (a, a_copy);
 
-	slen = vsnprintf(NULL,0,s,a_copy);
-
+	int slen = vsnprintf(nullptr,0,s,a_copy);
+	va_end(a_copy);
 	if(!slen) return;
 
-	clen = Length();
+	int clen = Length();
 
 	if(!Alloc(clen + slen + 1)) return;
 

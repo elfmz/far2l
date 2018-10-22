@@ -64,7 +64,7 @@ PreRedrawItem TPreRedrawFunc::Peek()
 	return TPreRedrawFunc::errorStack;
 }
 
-PreRedrawItem TPreRedrawFunc::SetParam(PreRedrawParamStruct Param)
+PreRedrawItem TPreRedrawFunc::SetParam(const PreRedrawParamStruct &Param)
 {
 	if (Top)
 	{

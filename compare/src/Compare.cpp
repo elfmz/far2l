@@ -1217,7 +1217,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
   AInfo.ItemsNumber=AI.ItemsNumber;
   AInfo.SelectedItemsNumber=AI.SelectedItemsNumber;
 
-  int Size=Info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR,0,NULL);
+  int Size=Info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR,0,(LONG_PTR)0);
   AInfo.lpwszCurDir=new wchar_t[Size];
   Info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR,Size,(LONG_PTR)AInfo.lpwszCurDir);
 
@@ -1244,7 +1244,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
   PInfo.ItemsNumber=PI.ItemsNumber;
   PInfo.SelectedItemsNumber=PI.SelectedItemsNumber;
 
-  Size=Info.Control(PANEL_PASSIVE, FCTL_GETPANELDIR,0,NULL);
+  Size=Info.Control(PANEL_PASSIVE, FCTL_GETPANELDIR,0,(LONG_PTR)0);
   PInfo.lpwszCurDir=new wchar_t[Size];
   Info.Control(PANEL_PASSIVE, FCTL_GETPANELDIR,Size,(LONG_PTR)PInfo.lpwszCurDir);
 
@@ -1376,25 +1376,25 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 #ifndef UNICODE
     Info.Control(INVALID_HANDLE_VALUE, FCTL_SETSELECTION, &AInfo);
     Info.Control(INVALID_HANDLE_VALUE, FCTL_SETANOTHERSELECTION, &PInfo);
-    Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWPANEL, NULL);
-    Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWANOTHERPANEL, NULL);
+    Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWPANEL, (LONG_PTR)0);
+    Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWANOTHERPANEL, (LONG_PTR)0);
 #else
-    Info.Control(PANEL_ACTIVE,FCTL_BEGINSELECTION,0,NULL);
+    Info.Control(PANEL_ACTIVE,FCTL_BEGINSELECTION,0,(LONG_PTR)0);
     for(int i=0;i<AInfo.ItemsNumber;i++)
     {
       Info.Control(PANEL_ACTIVE, FCTL_SETSELECTION,i,AInfo.PanelItems[i].Flags&PPIF_SELECTED);
     }
-    Info.Control(PANEL_ACTIVE,FCTL_ENDSELECTION,0,NULL);
+    Info.Control(PANEL_ACTIVE,FCTL_ENDSELECTION,0,(LONG_PTR)0);
 
-    Info.Control(PANEL_PASSIVE,FCTL_BEGINSELECTION,0,NULL);
+    Info.Control(PANEL_PASSIVE,FCTL_BEGINSELECTION,0,(LONG_PTR)0);
     for(int i=0;i<PInfo.ItemsNumber;i++)
     {
       Info.Control(PANEL_PASSIVE, FCTL_SETSELECTION,i,PInfo.PanelItems[i].Flags&PPIF_SELECTED);
     }
-    Info.Control(PANEL_PASSIVE,FCTL_ENDSELECTION,0,NULL);
+    Info.Control(PANEL_PASSIVE,FCTL_ENDSELECTION,0,(LONG_PTR)0);
 
-    Info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL,0,NULL);
-    Info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL,0,NULL);
+    Info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL,0,(LONG_PTR)0);
+    Info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL,0,(LONG_PTR)0);
 
 #endif
     if(bOpenFail)

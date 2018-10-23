@@ -688,7 +688,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		}
 		fprintf(stderr, "FileMode=%u\n", FileMode);
 
-		if (!SelCount || (SelCount==1 && TestParentFolderName(strSelName)))
+		if (SelCount==1 && TestParentFolderName(strSelName))
 			return false;
 
 		wchar_t DateSeparator=GetDateSeparator();

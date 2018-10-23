@@ -1944,7 +1944,7 @@ void Viewer::Up()
 	wchar_t Buf[MAX_VIEWLINE];
 	int BufSize,StrPos,Skipped,I,J;
 
-	if (FilePos > (int64_t)sizeof(Buf)/sizeof(wchar_t))
+    if (FilePos > (int64_t)(sizeof(Buf)/sizeof(wchar_t)))
 		BufSize=sizeof(Buf)/sizeof(wchar_t);
 	else
 		BufSize=(int)FilePos;
@@ -1970,7 +1970,7 @@ void Viewer::Up()
 	BufSize = vread(Buf,BufSize);
 	Skipped=0;
 
-	if (BufSize>0 && Buf[BufSize-1]==(unsigned int)CRSym)
+    if (BufSize>0 && Buf[BufSize-1]==(wchar_t)CRSym)
 	{
 		BufSize--;
 		Skipped++;
@@ -1987,7 +1987,7 @@ void Viewer::Up()
 		/* $ 29.11.2001 DJ
 		   не обращаемся за границу массива (а надо было всего лишь поменять местами условия...)
 		*/
-		if (I==-1 || Buf[I]==(unsigned int)CRSym)
+        if (I==-1 || Buf[I]==(wchar_t)CRSym)
 		{
 			if (!VM.Wrap)
 			{
@@ -3057,7 +3057,7 @@ void Viewer::AdjustFilePos()
 		ReadSize=vread(Buf,ReadSize);
 
 		for (int I=ReadSize-1; I>=0; I--)
-			if (Buf[I]==(unsigned int)CRSym)
+            if (Buf[I]==(wchar_t)CRSym)
 			{
 				StartLinePos=GotoLinePos+I;
 				break;
@@ -3124,7 +3124,7 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 	ReadSize=vread(Buf,ReadSize);
 
 	for (int I=ReadSize-1; I>=0; I--)
-		if (Buf[I]==(unsigned int)CRSym)
+        if (Buf[I]==(wchar_t)CRSym)
 		{
 			StartLinePos=SearchLinePos+I;
 			break;

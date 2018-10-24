@@ -274,7 +274,10 @@ AskConnect:
                         else {
                                 PluginPanelItem *tmp  = (PluginPanelItem *)realloc(NewPanelItem,(*pItemsNumber+1024+1)*sizeof(PluginPanelItem));
                                 if ( tmp ) NewPanelItem = tmp;
-                                else {free(NewPanelItem); NewPanelItem == nullptr;}
+                                else {
+					free(NewPanelItem);
+					NewPanelItem = nullptr;
+				     }
                              }
                         if(NewPanelItem == nullptr)
 			{

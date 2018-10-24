@@ -271,10 +271,15 @@ AskConnect:
 		{
 			if(!NewPanelItem)
 				NewPanelItem = (PluginPanelItem *)malloc((1024+1)*sizeof(PluginPanelItem));
-			else
-				NewPanelItem = (PluginPanelItem *)realloc(NewPanelItem,(*pItemsNumber+1024+1)*sizeof(PluginPanelItem));
-
-			if(NewPanelItem == NULL)
+                        else {
+                                PluginPanelItem *tmp  = (PluginPanelItem *)realloc(NewPanelItem,(*pItemsNumber+1024+1)*sizeof(PluginPanelItem));
+                                if ( tmp ) NewPanelItem = tmp;
+                                else {
+					free(NewPanelItem);
+					NewPanelItem = nullptr;
+				     }
+                             }
+                        if(NewPanelItem == nullptr)
 			{
 				/*-*/Log(("GetFindData(file)::!reallocate plugin panels items %d -> %d",*pItemsNumber,*pItemsNumber+1024+1));
 				return FALSE;

@@ -26,8 +26,8 @@ public:
    * Static string constructor from char stream
    * @param str source string, can't be null.
    */
-  SString(char *str, int enc = -1);
-  SString(wchar *str);
+  SString(const char *str, int enc = -1);
+  SString(const wchar *str);
 
   /**
    * Static string constructor from integer number

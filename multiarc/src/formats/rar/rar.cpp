@@ -72,7 +72,7 @@ static FARSTDSPRINTF FarSprintf=NULL;
 
 
 
-void  WINAPI SetFarInfo(const struct PluginStartupInfo *Info)
+void  WINAPI _export RAR_SetFarInfo(const struct PluginStartupInfo *Info)
 {
    FarInputBox=Info->InputBox;
    FarGetMsg=Info->GetMsg;

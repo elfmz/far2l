@@ -60,7 +60,7 @@ ArcPlugins::ArcPlugins(const char *ModuleName) : PluginsData(NULL), PluginsCount
 	//	_CloseArchive, _GetFormatName, _GetDefaultCommands, _SetFarInfo, _GetSFXPos);
 	
 	AddPluginItem("RAR", RAR_IsArchive, RAR_OpenArchive, RAR_GetArcItem, NULL, 
-		RAR_CloseArchive, RAR_GetFormatName, RAR_GetDefaultCommands, NULL, RAR_GetSFXPos);
+		RAR_CloseArchive, RAR_GetFormatName, RAR_GetDefaultCommands, RAR_SetFarInfo, RAR_GetSFXPos);
 
 	AddPluginItem("HA", HA_IsArchive, HA_OpenArchive, HA_GetArcItem, NULL, 
 		HA_CloseArchive, HA_GetFormatName, HA_GetDefaultCommands, HA_SetFarInfo, NULL);

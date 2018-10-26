@@ -590,6 +590,7 @@ char* WINAPI TruncStr(char *Str,int MaxLength)
 	int Length;
 
 	if((Length=static_cast<int>(strlen(Str)))>MaxLength)
+      {
 		if(MaxLength>3)
 		{
 			char *TmpStr=new char[MaxLength+5];
@@ -599,6 +600,7 @@ char* WINAPI TruncStr(char *Str,int MaxLength)
 		}
 		else
 			Str[MaxLength]=0;
+      }
 
 	return(Str);
 }

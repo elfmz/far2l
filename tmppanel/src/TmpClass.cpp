@@ -178,8 +178,8 @@ int TmpPanel::PutDirectoryContents(const TCHAR* Path)
       return FALSE;
     TmpPanelItem=NewPanelItem;
     memset(&TmpPanelItem[TmpItemsNumber],0,sizeof(*TmpPanelItem)*DirItemsNumber);
-    size_t PathLen = lstrlen(Path);
 #ifndef UNICODE
+    size_t PathLen = lstrlen(Path);
     const TCHAR *lpSlash = _tcsrchr(Path, GOOD_SLASH);
     if (lpSlash)
       PathLen = lpSlash - Path;

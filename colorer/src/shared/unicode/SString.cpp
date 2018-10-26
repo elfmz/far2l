@@ -16,11 +16,11 @@ SString::SString(const String *cstring, int s, int l){
 SString::SString(const String &cstring, int s, int l){
   construct(&cstring, s, l);
 }
-SString::SString(char *str, int enc){
+SString::SString(const char *str, int enc){
   DString ds(str, 0, -1, enc);
   construct(&ds, 0, ds.length());
 }
-SString::SString(wchar *str){
+SString::SString(const wchar *str){
    DString ds(str, 0, -1);
    construct(&ds, 0, ds.length());
 }

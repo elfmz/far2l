@@ -2,6 +2,10 @@
 #include <WinCompat.h>
 #include <WinPort.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 #include <assert.h>
 #include <mutex>
 #include <fcntl.h>
@@ -9,21 +13,32 @@
 #include <errno.h>
 
 
+std::string GetMyHome()
+{
+	std::string out;
+
+	struct passwd *pw = getpwuid(getuid());
+	if (pw && pw->pw_dir && *pw->pw_dir) {
+		out = pw->pw_dir;
+	} else {
+		const char *env = getenv("HOME");
+		if (env && *env) {
+			out = env;
+		} else {
+			out = "/tmp";
+		}
+	}
+	return out;
+}
+
 std::string InMyConfig(const char *subpath, bool create_path)
 {
 	std::string path;
 #ifdef _WIN32
 	path = "D:\\far2l";
 #else	
-	const char *home = getenv("HOME");
-	if (home) {
-		path = home;
-		path+= "/.config";
-	} else {
-		char tmp[128];
-		sprintf(tmp, "/tmp/far2l_%llx_cfg", (unsigned long long)geteuid());
-		path = tmp;
-	}
+	path = GetMyHome();
+	path+= "/.config";
 	if (create_path)
 		mkdir(path.c_str(), 0700);
 	path+= "/far2l";

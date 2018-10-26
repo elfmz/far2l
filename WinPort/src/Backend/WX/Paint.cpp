@@ -482,7 +482,7 @@ void ConsolePainter::FlushText()
 
 // U+0000..U+D7FF, U+E000..U+10FFFF
 
-#define IS_VALID_WCHAR(c)    ( (((unsigned int)c) >= 0 && ((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
+#define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {

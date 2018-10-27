@@ -88,7 +88,7 @@ LPCSTR FTP::InsertCurrentToQueue(void)
 		return FMSG(MErrGetPanelInfo);
 
 	if(pi.SelectedItemsNumber <= 0 ||
-	        pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED))
+	        (pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED)))
 		return FMSG(MErrNoSelection);
 
 	backup.Add(pi.SelectedItems, pi.SelectedItemsNumber);
@@ -122,7 +122,7 @@ LPCSTR FTP::InsertAnotherToQueue(void)
 		return FMSG(MErrGetPanelInfo);
 
 	if(pi.SelectedItemsNumber <= 0 ||
-	        pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED))
+	        (pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED)))
 		return FMSG(MErrNoSelection);
 
 	if(pi.PanelType != PTYPE_FILEPANEL || pi.Plugin)
@@ -677,7 +677,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 
 //IO completed
 		if(rc == -1 ||
-		        !rc && WINPORT(GetLastError)() == ERROR_CANCELLED)
+		        (!rc && WINPORT(GetLastError)() == ERROR_CANCELLED))
 		{
 			WINPORT(SetLastError)(ERROR_CANCELLED);
 			break;

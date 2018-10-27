@@ -843,7 +843,7 @@ static bool IsForcedCharTranslation(int code)
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	
-	fprintf(stderr, "OnKeyDown: %x %x %x %u %lu\n", event.GetRawKeyCode(), 
+	fprintf(stderr, "OnKeyDown: %x %x %x %u %ld\n", event.GetRawKeyCode(),
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 

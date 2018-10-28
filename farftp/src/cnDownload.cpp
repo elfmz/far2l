@@ -372,7 +372,7 @@ NormExit:
 	scClose(data_peer,-1);
 
 	if(getreply(FALSE) == RPL_ERROR ||
-	        oldtype && !SetType(oldtype))
+	        (oldtype && !SetType(oldtype)))
 	{
 		lostpeer();
 	}

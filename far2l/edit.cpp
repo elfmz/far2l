@@ -1453,7 +1453,7 @@ int Edit::ProcessKey(int Key)
 		default:
 		{
 //      _D(SysLog(L"Key=0x%08X",Key));
-			if (Key==KEY_NONE || Key==KEY_IDLE || Key==KEY_ENTER || Key==KEY_NUMENTER || Key>=65536)
+			if (Key==KEY_ENTER || Key>=EXTENDED_KEY_BASE) // KEY_NUMENTER,KEY_IDLE,KEY_NONE covered by >=EXTENDED_KEY_BASE
 				break;
 
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS))

@@ -754,8 +754,8 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 					switch(mps->Mode)
 					{
 						case 0: // выделить все?
-						    for (int i=0; i < FileCount; i++)
-						    	Select(ListData[i],TRUE);
+							for (int i=0; i < FileCount; i++)
+							  Select(ListData[i],TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
 						case 1: // по индексу?
@@ -790,8 +790,8 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 					switch(mps->Mode)
 					{
 						case 0: // инвертировать все?
-						    for (int i=0; i < FileCount; i++)
-						    	Select(ListData[i],ListData[i]->Selected?FALSE:TRUE);
+							for (int i=0; i < FileCount; i++)
+							  Select(ListData[i],ListData[i]->Selected?FALSE:TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
 						case 1: // по индексу?

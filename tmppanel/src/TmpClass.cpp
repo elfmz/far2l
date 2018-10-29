@@ -968,7 +968,7 @@ int TmpPanel::IsOwnersDisplayed(LPCTSTR ColumnTypes)
     if(ColumnTypes[i]==_T('O') && (i==0 || ColumnTypes[i-1]==_T(',')) &&
        (ColumnTypes[i+1]==_T(',') || ColumnTypes[i+1]==0))
       return(TRUE);
-    return(FALSE);
+  return(FALSE);
 }
 
 
@@ -979,7 +979,7 @@ int TmpPanel::IsLinksDisplayed(LPCTSTR ColumnTypes)
        (i==0 || ColumnTypes[i-1]==_T(',')) &&
       (ColumnTypes[i+2]==_T(',') || ColumnTypes[i+2]==0))
       return(TRUE);
-    return(FALSE);
+  return(FALSE);
 }
 
 inline bool isDevice(const TCHAR* FileName, const TCHAR* dev_begin)

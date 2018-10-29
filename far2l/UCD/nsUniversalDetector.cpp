@@ -145,13 +145,13 @@ nsresult nsUniversalDetector::HandleData(const char* aBuf, PRUint32 aLen)
         break;
       }  // switch
 
-      if (mDetectedCharset)
-      {
-        mDone = PR_TRUE;
-        return NS_OK;
-      }
+    if (mDetectedCharset)
+    {
+      mDone = PR_TRUE;
+      return NS_OK;
+    }
   }
-  
+
   PRUint32 i;
   for (i = 0; i < aLen; i++)
   {

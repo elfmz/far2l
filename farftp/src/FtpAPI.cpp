@@ -377,8 +377,8 @@ BOOL FtpPutFile(Connection *Connect,LPCSTR loc,LPCSTR rem,BOOL Reput,int AsciiMo
 	Assert(Connect && "FtpPutFile");
 	Connect->CacheReset();
 
-	if(AsciiMode && !Connect->ProcessCommand("ascii") ||
-	        !AsciiMode && !Connect->ProcessCommand("bin"))
+	if((AsciiMode && !Connect->ProcessCommand("ascii")) ||
+	        (!AsciiMode && !Connect->ProcessCommand("bin")))
 	{
 		Log(("!Set mode"));
 		return FALSE;
@@ -780,7 +780,7 @@ BOOL ParseDirLine(Connection *Connect,BOOL AllFiles,FTPFileInfo* p)
 		if(p->FileType == NET_SKIP ||
 		        !CurName[0] ||
 		        StrCmp(CurName,".") == 0 ||
-		        !AllFiles && StrCmp(CurName,"..") == 0)
+		        (!AllFiles && StrCmp(CurName,"..") == 0))
 			continue;
 
 		//Correct attrs

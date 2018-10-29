@@ -1,11 +1,15 @@
 
 #include <set>
 #include <mutex>
+#include <vector>
 #include <chrono>
 #include <thread>
 #include <condition_variable>
-#if !defined(__APPLE__) and !defined(__FreeBSD__)
-#include <sys/inotify.h>
+#if defined(__APPLE__) || defined(__FreeBSD__)
+# include <sys/event.h>
+# include <sys/time.h>
+#else
+# include <sys/inotify.h>
 #endif
 #include <pthread.h>
 #include <dirent.h>
@@ -22,6 +26,10 @@
 
 class WinPortFSNotify : public WinPortEvent
 {
+#if defined(__APPLE__) || defined(__FreeBSD__)
+	std::vector<struct kevent> _events;
+#endif
+
 	std::vector<int> _watches;
 	pthread_t _watcher;
 	int _fd;
@@ -33,7 +41,15 @@ class WinPortFSNotify : public WinPortEvent
 	void AddWatch(const char *path)
 	{
 		int w = -1;
-#if !defined(__APPLE__) and !defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
+		w = open(path, O_RDONLY);
+		if (w != -1) {
+			_events.emplace_back();
+			EV_SET(&_events.back(), w, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_ONESHOT,
+				NOTE_DELETE | NOTE_EXTEND | NOTE_WRITE | NOTE_ATTRIB | NOTE_LINK | NOTE_RENAME,
+				0, 0);
+		}
+#else
 		uint32_t mask = 0;
 		
 		//TODO: be smarter with filtering
@@ -46,37 +62,44 @@ class WinPortFSNotify : public WinPortEvent
 		w = inotify_add_watch(_fd, path, mask);
 #endif
 		if (w!=-1)
-			_watches.push_back(w);
+			_watches.emplace_back(w);
 		else
 			fprintf(stderr, "WinPortFSNotify::AddWatch('%s') - error %u\n", path, errno);
 	}
 
 	void AddWatchRecursive(const std::string &path, int level)
 	{
-		if (level==128) return;
-
-		AddWatch(path.c_str());
-
 		DIR *dir = opendir(path.c_str());
 		if (!dir) return;
 
-		std::string subpath;
-
+		std::vector<std::string> subdirs;
 		for (;;) {
 			struct dirent *de = readdir(dir);
 			if (!de) break;
-			if (de->d_type == DT_DIR){
-				 if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-					continue;
+			if (de->d_type == DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+				subdirs.emplace_back(de->d_name);
+		}
+		closedir(dir);
 
+		// first set watches on all at current level, and only then recurse deeper
+		std::string subpath;
+		for (const auto &subdir : subdirs) {
+			subpath = path;
+			if (!subpath.empty() && subpath[subpath.size()-1] != '/')
+				subpath+= '/';
+			subpath+= subdir;
+			AddWatch(subpath.c_str());
+		}
+
+		if (level < 128 && _watches.size() < 0x100) {
+			for (const auto &subdir : subdirs) {
 				subpath = path;
-				if (!subpath.empty() && subpath[subpath.size()-1]!='/')
+				if (!subpath.empty() && subpath[subpath.size()-1] != '/')
 					subpath+= '/';
-				subpath+= de->d_name;
+				subpath+= subdir;
 				AddWatchRecursive(subpath, level + 1);
 			}
 		}
-		closedir(dir);
 	}
 
 	static void *sWatcherProc(void *p)
@@ -87,7 +110,15 @@ class WinPortFSNotify : public WinPortEvent
 
 	void WatcherProc()
 	{
-#if !defined(__APPLE__) and !defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
+		struct kevent ev = {};
+		int nev = kevent(_fd, &_events[0], _events.size(), &ev, 1, NULL);
+		if (nev > 0) {
+			if (ev.ident != _pipe[0]) {
+				Set();
+			}
+		}
+#else
 		union {
 			struct inotify_event ie;
 			char space[ sizeof(struct inotify_event) + NAME_MAX + 10 ];
@@ -132,17 +163,28 @@ class WinPortFSNotify : public WinPortEvent
 	
 	void StopWatching()
 	{
-#if !defined(__APPLE__) and !defined(__FreeBSD__)
-		if (_fd!=-1) {
-			if (_watching) {
-				_watching = false;
-				if (write(_pipe[1], &_watching, sizeof(_watching))!=sizeof(_watching))
-					fprintf(stderr, "~WinPortFSNotify - pipe write error %u\n", errno);
-					
-				pthread_join(_watcher, NULL);
-				close(_pipe[0]);
-				close(_pipe[1]);
-			}
+		if (_watching) {
+			_watching = false;
+			if (write(_pipe[1], &_watching, sizeof(_watching))!=sizeof(_watching))
+				fprintf(stderr, "~WinPortFSNotify - pipe write error %u\n", errno);
+
+			pthread_join(_watcher, NULL);
+			close(_pipe[0]);
+			close(_pipe[1]);
+		}
+
+#if defined(__APPLE__) || defined(__FreeBSD__)
+		for (auto w : _watches) {
+			close(w);
+		}
+		_watches.clear();
+		_events.clear();
+		if (_fd != -1) {
+			close(_fd);
+			_fd = -1;
+		}
+#else
+		if (_fd != -1) {
 			for (auto w : _watches)
 				inotify_rm_watch(_fd, w);
 			close(_fd);
@@ -154,19 +196,28 @@ class WinPortFSNotify : public WinPortEvent
 public:
 	WinPortFSNotify(LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter)
 		: WinPortEvent(true, false), _watcher(0),
-		_filter(dwNotifyFilter), _watching(false)
+		_fd(-1), _filter(dwNotifyFilter), _watching(false)
 	{
-#if !defined(__APPLE__) and !defined(__FreeBSD__)
-		_fd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
-		if (_fd==-1)
+#if defined(__APPLE__) || defined(__FreeBSD__)
+		_fd = kqueue();
+		if (_fd == -1)
 			return;
+#else
+		_fd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
+		if (_fd == -1)
+			return;
+#endif
 
+		AddWatch( Wide2MB(lpPathName).c_str() );
 		if (bWatchSubtree) {
 			AddWatchRecursive(Wide2MB(lpPathName), 0);
-		} else
-			AddWatch( Wide2MB(lpPathName).c_str() );
+		}
 
-		if (!_watches.empty() && pipe2(_pipe, O_CLOEXEC)==0) {
+		if (!_watches.empty() && pipe_cloexec(_pipe)==0) {
+#if defined(__APPLE__) || defined(__FreeBSD__)
+			_events.emplace_back();
+			EV_SET(&_events.back(), _pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE | EV_ONESHOT, 0, 0, 0);
+#endif
 			_watching = true;
 			if (pthread_create(&_watcher, NULL, sWatcherProc, this)==0) {
 				fprintf(stderr, "WinPortFSNotify('%ls') - watching\n", lpPathName);
@@ -179,7 +230,6 @@ public:
 		} else {
 			fprintf(stderr, "WinPortFSNotify('%ls') - not watching\n", lpPathName);
 		}
-#endif
 	}
 
 	~WinPortFSNotify()

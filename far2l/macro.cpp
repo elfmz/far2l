@@ -5571,10 +5571,14 @@ bool KeyMacro::UnregMacroFunction(size_t Index)
 			for (size_t I=0; I < CMacroFunction; ++I)
 			{
 				pTemp=AMacroFunction+I;
-				if (pTemp->Name)        xf_free((void*)pTemp->Name);        pTemp->Name=nullptr;
-				if (pTemp->fnGUID)      xf_free((void*)pTemp->fnGUID);      pTemp->fnGUID=nullptr;
-				if (pTemp->Syntax)      xf_free((void*)pTemp->Syntax);      pTemp->Syntax=nullptr;
-				if (pTemp->Buffer)      xf_free((void*)pTemp->Buffer);      pTemp->Buffer=nullptr;
+				if (pTemp->Name)        xf_free((void*)pTemp->Name);
+				pTemp->Name=nullptr;
+				if (pTemp->fnGUID)      xf_free((void*)pTemp->fnGUID);
+				pTemp->fnGUID=nullptr;
+				if (pTemp->Syntax)      xf_free((void*)pTemp->Syntax);
+				pTemp->Syntax=nullptr;
+				if (pTemp->Buffer)      xf_free((void*)pTemp->Buffer);
+				pTemp->Buffer=nullptr;
 				//if (pTemp->Src)         xf_free((void*)pTemp->Src);         pTemp->Src=nullptr;
 				//if (pTemp->Description) xf_free((void*)pTemp->Description); pTemp->Description=nullptr;
 			}

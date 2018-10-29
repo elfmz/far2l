@@ -526,8 +526,8 @@ local ZPOS64_T zip64local_SearchCentralDir(const zlib_filefunc64_32_def* pzlib_f
         break;
       }
 
-      if (uPosFound!=0)
-        break;
+    if (uPosFound!=0)
+      break;
   }
   TRYFREE(buf);
   return uPosFound;
@@ -1114,9 +1114,9 @@ extern int ZEXPORT zipOpenNewFileInZip4_64 (zipFile file, const char* filename, 
     zi->ci.flag = flagBase;
     if ((level==8) || (level==9))
       zi->ci.flag |= 2;
-    if ((level==2))
+    if (level==2)
       zi->ci.flag |= 4;
-    if ((level==1))
+    if (level==1)
       zi->ci.flag |= 6;
     if (password != NULL)
       zi->ci.flag |= 1;

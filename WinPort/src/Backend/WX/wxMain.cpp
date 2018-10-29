@@ -403,7 +403,7 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 		ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_BASE);
 		
-	} else if (event.GetId() >= ID_CTRL_SHIFT_BASE && event.GetId() < ID_CTRL_SHIFT_BASE) {
+	} else if (event.GetId() >= ID_CTRL_SHIFT_BASE && event.GetId() < ID_CTRL_SHIFT_END) {
 		ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED | SHIFT_PRESSED;
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
 		
@@ -839,7 +839,7 @@ static bool IsForcedCharTranslation(int code)
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	
-	fprintf(stderr, "OnKeyDown: %x %x %x %u %lu\n", event.GetRawKeyCode(), 
+	fprintf(stderr, "OnKeyDown: %x %x %x %u %ld\n", event.GetRawKeyCode(),
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 

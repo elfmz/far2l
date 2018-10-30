@@ -603,6 +603,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 					case     ocNewer:
 					case  ocNewerAll:
 						goto Skip;
+					default: break; // ocNone, ocCancel
 				}
 
 				if(ci.MsgCode == ocCancel)
@@ -657,6 +658,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 					case     ocNewer:
 					case  ocNewerAll:
 						goto Skip;
+					default: break; // ocNone, ocCancel
 				}
 
 				if(ci.MsgCode == ocCancel)

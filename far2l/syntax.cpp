@@ -1834,6 +1834,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 					case emmWhile:
 						Size += 2; // Место под дополнительный JMP
 						break;
+					default: break; // emmMain, emmThen, emmElse
 				}
 
 				break;

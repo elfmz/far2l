@@ -13,58 +13,22 @@
 #include <wx/evtloop.h>
 #include <wx/apptrait.h>
 
-#ifdef __WXMAC__
-#include <Carbon/Carbon.h>
-extern "C" { void CPSEnableForegroundOperation(ProcessSerialNumber* psn); }
-#endif
-
-static int sudo_askpass_to_pipe(int pipe_sendpass)
-{
-#ifdef __WXMAC__
-	ProcessSerialNumber psn;
-	GetCurrentProcess( &psn );
-	CPSEnableForegroundOperation( &psn );
-	SetFrontProcess( &psn );
-#endif
-	wxInitialize();
-
-	const char *title = getenv(SDC_ENV_TITLE);
-	const char *prompt = getenv(SDC_ENV_PROMPT);
-	if (!title)
-		title = "sudo";
-	if (!prompt)
-		prompt = "Enter sudo password:";
-
-	wxPasswordEntryDialog dlg(nullptr, prompt, title, 
-		wxString(), wxCENTRE | wxOK | wxCANCEL);
-
-	int r;
-	if ( dlg.ShowModal() == wxID_OK )
-	{
-		wxString value = dlg.GetValue();
-		value+= '\n';
-		if (write(pipe_sendpass, value.c_str(), value.size()) <= 0) {
-			perror("sudo_askpass - write");
-			r = -1;
-		} else
-			r = 0;
-	} else
-		r = 1;
-	
-	return r;
-}
+#include "sudo_askpass_ipc.h"
 
 extern "C" int sudo_main_askpass()
 {
-	int pipe_sendpass = dup(STDOUT_FILENO);
-	int fd = open("/dev/null", O_RDWR);
-	if (fd!=-1) {
-		dup2(fd, STDOUT_FILENO);
-		close(fd);
-	} else
-		perror("open /dev/null");
+	std::string password;
+	switch (SudoAskpassRequestPassword(password)) {
+		case SAR_OK:
+			password+= '\n';
+			if (write(STDOUT_FILENO, password.c_str(), password.size()) <= 0)
+				perror("sudo_main_askpass - write");
+			return 0;
 
-	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
-	int r = sudo_askpass_to_pipe(pipe_sendpass);
-	return r;
+		case SAR_CANCEL:
+			return 1;
+
+		default:
+			return -1;
+	}
 }

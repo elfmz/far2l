@@ -1315,15 +1315,3 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 	_exclusive_hotkeys.Reset();
 }
 
-bool ConfirmationDialog(const char *title, const char *text)
-{
-	if (!wxIsMainThread()) {
-		auto fn = std::bind(ConfirmationDialog, title, text);
-		return CallInMain<bool>(fn);	
-	}
-
-	wxMessageDialog dlg(wxTheApp->GetTopWindow(), text, title, 
-		wxCENTRE | wxOK | wxCANCEL);
-	return ( dlg.ShowModal() == wxID_OK );
-}
-

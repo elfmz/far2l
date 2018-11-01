@@ -10,19 +10,22 @@
 #include <algorithm>
 #include "sudo_private.h"
 #include "sudo.h"
+#include "sudo_askpass_ipc.h"
 
-
-bool ConfirmationDialog(const char *title, const char *text);
 
 namespace Sudo 
 {
+	std::string g_sudo_title = "SUDO request";
+	std::string g_sudo_prompt = "Enter password";
+	std::string g_sudo_confirm = "Confirm priviledged operation";
+
 	static std::mutex s_client_mutex;
 	static int s_client_pipe_send = -1;
 	static int s_client_pipe_recv = -1;
 	static std::string g_curdir_override;
 	static struct ListOfStrings : std::list<std::string> {} g_recent_curdirs;
 	
-	static std::string 	g_sudo_app, g_askpass_app;
+	static std::string g_sudo_app, g_askpass_app;
 	
 	enum ModifyState
 	{
@@ -105,13 +108,7 @@ namespace Sudo
 	
 	static bool ClientConfirm()
 	{
-		const char *title = getenv(SDC_ENV_TITLE);
-		const char *text = getenv(SDC_ENV_CONFIRM);
-		if (!title)
-			title = "sudo";
-		if (!text)
-			text = "Confirm priviledged operation";
-		return ConfirmationDialog(title, text);
+		return SudoAskpassRequestConfirmation() == SAR_OK;
 	}
 
 	static bool LaunchDispatcher(int pipe_request, int pipe_reply)
@@ -282,9 +279,9 @@ namespace Sudo
 			const char *sudo_app, const char *askpass_app,
 			const char *sudo_title, const char *sudo_prompt, const char *sudo_confirm)
 		{
-			setenv(SDC_ENV_TITLE, sudo_title, 1);
-			setenv(SDC_ENV_PROMPT, sudo_prompt, 1);
-			setenv(SDC_ENV_CONFIRM, sudo_confirm, 1);
+			if (sudo_title && *sudo_title) g_sudo_title = sudo_title;
+			if (sudo_prompt && *sudo_prompt) g_sudo_prompt = sudo_prompt;
+			if (sudo_confirm && *sudo_confirm) g_sudo_confirm = sudo_confirm;
 
 			std::lock_guard<std::mutex> lock(s_client_mutex);
 			g_sudo_app = sudo_app;

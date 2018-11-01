@@ -6,6 +6,8 @@
 #include "ConsoleInput.h"
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
+#include "../sudo/sudo_askpass_ipc.h"
+#include "SudoAskpassImpl.h"
 
 
 ConsoleOutput g_winport_con_out;
@@ -65,8 +67,6 @@ static void SetupStdHandles(bool nohup)
 }
 
 
-
-
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
 	bool tty = false, help = false;
@@ -92,6 +92,9 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
 //      g_winport_con_out.WriteString(L"Hello", 5);
+
+	SudoAskpassImpl askass_impl;
+	SudoAskpassServer askpass_srv(&askass_impl);
 
 	int result = -1;
 	if (!tty) {

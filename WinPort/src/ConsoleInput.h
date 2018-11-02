@@ -20,7 +20,7 @@ public:
 	DWORD Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0);
 	DWORD Count(unsigned int requestor_priority = 0);
 	DWORD Flush(unsigned int requestor_priority = 0);
-	void WaitForNonEmpty(unsigned int requestor_priority = 0);
+	bool WaitForNonEmpty(unsigned int timeout_msec = (unsigned int)-1, unsigned int requestor_priority = 0);
 
 	unsigned int RaiseRequestorPriority();
 	void LowerRequestorPriority(unsigned int released_priority);

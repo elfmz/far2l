@@ -11,10 +11,12 @@ class SavedScreen
 {
 	std::vector<CHAR_INFO> _content;
 	unsigned int _width = 0, _height = 0;
+	USHORT _attr;
 
 public:
 	SavedScreen()
 	{
+		_attr = g_winport_con_out.GetAttributes();
 		g_winport_con_out.GetSize(_width, _height);
 		_content.resize(size_t(_width) * size_t(_height));
 		if (!_content.empty()) {
@@ -26,11 +28,17 @@ public:
 
 	~SavedScreen()
 	{
+		Restore();
+	}
+
+	void Restore()
+	{
 		if (!_content.empty()) {
 			COORD data_pos = {}, data_size = {(SHORT)_width, (SHORT)_height};
 			SMALL_RECT screen_rect = {0, 0, data_size.X, data_size.Y};
 			g_winport_con_out.Write(&_content[0], data_size, data_pos, screen_rect);
 		}
+		g_winport_con_out.SetAttributes(_attr);
 	}
 };
 
@@ -40,12 +48,14 @@ class SudoAskpassScreen
 	SavedScreen _ss;
 	INPUT_RECORD _ir_resized;
 	unsigned int _width = 0, _height = 0;
+	std::string _title, _text, _key_hint;
 	std::wstring _input;
 	enum Result {
 		RES_PENDING,
 		RES_OK,
 		RES_CANCEL
 	} _result = RES_PENDING;
+	bool _need_repaint = false;
 
 	void DispatchInputKey(const KEY_EVENT_RECORD &rec)
 	{
@@ -55,7 +65,7 @@ class SudoAskpassScreen
 		if (rec.wVirtualKeyCode == VK_RETURN) {
 			_result = RES_OK;
 
-		} else if (rec.wVirtualKeyCode == VK_ESCAPE) {
+		} else if (rec.wVirtualKeyCode == VK_ESCAPE || rec.wVirtualKeyCode == VK_F10) {
 			_result = RES_CANCEL;
 
 		} else if (rec.wVirtualKeyCode == VK_BACK) {
@@ -77,7 +87,9 @@ class SudoAskpassScreen
 		while (g_winport_con_in.Dequeue(&ir, 1, _cip)) {
 			switch (ir.EventType) {
 				case WINDOW_BUFFER_SIZE_EVENT:
+					_ss.Restore();
 					_ir_resized = ir;
+					_need_repaint = true;
 					break;
 
 				case KEY_EVENT:
@@ -100,14 +112,10 @@ class SudoAskpassScreen
 		g_winport_con_out.WriteStringAt(wstr.c_str(), wstr.size(), pos);
 	}
 
-public:
-	SudoAskpassScreen(const std::string &title, const std::string &text) :  _cip(g_winport_con_in)
+	void Repaint()
 	{
-		_ir_resized.EventType = NOOP_EVENT;
 		g_winport_con_out.GetSize(_width, _height);
-		std::string key_hint = "Confirm by <Enter> Cancel by <Esc>";
-
-		SHORT w = std::max(key_hint.size(), std::max(title.size(), text.size())) + 5, h = 5;
+		SHORT w = std::max(_key_hint.size(), std::max(_title.size(), _text.size())) + 5, h = 5;
 
 		SHORT l = (SHORT(_width) - w) / 2, t = 0;//(_height - h) / 2;
 		if (l < 0) l = 0;
@@ -129,11 +137,25 @@ public:
 			}
 		}
 
-		WriteCentered(title, t + 1);
-		WriteCentered(text, t + 2);
-		WriteCentered(key_hint, t + 3);
+		g_winport_con_out.SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		WriteCentered(_title, t + 1);
+		WriteCentered(_key_hint, t + 3);
+
+		g_winport_con_out.SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+		WriteCentered(_text, t + 2);
 //		COORD pos = {};
 //		g_winport_con_out.FillAttributeAt(FOREGROUND_GREEN, _width * _height, pos);
+	}
+
+public:
+	SudoAskpassScreen(const std::string &title, const std::string &text) :
+		_cip(g_winport_con_in),
+		_title(title),
+		_text(text),
+		_key_hint("Confirm by <Enter> Cancel by <Esc>")
+	{
+		_ir_resized.EventType = NOOP_EVENT;
+		Repaint();
 	}
 
 	~SudoAskpassScreen()
@@ -145,11 +167,20 @@ public:
 	bool Loop()
 	{
 		for (;;) {
-			if (g_winport_con_in.WaitForNonEmpty(500, _cip))
+			if (g_winport_con_in.WaitForNonEmpty(1000, _cip)) {
 				DispatchInput();
+			}/* else {
+				// repaint periodically to ensure not overpainted by somebody else
+				_need_repaint = true;
+			} */
 
 			if (_result != RES_PENDING)
 				return _result == RES_OK;
+
+			if (_need_repaint) {
+				_need_repaint = false;
+				Repaint();
+			}
 		}
 	}
 

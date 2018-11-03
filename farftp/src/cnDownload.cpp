@@ -362,6 +362,7 @@ write_error:
 
 			break;
 		}
+		default: break; // TYPE_E, TYPE_NONE
 	}
 
 NormExit:

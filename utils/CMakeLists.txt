@@ -9,6 +9,7 @@ set(SOURCES
   src/utils.cpp
   src/InMy.cpp
   src/ZombieControl.cpp
+  src/base64.cpp
   src/ConvertUTF.c
   src/crc64.c
   src/ini.c

@@ -8,10 +8,7 @@
 
 #include "FSClipboardBackend.h"
 #include <utils.h>
-
-void RegUnescape(std::string &s);
-void RegEscape(std::string &s);
-
+#include <base64.h>
 
 FSClipboardBackend::FSClipboardBackend() :
 	_shared_resource("fsclip", 0)
@@ -73,9 +70,9 @@ void *FSClipboardBackend::OnClipboardSetData(UINT format, void *data)
 #else
 	size_t len = malloc_usable_size(data);
 #endif
-	std::string str((const char *)data, len);
-	RegEscape(str);
-	str.insert(0, "!");
+	std::string str = base64_encode( (const unsigned char*)data, len);
+
+	str.insert(0, "#");
 	_kfh->PutString("Data", str_format, str.c_str());
 	return data;
 }
@@ -88,13 +85,19 @@ void *FSClipboardBackend::OnClipboardGetData(UINT format)
 	char str_format[64]; sprintf(str_format, "0x%x", format);
 
 	std::string str = _kfh->GetString("Data", str_format);
-	if (str.empty() || str[0] != '!')
+	if (str.empty() || str[0] != '#')
 		return nullptr;
 
 	str.erase(0, 1);
-	RegUnescape(str);
-	void *out = malloc(str.empty() ? 1 : str.size());
-	memcpy(out, &str[0], str.size());
+	const std::vector<unsigned char> &data = base64_decode(str);
+	void *out = malloc(data.empty() ? 1 : data.size());
+	if (out) {
+		if (!data.empty()) {
+			memcpy(out, &data[0], data.size());
+		} else {
+			memset(out, 0, 1);
+		}
+	}
 	return out;
 }
 

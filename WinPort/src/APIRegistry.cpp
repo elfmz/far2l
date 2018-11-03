@@ -305,16 +305,22 @@ static LONG RegValueDeserializeMB(const char *s, size_t l, LPBYTE lpData, LPDWOR
 	}
 	return ERROR_SUCCESS;
 }
-	
+
+inline void dosscanf(const char *s, unsigned int *var)
+{ sscanf(s, "%x", var); }
+
+inline void dosscanf(const char *s, unsigned long long *var)
+{ sscanf(s, "%llx", var); }
+
 template <class INT_T>
-	static LONG RegValueDeserializeINT(const char *s, const char *fmt, LPBYTE lpData, LPDWORD lpcbData)
+	static LONG RegValueDeserializeINT(const char *s, LPBYTE lpData, LPDWORD lpcbData)
 {
 	DWORD cbData = *lpcbData;
 	*lpcbData = sizeof(INT_T);
 	if (lpData) {
 		if (cbData < sizeof(INT_T))
 			return ERROR_MORE_DATA;
-		sscanf(s, fmt, (INT_T *)lpData);
+		dosscanf(s, (INT_T *)lpData);
 	}
 	return ERROR_SUCCESS;
 }
@@ -346,13 +352,13 @@ static LONG RegValueDeserialize(const std::string &tip, const std::string &s, LP
 	if ( tip == "DWORD") {
 		if (lpType)
 			*lpType = REG_DWORD;
-		return RegValueDeserializeINT<unsigned int> (s.c_str(), "%x", lpData, lpcbData);
+		return RegValueDeserializeINT<unsigned int> (s.c_str(), lpData, lpcbData);
 	}
 		
 	if ( tip == "QWORD") {
 		if (lpType)
 			*lpType = REG_QWORD;
-		return RegValueDeserializeINT<unsigned long long> (s.c_str() , "%llx", lpData, lpcbData);
+		return RegValueDeserializeINT<unsigned long long> (s.c_str(), lpData, lpcbData);
 	}
 
 	if ( tip == "SZ") {

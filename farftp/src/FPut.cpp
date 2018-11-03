@@ -13,8 +13,8 @@ void SetupFileTimeNDescription(int OpMode,Connection *hConnect,LPCSTR nm)
 
 	int   FileSize = (int)Fsize(SrcFile);
 	BYTE *Buf      = (BYTE*)malloc(sizeof(BYTE)*FileSize*3+1);
-	int   ReadSize = (int)fread(Buf,1,FileSize,SrcFile);
-	int WriteSize = ReadSize;//hConnect->FromOEM(Buf,ReadSize,sizeof(BYTE)*FileSize*3+1);
+	size_t ReadSize = fread(Buf,1,FileSize,SrcFile);
+	size_t WriteSize = ReadSize;//hConnect->FromOEM(Buf,ReadSize,sizeof(BYTE)*FileSize*3+1);
 	fflush(SrcFile);
 	fseek(SrcFile,0,SEEK_SET);
 	fflush(SrcFile);
@@ -217,7 +217,7 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 		{
 			WINPORT(SetLastError)(ERROR_SUCCESS);
 
-			if(FtpFindFirstFile(hConnect, DestName.c_str(), &FindData, NULL))
+			if(FtpFindFirstFile(hConnect, DestName.c_str(), &FindData, nullptr))
 			{
 				if(strcmp(PointToName(FTP_FILENAME(&FindData)),
 				           PointToName(DestName.c_str())) == 0)
@@ -288,6 +288,7 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 			case     ocNewer:
 				ci.MsgCode = ocNone;
 				break;
+			default: break;
 		}
 
 		if(DestAttr != MAX_DWORD)
@@ -320,6 +321,7 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 					break;
 				case    ocCancel:
 					return -1;
+				default: break;
 			}
 		}
 

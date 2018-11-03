@@ -142,7 +142,7 @@ Viewer::~Viewer()
 				CodePage=VM.CodePage;
 			}
 
-			PosCache poscache={0};
+			PosCache poscache={};
 			poscache.Param[0]=FilePos;
 			poscache.Param[1]=LeftPos;
 			poscache.Param[2]=VM.Hex;
@@ -286,7 +286,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		int64_t NewLeftPos,NewFilePos;
 		FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
 		memset(&BMSavePos,0xff,sizeof(BMSavePos)); //заполним с -1
-		PosCache poscache={0};
+		PosCache poscache={};
 
 		if (Opt.ViOpt.SaveShortPos)
 		{
@@ -1305,7 +1305,7 @@ int Viewer::ProcessKey(int Key)
 							CodePage=VM.CodePage;
 
 						{
-							PosCache poscache={0};
+							PosCache poscache={};
 							poscache.Param[0]=FilePos;
 							poscache.Param[1]=LeftPos;
 							poscache.Param[2]=VM.Hex;
@@ -2253,20 +2253,20 @@ void Viewer::Search(int Next,int FirstChar)
 	const wchar_t *HexMask=L"HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH ";
 	DialogDataEx SearchDlgData[]=
 	{
-		DI_DOUBLEBOX,3,1,72,11,0,0,MSG(MViewSearchTitle),
-		DI_TEXT,5,2,0,2,0,0,MSG(MViewSearchFor),
-		DI_EDIT,5,3,70,3,(DWORD_PTR)TextHistoryName,DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY,L"",
-		DI_FIXEDIT,5,3,70,3,(DWORD_PTR)HexMask,DIF_MASKEDIT,L"",
-		DI_TEXT,3,4,0,4,0,DIF_SEPARATOR,L"",
-		DI_RADIOBUTTON,5,5,0,5,1,DIF_GROUP,MSG(MViewSearchForText),
-		DI_RADIOBUTTON,5,6,0,6,0,0,MSG(MViewSearchForHex),
-		DI_CHECKBOX,40,5,0,5,0,0,MSG(MViewSearchCase),
-		DI_CHECKBOX,40,6,0,6,0,0,MSG(MViewSearchWholeWords),
-		DI_CHECKBOX,40,7,0,7,0,0,MSG(MViewSearchReverse),
-		DI_CHECKBOX,40,8,0,8,0,DIF_DISABLE,MSG(MViewSearchRegexp),
-		DI_TEXT,3,9,0,9,0,DIF_SEPARATOR,L"",
-		DI_BUTTON,0,10,0,10,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MViewSearchSearch),
-		DI_BUTTON,0,10,0,10,0,DIF_CENTERGROUP,MSG(MViewSearchCancel),
+		{DI_DOUBLEBOX,3,1,72,11,{0},0,MSG(MViewSearchTitle)},
+		{DI_TEXT,5,2,0,2,{0},0,MSG(MViewSearchFor)},
+		{DI_EDIT,5,3,70,3,{(DWORD_PTR)TextHistoryName},DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY,L""},
+		{DI_FIXEDIT,5,3,70,3,{(DWORD_PTR)HexMask},DIF_MASKEDIT,L""},
+		{DI_TEXT,3,4,0,4,{0},DIF_SEPARATOR,L""},
+		{DI_RADIOBUTTON,5,5,0,5,{1},DIF_GROUP,MSG(MViewSearchForText)},
+		{DI_RADIOBUTTON,5,6,0,6,{0},0,MSG(MViewSearchForHex)},
+		{DI_CHECKBOX,40,5,0,5,{0},0,MSG(MViewSearchCase)},
+		{DI_CHECKBOX,40,6,0,6,{0},0,MSG(MViewSearchWholeWords)},
+		{DI_CHECKBOX,40,7,0,7,{0},0,MSG(MViewSearchReverse)},
+		{DI_CHECKBOX,40,8,0,8,{0},DIF_DISABLE,MSG(MViewSearchRegexp)},
+		{DI_TEXT,3,9,0,9,{0},DIF_SEPARATOR,L""},
+		{DI_BUTTON,0,10,0,10,{0},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MViewSearchSearch)},
+		{DI_BUTTON,0,10,0,10,{0},DIF_CENTERGROUP,MSG(MViewSearchCancel)}
 	};
 	MakeDialogItemsEx(SearchDlgData,SearchDlg);
 	FARString strSearchStr;
@@ -2907,12 +2907,12 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 	const wchar_t *LineHistoryName=L"ViewerOffset";
 	DialogDataEx GoToDlgData[]=
 	{
-		DI_DOUBLEBOX,3,1,31,7,0,0,MSG(MViewerGoTo),
-		DI_EDIT,5,2,29,2,(DWORD_PTR)LineHistoryName,DIF_FOCUS|DIF_DEFAULT|DIF_HISTORY|DIF_USELASTHISTORY,L"",
-		DI_TEXT,3,3,0,3,0,DIF_SEPARATOR,L"",
-		DI_RADIOBUTTON,5,4,0,4,0,DIF_GROUP,MSG(MGoToPercent),
-		DI_RADIOBUTTON,5,5,0,5,0,0,MSG(MGoToHex),
-		DI_RADIOBUTTON,5,6,0,6,0,0,MSG(MGoToDecimal),
+		{DI_DOUBLEBOX,3,1,31,7,{0},0,MSG(MViewerGoTo)},
+		{DI_EDIT,5,2,29,2,{(DWORD_PTR)LineHistoryName},DIF_FOCUS|DIF_DEFAULT|DIF_HISTORY|DIF_USELASTHISTORY,L""},
+		{DI_TEXT,3,3,0,3,{0},DIF_SEPARATOR,L""},
+		{DI_RADIOBUTTON,5,4,0,4,{0},DIF_GROUP,MSG(MGoToPercent)},
+		{DI_RADIOBUTTON,5,5,0,5,{0},0,MSG(MGoToHex)},
+		{DI_RADIOBUTTON,5,6,0,6,{0},0,MSG(MGoToDecimal)}
 	};
 	MakeDialogItemsEx(GoToDlgData,GoToDlg);
 	static int PrevMode=0;

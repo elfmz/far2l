@@ -109,7 +109,7 @@ public:
 
 		SHORT w = std::max(key_hint.size(), std::max(title.size(), text.size())) + 5, h = 5;
 
-		SHORT l = (_width - w) / 2, t = 0;//(_height - h) / 2;
+		SHORT l = (SHORT(_width) - w) / 2, t = 0;//(_height - h) / 2;
 		if (l < 0) l = 0;
 //		if (t < 0) t = 0;
 

@@ -58,6 +58,10 @@ class SudoAskpassScreen
 		} else if (rec.wVirtualKeyCode == VK_ESCAPE) {
 			_result = RES_CANCEL;
 
+		} else if (rec.wVirtualKeyCode == VK_BACK) {
+			if (!_input.empty())
+				_input.resize(_input.size() - 1);
+
 		} else if (rec.uChar.UnicodeChar) {
 			_input+= rec.uChar.UnicodeChar;
 		}
@@ -87,13 +91,27 @@ class SudoAskpassScreen
 		}
 	}
 
+	void WriteCentered(const std::string &str, SHORT t)
+	{
+		std::wstring wstr;
+		StrMB2Wide(str, wstr);
+		SHORT l = (_width > wstr.size()) ? (_width - wstr.size()) / 2 : 0;
+		COORD pos = {l, t};
+		g_winport_con_out.WriteStringAt(wstr.c_str(), wstr.size(), pos);
+	}
+
 public:
 	SudoAskpassScreen(const std::string &title, const std::string &text) :  _cip(g_winport_con_in)
 	{
 		_ir_resized.EventType = NOOP_EVENT;
 		g_winport_con_out.GetSize(_width, _height);
+		std::string key_hint = "Confirm by <Enter> Cancel by <Esc>";
 
-		SHORT l = 0, t = 0, w = std::max(title.size(), text.size()) + 5, h = 4;
+		SHORT w = std::max(key_hint.size(), std::max(title.size(), text.size())) + 5, h = 5;
+
+		SHORT l = (_width - w) / 2, t = (_height - h) / 2;
+		if (l < 0) l = 0;
+		if (t < 0) t = 0;
 
 		COORD pos;
 
@@ -111,15 +129,9 @@ public:
 			}
 		}
 
-		std::wstring wstr;
-		StrMB2Wide(title, wstr);
-		pos = COORD{ l + 1, t + 1};
-		g_winport_con_out.WriteStringAt(wstr.c_str(), wstr.size(), pos);
-
-		StrMB2Wide(text, wstr);
-		pos = COORD{l + 1, t + 2};
-		g_winport_con_out.WriteStringAt(wstr.c_str(), wstr.size(), pos);
-
+		WriteCentered(title, t + 1);
+		WriteCentered(text, t + 2);
+		WriteCentered(key_hint, t + 3);
 //		COORD pos = {};
 //		g_winport_con_out.FillAttributeAt(FOREGROUND_GREEN, _width * _height, pos);
 	}

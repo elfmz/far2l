@@ -37,6 +37,7 @@ src/WinPortHandle.cpp
 src/WinPortSynch.cpp
 src/PathHelpers.cpp
 src/Backend/WinPortMain.cpp
+src/Backend/SudoAskpassImpl.cpp
 src/Backend/FSClipboardBackend.cpp
 src/Backend/WX/Paint.cpp
 src/Backend/WX/wxMain.cpp
@@ -52,6 +53,7 @@ src/sudo/sudo_client.cpp
 src/sudo/sudo_client_api.cpp
 src/sudo/sudo_dispatcher.cpp
 src/sudo/sudo_askpass.cpp
+src/sudo/sudo_askpass_ipc.cpp
 )
 
 add_library (WinPort ${SOURCES})

@@ -266,9 +266,9 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 		return 0;
 
 	struct FarDialogItem fdi[] = {
-            {DI_DOUBLEBOX,  3,  1,  70, 5,  0,0,0,0, 0},
-            {DI_TEXT,      -1,  2,  0,  2,  0,0,0,0, 0},
-            {DI_BUTTON,     34, 4,  0,  4,  0,0,0,0, 0}
+            {DI_DOUBLEBOX,  3,  1,  70, 5,  0,{},0,0, {}},
+            {DI_TEXT,      -1,  2,  0,  2,  0,{},0,0, {}},
+            {DI_BUTTON,     34, 4,  0,  4,  0,{},0,0, {}}
 	};
 
 	strncpy(fdi[0].Data, G.GetMsg(MTitle), sizeof(fdi[0].Data));

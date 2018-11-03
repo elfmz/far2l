@@ -121,14 +121,15 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 		}
 	} else if (ecl[0]=="cd") {
 		if (ecl.size() == 1 )
-			ecl.push_back("~");
+			ecl.push_back(GetMyHome());
+
 		if (ecl.size() == 2 ) {
 			if (IntChDir(StrMB2Wide(ecl[1]).c_str(), true, false))
 				return true;
 		}
 	} else if (ecl[0]=="pushd") {
 		if (ecl.size() == 1 )
-			ecl.push_back("~");
+			ecl.push_back(GetMyHome());
 		if (ecl.size() == 2 ) {
 			PushPopRecord prec;
 			prec.strName = strCurDir;

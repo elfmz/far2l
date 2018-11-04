@@ -1087,7 +1087,6 @@ int action=-1;
           insert_stack(&re,&prev,&toParse,&leftenter,rea_Break,rea_False,&re->un.param,0,toParse);
           continue;
         }
-        break;
       case ReNAhead:
         if (!leftenter){
           check_stack(true,&re,&prev,&toParse,&leftenter,&action); 
@@ -1097,7 +1096,6 @@ int action=-1;
           insert_stack(&re,&prev,&toParse,&leftenter,rea_False,rea_Break,&re->un.param,0,toParse);
           continue;
         }
-        break;
       case ReBehind:
         if (!leftenter){
           check_stack(true,&re,&prev,&toParse,&leftenter,&action); 
@@ -1111,7 +1109,6 @@ int action=-1;
           insert_stack(&re,&prev,&toParse,&leftenter,rea_Break,rea_False,&re->un.param,0,toParse - re->param0);
           continue;
         }
-        break;
       case ReNBehind:
         if (!leftenter){
           check_stack(true,&re,&prev,&toParse,&leftenter,&action); 
@@ -1133,7 +1130,6 @@ int action=-1;
           insert_stack(&re,&prev,&toParse,&leftenter,rea_True,rea_Break,&re->un.param,0,toParse );
           continue;
         }
-        break;
       case ReRangeN:
         // first enter into op
         if (leftenter){
@@ -1209,6 +1205,8 @@ int action=-1;
         re = re->un.param;
         leftenter = true;
         continue;
+
+      default: break;
     };
    
     switch (action){
@@ -1218,14 +1216,12 @@ int action=-1;
           continue;
         }else
           return false; 
-        break;
       case rea_True: 
         if (count_elem){
           check_stack(true,&re,&prev,&toParse,&leftenter,&action);
           continue;
         }else
           return true; 
-        break;
       case rea_Break: 
         action = -1; 
         break;
@@ -1233,36 +1229,30 @@ int action=-1;
         action = -1;
         insert_stack(&re,&prev,&toParse,&leftenter,rea_True,rea_False,&re->next,&re,toParse);
         continue;
-        break;
       case rea_RangeNM_step2:
         action = -1;
         insert_stack(&re,&prev,&toParse,&leftenter,rea_True,rea_RangeNM_step3,&re->next,&re,toParse);
         continue;
-        break;
       case rea_RangeNM_step3:
         action = -1;
         re->param1++;
         check_stack(false,&re,&prev,&toParse,&leftenter,&action);
         continue;
-        break;
       case rea_NGRangeN_step2:
         action = -1;
         if (re->param0) re->param0--;
         re = re->un.param;
         leftenter = true;
         continue;
-        break;
       case rea_NGRangeNM_step2:
         action = -1;
         insert_stack(&re,&prev,&toParse,&leftenter,rea_True,rea_NGRangeNM_step3,&re->un.param,0,toParse);
         continue;
-        break;
       case rea_NGRangeNM_step3:
         action = -1;
         re->param1++;
         check_stack(false,&re,&prev,&toParse,&leftenter,&action);
         continue;
-        break;
     }
     if (!re->next){
       re = re->parent;
@@ -1296,6 +1286,7 @@ inline bool CRegExp::quickCheck(int toParse)
       if (toParse != schemeStart) return false;
       return true;
 #endif
+    default: break;
 //    case ReWBound:
 //      return relocale->cl_isword(*toParse) && (toParse == start || !relocale->cl_isword(*(toParse-1)));
   };
@@ -1322,7 +1313,7 @@ inline bool CRegExp::parseRE(int pos)
 #endif
   do{
     //stack=null;
-    if (lowParse(tree_root, 0, toParse)) return true;
+    if (lowParse(tree_root, nullptr, toParse)) return true;
     if (!positionMoves) return false;
     toParse = ++pos;
   }while(toParse <= end);
@@ -1410,7 +1401,7 @@ int CRegExp::getBracketNo(const String *brname)
 };
 String *CRegExp::getBracketName(int no)
 {
-  if (no >= cnMatch) return 0;
+  if (no >= cnMatch) return nullptr;
   return brnames[no];
 };
 #endif

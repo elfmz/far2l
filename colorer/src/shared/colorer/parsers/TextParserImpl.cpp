@@ -402,6 +402,7 @@ int TextParserImpl::searchRE(SchemeImpl *cscheme, int no, int lowLen, int hiLen)
 
         return MATCH_SCHEME;
       };
+      default: break; // SNT_EMPTY
     };
   };
   return MATCH_NOTHING;

@@ -335,8 +335,8 @@ class Dialog: public Frame
 		   + Функции программного открытия/закрытия комбобокса и хистори
 		     и получения статуса открытости/закрытости комбобокса и хистори.
 		*/
-		volatile void SetDropDownOpened(int Status) { DropDownOpened=Status; }
-		volatile int GetDropDownOpened() { return DropDownOpened; }
+		void SetDropDownOpened(int Status) { DropDownOpened=Status; }
+		int GetDropDownOpened() { return DropDownOpened; }
 
 		void ProcessCenterGroup();
 		unsigned ProcessRadioButton(unsigned);

@@ -1,7 +1,8 @@
 #include <all_far.h>
 
-
 #include "Int.h"
+
+#include <cinttypes>
 
 //--------------------------------------------------------------------------------
 void Connection::sendrequest(char *cmd, char *local, char *remote)
@@ -18,7 +19,7 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 	if(type == TYPE_A)
 		restart_point=0;
 
-	WIN32_FIND_DATA   ffi;
+	//WIN32_FIND_DATA   ffi;
 	FHandle           fin;
 	SOCKET            dout = 0;
 	LONG              hi;
@@ -43,7 +44,7 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 		return;
 	}
 
-	struct stat s = {0};
+	struct stat s = {};
 	if (sdc_stat(local, &s)) {
 		ErrorCode = ERROR_OPEN_FAILED;
 		SysError = TRUE;
@@ -76,7 +77,7 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 		return;
 	}
 
-	fsz = Fsize(fin.Handle);
+	fsz = s.st_size;
 
 	if(restart_point && fsz == restart_point)
 	{
@@ -95,10 +96,9 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 	{
 		if(cmd[0] != Opt.cmdAppe[0])
 		{
-			int64_t v = ((int64_t)ffi.nFileSizeHigh) << 32 | ffi.nFileSizeLow;
-			Log(("ALLO %I64u", v));
+			Log(("ALLO %" PRId64, fsz));
 
-			if(command("%s %I64u",Opt.cmdAllo,v) != RPL_COMPLETE)
+			if(command("%s %" PRId64, Opt.cmdAllo, fsz) != RPL_COMPLETE)
 			{
 				Log(("!allo"));
 				return;
@@ -285,6 +285,7 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 			} /*fsz != 0*/
 
 			break;
+		default: break; // TYPE_E, TYPE_NONE
 	}/*SWITCH*/
 
 //NormExit

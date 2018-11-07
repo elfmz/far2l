@@ -15,6 +15,7 @@ struct FTPPluginHolder
 
 	virtual BOOL Assign(FTPPluginInterface* Interface);
 	virtual void Destroy(void);
+	virtual ~FTPPluginHolder() = default;
 };
 
 extern BOOL             InitPlugins(void);

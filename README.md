@@ -66,7 +66,12 @@ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/
 
 ##### One line OSX install
 
-* Install far2l via unofficial brew tap:
+ * Install stable far2l via unofficial brew tap:
+```sh
+brew install yurikoles/yurikoles/far2l
+```
+
+ * Latest git master can be installed via:
 ```sh
 brew install yurikoles/yurikoles/far2l --HEAD
 ```

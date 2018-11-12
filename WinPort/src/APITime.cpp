@@ -111,10 +111,10 @@ WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILE
 
 	/* FIXME: normalize the TIME_FIELDS structure here */
 	/* No, native just returns 0 (error) if the fields are not */
-	if( lpSystemTime->wMilliseconds< 0 || lpSystemTime->wMilliseconds > 999 ||
-		lpSystemTime->wSecond < 0 || lpSystemTime->wSecond > 59 ||
-		lpSystemTime->wMinute < 0 || lpSystemTime->wMinute > 59 ||
-		lpSystemTime->wHour < 0 || lpSystemTime->wHour > 23 ||
+	if(     lpSystemTime->wMilliseconds > 999 ||
+		lpSystemTime->wSecond > 59 ||
+		lpSystemTime->wMinute > 59 ||
+		lpSystemTime->wHour > 23 ||
 		lpSystemTime->wMonth < 1 || lpSystemTime->wMonth > 12 ||
 		lpSystemTime->wDay < 1 ||
 		lpSystemTime->wDay > MonthLengths [ lpSystemTime->wMonth ==2 || IsLeapYear(lpSystemTime->wYear)] [ lpSystemTime->wMonth - 1] ||

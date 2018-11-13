@@ -221,7 +221,7 @@ static std::string LookupIndexedRegItem(const std::string &root, const char *div
 
 
 
-static void RegEscape(std::string &s)
+void RegEscape(std::string &s)
 {
 	for (std::string::iterator i = s.begin(); i != s.end(); ++i) {
 		if (*i == '\\' || *i == '\r' || *i == '\n' || *i == 0) {
@@ -244,7 +244,7 @@ static void RegEscape(std::string &s)
 	}
 }
 	
-static void RegUnescape(std::string &s)
+void RegUnescape(std::string &s)
 {
 	for (std::string::iterator i = s.begin(); i != s.end(); ) {
 		if (*i == '\\') {

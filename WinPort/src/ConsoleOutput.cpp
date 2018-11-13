@@ -35,7 +35,7 @@ size_t utf8_char_len(const char *s, size_t bytes)
 
 
 ConsoleOutput::ConsoleOutput() :
-	_title(L"WinPort"), _listener(NULL), 
+	_title(L"WinPort"), _backend(NULL), 
 	_mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT),
 	_attributes(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED)
 {
@@ -48,9 +48,9 @@ ConsoleOutput::ConsoleOutput() :
 	SetSize(80, 25);
 }
 
-void ConsoleOutput::SetListener(ConsoleOutputListener *listener)
+void ConsoleOutput::SetBackend(IConsoleOutputBackend *backend)
 {
-	_listener = listener;
+	_backend = backend;
 }
 
 
@@ -80,8 +80,8 @@ void ConsoleOutput::SetCursor(COORD pos)
 		area[1].Left = area[1].Right = _cursor.pos.X;
 		area[1].Top = area[1].Bottom = _cursor.pos.Y;
 	}
-	if (_listener) {
-		_listener->OnConsoleOutputUpdated(&area[0], 2);
+	if (_backend) {
+		_backend->OnConsoleOutputUpdated(&area[0], 2);
 	}
 }
 
@@ -95,8 +95,8 @@ void ConsoleOutput::SetCursor(UCHAR height, bool visible)
 		area.Left = area.Right = _cursor.pos.X;
 		area.Top = area.Bottom = _cursor.pos.Y;
 	}
-	if (_listener)
-		_listener->OnConsoleOutputUpdated(&area, 1);
+	if (_backend)
+		_backend->OnConsoleOutputUpdated(&area, 1);
 }
 
 COORD ConsoleOutput::GetCursor()
@@ -123,8 +123,8 @@ void ConsoleOutput::SetSize(unsigned int width, unsigned int height)
 		_scroll_region = {0, MAXSHORT};
 		_buf.SetSize(width, height, _attributes);
 	}
-	if (_listener)
-		_listener->OnConsoleOutputResized();
+	if (_backend)
+		_backend->OnConsoleOutputResized();
 }
 
 void ConsoleOutput::GetSize(unsigned int &width, unsigned int &height)
@@ -138,28 +138,28 @@ void ConsoleOutput::GetSize(unsigned int &width, unsigned int &height)
 COORD ConsoleOutput::GetLargestConsoleWindowSize()
 {
 	COORD rv;
-	if (!_listener) {
+	if (!_backend) {
 		unsigned int width = 80, height = 25;
 		GetSize(width, height);
 		rv = {(SHORT)(USHORT)width, (SHORT)(USHORT)height};
 	} else
-		rv = _listener->OnConsoleGetLargestWindowSize();
+		rv = _backend->OnConsoleGetLargestWindowSize();
 	ApplyConsoleSizeLimits(rv.X, rv.Y);
 	return rv;
 }
 
 void ConsoleOutput::SetWindowMaximized(bool maximized)
 {
-	if (_listener)
-		_listener->OnConsoleSetMaximized(maximized);
+	if (_backend)
+		_backend->OnConsoleSetMaximized(maximized);
 }
 
 void ConsoleOutput::SetWindowInfo(bool absolute, const SMALL_RECT &rect)
 {
 	SetSize(rect.Right - rect.Left + 1, rect.Bottom - rect.Top + 1);
-	if (_listener) {
+	if (_backend) {
 		COORD pos = {rect.Left, rect.Top};
-		_listener->OnConsoleOutputWindowMoved(absolute, pos);
+		_backend->OnConsoleOutputWindowMoved(absolute, pos);
 	}
 }
 
@@ -172,8 +172,8 @@ void ConsoleOutput::SetTitle(const WCHAR *title)
 
 		_title = title;
 	}
-	if (_listener)
-		_listener->OnConsoleOutputTitleChanged();
+	if (_backend)
+		_backend->OnConsoleOutputTitleChanged();
 }
 
 std::wstring ConsoleOutput::GetTitle()
@@ -207,8 +207,8 @@ void ConsoleOutput::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos
 		std::lock_guard<std::mutex> lock(_mutex);
 		_buf.Write(data, data_size, data_pos, screen_rect);
 	}
-	if (_listener)
-		_listener->OnConsoleOutputUpdated(&screen_rect, 1);
+	if (_backend)
+		_backend->OnConsoleOutputUpdated(&screen_rect, 1);
 }
 
 bool ConsoleOutput::Read(CHAR_INFO &data, COORD screen_pos)
@@ -228,9 +228,9 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 		}
 	}
 
-	if (_listener) {
+	if (_backend) {
 		SMALL_RECT area = {screen_pos.X, screen_pos.Y, screen_pos.X, screen_pos.Y};
-		_listener->OnConsoleOutputUpdated(&area, 1);
+		_backend->OnConsoleOutputUpdated(&area, 1);
 	}
 	return true;
 }
@@ -407,14 +407,14 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			areas[1].Top = areas[1].Bottom = pos.Y;
 		}
 	}
-	if (_listener) {
+	if (_backend) {
 		bool refresh_main_area = (areas[2].Left <= areas[2].Right
 			&& areas[2].Top <= areas[2].Bottom);
 
 		if (refresh_pos_areas) {
-			_listener->OnConsoleOutputUpdated(&areas[0], refresh_main_area ? 3 : 2);
+			_backend->OnConsoleOutputUpdated(&areas[0], refresh_main_area ? 3 : 2);
 		} else if (refresh_main_area) {
-			_listener->OnConsoleOutputUpdated(&areas[2], 1);
+			_backend->OnConsoleOutputUpdated(&areas[2], 1);
 		}
 	}
 	return rv;
@@ -521,8 +521,8 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 		_buf.Write(&_temp_chars[0], data_size, data_pos, areas.n.dst);
 	}
 
-	if (_listener)
-		_listener->OnConsoleOutputUpdated(&areas.both[0], lpFill ? 2 : 1);
+	if (_backend)
+		_backend->OnConsoleOutputUpdated(&areas.both[0], lpFill ? 2 : 1);
 
 	return true;
 }
@@ -556,25 +556,25 @@ void ConsoleOutput::SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID 
 
 void ConsoleOutput::AdhocQuickEdit()
 {
-	if (_listener)
-		_listener->OnConsoleAdhocQuickEdit();
+	if (_backend)
+		_backend->OnConsoleAdhocQuickEdit();
 }
 
 DWORD ConsoleOutput::SetConsoleTweaks(DWORD tweaks)
 {
-	if (!_listener)
+	if (!_backend)
 		return 0;
 
-	return _listener->OnConsoleSetTweaks(tweaks);
+	return _backend->OnConsoleSetTweaks(tweaks);
 }
 
 void ConsoleOutput::ConsoleChangeFont()
 {
-	if (_listener)
-		_listener->OnConsoleChangeFont();
+	if (_backend)
+		_backend->OnConsoleChangeFont();
 }
 
 bool ConsoleOutput::IsActive()
 {
-	return _listener ? _listener->OnConsoleIsActive() : false;
+	return _backend ? _backend->OnConsoleIsActive() : false;
 }

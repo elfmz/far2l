@@ -14,7 +14,7 @@ class SharedResource
 		bool Lock(int op, int timeout);
 
 	public:
-		SharedResource(uint64_t id);
+		SharedResource(const char *group, uint64_t id);
 		~SharedResource();
 
 		bool LockRead(int timeout = -1);

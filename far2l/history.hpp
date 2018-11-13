@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "DList.hpp"
-#include "SharedResource.hpp"
+#include "SharedResource.h"
 
 class Dialog;
 class VMenu;

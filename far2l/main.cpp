@@ -638,54 +638,6 @@ static int libexec(const char *lib, const char *symbol, int argc, char *argv[])
 	return libexec_main(argc, argv);
 }
 
-static std::string GetStdPath(const char *env1, const char *env2)
-{
-	const char *path = getenv(env1);
-	if (!path)
-		path = getenv(env2);
-	if (path) {
-		std::string s;
-		if (*path == '~') {
-			const char *home = getenv("HOME");
-			s = home ? home : "/tmp";
-			s+= path + 1;
-		} else
-			s = path;
-
-		return s;
-	}
-
-	return DEVNULL;
-}
-
-static void SetupStdHandles()
-{
-	const std::string &out = GetStdPath("FAR2L_STDOUT", "FAR2L_STD");
-	const std::string &err = GetStdPath("FAR2L_STDERR", "FAR2L_STD");
-	unsigned char reopened = 0;
-	if (!out.empty() && out != "-") {
-		if (freopen(out.c_str(), "a", stdout)) {
-			reopened|= 1;
-		} else
-			perror("freopen stdout");
-	}
-	if (!err.empty() && err != "-") {
-		if (freopen(err.c_str(), "a", stderr)) {
-			reopened|= 2;
-		} else
-			perror("freopen stderr");
-	}
-	
-	if ( reopened == 3 && out == DEVNULL && err == DEVNULL) {
-		ioctl(0, TIOCNOTTY, NULL);
-		if (!freopen(DEVNULL, "r", stdin)) {
-			perror("freopen stdin");
-		}
-		signal(SIGHUP, SIG_IGN);
-	}
-}
-
-
 int FarDispatchAnsiApplicationProtocolCommand(const char *str)
 {
 	const char *space = strchr(str, ' ');
@@ -773,10 +725,6 @@ int _cdecl main(int argc, char *argv[])
 		//In case of Edit/View requested in FAR's VT - handover request to VT-controlling FAR
 		if (strstr(argv[1], "/e") == argv[1] || strstr(argv[1], "/v") == argv[1])
 			return SendAnsiApplicationProgramCommand(argv[1] + 1, argv[2]);
-	}
-
-	if (argc < 2 || (strcmp(argv[1], "/?") != 0 && strcmp(argv[1], "--help") != 0) ) {
-		SetupStdHandles();
 	}
 
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method

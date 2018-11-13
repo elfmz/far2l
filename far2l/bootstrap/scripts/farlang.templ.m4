@@ -1320,13 +1320,13 @@ upd:"Operation requires priviledges elevation"
 upd:"Operation requires priviledges elevation"
 
 MSudoPrompt
-"Введите пароль для sudo:"
-"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
-upd:"Enter sudo password:"
+"Введите пароль для sudo"
+"Enter sudo password"
+upd:"Enter sudo password"
+upd:"Enter sudo password"
+upd:"Enter sudo password"
+upd:"Enter sudo password"
+upd:"Enter sudo password"
 
 MSudoConfirm
 "Подтвердите использование привилегий"

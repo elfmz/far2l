@@ -65,7 +65,7 @@ History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t
 	HistoryCount(HistoryCount),
 	EnableSave(EnableSave),
 	CurrentItem(nullptr),
-	SharedRes(RegKey2ID(strRegKey))
+	SharedRes("history", RegKey2ID(strRegKey))
 {
 	if (*EnableSave)
 		ReadHistory();

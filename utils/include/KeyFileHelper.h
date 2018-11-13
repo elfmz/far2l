@@ -20,5 +20,7 @@ public:
 	void PutInt(const char *section, const char *name, int value);
 	std::vector<std::string> EnumSections();
 	std::vector<std::string> EnumKeys(const char *section);
+	void RemoveSection(const char *section);
+	void RemoveKey(const char *section, const char *name);
 };
 

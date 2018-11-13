@@ -5,9 +5,7 @@
 
 namespace Sudo
 {
-	#define SDC_ENV_TITLE	"sdc_sudo_title"
-	#define SDC_ENV_CONFIRM	"sdc_sudo_confirm"
-	#define SDC_ENV_PROMPT	"sdc_sudo_prompt"
+	extern std::string g_sudo_title, g_sudo_prompt, g_sudo_confirm;
 
 	enum SudoCommand
 	{
@@ -105,4 +103,5 @@ namespace Sudo
 #if !defined(__APPLE__) && !defined(__FreeBSD__)
 	int bugaware_ioctl_pint(int fd, unsigned long req, int *v);
 #endif
+
 }

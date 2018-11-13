@@ -544,6 +544,7 @@ typedef struct _MOUSE_EVENT_RECORD {
 #define MOUSE_HWHEELED 0x0008
 
 
+#define NOOP_EVENT        0x0000
 #define KEY_EVENT         0x0001 // Event contains key event record
 #define MOUSE_EVENT       0x0002 // Event contains mouse event record
 #define WINDOW_BUFFER_SIZE_EVENT 0x0004 // Event contains window change event record

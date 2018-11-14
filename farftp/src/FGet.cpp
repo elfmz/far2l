@@ -337,7 +337,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 		//Init current
 		hConnect->TrafficInfo->InitFile(CurPanelItem,CurName,DestName.c_str());
 
-		//Query ovirwrite
+		//Query overwrite
 		switch(ci.MsgCode)
 		{
 			case      ocOver:
@@ -346,6 +346,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 			case     ocNewer:
 				ci.MsgCode = ocNone;
 				break;
+			default: break;
 		}
 
 		if(DestAttr != MAX_DWORD)
@@ -379,6 +380,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 					break;
 				case    ocCancel:
 					return -1;
+				default: break;
 			}
 		}
 

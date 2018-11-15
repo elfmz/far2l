@@ -91,12 +91,12 @@ cd build
 ```
 _with make:_
 ``` sh
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ``` 
 _or with ninja_
 ``` sh
-cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
 

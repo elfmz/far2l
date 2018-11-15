@@ -6,9 +6,9 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-#if(NOT CMAKE_INSTALL_PREFIX)
+if(NOT CMAKE_INSTALL_PREFIX)
    set(CMAKE_INSTALL_PREFIX "/usr")
-#endif()
+endif()
 
 
 

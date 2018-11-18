@@ -196,6 +196,8 @@ add_custom_command(TARGET far2l POST_BUILD
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 #TODO
 else()
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop")
+
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/DE/icons" DESTINATION "${CMAKE_INSTALL_PREFIX}/share" USE_SOURCE_PERMISSIONS FILES_MATCHING PATTERN "*")
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l.desktop" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications")
 endif()

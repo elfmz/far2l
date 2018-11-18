@@ -158,8 +158,8 @@ rechar* RegExp::charbits=(rechar*)RegExp::icharbits;
 #define ISLOWER(c) iswlower(c)
 #define ISUPPER(c) iswupper(c)
 #define ISALPHA(c) iswalpha(c)
-#define TOUPPER(c) towupper(c)
-#define TOLOWER(c) towlower(c)
+#define TOUPPER(c) static_cast<wchar_t>(towupper(c))
+#define TOLOWER(c) static_cast<wchar_t>(towlower(c))
 
 
 #define ISTYPE(c,t) isType(c,t)
@@ -269,7 +269,7 @@ struct UniSet
 			if (high[i])
 			{
 				delete [] high[i];
-				high[i]=0;
+				high[i]=nullptr;
 			}
 		}
 
@@ -746,7 +746,7 @@ case opClassMinRange:delete [] range.symbolclass; break;
 
 
 
-void RegExp::Init(const prechar expr,int options)
+void RegExp::Init(const prechar expr, int options)
 {
 	//memset(this,0,sizeof(*this));
 	code=nullptr;
@@ -775,7 +775,7 @@ void RegExp::Init(const prechar expr,int options)
 	start=nullptr;
 	end=nullptr;
 	trimend=nullptr;
-	Compile((const RECHAR*)expr,options);
+	Compile(expr, options);
 }
 
 RegExp::RegExp():
@@ -814,14 +814,14 @@ RegExp::RegExp():
 	firstpage->prev=nullptr;
 }
 
-RegExp::RegExp(const RECHAR* expr,int options)
+RegExp::RegExp(const RECHAR* expr, int options)
 {
 	slashChar='/';
 	backslashChar='\\';
 #ifdef RE_DEBUG
 	resrc=nullptr;
 #endif
-	Init((const prechar)expr,options);
+	Init(expr, options);
 }
 
 RegExp::~RegExp()
@@ -1151,7 +1151,7 @@ int RegExp::Compile(const RECHAR* src,int options)
 	}
 
 	ignorecase=options&OP_IGNORECASE?1:0;
-	relength=CalcLength((const prechar)src+srcstart,srclength);
+	relength=CalcLength(src+srcstart,srclength);
 
 	if (!relength)
 	{
@@ -1168,11 +1168,11 @@ int RegExp::Compile(const RECHAR* src,int options)
 
 	for (int i=0; i<relength; i++)
 	{
-		code[i].next=i<relength-1?code+i+1:0;
-		code[i].prev=i>0?code+i-1:0;
+		code[i].next=i<relength-1?code+i+1:nullptr;
+		code[i].prev=i>0?code+i-1:nullptr;
 	}
 
-	int result=InnerCompile((const prechar)src+srcstart,srclength,options);
+	int result=InnerCompile(src+srcstart,srclength,options);
 
 	if (!result)
 	{
@@ -2020,8 +2020,8 @@ int RegExp::InnerCompile(const prechar src,int srclength,int options)
 				{
 #ifdef UNICODE
 					delete op->symbolclass;
-					op->symbolclass=0;
-					tmpclass=0;
+					op->symbolclass=nullptr;
+					tmpclass=nullptr;
 #endif
 					op->op=negative?opNotSymbol:opSymbol;
 
@@ -2347,7 +2347,7 @@ inline StateStackItem *RegExp::GetState()
 	if (tempcount<0)
 	{
 		if (!temppage->prev)
-			return 0;
+			return nullptr;
 
 		temppage=temppage->prev;
 		tempstack=temppage->stack;
@@ -2372,14 +2372,14 @@ inline StateStackItem *RegExp::FindStateByPos(PREOpCode pos,int op)
 #ifdef RELIB
 		tempusage--;
 
-		if (tempusage<0)return 0;
+		if (tempusage<0)return nullptr;
 
 #endif
 
 		if (tempcount<0)
 		{
 			if (!temppage->prev)
-				return 0;
+				return nullptr;
 
 			temppage=temppage->prev;
 			tempstack=temppage->stack;
@@ -3788,7 +3788,7 @@ int RegExp::InnerMatch(const prechar str,const prechar strend,PMatch match,int& 
 
 		for (;; PopState())
 		{
-			if (0==(ps=GetState()))return 0;
+			if (nullptr==(ps=GetState()))return 0;
 
 			//dpf(("ps->op:%s\n",ops[ps->op]));
 			switch (ps->op)
@@ -4259,8 +4259,8 @@ int RegExp::Match(const RECHAR* textstart,const RECHAR* textend,PMatch match,int
 #endif
                  )
 {
-	start=(const prechar)textstart;
-	const prechar tempend=(const prechar)textend;
+	start=textstart;
+	const prechar tempend=textend;
 
 	if (havefirst && !first[*start])return 0;
 
@@ -4298,26 +4298,26 @@ int RegExp::MatchEx(const RECHAR* datastart,const RECHAR* textstart,const RECHAR
 {
 	if (havefirst && !first[(rechar)*textstart])return 0;
 
-	const prechar tempend=(const prechar)textend;
+	const prechar tempend=textend;
 
-	if ((prechar)datastart==start && (prechar)textend==end)
+	if (datastart==start && textend==end)
 	{
 		tempend=trimend;
 	}
 	else
 	{
-		start=(const prechar)datastart;
+		start=datastart;
 		TrimTail(tempend);
 		trimend=tempend;
 	}
 
-	end=(const prechar)textend;
+	end=textend;
 
-	if (tempend<(const prechar)textstart)return 0;
+	if (tempend<textstart)return 0;
 
 	if (minlength && tempend-start<minlength)return 0;
 
-	int res=InnerMatch((const prechar)textstart,tempend,match,matchcount
+	int res=InnerMatch(textstart,tempend,match,matchcount
 #ifdef NAMEDBRACKETS
 	                   ,hmatch
 #endif
@@ -4460,7 +4460,7 @@ int RegExp::Optimize()
 				continue;
 			}
 			case opRegExpEnd:
-				op=0;
+				op=nullptr;
 				break;
 		}
 
@@ -4640,9 +4640,9 @@ int RegExp::Search(const RECHAR* textstart,const RECHAR* textend,PMatch match,in
 #endif
                   )
 {
-	start=(const prechar)textstart;
+	start=textstart;
 	const prechar str=start;
-	const prechar tempend=(prechar)textend;
+	const prechar tempend=textend;
 	TrimTail(tempend);
 
 	if (tempend<start)return 0;
@@ -4734,9 +4734,9 @@ int RegExp::SearchEx(const RECHAR* datastart,const RECHAR* textstart,const RECHA
 #endif
                     )
 {
-	start=(const prechar)datastart;
-	const prechar str=(const prechar)textstart;
-	const prechar tempend=(const prechar)textend;
+	start=datastart;
+	const prechar str=textstart;
+	const prechar tempend=textend;
 	TrimTail(tempend);
 
 	if (tempend<start)return 0;

@@ -182,17 +182,14 @@ void Connection::recvrequestINT(char *cmd, char *local, char *remote, const char
 				FTPNotify().Notify(&ni);
 
 			DWORD b,e,bw;
-			int64_t totalValue;
-			int b_done;
-			DWORD ind;
 			int b_ost = Host.IOBuffSize, wsz = get_cluster_size(local)*2;
 
-			if(!wsz || (wsz > b_ost && (wsz /= 2) > b_ost)) wsz = 512;
+			if(wsz > b_ost && (wsz /= 2) > b_ost) wsz = 512;
 
-			ind = std::min(1024*1024, std::max(4*wsz, 256*1024));  // 256K - 1M
-			setsockopt(din, SOL_SOCKET, SO_RCVBUF, (char*)&ind, sizeof(ind));
-			b_done = ind = 0;
-			totalValue = 0;
+			DWORD ind = std::min(1024*1024, std::max(4*wsz, 256*1024));  // 256K - 1M
+			setsockopt(din, SOL_SOCKET, SO_RCVBUF, (const void*)&ind, sizeof(ind));
+			int b_done = ind = 0;
+			int64_t totalValue = 0;
 			bool unalign = false;
 			GET_TIME(b);
 			bw = b;
@@ -201,7 +198,7 @@ void Connection::recvrequestINT(char *cmd, char *local, char *remote, const char
 			{
 				int c;
 
-				if(wsz != 512 && b_done >= wsz)       // pseudo ansync io
+				if(wsz != 512 && b_done >= wsz)       // pseudo async io
 				{
 					DWORD off = 0, rdy = 0, ost = b_done % wsz, top = b_done - ost;
 

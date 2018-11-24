@@ -1,6 +1,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <termios.h> 
 #include "Backend.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
@@ -14,7 +15,7 @@ ConsoleOutput g_winport_con_out;
 ConsoleInput g_winport_con_in;
 
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
-bool WinPortMainTTY(int std_in, int std_out, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 
 extern "C" void WinPortInitRegistry();
 
@@ -66,10 +67,37 @@ static void SetupStdHandles(bool nohup)
 	}
 }
 
+static bool NegotiateFar2lTTY(bool enable)
+{
+	struct termios ts;
+	int r = tcgetattr(1, &ts);
+	if (r != 0)
+		return false;
+
+	struct termios ts_ne = ts;
+	//ts_ne.c_lflag &= ~(ECHO | ECHONL);
+	cfmakeraw(&ts_ne);
+	if (tcsetattr( 1, TCSADRAIN, &ts_ne ) != 0)
+		return false;
+
+	printf("\x1b_far2l:%c\x07\x1b[5n", enable ? 'h' : 'l');
+	std::string s;
+	for (;;) {
+		int c = fgetc(stdin);
+		if (c == EOF)
+			break;
+		s+= c;
+		if (s.find("\x1b[0n") != std::string::npos)
+			break;
+	}
+
+	tcsetattr( 1, TCSADRAIN, &ts);
+	return (s.find("\x1b_f2l\x07") != std::string::npos);
+}
 
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
-	bool tty = false, help = false;
+	bool tty = false, far2l_tty = false, help = false;
 	for (int i = 0; i < argc; ++i) {
 		if (strcmp(argv[i], "--tty") == 0) {
 			tty = true;
@@ -77,6 +105,12 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		} else if (strcmp(argv[i], "/?") == 0 || strcmp(argv[i], "--help") == 0){
 			help = true;
 		}
+	}
+
+	far2l_tty = NegotiateFar2lTTY(true);
+
+	if (far2l_tty) {
+		tty = true;
 	}
 
 	int std_in = dup(0);
@@ -104,9 +138,11 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		}
 	}
 	if (tty) {
-		if (!WinPortMainTTY(std_in, std_out, argc, argv, AppMain, &result)) {
+		if (!WinPortMainTTY(std_in, std_out, far2l_tty, argc, argv, AppMain, &result)) {
 			fprintf(stderr, "Cannot use TTY backend\n");
 		}
+		if (far2l_tty)
+			NegotiateFar2lTTY(false);
 	}
 
 	WinPortHandle_FinalizeApp();

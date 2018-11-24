@@ -1086,6 +1086,7 @@ static bool shown_tip_exit = false;
 		OnKeypadChange(0);
 		DeliverPendingWindowInfo();
 		_completion_marker.Reset();
+		_far2l = false;
 
 		return _completion_marker.LastExitCode();
 	}	

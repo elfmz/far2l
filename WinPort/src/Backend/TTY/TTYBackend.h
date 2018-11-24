@@ -13,6 +13,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
 {
 	std::mutex _output_mutex;
 	int _stdin = 0, _stdout = 1, _kickass[2] = {-1, -1};
+	bool _far2l_tty = false;
 	unsigned int _cur_width = 0, _cur_height = 0;
 	unsigned int _prev_width = 0, _prev_height = 0;
 	std::vector<CHAR_INFO> _cur_output, _prev_output;
@@ -24,7 +25,6 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
 
 	pthread_t _reader_trd = 0, _writer_trd = 0;
 	volatile bool _exiting = false;
-	std::atomic<bool> _status_updated, _vt_far2l;
 
 	static void *sWriterThread(void *p) { ((TTYBackend *)p)->WriterThread(); return nullptr; }
 	static void *sReaderThread(void *p) { ((TTYBackend *)p)->ReaderThread(); return nullptr; }
@@ -70,7 +70,7 @@ protected:
 	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args);
 
 public:
-	TTYBackend(int std_in, int std_out);
+	TTYBackend(int std_in, int std_out, bool far2l_tty);
 	~TTYBackend();
 	void KickAss();
 	bool Startup();

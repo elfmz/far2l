@@ -16,9 +16,10 @@ extern ConsoleInput g_winport_con_in;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
-TTYBackend::TTYBackend(int std_in, int std_out) :
+TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty) :
 	_stdin(std_in),
-	_stdout(std_out)
+	_stdout(std_out),
+	_far2l_tty(far2l_tty)
 {
 	memset(&_ts, 0 , sizeof(_ts));
 	if (pipe_cloexec(_kickass) == -1) {
@@ -95,8 +96,6 @@ void TTYBackend::WriterThread()
 		tty_out.SetScreenBuffer(true);
 		tty_out.ChangeKeypad(true);
 		tty_out.ChangeMouse(true);
-		_status_updated = false;
-		tty_out.ChangeFar2lVT(true);
 		tty_out.Flush();
 
 		while (!_exiting) {
@@ -125,8 +124,6 @@ void TTYBackend::WriterThread()
 		}
 
 		tty_out.ChangeCursor(true, 13);
-		_status_updated = false;
-		tty_out.ChangeFar2lVT(false);
 		tty_out.ChangeMouse(false);
 		tty_out.ChangeKeypad(false);
 		tty_out.SetScreenBuffer(false);
@@ -395,14 +392,7 @@ void TTYBackend::OnFar2lMouse(const std::vector<uint32_t> &args)
 
 void TTYBackend::OnFar2lEvent(char code, const std::vector<uint32_t> &args)
 {
-	if (!_status_updated) {
-		_vt_far2l = true;
-		_status_updated = true;
-		if (code) {
-			fprintf(stderr, "Far2lEvent unexpected code=0x%x!\n", (unsigned int)(unsigned char)code);
-		}
-
-	} else if (_vt_far2l) {
+	if (_far2l_tty) {
 		switch (code) {
 			case 'M':
 				OnFar2lMouse(args);
@@ -429,9 +419,9 @@ static void sigwinch_handler(int)
 }
 
 
-bool WinPortMainTTY(int std_in, int std_out, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend  vtb(std_in, std_out);
+	TTYBackend  vtb(std_in, std_out, far2l_tty);
 	signal(SIGWINCH,  sigwinch_handler);
 	if (!vtb.Startup()) {
 		return false;

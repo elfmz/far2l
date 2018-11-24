@@ -727,9 +727,15 @@ void InterpretEscSeq( void )
 			for (i = 0; i < es_argc; i++) {
 				if (30 <= es_argv[i] && es_argv[i] <= 37) {
 					ansiState.foreground = es_argv[i] - 30;
+				} else if (90 <= es_argv[i] && es_argv[i] <= 97) {
+					ansiState.foreground = es_argv[i] - 90;
+
 				} else if (40 <= es_argv[i] && es_argv[i] <= 47) {
 					ansiState.background = es_argv[i] - 40;
-				} else if (es_argv[i] == 38 || es_argv[i] == 48) {
+				} else if (100 <= es_argv[i] && es_argv[i] <= 107) {
+					ansiState.background = es_argv[i] - 100;
+
+ 				} else if (es_argv[i] == 38 || es_argv[i] == 48) {
 					// This is technically incorrect, but it's what xterm does, so
 					// that's what we do.  According to T.416 (ISO 8613-6), there is
 					// only one parameter, which is divided into elements.  So where
@@ -1166,12 +1172,12 @@ void InterpretEscSeq( void )
 			if (es_argc != 1) return; // ESC[n == ESC[0n -> ignored
 			switch (es_argv[0]) {
 			case 5:		// ESC[5n Report status
-				SendSequence( "\33[0n" ); // "OK"
+				SendSequence( "\x1b[0n" ); // "OK"
 				return;
 
 			case 6: {	// ESC[6n Report cursor position
 				char buf[64] = {0};
-				sprintf( buf, "\33[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
+				sprintf( buf, "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
 				SendSequence( buf );
 			}
 			return;
@@ -1270,10 +1276,7 @@ static void InterpretControlString()
 			}
 
 		} else {
-			int r = g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
-			char reply[64] = {0};
-			sprintf( reply, "%c_%d%c", ESC, r, BEL);
-			SendSequence(reply);
+			g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
 		}
 	}
 	Pt_len = 0;

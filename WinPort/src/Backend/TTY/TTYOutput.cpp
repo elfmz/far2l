@@ -184,3 +184,8 @@ void TTYOutput::ChangeMouse(bool enable)
 	Format("\x1b[?1001%c", enable ? 'h' : 'l');
 	Format("\x1b[?1002%c", enable ? 'h' : 'l');
 }
+
+void TTYOutput::ChangeFar2lVT(bool enable)
+{
+	Format("\x1b_far2l:%c\x07\x1b[5n", enable ? 'h' : 'l');
+}

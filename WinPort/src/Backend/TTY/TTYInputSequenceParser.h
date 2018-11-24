@@ -61,6 +61,11 @@ template <size_t N, class V>
 
 template <size_t N> using NChars2Key = NCharsMap<N, TTYInputKey>;
 
+struct ITTYInputSpecialSequenceHandler
+{
+	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args) = 0;
+};
+
 class TTYInputSequenceParser
 {
 	NChars2Key<1> _nch2key1;
@@ -82,6 +87,9 @@ class TTYInputSequenceParser
 		DWORD right_ts = 0;
 	} _mouse;
 
+	ITTYInputSpecialSequenceHandler *_handler;
+	bool _vt_far2l = false;
+
 	void AssertNoConflicts();
 
 	void AddStr(WORD vk, DWORD control_keys, const char *fmt, ...);
@@ -93,10 +101,13 @@ class TTYInputSequenceParser
 
 	size_t ParseNChars2Key(const char *s, size_t l);
 	void ParseMouse(char action, char col, char raw);
+	void ParseAPC(const char *s, size_t l);
 
 	void PostKeyEvent(const TTYInputKey &k);
 
+
 public:
-	TTYInputSequenceParser();
+	TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler);
+
 	size_t Parse(const char *s, size_t l); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
 };

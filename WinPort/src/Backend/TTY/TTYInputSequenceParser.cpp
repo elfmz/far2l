@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <string>
+#include <base64.h>
 #include "TTYInputSequenceParser.h"
 #include "ConsoleInput.h"
 #include "WinPort.h"
@@ -132,7 +133,8 @@ void TTYInputSequenceParser::AddStrCursors(WORD vk, const char *code)
 	AddStr_ControlsThenCode(vk, "[1;%d%s", code);
 }
 
-TTYInputSequenceParser::TTYInputSequenceParser()
+TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler)
+	: _handler(handler)
 {
 	AddStrCursors(VK_UP, "A");
 	AddStrCursors(VK_DOWN, "B");
@@ -222,6 +224,25 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 	return 0;
 }
 
+void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
+{
+	if (strncmp(s, "f2l", 3) == 0 && _handler) {
+		std::vector<uint32_t> args;
+		if ( l > 3) {
+			const std::vector<unsigned char> &decoded = base64_decode(s + 3, l - 3);
+			if (!decoded.empty()) {
+				uint32_t a;
+				for (size_t i = 1; i < decoded.size(); i+= sizeof(a)) {
+					memcpy(&a, &decoded[i], sizeof(a));
+					args.emplace_back(a);
+				}
+				_handler->OnFar2lEvent((char)decoded[0], args);
+			}
+		} else
+			_handler->OnFar2lEvent(0, args);
+	}
+}
+
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l)
 {
 	switch (*s) {
@@ -229,7 +250,21 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l)
 			++s;
 			--l;
 
-			if (s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
+			if (l > 2 && s[0] == '[' && s[2] == 'n') {
+				return 4;
+			}
+
+			if (l > 0 && s[0] == '_') {
+				for (size_t i = 1; i < l; ++i) {
+					if (s[i] == '\x07') {
+						ParseAPC(s + 1, i - 1);
+						return i + 2;
+					}
+				}
+				return (l > 127) ? 1 : 0;
+			}
+
+			if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
 				if (l < 5)
 					return 0;
 
@@ -404,7 +439,4 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 
 }
 
-
 //////////////////
-
-

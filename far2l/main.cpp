@@ -676,36 +676,6 @@ int FarDispatchAnsiApplicationProtocolCommand(const char *str)
 	return r;
 }
 
-static int SendAnsiApplicationProgramCommand(const char *command, const char *argument)
-{
-	std::string str = "\x1b_";
-	str+= command;
-	str+= ' ';
-	str+= EscapeUnprintable(argument);
-	str+= '\x07';
-	fwrite(str.c_str(), str.size(), 1, stdout);
-	fflush(stdout);
-	
-	str.clear();
-	for (;;) {
-		int r = fgetc(stdin);
-		if (r == -1)
-			return -1;
-
-		str+= (char)(unsigned char)r;
-		
-		size_t p = str.find("\x1b_");
-		if (p!=std::string::npos) {
-			str.erase(0, p);
-			p = str.find('\x07');
-			if (p!=std::string::npos) {
-				str.resize(p);
-				return atoi(str.c_str() + p + 3);
-			}
-		}
-	}
-}
-
 int _cdecl main(int argc, char *argv[])
 {
 	char *name = strrchr(argv[0], GOOD_SLASH);
@@ -721,14 +691,7 @@ int _cdecl main(int argc, char *argv[])
 		}
 	}
 
-	if (argc > 2 && getenv("FARVTMARKER")) {
-		//In case of Edit/View requested in FAR's VT - handover request to VT-controlling FAR
-		if (strstr(argv[1], "/e") == argv[1] || strstr(argv[1], "/v") == argv[1])
-			return SendAnsiApplicationProgramCommand(argv[1] + 1, argv[2]);
-	}
-
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
-
 
 	SetupFarPath(argc, argv);
 

@@ -3,7 +3,7 @@
 
 struct IVTAnsiCommands
 {
-	virtual int OnApplicationProtocolCommand(const char *str) = 0;
+	virtual void OnApplicationProtocolCommand(const char *str) = 0;
 	virtual void WriteRawInput(const char *str) = 0;
 	virtual void OnKeypadChange(unsigned char keypad) = 0;
 };

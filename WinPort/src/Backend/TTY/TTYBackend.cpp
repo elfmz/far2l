@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <exception>
 #include <sys/ioctl.h>
 #include "utils.h"
 #include "WinPortHandle.h"
@@ -94,6 +95,8 @@ void TTYBackend::WriterThread()
 		tty_out.SetScreenBuffer(true);
 		tty_out.ChangeKeypad(true);
 		tty_out.ChangeMouse(true);
+		_status_updated = false;
+		tty_out.ChangeFar2lVT(true);
 		tty_out.Flush();
 
 		while (!_exiting) {
@@ -122,6 +125,8 @@ void TTYBackend::WriterThread()
 		}
 
 		tty_out.ChangeCursor(true, 13);
+		_status_updated = false;
+		tty_out.ChangeFar2lVT(false);
 		tty_out.ChangeMouse(false);
 		tty_out.ChangeKeypad(false);
 		tty_out.SetScreenBuffer(false);
@@ -136,7 +141,7 @@ void TTYBackend::WriterThread()
 void TTYBackend::ReaderThread()
 {
 	try {
-		TTYInput tty_in;
+		TTYInput tty_in(this);
 		fd_set fds, fde;
 		while (!_exiting) {
 			int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
@@ -327,6 +332,94 @@ bool TTYBackend::OnConsoleIsActive()
 	return true;
 }
 
+template <class I> void CheckedCast(I &dst, uint32_t v) throw(std::exception)
+{
+	if (std::is_signed<I>::value) {
+		int32_t sv = (int32_t)v;
+		dst = sv;
+		if ((int32_t)dst != sv) {
+			fprintf(stderr, "CheckedCast: v=0x%x sizeof(I)=%d signed\n", v, (int)sizeof(I));
+			throw std::exception();
+		}
+	} else {
+		dst = v;
+		if ((uint32_t)dst != v) {
+			fprintf(stderr, "CheckedCast: v=0x%x sizeof(I)=%d unsigned\n", v, (int)sizeof(I));
+			throw std::exception();
+		}
+	}
+}
+
+void TTYBackend::OnFar2lKey(bool down, const std::vector<uint32_t> &args)
+{
+	if (args.size() != 5) {
+		fprintf(stderr, "OnFar2lKey: unexpected args size=%ld!\n", (unsigned long)args.size());
+		return;
+	}
+
+	try {
+		INPUT_RECORD ir = {0};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
+		CheckedCast(ir.Event.KeyEvent.wRepeatCount, args[0]);
+		CheckedCast(ir.Event.KeyEvent.wVirtualKeyCode, args[1]);
+		CheckedCast(ir.Event.KeyEvent.wVirtualScanCode, args[2]);
+		CheckedCast(ir.Event.KeyEvent.uChar.UnicodeChar, args[3]);
+		CheckedCast(ir.Event.KeyEvent.dwControlKeyState, args[4]);
+
+		g_winport_con_in.Enqueue(&ir, 1);
+
+	} catch (std::exception &) { }
+}
+
+void TTYBackend::OnFar2lMouse(const std::vector<uint32_t> &args)
+{
+	if (args.size() != 5) {
+		fprintf(stderr, "OnFar2lMouse: unexpected args size=%ld!\n", (unsigned long)args.size());
+		return;
+	}
+
+	try {
+		INPUT_RECORD ir = {0};
+		ir.EventType = MOUSE_EVENT;
+		CheckedCast(ir.Event.MouseEvent.dwMousePosition.X, args[0]);
+		CheckedCast(ir.Event.MouseEvent.dwMousePosition.Y, args[1]);
+		CheckedCast(ir.Event.MouseEvent.dwButtonState, args[2]);
+		CheckedCast(ir.Event.MouseEvent.dwControlKeyState, args[3]);
+		CheckedCast(ir.Event.MouseEvent.dwEventFlags, args[4]);
+
+		g_winport_con_in.Enqueue(&ir, 1);
+
+	} catch (std::exception &) { }
+}
+
+void TTYBackend::OnFar2lEvent(char code, const std::vector<uint32_t> &args)
+{
+	if (!_status_updated) {
+		_vt_far2l = true;
+		_status_updated = true;
+		if (code) {
+			fprintf(stderr, "Far2lEvent unexpected code=0x%x!\n", (unsigned int)(unsigned char)code);
+		}
+
+	} else if (_vt_far2l) {
+		switch (code) {
+			case 'M':
+				OnFar2lMouse(args);
+				break;
+
+			case 'K': case 'k':
+				OnFar2lKey(code == 'K', args);
+				break;
+
+			default:
+				fprintf(stderr, "Far2lEvent unknown code=0x%x!\n", (unsigned int)(unsigned char)code);
+		}
+
+	} else {
+		fprintf(stderr, "Far2lEvent unexpected!\n");
+	}
+}
 
 static void sigwinch_handler(int)
 {

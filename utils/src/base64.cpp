@@ -51,8 +51,8 @@ std::string base64_encode(const unsigned char* buf, size_t bufLen)
   return ret;
 }
 
-std::vector<unsigned char> base64_decode(std::string const& encoded_string) {
-  int in_len = encoded_string.size();
+std::vector<unsigned char> base64_decode(const char *encoded_string, size_t in_len)
+{
   int i = 0;
   int j = 0;
   int in_ = 0;
@@ -90,4 +90,9 @@ std::vector<unsigned char> base64_decode(std::string const& encoded_string) {
   }
 
   return ret;
+}
+
+std::vector<unsigned char> base64_decode(std::string const& encoded_string)
+{
+	return base64_decode(encoded_string.c_str(), encoded_string.size());
 }

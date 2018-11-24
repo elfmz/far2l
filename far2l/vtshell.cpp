@@ -19,6 +19,7 @@
 #include <sys/ioctl.h> 
 #include <sys/wait.h> 
 #include <condition_variable>
+#include <base64.h> 
 #include "vtansi.h"
 #include "vtlog.h"
 #define __USE_BSD 
@@ -237,7 +238,7 @@ public:
 	struct IProcessor
 	{
 		virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent) = 0;
-		virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) = 0;
+		virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) = 0;
 		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
 		virtual void OnInputRaw(const std::string &str) = 0;
 	};
@@ -299,8 +300,10 @@ private:
 				usleep(100000);
 			} else if (ir.EventType == MOUSE_EVENT) {
 				_processor->OnInputMouse(ir.Event.MouseEvent);
-			} else if (ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown) {
-				_processor->OnInputKeyDown(ir.Event.KeyEvent);
+
+			} else if (ir.EventType == KEY_EVENT) {
+				_processor->OnInputKey(ir.Event.KeyEvent);
+
 			} else if (ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
 				_processor->OnInputResized(ir);
 			}
@@ -415,14 +418,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	VTInputReader _input_reader;
 	VTOutputReader _output_reader;
 	std::mutex _inout_control_mutex;
-	std::mutex _keypad_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _shell_pid, _forked_proc_pid;
 	std::string _slavename;
 	CompletionMarker _completion_marker;
 	bool _skipping_line;
-	unsigned char _keypad;
+	std::atomic<unsigned char> _keypad;
+	std::atomic<bool> _far2l;
 	INPUT_RECORD _last_window_info_ir;
 	
 	
@@ -663,7 +666,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	{
 		//fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
-		if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
+		if (_far2l) {
+			WriteFar2lEvent('M', 5, MouseEvent.dwMousePosition.X, MouseEvent.dwMousePosition.Y,
+				MouseEvent.dwButtonState, MouseEvent.dwControlKeyState, MouseEvent.dwEventFlags);
+			return;
+		}
+
+		else if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
 			if (HIWORD(MouseEvent.dwButtonState) > 0) {
 				OnConsoleLog(CLK_VIEW_AUTOCLOSE);
 			}
@@ -719,8 +728,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		}
 	}
 
-	virtual void OnInputKeyDown(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
+	virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
 	{
+		if (_far2l) {
+			WriteFar2lEvent(KeyEvent.bKeyDown ? 'K' : 'k', 5, KeyEvent.wRepeatCount, KeyEvent.wVirtualKeyCode,
+				KeyEvent.wVirtualScanCode, KeyEvent.uChar.UnicodeChar, KeyEvent.dwControlKeyState);
+			return;
+		}
+
+		if (!KeyEvent.bKeyDown)
+			return;
+
 		DWORD dw;
 		const std::string &translated = TranslateKeyEvent(KeyEvent);
 		if (!translated.empty()) {
@@ -801,43 +819,54 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	virtual void OnKeypadChange(unsigned char keypad)
 	{
 //		fprintf(stderr, "VTShell::OnKeypadChange: %u\n", keypad);
-		std::lock_guard<std::mutex> lock(_keypad_mutex);
 		_keypad = keypad;
 	}
 
-	virtual int OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
+	void OnFar2LVTExtensionsChange(bool enable)
 	{
-		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
-		if (!lock) {
-			fprintf(stderr, "VTShell::OnApplicationProtocolCommand: SKIPPED '%s'\n", str);
-			return -1;
+		_far2l = enable;
+		if (enable) {
+			WriteFar2lEvent(0, 0);
 		}
+	}
 
-		//called from _vta in output thread context
-		//we're output, stop input and remember _vta state
-		StopAndStart<VTInputReader> sas(_input_reader);
-		VTAnsiSuspend vta_suspend(_vta);
-		
-		ScrBuf.FillBuf();
-		CtrlObject->CmdLine->SaveBackground();
-		
-		SetFarConsoleMode(TRUE);
-		DeliverPendingWindowInfo();
-		int r = FarDispatchAnsiApplicationProtocolCommand(str);
-
-		CtrlObject->CmdLine->ShowBackground();
-		ScrBuf.Flush();
-
-		if (!_slavename.empty())
-			UpdateTerminalSize(_fd_out);
-		
-		return r;
+	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
+	{
+		if (strstr(str, "far2l:") == str) {
+			OnFar2LVTExtensionsChange(str[6] == 'h');
+		}
 	}
 	
 	virtual void WriteRawInput(const char *str)
 	{
 		_input_reader.EnqueueRaw(str, strlen(str));
 	}
+
+	void WriteFar2lEvent(char code, uint32_t argc, ...)
+	{
+		std::string msg = "\x1b_f2l";
+		if (code) {
+			std::vector<unsigned char> buf;
+			buf.push_back((unsigned char)code);
+			va_list va;
+			va_start(va, argc);
+			for (; argc; --argc) {
+				uint32_t a = va_arg(va, uint32_t);
+				buf.resize(buf.size() + sizeof(a));
+				memcpy(&buf[buf.size() - sizeof(a)], &a, sizeof(a));
+			}
+			va_end(va);
+
+			msg+= base64_encode(&buf[0], buf.size());
+
+		} else {
+			assert(argc == 0);
+		}
+		msg+= '\x07';
+
+		_input_reader.EnqueueRaw(msg.c_str(), msg.size());
+	}
+
 
 	std::string StringFromClipboard()
 	{
@@ -881,7 +910,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				OnConsoleLog(CLK_VIEW);
 			} 
 
-			std::lock_guard<std::mutex> lock(_keypad_mutex);
 			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad);
 			if (spec)
 				return spec;
@@ -950,7 +978,6 @@ static bool shown_tip_exit = false;
 
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
-		fprintf(f, "export FARVTMARKER=far2l\n"); // tell far2l started inside that he's little brother
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
 			fprintf(f, "echo \"Closing back shell.%s\"\n", 

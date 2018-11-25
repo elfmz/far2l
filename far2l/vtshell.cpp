@@ -822,18 +822,39 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		_keypad = keypad;
 	}
 
-	void OnFar2LVTExtensionsChange(bool enable)
+	void OnFar2lInterract(std::vector<unsigned char> &data)
 	{
-		_far2l = enable;
-		if (enable) {
-			WriteFar2lEvent(0, 0);
-		}
 	}
 
 	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
 	{
-		if (strstr(str, "far2l:") == str) {
-			OnFar2LVTExtensionsChange(str[6] == 'h');
+		if (strstr(str, "far2l") == str) {
+			std::string reply;
+			switch (str[5]) {
+				case 'h': {
+					_far2l = true;
+					reply = "\x1b_far2lok\x07";
+				} break;
+
+				case 'l': {
+					_far2l = false;
+				} break;
+
+				case ':': {
+					std::vector<unsigned char> data;
+					if (str[6])
+						data = base64_decode(str + 6, strlen(str + 6));
+
+					OnFar2lInterract(data);
+
+					reply = "\x1b_far2l";
+					if (!data.empty())
+						reply+= base64_encode(&data[0], data.size());
+					reply+= '\x07';
+				} break;
+			}
+			if (!reply.empty())
+				_input_reader.EnqueueRaw(reply.c_str(), reply.size());
 		}
 	}
 	

@@ -695,7 +695,7 @@ void Viewer::ShowHex()
 					WCHAR OutChar = Ch;
 
 					if (VM.CodePage == CP_UTF16BE) {
-						_swab((char*)&OutChar, (char*)&OutChar, sizeof(OutChar));
+						swab((char*)&OutChar, (char*)&OutChar, sizeof(OutChar));
 					}
 
 

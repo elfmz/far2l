@@ -64,7 +64,6 @@ typedef unsigned __int64 uint64_t;
 #define _read sdc_read
 #define _lseek sdc_lseek
 #define _chsize sdc_ftruncate
-#define _swab swab
 #define _itoa itoa
 
 #define __cdecl

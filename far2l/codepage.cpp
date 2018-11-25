@@ -164,7 +164,7 @@ void AddCodePage(const wchar_t *codePageName, UINT codePage, int position, bool 
 		}
 
 		// Вставляем элемент
-		FarListInsert item = {position};
+		FarListInsert item = {position, {}};
 
 		FormatString name;
 		FormatCodePageString(codePage, codePageName, name, IsCodePageNameCustom);
@@ -252,7 +252,7 @@ void AddSeparator(LPCWSTR Label=nullptr,int position = -1)
 			position = info.ItemsNumber;
 		}
 
-		FarListInsert item = {position};
+		FarListInsert item = {position, {}};
 		item.Item.Text = Label;
 		item.Item.Flags = LIF_SEPARATOR;
 		SendDlgMessage(dialog, DM_LISTINSERT, control, (LONG_PTR)&item);
@@ -683,12 +683,12 @@ void EditCodePageName()
 	CodePageName.LShift(BoxPosition+2);
 	DialogDataEx EditDialogData[]=
 		{
-			DI_DOUBLEBOX, 3, 1, 50, 5, 0, 0, MSG(MGetCodePageEditCodePageName),
-			DI_EDIT,      5, 2, 48, 2, (DWORD_PTR)L"CodePageName", DIF_FOCUS|DIF_HISTORY, CodePageName,
-			DI_TEXT,      0, 3,  0, 3, 0, DIF_SEPARATOR, L"",
-			DI_BUTTON,    0, 4,  0, 3, 0, DIF_DEFAULT|DIF_CENTERGROUP, MSG(MOk),
-			DI_BUTTON,    0, 4,  0, 3, 0, DIF_CENTERGROUP, MSG(MCancel),
-			DI_BUTTON,    0, 4,  0, 3, 0, DIF_CENTERGROUP, MSG(MGetCodePageResetCodePageName)
+			{DI_DOUBLEBOX, 3, 1, 50, 5, {}, 0, MSG(MGetCodePageEditCodePageName)},
+			{DI_EDIT,      5, 2, 48, 2, {(DWORD_PTR)L"CodePageName"}, DIF_FOCUS|DIF_HISTORY, CodePageName},
+			{DI_TEXT,      0, 3,  0, 3, {}, DIF_SEPARATOR, L""},
+			{DI_BUTTON,    0, 4,  0, 3, {}, DIF_DEFAULT|DIF_CENTERGROUP, MSG(MOk)},
+			{DI_BUTTON,    0, 4,  0, 3, {}, DIF_CENTERGROUP, MSG(MCancel)},
+			{DI_BUTTON,    0, 4,  0, 3, {}, DIF_CENTERGROUP, MSG(MGetCodePageResetCodePageName)}
 		};
 	MakeDialogItemsEx(EditDialogData, EditDialog);
 	Dialog Dlg(EditDialog, ARRAYSIZE(EditDialog), EditDialogProc);
@@ -772,7 +772,7 @@ UINT FillCodePagesList(HANDLE dialogHandle, UINT controlId, UINT codePage, bool 
 		{
 			if (GetListItemCodePage(i)==codePage)
 			{
-				FarListGetItem Item={i};
+				FarListGetItem Item={i, {}};
 				SendDlgMessage(dialog, DM_LISTGETITEM, control, reinterpret_cast<LONG_PTR>(&Item));
 				SendDlgMessage(dialog, DM_SETTEXTPTR, control, reinterpret_cast<LONG_PTR>(Item.Item.Text));
 				FarListPos Pos={i,-1};

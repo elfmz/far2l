@@ -39,18 +39,18 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
     int h = 10;
 
     struct FarDialogItem fdi[] = {
-            {DI_DOUBLEBOX, 1,  1, w - 2, h - 2, 0,     0, 0, 0,    getMsg(info, 0)},
-            {DI_TEXT,      3,  2, 0,     h - 1, FALSE, 0, 0, 0,    getMsg(info, 1)},
-            {DI_CHECKBOX,  3,  4, 0,     0,     TRUE,  0, 0, 0,    getMsg(info, 2)},
-            {DI_EDIT,      3,  5, w - 4, 0,     0,  0,  0, 0},
-            {DI_SINGLEBOX, 2,  6, 0,     0,     FALSE, 0, 0, 0,    L""},
-            {DI_BUTTON,    11, 7, 0,     0,     FALSE, 0, 0, TRUE, getMsg(info, 3)},
-            {DI_BUTTON,    26, 7, 0,     0,     FALSE, 0, 0, 0,    getMsg(info, 4)}
+            {DI_DOUBLEBOX, 1,  1, w - 2, h - 2, 0,     {}, 0, 0,    getMsg(info, 0), 0},
+            {DI_TEXT,      3,  2, 0,     h - 1, FALSE, {}, 0, 0,    getMsg(info, 1), 0},
+            {DI_CHECKBOX,  3,  4, 0,     0,     TRUE,  {}, 0, 0,    getMsg(info, 2), 0},
+            {DI_EDIT,      3,  5, w - 4, 0,     0,  {},  0, 0, nullptr, 0},
+            {DI_SINGLEBOX, 2,  6, 0,     0,     FALSE, {}, 0, 0,    L"", 0},
+            {DI_BUTTON,    11, 7, 0,     0,     FALSE, {}, 0, TRUE, getMsg(info, 3), 0},
+            {DI_BUTTON,    26, 7, 0,     0,     FALSE, {}, 0, 0,    getMsg(info, 4), 0}
     };
 
     unsigned int size = sizeof(fdi) / sizeof(fdi[0]);
     fdi[2].Param.Selected = editors->getAutoEnabling();
-    fdi[3].PtrData = (TCHAR*)editors->getFileMasks().c_str();
+    fdi[3].PtrData = (const TCHAR*)editors->getFileMasks().c_str();
 
     HANDLE hDlg = info.DialogInit(info.ModuleNumber, -1, -1, w, h, L"config", fdi, size, 0, 0, nullptr, 0);
 
@@ -75,12 +75,12 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
     int h = 8;
 
     struct FarDialogItem fdi[] = {
-            {DI_DOUBLEBOX, 1,  1, w - 2, h - 2, 0,     0, 0, 0,    getMsg(info, 0)},
-            {DI_TEXT,      3,  2, 0,     h - 1, FALSE, 0, 0, 0,    getMsg(info, 1)},
-            {DI_CHECKBOX,  3,  4, 0,     0,     TRUE,  0, 0, 0,    getMsg(info, 5)},
-            {DI_SINGLEBOX, 2,  5, 0,     0,     FALSE, 0, 0, 0,    L""},
-            {DI_BUTTON,    11, 6, 0,     0,     FALSE, 0, 0, TRUE, getMsg(info, 3)},
-            {DI_BUTTON,    26, 6, 0,     0,     FALSE, 0, 0, 0,    getMsg(info, 4)}
+            {DI_DOUBLEBOX, 1,  1, w - 2, h - 2, 0,     {}, 0, 0,    getMsg(info, 0), 0},
+            {DI_TEXT,      3,  2, 0,     h - 1, FALSE, {}, 0, 0,    getMsg(info, 1), 0},
+            {DI_CHECKBOX,  3,  4, 0,     0,     TRUE,  {}, 0, 0,    getMsg(info, 5), 0},
+            {DI_SINGLEBOX, 2,  5, 0,     0,     FALSE, {}, 0, 0,    L"", 0},
+            {DI_BUTTON,    11, 6, 0,     0,     FALSE, {}, 0, TRUE, getMsg(info, 3), 0},
+            {DI_BUTTON,    26, 6, 0,     0,     FALSE, {}, 0, 0,    getMsg(info, 4), 0}
     };
 
     bool active = editor->getEnabled();

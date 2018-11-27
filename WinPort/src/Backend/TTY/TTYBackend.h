@@ -4,10 +4,12 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
+#include <Event.h>
 #include "Backend.h"
 #include "TTYOutput.h"
 #include "TTYInput.h"
 #include "../FSClipboardBackend.h"
+
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
 {
@@ -17,7 +19,6 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
 	unsigned int _cur_width = 0, _cur_height = 0;
 	unsigned int _prev_width = 0, _prev_height = 0;
 	std::vector<CHAR_INFO> _cur_output, _prev_output;
-
 
 	struct termios _ts;
 	int _ts_r = -1;
@@ -36,19 +37,37 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
 
+	struct Far2lInterractData
+	{
+		Event evnt;
+		std::vector<unsigned char> data;
+		bool waited;
+	};
+
+	struct Far2lInterractV : std::vector<std::shared_ptr<Far2lInterractData> > {} _far2l_interracts_queued;
+	struct Far2lInterractsM : std::map<unsigned int, std::shared_ptr<Far2lInterractData> >, std::mutex
+	{
+		uint32_t _id_counter = 0;
+	} _far2l_interracts_sent;
+
 	union AsyncEvent
 	{
 		struct {
 			bool term_resized : 1;
 			bool output : 1;
+			bool far2l_interract : 1;
 		} flags;
 		uint32_t all;
 	} _ae;
 
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
+	void DispatchFar2lInterract(TTYOutput &tty_out);
+
 	void OnFar2lKey(bool down, const std::vector<uint32_t> &args);
 	void OnFar2lMouse(const std::vector<uint32_t> &args);
+
+	bool Far2lInterract(std::vector<unsigned char> &data, bool wait);
 
 	std::shared_ptr<IClipboardBackend> _clipboard_backend;
 
@@ -68,6 +87,7 @@ protected:
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args);
+	virtual void OnFar2lReply(std::vector<unsigned char> &data);
 
 public:
 	TTYBackend(int std_in, int std_out, bool far2l_tty);

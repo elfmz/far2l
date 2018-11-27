@@ -46,4 +46,6 @@ public:
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
 	void ChangeKeypad(bool app);
 	void ChangeMouse(bool enable);
+
+	void SendFar2lInterract(const std::vector<unsigned char> &data);
 };

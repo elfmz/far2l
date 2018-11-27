@@ -1,6 +1,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <termios.h> 
 #include "Backend.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
@@ -8,7 +9,7 @@
 #include "PathHelpers.h"
 #include "../sudo/sudo_askpass_ipc.h"
 #include "SudoAskpassImpl.h"
-#include "TTY/TTYFar2lExts.h"
+
 
 ConsoleOutput g_winport_con_out;
 ConsoleInput g_winport_con_in;
@@ -66,19 +67,51 @@ static void SetupStdHandles(bool nohup)
 	}
 }
 
+static bool NegotiateFar2lTTY(bool enable)
+{
+	struct termios ts;
+	int r = tcgetattr(1, &ts);
+	if (r != 0)
+		return false;
+
+	struct termios ts_ne = ts;
+	//ts_ne.c_lflag &= ~(ECHO | ECHONL);
+	cfmakeraw(&ts_ne);
+	if (tcsetattr( 1, TCSADRAIN, &ts_ne ) != 0)
+		return false;
+
+	printf("\x1b_far2l%d\x07\x1b[5n", enable ? 1 : 0);
+	fflush(stdout);
+	std::string s;
+	for (;;) {
+		int c = fgetc(stdin);
+		if (c == EOF)
+			break;
+		s+= c;
+		if (s.find("\x1b[0n") != std::string::npos)
+			break;
+	}
+
+	tcsetattr( 1, TCSADRAIN, &ts);
+	return (s.find("\x1b_far2lok\x07") != std::string::npos);
+}
+
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
-	bool tty = false, notty = false, far2l_tty = false, help = false;
+	bool tty = false, far2l_tty = false, help = false;
 	for (int i = 0; i < argc; ++i) {
 		if (strcmp(argv[i], "--tty") == 0) {
 			tty = true;
 
-		} else if (strcmp(argv[i], "--notty") == 0) {
-			notty = true;
-
 		} else if (strcmp(argv[i], "/?") == 0 || strcmp(argv[i], "--help") == 0){
 			help = true;
 		}
+	}
+
+	far2l_tty = NegotiateFar2lTTY(true);
+
+	if (far2l_tty) {
+		tty = true;
 	}
 
 	int std_in = dup(0);
@@ -86,12 +119,6 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	fcntl(std_in, F_SETFD, FD_CLOEXEC);
 	fcntl(std_out, F_SETFD, FD_CLOEXEC);
 
-	if (!notty) {
-		far2l_tty = TTYFar2lExt_Negotiate(std_in, std_out, true);
-		if (far2l_tty) {
-			tty = true;
-		}
-	}
 
 	if (!help) {
 		SetupStdHandles(!tty);
@@ -108,8 +135,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	if (!tty) {
 		if (!WinPortMainWX(argc, argv, AppMain, &result) ) {
 			fprintf(stderr, "Cannot use WX backend\n");
-			if (!notty)
-				tty = true;
+			tty = true;
 		}
 	}
 	if (tty) {
@@ -117,7 +143,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 			fprintf(stderr, "Cannot use TTY backend\n");
 		}
 		if (far2l_tty)
-			TTYFar2lExt_Negotiate(std_in, std_out, false);
+			NegotiateFar2lTTY(false);
 	}
 
 	WinPortHandle_FinalizeApp();

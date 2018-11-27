@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <assert.h>
+#include <base64.h>
 #include <string>
 #include "TTYOutput.h"
 #include "ConvertUTF.h"
@@ -183,4 +184,15 @@ void TTYOutput::ChangeMouse(bool enable)
 	Format("\x1b[?1000%c", enable ? 'h' : 'l');
 	Format("\x1b[?1001%c", enable ? 'h' : 'l');
 	Format("\x1b[?1002%c", enable ? 'h' : 'l');
+}
+
+void TTYOutput::SendFar2lInterract(const std::vector<unsigned char> &data)
+{
+	std::string request = "\x1b_far2l:";
+	if (!data.empty())
+		request+= base64_encode(&data[0], data.size());
+
+	request+= '\x07';
+
+	Write(request.c_str(), request.size());
 }

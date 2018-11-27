@@ -226,7 +226,10 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 
 void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 {
-	if (strncmp(s, "f2l", 3) == 0 && _handler) {
+	if (!_handler)
+		return;
+
+	if (strncmp(s, "f2l", 3) == 0) {
 		std::vector<uint32_t> args;
 		if ( l > 3) {
 			const std::vector<unsigned char> &decoded = base64_decode(s + 3, l - 3);
@@ -240,6 +243,13 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 			}
 		} else
 			_handler->OnFar2lEvent(0, args);
+
+	} else if (strncmp(s, "far2l", 5) == 0) {
+		_far2l_reply_data.clear();
+		if (l > 5)
+			_far2l_reply_data = base64_decode(s + 5, l - 5);
+
+		_handler->OnFar2lReply(_far2l_reply_data);
 	}
 }
 

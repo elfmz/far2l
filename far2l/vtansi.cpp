@@ -1172,6 +1172,7 @@ void InterpretEscSeq( void )
 			if (es_argc != 1) return; // ESC[n == ESC[0n -> ignored
 			switch (es_argv[0]) {
 			case 5:		// ESC[5n Report status
+				fprintf(stderr, "STATUSSTATUSSTATUSSTATUS\n");
 				SendSequence( "\x1b[0n" ); // "OK"
 				return;
 
@@ -1254,7 +1255,7 @@ static struct AttrStack : std::vector<AttrStackEntry > {} g_attr_stack;
 static void InterpretControlString()
 {
 	FlushBuffer();
-	if (prefix == '_' && g_vt_ansi_commands) {//Application Program Command
+	if (prefix == '_') {//Application Program Command
 		if (strstr(Pt_arg, "set-blank=") == Pt_arg)  {
 			blank_character = Pt_arg[10] ? Pt_arg[10] : L' ';
 
@@ -1275,7 +1276,7 @@ static void InterpretControlString()
 				g_attr_stack.pop_back();
 			}
 
-		} else {
+		} else if (g_vt_ansi_commands) {
 			g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
 		}
 	}

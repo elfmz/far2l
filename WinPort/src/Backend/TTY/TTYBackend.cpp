@@ -120,6 +120,9 @@ void TTYBackend::WriterThread()
 			if (ae.flags.output)
 				DispatchOutput(tty_out);
 
+			if (ae.flags.far2l_interract)
+				DispatchFar2lInterract(tty_out);
+
 			tty_out.Flush();
 		}
 
@@ -139,6 +142,7 @@ void TTYBackend::ReaderThread()
 {
 	try {
 		TTYInput tty_in(this);
+
 		fd_set fds, fde;
 		while (!_exiting) {
 			int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
@@ -261,6 +265,34 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	tty_out.ChangeCursor(cursor_visible, cursor_height);
 }
 
+
+void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
+{
+	Far2lInterractV queued;
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		queued.swap(_far2l_interracts_queued);
+	}
+
+	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+
+	for (auto & i : queued) {
+		uint32_t id;
+		for (;;) {
+			id = ++_far2l_interracts_sent._id_counter;
+			if (_far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
+		}
+
+		i->data.resize(i->data.size() + sizeof(id));
+		memcpy(&i->data[i->data.size() - sizeof(id)], &id, sizeof(id));
+
+		if (i->waited)
+			_far2l_interracts_sent.emplace(id, i);
+
+		tty_out.SendFar2lInterract(i->data);
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 void TTYBackend::KickAss()
@@ -312,6 +344,38 @@ void TTYBackend::OnConsoleChangeFont()
 
 void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
+	std::vector<unsigned char> data;
+	data.emplace_back((unsigned char) (maximized ? 'M' : 'm'));
+	Far2lInterract(data, true);
+}
+
+bool TTYBackend::Far2lInterract(std::vector<unsigned char> &data, bool wait)
+{
+	if (!_far2l_tty)
+		return false;
+
+	std::shared_ptr<Far2lInterractData> pfi = std::make_shared<Far2lInterractData>();
+	pfi->data.swap(data);
+	pfi->waited = wait;
+
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_far2l_interracts_queued.emplace_back(pfi);
+		_ae.flags.far2l_interract = 1;
+		_async_cond.notify_all();
+	}
+
+	if (!wait)
+		return true;
+
+	pfi->evnt.Wait();
+
+	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+	if (_exiting)
+		return false;
+
+	pfi->data.swap(data);
+	return true;
 }
 
 void TTYBackend::OnConsoleExit()
@@ -392,22 +456,49 @@ void TTYBackend::OnFar2lMouse(const std::vector<uint32_t> &args)
 
 void TTYBackend::OnFar2lEvent(char code, const std::vector<uint32_t> &args)
 {
-	if (_far2l_tty) {
-		switch (code) {
-			case 'M':
-				OnFar2lMouse(args);
-				break;
-
-			case 'K': case 'k':
-				OnFar2lKey(code == 'K', args);
-				break;
-
-			default:
-				fprintf(stderr, "Far2lEvent unknown code=0x%x!\n", (unsigned int)(unsigned char)code);
-		}
-
-	} else {
+	if (!_far2l_tty) {
 		fprintf(stderr, "Far2lEvent unexpected!\n");
+		return;
+	}
+
+	switch (code) {
+		case 'M':
+			OnFar2lMouse(args);
+			break;
+
+		case 'K': case 'k':
+			OnFar2lKey(code == 'K', args);
+			break;
+
+		default:
+			fprintf(stderr, "Far2lEvent unknown code=0x%x!\n", (unsigned int)(unsigned char)code);
+	}
+}
+
+void TTYBackend::OnFar2lReply(std::vector<unsigned char> &data)
+{
+	if (!_far2l_tty) {
+		fprintf(stderr, "OnFar2lReply: unexpected!\n");
+		return;
+	}
+
+	uint32_t id;
+
+	if (data.size() < sizeof(id)) {
+		fprintf(stderr, "OnFar2lReply: too short!\n");
+		return;
+	}
+
+	memcpy(&id, &data[data.size() - sizeof(id)], sizeof(id));
+	data.resize(data.size() - sizeof(id));
+
+	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+
+	auto i = _far2l_interracts_sent.find(id);
+	if (i != _far2l_interracts_sent.end()) {
+		auto pfi = i->second;
+		_far2l_interracts_sent.erase(i);
+		pfi->evnt.Signal();
 	}
 }
 

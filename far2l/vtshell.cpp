@@ -49,7 +49,6 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 # define DbgPrintEscaped(i, s, l) 
 #endif
 
-
 template <class T> 
 class StopAndStart
 {
@@ -703,12 +702,15 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 //			usleep(1000 );//drain seems not drainy enough...
 			struct termios ts_ne = ts;
 			ts_ne.c_lflag &= ~(ECHO | ECHONL);
+			//cfmakeraw(&ts_ne);
 			if (tcsetattr( _fd_in, TCSADRAIN, &ts_ne ) != 0) {
 				perror("VT: WriteTermRaw - tcsetattr RAW");
 			}
 		}
 
 		bool out = (write(_fd_in, str, len) == (ssize_t)len);
+
+
 
 		if (ra == 0) {
 //			tcdrain(_fd_in);
@@ -824,19 +826,38 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 	void OnFar2lInterract(std::vector<unsigned char> &data)
 	{
+		if (data.empty())
+			return;
+
+		const char code = (char)data[data.size() - 1];
+		data.resize(data.size() - 1);
+
+		switch (code) {
+			case 'M':
+				WINPORT(SetConsoleWindowMaximized)(TRUE);
+				data.clear();
+				break;
+			case 'm':
+				WINPORT(SetConsoleWindowMaximized)(FALSE);
+				data.clear();
+				break;
+
+			default:
+				data.clear();
+		}
 	}
 
 	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
 	{
-		if (strstr(str, "far2l") == str) {
+		if (strncmp(str, "far2l", 5) == 0) {
 			std::string reply;
 			switch (str[5]) {
-				case 'h': {
+				case '1': {
 					_far2l = true;
 					reply = "\x1b_far2lok\x07";
 				} break;
 
-				case 'l': {
+				case '0': {
 					_far2l = false;
 				} break;
 
@@ -845,12 +866,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 					if (str[6])
 						data = base64_decode(str + 6, strlen(str + 6));
 
-					OnFar2lInterract(data);
-
-					reply = "\x1b_far2l";
-					if (!data.empty())
+					uint32_t id;
+					if (data.size() >= sizeof(id)) {
+						memcpy(&id, &data[data.size() - sizeof(id)], sizeof(id));
+						data.resize(data.size() - sizeof(id));
+						OnFar2lInterract(data);
+						data.resize(data.size() + sizeof(id));
+						memcpy(&data[data.size() - sizeof(id)], &id, sizeof(id));
+						reply = "\x1b_far2l";
 						reply+= base64_encode(&data[0], data.size());
-					reply+= '\x07';
+						reply+= '\x07';
+					}
+
 				} break;
 			}
 			if (!reply.empty())

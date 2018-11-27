@@ -64,6 +64,7 @@ template <size_t N> using NChars2Key = NCharsMap<N, TTYInputKey>;
 struct ITTYInputSpecialSequenceHandler
 {
 	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args) = 0;
+	virtual void OnFar2lReply(std::vector<unsigned char> &data) = 0;
 };
 
 class TTYInputSequenceParser
@@ -88,7 +89,7 @@ class TTYInputSequenceParser
 	} _mouse;
 
 	ITTYInputSpecialSequenceHandler *_handler;
-	bool _vt_far2l = false;
+	std::vector<unsigned char> _far2l_reply_data;
 
 	void AssertNoConflicts();
 

@@ -48,7 +48,6 @@ src/Backend/TTY/TTYInput.cpp
 src/Backend/TTY/TTYInputSequenceParser.cpp
 src/Backend/TTY/TTYOutput.cpp
 src/Backend/TTY/TTYBackend.cpp
-src/Backend/TTY/TTYFar2lExts.cpp
 src/sudo/sudo_common.cpp
 src/sudo/sudo_client.cpp
 src/sudo/sudo_client_api.cpp

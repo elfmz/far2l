@@ -315,6 +315,13 @@ void TTYBackend::OnConsoleOutputResized()
 
 void TTYBackend::OnConsoleOutputTitleChanged()
 {
+	std::vector<unsigned char> data;
+	const std::string &title = StrWide2MB(g_winport_con_out.GetTitle());
+	for (char c : title) {
+		data.emplace_back((unsigned char)c);
+	}
+	data.emplace_back((unsigned char)'t');
+	Far2lInterract(data, false);
 	//tty_out.SetWindowTitle(g_winport_con_out.GetTitle());
 	//ESC]2;titleST
 }
@@ -331,6 +338,9 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 
 void TTYBackend::OnConsoleAdhocQuickEdit()
 {
+	std::vector<unsigned char> data;
+	data.emplace_back((unsigned char)'e');
+	Far2lInterract(data, false);
 }
 
 DWORD TTYBackend::OnConsoleSetTweaks(DWORD tweaks)

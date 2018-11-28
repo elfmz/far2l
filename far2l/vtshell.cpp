@@ -829,18 +829,33 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		if (data.empty())
 			return;
 
-		const char code = (char)data[data.size() - 1];
+		const char code = (char)data.back();
 		data.resize(data.size() - 1);
 
 		switch (code) {
+			case 't': {
+				std::wstring title;
+				if (!data.empty())
+					MB2Wide((const char *)&data[0], data.size(), title);
+
+				WINPORT(SetConsoleTitle)( title.c_str() );
+				data.clear();
+			} break;
+
+			case 'e':
+				WINPORT(BeginConsoleAdhocQuickEdit)();
+				data.clear();
+			break;
+
 			case 'M':
 				WINPORT(SetConsoleWindowMaximized)(TRUE);
 				data.clear();
-				break;
+			break;
+
 			case 'm':
 				WINPORT(SetConsoleWindowMaximized)(FALSE);
 				data.clear();
-				break;
+			break;
 
 			default:
 				data.clear();

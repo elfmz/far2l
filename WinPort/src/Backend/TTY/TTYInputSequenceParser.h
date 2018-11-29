@@ -1,6 +1,7 @@
 #pragma once
 #include <WinCompat.h>
 #include <map>
+#include <StackSerializer.h>
 
 struct TTYInputKey
 {
@@ -64,7 +65,7 @@ template <size_t N> using NChars2Key = NCharsMap<N, TTYInputKey>;
 struct ITTYInputSpecialSequenceHandler
 {
 	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args) = 0;
-	virtual void OnFar2lReply(std::vector<unsigned char> &data) = 0;
+	virtual void OnFar2lReply(StackSerializer &stk_ser) = 0;
 };
 
 class TTYInputSequenceParser
@@ -89,7 +90,7 @@ class TTYInputSequenceParser
 	} _mouse;
 
 	ITTYInputSpecialSequenceHandler *_handler;
-	std::vector<unsigned char> _far2l_reply_data;
+	StackSerializer _far2l_reply_data;
 
 	void AssertNoConflicts();
 

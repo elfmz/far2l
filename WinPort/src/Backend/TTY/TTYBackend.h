@@ -5,13 +5,13 @@
 #include <atomic>
 #include <condition_variable>
 #include <Event.h>
+#include <StackSerializer.h>
 #include "Backend.h"
 #include "TTYOutput.h"
 #include "TTYInput.h"
-#include "../FSClipboardBackend.h"
+#include "IFar2lInterractor.h"
 
-
-class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
+class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor
 {
 	std::mutex _output_mutex;
 	int _stdin = 0, _stdout = 1, _kickass[2] = {-1, -1};
@@ -40,7 +40,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
 	struct Far2lInterractData
 	{
 		Event evnt;
-		std::vector<unsigned char> data;
+		StackSerializer stk_ser;
 		bool waited;
 	};
 
@@ -67,11 +67,12 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler
 	void OnFar2lKey(bool down, const std::vector<uint32_t> &args);
 	void OnFar2lMouse(const std::vector<uint32_t> &args);
 
-	bool Far2lInterract(std::vector<unsigned char> &data, bool wait);
-
 	std::shared_ptr<IClipboardBackend> _clipboard_backend;
 
 protected:
+	// IFar2lInterractor
+	virtual bool Far2lInterract(StackSerializer &stk_ser, bool wait);
+
 	// IConsoleOutputBackend
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
 	virtual void OnConsoleOutputResized();
@@ -87,7 +88,7 @@ protected:
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args);
-	virtual void OnFar2lReply(std::vector<unsigned char> &data);
+	virtual void OnFar2lReply(StackSerializer &stk_ser);
 
 public:
 	TTYBackend(int std_in, int std_out, bool far2l_tty);

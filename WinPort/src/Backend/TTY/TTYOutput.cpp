@@ -186,12 +186,10 @@ void TTYOutput::ChangeMouse(bool enable)
 	Format("\x1b[?1002%c", enable ? 'h' : 'l');
 }
 
-void TTYOutput::SendFar2lInterract(const std::vector<unsigned char> &data)
+void TTYOutput::SendFar2lInterract(const StackSerializer &stk_ser)
 {
 	std::string request = "\x1b_far2l:";
-	if (!data.empty())
-		request+= base64_encode(&data[0], data.size());
-
+	request+= stk_ser.ToBase64();
 	request+= '\x07';
 
 	Write(request.c_str(), request.size());

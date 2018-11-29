@@ -245,10 +245,7 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 			_handler->OnFar2lEvent(0, args);
 
 	} else if (strncmp(s, "far2l", 5) == 0) {
-		_far2l_reply_data.clear();
-		if (l > 5)
-			_far2l_reply_data = base64_decode(s + 5, l - 5);
-
+		_far2l_reply_data.FromBase64(s + 5, l - 5);
 		_handler->OnFar2lReply(_far2l_reply_data);
 	}
 }

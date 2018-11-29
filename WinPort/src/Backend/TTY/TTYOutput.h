@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <vector>
 #include <WinCompat.h>
+#include <StackSerializer.h>
 
 class TTYOutput
 {
@@ -47,5 +48,5 @@ public:
 	void ChangeKeypad(bool app);
 	void ChangeMouse(bool enable);
 
-	void SendFar2lInterract(const std::vector<unsigned char> &data);
+	void SendFar2lInterract(const StackSerializer &stk_ser);
 };

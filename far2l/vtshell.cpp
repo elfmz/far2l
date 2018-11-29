@@ -20,6 +20,7 @@
 #include <sys/wait.h> 
 #include <condition_variable>
 #include <base64.h> 
+#include <StackSerializer.h>
 #include "vtansi.h"
 #include "vtlog.h"
 #define __USE_BSD 
@@ -824,41 +825,39 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		_keypad = keypad;
 	}
 
-	void OnFar2lInterract(std::vector<unsigned char> &data)
+	void OnFar2lInterract(StackSerializer &stk_ser)
 	{
-		if (data.empty())
-			return;
-
-		const char code = (char)data.back();
-		data.resize(data.size() - 1);
+		const char code = stk_ser.PopChar();
 
 		switch (code) {
 			case 't': {
-				std::wstring title;
-				if (!data.empty())
-					MB2Wide((const char *)&data[0], data.size(), title);
-
-				WINPORT(SetConsoleTitle)( title.c_str() );
-				data.clear();
+				std::string title;
+				stk_ser.PopStr(title);
+				WINPORT(SetConsoleTitle)( StrMB2Wide(title).c_str() );
+				stk_ser.Clear();
 			} break;
 
 			case 'e':
 				WINPORT(BeginConsoleAdhocQuickEdit)();
-				data.clear();
+				stk_ser.Clear();
 			break;
 
 			case 'M':
 				WINPORT(SetConsoleWindowMaximized)(TRUE);
-				data.clear();
+				stk_ser.Clear();
 			break;
 
 			case 'm':
 				WINPORT(SetConsoleWindowMaximized)(FALSE);
-				data.clear();
+				stk_ser.Clear();
+			break;
+
+			case 'c': //TODO: clipboard
+				stk_ser.Clear();
 			break;
 
 			default:
-				data.clear();
+				stk_ser.Clear();
 		}
 	}
 
@@ -877,20 +876,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				} break;
 
 				case ':': {
-					std::vector<unsigned char> data;
-					if (str[6])
-						data = base64_decode(str + 6, strlen(str + 6));
-
-					uint32_t id;
-					if (data.size() >= sizeof(id)) {
-						memcpy(&id, &data[data.size() - sizeof(id)], sizeof(id));
-						data.resize(data.size() - sizeof(id));
-						OnFar2lInterract(data);
-						data.resize(data.size() + sizeof(id));
-						memcpy(&data[data.size() - sizeof(id)], &id, sizeof(id));
+					if (str[6]) try {
+						StackSerializer stk_ser(str + 6, strlen(str + 6));
+						uint32_t id = stk_ser.PopU32();
+						OnFar2lInterract(stk_ser);
+						stk_ser.PushPOD(id);
 						reply = "\x1b_far2l";
-						reply+= base64_encode(&data[0], data.size());
+						reply+= stk_ser.ToBase64();
 						reply+= '\x07';
+
+					} catch (std::exception &) {
+						reply.clear();
 					}
 
 				} break;

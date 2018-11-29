@@ -9,6 +9,8 @@
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "TTYBackend.h"
+#include "TTYFar2lClipboardBackend.h"
+#include "../FSClipboardBackend.h"
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
@@ -89,7 +91,12 @@ bool TTYBackend::Startup()
 
 void TTYBackend::WriterThread()
 {
-	_clipboard_backend = std::make_shared<FSClipboardBackend>();
+	if (_far2l_tty) {
+		IFar2lInterractor *interractor = this;
+		_clipboard_backend = std::make_shared<TTYFar2lClipboardBackend>(interractor);
+	} else {
+		_clipboard_backend = std::make_shared<FSClipboardBackend>();
+	}
 
 	try {
 		TTYOutput tty_out(_stdout);
@@ -282,14 +289,12 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 			id = ++_far2l_interracts_sent._id_counter;
 			if (_far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
 		}
-
-		i->data.resize(i->data.size() + sizeof(id));
-		memcpy(&i->data[i->data.size() - sizeof(id)], &id, sizeof(id));
+		i->stk_ser.PushPOD(id);
 
 		if (i->waited)
 			_far2l_interracts_sent.emplace(id, i);
 
-		tty_out.SendFar2lInterract(i->data);
+		tty_out.SendFar2lInterract(i->stk_ser);
 	}
 }
 
@@ -315,13 +320,12 @@ void TTYBackend::OnConsoleOutputResized()
 
 void TTYBackend::OnConsoleOutputTitleChanged()
 {
-	std::vector<unsigned char> data;
-	const std::string &title = StrWide2MB(g_winport_con_out.GetTitle());
-	for (char c : title) {
-		data.emplace_back((unsigned char)c);
-	}
-	data.emplace_back((unsigned char)'t');
-	Far2lInterract(data, false);
+	try {
+		StackSerializer stk_ser;
+		stk_ser.PushStr(StrWide2MB(g_winport_con_out.GetTitle()));
+		stk_ser.PushPOD('t');
+		Far2lInterract(stk_ser, false);
+	} catch (std::exception &) {}
 	//tty_out.SetWindowTitle(g_winport_con_out.GetTitle());
 	//ESC]2;titleST
 }
@@ -338,9 +342,11 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 
 void TTYBackend::OnConsoleAdhocQuickEdit()
 {
-	std::vector<unsigned char> data;
-	data.emplace_back((unsigned char)'e');
-	Far2lInterract(data, false);
+	try {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD('e');
+		Far2lInterract(stk_ser, false);
+	} catch (std::exception &) {}
 }
 
 DWORD TTYBackend::OnConsoleSetTweaks(DWORD tweaks)
@@ -354,18 +360,20 @@ void TTYBackend::OnConsoleChangeFont()
 
 void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
-	std::vector<unsigned char> data;
-	data.emplace_back((unsigned char) (maximized ? 'M' : 'm'));
-	Far2lInterract(data, true);
+	try {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD((maximized ? 'M' : 'm'));
+		Far2lInterract(stk_ser, true);
+	} catch (std::exception &) {}
 }
 
-bool TTYBackend::Far2lInterract(std::vector<unsigned char> &data, bool wait)
+bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 {
 	if (!_far2l_tty)
 		return false;
 
 	std::shared_ptr<Far2lInterractData> pfi = std::make_shared<Far2lInterractData>();
-	pfi->data.swap(data);
+	pfi->stk_ser.swap(stk_ser);
 	pfi->waited = wait;
 
 	{
@@ -384,7 +392,7 @@ bool TTYBackend::Far2lInterract(std::vector<unsigned char> &data, bool wait)
 	if (_exiting)
 		return false;
 
-	pfi->data.swap(data);
+	pfi->stk_ser.swap(stk_ser);
 	return true;
 }
 
@@ -485,7 +493,7 @@ void TTYBackend::OnFar2lEvent(char code, const std::vector<uint32_t> &args)
 	}
 }
 
-void TTYBackend::OnFar2lReply(std::vector<unsigned char> &data)
+void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 {
 	if (!_far2l_tty) {
 		fprintf(stderr, "OnFar2lReply: unexpected!\n");
@@ -493,14 +501,7 @@ void TTYBackend::OnFar2lReply(std::vector<unsigned char> &data)
 	}
 
 	uint32_t id;
-
-	if (data.size() < sizeof(id)) {
-		fprintf(stderr, "OnFar2lReply: too short!\n");
-		return;
-	}
-
-	memcpy(&id, &data[data.size() - sizeof(id)], sizeof(id));
-	data.resize(data.size() - sizeof(id));
+	stk_ser.PopPOD(id);
 
 	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
 

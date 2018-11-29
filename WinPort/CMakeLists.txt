@@ -44,10 +44,11 @@ src/Backend/WX/wxMain.cpp
 src/Backend/WX/wxClipboardBackend.cpp
 src/Backend/WX/ExclusiveHotkeys.cpp
 src/Backend/WX/wxWinTranslations.cpp
+src/Backend/TTY/TTYBackend.cpp
 src/Backend/TTY/TTYInput.cpp
 src/Backend/TTY/TTYInputSequenceParser.cpp
 src/Backend/TTY/TTYOutput.cpp
-src/Backend/TTY/TTYBackend.cpp
+src/Backend/TTY/TTYFar2lClipboardBackend.cpp
 src/sudo/sudo_common.cpp
 src/sudo/sudo_client.cpp
 src/sudo/sudo_client_api.cpp

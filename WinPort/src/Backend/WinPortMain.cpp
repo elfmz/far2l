@@ -70,17 +70,6 @@ static void SetupStdHandles(bool ignore_hup)
 
 static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 {
-	struct termios ts;
-	int r = tcgetattr(fdout, &ts);
-	if (r != 0)
-		return false;
-
-	struct termios ts_ne = ts;
-	//ts_ne.c_lflag &= ~(ECHO | ECHONL);
-	cfmakeraw(&ts_ne);
-	if (tcsetattr( fdout, TCSADRAIN, &ts_ne ) != 0)
-		return false;
-
 	char buf[64] = {};
 	snprintf(buf, sizeof(buf) - 1, "\x1b_far2l%d\x07\x1b[5n", enable ? 1 : 0);
 	if (write(fdout, buf, strlen(buf)) != (ssize_t)strlen(buf))
@@ -88,15 +77,28 @@ static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 
 	std::string s;
 	for (;;) {
+		fd_set fds, fde;
+		FD_ZERO(&fds);
+		FD_ZERO(&fde);
+		FD_SET(fdin, &fds); 
+		FD_SET(fdin, &fde); 
+		struct timeval tv = {10, 0};
+
+		if (select(fdin + 1, &fds, NULL, &fde, &tv) <= 0) {
+			break;
+		}
+
 		char c = 0;
 		if (read(fdin, &c, 1) <= 0)
 			break;
 		s+= c;
-		if (s.find("\x1b[0n") != std::string::npos)
+		if (s.find("\x1b[0n") != std::string::npos // staus ok..
+		|| s.find("\x1b\x1b") != std::string::npos // ..or terminal doesnt know about status and user in panic
+		|| s.find_first_of("\r\n") != std::string::npos) {
 			break;
+		}
 	}
 
-	tcsetattr( fdout, TCSADRAIN, &ts);
 	return (s.find("\x1b_far2lok\x07") != std::string::npos);
 }
 
@@ -117,8 +119,18 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	fcntl(std_in, F_SETFD, FD_CLOEXEC);
 	fcntl(std_out, F_SETFD, FD_CLOEXEC);
 
-	far2l_tty = NegotiateFar2lTTY(std_in, std_out, true);
-
+	struct termios ts = {};
+	int r = tcgetattr(std_out, &ts);
+	if (r == 0) {
+		struct termios ts_ne = ts;
+		cfmakeraw(&ts_ne);
+		if (tcsetattr( std_out, TCSADRAIN, &ts_ne ) == 0) {
+			far2l_tty = NegotiateFar2lTTY(std_in, std_out, true);
+			if (!far2l_tty)
+				tcsetattr( std_out, TCSADRAIN, &ts);
+		}
+	}
+		
 	if (far2l_tty) {
 		tty = true;
 	}
@@ -145,8 +157,10 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		if (!WinPortMainTTY(std_in, std_out, far2l_tty, argc, argv, AppMain, &result)) {
 			fprintf(stderr, "Cannot use TTY backend\n");
 		}
-		if (far2l_tty)
+		if (far2l_tty) {
 			NegotiateFar2lTTY(std_in, std_out, false);
+			tcsetattr( std_out, TCSADRAIN, &ts);
+		}
 	}
 
 	WinPortHandle_FinalizeApp();

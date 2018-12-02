@@ -242,7 +242,7 @@ public:
 		virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent) = 0;
 		virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) = 0;
 		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
-		virtual void OnInputRaw(const std::string &str) = 0;
+		virtual void OnInputInjected(const std::string &str) = 0;
 	};
 
 	VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
@@ -266,11 +266,11 @@ public:
 		}
 	}
 
-	void EnqueueRaw(const char *str, size_t len)
+	void InjectInput(const char *str, size_t len)
 	{
 		{
-			std::unique_lock<std::mutex> locker(_pending_raw_inputs_mutex);
-			_pending_raw_inputs.emplace_back(str, len);
+			std::unique_lock<std::mutex> locker(_pending_injected_inputs_mutex);
+			_pending_injected_inputs.emplace_back(str, len);
 		}
 		KickInputThread();
 	}
@@ -278,8 +278,8 @@ public:
 private:
 	std::atomic<bool> _stop;
 	IProcessor *_processor;
-	std::list<std::string> _pending_raw_inputs;
-	std::mutex _pending_raw_inputs_mutex;
+	std::list<std::string> _pending_injected_inputs;
+	std::mutex _pending_injected_inputs_mutex;
 
 	void KickInputThread()
 	{
@@ -293,7 +293,7 @@ private:
 
 	virtual void *ThreadProc()
 	{
-		std::list<std::string> pending_raw_inputs;
+		std::list<std::string> pending_injected_inputs;
 		while (!_stop) {
 			INPUT_RECORD ir = {0};
 			DWORD dw = 0;
@@ -310,13 +310,13 @@ private:
 				_processor->OnInputResized(ir);
 			}
 			{
-				std::unique_lock<std::mutex> locker(_pending_raw_inputs_mutex);
-				pending_raw_inputs.swap(_pending_raw_inputs);
+				std::unique_lock<std::mutex> locker(_pending_injected_inputs_mutex);
+				pending_injected_inputs.swap(_pending_injected_inputs);
 			}
-			for(const auto &pri : pending_raw_inputs) {
-				_processor->OnInputRaw(pri);
+			for(const auto &pri : pending_injected_inputs) {
+				_processor->OnInputInjected(pri);
 			}
-			pending_raw_inputs.clear();
+			pending_injected_inputs.clear();
 		}
 
 		return nullptr;
@@ -429,9 +429,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
 	VTFar2lExtensios *_far2l_exts = nullptr;
-	std::mutex _far2l_exts_mutex;
-	struct termios _ts;
-	bool _in_raw_mode = false;
+	std::mutex _far2l_exts_mutex, _write_term_mutex;
 	
 	
 	int ForkAndAttachToSlave(bool shell)
@@ -552,8 +550,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			_fd_out = dup(fd_term);
 			fcntl(_fd_out, F_SETFD, FD_CLOEXEC);
 		}
-
-		_in_raw_mode = false;
 
 		return true;
 	}
@@ -695,39 +691,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		if (len == 0)
 			return true;
 
-		if (_in_raw_mode) {
-			_in_raw_mode = false;
-			if (tcsetattr( _fd_in, TCSADRAIN, &_ts) != 0) {
-				perror("VT: WriteTerm - tcsetattr");
-			}
-		}
-
+		std::lock_guard<std::mutex> lock(_write_term_mutex);
 		return (write(_fd_in, str, len) == (ssize_t)len);
 	}
 
-	bool WriteTermRaw(const char *str, size_t len)
+	virtual void OnInputInjected(const std::string &str) //called from worker thread
 	{
-		if (len == 0)
-			return true;
-
-		if (!_in_raw_mode) {
-			if (tcgetattr(_fd_in, &_ts) == 0) {
-				_in_raw_mode = true;
-				struct termios ts_ne = _ts;
-				ts_ne.c_lflag &= ~(ECHO | ECHONL);
-				if (tcsetattr( _fd_in, TCSADRAIN, &ts_ne) != 0) {
-					perror("VT: WriteTermRaw - tcsetattr");
-				}
-			}
-		}
-
-		return (write(_fd_in, str, len) == (ssize_t)len);
-	}
-
-	virtual void OnInputRaw(const std::string &str) //called from worker thread
-	{
-		if (!WriteTermRaw(str.c_str(), str.size())) {
-			fprintf(stderr, "VT: OnInputRaw - write error %d\n", errno);
+		if (!WriteTerm(str.c_str(), str.size())) {
+			fprintf(stderr, "VT: OnInputInjected - write error %d\n", errno);
 		}
 	}
 
@@ -872,13 +843,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				} break;
 			}
 			if (!reply.empty())
-				_input_reader.EnqueueRaw(reply.c_str(), reply.size());
+				_input_reader.InjectInput(reply.c_str(), reply.size());
 		}
 	}
 	
-	virtual void WriteRawInput(const char *str)
+	virtual void InjectInput(const char *str)
 	{
-		_input_reader.EnqueueRaw(str, strlen(str));
+		_input_reader.InjectInput(str, strlen(str));
 	}
 
 	std::string StringFromClipboard()

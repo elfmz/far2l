@@ -521,7 +521,7 @@ void SendSequence( const char *seq )
 	
 	fprintf(stderr, "VT: SendSequence - '%s'\n", seq);
 	if (g_vt_ansi_commands) {
-		g_vt_ansi_commands->WriteRawInput(seq);
+		g_vt_ansi_commands->InjectInput(seq);
 		return;
 	}
 
@@ -1172,7 +1172,6 @@ void InterpretEscSeq( void )
 			if (es_argc != 1) return; // ESC[n == ESC[0n -> ignored
 			switch (es_argv[0]) {
 			case 5:		// ESC[5n Report status
-				fprintf(stderr, "STATUSSTATUSSTATUSSTATUS\n");
 				SendSequence( "\x1b[0n" ); // "OK"
 				return;
 

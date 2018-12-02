@@ -47,7 +47,7 @@ void VTFar2lExtensios::WriteFar2lEvent(char code, uint32_t argc, ...)
 	}
 	_tmp_far2l_event+= '\x07';
 
-	_ansi_commands->WriteRawInput(_tmp_far2l_event.c_str());
+	_ansi_commands->InjectInput(_tmp_far2l_event.c_str());
 }
 
 bool VTFar2lExtensios::IsAllowedClipboardRead()

@@ -16,6 +16,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _output_mutex;
 	int _stdin = 0, _stdout = 1, _kickass[2] = {-1, -1};
 	bool _far2l_tty = false;
+	int _far2l_cursor_height = -1;
 	unsigned int _cur_width = 0, _cur_height = 0;
 	unsigned int _prev_width = 0, _prev_height = 0;
 	std::vector<CHAR_INFO> _cur_output, _prev_output;

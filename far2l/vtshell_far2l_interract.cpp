@@ -93,6 +93,17 @@ static void VT_OnFar2lInterract_Clipboard(StackSerializer &stk_ser)
 	}
 }
 
+static void VT_OnFar2lInterract_ChangeCursorHeigth(StackSerializer &stk_ser)
+{
+	UCHAR h;
+	stk_ser.PopPOD(h);
+	CONSOLE_CURSOR_INFO cci;
+	if (WINPORT(GetConsoleCursorInfo)(NULL, &cci)) {
+		cci.dwSize = h;
+		WINPORT(SetConsoleCursorInfo)(NULL, &cci);
+	}
+}
+
 void VT_OnFar2lInterract(StackSerializer &stk_ser)
 {
 	const char code = stk_ser.PopChar();
@@ -122,6 +133,10 @@ void VT_OnFar2lInterract(StackSerializer &stk_ser)
 
 		case 'c':
 			VT_OnFar2lInterract_Clipboard(stk_ser);
+		break;
+
+		case 'h':
+			VT_OnFar2lInterract_ChangeCursorHeigth(stk_ser);
 		break;
 
 		default:

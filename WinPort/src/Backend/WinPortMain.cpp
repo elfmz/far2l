@@ -68,32 +68,35 @@ static void SetupStdHandles(bool ignore_hup)
 	}
 }
 
-static bool NegotiateFar2lTTY(bool enable)
+static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 {
 	struct termios ts;
-	int r = tcgetattr(1, &ts);
+	int r = tcgetattr(fdout, &ts);
 	if (r != 0)
 		return false;
 
 	struct termios ts_ne = ts;
 	//ts_ne.c_lflag &= ~(ECHO | ECHONL);
 	cfmakeraw(&ts_ne);
-	if (tcsetattr( 1, TCSADRAIN, &ts_ne ) != 0)
+	if (tcsetattr( fdout, TCSADRAIN, &ts_ne ) != 0)
 		return false;
 
-	printf("\x1b_far2l%d\x07\x1b[5n", enable ? 1 : 0);
-	fflush(stdout);
+	char buf[64] = {};
+	snprintf(buf, sizeof(buf) - 1, "\x1b_far2l%d\x07\x1b[5n", enable ? 1 : 0);
+	if (write(fdout, buf, strlen(buf)) != (ssize_t)strlen(buf))
+		return false;
+
 	std::string s;
 	for (;;) {
-		int c = fgetc(stdin);
-		if (c == EOF)
+		char c = 0;
+		if (read(fdin, &c, 1) <= 0)
 			break;
 		s+= c;
 		if (s.find("\x1b[0n") != std::string::npos)
 			break;
 	}
 
-	tcsetattr( 1, TCSADRAIN, &ts);
+	tcsetattr( fdout, TCSADRAIN, &ts);
 	return (s.find("\x1b_far2lok\x07") != std::string::npos);
 }
 
@@ -109,17 +112,16 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		}
 	}
 
-	far2l_tty = NegotiateFar2lTTY(true);
-
-	if (far2l_tty) {
-		tty = true;
-	}
-
 	int std_in = dup(0);
 	int std_out = dup(1);
 	fcntl(std_in, F_SETFD, FD_CLOEXEC);
 	fcntl(std_out, F_SETFD, FD_CLOEXEC);
 
+	far2l_tty = NegotiateFar2lTTY(std_in, std_out, true);
+
+	if (far2l_tty) {
+		tty = true;
+	}
 
 	if (!help) {
 		SetupStdHandles(!tty);
@@ -144,7 +146,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 			fprintf(stderr, "Cannot use TTY backend\n");
 		}
 		if (far2l_tty)
-			NegotiateFar2lTTY(false);
+			NegotiateFar2lTTY(std_in, std_out, false);
 	}
 
 	WinPortHandle_FinalizeApp();

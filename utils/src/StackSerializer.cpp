@@ -105,6 +105,20 @@ char StackSerializer::PopChar()
 	return out;
 }
 
+uint8_t StackSerializer::PopU8()
+{
+	uint8_t out;
+	PopPOD(out);
+	return out;
+}
+
+uint16_t StackSerializer::PopU16()
+{
+	uint16_t out;
+	PopPOD(out);
+	return out;
+}
+
 uint32_t StackSerializer::PopU32()
 {
 	uint32_t out;

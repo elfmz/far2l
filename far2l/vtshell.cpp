@@ -843,10 +843,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				case ':': {
 					if (str[6]) {
 						StackSerializer stk_ser;
-						uint32_t id = 0;
+						uint8_t id = 0;
 						try {
 							stk_ser.FromBase64(str + 6, strlen(str + 6));
-							id = stk_ser.PopU32();
+							id = stk_ser.PopU8();
 							VT_OnFar2lInterract(stk_ser);
 
 						} catch (std::exception &) {

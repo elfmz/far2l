@@ -284,10 +284,17 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
 
 	for (auto & i : queued) {
-		uint32_t id;
-		for (;;) {
-			id = ++_far2l_interracts_sent._id_counter;
-			if (_far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
+		uint32_t id = 0;
+		if (i->waited) {
+			for (uint32_t limit = 0;;++limit) {
+				id = ++_far2l_interracts_sent._id_counter;
+				if (id && _far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
+				if (limit == 0xffffffff) {
+					i->stk_ser.Clear();
+					i->evnt.Signal();
+					return;
+				}
+			}
 		}
 		i->stk_ser.PushPOD(id);
 

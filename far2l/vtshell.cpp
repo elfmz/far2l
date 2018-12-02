@@ -23,6 +23,7 @@
 #include <StackSerializer.h>
 #include "vtansi.h"
 #include "vtlog.h"
+#include "VTFar2lExtensios.h"
 #define __USE_BSD 
 #include <termios.h> 
 
@@ -426,8 +427,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	CompletionMarker _completion_marker;
 	bool _skipping_line;
 	std::atomic<unsigned char> _keypad;
-	std::atomic<bool> _far2l;
 	INPUT_RECORD _last_window_info_ir;
+	VTFar2lExtensios *_far2l_exts = nullptr;
+	std::mutex _far2l_exts_mutex;
 	
 	
 	int ForkAndAttachToSlave(bool shell)
@@ -667,13 +669,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	{
 		//fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
-		if (_far2l) {
-			WriteFar2lEvent('M', 5, MouseEvent.dwMousePosition.X, MouseEvent.dwMousePosition.Y,
-				MouseEvent.dwButtonState, MouseEvent.dwControlKeyState, MouseEvent.dwEventFlags);
-			return;
+		{
+			std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+			if (_far2l_exts && _far2l_exts->OnInputMouse(MouseEvent))
+				return;
 		}
 
-		else if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
+		if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
 			if (HIWORD(MouseEvent.dwButtonState) > 0) {
 				OnConsoleLog(CLK_VIEW_AUTOCLOSE);
 			}
@@ -734,10 +736,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 	virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
 	{
-		if (_far2l) {
-			WriteFar2lEvent(KeyEvent.bKeyDown ? 'K' : 'k', 5, KeyEvent.wRepeatCount, KeyEvent.wVirtualKeyCode,
-				KeyEvent.wVirtualScanCode, KeyEvent.uChar.UnicodeChar, KeyEvent.dwControlKeyState);
-			return;
+		{
+			std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+			if (_far2l_exts && _far2l_exts->OnInputKey(KeyEvent))
+				return;
 		}
 
 		if (!KeyEvent.bKeyDown)
@@ -832,22 +834,28 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			std::string reply;
 			switch (str[5]) {
 				case '1': {
-					_far2l = true;
+					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					if (!_far2l_exts)
+						_far2l_exts = new VTFar2lExtensios(this);
+
 					reply = "\x1b_far2lok\x07";
 				} break;
 
 				case '0': {
-					_far2l = false;
+					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					delete _far2l_exts;
+					_far2l_exts = nullptr;
 				} break;
 
 				case ':': {
-					if (str[6]) {
+					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					if (str[6] && _far2l_exts) {
 						StackSerializer stk_ser;
 						uint8_t id = 0;
 						try {
 							stk_ser.FromBase64(str + 6, strlen(str + 6));
 							id = stk_ser.PopU8();
-							VT_OnFar2lInterract(stk_ser);
+							_far2l_exts->OnInterract(stk_ser);
 
 						} catch (std::exception &) {
 							stk_ser.Clear();
@@ -875,32 +883,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	{
 		_input_reader.EnqueueRaw(str, strlen(str));
 	}
-
-	void WriteFar2lEvent(char code, uint32_t argc, ...)
-	{
-		std::string msg = "\x1b_f2l";
-		if (code) {
-			std::vector<unsigned char> buf;
-			buf.push_back((unsigned char)code);
-			va_list va;
-			va_start(va, argc);
-			for (; argc; --argc) {
-				uint32_t a = va_arg(va, uint32_t);
-				buf.resize(buf.size() + sizeof(a));
-				memcpy(&buf[buf.size() - sizeof(a)], &a, sizeof(a));
-			}
-			va_end(va);
-
-			msg+= base64_encode(&buf[0], buf.size());
-
-		} else {
-			assert(argc == 0);
-		}
-		msg+= '\x07';
-
-		_input_reader.EnqueueRaw(msg.c_str(), msg.size());
-	}
-
 
 	std::string StringFromClipboard()
 	{
@@ -960,10 +942,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	{
 		pid_t grp = getpgid(_shell_pid);
 
-		if (grp!=-1 && grp!=getpgid(getpid())) {
+		if (grp!=-1 && grp != getpgid(getpid())) {
 			killpg(grp, sig);
+			//kill(_shell_pid, sig);
 		} else
-			kill(_shell_pid, sig);			
+			kill(_shell_pid, sig);
 	}
 	
 
@@ -1120,7 +1103,10 @@ static bool shown_tip_exit = false;
 		OnKeypadChange(0);
 		DeliverPendingWindowInfo();
 		_completion_marker.Reset();
-		_far2l = false;
+
+		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+		delete _far2l_exts;
+		_far2l_exts = nullptr;
 
 		return _completion_marker.LastExitCode();
 	}	

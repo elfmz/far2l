@@ -509,6 +509,7 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 	if (i != _far2l_interracts_sent.end()) {
 		auto pfi = i->second;
 		_far2l_interracts_sent.erase(i);
+		pfi->stk_ser.swap(stk_ser);
 		pfi->evnt.Signal();
 	}
 }

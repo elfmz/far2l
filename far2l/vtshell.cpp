@@ -27,6 +27,7 @@
 #include <termios.h> 
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0);
+void VT_OnFar2lInterract(StackSerializer &stk_ser);
 
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
 
@@ -825,42 +826,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		_keypad = keypad;
 	}
 
-	void OnFar2lInterract(StackSerializer &stk_ser)
-	{
-		const char code = stk_ser.PopChar();
-
-		switch (code) {
-			case 't': {
-				std::string title;
-				stk_ser.PopStr(title);
-				WINPORT(SetConsoleTitle)( StrMB2Wide(title).c_str() );
-				stk_ser.Clear();
-			} break;
-
-			case 'e':
-				WINPORT(BeginConsoleAdhocQuickEdit)();
-				stk_ser.Clear();
-			break;
-
-			case 'M':
-				WINPORT(SetConsoleWindowMaximized)(TRUE);
-				stk_ser.Clear();
-			break;
-
-			case 'm':
-				WINPORT(SetConsoleWindowMaximized)(FALSE);
-				stk_ser.Clear();
-			break;
-
-			case 'c': //TODO: clipboard
-				stk_ser.Clear();
-			break;
-
-			default:
-				stk_ser.Clear();
-		}
-	}
-
 	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
 	{
 		if (strncmp(str, "far2l", 5) == 0) {
@@ -876,17 +841,27 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 				} break;
 
 				case ':': {
-					if (str[6]) try {
-						StackSerializer stk_ser(str + 6, strlen(str + 6));
-						uint32_t id = stk_ser.PopU32();
-						OnFar2lInterract(stk_ser);
-						stk_ser.PushPOD(id);
-						reply = "\x1b_far2l";
-						reply+= stk_ser.ToBase64();
-						reply+= '\x07';
+					if (str[6]) {
+						StackSerializer stk_ser;
+						uint32_t id = 0;
+						try {
+							stk_ser.FromBase64(str + 6, strlen(str + 6));
+							id = stk_ser.PopU32();
+							VT_OnFar2lInterract(stk_ser);
 
-					} catch (std::exception &) {
-						reply.clear();
+						} catch (std::exception &) {
+							stk_ser.Clear();
+						}
+
+						try {
+							stk_ser.PushPOD(id);
+							reply = "\x1b_far2l";
+							reply+= stk_ser.ToBase64();
+							reply+= '\x07';
+
+						} catch (std::exception &) {
+							reply.clear();
+						}
 					}
 
 				} break;

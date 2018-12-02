@@ -430,6 +430,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	INPUT_RECORD _last_window_info_ir;
 	VTFar2lExtensios *_far2l_exts = nullptr;
 	std::mutex _far2l_exts_mutex;
+	struct termios _ts;
+	bool _in_raw_mode = false;
 	
 	
 	int ForkAndAttachToSlave(bool shell)
@@ -550,6 +552,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 			_fd_out = dup(fd_term);
 			fcntl(_fd_out, F_SETFD, FD_CLOEXEC);
 		}
+
+		_in_raw_mode = false;
 
 		return true;
 	}
@@ -691,6 +695,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		if (len == 0)
 			return true;
 
+		if (_in_raw_mode) {
+			_in_raw_mode = false;
+			if (tcsetattr( _fd_in, TCSADRAIN, &_ts) != 0) {
+				perror("VT: WriteTerm - tcsetattr");
+			}
+		}
+
 		return (write(_fd_in, str, len) == (ssize_t)len);
 	}
 
@@ -699,32 +710,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		if (len == 0)
 			return true;
 
-		struct termios ts = {};
-		int ra = tcgetattr(_fd_in, &ts);
-		if (ra == 0) {
-//			tcdrain(_fd_in);
-//			usleep(1000 );//drain seems not drainy enough...
-			struct termios ts_ne = ts;
-			ts_ne.c_lflag &= ~(ECHO | ECHONL);
-			//cfmakeraw(&ts_ne);
-			if (tcsetattr( _fd_in, TCSADRAIN, &ts_ne ) != 0) {
-				perror("VT: WriteTermRaw - tcsetattr RAW");
+		if (!_in_raw_mode) {
+			if (tcgetattr(_fd_in, &_ts) == 0) {
+				_in_raw_mode = true;
+				struct termios ts_ne = _ts;
+				ts_ne.c_lflag &= ~(ECHO | ECHONL);
+				if (tcsetattr( _fd_in, TCSADRAIN, &ts_ne) != 0) {
+					perror("VT: WriteTermRaw - tcsetattr");
+				}
 			}
 		}
 
-		bool out = (write(_fd_in, str, len) == (ssize_t)len);
-
-
-
-		if (ra == 0) {
-//			tcdrain(_fd_in);
-//			usleep(1000 );//drain seems not drainy enough...
-			if (tcsetattr( _fd_in, TCSADRAIN, &ts ) != 0) {
-				perror("VT: WriteTermRaw - tcsetattr NORM");
-			}
-		}
-
-		return out;
+		return (write(_fd_in, str, len) == (ssize_t)len);
 	}
 
 	virtual void OnInputRaw(const std::string &str) //called from worker thread

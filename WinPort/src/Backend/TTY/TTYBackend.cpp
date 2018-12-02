@@ -353,7 +353,7 @@ void TTYBackend::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 
 COORD TTYBackend::OnConsoleGetLargestWindowSize()
 {
-	COORD out = {0x100, 0x100};
+	COORD out = {_cur_width ? _cur_width : 0x10, _cur_height ? _cur_height : 0x10};
 	return out;
 }
 
@@ -380,7 +380,7 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushPOD((maximized ? 'M' : 'm'));
-		Far2lInterract(stk_ser, true);
+		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
 }
 

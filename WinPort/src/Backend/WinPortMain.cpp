@@ -40,7 +40,7 @@ static std::string GetStdPath(const char *env1, const char *env2)
 	return DEVNULL;
 }
 
-static void SetupStdHandles(bool nohup)
+static void SetupStdHandles(bool ignore_hup)
 {
 	const std::string &out = GetStdPath("FAR2L_STDOUT", "FAR2L_STD");
 	const std::string &err = GetStdPath("FAR2L_STDERR", "FAR2L_STD");
@@ -63,7 +63,8 @@ static void SetupStdHandles(bool nohup)
 		if (!freopen(DEVNULL, "r", stdin)) {
 			perror("freopen stdin");
 		}
-		signal(SIGHUP, SIG_IGN);
+		if (ignore_hup)
+			signal(SIGHUP, SIG_IGN);
 	}
 }
 

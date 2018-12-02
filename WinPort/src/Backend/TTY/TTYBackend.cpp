@@ -269,7 +269,17 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	bool cursor_visible = false;
 	COORD cursor_pos = g_winport_con_out.GetCursor(cursor_height, cursor_visible);
 	tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
-	tty_out.ChangeCursor(cursor_visible, cursor_height);
+	tty_out.ChangeCursor(cursor_visible);
+
+	if (_far2l_cursor_height != (int)(unsigned int)cursor_height && _far2l_tty) {
+		_far2l_cursor_height = (int)(unsigned int)cursor_height;
+
+		StackSerializer stk_ser;
+		stk_ser.PushPOD(cursor_height);
+		stk_ser.PushPOD('h');
+		stk_ser.PushPOD((uint32_t)0); // ID
+		tty_out.SendFar2lInterract(stk_ser);
+	}
 }
 
 

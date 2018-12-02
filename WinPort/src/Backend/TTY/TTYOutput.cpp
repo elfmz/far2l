@@ -98,15 +98,11 @@ void TTYOutput::SetScreenBuffer(bool alternate)
 	Format("\x1b[?1049%c", alternate ? 'h' : 'l');
 }
 
-void TTYOutput::ChangeCursor(bool visible, unsigned char height, bool force)
+void TTYOutput::ChangeCursor(bool visible, bool force)
 {
 	if (force || _cursor.visible != visible) {
 		Format("\x1b[?25%c", visible ? 'h' : 'l');
 		_cursor.visible = visible;
-	}
-	if (force || _cursor.height != height) {
-		//TODO: far2l VT extension
-		_cursor.height = height;
 	}
 }
 

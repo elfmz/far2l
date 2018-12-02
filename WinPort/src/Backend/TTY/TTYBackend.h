@@ -46,9 +46,9 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	};
 
 	struct Far2lInterractV : std::vector<std::shared_ptr<Far2lInterractData> > {} _far2l_interracts_queued;
-	struct Far2lInterractsM : std::map<unsigned int, std::shared_ptr<Far2lInterractData> >, std::mutex
+	struct Far2lInterractsM : std::map<uint8_t, std::shared_ptr<Far2lInterractData> >, std::mutex
 	{
-		uint32_t _id_counter = 0;
+		uint8_t _id_counter = 0;
 	} _far2l_interracts_sent;
 
 	union AsyncEvent

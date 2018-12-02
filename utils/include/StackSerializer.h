@@ -48,6 +48,8 @@ public:
 	void PopStr(std::string &str);
 	std::string PopStr();
 	char PopChar();
+	uint8_t PopU8();
+	uint16_t PopU16();
 	uint32_t PopU32();
 
 };

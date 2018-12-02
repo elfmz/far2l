@@ -277,7 +277,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 		StackSerializer stk_ser;
 		stk_ser.PushPOD(cursor_height);
 		stk_ser.PushPOD('h');
-		stk_ser.PushPOD((uint32_t)0); // ID
+		stk_ser.PushPOD((uint8_t)0); // zero ID means not expecting reply
 		tty_out.SendFar2lInterract(stk_ser);
 	}
 }
@@ -294,16 +294,16 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
 
 	for (auto & i : queued) {
-		uint32_t id = 0;
+		uint8_t id = 0;
 		if (i->waited) {
-			for (uint32_t limit = 0;;++limit) {
+			if (_far2l_interracts_sent.size() >= 0xff) {
+				i->stk_ser.Clear();
+				i->evnt.Signal();
+				return;
+			}
+			for (;;) {
 				id = ++_far2l_interracts_sent._id_counter;
 				if (id && _far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
-				if (limit == 0xffffffff) {
-					i->stk_ser.Clear();
-					i->evnt.Signal();
-					return;
-				}
 			}
 		}
 		i->stk_ser.PushPOD(id);
@@ -517,7 +517,7 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 		return;
 	}
 
-	uint32_t id;
+	uint8_t id;
 	stk_ser.PopPOD(id);
 
 	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);

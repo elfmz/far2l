@@ -853,7 +853,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 							stk_ser.Clear();
 						}
 
-						try {
+						if (id) try {
 							stk_ser.PushPOD(id);
 							reply = "\x1b_far2l";
 							reply+= stk_ser.ToBase64();

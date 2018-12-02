@@ -268,7 +268,7 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l)
 						return i + 2;
 					}
 				}
-				return (l > 127) ? 1 : 0;
+				return 0;
 			}
 
 			if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"

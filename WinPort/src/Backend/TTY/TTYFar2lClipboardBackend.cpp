@@ -1,11 +1,3 @@
-#if __FreeBSD__
-# include <malloc_np.h>
-#elif __APPLE__
-# include <malloc/malloc.h>
-#else
-# include <malloc.h>
-#endif
-
 #include "TTYFar2lClipboardBackend.h"
 #include <utils.h>
 #include <base64.h>
@@ -36,8 +28,9 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 		StackSerializer stk_ser;
 		stk_ser.PushPOD('o');
 		Far2lInterract(stk_ser, true);
-		if (stk_ser.PopChar() == 1)
+		if (stk_ser.PopChar() == 1) {
 			return true;
+		}
 
 	} catch (std::exception &) {}
 	return false;
@@ -67,7 +60,8 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 {
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD('o');
+		stk_ser.PushPOD(format);
+		stk_ser.PushPOD('a');
 		Far2lInterract(stk_ser, true);
 		if (stk_ser.PopChar() == 1)
 			return true;
@@ -78,18 +72,13 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 
 void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 {
-#ifdef _WIN32
-	uint32_t len = _msize(data);
-#elif defined(__APPLE__)
-	uint32_t len = malloc_size(data);
-#else
-	uint32_t len = malloc_usable_size(data);
-#endif
+	uint32_t len = GetMallocSize(data);
 
 	try {
 		StackSerializer stk_ser;
 		stk_ser.Push(data, len);
 		stk_ser.PushPOD(len);
+		stk_ser.PushPOD(format);
 		stk_ser.PushPOD('s');
 		Far2lInterract(stk_ser, true);
 		if (stk_ser.PopChar() == 1)
@@ -104,7 +93,7 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 	void *data = nullptr;
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD((uint32_t)format);
+		stk_ser.PushPOD(format);
 		stk_ser.PushPOD('g');
 		Far2lInterract(stk_ser, true);
 		uint32_t len = stk_ser.PopU32();

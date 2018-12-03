@@ -50,6 +50,7 @@ TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interracto
 TTYFar2lClipboardBackend::~TTYFar2lClipboardBackend()
 {
 	WinPortClipboard_SetBackend(_prior_backend);
+	delete _fallback_backend;
 }
 
 void TTYFar2lClipboardBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)

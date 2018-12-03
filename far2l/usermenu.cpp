@@ -1048,32 +1048,32 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 		DWORD State=SubMenu?DIF_HIDDEN|DIF_DISABLE:0;
 		DialogDataEx EditDlgData[]=
 		{
-			DI_DOUBLEBOX,3,1,DLG_X-4,(short)(DLG_Y-2),0,0,MSG(SubMenu?MEditSubmenuTitle:MEditMenuTitle),
-			DI_TEXT,5,2,0,2,0,0,MSG(MEditMenuHotKey),
-			DI_FIXEDIT,5,3,7,3,0,DIF_FOCUS,L"",
-			DI_TEXT,5,4,0,4,0,0,MSG(MEditMenuLabel),
-			DI_EDIT,5,5,DLG_X-6,5,0,0,L"",
+			{DI_DOUBLEBOX,3,1,DLG_X-4,(short)(DLG_Y-2),{},0,MSG(SubMenu?MEditSubmenuTitle:MEditMenuTitle)},
+			{DI_TEXT,5,2,0,2,{},0,MSG(MEditMenuHotKey)},
+			{DI_FIXEDIT,5,3,7,3,{},DIF_FOCUS,L""},
+			{DI_TEXT,5,4,0,4,{},0,MSG(MEditMenuLabel)},
+			{DI_EDIT,5,5,DLG_X-6,5,{},0,L""},
 
-			DI_TEXT,3,6,0,6,0,DIF_SEPARATOR|State,L"",
-			DI_TEXT,5,7,0,7,0,State,MSG(MEditMenuCommands),
+			{DI_TEXT,3,6,0,6,{},DIF_SEPARATOR|State,L""},
+			{DI_TEXT,5,7,0,7,{},State,MSG(MEditMenuCommands)},
 #ifdef PROJECT_DI_MEMOEDIT
-			DI_MEMOEDIT,5, 8,DLG_X-6,17,0,DIF_EDITPATH,L"",
+			{DI_MEMOEDIT,5, 8,DLG_X-6,17,{},DIF_EDITPATH,L""},
 #else
-			DI_EDIT,5, 8,DLG_X-6,8,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5, 9,DLG_X-6,9,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,10,DLG_X-6,10,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,11,DLG_X-6,11,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,12,DLG_X-6,12,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,13,DLG_X-6,13,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,14,DLG_X-6,14,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,15,DLG_X-6,15,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,16,DLG_X-6,16,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
-			DI_EDIT,5,17,DLG_X-6,17,0,DIF_EDITPATH|DIF_EDITOR|State,L"",
+			{DI_EDIT,5, 8,DLG_X-6,8,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5, 9,DLG_X-6,9,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,10,DLG_X-6,10,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,11,DLG_X-6,11,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,12,DLG_X-6,12,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,13,DLG_X-6,13,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,14,DLG_X-6,14,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,15,DLG_X-6,15,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,16,DLG_X-6,16,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
+			{DI_EDIT,5,17,DLG_X-6,17,{},DIF_EDITPATH|DIF_EDITOR|State,L""},
 #endif
 
-			DI_TEXT,3,(short)(DLG_Y-4),0,(short)(DLG_Y-4),0,DIF_SEPARATOR,L"",
-			DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk),
-			DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),0,DIF_CENTERGROUP,MSG(MCancel),
+			{DI_TEXT,3,(short)(DLG_Y-4),0,(short)(DLG_Y-4),{},DIF_SEPARATOR,L""},
+			{DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
+			{DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),{},DIF_CENTERGROUP,MSG(MCancel)}
 		};
 		MakeDialogItemsEx(EditDlgData,EditDlg);
 #ifndef PROJECT_DI_MEMOEDIT
@@ -1143,11 +1143,11 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 			SetRegKey(strItemKey,L"HotKey",EditDlg[EM_HOTKEY_EDIT].strData);
 			SetRegKey(strItemKey,L"Label",EditDlg[EM_LABEL_EDIT].strData);
-			SetRegKey(strItemKey,L"Submenu",(DWORD)0);
+			SetRegKey(strItemKey,L"Submenu",0u);
 
 			if (SubMenu)
 			{
-				SetRegKey(strItemKey,L"Submenu",(DWORD)1);
+				SetRegKey(strItemKey,L"Submenu",1u);
 			}
 			else
 			{

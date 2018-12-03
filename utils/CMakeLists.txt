@@ -4,6 +4,7 @@ project(utils)
 find_package(PkgConfig REQUIRED)
 
 set(SOURCES
+  src/SavedScreen.cpp
   src/SharedResource.cpp
   src/KeyFileHelper.cpp
   src/utils.cpp

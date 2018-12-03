@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <atomic>
 #include <StackSerializer.h>
 #include "WinCompat.h"
 #include "Backend.h"
@@ -8,8 +9,9 @@
 
 class TTYFar2lClipboardBackend : public IClipboardBackend
 {
-	IClipboardBackend *_default_backend = nullptr;
+	IClipboardBackend *_prior_backend = nullptr, *_fallback_backend = nullptr;
 	IFar2lInterractor *_interractor;
+	std::string _client_id;
 
 	void Far2lInterract(StackSerializer &stk_ser, bool wait);
 

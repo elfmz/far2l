@@ -65,8 +65,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
 
-	void OnFar2lKey(bool down, const std::vector<uint32_t> &args);
-	void OnFar2lMouse(const std::vector<uint32_t> &args);
+	void OnFar2lKey(bool down, StackSerializer &stk_ser);
+	void OnFar2lMouse(StackSerializer &stk_ser);
 
 	std::shared_ptr<IClipboardBackend> _clipboard_backend;
 
@@ -88,7 +88,7 @@ protected:
 	virtual bool OnConsoleIsActive();
 
 	// ITTYInputSpecialSequenceHandler
-	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args);
+	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 
 public:

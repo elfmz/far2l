@@ -230,23 +230,12 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 		return;
 
 	if (strncmp(s, "f2l", 3) == 0) {
-		std::vector<uint32_t> args;
-		if ( l > 3) {
-			const std::vector<unsigned char> &decoded = base64_decode(s + 3, l - 3);
-			if (!decoded.empty()) {
-				uint32_t a;
-				for (size_t i = 1; i < decoded.size(); i+= sizeof(a)) {
-					memcpy(&a, &decoded[i], sizeof(a));
-					args.emplace_back(a);
-				}
-				_handler->OnFar2lEvent((char)decoded[0], args);
-			}
-		} else
-			_handler->OnFar2lEvent(0, args);
+		_tmp_stk_ser.FromBase64(s + 3, l - 3);
+		_handler->OnFar2lEvent(_tmp_stk_ser);
 
 	} else if (strncmp(s, "far2l", 5) == 0) {
-		_far2l_reply_data.FromBase64(s + 5, l - 5);
-		_handler->OnFar2lReply(_far2l_reply_data);
+		_tmp_stk_ser.FromBase64(s + 5, l - 5);
+		_handler->OnFar2lReply(_tmp_stk_ser);
 	}
 }
 

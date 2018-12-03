@@ -25,29 +25,12 @@ VTFar2lExtensios::~VTFar2lExtensios()
 	}
 }
 
-void VTFar2lExtensios::WriteFar2lEvent(char code, uint32_t argc, ...)
+void VTFar2lExtensios::WriteInputEvent(const StackSerializer &stk_ser)
 {
-	_tmp_far2l_event = "\x1b_f2l";
-	if (code) {
-		std::vector<unsigned char> buf;
-		buf.push_back((unsigned char)code);
-		va_list va;
-		va_start(va, argc);
-		for (; argc; --argc) {
-			uint32_t a = va_arg(va, uint32_t);
-			buf.resize(buf.size() + sizeof(a));
-			memcpy(&buf[buf.size() - sizeof(a)], &a, sizeof(a));
-		}
-		va_end(va);
-
-		_tmp_far2l_event+= base64_encode(&buf[0], buf.size());
-
-	} else {
-		assert(argc == 0);
-	}
-	_tmp_far2l_event+= '\x07';
-
-	_ansi_commands->InjectInput(_tmp_far2l_event.c_str());
+	_tmp_input_event = "\x1b_f2l";
+	_tmp_input_event+= stk_ser.ToBase64();
+	_tmp_input_event+= '\x07';
+	_ansi_commands->InjectInput(_tmp_input_event.c_str());
 }
 
 bool VTFar2lExtensios::IsAllowedClipboardRead()
@@ -81,8 +64,14 @@ bool VTFar2lExtensios::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 		AllowClipboardRead(false);
 	}
 
-	WriteFar2lEvent('M', 5, MouseEvent.dwMousePosition.X, MouseEvent.dwMousePosition.Y,
-		MouseEvent.dwButtonState, MouseEvent.dwControlKeyState, MouseEvent.dwEventFlags);
+	StackSerializer stk_ser;
+	stk_ser.PushPOD(MouseEvent.dwMousePosition.X);
+	stk_ser.PushPOD(MouseEvent.dwMousePosition.Y);
+	stk_ser.PushPOD(MouseEvent.dwButtonState);
+	stk_ser.PushPOD(MouseEvent.dwControlKeyState);
+	stk_ser.PushPOD(MouseEvent.dwEventFlags);
+	stk_ser.PushPOD('M');
+	WriteInputEvent(stk_ser);
 	return true;
 }
 
@@ -112,8 +101,14 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 		}
 	}
 
-	WriteFar2lEvent(KeyEvent.bKeyDown ? 'K' : 'k', 5, KeyEvent.wRepeatCount, KeyEvent.wVirtualKeyCode,
-		KeyEvent.wVirtualScanCode, KeyEvent.uChar.UnicodeChar, KeyEvent.dwControlKeyState);
+	StackSerializer stk_ser;
+	stk_ser.PushPOD(KeyEvent.wRepeatCount);
+	stk_ser.PushPOD(KeyEvent.wVirtualKeyCode);
+	stk_ser.PushPOD(KeyEvent.wVirtualScanCode);
+	stk_ser.PushPOD(KeyEvent.dwControlKeyState);
+	stk_ser.PushPOD((uint32_t)KeyEvent.uChar.UnicodeChar);
+	stk_ser.PushPOD((KeyEvent.bKeyDown ? 'K' : 'k'));
+	WriteInputEvent(stk_ser);
 	return true;
 }
 

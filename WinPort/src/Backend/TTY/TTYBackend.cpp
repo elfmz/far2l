@@ -5,6 +5,7 @@
 #include <exception>
 #include <sys/ioctl.h>
 #include "utils.h"
+#include "CheckedCast.hpp"
 #include "WinPortHandle.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
@@ -230,9 +231,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 
 	_cur_output.resize(_cur_width * _cur_height);
 
-	COORD data_size = {_cur_width, _cur_height};
+	COORD data_size = {CheckedCast<SHORT>(_cur_width), CheckedCast<SHORT>(_cur_height) };
 	COORD data_pos = {0, 0};
-	SMALL_RECT screen_rect = {0, 0, _cur_width - 1, _cur_height - 1};
+	SMALL_RECT screen_rect = {0, 0, CheckedCast<SHORT>(_cur_width - 1), CheckedCast<SHORT>(_cur_height - 1)};
 	g_winport_con_out.Read(&_cur_output[0], data_size, data_pos, screen_rect);
 
 #if 1
@@ -320,7 +321,8 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 void TTYBackend::KickAss()
 {
 	unsigned char c = 0;
-	write(_kickass[1], &c, 1);
+	if (write(_kickass[1], &c, 1) != 1)
+		perror("write(_kickass[1]");
 }
 
 void TTYBackend::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
@@ -353,7 +355,7 @@ void TTYBackend::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 
 COORD TTYBackend::OnConsoleGetLargestWindowSize()
 {
-	COORD out = {_cur_width ? _cur_width : 0x10, _cur_height ? _cur_height : 0x10};
+	COORD out = {CheckedCast<SHORT>(_cur_width ? _cur_width : 0x10), CheckedCast<SHORT>(_cur_height ? _cur_height : 0x10)};
 	return out;
 }
 
@@ -428,81 +430,62 @@ bool TTYBackend::OnConsoleIsActive()
 	return true;
 }
 
-template <class I> void CheckedCast(I &dst, uint32_t v) throw(std::exception)
+void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
 {
-	if (std::is_signed<I>::value) {
-		int32_t sv = (int32_t)v;
-		dst = sv;
-		if ((int32_t)dst != sv) {
-			fprintf(stderr, "CheckedCast: v=0x%x sizeof(I)=%d signed\n", v, (int)sizeof(I));
-			throw std::exception();
-		}
-	} else {
-		dst = v;
-		if ((uint32_t)dst != v) {
-			fprintf(stderr, "CheckedCast: v=0x%x sizeof(I)=%d unsigned\n", v, (int)sizeof(I));
-			throw std::exception();
-		}
-	}
-}
-
-void TTYBackend::OnFar2lKey(bool down, const std::vector<uint32_t> &args)
-{
-	if (args.size() != 5) {
-		fprintf(stderr, "OnFar2lKey: unexpected args size=%ld!\n", (unsigned long)args.size());
-		return;
-	}
-
 	try {
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
-		CheckedCast(ir.Event.KeyEvent.wRepeatCount, args[0]);
-		CheckedCast(ir.Event.KeyEvent.wVirtualKeyCode, args[1]);
-		CheckedCast(ir.Event.KeyEvent.wVirtualScanCode, args[2]);
-		CheckedCast(ir.Event.KeyEvent.uChar.UnicodeChar, args[3]);
-		CheckedCast(ir.Event.KeyEvent.dwControlKeyState, args[4]);
 
+		uint32_t key;
+		stk_ser.PopPOD(key);
+		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)key;
+		stk_ser.PopPOD(ir.Event.KeyEvent.dwControlKeyState);
+		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualScanCode);
+		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualKeyCode);
+		stk_ser.PopPOD(ir.Event.KeyEvent.wRepeatCount);
 		g_winport_con_in.Enqueue(&ir, 1);
 
-	} catch (std::exception &) { }
+	} catch (std::exception &) {
+		fprintf(stderr, "OnFar2lKey: broken args!\n");
+	}
 }
 
-void TTYBackend::OnFar2lMouse(const std::vector<uint32_t> &args)
+void TTYBackend::OnFar2lMouse(StackSerializer &stk_ser)
 {
-	if (args.size() != 5) {
-		fprintf(stderr, "OnFar2lMouse: unexpected args size=%ld!\n", (unsigned long)args.size());
-		return;
-	}
-
 	try {
 		INPUT_RECORD ir = {0};
 		ir.EventType = MOUSE_EVENT;
-		CheckedCast(ir.Event.MouseEvent.dwMousePosition.X, args[0]);
-		CheckedCast(ir.Event.MouseEvent.dwMousePosition.Y, args[1]);
-		CheckedCast(ir.Event.MouseEvent.dwButtonState, args[2]);
-		CheckedCast(ir.Event.MouseEvent.dwControlKeyState, args[3]);
-		CheckedCast(ir.Event.MouseEvent.dwEventFlags, args[4]);
+
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwEventFlags);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwControlKeyState);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwButtonState);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.Y);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.X);
 
 		g_winport_con_in.Enqueue(&ir, 1);
 
-	} catch (std::exception &) { }
+	} catch (std::exception &) {
+		fprintf(stderr, "OnFar2lMouse: broken args!\n");
+	}
 }
 
-void TTYBackend::OnFar2lEvent(char code, const std::vector<uint32_t> &args)
+void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 {
 	if (!_far2l_tty) {
 		fprintf(stderr, "Far2lEvent unexpected!\n");
 		return;
 	}
 
+	char code = stk_ser.PopChar();
+
 	switch (code) {
 		case 'M':
-			OnFar2lMouse(args);
+			OnFar2lMouse(stk_ser);
 			break;
 
 		case 'K': case 'k':
-			OnFar2lKey(code == 'K', args);
+			OnFar2lKey(code == 'K', stk_ser);
 			break;
 
 		default:

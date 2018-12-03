@@ -1,7 +1,15 @@
 #include <assert.h>
 #include <base64.h>
 #include <utils.h>
+#include <fcntl.h>
+#include <SavedScreen.h>
+
 #include "VTFar2lExtensios.h"
+#include "headers.hpp"
+#include "lang.hpp"
+#include "language.hpp"
+#include "dialog.hpp"
+#include "message.hpp"
 
 
 // Potential security issue workaround: do not allow remote to read clipboard unless user
@@ -112,12 +120,79 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 	return true;
 }
 
+bool VTFar2lExtensios::ClipboardAuthorize(std::string client_id)
+{
+	if (client_id.size() < 0x10 || client_id.size() > 0x400) {
+		return false;
+	}
+
+	for (const auto &c : client_id) {
+		if ( (c < '0' || c > '9') && (c < 'a' || c > 'z') && c != '-' && c != '_')
+			return false;
+	}
+
+	client_id+= '\n';
+
+	if (_alloweds.find(client_id) != _alloweds.end())
+		return true;
+
+
+	const std::string &alloweds_file = InMyConfig("tty_clipboard/alloweds");
+	FILE *f = fopen(alloweds_file.c_str(), "r");
+	if (f) {
+		for (;;) {
+			char buf[0x404] = {};
+			if (!fgets(buf, sizeof(buf) - 1, f)) {
+				fclose(f);
+				break;
+			}
+
+			if (strcmp(client_id.c_str(), buf) == 0) {
+				fclose(f);
+				_alloweds.insert(client_id);
+				return true;
+			}
+		}
+	}
+
+	std::vector<const wchar_t *> lines_wz;
+	lines_wz.push_back(L"Allow access to clipboard for this terminal application?");
+	lines_wz.push_back(L"&Deny");
+	lines_wz.push_back(L"Allow &temporarily");
+	lines_wz.push_back(L"Allow &always");
+
+	SavedScreen saved_scr;
+
+	switch (Message(MSG_KEEPBACKGROUND, 3, MSG(MSetAttrSystemDialog), &lines_wz[0], lines_wz.size())) {
+		case 2: {//allow always
+				_alloweds.insert(client_id);
+				int fd = open(alloweds_file.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0600);
+				if (fd != -1) {
+					write(fd, client_id.c_str(), client_id.size());
+					close(fd);
+				}
+			}
+			// fall through
+
+		case 1: //allow temporary
+			_alloweds.insert(client_id);
+			return true;
+
+		default:
+			return false;
+	}
+}
 
 void VTFar2lExtensios::OnInterract_ClipboardOpen(StackSerializer &stk_ser)
 {
-	char out = WINPORT(OpenClipboard)(NULL) ? 1 : 0;
-	if (out)
-		++_clipboard_opens;
+	std::string client_id;
+	stk_ser.PopStr(client_id);
+	char out = -1;
+	if (ClipboardAuthorize(client_id)) {
+		out = WINPORT(OpenClipboard)(NULL) ? 1 : 0;
+		if (out)
+			++_clipboard_opens;
+	}
 
 	stk_ser.Clear();
 	stk_ser.PushPOD(out);
@@ -125,9 +200,12 @@ void VTFar2lExtensios::OnInterract_ClipboardOpen(StackSerializer &stk_ser)
 
 void VTFar2lExtensios::OnInterract_ClipboardClose(StackSerializer &stk_ser)
 {
-	char out = WINPORT(CloseClipboard)() ? 1 : 0;
-	if (out)
-		--_clipboard_opens;
+	char out = -1;
+	if (_clipboard_opens > 0) {
+		out = WINPORT(CloseClipboard)() ? 1 : 0;
+		if (out)
+			--_clipboard_opens;
+	}
 
 	stk_ser.Clear();
 	stk_ser.PushPOD(out);
@@ -137,7 +215,10 @@ void VTFar2lExtensios::OnInterract_ClipboardClose(StackSerializer &stk_ser)
 
 void VTFar2lExtensios::OnInterract_ClipboardEmpty(StackSerializer &stk_ser)
 {
-	char out = WINPORT(EmptyClipboard)() ? 1 : 0;
+	char out = -1;
+	if (_clipboard_opens > 0) {
+		out = WINPORT(EmptyClipboard)() ? 1 : 0;
+	}
 	stk_ser.Clear();
 	stk_ser.PushPOD(out);
 }
@@ -153,19 +234,22 @@ void VTFar2lExtensios::OnInterract_ClipboardIsFormatAvailable(StackSerializer &s
 
 void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 {
-	UINT fmt;
-	uint32_t len;
-	void *data;
+	char out = -1;
+	if (_clipboard_opens > 0) {
+		UINT fmt;
+		uint32_t len;
+		void *data;
 
-	stk_ser.PopPOD(fmt);
-	stk_ser.PopPOD(len);
-	if (len) {
-		data = malloc(len);
-		stk_ser.Pop(data, len);
-	} else
-		data = nullptr;
+		stk_ser.PopPOD(fmt);
+		stk_ser.PopPOD(len);
+		if (len) {
+			data = malloc(len);
+			stk_ser.Pop(data, len);
+		} else
+			data = nullptr;
 
-	char out = WINPORT(SetClipboardData)(fmt, data) ? 1 : 0;
+		out = WINPORT(SetClipboardData)(fmt, data) ? 1 : 0;
+	}
 	stk_ser.Clear();
 	stk_ser.PushPOD(out);
 
@@ -173,19 +257,23 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 
 void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
 {
-	bool allowed = IsAllowedClipboardRead();
+	if (_clipboard_opens > 0) {
+		bool allowed = IsAllowedClipboardRead();
 
-	UINT fmt;
-	stk_ser.PopPOD(fmt);
-	void *ptr = allowed ? WINPORT(GetClipboardData)(fmt) : nullptr;
-	stk_ser.Clear();
-	uint32_t len = ptr ? GetMallocSize(ptr) : 0;
-	if (len)
-		stk_ser.Push(ptr, len);
-	stk_ser.PushPOD(len);
+		UINT fmt;
+		stk_ser.PopPOD(fmt);
+		void *ptr = allowed ? WINPORT(GetClipboardData)(fmt) : nullptr;
+		stk_ser.Clear();
+		uint32_t len = ptr ? GetMallocSize(ptr) : 0;
+		if (len)
+			stk_ser.Push(ptr, len);
+		stk_ser.PushPOD(len);
 
-	if (allowed) { // prolong allowance
-		AllowClipboardRead(true);
+		if (allowed) { // prolong allowance
+			AllowClipboardRead(true);
+		}
+	} else {
+		stk_ser.PushPOD((uint32_t)-1);
 	}
 }
 

@@ -2,45 +2,11 @@
 #include <ConsoleInput.h>
 #include <ConsoleOutput.h>
 #include <utils.h>
+#include <SavedScreen.h>
 #include "SudoAskpassImpl.h"
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
-
-class SavedScreen
-{
-	std::vector<CHAR_INFO> _content;
-	unsigned int _width = 0, _height = 0;
-	USHORT _attr;
-
-public:
-	SavedScreen()
-	{
-		_attr = g_winport_con_out.GetAttributes();
-		g_winport_con_out.GetSize(_width, _height);
-		_content.resize(size_t(_width) * size_t(_height));
-		if (!_content.empty()) {
-			COORD data_pos = {}, data_size = {(SHORT)_width, (SHORT)_height};
-			SMALL_RECT screen_rect = {0, 0, data_size.X, data_size.Y};
-			g_winport_con_out.Read(&_content[0], data_size, data_pos, screen_rect);
-		}
-	}
-
-	~SavedScreen()
-	{
-		Restore();
-	}
-
-	void Restore()
-	{
-		if (!_content.empty()) {
-			COORD data_pos = {}, data_size = {(SHORT)_width, (SHORT)_height};
-			SMALL_RECT screen_rect = {0, 0, data_size.X, data_size.Y};
-			g_winport_con_out.Write(&_content[0], data_size, data_pos, screen_rect);
-		}
-		g_winport_con_out.SetAttributes(_attr);
-	}
-};
 
 class SudoAskpassScreen
 {

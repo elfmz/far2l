@@ -3,6 +3,7 @@
 #include "../WinPort/WinPort.h"
 #include <StackSerializer.h>
 #include <string>
+#include <set>
 #include "vtansi.h"
 
 class VTFar2lExtensios
@@ -15,6 +16,10 @@ class VTFar2lExtensios
 
 	std::string _tmp_input_event;
 	IVTAnsiCommands *_ansi_commands;
+
+	std::set<std::string> _alloweds;
+
+	bool ClipboardAuthorize(std::string client_id);
 
 	bool IsAllowedClipboardRead();
 	void AllowClipboardRead(bool prolong);

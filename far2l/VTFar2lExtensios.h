@@ -13,7 +13,7 @@ class VTFar2lExtensios
 	DWORD _clipboard_read_allowance = 0;
 	int _clipboard_read_allowance_prolongs = 0;
 
-	std::string _tmp_far2l_event;
+	std::string _tmp_input_event;
 	IVTAnsiCommands *_ansi_commands;
 
 	bool IsAllowedClipboardRead();
@@ -30,7 +30,7 @@ class VTFar2lExtensios
 
 	void OnInterract_ChangeCursorHeigth(StackSerializer &stk_ser);
 
-	void WriteFar2lEvent(char code, uint32_t argc, ...);
+	void WriteInputEvent(const StackSerializer &stk_ser);
 public:
 	VTFar2lExtensios(IVTAnsiCommands *ansi_commands);
 	~VTFar2lExtensios();

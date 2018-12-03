@@ -64,7 +64,7 @@ template <size_t N> using NChars2Key = NCharsMap<N, TTYInputKey>;
 
 struct ITTYInputSpecialSequenceHandler
 {
-	virtual void OnFar2lEvent(char code, const std::vector<uint32_t> &args) = 0;
+	virtual void OnFar2lEvent(StackSerializer &stk_ser) = 0;
 	virtual void OnFar2lReply(StackSerializer &stk_ser) = 0;
 };
 
@@ -90,7 +90,7 @@ class TTYInputSequenceParser
 	} _mouse;
 
 	ITTYInputSpecialSequenceHandler *_handler;
-	StackSerializer _far2l_reply_data;
+	StackSerializer _tmp_stk_ser;
 
 	void AssertNoConflicts();
 

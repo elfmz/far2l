@@ -258,8 +258,11 @@ struct MAAdvFlags
   unsigned PutDialogStyle       :1;
   unsigned                      :25;
 
-  operator int(){return *((int *)this);}
-  MAAdvFlags &operator=(int Flags){return *this=*((MAAdvFlags *)&Flags);}
+  operator int32_t(){return *((int32_t *)this);}
+  MAAdvFlags &operator=(int32_t Flags){
+        *((int32_t *)this) = Flags;
+        return *this;
+  }
 };
 
 struct Options

@@ -71,11 +71,11 @@ bool TTYBackend::Startup()
 	assert(!_writer_trd);
 	assert(!_reader_trd);
 
-	if (pthread_create(&_writer_trd, NULL, sWriterThread, this) != 0) {
+	if (pthread_create(&_writer_trd, nullptr, sWriterThread, this) != 0) {
 		return false;
 	}
 
-	if (pthread_create(&_reader_trd, NULL, sReaderThread, this) != 0) {
+	if (pthread_create(&_reader_trd, nullptr, sReaderThread, this) != 0) {
 		_exiting = true;
 		return false;
 	}
@@ -161,7 +161,7 @@ void TTYBackend::ReaderThread()
 			FD_SET(_stdin, &fds); 
 			FD_SET(_stdin, &fde); 
 
-			if (select(maxfd + 1, &fds, NULL, &fde, NULL) == -1) {
+			if (select(maxfd + 1, &fds, nullptr, &fde, nullptr) == -1) {
 				throw std::runtime_error("select failed");
 			}
 
@@ -212,7 +212,7 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 		_cur_height = w.ws_row;
 		g_winport_con_out.SetSize(_cur_width, _cur_height);
 		g_winport_con_out.GetSize(_cur_width, _cur_height);
-		INPUT_RECORD ir = {0};
+		INPUT_RECORD ir = {};
 		ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
 		ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
 		ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
@@ -334,7 +334,7 @@ void TTYBackend::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 
 void TTYBackend::OnConsoleOutputResized()
 {
-	OnConsoleOutputUpdated(NULL, 0);
+	OnConsoleOutputUpdated(nullptr, 0);
 }
 
 void TTYBackend::OnConsoleOutputTitleChanged()

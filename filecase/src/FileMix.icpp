@@ -96,7 +96,7 @@ void CaseWord( TCHAR *nm, int Type )
       for (I=0; nm[I]; I++)
         if(!I || IsWordDiv(nm[I-1]))
            nm[I]=(TCHAR)FSF.LUpper((UTCHAR)nm[I]);
-    else
+        else
       nm[I]=(TCHAR)FSF.LLower((UTCHAR)nm[I]);
       break;
     case MODE_LOWER:

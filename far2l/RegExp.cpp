@@ -1361,7 +1361,7 @@ int RegExp::InnerCompile(const prechar src,int srclength,int options)
 	SMatch m;
 #endif
 	int pos=1;
-	register PREOpCode op;//=code;
+	PREOpCode op;//=code;
 	brackets[0]=code;
 #ifdef RE_DEBUG
 #ifdef RE_NO_NEWARRAY
@@ -2528,7 +2528,7 @@ int RegExp::InnerMatch(const prechar str,const prechar strend,PMatch match,int& 
 #endif
                       )
 {
-//  register prechar str=start;
+//  prechar str=start;
 	int i,j;
 	int minimizing;
 	PREOpCode op,tmp=nullptr;

@@ -274,7 +274,7 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 				}
 
 				if (bBigEndian)
-					_swab((char*)&wReadBuf, (char*)&wReadBuf, ReadSize);
+					swab((char*)&wReadBuf, (char*)&wReadBuf, ReadSize);
 
 				ReadPos = 0;
 				ReadBufPtr = wReadBuf;
@@ -517,7 +517,7 @@ wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePa
 
 		if (nCodePage == CP_WIDE_BE)
 		{
-			_swab((char*)lpwszDest, (char*)lpwszDest, nDestLength*sizeof(wchar_t));
+			swab((char*)lpwszDest, (char*)lpwszDest, nDestLength*sizeof(wchar_t));
 			wchar_t *Ch = lpwszDest;
 			int nLength = Min(static_cast<int>(wcslen(lpwszDest)), nDestLength);
 

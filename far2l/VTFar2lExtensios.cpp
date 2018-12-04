@@ -355,13 +355,6 @@ void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 	const char code = stk_ser.PopChar();
 
 	switch (code) {
-		case 't': {
-			std::string title;
-			stk_ser.PopStr(title);
-			WINPORT(SetConsoleTitle)( StrMB2Wide(title).c_str() );
-			stk_ser.Clear();
-		} break;
-
 		case 'e':
 			WINPORT(BeginConsoleAdhocQuickEdit)();
 			stk_ser.Clear();

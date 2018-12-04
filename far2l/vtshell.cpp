@@ -944,7 +944,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 	}
 	
 	
-	std::string GenerateExecuteCommandScript(const char *cmd, bool need_sudo)
+	std::string GenerateExecuteCommandScript(const char *cd, const char *cmd, bool need_sudo)
 	{
 		char name[128]; 
 		sprintf(name, "vtcmd/%x_%p", getpid(), this);
@@ -955,11 +955,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 
 static bool shown_tip_init = false;
 static bool shown_tip_exit = false;
-
-		char cd[MAX_PATH + 1] = {'.', 0};
-		if (!sdc_getcwd(cd, MAX_PATH)) {
-			perror("getcwd");
-		} 
 				
 		if (!need_sudo) {
 			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
@@ -1028,7 +1023,12 @@ static bool shown_tip_exit = false;
 		if (_shell_pid==-1)
 			return -1;
 
-		const std::string &cmd_script = GenerateExecuteCommandScript(cmd, force_sudo);
+		char cd[MAX_PATH + 1] = {'.', 0};
+		if (!sdc_getcwd(cd, MAX_PATH)) {
+			perror("getcwd");
+		} 
+
+		const std::string &cmd_script = GenerateExecuteCommandScript(cd, cmd, force_sudo);
 		if (cmd_script.empty())
 			return -1;
 
@@ -1047,6 +1047,8 @@ static bool shown_tip_exit = false;
 		}
 
 		_skipping_line = true;
+
+		_vta.OnStart(cd);
 
 		{
 			std::lock_guard<std::mutex> lock(_inout_control_mutex);
@@ -1071,10 +1073,10 @@ static bool shown_tip_exit = false;
 
 		remove(cmd_script.c_str());
 
-		_vta.Reset();
 		OnKeypadChange(0);
-		DeliverPendingWindowInfo();
 		_completion_marker.Reset();
+		_vta.OnStop();
+		DeliverPendingWindowInfo();
 
 		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
 		delete _far2l_exts;

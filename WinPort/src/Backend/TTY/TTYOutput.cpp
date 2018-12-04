@@ -182,6 +182,14 @@ void TTYOutput::ChangeMouse(bool enable)
 	Format("\x1b[?1002%c", enable ? 'h' : 'l');
 }
 
+void TTYOutput::ChangeTitle(std::string title)
+{
+	for (auto &c : title) {
+		if (c == '\x07') c = '_';
+	}
+	Format("\x1b]2;%s\x07", title.c_str());
+}
+
 void TTYOutput::SendFar2lInterract(const StackSerializer &stk_ser)
 {
 	std::string request = "\x1b_far2l:";

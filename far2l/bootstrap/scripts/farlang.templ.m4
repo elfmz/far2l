@@ -19855,13 +19855,13 @@ MBadFileSizeFormat
 
 MFarTitleAddonsAdmin
 l:
-"Администратор"
-"Administrator"
-upd:"Administrator"
-upd:"Administrator"
-upd:"Administrator"
-upd:"Administrator"
-"Administrador"
+"root"
+"root"
+upd:"root"
+upd:"root"
+upd:"root"
+upd:"root"
+"root"
 
 MAdminRequired
 "Нужно обладать правами администратора"

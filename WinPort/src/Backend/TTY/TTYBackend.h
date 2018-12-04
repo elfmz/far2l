@@ -56,6 +56,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		struct {
 			bool term_resized : 1;
 			bool output : 1;
+			bool title_changed : 1;
 			bool far2l_interract : 1;
 		} flags;
 		uint32_t all;

@@ -213,3 +213,4 @@ UINT wxClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 
 	return g_wx_custom_formats.Register(lpszFormat);
 }
+

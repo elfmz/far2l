@@ -12,7 +12,7 @@ struct IVTAnsiCommands
 class VTAnsi
 {
 	std::string _buf;
-	std::wstring _ws;
+	std::wstring _ws, _saved_title;
 	public:
 	VTAnsi(IVTAnsiCommands *ansi_commands);
 	~VTAnsi();
@@ -22,7 +22,8 @@ class VTAnsi
 	struct VTAnsiState *Suspend();
 	void Resume(struct VTAnsiState* state);
 
-	void Reset();
+	void OnStart(const char *title);
+	void OnStop();
 };
 
 class VTAnsiSuspend

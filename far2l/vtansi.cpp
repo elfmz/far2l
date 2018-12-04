@@ -226,6 +226,7 @@ static CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
 static VTAnsiState g_saved_state;
 static std::mutex g_vt_ansi_mutex;
 IVTAnsiCommands *g_vt_ansi_commands = nullptr;
+static std::string g_title;
 
 static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 
@@ -365,6 +366,15 @@ static int   nCharInBuffer;
 static WCHAR ChBuffer[BUFFER_SIZE];
 static WCHAR ChPrev;
 static BOOL  fWrapped;
+
+
+static void ApplyConsoleTitle()
+{
+	std::wstring title(1, L'[');
+	title+= StrMB2Wide(g_title);
+	title+= L']';
+	WINPORT(SetConsoleTitle)(title.c_str() );
+}
 
 //-----------------------------------------------------------------------------
 //   FlushBuffer()
@@ -1189,15 +1199,13 @@ void InterpretEscSeq( void )
 		case 't':                 // ESC[#t Window manipulation
 			if (es_argc != 1) return;
 			if (es_argv[0] == 21) {	// ESC[21t Report xterm window's title
-				TCHAR buf[MAX_PATH*2] = {0};
-				WINPORT(GetConsoleTitle)( buf, ARRAYSIZE(buf) - 1 );
 				std::string seq;
-				seq.reserve(wcslen(buf) + 8);
+				seq.reserve(g_title.size() + 8);
 				// Too bad if it's too big or fails.
 				seq+= ESC;
 				seq+= ']';
 				seq+= 'l';
-				seq+= Wide2MB(buf);
+				seq+= g_title;
 				seq+= ESC;
 				seq+= '\\';
 				SendSequence( seq.c_str() );
@@ -1235,7 +1243,8 @@ void InterpretEscSeq( void )
 
 		if (es_argc == 1 && (es_argv[0] == 0 || // ESC]0;titleST - icon (ignored) &
 		                     es_argv[0] == 2)) { // ESC]2;titleST - window
-			WINPORT(SetConsoleTitle)( MB2Wide(Pt_arg).c_str() );
+			g_title = Pt_arg;
+			ApplyConsoleTitle();
 		}
 	}
 }
@@ -1574,7 +1583,16 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 	delete state;
 }
 
-void VTAnsi::Reset()
+void VTAnsi::OnStart(const char *title)
+{
+	TCHAR buf[MAX_PATH*2] = {0};
+	WINPORT(GetConsoleTitle)( buf, ARRAYSIZE(buf) - 1 );
+	_saved_title = buf;
+	g_title = title;
+	ApplyConsoleTitle();
+}
+
+void VTAnsi::OnStop()
 {
 	g_alternative_screen_buffer.Reset();
 	g_saved_state.ApplyToConsole(NULL, false);
@@ -1582,6 +1600,7 @@ void VTAnsi::Reset()
 	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
 	_buf.clear();
+	WINPORT(SetConsoleTitle)( _saved_title.c_str());
 }
 
 void VTAnsi::Write(const char *str, size_t len)

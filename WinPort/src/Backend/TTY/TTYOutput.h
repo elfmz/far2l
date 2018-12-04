@@ -46,6 +46,7 @@ public:
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
 	void ChangeKeypad(bool app);
 	void ChangeMouse(bool enable);
+	void ChangeTitle(std::string title);
 
 	void SendFar2lInterract(const StackSerializer &stk_ser);
 };

@@ -128,6 +128,9 @@ void TTYBackend::WriterThread()
 			if (ae.flags.output)
 				DispatchOutput(tty_out);
 
+			if (ae.flags.title_changed)
+				tty_out.ChangeTitle(StrWide2MB(g_winport_con_out.GetTitle()));
+
 			if (ae.flags.far2l_interract)
 				DispatchFar2lInterract(tty_out);
 
@@ -339,14 +342,9 @@ void TTYBackend::OnConsoleOutputResized()
 
 void TTYBackend::OnConsoleOutputTitleChanged()
 {
-	try {
-		StackSerializer stk_ser;
-		stk_ser.PushStr(StrWide2MB(g_winport_con_out.GetTitle()));
-		stk_ser.PushPOD('t');
-		Far2lInterract(stk_ser, false);
-	} catch (std::exception &) {}
-	//tty_out.SetWindowTitle(g_winport_con_out.GetTitle());
-	//ESC]2;titleST
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	_ae.flags.title_changed = true;
+	_async_cond.notify_all();
 }
 
 void TTYBackend::OnConsoleOutputWindowMoved(bool absolute, COORD pos)

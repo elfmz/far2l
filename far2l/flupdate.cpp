@@ -138,7 +138,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	AccessTimeUpdateRequired=FALSE;
 	DizRead=FALSE;
 	FAR_FIND_DATA_EX fdata;
-	FileListItem *CurPtr=0,**OldData=0;
+	FileListItem *CurPtr=nullptr,**OldData=nullptr;
 	FARString strCurName, strNextCurName;
 	int OldFileCount=0;
 	CloseChangeNotification();
@@ -432,7 +432,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				GetFileGroup(strComputerName,strCurDir,TwoDotsGroup);
 			}
 
-			FILETIME TwoDotsTimes[4]={0};
+			FILETIME TwoDotsTimes[4]={};
 			if(apiGetFindDataEx(strCurDir,fdata))
 			{
 				TwoDotsTimes[0]=fdata.ftCreationTime;
@@ -627,7 +627,7 @@ void FileList::MoveSelection(FileListItem **ListData,long FileCount,
 
 	while (FileCount--)
 	{
-		OldPtr=(FileListItem **)bsearch(ListData,(void *)OldData,
+		OldPtr=(FileListItem **)bsearch(ListData,(const void *)OldData,
 		                                OldFileCount,sizeof(*ListData),SortSearchList);
 
 		if (OldPtr)
@@ -660,7 +660,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	}
 
 	DizRead=FALSE;
-	FileListItem *CurPtr, **OldData=0;
+	FileListItem *CurPtr, **OldData=nullptr;
 	FARString strCurName, strNextCurName;
 	int OldFileCount=0;
 	CloseChangeNotification();

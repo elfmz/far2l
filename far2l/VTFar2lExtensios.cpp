@@ -21,6 +21,49 @@
 // Each allowed clipboard read request prolongs allowance expiration, here is limit of such prolongs
 #define CLIPBOARD_READ_ALLOWANCE_PROLONGS           3
 
+
+static bool ListFileContains(const std::string &filename, const std::string &line)
+{
+	FILE *f = fopen(filename.c_str(), "r");
+	if (!f)
+		return false;
+
+	for (;;) {
+		char buf[0x404] = {};
+		if (!fgets(buf, sizeof(buf) - 1, f)) {
+			fclose(f);
+			return false;
+		}
+
+		size_t l = strlen(buf);
+		while (l > 0 && (buf[l - 1] == '\r' || buf[l - 1] == '\n')) {
+			--l;
+		}
+
+		if (l == line.size() && memcmp(buf, line.c_str(), l) == 0) {
+			fclose(f);
+			return true;
+		}
+	}
+}
+
+static void ListFileAppend(const std::string &filename, std::string line)
+{
+	line+= '\n';
+	int fd = open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0600);
+	if (fd != -1) {
+		if (write(fd, line.c_str(), line.size()) != (ssize_t)line.size()) {
+			perror("ListFileAppend - write");
+		}
+		close(fd);
+	} else {
+		perror("ListFileAppend - open");
+	}
+
+}
+
+///
+
 VTFar2lExtensios::VTFar2lExtensios(IVTAnsiCommands *ansi_commands)
 	: _ansi_commands(ansi_commands)
 {
@@ -120,75 +163,66 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 	return true;
 }
 
-bool VTFar2lExtensios::ClipboardAuthorize(std::string client_id)
+char VTFar2lExtensios::ClipboardAuthorize(const std::string &client_id)
 {
-	if (client_id.size() < 0x10 || client_id.size() > 0x400) {
-		return false;
-	}
+	if (client_id.size() < 0x20 || client_id.size() > 0x100)
+		return 0;
 
 	for (const auto &c : client_id) {
 		if ( (c < '0' || c > '9') && (c < 'a' || c > 'z') && c != '-' && c != '_')
-			return false;
+			return 0;
 	}
 
-	client_id+= '\n';
+	if (_autheds.find(client_id) != _autheds.end())
+		return 1;
 
-	if (_alloweds.find(client_id) != _alloweds.end())
-		return true;
-
-
-	const std::string &alloweds_file = InMyConfig("tty_clipboard/alloweds");
-	FILE *f = fopen(alloweds_file.c_str(), "r");
-	if (f) {
-		for (;;) {
-			char buf[0x404] = {};
-			if (!fgets(buf, sizeof(buf) - 1, f)) {
-				fclose(f);
-				break;
-			}
-
-			if (strcmp(client_id.c_str(), buf) == 0) {
-				fclose(f);
-				_alloweds.insert(client_id);
-				return true;
-			}
-		}
+	const std::string &autheds_file = InMyConfig("tty_clipboard/autheds");
+	if (ListFileContains(autheds_file, client_id)) {
+		_autheds.insert(client_id);
+		return 1;
 	}
 
-	std::vector<const wchar_t *> lines_wz;
-	lines_wz.push_back(L"Allow access to clipboard for this terminal application?");
-	lines_wz.push_back(L"&Deny");
-	lines_wz.push_back(L"Allow &temporarily");
-	lines_wz.push_back(L"Allow &always");
+	int choice;
 
-	SavedScreen saved_scr;
+	{
+		const wchar_t *lines_wz[] = {
+			MSG(MTerminalClipboardAccessText),
+			MSG(MTerminalClipboardAccessBlock),		// 0
+			MSG(MTerminalClipboardAccessTemporaryRemote),	// 1
+			MSG(MTerminalClipboardAccessTemporaryLocal),	// 2
+			MSG(MTerminalClipboardAccessAlwaysLocal)};	// 3
+		SavedScreen saved_scr;
+		choice = Message(MSG_KEEPBACKGROUND, 4,
+			MSG(MTerminalClipboardAccessTitle),
+			&lines_wz[0], sizeof(lines_wz) / sizeof(lines_wz[0]));
+	}
 
-	switch (Message(MSG_KEEPBACKGROUND, 3, MSG(MSetAttrSystemDialog), &lines_wz[0], lines_wz.size())) {
-		case 2: {//allow always
-				_alloweds.insert(client_id);
-				int fd = open(alloweds_file.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0600);
-				if (fd != -1) {
-					write(fd, client_id.c_str(), client_id.size());
-					close(fd);
-				}
-			}
+	_ansi_commands->OnTerminalResized(); // window could resize during dialog box processing
+
+	switch (choice) {
+		case 3: // Always allow access to local clipboard
+			ListFileAppend(autheds_file, client_id);
 			// fall through
 
-		case 1: //allow temporary
-			_alloweds.insert(client_id);
-			return true;
+		case 2: // Temporary allow access to local clipboared
+			_autheds.insert(client_id);
+			return 1;
 
-		default:
-			return false;
+		case 1: // Tell client that he need to use own clipboard
+			return -1;
+
+		default: // Mimic just failed to open clipboard
+			return 0;
 	}
+
 }
 
 void VTFar2lExtensios::OnInterract_ClipboardOpen(StackSerializer &stk_ser)
 {
 	std::string client_id;
 	stk_ser.PopStr(client_id);
-	char out = -1;
-	if (ClipboardAuthorize(client_id)) {
+	char out = ClipboardAuthorize(client_id);
+	if (out == 1) {
 		out = WINPORT(OpenClipboard)(NULL) ? 1 : 0;
 		if (out)
 			++_clipboard_opens;

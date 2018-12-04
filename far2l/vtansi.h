@@ -6,6 +6,7 @@ struct IVTAnsiCommands
 	virtual void OnApplicationProtocolCommand(const char *str) = 0;
 	virtual void InjectInput(const char *str) = 0;
 	virtual void OnKeypadChange(unsigned char keypad) = 0;
+	virtual void OnTerminalResized() = 0;
 };
 
 class VTAnsi

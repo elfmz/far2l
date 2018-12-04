@@ -14,7 +14,10 @@
 ConsoleOutput g_winport_con_out;
 ConsoleInput g_winport_con_in;
 
+#ifndef NOWX
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
+#endif
+
 bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 
 extern "C" void WinPortInitRegistry();
@@ -71,12 +74,12 @@ static void SetupStdHandles(bool ignore_hup)
 static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 {
 	char buf[64] = {};
-	snprintf(buf, sizeof(buf) - 1, "\x1b_far2l%d\x07\x1b[5n", enable ? 1 : 0);
+	snprintf(buf, sizeof(buf) - 1, "\x1b_far2l%d\x07\x1b[5n\r\n", enable ? 1 : 0);
 	if (write(fdout, buf, strlen(buf)) != (ssize_t)strlen(buf))
 		return false;
 
 	std::string s;
-	for (;;) {
+	for (bool status_replied = false; !status_replied;) {
 		fd_set fds, fde;
 		FD_ZERO(&fds);
 		FD_ZERO(&fde);
@@ -92,10 +95,24 @@ static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 		if (read(fdin, &c, 1) <= 0)
 			break;
 		s+= c;
-		if (s.find("\x1b[0n") != std::string::npos // staus ok..
-		|| s.find("\x1b\x1b") != std::string::npos // ..or terminal doesnt know about status and user in panic
+		if (s.find("\x1b\x1b") != std::string::npos // ..if terminal doesnt report status and user in panic
 		|| s.find_first_of("\r\n") != std::string::npos) {
 			break;
+		}
+
+		// status reply typically looks like "\x1b[0n"
+		// but parse anything that is "\x1b[???n" where ??? is empty or sequence of nubers with ;
+		for (size_t p = s.find("\x1b["); p != std::string::npos; p = s.find("\x1b[", p + 1)) {
+			size_t e = s.find('n', p + 1);
+			if (e != std::string::npos) {
+				status_replied = true;
+				for (size_t i = p + 2; i < e; ++i) {
+					if (!isdigit(s[i]) && s[i] != ';') {
+						status_replied = false;
+					}
+				}
+				if (status_replied) break;
+			}
 		}
 	}
 
@@ -104,10 +121,14 @@ static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
-	bool tty = false, far2l_tty = false, help = false;
+	bool tty = false, far2l_tty = false, nodetect = false, help = false;
+
 	for (int i = 0; i < argc; ++i) {
-		if (strcmp(argv[i], "--tty") == 0) {
+		if (strstr(argv[i], "--tty") == argv[i]) {
 			tty = true;
+
+		} else if (strstr(argv[i], "--nodetect") == argv[i]) {
+			nodetect = true;
 
 		} else if (strcmp(argv[i], "/?") == 0 || strcmp(argv[i], "--help") == 0){
 			help = true;
@@ -120,14 +141,16 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	fcntl(std_out, F_SETFD, FD_CLOEXEC);
 
 	struct termios ts = {};
-	int r = tcgetattr(std_out, &ts);
-	if (r == 0) {
-		struct termios ts_ne = ts;
-		cfmakeraw(&ts_ne);
-		if (tcsetattr( std_out, TCSADRAIN, &ts_ne ) == 0) {
-			far2l_tty = NegotiateFar2lTTY(std_in, std_out, true);
-			if (!far2l_tty)
-				tcsetattr( std_out, TCSADRAIN, &ts);
+	if (!nodetect) {
+		int r = tcgetattr(std_out, &ts);
+		if (r == 0) {
+			struct termios ts_ne = ts;
+			cfmakeraw(&ts_ne);
+			if (tcsetattr( std_out, TCSADRAIN, &ts_ne ) == 0) {
+				far2l_tty = NegotiateFar2lTTY(std_in, std_out, true);
+				if (!far2l_tty)
+					tcsetattr( std_out, TCSADRAIN, &ts);
+			}
 		}
 	}
 		
@@ -147,12 +170,17 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	SudoAskpassServer askpass_srv(&askass_impl);
 
 	int result = -1;
+#ifndef NOWX
 	if (!tty) {
 		if (!WinPortMainWX(argc, argv, AppMain, &result) ) {
 			fprintf(stderr, "Cannot use WX backend\n");
 			tty = true;
 		}
 	}
+#else
+	tty = true;
+#endif
+
 	if (tty) {
 		if (!WinPortMainTTY(std_in, std_out, far2l_tty, argc, argv, AppMain, &result)) {
 			fprintf(stderr, "Cannot use TTY backend\n");

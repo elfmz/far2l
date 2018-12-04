@@ -17,9 +17,9 @@ class VTFar2lExtensios
 	std::string _tmp_input_event;
 	IVTAnsiCommands *_ansi_commands;
 
-	std::set<std::string> _alloweds;
+	std::set<std::string> _autheds;
 
-	bool ClipboardAuthorize(std::string client_id);
+	char ClipboardAuthorize(const std::string &client_id);
 
 	bool IsAllowedClipboardRead();
 	void AllowClipboardRead(bool prolong);

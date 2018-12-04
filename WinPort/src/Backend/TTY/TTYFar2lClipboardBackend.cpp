@@ -11,7 +11,7 @@ TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interracto
 
 	int fd = open(InMyConfig("tty_clipboard/me").c_str(), O_RDWR|O_CREAT, 0600);
 	ssize_t r = 0;
-	char buf[0x30] = {};
+	char buf[0x40] = {};
 	if (fd != -1) {
 		r = read(fd, buf, sizeof(buf));
 	}
@@ -76,13 +76,11 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 			case 1:
 				return true;
 
-/*
 			case -1:
 				if (!_fallback_backend)
 					_fallback_backend = new FSClipboardBackend;
 
 				return _fallback_backend->OnClipboardOpen();
-*/
 
 			default: ;
 		}

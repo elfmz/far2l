@@ -91,14 +91,17 @@ cd build
 ```
 _with make:_
 ``` sh
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ``` 
 _or with ninja_
 ``` sh
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -G Ninja ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
+
+To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no
+
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.

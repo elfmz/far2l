@@ -658,11 +658,15 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCo
 		return out;
 	}
 	
-	virtual void OnInputResized(const INPUT_RECORD &ir) //called from worker thread
+	virtual void OnTerminalResized()
 	{
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+	}
 
+	virtual void OnInputResized(const INPUT_RECORD &ir) //called from worker thread
+	{
+		OnTerminalResized();
 		_last_window_info_ir = ir;
 	}
 	

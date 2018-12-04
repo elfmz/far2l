@@ -1257,7 +1257,7 @@ void PluginManager::Configure(int StartPos)
 				MenuItemNumber=0;
 				LoadIfCacheAbsent();
 				FARString strHotKey, strRegKey, strValue, strName;
-				PluginInfo Info={0};
+				PluginInfo Info{};
 
 				for (int I=0; I<PluginsCount; I++)
 				{
@@ -1424,7 +1424,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 				PluginList.SetPosition(-1,-1,0,0);
 				LoadIfCacheAbsent();
 				FARString strHotKey, strRegKey, strValue, strName;
-				PluginInfo Info={0};
+				PluginInfo Info{};
 
 				for (int I=0; I<PluginsCount; I++)
 				{
@@ -1684,10 +1684,10 @@ bool PluginManager::SetHotKeyDialog(
 	*/
 	DialogDataEx PluginDlgData[]=
 	{
-		DI_DOUBLEBOX,3,1,60,4,0,0,MSG(MPluginHotKeyTitle),
-		DI_TEXT,5,2,0,2,0,0,MSG(MPluginHotKey),
-		DI_FIXEDIT,5,3,5,3,0,DIF_FOCUS|DIF_DEFAULT,L"",
-		DI_TEXT,8,3,58,3,0,0,DlgPluginTitle,
+		{DI_DOUBLEBOX,3,1,60,4,{},0,MSG(MPluginHotKeyTitle)},
+		{DI_TEXT,5,2,0,2,{},0,MSG(MPluginHotKey)},
+		{DI_FIXEDIT,5,3,5,3,{},DIF_FOCUS|DIF_DEFAULT,L""},
+		{DI_TEXT,8,3,58,3,{},0,DlgPluginTitle}
 	};
 	MakeDialogItemsEx(PluginDlgData,PluginDlg);
 	GetRegKey(RegKey,RegValueName,PluginDlg[2].strData,L"");
@@ -2093,7 +2093,7 @@ void PluginManager::GetCustomData(FileListItem *ListItem)
 	{
 		Plugin *pPlugin = PluginsData[i];
 
-		wchar_t *CustomData = NULL;
+		wchar_t *CustomData = nullptr;
 
 		if (pPlugin->HasGetCustomData() && pPlugin->GetCustomData(FilePath.CPtr(), &CustomData))
 		{

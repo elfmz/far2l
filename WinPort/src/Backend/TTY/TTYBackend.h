@@ -38,6 +38,10 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
 
+	COORD _largest_window_size;
+	std::atomic<bool> _largest_window_size_ready;
+
+
 	struct Far2lInterractData
 	{
 		Event evnt;

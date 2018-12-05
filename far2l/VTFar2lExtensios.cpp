@@ -350,6 +350,13 @@ void VTFar2lExtensios::OnInterract_ChangeCursorHeigth(StackSerializer &stk_ser)
 	}
 }
 
+void VTFar2lExtensios::OnInterract_GetLargestWindowSize(StackSerializer &stk_ser)
+{
+	COORD sz = WINPORT(GetLargestConsoleWindowSize)(NULL);
+	stk_ser.Clear();
+	stk_ser.PushPOD(sz);
+}
+
 void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 {
 	const char code = stk_ser.PopChar();
@@ -376,6 +383,10 @@ void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 
 		case 'h':
 			OnInterract_ChangeCursorHeigth(stk_ser);
+		break;
+
+		case 'w':
+			OnInterract_GetLargestWindowSize(stk_ser);
 		break;
 
 		default:

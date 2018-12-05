@@ -10,6 +10,6 @@ class Event
 	bool _done;
 
 public:
-	bool Wait();
+	void Wait();
 	void Signal();
 };

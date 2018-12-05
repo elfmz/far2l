@@ -1,6 +1,6 @@
 #include "Event.h"
 
-bool Event::Wait()
+void Event::Wait()
 {
 	std::unique_lock<std::mutex> lock(_mutex);
 	while (!_done) {

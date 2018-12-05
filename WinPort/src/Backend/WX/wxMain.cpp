@@ -200,7 +200,7 @@ protected:
 	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
-	
+
 private:
 	void CheckForResizePending();
 	void CheckPutText2CLip();

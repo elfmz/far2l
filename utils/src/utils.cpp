@@ -7,6 +7,15 @@
 #include "ConvertUTF.h"
 #include <errno.h>
 
+#if __FreeBSD__
+# include <malloc_np.h>
+#elif __APPLE__
+# include <malloc/malloc.h>
+#else
+# include <malloc.h>
+#endif
+
+
 //TODO: Implement convertion according to locale set, but not only UTF8
 //NB: Routines here should not change or preserve result of WINPORT(GetLastError)
 
@@ -390,4 +399,15 @@ bool TranslateInstallPath_Share2Lib(std::string &path)
 bool isCombinedUTF32(wchar_t c)
 {
 	return c >= 0x0300 && c <= 0x036F;
+}
+
+size_t GetMallocSize(void *p)
+{
+#ifdef _WIN32
+	return _msize(p);
+#elif defined(__APPLE__)
+	return malloc_size(p);
+#else
+	return malloc_usable_size(p);
+#endif
 }

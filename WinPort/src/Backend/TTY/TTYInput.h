@@ -18,6 +18,6 @@ class TTYInput
 	void OnBufUpdated();
 
 public:
-	TTYInput();
+	TTYInput(ITTYInputSpecialSequenceHandler *handler);
 	void OnChar(char c);
 };

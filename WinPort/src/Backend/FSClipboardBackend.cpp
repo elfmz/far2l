@@ -1,11 +1,3 @@
-#if __FreeBSD__
-# include <malloc_np.h>
-#elif __APPLE__
-# include <malloc/malloc.h>
-#else
-# include <malloc.h>
-#endif
-
 #include "FSClipboardBackend.h"
 #include <utils.h>
 #include <base64.h>
@@ -63,13 +55,8 @@ void *FSClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	char str_format[64]; sprintf(str_format, "0x%x", format);
 
-#ifdef _WIN32
-	size_t len = _msize(data);
-#elif defined(__APPLE__)
-	size_t len = malloc_size(data);
-#else
-	size_t len = malloc_usable_size(data);
-#endif
+	size_t len = GetMallocSize(data);
+
 	std::string str = base64_encode( (const unsigned char*)data, len);
 
 	str.insert(0, "#");

@@ -225,7 +225,8 @@ struct VTAnsiState
 static CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
 static VTAnsiState g_saved_state;
 static std::mutex g_vt_ansi_mutex;
-IVTAnsiCommands *g_vt_ansi_commands = nullptr;
+IVTShell *g_vt_shell = nullptr;
+static std::string g_title;
 
 static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 
@@ -365,6 +366,15 @@ static int   nCharInBuffer;
 static WCHAR ChBuffer[BUFFER_SIZE];
 static WCHAR ChPrev;
 static BOOL  fWrapped;
+
+
+static void ApplyConsoleTitle()
+{
+	std::wstring title(1, L'[');
+	title+= StrMB2Wide(g_title);
+	title+= L']';
+	WINPORT(SetConsoleTitle)(title.c_str() );
+}
 
 //-----------------------------------------------------------------------------
 //   FlushBuffer()
@@ -520,8 +530,8 @@ void SendSequence( const char *seq )
 		return;
 	
 	fprintf(stderr, "VT: SendSequence - '%s'\n", seq);
-	if (g_vt_ansi_commands) {
-		g_vt_ansi_commands->WriteRawInput(seq);
+	if (g_vt_shell) {
+		g_vt_shell->InjectInput(seq);
 		return;
 	}
 
@@ -704,8 +714,8 @@ void InterpretEscSeq( void )
 					break;
 
 				case 1:
-					if (g_vt_ansi_commands)
-						g_vt_ansi_commands->OnKeypadChange((suffix == 'h') ? 1 : 0);
+					if (g_vt_shell)
+						g_vt_shell->OnKeypadChange((suffix == 'h') ? 1 : 0);
 					break;
 
 				default:
@@ -727,9 +737,15 @@ void InterpretEscSeq( void )
 			for (i = 0; i < es_argc; i++) {
 				if (30 <= es_argv[i] && es_argv[i] <= 37) {
 					ansiState.foreground = es_argv[i] - 30;
+				} else if (90 <= es_argv[i] && es_argv[i] <= 97) {
+					ansiState.foreground = es_argv[i] - 90;
+
 				} else if (40 <= es_argv[i] && es_argv[i] <= 47) {
 					ansiState.background = es_argv[i] - 40;
-				} else if (es_argv[i] == 38 || es_argv[i] == 48) {
+				} else if (100 <= es_argv[i] && es_argv[i] <= 107) {
+					ansiState.background = es_argv[i] - 100;
+
+ 				} else if (es_argv[i] == 38 || es_argv[i] == 48) {
 					// This is technically incorrect, but it's what xterm does, so
 					// that's what we do.  According to T.416 (ISO 8613-6), there is
 					// only one parameter, which is divided into elements.  So where
@@ -1166,12 +1182,12 @@ void InterpretEscSeq( void )
 			if (es_argc != 1) return; // ESC[n == ESC[0n -> ignored
 			switch (es_argv[0]) {
 			case 5:		// ESC[5n Report status
-				SendSequence( "\33[0n" ); // "OK"
+				SendSequence( "\x1b[0n" ); // "OK"
 				return;
 
 			case 6: {	// ESC[6n Report cursor position
 				char buf[64] = {0};
-				sprintf( buf, "\33[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
+				sprintf( buf, "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
 				SendSequence( buf );
 			}
 			return;
@@ -1183,15 +1199,13 @@ void InterpretEscSeq( void )
 		case 't':                 // ESC[#t Window manipulation
 			if (es_argc != 1) return;
 			if (es_argv[0] == 21) {	// ESC[21t Report xterm window's title
-				TCHAR buf[MAX_PATH*2] = {0};
-				WINPORT(GetConsoleTitle)( buf, ARRAYSIZE(buf) - 1 );
 				std::string seq;
-				seq.reserve(wcslen(buf) + 8);
+				seq.reserve(g_title.size() + 8);
 				// Too bad if it's too big or fails.
 				seq+= ESC;
 				seq+= ']';
 				seq+= 'l';
-				seq+= Wide2MB(buf);
+				seq+= g_title;
 				seq+= ESC;
 				seq+= '\\';
 				SendSequence( seq.c_str() );
@@ -1229,7 +1243,8 @@ void InterpretEscSeq( void )
 
 		if (es_argc == 1 && (es_argv[0] == 0 || // ESC]0;titleST - icon (ignored) &
 		                     es_argv[0] == 2)) { // ESC]2;titleST - window
-			WINPORT(SetConsoleTitle)( MB2Wide(Pt_arg).c_str() );
+			g_title = Pt_arg;
+			ApplyConsoleTitle();
 		}
 	}
 }
@@ -1248,7 +1263,7 @@ static struct AttrStack : std::vector<AttrStackEntry > {} g_attr_stack;
 static void InterpretControlString()
 {
 	FlushBuffer();
-	if (prefix == '_' && g_vt_ansi_commands) {//Application Program Command
+	if (prefix == '_') {//Application Program Command
 		if (strstr(Pt_arg, "set-blank=") == Pt_arg)  {
 			blank_character = Pt_arg[10] ? Pt_arg[10] : L' ';
 
@@ -1269,11 +1284,8 @@ static void InterpretControlString()
 				g_attr_stack.pop_back();
 			}
 
-		} else {
-			int r = g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
-			char reply[64] = {0};
-			sprintf( reply, "%c_%d%c", ESC, r, BEL);
-			SendSequence(reply);
+		} else if (g_vt_shell) {
+			g_vt_shell->OnApplicationProtocolCommand(Pt_arg);
 		}
 	}
 	Pt_len = 0;
@@ -1530,10 +1542,10 @@ static void ResetState()
 }
 
 
-VTAnsi::VTAnsi(IVTAnsiCommands *ansi_commands)
+VTAnsi::VTAnsi(IVTShell *vt_shell)
 {
 	g_vt_ansi_mutex.lock();	
-	g_vt_ansi_commands = ansi_commands;
+	g_vt_shell = vt_shell;
 	ResetState();
 	g_saved_state.InitFromConsole(NULL);
 	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
@@ -1548,7 +1560,7 @@ VTAnsi::~VTAnsi()
 	VTLog::Stop();
 	g_saved_state.ApplyToConsole(NULL);
 	WINPORT(FlushConsoleInputBuffer)(NULL);
-	g_vt_ansi_commands = nullptr;
+	g_vt_shell = nullptr;
 	g_vt_ansi_mutex.unlock();
 }
 
@@ -1571,7 +1583,16 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 	delete state;
 }
 
-void VTAnsi::Reset()
+void VTAnsi::OnStart(const char *title)
+{
+	TCHAR buf[MAX_PATH*2] = {0};
+	WINPORT(GetConsoleTitle)( buf, ARRAYSIZE(buf) - 1 );
+	_saved_title = buf;
+	g_title = title;
+	ApplyConsoleTitle();
+}
+
+void VTAnsi::OnStop()
 {
 	g_alternative_screen_buffer.Reset();
 	g_saved_state.ApplyToConsole(NULL, false);
@@ -1579,6 +1600,7 @@ void VTAnsi::Reset()
 	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
 	_buf.clear();
+	WINPORT(SetConsoleTitle)( _saved_title.c_str());
 }
 
 void VTAnsi::Write(const char *str, size_t len)

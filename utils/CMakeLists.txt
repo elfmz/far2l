@@ -4,12 +4,15 @@ project(utils)
 find_package(PkgConfig REQUIRED)
 
 set(SOURCES
+  src/SavedScreen.cpp
   src/SharedResource.cpp
   src/KeyFileHelper.cpp
   src/utils.cpp
   src/InMy.cpp
   src/ZombieControl.cpp
   src/base64.cpp
+  src/Event.cpp
+  src/StackSerializer.cpp
   src/ConvertUTF.c
   src/crc64.c
   src/ini.c

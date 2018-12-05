@@ -2,12 +2,16 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <exception>
 #include <sys/ioctl.h>
 #include "utils.h"
+#include "CheckedCast.hpp"
 #include "WinPortHandle.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "TTYBackend.h"
+#include "TTYFar2lClipboardBackend.h"
+#include "../FSClipboardBackend.h"
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
@@ -15,10 +19,13 @@ extern ConsoleInput g_winport_con_in;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
-TTYBackend::TTYBackend(int std_in, int std_out) :
+TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty) :
 	_stdin(std_in),
-	_stdout(std_out)
+	_stdout(std_out),
+	_far2l_tty(far2l_tty)
 {
+	_largest_window_size_ready = false;
+
 	memset(&_ts, 0 , sizeof(_ts));
 	if (pipe_cloexec(_kickass) == -1) {
 		_kickass[0] = _kickass[1] = -1;
@@ -87,7 +94,12 @@ bool TTYBackend::Startup()
 
 void TTYBackend::WriterThread()
 {
-	_clipboard_backend = std::make_shared<FSClipboardBackend>();
+	if (_far2l_tty) {
+		IFar2lInterractor *interractor = this;
+		_clipboard_backend = std::make_shared<TTYFar2lClipboardBackend>(interractor);
+	} else {
+		_clipboard_backend = std::make_shared<FSClipboardBackend>();
+	}
 
 	try {
 		TTYOutput tty_out(_stdout);
@@ -118,6 +130,12 @@ void TTYBackend::WriterThread()
 			if (ae.flags.output)
 				DispatchOutput(tty_out);
 
+			if (ae.flags.title_changed)
+				tty_out.ChangeTitle(StrWide2MB(g_winport_con_out.GetTitle()));
+
+			if (ae.flags.far2l_interract)
+				DispatchFar2lInterract(tty_out);
+
 			tty_out.Flush();
 		}
 
@@ -136,7 +154,8 @@ void TTYBackend::WriterThread()
 void TTYBackend::ReaderThread()
 {
 	try {
-		TTYInput tty_in;
+		TTYInput tty_in(this);
+
 		fd_set fds, fde;
 		while (!_exiting) {
 			int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
@@ -217,9 +236,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 
 	_cur_output.resize(_cur_width * _cur_height);
 
-	COORD data_size = {(SHORT)_cur_width, (SHORT)_cur_height};
+	COORD data_size = {CheckedCast<SHORT>(_cur_width), CheckedCast<SHORT>(_cur_height) };
 	COORD data_pos = {0, 0};
-	SMALL_RECT screen_rect = {0, 0, (SHORT)(_cur_width - 1), (SHORT)(_cur_height - 1)};
+	SMALL_RECT screen_rect = {0, 0, CheckedCast<SHORT>(_cur_width - 1), CheckedCast<SHORT>(_cur_height - 1)};
 	g_winport_con_out.Read(&_cur_output[0], data_size, data_pos, screen_rect);
 
 #if 1
@@ -256,7 +275,50 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	bool cursor_visible = false;
 	COORD cursor_pos = g_winport_con_out.GetCursor(cursor_height, cursor_visible);
 	tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
-	tty_out.ChangeCursor(cursor_visible, cursor_height);
+	tty_out.ChangeCursor(cursor_visible);
+
+	if (_far2l_cursor_height != (int)(unsigned int)cursor_height && _far2l_tty) {
+		_far2l_cursor_height = (int)(unsigned int)cursor_height;
+
+		StackSerializer stk_ser;
+		stk_ser.PushPOD(cursor_height);
+		stk_ser.PushPOD('h');
+		stk_ser.PushPOD((uint8_t)0); // zero ID means not expecting reply
+		tty_out.SendFar2lInterract(stk_ser);
+	}
+}
+
+
+void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
+{
+	Far2lInterractV queued;
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		queued.swap(_far2l_interracts_queued);
+	}
+
+	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+
+	for (auto & i : queued) {
+		uint8_t id = 0;
+		if (i->waited) {
+			if (_far2l_interracts_sent.size() >= 0xff) {
+				i->stk_ser.Clear();
+				i->evnt.Signal();
+				return;
+			}
+			for (;;) {
+				id = ++_far2l_interracts_sent._id_counter;
+				if (id && _far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
+			}
+		}
+		i->stk_ser.PushPOD(id);
+
+		if (i->waited)
+			_far2l_interracts_sent.emplace(id, i);
+
+		tty_out.SendFar2lInterract(i->stk_ser);
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -264,7 +326,8 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 void TTYBackend::KickAss()
 {
 	unsigned char c = 0;
-	write(_kickass[1], &c, 1);
+	if (write(_kickass[1], &c, 1) != 1)
+		perror("write(_kickass[1]");
 }
 
 void TTYBackend::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
@@ -281,8 +344,9 @@ void TTYBackend::OnConsoleOutputResized()
 
 void TTYBackend::OnConsoleOutputTitleChanged()
 {
-	//tty_out.SetWindowTitle(g_winport_con_out.GetTitle());
-	//ESC]2;titleST
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	_ae.flags.title_changed = true;
+	_async_cond.notify_all();
 }
 
 void TTYBackend::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
@@ -291,12 +355,33 @@ void TTYBackend::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 
 COORD TTYBackend::OnConsoleGetLargestWindowSize()
 {
-	COORD out = {0x100, 0x100};
+	COORD out = {CheckedCast<SHORT>(_cur_width ? _cur_width : 0x10), CheckedCast<SHORT>(_cur_height ? _cur_height : 0x10)};
+
+	if (_far2l_tty) {
+		if (_largest_window_size_ready)
+			return _largest_window_size;
+
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushPOD('w');
+			if (Far2lInterract(stk_ser, true)) {
+				stk_ser.PopPOD(out);
+				_largest_window_size = out;
+				_largest_window_size_ready = true;
+			}
+		} catch(std::exception &) {; }
+	}
+
 	return out;
 }
 
 void TTYBackend::OnConsoleAdhocQuickEdit()
 {
+	try {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD('e');
+		Far2lInterract(stk_ser, false);
+	} catch (std::exception &) {}
 }
 
 DWORD TTYBackend::OnConsoleSetTweaks(DWORD tweaks)
@@ -310,6 +395,40 @@ void TTYBackend::OnConsoleChangeFont()
 
 void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
+	try {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD((maximized ? 'M' : 'm'));
+		Far2lInterract(stk_ser, false);
+	} catch (std::exception &) {}
+}
+
+bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
+{
+	if (!_far2l_tty)
+		return false;
+
+	std::shared_ptr<Far2lInterractData> pfi = std::make_shared<Far2lInterractData>();
+	pfi->stk_ser.swap(stk_ser);
+	pfi->waited = wait;
+
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_far2l_interracts_queued.emplace_back(pfi);
+		_ae.flags.far2l_interract = 1;
+		_async_cond.notify_all();
+	}
+
+	if (!wait)
+		return true;
+
+	pfi->evnt.Wait();
+
+	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+	if (_exiting)
+		return false;
+
+	pfi->stk_ser.swap(stk_ser);
+	return true;
 }
 
 void TTYBackend::OnConsoleExit()
@@ -327,6 +446,89 @@ bool TTYBackend::OnConsoleIsActive()
 	return true;
 }
 
+void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
+{
+	try {
+		INPUT_RECORD ir = {0};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
+
+		uint32_t key;
+		stk_ser.PopPOD(key);
+		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)key;
+		stk_ser.PopPOD(ir.Event.KeyEvent.dwControlKeyState);
+		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualScanCode);
+		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualKeyCode);
+		stk_ser.PopPOD(ir.Event.KeyEvent.wRepeatCount);
+		g_winport_con_in.Enqueue(&ir, 1);
+
+	} catch (std::exception &) {
+		fprintf(stderr, "OnFar2lKey: broken args!\n");
+	}
+}
+
+void TTYBackend::OnFar2lMouse(StackSerializer &stk_ser)
+{
+	try {
+		INPUT_RECORD ir = {0};
+		ir.EventType = MOUSE_EVENT;
+
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwEventFlags);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwControlKeyState);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwButtonState);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.Y);
+		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.X);
+
+		g_winport_con_in.Enqueue(&ir, 1);
+
+	} catch (std::exception &) {
+		fprintf(stderr, "OnFar2lMouse: broken args!\n");
+	}
+}
+
+void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
+{
+	if (!_far2l_tty) {
+		fprintf(stderr, "Far2lEvent unexpected!\n");
+		return;
+	}
+
+	char code = stk_ser.PopChar();
+
+	switch (code) {
+		case 'M':
+			OnFar2lMouse(stk_ser);
+			break;
+
+		case 'K': case 'k':
+			OnFar2lKey(code == 'K', stk_ser);
+			break;
+
+		default:
+			fprintf(stderr, "Far2lEvent unknown code=0x%x!\n", (unsigned int)(unsigned char)code);
+	}
+}
+
+void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
+{
+	if (!_far2l_tty) {
+		fprintf(stderr, "OnFar2lReply: unexpected!\n");
+		return;
+	}
+
+	uint8_t id;
+	stk_ser.PopPOD(id);
+
+	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+
+	auto i = _far2l_interracts_sent.find(id);
+	if (i != _far2l_interracts_sent.end()) {
+		auto pfi = i->second;
+		_far2l_interracts_sent.erase(i);
+		pfi->stk_ser.swap(stk_ser);
+		pfi->evnt.Signal();
+	}
+}
 
 static void sigwinch_handler(int)
 {
@@ -336,9 +538,9 @@ static void sigwinch_handler(int)
 }
 
 
-bool WinPortMainTTY(int std_in, int std_out, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend  vtb(std_in, std_out);
+	TTYBackend  vtb(std_in, std_out, far2l_tty);
 	signal(SIGWINCH,  sigwinch_handler);
 	if (!vtb.Startup()) {
 		return false;

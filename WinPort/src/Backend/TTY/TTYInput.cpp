@@ -7,7 +7,8 @@
 
 extern ConsoleInput g_winport_con_in;
 
-TTYInput::TTYInput()
+TTYInput::TTYInput(ITTYInputSpecialSequenceHandler *handler) :
+	_parser(handler)
 {
 }
 

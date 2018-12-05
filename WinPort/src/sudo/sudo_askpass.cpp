@@ -7,12 +7,6 @@
 #include <dlfcn.h>
 
 #include "sudo_private.h"
-#include <wx/wx.h>
-#include <wx/display.h>
-#include <wx/textdlg.h>
-#include <wx/evtloop.h>
-#include <wx/apptrait.h>
-
 #include "sudo_askpass_ipc.h"
 
 extern "C" int sudo_main_askpass()

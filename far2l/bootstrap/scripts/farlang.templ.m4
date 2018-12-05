@@ -19855,13 +19855,13 @@ MBadFileSizeFormat
 
 MFarTitleAddonsAdmin
 l:
-"Администратор"
-"Administrator"
-upd:"Administrator"
-upd:"Administrator"
-upd:"Administrator"
-upd:"Administrator"
-"Administrador"
+"root"
+"root"
+upd:"root"
+upd:"root"
+upd:"root"
+upd:"root"
+"root"
 
 MAdminRequired
 "Нужно обладать правами администратора"
@@ -20015,6 +20015,60 @@ upd:"Do not ask again in the current session"
 upd:"Do not ask again in the current session"
 upd:"Do not ask again in the current session"
 "No preguntar nuevamente en la sesión actual"
+
+MTerminalClipboardAccessTitle
+"Доступ к буферу обмена"
+"Clipboard access"
+upd:"Clipboard access"
+upd:"Clipboard access"
+upd:"Clipboard access"
+upd:"Clipboard access"
+upd:"Clipboard access"
+
+MTerminalClipboardAccessText
+"Укажите как это приложение может пользоваться буфером обмена."
+"Please choose how this terminal application may use clipboard."
+upd:"Please choose how this terminal application may use clipboard."
+upd:"Please choose how this terminal application may use clipboard."
+upd:"Please choose how this terminal application may use clipboard."
+upd:"Please choose how this terminal application may use clipboard."
+upd:"Please choose how this terminal application may use clipboard."
+
+MTerminalClipboardAccessBlock
+"&Заблокировать"
+"&Block attempt"
+upd:"&Block attempt"
+upd:"&Block attempt"
+upd:"&Block attempt"
+upd:"&Block attempt"
+upd:"&Block attempt"
+
+MTerminalClipboardAccessTemporaryRemote
+"&Удаленный буфер"
+"&Remote clipboard"
+upd:"&Remote clipboard"
+upd:"&Remote clipboard"
+upd:"&Remote clipboard"
+upd:"&Remote clipboard"
+upd:"&Remote clipboard"
+
+MTerminalClipboardAccessTemporaryLocal
+"&Общий буфер"
+"&Share clipboard"
+upd:"&Share clipboard"
+upd:"&Share clipboard"
+upd:"&Share clipboard"
+upd:"&Share clipboard"
+upd:"&Share clipboard"
+
+MTerminalClipboardAccessAlwaysLocal
+"Общий буфер всег&да"
+"Share clipboard &always"
+upd:"Share clipboard &always"
+upd:"Share clipboard &always"
+upd:"Share clipboard &always"
+upd:"Share clipboard &always"
+upd:"Share clipboard &always"
 
 #Must be the last
 MNewFileName

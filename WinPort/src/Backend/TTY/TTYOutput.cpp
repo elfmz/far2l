@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <assert.h>
+#include <base64.h>
 #include <string>
 #include "TTYOutput.h"
 #include "ConvertUTF.h"
@@ -97,15 +98,11 @@ void TTYOutput::SetScreenBuffer(bool alternate)
 	Format("\x1b[?1049%c", alternate ? 'h' : 'l');
 }
 
-void TTYOutput::ChangeCursor(bool visible, unsigned char height, bool force)
+void TTYOutput::ChangeCursor(bool visible, bool force)
 {
 	if (force || _cursor.visible != visible) {
 		Format("\x1b[?25%c", visible ? 'h' : 'l');
 		_cursor.visible = visible;
-	}
-	if (force || _cursor.height != height) {
-		//TODO: far2l VT extension
-		_cursor.height = height;
 	}
 }
 
@@ -183,4 +180,21 @@ void TTYOutput::ChangeMouse(bool enable)
 	Format("\x1b[?1000%c", enable ? 'h' : 'l');
 	Format("\x1b[?1001%c", enable ? 'h' : 'l');
 	Format("\x1b[?1002%c", enable ? 'h' : 'l');
+}
+
+void TTYOutput::ChangeTitle(std::string title)
+{
+	for (auto &c : title) {
+		if (c == '\x07') c = '_';
+	}
+	Format("\x1b]2;%s\x07", title.c_str());
+}
+
+void TTYOutput::SendFar2lInterract(const StackSerializer &stk_ser)
+{
+	std::string request = "\x1b_far2l:";
+	request+= stk_ser.ToBase64();
+	request+= '\x07';
+
+	Write(request.c_str(), request.size());
 }

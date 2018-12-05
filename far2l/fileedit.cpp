@@ -135,15 +135,15 @@ bool dlgOpenEditor(FARString &strFileName, UINT &codepage)
 	const wchar_t *HistoryName=L"NewEdit";
 	DialogDataEx EditDlgData[]=
 	{
-		DI_DOUBLEBOX,3,1,72,8,0,0,MSG(MEditTitle),
-		DI_TEXT,     5,2, 0,2,0,0,MSG(MEditOpenCreateLabel),
-		DI_EDIT,     5,3,70,3,(DWORD_PTR)HistoryName,DIF_FOCUS|DIF_HISTORY|DIF_EDITEXPAND|DIF_EDITPATH,L"",
-		DI_TEXT,     3,4, 0,4,0,DIF_SEPARATOR,L"",
-		DI_TEXT,     5,5, 0,5,0,0,MSG(MEditCodePage),
-		DI_COMBOBOX,25,5,70,5,0,DIF_DROPDOWNLIST|DIF_LISTWRAPMODE|DIF_LISTAUTOHIGHLIGHT,L"",
-		DI_TEXT,     3,6, 0,6,0,DIF_SEPARATOR,L"",
-		DI_BUTTON,   0,7, 0,7,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk),
-		DI_BUTTON,   0,7, 0,7,0,DIF_CENTERGROUP,MSG(MCancel),
+		{DI_DOUBLEBOX,3,1,72,8,{},0,MSG(MEditTitle)},
+		{DI_TEXT,     5,2, 0,2,{},0,MSG(MEditOpenCreateLabel)},
+		{DI_EDIT,     5,3,70,3,{(DWORD_PTR)HistoryName},DIF_FOCUS|DIF_HISTORY|DIF_EDITEXPAND|DIF_EDITPATH,L""},
+		{DI_TEXT,     3,4, 0,4,{},DIF_SEPARATOR,L""},
+		{DI_TEXT,     5,5, 0,5,{},0,MSG(MEditCodePage)},
+		{DI_COMBOBOX,25,5,70,5,{},DIF_DROPDOWNLIST|DIF_LISTWRAPMODE|DIF_LISTAUTOHIGHLIGHT,L""},
+		{DI_TEXT,     3,6, 0,6,{},DIF_SEPARATOR,L""},
+		{DI_BUTTON,   0,7, 0,7,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
+		{DI_BUTTON,   0,7, 0,7,{},DIF_CENTERGROUP,MSG(MCancel)}
 	};
 	MakeDialogItemsEx(EditDlgData,EditDlg);
 	EditDlg[ID_OE_FILENAME].strData = strFileName;
@@ -268,22 +268,22 @@ bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage,bool 
 	const wchar_t *HistoryName=L"NewEdit";
 	DialogDataEx EditDlgData[]=
 	{
-		DI_DOUBLEBOX,3,1,72,15,0,0,MSG(MEditTitle),
-		DI_TEXT,5,2,0,2,0,0,MSG(MEditSaveAs),
-		DI_EDIT,5,3,70,3,(DWORD_PTR)HistoryName,DIF_FOCUS|DIF_HISTORY|DIF_EDITEXPAND|DIF_EDITPATH,L"",
-		DI_TEXT,3,4,0,4,0,DIF_SEPARATOR,L"",
-		DI_TEXT,5,5,0,5,0,0,MSG(MEditCodePage),
-		DI_COMBOBOX,25,5,70,5,0,DIF_DROPDOWNLIST|DIF_LISTWRAPMODE|DIF_LISTAUTOHIGHLIGHT,L"",
-		DI_CHECKBOX,5,6,0,6,AddSignature,DIF_DISABLE,MSG(MEditAddSignature),
-		DI_TEXT,3,7,0,7,0,DIF_SEPARATOR,L"",
-		DI_TEXT,5,8,0,8,0,0,MSG(MEditSaveAsFormatTitle),
-		DI_RADIOBUTTON,5,9,0,9,0,DIF_GROUP,MSG(MEditSaveOriginal),
-		DI_RADIOBUTTON,5,10,0,10,0,0,MSG(MEditSaveDOS),
-		DI_RADIOBUTTON,5,11,0,11,0,0,MSG(MEditSaveUnix),
-		DI_RADIOBUTTON,5,12,0,12,0,0,MSG(MEditSaveMac),
-		DI_TEXT,3,13,0,13,0,DIF_SEPARATOR,L"",
-		DI_BUTTON,0,14,0,14,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk),
-		DI_BUTTON,0,14,0,14,0,DIF_CENTERGROUP,MSG(MCancel),
+		{DI_DOUBLEBOX,3,1,72,15,{},0,MSG(MEditTitle)},
+		{DI_TEXT,5,2,0,2,{},0,MSG(MEditSaveAs)},
+		{DI_EDIT,5,3,70,3,{(DWORD_PTR)HistoryName},DIF_FOCUS|DIF_HISTORY|DIF_EDITEXPAND|DIF_EDITPATH,L""},
+		{DI_TEXT,3,4,0,4,{},DIF_SEPARATOR,L""},
+		{DI_TEXT,5,5,0,5,{},0,MSG(MEditCodePage)},
+		{DI_COMBOBOX,25,5,70,5,{},DIF_DROPDOWNLIST|DIF_LISTWRAPMODE|DIF_LISTAUTOHIGHLIGHT,L""},
+		{DI_CHECKBOX,5,6,0,6,{AddSignature},DIF_DISABLE,MSG(MEditAddSignature)},
+		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
+		{DI_TEXT,5,8,0,8,{},0,MSG(MEditSaveAsFormatTitle)},
+		{DI_RADIOBUTTON,5,9,0,9,{},DIF_GROUP,MSG(MEditSaveOriginal)},
+		{DI_RADIOBUTTON,5,10,0,10,{},0,MSG(MEditSaveDOS)},
+		{DI_RADIOBUTTON,5,11,0,11,{},0,MSG(MEditSaveUnix)},
+		{DI_RADIOBUTTON,5,12,0,12,{},0,MSG(MEditSaveMac)},
+		{DI_TEXT,3,13,0,13,{},DIF_SEPARATOR,L""},
+		{DI_BUTTON,0,14,0,14,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
+		{DI_BUTTON,0,14,0,14,{},DIF_CENTERGROUP,MSG(MCancel)}
 	};
 	MakeDialogItemsEx(EditDlgData,EditDlg);
 	EditDlg[ID_SF_FILENAME].strData = (/*Flags.Check(FFILEEDIT_SAVETOSAVEAS)?strFullFileName:strFileName*/strFileName);
@@ -459,10 +459,10 @@ void FileEditor::Init(
 		private:
 			Editor *editor;
 		public:
-			SmartLock() {editor=nullptr;};
-			~SmartLock() {if (editor) editor->Unlock();};
+			SmartLock() {editor=nullptr;}
+			~SmartLock() {if (editor) editor->Unlock();}
 
-			void Set(Editor *e) {editor=e; editor->Lock();};
+			void Set(Editor *e) {editor=e; editor->Lock();}
 	};
 	SmartLock __smartlock;
 	SysErrorCode=0;
@@ -860,7 +860,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 		{
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
 			{
-				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER,OPEN_EDITOR,0); // printman
+				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER,OPEN_EDITOR,nullptr); // printman
 				return TRUE;
 			}
 
@@ -2768,7 +2768,7 @@ bool FileEditor::LoadFromCache(EditorCacheParams *pp)
 		strCacheName+=strFullFileName;
 	}
 
-	PosCache PosCache={0};
+	PosCache PosCache{};
 
 	if (Opt.EdOpt.SaveShortPos)
 	{
@@ -2789,13 +2789,13 @@ bool FileEditor::LoadFromCache(EditorCacheParams *pp)
 		pp->LeftPos=static_cast<int>(PosCache.Param[3]);
 		pp->CodePage=static_cast<UINT>(PosCache.Param[4]);
 
-		if ((int)pp->Line < 0) pp->Line=0;
+		if (pp->Line < 0) pp->Line=0;
 
-		if ((int)pp->ScreenLine < 0) pp->ScreenLine=0;
+		if (pp->ScreenLine < 0) pp->ScreenLine=0;
 
-		if ((int)pp->LinePos < 0) pp->LinePos=0;
+		if (pp->LinePos < 0) pp->LinePos=0;
 
-		if ((int)pp->LeftPos < 0) pp->LeftPos=0;
+		if (pp->LeftPos < 0) pp->LeftPos=0;
 
 		if ((int)pp->CodePage < 0) pp->CodePage=0;
 
@@ -2813,7 +2813,7 @@ void FileEditor::SaveToCache()
 
 	if (!Flags.Check(FFILEEDIT_OPENFAILED))   //????
 	{
-		PosCache poscache = {0};
+		PosCache poscache{};
 		poscache.Param[0] = cp.Line;
 		poscache.Param[1] = cp.ScreenLine;
 		poscache.Param[2] = cp.LinePos;

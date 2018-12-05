@@ -126,6 +126,7 @@ vtansi.cpp
 PluginA.cpp
 execute_oscmd.cpp
 vtshell_translation.cpp
+VTFar2lExtensios.cpp
 vtlog.cpp
 vtcompletor.cpp
 UCD/CharDistribution.cpp

@@ -1,16 +1,10 @@
 #include <stdlib.h>
 #include <map>
 #include <algorithm>
-#if __FreeBSD__
-# include <malloc_np.h>
-#elif __APPLE__
-# include <malloc/malloc.h>
-#else
-# include <malloc.h>
-#endif
 #include <wx/wx.h>
 #include <wx/display.h>
 #include <wx/clipbrd.h>
+#include <utils.h>
 
 #include "wxClipboardBackend.h"
 #include "CallInMain.h"
@@ -136,13 +130,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		return CallInMain<void *>(fn);
 	}
 		
-#ifdef _WIN32
-	size_t len = _msize(data);
-#elif defined(__APPLE__)
-	size_t len = malloc_size(data);
-#else
-	size_t len = malloc_usable_size(data);
-#endif
+	size_t len = GetMallocSize(data);
 	fprintf(stderr, "SetClipboardData: %u\n", format);
 	if (!g_wx_data_to_clipboard) {
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
@@ -225,3 +213,4 @@ UINT wxClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 
 	return g_wx_custom_formats.Register(lpszFormat);
 }
+

@@ -1,19 +1,20 @@
 #pragma once
 #include <string>
 
-struct IVTAnsiCommands
+struct IVTShell
 {
-	virtual int OnApplicationProtocolCommand(const char *str) = 0;
-	virtual void WriteRawInput(const char *str) = 0;
+	virtual void OnApplicationProtocolCommand(const char *str) = 0;
+	virtual void InjectInput(const char *str) = 0;
 	virtual void OnKeypadChange(unsigned char keypad) = 0;
+	virtual void OnTerminalResized() = 0;
 };
 
 class VTAnsi
 {
 	std::string _buf;
-	std::wstring _ws;
+	std::wstring _ws, _saved_title;
 	public:
-	VTAnsi(IVTAnsiCommands *ansi_commands);
+	VTAnsi(IVTShell *vt_shell);
 	~VTAnsi();
 	
 	void Write(const char *str, size_t len);
@@ -21,7 +22,8 @@ class VTAnsi
 	struct VTAnsiState *Suspend();
 	void Resume(struct VTAnsiState* state);
 
-	void Reset();
+	void OnStart(const char *title);
+	void OnStop();
 };
 
 class VTAnsiSuspend

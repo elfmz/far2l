@@ -2262,10 +2262,12 @@ or the drive selection menu (if the Network plugin is not available).
   #Far window title addons#
   Дополнительная информация, выводимая в заголовке окна консоли.
 Может содержать любой текст, включая следующие переменные:
-  #%Ver# - версия FAR;
-  #%Build# - номер сборки FAR;
-  #%Platform# - архитектура FAR;
-  #%Admin# - слово "Администратор", если FAR запущен от имени администратора, иначе пустая строка.
+  #%Ver# - version of FAR;
+  #%Build# - build number of FAR;
+  #%Platform# - FAR platform architecture;
+  #%Host# - host name of the machine where FAR is running;
+  #%User# - user name under wich FAR is running;
+  #%Admin# - name "Root", if FAR runs under root priviledges, otherwise - empty string.
 
 @DialogSettings
 $ #Settings dialog: dialogs#

@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <vector>
 #include <WinCompat.h>
+#include <StackSerializer.h>
 
 class TTYOutput
 {
@@ -11,7 +12,6 @@ class TTYOutput
 	{
 		unsigned int y = -1, x = -1;
 		bool visible = false;
-		unsigned char height = 0;
 	} _cursor;
 
 	struct Attributes
@@ -41,9 +41,12 @@ public:
 	void Flush();
 	void SetScreenBuffer(bool alternate);
 
-	void ChangeCursor(bool visible, unsigned char height, bool force = false);
+	void ChangeCursor(bool visible, bool force = false);
 	void MoveCursor(unsigned int y, unsigned int x, bool force = false);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
 	void ChangeKeypad(bool app);
 	void ChangeMouse(bool enable);
+	void ChangeTitle(std::string title);
+
+	void SendFar2lInterract(const StackSerializer &stk_ser);
 };

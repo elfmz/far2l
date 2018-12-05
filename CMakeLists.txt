@@ -11,6 +11,20 @@ if(NOT CMAKE_INSTALL_PREFIX)
 endif()
 
 
+if (${USEWX} MATCHES "no")
+	set(USEWX_INCS "")
+	set(USEWX_LIBS "")
+	set(USEWX_CXX_FLAGS "")
+else()
+	set(USEWX "yes")
+	find_package(wxWidgets REQUIRED net core base)
+	include(${wxWidgets_USE_FILE})
+
+	set(USEWX_INCS ${wxWidgets_INCLUDE_DIRS})
+	set(USEWX_LIBS ${wxWidgets_LIBRARIES})
+	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
+endif()
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address

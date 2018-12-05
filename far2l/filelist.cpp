@@ -3325,12 +3325,12 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	const wchar_t *HistoryName=L"Masks";
 	DialogDataEx SelectDlgData[]=
 	{
-		DI_DOUBLEBOX,3,1,51,5,0,0,L"",
-		DI_EDIT,5,2,49,2,(DWORD_PTR)HistoryName,DIF_FOCUS|DIF_HISTORY,L"",
-		DI_TEXT,0,3,0,3,0,DIF_SEPARATOR,L"",
-		DI_BUTTON,0,4,0,4,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk),
-		DI_BUTTON,0,4,0,4,0,DIF_CENTERGROUP,MSG(MSelectFilter),
-		DI_BUTTON,0,4,0,4,0,DIF_CENTERGROUP,MSG(MCancel),
+		{DI_DOUBLEBOX,3,1,51,5,{},0,L""},
+		{DI_EDIT,5,2,49,2,{(DWORD_PTR)HistoryName},DIF_FOCUS|DIF_HISTORY,L""},
+		{DI_TEXT,0,3,0,3,{},DIF_SEPARATOR,L""},
+		{DI_BUTTON,0,4,0,4,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
+		{DI_BUTTON,0,4,0,4,{},DIF_CENTERGROUP,MSG(MSelectFilter)},
+		{DI_BUTTON,0,4,0,4,{},DIF_CENTERGROUP,MSG(MCancel)}
 	};
 	MakeDialogItemsEx(SelectDlgData,SelectDlg);
 	FileFilter Filter(this,FFT_SELECT);
@@ -3796,7 +3796,7 @@ void FileList::CopyFiles()
 
 void FileList::CopyNames(bool FillPathName, bool UNC)
 {
-	OpenPluginInfo Info={0};
+	OpenPluginInfo Info{};
 	wchar_t *CopyData=nullptr;
 	long DataSize=0;
 	FARString strSelName, strQuotedName;
@@ -4078,28 +4078,28 @@ void FileList::SelectSortMode()
 {
 	MenuDataEx SortMenu[]=
 	{
-		MSG(MMenuSortByName),LIF_SELECTED,KEY_CTRLF3,
-		MSG(MMenuSortByExt),0,KEY_CTRLF4,
-		MSG(MMenuSortByWrite),0,KEY_CTRLF5,
-		MSG(MMenuSortBySize),0,KEY_CTRLF6,
-		MSG(MMenuUnsorted),0,KEY_CTRLF7,
-		MSG(MMenuSortByCreation),0,KEY_CTRLF8,
-		MSG(MMenuSortByAccess),0,KEY_CTRLF9,
-		MSG(MMenuSortByChange),0,0,
-		MSG(MMenuSortByDiz),0,KEY_CTRLF10,
-		MSG(MMenuSortByOwner),0,KEY_CTRLF11,
-		MSG(MMenuSortByCompressedSize),0,0,
-		MSG(MMenuSortByNumLinks),0,0,
-		MSG(MMenuSortByNumStreams),0,0,
-		MSG(MMenuSortByStreamsSize),0,0,
-		MSG(MMenuSortByFullName),0,0,
-		MSG(MMenuSortByCustomData),0,0,
-		L"",LIF_SEPARATOR,0,
-		MSG(MMenuSortUseNumeric),0,0,
-		MSG(MMenuSortUseCaseSensitive),0,0,
-		MSG(MMenuSortUseGroups),0,KEY_SHIFTF11,
-		MSG(MMenuSortSelectedFirst),0,KEY_SHIFTF12,
-		MSG(MMenuSortDirectoriesFirst),0,0,
+		{MSG(MMenuSortByName),LIF_SELECTED,KEY_CTRLF3},
+		{MSG(MMenuSortByExt),0,KEY_CTRLF4},
+		{MSG(MMenuSortByWrite),0,KEY_CTRLF5},
+		{MSG(MMenuSortBySize),0,KEY_CTRLF6},
+		{MSG(MMenuUnsorted),0,KEY_CTRLF7},
+		{MSG(MMenuSortByCreation),0,KEY_CTRLF8},
+		{MSG(MMenuSortByAccess),0,KEY_CTRLF9},
+		{MSG(MMenuSortByChange),0,0},
+		{MSG(MMenuSortByDiz),0,KEY_CTRLF10},
+		{MSG(MMenuSortByOwner),0,KEY_CTRLF11},
+		{MSG(MMenuSortByCompressedSize),0,0},
+		{MSG(MMenuSortByNumLinks),0,0},
+		{MSG(MMenuSortByNumStreams),0,0},
+		{MSG(MMenuSortByStreamsSize),0,0},
+		{MSG(MMenuSortByFullName),0,0},
+		{MSG(MMenuSortByCustomData),0,0},
+		{L"",LIF_SEPARATOR,0},
+		{MSG(MMenuSortUseNumeric),0,0},
+		{MSG(MMenuSortUseCaseSensitive),0,0},
+		{MSG(MMenuSortUseGroups),0,KEY_SHIFTF11},
+		{MSG(MMenuSortSelectedFirst),0,KEY_SHIFTF12},
+		{MSG(MMenuSortDirectoriesFirst),0,0}
 	};
 	static int SortModes[]=
 	{

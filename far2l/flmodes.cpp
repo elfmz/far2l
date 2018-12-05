@@ -75,16 +75,16 @@ void FileList::SetFilePanelModes()
 	{
 		MenuDataEx ModeListMenu[]=
 		{
-			MSG(MEditPanelModesBrief),0,0,
-			MSG(MEditPanelModesMedium),0,0,
-			MSG(MEditPanelModesFull),0,0,
-			MSG(MEditPanelModesWide),0,0,
-			MSG(MEditPanelModesDetailed),0,0,
-			MSG(MEditPanelModesDiz),0,0,
-			MSG(MEditPanelModesLongDiz),0,0,
-			MSG(MEditPanelModesOwners),0,0,
-			MSG(MEditPanelModesLinks),0,0,
-			MSG(MEditPanelModesAlternative),0,0,
+			{MSG(MEditPanelModesBrief),0,0},
+			{MSG(MEditPanelModesMedium),0,0},
+			{MSG(MEditPanelModesFull),0,0},
+			{MSG(MEditPanelModesWide),0,0},
+			{MSG(MEditPanelModesDetailed),0,0},
+			{MSG(MEditPanelModesDiz),0,0},
+			{MSG(MEditPanelModesLongDiz),0,0},
+			{MSG(MEditPanelModesOwners),0,0},
+			{MSG(MEditPanelModesLinks),0,0},
+			{MSG(MEditPanelModesAlternative),0,0}
 		};
 		int ModeNumber;
 		ModeListMenu[CurMode].SetSelect(1);
@@ -126,25 +126,25 @@ void FileList::SetFilePanelModes()
 		} ;
 		DialogDataEx ModeDlgData[]=
 		{
-			DI_DOUBLEBOX, 3, 1,72,15,0,0,ModeListMenu[ModeNumber].Name,
-			DI_TEXT,      5, 2, 0, 2,0,0,MSG(MEditPanelModeTypes),
-			DI_EDIT,      5, 3,35, 3,0,DIF_FOCUS,L"",
-			DI_TEXT,      5, 4, 0, 4,0,0,MSG(MEditPanelModeWidths),
-			DI_EDIT,      5, 5,35, 5,0,0,L"",
-			DI_TEXT,     38, 2, 0, 2,0,0,MSG(MEditPanelModeStatusTypes),
-			DI_EDIT,     38, 3,70, 3,0,0,L"",
-			DI_TEXT,     38, 4, 0, 4,0,0,MSG(MEditPanelModeStatusWidths),
-			DI_EDIT,     38, 5,70, 5,0,0,L"",
-			DI_TEXT,      3, 6, 0, 6,0,DIF_SEPARATOR,MSG(MEditPanelReadHelp),
-			DI_CHECKBOX,  5, 7, 0, 7,0,0,MSG(MEditPanelModeFullscreen),
-			DI_CHECKBOX,  5, 8, 0, 8,0,0,MSG(MEditPanelModeAlignExtensions),
-			DI_CHECKBOX,  5, 9, 0, 9,0,0,MSG(MEditPanelModeAlignFolderExtensions),
-			DI_CHECKBOX,  5,10, 0,10,0,0,MSG(MEditPanelModeFoldersUpperCase),
-			DI_CHECKBOX,  5,11, 0,11,0,0,MSG(MEditPanelModeFilesLowerCase),
-			DI_CHECKBOX,  5,12, 0,12,0,0,MSG(MEditPanelModeUpperToLowerCase),
-			DI_TEXT,      3,13, 0,13,0,DIF_SEPARATOR,L"",
-			DI_BUTTON,    0,14, 0,14,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk),
-			DI_BUTTON,    0,14, 0,14,0,DIF_CENTERGROUP,MSG(MCancel),
+			{DI_DOUBLEBOX, 3, 1,72,15,{},0,ModeListMenu[ModeNumber].Name},
+			{DI_TEXT,      5, 2, 0, 2,{},0,MSG(MEditPanelModeTypes)},
+			{DI_EDIT,      5, 3,35, 3,{},DIF_FOCUS,L""},
+			{DI_TEXT,      5, 4, 0, 4,{},0,MSG(MEditPanelModeWidths)},
+			{DI_EDIT,      5, 5,35, 5,{},0,L""},
+			{DI_TEXT,     38, 2, 0, 2,{},0,MSG(MEditPanelModeStatusTypes)},
+			{DI_EDIT,     38, 3,70, 3,{},0,L""},
+			{DI_TEXT,     38, 4, 0, 4,{},0,MSG(MEditPanelModeStatusWidths)},
+			{DI_EDIT,     38, 5,70, 5,{},0,L""},
+			{DI_TEXT,      3, 6, 0, 6,{},DIF_SEPARATOR,MSG(MEditPanelReadHelp)},
+			{DI_CHECKBOX,  5, 7, 0, 7,{},0,MSG(MEditPanelModeFullscreen)},
+			{DI_CHECKBOX,  5, 8, 0, 8,{},0,MSG(MEditPanelModeAlignExtensions)},
+			{DI_CHECKBOX,  5, 9, 0, 9,{},0,MSG(MEditPanelModeAlignFolderExtensions)},
+			{DI_CHECKBOX,  5,10, 0,10,{},0,MSG(MEditPanelModeFoldersUpperCase)},
+			{DI_CHECKBOX,  5,11, 0,11,{},0,MSG(MEditPanelModeFilesLowerCase)},
+			{DI_CHECKBOX,  5,12, 0,12,{},0,MSG(MEditPanelModeUpperToLowerCase)},
+			{DI_TEXT,      3,13, 0,13,{},DIF_SEPARATOR,L""},
+			{DI_BUTTON,    0,14, 0,14,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
+			{DI_BUTTON,    0,14, 0,14,{},DIF_CENTERGROUP,MSG(MCancel)}
 		};
 		MakeDialogItemsEx(ModeDlgData,ModeDlg);
 		int ExitCode;

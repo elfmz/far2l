@@ -225,7 +225,7 @@ struct VTAnsiState
 static CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
 static VTAnsiState g_saved_state;
 static std::mutex g_vt_ansi_mutex;
-IVTAnsiCommands *g_vt_ansi_commands = nullptr;
+IVTShell *g_vt_shell = nullptr;
 static std::string g_title;
 
 static HANDLE	  hConOut = NULL;		// handle to CONOUT$
@@ -530,8 +530,8 @@ void SendSequence( const char *seq )
 		return;
 	
 	fprintf(stderr, "VT: SendSequence - '%s'\n", seq);
-	if (g_vt_ansi_commands) {
-		g_vt_ansi_commands->InjectInput(seq);
+	if (g_vt_shell) {
+		g_vt_shell->InjectInput(seq);
 		return;
 	}
 
@@ -714,8 +714,8 @@ void InterpretEscSeq( void )
 					break;
 
 				case 1:
-					if (g_vt_ansi_commands)
-						g_vt_ansi_commands->OnKeypadChange((suffix == 'h') ? 1 : 0);
+					if (g_vt_shell)
+						g_vt_shell->OnKeypadChange((suffix == 'h') ? 1 : 0);
 					break;
 
 				default:
@@ -1284,8 +1284,8 @@ static void InterpretControlString()
 				g_attr_stack.pop_back();
 			}
 
-		} else if (g_vt_ansi_commands) {
-			g_vt_ansi_commands->OnApplicationProtocolCommand(Pt_arg);
+		} else if (g_vt_shell) {
+			g_vt_shell->OnApplicationProtocolCommand(Pt_arg);
 		}
 	}
 	Pt_len = 0;
@@ -1542,10 +1542,10 @@ static void ResetState()
 }
 
 
-VTAnsi::VTAnsi(IVTAnsiCommands *ansi_commands)
+VTAnsi::VTAnsi(IVTShell *vt_shell)
 {
 	g_vt_ansi_mutex.lock();	
-	g_vt_ansi_commands = ansi_commands;
+	g_vt_shell = vt_shell;
 	ResetState();
 	g_saved_state.InitFromConsole(NULL);
 	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
@@ -1560,7 +1560,7 @@ VTAnsi::~VTAnsi()
 	VTLog::Stop();
 	g_saved_state.ApplyToConsole(NULL);
 	WINPORT(FlushConsoleInputBuffer)(NULL);
-	g_vt_ansi_commands = nullptr;
+	g_vt_shell = nullptr;
 	g_vt_ansi_mutex.unlock();
 }
 

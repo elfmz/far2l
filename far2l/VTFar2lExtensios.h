@@ -15,7 +15,7 @@ class VTFar2lExtensios
 	int _clipboard_read_allowance_prolongs = 0;
 
 	std::string _tmp_input_event;
-	IVTAnsiCommands *_ansi_commands;
+	IVTShell *_vt_shell;
 
 	std::set<std::string> _autheds;
 
@@ -37,7 +37,7 @@ class VTFar2lExtensios
 
 	void WriteInputEvent(const StackSerializer &stk_ser);
 public:
-	VTFar2lExtensios(IVTAnsiCommands *ansi_commands);
+	VTFar2lExtensios(IVTShell *vt_shell);
 	~VTFar2lExtensios();
 
 	bool OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent);

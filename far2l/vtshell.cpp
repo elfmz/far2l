@@ -414,7 +414,7 @@ public:
 	}
 };
 	
-class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTAnsiCommands
+class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
 	VTAnsi _vta;
 	VTInputReader _input_reader;

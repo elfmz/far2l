@@ -24,6 +24,8 @@ TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty) :
 	_stdout(std_out),
 	_far2l_tty(far2l_tty)
 {
+	_largest_window_size_ready = false;
+
 	memset(&_ts, 0 , sizeof(_ts));
 	if (pipe_cloexec(_kickass) == -1) {
 		_kickass[0] = _kickass[1] = -1;
@@ -354,6 +356,22 @@ void TTYBackend::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 COORD TTYBackend::OnConsoleGetLargestWindowSize()
 {
 	COORD out = {CheckedCast<SHORT>(_cur_width ? _cur_width : 0x10), CheckedCast<SHORT>(_cur_height ? _cur_height : 0x10)};
+
+	if (_far2l_tty) {
+		if (_largest_window_size_ready)
+			return _largest_window_size;
+
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushPOD('w');
+			if (Far2lInterract(stk_ser, true)) {
+				stk_ser.PopPOD(out);
+				_largest_window_size = out;
+				_largest_window_size_ready = true;
+			}
+		} catch(std::exception &) {; }
+	}
+
 	return out;
 }
 

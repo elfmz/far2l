@@ -64,8 +64,8 @@ static void ListFileAppend(const std::string &filename, std::string line)
 
 ///
 
-VTFar2lExtensios::VTFar2lExtensios(IVTAnsiCommands *ansi_commands)
-	: _ansi_commands(ansi_commands)
+VTFar2lExtensios::VTFar2lExtensios(IVTShell *vt_shell)
+	: _vt_shell(vt_shell)
 {
 }
 
@@ -81,7 +81,7 @@ void VTFar2lExtensios::WriteInputEvent(const StackSerializer &stk_ser)
 	_tmp_input_event = "\x1b_f2l";
 	_tmp_input_event+= stk_ser.ToBase64();
 	_tmp_input_event+= '\x07';
-	_ansi_commands->InjectInput(_tmp_input_event.c_str());
+	_vt_shell->InjectInput(_tmp_input_event.c_str());
 }
 
 bool VTFar2lExtensios::IsAllowedClipboardRead()
@@ -197,7 +197,7 @@ char VTFar2lExtensios::ClipboardAuthorize(const std::string &client_id)
 			&lines_wz[0], sizeof(lines_wz) / sizeof(lines_wz[0]));
 	}
 
-	_ansi_commands->OnTerminalResized(); // window could resize during dialog box processing
+	_vt_shell->OnTerminalResized(); // window could resize during dialog box processing
 
 	switch (choice) {
 		case 3: // Always allow access to local clipboard

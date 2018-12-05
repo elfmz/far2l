@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-struct IVTAnsiCommands
+struct IVTShell
 {
 	virtual void OnApplicationProtocolCommand(const char *str) = 0;
 	virtual void InjectInput(const char *str) = 0;
@@ -14,7 +14,7 @@ class VTAnsi
 	std::string _buf;
 	std::wstring _ws, _saved_title;
 	public:
-	VTAnsi(IVTAnsiCommands *ansi_commands);
+	VTAnsi(IVTShell *vt_shell);
 	~VTAnsi();
 	
 	void Write(const char *str, size_t len);

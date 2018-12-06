@@ -556,13 +556,13 @@ size_t MkStrFTime(FARString &strDest, const wchar_t *Fmt)
 
 int64_t FileTimeDifference(const FILETIME *a, const FILETIME* b)
 {
-	LARGE_INTEGER A={a->dwLowDateTime, (LONG)a->dwHighDateTime},B={b->dwLowDateTime, (LONG)b->dwHighDateTime};
+	LARGE_INTEGER A={{a->dwLowDateTime, (LONG)a->dwHighDateTime}},B={{b->dwLowDateTime, (LONG)b->dwHighDateTime}};
 	return A.QuadPart - B.QuadPart;
 }
 
 uint64_t FileTimeToUI64(const FILETIME *ft)
 {
-	ULARGE_INTEGER A={ft->dwLowDateTime,ft->dwHighDateTime};
+	ULARGE_INTEGER A={{ft->dwLowDateTime,ft->dwHighDateTime}};
 	return A.QuadPart;
 }
 
@@ -604,7 +604,7 @@ void GetFileDateAndTime(const wchar_t *Src,LPWORD Dst,size_t Count,int Separator
 void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int DateFormat, int DateSeparator, int TimeSeparator, bool bRelative)
 {
 	WORD DateN[3]={0},TimeN[4]={0};
-	SYSTEMTIME st={0};
+	SYSTEMTIME st{};
 	// Преобразуем введённые пользователем дату и время
 	GetFileDateAndTime(CDate,DateN,ARRAYSIZE(DateN),DateSeparator);
 	GetFileDateAndTime(CTime,TimeN,ARRAYSIZE(TimeN),TimeSeparator);
@@ -668,7 +668,7 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 	}
 	else
 	{
-		FILETIME lft={0};
+		FILETIME lft{};
 
 		if (WINPORT(SystemTimeToFileTime)(&st,&lft))
 		{
@@ -808,7 +808,7 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 
 void ConvertRelativeDate(const FILETIME &ft,FARString &strDaysText,FARString &strTimeText)
 {
-	ULARGE_INTEGER time={ft.dwLowDateTime,ft.dwHighDateTime};
+	ULARGE_INTEGER time={{ft.dwLowDateTime,ft.dwHighDateTime}};
 	
 	UINT64 ms = (time.QuadPart/=10000)%1000;
 	UINT64 s = (time.QuadPart/=1000)%60;

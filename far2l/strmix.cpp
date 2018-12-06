@@ -176,7 +176,7 @@ static FARString escapeSpace(const wchar_t* str) {
 		return "''";
 	FARString result;
 	for (const wchar_t *cur = str; *cur; ++cur) {
-		if (wcschr(Opt.strQuotedSymbols, *cur) != NULL)
+		if (wcschr(Opt.strQuotedSymbols, *cur) != nullptr)
 			result.Append('\\');
 		result.Append(*cur);
 	}
@@ -645,7 +645,7 @@ void UnquoteExternal(FARString &strStr)
 
 #define UNIT_COUNT 7 // byte, kilobyte, megabyte, gigabyte, terabyte, petabyte, exabyte.
 
-static wchar_t UnitStr[UNIT_COUNT][2][MAX_UNITSTR_SIZE]={0};
+static wchar_t UnitStr[UNIT_COUNT][2][MAX_UNITSTR_SIZE]={};
 
 void PrepareUnitStr()
 {

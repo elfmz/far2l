@@ -410,7 +410,7 @@ bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 		return false;
 
 	std::shared_ptr<Far2lInterractData> pfi = std::make_shared<Far2lInterractData>();
-	pfi->stk_ser.swap(stk_ser);
+	pfi->stk_ser.Swap(stk_ser);
 	pfi->waited = wait;
 
 	{
@@ -429,7 +429,7 @@ bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 	if (_exiting)
 		return false;
 
-	pfi->stk_ser.swap(stk_ser);
+	pfi->stk_ser.Swap(stk_ser);
 	return true;
 }
 
@@ -527,7 +527,7 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 	if (i != _far2l_interracts_sent.end()) {
 		auto pfi = i->second;
 		_far2l_interracts_sent.erase(i);
-		pfi->stk_ser.swap(stk_ser);
+		pfi->stk_ser.Swap(stk_ser);
 		pfi->evnt.Signal();
 	}
 }

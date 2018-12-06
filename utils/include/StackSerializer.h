@@ -21,7 +21,7 @@ public:
 
 	void Clear();
 
-	void swap(StackSerializer &other);
+	void Swap(StackSerializer &other);
 
 	////////////
 

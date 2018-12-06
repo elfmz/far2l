@@ -74,7 +74,7 @@ void FileList::PushPlugin(HANDLE hPlugin,const wchar_t *HostFile)
 
 int FileList::PopPlugin(int EnableRestoreViewMode)
 {
-	OpenPluginInfo Info={0};
+	OpenPluginInfo Info{};
 
 	if (PluginsList.Empty())
 	{
@@ -106,7 +106,7 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 
 		if (PStack->Modified)
 		{
-			PluginPanelItem PanelItem={0};
+			PluginPanelItem PanelItem{};
 			FARString strSaveDir;
 			apiGetCurrentDirectory(strSaveDir);
 
@@ -283,7 +283,7 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 		{
 			DWORD Size=*(DWORD *)fi->UserData;
 			pi->UserData=(DWORD_PTR)data;
-			memcpy((void *)pi->UserData,(void *)fi->UserData,Size);
+			memcpy((void *)pi->UserData,(const void *)fi->UserData,Size);
 			data+=Size;
 		}
 		else
@@ -523,7 +523,7 @@ void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
 					CtrlObject->Plugins.PutFiles(DestPanel->hPlugin,&PanelItem,1,FALSE,OPM_SILENT|OPM_DESCR);
 				else if (Delete)
 				{
-					PluginPanelItem pi={0};
+					PluginPanelItem pi{};
 					pi.FindData.lpwszFileName = xf_wcsdup(DestPanel->strPluginDizName);
 					CtrlObject->Plugins.DeleteFiles(DestPanel->hPlugin,&pi,1,OPM_SILENT);
 					xf_free(pi.FindData.lpwszFileName);

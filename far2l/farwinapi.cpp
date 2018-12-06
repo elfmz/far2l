@@ -158,7 +158,7 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& Find
 
 static bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
 {
-	WIN32_FIND_DATA wfd = {0};
+	WIN32_FIND_DATA wfd{};
 	if (!WINPORT(FindNextFile)(Find, &wfd))
 		return FALSE;
 
@@ -179,7 +179,7 @@ FindFile::FindFile(LPCWSTR Object, bool ScanSymLink, DWORD WinPortFindFlags) :
 
 	WinPortFindFlags|= FIND_FILE_FLAG_NO_CUR_UP;
 
-	WIN32_FIND_DATA wfd = {0};
+	WIN32_FIND_DATA wfd{};
 	Handle = WINPORT(FindFirstFileWithFlags)(strName, &wfd, WinPortFindFlags);
 	if (Handle!=INVALID_HANDLE_VALUE) {
 		TranslateFindFile(wfd, Data);
@@ -681,7 +681,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 	}
 	else if (!wcspbrk(lpwszFileName,L"*?"))
 	{
-		struct stat s = {0};
+		struct stat s{};
 		if (sdc_stat(Wide2MB(lpwszFileName).c_str(), &s)==0) {
 			FindData.Clear();
 			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);

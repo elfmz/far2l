@@ -244,8 +244,7 @@ static char  suffix;			// escape sequence suffix
 static char  suffix2;			// escape sequence secondary suffix
 static int   es_argc;			// escape sequence args count
 static int   es_argv[MAX_ARG]; 	// escape sequence args
-static char  Pt_arg[MAX_PATH*2];	// text parameter for Operating System Command
-static int   Pt_len;
+static std::string os_cmd_arg;	// text parameter for Operating System Command
 static BOOL  shifted;
 static int   screen_top = -1;		// initial window top when cleared
 static TCHAR blank_character = L' ';
@@ -1243,7 +1242,8 @@ void InterpretEscSeq( void )
 
 		if (es_argc == 1 && (es_argv[0] == 0 || // ESC]0;titleST - icon (ignored) &
 		                     es_argv[0] == 2)) { // ESC]2;titleST - window
-			g_title = Pt_arg;
+			g_title.swap(os_cmd_arg);
+			os_cmd_arg.clear();
 			ApplyConsoleTitle();
 		}
 	}
@@ -1260,14 +1260,20 @@ struct AttrStackEntry
 
 static struct AttrStack : std::vector<AttrStackEntry > {} g_attr_stack;
 
+static bool StrStartsWith(const std::string &str, const char *needle)
+{
+	size_t l = strlen(needle);
+	return (str.size() >= l && memcmp(str.c_str(), needle, l) == 0);
+}
+
 static void InterpretControlString()
 {
 	FlushBuffer();
 	if (prefix == '_') {//Application Program Command
-		if (strstr(Pt_arg, "set-blank=") == Pt_arg)  {
-			blank_character = Pt_arg[10] ? Pt_arg[10] : L' ';
+		if (StrStartsWith(os_cmd_arg, "set-blank="))  {
+			blank_character = (os_cmd_arg.size() > 10) ? os_cmd_arg[10] : L' ';
 
-		} else if (strcmp(Pt_arg, "push-attr") == 0)  {
+		} else if (os_cmd_arg == "push-attr")  {
 			CONSOLE_SCREEN_BUFFER_INFO csbi;
 			if (WINPORT(GetConsoleScreenBufferInfo)( hConOut, &csbi ) ) {
 				g_attr_stack.emplace_back(blank_character, csbi.wAttributes);
@@ -1277,7 +1283,7 @@ static void InterpretControlString()
 				}
 			}
 
-		} else if (strcmp(Pt_arg, "pop-attr") == 0)  {
+		} else if (os_cmd_arg == "pop-attr")  {
 			if (!g_attr_stack.empty()) {
 				blank_character = g_attr_stack.back().blank_character;
 				WINPORT(SetConsoleTextAttribute)( hConOut, g_attr_stack.back().attributes );
@@ -1285,10 +1291,12 @@ static void InterpretControlString()
 			}
 
 		} else if (g_vt_shell) {
-			g_vt_shell->OnApplicationProtocolCommand(Pt_arg);
+			g_vt_shell->OnApplicationProtocolCommand(os_cmd_arg.c_str());
 		}
 	}
-	Pt_len = 0;
+	if (os_cmd_arg.capacity() > 0x1000)
+		os_cmd_arg.shrink_to_fit();
+	os_cmd_arg.clear();
 }
 
 static void PartialLineDown()
@@ -1403,15 +1411,15 @@ void ParseAndPrintString( HANDLE hDev,
 				FlushBuffer();
 				prefix = *s;
 				prefix2 = 0;
-				Pt_len = 0;
-				*Pt_arg = '\0';
+				os_cmd_arg.clear();
+				// Pt_len = 0; *Pt_arg = '\0';
 				state = 3;
 			} else if (*s == 'P' ||   // DCS Device Control String
 			           *s == 'X' ||     // SOS Start Of String
 			           *s == '^' ||     // PM  Privacy Message
 			           *s == '_') {     // APC Application Program Command
-				*Pt_arg = '\0';
-				Pt_len = 0;
+				os_cmd_arg.clear();
+				// *Pt_arg = '\0'; Pt_len = 0;
 				prefix = *s;
 				state = 6;
 			} else  {
@@ -1473,13 +1481,22 @@ void ParseAndPrintString( HANDLE hDev,
 		} else if (state == 5 || state == 6) {
 			bool done = false;
 			if ( *s == BEL) {
-				Pt_arg[Pt_len] = '\0';
+				//Pt_arg[Pt_len] = '\0';
 				done = true;
-			} else if (*s == '\\' && Pt_len > 0 && Pt_arg[Pt_len-1] == ESC) {
-				Pt_arg[--Pt_len] = '\0';
+			} else if (*s == '\\' && !os_cmd_arg.empty() && os_cmd_arg[os_cmd_arg.size() - 1] == ESC) {
+				//Pt_arg[--Pt_len] = '\0';
+				os_cmd_arg.resize(os_cmd_arg.size() - 1);
 				done = true;
-			} else if (Pt_len < (int)ARRAYSIZE(Pt_arg)-1)
-				Pt_arg[Pt_len++] = *s;
+			} else try {
+				os_cmd_arg+= *s;
+
+			} catch (std::exception &e) {
+				os_cmd_arg.clear();
+				std::string empty;
+				os_cmd_arg.swap(empty);
+				done = true;
+				fprintf(stderr, "ParseAndPrintString: %s\n", e.what());
+			}
 
 			if (done) {
 				if (state == 6) 
@@ -1535,8 +1552,8 @@ static void ResetState()
 	suffix2 = 0;
 	es_argc = 0;
 	memset(es_argv, 0, sizeof(es_argv));
-	memset(Pt_arg, 0, sizeof(Pt_arg));
-	Pt_len = 0;
+	os_cmd_arg.clear();
+	//memset(Pt_arg, 0, sizeof(Pt_arg)); Pt_len = 0;
 	shifted = 0;
 	screen_top = -1;	
 }

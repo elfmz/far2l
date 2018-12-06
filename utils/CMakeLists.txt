@@ -13,6 +13,7 @@ set(SOURCES
   src/base64.cpp
   src/Event.cpp
   src/StackSerializer.cpp
+  src/ScopeHelpers.cpp
   src/ConvertUTF.c
   src/crc64.c
   src/ini.c

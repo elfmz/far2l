@@ -66,6 +66,7 @@ struct ITTYInputSpecialSequenceHandler
 {
 	virtual void OnFar2lEvent(StackSerializer &stk_ser) = 0;
 	virtual void OnFar2lReply(StackSerializer &stk_ser) = 0;
+	virtual void OnInputBroken() = 0;
 };
 
 class TTYInputSequenceParser

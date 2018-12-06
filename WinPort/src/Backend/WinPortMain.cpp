@@ -2,6 +2,8 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <termios.h> 
+#include <ScopeHelpers.h>
+
 #include "Backend.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
@@ -9,6 +11,7 @@
 #include "PathHelpers.h"
 #include "../sudo/sudo_askpass_ipc.h"
 #include "SudoAskpassImpl.h"
+#include "TTY/TTYRawMode.h"
 
 
 ConsoleOutput g_winport_con_out;
@@ -135,22 +138,19 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		}
 	}
 
-	int std_in = dup(0);
-	int std_out = dup(1);
+	FDScope std_in(dup(0));
+	FDScope std_out(dup(1));
+
 	fcntl(std_in, F_SETFD, FD_CLOEXEC);
 	fcntl(std_out, F_SETFD, FD_CLOEXEC);
 
-	struct termios ts = {};
+	std::unique_ptr<TTYRawMode> tty_raw_mode;
 	if (!nodetect) {
-		int r = tcgetattr(std_out, &ts);
-		if (r == 0) {
-			struct termios ts_ne = ts;
-			cfmakeraw(&ts_ne);
-			if (tcsetattr( std_out, TCSADRAIN, &ts_ne ) == 0) {
-				far2l_tty = NegotiateFar2lTTY(std_in, std_out, true);
-				if (!far2l_tty)
-					tcsetattr( std_out, TCSADRAIN, &ts);
-			}
+		tty_raw_mode.reset(new TTYRawMode(std_out));
+		if (tty_raw_mode->Applied()) {
+			far2l_tty = NegotiateFar2lTTY(std_in, std_out, true);
+			if (!far2l_tty)
+				tty_raw_mode.reset();
 		}
 	}
 		
@@ -187,12 +187,10 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		}
 		if (far2l_tty) {
 			NegotiateFar2lTTY(std_in, std_out, false);
-			tcsetattr( std_out, TCSADRAIN, &ts);
 		}
 	}
 
 	WinPortHandle_FinalizeApp();
-	close(std_in);
-	close(std_out);
+
 	return result;
 }

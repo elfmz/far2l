@@ -10,6 +10,7 @@ class TTYInput
 {
 	std::vector<char> _buf;
 	TTYInputSequenceParser _parser;
+	ITTYInputSpecialSequenceHandler *_handler;
 
 	void PostCharEvent(wchar_t ch);
 
@@ -19,5 +20,5 @@ class TTYInput
 
 public:
 	TTYInput(ITTYInputSpecialSequenceHandler *handler);
-	void OnChar(char c);
+	void OnInput(const char *data, size_t len);
 };

@@ -696,7 +696,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			return true;
 
 		std::lock_guard<std::mutex> lock(_write_term_mutex);
-		return (write(_fd_in, str, len) == (ssize_t)len);
+		while (len) {
+			ssize_t written = write(_fd_in, str, len);
+			if (written <= 0) {
+				perror("WriteTerm - write");
+				return false;
+			}
+			len-= written;
+			str+= written;
+		}
+
+		return true;
 	}
 
 	virtual void OnInputInjected(const std::string &str) //called from worker thread

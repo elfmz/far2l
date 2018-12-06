@@ -171,12 +171,13 @@ void TTYBackend::ReaderThread()
 			}
 
 			if (FD_ISSET(_stdin, &fds)) {
-				char c = 0;
-				if (read(_stdin, &c, 1) <= 0) {
+				char buf[0x1000];
+				ssize_t rd = read(_stdin, buf, sizeof(buf));
+				if (rd <= 0) {
 					throw std::runtime_error("stdin read failed");
 				}
 				//fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
-				tty_in.OnChar(c);
+				tty_in.OnInput(buf, (size_t)rd);
 			}
 
 			if (FD_ISSET(_stdin, &fde)) {
@@ -204,6 +205,7 @@ void TTYBackend::ReaderThread()
 		fprintf(stderr, "ReaderThread: %s <%d>\n", e.what(), errno);
 	}
 	_exiting = true;
+	OnInputBroken();
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -404,7 +406,7 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 
 bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 {
-	if (!_far2l_tty)
+	if (!_far2l_tty || _exiting)
 		return false;
 
 	std::shared_ptr<Far2lInterractData> pfi = std::make_shared<Far2lInterractData>();
@@ -528,6 +530,16 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 		pfi->stk_ser.swap(stk_ser);
 		pfi->evnt.Signal();
 	}
+}
+
+void TTYBackend::OnInputBroken()
+{
+	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+	for (auto &i : _far2l_interracts_sent) {
+		i.second->stk_ser.Clear();
+		i.second->evnt.Signal();
+	}
+	_far2l_interracts_sent.clear();
 }
 
 static void sigwinch_handler(int)

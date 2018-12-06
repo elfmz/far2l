@@ -8,7 +8,7 @@
 extern ConsoleInput g_winport_con_in;
 
 TTYInput::TTYInput(ITTYInputSpecialSequenceHandler *handler) :
-	_parser(handler)
+	_parser(handler), _handler(handler)
 {
 }
 
@@ -65,8 +65,20 @@ void TTYInput::OnBufUpdated()
 	}
 }
 
-void TTYInput::OnChar(char c)
+void TTYInput::OnInput(const char *data, size_t len)
 {
-	_buf.emplace_back(c);
-	OnBufUpdated();
+	if (len) try {
+		_buf.reserve(_buf.size() + len);
+
+		for (size_t i = 0; i < len; ++i)
+			_buf.emplace_back(data[i]);
+
+		OnBufUpdated();
+
+	} catch (std::exception &e) {
+		_buf.clear();
+		_buf.shrink_to_fit();
+		fprintf(stderr, "TTYInput: %s\n", e.what());
+		_handler->OnInputBroken();
+	}
 }

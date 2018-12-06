@@ -9,10 +9,7 @@ public:
 	FDScope(const FDScope &) = delete;
 
 	FDScope(int fd = -1) : _fd(fd) {}
-	~FDScope()
-	{
-		CheckedCloseFD(_fd);
-	}
+	~FDScope();
 
 	bool Valid() const
 	{
@@ -31,9 +28,5 @@ class UnlinkScope
 	std::string _path;
 public:
 	UnlinkScope(const std::string &path) : _path(path) {}
-	~UnlinkScope()
-	{
-		if (!_path.empty())
-			unlink(_path.c_str());
-	}
+	~UnlinkScope();
 };

@@ -45,7 +45,7 @@ void StackSerializer::Clear()
 	_data.clear();
 }
 
-void StackSerializer::swap(StackSerializer &other)
+void StackSerializer::Swap(StackSerializer &other)
 {
 	_data.swap(other._data);
 }

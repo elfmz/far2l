@@ -74,12 +74,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "setattr.hpp"
 #include "udlist.hpp"
 
-const int CHAR_TABLE_SIZE=5;
-const int LIST_DELTA=64;
-const DWORD LIST_INDEX_NONE = static_cast<DWORD>(-1);
+constexpr int CHAR_TABLE_SIZE=5;
+constexpr int LIST_DELTA=64;
+constexpr DWORD LIST_INDEX_NONE = std::numeric_limits<DWORD>::max();
 
-const size_t readBufferSizeA=32768;
-const size_t readBufferSize=(readBufferSizeA*sizeof(wchar_t));
+constexpr size_t readBufferSizeA=32768;
+constexpr size_t readBufferSize=readBufferSizeA*sizeof(wchar_t);
 
 bool AnySetFindList=false;
 

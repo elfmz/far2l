@@ -518,7 +518,7 @@ bool console::ScrollScreenBuffer(int Lines)
 	WINPORT(GetConsoleScreenBufferInfo)(GetOutputHandle(), &csbi);
 	SMALL_RECT ScrollRectangle={0, 0, (SHORT)(csbi.dwSize.X-1), (SHORT)(csbi.dwSize.Y-1)};
 	COORD DestinationOrigin={0,(SHORT)(-Lines)};
-	CHAR_INFO Fill={L' ', FarColorToReal(COL_COMMANDLINEUSERSCREEN)};
+	CHAR_INFO Fill={{L' '}, FarColorToReal(COL_COMMANDLINEUSERSCREEN)};
 	return WINPORT(ScrollConsoleScreenBuffer)(GetOutputHandle(), &ScrollRectangle, nullptr, DestinationOrigin, &Fill)!=FALSE;
 }
 

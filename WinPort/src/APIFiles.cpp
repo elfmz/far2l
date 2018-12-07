@@ -240,7 +240,7 @@ extern "C"
 			return FALSE;
 		lpFileSize->QuadPart = len;
 #else
-		struct stat s = {0};
+		struct stat s{};
 		if (os_call_int(sdc_fstat, wph->fd,  &s) == -1)
 			return FALSE;
 		lpFileSize->QuadPart = s.st_size;
@@ -250,7 +250,7 @@ extern "C"
 
 	DWORD WINPORT(GetFileSize)( HANDLE  hFile, LPDWORD lpFileSizeHigh)
 	{
-		LARGE_INTEGER sz64 = {0};
+		LARGE_INTEGER sz64{};
 		if (!WINPORT(GetFileSizeEx)(hFile, &sz64)) {
 			if (lpFileSizeHigh) *lpFileSizeHigh = 0;
 			return INVALID_FILE_SIZE;
@@ -340,7 +340,7 @@ extern "C"
 
 	DWORD WINPORT(SetFilePointer)( HANDLE hFile, LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod)
 	{
-		LARGE_INTEGER liDistanceToMove, liNewFilePointer = {0};
+		LARGE_INTEGER liDistanceToMove, liNewFilePointer = {};
 		if (lpDistanceToMoveHigh) {
 			liDistanceToMove.LowPart = lDistanceToMove;
 			liDistanceToMove.HighPart = lpDistanceToMoveHigh ? *lpDistanceToMoveHigh : 0;			
@@ -364,7 +364,7 @@ extern "C"
 		if (!wph) {
 			return FALSE;
 		}
-		struct stat s = {0};
+		struct stat s{};
 		if (os_call_int(sdc_fstat, wph->fd, &s) < 0)
 			return FALSE;
 			
@@ -382,7 +382,7 @@ extern "C"
 			return FALSE;
 		}
 
-		struct timespec ts[2] = {0};
+		struct timespec ts[2] = {};
 		if (lpLastAccessTime) {
 			WINPORT(FileTime_Win32ToUnix)(lpLastAccessTime, &ts[0]);
 		}
@@ -414,7 +414,7 @@ extern "C"
 		}
 		
 		if ((s.st_mode & S_IFMT) == S_IFLNK) {
-			struct stat sdst = {0};
+			struct stat sdst{};
 			if (os_call_int(sdc_stat, path, &sdst) == 0) {
 				s = sdst;
 				symattr = FILE_ATTRIBUTE_REPARSE_POINT;
@@ -433,7 +433,7 @@ extern "C"
 
 	DWORD WINPORT(GetFileAttributes)(LPCWSTR lpFileName)
 	{
-		struct stat s = { };
+		struct stat s{};
 		const std::string &path = ConsumeWinPath(lpFileName);
 		
 		DWORD symattr = 0;
@@ -544,7 +544,7 @@ extern "C"
 #ifdef _WIN32
 			_h = INVALID_HANDLE_VALUE;
 #else
-			_d = NULL;
+			_d = nullptr;
 #endif
 		}
 		UnixFindFile(const std::string &root, const std::string &mask, DWORD flags) : _flags(flags)
@@ -861,7 +861,7 @@ extern "C"
 			do
 			{
 				swprintf( p, MAX_PATH - 1 - (p - buffer), formatW, unique );
-				handle = WINPORT(CreateFile)( buffer, GENERIC_WRITE, 0, NULL,
+				handle = WINPORT(CreateFile)( buffer, GENERIC_WRITE, 0, nullptr,
 					CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
 				if (handle != INVALID_HANDLE_VALUE)
 				{  /* We created it */

@@ -3117,7 +3117,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 		{
 			if (!Param) return FALSE;
 
-			KeySequence ks;
+			KeySequence ks{};
 			oldfar::KeySequence *ksA = (oldfar::KeySequence*)Param;
 
 			if (!ksA->Count || !ksA->Sequence) return FALSE;

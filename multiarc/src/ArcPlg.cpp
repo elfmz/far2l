@@ -16,7 +16,7 @@ bool ArcPlugins::AddPluginItem(const char *name,
 				PLUGINSETFARINFO pSetFarInfo,
 				PLUGINGETSFXPOS pGetSFXPos)
 {
-	PluginItem item = { 0 };
+	PluginItem item{};
 	strcpy(item.ModuleName, name); 
 	item.pIsArchive = pIsArchive; 
 	item.pOpenArchive = pOpenArchive; 

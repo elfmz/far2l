@@ -946,7 +946,7 @@ struct FAR_SEARCH_A_CALLBACK_PARAM
 static int WINAPI FarRecursiveSearchA_Callback(const FAR_FIND_DATA *FData,const wchar_t *FullName,void *param)
 {
 	FAR_SEARCH_A_CALLBACK_PARAM* pCallbackParam = static_cast<FAR_SEARCH_A_CALLBACK_PARAM*>(param);
-	WIN32_FIND_DATAA FindData={0};
+	WIN32_FIND_DATAA FindData{};
 	FindData.dwFileAttributes = FData->dwFileAttributes;
 	FindData.ftCreationTime = FData->ftCreationTime;
 	FindData.ftLastAccessTime = FData->ftLastAccessTime;
@@ -2120,7 +2120,7 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 		}
 		case oldfar::DM_LISTUPDATE:
 		{
-			FarListUpdate newui = {0,0};
+			FarListUpdate newui{};
 
 			if (Param2)
 			{
@@ -2137,7 +2137,7 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 		}
 		case oldfar::DM_LISTINSERT:
 		{
-			FarListInsert newli = {0,0};
+			FarListInsert newli{};
 
 			if (Param2)
 			{
@@ -3117,7 +3117,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 		{
 			if (!Param) return FALSE;
 
-			KeySequence ks;
+			KeySequence ks{};
 			oldfar::KeySequence *ksA = (oldfar::KeySequence*)Param;
 
 			if (!ksA->Count || !ksA->Sequence) return FALSE;
@@ -3708,7 +3708,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 		}
 		case oldfar::ECTL_SETPARAM:
 		{
-			EditorSetParameter newsp = {0,0,0,0};
+			EditorSetParameter newsp{};
 
 			if (Param)
 			{

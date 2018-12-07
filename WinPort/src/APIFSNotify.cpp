@@ -105,14 +105,14 @@ class WinPortFSNotify : public WinPortEvent
 	static void *sWatcherProc(void *p)
 	{
 		((WinPortFSNotify *)p)->WatcherProc();
-		return NULL;
+		return nullptr;
 	}
 
 	void WatcherProc()
 	{
 #if defined(__APPLE__) || defined(__FreeBSD__)
 		struct kevent ev = {};
-		int nev = kevent(_fd, &_events[0], _events.size(), &ev, 1, NULL);
+		int nev = kevent(_fd, &_events[0], _events.size(), &ev, 1, nullptr);
 		if (nev > 0) {
 			if (ev.ident != _pipe[0]) {
 				Set();
@@ -122,14 +122,14 @@ class WinPortFSNotify : public WinPortEvent
 		union {
 			struct inotify_event ie;
 			char space[ sizeof(struct inotify_event) + NAME_MAX + 10 ];
-		} buf = { 0 };
+		} buf = {};
 
 		fd_set rfds;
 		for (;;) {
 			FD_ZERO(&rfds);
 			FD_SET(_fd, &rfds);
 			FD_SET(_pipe[0], &rfds);
-			int r = select(std::max(_fd, _pipe[0]) + 1, &rfds, NULL, NULL, NULL);
+			int r = select(std::max(_fd, _pipe[0]) + 1, &rfds, nullptr, nullptr, nullptr);
 			if (!_watching) break;
 
 			if (FD_ISSET(_fd, &rfds)) {
@@ -156,7 +156,7 @@ class WinPortFSNotify : public WinPortEvent
 
 	virtual void OnFinalizeApp()
 	{
-		fprintf(stderr, "WinPortFSNotify(%p)::OnFinalizeApp\n", this);
+		fprintf(stderr, "WinPortFSNotify(%p)::OnFinalizeApp\n", (void*)this);
 		StopWatching();
 		WinPortEvent::OnFinalizeApp();
 	}
@@ -168,7 +168,7 @@ class WinPortFSNotify : public WinPortEvent
 			if (write(_pipe[1], &_watching, sizeof(_watching))!=sizeof(_watching))
 				fprintf(stderr, "~WinPortFSNotify - pipe write error %u\n", errno);
 
-			pthread_join(_watcher, NULL);
+			pthread_join(_watcher, nullptr);
 			close(_pipe[0]);
 			close(_pipe[1]);
 		}
@@ -219,7 +219,7 @@ public:
 			EV_SET(&_events.back(), _pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE | EV_ONESHOT, 0, 0, 0);
 #endif
 			_watching = true;
-			if (pthread_create(&_watcher, NULL, sWatcherProc, this)==0) {
+			if (pthread_create(&_watcher, nullptr, sWatcherProc, this)==0) {
 				fprintf(stderr, "WinPortFSNotify('%ls') - watching\n", lpPathName);
 			} else {
 				fprintf(stderr, "WinPortFSNotify('%ls') - pthread error %u\n", lpPathName, errno);

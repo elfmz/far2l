@@ -713,14 +713,14 @@ int KeyMacro::LoadMacros(BOOL InitedRAM,BOOL LoadAll)
 	return ErrCount?FALSE:TRUE;
 }
 
-int KeyMacro::ProcessKey(int Key)
+uint32_t KeyMacro::ProcessKey(uint32_t Key)
 {
 	if (InternalInput || Key==KEY_IDLE || Key==KEY_NONE || !FrameManager->GetCurrentFrame())
 		return FALSE;
 
 	if (Recording) // Идет запись?
 	{
-		if ((unsigned int)Key==Opt.Macro.KeyMacroCtrlDot || (unsigned int)Key==Opt.Macro.KeyMacroCtrlShiftDot) // признак конца записи?
+		if (Key==Opt.Macro.KeyMacroCtrlDot || Key==Opt.Macro.KeyMacroCtrlShiftDot) // признак конца записи?
 		{
 			_KEYMACRO(CleverSysLog Clev(L"MACRO End record..."));
 			DWORD MacroKey;
@@ -737,16 +737,16 @@ int KeyMacro::ProcessKey(int Key)
 			// добавим проверку на удаление
 			// если удаляем, то не нужно выдавать диалог настройки.
 			//if (MacroKey != (DWORD)-1 && (Key==KEY_CTRLSHIFTDOT || Recording==2) && RecBufferSize)
-			if (MacroKey != (DWORD)-1 && (unsigned int)Key==Opt.Macro.KeyMacroCtrlShiftDot && RecBufferSize)
+			if (MacroKey != std::numeric_limits<uint32_t>::max() && Key==Opt.Macro.KeyMacroCtrlShiftDot && RecBufferSize)
 			{
 				if (!GetMacroSettings(MacroKey,Flags))
-					MacroKey=(DWORD)-1;
+					MacroKey=std::numeric_limits<uint32_t>::max();
 			}
 
 			WaitInMainLoop=WaitInMainLoop0;
 			InternalInput=FALSE;
 
-			if (MacroKey==(DWORD)-1)
+			if (MacroKey==std::numeric_limits<uint32_t>::max())
 			{
 				if (RecBuffer)
 				{
@@ -836,7 +836,7 @@ int KeyMacro::ProcessKey(int Key)
 		}
 		else // процесс записи продолжается.
 		{
-			if ((unsigned int)Key>=KEY_NONE && (unsigned int)Key<=KEY_END_SKEY) // специальные клавиши прокинем
+			if (Key>=KEY_NONE && Key<=KEY_END_SKEY) // специальные клавиши прокинем
 				return FALSE;
 
 			RecBuffer=(DWORD *)xf_realloc(RecBuffer,sizeof(*RecBuffer)*(RecBufferSize+3));
@@ -857,7 +857,7 @@ int KeyMacro::ProcessKey(int Key)
 			return FALSE;
 		}
 	}
-	else if ((unsigned int)Key==Opt.Macro.KeyMacroCtrlDot || (unsigned int)Key==Opt.Macro.KeyMacroCtrlShiftDot) // Начало записи?
+	else if (Key==Opt.Macro.KeyMacroCtrlDot || Key==Opt.Macro.KeyMacroCtrlShiftDot) // Начало записи?
 	{
 		_KEYMACRO(CleverSysLog Clev(L"MACRO Begin record..."));
 
@@ -877,7 +877,7 @@ int KeyMacro::ProcessKey(int Key)
 		// тип записи - с вызовом диалога настроек или...
 		// В зависимости от того, КАК НАЧАЛИ писать макрос, различаем общий режим (Ctrl-.
 		// с передачей плагину кеев) или специальный (Ctrl-Shift-. - без передачи клавиш плагину)
-		Recording=((unsigned int)Key==Opt.Macro.KeyMacroCtrlDot) ? MACROMODE_RECORDING_COMMON:MACROMODE_RECORDING;
+		Recording=(Key==Opt.Macro.KeyMacroCtrlDot) ? MACROMODE_RECORDING_COMMON:MACROMODE_RECORDING;
 
 		if (RecBuffer)
 			xf_free(RecBuffer);
@@ -907,7 +907,7 @@ int KeyMacro::ProcessKey(int Key)
 				if ((Key&(~KEY_CTRLMASK)) > 0x7F && (Key&(~KEY_CTRLMASK)) < KEY_FKEY_BEGIN)
 					Key=KeyToKeyLayout(Key&0x0000FFFF)|(Key&(~0x0000FFFF));
 
-				if ((DWORD)Key < KEY_FKEY_BEGIN)
+				if (Key < KEY_FKEY_BEGIN)
 					Key=Upper(Key&0x0000FFFF)|(Key&(~0x0000FFFF));
 
 			}
@@ -2063,7 +2063,7 @@ static bool keyFunc(const TMacroFunction*)
 	if (VarKey.isInteger())
 	{
 		if (VarKey.i())
-			KeyToText((int)VarKey.i(),strKeyText);
+			KeyToText((DWORD)VarKey.i(),strKeyText);
 	}
 	else
 	{
@@ -5992,10 +5992,10 @@ M1:
 
 		_SVS(SysLog(L"[%d] Assign ==> Param2='%ls',LastKey='%ls'",__LINE__,_FARKEY_ToName((DWORD)Param2),LastKey?_FARKEY_ToName(LastKey):L""));
 		KMParam->Key=(DWORD)Param2;
-		KeyToText((int)Param2,strKeyText);
+		KeyToText((uint32_t)Param2,strKeyText);
 
 		// если УЖЕ есть такой макрос...
-		if ((Index=MacroDlg->GetIndex((int)Param2,KMParam->Mode)) != -1)
+		if ((Index=MacroDlg->GetIndex((uint32_t)Param2,KMParam->Mode)) != -1)
 		{
 			MacroRecord *Mac=MacroDlg->MacroLIB+Index;
 
@@ -6256,7 +6256,7 @@ LONG_PTR WINAPI KeyMacro::ParamMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_
 	return DefDlgProc(hDlg,Msg,Param1,Param2);
 }
 
-int KeyMacro::GetMacroSettings(int Key,DWORD &Flags)
+int KeyMacro::GetMacroSettings(uint32_t Key,DWORD &Flags)
 {
 	/*
 	          1         2         3         4         5         6
@@ -6613,7 +6613,7 @@ int KeyMacro::PopState()
 // Функция получения индекса нужного макроса в массиве
 // Ret=-1 - не найден таковой.
 // если CheckMode=-1 - значит пофигу в каком режиме, т.е. первый попавшийся
-int KeyMacro::GetIndex(int Key, int ChechMode, bool UseCommon)
+int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
 {
 	if (MacroLIB)
 	{

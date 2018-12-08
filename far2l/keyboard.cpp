@@ -1099,7 +1099,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		        (KeyCode==VK_SHIFT || KeyCode==VK_CONTROL || KeyCode==VK_MENU) &&
 		        CurClock-PressedLastTime<500)
 		{
-			int Key=-1;
+			uint32_t Key {std::numeric_limits<uint32_t>::max()};
 
 			if (ShiftPressedLast && KeyCode==VK_SHIFT)
 			{
@@ -1149,14 +1149,14 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 				{
 					FrameManager->SetLastInputRecord(rec);
 				}
-				if (Key!=-1 && !NotMacros && CtrlObject && CtrlObject->Macro.ProcessKey(Key))
+				if (Key!=std::numeric_limits<uint32_t>::max() && !NotMacros && CtrlObject && CtrlObject->Macro.ProcessKey(Key))
 				{
 					rec->EventType=0;
 					Key=KEY_NONE;
 				}
 			}
 
-			if (Key!=-1)
+			if (Key!=std::numeric_limits<uint32_t>::max())
 				return(Key);
 		}
 
@@ -1770,12 +1770,12 @@ int WINAPI KeyNameToKey(const wchar_t *Name)
 	return (!Key || Pos < Len)? -1: (int)Key;
 }
 
-BOOL WINAPI KeyToText(int Key0, FARString &strKeyText0)
+BOOL WINAPI KeyToText(uint32_t Key0, FARString &strKeyText0)
 {
 	FARString strKeyText;
 	FARString strKeyTemp;
 	int I, Len;
-	DWORD Key=(DWORD)Key0, FKey=(DWORD)Key0&0xFFFFFF;
+	DWORD Key=Key0, FKey=Key0&0xFFFFFF;
 	//if(Key >= KEY_MACRO_BASE && Key <= KEY_MACRO_ENDBASE)
 	//  return KeyMacroToText(Key0, strKeyText0);
 

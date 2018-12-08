@@ -1118,7 +1118,7 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
   возвращает указатель на начало слова
 */
 
-const wchar_t * const CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End, const wchar_t *WordDiv0)
+const wchar_t * CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End, const wchar_t *WordDiv0)
 {
 	int StartWPos, EndWPos;
 

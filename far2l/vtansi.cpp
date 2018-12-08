@@ -345,7 +345,7 @@ typedef struct {
 	COORD SavePos;	// saved cursor position
 } STATE, *PSTATE;
 
-static STATE ansiState = {0};
+static STATE ansiState{};
 
 static void SetAnsiStateFromAttributes(WORD wAttributes)
 {

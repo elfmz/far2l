@@ -413,7 +413,7 @@ int VMenu::AddItem(const wchar_t *NewStrItem)
 {
 	CriticalSectionLock Lock(CS);
 
-	FarListItem FarListItem0={0};
+	FarListItem FarListItem0{};
 
 	if (!NewStrItem || NewStrItem[0] == 0x1)
 	{
@@ -2951,7 +2951,7 @@ void EnumFiles(VMenu& Menu, const wchar_t* Str)
 					{
 						if(Menu.GetItemCount())
 						{
-							MenuItemEx Item={0};
+							MenuItemEx Item{};
 							Item.Flags=LIF_SEPARATOR;
 							Menu.AddItem(&Item);
 						}

@@ -63,8 +63,8 @@ static SMALL_RECT windowholder_rect;
 WCHAR Oem2Unicode[256];
 WCHAR BoxSymbols[64];
 
-COORD InitSize={0};
-COORD CurSize={0};
+COORD InitSize{};
+COORD CurSize{};
 SHORT ScrX=0,ScrY=0;
 SHORT PrevScrX=-1,PrevScrY=-1;
 DWORD InitialConsoleMode=0;

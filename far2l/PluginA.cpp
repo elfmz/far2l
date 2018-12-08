@@ -380,8 +380,8 @@ bool PluginA::Load()
 
 static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo *PSI, oldfar::FarStandardFunctions *FSF)
 {
-	static oldfar::PluginStartupInfo StartupInfo={0};
-	static oldfar::FarStandardFunctions StandardFunctions={0};
+	static oldfar::PluginStartupInfo StartupInfo{};
+	static oldfar::FarStandardFunctions StandardFunctions{};
 
 	// заполняем структуру StandardFunctions один раз!!!
 	if (!StandardFunctions.StructSize)
@@ -1294,7 +1294,7 @@ void PluginA::GetOpenPluginInfo(
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETOPENPLUGININFO;
-		oldfar::OpenPluginInfo InfoA={0};
+		oldfar::OpenPluginInfo InfoA{};
 		EXECUTE_FUNCTION(pGetOpenPluginInfo(hPlugin, &InfoA), es);
 		ConvertOpenPluginInfo(InfoA,pInfo);
 		(void)es; // supress 'set but not used' warning
@@ -1405,7 +1405,7 @@ bool PluginA::GetPluginInfo(PluginInfo *pi)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETPLUGININFO;
-		oldfar::PluginInfo InfoA={0};
+		oldfar::PluginInfo InfoA{};
 		EXECUTE_FUNCTION(pGetPluginInfo(&InfoA), es);
 
 		if (!es.bUnloaded)
@@ -1431,31 +1431,31 @@ void PluginA::ExitFAR()
 
 void PluginA::ClearExports()
 {
-	pSetStartupInfo=0;
-	pOpenPlugin=0;
-	pOpenFilePlugin=0;
-	pClosePlugin=0;
-	pGetPluginInfo=0;
-	pGetOpenPluginInfo=0;
-	pGetFindData=0;
-	pFreeFindData=0;
-	pGetVirtualFindData=0;
-	pFreeVirtualFindData=0;
-	pSetDirectory=0;
-	pGetFiles=0;
-	pPutFiles=0;
-	pDeleteFiles=0;
-	pMakeDirectory=0;
-	pProcessHostFile=0;
-	pSetFindList=0;
-	pConfigure=0;
-	pExitFAR=0;
-	pProcessKey=0;
-	pProcessEvent=0;
-	pCompare=0;
-	pProcessEditorInput=0;
-	pProcessEditorEvent=0;
-	pProcessViewerEvent=0;
-	pProcessDialogEvent=0;
-	pMinFarVersion=0;
+	pSetStartupInfo=nullptr;
+	pOpenPlugin=nullptr;
+	pOpenFilePlugin=nullptr;
+	pClosePlugin=nullptr;
+	pGetPluginInfo=nullptr;
+	pGetOpenPluginInfo=nullptr;
+	pGetFindData=nullptr;
+	pFreeFindData=nullptr;
+	pGetVirtualFindData=nullptr;
+	pFreeVirtualFindData=nullptr;
+	pSetDirectory=nullptr;
+	pGetFiles=nullptr;
+	pPutFiles=nullptr;
+	pDeleteFiles=nullptr;
+	pMakeDirectory=nullptr;
+	pProcessHostFile=nullptr;
+	pSetFindList=nullptr;
+	pConfigure=nullptr;
+	pExitFAR=nullptr;
+	pProcessKey=nullptr;
+	pProcessEvent=nullptr;
+	pCompare=nullptr;
+	pProcessEditorInput=nullptr;
+	pProcessEditorEvent=nullptr;
+	pProcessViewerEvent=nullptr;
+	pProcessDialogEvent=nullptr;
+	pMinFarVersion=nullptr;
 }

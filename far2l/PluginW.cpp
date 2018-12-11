@@ -446,8 +446,8 @@ static int WINAPI farExecuteLibraryW(const wchar_t *Library, const wchar_t *Symb
 
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
 {
-	static PluginStartupInfo StartupInfo={0};
-	static FarStandardFunctions StandardFunctions={0};
+	static PluginStartupInfo StartupInfo{};
+	static FarStandardFunctions StandardFunctions{};
 
 	// заполняем структуру StandardFunctions один раз!!!
 	if (!StandardFunctions.StructSize)

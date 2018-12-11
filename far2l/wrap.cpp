@@ -946,7 +946,7 @@ struct FAR_SEARCH_A_CALLBACK_PARAM
 static int WINAPI FarRecursiveSearchA_Callback(const FAR_FIND_DATA *FData,const wchar_t *FullName,void *param)
 {
 	FAR_SEARCH_A_CALLBACK_PARAM* pCallbackParam = static_cast<FAR_SEARCH_A_CALLBACK_PARAM*>(param);
-	WIN32_FIND_DATAA FindData={0};
+	WIN32_FIND_DATAA FindData{};
 	FindData.dwFileAttributes = FData->dwFileAttributes;
 	FindData.ftCreationTime = FData->ftCreationTime;
 	FindData.ftLastAccessTime = FData->ftLastAccessTime;
@@ -2120,7 +2120,7 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 		}
 		case oldfar::DM_LISTUPDATE:
 		{
-			FarListUpdate newui = {0,0};
+			FarListUpdate newui{};
 
 			if (Param2)
 			{
@@ -2137,7 +2137,7 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 		}
 		case oldfar::DM_LISTINSERT:
 		{
-			FarListInsert newli = {0,0};
+			FarListInsert newli{};
 
 			if (Param2)
 			{
@@ -2549,7 +2549,7 @@ void FreeAnsiPanelInfo(oldfar::PanelInfo* PIA)
 
 int WINAPI FarControlA(HANDLE hPlugin,int Command,void *Param)
 {
-	static oldfar::PanelInfo PanelInfoA={0},AnotherPanelInfoA={0};
+	static oldfar::PanelInfo PanelInfoA{},AnotherPanelInfoA{};
 	static int Reenter=0;
 
 	if (hPlugin==INVALID_HANDLE_VALUE)
@@ -3031,7 +3031,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 		{
 			if (!Param) return FALSE;
 
-			ActlKeyMacro km={0};
+			ActlKeyMacro km{};
 			oldfar::ActlKeyMacro *kmA=(oldfar::ActlKeyMacro *)Param;
 
 			switch (kmA->Command)
@@ -3117,7 +3117,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 		{
 			if (!Param) return FALSE;
 
-			KeySequence ks;
+			KeySequence ks{};
 			oldfar::KeySequence *ksA = (oldfar::KeySequence*)Param;
 
 			if (!ksA->Count || !ksA->Sequence) return FALSE;
@@ -3147,7 +3147,8 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 
 			int cmd = (Command==oldfar::ACTL_GETWINDOWINFO)?ACTL_GETWINDOWINFO:ACTL_GETSHORTWINDOWINFO;
 			oldfar::WindowInfo *wiA = (oldfar::WindowInfo *)Param;
-			WindowInfo wi={wiA->Pos};
+			WindowInfo wi{};
+			wi.Pos = wiA->Pos;
 			INT_PTR ret = FarAdvControl(ModuleNumber, cmd, &wi);
 
 			if (ret)
@@ -3373,7 +3374,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 
 UINT GetEditorCodePageA()
 {
-	EditorInfo info={0};
+	EditorInfo info{};
 	FarEditorControl(ECTL_GETINFO,&info);
 	UINT CodePage=info.CodePage;
 	CPINFO cpi;
@@ -3548,7 +3549,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 		}
 		case oldfar::ECTL_GETINFO:
 		{
-			EditorInfo ei={0};
+			EditorInfo ei{};
 			oldfar::EditorInfo *oei=(oldfar::EditorInfo *)Param;
 
 			if (!oei)
@@ -3609,7 +3610,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 		}
 		case oldfar::ECTL_SAVEFILE:
 		{
-			EditorSaveFile newsf = {0,0};
+			EditorSaveFile newsf{};
 
 			if (Param)
 			{
@@ -3708,7 +3709,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 		}
 		case oldfar::ECTL_SETPARAM:
 		{
-			EditorSetParameter newsp = {0,0,0,0};
+			EditorSetParameter newsp{};
 
 			if (Param)
 			{

@@ -148,7 +148,7 @@ struct TMacroFunction
 struct MacroRecord
 {
 	DWORD  Flags;         // Флаги макропоследовательности
-	int    Key;           // Назначенная клавиша
+	uint32_t    Key;           // Назначенная клавиша
 	int    BufferSize;    // Размер буфера компилированной последовательности
 	DWORD *Buffer;        // компилированная последовательность (OpCode) макроса
 	wchar_t  *Src;           // оригинальный "текст" макроса
@@ -232,7 +232,7 @@ class KeyMacro
 		int WriteVarsConst(int WriteMode);
 		int ReadMacros(int ReadMode, FARString &strBuffer);
 		DWORD AssignMacroKey();
-		int GetMacroSettings(int Key,DWORD &Flags);
+		int GetMacroSettings(uint32_t Key,DWORD &Flags);
 		void InitInternalVars(BOOL InitedRAM=TRUE);
 		void InitInternalLIBVars();
 		void ReleaseWORKBuffer(BOOL All=FALSE); // удалить временный буфер
@@ -260,7 +260,7 @@ class KeyMacro
 		~KeyMacro();
 
 	public:
-		int ProcessKey(int Key);
+		uint32_t ProcessKey(uint32_t Key);
 		int GetKey();
 		int PeekKey();
 		bool IsOpCode(DWORD p);
@@ -291,7 +291,7 @@ class KeyMacro
 
 		int GetStartIndex(int Mode) {return IndexMode[Mode<MACRO_LAST-1?Mode:MACRO_LAST-1][0];}
 		// Функция получения индекса нужного макроса в массиве
-		int GetIndex(int Key, int Mode, bool UseCommon=true);
+		int GetIndex(uint32_t Key, int Mode, bool UseCommon=true);
 		// получение размера, занимаемого указанным макросом
 		int GetRecordSize(int Key, int Mode);
 

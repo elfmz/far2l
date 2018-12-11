@@ -306,7 +306,6 @@ void InfoList::DisplayObject()
         unsigned long long totalram;
         vm_size_t page_size;
         unsigned long long freeram;
-        size_t ulllen = sizeof(totalram);
         int ret_sc;
 
         //ret_sc =  (sysctlbyname("hw.memsize", &totalram, &ulllen, NULL, 0) ? 1 : 0);

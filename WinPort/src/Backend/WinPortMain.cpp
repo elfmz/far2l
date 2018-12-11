@@ -74,12 +74,31 @@ static void SetupStdHandles(bool ignore_hup)
 	}
 }
 
+
+static bool WriteStr2TC(int fd, const char *str)
+{
+	for (size_t len = strlen(str), ofs = 0; ofs < len; ) {
+		ssize_t written = write(fd, str + ofs, len - ofs);
+		if (written <= 0)
+			return false;
+
+		ofs+= (size_t) written;
+	}
+	tcdrain(fd);
+	return true;
+}
+
 static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 {
-	char buf[64] = {};
-	snprintf(buf, sizeof(buf) - 1, "\x1b_far2l%d\x07\x1b[5n\r\n", enable ? 1 : 0);
-	if (write(fdout, buf, strlen(buf)) != (ssize_t)strlen(buf))
+	// far2l supports both BEL and ST APC finalizers, however screen supports only ST,
+	// so use it as most compatible
+	if (!WriteStr2TC(fdout, enable ? "\x1b_far2l1\x1b\\\x1b[5n" : "\x1b_far2l0\x07\x1b[5n"))
 		return false;
+
+	if (enable) {
+		if (!WriteStr2TC(fdout, "Press <ENTER> if tired watching this message"))
+			return false;
+	}
 
 	std::string s;
 	for (bool status_replied = false; !status_replied;) {
@@ -117,6 +136,11 @@ static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 				if (status_replied) break;
 			}
 		}
+	}
+
+	if (enable) { // erase stuff printed for detection
+		if (!WriteStr2TC(fdout, "\x1b[2K\r\n"))
+			perror("write");
 	}
 
 	return (s.find("\x1b_far2lok\x07") != std::string::npos);

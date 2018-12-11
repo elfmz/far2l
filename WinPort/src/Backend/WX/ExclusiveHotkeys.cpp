@@ -2,7 +2,7 @@
 #include <dlfcn.h>
 
 
-ExclusiveHotkeys::ExclusiveHotkeys() : _grab_counter(0),
+ExclusiveHotkeys::ExclusiveHotkeys() :
 	_ctrl_left(false), _ctrl_right(false), 
 	_alt_left(false), _alt_right(false), 
 	_win_left(false), _win_right(false),

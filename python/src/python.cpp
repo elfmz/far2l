@@ -199,15 +199,6 @@ XPORT(void, ClosePlugin)(HANDLE hPlugin) {
     flog(_T("%s:%d\n"), __FUNCTION__, __LINE__);
     PyObject *pyresult = vcall("ClosePlugin", 1, hPlugin);
     PYTHON_VOID()
-
-    Py_XDECREF(pyPluginManager); pyPluginManager = NULL;
-    Py_XDECREF(pyPluginModule); pyPluginModule = NULL;
-    Py_Finalize();
-    if( gPython_Interpreter != NULL ) {
-        dlclose(gPython_Interpreter);
-        gPython_Interpreter = NULL;
-    }
-    //flog(_T("ClosePlugin(%08X)\n"), hPlugin);
 }
 
 XPORT(int, Compare)(HANDLE hPlugin,const PluginPanelItem *Item1,const PluginPanelItem *Item2,unsigned int Mode) {

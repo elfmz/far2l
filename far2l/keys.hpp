@@ -61,7 +61,7 @@ other possible license with no implications from the above license on them.
 #define INTERNAL_MACRO_BASE   0x00080000
 #endif  // END FAR_USE_INTERNALS
 
-enum BaseDefKeyboard
+enum BaseDefKeyboard : uint32_t
 {
 	KEY_CTRLMASK             =0xFFF00000,
 #ifdef FAR_USE_INTERNALS
@@ -279,6 +279,9 @@ enum BaseDefKeyboard
 
 	KEY_MACRO_ENDBASE        =0x000FFFFF,
 #endif // END FAR_USE_INTERNALS
+
+	KEY_FAILURE              =0xFFFFFFFF    // TODO: replace all (DWORD)int(-1) treated as errors,
+	                                        // switch all key related functions to uint32_t return type
 };
 
 enum AddDefKeyboard

@@ -994,7 +994,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 {
 	_KEYMACRO(CleverSysLog Clev(L"KeyMacro::FARPseudoVariable()"));
 	size_t I;
-	TVar Cond((int64_t)0ll);
+	TVar Cond{TVar()};
 	FARString strFileName;
 	DWORD FileAttr=INVALID_FILE_ATTRIBUTES;
 
@@ -2049,7 +2049,7 @@ static bool sleepFunc(const TMacroFunction*)
 		return true;
 	}
 
-	VMStack.Push((int64_t)0ll);
+	VMStack.Push(TVar());
 	return false;
 }
 
@@ -2134,7 +2134,7 @@ static bool modFunc(const TMacroFunction*)
 	if (!V2.i())
 	{
 		_KEYMACRO(___FILEFUNCLINE___;SysLog(L"Error: Divide (mod) by zero"));
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(TVar());
 		return false;
 	}
 
@@ -2631,7 +2631,7 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 					}
 					else
 					{
-						Ret=(int64_t)0ll;
+						Ret=TVar();
 						/*
 						int Item->Selected;
 						const char *Item->History;
@@ -2917,7 +2917,7 @@ static bool mloadFunc(const TMacroFunction*)
 
 	if (!Name || *Name!= L'%')
 	{
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(TVar());
 		return false;
 	}
 
@@ -2986,7 +2986,7 @@ static bool msaveFunc(const TMacroFunction*)
 
 	if (!Name || *Name!= L'%')
 	{
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(TVar());
 		return false;
 	}
 
@@ -2994,7 +2994,7 @@ static bool msaveFunc(const TMacroFunction*)
 
 	if (!tmpVarSet)
 	{
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(TVar());
 		return false;
 	}
 
@@ -3434,7 +3434,7 @@ static bool panelitemFunc(const TMacroFunction*)
 	TVar P2; VMStack.Pop(P2);
 	TVar P1; VMStack.Pop(P1);
 	int typePanel=(int)VMStack.Pop().getInteger();
-	TVar Ret((int64_t)0ll);
+	TVar Ret{};
 	Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 	Panel *PassivePanel=nullptr;
 
@@ -3629,7 +3629,7 @@ static bool absFunc(const TMacroFunction*)
 	TVar tmpVar;
 	VMStack.Pop(tmpVar);
 
-	if (tmpVar < (int64_t)0ll)
+	if (tmpVar < TVar())
 		tmpVar=-tmpVar;
 
 	VMStack.Push(tmpVar);
@@ -3699,7 +3699,7 @@ static bool editorselFunc(const TMacroFunction*)
 	              Opt: ignore
 	              return 1
 	*/
-	TVar Ret((int64_t)0ll);
+	TVar Ret{TVar()};
 	TVar Opt; VMStack.Pop(Opt);
 	TVar Action; VMStack.Pop(Action);
 	int Mode=CtrlObject->Macro.GetMode();
@@ -3721,7 +3721,7 @@ static bool editorselFunc(const TMacroFunction*)
 // V=Editor.Undo(N)
 static bool editorundoFunc(const TMacroFunction*)
 {
-	TVar Ret((int64_t)0ll);
+	TVar Ret{TVar()};
 	TVar Action; VMStack.Pop(Action);
 
 	if (CtrlObject->Macro.GetMode()==MACRO_EDITOR && CtrlObject->Plugins.CurEditor && CtrlObject->Plugins.CurEditor->IsVisible())
@@ -3738,7 +3738,7 @@ static bool editorundoFunc(const TMacroFunction*)
 // N=Editor.SetTitle([Title])
 static bool editorsettitleFunc(const TMacroFunction*)
 {
-	TVar Ret((int64_t)0ll);
+	TVar Ret{TVar()};
 	TVar Title; VMStack.Pop(Title);
 
 	if (CtrlObject->Macro.GetMode()==MACRO_EDITOR && CtrlObject->Plugins.CurEditor && CtrlObject->Plugins.CurEditor->IsVisible())
@@ -4528,7 +4528,7 @@ done:
 			if (tmpVarSet)
 				VMStack.Push(tmpVarSet->value);
 			else
-				VMStack.Push((int64_t)0ll);
+				VMStack.Push(TVar());
 
 			goto begin;
 		}
@@ -4542,7 +4542,7 @@ done:
 			if (tmpVarSet)
 				VMStack.Push(tmpVarSet->value);
 			else
-				VMStack.Push((int64_t)0ll);
+				VMStack.Push(TVar());
 
 			goto begin;
 		}
@@ -4584,7 +4584,7 @@ done:
 		case MCODE_OP_MUL:    VMStack.Pop(tmpVar); VMStack.Push(VMStack.Pop() *  tmpVar); goto begin;
 		case MCODE_OP_DIV:
 
-			if (VMStack.Peek()==(int64_t)0ll)
+			if (VMStack.Peek()==TVar())
 			{
 				_KEYMACRO(SysLog(L"[%d] IP=%d/0x%08X Error: Divide by zero",__LINE__,Work.ExecLIBPos,Work.ExecLIBPos));
 				goto done;
@@ -4637,7 +4637,7 @@ done:
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
 			tmpVarSet=varLook(*t, value);
 			VMStack.Pop(tmpVar);
-			if (tmpVar == (int64_t)0ll)
+			if (tmpVar == TVar())
 				goto done;
 			tmpVarSet->value /= tmpVar;
 			goto begin;
@@ -4846,7 +4846,7 @@ done:
 			VMStack.Pop(tmpVar);
 
 			if (!tmpVar.isInteger())
-				tmpVar=(int64_t)0ll;
+				tmpVar=TVar();
 
 			int CurMMode=CtrlObject->Macro.GetMode();
 

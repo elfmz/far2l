@@ -3615,7 +3615,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 			if (Param)
 			{
 				oldfar::EditorSaveFile *oldsf = (oldfar::EditorSaveFile*) Param;
-				newsf.FileName=(oldsf->FileName)?AnsiToUnicode(oldsf->FileName):nullptr;
+				newsf.FileName=AnsiToUnicode(oldsf->FileName);
 				newsf.FileEOL=(oldsf->FileEOL)?AnsiToUnicode(oldsf->FileEOL):nullptr;
 			}
 

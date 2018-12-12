@@ -5601,8 +5601,8 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		//   Return MAKELONG(OldVisible,OldSize)
 		case DM_SETCURSORSIZE:
 		{
-			bool Visible;
-			DWORD Size;
+			bool Visible = false;
+			DWORD Size = 0;
 
 			if (IsEdit(Type) && CurItem->ObjPtr)
 			{

@@ -11,7 +11,6 @@ class ExclusiveHotkeys
 	gdk_keyboard_grab_t _gdk_grab;
 	gdk_keyboard_ungrab_t _gdk_ungrab;
 #endif
-	int _grab_counter;
 	bool _ctrl_left, _ctrl_right, _alt_left, _alt_right, _win_left, _win_right;
 	bool _pending;
 

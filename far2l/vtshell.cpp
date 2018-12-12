@@ -41,7 +41,7 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 		if (c=='\\') {
 			msg+= "\\\\";
 		} else if (c <= 32 || c > 127) {
-			char zz[64]; sprintf(zz, "\\%02x", (unsigned int)c);
+			char zz[64]; sprintf(zz, "\\%02x", (unsigned int)(unsigned char)c);
 			msg+= zz;
 		} else 
 			msg+= (char)(unsigned char)c;

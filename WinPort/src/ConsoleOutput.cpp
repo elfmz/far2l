@@ -378,7 +378,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 				pos.X = 0;
 
 			} else if ( sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
-				pos.X = 0;
+				//pos.X = 0;
 				pos.Y++;
 				if (pos.Y >= (int)scroll_edge) {
 					pos.Y--;

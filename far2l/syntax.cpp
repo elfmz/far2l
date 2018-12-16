@@ -907,7 +907,7 @@ static TToken getToken()
 					{
 						if (IsProcessFunc || currTok == tFunc || currTok == tLt) // TODO: уточнить
 						{
-							if (KeyNameMacroToKey(nameString) == -1 && KeyNameToKey(nameString) == -1 && checkMacroConst(nameString))
+							if (KeyNameMacroToKey(nameString) == -1 && KeyNameToKey(nameString) == (DWORD)-1 && checkMacroConst(nameString))
 								__currTok = tConst;
 							else
 							{
@@ -928,7 +928,7 @@ static TToken getToken()
 						{
 							if (KeyNameMacroToKey(nameString) == -1)
 							{
-								if (KeyNameToKey(nameString) == -1)
+								if (KeyNameToKey(nameString) == (DWORD)-1)
 								{
 									if (checkMacroConst(nameString))
 										__currTok = tConst;

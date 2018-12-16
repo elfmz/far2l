@@ -1640,7 +1640,7 @@ static FARString &GetShiftKeyName(FARString &strName, DWORD Key,int& Len)
 
 /* $ 24.09.2000 SVS
  + Функция KeyNameToKey - получение кода клавиши по имени
-   Если имя не верно или нет такого - возвращается -1
+   Если имя не верно или нет такого - возвращается 0xFFFFFFFF
    Может и криво, но правильно и коротко!
 
    Функция KeyNameToKey ждет строку по вот такой спецификации:
@@ -1652,23 +1652,23 @@ static FARString &GetShiftKeyName(FARString &strName, DWORD Key,int& Len)
    5. "Oem" и 5 десятичных цифр (с ведущими нулями)
    6. только модификаторы (Alt/RAlt/Ctrl/RCtrl/Shift)
 */
-int WINAPI KeyNameToKey(const wchar_t *Name)
+uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
 {
 	if (!Name || !*Name)
-		return -1;
+		return std::numeric_limits<uint32_t>::max();
 
-	DWORD Key=0;
+	uint32_t Key=0;
     // _SVS(SysLog(L"KeyNameToKey('%ls')",Name));
 
 	// Это макроклавиша?
 	if (Name[0] == L'$' && Name[1])
-		return -1;// KeyNameMacroToKey(Name);
+		return std::numeric_limits<uint32_t>::max(); // KeyNameMacroToKey(Name);
 
 	if (Name[0] == L'%' && Name[1])
-		return -1;
+		return std::numeric_limits<uint32_t>::max();
 
 	if (Name[1] && wcspbrk(Name,L"()")) // если не один символ и встречаются '(' или ')', то это явно не клавиша!
-		return -1;
+		return std::numeric_limits<uint32_t>::max();
 
 //   if((Key=KeyNameMacroToKey(Name)) != (DWORD)-1)
 //     return Key;
@@ -1767,7 +1767,7 @@ int WINAPI KeyNameToKey(const wchar_t *Name)
 	}
 	*/
 	// _SVS(SysLog(L"Key=0x%08X (%c) => '%ls'",Key,(Key?Key:' '),Name));
-	return (!Key || Pos < Len)? -1: (int)Key;
+	return (!Key || Pos < Len)? std::numeric_limits<uint32_t>::max() : Key;
 }
 
 BOOL WINAPI KeyToText(uint32_t Key0, FARString &strKeyText0)

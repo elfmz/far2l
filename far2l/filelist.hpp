@@ -145,6 +145,7 @@ struct FileListItem
 			PackSize = fliCopy.PackSize;
 			StreamsSize = fliCopy.StreamsSize;
 			strName = fliCopy.strName;
+			ReparseTag = fliCopy.ReparseTag;
 			strCustomData = fliCopy.strCustomData;
 		}
 
@@ -224,7 +225,7 @@ class FileList:public Panel
 
 	private:
 		virtual void SetSelectedFirstMode(int Mode);
-		virtual int GetSelectedFirstMode() {return SelectedFirst;};
+		virtual int GetSelectedFirstMode() {return SelectedFirst;}
 		virtual void DisplayObject();
 		void DeleteListData(FileListItem **(&ListData),int &FileCount);
 		void Up(int Count);
@@ -372,7 +373,7 @@ class FileList:public Panel
 		virtual int IsFullScreen();
 		virtual int IsDizDisplayed();
 		virtual int IsColumnDisplayed(int Type);
-		virtual int GetColumnsCount() { return Columns;};
+		virtual int GetColumnsCount() { return Columns;}
 		virtual void SetReturnCurrentFile(int Mode);
 		virtual void GetOpenPluginInfo(OpenPluginInfo *Info);
 		virtual void SetPluginMode(HANDLE hPlugin,const wchar_t *PluginFile,bool SendOnFocus=false);

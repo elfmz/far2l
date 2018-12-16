@@ -2068,7 +2068,7 @@ static bool keyFunc(const TMacroFunction*)
 	else
 	{
 		// Проверим...
-		DWORD Key=(DWORD)KeyNameToKey(VarKey.s());
+		DWORD Key = KeyNameToKey(VarKey.s());
 
 		if (Key != (DWORD)-1 && Key==(DWORD)VarKey.i())
 			strKeyText=VarKey.s();
@@ -5657,9 +5657,9 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 		else
 			strKeyText.Clear();
 
-		int KeyCode=KeyNameToKey(strKeyText);
+		uint32_t KeyCode=KeyNameToKey(strKeyText);
 
-		if (KeyCode==-1)
+		if (KeyCode==(DWORD)-1)
 			continue;
 
 		DWORD regType=0;

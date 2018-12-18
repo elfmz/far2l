@@ -1720,7 +1720,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 // S=trim(S[,N])
 static bool trimFunc(const TMacroFunction*)
 {
-	int  mode = (int) VMStack.Pop().getInteger();
+	int  mode = VMStack.Pop().getInt32();
 	TVar Val;
 	VMStack.Pop(Val);
 	wchar_t *p = (wchar_t *)Val.toString();
@@ -1756,8 +1756,8 @@ static bool substrFunc(const TMacroFunction*)
 	bool Ret=false;
 
 	TVar VarLength;  VMStack.Pop(VarLength);
-	int length=(int)VarLength.getInteger();
-	int  start     = (int)VMStack.Pop().getInteger();
+	int length = VarLength.getInt32();
+	int  start = VMStack.Pop().getInt32();
 	TVar Val;        VMStack.Pop(Val);
 
 	wchar_t *p = (wchar_t *)Val.toString();
@@ -1931,7 +1931,7 @@ static BOOL SplitFileName(const wchar_t *lpFullName,FARString &strDest,int nFlag
 // S=fsplit(S,N)
 static bool fsplitFunc(const TMacroFunction*)
 {
-	int m = (int)VMStack.Pop().getInteger();
+	int m = VMStack.Pop().getInt32();
 	TVar Val;
 	VMStack.Pop(Val);
 	const wchar_t *s = Val.toString();
@@ -2381,9 +2381,9 @@ static bool environFunc(const TMacroFunction*)
 static bool panelselectFunc(const TMacroFunction*)
 {
 	TVar ValItems;  VMStack.Pop(ValItems);
-	int Mode=(int)VMStack.Pop().getInteger();
+	int Mode = VMStack.Pop().getInt32();
 	DWORD Action=(int)VMStack.Pop().getInteger();
-	int typePanel=(int)VMStack.Pop().getInteger();
+	int typePanel = VMStack.Pop().getInt32();
 	int64_t Result=-1;
 
 	Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
@@ -2445,7 +2445,7 @@ static bool _fattrFunc(int Type)
 	{
 		TVar S;
 		VMStack.Pop(S);
-		int typePanel=(int)VMStack.Pop().getInteger();
+		int typePanel = VMStack.Pop().getInt32();
 		const wchar_t *Str = S.toString();
 		Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 		Panel *PassivePanel=nullptr;
@@ -2521,7 +2521,7 @@ static bool panelfexistFunc(const TMacroFunction*)
 static bool flockFunc(const TMacroFunction*)
 {
 	TVar Ret(-1);
-	int stateFLock=(int)VMStack.Pop().getInteger();
+	int stateFLock = VMStack.Pop().getInt32();
 	UINT vkKey=(UINT)VMStack.Pop().getInteger();
 
 	switch (vkKey)
@@ -2551,7 +2551,7 @@ static bool flockFunc(const TMacroFunction*)
 static bool dlggetvalueFunc(const TMacroFunction*)
 {
 	TVar Ret(-1);
-	int TypeInf=(int)VMStack.Pop().getInteger();
+	int TypeInf = VMStack.Pop().getInt32();
 	unsigned Index=(unsigned)VMStack.Pop().getInteger()-1;
 	Frame* CurFrame=FrameManager->GetCurrentFrame();
 
@@ -2673,9 +2673,9 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 static bool editorposFunc(const TMacroFunction*)
 {
 	TVar Ret(-1);
-	int Where = (int)VMStack.Pop().getInteger();
-	int What  = (int)VMStack.Pop().getInteger();
-	int Op    = (int)VMStack.Pop().getInteger();
+	int Where = VMStack.Pop().getInt32();
+	int What  = VMStack.Pop().getInt32();
+	int Op    = VMStack.Pop().getInt32();
 
 	if (CtrlObject->Macro.GetMode()==MACRO_EDITOR && CtrlObject->Plugins.CurEditor && CtrlObject->Plugins.CurEditor->IsVisible())
 	{
@@ -2787,7 +2787,7 @@ static bool editorsetFunc(const TMacroFunction*)
 	TVar Ret(-1);
 	TVar _longState;
 	VMStack.Pop(_longState);
-	int Index=(int)VMStack.Pop().getInteger();
+	int Index = VMStack.Pop().getInt32();
 
 	if (CtrlObject->Macro.GetMode()==MACRO_EDITOR && CtrlObject->Plugins.CurEditor && CtrlObject->Plugins.CurEditor->IsVisible())
 	{
@@ -3032,7 +3032,7 @@ static bool clipFunc(const TMacroFunction*)
 {
 	TVar Val;
 	VMStack.Pop(Val);
-	int cmdType=(int)VMStack.Pop().getInteger();
+	int cmdType = VMStack.Pop().getInt32();
 
 	// принудительно второй параметр ставим AS string
 	if (cmdType != 5 && Val.isInteger() && !Val.i())
@@ -3125,7 +3125,7 @@ static bool clipFunc(const TMacroFunction*)
 		case 5: // ClipMode
 		{
 			// 0 - flip, 1 - виндовый буфер, 2 - внутренний, -1 - что сейчас?
-			int Action=(int)Val.getInteger();
+			int Action = Val.getInt32();
 			bool mode=Clipboard::GetUseInternalClipboardState();
 			if (Action >= 0)
 			{
@@ -3151,9 +3151,9 @@ static bool clipFunc(const TMacroFunction*)
 */
 static bool panelsetposidxFunc(const TMacroFunction*)
 {
-	int InSelection=(int)VMStack.Pop().getInteger();
+	int InSelection = VMStack.Pop().getInt32();
 	long idxItem=(long)VMStack.Pop().getInteger();
-	int typePanel=(int)VMStack.Pop().getInteger();
+	int typePanel = VMStack.Pop().getInt32();
 	Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 	Panel *PassivePanel=nullptr;
 
@@ -3273,7 +3273,7 @@ static bool panelsetpathFunc(const TMacroFunction*)
 {
 	TVar ValFileName;  VMStack.Pop(ValFileName);
 	TVar Val;          VMStack.Pop(Val);
-	int typePanel=(int)VMStack.Pop().getInteger();
+	int typePanel = VMStack.Pop().getInt32();
 	int64_t Ret=0;
 
 	if (!(Val.isInteger() && !Val.i()))
@@ -3320,7 +3320,7 @@ static bool panelsetpathFunc(const TMacroFunction*)
 static bool panelsetposFunc(const TMacroFunction*)
 {
 	TVar Val; VMStack.Pop(Val);
-	int typePanel=(int)VMStack.Pop().getInteger();
+	int typePanel = VMStack.Pop().getInt32();
 	const wchar_t *fileName=Val.s();
 
 	if (!fileName || !*fileName)
@@ -3374,7 +3374,7 @@ Mode:
 */
 static bool replaceFunc(const TMacroFunction*)
 {
-	int Mode=(int)VMStack.Pop().getInteger();
+	int Mode = VMStack.Pop().getInt32();
 	TVar Count; VMStack.Pop(Count);
 	TVar Repl;  VMStack.Pop(Repl);
 	TVar Find;  VMStack.Pop(Find);
@@ -3433,7 +3433,7 @@ static bool panelitemFunc(const TMacroFunction*)
 {
 	TVar P2; VMStack.Pop(P2);
 	TVar P1; VMStack.Pop(P1);
-	int typePanel=(int)VMStack.Pop().getInteger();
+	int typePanel = VMStack.Pop().getInt32();
 	TVar Ret((int64_t)0ll);
 	Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 	Panel *PassivePanel=nullptr;
@@ -4301,8 +4301,8 @@ done:
 
 			if (Key == MCODE_F_AKEY)
 			{
-				int tmpType=(int)VMStack.Pop().getInteger();
-				int tmpMode=(int)VMStack.Pop().getInteger();
+				int tmpType = VMStack.Pop().getInt32();
+				int tmpMode = VMStack.Pop().getInt32();
 
 				if(tmpType)
 					aKey=MR->Key;

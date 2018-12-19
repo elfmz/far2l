@@ -136,6 +136,7 @@ class TVar
 		int64_t toInteger();
 
 		int64_t getInteger() const;
+		int32_t getInt32() const;
 		double getDouble() const;
 };
 

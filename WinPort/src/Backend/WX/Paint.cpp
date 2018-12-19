@@ -35,7 +35,7 @@ static unsigned int DivCeil(unsigned int v, unsigned int d)
 /////////////////////////////////////////////////////////////////////////////////
 static const char *g_known_good_fonts[] = { "Ubuntu", "Terminus", "DejaVu", 
 											"Liberation", "Droid", "Monospace", "PT Mono", "Menlo",
-											NULL};
+											nullptr};
 	
 
 class FixedFontLookup : wxFontEnumerator
@@ -213,7 +213,7 @@ void ConsolePaintContext::SetFont(wxFont font)
 		font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
 		
 	if (font.IsFixedWidth() && !is_unstable) {
-		struct stat s = {0};
+		struct stat s{};
 		if (stat(InMyConfig("nobuffering").c_str(), &s) != 0)
 			_buffered_paint = true;
 	}
@@ -242,7 +242,7 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
 		return _char_fit_cache.result[ (size_t)c  - 1 ];
 	}
 
-	uint32_t font_index;
+	uint8_t font_index;
 	_cft_tmp = wxUniChar(c);
 	wxSize char_size = dc.GetTextExtent(_cft_tmp);
 	if ((unsigned)char_size.GetWidth() == _font_width 

@@ -436,6 +436,18 @@ int64_t TVar::getInteger() const
 	return ret;
 }
 
+int32_t TVar::getInt32() const
+{
+	int64_t ret = inum;
+
+	if (vType == vtString)
+		ret = str ? _wtoi64(str) : 0;
+	else if (vType == vtDouble)
+		ret=static_cast<int64_t>(dnum);
+
+	return static_cast<int32_t>(ret);
+}
+
 double TVar::getDouble() const
 {
 	double ret = dnum;

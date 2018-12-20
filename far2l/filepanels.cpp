@@ -56,11 +56,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 
 FilePanels::FilePanels():
-	LastLeftFilePanel(0),
-	LastRightFilePanel(0),
+	LastLeftFilePanel(nullptr),
+	LastRightFilePanel(nullptr),
 	LeftPanel(CreatePanel(Opt.LeftPanel.Type)),
 	RightPanel(CreatePanel(Opt.RightPanel.Type)),
-	ActivePanel(0),
+	ActivePanel(nullptr),
 	LastLeftType(0),
 	LastRightType(0),
 	LeftStateBeforeHide(0),
@@ -854,7 +854,7 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 	OldSelectedFirst=Current->GetSelectedFirstMode();
 	OldDirectoriesFirst=Current->GetPrevDirectoriesFirst();
 	LeftPosition=(Current==LeftPanel);
-	Panel *(&LastFilePanel)=LeftPosition ? LastLeftFilePanel:LastRightFilePanel;
+	Panel* &LastFilePanel=LeftPosition ? LastLeftFilePanel:LastRightFilePanel;
 	Current->GetPosition(X1,Y1,X2,Y2);
 	ChangePosition=((OldType==FILE_PANEL && NewType!=FILE_PANEL &&
 	                 OldFullScreen) || (NewType==FILE_PANEL &&

@@ -356,6 +356,18 @@ TVar& TVar::operator=(const TVar& v)
 	return *this;
 }
 
+TVar& TVar::operator=(const int& v)
+{
+	vType = vtInteger;
+	inum = static_cast<int64_t>(v);
+	dnum = 0.0;
+	if (str)
+		delete [] str;
+	str = nullptr;
+
+	return *this;
+}
+
 int64_t TVar::i() const
 {
 	return isInteger() ? inum : (isDouble() ? (int64_t)dnum : (str ? _wtoi64(str) : 0));

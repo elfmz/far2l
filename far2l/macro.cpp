@@ -439,6 +439,7 @@ TVarTable glbVarTable;
 TVarTable glbConstTable;
 
 static TVar __varTextDate;
+const TVar tviZero {static_cast<int64_t>(0)};
 
 class TVMStack: public TStack<TVar>
 {

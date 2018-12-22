@@ -561,8 +561,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/sh";
-		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols
-		if (strcmp(shell, "/usr/bin/fish")==0)
+
+		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols and some others
+		const char *slash = strrchr(shell, '/');
+		if (strcmp(slash ? slash + 1 : shell, "fish")==0)
 			shell = "/bin/bash";
 
 		//shell = "/usr/bin/zsh";

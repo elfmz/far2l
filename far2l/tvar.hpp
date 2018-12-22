@@ -93,6 +93,8 @@ class TVar
 
 		TVar& operator=(const TVar&);
 		TVar& operator=(const int&);
+		TVar& operator=(const int64_t&);
+		TVar& operator=(const double&);
 
 		TVar& operator+=(const TVar& b)  { return *this = *this+b;  };
 		TVar& operator-=(const TVar& b)  { return *this = *this-b;  };

@@ -335,7 +335,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 
 	if (event.ControlDown())
-		Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+		Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
 		
 		
 }

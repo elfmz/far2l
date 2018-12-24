@@ -154,7 +154,9 @@ PluginA::PluginA(PluginManager *owner, const wchar_t *lpwszModuleName):
 	m_strModuleName(lpwszModuleName),
 	m_strCacheName(lpwszModuleName),
 	m_hModule(nullptr),
-	RootKey(nullptr)
+	RootKey(nullptr),
+	pFDPanelItemA(nullptr),
+	pVFDPanelItemA(nullptr)
 	//more initialization here!!!
 {
 	ClearExports();
@@ -773,7 +775,7 @@ int PluginA::ProcessEditorInput(
 		{
 			OemRecord=*D;
 			int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0,  &D->Event.KeyEvent.uChar.UnicodeChar,
-					1, &OemRecord.Event.KeyEvent.uChar.AsciiChar,1, NULL, NULL);
+					1, &OemRecord.Event.KeyEvent.uChar.AsciiChar,1, nullptr, nullptr);
 			if (r<0) fprintf(stderr, "PluginA::ProcessEditorInput: convert failed\n");
 			//CharToOemBuff(&D->Event.KeyEvent.uChar.UnicodeChar,&OemRecord.Event.KeyEvent.uChar.AsciiChar,1);
 			Ptr=&OemRecord;

@@ -245,7 +245,7 @@ static char  suffix2;			// escape sequence secondary suffix
 static int   es_argc;			// escape sequence args count
 static int   es_argv[MAX_ARG]; 	// escape sequence args
 static std::string os_cmd_arg;	// text parameter for Operating System Command
-static BOOL  shifted;
+static bool  shifted = false;
 static int   screen_top = -1;		// initial window top when cleared
 static TCHAR blank_character = L' ';
 
@@ -1389,7 +1389,7 @@ void ParseAndPrintString( HANDLE hDev,
 	if (hDev != hConOut) {	// reinit if device has changed
 		hConOut = hDev;
 		state = 1;
-		shifted = FALSE;
+		shifted = false;
 	}
 	for (i = nNumberOfBytesToWrite, s = (LPCWSTR)lpBuffer; i > 0; i--, s++) {
 		if (state == 1) {
@@ -1397,11 +1397,16 @@ void ParseAndPrintString( HANDLE hDev,
 				suffix2 = 0;
 				//get_state();
 				state = (ansiState.crm) ? 7 : 2;
-			} else if (*s == SO) shifted = TRUE;
-			else if (*s == SI) shifted = FALSE;
+			} else if (*s == SO) shifted = true;
+			else if (*s == SI) shifted = false;
 			else PushBuffer( *s );
 		} else if (state == 2) {
 			if (*s == ESC) ;		// \e\e...\e == \e
+			else if (*s == '(' || *s == ')' || *s == '*' || *s == '+') {
+				FlushBuffer();
+				prefix = *s;
+				state = 10;
+			}
 			else if (*s >= '\x20' && *s <= '\x2f')
 				suffix2 = *s;
 			else if (suffix2 != 0)
@@ -1428,9 +1433,12 @@ void ParseAndPrintString( HANDLE hDev,
 					case 'L': PartialLineUp(); break;
 					case 'D': ForwardIndex(); break;
 					case 'M': ReverseIndex(); break;
+					case 'N': shifted = true; break;
+					case 'O': shifted = false; break;
 					case 'C': ResetTerminal(); break;
 					case '7': SaveCursor(); break;
 					case '8': RestoreCursor(); break;
+					default: /*fprintf(stderr, "VTAnsi: state=2 *s=0x%x '%lc'\n", (unsigned int)*s, *s) */ ;
 				}
 				state = 1;
 			}
@@ -1530,6 +1538,10 @@ void ParseAndPrintString( HANDLE hDev,
 				PushBuffer( *s );
 			}
 			state = 1;
+
+		} else if (state == 10) {
+			shifted = (*s == '0');
+			state = 1;
 		}
 	}
 	FlushBuffer();
@@ -1554,7 +1566,7 @@ static void ResetState()
 	memset(es_argv, 0, sizeof(es_argv));
 	os_cmd_arg.clear();
 	//memset(Pt_arg, 0, sizeof(Pt_arg)); Pt_len = 0;
-	shifted = 0;
+	shifted = false;
 	screen_top = -1;	
 }
 

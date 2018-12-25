@@ -1227,7 +1227,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								if (SlashPos)
 									Owner=SlashPos+1;
 							}
-							else if(IsSlash(*Owner))
+							else if(Owner && IsSlash(*Owner))
 							{
 								Owner++;
 							}

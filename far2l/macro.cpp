@@ -423,7 +423,7 @@ static TMacroFunction intMacroFunction[]=
 	{L"WINDOW.SCROLL",    2, 1,   MCODE_F_WINDOW_SCROLL,    nullptr, 0,nullptr,L"N=Window.Scroll(Lines[,Axis])",0,windowscrollFunc},
 	{L"XLAT",             1, 0,   MCODE_F_XLAT,             nullptr, 0,nullptr,L"S=Xlat(S)",0,xlatFunc},
 
-	{0}
+	{}
 };
 
 
@@ -1376,7 +1376,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					{
 						if (SelPanel->GetMode() == PLUGIN_PANEL)
 						{
-							OpenPluginInfo Info={0};
+							OpenPluginInfo Info{};
 							Info.StructSize=sizeof(OpenPluginInfo);
 							SelPanel->GetOpenPluginInfo(&Info);
 							if (CheckCode == MCODE_V_APANEL_OPIFLAGS || CheckCode == MCODE_V_PPANEL_OPIFLAGS)
@@ -1434,7 +1434,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					{
 						if (SelPanel->GetMode() == PLUGIN_PANEL)
 						{
-							OpenPluginInfo Info={0};
+							OpenPluginInfo Info{};
 							Info.StructSize=sizeof(OpenPluginInfo);
 							SelPanel->GetOpenPluginInfo(&Info);
 							strFileName = Info.CurDir;
@@ -2050,7 +2050,7 @@ static bool sleepFunc(const TMacroFunction*)
 		return true;
 	}
 
-	VMStack.Push((int64_t)0ll);
+	VMStack.Push(tviZero);
 	return false;
 }
 
@@ -2135,7 +2135,7 @@ static bool modFunc(const TMacroFunction*)
 	if (!V2.i())
 	{
 		_KEYMACRO(___FILEFUNCLINE___;SysLog(L"Error: Divide (mod) by zero"));
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(tviZero);
 		return false;
 	}
 
@@ -2275,7 +2275,7 @@ static bool kbdLayoutFunc(const TMacroFunction*)
 	BOOL Ret=TRUE;
 	HKL  RetLayout=(HKL)0; //Layout=(HKL)0, 
 
-	VMStack.Push(Ret?TVar(static_cast<INT64>(reinterpret_cast<INT_PTR>(RetLayout))):0);
+	VMStack.Push(Ret?TVar(static_cast<INT64>(reinterpret_cast<INT_PTR>(RetLayout))):tviZero);
 
 	return Ret?true:false;
 }
@@ -2918,7 +2918,7 @@ static bool mloadFunc(const TMacroFunction*)
 
 	if (!Name || *Name!= L'%')
 	{
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(tviZero);
 		return false;
 	}
 
@@ -2987,7 +2987,7 @@ static bool msaveFunc(const TMacroFunction*)
 
 	if (!Name || *Name!= L'%')
 	{
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(tviZero);
 		return false;
 	}
 
@@ -2995,7 +2995,7 @@ static bool msaveFunc(const TMacroFunction*)
 
 	if (!tmpVarSet)
 	{
-		VMStack.Push((int64_t)0ll);
+		VMStack.Push(tviZero);
 		return false;
 	}
 
@@ -3435,7 +3435,7 @@ static bool panelitemFunc(const TMacroFunction*)
 	TVar P2; VMStack.Pop(P2);
 	TVar P1; VMStack.Pop(P1);
 	int typePanel = VMStack.Pop().getInt32();
-	TVar Ret((int64_t)0ll);
+	TVar Ret{tviZero};
 	Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 	Panel *PassivePanel=nullptr;
 
@@ -3630,7 +3630,7 @@ static bool absFunc(const TMacroFunction*)
 	TVar tmpVar;
 	VMStack.Pop(tmpVar);
 
-	if (tmpVar < (int64_t)0ll)
+	if (tmpVar < tviZero)
 		tmpVar=-tmpVar;
 
 	VMStack.Push(tmpVar);
@@ -3700,7 +3700,7 @@ static bool editorselFunc(const TMacroFunction*)
 	              Opt: ignore
 	              return 1
 	*/
-	TVar Ret((int64_t)0ll);
+	TVar Ret{tviZero};
 	TVar Opt; VMStack.Pop(Opt);
 	TVar Action; VMStack.Pop(Action);
 	int Mode=CtrlObject->Macro.GetMode();
@@ -3722,7 +3722,7 @@ static bool editorselFunc(const TMacroFunction*)
 // V=Editor.Undo(N)
 static bool editorundoFunc(const TMacroFunction*)
 {
-	TVar Ret((int64_t)0ll);
+	TVar Ret{tviZero};
 	TVar Action; VMStack.Pop(Action);
 
 	if (CtrlObject->Macro.GetMode()==MACRO_EDITOR && CtrlObject->Plugins.CurEditor && CtrlObject->Plugins.CurEditor->IsVisible())
@@ -3739,7 +3739,7 @@ static bool editorundoFunc(const TMacroFunction*)
 // N=Editor.SetTitle([Title])
 static bool editorsettitleFunc(const TMacroFunction*)
 {
-	TVar Ret((int64_t)0ll);
+	TVar Ret{tviZero};
 	TVar Title; VMStack.Pop(Title);
 
 	if (CtrlObject->Macro.GetMode()==MACRO_EDITOR && CtrlObject->Plugins.CurEditor && CtrlObject->Plugins.CurEditor->IsVisible())
@@ -4383,7 +4383,7 @@ done:
 
 		case MCODE_F_MMODE:               // N=MMode(Action[,Value])
 		{
-			int64_t nValue = (int64_t)VMStack.Pop().getInteger();
+			int64_t nValue = VMStack.Pop().getInteger();
 			TVar Action(1);
 			if (Key == MCODE_F_MMODE)
 				VMStack.Pop(Action);
@@ -4529,7 +4529,7 @@ done:
 			if (tmpVarSet)
 				VMStack.Push(tmpVarSet->value);
 			else
-				VMStack.Push((int64_t)0ll);
+				VMStack.Push(tviZero);
 
 			goto begin;
 		}
@@ -4543,7 +4543,7 @@ done:
 			if (tmpVarSet)
 				VMStack.Push(tmpVarSet->value);
 			else
-				VMStack.Push((int64_t)0ll);
+				VMStack.Push(tviZero);
 
 			goto begin;
 		}
@@ -4585,7 +4585,7 @@ done:
 		case MCODE_OP_MUL:    VMStack.Pop(tmpVar); VMStack.Push(VMStack.Pop() *  tmpVar); goto begin;
 		case MCODE_OP_DIV:
 
-			if (VMStack.Peek()==(int64_t)0ll)
+			if (VMStack.Peek()==tviZero)
 			{
 				_KEYMACRO(SysLog(L"[%d] IP=%d/0x%08X Error: Divide by zero",__LINE__,Work.ExecLIBPos,Work.ExecLIBPos));
 				goto done;
@@ -4638,7 +4638,7 @@ done:
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
 			tmpVarSet=varLook(*t, value);
 			VMStack.Pop(tmpVar);
-			if (tmpVar == (int64_t)0ll)
+			if (tmpVar == tviZero)
 				goto done;
 			tmpVarSet->value /= tmpVar;
 			goto begin;
@@ -4847,7 +4847,7 @@ done:
 			VMStack.Pop(tmpVar);
 
 			if (!tmpVar.isInteger())
-				tmpVar=(int64_t)0ll;
+				tmpVar=tviZero;
 
 			int CurMMode=CtrlObject->Macro.GetMode();
 
@@ -5327,13 +5327,12 @@ int KeyMacro::ReadVarsConst(int ReadMode, FARString &strSData)
 
 	if (ReadMode == MACRO_CONSTS)
 	{
-		INT64 Value=0;
-		SetMacroConst(constMsX,Value);
-		SetMacroConst(constMsY,Value);
-		SetMacroConst(constMsButton,Value);
-		SetMacroConst(constMsCtrlState,Value);
-		SetMacroConst(constMsEventFlags,Value);
-		SetMacroConst(constRCounter,Value);
+		SetMacroConst(constMsX,tviZero);
+		SetMacroConst(constMsY,tviZero);
+		SetMacroConst(constMsButton,tviZero);
+		SetMacroConst(constMsCtrlState,tviZero);
+		SetMacroConst(constMsEventFlags,tviZero);
+		SetMacroConst(constRCounter,tviZero);
 	}
 
 	return TRUE;
@@ -5418,7 +5417,7 @@ int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 			{
 				wchar_t *ptrBuffer = strBuffer.GetBuffer();
 
-				while (1)
+				for (;;)
 				{
 					ptrBuffer+=StrLength(ptrBuffer);
 
@@ -5451,12 +5450,12 @@ int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 			if (GetRegKey(strRegKeyName,L"Description",strDescription,L"",&regType))
 				RemoveExternalSpaces(strDescription);
 
-			MacroRecord mr={0};
+			MacroRecord mr{};
 			bool UsePluginFunc=true;
 			if (!strBuffer.IsEmpty())
 			{
 				if (!ParseMacroString(&mr,strBuffer.CPtr()))
-					mr.Buffer=0;
+					mr.Buffer=nullptr;
 			}
 
 			// использовать Sequence вместо плагина; оно же будет юзаться, если GUID пуст
@@ -5564,7 +5563,7 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 
 bool KeyMacro::UnregMacroFunction(size_t Index)
 {
-	if (Index < 0)
+	if (Index < 0) // size_t < 0 ???
 	{
 		if (AMacroFunction)
 		{
@@ -5621,7 +5620,7 @@ DWORD KeyMacro::GetNewOpCode()
 int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 {
 	int I, J;
-	MacroRecord CurMacro={0};
+	MacroRecord CurMacro{};
 	FARString strUpKeyName=L"KeyMacros/";
 	strUpKeyName+=GetSubKey(ReadMode);
 	FARString strRegKeyName, strKeyText;
@@ -6165,7 +6164,7 @@ LONG_PTR WINAPI KeyMacro::ParamMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_
 
 			if (Param1==MS_BUTTON_OK)
 			{
-				MacroRecord mr={0};
+				MacroRecord mr{};
 				KeyMacro *Macro=KMParam->Handle;
 				LPCWSTR Sequence=(LPCWSTR)SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,MS_EDIT_SEQUENCE,0);
 
@@ -6374,13 +6373,13 @@ int KeyMacro::GetMacroSettings(uint32_t Key,DWORD &Flags)
 
 int KeyMacro::PostNewMacro(const wchar_t *PlainText,DWORD Flags,DWORD AKey,BOOL onlyCheck)
 {
-	MacroRecord NewMacroWORK2={0};
+	MacroRecord NewMacroWORK2{};
 	wchar_t *Buffer=(wchar_t *)PlainText;
 	bool allocBuffer=false;
 
 	if (Flags&MFLAGS_REG_MULTI_SZ) // Различаем так же REG_MULTI_SZ
 	{
-		int lenPlainText=0;
+		size_t lenPlainText=0;
 
 		for (;;)
 		{
@@ -6470,7 +6469,7 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec,BOOL NeedAddSendFlag,BOOL IsPluginS
 	if (!MRec)
 		return FALSE;
 
-	MacroRecord NewMacroWORK2={0};
+	MacroRecord NewMacroWORK2{};
 	NewMacroWORK2=*MRec;
 	NewMacroWORK2.Src=nullptr;
 	NewMacroWORK2.Description=nullptr;

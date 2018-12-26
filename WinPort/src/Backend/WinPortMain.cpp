@@ -148,10 +148,14 @@ static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
-	bool tty = false, far2l_tty = false, nodetect = false, help = false;
+	bool tty = false, far2l_tty = false, nodetect = false, help = false, notty = false;
 
 	for (int i = 0; i < argc; ++i) {
-		if (strstr(argv[i], "--tty") == argv[i]) {
+
+		if (strstr(argv[i], "--notty") == argv[i]) {
+			notty = true;
+
+		} if (strstr(argv[i], "--tty") == argv[i]) {
 			tty = true;
 
 		} else if (strstr(argv[i], "--nodetect") == argv[i]) {
@@ -198,7 +202,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	if (!tty) {
 		if (!WinPortMainWX(argc, argv, AppMain, &result) ) {
 			fprintf(stderr, "Cannot use WX backend\n");
-			tty = true;
+			tty = !notty;
 		}
 	}
 #else

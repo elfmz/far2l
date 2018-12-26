@@ -995,7 +995,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 {
 	_KEYMACRO(CleverSysLog Clev(L"KeyMacro::FARPseudoVariable()"));
 	size_t I;
-	TVar Cond((int64_t)0ll);
+	TVar Cond(tviZero);
 	FARString strFileName;
 	DWORD FileAttr=INVALID_FILE_ATTRIBUTES;
 
@@ -1037,10 +1037,10 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 			switch (CheckCode)
 			{
 				case MCODE_V_FAR_WIDTH:
-					Cond=(int64_t)(ScrX+1);
+					Cond=ScrX+1;
 					break;
 				case MCODE_V_FAR_HEIGHT:
-					Cond=(int64_t)(ScrY+1);
+					Cond=ScrY+1;
 					break;
 				case MCODE_V_FAR_TITLE:
 					Console.GetTitle(strFileName);
@@ -1056,10 +1056,10 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					Cond=(int64_t)Opt.IsUserAdmin;
 					break;
 				case MCODE_V_DRVSHOWPOS: // Drv.ShowPos
-					Cond=(int64_t)Macro_DskShowPosType;
+					Cond=Macro_DskShowPosType;
 					break;
 				case MCODE_V_DRVSHOWMODE: // Drv.ShowMode
-					Cond=(int64_t)Opt.ChangeDriveMode;
+					Cond=Opt.ChangeDriveMode;
 					break;
 				case MCODE_C_CMDLINE_BOF:              // CmdLine.Bof - курсор в начале cmd-строки редактирования?
 				case MCODE_C_CMDLINE_EOF:              // CmdLine.Eof - курсор в конеце cmd-строки редактирования?
@@ -1187,7 +1187,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 				case MCODE_V_DLGITEMTYPE:  // Dlg.ItemType
 				{
 					if (CurFrame && CurFrame->GetType()==MODALTYPE_DIALOG) // ?? Mode == MACRO_DIALOG ??
-						Cond=(int64_t)CurFrame->VMProcess(CheckCode);
+						Cond=CurFrame->VMProcess(CheckCode);
 
 					break;
 				}
@@ -1327,7 +1327,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					Panel *SelPanel = CheckCode == MCODE_V_APANEL_SELCOUNT ? ActivePanel : PassivePanel;
 
 					if (SelPanel )
-						Cond = (int64_t)SelPanel->GetRealSelCount();
+						Cond = SelPanel->GetRealSelCount();
 
 					break;
 				}
@@ -1337,7 +1337,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					Panel *SelPanel = CheckCode == MCODE_V_APANEL_COLUMNCOUNT ? ActivePanel : PassivePanel;
 
 					if (SelPanel )
-						Cond = (int64_t)SelPanel->GetColumnsCount();
+						Cond = SelPanel->GetColumnsCount();
 
 					break;
 				}
@@ -1354,9 +1354,9 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 						SelPanel->GetPosition(X1,Y1,X2,Y2);
 
 						if (CheckCode == MCODE_V_APANEL_HEIGHT || CheckCode == MCODE_V_PPANEL_HEIGHT)
-							Cond = (int64_t)(Y2-Y1+1);
+							Cond = Y2-Y1+1;
 						else
-							Cond = (int64_t)(X2-X1+1);
+							Cond = X2-X1+1;
 					}
 
 					break;
@@ -1469,7 +1469,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					Panel *SelPanel = CheckCode == MCODE_V_APANEL_TYPE ? ActivePanel : PassivePanel;
 
 					if (SelPanel )
-						Cond=(int64_t)SelPanel->GetType();
+						Cond=SelPanel->GetType();
 
 					break;
 				}
@@ -1559,9 +1559,9 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 						f->GetPosition(X1,Y1,X2,Y2);
 
 						if (CheckCode == MCODE_V_HEIGHT)
-							Cond = (int64_t)(Y2-Y1+1);
+							Cond = Y2-Y1+1;
 						else
-							Cond = (int64_t)(X2-X1+1);
+							Cond = X2-X1+1;
 					}
 
 					break;
@@ -2355,8 +2355,8 @@ static bool msgBoxFunc(const TMacroFunction*)
 	FARString TempBuf = title;
 	TempBuf += L"\n";
 	TempBuf += text;
-	int Result=FarMessageFn(-1,Flags,nullptr,(const wchar_t * const *)TempBuf.CPtr(),0,0)+1;
-	VMStack.Push((int64_t)Result);
+	TVar Result=FarMessageFn(-1,Flags,nullptr,(const wchar_t * const *)TempBuf.CPtr(),0,0)+1;
+	VMStack.Push(Result);
 	return true;
 }
 
@@ -2478,7 +2478,7 @@ static bool _fattrFunc(int Type)
 	else if (Type == 3) // panel.fexist(3)
 		FileAttr=(DWORD)Pos+1;
 
-	VMStack.Push(TVar((int64_t)(long)FileAttr));
+	VMStack.Push(TVar((int64_t)FileAttr));
 	return Ret;
 }
 
@@ -2542,7 +2542,7 @@ static bool flockFunc(const TMacroFunction*)
 	}
 
 	if (vkKey)
-		Ret=(int64_t)SetFLockState(vkKey,stateFLock);
+		Ret=SetFLockState(vkKey,stateFLock);
 
 	VMStack.Push(Ret);
 	return Ret.i()!=-1;
@@ -2561,7 +2561,7 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 		unsigned DlgItemCount=((Dialog*)CurFrame)->GetAllItemCount();
 		const DialogItemEx **DlgItem=((Dialog*)CurFrame)->GetAllItem();
 
-		if (Index == (unsigned)-1)
+		if (Index == std::numeric_limits<unsigned>::max())
 		{
 			SMALL_RECT Rect;
 
@@ -2570,10 +2570,10 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 				switch (TypeInf)
 				{
 					case 0: Ret=(int64_t)DlgItemCount; break;
-					case 2: Ret=(int64_t)Rect.Left; break;
-					case 3: Ret=(int64_t)Rect.Top; break;
-					case 4: Ret=(int64_t)Rect.Right; break;
-					case 5: Ret=(int64_t)Rect.Bottom; break;
+					case 2: Ret=Rect.Left; break;
+					case 3: Ret=Rect.Top; break;
+					case 4: Ret=Rect.Right; break;
+					case 5: Ret=Rect.Bottom; break;
 					case 6: Ret=(int64_t)(((Dialog*)CurFrame)->GetDlgFocusPos()+1); break;
 				}
 			}
@@ -2614,25 +2614,25 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 
 			switch (TypeInf)
 			{
-				case 1: Ret=(int64_t)ItemType;    break;
-				case 2: Ret=(int64_t)Item->X1;    break;
-				case 3: Ret=(int64_t)Item->Y1;    break;
-				case 4: Ret=(int64_t)Item->X2;    break;
-				case 5: Ret=(int64_t)Item->Y2;    break;
-				case 6: Ret=(int64_t)Item->Focus; break;
+				case 1: Ret=ItemType;    break;
+				case 2: Ret=Item->X1;    break;
+				case 3: Ret=Item->Y1;    break;
+				case 4: Ret=Item->X2;    break;
+				case 5: Ret=Item->Y2;    break;
+				case 6: Ret=Item->Focus; break;
 				case 7:
 				{
 					if (ItemType == DI_CHECKBOX || ItemType == DI_RADIOBUTTON)
 					{
-						Ret=(int64_t)Item->Selected;
+						Ret=Item->Selected;
 					}
 					else if (ItemType == DI_COMBOBOX || ItemType == DI_LISTBOX)
 					{
-						Ret=(int64_t)(Item->ListPtr->GetSelectPos()+1);
+						Ret=Item->ListPtr->GetSelectPos()+1;
 					}
 					else
 					{
-						Ret=(int64_t)0ll;
+						Ret = tviZero;
 						/*
 						int Item->Selected;
 						const char *Item->History;
@@ -2646,7 +2646,7 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 					break;
 				}
 				case 8: Ret=(int64_t)ItemFlags; break;
-				case 9: Ret=(int64_t)Item->DefaultButton; break;
+				case 9: Ret=Item->DefaultButton; break;
 				case 10:
 				{
 					Ret=Item->strData.CPtr();
@@ -2803,49 +2803,49 @@ static bool editorsetFunc(const TMacroFunction*)
 		switch (Index)
 		{
 			case 0:  // TabSize;
-				Ret=(int64_t)EdOpt.TabSize; break;
+				Ret=EdOpt.TabSize; break;
 			case 1:  // ExpandTabs;
-				Ret=(int64_t)EdOpt.ExpandTabs; break;
+				Ret=EdOpt.ExpandTabs; break;
 			case 2:  // PersistentBlocks;
-				Ret=(int64_t)EdOpt.PersistentBlocks; break;
+				Ret=EdOpt.PersistentBlocks; break;
 			case 3:  // DelRemovesBlocks;
-				Ret=(int64_t)EdOpt.DelRemovesBlocks; break;
+				Ret=EdOpt.DelRemovesBlocks; break;
 			case 4:  // AutoIndent;
-				Ret=(int64_t)EdOpt.AutoIndent; break;
+				Ret=EdOpt.AutoIndent; break;
 			case 5:  // AutoDetectCodePage;
-				Ret=(int64_t)EdOpt.AutoDetectCodePage; break;
+				Ret=EdOpt.AutoDetectCodePage; break;
 			case 6:  // UTF8CodePageForNewFile;
-				Ret=(int64_t)EdOpt.UTF8CodePageForNewFile; break;
+				Ret=EdOpt.UTF8CodePageForNewFile; break;
 			case 7:  // CursorBeyondEOL;
-				Ret=(int64_t)EdOpt.CursorBeyondEOL; break;
+				Ret=EdOpt.CursorBeyondEOL; break;
 			case 8:  // BSLikeDel;
-				Ret=(int64_t)EdOpt.BSLikeDel; break;
+				Ret=EdOpt.BSLikeDel; break;
 			case 9:  // CharCodeBase;
-				Ret=(int64_t)EdOpt.CharCodeBase; break;
+				Ret=EdOpt.CharCodeBase; break;
 			case 10: // SavePos;
-				Ret=(int64_t)EdOpt.SavePos; break;
+				Ret=EdOpt.SavePos; break;
 			case 11: // SaveShortPos;
-				Ret=(int64_t)EdOpt.SaveShortPos; break;
+				Ret=EdOpt.SaveShortPos; break;
 			case 12: // char WordDiv[256];
 				Ret=TVar(EdOpt.strWordDiv); break;
 			case 13: // F7Rules;
-				Ret=(int64_t)EdOpt.F7Rules; break;
+				Ret=EdOpt.F7Rules; break;
 			case 14: // AllowEmptySpaceAfterEof;
-				Ret=(int64_t)EdOpt.AllowEmptySpaceAfterEof; break;
+				Ret=EdOpt.AllowEmptySpaceAfterEof; break;
 			case 15: // ShowScrollBar;
-				Ret=(int64_t)EdOpt.ShowScrollBar; break;
+				Ret=EdOpt.ShowScrollBar; break;
 			case 16: // EditOpenedForWrite;
-				Ret=(int64_t)EdOpt.EditOpenedForWrite; break;
+				Ret=EdOpt.EditOpenedForWrite; break;
 			case 17: // SearchSelFound;
-				Ret=(int64_t)EdOpt.SearchSelFound; break;
+				Ret=EdOpt.SearchSelFound; break;
 			case 18: // SearchRegexp;
-				Ret=(int64_t)EdOpt.SearchRegexp; break;
+				Ret=EdOpt.SearchRegexp; break;
 			case 19: // SearchPickUpWord;
-				Ret=(int64_t)EdOpt.SearchPickUpWord; break;
+				Ret=EdOpt.SearchPickUpWord; break;
 			case 20: // ShowWhiteSpace;
-				Ret=static_cast<INT64>(EdOpt.ShowWhiteSpace); break;
+				Ret=EdOpt.ShowWhiteSpace; break;
 			default:
-				Ret=(int64_t)-1L;
+				Ret = -1;
 		}
 
 		if ((Index != 12 && longState != -1) || (Index == 12 && _longState.i() == -1))
@@ -3210,7 +3210,7 @@ static bool panelsetposidxFunc(const TMacroFunction*)
 								break;
 						}
 
-						if ( (!InSelection || (InSelection && SelPanel->IsSelected(I))) && SelPanel->FileInFilter(I) )
+						if ( (!InSelection || SelPanel->IsSelected(I)) && SelPanel->FileInFilter(I) )
 						{
 							if (idxFoundItem == idxItem)
 							{
@@ -3235,16 +3235,16 @@ static bool panelsetposidxFunc(const TMacroFunction*)
 						// </Mantis#0000289>
 
 						if ( !InSelection )
-							Ret=(int64_t)(SelPanel->GetCurrentPos()+1);
+							Ret = SelPanel->GetCurrentPos()+1;
 						else
-							Ret=(int64_t)(idxFoundItem+1);
+							Ret = idxFoundItem+1;
 					}
 				}
 			}
 			else // = 0 - вернем текущую позицию
 			{
 				if ( !InSelection )
-					Ret=(int64_t)(SelPanel->GetCurrentPos()+1);
+					Ret = SelPanel->GetCurrentPos()+1;
 				else
 				{
 					long CurPos=SelPanel->GetCurrentPos();
@@ -3383,9 +3383,9 @@ static bool replaceFunc(const TMacroFunction*)
 	int64_t Ret=1;
 	// TODO: Здесь нужно проверить в соответствии с УНИХОДОМ!
 	FARString strStr;
-	int lenS=(int)StrLength(Src.s());
-	int lenF=(int)StrLength(Find.s());
-	int lenR=(int)StrLength(Repl.s());
+	int lenS=StrLength(Src.s());
+	int lenF=StrLength(Find.s());
+	int lenR=StrLength(Repl.s());
 	int cnt=0;
 
 	if( lenF )
@@ -3492,7 +3492,7 @@ static bool panelitemFunc(const TMacroFunction*)
 				Ret=TVar(filelistItem.strName);
 				break;
 			case 2:  // FileAttr
-				Ret=TVar((int64_t)(long)filelistItem.FileAttr);
+				Ret=TVar((int64_t)filelistItem.FileAttr);
 				break;
 			case 3:  // CreationTime
 				ConvertDate(filelistItem.CreationTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
@@ -3525,7 +3525,7 @@ static bool panelitemFunc(const TMacroFunction*)
 				Ret=TVar((int64_t)filelistItem.NumberOfLinks);
 				break;
 			case 10:  // SortGroup
-				Ret=TVar((int64_t)filelistItem.SortGroup);
+				Ret=filelistItem.SortGroup;
 				break;
 			case 11:  // DizText
 			{
@@ -3540,7 +3540,7 @@ static bool panelitemFunc(const TMacroFunction*)
 				Ret=TVar((int64_t)filelistItem.CRC32);
 				break;
 			case 14:  // Position
-				Ret=TVar((int64_t)filelistItem.Position);
+				Ret=filelistItem.Position;
 				break;
 			case 15:  // CreationTime (FILETIME)
 				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem.CreationTime));
@@ -3729,7 +3729,7 @@ static bool editorundoFunc(const TMacroFunction*)
 	{
 		EditorUndoRedo eur;
 		eur.Command=(int)Action.toInteger();
-		Ret=(int64_t)CtrlObject->Plugins.CurEditor->EditorControl(ECTL_UNDOREDO,&eur);
+		Ret=CtrlObject->Plugins.CurEditor->EditorControl(ECTL_UNDOREDO,&eur);
 	}
 
 	VMStack.Push(Ret);
@@ -3749,7 +3749,7 @@ static bool editorsettitleFunc(const TMacroFunction*)
 			Title=L"";
 			Title.toString();
 		}
-		Ret=(int64_t)CtrlObject->Plugins.CurEditor->EditorControl(ECTL_SETTITLE,(void*)Title.s());
+		Ret=CtrlObject->Plugins.CurEditor->EditorControl(ECTL_SETTITLE,(void*)Title.s());
 	}
 
 	VMStack.Push(Ret);
@@ -3885,7 +3885,7 @@ static bool callpluginFunc(const TMacroFunction*)
 		if (CtrlObject->Plugins.CallPlugin((DWORD)SysID.i(),OpenFrom,
 		                                   Param.isString() ? (void*)Param.s() :
 		                                   (void*)(size_t)Param.i(),&ResultCallPlugin))
-			Ret=(int64_t)ResultCallPlugin;
+			Ret=ResultCallPlugin;
 
 		if( Opt.Macro.CallPluginRules )
 			CtrlObject->Macro.PopState();
@@ -3914,7 +3914,7 @@ static bool testfolderFunc(const TMacroFunction*)
 
 	if (tmpVar.isString())
 	{
-		Ret=(int64_t)TestFolder(tmpVar.s());
+		Ret=TestFolder(tmpVar.s());
 	}
 
 	VMStack.Push(Ret);
@@ -3926,7 +3926,7 @@ static bool pluginsFunc(const TMacroFunction *thisFunc)
 {
 	TVar V;
 	bool Ret=false;
-	int nParam=(int)thisFunc->nParam;
+	int nParam=thisFunc->nParam;
 /*
 enum FARMACROVARTYPE
 {

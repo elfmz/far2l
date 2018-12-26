@@ -136,15 +136,14 @@ BOOL WINAPI FP_DeleteRegKeyAll(HKEY hParentKey, LPCSTR szKey)
 
 BYTE *WINAPI FP_GetRegKey(const char *Key, const char *ValueName, BYTE *ValueData, const BYTE * Default, DWORD DataSize)
 {
-	HKEY  hKey;
 	DWORD Type,sz = DataSize;
-	int   ExitCode;
+	int   ExitCode = -1; // not ERROR_SUCCESS, not ERROR_MORE_DATA
 	Assert(ValueData);
-	hKey = FP_OpenRegKey(Key);
+	HKEY hKey = FP_OpenRegKey(Key);
 
 	if(hKey)
 	{
-		ExitCode = WINPORT(RegQueryValueEx)(hKey, MB2Wide(ValueName).c_str(),0,&Type,ValueData,&sz);
+		ExitCode = WINPORT(RegQueryValueEx)(hKey, MB2Wide(ValueName).c_str(),nullptr,&Type,ValueData,&sz);
 		WINPORT(RegCloseKey)(hKey);
 	}
 
@@ -162,15 +161,14 @@ BYTE *WINAPI FP_GetRegKey(const char *Key, const char *ValueName, BYTE *ValueDat
 
 char *WINAPI FP_GetRegKey(const char *Key, const char *ValueName, char *ValueData, LPCSTR Default, DWORD DataSize)
 {
-	HKEY  hKey;
 	DWORD Type,sz = DataSize;
-	int   ExitCode;
+	int   ExitCode = -1; // not ERROR_SUCCESS, not ERROR_MORE_DATA
 	Assert(ValueData);
-	hKey = FP_OpenRegKey(Key);
+	HKEY hKey = FP_OpenRegKey(Key);
 
 	if(hKey)
 	{
-		ExitCode = WINPORT(RegQueryValueEx)(hKey,MB2Wide(ValueName).c_str(),0,&Type,(LPBYTE)ValueData,&sz);
+		ExitCode = WINPORT(RegQueryValueEx)(hKey,MB2Wide(ValueName).c_str(),nullptr,&Type,(LPBYTE)ValueData,&sz);
 		WINPORT(RegCloseKey)(hKey);
 	}
 

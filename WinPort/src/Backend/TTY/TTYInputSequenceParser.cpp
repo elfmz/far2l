@@ -142,6 +142,42 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 			AddStr(c, LEFT_ALT_PRESSED | SHIFT_PRESSED, "%c", c);
 		}
 	}
+	for (char c = '0'; c <= '9'; ++c) {
+		AddStr(c, LEFT_ALT_PRESSED, "%c", c);
+	}
+	AddStr('0', LEFT_ALT_PRESSED | SHIFT_PRESSED, ")");
+	AddStr('1', LEFT_ALT_PRESSED | SHIFT_PRESSED, "!");
+	AddStr('2', LEFT_ALT_PRESSED | SHIFT_PRESSED, "@");
+	AddStr('3', LEFT_ALT_PRESSED | SHIFT_PRESSED, "#");
+	AddStr('4', LEFT_ALT_PRESSED | SHIFT_PRESSED, "$");
+	AddStr('5', LEFT_ALT_PRESSED | SHIFT_PRESSED, "%%");
+	AddStr('6', LEFT_ALT_PRESSED | SHIFT_PRESSED, "^");
+	AddStr('7', LEFT_ALT_PRESSED | SHIFT_PRESSED, "&");
+	AddStr('8', LEFT_ALT_PRESSED | SHIFT_PRESSED, "*");
+	AddStr('9', LEFT_ALT_PRESSED | SHIFT_PRESSED, "(");
+	AddStr(VK_OEM_PLUS, LEFT_ALT_PRESSED, "=");
+	AddStr(VK_OEM_PLUS, LEFT_ALT_PRESSED | SHIFT_PRESSED, "+");
+	AddStr(VK_OEM_MINUS, LEFT_ALT_PRESSED, "-");
+	AddStr(VK_TAB, LEFT_ALT_PRESSED, "\x08");
+	AddStr(VK_CLEAR, LEFT_ALT_PRESSED, "\x7f");
+	AddStr(VK_DIVIDE, LEFT_ALT_PRESSED, "/");
+	AddStr(VK_OEM_PERIOD, LEFT_ALT_PRESSED, ".");
+	AddStr(VK_OEM_COMMA, LEFT_ALT_PRESSED, ",");
+
+	AddStr(VK_OEM_1, LEFT_ALT_PRESSED, ";");
+	AddStr(VK_OEM_3, LEFT_ALT_PRESSED, "`");
+	//AddStr(VK_OEM_4, LEFT_ALT_PRESSED, "[");
+	AddStr(VK_OEM_5, LEFT_ALT_PRESSED, "\\");
+	AddStr(VK_OEM_6, LEFT_ALT_PRESSED, "]");
+	AddStr(VK_OEM_7, LEFT_ALT_PRESSED, "\'");
+
+
+
+
+
+	//AddStr(VK_DIVIDE, LEFT_ALT_PRESSED, "/");
+	//AddStr(VK_ADD, LEFT_ALT_PRESSED | SHIFT_PRESSED, "_", c);
+
 
 	AddStrCursors(VK_UP, "A");
 	AddStrCursors(VK_DOWN, "B");

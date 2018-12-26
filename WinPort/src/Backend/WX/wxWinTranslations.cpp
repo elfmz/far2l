@@ -271,6 +271,7 @@ int wxKeyCode2WinKeyCode(int code)
 	case L',': return VK_OEM_COMMA;
 	case L'-': return VK_OEM_MINUS;
 	case L'+': return VK_OEM_PLUS;
+	case L';': return VK_OEM_1;
 	case L'`': return VK_OEM_3;
 	case L'[': return VK_OEM_4;
 	case L'\\': return VK_OEM_5;

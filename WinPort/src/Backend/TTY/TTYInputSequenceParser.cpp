@@ -136,6 +136,13 @@ void TTYInputSequenceParser::AddStrCursors(WORD vk, const char *code)
 TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler)
 	: _handler(handler)
 {
+	for (char c = 'A'; c <= 'Z'; ++c) {
+		AddStr(c, LEFT_ALT_PRESSED, "%c", c + ('a' - 'A'));
+		if (c != 'O') {
+			AddStr(c, LEFT_ALT_PRESSED | SHIFT_PRESSED, "%c", c);
+		}
+	}
+
 	AddStrCursors(VK_UP, "A");
 	AddStrCursors(VK_DOWN, "B");
 	AddStrCursors(VK_RIGHT, "C");

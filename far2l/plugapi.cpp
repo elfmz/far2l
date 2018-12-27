@@ -1073,7 +1073,7 @@ HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2
 		return hDlg;
 
 	{
-		Dialog *FarDialog = new Dialog(Item,ItemsNumber,DlgProc,Param);
+		Dialog *FarDialog = new(std::nothrow) Dialog(Item,ItemsNumber,DlgProc,Param);
 
 		if (!FarDialog)
 			return hDlg;
@@ -2380,7 +2380,7 @@ int WINAPI farFileFilterControl(HANDLE hHandle, int Command, int Param1, LONG_PT
 					return FALSE;
 			}
 
-			Filter = new FileFilter((Panel *)hHandle, (FAR_FILE_FILTER_TYPE)Param1);
+			Filter = new(std::nothrow) FileFilter((Panel *)hHandle, (FAR_FILE_FILTER_TYPE)Param1);
 
 			if (Filter)
 			{
@@ -2436,7 +2436,7 @@ int WINAPI farRegExpControl(HANDLE hHandle, int Command, LONG_PTR Param)
 				break;
 
 			*((HANDLE*)Param) = INVALID_HANDLE_VALUE;
-			re = new RegExp;
+			re = new(std::nothrow) RegExp;
 
 			if (re)
 			{

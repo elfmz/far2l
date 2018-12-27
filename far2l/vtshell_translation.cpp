@@ -20,6 +20,12 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		case VK_RETURN:
 			return "\r";
 
+		case VK_TAB:
+			return "\t";
+
+		case VK_ESCAPE:
+			return "\x1b";
+
 		case VK_F1: /*
         F1                 \x1bOP
         F1                 \x1b[[A

@@ -198,14 +198,14 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	AddStrTilde(VK_PRIOR, 5);
 	AddStrTilde(VK_NEXT, 6);
 
-	AddStrTilde(VK_F1, 11);
-	AddStrTilde(VK_F2, 12);
-	AddStrTilde(VK_F3, 13);
-	AddStrTilde(VK_F4, 14);
-	AddStrTilde(VK_F5, 15);
-	AddStrTilde(VK_F6, 17);
-	AddStrTilde(VK_F7, 18);
-	AddStrTilde(VK_F8, 19);
+	AddStrTilde(VK_F1, 11);	AddStr(VK_F1, SHIFT_PRESSED, "[25~");
+	AddStrTilde(VK_F2, 12); AddStr(VK_F2, SHIFT_PRESSED, "[26~");
+	AddStrTilde(VK_F3, 13); AddStr(VK_F3, SHIFT_PRESSED, "[28~");
+	AddStrTilde(VK_F4, 14); AddStr(VK_F4, SHIFT_PRESSED, "[29~");
+	AddStrTilde(VK_F5, 15); AddStr(VK_F5, SHIFT_PRESSED, "[31~");
+	AddStrTilde(VK_F6, 17); AddStr(VK_F6, SHIFT_PRESSED, "[32~");
+	AddStrTilde(VK_F7, 18); AddStr(VK_F7, SHIFT_PRESSED, "[33~");
+	AddStrTilde(VK_F8, 19); AddStr(VK_F8, SHIFT_PRESSED, "[34~");
 	AddStrTilde(VK_F9, 20);
 	AddStrTilde(VK_F10, 21);
 	AddStrTilde(VK_F11, 23);

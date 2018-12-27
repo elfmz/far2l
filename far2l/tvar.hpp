@@ -96,16 +96,19 @@ class TVar
 		TVar& operator=(const int64_t&);
 		TVar& operator=(const double&);
 
-		TVar& operator+=(const TVar& b)  { return *this = *this+b;  };
-		TVar& operator-=(const TVar& b)  { return *this = *this-b;  };
-		TVar& operator*=(const TVar& b)  { return *this = *this*b;  };
-		TVar& operator/=(const TVar& b)  { return *this = *this/b;  };
-		TVar& operator%=(const TVar& b)  { return *this = *this%b;  };
-		TVar& operator&=(const TVar& b)  { return *this = *this&b;  };
-		TVar& operator|=(const TVar& b)  { return *this = *this|b;  };
-		TVar& operator^=(const TVar& b)  { return *this = *this^b;  };
-		TVar& operator>>=(const TVar& b) { return *this = *this>>b; };
-		TVar& operator<<=(const TVar& b) { return *this = *this<<b; };
+		// TVar operator==(const TVar &) const = delete;
+		// TVar(TVar&&) = delete;
+
+		TVar& operator+=(const TVar& b)  { return *this = *this+b;  }
+		TVar& operator-=(const TVar& b)  { return *this = *this-b;  }
+		TVar& operator*=(const TVar& b)  { return *this = *this*b;  }
+		TVar& operator/=(const TVar& b)  { return *this = *this/b;  }
+		TVar& operator%=(const TVar& b)  { return *this = *this%b;  }
+		TVar& operator&=(const TVar& b)  { return *this = *this&b;  }
+		TVar& operator|=(const TVar& b)  { return *this = *this|b;  }
+		TVar& operator^=(const TVar& b)  { return *this = *this^b;  }
+		TVar& operator>>=(const TVar& b) { return *this = *this>>b; }
+		TVar& operator<<=(const TVar& b) { return *this = *this<<b; }
 
 		TVar operator+();
 		TVar operator-();
@@ -122,8 +125,8 @@ class TVar
 		TVar& AppendStr(wchar_t);
 		TVar& AppendStr(const TVar&);
 
-		TVarType type() { return vType; };
-		void SetType(TVarType newType) {vType=newType;};
+		TVarType type() { return vType; }
+		void SetType(TVarType newType) {vType=newType;}
 
 		int isString()   const { return vType == vtString;  }
 		int isInteger()  const { return vType == vtInteger; }

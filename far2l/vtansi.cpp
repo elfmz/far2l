@@ -1596,7 +1596,7 @@ VTAnsi::~VTAnsi()
 
 struct VTAnsiState *VTAnsi::Suspend()
 {
-	VTAnsiState *out = new VTAnsiState;
+	VTAnsiState *out = new(std::nothrow) VTAnsiState;
 	if (out) {
 		out->InitFromConsole(NULL);
 		g_saved_state.ApplyToConsole(NULL);

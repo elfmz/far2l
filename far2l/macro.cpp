@@ -4023,7 +4023,7 @@ static bool usersFunc(const TMacroFunction *thisFunc)
 	int nParam=thisFunc->nParam;
 	/* времянка */ while(--nParam >= 0) VMStack.Pop(V);
 
-	VMStack.Push(0);
+	VMStack.Push(tviZero);
 	return Ret;
 }
 

@@ -306,7 +306,7 @@ int Message(
 	{
 		DWORD ItemCount=StrCount+Buttons+1;
 		DialogItemEx *PtrMsgDlg;
-		DialogItemEx *MsgDlg = new DialogItemEx[ItemCount+1];
+		DialogItemEx *MsgDlg = new(std::nothrow) DialogItemEx[ItemCount+1];
 
 		if (!MsgDlg)
 		{

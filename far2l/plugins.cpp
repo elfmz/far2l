@@ -597,7 +597,7 @@ HANDLE PluginManager::OpenFilePlugin(
 		{
 			if (file.Open(Name, FILE_READ_DATA, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 			{
-				Data = new BYTE[Opt.PluginMaxReadData];
+				Data = new(std::nothrow) BYTE[Opt.PluginMaxReadData];
 				if (Data)
 				{
 					if (file.Read(Data, Opt.PluginMaxReadData, &DataSize))

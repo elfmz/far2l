@@ -695,6 +695,10 @@ void InterpretEscSeq( void )
 		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 			for (i = 0; i < es_argc; ++i) {
 				switch (es_argv[i]) {
+//				case 47: case 1047:
+//					g_alternative_screen_buffer.Toggle(suffix == 'h');
+//					break;
+
 				case 1049:
 					g_alternative_screen_buffer.Toggle(suffix == 'h');
 					break;

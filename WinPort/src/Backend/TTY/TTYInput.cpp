@@ -16,10 +16,13 @@ void TTYInput::PostCharEvent(wchar_t ch)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
-	ir.Event.KeyEvent.bKeyDown = TRUE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	ir.Event.KeyEvent.uChar.UnicodeChar = ch;
 	ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
+	if (_handler)
+		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
+
+	ir.Event.KeyEvent.bKeyDown = TRUE;
 	g_winport_con_in.Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	g_winport_con_in.Enqueue(&ir, 1);

@@ -145,6 +145,8 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	for (char c = '0'; c <= '9'; ++c) {
 		AddStr(c, LEFT_ALT_PRESSED, "%c", c);
 	}
+	AddStr('C', LEFT_CTRL_PRESSED | LEFT_ALT_PRESSED, "\x03");
+
 	AddStr('0', LEFT_ALT_PRESSED | SHIFT_PRESSED, ")");
 	AddStr('1', LEFT_ALT_PRESSED | SHIFT_PRESSED, "!");
 	AddStr('2', LEFT_ALT_PRESSED | SHIFT_PRESSED, "@");
@@ -372,10 +374,10 @@ void TTYInputSequenceParser::PostKeyEvent(const TTYInputKey &k)
 //	ir.Event.KeyEvent.uChar.UnicodeChar = i.second.unicode_char;
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys;
-	if (IsEnhancedKey(k.vk)) {
-		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
-	}
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
+	if (_handler)
+		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
+
 	ir.Event.KeyEvent.bKeyDown = TRUE;
 	g_winport_con_in.Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;

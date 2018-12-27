@@ -96,6 +96,8 @@ protected:
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnInputBroken();
+	virtual DWORD OnQueryControlKeys();
+
 
 public:
 	TTYBackend(int std_in, int std_out, bool far2l_tty);

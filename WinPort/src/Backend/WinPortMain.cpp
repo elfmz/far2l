@@ -65,10 +65,10 @@ static void SetupStdHandles(bool ignore_hup)
 	}
 	
 	if ( reopened == 3 && out == DEVNULL && err == DEVNULL) {
-		ioctl(0, TIOCNOTTY, NULL);
 		if (!freopen(DEVNULL, "r", stdin)) {
 			perror("freopen stdin");
 		}
+		ioctl(0, TIOCNOTTY, NULL);
 		if (ignore_hup)
 			signal(SIGHUP, SIG_IGN);
 	}

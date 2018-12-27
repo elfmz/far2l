@@ -514,7 +514,7 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 				if (!DizData[I].Deleted)
 				{
 					DWORD Size=(DizData[I].DizLength+1)*(CodePage == CP_UTF8?3:1); //UTF-8, up to 3 bytes per char support
-					char* lpDizText = new char[Size];
+					char* lpDizText = new(std::nothrow) char[Size];
 					if (lpDizText)
 					{
 						int BytesCount=WINPORT(WideCharToMultiByte)(CodePage, 0, DizData[I].DizText, DizData[I].DizLength+1, lpDizText, Size, nullptr, nullptr);

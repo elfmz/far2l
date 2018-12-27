@@ -6720,7 +6720,7 @@ void Editor::PR_EditorShowMsg()
 
 Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 {
-	Edit *pEdit = new Edit(this, nullptr, lpwszStr ? false : true);
+	Edit *pEdit = new(std::nothrow) Edit(this, nullptr, lpwszStr ? false : true);
 
 	if (pEdit)
 	{

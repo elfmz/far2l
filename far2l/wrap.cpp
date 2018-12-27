@@ -299,7 +299,7 @@ void ConvertPanelModesA(const oldfar::PanelMode *pnmA, PanelMode **ppnmW, int iC
 {
 	if (pnmA && ppnmW && (iCount>0))
 	{
-		PanelMode *pnmW = new PanelMode[iCount]();
+		PanelMode *pnmW = new(std::nothrow) PanelMode[iCount]();
 		if (pnmW)
 		{
 			for (int i=0; i<iCount; i++)

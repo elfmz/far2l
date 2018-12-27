@@ -2203,7 +2203,7 @@ bool TreeList::SaveState()
 
 	if (TreeCount > 0)
 	{
-		SaveListData= new TreeItem[TreeCount];
+		SaveListData = new(std::nothrow) TreeItem[TreeCount];
 
 		if (SaveListData)
 		{

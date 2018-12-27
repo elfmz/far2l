@@ -83,7 +83,7 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 
 	if (bRE)
 	{
-		re = new RegExp;
+		re = new(std::nothrow) RegExp;
 
 		if (re && re->Compile(masks, OP_PERLSTYLE|OP_OPTIMIZE))
 		{

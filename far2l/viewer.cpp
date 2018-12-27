@@ -1541,7 +1541,7 @@ int Viewer::ProcessKey(int Key)
 		}
 		case KEY_PGDN: case KEY_NUMPAD3:  case KEY_SHIFTNUMPAD3: case KEY_CTRLDOWN:
 		{
-			vString.lpData = new wchar_t[MAX_VIEWLINEB];
+			vString.lpData = new(std::nothrow) wchar_t[MAX_VIEWLINEB];
 
 			if (!vString.lpData)
 				return TRUE;

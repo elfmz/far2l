@@ -394,7 +394,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 	if (m_bUnicode)
 	{
 		wchar_t *CurAddr = MsgList;
-		MsgAddr = new wchar_t*[MsgCount];
+		MsgAddr = new(std::nothrow) wchar_t*[MsgCount];
 
 		if (!MsgAddr)
 		{
@@ -411,7 +411,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 	else
 	{
 		char *CurAddrA = MsgListA;
-		MsgAddrA = new char*[MsgCount];
+		MsgAddrA = new(std::nothrow) char*[MsgCount];
 
 		if (!MsgAddrA)
 		{

@@ -4,6 +4,11 @@
 #include <fcntl.h>
 #include <exception>
 #include <sys/ioctl.h>
+#ifdef __linux__
+# include <termios.h>
+# include <linux/kd.h>
+# include <linux/keyboard.h>
+#endif
 #include "utils.h"
 #include "CheckedCast.hpp"
 #include "WinPortHandle.h"
@@ -541,6 +546,66 @@ void TTYBackend::OnInputBroken()
 	}
 	_far2l_interracts_sent.clear();
 }
+
+DWORD TTYBackend::OnQueryControlKeys()
+{
+	DWORD out = 0;
+
+#ifdef __linux__
+	unsigned char state = 6;
+/* #ifndef KG_SHIFT
+# define KG_SHIFT        0
+# define KG_CTRL         2
+# define KG_ALT          3
+# define KG_ALTGR        1
+# define KG_SHIFTL       4
+# define KG_KANASHIFT    4
+# define KG_SHIFTR       5
+# define KG_CTRLL        6
+# define KG_CTRLR        7
+# define KG_CAPSSHIFT    8
+#endif */
+
+	if (ioctl(_stdin, TIOCLINUX, &state) == 0) {
+		if (state & ((1 << KG_SHIFT) | (1 << KG_SHIFTL) | (1 << KG_SHIFTR))) {
+			out|= SHIFT_PRESSED;
+		}
+		if (state & (1 << KG_CTRLL)) {
+			out|= LEFT_CTRL_PRESSED;
+		}
+		if (state & (1 << KG_CTRLR)) {
+			out|= RIGHT_CTRL_PRESSED;
+		}
+		if ( (state & (1 << KG_CTRL)) != 0
+		&& ((state & ((1 << KG_CTRLL) | (1 << KG_CTRLR))) == 0) ) {
+			out|= LEFT_CTRL_PRESSED;
+		}
+
+		if (state & (1 << KG_ALTGR)) {
+			out|= RIGHT_ALT_PRESSED;
+		}
+		else if (state & (1 << KG_ALT)) {
+			out|= LEFT_ALT_PRESSED;
+		}
+	}
+
+	state = 0;
+	if (ioctl (_stdin, KDGETLED, &state) == 0) {
+		if (state & 1) {
+			out|= SCROLLLOCK_ON;
+		}
+		if (state & 2) {
+			out|= NUMLOCK_ON;
+		}
+		if (state & 4) {
+			out|= CAPSLOCK_ON;
+		}
+	}
+#endif
+	return out;
+}
+
+
 
 static void sigwinch_handler(int)
 {

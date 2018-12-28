@@ -1467,7 +1467,7 @@ DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 			Key=GetInputRecord(&rec,ExcludeMacro,true);
 		}
 
-		if (KeyWait == (DWORD)-1)
+		if (KeyWait == KEY_INVALID)
 		{
 			if ((Key&(~KEY_CTRLMASK)) < KEY_END_FKEY || IS_INTERNAL_KEY_REAL(Key&(~KEY_CTRLMASK)))
 				break;
@@ -1655,20 +1655,20 @@ static FARString &GetShiftKeyName(FARString &strName, DWORD Key,int& Len)
 uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
 {
 	if (!Name || !*Name)
-		return std::numeric_limits<uint32_t>::max();
+		return KEY_INVALID;
 
 	uint32_t Key=0;
     // _SVS(SysLog(L"KeyNameToKey('%ls')",Name));
 
 	// Это макроклавиша?
 	if (Name[0] == L'$' && Name[1])
-		return std::numeric_limits<uint32_t>::max(); // KeyNameMacroToKey(Name);
+		return KEY_INVALID; // KeyNameMacroToKey(Name);
 
 	if (Name[0] == L'%' && Name[1])
-		return std::numeric_limits<uint32_t>::max();
+		return KEY_INVALID;
 
 	if (Name[1] && wcspbrk(Name,L"()")) // если не один символ и встречаются '(' или ')', то это явно не клавиша!
-		return std::numeric_limits<uint32_t>::max();
+		return KEY_INVALID;
 
 //   if((Key=KeyNameMacroToKey(Name)) != (DWORD)-1)
 //     return Key;
@@ -1741,7 +1741,7 @@ uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
 			else if (Key == KEY_ALT || Key == KEY_RALT || Key == KEY_M_SPEC || Key == KEY_M_OEM) // Варианты (3), (4) и (5)
 			{
 				wchar_t *endptr=nullptr;
-				int K=(int)wcstol(Ptr, &endptr, 10);
+				uint32_t K=static_cast<uint32_t>(wcstoul(Ptr, &endptr, 10));
 
 				if (Ptr+5 == endptr)
 				{
@@ -1767,7 +1767,7 @@ uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
 	}
 	*/
 	// _SVS(SysLog(L"Key=0x%08X (%c) => '%ls'",Key,(Key?Key:' '),Name));
-	return (!Key || Pos < Len)? std::numeric_limits<uint32_t>::max() : Key;
+	return (!Key || Pos < Len)? KEY_INVALID : Key;
 }
 
 BOOL WINAPI KeyToText(uint32_t Key0, FARString &strKeyText0)

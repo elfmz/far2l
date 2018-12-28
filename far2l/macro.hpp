@@ -326,8 +326,8 @@ class KeyMacro
 		static bool UnregMacroFunction(size_t Index);
 };
 
-BOOL WINAPI KeyMacroToText(int Key,FARString &strKeyText0);
-int WINAPI KeyNameMacroToKey(const wchar_t *Name);
+BOOL WINAPI KeyMacroToText(uint32_t Key,FARString &strKeyText0);
+uint32_t WINAPI KeyNameMacroToKey(const wchar_t *Name);
 void initMacroVarTable(int global);
 void doneMacroVarTable(int global);
 bool checkMacroConst(const wchar_t *name);

@@ -375,6 +375,8 @@ void TTYInputSequenceParser::PostKeyEvent(const TTYInputKey &k)
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys;
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
+	if (IsEnhancedKey(k.vk))
+		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	if (_handler)
 		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
 

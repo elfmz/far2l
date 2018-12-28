@@ -27,10 +27,10 @@ static TTYBackend * g_vtb = nullptr;
 TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty) :
 	_stdin(std_in),
 	_stdout(std_out),
-	_far2l_tty(far2l_tty)
-{
-	_largest_window_size_ready = false;
+	_far2l_tty(far2l_tty),
+	_largest_window_size_ready(false)
 
+{
 	memset(&_ts, 0 , sizeof(_ts));
 	if (pipe_cloexec(_kickass) == -1) {
 		_kickass[0] = _kickass[1] = -1;
@@ -150,7 +150,7 @@ void TTYBackend::WriterThread()
 		tty_out.SetScreenBuffer(false);
 		tty_out.Flush();
 
-	} catch (std::exception &e) {
+	} catch (const std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
 	}
 	_exiting = true;
@@ -206,7 +206,7 @@ void TTYBackend::ReaderThread()
 			}
 		}
 
-	} catch (std::exception &e) {
+	} catch (const std::exception &e) {
 		fprintf(stderr, "ReaderThread: %s <%d>\n", e.what(), errno);
 	}
 	_exiting = true;
@@ -456,7 +456,7 @@ bool TTYBackend::OnConsoleIsActive()
 void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
 {
 	try {
-		INPUT_RECORD ir = {0};
+		INPUT_RECORD ir {};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
 
@@ -477,7 +477,7 @@ void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
 void TTYBackend::OnFar2lMouse(StackSerializer &stk_ser)
 {
 	try {
-		INPUT_RECORD ir = {0};
+		INPUT_RECORD ir {};
 		ir.EventType = MOUSE_EVENT;
 
 		stk_ser.PopPOD(ir.Event.MouseEvent.dwEventFlags);

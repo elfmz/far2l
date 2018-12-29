@@ -2742,6 +2742,7 @@ int Editor::ProcessKey(int Key)
 				{
 					Xlat();
 					Show();
+					delete[] CmpStr;
 					return TRUE;
 				}
 

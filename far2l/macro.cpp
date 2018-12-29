@@ -269,7 +269,7 @@ TMacroKeywords MKeywordsFlags[] =
 // транслирующая таблица - имя <-> код макроклавиши
 static struct TKeyCodeName
 {
-	int Key;
+	uint32_t Key;
 	int Len;
 	const wchar_t *Name;
 } KeyMacroCodes[]=
@@ -485,7 +485,7 @@ TVMStack VMStack;
 static LONG _RegWriteString(const wchar_t *Key,const wchar_t *ValueName,const wchar_t *Data);
 
 // функция преобразования кода макроклавиши в текст
-BOOL WINAPI KeyMacroToText(int Key,FARString &strKeyText0)
+BOOL WINAPI KeyMacroToText(uint32_t Key,FARString &strKeyText0)
 {
 	FARString strKeyText;
 
@@ -509,15 +509,15 @@ BOOL WINAPI KeyMacroToText(int Key,FARString &strKeyText0)
 }
 
 // функция преобразования названия в код макроклавиши
-// вернет -1, если нет эквивалента!
-int WINAPI KeyNameMacroToKey(const wchar_t *Name)
+// вернет KEY_INVALID, если нет эквивалента!
+uint32_t WINAPI KeyNameMacroToKey(const wchar_t *Name)
 {
 	// пройдемся по всем модификаторам
-	for (int I=0; I < int(ARRAYSIZE(KeyMacroCodes)); ++I)
-		if (!StrCmpNI(Name,KeyMacroCodes[I].Name,KeyMacroCodes[I].Len))
-			return KeyMacroCodes[I].Key;
+	for (const auto& elem : KeyMacroCodes)
+		if (!StrCmpNI(Name, elem.Name, elem.Len))
+			return elem.Key;
 
-	return -1;
+	return KEY_INVALID;
 }
 
 KeyMacro::KeyMacro():
@@ -738,16 +738,16 @@ uint32_t KeyMacro::ProcessKey(uint32_t Key)
 			// добавим проверку на удаление
 			// если удаляем, то не нужно выдавать диалог настройки.
 			//if (MacroKey != (DWORD)-1 && (Key==KEY_CTRLSHIFTDOT || Recording==2) && RecBufferSize)
-			if (MacroKey != std::numeric_limits<uint32_t>::max() && Key==Opt.Macro.KeyMacroCtrlShiftDot && RecBufferSize)
+			if (MacroKey != KEY_INVALID && Key==Opt.Macro.KeyMacroCtrlShiftDot && RecBufferSize)
 			{
 				if (!GetMacroSettings(MacroKey,Flags))
-					MacroKey=std::numeric_limits<uint32_t>::max();
+					MacroKey=KEY_INVALID;
 			}
 
 			WaitInMainLoop=WaitInMainLoop0;
 			InternalInput=FALSE;
 
-			if (MacroKey==std::numeric_limits<uint32_t>::max())
+			if (MacroKey==KEY_INVALID)
 			{
 				if (RecBuffer)
 				{
@@ -906,10 +906,10 @@ uint32_t KeyMacro::ProcessKey(uint32_t Key)
 				//_KEYMACRO(SysLog(L"Upper(Key)=%ls",_FARKEY_ToName(Key)));
 
 				if ((Key&(~KEY_CTRLMASK)) > 0x7F && (Key&(~KEY_CTRLMASK)) < KEY_FKEY_BEGIN)
-					Key=KeyToKeyLayout(Key&0x0000FFFF)|(Key&(~0x0000FFFF));
+					Key=KeyToKeyLayout(Key&0x0000FFFF)|(Key&(~0x0000FFFFu));
 
 				if (Key < KEY_FKEY_BEGIN)
-					Key=Upper(Key&0x0000FFFF)|(Key&(~0x0000FFFF));
+					Key=Upper(Key&0x0000FFFF)|(Key&(~0x0000FFFFu));
 
 			}
 
@@ -2071,7 +2071,7 @@ static bool keyFunc(const TMacroFunction*)
 		// Проверим...
 		DWORD Key = KeyNameToKey(VarKey.s());
 
-		if (Key != (DWORD)-1 && Key==(DWORD)VarKey.i())
+		if (Key != KEY_INVALID && Key==(DWORD)VarKey.i())
 			strKeyText=VarKey.s();
 	}
 
@@ -2082,8 +2082,8 @@ static bool keyFunc(const TMacroFunction*)
 // V=waitkey([N,[T]])
 static bool waitkeyFunc(const TMacroFunction*)
 {
-	long Type=(long)VMStack.Pop().getInteger();
-	long Period=(long)VMStack.Pop().getInteger();
+	int64_t Type=VMStack.Pop().getInteger();
+	int64_t Period=VMStack.Pop().getInteger();
 	DWORD Key=WaitKey((DWORD)-1,Period);
 
 	if (!Type)
@@ -2099,10 +2099,10 @@ static bool waitkeyFunc(const TMacroFunction*)
 	}
 
 	if (Key == KEY_NONE)
-		Key=-1;
+		Key=KEY_INVALID;
 
 	VMStack.Push((int64_t)Key);
-	return Key != (DWORD)-1;
+	return Key != KEY_INVALID;
 }
 
 // n=min(n1,n2)
@@ -5659,7 +5659,7 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 
 		uint32_t KeyCode=KeyNameToKey(strKeyText);
 
-		if (KeyCode==(DWORD)-1)
+		if (KeyCode == KEY_INVALID)
 			continue;
 
 		DWORD regType=0;
@@ -6104,7 +6104,7 @@ DWORD KeyMacro::AssignMacroKey()
 	IsProcessAssignMacroKey--;
 
 	if (Dlg.GetExitCode() == -1)
-		return (DWORD)-1;
+		return KEY_INVALID;
 
 	return Param.Key;
 }
@@ -6645,7 +6645,7 @@ int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
 			{
 				for (Pos=0; Pos < Len; ++Pos, ++MPtr)
 				{
-					if (!((MPtr->Key ^ Key) & ~0xFFFF) &&
+					if (!((MPtr->Key ^ Key) & ~0xFFFFu) &&
 					        (Upper(static_cast<WCHAR>(MPtr->Key))==Upper(static_cast<WCHAR>(Key))) &&
 					        (MPtr->BufferSize > 0))
 					{

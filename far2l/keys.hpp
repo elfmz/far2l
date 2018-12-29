@@ -54,6 +54,9 @@ Far Manager plugins that use this header file can be distributed under any
 other possible license with no implications from the above license on them.
 */
 
+#include <cstdint>
+#include <limits>
+
 #define EXTENDED_KEY_BASE     0x00010000
 #define INTERNAL_KEY_BASE     0x00020000
 #define INTERNAL_KEY_BASE_2   0x00030000
@@ -61,7 +64,7 @@ other possible license with no implications from the above license on them.
 #define INTERNAL_MACRO_BASE   0x00080000
 #endif  // END FAR_USE_INTERNALS
 
-enum BaseDefKeyboard
+enum BaseDefKeyboard : uint32_t
 {
 	KEY_CTRLMASK             =0xFFF00000,
 #ifdef FAR_USE_INTERNALS
@@ -279,6 +282,9 @@ enum BaseDefKeyboard
 
 	KEY_MACRO_ENDBASE        =0x000FFFFF,
 #endif // END FAR_USE_INTERNALS
+
+	KEY_INVALID              =std::numeric_limits<uint32_t>::max()
+
 };
 
 enum AddDefKeyboard
@@ -779,7 +785,7 @@ enum AddDefKeyboard
 	KEY_CTRLSHIFTSPACE       =KEY_CTRL|KEY_SHIFT|KEY_SPACE,
 
 	KEY_ALT_BASE             =KEY_ALT,
-	KEY_ALTSHIFT_BASE        =KEY_ALTSHIFT,
+	KEY_ALTSHIFT_BASE        =KEY_ALTSHIFT
 };
 
 #ifdef FAR_USE_INTERNALS

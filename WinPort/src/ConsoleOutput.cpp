@@ -463,7 +463,7 @@ static void ClipRect(SMALL_RECT &rect, const SMALL_RECT &clip, COORD *offset = N
 		rect.Top = clip.Top;
 	}
 	if (rect.Right > clip.Right) rect.Right = clip.Right;
-	if (rect.Bottom > clip.Bottom) rect.Bottom = clip.Bottom;	
+	if (rect.Bottom > clip.Bottom) rect.Bottom = clip.Bottom;
 }
 
 bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle, 
@@ -493,17 +493,17 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 		std::lock_guard<std::mutex> lock(_mutex);
 		_buf.Read(&_temp_chars[0], data_size, data_pos, areas.n.src);
 
-		fprintf(stderr, "!!!!SCROLL:[%u %u %u %u] -> [%u %u %u %u]",
+		fprintf(stderr, "!!!!SCROLL:[%i %i %i %i] -> [%i %i %i %i]",
 			areas.n.src.Left, areas.n.src.Top, areas.n.src.Right, areas.n.src.Bottom,
 			areas.n.dst.Left, areas.n.dst.Top, areas.n.dst.Right, areas.n.dst.Bottom);
 	
 		if (lpClipRectangle) {
-			fprintf(stderr, " CLIP:[%u %u %u %u]",
+			fprintf(stderr, " CLIP:[%i %i %i %i]",
 				lpClipRectangle->Left, lpClipRectangle->Top, lpClipRectangle->Right, lpClipRectangle->Bottom);
 			ClipRect(areas.n.src, *lpClipRectangle);
 			ClipRect(areas.n.dst, *lpClipRectangle, &data_pos);
 
-			fprintf(stderr, " CLIPPED:[%u %u %u %u] -> [%u %u %u %u] DP=[%u %u]",
+			fprintf(stderr, " CLIPPED:[%i %i %i %i] -> [%i %i %i %i] DP=[%i %i]",
 				areas.n.src.Left, areas.n.src.Top, areas.n.src.Right, areas.n.src.Bottom,
 				areas.n.dst.Left, areas.n.dst.Top, areas.n.dst.Right, areas.n.dst.Bottom,
 				data_pos.X, data_pos.Y);

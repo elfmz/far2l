@@ -174,7 +174,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 							if (DlgParam->OSubfoldersState != SubfoldersState) // Состояние изменилось?
 							{
 								// установили?
-								if (SubfoldersState)
+								if (SubfoldersState != BSTATE_UNCHECKED)
 								{
 									for (int i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
 									{
@@ -218,7 +218,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 										{
 											if (!*ParamTimes[i])
 											{
-												SendDlgMessage(hDlg,DM_SETATTR,Items[i],SubfoldersState?0:(LONG_PTR)FDTimes[i]);
+												SendDlgMessage(hDlg,DM_SETATTR,Items[i],(SubfoldersState != BSTATE_UNCHECKED)?0:(LONG_PTR)FDTimes[i]);
 												*ParamTimes[i]=false;
 											}
 										}
@@ -233,7 +233,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 							if (DlgParam->OSubfoldersState!=SubfoldersState)
 							{
 								// установили?
-								if (SubfoldersState)
+								if (SubfoldersState != BSTATE_UNCHECKED)
 								{
 									for (int i=SA_ATTR_FIRST; i<= SA_ATTR_LAST; i++)
 									{

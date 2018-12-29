@@ -109,7 +109,7 @@ static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 		FD_SET(fdin, &fde); 
 		struct timeval tv = {10, 0};
 
-		if (select(fdin + 1, &fds, NULL, &fde, &tv) <= 0) {
+		if (select(fdin + 1, &fds, nullptr, &fde, &tv) <= 0) {
 			break;
 		}
 
@@ -155,7 +155,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		if (strstr(argv[i], "--notty") == argv[i]) {
 			notty = true;
 
-		} if (strstr(argv[i], "--tty") == argv[i]) {
+		} else if (strstr(argv[i], "--tty") == argv[i]) {
 			tty = true;
 
 		} else if (strstr(argv[i], "--nodetect") == argv[i]) {

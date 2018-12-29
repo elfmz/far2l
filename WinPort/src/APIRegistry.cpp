@@ -167,7 +167,7 @@ LONG RegXxxKeyEx(
 			*lpdwDisposition = REG_OPENED_EXISTING_KEY;
 
 
-	WinPortHandleReg *rd = new WinPortHandleReg;
+	WinPortHandleReg *rd = new(std::nothrow) WinPortHandleReg;
 	if (!rd)
 		return ERROR_OUTOFMEMORY;
 	rd->dir.swap(dir);

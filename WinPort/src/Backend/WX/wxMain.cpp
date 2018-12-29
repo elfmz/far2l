@@ -88,7 +88,7 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 
 	wxClipboardBackend clip_backend;
 	if (AppMain && !g_winport_app_thread) {
-		g_winport_app_thread = new WinPortAppThread(argc, argv, AppMain);
+		g_winport_app_thread = new(std::nothrow) WinPortAppThread(argc, argv, AppMain);
 		if (!g_winport_app_thread) {
 			wxUninitialize();
 			return false;
@@ -361,7 +361,7 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 	
 	if (!_shown) {
 		_shown = true;
-		wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_INITIALIZED);
+		wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_INITIALIZED);
 		if (event)
 			wxQueueEvent(_panel, event);		
 	}
@@ -683,7 +683,7 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 	
 	switch (action) {
 		case A_QUEUE: {
-			wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_REFRESH);
+			wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_REFRESH);
 			if (event)
 				wxQueueEvent (this, event);
 		} break;
@@ -694,7 +694,7 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 			std::lock_guard<std::mutex> lock(_refresh_rects);
 			_refresh_rects_throttle = WINPORT(GetTickCount)();
 			if (_refresh_rects_throttle == (DWORD)-1)
-				_refresh_rects_throttle = 0;			
+				_refresh_rects_throttle = 0;
 		} break;
 		
 		case A_NOTHING: break;
@@ -703,14 +703,14 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 
 void WinPortPanel::OnConsoleOutputResized()
 {
-	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_RESIZED);
+	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_RESIZED);
 	if (event)
 		wxQueueEvent	(this, event);
 }
 
 void WinPortPanel::OnConsoleOutputTitleChanged()
 {
-	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_TITLE_CHANGED);
+	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_TITLE_CHANGED);
 	if (event)
 		wxQueueEvent	(this, event);
 }
@@ -718,7 +718,7 @@ void WinPortPanel::OnConsoleOutputTitleChanged()
 void WinPortPanel::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 {
 	SMALL_RECT rect = {pos.X, pos.Y, absolute ? (SHORT)1 : (SHORT)0, 0};
-	wxCommandEvent *event = new EventWithRect(rect, WX_CONSOLE_WINDOW_MOVED);
+	wxCommandEvent *event = new(std::nothrow) EventWithRect(rect, WX_CONSOLE_WINDOW_MOVED);
 	if (event)
 		wxQueueEvent	(this, event);
 }
@@ -753,7 +753,7 @@ COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 
 void WinPortPanel::OnConsoleSetMaximized(bool maximized)
 {
-	EventWithBool *event = new EventWithBool(maximized, WX_CONSOLE_SET_MAXIMIZED);
+	EventWithBool *event = new(std::nothrow) EventWithBool(maximized, WX_CONSOLE_SET_MAXIMIZED);
 	if (event)
 		wxQueueEvent(this, event);
 }
@@ -1203,7 +1203,7 @@ void WinPortPanel::OnConsoleAdhocQuickEditSync( wxCommandEvent& event )
 
 void WinPortPanel::OnConsoleAdhocQuickEdit()
 {
-	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_ADHOC_QEDIT);
+	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_ADHOC_QEDIT);
 	if (event)
 		wxQueueEvent(this, event);
 }
@@ -1229,7 +1229,7 @@ DWORD WinPortPanel::OnConsoleSetTweaks(DWORD tweaks)
 	if (_exclusive_hotkeys.Available())
 		out|= TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS;
 
-	EventWithDWORD *event = new EventWithDWORD(tweaks, WX_CONSOLE_SET_TWEAKS);
+	EventWithDWORD *event = new(std::nothrow) EventWithDWORD(tweaks, WX_CONSOLE_SET_TWEAKS);
 	if (event)
 		wxQueueEvent(this, event);
 
@@ -1252,7 +1252,7 @@ void WinPortPanel::OnConsoleChangeFontSync(wxCommandEvent& event)
 
 void WinPortPanel::OnConsoleChangeFont()
 {
-	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_CHANGE_FONT);
+	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_CHANGE_FONT);
 	if (event)
 		wxQueueEvent(this, event);
 }
@@ -1268,7 +1268,7 @@ void WinPortPanel::OnConsoleExitSync( wxCommandEvent& event )
 
 void WinPortPanel::OnConsoleExit()
 {
-	wxCommandEvent *event = new wxCommandEvent(WX_CONSOLE_EXIT);
+	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_EXIT);
 	if (event)
 		wxQueueEvent(this, event);
 }
@@ -1302,7 +1302,7 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
 		ir.Event.KeyEvent.wVirtualKeyCode = k;
-		g_winport_con_in.Enqueue(&ir, 1);		
+		g_winport_con_in.Enqueue(&ir, 1);
 	}
 	_pressed_keys.clear();
 	_right_control = false;
@@ -1314,4 +1314,3 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 	
 	_exclusive_hotkeys.Reset();
 }
-

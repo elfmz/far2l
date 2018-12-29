@@ -907,13 +907,13 @@ static TToken getToken()
 					{
 						if (IsProcessFunc || currTok == tFunc || currTok == tLt) // TODO: уточнить
 						{
-							if (KeyNameMacroToKey(nameString) == -1 && KeyNameToKey(nameString) == (DWORD)-1 && checkMacroConst(nameString))
+							if (KeyNameMacroToKey(nameString) == KEY_INVALID && KeyNameToKey(nameString) == KEY_INVALID && checkMacroConst(nameString))
 								__currTok = tConst;
 							else
 							{
 								DWORD k=KeyNameToKey(nameString);
 
-								if (k != (DWORD)-1)
+								if (k != KEY_INVALID)
 								{
 									currVar = (int64_t)k;
 									__currTok = tInt; //??
@@ -926,9 +926,9 @@ static TToken getToken()
 						}
 						else
 						{
-							if (KeyNameMacroToKey(nameString) == -1)
+							if (KeyNameMacroToKey(nameString) == KEY_INVALID)
 							{
-								if (KeyNameToKey(nameString) == (DWORD)-1)
+								if (KeyNameToKey(nameString) == KEY_INVALID)
 								{
 									if (checkMacroConst(nameString))
 										__currTok = tConst;
@@ -1551,7 +1551,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 			KeyCode = MCODE_OP_PLAINTEXT;
 			BufPtr = oldBufPtr;
 		}
-		else if ((KeyCode = KeyNameMacroToKey(strCurrKeyText)) == (DWORD)-1 && (KeyCode = KeyNameToKey(strCurrKeyText)) == (DWORD)-1)
+		else if ((KeyCode = KeyNameMacroToKey(strCurrKeyText)) == KEY_INVALID && (KeyCode = KeyNameToKey(strCurrKeyText)) == KEY_INVALID)
 		{
 			int ProcError=0;
 

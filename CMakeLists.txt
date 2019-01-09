@@ -10,17 +10,19 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if(NOT CMAKE_INSTALL_PREFIX)
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
    set(CMAKE_INSTALL_PREFIX "/usr")
 endif()
 
+if (NOT DEFINED USEWX)
+	set(USEWX "YES")
+endif()
 
-if (${USEWX} MATCHES "no")
+if (NOT ${USEWX})
 	set(USEWX_INCS "")
 	set(USEWX_LIBS "")
 	set(USEWX_CXX_FLAGS "")
 else()
-	set(USEWX "yes")
 	find_package(wxWidgets REQUIRED net core base)
 	include(${wxWidgets_USE_FILE})
 

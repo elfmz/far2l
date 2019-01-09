@@ -304,7 +304,7 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 	if (!tmp.empty()) {
 		flags|= EF_NOWAIT | EF_HIDEOUT; //open.sh doesnt print anything
 	}
-	if ( (ec.IsFile() || ec.IsDir()) && ec.cmd()[0] != '/' && (ec.cmd()[0] != '.' || ec.cmd()[0] != '/')) {
+	if ( (ec.IsFile() || ec.IsDir()) && ec.cmd()[0] != '/' && !StrStartsFrom(ec.cmd(), "./")) {
 		tmp+= "./"; // it is ok to prefix ./ even to a quoted string
 	}
 	tmp+= CmdStr;

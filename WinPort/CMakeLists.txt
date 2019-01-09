@@ -8,7 +8,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk2u-3.0-config")
 endif()
 
-if (NOT ${USEWX} MATCHES "no")
+if (${USEWX})
 	find_package(wxWidgets REQUIRED net core base)
 	include(${wxWidgets_USE_FILE})
 endif()
@@ -56,7 +56,7 @@ src/Backend/TTY/TTYFar2lClipboardBackend.cpp
 src/Backend/TTY/TTYRawMode.cpp
 )
 
-if (NOT ${USEWX} MATCHES "no")
+if (${USEWX})
 	set(SOURCES
 		${SOURCES}
 		src/Backend/WX/Paint.cpp
@@ -70,7 +70,7 @@ endif()
 
 add_library (WinPort ${SOURCES})
 
-if (${USEWX} MATCHES "no")
+if (NOT ${USEWX})
 	target_compile_options(WinPort PUBLIC "-DNOWX")
 endif()
 

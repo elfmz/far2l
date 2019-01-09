@@ -58,6 +58,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "history.hpp"
 
+#include <cwctype>
+
 #define VTEXT_ADN_SEPARATORS	1
 
 // Флаги для функции ConvertItem
@@ -119,44 +121,44 @@ bool IsKeyHighlighted(const wchar_t *Str,int Key,int Translate,int AmpPos)
 	if (AmpPos == -1)
 	{
 		if (!(Str=wcschr(Str,L'&')))
-			return FALSE;
+			return false;
 
 		AmpPos=1;
 	}
 	else
 	{
 		if (AmpPos >= StrLength(Str))
-			return FALSE;
+			return false;
 
-		Str=Str+AmpPos;
+		Str+=AmpPos;
 		AmpPos=0;
 
 		if (Str[AmpPos] == L'&')
 			AmpPos++;
 	}
 
-	int UpperStrKey=Upper((int)Str[AmpPos]);
+	int UpperStrKey=Upper(Str[AmpPos]);
 
 	if (Key < 0xFFFF)
 	{
-		return UpperStrKey == (int)Upper(Key) || (Translate && KeyToKeyLayoutCompare(Key,UpperStrKey));
+		return UpperStrKey == Upper(Key) || (Translate && KeyToKeyLayoutCompare(Key,UpperStrKey));
 	}
 
 	if (Key&KEY_ALT)
 	{
-		int AltKey=Key&(~KEY_ALT);
+		uint32_t AltKey=Key&(~KEY_ALT);
 
 		if (AltKey < 0xFFFF)
 		{
-			if ((unsigned int)AltKey >= L'0' && (unsigned int)AltKey <= L'9')
-				return(AltKey==UpperStrKey);
+			if ( iswdigit(AltKey) != 0 )
+				return(AltKey==(uint32_t)UpperStrKey);
 
-			if ((unsigned int)AltKey > L' ' && AltKey <= 0xFFFF)
+			if (AltKey > L' ')
 				//         (AltKey=='-'  || AltKey=='/' || AltKey==','  || AltKey=='.' ||
 				//          AltKey=='\\' || AltKey=='=' || AltKey=='['  || AltKey==']' ||
 				//          AltKey==':'  || AltKey=='"' || AltKey=='~'))
 			{
-				return(UpperStrKey==(int)Upper(AltKey) || (Translate && KeyToKeyLayoutCompare(AltKey,UpperStrKey)));
+				return(UpperStrKey==Upper(AltKey) || (Translate && KeyToKeyLayoutCompare(AltKey,UpperStrKey)));
 			}
 		}
 	}

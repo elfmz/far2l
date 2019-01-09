@@ -278,39 +278,36 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu *Menu, FileType *CurFileType)
 
 inline wchar_t __cdecl Upper(wchar_t Ch) { WINPORT(CharUpperBuff)(&Ch, 1); return Ch; }
 
-LONG_PTR WINAPI KeyDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2) 
+LONG_PTR WINAPI KeyDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-  static int LastKey=0;
-  int key=0;
-  wchar wkey[2];
+  int key = Param2;
 
-  if (Msg == DN_KEY)
+  if (Msg == DN_KEY && key != KEY_F1)
   {
-      key = Param2;
-  }
-
-  if (Msg == DN_KEY && key>31  && key!=KEY_F1)
-  {
-    if (key == KEY_ESC || key == KEY_ENTER||key == KEY_NUMENTER)
+    if (key == KEY_ESC || key == KEY_ENTER || key == KEY_NUMENTER)
     {
       return FALSE;
     }
 
-    if (key>128){
-      FSF.FarKeyToName((int)key,wkey,2);
-      wchar_t* c= FSF.XLat(wkey,0,1,0);
-      key=FSF.FarNameToKey(c);
-    }
+    if (key > 31)
+    {
+      wchar wkey[2];
 
-    if (key<0xFFFF)
-      key=Upper((wchar_t)(key&0x0000FFFF))|(key&(~0x0000FFFF));
+      if (key > 128) {
+        FSF.FarKeyToName(key, wkey, 2);
+        wchar_t* c= FSF.XLat(wkey, 0, 1, 0);
+        key=FSF.FarNameToKey(c);
+      }
 
-    if((key>=48 && key<=57)||(key>=65 && key<=90)){
-      FSF.FarKeyToName((int)key,wkey,2);
-      Info.SendDlgMessage(hDlg,DM_SETTEXTPTR,2,(LONG_PTR)wkey);
-      LastKey=(int)key;
+      if (key < 0xFFFF)
+        key=Upper((wchar_t)(key&0x0000FFFF))|(key&(~0x0000FFFF));
+
+      if((key >= 48 && key <= 57)||(key >= 65 && key <= 90)){
+        FSF.FarKeyToName(key, wkey, 2);
+        Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, 2, (LONG_PTR)wkey);
+      }
+      return TRUE;
     }
-    return TRUE;
   }
 
   return Info.DefDlgProc(hDlg, Msg, Param1, Param2);

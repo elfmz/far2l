@@ -5942,7 +5942,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		_SVS(SysLog(L"[%d] ((FarDialogItem*)Param2)->PtrData='%ls'",__LINE__,((FarDialogItem*)Param2)->PtrData));
 		Param2=KeyNameToKey(((FarDialogItem*)Param2)->PtrData);
 
-		if (Param2 != -1 && !KMParam->Recurse)
+		if (Param2 != KEY_INVALID && !KMParam->Recurse)
 			goto M1;
 	}
 	else if (Msg == DN_KEY && (((Param2&KEY_END_SKEY) < KEY_END_FKEY) ||

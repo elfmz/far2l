@@ -2797,8 +2797,8 @@ int Dialog::ProcessKey(int Key)
 			}
 
 			return TRUE;
-		case KEY_LEFT:  case KEY_NUMPAD4: case KEY_MSWHEEL_LEFT:
-		case KEY_RIGHT: case KEY_NUMPAD6: case KEY_MSWHEEL_RIGHT:
+		case KEY_LEFT:  case KEY_NUMPAD4: case KEY_SHIFTNUMPAD4: case KEY_MSWHEEL_LEFT:
+		case KEY_RIGHT: case KEY_NUMPAD6: case KEY_SHIFTNUMPAD6: case KEY_MSWHEEL_RIGHT:
 		{
 			if (Item[FocusPos]->Type == DI_USERCONTROL) // для user-типа вываливаем
 				return TRUE;

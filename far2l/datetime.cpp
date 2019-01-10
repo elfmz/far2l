@@ -603,7 +603,7 @@ void GetFileDateAndTime(const wchar_t *Src,LPWORD Dst,size_t Count,int Separator
 
 void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int DateFormat, int DateSeparator, int TimeSeparator, bool bRelative)
 {
-	WORD DateN[3]={0},TimeN[4]={0};
+	WORD DateN[3]{}, TimeN[4]{};
 	SYSTEMTIME st{};
 	// Преобразуем введённые пользователем дату и время
 	GetFileDateAndTime(CDate,DateN,ARRAYSIZE(DateN),DateSeparator);
@@ -622,19 +622,19 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 		switch (DateFormat)
 		{
 			case 0:
-				st.wMonth=DateN[0]!=(WORD)-1?DateN[0]:0;
-				st.wDay  =DateN[1]!=(WORD)-1?DateN[1]:0;
-				st.wYear =DateN[2]!=(WORD)-1?DateN[2]:0;
+				st.wMonth = DateN[0];
+				st.wDay   = DateN[1];
+				st.wYear  = DateN[2];
 				break;
 			case 1:
-				st.wDay  =DateN[0]!=(WORD)-1?DateN[0]:0;
-				st.wMonth=DateN[1]!=(WORD)-1?DateN[1]:0;
-				st.wYear =DateN[2]!=(WORD)-1?DateN[2]:0;
+				st.wDay   = DateN[0];
+				st.wMonth = DateN[1];
+				st.wYear  = DateN[2];
 				break;
 			default:
-				st.wYear =DateN[0]!=(WORD)-1?DateN[0]:0;
-				st.wMonth=DateN[1]!=(WORD)-1?DateN[1]:0;
-				st.wDay  =DateN[2]!=(WORD)-1?DateN[2]:0;
+				st.wYear  = DateN[0];
+				st.wMonth = DateN[1];
+				st.wDay   = DateN[2];
 				break;
 		}
 

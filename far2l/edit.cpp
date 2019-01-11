@@ -920,7 +920,7 @@ int Edit::ProcessKey(int Key)
 
 			if (Mask && *Mask)
 			{
-				wchar_t *ShortStr=new wchar_t[StrSize+1];
+				wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
 
 				if (!ShortStr)
 					return FALSE;
@@ -1180,7 +1180,7 @@ int Edit::ProcessKey(int Key)
 
 			if (Mask && *Mask)
 			{
-				wchar_t *ShortStr=new wchar_t[StrSize+1];
+				wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
 
 				if (!ShortStr)
 					return FALSE;
@@ -1214,7 +1214,7 @@ int Edit::ProcessKey(int Key)
 
 			if (Mask && *Mask)
 			{
-				wchar_t *ShortStr=new wchar_t[StrSize+1];
+				wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
 
 				if (!ShortStr)
 					return FALSE;
@@ -1309,7 +1309,7 @@ int Edit::ProcessKey(int Key)
 
 			if (Mask && *Mask)
 			{
-				wchar_t *ShortStr=new wchar_t[StrSize+1];
+				wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
 
 				if (!ShortStr)
 					return FALSE;
@@ -1359,7 +1359,7 @@ int Edit::ProcessKey(int Key)
 				{
 					if (Mask && *Mask)
 					{
-						wchar_t *ShortStr=new wchar_t[StrSize+1];
+						wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
 
 						if (!ShortStr)
 							return FALSE;
@@ -1980,7 +1980,7 @@ void Edit::InsertBinaryString(const wchar_t *Str,int Length)
 			}
 
 			int TmpSize=StrSize-CurPos;
-			wchar_t *TmpStr=new wchar_t[TmpSize+16];
+			wchar_t *TmpStr=new(std::nothrow) wchar_t[TmpSize+16];
 
 			if (!TmpStr)
 				return;
@@ -2324,7 +2324,7 @@ void Edit::SetTabCurPos(int NewPos)
 
 	if (Mask && *Mask)
 	{
-		wchar_t *ShortStr=new wchar_t[StrSize+1];
+		wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
 
 		if (!ShortStr)
 			return;

@@ -4516,7 +4516,7 @@ void Dialog::SetHelp(const wchar_t *Topic)
 
 	if (Topic && *Topic)
 	{
-		HelpTopic = new wchar_t [wcslen(Topic)+1];
+		HelpTopic = new(std::nothrow) wchar_t [wcslen(Topic)+1];
 
 		if (HelpTopic)
 			wcscpy(HelpTopic, Topic);

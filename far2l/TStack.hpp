@@ -96,7 +96,7 @@ class TStack : private NonCopyable
 		// при удаче вернется адрес элемента на стеке, иначе - nullptr
 		Object *Push(const Object &Source)
 		{
-			struct OneItem *Temp=new OneItem;
+			struct OneItem *Temp=new(std::nothrow) OneItem;
 
 			if (Temp)
 			{

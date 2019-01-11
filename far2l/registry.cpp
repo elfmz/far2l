@@ -287,7 +287,7 @@ int GetRegKey(const wchar_t *Key,const wchar_t *ValueName,BYTE *ValueData,const 
 
 		if (ExitCode == ERROR_MORE_DATA) // если размер не подходящие...
 		{
-			char *TempBuffer=new char[Required+1]; // ...то выделим сколько надо
+			char *TempBuffer=new(std::nothrow) char[Required+1]; // ...то выделим сколько надо
 
 			if (TempBuffer) // Если с памятью все нормально...
 			{

@@ -246,8 +246,8 @@ bool PluginManager::LoadPlugin(
 
 	switch (IsModulePlugin(lpwszModuleName))
 	{
-		case WIDE_PLUGIN: pPlugin = new PluginW(this, lpwszModuleName); break;
-		case MULTIBYTE_PLUGIN: pPlugin = new PluginA(this, lpwszModuleName); break;
+		case WIDE_PLUGIN: pPlugin = new(std::nothrow) PluginW(this, lpwszModuleName); break;
+		case MULTIBYTE_PLUGIN: pPlugin = new(std::nothrow) PluginA(this, lpwszModuleName); break;
 		default: return false;
 	}
 

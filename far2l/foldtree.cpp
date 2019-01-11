@@ -65,7 +65,7 @@ FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalon
 	//TopScreen=new SaveScreen;
 	SetCoords();
 
-	if ((Tree=new TreeList(FALSE)))
+	if ((Tree=new(std::nothrow) TreeList(FALSE)))
 	{
 		CtrlObject->Macro.SetMode(MACRO_FINDFOLDER);
 		MacroMode = MACRO_FINDFOLDER;
@@ -82,7 +82,7 @@ FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalon
 		// если было прерывание в процессе сканирования и это было дерево копира...
 		if (Tree->GetExitCode())
 		{
-			if (!(FindEdit=new Edit))
+			if (!(FindEdit=new(std::nothrow) Edit))
 			{
 				SetExitCode(XC_OPEN_ERROR);
 				return;

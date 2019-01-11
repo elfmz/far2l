@@ -1385,12 +1385,8 @@ int Editor::ProcessKey(int Key)
 			else //расширяем выделение
 			{
 				CurLine->Select(SelStart,-1);
-				SelStart=0;
-				SelEnd=CurPos;
-
-				if (SelStart!=-1)SelStart=CurLine->m_next->TabPosToReal(SelStart);
-
-				if (SelEnd!=-1)SelEnd=CurLine->m_next->TabPosToReal(SelEnd);
+				SelStart=CurLine->m_next->TabPosToReal(0);
+				SelEnd=CurLine->m_next->TabPosToReal(CurPos);
 			}
 
 			if (!EdOpt.CursorBeyondEOL && SelEnd > CurLine->m_next->GetLength())

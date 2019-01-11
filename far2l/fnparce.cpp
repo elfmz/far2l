@@ -436,9 +436,9 @@ int ReplaceVariables(FARString &strStr,TSubstData *PSubstData)
 	const wchar_t *Str=strStr;
 	const wchar_t * const StartStr=Str;
 
-	if (*Str==L'\"')
-		while (*Str && *Str!=L'\"')
-			Str++;
+//	if (*Str==L'\"')
+//		while (*Str && *Str!=L'\"')
+//			Str++;
 
 	DialogItemEx *DlgData = new DialogItemEx[MaxSize+2];
 	FARString HistoryName[MaxSize];

@@ -128,7 +128,7 @@ Object *TArray<Object>::setItem(size_t index, const Object &newItem)
 
 	if (set)
 	{
-		items[index]=new Object;
+		items[index]=new(std::nothrow) Object;
 
 		if (items[index])
 			*items[index]=newItem;

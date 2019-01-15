@@ -2849,7 +2849,7 @@ bool FindFilesProcess(Vars& v)
 			// Отработаем переброску на временную панель
 			{
 				size_t ListSize = itd.GetFindListCount();
-				PluginPanelItem *PanelItems=new PluginPanelItem[ListSize];
+				PluginPanelItem *PanelItems=new(std::nothrow) PluginPanelItem[ListSize];
 
 				if (!PanelItems)
 					ListSize=0;

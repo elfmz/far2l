@@ -81,11 +81,11 @@ static std::string LitterFile(const char *path)
 		return path;
 	}
 
-	struct stat s = {};
+	struct stat s{};
 	if (fstat(fd, &s) != 0)
 		s.st_size = 0x10000;
 
-	srand(fd ^ time(NULL));
+	srand(fd ^ time(nullptr));
 
 	unsigned char garbage[128];
 	for (off_t i = 0; i < s.st_size;) {
@@ -138,14 +138,14 @@ LONG RegXxxKeyEx(
 	HKEY    hKey,
 	LPCWSTR lpSubKey,
 	PHKEY   phkResult,
-	LPDWORD lpdwDisposition = NULL)
+	LPDWORD lpdwDisposition = nullptr)
 {
 	std::string dir = HKDir(hKey);
 	if (dir.empty())
 		return ERROR_INVALID_HANDLE;
 
 	AppendAndRectifyPath(dir, WINPORT_REG_DIV_KEY, lpSubKey);
-	struct stat s = {0};
+	struct stat s{};
 	if (stat(dir.c_str(), &s)==-1) {
 		if (!create) {
 			//fprintf(stderr, "RegXxxKeyEx: can't open %s\n", dir.c_str());
@@ -540,7 +540,7 @@ extern "C" {
 		}
 
 		if (rmdir(dir.c_str())!=0) {
-			struct stat s = {0};
+			struct stat s{};
 			if (stat(dir.c_str(), &s)==0)
 				return ERROR_DIR_NOT_EMPTY;
 		}
@@ -606,7 +606,7 @@ extern "C" {
 		)
 	{
 		DWORD reserved = 0;
-		return WINPORT(RegEnumKeyEx)( hKey, dwIndex, lpName, &cchName, &reserved, NULL, NULL, NULL);
+		return WINPORT(RegEnumKeyEx)( hKey, dwIndex, lpName, &cchName, &reserved, nullptr, nullptr, nullptr);
 	}
 
 
@@ -674,7 +674,7 @@ extern "C" {
 		std::string prefixed_name = WINPORT_REG_DIV_VALUE + 1;
 		prefixed_name+= Wide2MB(lpValueName);
 		return CommonQueryValue(root, prefixed_name,
-			NULL, NULL, lpType, lpData, lpcbData);
+			nullptr, nullptr, lpType, lpData, lpcbData);
 	}
 
 	LONG WINPORT(RegSetValueEx)(
@@ -731,7 +731,7 @@ extern "C" {
 		
 		if (lpcMaxSubKeyLen) *lpcMaxSubKeyLen = 0;
 		if (lpcMaxClassLen) {
-			if (lpClass && lpcMaxClassLen ) *lpClass = 0;
+			if (lpClass) *lpClass = 0;
 			*lpcMaxClassLen = 0;
 		}
 		if (lpcMaxValueNameLen) *lpcMaxValueNameLen = 0;
@@ -741,7 +741,7 @@ extern "C" {
 		
 		for (DWORD i = 0;;++i) {
 			DWORD namelen = 0, classlen = 0;
-			LONG r = WINPORT(RegEnumKeyEx)( hKey, i, NULL, &namelen, NULL, NULL, &classlen, NULL);
+			LONG r = WINPORT(RegEnumKeyEx)( hKey, i, nullptr, &namelen, nullptr, nullptr, &classlen, nullptr);
 			if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA) {
 				if (lpcSubKeys) *lpcSubKeys = i;
 				break;
@@ -752,7 +752,7 @@ extern "C" {
 		
 		for (DWORD i = 0;;++i) {
 			DWORD  namelen = 0, datalen = 0;
-			LONG r = WINPORT(RegEnumValue)(hKey, i, NULL, &namelen, NULL, NULL, NULL, &datalen);
+			LONG r = WINPORT(RegEnumValue)(hKey, i, nullptr, &namelen, nullptr, nullptr, nullptr, &datalen);
 			if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA) {
 				if (lpcValues) *lpcValues = i;
 				break;

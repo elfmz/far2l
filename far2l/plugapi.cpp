@@ -1933,7 +1933,7 @@ int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
 	if (Flags & VF_NONMODAL)
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileViewer *Viewer=new FileViewer(FileName,TRUE,DisableHistory,Title,X1,Y1,X2,Y2,CodePage);
+		FileViewer *Viewer=new(std::nothrow) FileViewer(FileName,TRUE,DisableHistory,Title,X1,Y1,X2,Y2,CodePage);
 
 		if (!Viewer)
 			return FALSE;
@@ -2046,7 +2046,7 @@ int WINAPI FarEditor(
 	if (Flags & EF_NONMODAL)
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileEditor *Editor=new FileEditor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
+		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
 		                                  StartLine,StartChar,Title,
 		                                  X1,Y1,X2,Y2,
 		                                  DeleteOnClose,OpMode);

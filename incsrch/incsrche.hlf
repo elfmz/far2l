@@ -1,0 +1,124 @@
+.Language=English,English
+.PluginContents=Incremental Search
+
+@Contents
+$^#Incremental Search FAR plugin#
+$^#Version 2.1#
+$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Contents
+ This plugin adds the #Incremental Search# capability to the internal FAR editor.
+
+ To access this module open plugins menu (F11) from the editor window. Then choose the "Incremental Search" item. See further topics for more detail.
+
+   ~Plugin menu~@Menu@
+
+   ~Plugin configuration~@Cfg@
+
+   ~Interface and Keyboard reference~@Iface@
+
+   ~Contact information~@Contact@
+
+@Menu
+$^#Incremental Search FAR plugin#
+$^#Version 2.1#
+$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Plugin menu#
+ After choosing the plugin from editor plugins menu You will see the submenu like this:
+
+@-
+^  
+^  
+^  
+^  
+^  
+^  
+^  
+^  
+^  
+@+
+
+ Now You can select the option. First two will activate the incremental search in the chosen direction respectively. See ~Interface and Keyboard reference~@Iface@ topic for the key bindings of this mode.
+
+ Note that activating this menu again You will have the cursor selecting the #last search direction# used.
+
+ #Find selected# mode is used to locate the next occurrence of the text selected with a block. Does nothing if there is no block selected. Otherwise starts search as if "Use selected block" and "Auto next selected block" options has been set and terminates plugin after search is completed.
+
+ ~Configure...~@Cfg@ option will give You the opportunity to setup the plugin. After configuration made You will get back current menu.
+ 
+ ~Contents~@Contents@
+
+@Cfg
+$^#Incremental Search FAR plugin#
+$^#Version 2.1#
+$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Plugin configuration#
+ There are two ways to configure plugin: from #Plugins configuration menu# (Main Menu|Options|Plugins Configuration|Incremental Search) or directly from ~Incremental Search plugin menu~@Menu@ from inside editor.
+
+ Configuration dialog has following options:
+
+@-
+^   
+^   
+^   
+^   
+^   
+^   
+^   
+^   
+^   
+^   
+^   
+@+
+
+ #Case sensitive#            - Search for case sensitive text.
+ #Restart search beyond EOF# - Plugin will continue to search for the string from the beginning of file if searching forward or from the end of file if searching backward up to the current match if pattern was not found.
+ #Keep selection#            - After search is finished upon plugin completion found text will remain selected.
+ #Beep on mismatch#          - Make a beep if pattern was not found.
+ #Use selected block#        - Initialize search pattern with a block selected, if any. Line containing the selection must be the current line. If block has more than one line only the current one will be used.
+ #Auto next selected block#  - If block contents were used to initialize the pattern, search will be started immediately with this option.
+ #Backspace unroll#          - Restore previous editor position on backspace.
+
+ #Ok# button will save the settings to the registry immediately.
+ 
+ ~Contents~@Contents@
+
+@Iface
+$^#Incremental Search FAR plugin#
+$^#Version 2.1#
+$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Interface and Keyboard reference#
+ When in incremental search mode the leftmost characters of the top line will display the prompt #^:#. Start typing the search string and it will be displayed after this prompt.
+
+ When found the match will be scrolled to view in editor and selected with a block. Message #[Not found]# will be displayed at the editor's status line otherwise. After succeeded search, which was crossing end or beginning of file, the #[EOF]# or #[BOF]# message will be displayed at status line.
+
+ Any character, which is neither a possible pattern symbol nor a plugin's control key, will be bypassed to FAR which will terminate plugin.
+@-
+^#Key bindings#
+@+
+
+ #Any printable character#   appended to the search pattern
+ #Backspace#                 delete last pattern character
+ #Escape#                    ends incremental search
+ #Ctrl-V, Shift-Ins#         paste search data from clipboard
+ #Ctrl-Enter#                find next in forward search mode
+                           find previous in backward search mode
+ #Ctrl-Shift-Enter#          find previous in forward search mode
+                           find next in backward search mode
+ #F1#                        about window and help
+ #Alt#                       clear messages area
+ #Any control character,#    ends incremental search and bypass to FAR
+           #mouse click#
+ 
+ ~Contents~@Contents@
+
+@Contact
+$^#Incremental Search FAR plugin#
+$^#Version 2.1#
+$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Contact information#
+
+ Stanislav V. Mekhanoshin, St.Petersburg, Russia
+
+ #http://rampitec.us.to#
+
+  ~Contents~@Contents@

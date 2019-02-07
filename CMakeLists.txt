@@ -78,6 +78,7 @@ add_subdirectory (autowrap)
 add_subdirectory (drawline)
 add_subdirectory (editorcomp)
 add_subdirectory (inside)
+add_subdirectory (incsrch)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

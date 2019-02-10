@@ -1,0 +1,17 @@
+Версия 2.1
+  + far2l (FAR for Linux) support
+
+Version 1.21
+
+  % support for key event during macro playback for FAR 1.70.a6.1661  or
+    higher.
+
+Version 1.2
+
+  + added "Backspace unroll" option to restore previous editor  position
+    on backspace.
+
+Version 1.1
+
+  + added ^V or #Ins to paste search data from clipboard when in  search
+    mode.

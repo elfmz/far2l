@@ -1,0 +1,24 @@
+.Language=English,English
+
+"Incremental Search"
+
+"Ok"
+"Cancel"
+
+"Search &Forward"
+"Search &Backward"
+"Find Selected &Next"
+"Find Selected &Previous"
+"&Configure..."
+
+"&Case sensitive"
+"&Keep selection"
+"&Beep on mismatch"
+"&Restart search beyond EOF"
+"&Use selected block"
+"&Auto next selected block"
+"Backspace u&nroll"
+
+"[EOF]"
+"[BOF]"
+"[Not found]"

@@ -755,6 +755,7 @@ struct PluginPanelItem
 	DWORD         NumberOfLinks;
 	const wchar_t *Description;
 	const wchar_t *Owner;
+	const wchar_t *Group;
 	const wchar_t * const *CustomColumnData;
 	int           CustomColumnNumber;
 	DWORD_PTR     UserData;

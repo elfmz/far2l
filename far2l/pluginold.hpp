@@ -548,6 +548,7 @@ namespace oldfar
 		DWORD                NumberOfLinks;
 		char                *Description;
 		char                *Owner;
+		char                *Group;
 		char               **CustomColumnData;
 		int                  CustomColumnNumber;
 		DWORD_PTR            UserData;

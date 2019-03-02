@@ -413,6 +413,9 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 		if (PanelItemA[i].Owner)
 			(*PanelItemW)[i].Owner = AnsiToUnicode(PanelItemA[i].Owner);
 
+		if (PanelItemA[i].Group)
+			(*PanelItemW)[i].Group = AnsiToUnicode(PanelItemA[i].Group);
+
 		if (PanelItemA[i].CustomColumnNumber)
 		{
 			(*PanelItemW)[i].CustomColumnNumber = PanelItemA[i].CustomColumnNumber;
@@ -442,6 +445,9 @@ void ConvertPanelItemToAnsi(const PluginPanelItem &PanelItem, oldfar::PluginPane
 
 	if (PanelItem.Owner)
 		PanelItemA.Owner=UnicodeToAnsi(PanelItem.Owner);
+
+	if (PanelItem.Group)
+		PanelItemA.Group=UnicodeToAnsi(PanelItem.Group);
 
 	if (PanelItem.CustomColumnNumber)
 	{
@@ -494,6 +500,9 @@ void FreeUnicodePanelItem(PluginPanelItem *PanelItem, int ItemsNumber)
 		if (PanelItem[i].Owner)
 			xf_free((void*)PanelItem[i].Owner);
 
+		if (PanelItem[i].Group)
+			xf_free((void*)PanelItem[i].Group);
+
 		if (PanelItem[i].CustomColumnNumber)
 		{
 			for (int j=0; j<PanelItem[i].CustomColumnNumber; j++)
@@ -517,6 +526,9 @@ void FreePanelItemA(oldfar::PluginPanelItem *PanelItem, int ItemsNumber, bool bF
 
 		if (PanelItem[i].Owner)
 			xf_free(PanelItem[i].Owner);
+
+		if (PanelItem[i].Group)
+			xf_free(PanelItem[i].Group);
 
 		if (PanelItem[i].CustomColumnNumber)
 		{

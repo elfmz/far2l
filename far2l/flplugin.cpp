@@ -208,6 +208,8 @@ void FileList::FileListToPluginItem(FileListItem *fi,PluginPanelItem *pi)
 	pi->CRC32=fi->CRC32;
 	pi->Reserved[0]=pi->Reserved[1]=0;
 	pi->Owner=fi->strOwner.IsEmpty()?nullptr:(wchar_t*)fi->strOwner.CPtr();
+	pi->Group=fi->strGroup.IsEmpty()?nullptr:(wchar_t*)fi->strGroup.CPtr();
+
 }
 
 void FileList::FreePluginPanelItem(PluginPanelItem *pi)
@@ -223,6 +225,7 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 	size_t size=sizeof(*pi);
 	size+=sizeof(wchar_t)*(fi->strName.GetLength()+1);
 	size+=fi->strOwner.IsEmpty()?0:sizeof(wchar_t)*(fi->strOwner.GetLength()+1);
+	size+=fi->strGroup.IsEmpty()?0:sizeof(wchar_t)*(fi->strGroup.GetLength()+1);
 	size+=fi->DizText?sizeof(wchar_t)*(wcslen(fi->DizText)+1):0;
 	size+=fi->CustomColumnNumber*sizeof(wchar_t*);
 
@@ -299,6 +302,17 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 		else
 		{
 			pi->Owner=wcscpy((wchar_t*)data,fi->strOwner);
+			data+= wcslen(fi->strOwner) + 1;
+		}
+
+		if (fi->strGroup.IsEmpty())
+		{
+			pi->Group=nullptr;
+		}
+		else
+		{
+			pi->Group=wcscpy((wchar_t*)data,fi->strGroup);
+			//data+= wcslen(fi->strGroup) + 1;
 		}
 	}
 
@@ -309,6 +323,7 @@ void FileList::PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi)
 {
 	fi->strName = pi->FindData.lpwszFileName;
 	fi->strOwner = pi->Owner;
+	fi->strGroup = pi->Group;
 
 	if (pi->Description)
 	{

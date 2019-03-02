@@ -270,6 +270,7 @@ SHAREDSYMBOL  int WINAPI Configure(int ItemNumber)
 
 SHAREDSYMBOL  HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item)
 {
+	fprintf(stderr, "FARFTP: OpenPlugin\n");
 	LastUsedPlugin = NULL;
 	PROC(("OpenPlugin","%d,%d",OpenFrom,Item))
 	FTP *Ftp;
@@ -342,6 +343,7 @@ SHAREDSYMBOL  void WINAPI FreeFindData(HANDLE hPlugin,struct PluginPanelItem *Pa
 
 SHAREDSYMBOL  void WINAPI GetOpenPluginInfo(HANDLE hPlugin,struct OpenPluginInfo *Info)
 {
+//	fprintf(stderr, "FARFTP: GetOpenPluginInfoy \n");
 	FTP*     p = (FTP*)hPlugin;
 	p->Call();
 	p->GetOpenPluginInfo(Info);
@@ -350,6 +352,7 @@ SHAREDSYMBOL  void WINAPI GetOpenPluginInfo(HANDLE hPlugin,struct OpenPluginInfo
 
 SHAREDSYMBOL  int WINAPI SetDirectory(HANDLE hPlugin,LPCSTR Dir,int OpMode)
 {
+	fprintf(stderr, "FARFTP: SetDirectory '%s'\n", Dir);
 	FPOpMode _op(OpMode);
 	FTP*     p = (FTP*)hPlugin;
 	p->Call();
@@ -395,6 +398,7 @@ SHAREDSYMBOL  int WINAPI DeleteFiles(HANDLE hPlugin,struct PluginPanelItem *Pane
 
 SHAREDSYMBOL  int WINAPI MakeDirectory(HANDLE hPlugin,char *Name,int OpMode)
 {
+	fprintf(stderr, "FARFTP: MakeDirectory '%s'\n", Name);
 	FPOpMode _op(OpMode);
 
 	if(!hPlugin)

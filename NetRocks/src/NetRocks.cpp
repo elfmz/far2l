@@ -6,10 +6,12 @@
 #endif
 #include <sudo.h>
 
+//LPCSTR      DiskMenuStrings[ 1+FTP_MAXBACKUPS ];
+
 SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
 {
 	G.plugin_path = path;
-//	fprintf(stderr, "Inside::WINPORT_DllStartup\n");
+//	fprintf(stderr, "NetRocks::WINPORT_DllStartup\n");
 }
 
 SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)
@@ -22,7 +24,8 @@ SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)
 SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *Info)
 {
 	G.Startup(Info);
-//	fprintf(stderr, "Inside::SetStartupInfo\n");
+//	fprintf(stderr, "FSF=%p ExecuteLibrary=%p\n", G.info.FSF, G.info.FSF ? G.info.FSF->ExecuteLibrary : nullptr);
+
 }
 /*
 SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsigned char *Data, int DataSize, int OpMode)
@@ -50,19 +53,22 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsign
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenPlugin(int OpenFrom, INT_PTR Item)
 {
-	if (!G.IsStarted() || OpenFrom != OPEN_COMMANDLINE)
+	fprintf(stderr, "NetRocks: OpenPlugin(%d, '%s')\n", OpenFrom, (const char *)Item);
+
+	if (!G.IsStarted())// || OpenFrom != OPEN_COMMANDLINE)
 		return INVALID_HANDLE_VALUE;
 
-	if (strncmp((const char *)Item, G.command_prefix.c_str(), G.command_prefix.size()) != 0
-	||  ((const char *)Item)[G.command_prefix.size()] != ':') {
-		return INVALID_HANDLE_VALUE;
+
+	const char *path = nullptr;
+
+	if (OpenFrom == OPEN_COMMANDLINE) {
+		if (strncmp((const char *)Item, G.command_prefix.c_str(), G.command_prefix.size()) != 0
+		||  ((const char *)Item)[G.command_prefix.size()] != ':') {
+			return INVALID_HANDLE_VALUE;
+		}
+		path = (const char *)Item + G.command_prefix.size() + 1;
 	}
 
-	std::string path( &((const char *)Item)[G.command_prefix.size() + 1] );
-	if (path.size() >1 && path[0] == '\"' && path[path.size() - 1] == '\"')
-		path = path.substr(1, path.size() - 2);
-	if (path.empty())
-		return INVALID_HANDLE_VALUE;
 
 	return new PluginImpl(path);
 }
@@ -120,7 +126,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
 
-	Info->Flags = PF_FULLCMDLINE;
+	Info->Flags = 0;//PF_FULLCMDLINE;
 	static const char *PluginCfgStrings[1];
 	PluginCfgStrings[0] = (char*)G.GetMsg(MTitle);
 	Info->PluginConfigStrings = PluginCfgStrings;
@@ -129,7 +135,26 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 	static char s_command_prefix[G.MAX_COMMAND_PREFIX + 1] = {}; // WHY?
 	strncpy(s_command_prefix, G.command_prefix.c_str(), sizeof(s_command_prefix));
 	Info->CommandPrefix = s_command_prefix;
+
+
+//	static LPCSTR PluginMenuStrings[1];
+//	static LPCSTR PluginCfgStrings[1];
+//	static char     MenuString[MAX_PATH];
+//	static char     CfgString[MAX_PATH];
+//	snprintf(MenuString,     ARRAYSIZE(MenuString),     "%s", "MNetRocksMenu");//FP_GetMsg(MFtpMenu));
+//	snprintf(DiskStrings[0], ARRAYSIZE(DiskStrings[0]), "%s", "MNetRocksDiskMenu");//(MFtpDiskMenu));
+//	snprintf(CfgString,      ARRAYSIZE(CfgString),      "%s", "MNetRocksMenu");//FP_GetMsg(MFtpMenu));
+	static char *DiskMenuStrings[2] = {"NetRocks\0", 0};
+	Info->DiskMenuStrings           = DiskMenuStrings;
+//	Info->DiskMenuNumbers           = 0;
+	Info->DiskMenuStringsNumber     = 1;
+//	Info->PluginMenuStrings         = PluginMenuStrings;
+//	Info->PluginMenuStringsNumber   = Opt.AddToPluginsMenu ? ARRAYSIZE(PluginMenuStrings):0;
+//	Info->PluginConfigStrings       = PluginCfgStrings;
+//	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
+//	Info->CommandPrefix             = FTP_CMDPREFIX;
 }
+
 
 SHAREDSYMBOL void WINAPI _export GetOpenPluginInfo(HANDLE hPlugin,struct OpenPluginInfo *Info)
 {

@@ -15,7 +15,8 @@ extern struct Globals
 	std::string plugin_path;
 	std::string command_prefix;
 	std::string config;
-	struct PluginStartupInfo info;
+	PluginStartupInfo info = {};
+	FarStandardFunctions fsf = {};
 
 	void Startup(const struct PluginStartupInfo *Info);
 

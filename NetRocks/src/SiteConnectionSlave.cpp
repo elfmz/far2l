@@ -182,6 +182,7 @@ public:
 
 extern "C" __attribute__ ((visibility("default"))) void SiteConnectionSlaveMain(int argc, char *argv[])
 {
+	fprintf(stderr, "SiteConnectionSlaveMain: BEGIN\n");
 	try {
 		if (argc == 2) {
 			SiteConnectionSlave(atoi(argv[0]), atoi(argv[1])).Loop();
@@ -190,4 +191,5 @@ extern "C" __attribute__ ((visibility("default"))) void SiteConnectionSlaveMain(
 	} catch (std::exception &e) {
 		fprintf(stderr, "SiteConnectionSlaveMain: %s\n", e.what());
 	}
+	fprintf(stderr, "SiteConnectionSlaveMain: END\n");
 }

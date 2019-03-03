@@ -78,7 +78,7 @@ add_subdirectory (autowrap)
 add_subdirectory (drawline)
 add_subdirectory (editorcomp)
 add_subdirectory (inside)
-add_subdirectory (NetRoks)
+add_subdirectory (NetRocks)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

@@ -52,7 +52,7 @@ SiteConnection::SiteConnection(const std::string &site, int OpMode) throw (std::
 	fcntl(master2slave[1], F_SETFD, FD_CLOEXEC);
 	fcntl(slave2master[0], F_SETFD, FD_CLOEXEC);
 
-	char lib_cmdline[0x100];
+	char lib_cmdline[0x200];
 	snprintf(lib_cmdline, sizeof(lib_cmdline), "%d %d", master2slave[0], slave2master[1]);
 
 	G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(),
@@ -128,6 +128,7 @@ bool SiteConnection::IsBroken()
 		return out;
 
 	} catch (std::exception &e) {
+		fprintf(stderr, "SiteConnection::IsBroken: %s\n", e.what());
 		return true;
 	}
 }

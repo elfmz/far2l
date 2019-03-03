@@ -3,7 +3,7 @@
 #include "PluginImpl.h"
 
 
-PluginImpl::PluginImpl(const std::string &path)
+PluginImpl::PluginImpl(const char *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
 }
@@ -20,7 +20,7 @@ void PluginImpl::UpdatePanelTitle()
 //		tmp+= '/';
 		tmp+= _cur_dir;
 	} else {
-		tmp = "NetRoks connections list";
+		tmp = "NetRocks connections list";
 	}
 
 	if (tmp.size() >= sizeof(_panel_title)) {
@@ -31,13 +31,30 @@ void PluginImpl::UpdatePanelTitle()
 	memcpy(_panel_title, tmp.c_str(), tmp.size() + 1);
 }
 
+bool PluginImpl::ValidateConnection()
+{
+	try {
+		if (!_connection)
+			return false;
+
+		if (_connection->IsBroken()) 
+			throw std::runtime_error("Connection broken");
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "NetRocks::ValidateConnection: %s\n", e.what());
+		_connection.reset();
+		return false;
+	}
+
+	return true;
+}
+
 int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
 {
-	fprintf(stderr, "NetRoks::GetFindData %s\n", _cur_dir);
+	fprintf(stderr, "NetRocks::GetFindData '%s' G.config='%s'\n", _cur_dir, G.config.c_str());
 	FP_SizeItemList il(FALSE);
 	try {
-		if (!_connection || _connection->IsBroken()) {
-			_connection.reset();
+		if (!ValidateConnection()) {
 			_cur_dir[0] = 0;
 			KeyFileHelper kfh(G.config.c_str());
 			const std::vector<std::string> &sites = kfh.EnumSections();
@@ -54,7 +71,7 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "NetRoks::GetFindData('%s', %d) - %s\n", _cur_dir, OpMode, e.what());
+		fprintf(stderr, "NetRocks::GetFindData('%s', %d) ERROR: %s\n", _cur_dir, OpMode, e.what());
 		il.Free(il.Items(), il.Count() );
 		*pPanelItem = nullptr;
 		*pItemsNumber = 0;
@@ -73,7 +90,7 @@ void PluginImpl::FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber)
 
 int PluginImpl::SetDirectory(const char *Dir,int OpMode)
 {
-	fprintf(stderr, "NetRoks::SetDirectory('%s', %d)\n", Dir, OpMode);
+	fprintf(stderr, "NetRocks::SetDirectory('%s', %d)\n", Dir, OpMode);
 	if (strcmp(Dir, ".") == 0)
 		return TRUE;
 
@@ -87,35 +104,38 @@ int PluginImpl::SetDirectory(const char *Dir,int OpMode)
 			tmp.resize(p);
 
 		} else if (*Dir == '/') {
-			tmp = Dir;
+			tmp = Dir + 1;
 
 		} else {
-			tmp+= '/';
+			if (!tmp.empty())
+				tmp+= '/';
 			tmp+= Dir;
 		}
+		while (!tmp.empty() && tmp[tmp.size() - 1] == '/')
+			tmp.resize(tmp.size() - 1);
 
+		size_t p = tmp.find('/');
 		if (!_connection) {
-			size_t p = tmp.find('/');
 			const std::string &site = tmp.substr(0, p);
 			try {
 				_connection.reset(new SiteConnection(site, OpMode));
 
 			} catch (std::runtime_error &e) {
 				fprintf(stderr,
-					"NetRoks::SetDirectory: new SiteConnection('%s') - %s\n",
+					"NetRocks::SetDirectory: new SiteConnection('%s') - %s\n",
 					site.c_str(), e.what());
 
 				return FALSE;
 			}
 
-			if (p != std::string::npos)
-				tmp.erase(0, p + 1);
-			else
-				tmp.clear();
+//			if (p != std::string::npos)
+//				tmp.erase(0, p + 1);
+//			else
+//				tmp.clear();
 		}
 
-		if (!tmp.empty() && tmp != "/") {
-			mode_t mode = _connection->GetMode(tmp);
+		if (p != std::string::npos && p < tmp.size() - 1) {
+			mode_t mode = _connection->GetMode(tmp.substr(p + 1));
 			if (!S_ISDIR(mode))
 				throw std::runtime_error("Not a directory");
 		}
@@ -126,9 +146,11 @@ int PluginImpl::SetDirectory(const char *Dir,int OpMode)
 		memcpy(_cur_dir, tmp.c_str(), tmp.size() + 1);
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "NetRoks::SetDirectory('%s', %d) - %s\n", Dir, OpMode, e.what());
+		fprintf(stderr, "NetRocks::SetDirectory('%s', %d) ERROR: %s\n", Dir, OpMode, e.what());
 		return FALSE;
 	}
+
+	fprintf(stderr, "NetRocks::SetDirectory('%s', %d) OK: '%s'\n", Dir, OpMode, _cur_dir);
 
 	return TRUE;
 }

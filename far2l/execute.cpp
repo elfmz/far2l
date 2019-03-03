@@ -169,15 +169,16 @@ static void CallExec(const char *CmdStr)
 
 static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 {
-	int r = -1;
+	int r = -1, fdr = -1, fdw = -1;
 	if (NeedSudo) {
 		return sudo_client_execute(CmdStr, false, NoWait);
 	}
-	int fdr = open(DEVNULL, O_RDONLY);
-	if (fdr==-1) perror("stdin error opening " DEVNULL);
+// DEBUG
+//	fdr = open(DEVNULL, O_RDONLY);
+//	if (fdr==-1) perror("stdin error opening " DEVNULL);
 	
 	//let debug out go to console
-	int fdw = open(DEVNULL, O_WRONLY);
+//	fdw = open(DEVNULL, O_WRONLY);
 	//if (fdw==-1) perror("open stdout error");
 	int pid = fork();
 	if (pid==0) {

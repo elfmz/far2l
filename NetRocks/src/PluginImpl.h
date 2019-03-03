@@ -12,9 +12,10 @@ class PluginImpl
 	std::shared_ptr<SiteConnection> _connection;
 
 	void UpdatePanelTitle();
+	bool ValidateConnection();
 
 public:
-	PluginImpl(const std::string &path);
+	PluginImpl(const char *path = nullptr);
 	virtual ~PluginImpl();
 
 	int GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode);

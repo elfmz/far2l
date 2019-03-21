@@ -11082,7 +11082,7 @@ upd:"No&tifications settings"
 
 MMenuCodePages
 "Кодов&ые страницы"
-upd:"Cod&e pages"
+upd:"&Code pages"
 upd:"Znakové sady:"
 upd:"Tabellen"
 upd:"Kódlapok"

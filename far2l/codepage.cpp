@@ -44,6 +44,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "config.hpp"
 
+#include"stdio.h"
+#include"stdarg.h"
+
 // Ключ где хранятся имена кодовых страниц
 const wchar_t *NamesOfCodePagesKey = L"CodePages/Names";
 
@@ -106,9 +109,49 @@ static bool selectedCodePages;
 // Источник вызова каллбака для функции EnumSystemCodePages
 static CodePagesCallbackCallSource CallbackCallSource;
 // Признак того, что кодовая страница поддерживается
-static bool CodePageSupported;
+//static bool CodePageSupported;
 
 wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length, bool &IsCodePageNameCustom);
+
+#ifdef CP_DBG
+static const char *levelNames[] = {"QUIET", "ERROR", "WARN", "TRACE", "INFO"};
+
+static FILE *cplog = 0;
+
+static void file_logger(int level, const char *cname, const char *msg, va_list v){
+
+  int idx = 0;
+
+  while (cplog == 0 && idx < 10){
+    char log_name[30];
+#ifdef __unix__
+    sprintf(log_name, "/tmp/cp-trace%d.log", idx);
+#else
+    sprintf(log_name, "c:/cp-trace%d.log", idx);
+#endif
+    cplog = fopen(log_name, "ab+");
+    idx++;
+  }
+
+  fprintf(cplog, "[%s][%s] ", levelNames[level], cname);
+
+  vfprintf(cplog, msg, v);
+
+  //fprintf(cplog, "\n");
+
+  fflush(cplog);
+}
+#endif //CP_DBG
+
+void cp_logger(int level, const char *cname, const char *msg, ...){
+#ifdef CP_DBG
+  va_list v;
+  va_start(v, msg);
+  file_logger(level, cname, msg, v);
+  va_end (v);
+#endif //CP_DBG
+  return;
+}
 
 // Получаем кодовую страницу для элемента в меню
 inline UINT GetMenuItemCodePage(int Position = -1)
@@ -334,22 +377,16 @@ BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 {
 	UINT codePage = _wtoi(lpwszCodePage);
 
-	// Для функции проверки нас не интересует информация о кодовых страницах отличных от проверяемой
-	if (CallbackCallSource == CodePageCheck && codePage != currentCodePage)
-		return TRUE;
-
 	// Получаем информацию о кодовой странице. Если информацию по какой-либо причине получить не удалось, то
-	// для списков прожолжаем енумерацию, а для процедуры же проверки поддерживаемости кодовой страницы выходим
+	// для списков продолжаем енумерацию, а для процедуры же проверки поддерживаемости кодовой страницы выходим
 	CPINFOEX cpiex;
-	if (!GetCodePageInfo(codePage, cpiex))
+	if (!GetCodePageInfo(codePage, cpiex)) {
 		return CallbackCallSource == CodePageCheck ? FALSE : TRUE;
-
-	// Для функции провепки поддерживаемости кодовый страницы мы прошли все проверки и можем выходить
-	if (CallbackCallSource == CodePageCheck)
-	{
-		CodePageSupported = true;
-		return FALSE;
 	}
+
+    	if (IsStandardCodePage(codePage)) {
+    		return TRUE; // continue
+    	}
 
 	// Формируем имя таблиц символов
 	bool IsCodePageNameCustom = false;
@@ -381,7 +418,7 @@ BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 		// Увеличиваем счётчик выбранных таблиц символов
 		favoriteCodePages++;
 	}
-	else if (CallbackCallSource == CodePagesFill || !Opt.CPMenuMode)
+	else if (CallbackCallSource == CodePagesFill || Opt.CPMenuMode)
 	{
 		// добавляем разделитель между стандартными и системными таблицами символов
 		if (!favoriteCodePages && !normalCodePages)
@@ -426,7 +463,7 @@ void AddCodePages(DWORD codePages)
 		AddStandardCodePage(L"UTF-32 (Big endian)", CP_UTF32BE, -1, true);
 	}
 	// Получаем таблицы символов установленные в системе
-	//EnumSystemCodePages((CODEPAGE_ENUMPROCW)EnumCodePagesProc, CP_INSTALLED);
+	WINPORT(EnumSystemCodePages)((CODEPAGE_ENUMPROCW)EnumCodePagesProc, 0);//CP_INSTALLED
 }
 
 // Обработка добавления/удаления в/из список выбранных таблиц символов
@@ -590,6 +627,7 @@ wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length,
 	}
 	else
 		IsCodePageNameCustom = false;
+
 	if (*CodePageName)
 	{
 		// Под виндой на входе "XXXX (Name)", а, например, под wine просто "Name"
@@ -608,11 +646,11 @@ wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length,
 			{
 				DeleteRegValue(NamesOfCodePagesKey, strCodePage);
 				IsCodePageNameCustom = false;
-				return Name;
+				return Name ? Name : CodePageName;
 			}
 		}
 		else
-			return Name;
+			return Name ? Name : CodePageName;
 	}
 	if (IsCodePageNameCustom)
 	{
@@ -793,10 +831,7 @@ bool IsCodePageSupported(UINT CodePage)
 	if (CodePage == CP_AUTODETECT || IsStandardCodePage(CodePage))
 		return true;
 
-	// Проходим по всем кодовым страницам системы и проверяем поддерживаем мы или нет её
-	CallbackCallSource = CodePageCheck;
-	currentCodePage = CodePage;
-	CodePageSupported = false;
-	WINPORT(EnumSystemCodePages)((CODEPAGE_ENUMPROCW)EnumCodePagesProc, 0);//CP_INSTALLED
-	return CodePageSupported;
+	CPINFOEX cpiex;
+
+	return GetCodePageInfo(CodePage, cpiex);
 }

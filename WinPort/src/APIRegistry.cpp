@@ -19,8 +19,6 @@
 #include <utils.h>
 #include "os_call.h"
 
-
-
 static std::atomic<int>	s_reg_wipe_count(0);
 
 struct WinPortHandleReg : WinPortHandle
@@ -269,13 +267,16 @@ void RegUnescape(std::string &s)
 	
 static LONG RegValueDeserializeWide(const char *s, size_t l, LPBYTE lpData, LPDWORD lpcbData)
 {
-	DWORD cbData = *lpcbData;
+	DWORD cbData = 0;
 	std::string us(s, l);
 	RegUnescape(us);
 	std::wstring ws;
 	StrMB2Wide(us, ws);
 	size_t total_len = ws.size() * sizeof(wchar_t);
-	*lpcbData = total_len;
+	if(lpcbData) {
+		cbData = *lpcbData;
+		*lpcbData = total_len;
+	}
 	if (lpData) {
 		if (total_len > cbData)
 			return ERROR_MORE_DATA;
@@ -290,11 +291,14 @@ static LONG RegValueDeserializeWide(const char *s, size_t l, LPBYTE lpData, LPDW
 	
 static LONG RegValueDeserializeMB(const char *s, size_t l, LPBYTE lpData, LPDWORD lpcbData)
 {
-	DWORD cbData = *lpcbData;
+	DWORD cbData = 0;
 	std::string us(s, l);
 	RegUnescape(us);
 	size_t total_len = us.size();
-	*lpcbData = total_len;
+	if(lpcbData) {
+		cbData = *lpcbData;
+		*lpcbData = total_len;
+	}
 	if (lpData) {
 		if (total_len > cbData)
 			return ERROR_MORE_DATA;
@@ -315,8 +319,11 @@ inline void dosscanf(const char *s, unsigned long long *var)
 template <class INT_T>
 	static LONG RegValueDeserializeINT(const char *s, LPBYTE lpData, LPDWORD lpcbData)
 {
-	DWORD cbData = *lpcbData;
-	*lpcbData = sizeof(INT_T);
+	DWORD cbData = 0;
+	if(lpcbData) {
+		cbData = *lpcbData;
+		*lpcbData = sizeof(INT_T);
+	}
 	if (lpData) {
 		if (cbData < sizeof(INT_T))
 			return ERROR_MORE_DATA;
@@ -327,8 +334,11 @@ template <class INT_T>
 
 static LONG RegValueDeserializeBinary(const char *s, LPBYTE lpData, LPDWORD lpcbData)
 {
-	DWORD cbData = *lpcbData;
-	*lpcbData = 0;
+	DWORD cbData = 0;
+	if(lpcbData) {
+		cbData = *lpcbData;
+		*lpcbData = 0;
+	}
 	for (;;) {
 		while (s[0]=='\n' || s[0]=='\r' || s[0]==' ') ++s;
 		if (!s[0] || !s[1]) break;
@@ -348,6 +358,10 @@ static LONG RegValueDeserialize(const std::string &tip, const std::string &s, LP
 {
 	static_assert(sizeof(DWORD) == sizeof(unsigned int ), "bad DWORD size");
 	static_assert(sizeof(DWORD64) == sizeof(unsigned long long), "bad DWORD64 size");
+
+	if(lpData && !lpcbData) {
+		return ERROR_INVALID_PARAMETER;
+	}
 				
 	if ( tip == "DWORD") {
 		if (lpType)
@@ -577,12 +591,13 @@ extern "C" {
 	{
 		const std::string &root = HKDir(hKey);
 		if (root.empty()) {
-			fprintf(stderr, "RegEnumKeyEx: bad handle - %p\n", hKey);
+			//fprintf(stderr, "RegEnumKeyEx: bad handle - %p\n", hKey);
 			return ERROR_INVALID_HANDLE;
 		}
 		std::string name = LookupIndexedRegItem(root, WINPORT_REG_DIV_KEY,  dwIndex);
-		if (name.empty()) 
+		if (name.empty()) {
 			return ERROR_NO_MORE_ITEMS;
+		}
 
 		name.erase(0, strlen(WINPORT_REG_DIV_KEY)-1);
 

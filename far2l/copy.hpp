@@ -85,6 +85,8 @@ class ShellCopy
 		FARString strDestDizPath;
 		char *CopyBuffer, *CopyBufferBase;
 		int CopyBufferSize;
+		clock_t ProgressUpdateTime;              // Last progress bar update time
+		int ProgressUpdateThreshold;    // minimum progress bar update interval, msec
 		FARString strCopiedName;
 		FARString strRenamedName;
 		FARString strRenamedFilesPath;

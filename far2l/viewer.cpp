@@ -889,8 +889,11 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 
 	if (VM.Hex)
 	{
-		size_t len = 8;
-		if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t);
+		size_t len = 16;
+		// Alter-1: ::vread accepts number of displayable bytes for 8/16 bit charsets
+		// and number of w_char's for 32 bit charsets
+		// But we always display 16 bytes
+		if (IsFullWideCodePage(VM.CodePage)) len/= sizeof(wchar_t); // TODO: ??? 
 
 		OutPtr=vread(pString->lpData, len);
 		pString->lpData[len] = 0;
@@ -1956,7 +1959,10 @@ void Viewer::Up()
 
 	if (VM.Hex)
 	{
-		int UpSize=IsFullWideCodePage(VM.CodePage) ? 8 : 8 * sizeof(wchar_t);
+		// Alter-1: here we use BYTE COUNT, while in Down handler we use ::vread which may 
+		// accept either CHARACTER COUNT or w_char count. 
+		//int UpSize=IsFullWideCodePage(VM.CodePage) ? 8 : 8 * sizeof(wchar_t);
+		int UpSize=16; // always have 16 bytes per row
 
 		if (FilePos<(int64_t)UpSize)
 			FilePos=0;

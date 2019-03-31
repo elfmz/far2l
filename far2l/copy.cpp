@@ -486,9 +486,11 @@ CopyProgress *CP;
 
 static int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 {
-	FARString strSrcFullName = Src, strDestFullName = Dest;
+	FARString strSrcFullName, strDestFullName;
 
 	// получим полные пути с учетом символических связей
+    	ConvertNameToFull(Src, strSrcFullName);
+    	ConvertNameToFull(Dest, strDestFullName);
 	DeleteEndSlash(strSrcFullName);
 	DeleteEndSlash(strDestFullName);
 

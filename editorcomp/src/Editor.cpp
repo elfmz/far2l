@@ -284,15 +284,7 @@ void Editor::putSuggestion() {
                     this->suggestion = fi.substr(prefix.length(), cp - prefix.length());
                     this->suggestionRow = ei.CurLine;
                     this->suggestionCol = ei.CurPos;
-
-                    EditorUndoRedo eur = {0};
-                    eur.Command = EUR_BEGIN;
-                    info.EditorControl(ECTL_UNDOREDO, &eur);
-
                     info.EditorControl(ECTL_INSERTTEXT, (void *) suggestion.c_str());
-
-                    eur.Command = EUR_END;
-                    info.EditorControl(ECTL_UNDOREDO, &eur);
 
 #if defined(DEBUG_EDITORCOMP)
                     debug("Added suggestion of length " + std::to_string(suggestion.length()) +
@@ -367,9 +359,8 @@ void Editor::declineSuggestion() {
 
         const EditorInfo &editorInfo = getInfo();
         if (editorInfo.CurLine == suggestionRow && editorInfo.CurPos == suggestionCol) {
-            EditorUndoRedo eur = {0};
-            eur.Command = EUR_UNDO;
-            info.EditorControl(ECTL_UNDOREDO, &eur);
+            for (int i = 0; i < int(suggestion.length()); i++)
+                info.EditorControl(ECTL_DELETECHAR, nullptr);
         } else {
             int beforeRow = editorInfo.CurLine;
             int beforeCol = editorInfo.CurPos;

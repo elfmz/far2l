@@ -1,6 +1,7 @@
 #include "Globals.h"
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
+#include "UI/SiteConnectionEditor.h"
 
 
 PluginImpl::PluginImpl(const char *path)
@@ -88,7 +89,7 @@ void PluginImpl::FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber)
 	FP_SizeItemList::Free(PanelItem, ItemsNumber);
 }
 
-int PluginImpl::SetDirectory(const char *Dir,int OpMode)
+int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 {
 	fprintf(stderr, "NetRocks::SetDirectory('%s', %d)\n", Dir, OpMode);
 	if (strcmp(Dir, ".") == 0)
@@ -240,5 +241,28 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 	fprintf(stderr, "Inside::ProcessKey\n");
+
+	if (!_cur_dir[0] && Key==VK_F4
+	&& (ControlState == 0 || ControlState == PKF_SHIFT))
+	{
+		std::string site;
+
+		if (ControlState == 0) {
+			PanelInfo pi = {};
+			G.info.Control(this, FCTL_GETPANELINFO, &pi);
+
+			if (pi.CurrentItem >= pi.ItemsNumber)
+				return TRUE;
+
+			site = pi.PanelItems[pi.CurrentItem].FindData.cFileName;
+		}
+		SiteConnectionEditor sce(site);
+		if (sce.Edit()) {
+			SetDirectory(sce.SiteName().c_str(), 0);
+		}
+
+		return TRUE;
+	}
+
 	return FALSE;
 }

@@ -1,5 +1,5 @@
 #include "IPC.h"
-#include "ProtocolSFTP.h"
+#include "Protocol/ProtocolSFTP.h"
 
 static const std::string s_empty_string;
 
@@ -16,12 +16,12 @@ class SiteConnectionSlave : protected IPCEndpoint
 
 	void InitConnection()
 	{
-		std::string protocol, host, username, password, directory;
-		unsigned int port, options;
+		std::string protocol, host, username, password, directory, options;
+		unsigned int port;
 		RecvString(protocol);
 		RecvString(host);
 		RecvPOD(port);
-		RecvPOD(options);
+		RecvString(options);
 		RecvString(username);
 		RecvString(password);
 		RecvString(directory);

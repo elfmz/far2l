@@ -68,7 +68,7 @@ struct SFTPConnection
 
 ////////////////////////////
 
-ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, unsigned int options,
+ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std::string &options,
 				const std::string &username, const std::string &password,
 				const std::string &directory) throw (ProtocolError)
 	: _conn(new SFTPConnection)

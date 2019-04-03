@@ -9,7 +9,7 @@ class ProtocolSFTP : public IProtocol
 	std::shared_ptr<SFTPConnection> _conn;
 
 public:
-	ProtocolSFTP(const std::string &host, unsigned int port, unsigned int options, const std::string &username,
+	ProtocolSFTP(const std::string &host, unsigned int port, const std::string &options, const std::string &username,
 		const std::string &password, const std::string &directory) throw (ProtocolError);
 	virtual ~ProtocolSFTP();
 

@@ -3,3 +3,16 @@
 "NetRocks"
 "SFTP"
 "Ok"
+"Cancel"
+
+"P&rotocol           :"
+"&Host name          :"
+"Port &number        :"
+"Login &username     :"
+"Login &password     :"
+"&Display name       :"
+"Protocol &options"
+"&Save"
+"&Connect"
+
+"Site connection settings"

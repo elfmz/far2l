@@ -6,7 +6,7 @@
 #include <ScopeHelpers.h>
 
 #include "SiteConnection.h"
-#include "Protocol.h"
+#include "Protocol/Protocol.h"
 #include "IPC.h"
 #include "Globals.h"
 #include "PooledStrings.h"
@@ -18,7 +18,7 @@ SiteConnection::SiteConnection(const std::string &site, int OpMode) throw (std::
 	const std::string &protocol = kfh.GetString(site.c_str(), "Protocol");
 	const std::string &host = kfh.GetString(site.c_str(), "Host");
 	unsigned int port = (unsigned int)kfh.GetInt(site.c_str(), "Port");
-	unsigned int options = (unsigned int)kfh.GetInt(site.c_str(), "Options");
+	const std::string &options = kfh.GetString(site.c_str(), "Options");
 	const std::string &username = kfh.GetString(site.c_str(), "Username");
 	const std::string &password = kfh.GetString(site.c_str(), "Password"); // TODO: de/obfuscation
 	const std::string &directory = kfh.GetString(site.c_str(), "Directory");
@@ -67,7 +67,7 @@ SiteConnection::SiteConnection(const std::string &site, int OpMode) throw (std::
 	SendString(protocol);
 	SendString(host);
 	SendPOD(port);
-	SendPOD(options);
+	SendString(options);
 	SendString(username);
 	SendString(password);
 	SendString(directory);

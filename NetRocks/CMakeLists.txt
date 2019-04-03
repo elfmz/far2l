@@ -7,9 +7,11 @@ src/IPC.cpp
 src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PooledStrings.cpp
-src/ProtocolSFTP.cpp
 src/SiteConnection.cpp
 src/SiteConnectionSlave.cpp
+src/Protocol/ProtocolSFTP.cpp
+src/UI/DialogUtils.cpp
+src/UI/SiteConnectionEditor.cpp
 
 )
 

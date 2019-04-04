@@ -258,7 +258,7 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 		}
 		SiteConnectionEditor sce(site);
 		if (sce.Edit()) {
-			SetDirectory(sce.SiteName().c_str(), 0);
+			SetDirectory(sce.DisplayName().c_str(), 0);
 		}
 
 		return TRUE;

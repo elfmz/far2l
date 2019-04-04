@@ -12,6 +12,7 @@ enum LanguageID
   MPort,
   MUserName,
   MPassword,
+  MDirectory,
   MDisplayName,
   MProtocolOptions,
   MSave,

@@ -7,8 +7,8 @@ using namespace oldfar;
 
 struct FarDialogItems : std::vector<struct FarDialogItem>
 {
-	size_t Add(int type, int x1, int y1, int x2, int y2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr, bool def = false, bool focus = false);
-	size_t Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history = nullptr, bool def = false, bool focus = false);
+	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr, bool def = false, bool focus = false);
+	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history = nullptr, bool def = false, bool focus = false);
 
 	int EstimateWidth() const;
 	int EstimateHeight() const;
@@ -20,6 +20,7 @@ struct FarListWrapper
 	FarList *Get() { return &_list; }
 
 	bool Select(const char *text);
+	const char *GetSelection();
 
 private:
 	FarList _list{};

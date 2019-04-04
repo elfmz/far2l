@@ -10,6 +10,7 @@
 "Port &number        :"
 "Login &username     :"
 "Login &password     :"
+"&Working directory  :"
 "&Display name       :"
 "Protocol &options"
 "&Save"

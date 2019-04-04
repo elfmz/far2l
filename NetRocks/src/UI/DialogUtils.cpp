@@ -1,9 +1,9 @@
 #include "DialogUtils.h"
 #include "../Globals.h"
 
-size_t FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, bool focus, bool def)
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, bool focus, bool def)
 {
-	size_t index = size();
+	int index = (int)size();
 	resize(index + 1);
 	auto &item = back();
 
@@ -22,7 +22,7 @@ size_t FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned in
 }
 
 
-size_t FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history, bool def, bool focus)
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history, bool def, bool focus)
 {
 	return Add(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsg(data_lng) : nullptr, history, def, focus);
 }
@@ -84,4 +84,13 @@ bool FarListWrapper::Select(const char *text)
 		}
 	}
 	return out;
+}
+
+const char *FarListWrapper::GetSelection()
+{
+	for (auto &item : _items) {
+		if (item.Flags)
+			return item.Text;
+	}
+	return nullptr;
 }

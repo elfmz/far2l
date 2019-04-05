@@ -1939,6 +1939,14 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	return TRUE;
 }
 
+void Viewer::FilePosShiftLeft(uint64_t Offset)
+{
+	if (FilePos > 0 && (uint64_t)FilePos > Offset) {
+		FilePos-= Offset;
+	} else
+		FilePos = 0;
+}
+
 void Viewer::Up()
 {
 	if (!ViewFile.Opened())
@@ -1967,13 +1975,14 @@ void Viewer::Up()
 		if (FilePos<(int64_t)UpSize)
 			FilePos=0;
 		else
-			FilePos-=UpSize;
+			FilePosShiftLeft(UpSize);
 
 		return;
 	}
 
 	vseek(FilePos-(int64_t)BufSize,SEEK_SET);
 	BufSize = vread(Buf,BufSize);
+
 	Skipped=0;
 
     if (BufSize>0 && Buf[BufSize-1]==(wchar_t)CRSym)
@@ -1997,7 +2006,7 @@ void Viewer::Up()
 		{
 			if (!VM.Wrap)
 			{
-				FilePos -= GetStrBytesNum(Buf + (I+1), BufSize-(I+1)) + Skipped;
+				FilePosShiftLeft(GetStrBytesNum(Buf + (I+1), BufSize-(I+1)) + Skipped);
 				return;
 			}
 			else
@@ -2014,14 +2023,14 @@ void Viewer::Up()
 							if (!Skipped)
 								FilePos--;
 							else
-								FilePos-=Skipped;
+								FilePosShiftLeft(Skipped);
 
 							return;
 						}
 
 						if (CalcStrSize(&Buf[J],BufSize-J) <= Width)
 						{
-							FilePos -= GetStrBytesNum(Buf + J, BufSize-J) + Skipped;
+							FilePosShiftLeft(GetStrBytesNum(Buf + J, BufSize-J) + Skipped);
 							return;
 						}
 						else
@@ -2043,7 +2052,7 @@ void Viewer::Up()
 	for (I=Min(Width,BufSize); I>0; I-=5)
 		if (CalcStrSize(&Buf[BufSize-I],I) <= Width)
 		{
-			FilePos -= GetStrBytesNum(&Buf[BufSize-I], I)+Skipped;
+			FilePosShiftLeft(GetStrBytesNum(&Buf[BufSize-I], I)+Skipped);
 			break;
 		}
 }
@@ -2758,7 +2767,6 @@ void Viewer::SetNamesList(NamesList *List)
 		List->MoveData(ViewNamesList);
 }
 
-
 int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
 	if (IsFullWideCodePage(VM.CodePage))
@@ -3061,6 +3069,7 @@ void Viewer::AdjustFilePos()
 		vseek(GotoLinePos,SEEK_SET);
 		int ReadSize=(int)Min((int64_t)ARRAYSIZE(Buf),(int64_t)(FilePos-GotoLinePos));
 		ReadSize=vread(Buf,ReadSize);
+
 
 		for (int I=ReadSize-1; I>=0; I--)
             if (Buf[I]==(wchar_t)CRSym)

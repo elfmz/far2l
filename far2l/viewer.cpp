@@ -2798,6 +2798,39 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		xf_free(TmpBuf);
 		return Count;
 	}
+	else if (VM.CodePage == CP_UTF8)
+	{
+		UTF8 src[6] = {};
+		UTF32 dst[6] = {};
+		size_t src_len = 0;
+		wchar_t *BufPos = Buf;
+		while (Count) {
+			DWORD rd = 0;
+			Reader.Read(&src[src_len], 1, &rd);
+			if (rd == 0) break;
+			++src_len;
+
+			const UTF8 *src_pos = src;
+			UTF32 *dst_pos = dst;
+			ConversionResult cr = ConvertUTF8toUTF32(&src_pos,
+				&src[src_len], &dst_pos, dst_pos + ARRAYSIZE(dst), strictConversion);
+			if (cr == conversionOK) {
+				for (UTF32 *tmp = dst; (tmp != dst_pos && Count); ++tmp, ++BufPos, --Count) {
+					*BufPos = *tmp ? *tmp : ' ';
+				}
+				src_len = 0;
+
+			} else if (cr != sourceExhausted || src_len == ARRAYSIZE(src)) {
+				*(BufPos++) = ' ';
+				--Count;
+				--src_len;
+				if (src_len)
+					memmove(&src[0], &src[1], src_len);
+			}
+		}
+
+		return (BufPos - Buf);
+	}
 	else
 	{
 		char *TmpBuf=(char*)xf_malloc(Count+16);
@@ -2811,45 +2844,8 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 
 		if (Count == 1)
 		{
-			//Если UTF8 то простой ли это символ или нет?
-			unsigned int c=*TmpBuf;
-
-			if (VM.CodePage==CP_UTF8 && ReadSize && (c&0x80) )
-			{
-				/*
-				UTF-8 format
-				Byte1     Byte2     Byte3     Byte4
-				0xxxxxxx
-				110yyyxx  10xxxxxx
-				1110yyyy  10yyyyxx  10xxxxxx
-				11110zzz  10zzyyyy  10yyyyxx  10xxxxxx
-				*/
-
-				//Мы посреди буквы? Тогда ищем начало следующей.
-				while ((c&0xC0) == 0x80)
-				{
-					DWORD Readed=0;
-					if(!(Reader.Read(TmpBuf, 1, &Readed) && Readed==1))
-						break;
-
-					ReadSize++;
-					c=*TmpBuf;
-				}
-
-				//Посчитаем сколько байт нам ещё надо прочитать чтоб получить целую букву.
-				DWORD cc=1;
-				c = c & 0xF0;
-
-				if (c == 0xE0)
-					cc = 2;
-				else if (c == 0xF0)
-					cc = 3;
-
-				DWORD CurRead=0;
-				Reader.Read(TmpBuf+1, cc, &CurRead);
-				ReadSize += CurRead;
-				ConvertSize = Min(cc+1,ReadSize);
-			} else if ( (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) && ReadSize ) {
+			//Если UTF16 то простой ли это символ или нет?
+			if ( (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) && ReadSize ) {
 				DWORD CurRead=0;
 				Reader.Read(TmpBuf + 1, 1, &CurRead);
 				ReadSize += CurRead;
@@ -2872,7 +2868,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		}
 		else
 		{
-			ReadSize = FaultTolerantMultiByteToWideChar(VM.CodePage, TmpBuf, ConvertSize, Buf, Count);
+			ReadSize = WINPORT(MultiByteToWideChar)(VM.CodePage, 0, TmpBuf, ConvertSize, Buf, Count);
 		}
 
 		xf_free(TmpBuf);

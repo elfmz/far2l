@@ -2824,8 +2824,9 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 				*(BufPos++) = ' ';
 				--Count;
 				--src_len;
-				if (src_len)
-					memmove(&src[0], &src[1], src_len);
+				for (size_t i = 0; i < src_len; ++i) {
+					src[i] = src[i + 1];
+				}
 			}
 		}
 

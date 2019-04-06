@@ -1,7 +1,7 @@
 #include "DialogUtils.h"
 #include "../Globals.h"
 
-int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, bool focus, bool def)
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
 {
 	int index = (int)size();
 	resize(index + 1);
@@ -12,19 +12,19 @@ int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int f
 	item.Y1 = y1;
 	item.X2 = x2;
 	item.Y2 = y2;
-	item.Focus = focus ? 1 : 0;
+	item.Focus = (state == FDIS_FOCUSED || state == FDIS_DEFAULT_FOCUSED);
 	item.History = history;
 	item.Flags = flags;
-	item.DefaultButton = def ? 1 : 0;
+	item.DefaultButton = (state == FDIS_DEFAULT || state == FDIS_DEFAULT_FOCUSED);
 	strncpy(item.Data, data ? data : "", sizeof(item.Data) );
 
 	return index;
 }
 
 
-int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history, bool def, bool focus)
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
 {
-	return Add(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsg(data_lng) : nullptr, history, def, focus);
+	return Add(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsg(data_lng) : nullptr, history, state);
 }
 
 int FarDialogItems::EstimateWidth() const

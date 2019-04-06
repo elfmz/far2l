@@ -26,7 +26,7 @@ class SiteConnectionSlave : protected IPCEndpoint
 		RecvString(password);
 		RecvString(directory);
 
-		if (protocol == "sftp") {
+		if (strcasecmp(protocol.c_str(), "sftp") == 0) {
 			_protocol.reset(new ProtocolSFTP(host, port, options, username, password, directory));
 
         	} else {

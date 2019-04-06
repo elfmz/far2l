@@ -168,6 +168,7 @@ class Viewer:public ScreenObject
 
 		void ShowPage(int nMode);
 
+		void FilePosShiftLeft(uint64_t Offset);
 		void Up();
 		void ShowHex();
 		void ShowStatus();

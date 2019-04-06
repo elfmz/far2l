@@ -1341,27 +1341,6 @@ FARString ReplaceBrackets(const FARString& SearchStr,const FARString& ReplaceStr
 }
 
 
-int FaultTolerantMultiByteToWideChar( UINT CodePage, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar)
-{
-	if (cbMultiByte == -1)
-		cbMultiByte = strlen(lpMultiByteStr) + 1;
-
-	WINPORT(SetLastError)(0);
-	int r = WINPORT(MultiByteToWideChar)(CodePage, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
-
-	if (CodePage == CP_UTF8 && WINPORT(GetLastError)() == ERROR_NO_UNICODE_TRANSLATION) {
-		std::wstring ws;
-		MB2Wide(lpMultiByteStr, cbMultiByte, ws);
-		if (lpWideCharStr) {
-			if (ws.size() > (size_t)cchWideChar)
-				ws.resize(cchWideChar);
-			memcpy(lpWideCharStr, ws.c_str(), ws.size() * sizeof(wchar_t));
-		}
-		r = ws.size();
-	}
-	return r;
-}
-
 std::string EscapeUnprintable(const std::string &str)
 {
 	std::string out;

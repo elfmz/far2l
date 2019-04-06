@@ -889,8 +889,11 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 
 	if (VM.Hex)
 	{
-		size_t len = 8;
-		if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t);
+		size_t len = 16;
+		// Alter-1: ::vread accepts number of displayable bytes for 8/16 bit charsets
+		// and number of w_char's for 32 bit charsets
+		// But we always display 16 bytes
+		if (IsFullWideCodePage(VM.CodePage)) len/= sizeof(wchar_t); // TODO: ??? 
 
 		OutPtr=vread(pString->lpData, len);
 		pString->lpData[len] = 0;
@@ -1936,6 +1939,14 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	return TRUE;
 }
 
+void Viewer::FilePosShiftLeft(uint64_t Offset)
+{
+	if (FilePos > 0 && (uint64_t)FilePos > Offset) {
+		FilePos-= Offset;
+	} else
+		FilePos = 0;
+}
+
 void Viewer::Up()
 {
 	if (!ViewFile.Opened())
@@ -1956,18 +1967,22 @@ void Viewer::Up()
 
 	if (VM.Hex)
 	{
-		int UpSize=IsFullWideCodePage(VM.CodePage) ? 8 : 8 * sizeof(wchar_t);
+		// Alter-1: here we use BYTE COUNT, while in Down handler we use ::vread which may 
+		// accept either CHARACTER COUNT or w_char count. 
+		//int UpSize=IsFullWideCodePage(VM.CodePage) ? 8 : 8 * sizeof(wchar_t);
+		int UpSize=16; // always have 16 bytes per row
 
 		if (FilePos<(int64_t)UpSize)
 			FilePos=0;
 		else
-			FilePos-=UpSize;
+			FilePosShiftLeft(UpSize);
 
 		return;
 	}
 
 	vseek(FilePos-(int64_t)BufSize,SEEK_SET);
 	BufSize = vread(Buf,BufSize);
+
 	Skipped=0;
 
     if (BufSize>0 && Buf[BufSize-1]==(wchar_t)CRSym)
@@ -1991,7 +2006,7 @@ void Viewer::Up()
 		{
 			if (!VM.Wrap)
 			{
-				FilePos -= GetStrBytesNum(Buf + (I+1), BufSize-(I+1)) + Skipped;
+				FilePosShiftLeft(GetStrBytesNum(Buf + (I+1), BufSize-(I+1)) + Skipped);
 				return;
 			}
 			else
@@ -2008,14 +2023,14 @@ void Viewer::Up()
 							if (!Skipped)
 								FilePos--;
 							else
-								FilePos-=Skipped;
+								FilePosShiftLeft(Skipped);
 
 							return;
 						}
 
 						if (CalcStrSize(&Buf[J],BufSize-J) <= Width)
 						{
-							FilePos -= GetStrBytesNum(Buf + J, BufSize-J) + Skipped;
+							FilePosShiftLeft(GetStrBytesNum(Buf + J, BufSize-J) + Skipped);
 							return;
 						}
 						else
@@ -2037,7 +2052,7 @@ void Viewer::Up()
 	for (I=Min(Width,BufSize); I>0; I-=5)
 		if (CalcStrSize(&Buf[BufSize-I],I) <= Width)
 		{
-			FilePos -= GetStrBytesNum(&Buf[BufSize-I], I)+Skipped;
+			FilePosShiftLeft(GetStrBytesNum(&Buf[BufSize-I], I)+Skipped);
 			break;
 		}
 }
@@ -2752,7 +2767,6 @@ void Viewer::SetNamesList(NamesList *List)
 		List->MoveData(ViewNamesList);
 }
 
-
 int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
 	if (IsFullWideCodePage(VM.CodePage))
@@ -2784,6 +2798,40 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		xf_free(TmpBuf);
 		return Count;
 	}
+	else if (VM.CodePage == CP_UTF8)
+	{
+		UTF8 src[6] = {};
+		UTF32 dst[6] = {};
+		size_t src_len = 0;
+		wchar_t *BufPos = Buf;
+		while (Count) {
+			DWORD rd = 0;
+			Reader.Read(&src[src_len], 1, &rd);
+			if (rd == 0) break;
+			++src_len;
+
+			const UTF8 *src_pos = src;
+			UTF32 *dst_pos = dst;
+			ConversionResult cr = ConvertUTF8toUTF32(&src_pos,
+				&src[src_len], &dst_pos, dst_pos + ARRAYSIZE(dst), strictConversion);
+			if (cr == conversionOK) {
+				for (UTF32 *tmp = dst; (tmp != dst_pos && Count); ++tmp, ++BufPos, --Count) {
+					*BufPos = *tmp ? *tmp : ' ';
+				}
+				src_len = 0;
+
+			} else if (cr != sourceExhausted || src_len == ARRAYSIZE(src)) {
+				*(BufPos++) = ' ';
+				--Count;
+				--src_len;
+				for (size_t i = 0; i < src_len; ++i) {
+					src[i] = src[i + 1];
+				}
+			}
+		}
+
+		return (BufPos - Buf);
+	}
 	else
 	{
 		char *TmpBuf=(char*)xf_malloc(Count+16);
@@ -2797,45 +2845,8 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 
 		if (Count == 1)
 		{
-			//Если UTF8 то простой ли это символ или нет?
-			unsigned int c=*TmpBuf;
-
-			if (VM.CodePage==CP_UTF8 && ReadSize && (c&0x80) )
-			{
-				/*
-				UTF-8 format
-				Byte1     Byte2     Byte3     Byte4
-				0xxxxxxx
-				110yyyxx  10xxxxxx
-				1110yyyy  10yyyyxx  10xxxxxx
-				11110zzz  10zzyyyy  10yyyyxx  10xxxxxx
-				*/
-
-				//Мы посреди буквы? Тогда ищем начало следующей.
-				while ((c&0xC0) == 0x80)
-				{
-					DWORD Readed=0;
-					if(!(Reader.Read(TmpBuf, 1, &Readed) && Readed==1))
-						break;
-
-					ReadSize++;
-					c=*TmpBuf;
-				}
-
-				//Посчитаем сколько байт нам ещё надо прочитать чтоб получить целую букву.
-				DWORD cc=1;
-				c = c & 0xF0;
-
-				if (c == 0xE0)
-					cc = 2;
-				else if (c == 0xF0)
-					cc = 3;
-
-				DWORD CurRead=0;
-				Reader.Read(TmpBuf+1, cc, &CurRead);
-				ReadSize += CurRead;
-				ConvertSize = Min(cc+1,ReadSize);
-			} else if ( (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) && ReadSize ) {
+			//Если UTF16 то простой ли это символ или нет?
+			if ( (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) && ReadSize ) {
 				DWORD CurRead=0;
 				Reader.Read(TmpBuf + 1, 1, &CurRead);
 				ReadSize += CurRead;
@@ -2858,7 +2869,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		}
 		else
 		{
-			ReadSize = FaultTolerantMultiByteToWideChar(VM.CodePage, TmpBuf, ConvertSize, Buf, Count);
+			ReadSize = WINPORT(MultiByteToWideChar)(VM.CodePage, 0, TmpBuf, ConvertSize, Buf, Count);
 		}
 
 		xf_free(TmpBuf);
@@ -3055,6 +3066,7 @@ void Viewer::AdjustFilePos()
 		vseek(GotoLinePos,SEEK_SET);
 		int ReadSize=(int)Min((int64_t)ARRAYSIZE(Buf),(int64_t)(FilePos-GotoLinePos));
 		ReadSize=vread(Buf,ReadSize);
+
 
 		for (int I=ReadSize-1; I>=0; I--)
             if (Buf[I]==(wchar_t)CRSym)

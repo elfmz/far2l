@@ -1577,7 +1577,7 @@ int FileList::ProcessKey(int Key)
 							}
 							else
 							{
-								FileEditor *ShellEditor=new FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6);
+								FileEditor *ShellEditor=new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6);
 
 								if (ShellEditor)
 								{
@@ -1680,7 +1680,7 @@ int FileList::ProcessKey(int Key)
 									ViewList.SetCurName(strFileName);
 								}
 
-								FileViewer *ShellViewer=new FileViewer(strFileName, TRUE,PluginMode,PluginMode,-1,strPluginData,&ViewList);
+								FileViewer *ShellViewer=new(std::nothrow) FileViewer(strFileName, TRUE,PluginMode,PluginMode,-1,strPluginData,&ViewList);
 
 								if (ShellViewer)
 								{

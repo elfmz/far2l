@@ -2874,8 +2874,8 @@ bool FileEditor::AskOverwrite(const FARString& FileName)
 
 void ModalEditTempFile(const std::string &pathname, bool scroll_to_end)
 {
-	FileEditor *ShellEditor=new FileEditor(StrMB2Wide(pathname).c_str(), 
-		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW | FFILEEDIT_SAVETOSAVEAS, 
+	FileEditor *ShellEditor=new(std::nothrow) FileEditor(StrMB2Wide(pathname).c_str(),
+		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW | FFILEEDIT_SAVETOSAVEAS,
 		scroll_to_end ? std::numeric_limits<int>::max() : 0 );
 	unlink(pathname.c_str());
 	if (ShellEditor) {

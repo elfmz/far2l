@@ -81,6 +81,8 @@ static long OldCalcTime;
 
 #define SDDATA_SIZE   64*1024
 
+#define PROGRESS_REFRESH_THRESHOLD    1000 // msec
+
 enum {COPY_BUFFER_SIZE  = 0x10000};
 
 enum
@@ -486,9 +488,11 @@ CopyProgress *CP;
 
 static int CmpFullNames(const wchar_t *Src,const wchar_t *Dest)
 {
-	FARString strSrcFullName = Src, strDestFullName = Dest;
+	FARString strSrcFullName, strDestFullName;
 
 	// получим полные пути с учетом символических связей
+    	ConvertNameToFull(Src, strSrcFullName);
+    	ConvertNameToFull(Dest, strDestFullName);
 	DeleteEndSlash(strSrcFullName);
 	DeleteEndSlash(strDestFullName);
 
@@ -636,6 +640,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// Размер буфера берется из реестра
 	GetRegKey(L"System", L"CopyBufferSize", CopyBufferSize, 0);
 	CopyBufferSize=AlignPageUp(Max(CopyBufferSize,(int)COPY_BUFFER_SIZE));
+	// Progress bar update threshold
+	GetRegKey(L"System", L"ProgressUpdateThreshold", ProgressUpdateThreshold, PROGRESS_REFRESH_THRESHOLD);
 	CDP.thisClass=this;
 	CDP.AltF10=0;
 	CDP.FolderPresent=false;
@@ -1155,6 +1161,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 			DestList.Reset();
 			TotalFiles=0;
 			TotalCopySize=TotalCopiedSize=TotalSkippedSize=0;
+			ProgressUpdateTime=0;
 
 			// Запомним время начала
 			if (ShowCopyTime)
@@ -2947,11 +2954,15 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 					PR_ShellCopyMsg();
 				}
 
-				CP->SetProgressValue(CurCopiedSize,SrcData.nFileSize);
+				if(GetProcessUptimeMSec()-ProgressUpdateTime >= ProgressUpdateThreshold) {
 
-				if (ShowTotalCopySize)
-				{
-					CP->SetTotalProgressValue(TotalCopiedSize,TotalCopySize);
+					CP->SetProgressValue(CurCopiedSize,SrcData.nFileSize);
+
+					if (ShowTotalCopySize)
+					{
+						CP->SetTotalProgressValue(TotalCopiedSize,TotalCopySize);
+					}
+					ProgressUpdateTime=GetProcessUptimeMSec();
 				}
 
 				if (AbortOp)
@@ -3198,15 +3209,19 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 				if (ShowTotalCopySize)
 					TotalCopiedSize+=BytesWritten;
 
-				CP->SetProgressValue(CurCopiedSize,SrcData.nFileSize);
+				if(GetProcessUptimeMSec()-ProgressUpdateTime >= ProgressUpdateThreshold) {
 
-				if (ShowTotalCopySize)
-				{
-					CP->SetTotalProgressValue(TotalCopiedSize,TotalCopySize);
+					CP->SetProgressValue(CurCopiedSize,SrcData.nFileSize);
+
+					if (ShowTotalCopySize)
+					{
+						CP->SetTotalProgressValue(TotalCopiedSize,TotalCopySize);
+					}
+
+					CP->SetNames(SrcData.strFileName,strDestName);
+
+					ProgressUpdateTime=GetProcessUptimeMSec();
 				}
-
-				CP->SetNames(SrcData.strFileName,strDestName);
-
 				//if (CopySparse)
 				//	Size -= BytesRead;
 			}

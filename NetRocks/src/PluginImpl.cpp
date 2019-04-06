@@ -257,7 +257,9 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 			site = pi.PanelItems[pi.CurrentItem].FindData.cFileName;
 		}
 		SiteConnectionEditor sce(site);
-		if (sce.Edit()) {
+		const bool connect_now = sce.Edit();
+		G.info.Control(this, FCTL_UPDATEPANEL, NULL);
+		if (connect_now) {
 			SetDirectory(sce.DisplayName().c_str(), 0);
 		}
 

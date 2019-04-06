@@ -45,6 +45,8 @@ class nsUniversalDetectorEx : public nsUniversalDetector
 				m_codepage = 866;
 			else if (!strcmp(aCharset, "KOI8-R"))
 				m_codepage = 20866;
+			else if (!strcmp(aCharset, "KOI8-U"))
+				m_codepage = 21866;
 			else if (!strcmp(aCharset, "x-mac-hebrew"))
 				m_codepage = 10005;
 			else if (!strcmp(aCharset, "x-mac-cyrillic"))

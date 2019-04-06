@@ -81,7 +81,7 @@ int FarQueue<Object>::Init(int SizeQueue)
 	if (Array)
 		delete[] Array;
 
-	Array=new Object[Size=SizeQueue];
+	Array=new(std::nothrow) Object[Size=SizeQueue];
 
 	if (!Array)
 		Size=0;

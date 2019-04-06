@@ -107,6 +107,7 @@ protected:
 
 
 extern SequenceModel Koi8rModel;
+extern SequenceModel Koi8uModel;
 extern SequenceModel Win1251Model;
 extern SequenceModel Latin5Model;
 extern SequenceModel MacCyrillicModel;

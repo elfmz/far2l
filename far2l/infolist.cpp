@@ -745,7 +745,7 @@ int InfoList::OpenDizFile(const wchar_t *DizFile,int YPos)
 
 	if (!DizView)
 	{
-		DizView=new DizViewer;
+		DizView=new(std::nothrow) DizViewer;
 
 		if (!DizView)
 			return FALSE;

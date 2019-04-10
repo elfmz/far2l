@@ -22,7 +22,7 @@ target_include_directories(farlng SYSTEM PRIVATE ${GLIB2_INCLUDE_DIRS})
 target_include_directories(farlng PRIVATE ../WinPort)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk2u-3.0-config")
+    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
     target_link_libraries (farlng WinPort utils ${wxWidgets_LIBRARIES} c)
 else()
     target_link_libraries (farlng WinPort utils ${wxWidgets_LIBRARIES} dl)

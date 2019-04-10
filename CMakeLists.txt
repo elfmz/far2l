@@ -11,11 +11,16 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-   set(CMAKE_INSTALL_PREFIX "/usr")
+   set(CMAKE_INSTALL_PREFIX "/usr/local")
 endif()
 
 if (NOT DEFINED USEWX)
 	set(USEWX "YES")
+endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
+    set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
 endif()
 
 if (NOT ${USEWX})
@@ -45,7 +50,6 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 if(CMAKE_VERSION VERSION_GREATER "3.3")
   cmake_policy(SET CMP0063 NEW)
 endif()
-
 
 include_directories(utils/include)
 

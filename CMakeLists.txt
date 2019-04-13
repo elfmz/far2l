@@ -11,7 +11,11 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-   set(CMAKE_INSTALL_PREFIX "/usr/local")
+   if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+      set(CMAKE_INSTALL_PREFIX "/usr/local")
+   else()
+      set(CMAKE_INSTALL_PREFIX "/usr")
+   endif()
 endif()
 
 if (NOT DEFINED USEWX)

@@ -856,7 +856,7 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 		}
 	}
 
-#if defined(__APPLE__) or defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 //TODO: handle chattr +i
 #else
 	if (!um->dir.empty() && sdc_fs_flags_get(um->dir.c_str(), &um->dir_flags) != -1 

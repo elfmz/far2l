@@ -1,11 +1,11 @@
 
 project(WinPort)
 
-
 find_package(PkgConfig REQUIRED)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk2u-3.0-config")
+    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
+    set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
 endif()
 
 if (${USEWX})
@@ -14,7 +14,6 @@ if (${USEWX})
 endif()
 
 pkg_check_modules(GLIB2 glib-2.0)
-
 
 
 add_subdirectory(wineguts)

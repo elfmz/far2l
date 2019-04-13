@@ -165,13 +165,12 @@ target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 add_dependencies(far2l bootstrap)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    
-    if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-        set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk2u-3.0-config")
-    endif()
-    find_package(wxWidgets REQUIRED net core base)
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
+endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    find_package(wxWidgets REQUIRED net core base)
     SET (WINPORT "-force_load ../WinPort/libWinPort.a -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL" wineguts utils glib-2.0 -L/usr/local/lib ${wxWidgets_LIBRARIES} ${wxWidgets_CXX_FLAGS})
 else()
     SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)

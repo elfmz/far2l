@@ -4,6 +4,7 @@
 #include <fstdlib.h>
 #include <KeyFileHelper.h>
 #include <ScopeHelpers.h>
+#include <CheckedCast.hpp>
 
 #include "SiteConnection.h"
 #include "Protocol/Protocol.h"
@@ -227,7 +228,7 @@ void SiteConnection::FileGet(const std::string &path_remote, const std::string &
 	if (ftruncate(fd, resume_pos) == -1)
 		throw std::runtime_error("Truncate file error");
 
-	if (lseek(fd, resume_pos, SEEK_SET) != resume_pos)
+	if (lseek(fd, resume_pos, SEEK_SET) != CheckedCast<off_t>(resume_pos) )
 		throw std::runtime_error("Seek file error");
 
 	std::vector<char> buf;
@@ -258,7 +259,7 @@ void SiteConnection::FilePut(const std::string &path_remote, const std::string &
 	if (!fd.Valid())
 		throw std::runtime_error("Open file error");
 
-	if (lseek(fd, resume_pos, SEEK_SET) != resume_pos)
+	if (lseek(fd, resume_pos, SEEK_SET) != CheckedCast<off_t>(resume_pos) )
 		throw std::runtime_error("Seek file error");
 
 	SendCommand(IPC_FILE_PUT);

@@ -18,5 +18,33 @@ enum LanguageID
   MSave,
   MConnect,
 
-  MEditHost
+  MEditHost,
+
+
+  MXferCopyDownloadTitle,
+  MXferCopyUploadTitle,
+  MXferMoveDownloadTitle,
+  MXferMoveUploadTitle,
+
+  MXferCopyDownloadText,
+  MXferCopyUploadText,
+  MXferMoveDownloadText,
+  MXferMoveUploadText,
+
+  MXferDOAText,
+
+  MXferDOAAsk,
+  MXferDOAOverwrite,
+
+  MXferDOASkip,
+  MXferDOAOverwriteIfNewer,
+
+  MXferDOAResume,
+  MXferDOACreateDifferentName,
+
+  MProceedCopyDownload,
+  MProceedCopyUpload,
+  MProceedMoveDownload,
+  MProceedMoveUpload,
+
 };

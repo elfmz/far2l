@@ -3,6 +3,7 @@
 #include <termios.h> 
 #include <mutex>
 #include <atomic>
+#include <memory>
 #include <condition_variable>
 #include <Event.h>
 #include <StackSerializer.h>

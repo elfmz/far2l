@@ -4,7 +4,7 @@
 #include "DialogUtils.h"
 
 
-class SiteConnectionEditor
+class SiteConnectionEditor : protected BaseDialog
 {
 	std::string _initial_display_name, _display_name;
 	std::string _initial_protocol, _protocol, _host, _username, _password, _directory, _options;
@@ -23,8 +23,7 @@ class SiteConnectionEditor
 	FarListWrapper _di_protocols;
 
 
-	static LONG_PTR WINAPI sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
-	LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
+	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 
 	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
 	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);

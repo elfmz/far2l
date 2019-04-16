@@ -21,7 +21,6 @@ int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int f
 	return index;
 }
 
-
 int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
 {
 	return Add(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsg(data_lng) : nullptr, history, state);
@@ -72,6 +71,11 @@ void FarListWrapper::Add(const char *text, DWORD flags)
 	_list.Items = &_items[0];
 }
 
+void FarListWrapper::Add(int text_lng, DWORD flags)
+{
+	Add(G.GetMsg(text_lng), flags);
+}
+
 bool FarListWrapper::Select(const char *text)
 {
 	bool out = false;
@@ -93,4 +97,21 @@ const char *FarListWrapper::GetSelection()
 			return item.Text;
 	}
 	return nullptr;
+}
+
+
+///////////////////////
+LONG_PTR WINAPI BaseDialog::sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+{
+	BaseDialog *it = (BaseDialog *)G.info.SendDlgMessage(dlg, DM_GETDLGDATA, 0, 0);
+	if (it) {
+		return it->DlgProc(dlg, msg, param1, param2);
+	}
+
+	return G.info.DefDlgProc(dlg, msg, param1, param2);
+}
+
+LONG_PTR BaseDialog::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+{
+	return G.info.DefDlgProc(dlg, msg, param1, param2);
 }

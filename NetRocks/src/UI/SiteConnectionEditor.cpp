@@ -32,76 +32,6 @@ static unsigned int DefaultPortForProtocol(const char *protocol)
 }
 
 
-bool SiteConnectionEditor::Edit()
-{
-	int result = G.info.DialogEx(G.info.ModuleNumber, -1, -1, _di.EstimateWidth() + 6, _di.EstimateHeight() + 2,
-		_di[_i_dblbox].Data, &_di[0], _di.size(), 0, 0, &sDlgProc, (LONG_PTR)(uintptr_t)this);
-
-	if (result == _i_save || result == _i_connect) {
-		if (!Save()) {
-			return false;
-		}
-	}
-
-	return (result == _i_connect);
-}
-
-LONG_PTR WINAPI SiteConnectionEditor::sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
-{
-	SiteConnectionEditor *it = (SiteConnectionEditor *)G.info.SendDlgMessage(dlg, DM_GETDLGDATA, 0, 0);
-	if (it) {
-		return it->DlgProc(dlg, msg, param1, param2);
-	}
-
-	return G.info.DefDlgProc(dlg, msg, param1, param2);
-}
-
-void SiteConnectionEditor::AssignDefaultPortNumber(HANDLE dlg)
-{
-	++_autogen_pending;
-	std::string protocol;
-	TextFromDialogControl(dlg, _i_protocol, protocol);
-	unsigned int port = DefaultPortForProtocol(protocol.c_str());
-	char sz[32];
-	snprintf(sz, sizeof(sz), "%u", port);
-	TextToDialogControl(dlg, _i_port, sz);
-	--_autogen_pending;
-}
-
-LONG_PTR SiteConnectionEditor::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
-{
-	switch (msg) {
-		case DN_BTNCLICK:
-			if (param1 == _i_display_name_autogen) {
-				DisplayNameAutogenerateAndApply(dlg);
-				return TRUE;
-
-			} else if (param1 == _i_save || param1 == _i_connect) {
-				DataFromDialog(dlg);
-			}
-		break;
-
-		case DN_EDITCHANGE:
-			if (_autogen_pending) {
-				;
-
-			} else if (param1 == _i_display_name) {
-				_autogen_display_name = false;
-
-			} else if (_autogen_display_name && (
-				param1 == _i_protocol || param1 == _i_host || param1 == _i_port
-				|| param1 == _i_username || param1 == _i_directory) ) {
-				if (param1 == _i_protocol) {
-					AssignDefaultPortNumber(dlg);
-				}
-				DisplayNameAutogenerateAndApply(dlg);
-			}
-
-		break;
-	}
-	return G.info.DefDlgProc(dlg, msg, param1, param2);
-}
-
 SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 	: _initial_display_name(display_name), _display_name(display_name)
 {
@@ -191,6 +121,54 @@ bool SiteConnectionEditor::Save()
 	return true;
 }
 
+bool SiteConnectionEditor::Edit()
+{
+	int result = G.info.DialogEx(G.info.ModuleNumber, -1, -1, _di.EstimateWidth() + 6, _di.EstimateHeight() + 2,
+		_di[_i_dblbox].Data, &_di[0], _di.size(), 0, 0, &sDlgProc, (LONG_PTR)(uintptr_t)this);
+
+	if (result == _i_save || result == _i_connect) {
+		if (!Save()) {
+			return false;
+		}
+	}
+
+	return (result == _i_connect);
+}
+
+LONG_PTR SiteConnectionEditor::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+{
+	switch (msg) {
+		case DN_BTNCLICK:
+			if (param1 == _i_display_name_autogen) {
+				DisplayNameAutogenerateAndApply(dlg);
+				return TRUE;
+
+			} else if (param1 == _i_save || param1 == _i_connect) {
+				DataFromDialog(dlg);
+			}
+		break;
+
+		case DN_EDITCHANGE:
+			if (_autogen_pending) {
+				;
+
+			} else if (param1 == _i_display_name) {
+				_autogen_display_name = false;
+
+			} else if (_autogen_display_name && (
+				param1 == _i_protocol || param1 == _i_host || param1 == _i_port
+				|| param1 == _i_username || param1 == _i_directory) ) {
+				if (param1 == _i_protocol) {
+					AssignDefaultPortNumber(dlg);
+				}
+				DisplayNameAutogenerateAndApply(dlg);
+			}
+
+		break;
+	}
+	return BaseDialog::DlgProc(dlg, msg, param1, param2);
+}
+
 void SiteConnectionEditor::TextToDialogControl(HANDLE dlg, int ctl, const std::string &str)
 {
 	FarDialogItemData dd = { (int)str.size(), (char*)str.c_str() };
@@ -217,6 +195,18 @@ void SiteConnectionEditor::DataFromDialog(HANDLE dlg)
 	TextFromDialogControl(dlg, _i_username, _username);
 	TextFromDialogControl(dlg, _i_password, _password);
 	TextFromDialogControl(dlg, _i_directory, _directory);
+}
+
+void SiteConnectionEditor::AssignDefaultPortNumber(HANDLE dlg)
+{
+	++_autogen_pending;
+	std::string protocol;
+	TextFromDialogControl(dlg, _i_protocol, protocol);
+	unsigned int port = DefaultPortForProtocol(protocol.c_str());
+	char sz[32];
+	snprintf(sz, sizeof(sz), "%u", port);
+	TextToDialogControl(dlg, _i_port, sz);
+	--_autogen_pending;
 }
 
 void SiteConnectionEditor::DisplayNameAutogenerateAndApply(HANDLE dlg)

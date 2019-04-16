@@ -25,6 +25,8 @@ struct FarDialogItems : std::vector<struct FarDialogItem>
 struct FarListWrapper
 {
 	void Add(const char *text, DWORD flags = 0);
+	void Add(int text_lng, DWORD flags = 0);
+
 	FarList *Get() { return &_list; }
 
 	bool Select(const char *text);
@@ -34,3 +36,15 @@ private:
 	FarList _list{};
 	std::vector<FarListItem> _items;
 };
+
+
+class BaseDialog
+{
+protected:
+	static LONG_PTR WINAPI sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
+	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
+
+public:
+	virtual ~BaseDialog(){};
+};
+

@@ -17,3 +17,29 @@
 "&Connect"
 
 "Site connection settings"
+
+"Download from server"
+"Upload to server"
+"Move from server"
+"Move to server"
+
+"Download selected files to:"
+"Upload selected files to:"
+"Move downloaded selected files to:"
+"Move uploaded selected files to:"
+
+"Default overwrite action:"
+
+"Ask"
+"Overwrite"
+
+"Skip"
+"Overwrite if newer"
+
+"Resume"
+"Create different name"
+
+"Proceed Download"
+"Proceed Upload"
+"Proceed Dwld-move"
+"Proceed Upld-move"

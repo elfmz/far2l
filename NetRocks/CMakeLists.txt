@@ -12,6 +12,7 @@ src/SiteConnectionSlave.cpp
 src/Protocol/ProtocolSFTP.cpp
 src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
+src/UI/XferConfirm.cpp
 
 )
 

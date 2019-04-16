@@ -13,7 +13,7 @@ src/Protocol/ProtocolSFTP.cpp
 src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/XferConfirm.cpp
-
+src/UI/XferProgress.cpp
 )
 
 add_library (NetRocks MODULE ${SOURCES})

@@ -39,6 +39,18 @@
 "Resume"
 "Create different name"
 
+"Current file"
+"Current file progress:"
+"Total progress:"
+"Current file time SPENT:"
+"REMAIN:"
+"Total time SPENT:"
+"Speed CURRENT:"
+"AVERAGE:"
+"Background"
+"Pause"
+"Resume"
+
 "Proceed Download"
 "Proceed Upload"
 "Proceed Dwld-move"

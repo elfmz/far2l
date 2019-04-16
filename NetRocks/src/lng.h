@@ -42,9 +42,20 @@ enum LanguageID
   MXferDOAResume,
   MXferDOACreateDifferentName,
 
+  MXferCurrentFile,
+  MXferCurrentProgress,
+  MXferTotalProgress, 
+  MXferCurrentTimeSpent,
+  MXferRemain,
+  MXferTotalTimeSpent,
+  MXferSpeedCurrent,
+  MXferAverage, 
+  MBackground,
+  MPause,
+  MResume,
+
   MProceedCopyDownload,
   MProceedCopyUpload,
   MProceedMoveDownload,
   MProceedMoveUpload,
-
 };

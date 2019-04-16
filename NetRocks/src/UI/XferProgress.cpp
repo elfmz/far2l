@@ -73,7 +73,7 @@ XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &des
 
 	_di.Add(DI_TEXT, 4,12,63,12, DIF_BOXCOLOR | DIF_SEPARATOR);
 
-	_i_cancel = _di.Add(DI_BUTTON, 5,13,25,13, DIF_CENTERGROUP, MBackground);
+	_i_background = _di.Add(DI_BUTTON, 5,13,25,13, DIF_CENTERGROUP, MBackground);
 	_i_pause_resume = _di.Add(DI_BUTTON, 30,13,45,13, DIF_CENTERGROUP, MPause); // MResume
 	_i_cancel = _di.Add(DI_BUTTON, 48,13,60,13, DIF_CENTERGROUP, MCancel);
 }

@@ -13,6 +13,7 @@
 #include "SudoAskpassImpl.h"
 #include "TTY/TTYRawMode.h"
 
+#include <memory>
 
 ConsoleOutput g_winport_con_out;
 ConsoleInput g_winport_con_in;

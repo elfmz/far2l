@@ -123,8 +123,7 @@ bool SiteConnectionEditor::Save()
 
 bool SiteConnectionEditor::Edit()
 {
-	int result = G.info.DialogEx(G.info.ModuleNumber, -1, -1, _di.EstimateWidth() + 6, _di.EstimateHeight() + 2,
-		_di[_i_dblbox].Data, &_di[0], _di.size(), 0, 0, &sDlgProc, (LONG_PTR)(uintptr_t)this);
+	int result = Show(6, 2, _di[_i_dblbox].Data);
 
 	if (result == _i_save || result == _i_connect) {
 		if (!Save()) {
@@ -231,7 +230,7 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 	char sz[32];
 	for (unsigned int attempt = 0; attempt < 0x10000000; ++attempt) {
 		str = _protocol;
-		str+= "://";
+		str+= ':';
 
 		if (!_username.empty()) {
 			str+= _username;
@@ -249,7 +248,9 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 			str+= sz;
 		}
 
-		str+= _directory;
+		for (auto ch : _directory) {
+			str+= (ch == '/') ? '\\' : ch;
+		}
 
 		if (attempt) {
 			snprintf(sz, sizeof(sz) - 1, " (%u)", attempt);

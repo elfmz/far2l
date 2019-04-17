@@ -3,7 +3,7 @@
 "NetRocks"
 "SFTP"
 "Ok"
-"Cancel"
+"&Cancel"
 
 "P&rotocol           :"
 "&Host name          :"
@@ -23,21 +23,21 @@
 "Move from server"
 "Move to server"
 
-"Download selected files to:"
-"Upload selected files to:"
-"Move downloaded selected files to:"
-"Move uploaded selected files to:"
+"Download selected files &to:"
+"Upload selected files &to:"
+"Move downloaded selected &files &to:"
+"Move uploaded selected files &to:"
 
 "Default overwrite action:"
 
-"Ask"
-"Overwrite"
+"&Ask"
+"&Overwrite"
 
-"Skip"
-"Overwrite if newer"
+"&Skip"
+"Overwrite if &newer"
 
-"Resume"
-"Create different name"
+"&Resume"
+"Create &different name"
 
 "Current file"
 "Current file progress:"
@@ -51,7 +51,7 @@
 "Pause"
 "Resume"
 
-"Proceed Download"
-"Proceed Upload"
-"Proceed Dwld-move"
-"Proceed Upld-move"
+"Down&load"
+"Up&load"
+"Download-&Move"
+"Upload-&Move"

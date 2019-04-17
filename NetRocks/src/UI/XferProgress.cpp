@@ -81,9 +81,6 @@ XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &des
 
 bool XferProgress::Confirm(XferDefaultOverwriteAction &xdoa)
 {
-	int result = G.info.DialogEx(G.info.ModuleNumber, -1, -1, _di.EstimateWidth() + 6, _di.EstimateHeight() + 2,
-		_di[_i_dblbox].Data, &_di[0], _di.size(), 0, 0, &sDlgProc, (LONG_PTR)(uintptr_t)this);
-
-	return (result == _i_proceed);
+	return 0;
 }
 

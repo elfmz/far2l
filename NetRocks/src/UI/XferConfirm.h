@@ -6,7 +6,6 @@
 
 class XferConfirm : protected BaseDialog
 {
-	FarDialogItems _di;
 	int _i_dblbox = -1;
 	int _i_destination = -1, _i_doa_ask = -1, _i_doa_overwrite = -1, _i_doa_skip = -1;
 	int _i_doa_overwrite_newer = -1, _i_doa_resume = -1, _i_doa_create_diff_name = -1;

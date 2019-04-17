@@ -19,7 +19,6 @@ class SiteConnectionEditor : protected BaseDialog
 	unsigned int _autogen_pending = 0;
 	bool _autogen_display_name = false;
 
-	FarDialogItems _di;
 	FarListWrapper _di_protocols;
 
 

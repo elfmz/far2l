@@ -6,7 +6,6 @@
 
 class XferProgress : protected BaseDialog
 {
-	FarDialogItems _di;
 	FarListWrapper _di_doa;
 
 	int _i_dblbox = -1;

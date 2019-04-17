@@ -34,7 +34,7 @@ static void SFTPFileDeleter(sftp_file res)
 
 #define RESOURCE_CONTAINER(CONTAINER, RESOURCE, DELETER) 		\
 class CONTAINER {						\
-	RESOURCE _res;							\
+	RESOURCE _res = {};							\
 	CONTAINER(const CONTAINER &) = delete;	\
 public:									\
 	operator RESOURCE() { return _res; }				\
@@ -221,7 +221,6 @@ public:
 		group = attributes->group ? attributes->group : "";
 
 		SftpFileInfoFromAttributes(file_info, attributes);
-     		sftp_attributes_free(attributes);
 		return true;
   	}
 };

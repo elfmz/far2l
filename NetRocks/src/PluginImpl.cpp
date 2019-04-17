@@ -2,11 +2,13 @@
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
 #include "UI/SiteConnectionEditor.h"
+#include "UI/XferConfirm.h"
 
 
 PluginImpl::PluginImpl(const char *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
+	UpdatePanelTitle();
 }
 
 PluginImpl::~PluginImpl()
@@ -17,7 +19,7 @@ void PluginImpl::UpdatePanelTitle()
 {
 	std::string tmp;
 	if (_connection) {
-		tmp = _connection->SiteInfo();
+//		tmp = _connection->SiteInfo();
 //		tmp+= '/';
 		tmp+= _cur_dir;
 	} else {
@@ -68,7 +70,9 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 			}
 
 		} else {
-			_connection->DirectoryEnum(_cur_dir, il, OpMode);
+			const char *slash = strchr(_cur_dir, '/');
+			std::string site_dir(slash ? slash + 1 : ".");
+			_connection->DirectoryEnum(site_dir, il, OpMode);
 		}
 
 	} catch (std::exception &e) {
@@ -151,6 +155,8 @@ int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 		return FALSE;
 	}
 
+	UpdatePanelTitle();
+
 	fprintf(stderr, "NetRocks::SetDirectory('%s', %d) OK: '%s'\n", Dir, OpMode, _cur_dir);
 
 	return TRUE;
@@ -171,7 +177,18 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, char *DestPath, int OpMode)
 {
 	fprintf(stderr, "Inside::GetFiles: _dir='%s' DestPath='%s'\n", _cur_dir, DestPath);
-	if (ItemsNumber == 0 || Move)
+	if (ItemsNumber == 0)
+		return FALSE;
+
+	std::string destination;
+	if (DestPath)
+		destination = DestPath;
+	else
+		destination = ".";
+
+	XferConfirm xc(Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD, destination);
+	XferDefaultOverwriteAction xdoa = XDOA_ASK;
+	if (!xc.Confirm(xdoa))
 		return FALSE;
 
 	BOOL out = TRUE;

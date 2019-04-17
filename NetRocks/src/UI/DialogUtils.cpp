@@ -115,3 +115,15 @@ LONG_PTR BaseDialog::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {
 	return G.info.DefDlgProc(dlg, msg, param1, param2);
 }
+
+int BaseDialog::Show(int extra_width, int extra_height, const char *title)
+{
+	return G.info.DialogEx(G.info.ModuleNumber, -1, -1,
+		_di.EstimateWidth() + extra_width, _di.EstimateHeight() + extra_height,
+		title, &_di[0], _di.size(), 0, 0, &sDlgProc, (LONG_PTR)(uintptr_t)this);
+}
+
+int BaseDialog::Show(int extra_width, int extra_height, int title_lng)
+{
+	return Show(extra_width, extra_height, G.GetMsg(title_lng));
+}

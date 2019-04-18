@@ -153,6 +153,7 @@ LONG_PTR SiteConnectionEditor::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR
 
 			} else if (param1 == _i_display_name) {
 				_autogen_display_name = false;
+				DisplayNameInputRefine(dlg);
 
 			} else if (_autogen_display_name && (
 				param1 == _i_protocol || param1 == _i_host || param1 == _i_port
@@ -207,6 +208,27 @@ void SiteConnectionEditor::AssignDefaultPortNumber(HANDLE dlg)
 	TextToDialogControl(dlg, _i_port, sz);
 	--_autogen_pending;
 }
+
+void SiteConnectionEditor::DisplayNameInputRefine(HANDLE dlg)
+{
+	++_autogen_pending;
+	try {
+		DataFromDialog(dlg);
+		bool changed = false;
+		for (auto &c : _display_name) {
+			if (c == '/') {
+				c = '\\';
+				changed = true;
+			}
+		}
+		if (changed)
+			TextToDialogControl(dlg, _i_display_name, _display_name);
+	} catch (std::exception &) {
+		;
+	}
+	--_autogen_pending;
+}
+
 
 void SiteConnectionEditor::DisplayNameAutogenerateAndApply(HANDLE dlg)
 {

@@ -77,12 +77,12 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 	fprintf(stderr, "NetRocks::GetFindData '%s' G.config='%s'\n", _cur_dir, G.config.c_str());
 	FP_SizeItemList il(FALSE);
 	try {
+		PluginPanelItem tmp = {};
 		if (!ValidateConnection()) {
 			_cur_dir[0] = 0;
 			KeyFileHelper kfh(G.config.c_str());
 			const std::vector<std::string> &sites = kfh.EnumSections();
 			for (const auto &site : sites) {
-				PluginPanelItem tmp = {};
 				strncpy(tmp.FindData.cFileName, site.c_str(), sizeof(tmp.FindData.cFileName));
 				tmp.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 				if (!il.Add(&tmp))
@@ -90,6 +90,11 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 			}
 
 		} else {
+			strncpy(tmp.FindData.cFileName, "..", sizeof(tmp.FindData.cFileName) - 1);
+			tmp.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+			if (!il.Add(&tmp))
+				throw std::runtime_error("Can't add list entry");
+
 			_connection->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
 

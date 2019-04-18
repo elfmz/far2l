@@ -2,7 +2,6 @@
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
 #include "UI/SiteConnectionEditor.h"
-#include "UI/XferConfirm.h"
 
 
 PluginImpl::PluginImpl(const char *path)
@@ -52,6 +51,27 @@ bool PluginImpl::ValidateConnection()
 	return true;
 }
 
+std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
+{
+	std::string out;
+	const char *slash = strchr(_cur_dir, '/');
+	if (slash)
+		out = slash + 1;
+	if (out.empty()) {
+		out = with_ending_slash ? "./" : ".";
+
+	} else if (out[out.size() - 1] != '/') {
+		if (with_ending_slash)
+			out+= "/";
+
+	} else if (!with_ending_slash) {
+		out.resize(out.size() - 1);
+		if (out.empty())
+			out = ".";
+	}
+	return out;
+}
+
 int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
 {
 	fprintf(stderr, "NetRocks::GetFindData '%s' G.config='%s'\n", _cur_dir, G.config.c_str());
@@ -70,9 +90,7 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 			}
 
 		} else {
-			const char *slash = strchr(_cur_dir, '/');
-			std::string site_dir(slash ? slash + 1 : ".");
-			_connection->DirectoryEnum(site_dir, il, OpMode);
+			_connection->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
 
 	} catch (std::exception &e) {
@@ -164,7 +182,7 @@ int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 
 void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 {
-	fprintf(stderr, "Inside::GetOpenPluginInfo: '%s' \n", _cur_dir);
+	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%s' \n", _cur_dir);
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %s@%s ", _dir.c_str(), _name.c_str());
 
@@ -172,44 +190,6 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	Info->HostFile = NULL;
 	Info->CurDir = _cur_dir;
 	Info->PanelTitle = _panel_title;
-}
-
-int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, char *DestPath, int OpMode)
-{
-	fprintf(stderr, "Inside::GetFiles: _dir='%s' DestPath='%s'\n", _cur_dir, DestPath);
-	if (ItemsNumber == 0)
-		return FALSE;
-
-	std::string destination;
-	if (DestPath)
-		destination = DestPath;
-	else
-		destination = ".";
-
-	XferConfirm xc(Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD, destination);
-	XferDefaultOverwriteAction xdoa = XDOA_ASK;
-	if (!xc.Confirm(xdoa))
-		return FALSE;
-
-	BOOL out = TRUE;
-	std::string data_path;
-	for (int i = 0; i < ItemsNumber; ++i) {
-		data_path = DestPath;
-		if (!data_path.empty() && data_path[data_path.size() - 1] != '/') {
-			data_path+= '/';
-		}
-		data_path+= PanelItem[i].FindData.cFileName;
-
-		uint64_t len = PanelItem[i].FindData.nFileSizeHigh;
-		len<<= 32;
-		len|= PanelItem[i].FindData.nFileSizeLow;
-
-		//bool rv = OnGetFile(PanelItem[i].FindData.cFileName, data_path.c_str(), len);
-		//fprintf(stderr, "Inside::GetFiles[%i]: %s '%s'\n",
-		//	i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
-	}
-
-	return out;
 }
 
 
@@ -231,7 +211,7 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 			data_path = PanelItem[i].FindData.cFileName;
 
 		//bool rv = OnPutFile(PanelItem[i].FindData.cFileName, data_path.c_str());
-		//fprintf(stderr, "Inside::PutFiles[%i]: %s '%s'\n",
+		//fprintf(stderr, "NetRocks::PutFiles[%i]: %s '%s'\n",
 		//	i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
 
 		//if (!rv)
@@ -248,7 +228,7 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 
 	for (int i = 0; i < ItemsNumber; ++i) {
 		//bool rv = OnDeleteFile(PanelItem[i].FindData.cFileName);
-		//fprintf(stderr, "Inside::DeleteFiles[%i]: %s '%s'\n",
+		//fprintf(stderr, "NetRocks::DeleteFiles[%i]: %s '%s'\n",
 		//	i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
 	}
 
@@ -257,7 +237,7 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
-	fprintf(stderr, "Inside::ProcessKey\n");
+	fprintf(stderr, "NetRocks::ProcessKey\n");
 
 	if (!_cur_dir[0] && Key==VK_F4
 	&& (ControlState == 0 || ControlState == PKF_SHIFT))

@@ -6,6 +6,7 @@ src/Globals.cpp
 src/IPC.cpp
 src/NetRocks.cpp
 src/PluginImpl.cpp
+src/PluginImpl_Get.cpp
 src/PooledStrings.cpp
 src/SiteConnection.cpp
 src/SiteConnectionSlave.cpp

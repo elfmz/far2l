@@ -14,6 +14,8 @@ class PluginImpl
 	void UpdatePanelTitle();
 	bool ValidateConnection();
 
+	std::string CurrentSiteDir(bool with_ending_slash) const;
+
 public:
 	PluginImpl(const char *path = nullptr);
 	virtual ~PluginImpl();

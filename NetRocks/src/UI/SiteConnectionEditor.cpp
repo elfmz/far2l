@@ -123,7 +123,7 @@ bool SiteConnectionEditor::Save()
 
 bool SiteConnectionEditor::Edit()
 {
-	int result = Show(6, 2, _di[_i_dblbox].Data);
+	int result = Show(_di[_i_dblbox].Data, 6, 2);
 
 	if (result == _i_save || result == _i_connect) {
 		if (!Save()) {

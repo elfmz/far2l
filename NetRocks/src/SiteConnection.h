@@ -1,7 +1,18 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <list>
 #include "IPC.h"
+#include "FileInformation.h"
+
+struct UnixFileEntry
+{
+	std::string name;
+	const char *owner, *group;
+	FileInformation info;
+};
+
+typedef std::list<UnixFileEntry> UnixFileList;
 
 class SiteConnection : protected IPCRecver, protected IPCSender
 {
@@ -20,6 +31,7 @@ public:
 
 	bool IsBroken();
 	void DirectoryEnum(const std::string &path, FP_SizeItemList &il, int OpMode) throw (std::runtime_error);
+	void DirectoryEnum(const std::string &path, UnixFileList &ufl, int OpMode) throw (std::runtime_error);
 	mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	void FileDelete(const std::string &path) throw (std::runtime_error);

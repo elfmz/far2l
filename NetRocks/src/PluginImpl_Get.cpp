@@ -77,6 +77,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 
 	XferDefaultOverwriteAction xdoa = XDOA_ASK;
 	if (!XferConfirm(Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD, destination).Ask(xdoa)) {
+		fprintf(stderr, "NetRocks::GetFiles: cancel\n");
 		return FALSE;
 	}
 
@@ -86,6 +87,10 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	unsigned long long total_size = 0;
 	FileInformation file_info = {};
 	for (int i = 0; i < ItemsNumber; ++i) {
+		if (strcmp(PanelItem[i].FindData.cFileName, ".") == 0 || strcmp(PanelItem[i].FindData.cFileName, "..") == 0) {
+			continue;
+		}
+
 		item_path = site_dir;
 		item_path+= PanelItem[i].FindData.cFileName;
 		file_info.mode = _connection->GetMode(item_path, true);

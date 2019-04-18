@@ -48,7 +48,7 @@ XferConfirm::XferConfirm(XferKind xk, XferDirection xd, const std::string &desti
 
 	_i_proceed = _di.Add(DI_BUTTON, 7,10,29,10, DIF_CENTERGROUP, (xk == XK_COPY) ?
 		((xd == XK_DOWNLOAD) ? MProceedCopyDownload : MProceedCopyUpload) :
-		((xd == XK_DOWNLOAD) ? MProceedMoveDownload : MProceedMoveUpload) );
+		((xd == XK_DOWNLOAD) ? MProceedMoveDownload : MProceedMoveUpload), nullptr, FDIS_DEFAULT);
 
 	_i_cancel = _di.Add(DI_BUTTON, 38,10,58,10, DIF_CENTERGROUP, MCancel);
 }

@@ -210,18 +210,26 @@ public:
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (ProtocolError)
 	{
-		SFTPAttributes  attributes(sftp_readdir(_conn->sftp, _dir));
-		if (!attributes) {
-			if (!sftp_dir_eof(_dir))
-				throw ProtocolError("Directory list error",  ssh_get_error(_conn->ssh));
-			return false;
-		}
-		name = attributes->name ? attributes->name : "";
-		owner = attributes->owner ? attributes->owner : "";
-		group = attributes->group ? attributes->group : "";
+		for (;;) {
+			SFTPAttributes  attributes(sftp_readdir(_conn->sftp, _dir));
+			if (!attributes) {
+				if (!sftp_dir_eof(_dir))
+					throw ProtocolError("Directory list error",  ssh_get_error(_conn->ssh));
+				return false;
+			}
+			if (attributes->name == nullptr || attributes->name[0] == 0) {
+				return false;
+			}
 
-		SftpFileInfoFromAttributes(file_info, attributes);
-		return true;
+			if (attributes->name[0] != '.' || (attributes->name[1] != 0 && (attributes->name[1] != '.' || attributes->name[2] != 0)) ) {
+				name = attributes->name ? attributes->name : "";
+				owner = attributes->owner ? attributes->owner : "";
+				group = attributes->group ? attributes->group : "";
+
+				SftpFileInfoFromAttributes(file_info, attributes);
+				return true;
+			}
+		}
   	}
 };
 
@@ -264,7 +272,7 @@ public:
 			const ssize_t rc = sftp_write(_file, buf, len);
 			if (rc <= 0)
 				throw ProtocolError("Write file error",  ssh_get_error(_conn->ssh));
-			if (rc >= len)
+			if ((size_t)rc >= len)
 				break;
 
 			len-= (size_t)len;

@@ -14,6 +14,6 @@ class XferConfirm : protected BaseDialog
 public:
 	XferConfirm(XferKind xk, XferDirection xd, const std::string &destination);
 
-	bool Confirm(XferDefaultOverwriteAction &xdoa);
+	bool Ask(XferDefaultOverwriteAction &xdoa);
 };
 

@@ -19,6 +19,8 @@ const char *PooledString(const char *s)
 {
 	if (!s)
 		return nullptr;
+	if (!*s)
+		return "";
 
 	const std::string tmp_str(s);
 	return PooledString(tmp_str);

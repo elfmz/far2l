@@ -54,7 +54,7 @@ XferConfirm::XferConfirm(XferKind xk, XferDirection xd, const std::string &desti
 }
 
 
-bool XferConfirm::Confirm(XferDefaultOverwriteAction &xdoa)
+bool XferConfirm::Ask(XferDefaultOverwriteAction &xdoa)
 {
 	switch (xdoa) {
 		case XDOA_SKIP:
@@ -81,7 +81,7 @@ bool XferConfirm::Confirm(XferDefaultOverwriteAction &xdoa)
 			_di[_i_doa_ask].Selected = 1;
 	}
 
-	if (Show(6, 2, _di[_i_dblbox].Data) != _i_proceed)
+	if (Show(_di[_i_dblbox].Data, 6, 2) != _i_proceed)
 		return false;
 
 	if (_di[_i_doa_skip].Selected) {

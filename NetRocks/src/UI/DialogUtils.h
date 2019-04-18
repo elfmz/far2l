@@ -46,8 +46,8 @@ protected:
 	static LONG_PTR WINAPI sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 
-	int Show(int extra_width, int extra_height, const char *title);
-	int Show(int extra_width, int extra_height, int title_lng);
+	int Show(const char *title, int extra_width, int extra_height, unsigned int flags = 0);
+	int Show(int title_lng, int extra_width, int extra_height, unsigned int flags = 0);
 
 public:
 	virtual ~BaseDialog(){};

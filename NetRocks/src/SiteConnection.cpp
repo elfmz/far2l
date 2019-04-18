@@ -184,6 +184,27 @@ void SiteConnection::DirectoryEnum(const std::string &path, FP_SizeItemList &il,
 	}
 }
 
+void SiteConnection::DirectoryEnum(const std::string &path, UnixFileList &ufl, int OpMode) throw (std::runtime_error)
+{
+	SendCommand(IPC_DIRECTORY_ENUM);
+	SendString(path);
+	RecvReply(IPC_DIRECTORY_ENUM);
+
+	std::string owner, group;
+	UnixFileEntry e;
+	for (;;) {
+		TransactContinueOrAbort();
+		RecvString(e.name);
+		if (e.name.empty()) break;
+		RecvString(owner);
+		RecvString(group);
+		e.owner = (char *)PooledString(owner);
+		e.group = (char *)PooledString(group);
+		RecvPOD(e.info);
+		ufl.emplace_back(e);
+	}
+}
+
 void SiteConnection::FileDelete(const std::string &path) throw (std::runtime_error)
 {
 	SendCommand(IPC_FILE_DELETE);

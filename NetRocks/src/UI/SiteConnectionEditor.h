@@ -27,6 +27,7 @@ class SiteConnectionEditor : protected BaseDialog
 	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
 	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
 	void DataFromDialog(HANDLE dlg);
+	void DisplayNameInputRefine(HANDLE dlg);
 	void DisplayNameAutogenerateAndApply(HANDLE dlg);
 	std::string DisplayNameAutogenerate();
 	void AssignDefaultPortNumber(HANDLE dlg);

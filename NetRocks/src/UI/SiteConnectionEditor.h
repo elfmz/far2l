@@ -24,8 +24,6 @@ class SiteConnectionEditor : protected BaseDialog
 
 	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 
-	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
-	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
 	void DataFromDialog(HANDLE dlg);
 	void DisplayNameInputRefine(HANDLE dlg);
 	void DisplayNameAutogenerateAndApply(HANDLE dlg);

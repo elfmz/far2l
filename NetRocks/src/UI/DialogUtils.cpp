@@ -101,9 +101,14 @@ const char *FarListWrapper::GetSelection()
 
 
 ///////////////////////
+LONG_PTR BaseDialog::SendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+{
+	return G.info.SendDlgMessage(dlg, msg, param1, param2);
+}
+
 LONG_PTR WINAPI BaseDialog::sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {
-	BaseDialog *it = (BaseDialog *)G.info.SendDlgMessage(dlg, DM_GETDLGDATA, 0, 0);
+	BaseDialog *it = (BaseDialog *)SendDlgMessage(dlg, DM_GETDLGDATA, 0, 0);
 	if (it) {
 		return it->DlgProc(dlg, msg, param1, param2);
 	}
@@ -126,4 +131,44 @@ int BaseDialog::Show(const char *title, int extra_width, int extra_height, unsig
 int BaseDialog::Show(int title_lng, int extra_width, int extra_height, unsigned int flags)
 {
 	return Show(G.GetMsg(title_lng), extra_width, extra_height, flags);
+}
+
+void BaseDialog::Close(HANDLE dlg)
+{
+	SendDlgMessage(dlg, DM_CLOSE, -1, 0);
+}
+
+void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const std::string &str)
+{
+	FarDialogItemData dd = { (int)str.size(), (char*)str.c_str() };
+	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
+}
+
+void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, int lng_str)
+{
+	const char *str = G.GetMsg(lng_str);
+	if (!str)
+		str = "";
+
+	FarDialogItemData dd = { (int)strlen(str), (char*)str };
+	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
+}
+
+void BaseDialog::LongLongToDialogControl(HANDLE dlg, int ctl, long long value)
+{
+	char str[0x100] = {};
+	snprintf(str, sizeof(str) - 1, "%lld", value);
+
+	FarDialogItemData dd = { (int)strlen(str), &str[0] };
+	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
+}
+
+void BaseDialog::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
+{
+	static char buf[ 0x1000 ] = {};
+	FarDialogItemData dd = { sizeof(buf) - 1, buf };
+	LONG_PTR rv = SendDlgMessage(dlg, DM_GETTEXT, ctl, (LONG_PTR)&dd);
+	if (rv > 0 && rv < (LONG_PTR)sizeof(buf))
+		buf[rv] = 0;
+	str = buf;
 }

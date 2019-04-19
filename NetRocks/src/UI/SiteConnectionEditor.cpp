@@ -169,22 +169,6 @@ LONG_PTR SiteConnectionEditor::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR
 	return BaseDialog::DlgProc(dlg, msg, param1, param2);
 }
 
-void SiteConnectionEditor::TextToDialogControl(HANDLE dlg, int ctl, const std::string &str)
-{
-	FarDialogItemData dd = { (int)str.size(), (char*)str.c_str() };
-	G.info.SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
-}
-
-void SiteConnectionEditor::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
-{
-	static char buf[ 0x1000 ] = {};
-	FarDialogItemData dd = { sizeof(buf) - 1, buf };
-	LONG_PTR rv = G.info.SendDlgMessage(dlg, DM_GETTEXT, ctl, (LONG_PTR)&dd);
-	if (rv > 0 && rv < (LONG_PTR)sizeof(buf))
-		buf[rv] = 0;
-	str = buf;
-}
-
 void SiteConnectionEditor::DataFromDialog(HANDLE dlg)
 {
 	std::string str;

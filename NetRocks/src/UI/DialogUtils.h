@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 #include <windows.h>
 #include <pluginold.hpp>
 using namespace oldfar;
@@ -43,11 +44,20 @@ class BaseDialog
 protected:
 	FarDialogItems _di;
 
+	static LONG_PTR SendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	static LONG_PTR WINAPI sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 
 	int Show(const char *title, int extra_width, int extra_height, unsigned int flags = 0);
 	int Show(int title_lng, int extra_width, int extra_height, unsigned int flags = 0);
+
+	void Close(HANDLE dlg);
+
+	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
+	void TextToDialogControl(HANDLE dlg, int ctl, int lng_str);
+	void LongLongToDialogControl(HANDLE dlg, int ctl, long long value);
+
+	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
 
 public:
 	virtual ~BaseDialog(){};

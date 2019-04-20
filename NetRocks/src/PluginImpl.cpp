@@ -2,7 +2,7 @@
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
 #include "UI/SiteConnectionEditor.h"
-#include "Ops/FilesGetter.h"
+#include "Op/Download.h"
 
 
 PluginImpl::PluginImpl(const char *path)
@@ -208,10 +208,8 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	std::string dst_dir;
 	if (DestPath)
 		dst_dir = DestPath;
-	if (dst_dir.empty())
-		dst_dir = ".";
 
-	return FilesGetter(_connection).Do(dst_dir, CurrentSiteDir(true), PanelItem, ItemsNumber, Move != 0, OpMode) ? TRUE : FALSE;
+	return Download(_connection).Do(dst_dir, CurrentSiteDir(true), PanelItem, ItemsNumber, Move != 0, OpMode) ? TRUE : FALSE;
 }
 
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)

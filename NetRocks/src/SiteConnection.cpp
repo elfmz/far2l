@@ -235,7 +235,7 @@ void SiteConnection::Rename(const std::string &path_old, const std::string &path
 	RecvReply(IPC_RENAME);
 }
 
-void SiteConnection::FileGet(const std::string &path_remote, const std::string &path_local, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+void SiteConnection::FileGet(const std::string &path_remote, const std::string &path_local, mode_t mode, unsigned long long resume_pos, IOStatusCallback *cb) throw (std::runtime_error)
 {
 	SendCommand(IPC_FILE_GET);
 	SendString(path_remote);
@@ -264,17 +264,19 @@ void SiteConnection::FileGet(const std::string &path_remote, const std::string &
 			buf.resize(piece);
 
 		Recv(&buf[0], piece);
-		do {
-			ssize_t wr = write(fd, &buf[0], piece);
+		for (size_t i = 0; i < piece; ) {
+			ssize_t wr = write(fd, &buf[i], piece - i);
 			if (wr <= 0)
 				throw std::runtime_error("Write file error");
 
-			piece-= (size_t) wr;
-		} while (piece != 0);
+			i+= (size_t)wr;
+		}
+		if (cb && !cb->OnIOStatus(piece))
+			break;
 	}
 }
 
-void SiteConnection::FilePut(const std::string &path_remote, const std::string &path_local, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+void SiteConnection::FilePut(const std::string &path_remote, const std::string &path_local, mode_t mode, unsigned long long resume_pos, IOStatusCallback *cb) throw (std::runtime_error)
 {
 	FDScope fd(open(path_local.c_str(), O_RDONLY));
 	if (!fd.Valid())
@@ -301,5 +303,7 @@ void SiteConnection::FilePut(const std::string &path_remote, const std::string &
 			break;
 
 		Send(buf, piece);
+		if (cb && !cb->OnIOStatus(piece))
+			break;
 	}
 }

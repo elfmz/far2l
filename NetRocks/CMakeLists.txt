@@ -14,7 +14,7 @@ src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/XferConfirm.cpp
 src/UI/XferProgress.cpp
-src/Ops/FilesGetter.cpp
+src/Op/Download.cpp
 )
 
 add_library (NetRocks MODULE ${SOURCES})

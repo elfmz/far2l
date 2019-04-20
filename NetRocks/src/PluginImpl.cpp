@@ -2,6 +2,7 @@
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
 #include "UI/SiteConnectionEditor.h"
+#include "Ops/FilesGetter.h"
 
 
 PluginImpl::PluginImpl(const char *path)
@@ -197,6 +198,21 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	Info->PanelTitle = _panel_title;
 }
 
+
+int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, char *DestPath, int OpMode)
+{
+	fprintf(stderr, "NetRocks::GetFiles: _dir='%s' DestPath='%s' ItemsNumber=%d\n", _cur_dir, DestPath, ItemsNumber);
+	if (ItemsNumber <= 0)
+		return FALSE;
+
+	std::string dst_dir;
+	if (DestPath)
+		dst_dir = DestPath;
+	if (dst_dir.empty())
+		dst_dir = ".";
+
+	return FilesGetter(_connection).Do(dst_dir, CurrentSiteDir(true), PanelItem, ItemsNumber, Move != 0, OpMode) ? TRUE : FALSE;
+}
 
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
 {

@@ -100,13 +100,13 @@ LONG_PTR XferProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 		if (param1 == _i_pause_resume) {
 			bool paused;
 			{
-				std::lock_guard<std::mutex> locker(_state.lock);
+				std::lock_guard<std::mutex> locker(_state.mtx);
 				paused = (_state.paused = !_state.paused);
 			}
 			TextToDialogControl(dlg, _i_pause_resume, paused ? MResume : MPause);
 
 		} else if (param1 == _i_cancel) {
-			std::lock_guard<std::mutex> locker(_state.lock);
+			std::lock_guard<std::mutex> locker(_state.mtx);
 			_state.aborting = true;
 		}
 		return TRUE;
@@ -124,27 +124,16 @@ void XferProgress::OnIdle(HANDLE dlg)
 	bool finished = false;
 
 	{
-		std::lock_guard<std::mutex> locker(_state.lock);
+		std::lock_guard<std::mutex> locker(_state.mtx);
 		if (_state.name != nullptr && _last_name != *_state.name) {
 			_last_name = *_state.name;
 			changed.name = true;
 		}
-		if (_state.total_count) {
-			_last_stats.total_count = _state.total_count;
-			changed.total_count = true;
-		}
-		if (_state.current_count) {
-			_last_stats.current_count = _state.current_count;
-			changed.current_count = true;
-		}
-		if (_state.total_size) {
-			_last_stats.total_size = _state.total_size;
-			changed.total_size = true;
-		}
-		if (_state.current_size) {
-			_last_stats.current_size = _state.current_size;
-			changed.current_size = true;
-		}
+		changed.total_count = (_state.stats.total_count != _last_stats.total_count);
+		changed.current_count = (_state.stats.current_count != _last_stats.current_count);
+		changed.total_size = (_state.stats.total_size != _last_stats.total_size);
+		changed.current_size = (_state.stats.current_size != _last_stats.current_size);
+		_last_stats = _state.stats;
 		finished = _state.finished;
 	}
 

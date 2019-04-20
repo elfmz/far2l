@@ -6,7 +6,6 @@ src/Globals.cpp
 src/IPC.cpp
 src/NetRocks.cpp
 src/PluginImpl.cpp
-src/PluginImpl_Get.cpp
 src/PooledStrings.cpp
 src/SiteConnection.cpp
 src/SiteConnectionSlave.cpp
@@ -15,6 +14,7 @@ src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/XferConfirm.cpp
 src/UI/XferProgress.cpp
+src/Ops/FilesGetter.cpp
 )
 
 add_library (NetRocks MODULE ${SOURCES})

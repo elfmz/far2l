@@ -86,7 +86,7 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 	if (!directory.empty())
 		ssh_options_set(_conn->ssh, SSH_OPTIONS_SSH_DIR, directory.c_str());
 
-	int verbosity = SSH_LOG_PROTOCOL;
+	int verbosity = SSH_LOG_NOLOG;//SSH_LOG_WARNING;//SSH_LOG_PROTOCOL;
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
 	int rc = ssh_connect(_conn->ssh);

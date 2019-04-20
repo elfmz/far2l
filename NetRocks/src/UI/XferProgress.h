@@ -13,12 +13,19 @@ struct XferStateStats
 	clock_t total_paused = 0, current_paused = 0;
 };
 
-struct XferState : XferStateStats
+struct XferState
 {
-	std::mutex lock;
-	XferDefaultOverwriteAction xdoa = XDOA_ASK;
+	std::mutex mtx;
+	XferStateStats stats;
 	const std::string *name = nullptr;
 	bool paused = false, aborting = false, finished = false;
+
+	void Reset()
+	{
+		stats = XferStateStats();
+		name = nullptr;
+		paused = aborting = finished = false;
+	}
 };
 
 class XferProgress : protected BaseDialog

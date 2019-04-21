@@ -12,9 +12,9 @@
 #include "../UI/XferProgress.h"
 
 
-class Download : protected Threaded, protected SiteConnection::IOStatusCallback
+class Upload : protected Threaded, protected SiteConnection::IOStatusCallback
 {
-	struct Entries : std::map<std::string, FileInformation> {} _entries;
+	struct Entries : std::map<std::string, struct stat> {} _entries;
 
 	std::set<std::string> _items;
 	size_t _src_dir_len;
@@ -28,6 +28,7 @@ class Download : protected Threaded, protected SiteConnection::IOStatusCallback
 	unsigned int _scan_depth_limit;
 
 	void CheckForUserInput(std::unique_lock<std::mutex> &lock);
+	bool OnScannedPath(const std::string &path);
 	void Scan();
 	void ScanItem(const std::string &path);
 	void Transfer();
@@ -36,6 +37,6 @@ class Download : protected Threaded, protected SiteConnection::IOStatusCallback
 	virtual void *ThreadProc();
 
 public:
-	Download(std::shared_ptr<SiteConnection> &connection);
+	Upload(std::shared_ptr<SiteConnection> &connection);
 	bool Do(const std::string &dst_dir, const std::string &src_dir, struct PluginPanelItem *items, int items_count, bool mv, int op_mode);
 };

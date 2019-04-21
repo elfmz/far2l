@@ -3,6 +3,7 @@
 #include "PluginImpl.h"
 #include "UI/SiteConnectionEditor.h"
 #include "Op/Download.h"
+#include "Op/Upload.h"
 
 
 PluginImpl::PluginImpl(const char *path)
@@ -214,30 +215,22 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
 {
-	if (ItemsNumber == 0 || Move)
+	const std::string &site_dir = CurrentSiteDir(true);
+	fprintf(stderr, "NetRocks::GetFiles: _dir='%s' site_dir='%s' ItemsNumber=%d\n", _cur_dir, site_dir.c_str(), ItemsNumber);
+	if (ItemsNumber <= 0)
 		return FALSE;
 
-	BOOL out = TRUE;
-	char cd[0x1000] = {};
-	sdc_getcwd(cd, sizeof(cd) - 1);
-	std::string data_path;
-	for (int i = 0; i < ItemsNumber; ++i) {
-		if (PanelItem[i].FindData.cFileName[0] != '/') {
-			data_path = cd;
-			data_path+= '/';
-			data_path+= PanelItem[i].FindData.cFileName;
-		} else
-			data_path = PanelItem[i].FindData.cFileName;
-
-		//bool rv = OnPutFile(PanelItem[i].FindData.cFileName, data_path.c_str());
-		//fprintf(stderr, "NetRocks::PutFiles[%i]: %s '%s'\n",
-		//	i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
-
-		//if (!rv)
-		//	out = FALSE;
+	char cwd[PATH_MAX] = {};
+	sdc_getcwd(cwd, PATH_MAX-2);
+	size_t l = strlen(cwd);
+	if (l == 0) {
+		strcpy(cwd, "./");
+	} else if (cwd[l - 1] != '/') {
+		cwd[l] = '/';
+		cwd[l + 1] = 0;
 	}
 
-	return out;
+	return Upload(_connection).Do(site_dir, cwd, PanelItem, ItemsNumber, Move != 0, OpMode) ? TRUE : FALSE;
 }
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)

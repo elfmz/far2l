@@ -81,7 +81,12 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 	if (port > 0)
 		ssh_options_set(_conn->ssh, SSH_OPTIONS_PORT, &port);	
 
-	ssh_options_set(_conn->ssh, SSH_OPTIONS_USER, &port);	
+	ssh_options_set(_conn->ssh, SSH_OPTIONS_USER, &port);
+
+#if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
+	int nodelay = 1;
+	ssh_options_set(_conn->ssh, SSH_OPTIONS_NODELAY, &nodelay);
+#endif
 
 	if (!directory.empty())
 		ssh_options_set(_conn->ssh, SSH_OPTIONS_SSH_DIR, directory.c_str());

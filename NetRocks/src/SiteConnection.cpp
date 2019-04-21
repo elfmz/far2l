@@ -224,7 +224,7 @@ void SiteConnection::DirectoryCreate(const std::string &path, mode_t mode) throw
 	SendCommand(IPC_DIRECTORY_CREATE);
 	SendString(path);
 	SendPOD(mode);
-	RecvReply(IPC_DIRECTORY_DELETE);
+	RecvReply(IPC_DIRECTORY_CREATE);
 }
 
 void SiteConnection::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)

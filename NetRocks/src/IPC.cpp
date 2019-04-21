@@ -23,7 +23,7 @@ void IPCSender::Send(const void *data, size_t len) throw(IPCError)
 		if (rv <= 0)
 			throw IPCError("IPCSender: write", errno);
 
-		if (rv == len)
+		if ((size_t)rv == len)
 			break;
 
 		len-= (size_t)rv;

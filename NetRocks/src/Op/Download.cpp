@@ -141,8 +141,9 @@ void Download::ScanItem(const std::string &path)
 
 void Download::Transfer()
 {
+	std::string path_local;
 	for (const auto &e : _entries) {
-		std::string path_local = _dst_dir;
+		path_local = _dst_dir;
 		path_local+= e.first.substr(_src_dir_len);
 
 		if (S_ISDIR(e.second.mode)) {

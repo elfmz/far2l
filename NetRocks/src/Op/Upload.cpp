@@ -25,9 +25,11 @@ bool Upload::Do(const std::string &dst_dir, const std::string &src_dir, struct P
 		}
 	}
 
-	if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir).Ask(_xdoa)) {
-		fprintf(stderr, "NetRocks::Upload: cancel\n");
-		return false;
+	if (!IS_SILENT(op_mode)) {
+		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir).Ask(_xdoa)) {
+			fprintf(stderr, "NetRocks::Upload: cancel\n");
+			return false;
+		}
 	}
 
 	if (_dst_dir.empty()) {
@@ -55,8 +57,8 @@ void *Upload::ThreadProc()
 		Scan();
 		Transfer();
 		fprintf(stderr,
-			"NetRocks::Upload: _dst_dir='%s' --> count=%lu total_size=%llu\n",
-			_dst_dir.c_str(), _entries.size(), _state.stats.total_size);
+			"NetRocks::Upload: _dst_dir='%s' --> count=%lu all_total=%llu\n",
+			_dst_dir.c_str(), _entries.size(), _state.stats.all_total);
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "NetRocks::UploadThread('%s') ERROR: %s\n", _dst_dir.c_str(), e.what());
@@ -100,9 +102,9 @@ bool Upload::OnScannedPath(const std::string &path)
 	std::unique_lock<std::mutex> lock(_state.mtx);
 	CheckForUserInput(lock);
 
-	_state.stats.total_count = _entries.size();
+	_state.stats.count_total = _entries.size();
 	if (!S_ISDIR(s.st_mode)) {
-		_state.stats.total_size+= s.st_size;
+		_state.stats.all_total+= s.st_size;
 		return false;
 	}
 
@@ -152,12 +154,20 @@ void Upload::Transfer()
 {
 	std::string path_remote;
 	for (const auto &e : _entries) {
+		const std::string &subpath = e.first.substr(_src_dir_len);
 		path_remote = _dst_dir;
-		path_remote+= e.first.substr(_src_dir_len);
+		path_remote+= subpath;
 		mode_t mode = 0;
 		try {
 			mode = _connection->GetMode(path_remote, false);
 		} catch (ProtocolError &) { ; }
+
+		{
+			std::unique_lock<std::mutex> lock(_state.mtx);
+			_state.path = subpath;
+			_state.stats.file_complete = 0;
+			_state.stats.file_total = S_ISDIR(e.second.st_mode) ? 0 : e.second.st_size;
+		}
 
 		if (S_ISDIR(e.second.st_mode)) {
 			if (mode == 0) {
@@ -188,8 +198,8 @@ void Upload::Transfer()
 
 		std::unique_lock<std::mutex> lock(_state.mtx);
 		if (!S_ISDIR(e.second.st_mode))
-			_state.stats.current_size+= e.second.st_size;
-		_state.stats.current_count++;
+			_state.stats.all_complete+= e.second.st_size;
+		_state.stats.count_complete++;
 		CheckForUserInput(lock);
 	}
 
@@ -208,7 +218,8 @@ void Upload::Transfer()
 bool Upload::OnIOStatus(unsigned long long transferred)
 {
 	std::unique_lock<std::mutex> lock(_state.mtx);
-	_state.stats.current_size+= transferred;
+	_state.stats.all_complete+= transferred;
+	_state.stats.file_complete+= transferred;
 	for (;;) {
 		if (_state.aborting)
 			return false;

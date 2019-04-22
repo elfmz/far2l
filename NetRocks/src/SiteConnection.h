@@ -17,8 +17,7 @@ typedef std::list<UnixFileEntry> UnixFileList;
 class SiteConnection : protected IPCRecver, protected IPCSender
 {
 	std::string _site, _site_info;
-
-	bool IsUserRequestingAbort();
+	bool _user_requesting_abort = false;
 
 	void RecvReply(IPCCommand cmd);
 	void TransactContinueOrAbort();

@@ -88,11 +88,6 @@ const std::string &SiteConnection::SiteInfo() const
 	return _site_info;
 }
 
-bool SiteConnection::IsUserRequestingAbort()
-{
-	return false;
-}
-
 void SiteConnection::RecvReply(IPCCommand cmd)
 {
 	IPCCommand reply = RecvCommand();
@@ -109,7 +104,8 @@ void SiteConnection::RecvReply(IPCCommand cmd)
 
 void SiteConnection::TransactContinueOrAbort()
 {
-	if (IsUserRequestingAbort()) {
+	if (_user_requesting_abort) {
+		_user_requesting_abort = false;
 		SendCommand(IPC_ABORT);
 		RecvReply(IPC_ABORT);
 		throw AbortError();
@@ -158,6 +154,8 @@ unsigned long long SiteConnection::GetSize(const std::string &path, bool follow_
 
 void SiteConnection::DirectoryEnum(const std::string &path, FP_SizeItemList &il, int OpMode) throw (std::runtime_error)
 {
+	_user_requesting_abort = false;
+
 	SendCommand(IPC_DIRECTORY_ENUM);
 	SendString(path);
 	RecvReply(IPC_DIRECTORY_ENUM);
@@ -186,6 +184,8 @@ void SiteConnection::DirectoryEnum(const std::string &path, FP_SizeItemList &il,
 
 void SiteConnection::DirectoryEnum(const std::string &path, UnixFileList &ufl, int OpMode) throw (std::runtime_error)
 {
+	_user_requesting_abort = false;
+
 	SendCommand(IPC_DIRECTORY_ENUM);
 	SendString(path);
 	RecvReply(IPC_DIRECTORY_ENUM);
@@ -237,6 +237,8 @@ void SiteConnection::Rename(const std::string &path_old, const std::string &path
 
 void SiteConnection::FileGet(const std::string &path_remote, const std::string &path_local, mode_t mode, unsigned long long resume_pos, IOStatusCallback *cb) throw (std::runtime_error)
 {
+	_user_requesting_abort = false;
+
 	SendCommand(IPC_FILE_GET);
 	SendString(path_remote);
 	SendPOD(resume_pos);
@@ -272,12 +274,14 @@ void SiteConnection::FileGet(const std::string &path_remote, const std::string &
 			i+= (size_t)wr;
 		}
 		if (cb && !cb->OnIOStatus(piece))
-			break;
+			_user_requesting_abort = true;
 	}
 }
 
 void SiteConnection::FilePut(const std::string &path_remote, const std::string &path_local, mode_t mode, unsigned long long resume_pos, IOStatusCallback *cb) throw (std::runtime_error)
 {
+	_user_requesting_abort = false;
+
 	FDScope fd(open(path_local.c_str(), O_RDONLY));
 	if (!fd.Valid())
 		throw std::runtime_error("Open file error");
@@ -304,6 +308,6 @@ void SiteConnection::FilePut(const std::string &path_remote, const std::string &
 
 		Send(buf, piece);
 		if (cb && !cb->OnIOStatus(piece))
-			break;
+			_user_requesting_abort = true;
 	}
 }

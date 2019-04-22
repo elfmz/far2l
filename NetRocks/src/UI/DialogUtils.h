@@ -53,11 +53,15 @@ protected:
 
 	void Close(HANDLE dlg);
 
+	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
+
+	void TextToDialogControl(HANDLE dlg, int ctl, const char *str);
 	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
 	void TextToDialogControl(HANDLE dlg, int ctl, int lng_str);
 	void LongLongToDialogControl(HANDLE dlg, int ctl, long long value);
+	void FileSizeToDialogControl(HANDLE dlg, int ctl, long long value);
 
-	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
+	void ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents = -1);
 
 public:
 	virtual ~BaseDialog(){};

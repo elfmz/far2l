@@ -25,9 +25,11 @@ bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct
 		}
 	}
 
-	if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir).Ask(_xdoa)) {
-		fprintf(stderr, "NetRocks::Download: cancel\n");
-		return false;
+	if (!IS_SILENT(op_mode)) {
+		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir).Ask(_xdoa)) {
+			fprintf(stderr, "NetRocks::Download: cancel\n");
+			return false;
+		}
 	}
 
 	if (_dst_dir.empty()) {
@@ -55,8 +57,8 @@ void *Download::ThreadProc()
 		Scan();
 		Transfer();
 		fprintf(stderr,
-			"NetRocks::Download: _dst_dir='%s' --> count=%lu total_size=%llu\n",
-			_dst_dir.c_str(), _entries.size(), _state.stats.total_size);
+			"NetRocks::Download: _dst_dir='%s' --> count=%lu all_total=%llu\n",
+			_dst_dir.c_str(), _entries.size(), _state.stats.all_total);
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "NetRocks::DownloadThread('%s') ERROR: %s\n", _dst_dir.c_str(), e.what());
@@ -98,8 +100,8 @@ void Download::Scan()
 		
 			std::unique_lock<std::mutex> lock(_state.mtx);
 			if (!S_ISDIR(info.mode))
-				_state.stats.total_size+= info.size;
-			_state.stats.total_count = _entries.size();
+				_state.stats.all_total+= info.size;
+			_state.stats.count_total = _entries.size();
 			CheckForUserInput(lock);
 		}
 	}
@@ -115,7 +117,6 @@ void Download::ScanItem(const std::string &path)
 	std::string subpath;
 	for (const auto &e : ufl) {
 		subpath = path;
-		subpath+= '/';
 		subpath+= e.name;
 		if (_entries.emplace(subpath, e.info).second) {
 			if (S_ISDIR(e.info.mode)) {
@@ -132,8 +133,8 @@ void Download::ScanItem(const std::string &path)
 
 			std::unique_lock<std::mutex> lock(_state.mtx);
 			if (!S_ISDIR(e.info.mode))
-				_state.stats.total_size+= e.info.size;
-			_state.stats.total_count = _entries.size();
+				_state.stats.all_total+= e.info.size;
+			_state.stats.count_total = _entries.size();
 			CheckForUserInput(lock);
 		}
 	}
@@ -143,8 +144,16 @@ void Download::Transfer()
 {
 	std::string path_local;
 	for (const auto &e : _entries) {
+		const std::string &subpath = e.first.substr(_src_dir_len);
 		path_local = _dst_dir;
-		path_local+= e.first.substr(_src_dir_len);
+		path_local+= subpath;
+
+		{
+			std::unique_lock<std::mutex> lock(_state.mtx);
+			_state.path = subpath;
+			_state.stats.file_complete = 0;
+			_state.stats.file_total = S_ISDIR(e.second.mode) ? 0 : e.second.size;
+		}
 
 		if (S_ISDIR(e.second.mode)) {
 			sdc_mkdir(path_local.c_str(), e.second.mode);
@@ -167,8 +176,8 @@ void Download::Transfer()
 
 		std::unique_lock<std::mutex> lock(_state.mtx);
 		if (!S_ISDIR(e.second.mode))
-			_state.stats.current_size+= e.second.size;
-		_state.stats.current_count++;
+			_state.stats.all_complete+= e.second.size;
+		_state.stats.count_complete++;
 		CheckForUserInput(lock);
 	}
 
@@ -189,7 +198,8 @@ void Download::Transfer()
 bool Download::OnIOStatus(unsigned long long transferred)
 {
 	std::unique_lock<std::mutex> lock(_state.mtx);
-	_state.stats.current_size+= transferred;
+	_state.stats.all_complete+= transferred;
+	_state.stats.file_complete+= transferred;
 	for (;;) {
 		if (_state.aborting)
 			return false;

@@ -138,30 +138,6 @@ void BaseDialog::Close(HANDLE dlg)
 	SendDlgMessage(dlg, DM_CLOSE, -1, 0);
 }
 
-void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const std::string &str)
-{
-	FarDialogItemData dd = { (int)str.size(), (char*)str.c_str() };
-	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
-}
-
-void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, int lng_str)
-{
-	const char *str = G.GetMsg(lng_str);
-	if (!str)
-		str = "";
-
-	FarDialogItemData dd = { (int)strlen(str), (char*)str };
-	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
-}
-
-void BaseDialog::LongLongToDialogControl(HANDLE dlg, int ctl, long long value)
-{
-	char str[0x100] = {};
-	snprintf(str, sizeof(str) - 1, "%lld", value);
-
-	FarDialogItemData dd = { (int)strlen(str), &str[0] };
-	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
-}
 
 void BaseDialog::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
 {
@@ -171,4 +147,70 @@ void BaseDialog::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
 	if (rv > 0 && rv < (LONG_PTR)sizeof(buf))
 		buf[rv] = 0;
 	str = buf;
+}
+
+void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const char *str)
+{
+	FarDialogItemData dd = { (int)strlen(str), (char*)str };
+	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
+}
+
+void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const std::string &str)
+{
+	TextToDialogControl(dlg, ctl, str.c_str());
+}
+
+void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, int lng_str)
+{
+	const char *str = G.GetMsg(lng_str);
+	TextToDialogControl(dlg, ctl, str ? str : "");
+}
+
+void BaseDialog::LongLongToDialogControl(HANDLE dlg, int ctl, long long value)
+{
+	char str[0x100] = {};
+	snprintf(str, sizeof(str) - 1, "%lld", value);
+	TextToDialogControl(dlg, ctl, str);
+}
+
+void BaseDialog::FileSizeToDialogControl(HANDLE dlg, int ctl, long long value)
+{
+	char str[0x100] = {};
+	const char *suffix = "b";
+	if (value > 100ll * 1024ll * 1024ll * 1024ll * 1024ll) {
+		suffix = "Tb";
+		value/= (1024ll * 1024ll * 1024ll * 1024ll);
+	} else if (value > 100ll * 1024ll * 1024ll * 1024ll) {
+		suffix = "Gb";
+		value/= (1024ll * 1024ll * 1024ll);
+	} else if (value > 100ll * 1024ll * 1024ll ) {
+		suffix = "Mb";
+		value/= (1024ll * 1024ll);
+	} else if (value > 100ll * 1024ll ) {
+		suffix = "Kb";
+		value/= (1024ll);
+	}
+	snprintf(str, sizeof(str) - 1, "%lld %s", value, suffix);
+	TextToDialogControl(dlg, ctl, str);
+}
+
+void BaseDialog::ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents)
+{
+	std::string str;
+	int width = _di[ctl].X2 + 1 - _di[ctl].X1;
+	str.resize(width);
+	if (percents >= 0) {
+		int filled = (percents * width) / 100;
+		for (int i = 0; i < filled; ++i) {
+			str[i] = '#';
+		}
+		for (int i = filled; i < width; ++i) {
+			str[i] = '=';
+		}
+	} else {
+		for (auto &c : str) {
+			c = '-';
+		}
+	}
+	TextToDialogControl(dlg, ctl, str);
 }

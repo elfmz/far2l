@@ -27,7 +27,7 @@ void IPCSender::Send(const void *data, size_t len) throw(IPCError)
 			break;
 
 		len-= (size_t)rv;
-		data = (char *)data + rv;
+		data = (const char *)data + rv;
 	}
 }
 

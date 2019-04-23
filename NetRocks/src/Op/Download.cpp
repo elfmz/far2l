@@ -99,8 +99,7 @@ void Download::Scan()
 			}
 		
 			std::unique_lock<std::mutex> lock(_state.mtx);
-			if (!S_ISDIR(info.mode))
-				_state.stats.all_total+= info.size;
+			_state.stats.all_total+= info.size;
 			_state.stats.count_total = _entries.size();
 			CheckForUserInput(lock);
 		}
@@ -175,8 +174,6 @@ void Download::Transfer()
 		}
 
 		std::unique_lock<std::mutex> lock(_state.mtx);
-		if (!S_ISDIR(e.second.mode))
-			_state.stats.all_complete+= e.second.size;
 		_state.stats.count_complete++;
 		CheckForUserInput(lock);
 	}

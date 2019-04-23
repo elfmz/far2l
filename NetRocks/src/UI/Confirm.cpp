@@ -1,4 +1,4 @@
-#include "XferConfirm.h"
+#include "Confirm.h"
 #include "../Globals.h"
 
 
@@ -104,5 +104,39 @@ bool XferConfirm::Ask(XferDefaultOverwriteAction &xdoa)
 	}
 
 	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+/*                                                         62
+345                      28         39                   60  64
+ ======================= Remove ==============================
+| Remove selected files from:                                |
+| [EDITBOX                                                 ] |
+|------------------------------------------------------------|
+|   [  Proceed removal    ]        [        Cancel       ]   |
+ =============================================================
+    6                     29       38                      60
+*/
+
+RemoveConfirm::RemoveConfirm(const std::string &site_dir)
+{
+	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,6, 0, MRemoveTitle);
+	_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveText);
+
+	_di.Add(DI_TEXT, 5,3,62,3, 0, site_dir.c_str());
+
+	_di.Add(DI_TEXT, 4,4,63,4, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+	_i_proceed = _di.Add(DI_BUTTON, 7,5,29,5, DIF_CENTERGROUP, MProceedRemoval);
+	_i_cancel = _di.Add(DI_BUTTON, 38,5,58,5, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
+}
+
+
+bool RemoveConfirm::Ask()
+{
+	return (Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING) == _i_proceed);
 }
 

@@ -2,7 +2,7 @@
 #include <string>
 #include <windows.h>
 #include "DialogUtils.h"
-#include "XferDefs.h"
+#include "Defs.h"
 
 class XferConfirm : protected BaseDialog
 {
@@ -15,5 +15,17 @@ public:
 	XferConfirm(XferKind xk, XferDirection xd, const std::string &destination);
 
 	bool Ask(XferDefaultOverwriteAction &xdoa);
+};
+
+
+class RemoveConfirm : protected BaseDialog
+{
+	int _i_dblbox = -1;
+	int _i_proceed = -1, _i_cancel = -1;
+
+public:
+	RemoveConfirm(const std::string &site_dir);
+
+	bool Ask();
 };
 

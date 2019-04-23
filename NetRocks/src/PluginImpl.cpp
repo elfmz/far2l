@@ -4,7 +4,7 @@
 #include "UI/SiteConnectionEditor.h"
 #include "Op/Download.h"
 #include "Op/Upload.h"
-
+#include "Op/Remove.h"
 
 PluginImpl::PluginImpl(const char *path)
 {
@@ -235,16 +235,11 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
-	if (ItemsNumber == 0 )
+	fprintf(stderr, "NetRocks::DeleteFiles: _dir='%s' ItemsNumber=%d\n", _cur_dir, ItemsNumber);
+	if (ItemsNumber <= 0)
 		return FALSE;
 
-	for (int i = 0; i < ItemsNumber; ++i) {
-		//bool rv = OnDeleteFile(PanelItem[i].FindData.cFileName);
-		//fprintf(stderr, "NetRocks::DeleteFiles[%i]: %s '%s'\n",
-		//	i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
-	}
-
-	return TRUE;
+	return Remove(_connection).Do(CurrentSiteDir(true), PanelItem, ItemsNumber, OpMode) ? TRUE : FALSE;
 }
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)

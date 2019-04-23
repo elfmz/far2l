@@ -8,8 +8,8 @@
 #include <fstdlib.h>
 #include "../FileInformation.h"
 #include "../SiteConnection.h"
-#include "../UI/XferConfirm.h"
-#include "../UI/XferProgress.h"
+#include "../UI/Confirm.h"
+#include "../UI/Progress.h"
 
 
 class Download : protected Threaded, protected SiteConnection::IOStatusCallback
@@ -24,7 +24,7 @@ class Download : protected Threaded, protected SiteConnection::IOStatusCallback
 
 	std::shared_ptr<SiteConnection> _connection;
 	std::string _dst_dir;
-	XferState _state;
+	ProgressState _state;
 	unsigned int _scan_depth_limit;
 
 	void CheckForUserInput(std::unique_lock<std::mutex> &lock);

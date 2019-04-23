@@ -61,4 +61,8 @@ enum LanguageID
   MProceedCopyUpload,
   MProceedMoveDownload,
   MProceedMoveUpload,
+
+  MRemoveTitle,
+  MRemoveText,
+  MProceedRemoval
 };

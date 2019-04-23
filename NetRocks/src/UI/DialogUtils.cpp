@@ -62,6 +62,29 @@ int FarDialogItems::EstimateHeight() const
 
 /////////////////
 
+void FarDialogItemsLineGrouped::SetLine(int y)
+{
+	_y = y;
+}
+
+void FarDialogItemsLineGrouped::NextLine()
+{
+	++_y;
+}
+
+int FarDialogItemsLineGrouped::AddOnLine(int type, int x1, int x2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
+{
+	return Add(type, x1, _y, x2, _y, flags, data, history, state);
+}
+
+int FarDialogItemsLineGrouped::AddOnLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
+{
+	return Add(type, x1, _y, x2, _y, flags, data_lng, history, state);
+}
+
+/////////////////
+
+
 void FarListWrapper::Add(const char *text, DWORD flags)
 {
 	FarListItem fli = {flags, {}, {}};

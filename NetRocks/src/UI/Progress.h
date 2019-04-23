@@ -2,15 +2,16 @@
 #include <string>
 #include <windows.h>
 #include "DialogUtils.h"
-#include "XferDefs.h"
+#include "Defs.h"
 
-class XferProgress : protected BaseDialog
+class BaseProgress : protected BaseDialog
 {
-	XferState &_state;
-	XferStateStats _last_stats;
+	ProgressState &_state;
+	ProgressStateStats _last_stats;
 	std::string _last_path;
 	bool _finished = false;
 
+protected:
 	int _i_dblbox = -1, _i_cur_file = -1;
 	int _i_file_size_complete = -1;
 	int _i_file_size_total = -1;
@@ -40,7 +41,20 @@ class XferProgress : protected BaseDialog
 	void OnIdle(HANDLE dlg);
 
 public:
-	XferProgress(XferKind xk, XferDirection xd, const std::string &destination, XferState &state);
+	BaseProgress(int title_lng, bool show_file_size_progress, const std::string &path, ProgressState &state);
 	void Show();
+};
+
+class XferProgress : public BaseProgress
+{
+public:
+	XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state);
+};
+
+class RemoveProgress : public BaseProgress
+{
+
+public:
+	RemoveProgress(const std::string &site_dir, ProgressState &state);
 };
 

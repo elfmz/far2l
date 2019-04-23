@@ -25,7 +25,7 @@ enum XferDefaultOverwriteAction
 };
 
 
-struct XferStateStats
+struct ProgressStateStats
 {
 	long long file_complete = 0, file_total = 0;
 	long long all_complete = 0, all_total = 0;
@@ -34,16 +34,16 @@ struct XferStateStats
 	clock_t total_paused = 0, current_paused = 0;
 };
 
-struct XferState
+struct ProgressState
 {
 	std::mutex mtx;
-	XferStateStats stats;
+	ProgressStateStats stats;
 	std::string path;
 	bool paused = false, aborting = false, finished = false;
 
 	void Reset()
 	{
-		stats = XferStateStats();
+		stats = ProgressStateStats();
 		path.clear();
 		paused = aborting = finished = false;
 	}

@@ -12,10 +12,11 @@ src/SiteConnectionSlave.cpp
 src/Protocol/ProtocolSFTP.cpp
 src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
-src/UI/XferConfirm.cpp
-src/UI/XferProgress.cpp
+src/UI/Confirm.cpp
+src/UI/Progress.cpp
 src/Op/Download.cpp
 src/Op/Upload.cpp
+src/Op/Remove.cpp
 )
 
 add_library (NetRocks MODULE ${SOURCES})

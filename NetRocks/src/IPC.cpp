@@ -20,6 +20,7 @@ void IPCSender::Send(const void *data, size_t len) throw(IPCError)
 {
 	if (len) for (;;) {
 		ssize_t rv = write(_fd, data, len);
+//		fprintf(stderr, "[%d] SENT: %lx/%lx {0x%x... }\n", getpid(), rv, len, *(const unsigned char *)data);
 		if (rv <= 0)
 			throw IPCError("IPCSender: write", errno);
 
@@ -70,6 +71,7 @@ void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
 {
 	if (len) for (;;) {
 		ssize_t rv = read(_fd, data, len);
+//		fprintf(stderr, "[%d] RECV: %lx/%lx {0x%x... }\n", getpid(), rv, len, *(const unsigned char *)data);
 		if (rv <= 0)
 			throw IPCError("IPCRecver: read", errno);
 

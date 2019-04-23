@@ -34,11 +34,11 @@ class SiteConnectionSlave : protected IPCEndpoint
 		}
 	}
 
-	bool OnContinueOrAbort()
+	bool OnContinueOrAbort(bool may_continue = true)
 	{
 		IPCCommand c = RecvCommand();
-		SendCommand(c);
-		return (c == IPC_CONTINUE);
+		SendCommand(may_continue ? c : IPC_ABORT);
+		return (may_continue && c == IPC_CONTINUE);
 	}
 
 	void OnDirectoryEnum()
@@ -46,8 +46,19 @@ class SiteConnectionSlave : protected IPCEndpoint
 		RecvString(_args.str1);
 		std::shared_ptr<IDirectoryEnumer> enumer = _protocol->DirectoryEnum(_args.str1);
 		SendCommand(IPC_DIRECTORY_ENUM);
-		while (OnContinueOrAbort()) {
-			if (!enumer->Enum(_args.str1, _args.str2, _args.str3, _args.file_info)) {
+		for (;;) {
+			bool cont;
+			try {
+				cont = enumer->Enum(_args.str1, _args.str2, _args.str3, _args.file_info);
+			} catch (ProtocolError &ex) {
+				fprintf(stderr, "OnDirectoryEnum: %s\n", ex.what());
+				OnContinueOrAbort(false);
+				break;
+			}
+			if (!OnContinueOrAbort())
+				break;
+
+			if (!cont) {
 				SendString(s_empty_string);
 				break;
 
@@ -71,11 +82,18 @@ class SiteConnectionSlave : protected IPCEndpoint
 		SendCommand(IPC_FILE_GET);
 		char buf[0x10000];
 		while (OnContinueOrAbort()) {
-			size_t piece = reader->Read(buf, sizeof(buf));
+			size_t piece;
+			try {
+				piece = reader->Read(buf, sizeof(buf));
+			} catch (ProtocolError &ex) {
+				fprintf(stderr, "OnFileGet: %s\n", ex.what());
+				piece = (size_t)-1;
+			}
 			SendPOD(piece);
-			if (!piece)
+			if (!piece || piece == (size_t)-1)
 				break;
 			Send(buf, piece);
+
 		}
 	}
 
@@ -93,7 +111,13 @@ class SiteConnectionSlave : protected IPCEndpoint
 			if (!piece)
 				break;
 			Recv(buf, piece);
-			writer->Write(buf, sizeof(buf));
+			try {
+				writer->Write(buf, sizeof(buf));
+			} catch (ProtocolError &ex) {
+				fprintf(stderr, "OnFilePut: %s\n", ex.what());
+				OnContinueOrAbort(false);
+				break;
+			}
 		}
 	}
 

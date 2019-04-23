@@ -238,21 +238,29 @@ void SiteConnection::Rename(const std::string &path_old, const std::string &path
 void SiteConnection::FileGet(const std::string &path_remote, const std::string &path_local, mode_t mode, unsigned long long resume_pos, IOStatusCallback *cb) throw (std::runtime_error)
 {
 	_user_requesting_abort = false;
-
 	SendCommand(IPC_FILE_GET);
 	SendString(path_remote);
 	SendPOD(resume_pos);
 	RecvReply(IPC_FILE_GET);
 
 	FDScope fd(open(path_local.c_str(), O_RDWR | O_CREAT, mode));
-	if (!fd.Valid())
-		throw std::runtime_error("Create file error");
+	const char *err = nullptr;
+	if (!fd.Valid()) {
+		err = "Create file error";
 
-	if (ftruncate(fd, resume_pos) == -1)
-		throw std::runtime_error("Truncate file error");
+	} else  if (ftruncate(fd, resume_pos) == -1) {
+		err = "Truncate file error";
 
-	if (lseek(fd, resume_pos, SEEK_SET) != CheckedCast<off_t>(resume_pos) )
-		throw std::runtime_error("Seek file error");
+	} else if (lseek(fd, resume_pos, SEEK_SET) != CheckedCast<off_t>(resume_pos) ) {
+		err = "Seek file error";
+	}
+
+	if (err != nullptr) {
+		fprintf(stderr, "SiteConnection::FileGet: %s\n", err);
+		SendCommand(IPC_ABORT);
+		RecvReply(IPC_ABORT);
+		throw std::runtime_error(err);
+	}
 
 	std::vector<char> buf;
 	for (;;) {
@@ -262,14 +270,21 @@ void SiteConnection::FileGet(const std::string &path_remote, const std::string &
 		if (piece == 0)
 			break;
 
+		if (piece == (size_t)-1)
+			throw ProtocolError("Protocol read error");
+
 		if (buf.size() < piece)
 			buf.resize(piece);
 
 		Recv(&buf[0], piece);
 		for (size_t i = 0; i < piece; ) {
 			ssize_t wr = write(fd, &buf[i], piece - i);
-			if (wr <= 0)
-				throw std::runtime_error("Write file error");
+			if (wr <= 0) {
+				fprintf(stderr, "SiteConnection::FileGet: IO error!\n");
+				SendCommand(IPC_ABORT);
+				RecvReply(IPC_ABORT);
+				throw ProtocolError("Write file IO error");
+			}
 
 			i+= (size_t)wr;
 		}
@@ -297,10 +312,13 @@ void SiteConnection::FilePut(const std::string &path_remote, const std::string &
 
 	char buf[0x10000];
 	for (;;) {
-		TransactContinueOrAbort();
 		ssize_t piece = read(fd, buf, sizeof(buf));
-		if (piece < 0)
+		if (piece < 0) {
+			SendCommand(IPC_ABORT);
+			RecvReply(IPC_ABORT);
 			throw std::runtime_error("Read file error");
+		}
+		TransactContinueOrAbort();
 
 		SendPOD(piece);
 		if (piece == 0)

@@ -197,8 +197,6 @@ void Upload::Transfer()
 		}
 
 		std::unique_lock<std::mutex> lock(_state.mtx);
-		if (!S_ISDIR(e.second.st_mode))
-			_state.stats.all_complete+= e.second.st_size;
 		_state.stats.count_complete++;
 		CheckForUserInput(lock);
 	}

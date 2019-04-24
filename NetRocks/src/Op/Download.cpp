@@ -85,23 +85,38 @@ void Download::CheckForUserInput(std::unique_lock<std::mutex> &lock)
 	}
 }
 
-void Download::Scan()
+bool Download::OnScannedPath(const std::string &path)
 {
 	FileInformation info = {};
+	info.mode = _connection->GetMode(path, true);
+	if (S_ISREG(info.mode)) {
+		info.size = _connection->GetSize(path, true);
+	} else if (!S_ISDIR(info.mode)) {
+		return false;
+	}
+
+	if (!_entries.emplace(path, info).second)
+		return false;
+
+	std::unique_lock<std::mutex> lock(_state.mtx);
+	CheckForUserInput(lock);
+
+	_state.stats.count_total = _entries.size();
+	if (!S_ISDIR(info.mode)) {
+		_state.stats.all_total+= info.size;
+		return false;
+	}
+
+	return true;
+}
+
+void Download::Scan()
+{
 	for (auto path : _items) {
-		info.mode = _connection->GetMode(path, true);
-		info.size = S_ISDIR(info.mode) ? 0 :_connection->GetSize(path, true);
-		if (_entries.emplace(path, info).second) {
-			if (S_ISDIR(info.mode)) {
-				path+= '/';
-				_scan_depth_limit = 255;
-				ScanItem(path);
-			}
-		
-			std::unique_lock<std::mutex> lock(_state.mtx);
-			_state.stats.all_total+= info.size;
-			_state.stats.count_total = _entries.size();
-			CheckForUserInput(lock);
+		if (OnScannedPath(path)) {
+			path+= '/';
+			_scan_depth_limit = 255;
+			ScanItem(path);
 		}
 	}
 }
@@ -117,24 +132,15 @@ void Download::ScanItem(const std::string &path)
 	for (const auto &e : ufl) {
 		subpath = path;
 		subpath+= e.name;
-		if (_entries.emplace(subpath, e.info).second) {
-			if (S_ISDIR(e.info.mode)) {
-				if (_scan_depth_limit) {
-					subpath+= '/';
-					--_scan_depth_limit;
-					ScanItem(subpath);
-					++_scan_depth_limit;
-				} else {
-					fprintf(stderr, "NetRocks::Item('%s'): depth limit exhausted\n", subpath.c_str());
-					// _failed = true;
-				}
+		if (OnScannedPath(subpath)) {
+			if (_scan_depth_limit) {
+				subpath+= '/';
+				--_scan_depth_limit;
+				ScanItem(subpath);
+				++_scan_depth_limit;
+			} else {
+				fprintf(stderr, "NetRocks::Item('%s'): depth limit exhausted\n", subpath.c_str());
 			}
-
-			std::unique_lock<std::mutex> lock(_state.mtx);
-			if (!S_ISDIR(e.info.mode))
-				_state.stats.all_total+= e.info.size;
-			_state.stats.count_total = _entries.size();
-			CheckForUserInput(lock);
 		}
 	}
 }

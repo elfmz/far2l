@@ -22,10 +22,10 @@
 XferConfirm::XferConfirm(XferKind xk, XferDirection xd, const std::string &destination)
 {
 	if (xk == XK_COPY) {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,12, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
+		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
 		_di.Add(DI_TEXT, 5,2,62,2, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadText : MXferCopyUploadText);
 	} else {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,12, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
+		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
 		_di.Add(DI_TEXT, 5,2,62,2, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadText : MXferMoveUploadText);
 	}
 

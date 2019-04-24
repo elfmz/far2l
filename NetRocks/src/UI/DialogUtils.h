@@ -28,8 +28,8 @@ struct FarDialogItemsLineGrouped : FarDialogItems
 	void SetLine(int y);
 	void NextLine();
 
-	int AddOnLine(int type, int x1, int x2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
-	int AddOnLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
+	int AddAtLine(int type, int x1, int x2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
+	int AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
 
 private:
 	int _y = 1;

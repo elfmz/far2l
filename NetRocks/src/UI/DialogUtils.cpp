@@ -72,12 +72,12 @@ void FarDialogItemsLineGrouped::NextLine()
 	++_y;
 }
 
-int FarDialogItemsLineGrouped::AddOnLine(int type, int x1, int x2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
+int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
 {
 	return Add(type, x1, _y, x2, _y, flags, data, history, state);
 }
 
-int FarDialogItemsLineGrouped::AddOnLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
+int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
 {
 	return Add(type, x1, _y, x2, _y, flags, data_lng, history, state);
 }
@@ -164,6 +164,9 @@ void BaseDialog::Close(HANDLE dlg)
 
 void BaseDialog::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
 {
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
 	static char buf[ 0x1000 ] = {};
 	FarDialogItemData dd = { sizeof(buf) - 1, buf };
 	LONG_PTR rv = SendDlgMessage(dlg, DM_GETTEXT, ctl, (LONG_PTR)&dd);
@@ -174,6 +177,9 @@ void BaseDialog::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
 
 void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const char *str)
 {
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
 	FarDialogItemData dd = { (int)strlen(str), (char*)str };
 	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
 }
@@ -198,6 +204,9 @@ void BaseDialog::LongLongToDialogControl(HANDLE dlg, int ctl, long long value)
 
 void BaseDialog::FileSizeToDialogControl(HANDLE dlg, int ctl, long long value)
 {
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
 	char str[0x100] = {};
 	const char *suffix = "b";
 	if (value > 100ll * 1024ll * 1024ll * 1024ll * 1024ll) {
@@ -219,6 +228,9 @@ void BaseDialog::FileSizeToDialogControl(HANDLE dlg, int ctl, long long value)
 
 void BaseDialog::ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents)
 {
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
 	std::string str;
 	int width = _di[ctl].X2 + 1 - _di[ctl].X1;
 	str.resize(width);

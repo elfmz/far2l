@@ -26,63 +26,63 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 	_di.Add(DI_DOUBLEBOX, 3, 1, 64, show_file_size_progress ? 13 : 12, 0, title_lng);
 
 	_di.SetLine(2);
-	_di.AddOnLine(DI_TEXT, 5,62, 0, MXferCurrentFile);
+	_di.AddAtLine(DI_TEXT, 5,62, 0, MXferCurrentFile);
 
 	_di.NextLine();
-	_i_cur_file = _di.AddOnLine(DI_EDIT, 5,62, DIF_READONLY, "...");
+	_i_cur_file = _di.AddAtLine(DI_EDIT, 5,62, DIF_READONLY, "...");
 
 	_di.NextLine();
-	_di.AddOnLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
+	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 
 	if (show_file_size_progress) {
 		_di.NextLine();
-		_di.AddOnLine(DI_TEXT, 5,20, 0, MXferFileSize);
-		_i_file_size_complete = _di.AddOnLine(DI_TEXT, 21,29, 0, "#########");
-		_di.AddOnLine(DI_TEXT, 30,35, 0, MXferOf);
-		_i_file_size_total = _di.AddOnLine(DI_TEXT, 35,43, 0, "#########");
-		_i_file_size_progress_bar = _di.AddOnLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
+		_di.AddAtLine(DI_TEXT, 5,20, 0, MXferFileSize);
+		_i_file_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
+		_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
+		_i_file_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
+		_i_file_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
 	}
 
 	_di.NextLine();
-	_di.AddOnLine(DI_TEXT, 5,20, 0, MXferAllSize);
-	_i_all_size_complete = _di.AddOnLine(DI_TEXT, 21,29, 0, "#########");
-	_di.AddOnLine(DI_TEXT, 30,35, 0, MXferOf);
-	_i_all_size_total = _di.AddOnLine(DI_TEXT, 35,43, 0, "#########");
-	_i_all_size_progress_bar = _di.AddOnLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
+	_di.AddAtLine(DI_TEXT, 5,20, 0, MXferAllSize);
+	_i_all_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
+	_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
+	_i_all_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
+	_i_all_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
 
 	_di.NextLine();
-	_di.AddOnLine(DI_TEXT, 5,20, 0, MXferCount);
-	_i_count_complete = _di.AddOnLine(DI_TEXT, 21,29, 0, "#########");
-	_di.AddOnLine(DI_TEXT, 30,35, 0, MXferOf);
-	_i_count_total = _di.AddOnLine(DI_TEXT, 35,43, 0, "#########");
-	_i_count_progress_bar = _di.AddOnLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
+	_di.AddAtLine(DI_TEXT, 5,20, 0, MXferCount);
+	_i_count_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
+	_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
+	_i_count_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
+	_i_count_progress_bar = _di.AddAtLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
 
 	_di.NextLine();
-	_di.AddOnLine(DI_TEXT, 5,32, 0, MXferFileTimeSpent);
-	_i_file_time_spent = _di.AddOnLine(DI_TEXT, 33,41, 0, "???:??.??");
-	_di.AddOnLine(DI_TEXT, 44,53, 0, MXferRemain);
-	_i_file_time_remain = _di.AddOnLine(DI_TEXT, 54,60, 0, "???:??.??");
+	_di.AddAtLine(DI_TEXT, 5,32, 0, MXferFileTimeSpent);
+	_i_file_time_spent = _di.AddAtLine(DI_TEXT, 33,41, 0, "???:??.??");
+	_di.AddAtLine(DI_TEXT, 44,53, 0, MXferRemain);
+	_i_file_time_remain = _di.AddAtLine(DI_TEXT, 54,60, 0, "???:??.??");
 
 	_di.NextLine();
-	_di.AddOnLine(DI_TEXT, 5,32, 0, MXferAllTimeSpent);
-	_i_all_time_spent = _di.AddOnLine(DI_TEXT, 33,41, 0, "???:??.??");
-	_di.AddOnLine(DI_TEXT, 44,53, 0, MXferRemain);
-	_i_all_time_remain = _di.AddOnLine(DI_TEXT, 54,60, 0, "???:??.??");
+	_di.AddAtLine(DI_TEXT, 5,32, 0, MXferAllTimeSpent);
+	_i_all_time_spent = _di.AddAtLine(DI_TEXT, 33,41, 0, "???:??.??");
+	_di.AddAtLine(DI_TEXT, 44,53, 0, MXferRemain);
+	_i_all_time_remain = _di.AddAtLine(DI_TEXT, 54,60, 0, "???:??.??");
 
 	_di.NextLine();
-	_i_speed_current_label = _di.AddOnLine(DI_TEXT, 5,32, 0, MXferSpeedCurrent);
-	_i_speed_current = _di.AddOnLine(DI_TEXT, 33,41, 0, "???");
-	_di.AddOnLine(DI_TEXT, 44,53, 0, MXferAverage);
-	_i_speed_average = _di.AddOnLine(DI_TEXT, 54,60, 0, "???");
+	_i_speed_current_label = _di.AddAtLine(DI_TEXT, 5,32, 0, MXferSpeedCurrent);
+	_i_speed_current = _di.AddAtLine(DI_TEXT, 33,41, 0, "???");
+	_di.AddAtLine(DI_TEXT, 44,53, 0, MXferAverage);
+	_i_speed_average = _di.AddAtLine(DI_TEXT, 54,60, 0, "???");
 
 	_di.NextLine();
-	_di.AddOnLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
+	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	//_i_background = _di.AddOnLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
-	_i_pause_resume = _di.AddOnLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MPause); // MResume
-	_i_cancel = _di.AddOnLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
+	//_i_background = _di.AddAtLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
+	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MPause); // MResume
+	_i_cancel = _di.AddAtLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
 }
 
 void BaseProgress::Show()

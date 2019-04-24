@@ -28,6 +28,8 @@ class Download : protected Threaded, protected SiteConnection::IOStatusCallback
 	unsigned int _scan_depth_limit;
 
 	void CheckForUserInput(std::unique_lock<std::mutex> &lock);
+
+	bool OnScannedPath(const std::string &path);
 	void Scan();
 	void ScanItem(const std::string &path);
 	void Transfer();

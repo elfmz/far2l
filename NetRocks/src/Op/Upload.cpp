@@ -1,7 +1,7 @@
 #include "Upload.h"
 
 Upload::Upload(std::shared_ptr<SiteConnection> &connection)
-	: _connection(connection)
+	: ProgressStateIOUpdater(_state), _connection(connection)
 {
 }
 
@@ -11,19 +11,11 @@ bool Upload::Do(const std::string &dst_dir, const std::string &src_dir, struct P
 	_op_mode = op_mode;
 	_src_dir_len = src_dir.size();
 	_dst_dir = dst_dir;
-	_items.clear();
 	_xdoa = XDOA_ASK;
 	_state.Reset();
+	_entries.clear();
 
-
-	std::string item_path;
-	for (int i = 0; i < items_count; ++i) {
-		if (items[i].FindData.cFileName[0] && strcmp(items[i].FindData.cFileName, ".") != 0 && strcmp(items[i].FindData.cFileName, "..") != 0) {
-			item_path = src_dir;
-			item_path+= items[i].FindData.cFileName;
-			_items.emplace(item_path);
-		}
-	}
+	_enumer = std::make_shared<EnumerLocal>(_entries, _state, src_dir, items, items_count, true);
 
 	if (!IS_SILENT(op_mode)) {
 		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir).Ask(_xdoa)) {
@@ -54,7 +46,11 @@ void *Upload::ThreadProc()
 {
 	void *out = nullptr;
 	try {
-		Scan();
+		if (_enumer) {
+			_enumer->Scan();
+			_enumer.reset();
+		}
+
 		Transfer();
 		fprintf(stderr,
 			"NetRocks::Upload: _dst_dir='%s' --> count=%lu all_total=%llu\n",
@@ -70,85 +66,6 @@ void *Upload::ThreadProc()
 }
 
 
-
-void Upload::CheckForUserInput(std::unique_lock<std::mutex> &lock)
-{
-	for (;;) {
-		if (_state.aborting)
-			throw std::runtime_error("Aborted");
-		if (!_state.paused)
-			break;
-
-		lock.unlock();
-		usleep(1000000);
-		lock.lock();
-	}
-}
-
-bool Upload::OnScannedPath(const std::string &path)
-{
-	struct stat s = {};
-	fprintf(stderr, "OnScannedPath: '%s'\n", path.c_str());
-	if (sdc_lstat(path.c_str(), &s) != 0) {
-		throw std::runtime_error("Failed to stat path");
-	}
-	if (!S_ISDIR(s.st_mode) && !S_ISREG(s.st_mode)) {
-		return false;
-	}
-	if (!_entries.emplace(path, s).second) {
-		return false;
-	}
-
-	std::unique_lock<std::mutex> lock(_state.mtx);
-	CheckForUserInput(lock);
-
-	_state.stats.count_total = _entries.size();
-	if (!S_ISDIR(s.st_mode)) {
-		_state.stats.all_total+= s.st_size;
-		return false;
-	}
-
-	return true;
-}
-
-void Upload::Scan()
-{
-	for (auto path : _items) {
-		if (OnScannedPath(path)) {
-			path+= '/';
-			_scan_depth_limit = 255;
-			ScanItem(path);
-		}
-	}
-}
-
-void Upload::ScanItem(const std::string &path)
-{
-	DIR *dir = opendir(path.c_str());
-	if (dir) {
-		std::string subpath;
-		for (;;) {
-			struct dirent *de = readdir(dir);
-			if (!de) break;
-			if (de->d_name[0] && (de->d_name[0] != '.'
-			 || (de->d_name[1] && (de->d_name[1] != '.' || de->d_name[2])))) {
-				subpath = path;
-				subpath+= de->d_name;
-				if (OnScannedPath(subpath)) {
-					if (_scan_depth_limit) {
-						--_scan_depth_limit;
-						subpath+= '/';
-						ScanItem(subpath);
-						++_scan_depth_limit;
-					} else {
-						fprintf(stderr, "NetRocks::Item('%s'): depth limit exhausted\n", subpath.c_str());
-					}
-				}
-			}
-		}
-		closedir(dir);
-	}
-}
 
 void Upload::Transfer()
 {
@@ -196,9 +113,8 @@ void Upload::Transfer()
 			}
 		}
 
-		std::unique_lock<std::mutex> lock(_state.mtx);
+		ProgressStateUpdate psu(_state);
 		_state.stats.count_complete++;
-		CheckForUserInput(lock);
 	}
 
 	if (_mv) {
@@ -212,21 +128,3 @@ void Upload::Transfer()
 		}
 	}
 }
-
-bool Upload::OnIOStatus(unsigned long long transferred)
-{
-	std::unique_lock<std::mutex> lock(_state.mtx);
-	_state.stats.all_complete+= transferred;
-	_state.stats.file_complete+= transferred;
-	for (;;) {
-		if (_state.aborting)
-			return false;
-		if (!_state.paused)
-			return true;
-
-		lock.unlock();
-		usleep(1000000);
-		lock.lock();
-	}
-}
-

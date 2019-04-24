@@ -1,7 +1,7 @@
 #include "Download.h"
 
 Download::Download(std::shared_ptr<SiteConnection> &connection)
-	: _connection(connection)
+	: ProgressStateIOUpdater(_state), _connection(connection)
 {
 }
 
@@ -11,19 +11,11 @@ bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct
 	_op_mode = op_mode;
 	_src_dir_len = src_dir.size();
 	_dst_dir = dst_dir;
-	_items.clear();
 	_xdoa = XDOA_ASK;
 	_state.Reset();
+	_entries.clear();
 
-
-	std::string item_path;
-	for (int i = 0; i < items_count; ++i) {
-		if (strcmp(items[i].FindData.cFileName, ".") != 0 && strcmp(items[i].FindData.cFileName, "..") != 0) {
-			item_path = src_dir;
-			item_path+= items[i].FindData.cFileName;
-			_items.emplace(item_path);
-		}
-	}
+	_enumer = std::make_shared<EnumerRemote>(_entries, _state, src_dir, items, items_count, true, _connection);
 
 	if (!IS_SILENT(op_mode)) {
 		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir).Ask(_xdoa)) {
@@ -54,7 +46,11 @@ void *Download::ThreadProc()
 {
 	void *out = nullptr;
 	try {
-		Scan();
+		if (_enumer) {
+			_enumer->Scan();
+			_enumer.reset();
+		}
+
 		Transfer();
 		fprintf(stderr,
 			"NetRocks::Download: _dst_dir='%s' --> count=%lu all_total=%llu\n",
@@ -69,81 +65,6 @@ void *Download::ThreadProc()
 	return out;
 }
 
-
-
-void Download::CheckForUserInput(std::unique_lock<std::mutex> &lock)
-{
-	for (;;) {
-		if (_state.aborting)
-			throw std::runtime_error("Aborted");
-		if (!_state.paused)
-			break;
-
-		lock.unlock();
-		usleep(1000000);
-		lock.lock();
-	}
-}
-
-bool Download::OnScannedPath(const std::string &path)
-{
-	FileInformation info = {};
-	info.mode = _connection->GetMode(path, true);
-	if (S_ISREG(info.mode)) {
-		info.size = _connection->GetSize(path, true);
-	} else if (!S_ISDIR(info.mode)) {
-		return false;
-	}
-
-	if (!_entries.emplace(path, info).second)
-		return false;
-
-	std::unique_lock<std::mutex> lock(_state.mtx);
-	CheckForUserInput(lock);
-
-	_state.stats.count_total = _entries.size();
-	if (!S_ISDIR(info.mode)) {
-		_state.stats.all_total+= info.size;
-		return false;
-	}
-
-	return true;
-}
-
-void Download::Scan()
-{
-	for (auto path : _items) {
-		if (OnScannedPath(path)) {
-			path+= '/';
-			_scan_depth_limit = 255;
-			ScanItem(path);
-		}
-	}
-}
-
-void Download::ScanItem(const std::string &path)
-{
-	UnixFileList ufl;
-	_connection->DirectoryEnum(path, ufl, 0);
-	if (ufl.empty())
-		return;
-
-	std::string subpath;
-	for (const auto &e : ufl) {
-		subpath = path;
-		subpath+= e.name;
-		if (OnScannedPath(subpath)) {
-			if (_scan_depth_limit) {
-				subpath+= '/';
-				--_scan_depth_limit;
-				ScanItem(subpath);
-				++_scan_depth_limit;
-			} else {
-				fprintf(stderr, "NetRocks::Item('%s'): depth limit exhausted\n", subpath.c_str());
-			}
-		}
-	}
-}
 
 void Download::Transfer()
 {
@@ -179,9 +100,8 @@ void Download::Transfer()
 			}
 		}
 
-		std::unique_lock<std::mutex> lock(_state.mtx);
+		ProgressStateUpdate psu(_state);
 		_state.stats.count_complete++;
-		CheckForUserInput(lock);
 	}
 
 	if (_mv) {
@@ -197,21 +117,3 @@ void Download::Transfer()
 		}
 	}
 }
-
-bool Download::OnIOStatus(unsigned long long transferred)
-{
-	std::unique_lock<std::mutex> lock(_state.mtx);
-	_state.stats.all_complete+= transferred;
-	_state.stats.file_complete+= transferred;
-	for (;;) {
-		if (_state.aborting)
-			return false;
-		if (!_state.paused)
-			return true;
-
-		lock.unlock();
-		usleep(1000000);
-		lock.lock();
-	}
-}
-

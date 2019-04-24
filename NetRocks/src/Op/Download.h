@@ -6,17 +6,19 @@
 #include <Threaded.h>
 #include <all_far.h>
 #include <fstdlib.h>
+#include "EnumerRemote.h"
+#include "ProgressStateUpdate.h"
 #include "../FileInformation.h"
 #include "../SiteConnection.h"
 #include "../UI/Confirm.h"
 #include "../UI/Progress.h"
 
-
-class Download : protected Threaded, protected SiteConnection::IOStatusCallback
+class Download : protected Threaded, protected ProgressStateIOUpdater
 {
-	struct Entries : std::map<std::string, FileInformation> {} _entries;
+	RemoteEntries _entries;
 
-	std::set<std::string> _items;
+	std::shared_ptr<EnumerRemote> _enumer;
+
 	size_t _src_dir_len;
 	bool _mv;
 	int _op_mode;
@@ -25,16 +27,9 @@ class Download : protected Threaded, protected SiteConnection::IOStatusCallback
 	std::shared_ptr<SiteConnection> _connection;
 	std::string _dst_dir;
 	ProgressState _state;
-	unsigned int _scan_depth_limit;
 
-	void CheckForUserInput(std::unique_lock<std::mutex> &lock);
-
-	bool OnScannedPath(const std::string &path);
-	void Scan();
-	void ScanItem(const std::string &path);
 	void Transfer();
 
-	virtual bool OnIOStatus(unsigned long long transferred);
 	virtual void *ThreadProc();
 
 public:

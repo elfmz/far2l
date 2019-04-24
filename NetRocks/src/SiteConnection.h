@@ -2,6 +2,9 @@
 #include <memory>
 #include <string>
 #include <list>
+#include <all_far.h>
+#include <fstdlib.h>
+
 #include "IPC.h"
 #include "FileInformation.h"
 

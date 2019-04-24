@@ -6,6 +6,8 @@
 #include <Threaded.h>
 #include <all_far.h>
 #include <fstdlib.h>
+#include "EnumerRemote.h"
+#include "ProgressStateUpdate.h"
 #include "../FileInformation.h"
 #include "../SiteConnection.h"
 #include "../UI/Confirm.h"
@@ -14,20 +16,17 @@
 
 class Remove : protected Threaded
 {
-	struct Entries : std::map<std::string, FileInformation> {} _entries;
+	RemoteEntries _entries;
 
-	std::set<std::string> _items;
+	std::shared_ptr<EnumerRemote> _enumer;
+
 	size_t _src_dir_len;
 	int _op_mode;
 
 	std::shared_ptr<SiteConnection> _connection;
 	ProgressState _state;
-	unsigned int _scan_depth_limit;
 
-	void CheckForUserInput(std::unique_lock<std::mutex> &lock);
-	void Scan();
-	void ScanItem(const std::string &path);
-	void Removal();
+	void Process();
 
 	virtual void *ThreadProc();
 

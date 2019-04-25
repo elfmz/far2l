@@ -57,8 +57,21 @@ Frame::Frame():
 Frame::~Frame()
 {
 	_OT(SysLog(L"[%p] Frame::~Frame()", this));
+	SetRegularIdle(false);
 	DestroyAllModal();
 //  xf_free(ModalStack);
+}
+
+void Frame::SetRegularIdle(bool enabled)
+{
+	if (enabled != RegularIdle) {
+		RegularIdle = enabled;
+		if (enabled) {
+			FrameManager->RegularIdleWantersAdd();
+		} else {
+			FrameManager->RegularIdleWantersRemove();
+		}
+	}
 }
 
 void Frame::SetKeyBar(KeyBar *FrameKeyBar)

@@ -63,6 +63,7 @@ class Frame: public ScreenObject
 //    int  ModalStackCount, ModalStackSize;
 		Frame *FrameToBack;
 		Frame *NextModal,*PrevModal;
+		bool RegularIdle = false;
 
 	protected:
 		int  DynamicallyBorn;
@@ -82,6 +83,7 @@ class Frame: public ScreenObject
 
 		virtual int GetCanLoseFocus(int DynamicMode=FALSE) { return(CanLoseFocus); };
 		void SetCanLoseFocus(int Mode) { CanLoseFocus=Mode; };
+		void SetRegularIdle(bool enabled);
 		int  GetExitCode() { return ExitCode; };
 		virtual void SetExitCode(int Code) { ExitCode=Code; };
 

@@ -1,23 +1,22 @@
-#include "Download.h"
+#include "OpDownload.h"
+#include "../UI/Confirm.h"
 
-Download::Download(std::shared_ptr<SiteConnection> &connection)
-	: ProgressStateIOUpdater(_state), _connection(connection)
+OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
+	const std::string &src_dir, const std::string &dst_dir,
+	struct PluginPanelItem *items, int items_count, bool mv)
+	:
+	OpBase(connection, op_mode, src_dir),
+	ProgressStateIOUpdater(_state),
+	_mv(mv),
+	_xdoa(XDOA_ASK),
+	_dst_dir(dst_dir)
 {
+	_enumer = std::make_shared<EnumerRemote>(_entries, _state, _src_dir, items, items_count, true, _connection);
 }
 
-bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct PluginPanelItem *items, int items_count, bool mv, int op_mode)
+bool OpDownload::Do()
 {
-	_mv = mv;
-	_op_mode = op_mode;
-	_src_dir_len = src_dir.size();
-	_dst_dir = dst_dir;
-	_xdoa = XDOA_ASK;
-	_state.Reset();
-	_entries.clear();
-
-	_enumer = std::make_shared<EnumerRemote>(_entries, _state, src_dir, items, items_count, true, _connection);
-
-	if (!IS_SILENT(op_mode)) {
+	if (!IS_SILENT(_op_mode)) {
 		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir).Ask(_xdoa)) {
 			fprintf(stderr, "NetRocks::Download: cancel\n");
 			return false;
@@ -26,7 +25,7 @@ bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct
 
 	if (_dst_dir.empty()) {
 		_dst_dir = "./";
-	} else if (dst_dir[_dst_dir.size() - 1] != '.')
+	} else if (_dst_dir[_dst_dir.size() - 1] != '.')
 		_dst_dir+= '/';
 
 	if (!StartThread()) {
@@ -34,7 +33,7 @@ bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct
 		return false;
 	}
 
-	if (!WaitThread(IS_SILENT(op_mode) ? 2000 : 500)) {
+	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
 		XferProgress(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir, _state).Show();
 		WaitThread();
 	}
@@ -43,35 +42,22 @@ bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct
 }
 
 
-void *Download::ThreadProc()
+void OpDownload::Process()
 {
-	void *out = nullptr;
-	try {
-		if (_enumer) {
-			_enumer->Scan();
-			_enumer.reset();
-		}
-
-		Transfer();
-		fprintf(stderr,
-			"NetRocks::Download: _dst_dir='%s' --> count=%lu all_total=%llu\n",
-			_dst_dir.c_str(), _entries.size(), _state.stats.all_total);
-
-	} catch (std::exception &e) {
-		fprintf(stderr, "NetRocks::DownloadThread('%s') ERROR: %s\n", _dst_dir.c_str(), e.what());
-		out = this;
+	if (_enumer) {
+		_enumer->Scan();
+		_enumer.reset();
 	}
-	std::lock_guard<std::mutex> locker(_state.mtx);
-	_state.finished = true;
-	return out;
+
+	Transfer();
 }
 
 
-void Download::Transfer()
+void OpDownload::Transfer()
 {
 	std::string path_local;
 	for (const auto &e : _entries) {
-		const std::string &subpath = e.first.substr(_src_dir_len);
+		const std::string &subpath = e.first.substr(_src_dir.size());
 		path_local = _dst_dir;
 		path_local+= subpath;
 

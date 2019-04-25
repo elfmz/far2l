@@ -76,6 +76,7 @@ class Manager
 		  2) не только для editor/viewer'ов.
 		*/
 		int ModalEVCount;
+		unsigned int RegularIdleWanters = 0;
 
 		int  EndLoop;            // Признак выхода из цикла
 		int  StartManager;
@@ -213,6 +214,10 @@ class Manager
 
 		// возвращает top-модал или сам фрейм, если у фрейма нету модалов
 		Frame* GetTopModal();
+
+		void RegularIdleWantersAdd() { RegularIdleWanters++; }
+		void RegularIdleWantersRemove() { if (RegularIdleWanters) RegularIdleWanters--; }
+		unsigned int RegularIdleWantersCount() const { return RegularIdleWanters; };
 };
 
 extern Manager *FrameManager;

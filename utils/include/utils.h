@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <sys/types.h>
+#include "luck.h"
 #include "MatchWildcard.hpp"
 
 template <class C> static size_t tzlen(const C *ptz)

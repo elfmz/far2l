@@ -34,9 +34,10 @@ bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct
 		return false;
 	}
 
-	XferProgress(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir, _state).Show();
-
-	WaitThread();
+	if (!WaitThread(500)) {
+		XferProgress(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir, _state).Show();
+		WaitThread();
+	}
 
 	return true;
 }

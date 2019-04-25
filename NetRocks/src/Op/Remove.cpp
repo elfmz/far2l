@@ -26,9 +26,10 @@ bool Remove::Do(const std::string &src_dir, struct PluginPanelItem *items, int i
 		return false;
 	}
 
-	RemoveProgress(src_dir, _state).Show();
-
-	WaitThread();
+	if (!WaitThread(500)) {
+		RemoveProgress(src_dir, _state).Show();
+		WaitThread();
+	}
 
 	return true;
 }

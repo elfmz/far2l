@@ -6,7 +6,7 @@
 #include <all_far.h>
 #include <fstdlib.h>
 
-#include "../UI/Defs.h"
+#include "../../UI/Defs.h"
 
 
 class EnumerBase

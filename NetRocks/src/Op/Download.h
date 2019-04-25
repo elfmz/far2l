@@ -6,8 +6,8 @@
 #include <Threaded.h>
 #include <all_far.h>
 #include <fstdlib.h>
-#include "EnumerRemote.h"
-#include "ProgressStateUpdate.h"
+#include "./Utils/EnumerRemote.h"
+#include "./Utils/ProgressStateUpdate.h"
 #include "../FileInformation.h"
 #include "../SiteConnection.h"
 #include "../UI/Confirm.h"

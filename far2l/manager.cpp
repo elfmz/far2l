@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "exitcode.hpp"
 #include "scrbuf.hpp"
 #include "console.hpp"
+#include "InterlockedCall.hpp"
 
 Manager *FrameManager;
 
@@ -691,6 +692,8 @@ void Manager::ProcessMainLoop()
 	if ( CurrentFrame )
 		CtrlObject->Macro.SetMode(CurrentFrame->GetMacroMode());
 
+	DispatchInterlockedCalls();
+
 	if ( CurrentFrame && !CurrentFrame->ProcessEvents() )
 	{
 		ProcessKey(KEY_IDLE);
@@ -740,7 +743,9 @@ void Manager::ExitMainLoop(int Ask)
 
 			if (!(cp = CtrlObject->Cp())
 			        || (!cp->LeftPanel->ProcessPluginEvent(FE_CLOSE,nullptr) && !cp->RightPanel->ProcessPluginEvent(FE_CLOSE,nullptr)))
+			{
 				EndLoop=TRUE;
+			}
 		}
 		else
 		{

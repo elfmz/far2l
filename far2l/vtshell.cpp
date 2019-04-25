@@ -284,9 +284,8 @@ private:
 	void KickInputThread()
 	{
 		// write some dummy console input to kick pending ReadConsoleInput
-		INPUT_RECORD ir = {0};
-		ir.EventType = FOCUS_EVENT;
-		ir.Event.FocusEvent.bSetFocus = TRUE;
+		INPUT_RECORD ir = {};
+		ir.EventType = NOOP_EVENT;
 		DWORD dw = 0;
 		WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
 	}

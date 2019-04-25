@@ -869,6 +869,9 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 	} // while (1)
 
 	clock_t CurClock=GetProcessUptimeMSec();
+	if (rec->EventType==NOOP_EVENT) {
+		return KEY_NONE;
+	}
 
 	if (rec->EventType==FOCUS_EVENT)
 	{

@@ -619,6 +619,7 @@ enum FARDIALOGFLAGS
 	FDLG_NONMODAL            = 0x00000010,
 #endif // END FAR_USE_INTERNALS
 	FDLG_KEEPCONSOLETITLE    = 0x00000020,
+	FDLG_REGULARIDLE         = 0x00000040 // causes dialog to receive DN_ENTERIDLE at least once per second
 };
 
 typedef LONG_PTR(WINAPI *FARWINDOWPROC)(

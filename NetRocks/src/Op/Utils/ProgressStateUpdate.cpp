@@ -18,20 +18,20 @@ ProgressStateUpdate::ProgressStateUpdate(ProgressState &state)
 /////////
 
 ProgressStateIOUpdater::ProgressStateIOUpdater(ProgressState &state)
-	: _state(state)
+	: _state_ref(state)
 {
 }
 
 
 bool ProgressStateIOUpdater::OnIOStatus(unsigned long long transferred)
 {
-	std::unique_lock<std::mutex> lock(_state.mtx);
-	_state.stats.all_complete+= transferred;
-	_state.stats.file_complete+= transferred;
+	std::unique_lock<std::mutex> lock(_state_ref.mtx);
+	_state_ref.stats.all_complete+= transferred;
+	_state_ref.stats.file_complete+= transferred;
 	for (;;) {
-		if (_state.aborting)
+		if (_state_ref.aborting)
 			return false;
-		if (!_state.paused)
+		if (!_state_ref.paused)
 			return true;
 
 		lock.unlock();

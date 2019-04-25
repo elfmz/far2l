@@ -409,6 +409,8 @@ namespace oldfar
 		FDLG_NODRAWSHADOW        = 0x00000004,
 		FDLG_NODRAWPANEL         = 0x00000008,
 		FDLG_NONMODAL            = 0x00000010,
+		FDLG_KEEPCONSOLETITLE    = 0x00000020,
+		FDLG_REGULARIDLE         = 0x00000040 // causes dialog to receive DN_ENTERIDLE at least once per second
 	};
 
 	typedef LONG_PTR(WINAPI *FARWINDOWPROC)(

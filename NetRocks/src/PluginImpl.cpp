@@ -2,9 +2,9 @@
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
 #include "UI/SiteConnectionEditor.h"
-#include "Op/Download.h"
-#include "Op/Upload.h"
-#include "Op/Remove.h"
+#include "Op/OpDownload.h"
+#include "Op/OpUpload.h"
+#include "Op/OpRemove.h"
 
 PluginImpl::PluginImpl(const char *path)
 {
@@ -210,7 +210,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	if (DestPath)
 		dst_dir = DestPath;
 
-	return Download(_connection).Do(dst_dir, CurrentSiteDir(true), PanelItem, ItemsNumber, Move != 0, OpMode) ? TRUE : FALSE;
+	return OpDownload(_connection, OpMode, CurrentSiteDir(true), dst_dir, PanelItem, ItemsNumber, Move != 0).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
@@ -230,7 +230,7 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		cwd[l + 1] = 0;
 	}
 
-	return Upload(_connection).Do(site_dir, cwd, PanelItem, ItemsNumber, Move != 0, OpMode) ? TRUE : FALSE;
+	return OpUpload(_connection, OpMode, cwd, site_dir, PanelItem, ItemsNumber, Move != 0).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
@@ -239,7 +239,7 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	if (ItemsNumber <= 0)
 		return FALSE;
 
-	return Remove(_connection).Do(CurrentSiteDir(true), PanelItem, ItemsNumber, OpMode) ? TRUE : FALSE;
+	return OpRemove(_connection, OpMode,CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)

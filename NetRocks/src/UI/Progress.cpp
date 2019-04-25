@@ -89,7 +89,7 @@ void BaseProgress::Show()
 {
 	_finished = false;
 	do {
-		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2);
+		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
 	} while (!_finished);
 }
 

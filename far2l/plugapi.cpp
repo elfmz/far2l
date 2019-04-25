@@ -1152,6 +1152,9 @@ static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2,
 		if (Flags & FDLG_NONMODAL)
 			FarDialog->SetCanLoseFocus(TRUE);
 
+		if (Flags & FDLG_REGULARIDLE)
+			FarDialog->SetRegularIdle(TRUE);
+
 		FarDialog->SetHelp(HelpTopic);
 		/* $ 29.08.2000 SVS
 		   Запомним номер плагина - сейчас в основном для формирования HelpTopic

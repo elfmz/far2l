@@ -10,7 +10,7 @@ struct ProgressStateUpdate : std::unique_lock<std::mutex>
 
 class ProgressStateIOUpdater : public SiteConnection::IOStatusCallback
 {
-	ProgressState &_state;
+	ProgressState &_state_ref;
 
 protected:
 	virtual bool OnIOStatus(unsigned long long transferred);

@@ -1,23 +1,22 @@
-#include "Upload.h"
+#include "OpUpload.h"
+#include "../UI/Confirm.h"
 
-Upload::Upload(std::shared_ptr<SiteConnection> &connection)
-	: ProgressStateIOUpdater(_state), _connection(connection)
+OpUpload::OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode,
+	const std::string &src_dir, const std::string &dst_dir,
+	struct PluginPanelItem *items, int items_count, bool mv)
+	:
+	OpBase(connection, op_mode, src_dir),
+	ProgressStateIOUpdater(_state),
+	_mv(mv),
+	_xdoa(XDOA_ASK),
+	_dst_dir(dst_dir)
 {
+	_enumer = std::make_shared<EnumerLocal>(_entries, _state, _src_dir, items, items_count, true);
 }
 
-bool Upload::Do(const std::string &dst_dir, const std::string &src_dir, struct PluginPanelItem *items, int items_count, bool mv, int op_mode)
+bool OpUpload::Do()
 {
-	_mv = mv;
-	_op_mode = op_mode;
-	_src_dir_len = src_dir.size();
-	_dst_dir = dst_dir;
-	_xdoa = XDOA_ASK;
-	_state.Reset();
-	_entries.clear();
-
-	_enumer = std::make_shared<EnumerLocal>(_entries, _state, src_dir, items, items_count, true);
-
-	if (!IS_SILENT(op_mode)) {
+	if (!IS_SILENT(_op_mode)) {
 		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir).Ask(_xdoa)) {
 			fprintf(stderr, "NetRocks::Upload: cancel\n");
 			return false;
@@ -26,7 +25,7 @@ bool Upload::Do(const std::string &dst_dir, const std::string &src_dir, struct P
 
 	if (_dst_dir.empty()) {
 		_dst_dir = "./";
-	} else if (dst_dir[_dst_dir.size() - 1] != '.')
+	} else if (_dst_dir[_dst_dir.size() - 1] != '.')
 		_dst_dir+= '/';
 
 	if (!StartThread()) {
@@ -34,7 +33,7 @@ bool Upload::Do(const std::string &dst_dir, const std::string &src_dir, struct P
 		return false;
 	}
 
-	if (!WaitThread(IS_SILENT(op_mode) ? 2000 : 500)) {
+	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
 		XferProgress(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir, _state).Show();
 		WaitThread();
 	}
@@ -43,36 +42,21 @@ bool Upload::Do(const std::string &dst_dir, const std::string &src_dir, struct P
 }
 
 
-void *Upload::ThreadProc()
+void OpUpload::Process()
 {
-	void *out = nullptr;
-	try {
-		if (_enumer) {
-			_enumer->Scan();
-			_enumer.reset();
-		}
-
-		Transfer();
-		fprintf(stderr,
-			"NetRocks::Upload: _dst_dir='%s' --> count=%lu all_total=%llu\n",
-			_dst_dir.c_str(), _entries.size(), _state.stats.all_total);
-
-	} catch (std::exception &e) {
-		fprintf(stderr, "NetRocks::UploadThread('%s') ERROR: %s\n", _dst_dir.c_str(), e.what());
-		out = this;
+	if (_enumer) {
+		_enumer->Scan();
+		_enumer.reset();
 	}
-	std::lock_guard<std::mutex> locker(_state.mtx);
-	_state.finished = true;
-	return out;
+
+	Transfer();
 }
 
-
-
-void Upload::Transfer()
+void OpUpload::Transfer()
 {
 	std::string path_remote;
 	for (const auto &e : _entries) {
-		const std::string &subpath = e.first.substr(_src_dir_len);
+		const std::string &subpath = e.first.substr(_src_dir.size());
 		path_remote = _dst_dir;
 		path_remote+= subpath;
 		mode_t mode = 0;

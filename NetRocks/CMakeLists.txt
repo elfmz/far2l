@@ -18,9 +18,10 @@ src/Op/Utils/ProgressStateUpdate.cpp
 src/Op/Utils/EnumerBase.cpp
 src/Op/Utils/EnumerLocal.cpp
 src/Op/Utils/EnumerRemote.cpp
-src/Op/Download.cpp
-src/Op/Upload.cpp
-src/Op/Remove.cpp
+src/Op/OpBase.cpp
+src/Op/OpDownload.cpp
+src/Op/OpUpload.cpp
+src/Op/OpRemove.cpp
 )
 
 add_library (NetRocks MODULE ${SOURCES})

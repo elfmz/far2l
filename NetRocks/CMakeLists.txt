@@ -14,10 +14,10 @@ src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/Confirm.cpp
 src/UI/Progress.cpp
-src/Op/ProgressStateUpdate.cpp
-src/Op/EnumerBase.cpp
-src/Op/EnumerLocal.cpp
-src/Op/EnumerRemote.cpp
+src/Op/Utils/ProgressStateUpdate.cpp
+src/Op/Utils/EnumerBase.cpp
+src/Op/Utils/EnumerLocal.cpp
+src/Op/Utils/EnumerRemote.cpp
 src/Op/Download.cpp
 src/Op/Upload.cpp
 src/Op/Remove.cpp

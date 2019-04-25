@@ -6,8 +6,8 @@
 #include <Threaded.h>
 #include <all_far.h>
 #include <fstdlib.h>
-#include "EnumerLocal.h"
-#include "ProgressStateUpdate.h"
+#include "./Utils/EnumerLocal.h"
+#include "./Utils/ProgressStateUpdate.h"
 #include "../FileInformation.h"
 #include "../SiteConnection.h"
 #include "../UI/Confirm.h"

@@ -1,6 +1,6 @@
 #pragma once
-#include "../UI/Defs.h"
-#include "../SiteConnection.h"
+#include "../../UI/Defs.h"
+#include "../../SiteConnection.h"
 
 struct ProgressStateUpdate : std::unique_lock<std::mutex>
 {

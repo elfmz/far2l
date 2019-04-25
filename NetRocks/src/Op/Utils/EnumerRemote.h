@@ -7,8 +7,8 @@
 
 #include "EnumerBase.h"
 
-#include "../FileInformation.h"
-#include "../SiteConnection.h"
+#include "../../FileInformation.h"
+#include "../../SiteConnection.h"
 
 
 typedef std::map<std::string, FileInformation> RemoteEntries;

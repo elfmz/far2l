@@ -47,6 +47,7 @@ Loop:
     {
         switch( Event.EventType ){
         case 0: // Internal FAR (bug?)
+        case NOOP_EVENT:
         case FOCUS_EVENT:
         case MENU_EVENT:
         case WINDOW_BUFFER_SIZE_EVENT:

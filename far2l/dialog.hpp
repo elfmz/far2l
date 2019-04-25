@@ -258,7 +258,7 @@ class ConsoleTitle;
 class Dialog: public Frame
 {
 		friend class DlgEdit;
-		friend LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
+		friend LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
 		friend LONG_PTR WINAPI DefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
 
 	private:

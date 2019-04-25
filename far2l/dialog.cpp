@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "strmix.hpp"
 #include "history.hpp"
-
+#include "InterlockedCall.hpp"
 #include <cwctype>
 
 #define VTEXT_ADN_SEPARATORS	1
@@ -4782,16 +4782,8 @@ LONG_PTR Dialog::CallDlgProc(int nMsg, int nParam1, LONG_PTR nParam2)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* $ 28.07.2000 SVS
-   Посылка сообщения диалогу
-   Некоторые сообщения эта функция обрабатывает сама, не передавая управление
-   обработчику диалога.
-*/
-LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
+LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
-	if (!hDlg)
-		return 0;
-
 	Dialog* Dlg=(Dialog*)hDlg;
 	CriticalSectionLock Lock(Dlg->CS);
 	_DIALOG(CleverSysLog CL(L"Dialog.SendDlgMessage()"));
@@ -6359,6 +6351,19 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 	// Все, что сами не отрабатываем - посылаем на обработку обработчику.
 	return Dlg->CallDlgProc(Msg,Param1,Param2);
+}
+
+/* $ 28.07.2000 SVS
+   Посылка сообщения диалогу
+   Некоторые сообщения эта функция обрабатывает сама, не передавая управление
+   обработчику диалога.
+*/
+LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
+{
+	if (!hDlg)
+		return 0;
+
+	return InterlockedCall<LONG_PTR, 0>(std::bind(SendDlgMessageSynched, hDlg, Msg, Param1, Param2));
 }
 
 void Dialog::SetPosition(int X1,int Y1,int X2,int Y2)

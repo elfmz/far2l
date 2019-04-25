@@ -34,7 +34,7 @@ bool Download::Do(const std::string &dst_dir, const std::string &src_dir, struct
 		return false;
 	}
 
-	if (!WaitThread(500)) {
+	if (!WaitThread(IS_SILENT(op_mode) ? 2000 : 500)) {
 		XferProgress(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir, _state).Show();
 		WaitThread();
 	}

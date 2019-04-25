@@ -60,10 +60,9 @@ bool EnqueueInterlockedCallDelegate(IInterlockedCallDelegate *d)
 
 	s_interlocked_delegates.emplace_back(d);
 	if (s_interlocked_delegates.size() == 1) {
-		// write some dummy console input to kick pending ReadConsoleInput
-		INPUT_RECORD ir = {0};
-		ir.EventType = FOCUS_EVENT;
-		ir.Event.FocusEvent.bSetFocus = TRUE;
+		// write dummy console input to kick pending ReadConsoleInput
+		INPUT_RECORD ir = {};
+		ir.EventType = NOOP_EVENT;
 		DWORD dw = 0;
 		WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
 	}

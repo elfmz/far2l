@@ -10,7 +10,7 @@ class Threaded
 
 	pthread_t _trd = 0;
 	void *_result = nullptr;
-	bool _exited = false, _joined = false;
+	bool _exited = true, _joined = true;
 
 	static void *sThreadProc(void *p);
 

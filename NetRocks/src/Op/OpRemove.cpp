@@ -3,18 +3,18 @@
 
 
 OpRemove::OpRemove(std::shared_ptr<SiteConnection> &connection, int op_mode,
-	const std::string &src_dir, struct PluginPanelItem *items, int items_count)
+	const std::string &base_dir, struct PluginPanelItem *items, int items_count)
 	:
-	OpBase(connection, op_mode, src_dir)
+	OpBase(connection, op_mode, base_dir)
 {
-	_enumer = std::make_shared<EnumerRemote>(_entries, _state, _src_dir, items, items_count, true, _connection);
+	_enumer = std::make_shared<EnumerRemote>(_entries, _state, _base_dir, items, items_count, true, _connection);
 }
 
 
 bool OpRemove::Do()
 {
 	if (!IS_SILENT(_op_mode)) {
-		if (!RemoveConfirm(_src_dir).Ask()) {
+		if (!RemoveConfirm(_base_dir).Ask()) {
 			fprintf(stderr, "NetRocks::Remove: cancel\n");
 			return false;
 		}
@@ -26,7 +26,7 @@ bool OpRemove::Do()
 	}
 
 	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
-		RemoveProgress(_src_dir, _state).Show();
+		RemoveProgress(_base_dir, _state).Show();
 		WaitThread();
 	}
 
@@ -43,7 +43,7 @@ void OpRemove::Process()
 
 	for (auto rev_i = _entries.rbegin(); rev_i != _entries.rend(); ++rev_i) {
 		try {
-			const std::string &subpath = rev_i->first.substr(_src_dir.size());
+			const std::string &subpath = rev_i->first.substr(_base_dir.size());
 
 			if (S_ISDIR(rev_i->second.mode)) {
 				_connection->DirectoryDelete(rev_i->first);

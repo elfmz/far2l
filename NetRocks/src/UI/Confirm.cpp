@@ -5,7 +5,7 @@
 
 /*                                                         62
 345                      28         39                   60  64
- ====================== Download =============================
+ ====================== Download ============================
 | Download selected file &to:                                |
 | [EDITBOX                                                 ] |
 |------------------------------------------------------------|
@@ -15,7 +15,7 @@
 | [ ] &Resume              [ ] Create &different name        |
 |------------------------------------------------------------|
 |   [  Proceed dowmload   ]        [        Cancel       ]   |
- =============================================================
+ ============================================================
     6                     29       38                      60
 */
 
@@ -112,12 +112,12 @@ bool XferConfirm::Ask(XferDefaultOverwriteAction &xdoa)
 
 /*                                                         62
 345                      28         39                   60  64
- ======================= Remove ==============================
+ ======================= Remove =============================
 | Remove selected files from:                                |
-| [EDITBOX                                                 ] |
+| [TEXTBOX                                                 ] |
 |------------------------------------------------------------|
 |   [  Proceed removal    ]        [        Cancel       ]   |
- =============================================================
+ ============================================================
     6                     29       38                      60
 */
 
@@ -138,5 +138,42 @@ RemoveConfirm::RemoveConfirm(const std::string &site_dir)
 bool RemoveConfirm::Ask()
 {
 	return (Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING) == _i_proceed);
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*                                               
+345                                            50
+ ============ Create directory ================
+| Enter name of directory to create:           |
+| [EDITBOX                                   ] |
+|----------------------------------------------|
+|   [       Ok      ]      [    Cancel    ]    |
+ ==============================================
+    6                     29       38            
+*/
+
+MakeDirConfirm::MakeDirConfirm(const std::string &default_name)
+{
+	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,50,6, 0, MMakeDirTitle);
+	_di.Add(DI_TEXT, 5,2,48,2, 0, MMakeDirText);
+
+	_i_dir_name = _di.Add(DI_EDIT, 5,3,48,3, DIF_HISTORY, default_name.c_str(), "NetRocks_History_MakeDir", FDIS_FOCUSED);
+
+	_di.Add(DI_TEXT, 4,4,49,4, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+	_i_proceed = _di.Add(DI_BUTTON, 6,5,23,5, DIF_CENTERGROUP, MProceedMakeDir, nullptr, FDIS_DEFAULT);
+	_i_cancel = _di.Add(DI_BUTTON, 30,5,45,5, DIF_CENTERGROUP, MCancel);
+}
+
+std::string MakeDirConfirm::Ask()
+{
+	std::string out;
+	if (Show(_di[_i_dblbox].Data, 6, 2) == _i_proceed) {
+		out = _di[_i_dir_name].Data;
+	}
+	return out;
 }
 

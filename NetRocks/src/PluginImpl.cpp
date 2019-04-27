@@ -5,6 +5,7 @@
 #include "Op/OpDownload.h"
 #include "Op/OpUpload.h"
 #include "Op/OpRemove.h"
+#include "Op/OpMakeDirectory.h"
 
 PluginImpl::PluginImpl(const char *path)
 {
@@ -239,12 +240,23 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	if (ItemsNumber <= 0)
 		return FALSE;
 
-	return OpRemove(_connection, OpMode,CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
+	return OpRemove(_connection, OpMode, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
+}
+
+int PluginImpl::MakeDirectory(const char *Name, int OpMode)
+{
+	fprintf(stderr, "NetRocks::MakeDirectory('%s', 0x%x)\n", Name, OpMode);
+	if (_cur_dir[0]) {
+		return OpMakeDirectory(_connection, OpMode, CurrentSiteDir(true), Name).Do();
+	} else {
+		;//todo
+	}
+	return FALSE;
 }
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
-	fprintf(stderr, "NetRocks::ProcessKey\n");
+	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
 
 	if (!_cur_dir[0] && Key==VK_F4
 	&& (ControlState == 0 || ControlState == PKF_SHIFT))
@@ -269,6 +281,11 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 
 		return TRUE;
 	}
-
+/*
+	if (Key == VK_F7) {
+		MakeDirectory();
+		return TRUE;
+	}
+*/
 	return FALSE;
 }

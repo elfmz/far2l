@@ -22,7 +22,7 @@ protected:
 	virtual bool OnScanningPath(const std::string &path) = 0;
 
 public:
-	EnumerBase(ProgressState &state, const std::string &src_dir, const struct PluginPanelItem *items, int items_count, bool no_special_files);
+	EnumerBase(ProgressState &state, const std::string &base_dir, const struct PluginPanelItem *items, int items_count, bool no_special_files);
 
 	void Scan();
 };

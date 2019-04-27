@@ -64,5 +64,9 @@ enum LanguageID
 
   MRemoveTitle,
   MRemoveText,
-  MProceedRemoval
+  MProceedRemoval,
+
+  MMakeDirTitle,
+  MMakeDirText,
+  MProceedMakeDir
 };

@@ -17,7 +17,6 @@ public:
 	bool Ask(XferDefaultOverwriteAction &xdoa);
 };
 
-
 class RemoveConfirm : protected BaseDialog
 {
 	int _i_dblbox = -1;
@@ -27,5 +26,18 @@ public:
 	RemoveConfirm(const std::string &site_dir);
 
 	bool Ask();
+};
+
+
+class MakeDirConfirm : protected BaseDialog
+{
+	int _i_dblbox = -1;
+	int _i_dir_name = -1;
+	int _i_proceed = -1, _i_cancel = -1;
+
+public:
+	MakeDirConfirm(const std::string &default_name);
+
+	std::string Ask();
 };
 

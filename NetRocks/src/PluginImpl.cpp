@@ -6,6 +6,7 @@
 #include "Op/OpUpload.h"
 #include "Op/OpRemove.h"
 #include "Op/OpMakeDirectory.h"
+#include "Op/OpEnumDirectory.h"
 
 PluginImpl::PluginImpl(const char *path)
 {
@@ -98,7 +99,8 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 			if (!il.Add(&tmp))
 				throw std::runtime_error("Can't add list entry");
 
-			_connection->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
+			OpEnumDirectory(_connection, OpMode, CurrentSiteDir(false), il).Do();
+			//_connection->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
 
 	} catch (std::exception &e) {

@@ -2,7 +2,7 @@
 #include "OpBase.h"
 #include "./Utils/EnumerRemote.h"
 
-class OpDownload : protected OpBase, protected ProgressStateIOUpdater
+class OpDownload : protected OpBase, protected ProgressStateUpdaterCallback
 {
 	RemoteEntries _entries;
 

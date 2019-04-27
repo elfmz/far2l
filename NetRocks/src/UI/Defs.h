@@ -27,9 +27,9 @@ enum XferDefaultOverwriteAction
 
 struct ProgressStateStats
 {
-	long long file_complete = 0, file_total = 0;
-	long long all_complete = 0, all_total = 0;
-	long long count_complete = 0, count_total = 0;
+	unsigned long long file_complete = 0, file_total = 0;
+	unsigned long long all_complete = 0, all_total = 0;
+	unsigned long long count_complete = 0, count_total = 0;
 	clock_t total_start = 0, current_start = 0;
 	clock_t total_paused = 0, current_paused = 0;
 };

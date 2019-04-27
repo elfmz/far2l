@@ -1,8 +1,7 @@
 #pragma once
 #include "OpBase.h"
-#include "./Utils/EnumerLocal.h"
 
-class OpMakeDirectory : protected OpBase, protected ProgressStateIOUpdater
+class OpMakeDirectory : protected OpBase
 {
 	std::string _dir_name;
 

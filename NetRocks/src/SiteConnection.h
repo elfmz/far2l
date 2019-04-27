@@ -31,14 +31,22 @@ public:
 		virtual bool OnIOStatus(unsigned long long transferred) = 0;
 	};
 
+	struct EnumStatusCallback
+	{
+		virtual bool OnEnumEntry() = 0;
+	};
+
 	SiteConnection(const std::string &site, int OpMode) throw (std::runtime_error);
 	virtual ~SiteConnection();
+
+	void Reinitialize() throw (std::runtime_error);
+
 	const std::string &Site() const;
 	const std::string &SiteInfo() const;
 
 	bool IsBroken();
-	void DirectoryEnum(const std::string &path, FP_SizeItemList &il, int OpMode) throw (std::runtime_error);
-	void DirectoryEnum(const std::string &path, UnixFileList &ufl, int OpMode) throw (std::runtime_error);
+	void DirectoryEnum(const std::string &path, FP_SizeItemList &il, int OpMode, EnumStatusCallback *cb = nullptr) throw (std::runtime_error);
+	void DirectoryEnum(const std::string &path, UnixFileList &ufl, int OpMode, EnumStatusCallback *cb = nullptr) throw (std::runtime_error);
 	mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	void FileDelete(const std::string &path) throw (std::runtime_error);

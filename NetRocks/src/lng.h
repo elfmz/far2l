@@ -68,5 +68,8 @@ enum LanguageID
 
   MMakeDirTitle,
   MMakeDirText,
-  MProceedMakeDir
+  MProceedMakeDir,
+
+  MEnumDirProgressTitle,
+  MCreateDirProgressTitle
 };

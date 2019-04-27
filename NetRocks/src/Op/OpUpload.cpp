@@ -2,16 +2,16 @@
 #include "../UI/Confirm.h"
 
 OpUpload::OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode,
-	const std::string &src_dir, const std::string &dst_dir,
+	const std::string &base_dir, const std::string &dst_dir,
 	struct PluginPanelItem *items, int items_count, bool mv)
 	:
-	OpBase(connection, op_mode, src_dir),
+	OpBase(connection, op_mode, base_dir),
 	ProgressStateIOUpdater(_state),
 	_mv(mv),
 	_xdoa(XDOA_ASK),
 	_dst_dir(dst_dir)
 {
-	_enumer = std::make_shared<EnumerLocal>(_entries, _state, _src_dir, items, items_count, true);
+	_enumer = std::make_shared<EnumerLocal>(_entries, _state, _base_dir, items, items_count, true);
 }
 
 bool OpUpload::Do()
@@ -56,7 +56,7 @@ void OpUpload::Transfer()
 {
 	std::string path_remote;
 	for (const auto &e : _entries) {
-		const std::string &subpath = e.first.substr(_src_dir.size());
+		const std::string &subpath = e.first.substr(_base_dir.size());
 		path_remote = _dst_dir;
 		path_remote+= subpath;
 		mode_t mode = 0;

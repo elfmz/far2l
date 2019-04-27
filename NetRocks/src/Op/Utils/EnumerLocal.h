@@ -18,5 +18,5 @@ class EnumerLocal : public EnumerBase
 	virtual bool OnScanningPath(const std::string &path);
 
 public:
-	EnumerLocal(LocalEntries &entries, ProgressState &state, const std::string src_dir, const struct PluginPanelItem *items, int items_count, bool no_special_files);
+	EnumerLocal(LocalEntries &entries, ProgressState &state, const std::string base_dir, const struct PluginPanelItem *items, int items_count, bool no_special_files);
 };

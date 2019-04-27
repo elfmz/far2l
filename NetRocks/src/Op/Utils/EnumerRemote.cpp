@@ -2,10 +2,10 @@
 #include "ProgressStateUpdate.h"
 
 EnumerRemote::EnumerRemote(RemoteEntries &entries, ProgressState &state,
-	const std::string src_dir, const struct PluginPanelItem *items, int items_count,
+	const std::string base_dir, const struct PluginPanelItem *items, int items_count,
 	bool no_special_files, std::shared_ptr<SiteConnection> &connection)
 	:
-	EnumerBase(state, src_dir, items, items_count, no_special_files),
+	EnumerBase(state, base_dir, items, items_count, no_special_files),
 	_entries(entries), _connection(connection)
 {
 }

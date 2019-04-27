@@ -116,6 +116,10 @@ SHAREDSYMBOL int WINAPI _export PutFiles(HANDLE hPlugin,struct PluginPanelItem *
 	return ((PluginImpl *)hPlugin)->PutFiles(PanelItem, ItemsNumber, Move, OpMode);
 }
 
+SHAREDSYMBOL int WINAPI _export MakeDirectory(HANDLE hPlugin, const char *Name, int OpMode)
+{
+	return ((PluginImpl *)hPlugin)->MakeDirectory(Name, OpMode);
+}
 
 SHAREDSYMBOL void WINAPI _export ExitFAR()
 {

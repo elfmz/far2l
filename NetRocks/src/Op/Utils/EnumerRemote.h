@@ -22,6 +22,6 @@ class EnumerRemote : public EnumerBase
 	virtual bool OnScanningPath(const std::string &path);
 
 public:
-	EnumerRemote(RemoteEntries &entries, ProgressState &state, const std::string src_dir,
+	EnumerRemote(RemoteEntries &entries, ProgressState &state, const std::string base_dir,
 		const struct PluginPanelItem *items, int items_count, bool no_special_files, std::shared_ptr<SiteConnection> &connection);
 };

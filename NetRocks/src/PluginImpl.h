@@ -29,5 +29,6 @@ public:
 		int Move,char *DestPath,int OpMode);
 	int PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
 		int Move,int OpMode);
+	int MakeDirectory(const char *Name, int OpMode);
 	int ProcessKey(int Key,unsigned int ControlState);
 };

@@ -17,7 +17,7 @@ class OpUpload : protected OpBase, protected ProgressStateIOUpdater
 	virtual void Process();
 
 public:
-	OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &src_dir,
+	OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &base_dir,
 		const std::string &dst_dir, struct PluginPanelItem *items, int items_count, bool mv);
 	bool Do();
 };

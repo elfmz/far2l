@@ -12,6 +12,6 @@ class OpRemove : protected OpBase
 	virtual void Process();
 
 public:
-	OpRemove(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &src_dir, struct PluginPanelItem *items, int items_count);
+	OpRemove(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &base_dir, struct PluginPanelItem *items, int items_count);
 	bool Do();
 };

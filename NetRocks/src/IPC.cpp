@@ -9,11 +9,10 @@ IPCSender::~IPCSender()
 	CheckedCloseFD(_fd);
 }
 
-int IPCSender::SetFD(int fd)
+void IPCSender::SetFD(int fd)
 {
-	int out = _fd;
+	CheckedCloseFD(_fd);
 	_fd = fd;
-	return out;
 }
 
 void IPCSender::Send(const void *data, size_t len) throw(IPCError)
@@ -60,11 +59,10 @@ IPCRecver::~IPCRecver()
 	CheckedCloseFD(_fd);
 }
 
-int IPCRecver::SetFD(int fd)
+void IPCRecver::SetFD(int fd)
 {
-	int out = _fd;
+	CheckedCloseFD(_fd);
 	_fd = fd;
-	return out;
 }
 
 void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
@@ -75,7 +73,7 @@ void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
 		if (rv <= 0)
 			throw IPCError("IPCRecver: read", errno);
 
-		if (rv == len)
+		if ((size_t)rv == len)
 			break;
 
 		len-= (size_t)rv;

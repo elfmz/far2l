@@ -192,3 +192,78 @@ RemoveProgress::RemoveProgress(const std::string &site_dir, ProgressState &state
 	: BaseProgress(MRemoveTitle, false, site_dir, state)
 {
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+345               21      29    35      43   48
+ ========== Creating directory ...=============
+|[TEXTBOX                                     ]|
+|----------------------------------------------|
+|             [   &Abort   ]                   |
+ ==============================================
+  5              20   25   30             45 48
+*/
+
+DirOperationProgress::DirOperationProgress(Kind kind, const std::string &object, ProgressState &state)
+	: _state(state)
+{
+	unsigned int title_lng;
+	switch (kind) {
+		case K_ENUMDIR: title_lng = MEnumDirProgressTitle; break;
+		case K_CREATEDIR: title_lng = MCreateDirProgressTitle; break;
+		default:
+			throw std::runtime_error("Unexpected kind");
+	}
+	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3, 1, 50, 5, 0, title_lng);
+	_di.Add(DI_TEXT, 5,2,48,2, 0, object.c_str());
+	_di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);
+	_di.Add(DI_BUTTON, 16,4,32,4, DIF_CENTERGROUP, MCancel);
+
+	_title = _di[_i_dblbox].Data;
+}
+
+void DirOperationProgress::Show()
+{
+	_finished = 0;
+	do {
+		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
+	} while (!_finished);
+}
+
+LONG_PTR DirOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+{
+	//fprintf(stderr, "%x %x\n", msg, param1);
+	if (msg == DN_ENTERIDLE) {
+		bool count_complete_changed = false;
+		{
+			std::lock_guard<std::mutex> locker(_state.mtx);
+			if (_last_count_complete != _state.stats.count_complete) {
+				_last_count_complete = _state.stats.count_complete;
+				count_complete_changed = true;
+			}
+			if (_state.finished && _finished == 0) {
+				_finished = 1;
+			}
+		}
+
+		if (_finished == 1) {
+			_finished = 2;
+			Close(dlg);
+
+		} else if (count_complete_changed && _finished == 0) {
+			std::string title = _title;
+			char sz[64] = {};
+			snprintf(sz, sizeof(sz) - 1, " (%lu)", _last_count_complete);
+			title+= sz;
+			TextToDialogControl(dlg, _i_dblbox, title);
+		}
+
+	} else if (msg == DN_BTNCLICK) {
+		std::lock_guard<std::mutex> locker(_state.mtx);
+		_state.aborting = true;
+		return TRUE;
+	}
+	
+	return BaseDialog::DlgProc(dlg, msg, param1, param2);
+}

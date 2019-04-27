@@ -5,7 +5,6 @@ OpMakeDirectory::OpMakeDirectory(std::shared_ptr<SiteConnection> &connection, in
 	const std::string &base_dir, const std::string &dir_name)
 	:
 	OpBase(connection, op_mode, base_dir),
-	ProgressStateIOUpdater(_state),
 	_dir_name(dir_name)
 {
 }
@@ -27,12 +26,10 @@ bool OpMakeDirectory::Do()
 		_base_dir+= '/';
 
 	if (!StartThread()) {
-		fprintf(stderr, "NetRocks::MakeDirectory: start thread error\n");
 		return false;
 	}
-
 	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
-		//XferProgress(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir, _state).Show();
+		DirOperationProgress(DirOperationProgress::K_CREATEDIR, _dir_name, _state).Show();
 		WaitThread();
 	}
 

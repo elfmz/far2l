@@ -23,6 +23,7 @@ src/Op/OpDownload.cpp
 src/Op/OpUpload.cpp
 src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
+src/Op/OpEnumDirectory.cpp
 )
 
 add_library (NetRocks MODULE ${SOURCES})

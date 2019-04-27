@@ -2,7 +2,7 @@
 #include "OpBase.h"
 #include "./Utils/EnumerLocal.h"
 
-class OpUpload : protected OpBase, protected ProgressStateIOUpdater
+class OpUpload : protected OpBase, protected ProgressStateUpdaterCallback
 {
 	LocalEntries _entries;
 

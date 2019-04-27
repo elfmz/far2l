@@ -27,7 +27,7 @@ class IPCSender
 	int _fd;
 
 protected:
-	int SetFD(int fd);
+	void SetFD(int fd);
 
 public:
 	IPCSender(int fd = -1);
@@ -52,7 +52,7 @@ class IPCRecver
 	int _fd;
 
 protected:
-	int SetFD(int fd);
+	void SetFD(int fd);
 
 public:
 	IPCRecver(int fd = -1);

@@ -8,13 +8,14 @@ struct ProgressStateUpdate : std::unique_lock<std::mutex>
 };
 
 
-class ProgressStateIOUpdater : public SiteConnection::IOStatusCallback
+class ProgressStateUpdaterCallback : public SiteConnection::IOStatusCallback, public SiteConnection::EnumStatusCallback
 {
 	ProgressState &_state_ref;
 
 protected:
 	virtual bool OnIOStatus(unsigned long long transferred);
+	virtual bool OnEnumEntry();
 
 public:
-	ProgressStateIOUpdater(ProgressState &state);
+	ProgressStateUpdaterCallback(ProgressState &state);
 };

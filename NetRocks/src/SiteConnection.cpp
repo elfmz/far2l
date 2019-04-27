@@ -15,14 +15,19 @@
 SiteConnection::SiteConnection(const std::string &site, int OpMode) throw (std::runtime_error)
 	: _site(site)
 {
+	Reinitialize();
+}
+
+void SiteConnection::Reinitialize() throw (std::runtime_error)
+{
 	KeyFileHelper kfh(G.config.c_str());
-	const std::string &protocol = kfh.GetString(site.c_str(), "Protocol");
-	const std::string &host = kfh.GetString(site.c_str(), "Host");
-	unsigned int port = (unsigned int)kfh.GetInt(site.c_str(), "Port");
-	const std::string &options = kfh.GetString(site.c_str(), "Options");
-	const std::string &username = kfh.GetString(site.c_str(), "Username");
-	const std::string &password = kfh.GetString(site.c_str(), "Password"); // TODO: de/obfuscation
-	const std::string &directory = kfh.GetString(site.c_str(), "Directory");
+	const std::string &protocol = kfh.GetString(_site.c_str(), "Protocol");
+	const std::string &host = kfh.GetString(_site.c_str(), "Host");
+	unsigned int port = (unsigned int)kfh.GetInt(_site.c_str(), "Port");
+	const std::string &options = kfh.GetString(_site.c_str(), "Options");
+	const std::string &username = kfh.GetString(_site.c_str(), "Username");
+	const std::string &password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
+	const std::string &directory = kfh.GetString(_site.c_str(), "Directory");
 	if (protocol.empty() || host.empty())
 		throw std::runtime_error("Bad site configuration");
 
@@ -152,7 +157,7 @@ unsigned long long SiteConnection::GetSize(const std::string &path, bool follow_
 	return out;
 }
 
-void SiteConnection::DirectoryEnum(const std::string &path, FP_SizeItemList &il, int OpMode) throw (std::runtime_error)
+void SiteConnection::DirectoryEnum(const std::string &path, FP_SizeItemList &il, int OpMode, EnumStatusCallback *cb) throw (std::runtime_error)
 {
 	_user_requesting_abort = false;
 
@@ -177,12 +182,13 @@ void SiteConnection::DirectoryEnum(const std::string &path, FP_SizeItemList &il,
 		tmp.FindData.dwFileAttributes = WINPORT(EvaluateAttributesA)(file_info.mode, name.c_str());
 		tmp.Owner = (char *)PooledString(owner);
 		tmp.Group = (char *)PooledString(group);
-		if (!il.Add(&tmp))
-			throw std::runtime_error("Can't add list entry");
+		if (!il.Add(&tmp) || (cb && !cb->OnEnumEntry())) {
+			_user_requesting_abort = true;
+		}
 	}
 }
 
-void SiteConnection::DirectoryEnum(const std::string &path, UnixFileList &ufl, int OpMode) throw (std::runtime_error)
+void SiteConnection::DirectoryEnum(const std::string &path, UnixFileList &ufl, int OpMode, EnumStatusCallback *cb) throw (std::runtime_error)
 {
 	_user_requesting_abort = false;
 
@@ -202,6 +208,9 @@ void SiteConnection::DirectoryEnum(const std::string &path, UnixFileList &ufl, i
 		e.group = (char *)PooledString(group);
 		RecvPOD(e.info);
 		ufl.emplace_back(e);
+		if (cb && !cb->OnEnumEntry()) {
+			_user_requesting_abort = true;
+		}
 	}
 }
 

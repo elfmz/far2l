@@ -53,8 +53,30 @@ public:
 
 class RemoveProgress : public BaseProgress
 {
-
 public:
 	RemoveProgress(const std::string &site_dir, ProgressState &state);
 };
 
+class DirOperationProgress : protected BaseDialog
+{
+public:
+	enum Kind
+	{
+		K_ENUMDIR,
+		K_CREATEDIR
+	};
+
+	DirOperationProgress(Kind kind, const std::string &object, ProgressState &state);
+	void Show();
+
+protected:
+	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
+
+private:
+	Kind _kind;
+	ProgressState &_state;
+	int _finished = 0;
+	int _i_dblbox = -1;
+	unsigned long _last_count_complete = 0;
+	std::string _title;
+};

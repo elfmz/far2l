@@ -6,7 +6,7 @@ OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	struct PluginPanelItem *items, int items_count, bool mv)
 	:
 	OpBase(connection, op_mode, base_dir),
-	ProgressStateIOUpdater(_state),
+	ProgressStateUpdaterCallback(_state),
 	_mv(mv),
 	_xdoa(XDOA_ASK),
 	_dst_dir(dst_dir)

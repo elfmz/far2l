@@ -90,5 +90,10 @@ enum LanguageID
   MAbortNotConfirm,
 
   MAbortingOperationTitle,
-  MBreakConnection
+  MBreakConnection,
+
+  MNotificationSuccess,
+  MNotificationFailed,
+  MNotificationUpload,
+  MNotificationDownload
 };

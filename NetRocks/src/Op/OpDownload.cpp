@@ -1,11 +1,12 @@
 #include "OpDownload.h"
 #include "../UI/Confirm.h"
+#include "../lng.h"
 
 OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	const std::string &base_dir, const std::string &dst_dir,
 	struct PluginPanelItem *items, int items_count, bool mv)
 	:
-	OpBase(connection, op_mode, base_dir),
+	OpBase(connection, op_mode, base_dir, MNotificationDownload),
 	ProgressStateUpdaterCallback(_state),
 	_mv(mv),
 	_xdoa(XDOA_ASK),

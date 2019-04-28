@@ -16,6 +16,8 @@ protected:
 	std::shared_ptr<SiteConnection> _connection;
 	int _op_mode;
 	std::string _base_dir;
+	int _op_name_lng;
+	volatile bool _succeded;
 
 	ProgressState _state;
 
@@ -26,7 +28,8 @@ protected:
 	virtual void Process() = 0;
 
 public:
-	OpBase(std::shared_ptr<SiteConnection> connection, int op_mode, const std::string &base_dir);
+	OpBase(std::shared_ptr<SiteConnection> connection, int op_mode, const std::string &base_dir, int op_name_lng = -1);
+	~OpBase();
 };
 
 

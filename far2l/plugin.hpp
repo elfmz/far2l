@@ -44,7 +44,7 @@ other possible license with no implications from the above license on them.
 */
 
 #define FARMANAGERVERSION_MAJOR 2
-#define FARMANAGERVERSION_MINOR 1
+#define FARMANAGERVERSION_MINOR 2
 
 #ifndef RC_INVOKED
 
@@ -1912,6 +1912,7 @@ enum MKLINKOP
 };
 typedef int (WINAPI *FARSTDMKLINK)(const wchar_t *Src,const wchar_t *Dest,DWORD Flags);
 typedef int (WINAPI *FARGETREPARSEPOINTINFO)(const wchar_t *Src, wchar_t *Dest,int DestSize);
+typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const wchar_t *action, const wchar_t *object);
 
 enum CONVERTPATHMODES
 {
@@ -1997,6 +1998,7 @@ typedef struct FarStandardFunctions
 	FARGETCURRENTDIRECTORY     GetCurrentDirectory;
 	FAREXECUTE                 Execute;
 	FAREXECUTE_LIBRARY         ExecuteLibrary;
+	FARDISPLAYNOTIFICATION     DisplayNotification;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

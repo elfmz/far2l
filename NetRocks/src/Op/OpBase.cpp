@@ -6,6 +6,7 @@ OpBase::OpBase(std::shared_ptr<SiteConnection> connection, int op_mode, const st
 	_op_mode(op_mode),
 	_base_dir(base_dir)
 {
+	_state.ao_host = this;
 }
 
 

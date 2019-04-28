@@ -89,7 +89,8 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 
 void BaseProgress::Show()
 {
-	for (_finished = 0; _finished == 0; ) {
+	while (!_state.finished) {
+		_finished = 0;
 		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
 		if (_finished) break;
 		AbortOperationRequest(_state);
@@ -226,7 +227,8 @@ SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &o
 
 void SimpleOperationProgress::Show()
 {
-	for (_finished = 0; _finished == 0; ) {
+	while (!_state.finished) {
+		_finished = 0;
 		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
 		if (_finished) break;
 		AbortOperationRequest(_state);

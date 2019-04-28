@@ -60,7 +60,7 @@ protected:
 			} else {
 				const time_t secs = time(NULL) - _ts;
 				if (secs) {
-					snprintf(_di[_i_dblbox].Data, sizeof(_di[_i_dblbox].Data) - 1, "%s (%lu)", _title.c_str(), (unsigned long)secs);
+					snprintf(_di[_i_dblbox].Data, sizeof(_di[_i_dblbox].Data) - 1, "%s (%lus)", _title.c_str(), (unsigned long)secs);
 					TextToDialogControl(dlg, _i_dblbox, _di[_i_dblbox].Data);
 					if (secs == 60) {
 						_finished = true;
@@ -77,13 +77,14 @@ public:
 		: _state(state), _ts(time(NULL))
 	{
 		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3, 1, 50, 3, 0, MAbortingOperationTitle);
-		_di.Add(DI_BUTTON, 5,2,48,2, DIF_CENTERGROUP, MAbortOperationForce);
+		_di.Add(DI_BUTTON, 5,2,48,2, DIF_CENTERGROUP, MBreakConnection);
 		_title = _di[_i_dblbox].Data;
 	}
 
 	void Show()
 	{
-		for (;;) {
+		_finished = false;
+		while (!_state.finished) {
 			BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
 			if (_state.finished) break;
 			if (_state.ao_host) {
@@ -117,8 +118,7 @@ void AbortOperationRequest(ProgressState &state)
 		state.aborting = true;
 		state.paused = saved_paused;
 	}
-
-//	AbortOperationProgress(state).Show();
+	AbortOperationProgress(state).Show();
 }
 
 

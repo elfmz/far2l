@@ -61,8 +61,10 @@ std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
 {
 	std::string out;
 	const char *slash = strchr(_cur_dir, '/');
-	if (slash)
+	if (slash) {
 		out = slash + 1;
+	}
+
 	if (out.empty()) {
 		out = with_ending_slash ? "./" : ".";
 

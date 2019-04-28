@@ -14,6 +14,7 @@ src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/Confirm.cpp
 src/UI/Progress.cpp
+src/UI/AbortOperationRequest.cpp
 src/UI/InteractiveLogin.cpp
 src/Op/Utils/ProgressStateUpdate.cpp
 src/Op/Utils/EnumerBase.cpp

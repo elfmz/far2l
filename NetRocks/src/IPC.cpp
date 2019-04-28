@@ -50,24 +50,35 @@ void IPCSender::SendString(const std::string &s) throw(IPCError)
 //////////////////
 
 
-IPCRecver::IPCRecver(int fd) : _fd(fd)
+IPCRecver::IPCRecver(int fd) : _fd(fd), _aborted(false)
 {
+	pipe_cloexec(_kickass);
 }
 
 IPCRecver::~IPCRecver()
 {
 	CheckedCloseFD(_fd);
+	CheckedCloseFDPair(_kickass);
+}
+
+void IPCRecver::AbortReceiving()
+{
+	_aborted = true;
 }
 
 void IPCRecver::SetFD(int fd)
 {
 	CheckedCloseFD(_fd);
+	_aborted = false;
 	_fd = fd;
 }
 
 void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
 {
 	if (len) for (;;) {
+		if (_aborted)
+			throw IPCError("IPCRecver: aborted", errno);
+
 		ssize_t rv = read(_fd, data, len);
 //		fprintf(stderr, "[%d] RECV: %lx/%lx {0x%x... }\n", getpid(), rv, len, *(const unsigned char *)data);
 		if (rv <= 0)

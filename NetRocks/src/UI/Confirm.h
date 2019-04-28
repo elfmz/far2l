@@ -40,4 +40,3 @@ public:
 
 	std::string Ask();
 };
-

@@ -82,5 +82,13 @@ enum LanguageID
   MConnectProgressTitle,
   MGetModeProgressTitle,
   MEnumDirProgressTitle,
-  MCreateDirProgressTitle
+  MCreateDirProgressTitle,
+
+  MAbortTitle,
+  MAbortText,
+  MAbortConfirm,
+  MAbortNotConfirm,
+
+  MAbortingOperationTitle,
+  MAbortOperationForce
 };

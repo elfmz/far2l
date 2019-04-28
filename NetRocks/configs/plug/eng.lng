@@ -2,7 +2,7 @@
 
 "NetRocks"
 "SFTP"
-"Ok"
+"&Ok"
 "&Cancel"
 
 "Authentification"
@@ -21,9 +21,9 @@
 "Login &password     :"
 "&Working directory  :"
 "&Display name       :"
-"Advanced &options"
+"&Advanced options"
 "&Save"
-"&Connect"
+"C&onnect"
 
 "Site connection settings"
 
@@ -81,3 +81,12 @@
 "Querying path"
 "Enumerating directory"
 "Creating directory"
+
+"Aborting operation"
+"Confirm abort current operation"
+"&Abort operation"
+"&Continue"
+
+"Aborting operation..."
+"&Abort connection"
+

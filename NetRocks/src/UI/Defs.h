@@ -34,12 +34,18 @@ struct ProgressStateStats
 	clock_t total_paused = 0, current_paused = 0;
 };
 
+struct IAbortableOperationsHost
+{
+	virtual void ForcefullyAbort() = 0;
+};
+
 struct ProgressState
 {
 	std::mutex mtx;
 	ProgressStateStats stats;
 	std::string path;
 	bool paused = false, aborting = false, finished = false;
+	IAbortableOperationsHost *ao_host = nullptr;
 
 	void Reset()
 	{

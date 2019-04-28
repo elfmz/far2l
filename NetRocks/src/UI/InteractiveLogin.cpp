@@ -18,7 +18,7 @@
 
 class InteractiveLoginDialog : BaseDialog
 {
-	int _i_dblbox, _i_username, _i_password, _i_ok;
+	int _i_dblbox, _i_username, _i_password, _i_connect;
 public:
 	InteractiveLoginDialog(const std::string &display_name, unsigned int retry)
 	{
@@ -39,7 +39,7 @@ public:
 		_di.AddAtLine(DI_TEXT, 4,49, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 		_di.NextLine();
-		_i_ok = _di.AddAtLine(DI_BUTTON, 6,23, DIF_CENTERGROUP, MOK, nullptr, FDIS_DEFAULT);
+		_i_connect = _di.AddAtLine(DI_BUTTON, 6,23, DIF_CENTERGROUP, MConnect, nullptr, FDIS_DEFAULT);
 		_di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MCancel);
 
 		if (retry) {
@@ -54,7 +54,7 @@ public:
 		strncpy(_di[_i_username].Data, username.c_str(), sizeof(_di[_i_username].Data));
 		strncpy(_di[_i_password].Data, password.c_str(), sizeof(_di[_i_password].Data));
 
-		if (Show(_di[_i_dblbox].Data, 6, 2) != _i_ok)
+		if (Show(_di[_i_dblbox].Data, 6, 2) != _i_connect)
 			return false;
 
 		username = _di[_i_username].Data;

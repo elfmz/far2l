@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "farexcpt.hpp"
 #include "fileedit.hpp"
 #include "RefreshFrameManager.hpp"
+#include "InterlockedCall.hpp"
 #include "plclass.hpp"
 #include "PluginA.hpp"
 #include "registry.hpp"
@@ -386,6 +387,11 @@ static void farDisplayNotificationA(const char *action, const char *object)
 	DisplayNotification(action, object);
 }
 
+static int farCallOnWaitA()
+{
+	return DispatchInterlockedCalls();
+}
+
 static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo *PSI, oldfar::FarStandardFunctions *FSF)
 {
 	static oldfar::PluginStartupInfo StartupInfo{};
@@ -434,6 +440,7 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 		StandardFunctions.Execute = farExecuteA;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryA;
 		StandardFunctions.DisplayNotification = farDisplayNotificationA;
+		StandardFunctions.CallOnWait = farCallOnWaitA;
 	}
 
 	if (!StartupInfo.StructSize)

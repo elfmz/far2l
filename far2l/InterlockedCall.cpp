@@ -35,20 +35,24 @@ bool IsCurrentThreadDispatchesInterlockedCalls()
 	return LIKELY(s_interlocked_delegates_tid == WINPORT(GetCurrentThreadId)());
 }
 
-void DispatchInterlockedCalls()
+int DispatchInterlockedCalls()
 {
-	while (LIKELY(IsCurrentThreadDispatchesInterlockedCalls())) {
+	for (int dispatched_count = 0;;) {
+		if (UNLIKELY(!IsCurrentThreadDispatchesInterlockedCalls()))
+			return -1;
+
 		InterlockedCallDelegates interlocked_delegates;
 		{
 			std::lock_guard<std::mutex> lock(s_interlocked_delegates_mtx);
 			if (LIKELY(s_interlocked_delegates.empty())) {
-				break;
+				return dispatched_count;
 			}
 			interlocked_delegates.swap(s_interlocked_delegates);
 		}
 		for (const auto &d : interlocked_delegates) {
 			d->Process(false);
 		}
+		dispatched_count+= (int)interlocked_delegates.size();
 	}
 }
 

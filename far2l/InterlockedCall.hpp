@@ -11,7 +11,7 @@ struct IInterlockedCallDelegate
 void StartDispatchingInterlockedCalls();
 void StopDispatchingInterlockedCalls();
 bool IsCurrentThreadDispatchesInterlockedCalls();
-void DispatchInterlockedCalls();
+int DispatchInterlockedCalls();
 
 bool EnqueueInterlockedCallDelegate(IInterlockedCallDelegate *d);
 

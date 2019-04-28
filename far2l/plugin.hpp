@@ -1912,7 +1912,6 @@ enum MKLINKOP
 };
 typedef int (WINAPI *FARSTDMKLINK)(const wchar_t *Src,const wchar_t *Dest,DWORD Flags);
 typedef int (WINAPI *FARGETREPARSEPOINTINFO)(const wchar_t *Src, wchar_t *Dest,int DestSize);
-typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const wchar_t *action, const wchar_t *object);
 
 enum CONVERTPATHMODES
 {
@@ -1936,6 +1935,8 @@ enum EXECUTEFLAGS
 
 typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef int (WINAPI *FAREXECUTE_LIBRARY)(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags);
+typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const wchar_t *action, const wchar_t *object);
+typedef int (WINAPI *FARCALLONWAIT)();
 
 typedef struct FarStandardFunctions
 {
@@ -1999,6 +2000,7 @@ typedef struct FarStandardFunctions
 	FAREXECUTE                 Execute;
 	FAREXECUTE_LIBRARY         ExecuteLibrary;
 	FARDISPLAYNOTIFICATION     DisplayNotification;
+	FARCALLONWAIT              CallOnWait;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

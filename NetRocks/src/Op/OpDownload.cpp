@@ -1,6 +1,7 @@
 #include "OpDownload.h"
 #include "../UI/Confirm.h"
 #include "../lng.h"
+#include "../Globals.h"
 
 OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	const std::string &base_dir, const std::string &dst_dir,
@@ -50,6 +51,11 @@ void OpDownload::Process()
 		_enumer.reset();
 	}
 
+	{
+		std::lock_guard<std::mutex> locker(_state.mtx);
+		_state.stats.total_start = _state.stats.current_start = TimeMSNow();
+	}
+
 	Transfer();
 }
 
@@ -67,6 +73,7 @@ void OpDownload::Transfer()
 			_state.path = subpath;
 			_state.stats.file_complete = 0;
 			_state.stats.file_total = S_ISDIR(e.second.mode) ? 0 : e.second.size;
+			_state.stats.current_start = TimeMSNow();
 		}
 
 		if (S_ISDIR(e.second.mode)) {

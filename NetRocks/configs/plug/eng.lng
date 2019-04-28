@@ -57,7 +57,7 @@
 "Current file time SPENT:"
 "REMAIN:"
 "Total time SPENT:"
-"Speed CURRENT:"
+"Speed () CURRENT:"
 "AVERAGE:"
 "Background"
 "Pause"
@@ -90,7 +90,7 @@
 "Aborting operation..."
 "&Break connection"
 
-"NetRocks {} complete"
-"NetRocks {} failed"
+"NetRocks () complete"
+"NetRocks () failed"
 "upload"
 "download"

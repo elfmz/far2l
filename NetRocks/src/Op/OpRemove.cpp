@@ -1,5 +1,6 @@
 #include "OpRemove.h"
 #include "../UI/Confirm.h"
+#include "../Globals.h"
 
 
 OpRemove::OpRemove(std::shared_ptr<SiteConnection> &connection, int op_mode,
@@ -40,8 +41,16 @@ void OpRemove::Process()
 		_enumer->Scan();
 		_enumer.reset();
 	}
+	{
+		std::lock_guard<std::mutex> locker(_state.mtx);
+		_state.stats.total_start = _state.stats.current_start = TimeMSNow();
+	}
 
 	for (auto rev_i = _entries.rbegin(); rev_i != _entries.rend(); ++rev_i) {
+		{
+			std::lock_guard<std::mutex> locker(_state.mtx);
+			_state.stats.current_start = TimeMSNow();
+		}
 		try {
 			const std::string &subpath = rev_i->first.substr(_base_dir.size());
 

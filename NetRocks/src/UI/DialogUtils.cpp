@@ -169,6 +169,7 @@ LONG_PTR BaseDialog::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 
 int BaseDialog::Show(const char *title, int extra_width, int extra_height, unsigned int flags)
 {
+//	fprintf(stderr, "[%ld] BaseDialog::Show: %p %d\n", time(NULL), &_di[0], _di.size());
 	return G.info.DialogEx(G.info.ModuleNumber, -1, -1,
 		_di.EstimateWidth() + extra_width, _di.EstimateHeight() + extra_height,
 		title, &_di[0], _di.size(), 0, flags, &sDlgProc, (LONG_PTR)(uintptr_t)this);
@@ -179,9 +180,9 @@ int BaseDialog::Show(int title_lng, int extra_width, int extra_height, unsigned 
 	return Show(G.GetMsg(title_lng), extra_width, extra_height, flags);
 }
 
-void BaseDialog::Close(HANDLE dlg)
+void BaseDialog::Close(HANDLE dlg, int code)
 {
-	SendDlgMessage(dlg, DM_CLOSE, -1, 0);
+	SendDlgMessage(dlg, DM_CLOSE, code, 0);
 }
 
 
@@ -225,27 +226,59 @@ void BaseDialog::LongLongToDialogControl(HANDLE dlg, int ctl, long long value)
 	TextToDialogControl(dlg, ctl, str);
 }
 
-void BaseDialog::FileSizeToDialogControl(HANDLE dlg, int ctl, long long value)
+const char *BaseDialog::FileSizeToFractionAndUnits(unsigned long long &value)
+{
+	if (value > 100ll * 1024ll * 1024ll * 1024ll * 1024ll) {
+		value = (1024ll * 1024ll * 1024ll * 1024ll);
+		return "TB";
+	}
+
+	if (value > 100ll * 1024ll * 1024ll * 1024ll) {
+		value = (1024ll * 1024ll * 1024ll);
+		return "GB";
+	}
+
+	if (value > 100ll * 1024ll * 1024ll ) {
+		value = (1024ll * 1024ll);
+		return "MB";
+
+	}
+
+	if (value > 100ll * 1024ll ) {
+		value = (1024ll);
+		return "KB";
+	}
+
+	value = 1;
+	return "B";
+}
+
+void BaseDialog::FileSizeToDialogControl(HANDLE dlg, int ctl, unsigned long long value)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
+	unsigned long long fraction = value;
+	const char *units = FileSizeToFractionAndUnits(fraction);
+	value/= fraction;
+
 	char str[0x100] = {};
-	const char *suffix = "b";
-	if (value > 100ll * 1024ll * 1024ll * 1024ll * 1024ll) {
-		suffix = "Tb";
-		value/= (1024ll * 1024ll * 1024ll * 1024ll);
-	} else if (value > 100ll * 1024ll * 1024ll * 1024ll) {
-		suffix = "Gb";
-		value/= (1024ll * 1024ll * 1024ll);
-	} else if (value > 100ll * 1024ll * 1024ll ) {
-		suffix = "Mb";
-		value/= (1024ll * 1024ll);
-	} else if (value > 100ll * 1024ll ) {
-		suffix = "Kb";
-		value/= (1024ll);
-	}
-	snprintf(str, sizeof(str) - 1, "%lld %s", value, suffix);
+	snprintf(str, sizeof(str) - 1, "%lld %s", value, units);
+	TextToDialogControl(dlg, ctl, str);
+}
+
+void BaseDialog::TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long long msec_ull)
+{
+//	unsigned long long msec_ull = msec.count();
+	unsigned int hrs = (unsigned int)(msec_ull / 3600000ll);
+	msec_ull-= 3600000ll * hrs;
+	unsigned int mins = (unsigned int)(msec_ull / 60000ll);
+	msec_ull -= 60000ll * hrs;
+	unsigned int secs = (unsigned int)(msec_ull / 1000ll);
+	//msec-= 60000l * hrs;
+
+	char str[0x100] = {};
+	snprintf(str, sizeof(str) - 1, "%02u:%02u.%02u", hrs, mins, secs);
 	TextToDialogControl(dlg, ctl, str);
 }
 

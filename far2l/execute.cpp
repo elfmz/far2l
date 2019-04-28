@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "constitle.hpp"
 #include "vtshell.h"
+#include "InterlockedCall.hpp"
 #include <wordexp.h>
 #include <set>
 #include <sys/wait.h>
@@ -215,7 +216,7 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 	return r;
 }
 
-int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
+static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 {
 //	fprintf(stderr, "TODO: Execute('" WS_FMT "')\n", CmdStr);
 	int r;
@@ -257,6 +258,11 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
 	
 	return r;
+}
+
+int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
+{
+	return InterlockedCall<int, -1>(std::bind(farExecuteASynched, CmdStr, ExecFlags));
 }
 
 int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags)

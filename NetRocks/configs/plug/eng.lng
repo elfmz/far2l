@@ -89,3 +89,8 @@
 
 "Aborting operation..."
 "&Break connection"
+
+"NetRocks {} complete"
+"NetRocks {} failed"
+"upload"
+"download"

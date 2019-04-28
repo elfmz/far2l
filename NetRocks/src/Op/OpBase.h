@@ -10,7 +10,7 @@
 #include "./Utils/ProgressStateUpdate.h"
 #include "../UI/Progress.h"
 
-class OpBase : protected Threaded
+class OpBase : protected Threaded, protected IAbortableOperationsHost
 {
 protected:
 	std::shared_ptr<SiteConnection> _connection;
@@ -19,8 +19,10 @@ protected:
 
 	ProgressState _state;
 
-	virtual void *ThreadProc();
+	virtual void *ThreadProc();	// Threaded
+	virtual void ForcefullyAbort();	// IAbortableOperationsHost
 
+//
 	virtual void Process() = 0;
 
 public:

@@ -122,6 +122,11 @@ SiteConnection::~SiteConnection()
 {
 }
 
+void SiteConnection::Abort()
+{
+	AbortReceiving();
+}
+
 const std::string &SiteConnection::Site() const
 {
 	return _site;

@@ -9,7 +9,7 @@ class BaseProgress : protected BaseDialog
 	ProgressState &_state;
 	ProgressStateStats _last_stats;
 	std::string _last_path;
-	bool _finished = false;
+	int _finished = 0;
 
 protected:
 	int _i_dblbox = -1, _i_cur_file = -1;

@@ -1,4 +1,6 @@
 #include "Progress.h"
+#include "Confirm.h"
+#include "AbortOperationRequest.h"
 #include "../Globals.h"
 
 
@@ -87,10 +89,11 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 
 void BaseProgress::Show()
 {
-	_finished = false;
-	do {
+	for (_finished = 0; _finished == 0; ) {
 		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
-	} while (!_finished);
+		if (_finished) break;
+		AbortOperationRequest(_state);
+	}
 }
 
 LONG_PTR BaseProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
@@ -107,12 +110,8 @@ LONG_PTR BaseProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 				paused = (_state.paused = !_state.paused);
 			}
 			TextToDialogControl(dlg, _i_pause_resume, paused ? MResume : MPause);
-
-		} else if (param1 == _i_cancel) {
-			std::lock_guard<std::mutex> locker(_state.mtx);
-			_state.aborting = true;
+			return TRUE;
 		}
-		return TRUE;
 	}
 	
 	return BaseDialog::DlgProc(dlg, msg, param1, param2);
@@ -123,8 +122,6 @@ void BaseProgress::OnIdle(HANDLE dlg)
 	struct {
 		bool path, file, all, count;
 	} changed = {};
-
-	bool finished = false;
 
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
@@ -142,7 +139,9 @@ void BaseProgress::OnIdle(HANDLE dlg)
 					|| _state.stats.count_total != _last_stats.count_total);
 
 		_last_stats = _state.stats;
-		finished = _state.finished;
+		if (_state.finished && _finished == 0) {
+			_finished = 1;
+		}
 	}
 
 	if (changed.path) {
@@ -170,8 +169,8 @@ void BaseProgress::OnIdle(HANDLE dlg)
 			? _last_stats.count_complete * 100 / _last_stats.count_total : -1);
 	}
 
-	if (finished && !_finished) {
-		_finished = true;
+	if (_finished == 1) {
+		_finished = 2;
 		Close(dlg);
 	}
 }
@@ -227,10 +226,11 @@ SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &o
 
 void SimpleOperationProgress::Show()
 {
-	_finished = 0;
-	do {
+	for (_finished = 0; _finished == 0; ) {
 		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
-	} while (!_finished);
+		if (_finished) break;
+		AbortOperationRequest(_state);
+	}
 }
 
 LONG_PTR SimpleOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
@@ -261,11 +261,11 @@ LONG_PTR SimpleOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_
 			TextToDialogControl(dlg, _i_dblbox, title);
 		}
 
-	} else if (msg == DN_BTNCLICK) {
+	}/* else if (msg == DN_BTNCLICK && AbortConfirm().Ask()) {
 		std::lock_guard<std::mutex> locker(_state.mtx);
 		_state.aborting = true;
 		return TRUE;
-	}
+	}*/
 	
 	return BaseDialog::DlgProc(dlg, msg, param1, param2);
 }

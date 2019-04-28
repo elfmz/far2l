@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <atomic>
 #include <unistd.h>
 #include <string.h>
 #include "Erroring.h"
@@ -49,7 +50,8 @@ public:
 
 class IPCRecver
 {
-	int _fd;
+	int _fd, _kickass[2];
+	std::atomic<bool> _aborted;
 
 protected:
 	void SetFD(int fd);
@@ -57,6 +59,8 @@ protected:
 public:
 	IPCRecver(int fd = -1);
 	~IPCRecver();
+
+	void AbortReceiving();
 
 	void Recv(void *data, size_t len) throw(IPCError);
 	void RecvString(std::string &s) throw(IPCError);

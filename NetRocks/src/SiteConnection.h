@@ -40,6 +40,7 @@ public:
 	virtual ~SiteConnection();
 
 	void ReInitialize() throw (std::runtime_error);
+	void Abort();
 
 	const std::string &Site() const;
 	const std::string &SiteInfo() const;

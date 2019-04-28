@@ -36,3 +36,8 @@ void *OpBase::ThreadProc()
 
 	return out;
 }
+
+void OpBase::ForcefullyAbort()
+{
+	_connection->Abort();
+}

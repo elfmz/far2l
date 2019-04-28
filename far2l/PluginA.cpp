@@ -380,6 +380,12 @@ bool PluginA::Load()
 	return true;
 }
 
+
+static void farDisplayNotificationA(const char *action, const char *object)
+{
+	DisplayNotification(action, object);
+}
+
 static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo *PSI, oldfar::FarStandardFunctions *FSF)
 {
 	static oldfar::PluginStartupInfo StartupInfo{};
@@ -427,6 +433,7 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 		StandardFunctions.ExpandEnvironmentStr=ExpandEnvironmentStrA;
 		StandardFunctions.Execute = farExecuteA;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryA;
+		StandardFunctions.DisplayNotification = farDisplayNotificationA;
 	}
 
 	if (!StartupInfo.StructSize)

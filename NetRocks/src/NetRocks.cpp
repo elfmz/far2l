@@ -17,7 +17,7 @@ SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
 SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)
 {
 	#define MAKEFARVERSION(major,minor) ( ((major)<<16) | (minor))
-	return MAKEFARVERSION(2, 1);
+	return MAKEFARVERSION(2, 2);
 }
 
 

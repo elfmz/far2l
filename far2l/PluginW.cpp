@@ -444,6 +444,11 @@ static int WINAPI farExecuteLibraryW(const wchar_t *Library, const wchar_t *Symb
 	return farExecuteLibraryA(Wide2MB(Library).c_str(), Wide2MB(Symbol).c_str(), Wide2MB(CmdStr).c_str(), flags);
 }
 
+static void farDisplayNotificationW(const wchar_t *action, const wchar_t *object)
+{
+	DisplayNotification(action, object);
+}
+
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
 {
 	static PluginStartupInfo StartupInfo{};
@@ -502,6 +507,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.GetCurrentDirectory=farGetCurrentDirectory;
 		StandardFunctions.Execute = farExecuteW;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryW;
+		StandardFunctions.DisplayNotification = farDisplayNotificationW;
 	}
 
 	if (!StartupInfo.StructSize)

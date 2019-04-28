@@ -12,22 +12,24 @@
 #include "Globals.h"
 #include "PooledStrings.h"
 
+#include "UI/InteractiveLogin.h"
+
 SiteConnection::SiteConnection(const std::string &site, int OpMode) throw (std::runtime_error)
 	: _site(site)
 {
-	Reinitialize();
 }
 
-void SiteConnection::Reinitialize() throw (std::runtime_error)
+void SiteConnection::ReInitialize() throw (std::runtime_error)
 {
 	KeyFileHelper kfh(G.config.c_str());
 	const std::string &protocol = kfh.GetString(_site.c_str(), "Protocol");
 	const std::string &host = kfh.GetString(_site.c_str(), "Host");
 	unsigned int port = (unsigned int)kfh.GetInt(_site.c_str(), "Port");
-	const std::string &options = kfh.GetString(_site.c_str(), "Options");
-	const std::string &username = kfh.GetString(_site.c_str(), "Username");
-	const std::string &password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
+	unsigned int login_mode = (unsigned int)kfh.GetInt(_site.c_str(), "LoginMode", 2);
+	std::string username = kfh.GetString(_site.c_str(), "Username");
+	std::string password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
 	const std::string &directory = kfh.GetString(_site.c_str(), "Directory");
+	const std::string &options = kfh.GetString(_site.c_str(), "Options");
 	if (protocol.empty() || host.empty())
 		throw std::runtime_error("Bad site configuration");
 
@@ -37,6 +39,10 @@ void SiteConnection::Reinitialize() throw (std::runtime_error)
 		_site_info+= username;
 		_site_info+= '@';
 	}
+	if (login_mode == 0) {
+		password.clear();
+	}
+
 	_site_info+= host;
 	if (port > 0) {
 		char sz[64];
@@ -70,13 +76,46 @@ void SiteConnection::Reinitialize() throw (std::runtime_error)
 	IPCRecver::SetFD(slave2master[0]);
 	IPCSender::SetFD(master2slave[1]);
 
-	SendString(protocol);
-	SendString(host);
-	SendPOD(port);
-	SendString(options);
-	SendString(username);
-	SendString(password);
-	SendString(directory);
+	for (unsigned int retry = 0;; ++retry) {
+
+		if (retry > 0) {
+			if (retry == 3) {
+				throw ProtocolAuthFailedError();
+			}
+			login_mode = 1;
+		}
+
+//		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
+		if (login_mode == 1) {
+			if (!InteractiveLogin(_site, retry, username, password)) {
+				SendString(std::string());
+				throw AbortError();
+			}
+		}
+
+		SendString(protocol);
+		SendString(host);
+		SendPOD(port);
+		SendPOD(login_mode);
+		SendString(username);
+		SendString(password);
+		SendString(directory);
+		SendString(options);
+
+		unsigned int status;
+		RecvPOD(status);
+		if (status == 0) {
+			break;
+		}
+		if (status == 2 || status == 3) {
+			std::string what;
+			RecvString(what);
+			if (status == 2)
+				throw ProtocolError(what);
+
+			throw std::runtime_error(what);
+		}
+	}
 }
 
 SiteConnection::~SiteConnection()

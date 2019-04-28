@@ -14,16 +14,19 @@ src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/Confirm.cpp
 src/UI/Progress.cpp
+src/UI/InteractiveLogin.cpp
 src/Op/Utils/ProgressStateUpdate.cpp
 src/Op/Utils/EnumerBase.cpp
 src/Op/Utils/EnumerLocal.cpp
 src/Op/Utils/EnumerRemote.cpp
 src/Op/OpBase.cpp
+src/Op/OpConnect.cpp
+src/Op/OpGetMode.cpp
+src/Op/OpEnumDirectory.cpp
 src/Op/OpDownload.cpp
 src/Op/OpUpload.cpp
 src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
-src/Op/OpEnumDirectory.cpp
 )
 
 add_library (NetRocks MODULE ${SOURCES})

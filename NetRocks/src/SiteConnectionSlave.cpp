@@ -17,19 +17,23 @@ class SiteConnectionSlave : protected IPCEndpoint
 	void InitConnection()
 	{
 		std::string protocol, host, username, password, directory, options;
-		unsigned int port;
+		unsigned int port, login_mode;
 		RecvString(protocol);
+		if (protocol.empty()) {
+			throw AbortError();
+		}
+
 		RecvString(host);
 		RecvPOD(port);
-		RecvString(options);
+		RecvPOD(login_mode);
 		RecvString(username);
 		RecvString(password);
 		RecvString(directory);
+		RecvString(options);
 
 		if (strcasecmp(protocol.c_str(), "sftp") == 0) {
-			_protocol.reset(new ProtocolSFTP(host, port, options, username, password, directory));
-
-        	} else {
+			_protocol = std::make_shared<ProtocolSFTP>(host, port, options, username, password, directory);
+       		} else {
 			throw std::runtime_error(std::string("Wrong protocol: ").append(protocol));
 		}
 	}
@@ -184,7 +188,24 @@ public:
 		IPCEndpoint(fd_recv, fd_send)
 		
 	{
-		InitConnection();
+		for (;;) try {
+			InitConnection();
+			SendPOD((unsigned int)0);
+			break;
+
+		} catch (ProtocolAuthFailedError &) {
+			SendPOD((unsigned int)1);
+
+		} catch (ProtocolError &ex) {
+			SendPOD((unsigned int)2);
+			SendString(ex.what());
+			break;
+
+		} catch (std::exception &ex) {
+			SendPOD((unsigned int)3);
+			SendString(ex.what());
+			break;
+		}
 	}
 
 	void Loop()

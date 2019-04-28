@@ -57,16 +57,18 @@ public:
 	RemoveProgress(const std::string &site_dir, ProgressState &state);
 };
 
-class DirOperationProgress : protected BaseDialog
+class SimpleOperationProgress : protected BaseDialog
 {
 public:
 	enum Kind
 	{
+		K_CONNECT,
+		K_GETMODE,
 		K_ENUMDIR,
 		K_CREATEDIR
 	};
 
-	DirOperationProgress(Kind kind, const std::string &object, ProgressState &state);
+	SimpleOperationProgress(Kind kind, const std::string &object, ProgressState &state);
 	void Show();
 
 protected:

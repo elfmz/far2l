@@ -1,6 +1,6 @@
 #include "OpBase.h"
 
-OpBase::OpBase(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &base_dir)
+OpBase::OpBase(std::shared_ptr<SiteConnection> connection, int op_mode, const std::string &base_dir)
 	:
 	_connection(connection),
 	_op_mode(op_mode),
@@ -16,7 +16,7 @@ void *OpBase::ThreadProc()
 		_state.Reset();
 		Process();
 		fprintf(stderr,
-			"NetRocks::OpBase('%s'): count=%lu all_total=%llu\n",
+			"NetRocks::OpBase('%s'): count=%llu all_total=%llu\n",
 			_base_dir.c_str(), _state.stats.count_total, _state.stats.all_total);
 
 	} catch (std::exception &e) {

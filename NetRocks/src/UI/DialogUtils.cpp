@@ -113,13 +113,36 @@ bool FarListWrapper::Select(const char *text)
 	return out;
 }
 
-const char *FarListWrapper::GetSelection()
+const char *FarListWrapper::GetSelection() const
 {
 	for (auto &item : _items) {
-		if (item.Flags)
+		if (item.Flags & LIF_SELECTED)
 			return item.Text;
 	}
 	return nullptr;
+}
+
+bool FarListWrapper::SelectIndex(ssize_t index)
+{
+	for (size_t i = 0; i < _items.size(); ++i) {
+		auto &item = _items[i];
+		if ((ssize_t)i == index) {
+			item.Flags|= LIF_SELECTED;
+		} else {
+			item.Flags&= ~LIF_SELECTED;
+		}
+	}
+	return (index >= 0 && (size_t)index < _items.size());
+}
+
+ssize_t FarListWrapper::GetSelectionIndex() const
+{
+	for (size_t i = 0; i < _items.size(); ++i) {
+		const auto &item = _items[i];
+		if (item.Flags & LIF_SELECTED)
+			return i;
+	}
+	return -1;
 }
 
 
@@ -248,4 +271,9 @@ void BaseDialog::ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents)
 		}
 	}
 	TextToDialogControl(dlg, ctl, str);
+}
+
+void BaseDialog::SetEnabledDialogControl(HANDLE dlg, int ctl, bool en)
+{
+	SendDlgMessage(dlg, DM_ENABLE, ctl, en ? TRUE : FALSE);
 }

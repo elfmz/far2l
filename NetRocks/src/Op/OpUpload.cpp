@@ -1,6 +1,7 @@
 #include "OpUpload.h"
 #include "../UI/Confirm.h"
 #include "../lng.h"
+#include "../Globals.h"
 
 OpUpload::OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	const std::string &base_dir, const std::string &dst_dir,
@@ -50,6 +51,11 @@ void OpUpload::Process()
 		_enumer.reset();
 	}
 
+	{
+		std::lock_guard<std::mutex> locker(_state.mtx);
+		_state.stats.total_start = _state.stats.current_start = TimeMSNow();
+	}
+
 	Transfer();
 }
 
@@ -61,16 +67,17 @@ void OpUpload::Transfer()
 		path_remote = _dst_dir;
 		path_remote+= subpath;
 		mode_t mode = 0;
-		try {
-			mode = _connection->GetMode(path_remote, false);
-		} catch (ProtocolError &) { ; }
-
 		{
 			std::unique_lock<std::mutex> lock(_state.mtx);
 			_state.path = subpath;
 			_state.stats.file_complete = 0;
 			_state.stats.file_total = S_ISDIR(e.second.st_mode) ? 0 : e.second.st_size;
+			_state.stats.current_start = TimeMSNow();
 		}
+
+		try {
+			mode = _connection->GetMode(path_remote, false);
+		} catch (ProtocolError &) { ; }
 
 		if (S_ISDIR(e.second.st_mode)) {
 			if (mode == 0) {

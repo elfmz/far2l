@@ -17,8 +17,18 @@
 
 class AbortConfirm : protected BaseDialog
 {
-	int _i_dblbox = -1;
-	int _i_confirm = -1;
+	int _i_dblbox, _i_confirm, _i_cancel;
+
+	LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+	{
+		if (msg == DM_KEY && param2 == 0x1b) {
+			// need to distinguish escape press and exit due to far going down
+			// to avoid infinite loop at far shutdown
+			Close(dlg, _i_cancel);
+			return TRUE;
+		}
+		return BaseDialog::DlgProc(dlg, msg, param1, param2);
+	}
 
 public:
 	AbortConfirm()
@@ -28,12 +38,13 @@ public:
 		_di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 		_i_confirm = _di.Add(DI_BUTTON, 6,4,27,4, DIF_CENTERGROUP, MAbortConfirm, nullptr, FDIS_DEFAULT);
-		_di.Add(DI_BUTTON, 32,4,46,4, DIF_CENTERGROUP, MAbortNotConfirm);
+		_i_cancel = _di.Add(DI_BUTTON, 32,4,46,4, DIF_CENTERGROUP, MAbortNotConfirm);
 	}
 
 	bool Ask()
 	{
-		return (Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING) == _i_confirm);
+		int reply = Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING);
+		return (reply == _i_confirm || reply == -1);
 	}
 };
 

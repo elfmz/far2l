@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <chrono>
 #include <windows.h>
 #include <pluginold.hpp>
 using namespace oldfar;
@@ -66,14 +67,18 @@ protected:
 	int Show(const char *title, int extra_width, int extra_height, unsigned int flags = 0);
 	int Show(int title_lng, int extra_width, int extra_height, unsigned int flags = 0);
 
-	void Close(HANDLE dlg);
+	void Close(HANDLE dlg, int code = -1);
 
 	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
 	void TextToDialogControl(HANDLE dlg, int ctl, const char *str);
 	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
 	void TextToDialogControl(HANDLE dlg, int ctl, int lng_str);
 	void LongLongToDialogControl(HANDLE dlg, int ctl, long long value);
-	void FileSizeToDialogControl(HANDLE dlg, int ctl, long long value);
+
+	static const char *FileSizeToFractionAndUnits(unsigned long long &value);
+	void FileSizeToDialogControl(HANDLE dlg, int ctl, unsigned long long value);
+
+	void TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long long msec);
 
 	void ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents = -1);
 

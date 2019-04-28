@@ -37,8 +37,17 @@ protected:
 
 	int /*_i_background = -1, */_i_pause_resume = -1, _i_cancel = -1;
 
+	std::string _speed_current_label;
+
+	unsigned long long _prev_complete = 0, _speed_current = 0, _speed_average = 0;
+	std::chrono::milliseconds _prev_ts;
+
 	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	void OnIdle(HANDLE dlg);
+	void UpdateTimes(HANDLE dlg);
+	void UpdateTime(unsigned long long complete, unsigned long long total,
+		const std::chrono::milliseconds &start, const std::chrono::milliseconds &paused, const std::chrono::milliseconds &now,
+		HANDLE dlg, int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl = -1, int i_speed_cur_ctl = -1, int i_speed_avg_ctl = -1);
 
 public:
 	BaseProgress(int title_lng, bool show_file_size_progress, const std::string &path, ProgressState &state);

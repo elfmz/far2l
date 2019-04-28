@@ -19,7 +19,7 @@ OpBase::~OpBase()
 	// InterlockedCall waits for main thread while main thread waits for thread's completion
 	if (_op_name_lng != -1) {
 		std::string display_action = G.GetMsg(_succeded ? MNotificationSuccess : MNotificationFailed);
-		size_t p = display_action.find("{}");
+		size_t p = display_action.find("()");
 		if (p != std::string::npos)
 			display_action.replace(p, 2, G.GetMsg(_op_name_lng));
 

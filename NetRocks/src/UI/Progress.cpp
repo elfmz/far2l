@@ -4,8 +4,8 @@
 #include "../Globals.h"
 
 
-/*                                                         62
-345               21      29    35      43   48    54  58  60  64
+/*
+345               21      29    35      43   48    54  58  62  64
  ====================== Download =============================
 | Current file:                                              |
 | [EDITBOX                                                 ] |
@@ -43,7 +43,7 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 		_i_file_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
 		_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
 		_i_file_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
-		_i_file_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
+		_i_file_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "::::::::::::::::::");
 	}
 
 	_di.NextLine();
@@ -51,32 +51,32 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 	_i_all_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
 	_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
 	_i_all_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
-	_i_all_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
+	_i_all_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "::::::::::::::::::");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,20, 0, MXferCount);
 	_i_count_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
 	_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
 	_i_count_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
-	_i_count_progress_bar = _di.AddAtLine(DI_TEXT, 45,60, 0, "::::::::::::::::::");
+	_i_count_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "::::::::::::::::::");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,32, 0, MXferFileTimeSpent);
 	_i_file_time_spent = _di.AddAtLine(DI_TEXT, 33,41, 0, "???:??.??");
 	_di.AddAtLine(DI_TEXT, 44,53, 0, MXferRemain);
-	_i_file_time_remain = _di.AddAtLine(DI_TEXT, 54,60, 0, "???:??.??");
+	_i_file_time_remain = _di.AddAtLine(DI_TEXT, 54,62, 0, "???:??.??");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,32, 0, MXferAllTimeSpent);
 	_i_all_time_spent = _di.AddAtLine(DI_TEXT, 33,41, 0, "???:??.??");
 	_di.AddAtLine(DI_TEXT, 44,53, 0, MXferRemain);
-	_i_all_time_remain = _di.AddAtLine(DI_TEXT, 54,60, 0, "???:??.??");
+	_i_all_time_remain = _di.AddAtLine(DI_TEXT, 54,62, 0, "???:??.??");
 
 	_di.NextLine();
 	_i_speed_current_label = _di.AddAtLine(DI_TEXT, 5,32, 0, MXferSpeedCurrent);
 	_i_speed_current = _di.AddAtLine(DI_TEXT, 33,41, 0, "???");
 	_di.AddAtLine(DI_TEXT, 44,53, 0, MXferAverage);
-	_i_speed_average = _di.AddAtLine(DI_TEXT, 54,60, 0, "???");
+	_i_speed_average = _di.AddAtLine(DI_TEXT, 54,62, 0, "???");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -85,6 +85,8 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 	//_i_background = _di.AddAtLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
 	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MPause); // MResume
 	_i_cancel = _di.AddAtLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
+
+	_speed_current_label = _di[_i_speed_current_label].Data;
 }
 
 void BaseProgress::Show()
@@ -173,8 +175,80 @@ void BaseProgress::OnIdle(HANDLE dlg)
 	if (_finished == 1) {
 		_finished = 2;
 		Close(dlg);
+
+	} else
+		UpdateTimes(dlg);
+}
+
+void BaseProgress::UpdateTimes(HANDLE dlg)
+{
+	auto now = TimeMSNow();
+
+	if (_last_stats.total_start.count()) {
+		// must be first cuz it updates speeds
+		UpdateTime(_last_stats.all_complete, _last_stats.all_total, _last_stats.total_start, _last_stats.total_paused,
+			now, dlg, _i_all_time_spent, _i_all_time_remain, _i_speed_current_label, _i_speed_current, _i_speed_average);
+	}
+
+	if (_last_stats.current_start.count()) {
+		UpdateTime(_last_stats.file_complete, _last_stats.file_total, _last_stats.current_start, _last_stats.current_paused,
+			now, dlg, _i_file_time_spent, _i_file_time_remain);
 	}
 }
+
+void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long total,
+		const std::chrono::milliseconds &start, const std::chrono::milliseconds &paused, const std::chrono::milliseconds &now,
+		HANDLE dlg, int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl, int i_speed_cur_ctl, int i_speed_avg_ctl)
+{
+	auto delta = now - _last_stats.total_start;
+	if (delta <= paused)
+		return;
+
+	delta-= paused;
+
+	TimePeriodToDialogControl(dlg, i_spent_ctl, delta.count());
+
+	if (i_speed_lbl_ctl == -1) {
+		;
+	} else if (_prev_ts.count()) {
+		auto speed_delta_time = (now - _prev_ts).count();
+		if (speed_delta_time >= 3000) {
+			_speed_average =  (complete * 1000ll / delta.count());
+			_speed_current =  (complete > _prev_complete) ? complete - _prev_complete : 0;
+			_speed_current = (_speed_current * 1000ll / speed_delta_time);
+			_prev_complete = complete;
+			_prev_ts = now;
+
+			unsigned long long fraction;
+			size_t p = _speed_current_label.find("()");
+			if (p != std::string::npos) {
+				fraction = _speed_current;
+				const char *units = FileSizeToFractionAndUnits(fraction);
+				char str[0x100] = {};
+				snprintf(str, sizeof(str) - 1, "%sps", units);
+
+				std::string speed_current_label = _speed_current_label;
+				speed_current_label.insert(p + 1, str);
+				TextToDialogControl(dlg, i_speed_lbl_ctl, speed_current_label);
+			} else
+				fraction = 1;
+
+			LongLongToDialogControl(dlg, i_speed_cur_ctl, _speed_current / fraction);
+			LongLongToDialogControl(dlg, i_speed_avg_ctl, _speed_average / fraction);
+		}
+	} else {
+		_prev_complete = complete;
+		_prev_ts = now;
+	}
+
+	if (_speed_current != 0 && complete < total) {
+		TimePeriodToDialogControl(dlg, i_remain_ctl, (total - complete) * 1000ll / _speed_current);
+
+	} else {
+		TextToDialogControl(dlg, i_remain_ctl, "??:??.??");
+	}
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -2467,9 +2467,12 @@ int WINAPI FarDialogExA(INT_PTR PluginNumber,int X1,int Y1,int X2,int Y2,const c
 		{
 			if (di[i].Type==DI_LISTBOX || di[i].Type==DI_COMBOBOX)
 				di[i].Param.ListItems=CurrentList(hDlg,i);
-
-			FreeUnicodeDialogItem(di[i]);
 		}
+	}
+
+	for (int i=0; i<ItemsNumber; i++)
+	{
+		FreeUnicodeDialogItem(di[i]);
 	}
 
 	delete *DialogList.Last();

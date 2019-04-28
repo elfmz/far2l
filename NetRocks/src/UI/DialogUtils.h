@@ -43,7 +43,10 @@ struct FarListWrapper
 	FarList *Get() { return &_list; }
 
 	bool Select(const char *text);
-	const char *GetSelection();
+	const char *GetSelection() const;
+
+	bool SelectIndex(ssize_t index = -1);
+	ssize_t GetSelectionIndex() const;
 
 private:
 	FarList _list{};
@@ -66,7 +69,6 @@ protected:
 	void Close(HANDLE dlg);
 
 	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
-
 	void TextToDialogControl(HANDLE dlg, int ctl, const char *str);
 	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
 	void TextToDialogControl(HANDLE dlg, int ctl, int lng_str);
@@ -74,6 +76,8 @@ protected:
 	void FileSizeToDialogControl(HANDLE dlg, int ctl, long long value);
 
 	void ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents = -1);
+
+	void SetEnabledDialogControl(HANDLE dlg, int ctl, bool en = true);
 
 public:
 	virtual ~BaseDialog(){};

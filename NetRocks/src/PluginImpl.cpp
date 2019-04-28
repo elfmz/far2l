@@ -2,6 +2,8 @@
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
 #include "UI/SiteConnectionEditor.h"
+#include "Op/OpConnect.h"
+#include "Op/OpGetMode.h"
 #include "Op/OpDownload.h"
 #include "Op/OpUpload.h"
 #include "Op/OpRemove.h"
@@ -150,14 +152,8 @@ int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 		size_t p = tmp.find('/');
 		if (!_connection) {
 			const std::string &site = tmp.substr(0, p);
-			try {
-				_connection.reset(new SiteConnection(site, OpMode));
-
-			} catch (std::runtime_error &e) {
-				fprintf(stderr,
-					"NetRocks::SetDirectory: new SiteConnection('%s') - %s\n",
-					site.c_str(), e.what());
-
+			_connection = OpConnect(OpMode, site).Do();
+			if (!_connection) {
 				return FALSE;
 			}
 
@@ -168,7 +164,10 @@ int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 		}
 
 		if (p != std::string::npos && p < tmp.size() - 1) {
-			mode_t mode = _connection->GetMode(tmp.substr(p + 1));
+			mode_t mode = 0;
+			if (!OpGetMode(_connection, OpMode, tmp.substr(p + 1)).Do(mode))
+				throw std::runtime_error("Get mode failed");
+
 			if (!S_ISDIR(mode))
 				throw std::runtime_error("Not a directory");
 		}

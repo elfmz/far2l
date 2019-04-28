@@ -19,7 +19,7 @@ bool OpEnumDirectory::Do()
 		WaitThread();
 
 	} else if (!WaitThread(1000)) {
-		DirOperationProgress(DirOperationProgress::K_ENUMDIR, _base_dir, _state).Show();
+		SimpleOperationProgress(SimpleOperationProgress::K_ENUMDIR, _base_dir, _state).Show();
 		WaitThread();
 	}
 

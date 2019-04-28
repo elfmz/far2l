@@ -7,14 +7,23 @@ enum LanguageID
   MOK,
   MCancel,
 
+  MLoginAuthTitle,
+  MLoginAuthRetryTitle,
+  MLoginAuthTo,
+  MLoginAuthRetryTo,
+
   MProtocol,
   MHost,
   MPort,
+  MLoginMode,
+  MPasswordModeNoPassword,
+  MPasswordModeAskPassword,
+  MPasswordModeSavedPassword,
   MUserName,
   MPassword,
   MDirectory,
   MDisplayName,
-  MProtocolOptions,
+  MAdvancedOptions,
   MSave,
   MConnect,
 
@@ -70,6 +79,8 @@ enum LanguageID
   MMakeDirText,
   MProceedMakeDir,
 
+  MConnectProgressTitle,
+  MGetModeProgressTitle,
   MEnumDirProgressTitle,
   MCreateDirProgressTitle
 };

@@ -39,7 +39,7 @@ public:
 	SiteConnection(const std::string &site, int OpMode) throw (std::runtime_error);
 	virtual ~SiteConnection();
 
-	void Reinitialize() throw (std::runtime_error);
+	void ReInitialize() throw (std::runtime_error);
 
 	const std::string &Site() const;
 	const std::string &SiteInfo() const;

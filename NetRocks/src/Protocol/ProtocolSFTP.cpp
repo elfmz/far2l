@@ -100,7 +100,7 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 
 	rc = ssh_userauth_password(_conn->ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
   	if (rc != SSH_AUTH_SUCCESS)
-		throw ProtocolError("Authentification failed", ssh_get_error(_conn->ssh), rc);
+		throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(_conn->ssh), rc);
 
 	_conn->sftp = sftp_new(_conn->ssh);
 	if (_conn->sftp == nullptr)

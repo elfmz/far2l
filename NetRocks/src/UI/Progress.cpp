@@ -205,11 +205,13 @@ RemoveProgress::RemoveProgress(const std::string &site_dir, ProgressState &state
   5              20   25   30             45 48
 */
 
-DirOperationProgress::DirOperationProgress(Kind kind, const std::string &object, ProgressState &state)
+SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &object, ProgressState &state)
 	: _state(state)
 {
 	unsigned int title_lng;
 	switch (kind) {
+		case K_CONNECT: title_lng = MConnectProgressTitle; break;
+		case K_GETMODE: title_lng = MGetModeProgressTitle; break;
 		case K_ENUMDIR: title_lng = MEnumDirProgressTitle; break;
 		case K_CREATEDIR: title_lng = MCreateDirProgressTitle; break;
 		default:
@@ -223,7 +225,7 @@ DirOperationProgress::DirOperationProgress(Kind kind, const std::string &object,
 	_title = _di[_i_dblbox].Data;
 }
 
-void DirOperationProgress::Show()
+void SimpleOperationProgress::Show()
 {
 	_finished = 0;
 	do {
@@ -231,7 +233,7 @@ void DirOperationProgress::Show()
 	} while (!_finished);
 }
 
-LONG_PTR DirOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+LONG_PTR SimpleOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {
 	//fprintf(stderr, "%x %x\n", msg, param1);
 	if (msg == DN_ENTERIDLE) {

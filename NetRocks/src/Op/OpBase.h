@@ -24,7 +24,7 @@ protected:
 	virtual void Process() = 0;
 
 public:
-	OpBase(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &base_dir);
+	OpBase(std::shared_ptr<SiteConnection> connection, int op_mode, const std::string &base_dir);
 };
 
 

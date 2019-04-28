@@ -52,7 +52,9 @@ void IPCSender::SendString(const std::string &s) throw(IPCError)
 
 IPCRecver::IPCRecver(int fd) : _fd(fd), _aborted(false)
 {
-	pipe_cloexec(_kickass);
+	if (pipe_cloexec(_kickass) == -1) {
+		_kickass[0] = _kickass[1] = -1;
+	}
 }
 
 IPCRecver::~IPCRecver()
@@ -64,6 +66,9 @@ IPCRecver::~IPCRecver()
 void IPCRecver::AbortReceiving()
 {
 	_aborted = true;
+	char c = 0;
+	if (write(_kickass[1], &c, 1) != 1)
+		perror("IPCRecver - write kickass");
 }
 
 void IPCRecver::SetFD(int fd)
@@ -75,20 +80,48 @@ void IPCRecver::SetFD(int fd)
 
 void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
 {
+	fd_set fds, fde;
 	if (len) for (;;) {
 		if (_aborted)
 			throw IPCError("IPCRecver: aborted", errno);
 
-		ssize_t rv = read(_fd, data, len);
-//		fprintf(stderr, "[%d] RECV: %lx/%lx {0x%x... }\n", getpid(), rv, len, *(const unsigned char *)data);
-		if (rv <= 0)
-			throw IPCError("IPCRecver: read", errno);
+		int maxfd = (_kickass[0] > _fd) ? _kickass[0] : _fd;
 
-		if ((size_t)rv == len)
-			break;
+		FD_ZERO(&fds);
+		FD_ZERO(&fde);
+		FD_SET(_kickass[0], &fds);
+		FD_SET(_fd, &fds);
+		FD_SET(_fd, &fde);
 
-		len-= (size_t)rv;
-		data = (char *)data + rv;
+		int sv = select(maxfd + 1, &fds, nullptr, &fde, nullptr);
+		if (sv == -1)
+			throw IPCError("IPCRecver: select", errno);
+		if (sv == 0) {
+			sleep(1);
+			continue;
+		}
+		if (FD_ISSET(_kickass[0], &fds)) {
+			char c;
+			if (read(_kickass[0], &c, 1) != 1)
+				perror("IPCRecver - read kickass");
+		}
+
+		if (FD_ISSET(_fd, &fde)) {
+			throw IPCError("IPCRecver: exception", errno);
+		}
+
+		if (FD_ISSET(_fd, &fds)) {
+			ssize_t rv = read(_fd, data, len);
+//			fprintf(stderr, "[%d] RECV: %lx/%lx {0x%x... }\n", getpid(), rv, len, *(const unsigned char *)data);
+			if (rv <= 0)
+				throw IPCError("IPCRecver: read", errno);
+
+			if ((size_t)rv == len)
+				break;
+
+			len-= (size_t)rv;
+			data = (char *)data + rv;
+		}
 	}
 }
 

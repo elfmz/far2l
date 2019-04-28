@@ -267,6 +267,7 @@ public:
 		const ssize_t rc = sftp_read(_file, buf, len);
 		if (rc < 0)
 			throw ProtocolError("Read file error",  ssh_get_error(_conn->ssh));
+		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
 
 		return (size_t)rc;
 	}

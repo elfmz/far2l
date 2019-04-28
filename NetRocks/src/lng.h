@@ -90,5 +90,5 @@ enum LanguageID
   MAbortNotConfirm,
 
   MAbortingOperationTitle,
-  MAbortOperationForce
+  MBreakConnection
 };

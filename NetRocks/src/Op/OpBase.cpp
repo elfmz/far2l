@@ -62,3 +62,22 @@ void OpBase::ForcefullyAbort()
 {
 	_connection->Abort();
 }
+
+bool OpBase::WaitThread(unsigned int msec)
+{
+	for (;;) {
+		unsigned int interval = (msec > 500) ? 500 : msec;
+		if (Threaded::WaitThread(interval))
+			return true;
+
+		if (msec != (unsigned int)-1) {
+			msec-= interval;
+			if (msec == 0)
+				return false;
+		}
+		int cow_result = G.info.FSF->CallOnWait();
+		if (cow_result != 0) {
+			fprintf(stderr, "NetRocks::OpBase('%s', %d): CallOnWait returned %d\n", _base_dir.c_str(), _op_name_lng, cow_result);
+		}
+	}
+}

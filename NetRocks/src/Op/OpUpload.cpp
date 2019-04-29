@@ -49,11 +49,10 @@ void OpUpload::Process()
 	if (_enumer) {
 		_enumer->Scan();
 		_enumer.reset();
-	}
 
-	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
-		_state.stats.total_start = _state.stats.current_start = TimeMSNow();
+		_state.stats.total_start = TimeMSNow();
+		_state.stats.total_paused = std::chrono::milliseconds::zero();
 	}
 
 	Transfer();
@@ -73,6 +72,7 @@ void OpUpload::Transfer()
 			_state.stats.file_complete = 0;
 			_state.stats.file_total = S_ISDIR(e.second.st_mode) ? 0 : e.second.st_size;
 			_state.stats.current_start = TimeMSNow();
+			_state.stats.current_paused = std::chrono::milliseconds::zero();
 		}
 
 		try {

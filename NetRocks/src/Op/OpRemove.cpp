@@ -40,16 +40,17 @@ void OpRemove::Process()
 	if (_enumer) {
 		_enumer->Scan();
 		_enumer.reset();
-	}
-	{
+
 		std::lock_guard<std::mutex> locker(_state.mtx);
-		_state.stats.total_start = _state.stats.current_start = TimeMSNow();
+		_state.stats.total_start = TimeMSNow();
+		_state.stats.total_paused = std::chrono::milliseconds::zero();
 	}
 
 	for (auto rev_i = _entries.rbegin(); rev_i != _entries.rend(); ++rev_i) {
 		{
 			std::lock_guard<std::mutex> locker(_state.mtx);
 			_state.stats.current_start = TimeMSNow();
+			_state.stats.current_paused = std::chrono::milliseconds::zero();
 		}
 		try {
 			const std::string &subpath = rev_i->first.substr(_base_dir.size());

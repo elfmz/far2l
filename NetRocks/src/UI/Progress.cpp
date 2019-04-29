@@ -125,7 +125,7 @@ void BaseProgress::OnIdle(HANDLE dlg)
 	struct {
 		bool path, file, all, count;
 	} changed = {};
-
+	bool paused;
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
 		if (_last_path != _state.path) {
@@ -142,6 +142,7 @@ void BaseProgress::OnIdle(HANDLE dlg)
 					|| _state.stats.count_total != _last_stats.count_total);
 
 		_last_stats = _state.stats;
+		paused = _state.paused;
 		if (_state.finished && _finished == 0) {
 			_finished = 1;
 		}
@@ -176,7 +177,7 @@ void BaseProgress::OnIdle(HANDLE dlg)
 		_finished = 2;
 		Close(dlg);
 
-	} else
+	} else if (!paused)
 		UpdateTimes(dlg);
 }
 

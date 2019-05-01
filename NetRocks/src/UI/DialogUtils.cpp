@@ -273,7 +273,7 @@ void BaseDialog::TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long lo
 	unsigned int hrs = (unsigned int)(msec_ull / 3600000ll);
 	msec_ull-= 3600000ll * hrs;
 	unsigned int mins = (unsigned int)(msec_ull / 60000ll);
-	msec_ull -= 60000ll * hrs;
+	msec_ull -= 60000ll * mins;
 	unsigned int secs = (unsigned int)(msec_ull / 1000ll);
 	//msec-= 60000l * hrs;
 

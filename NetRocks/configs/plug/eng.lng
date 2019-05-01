@@ -68,6 +68,12 @@
 "Download-&Move"
 "Upload-&Move"
 
+"Destination file aready exists:"
+"Source file information:"
+"Destination information"
+"Options to proceed"
+"Re&member selection"
+
 "Remove from server"
 "Remove selected items from:"
 "Proceed &removal"

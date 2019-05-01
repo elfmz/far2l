@@ -15,7 +15,7 @@ OpRemove::OpRemove(std::shared_ptr<SiteConnection> &connection, int op_mode,
 bool OpRemove::Do()
 {
 	if (!IS_SILENT(_op_mode)) {
-		if (!RemoveConfirm(_base_dir).Ask()) {
+		if (!ConfirmRemove(_base_dir).Ask()) {
 			fprintf(stderr, "NetRocks::Remove: cancel\n");
 			return false;
 		}

@@ -29,7 +29,6 @@ enum LanguageID
 
   MEditHost,
 
-
   MXferCopyDownloadTitle,
   MXferCopyUploadTitle,
   MXferMoveDownloadTitle,
@@ -70,6 +69,12 @@ enum LanguageID
   MProceedCopyUpload,
   MProceedMoveDownload,
   MProceedMoveUpload,
+
+  MDestinationExists,
+  MSourceInfo,
+  MDestinationInfo,
+  MOverwriteOptions,
+  MRememberSelection,
 
   MRemoveTitle,
   MRemoveText,

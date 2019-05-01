@@ -15,14 +15,15 @@ enum XferDirection
 	XK_UPLOAD
 };
 
-enum XferDefaultOverwriteAction
+enum XferOverwriteAction
 {
-	XDOA_ASK,
-	XDOA_SKIP,
-	XDOA_RESUME,
-	XDOA_OVERWRITE,
-	XDOA_OVERWRITE_IF_NEWER,
-	XDOA_CREATE_DIFFERENT_NAME
+	XOA_CANCEL = 0, // only with ConfirmOverwrite
+	XOA_ASK = 0,    // only with ConfirmXfer
+	XOA_SKIP,
+	XOA_RESUME,
+	XOA_OVERWRITE,
+	XOA_OVERWRITE_IF_NEWER,
+	XOA_CREATE_DIFFERENT_NAME
 };
 
 

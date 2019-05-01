@@ -10,7 +10,7 @@ OpUpload::OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	OpBase(connection, op_mode, base_dir, MNotificationUpload),
 	ProgressStateUpdaterCallback(_state),
 	_mv(mv),
-	_xdoa(XDOA_ASK),
+	_default_xoa(XOA_ASK),
 	_dst_dir(dst_dir)
 {
 	_enumer = std::make_shared<EnumerLocal>(_entries, _state, _base_dir, items, items_count, true);
@@ -19,7 +19,7 @@ OpUpload::OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 bool OpUpload::Do()
 {
 	if (!IS_SILENT(_op_mode)) {
-		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir).Ask(_xdoa)) {
+		if (!ConfirmXfer(_mv ? XK_MOVE : XK_COPY, XK_UPLOAD, _dst_dir).Ask(_default_xoa)) {
 			fprintf(stderr, "NetRocks::Upload: cancel\n");
 			return false;
 		}

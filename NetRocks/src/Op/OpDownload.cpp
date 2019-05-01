@@ -10,7 +10,7 @@ OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	OpBase(connection, op_mode, base_dir, MNotificationDownload),
 	ProgressStateUpdaterCallback(_state),
 	_mv(mv),
-	_xdoa(XDOA_ASK),
+	_default_xoa(XOA_ASK),
 	_dst_dir(dst_dir)
 {
 	_enumer = std::make_shared<EnumerRemote>(_entries, _state, _base_dir, items, items_count, true, _connection);
@@ -19,7 +19,7 @@ OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 bool OpDownload::Do()
 {
 	if (!IS_SILENT(_op_mode)) {
-		if (!XferConfirm(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir).Ask(_xdoa)) {
+		if (!ConfirmXfer(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, _dst_dir).Ask(_default_xoa)) {
 			fprintf(stderr, "NetRocks::Download: cancel\n");
 			return false;
 		}

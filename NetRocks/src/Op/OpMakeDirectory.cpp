@@ -12,7 +12,7 @@ OpMakeDirectory::OpMakeDirectory(std::shared_ptr<SiteConnection> &connection, in
 bool OpMakeDirectory::Do()
 {
 	if (!IS_SILENT(_op_mode)) {
-		_dir_name = MakeDirConfirm(_dir_name.c_str()).Ask();
+		_dir_name = ConfirmMakeDir(_dir_name.c_str()).Ask();
 		if (_dir_name.empty()) {
 			fprintf(stderr, "NetRocks::MakeDirectory: cancel\n");
 			return false;

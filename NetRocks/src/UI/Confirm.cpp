@@ -19,7 +19,7 @@
     6                     29       38                      60
 */
 
-XferConfirm::XferConfirm(XferKind xk, XferDirection xd, const std::string &destination)
+ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd, const std::string &destination)
 {
 	if (xk == XK_COPY) {
 		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
@@ -35,14 +35,14 @@ XferConfirm::XferConfirm(XferKind xk, XferDirection xd, const std::string &desti
 
 	_di.Add(DI_TEXT, 5,5,62,5, 0, MXferDOAText);
 
-	_i_doa_ask = _di.Add(DI_RADIOBUTTON, 5,6,29,6, DIF_GROUP, MXferDOAAsk);
-	_i_doa_overwrite = _di.Add(DI_RADIOBUTTON, 30,6,62,6, 0, MXferDOAOverwrite);
+	_i_ask = _di.Add(DI_RADIOBUTTON, 5,6,29,6, DIF_GROUP, MXferDOAAsk);
+	_i_overwrite = _di.Add(DI_RADIOBUTTON, 30,6,62,6, 0, MXferDOAOverwrite);
 
-	_i_doa_skip = _di.Add(DI_RADIOBUTTON, 5,7,29,7, 0, MXferDOASkip);
-	_i_doa_overwrite_newer = _di.Add(DI_RADIOBUTTON, 30,7,62,7, 0, MXferDOAOverwriteIfNewer);
+	_i_skip = _di.Add(DI_RADIOBUTTON, 5,7,29,7, 0, MXferDOASkip);
+	_i_overwrite_newer = _di.Add(DI_RADIOBUTTON, 30,7,62,7, 0, MXferDOAOverwriteIfNewer);
 
-	_i_doa_resume = _di.Add(DI_RADIOBUTTON, 5,8,29,8, 0, MXferDOAResume);
-	_i_doa_create_diff_name = _di.Add(DI_RADIOBUTTON, 30,8,62,8, 0, MXferDOACreateDifferentName);
+	_i_resume = _di.Add(DI_RADIOBUTTON, 5,8,29,8, 0, MXferDOAResume);
+	_i_create_diff_name = _di.Add(DI_RADIOBUTTON, 30,8,62,8, 0, MXferDOACreateDifferentName);
 
 	_di.Add(DI_TEXT, 4,9,63,9, DIF_BOXCOLOR | DIF_SEPARATOR);
 
@@ -54,53 +54,53 @@ XferConfirm::XferConfirm(XferKind xk, XferDirection xd, const std::string &desti
 }
 
 
-bool XferConfirm::Ask(XferDefaultOverwriteAction &xdoa)
+bool ConfirmXfer::Ask(XferOverwriteAction &default_xoa)
 {
-	switch (xdoa) {
-		case XDOA_SKIP:
-			_di[_i_doa_skip].Selected = 1;
+	switch (default_xoa) {
+		case XOA_SKIP:
+			_di[_i_skip].Selected = 1;
 			break;
 
-		case XDOA_RESUME:
-			_di[_i_doa_resume].Selected = 1;
+		case XOA_RESUME:
+			_di[_i_resume].Selected = 1;
 			break;
 
-		case XDOA_OVERWRITE:
-			_di[_i_doa_overwrite].Selected = 1;
+		case XOA_OVERWRITE:
+			_di[_i_overwrite].Selected = 1;
 			break;
 
-		case XDOA_OVERWRITE_IF_NEWER:
-			_di[_i_doa_overwrite_newer].Selected = 1;
+		case XOA_OVERWRITE_IF_NEWER:
+			_di[_i_overwrite_newer].Selected = 1;
 			break;
 
-		case XDOA_CREATE_DIFFERENT_NAME:
-			_di[_i_doa_create_diff_name].Selected = 1;
+		case XOA_CREATE_DIFFERENT_NAME:
+			_di[_i_create_diff_name].Selected = 1;
 			break;
 
-		case XDOA_ASK: default:
-			_di[_i_doa_ask].Selected = 1;
+		case XOA_ASK: default:
+			_di[_i_ask].Selected = 1;
 	}
 
 	if (Show(_di[_i_dblbox].Data, 6, 2) != _i_proceed)
 		return false;
 
-	if (_di[_i_doa_skip].Selected) {
-		xdoa = XDOA_SKIP;
+	if (_di[_i_skip].Selected) {
+		default_xoa = XOA_SKIP;
 
-	} else if (_di[_i_doa_resume].Selected) {
-		xdoa = XDOA_RESUME;
+	} else if (_di[_i_resume].Selected) {
+		default_xoa = XOA_RESUME;
 
-	} else if (_di[_i_doa_overwrite].Selected) {
-		xdoa = XDOA_OVERWRITE;
+	} else if (_di[_i_overwrite].Selected) {
+		default_xoa = XOA_OVERWRITE;
 
-	} else if (_di[_i_doa_overwrite_newer].Selected) {
-		xdoa = XDOA_OVERWRITE_IF_NEWER;
+	} else if (_di[_i_overwrite_newer].Selected) {
+		default_xoa = XOA_OVERWRITE_IF_NEWER;
 
-	} else if (_di[_i_doa_create_diff_name].Selected) {
-		xdoa = XDOA_CREATE_DIFFERENT_NAME;
+	} else if (_di[_i_create_diff_name].Selected) {
+		default_xoa = XOA_CREATE_DIFFERENT_NAME;
 
 	} else {
-		xdoa = XDOA_ASK;
+		default_xoa = XOA_ASK;
 	}
 
 	return true;
@@ -121,7 +121,7 @@ bool XferConfirm::Ask(XferDefaultOverwriteAction &xdoa)
     6                     29       38                      60
 */
 
-RemoveConfirm::RemoveConfirm(const std::string &site_dir)
+ConfirmRemove::ConfirmRemove(const std::string &site_dir)
 {
 	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,6, 0, MRemoveTitle);
 	_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveText);
@@ -135,7 +135,7 @@ RemoveConfirm::RemoveConfirm(const std::string &site_dir)
 }
 
 
-bool RemoveConfirm::Ask()
+bool ConfirmRemove::Ask()
 {
 	return (Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING) == _i_proceed);
 }
@@ -153,7 +153,7 @@ bool RemoveConfirm::Ask()
     6                     29       38            
 */
 
-MakeDirConfirm::MakeDirConfirm(const std::string &default_name)
+ConfirmMakeDir::ConfirmMakeDir(const std::string &default_name)
 {
 	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,50,6, 0, MMakeDirTitle);
 	_di.Add(DI_TEXT, 5,2,48,2, 0, MMakeDirText);
@@ -166,7 +166,7 @@ MakeDirConfirm::MakeDirConfirm(const std::string &default_name)
 	_i_cancel = _di.Add(DI_BUTTON, 30,5,45,5, DIF_CENTERGROUP, MCancel);
 }
 
-std::string MakeDirConfirm::Ask()
+std::string ConfirmMakeDir::Ask()
 {
 	std::string out;
 	if (Show(_di[_i_dblbox].Data, 6, 2) == _i_proceed) {

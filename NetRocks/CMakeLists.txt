@@ -13,6 +13,7 @@ src/Protocol/ProtocolSFTP.cpp
 src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/Confirm.cpp
+src/UI/ConfirmOverwrite.cpp
 src/UI/Progress.cpp
 src/UI/AbortOperationRequest.cpp
 src/UI/InteractiveLogin.cpp

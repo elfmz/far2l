@@ -9,7 +9,7 @@ class OpDownload : protected OpBase, protected ProgressStateUpdaterCallback
 	std::shared_ptr<EnumerRemote> _enumer;
 
 	bool _mv;
-	XferDefaultOverwriteAction _xdoa;
+	XferOverwriteAction _default_xoa;
 
 	std::string _dst_dir;
 

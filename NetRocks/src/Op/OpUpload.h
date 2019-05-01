@@ -8,7 +8,7 @@ class OpUpload : protected OpBase, protected ProgressStateUpdaterCallback
 
 	std::shared_ptr<EnumerLocal> _enumer;
 	bool _mv;
-	XferDefaultOverwriteAction _xdoa;
+	XferOverwriteAction _default_xoa;
 
 	std::string _dst_dir;
 

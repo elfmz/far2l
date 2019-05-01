@@ -24,9 +24,9 @@
 ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::string &destination)
 {
 	if (xk == XK_COPY) {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
+		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
 	} else {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
+		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
 	}
 
 	_di.SetLine(2);
@@ -45,24 +45,30 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	_i_destination_size = _di.AddAtLine(DI_TEXT, 30,39, 0, "???");
 	_i_destination_timestamp = _di.AddAtLine(DI_TEXT, 42,62, 0, "???");
 
+	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
+	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,62, 0, MOverwriteOptions);
 
-	_i_remember = _di.Add(DI_RADIOBUTTON, 5,33, 0, MRememberSelection);
-	_i_overwrite = _di.Add(DI_CHECKBOX, 34,62, DIF_GROUP, MXferDOAOverwrite);
+	_di.NextLine();
+	_i_remember = _di.AddAtLine(DI_RADIOBUTTON, 5,33, 0, MRememberSelection);
+	_i_overwrite = _di.AddAtLine(DI_CHECKBOX, 34,62, DIF_GROUP, MXferDOAOverwrite);
 
-	_i_skip = _di.Add(DI_RADIOBUTTON, 5,33, 0, MXferDOASkip);
-	_i_overwrite_newer = _di.Add(DI_RADIOBUTTON, 34,62, 0, MXferDOAOverwriteIfNewer);
+	_di.NextLine();
+	_i_skip = _di.AddAtLine(DI_RADIOBUTTON, 5,33, 0, MXferDOASkip);
+	_i_overwrite_newer = _di.AddAtLine(DI_RADIOBUTTON, 34,62, 0, MXferDOAOverwriteIfNewer);
 
-	_i_resume = _di.Add(DI_RADIOBUTTON, 5,33, 0, MXferDOAResume);
-	_i_create_diff_name = _di.Add(DI_RADIOBUTTON, 34,62, 0, MXferDOACreateDifferentName);
+	_di.NextLine();
+	_i_resume = _di.AddAtLine(DI_RADIOBUTTON, 5,33, 0, MXferDOAResume);
+	_i_create_diff_name = _di.AddAtLine(DI_RADIOBUTTON, 34,62, 0, MXferDOACreateDifferentName);
 
-	_di.Add(DI_TEXT, 4,9,63,9, DIF_BOXCOLOR | DIF_SEPARATOR);
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
-	_i_proceed = _di.Add(DI_BUTTON, 7,10,29,10, DIF_CENTERGROUP, MOK, nullptr, FDIS_DEFAULT);
-
-	_i_cancel = _di.Add(DI_BUTTON, 38,10,58,10, DIF_CENTERGROUP, MCancel);
+	_di.NextLine();
+	_i_proceed = _di.AddAtLine(DI_BUTTON, 7,29, DIF_CENTERGROUP, MOK, nullptr, FDIS_DEFAULT);
+	_i_cancel = _di.AddAtLine(DI_BUTTON, 38,58, DIF_CENTERGROUP, MCancel);
 }
 
 

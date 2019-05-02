@@ -2,6 +2,7 @@ project(NetRocks)
 
 set(SOURCES
 src/Erroring.cpp
+src/Utils.cpp
 src/Globals.cpp
 src/IPC.cpp
 src/NetRocks.cpp

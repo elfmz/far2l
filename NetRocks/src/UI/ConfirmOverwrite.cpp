@@ -1,5 +1,6 @@
 #include "ConfirmOverwrite.h"
 #include "../Globals.h"
+#include "../Utils.h"
 
 
 
@@ -21,7 +22,8 @@
     6                     29   34  38                      60
 */
 
-ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::string &destination)
+ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::string &destination, const timespec &src_ts,
+	unsigned long long src_size, const timespec &dst_ts, unsigned long long dst_size)
 {
 	if (xk == XK_COPY) {
 		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
@@ -33,17 +35,17 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	_di.AddAtLine(DI_TEXT, 5,62, 0, MDestinationExists);
 
 	_di.NextLine();
-	_i_destination = _di.AddAtLine(DI_EDIT, 5,62, 0, destination.c_str());
+	_i_destination = _di.AddAtLine(DI_TEXT, 5,62, 0, destination.c_str());
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,29, 0, MSourceInfo);
-	_i_source_size = _di.AddAtLine(DI_TEXT, 30,39, 0, "???");
-	_i_source_timestamp = _di.AddAtLine(DI_TEXT, 42,62, 0, "???");
+	_i_source_size = _di.AddAtLine(DI_TEXT, 30,39, 0, FileSizeString(src_size).c_str());
+	_i_source_timestamp = _di.AddAtLine(DI_TEXT, 42,62, 0, TimeString(src_ts, TSF_FOR_UI).c_str() );
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,29, 0, MDestinationInfo);
-	_i_destination_size = _di.AddAtLine(DI_TEXT, 30,39, 0, "???");
-	_i_destination_timestamp = _di.AddAtLine(DI_TEXT, 42,62, 0, "???");
+	_i_destination_size = _di.AddAtLine(DI_TEXT, 30,39, 0, FileSizeString(dst_size).c_str());
+	_i_destination_timestamp = _di.AddAtLine(DI_TEXT, 42,62, 0, TimeString(dst_ts, TSF_FOR_UI).c_str() );
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -76,7 +78,7 @@ XferOverwriteAction ConfirmOverwrite::Ask(XferOverwriteAction &default_xoa)
 {
 	_di[_i_overwrite].Selected = 1;
 
-	if (Show(_di[_i_dblbox].Data, 6, 2) != _i_proceed)
+	if (Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING) != _i_proceed)
 		return XOA_CANCEL;
 
 	XferOverwriteAction out;

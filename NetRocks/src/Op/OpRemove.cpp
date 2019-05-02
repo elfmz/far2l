@@ -1,6 +1,6 @@
 #include "OpRemove.h"
 #include "../UI/Confirm.h"
-#include "../Globals.h"
+#include "../Utils.h"
 
 
 OpRemove::OpRemove(std::shared_ptr<SiteConnection> &connection, int op_mode,

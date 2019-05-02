@@ -1,5 +1,6 @@
 #include "DialogUtils.h"
 #include "../Globals.h"
+#include "../Utils.h"
 
 int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
 {
@@ -226,45 +227,12 @@ void BaseDialog::LongLongToDialogControl(HANDLE dlg, int ctl, long long value)
 	TextToDialogControl(dlg, ctl, str);
 }
 
-const char *BaseDialog::FileSizeToFractionAndUnits(unsigned long long &value)
-{
-	if (value > 100ll * 1024ll * 1024ll * 1024ll * 1024ll) {
-		value = (1024ll * 1024ll * 1024ll * 1024ll);
-		return "TB";
-	}
-
-	if (value > 100ll * 1024ll * 1024ll * 1024ll) {
-		value = (1024ll * 1024ll * 1024ll);
-		return "GB";
-	}
-
-	if (value > 100ll * 1024ll * 1024ll ) {
-		value = (1024ll * 1024ll);
-		return "MB";
-
-	}
-
-	if (value > 100ll * 1024ll ) {
-		value = (1024ll);
-		return "KB";
-	}
-
-	value = 1;
-	return "B";
-}
-
 void BaseDialog::FileSizeToDialogControl(HANDLE dlg, int ctl, unsigned long long value)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
-	unsigned long long fraction = value;
-	const char *units = FileSizeToFractionAndUnits(fraction);
-	value/= fraction;
-
-	char str[0x100] = {};
-	snprintf(str, sizeof(str) - 1, "%lld %s", value, units);
-	TextToDialogControl(dlg, ctl, str);
+	TextToDialogControl(dlg, ctl, FileSizeString(value));
 }
 
 void BaseDialog::TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long long msec_ull)

@@ -1,7 +1,8 @@
 #include "Progress.h"
 #include "Confirm.h"
 #include "AbortOperationRequest.h"
-#include "../Globals.h"
+#include "../Utils.h"
+#include "../lng.h"
 
 
 /*

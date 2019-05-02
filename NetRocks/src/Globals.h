@@ -2,7 +2,6 @@
 #include <windows.h>
 #include <sudo.h>
 #include <string>
-#include <chrono>
 #include <vector>
 #include <pluginold.hpp>
 using namespace oldfar;
@@ -28,5 +27,3 @@ extern struct Globals
 	private:
 	bool _started = false;
 } G;
-
-std::chrono::milliseconds TimeMSNow();

@@ -1,7 +1,8 @@
 #include "OpDownload.h"
 #include "../UI/Confirm.h"
+#include "../UI/ConfirmOverwrite.h"
 #include "../lng.h"
-#include "../Globals.h"
+#include "../Utils.h"
 
 OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	const std::string &base_dir, const std::string &dst_dir,
@@ -14,6 +15,8 @@ OpDownload::OpDownload(std::shared_ptr<SiteConnection> &connection, int op_mode,
 	_dst_dir(dst_dir)
 {
 	_enumer = std::make_shared<EnumerRemote>(_entries, _state, _base_dir, items, items_count, true, _connection);
+	_diffname_suffix = ".NetRocks@";
+	_diffname_suffix+= TimeString(TSF_FOR_FILENAME);
 }
 
 bool OpDownload::Do()
@@ -80,8 +83,43 @@ void OpDownload::Transfer()
 			sdc_mkdir(path_local.c_str(), e.second.mode);
 
 		} else {
+			struct stat s = {};
+			unsigned long long pos = 0;
+			if (sdc_stat(path_local.c_str(), &s) == 0) {
+				auto xoa = _default_xoa;
+				if (xoa == XOA_ASK) {
+					xoa = ConfirmOverwrite(_mv ? XK_MOVE : XK_COPY, XK_DOWNLOAD, path_local,
+						e.second.modification_time, e.second.size, s.st_mtim, s.st_size).Ask(_default_xoa);
+					if (xoa == XOA_CANCEL) {
+						return;
+					}
+				}
+				if (xoa == XOA_OVERWRITE_IF_NEWER) {
+					if (e.second.modification_time.tv_sec < s.st_mtim.tv_sec ||
+					(e.second.modification_time.tv_sec == s.st_mtim.tv_sec && e.second.modification_time.tv_nsec <= s.st_mtim.tv_nsec)) {
+						xoa = XOA_SKIP;
+					} else {
+						xoa = XOA_OVERWRITE;
+					}
+				}
+				if (xoa == XOA_SKIP) {
+					std::unique_lock<std::mutex> lock(_state.mtx);
+					_state.stats.all_complete+= e.second.size;
+					_state.stats.file_complete+= e.second.size;
+					_state.stats.count_complete++;
+					continue;
+				}
+				if (xoa == XOA_RESUME) {
+					_state.stats.all_complete+= s.st_size;
+					_state.stats.file_complete+= s.st_size;
+					pos = s.st_size;
+
+				} else if (xoa == XOA_CREATE_DIFFERENT_NAME) {
+					path_local+= _diffname_suffix;
+				}
+			}
 			try {
-				_connection->FileGet(e.first, path_local, e.second.mode, 0, this);
+				_connection->FileGet(e.first, path_local, e.second.mode, pos, this);
 				if (_mv) {
 					try {
 						_connection->FileDelete(e.first);

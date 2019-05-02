@@ -75,7 +75,6 @@ protected:
 	void TextToDialogControl(HANDLE dlg, int ctl, int lng_str);
 	void LongLongToDialogControl(HANDLE dlg, int ctl, long long value);
 
-	static const char *FileSizeToFractionAndUnits(unsigned long long &value);
 	void FileSizeToDialogControl(HANDLE dlg, int ctl, unsigned long long value);
 
 	void TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long long msec);

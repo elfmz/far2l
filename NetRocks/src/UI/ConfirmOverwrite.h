@@ -14,7 +14,8 @@ class ConfirmOverwrite : protected BaseDialog
 	int _i_proceed = -1, _i_cancel = -1;
 
 public:
-	ConfirmOverwrite(XferKind xk, XferDirection xd, const std::string &destination);
+	ConfirmOverwrite(XferKind xk, XferDirection xd, const std::string &destination,
+		const timespec &src_ts, unsigned long long src_size, const timespec &dst_ts, unsigned long long dst_size);
 
 	XferOverwriteAction Ask(XferOverwriteAction &default_xoa);
 };

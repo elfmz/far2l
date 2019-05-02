@@ -11,7 +11,7 @@ class OpDownload : protected OpBase, protected ProgressStateUpdaterCallback
 	bool _mv;
 	XferOverwriteAction _default_xoa;
 
-	std::string _dst_dir;
+	std::string _dst_dir, _diffname_suffix;
 
 	void Transfer();
 

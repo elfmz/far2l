@@ -54,8 +54,8 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	_di.AddAtLine(DI_TEXT, 5,62, 0, MOverwriteOptions);
 
 	_di.NextLine();
-	_i_remember = _di.AddAtLine(DI_RADIOBUTTON, 5,33, 0, MRememberSelection);
-	_i_overwrite = _di.AddAtLine(DI_CHECKBOX, 34,62, DIF_GROUP, MXferDOAOverwrite);
+	_i_remember = _di.AddAtLine(DI_CHECKBOX, 5,33, 0, MRememberSelection);
+	_i_overwrite = _di.AddAtLine(DI_RADIOBUTTON, 34,62, DIF_GROUP, MXferDOAOverwrite);
 
 	_di.NextLine();
 	_i_skip = _di.AddAtLine(DI_RADIOBUTTON, 5,33, 0, MXferDOASkip);

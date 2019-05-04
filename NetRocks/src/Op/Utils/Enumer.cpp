@@ -40,6 +40,7 @@ void Enumer::GetSubitems(const std::string &path, Path2FileInformation &subitems
 			break;
 		}
 		subitems.emplace(name, file_info);
+		ProgressStateUpdate psu(_state); // check for abort/pause
 	}
 }
 

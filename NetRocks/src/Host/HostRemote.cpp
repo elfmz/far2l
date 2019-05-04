@@ -303,22 +303,28 @@ public:
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
-		if (_complete) {
+		if (_complete)
 			return false;
-		}
-		_conn->SendCommand(IPC_DIRECTORY_ENUM);
-		_conn->RecvReply(IPC_DIRECTORY_ENUM);
 
-		_conn->RecvString(name);
-		if (name.empty()) {
+		try {
+			_conn->SendCommand(IPC_DIRECTORY_ENUM);
+			_conn->RecvReply(IPC_DIRECTORY_ENUM);
+
+			_conn->RecvString(name);
+			if (name.empty()) {
+				_complete = true;
+				return false;
+			}
+
+			_conn->RecvString(owner);
+			_conn->RecvString(group);
+			_conn->RecvPOD(file_info);
+			return true;
+
+		} catch (...) {
 			_complete = true;
-			return false;
+			throw;
 		}
-
-		_conn->RecvString(owner);
-		_conn->RecvString(group);
-		_conn->RecvPOD(file_info);
-		return true;
   	}
 };
 
@@ -361,21 +367,27 @@ public:
 		if (_complete || len == 0)
 			return 0;
 
-		_conn->SendPOD(len);
-		_conn->RecvReply(IPC_FILE_GET);
-		size_t recv_len = len;
-		_conn->RecvPOD(recv_len);
-		if (recv_len == 0) {
+		try {
+			_conn->SendPOD(len);
+			_conn->RecvReply(IPC_FILE_GET);
+			size_t recv_len = len;
+			_conn->RecvPOD(recv_len);
+			if (recv_len == 0) {
+				_complete = true;
+				return 0;
+			}
+			if (recv_len > len) {
+				fprintf(stderr, "HostRemoteFileIO::Read: IPC gonna mad\n");
+				_conn->Abort();
+				throw ProtocolError("Read: IPC gonna mad");
+			}
+			_conn->Recv(buf, recv_len);
+			return recv_len;
+
+		} catch (...) {
 			_complete = true;
-			return 0;
+			throw;
 		}
-		if (recv_len > len) {
-			fprintf(stderr, "HostRemoteFileIO::Read: IPC gonna mad\n");
-			_conn->Abort();
-			throw ProtocolError("Read: IPC gonna mad");
-		}
-		_conn->Recv(buf, recv_len);
-		return recv_len;
 	}
 
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
@@ -384,9 +396,15 @@ public:
 		if (len == 0)
 			return;
 
-		_conn->SendPOD(len);
-		_conn->Send(buf, len);
-		_conn->RecvReply(IPC_FILE_PUT);
+		try {
+			_conn->SendPOD(len);
+			_conn->Send(buf, len);
+			_conn->RecvReply(IPC_FILE_PUT);
+
+		} catch (...) {
+			_complete = true;
+			throw;
+		}
 	}
 };
 

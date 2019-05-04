@@ -4,11 +4,11 @@ set(SOURCES
 src/Erroring.cpp
 src/Utils.cpp
 src/Globals.cpp
-src/IPC.cpp
 src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PooledStrings.cpp
 src/Protocol/ProtocolSFTP.cpp
+src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp
 src/Host/HostRemoteSlave.cpp

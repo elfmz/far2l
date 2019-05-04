@@ -202,7 +202,7 @@ void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long to
 		const std::chrono::milliseconds &start, const std::chrono::milliseconds &paused, const std::chrono::milliseconds &now,
 		HANDLE dlg, int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl, int i_speed_cur_ctl, int i_speed_avg_ctl)
 {
-	auto delta = now - _last_stats.total_start;
+	auto delta = now - start;//_last_stats.total_start;
 	if (delta <= paused)
 		return;
 

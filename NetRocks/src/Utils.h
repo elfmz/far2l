@@ -18,3 +18,5 @@ void AbbreviateFilePath(std::string &path, size_t needed_length);
 
 const char *FileSizeToFractionAndUnits(unsigned long long &value);
 std::string FileSizeString(unsigned long long value);
+
+

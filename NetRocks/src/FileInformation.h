@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+#include <map>
 
 struct FileInformation
 {
@@ -8,4 +10,6 @@ struct FileInformation
 	unsigned long long size;
 	mode_t mode;
 };
+
+typedef std::map<std::string, FileInformation> Path2FileInformation;
 

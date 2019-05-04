@@ -1,19 +1,21 @@
 #pragma once
 #include <memory>
-#include "Protocol.h"
+#include <string>
+#include <atomic>
+#include <list>
 
-struct SFTPConnection;
+#include "Host.h"
+#include "FileInformation.h"
 
-class ProtocolSFTP : public IProtocol
+class HostLocal : public IHost
 {
-	std::shared_ptr<SFTPConnection> _conn;
-
 public:
-	ProtocolSFTP(const std::string &host, unsigned int port, const std::string &options, const std::string &username,
-		const std::string &password, const std::string &directory) throw (std::runtime_error);
-	virtual ~ProtocolSFTP();
+	HostLocal();
+	virtual ~HostLocal();
 
 	virtual bool IsBroken();
+	virtual void ReInitialize() throw (std::runtime_error);
+	virtual void Abort();
 
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);

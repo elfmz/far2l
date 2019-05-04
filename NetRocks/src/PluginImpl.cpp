@@ -1,11 +1,11 @@
 #include "Globals.h"
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
+#include "Host/HostLocal.h"
 #include "UI/SiteConnectionEditor.h"
 #include "Op/OpConnect.h"
 #include "Op/OpGetMode.h"
-#include "Op/OpDownload.h"
-#include "Op/OpUpload.h"
+#include "Op/OpXfer.h"
 #include "Op/OpRemove.h"
 #include "Op/OpMakeDirectory.h"
 #include "Op/OpEnumDirectory.h"
@@ -13,6 +13,7 @@
 PluginImpl::PluginImpl(const char *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
+	_local.reset((IHost *)new HostLocal());
 	UpdatePanelTitle();
 }
 
@@ -23,8 +24,8 @@ PluginImpl::~PluginImpl()
 void PluginImpl::UpdatePanelTitle()
 {
 	std::string tmp;
-	if (_connection) {
-//		tmp = _connection->SiteInfo();
+	if (_remote) {
+//		tmp = _remote->SiteInfo();
 //		tmp+= '/';
 		tmp+= _cur_dir;
 	} else {
@@ -42,15 +43,15 @@ void PluginImpl::UpdatePanelTitle()
 bool PluginImpl::ValidateConnection()
 {
 	try {
-		if (!_connection)
+		if (!_remote)
 			return false;
 
-		if (_connection->IsBroken()) 
+		if (_remote->IsBroken()) 
 			throw std::runtime_error("Connection broken");
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "NetRocks::ValidateConnection: %s\n", e.what());
-		_connection.reset();
+		_remote.reset();
 		return false;
 	}
 
@@ -103,8 +104,8 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 			if (!il.Add(&tmp))
 				throw std::runtime_error("Can't add list entry");
 
-			OpEnumDirectory(_connection, OpMode, CurrentSiteDir(false), il).Do();
-			//_connection->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
+			OpEnumDirectory(_remote, OpMode, CurrentSiteDir(false), il).Do();
+			//_remote->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
 
 	} catch (std::exception &e) {
@@ -152,10 +153,10 @@ int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 			tmp.resize(tmp.size() - 1);
 
 		size_t p = tmp.find('/');
-		if (!_connection) {
+		if (!_remote) {
 			const std::string &site = tmp.substr(0, p);
-			_connection = OpConnect(OpMode, site).Do();
-			if (!_connection) {
+			_remote = OpConnect(OpMode, site).Do();
+			if (!_remote) {
 				return FALSE;
 			}
 
@@ -167,7 +168,7 @@ int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 
 		if (p != std::string::npos && p < tmp.size() - 1) {
 			mode_t mode = 0;
-			if (!OpGetMode(_connection, OpMode, tmp.substr(p + 1)).Do(mode))
+			if (!OpGetMode(_remote, OpMode, tmp.substr(p + 1)).Do(mode))
 				throw std::runtime_error("Get mode failed");
 
 			if (!S_ISDIR(mode))
@@ -214,7 +215,8 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	if (DestPath)
 		dst_dir = DestPath;
 
-	return OpDownload(_connection, OpMode, CurrentSiteDir(true), dst_dir, PanelItem, ItemsNumber, Move != 0).Do() ? TRUE : FALSE;
+	return OpXfer(_remote, OpMode, CurrentSiteDir(true), _local, dst_dir,
+		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
@@ -224,17 +226,19 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	if (ItemsNumber <= 0)
 		return FALSE;
 
-	char cwd[PATH_MAX] = {};
-	sdc_getcwd(cwd, PATH_MAX-2);
-	size_t l = strlen(cwd);
+	char dst_dir[PATH_MAX] = {};
+	sdc_getcwd(dst_dir, PATH_MAX-2);
+	size_t l = strlen(dst_dir);
 	if (l == 0) {
-		strcpy(cwd, "./");
-	} else if (cwd[l - 1] != '/') {
-		cwd[l] = '/';
-		cwd[l + 1] = 0;
+		strcpy(dst_dir, "./");
+
+	} else if (dst_dir[l - 1] != '/') {
+		dst_dir[l] = '/';
+		dst_dir[l + 1] = 0;
 	}
 
-	return OpUpload(_connection, OpMode, cwd, site_dir, PanelItem, ItemsNumber, Move != 0).Do() ? TRUE : FALSE;
+	return OpXfer(_local, OpMode, dst_dir, _remote, CurrentSiteDir(true),
+		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_UPLOAD).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
@@ -243,14 +247,14 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	if (ItemsNumber <= 0)
 		return FALSE;
 
-	return OpRemove(_connection, OpMode, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
+	return OpRemove(_remote, OpMode, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::MakeDirectory(const char *Name, int OpMode)
 {
 	fprintf(stderr, "NetRocks::MakeDirectory('%s', 0x%x)\n", Name, OpMode);
 	if (_cur_dir[0]) {
-		return OpMakeDirectory(_connection, OpMode, CurrentSiteDir(true), Name).Do();
+		return OpMakeDirectory(_remote, OpMode, CurrentSiteDir(true), Name).Do();
 	} else {
 		;//todo
 	}

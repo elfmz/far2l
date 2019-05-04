@@ -2,9 +2,9 @@
 #include "../Globals.h"
 #include "../lng.h"
 
-OpBase::OpBase(std::shared_ptr<SiteConnection> connection, int op_mode, const std::string &base_dir, int op_name_lng)
+OpBase::OpBase(std::shared_ptr<IHost> base_host, int op_mode, const std::string &base_dir, int op_name_lng)
 	:
-	_connection(connection),
+	_base_host(base_host),
 	_op_mode(op_mode),
 	_base_dir(base_dir),
 	_op_name_lng(op_name_lng)
@@ -60,7 +60,7 @@ void *OpBase::ThreadProc()
 
 void OpBase::ForcefullyAbort()
 {
-	_connection->Abort();
+	_base_host->Abort();
 }
 
 bool OpBase::WaitThread(unsigned int msec)

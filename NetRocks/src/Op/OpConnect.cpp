@@ -1,14 +1,15 @@
 #include "OpConnect.h"
+#include "Host/HostRemote.h"
 
 OpConnect::OpConnect(int op_mode, const std::string &display_name)
-	: OpBase(std::make_shared<SiteConnection>(display_name, op_mode), op_mode, display_name)
+	: OpBase(std::make_shared<HostRemote>(display_name, op_mode), op_mode, display_name)
 {
 }
 
-std::shared_ptr<SiteConnection> OpConnect::Do()
+std::shared_ptr<IHost> OpConnect::Do()
 {
 	_succeed = false;
-
+//	fprintf(stderr, "Connect START\n");
 	if (!StartThread()) {
 		;
 
@@ -20,11 +21,13 @@ std::shared_ptr<SiteConnection> OpConnect::Do()
 		WaitThread();
 	}
 
-	return _succeed ? _connection : std::shared_ptr<SiteConnection>();
+//	fprintf(stderr, "Connect END\n");
+	return _succeed ? _base_host : std::shared_ptr<IHost>();
 }
 
 void OpConnect::Process()
 {
-	_connection->ReInitialize();
+	_base_host->ReInitialize();
 	_succeed = true;
+//	fprintf(stderr, "Connect OK\n");
 }

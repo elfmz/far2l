@@ -3,12 +3,12 @@
 #include "../Utils.h"
 
 
-OpRemove::OpRemove(std::shared_ptr<SiteConnection> &connection, int op_mode,
+OpRemove::OpRemove(std::shared_ptr<IHost> &base_host, int op_mode,
 	const std::string &base_dir, struct PluginPanelItem *items, int items_count)
 	:
-	OpBase(connection, op_mode, base_dir)
+	OpBase(base_host, op_mode, base_dir)
 {
-	_enumer = std::make_shared<EnumerRemote>(_entries, _state, _base_dir, items, items_count, true, _connection);
+	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, false, _state);
 }
 
 
@@ -56,9 +56,9 @@ void OpRemove::Process()
 			const std::string &subpath = rev_i->first.substr(_base_dir.size());
 
 			if (S_ISDIR(rev_i->second.mode)) {
-				_connection->DirectoryDelete(rev_i->first);
+				_base_host->DirectoryDelete(rev_i->first);
 			} else {
-				_connection->FileDelete(rev_i->first);
+				_base_host->FileDelete(rev_i->first);
 			}
 
 			ProgressStateUpdate psu(_state);

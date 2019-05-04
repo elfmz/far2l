@@ -3,11 +3,11 @@
 #include "../lng.h"
 #include "../Utils.h"
 
-OpUpload::OpUpload(std::shared_ptr<SiteConnection> &connection, int op_mode,
+OpUpload::OpUpload(std::shared_ptr<IHost> &base_host, int op_mode,
 	const std::string &base_dir, const std::string &dst_dir,
 	struct PluginPanelItem *items, int items_count, bool mv)
 	:
-	OpBase(connection, op_mode, base_dir, MNotificationUpload),
+	OpBase(base_host, op_mode, base_dir, MNotificationUpload),
 	ProgressStateUpdaterCallback(_state),
 	_mv(mv),
 	_default_xoa(XOA_ASK),
@@ -76,13 +76,13 @@ void OpUpload::Transfer()
 		}
 
 		try {
-			mode = _connection->GetMode(path_remote, false);
+			mode = _base_host->GetMode(path_remote, false);
 		} catch (ProtocolError &) { ; }
 
 		if (S_ISDIR(e.second.st_mode)) {
 			if (mode == 0) {
 				try {
-					_connection->DirectoryCreate(path_remote, e.second.st_mode);
+					_base_host->DirectoryCreate(path_remote, e.second.st_mode);
 				} catch (std::exception &ex) {
 					fprintf(stderr, "NetRocks::Upload: %s on mkdir '%s'\n", ex.what(), path_remote.c_str());
 				}
@@ -94,7 +94,7 @@ void OpUpload::Transfer()
 
 		} else {
 			try {
-				_connection->FilePut(path_remote, e.first, e.second.st_mode, 0, this);
+				_base_host->FilePut(path_remote, e.first, e.second.st_mode, 0, this);
 				if (_mv) {
 					if (unlink(e.first.c_str()) == -1) {
 						fprintf(stderr, "NetRocks::Transfer: error %d while rmfile '%s'\n",

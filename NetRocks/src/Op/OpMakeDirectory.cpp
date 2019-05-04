@@ -1,10 +1,10 @@
 #include "OpMakeDirectory.h"
 #include "../UI/Confirm.h"
 
-OpMakeDirectory::OpMakeDirectory(std::shared_ptr<SiteConnection> &connection, int op_mode,
+OpMakeDirectory::OpMakeDirectory(std::shared_ptr<IHost> &base_host, int op_mode,
 	const std::string &base_dir, const std::string &dir_name)
 	:
-	OpBase(connection, op_mode, base_dir),
+	OpBase(base_host, op_mode, base_dir),
 	_dir_name(dir_name)
 {
 }
@@ -45,7 +45,7 @@ void OpMakeDirectory::Process()
 		if (i == full_path.size() || full_path[i] == '/') {
 			const std::string &component = full_path.substr(0, i);
 			try {
-				_connection->DirectoryCreate(component.c_str(), 0751);
+				_base_host->DirectoryCreate(component.c_str(), 0751);
 
 			} catch (std::exception &ex) {
 				fprintf(stderr, "NetRocks::MakeDirectory: '%s' while creating '%s'\n", ex.what(), component.c_str());

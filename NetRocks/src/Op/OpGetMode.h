@@ -1,6 +1,5 @@
 #pragma once
 #include "OpBase.h"
-#include "./Utils/EnumerLocal.h"
 
 class OpGetMode : protected OpBase
 {
@@ -9,6 +8,6 @@ class OpGetMode : protected OpBase
 	virtual void Process();
 
 public:
-	OpGetMode(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &path);
+	OpGetMode(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &path);
 	bool Do(mode_t &result);
 };

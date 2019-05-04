@@ -6,14 +6,14 @@
 #include <Threaded.h>
 #include <all_far.h>
 #include <fstdlib.h>
-#include "../SiteConnection.h"
+#include "../Host/Host.h"
 #include "./Utils/ProgressStateUpdate.h"
 #include "../UI/Progress.h"
 
 class OpBase : protected Threaded, protected IAbortableOperationsHost
 {
 protected:
-	std::shared_ptr<SiteConnection> _connection;
+	std::shared_ptr<IHost> _base_host;
 	int _op_mode;
 	std::string _base_dir;
 	int _op_name_lng;
@@ -30,7 +30,7 @@ protected:
 	virtual void Process() = 0;
 
 public:
-	OpBase(std::shared_ptr<SiteConnection> connection, int op_mode, const std::string &base_dir, int op_name_lng = -1);
+	OpBase(std::shared_ptr<IHost> base_host, int op_mode, const std::string &base_dir, int op_name_lng = -1);
 	~OpBase();
 };
 

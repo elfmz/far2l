@@ -1,9 +1,9 @@
 #include "OpGetMode.h"
 #include "../UI/Confirm.h"
 
-OpGetMode::OpGetMode(std::shared_ptr<SiteConnection> &connection, int op_mode, const std::string &path)
+OpGetMode::OpGetMode(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &path)
 	:
-	OpBase(connection, op_mode, path)
+	OpBase(base_host, op_mode, path)
 {
 }
 
@@ -32,6 +32,6 @@ bool OpGetMode::Do(mode_t &result)
 
 void OpGetMode::Process()
 {
-	_result = _connection->GetMode(_base_dir);
+	_result = _base_host->GetMode(_base_dir);
 	_succeed = true;
 }

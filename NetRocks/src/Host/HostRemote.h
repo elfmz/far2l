@@ -1,19 +1,38 @@
 #pragma once
 #include <memory>
-#include "Protocol.h"
+#include <string>
+#include <atomic>
+#include <list>
 
-struct SFTPConnection;
+#include "Host.h"
+#include "IPC.h"
+#include "FileInformation.h"
 
-class ProtocolSFTP : public IProtocol
+class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_shared_from_this<HostRemote>, public IHost
 {
-	std::shared_ptr<SFTPConnection> _conn;
+	friend class HostRemoteDirectoryEnumer;
+	friend class HostRemoteFileIO;
+
+	std::string _site, _site_info;
+	bool _broken = true;
+	bool _busy = false;
+
+	void RecvReply(IPCCommand cmd);
+
+protected:
+	void BusySet();
+	void BusyReset();
+	void AssertNotBusy();
+	void OnBroken();
+	void CheckReady();
 
 public:
-	ProtocolSFTP(const std::string &host, unsigned int port, const std::string &options, const std::string &username,
-		const std::string &password, const std::string &directory) throw (std::runtime_error);
-	virtual ~ProtocolSFTP();
+	HostRemote(const std::string &site, int OpMode) throw (std::runtime_error);
+	virtual ~HostRemote();
 
 	virtual bool IsBroken();
+	virtual void ReInitialize() throw (std::runtime_error);
+	virtual void Abort();
 
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);

@@ -40,7 +40,7 @@ protected:
 	std::string _speed_current_label;
 
 	unsigned long long _prev_complete = 0, _speed_current = 0, _speed_average = 0;
-	std::chrono::milliseconds _prev_ts;
+	std::chrono::milliseconds _prev_ts {};
 
 	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	void OnIdle(HANDLE dlg);

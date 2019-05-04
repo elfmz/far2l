@@ -4,12 +4,13 @@
 #include <memory>
 #include <all_far.h>
 #include <fstdlib.h>
-#include "SiteConnection.h"
+#include "Host/Host.h"
 
 class PluginImpl
 {
 	char _panel_title[64], _cur_dir[MAX_PATH];
-	std::shared_ptr<SiteConnection> _connection;
+	std::shared_ptr<IHost> _remote;
+	std::shared_ptr<IHost> _local;
 
 	void UpdatePanelTitle();
 	bool ValidateConnection();

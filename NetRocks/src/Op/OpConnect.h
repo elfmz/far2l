@@ -11,5 +11,5 @@ class OpConnect : protected OpBase
 
 public:
 	OpConnect(int op_mode, const std::string &display_name);
-	std::shared_ptr<SiteConnection> Do();
+	std::shared_ptr<IHost> Do();
 };

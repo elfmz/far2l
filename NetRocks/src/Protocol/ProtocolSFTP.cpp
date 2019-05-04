@@ -70,7 +70,7 @@ struct SFTPConnection
 
 ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std::string &options,
 				const std::string &username, const std::string &password,
-				const std::string &directory) throw (ProtocolError)
+				const std::string &directory) throw (std::runtime_error)
 	: _conn(new SFTPConnection)
 {
 	_conn->ssh = ssh_new();
@@ -117,12 +117,12 @@ ProtocolSFTP::~ProtocolSFTP()
 {
 }
 
-bool ProtocolSFTP::IsBroken() const
+bool ProtocolSFTP::IsBroken()
 {
 	return (!_conn || !_conn->ssh || !_conn->sftp || (ssh_get_status(_conn->ssh) & (SSH_CLOSED|SSH_CLOSED_ERROR)) != 0);
 }
 
-static sftp_attributes SFTPGetAttributes(sftp_session sftp, const std::string &path, bool follow_symlink) throw (ProtocolError)
+static sftp_attributes SFTPGetAttributes(sftp_session sftp, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	sftp_attributes out = follow_symlink ? sftp_stat(sftp, path.c_str()) : sftp_lstat(sftp, path.c_str());
 	if (!out)
@@ -160,40 +160,46 @@ static void SftpFileInfoFromAttributes(FileInformation &file_info, sftp_attribut
 
 
 
-mode_t ProtocolSFTP::GetMode(const std::string &path, bool follow_symlink) throw (ProtocolError)
+mode_t ProtocolSFTP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	SFTPAttributes  attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
 	return SFTPModeFromAttributes(attributes);
 }
 
-unsigned long long ProtocolSFTP::GetSize(const std::string &path, bool follow_symlink) throw (ProtocolError)
+unsigned long long ProtocolSFTP::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	SFTPAttributes  attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
 	return attributes->size;
 }
 
-void ProtocolSFTP::FileDelete(const std::string &path) throw (ProtocolError)
+void ProtocolSFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+{
+	SFTPAttributes  attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
+	SftpFileInfoFromAttributes(file_info, attributes);
+}
+
+void ProtocolSFTP::FileDelete(const std::string &path) throw (std::runtime_error)
 {
 	int rc = sftp_unlink(_conn->sftp, path.c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete file error",  ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::DirectoryDelete(const std::string &path) throw (ProtocolError)
+void ProtocolSFTP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
 	int rc = sftp_rmdir(_conn->sftp, path.c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete directory error",  ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (ProtocolError)
+void ProtocolSFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
 	int rc = sftp_mkdir(_conn->sftp, path.c_str(), mode);
 	if (rc != 0)
 		throw ProtocolError("Create directory error",  ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::Rename(const std::string &path_old, const std::string &path_new) throw (ProtocolError)
+void ProtocolSFTP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
 	int rc = sftp_rename(_conn->sftp, path_old.c_str(), path_new.c_str());
 	if (rc != 0)
@@ -213,7 +219,7 @@ public:
 			throw ProtocolError("Directory open error",  ssh_get_error(_conn->ssh));
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (ProtocolError)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
 		for (;;) {
 			SFTPAttributes  attributes(sftp_readdir(_conn->sftp, _dir));
@@ -226,7 +232,7 @@ public:
 				return false;
 			}
 
-			if (attributes->name[0] != '.' || (attributes->name[1] != 0 && (attributes->name[1] != '.' || attributes->name[2] != 0)) ) {
+			if (FILENAME_ENUMERABLE(attributes->name)) {
 				name = attributes->name ? attributes->name : "";
 				owner = attributes->owner ? attributes->owner : "";
 				group = attributes->group ? attributes->group : "";
@@ -238,7 +244,7 @@ public:
   	}
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolSFTP::DirectoryEnum(const std::string &path) throw (ProtocolError)
+std::shared_ptr<IDirectoryEnumer> ProtocolSFTP::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
 	return std::shared_ptr<IDirectoryEnumer>(new SFTPDirectoryEnumer(_conn, path));
 }
@@ -262,7 +268,7 @@ public:
 		}
 	}
 
-	virtual size_t Read(void *buf, size_t len) throw (ProtocolError)
+	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
 		const ssize_t rc = sftp_read(_file, buf, len);
 		if (rc < 0)
@@ -272,7 +278,7 @@ public:
 		return (size_t)rc;
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (ProtocolError)
+	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
 		if (len > 0) for (;;) {
 			const ssize_t rc = sftp_write(_file, buf, len);
@@ -288,12 +294,12 @@ public:
 };
 
 
-std::shared_ptr<IFileReader> ProtocolSFTP::FileGet(const std::string &path, unsigned long long resume_pos) throw (ProtocolError)
+std::shared_ptr<IFileReader> ProtocolSFTP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	return std::shared_ptr<IFileReader>((IFileReader *)new SFTPFileIO(_conn, path, O_RDONLY, 0, resume_pos));
 }
 
-std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (ProtocolError)
+std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	return std::shared_ptr<IFileWriter>((IFileWriter *)new SFTPFileIO(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos));
 }

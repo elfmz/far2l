@@ -1,7 +1,8 @@
+#include <utils.h>
+#include <TimeUtils.h>
 #include "OpUpload.h"
 #include "../UI/Confirm.h"
 #include "../lng.h"
-#include "../Utils.h"
 
 OpUpload::OpUpload(std::shared_ptr<IHost> &base_host, int op_mode,
 	const std::string &base_dir, const std::string &dst_dir,

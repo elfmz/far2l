@@ -1,6 +1,9 @@
 #include "Globals.h"
+#include <utils.h>
+#include <TailedStruct.hpp>
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
+#include "PluginPanelItems.h"
 #include "Host/HostLocal.h"
 #include "UI/SiteConnectionEditor.h"
 #include "Op/OpConnect.h"
@@ -10,7 +13,7 @@
 #include "Op/OpMakeDirectory.h"
 #include "Op/OpEnumDirectory.h"
 
-PluginImpl::PluginImpl(const char *path)
+PluginImpl::PluginImpl(const wchar_t *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
 	_local.reset((IHost *)new HostLocal());
@@ -23,21 +26,21 @@ PluginImpl::~PluginImpl()
 
 void PluginImpl::UpdatePanelTitle()
 {
-	std::string tmp;
+	std::wstring tmp;
 	if (_remote) {
 //		tmp = _remote->SiteInfo();
 //		tmp+= '/';
 		tmp+= _cur_dir;
 	} else {
-		tmp = "NetRocks connections list";
+		tmp = L"NetRocks connections list";
 	}
 
-	if (tmp.size() >= sizeof(_panel_title)) {
-		size_t rmlen = 4 + (tmp.size() - sizeof(_panel_title));
-		tmp.replace((tmp.size() - rmlen) / 2 , rmlen, "...");
+	if (tmp.size() >= ARRAYSIZE(_panel_title)) {
+		size_t rmlen = 4 + (tmp.size() - ARRAYSIZE(_panel_title));
+		tmp.replace((tmp.size() - rmlen) / 2 , rmlen, L"...");
 	}
 	
-	memcpy(_panel_title, tmp.c_str(), tmp.size() + 1);
+	wcscpy(_panel_title, tmp.c_str());
 }
 
 bool PluginImpl::ValidateConnection()
@@ -61,9 +64,9 @@ bool PluginImpl::ValidateConnection()
 std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
 {
 	std::string out;
-	const char *slash = strchr(_cur_dir, '/');
+	const wchar_t *slash = wcschr(_cur_dir, '/');
 	if (slash) {
-		out = slash + 1;
+		out = Wide2MB(slash + 1);
 	}
 
 	if (out.empty()) {
@@ -83,71 +86,65 @@ std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
 
 int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
 {
-	fprintf(stderr, "NetRocks::GetFindData '%s' G.config='%s'\n", _cur_dir, G.config.c_str());
-	FP_SizeItemList il(FALSE);
+	fprintf(stderr, "NetRocks::GetFindData '%ls' G.config='%s'\n", _cur_dir, G.config.c_str());
+	PluginPanelItems ppis;
 	try {
-		PluginPanelItem tmp = {};
 		if (!ValidateConnection()) {
 			_cur_dir[0] = 0;
 			KeyFileHelper kfh(G.config.c_str());
 			const std::vector<std::string> &sites = kfh.EnumSections();
 			for (const auto &site : sites) {
-				strncpy(tmp.FindData.cFileName, site.c_str(), sizeof(tmp.FindData.cFileName));
-				tmp.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-				if (!il.Add(&tmp))
-					throw std::runtime_error("Can't add list entry");
+				auto *ppi = ppis.Add(site.c_str());
+				ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 			}
 
 		} else {
-			strncpy(tmp.FindData.cFileName, "..", sizeof(tmp.FindData.cFileName) - 1);
-			tmp.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-			if (!il.Add(&tmp))
-				throw std::runtime_error("Can't add list entry");
-
-			OpEnumDirectory(_remote, OpMode, CurrentSiteDir(false), il).Do();
+			auto *ppi = ppis.Add(L"..");
+			ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+			OpEnumDirectory(_remote, OpMode, CurrentSiteDir(false), ppis).Do();
 			//_remote->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "NetRocks::GetFindData('%s', %d) ERROR: %s\n", _cur_dir, OpMode, e.what());
-		il.Free(il.Items(), il.Count() );
-		*pPanelItem = nullptr;
-		*pItemsNumber = 0;
+		fprintf(stderr, "NetRocks::GetFindData('%ls', %d) ERROR: %s\n", _cur_dir, OpMode, e.what());
 		return FALSE;
 	}
 
-	*pPanelItem = il.Items();
-	*pItemsNumber = il.Count();
+	
+	*pPanelItem = ppis.items;
+	*pItemsNumber = ppis.count;
+	ppis.Detach();
 	return TRUE;
 }
 
 void PluginImpl::FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber)
 {
-	FP_SizeItemList::Free(PanelItem, ItemsNumber);
+	PluginPanelItems_Free(PanelItem, ItemsNumber);
 }
 
-int PluginImpl::SetDirectory(const char *Dir, int OpMode)
+int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 {
-	fprintf(stderr, "NetRocks::SetDirectory('%s', %d)\n", Dir, OpMode);
-	if (strcmp(Dir, ".") == 0)
+	fprintf(stderr, "NetRocks::SetDirectory('%ls', %d)\n", Dir, OpMode);
+	if (wcscmp(Dir, L".") == 0)
 		return TRUE;
 
 	try {
-		std::string tmp = _cur_dir;
+		std::string tmp;
+		Wide2MB(_cur_dir, tmp);
 
-		if (strcmp(Dir, "..") == 0) {
+		if (wcscmp(Dir, L"..") == 0) {
 			size_t p = tmp.rfind('/');
 			if (p == std::string::npos)
 				p = 0;
 			tmp.resize(p);
 
-		} else if (*Dir == '/') {
-			tmp = Dir + 1;
+		} else if (*Dir == L'/') {
+			Wide2MB(Dir + 1, tmp);
 
 		} else {
 			if (!tmp.empty())
 				tmp+= '/';
-			tmp+= Dir;
+			tmp+= Wide2MB(Dir);
 		}
 		while (!tmp.empty() && tmp[tmp.size() - 1] == '/')
 			tmp.resize(tmp.size() - 1);
@@ -175,28 +172,30 @@ int PluginImpl::SetDirectory(const char *Dir, int OpMode)
 				throw std::runtime_error("Not a directory");
 		}
 
-		if (tmp.size() >= sizeof(_cur_dir))
+		const std::wstring &tmp_ws = StrMB2Wide(tmp);
+
+		if (tmp_ws.size() >= ARRAYSIZE(_cur_dir))
 			throw std::runtime_error("Too long path");
 
-		memcpy(_cur_dir, tmp.c_str(), tmp.size() + 1);
+		wcscpy(_cur_dir, tmp_ws.c_str());
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "NetRocks::SetDirectory('%s', %d) ERROR: %s\n", Dir, OpMode, e.what());
+		fprintf(stderr, "NetRocks::SetDirectory('%ls', %d) ERROR: %s\n", Dir, OpMode, e.what());
 		return FALSE;
 	}
 
 	UpdatePanelTitle();
 
-	fprintf(stderr, "NetRocks::SetDirectory('%s', %d) OK: '%s'\n", Dir, OpMode, _cur_dir);
+	fprintf(stderr, "NetRocks::SetDirectory('%ls', %d) OK: '%ls'\n", Dir, OpMode, &_cur_dir[0]);
 
 	return TRUE;
 }
 
 void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 {
-	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%s' \n", _cur_dir);
+	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%ls' \n", &_cur_dir[0]);
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
-//	          " Inside: %s@%s ", _dir.c_str(), _name.c_str());
+//	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
 
 	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 	Info->HostFile = NULL;
@@ -205,27 +204,31 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 }
 
 
-int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, char *DestPath, int OpMode)
+int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *DestPath, int OpMode)
 {
-	fprintf(stderr, "NetRocks::GetFiles: _dir='%s' DestPath='%s' ItemsNumber=%d\n", _cur_dir, DestPath, ItemsNumber);
+	fprintf(stderr, "NetRocks::GetFiles: _dir='%ls' DestPath='%ls' ItemsNumber=%d\n", _cur_dir, DestPath, ItemsNumber);
 	if (ItemsNumber <= 0)
 		return FALSE;
 
 	std::string dst_dir;
 	if (DestPath)
-		dst_dir = DestPath;
+		Wide2MB(DestPath, dst_dir);
 
 	return OpXfer(_remote, OpMode, CurrentSiteDir(true), _local, dst_dir,
 		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD).Do() ? TRUE : FALSE;
 }
 
-int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
+int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode)
 {
 	const std::string &site_dir = CurrentSiteDir(true);
-	fprintf(stderr, "NetRocks::GetFiles: _dir='%s' site_dir='%s' ItemsNumber=%d\n", _cur_dir, site_dir.c_str(), ItemsNumber);
+	fprintf(stderr, "NetRocks::GetFiles: _dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d\n", _cur_dir, SrcPath, site_dir.c_str(), ItemsNumber);
 	if (ItemsNumber <= 0)
 		return FALSE;
 
+//	std::string src_dir;
+//	if (SrcPath) {
+//		Wide2MB(SrcPath, src_dir);
+//	} else {
 	char dst_dir[PATH_MAX] = {};
 	sdc_getcwd(dst_dir, PATH_MAX-2);
 	size_t l = strlen(dst_dir);
@@ -243,18 +246,21 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
-	fprintf(stderr, "NetRocks::DeleteFiles: _dir='%s' ItemsNumber=%d\n", _cur_dir, ItemsNumber);
+	fprintf(stderr, "NetRocks::DeleteFiles: _dir='%ls' ItemsNumber=%d\n", _cur_dir, ItemsNumber);
 	if (ItemsNumber <= 0)
 		return FALSE;
 
 	return OpRemove(_remote, OpMode, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
 }
 
-int PluginImpl::MakeDirectory(const char *Name, int OpMode)
+int PluginImpl::MakeDirectory(const wchar_t *Name, int OpMode)
 {
-	fprintf(stderr, "NetRocks::MakeDirectory('%s', 0x%x)\n", Name, OpMode);
+	fprintf(stderr, "NetRocks::MakeDirectory('%ls', 0x%x)\n", Name, OpMode);
 	if (_cur_dir[0]) {
-		return OpMakeDirectory(_remote, OpMode, CurrentSiteDir(true), Name).Do();
+		std::string tmp;
+		if (Name)
+			Wide2MB(Name, tmp);
+		return OpMakeDirectory(_remote, OpMode, CurrentSiteDir(true), Name ? tmp.c_str() : nullptr).Do();
 	} else {
 		;//todo
 	}
@@ -265,26 +271,33 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
 
-	if (!_cur_dir[0] && Key==VK_F4
+	if ((Key==VK_F5 || Key==VK_F6) && _remote)
+	{
+	}
+
+	if (Key==VK_F4 && !_cur_dir[0]
 	&& (ControlState == 0 || ControlState == PKF_SHIFT))
 	{
 		std::string site;
 
 		if (ControlState == 0) {
-			PanelInfo pi = {};
-			G.info.Control(this, FCTL_GETPANELINFO, &pi);
-
-			if (pi.CurrentItem >= pi.ItemsNumber)
-				return TRUE;
-
-			site = pi.PanelItems[pi.CurrentItem].FindData.cFileName;
+    			intptr_t size = G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, 0);
+			if (size >= (intptr_t)sizeof(PluginPanelItem)) {
+				TailedStruct<PluginPanelItem> ppi(0x100 + size - sizeof(PluginPanelItem));
+				G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
+				//if ((ppi->Flags & PPIF_SELECTED) != 0) {
+					Wide2MB(ppi->FindData.lpwszFileName, site);
+				//}
+			}
 		}
+
 		SiteConnectionEditor sce(site);
 		const bool connect_now = sce.Edit();
-		G.info.Control(this, FCTL_UPDATEPANEL, NULL);
+		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 		if (connect_now) {
-			SetDirectory(sce.DisplayName().c_str(), 0);
+			SetDirectory(StrMB2Wide(sce.DisplayName()).c_str(), 0);
 		}
+
 
 		return TRUE;
 	}

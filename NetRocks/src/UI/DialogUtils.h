@@ -1,10 +1,10 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <set>
 #include <chrono>
 #include <windows.h>
-#include <pluginold.hpp>
-using namespace oldfar;
+#include <plugin.hpp>
 
 
 enum FarDialogItemState
@@ -22,6 +22,9 @@ struct FarDialogItems : std::vector<struct FarDialogItem>
 
 	int EstimateWidth() const;
 	int EstimateHeight() const;
+
+private:
+	int AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history, FarDialogItemState state);
 };
 
 struct FarDialogItemsLineGrouped : FarDialogItems
@@ -59,11 +62,13 @@ class BaseDialog
 {
 protected:
 	FarDialogItemsLineGrouped _di;
+	HANDLE _dlg = INVALID_HANDLE_VALUE;
 
 	static LONG_PTR SendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	static LONG_PTR WINAPI sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 
+	int Show(const wchar_t *title, int extra_width, int extra_height, unsigned int flags = 0);
 	int Show(const char *title, int extra_width, int extra_height, unsigned int flags = 0);
 	int Show(int title_lng, int extra_width, int extra_height, unsigned int flags = 0);
 
@@ -84,6 +89,6 @@ protected:
 	void SetEnabledDialogControl(HANDLE dlg, int ctl, bool en = true);
 
 public:
-	virtual ~BaseDialog(){};
+	virtual ~BaseDialog();
 };
 

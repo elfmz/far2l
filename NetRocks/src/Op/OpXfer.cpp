@@ -1,8 +1,9 @@
+#include <utils.h>
+#include <TimeUtils.h>
 #include "OpXfer.h"
 #include "../UI/Confirm.h"
 #include "../UI/ConfirmOverwrite.h"
 #include "../lng.h"
-#include "../Utils.h"
 
 OpXfer::OpXfer(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &base_dir,
 	std::shared_ptr<IHost> &dst_host, const std::string &dst_dir,

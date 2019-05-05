@@ -12,7 +12,7 @@ class SiteConnectionEditor : protected BaseDialog
 	unsigned int _initial_port = 0, _port = 0;
 
 	int _i_display_name = -1, _i_display_name_autogen = -1;
-	int _i_dblbox = -1, _i_protocol = -1, _i_host = -1, _i_port = -1;
+	int _i_protocol = -1, _i_host = -1, _i_port = -1;
 	int _i_login_mode = -1, _i_username = -1, _i_password = -1;
 	int _i_directory = -1, _i_advanced_options = -1;
 	int _i_save = -1, _i_connect = -1, _i_cancel = -1;

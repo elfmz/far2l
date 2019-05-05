@@ -1,6 +1,7 @@
+#include <utils.h>
+#include <TimeUtils.h>
 #include <unistd.h>
 #include "ProgressStateUpdate.h"
-#include "../../Utils.h"
 
 ProgressStateUpdate::ProgressStateUpdate(ProgressState &state)
 	:std::unique_lock<std::mutex>(state.mtx)

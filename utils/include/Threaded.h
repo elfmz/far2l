@@ -5,12 +5,12 @@
 
 class Threaded
 {
-	std::condition_variable _cond;
-	std::mutex _mtx;
+	std::condition_variable _trd_cond;
+	std::mutex _trd_mtx;
 
 	pthread_t _trd = 0;
-	void *_result = nullptr;
-	bool _exited = true, _joined = true;
+	void *_trd_result = nullptr;
+	bool _trd_exited = true, _trd_joined = true;
 
 	static void *sThreadProc(void *p);
 

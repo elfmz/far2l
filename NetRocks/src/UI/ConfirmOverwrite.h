@@ -6,7 +6,6 @@
 
 class ConfirmOverwrite : protected BaseDialog
 {
-	int _i_dblbox = -1;
 	int _i_source_size = -1, _i_source_timestamp = -1;
 	int _i_destination_size = -1, _i_destination_timestamp = -1;
 	int _i_destination = -1, _i_remember = -1, _i_overwrite = -1, _i_skip = -1;

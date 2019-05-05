@@ -4,11 +4,10 @@
 #include <set>
 #include <memory>
 #include <Threaded.h>
-#include <all_far.h>
-#include <fstdlib.h>
 #include "../Host/Host.h"
 #include "./Utils/ProgressStateUpdate.h"
 #include "../UI/Progress.h"
+#include <plugin.hpp>
 
 class OpBase : protected Threaded, protected IAbortableOperationsHost
 {
@@ -35,3 +34,4 @@ public:
 };
 
 
+#define IS_SILENT(v)               ( ((v) & (OPM_FIND|OPM_VIEW|OPM_EDIT)) != 0 )

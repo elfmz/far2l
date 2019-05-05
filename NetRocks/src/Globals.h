@@ -3,8 +3,7 @@
 #include <sudo.h>
 #include <string>
 #include <vector>
-#include <pluginold.hpp>
-using namespace oldfar;
+#include <plugin.hpp>
 #include "lng.h"
 
 extern struct Globals
@@ -12,8 +11,8 @@ extern struct Globals
 	enum {
 		MAX_COMMAND_PREFIX = 50
 	};
-	std::string plugin_path;
-	std::string command_prefix;
+	std::wstring plugin_path;
+	std::wstring command_prefix;
 	std::string config;
 	PluginStartupInfo info = {};
 	FarStandardFunctions fsf = {};
@@ -22,7 +21,8 @@ extern struct Globals
 
 	inline bool IsStarted() const {return _started; }
 
-	const char *GetMsg(int id);
+	const wchar_t *GetMsgWide(int id);
+	const char *GetMsgMB(int id);
 
 	private:
 	bool _started = false;

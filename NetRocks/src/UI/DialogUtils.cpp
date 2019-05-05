@@ -1,8 +1,9 @@
+#include <utils.h>
 #include "DialogUtils.h"
 #include "../Globals.h"
-#include "../Utils.h"
+#include "PooledStrings.h"
 
-int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
+int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history, FarDialogItemState state)
 {
 	int index = (int)size();
 	resize(index + 1);
@@ -17,14 +18,21 @@ int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int f
 	item.History = history;
 	item.Flags = flags;
 	item.DefaultButton = (state == FDIS_DEFAULT || state == FDIS_DEFAULT_FOCUSED);
-	strncpy(item.Data, data ? data : "", sizeof(item.Data) );
+	item.PtrData = data;
+
+//	strncpy(item.Data, data ? data : "", sizeof(item.Data) );
 
 	return index;
 }
 
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
+{
+	return AddInternal(type, x1, y1, x2, y2, flags, MB2WidePooled(data), MB2WidePooled(history), state);
+}
+
 int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
 {
-	return Add(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsg(data_lng) : nullptr, history, state);
+	return AddInternal(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsgWide(data_lng) : nullptr, MB2WidePooled(history), state);
 }
 
 int FarDialogItems::EstimateWidth() const
@@ -89,7 +97,7 @@ int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int 
 void FarListWrapper::Add(const char *text, DWORD flags)
 {
 	FarListItem fli = {flags, {}, {}};
-	strncpy(fli.Text, text, sizeof(fli.Text));
+	fli.Text = MB2WidePooled(text);
 	_items.emplace_back(fli);
 	_list.ItemsNumber = _items.size();
 	_list.Items = &_items[0];
@@ -97,14 +105,15 @@ void FarListWrapper::Add(const char *text, DWORD flags)
 
 void FarListWrapper::Add(int text_lng, DWORD flags)
 {
-	Add(G.GetMsg(text_lng), flags);
+	Add(G.GetMsgMB(text_lng), flags);
 }
 
 bool FarListWrapper::Select(const char *text)
 {
 	bool out = false;
+	const std::wstring text_wide = MB2Wide(text);
 	for (auto &item : _items) {
-		if (strncmp(item.Text, text, sizeof(item.Text) ) == 0) {
+		if (item.Text && wcscmp(item.Text, text_wide.c_str()) == 0) {
 			item.Flags|= LIF_SELECTED;
 			out = true;
 		} else {
@@ -118,7 +127,7 @@ const char *FarListWrapper::GetSelection() const
 {
 	for (auto &item : _items) {
 		if (item.Flags & LIF_SELECTED)
-			return item.Text;
+			return PooledString(item.Text);
 	}
 	return nullptr;
 }
@@ -148,6 +157,14 @@ ssize_t FarListWrapper::GetSelectionIndex() const
 
 
 ///////////////////////
+BaseDialog::~BaseDialog()
+{
+	if (_dlg != INVALID_HANDLE_VALUE) {
+		G.info.DialogFree(_dlg);
+		// _dlg = INVALID_HANDLE_VALUE;
+	}
+}
+
 LONG_PTR BaseDialog::SendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {
 	return G.info.SendDlgMessage(dlg, msg, param1, param2);
@@ -168,17 +185,35 @@ LONG_PTR BaseDialog::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 	return G.info.DefDlgProc(dlg, msg, param1, param2);
 }
 
+int BaseDialog::Show(const wchar_t *title, int extra_width, int extra_height, unsigned int flags)
+{
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		_dlg = G.info.DialogInit(G.info.ModuleNumber, -1, -1,
+			_di.EstimateWidth() + extra_width, _di.EstimateHeight() + extra_height,
+			title, &_di[0], _di.size(), 0, flags, &sDlgProc, (LONG_PTR)(uintptr_t)this);
+		if (_dlg == INVALID_HANDLE_VALUE) {
+			return -1;
+		}
+	}
+
+	int out = G.info.DialogRun(_dlg);
+
+	for (size_t i = 0; i < _di.size(); ++i) {
+        	_di[i].Selected = (SendDlgMessage(_dlg, DM_GETCHECK, (int)i, 0) == BSTATE_CHECKED);
+	}
+
+	return out;
+}
+
 int BaseDialog::Show(const char *title, int extra_width, int extra_height, unsigned int flags)
 {
+	return Show(MB2Wide(title).c_str(), extra_width, extra_height, flags);
 //	fprintf(stderr, "[%ld] BaseDialog::Show: %p %d\n", time(NULL), &_di[0], _di.size());
-	return G.info.DialogEx(G.info.ModuleNumber, -1, -1,
-		_di.EstimateWidth() + extra_width, _di.EstimateHeight() + extra_height,
-		title, &_di[0], _di.size(), 0, flags, &sDlgProc, (LONG_PTR)(uintptr_t)this);
 }
 
 int BaseDialog::Show(int title_lng, int extra_width, int extra_height, unsigned int flags)
 {
-	return Show(G.GetMsg(title_lng), extra_width, extra_height, flags);
+	return Show(G.GetMsgMB(title_lng), extra_width, extra_height, flags);
 }
 
 void BaseDialog::Close(HANDLE dlg, int code)
@@ -192,12 +227,13 @@ void BaseDialog::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
-	static char buf[ 0x1000 ] = {};
-	FarDialogItemData dd = { sizeof(buf) - 1, buf };
+	static wchar_t buf[ 0x1000 ] = {};
+	FarDialogItemData dd = { ARRAYSIZE(buf) - 1, buf };
 	LONG_PTR rv = SendDlgMessage(dlg, DM_GETTEXT, ctl, (LONG_PTR)&dd);
 	if (rv > 0 && rv < (LONG_PTR)sizeof(buf))
 		buf[rv] = 0;
-	str = buf;
+
+	Wide2MB(buf, str);
 }
 
 void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const char *str)
@@ -205,7 +241,8 @@ void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const char *str)
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
-	FarDialogItemData dd = { (int)strlen(str), (char*)str };
+	const std::wstring &tmp = MB2Wide(str);
+	FarDialogItemData dd = { tmp.size(), (wchar_t*)tmp.c_str()};
 	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
 }
 
@@ -216,7 +253,7 @@ void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const std::string &str
 
 void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, int lng_str)
 {
-	const char *str = G.GetMsg(lng_str);
+	const char *str = G.GetMsgMB(lng_str);
 	TextToDialogControl(dlg, ctl, str ? str : "");
 }
 

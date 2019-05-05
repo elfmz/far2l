@@ -2,13 +2,11 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <all_far.h>
-#include <fstdlib.h>
 #include "Host/Host.h"
 
 class PluginImpl
 {
-	char _panel_title[64], _cur_dir[MAX_PATH];
+	wchar_t _panel_title[64], _cur_dir[MAX_PATH];
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
 
@@ -18,18 +16,16 @@ class PluginImpl
 	std::string CurrentSiteDir(bool with_ending_slash) const;
 
 public:
-	PluginImpl(const char *path = nullptr);
+	PluginImpl(const wchar_t *path = nullptr);
 	virtual ~PluginImpl();
 
-	int GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode);
-	void FreeFindData(PluginPanelItem *PanelItem,int ItemsNumber);
-	int SetDirectory(const char *Dir,int OpMode);
+	int GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode);
+	void FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber);
+	int SetDirectory(const wchar_t *Dir, int OpMode);
 	void GetOpenPluginInfo(struct OpenPluginInfo *Info);
 	int DeleteFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
-	int GetFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
-		int Move,char *DestPath,int OpMode);
-	int PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
-		int Move,int OpMode);
-	int MakeDirectory(const char *Name, int OpMode);
-	int ProcessKey(int Key,unsigned int ControlState);
+	int GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *DestPath, int OpMode);
+	int PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode);
+	int MakeDirectory(const wchar_t *Name, int OpMode);
+	int ProcessKey(int Key, unsigned int ControlState);
 };

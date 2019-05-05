@@ -127,7 +127,9 @@ other possible license with no implications from the above license on them.
 #define FARMACRO_KEY_EVENT  (KEY_EVENT|0x8000)
 
 #ifdef FAR_USE_INTERNALS
+#ifndef _FAR_HAS_NAMELESS_UNIONS
 #define _FAR_NO_NAMELESS_UNIONS
+#endif
 #else // ELSE FAR_USE_INTERNALS
 // To ensure compatibility of plugin.hpp with compilers not supporting C++,
 // you can #define _FAR_NO_NAMELESS_UNIONS. In this case, to access,

@@ -1,7 +1,7 @@
+#include <utils.h>
+#include <TimeUtils.h>
 #include "ConfirmOverwrite.h"
 #include "../Globals.h"
-#include "../Utils.h"
-
 
 
 /*                             34                          62
@@ -26,9 +26,9 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	unsigned long long src_size, const timespec &dst_ts, unsigned long long dst_size)
 {
 	if (xk == XK_COPY) {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
 	} else {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
 	}
 
 	_di.SetLine(2);
@@ -78,7 +78,7 @@ XferOverwriteAction ConfirmOverwrite::Ask(XferOverwriteAction &default_xoa)
 {
 	_di[_i_overwrite].Selected = 1;
 
-	if (Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING) != _i_proceed)
+	if (Show(L"ConfirmOverwrite", 6, 2, FDLG_WARNING) != _i_proceed)
 		return XOA_CANCEL;
 
 	XferOverwriteAction out;

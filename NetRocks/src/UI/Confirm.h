@@ -6,7 +6,6 @@
 
 class ConfirmXfer : protected BaseDialog
 {
-	int _i_dblbox = -1;
 	int _i_destination = -1, _i_ask = -1, _i_overwrite = -1, _i_skip = -1;
 	int _i_overwrite_newer = -1, _i_resume = -1, _i_create_diff_name = -1;
 	int _i_proceed = -1, _i_cancel = -1;
@@ -19,7 +18,6 @@ public:
 
 class ConfirmRemove : protected BaseDialog
 {
-	int _i_dblbox = -1;
 	int _i_proceed = -1, _i_cancel = -1;
 
 public:
@@ -31,7 +29,6 @@ public:
 
 class ConfirmMakeDir : protected BaseDialog
 {
-	int _i_dblbox = -1;
 	int _i_dir_name = -1;
 	int _i_proceed = -1, _i_cancel = -1;
 

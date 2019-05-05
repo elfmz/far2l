@@ -852,6 +852,12 @@ void PluginManager::ClosePlugin(HANDLE hPlugin)
 	delete ph;
 }
 
+HANDLE PluginManager::GetRealPluginHandle(HANDLE hPlugin)
+{
+	PluginHandle *ph = (PluginHandle*)hPlugin;
+	return ph->hPlugin;
+}
+
 
 int PluginManager::ProcessEditorInput(INPUT_RECORD *Rec)
 {

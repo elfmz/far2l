@@ -860,6 +860,7 @@ enum FILE_CONTROL_COMMANDS
 	FCTL_GETPANELFORMAT,
 	FCTL_GETPANELHOSTFILE,
 	FCTL_SETCASESENSITIVESORT,
+	FCTL_GETPANELPLUGINHANDLE, // Param2 points to value of type HANDLE, sets that value to handle of plugin that renders that panel or INVALID_HANDLE_VALUE
 };
 
 typedef int (WINAPI *FARAPICONTROL)(

@@ -1464,6 +1464,7 @@ static int FarControlSynched(HANDLE hPlugin,int Command,int Param1,LONG_PTR Para
 		case FCTL_SETDIRECTORIESFIRST:
 		case FCTL_GETPANELFORMAT:
 		case FCTL_GETPANELHOSTFILE:
+		case FCTL_GETPANELPLUGINHANDLE:
 		{
 			if (!FPanels)
 				return FALSE;

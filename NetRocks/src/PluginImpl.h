@@ -6,6 +6,8 @@
 
 class PluginImpl
 {
+	friend class AllNetRocks;
+
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH];
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
@@ -14,6 +16,8 @@ class PluginImpl
 	bool ValidateConnection();
 
 	std::string CurrentSiteDir(bool with_ending_slash) const;
+	void FromKey_EditSiteConnection(bool create_new);
+	bool FromKey_TryCrossSiteCrossload(bool mv);
 
 public:
 	PluginImpl(const wchar_t *path = nullptr);

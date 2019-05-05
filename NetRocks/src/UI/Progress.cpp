@@ -257,8 +257,8 @@ void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long to
 
 XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state)
 	: BaseProgress((xk == XK_COPY)
-	? ((xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle)
-	: ((xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle),
+	? ((xd == XK_UPLOAD) ? MXferCopyUploadTitle : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle))
+	: ((xd == XK_UPLOAD) ? MXferMoveUploadTitle : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle)),
 	true, destination, state)
 {
 }

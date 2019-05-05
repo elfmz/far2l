@@ -12,7 +12,8 @@ enum XferKind
 enum XferDirection
 {
 	XK_DOWNLOAD,
-	XK_UPLOAD
+	XK_UPLOAD,
+	XK_CROSSLOAD
 };
 
 enum XferOverwriteAction

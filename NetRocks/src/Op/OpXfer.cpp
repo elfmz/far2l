@@ -9,7 +9,10 @@ OpXfer::OpXfer(std::shared_ptr<IHost> &base_host, int op_mode, const std::string
 	std::shared_ptr<IHost> &dst_host, const std::string &dst_dir,
 	struct PluginPanelItem *items, int items_count, XferKind kind, XferDirection direction)
 	:
-	OpBase(base_host, op_mode, base_dir, (direction == XK_UPLOAD) ? MNotificationUpload : MNotificationDownload),
+	OpBase(base_host, op_mode, base_dir,
+		(direction == XK_UPLOAD) ? MNotificationUpload :
+			((direction == XK_CROSSLOAD) ? MNotificationCrossload : MNotificationDownload)),
+
 	_dst_host(dst_host),
 	_dst_dir(dst_dir),
 	_default_xoa(XOA_ASK),

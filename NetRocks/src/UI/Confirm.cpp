@@ -23,11 +23,15 @@
 ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd, const std::string &destination)
 {
 	if (xk == XK_COPY) {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
-		_di.Add(DI_TEXT, 5,2,62,2, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadText : MXferCopyUploadText);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0,
+			(xd == XK_UPLOAD) ? MXferCopyUploadTitle : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle));
+		_di.Add(DI_TEXT, 5,2,62,2, 0,
+			(xd == XK_UPLOAD) ? MXferCopyUploadText : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadText : MXferCopyDownloadText));
 	} else {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
-		_di.Add(DI_TEXT, 5,2,62,2, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadText : MXferMoveUploadText);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0,
+			(xd == XK_UPLOAD) ? MXferMoveUploadTitle : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle));
+		_di.Add(DI_TEXT, 5,2,62,2, 0,
+			(xd == XK_UPLOAD) ? MXferMoveUploadText : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadText : MXferMoveDownloadText));
 	}
 
 	_i_destination = _di.Add(DI_EDIT, 5,3,62,3, 0, destination.c_str());
@@ -48,8 +52,11 @@ ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd, const std::string &desti
 	_di.Add(DI_TEXT, 4,9,63,9, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_i_proceed = _di.Add(DI_BUTTON, 7,10,29,10, DIF_CENTERGROUP, (xk == XK_COPY) ?
-		((xd == XK_DOWNLOAD) ? MProceedCopyDownload : MProceedCopyUpload) :
-		((xd == XK_DOWNLOAD) ? MProceedMoveDownload : MProceedMoveUpload), nullptr, FDIS_DEFAULT);
+		((xd == XK_UPLOAD) ? MProceedCopyUpload : ((xd == XK_CROSSLOAD) ? MProceedCopyCrossload : MProceedCopyDownload))
+		:
+		((xd == XK_UPLOAD) ? MProceedMoveUpload : ((xd == XK_CROSSLOAD) ? MProceedMoveCrossload : MProceedMoveDownload)),
+
+		nullptr, FDIS_DEFAULT);
 
 	_i_cancel = _di.Add(DI_BUTTON, 38,10,58,10, DIF_CENTERGROUP, MCancel);
 }

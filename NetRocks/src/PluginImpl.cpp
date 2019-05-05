@@ -13,15 +13,53 @@
 #include "Op/OpMakeDirectory.h"
 #include "Op/OpEnumDirectory.h"
 
+
+class AllNetRocks
+{
+	std::mutex _mutex;
+	std::map<void *, PluginImpl *> _all;
+
+public:
+	void Add(PluginImpl *it)
+	{
+		std::lock_guard<std::mutex> locker(_mutex);
+		if (!_all.emplace((void *)it, it).second) {
+			fprintf(stderr, "AllNetRocks -dup entry: %p\n", it);
+			abort();
+		}
+	}
+
+	void Remove(PluginImpl *it)
+	{
+		std::lock_guard<std::mutex> locker(_mutex);
+		_all.erase((void *)it);
+	}
+
+	bool GetDestinationOf(void *handle, std::shared_ptr<IHost> &remote, std::string &site_dir)
+	{
+		std::lock_guard<std::mutex> locker(_mutex);
+		auto i = _all.find(handle);
+		if (i == _all.end())
+			return false;
+
+		remote = i->second->_remote;
+		site_dir = i->second->CurrentSiteDir(true);
+		return true;
+	}
+} g_all_netrocks;
+
 PluginImpl::PluginImpl(const wchar_t *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
 	_local.reset((IHost *)new HostLocal());
 	UpdatePanelTitle();
+
+	g_all_netrocks.Add(this);
 }
 
 PluginImpl::~PluginImpl()
 {
+	g_all_netrocks.Remove(this);
 }
 
 void PluginImpl::UpdatePanelTitle()
@@ -269,36 +307,17 @@ int PluginImpl::MakeDirectory(const wchar_t *Name, int OpMode)
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
-	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
+//	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
 
 	if ((Key==VK_F5 || Key==VK_F6) && _remote)
 	{
+		return FromKey_TryCrossSiteCrossload(Key==VK_F6) ? TRUE : FALSE;
 	}
 
 	if (Key==VK_F4 && !_cur_dir[0]
 	&& (ControlState == 0 || ControlState == PKF_SHIFT))
 	{
-		std::string site;
-
-		if (ControlState == 0) {
-    			intptr_t size = G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, 0);
-			if (size >= (intptr_t)sizeof(PluginPanelItem)) {
-				TailedStruct<PluginPanelItem> ppi(0x100 + size - sizeof(PluginPanelItem));
-				G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
-				//if ((ppi->Flags & PPIF_SELECTED) != 0) {
-					Wide2MB(ppi->FindData.lpwszFileName, site);
-				//}
-			}
-		}
-
-		SiteConnectionEditor sce(site);
-		const bool connect_now = sce.Edit();
-		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
-		if (connect_now) {
-			SetDirectory(StrMB2Wide(sce.DisplayName()).c_str(), 0);
-		}
-
-
+		FromKey_EditSiteConnection(ControlState == PKF_SHIFT);
 		return TRUE;
 	}
 /*
@@ -308,4 +327,90 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 	}
 */
 	return FALSE;
+}
+
+void PluginImpl::FromKey_EditSiteConnection(bool create_new)
+{
+	std::string site;
+
+	if (!create_new) {
+		intptr_t size = G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, 0);
+		if (size >= (intptr_t)sizeof(PluginPanelItem)) {
+			TailedStruct<PluginPanelItem> ppi(size + 0x20 - sizeof(PluginPanelItem));
+			G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
+			//if ((ppi->Flags & PPIF_SELECTED) != 0) {
+				Wide2MB(ppi->FindData.lpwszFileName, site);
+			//}
+		}
+	}
+
+	SiteConnectionEditor sce(site);
+	const bool connect_now = sce.Edit();
+	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+	if (connect_now) {
+		SetDirectory(StrMB2Wide(sce.DisplayName()).c_str(), 0);
+	}
+}
+
+
+
+bool PluginImpl::FromKey_TryCrossSiteCrossload(bool mv)
+{
+	HANDLE plugin = INVALID_HANDLE_VALUE;
+	G.info.Control(PANEL_ACTIVE, FCTL_GETPANELPLUGINHANDLE, 0, (LONG_PTR)(void *)&plugin);
+	if (plugin != (void *)this)
+		return false;
+
+	G.info.Control(PANEL_PASSIVE, FCTL_GETPANELPLUGINHANDLE, 0, (LONG_PTR)(void *)&plugin);
+	if (plugin == INVALID_HANDLE_VALUE)
+		return false;
+
+	std::shared_ptr<IHost> dst_remote;
+	std::string dst_site_dir;
+	if (!g_all_netrocks.GetDestinationOf(plugin, dst_remote, dst_site_dir))
+		return false;
+
+	if (!dst_remote) {
+		;// TODO: Show error that need connection
+		fprintf(stderr, "TryCrossSiteCrossload: tried to upload to unconnected NetRocks instance\n");
+		return true;
+	}
+
+
+	PanelInfo pi = {};
+	G.info.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)(void *)&pi);
+	if (pi.SelectedItemsNumber == 0) {
+		fprintf(stderr, "TryCrossSiteCrossload: no files selected\n");
+		return true;
+	}
+
+	std::vector<PluginPanelItem> items_vector;
+	std::vector<PluginPanelItem *> items_to_free;
+	for (int i = 0; i < pi.SelectedItemsNumber; ++i) {
+		size_t len = G.info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
+		if (len >= sizeof(PluginPanelItem)) {
+			PluginPanelItem *pi = (PluginPanelItem *)calloc(1, len + 0x20);
+			if (pi == nullptr)
+				break;
+
+			G.info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(void *)pi);
+			items_to_free.push_back(pi);
+			if (pi->FindData.lpwszFileName)
+				items_vector.push_back(*pi);
+		}
+	}
+
+	if (!items_vector.empty()) {
+		OpXfer(_remote, 0, CurrentSiteDir(true), dst_remote, dst_site_dir,
+			&items_vector[0], (int)items_vector.size(), mv ? XK_MOVE : XK_COPY, XK_CROSSLOAD).Do();
+
+		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+		G.info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
+	}
+
+	for (auto &pi : items_to_free) {
+		free(pi);
+	}
+
+	return true;
 }

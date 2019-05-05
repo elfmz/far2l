@@ -29,13 +29,17 @@
 
 "Download from server"
 "Upload to server"
-"Move from server"
-"Move to server"
+"Crossload to server"
+"Download/Move from server"
+"Upload/Move to server"
+"Crossload/Move to server"
 
 "Download selected files &to:"
 "Upload selected files &to:"
+"Crossload selected files &to:"
 "Move downloaded selected &files &to:"
 "Move uploaded selected files &to:"
+"Move crossloaded selected files &to:"
 
 "Default overwrite action:"
 
@@ -65,8 +69,10 @@
 
 "Down&load"
 "Up&load"
+"Cross&load"
 "Download-&Move"
 "Upload-&Move"
+"Crossload-&Move"
 
 "Destination file aready exists:"
 "Source file information:"
@@ -100,3 +106,4 @@
 "NetRocks () failed"
 "upload"
 "download"
+"crossload"

@@ -31,13 +31,17 @@ enum LanguageID
 
   MXferCopyDownloadTitle,
   MXferCopyUploadTitle,
+  MXferCopyCrossloadTitle,
   MXferMoveDownloadTitle,
   MXferMoveUploadTitle,
+  MXferMoveCrossloadTitle,
 
   MXferCopyDownloadText,
   MXferCopyUploadText,
+  MXferCopyCrossloadText,
   MXferMoveDownloadText,
   MXferMoveUploadText,
+  MXferMoveCrossloadText,
 
   MXferDOAText,
 
@@ -67,8 +71,10 @@ enum LanguageID
 
   MProceedCopyDownload,
   MProceedCopyUpload,
+  MProceedCopyCrossload,
   MProceedMoveDownload,
   MProceedMoveUpload,
+  MProceedMoveCrossload,
 
   MDestinationExists,
   MSourceInfo,
@@ -100,5 +106,6 @@ enum LanguageID
   MNotificationSuccess,
   MNotificationFailed,
   MNotificationUpload,
-  MNotificationDownload
+  MNotificationDownload,
+  MNotificationCrossload
 };

@@ -15,6 +15,9 @@ struct IFileWriter
 	virtual ~IFileWriter() {};
 
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error) = 0;
+
+	/// optional call used to ensure that all data written (flush, gracefully close connection etc) but may be not called
+	virtual void WriteComplete() throw (std::runtime_error) = 0;
 };
 
 struct IDirectoryEnumer

@@ -183,6 +183,7 @@ void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 	for (;;) {
 		const size_t piece = reader->Read(buf, sizeof(buf));
 		if (piece == 0) {
+			writer->Write(buf, 0); // it will raise exception if last chunk failed to write
 			break;
 		}
 		writer->Write(buf, piece);

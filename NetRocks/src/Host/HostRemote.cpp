@@ -349,6 +349,15 @@ class HostRemoteFileIO : public IFileReader, public IFileWriter
 	std::shared_ptr<HostRemote> _conn;
 	bool _complete = false, _writing;
 
+	void EnsureComplete()
+	{
+		if (!_complete) {
+			_complete = true;
+			_conn->SendPOD((size_t)0); // zero length mean stop requested
+			_conn->RecvReply(IPC_STOP);
+		}
+	}
+
 public:
 	HostRemoteFileIO(std::shared_ptr<HostRemote> conn, bool writing)
 		: _conn(conn), _writing(writing)
@@ -357,10 +366,11 @@ public:
 
 	virtual ~HostRemoteFileIO()
 	{
-		if (!_complete) try {
-			_conn->SendPOD((size_t)0); // zero length mean stop requested
-			_conn->RecvReply(IPC_STOP);
+		try {
+			EnsureComplete();
+
 		} catch (std::exception &ex) {
+			fprintf(stderr, "~HostRemoteFileIO(_writing=%d): %s\n", _writing, ex.what());
 //			_conn->Abort();
 		}
 	}
@@ -368,8 +378,9 @@ public:
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
 		assert(!_writing);
-		if (_complete || len == 0)
+		if (_complete || len == 0) {
 			return 0;
+		}
 
 		try {
 			_conn->SendPOD(len);
@@ -397,8 +408,12 @@ public:
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
 		assert(_writing);
-		if (len == 0)
+		if (len == 0) {
 			return;
+		}
+		if (_complete) {
+			throw std::runtime_error("Write: already complete");
+		}
 
 		try {
 			_conn->SendPOD(len);
@@ -409,6 +424,11 @@ public:
 			_complete = true;
 			throw;
 		}
+	}
+
+	virtual void WriteComplete() throw (std::runtime_error)
+	{
+		EnsureComplete();
 	}
 };
 

@@ -291,6 +291,11 @@ public:
 			buf = (const char *)buf + len;
 		}
 	}
+
+	virtual void WriteComplete() throw (std::runtime_error)
+	{
+		// what?
+	}
 };
 
 

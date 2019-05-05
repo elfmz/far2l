@@ -29,10 +29,10 @@
 
 "Download from server"
 "Upload to server"
-"Crossload to server"
+"Crossload between servers"
 "Download/Move from server"
 "Upload/Move to server"
-"Crossload/Move to server"
+"Crossload/Move between servers"
 
 "Download selected files &to:"
 "Upload selected files &to:"

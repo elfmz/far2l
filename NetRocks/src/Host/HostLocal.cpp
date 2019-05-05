@@ -2,6 +2,7 @@
 #include <map>
 #include <ScopeHelpers.h>
 #include <sudo.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
@@ -237,6 +238,19 @@ public:
 			len-= (size_t)rv;
 			buf = (const char *)buf + rv;
 		}
+	}
+
+	virtual void WriteComplete() throw (std::runtime_error)
+	{
+/*
+#ifdef __APPLE__
+		if (fcntl(_fd, F_FULLFSYNC) == -1) {
+#else
+		if (fdatasync(_fd) == -1) {
+#endif
+			throw ProtocolError("sync failed", errno);
+		}
+*/
 	}
 };
 

@@ -122,13 +122,24 @@ class HostRemoteSlave : protected IPCEndpoint
 		RecvPOD(_args.ull);
 		std::shared_ptr<IFileWriter> writer = _protocol->FilePut(_args.str1, _args.mode, _args.ull);
 		SendCommand(IPC_FILE_PUT);
+		// Trick to improve IO parallelization: instead of sending status reply on operation,
+		// send preliminary OK and if error will occur - do error reply on next operation.
+		std::string error_str;
 		for (;;) {
 			size_t len = 0;
 			RecvPOD(len);
+			if (!error_str.empty()) {
+				SendCommand(IPC_ERROR);
+				SendString(error_str);
+				break;
+			}
 			if (!len) {
+				writer->WriteComplete();
 				SendCommand(IPC_STOP);
 				break;
 			}
+			SendCommand(IPC_FILE_PUT);
+
 			if (_io_buf.size() < len) {
 				_io_buf.resize(len);
 			}
@@ -138,11 +149,10 @@ class HostRemoteSlave : protected IPCEndpoint
 				writer->Write(&_io_buf[0], len);
 			} catch (ProtocolError &ex) {
 				fprintf(stderr, "OnFilePut: %s\n", ex.what());
-				SendCommand(IPC_ERROR);
-				SendString(ex.what());
-				break;
+				error_str = ex.what();
+				if (error_str.empty())
+					error_str = "Unknown error";
 			}
-			SendCommand(IPC_FILE_PUT);
 		}
 	}
 

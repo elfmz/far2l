@@ -9,6 +9,7 @@ set(SOURCES
   src/SharedResource.cpp
   src/KeyFileHelper.cpp
   src/utils.cpp
+  src/TimeUtils.cpp
   src/InMy.cpp
   src/ZombieControl.cpp
   src/base64.cpp

@@ -1,7 +1,10 @@
+#include <stdio.h>
+#include <wchar.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
 #include <string>
 #include <vector>
-#include <all_far.h>
-#include <fstdlib.h>
 #include <KeyFileHelper.h>
 #include <ScopeHelpers.h>
 #include <CheckedCast.hpp>
@@ -102,11 +105,12 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	fcntl(master2slave[1], F_SETFD, FD_CLOEXEC);
 	fcntl(slave2master[0], F_SETFD, FD_CLOEXEC);
 
-	char lib_cmdline[0x200];
-	snprintf(lib_cmdline, sizeof(lib_cmdline), "%d %d", master2slave[0], slave2master[1]);
+	wchar_t lib_cmdline[0x200] = {};
+	swprintf(lib_cmdline, ARRAYSIZE(lib_cmdline) - 1, L"%d %d", master2slave[0], slave2master[1]);
 
+	fprintf(stderr, "G.plugin_path.c_str()='%ls'\n", G.plugin_path.c_str());
 	G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(),
-		"HostRemoteSlaveMain", lib_cmdline, EF_HIDEOUT | EF_NOWAIT);
+		L"HostRemoteSlaveMain", lib_cmdline, EF_HIDEOUT | EF_NOWAIT);
 
 	close(master2slave[0]);
 	close(slave2master[1]);

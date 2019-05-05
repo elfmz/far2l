@@ -2,10 +2,7 @@
 #include <string>
 #include <set>
 #include <memory>
-
-#include <all_far.h>
-#include <fstdlib.h>
-
+#include <plugin.hpp>
 #include "../../UI/Defs.h"
 #include "../../FileInformation.h"
 #include "../../Host/Host.h"

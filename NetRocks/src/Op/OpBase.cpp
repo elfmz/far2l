@@ -1,3 +1,4 @@
+#include <utils.h>
 #include "OpBase.h"
 #include "../Globals.h"
 #include "../lng.h"
@@ -18,12 +19,12 @@ OpBase::~OpBase()
 	// calling DisplayNotification from here cuz calling it from thread causes deadlock due to
 	// InterlockedCall waits for main thread while main thread waits for thread's completion
 	if (_op_name_lng != -1) {
-		std::string display_action = G.GetMsg(_succeded ? MNotificationSuccess : MNotificationFailed);
-		size_t p = display_action.find("()");
-		if (p != std::string::npos)
-			display_action.replace(p, 2, G.GetMsg(_op_name_lng));
+		std::wstring display_action = G.GetMsgWide(_succeded ? MNotificationSuccess : MNotificationFailed);
+		size_t p = display_action.find(L"()");
+		if (p != std::wstring::npos)
+			display_action.replace(p, 2, G.GetMsgWide(_op_name_lng));
 
-		G.info.FSF->DisplayNotification(display_action.c_str(), _base_dir.c_str());
+		G.info.FSF->DisplayNotification(display_action.c_str(), StrMB2Wide(_base_dir).c_str());
 	}
 
 }

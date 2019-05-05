@@ -71,3 +71,8 @@ bool isCombinedUTF32(wchar_t c);
 
 size_t GetMallocSize(void *p);
 
+
+void AbbreviateFilePath(std::string &path, size_t needed_length);
+
+const char *FileSizeToFractionAndUnits(unsigned long long &value);
+std::string FileSizeString(unsigned long long value);

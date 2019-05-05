@@ -62,7 +62,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 		_port = DefaultPortForProtocol("sftp");
 	}
 
-	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, MEditHost);
+	_di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, MEditHost);
 
 	_di.SetLine(2);
 	_di.AddAtLine(DI_TEXT, 5,27, 0, MDisplayName);
@@ -163,7 +163,7 @@ bool SiteConnectionEditor::Save()
 
 bool SiteConnectionEditor::Edit()
 {
-	int result = Show(_di[_i_dblbox].Data, 6, 2);
+	int result = Show(L"SiteConnectionEditor", 6, 2);
 
 	if (result == _i_save || result == _i_connect) {
 		if (!Save()) {

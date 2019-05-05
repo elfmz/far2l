@@ -1,4 +1,4 @@
-#pragma once
+#include <utils.h>
 #include "Defs.h"
 #include "DialogUtils.h"
 #include "../lng.h"
@@ -43,7 +43,7 @@ public:
 
 	bool Ask()
 	{
-		int reply = Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING);
+		int reply = Show(L"AbortConfirm", 6, 2, FDLG_WARNING);
 		return (reply == _i_confirm || reply == -1);
 	}
 };
@@ -71,8 +71,9 @@ protected:
 			} else {
 				const time_t secs = time(NULL) - _ts;
 				if (secs) {
-					snprintf(_di[_i_dblbox].Data, sizeof(_di[_i_dblbox].Data) - 1, "%s (%lus)", _title.c_str(), (unsigned long)secs);
-					TextToDialogControl(dlg, _i_dblbox, _di[_i_dblbox].Data);
+					char sz[0x200];
+					snprintf(sz, ARRAYSIZE(sz) - 1, "%s (%lus)", _title.c_str(), (unsigned long)secs);
+					TextToDialogControl(dlg, _i_dblbox, sz);
 					if (secs == 60) {
 						_finished = true;
 						Close(dlg);
@@ -89,14 +90,14 @@ public:
 	{
 		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3, 1, 50, 3, 0, MAbortingOperationTitle);
 		_di.Add(DI_BUTTON, 5,2,48,2, DIF_CENTERGROUP, MBreakConnection);
-		_title = _di[_i_dblbox].Data;
+		_title = Wide2MB(_di[_i_dblbox].PtrData);
 	}
 
 	void Show()
 	{
 		_finished = false;
 		while (!_state.finished) {
-			BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
+			BaseDialog::Show(L"AbortOperationProgress", 6, 2, FDLG_REGULARIDLE);
 			if (_state.finished) break;
 			if (_state.ao_host) {
 				_state.ao_host->ForcefullyAbort();

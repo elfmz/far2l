@@ -12,7 +12,7 @@ class BaseProgress : protected BaseDialog
 	int _finished = 0;
 
 protected:
-	int _i_dblbox = -1, _i_cur_file = -1;
+	int _i_cur_file = -1;
 	int _i_file_size_complete = -1;
 	int _i_file_size_total = -1;
 	int _i_file_size_progress_bar = -1;

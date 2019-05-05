@@ -1,5 +1,6 @@
 #include <assert.h>
-
+#include <sys/stat.h>
+#include <utils.h>
 #include "Enumer.h"
 #include "ProgressStateUpdate.h"
 
@@ -11,9 +12,9 @@ Enumer::Enumer(Path2FileInformation &result, std::shared_ptr<IHost> &host, const
 	assert(dir.empty() || dir[dir.size() - 1] == '/');
 	std::string item_path;
 	for (int i = 0; i < items_count; ++i) {
-		if (FILENAME_ENUMERABLE(items[i].FindData.cFileName)) {
+		if (FILENAME_ENUMERABLE(items[i].FindData.lpwszFileName)) {
 			item_path = dir;
-			item_path+= items[i].FindData.cFileName;
+			item_path+= Wide2MB(items[i].FindData.lpwszFileName);
 			_items.emplace(item_path);
 		}
 	}

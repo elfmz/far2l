@@ -2,10 +2,10 @@ project(NetRocks)
 
 set(SOURCES
 src/Erroring.cpp
-src/Utils.cpp
 src/Globals.cpp
 src/NetRocks.cpp
 src/PluginImpl.cpp
+src/PluginPanelItems.cpp
 src/PooledStrings.cpp
 src/Protocol/ProtocolSFTP.cpp
 src/Host/IPC.cpp
@@ -30,6 +30,10 @@ src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
 )
 
+
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")
+
 add_library (NetRocks MODULE ${SOURCES})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -38,10 +42,9 @@ endif()
 
 FIND_LIBRARY(LIBSSH_LIBRARY NAMES ssh)
 
-target_link_libraries(NetRocks utils FARStdlib ssh)
+target_link_libraries(NetRocks utils ssh)
 
 target_include_directories(NetRocks PRIVATE src)
-target_include_directories(NetRocks PRIVATE ../FARStdlib/include)
 target_include_directories(NetRocks PRIVATE ../WinPort)
 target_include_directories(NetRocks PRIVATE ../far2l)
 target_include_directories(NetRocks PRIVATE ../far2l/Include)
@@ -53,7 +56,7 @@ set_target_properties(NetRocks
   PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
     PREFIX ""
-    SUFFIX ".far-plug-mb")
+    SUFFIX ".far-plug-wide")
 
 add_custom_command(TARGET NetRocks POST_BUILD
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs

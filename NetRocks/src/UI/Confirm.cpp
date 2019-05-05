@@ -1,3 +1,4 @@
+#include <utils.h>
 #include "Confirm.h"
 #include "../Globals.h"
 
@@ -22,10 +23,10 @@
 ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd, const std::string &destination)
 {
 	if (xk == XK_COPY) {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
 		_di.Add(DI_TEXT, 5,2,62,2, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadText : MXferCopyUploadText);
 	} else {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
 		_di.Add(DI_TEXT, 5,2,62,2, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadText : MXferMoveUploadText);
 	}
 
@@ -81,7 +82,7 @@ bool ConfirmXfer::Ask(XferOverwriteAction &default_xoa)
 			_di[_i_ask].Selected = 1;
 	}
 
-	if (Show(_di[_i_dblbox].Data, 6, 2) != _i_proceed)
+	if (Show(L"ConfirmXfer", 6, 2) != _i_proceed)
 		return false;
 
 	if (_di[_i_skip].Selected) {
@@ -123,7 +124,7 @@ bool ConfirmXfer::Ask(XferOverwriteAction &default_xoa)
 
 ConfirmRemove::ConfirmRemove(const std::string &site_dir)
 {
-	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,6, 0, MRemoveTitle);
+	_di.Add(DI_DOUBLEBOX, 3,1,64,6, 0, MRemoveTitle);
 	_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveText);
 
 	_di.Add(DI_TEXT, 5,3,62,3, 0, site_dir.c_str());
@@ -137,7 +138,7 @@ ConfirmRemove::ConfirmRemove(const std::string &site_dir)
 
 bool ConfirmRemove::Ask()
 {
-	return (Show(_di[_i_dblbox].Data, 6, 2, FDLG_WARNING) == _i_proceed);
+	return (Show(L"ConfirmRemove", 6, 2, FDLG_WARNING) == _i_proceed);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,7 +156,7 @@ bool ConfirmRemove::Ask()
 
 ConfirmMakeDir::ConfirmMakeDir(const std::string &default_name)
 {
-	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,50,6, 0, MMakeDirTitle);
+	_di.Add(DI_DOUBLEBOX, 3,1,50,6, 0, MMakeDirTitle);
 	_di.Add(DI_TEXT, 5,2,48,2, 0, MMakeDirText);
 
 	_i_dir_name = _di.Add(DI_EDIT, 5,3,48,3, DIF_HISTORY, default_name.c_str(), "NetRocks_History_MakeDir", FDIS_FOCUSED);
@@ -169,8 +170,8 @@ ConfirmMakeDir::ConfirmMakeDir(const std::string &default_name)
 std::string ConfirmMakeDir::Ask()
 {
 	std::string out;
-	if (Show(_di[_i_dblbox].Data, 6, 2) == _i_proceed) {
-		out = _di[_i_dir_name].Data;
+	if (Show(L"ConfirmMakeDir", 6, 2) == _i_proceed) {
+		Wide2MB(_di[_i_dir_name].PtrData, out);
 	}
 	return out;
 }

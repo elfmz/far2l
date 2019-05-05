@@ -1,8 +1,9 @@
-#pragma once
+#include <utils.h>
 #include <string>
 #include <windows.h>
 #include "DialogUtils.h"
 #include "../lng.h"
+#include "../PooledStrings.h"
 
 /*                                               
 345                                            50
@@ -43,22 +44,22 @@ public:
 		_di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MCancel);
 
 		if (retry) {
-			char sz[32] = {};
-			snprintf(sz, sizeof(sz) - 1, " (%u)", retry);
-			strncat(_di[_i_dblbox].Data, sz, sizeof(_di[_i_username].Data));
+			char sz[0x200] = {};
+			snprintf(sz, sizeof(sz) - 1, "%ls (%u)", _di[_i_dblbox].PtrData, retry);
+			_di[_i_dblbox].PtrData = MB2WidePooled(sz);
 		}
 	}
 
 	bool Ask(std::string &username, std::string &password)
 	{
-		strncpy(_di[_i_username].Data, username.c_str(), sizeof(_di[_i_username].Data));
-		strncpy(_di[_i_password].Data, password.c_str(), sizeof(_di[_i_password].Data));
+		_di[_i_username].PtrData = MB2WidePooled(username);
+		_di[_i_password].PtrData = MB2WidePooled(password);
 
-		if (Show(_di[_i_dblbox].Data, 6, 2) != _i_connect)
+		if (Show(L"InteractiveLoginDialog", 6, 2) != _i_connect)
 			return false;
 
-		username = _di[_i_username].Data;
-		password = _di[_i_password].Data;
+		Wide2MB(_di[_i_username].PtrData, username);
+		Wide2MB(_di[_i_password].PtrData, password);
 		return true;
 	}
 };

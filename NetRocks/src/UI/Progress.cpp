@@ -1,7 +1,8 @@
+#include <utils.h>
+#include <TimeUtils.h>
 #include "Progress.h"
 #include "Confirm.h"
 #include "AbortOperationRequest.h"
-#include "../Utils.h"
 #include "../lng.h"
 
 
@@ -87,14 +88,14 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MPause); // MResume
 	_i_cancel = _di.AddAtLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
 
-	_speed_current_label = _di[_i_speed_current_label].Data;
+	_speed_current_label = Wide2MB(_di[_i_speed_current_label].PtrData);
 }
 
 void BaseProgress::Show()
 {
 	while (!_state.finished) {
 		_finished = 0;
-		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
+		BaseDialog::Show(L"BaseProgress", 6, 2, FDLG_REGULARIDLE);
 		if (_finished) break;
 		AbortOperationRequest(_state);
 	}
@@ -298,14 +299,14 @@ SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &o
 	_di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 	_di.Add(DI_BUTTON, 16,4,32,4, DIF_CENTERGROUP, MCancel);
 
-	_title = _di[_i_dblbox].Data;
+	_title = Wide2MB(_di[_i_dblbox].PtrData);
 }
 
 void SimpleOperationProgress::Show()
 {
 	while (!_state.finished) {
 		_finished = 0;
-		BaseDialog::Show(_di[_i_dblbox].Data, 6, 2, FDLG_REGULARIDLE);
+		BaseDialog::Show(L"SimpleOperationProgress", 6, 2, FDLG_REGULARIDLE);
 		if (_finished) break;
 		AbortOperationRequest(_state);
 	}

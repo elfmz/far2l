@@ -2,7 +2,7 @@
 #include "../UI/Confirm.h"
 #include "../PooledStrings.h"
 
-OpEnumDirectory::OpEnumDirectory(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &base_dir, FP_SizeItemList &result)
+OpEnumDirectory::OpEnumDirectory(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &base_dir, PluginPanelItems &result)
 	:
 	OpBase(base_host, op_mode, base_dir),
 	_result(result)
@@ -37,17 +37,12 @@ void OpEnumDirectory::Process()
 			break;
 		}
 
-		PluginPanelItem tmp = {};
-		strncpy(tmp.FindData.cFileName, name.c_str(), sizeof(tmp.FindData.cFileName) - 1);
-		tmp.FindData.nFileSizeLow = (DWORD)(file_info.size & 0xffffffff);
-		tmp.FindData.nFileSizeHigh = (DWORD)(file_info.size >> 32);
-		tmp.FindData.dwUnixMode = file_info.mode;
-		tmp.FindData.dwFileAttributes = WINPORT(EvaluateAttributesA)(file_info.mode, name.c_str());
-		tmp.Owner = (char *)PooledString(owner);
-		tmp.Group = (char *)PooledString(group);
-		if (!_result.Add(&tmp)) {
-			throw std::runtime_error("our of memory");
-		}
+		auto *ppi = _result.Add(name.c_str());
+		ppi->FindData.nFileSize = file_info.size;
+		ppi->FindData.dwUnixMode = file_info.mode;
+		ppi->FindData.dwFileAttributes = WINPORT(EvaluateAttributesA)(file_info.mode, name.c_str());
+		ppi->Owner = (wchar_t *)MB2WidePooled(owner);
+		ppi->Group = (wchar_t *)MB2WidePooled(group);
 
 		ProgressStateUpdate psu(_state);
 		_state.stats.count_complete++;

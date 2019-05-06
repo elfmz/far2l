@@ -110,6 +110,14 @@
 "download"
 "crossload"
 
+"Download error"
+"Upload error"
+"Crossload error"
+"Query information error"
+"Make directory error"
+"Remove directory error"
+"Remove file error"
+
 "Error:"
 "Failed object:"
 "Failed site:"

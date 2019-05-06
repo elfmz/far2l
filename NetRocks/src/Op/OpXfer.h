@@ -9,7 +9,8 @@ class OpXfer : protected OpBase
 	std::shared_ptr<Enumer> _enumer;
 	std::shared_ptr<IHost> _dst_host;
 	std::string _dst_dir, _diffname_suffix;
-	XferOverwriteAction _default_xoa;
+	XferOverwriteAction _default_xoa = XOA_ASK;
+	WhatOnErrorAction _default_wea = WEA_ASK;
 	XferKind _kind;
 	XferDirection _direction;
 

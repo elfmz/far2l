@@ -6,6 +6,9 @@ enum LanguageID
   MDescription,
   MOK,
   MCancel,
+  MRetry,
+  MSkip,
+  MRememberChoice,
 
   MLoginAuthTitle,
   MLoginAuthRetryTitle,
@@ -80,7 +83,6 @@ enum LanguageID
   MSourceInfo,
   MDestinationInfo,
   MOverwriteOptions,
-  MRememberSelection,
 
   MRemoveTitle,
   MRemoveText,
@@ -107,5 +109,16 @@ enum LanguageID
   MNotificationFailed,
   MNotificationUpload,
   MNotificationDownload,
-  MNotificationCrossload
+  MNotificationCrossload,
+
+  MErrorDownloadTitle,
+  MErrorUploadTitle,
+  MErrorCrossloadTitle,
+  MErrorMakeDirTitle,
+  MErrorRmFileTitle,
+  MErrorRmDirTitle,
+
+  MErrorError,
+  MErrorObject,
+  MErrorSite,
 };

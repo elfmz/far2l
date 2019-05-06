@@ -4,6 +4,7 @@ project(utils)
 find_package(PkgConfig REQUIRED)
 
 set(SOURCES
+  src/StrFormat.cpp
   src/Threaded.cpp
   src/SavedScreen.cpp
   src/SharedResource.cpp

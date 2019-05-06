@@ -12,12 +12,10 @@
 | Source file information: [99999 Kb]  [DD/MM/YYYY hh:mm.ss] |
 | Destination information: [        ]  [DD/MM/YYYY hh:mm.ss] |
 |------------------------------------------------------------|
-| Options to proceed:                                        |
-| [ ] Reme&mber selection      [ ] &Overwrite                |
-| [ ] &Skip                    [ ] Overwrite with &newer     |
-| [ ] &Resume                  [ ] Create &different name    |
+| [ ] Reme&mber my choice for current operation              |
 |------------------------------------------------------------|
-|   [  Proceed dowmload   ]        [        Cancel       ]   |
+|  [&Skip]     [&Overwrite]           [Overwrite with &newer]|
+|  [&Resume]     [Create &different name]   [    Cancel  ]   |
  ============================================================
     6                     29   34  38                      60
 */
@@ -26,9 +24,9 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	unsigned long long src_size, const timespec &dst_ts, unsigned long long dst_size)
 {
 	if (xk == XK_COPY) {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
 	} else {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XK_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
 	}
 
 	_di.SetLine(2);
@@ -51,58 +49,49 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,62, 0, MOverwriteOptions);
-
-	_di.NextLine();
-	_i_remember = _di.AddAtLine(DI_CHECKBOX, 5,33, 0, MRememberSelection);
-	_i_overwrite = _di.AddAtLine(DI_RADIOBUTTON, 34,62, DIF_GROUP, MXferDOAOverwrite);
-
-	_di.NextLine();
-	_i_skip = _di.AddAtLine(DI_RADIOBUTTON, 5,33, 0, MXferDOASkip);
-	_i_overwrite_newer = _di.AddAtLine(DI_RADIOBUTTON, 34,62, 0, MXferDOAOverwriteIfNewer);
-
-	_di.NextLine();
-	_i_resume = _di.AddAtLine(DI_RADIOBUTTON, 5,33, 0, MXferDOAResume);
-	_i_create_diff_name = _di.AddAtLine(DI_RADIOBUTTON, 34,62, 0, MXferDOACreateDifferentName);
+	_i_remember = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MRememberChoice);
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	_i_proceed = _di.AddAtLine(DI_BUTTON, 7,29, DIF_CENTERGROUP, MOK, nullptr, FDIS_DEFAULT);
-	_i_cancel = _di.AddAtLine(DI_BUTTON, 38,58, DIF_CENTERGROUP, MCancel);
+	_i_skip = _di.AddAtLine(DI_BUTTON, 5,15, DIF_CENTERGROUP, MXferDOASkip, nullptr, FDIS_DEFAULT);
+	_i_overwrite = _di.AddAtLine(DI_BUTTON, 16,29, DIF_CENTERGROUP, MXferDOAOverwrite);
+	_i_overwrite_newer = _di.AddAtLine(DI_BUTTON, 30,62, DIF_CENTERGROUP, MXferDOAOverwriteIfNewer);
+
+	_di.NextLine();
+	_i_resume = _di.AddAtLine(DI_BUTTON, 5,15, DIF_CENTERGROUP, MXferDOAResume);
+	_i_create_diff_name = _di.AddAtLine(DI_BUTTON, 16,49, DIF_CENTERGROUP, MXferDOACreateDifferentName);
+	_di.AddAtLine(DI_BUTTON, 50,62, DIF_CENTERGROUP, MCancel);
 }
 
 
 XferOverwriteAction ConfirmOverwrite::Ask(XferOverwriteAction &default_xoa)
 {
-	_di[_i_overwrite].Selected = 1;
+	int r = Show(L"ConfirmOverwrite", 6, 2, FDLG_WARNING);
 
-	if (Show(L"ConfirmOverwrite", 6, 2, FDLG_WARNING) != _i_proceed)
-		return XOA_CANCEL;
+	XferOverwriteAction out = XOA_CANCEL;
 
-	XferOverwriteAction out;
-
-	if (IsCheckedDialogControl(_i_skip)) {
+	if (r == _i_skip) {
 		out = XOA_SKIP;
 
-	} else if (IsCheckedDialogControl(_i_resume)) {
-		out = XOA_RESUME;
-
-	} else if (IsCheckedDialogControl(_i_overwrite)) {
+	} else if (r == _i_overwrite) {
 		out = XOA_OVERWRITE;
 
-	} else if (IsCheckedDialogControl(_i_overwrite_newer)) {
+	} else if (r == _i_overwrite_newer) {
 		out = XOA_OVERWRITE_IF_NEWER;
 
-	} else if (IsCheckedDialogControl(_i_create_diff_name)) {
+	} else if (r == _i_resume) {
+		out = XOA_RESUME;
+
+	} else if (r == _i_create_diff_name) {
 		out = XOA_CREATE_DIFFERENT_NAME;
 
-	} else { // WTF
-		return XOA_CANCEL;
+	} else if (r == _i_create_diff_name) {
+		out = XOA_CREATE_DIFFERENT_NAME;
 	}
 
-	if (IsCheckedDialogControl(_i_remember)) {
+	if (out != XOA_CANCEL && IsCheckedDialogControl(_i_remember)) {
 		default_xoa = out;
 	}
 

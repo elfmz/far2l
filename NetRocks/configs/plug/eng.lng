@@ -4,6 +4,9 @@
 "SFTP"
 "&Ok"
 "&Cancel"
+"&Retry"
+"&Skip"
+"Re&member my choice for current operation"
 
 "Authentification"
 "Authentification - retry"
@@ -78,7 +81,6 @@
 "Source file information:"
 "Destination information"
 "Options to proceed"
-"Re&member selection"
 
 "Remove from server"
 "Remove selected items from:"
@@ -107,3 +109,7 @@
 "upload"
 "download"
 "crossload"
+
+"Error:"
+"Failed object:"
+"Failed site:"

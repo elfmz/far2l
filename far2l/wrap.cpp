@@ -2475,8 +2475,15 @@ int WINAPI FarDialogExA(INT_PTR PluginNumber,int X1,int Y1,int X2,int Y2,const c
 		FreeUnicodeDialogItem(di[i]);
 	}
 
-	delete *DialogList.Last();
-	DialogList.Delete(DialogList.Last());
+	for(PDialogData* i=DialogList.Last();i;i=DialogList.Prev(i))
+	{
+		if((*i)->hDlg==hDlg)
+		{
+			delete *i;
+			DialogList.Delete(i);
+			break;
+		}
+	}
 
 	delete[] diA;
 	delete[] di;

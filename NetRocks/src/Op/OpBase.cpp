@@ -3,12 +3,12 @@
 #include "../Globals.h"
 #include "../lng.h"
 
-OpBase::OpBase(std::shared_ptr<IHost> base_host, int op_mode, const std::string &base_dir, int op_name_lng)
+OpBase::OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir, int op_name_lng)
 	:
-	_base_host(base_host),
+	_op_name_lng(op_name_lng),
 	_op_mode(op_mode),
-	_base_dir(base_dir),
-	_op_name_lng(op_name_lng)
+	_base_host(base_host),
+	_base_dir(base_dir)
 {
 	_state.ao_host = this;
 	_succeded = false;

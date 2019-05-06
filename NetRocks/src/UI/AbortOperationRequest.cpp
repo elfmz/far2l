@@ -19,15 +19,15 @@ class AbortConfirm : protected BaseDialog
 {
 	int _i_dblbox, _i_confirm, _i_cancel;
 
-	LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
 		if (msg == DM_KEY && param2 == 0x1b) {
 			// need to distinguish escape press and exit due to far going down
 			// to avoid infinite loop at far shutdown
-			Close(dlg, _i_cancel);
+			Close(_i_cancel);
 			return TRUE;
 		}
-		return BaseDialog::DlgProc(dlg, msg, param1, param2);
+		return BaseDialog::DlgProc(msg, param1, param2);
 	}
 
 public:
@@ -60,28 +60,28 @@ class AbortOperationProgress : protected BaseDialog
 	bool _finished;
 
 protected:
-	LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
 		if (msg == DN_ENTERIDLE) {
 			if (_state.finished) {
 				if (!_finished) {
 					_finished = true;
-					Close(dlg);
+					Close();
 				}
 			} else {
 				const time_t secs = time(NULL) - _ts;
 				if (secs) {
 					char sz[0x200];
 					snprintf(sz, ARRAYSIZE(sz) - 1, "%s (%lus)", _title.c_str(), (unsigned long)secs);
-					TextToDialogControl(dlg, _i_dblbox, sz);
+					TextToDialogControl(_i_dblbox, sz);
 					if (secs == 60) {
 						_finished = true;
-						Close(dlg);
+						Close();
 					}
 				}
 			}
 		}	
-		return BaseDialog::DlgProc(dlg, msg, param1, param2);
+		return BaseDialog::DlgProc(msg, param1, param2);
 	}
 
 public:

@@ -21,7 +21,7 @@ class OpXfer : protected OpBase
 	void FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode);
 
 public:
-	OpXfer(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &base_dir,
+	OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
 		int items_count, XferKind kind, XferDirection direction);
 	bool Do();

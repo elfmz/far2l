@@ -2,9 +2,9 @@
 #include "../UI/Confirm.h"
 #include "../PooledStrings.h"
 
-OpEnumDirectory::OpEnumDirectory(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &base_dir, PluginPanelItems &result)
+OpEnumDirectory::OpEnumDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, PluginPanelItems &result)
 	:
-	OpBase(base_host, op_mode, base_dir),
+	OpBase(op_mode, base_host, base_dir),
 	_result(result)
 {
 }

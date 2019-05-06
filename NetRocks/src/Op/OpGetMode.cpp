@@ -1,9 +1,9 @@
 #include "OpGetMode.h"
 #include "../UI/Confirm.h"
 
-OpGetMode::OpGetMode(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &path)
+OpGetMode::OpGetMode(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &path)
 	:
-	OpBase(base_host, op_mode, path)
+	OpBase(op_mode, base_host, path)
 {
 }
 

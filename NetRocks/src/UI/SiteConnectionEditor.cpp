@@ -174,16 +174,16 @@ bool SiteConnectionEditor::Edit()
 	return (result == _i_connect);
 }
 
-LONG_PTR SiteConnectionEditor::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 {
 	switch (msg) {
 		case DN_BTNCLICK:
 			if (param1 == _i_display_name_autogen) {
-				DisplayNameAutogenerateAndApply(dlg);
+				DisplayNameAutogenerateAndApply();
 				return TRUE;
 
 			} else if (param1 == _i_save || param1 == _i_connect) {
-				DataFromDialog(dlg);
+				DataFromDialog();
 			}
 		break;
 
@@ -192,72 +192,72 @@ LONG_PTR SiteConnectionEditor::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR
 				break;
 
 			if (param1 == _i_protocol) {
-				OnProtocolChanged(dlg);
+				OnProtocolChanged();
 			}
 			if (param1 == _i_login_mode) {
-				OnLoginModeChanged(dlg);
+				OnLoginModeChanged();
 			}
 
 			if (param1 == _i_display_name) {
 				_autogen_display_name = false;
-				DisplayNameInputRefine(dlg);
+				DisplayNameInputRefine();
 
 			} else if (_autogen_display_name && (
 				param1 == _i_protocol || param1 == _i_host || param1 == _i_port
 				|| param1 == _i_login_mode || param1 == _i_username || param1 == _i_directory) ) {
-				DisplayNameAutogenerateAndApply(dlg);
+				DisplayNameAutogenerateAndApply();
 			}
 
 		break;
 	}
-	return BaseDialog::DlgProc(dlg, msg, param1, param2);
+	return BaseDialog::DlgProc(msg, param1, param2);
 }
 
-void SiteConnectionEditor::DataFromDialog(HANDLE dlg)
+void SiteConnectionEditor::DataFromDialog()
 {
 	std::string str;
-	TextFromDialogControl(dlg, _i_protocol, _protocol);
-	TextFromDialogControl(dlg, _i_display_name, _display_name);
-	TextFromDialogControl(dlg, _i_host, _host);
-	TextFromDialogControl(dlg, _i_port, str); _port = atoi(str.c_str());
-	TextFromDialogControl(dlg, _i_username, _username);
-	TextFromDialogControl(dlg, _i_password, _password);
-	TextFromDialogControl(dlg, _i_directory, _directory);
+	TextFromDialogControl(_i_protocol, _protocol);
+	TextFromDialogControl(_i_display_name, _display_name);
+	TextFromDialogControl(_i_host, _host);
+	TextFromDialogControl(_i_port, str); _port = atoi(str.c_str());
+	TextFromDialogControl(_i_username, _username);
+	TextFromDialogControl(_i_password, _password);
+	TextFromDialogControl(_i_directory, _directory);
 }
 
-void SiteConnectionEditor::OnProtocolChanged(HANDLE dlg)
+void SiteConnectionEditor::OnProtocolChanged()
 {
 	++_autogen_pending;
 	std::string protocol;
-	TextFromDialogControl(dlg, _i_protocol, protocol);
+	TextFromDialogControl(_i_protocol, protocol);
 	unsigned int port = DefaultPortForProtocol(protocol.c_str());
 	char sz[32];
 	snprintf(sz, sizeof(sz), "%u", port);
-	TextToDialogControl(dlg, _i_port, sz);
+	TextToDialogControl(_i_port, sz);
 	--_autogen_pending;
 }
 
-void SiteConnectionEditor::OnLoginModeChanged(HANDLE dlg)
+void SiteConnectionEditor::OnLoginModeChanged()
 {
 	++_autogen_pending;
-	_login_mode = (unsigned long)SendDlgMessage(dlg, DM_LISTGETCURPOS, _i_login_mode, 0);
+	_login_mode = (unsigned long)SendDlgMessage(DM_LISTGETCURPOS, _i_login_mode, 0);
 	if (_login_mode > 2) {
 		_login_mode = 0;
 	}
 //	fprintf(stderr, "_login_mode=%u\n", _login_mode);
 
 	if (_login_mode == 0) {
-		TextToDialogControl(dlg, _i_username, "anonymous");
+		TextToDialogControl(_i_username, "anonymous");
 	}
-	SetEnabledDialogControl(dlg, _i_password, (_login_mode == 2));
+	SetEnabledDialogControl(_i_password, (_login_mode == 2));
 	--_autogen_pending;
 }
 
-void SiteConnectionEditor::DisplayNameInputRefine(HANDLE dlg)
+void SiteConnectionEditor::DisplayNameInputRefine()
 {
 	++_autogen_pending;
 	try {
-		DataFromDialog(dlg);
+		DataFromDialog();
 		bool changed = false;
 		for (auto &c : _display_name) {
 			if (c == '/') {
@@ -266,7 +266,7 @@ void SiteConnectionEditor::DisplayNameInputRefine(HANDLE dlg)
 			}
 		}
 		if (changed)
-			TextToDialogControl(dlg, _i_display_name, _display_name);
+			TextToDialogControl(_i_display_name, _display_name);
 	} catch (std::exception &) {
 		;
 	}
@@ -274,13 +274,13 @@ void SiteConnectionEditor::DisplayNameInputRefine(HANDLE dlg)
 }
 
 
-void SiteConnectionEditor::DisplayNameAutogenerateAndApply(HANDLE dlg)
+void SiteConnectionEditor::DisplayNameAutogenerateAndApply()
 {
 	++_autogen_pending;
 	try {
-		DataFromDialog(dlg);
+		DataFromDialog();
 		_display_name = DisplayNameAutogenerate();
-		TextToDialogControl(dlg, _i_display_name, _display_name);
+		TextToDialogControl(_i_display_name, _display_name);
 		_autogen_display_name = true;
 	} catch (std::exception &) {
 		;

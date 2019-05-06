@@ -23,8 +23,15 @@ struct FarDialogItems : std::vector<struct FarDialogItem>
 	int EstimateWidth() const;
 	int EstimateHeight() const;
 
+	// use local strings pool to do not pollute global one
+	const wchar_t *MB2WidePooled(const char *sz);
+
 private:
+
 	int AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history, FarDialogItemState state);
+
+	std::set<std::wstring> _str_pool;
+	std::wstring _str_pool_tmp;
 };
 
 struct FarDialogItemsLineGrouped : FarDialogItems
@@ -64,29 +71,31 @@ protected:
 	FarDialogItemsLineGrouped _di;
 	HANDLE _dlg = INVALID_HANDLE_VALUE;
 
-	static LONG_PTR SendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2);
+	static LONG_PTR sSendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	static LONG_PTR WINAPI sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
-	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 
-	int Show(const wchar_t *title, int extra_width, int extra_height, unsigned int flags = 0);
-	int Show(const char *title, int extra_width, int extra_height, unsigned int flags = 0);
-	int Show(int title_lng, int extra_width, int extra_height, unsigned int flags = 0);
+	LONG_PTR SendDlgMessage(int msg, int param1, LONG_PTR param2);
+	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2);
 
-	void Close(HANDLE dlg, int code = -1);
+	int Show(const wchar_t *help_topic, int extra_width, int extra_height, unsigned int flags = 0);
+	int Show(const char *help_topic, int extra_width, int extra_height, unsigned int flags = 0);
 
-	void TextFromDialogControl(HANDLE dlg, int ctl, std::string &str);
-	void TextToDialogControl(HANDLE dlg, int ctl, const char *str);
-	void TextToDialogControl(HANDLE dlg, int ctl, const std::string &str);
-	void TextToDialogControl(HANDLE dlg, int ctl, int lng_str);
-	void LongLongToDialogControl(HANDLE dlg, int ctl, long long value);
+	void Close(int code = -1);
 
-	void FileSizeToDialogControl(HANDLE dlg, int ctl, unsigned long long value);
+	void TextFromDialogControl(int ctl, std::string &str);
+	void TextToDialogControl(int ctl, const char *str);
+	void TextToDialogControl(int ctl, const std::string &str);
+	void TextToDialogControl(int ctl, int lng_str);
+	void LongLongToDialogControl(int ctl, long long value);
 
-	void TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long long msec);
+	void FileSizeToDialogControl(int ctl, unsigned long long value);
 
-	void ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents = -1);
+	void TimePeriodToDialogControl(int ctl, unsigned long long msec);
 
-	void SetEnabledDialogControl(HANDLE dlg, int ctl, bool en = true);
+	void ProgressBarToDialogControl(int ctl, int percents = -1);
+
+	void SetEnabledDialogControl(int ctl, bool en = true);
+	bool IsCheckedDialogControl(int ctl);
 
 public:
 	virtual ~BaseDialog();

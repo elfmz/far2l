@@ -3,6 +3,18 @@
 #include "../Globals.h"
 #include "PooledStrings.h"
 
+const wchar_t *FarDialogItems::MB2WidePooled(const char *sz)
+{
+	if (!sz)
+		return nullptr;
+
+	if (!*sz)
+		return L"";
+
+	MB2Wide(sz, _str_pool_tmp);
+	return _str_pool.insert(_str_pool_tmp).first->c_str();
+}
+
 int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history, FarDialogItemState state)
 {
 	int index = (int)size();
@@ -165,114 +177,115 @@ BaseDialog::~BaseDialog()
 	}
 }
 
-LONG_PTR BaseDialog::SendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+LONG_PTR BaseDialog::sSendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {
+	if (dlg == INVALID_HANDLE_VALUE) {
+		fprintf(stderr, "BaseDialog::sSendDlgMessage: invalid dlg, msg=0x%x param1=0x%x\n", msg, param1);
+	}
 	return G.info.SendDlgMessage(dlg, msg, param1, param2);
+}
+
+LONG_PTR BaseDialog::SendDlgMessage(int msg, int param1, LONG_PTR param2)
+{
+	return sSendDlgMessage(_dlg, msg, param1, param2);
 }
 
 LONG_PTR WINAPI BaseDialog::sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {
-	BaseDialog *it = (BaseDialog *)SendDlgMessage(dlg, DM_GETDLGDATA, 0, 0);
+	BaseDialog *it = (BaseDialog *)sSendDlgMessage(dlg, DM_GETDLGDATA, 0, 0);
 	if (it) {
-		return it->DlgProc(dlg, msg, param1, param2);
+		if (dlg == it->_dlg) {
+			return it->DlgProc(msg, param1, param2);
+		}
+
+		fprintf(stderr, "BaseDialog::sDlgProc: wrong dlg: %p != %p\n", dlg, it->_dlg);
 	}
 
 	return G.info.DefDlgProc(dlg, msg, param1, param2);
 }
 
-LONG_PTR BaseDialog::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+LONG_PTR BaseDialog::DlgProc(int msg, int param1, LONG_PTR param2)
 {
-	return G.info.DefDlgProc(dlg, msg, param1, param2);
+	return G.info.DefDlgProc(_dlg, msg, param1, param2);
 }
 
-int BaseDialog::Show(const wchar_t *title, int extra_width, int extra_height, unsigned int flags)
+int BaseDialog::Show(const wchar_t *help_topic, int extra_width, int extra_height, unsigned int flags)
 {
 	if (_dlg == INVALID_HANDLE_VALUE) {
 		_dlg = G.info.DialogInit(G.info.ModuleNumber, -1, -1,
 			_di.EstimateWidth() + extra_width, _di.EstimateHeight() + extra_height,
-			title, &_di[0], _di.size(), 0, flags, &sDlgProc, (LONG_PTR)(uintptr_t)this);
+			help_topic, &_di[0], _di.size(), 0, flags, &sDlgProc, (LONG_PTR)(uintptr_t)this);
 		if (_dlg == INVALID_HANDLE_VALUE) {
 			return -1;
 		}
 	}
 
-	int out = G.info.DialogRun(_dlg);
-
-	for (size_t i = 0; i < _di.size(); ++i) {
-        	_di[i].Selected = (SendDlgMessage(_dlg, DM_GETCHECK, (int)i, 0) == BSTATE_CHECKED);
-	}
-
-	return out;
+	return G.info.DialogRun(_dlg);
 }
 
-int BaseDialog::Show(const char *title, int extra_width, int extra_height, unsigned int flags)
+int BaseDialog::Show(const char *help_topic, int extra_width, int extra_height, unsigned int flags)
 {
-	return Show(MB2Wide(title).c_str(), extra_width, extra_height, flags);
+	return Show(MB2Wide(help_topic).c_str(), extra_width, extra_height, flags);
 //	fprintf(stderr, "[%ld] BaseDialog::Show: %p %d\n", time(NULL), &_di[0], _di.size());
 }
 
-int BaseDialog::Show(int title_lng, int extra_width, int extra_height, unsigned int flags)
+void BaseDialog::Close(int code)
 {
-	return Show(G.GetMsgMB(title_lng), extra_width, extra_height, flags);
-}
-
-void BaseDialog::Close(HANDLE dlg, int code)
-{
-	SendDlgMessage(dlg, DM_CLOSE, code, 0);
+	SendDlgMessage(DM_CLOSE, code, 0);
 }
 
 
-void BaseDialog::TextFromDialogControl(HANDLE dlg, int ctl, std::string &str)
+void BaseDialog::TextFromDialogControl(int ctl, std::string &str)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
 	static wchar_t buf[ 0x1000 ] = {};
 	FarDialogItemData dd = { ARRAYSIZE(buf) - 1, buf };
-	LONG_PTR rv = SendDlgMessage(dlg, DM_GETTEXT, ctl, (LONG_PTR)&dd);
+	LONG_PTR rv = SendDlgMessage(DM_GETTEXT, ctl, (LONG_PTR)&dd);
 	if (rv > 0 && rv < (LONG_PTR)sizeof(buf))
 		buf[rv] = 0;
 
 	Wide2MB(buf, str);
 }
 
-void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const char *str)
+void BaseDialog::TextToDialogControl(int ctl, const char *str)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
 	const std::wstring &tmp = MB2Wide(str);
 	FarDialogItemData dd = { tmp.size(), (wchar_t*)tmp.c_str()};
-	SendDlgMessage(dlg, DM_SETTEXT, ctl, (LONG_PTR)&dd);
+	SendDlgMessage(DM_SETTEXT, ctl, (LONG_PTR)&dd);
 }
 
-void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, const std::string &str)
+void BaseDialog::TextToDialogControl(int ctl, const std::string &str)
 {
-	TextToDialogControl(dlg, ctl, str.c_str());
+	TextToDialogControl(ctl, str.c_str());
 }
 
-void BaseDialog::TextToDialogControl(HANDLE dlg, int ctl, int lng_str)
+void BaseDialog::TextToDialogControl(int ctl, int lng_str)
 {
 	const char *str = G.GetMsgMB(lng_str);
-	TextToDialogControl(dlg, ctl, str ? str : "");
+	TextToDialogControl(ctl, str ? str : "");
 }
 
-void BaseDialog::LongLongToDialogControl(HANDLE dlg, int ctl, long long value)
+void BaseDialog::LongLongToDialogControl(int ctl, long long value)
 {
 	char str[0x100] = {};
 	snprintf(str, sizeof(str) - 1, "%lld", value);
-	TextToDialogControl(dlg, ctl, str);
+	TextToDialogControl(ctl, str);
 }
 
-void BaseDialog::FileSizeToDialogControl(HANDLE dlg, int ctl, unsigned long long value)
+void BaseDialog::FileSizeToDialogControl(int ctl, unsigned long long value)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
-	TextToDialogControl(dlg, ctl, FileSizeString(value));
+	TextToDialogControl(ctl, FileSizeString(value));
 }
 
-void BaseDialog::TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long long msec_ull)
+void BaseDialog::TimePeriodToDialogControl(int ctl, unsigned long long msec_ull)
 {
 //	unsigned long long msec_ull = msec.count();
 	unsigned int hrs = (unsigned int)(msec_ull / 3600000ll);
@@ -284,10 +297,10 @@ void BaseDialog::TimePeriodToDialogControl(HANDLE dlg, int ctl, unsigned long lo
 
 	char str[0x100] = {};
 	snprintf(str, sizeof(str) - 1, "%02u:%02u.%02u", hrs, mins, secs);
-	TextToDialogControl(dlg, ctl, str);
+	TextToDialogControl(ctl, str);
 }
 
-void BaseDialog::ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents)
+void BaseDialog::ProgressBarToDialogControl(int ctl, int percents)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
@@ -308,10 +321,15 @@ void BaseDialog::ProgressBarToDialogControl(HANDLE dlg, int ctl, int percents)
 			c = '-';
 		}
 	}
-	TextToDialogControl(dlg, ctl, str);
+	TextToDialogControl(ctl, str);
 }
 
-void BaseDialog::SetEnabledDialogControl(HANDLE dlg, int ctl, bool en)
+void BaseDialog::SetEnabledDialogControl(int ctl, bool en)
 {
-	SendDlgMessage(dlg, DM_ENABLE, ctl, en ? TRUE : FALSE);
+	SendDlgMessage(DM_ENABLE, ctl, en ? TRUE : FALSE);
+}
+
+bool BaseDialog::IsCheckedDialogControl(int ctl)
+{
+	return (SendDlgMessage(DM_GETCHECK, ctl, 0) == BSTATE_CHECKED);
 }

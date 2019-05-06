@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <cstdarg>
 #include <sys/types.h>
 #include "luck.h"
 #include "MatchWildcard.hpp"
@@ -76,3 +77,6 @@ void AbbreviateFilePath(std::string &path, size_t needed_length);
 
 const char *FileSizeToFractionAndUnits(unsigned long long &value);
 std::string FileSizeString(unsigned long long value);
+
+std::string StrFormatV(const char *format, va_list args);
+std::string StrFormat(const char *format, ...);

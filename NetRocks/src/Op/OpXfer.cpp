@@ -3,6 +3,7 @@
 #include "OpXfer.h"
 #include "../UI/Confirm.h"
 #include "../UI/ConfirmOverwrite.h"
+#include "../UI/WhatOnError.h"
 #include "../lng.h"
 
 OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
@@ -15,7 +16,6 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 
 	_dst_host(dst_host),
 	_dst_dir(dst_dir),
-	_default_xoa(XOA_ASK),
 	_kind(kind),
 	_direction(direction)
 {
@@ -177,19 +177,65 @@ void OpXfer::Transfer()
 
 void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
 {
-	std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, pos);
-	std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, mode, pos);
-	char buf[0x10000];
-	for (;;) {
-		const size_t piece = reader->Read(buf, sizeof(buf));
-		if (piece == 0) {
+	IHost *indicted = nullptr;
+	for (;;) try {
+		if (indicted) { // retrying...
+			indicted->ReInitialize();
+
+			indicted = _dst_host.get();
+			pos = _dst_host->GetSize(path_dst);
+		}
+
+		indicted = _base_host.get();
+		std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, pos);
+		indicted = _dst_host.get();
+		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, mode, pos);
+		char buf[0x10000];
+		for (;;) {
+			indicted = _base_host.get();
+			const size_t piece = reader->Read(buf, sizeof(buf));
+			if (piece == 0) {
+				break;
+			}
+			indicted = _dst_host.get();
+			writer->Write(buf, piece);
+
+			indicted = nullptr;
+			ProgressStateUpdate psu(_state);
+			_state.stats.all_complete+= piece;
+			_state.stats.file_complete+= piece;
+		}
+		break;
+
+	} catch (AbortError &) {
+		throw;
+
+	} catch (std::exception &ex) {
+		if (indicted == nullptr) {
+			throw;
+		}
+
+		WhatOnErrorAction action = _default_wea;
+		if (action == WEA_ASK) {
+			action = WhatOnError( (_direction == XK_UPLOAD) ? WEK_UPLOAD
+				: ((_direction == XK_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
+				ex.what(), path_src, "???").Ask(_default_wea);
+
+			if (action == WEA_CANCEL) {
+				throw AbortError();
+			}
+		}
+
+		if (action == WEA_SKIP) {
+			ProgressStateUpdate psu(_state);
+			_state.stats.count_skips++;
 			break;
 		}
-		writer->Write(buf, piece);
 
+		// WEA_RETRY
+		sleep(1);
 		ProgressStateUpdate psu(_state);
-		_state.stats.all_complete+= piece;
-		_state.stats.file_complete+= piece;
+		_state.stats.count_retries++;
 	}
 }
 

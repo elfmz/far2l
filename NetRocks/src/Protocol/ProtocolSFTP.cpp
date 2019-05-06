@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+//#define SIMULATED_FAILURES_RATE 0
 
 static void SSHSessionDeleter(ssh_session res)
 {

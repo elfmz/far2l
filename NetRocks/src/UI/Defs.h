@@ -27,12 +27,30 @@ enum XferOverwriteAction
 	XOA_CREATE_DIFFERENT_NAME
 };
 
+enum WhatOnErrorKind
+{
+	WEK_DOWNLOAD,
+	WEK_UPLOAD,
+	WEK_CROSSLOAD,
+	WEK_MAKEDIR,
+	WEK_RMFILE,
+	WEK_RMDIR
+};
+
+enum WhatOnErrorAction
+{
+	WEA_CANCEL = 0, // meaningful as dialog result
+	WEA_ASK = 0,    // meaningful as default action
+	WEA_SKIP,
+	WEA_RETRY
+};
 
 struct ProgressStateStats
 {
 	unsigned long long file_complete = 0, file_total = 0;
 	unsigned long long all_complete = 0, all_total = 0;
 	unsigned long long count_complete = 0, count_total = 0;
+	unsigned long long count_skips = 0, count_retries = 0;
 	std::chrono::milliseconds total_start = {}, current_start = {};
 	std::chrono::milliseconds total_paused = {}, current_paused = {};
 };

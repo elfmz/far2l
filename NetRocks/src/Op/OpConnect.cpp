@@ -2,7 +2,7 @@
 #include "Host/HostRemote.h"
 
 OpConnect::OpConnect(int op_mode, const std::string &display_name)
-	: OpBase(std::make_shared<HostRemote>(display_name, op_mode), op_mode, display_name)
+	: OpBase(op_mode, std::make_shared<HostRemote>(display_name, op_mode), display_name)
 {
 }
 

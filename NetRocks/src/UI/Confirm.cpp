@@ -92,19 +92,19 @@ bool ConfirmXfer::Ask(XferOverwriteAction &default_xoa)
 	if (Show(L"ConfirmXfer", 6, 2) != _i_proceed)
 		return false;
 
-	if (_di[_i_skip].Selected) {
+	if (IsCheckedDialogControl(_i_skip)) {
 		default_xoa = XOA_SKIP;
 
-	} else if (_di[_i_resume].Selected) {
+	} else if (IsCheckedDialogControl(_i_resume)) {
 		default_xoa = XOA_RESUME;
 
-	} else if (_di[_i_overwrite].Selected) {
+	} else if (IsCheckedDialogControl(_i_overwrite)) {
 		default_xoa = XOA_OVERWRITE;
 
-	} else if (_di[_i_overwrite_newer].Selected) {
+	} else if (IsCheckedDialogControl(_i_overwrite_newer)) {
 		default_xoa = XOA_OVERWRITE_IF_NEWER;
 
-	} else if (_di[_i_create_diff_name].Selected) {
+	} else if (IsCheckedDialogControl(_i_create_diff_name)) {
 		default_xoa = XOA_CREATE_DIFFERENT_NAME;
 
 	} else {
@@ -178,7 +178,7 @@ std::string ConfirmMakeDir::Ask()
 {
 	std::string out;
 	if (Show(L"ConfirmMakeDir", 6, 2) == _i_proceed) {
-		Wide2MB(_di[_i_dir_name].PtrData, out);
+		TextFromDialogControl(_i_dir_name, out);
 	}
 	return out;
 }

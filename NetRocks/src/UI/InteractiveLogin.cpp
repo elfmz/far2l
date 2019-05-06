@@ -46,20 +46,21 @@ public:
 		if (retry) {
 			char sz[0x200] = {};
 			snprintf(sz, sizeof(sz) - 1, "%ls (%u)", _di[_i_dblbox].PtrData, retry);
-			_di[_i_dblbox].PtrData = MB2WidePooled(sz);
+			_di[_i_dblbox].PtrData = _di.MB2WidePooled(sz);
 		}
 	}
 
 	bool Ask(std::string &username, std::string &password)
 	{
-		_di[_i_username].PtrData = MB2WidePooled(username);
-		_di[_i_password].PtrData = MB2WidePooled(password);
+		_di[_i_username].PtrData = _di.MB2WidePooled(username.c_str());
+		_di[_i_password].PtrData = _di.MB2WidePooled(password.c_str());
 
 		if (Show(L"InteractiveLoginDialog", 6, 2) != _i_connect)
 			return false;
 
-		Wide2MB(_di[_i_username].PtrData, username);
-		Wide2MB(_di[_i_password].PtrData, password);
+		TextFromDialogControl(_i_username, username);
+		TextFromDialogControl(_i_password, password);
+		//fprintf(stderr, "username='%s', password='%s'\n", username.c_str(), password.c_str());
 		return true;
 	}
 };

@@ -8,6 +8,6 @@ class OpMakeDirectory : protected OpBase
 	virtual void Process();
 
 public:
-	OpMakeDirectory(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &base_dir, const std::string &dir_name);
+	OpMakeDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, const std::string &dir_name);
 	bool Do();
 };

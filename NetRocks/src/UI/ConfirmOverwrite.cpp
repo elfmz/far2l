@@ -83,26 +83,26 @@ XferOverwriteAction ConfirmOverwrite::Ask(XferOverwriteAction &default_xoa)
 
 	XferOverwriteAction out;
 
-	if (_di[_i_skip].Selected) {
+	if (IsCheckedDialogControl(_i_skip)) {
 		out = XOA_SKIP;
 
-	} else if (_di[_i_resume].Selected) {
+	} else if (IsCheckedDialogControl(_i_resume)) {
 		out = XOA_RESUME;
 
-	} else if (_di[_i_overwrite].Selected) {
+	} else if (IsCheckedDialogControl(_i_overwrite)) {
 		out = XOA_OVERWRITE;
 
-	} else if (_di[_i_overwrite_newer].Selected) {
+	} else if (IsCheckedDialogControl(_i_overwrite_newer)) {
 		out = XOA_OVERWRITE_IF_NEWER;
 
-	} else if (_di[_i_create_diff_name].Selected) {
+	} else if (IsCheckedDialogControl(_i_create_diff_name)) {
 		out = XOA_CREATE_DIFFERENT_NAME;
 
 	} else { // WTF
 		return XOA_CANCEL;
 	}
 
-	if (_di[_i_remember].Selected) {
+	if (IsCheckedDialogControl(_i_remember)) {
 		default_xoa = out;
 	}
 

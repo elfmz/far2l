@@ -1,10 +1,10 @@
 #include "OpMakeDirectory.h"
 #include "../UI/Confirm.h"
 
-OpMakeDirectory::OpMakeDirectory(std::shared_ptr<IHost> &base_host, int op_mode,
+OpMakeDirectory::OpMakeDirectory(int op_mode,std::shared_ptr<IHost> &base_host,
 	const std::string &base_dir, const std::string &dir_name)
 	:
-	OpBase(base_host, op_mode, base_dir),
+	OpBase(op_mode, base_host, base_dir),
 	_dir_name(dir_name)
 {
 }

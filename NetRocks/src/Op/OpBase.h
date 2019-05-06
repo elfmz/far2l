@@ -12,10 +12,10 @@
 class OpBase : protected Threaded, protected IAbortableOperationsHost
 {
 protected:
-	std::shared_ptr<IHost> _base_host;
-	int _op_mode;
-	std::string _base_dir;
 	int _op_name_lng;
+	int _op_mode;
+	std::shared_ptr<IHost> _base_host;
+	std::string _base_dir;
 	volatile bool _succeded;
 
 	ProgressState _state;
@@ -29,7 +29,7 @@ protected:
 	virtual void Process() = 0;
 
 public:
-	OpBase(std::shared_ptr<IHost> base_host, int op_mode, const std::string &base_dir, int op_name_lng = -1);
+	OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir, int op_name_lng = -1);
 	~OpBase();
 };
 

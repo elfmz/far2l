@@ -42,12 +42,12 @@ protected:
 	unsigned long long _prev_complete = 0, _speed_current = 0, _speed_average = 0;
 	std::chrono::milliseconds _prev_ts {};
 
-	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
-	void OnIdle(HANDLE dlg);
-	void UpdateTimes(HANDLE dlg);
+	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2);
+	void OnIdle();
+	void UpdateTimes();
 	void UpdateTime(unsigned long long complete, unsigned long long total,
 		const std::chrono::milliseconds &start, const std::chrono::milliseconds &paused, const std::chrono::milliseconds &now,
-		HANDLE dlg, int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl = -1, int i_speed_cur_ctl = -1, int i_speed_avg_ctl = -1);
+		int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl = -1, int i_speed_cur_ctl = -1, int i_speed_avg_ctl = -1);
 
 public:
 	BaseProgress(int title_lng, bool show_file_size_progress, const std::string &path, ProgressState &state);
@@ -81,7 +81,7 @@ public:
 	void Show();
 
 protected:
-	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
+	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2);
 
 private:
 	Kind _kind;

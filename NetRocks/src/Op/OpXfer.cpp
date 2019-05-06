@@ -5,11 +5,11 @@
 #include "../UI/ConfirmOverwrite.h"
 #include "../lng.h"
 
-OpXfer::OpXfer(std::shared_ptr<IHost> &base_host, int op_mode, const std::string &base_dir,
+OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 	std::shared_ptr<IHost> &dst_host, const std::string &dst_dir,
 	struct PluginPanelItem *items, int items_count, XferKind kind, XferDirection direction)
 	:
-	OpBase(base_host, op_mode, base_dir,
+	OpBase(op_mode, base_host, base_dir,
 		(direction == XK_UPLOAD) ? MNotificationUpload :
 			((direction == XK_CROSSLOAD) ? MNotificationCrossload : MNotificationDownload)),
 

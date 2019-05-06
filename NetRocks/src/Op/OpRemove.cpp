@@ -4,10 +4,10 @@
 #include "../UI/Confirm.h"
 
 
-OpRemove::OpRemove(std::shared_ptr<IHost> &base_host, int op_mode,
+OpRemove::OpRemove(int op_mode, std::shared_ptr<IHost> &base_host,
 	const std::string &base_dir, struct PluginPanelItem *items, int items_count)
 	:
-	OpBase(base_host, op_mode, base_dir)
+	OpBase(op_mode, base_host, base_dir)
 {
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, false, _state);
 }

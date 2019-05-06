@@ -139,7 +139,7 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 		} else {
 			auto *ppi = ppis.Add(L"..");
 			ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-			OpEnumDirectory(_remote, OpMode, CurrentSiteDir(false), ppis).Do();
+			OpEnumDirectory(OpMode, _remote, CurrentSiteDir(false), ppis).Do();
 			//_remote->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
 
@@ -203,7 +203,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 		if (p != std::string::npos && p < tmp.size() - 1) {
 			mode_t mode = 0;
-			if (!OpGetMode(_remote, OpMode, tmp.substr(p + 1)).Do(mode))
+			if (!OpGetMode(OpMode, _remote, tmp.substr(p + 1)).Do(mode))
 				throw std::runtime_error("Get mode failed");
 
 			if (!S_ISDIR(mode))
@@ -252,7 +252,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	if (DestPath)
 		Wide2MB(DestPath, dst_dir);
 
-	return OpXfer(_remote, OpMode, CurrentSiteDir(true), _local, dst_dir,
+	return OpXfer(OpMode, _remote, CurrentSiteDir(true), _local, dst_dir,
 		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD).Do() ? TRUE : FALSE;
 }
 
@@ -278,7 +278,7 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		dst_dir[l + 1] = 0;
 	}
 
-	return OpXfer(_local, OpMode, dst_dir, _remote, CurrentSiteDir(true),
+	return OpXfer(OpMode, _local, dst_dir, _remote, CurrentSiteDir(true),
 		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_UPLOAD).Do() ? TRUE : FALSE;
 }
 
@@ -288,7 +288,7 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	if (ItemsNumber <= 0)
 		return FALSE;
 
-	return OpRemove(_remote, OpMode, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
+	return OpRemove(OpMode, _remote, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::MakeDirectory(const wchar_t *Name, int OpMode)
@@ -296,9 +296,10 @@ int PluginImpl::MakeDirectory(const wchar_t *Name, int OpMode)
 	fprintf(stderr, "NetRocks::MakeDirectory('%ls', 0x%x)\n", Name, OpMode);
 	if (_cur_dir[0]) {
 		std::string tmp;
-		if (Name)
+		if (Name) {
 			Wide2MB(Name, tmp);
-		return OpMakeDirectory(_remote, OpMode, CurrentSiteDir(true), Name ? tmp.c_str() : nullptr).Do();
+		}
+		return OpMakeDirectory(OpMode, _remote, CurrentSiteDir(true), Name ? tmp.c_str() : nullptr).Do();
 	} else {
 		;//todo
 	}
@@ -401,7 +402,7 @@ bool PluginImpl::FromKey_TryCrossSiteCrossload(bool mv)
 	}
 
 	if (!items_vector.empty()) {
-		OpXfer(_remote, 0, CurrentSiteDir(true), dst_remote, dst_site_dir,
+		OpXfer(0, _remote, CurrentSiteDir(true), dst_remote, dst_site_dir,
 			&items_vector[0], (int)items_vector.size(), mv ? XK_MOVE : XK_COPY, XK_CROSSLOAD).Do();
 
 		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);

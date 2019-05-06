@@ -24,14 +24,14 @@ class SiteConnectionEditor : protected BaseDialog
 	FarListWrapper _di_login_mode;
 
 
-	virtual LONG_PTR DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
+	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2);
 
-	void DataFromDialog(HANDLE dlg);
-	void DisplayNameInputRefine(HANDLE dlg);
-	void DisplayNameAutogenerateAndApply(HANDLE dlg);
+	void DataFromDialog();
+	void DisplayNameInputRefine();
+	void DisplayNameAutogenerateAndApply();
 	std::string DisplayNameAutogenerate();
-	void OnProtocolChanged(HANDLE dlg);
-	void OnLoginModeChanged(HANDLE dlg);
+	void OnProtocolChanged();
+	void OnLoginModeChanged();
 
 	void Load();
 	bool Save();

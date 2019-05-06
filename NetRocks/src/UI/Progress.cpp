@@ -101,11 +101,11 @@ void BaseProgress::Show()
 	}
 }
 
-LONG_PTR BaseProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+LONG_PTR BaseProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 {
 	//fprintf(stderr, "%x %x\n", msg, param1);
 	if (msg == DN_ENTERIDLE) {
-		OnIdle(dlg);
+		OnIdle();
 
 	} else if (msg == DN_BTNCLICK) {
 		if (param1 == _i_pause_resume) {
@@ -114,15 +114,15 @@ LONG_PTR BaseProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 				std::lock_guard<std::mutex> locker(_state.mtx);
 				paused = (_state.paused = !_state.paused);
 			}
-			TextToDialogControl(dlg, _i_pause_resume, paused ? MResume : MPause);
+			TextToDialogControl(_i_pause_resume, paused ? MResume : MPause);
 			return TRUE;
 		}
 	}
 	
-	return BaseDialog::DlgProc(dlg, msg, param1, param2);
+	return BaseDialog::DlgProc(msg, param1, param2);
 }
 
-void BaseProgress::OnIdle(HANDLE dlg)
+void BaseProgress::OnIdle()
 {
 	struct {
 		bool path, file, all, count;
@@ -151,57 +151,58 @@ void BaseProgress::OnIdle(HANDLE dlg)
 	}
 
 	if (changed.path) {
-		TextToDialogControl(dlg, _i_cur_file, _last_path);
+		TextToDialogControl(_i_cur_file, _last_path);
 	}
 
 	if (changed.file) {
-		FileSizeToDialogControl(dlg, _i_file_size_complete, _last_stats.file_complete);
-		FileSizeToDialogControl(dlg, _i_file_size_total, _last_stats.file_total);
-		ProgressBarToDialogControl(dlg, _i_file_size_progress_bar, _last_stats.file_total
+		FileSizeToDialogControl(_i_file_size_complete, _last_stats.file_complete);
+		FileSizeToDialogControl(_i_file_size_total, _last_stats.file_total);
+		ProgressBarToDialogControl(_i_file_size_progress_bar, _last_stats.file_total
 			? _last_stats.file_complete * 100 / _last_stats.file_total : -1);
 	}
 
 	if (changed.all) {
-		FileSizeToDialogControl(dlg, _i_all_size_complete, _last_stats.all_complete);
-		FileSizeToDialogControl(dlg, _i_all_size_total, _last_stats.all_total);
-		ProgressBarToDialogControl(dlg, _i_all_size_progress_bar, _last_stats.all_total
+		FileSizeToDialogControl(_i_all_size_complete, _last_stats.all_complete);
+		FileSizeToDialogControl(_i_all_size_total, _last_stats.all_total);
+		ProgressBarToDialogControl(_i_all_size_progress_bar, _last_stats.all_total
 			? _last_stats.all_complete * 100 / _last_stats.all_total : -1);
 	}
 
 	if (changed.count) {
-		LongLongToDialogControl(dlg, _i_count_complete, _last_stats.count_complete);
-		LongLongToDialogControl(dlg, _i_count_total, _last_stats.count_total);
-		ProgressBarToDialogControl(dlg, _i_count_progress_bar, _last_stats.count_total
+		LongLongToDialogControl(_i_count_complete, _last_stats.count_complete);
+		LongLongToDialogControl(_i_count_total, _last_stats.count_total);
+		ProgressBarToDialogControl(_i_count_progress_bar, _last_stats.count_total
 			? _last_stats.count_complete * 100 / _last_stats.count_total : -1);
 	}
 
 	if (_finished == 1) {
 		_finished = 2;
-		Close(dlg);
+		Close();
 
-	} else if (!paused)
-		UpdateTimes(dlg);
+	} else if (!paused) {
+		UpdateTimes();
+	}
 }
 
-void BaseProgress::UpdateTimes(HANDLE dlg)
+void BaseProgress::UpdateTimes()
 {
 	auto now = TimeMSNow();
 
 	if (_last_stats.total_start.count()) {
 		// must be first cuz it updates speeds
 		UpdateTime(_last_stats.all_complete, _last_stats.all_total, _last_stats.total_start, _last_stats.total_paused,
-			now, dlg, _i_all_time_spent, _i_all_time_remain, _i_speed_current_label, _i_speed_current, _i_speed_average);
+			now, _i_all_time_spent, _i_all_time_remain, _i_speed_current_label, _i_speed_current, _i_speed_average);
 	}
 
 	if (_last_stats.current_start.count()) {
 		UpdateTime(_last_stats.file_complete, _last_stats.file_total, _last_stats.current_start, _last_stats.current_paused,
-			now, dlg, _i_file_time_spent, _i_file_time_remain);
+			now, _i_file_time_spent, _i_file_time_remain);
 	}
 }
 
 void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long total,
 		const std::chrono::milliseconds &start, const std::chrono::milliseconds &paused, const std::chrono::milliseconds &now,
-		HANDLE dlg, int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl, int i_speed_cur_ctl, int i_speed_avg_ctl)
+		int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl, int i_speed_cur_ctl, int i_speed_avg_ctl)
 {
 	auto delta = now - start;//_last_stats.total_start;
 	if (delta <= paused)
@@ -209,7 +210,7 @@ void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long to
 
 	delta-= paused;
 
-	TimePeriodToDialogControl(dlg, i_spent_ctl, delta.count());
+	TimePeriodToDialogControl(i_spent_ctl, delta.count());
 
 	if (i_speed_lbl_ctl == -1) {
 		;
@@ -232,12 +233,12 @@ void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long to
 
 				std::string speed_current_label = _speed_current_label;
 				speed_current_label.insert(p + 1, str);
-				TextToDialogControl(dlg, i_speed_lbl_ctl, speed_current_label);
+				TextToDialogControl(i_speed_lbl_ctl, speed_current_label);
 			} else
 				fraction = 1;
 
-			LongLongToDialogControl(dlg, i_speed_cur_ctl, _speed_current / fraction);
-			LongLongToDialogControl(dlg, i_speed_avg_ctl, _speed_average / fraction);
+			LongLongToDialogControl(i_speed_cur_ctl, _speed_current / fraction);
+			LongLongToDialogControl(i_speed_avg_ctl, _speed_average / fraction);
 		}
 	} else {
 		_prev_complete = complete;
@@ -245,10 +246,10 @@ void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long to
 	}
 
 	if (_speed_current != 0 && complete < total) {
-		TimePeriodToDialogControl(dlg, i_remain_ctl, (total - complete) * 1000ll / _speed_current);
+		TimePeriodToDialogControl(i_remain_ctl, (total - complete) * 1000ll / _speed_current);
 
 	} else {
-		TextToDialogControl(dlg, i_remain_ctl, "??:??.??");
+		TextToDialogControl(i_remain_ctl, "??:??.??");
 	}
 }
 
@@ -312,7 +313,7 @@ void SimpleOperationProgress::Show()
 	}
 }
 
-LONG_PTR SimpleOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
+LONG_PTR SimpleOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 {
 	//fprintf(stderr, "%x %x\n", msg, param1);
 	if (msg == DN_ENTERIDLE) {
@@ -330,14 +331,14 @@ LONG_PTR SimpleOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_
 
 		if (_finished == 1) {
 			_finished = 2;
-			Close(dlg);
+			Close();
 
 		} else if (count_complete_changed && _finished == 0) {
 			std::string title = _title;
 			char sz[64] = {};
 			snprintf(sz, sizeof(sz) - 1, " (%lu)", _last_count_complete);
 			title+= sz;
-			TextToDialogControl(dlg, _i_dblbox, title);
+			TextToDialogControl(_i_dblbox, title);
 		}
 
 	}/* else if (msg == DN_BTNCLICK && AbortConfirm().Ask()) {
@@ -346,5 +347,5 @@ LONG_PTR SimpleOperationProgress::DlgProc(HANDLE dlg, int msg, int param1, LONG_
 		return TRUE;
 	}*/
 	
-	return BaseDialog::DlgProc(dlg, msg, param1, param2);
+	return BaseDialog::DlgProc(msg, param1, param2);
 }

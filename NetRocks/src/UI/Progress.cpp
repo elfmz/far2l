@@ -4,6 +4,7 @@
 #include "Confirm.h"
 #include "AbortOperationRequest.h"
 #include "../lng.h"
+#include "../Globals.h"
 
 
 /*
@@ -81,7 +82,8 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 	_i_speed_average = _di.AddAtLine(DI_TEXT, 54,62, 0, "???");
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
+	// this separator used to display retries/skips count
+	_i_errstats_separator = _di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);// | DIF_SETCOLOR | FOREGROUND_GREEN|FOREGROUND_RED|FOREGROUND_INTENSITY);
 
 	_di.NextLine();
 	//_i_background = _di.AddAtLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
@@ -125,7 +127,7 @@ LONG_PTR BaseProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 void BaseProgress::OnIdle()
 {
 	struct {
-		bool path, file, all, count;
+		bool path, file, all, count, errors;
 	} changed = {};
 	bool paused;
 	{
@@ -142,6 +144,9 @@ void BaseProgress::OnIdle()
 
 		changed.count = (_state.stats.count_complete != _last_stats.count_complete
 					|| _state.stats.count_total != _last_stats.count_total);
+
+		changed.errors = (_state.stats.count_skips != _last_stats.count_skips
+					|| _state.stats.count_retries != _last_stats.count_retries);
 
 		_last_stats = _state.stats;
 		paused = _state.paused;
@@ -173,6 +178,13 @@ void BaseProgress::OnIdle()
 		LongLongToDialogControl(_i_count_total, _last_stats.count_total);
 		ProgressBarToDialogControl(_i_count_progress_bar, _last_stats.count_total
 			? _last_stats.count_complete * 100 / _last_stats.count_total : -1);
+	}
+
+	if (changed.errors) {
+		char sz[0x100] = {};
+		snprintf(sz, sizeof(sz) - 1, G.GetMsgMB(MErrorsStatus),
+			_last_stats.count_retries, _last_stats.count_skips);
+		TextToDialogControl(_i_errstats_separator, sz);
 	}
 
 	if (_finished == 1) {

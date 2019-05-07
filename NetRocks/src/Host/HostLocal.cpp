@@ -8,6 +8,8 @@
 #include <grp.h>
 #include <CheckedCast.hpp>
 
+#include "../lng.h"
+#include "../Globals.h"
 #include "HostLocal.h"
 
 HostLocal::HostLocal()
@@ -16,6 +18,11 @@ HostLocal::HostLocal()
 
 HostLocal::~HostLocal()
 {
+}
+
+std::string HostLocal::SiteName() const
+{
+	return G.GetMsgMB(MHostLocalName);
 }
 
 void HostLocal::ReInitialize() throw (std::runtime_error)

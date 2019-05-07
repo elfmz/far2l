@@ -34,7 +34,7 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 		}
 	}
 
-	_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, title_lng);
+	_di.Add(DI_DOUBLEBOX, 3,1,64,9, 0, title_lng);
 
 	_di.SetLine(2);
 	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorError);
@@ -51,9 +51,13 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
-	_i_remember = _di.AddAtLine(DI_CHECKBOX, 5,33, 0, MRememberChoice);
 	_di.NextLine();
+	_i_remember = _di.AddAtLine(DI_CHECKBOX, 5,33, 0, MRememberChoice);
 
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+	_di.NextLine();
 	_i_retry = _di.AddAtLine(DI_BUTTON, 5,20, DIF_CENTERGROUP, MRetry);
 	_i_skip = _di.AddAtLine(DI_BUTTON, 21,40, DIF_CENTERGROUP, MSkip);
 	_di.AddAtLine(DI_BUTTON, 41,60, DIF_CENTERGROUP, MCancel);
@@ -62,7 +66,7 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 
 WhatOnErrorAction WhatOnError::Ask(WhatOnErrorAction &default_wea)
 {
-	int r = Show(L"Error", 6, 2);
+	int r = Show(L"WhatOnError", 6, 2, FDLG_WARNING);
 
 	WhatOnErrorAction out = WEA_CANCEL;
 

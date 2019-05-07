@@ -121,3 +121,6 @@
 "Error:"
 "Failed object:"
 "Failed site:"
+
+"Local filesystem"
+"RETRIES: %llu SKIPS: %llu"

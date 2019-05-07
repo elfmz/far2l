@@ -6243,6 +6243,21 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 			return (PrevFlags&DIF_DISABLE)?FALSE:TRUE;
 		}
+
+		case DM_SETCOLOR:
+		{
+			CurItem->Flags&= ~(DIF_SETCOLOR | DIF_COLORMASK);
+			CurItem->Flags|= Param2 & (DIF_SETCOLOR | DIF_COLORMASK);
+
+			if (Dlg->DialogMode.Check(DMODE_SHOW)) //???
+			{
+				Dlg->ShowDialog(Param1);
+				ScrBuf.Flush();
+			}
+
+			return TRUE;
+		}
+
 		/*****************************************************************/
 		// получить позицию и размеры контрола
 		case DM_GETITEMPOSITION: // Param1=ID, Param2=*SMALL_RECT

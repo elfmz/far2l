@@ -39,6 +39,8 @@ protected:
 
 	int /*_i_background = -1, */_i_pause_resume = -1, _i_cancel = -1;
 
+	bool _errstats_colored = false;
+
 	std::string _speed_current_label;
 
 	unsigned long long _prev_complete = 0, _speed_current = 0, _speed_average = 0;

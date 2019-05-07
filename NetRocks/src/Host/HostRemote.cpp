@@ -20,6 +20,40 @@
 HostRemote::HostRemote(const std::string &site, int OpMode) throw (std::runtime_error)
 	: _site(site)
 {
+	KeyFileHelper kfh(G.config.c_str());
+	_protocol = kfh.GetString(_site.c_str(), "Protocol");
+	_host = kfh.GetString(_site.c_str(), "Host");
+	_port = (unsigned int)kfh.GetInt(_site.c_str(), "Port");
+	_login_mode = (unsigned int)kfh.GetInt(_site.c_str(), "LoginMode", 2);
+	_username = kfh.GetString(_site.c_str(), "Username");
+	_password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
+	_directory = kfh.GetString(_site.c_str(), "Directory");
+	_options = kfh.GetString(_site.c_str(), "Options");
+	if (_protocol.empty() || _host.empty())
+		throw std::runtime_error("Bad site configuration");
+
+	_site_info = _protocol;
+	_site_info+= "://";
+	if (!_username.empty()) {
+		_site_info+= _username;
+		_site_info+= '@';
+	}
+
+	if (_login_mode == 0) {
+		_password.clear();
+	}
+
+	_site_info+= _host;
+	if (_port > 0) {
+		char sz[64];
+		snprintf(sz, sizeof(sz), ":%d", _port);
+		_site_info+= sz;
+	}
+}
+
+std::string HostRemote::SiteName() const
+{
+	return _site;
 }
 
 void HostRemote::BusySet()
@@ -62,35 +96,6 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
 
-	KeyFileHelper kfh(G.config.c_str());
-	const std::string &protocol = kfh.GetString(_site.c_str(), "Protocol");
-	const std::string &host = kfh.GetString(_site.c_str(), "Host");
-	unsigned int port = (unsigned int)kfh.GetInt(_site.c_str(), "Port");
-	unsigned int login_mode = (unsigned int)kfh.GetInt(_site.c_str(), "LoginMode", 2);
-	std::string username = kfh.GetString(_site.c_str(), "Username");
-	std::string password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
-	const std::string &directory = kfh.GetString(_site.c_str(), "Directory");
-	const std::string &options = kfh.GetString(_site.c_str(), "Options");
-	if (protocol.empty() || host.empty())
-		throw std::runtime_error("Bad site configuration");
-
-	_site_info = protocol;
-	_site_info+= "://";
-	if (!username.empty()) {
-		_site_info+= username;
-		_site_info+= '@';
-	}
-	if (login_mode == 0) {
-		password.clear();
-	}
-
-	_site_info+= host;
-	if (port > 0) {
-		char sz[64];
-		snprintf(sz, sizeof(sz), ":%d", port);
-		_site_info+= sz;
-	}
-
 	int master2slave[2] = {-1, -1};
 	int slave2master[2] = {-1, -1};
 	int r = pipe(master2slave);
@@ -124,37 +129,41 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 			if (retry == 3) {
 				throw ProtocolAuthFailedError();
 			}
-			login_mode = 1;
+			_login_mode = 1;
 		}
 
 //		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
-		if (login_mode == 1) {
-			if (!InteractiveLogin(_site, retry, username, password)) {
+		if (_login_mode == 1) {
+			if (!InteractiveLogin(_site, retry, _username, _password)) {
 				SendString(std::string());
 				throw AbortError();
 			}
 		}
 
-		SendString(protocol);
-		SendString(host);
-		SendPOD(port);
-		SendPOD(login_mode);
-		SendString(username);
-		SendString(password);
-		SendString(directory);
-		SendString(options);
+		SendString(_protocol);
+		SendString(_host);
+		SendPOD(_port);
+		SendPOD(_login_mode);
+		SendString(_username);
+		SendString(_password);
+		SendString(_directory);
+		SendString(_options);
 
 		unsigned int status;
 		RecvPOD(status);
 		if (status == 0) {
+			if (_login_mode == 1) {
+				// on next reinitialization try to autouse same password that now succeeded
+				_login_mode = 2;
+			}
 			break;
 		}
 		if (status == 2 || status == 3) {
 			std::string what;
 			RecvString(what);
-			if (status == 2)
+			if (status == 2) {
 				throw ProtocolError(what);
-
+			}
 			throw std::runtime_error(what);
 		}
 	}

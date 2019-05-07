@@ -178,7 +178,7 @@ void OpXfer::Transfer()
 void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
 {
 	IHost *indicted = nullptr;
-	for (;;) try {
+	for (unsigned long long prev_attempt_pos = pos;;) try {
 		if (indicted) { // retrying...
 			indicted->ReInitialize();
 
@@ -219,7 +219,7 @@ void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		if (action == WEA_ASK) {
 			action = WhatOnError( (_direction == XK_UPLOAD) ? WEK_UPLOAD
 				: ((_direction == XK_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
-				ex.what(), path_src, "???").Ask(_default_wea);
+				ex.what(), path_src, indicted->SiteName()).Ask(_default_wea);
 
 			if (action == WEA_CANCEL) {
 				throw AbortError();
@@ -233,7 +233,11 @@ void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		}
 
 		// WEA_RETRY
-		sleep(1);
+		if (prev_attempt_pos == pos) {
+			sleep(1);
+		} else {
+			prev_attempt_pos = pos;
+		}
 		ProgressStateUpdate psu(_state);
 		_state.stats.count_retries++;
 	}

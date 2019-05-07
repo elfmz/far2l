@@ -35,6 +35,8 @@ protected:
 	int _i_speed_current = -1;
 	int _i_speed_average = -1;
 
+	int _i_errstats_separator = -1;
+
 	int /*_i_background = -1, */_i_pause_resume = -1, _i_cancel = -1;
 
 	std::string _speed_current_label;

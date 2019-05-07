@@ -13,6 +13,15 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 	friend class HostRemoteDirectoryEnumer;
 	friend class HostRemoteFileIO;
 
+	std::string _protocol;
+	std::string _host;
+	unsigned int _port;
+	unsigned int _login_mode;
+	std::string _username;
+	std::string _password;
+	std::string _directory;
+	std::string _options;
+
 	std::string _site, _site_info;
 	bool _broken = true;
 	bool _busy = false;
@@ -30,6 +39,7 @@ public:
 	HostRemote(const std::string &site, int OpMode) throw (std::runtime_error);
 	virtual ~HostRemote();
 
+	virtual std::string SiteName() const;
 	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);
 	virtual void Abort();

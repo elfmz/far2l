@@ -122,4 +122,7 @@ enum LanguageID
   MErrorError,
   MErrorObject,
   MErrorSite,
+
+  MHostLocalName,
+  MErrorsStatus
 };

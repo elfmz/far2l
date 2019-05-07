@@ -13,6 +13,8 @@ public:
 	HostLocal();
 	virtual ~HostLocal();
 
+	virtual std::string SiteName() const;
+
 	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);
 	virtual void Abort();

@@ -4,7 +4,21 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-//#define SIMULATED_FAILURES_RATE 0
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+#define SIMULATED_GETMODE_FAILS_RATE 0
+#define SIMULATED_GETSIZE_FAILS_RATE 0
+#define SIMULATED_GETINFO_FAILS_RATE 0
+#define SIMULATED_UNLINK_FAILS_RATE 0
+#define SIMULATED_RMDIR_FAILS_RATE 0
+#define SIMULATED_MKDIR_FAILS_RATE 0
+#define SIMULATED_RENAME_FAILS_RATE 0
+#define SIMULATED_ENUM_FAILS_RATE 0
+#define SIMULATED_OPEN_FAILS_RATE 0
+#define SIMULATED_READ_FAILS_RATE 0
+#define SIMULATED_WRITE_FAILS_RATE 0
+#define SIMULATED_WRITE_COMPLETE_FAILS_RATE 0
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void SSHSessionDeleter(ssh_session res)
 {
@@ -163,24 +177,44 @@ static void SftpFileInfoFromAttributes(FileInformation &file_info, sftp_attribut
 
 mode_t ProtocolSFTP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+#if SIMULATED_GETMODE_FAILS_RATE
+	if ( (rand() % 100) + 1 <= SIMULATED_GETMODE_FAILS_RATE)
+		throw ProtocolError("Simulated getmode error");
+#endif
+
 	SFTPAttributes  attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
 	return SFTPModeFromAttributes(attributes);
 }
 
 unsigned long long ProtocolSFTP::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+#if SIMULATED_GETSIZE_FAILS_RATE
+	if ( (rand() % 100) + 1 <= SIMULATED_GETSIZE_FAILS_RATE)
+		throw ProtocolError("Simulated getsize error");
+#endif
+
 	SFTPAttributes  attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
 	return attributes->size;
 }
 
 void ProtocolSFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+#if SIMULATED_GETINFO_FAILS_RATE
+	if ( (rand() % 100) + 1 <= SIMULATED_GETINFO_FAILS_RATE)
+		throw ProtocolError("Simulated getinfo error");
+#endif
+
 	SFTPAttributes  attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
 	SftpFileInfoFromAttributes(file_info, attributes);
 }
 
 void ProtocolSFTP::FileDelete(const std::string &path) throw (std::runtime_error)
 {
+#if SIMULATED_UNLINK_FAILS_RATE
+	if ( (rand() % 100) + 1 <= SIMULATED_UNLINK_FAILS_RATE)
+		throw ProtocolError("Simulated unlink error");
+#endif
+
 	int rc = sftp_unlink(_conn->sftp, path.c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete file error",  ssh_get_error(_conn->ssh), rc);
@@ -188,6 +222,11 @@ void ProtocolSFTP::FileDelete(const std::string &path) throw (std::runtime_error
 
 void ProtocolSFTP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
+#if SIMULATED_RMDIR_FAILS_RATE
+	if ( (rand() % 100) + 1 <= SIMULATED_RMDIR_FAILS_RATE)
+		throw ProtocolError("Simulated rmdir error");
+#endif
+
 	int rc = sftp_rmdir(_conn->sftp, path.c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete directory error",  ssh_get_error(_conn->ssh), rc);
@@ -195,6 +234,11 @@ void ProtocolSFTP::DirectoryDelete(const std::string &path) throw (std::runtime_
 
 void ProtocolSFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
+#if SIMULATED_MKDIR_FAILS_RATE
+	if ( (rand() % 100) + 1 <= SIMULATED_MKDIR_FAILS_RATE)
+		throw ProtocolError("Simulated mkdir error");
+#endif
+
 	int rc = sftp_mkdir(_conn->sftp, path.c_str(), mode);
 	if (rc != 0)
 		throw ProtocolError("Create directory error",  ssh_get_error(_conn->ssh), rc);
@@ -202,6 +246,11 @@ void ProtocolSFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (
 
 void ProtocolSFTP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
+#if SIMULATED_RENAME_FAILS_RATE
+	if ( (rand() % 100) + 1 <= SIMULATED_RENAME_FAILS_RATE)
+		throw ProtocolError("Simulated rename error");
+#endif
+
 	int rc = sftp_rename(_conn->sftp, path_old.c_str(), path_new.c_str());
 	if (rc != 0)
 		throw ProtocolError("Rename error",  ssh_get_error(_conn->ssh), rc);
@@ -223,6 +272,11 @@ public:
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
 		for (;;) {
+#if SIMULATED_ENUM_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_ENUM_FAILS_RATE)
+			throw ProtocolError("Simulated enum dir error");
+#endif
+
 			SFTPAttributes  attributes(sftp_readdir(_conn->sftp, _dir));
 			if (!attributes) {
 				if (!sftp_dir_eof(_dir))
@@ -259,6 +313,11 @@ public:
 	SFTPFileIO(std::shared_ptr<SFTPConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
 		: _conn(conn), _file(sftp_open(conn->sftp, path.c_str(), flags, mode))
 	{
+#if SIMULATED_OPEN_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_OPEN_FAILS_RATE)
+			throw ProtocolError("Simulated open file error");
+#endif
+
 		if (!_file)
 			throw ProtocolError("Failed to open file",  ssh_get_error(_conn->ssh));
 
@@ -271,6 +330,10 @@ public:
 
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
+#if SIMULATED_READ_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
+			throw ProtocolError("Simulated read file error");
+#endif
 		const ssize_t rc = sftp_read(_file, buf, len);
 		if (rc < 0)
 			throw ProtocolError("Read file error",  ssh_get_error(_conn->ssh));
@@ -281,6 +344,10 @@ public:
 
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
+#if SIMULATED_WRITE_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
+			throw ProtocolError("Simulated write file error");
+#endif
 		if (len > 0) for (;;) {
 			const ssize_t rc = sftp_write(_file, buf, len);
 			if (rc <= 0)
@@ -295,6 +362,10 @@ public:
 
 	virtual void WriteComplete() throw (std::runtime_error)
 	{
+#if SIMULATED_WRITE_COMPLETE_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
+			throw ProtocolError("Simulated write-complete file error");
+#endif
 		// what?
 	}
 };

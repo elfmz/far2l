@@ -15,7 +15,7 @@
 #define SIMULATED_RENAME_FAILS_RATE 0
 #define SIMULATED_ENUM_FAILS_RATE 0
 #define SIMULATED_OPEN_FAILS_RATE 0
-#define SIMULATED_READ_FAILS_RATE 0
+#define SIMULATED_READ_FAILS_RATE 1
 #define SIMULATED_WRITE_FAILS_RATE 0
 #define SIMULATED_WRITE_COMPLETE_FAILS_RATE 0
 ///////////////////////////////////////////////////////////////////////////////////////////////////

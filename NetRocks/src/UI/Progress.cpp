@@ -185,6 +185,13 @@ void BaseProgress::OnIdle()
 		snprintf(sz, sizeof(sz) - 1, G.GetMsgMB(MErrorsStatus),
 			_last_stats.count_retries, _last_stats.count_skips);
 		TextToDialogControl(_i_errstats_separator, sz);
+		if (!_errstats_colored) {
+			_errstats_colored = true;
+			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, DIF_SETCOLOR | FOREGROUND_GREEN|FOREGROUND_RED|FOREGROUND_INTENSITY);
+		}
+	} else if (_errstats_colored) {
+		_errstats_colored = false;
+		SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, 0);
 	}
 
 	if (_finished == 1) {

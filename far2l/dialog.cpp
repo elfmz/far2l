@@ -6244,6 +6244,15 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			return (PrevFlags&DIF_DISABLE)?FALSE:TRUE;
 		}
 
+		case DM_GETCOLOR:
+		{
+			*(DWORD*)Param2=(DWORD)Dlg->CtlColorDlgItem(Param1, CurItem->Type,
+				CurItem->Focus, CurItem->DefaultButton, CurItem->Flags);
+			*(DWORD*)Param2|= (CurItem->Flags & DIF_SETCOLOR);
+			return TRUE;
+		}
+
+
 		case DM_SETCOLOR:
 		{
 			CurItem->Flags&= ~(DIF_SETCOLOR | DIF_COLORMASK);

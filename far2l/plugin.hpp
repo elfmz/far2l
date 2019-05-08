@@ -358,6 +358,7 @@ enum FarMessagesProc
 
 	DM_GETDIALOGINFO,
 
+	DM_GETCOLOR,
 	DM_SETCOLOR,
 
 

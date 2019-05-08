@@ -32,6 +32,18 @@ void PluginPanelItems::Detach()
 	capacity = count = 0;
 }
 
+void PluginPanelItems::Shrink(int new_count)
+{
+	if (new_count > count) {
+		fprintf(stderr, "PluginPanelItems::Shrink(%d) while count=%d\n", new_count, count);
+		abort();
+	}
+
+	for (int i = new_count; i < count; ++i) {
+		free(items[i].FindData.lpwszFileName);
+	}
+	count = new_count;
+}
 
 PluginPanelItem *PluginPanelItems::Add(const wchar_t *name) throw (std::runtime_error)
 {

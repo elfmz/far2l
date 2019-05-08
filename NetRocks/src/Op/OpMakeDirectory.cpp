@@ -44,12 +44,12 @@ void OpMakeDirectory::Process()
 	for (size_t i = _base_dir.size();  i <= full_path.size(); ++i) {
 		if (i == full_path.size() || full_path[i] == '/') {
 			const std::string &component = full_path.substr(0, i);
-			try {
-				_base_host->DirectoryCreate(component.c_str(), 0751);
-
-			} catch (std::exception &ex) {
-				fprintf(stderr, "NetRocks::MakeDirectory: '%s' while creating '%s'\n", ex.what(), component.c_str());
-			}
+			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _base_host.get(), _base_dir,
+				[&] () mutable 
+				{
+					_base_host->DirectoryCreate(component.c_str(), 0751);
+				}
+			);
 		}
 	}
 }

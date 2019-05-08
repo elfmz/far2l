@@ -2,6 +2,7 @@
 #include <TimeUtils.h>
 #include <unistd.h>
 #include "ProgressStateUpdate.h"
+#include "Erroring.h"
 
 ProgressStateUpdate::ProgressStateUpdate(ProgressState &state)
 	:std::unique_lock<std::mutex>(state.mtx)
@@ -10,7 +11,7 @@ ProgressStateUpdate::ProgressStateUpdate(ProgressState &state)
 
 	for (;;) {
 		if (state.aborting)
-			throw std::runtime_error("Aborted");
+			throw AbortError();
 		if (!state.paused)
 			break;
 

@@ -25,6 +25,8 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 		case WEK_DOWNLOAD:  title_lng = MErrorDownloadTitle; break;
 		case WEK_UPLOAD:    title_lng = MErrorUploadTitle; break;
 		case WEK_CROSSLOAD: title_lng = MErrorCrossloadTitle; break;
+		case WEK_QUERYINFO: title_lng = MErrorQueryInfoTitle; break;
+		case WEK_ENUMDIR:   title_lng = MErrorEnumDirTitle; break;
 		case WEK_MAKEDIR:   title_lng = MErrorMakeDirTitle; break;
 		case WEK_RMFILE:    title_lng = MErrorRmFileTitle; break;
 		case WEK_RMDIR:     title_lng = MErrorRmDirTitle; break;
@@ -95,4 +97,8 @@ WhatOnErrorAction WhatOnErrorState::Query(WhatOnErrorKind wek, const std::string
 	}
 
 	return WhatOnError(wek, error, object, site).Ask(i->second);
+}
+
+void WhatOnErrorWrap_DummyOnRetry()
+{
 }

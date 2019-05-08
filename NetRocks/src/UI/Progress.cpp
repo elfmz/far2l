@@ -43,25 +43,25 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 	if (show_file_size_progress) {
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,20, 0, MXferFileSize);
-		_i_file_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
+		_i_file_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "?????????");
 		_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
-		_i_file_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
-		_i_file_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "::::::::::::::::::");
+		_i_file_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "?????????");
+		_i_file_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "??????????????????");
 	}
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,20, 0, MXferAllSize);
-	_i_all_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
+	_i_all_size_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "?????????");
 	_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
-	_i_all_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
-	_i_all_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "::::::::::::::::::");
+	_i_all_size_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "?????????");
+	_i_all_size_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "??????????????????");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,20, 0, MXferCount);
-	_i_count_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "#########");
+	_i_count_complete = _di.AddAtLine(DI_TEXT, 21,29, 0, "?????????");
 	_di.AddAtLine(DI_TEXT, 30,35, 0, MXferOf);
-	_i_count_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "#########");
-	_i_count_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "::::::::::::::::::");
+	_i_count_total = _di.AddAtLine(DI_TEXT, 35,43, 0, "?????????");
+	_i_count_progress_bar = _di.AddAtLine(DI_TEXT, 45,62, 0, "??????????????????");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,32, 0, MXferFileTimeSpent);

@@ -83,3 +83,16 @@ WhatOnErrorAction WhatOnError::Ask(WhatOnErrorAction &default_wea)
 
 	return out;
 }
+
+//////////////////////////////////////
+
+
+WhatOnErrorAction WhatOnErrorState::Query(WhatOnErrorKind wek, const std::string &error, const std::string &object, const std::string &site)
+{
+	auto i = _default_weas[wek].emplace(error, WEA_ASK).first;
+	if (i->second != WEA_ASK) {
+		return i->second;
+	}
+
+	return WhatOnError(wek, error, object, site).Ask(i->second);
+}

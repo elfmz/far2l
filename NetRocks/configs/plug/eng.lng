@@ -114,6 +114,7 @@
 "Upload error"
 "Crossload error"
 "Query information error"
+"Enum directory error"
 "Make directory error"
 "Remove directory error"
 "Remove file error"

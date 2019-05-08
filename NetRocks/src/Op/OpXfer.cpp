@@ -19,7 +19,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_kind(kind),
 	_direction(direction)
 {
-	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state);
+	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";
 	_diffname_suffix+= TimeString(TSF_FOR_FILENAME);
 }
@@ -85,11 +85,12 @@ void OpXfer::Transfer()
 		}
 
 		if (S_ISDIR(e.second.mode)) {
-			try {
-				_dst_host->DirectoryCreate(path_local, e.second.mode);
-			} catch (std::exception &ex) {
-				fprintf(stderr, "DirectoryCreate '%s' - %s\n", path_local.c_str(), ex.what());
-			}
+			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _base_host.get(), path_local,
+				[&] () mutable 
+				{
+					_dst_host->DirectoryCreate(path_local, e.second.mode);
+				}
+			);
 
 		} else {
 			unsigned long long pos = 0;
@@ -99,7 +100,7 @@ void OpXfer::Transfer()
 			try {
 				_dst_host->GetInformation(existing_file_info, path_local);
 				existing = true;
-			} catch (std::exception &ex) {
+			} catch (std::exception &ex) { // FIXME: distinguish unexistence of file from IO failure
 				;
 			}
 
@@ -145,12 +146,12 @@ void OpXfer::Transfer()
 			try {
 				FileCopyLoop(e.first, path_local, pos, e.second.mode);
 				if (_kind == XK_MOVE) {
-					try {
-						_base_host->FileDelete(e.first);
-					} catch (std::exception &ex) {
-						fprintf(stderr, "NetRocks::Xfer: %s while rmfile '%s'\n",
-							ex.what(), e.first.c_str());
-					}
+					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
+						[&] () mutable 
+						{
+							_base_host->FileDelete(e.first);
+						}
+					);
 				}
 			} catch (std::exception &ex) {
 				fprintf(stderr, "NetRocks::Xfer: %s on '%s' -> '%s'\n", ex.what(), e.first.c_str(), path_local.c_str());
@@ -164,16 +165,17 @@ void OpXfer::Transfer()
 	if (_kind == XK_MOVE) {
 		for (auto rev_i = _entries.rbegin(); rev_i != _entries.rend(); ++rev_i) {
 			if (S_ISDIR(rev_i->second.mode)) {
-				try {
-					_base_host->DirectoryDelete(rev_i->first);
-				} catch  (std::exception &ex) {
-					fprintf(stderr, "NetRocks::Xfer: %s while rmdir '%s'\n",
-						ex.what(), rev_i->first.c_str());
-				}
+				WhatOnErrorWrap<WEK_RMDIR>(_wea_state, _state, _base_host.get(), rev_i->first,
+					[&] () mutable 
+					{
+						_base_host->DirectoryDelete(rev_i->first);
+					}
+				);
 			}
 		}
 	}
 }
+
 
 void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
 {
@@ -215,24 +217,29 @@ void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			throw;
 		}
 
-		WhatOnErrorAction action = _wea_state.Query( (_direction == XK_UPLOAD) ? WEK_UPLOAD
+		switch (_wea_state.Query( (_direction == XK_UPLOAD) ? WEK_UPLOAD
 				: ((_direction == XK_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
-				ex.what(), path_src, indicted->SiteName());
+				ex.what(), path_src, indicted->SiteName())) {
 
-		if (action == WEA_SKIP) {
-			ProgressStateUpdate psu(_state);
-			_state.stats.count_skips++;
-			break;
-		}
+			case WEA_SKIP: {
+				ProgressStateUpdate psu(_state);
+				_state.stats.count_skips++;
+			} return;
 
-		// WEA_RETRY
-		if (prev_attempt_pos == pos) {
-			sleep(1);
-		} else {
-			prev_attempt_pos = pos;
+			case WEA_RETRY: {
+				if (prev_attempt_pos == pos) {
+					sleep(1);
+				} else {
+					prev_attempt_pos = pos;
+				}
+
+				ProgressStateUpdate psu(_state);
+				_state.stats.count_retries++;
+			} break;
+
+			default:
+				throw;
 		}
-		ProgressStateUpdate psu(_state);
-		_state.stats.count_retries++;
 	}
 }
 

@@ -5,9 +5,10 @@
 #include "ProgressStateUpdate.h"
 
 Enumer::Enumer(Path2FileInformation &result, std::shared_ptr<IHost> &host, const std::string &dir,
-		const struct PluginPanelItem *items, int items_count, bool no_special_files, ProgressState &state)
+		const struct PluginPanelItem *items, int items_count, bool no_special_files,
+		ProgressState &state, WhatOnErrorState &wea_state)
 	:
-	_result(result), _host(host), _no_special_files(no_special_files), _state(state)
+	_result(result), _host(host), _no_special_files(no_special_files), _state(state), _wea_state(wea_state)
 {
 	assert(dir.empty() || dir[dir.size() - 1] == '/');
 	std::string item_path;
@@ -33,16 +34,21 @@ void Enumer::Scan()
 
 void Enumer::GetSubitems(const std::string &path, Path2FileInformation &subitems)
 {
-	std::shared_ptr<IDirectoryEnumer> enumer = _host->DirectoryEnum(path);
-	std::string name, owner, group;
-	FileInformation file_info;
-	for (;;) {
-		if (!enumer->Enum(name, owner, group, file_info)) {
-			break;
+	WhatOnErrorWrap<WEK_ENUMDIR>(_wea_state, _state, _host.get(), path,
+		[&] () mutable
+		{
+			std::shared_ptr<IDirectoryEnumer> enumer = _host->DirectoryEnum(path);
+			std::string name, owner, group;
+			FileInformation file_info;
+			for (;;) {
+				if (!enumer->Enum(name, owner, group, file_info)) {
+					break;
+				}
+				subitems.emplace(name, file_info);
+				ProgressStateUpdate psu(_state); // check for abort/pause
+			}
 		}
-		subitems.emplace(name, file_info);
-		ProgressStateUpdate psu(_state); // check for abort/pause
-	}
+	);
 }
 
 void Enumer::ScanItem(const std::string &path)

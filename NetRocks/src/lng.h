@@ -115,6 +115,7 @@ enum LanguageID
   MErrorUploadTitle,
   MErrorCrossloadTitle,
   MErrorQueryInfoTitle,
+  MErrorEnumDirTitle,
   MErrorMakeDirTitle,
   MErrorRmDirTitle,
   MErrorRmFileTitle,

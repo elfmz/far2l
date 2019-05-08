@@ -32,6 +32,11 @@ bool OpGetMode::Do(mode_t &result)
 
 void OpGetMode::Process()
 {
-	_result = _base_host->GetMode(_base_dir);
-	_succeed = true;
+	WhatOnErrorWrap<WEK_QUERYINFO>(_wea_state, _state, _base_host.get(), _base_dir,
+		[&] () mutable 
+		{
+			_result = _base_host->GetMode(_base_dir);
+			_succeed = true;
+		}
+	);
 }

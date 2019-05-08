@@ -2,9 +2,12 @@
 #include "OpBase.h"
 #include "../PluginPanelItems.h"
 
+
 class OpEnumDirectory : protected OpBase
 {
 	PluginPanelItems &_result;
+	unsigned long long _initial_count_complete;
+	int _initial_result_count;
 
 	virtual void Process();
 

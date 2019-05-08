@@ -7,6 +7,7 @@
 #include "../Host/Host.h"
 #include "./Utils/ProgressStateUpdate.h"
 #include "../UI/Progress.h"
+#include "../UI/WhatOnError.h"
 #include <plugin.hpp>
 
 class OpBase : protected Threaded, protected IAbortableOperationsHost
@@ -19,6 +20,7 @@ protected:
 	volatile bool _succeded;
 
 	ProgressState _state;
+	WhatOnErrorState _wea_state;
 
 	bool WaitThread(unsigned int msec = (unsigned int)-1);
 

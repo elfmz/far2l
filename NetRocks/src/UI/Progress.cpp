@@ -187,7 +187,11 @@ void BaseProgress::OnIdle()
 		TextToDialogControl(_i_errstats_separator, sz);
 		if (!_errstats_colored) {
 			_errstats_colored = true;
-			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, DIF_SETCOLOR | FOREGROUND_GREEN|FOREGROUND_RED|FOREGROUND_INTENSITY);
+			DWORD color_flags = 0;
+			SendDlgMessage(DM_GETCOLOR, _i_errstats_separator, (LONG_PTR)&color_flags);
+			color_flags&= ~(FOREGROUND_GREEN | FOREGROUND_BLUE);
+			color_flags|= DIF_SETCOLOR | FOREGROUND_RED;
+			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, color_flags);
 		}
 	} else if (_errstats_colored) {
 		_errstats_colored = false;

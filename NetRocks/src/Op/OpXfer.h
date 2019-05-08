@@ -2,6 +2,7 @@
 #include "OpBase.h"
 #include "./Utils/Enumer.h"
 #include "../UI/Defs.h"
+#include "../UI/WhatOnError.h"
 
 class OpXfer : protected OpBase
 {
@@ -10,7 +11,7 @@ class OpXfer : protected OpBase
 	std::shared_ptr<IHost> _dst_host;
 	std::string _dst_dir, _diffname_suffix;
 	XferOverwriteAction _default_xoa = XOA_ASK;
-	WhatOnErrorAction _default_wea = WEA_ASK;
+	WhatOnErrorState _wea_state;
 	XferKind _kind;
 	XferDirection _direction;
 

@@ -215,16 +215,9 @@ void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			throw;
 		}
 
-		WhatOnErrorAction action = _default_wea;
-		if (action == WEA_ASK) {
-			action = WhatOnError( (_direction == XK_UPLOAD) ? WEK_UPLOAD
+		WhatOnErrorAction action = _wea_state.Query( (_direction == XK_UPLOAD) ? WEK_UPLOAD
 				: ((_direction == XK_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
-				ex.what(), path_src, indicted->SiteName()).Ask(_default_wea);
-
-			if (action == WEA_CANCEL) {
-				throw AbortError();
-			}
-		}
+				ex.what(), path_src, indicted->SiteName());
 
 		if (action == WEA_SKIP) {
 			ProgressStateUpdate psu(_state);

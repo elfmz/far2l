@@ -17,3 +17,12 @@ public:
 
 	XferOverwriteAction Ask(XferOverwriteAction &default_xoa);
 };
+
+
+class ConfirmOverwriteState
+{
+public:
+
+	XferOverwriteAction Query(XferKind xk, XferDirection xd, const std::string &destination,
+		const timespec &src_ts, unsigned long long src_size, const timespec &dst_ts, unsigned long long dst_size);
+};

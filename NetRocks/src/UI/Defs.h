@@ -29,12 +29,13 @@ enum XferOverwriteAction
 
 enum WhatOnErrorKind
 {
-	WEK_DOWNLOAD,
+	WEK_DOWNLOAD = 0,
 	WEK_UPLOAD,
 	WEK_CROSSLOAD,
 	WEK_MAKEDIR,
 	WEK_RMFILE,
-	WEK_RMDIR
+	WEK_RMDIR,
+	WEKS_COUNT
 };
 
 enum WhatOnErrorAction

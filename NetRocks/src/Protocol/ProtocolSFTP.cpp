@@ -111,7 +111,7 @@ static std::string GetSSHPubkeyHash(ssh_session ssh)
 }
 
 ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std::string &username, const std::string &password,
-				const std::string &directory, const StringConfig &options) throw (std::runtime_error)
+				const StringConfig &options) throw (std::runtime_error)
 	: _conn(new SFTPConnection)
 {
 	_conn->ssh = ssh_new();
@@ -128,9 +128,6 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 	int nodelay = 1;
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_NODELAY, &nodelay);
 #endif
-
-	if (!directory.empty())
-		ssh_options_set(_conn->ssh, SSH_OPTIONS_SSH_DIR, directory.c_str());
 
 	int verbosity = SSH_LOG_NOLOG;//SSH_LOG_WARNING;//SSH_LOG_PROTOCOL;
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);

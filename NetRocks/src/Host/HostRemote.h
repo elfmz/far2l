@@ -19,7 +19,6 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 	unsigned int _login_mode;
 	std::string _username;
 	std::string _password;
-	std::string _directory;
 	std::string _options;
 
 	std::string _site, _site_info;

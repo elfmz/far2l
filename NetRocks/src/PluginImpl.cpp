@@ -207,6 +207,8 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 			KeyFileHelper(G.config.c_str());
 			_remote_root_dir = KeyFileHelper(G.config.c_str()).GetString(site.c_str(), "Directory");
+			if (!_remote_root_dir.empty() && _remote_root_dir[_remote_root_dir.size() - 1] != '/')
+				_remote_root_dir+= '/';
 
 
 //			if (p != std::string::npos)
@@ -217,7 +219,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 		if (p != std::string::npos && p < tmp.size() - 1) {
 			mode_t mode = 0;
-			if (!OpGetMode(OpMode, _remote, tmp.substr(p + 1)).Do(mode))
+			if (!OpGetMode(OpMode, _remote, _remote_root_dir + tmp.substr(p + 1)).Do(mode))
 				throw std::runtime_error("Get mode failed");
 
 			if (!S_ISDIR(mode))

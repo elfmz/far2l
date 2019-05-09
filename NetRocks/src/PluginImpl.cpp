@@ -109,7 +109,7 @@ std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
 	std::string out;
 	const wchar_t *slash = wcschr(_cur_dir, '/');
 	if (slash) {
-		out = Wide2MB(slash + 1);
+		out+= Wide2MB(slash + 1);
 	}
 
 	if (out.empty()) {
@@ -124,6 +124,11 @@ std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
 		if (out.empty())
 			out = ".";
 	}
+
+	if (out.empty() || out[0] != '/') {
+		out.insert(0, _remote_root_dir);
+	}
+	fprintf(stderr, "CurrentSiteDir: out='%s'\n", out.c_str());
 	return out;
 }
 
@@ -199,6 +204,10 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 			if (!_remote) {
 				return FALSE;
 			}
+
+			KeyFileHelper(G.config.c_str());
+			_remote_root_dir = KeyFileHelper(G.config.c_str()).GetString(site.c_str(), "Directory");
+
 
 //			if (p != std::string::npos)
 //				tmp.erase(0, p + 1);

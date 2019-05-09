@@ -20,7 +20,7 @@ class HostRemoteBroker : protected IPCEndpoint
 
 	void InitConnection()
 	{
-		std::string protocol, host, username, password, directory, options;
+		std::string protocol, host, username, password, options;
 		unsigned int port, login_mode;
 		RecvString(protocol);
 		if (protocol.empty()) {
@@ -32,12 +32,11 @@ class HostRemoteBroker : protected IPCEndpoint
 		RecvPOD(login_mode);
 		RecvString(username);
 		RecvString(password);
-		RecvString(directory);
 		RecvString(options);
 
 		StringConfig protocol_options(options);
 		if (strcasecmp(protocol.c_str(), "sftp") == 0) {
-			_protocol = std::make_shared<ProtocolSFTP>(host, port, username, password, directory, protocol_options);
+			_protocol = std::make_shared<ProtocolSFTP>(host, port, username, password, protocol_options);
        		} else {
 			throw std::runtime_error(std::string("Wrong protocol: ").append(protocol));
 		}

@@ -12,6 +12,8 @@ class PluginImpl
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
 
+	std::string _remote_root_dir;
+
 	void UpdatePanelTitle();
 	bool ValidateConnection();
 

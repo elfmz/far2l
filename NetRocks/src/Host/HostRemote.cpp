@@ -29,7 +29,6 @@ HostRemote::HostRemote(const std::string &site, int OpMode) throw (std::runtime_
 	_login_mode = (unsigned int)kfh.GetInt(_site.c_str(), "LoginMode", 2);
 	_username = kfh.GetString(_site.c_str(), "Username");
 	_password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
-	_directory = kfh.GetString(_site.c_str(), "Directory");
 	_options = kfh.GetString(_site.c_str(), "Options");
 	if (_protocol.empty() || _host.empty())
 		throw std::runtime_error("Bad site configuration");
@@ -140,7 +139,6 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 		SendPOD(_login_mode);
 		SendString(_username);
 		SendString(_password);
-		SendString(_directory);
 		SendString(_options);
 
 		IPCProtocolInitStatus status;

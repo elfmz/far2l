@@ -4,8 +4,10 @@
 #include <KeyFileHelper.h>
 #include "PluginImpl.h"
 #include "PluginPanelItems.h"
+#include "PooledStrings.h"
 #include "Host/HostLocal.h"
 #include "UI/SiteConnectionEditor.h"
+#include "UI/Confirm.h"
 #include "Op/OpConnect.h"
 #include "Op/OpGetMode.h"
 #include "Op/OpXfer.h"
@@ -33,6 +35,9 @@ public:
 	{
 		std::lock_guard<std::mutex> locker(_mutex);
 		_all.erase((void *)it);
+		if (_all.empty()) {
+			PurgePooledStrings();
+		}
 	}
 
 	bool GetDestinationOf(void *handle, std::shared_ptr<IHost> &remote, std::string &site_dir)
@@ -248,6 +253,10 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	if (ItemsNumber <= 0)
 		return FALSE;
 
+	if (!_remote) {
+		return FALSE;
+	}
+
 	std::string dst_dir;
 	if (DestPath)
 		Wide2MB(DestPath, dst_dir);
@@ -262,6 +271,10 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	fprintf(stderr, "NetRocks::GetFiles: _dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d\n", _cur_dir, SrcPath, site_dir.c_str(), ItemsNumber);
 	if (ItemsNumber <= 0)
 		return FALSE;
+
+	if (!_remote) {
+		return FALSE;
+	}
 
 //	std::string src_dir;
 //	if (SrcPath) {
@@ -288,12 +301,28 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	if (ItemsNumber <= 0)
 		return FALSE;
 
+	if (!_remote) {
+		if (!ConfirmRemoveSites().Ask())
+			return FALSE;
+
+		KeyFileHelper kfh(G.config.c_str());
+		for (int i = 0; i < ItemsNumber; ++i) {
+			const std::string &display_name = Wide2MB(PanelItem[i].FindData.lpwszFileName);
+			fprintf(stderr, "removing %s\n", display_name.c_str());
+			kfh.RemoveSection(display_name.c_str());
+		}
+		return TRUE;
+	}
+
 	return OpRemove(OpMode, _remote, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
 }
 
 int PluginImpl::MakeDirectory(const wchar_t *Name, int OpMode)
 {
 	fprintf(stderr, "NetRocks::MakeDirectory('%ls', 0x%x)\n", Name, OpMode);
+	if (!_remote) {
+		return FALSE;
+	}
 	if (_cur_dir[0]) {
 		std::string tmp;
 		if (Name) {

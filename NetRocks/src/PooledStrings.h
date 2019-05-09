@@ -7,3 +7,7 @@ const char *PooledString(const std::string &s);
 
 const wchar_t *MB2WidePooled(const std::string &str);
 const wchar_t *MB2WidePooled(const char *str);
+
+
+void PurgePooledStrings();
+

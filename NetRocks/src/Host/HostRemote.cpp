@@ -7,11 +7,11 @@
 #include <vector>
 #include <KeyFileHelper.h>
 #include <ScopeHelpers.h>
+#include <StringConfig.h>
 #include <CheckedCast.hpp>
 
 #include "HostRemote.h"
 #include "Protocol/Protocol.h"
-#include "Protocol/ProtocolOptions.h"
 #include "IPC.h"
 #include "Globals.h"
 #include "PooledStrings.h"
@@ -190,7 +190,7 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 
 bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 {
-	ProtocolOptions protocol_options(_options);
+	StringConfig protocol_options(_options);
 	const std::string &prev_identity = protocol_options.GetString("ServerIdentity");
 	protocol_options.SetString("ServerIdentity", new_identity);
 

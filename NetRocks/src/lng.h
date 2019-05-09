@@ -88,6 +88,9 @@ enum LanguageID
   MRemoveText,
   MProceedRemoval,
 
+  MRemoveSitesTitle,
+  MRemoveSitesText,
+
   MMakeDirTitle,
   MMakeDirText,
   MProceedMakeDir,
@@ -133,4 +136,5 @@ enum LanguageID
 
   MNewServerIdentityAllowOnce,
   MNewServerIdentityAllowAlways
+
 };

@@ -55,3 +55,17 @@ const wchar_t *MB2WidePooled(const std::string &str)
 {
 	return MB2WidePooled(str.c_str());
 }
+
+//////////////////////////////////
+void PurgePooledStrings()
+{
+	{
+		std::lock_guard<std::mutex> locker(g_strings_pool_mutex);
+		g_strings_pool.clear();
+	}
+
+	{
+		std::lock_guard<std::mutex> locker(g_wide_strings_pool_mutex);
+		g_wide_strings_pool.clear();
+	}
+}

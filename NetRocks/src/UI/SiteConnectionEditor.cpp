@@ -158,6 +158,10 @@ bool SiteConnectionEditor::Save()
 	kfh.PutString(_display_name.c_str(), "Password", _password.c_str());
 	kfh.PutString(_display_name.c_str(), "Directory", _directory.c_str());
 	kfh.PutString(_display_name.c_str(), "Options", _options.c_str());
+
+	if (_display_name != _initial_display_name && !_initial_display_name.empty()) {
+		kfh.RemoveSection(_initial_display_name.c_str());
+	}
 	return true;
 }
 

@@ -1,5 +1,5 @@
-#include <utils.h>
-#include "ProtocolOptions.h"
+#include "utils.h"
+#include "StringConfig.h"
 
 static std::string StringEscape(const std::string &str)
 {
@@ -47,7 +47,7 @@ static std::string StringUnescape(const std::string &str)
 	return out;
 }
 
-ProtocolOptions::ProtocolOptions(const std::string &serialized_str)
+StringConfig::StringConfig(const std::string &serialized_str)
 {
 	std::string s;
 	for (size_t i = 0, ii = 0; i <= serialized_str.size(); ++i) {
@@ -64,7 +64,7 @@ ProtocolOptions::ProtocolOptions(const std::string &serialized_str)
 	}
 }
 
-std::string ProtocolOptions::Serialize() const
+std::string StringConfig::Serialize() const
 {
 	std::string out;
 	for (const auto &it : _entries) {
@@ -76,34 +76,34 @@ std::string ProtocolOptions::Serialize() const
 	return out;
 }
 
-int ProtocolOptions::GetInt(const char *name, int def) const
+int StringConfig::GetInt(const char *name, int def) const
 {
 	auto it = _entries.find(name);
 	return (it != _entries.end()) ? atoi(it->second.c_str()) : def;
 }
 
-std::string ProtocolOptions::GetString(const char *name, const char *def) const
+std::string StringConfig::GetString(const char *name, const char *def) const
 {
 	auto it = _entries.find(name);
 	return (it != _entries.end()) ? it->second : def;
 }
 
-void ProtocolOptions::SetInt(const char *name, int val)
+void StringConfig::SetInt(const char *name, int val)
 {
 	_entries[name] = StrPrintf("%d", val);
 }
 
-void ProtocolOptions::SetString(const char *name, const std::string &val)
+void StringConfig::SetString(const char *name, const std::string &val)
 {
 	_entries[name] = val;
 }
 
-void ProtocolOptions::SetString(const char *name, const char *val)
+void StringConfig::SetString(const char *name, const char *val)
 {
 	_entries[name] = val;
 }
 
-void ProtocolOptions::Delete(const char *name)
+void StringConfig::Delete(const char *name)
 {
 	_entries.erase(name);
 }

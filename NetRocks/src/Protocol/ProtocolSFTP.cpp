@@ -111,7 +111,7 @@ static std::string GetSSHPubkeyHash(ssh_session ssh)
 }
 
 ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std::string &username, const std::string &password,
-				const std::string &directory, const ProtocolOptions &options) throw (std::runtime_error)
+				const std::string &directory, const StringConfig &options) throw (std::runtime_error)
 	: _conn(new SFTPConnection)
 {
 	_conn->ssh = ssh_new();

@@ -56,7 +56,7 @@ ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd, const std::string &desti
 		:
 		((xd == XK_UPLOAD) ? MProceedMoveUpload : ((xd == XK_CROSSLOAD) ? MProceedMoveCrossload : MProceedMoveDownload)),
 
-		nullptr, FDIS_DEFAULT);
+		nullptr, FDIS_DEFAULT_FOCUSED);
 
 	_i_cancel = _di.Add(DI_BUTTON, 38,10,58,10, DIF_CENTERGROUP, MCancel);
 }
@@ -139,7 +139,7 @@ ConfirmRemove::ConfirmRemove(const std::string &site_dir)
 	_di.Add(DI_TEXT, 4,4,63,4, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_i_proceed = _di.Add(DI_BUTTON, 7,5,29,5, DIF_CENTERGROUP, MProceedRemoval);
-	_i_cancel = _di.Add(DI_BUTTON, 38,5,58,5, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
+	_i_cancel = _di.Add(DI_BUTTON, 38,5,58,5, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT_FOCUSED);
 }
 
 
@@ -149,6 +149,35 @@ bool ConfirmRemove::Ask()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*                                                         62
+345                      28         39                   60  64
+ ======================= Remove =============================
+| Remove selected connection sites settings?                 |
+|------------------------------------------------------------|
+|   [  Proceed removal    ]        [        Cancel       ]   |
+ ============================================================
+    6                     29       38                      60
+*/
+
+ConfirmRemoveSites::ConfirmRemoveSites()
+{
+	_di.Add(DI_DOUBLEBOX, 3,1,64,5, 0, MRemoveSitesTitle);
+	_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveSitesText);
+
+	_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+	_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MProceedRemoval);
+	_i_cancel = _di.Add(DI_BUTTON, 38,4,58,4, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT_FOCUSED);
+}
+
+
+bool ConfirmRemoveSites::Ask()
+{
+	return (Show(L"ConfirmRemoveSites", 6, 2, FDLG_WARNING) == _i_proceed);
+}
+
+//////////////////////////////////////////////////////////////////////////
 
 /*                                               
 345                                            50

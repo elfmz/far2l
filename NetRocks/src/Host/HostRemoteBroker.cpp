@@ -1,7 +1,7 @@
 #include <vector>
+#include <StringConfig.h>
 #include "IPC.h"
 #include "Protocol/ProtocolSFTP.h"
-#include "Protocol/ProtocolOptions.h"
 
 static const std::string s_empty_string;
 
@@ -35,7 +35,7 @@ class HostRemoteBroker : protected IPCEndpoint
 		RecvString(directory);
 		RecvString(options);
 
-		ProtocolOptions protocol_options(options);
+		StringConfig protocol_options(options);
 		if (strcasecmp(protocol.c_str(), "sftp") == 0) {
 			_protocol = std::make_shared<ProtocolSFTP>(host, port, username, password, directory, protocol_options);
        		} else {

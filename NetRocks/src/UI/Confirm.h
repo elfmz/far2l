@@ -26,6 +26,15 @@ public:
 	bool Ask();
 };
 
+class ConfirmRemoveSites : protected BaseDialog
+{
+	int _i_proceed = -1, _i_cancel = -1;
+
+public:
+	ConfirmRemoveSites();
+
+	bool Ask();
+};
 
 class ConfirmMakeDir : protected BaseDialog
 {

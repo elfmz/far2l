@@ -8,7 +8,6 @@ src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
 src/Protocol/ProtocolSFTP.cpp
-src/Protocol/ProtocolOptions.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp

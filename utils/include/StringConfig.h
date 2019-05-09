@@ -2,12 +2,12 @@
 #include <string>
 #include <map>
 
-class ProtocolOptions
+class StringConfig
 {
 	std::map<std::string, std::string> _entries;
 
 public:
-	ProtocolOptions(const std::string &serialized_str);
+	StringConfig(const std::string &serialized_str);
 	std::string Serialize() const;
 
 	int GetInt(const char *name, int def = 0) const;

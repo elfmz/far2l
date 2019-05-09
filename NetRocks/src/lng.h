@@ -125,5 +125,10 @@ enum LanguageID
   MErrorSite,
 
   MHostLocalName,
-  MErrorsStatus
+  MErrorsStatus,
+
+  MNewServerIdentityTitle,
+  MNewServerIdentitySite,
+  MNewServerIdentityText
+
 };

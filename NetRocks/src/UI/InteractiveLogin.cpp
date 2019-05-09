@@ -54,6 +54,10 @@ public:
 	{
 		_di[_i_username].PtrData = _di.MB2WidePooled(username.c_str());
 		_di[_i_password].PtrData = _di.MB2WidePooled(password.c_str());
+		if (!username.empty() && password.empty()) {
+			_di[_i_username].Focus = 0;
+			_di[_i_password].Focus = 1;
+		}
 
 		if (Show(L"InteractiveLoginDialog", 6, 2) != _i_connect)
 			return false;

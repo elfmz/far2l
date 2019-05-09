@@ -4,12 +4,12 @@ project(utils)
 find_package(PkgConfig REQUIRED)
 
 set(SOURCES
-  src/StrFormat.cpp
   src/Threaded.cpp
   src/SavedScreen.cpp
   src/SharedResource.cpp
   src/KeyFileHelper.cpp
   src/utils.cpp
+  src/StrPrintf.cpp
   src/TimeUtils.cpp
   src/InMy.cpp
   src/ZombieControl.cpp

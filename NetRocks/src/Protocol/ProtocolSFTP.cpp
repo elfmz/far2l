@@ -1,8 +1,11 @@
-#include "ProtocolSFTP.h"
-#include <libssh/ssh2.h>
-#include <libssh/sftp.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
+#include <utils.h>
+#include <vector>
+#include <libssh/ssh2.h>
+#include <libssh/sftp.h>
+#include "ProtocolSFTP.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,9 +86,32 @@ struct SFTPConnection
 
 ////////////////////////////
 
-ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std::string &options,
-				const std::string &username, const std::string &password,
-				const std::string &directory) throw (std::runtime_error)
+static std::string GetSSHPubkeyHash(ssh_session ssh)
+{
+	ssh_key pub_key = {};
+	int rc = ssh_get_publickey(ssh, &pub_key);
+	if (rc != SSH_OK)
+		throw ProtocolError("Public key failed", ssh_get_error(ssh), rc);
+
+	unsigned char *hash = nullptr;
+	size_t hlen = 0;
+	rc = ssh_get_publickey_hash(pub_key, SSH_PUBLICKEY_HASH_SHA1, &hash, &hlen);
+	ssh_key_free(pub_key);
+
+	if (rc != SSH_OK)
+		throw ProtocolError("Public key hash failed", ssh_get_error(ssh), rc);
+
+	std::string out;
+	for (size_t i = 0; i < hlen; ++i) {
+		out+= StrPrintf("%02x", (unsigned int)hash[i]);
+	}
+	ssh_clean_pubkey_hash(&hash);
+
+	return out;
+}
+
+ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std::string &username, const std::string &password,
+				const std::string &directory, const ProtocolOptions &options) throw (std::runtime_error)
 	: _conn(new SFTPConnection)
 {
 	_conn->ssh = ssh_new();
@@ -112,6 +138,10 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 	int rc = ssh_connect(_conn->ssh);
 	if (rc != SSH_OK)
 		throw ProtocolError("Connection failed", ssh_get_error(_conn->ssh), rc);
+
+	const std::string &pub_key_hash = GetSSHPubkeyHash(_conn->ssh);
+	if (pub_key_hash != options.GetString("ServerIdentity"))
+		throw ServerIdentityMismatchError(pub_key_hash);
 
 	rc = ssh_userauth_password(_conn->ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
   	if (rc != SSH_AUTH_SUCCESS)

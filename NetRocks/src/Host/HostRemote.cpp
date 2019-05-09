@@ -11,11 +11,13 @@
 
 #include "HostRemote.h"
 #include "Protocol/Protocol.h"
+#include "Protocol/ProtocolOptions.h"
 #include "IPC.h"
 #include "Globals.h"
 #include "PooledStrings.h"
 
 #include "UI/InteractiveLogin.h"
+#include "UI/ConfirmNewServerIdentity.h"
 
 HostRemote::HostRemote(const std::string &site, int OpMode) throw (std::runtime_error)
 	: _site(site)
@@ -96,45 +98,37 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
 
-	int master2slave[2] = {-1, -1};
-	int slave2master[2] = {-1, -1};
-	int r = pipe(master2slave);
+	int master2broker[2] = {-1, -1};
+	int broker2master[2] = {-1, -1};
+	int r = pipe(master2broker);
 	if (r == 0) {
-		r = pipe(slave2master);
+		r = pipe(broker2master);
 		if (r != 0)
-			CheckedCloseFDPair(master2slave);
+			CheckedCloseFDPair(master2broker);
 	}
 	if (r != 0)
 		throw IPCError("pipe() error", errno);
 
-	fcntl(master2slave[1], F_SETFD, FD_CLOEXEC);
-	fcntl(slave2master[0], F_SETFD, FD_CLOEXEC);
+	fcntl(master2broker[1], F_SETFD, FD_CLOEXEC);
+	fcntl(broker2master[0], F_SETFD, FD_CLOEXEC);
 
 	wchar_t lib_cmdline[0x200] = {};
-	swprintf(lib_cmdline, ARRAYSIZE(lib_cmdline) - 1, L"%d %d", master2slave[0], slave2master[1]);
+	swprintf(lib_cmdline, ARRAYSIZE(lib_cmdline) - 1, L"%d %d", master2broker[0], broker2master[1]);
 
 	fprintf(stderr, "G.plugin_path.c_str()='%ls'\n", G.plugin_path.c_str());
 	G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(),
-		L"HostRemoteSlaveMain", lib_cmdline, EF_HIDEOUT | EF_NOWAIT);
+		L"HostRemoteBrokerMain", lib_cmdline, EF_HIDEOUT | EF_NOWAIT);
 
-	close(master2slave[0]);
-	close(slave2master[1]);
+	close(master2broker[0]);
+	close(broker2master[1]);
 
-	IPCRecver::SetFD(slave2master[0]);
-	IPCSender::SetFD(master2slave[1]);
+	IPCRecver::SetFD(broker2master[0]);
+	IPCSender::SetFD(master2broker[1]);
 
-	for (unsigned int retry = 0;; ++retry) {
-
-		if (retry > 0) {
-			if (retry == 3) {
-				throw ProtocolAuthFailedError();
-			}
-			_login_mode = 1;
-		}
-
+	for (unsigned int auth_failures = 0;;) {
 //		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
 		if (_login_mode == 1) {
-			if (!InteractiveLogin(_site, retry, _username, _password)) {
+			if (!InteractiveLogin(_site, auth_failures, _username, _password)) {
 				SendString(std::string());
 				throw AbortError();
 			}
@@ -149,25 +143,66 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 		SendString(_directory);
 		SendString(_options);
 
-		unsigned int status;
+		IPCProtocolInitStatus status;
 		RecvPOD(status);
-		if (status == 0) {
+		if (status == IPC_PI_OK) {
 			if (_login_mode == 1) {
 				// on next reinitialization try to autouse same password that now succeeded
 				_login_mode = 2;
 			}
 			break;
 		}
-		if (status == 2 || status == 3) {
-			std::string what;
-			RecvString(what);
-			if (status == 2) {
-				throw ProtocolError(what);
-			}
-			throw std::runtime_error(what);
+
+		std::string info;
+		RecvString(info);
+		fprintf(stderr, "HostRemote::ReInitialize: status=%d info='%s'\n", status, info.c_str());
+		switch (status) {
+			case IPC_PI_SERVER_IDENTITY_CHANGED:
+				if (!OnServerIdentityChanged(info)) 
+					throw ProtocolError("Server identity mismatch", info.c_str());
+				if (_login_mode == 1) {
+					// on next reinitialization try to autouse same password that was already entered
+					_login_mode = 2;
+				}
+
+				break;
+
+			case IPC_PI_AUTHORIZATION_FAILED:
+				if (auth_failures >= 3)
+					throw ProtocolError("Authorization failed", info.c_str());
+
+				++auth_failures;
+				_login_mode = 1;
+				break;
+
+			case IPC_PI_PROTOCOL_ERROR:
+				throw ProtocolError(info);
+
+			case IPC_PI_GENERIC_ERROR:
+				throw std::runtime_error(info);
+
+			default:
+				throw IPCError("Unexpected protocol init status", status);
 		}
 	}
 	_broken = false;
+}
+
+bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
+{
+	ProtocolOptions protocol_options(_options);
+	const std::string &prev_identity = protocol_options.GetString("ServerIdentity");
+	if (!prev_identity.empty()) {
+		if (!ConfirmNewServerIdentity(_site, new_identity).Ask())
+			return false;
+	}
+
+	protocol_options.SetString("ServerIdentity", new_identity);
+	_options = protocol_options.Serialize();
+
+	KeyFileHelper kfh(G.config.c_str());
+	kfh.PutString(_site.c_str(), "Options", _options.c_str());
+	return true;
 }
 
 HostRemote::~HostRemote()
@@ -208,7 +243,7 @@ bool HostRemote::IsBroken()
 		return out;
 
 	} catch (std::exception &ex) {
-		fprintf(stderr, "HostRemoteSlave::IsBroken: %s\n", ex.what());
+		fprintf(stderr, "HostRemote::IsBroken: %s\n", ex.what());
 		OnBroken();
 		return true;
 	}

@@ -28,6 +28,8 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 
 	void RecvReply(IPCCommand cmd);
 
+	bool OnServerIdentityChanged(const std::string &new_identity);
+
 protected:
 	void BusySet();
 	void BusyReset();

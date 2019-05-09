@@ -35,12 +35,23 @@ ProtocolError::ProtocolError(const std::string &msg)
 	: std::runtime_error(msg)
 {
 }
+
 ////////////
-ProtocolAuthFailedError::ProtocolAuthFailedError()
-	: ProtocolError("Authorization failed")
+
+ProtocolAuthFailedError::ProtocolAuthFailedError(const std::string &info)
+	: std::runtime_error(info)
 {
 }
+
 ////////////
+
+ServerIdentityMismatchError::ServerIdentityMismatchError(const std::string &identity)
+	: std::runtime_error(identity)
+{
+}
+
+////////////
+
 static std::string FormatIPCError(const char *msg, unsigned int code)
 {
 	std::string s = msg;

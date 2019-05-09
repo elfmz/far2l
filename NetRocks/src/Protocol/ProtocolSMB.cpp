@@ -86,9 +86,8 @@ static void ProtocolSMB_AuthFn(const char *server, const char *share, char *wrkg
 }
 
 
-ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port, const std::string &options,
-				const std::string &username, const std::string &password,
-				const std::string &directory) throw (ProtocolError)
+ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port, const std::string &username, const std::string &password,
+				const std::string &directory, const ProtocolOptions &protocol_options) throw (ProtocolError)
 	: _conn(new SMBConnection)
 {
 	_conn->ctx = create_smbctx();

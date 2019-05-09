@@ -18,7 +18,8 @@ bool OpGetMode::Do(mode_t &result)
 		WaitThread();
 
 	} else if (!WaitThread(1000)) {
-		SimpleOperationProgress(SimpleOperationProgress::K_GETMODE, _base_dir, _state).Show();
+		SimpleOperationProgress p(SimpleOperationProgress::K_GETMODE, _base_dir, _state);
+		p.Show();
 		WaitThread();
 	}
 

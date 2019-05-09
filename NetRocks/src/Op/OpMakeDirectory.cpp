@@ -29,7 +29,8 @@ bool OpMakeDirectory::Do()
 		return false;
 	}
 	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
-		SimpleOperationProgress(SimpleOperationProgress::K_CREATEDIR, _dir_name, _state).Show();
+		SimpleOperationProgress p(SimpleOperationProgress::K_CREATEDIR, _dir_name, _state);
+		p.Show();
 		WaitThread();
 	}
 

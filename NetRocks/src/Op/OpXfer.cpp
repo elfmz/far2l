@@ -44,7 +44,8 @@ bool OpXfer::Do()
 	}
 
 	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
-		XferProgress(_kind, _direction, _dst_dir, _state).Show();
+		XferProgress p(_kind, _direction, _dst_dir, _state);
+		p.Show();
 		WaitThread();
 	}
 

@@ -92,6 +92,8 @@ private:
 	ProgressState &_state;
 	int _finished = 0;
 	int _i_dblbox = -1;
-	unsigned long _last_count_complete = 0;
+	int _i_errstats_separator = -1;
+	bool _errstats_colored = false;
+	ProgressStateStats _last_stats;
 	std::string _title;
 };

@@ -34,14 +34,21 @@ ConfirmNewServerIdentity::ConfirmNewServerIdentity(const std::string &site, cons
 	_di.AddAtLine(DI_TEXT, 4,49, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	_i_ok = _di.AddAtLine(DI_BUTTON, 6,23, DIF_CENTERGROUP, MOK);
-	_di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
+	_i_allow_once = _di.AddAtLine(DI_BUTTON, 6,15, DIF_CENTERGROUP, MNewServerIdentityAllowOnce);
+	_i_allow_always = _di.AddAtLine(DI_BUTTON, 16,25, DIF_CENTERGROUP, MNewServerIdentityAllowAlways);
+	_di.AddAtLine(DI_BUTTON, 26,35, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT_FOCUSED);
 }
 
-bool ConfirmNewServerIdentity::Ask()
+ConfirmNewServerIdentity::Result ConfirmNewServerIdentity::Ask()
 {
-	return (Show("ConfirmNewServerIdentity", 6, 2, FDLG_WARNING) == _i_ok);
+	const int r = Show("ConfirmNewServerIdentity", 6, 2, FDLG_WARNING);
+
+	if (r == _i_allow_once)
+		return R_ALLOW_ONCE;
+
+	if (r == _i_allow_always)
+		return R_ALLOW_ALWAYS;
+
+	return R_DENY;
 }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////

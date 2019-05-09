@@ -192,12 +192,23 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 {
 	ProtocolOptions protocol_options(_options);
 	const std::string &prev_identity = protocol_options.GetString("ServerIdentity");
+	protocol_options.SetString("ServerIdentity", new_identity);
+
 	if (!prev_identity.empty()) {
-		if (!ConfirmNewServerIdentity(_site, new_identity).Ask())
-			return false;
+		switch (ConfirmNewServerIdentity(_site, new_identity).Ask()) {
+			case ConfirmNewServerIdentity::R_ALLOW_ONCE: {
+				_options = protocol_options.Serialize();
+				return true;
+			}
+
+			case ConfirmNewServerIdentity::R_ALLOW_ALWAYS:
+				break;
+
+			default:
+				return false;
+		}
 	}
 
-	protocol_options.SetString("ServerIdentity", new_identity);
 	_options = protocol_options.Serialize();
 
 	KeyFileHelper kfh(G.config.c_str());

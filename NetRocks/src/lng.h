@@ -129,6 +129,8 @@ enum LanguageID
 
   MNewServerIdentityTitle,
   MNewServerIdentitySite,
-  MNewServerIdentityText
+  MNewServerIdentityText,
 
+  MNewServerIdentityAllowOnce,
+  MNewServerIdentityAllowAlways
 };

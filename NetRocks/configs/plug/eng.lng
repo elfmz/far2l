@@ -125,3 +125,7 @@
 
 "Local filesystem"
 "RETRIES: %llu SKIPS: %llu"
+
+"Confirm new server identity"
+"Site name:"
+"Site's server current identity:"

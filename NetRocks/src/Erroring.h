@@ -11,9 +11,14 @@ struct ProtocolError : std::runtime_error
 	ProtocolError(const std::string &msg);
 };
 
-struct ProtocolAuthFailedError : ProtocolError
+struct ProtocolAuthFailedError : std::runtime_error
 {
-	ProtocolAuthFailedError();
+	ProtocolAuthFailedError(const std::string &info = std::string());
+};
+
+struct ServerIdentityMismatchError : std::runtime_error
+{
+	ServerIdentityMismatchError(const std::string &identity);
 };
 
 struct IPCError : std::runtime_error

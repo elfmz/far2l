@@ -23,6 +23,15 @@ enum IPCCommand
 	IPC_FILE_PUT
 };
 
+enum IPCProtocolInitStatus
+{
+	IPC_PI_OK = 0,
+	IPC_PI_SERVER_IDENTITY_CHANGED,
+	IPC_PI_AUTHORIZATION_FAILED,
+	IPC_PI_PROTOCOL_ERROR,
+	IPC_PI_GENERIC_ERROR
+};
+
 class IPCSender
 {
 	int _fd;

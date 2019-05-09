@@ -1,6 +1,6 @@
 #include <utils.h>
 
-std::string StrFormatV(const char *format, va_list args)
+std::string StrPrintfV(const char *format, va_list args)
 {
 	std::string out(0x100, '#');
 
@@ -27,12 +27,12 @@ std::string StrFormatV(const char *format, va_list args)
 	return out;
 }
 
-std::string StrFormat(const char *format, ...)
+std::string StrPrintf(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
 
-	const std::string &out = StrFormatV(format, args);
+	const std::string &out = StrPrintfV(format, args);
 
 	va_end(args);
 

@@ -1,10 +1,11 @@
 #include <vector>
 #include "IPC.h"
 #include "Protocol/ProtocolSFTP.h"
+#include "Protocol/ProtocolOptions.h"
 
 static const std::string s_empty_string;
 
-class HostRemoteSlave : protected IPCEndpoint
+class HostRemoteBroker : protected IPCEndpoint
 {
 	std::shared_ptr<IProtocol> _protocol;
 	struct {
@@ -34,8 +35,9 @@ class HostRemoteSlave : protected IPCEndpoint
 		RecvString(directory);
 		RecvString(options);
 
+		ProtocolOptions protocol_options(options);
 		if (strcasecmp(protocol.c_str(), "sftp") == 0) {
-			_protocol = std::make_shared<ProtocolSFTP>(host, port, options, username, password, directory);
+			_protocol = std::make_shared<ProtocolSFTP>(host, port, username, password, directory, protocol_options);
        		} else {
 			throw std::runtime_error(std::string("Wrong protocol: ").append(protocol));
 		}
@@ -221,30 +223,35 @@ class HostRemoteSlave : protected IPCEndpoint
 			case IPC_FILE_PUT: OnFilePut(); break;
 				
 			default:
-				throw IPCError("HostRemoteSlave: bad command", (unsigned int)c); 
+				throw IPCError("HostRemoteBroker: bad command", (unsigned int)c); 
 		}
 	}
 
 public:
-	HostRemoteSlave(int fd_recv, int fd_send) :
+	HostRemoteBroker(int fd_recv, int fd_send) :
 		IPCEndpoint(fd_recv, fd_send)
 		
 	{
 		for (;;) try {
 			InitConnection();
-			SendPOD((unsigned int)0);
+			SendPOD(IPC_PI_OK);
+			break;
+		} catch (ServerIdentityMismatchError &ex) {
+			SendPOD(IPC_PI_SERVER_IDENTITY_CHANGED);
+			SendString(ex.what());
+
+		} catch (ProtocolAuthFailedError &ex) {
+			SendPOD(IPC_PI_AUTHORIZATION_FAILED);
+			SendString(ex.what());
 			break;
 
-		} catch (ProtocolAuthFailedError &) {
-			SendPOD((unsigned int)1);
-
 		} catch (ProtocolError &ex) {
-			SendPOD((unsigned int)2);
+			SendPOD(IPC_PI_PROTOCOL_ERROR);
 			SendString(ex.what());
 			break;
 
 		} catch (std::exception &ex) {
-			SendPOD((unsigned int)3);
+			SendPOD(IPC_PI_GENERIC_ERROR);
 			SendString(ex.what());
 			break;
 		}
@@ -267,16 +274,16 @@ public:
 
 };
 
-extern "C" __attribute__ ((visibility("default"))) void HostRemoteSlaveMain(int argc, char *argv[])
+extern "C" __attribute__ ((visibility("default"))) void HostRemoteBrokerMain(int argc, char *argv[])
 {
-	fprintf(stderr, "HostRemoteSlaveMain: BEGIN\n");
+	fprintf(stderr, "HostRemoteBrokerMain: BEGIN\n");
 	try {
 		if (argc == 2) {
-			HostRemoteSlave(atoi(argv[0]), atoi(argv[1])).Loop();
+			HostRemoteBroker(atoi(argv[0]), atoi(argv[1])).Loop();
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "HostRemoteSlaveMain: %s\n", e.what());
+		fprintf(stderr, "HostRemoteBrokerMain: %s\n", e.what());
 	}
-	fprintf(stderr, "HostRemoteSlaveMain: END\n");
+	fprintf(stderr, "HostRemoteBrokerMain: END\n");
 }

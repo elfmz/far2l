@@ -9,8 +9,8 @@ class ProtocolSMB : public IProtocol
 	std::shared_ptr<SMBConnection> _conn;
 
 public:
-	ProtocolSMB(const std::string &host, unsigned int port, const std::string &options, const std::string &username,
-		const std::string &password, const std::string &directory) throw (ProtocolError);
+	ProtocolSMB(const std::string &host, unsigned int port, const std::string &username, const std::string &password,
+		const std::string &directory, const ProtocolOptions &protocol_options) throw (ProtocolError);
 	virtual ~ProtocolSMB();
 
 	virtual bool IsBroken() const;

@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "Protocol.h"
+#include "ProtocolOptions.h"
 
 struct SFTPConnection;
 
@@ -9,8 +10,8 @@ class ProtocolSFTP : public IProtocol
 	std::shared_ptr<SFTPConnection> _conn;
 
 public:
-	ProtocolSFTP(const std::string &host, unsigned int port, const std::string &options, const std::string &username,
-		const std::string &password, const std::string &directory) throw (std::runtime_error);
+	ProtocolSFTP(const std::string &host, unsigned int port, const std::string &username,
+		const std::string &password, const std::string &directory, const ProtocolOptions &options) throw (std::runtime_error);
 	virtual ~ProtocolSFTP();
 
 	virtual bool IsBroken();

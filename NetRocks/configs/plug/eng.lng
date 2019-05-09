@@ -129,3 +129,5 @@
 "Confirm new server identity"
 "Site name:"
 "Site's server current identity:"
+"Allow &once"
+"Allow &always"

@@ -125,6 +125,13 @@ SHAREDSYMBOL int WINAPI _export MakeDirectoryW(HANDLE hPlugin, const wchar_t **N
 
 SHAREDSYMBOL void WINAPI _export ExitFARW()
 {
+//	abort();
+}
+
+SHAREDSYMBOL int WINAPI _export MayExitFARW()
+{
+//	abort();
+	return 1;
 }
 
 

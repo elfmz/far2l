@@ -729,7 +729,7 @@ void Manager::ExitMainLoop(int Ask)
 		CloseFARMenu=TRUE;
 	};
 
-	if (!Ask || !Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo)))
+	if (!Ask || (CtrlObject->Plugins.MayExitFar() && (!Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo)))))
 	{
 		/* $ 29.12.2000 IS
 		   + Проверяем, сохранены ли все измененные файлы. Если нет, то не выходим
@@ -842,9 +842,10 @@ int Manager::ProcessKey(DWORD Key)
 				{EXCEPTION_ILLEGAL_INSTRUCTION,L"Illegal instruction"},
 				{EXCEPTION_STACK_OVERFLOW,L"Stack Overflow"},
 				{EXCEPTION_FLT_DIVIDE_BY_ZERO,L"Floating-point divide by zero"},
-				{EXCEPTION_BREAKPOINT,L"Breakpoint"},
+*/				{EXCEPTION_BREAKPOINT,L"Breakpoint"},
 #ifdef _M_IA64
-				{EXCEPTION_DATATYPE_MISALIGNMENT,L"Alignment fault (IA64 specific)",},
+/				{EXCEPTION_DATATYPE_MISALIGNMENT,L"Alignment fault (IA64 specific)",},
++
 #endif
 				/*
 				        {EXCEPTION_FLT_OVERFLOW,"EXCEPTION_FLT_OVERFLOW"},
@@ -887,7 +888,7 @@ int Manager::ProcessKey(DWORD Key)
 			int ExitCode=ModalMenu.Modal::GetExitCode();
 
 			switch (ExitCode)
-			{
+-			{
 				case -1:
 					return TRUE;
 				case 0:

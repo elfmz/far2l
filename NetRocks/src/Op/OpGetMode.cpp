@@ -1,5 +1,5 @@
 #include "OpGetMode.h"
-#include "../UI/Confirm.h"
+#include "../UI/SimpleOperationProgress.h"
 
 OpGetMode::OpGetMode(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &path)
 	:

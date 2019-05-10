@@ -1,5 +1,6 @@
 #include "OpMakeDirectory.h"
 #include "../UI/Confirm.h"
+#include "../UI/SimpleOperationProgress.h"
 
 OpMakeDirectory::OpMakeDirectory(int op_mode,std::shared_ptr<IHost> &base_host,
 	const std::string &base_dir, const std::string &dir_name)

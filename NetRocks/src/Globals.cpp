@@ -21,5 +21,11 @@ const wchar_t *Globals::GetMsgWide(int id)
 
 const char *Globals::GetMsgMB(int id)
 {
-	return PooledString(info.GetMsg(info.ModuleNumber, id));
+	std::lock_guard<std::mutex> locker(_msg_mb_mtx);
+	auto it = _msg_mb.find(id);
+	if (it != _msg_mb.end())
+		return it->second.c_str();
+
+	auto ir = _msg_mb.emplace(id, Wide2MB(info.GetMsg(info.ModuleNumber, id)));
+	return ir.first->second.c_str();
 }

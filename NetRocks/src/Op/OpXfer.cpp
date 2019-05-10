@@ -4,6 +4,7 @@
 #include "../UI/Confirm.h"
 #include "../UI/ConfirmOverwrite.h"
 #include "../UI/WhatOnError.h"
+#include "../UI/ComplexOperationProgress.h"
 #include "../lng.h"
 
 OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
@@ -22,36 +23,88 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";
 	_diffname_suffix+= TimeString(TSF_FOR_FILENAME);
-}
-
-bool OpXfer::Do()
-{
-	if (!IS_SILENT(_op_mode)) {
-		if (!ConfirmXfer(_kind, _direction, _dst_dir).Ask(_default_xoa)) {
-			fprintf(stderr, "NetRocks::Xfer: cancel\n");
-			return false;
-		}
-	}
 
 	if (_dst_dir.empty()) {
 		_dst_dir = "./";
 	} else if (_dst_dir[_dst_dir.size() - 1] != '.')
 		_dst_dir+= '/';
 
+	if (!IS_SILENT(_op_mode)) {
+		if (!ConfirmXfer(_kind, _direction, _dst_dir).Ask(_default_xoa)) {
+			fprintf(stderr, "NetRocks::Xfer: cancel\n");
+			throw AbortError();
+		}
+	}
+
 	if (!StartThread()) {
-		fprintf(stderr, "NetRocks::Xfer: start thread error\n");
-		return false;
+		throw std::runtime_error("Cannot start thread");
 	}
 
 	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
 		XferProgress p(_kind, _direction, _dst_dir, _state);
-		p.Show();
-		WaitThread();
+		p.Show(false);
 	}
-
-	return true;
 }
 
+OpXfer::~OpXfer()
+{
+//	sleep(10);
+	WaitThread();
+}
+
+BackgroundTaskStatus OpXfer::GetStatus()
+{
+	{
+		std::lock_guard<std::mutex> locker(_state.mtx);
+		if (!_state.finished)
+			return _state.paused ? BTS_PAUSED : BTS_ACTIVE;
+	}
+
+	WaitThread();
+	return (GetThreadResult() == nullptr) ? BTS_COMPLETE : BTS_ABORTED;
+}
+
+std::string OpXfer::GetInformation()
+{
+	std::string out;
+	if (!WaitThread( 0 )) {
+		ProgressStateStats stats;
+		{
+			std::lock_guard<std::mutex> locker(_state.mtx);
+			stats = _state.stats;
+		}
+
+		if (stats.all_total != 0) {
+			out+= StrPrintf("%u%% ", (unsigned int)(stats.all_complete * 100ll / stats.all_total));
+		} else {
+			out+= "... ";
+		}
+	}
+
+	out+= _base_host->SiteName();
+	out+= " -> ";
+	out+= _dst_host->SiteName();
+	return out;
+}
+
+void OpXfer::Show()
+{
+	XferProgress p(_kind, _direction, _dst_dir, _state);
+	p.Show(true);
+}
+
+void OpXfer::Abort()
+{
+	{
+		std::lock_guard<std::mutex> locker(_state.mtx);
+		if (_state.finished)
+			return;
+		_state.aborting = true;
+	}
+
+	_dst_host->Abort();
+	_base_host->Abort();
+}
 
 void OpXfer::Process()
 {
@@ -144,18 +197,14 @@ void OpXfer::Transfer()
 					continue;
 				}
 			}
-			try {
-				FileCopyLoop(e.first, path_local, pos, e.second.mode);
-				if (_kind == XK_MOVE) {
-					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
-						[&] () mutable 
-						{
-							_base_host->FileDelete(e.first);
-						}
-					);
-				}
-			} catch (std::exception &ex) {
-				fprintf(stderr, "NetRocks::Xfer: %s on '%s' -> '%s'\n", ex.what(), e.first.c_str(), path_local.c_str());
+			FileCopyLoop(e.first, path_local, pos, e.second.mode);
+			if (_kind == XK_MOVE) {
+				WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
+					[&] () mutable 
+					{
+						_base_host->FileDelete(e.first);
+					}
+				);
 			}
 		}
 

@@ -63,6 +63,8 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 	_i_retry = _di.AddAtLine(DI_BUTTON, 5,20, DIF_CENTERGROUP, MRetry);
 	_i_skip = _di.AddAtLine(DI_BUTTON, 21,40, DIF_CENTERGROUP, MSkip);
 	_di.AddAtLine(DI_BUTTON, 41,60, DIF_CENTERGROUP, MCancel);
+
+	G.info.FSF->DisplayNotification(L"far2l - NetRocks", G.GetMsgWide(title_lng));
 }
 
 

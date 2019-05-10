@@ -26,7 +26,6 @@ OpBase::~OpBase()
 
 		G.info.FSF->DisplayNotification(display_action.c_str(), StrMB2Wide(_base_dir).c_str());
 	}
-
 }
 
 
@@ -66,8 +65,8 @@ void OpBase::ForcefullyAbort()
 
 bool OpBase::WaitThread(unsigned int msec)
 {
-	for (;;) {
-		unsigned int interval = (msec > 500) ? 500 : msec;
+	for (unsigned int sleep_limit = 500;;) {
+		unsigned int interval = (msec > sleep_limit) ? sleep_limit : msec;
 		if (Threaded::WaitThread(interval))
 			return true;
 
@@ -79,6 +78,11 @@ bool OpBase::WaitThread(unsigned int msec)
 		int cow_result = G.info.FSF->CallOnWait();
 		if (cow_result != 0) {
 			fprintf(stderr, "NetRocks::OpBase('%s', %d): CallOnWait returned %d\n", _base_dir.c_str(), _op_name_lng, cow_result);
+			if (cow_result > 0) {
+					sleep_limit = 1;
+			}
+		} else {
+			sleep_limit = 500;
 		}
 	}
 }

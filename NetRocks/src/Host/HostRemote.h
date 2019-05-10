@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
-#include <atomic>
+#include <mutex>
 #include <list>
 
 #include "Host.h"
@@ -13,6 +13,10 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 	friend class HostRemoteDirectoryEnumer;
 	friend class HostRemoteFileIO;
 
+	std::mutex _mutex; // to protect internal fields
+
+	std::string _site;
+
 	std::string _protocol;
 	std::string _host;
 	unsigned int _port;
@@ -21,9 +25,10 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 	std::string _password;
 	std::string _options;
 
-	std::string _site, _site_info;
 	bool _broken = true;
 	bool _busy = false;
+	bool _cloning = false;
+
 
 	void RecvReply(IPCCommand cmd);
 
@@ -37,8 +42,11 @@ protected:
 	void CheckReady();
 
 public:
-	HostRemote(const std::string &site, int OpMode) throw (std::runtime_error);
+	inline HostRemote() {}
+	HostRemote(const std::string &site) throw (std::runtime_error);
 	virtual ~HostRemote();
+
+	virtual std::shared_ptr<IHost> Clone();
 
 	virtual std::string SiteName() const;
 	virtual bool IsBroken();

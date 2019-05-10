@@ -4,7 +4,7 @@
 #include "DialogUtils.h"
 #include "Defs.h"
 
-class BaseProgress : protected BaseDialog
+class ComplexOperationProgress : protected BaseDialog
 {
 	ProgressState &_state;
 	ProgressStateStats _last_stats;
@@ -12,6 +12,8 @@ class BaseProgress : protected BaseDialog
 	int _finished = 0;
 
 protected:
+	bool _escape_to_background = false;
+
 	int _i_cur_file = -1;
 	int _i_file_size_complete = -1;
 	int _i_file_size_total = -1;
@@ -37,7 +39,7 @@ protected:
 
 	int _i_errstats_separator = -1;
 
-	int /*_i_background = -1, */_i_pause_resume = -1, _i_cancel = -1;
+	int _i_background = -1, _i_pause_resume = -1, _i_cancel = -1;
 
 	bool _errstats_colored = false;
 
@@ -54,46 +56,19 @@ protected:
 		int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl = -1, int i_speed_cur_ctl = -1, int i_speed_avg_ctl = -1);
 
 public:
-	BaseProgress(int title_lng, bool show_file_size_progress, const std::string &path, ProgressState &state);
+	ComplexOperationProgress(const std::string &path, ProgressState &state, int title_lng, bool show_file_size_progress, bool allow_background);
 	void Show();
 };
 
-class XferProgress : public BaseProgress
+class XferProgress : public ComplexOperationProgress
 {
 public:
 	XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state);
+	void Show(bool escape_to_background);
 };
 
-class RemoveProgress : public BaseProgress
+class RemoveProgress : public ComplexOperationProgress
 {
 public:
 	RemoveProgress(const std::string &site_dir, ProgressState &state);
-};
-
-class SimpleOperationProgress : protected BaseDialog
-{
-public:
-	enum Kind
-	{
-		K_CONNECT,
-		K_GETMODE,
-		K_ENUMDIR,
-		K_CREATEDIR
-	};
-
-	SimpleOperationProgress(Kind kind, const std::string &object, ProgressState &state);
-	void Show();
-
-protected:
-	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2);
-
-private:
-	Kind _kind;
-	ProgressState &_state;
-	int _finished = 0;
-	int _i_dblbox = -1;
-	int _i_errstats_separator = -1;
-	bool _errstats_colored = false;
-	ProgressStateStats _last_stats;
-	std::string _title;
 };

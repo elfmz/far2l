@@ -1,7 +1,10 @@
 #include <utils.h>
 #include "Globals.h"
 #include "PluginImpl.h"
+#include "BackgroundTasks.h"
+#include "UI/BackgroundTasksUI.h"
 #include <fcntl.h>
+#include <set>
 #ifndef __APPLE__
 # include <elf.h>
 #endif
@@ -55,10 +58,19 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginw(const wchar_t *Name, const un
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenPluginW(int OpenFrom, INT_PTR Item)
 {
-	fprintf(stderr, "NetRocks: OpenPlugin(%d, '%ls')\n", OpenFrom, (const wchar_t *)Item);
+	fprintf(stderr, "NetRocks: OpenPlugin(%d, '0x%lx')\n", OpenFrom, (unsigned long)Item);
 
 	if (!G.IsStarted())// || OpenFrom != OPEN_COMMANDLINE)
 		return INVALID_HANDLE_VALUE;
+
+	if (OpenFrom == OPEN_PLUGINSMENU) {
+		if (Item == 1) {
+			BackgroundTasksList();
+			return INVALID_HANDLE_VALUE;
+		}
+
+		Item = 0;
+	}
 
 
 	const wchar_t *path = nullptr;
@@ -125,12 +137,31 @@ SHAREDSYMBOL int WINAPI _export MakeDirectoryW(HANDLE hPlugin, const wchar_t **N
 
 SHAREDSYMBOL void WINAPI _export ExitFARW()
 {
-//	abort();
+	BackgroundTasksInfo info;
+	GetBackgroundTasksInfo(info);
+	for (const auto &task_info : info) {
+		if (task_info.status == BTS_ACTIVE || task_info.status == BTS_PAUSED) {
+			fprintf(stderr, "NetRocks::ExitFARW: aborting task id=%lu info='%s'\n", task_info.id, task_info.information.c_str());
+			AbortBackgroundTask(task_info.id);
+		}
+	}
+
+	while (CountOfPendingBackgroundTasks() != 0) {
+		if (G.info.FSF->CallOnWait() > 0) {
+			usleep(1000);
+		} else {
+			usleep(100000);
+		}
+	}
 }
 
 SHAREDSYMBOL int WINAPI _export MayExitFARW()
 {
-//	abort();
+	const size_t background_tasks_count = CountOfPendingBackgroundTasks();
+	if ( background_tasks_count != 0 && !ConfirmExitFAR(background_tasks_count).Ask()) {
+		return 0;
+	}
+
 	return 1;
 }
 
@@ -139,11 +170,17 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
 
+	fprintf(stderr, "NetRocks: GetPluginInfoW\n");
+
 	Info->Flags = 0;//PF_FULLCMDLINE;
-	static const wchar_t *PluginCfgStrings[1];
-	PluginCfgStrings[0] = (wchar_t *)G.GetMsgWide(MTitle);
+	static const wchar_t *PluginCfgStrings[1] = {(wchar_t *)G.GetMsgWide(MTitle)};
+	static const wchar_t *PluginMenuStrings[2] = {(wchar_t *)G.GetMsgWide(MTitle), (wchar_t *)G.GetMsgWide(MBackgroundTasksTitle)};
+
 	Info->PluginConfigStrings = PluginCfgStrings;
 	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
+
+	Info->PluginMenuStrings = PluginMenuStrings;
+	Info->PluginMenuStringsNumber = (CountOfAllBackgroundTasks() != 0) ? ARRAYSIZE(PluginMenuStrings) : 1;
 
 	static wchar_t s_command_prefix[G.MAX_COMMAND_PREFIX + 1] = {}; // WHY?
 	wcsncpy(s_command_prefix, G.command_prefix.c_str(), ARRAYSIZE(s_command_prefix));

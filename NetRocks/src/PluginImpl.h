@@ -3,6 +3,8 @@
 #include <map>
 #include <memory>
 #include "Host/Host.h"
+#include "UI/Defs.h"
+#include "BackgroundTasks.h"
 
 class PluginImpl
 {
@@ -18,8 +20,12 @@ class PluginImpl
 	bool ValidateConnection();
 
 	std::string CurrentSiteDir(bool with_ending_slash) const;
-	void FromKey_EditSiteConnection(bool create_new);
-	bool FromKey_TryCrossSiteCrossload(bool mv);
+	void ByKey_EditSiteConnection(bool create_new);
+	bool ByKey_TryCrossload(bool mv);
+
+	BackgroundTaskStatus StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
+		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
+		int items_count, XferKind kind, XferDirection direction);
 
 public:
 	PluginImpl(const wchar_t *path = nullptr);

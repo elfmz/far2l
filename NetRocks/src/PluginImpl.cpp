@@ -66,7 +66,7 @@ public:
 PluginImpl::PluginImpl(const wchar_t *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
-	_local.reset((IHost *)new HostLocal());
+	_local = std::make_shared<HostLocal>();
 	UpdatePanelTitle();
 
 	g_all_netrocks.Add(this);

@@ -2,8 +2,9 @@
 #include "OpBase.h"
 #include "./Utils/Enumer.h"
 #include "../UI/Defs.h"
+#include "../BackgroundTasks.h"
 
-class OpXfer : protected OpBase
+class OpXfer : protected OpBase, public IBackgroundTask
 {
 	Path2FileInformation _entries;
 	std::shared_ptr<Enumer> _enumer;
@@ -24,5 +25,11 @@ public:
 	OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
 		int items_count, XferKind kind, XferDirection direction);
-	bool Do();
+
+	virtual ~OpXfer();
+
+	virtual BackgroundTaskStatus GetStatus();
+	virtual std::string GetInformation();
+	virtual void Show();
+	virtual void Abort();
 };

@@ -57,6 +57,8 @@ enum LanguageID
   MXferDOAResume,
   MXferDOACreateDifferentName,
 
+  MXferConfirmOverwriteNotify,
+
   MXferCurrentFile,
   MXferFileSize,
   MXferAllSize,
@@ -68,6 +70,7 @@ enum LanguageID
   MXferAllTimeSpent,
   MXferSpeedCurrent,
   MXferAverage, 
+
   MBackground,
   MPause,
   MResume,
@@ -135,6 +138,16 @@ enum LanguageID
   MNewServerIdentityText,
 
   MNewServerIdentityAllowOnce,
-  MNewServerIdentityAllowAlways
+  MNewServerIdentityAllowAlways,
 
+  MBackgroundTasksTitle,
+  MBackgroundTasksMenuActive,
+  MBackgroundTasksMenuPaused,
+  MBackgroundTasksMenuComplete,
+  MBackgroundTasksMenuAborted,
+
+  MConfirmExitFARTitle,
+  MConfirmExitFARText,
+  MConfirmExitFARQuestion,
+  MConfirmExitFARBackgroundTasks
 };

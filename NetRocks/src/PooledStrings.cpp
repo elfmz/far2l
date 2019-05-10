@@ -23,8 +23,7 @@ const char *PooledString(const char *s)
 	if (!*s)
 		return "";
 
-	const std::string tmp_str(s);
-	return PooledString(tmp_str);
+	return PooledString(std::string(s));
 }
 
 const char *PooledString(const wchar_t *s)

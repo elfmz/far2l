@@ -2,6 +2,7 @@
 #include <TimeUtils.h>
 #include "OpRemove.h"
 #include "../UI/Confirm.h"
+#include "../UI/ComplexOperationProgress.h"
 
 
 OpRemove::OpRemove(int op_mode, std::shared_ptr<IHost> &base_host,

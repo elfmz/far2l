@@ -25,6 +25,11 @@ std::string HostLocal::SiteName() const
 	return G.GetMsgMB(MHostLocalName);
 }
 
+std::shared_ptr<IHost> HostLocal::Clone()
+{
+	return std::make_shared<HostLocal>();
+}
+
 void HostLocal::ReInitialize() throw (std::runtime_error)
 {
 }

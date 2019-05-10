@@ -6,12 +6,13 @@
 #include <Threaded.h>
 #include "../Host/Host.h"
 #include "./Utils/ProgressStateUpdate.h"
-#include "../UI/Progress.h"
+#include "../UI/Defs.h"
 #include "../UI/WhatOnError.h"
 #include <plugin.hpp>
 
 class OpBase : protected Threaded, protected IAbortableOperationsHost
 {
+	OpBase(const OpBase &) = delete;
 protected:
 	int _op_name_lng;
 	int _op_mode;

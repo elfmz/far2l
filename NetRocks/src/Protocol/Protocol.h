@@ -3,6 +3,8 @@
 #include "Erroring.h"
 #include "FileInformation.h"
 
+// all methods of this interfaces are NOT thread-safe unless explicitely marked as MT-safe
+
 struct IFileReader
 {
 	virtual ~IFileReader() {};

@@ -7,6 +7,7 @@ src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
+src/BackgroundTasks.cpp
 src/Protocol/ProtocolSFTP.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
@@ -16,11 +17,13 @@ src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/Confirm.cpp
 src/UI/ConfirmOverwrite.cpp
-src/UI/Progress.cpp
+src/UI/SimpleOperationProgress.cpp
+src/UI/ComplexOperationProgress.cpp
 src/UI/AbortOperationRequest.cpp
 src/UI/InteractiveLogin.cpp
 src/UI/ConfirmNewServerIdentity.cpp
 src/UI/WhatOnError.cpp
+src/UI/BackgroundTasksUI.cpp
 src/Op/Utils/ProgressStateUpdate.cpp
 src/Op/Utils/Enumer.cpp
 src/Op/OpBase.cpp

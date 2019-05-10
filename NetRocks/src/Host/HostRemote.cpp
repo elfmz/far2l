@@ -19,7 +19,7 @@
 #include "UI/InteractiveLogin.h"
 #include "UI/ConfirmNewServerIdentity.h"
 
-HostRemote::HostRemote(const std::string &site, int OpMode) throw (std::runtime_error)
+HostRemote::HostRemote(const std::string &site) throw (std::runtime_error)
 	: _site(site)
 {
 	KeyFileHelper kfh(G.config.c_str());
@@ -33,29 +33,42 @@ HostRemote::HostRemote(const std::string &site, int OpMode) throw (std::runtime_
 	if (_protocol.empty() || _host.empty())
 		throw std::runtime_error("Bad site configuration");
 
-	_site_info = _protocol;
-	_site_info+= "://";
-	if (!_username.empty()) {
-		_site_info+= _username;
-		_site_info+= '@';
-	}
-
 	if (_login_mode == 0) {
 		_password.clear();
 	}
+}
 
-	_site_info+= _host;
-	if (_port > 0) {
-		char sz[64];
-		snprintf(sz, sizeof(sz), ":%d", _port);
-		_site_info+= sz;
-	}
+HostRemote::~HostRemote()
+{
+	AssertNotBusy();
+}
+
+
+std::shared_ptr<IHost> HostRemote::Clone()
+{
+	auto cloned = std::make_shared<HostRemote>();
+
+	std::unique_lock<std::mutex> locker(_mutex);
+	cloned->_site = _site;
+	cloned->_protocol = _protocol;
+	cloned->_host = _host;
+	cloned->_port = _port;
+	cloned->_login_mode = _login_mode;
+	cloned->_username = _username;
+	cloned->_password = _password;
+	cloned->_options = _options;
+	cloned->_broken = false;
+	cloned->_busy = false;
+	cloned->_cloning = true;
+
+	return cloned;
 }
 
 std::string HostRemote::SiteName() const
 {
 	return _site;
 }
+
 
 void HostRemote::BusySet()
 {
@@ -87,6 +100,12 @@ void HostRemote::OnBroken()
 void HostRemote::CheckReady()
 {
 	AssertNotBusy();
+
+	if (_cloning) {
+		_cloning = false;
+		ReInitialize();
+	}
+
 	if (_broken) {
 		throw std::runtime_error("IPC broken");
 	}
@@ -124,6 +143,7 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	IPCRecver::SetFD(broker2master[0]);
 	IPCSender::SetFD(master2broker[1]);
 
+	std::unique_lock<std::mutex> locker(_mutex);
 	for (unsigned int auth_failures = 0;;) {
 //		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
 		if (_login_mode == 1) {
@@ -141,8 +161,13 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 		SendString(_password);
 		SendString(_options);
 
+		locker.unlock();
+
 		IPCProtocolInitStatus status;
 		RecvPOD(status);
+
+		locker.lock();
+
 		if (status == IPC_PI_OK) {
 			if (_login_mode == 1) {
 				// on next reinitialization try to autouse same password that now succeeded
@@ -154,6 +179,7 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 		std::string info;
 		RecvString(info);
 		fprintf(stderr, "HostRemote::ReInitialize: status=%d info='%s'\n", status, info.c_str());
+
 		switch (status) {
 			case IPC_PI_SERVER_IDENTITY_CHANGED:
 				if (!OnServerIdentityChanged(info)) 
@@ -214,11 +240,6 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 	return true;
 }
 
-HostRemote::~HostRemote()
-{
-	AssertNotBusy();
-}
-
 void HostRemote::Abort()
 {
 	AbortReceiving();
@@ -240,11 +261,12 @@ void HostRemote::RecvReply(IPCCommand cmd)
 
 bool HostRemote::IsBroken()
 {
-	AssertNotBusy();
 	if (_broken)
 		return true;
 
 	try {
+		CheckReady();
+
 		SendCommand(IPC_IS_BROKEN);
 		RecvReply(IPC_IS_BROKEN);
 		bool out;

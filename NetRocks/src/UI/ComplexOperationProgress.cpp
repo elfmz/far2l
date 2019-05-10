@@ -1,6 +1,6 @@
 #include <utils.h>
 #include <TimeUtils.h>
-#include "Progress.h"
+#include "ComplexOperationProgress.h"
 #include "Confirm.h"
 #include "AbortOperationRequest.h"
 #include "../lng.h"
@@ -25,7 +25,7 @@
   5              20   25   30             45 48            60
 */
 
-BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const std::string &path, ProgressState &state)
+ComplexOperationProgress::ComplexOperationProgress(const std::string &path, ProgressState &state, int title_lng, bool show_file_size_progress, bool allow_background)
 	: _state(state)
 {
 	_di.Add(DI_DOUBLEBOX, 3, 1, 64, show_file_size_progress ? 13 : 12, 0, title_lng);
@@ -86,45 +86,50 @@ BaseProgress::BaseProgress(int title_lng, bool show_file_size_progress, const st
 	_i_errstats_separator = _di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	//_i_background = _di.AddAtLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
-	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MPause); // MResume
-	_i_cancel = _di.AddAtLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT);
+	if (allow_background) {
+		_i_background = _di.AddAtLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
+	}
+	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, _state.paused ? MResume : MPause, nullptr, FDIS_DEFAULT);
+	_i_cancel = _di.AddAtLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel);
 
 	_speed_current_label = Wide2MB(_di[_i_speed_current_label].PtrData);
 }
 
-void BaseProgress::Show()
+void ComplexOperationProgress::Show()
 {
 	while (!_state.finished) {
 		_finished = 0;
-		BaseDialog::Show(L"BaseProgress", 6, 2, FDLG_REGULARIDLE);
-		if (_finished) break;
-		AbortOperationRequest(_state);
-	}
-}
+		int r = BaseDialog::Show(L"ComplexOperationProgress", 6, 2, FDLG_REGULARIDLE);
+		if (_finished || (_i_background != -1 && r == _i_background) || (r == -1 && _escape_to_background)) {
+			break;
 
-LONG_PTR BaseProgress::DlgProc(int msg, int param1, LONG_PTR param2)
-{
-	//fprintf(stderr, "%x %x\n", msg, param1);
-	if (msg == DN_ENTERIDLE) {
-		OnIdle();
-
-	} else if (msg == DN_BTNCLICK) {
-		if (param1 == _i_pause_resume) {
+		} else if (r == _i_pause_resume) {
 			bool paused;
 			{
 				std::lock_guard<std::mutex> locker(_state.mtx);
 				paused = (_state.paused = !_state.paused);
 			}
 			TextToDialogControl(_i_pause_resume, paused ? MResume : MPause);
-			return TRUE;
+
+		} else {
+//			fprintf(stderr, "r=%d\n", r);
+			AbortOperationRequest(_state);
 		}
+	}
+}
+
+LONG_PTR ComplexOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
+{
+	//fprintf(stderr, "%x %x\n", msg, param1);
+	if (msg == DN_ENTERIDLE) {
+		OnIdle();
+
 	}
 	
 	return BaseDialog::DlgProc(msg, param1, param2);
 }
 
-void BaseProgress::OnIdle()
+void ComplexOperationProgress::OnIdle()
 {
 	struct {
 		bool path, file, all, count, errors;
@@ -207,7 +212,7 @@ void BaseProgress::OnIdle()
 	}
 }
 
-void BaseProgress::UpdateTimes()
+void ComplexOperationProgress::UpdateTimes()
 {
 	auto now = TimeMSNow();
 
@@ -223,7 +228,7 @@ void BaseProgress::UpdateTimes()
 	}
 }
 
-void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long total,
+void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned long long total,
 		const std::chrono::milliseconds &start, const std::chrono::milliseconds &paused, const std::chrono::milliseconds &now,
 		int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl, int i_speed_cur_ctl, int i_speed_avg_ctl)
 {
@@ -280,122 +285,23 @@ void BaseProgress::UpdateTime(unsigned long long complete, unsigned long long to
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state)
-	: BaseProgress((xk == XK_COPY)
-	? ((xd == XK_UPLOAD) ? MXferCopyUploadTitle : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle))
-	: ((xd == XK_UPLOAD) ? MXferMoveUploadTitle : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle)),
-	true, destination, state)
+	: ComplexOperationProgress(destination, state,
+	(xk == XK_COPY)
+		? ((xd == XK_UPLOAD) ? MXferCopyUploadTitle : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle))
+		: ((xd == XK_UPLOAD) ? MXferMoveUploadTitle : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle)),
+	true, true)
 {
 }
 
+void XferProgress::Show(bool escape_to_background)
+{
+	_escape_to_background = escape_to_background;
+	ComplexOperationProgress::Show();
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RemoveProgress::RemoveProgress(const std::string &site_dir, ProgressState &state)
-	: BaseProgress(MRemoveTitle, false, site_dir, state)
+	: ComplexOperationProgress(site_dir, state, MRemoveTitle, false, false)
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-345               21      29    35      43   48
- ========== Creating directory ...=============
-|[TEXTBOX                                     ]|
-|----------------------------------------------|
-|             [   &Abort   ]                   |
- ==============================================
-  5              20   25   30             45 48
-*/
-
-SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &object, ProgressState &state)
-	: _state(state)
-{
-	unsigned int title_lng;
-	switch (kind) {
-		case K_CONNECT: title_lng = MConnectProgressTitle; break;
-		case K_GETMODE: title_lng = MGetModeProgressTitle; break;
-		case K_ENUMDIR: title_lng = MEnumDirProgressTitle; break;
-		case K_CREATEDIR: title_lng = MCreateDirProgressTitle; break;
-		default:
-			throw std::runtime_error("Unexpected kind");
-	}
-	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3, 1, 50, 5, 0, title_lng);
-	_di.Add(DI_TEXT, 5,2,48,2, 0, object.c_str());
-	// this separator used to display retries/skips count
-	_i_errstats_separator = _di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);
-	_di.Add(DI_BUTTON, 16,4,32,4, DIF_CENTERGROUP, MCancel);
-
-	_title = Wide2MB(_di[_i_dblbox].PtrData);
-}
-
-void SimpleOperationProgress::Show()
-{
-	while (!_state.finished) {
-		_finished = 0;
-		BaseDialog::Show(L"SimpleOperationProgress", 6, 2, FDLG_REGULARIDLE);
-		if (_finished) break;
-		AbortOperationRequest(_state);
-	}
-}
-
-LONG_PTR SimpleOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
-{
-	//fprintf(stderr, "%x %x\n", msg, param1);
-	if (msg == DN_ENTERIDLE) {
-		bool count_complete_changed = false, errors_changed = false;
-		{
-			std::lock_guard<std::mutex> locker(_state.mtx);
-			if (_last_stats.count_complete != _state.stats.count_complete) {
-				count_complete_changed = true;
-			}
-
-			if (_last_stats.count_retries != _state.stats.count_retries
-			 || _last_stats.count_skips != _state.stats.count_skips) {
-				errors_changed = true;
-			}
-
-			if (_state.finished && _finished == 0) {
-				_finished = 1;
-			}
-
-			_last_stats = _state.stats;
-		}
-
-		if (errors_changed) {
-			char sz[0x100] = {};
-			snprintf(sz, sizeof(sz) - 1, G.GetMsgMB(MErrorsStatus),
-				_last_stats.count_retries, _last_stats.count_skips);
-			TextToDialogControl(_i_errstats_separator, sz);
-			if (!_errstats_colored) {
-				_errstats_colored = true;
-				DWORD color_flags = 0;
-				SendDlgMessage(DM_GETCOLOR, _i_errstats_separator, (LONG_PTR)&color_flags);
-				color_flags&= ~(FOREGROUND_GREEN | FOREGROUND_BLUE);
-				color_flags|= DIF_SETCOLOR | FOREGROUND_RED;
-				SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, color_flags);
-			}
-		} else if (_errstats_colored) {
-			_errstats_colored = false;
-			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, 0);
-		}
-
-
-		if (_finished == 1) {
-			_finished = 2;
-			Close();
-
-		} else if (count_complete_changed && _finished == 0) {
-			std::string title = _title;
-			char sz[64] = {};
-			snprintf(sz, sizeof(sz) - 1, " (%llu)", _last_stats.count_complete);
-			title+= sz;
-			TextToDialogControl(_i_dblbox, title);
-		}
-
-	}/* else if (msg == DN_BTNCLICK && AbortConfirm().Ask()) {
-		std::lock_guard<std::mutex> locker(_state.mtx);
-		_state.aborting = true;
-		return TRUE;
-	}*/
-	
-	return BaseDialog::DlgProc(msg, param1, param2);
-}

@@ -63,6 +63,8 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	_i_resume = _di.AddAtLine(DI_BUTTON, 5,15, DIF_CENTERGROUP, MXferDOAResume);
 	_i_create_diff_name = _di.AddAtLine(DI_BUTTON, 16,49, DIF_CENTERGROUP, MXferDOACreateDifferentName);
 	_di.AddAtLine(DI_BUTTON, 50,62, DIF_CENTERGROUP, MCancel);
+
+	G.info.FSF->DisplayNotification(L"far2l - NetRocks", G.GetMsgWide(MXferConfirmOverwriteNotify));
 }
 
 

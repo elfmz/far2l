@@ -55,6 +55,8 @@
 "&Resume"
 "Create &different name"
 
+"Need to choose overwrite action"
+
 "Current file"
 "File Size"
 "Total Size"
@@ -66,7 +68,7 @@
 "Total time SPENT:"
 "Speed () CURRENT:"
 "AVERAGE:"
-"Background"
+"&Background"
 "Paus&e"
 "Resum&e"
 
@@ -133,3 +135,14 @@
 "Site's server current identity:"
 "Allow &once"
 "Allow &always"
+
+"NetRocks background tasks"
+"ACTIVE"
+"PAUSED"
+"COMPLETE"
+"ABORTED"
+
+"NetRocks exit confirmation"
+"Exiting FAR will disrupt %u pending background tasks."
+"Are you really sure you want to exit FAR?"
+"&Background tasks"

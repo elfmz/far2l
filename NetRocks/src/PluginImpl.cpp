@@ -26,7 +26,7 @@ public:
 	{
 		std::lock_guard<std::mutex> locker(_mutex);
 		if (!_all.emplace((void *)it, it).second) {
-			fprintf(stderr, "AllNetRocks -dup entry: %p\n", it);
+			fprintf(stderr, "AllNetRocks - dup entry: %p\n", it);
 			abort();
 		}
 	}
@@ -40,7 +40,7 @@ public:
 		}
 	}
 
-	bool GetDestinationOf(void *handle, std::shared_ptr<IHost> &remote, std::string &site_dir)
+	bool GetRemoteOf(void *handle, std::shared_ptr<IHost> &remote, std::string &site_dir)
 	{
 		std::lock_guard<std::mutex> locker(_mutex);
 		auto i = _all.find(handle);
@@ -51,6 +51,16 @@ public:
 		site_dir = i->second->CurrentSiteDir(true);
 		return true;
 	}
+
+	void CloneRemoteOf(void *handle)
+	{
+		std::lock_guard<std::mutex> locker(_mutex);
+		auto i = _all.find(handle);
+		if (i != _all.end()) {
+			i->second->_remote = i->second->_remote->Clone();
+		}
+	}
+
 } g_all_netrocks;
 
 PluginImpl::PluginImpl(const wchar_t *path)
@@ -258,6 +268,27 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 }
 
 
+BackgroundTaskStatus PluginImpl::StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
+		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
+		int items_count, XferKind kind, XferDirection direction)
+{
+	BackgroundTaskStatus out = BTS_ABORTED;
+	try {
+		std::shared_ptr<IBackgroundTask> task((IBackgroundTask *)new OpXfer(
+			op_mode, base_host, base_dir, dst_host, dst_dir, items, items_count, kind, direction));
+
+		// task->Show();
+		out = task->GetStatus();
+		if (out == BTS_ACTIVE || out == BTS_PAUSED) {
+			AddBackgroundTask(task);
+		}
+	} catch (std::exception &ex) {
+		fprintf(stderr, "NetRocks::StartXfer: %s\n", ex.what());
+	}
+
+	return out;
+}
+
 int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *DestPath, int OpMode)
 {
 	fprintf(stderr, "NetRocks::GetFiles: _dir='%ls' DestPath='%ls' ItemsNumber=%d\n", _cur_dir, DestPath, ItemsNumber);
@@ -272,8 +303,21 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	if (DestPath)
 		Wide2MB(DestPath, dst_dir);
 
-	return OpXfer(OpMode, _remote, CurrentSiteDir(true), _local, dst_dir,
-		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD).Do() ? TRUE : FALSE;
+	switch (StartXfer(OpMode, _remote, CurrentSiteDir(true), _local,
+		dst_dir, PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD)) {
+
+		case BTS_ACTIVE: case BTS_PAUSED:
+			_remote = _remote->Clone();
+			_local = _local->Clone();
+
+		case BTS_COMPLETE:
+			return TRUE;
+
+		case BTS_ABORTED:
+		default:
+			return FALSE;
+	}
+
 }
 
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode)
@@ -302,8 +346,20 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		dst_dir[l + 1] = 0;
 	}
 
-	return OpXfer(OpMode, _local, dst_dir, _remote, CurrentSiteDir(true),
-		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_UPLOAD).Do() ? TRUE : FALSE;
+	switch (StartXfer(OpMode, _local, dst_dir, _remote, CurrentSiteDir(true),
+		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_UPLOAD)) {
+
+		case BTS_ACTIVE: case BTS_PAUSED:
+			_remote = _remote->Clone();
+			_local = _local->Clone();
+
+		case BTS_COMPLETE:
+			return TRUE;
+
+		case BTS_ABORTED:
+		default:
+			return FALSE;
+	}
 }
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
@@ -352,13 +408,13 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 
 	if ((Key==VK_F5 || Key==VK_F6) && _remote)
 	{
-		return FromKey_TryCrossSiteCrossload(Key==VK_F6) ? TRUE : FALSE;
+		return ByKey_TryCrossload(Key==VK_F6) ? TRUE : FALSE;
 	}
 
 	if (Key==VK_F4 && !_cur_dir[0]
 	&& (ControlState == 0 || ControlState == PKF_SHIFT))
 	{
-		FromKey_EditSiteConnection(ControlState == PKF_SHIFT);
+		ByKey_EditSiteConnection(ControlState == PKF_SHIFT);
 		return TRUE;
 	}
 /*
@@ -370,7 +426,7 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 	return FALSE;
 }
 
-void PluginImpl::FromKey_EditSiteConnection(bool create_new)
+void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 {
 	std::string site;
 
@@ -395,7 +451,7 @@ void PluginImpl::FromKey_EditSiteConnection(bool create_new)
 
 
 
-bool PluginImpl::FromKey_TryCrossSiteCrossload(bool mv)
+bool PluginImpl::ByKey_TryCrossload(bool mv)
 {
 	HANDLE plugin = INVALID_HANDLE_VALUE;
 	G.info.Control(PANEL_ACTIVE, FCTL_GETPANELPLUGINHANDLE, 0, (LONG_PTR)(void *)&plugin);
@@ -408,7 +464,7 @@ bool PluginImpl::FromKey_TryCrossSiteCrossload(bool mv)
 
 	std::shared_ptr<IHost> dst_remote;
 	std::string dst_site_dir;
-	if (!g_all_netrocks.GetDestinationOf(plugin, dst_remote, dst_site_dir))
+	if (!g_all_netrocks.GetRemoteOf(plugin, dst_remote, dst_site_dir))
 		return false;
 
 	if (!dst_remote) {
@@ -442,8 +498,12 @@ bool PluginImpl::FromKey_TryCrossSiteCrossload(bool mv)
 	}
 
 	if (!items_vector.empty()) {
-		OpXfer(0, _remote, CurrentSiteDir(true), dst_remote, dst_site_dir,
-			&items_vector[0], (int)items_vector.size(), mv ? XK_MOVE : XK_COPY, XK_CROSSLOAD).Do();
+		auto state = StartXfer(0, _remote, CurrentSiteDir(true), dst_remote, dst_site_dir,
+			&items_vector[0], (int)items_vector.size(), mv ? XK_MOVE : XK_COPY, XK_CROSSLOAD);
+		if (state == BTS_ACTIVE || state == BTS_PAUSED) {
+			_remote = _remote->Clone();
+			g_all_netrocks.CloneRemoteOf(plugin);
+		}
 
 		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 		G.info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);

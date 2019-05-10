@@ -729,7 +729,7 @@ void Manager::ExitMainLoop(int Ask)
 		CloseFARMenu=TRUE;
 	};
 
-	if (!Ask || (CtrlObject->Plugins.MayExitFar() && (!Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo)))))
+	if (!Ask || ((!Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo))) && CtrlObject->Plugins.MayExitFar()))
 	{
 		/* $ 29.12.2000 IS
 		   + Проверяем, сохранены ли все измененные файлы. Если нет, то не выходим

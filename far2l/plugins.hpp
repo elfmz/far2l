@@ -270,6 +270,7 @@ class PluginManager
 		int ProcessMacroFunc(const wchar_t *Name, const FarMacroValue *Params, int nParams, FarMacroValue **Results, int *nResults);
 #endif
 		void GetCustomData(FileListItem *ListItem);
+		bool MayExitFar();
 
 		friend class Plugin;
 };

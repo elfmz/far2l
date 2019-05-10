@@ -75,6 +75,7 @@ class Plugin
 		virtual bool HasProcessHostFile() = 0;
 		virtual bool HasSetFindList() = 0;
 		virtual bool HasConfigure() = 0;
+		virtual bool HasMayExitFAR() = 0;
 		virtual bool HasExitFAR() = 0;
 		virtual bool HasProcessKey() = 0;
 		virtual bool HasProcessEvent() = 0;
@@ -143,5 +144,6 @@ class Plugin
 		virtual bool GetPluginInfo(PluginInfo *pi) = 0;
 		virtual int Configure(int MenuItem) = 0;
 
+		virtual bool MayExitFAR() = 0;
 		virtual void ExitFAR() = 0;
 };

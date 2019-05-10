@@ -1442,7 +1442,7 @@ bool PluginA::MayExitFAR()
 	if (pMayExitFAR && !ProcessException)
 	{
 		ExecuteStruct es;
-		es.id = EXCEPT_EXITFAR;
+		es.id = EXCEPT_MAYEXITFAR;
 		es.bDefaultResult = 1;
 		EXECUTE_FUNCTION_EX(pMayExitFAR(), es);
 		return es.bResult;

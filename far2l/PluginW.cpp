@@ -208,6 +208,8 @@ bool PluginW::LoadFromCache(const FAR_FIND_DATA_EX &FindData)
 	FARString strRegKey;
 	strRegKey.Format(FmtPluginsCache_PluginS, m_strCacheName.CPtr());
 
+	strRegKey += L"/Exports";
+
 	if (CheckRegKey(strRegKey))
 	{
 		if (GetRegKey(strRegKey,wszReg_Preload,0) == 1)   //PF_PRELOAD plugin, skip cache
@@ -1323,7 +1325,7 @@ bool PluginW::MayExitFAR()
 	if (pMayExitFARW && !ProcessException)
 	{
 		ExecuteStruct es;
-		es.id = EXCEPT_EXITFAR;
+		es.id = EXCEPT_MAYEXITFAR;
 		es.bDefaultResult = 1;
 		EXECUTE_FUNCTION_EX(pMayExitFARW(), es);
 		return es.bResult;

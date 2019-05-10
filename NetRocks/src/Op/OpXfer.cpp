@@ -197,14 +197,15 @@ void OpXfer::Transfer()
 					continue;
 				}
 			}
-			FileCopyLoop(e.first, path_local, pos, e.second.mode);
-			if (_kind == XK_MOVE) {
-				WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
-					[&] () mutable 
-					{
-						_base_host->FileDelete(e.first);
-					}
-				);
+			if (FileCopyLoop(e.first, path_local, pos, e.second.mode)) {
+				if (_kind == XK_MOVE) {
+					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
+						[&] () mutable
+						{
+							_base_host->FileDelete(e.first);
+						}
+					);
+				}
 			}
 		}
 
@@ -227,7 +228,7 @@ void OpXfer::Transfer()
 }
 
 
-void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
+bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
 {
 	IHost *indicted = nullptr;
 	for (unsigned long long prev_attempt_pos = pos;;) try {
@@ -274,7 +275,7 @@ void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			case WEA_SKIP: {
 				ProgressStateUpdate psu(_state);
 				_state.stats.count_skips++;
-			} return;
+			} return false;
 
 			case WEA_RETRY: {
 				if (prev_attempt_pos == pos) {
@@ -291,6 +292,8 @@ void OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 				throw;
 		}
 	}
+
+	return true;
 }
 
 void OpXfer::ForcefullyAbort()

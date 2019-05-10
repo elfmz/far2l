@@ -19,7 +19,7 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	virtual void ForcefullyAbort();	// IAbortableOperationsHost
 
 	void Transfer();
-	void FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode);
+	bool FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode);
 
 public:
 	OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,

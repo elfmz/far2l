@@ -60,6 +60,11 @@ void *OpBase::ThreadProc()
 
 void OpBase::ForcefullyAbort()
 {
+	{
+		std::lock_guard<std::mutex> locker(_state.mtx);
+		_state.aborting = true;
+	}
+
 	_base_host->Abort();
 }
 
@@ -75,9 +80,9 @@ bool OpBase::WaitThread(unsigned int msec)
 			if (msec == 0)
 				return false;
 		}
-		int cow_result = G.info.FSF->CallOnWait();
+		int cow_result = G.info.FSF->DispatchInterlockedCalls();
 		if (cow_result != 0) {
-			fprintf(stderr, "NetRocks::OpBase('%s', %d): CallOnWait returned %d\n", _base_dir.c_str(), _op_name_lng, cow_result);
+			fprintf(stderr, "NetRocks::OpBase('%s', %d): DispatchInterlockedCalls returned %d\n", _base_dir.c_str(), _op_name_lng, cow_result);
 			if (cow_result > 0) {
 					sleep_limit = 1;
 			}

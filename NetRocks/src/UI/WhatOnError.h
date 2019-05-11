@@ -62,7 +62,7 @@ template <WhatOnErrorKind WEK, class FN, class FN_ON_RETRY = void(*)()>
 			} break;
 
 			default:
-				throw;
+				throw AbortError(); // throw abort to avoid second error warning
 		}
 	}
 }

@@ -1,11 +1,12 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include "Erroring.h"
 
 static std::string FormatProtocolError(const char *msg, const char *info = nullptr, int err = 0)
 {
 	std::string s = msg;
 	if (info) {
-		s+= ": ";
+		s+= " - ";
 		s+= info;
 	}
 	if (err) {
@@ -16,23 +17,36 @@ static std::string FormatProtocolError(const char *msg, const char *info = nullp
 	return s;
 }
 
+static const std::string &TeeStr(const std::string &s)
+{
+	fprintf(stderr, "%d: %s\n", getpid(), s.c_str());
+	return s;
+}
+
+static const char *TeeSZ(const char *s)
+{
+	fprintf(stderr, "%d: %s\n", getpid(), s);
+	return s;
+}
+
+
 ProtocolError::ProtocolError(const char *msg, const char *info, int err)
-	: std::runtime_error(FormatProtocolError(msg, info, err))
+	: std::runtime_error(TeeStr(FormatProtocolError(msg, info, err)))
 {
 }
 
 ProtocolError::ProtocolError(const char *msg, int err)
-	: std::runtime_error(FormatProtocolError(msg, nullptr, err))
+	: std::runtime_error(TeeStr(FormatProtocolError(msg, nullptr, err)))
 {
 }
 
 ProtocolError::ProtocolError(const char *msg)
-	: std::runtime_error(msg)
+	: std::runtime_error(TeeSZ(msg))
 {
 }
 
 ProtocolError::ProtocolError(const std::string &msg)
-	: std::runtime_error(msg)
+	: std::runtime_error(TeeStr(msg))
 {
 }
 
@@ -62,6 +76,6 @@ static std::string FormatIPCError(const char *msg, unsigned int code)
 }
 
 IPCError::IPCError(const char *msg, unsigned int code)
-	: std::runtime_error(FormatIPCError(msg, code))
+	: std::runtime_error(TeeStr(FormatIPCError(msg, code)))
 {
 }

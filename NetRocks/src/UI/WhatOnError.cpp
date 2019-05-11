@@ -7,7 +7,7 @@
 /*                                                         62
 345              20                                          64
  ====================== Download error ======================
-| Error:         [EDITBOX                                  ] |
+| [EDITBOX                                                 ] |
 | Object:        [EDITBOX                                  ] |
 | Site:          [EDITBOX                                  ] |
 |------------------------------------------------------------|
@@ -39,8 +39,8 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 	_di.Add(DI_DOUBLEBOX, 3,1,64,9, 0, title_lng);
 
 	_di.SetLine(2);
-	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorError);
-	_di.AddAtLine(DI_TEXT, 20,62, 0, error.c_str());
+//	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorError);
+	_di.AddAtLine(DI_TEXT, 5,62, 0, error.c_str());
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorObject);

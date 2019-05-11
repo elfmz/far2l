@@ -9,6 +9,7 @@ enum LanguageID
   MRetry,
   MSkip,
   MRememberChoice,
+  MOperationFailed,
 
   MLoginAuthTitle,
   MLoginAuthRetryTitle,

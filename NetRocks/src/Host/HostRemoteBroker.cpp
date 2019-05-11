@@ -1,4 +1,5 @@
 #include <vector>
+#include <unistd.h>
 #include <StringConfig.h>
 #include "IPC.h"
 #include "Protocol/ProtocolSFTP.h"
@@ -275,15 +276,15 @@ public:
 
 extern "C" __attribute__ ((visibility("default"))) int HostRemoteBrokerMain(int argc, char *argv[])
 {
-	fprintf(stderr, "HostRemoteBrokerMain: BEGIN\n");
+	fprintf(stderr, "%d: HostRemoteBrokerMain: BEGIN\n", getpid());
 	try {
 		if (argc == 2) {
 			HostRemoteBroker(atoi(argv[0]), atoi(argv[1])).Loop();
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "HostRemoteBrokerMain: %s\n", e.what());
+		fprintf(stderr, "%d HostRemoteBrokerMain: %s\n", getpid(), e.what());
 	}
-	fprintf(stderr, "HostRemoteBrokerMain: END\n");
+	fprintf(stderr, "%d: HostRemoteBrokerMain: END\n", getpid());
 	return 0;
 }

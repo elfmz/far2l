@@ -415,7 +415,7 @@ std::shared_ptr<IDirectoryEnumer> HostRemote::DirectoryEnum(const std::string &p
 	SendString(path);
 	RecvReply(IPC_DIRECTORY_ENUM);
 
-	return std::shared_ptr<IDirectoryEnumer>(new HostRemoteDirectoryEnumer(shared_from_this(), path));
+	return std::make_shared<HostRemoteDirectoryEnumer>(shared_from_this(), path);
 }
 
 
@@ -517,7 +517,7 @@ std::shared_ptr<IFileReader> HostRemote::FileGet(const std::string &path, unsign
 	SendPOD(resume_pos);
 	RecvReply(IPC_FILE_GET);
 
-	return std::shared_ptr<IFileReader>((IFileReader *)new HostRemoteFileIO(shared_from_this(), false));
+	return std::make_shared<HostRemoteFileIO>(shared_from_this(), false);
 }
 
 std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
@@ -530,5 +530,5 @@ std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t
 	SendPOD(resume_pos);
 	RecvReply(IPC_FILE_PUT);
 
-	return std::shared_ptr<IFileWriter>((IFileWriter *)new HostRemoteFileIO(shared_from_this(), true));
+	return std::make_shared<HostRemoteFileIO>(shared_from_this(), true);
 }

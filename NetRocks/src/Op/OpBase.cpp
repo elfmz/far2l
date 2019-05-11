@@ -20,7 +20,7 @@ OpBase::~OpBase()
 
 void *OpBase::ThreadProc()
 {
-	void *out = nullptr;
+	void *out = this;
 	try {
 		_state.Reset();
 		Process();
@@ -28,9 +28,18 @@ void *OpBase::ThreadProc()
 			"NetRocks::OpBase('%s'): count=%llu all_total=%llu\n",
 			_base_dir.c_str(), _state.stats.count_total, _state.stats.all_total);
 
+		out = nullptr;
+
+	} catch (AbortError &) {
+		fprintf(stderr, "NetRocks::OpBase('%s'): aborted\n", _base_dir.c_str());
+
 	} catch (std::exception &e) {
 		fprintf(stderr, "NetRocks::OpBase('%s'): ERROR='%s'\n", _base_dir.c_str(), e.what());
-		out = this;
+
+		const std::wstring &tmp_what = MB2Wide(e.what());
+		const wchar_t *msg[] = { G.GetMsgWide(MOperationFailed), tmp_what.c_str(), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+
 	}
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);

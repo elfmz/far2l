@@ -205,7 +205,7 @@ public:
 
 std::shared_ptr<IDirectoryEnumer> HostLocal::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
-	return std::shared_ptr<IDirectoryEnumer>(new HostLocalDirectoryEnumer(path));
+	return std::make_shared<HostLocalDirectoryEnumer>(path);
 }
 
 
@@ -269,10 +269,10 @@ public:
 
 std::shared_ptr<IFileReader> HostLocal::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::shared_ptr<IFileReader>((IFileReader *)new HostLocalFileIO(path, resume_pos, O_RDONLY, 0 ));
+	return std::make_shared<HostLocalFileIO>(path, resume_pos, O_RDONLY, 0 );
 }
 
 std::shared_ptr<IFileWriter> HostLocal::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::shared_ptr<IFileWriter>((IFileWriter *)new HostLocalFileIO(path, resume_pos, (resume_pos == 0) ? O_CREAT | O_TRUNC | O_RDWR : O_RDWR, mode ));
+	return std::make_shared<HostLocalFileIO>(path, resume_pos, (resume_pos == 0) ? O_CREAT | O_TRUNC | O_RDWR : O_RDWR, mode );
 }

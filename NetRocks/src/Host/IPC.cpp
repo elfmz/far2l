@@ -1,3 +1,4 @@
+#include <errno.h>
 #include "IPC.h"
 
 IPCSender::IPCSender(int fd) : _fd(fd)

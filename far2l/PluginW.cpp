@@ -455,7 +455,7 @@ static void farDisplayNotificationW(const wchar_t *action, const wchar_t *object
 	DisplayNotification(action, object);
 }
 
-static int farCallOnWaitW()
+static int farDispatchInterlockedCallsW()
 {
 	return DispatchInterlockedCalls();
 }
@@ -519,7 +519,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.Execute = farExecuteW;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryW;
 		StandardFunctions.DisplayNotification = farDisplayNotificationW;
-		StandardFunctions.CallOnWait = farCallOnWaitW;
+		StandardFunctions.DispatchInterlockedCalls = farDispatchInterlockedCallsW;
 	}
 
 	if (!StartupInfo.StructSize)

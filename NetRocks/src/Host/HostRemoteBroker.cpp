@@ -273,7 +273,7 @@ public:
 
 };
 
-extern "C" __attribute__ ((visibility("default"))) void HostRemoteBrokerMain(int argc, char *argv[])
+extern "C" __attribute__ ((visibility("default"))) int HostRemoteBrokerMain(int argc, char *argv[])
 {
 	fprintf(stderr, "HostRemoteBrokerMain: BEGIN\n");
 	try {
@@ -285,4 +285,5 @@ extern "C" __attribute__ ((visibility("default"))) void HostRemoteBrokerMain(int
 		fprintf(stderr, "HostRemoteBrokerMain: %s\n", e.what());
 	}
 	fprintf(stderr, "HostRemoteBrokerMain: END\n");
+	return 0;
 }

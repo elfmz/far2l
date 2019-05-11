@@ -147,7 +147,7 @@ SHAREDSYMBOL void WINAPI _export ExitFARW()
 	}
 
 	while (CountOfPendingBackgroundTasks() != 0) {
-		if (G.info.FSF->CallOnWait() > 0) {
+		if (G.info.FSF->DispatchInterlockedCalls() > 0) {
 			usleep(1000);
 		} else {
 			usleep(100000);

@@ -298,7 +298,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 
 void OpXfer::ForcefullyAbort()
 {
-	_dst_host->Abort();
 	OpBase::ForcefullyAbort();
+	_dst_host->Abort();
 }
 

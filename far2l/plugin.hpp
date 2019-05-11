@@ -1943,7 +1943,7 @@ enum EXECUTEFLAGS
 typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef int (WINAPI *FAREXECUTE_LIBRARY)(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const wchar_t *action, const wchar_t *object);
-typedef int (WINAPI *FARCALLONWAIT)();
+typedef int (WINAPI *FARDISPATCHNTRLCKDCALLS)();
 
 typedef struct FarStandardFunctions
 {
@@ -2007,7 +2007,7 @@ typedef struct FarStandardFunctions
 	FAREXECUTE                 Execute;
 	FAREXECUTE_LIBRARY         ExecuteLibrary;
 	FARDISPLAYNOTIFICATION     DisplayNotification;
-	FARCALLONWAIT              CallOnWait;
+	FARDISPATCHNTRLCKDCALLS    DispatchInterlockedCalls;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo
@@ -2313,6 +2313,7 @@ extern "C"
 	int    WINAPI _export ConfigureW(int ItemNumber);
 	int    WINAPI _export DeleteFilesW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
 	void   WINAPI _export ExitFARW(void);
+	int    WINAPI _export MayExitFARW(void);
 	void   WINAPI _export FreeFindDataW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber);
 	void   WINAPI _export FreeVirtualFindDataW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber);
 	int    WINAPI _export GetFilesW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,const wchar_t **DestPath,int OpMode);

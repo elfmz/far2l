@@ -1552,7 +1552,7 @@ namespace oldfar
         typedef int (WINAPI *FAREXECUTE)(const char *CmdStr, unsigned int ExecFlags);
 	typedef int (WINAPI *FAREXECUTE_LIBRARY)(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags);
 	typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const char *action, const char *object);
-	typedef int (WINAPI *FARCALLONWAIT)();
+	typedef int (WINAPI *FARDISPATCHNTRLCKDCALLS)();
 
 	typedef struct FarStandardFunctions
 	{
@@ -1605,7 +1605,7 @@ namespace oldfar
 		FAREXECUTE                 Execute;
 		FAREXECUTE_LIBRARY         ExecuteLibrary;
 		FARDISPLAYNOTIFICATION     DisplayNotification;
-		FARCALLONWAIT              CallOnWait;
+		FARDISPATCHNTRLCKDCALLS    DispatchInterlockedCalls;
 	} FARSTANDARDFUNCTIONS;
 
 	struct PluginStartupInfo

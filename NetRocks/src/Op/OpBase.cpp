@@ -11,21 +11,10 @@ OpBase::OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string 
 	_base_dir(base_dir)
 {
 	_state.ao_host = this;
-	_succeded = false;
 }
 
 OpBase::~OpBase()
 {
-	// calling DisplayNotification from here cuz calling it from thread causes deadlock due to
-	// InterlockedCall waits for main thread while main thread waits for thread's completion
-	if (_op_name_lng != -1) {
-		std::wstring display_action = G.GetMsgWide(_succeded ? MNotificationSuccess : MNotificationFailed);
-		size_t p = display_action.find(L"()");
-		if (p != std::wstring::npos)
-			display_action.replace(p, 2, G.GetMsgWide(_op_name_lng));
-
-		G.info.FSF->DisplayNotification(display_action.c_str(), StrMB2Wide(_base_dir).c_str());
-	}
 }
 
 
@@ -35,7 +24,6 @@ void *OpBase::ThreadProc()
 	try {
 		_state.Reset();
 		Process();
-		_succeded = true;
 		fprintf(stderr,
 			"NetRocks::OpBase('%s'): count=%llu all_total=%llu\n",
 			_base_dir.c_str(), _state.stats.count_total, _state.stats.all_total);
@@ -54,6 +42,17 @@ void *OpBase::ThreadProc()
 	ir.EventType = NOOP_EVENT;
 	DWORD dw = 0;
 	WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
+
+	// calling DisplayNotification from here cuz calling it from thread causes deadlock due to
+	// InterlockedCall waits for main thread while main thread waits for thread's completion
+	if (_op_name_lng != -1) {
+		std::wstring display_action = G.GetMsgWide((out == nullptr) ? MNotificationSuccess : MNotificationFailed);
+		size_t p = display_action.find(L"()");
+		if (p != std::wstring::npos)
+			display_action.replace(p, 2, G.GetMsgWide(_op_name_lng));
+
+		G.info.FSF->DisplayNotification(display_action.c_str(), StrMB2Wide(_base_dir).c_str());
+	}
 
 	return out;
 }

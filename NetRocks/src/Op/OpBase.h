@@ -18,7 +18,6 @@ protected:
 	int _op_mode;
 	std::shared_ptr<IHost> _base_host;
 	std::string _base_dir;
-	volatile bool _succeded;
 
 	ProgressState _state;
 	WhatOnErrorState _wea_state;

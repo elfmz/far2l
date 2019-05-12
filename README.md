@@ -130,25 +130,25 @@ Plugins API based on FAR Manager v2 plus following changes:
 ### Added following entries to FarStandardFunctions:
 
 * int Execute(const wchar_t *CmdStr, unsigned int ExecFlags);
-...where ExecFlags - combination of values of EXECUTEFLAGS
-Executes given command line, if EF_HIDEOUT and EF_NOWAIT are not specified then command will be executed on far2l virtual terminal
+...where ExecFlags - combination of values of EXECUTEFLAGS.
+Executes given command line, if EF_HIDEOUT and EF_NOWAIT are not specified then command will be executed on far2l virtual terminal.
 
 * int ExecuteLibrary(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags)
-Executes given shared library symbol in separate process (process creation behaviour is the same as for Execute)
+Executes given shared library symbol in separate process (process creation behaviour is the same as for Execute).
 symbol function must be defined as: int 'Symbol'(int argc, char *argv[])
 
 * void DisplayNotification(const wchar_t *action, const wchar_t *object);
 Shows (depending on settings - always or if far2l in background) system shell-wide notification with given title and text.
 
-* void DispatchInterlockedCalls();
-far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterlockedCalls() allows plugin to explicitely dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
+* void DispatchInterthreadCalls();
+far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterthreadCalls() allows plugin to explicitely dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
 
 ### Added following commands into FILE_CONTROL_COMMANDS:
 * FCTL_GETPANELPLUGINHANDLE
 Can be used to interract with plugin that renders other panel.
-hPlugin can be set to PANEL_ACTIVE or PANEL_PASSIVE
-Param1 ignored
-Param2 points to value of type HANDLE, call sets that value to handle of plugin that renders specified panel or INVALID_HANDLE_VALUE
+hPlugin can be set to PANEL_ACTIVE or PANEL_PASSIVE.
+Param1 ignored.
+Param2 points to value of type HANDLE, call sets that value to handle of plugin that renders specified panel or INVALID_HANDLE_VALUE.
 
 ### Added following plugin-exported functions:
 * int MayExitFARW();

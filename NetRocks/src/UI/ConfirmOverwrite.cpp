@@ -55,7 +55,7 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	_i_skip = _di.AddAtLine(DI_BUTTON, 5,15, DIF_CENTERGROUP, MXferDOASkip, nullptr, FDIS_DEFAULT);
+	_i_skip = _di.AddAtLine(DI_BUTTON, 5,15, DIF_CENTERGROUP, MXferDOASkip);
 	_i_overwrite = _di.AddAtLine(DI_BUTTON, 16,29, DIF_CENTERGROUP, MXferDOAOverwrite);
 	_i_overwrite_newer = _di.AddAtLine(DI_BUTTON, 30,62, DIF_CENTERGROUP, MXferDOAOverwriteIfNewer);
 
@@ -65,6 +65,8 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	_di.AddAtLine(DI_BUTTON, 50,62, DIF_CENTERGROUP, MCancel);
 
 	G.info.FSF->DisplayNotification(L"far2l - NetRocks", G.GetMsgWide(MXferConfirmOverwriteNotify));
+
+	SetDefaultDialogControl(_i_skip);
 }
 
 

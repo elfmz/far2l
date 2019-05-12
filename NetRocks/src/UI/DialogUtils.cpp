@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <utils.h>
 #include "DialogUtils.h"
 #include "../Globals.h"
@@ -15,7 +16,7 @@ const wchar_t *FarDialogItems::MB2WidePooled(const char *sz)
 	return _str_pool.insert(_str_pool_tmp).first->c_str();
 }
 
-int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history, FarDialogItemState state)
+int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history)
 {
 	int index = (int)size();
 	resize(index + 1);
@@ -26,10 +27,10 @@ int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsign
 	item.Y1 = y1;
 	item.X2 = x2;
 	item.Y2 = y2;
-	item.Focus = (state == FDIS_FOCUSED || state == FDIS_DEFAULT_FOCUSED);
+	item.Focus = 0;
 	item.History = history;
 	item.Flags = flags;
-	item.DefaultButton = (state == FDIS_DEFAULT || state == FDIS_DEFAULT_FOCUSED);
+	item.DefaultButton = 0;
 	item.PtrData = data;
 
 //	strncpy(item.Data, data ? data : "", sizeof(item.Data) );
@@ -37,14 +38,14 @@ int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsign
 	return index;
 }
 
-int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history)
 {
-	return AddInternal(type, x1, y1, x2, y2, flags, MB2WidePooled(data), MB2WidePooled(history), state);
+	return AddInternal(type, x1, y1, x2, y2, flags, MB2WidePooled(data), MB2WidePooled(history));
 }
 
-int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history)
 {
-	return AddInternal(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsgWide(data_lng) : nullptr, MB2WidePooled(history), state);
+	return AddInternal(type, x1, y1, x2, y2, flags, (data_lng != -1) ? G.GetMsgWide(data_lng) : nullptr, MB2WidePooled(history));
 }
 
 int FarDialogItems::EstimateWidth() const
@@ -93,14 +94,14 @@ void FarDialogItemsLineGrouped::NextLine()
 	++_y;
 }
 
-int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, const char *data, const char *history, FarDialogItemState state)
+int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, const char *data, const char *history)
 {
-	return Add(type, x1, _y, x2, _y, flags, data, history, state);
+	return Add(type, x1, _y, x2, _y, flags, data, history);
 }
 
-int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history, FarDialogItemState state)
+int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history)
 {
-	return Add(type, x1, _y, x2, _y, flags, data_lng, history, state);
+	return Add(type, x1, _y, x2, _y, flags, data_lng, history);
 }
 
 /////////////////
@@ -234,11 +235,49 @@ void BaseDialog::Close(int code)
 	SendDlgMessage(DM_CLOSE, code, 0);
 }
 
+void BaseDialog::SetDefaultDialogControl(int ctl)
+{
+	assert(_dlg == INVALID_HANDLE_VALUE);
+
+	if (ctl == -1) {
+		if (!_di.empty()) {
+			SetDefaultDialogControl((int)(_di.size() - 1));
+		}
+		return;
+	}
+
+	for (size_t i = 0; i < _di.size(); ++i) {
+		_di[i].DefaultButton = ((int)i == ctl) ? 1 : 0;
+
+	}
+}
+
+void BaseDialog::SetFocusedDialogControl(int ctl)
+{
+	assert(_dlg == INVALID_HANDLE_VALUE);
+
+	if (ctl == -1) {
+		if (!_di.empty()) {
+			SetFocusedDialogControl((int)(_di.size() - 1));
+		}
+		return;
+	}
+
+	for (size_t i = 0; i < _di.size(); ++i) {
+		_di[i].Focus = ((int)i == ctl) ? 1 : 0;
+
+	}
+}
 
 void BaseDialog::TextFromDialogControl(int ctl, std::string &str)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
+
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		str = Wide2MB(_di[ctl].PtrData ? _di[ctl].PtrData : L"");
+		return;
+	}
 
 	static wchar_t buf[ 0x1000 ] = {};
 	FarDialogItemData dd = { ARRAYSIZE(buf) - 1, buf };
@@ -249,13 +288,52 @@ void BaseDialog::TextFromDialogControl(int ctl, std::string &str)
 	Wide2MB(buf, str);
 }
 
+void BaseDialog::SetEnabledDialogControl(int ctl, bool en)
+{
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
+	SendDlgMessage(DM_ENABLE, ctl, en ? TRUE : FALSE);
+}
+
+bool BaseDialog::IsCheckedDialogControl(int ctl)
+{
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return false;
+
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		return (_di[ctl].Selected != 0);
+	}
+
+	return (SendDlgMessage(DM_GETCHECK, ctl, 0) == BSTATE_CHECKED);
+}
+
+void BaseDialog::SetCheckedDialogControl(int ctl, bool checked)
+{
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		_di[ctl].Selected = checked ? 1 : 0;
+		return;
+	}
+
+	SendDlgMessage(DM_SETCHECK, ctl, checked ? BSTATE_CHECKED : BSTATE_UNCHECKED);
+}
+
 void BaseDialog::TextToDialogControl(int ctl, const char *str)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
-	const std::wstring &tmp = MB2Wide(str);
-	FarDialogItemData dd = { tmp.size(), (wchar_t*)tmp.c_str()};
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		_di[ctl].PtrData = _di.MB2WidePooled(str);
+		return;
+	}
+
+	std::wstring tmp;
+	MB2Wide(str, tmp);
+	FarDialogItemData dd = { tmp.size(), (wchar_t*)tmp.c_str() };
 	SendDlgMessage(DM_SETTEXT, ctl, (LONG_PTR)&dd);
 }
 
@@ -324,12 +402,3 @@ void BaseDialog::ProgressBarToDialogControl(int ctl, int percents)
 	TextToDialogControl(ctl, str);
 }
 
-void BaseDialog::SetEnabledDialogControl(int ctl, bool en)
-{
-	SendDlgMessage(DM_ENABLE, ctl, en ? TRUE : FALSE);
-}
-
-bool BaseDialog::IsCheckedDialogControl(int ctl)
-{
-	return (SendDlgMessage(DM_GETCHECK, ctl, 0) == BSTATE_CHECKED);
-}

@@ -70,7 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "synchro.hpp"
 #include "RegExp.hpp"
 #include "console.hpp"
-#include "InterlockedCall.hpp"
+#include "InterthreadCall.hpp"
 
 wchar_t *WINAPI FarItoa(int value, wchar_t *string, int radix)
 {
@@ -164,7 +164,7 @@ int WINAPI FarInputBox(
     DWORD Flags
 )
 {
-	return InterlockedCall<int, 0>(std::bind(FarInputBoxSynched, Title, Prompt, HistoryName, SrcText, DestText, DestLength, HelpTopic, Flags));
+	return InterthreadCall<int, 0>(std::bind(FarInputBoxSynched, Title, Prompt, HistoryName, SrcText, DestText, DestLength, HelpTopic, Flags));
 }
 
 /* Функция вывода помощи */
@@ -237,7 +237,7 @@ BOOL WINAPI FarShowHelp(
     const wchar_t *HelpTopic,
     DWORD Flags )
 {
-	return InterlockedCall<BOOL, FALSE>(std::bind(FarShowHelpSynched, ModuleName, HelpTopic, Flags));
+	return InterthreadCall<BOOL, FALSE>(std::bind(FarShowHelpSynched, ModuleName, HelpTopic, Flags));
 }
 
 /* $ 05.07.2000 IS
@@ -870,7 +870,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 {
-	return InterlockedCall<LONG_PTR, 0>(std::bind(FarAdvControlSynched, ModuleNumber, Command, Param));
+	return InterthreadCall<LONG_PTR, 0>(std::bind(FarAdvControlSynched, ModuleNumber, Command, Param));
 }
 
 static int FarMenuFnSynched(
@@ -1074,7 +1074,7 @@ int WINAPI FarMenuFn(
     int ItemsNumber
 )
 {
-	return InterlockedCall<int, -1>(std::bind(FarMenuFnSynched, PluginNumber, X, Y,
+	return InterthreadCall<int, -1>(std::bind(FarMenuFnSynched, PluginNumber, X, Y,
 		MaxHeight, Flags, Title, Bottom, HelpTopic, BreakKeys, BreakCode, Item, ItemsNumber));
 }
 
@@ -1220,7 +1220,7 @@ HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2
                             unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
                             FARWINDOWPROC DlgProc, LONG_PTR Param)
 {
-	HANDLE out = InterlockedCall<HANDLE, nullptr>(std::bind(FarDialogInitSynched,
+	HANDLE out = InterthreadCall<HANDLE, nullptr>(std::bind(FarDialogInitSynched,
 		PluginNumber, X1, Y1, X2, Y2, HelpTopic, Item, ItemsNumber, Reserved, Flags, DlgProc, Param));
 
 	return (out != nullptr) ? out : INVALID_HANDLE_VALUE;
@@ -1228,12 +1228,12 @@ HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2
 
 int WINAPI FarDialogRun(HANDLE hDlg)
 {
-	return InterlockedCall<int, -1>(std::bind(FarDialogRunSynched, hDlg));
+	return InterthreadCall<int, -1>(std::bind(FarDialogRunSynched, hDlg));
 }
 
 void WINAPI FarDialogFree(HANDLE hDlg)
 {
-	InterlockedCall<bool, false>(std::bind(FarDialogFreeSynched, hDlg));
+	InterthreadCall<bool, false>(std::bind(FarDialogFreeSynched, hDlg));
 }
 
 /////////
@@ -1256,7 +1256,7 @@ static const wchar_t* FarGetMsgFnSynched(INT_PTR PluginHandle,int MsgId)
 
 const wchar_t* WINAPI FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
 {
-	const wchar_t* out = InterlockedCall<const wchar_t*, nullptr>(std::bind(FarGetMsgFnSynched, PluginHandle, MsgId));
+	const wchar_t* out = InterthreadCall<const wchar_t*, nullptr>(std::bind(FarGetMsgFnSynched, PluginHandle, MsgId));
 	return out ? out : L"";
 }
 
@@ -1419,7 +1419,7 @@ int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopi
                         const wchar_t * const *Items,int ItemsNumber,
                         int ButtonsNumber)
 {
-	return InterlockedCall<int, -1>(std::bind(FarMessageFnSynched, PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber));
+	return InterthreadCall<int, -1>(std::bind(FarMessageFnSynched, PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber));
 }
 
 static int FarControlSynched(HANDLE hPlugin,int Command,int Param1,LONG_PTR Param2)
@@ -1645,7 +1645,7 @@ static int FarControlSynched(HANDLE hPlugin,int Command,int Param1,LONG_PTR Para
 
 int WINAPI FarControl(HANDLE hPlugin,int Command,int Param1,LONG_PTR Param2)
 {
-	return InterlockedCall<int, 0>(std::bind(FarControlSynched, hPlugin, Command, Param1, Param2));
+	return InterthreadCall<int, 0>(std::bind(FarControlSynched, hPlugin, Command, Param1, Param2));
 }
 
 //
@@ -1748,7 +1748,7 @@ static int FarGetDirListSynched(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,in
 
 int WINAPI FarGetDirList(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pItemsNumber)
 {
-	return InterlockedCall<int, 0>(std::bind(FarGetDirListSynched, Dir, pPanelItem, pItemsNumber));
+	return InterthreadCall<int, 0>(std::bind(FarGetDirListSynched, Dir, pPanelItem, pItemsNumber));
 }
 
 static PluginPanelItem *PluginDirList;
@@ -1859,7 +1859,7 @@ int FarGetPluginDirListSynched(INT_PTR PluginNumber,
 int WINAPI FarGetPluginDirList(INT_PTR PluginNumber, HANDLE hPlugin,
 		const wchar_t *Dir, PluginPanelItem **pPanelItem, int *pItemsNumber)
 {
-	return InterlockedCall<int, 0>(std::bind(FarGetPluginDirListSynched, PluginNumber, hPlugin, Dir, pPanelItem, pItemsNumber));
+	return InterthreadCall<int, 0>(std::bind(FarGetPluginDirListSynched, PluginNumber, hPlugin, Dir, pPanelItem, pItemsNumber));
 }
 
 /* $ 30.11.2001 DJ
@@ -2102,7 +2102,7 @@ static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
 int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
                      int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
 {
-	return InterlockedCall<int, 0>(std::bind(FarViewerSynched, FileName, Title, X1, Y1, X2, Y2, Flags, CodePage));
+	return InterthreadCall<int, 0>(std::bind(FarViewerSynched, FileName, Title, X1, Y1, X2, Y2, Flags, CodePage));
 }
 
 int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
@@ -2230,7 +2230,7 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 int WINAPI FarEditor( const wchar_t *FileName, const wchar_t *Title,
     int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
 {
-	return InterlockedCall<int, EEC_OPEN_ERROR>(std::bind(FarEditorSynched,
+	return InterthreadCall<int, EEC_OPEN_ERROR>(std::bind(FarEditorSynched,
 		FileName, Title, X1, Y1, X2, Y2, Flags, StartLine, StartChar, CodePage));
 }
 
@@ -2263,7 +2263,7 @@ static bool FarTextSynched(int X,int Y,int Color,const wchar_t *Str)
 
 void WINAPI FarText(int X,int Y,int Color,const wchar_t *Str)
 {
-	InterlockedCall<bool>(std::bind(FarTextSynched, X, Y, Color, Str));
+	InterthreadCall<bool>(std::bind(FarTextSynched, X, Y, Color, Str));
 }
 
 static int FarEditorControlSynched(int Command,void *Param)
@@ -2276,7 +2276,7 @@ static int FarEditorControlSynched(int Command,void *Param)
 
 int WINAPI FarEditorControl(int Command,void *Param)
 {
-	return InterlockedCall<int, 0>(std::bind(FarEditorControlSynched, Command, Param));
+	return InterthreadCall<int, 0>(std::bind(FarEditorControlSynched, Command, Param));
 }
 
 
@@ -2290,7 +2290,7 @@ static int FarViewerControlSynched(int Command,void *Param)
 
 int WINAPI FarViewerControl(int Command,void *Param)
 {
-	return InterlockedCall<int, 0>(std::bind(FarViewerControlSynched, Command, Param));
+	return InterthreadCall<int, 0>(std::bind(FarViewerControlSynched, Command, Param));
 }
 
 
@@ -2475,7 +2475,7 @@ static int farPluginsControlSynched(HANDLE hHandle, int Command, int Param1, LON
 
 int WINAPI farPluginsControl(HANDLE hHandle, int Command, int Param1, LONG_PTR Param2)
 {
-	return InterlockedCall<int, 0>(std::bind(farPluginsControlSynched, hHandle, Command, Param1, Param2));
+	return InterthreadCall<int, 0>(std::bind(farPluginsControlSynched, hHandle, Command, Param1, Param2));
 }
 
 int WINAPI farFileFilterControl(HANDLE hHandle, int Command, int Param1, LONG_PTR Param2)

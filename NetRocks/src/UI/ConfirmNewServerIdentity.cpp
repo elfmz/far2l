@@ -36,7 +36,10 @@ ConfirmNewServerIdentity::ConfirmNewServerIdentity(const std::string &site, cons
 	_di.NextLine();
 	_i_allow_once = _di.AddAtLine(DI_BUTTON, 6,15, DIF_CENTERGROUP, MNewServerIdentityAllowOnce);
 	_i_allow_always = _di.AddAtLine(DI_BUTTON, 16,25, DIF_CENTERGROUP, MNewServerIdentityAllowAlways);
-	_di.AddAtLine(DI_BUTTON, 26,35, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT_FOCUSED);
+	_di.AddAtLine(DI_BUTTON, 26,35, DIF_CENTERGROUP, MCancel);
+
+	SetFocusedDialogControl();
+	SetDefaultDialogControl();
 }
 
 ConfirmNewServerIdentity::Result ConfirmNewServerIdentity::Ask()

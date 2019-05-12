@@ -89,10 +89,13 @@ ComplexOperationProgress::ComplexOperationProgress(const std::string &path, Prog
 	if (allow_background) {
 		_i_background = _di.AddAtLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
 	}
-	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, _state.paused ? MResume : MPause, nullptr, FDIS_DEFAULT);
+	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, _state.paused ? MResume : MPause);
 	_i_cancel = _di.AddAtLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel);
 
-	_speed_current_label = Wide2MB(_di[_i_speed_current_label].PtrData);
+	//SetFocusedDialogControl();
+	SetDefaultDialogControl(_i_pause_resume);
+
+	TextFromDialogControl(_i_speed_current_label, _speed_current_label);
 }
 
 void ComplexOperationProgress::Show()

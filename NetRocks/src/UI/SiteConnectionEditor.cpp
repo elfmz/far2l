@@ -71,7 +71,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,27, 0, MProtocol);
-	_i_protocol = _di.AddAtLine(DI_COMBOBOX, 28,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "", nullptr, FDIS_FOCUSED);
+	_i_protocol = _di.AddAtLine(DI_COMBOBOX, 28,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
 	_di[_i_protocol].ListItems = _di_protocols.Get();
 
 	_di.NextLine();
@@ -85,7 +85,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,27, 0, MLoginMode);
-	_i_login_mode = _di.AddAtLine(DI_COMBOBOX, 28,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "", nullptr, FDIS_FOCUSED);
+	_i_login_mode = _di.AddAtLine(DI_COMBOBOX, 28,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
 	_di[_i_login_mode].ListItems = _di_login_mode.Get();
 
 	_di.NextLine();
@@ -108,8 +108,11 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 
 	_di.NextLine();
 	_i_save = _di.AddAtLine(DI_BUTTON, 61,21, DIF_CENTERGROUP, MSave);
-	_i_connect = _di.AddAtLine(DI_BUTTON, 24,39, DIF_CENTERGROUP, MConnect, nullptr, FDIS_DEFAULT);
+	_i_connect = _di.AddAtLine(DI_BUTTON, 24,39, DIF_CENTERGROUP, MConnect);
 	_i_cancel = _di.AddAtLine(DI_BUTTON, 45,60, DIF_CENTERGROUP, MCancel);
+
+	SetFocusedDialogControl(_i_protocol);
+	SetDefaultDialogControl(_i_connect);
 }
 
 void SiteConnectionEditor::Load()

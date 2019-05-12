@@ -1,7 +1,7 @@
 #include <utils.h>
 #include <TimeUtils.h>
 #include "OpXfer.h"
-#include "../UI/Confirm.h"
+#include "../UI/ConfirmXfer.h"
 #include "../UI/ConfirmOverwrite.h"
 #include "../UI/WhatOnError.h"
 #include "../UI/ComplexOperationProgress.h"
@@ -30,7 +30,8 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		_dst_dir+= '/';
 
 	if (!IS_SILENT(_op_mode)) {
-		if (!ConfirmXfer(_kind, _direction, _dst_dir).Ask(_default_xoa)) {
+		std::string dst_dir = _dst_dir;
+		if (!ConfirmXfer(_kind, _direction).Ask(_default_xoa, dst_dir)) {
 			fprintf(stderr, "NetRocks::Xfer: cancel\n");
 			throw AbortError();
 		}
@@ -289,7 +290,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			} break;
 
 			default:
-				throw;
+				throw AbortError(); // throw abort to avoid second error warning
 		}
 	}
 

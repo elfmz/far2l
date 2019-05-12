@@ -30,7 +30,7 @@ public:
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,24, 0, MUserName);
-		_i_username = _di.AddAtLine(DI_EDIT, 28,48, DIF_HISTORY, "", "NetRocks_History_User", FDIS_FOCUSED);
+		_i_username = _di.AddAtLine(DI_EDIT, 28,48, DIF_HISTORY, "", "NetRocks_History_User");
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,24, 0, MPassword);
@@ -40,24 +40,26 @@ public:
 		_di.AddAtLine(DI_TEXT, 4,49, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 		_di.NextLine();
-		_i_connect = _di.AddAtLine(DI_BUTTON, 6,23, DIF_CENTERGROUP, MConnect, nullptr, FDIS_DEFAULT);
+		_i_connect = _di.AddAtLine(DI_BUTTON, 6,23, DIF_CENTERGROUP, MConnect);
 		_di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MCancel);
 
 		if (retry) {
-			char sz[0x200] = {};
-			snprintf(sz, sizeof(sz) - 1, "%ls (%u)", _di[_i_dblbox].PtrData, retry);
-			_di[_i_dblbox].PtrData = _di.MB2WidePooled(sz);
+			std::string title;
+			TextFromDialogControl(_i_dblbox, title);
+			title+= StrPrintf(" (%u)", retry);
+			TextToDialogControl(_i_dblbox, title);
 		}
+
+		SetFocusedDialogControl(_i_username);
+		SetDefaultDialogControl(_i_connect);
 	}
 
 	bool Ask(std::string &username, std::string &password)
 	{
-		_di[_i_username].PtrData = _di.MB2WidePooled(username.c_str());
-		_di[_i_password].PtrData = _di.MB2WidePooled(password.c_str());
-		if (!username.empty() && password.empty()) {
-			_di[_i_username].Focus = 0;
-			_di[_i_password].Focus = 1;
-		}
+		TextToDialogControl(_i_username, username);
+		TextToDialogControl(_i_password, password);
+
+		SetFocusedDialogControl((username.empty() || !password.empty()) ? _i_username : _i_password);
 
 		if (Show(L"InteractiveLoginDialog", 6, 2) != _i_connect)
 			return false;

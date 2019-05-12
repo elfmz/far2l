@@ -34,7 +34,7 @@ SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &o
 	_i_errstats_separator = _di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 	_di.Add(DI_BUTTON, 16,4,32,4, DIF_CENTERGROUP, MCancel);
 
-	_title = Wide2MB(_di[_i_dblbox].PtrData);
+	TextFromDialogControl(_i_dblbox, _title);
 }
 
 void SimpleOperationProgress::Show()

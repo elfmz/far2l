@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "constitle.hpp"
 #include "vtshell.h"
-#include "InterlockedCall.hpp"
+#include "InterthreadCall.hpp"
 #include <wordexp.h>
 #include <set>
 #include <sys/wait.h>
@@ -262,7 +262,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 
 int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 {
-	return InterlockedCall<int, -1>(std::bind(farExecuteASynched, CmdStr, ExecFlags));
+	return InterthreadCall<int, -1>(std::bind(farExecuteASynched, CmdStr, ExecFlags));
 }
 
 int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags)

@@ -2007,7 +2007,7 @@ typedef struct FarStandardFunctions
 	FAREXECUTE                 Execute;
 	FAREXECUTE_LIBRARY         ExecuteLibrary;
 	FARDISPLAYNOTIFICATION     DisplayNotification;
-	FARDISPATCHNTRLCKDCALLS    DispatchInterlockedCalls;
+	FARDISPATCHNTRLCKDCALLS    DispatchInterthreadCalls;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

@@ -7,18 +7,10 @@
 #include <plugin.hpp>
 
 
-enum FarDialogItemState
-{
-	FDIS_NORMAL,
-	FDIS_DEFAULT,
-	FDIS_FOCUSED,
-	FDIS_DEFAULT_FOCUSED
-};
-
 struct FarDialogItems : std::vector<struct FarDialogItem>
 {
-	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
-	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
+	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr);
+	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history = nullptr);
 
 	int EstimateWidth() const;
 	int EstimateHeight() const;
@@ -28,7 +20,7 @@ struct FarDialogItems : std::vector<struct FarDialogItem>
 
 private:
 
-	int AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history, FarDialogItemState state);
+	int AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history);
 
 	std::set<std::wstring> _str_pool;
 	std::wstring _str_pool_tmp;
@@ -39,8 +31,8 @@ struct FarDialogItemsLineGrouped : FarDialogItems
 	void SetLine(int y);
 	void NextLine();
 
-	int AddAtLine(int type, int x1, int x2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
-	int AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history = nullptr, FarDialogItemState state = FDIS_NORMAL);
+	int AddAtLine(int type, int x1, int x2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr);
+	int AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history = nullptr);
 
 private:
 	int _y = 1;
@@ -67,9 +59,10 @@ private:
 
 class BaseDialog
 {
+	HANDLE _dlg = INVALID_HANDLE_VALUE;
+
 protected:
 	FarDialogItemsLineGrouped _di;
-	HANDLE _dlg = INVALID_HANDLE_VALUE;
 
 	static LONG_PTR sSendDlgMessage(HANDLE dlg, int msg, int param1, LONG_PTR param2);
 	static LONG_PTR WINAPI sDlgProc(HANDLE dlg, int msg, int param1, LONG_PTR param2);
@@ -81,6 +74,13 @@ protected:
 	int Show(const char *help_topic, int extra_width, int extra_height, unsigned int flags = 0);
 
 	void Close(int code = -1);
+
+	void SetDefaultDialogControl(int ctl = -1);
+	void SetFocusedDialogControl(int ctl = -1);
+
+	void SetEnabledDialogControl(int ctl, bool en = true);
+	void SetCheckedDialogControl(int ctl, bool checked = true);
+	bool IsCheckedDialogControl(int ctl);
 
 	void TextFromDialogControl(int ctl, std::string &str);
 	void TextToDialogControl(int ctl, const char *str);
@@ -94,8 +94,6 @@ protected:
 
 	void ProgressBarToDialogControl(int ctl, int percents = -1);
 
-	void SetEnabledDialogControl(int ctl, bool en = true);
-	bool IsCheckedDialogControl(int ctl);
 
 public:
 	virtual ~BaseDialog();

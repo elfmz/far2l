@@ -40,7 +40,7 @@ void BackgroundTasksList()
 			if (selected_id == 0 && (info[i].status == BTS_ACTIVE || info[i].status == BTS_PAUSED)) {
 				selected_id = info[i].id;
 			}
-			if (selected_id = info[i].id) {
+			if (selected_id == info[i].id) {
 				menu_items[i].Selected = 1;
 			}
 		}
@@ -82,7 +82,10 @@ ConfirmExitFAR::ConfirmExitFAR(size_t background_ops_count)
 	_di.NextLine();
 	_i_background_tasks = _di.AddAtLine(DI_BUTTON, 6,15, DIF_CENTERGROUP, MConfirmExitFARBackgroundTasks);
 	_i_ok = _di.AddAtLine(DI_BUTTON, 16,25, DIF_CENTERGROUP, MOK);
-	_di.AddAtLine(DI_BUTTON, 26,35, DIF_CENTERGROUP, MCancel, nullptr, FDIS_DEFAULT_FOCUSED);
+	_di.AddAtLine(DI_BUTTON, 26,35, DIF_CENTERGROUP, MCancel);
+
+	SetFocusedDialogControl();
+	SetDefaultDialogControl();
 }
 
 LONG_PTR ConfirmExitFAR::DlgProc(int msg, int param1, LONG_PTR param2)

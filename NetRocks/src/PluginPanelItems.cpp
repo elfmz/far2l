@@ -1,3 +1,4 @@
+#include <limits>
 #include <utils.h>
 #include "PluginPanelItems.h"
 
@@ -48,13 +49,12 @@ void PluginPanelItems::Shrink(int new_count)
 PluginPanelItem *PluginPanelItems::Add(const wchar_t *name) throw (std::runtime_error)
 {
 	if (count == capacity) {
-		int new_capacity = capacity + capacity/2 + 0x100;
-		if (new_capacity < capacity) {
-			new_capacity = capacity + 1;
-			if (new_capacity < capacity) {
-				throw std::runtime_error("PluginPanelItems: capacity overflow");;
-			}
-		}
+		if (capacity == std::numeric_limits<int>::max() - 16)
+			throw std::runtime_error("PluginPanelItems: capacity overflow");;
+
+		int new_capacity = (capacity < (std::numeric_limits<int>::max() / 2) )
+			? capacity + capacity/2 + 0x100 : capacity + 16;
+
 		PluginPanelItem *new_items = PluginPanelItems_ReAlloc(items, new_capacity);
 		if (new_items == nullptr) {
 			new_capacity = capacity + 1;

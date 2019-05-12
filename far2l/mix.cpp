@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "pathmix.hpp"
 #include "dirmix.hpp"
-#include "InterlockedCall.hpp"
+#include "InterthreadCall.hpp"
 
 int ToPercent(uint32_t N1,uint32_t N2)
 {
@@ -203,7 +203,7 @@ static int DisplayNotificationSynched(const wchar_t *action, const char *object)
 
 void DisplayNotification(const wchar_t *action, const char *object)
 {
-	InterlockedCall<int>(std::bind(DisplayNotificationSynched, action, object));
+	InterthreadCall<int>(std::bind(DisplayNotificationSynched, action, object));
 }
 
 void DisplayNotification(const char *action, const char *object)

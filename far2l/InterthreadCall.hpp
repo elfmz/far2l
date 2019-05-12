@@ -3,21 +3,21 @@
 #include <condition_variable>
 #include <luck.h>
 
-struct IInterlockedCallDelegate
+struct IInterthreadCallDelegate
 {
 	virtual void Process(bool stopping) = 0;
 };
 
-void StartDispatchingInterlockedCalls();
-void StopDispatchingInterlockedCalls();
-bool IsCurrentThreadDispatchesInterlockedCalls();
-int DispatchInterlockedCalls();
+void StartDispatchingInterthreadCalls();
+void StopDispatchingInterthreadCalls();
+bool IsCurrentThreadDispatchesInterthreadCalls();
+int DispatchInterthreadCalls();
 
-bool EnqueueInterlockedCallDelegate(IInterlockedCallDelegate *d);
+bool EnqueueInterthreadCallDelegate(IInterthreadCallDelegate *d);
 
 
 template <class RV, class FN>
-	class InterlockedCallDelegate : protected IInterlockedCallDelegate
+	class InterthreadCallDelegate : protected IInterthreadCallDelegate
 {
 	std::mutex _mtx;
 	std::condition_variable _cond;
@@ -38,13 +38,13 @@ protected:
 	}
 
 public:
-	inline InterlockedCallDelegate(FN fn):_fn(fn) { }
+	inline InterthreadCallDelegate(FN fn):_fn(fn) { }
 
 	bool Do()
 	{
 		_done = _discarded = false;
 
-		if (UNLIKELY(!EnqueueInterlockedCallDelegate(this)))
+		if (UNLIKELY(!EnqueueInterthreadCallDelegate(this)))
 			return false;
 
 		std::unique_lock<std::mutex> lock(_mtx);
@@ -65,13 +65,13 @@ public:
 ////////
 
 template <class RV, RV FAIL_RV = (RV)0, class FN>
-	static RV InterlockedCall(FN fn)
+	static RV InterthreadCall(FN fn)
 {
-	if (LIKELY(IsCurrentThreadDispatchesInterlockedCalls())) {
+	if (LIKELY(IsCurrentThreadDispatchesInterthreadCalls())) {
 		return fn();
 	}
 
-	InterlockedCallDelegate<RV, FN> c(fn);
+	InterthreadCallDelegate<RV, FN> c(fn);
 	if (LIKELY(c.Do())) {
 		return c.Result();
 	}

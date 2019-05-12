@@ -16,6 +16,7 @@ src/Host/HostRemoteBroker.cpp
 src/UI/DialogUtils.cpp
 src/UI/SiteConnectionEditor.cpp
 src/UI/Confirm.cpp
+src/UI/ConfirmXfer.cpp
 src/UI/ConfirmOverwrite.cpp
 src/UI/SimpleOperationProgress.cpp
 src/UI/ComplexOperationProgress.cpp

@@ -129,7 +129,7 @@ vtshell_translation.cpp
 VTFar2lExtensios.cpp
 vtlog.cpp
 vtcompletor.cpp
-InterlockedCall.cpp
+InterthreadCall.cpp
 UCD/CharDistribution.cpp
 UCD/JpCntx.cpp
 UCD/LangBulgarianModel.cpp

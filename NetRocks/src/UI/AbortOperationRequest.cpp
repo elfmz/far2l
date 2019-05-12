@@ -37,8 +37,11 @@ public:
 		_di.Add(DI_TEXT, 5,2,48,2, DIF_CENTERGROUP, MAbortText);
 		_di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 
-		_i_confirm = _di.Add(DI_BUTTON, 6,4,27,4, DIF_CENTERGROUP, MAbortConfirm, nullptr, FDIS_DEFAULT);
+		_i_confirm = _di.Add(DI_BUTTON, 6,4,27,4, DIF_CENTERGROUP, MAbortConfirm);
 		_i_cancel = _di.Add(DI_BUTTON, 32,4,46,4, DIF_CENTERGROUP, MAbortNotConfirm);
+
+		SetFocusedDialogControl();
+		SetDefaultDialogControl();
 	}
 
 	bool Ask()
@@ -90,7 +93,7 @@ public:
 	{
 		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3, 1, 50, 3, 0, MAbortingOperationTitle);
 		_di.Add(DI_BUTTON, 5,2,48,2, DIF_CENTERGROUP, MBreakConnection);
-		_title = Wide2MB(_di[_i_dblbox].PtrData);
+		TextFromDialogControl(_i_dblbox, _title);
 	}
 
 	void Show()

@@ -14,7 +14,7 @@ class OpBase : protected Threaded, protected IAbortableOperationsHost
 {
 	OpBase(const OpBase &) = delete;
 protected:
-	int _op_name_lng;
+	int _notify_title_lng = -1;
 	int _op_mode;
 	std::shared_ptr<IHost> _base_host;
 	std::string _base_dir;
@@ -30,9 +30,11 @@ protected:
 //
 	virtual void Process() = 0;
 
+	void SetNotifyTitle(int title_lng = -1);
 public:
-	OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir, int op_name_lng = -1);
+	OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir);
 	~OpBase();
+
 };
 
 

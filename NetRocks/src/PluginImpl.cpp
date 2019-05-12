@@ -274,8 +274,8 @@ BackgroundTaskStatus PluginImpl::StartXfer(int op_mode, std::shared_ptr<IHost> &
 {
 	BackgroundTaskStatus out = BTS_ABORTED;
 	try {
-		std::shared_ptr<IBackgroundTask> task((IBackgroundTask *)new OpXfer(
-			op_mode, base_host, base_dir, dst_host, dst_dir, items, items_count, kind, direction));
+		std::shared_ptr<IBackgroundTask> task = std::make_shared<OpXfer>(op_mode, base_host,
+				base_dir, dst_host, dst_dir, items, items_count, kind, direction);
 
 		// task->Show();
 		out = task->GetStatus();
@@ -304,7 +304,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		Wide2MB(DestPath, dst_dir);
 
 	switch (StartXfer(OpMode, _remote, CurrentSiteDir(true), _local,
-		dst_dir, PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_DOWNLOAD)) {
+		dst_dir, PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XD_DOWNLOAD)) {
 
 		case BTS_ACTIVE: case BTS_PAUSED:
 			_remote = _remote->Clone();
@@ -347,7 +347,7 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	}
 
 	switch (StartXfer(OpMode, _local, dst_dir, _remote, CurrentSiteDir(true),
-		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XK_UPLOAD)) {
+		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XD_UPLOAD)) {
 
 		case BTS_ACTIVE: case BTS_PAUSED:
 			_remote = _remote->Clone();
@@ -499,7 +499,7 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 	if (!items_vector.empty()) {
 		auto state = StartXfer(0, _remote, CurrentSiteDir(true), dst_remote, dst_site_dir,
-			&items_vector[0], (int)items_vector.size(), mv ? XK_MOVE : XK_COPY, XK_CROSSLOAD);
+			&items_vector[0], (int)items_vector.size(), mv ? XK_MOVE : XK_COPY, XD_CROSSLOAD);
 		if (state == BTS_ACTIVE || state == BTS_PAUSED) {
 			_remote = _remote->Clone();
 			g_all_netrocks.CloneRemoteOf(plugin);

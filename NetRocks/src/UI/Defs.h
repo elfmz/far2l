@@ -5,15 +5,17 @@
 
 enum XferKind
 {
+	XK_NONE,
 	XK_COPY,
-	XK_MOVE
+	XK_MOVE,
+	XK_RENAME
 };
 
 enum XferDirection
 {
-	XK_DOWNLOAD,
-	XK_UPLOAD,
-	XK_CROSSLOAD
+	XD_DOWNLOAD,
+	XD_UPLOAD,
+	XD_CROSSLOAD
 };
 
 enum XferOverwriteAction
@@ -35,6 +37,7 @@ enum WhatOnErrorKind
 	WEK_QUERYINFO,
 	WEK_ENUMDIR,
 	WEK_MAKEDIR,
+	WEK_RENAME,
 	WEK_RMFILE,
 	WEK_RMDIR,
 	WEKS_COUNT

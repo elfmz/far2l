@@ -11,9 +11,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	std::shared_ptr<IHost> &dst_host, const std::string &dst_dir,
 	struct PluginPanelItem *items, int items_count, XferKind kind, XferDirection direction)
 	:
-	OpBase(op_mode, base_host, base_dir,
-		(direction == XK_UPLOAD) ? MNotificationUpload :
-			((direction == XK_CROSSLOAD) ? MNotificationCrossload : MNotificationDownload)),
+	OpBase(op_mode, base_host, base_dir),
 
 	_dst_host(dst_host),
 	_dst_dir(dst_dir),
@@ -30,11 +28,21 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		_dst_dir+= '/';
 
 	if (!IS_SILENT(_op_mode)) {
-		std::string dst_dir = _dst_dir;
-		if (!ConfirmXfer(_kind, _direction).Ask(_default_xoa, dst_dir)) {
+		_kind = ConfirmXfer(_kind, _direction).Ask(_default_xoa, _dst_dir);
+		if (_kind == XK_NONE) {
 			fprintf(stderr, "NetRocks::Xfer: cancel\n");
 			throw AbortError();
 		}
+	}
+
+	if (_kind == XK_RENAME) {
+		SetNotifyTitle(MNotificationRename);
+	} else if (direction == XD_UPLOAD) {
+		SetNotifyTitle(MNotificationUpload);
+	} else if (direction == XD_DOWNLOAD) {
+		SetNotifyTitle(MNotificationDownload);
+	} else {
+		throw std::runtime_error("Wrong direction");
 	}
 
 	if (!StartThread()) {
@@ -109,26 +117,71 @@ void OpXfer::Abort()
 
 void OpXfer::Process()
 {
-	if (_enumer) {
-		_enumer->Scan();
-		_enumer.reset();
+	if (_kind == XK_RENAME) {
+		if (_enumer) {
+			Rename(_enumer->Items());
+			_enumer.reset();
+		}
+	} else {
+		if (_enumer) {
+			_enumer->Scan();
+			_enumer.reset();
 
-		std::lock_guard<std::mutex> locker(_state.mtx);
-		_state.stats.total_start = TimeMSNow();
-		_state.stats.total_paused = std::chrono::milliseconds::zero();
+			std::lock_guard<std::mutex> locker(_state.mtx);
+			_state.stats.total_start = TimeMSNow();
+			_state.stats.total_paused = std::chrono::milliseconds::zero();
+		}
 	}
 
 	Transfer();
 }
 
+void OpXfer::Rename(const std::set<std::string> &items)
+{
+	if (_dst_dir == "*")
+		return;
+
+	std::string new_path;
+	size_t star = _dst_dir.find("*"); // its actually name or wildcard
+
+	for (const auto &original_path : items) {
+			const std::string &original_name = original_path.substr(_base_dir.size() + 1);
+			new_path = _base_dir;
+
+			if (star == 0) {// *.txt: <foo.doc -> foo.txt>   <bar -> bar.txt>
+				size_t p = original_name.rfind(_dst_dir[star + 1]);
+				if (p != std::string::npos) {
+					new_path+= original_name.substr(0, p);
+				} else {
+					new_path+= original_name;
+					}
+				new_path+= _dst_dir.substr(star + 1);
+
+			} else if (star != std::string::npos) { // Foo*Bar: <Hello->FooHelloBar>
+				new_path+= _dst_dir.substr(0, star);
+				new_path+= original_name;
+				new_path+= _dst_dir.substr(star + 1);
+			} else {
+				new_path+= _dst_dir;
+			}
+
+			WhatOnErrorWrap<WEK_RENAME>(_wea_state, _state, _base_host.get(), original_path,
+				[&] () mutable 
+				{
+					_base_host->Rename(original_path, new_path);
+				}
+		);
+		
+	}
+}
 
 void OpXfer::Transfer()
 {
-	std::string path_local;
+	std::string path_dst;
 	for (const auto &e : _entries) {
 		const std::string &subpath = e.first.substr(_base_dir.size());
-		path_local = _dst_dir;
-		path_local+= subpath;
+		path_dst = _dst_dir;
+		path_dst+= subpath;
 
 		{
 			std::unique_lock<std::mutex> lock(_state.mtx);
@@ -140,10 +193,10 @@ void OpXfer::Transfer()
 		}
 
 		if (S_ISDIR(e.second.mode)) {
-			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _base_host.get(), path_local,
+			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _base_host.get(), path_dst,
 				[&] () mutable 
 				{
-					_dst_host->DirectoryCreate(path_local, e.second.mode);
+					_dst_host->DirectoryCreate(path_dst, e.second.mode);
 				}
 			);
 
@@ -153,7 +206,7 @@ void OpXfer::Transfer()
 			FileInformation existing_file_info;
 			bool existing = false;
 			try {
-				_dst_host->GetInformation(existing_file_info, path_local);
+				_dst_host->GetInformation(existing_file_info, path_dst);
 				existing = true;
 			} catch (std::exception &ex) { // FIXME: distinguish unexistence of file from IO failure
 				;
@@ -162,7 +215,7 @@ void OpXfer::Transfer()
 			if (existing) {
 				auto xoa = _default_xoa;
 				if (xoa == XOA_ASK) {
-					xoa = ConfirmOverwrite(_kind, _direction, path_local, e.second.modification_time, e.second.size,
+					xoa = ConfirmOverwrite(_kind, _direction, path_dst, e.second.modification_time, e.second.size,
 								existing_file_info.modification_time, existing_file_info.size).Ask(_default_xoa);
 					if (xoa == XOA_CANCEL) {
 						return;
@@ -187,7 +240,7 @@ void OpXfer::Transfer()
 					}
 
 				} else if (xoa == XOA_CREATE_DIFFERENT_NAME) {
-					path_local+= _diffname_suffix;
+					path_dst+= _diffname_suffix;
 				}
 
 				if (xoa == XOA_SKIP) {
@@ -198,7 +251,7 @@ void OpXfer::Transfer()
 					continue;
 				}
 			}
-			if (FileCopyLoop(e.first, path_local, pos, e.second.mode)) {
+			if (FileCopyLoop(e.first, path_dst, pos, e.second.mode)) {
 				if (_kind == XK_MOVE) {
 					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
 						[&] () mutable
@@ -269,8 +322,8 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			throw;
 		}
 
-		switch (_wea_state.Query( (_direction == XK_UPLOAD) ? WEK_UPLOAD
-				: ((_direction == XK_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
+		switch (_wea_state.Query( (_direction == XD_UPLOAD) ? WEK_UPLOAD
+				: ((_direction == XD_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
 				ex.what(), path_src, indicted->SiteName())) {
 
 			case WEA_SKIP: {

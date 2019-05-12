@@ -22,11 +22,6 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_diffname_suffix = ".NetRocks@";
 	_diffname_suffix+= TimeString(TSF_FOR_FILENAME);
 
-	if (_dst_dir.empty()) {
-		_dst_dir = "./";
-	} else if (_dst_dir[_dst_dir.size() - 1] != '.')
-		_dst_dir+= '/';
-
 	if (!IS_SILENT(_op_mode)) {
 		_kind = ConfirmXfer(_kind, _direction).Ask(_default_xoa, _dst_dir);
 		if (_kind == XK_NONE) {
@@ -34,6 +29,11 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 			throw AbortError();
 		}
 	}
+
+	if (_dst_dir.empty()) {
+		_dst_dir = "./";
+	} else if (_dst_dir[_dst_dir.size() - 1] != '/')
+		_dst_dir+= '/';
 
 	if (_kind == XK_RENAME) {
 		SetNotifyTitle(MNotificationRename);
@@ -131,9 +131,8 @@ void OpXfer::Process()
 			_state.stats.total_start = TimeMSNow();
 			_state.stats.total_paused = std::chrono::milliseconds::zero();
 		}
+		Transfer();
 	}
-
-	Transfer();
 }
 
 void OpXfer::Rename(const std::set<std::string> &items)
@@ -175,8 +174,35 @@ void OpXfer::Rename(const std::set<std::string> &items)
 	}
 }
 
+void OpXfer::EnsureDstDirExists()
+{
+	try {
+		_dst_host->GetMode(_dst_dir);
+		return;
+	} catch (std::exception &) { }
+
+	for (size_t i = 1; i <= _dst_dir.size(); ++i) {
+		if (i == _dst_dir.size() || _dst_dir[i] == '/') {
+			const std::string &part_dir = _dst_dir.substr(0, i);
+			try {
+				_dst_host->GetMode(part_dir);
+				continue;
+			} catch (std::exception &) { }
+
+			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), part_dir,
+				[&] () mutable 
+				{
+					_dst_host->DirectoryCreate(part_dir, 0751);
+				}
+			);
+		}
+	}
+}
+
 void OpXfer::Transfer()
 {
+	EnsureDstDirExists();
+
 	std::string path_dst;
 	for (const auto &e : _entries) {
 		const std::string &subpath = e.first.substr(_base_dir.size());
@@ -193,7 +219,7 @@ void OpXfer::Transfer()
 		}
 
 		if (S_ISDIR(e.second.mode)) {
-			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _base_host.get(), path_dst,
+			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), path_dst,
 				[&] () mutable 
 				{
 					_dst_host->DirectoryCreate(path_dst, e.second.mode);

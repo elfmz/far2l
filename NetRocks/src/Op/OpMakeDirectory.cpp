@@ -23,7 +23,7 @@ bool OpMakeDirectory::Do()
 	if (_base_dir.empty()) {
 		_base_dir = "./";
 
-	} else if (_base_dir[_base_dir.size() - 1] != '.')
+	} else if (_base_dir[_base_dir.size() - 1] != '/')
 		_base_dir+= '/';
 
 	if (!StartThread()) {

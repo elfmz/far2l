@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <utils.h>
 #include "ConfirmXfer.h"
 #include "../Globals.h"
@@ -21,17 +22,23 @@
 */
 
 ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd)
+	: _xk(xk), _xd(xd)
 {
-	if (xk == XK_COPY) {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0,
-			(xd == XK_UPLOAD) ? MXferCopyUploadTitle : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle));
-		_di.Add(DI_TEXT, 5,2,62,2, 0,
-			(xd == XK_UPLOAD) ? MXferCopyUploadText : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadText : MXferCopyDownloadText));
+	if (_xk == XK_COPY) {
+		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (_xd == XD_UPLOAD) ? MXferCopyUploadTitle
+				: ((_xd == XD_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle));
+		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, (_xd == XD_UPLOAD) ? MXferCopyUploadText
+				: ((_xd == XD_CROSSLOAD) ? MXferCopyCrossloadText : MXferCopyDownloadText));
+	} else if (_xk == XK_MOVE) {
+		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (_xd == XD_UPLOAD) ? MXferMoveUploadTitle
+				: ((_xd == XD_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle));
+		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, (_xd == XD_UPLOAD) ? MXferMoveUploadText
+				: ((_xd == XD_CROSSLOAD) ? MXferMoveCrossloadText : MXferMoveDownloadText));
 	} else {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0,
-			(xd == XK_UPLOAD) ? MXferMoveUploadTitle : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle));
-		_di.Add(DI_TEXT, 5,2,62,2, 0,
-			(xd == XK_UPLOAD) ? MXferMoveUploadText : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadText : MXferMoveDownloadText));
+		assert(_xk == XK_RENAME);
+		assert(_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD);
+		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, MXferRenameTitle);
+		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, MXferRenameText);
 	}
 
 	_i_destination = _di.Add(DI_EDIT, 5,3,62,3, 0, "");
@@ -51,19 +58,19 @@ ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd)
 
 	_di.Add(DI_TEXT, 4,9,63,9, DIF_BOXCOLOR | DIF_SEPARATOR);
 
-	_i_proceed = _di.Add(DI_BUTTON, 7,10,29,10, DIF_CENTERGROUP, (xk == XK_COPY) ?
-		((xd == XK_UPLOAD) ? MProceedCopyUpload : ((xd == XK_CROSSLOAD) ? MProceedCopyCrossload : MProceedCopyDownload))
+	_i_proceed = _di.Add(DI_BUTTON, 7,10,29,10, DIF_CENTERGROUP, (_xk == XK_RENAME) ? MProceedRename : ( (_xk == XK_COPY) ?
+		((_xd == XD_UPLOAD) ? MProceedCopyUpload : ((_xd == XD_CROSSLOAD) ? MProceedCopyCrossload : MProceedCopyDownload))
 		:
-		((xd == XK_UPLOAD) ? MProceedMoveUpload : ((xd == XK_CROSSLOAD) ? MProceedMoveCrossload : MProceedMoveDownload)));
+		((_xd == XD_UPLOAD) ? MProceedMoveUpload : ((_xd == XD_CROSSLOAD) ? MProceedMoveCrossload : MProceedMoveDownload))) );
 
 	_i_cancel = _di.Add(DI_BUTTON, 38,10,58,10, DIF_CENTERGROUP, MCancel);
 
-	SetFocusedDialogControl(_i_proceed);
+	SetFocusedDialogControl(_i_text);
 	SetDefaultDialogControl(_i_proceed);
 }
 
 
-bool ConfirmXfer::Ask(XferOverwriteAction &default_xoa, std::string &destination)
+XferKind ConfirmXfer::Ask(XferOverwriteAction &default_xoa, std::string &destination)
 {
 	switch (default_xoa) {
 		case XOA_SKIP:
@@ -90,12 +97,17 @@ bool ConfirmXfer::Ask(XferOverwriteAction &default_xoa, std::string &destination
 			SetCheckedDialogControl(_i_ask);
 	}
 
+	_prev_destination = destination;
 	TextToDialogControl(_i_destination, destination);
 
-	if (Show(L"ConfirmXfer", 6, 2) != _i_proceed)
-		return false;
+	if (Show(L"ConfirmXfer", 6, 2) != _i_proceed) {
+		return XK_NONE;
+	}
 
 	TextFromDialogControl(_i_destination, destination);
+	if (destination.empty()) {
+		return XK_NONE;
+	}
 
 	if (IsCheckedDialogControl(_i_skip)) {
 		default_xoa = XOA_SKIP;
@@ -116,5 +128,64 @@ bool ConfirmXfer::Ask(XferOverwriteAction &default_xoa, std::string &destination
 		default_xoa = XOA_ASK;
 	}
 
-	return true;
+	if (_xk == XK_MOVE && _xd == XD_DOWNLOAD
+	 && destination.find("/") == std::string::npos) {
+		return XK_RENAME;
+	}
+
+	return _xk;
 }
+
+
+LONG_PTR ConfirmXfer::DlgProc(int msg, int param1, LONG_PTR param2)
+{
+	if (msg == DN_EDITCHANGE && param1 == _i_destination) {
+		std::string destination;
+		TextFromDialogControl(_i_destination, destination);
+
+		if (_xk == XK_RENAME) {
+			const bool prev_valid = (!_prev_destination.empty()
+				&& _prev_destination.find('/') == std::string::npos);
+
+			if (destination.empty() || destination.find('/') != std::string::npos) {
+				if (prev_valid) {
+					SetEnabledDialogControl(_i_proceed, false);
+				}
+			} else if (!prev_valid) {
+				SetEnabledDialogControl(_i_proceed, true);
+			}
+
+
+		} else if (destination.empty()) {
+			if (!_prev_destination.empty()) {
+				SetEnabledDialogControl(_i_proceed, false);
+			}
+
+		} else {
+			if (_prev_destination.empty()) {
+				SetEnabledDialogControl(_i_proceed, true);
+			}
+
+			if (_xk == XK_MOVE && _xd == XD_DOWNLOAD) {
+				if (destination.find("/") == std::string::npos) {
+					if (_prev_destination.find("/") != std::string::npos
+					 || _prev_destination.empty()) {
+						TextToDialogControl(_i_dblbox, MXferRenameTitle);
+						TextToDialogControl(_i_text, MXferRenameText);
+						TextToDialogControl(_i_proceed, MProceedRename);
+					}
+				} else if (_prev_destination.find("/") == std::string::npos
+					 || _prev_destination.empty()) {
+					TextToDialogControl(_i_dblbox, MXferMoveDownloadTitle);
+					TextToDialogControl(_i_text, MXferMoveDownloadText);
+					TextToDialogControl(_i_proceed, MProceedMoveDownload);
+				}
+			}
+		}
+
+		_prev_destination.swap(destination);
+	}
+
+	return BaseDialog::DlgProc(msg, param1, param2);
+}
+

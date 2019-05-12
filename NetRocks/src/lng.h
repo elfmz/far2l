@@ -39,6 +39,7 @@ enum LanguageID
   MXferMoveDownloadTitle,
   MXferMoveUploadTitle,
   MXferMoveCrossloadTitle,
+  MXferRenameTitle,
 
   MXferCopyDownloadText,
   MXferCopyUploadText,
@@ -46,6 +47,7 @@ enum LanguageID
   MXferMoveDownloadText,
   MXferMoveUploadText,
   MXferMoveCrossloadText,
+  MXferRenameText,
 
   MXferDOAText,
 
@@ -82,6 +84,7 @@ enum LanguageID
   MProceedMoveDownload,
   MProceedMoveUpload,
   MProceedMoveCrossload,
+  MProceedRename,
 
   MDestinationExists,
   MSourceInfo,
@@ -117,6 +120,7 @@ enum LanguageID
   MNotificationUpload,
   MNotificationDownload,
   MNotificationCrossload,
+  MNotificationRename,
 
   MErrorDownloadTitle,
   MErrorUploadTitle,
@@ -124,6 +128,7 @@ enum LanguageID
   MErrorQueryInfoTitle,
   MErrorEnumDirTitle,
   MErrorMakeDirTitle,
+  MErrorRenameTitle,
   MErrorRmDirTitle,
   MErrorRmFileTitle,
 

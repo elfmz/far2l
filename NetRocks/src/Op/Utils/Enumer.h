@@ -27,5 +27,7 @@ public:
 		const struct PluginPanelItem *items, int items_count, bool no_special_files,
 		ProgressState &state, WhatOnErrorState &wea_state);
 
+	inline const std::set<std::string> &Items() const { return _items; }
+
 	void Scan();
 };

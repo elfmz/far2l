@@ -18,6 +18,7 @@ class OpXfer : protected OpBase, public IBackgroundTask
 
 	virtual void ForcefullyAbort();	// IAbortableOperationsHost
 
+	void Rename(const std::set<std::string> &items);
 	void Transfer();
 	bool FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode);
 

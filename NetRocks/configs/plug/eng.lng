@@ -37,6 +37,7 @@
 "Download/Move from server"
 "Upload/Move to server"
 "Crossload/Move between servers"
+"Rename on server"
 
 "Download selected files &to:"
 "Upload selected files &to:"
@@ -44,6 +45,7 @@
 "Move downloaded selected &files &to:"
 "Move uploaded selected files &to:"
 "Move crossloaded selected files &to:"
+"Rename selected files &to"
 
 "Default overwrite action:"
 
@@ -79,6 +81,7 @@
 "Download-&Move"
 "Upload-&Move"
 "Crossload-&Move"
+"Re&name"
 
 "Destination file aready exists:"
 "Source file information:"
@@ -114,6 +117,7 @@
 "upload"
 "download"
 "crossload"
+"rename"
 
 "Download error"
 "Upload error"
@@ -121,6 +125,7 @@
 "Query information error"
 "Enum directory error"
 "Make directory error"
+"Rename error"
 "Remove directory error"
 "Remove file error"
 

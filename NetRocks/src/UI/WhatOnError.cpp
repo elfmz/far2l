@@ -28,6 +28,7 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 		case WEK_QUERYINFO: title_lng = MErrorQueryInfoTitle; break;
 		case WEK_ENUMDIR:   title_lng = MErrorEnumDirTitle; break;
 		case WEK_MAKEDIR:   title_lng = MErrorMakeDirTitle; break;
+		case WEK_RENAME:    title_lng = MErrorRenameTitle; break;
 		case WEK_RMFILE:    title_lng = MErrorRmFileTitle; break;
 		case WEK_RMDIR:     title_lng = MErrorRmDirTitle; break;
 		default: {

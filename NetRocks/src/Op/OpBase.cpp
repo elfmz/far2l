@@ -3,9 +3,8 @@
 #include "../Globals.h"
 #include "../lng.h"
 
-OpBase::OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir, int op_name_lng)
+OpBase::OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir)
 	:
-	_op_name_lng(op_name_lng),
 	_op_mode(op_mode),
 	_base_host(base_host),
 	_base_dir(base_dir)
@@ -15,6 +14,11 @@ OpBase::OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string 
 
 OpBase::~OpBase()
 {
+}
+
+void OpBase::SetNotifyTitle(int title_lng)
+{
+	_notify_title_lng = title_lng;
 }
 
 
@@ -54,11 +58,11 @@ void *OpBase::ThreadProc()
 
 	// calling DisplayNotification from here cuz calling it from thread causes deadlock due to
 	// InterthreadCall waits for main thread while main thread waits for thread's completion
-	if (_op_name_lng != -1) {
+	if (_notify_title_lng != -1) {
 		std::wstring display_action = G.GetMsgWide((out == nullptr) ? MNotificationSuccess : MNotificationFailed);
 		size_t p = display_action.find(L"()");
 		if (p != std::wstring::npos)
-			display_action.replace(p, 2, G.GetMsgWide(_op_name_lng));
+			display_action.replace(p, 2, G.GetMsgWide(_notify_title_lng));
 
 		G.info.FSF->DisplayNotification(display_action.c_str(), StrMB2Wide(_base_dir).c_str());
 	}
@@ -90,7 +94,7 @@ bool OpBase::WaitThread(unsigned int msec)
 		}
 		int cow_result = G.info.FSF->DispatchInterthreadCalls();
 		if (cow_result != 0) {
-			fprintf(stderr, "NetRocks::OpBase('%s', %d): DispatchInterthreadCalls returned %d\n", _base_dir.c_str(), _op_name_lng, cow_result);
+			fprintf(stderr, "NetRocks::OpBase('%s', %d): DispatchInterthreadCalls returned %d\n", _base_dir.c_str(), _notify_title_lng, cow_result);
 			if (cow_result > 0) {
 					sleep_limit = 1;
 			}

@@ -289,9 +289,9 @@ void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned 
 
 XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state)
 	: ComplexOperationProgress(destination, state,
-	(xk == XK_COPY)
-		? ((xd == XK_UPLOAD) ? MXferCopyUploadTitle : ((xd == XK_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle))
-		: ((xd == XK_UPLOAD) ? MXferMoveUploadTitle : ((xd == XK_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle)),
+	(xk == XK_RENAME) ? MXferRenameTitle : ((xk == XK_COPY)
+		? ((xd == XD_UPLOAD) ? MXferCopyUploadTitle : ((xd == XD_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle))
+		: ((xd == XD_UPLOAD) ? MXferMoveUploadTitle : ((xd == XD_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle))),
 	true, true)
 {
 }

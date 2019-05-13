@@ -30,19 +30,23 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		}
 	}
 
-	if (_dst_dir.empty()) {
-		_dst_dir = "./";
-	} else if (_dst_dir[_dst_dir.size() - 1] != '/')
-		_dst_dir+= '/';
-
 	if (_kind == XK_RENAME) {
 		SetNotifyTitle(MNotificationRename);
-	} else if (direction == XD_UPLOAD) {
-		SetNotifyTitle(MNotificationUpload);
-	} else if (direction == XD_DOWNLOAD) {
-		SetNotifyTitle(MNotificationDownload);
 	} else {
-		throw std::runtime_error("Wrong direction");
+		if (_dst_dir.empty()) {
+			_dst_dir = "./";
+		} else if (_dst_dir[_dst_dir.size() - 1] != '/')
+			_dst_dir+= '/';
+
+		if (direction == XD_UPLOAD) {
+			SetNotifyTitle(MNotificationUpload);
+		} else if (direction == XD_DOWNLOAD) {
+			SetNotifyTitle(MNotificationDownload);
+		} else if (direction == XD_CROSSLOAD) {
+			SetNotifyTitle(MNotificationCrossload);
+		} else {
+			throw std::runtime_error("Wrong direction");
+		}
 	}
 
 	if (!StartThread()) {
@@ -164,7 +168,7 @@ void OpXfer::Rename(const std::set<std::string> &items)
 				new_path+= _dst_dir;
 			}
 
-			WhatOnErrorWrap<WEK_RENAME>(_wea_state, _state, _base_host.get(), original_path,
+			WhatOnErrorWrap<WEK_RENAME>(_wea_state, _state, _base_host.get(), original_path + " -> " + new_path,
 				[&] () mutable 
 				{
 					_base_host->Rename(original_path, new_path);

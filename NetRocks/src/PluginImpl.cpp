@@ -136,19 +136,10 @@ PluginImpl::PluginImpl(const wchar_t *path)
 			throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
 		}
 		
-		wcsncpy(_cur_dir, protocol.c_str(), ARRAYSIZE(_cur_dir) - 1 );
-		wcsncat(_cur_dir, L":", ARRAYSIZE(_cur_dir) - 1 );
-		if (!username.empty()) {
-			wcsncat(_cur_dir, username.c_str(), ARRAYSIZE(_cur_dir) - 1 );
-			wcsncat(_cur_dir, L"@", ARRAYSIZE(_cur_dir) - 1 );
-		}
-		wcsncat(_cur_dir, host.c_str(), ARRAYSIZE(_cur_dir) - 1 );
+		wcsncpy(_cur_dir, StrMB2Wide(_remote->SiteName()).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 		if (!directory.empty()) {
 			wcsncat(_cur_dir, directory.c_str(), ARRAYSIZE(_cur_dir) - 1 );
-			_remote_root_dir = StrWide2MB(directory);
-		}
-		for (size_t i = 0; _cur_dir[i]; ++i) if (_cur_dir[i] == '/') {
-			_cur_dir[i] = '\\';
+			_cur_dir_absolute = (directory[0] == '/');
 		}
 	}
 
@@ -210,18 +201,21 @@ std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
 		out = with_ending_slash ? "./" : ".";
 
 	} else if (out[out.size() - 1] != '/') {
-		if (with_ending_slash)
+		if (with_ending_slash) {
 			out+= "/";
+		}
 
 	} else if (!with_ending_slash) {
 		out.resize(out.size() - 1);
-		if (out.empty())
+		if (out.empty()) {
 			out = ".";
+		}
 	}
 
-	if (out.empty() || out[0] != '/') {
-		out.insert(0, _remote_root_dir);
+	if (_cur_dir_absolute && (out.empty() || out[0] != '/')) {
+		out.insert(0, "/");
 	}
+
 	fprintf(stderr, "CurrentSiteDir: out='%s'\n", out.c_str());
 	return out;
 }
@@ -280,6 +274,13 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 				p = 0;
 			tmp.resize(p);
 
+			if (tmp.empty()) {
+				_remote.reset();
+				_cur_dir[0] = 0;
+				UpdatePanelTitle();
+				return TRUE;
+			}
+
 		} else if (*Dir == L'/') {
 			Wide2MB(Dir + 1, tmp);
 
@@ -299,21 +300,36 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 				return FALSE;
 			}
 
-			KeyFileHelper(G.config.c_str());
-			_remote_root_dir = KeyFileHelper(G.config.c_str()).GetString(site.c_str(), "Directory");
-			if (!_remote_root_dir.empty() && _remote_root_dir[_remote_root_dir.size() - 1] != '/')
-				_remote_root_dir+= '/';
+			std::string root_dir = KeyFileHelper(G.config.c_str()).GetString(site.c_str(), "Directory");
+			if (!root_dir.empty()) {
+				_cur_dir_absolute = (root_dir[0] == '/');
 
+				if (root_dir[root_dir.size() - 1] != '/')
+					root_dir+= '/';
 
-//			if (p != std::string::npos)
-//				tmp.erase(0, p + 1);
-//			else
-//				tmp.clear();
+				if (_cur_dir_absolute)
+					root_dir.erase(0, 1);
+
+				if (!root_dir.empty()) {
+					if (p == std::string::npos) {
+						p = tmp.size();
+						tmp+= '/';
+					}
+					tmp.insert(p + 1, root_dir);
+				}
+			}
 		}
 
-		if (p != std::string::npos && p < tmp.size() - 1) {
+//		fprintf(stderr, "tmp='%s'\n", tmp.c_str());
+
+		if (p < tmp.size() - 1) {
 			mode_t mode = 0;
-			if (!OpGetMode(OpMode, _remote, _remote_root_dir + tmp.substr(p + 1)).Do(mode))
+			std::string chk_path = tmp.substr(p + 1);
+			if (_cur_dir_absolute)
+				chk_path.insert(0, "/");
+			fprintf(stderr, "chk_path='%s'\n", chk_path.c_str());
+
+			if (!OpGetMode(OpMode, _remote, chk_path).Do(mode))
 				throw std::runtime_error("Get mode failed");
 
 			if (!S_ISDIR(mode))

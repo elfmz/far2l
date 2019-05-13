@@ -86,6 +86,9 @@ std::string HostRemote::SiteName()
 		out+= "@";
 	}
 	out+= _host;
+	for (auto &c : out) {
+		if (c == '/') c = '\\';
+	}
 	return out;
 }
 

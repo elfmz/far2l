@@ -317,6 +317,8 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 					}
 					tmp.insert(p + 1, root_dir);
 				}
+			} else {
+				 _cur_dir_absolute = false;
 			}
 		}
 

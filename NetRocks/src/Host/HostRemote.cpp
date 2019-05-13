@@ -173,10 +173,15 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	for (unsigned int auth_failures = 0;;) {
 //		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
 		if (_login_mode == 1) {
-			if (!InteractiveLogin(_site, auth_failures, _username, _password)) {
+			std::string tmp_username = _username, tmp_password = _password;
+			locker.unlock();
+			if (!InteractiveLogin(SiteName(), auth_failures, tmp_username, tmp_password)) {
 				SendString(std::string());
 				throw AbortError();
 			}
+			locker.lock();
+			_username = tmp_username;
+			_password = tmp_password;
 		}
 
 		SendString(_protocol);

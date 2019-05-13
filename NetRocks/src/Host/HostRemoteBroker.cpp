@@ -236,6 +236,10 @@ public:
 			InitConnection();
 			SendPOD(IPC_PI_OK);
 			break;
+
+		} catch (AbortError &) {
+			throw;
+
 		} catch (ServerIdentityMismatchError &ex) {
 			SendPOD(IPC_PI_SERVER_IDENTITY_CHANGED);
 			SendString(ex.what());
@@ -243,17 +247,14 @@ public:
 		} catch (ProtocolAuthFailedError &ex) {
 			SendPOD(IPC_PI_AUTHORIZATION_FAILED);
 			SendString(ex.what());
-			break;
 
 		} catch (ProtocolError &ex) {
 			SendPOD(IPC_PI_PROTOCOL_ERROR);
 			SendString(ex.what());
-			break;
 
 		} catch (std::exception &ex) {
 			SendPOD(IPC_PI_GENERIC_ERROR);
 			SendString(ex.what());
-			break;
 		}
 	}
 

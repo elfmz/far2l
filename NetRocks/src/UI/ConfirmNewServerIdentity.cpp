@@ -16,7 +16,7 @@
     6                     29       38            
 */
 
-ConfirmNewServerIdentity::ConfirmNewServerIdentity(const std::string &site, const std::string &identity)
+ConfirmNewServerIdentity::ConfirmNewServerIdentity(const std::string &site, const std::string &identity, bool may_remember)
 {
 	_di.Add(DI_DOUBLEBOX, 3,1,50,7, 0, MNewServerIdentityTitle);
 
@@ -35,7 +35,9 @@ ConfirmNewServerIdentity::ConfirmNewServerIdentity(const std::string &site, cons
 
 	_di.NextLine();
 	_i_allow_once = _di.AddAtLine(DI_BUTTON, 6,15, DIF_CENTERGROUP, MNewServerIdentityAllowOnce);
-	_i_allow_always = _di.AddAtLine(DI_BUTTON, 16,25, DIF_CENTERGROUP, MNewServerIdentityAllowAlways);
+	if (may_remember) {
+		_i_allow_always = _di.AddAtLine(DI_BUTTON, 16,25, DIF_CENTERGROUP, MNewServerIdentityAllowAlways);
+	}
 	_di.AddAtLine(DI_BUTTON, 26,35, DIF_CENTERGROUP, MCancel);
 
 	SetFocusedDialogControl();
@@ -46,11 +48,13 @@ ConfirmNewServerIdentity::Result ConfirmNewServerIdentity::Ask()
 {
 	const int r = Show("ConfirmNewServerIdentity", 6, 2, FDLG_WARNING);
 
-	if (r == _i_allow_once)
-		return R_ALLOW_ONCE;
+	if (r != -1) {
+		if (r == _i_allow_once)
+			return R_ALLOW_ONCE;
 
-	if (r == _i_allow_always)
-		return R_ALLOW_ALWAYS;
+		if (r == _i_allow_always)
+			return R_ALLOW_ALWAYS;
+	}
 
 	return R_DENY;
 }

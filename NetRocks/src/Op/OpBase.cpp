@@ -40,10 +40,16 @@ void *OpBase::ThreadProc()
 	} catch (std::exception &e) {
 		fprintf(stderr, "NetRocks::OpBase('%s'): ERROR='%s'\n", _base_dir.c_str(), e.what());
 
-		const std::wstring &tmp_what = MB2Wide(e.what());
-		const wchar_t *msg[] = { G.GetMsgWide(MOperationFailed), tmp_what.c_str(), G.GetMsgWide(MOK)};
-		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
-
+		bool aborting;
+		{
+			std::lock_guard<std::mutex> locker(_state.mtx);
+			aborting = _state.aborting;
+		}
+		if (!aborting) {
+			const std::wstring &tmp_what = MB2Wide(e.what());
+			const wchar_t *msg[] = { G.GetMsgWide(MOperationFailed), tmp_what.c_str(), G.GetMsgWide(MOK)};
+			G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+		}
 	}
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
@@ -72,6 +78,8 @@ void *OpBase::ThreadProc()
 
 void OpBase::ForcefullyAbort()
 {
+	fprintf(stderr, "NetRocks::OpBase('%s')::ForcefullyAbort()\n", _base_dir.c_str());
+
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
 		_state.aborting = true;

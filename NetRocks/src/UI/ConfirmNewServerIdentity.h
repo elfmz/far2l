@@ -15,7 +15,7 @@ public:
 		R_ALLOW_ONCE,
 		R_ALLOW_ALWAYS
 	};
-	ConfirmNewServerIdentity(const std::string &site, const std::string &identity);
+	ConfirmNewServerIdentity(const std::string &site, const std::string &identity, bool may_remember);
 
 	Result Ask();
 };

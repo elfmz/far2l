@@ -8,8 +8,12 @@ enum LanguageID
   MCancel,
   MRetry,
   MSkip,
+  MError,
+
   MRememberChoice,
   MOperationFailed,
+  MCouldNotConnect,
+  MWrongPath,
 
   MLoginAuthTitle,
   MLoginAuthRetryTitle,

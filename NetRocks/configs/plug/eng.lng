@@ -6,8 +6,13 @@
 "&Cancel"
 "&Retry"
 "&Skip"
+"Error"
+
 "Re&member my choice for current operation"
 "Operation failed"
+
+"Could not connect"
+"Wrong path spfcification"
 
 "Authentification"
 "Authentification - retry"

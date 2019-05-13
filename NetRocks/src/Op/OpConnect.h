@@ -11,5 +11,8 @@ class OpConnect : protected OpBase
 
 public:
 	OpConnect(int op_mode, const std::string &display_name);
+	OpConnect(int op_mode, const std::string &protocol, const std::string &host, unsigned int port,
+		const std::string &username, const std::string &password, const std::string &directory);
+
 	std::shared_ptr<IHost> Do();
 };

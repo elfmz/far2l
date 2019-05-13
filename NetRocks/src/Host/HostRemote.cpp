@@ -19,7 +19,7 @@
 #include "UI/InteractiveLogin.h"
 #include "UI/ConfirmNewServerIdentity.h"
 
-HostRemote::HostRemote(const std::string &site) throw (std::runtime_error)
+HostRemote::HostRemote(const std::string &site)
 	: _site(site)
 {
 	KeyFileHelper kfh(G.config.c_str());
@@ -30,12 +30,21 @@ HostRemote::HostRemote(const std::string &site) throw (std::runtime_error)
 	_username = kfh.GetString(_site.c_str(), "Username");
 	_password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
 	_options = kfh.GetString(_site.c_str(), "Options");
-	if (_protocol.empty() || _host.empty())
-		throw std::runtime_error("Bad site configuration");
 
 	if (_login_mode == 0) {
 		_password.clear();
 	}
+}
+
+HostRemote::HostRemote(const std::string &protocol, const std::string &host, unsigned int port,
+		const std::string &username, const std::string &password, const std::string &directory)
+	:_protocol(protocol),
+	_host(host),
+	_port(port),
+	_login_mode( ( (username.empty() || username == "anonymous") && password.empty()) ? 0 : (password.empty() ? 1 : 2)),
+	_username(username),
+	_password(password)
+{
 }
 
 HostRemote::~HostRemote()
@@ -64,9 +73,20 @@ std::shared_ptr<IHost> HostRemote::Clone()
 	return cloned;
 }
 
-std::string HostRemote::SiteName() const
+std::string HostRemote::SiteName()
 {
-	return _site;
+	if (!_site.empty())
+		return _site;
+
+	std::unique_lock<std::mutex> locker(_mutex);
+	std::string out = _protocol;
+	out+= ":";
+	if (!_username.empty()) {
+		out+= _username;
+		out+= "@";
+	}
+	out+= _host;
+	return out;
 }
 
 
@@ -115,6 +135,9 @@ void HostRemote::CheckReady()
 void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
+
+	if (_protocol.empty() || _host.empty())
+		throw std::runtime_error("Bad site configuration");
 
 	int master2broker[2] = {-1, -1};
 	int broker2master[2] = {-1, -1};
@@ -219,7 +242,7 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 	protocol_options.SetString("ServerIdentity", new_identity);
 
 	if (!prev_identity.empty()) {
-		switch (ConfirmNewServerIdentity(_site, new_identity).Ask()) {
+		switch (ConfirmNewServerIdentity(_site, new_identity, !_site.empty()).Ask()) {
 			case ConfirmNewServerIdentity::R_ALLOW_ONCE: {
 				_options = protocol_options.Serialize();
 				return true;
@@ -235,8 +258,10 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 
 	_options = protocol_options.Serialize();
 
-	KeyFileHelper kfh(G.config.c_str());
-	kfh.PutString(_site.c_str(), "Options", _options.c_str());
+	if (!_site.empty()) {
+		KeyFileHelper kfh(G.config.c_str());
+		kfh.PutString(_site.c_str(), "Options", _options.c_str());
+	}
 	return true;
 }
 

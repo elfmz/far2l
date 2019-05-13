@@ -13,7 +13,7 @@ public:
 	HostLocal();
 	virtual ~HostLocal();
 
-	virtual std::string SiteName() const;
+	virtual std::string SiteName();
 	virtual std::shared_ptr<IHost> Clone();
 
 	virtual bool IsBroken();

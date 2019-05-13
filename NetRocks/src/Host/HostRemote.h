@@ -43,12 +43,15 @@ protected:
 
 public:
 	inline HostRemote() {}
-	HostRemote(const std::string &site) throw (std::runtime_error);
+
+	HostRemote(const std::string &site);
+	HostRemote(const std::string &protocol, const std::string &host, unsigned int port,
+		const std::string &username, const std::string &password, const std::string &directory);
 	virtual ~HostRemote();
 
 	virtual std::shared_ptr<IHost> Clone();
 
-	virtual std::string SiteName() const;
+	virtual std::string SiteName();
 	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);
 	virtual void Abort();

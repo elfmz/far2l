@@ -73,18 +73,17 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPluginW(int OpenFrom, INT_PTR Item)
 	}
 
 
-	const wchar_t *path = nullptr;
+	const wchar_t *path = (Item > 0xfff) ? (const wchar_t *)Item : nullptr;
 
-	if (OpenFrom == OPEN_COMMANDLINE) {
-		if (wcsncmp((const wchar_t *)Item, G.command_prefix.c_str(), G.command_prefix.size()) != 0
-		||  ((const wchar_t *)Item)[G.command_prefix.size()] != ':') {
-			return INVALID_HANDLE_VALUE;
-		}
-		path = (const wchar_t *)Item + G.command_prefix.size() + 1;
+	try {
+		return new PluginImpl(path);
+
+	} catch (std::exception &ex) {
+		const std::wstring &tmp_what = MB2Wide(ex.what());
+		const wchar_t *msg[] = { G.GetMsgWide(MError), tmp_what.c_str(), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+		return INVALID_HANDLE_VALUE;
 	}
-
-
-	return new PluginImpl(path);
 }
 
 SHAREDSYMBOL void WINAPI _export ClosePluginW(HANDLE hPlugin)
@@ -172,7 +171,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 
 	fprintf(stderr, "NetRocks: GetPluginInfoW\n");
 
-	Info->Flags = 0;//PF_FULLCMDLINE;
+	Info->Flags = PF_FULLCMDLINE;
 	static const wchar_t *PluginCfgStrings[1] = {(wchar_t *)G.GetMsgWide(MTitle)};
 	static const wchar_t *PluginMenuStrings[2] = {(wchar_t *)G.GetMsgWide(MTitle), (wchar_t *)G.GetMsgWide(MBackgroundTasksTitle)};
 

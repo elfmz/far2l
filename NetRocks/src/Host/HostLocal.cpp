@@ -20,7 +20,7 @@ HostLocal::~HostLocal()
 {
 }
 
-std::string HostLocal::SiteName() const
+std::string HostLocal::SiteName()
 {
 	return G.GetMsgMB(MHostLocalName);
 }

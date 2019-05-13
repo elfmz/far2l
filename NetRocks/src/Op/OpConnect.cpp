@@ -7,6 +7,13 @@ OpConnect::OpConnect(int op_mode, const std::string &display_name)
 {
 }
 
+OpConnect::OpConnect(int op_mode, const std::string &protocol, const std::string &host, unsigned int port,
+		const std::string &username, const std::string &password, const std::string &directory)
+	: OpBase(op_mode, std::make_shared<HostRemote>(protocol, host, port, username, password, directory), "")
+{
+}
+
+
 std::shared_ptr<IHost> OpConnect::Do()
 {
 	_succeed = false;
@@ -18,7 +25,7 @@ std::shared_ptr<IHost> OpConnect::Do()
 		WaitThread();
 
 	} else if (!WaitThread(1000)) {
-		SimpleOperationProgress p(SimpleOperationProgress::K_CONNECT, _base_dir, _state);
+		SimpleOperationProgress p(SimpleOperationProgress::K_CONNECT, _base_host->SiteName(), _state);//_base_dir
 		p.Show();
 		WaitThread();
 	}

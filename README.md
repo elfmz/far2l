@@ -140,8 +140,8 @@ symbol function must be defined as: int 'Symbol'(int argc, char *argv[])
 * void DisplayNotification(const wchar_t *action, const wchar_t *object);
 Shows (depending on settings - always or if far2l in background) system shell-wide notification with given title and text.
 
-* int DispatchInterthreadCalls();
-far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterthreadCalls() allows plugin to explicitely dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
+* int DispatchInterThreadCalls();
+far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterThreadCalls() allows plugin to explicitely dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
 
 ### Added following commands into FILE_CONTROL_COMMANDS:
 * FCTL_GETPANELPLUGINHANDLE

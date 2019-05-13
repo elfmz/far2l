@@ -4,22 +4,22 @@
 #include "../WinPort/WinCompat.h"
 #include "../WinPort/WinPort.h"
 
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 
-static struct InterthreadCallDelegates : std::vector<IInterthreadCallDelegate *> {} s_interlocked_delegates;
+static struct InterThreadCallDelegates : std::vector<IInterThreadCallDelegate *> {} s_interlocked_delegates;
 static std::mutex s_interlocked_delegates_mtx;
 static volatile DWORD s_interlocked_delegates_tid = 0;
 
-void StartDispatchingInterthreadCalls()
+void StartDispatchingInterThreadCalls()
 {
 	std::lock_guard<std::mutex> lock(s_interlocked_delegates_mtx);
 	s_interlocked_delegates_tid = WINPORT(GetCurrentThreadId)();
 }
 
-void StopDispatchingInterthreadCalls()
+void StopDispatchingInterThreadCalls()
 {
-	assert((IsCurrentThreadDispatchesInterthreadCalls()));
-	InterthreadCallDelegates interlocked_delegates;
+	assert((IsCurrentThreadDispatchesInterThreadCalls()));
+	InterThreadCallDelegates interlocked_delegates;
 	{
 		std::lock_guard<std::mutex> lock(s_interlocked_delegates_mtx);
 		s_interlocked_delegates_tid = 0;
@@ -30,18 +30,18 @@ void StopDispatchingInterthreadCalls()
 	}
 }
 
-bool IsCurrentThreadDispatchesInterthreadCalls()
+bool IsCurrentThreadDispatchesInterThreadCalls()
 {
 	return LIKELY(s_interlocked_delegates_tid == WINPORT(GetCurrentThreadId)());
 }
 
-int DispatchInterthreadCalls()
+int DispatchInterThreadCalls()
 {
 	for (int dispatched_count = 0;;) {
-		if (UNLIKELY(!IsCurrentThreadDispatchesInterthreadCalls()))
+		if (UNLIKELY(!IsCurrentThreadDispatchesInterThreadCalls()))
 			return -1;
 
-		InterthreadCallDelegates interlocked_delegates;
+		InterThreadCallDelegates interlocked_delegates;
 		{
 			std::lock_guard<std::mutex> lock(s_interlocked_delegates_mtx);
 			if (LIKELY(s_interlocked_delegates.empty())) {
@@ -56,7 +56,7 @@ int DispatchInterthreadCalls()
 	}
 }
 
-bool EnqueueInterthreadCallDelegate(IInterthreadCallDelegate *d)
+bool EnqueueInterThreadCallDelegate(IInterThreadCallDelegate *d)
 {
 	std::lock_guard<std::mutex> lock(s_interlocked_delegates_mtx);
 	if (UNLIKELY(s_interlocked_delegates_tid == 0))

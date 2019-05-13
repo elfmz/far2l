@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "fileedit.hpp"
 #include "RefreshFrameManager.hpp"
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 #include "plclass.hpp"
 #include "PluginW.hpp"
 #include "registry.hpp"
@@ -455,9 +455,9 @@ static void farDisplayNotificationW(const wchar_t *action, const wchar_t *object
 	DisplayNotification(action, object);
 }
 
-static int farDispatchInterthreadCallsW()
+static int farDispatchInterThreadCallsW()
 {
-	return DispatchInterthreadCalls();
+	return DispatchInterThreadCalls();
 }
 
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
@@ -519,7 +519,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.Execute = farExecuteW;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryW;
 		StandardFunctions.DisplayNotification = farDisplayNotificationW;
-		StandardFunctions.DispatchInterthreadCalls = farDispatchInterthreadCallsW;
+		StandardFunctions.DispatchInterThreadCalls = farDispatchInterThreadCallsW;
 	}
 
 	if (!StartupInfo.StructSize)

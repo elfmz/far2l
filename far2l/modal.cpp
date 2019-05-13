@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lockscrn.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 
 Modal::Modal():
 	WriteKey(-1),
@@ -58,7 +58,7 @@ void Modal::Process()
 	{
 		ReadInput();
 		ProcessInput();
-		DispatchInterthreadCalls();
+		DispatchInterThreadCalls();
 	}
 
 	GetDialogObjectsData();

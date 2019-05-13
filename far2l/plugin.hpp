@@ -1943,7 +1943,7 @@ enum EXECUTEFLAGS
 typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef int (WINAPI *FAREXECUTE_LIBRARY)(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const wchar_t *action, const wchar_t *object);
-typedef int (WINAPI *FARDISPATCHNTRLCKDCALLS)();
+typedef int (WINAPI *FARDISPATCHNTRTHRDCALLS)();
 
 typedef struct FarStandardFunctions
 {
@@ -2007,7 +2007,7 @@ typedef struct FarStandardFunctions
 	FAREXECUTE                 Execute;
 	FAREXECUTE_LIBRARY         ExecuteLibrary;
 	FARDISPLAYNOTIFICATION     DisplayNotification;
-	FARDISPATCHNTRLCKDCALLS    DispatchInterthreadCalls;
+	FARDISPATCHNTRTHRDCALLS    DispatchInterThreadCalls;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

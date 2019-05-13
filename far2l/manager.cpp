@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "exitcode.hpp"
 #include "scrbuf.hpp"
 #include "console.hpp"
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 
 Manager *FrameManager;
 
@@ -692,7 +692,7 @@ void Manager::ProcessMainLoop()
 	if ( CurrentFrame )
 		CtrlObject->Macro.SetMode(CurrentFrame->GetMacroMode());
 
-	DispatchInterthreadCalls();
+	DispatchInterThreadCalls();
 
 	if ( CurrentFrame && !CurrentFrame->ProcessEvents() )
 	{

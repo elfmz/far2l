@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "strmix.hpp"
 #include "history.hpp"
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 #include <cwctype>
 
 #define VTEXT_ADN_SEPARATORS	1
@@ -6387,7 +6387,7 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	if (!hDlg)
 		return 0;
 
-	return InterthreadCall<LONG_PTR, 0>(std::bind(SendDlgMessageSynched, hDlg, Msg, Param1, Param2));
+	return InterThreadCall<LONG_PTR, 0>(std::bind(SendDlgMessageSynched, hDlg, Msg, Param1, Param2));
 }
 
 void Dialog::SetPosition(int X1,int Y1,int X2,int Y2)

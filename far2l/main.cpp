@@ -68,7 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <unistd.h>
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -300,9 +300,9 @@ static int MainProcess(
 int MainProcessSEH(FARString& strEditName,FARString& strViewName,FARString& DestName1,FARString& DestName2,int StartLine,int StartChar)
 {
 	int Result=0;
-	StartDispatchingInterthreadCalls();
+	StartDispatchingInterThreadCalls();
 	Result=MainProcess(strEditName,strViewName,DestName1,DestName2,StartLine,StartChar);
-	StopDispatchingInterthreadCalls();
+	StopDispatchingInterThreadCalls();
 	return Result;
 }
 

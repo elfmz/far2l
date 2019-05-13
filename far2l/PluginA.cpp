@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "farexcpt.hpp"
 #include "fileedit.hpp"
 #include "RefreshFrameManager.hpp"
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 #include "plclass.hpp"
 #include "PluginA.hpp"
 #include "registry.hpp"
@@ -390,9 +390,9 @@ static void farDisplayNotificationA(const char *action, const char *object)
 	DisplayNotification(action, object);
 }
 
-static int farDispatchInterthreadCallsA()
+static int farDispatchInterThreadCallsA()
 {
-	return DispatchInterthreadCalls();
+	return DispatchInterThreadCalls();
 }
 
 static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo *PSI, oldfar::FarStandardFunctions *FSF)
@@ -443,7 +443,7 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 		StandardFunctions.Execute = farExecuteA;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryA;
 		StandardFunctions.DisplayNotification = farDisplayNotificationA;
-		StandardFunctions.DispatchInterthreadCalls = farDispatchInterthreadCallsA;
+		StandardFunctions.DispatchInterThreadCalls = farDispatchInterThreadCallsA;
 	}
 
 	if (!StartupInfo.StructSize)

@@ -63,7 +63,7 @@ void *OpBase::ThreadProc()
 	WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
 
 	// calling DisplayNotification from here cuz calling it from thread causes deadlock due to
-	// InterthreadCall waits for main thread while main thread waits for thread's completion
+	// InterThreadCall waits for main thread while main thread waits for thread's completion
 	if (_notify_title_lng != -1) {
 		std::wstring display_action = G.GetMsgWide((out == nullptr) ? MNotificationSuccess : MNotificationFailed);
 		size_t p = display_action.find(L"()");
@@ -100,9 +100,9 @@ bool OpBase::WaitThread(unsigned int msec)
 			if (msec == 0)
 				return false;
 		}
-		int cow_result = G.info.FSF->DispatchInterthreadCalls();
+		int cow_result = G.info.FSF->DispatchInterThreadCalls();
 		if (cow_result != 0) {
-			fprintf(stderr, "NetRocks::OpBase('%s', %d): DispatchInterthreadCalls returned %d\n", _base_dir.c_str(), _notify_title_lng, cow_result);
+			fprintf(stderr, "NetRocks::OpBase('%s', %d): DispatchInterThreadCalls returned %d\n", _base_dir.c_str(), _notify_title_lng, cow_result);
 			if (cow_result > 0) {
 					sleep_limit = 1;
 			}

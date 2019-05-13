@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "palette.hpp"
 #include "config.hpp"
-#include "InterthreadCall.hpp"
+#include "InterThreadCall.hpp"
 
 static int MessageX1,MessageY1,MessageX2,MessageY2;
 static FARString strMsgHelpTopic;
@@ -537,7 +537,7 @@ static int MessageSynched(
 int Message( DWORD Flags, int Buttons, const wchar_t *Title,
 	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber)
 {
-	return InterthreadCall<int, 0>(std::bind(MessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
+	return InterThreadCall<int, 0>(std::bind(MessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
 }
 
 void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2)

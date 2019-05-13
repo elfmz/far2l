@@ -321,14 +321,20 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 			str+= sz;
 		}
 
-		for (auto ch : _directory) {
-			str+= (ch == '/') ? '\\' : ch;
-		}
+//		for (auto ch : _directory) {
+//			str+= (ch == '/') ? '\\' : ch;
+//		}
 
 		if (attempt) {
 			snprintf(sz, sizeof(sz) - 1, " (%u)", attempt);
 			str+= sz;
 		}
+
+
+		for (auto &ch : str) {
+			if (ch == '/') ch = '\\';
+		}
+
 
 		if (str == _display_name || str == _initial_display_name) {
 			break;

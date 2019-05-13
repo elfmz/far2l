@@ -11,10 +11,10 @@ class PluginImpl
 	friend class AllNetRocks;
 
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH];
+	bool _cur_dir_absolute = false;
+
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
-
-	std::string _remote_root_dir;
 
 	void UpdatePanelTitle();
 	bool ValidateConnection();

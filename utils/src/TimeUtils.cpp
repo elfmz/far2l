@@ -11,12 +11,12 @@ std::string TimeString(const struct tm &t, TimeStringFormat tsf)
 	switch (tsf) {
 		case TSF_FOR_UI:
 			snprintf(buf, sizeof(buf) - 1, "%04d/%02d/%02d %02d:%02d.%02d",
-				t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+				t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
 			break;
 
 		case TSF_FOR_FILENAME:
 			snprintf(buf, sizeof(buf) - 1, "%04d-%02d-%02d_%02d-%02d-%02d",
-				t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+				t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
 			break;
 
 		default:

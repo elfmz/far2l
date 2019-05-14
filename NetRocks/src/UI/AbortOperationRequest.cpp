@@ -112,7 +112,7 @@ public:
 };
 
 
-void AbortOperationRequest(ProgressState &state)
+void AbortOperationRequest(ProgressState &state, bool force_immediate)
 {
 	if (state.aborting)
 		return;
@@ -132,6 +132,9 @@ void AbortOperationRequest(ProgressState &state)
 		std::lock_guard<std::mutex> locker(state.mtx);
 		state.aborting = true;
 		state.paused = saved_paused;
+	}
+	if (force_immediate && state.ao_host) {
+		state.ao_host->ForcefullyAbort();
 	}
 	AbortOperationProgress(state).Show();
 }

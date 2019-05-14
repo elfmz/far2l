@@ -172,7 +172,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 	fprintf(stderr, "NetRocks: GetPluginInfoW\n");
 
 	Info->Flags = PF_FULLCMDLINE;
-	static const wchar_t *PluginCfgStrings[1] = {(wchar_t *)G.GetMsgWide(MTitle)};
+	static const wchar_t *PluginCfgStrings[1] = {(wchar_t *)G.GetMsgWide(MBackgroundTasksTitle)};
 	static const wchar_t *PluginMenuStrings[2] = {(wchar_t *)G.GetMsgWide(MTitle), (wchar_t *)G.GetMsgWide(MBackgroundTasksTitle)};
 
 	Info->PluginConfigStrings = PluginCfgStrings;
@@ -219,6 +219,13 @@ SHAREDSYMBOL int WINAPI _export ConfigureW(int ItemNumber)
 {
 	if (!G.IsStarted())
 		return 0;
+
+	if (CountOfAllBackgroundTasks()) {
+		BackgroundTasksList();
+	} else {
+		const wchar_t *msg[] = { G.GetMsgWide(MTitle), G.GetMsgWide(MNoBackgrundTasks), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, 0, nullptr, msg, ARRAYSIZE(msg), 1);
+	}
 
 	return 1;
 /*

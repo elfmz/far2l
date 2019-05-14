@@ -47,7 +47,7 @@ public:
 	bool Ask()
 	{
 		int reply = Show(L"AbortConfirm", 6, 2, FDLG_WARNING);
-		return (reply == _i_confirm || reply == -1);
+		return (reply == _i_confirm || reply < 0);
 	}
 };
 
@@ -100,7 +100,9 @@ public:
 	{
 		_finished = false;
 		while (!_state.finished) {
-			BaseDialog::Show(L"AbortOperationProgress", 6, 2, FDLG_REGULARIDLE);
+			if (BaseDialog::Show(L"AbortOperationProgress", 6, 2, FDLG_REGULARIDLE) == -2) {
+				usleep(1000);// seems far2l goes down, dont use all CPU in this loop
+			}
 			if (_state.finished) break;
 			if (_state.ao_host) {
 				_state.ao_host->ForcefullyAbort();

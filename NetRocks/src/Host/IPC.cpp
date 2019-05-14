@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <errno.h>
 #include "IPC.h"
 
@@ -53,7 +54,9 @@ void IPCSender::SendString(const std::string &s) throw(IPCError)
 
 IPCRecver::IPCRecver(int fd) : _fd(fd), _aborted(false)
 {
-	if (pipe_cloexec(_kickass) == -1) {
+	if (pipe_cloexec(_kickass) != -1) {
+		fcntl(_kickass[1], F_SETFL, fcntl(_kickass[1], F_GETFL, 0) | O_NONBLOCK);
+	} else {
 		_kickass[0] = _kickass[1] = -1;
 	}
 }

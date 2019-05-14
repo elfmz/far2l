@@ -152,6 +152,7 @@
 "PAUSED"
 "COMPLETE"
 "ABORTED"
+"No background tasks"
 
 "NetRocks exit confirmation"
 "Exiting FAR will disrupt %u pending background tasks."

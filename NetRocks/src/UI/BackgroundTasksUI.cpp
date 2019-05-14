@@ -50,7 +50,7 @@ void BackgroundTasksList()
 		if (choice >= 0 && (size_t)choice < menu_items.size()) {
 			ShowBackgroundTask(info[choice].id);
 			selected_id = info[choice].id;
-		} else if (choice == -1) {
+		} else {
 			break;
 		}
 	}

@@ -17,7 +17,7 @@
 */
 
 SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &object, ProgressState &state)
-	: _state(state)
+	: _kind(kind), _state(state)
 {
 	unsigned int title_lng;
 	switch (kind) {
@@ -43,7 +43,7 @@ void SimpleOperationProgress::Show()
 		_finished = 0;
 		BaseDialog::Show(L"SimpleOperationProgress", 6, 2, FDLG_REGULARIDLE);
 		if (_finished) break;
-		AbortOperationRequest(_state);
+		AbortOperationRequest(_state, _kind == K_CONNECT);
 	}
 }
 

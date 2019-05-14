@@ -52,6 +52,10 @@ void OpEnumDirectory::Process()
 				ppi->Owner = (wchar_t *)MB2WidePooled(owner);
 				ppi->Group = (wchar_t *)MB2WidePooled(group);
 
+				WINPORT(FileTime_UnixToWin32)(file_info.access_time, &ppi->FindData.ftCreationTime);
+				WINPORT(FileTime_UnixToWin32)(file_info.access_time, &ppi->FindData.ftLastAccessTime);
+				WINPORT(FileTime_UnixToWin32)(file_info.modification_time, &ppi->FindData.ftLastWriteTime);
+
 				ProgressStateUpdate psu(_state);
 				_state.stats.count_complete++;
 			}

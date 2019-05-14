@@ -217,7 +217,7 @@ int BaseDialog::Show(const wchar_t *help_topic, int extra_width, int extra_heigh
 			_di.EstimateWidth() + extra_width, _di.EstimateHeight() + extra_height,
 			help_topic, &_di[0], _di.size(), 0, flags, &sDlgProc, (LONG_PTR)(uintptr_t)this);
 		if (_dlg == INVALID_HANDLE_VALUE) {
-			return -1;
+			return -2;
 		}
 	}
 

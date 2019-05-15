@@ -289,6 +289,23 @@ void ProtocolSFTP::Rename(const std::string &path_old, const std::string &path_n
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
+void ProtocolSFTP::SetTimes(const std::string &path, const timespec &access_timem, const timespec &modification_time) throw (std::runtime_error)
+{
+}
+
+void ProtocolSFTP::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+{
+}
+
+
+void ProtocolSFTP::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+{
+}
+
+void ProtocolSFTP::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+{
+}
+
 class SFTPDirectoryEnumer : public IDirectoryEnumer
 {
 	std::shared_ptr<SFTPConnection> _conn;

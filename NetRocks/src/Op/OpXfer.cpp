@@ -315,7 +315,7 @@ void OpXfer::Transfer()
 bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
 {
 	IHost *indicted = nullptr;
-	for (unsigned long long prev_attempt_pos = pos;;) try {
+	for (;;) try {
 		if (indicted) { // retrying...
 			indicted->ReInitialize();
 
@@ -338,6 +338,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			writer->Write(buf, piece);
 
 			indicted = nullptr;
+			_wea_state.ResetAutoRetryDelay();
 			ProgressStateUpdate psu(_state);
 			_state.stats.all_complete+= piece;
 			_state.stats.file_complete+= piece;
@@ -352,7 +353,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			throw;
 		}
 
-		switch (_wea_state.Query( (_direction == XD_UPLOAD) ? WEK_UPLOAD
+		switch (_wea_state.Query(_state, (_direction == XD_UPLOAD) ? WEK_UPLOAD
 				: ((_direction == XD_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
 				ex.what(), path_src, indicted->SiteName())) {
 
@@ -362,12 +363,6 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			} return false;
 
 			case WEA_RETRY: {
-				if (prev_attempt_pos == pos) {
-					sleep(1);
-				} else {
-					prev_attempt_pos = pos;
-				}
-
 				ProgressStateUpdate psu(_state);
 				_state.stats.count_retries++;
 			} break;

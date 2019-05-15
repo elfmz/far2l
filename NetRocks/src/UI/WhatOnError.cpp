@@ -92,14 +92,34 @@ WhatOnErrorAction WhatOnError::Ask(WhatOnErrorAction &default_wea)
 //////////////////////////////////////
 
 
-WhatOnErrorAction WhatOnErrorState::Query(WhatOnErrorKind wek, const std::string &error, const std::string &object, const std::string &site)
+WhatOnErrorAction WhatOnErrorState::Query(ProgressState &progress_state, WhatOnErrorKind wek, const std::string &error, const std::string &object, const std::string &site)
 {
 	auto i = _default_weas[wek].emplace(error, WEA_ASK).first;
 	if (i->second != WEA_ASK) {
+		if (i->second == WEA_RETRY) {
+			for (unsigned int sleep_usec = _auto_retry_delay * 1000000; sleep_usec; ) {
+				unsigned int sleep_usec_portion = (sleep_usec > 100000) ? 100000 : sleep_usec;
+				usleep(sleep_usec_portion);
+				sleep_usec-= sleep_usec_portion;
+				std::lock_guard<std::mutex> locker(progress_state.mtx);
+				if (progress_state.aborting) {
+					return WEA_CANCEL;
+				}
+			}
+			if (_auto_retry_delay < 5) {
+				++_auto_retry_delay;
+			}
+		}
+
 		return i->second;
 	}
 
 	return WhatOnError(wek, error, object, site).Ask(i->second);
+}
+
+void WhatOnErrorState::ResetAutoRetryDelay()
+{
+	_auto_retry_delay = 0;
 }
 
 void WhatOnErrorWrap_DummyOnRetry()

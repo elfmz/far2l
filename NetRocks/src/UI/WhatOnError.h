@@ -21,9 +21,11 @@ public:
 class WhatOnErrorState
 {
 	std::map<std::string, WhatOnErrorAction> _default_weas[WEKS_COUNT];
+	unsigned int _auto_retry_delay = 0;
 
 	public:
-	WhatOnErrorAction Query(WhatOnErrorKind wek, const std::string &error, const std::string &object, const std::string &site);
+	WhatOnErrorAction Query(ProgressState &progress_state, WhatOnErrorKind wek, const std::string &error, const std::string &object, const std::string &site);
+	void ResetAutoRetryDelay();
 };
 
 void WhatOnErrorWrap_DummyOnRetry();
@@ -33,26 +35,22 @@ template <WhatOnErrorKind WEK, class FN, class FN_ON_RETRY = void(*)()>
 	static void WhatOnErrorWrap(WhatOnErrorState &wea_state,
 		ProgressState &progress_state, IHost *indicted, const std::string &object, FN fn, FN_ON_RETRY fn_on_retry = WhatOnErrorWrap_DummyOnRetry)
 {
-	for (bool retried = false;;) try {
+	for (;;) try {
 		fn();
+		wea_state.ResetAutoRetryDelay();
 		break;
 
 	} catch (AbortError &) {
 		throw;
 
 	} catch (std::exception &ex) {
-		switch (wea_state.Query(WEK, ex.what(), object, indicted->SiteName())) {
+		switch (wea_state.Query(progress_state, WEK, ex.what(), object, indicted->SiteName())) {
 			case WEA_SKIP: {
 				std::unique_lock<std::mutex> locker(progress_state.mtx);
 				progress_state.stats.count_skips++;
 			} return;
 
 			case WEA_RETRY: {
-				if (retried) {
-					sleep(1);
-				} else {
-					retried = true;
-				}
 				indicted->ReInitialize();
 				fn_on_retry();
 				std::unique_lock<std::mutex> locker(progress_state.mtx);

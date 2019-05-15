@@ -112,6 +112,47 @@ void HostLocal::Rename(const std::string &path_old, const std::string &path_new)
 	}
 }
 
+void HostLocal::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+{
+	struct timeval times[2] = {};
+	times[0].tv_sec = access_time.tv_sec;
+	times[0].tv_usec = access_time.tv_nsec / 1000;
+	times[1].tv_sec = modification_time.tv_sec;
+	times[1].tv_usec = modification_time.tv_nsec / 1000;
+	int r = sdc_utimes(path.c_str(), times);
+	if (r == -1) {
+		throw ProtocolError("utimes failed", errno);
+	}
+}
+
+void HostLocal::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+{
+	int r = sdc_chmod(path.c_str(), mode);
+	if (r == -1) {
+		throw ProtocolError("utimes failed", errno);
+	}
+}
+
+
+void HostLocal::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+{
+	int r = sdc_symlink(link_target.c_str(), link_path.c_str());
+	if (r == -1) {
+		throw ProtocolError("symlink failed", errno);
+	}
+}
+
+void HostLocal::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+{
+	char buf[PATH_MAX];
+	ssize_t r = sdc_readlink(link_path.c_str(), buf, sizeof(buf));
+	if (r < 0 || (size_t)r >= sizeof(buf)) {
+		throw ProtocolError("read failed", errno);
+	}
+
+	link_target.assign(buf, (size_t)r);
+}
+
 ////////////////////////////////////////
 
 

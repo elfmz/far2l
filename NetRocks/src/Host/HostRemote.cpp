@@ -388,6 +388,48 @@ void HostRemote::Rename(const std::string &path_old, const std::string &path_new
 	RecvReply(IPC_RENAME);
 }
 
+
+void HostRemote::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+{
+	CheckReady();
+
+	SendCommand(IPC_SET_TIMES);
+	SendString(path);
+	SendPOD(access_time);
+	SendPOD(modification_time);
+	RecvReply(IPC_SET_TIMES);
+}
+
+void HostRemote::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+{
+	CheckReady();
+
+	SendCommand(IPC_SET_MODE);
+	SendString(path);
+	SendPOD(mode);
+	RecvReply(IPC_SET_MODE);
+}
+
+void HostRemote::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+{
+	CheckReady();
+
+	SendCommand(IPC_SYMLINK_CREATE);
+	SendString(link_path);
+	SendString(link_target);
+	RecvReply(IPC_SYMLINK_CREATE);
+}
+
+void HostRemote::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+{
+	CheckReady();
+
+	SendCommand(IPC_SYMLINK_QUERY);
+	SendString(link_path);
+	RecvReply(IPC_SYMLINK_QUERY);
+	RecvString(link_target);
+}
+
 ////////////////////////////////////////
 
 

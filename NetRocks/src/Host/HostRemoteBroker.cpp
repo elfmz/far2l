@@ -11,6 +11,7 @@ class HostRemoteBroker : protected IPCEndpoint
 	std::shared_ptr<IProtocol> _protocol;
 	struct {
 		std::string str1, str2, str3;
+		timespec ts1, ts2;
 		FileInformation file_info;
 		unsigned long long ull;
 		mode_t mode;
@@ -202,6 +203,40 @@ class HostRemoteBroker : protected IPCEndpoint
 		SendCommand(IPC_DIRECTORY_CREATE);
 	}
 
+	void OnSetTimes()
+	{
+		RecvString(_args.str1);
+		RecvPOD(_args.ts1);
+		RecvPOD(_args.ts2);
+		_protocol->SetTimes(_args.str1, _args.ts1, _args.ts2);
+		SendCommand(IPC_SET_TIMES);
+	}
+
+	void OnSetMode()
+	{
+		RecvString(_args.str1);
+		RecvPOD(_args.mode);
+		_protocol->SetMode(_args.str1, _args.mode);
+		SendCommand(IPC_SET_MODE);
+	}
+
+	void OnSymLinkCreate()
+	{
+		RecvString(_args.str1);
+		RecvString(_args.str2);
+		_protocol->SymlinkCreate(_args.str1, _args.str2);
+		SendCommand(IPC_SYMLINK_CREATE);
+	}
+
+	void OnSymLinkQuery()
+	{
+		RecvString(_args.str1);
+		_args.str2.clear();
+		_protocol->SymlinkQuery(_args.str1, _args.str2);
+		SendCommand(IPC_SYMLINK_QUERY);
+		SendString(_args.str2);
+	}
+
 	void OnCommand(IPCCommand c)
 	{
 		switch (c) {
@@ -218,6 +253,10 @@ class HostRemoteBroker : protected IPCEndpoint
 			case IPC_DIRECTORY_DELETE: OnDelete<IPC_DIRECTORY_DELETE>(&IProtocol::DirectoryDelete); break;
 			case IPC_RENAME: OnRename(); break;
 			case IPC_DIRECTORY_CREATE: OnDirectoryCreate(); break;
+			case IPC_SET_TIMES: OnSetTimes(); break;
+			case IPC_SET_MODE: OnSetMode(); break;
+			case IPC_SYMLINK_CREATE: OnSymLinkCreate(); break;
+			case IPC_SYMLINK_QUERY: OnSymLinkQuery(); break;
 			case IPC_DIRECTORY_ENUM: OnDirectoryEnum(); break;
 			case IPC_FILE_GET: OnFileGet(); break;	
 			case IPC_FILE_PUT: OnFilePut(); break;

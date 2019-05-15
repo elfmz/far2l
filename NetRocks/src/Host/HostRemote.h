@@ -66,6 +66,13 @@ public:
 	virtual void DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error);
 	virtual void Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error);
 
+	virtual void SetTimes(const std::string &path, const timespec &access_timem, const timespec &modification_time) throw (std::runtime_error);
+	virtual void SetMode(const std::string &path, mode_t mode) throw (std::runtime_error);
+
+	virtual void SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error);
+	virtual void SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error);
+
+
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos = 0) throw (std::runtime_error);

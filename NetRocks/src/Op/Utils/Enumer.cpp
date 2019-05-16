@@ -86,12 +86,12 @@ bool Enumer::OnScanningPath(const std::string &path, const FileInformation *file
 		//info.mode = _host->GetMode(path, true);
 	}
 
-	if (S_ISREG(info.mode)) {
-		;
-
-	} else if (!S_ISDIR(info.mode)) {
-		if (_no_special_files)
+	if (!S_ISREG(info.mode)) {
+		if (_no_special_files && !S_ISDIR(info.mode) && !S_ISLNK(info.mode)) {
 			return false;
+		}
+
+		info.size = 0;
 	}
 
 	if (!_result.emplace(path, info).second)

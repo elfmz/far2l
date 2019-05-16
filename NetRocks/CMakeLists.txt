@@ -27,6 +27,7 @@ src/UI/WhatOnError.cpp
 src/UI/BackgroundTasksUI.cpp
 src/Op/Utils/ProgressStateUpdate.cpp
 src/Op/Utils/Enumer.cpp
+src/Op/Utils/IOBuffer.cpp
 src/Op/OpBase.cpp
 src/Op/OpConnect.cpp
 src/Op/OpGetMode.cpp

@@ -40,6 +40,10 @@ enum WhatOnErrorKind
 	WEK_RENAME,
 	WEK_RMFILE,
 	WEK_RMDIR,
+	WEK_SETTIMES,
+	WEK_CHMODE,
+	WEK_SYMLINK_QUERY,
+	WEK_SYMLINK_CREATE,
 	WEKS_COUNT
 };
 
@@ -81,3 +85,5 @@ struct ProgressState
 		paused = aborting = finished = false;
 	}
 };
+
+

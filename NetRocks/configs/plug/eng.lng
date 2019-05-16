@@ -133,6 +133,10 @@
 "Rename error"
 "Remove directory error"
 "Remove file error"
+"Set file times error"
+"Change file mode error"
+"Symlink query error"
+"Symlink create error"
 
 "Error:"
 "Failed object:"
@@ -158,3 +162,4 @@
 "Exiting FAR will disrupt %u pending background tasks."
 "Are you really sure you want to exit FAR?"
 "&Background tasks"
+

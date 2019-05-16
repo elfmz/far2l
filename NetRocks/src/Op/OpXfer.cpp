@@ -238,9 +238,7 @@ void OpXfer::Transfer()
 			try {
 				_dst_host->GetInformation(existing_file_info, path_dst);
 				existing = true;
-			} catch (std::exception &ex) { // FIXME: distinguish unexistence of file from IO failure
-				;
-			}
+			} catch (std::exception &ex) { ; } // FIXME: distinguish unexistence of file from IO failure
 
 			if (existing) {
 				auto xoa = _default_xoa;
@@ -282,6 +280,7 @@ void OpXfer::Transfer()
 				}
 			}
 			if (FileCopyLoop(e.first, path_dst, pos, e.second.mode)) {
+				CopyTimes(path_dst, e.second);
 				if (_kind == XK_MOVE) {
 					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
 						[&] () mutable
@@ -297,8 +296,14 @@ void OpXfer::Transfer()
 		_state.stats.count_complete++;
 	}
 
-	if (_kind == XK_MOVE) {
-		for (auto rev_i = _entries.rbegin(); rev_i != _entries.rend(); ++rev_i) {
+	for (auto rev_i = _entries.rbegin(); rev_i != _entries.rend(); ++rev_i) {
+		if (S_ISDIR(rev_i->second.mode)) {
+			path_dst = _dst_dir;
+			path_dst+= rev_i->first.substr(_base_dir.size());
+			CopyTimes(path_dst, rev_i->second);
+		}
+
+		if (_kind == XK_MOVE) {
 			if (S_ISDIR(rev_i->second.mode)) {
 				WhatOnErrorWrap<WEK_RMDIR>(_wea_state, _state, _base_host.get(), rev_i->first,
 					[&] () mutable 
@@ -311,6 +316,15 @@ void OpXfer::Transfer()
 	}
 }
 
+void OpXfer::CopyTimes(const std::string &path_dst, const FileInformation &info)
+{
+	WhatOnErrorWrap<WEK_SETTIMES>(_wea_state, _state, _dst_host.get(), path_dst,
+		[&] () mutable
+		{
+			_dst_host->SetTimes(path_dst.c_str(), info.access_time, info.modification_time);
+		}
+	);
+}
 
 bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
 {

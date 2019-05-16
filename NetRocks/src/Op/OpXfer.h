@@ -1,8 +1,10 @@
 #pragma once
 #include "OpBase.h"
 #include "./Utils/Enumer.h"
+#include "./Utils/IOBuffer.h"
 #include "../UI/Defs.h"
 #include "../BackgroundTasks.h"
+
 
 class OpXfer : protected OpBase, public IBackgroundTask
 {
@@ -13,6 +15,7 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	XferOverwriteAction _default_xoa = XOA_ASK;
 	XferKind _kind;
 	XferDirection _direction;
+	IOBuffer _io_buf;
 
 	virtual void Process();
 
@@ -21,7 +24,10 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	void Rename(const std::set<std::string> &items);
 	void EnsureDstDirExists();
 	void Transfer();
-	bool FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode);
+	void DirectoryCopy(const std::string &path_dst, const FileInformation &info);
+	bool SymlinkCopy(const std::string &path_src, const std::string &path_dst);
+	bool FileCopyLoop(const std::string &path_src, const std::string &path_dst, FileInformation &info);
+	void EnsureProgressConsistency();
 	void CopyTimes(const std::string &path_dst, const FileInformation &info);
 
 public:

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <utils.h>
 #include <TimeUtils.h>
 #include "OpXfer.h"
@@ -6,6 +7,10 @@
 #include "../UI/WhatOnError.h"
 #include "../UI/ComplexOperationProgress.h"
 #include "../lng.h"
+
+#define MIN_BUFFER_SIZE         0x1000
+#define MAX_BUFFER_SIZE         0x1000000
+#define INITIAL_BUFFER_SIZE     0x8000
 
 OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 	std::shared_ptr<IHost> &dst_host, const std::string &dst_dir,
@@ -16,7 +21,8 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_dst_host(dst_host),
 	_dst_dir(dst_dir),
 	_kind(kind),
-	_direction(direction)
+	_direction(direction),
+	_io_buf(INITIAL_BUFFER_SIZE, MIN_BUFFER_SIZE, MAX_BUFFER_SIZE)
 {
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";
@@ -208,11 +214,10 @@ void OpXfer::Transfer()
 	EnsureDstDirExists();
 
 	std::string path_dst;
-	for (const auto &e : _entries) {
+	for (auto &e : _entries) {
 		const std::string &subpath = e.first.substr(_base_dir.size());
 		path_dst = _dst_dir;
 		path_dst+= subpath;
-
 		{
 			std::unique_lock<std::mutex> lock(_state.mtx);
 			_state.path = subpath;
@@ -222,24 +227,49 @@ void OpXfer::Transfer()
 			_state.stats.current_paused = std::chrono::milliseconds::zero();
 		}
 
-		if (S_ISDIR(e.second.mode)) {
-			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), path_dst,
+		FileInformation existing_file_info;
+		bool existing = false;
+		try {
+			_dst_host->GetInformation(existing_file_info, path_dst);
+			existing = true;
+		} catch (std::exception &ex) { ; } // FIXME: distinguish unexistence of file from IO failure
+
+
+		if (S_ISLNK(e.second.mode)) {
+			if (existing || SymlinkCopy(e.first, path_dst)) {
+				ProgressStateUpdate psu(_state);
+				_state.stats.count_complete++;
+				continue;
+			}
+			// if symlink copy failed then fallback to target's content copy
+			WhatOnErrorWrap<WEK_QUERYINFO>(_wea_state, _state, _base_host.get(), e.first,
 				[&] () mutable 
 				{
-					_dst_host->DirectoryCreate(path_dst, e.second.mode);
+					_base_host->GetInformation(e.second, e.first, true);
 				}
 			);
+			if (!S_ISREG(e.second.mode) && !S_ISDIR(e.second.mode)) {
+				// don't copy symlink's target if its nor file nor directory
+				fprintf(stderr, "NetRocks: skipped symlink target with mode=0x%x - '%s' \n", e.second.mode, path_dst.c_str());
+				ProgressStateUpdate psu(_state);
+				_state.stats.count_complete++;
+				_state.stats.count_skips++;
+				continue;
+			}
+
+			if (S_ISREG(e.second.mode)) {
+				// symlinks are not counted in all_total, need to add size for symlink's target if gonna file-copy it
+				std::unique_lock<std::mutex> lock(_state.mtx);
+				_state.stats.all_total+= e.second.size;
+			}
+		}
+
+		if (S_ISDIR(e.second.mode)) {
+			if (!existing) {
+				DirectoryCopy(path_dst, e.second);
+			}
 
 		} else {
-			unsigned long long pos = 0;
-
-			FileInformation existing_file_info;
-			bool existing = false;
-			try {
-				_dst_host->GetInformation(existing_file_info, path_dst);
-				existing = true;
-			} catch (std::exception &ex) { ; } // FIXME: distinguish unexistence of file from IO failure
-
 			if (existing) {
 				auto xoa = _default_xoa;
 				if (xoa == XOA_ASK) {
@@ -261,8 +291,7 @@ void OpXfer::Transfer()
 				if (xoa == XOA_RESUME) {
 					if (existing_file_info.size < e.second.size) {
 						_state.stats.all_complete+= existing_file_info.size;
-						_state.stats.file_complete+= existing_file_info.size;
-						pos = existing_file_info.size;
+						_state.stats.file_complete = existing_file_info.size;
 					} else {
 						xoa = XOA_SKIP;
 					}
@@ -279,7 +308,7 @@ void OpXfer::Transfer()
 					continue;
 				}
 			}
-			if (FileCopyLoop(e.first, path_dst, pos, e.second.mode)) {
+			if (FileCopyLoop(e.first, path_dst, e.second)) {
 				CopyTimes(path_dst, e.second);
 				if (_kind == XK_MOVE) {
 					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
@@ -326,36 +355,100 @@ void OpXfer::CopyTimes(const std::string &path_dst, const FileInformation &info)
 	);
 }
 
-bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode)
+void OpXfer::EnsureProgressConsistency()
 {
-	IHost *indicted = nullptr;
-	for (;;) try {
+	if (_state.stats.file_complete > _state.stats.file_total) {
+		// keep pocker face if file grew while copying
+		_state.stats.all_total+= _state.stats.file_complete - _state.stats.file_total;
+		_state.stats.file_total = _state.stats.file_complete;
+	}
+}
+
+bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, FileInformation &info)
+{
+	for (IHost *indicted = nullptr;;) try {
+		unsigned long long file_complete;
 		if (indicted) { // retrying...
 			indicted->ReInitialize();
-
 			indicted = _dst_host.get();
-			pos = _dst_host->GetSize(path_dst);
+			file_complete = _dst_host->GetSize(path_dst);
+
+			ProgressStateUpdate psu(_state);
+			_state.stats.file_complete = file_complete;
+			EnsureProgressConsistency();
+		} else {
+			ProgressStateUpdate psu(_state);
+			file_complete = _state.stats.file_complete;
 		}
 
 		indicted = _base_host.get();
-		std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, pos);
+		std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, file_complete);
 		indicted = _dst_host.get();
-		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, mode, pos);
-		char buf[0x10000];
+		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode, file_complete);
+		if (!_io_buf.Size())
+			throw std::runtime_error("No buffer - no file");
+
 		for (;;) {
 			indicted = _base_host.get();
-			const size_t piece = reader->Read(buf, sizeof(buf));
+			size_t ask_piece = _io_buf.Size();
+			if (info.size < file_complete + ask_piece && info.size > file_complete) {
+				// use small buffer if gonna read small piece: IO may have small-read-optimized implementation
+				// but ask by one extra byte more to properly detect file being grew while copied
+				ask_piece = (info.size - file_complete) + 1;
+			}
+
+			std::chrono::milliseconds msec = TimeMSNow();
+
+			const size_t piece = reader->Read(_io_buf.Data(), ask_piece);
 			if (piece == 0) {
+				if (file_complete < info.size) {
+					// protocol returned no read error, but trieved less data then expected, only two reasons possible:
+					// - remote file size reduced while copied
+					// - protocol implementation misdetected read failure
+					// so get actual file size, and if it still bigger than retrieved data size then ring-the-bell
+					const auto actual_size = _dst_host->GetSize(path_src);
+					if (file_complete < actual_size) {
+						info.size = actual_size;
+						throw std::runtime_error("Retrieved less data than expected");
+					}
+					if (file_complete >= actual_size) {
+						info.size = file_complete;
+					}
+				}
 				break;
 			}
+
 			indicted = _dst_host.get();
-			writer->Write(buf, piece);
+			writer->Write(_io_buf.Data(), piece);
+
+			if (piece == _io_buf.Size()) {
+				msec = TimeMSNow() - msec;
+				if (msec.count() < 100) {
+					if (_io_buf.Increase()) {
+						fprintf(stderr, "NetRocks: IO buffer size increased to %lu\n", _io_buf.Size());
+					}
+				} else if (msec.count() > 500) {
+					if (_io_buf.Decrease()) {
+						fprintf(stderr, "NetRocks: IO buffer size decreased to %lu\n", _io_buf.Size());
+					}
+				}
+			}
 
 			indicted = nullptr;
 			_wea_state.ResetAutoRetryDelay();
+
+			file_complete+= piece;
 			ProgressStateUpdate psu(_state);
+			_state.stats.file_complete = file_complete;
 			_state.stats.all_complete+= piece;
-			_state.stats.file_complete+= piece;
+			EnsureProgressConsistency();
+
+			if (piece < ask_piece && file_complete == info.size) {
+				// read returned less than was asked, and position is exactly at file size
+				// - pretty sure its end of file, so don't iterate to next IO to save time, space and Universe
+				// fprintf(stderr, "optimized read completion\n");
+				break;
+			}
 		}
 		break;
 
@@ -389,9 +482,100 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 	return true;
 }
 
+void OpXfer::DirectoryCopy(const std::string &path_dst, const FileInformation &info)
+{
+	WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), path_dst,
+		[&] () mutable
+		{
+			_dst_host->DirectoryCreate(path_dst, info.mode);
+		}
+	);
+}
+
+bool OpXfer::SymlinkCopy(const std::string &path_src, const std::string &path_dst)
+{
+	std::string symlink_target;
+	WhatOnErrorWrap<WEK_SYMLINK_QUERY>(_wea_state, _state, _base_host.get(), path_src,
+		[&] () mutable
+		{
+			symlink_target.clear();
+			_base_host->SymlinkQuery(path_src, symlink_target);
+		}
+	);
+
+	if (symlink_target.empty()) {
+		return false;
+	}
+
+	std::string orig_symlink_target = symlink_target;
+
+	if (symlink_target[0] == '/') {
+		if (_entries.find(symlink_target) ==  _entries.end()) {
+			fprintf(stderr, "NetRocks: SymlinkCopy dismiss '%s' [%s]\n",
+				path_src.c_str(), orig_symlink_target.c_str());
+			return false;
+		}
+		// absolute target is part of copied directories tree: translate it to relative form
+		// /base/dir/copied/sym/link
+		// /some/destination/path/copied/sym/link
+
+		symlink_target.erase(0, _base_dir.size());
+		for (size_t i = _base_dir.size(); i < path_dst.size(); ++i) {
+			if (path_dst[i] == '/') {
+				symlink_target.insert(0, "../");
+			}
+		}
+	} else {
+		// target is relative: check if it doesnt point outside of copied directories tree
+		// ../../../some/relaive/path
+		std::string refined = path_src;
+		size_t p = refined.rfind('/');
+		refined.resize( (p == std::string::npos) ? 0 : p);
+
+		for (size_t i = 0, ii = 0; i != symlink_target.size() + 1; ++i) {
+			if (i == symlink_target.size() || symlink_target[i] == '/') {
+				if (i > ii) {
+					const std::string &component = symlink_target.substr(ii, i - ii);
+					if (component == "..") {
+						p = refined.rfind('/');
+						refined.resize( (p == std::string::npos) ? 0 : p);
+					} else if (component != ".") {
+						if (!refined.empty() && refined[refined.size() - 1] != '/') {
+							refined+= '/';
+						}
+						refined+= component;
+					}
+				}
+				ii = i + 1;
+			}
+		}
+
+		fprintf(stderr, "NetRocks: SymlinkCopy '%s' [%s] refined as [%s]\n",
+			path_src.c_str(), orig_symlink_target.c_str(), refined.c_str());
+		if (_entries.find(refined) ==  _entries.end()) {
+			fprintf(stderr, "NetRocks: SymlinkCopy dismiss '%s' [%s]\n",
+				path_src.c_str(), orig_symlink_target.c_str());
+			return false;
+		}
+	}
+
+	fprintf(stderr, "NetRocks: SymlinkCopy '%s' [%s] -> '%s' [%s]\n",
+		path_src.c_str(), orig_symlink_target.c_str(), path_dst.c_str(), symlink_target.c_str());
+
+	bool created = false;
+	WhatOnErrorWrap<WEK_SYMLINK_CREATE>(_wea_state, _state, _dst_host.get(), path_dst,
+		[&] () mutable
+		{
+			_dst_host->SymlinkCreate(path_dst, symlink_target);
+			created = true;
+		}
+	);
+
+	return created;
+}
+
 void OpXfer::ForcefullyAbort()
 {
 	OpBase::ForcefullyAbort();
 	_dst_host->Abort();
 }
-

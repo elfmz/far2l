@@ -3,6 +3,7 @@
 #include <string.h>
 #include <utils.h>
 #include <vector>
+#include <algorithm>
 #include <libssh/ssh2.h>
 #include <libssh/sftp.h>
 #include "ProtocolSFTP.h"
@@ -22,6 +23,9 @@
 #define SIMULATED_WRITE_FAILS_RATE 0
 #define SIMULATED_WRITE_COMPLETE_FAILS_RATE 0
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#define MAX_SFTP_IO_BLOCK_SIZE		((size_t)32768)	// googling shows than such block size compatible with at least most of servers
 
 static void SSHSessionDeleter(ssh_session res)
 {
@@ -379,6 +383,7 @@ class SFTPFileIO : public IFileReader, public IFileWriter
 {
 	std::shared_ptr<SFTPConnection> _conn;
 	SFTPFile _file;
+	bool _sync_fallback = false;
 
 public:
 	SFTPFileIO(std::shared_ptr<SFTPConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
@@ -390,14 +395,79 @@ public:
 #endif
 
 		if (!_file)
-			throw ProtocolError("file open",  ssh_get_error(_conn->ssh));
+			throw ProtocolError("open",  ssh_get_error(_conn->ssh));
 
 		if (resume_pos) {
 			int rc = sftp_seek64(_file, resume_pos);
 			if (rc != 0)
-				throw ProtocolError("file seek",  ssh_get_error(_conn->ssh), rc);
+				throw ProtocolError("seek",  ssh_get_error(_conn->ssh), rc);
 		}
 	}
+
+	template <class BUF_T, class SYNC_IO_T>
+		size_t SyncIO(BUF_T buf, size_t len, SYNC_IO_T p_sync_io) throw (std::runtime_error)
+	{
+			const ssize_t rc = p_sync_io(_file, buf, len);
+			if (rc < 0)
+				throw ProtocolError("io",  ssh_get_error(_conn->ssh));
+
+			return (size_t)rc;
+	}
+
+	template <class BUF_T, class SYNC_IO_T, class ASYNC_IO_BEGIN_T, class ASYNC_IO_WAIT_T>
+		size_t AsyncIO(BUF_T buf, size_t len, SYNC_IO_T p_sync_io, ASYNC_IO_BEGIN_T p_async_io_begin, ASYNC_IO_WAIT_T p_async_io_wait)
+	{
+		if (len <= MAX_SFTP_IO_BLOCK_SIZE || _sync_fallback) {
+			return SyncIO(buf, std::min(len, MAX_SFTP_IO_BLOCK_SIZE), p_sync_io);
+		}
+
+		size_t pipeline_count = len / MAX_SFTP_IO_BLOCK_SIZE;
+		if (pipeline_count * MAX_SFTP_IO_BLOCK_SIZE < len) {
+			++pipeline_count;
+		}
+
+		int *pipeline = (int *)alloca(pipeline_count * sizeof(int));
+		for (size_t i = 0; i != pipeline_count; ++i) {
+			const size_t pipeline_piece = std::min(len - i * MAX_SFTP_IO_BLOCK_SIZE, MAX_SFTP_IO_BLOCK_SIZE);
+			pipeline[i] = p_async_io_begin(_file, (uint32_t)pipeline_piece);
+			if (pipeline[i] < 0) {
+				if (i == 0) {
+					size_t r = SyncIO(buf, std::min(len, MAX_SFTP_IO_BLOCK_SIZE), p_sync_io);
+					_sync_fallback = true;
+					fprintf(stderr, "SFTPFileIO::IO(...0x%lx): sync fallback1\n", (unsigned long)len);
+					return r;
+				}
+				pipeline_count = i;
+				break;
+			}
+		}
+
+		size_t done_length = 0;
+		int first_failed = 0;
+
+		for (size_t i = 0; i != pipeline_count; ++i) {
+			const size_t pipeline_piece = std::min(len - i * MAX_SFTP_IO_BLOCK_SIZE, MAX_SFTP_IO_BLOCK_SIZE);
+			int done_piece = p_async_io_wait(_file, (char *)buf + done_length, pipeline_piece, pipeline[i]);
+			if (done_piece < 0) {
+				if (i == 0) {
+					first_failed = 1;
+				}
+			} else if (done_piece == 0) {
+				;
+			} else {
+				done_length+= (size_t)(unsigned int)done_piece;
+			}
+		}
+
+		if (done_length == 0 && first_failed) {
+			done_length = SyncIO(buf, std::min(len, MAX_SFTP_IO_BLOCK_SIZE), p_sync_io);
+			_sync_fallback = true;
+			fprintf(stderr, "SFTPFileIO::IO(...0x%lx): sync fallback2\n", (unsigned long)len);
+		}
+
+		return done_length;
+	}
+
 
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
@@ -405,12 +475,8 @@ public:
 		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
 			throw ProtocolError("Simulated read file error");
 #endif
-		const ssize_t rc = sftp_read(_file, buf, len);
-		if (rc < 0)
-			throw ProtocolError("file read",  ssh_get_error(_conn->ssh));
-		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
 
-		return (size_t)rc;
+		return AsyncIO(buf, len, sftp_read, sftp_async_read_begin, sftp_async_read);
 	}
 
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
@@ -419,15 +485,20 @@ public:
 		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
 			throw ProtocolError("Simulated write file error");
 #endif
+		// somewhy libssh doesnt have async write yet
 		if (len > 0) for (;;) {
-			const ssize_t rc = sftp_write(_file, buf, len);
-			if (rc <= 0)
-				throw ProtocolError("file write",  ssh_get_error(_conn->ssh));
-			if ((size_t)rc >= len)
+			size_t piece = (len >= MAX_SFTP_IO_BLOCK_SIZE) ? MAX_SFTP_IO_BLOCK_SIZE : len;
+
+			piece = SyncIO(buf, piece, sftp_write);
+
+			if (piece == 0)
+				throw ProtocolError("zero write",  ssh_get_error(_conn->ssh));
+
+			if (piece >= len)
 				break;
 
-			len-= (size_t)len;
-			buf = (const char *)buf + len;
+			len-= (size_t)piece;
+			buf = (const char *)buf + piece;
 		}
 	}
 

@@ -22,6 +22,7 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	void EnsureDstDirExists();
 	void Transfer();
 	bool FileCopyLoop(const std::string &path_src, const std::string &path_dst, unsigned long long pos, mode_t mode);
+	void CopyTimes(const std::string &path_dst, const FileInformation &info);
 
 public:
 	OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,

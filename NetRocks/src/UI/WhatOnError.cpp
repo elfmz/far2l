@@ -31,6 +31,11 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 		case WEK_RENAME:    title_lng = MErrorRenameTitle; break;
 		case WEK_RMFILE:    title_lng = MErrorRmFileTitle; break;
 		case WEK_RMDIR:     title_lng = MErrorRmDirTitle; break;
+		case WEK_SETTIMES:  title_lng = MErrorSetTimes; break;
+		case WEK_CHMODE:    title_lng = MErrorChangeMode; break;
+		case WEK_SYMLINK_QUERY:     title_lng = MErrorSymlinkQuery; break;
+		case WEK_SYMLINK_CREATE:     title_lng = MErrorSymlinkCreate; break;
+
 		default: {
 			fprintf(stderr, "Error: wrong kind %u\n", wek);
 			abort();
@@ -125,3 +130,5 @@ void WhatOnErrorState::ResetAutoRetryDelay()
 void WhatOnErrorWrap_DummyOnRetry()
 {
 }
+
+

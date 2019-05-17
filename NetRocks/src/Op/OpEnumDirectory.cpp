@@ -1,3 +1,4 @@
+#include <utils.h>
 #include "OpEnumDirectory.h"
 #include "../UI/Confirm.h"
 #include "../UI/SimpleOperationProgress.h"
@@ -68,4 +69,23 @@ void OpEnumDirectory::Process()
 			_state.stats.count_complete = _initial_count_complete;
 		}
 	);
+
+	std::string path_name;
+	for (int i = 0; i < _result.count; ++i) {
+		auto &entry = _result.items[i];
+		if (S_ISLNK(entry.FindData.dwUnixMode)) try {
+			path_name = _base_dir;
+			if (!path_name.empty() && path_name[path_name.size() - 1] != '/') {
+				path_name+= '/';
+			}
+			path_name+= Wide2MB(entry.FindData.lpwszFileName);
+			mode_t mode = _base_host->GetMode(path_name);
+			if (S_ISDIR(mode)) {
+				entry.FindData.dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
+			}
+		} catch (std::exception &) {
+		}
+	}
+
+
 }

@@ -11,7 +11,6 @@
 extern struct Globals
 {
 	std::wstring plugin_path;
-	std::string config;
 	PluginStartupInfo info = {};
 	FarStandardFunctions fsf = {};
 

@@ -1,7 +1,9 @@
-#include "SiteConnectionEditor.h"
-#include "../Globals.h"
-#include <KeyFileHelper.h>
 #include <algorithm>
+#include <utils.h>
+#include "SiteConnectionEditor.h"
+#include "ProtocolOptions/ProtocolOptionsSFTP.h"
+#include "../Globals.h"
+#include "../SitesConfig.h"
 
 /*                                                         62
 345                      28         39                   60  64
@@ -109,7 +111,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	_i_advanced_options = _di.AddAtLine(DI_BUTTON, 10,50, DIF_CENTERGROUP, MAdvancedOptions);
+	_i_protocol_options = _di.AddAtLine(DI_BUTTON, 10,50, DIF_CENTERGROUP, MProtocolOptions);
 
 	_di.NextLine();
 	_i_save = _di.AddAtLine(DI_BUTTON, 61,21, DIF_CENTERGROUP, MSave);
@@ -122,31 +124,15 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 
 void SiteConnectionEditor::Load()
 {
-	KeyFileHelper kfh(G.config.c_str());
-	_initial_protocol = _protocol = kfh.GetString(_display_name.c_str(), "Protocol");
-	_host = kfh.GetString(_display_name.c_str(), "Host");
-	_initial_port = _port = (unsigned int)kfh.GetInt(_display_name.c_str(), "Port");
-	int login_mode = kfh.GetInt(_display_name.c_str(), "LoginMode", -1);
-	_username = kfh.GetString(_display_name.c_str(), "Username");
-	_password = kfh.GetString(_display_name.c_str(), "Password"); // TODO: de/obfuscation
-	_directory = kfh.GetString(_display_name.c_str(), "Directory");
-	_options = kfh.GetString(_display_name.c_str(), "Options");
-
-	if (login_mode < 0) {
-		if (_username.empty() && _password.empty()) {
-			_login_mode = 0;
-			_username = "anonymous";
-
-		} else if (_password.empty()) {
-			_login_mode = 1;
-
-		} else {
-			_login_mode = 2;
-		}
-
-	} else {
-		_login_mode = (unsigned int)login_mode;
-	}
+	SitesConfig sc;
+	_initial_protocol = _protocol = sc.GetProtocol(_display_name);
+	_host = sc.GetHost(_display_name);
+	_initial_port = _port = sc.GetPort(_display_name);
+	_login_mode = sc.GetLoginMode(_display_name);
+	_username = sc.GetUsername(_display_name);
+	_password = sc.GetPassword(_display_name);
+	_directory = sc.GetDirectory(_display_name);
+	_protocol_options = sc.GetProtocolOptions(_display_name, _protocol);
 }
 
 bool SiteConnectionEditor::Save()
@@ -157,18 +143,18 @@ bool SiteConnectionEditor::Save()
 			return false;
 	}
 
-	KeyFileHelper kfh(G.config.c_str());
-	kfh.PutString(_display_name.c_str(), "Protocol", _protocol.c_str());
-	kfh.PutString(_display_name.c_str(), "Host", _host.c_str());
-	kfh.PutInt(_display_name.c_str(), "Port", _port);
-	kfh.PutInt(_display_name.c_str(), "LoginMode", _login_mode);
-	kfh.PutString(_display_name.c_str(), "Username", _username.c_str());
-	kfh.PutString(_display_name.c_str(), "Password", _password.c_str());
-	kfh.PutString(_display_name.c_str(), "Directory", _directory.c_str());
-	kfh.PutString(_display_name.c_str(), "Options", _options.c_str());
+	SitesConfig sc;
+	sc.PutProtocol(_display_name, _protocol);
+	sc.PutHost(_display_name, _host);
+	sc.PutPort(_display_name, _port);
+	sc.PutLoginMode(_display_name, _login_mode);
+	sc.PutUsername(_display_name, _username);
+	sc.PutPassword(_display_name, _password);
+	sc.PutDirectory(_display_name, _directory);
+	sc.PutProtocolOptions(_display_name, _protocol, _protocol_options);
 
 	if (_display_name != _initial_display_name && !_initial_display_name.empty()) {
-		kfh.RemoveSection(_initial_display_name.c_str());
+		sc.RemoveSite(_initial_display_name);
 	}
 	return true;
 }
@@ -190,11 +176,18 @@ LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 {
 	switch (msg) {
 		case DN_BTNCLICK:
+			if (param1 == _i_protocol_options) {
+				ProtocolOptions();
+				return TRUE;
+			}
+
 			if (param1 == _i_display_name_autogen) {
 				DisplayNameAutogenerateAndApply();
 				return TRUE;
 
-			} else if (param1 == _i_save || param1 == _i_connect) {
+			}
+
+			if (param1 == _i_save || param1 == _i_connect) {
 				DataFromDialog();
 			}
 		break;
@@ -252,7 +245,7 @@ void SiteConnectionEditor::OnProtocolChanged()
 void SiteConnectionEditor::OnLoginModeChanged()
 {
 	++_autogen_pending;
-	_login_mode = (unsigned long)SendDlgMessage(DM_LISTGETCURPOS, _i_login_mode, 0);
+	_login_mode = (unsigned long)GetDialogListPosition(_i_login_mode);
 	if (_login_mode > 2) {
 		_login_mode = 0;
 	}
@@ -302,7 +295,8 @@ void SiteConnectionEditor::DisplayNameAutogenerateAndApply()
 
 std::string SiteConnectionEditor::DisplayNameAutogenerate()
 {
-	const auto &sections = KeyFileHelper(G.config.c_str()).EnumSections();
+	auto existing = SitesConfig().EnumSites();
+	existing.emplace_back(Wide2MB(G.GetMsgWide(MCreateSiteConnection)));
 
 	std::string str;
 	char sz[32];
@@ -345,10 +339,18 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 			break;
 		}
 
-		if (std::find(sections.begin(), sections.end(), str) == sections.end()) {
+		if (std::find(existing.begin(), existing.end(), str) == existing.end()) {
 			break;
 		}
 	}
 
 	return str;
+}
+
+void SiteConnectionEditor::ProtocolOptions()
+{
+	if (_protocol == "sftp") {
+		ProtocolOptionsSFTP().Ask(_protocol_options);
+	}
+//	ProtocolOptionsSFTP
 }

@@ -288,6 +288,13 @@ void BaseDialog::TextFromDialogControl(int ctl, std::string &str)
 	Wide2MB(buf, str);
 }
 
+long long BaseDialog::LongLongFromDialogControl(int ctl)
+{
+	std::string str;
+	TextFromDialogControl(ctl, str);
+	return atoll(str.c_str());
+}
+
 void BaseDialog::SetEnabledDialogControl(int ctl, bool en)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
@@ -402,3 +409,34 @@ void BaseDialog::ProgressBarToDialogControl(int ctl, int percents)
 	TextToDialogControl(ctl, str);
 }
 
+
+int BaseDialog::GetDialogListPosition(int ctl)
+{
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		const auto *items = _di[ctl].ListItems;
+		for (int i = 0; i < items->ItemsNumber; ++i) {
+			if (items->Items[i].Flags & LIF_SELECTED) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	return SendDlgMessage(DM_LISTGETCURPOS, ctl, 0);
+}
+
+void BaseDialog::SetDialogListPosition(int ctl, int pos)
+{
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		auto *items = _di[ctl].ListItems;
+		for (int i = 0; i < items->ItemsNumber; ++i) {
+			if (i == pos) {
+				items->Items[i].Flags|= LIF_SELECTED;
+			} else
+				items->Items[i].Flags&= ~LIF_SELECTED;
+		}
+		return;
+	}
+
+//TODO:	SendDlgMessage(DM_LISTGETCURPOS, ctl, 0);
+}

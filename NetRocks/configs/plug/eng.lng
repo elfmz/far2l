@@ -12,7 +12,7 @@
 "Operation failed"
 
 "Could not connect"
-"Wrong path spfcification"
+"Wrong path specification"
 
 "Authentification"
 "Authentification - retry"
@@ -30,10 +30,11 @@
 "Login &password     :"
 "&Working directory  :"
 "&Display name       :"
-"&Advanced options"
+"Pro&tocol options"
 "&Save"
 "C&onnect"
 
+"<Create site connection>"
 "Site connection settings"
 
 "Download from server"
@@ -163,3 +164,7 @@
 "Are you really sure you want to exit FAR?"
 "&Background tasks"
 
+"SFTP protocol options"
+"Max IO &block size, bytes:"
+"Enable &TCP_NODELAY option (libssh >= v0.8.0)"
+"Enable &sandbox (if you dont trust server)"

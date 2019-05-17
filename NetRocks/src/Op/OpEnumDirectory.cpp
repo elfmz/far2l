@@ -70,8 +70,12 @@ void OpEnumDirectory::Process()
 		}
 	);
 
+	// Now for those of them which are symlinks check if they point to directory and
+	// set FILE_ATTRIBUTE_DIRECTORY to tell far2l that they're 'enterable' directories
+	// note that not using WhatOnErrorWrap for a reason to do not bother user with
+	// annoying errors if some directories target's will appear inaccessble.
 	std::string path_name;
-	for (int i = 0; i < _result.count; ++i) {
+	for (int i = _initial_result_count; i < _result.count; ++i) {
 		auto &entry = _result.items[i];
 		if (S_ISLNK(entry.FindData.dwUnixMode)) try {
 			path_name = _base_dir;
@@ -83,8 +87,13 @@ void OpEnumDirectory::Process()
 			if (S_ISDIR(mode)) {
 				entry.FindData.dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
 			}
-		} catch (std::exception &) {
+		} catch (std::exception &ex) {
+			fprintf(stderr,
+				"NetRocks::OpEnumDirectory: '%s' at target of '%s'\n",
+				ex.what(), path_name.c_str());
 		}
+
+		ProgressStateUpdate psu(_state); // check for pause/abort
 	}
 
 

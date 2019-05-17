@@ -83,6 +83,8 @@ protected:
 	bool IsCheckedDialogControl(int ctl);
 
 	void TextFromDialogControl(int ctl, std::string &str);
+	long long LongLongFromDialogControl(int ctl);
+
 	void TextToDialogControl(int ctl, const char *str);
 	void TextToDialogControl(int ctl, const std::string &str);
 	void TextToDialogControl(int ctl, int lng_str);
@@ -94,6 +96,8 @@ protected:
 
 	void ProgressBarToDialogControl(int ctl, int percents = -1);
 
+	int GetDialogListPosition(int ctl);
+	void SetDialogListPosition(int ctl, int pos);
 
 public:
 	virtual ~BaseDialog();

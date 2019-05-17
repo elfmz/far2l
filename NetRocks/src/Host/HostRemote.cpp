@@ -5,10 +5,11 @@
 #include <fcntl.h>
 #include <string>
 #include <vector>
-#include <KeyFileHelper.h>
 #include <ScopeHelpers.h>
 #include <StringConfig.h>
 #include <CheckedCast.hpp>
+
+#include "../SitesConfig.h"
 
 #include "HostRemote.h"
 #include "Protocol/Protocol.h"
@@ -22,14 +23,14 @@
 HostRemote::HostRemote(const std::string &site)
 	: _site(site)
 {
-	KeyFileHelper kfh(G.config.c_str());
-	_protocol = kfh.GetString(_site.c_str(), "Protocol");
-	_host = kfh.GetString(_site.c_str(), "Host");
-	_port = (unsigned int)kfh.GetInt(_site.c_str(), "Port");
-	_login_mode = (unsigned int)kfh.GetInt(_site.c_str(), "LoginMode", 2);
-	_username = kfh.GetString(_site.c_str(), "Username");
-	_password = kfh.GetString(_site.c_str(), "Password"); // TODO: de/obfuscation
-	_options = kfh.GetString(_site.c_str(), "Options");
+	SitesConfig sc;
+	_protocol = sc.GetProtocol(_site);
+	_host = sc.GetHost(_site);
+	_port = sc.GetPort(_site);
+	_login_mode = sc.GetLoginMode(_site);
+	_username = sc.GetUsername(_site);
+	_password = sc.GetPassword(_site);
+	_options = sc.GetProtocolOptions(_site, _protocol);
 
 	if (_login_mode == 0) {
 		_password.clear();
@@ -267,8 +268,7 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 	_options = protocol_options.Serialize();
 
 	if (!_site.empty()) {
-		KeyFileHelper kfh(G.config.c_str());
-		kfh.PutString(_site.c_str(), "Options", _options.c_str());
+		SitesConfig().PutProtocolOptions(_site, _protocol, _options);
 	}
 	return true;
 }

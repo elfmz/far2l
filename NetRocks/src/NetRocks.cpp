@@ -70,6 +70,8 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPluginW(int OpenFrom, INT_PTR Item)
 		}
 
 		Item = 0;
+//		static const wchar_t s_curdir_cmd[] = L"file:.";
+//		Item = (INT_PTR)&s_curdir_cmd[0];
 	}
 
 
@@ -219,13 +221,7 @@ SHAREDSYMBOL int WINAPI _export ConfigureW(int ItemNumber)
 	if (!G.IsStarted())
 		return 0;
 
-	if (CountOfAllBackgroundTasks()) {
-		BackgroundTasksList();
-	} else {
-		const wchar_t *msg[] = { G.GetMsgWide(MTitle), G.GetMsgWide(MNoBackgrundTasks), G.GetMsgWide(MOK)};
-		G.info.Message(G.info.ModuleNumber, 0, nullptr, msg, ARRAYSIZE(msg), 1);
-	}
-
+	BackgroundTasksList();
 	return 1;
 /*
 	struct FarDialogItem fdi[] = {

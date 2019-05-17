@@ -6,6 +6,11 @@
 
 void BackgroundTasksList()
 {
+	if (CountOfAllBackgroundTasks() == 0) {
+		const wchar_t *msg[] = { G.GetMsgWide(MTitle), G.GetMsgWide(MNoBackgrundTasks), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, 0, nullptr, msg, ARRAYSIZE(msg), 1);
+	}
+
 	std::wstring item_text;
 	std::set<std::wstring> str_pool;
 	std::wstring prefix_active = G.GetMsgWide(MBackgroundTasksMenuActive);

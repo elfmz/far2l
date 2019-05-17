@@ -31,10 +31,11 @@ enum LanguageID
   MPassword,
   MDirectory,
   MDisplayName,
-  MAdvancedOptions,
+  MProtocolOptions,
   MSave,
   MConnect,
 
+  MCreateSiteConnection,
   MEditHost,
 
   MXferCopyDownloadTitle,
@@ -164,5 +165,10 @@ enum LanguageID
   MConfirmExitFARTitle,
   MConfirmExitFARText,
   MConfirmExitFARQuestion,
-  MConfirmExitFARBackgroundTasks
+  MConfirmExitFARBackgroundTasks,
+
+  MSFTPOptionsTitle,
+  MSFTPMaxBlockSize,
+  MSFTPTCPNodelay,
+  MSFTPEnableSandbox
 };

@@ -3,6 +3,7 @@ project(NetRocks)
 set(SOURCES
 src/Erroring.cpp
 src/Globals.cpp
+src/SitesConfig.cpp
 src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PluginPanelItems.cpp
@@ -26,6 +27,7 @@ src/UI/InteractiveLogin.cpp
 src/UI/ConfirmNewServerIdentity.cpp
 src/UI/WhatOnError.cpp
 src/UI/BackgroundTasksUI.cpp
+src/UI/ProtocolOptions/ProtocolOptionsSFTP.cpp
 src/Op/Utils/ProgressStateUpdate.cpp
 src/Op/Utils/Enumer.cpp
 src/Op/Utils/IOBuffer.cpp

@@ -25,7 +25,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#define MAX_SFTP_IO_BLOCK_SIZE		((size_t)32768)	// googling shows than such block size compatible with at least most of servers
+// #define MAX_SFTP_IO_BLOCK_SIZE		((size_t)32768)	// googling shows than such block size compatible with at least most of servers
 
 static void SSHSessionDeleter(ssh_session res)
 {
@@ -81,6 +81,7 @@ struct SFTPConnection
 {
 	ssh_session ssh = nullptr;
 	sftp_session sftp = nullptr;
+	size_t max_io_block = 32768; // default value
 
 	~SFTPConnection()
 	{
@@ -134,13 +135,22 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_USER, &port);
 
+	if (options.GetInt("TcpNoDelay") ) {
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
-	int nodelay = 1;
-	ssh_options_set(_conn->ssh, SSH_OPTIONS_NODELAY, &nodelay);
+		int nodelay = 1;
+		ssh_options_set(_conn->ssh, SSH_OPTIONS_NODELAY, &nodelay);
+#else
+		fprintf(stderr, "NetRocks::ProtocolSFTP: cannot set SSH_OPTIONS_NODELAY - too old libssh\n");
 #endif
+	}
+
+	_conn->max_io_block = (size_t)std::max(options.GetInt("MaxIOBlock", _conn->max_io_block), 512);
 
 	int verbosity = SSH_LOG_NOLOG;//SSH_LOG_WARNING;//SSH_LOG_PROTOCOL;
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
+
+
+	// TODO: seccomp: if (options.GetInt("Sandbox") ) ...
 
 	int rc = ssh_connect(_conn->ssh);
 	if (rc != SSH_OK)
@@ -417,22 +427,22 @@ public:
 	template <class BUF_T, class SYNC_IO_T, class ASYNC_IO_BEGIN_T, class ASYNC_IO_WAIT_T>
 		size_t AsyncIO(BUF_T buf, size_t len, SYNC_IO_T p_sync_io, ASYNC_IO_BEGIN_T p_async_io_begin, ASYNC_IO_WAIT_T p_async_io_wait)
 	{
-		if (len <= MAX_SFTP_IO_BLOCK_SIZE || _sync_fallback) {
-			return SyncIO(buf, std::min(len, MAX_SFTP_IO_BLOCK_SIZE), p_sync_io);
+		if (len <= _conn->max_io_block || _sync_fallback) {
+			return SyncIO(buf, std::min(len, _conn->max_io_block), p_sync_io);
 		}
 
-		size_t pipeline_count = len / MAX_SFTP_IO_BLOCK_SIZE;
-		if (pipeline_count * MAX_SFTP_IO_BLOCK_SIZE < len) {
+		size_t pipeline_count = len / _conn->max_io_block;
+		if (pipeline_count * _conn->max_io_block < len) {
 			++pipeline_count;
 		}
 
 		int *pipeline = (int *)alloca(pipeline_count * sizeof(int));
 		for (size_t i = 0; i != pipeline_count; ++i) {
-			const size_t pipeline_piece = std::min(len - i * MAX_SFTP_IO_BLOCK_SIZE, MAX_SFTP_IO_BLOCK_SIZE);
+			const size_t pipeline_piece = std::min(len - i * _conn->max_io_block, _conn->max_io_block);
 			pipeline[i] = p_async_io_begin(_file, (uint32_t)pipeline_piece);
 			if (pipeline[i] < 0) {
 				if (i == 0) {
-					size_t r = SyncIO(buf, std::min(len, MAX_SFTP_IO_BLOCK_SIZE), p_sync_io);
+					size_t r = SyncIO(buf, std::min(len, _conn->max_io_block), p_sync_io);
 					_sync_fallback = true;
 					fprintf(stderr, "SFTPFileIO::IO(...0x%lx): sync fallback1\n", (unsigned long)len);
 					return r;
@@ -446,7 +456,7 @@ public:
 		int first_failed = 0;
 
 		for (size_t i = 0; i != pipeline_count; ++i) {
-			const size_t pipeline_piece = std::min(len - i * MAX_SFTP_IO_BLOCK_SIZE, MAX_SFTP_IO_BLOCK_SIZE);
+			const size_t pipeline_piece = std::min(len - i * _conn->max_io_block, _conn->max_io_block);
 			int done_piece = p_async_io_wait(_file, (char *)buf + done_length, pipeline_piece, pipeline[i]);
 			if (done_piece < 0) {
 				if (i == 0) {
@@ -460,7 +470,7 @@ public:
 		}
 
 		if (done_length == 0 && first_failed) {
-			done_length = SyncIO(buf, std::min(len, MAX_SFTP_IO_BLOCK_SIZE), p_sync_io);
+			done_length = SyncIO(buf, std::min(len, _conn->max_io_block), p_sync_io);
 			_sync_fallback = true;
 			fprintf(stderr, "SFTPFileIO::IO(...0x%lx): sync fallback2\n", (unsigned long)len);
 		}
@@ -487,7 +497,7 @@ public:
 #endif
 		// somewhy libssh doesnt have async write yet
 		if (len > 0) for (;;) {
-			size_t piece = (len >= MAX_SFTP_IO_BLOCK_SIZE) ? MAX_SFTP_IO_BLOCK_SIZE : len;
+			size_t piece = (len >= _conn->max_io_block) ? _conn->max_io_block : len;
 
 			piece = SyncIO(buf, piece, sftp_write);
 

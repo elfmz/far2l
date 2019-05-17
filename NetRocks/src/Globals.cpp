@@ -6,11 +6,12 @@ struct Globals G;
 
 void Globals::Startup(const struct PluginStartupInfo *Info)
 {
-	info = *Info;
-	fsf = *(Info->FSF);
-	info.FSF = &fsf;
-	config = InMyConfig("netrocks.ini", false);
-	_started = true;
+	if (!_started) {
+		info = *Info;
+		fsf = *(Info->FSF);
+		info.FSF = &fsf;
+		_started = true;
+	}
 }
 
 const wchar_t *Globals::GetMsgWide(int id)

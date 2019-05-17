@@ -28,7 +28,7 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	bool SymlinkCopy(const std::string &path_src, const std::string &path_dst);
 	bool FileCopyLoop(const std::string &path_src, const std::string &path_dst, FileInformation &info);
 	void EnsureProgressConsistency();
-	void CopyTimes(const std::string &path_dst, const FileInformation &info);
+	void CopyAttributes(const std::string &path_dst, const FileInformation &info);
 
 public:
 	OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,

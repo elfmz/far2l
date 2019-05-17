@@ -12,6 +12,8 @@
 #define MAX_BUFFER_SIZE         0x1000000
 #define INITIAL_BUFFER_SIZE     0x8000
 
+#define CREATE_WITH_EXTRA_MODE	(S_IRUSR | S_IWUSR)
+
 OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 	std::shared_ptr<IHost> &dst_host, const std::string &dst_dir,
 	struct PluginPanelItem *items, int items_count, XferKind kind, XferDirection direction)
@@ -309,7 +311,7 @@ void OpXfer::Transfer()
 				}
 			}
 			if (FileCopyLoop(e.first, path_dst, e.second)) {
-				CopyTimes(path_dst, e.second);
+				CopyAttributes(path_dst, e.second);
 				if (_kind == XK_MOVE) {
 					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
 						[&] () mutable
@@ -329,7 +331,7 @@ void OpXfer::Transfer()
 		if (S_ISDIR(rev_i->second.mode)) {
 			path_dst = _dst_dir;
 			path_dst+= rev_i->first.substr(_base_dir.size());
-			CopyTimes(path_dst, rev_i->second);
+			CopyAttributes(path_dst, rev_i->second);
 		}
 
 		if (_kind == XK_MOVE) {
@@ -345,7 +347,7 @@ void OpXfer::Transfer()
 	}
 }
 
-void OpXfer::CopyTimes(const std::string &path_dst, const FileInformation &info)
+void OpXfer::CopyAttributes(const std::string &path_dst, const FileInformation &info)
 {
 	WhatOnErrorWrap<WEK_SETTIMES>(_wea_state, _state, _dst_host.get(), path_dst,
 		[&] () mutable
@@ -353,6 +355,18 @@ void OpXfer::CopyTimes(const std::string &path_dst, const FileInformation &info)
 			_dst_host->SetTimes(path_dst.c_str(), info.access_time, info.modification_time);
 		}
 	);
+
+	if (( (info.mode | CREATE_WITH_EXTRA_MODE) == info.mode)) {
+		return;
+	}
+
+	WhatOnErrorWrap<WEK_CHMODE>(_wea_state, _state, _dst_host.get(), path_dst,
+		[&] () mutable
+		{
+			_dst_host->SetMode(path_dst.c_str(), info.mode);
+		}
+	);
+
 }
 
 void OpXfer::EnsureProgressConsistency()
@@ -384,7 +398,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		indicted = _base_host.get();
 		std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, file_complete);
 		indicted = _dst_host.get();
-		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode, file_complete);
+		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode | CREATE_WITH_EXTRA_MODE, file_complete);
 		if (!_io_buf.Size())
 			throw std::runtime_error("No buffer - no file");
 
@@ -487,7 +501,7 @@ void OpXfer::DirectoryCopy(const std::string &path_dst, const FileInformation &i
 	WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), path_dst,
 		[&] () mutable
 		{
-			_dst_host->DirectoryCreate(path_dst, info.mode);
+			_dst_host->DirectoryCreate(path_dst, info.mode | CREATE_WITH_EXTRA_MODE);
 		}
 	);
 }

@@ -181,8 +181,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 	Info->PluginMenuStrings = PluginMenuStrings;
 	Info->PluginMenuStringsNumber = (CountOfAllBackgroundTasks() != 0) ? ARRAYSIZE(PluginMenuStrings) : 1;
 
-	static wchar_t s_command_prefix[G.MAX_COMMAND_PREFIX + 1] = {}; // WHY?
-	wcsncpy(s_command_prefix, G.command_prefix.c_str(), ARRAYSIZE(s_command_prefix));
+	static wchar_t s_command_prefix[64] = L"sftp:file:\0\0";
 	Info->CommandPrefix = s_command_prefix;
 
 

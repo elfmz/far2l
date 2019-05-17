@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <string.h>
 #include "IOBuffer.h"
 
 #define ALIGNMENT              ((size_t)0x1000)
@@ -44,7 +45,7 @@ IOBuffer::~IOBuffer()
 
 
 
-bool IOBuffer::Increase()
+bool IOBuffer::Increase(bool preserve_data)
 {
 	if (_size >= _max_size)
 		return false;
@@ -66,7 +67,9 @@ bool IOBuffer::Increase()
 		return false;
 	}
 	if (_data) {
-		// dont care memcpy(new_data, _data, _size);
+		if (preserve_data) {
+			memcpy(new_data, _data, _size);
+		}
 		free(_data);
 	}
 	_data = new_data;

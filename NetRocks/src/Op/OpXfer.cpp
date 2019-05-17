@@ -424,7 +424,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			if (piece == _io_buf.Size()) {
 				msec = TimeMSNow() - msec;
 				if (msec.count() < 100) {
-					if (_io_buf.Increase()) {
+					if (_io_buf.Increase(false)) {
 						fprintf(stderr, "NetRocks: IO buffer size increased to %lu\n", _io_buf.Size());
 					}
 				} else if (msec.count() > 500) {

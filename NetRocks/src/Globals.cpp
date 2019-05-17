@@ -9,7 +9,6 @@ void Globals::Startup(const struct PluginStartupInfo *Info)
 	info = *Info;
 	fsf = *(Info->FSF);
 	info.FSF = &fsf;
-	command_prefix = L"sftp"; //ensure not longer than MAX_COMMAND_PREFIX
 	config = InMyConfig("netrocks.ini", false);
 	_started = true;
 }

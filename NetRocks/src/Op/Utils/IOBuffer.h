@@ -20,6 +20,6 @@ public:
 	inline void *Data() { return _data; }
 	inline size_t Size() { return _size; }
 
-	bool Increase(); //  !!!MAY INVALIDATE DATA!!! tries to increase size of buffer (will not go above max_size)
+	bool Increase(bool preserve_data = true); //  tries to increase size of buffer (will not go above max_size)
 	bool Decrease(); // tries to decrease size of buffer (will not go below min_size)
 };

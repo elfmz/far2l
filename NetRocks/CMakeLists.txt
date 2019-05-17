@@ -9,6 +9,7 @@ src/PluginPanelItems.cpp
 src/PooledStrings.cpp
 src/BackgroundTasks.cpp
 src/Protocol/ProtocolSFTP.cpp
+src/Protocol/SplitPathSpecification.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp

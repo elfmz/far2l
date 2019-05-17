@@ -23,11 +23,15 @@
 
 static unsigned int DefaultPortForProtocol(const char *protocol)
 {
-	if (strcasecmp(protocol, "sftp") == 0)
-		return 22;
+//	if (strcasecmp(protocol, "file") == 0)
+//		return 0;
+	if (protocol) {
+		if (strcasecmp(protocol, "sftp") == 0)
+			return 22;
 
-	if (strcasecmp(protocol, "ftp") == 0)
-		return 21;
+		if (strcasecmp(protocol, "ftp") == 0)
+			return 21;
+	}
 
 	return 0;
 }
@@ -45,6 +49,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 	}
 
 	_di_protocols.Add("sftp");
+	_di_protocols.Add("file");
 	if (_protocol.empty() || !_di_protocols.Select(_protocol.c_str())) {
 		_protocol = "sftp";
 		_di_protocols.Select(_protocol.c_str());
@@ -59,7 +64,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 	}
 
 	if (_port == 0) {
-		_port = DefaultPortForProtocol("sftp");
+		_port = DefaultPortForProtocol(_di_protocols.GetSelection());
 	}
 
 	_di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, MEditHost);

@@ -3,7 +3,7 @@ Linux port of FAR Manager v2 (http://farmanager.com/)
 ALPHA VERSION.
 **Currently interesting only for enthusiasts!!!**
 
-Plug-ins that are currently working: colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
+Plug-ins that are currently working: NetRocks (SFTP), colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
 
 [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 
@@ -154,3 +154,6 @@ Param2 points to value of type HANDLE, call sets that value to handle of plugin 
 * int MayExitFARW();
 far2l asks plugin if it can exit now. If plugin has some background tasks pending it may block exiting of far2l, however it highly recommended to give user choice using UI prompt.
 
+### Added following dialog messages:
+* DM_GETCOLOR - retrieves get current color attributes of selected dialog item
+* DM_SETCOLOR - changes current color attributes of selected dialog item

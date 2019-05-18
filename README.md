@@ -24,6 +24,7 @@ Plug-ins that are currently working: NetRocks (SFTP), colorer, multiarc, farftp,
 * m4
 * libglib2.0-dev
 * libwxgtk3.0-dev
+* libssh-dev (needed for NetRocks/SFTP)
 * cmake ( >= 3.2.2 )
 * g++
 * git (needed for downloading source code)

@@ -576,9 +576,22 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 	DWORD ReadKey=0;
 	int NotMacros=FALSE;
 	static int LastMsClickMacroKey=0;
+	static clock_t sLastIdleDelivered = 0;
 
 	if (AllowSynchro)
 		PluginSynchroManager.Process();
+
+	if (FrameManager->RegularIdleWantersCount())
+	{
+		clock_t now = GetProcessUptimeMSec();
+		if (now - sLastIdleDelivered >= 1000) {
+			LastEventIdle=TRUE;
+			memset(rec,0,sizeof(*rec));
+			rec->EventType=KEY_EVENT;
+			sLastIdleDelivered=now;
+			return KEY_IDLE;
+		}
+	}
 
 	if (!ExcludeMacro && CtrlObject && CtrlObject->Cp())
 	{
@@ -855,6 +868,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 				LastEventIdle=TRUE;
 				memset(rec,0,sizeof(*rec));
 				rec->EventType=KEY_EVENT;
+				sLastIdleDelivered=GetProcessUptimeMSec();
 				return(KEY_IDLE);
 			}
 		}
@@ -867,6 +881,13 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 		LoopCount++;
 	} // while (1)
+
+	if (rec->EventType==NOOP_EVENT) {
+		Console.ReadInput(*rec, 1, ReadCount);
+		memset(rec,0,sizeof(*rec));
+		rec->EventType=KEY_EVENT;
+		return KEY_NONE;
+	}
 
 	clock_t CurClock=GetProcessUptimeMSec();
 

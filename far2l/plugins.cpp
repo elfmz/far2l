@@ -389,6 +389,8 @@ void PluginManager::LoadPlugins()
 {
 	Flags.Clear(PSIF_PLUGINSLOADDED);
 
+	clock_t cl_start = clock();
+
 	if (Opt.LoadPlug.PluginsCacheOnly)  // $ 01.09.2000 tran  '/co' switch
 	{
 		LoadPluginsFromCache();
@@ -460,6 +462,11 @@ void PluginManager::LoadPlugins()
 	}
 
 	Flags.Set(PSIF_PLUGINSLOADDED);
+
+	clock_t cl_end = clock();
+
+	fprintf(stderr, "STARTUP=%ld\n", long(cl_end - cl_start) );
+
 	far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
 }
 
@@ -850,6 +857,12 @@ void PluginManager::ClosePlugin(HANDLE hPlugin)
 	PluginHandle *ph = (PluginHandle*)hPlugin;
 	ph->pPlugin->ClosePlugin(ph->hPlugin);
 	delete ph;
+}
+
+HANDLE PluginManager::GetRealPluginHandle(HANDLE hPlugin)
+{
+	PluginHandle *ph = (PluginHandle*)hPlugin;
+	return ph->hPlugin;
 }
 
 
@@ -2105,4 +2118,20 @@ void PluginManager::GetCustomData(FileListItem *ListItem)
 				pPlugin->FreeCustomData(CustomData);
 		}
 	}
+}
+
+bool PluginManager::MayExitFar()
+{
+	bool out = true;
+	for (int i=0; i<PluginsCount; i++)
+	{
+		Plugin *pPlugin = PluginsData[i];
+
+		if (pPlugin->HasMayExitFAR() && !pPlugin->MayExitFAR())
+		{
+			out = false;
+		}
+	}
+
+	return out;
 }

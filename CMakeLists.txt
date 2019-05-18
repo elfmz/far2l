@@ -1,3 +1,5 @@
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+
 cmake_minimum_required (VERSION 3.0.2)
 
 project (FAR)
@@ -39,6 +41,21 @@ else()
 	set(USEWX_LIBS ${wxWidgets_LIBRARIES})
 	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
 endif()
+
+#find_package(LibSSH 0.5.0 QUIET)
+find_package(LibSSH 0.5.0)
+if(LIBSSH_FOUND)
+	message(STATUS "libssh found")
+	if (NOT DEFINED NETROCKS)
+		set(NETROCKS "YES")
+	endif()
+
+elseif(NOT LIBSSH_FOUND AND NETROCKS)
+	message(FATAL_ERROR "libssh >= 0.5.0 not found but NETROCKS build was requested.\nInstall libssh-dev or omit NETROCKS=YES to build without it.")
+else()
+	message(WARNING "libssh >= 0.5.0 not found, omitting NETROCKS build.")
+	set(NETROCKS "NO")
+endif(LIBSSH_FOUND)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
@@ -87,6 +104,10 @@ add_subdirectory (drawline)
 add_subdirectory (editorcomp)
 add_subdirectory (inside)
 add_subdirectory (incsrch)
+
+if (NETROCKS)
+	add_subdirectory (NetRocks)
+endif()
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

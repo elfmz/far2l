@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "strmix.hpp"
 #include "history.hpp"
-
+#include "InterThreadCall.hpp"
 #include <cwctype>
 
 #define VTEXT_ADN_SEPARATORS	1
@@ -4782,16 +4782,8 @@ LONG_PTR Dialog::CallDlgProc(int nMsg, int nParam1, LONG_PTR nParam2)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* $ 28.07.2000 SVS
-   Посылка сообщения диалогу
-   Некоторые сообщения эта функция обрабатывает сама, не передавая управление
-   обработчику диалога.
-*/
-LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
+LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
-	if (!hDlg)
-		return 0;
-
 	Dialog* Dlg=(Dialog*)hDlg;
 	CriticalSectionLock Lock(Dlg->CS);
 	_DIALOG(CleverSysLog CL(L"Dialog.SendDlgMessage()"));
@@ -6251,6 +6243,30 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 			return (PrevFlags&DIF_DISABLE)?FALSE:TRUE;
 		}
+
+		case DM_GETCOLOR:
+		{
+			*(DWORD*)Param2=(DWORD)Dlg->CtlColorDlgItem(Param1, CurItem->Type,
+				CurItem->Focus, CurItem->DefaultButton, CurItem->Flags);
+			*(DWORD*)Param2|= (CurItem->Flags & DIF_SETCOLOR);
+			return TRUE;
+		}
+
+
+		case DM_SETCOLOR:
+		{
+			CurItem->Flags&= ~(DIF_SETCOLOR | DIF_COLORMASK);
+			CurItem->Flags|= Param2 & (DIF_SETCOLOR | DIF_COLORMASK);
+
+			if (Dlg->DialogMode.Check(DMODE_SHOW)) //???
+			{
+				Dlg->ShowDialog(Param1);
+				ScrBuf.Flush();
+			}
+
+			return TRUE;
+		}
+
 		/*****************************************************************/
 		// получить позицию и размеры контрола
 		case DM_GETITEMPOSITION: // Param1=ID, Param2=*SMALL_RECT
@@ -6359,6 +6375,19 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 	// Все, что сами не отрабатываем - посылаем на обработку обработчику.
 	return Dlg->CallDlgProc(Msg,Param1,Param2);
+}
+
+/* $ 28.07.2000 SVS
+   Посылка сообщения диалогу
+   Некоторые сообщения эта функция обрабатывает сама, не передавая управление
+   обработчику диалога.
+*/
+LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
+{
+	if (!hDlg)
+		return 0;
+
+	return InterThreadCall<LONG_PTR, 0>(std::bind(SendDlgMessageSynched, hDlg, Msg, Param1, Param2));
 }
 
 void Dialog::SetPosition(int X1,int Y1,int X2,int Y2)

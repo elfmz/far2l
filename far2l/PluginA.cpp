@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "farexcpt.hpp"
 #include "fileedit.hpp"
 #include "RefreshFrameManager.hpp"
+#include "InterThreadCall.hpp"
 #include "plclass.hpp"
 #include "PluginA.hpp"
 #include "registry.hpp"
@@ -94,6 +95,7 @@ static const wchar_t wszReg_DeleteFiles[]=L"DeleteFiles";
 static const wchar_t wszReg_MakeDirectory[]=L"MakeDirectory";
 static const wchar_t wszReg_ProcessHostFile[]=L"ProcessHostFile";
 static const wchar_t wszReg_Configure[]=L"Configure";
+static const wchar_t wszReg_MayExitFAR[]=L"MayExitFAR";
 static const wchar_t wszReg_ExitFAR[]=L"ExitFAR";
 static const wchar_t wszReg_ProcessKey[]=L"ProcessKey";
 static const wchar_t wszReg_ProcessEvent[]=L"ProcessEvent";
@@ -123,6 +125,7 @@ static const char NFMP_DeleteFiles[]="DeleteFiles";
 static const char NFMP_MakeDirectory[]="MakeDirectory";
 static const char NFMP_ProcessHostFile[]="ProcessHostFile";
 static const char NFMP_Configure[]="Configure";
+static const char NFMP_MayExitFAR[]="MayExitFAR";
 static const char NFMP_ExitFAR[]="ExitFAR";
 static const char NFMP_ProcessKey[]="ProcessKey";
 static const char NFMP_ProcessEvent[]="ProcessEvent";
@@ -355,6 +358,7 @@ bool PluginA::Load()
 	pSetFindList=(PLUGINSETFINDLIST)WINPORT(GetProcAddress)(m_hModule,NFMP_SetFindList);
 	pConfigure=(PLUGINCONFIGURE)WINPORT(GetProcAddress)(m_hModule,NFMP_Configure);
 	pExitFAR=(PLUGINEXITFAR)WINPORT(GetProcAddress)(m_hModule,NFMP_ExitFAR);
+	pMayExitFAR=(PLUGINMAYEXITFAR)WINPORT(GetProcAddress)(m_hModule,NFMP_MayExitFAR);
 	pProcessKey=(PLUGINPROCESSKEY)WINPORT(GetProcAddress)(m_hModule,NFMP_ProcessKey);
 	pProcessEvent=(PLUGINPROCESSEVENT)WINPORT(GetProcAddress)(m_hModule,NFMP_ProcessEvent);
 	pCompare=(PLUGINCOMPARE)WINPORT(GetProcAddress)(m_hModule,NFMP_Compare);
@@ -378,6 +382,17 @@ bool PluginA::Load()
 	FuncFlags.Set(PICFF_LOADED);
 	SaveToCache();
 	return true;
+}
+
+
+static void farDisplayNotificationA(const char *action, const char *object)
+{
+	DisplayNotification(action, object);
+}
+
+static int farDispatchInterThreadCallsA()
+{
+	return DispatchInterThreadCalls();
 }
 
 static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo *PSI, oldfar::FarStandardFunctions *FSF)
@@ -427,6 +442,8 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 		StandardFunctions.ExpandEnvironmentStr=ExpandEnvironmentStrA;
 		StandardFunctions.Execute = farExecuteA;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryA;
+		StandardFunctions.DisplayNotification = farDisplayNotificationA;
+		StandardFunctions.DispatchInterThreadCalls = farDispatchInterThreadCallsA;
 	}
 
 	if (!StartupInfo.StructSize)
@@ -1420,6 +1437,20 @@ bool PluginA::GetPluginInfo(PluginInfo *pi)
 	return false;
 }
 
+bool PluginA::MayExitFAR()
+{
+	if (pMayExitFAR && !ProcessException)
+	{
+		ExecuteStruct es;
+		es.id = EXCEPT_MAYEXITFAR;
+		es.bDefaultResult = 1;
+		EXECUTE_FUNCTION_EX(pMayExitFAR(), es);
+		return es.bResult;
+	}
+
+	return true;
+}
+
 void PluginA::ExitFAR()
 {
 	if (pExitFAR && !ProcessException)
@@ -1452,6 +1483,7 @@ void PluginA::ClearExports()
 	pSetFindList=nullptr;
 	pConfigure=nullptr;
 	pExitFAR=nullptr;
+	pMayExitFAR=nullptr;
 	pProcessKey=nullptr;
 	pProcessEvent=nullptr;
 	pCompare=nullptr;

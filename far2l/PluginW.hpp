@@ -40,6 +40,7 @@ typedef void (WINAPI *PLUGINCLOSEPLUGINW)(HANDLE hPlugin);
 typedef int (WINAPI *PLUGINCOMPAREW)(HANDLE hPlugin,const PluginPanelItem *Item1,const PluginPanelItem *Item2,unsigned int Mode);
 typedef int (WINAPI *PLUGINCONFIGUREW)(int ItemNumber);
 typedef int (WINAPI *PLUGINDELETEFILESW)(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
+typedef int (WINAPI *PLUGINMAYEXITFARW)();
 typedef void (WINAPI *PLUGINEXITFARW)();
 typedef void (WINAPI *PLUGINFREEFINDDATAW)(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber);
 typedef void (WINAPI *PLUGINFREEVIRTUALFINDDATAW)(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber);
@@ -115,6 +116,7 @@ class PluginW: public Plugin
 		PLUGINPROCESSHOSTFILEW       pProcessHostFileW;
 		PLUGINSETFINDLISTW           pSetFindListW;
 		PLUGINCONFIGUREW             pConfigureW;
+		PLUGINMAYEXITFARW            pMayExitFARW;
 		PLUGINEXITFARW               pExitFARW;
 		PLUGINPROCESSKEYW            pProcessKeyW;
 		PLUGINPROCESSEVENTW          pProcessEventW;
@@ -166,6 +168,7 @@ class PluginW: public Plugin
 		bool HasProcessHostFile() { return pProcessHostFileW!=nullptr; }
 		bool HasSetFindList() { return pSetFindListW!=nullptr; }
 		bool HasConfigure() { return pConfigureW!=nullptr; }
+		bool HasMayExitFAR() { return pMayExitFARW!=nullptr; }
 		bool HasExitFAR() { return pExitFARW!=nullptr; }
 		bool HasProcessKey() { return pProcessKeyW!=nullptr; }
 		bool HasProcessEvent() { return pProcessEventW!=nullptr; }
@@ -237,6 +240,7 @@ class PluginW: public Plugin
 		bool GetPluginInfo(PluginInfo *pi);
 		int Configure(int MenuItem);
 
+		bool MayExitFAR();
 		void ExitFAR();
 
 	private:

@@ -1,0 +1,81 @@
+#include <stdlib.h>
+#include <unistd.h>
+#include "Erroring.h"
+
+static std::string FormatProtocolError(const char *msg, const char *info = nullptr, int err = 0)
+{
+	std::string s = msg;
+	if (info) {
+		s+= " - ";
+		s+= info;
+	}
+	if (err) {
+		char sz[64];
+		snprintf(sz, sizeof(sz), " (%d)", err);
+		s+= sz;
+	}
+	return s;
+}
+
+static const std::string &TeeStr(const std::string &s)
+{
+	fprintf(stderr, "%d: %s\n", getpid(), s.c_str());
+	return s;
+}
+
+static const char *TeeSZ(const char *s)
+{
+	fprintf(stderr, "%d: %s\n", getpid(), s);
+	return s;
+}
+
+
+ProtocolError::ProtocolError(const char *msg, const char *info, int err)
+	: std::runtime_error(TeeStr(FormatProtocolError(msg, info, err)))
+{
+}
+
+ProtocolError::ProtocolError(const char *msg, int err)
+	: std::runtime_error(TeeStr(FormatProtocolError(msg, nullptr, err)))
+{
+}
+
+ProtocolError::ProtocolError(const char *msg)
+	: std::runtime_error(TeeSZ(msg))
+{
+}
+
+ProtocolError::ProtocolError(const std::string &msg)
+	: std::runtime_error(TeeStr(msg))
+{
+}
+
+////////////
+
+ProtocolAuthFailedError::ProtocolAuthFailedError(const std::string &info)
+	: std::runtime_error(info)
+{
+}
+
+////////////
+
+ServerIdentityMismatchError::ServerIdentityMismatchError(const std::string &identity)
+	: std::runtime_error(identity)
+{
+}
+
+////////////
+
+static std::string FormatIPCError(const char *msg, unsigned int code)
+{
+	std::string s = msg;
+	char sz[32];
+	snprintf(sz, sizeof(sz) - 1, " (0x%x)", code);
+	s+= sz;
+	return s;
+}
+
+IPCError::IPCError(const char *msg, unsigned int code)
+	: std::runtime_error(TeeStr(FormatIPCError(msg, code)))
+{
+}

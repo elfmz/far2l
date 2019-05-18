@@ -1777,6 +1777,13 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 			break;
 		}
 
+		case FCTL_GETPANELPLUGINHANDLE:
+		{
+			*(HANDLE *)Param2 = (GetPluginHandle() != INVALID_HANDLE_VALUE) ? CtrlObject->Plugins.GetRealPluginHandle(GetPluginHandle()) : INVALID_HANDLE_VALUE;
+			Result=TRUE;
+			break;
+		}
+
 		case FCTL_SETSORTORDER:
 		{
 			ChangeSortOrder(Param1?-1:1);

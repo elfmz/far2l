@@ -1,0 +1,25 @@
+#pragma once
+#include <exception>
+#include <stdexcept>
+
+class IOBuffer
+{
+	void *_data = nullptr;
+	size_t _size = 0, _capacity = 0;
+
+	unsigned int _low_mem_countdown = 0;
+
+	size_t _min_size, _max_size;
+
+	IOBuffer(const IOBuffer &) = delete;
+
+public:
+	IOBuffer(size_t initial_size, size_t min_size, size_t max_size) throw (std::runtime_error);
+	~IOBuffer();
+
+	inline void *Data() { return _data; }
+	inline size_t Size() { return _size; }
+
+	bool Increase(bool preserve_data = true); //  tries to increase size of buffer (will not go above max_size)
+	bool Decrease(); // tries to decrease size of buffer (will not go below min_size)
+};

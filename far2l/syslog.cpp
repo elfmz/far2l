@@ -1101,6 +1101,9 @@ FARString __INPUT_RECORD_Dump(INPUT_RECORD *rec)
 		case MOUSE_EVENT:
 			Records=__MOUSE_EVENT_RECORD_Dump(&rec->Event.MouseEvent);
 			break;
+		case NOOP_EVENT:
+			Records.Format(L"NOOP_EVENT");
+			break;
 		default:
 			Records.Format(
 			    L"??????_EVENT_RECORD: EventType = %d",

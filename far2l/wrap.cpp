@@ -413,6 +413,9 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 		if (PanelItemA[i].Owner)
 			(*PanelItemW)[i].Owner = AnsiToUnicode(PanelItemA[i].Owner);
 
+		if (PanelItemA[i].Group)
+			(*PanelItemW)[i].Group = AnsiToUnicode(PanelItemA[i].Group);
+
 		if (PanelItemA[i].CustomColumnNumber)
 		{
 			(*PanelItemW)[i].CustomColumnNumber = PanelItemA[i].CustomColumnNumber;
@@ -442,6 +445,9 @@ void ConvertPanelItemToAnsi(const PluginPanelItem &PanelItem, oldfar::PluginPane
 
 	if (PanelItem.Owner)
 		PanelItemA.Owner=UnicodeToAnsi(PanelItem.Owner);
+
+	if (PanelItem.Group)
+		PanelItemA.Group=UnicodeToAnsi(PanelItem.Group);
 
 	if (PanelItem.CustomColumnNumber)
 	{
@@ -494,6 +500,9 @@ void FreeUnicodePanelItem(PluginPanelItem *PanelItem, int ItemsNumber)
 		if (PanelItem[i].Owner)
 			xf_free((void*)PanelItem[i].Owner);
 
+		if (PanelItem[i].Group)
+			xf_free((void*)PanelItem[i].Group);
+
 		if (PanelItem[i].CustomColumnNumber)
 		{
 			for (int j=0; j<PanelItem[i].CustomColumnNumber; j++)
@@ -517,6 +526,9 @@ void FreePanelItemA(oldfar::PluginPanelItem *PanelItem, int ItemsNumber, bool bF
 
 		if (PanelItem[i].Owner)
 			xf_free(PanelItem[i].Owner);
+
+		if (PanelItem[i].Group)
+			xf_free(PanelItem[i].Group);
 
 		if (PanelItem[i].CustomColumnNumber)
 		{
@@ -2402,6 +2414,10 @@ int WINAPI FarDialogExA(INT_PTR PluginNumber,int X1,int Y1,int X2,int Y2,const c
 
 	if (Flags&oldfar::FDLG_NONMODAL)     DlgFlags|=FDLG_NONMODAL;
 
+	if (Flags&oldfar::FDLG_KEEPCONSOLETITLE)     DlgFlags|=FDLG_KEEPCONSOLETITLE;
+
+	if (Flags&oldfar::FDLG_REGULARIDLE)     DlgFlags|=FDLG_REGULARIDLE;
+
 	int ret = -1;
 	HANDLE hDlg = FarDialogInit(PluginNumber, X1, Y1, X2, Y2, (HelpTopic?strHT.CPtr():nullptr), (FarDialogItem *)di, ItemsNumber, 0, DlgFlags, DlgProc?DlgProcA:0, Param);
 	PDialogData NewDialogData=new DialogData;
@@ -2451,13 +2467,23 @@ int WINAPI FarDialogExA(INT_PTR PluginNumber,int X1,int Y1,int X2,int Y2,const c
 		{
 			if (di[i].Type==DI_LISTBOX || di[i].Type==DI_COMBOBOX)
 				di[i].Param.ListItems=CurrentList(hDlg,i);
-
-			FreeUnicodeDialogItem(di[i]);
 		}
 	}
 
-	delete *DialogList.Last();
-	DialogList.Delete(DialogList.Last());
+	for (int i=0; i<ItemsNumber; i++)
+	{
+		FreeUnicodeDialogItem(di[i]);
+	}
+
+	for(PDialogData* i=DialogList.Last();i;i=DialogList.Prev(i))
+	{
+		if((*i)->hDlg==hDlg)
+		{
+			delete *i;
+			DialogList.Delete(i);
+			break;
+		}
+	}
 
 	delete[] diA;
 	delete[] di;

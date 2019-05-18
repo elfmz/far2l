@@ -2,6 +2,7 @@
 #include <utils.h>
 #include "SiteConnectionEditor.h"
 #include "ProtocolOptionsSFTP.h"
+#include "ProtocolOptionsFile.h"
 #include "../../Globals.h"
 #include "../../SitesConfig.h"
 
@@ -351,6 +352,7 @@ void SiteConnectionEditor::ProtocolOptions()
 {
 	if (_protocol == "sftp") {
 		ProtocolOptionsSFTP().Ask(_protocol_options);
+	} else if (_protocol == "file") {
+		ProtocolOptionsFile().Ask(_protocol_options);
 	}
-//	ProtocolOptionsSFTP
 }

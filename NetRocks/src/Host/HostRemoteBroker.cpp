@@ -3,7 +3,7 @@
 #include <StringConfig.h>
 #include "IPC.h"
 #include "Protocol/ProtocolSFTP.h"
-#include "HostLocal.h"
+#include "Protocol/ProtocolFile.h"
 
 static const std::string s_empty_string;
 
@@ -39,7 +39,7 @@ class HostRemoteBroker : protected IPCEndpoint
 
 		StringConfig protocol_options(options);
 		if (strcasecmp(protocol.c_str(), "file") == 0) {
-			_protocol = std::make_shared<HostLocal>();
+			_protocol = std::make_shared<ProtocolFile>(host, port, username, password, protocol_options);
 		} else if (strcasecmp(protocol.c_str(), "sftp") == 0) {
 			_protocol = std::make_shared<ProtocolSFTP>(host, port, username, password, protocol_options);
        		} else {

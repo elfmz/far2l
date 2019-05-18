@@ -7,7 +7,7 @@
 #include "../Host/Host.h"
 #include "./Utils/ProgressStateUpdate.h"
 #include "../UI/Defs.h"
-#include "../UI/WhatOnError.h"
+#include "../UI/Activities/WhatOnError.h"
 #include <plugin.hpp>
 
 class OpBase : protected Threaded, protected IAbortableOperationsHost

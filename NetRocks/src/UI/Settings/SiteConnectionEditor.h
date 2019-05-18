@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <windows.h>
-#include "DialogUtils.h"
+#include "../DialogUtils.h"
 
 
 class SiteConnectionEditor : protected BaseDialog

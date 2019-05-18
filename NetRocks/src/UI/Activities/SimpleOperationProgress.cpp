@@ -3,8 +3,8 @@
 #include "SimpleOperationProgress.h"
 #include "Confirm.h"
 #include "AbortOperationRequest.h"
-#include "../lng.h"
-#include "../Globals.h"
+#include "../../lng.h"
+#include "../../Globals.h"
 
 /*
 345               21      29    35      43   48

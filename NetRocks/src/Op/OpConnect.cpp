@@ -1,6 +1,6 @@
 #include "OpConnect.h"
 #include "Host/HostRemote.h"
-#include "../UI/SimpleOperationProgress.h"
+#include "../UI/Activities/SimpleOperationProgress.h"
 
 OpConnect::OpConnect(int op_mode, const std::string &display_name)
 	: OpBase(op_mode, std::make_shared<HostRemote>(display_name), display_name)

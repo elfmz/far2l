@@ -1,7 +1,7 @@
 #include <utils.h>
 #include "OpEnumDirectory.h"
-#include "../UI/Confirm.h"
-#include "../UI/SimpleOperationProgress.h"
+#include "../UI/Activities/Confirm.h"
+#include "../UI/Activities/SimpleOperationProgress.h"
 #include "../PooledStrings.h"
 
 OpEnumDirectory::OpEnumDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, PluginPanelItems &result)

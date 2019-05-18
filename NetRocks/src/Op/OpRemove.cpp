@@ -1,8 +1,8 @@
 #include <utils.h>
 #include <TimeUtils.h>
 #include "OpRemove.h"
-#include "../UI/Confirm.h"
-#include "../UI/ComplexOperationProgress.h"
+#include "../UI/Activities/Confirm.h"
+#include "../UI/Activities/ComplexOperationProgress.h"
 
 
 OpRemove::OpRemove(int op_mode, std::shared_ptr<IHost> &base_host,

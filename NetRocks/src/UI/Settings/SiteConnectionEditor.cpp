@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <utils.h>
 #include "SiteConnectionEditor.h"
-#include "ProtocolOptions/ProtocolOptionsSFTP.h"
-#include "../Globals.h"
-#include "../SitesConfig.h"
+#include "ProtocolOptionsSFTP.h"
+#include "../../Globals.h"
+#include "../../SitesConfig.h"
 
 /*                                                         62
 345                      28         39                   60  64

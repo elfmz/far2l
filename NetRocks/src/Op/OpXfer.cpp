@@ -2,17 +2,17 @@
 #include <utils.h>
 #include <TimeUtils.h>
 #include "OpXfer.h"
-#include "../UI/ConfirmXfer.h"
-#include "../UI/ConfirmOverwrite.h"
-#include "../UI/WhatOnError.h"
-#include "../UI/ComplexOperationProgress.h"
+#include "../UI/Activities/ConfirmXfer.h"
+#include "../UI/Activities/ConfirmOverwrite.h"
+#include "../UI/Activities/WhatOnError.h"
+#include "../UI/Activities/ComplexOperationProgress.h"
 #include "../lng.h"
 
 #define MIN_BUFFER_SIZE         0x1000
 #define MAX_BUFFER_SIZE         0x1000000
 #define INITIAL_BUFFER_SIZE     0x8000
 
-#define CREATE_WITH_EXTRA_MODE	(S_IRUSR | S_IWUSR)
+#define EXTRA_NEEDED_MODE	(S_IRUSR | S_IWUSR)
 
 OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 	std::shared_ptr<IHost> &dst_host, const std::string &dst_dir,
@@ -356,7 +356,7 @@ void OpXfer::CopyAttributes(const std::string &path_dst, const FileInformation &
 		}
 	);
 
-	if (( (info.mode | CREATE_WITH_EXTRA_MODE) == info.mode)) {
+	if (( (info.mode | EXTRA_NEEDED_MODE) == info.mode)) {
 		return;
 	}
 
@@ -398,7 +398,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		indicted = _base_host.get();
 		std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, file_complete);
 		indicted = _dst_host.get();
-		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode | CREATE_WITH_EXTRA_MODE, file_complete);
+		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode | EXTRA_NEEDED_MODE, file_complete);
 		if (!_io_buf.Size())
 			throw std::runtime_error("No buffer - no file");
 
@@ -501,7 +501,7 @@ void OpXfer::DirectoryCopy(const std::string &path_dst, const FileInformation &i
 	WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), path_dst,
 		[&] () mutable
 		{
-			_dst_host->DirectoryCreate(path_dst, info.mode | CREATE_WITH_EXTRA_MODE);
+			_dst_host->DirectoryCreate(path_dst, info.mode | EXTRA_NEEDED_MODE);
 		}
 	);
 }
@@ -564,11 +564,9 @@ bool OpXfer::SymlinkCopy(const std::string &path_src, const std::string &path_ds
 			}
 		}
 
-		fprintf(stderr, "NetRocks: SymlinkCopy '%s' [%s] refined as [%s]\n",
-			path_src.c_str(), orig_symlink_target.c_str(), refined.c_str());
 		if (_entries.find(refined) ==  _entries.end()) {
-			fprintf(stderr, "NetRocks: SymlinkCopy dismiss '%s' [%s]\n",
-				path_src.c_str(), orig_symlink_target.c_str());
+			fprintf(stderr, "NetRocks: SymlinkCopy dismiss '%s' [%s] refined='%s;\n",
+				path_src.c_str(), orig_symlink_target.c_str(), refined.c_str());
 			return false;
 		}
 	}

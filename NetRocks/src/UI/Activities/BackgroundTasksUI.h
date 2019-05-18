@@ -1,8 +1,8 @@
 #pragma once
 #include <string>
 #include <windows.h>
-#include "DialogUtils.h"
-#include "Defs.h"
+#include "../DialogUtils.h"
+#include "../Defs.h"
 
 void BackgroundTasksList();
 

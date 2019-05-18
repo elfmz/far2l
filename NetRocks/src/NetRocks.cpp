@@ -2,7 +2,7 @@
 #include "Globals.h"
 #include "PluginImpl.h"
 #include "BackgroundTasks.h"
-#include "UI/BackgroundTasksUI.h"
+#include "UI/Activities/BackgroundTasksUI.h"
 #include <fcntl.h>
 #include <set>
 #ifndef __APPLE__

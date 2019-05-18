@@ -4,9 +4,9 @@
 #include <mutex>
 #include <sys/time.h>
 #include <windows.h>
-#include "DialogUtils.h"
-#include "Defs.h"
-#include "../Host/Host.h"
+#include "../DialogUtils.h"
+#include "../Defs.h"
+#include "../../Host/Host.h"
 
 class WhatOnError : protected BaseDialog
 {

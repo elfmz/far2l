@@ -1,7 +1,7 @@
 #include <utils.h>
 #include "BackgroundTasksUI.h"
-#include "../Globals.h"
-#include "../BackgroundTasks.h"
+#include "../../Globals.h"
+#include "../../BackgroundTasks.h"
 
 
 void BackgroundTasksList()

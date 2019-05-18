@@ -3,6 +3,7 @@
 #include "PluginImpl.h"
 #include "BackgroundTasks.h"
 #include "UI/Activities/BackgroundTasksUI.h"
+#include "Protocol/Protocol.h"
 #include <fcntl.h>
 #include <set>
 #ifndef __APPLE__
@@ -166,43 +167,33 @@ SHAREDSYMBOL int WINAPI _export MayExitFARW()
 	return 1;
 }
 
+static std::wstring CombineAllProtocolPrefixes()
+{
+	std::wstring out;
+	for (auto pi = g_protocols; pi->name; ++pi) {
+		out+= MB2Wide(pi->name);
+		out+= L':';
+	}
+	return out;
+}
 
 SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 {
+//	fprintf(stderr, "NetRocks: GetPluginInfoW\n");
+	static const wchar_t *s_cfg_strings[] = {G.GetMsgWide(MBackgroundTasksTitle)};
+	static const wchar_t *s_menu_strings[] = {G.GetMsgWide(MTitle), G.GetMsgWide(MBackgroundTasksTitle)};
+	static const wchar_t *s_disk_menu_strings[] = {L"NetRocks\0"};
+	static std::wstring s_command_prefixes = CombineAllProtocolPrefixes();
+
 	Info->StructSize = sizeof(*Info);
-
-	fprintf(stderr, "NetRocks: GetPluginInfoW\n");
-
 	Info->Flags = PF_FULLCMDLINE;
-	static const wchar_t *PluginCfgStrings[1] = {(wchar_t *)G.GetMsgWide(MBackgroundTasksTitle)};
-	static const wchar_t *PluginMenuStrings[2] = {(wchar_t *)G.GetMsgWide(MTitle), (wchar_t *)G.GetMsgWide(MBackgroundTasksTitle)};
-
-	Info->PluginConfigStrings = PluginCfgStrings;
-	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
-
-	Info->PluginMenuStrings = PluginMenuStrings;
-	Info->PluginMenuStringsNumber = (CountOfAllBackgroundTasks() != 0) ? ARRAYSIZE(PluginMenuStrings) : 1;
-
-	static wchar_t s_command_prefix[64] = L"sftp:file:\0\0";
-	Info->CommandPrefix = s_command_prefix;
-
-
-//	static LPCSTR PluginMenuStrings[1];
-//	static LPCSTR PluginCfgStrings[1];
-//	static char     MenuString[MAX_PATH];
-//	static char     CfgString[MAX_PATH];
-//	snprintf(MenuString,     ARRAYSIZE(MenuString),     "%ls", "MNetRocksMenu");//FP_GetMsg(MFtpMenu));
-//	snprintf(DiskStrings[0], ARRAYSIZE(DiskStrings[0]), "%ls", "MNetRocksDiskMenu");//(MFtpDiskMenu));
-//	snprintf(CfgString,      ARRAYSIZE(CfgString),      "%ls", "MNetRocksMenu");//FP_GetMsg(MFtpMenu));
-	static wchar_t *DiskMenuStrings[2] = {L"NetRocks\0", 0};
-	Info->DiskMenuStrings           = DiskMenuStrings;
-//	Info->DiskMenuNumbers           = 0;
-	Info->DiskMenuStringsNumber     = 1;
-//	Info->PluginMenuStrings         = PluginMenuStrings;
-//	Info->PluginMenuStringsNumber   = Opt.AddToPluginsMenu ? ARRAYSIZE(PluginMenuStrings):0;
-//	Info->PluginConfigStrings       = PluginCfgStrings;
-//	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
-//	Info->CommandPrefix             = FTP_CMDPREFIX;
+	Info->PluginConfigStrings = s_cfg_strings;
+	Info->PluginConfigStringsNumber = ARRAYSIZE(s_cfg_strings);
+	Info->PluginMenuStrings = s_menu_strings;
+	Info->PluginMenuStringsNumber = (CountOfAllBackgroundTasks() != 0) ? ARRAYSIZE(s_menu_strings) : 1;
+	Info->CommandPrefix = s_command_prefixes.c_str();
+	Info->DiskMenuStrings           = s_disk_menu_strings;
+	Info->DiskMenuStringsNumber     = ARRAYSIZE(s_disk_menu_strings);
 }
 
 

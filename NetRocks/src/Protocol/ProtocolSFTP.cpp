@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <libssh/ssh2.h>
 #include <libssh/sftp.h>
+#include <StringConfig.h>
 #include "ProtocolSFTP.h"
 
 
@@ -24,6 +25,11 @@
 #define SIMULATED_WRITE_COMPLETE_FAILS_RATE 0
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::shared_ptr<IProtocol> CreateProtocolSFTP(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+{
+	return std::make_shared<ProtocolSFTP>(host, port, username, password, options);
+}
 
 // #define MAX_SFTP_IO_BLOCK_SIZE		((size_t)32768)	// googling shows than such block size compatible with at least most of servers
 
@@ -121,8 +127,8 @@ static std::string GetSSHPubkeyHash(ssh_session ssh)
 	return out;
 }
 
-ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std::string &username, const std::string &password,
-				const StringConfig &options) throw (std::runtime_error)
+ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 	: _conn(std::make_shared<SFTPConnection>())
 {
 	_conn->ssh = ssh_new();
@@ -135,7 +141,9 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_USER, &port);
 
-	if (options.GetInt("TcpNoDelay") ) {
+	StringConfig protocol_options(options);
+
+	if (protocol_options.GetInt("TcpNoDelay") ) {
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
 		int nodelay = 1;
 		ssh_options_set(_conn->ssh, SSH_OPTIONS_NODELAY, &nodelay);
@@ -144,20 +152,20 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port, const std
 #endif
 	}
 
-	_conn->max_io_block = (size_t)std::max(options.GetInt("MaxIOBlock", _conn->max_io_block), 512);
+	_conn->max_io_block = (size_t)std::max(protocol_options.GetInt("MaxIOBlock", _conn->max_io_block), 512);
 
 	int verbosity = SSH_LOG_NOLOG;//SSH_LOG_WARNING;//SSH_LOG_PROTOCOL;
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
 
-	// TODO: seccomp: if (options.GetInt("Sandbox") ) ...
+	// TODO: seccomp: if (protocol_options.GetInt("Sandbox") ) ...
 
 	int rc = ssh_connect(_conn->ssh);
 	if (rc != SSH_OK)
 		throw ProtocolError("Connection", ssh_get_error(_conn->ssh), rc);
 
 	const std::string &pub_key_hash = GetSSHPubkeyHash(_conn->ssh);
-	if (pub_key_hash != options.GetString("ServerIdentity"))
+	if (pub_key_hash != protocol_options.GetString("ServerIdentity"))
 		throw ServerIdentityMismatchError(pub_key_hash);
 
 	rc = ssh_userauth_password(_conn->ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
@@ -532,3 +540,6 @@ std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode
 {
 	return std::make_shared<SFTPFileIO>(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

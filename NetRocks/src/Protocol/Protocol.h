@@ -63,3 +63,15 @@ struct IProtocol
 bool SplitPathSpecification(const wchar_t *specification,
 	std::wstring &protocol, std::wstring &host, unsigned int &port,
 	std::wstring &username, std::wstring &password, std::wstring &directory);
+
+
+struct ProtocolImplementation
+{
+	const char *name;
+	unsigned int default_port;
+	void (*Configure)(std::string &options);
+	std::shared_ptr<IProtocol> (*Create)(const std::string &host, unsigned int port,
+		const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
+};
+
+extern ProtocolImplementation *g_protocols;

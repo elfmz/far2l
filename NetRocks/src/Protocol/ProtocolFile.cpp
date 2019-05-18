@@ -8,12 +8,20 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <algorithm>
+#include <StringConfig.h>
 #include "ProtocolFile.h"
 
 
-ProtocolFile::ProtocolFile(const std::string &host, unsigned int port, const std::string &username, const std::string &password,
-	const StringConfig &protocol_options) throw (ProtocolError)
+std::shared_ptr<IProtocol> CreateProtocolFile(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {
+	return std::make_shared<ProtocolFile>(host, port, username, password, options);
+}
+
+ProtocolFile::ProtocolFile(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (ProtocolError)
+{
+	StringConfig protocol_options(options);
 	const std::string &cmd = protocol_options.GetString("Command");
 	if (!cmd.empty()) {
 		const std::string &extra = protocol_options.GetString("Extra");

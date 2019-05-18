@@ -1,9 +1,7 @@
 #include <vector>
 #include <unistd.h>
-#include <StringConfig.h>
 #include "IPC.h"
-#include "Protocol/ProtocolSFTP.h"
-#include "Protocol/ProtocolFile.h"
+#include "Protocol/Protocol.h"
 
 static const std::string s_empty_string;
 
@@ -37,12 +35,14 @@ class HostRemoteBroker : protected IPCEndpoint
 		RecvString(password);
 		RecvString(options);
 
-		StringConfig protocol_options(options);
-		if (strcasecmp(protocol.c_str(), "file") == 0) {
-			_protocol = std::make_shared<ProtocolFile>(host, port, username, password, protocol_options);
-		} else if (strcasecmp(protocol.c_str(), "sftp") == 0) {
-			_protocol = std::make_shared<ProtocolSFTP>(host, port, username, password, protocol_options);
-       		} else {
+		for (auto pi = g_protocols; pi->name; ++pi) {
+			if (strcasecmp(protocol.c_str(), pi->name) == 0) {
+				_protocol = pi->Create(host, port, username, password, options);
+				break;
+			}
+		}
+
+       		if (!_protocol){
 			throw std::runtime_error(std::string("Wrong protocol: ").append(protocol));
 		}
 	}

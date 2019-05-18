@@ -1,10 +1,9 @@
 #include <algorithm>
 #include <utils.h>
 #include "SiteConnectionEditor.h"
-#include "ProtocolOptionsSFTP.h"
-#include "ProtocolOptionsFile.h"
 #include "../../Globals.h"
 #include "../../SitesConfig.h"
+#include "../../Protocol/Protocol.h"
 
 /*                                                         62
 345                      28         39                   60  64
@@ -26,14 +25,12 @@
 
 static unsigned int DefaultPortForProtocol(const char *protocol)
 {
-//	if (strcasecmp(protocol, "file") == 0)
-//		return 0;
 	if (protocol) {
-		if (strcasecmp(protocol, "sftp") == 0)
-			return 22;
-
-		if (strcasecmp(protocol, "ftp") == 0)
-			return 21;
+		for (auto pi = g_protocols; pi->name; ++pi) {
+			if (strcasecmp(protocol, pi->name) == 0) {
+				return pi->default_port;
+			}
+		}
 	}
 
 	return 0;
@@ -51,10 +48,12 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 		_autogen_display_name = true;
 	}
 
-	_di_protocols.Add("sftp");
-	_di_protocols.Add("file");
+	for (auto pi = g_protocols; pi->name; ++pi) {
+		_di_protocols.Add(pi->name);
+	}
+
 	if (_protocol.empty() || !_di_protocols.Select(_protocol.c_str())) {
-		_protocol = "sftp";
+		_protocol = g_protocols->name;
 		_di_protocols.Select(_protocol.c_str());
 	}
 
@@ -350,9 +349,12 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 
 void SiteConnectionEditor::ProtocolOptions()
 {
-	if (_protocol == "sftp") {
-		ProtocolOptionsSFTP().Ask(_protocol_options);
-	} else if (_protocol == "file") {
-		ProtocolOptionsFile().Ask(_protocol_options);
+	for (auto pi = g_protocols; pi->name; ++pi) {
+		if (strcasecmp(_protocol.c_str(), pi->name) == 0) {
+			if (pi->Configure) {
+				pi->Configure(_protocol_options);
+			}
+			break;
+		}
 	}
 }

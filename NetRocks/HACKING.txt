@@ -1,13 +1,16 @@
 Architecture overview:
-                  [PluginImpl]----{shared_ptr or temporaty}----\       [g_background_tasks]
-                      |                                        |                 |
-                      |                                        |                 |
-                      |                                        |            {shared_ptr}
+
+       /----------[PluginImpl]----{shared_ptr or temporary}----\       [g_background_tasks]
+       |              |                                        |                 |
+       V              |                                        |                 |
+[UI/Settings]         |                                        |            {shared_ptr}
                       |                                        |                 |
                  {shared_ptr}                                  V                 V
-                      |                                  [Operations:OpConnect,OpXfer etc]
-                      V                                        |
-         [IHost:HostRemote,HostLocal] <---{shared_ptr}---------/ 
+                      |                                  [Operations:OpConnect,OpXfer etc]----\
+                      |                                                    |                  |
+                      |                                                    |                  |
+                      V                                                    |                  |
+         [IHost:HostRemote,HostLocal] <---{dedicated thread, shared_ptr}---/   [UI/Activities: Confirmations, Errors, Progress]
                  /                 \
   {IPC to dedicated process}       |
               |                    V
@@ -20,10 +23,8 @@ Architecture overview:
       [IProtocol:ProtocolSFTP,ProtocolFile]
 
 To add additional protocol:
-- Add protocol-specific prefix into GetPluginInfoW in NetRocks.cpp
-- Write IProtocol implementation: see Protocol/ProtocolSFTP.cpp as example
-- Add protocol instantiation into InitConnection() in Host/HostRemoteBroker.cpp
-- Add protocol-specific prefix in several places of UI/Settings/SiteConnectionEditor.cpp
-- If need: implement protocol-specific configuration dialog like UI/Settings/ProtocolOptionsSFTP.cpp and use it from SiteConnectionEditor::ProtocolOptions
-- Dont forget to add new .cpp files into CMakeLists.txt
-- Keep in mind that protocol implementation hosted in separate process, so it cannot interchange any data via global variables etc
++ Write IProtocol implementation and function that instantiates it: see Protocol/ProtocolSFTP.cpp as example
++ Write protocol-specific options configuration UI: see UI/Settings/ConfigureProtocolSFTP.cpp as example
++ Define protocol name, default port and pointers to instantiation and configuration functions in s_protocols array in Protocol/Protocol.cpp
+* Dont forget to add new .cpp files into CMakeLists.txt
+* Keep in mind that protocol implementation hosted in separate process, so it cannot interchange any data via global variables etc

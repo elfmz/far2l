@@ -156,7 +156,7 @@ void OpXfer::Rename(const std::set<std::string> &items)
 	size_t star = _dst_dir.find("*"); // its actually name or wildcard
 
 	for (const auto &original_path : items) {
-			const std::string &original_name = original_path.substr(_base_dir.size() + 1);
+			const std::string &original_name = original_path.substr(_base_dir.size());
 			new_path = _base_dir;
 
 			if (star == 0) {// *.txt: <foo.doc -> foo.txt>   <bar -> bar.txt>

@@ -85,8 +85,11 @@ PluginImpl::PluginImpl(const wchar_t *path)
 		
 		wcsncpy(_cur_dir, StrMB2Wide(_remote->SiteName()).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 		if (!directory.empty()) {
-			wcsncat(_cur_dir, directory.c_str(), ARRAYSIZE(_cur_dir) - 1 );
 			_cur_dir_absolute = (directory[0] == '/');
+			while (!directory.empty() && directory[directory.size() - 1] == '/') {
+				directory.resize(directory.size() - 1);
+			}
+			wcsncat(_cur_dir, directory.c_str(), ARRAYSIZE(_cur_dir) - 1 );
 		}
 	}
 
@@ -269,6 +272,9 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 					if (p == std::string::npos) {
 						p = tmp.size();
 						tmp+= '/';
+					}
+					while (!root_dir.empty() && root_dir[root_dir.size() - 1] == '/') {
+						root_dir.resize(root_dir.size() - 1);
 					}
 					tmp.insert(p + 1, root_dir);
 				}

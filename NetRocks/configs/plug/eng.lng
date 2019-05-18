@@ -168,3 +168,9 @@
 "Max IO &block size, bytes:"
 "Enable &TCP_NODELAY option (libssh >= v0.8.0)"
 "Enable &sandbox (if you dont trust server)"
+
+"File Protocol options"
+"Command to execute on connect:"
+"Extra string passed to command:"
+"Limit command execution time, seconds:"
+"Extra environment variables available for command process:"

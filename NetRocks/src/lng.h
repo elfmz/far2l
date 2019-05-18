@@ -170,5 +170,12 @@ enum LanguageID
   MSFTPOptionsTitle,
   MSFTPMaxBlockSize,
   MSFTPTCPNodelay,
-  MSFTPEnableSandbox
+  MSFTPEnableSandbox,
+
+  MSFileOptionsTitle,
+  MSFileCommand,
+  MSFileExtra,
+  MSFileCommandTimeLimit,
+  MSFileCommandVarsHint,
+
 };

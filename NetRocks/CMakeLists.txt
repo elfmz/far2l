@@ -9,8 +9,9 @@ src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
 src/BackgroundTasks.cpp
-src/Protocol/ProtocolSFTP.cpp
 src/Protocol/SplitPathSpecification.cpp
+src/Protocol/ProtocolFile.cpp
+src/Protocol/ProtocolSFTP.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp
@@ -18,6 +19,7 @@ src/Host/HostRemoteBroker.cpp
 src/UI/DialogUtils.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ProtocolOptionsSFTP.cpp
+src/UI/Settings/ProtocolOptionsFile.cpp
 src/UI/Activities/Confirm.cpp
 src/UI/Activities/ConfirmXfer.cpp
 src/UI/Activities/ConfirmOverwrite.cpp

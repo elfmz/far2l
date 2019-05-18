@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
+#include <cstdarg>
 #include <sys/types.h>
+#include "luck.h"
 #include "MatchWildcard.hpp"
 
 template <class C> static size_t tzlen(const C *ptz)
@@ -70,3 +72,11 @@ bool isCombinedUTF32(wchar_t c);
 
 size_t GetMallocSize(void *p);
 
+
+void AbbreviateFilePath(std::string &path, size_t needed_length);
+
+const char *FileSizeToFractionAndUnits(unsigned long long &value);
+std::string FileSizeString(unsigned long long value);
+
+std::string StrPrintfV(const char *format, va_list args);
+std::string StrPrintf(const char *format, ...);

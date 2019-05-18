@@ -41,6 +41,7 @@ typedef int (WINAPI *PLUGINCOMPARE)(HANDLE hPlugin,const oldfar::PluginPanelItem
 typedef int (WINAPI *PLUGINCONFIGURE)(int ItemNumber);
 typedef int (WINAPI *PLUGINDELETEFILES)(HANDLE hPlugin,oldfar::PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
 typedef void (WINAPI *PLUGINEXITFAR)();
+typedef int (WINAPI *PLUGINMAYEXITFAR)();
 typedef void (WINAPI *PLUGINFREEFINDDATA)(HANDLE hPlugin,oldfar::PluginPanelItem *PanelItem,int ItemsNumber);
 typedef void (WINAPI *PLUGINFREEVIRTUALFINDDATA)(HANDLE hPlugin,oldfar::PluginPanelItem *PanelItem,int ItemsNumber);
 typedef int (WINAPI *PLUGINGETFILES)(HANDLE hPlugin,oldfar::PluginPanelItem *PanelItem,int ItemsNumber,int Move,char *DestPath,int OpMode);
@@ -115,6 +116,7 @@ class PluginA: public Plugin
 		PLUGINPROCESSHOSTFILE       pProcessHostFile;
 		PLUGINSETFINDLIST           pSetFindList;
 		PLUGINCONFIGURE             pConfigure;
+		PLUGINMAYEXITFAR            pMayExitFAR;
 		PLUGINEXITFAR               pExitFAR;
 		PLUGINPROCESSKEY            pProcessKey;
 		PLUGINPROCESSEVENT          pProcessEvent;
@@ -159,6 +161,7 @@ class PluginA: public Plugin
 		bool HasProcessHostFile() { return pProcessHostFile!=nullptr; }
 		bool HasSetFindList() { return pSetFindList!=nullptr; }
 		bool HasConfigure() { return pConfigure!=nullptr; }
+		bool HasMayExitFAR() { return pMayExitFAR!=nullptr; }
 		bool HasExitFAR() { return pExitFAR!=nullptr; }
 		bool HasProcessKey() { return pProcessKey!=nullptr; }
 		bool HasProcessEvent() { return pProcessEvent!=nullptr; }
@@ -230,6 +233,7 @@ class PluginA: public Plugin
 		bool GetPluginInfo(PluginInfo *pi);
 		int Configure(int MenuItem);
 
+		bool MayExitFAR();
 		void ExitFAR();
 
 	private:

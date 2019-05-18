@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "exitcode.hpp"
 #include "scrbuf.hpp"
 #include "console.hpp"
+#include "InterThreadCall.hpp"
 
 Manager *FrameManager;
 
@@ -691,6 +692,8 @@ void Manager::ProcessMainLoop()
 	if ( CurrentFrame )
 		CtrlObject->Macro.SetMode(CurrentFrame->GetMacroMode());
 
+	DispatchInterThreadCalls();
+
 	if ( CurrentFrame && !CurrentFrame->ProcessEvents() )
 	{
 		ProcessKey(KEY_IDLE);
@@ -726,7 +729,7 @@ void Manager::ExitMainLoop(int Ask)
 		CloseFARMenu=TRUE;
 	};
 
-	if (!Ask || !Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo)))
+	if (!Ask || ((!Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo))) && CtrlObject->Plugins.MayExitFar()))
 	{
 		/* $ 29.12.2000 IS
 		   + Проверяем, сохранены ли все измененные файлы. Если нет, то не выходим
@@ -740,7 +743,9 @@ void Manager::ExitMainLoop(int Ask)
 
 			if (!(cp = CtrlObject->Cp())
 			        || (!cp->LeftPanel->ProcessPluginEvent(FE_CLOSE,nullptr) && !cp->RightPanel->ProcessPluginEvent(FE_CLOSE,nullptr)))
+			{
 				EndLoop=TRUE;
+			}
 		}
 		else
 		{
@@ -837,9 +842,10 @@ int Manager::ProcessKey(DWORD Key)
 				{EXCEPTION_ILLEGAL_INSTRUCTION,L"Illegal instruction"},
 				{EXCEPTION_STACK_OVERFLOW,L"Stack Overflow"},
 				{EXCEPTION_FLT_DIVIDE_BY_ZERO,L"Floating-point divide by zero"},
-				{EXCEPTION_BREAKPOINT,L"Breakpoint"},
+*/				{EXCEPTION_BREAKPOINT,L"Breakpoint"},
 #ifdef _M_IA64
-				{EXCEPTION_DATATYPE_MISALIGNMENT,L"Alignment fault (IA64 specific)",},
+/				{EXCEPTION_DATATYPE_MISALIGNMENT,L"Alignment fault (IA64 specific)",},
++
 #endif
 				/*
 				        {EXCEPTION_FLT_OVERFLOW,"EXCEPTION_FLT_OVERFLOW"},
@@ -882,7 +888,7 @@ int Manager::ProcessKey(DWORD Key)
 			int ExitCode=ModalMenu.Modal::GetExitCode();
 
 			switch (ExitCode)
-			{
+-			{
 				case -1:
 					return TRUE;
 				case 0:

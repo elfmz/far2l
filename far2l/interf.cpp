@@ -351,6 +351,10 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType)
 		return TRUE;
 	}
 
+	if (!CtrlObject->Plugins.MayExitFar()) {
+		return TRUE;
+	}
+
 	CloseFAR=TRUE;
 
 	/* $ 30.08.2001 IS

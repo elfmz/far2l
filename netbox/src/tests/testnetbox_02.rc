@@ -1,7 +1,0 @@
-#include "TestTexts.h"
-
-STRINGTABLE
-BEGIN
-  CONST_TEST_STRING, "test string: ""%s"" %d"
-  CONST_TEST_STRING2, "test string part 1|part 2"
-END

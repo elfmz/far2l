@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "constitle.hpp"
 #include "vtshell.h"
+#include "InterThreadCall.hpp"
 #include <wordexp.h>
 #include <set>
 #include <sys/wait.h>
@@ -169,15 +170,16 @@ static void CallExec(const char *CmdStr)
 
 static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 {
-	int r = -1;
+	int r = -1, fdr = -1, fdw = -1;
 	if (NeedSudo) {
 		return sudo_client_execute(CmdStr, false, NoWait);
 	}
-	int fdr = open(DEVNULL, O_RDONLY);
-	if (fdr==-1) perror("stdin error opening " DEVNULL);
+// DEBUG
+//	fdr = open(DEVNULL, O_RDONLY);
+//	if (fdr==-1) perror("stdin error opening " DEVNULL);
 	
 	//let debug out go to console
-	int fdw = open(DEVNULL, O_WRONLY);
+//	fdw = open(DEVNULL, O_WRONLY);
 	//if (fdw==-1) perror("open stdout error");
 	int pid = fork();
 	if (pid==0) {
@@ -214,7 +216,7 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 	return r;
 }
 
-int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
+static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 {
 //	fprintf(stderr, "TODO: Execute('" WS_FMT "')\n", CmdStr);
 	int r;
@@ -256,6 +258,11 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
 	
 	return r;
+}
+
+int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
+{
+	return InterThreadCall<int, -1>(std::bind(farExecuteASynched, CmdStr, ExecFlags));
 }
 
 int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags)

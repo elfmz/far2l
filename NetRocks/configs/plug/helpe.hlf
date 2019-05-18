@@ -1,0 +1,91 @@
+.Language=English,English
+.PluginContents=NetRocks
+
+@Contents
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+ This plugin adds SFTP connectivity to far2l with possibility to add other protocols.
+
+ To access this module open plugins menu (F11) or use disks (Alt+F1/Alt+F2) menu. Then choose the "NetRocks". See further topics for more detail.
+
+   ~Disks menu~@DisksMenu@
+
+   ~Plugin menu~@DisksMenu@
+
+   ~Plugin configuration~@CfgMenu@
+
+   ~Site connection editor~@SiteConnectionEditor@
+
+   ~Contact information~@Contact@
+
+@DisksMenu
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#Plugin menu#
+ 
+ After choosing the plugin from disks menu (Alt+F1/Alt+F2) or from Plugin meu (F11) you will see connection sites list. Initially there're no sites defined, but you can add site using <Create site connection> entry or pressing Shift+F4. After being added any site connection can be edited by pressing F4 or removed by pressing F8.
+ 
+ ~Contents~@Contents@
+
+@CfgMenu
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#Configuration menu#
+
+ Currently there're no plugin-wide configurations available and configiration menu opens background tasks list.
+ 
+ ~Contents~@Contents@
+
+@SiteConnectionEditor
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#Site connection editor#
+
+ This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like hostname and port to connect to, login mode and username and password if needed. Also by clicking on Protocol options button you can modify some protocol-specific settings.
+ ~SFTP:// protocol specific options~@ProtocolOptionsSFTP@
+ ~FILE:// protocol specific options~@ProtocolOptionsFile@
+ 
+ ~Contents~@Contents@
+
+@ProtocolOptionsSFTP
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#SFTP:// protocol specific options#
+
+ This dialog allows you to modify "sftp://" protocol specific settings. Here you can change maximum IO block size and enable TCP_NODELAY socket option. Increasing IO block size usualy gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
+ 
+ ~Contents~@Contents@
+
+@ProtocolOptionsFile
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#FILE:// protocol specific options#
+
+ This dialog allows you to modify "file://" protocol specific settings. Since file:// is not actual protocol, but just a plain filesystem, accessed via NetRocks infrastructure, there're no usual connectivity settings. However its possible to execute specific command when opening "file://" connection site, and that command can, for example, do mounting of some resource that is to be accessed using this connection site. This command will have defined as environment fields of host ($HOST), port ($PORT), username ($USER), password ($PASSWORD) and additional extra string configured in this dialog ($EXTRA). In this dialog its also possible to defined amount of time NetRocks will wait for completion of this command (if command will not complete during that time - timeout error will be raised).
+ 
+ ~Contents~@Contents@
+
+@Contact
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#Contact information#
+
+ elfmz
+
+ #http://github.com/elfmz
+
+  ~Contents~@Contents@

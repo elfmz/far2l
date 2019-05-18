@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "pathmix.hpp"
 #include "dirmix.hpp"
+#include "InterThreadCall.hpp"
 
 int ToPercent(uint32_t N1,uint32_t N2)
 {
@@ -178,10 +179,10 @@ FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix, BOOL WithTempP
 	return strDest;
 }
 
-void DisplayNotification(const wchar_t *action, const char *object)
+static int DisplayNotificationSynched(const wchar_t *action, const char *object)
 {
 	if (Opt.NotifOpt.OnlyIfBackground && WINPORT(IsConsoleActive)() != FALSE) {
-		return;
+		return 0;
 	}
 
 	const std::string &str_script = GetHelperPathName("notify.sh");
@@ -196,6 +197,18 @@ void DisplayNotification(const wchar_t *action, const char *object)
 
 	} else if (pid != -1)
 		PutZombieUnderControl(pid);
+
+	return 1;
+}
+
+void DisplayNotification(const wchar_t *action, const char *object)
+{
+	InterThreadCall<int>(std::bind(DisplayNotificationSynched, action, object));
+}
+
+void DisplayNotification(const char *action, const char *object)
+{
+	DisplayNotification(MB2Wide(action).c_str(), object);
 }
 
 void DisplayNotification(const wchar_t *action, const wchar_t *object)

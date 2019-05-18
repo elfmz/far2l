@@ -411,3 +411,54 @@ size_t GetMallocSize(void *p)
 	return malloc_usable_size(p);
 #endif
 }
+
+
+void AbbreviateFilePath(std::string &path, size_t needed_length)
+{
+	size_t len = path.size();
+	if (needed_length < 3) {
+		needed_length = 3;
+	}
+	if (len > needed_length) {
+		size_t delta = len - (needed_length - 3);
+		path.replace((path.size() - delta) / 2, delta, "...");
+	}
+}
+
+const char *FileSizeToFractionAndUnits(unsigned long long &value)
+{
+	if (value > 100ll * 1024ll * 1024ll * 1024ll * 1024ll) {
+		value = (1024ll * 1024ll * 1024ll * 1024ll);
+		return "TB";
+	}
+
+	if (value > 100ll * 1024ll * 1024ll * 1024ll) {
+		value = (1024ll * 1024ll * 1024ll);
+		return "GB";
+	}
+
+	if (value > 100ll * 1024ll * 1024ll ) {
+		value = (1024ll * 1024ll);
+		return "MB";
+
+	}
+
+	if (value > 100ll * 1024ll ) {
+		value = (1024ll);
+		return "KB";
+	}
+
+	value = 1;
+	return "B";
+}
+
+std::string FileSizeString(unsigned long long value)
+{
+	unsigned long long fraction = value;
+	const char *units = FileSizeToFractionAndUnits(fraction);
+	value/= fraction;
+
+	char str[0x100] = {};
+	snprintf(str, sizeof(str) - 1, "%lld %s", value, units);
+	return str;
+}

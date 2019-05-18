@@ -46,5 +46,3 @@ bool ProcessOSAliases(FARString &strStr);
 std::vector<std::string> ExplodeCmdLine(std::string cmd_line);
 
 bool POpen(std::vector<std::wstring> &result, const char *command);
-
-

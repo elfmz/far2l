@@ -54,11 +54,13 @@ std::vector<std::string> KeyFileHelper::EnumSections()
 
 void KeyFileHelper::RemoveSection(const char *section)
 {
+	_dirty = true;
 	g_key_file_remove_group(_kf, section, NULL);
 }
 
 void KeyFileHelper::RemoveKey(const char *section, const char *name)
 {
+	_dirty = true;
 	g_key_file_remove_key(_kf, section, name, NULL);
 }
 

@@ -3,8 +3,8 @@
 #include "ComplexOperationProgress.h"
 #include "Confirm.h"
 #include "AbortOperationRequest.h"
-#include "../lng.h"
-#include "../Globals.h"
+#include "../../lng.h"
+#include "../../Globals.h"
 
 
 /*

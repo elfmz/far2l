@@ -1,7 +1,7 @@
 #include <utils.h>
-#include "Defs.h"
-#include "DialogUtils.h"
-#include "../lng.h"
+#include "../Defs.h"
+#include "../DialogUtils.h"
+#include "../../lng.h"
 
 
 /*                                               

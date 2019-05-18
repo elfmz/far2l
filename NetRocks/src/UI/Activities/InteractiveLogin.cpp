@@ -1,9 +1,9 @@
 #include <utils.h>
 #include <string>
 #include <windows.h>
-#include "DialogUtils.h"
-#include "../lng.h"
-#include "../PooledStrings.h"
+#include "../DialogUtils.h"
+#include "../../lng.h"
+#include "../../PooledStrings.h"
 
 /*                                               
 345                                            50

@@ -17,8 +17,8 @@
 #include "Globals.h"
 #include "PooledStrings.h"
 
-#include "UI/InteractiveLogin.h"
-#include "UI/ConfirmNewServerIdentity.h"
+#include "UI/Activities/InteractiveLogin.h"
+#include "UI/Activities/ConfirmNewServerIdentity.h"
 
 HostRemote::HostRemote(const std::string &site)
 	: _site(site)

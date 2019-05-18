@@ -4,7 +4,7 @@
 #include <memory>
 #include <plugin.hpp>
 #include "../../UI/Defs.h"
-#include "../../UI/WhatOnError.h"
+#include "../../UI/Activities/WhatOnError.h"
 #include "../../FileInformation.h"
 #include "../../Host/Host.h"
 

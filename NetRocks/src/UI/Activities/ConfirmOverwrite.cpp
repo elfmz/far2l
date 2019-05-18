@@ -1,7 +1,7 @@
 #include <utils.h>
 #include <TimeUtils.h>
 #include "ConfirmOverwrite.h"
-#include "../Globals.h"
+#include "../../Globals.h"
 
 
 /*                             34                          62
@@ -14,8 +14,8 @@
 |------------------------------------------------------------|
 | [ ] Reme&mber my choice for current operation              |
 |------------------------------------------------------------|
-|  [&Skip]     [&Overwrite]           [Overwrite with &newer]|
-|  [&Resume]     [Create &different name]   [    Cancel  ]   |
+|  [&Overwrite]           [Overwrite with &newer] [&Skip]    |
+|  [&Resume]  [Create &different name]      [    Cancel  ]   |
  ============================================================
     6                     29   34  38                      60
 */

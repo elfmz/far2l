@@ -109,7 +109,7 @@ int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int 
 
 void FarListWrapper::Add(const char *text, DWORD flags)
 {
-	FarListItem fli = {flags, {}, {}};
+	FarListItem fli = {flags, nullptr, {}};
 	fli.Text = MB2WidePooled(text);
 	_items.emplace_back(fli);
 	_list.ItemsNumber = _items.size();

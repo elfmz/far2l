@@ -1,4 +1,5 @@
 #include <utils.h>
+#include <sudo.h>
 #include "OpBase.h"
 #include "../Globals.h"
 #include "../lng.h"
@@ -27,6 +28,7 @@ void *OpBase::ThreadProc()
 	void *out = this;
 	try {
 		_state.Reset();
+		SudoClientRegion sdc_region;
 		Process();
 		fprintf(stderr,
 			"NetRocks::OpBase('%s'): count=%llu all_total=%llu\n",

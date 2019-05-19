@@ -4,6 +4,7 @@
 #include <utils.h>
 #include <vector>
 #include <algorithm>
+#include <libssh/libssh.h>
 #include <libssh/ssh2.h>
 #include <libssh/sftp.h>
 #include <StringConfig.h>
@@ -157,6 +158,28 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	int verbosity = SSH_LOG_NOLOG;//SSH_LOG_WARNING;//SSH_LOG_PROTOCOL;
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
+	ssh_key priv_key {};
+	std::string key_path;
+	if (protocol_options.GetInt("PrivKeyEnable", 0) != 0) {
+		key_path = protocol_options.GetString("PrivKeyPath");
+		int key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), password.c_str(), nullptr, nullptr, &priv_key);
+		if (key_import_result == SSH_ERROR && password.empty()) {
+			key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), nullptr, nullptr, nullptr, &priv_key);
+		}
+		switch (key_import_result) {
+			case SSH_EOF:
+				throw std::runtime_error(StrPrintf("Cannot read key file \'%s\'", key_path.c_str()));
+
+			case SSH_ERROR:
+				throw ProtocolAuthFailedError();
+
+			case SSH_OK:
+				break;
+
+			default:
+				throw std::runtime_error(StrPrintf("Unexpected error %u while loading key from \'%s\'", key_import_result, key_path.c_str()));
+		}
+	}
 
 	// TODO: seccomp: if (protocol_options.GetInt("Sandbox") ) ...
 
@@ -168,9 +191,16 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	if (pub_key_hash != protocol_options.GetString("ServerIdentity"))
 		throw ServerIdentityMismatchError(pub_key_hash);
 
-	rc = ssh_userauth_password(_conn->ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
-  	if (rc != SSH_AUTH_SUCCESS)
-		throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(_conn->ssh), rc);
+	if (priv_key) {
+		rc = ssh_userauth_publickey(_conn->ssh, username.empty() ? nullptr : username.c_str(), priv_key);
+  		if (rc != SSH_AUTH_SUCCESS)
+			throw std::runtime_error("Key file authentification failed");
+
+	} else {
+		rc = ssh_userauth_password(_conn->ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
+  		if (rc != SSH_AUTH_SUCCESS)
+			throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(_conn->ssh), rc);
+	}
 
 	_conn->sftp = sftp_new(_conn->ssh);
 	if (_conn->sftp == nullptr)

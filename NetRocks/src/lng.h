@@ -168,6 +168,7 @@ enum LanguageID
   MConfirmExitFARBackgroundTasks,
 
   MSFTPOptionsTitle,
+  MSFTPPrivateKeyPath,
   MSFTPMaxBlockSize,
   MSFTPTCPNodelay,
   MSFTPEnableSandbox,

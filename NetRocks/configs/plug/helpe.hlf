@@ -62,7 +62,11 @@ $^#Copyright (C) 2019 elfmz#
 $^#Contents
 $^#SFTP:// protocol specific options#
 
- This dialog allows you to modify "sftp://" protocol specific settings. Here you can change maximum IO block size and enable TCP_NODELAY socket option. Increasing IO block size usualy gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
+ This dialog allows you to modify "sftp://" protocol specific settings. Here you can enable authentification by key file, change maximum IO block size or enable TCP_NODELAY socket option.
+ Private key file: can be used for SSH server instead of 'usual' username:password authentification. Note that in such case password field in the main connection settings is actually 'passphrase' used to access private key file.
+ IO block size: increasing this value usualy gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
+ TCP_NODELAY socket option: also can improve network performance by eliminating delay used by TCP stack to buffe routgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
+  
  
  ~Contents~@Contents@
 

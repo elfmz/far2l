@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <utils.h>
+#include <WordExpansion.h>
 #include <StringConfig.h>
 #include "../DialogUtils.h"
 #include "../../Globals.h"
@@ -35,11 +36,16 @@ class ProtocolOptionsSFTP : protected BaseDialog
 		||  (msg == DN_EDITCHANGE && param1 == _i_privkey_path) ) {
 			bool ok_enabled = true;
 			if (IsCheckedDialogControl(_i_privkey_enable)) {
+				ok_enabled = false;
 				std::string str;
 				TextFromDialogControl(_i_privkey_path, str);
-				struct stat s;
-				if (str.empty() || stat(str.c_str(), &s) != 0 || !S_ISREG(s.st_mode)) {
-					ok_enabled = false;
+				WordExpansion we(str);
+				for (const auto &str : we) {
+					struct stat s{};
+					if (!str.empty() && stat(str.c_str(), &s) == 0 && S_ISREG(s.st_mode)) {
+						ok_enabled = true;
+						break;
+					}
 				}
 			}
 

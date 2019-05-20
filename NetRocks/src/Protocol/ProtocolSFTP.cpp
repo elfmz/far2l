@@ -8,6 +8,7 @@
 #include <libssh/ssh2.h>
 #include <libssh/sftp.h>
 #include <StringConfig.h>
+#include <WordExpansion.h>
 #include "ProtocolSFTP.h"
 
 
@@ -159,16 +160,26 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
 	ssh_key priv_key {};
-	std::string key_path;
+	std::string key_path_spec;
 	if (protocol_options.GetInt("PrivKeyEnable", 0) != 0) {
-		key_path = protocol_options.GetString("PrivKeyPath");
-		int key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), password.c_str(), nullptr, nullptr, &priv_key);
-		if (key_import_result == SSH_ERROR && password.empty()) {
-			key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), nullptr, nullptr, nullptr, &priv_key);
+		key_path_spec = protocol_options.GetString("PrivKeyPath");
+		WordExpansion we(key_path_spec);
+		if (we.empty()) {
+			throw std::runtime_error(StrPrintf("No key file specified: \'%s\'", key_path_spec.c_str()));
+		}
+		int key_import_result = -1;
+		for (const auto &key_path : we) {
+			key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), password.c_str(), nullptr, nullptr, &priv_key);
+			if (key_import_result == SSH_ERROR && password.empty()) {
+				key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), nullptr, nullptr, nullptr, &priv_key);
+			}
+			if (key_import_result == SSH_OK) {
+				break;
+			}
 		}
 		switch (key_import_result) {
 			case SSH_EOF:
-				throw std::runtime_error(StrPrintf("Cannot read key file \'%s\'", key_path.c_str()));
+				throw std::runtime_error(StrPrintf("Cannot read key file \'%s\'", key_path_spec.c_str()));
 
 			case SSH_ERROR:
 				throw ProtocolAuthFailedError();
@@ -177,7 +188,9 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 				break;
 
 			default:
-				throw std::runtime_error(StrPrintf("Unexpected error %u while loading key from \'%s\'", key_import_result, key_path.c_str()));
+				throw std::runtime_error(
+					StrPrintf("Unexpected error %u while loading key from \'%s\'",
+					key_import_result, key_path_spec.c_str()));
 		}
 	}
 

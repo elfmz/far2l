@@ -28,31 +28,47 @@ class ProtocolOptionsSFTP : protected BaseDialog
 	int _i_tcp_nodelay = -1;
 	//int _i_enable_sandbox = -1;
 
-	bool _ok_enabled = true;
+	bool _keypath_enabled = true, _ok_enabled = true;
+
+	void UpdateEnableds(bool due_privkey_enable_clicked)
+	{
+		bool ok_enabled = true, keypath_enabled = false;
+		if (IsCheckedDialogControl(_i_privkey_enable)) {
+			ok_enabled = false;
+			keypath_enabled = true;
+			std::string str;
+			TextFromDialogControl(_i_privkey_path, str);
+			if (str.empty() && due_privkey_enable_clicked) {
+				str = "~/.ssh/id_rsa";
+				TextToDialogControl(_i_privkey_path, str);
+			}
+			WordExpansion we(str);
+			for (const auto &str : we) {
+				struct stat s{};
+				if (!str.empty() && stat(str.c_str(), &s) == 0 && S_ISREG(s.st_mode)) {
+					ok_enabled = true;
+					break;
+				}
+			}
+		}
+
+		if (ok_enabled != _ok_enabled) {
+			_ok_enabled = ok_enabled;
+			SetEnabledDialogControl(_i_ok, ok_enabled);
+		}
+
+		if (keypath_enabled != _keypath_enabled) {
+			_keypath_enabled = keypath_enabled;
+			SetEnabledDialogControl(_i_privkey_path, keypath_enabled);
+		}
+	}
 
 	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
-		if ( (msg == DN_BTNCLICK && param1 == _i_privkey_enable)
-		||  (msg == DN_EDITCHANGE && param1 == _i_privkey_path) ) {
-			bool ok_enabled = true;
-			if (IsCheckedDialogControl(_i_privkey_enable)) {
-				ok_enabled = false;
-				std::string str;
-				TextFromDialogControl(_i_privkey_path, str);
-				WordExpansion we(str);
-				for (const auto &str : we) {
-					struct stat s{};
-					if (!str.empty() && stat(str.c_str(), &s) == 0 && S_ISREG(s.st_mode)) {
-						ok_enabled = true;
-						break;
-					}
-				}
-			}
-
-			if (ok_enabled != _ok_enabled) {
-				_ok_enabled = ok_enabled;
-				SetEnabledDialogControl(_i_ok, ok_enabled);
-			}
+		if ( msg == DN_INITDIALOG
+		|| (msg == DN_BTNCLICK && param1 == _i_privkey_enable)
+		|| (msg == DN_EDITCHANGE && param1 == _i_privkey_path) ) {
+			UpdateEnableds(msg == DN_BTNCLICK && param1 == _i_privkey_enable);
 		}
 
 		return BaseDialog::DlgProc(msg, param1, param2);

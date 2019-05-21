@@ -1688,7 +1688,7 @@ void FarEditorSet::configureHrc()
   fdi[IDX_CH_BOX].PtrData = GetMsg(mUserHrcSettingDialog);
   fdi[IDX_CH_CAPTIONLIST].PtrData = GetMsg(mListSyntax); 
   FarList* l=buildHrcList();
-  //todo fdi[IDX_CH_SCHEMAS].ListItems = l;
+  fdi[IDX_CH_SCHEMAS].Param.ListItems = l;
   fdi[IDX_CH_SCHEMAS].Flags= DIF_LISTWRAPMODE | DIF_DROPDOWNLIST;
   fdi[IDX_CH_OK].PtrData = GetMsg(mOk);
   fdi[IDX_CH_CANCEL].PtrData = GetMsg(mCancel);  

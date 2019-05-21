@@ -42,3 +42,17 @@ std::string TimeString(TimeStringFormat tsf)
 	return TimeString(t, tsf);
 }
 
+int TimeSpecCompare(const struct timespec &ts_left, const struct timespec &ts_right)
+{
+	if (ts_left.tv_sec < ts_right.tv_sec)
+		return -1;
+	if (ts_left.tv_sec > ts_right.tv_sec)
+		return -1;
+
+	if (ts_left.tv_nsec < ts_right.tv_nsec)
+		return -1;
+	if (ts_left.tv_nsec > ts_right.tv_nsec)
+		return -1;
+
+	return 0;
+}

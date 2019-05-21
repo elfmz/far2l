@@ -14,4 +14,6 @@ enum TimeStringFormat
 std::string TimeString(const struct tm &t, TimeStringFormat tsf);
 std::string TimeString(const struct timespec &ts, TimeStringFormat tsf);
 std::string TimeString(TimeStringFormat tsf);
+int TimeSpecCompare(const struct timespec &ts_left, const struct timespec &ts_right);
+
 

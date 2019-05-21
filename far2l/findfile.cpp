@@ -73,6 +73,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panelmix.hpp"
 #include "setattr.hpp"
 #include "udlist.hpp"
+#include "InterThreadCall.hpp"
+#include <Event.h>
 
 constexpr int CHAR_TABLE_SIZE=5;
 constexpr int LIST_DELTA=64;
@@ -334,7 +336,34 @@ int SearchMode,CmpCase,WholeWords,SearchInArchives,SearchHex;
 FARString strLastDirName;
 FARString strPluginSearchPath;
 
-CriticalSection PluginCS;
+
+//static CriticalSection PluginCS;
+
+
+
+class PluginLocker
+{
+	static Event s_event;
+	PluginLocker(const PluginLocker&) = delete;
+
+public:
+	PluginLocker()
+	{
+		while (!s_event.TimedWait(100)) {
+			DispatchInterThreadCalls();
+		}
+	}
+
+	~PluginLocker()
+	{
+		s_event.Signal();
+	}
+
+};
+
+Event PluginLocker::s_event(true, true);
+
+
 
 //Event PauseEvent(true, true);
 //Event StopEvent(true, false);
@@ -1476,7 +1505,7 @@ bool IsFileIncluded(PluginPanelItem* FileItem, const wchar_t *FullName, DWORD Fi
 
 					bool GetFileResult=false;
 					{
-						CriticalSectionLock Lock(PluginCS);
+						PluginLocker Lock;
 						GetFileResult=CtrlObject->Plugins.GetFile(hPlugin,FileItem,strTempDir,strSearchFileName,OPM_SILENT|OPM_FIND)!=FALSE;
 					}
 					if (!GetFileResult)
@@ -1755,7 +1784,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 								int SavePluginsOutput=DisablePluginsOutput;
 								DisablePluginsOutput=TRUE;
 								{
-									CriticalSectionLock Lock(PluginCS);
+									PluginLocker Lock;
 									ArcItem.hPlugin = CtrlObject->Plugins.OpenFilePlugin(strFindArcName, OPM_FIND, OFP_SEARCH);
 								}
 								itd.SetArcListItem(FindItem.ArcIndex, ArcItem);
@@ -1773,7 +1802,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 							}
 							FarMkTempEx(strTempDir);
 							apiCreateDirectory(strTempDir, nullptr);
-							CriticalSectionLock Lock(PluginCS);
+							PluginLocker Lock;
 							bool bGet=GetPluginFile(FindItem.ArcIndex,FindItem.FindData,strTempDir,strSearchFileName);
 							itd.SetFindListItem(ItemIndex, FindItem);
 							if (!bGet)
@@ -2403,7 +2432,7 @@ void ArchiveSearch(HANDLE hDlg, const wchar_t *ArcName)
 			ARCLIST ArcItem;
 			itd.GetArcListItem(itd.GetFindFileArcIndex(), ArcItem);
 			{
-				CriticalSectionLock Lock(PluginCS);
+				PluginLocker Lock;
 				CtrlObject->Plugins.ClosePlugin(ArcItem.hPlugin);
 			}
 			ArcItem.hPlugin = INVALID_HANDLE_VALUE;
@@ -2527,12 +2556,10 @@ void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& RecurseLevel)
 	int ItemCount=0;
 	bool GetFindDataResult=false;
 	{
-		CriticalSectionLock Lock(PluginCS);
+		if(!WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0))
 		{
-			if(!WINPORT(InterlockedCompareExchange)(&StopFlag, 0, 0))
-			{
-				GetFindDataResult=CtrlObject->Plugins.GetFindData(hPlugin,&PanelData,&ItemCount,OPM_FIND)!=FALSE;
-			}
+			PluginLocker Lock;
+			GetFindDataResult=CtrlObject->Plugins.GetFindData(hPlugin,&PanelData,&ItemCount,OPM_FIND)!=FALSE;
 		}
 	}
 	if (!GetFindDataResult)
@@ -2591,7 +2618,7 @@ void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& RecurseLevel)
 			{
 				bool SetDirectoryResult=false;
 				{
-					CriticalSectionLock Lock(PluginCS);
+					PluginLocker Lock;
 					SetDirectoryResult=CtrlObject->Plugins.SetDirectory(hPlugin,strCurName,OPM_FIND)!=FALSE;
 				}
 				if (SetDirectoryResult)
@@ -2611,7 +2638,7 @@ void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& RecurseLevel)
 
 					bool SetDirectoryResult=false;
 					{
-						CriticalSectionLock Lock(PluginCS);
+						PluginLocker Lock;
 						SetDirectoryResult=CtrlObject->Plugins.SetDirectory(hPlugin,L"..",OPM_FIND)!=FALSE;
 					}
 					if (!SetDirectoryResult)
@@ -2671,7 +2698,7 @@ void DoPreparePluginList(HANDLE hDlg, bool Internal)
 	OpenPluginInfo Info;
 	FARString strSaveDir;
 	{
-		CriticalSectionLock Lock(PluginCS);
+		PluginLocker Lock;
 		CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
 		strSaveDir = Info.CurDir;
 		if (SearchMode==FINDAREA_ROOT || SearchMode==FINDAREA_ALL || SearchMode==FINDAREA_ALL_BUTNETWORK || SearchMode==FINDAREA_INPATH)
@@ -2691,7 +2718,7 @@ void DoPreparePluginList(HANDLE hDlg, bool Internal)
 
 	if (SearchMode==FINDAREA_ROOT || SearchMode==FINDAREA_ALL || SearchMode==FINDAREA_ALL_BUTNETWORK || SearchMode==FINDAREA_INPATH)
 	{
-		CriticalSectionLock Lock(PluginCS);
+		PluginLocker Lock;
 		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,strSaveDir,OPM_FIND);
 	}
 
@@ -2832,7 +2859,9 @@ bool FindFilesProcess(Vars& v)
 	{
 		wakeful W;
 		Dlg.Process();
-		WINPORT(WaitForSingleObject)(Thread,INFINITE);
+		while (WINPORT(WaitForSingleObject)(Thread, 100) == WAIT_TIMEOUT) {
+			DispatchInterThreadCalls();
+		}
 		WINPORT(CloseHandle)(Thread);
 
 		WINPORT(InterlockedExchange)(&PauseFlag, 0);

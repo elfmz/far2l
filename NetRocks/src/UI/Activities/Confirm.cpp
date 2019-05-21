@@ -26,8 +26,8 @@ ConfirmRemove::ConfirmRemove(const std::string &site_dir)
 	_i_proceed = _di.Add(DI_BUTTON, 7,5,29,5, DIF_CENTERGROUP, MProceedRemoval);
 	_i_cancel = _di.Add(DI_BUTTON, 38,5,58,5, DIF_CENTERGROUP, MCancel);
 
-	SetFocusedDialogControl();
-	SetDefaultDialogControl();
+	SetFocusedDialogControl(_i_proceed);
+	SetDefaultDialogControl(_i_proceed);
 }
 
 

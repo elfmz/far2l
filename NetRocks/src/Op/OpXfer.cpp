@@ -36,6 +36,8 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 			fprintf(stderr, "NetRocks::Xfer: cancel\n");
 			throw AbortError();
 		}
+	} else {
+		_default_xoa = XOA_OVERWRITE_IF_NEWER_OTHERWISE_ASK;
 	}
 
 	if (_kind == XK_RENAME) {
@@ -274,6 +276,11 @@ void OpXfer::Transfer()
 		} else {
 			if (existing) {
 				auto xoa = _default_xoa;
+				if (xoa == XOA_OVERWRITE_IF_NEWER_OTHERWISE_ASK) {
+					xoa = (TimeSpecCompare(existing_file_info.modification_time, e.second.modification_time) < 0)
+						? XOA_OVERWRITE : XOA_ASK;
+				}
+
 				if (xoa == XOA_ASK) {
 					xoa = ConfirmOverwrite(_kind, _direction, path_dst, e.second.modification_time, e.second.size,
 								existing_file_info.modification_time, existing_file_info.size).Ask(_default_xoa);
@@ -282,13 +289,8 @@ void OpXfer::Transfer()
 					}
 				}
 				if (xoa == XOA_OVERWRITE_IF_NEWER) {
-					if (e.second.modification_time.tv_sec < existing_file_info.modification_time.tv_sec ||
-					(e.second.modification_time.tv_sec == existing_file_info.modification_time.tv_sec
-						&& e.second.modification_time.tv_nsec <= existing_file_info.modification_time.tv_nsec)) {
-						xoa = XOA_SKIP;
-					} else {
-						xoa = XOA_OVERWRITE;
-					}
+					xoa = (TimeSpecCompare(existing_file_info.modification_time, e.second.modification_time) < 0)
+						? XOA_OVERWRITE : XOA_SKIP;
 				}
 				if (xoa == XOA_RESUME) {
 					if (existing_file_info.size < e.second.size) {

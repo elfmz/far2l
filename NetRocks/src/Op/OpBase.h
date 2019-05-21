@@ -38,4 +38,4 @@ public:
 };
 
 
-#define IS_SILENT(v)               ( ((v) & (OPM_FIND|OPM_VIEW|OPM_EDIT)) != 0 )
+#define IS_SILENT(v)               ( ((v) & (OPM_FIND|OPM_VIEW|OPM_EDIT|OPM_SILENT)) != 0 )

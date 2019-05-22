@@ -66,7 +66,7 @@ void *OpBase::ThreadProc()
 
 	// calling DisplayNotification from here cuz calling it from thread causes deadlock due to
 	// InterThreadCall waits for main thread while main thread waits for thread's completion
-	if (_notify_title_lng != -1) {
+	if (_notify_title_lng != -1 && !IS_SILENT(_op_mode)) {
 		std::wstring display_action = G.GetMsgWide((out == nullptr) ? MNotificationSuccess : MNotificationFailed);
 		size_t p = display_action.find(L"()");
 		if (p != std::wstring::npos)

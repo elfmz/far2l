@@ -19,6 +19,7 @@ matrix:
             - libwxgtk3.0-dev
             - libglib2.0-dev
             - libssh-dev
+            - libsmbclient-dev
             - gawk
             - m4
             - ninja-build
@@ -39,6 +40,7 @@ matrix:
             - libwxgtk3.0-dev
             - libglib2.0-dev
             - libssh-dev
+            - libsmbclient-dev
             - gawk
             - m4
             - ninja-build
@@ -60,6 +62,7 @@ matrix:
             - libwxgtk3.0-dev
             - libglib2.0-dev
             - libssh-dev
+            - libsmbclient-dev
             - gawk
             - m4
             - ninja-build
@@ -81,6 +84,7 @@ matrix:
             - libwxgtk3.0-dev
             - libglib2.0-dev
             - libssh-dev
+            - libsmbclient-dev
             - gawk
             - m4
             - libpcre3-dev

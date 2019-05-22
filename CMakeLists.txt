@@ -49,14 +49,14 @@ find_package(LibSSH 0.5.0)
 if(LIBSSH_FOUND)
 	message(STATUS "libssh found -> enjoy SFTP support in NetRocks")
 else()
-	message(WARNING "${Esc}[1;31mlibssh not found, NetRocks will not have SFTP protocol support. Install libsmbclient-dev if you want SFTP protocol available in NetRocks.${Esc}[39;22m")
+	message(WARNING "${Esc}[1;31mlibssh not found, NetRocks will not have SFTP protocol support. Install libssh-dev if you want SFTP protocol available in NetRocks.${Esc}[39;22m")
 endif(LIBSSH_FOUND)
 
 find_package(Libsmbclient)
 if (LIBSMBCLIENT_FOUND)
 	message(STATUS "libsmbclient found -> enjoy SMB support in NetRocks")
 else()
-	message(WARNING "${Esc}[1;31mlibsmbclient not found, NetRocks will not have SMB protocol support. Install libssh-dev if you want SMB protocol available in NetRocks.${Esc}[39;22m")
+	message(WARNING "${Esc}[1;31mlibsmbclient not found, NetRocks will not have SMB protocol support. Install libsmbclient-dev if you want SMB protocol available in NetRocks.${Esc}[39;22m")
 endif (LIBSMBCLIENT_FOUND)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address

@@ -80,3 +80,15 @@ std::string FileSizeString(unsigned long long value);
 
 std::string StrPrintfV(const char *format, va_list args);
 std::string StrPrintf(const char *format, ...);
+
+template <class CharT>
+	bool CutToSlash(std::basic_string<CharT> &str, bool include = false)
+{
+	size_t p = str.rfind('/');
+	if (p == std::string::npos)
+		return false;
+
+	str.resize(include ? p + 1 : p);
+	return true;
+}
+

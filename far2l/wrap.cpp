@@ -1074,15 +1074,19 @@ int WINAPI FarMessageFnA(INT_PTR PluginNumber,DWORD Flags,const char *HelpTopic,
 	return ret;
 }
 
+static CriticalSection s_get_msga_cs;
 const char * WINAPI FarGetMsgFnA(INT_PTR PluginHandle,int MsgId)
 {
 	//BUGBUG, надо проверять, что PluginHandle - плагин
 	PluginA *pPlugin = (PluginA*)PluginHandle;
-	FARString strPath = pPlugin->GetModuleName();
+
+	std::wstring strPath = pPlugin->GetModuleName().CPtr();
 	CutToSlash(strPath);
+
+	CriticalSectionLock lock(s_get_msga_cs);
 //	fprintf(stderr,"FarGetMsgFnA: strPath=%ls\n", strPath.CPtr());
 
-	if (!pPlugin->InitLang(strPath)) {
+	if (!pPlugin->InitLang(strPath.c_str())) {
 		return "";
 	}
 

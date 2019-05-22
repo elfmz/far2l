@@ -462,3 +462,4 @@ std::string FileSizeString(unsigned long long value)
 	snprintf(str, sizeof(str) - 1, "%lld %s", value, units);
 	return str;
 }
+

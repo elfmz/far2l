@@ -181,10 +181,6 @@ FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix, BOOL WithTempP
 
 static int DisplayNotificationSynched(const wchar_t *action, const char *object)
 {
-	if (Opt.NotifOpt.OnlyIfBackground && WINPORT(IsConsoleActive)() != FALSE) {
-		return 0;
-	}
-
 	const std::string &str_script = GetHelperPathName("notify.sh");
 	const std::string &str_action = Wide2MB(action);
 
@@ -203,15 +199,21 @@ static int DisplayNotificationSynched(const wchar_t *action, const char *object)
 
 void DisplayNotification(const wchar_t *action, const char *object)
 {
-	InterThreadCall<int>(std::bind(DisplayNotificationSynched, action, object));
+	if (!Opt.NotifOpt.OnlyIfBackground || !WINPORT(IsConsoleActive)()) {
+		InterThreadCall<int>(std::bind(DisplayNotificationSynched, action, object));
+	}
 }
 
 void DisplayNotification(const char *action, const char *object)
 {
-	DisplayNotification(MB2Wide(action).c_str(), object);
+	if (!Opt.NotifOpt.OnlyIfBackground || !WINPORT(IsConsoleActive)()) {
+		DisplayNotification(MB2Wide(action).c_str(), object);
+	}
 }
 
 void DisplayNotification(const wchar_t *action, const wchar_t *object)
 {
-	DisplayNotification(action, Wide2MB(object).c_str());
+	if (!Opt.NotifOpt.OnlyIfBackground || !WINPORT(IsConsoleActive)()) {
+		DisplayNotification(action, Wide2MB(object).c_str());
+	}
 }

@@ -1239,25 +1239,20 @@ void WINAPI FarDialogFree(HANDLE hDlg)
 /////////
 
 
-
-static const wchar_t* FarGetMsgFnSynched(INT_PTR PluginHandle,int MsgId)
+static CriticalSection s_get_msg_cs;
+const wchar_t* FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
 {
 	//BUGBUG, надо проверять, что PluginHandle - плагин
 	PluginW *pPlugin = (PluginW*)PluginHandle;
-	FARString strPath = pPlugin->GetModuleName();
+	std::wstring strPath = pPlugin->GetModuleName().CPtr();
 	CutToSlash(strPath);
 
-	if (!pPlugin->InitLang(strPath)) {
+	CriticalSectionLock lock(s_get_msg_cs);
+	if (!pPlugin->InitLang(strPath.c_str())) {
 		return nullptr;
 	}
 
 	return pPlugin->GetMsg(MsgId);
-}
-
-const wchar_t* WINAPI FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
-{
-	const wchar_t* out = InterThreadCall<const wchar_t*, nullptr>(std::bind(FarGetMsgFnSynched, PluginHandle, MsgId));
-	return out ? out : L"";
 }
 
 static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopic,

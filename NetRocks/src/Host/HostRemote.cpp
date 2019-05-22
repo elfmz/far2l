@@ -286,6 +286,11 @@ void HostRemote::RecvReply(IPCCommand cmd)
 			std::string str;
 			RecvString(str);
 			throw ProtocolError(str);
+
+		} else if (reply == IPC_UNSUPPORTED) {
+			std::string str;
+			RecvString(str);
+			throw ProtocolUnsupportedError(str);
 		}
 
 		throw IPCError("Wrong command reply", (unsigned int)cmd);

@@ -140,7 +140,7 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
 
-	if (_protocol.empty() || (_host.empty() && _protocol != "file"))
+	if (_protocol.empty() || (_host.empty() && _protocol != "file" && _protocol != "smb"))
 		throw std::runtime_error("Bad site configuration");
 
 	int master2broker[2] = {-1, -1};

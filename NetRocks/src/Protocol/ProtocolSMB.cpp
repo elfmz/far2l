@@ -116,15 +116,26 @@ unsigned long long ProtocolSMB::GetSize(const std::string &path, bool follow_sym
 	return s.st_size;
 }
 
-void ProtocolSMB::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+static int ProtocolSMB_GetInformationInternal(FileInformation &file_info, const std::string &path)
 {
 	struct stat s = {};
-	int rc = smbc_stat(RootedPath(path).c_str(), &s);
-	if (rc != 0)
-		throw ProtocolError("Get info error", errno);
+	int rc = smbc_stat(path.c_str(), &s);
+	if (rc < 0)
+		return rc;
 
+	file_info.access_time = s.st_atim;
+	file_info.modification_time = s.st_mtim;
+	file_info.status_change_time = s.st_ctim;
 	file_info.mode = s.st_mode;
 	file_info.size = s.st_size;
+	return 0;
+}
+
+void ProtocolSMB::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+{
+	int rc = ProtocolSMB_GetInformationInternal(file_info, RootedPath(path));
+	if (rc != 0)
+		throw ProtocolError("Get info error", errno);
 }
 
 void ProtocolSMB::FileDelete(const std::string &path) throw (std::runtime_error)
@@ -195,13 +206,17 @@ class SMBDirectoryEnumer : public IDirectoryEnumer
 	int _remain = 0;
 
 public:
-	SMBDirectoryEnumer(std::shared_ptr<ProtocolSMB> &protocol, const std::string &path)
+	SMBDirectoryEnumer(std::shared_ptr<ProtocolSMB> protocol, const std::string &path)
 		: _protocol(protocol),
 		_dir_path(protocol->RootedPath(path))
 	{
+		if (_dir_path[_dir_path.size() - 1] == '.' && _dir_path[_dir_path.size() - 2] == '/') {
+			_dir_path.resize(_dir_path.size() - 2);
+		}
 		_dir = smbc_opendir(_dir_path.c_str());
-		if (_dir < 0)
-	        throw ProtocolError("Directory open error", errno);
+		if (_dir < 0) {
+			throw ProtocolError("Directory open error", _dir_path.c_str(), errno);
+		}
 
 		if (_dir_path.empty() || _dir_path[_dir_path.size() - 1] != '/') {
 			_dir_path+= '/';
@@ -227,19 +242,25 @@ public:
 				}
 				if (FILENAME_ENUMERABLE(de->name)) {
 					name = de->name;
+					subpath = _dir_path;
+					subpath+= name;
+
+					file_info.size = 0;
+
 					switch (de->smbc_type) {
 						case SMBC_WORKGROUP: case SMBC_SERVER: case SMBC_FILE_SHARE: case SMBC_PRINTER_SHARE: case SMBC_DIR:
+							ProtocolSMB_GetInformationInternal(file_info, subpath);
 							file_info.mode = S_IFDIR;
-							file_info.size = 0;
 							return true;
 
 						case SMBC_FILE: case SMBC_LINK:
+							ProtocolSMB_GetInformationInternal(file_info, subpath);
 							file_info.mode = S_IFREG;
-							file_info.size = 0;
 							return true;
 					}
 				}
 			}
+
 
 			if (_remain <= 0) {
 				_entry = _buf;
@@ -256,35 +277,45 @@ public:
 
 std::shared_ptr<IDirectoryEnumer> ProtocolSMB::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
-	std::shared_ptr<ProtocolSMB> self_sp = shared_from_this();
-	return std::shared_ptr<IDirectoryEnumer>(new SMBDirectoryEnumer(self_sp, path));
+	return std::shared_ptr<IDirectoryEnumer>(new SMBDirectoryEnumer(shared_from_this(), path));
 }
 
-/*
-class SMBFileIO : IFileReader, IFileWriter
+
+class SMBFileIO : public IFileReader, public IFileWriter
 {
-	std::shared_ptr<SMBConnection> _conn;
-	SMBFile _file;
+	std::shared_ptr<ProtocolSMB> _protocol;
+	int _file = -1;
 
 public:
-	SMBFileIO(std::shared_ptr<SMBConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
-		: _conn(conn), _file(SMB_open(conn->SMB, path.c_str(), flags, mode))
+	SMBFileIO(std::shared_ptr<ProtocolSMB> protocol, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
+		: _protocol(protocol)
 	{
-		if (!_file)
-			throw ProtocolError("Failed to open file",  ssh_get_error(_conn->ssh));
+		_file = smbc_open(protocol->RootedPath(path).c_str(), flags, mode);
+		if (_file == -1)
+			throw ProtocolError("Failed to open file",  errno);
 
 		if (resume_pos) {
-			int rc = SMB_seek64(_file, resume_pos);
-			if (rc != 0)
-				throw ProtocolError("Failed to seek file",  ssh_get_error(_conn->ssh), rc);
+			off_t rc = smbc_lseek(_file, resume_pos, SEEK_SET);
+			if (rc == (off_t)-1) {
+				smbc_close(_file);
+				_file = -1;
+				throw ProtocolError("Failed to seek file",  errno);
+			}
+		}
+	}
+
+	virtual ~SMBFileIO()
+	{
+		if (_file != -1) {
+			smbc_close(_file);
 		}
 	}
 
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
-		const ssize_t rc = SMB_read(_file, buf, len);
+		const ssize_t rc = smbc_read(_file, buf, len);
 		if (rc < 0)
-			throw ProtocolError("Read file error",  ssh_get_error(_conn->ssh));
+			throw ProtocolError("Read file error",  errno);
 		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
 
 		return (size_t)rc;
@@ -293,27 +324,30 @@ public:
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
 		if (len > 0) for (;;) {
-			const ssize_t rc = SMB_write(_file, buf, len);
+			const ssize_t rc = smbc_write(_file, buf, len);
 			if (rc <= 0)
-				throw ProtocolError("Write file error",  ssh_get_error(_conn->ssh));
+				throw ProtocolError("Write file error",  errno);
 			if ((size_t)rc >= len)
 				break;
 
-			len-= (size_t)len;
-			buf = (const char *)buf + len;
+			len-= (size_t)rc;
+			buf = (const char *)buf + rc;
 		}
 	}
+
+	virtual void WriteComplete() throw (std::runtime_error)
+	{
+		// what?
+	}
 };
-*/
+
 
 std::shared_ptr<IFileReader> ProtocolSMB::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("Not implemented");
-	// return std::shared_ptr<IFileReader>((IFileReader *)new SMBFileIO(_conn, path, O_RDONLY, 0, resume_pos));
+	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_RDONLY, 0, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolSMB::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("Not implemented");
-	// return std::shared_ptr<IFileWriter>((IFileWriter *)new SMBFileIO(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos));
+	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }

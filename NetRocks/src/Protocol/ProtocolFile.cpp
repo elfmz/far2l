@@ -28,7 +28,9 @@ ProtocolFile::ProtocolFile(const std::string &host, unsigned int port,
 		char port_sz[32];
 		snprintf(port_sz, sizeof(port_sz) - 1, "%d", port);
 		int child_stdout[2] = {-1, -1};
-		pipe(child_stdout);
+		if (pipe(child_stdout) < 0) {
+			throw std::runtime_error("Can't create pipe");
+		}
 		fcntl(child_stdout[0], F_SETFD, fcntl(child_stdout[0], F_GETFD) | FD_CLOEXEC);
 		pid_t pid = fork();
 		if (pid == 0) {

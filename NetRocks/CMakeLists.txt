@@ -9,10 +9,6 @@ src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
 src/BackgroundTasks.cpp
-src/Protocol/Protocol.cpp
-src/Protocol/ProtocolFile.cpp
-src/Protocol/ProtocolSFTP.cpp
-src/Protocol/SplitPathSpecification.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp
@@ -41,8 +37,30 @@ src/Op/OpEnumDirectory.cpp
 src/Op/OpXfer.cpp
 src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
+src/Protocol/SplitPathSpecification.cpp
+src/Protocol/Protocol.cpp
+src/Protocol/ProtocolFile.cpp
 )
+set (PROTOCOL_LIBS )
+set (PROTOCOL_DEFS )
 
+if (LIBSSH_FOUND)
+	set(SOURCES
+		${SOURCES}
+		src/Protocol/ProtocolSFTP.cpp
+	)
+	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBSSH_LIBRARIES})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
+endif (LIBSSH_FOUND)
+
+if (LIBSMBCLIENT_FOUND)
+	set(SOURCES
+		${SOURCES}
+		src/Protocol/ProtocolSMB.cpp
+	)
+	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBSMBCLIENT_LIBRARIES})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
+endif (LIBSMBCLIENT_FOUND)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")
@@ -53,9 +71,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
 endif()
 
-FIND_LIBRARY(LIBSSH_LIBRARY NAMES ssh)
+#FIND_LIBRARY(LIBSSH_LIBRARY NAMES ssh)
+#FIND_LIBRARY(LIBSMBCLIENT_LIBRARY NAMES smbclient)
 
-target_link_libraries(NetRocks utils ssh)
+target_link_libraries(NetRocks utils ${PROTOCOL_LIBS})
 
 target_include_directories(NetRocks PRIVATE src)
 target_include_directories(NetRocks PRIVATE ../WinPort)
@@ -63,6 +82,14 @@ target_include_directories(NetRocks PRIVATE ../far2l)
 target_include_directories(NetRocks PRIVATE ../far2l/Include)
 
 target_compile_definitions(NetRocks PRIVATE)
+
+if (LIBSSH_FOUND)
+	target_include_directories(NetRocks PRIVATE ${LIBSSH_INCLUDE_DIRS})
+endif (LIBSSH_FOUND)
+
+if (LIBSMBCLIENT_FOUND)
+	target_include_directories(NetRocks PRIVATE ${LIBSMBCLIENT_INCLUDE_DIRS})
+endif (LIBSMBCLIENT_FOUND)
 
 
 set_target_properties(NetRocks

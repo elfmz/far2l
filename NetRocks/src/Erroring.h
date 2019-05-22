@@ -16,6 +16,13 @@ struct ProtocolAuthFailedError : std::runtime_error
 	ProtocolAuthFailedError(const std::string &info = std::string());
 };
 
+
+struct ProtocolUnsupportedError : ProtocolError
+{
+	ProtocolUnsupportedError(const std::string &msg) : ProtocolError(msg) {}
+};
+
+
 struct ServerIdentityMismatchError : std::runtime_error
 {
 	ServerIdentityMismatchError(const std::string &identity);

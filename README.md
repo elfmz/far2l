@@ -81,7 +81,7 @@ brew install yurikoles/yurikoles/far2l --HEAD
 ##### Hard way OSX install - with building from sources:
  * Install required packages:
 ```sh
-brew install cmake gawk glib ninja pkg-config wget wxmac libssh libsmbclient
+brew install cmake gawk glib ninja pkg-config wget wxmac libssh
 ```
 
  * Clone:

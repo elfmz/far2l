@@ -262,8 +262,10 @@ public:
 			throw ProtocolError("open failed", errno);
 		}
 		if (resume_pos) {
-			if (sdc_lseek(_fd, resume_pos, SEEK_SET) == -1)
+			if (sdc_lseek(_fd, resume_pos, SEEK_SET) == -1) {
+				CheckedCloseFD(_fd);
 				throw ProtocolError("lseek failed", errno);
+			}
 		}
 	}
 

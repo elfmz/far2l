@@ -6,4 +6,4 @@ brew "pkg-config"
 brew "wxmac"
 brew "wget"
 brew "libssh"
-brew "samba"
+

@@ -1,11 +1,111 @@
 #include "ProtocolSMB.h"
 #include <libsmbclient.h>
 #include <StringConfig.h>
+#include <Threaded.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <time.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <map>
+#include <set>
+#include <vector>
+#include <string>
 
+typedef std::map<std::string, struct sockaddr_in> Name2Addr;
+
+class NMBLookup : protected Threaded
+{
+	Name2Addr _results;
+
+	void ParseReply(const struct sockaddr_in &sin, const unsigned char *buf, unsigned int len)
+	{
+		if (len > 56) {
+			for (unsigned int i = 0; i < (unsigned int)buf[56]; ++i) {
+				unsigned int j = 57 + i * 18;
+				if (j + 16 <= len) {
+					if ( (buf[j + 16] & 0x80) == 0 && (buf[j + 15] == 0 || buf[j + 15] == 0x20)) {
+						char name[16] = {};
+						memcpy(name, &buf[j], 15);
+						_results.emplace(name, sin);
+					}
+				}
+			}
+		}
+	}
+
+	virtual void *ThreadProc()
+	{
+		int sc = socket(AF_INET, SOCK_DGRAM, 0);
+		if (sc == -1) {
+			perror("NMBLookup - socket");
+			return nullptr;
+		}
+
+		int one = 1;
+		if (setsockopt(sc, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one)) < 0) {
+			perror("NMBLookup - SO_BROADCAST");
+		}
+
+		char mess[] = "\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00 CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x00\x00\x21\x00\x01";
+
+		struct timeval tv = {};
+		tv.tv_usec = 100000;
+		if (setsockopt(sc, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof(tv)) < 0) {
+			perror("NMBLookup - SO_RCVTIMEO");
+		}
+
+		const time_t ts = time(NULL);
+		for (unsigned int sends = 0;;) {
+			struct sockaddr_in sin = {};
+			time_t passed_time = time(NULL) - ts;
+			if (passed_time >= 5) {
+				break;
+			}
+			if (sends < 3 && sends <= passed_time) {
+				sin.sin_family = AF_INET;
+				sin.sin_port = (in_port_t)htons(137);
+				sin.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+				if (sendto(sc, mess, sizeof(mess) - 1, 0, (struct sockaddr *)&sin, sizeof(struct sockaddr_in)) > 0) {
+					++sends;
+				} else {
+					perror("NMBLookup - sendto");
+				}
+			}
+			unsigned char buf[0x1000];
+			socklen_t sin_len = sizeof(sin);
+			ssize_t r = recvfrom(sc, buf, sizeof(buf), 0, (struct sockaddr *)&sin, &sin_len);
+			if (r > 0) {
+				ParseReply(sin, buf, (unsigned int)r);
+			}
+		}
+
+		close(sc);
+		return nullptr;
+	}
+
+public:
+	NMBLookup()
+	{
+		StartThread();
+	}
+
+	virtual ~NMBLookup()
+	{
+		WaitThread();
+	}
+
+	const Name2Addr &WaitResults()
+	{
+		WaitThread();
+		return _results;
+	}
+};
 
 std::shared_ptr<IProtocol> CreateProtocolSMB(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
@@ -52,6 +152,7 @@ static void ProtocolSMB_AuthFn(const char *server, const char *share, char *wrkg
 
 ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	: _host(host)
 {
 //	_conn->ctx = create_smbctx();
 //	if (!_conn->ctx)
@@ -71,9 +172,6 @@ ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
 	}
 
 	//TODO: smb_workgroup = ;
-	_root = "smb://";
-	_root+= host;
-	_root+= '/';
 }
 
 ProtocolSMB::~ProtocolSMB()
@@ -82,13 +180,36 @@ ProtocolSMB::~ProtocolSMB()
 
 std::string ProtocolSMB::RootedPath(const std::string &path)
 {
-	std::string out = _root;
-	if (out[out.size() - 1] == '/' && !path.empty() && path[0] == '/') {
-		out+= path.substr(1);
-	} else {
-		out+= path;
+	std::string out = "smb://";
+	for (size_t i = 0; i < _host.size(); ++i) {
+		if (_host[i] != '/') {
+			out+= _host.substr(i);
+			break;
+		}
 	}
+	while (out.size() > 6 && out[out.size() - 1] == '/') {
+		out.resize(out.size() - 1);
+	}
+	if (out.size() > 6 && !path.empty() && path[0] != '/') {
+		out+= '/';
+	}
+	out+= path;
+
+	if (out[out.size() - 1] == '.' && out[out.size() - 2] == '/') {
+		out.resize(out.size() - 2);
+	}
+
 	return out;
+}
+
+static bool IsRootedPathServerOnly(const std::string &path)
+{
+	size_t slashes_count = 0;
+	for (size_t i = 0; i < path.size(); ++i) {
+		if (path[i] == '/')
+			slashes_count++;
+	}
+	return (slashes_count <= 2);
 }
 
 bool ProtocolSMB::IsBroken()
@@ -98,8 +219,12 @@ bool ProtocolSMB::IsBroken()
 
 mode_t ProtocolSMB::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+	const std::string &rooted_path = RootedPath(path);
+	if (IsRootedPathServerOnly(rooted_path)) {
+		return S_IFDIR;
+	}
 	struct stat s = {};
-	int rc = smbc_stat(RootedPath(path).c_str(), &s);
+	int rc = smbc_stat(rooted_path.c_str(), &s);
 	if (rc != 0)
 		throw ProtocolError("Get mode error", errno);
 
@@ -108,8 +233,12 @@ mode_t ProtocolSMB::GetMode(const std::string &path, bool follow_symlink) throw 
 
 unsigned long long ProtocolSMB::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+	const std::string &rooted_path = RootedPath(path);
+	if (IsRootedPathServerOnly(rooted_path)) {
+		return 0;
+	}
 	struct stat s = {};
-	int rc = smbc_stat(RootedPath(path).c_str(), &s);
+	int rc = smbc_stat(rooted_path.c_str(), &s);
 	if (rc != 0)
 		throw ProtocolError("Get size error", errno);
 
@@ -133,7 +262,13 @@ static int ProtocolSMB_GetInformationInternal(FileInformation &file_info, const 
 
 void ProtocolSMB::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	int rc = ProtocolSMB_GetInformationInternal(file_info, RootedPath(path));
+	const std::string &rooted_path = RootedPath(path);
+	if (IsRootedPathServerOnly(rooted_path)) {
+		file_info = FileInformation();
+		file_info.mode = S_IFDIR;
+		return;
+	}
+	int rc = ProtocolSMB_GetInformationInternal(file_info, rooted_path);
 	if (rc != 0)
 		throw ProtocolError("Get info error", errno);
 }
@@ -204,6 +339,37 @@ class SMBDirectoryEnumer : public IDirectoryEnumer
 	int _dir = -1;
 	char _buf[0x4000], *_entry = nullptr;
 	int _remain = 0;
+	std::shared_ptr<NMBLookup> _nmb_lookup;
+	std::set<std::string> _nmb_lookup_exlusions;
+	std::vector<std::string> _nmb_lookup_results;
+
+	void FinalizeNMBLookup()
+	{
+		if (_nmb_lookup) {
+			for (const auto &name2addr: _nmb_lookup->WaitResults()) {
+				if (FILENAME_ENUMERABLE(name2addr.first.c_str())
+				 && _nmb_lookup_exlusions.find(name2addr.first) == _nmb_lookup_exlusions.end()) {
+					if (name2addr.second.sin_family == AF_INET) {
+						const uint32_t addr = name2addr.second.sin_addr.s_addr;
+						char addrname[32] = {};
+						snprintf(addrname, sizeof(addrname) - 1, "%u.%u.%u.%u",
+							addr&0xff, (addr>>8)&0xff, (addr>>16)&0xff, (addr>>24)&0xff);
+						_nmb_lookup_results.emplace_back(addrname);
+					} else
+						_nmb_lookup_results.emplace_back(name2addr.first);
+				}
+			}
+			_nmb_lookup.reset();
+		}
+	}
+
+	void EnsureClosedDir()
+	{
+		if (_dir != -1) {
+			smbc_closedir(_dir);
+			_dir = -1;
+		}
+	}
 
 public:
 	SMBDirectoryEnumer(std::shared_ptr<ProtocolSMB> protocol, const std::string &path)
@@ -213,8 +379,14 @@ public:
 		if (_dir_path[_dir_path.size() - 1] == '.' && _dir_path[_dir_path.size() - 2] == '/') {
 			_dir_path.resize(_dir_path.size() - 2);
 		}
+		fprintf(stderr, "SMBDirectoryEnumer: '%s'\n", _dir_path.c_str());
+
+		if (_dir_path == "smb:" || _dir_path == "smb:/" || _dir_path == "smb://") {
+			_nmb_lookup = std::make_shared<NMBLookup>();
+		}
+
 		_dir = smbc_opendir(_dir_path.c_str());
-		if (_dir < 0) {
+		if (_dir < 0 && !_nmb_lookup) {
 			throw ProtocolError("Directory open error", _dir_path.c_str(), errno);
 		}
 
@@ -225,14 +397,15 @@ public:
 
 	virtual ~SMBDirectoryEnumer()
 	{
-		if (_dir != -1) {
-			smbc_closedir(_dir);
-		}
+		EnsureClosedDir();
 	}
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
 		std::string subpath;
+		owner.clear();
+		group.clear();
+		file_info = FileInformation();
 		for (;;) {
 			if (_remain > 0 && _entry != nullptr) {
 				struct smbc_dirent *de = (struct smbc_dirent *)_entry;
@@ -248,12 +421,17 @@ public:
 					file_info.size = 0;
 
 					switch (de->smbc_type) {
-						case SMBC_WORKGROUP: case SMBC_SERVER: case SMBC_FILE_SHARE: case SMBC_PRINTER_SHARE: case SMBC_DIR:
+						case SMBC_WORKGROUP: case SMBC_SERVER:
+						case SMBC_FILE_SHARE: case SMBC_PRINTER_SHARE:
+						case SMBC_DIR: case SMBC_LINK:
 							ProtocolSMB_GetInformationInternal(file_info, subpath);
+							if (_nmb_lookup) {
+								_nmb_lookup_exlusions.insert(name);
+							}
 							file_info.mode = S_IFDIR;
 							return true;
 
-						case SMBC_FILE: case SMBC_LINK:
+						case SMBC_FILE:
 							ProtocolSMB_GetInformationInternal(file_info, subpath);
 							file_info.mode = S_IFREG;
 							return true;
@@ -264,9 +442,18 @@ public:
 
 			if (_remain <= 0) {
 				_entry = _buf;
-				_remain = smbc_getdents(_dir, (struct smbc_dirent *)_buf, sizeof(_buf));
-				if (_remain == 0)
+				_remain = (_dir == -1) ? 0 : smbc_getdents(_dir, (struct smbc_dirent *)_buf, sizeof(_buf));
+				if (_remain == 0) {
+					EnsureClosedDir();
+					FinalizeNMBLookup();
+					if (!_nmb_lookup_results.empty()) {
+						name = _nmb_lookup_results.back();
+						file_info.mode = S_IFDIR;
+						_nmb_lookup_results.resize(_nmb_lookup_results.size() - 1);
+						return true;
+					}
 					return false;
+				}
 				if (_remain < 0)
 					throw ProtocolError("Directory enum error", errno);
 			}

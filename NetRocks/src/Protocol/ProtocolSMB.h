@@ -4,7 +4,7 @@
 
 class ProtocolSMB : public IProtocol, public std::enable_shared_from_this<ProtocolSMB>
 {
-	std::string _root;
+	std::string _host;
 
 public:
 

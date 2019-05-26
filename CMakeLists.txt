@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+string(ASCII 27 Esc)
+set(ColourReset "${Esc}[m")
+
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -42,21 +45,19 @@ else()
 	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
 endif()
 
-#find_package(LibSSH 0.5.0 QUIET)
 find_package(LibSSH 0.5.0)
 if(LIBSSH_FOUND)
-	message(STATUS "libssh found")
-	if (NOT DEFINED NETROCKS)
-		set(NETROCKS "YES")
-	endif()
-
-elseif(NOT LIBSSH_FOUND AND NETROCKS)
-	message(FATAL_ERROR "libssh >= 0.5.0 not found but NETROCKS build was requested.\nInstall libssh-dev or omit NETROCKS=YES to build without it.")
+	message(STATUS "libssh found -> enjoy SFTP support in NetRocks")
 else()
-	message(WARNING "libssh >= 0.5.0 not found, omitting NETROCKS build.")
-	set(NETROCKS "NO")
+	message(WARNING "${Esc}[1;31mlibssh not found, NetRocks will not have SFTP protocol support. Install libssh-dev if you want SFTP protocol available in NetRocks.${Esc}[39;22m")
 endif(LIBSSH_FOUND)
 
+find_package(Libsmbclient)
+if (LIBSMBCLIENT_FOUND)
+	message(STATUS "libsmbclient found -> enjoy SMB support in NetRocks")
+else()
+	message(WARNING "${Esc}[1;31mlibsmbclient not found, NetRocks will not have SMB protocol support. Install libsmbclient-dev if you want SMB protocol available in NetRocks.${Esc}[39;22m")
+endif (LIBSMBCLIENT_FOUND)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
@@ -104,10 +105,7 @@ add_subdirectory (drawline)
 add_subdirectory (editorcomp)
 add_subdirectory (inside)
 add_subdirectory (incsrch)
-
-if (NETROCKS)
-	add_subdirectory (NetRocks)
-endif()
+add_subdirectory (NetRocks)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

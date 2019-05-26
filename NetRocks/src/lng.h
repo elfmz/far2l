@@ -179,4 +179,9 @@ enum LanguageID
   MSFileCommandTimeLimit,
   MSFileCommandVarsHint,
 
+  MSMBOptionsTitle,
+  MSMBWorkgroup,
+  MSMBEnumBySMB,
+  MSMBEnumByNMB
+
 };

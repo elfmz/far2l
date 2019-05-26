@@ -15,8 +15,9 @@ src/Host/HostRemote.cpp
 src/Host/HostRemoteBroker.cpp
 src/UI/DialogUtils.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
-src/UI/Settings/ConfigureProtocolSFTP.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp
+src/UI/Settings/ConfigureProtocolSFTP.cpp
+src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Activities/Confirm.cpp
 src/UI/Activities/ConfirmXfer.cpp
 src/UI/Activities/ConfirmOverwrite.cpp
@@ -57,6 +58,7 @@ if (LIBSMBCLIENT_FOUND)
 	set(SOURCES
 		${SOURCES}
 		src/Protocol/ProtocolSMB.cpp
+		src/Protocol/NMBEnum.cpp
 	)
 	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBSMBCLIENT_LIBRARIES})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")

@@ -7,7 +7,7 @@ std::shared_ptr<IProtocol> CreateProtocolSFTP(const std::string &host, unsigned 
 #endif
 
 #ifdef HAVE_SMB
-void ConfigureProtocolSMB(std::string &options) {};
+void ConfigureProtocolSMB(std::string &options);
 std::shared_ptr<IProtocol> CreateProtocolSMB(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 #endif

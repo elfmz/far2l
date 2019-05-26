@@ -12,9 +12,11 @@ class PluginImpl
 
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH];
 	bool _cur_dir_absolute = false;
+	std::vector<std::wstring> _dir_stack;
 
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
+
 
 	void UpdatePanelTitle();
 	bool ValidateConnection();

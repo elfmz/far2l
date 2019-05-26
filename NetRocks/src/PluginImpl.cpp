@@ -595,8 +595,37 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 {
+	if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
+		std::wstring cd_cmd = L"cd";
+		cd_cmd+= cmd + 5;
+		std::wstring prev_dir = _cur_dir;
+		if (!ProcessEventCommand(cd_cmd.c_str()))
+			return FALSE;
+
+		_dir_stack.emplace_back(prev_dir);
+		return TRUE;
+	}
+
 	int out = 0;
-	if (wcsstr(cmd, L"cd ") == cmd) {
+	if (wcscmp(cmd, L"popd") == 0) {
+		if (!_dir_stack.empty()) {
+			std::wstring prev_dir = _cur_dir, new_dir = _dir_stack.back();
+			_dir_stack.pop_back();
+			wcsncpy(_cur_dir, new_dir.c_str(), ARRAYSIZE(_cur_dir) - 1);
+
+			size_t p = new_dir.find('/');
+			if (p != prev_dir.find('/')
+			  || (p != std::wstring::npos && new_dir.substr(0, p) != prev_dir.substr(0, p))) {
+				_remote.reset();
+				//_cur_dir[p] = 0;
+				//SetDirectory(new_dir.c_str() + p + 1, 0);
+				SetDirectory(L"", 0);
+			}
+
+			out = TRUE;
+		}
+
+	} else if (wcsstr(cmd, L"cd ") == cmd) {
 		for (cmd+= 3; *cmd == ' '; ++cmd);
 		out = SetDirectory(cmd, 0);
 

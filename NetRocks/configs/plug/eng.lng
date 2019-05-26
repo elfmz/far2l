@@ -177,5 +177,6 @@
 "Extra environment variables available for command process:"
 
 "SMB Protocol options"
+"Work&group:"
 "Enum network with &SMB"
 "Enum network with &NMB"

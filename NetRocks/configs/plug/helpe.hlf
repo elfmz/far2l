@@ -51,8 +51,23 @@ $^#Site connection editor#
 
  This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like hostname and port to connect to, login mode and username and password if needed. Also by clicking on Protocol options button you can modify some protocol-specific settings.
  ~SFTP:// protocol specific options~@ProtocolOptionsSFTP@
+ ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~FILE:// protocol specific options~@ProtocolOptionsFile@
- 
+
+ ~Contents~@Contents@
+
+@ProtocolOptionsSMB
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#SMB:// protocol specific options#
+
+ This dialog allows you to modify "smb://" protocol specific settings, which is file sharing protocol primarily used in Windows networks.
+ #Workgroup:# here you can specify workgroup name where to search hosts.
+ #Enum network with SMB:# check this option to enable using of libsmbclient to scan for hosts when open empty path ("smb://")
+ #Enum network with NMB:# check this option to enable using of NetRock's builtin NetBios name service scanner to scan for hosts when open empty path ("smb://")
+
  ~Contents~@Contents@
 
 @ProtocolOptionsSFTP
@@ -63,11 +78,10 @@ $^#Contents
 $^#SFTP:// protocol specific options#
 
  This dialog allows you to modify "sftp://" protocol specific settings. Here you can enable authentification by key file, change maximum IO block size or enable TCP_NODELAY socket option.
- Private key file: can be used for SSH server instead of 'usual' username:password authentification. Note that in such case password field in the main connection settings is actually 'passphrase' used to access private key file.
- IO block size: increasing this value usualy gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
- TCP_NODELAY socket option: also can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
-  
- 
+ #Private key file:# can be used for SSH server instead of 'usual' username:password authentification. Note that in such case password field in the main connection settings is actually 'passphrase' used to access private key file.
+ #IO block size:# increasing this value usualy gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
+ #TCP_NODELAY socket option:# also can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
+
  ~Contents~@Contents@
 
 @ProtocolOptionsFile
@@ -78,7 +92,7 @@ $^#Contents
 $^#FILE:// protocol specific options#
 
  This dialog allows you to modify "file://" protocol specific settings. Since file:// is not actual protocol, but just a plain filesystem, accessed via NetRocks infrastructure, there're no usual connectivity settings. However its possible to execute specific command when opening "file://" connection site, and that command can, for example, do mounting of some resource that is to be accessed using this connection site. This command will have defined as environment fields of host ($HOST), port ($PORT), username ($USER), password ($PASSWORD) and additional extra string configured in this dialog ($EXTRA). In this dialog its also possible to defined amount of time NetRocks will wait for completion of this command (if command will not complete during that time - timeout error will be raised).
- 
+
  ~Contents~@Contents@
 
 @Contact

@@ -7,7 +7,6 @@
 #include <string>
 
 #include <libsmbclient.h>
-#include <StringConfig.h>
 
 #include "ProtocolSMB.h"
 #include "NMBEnum.h"
@@ -17,7 +16,7 @@ std::shared_ptr<IProtocol> CreateProtocolSMB(const std::string &host, unsigned i
 {
 	return std::make_shared<ProtocolSMB>(host, port, username, password, options);
 }
-
+/*
 struct SMBConnection
 {
 	SMBCCTX	*ctx = nullptr;
@@ -32,6 +31,7 @@ struct SMBConnection
 private:
 	SMBConnection(const SMBConnection &) = delete;
 };
+*/
 
 ////////////////////////////
 static std::string smb_username, smb_password, smb_workgroup;
@@ -55,12 +55,13 @@ static void ProtocolSMB_AuthFn(const char *server, const char *share, char *wrkg
 
 ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
-	: _host(host), _options(options)
+	: _host(host), _protocol_options(options)
 {
 //	_conn->ctx = create_smbctx();
 //	if (!_conn->ctx)
 //		throw ProtocolError("SMB context create failed");
 
+	smb_workgroup = _protocol_options.GetString("Workgroup");
 	smb_username = username;
 	smb_password = password;
 
@@ -243,14 +244,6 @@ class SMBDirectoryEnumer : public IDirectoryEnumer
 	char _buf[0x4000], *_entry = nullptr;
 	int _remain = 0;
 
-	void EnsureClosedDir()
-	{
-		if (_dir != -1) {
-			smbc_closedir(_dir);
-			_dir = -1;
-		}
-	}
-
 public:
 	SMBDirectoryEnumer(std::shared_ptr<ProtocolSMB> protocol, const std::string &rooted_path)
 		: _protocol(protocol),
@@ -270,7 +263,9 @@ public:
 
 	virtual ~SMBDirectoryEnumer()
 	{
-		EnsureClosedDir();
+		if (_dir != -1) {
+			smbc_closedir(_dir);
+		}
 	}
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
@@ -336,7 +331,7 @@ public:
 			return;
 		}
 
-		const auto enum_by = (unsigned int)StringConfig(protocol->_options).GetInt("EnumBy", 0xff);
+		const auto enum_by = (unsigned int)protocol->_protocol_options.GetInt("EnumBy", 0xff);
 
 		std::unique_ptr<NMBEnum> nmb_enum;
 		if (enum_by & 2) {

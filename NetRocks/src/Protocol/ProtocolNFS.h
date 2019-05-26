@@ -1,24 +1,34 @@
 #pragma once
 #include <memory>
-#include <string>
-#include <map>
+#include <nfsc/libnfs.h>
 #include "Protocol.h"
 
-class ProtocolSMB : public IProtocol, public std::enable_shared_from_this<ProtocolSMB>
+struct NFSConnection
 {
-	std::string _host;
+	struct nfs_context *ctx = nullptr;
+	std::string host, mount;
 
+	~NFSConnection()
+	{
+		if (ctx != nullptr) {
+			nfs_destroy_context(ctx);
+		}
+	}
+
+private:
+	NFSConnection(const NFSConnection &) = delete;
+};
+
+class ProtocolNFS : public IProtocol
+{
+	std::shared_ptr<NFSConnection> _nfs;
+
+	std::string InspectPath(const std::string &path);
 public:
-	std::string _options;
-	std::map<std::string, FileInformation> _cached_net;
 
-	ProtocolSMB(const std::string &host, unsigned int port,
+	ProtocolNFS(const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const std::string &protocol_options) throw (std::runtime_error);
-	virtual ~ProtocolSMB();
-
-	const std::vector<std::string> &EnumHosts();
-
-	std::string RootedPath(const std::string &path);
+	virtual ~ProtocolNFS();
 
 	virtual bool IsBroken();
 

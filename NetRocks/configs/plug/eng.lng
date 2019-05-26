@@ -175,3 +175,7 @@
 "Extra string passed to command:"
 "Limit command execution time, seconds:"
 "Extra environment variables available for command process:"
+
+"SMB Protocol options"
+"Enum network with &SMB"
+"Enum network with &NMB"

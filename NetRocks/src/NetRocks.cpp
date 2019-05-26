@@ -137,6 +137,21 @@ SHAREDSYMBOL int WINAPI _export MakeDirectoryW(HANDLE hPlugin, const wchar_t **N
 	return ((PluginImpl *)hPlugin)->MakeDirectory(Name ? *Name : nullptr, OpMode);
 }
 
+SHAREDSYMBOL int WINAPI ProcessEventW(HANDLE hPlugin, int Event, void * Param)
+{
+	switch (Event) {
+		case FE_COMMAND:
+			if (Param)
+				return ((PluginImpl *)hPlugin)->ProcessEventCommand((const wchar_t *)Param);
+		break;
+
+		default:
+			;
+	}
+
+	return 0;
+}
+
 SHAREDSYMBOL void WINAPI _export ExitFARW()
 {
 	BackgroundTasksInfo info;

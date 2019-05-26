@@ -40,4 +40,5 @@ public:
 	int PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode);
 	int MakeDirectory(const wchar_t *Name, int OpMode);
 	int ProcessKey(int Key, unsigned int ControlState);
+	int ProcessEventCommand(const wchar_t *cmd);
 };

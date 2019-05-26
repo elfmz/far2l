@@ -580,8 +580,10 @@ bool OpXfer::SymlinkCopy(const std::string &path_src, const std::string &path_ds
 	WhatOnErrorWrap<WEK_SYMLINK_CREATE>(_wea_state, _state, _dst_host.get(), path_dst,
 		[&] () mutable
 		{
-			_dst_host->SymlinkCreate(path_dst, symlink_target);
-			created = true;
+			try {
+				created = true;
+				_dst_host->SymlinkCreate(path_dst, symlink_target);
+			} catch (ProtocolUnsupportedError &) {}
 		}
 	);
 

@@ -9,6 +9,7 @@
 enum IPCCommand
 {
 	IPC_ERROR = 0,
+	IPC_UNSUPPORTED,
 	IPC_STOP,
 	IPC_IS_BROKEN = 10,
 	IPC_GET_MODE,

@@ -307,6 +307,11 @@ public:
 			try {
 				OnCommand(c);
 
+			} catch (ProtocolUnsupportedError &e) {
+				c = IPC_UNSUPPORTED;
+				SendPOD(c);
+				SendString(e.what());
+
 			} catch (ProtocolError &e) {
 				c = IPC_ERROR;
 				SendPOD(c);

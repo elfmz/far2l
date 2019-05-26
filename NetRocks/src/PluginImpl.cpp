@@ -242,6 +242,11 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 		} else if (*Dir == L'/') {
 			Wide2MB(Dir + 1, tmp);
 
+		} else if (*Dir == '~') {
+			if (Dir[1] == '/') {
+				return (SetDirectory(L"~", 0) && SetDirectory(Dir + 2, 0));
+			}
+
 		} else {
 			if (!tmp.empty())
 				tmp+= '/';
@@ -251,11 +256,15 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 			tmp.resize(tmp.size() - 1);
 
 		size_t p = tmp.find('/');
-		if (!_remote) {
+		if (!_remote || wcscmp(Dir, L"~") == 0) {
 			const std::string &site = tmp.substr(0, p);
-			_remote = OpConnect(OpMode, site).Do();
 			if (!_remote) {
-				return FALSE;
+				_remote = OpConnect(OpMode, site).Do();
+				if (!_remote) {
+					return FALSE;
+				}
+			} else if (p != std::string::npos) {
+				tmp.resize(p);
 			}
 
 			std::string root_dir = SitesConfig().GetDirectory(site);
@@ -582,4 +591,26 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 	}
 
 	return true;
+}
+
+int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
+{
+	int out = 0;
+	if (wcsstr(cmd, L"cd ") == cmd) {
+		for (cmd+= 3; *cmd == ' '; ++cmd);
+		out = SetDirectory(cmd, 0);
+
+	} else if (wcscmp(cmd, L"cd") == 0) {
+		out = SetDirectory(L"~", 0);
+	} else {
+		fprintf(stderr, "PluginImpl::ProcessEventCommand('%ls'): arbitrary commands not yet supported\n", cmd);
+	}
+
+	if (out) {
+		G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
+		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+		G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
+	}
+
+	return out;
 }

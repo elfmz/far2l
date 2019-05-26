@@ -9,6 +9,7 @@
 /*                                                         62
 345                      28         39                   60  64
  ================ SMB Protocol options =====================
+| Workgroup:                    [                          ] |
 | [ ] Enum network with SMB                                  |
 | [ ] Enum network with NMB                                  |
 |------------------------------------------------------------|
@@ -20,6 +21,7 @@
 class ProtocolOptionsSMB : protected BaseDialog
 {
 	int _i_ok = -1, _i_cancel = -1;
+	int _i_workgroup = -1;
 	int _i_enum_by_smb = -1, _i_enum_by_nmb = -1;
 
 	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
@@ -40,8 +42,13 @@ class ProtocolOptionsSMB : protected BaseDialog
 public:
 	ProtocolOptionsSMB()
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,64,4, 0, MSMBOptionsTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,5, 0, MSMBOptionsTitle);
+
 		_di.SetLine(2);
+		_di.AddAtLine(DI_TEXT, 5,34, 0, MSMBWorkgroup);
+		_i_workgroup = _di.AddAtLine(DI_EDIT, 35,62, 0, "");
+
+		_di.NextLine();
 		_i_enum_by_smb = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSMBEnumBySMB);
 		_di.NextLine();
 		_i_enum_by_nmb = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSMBEnumByNMB);
@@ -62,12 +69,17 @@ public:
 	{
 		StringConfig sc(options);
 
-		auto enum_by = (unsigned int)sc.GetInt("EnumBy", 0xff);
+		TextToDialogControl(_i_workgroup, sc.GetString("Workgroup"));
 
+		auto enum_by = (unsigned int)sc.GetInt("EnumBy", 0xff);
 		SetCheckedDialogControl( _i_enum_by_smb, enum_by & 1);
 		SetCheckedDialogControl( _i_enum_by_nmb, enum_by & 2);
 
 		if (Show(L"ProtocolOptionsSMB", 6, 2) == _i_ok) {
+			std::string str;
+			TextFromDialogControl(_i_workgroup, str);
+			sc.SetString("Workgroup", str);
+
 			enum_by = IsCheckedDialogControl(_i_enum_by_smb) ? 1 : 0;
 			if (IsCheckedDialogControl(_i_enum_by_nmb)) enum_by|= 2;
 			sc.SetInt("EnumBy", enum_by);

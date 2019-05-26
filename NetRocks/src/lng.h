@@ -180,6 +180,7 @@ enum LanguageID
   MSFileCommandVarsHint,
 
   MSMBOptionsTitle,
+  MSMBWorkgroup,
   MSMBEnumBySMB,
   MSMBEnumByNMB
 

@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <StringConfig.h>
 #include "Protocol.h"
 
 class ProtocolSMB : public IProtocol, public std::enable_shared_from_this<ProtocolSMB>
@@ -9,7 +10,7 @@ class ProtocolSMB : public IProtocol, public std::enable_shared_from_this<Protoc
 	std::string _host;
 
 public:
-	std::string _options;
+	StringConfig _protocol_options;
 	std::map<std::string, FileInformation> _cached_net;
 
 	ProtocolSMB(const std::string &host, unsigned int port,

@@ -26,13 +26,14 @@ Plug-ins that are currently working: NetRocks (SFTP/SMB), colorer, multiarc, far
 * libwxgtk3.0-dev
 * libssh-dev (needed for NetRocks/SFTP)
 * libsmbclient-dev (needed for NetRocks/SMB)
+* libnfs-dev (needed for NetRocks/NFS)
 * cmake ( >= 3.2.2 )
 * g++
 * git (needed for downloading source code)
 
 #### Or simply on Ubuntu:
 ``` sh
-apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev libssh-dev libsmbclient-dev cmake g++ git
+apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev libssh-dev libsmbclient-dev libnfs-dev cmake g++ git
 ```
 
 #### Clone and Build
@@ -81,7 +82,7 @@ brew install yurikoles/yurikoles/far2l --HEAD
 ##### Hard way OSX install - with building from sources:
  * Install required packages:
 ```sh
-brew install cmake gawk glib ninja pkg-config wget wxmac libssh
+brew install cmake gawk glib ninja pkg-config wget wxmac libssh libnfs
 ```
 
  * Clone:

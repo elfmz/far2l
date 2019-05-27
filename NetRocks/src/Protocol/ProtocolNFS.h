@@ -6,7 +6,8 @@
 struct NFSConnection
 {
 	struct nfs_context *ctx = nullptr;
-	std::string host, mount;
+
+	NFSConnection() = default;
 
 	~NFSConnection()
 	{
@@ -22,8 +23,9 @@ private:
 class ProtocolNFS : public IProtocol
 {
 	std::shared_ptr<NFSConnection> _nfs;
+	std::string _host, _mount;
 
-	std::string InspectPath(const std::string &path);
+	std::string RootedPath(const std::string &path);
 public:
 
 	ProtocolNFS(const std::string &host, unsigned int port,

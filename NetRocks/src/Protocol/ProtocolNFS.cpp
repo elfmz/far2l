@@ -1,10 +1,11 @@
-#include "ProtocolNFS.h"
-#include <libsmbclient.h>
-#include <StringConfig.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include "ProtocolNFS.h"
+#include <nfsc/libnfs-raw-nfs.h>
+#include <StringConfig.h>
+#include <utils.h>
 
 
 std::shared_ptr<IProtocol> CreateProtocolNFS(const std::string &host, unsigned int port,
@@ -18,38 +19,34 @@ std::shared_ptr<IProtocol> CreateProtocolNFS(const std::string &host, unsigned i
 ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 	:
-	_nfs(std::make_shared<NFSConnection>())
+	_nfs(std::make_shared<NFSConnection>()),
+	_host(host)
 {
 	_nfs->ctx = nfs_init_context();
 	if (!_nfs->ctx) {
 		throw ProtocolError("Create context error", errno);
 	}
 
-	_nfs->host = host;
-
 	StringConfig protocol_options(options);
 
-	int i = protocol_options.GetInt("UID", -1);
-	if (i != -1) {
+	int i = atoi(username.c_str());
+	if (i != 0 || username == "0") {
 		nfs_set_uid(_nfs->ctx, i);
 	}
-	i = protocol_options.GetInt("GID", -1);
-	if (i != -1) {
+	i = atoi(password.c_str());
+	if (i != 0 || password == "0") {
 		nfs_set_gid(_nfs->ctx, i);
 	}
-
-	if (!username.empty() || !password.empty() ) {
-		;//TODO. How to use this??? nfs_set_auth(_nfs->ctx, struct AUTH *auth);
-	}
-
 }
 
 ProtocolNFS::~ProtocolNFS()
 {
 }
 
-std::string ProtocolNFS::InspectPath(const std::string &path)
+std::string ProtocolNFS::RootedPath(const std::string &path)
 {
+	return path;
+/*
 	if (path.empty() || path == "/") {
 		_ctx->mount.clear();
 		return path;
@@ -76,6 +73,7 @@ std::string ProtocolNFS::InspectPath(const std::string &path)
 	_nfs->mount.swap(mount);
 
 	return path.substr(p);
+*/
 }
 
 bool ProtocolNFS::IsBroken()
@@ -85,72 +83,73 @@ bool ProtocolNFS::IsBroken()
 
 mode_t ProtocolNFS::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	struct stat s = {};
-	int rc = smbc_stat(RootedPath(path).c_str(), &s);
+	struct nfs_stat_64 s = {};
+	int rc = follow_symlink
+		? nfs_stat64(_nfs->ctx, RootedPath(path).c_str(), &s)
+		: nfs_lstat64(_nfs->ctx, RootedPath(path).c_str(), &s);
 	if (rc != 0)
-		throw ProtocolError("Get mode error", errno);
+		throw ProtocolError("Get mode error", rc);
 
-	return s.st_mode;
+	return s.nfs_mode;
 }
 
 unsigned long long ProtocolNFS::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	struct stat s = {};
-	int rc = smbc_stat(RootedPath(path).c_str(), &s);
+	struct nfs_stat_64 s = {};
+	int rc = follow_symlink
+		? nfs_stat64(_nfs->ctx, RootedPath(path).c_str(), &s)
+		: nfs_lstat64(_nfs->ctx, RootedPath(path).c_str(), &s);
 	if (rc != 0)
-		throw ProtocolError("Get size error", errno);
+		throw ProtocolError("Get size error", rc);
 
-	return s.st_size;
-}
-
-static int ProtocolNFS_GetInformationInternal(FileInformation &file_info, const std::string &path)
-{
-	struct stat s = {};
-	int rc = smbc_stat(path.c_str(), &s);
-	if (rc < 0)
-		return rc;
-
-	file_info.access_time = s.st_atim;
-	file_info.modification_time = s.st_mtim;
-	file_info.status_change_time = s.st_ctim;
-	file_info.mode = s.st_mode;
-	file_info.size = s.st_size;
-	return 0;
+	return s.nfs_size;
 }
 
 void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	int rc = ProtocolNFS_GetInformationInternal(file_info, RootedPath(path));
+	struct nfs_stat_64 s = {};
+	int rc = follow_symlink
+		? nfs_stat64(_nfs->ctx, RootedPath(path).c_str(), &s)
+		: nfs_lstat64(_nfs->ctx, RootedPath(path).c_str(), &s);
 	if (rc != 0)
-		throw ProtocolError("Get info error", errno);
+		throw ProtocolError("Get info error", rc);
+
+	file_info.access_time.tv_sec = s.nfs_atime;
+	file_info.access_time.tv_nsec = s.nfs_atime_nsec;
+	file_info.modification_time.tv_sec = s.nfs_mtime;
+	file_info.modification_time.tv_nsec = s.nfs_mtime_nsec;
+	file_info.status_change_time.tv_sec = s.nfs_ctime;
+	file_info.status_change_time.tv_nsec = s.nfs_ctime_nsec;
+	file_info.mode = s.nfs_mode;
+	file_info.size = s.nfs_size;
 }
 
 void ProtocolNFS::FileDelete(const std::string &path) throw (std::runtime_error)
 {
-	int rc = smbc_unlink(RootedPath(path).c_str());
+	int rc = nfs_unlink(_nfs->ctx, RootedPath(path).c_str());
 	if (rc != 0)
-		throw ProtocolError("Delete file error", errno);
+		throw ProtocolError("Delete file error", rc);
 }
 
 void ProtocolNFS::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
-	int rc = smbc_rmdir(RootedPath(path).c_str());
+	int rc = nfs_rmdir(_nfs->ctx, RootedPath(path).c_str());
 	if (rc != 0)
-		throw ProtocolError("Delete directory error", errno);
+		throw ProtocolError("Delete directory error", rc);
 }
 
 void ProtocolNFS::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
-	int rc = smbc_mkdir(RootedPath(path).c_str(), mode);
+	int rc = nfs_mkdir(_nfs->ctx, RootedPath(path).c_str());//, mode);
 	if (rc != 0)
-		throw ProtocolError("Create directory error",  errno);
+		throw ProtocolError("Create directory error", rc);
 }
 
 void ProtocolNFS::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
-	int rc = smbc_rename(RootedPath(path_old).c_str(), RootedPath(path_new).c_str());
+	int rc = nfs_rename(_nfs->ctx, RootedPath(path_old).c_str(), RootedPath(path_new).c_str());
 	if (rc != 0)
-		throw ProtocolError("Rename error",  errno);
+		throw ProtocolError("Rename error", rc);
 }
 
 
@@ -162,145 +161,140 @@ void ProtocolNFS::SetTimes(const std::string &path, const timespec &access_time,
 	times[1].tv_sec = modification_time.tv_sec;
 	times[1].tv_usec = modification_time.tv_nsec / 1000;
 
-	int rc = smbc_utimes(RootedPath(path).c_str(), times);
+	int rc = nfs_utimes(_nfs->ctx, RootedPath(path).c_str(), times);
 	if (rc != 0)
-		throw ProtocolError("Set times error",  errno);
+		throw ProtocolError("Set times error",  rc);
 }
 
 void ProtocolNFS::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
-	int rc = smbc_chmod(RootedPath(path).c_str(), mode);
+	int rc = nfs_chmod(_nfs->ctx, RootedPath(path).c_str(), mode);
 	if (rc != 0)
-		throw ProtocolError("Set mode error",  errno);
+		throw ProtocolError("Set mode error",  rc);
 }
 
 void ProtocolNFS::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
 {
-		throw ProtocolUnsupportedError("Symlink creation unsupported");
+	int rc = nfs_symlink(_nfs->ctx, RootedPath(link_target).c_str(), RootedPath(link_path).c_str());
+	if (rc != 0)
+		throw ProtocolError("Symlink create error",  rc);
 }
 
 void ProtocolNFS::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
 {
-		throw ProtocolUnsupportedError("Symlink querying unsupported");
+	char buf[0x1001] = {};
+	int rc = nfs_readlink(_nfs->ctx, RootedPath(link_path).c_str(), buf, sizeof(buf) - 1);
+	if (rc != 0)
+		throw ProtocolError("Symlink query error",  rc);
+
+	link_target = buf;
 }
 
-class SMBDirectoryEnumer : public IDirectoryEnumer
+class NFSDirectoryEnumer : public IDirectoryEnumer
 {
-	std::shared_ptr<ProtocolNFS> _protocol;
-	std::string _dir_path;
-	int _dir = -1;
-	char _buf[0x4000], *_entry = nullptr;
-	int _remain = 0;
+	std::shared_ptr<NFSConnection> _nfs;
+	struct nfsdir *_dir = nullptr;
 
 public:
-	SMBDirectoryEnumer(std::shared_ptr<ProtocolNFS> protocol, const std::string &path)
-		: _protocol(protocol),
-		_dir_path(protocol->RootedPath(path))
+	NFSDirectoryEnumer(std::shared_ptr<NFSConnection> &nfs, const std::string &path)
+		: _nfs(nfs)
 	{
-		if (_dir_path[_dir_path.size() - 1] == '.' && _dir_path[_dir_path.size() - 2] == '/') {
-			_dir_path.resize(_dir_path.size() - 2);
-		}
-		_dir = smbc_opendir(_dir_path.c_str());
-		if (_dir < 0) {
-			throw ProtocolError("Directory open error", _dir_path.c_str(), errno);
-		}
-
-		if (_dir_path.empty() || _dir_path[_dir_path.size() - 1] != '/') {
-			_dir_path+= '/';
+		//const std::string &dir_path = protocol->RootedPath(path)
+		int rc = nfs_opendir(_nfs->ctx, path.c_str(), &_dir);
+		if (rc != 0 || _dir == nullptr) {
+			_dir = nullptr;
+			throw ProtocolError("Directory open error", rc);
 		}
 	}
 
-	virtual ~SMBDirectoryEnumer()
+	virtual ~NFSDirectoryEnumer()
 	{
-		if (_dir != -1) {
-			smbc_closedir(_dir);
+		if (_dir != nullptr) {
+			nfs_closedir(_nfs->ctx, _dir);
 		}
 	}
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
-		std::string subpath;
 		for (;;) {
-			if (_remain > 0 && _entry != nullptr) {
-				struct smbc_dirent *de = (struct smbc_dirent *)_entry;
-				_remain-= de->dirlen;
-				if (_remain > 0) {
-					_entry+= de->dirlen;
-				}
-				if (FILENAME_ENUMERABLE(de->name)) {
-					name = de->name;
-					subpath = _dir_path;
-					subpath+= name;
-
-					file_info.size = 0;
-
-					switch (de->smbc_type) {
-						case SMBC_WORKGROUP: case SMBC_SERVER: case SMBC_FILE_SHARE: case SMBC_PRINTER_SHARE: case SMBC_DIR:
-							ProtocolNFS_GetInformationInternal(file_info, subpath);
-							file_info.mode = S_IFDIR;
-							return true;
-
-						case SMBC_FILE: case SMBC_LINK:
-							ProtocolNFS_GetInformationInternal(file_info, subpath);
-							file_info.mode = S_IFREG;
-							return true;
-					}
-				}
+			struct nfsdirent *de = nfs_readdir(_nfs->ctx, _dir);
+			if (de == nullptr) {
+				return false;
+			}
+			if (!de->name || !FILENAME_ENUMERABLE(de->name)) {
+				continue;
 			}
 
+			name = de->name;
+			owner = StrPrintf("UID:%u", de->uid);
+			group = StrPrintf("GID:%u", de->gid);
 
-			if (_remain <= 0) {
-				_entry = _buf;
-				_remain = smbc_getdents(_dir, (struct smbc_dirent *)_buf, sizeof(_buf));
-				if (_remain == 0)
-					return false;
-				if (_remain < 0)
-					throw ProtocolError("Directory enum error", errno);
+			file_info.access_time.tv_sec = de->atime.tv_sec;
+			file_info.access_time.tv_nsec = de->atime_nsec;
+			file_info.modification_time.tv_sec = de->mtime.tv_sec;
+			file_info.modification_time.tv_nsec = de->mtime_nsec;
+			file_info.status_change_time.tv_sec = de->ctime.tv_sec;
+			file_info.status_change_time.tv_nsec = de->ctime_nsec;
+			file_info.mode = de->mode;
+			file_info.size = de->size;
+			switch (de->type) {
+				case NF3REG: file_info.mode|= S_IFREG; break;
+				case NF3DIR: file_info.mode|= S_IFDIR; break;
+				case NF3BLK: file_info.mode|= S_IFBLK; break;
+				case NF3CHR: file_info.mode|= S_IFCHR; break;
+				case NF3LNK: file_info.mode|= S_IFLNK; break;
+				case NF3SOCK: file_info.mode|= S_IFSOCK; break;
+				case NF3FIFO: file_info.mode|= S_IFIFO; break;
 			}
+			return true;
 		}
 	}
-
 };
 
 std::shared_ptr<IDirectoryEnumer> ProtocolNFS::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
-	return std::shared_ptr<IDirectoryEnumer>(new SMBDirectoryEnumer(shared_from_this(), path));
+	return std::shared_ptr<IDirectoryEnumer>(new NFSDirectoryEnumer(_nfs, RootedPath(path)));
 }
 
 
 class NFSFileIO : public IFileReader, public IFileWriter
 {
-	std::shared_ptr<ProtocolNFS> _protocol;
-	int _file = -1;
+	std::shared_ptr<NFSConnection> _nfs;
+	struct nfsfh *_file = nullptr;
 
 public:
-	NFSFileIO(std::shared_ptr<ProtocolNFS> protocol, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
-		: _protocol(protocol)
+	NFSFileIO(std::shared_ptr<NFSConnection> &nfs, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
+		: _nfs(nfs)
 	{
-		_file = smbc_open(protocol->RootedPath(path).c_str(), flags, mode);
-		if (_file == -1)
-			throw ProtocolError("Failed to open file",  errno);
-
+		int rc = (flags & O_CREAT)
+			? nfs_creat(_nfs->ctx, path.c_str(), mode & (~O_CREAT), &_file)
+			: nfs_open(_nfs->ctx, path.c_str(), flags, &_file);
+		
+		if (rc != 0 || _file != nullptr) {
+			_file = nullptr;
+			throw ProtocolError("Failed to open file",  rc);
+		}
 		if (resume_pos) {
-			off_t rc = smbc_lseek(_file, resume_pos, SEEK_SET);
-			if (rc == (off_t)-1) {
-				smbc_close(_file);
-				_file = -1;
-				throw ProtocolError("Failed to seek file",  errno);
+			uint64_t current_offset = resume_pos;
+			int rc = nfs_lseek(_nfs->ctx, _file, resume_pos, SEEK_SET, &current_offset);
+			if (rc < 0) {
+				nfs_close(_nfs->ctx, _file);
+				_file = nullptr;
+				throw ProtocolError("Failed to seek file",  rc);
 			}
 		}
 	}
 
 	virtual ~NFSFileIO()
 	{
-		if (_file != -1) {
-			smbc_close(_file);
+		if (_file != nullptr) {
+			nfs_close(_nfs->ctx, _file);
 		}
 	}
 
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
-		const ssize_t rc = smbc_read(_file, buf, len);
+		const auto rc = nfs_read(_nfs->ctx, _file, len, (char *)buf);
 		if (rc < 0)
 			throw ProtocolError("Read file error",  errno);
 		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
@@ -311,7 +305,7 @@ public:
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
 		if (len > 0) for (;;) {
-			const ssize_t rc = smbc_write(_file, buf, len);
+			const auto rc = nfs_write(_nfs->ctx, _file, len, (char *)buf);
 			if (rc <= 0)
 				throw ProtocolError("Write file error",  errno);
 			if ((size_t)rc >= len)
@@ -331,10 +325,10 @@ public:
 
 std::shared_ptr<IFileReader> ProtocolNFS::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::make_shared<NFSFileIO>(shared_from_this(), path, O_RDONLY, 0, resume_pos);
+	return std::make_shared<NFSFileIO>(_nfs, path, O_RDONLY, 0, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolNFS::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::make_shared<NFSFileIO>(shared_from_this(), path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
+	return std::make_shared<NFSFileIO>(_nfs, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }

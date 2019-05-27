@@ -12,6 +12,14 @@ std::shared_ptr<IProtocol> CreateProtocolSMB(const std::string &host, unsigned i
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 #endif
 
+#ifdef HAVE_NFS
+void ConfigureProtocolNFS(std::string &options) {};
+std::shared_ptr<IProtocol> CreateProtocolNFS(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
+#endif
+
+
+
 void ConfigureProtocolFile(std::string &options);
 std::shared_ptr<IProtocol> CreateProtocolFile(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
@@ -22,6 +30,9 @@ static ProtocolImplementation s_protocols[] = {
 #endif
 #ifdef HAVE_SMB
 	{ "smb", 445, ConfigureProtocolSMB, CreateProtocolSMB},
+#endif
+#ifdef HAVE_NFS
+	{ "nfs", 111, ConfigureProtocolSMB, CreateProtocolSMB},
 #endif
 	{ "file", 0, ConfigureProtocolFile, CreateProtocolFile},
 	{ nullptr, 0, nullptr, nullptr }

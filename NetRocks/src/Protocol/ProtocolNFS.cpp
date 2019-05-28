@@ -28,7 +28,7 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 	}
 
 	StringConfig protocol_options(options);
-
+#ifdef LIBNFS_FEATURE_READAHEAD
 	int i = atoi(username.c_str());
 	if (i != 0 || username == "0") {
 		nfs_set_uid(_nfs->ctx, i);
@@ -37,6 +37,7 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 	if (i != 0 || password == "0") {
 		nfs_set_gid(_nfs->ctx, i);
 	}
+#endif
 }
 
 ProtocolNFS::~ProtocolNFS()
@@ -83,30 +84,44 @@ bool ProtocolNFS::IsBroken()
 
 mode_t ProtocolNFS::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+#ifdef LIBNFS_FEATURE_READAHEAD
 	struct nfs_stat_64 s = {};
 	int rc = follow_symlink
 		? nfs_stat64(_nfs->ctx, RootedPath(path).c_str(), &s)
 		: nfs_lstat64(_nfs->ctx, RootedPath(path).c_str(), &s);
+	auto out = s.nfs_mode;
+#else
+	struct stat s = {};
+	int rc = nfs_stat(_nfs->ctx, RootedPath(path).c_str(), &s);
+	auto out = s.st_mode;
+#endif
 	if (rc != 0)
 		throw ProtocolError("Get mode error", rc);
-
-	return s.nfs_mode;
+	return out;
 }
 
 unsigned long long ProtocolNFS::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+#ifdef LIBNFS_FEATURE_READAHEAD
 	struct nfs_stat_64 s = {};
 	int rc = follow_symlink
 		? nfs_stat64(_nfs->ctx, RootedPath(path).c_str(), &s)
 		: nfs_lstat64(_nfs->ctx, RootedPath(path).c_str(), &s);
+	auto out = s.nfs_size;
+#else
+	struct stat s = {};
+	int rc = nfs_stat(_nfs->ctx, RootedPath(path).c_str(), &s);
+	auto out = s.st_size;
+#endif
 	if (rc != 0)
 		throw ProtocolError("Get size error", rc);
 
-	return s.nfs_size;
+	return out;
 }
 
 void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
+#ifdef LIBNFS_FEATURE_READAHEAD
 	struct nfs_stat_64 s = {};
 	int rc = follow_symlink
 		? nfs_stat64(_nfs->ctx, RootedPath(path).c_str(), &s)
@@ -122,6 +137,18 @@ void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &
 	file_info.status_change_time.tv_nsec = s.nfs_ctime_nsec;
 	file_info.mode = s.nfs_mode;
 	file_info.size = s.nfs_size;
+#else
+	struct stat s = {};
+	int rc = nfs_stat(_nfs->ctx, RootedPath(path).c_str(), &&s);
+	if (rc != 0)
+		throw ProtocolError("Get info error", rc);
+
+	file_info.access_time = s.st_atim;
+	file_info.modification_time = s.st_mtim;
+	file_info.status_change_time = s.st_ctim;
+	file_info.size = s.st_size;
+	file_info.mode = s.st_mode;
+#endif
 }
 
 void ProtocolNFS::FileDelete(const std::string &path) throw (std::runtime_error)
@@ -230,11 +257,13 @@ public:
 			group = StrPrintf("GID:%u", de->gid);
 
 			file_info.access_time.tv_sec = de->atime.tv_sec;
-			file_info.access_time.tv_nsec = de->atime_nsec;
 			file_info.modification_time.tv_sec = de->mtime.tv_sec;
-			file_info.modification_time.tv_nsec = de->mtime_nsec;
 			file_info.status_change_time.tv_sec = de->ctime.tv_sec;
+#ifdef LIBNFS_FEATURE_READAHEAD
+			file_info.access_time.tv_nsec = de->atime_nsec;
+			file_info.modification_time.tv_nsec = de->mtime_nsec;
 			file_info.status_change_time.tv_nsec = de->ctime_nsec;
+#endif
 			file_info.mode = de->mode;
 			file_info.size = de->size;
 			switch (de->type) {

@@ -139,7 +139,7 @@ void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &
 	file_info.size = s.nfs_size;
 #else
 	struct stat s = {};
-	int rc = nfs_stat(_nfs->ctx, RootedPath(path).c_str(), &&s);
+	int rc = nfs_stat(_nfs->ctx, RootedPath(path).c_str(), &s);
 	if (rc != 0)
 		throw ProtocolError("Get info error", rc);
 
@@ -253,16 +253,19 @@ public:
 			}
 
 			name = de->name;
-			owner = StrPrintf("UID:%u", de->uid);
-			group = StrPrintf("GID:%u", de->gid);
 
 			file_info.access_time.tv_sec = de->atime.tv_sec;
 			file_info.modification_time.tv_sec = de->mtime.tv_sec;
 			file_info.status_change_time.tv_sec = de->ctime.tv_sec;
 #ifdef LIBNFS_FEATURE_READAHEAD
+			owner = StrPrintf("UID:%u", de->uid);
+			group = StrPrintf("GID:%u", de->gid);
 			file_info.access_time.tv_nsec = de->atime_nsec;
 			file_info.modification_time.tv_nsec = de->mtime_nsec;
 			file_info.status_change_time.tv_nsec = de->ctime_nsec;
+#else
+			owner.clear();
+			group.clear();
 #endif
 			file_info.mode = de->mode;
 			file_info.size = de->size;

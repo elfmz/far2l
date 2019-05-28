@@ -32,7 +32,7 @@ static ProtocolImplementation s_protocols[] = {
 	{ "smb", 445, ConfigureProtocolSMB, CreateProtocolSMB},
 #endif
 #ifdef HAVE_NFS
-	{ "nfs", 111, ConfigureProtocolSMB, CreateProtocolSMB},
+	{ "nfs", 111, ConfigureProtocolNFS, CreateProtocolNFS},
 #endif
 	{ "file", 0, ConfigureProtocolFile, CreateProtocolFile},
 	{ nullptr, 0, nullptr, nullptr }

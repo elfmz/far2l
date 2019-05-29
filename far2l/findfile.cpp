@@ -74,7 +74,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "setattr.hpp"
 #include "udlist.hpp"
 #include "InterThreadCall.hpp"
-#include <Event.h>
 
 constexpr int CHAR_TABLE_SIZE=5;
 constexpr int LIST_DELTA=64;
@@ -343,25 +342,33 @@ FARString strPluginSearchPath;
 
 class PluginLocker
 {
-	static Event s_event;
+	static bool s_locked;
 	PluginLocker(const PluginLocker&) = delete;
+
+	bool TryLock()
+	{
+		if (s_locked)
+			return false;
+
+		s_locked = true;
+		return true;
+	}
 
 public:
 	PluginLocker()
 	{
-		while (!s_event.TimedWait(100)) {
-			DispatchInterThreadCalls();
-		}
+		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(TryLock());
 	}
 
 	~PluginLocker()
 	{
-		s_event.Signal();
+		InterThreadLockAndWake itlw;
+		s_locked = false;
 	}
 
 };
 
-Event PluginLocker::s_event(true, true);
+bool PluginLocker::s_locked = false;
 
 
 
@@ -2733,15 +2740,21 @@ struct THREADPARAM
 {
 	bool PluginMode;
 	HANDLE hDlg;
+	bool bDone;
 };
 
 DWORD ThreadRoutine(LPVOID Param)
 {
-	SudoClientRegion scr;
 	InitInFileSearch();
 	THREADPARAM* tParam=reinterpret_cast<THREADPARAM*>(Param);
-	tParam->PluginMode?DoPreparePluginList(tParam->hDlg, false):DoPrepareFileList(tParam->hDlg);
+	{
+		SudoClientRegion scr;
+		tParam->PluginMode?DoPreparePluginList(tParam->hDlg, false):DoPrepareFileList(tParam->hDlg);
+	}
 	ReleaseInFileSearch();
+
+	InterThreadLockAndWake itlw;
+	tParam->bDone = true;
 	return 0;
 }
 
@@ -2853,15 +2866,13 @@ bool FindFilesProcess(Vars& v)
 
 	strLastDirName.Clear();
 
-	THREADPARAM Param={v.PluginMode,reinterpret_cast<HANDLE>(&Dlg)};
+	THREADPARAM Param={v.PluginMode, reinterpret_cast<HANDLE>(&Dlg), false};
 	HANDLE Thread = WINPORT(CreateThread)(nullptr, 0, ThreadRoutine, &Param, 0, nullptr);
 	if (Thread)
 	{
 		wakeful W;
 		Dlg.Process();
-		while (WINPORT(WaitForSingleObject)(Thread, 100) == WAIT_TIMEOUT) {
-			DispatchInterThreadCalls();
-		}
+		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(Param.bDone);
 		WINPORT(CloseHandle)(Thread);
 
 		WINPORT(InterlockedExchange)(&PauseFlag, 0);

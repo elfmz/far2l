@@ -24,6 +24,7 @@
 #include "vtansi.h"
 #include "vtlog.h"
 #include "VTFar2lExtensios.h"
+#include "InterThreadCall.hpp"
 #define __USE_BSD 
 #include <termios.h> 
 
@@ -138,7 +139,7 @@ public:
 	{
 		if (fd_out != -1 ) {
 			_fd_out = fd_out;
-			std::lock_guard<std::mutex> locker(_mutex);
+			InterThreadLock itl;
 			_deactivated = false;
 		}
 
@@ -169,11 +170,7 @@ public:
 
 	void WaitDeactivation()
 	{
-		for (;;) {
-			std::unique_lock<std::mutex> locker(_mutex);
-			if (_deactivated) break;
-			_cond.wait(locker);
-		}
+		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(_deactivated);
 	}
 	
 	
@@ -181,7 +178,6 @@ private:
 	IProcessor *_processor;
 	int _fd_out, _pipe[2];
 	std::mutex _mutex;
-	std::condition_variable _cond;
 	bool _deactivated;
 	
 	virtual void *ThreadProc()
@@ -227,9 +223,8 @@ private:
 		}
 
 		//thread stopped due to output deactivated
-		std::unique_lock<std::mutex> locker(_mutex);
+		InterThreadLockAndWake itlw;
 		_deactivated = true;
-		_cond.notify_all();
 		return NULL;
 	}
 };
@@ -767,7 +762,23 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		CLK_VIEW,
 		CLK_VIEW_AUTOCLOSE
 	};
-	
+
+	static int sShowConsoleLog(ConsoleLogKind kind, const std::string &histfile)
+	{
+		ScrBuf.FillBuf();
+		CtrlObject->CmdLine->SaveBackground();
+
+		SetFarConsoleMode(TRUE);
+		if (kind == CLK_EDIT)
+			ModalEditTempFile(histfile, true);
+		else
+			ModalViewTempFile(histfile, true, kind == CLK_VIEW_AUTOCLOSE);
+
+		CtrlObject->CmdLine->ShowBackground();
+		ScrBuf.Flush();
+		return 1;
+	}
+
 	void OnConsoleLog(ConsoleLogKind kind)//NB: called not from main thread!
 	{
 		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
@@ -788,18 +799,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (histfile.empty())
 			return;
 
-		ScrBuf.FillBuf();
-		CtrlObject->CmdLine->SaveBackground();
-
-		SetFarConsoleMode(TRUE);
 		DeliverPendingWindowInfo();
-		if (kind == CLK_EDIT)
-			ModalEditTempFile(histfile, true);
-		else
-			ModalViewTempFile(histfile, true, kind == CLK_VIEW_AUTOCLOSE);
-
-		CtrlObject->CmdLine->ShowBackground();
-		ScrBuf.Flush();
+		InterThreadCall<int>(std::bind(sShowConsoleLog, kind, histfile));
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);

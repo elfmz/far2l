@@ -44,9 +44,48 @@ ProtocolNFS::~ProtocolNFS()
 {
 }
 
+static int RootedPathLevel(const std::string &rooted_path)
+{
+	// 0 on "nfs://"
+	// 1 on "nfs://server" or "nfs://server/"
+	// 2 on "nfs://server/export" or "nfs://server/export/"
+	//etc
+	if (rooted_path.size() < 6)
+		return -1;
+
+	int out = 0;
+	for (size_t i = 6; i < rooted_path.size(); ++i) {
+		if (rooted_path[i] == '/' && i + 1 < rooted_path.size() && rooted_path[i] != '/') {
+			++out;
+		}
+	}
+
+	return out;
+}
+
 std::string ProtocolNFS::RootedPath(const std::string &path)
 {
-	return path;
+	std::string out = "nfs://";
+	out+= _host;
+	if (!_host.empty() && !_mount.empty()) {
+		out+= '/';
+		out+= _mount;
+	}
+	if (!path.empty() && path[0] != '/') {
+		out+= '/';
+	}
+	out+= path;
+
+	for (size_t i = 7; i < out.size();) {
+		if (out[i] == '.' && out[i - 1] == '/' && (i + 1 == out.size() || out[i + 1] == '/')) {
+			out.erase(i - 1, 2);
+			--i;
+		} else {
+			++i;
+		}
+	}
+
+	return out;
 /*
 	if (path.empty() || path == "/") {
 		_ctx->mount.clear();
@@ -283,9 +322,96 @@ public:
 	}
 };
 
+struct NFSContainersEnumer : IDirectoryEnumer
+{
+protected:
+	std::set<std::string> _names;
+
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	{
+		if (_servers.empty()) {
+			return false;
+		}
+
+		name = *_names.begin();
+		owner.clear();
+		group.clear();
+		file_info = FileInformation();
+		file_info.mode|= S_IFDIR;
+		_names.erase(_names.begin());
+		return true;
+	}
+};
+
+struct NFSServersEnumer : NFSContainersEnumer
+{
+	NFSServersEnumer(std::shared_ptr<NFSConnection> &nfs)
+	{
+		if (nfs.srv2exports.empty()) {
+			struct nfs_server_list *servers = nfs_find_local_servers();
+			if (servers != nullptr) {
+				std::set<std::string> empty;
+				struct nfs_server_list *server = servers;
+				do {
+					nfs.emplace(srv->name, empty);
+					server = server->next;
+				} while (server != nullptr);
+				free_nfs_srvr_list(servers);
+			}
+		}
+
+		for (const auto &i : nfs.srv2exports) {
+			_names.emplace(i.first);
+		}
+	}
+
+};
+
+struct NFSExportsEnumer : FSContainersEnumer
+{
+	NFSExportsEnumer(std::shared_ptr<NFSConnection> &nfs, const std::string &rooted_path)
+	{
+		if (path.size() <= 6) {
+			fprintf(stderr, "NFSExportsEnumer('%s'): path too short\n", rooted_path.c_str());
+			return;
+		}
+
+		std::string server = path.substr(6);
+
+		while (!server.empty() && server[server.size() - 1] == '/') {
+			server.resize(server.size() - 1);
+		}
+		if (server.empty()) {
+			fprintf(stderr, "NFSExportsEnumer('%s'): no server in path\n", rooted_path.c_str());
+			return;
+		}
+
+		auto &cached_exports = nfs.srv2exports[server];
+		if (cached_exports.empty()) {
+			struct exportnode *en_list = mount_getexports(server.c_str());
+			if (en_list != nullptr) {
+				struct exportnode *en = en_list;
+				do {
+					cached_exports.emplace(en->ex_dir);
+					en = en->ex_next;
+				} while (server != nullptr);
+				mount_free_export_list(en_list);
+			}
+		}
+
+		_names = cached_exports;
+	}
+};
+
 std::shared_ptr<IDirectoryEnumer> ProtocolNFS::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
-	return std::shared_ptr<IDirectoryEnumer>(new NFSDirectoryEnumer(_nfs, RootedPath(path)));
+	const std::string &rooted_path = RootedPath(path);
+	switch (RootedPathLevel(rooted_path)) {
+		case 0: return std::shared_ptr<IDirectoryEnumer>(new NFSServersEnumer(_nfs));
+		case 1: return std::shared_ptr<IDirectoryEnumer>(new NFSExportsEnumer(_nfs, rooted_path));
+		default:
+			return std::shared_ptr<IDirectoryEnumer>(new NFSDirectoryEnumer(_nfs, rooted_path));
+	}
 }
 
 

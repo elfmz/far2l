@@ -16,7 +16,6 @@ int DispatchInterThreadCalls();
 
 bool EnqueueInterThreadCallDelegate(IInterThreadCallDelegate *d);
 
-
 template <class RV, class FN>
 	class InterThreadCallDelegate : protected IInterThreadCallDelegate
 {
@@ -78,4 +77,26 @@ template <class RV, RV FAIL_RV = (RV)0, class FN>
 	}
 
 	return FAIL_RV;
+}
+
+
+struct InterThreadLock
+{
+	InterThreadLock();
+	void WaitForWake();
+
+private:
+	std::unique_lock<std::mutex> _locker;
+};
+
+struct InterThreadLockAndWake : InterThreadLock
+{
+	~InterThreadLockAndWake();
+};
+
+#define WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(condition) for(;;) {	\
+	DispatchInterThreadCalls();	\
+	InterThreadLock lock;	\
+	if (condition) break;	\
+	lock.WaitForWake();	\
 }

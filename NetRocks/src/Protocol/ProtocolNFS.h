@@ -9,8 +9,8 @@
 struct NFSConnection
 {
 	std::map<std::string, std::set<std::string> > srv2exports;
-
 	struct nfs_context *ctx = nullptr;
+	std::string mounted_path;
 
 	NFSConnection() = default;
 
@@ -31,6 +31,11 @@ class ProtocolNFS : public IProtocol
 	std::string _host, _mount;
 
 	std::string RootedPath(const std::string &path);
+	void RootedPathToMounted(std::string &path);
+
+	std::string MountedRootedPath(const std::string &path);
+
+
 public:
 
 	ProtocolNFS(const std::string &host, unsigned int port,

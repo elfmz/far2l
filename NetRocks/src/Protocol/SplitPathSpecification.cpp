@@ -51,7 +51,7 @@ bool SplitPathSpecification(const wchar_t *specification, std::wstring &protocol
 	}
 
 	if (!*at) {
-		return (wcscasecmp(protocol.c_str(), L"smb") == 0);
+		return (wcscasecmp(protocol.c_str(), L"smb") == 0 || wcscasecmp(protocol.c_str(), L"nfs") == 0);
 	}
 
 	host = at;

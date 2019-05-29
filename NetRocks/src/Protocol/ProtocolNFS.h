@@ -1,10 +1,15 @@
 #pragma once
 #include <memory>
+#include <string>
+#include <map>
+#include <set>
 #include <nfsc/libnfs.h>
 #include "Protocol.h"
 
 struct NFSConnection
 {
+	std::map<std::string, std::set<std::string> > srv2exports;
+
 	struct nfs_context *ctx = nullptr;
 
 	NFSConnection() = default;

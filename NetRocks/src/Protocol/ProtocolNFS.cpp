@@ -4,9 +4,9 @@
 #include <string.h>
 #include <errno.h>
 #include "ProtocolNFS.h"
+#include <nfsc/libnfs-raw.h>
 #include <nfsc/libnfs-raw-nfs.h>
 #include <nfsc/libnfs-raw-mount.h>
-#include <nfsc/libnfs-zdr.h>
 #include <StringConfig.h>
 #include <utils.h>
 
@@ -33,6 +33,7 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 	StringConfig protocol_options(options);
 
 	if (protocol_options.GetInt("Override", 0) != 0) {
+#ifdef LIBNFS_FEATURE_READAHEAD
 		const std::string &host = protocol_options.GetString("Host");
 		const std::string &groups_str = protocol_options.GetString("Groups");
 		uint32_t uid = (uint32_t)protocol_options.GetInt("UID", 65534);
@@ -58,6 +59,9 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 			nfs_set_auth(_nfs->ctx, auth);
 			// owned by context: libnfs_auth_destroy(auth);
 		}
+#else
+		fprintf(stderr, "Your libnfs doesnt support credentials override\n");
+#endif
 	}
 }
 

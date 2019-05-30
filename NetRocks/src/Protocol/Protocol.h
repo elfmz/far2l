@@ -65,13 +65,16 @@ bool SplitPathSpecification(const wchar_t *specification,
 	std::wstring &username, std::wstring &password, std::wstring &directory);
 
 
-struct ProtocolImplementation
+struct ProtocolInfo
 {
 	const char *name;
-	unsigned int default_port;
+	int default_port; // -1 if port cannot be represented/changed
+	bool require_server; // false if protocol can be instantiated with empty server
+	bool support_creds; // false if protocol doesnt support username:password authentification
 	void (*Configure)(std::string &options);
 	std::shared_ptr<IProtocol> (*Create)(const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 };
 
-extern ProtocolImplementation *g_protocols;
+const ProtocolInfo *ProtocolInfoHead();
+const ProtocolInfo *ProtocolInfoLookup(const char *name);

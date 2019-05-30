@@ -18,6 +18,7 @@ src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp
 src/UI/Settings/ConfigureProtocolSFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
+src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Activities/Confirm.cpp
 src/UI/Activities/ConfirmXfer.cpp
 src/UI/Activities/ConfirmOverwrite.cpp
@@ -63,6 +64,16 @@ if (LIBSMBCLIENT_FOUND)
 	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBSMBCLIENT_LIBRARIES})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
 endif (LIBSMBCLIENT_FOUND)
+
+if (LIBNFS_FOUND)
+	set(SOURCES
+		${SOURCES}
+		src/Protocol/ProtocolNFS.cpp
+	)
+	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBNFS_LIBRARIES})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
+endif (LIBNFS_FOUND)
+
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")

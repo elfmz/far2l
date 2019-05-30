@@ -20,6 +20,7 @@ matrix:
             - libglib2.0-dev
             - libssh-dev
             - libsmbclient-dev
+            - libnfs-dev
             - gawk
             - m4
             - ninja-build
@@ -41,6 +42,7 @@ matrix:
             - libglib2.0-dev
             - libssh-dev
             - libsmbclient-dev
+            - libnfs-dev
             - gawk
             - m4
             - ninja-build
@@ -63,6 +65,7 @@ matrix:
             - libglib2.0-dev
             - libssh-dev
             - libsmbclient-dev
+            - libnfs-dev
             - gawk
             - m4
             - ninja-build
@@ -85,6 +88,7 @@ matrix:
             - libglib2.0-dev
             - libssh-dev
             - libsmbclient-dev
+            - libnfs-dev
             - gawk
             - m4
             - libpcre3-dev

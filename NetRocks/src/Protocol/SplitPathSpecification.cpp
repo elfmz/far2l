@@ -2,6 +2,7 @@
 #include <string>
 #include <sudo.h>
 #include <utils.h>
+#include "Protocol.h"
 
 bool SplitPathSpecification(const wchar_t *specification, std::wstring &protocol, std::wstring &host, unsigned int &port,
 				std::wstring &username, std::wstring &password, std::wstring &directory)
@@ -51,7 +52,8 @@ bool SplitPathSpecification(const wchar_t *specification, std::wstring &protocol
 	}
 
 	if (!*at) {
-		return (wcscasecmp(protocol.c_str(), L"smb") == 0);
+		auto pi = ProtocolInfoLookup(StrWide2MB(protocol).c_str());
+		return (pi && !pi->require_server);
 	}
 
 	host = at;

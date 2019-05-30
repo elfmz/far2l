@@ -2,6 +2,7 @@
 #include <wchar.h>
 #include <unistd.h>
 #include <assert.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <string>
 #include <vector>
@@ -140,9 +141,6 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
 
-	if (_protocol.empty() || (_host.empty() && _protocol != "file" && _protocol != "smb"))
-		throw std::runtime_error("Bad site configuration");
-
 	int master2broker[2] = {-1, -1};
 	int broker2master[2] = {-1, -1};
 	int r = pipe(master2broker);
@@ -169,6 +167,9 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 
 	IPCRecver::SetFD(broker2master[0]);
 	IPCSender::SetFD(master2broker[1]);
+
+	_peer = 0;
+	RecvPOD(_peer);
 
 	std::unique_lock<std::mutex> locker(_mutex);
 	for (unsigned int auth_failures = 0;;) {
@@ -276,6 +277,10 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 void HostRemote::Abort()
 {
 	AbortReceiving();
+	if (_peer != 0) {
+		kill(_peer, SIGQUIT);
+		_peer = 0;
+	}
 }
 
 void HostRemote::RecvReply(IPCCommand cmd)

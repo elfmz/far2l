@@ -180,3 +180,10 @@
 "Work&group:"
 "Enum network with &SMB"
 "Enum network with &NMB"
+
+"NFS Protocol options"
+"O&verride client credentials:"
+"&Host:"
+"&UID:"
+"&GID:"
+"G&roups:"

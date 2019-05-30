@@ -14,7 +14,7 @@ std::shared_ptr<IProtocol> CreateProtocolSMB(const std::string &host, unsigned i
 #endif
 
 #ifdef HAVE_NFS
-void ConfigureProtocolNFS(std::string &options) {};
+void ConfigureProtocolNFS(std::string &options);
 std::shared_ptr<IProtocol> CreateProtocolNFS(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 #endif

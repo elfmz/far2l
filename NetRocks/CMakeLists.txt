@@ -18,6 +18,7 @@ src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp
 src/UI/Settings/ConfigureProtocolSFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
+src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Activities/Confirm.cpp
 src/UI/Activities/ConfirmXfer.cpp
 src/UI/Activities/ConfirmOverwrite.cpp

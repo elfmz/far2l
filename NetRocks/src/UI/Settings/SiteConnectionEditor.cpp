@@ -171,6 +171,20 @@ bool SiteConnectionEditor::Edit()
 	return (result == _i_connect);
 }
 
+void SiteConnectionEditor::UpdateEnabledButtons()
+{
+	++_autogen_pending;
+	std::string protocol, host;
+	TextFromDialogControl(_i_protocol, protocol);
+	TextFromDialogControl(_i_host, host);
+	auto pi = ProtocolInfoLookup(protocol.c_str());
+	if (pi) {
+		SetEnabledDialogControl(_i_save, !pi->require_server || !host.empty() );
+		SetEnabledDialogControl(_i_connect, !pi->require_server || !host.empty() );
+	}
+	--_autogen_pending;
+}
+
 void SiteConnectionEditor::UpdatePerProtocolState(bool reset_port)
 {
 	++_autogen_pending;
@@ -198,6 +212,7 @@ LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 	switch (msg) {
 		case DN_INITDIALOG: {
 				UpdatePerProtocolState(false);
+				UpdateEnabledButtons();
 			} break;
 
 		case DN_BTNCLICK:
@@ -223,10 +238,15 @@ LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 
 			if (param1 == _i_protocol) {
 				UpdatePerProtocolState(true);
+				UpdateEnabledButtons();
 			}
-			if (param1 == _i_login_mode) {
+			else if (param1 == _i_login_mode) {
 				OnLoginModeChanged();
 			}
+			else if (param1 == _i_host) {
+				UpdateEnabledButtons();
+			}
+
 
 			if (param1 == _i_display_name) {
 				_autogen_display_name = false;
@@ -253,18 +273,6 @@ void SiteConnectionEditor::DataFromDialog()
 	TextFromDialogControl(_i_username, _username);
 	TextFromDialogControl(_i_password, _password);
 	TextFromDialogControl(_i_directory, _directory);
-}
-
-void SiteConnectionEditor::OnProtocolChanged()
-{
-	++_autogen_pending;
-	std::string protocol;
-	TextFromDialogControl(_i_protocol, protocol);
-	unsigned int port = DefaultPortForProtocol(protocol.c_str());
-	char sz[32];
-	snprintf(sz, sizeof(sz), "%u", port);
-	TextToDialogControl(_i_port, sz);
-	--_autogen_pending;
 }
 
 void SiteConnectionEditor::OnLoginModeChanged()
@@ -323,6 +331,8 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 	auto existing = SitesConfig().EnumSites();
 	existing.emplace_back(Wide2MB(G.GetMsgWide(MCreateSiteConnection)));
 
+	const int def_port = DefaultPortForProtocol(_protocol.c_str());
+
 	std::string str;
 	char sz[32];
 	for (unsigned int attempt = 0; attempt < 0x10000000; ++attempt) {
@@ -337,10 +347,10 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 		if (!_host.empty()) {
 			str+= _host;
 		} else {
-			str+= "-";
+			str+= "*";
 		}
 
-		if (_port != (unsigned int)DefaultPortForProtocol(_protocol.c_str())) {
+		if (def_port != -1 && _port != (unsigned int)def_port) {
 			snprintf(sz, sizeof(sz) - 1, ":%u", _port);
 			str+= sz;
 		}
@@ -354,11 +364,9 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 			str+= sz;
 		}
 
-
 		for (auto &ch : str) {
 			if (ch == '/') ch = '\\';
 		}
-
 
 		if (str == _display_name || str == _initial_display_name) {
 			break;

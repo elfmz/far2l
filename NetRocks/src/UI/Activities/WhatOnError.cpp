@@ -123,7 +123,11 @@ WhatOnErrorAction WhatOnErrorState::Query(ProgressState &progress_state, WhatOnE
 		return i->second;
 	}
 
-	return WhatOnError(wek, error, object, site).Ask(i->second);
+	++_showing_ui;
+	auto out = WhatOnError(wek, error, object, site).Ask(i->second);
+	--_showing_ui;
+
+	return out;
 }
 
 void WhatOnErrorState::ResetAutoRetryDelay()

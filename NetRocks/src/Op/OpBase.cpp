@@ -113,3 +113,19 @@ bool OpBase::WaitThread(unsigned int msec)
 		}
 	}
 }
+
+bool OpBase::WaitThreadBeforeShowProgress()
+{
+	if (WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
+		return true;
+	}
+
+	// avoid annoying poping up of progress dialog while reading error dialog
+	while (_wea_state.IsShowingUIRightNow()) {
+		if (WaitThread(100)) {
+			return true;
+		}
+	}
+
+	return false;
+}

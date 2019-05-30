@@ -24,6 +24,8 @@ protected:
 
 	bool WaitThread(unsigned int msec = (unsigned int)-1);
 
+	bool WaitThreadBeforeShowProgress();
+
 	virtual void *ThreadProc();	// Threaded
 	virtual void ForcefullyAbort();	// IAbortableOperationsHost
 

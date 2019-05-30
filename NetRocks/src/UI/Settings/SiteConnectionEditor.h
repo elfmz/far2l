@@ -24,6 +24,7 @@ class SiteConnectionEditor : protected BaseDialog
 	FarListWrapper _di_protocols;
 	FarListWrapper _di_login_mode;
 
+	void UpdateEnabledButtons();
 	void UpdatePerProtocolState(bool reset_port);
 	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2);
 
@@ -31,7 +32,6 @@ class SiteConnectionEditor : protected BaseDialog
 	void DisplayNameInputRefine();
 	void DisplayNameAutogenerateAndApply();
 	std::string DisplayNameAutogenerate();
-	void OnProtocolChanged();
 	void OnLoginModeChanged();
 
 	void ProtocolOptions();

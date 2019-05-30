@@ -1,5 +1,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <vector>
 #include <string.h>
 #include <errno.h>
 #include "ProtocolNFS.h"
@@ -29,6 +30,34 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 	}
 
 	StringConfig protocol_options(options);
+
+	if (protocol_options.GetInt("Override", 0) != 0) {
+		const std::string &host = protocol_options.GetString("Host");
+		const std::string &groups_str = protocol_options.GetString("Groups");
+		uint32_t uid = (uint32_t)protocol_options.GetInt("UID", 65534);
+		uint32_t gid = (uint32_t)protocol_options.GetInt("GID", 65534);
+
+		std::vector<uint32_t> groups;
+		for (size_t i = 0, j = 0; i <= groups_str.size(); ++i) {
+			if (i == groups_str.size() || !isdigit(groups_str[i])) {
+				const std::string &grp = groups_str.substr(j, i - j);
+				for (size_t k = 0; k < grp.size(); ++i) {
+					if (isdigit(grp[k])) {
+						groups.emplace_back(atoi(grp.c_str() + k));
+						break;
+					}
+				}
+				j = i + 1;
+			}
+		}
+
+		struct AUTH *auth = libnfs_authunix_create(host.c_str(),
+			uid, gid, groups.size(), groups.empty() ? nullptr : &groups[0]);
+		if (auth) {
+			nfs_set_auth(_nfs->ctx, auth);
+			// owned by context: libnfs_auth_destroy(auth);
+		}
+	}
 #ifdef LIBNFS_FEATURE_READAHEAD
 	int i = atoi(username.c_str());
 	if (i != 0 || username == "0") {

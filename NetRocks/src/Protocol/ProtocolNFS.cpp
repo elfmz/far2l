@@ -6,6 +6,7 @@
 #include "ProtocolNFS.h"
 #include <nfsc/libnfs-raw-nfs.h>
 #include <nfsc/libnfs-raw-mount.h>
+#include <nfsc/libnfs-zdr.h>
 #include <StringConfig.h>
 #include <utils.h>
 
@@ -58,16 +59,6 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 			// owned by context: libnfs_auth_destroy(auth);
 		}
 	}
-#ifdef LIBNFS_FEATURE_READAHEAD
-	int i = atoi(username.c_str());
-	if (i != 0 || username == "0") {
-		nfs_set_uid(_nfs->ctx, i);
-	}
-	i = atoi(password.c_str());
-	if (i != 0 || password == "0") {
-		nfs_set_gid(_nfs->ctx, i);
-	}
-#endif
 }
 
 ProtocolNFS::~ProtocolNFS()

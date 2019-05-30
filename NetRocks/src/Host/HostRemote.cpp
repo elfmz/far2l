@@ -2,6 +2,7 @@
 #include <wchar.h>
 #include <unistd.h>
 #include <assert.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <string>
 #include <vector>
@@ -167,6 +168,9 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	IPCRecver::SetFD(broker2master[0]);
 	IPCSender::SetFD(master2broker[1]);
 
+	_peer = 0;
+	RecvPOD(_peer);
+
 	std::unique_lock<std::mutex> locker(_mutex);
 	for (unsigned int auth_failures = 0;;) {
 //		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
@@ -273,6 +277,10 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 void HostRemote::Abort()
 {
 	AbortReceiving();
+	if (_peer != 0) {
+		kill(_peer, SIGQUIT);
+		_peer = 0;
+	}
 }
 
 void HostRemote::RecvReply(IPCCommand cmd)

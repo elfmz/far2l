@@ -182,6 +182,13 @@ enum LanguageID
   MSMBOptionsTitle,
   MSMBWorkgroup,
   MSMBEnumBySMB,
-  MSMBEnumByNMB
+  MSMBEnumByNMB,
+
+  MNFSOptionsTitle,
+  MNFSOverride,
+  MNFSHost,
+  MNFSUID,
+  MNFSGID,
+  MNFSGroups
 
 };

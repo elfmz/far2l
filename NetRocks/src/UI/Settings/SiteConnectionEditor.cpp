@@ -23,17 +23,16 @@
    6              21 24             39    45             60
 */
 
-static unsigned int DefaultPortForProtocol(const char *protocol)
+static int DefaultPortForProtocol(const char *protocol)
 {
 	if (protocol) {
-		for (auto pi = g_protocols; pi->name; ++pi) {
-			if (strcasecmp(protocol, pi->name) == 0) {
-				return pi->default_port;
-			}
+		const auto pi = ProtocolInfoLookup(protocol);
+		if (pi) {
+			return pi->default_port;
 		}
 	}
 
-	return 0;
+	return -1;
 }
 
 
@@ -48,12 +47,12 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 		_autogen_display_name = true;
 	}
 
-	for (auto pi = g_protocols; pi->name; ++pi) {
+	for (auto pi = ProtocolInfoHead(); pi->name; ++pi) {
 		_di_protocols.Add(pi->name);
 	}
 
 	if (_protocol.empty() || !_di_protocols.Select(_protocol.c_str())) {
-		_protocol = g_protocols->name;
+		_protocol = ProtocolInfoHead()->name;
 		_di_protocols.Select(_protocol.c_str());
 	}
 
@@ -86,21 +85,21 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 	_i_host = _di.AddAtLine(DI_EDIT, 28,62, DIF_HISTORY, _host.c_str(), "NetRocks_History_Host");
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,27, 0, MPort);
+	_i_port_text = _di.AddAtLine(DI_TEXT, 5,27, 0, MPort);
 	char sz[32]; itoa(_port, sz, 10);
 	_i_port = _di.AddAtLine(DI_FIXEDIT, 28,33, DIF_MASKEDIT, sz, "99999");
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,27, 0, MLoginMode);
+	_i_login_mode_text = _di.AddAtLine(DI_TEXT, 5,27, 0, MLoginMode);
 	_i_login_mode = _di.AddAtLine(DI_COMBOBOX, 28,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
 	_di[_i_login_mode].ListItems = _di_login_mode.Get();
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,27, 0, MUserName);
+	_i_username_text = _di.AddAtLine(DI_TEXT, 5,27, 0, MUserName);
 	_i_username = _di.AddAtLine(DI_EDIT, 28,62, DIF_HISTORY, _username.c_str(), "NetRocks_History_User");
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,27, 0, MPassword);
+	_i_password_text = _di.AddAtLine(DI_TEXT, 5,27, 0, MPassword);
 	_i_password = _di.AddAtLine(DI_PSWEDIT, 28,62, 0, _password.c_str());
 
 	_di.NextLine();
@@ -172,9 +171,50 @@ bool SiteConnectionEditor::Edit()
 	return (result == _i_connect);
 }
 
+void SiteConnectionEditor::UpdateEnabledButtons()
+{
+	++_autogen_pending;
+	std::string protocol, host;
+	TextFromDialogControl(_i_protocol, protocol);
+	TextFromDialogControl(_i_host, host);
+	auto pi = ProtocolInfoLookup(protocol.c_str());
+	if (pi) {
+		SetEnabledDialogControl(_i_save, !pi->require_server || !host.empty() );
+		SetEnabledDialogControl(_i_connect, !pi->require_server || !host.empty() );
+	}
+	--_autogen_pending;
+}
+
+void SiteConnectionEditor::UpdatePerProtocolState(bool reset_port)
+{
+	++_autogen_pending;
+	std::string protocol;
+	TextFromDialogControl(_i_protocol, protocol);
+	auto pi = ProtocolInfoLookup(protocol.c_str());
+	if (pi) {
+		if (reset_port && pi->default_port != -1) {
+			LongLongToDialogControl(_i_port, pi->default_port);
+		}
+		SendDlgMessage(DM_SHOWITEM, _i_port, pi->default_port != -1);
+		SendDlgMessage(DM_SHOWITEM, _i_port_text, pi->default_port != -1);
+		SendDlgMessage(DM_SHOWITEM, _i_login_mode, pi->support_creds);
+		SendDlgMessage(DM_SHOWITEM, _i_login_mode_text, pi->support_creds);
+		SendDlgMessage(DM_SHOWITEM, _i_username, pi->support_creds);
+		SendDlgMessage(DM_SHOWITEM, _i_username_text, pi->support_creds);
+		SendDlgMessage(DM_SHOWITEM, _i_password, pi->support_creds);
+		SendDlgMessage(DM_SHOWITEM, _i_password_text, pi->support_creds);
+	}
+	--_autogen_pending;
+}
+
 LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 {
 	switch (msg) {
+		case DN_INITDIALOG: {
+				UpdatePerProtocolState(false);
+				UpdateEnabledButtons();
+			} break;
+
 		case DN_BTNCLICK:
 			if (param1 == _i_protocol_options) {
 				ProtocolOptions();
@@ -197,11 +237,16 @@ LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 				break;
 
 			if (param1 == _i_protocol) {
-				OnProtocolChanged();
+				UpdatePerProtocolState(true);
+				UpdateEnabledButtons();
 			}
-			if (param1 == _i_login_mode) {
+			else if (param1 == _i_login_mode) {
 				OnLoginModeChanged();
 			}
+			else if (param1 == _i_host) {
+				UpdateEnabledButtons();
+			}
+
 
 			if (param1 == _i_display_name) {
 				_autogen_display_name = false;
@@ -228,18 +273,6 @@ void SiteConnectionEditor::DataFromDialog()
 	TextFromDialogControl(_i_username, _username);
 	TextFromDialogControl(_i_password, _password);
 	TextFromDialogControl(_i_directory, _directory);
-}
-
-void SiteConnectionEditor::OnProtocolChanged()
-{
-	++_autogen_pending;
-	std::string protocol;
-	TextFromDialogControl(_i_protocol, protocol);
-	unsigned int port = DefaultPortForProtocol(protocol.c_str());
-	char sz[32];
-	snprintf(sz, sizeof(sz), "%u", port);
-	TextToDialogControl(_i_port, sz);
-	--_autogen_pending;
 }
 
 void SiteConnectionEditor::OnLoginModeChanged()
@@ -298,6 +331,8 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 	auto existing = SitesConfig().EnumSites();
 	existing.emplace_back(Wide2MB(G.GetMsgWide(MCreateSiteConnection)));
 
+	const int def_port = DefaultPortForProtocol(_protocol.c_str());
+
 	std::string str;
 	char sz[32];
 	for (unsigned int attempt = 0; attempt < 0x10000000; ++attempt) {
@@ -312,10 +347,10 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 		if (!_host.empty()) {
 			str+= _host;
 		} else {
-			str+= "-";
+			str+= "*";
 		}
 
-		if (_port != DefaultPortForProtocol(_protocol.c_str())) {
+		if (def_port != -1 && _port != (unsigned int)def_port) {
 			snprintf(sz, sizeof(sz) - 1, ":%u", _port);
 			str+= sz;
 		}
@@ -329,11 +364,9 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 			str+= sz;
 		}
 
-
 		for (auto &ch : str) {
 			if (ch == '/') ch = '\\';
 		}
-
 
 		if (str == _display_name || str == _initial_display_name) {
 			break;
@@ -349,12 +382,8 @@ std::string SiteConnectionEditor::DisplayNameAutogenerate()
 
 void SiteConnectionEditor::ProtocolOptions()
 {
-	for (auto pi = g_protocols; pi->name; ++pi) {
-		if (strcasecmp(_protocol.c_str(), pi->name) == 0) {
-			if (pi->Configure) {
-				pi->Configure(_protocol_options);
-			}
-			break;
-		}
+	auto pi = ProtocolInfoLookup(_protocol.c_str());
+	if (pi && pi->Configure) {
+		pi->Configure(_protocol_options);
 	}
 }

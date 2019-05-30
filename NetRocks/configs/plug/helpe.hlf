@@ -52,6 +52,7 @@ $^#Site connection editor#
  This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like hostname and port to connect to, login mode and username and password if needed. Also by clicking on Protocol options button you can modify some protocol-specific settings.
  ~SFTP:// protocol specific options~@ProtocolOptionsSFTP@
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
+ ~NFS:// protocol specific options~@ProtocolOptionsNFS@
  ~FILE:// protocol specific options~@ProtocolOptionsFile@
 
  ~Contents~@Contents@
@@ -81,6 +82,17 @@ $^#SFTP:// protocol specific options#
  #Private key file:# can be used for SSH server instead of 'usual' username:password authentification. Note that in such case password field in the main connection settings is actually 'passphrase' used to access private key file.
  #IO block size:# increasing this value usualy gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
  #TCP_NODELAY socket option:# also can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
+
+ ~Contents~@Contents@
+
+@ProtocolOptionsNFS
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#SFTP:// protocol specific options#
+
+ This dialog allows you to modify "nfs://" protocol specific settings. Here you can override default user credentials: host, UID, GID and comma-separated list of additional group IDs. Note that some old libnfs may not support this options - in such case they will have no effect.
 
  ~Contents~@Contents@
 

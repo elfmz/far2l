@@ -185,7 +185,7 @@ SHAREDSYMBOL int WINAPI _export MayExitFARW()
 static std::wstring CombineAllProtocolPrefixes()
 {
 	std::wstring out;
-	for (auto pi = g_protocols; pi->name; ++pi) {
+	for (auto pi = ProtocolInfoHead(); pi->name; ++pi) {
 		out+= MB2Wide(pi->name);
 		out+= L':';
 	}

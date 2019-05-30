@@ -63,7 +63,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		throw std::runtime_error("Cannot start thread");
 	}
 
-	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
+	if (!WaitThreadBeforeShowProgress()) {
 		XferProgress p(_kind, _direction, _dst_dir, _state);
 		p.Show(false);
 	}

@@ -28,7 +28,7 @@ bool OpRemove::Do()
 		return false;
 	}
 
-	if (!WaitThread(IS_SILENT(_op_mode) ? 2000 : 500)) {
+	if (!WaitThreadBeforeShowProgress()) {
 		RemoveProgress p(_base_dir, _state);
 		p.Show();
 		WaitThread();

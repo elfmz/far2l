@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <mutex>
+#include <atomic>
 #include <sys/time.h>
 #include <windows.h>
 #include "../DialogUtils.h"
@@ -22,10 +23,13 @@ class WhatOnErrorState
 {
 	std::map<std::string, WhatOnErrorAction> _default_weas[WEKS_COUNT];
 	unsigned int _auto_retry_delay = 0;
+	std::atomic<int> _showing_ui = {};
 
 	public:
 	WhatOnErrorAction Query(ProgressState &progress_state, WhatOnErrorKind wek, const std::string &error, const std::string &object, const std::string &site);
 	void ResetAutoRetryDelay();
+
+	bool IsShowingUIRightNow() const { return _showing_ui != 0; };
 };
 
 void WhatOnErrorWrap_DummyOnRetry();

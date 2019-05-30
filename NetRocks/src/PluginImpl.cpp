@@ -175,6 +175,9 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 	fprintf(stderr, "NetRocks::GetFindData '%ls'\n", _cur_dir);
 	PluginPanelItems ppis;
 	try {
+		auto *ppi = ppis.Add(L"..");
+		ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+
 		if (!ValidateConnection()) {
 			_cur_dir[0] = 0;
 			SitesConfig sc;
@@ -188,8 +191,6 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 			}
 
 		} else {
-			auto *ppi = ppis.Add(L"..");
-			ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 			OpEnumDirectory(OpMode, _remote, CurrentSiteDir(false), ppis).Do();
 			//_remote->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
@@ -199,7 +200,6 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 		return FALSE;
 	}
 
-	
 	*pPanelItem = ppis.items;
 	*pItemsNumber = ppis.count;
 	ppis.Detach();

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "Protocol.h"
 
 #ifdef HAVE_SFTP
@@ -24,18 +25,32 @@ void ConfigureProtocolFile(std::string &options);
 std::shared_ptr<IProtocol> CreateProtocolFile(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 
-static ProtocolImplementation s_protocols[] = {
+static ProtocolInfo s_protocols[] = {
 #ifdef HAVE_SFTP
-	{ "sftp", 22, ConfigureProtocolSFTP, CreateProtocolSFTP},
+	{ "sftp", 22, true, true, ConfigureProtocolSFTP, CreateProtocolSFTP},
 #endif
 #ifdef HAVE_SMB
-	{ "smb", 445, ConfigureProtocolSMB, CreateProtocolSMB},
+	{ "smb", -1, false, true, ConfigureProtocolSMB, CreateProtocolSMB},
 #endif
 #ifdef HAVE_NFS
-	{ "nfs", 111, ConfigureProtocolNFS, CreateProtocolNFS},
+	{ "nfs", -1, false, false, ConfigureProtocolNFS, CreateProtocolNFS},
 #endif
-	{ "file", 0, ConfigureProtocolFile, CreateProtocolFile},
-	{ nullptr, 0, nullptr, nullptr }
+	{ "file", 0, false, true, ConfigureProtocolFile, CreateProtocolFile},
+	{ }
 };
 
-ProtocolImplementation *g_protocols = &s_protocols[0];
+const ProtocolInfo *ProtocolInfoHead()
+{
+	return &s_protocols[0];
+}
+
+const ProtocolInfo *ProtocolInfoLookup(const char *name)
+{
+	for (const ProtocolInfo *pi = ProtocolInfoHead(); pi->name; ++pi) {
+		if (strcasecmp(name, pi->name) == 0) {
+			return pi;
+		}
+	}
+
+	return nullptr;
+}

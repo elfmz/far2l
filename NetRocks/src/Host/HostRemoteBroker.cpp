@@ -35,15 +35,19 @@ class HostRemoteBroker : protected IPCEndpoint
 		RecvString(password);
 		RecvString(options);
 
-		for (auto pi = g_protocols; pi->name; ++pi) {
-			if (strcasecmp(protocol.c_str(), pi->name) == 0) {
-				_protocol = pi->Create(host, port, username, password, options);
-				break;
-			}
+		const auto *pi = ProtocolInfoLookup(protocol.c_str());
+		if (!pi) {
+			throw std::runtime_error(std::string("Wrong protocol: ").append(protocol));
 		}
 
+		if (host.empty() && pi->require_server) {
+			throw std::runtime_error("No server specified");
+		}
+
+		_protocol = pi->Create(host, port, username, password, options);
+
        		if (!_protocol){
-			throw std::runtime_error(std::string("Wrong protocol: ").append(protocol));
+			throw std::runtime_error(std::string("Failed to create protocol: ").append(protocol));
 		}
 	}
 

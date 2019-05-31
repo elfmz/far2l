@@ -228,12 +228,12 @@ void ProtocolSMB::SetMode(const std::string &path, mode_t mode) throw (std::runt
 
 void ProtocolSMB::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
 {
-		throw ProtocolUnsupportedError("Symlink creation unsupported");
+	throw ProtocolUnsupportedError("Symlink creation unsupported");
 }
 
 void ProtocolSMB::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
 {
-		throw ProtocolUnsupportedError("Symlink querying unsupported");
+	throw ProtocolUnsupportedError("Symlink querying unsupported");
 }
 
 class SMBDirectoryEnumer : public IDirectoryEnumer

@@ -1,5 +1,8 @@
 #pragma once
 #include <memory>
+#ifdef __FreeBSD__
+# include <sys/types.h>
+#endif
 #include "Erroring.h"
 #include "FileInformation.h"
 

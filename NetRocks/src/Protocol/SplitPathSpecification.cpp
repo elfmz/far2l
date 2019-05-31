@@ -1,6 +1,9 @@
 #include <wchar.h>
 #include <string>
 #include <sudo.h>
+#ifdef __FreeBSD__
+# include <sys/syslimits.h>
+#endif
 #include <utils.h>
 #include "Protocol.h"
 

@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
 #include <map>
+#ifdef __FreeBSD__
+# include <sys/types.h>
+#endif
 
 struct FileInformation
 {

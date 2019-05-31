@@ -68,6 +68,10 @@ class HostRemoteBroker : protected IPCEndpoint
 				SendString(ex.what());
 				break;
 			}
+			if (cont && _args.str1.empty()) {
+				fprintf(stderr, "OnDirectoryEnum: skipped empty name\n");
+				continue;
+			}
 			auto cmd = RecvCommand();
 			SendCommand(cmd);
 			if (cmd != IPC_DIRECTORY_ENUM) {
@@ -79,15 +83,10 @@ class HostRemoteBroker : protected IPCEndpoint
 				break;
 			}
 
-			if (!_args.str1.empty()) {
-				SendString(_args.str1);
-				SendString(_args.str2);
-				SendString(_args.str3);
-				SendPOD(_args.file_info);
-
-			} else {
-				fprintf(stderr, "OnDirectoryEnum: skipped empty name\n");
-			}
+			SendString(_args.str1);
+			SendString(_args.str2);
+			SendString(_args.str3);
+			SendPOD(_args.file_info);
 		}
 	}
 

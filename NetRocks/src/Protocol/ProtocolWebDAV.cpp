@@ -401,8 +401,19 @@ void ProtocolWebDAV::SetTimes(const std::string &path, const timespec &access_ti
 {
 }
 
+static void ProtocolWebDAV_ChangeExecutable(ne_session *sess, const std::string &path, bool executable)
+{
+	ne_proppatch_operation ops[] = { { &PROP_EXECUTABLE, ne_propset, executable ? "T" : "F"}, {} };
+	int rc = ne_proppatch(sess, path.c_str(), ops);
+	if (rc != NE_OK) {
+		fprintf(stderr, "ProtocolWebDAV_ChangeExecutable('%s', %d) error %d - '%s'\n", 
+			path.c_str(), executable, rc, ne_get_error(sess));
+	}
+}
+
 void ProtocolWebDAV::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
+	ProtocolWebDAV_ChangeExecutable(_conn->sess, RefinePath(path), (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0);
 }
 
 void ProtocolWebDAV::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
@@ -421,13 +432,16 @@ class DavDirectoryEnumer : public IDirectoryEnumer
 public:
 	DavDirectoryEnumer(std::shared_ptr<DavConnection> &conn, std::string path)
 		: _wdp(conn->sess, RefinePath(path, true), true, PROPS_MODE PROPS_SIZE PROPS_TIMES nullptr)
+//		: _wdp(conn->sess, RefinePath(path, true), true, nullptr)
 	{
-/*		for (const auto &path_i : _wdp) {
+/*
+		for (const auto &path_i : _wdp) {
 			fprintf(stderr, "Path: %s\n", path_i.first.c_str());
 			for (const auto &prop : path_i.second) {
 				fprintf(stderr, "    '%s'='%s'\n", prop.first.c_str(), prop.second.c_str());
 			}
-		}*/
+		}
+*/
 	}
 
 	virtual ~DavDirectoryEnumer()
@@ -657,6 +671,10 @@ public:
 		EnsureAllDone();
 		if (_ne_status != NE_OK) {
 			throw ProtocolError("Finalize error", _ne_error.c_str(), _ne_status);
+		}
+
+		if ((_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0) {
+			ProtocolWebDAV_ChangeExecutable(_conn->sess, _path, true);
 		}
 	}
 };

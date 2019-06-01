@@ -1,3 +1,6 @@
+#include <mutex>
+#include <condition_variable>
+
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <vector>
@@ -5,6 +8,8 @@
 #include <errno.h>
 #include <StringConfig.h>
 #include <utils.h>
+#include <Threaded.h>
+#include <os_call.hpp>
 
 #include "ProtocolDav.h"
 #include <neon/ne_auth.h>
@@ -133,7 +138,7 @@ struct PropsList : std::map<std::string, std::string>
 {
 	mode_t GetMode()
 	{
-		mode_t mode = 0;
+		mode_t mode = (S_IRUSR | S_IRGRP | S_IROTH  |  S_IWUSR | S_IWGRP);
 
 		auto it = find(PROP_RESOURCETYPE.name);
 		if (it != end() && it->second.find("<DAV:collection") != std::string::npos) {
@@ -255,7 +260,7 @@ private:
 
 mode_t ProtocolDav::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	WebDavProps wdp(_conn->sess, path, false, PROPS_MODE nullptr);
+	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE nullptr);
 	if (wdp.empty())
 		return S_IFREG;
 
@@ -265,7 +270,7 @@ mode_t ProtocolDav::GetMode(const std::string &path, bool follow_symlink) throw 
 
 unsigned long long ProtocolDav::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	WebDavProps wdp(_conn->sess, path, false, PROPS_SIZE nullptr);
+	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_SIZE nullptr);
 	if (wdp.empty())
 		return 0;
 
@@ -275,7 +280,7 @@ unsigned long long ProtocolDav::GetSize(const std::string &path, bool follow_sym
 
 void ProtocolDav::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	WebDavProps wdp(_conn->sess, path, false, PROPS_MODE PROPS_SIZE PROPS_TIMES nullptr);
+	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE PROPS_SIZE PROPS_TIMES nullptr);
 	file_info = FileInformation();
 	if (!wdp.empty())
 		wdp.begin()->second.GetFileInfo(file_info);
@@ -283,17 +288,17 @@ void ProtocolDav::GetInformation(FileInformation &file_info, const std::string &
 
 void ProtocolDav::FileDelete(const std::string &path) throw (std::runtime_error)
 {
-	int rc = ne_delete(_conn->sess, path.c_str());
+	int rc = ne_delete(_conn->sess, RefinePath(path).c_str());
 	if (rc != NE_OK) {
-		throw ProtocolError("Delete file error", rc);
+		throw ProtocolError("Delete file", ne_get_error(_conn->sess), rc);
 	}
 }
 
 void ProtocolDav::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
-	int rc = ne_delete(_conn->sess, path.c_str());
+	int rc = ne_delete(_conn->sess, RefinePath(path).c_str());
 	if (rc != NE_OK) {
-		throw ProtocolError("Delete directory error", rc);
+		throw ProtocolError("Delete directory", ne_get_error(_conn->sess), rc);
 	}
 }
 
@@ -303,21 +308,17 @@ void ProtocolDav::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 		throw ProtocolError("Cannot create root directory");
 	}
 
-	std::string xpath = path;
-	if (xpath[xpath.size() - 1] != '/') {
-		xpath+= '/';
-	}
-	int rc = ne_mkcol(_conn->sess, xpath.c_str());
+	int rc = ne_mkcol(_conn->sess, RefinePath(path, true).c_str());
 	if (rc != NE_OK) {
-		throw ProtocolError("Create directory error", rc);
+		throw ProtocolError("Create directory", ne_get_error(_conn->sess), rc);
 	}
 }
 
 void ProtocolDav::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
-	int rc = ne_move(_conn->sess, 1, path_old.c_str(), path_new.c_str());
+	int rc = ne_move(_conn->sess, 1, RefinePath(path_old).c_str(), RefinePath(path_new).c_str());
 	if (rc != NE_OK) {
-		throw ProtocolError("Rename error", rc);
+		throw ProtocolError("Rename", ne_get_error(_conn->sess), rc);
 	}
 }
 
@@ -393,82 +394,205 @@ std::shared_ptr<IDirectoryEnumer> ProtocolDav::DirectoryEnum(const std::string &
 	return std::make_shared<DavDirectoryEnumer>(_conn, path);
 }
 
-#if 0
-class DavFileIO : public IFileReader, public IFileWriter
+class DavFileIO : public IFileReader, public IFileWriter, protected Threaded
 {
-	std::shared_ptr<DavConnection> _nfs;
-	struct nfsfh *_file = nullptr;
+	std::shared_ptr<DavConnection> _conn;
+	std::string  _path;
+	mode_t _mode;
+	unsigned long long _resume_pos;
+	bool _writing;
+	ne_request *_req = nullptr;
+
+	int _ne_status = NE_ERROR;
+	std::string _ne_error;
+	bool _done = false;
+
+	std::vector<char> _buf;
+	std::mutex _mtx;
+	std::condition_variable _cond;
+
+	bool TryAddToBuffer(const void *data, size_t len)
+	{
+		try {
+			const size_t prev_size = _buf.size();
+			if (prev_size > 0x100000) {
+				return false;
+			}
+
+			_buf.resize(prev_size + len);
+			memcpy(&_buf[prev_size], data, len);
+
+		} catch (std::exception &ex) {
+			return false;
+		}
+
+		return true;
+	}
+
+	size_t TryFetchFromBuffer(void *data, size_t len)
+	{
+		len = std::min(len, _buf.size());
+		if (len != 0) {
+			memcpy(data, &_buf[0], len);
+			_buf.erase(_buf.begin(), _buf.begin() + len);
+		}
+
+		return len;
+	}
+
+	static ssize_t sWriteCallback(void *userdata, char *buf, size_t buflen)
+	{
+		return ((DavFileIO *)userdata)->WriteCallback(buf, buflen);
+	}
+
+	static int sReadCallback(void *userdata, const char *buf, size_t len)
+	{
+		return ((DavFileIO *)userdata)->ReadCallback(buf, len);
+	}
+
+	ssize_t WriteCallback(char *buf, size_t buflen)
+	{
+		std::unique_lock<std::mutex> lock(_mtx);
+		for (;;) {
+			const size_t fetched = TryFetchFromBuffer(buf, buflen);
+			if (fetched) {
+				_cond.notify_all();
+				return fetched;
+			}
+			if (_done) {
+				return 0;
+			}
+			_cond.wait(lock);
+		}
+	}
+
+	int ReadCallback(const char *buf, size_t len)
+	{
+		std::unique_lock<std::mutex> lock(_mtx);
+		for (;;) {
+			if (_done) {
+				return -1;
+			}
+			if (TryAddToBuffer(buf, len)) {
+				_cond.notify_all();
+				return 0;
+			}
+			_cond.wait(lock);
+		}
+	}
+
+protected:
+	void *ThreadProc()
+	{
+		_ne_status = ne_request_dispatch(_req);
+		std::unique_lock<std::mutex> lock(_mtx);
+		if (_ne_status != NE_OK) {
+			const char *ner = ne_get_error(_conn->sess);
+			_ne_error = ner ? ner : "";
+		}
+		_done = true;
+		_cond.notify_all();
+		return nullptr;
+	}
+
+	void EnsureAllDone()
+	{
+		{
+			std::unique_lock<std::mutex> lock(_mtx);
+			_done = true;
+			_cond.notify_all();
+		}
+		WaitThread();
+	}
 
 public:
-	DavFileIO(std::shared_ptr<DavConnection> &nfs, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
-		: _nfs(nfs)
+	DavFileIO(std::shared_ptr<DavConnection> &conn, const std::string &path, bool writing, mode_t mode, unsigned long long resume_pos)
+		: _conn(conn), _path(RefinePath(path, false)), _mode(mode), _resume_pos(resume_pos), _writing(writing)
 	{
-		fprintf(stderr, "TRying to open path: '%s'\n", path.c_str());
-		int rc = (flags & O_CREAT)
-			? nfs_creat(_nfs->ctx, path.c_str(), mode & (~O_CREAT), &_file)
-			: nfs_open(_nfs->ctx, path.c_str(), flags, &_file);
-		
-		if (rc != 0 || _file == nullptr) {
-			_file = nullptr;
-			throw ProtocolError("Failed to open file",  rc);
+		if (_writing && _resume_pos) {
+			throw ProtocolUnsupportedError("WebDav doesn't support upload resume");
 		}
-		if (resume_pos) {
-			uint64_t current_offset = resume_pos;
-			int rc = nfs_lseek(_nfs->ctx, _file, resume_pos, SEEK_SET, &current_offset);
-			if (rc < 0) {
-				nfs_close(_nfs->ctx, _file);
-				_file = nullptr;
-				throw ProtocolError("Failed to seek file",  rc);
-			}
+
+		_req = ne_request_create(_conn->sess, _writing ? "PUT" : "GET", _path.c_str());
+		if (_req == nullptr) {
+			throw ProtocolError("Can't create request");
+		}
+
+		if (_resume_pos) {
+			char brange[64] = {};
+			snprintf(brange, sizeof(brange) - 1, "bytes=%llu-", _resume_pos);
+			ne_add_request_header(_req, "Range", brange);
+			ne_add_request_header(_req, "Accept-Ranges", "bytes");
+		}
+
+                if (_writing) {
+			ne_set_request_body_provider(_req, -1, sWriteCallback, this);
+		} else {
+			ne_add_response_body_reader(_req, ne_accept_always, sReadCallback, this);
+		}
+
+		if (!StartThread()) {
+			throw std::runtime_error("Can't start thread");
 		}
 	}
 
 	virtual ~DavFileIO()
 	{
-		if (_file != nullptr) {
-			nfs_close(_nfs->ctx, _file);
+		EnsureAllDone();
+		if (_req != nullptr) {
+			ne_request_destroy(_req);
 		}
 	}
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t buflen) throw (std::runtime_error)
 	{
-		const auto rc = nfs_read(_nfs->ctx, _file, len, (char *)buf);
-		if (rc < 0)
-			throw ProtocolError("Read file error",  errno);
-		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
-
-		return (size_t)rc;
+		std::unique_lock<std::mutex> lock(_mtx);
+		for (;;) {
+			const size_t fetched = TryFetchFromBuffer(buf, buflen);
+			if (fetched) {
+				_cond.notify_all();
+				return fetched;
+			}
+			if (_done) {
+				if (_ne_status != NE_OK) {
+					throw ProtocolError("Read error", _ne_error.c_str(), _ne_status);
+				}
+				return 0;
+			}
+			_cond.wait(lock);
+		}
 	}
 
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
-		if (len > 0) for (;;) {
-			const auto rc = nfs_write(_nfs->ctx, _file, len, (char *)buf);
-			if (rc <= 0)
-				throw ProtocolError("Write file error",  errno);
-			if ((size_t)rc >= len)
+		std::unique_lock<std::mutex> lock(_mtx);
+		for (;;) {
+			if (_done) {
+				throw ProtocolError("Upload error", _ne_error.c_str(), _ne_status);
+			}
+			if (TryAddToBuffer(buf, len)) {
+				_cond.notify_all();
 				break;
-
-			len-= (size_t)rc;
-			buf = (const char *)buf + rc;
+			}
+			_cond.wait(lock);
 		}
 	}
 
 	virtual void WriteComplete() throw (std::runtime_error)
 	{
-		// what?
+		EnsureAllDone();
+		if (_ne_status != NE_OK) {
+			throw ProtocolError("Finalize error", _ne_error.c_str(), _ne_status);
+		}
 	}
 };
-#endif
 
 std::shared_ptr<IFileReader> ProtocolDav::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	throw ProtocolError("FilePut not implemented");
-//	return std::make_shared<DavFileIO>(_nfs, MountedRootedPath(path), O_RDONLY, 0, resume_pos);
+	return std::make_shared<DavFileIO>(_conn, path, false, 0, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolDav::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	throw ProtocolError("FilePut not implemented");
-//	return std::make_shared<DavFileIO>(_nfs, MountedRootedPath(path), O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
+	return std::make_shared<DavFileIO>(_conn, path, true, mode, resume_pos);
 }

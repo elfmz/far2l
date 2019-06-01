@@ -17,7 +17,7 @@
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
 #include <utils.h>
-#include "os_call.h"
+#include <os_call.hpp>
 
 static std::atomic<int>	s_reg_wipe_count(0);
 

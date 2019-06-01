@@ -17,60 +17,17 @@
 #include <neon/ne_props.h>
 
 
+static const ne_propname PROP_ISCOLLECTION = { "DAV:", "iscollection" };
+static const ne_propname PROP_COLLECTION = { "DAV:", "collection" };
+static const ne_propname PROP_RESOURCETYPE = { "DAV:", "resourcetype" };
+static const ne_propname PROP_EXECUTABLE = { "http://apache.org/dav/props/", "executable"};
 
-std::shared_ptr<IProtocol> CreateProtocolDav(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
-{
-	return std::make_shared<ProtocolDav>("http", host, port, username, password, options);
-}
-
-std::shared_ptr<IProtocol> CreateProtocolDavS(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
-{
-	return std::make_shared<ProtocolDav>("https", host, port, username, password, options);
-}
-
-////////////////////////////
-
-int ProtocolDav::sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
-{
-	strncpy(username, ((ProtocolDav *)userdata)->_username.c_str(), NE_ABUFSIZ);
-	strncpy(password, ((ProtocolDav *)userdata)->_password.c_str(), NE_ABUFSIZ);
-	return attempt;
-}
-
-ProtocolDav::ProtocolDav(const char *scheme, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
-	:
-	_conn(std::make_shared<DavConnection>()),
-	_username(username), _password(password)
-{
-	_conn->sess = ne_session_create(scheme, host.c_str(), port);
-	if (_conn->sess == nullptr) {
-		throw ProtocolError("Create session error", errno);
-	}
-	if (!username.empty() || !password.empty()) {
-		fprintf(stderr, "ProtocolDav: this=%p\n", this);
-		ne_set_server_auth(_conn->sess, sAuthCreds, this);
-	}
-/*
-	if (protocol_options.GetInt("UseProxy", 0) != 0) {
-		ne_session_proxy(_conn->sess,
-			protocol_options.GetString("ProxyHost").c_str(),
-			(unsigned int)protocol_options.GetInt("ProxyPort"));
-	}
-*/
-}
-
-ProtocolDav::~ProtocolDav()
-{
-}
+static const ne_propname PROP_GETCONTENTLENGTH = { "DAV:", "getcontentlength" };
+static const ne_propname PROP_CREATIONDATE = { "DAV:", "creationdate" };
+static const ne_propname PROP_GETLASTMODIFIED = { "DAV:", "getlastmodified" };
 
 
-bool ProtocolDav::IsBroken()
-{
-	return false;//(!_conn || !_conn->ctx || !_conn->SMB || (ssh_get_status(_conn->ssh) & (SSH_CLOSED|SSH_CLOSED_ERROR)) != 0);
-}
+static const char *s_months = "janfebmaraprmayjunjulaugsepoctnovdec";
 
 static std::string RefinePath(std::string path, bool ending_slash = false)
 {
@@ -94,18 +51,6 @@ static std::string RefinePath(std::string path, bool ending_slash = false)
 
 
 /////////////////////
-
-static const ne_propname PROP_ISCOLLECTION = { "DAV:", "iscollection" };
-static const ne_propname PROP_COLLECTION = { "DAV:", "collection" };
-static const ne_propname PROP_RESOURCETYPE = { "DAV:", "resourcetype" };
-static const ne_propname PROP_EXECUTABLE = { "http://apache.org/dav/props/", "executable"};
-
-static const ne_propname PROP_GETCONTENTLENGTH = { "DAV:", "getcontentlength" };
-static const ne_propname PROP_CREATIONDATE = { "DAV:", "creationdate" };
-static const ne_propname PROP_GETLASTMODIFIED = { "DAV:", "getlastmodified" };
-
-
-static const char *s_months = "janfebmaraprmayjunjulaugsepoctnovdec";
 
 static void ParseWebDavDateTime(timespec &result, const std::string &str)
 {
@@ -230,6 +175,9 @@ struct WebDavProps : std::map<std::string, PropsList >
 		}
 
 		if (rc != NE_OK) {
+			if (rc == NE_AUTH) {
+				throw ProtocolAuthFailedError(ne_get_error(sess));
+			}
 			throw ProtocolError("Query props", ne_get_error(sess), rc);
 		}
 	}
@@ -257,6 +205,84 @@ private:
 #define PROPS_MODE &PROP_ISCOLLECTION, &PROP_COLLECTION, &PROP_RESOURCETYPE, &PROP_EXECUTABLE,
 #define PROPS_SIZE &PROP_GETCONTENTLENGTH,
 #define PROPS_TIMES &PROP_CREATIONDATE, &PROP_GETLASTMODIFIED,
+
+////////////////////////////////////////////////////////
+
+std::shared_ptr<IProtocol> CreateProtocolDav(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+{
+	return std::make_shared<ProtocolDav>("http", host, port, username, password, options);
+}
+
+std::shared_ptr<IProtocol> CreateProtocolDavS(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+{
+	return std::make_shared<ProtocolDav>("https", host, port, username, password, options);
+}
+
+////////////////////////////
+
+int ProtocolDav::sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
+{
+	strncpy(username, ((ProtocolDav *)userdata)->_username.c_str(), NE_ABUFSIZ - 1);
+	strncpy(password, ((ProtocolDav *)userdata)->_password.c_str(), NE_ABUFSIZ - 1);
+	return attempt;
+}
+
+int ProtocolDav::sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
+{
+	strncpy(username, ((ProtocolDav *)userdata)->_proxy_username.c_str(), NE_ABUFSIZ - 1);
+	strncpy(password, ((ProtocolDav *)userdata)->_proxy_password.c_str(), NE_ABUFSIZ - 1);
+	return attempt;
+}
+
+ProtocolDav::ProtocolDav(const char *scheme, const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	:
+	_conn(std::make_shared<DavConnection>()),
+	_username(username), _password(password)
+{
+	_conn->sess = ne_session_create(scheme, host.c_str(), port);
+	if (_conn->sess == nullptr) {
+		throw ProtocolError("Create session error", errno);
+	}
+	if (!username.empty() || !password.empty()) {
+		ne_set_server_auth(_conn->sess, sAuthCreds, this);
+	}
+
+	StringConfig protocol_options(options);
+	if (protocol_options.GetInt("UseProxy", 0) != 0) {
+		ne_session_proxy(_conn->sess,
+			protocol_options.GetString("ProxyHost").c_str(),
+			(unsigned int)protocol_options.GetInt("ProxyPort"));
+
+		if (protocol_options.GetInt("ProxyAuth", 0) != 0) {
+			_proxy_username = protocol_options.GetString("ProxyUsername");
+			_proxy_password = protocol_options.GetString("ProxyPassword");
+			ne_set_proxy_auth(_conn->sess, sProxyAuthCreds, this);
+		}
+	}
+
+	try { // probe auth
+		WebDavProps(_conn->sess, "/", false, &PROP_RESOURCETYPE, nullptr);
+
+	} catch (ProtocolAuthFailedError &) {
+		throw;
+
+	} catch (std::exception &ex) {
+		fprintf(stderr, "Ignoring non-auth error on auth probe: %s\n", ex.what());
+	}
+}
+
+ProtocolDav::~ProtocolDav()
+{
+}
+
+
+bool ProtocolDav::IsBroken()
+{
+	return false;//(!_conn || !_conn->ctx || !_conn->SMB || (ssh_get_status(_conn->ssh) & (SSH_CLOSED|SSH_CLOSED_ERROR)) != 0);
+}
 
 mode_t ProtocolDav::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {

@@ -56,7 +56,7 @@ void OpRemove::Process()
 			_state.stats.current_paused = std::chrono::milliseconds::zero();
 		}
 
-		WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _base_host.get(), _base_dir,
+		WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), _base_dir,
 			[&] () mutable 
 			{
 				const std::string &subpath = rev_i->first.substr(_base_dir.size());

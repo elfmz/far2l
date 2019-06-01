@@ -315,7 +315,7 @@ void OpXfer::Transfer()
 			if (FileCopyLoop(e.first, path_dst, e.second)) {
 				CopyAttributes(path_dst, e.second);
 				if (_kind == XK_MOVE) {
-					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
+					WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), e.first,
 						[&] () mutable
 						{
 							_base_host->FileDelete(e.first);
@@ -338,7 +338,7 @@ void OpXfer::Transfer()
 
 		if (_kind == XK_MOVE) {
 			if (S_ISDIR(rev_i->second.mode)) {
-				WhatOnErrorWrap<WEK_RMDIR>(_wea_state, _state, _base_host.get(), rev_i->first,
+				WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), rev_i->first,
 					[&] () mutable 
 					{
 						_base_host->DirectoryDelete(rev_i->first);
@@ -439,11 +439,11 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 
 			if (piece == _io_buf.Size()) {
 				msec = TimeMSNow() - msec;
-				if (msec.count() < 100) {
+				if (msec.count() < ((_io_buf.Size() <= 524288) ? 500 : 200)) {
 					if (_io_buf.Increase(false)) {
 						fprintf(stderr, "NetRocks: IO buffer size increased to %lu\n", _io_buf.Size());
 					}
-				} else if (msec.count() > 500) {
+				} else if (msec.count() > ((_io_buf.Size() < 1048576) ? 1000 : 500)) {
 					if (_io_buf.Decrease()) {
 						fprintf(stderr, "NetRocks: IO buffer size decreased to %lu\n", _io_buf.Size());
 					}

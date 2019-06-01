@@ -28,10 +28,11 @@ class ProtocolWebDAV : public IProtocol
 	std::shared_ptr<DavConnection> _conn;
 	std::string _username, _password;
 	std::string _proxy_username, _proxy_password;
+	std::string _known_server_identity, _current_server_identity;
 
 	static int sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
 	static int sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
-
+	static int sVerifySsl(void *userdata, int failures, const ne_ssl_certificate *cert);
 public:
 
 	ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,

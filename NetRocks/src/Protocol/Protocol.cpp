@@ -21,11 +21,11 @@ std::shared_ptr<IProtocol> CreateProtocolNFS(const std::string &host, unsigned i
 
 
 #ifdef HAVE_WEBDAV
-void ConfigureProtocolDav(std::string &options) {};
-void ConfigureProtocolDavS(std::string &options) {};
-std::shared_ptr<IProtocol> CreateProtocolDav(const std::string &host, unsigned int port,
+void ConfigureProtocolWebDAV(std::string &options);
+void ConfigureProtocolWebDAVs(std::string &options);
+std::shared_ptr<IProtocol> CreateProtocolWebDAV(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
-std::shared_ptr<IProtocol> CreateProtocolDavS(const std::string &host, unsigned int port,
+std::shared_ptr<IProtocol> CreateProtocolWebDAVs(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 #endif
 
@@ -45,8 +45,8 @@ static ProtocolInfo s_protocols[] = {
 	{ "nfs", -1, false, false, ConfigureProtocolNFS, CreateProtocolNFS},
 #endif
 #ifdef HAVE_WEBDAV
-	{ "dav", 80, true, true, ConfigureProtocolDav, CreateProtocolDav},
-	{ "davs", 443, true, true, ConfigureProtocolDavS, CreateProtocolDavS},
+	{ "dav", 80, true, true, ConfigureProtocolWebDAV, CreateProtocolWebDAV},
+	{ "davs", 443, true, true, ConfigureProtocolWebDAVs, CreateProtocolWebDAVs},
 #endif
 	{ "file", 0, false, true, ConfigureProtocolFile, CreateProtocolFile},
 	{ }

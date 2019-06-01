@@ -189,6 +189,14 @@ enum LanguageID
   MNFSHost,
   MNFSUID,
   MNFSGID,
-  MNFSGroups
+  MNFSGroups,
+
+  MWebDAVOptionsTitle,
+  MWebDAVUseProxy,
+  MWebDAVProxyHost,
+  MWebDAVProxyPort,
+  MWebDAVAuthProxy,
+  MWebDAVProxyUsername,
+  MWebDAVProxyPassword,
 
 };

@@ -11,7 +11,7 @@
 #include <Threaded.h>
 #include <os_call.hpp>
 
-#include "ProtocolDav.h"
+#include "ProtocolWebDAV.h"
 #include <neon/ne_auth.h>
 #include <neon/ne_basic.h>
 #include <neon/ne_props.h>
@@ -208,35 +208,35 @@ private:
 
 ////////////////////////////////////////////////////////
 
-std::shared_ptr<IProtocol> CreateProtocolDav(const std::string &host, unsigned int port,
+std::shared_ptr<IProtocol> CreateProtocolWebDAV(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {
-	return std::make_shared<ProtocolDav>("http", host, port, username, password, options);
+	return std::make_shared<ProtocolWebDAV>("http", host, port, username, password, options);
 }
 
-std::shared_ptr<IProtocol> CreateProtocolDavS(const std::string &host, unsigned int port,
+std::shared_ptr<IProtocol> CreateProtocolWebDAVs(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {
-	return std::make_shared<ProtocolDav>("https", host, port, username, password, options);
+	return std::make_shared<ProtocolWebDAV>("https", host, port, username, password, options);
 }
 
 ////////////////////////////
 
-int ProtocolDav::sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
+int ProtocolWebDAV::sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
 {
-	strncpy(username, ((ProtocolDav *)userdata)->_username.c_str(), NE_ABUFSIZ - 1);
-	strncpy(password, ((ProtocolDav *)userdata)->_password.c_str(), NE_ABUFSIZ - 1);
+	strncpy(username, ((ProtocolWebDAV *)userdata)->_username.c_str(), NE_ABUFSIZ - 1);
+	strncpy(password, ((ProtocolWebDAV *)userdata)->_password.c_str(), NE_ABUFSIZ - 1);
 	return attempt;
 }
 
-int ProtocolDav::sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
+int ProtocolWebDAV::sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
 {
-	strncpy(username, ((ProtocolDav *)userdata)->_proxy_username.c_str(), NE_ABUFSIZ - 1);
-	strncpy(password, ((ProtocolDav *)userdata)->_proxy_password.c_str(), NE_ABUFSIZ - 1);
+	strncpy(username, ((ProtocolWebDAV *)userdata)->_proxy_username.c_str(), NE_ABUFSIZ - 1);
+	strncpy(password, ((ProtocolWebDAV *)userdata)->_proxy_password.c_str(), NE_ABUFSIZ - 1);
 	return attempt;
 }
 
-ProtocolDav::ProtocolDav(const char *scheme, const std::string &host, unsigned int port,
+ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 	:
 	_conn(std::make_shared<DavConnection>()),
@@ -256,7 +256,7 @@ ProtocolDav::ProtocolDav(const char *scheme, const std::string &host, unsigned i
 			protocol_options.GetString("ProxyHost").c_str(),
 			(unsigned int)protocol_options.GetInt("ProxyPort"));
 
-		if (protocol_options.GetInt("ProxyAuth", 0) != 0) {
+		if (protocol_options.GetInt("AuthProxy", 0) != 0) {
 			_proxy_username = protocol_options.GetString("ProxyUsername");
 			_proxy_password = protocol_options.GetString("ProxyPassword");
 			ne_set_proxy_auth(_conn->sess, sProxyAuthCreds, this);
@@ -274,17 +274,17 @@ ProtocolDav::ProtocolDav(const char *scheme, const std::string &host, unsigned i
 	}
 }
 
-ProtocolDav::~ProtocolDav()
+ProtocolWebDAV::~ProtocolWebDAV()
 {
 }
 
 
-bool ProtocolDav::IsBroken()
+bool ProtocolWebDAV::IsBroken()
 {
 	return false;//(!_conn || !_conn->ctx || !_conn->SMB || (ssh_get_status(_conn->ssh) & (SSH_CLOSED|SSH_CLOSED_ERROR)) != 0);
 }
 
-mode_t ProtocolDav::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t ProtocolWebDAV::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE nullptr);
 	if (wdp.empty())
@@ -294,7 +294,7 @@ mode_t ProtocolDav::GetMode(const std::string &path, bool follow_symlink) throw 
 }
 
 
-unsigned long long ProtocolDav::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long ProtocolWebDAV::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_SIZE nullptr);
 	if (wdp.empty())
@@ -304,7 +304,7 @@ unsigned long long ProtocolDav::GetSize(const std::string &path, bool follow_sym
 }
 
 
-void ProtocolDav::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolWebDAV::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE PROPS_SIZE PROPS_TIMES nullptr);
 	file_info = FileInformation();
@@ -312,7 +312,7 @@ void ProtocolDav::GetInformation(FileInformation &file_info, const std::string &
 		wdp.begin()->second.GetFileInfo(file_info);
 }
 
-void ProtocolDav::FileDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolWebDAV::FileDelete(const std::string &path) throw (std::runtime_error)
 {
 	int rc = ne_delete(_conn->sess, RefinePath(path).c_str());
 	if (rc != NE_OK) {
@@ -320,7 +320,7 @@ void ProtocolDav::FileDelete(const std::string &path) throw (std::runtime_error)
 	}
 }
 
-void ProtocolDav::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolWebDAV::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
 	int rc = ne_delete(_conn->sess, RefinePath(path).c_str());
 	if (rc != NE_OK) {
@@ -328,7 +328,7 @@ void ProtocolDav::DirectoryDelete(const std::string &path) throw (std::runtime_e
 	}
 }
 
-void ProtocolDav::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolWebDAV::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
 	if (path.empty() || path == "/") {
 		throw ProtocolError("Cannot create root directory");
@@ -340,7 +340,7 @@ void ProtocolDav::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 	}
 }
 
-void ProtocolDav::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void ProtocolWebDAV::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
 	int rc = ne_move(_conn->sess, 1, RefinePath(path_old).c_str(), RefinePath(path_new).c_str());
 	if (rc != NE_OK) {
@@ -349,20 +349,20 @@ void ProtocolDav::Rename(const std::string &path_old, const std::string &path_ne
 }
 
 
-void ProtocolDav::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void ProtocolWebDAV::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
 {
 }
 
-void ProtocolDav::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolWebDAV::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
 }
 
-void ProtocolDav::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void ProtocolWebDAV::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
 {
 	throw ProtocolUnsupportedError("Symlink creation unsupported");
 }
 
-void ProtocolDav::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void ProtocolWebDAV::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
 {
 	throw ProtocolUnsupportedError("Symlink querying unsupported");
 }
@@ -415,7 +415,7 @@ public:
 	}
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolDav::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> ProtocolWebDAV::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
 	return std::make_shared<DavDirectoryEnumer>(_conn, path);
 }
@@ -613,12 +613,12 @@ public:
 	}
 };
 
-std::shared_ptr<IFileReader> ProtocolDav::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> ProtocolWebDAV::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	return std::make_shared<DavFileIO>(_conn, path, false, 0, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolDav::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolWebDAV::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	return std::make_shared<DavFileIO>(_conn, path, true, mode, resume_pos);
 }

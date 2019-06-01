@@ -299,9 +299,7 @@ ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsi
 	}
 
 	try { // probe auth
-		fprintf(stderr, "ProtocolWebDAV: X3\n");
 		WebDavProps(_conn->sess, "/", false, &PROP_RESOURCETYPE, nullptr);
-		fprintf(stderr, "ProtocolWebDAV: X4\n");
 
 	} catch (ProtocolAuthFailedError &) {
 		throw;

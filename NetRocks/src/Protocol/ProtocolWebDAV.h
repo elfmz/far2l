@@ -23,7 +23,7 @@ private:
 	DavConnection(const DavConnection &) = delete;
 };
 
-class ProtocolDav : public IProtocol
+class ProtocolWebDAV : public IProtocol
 {
 	std::shared_ptr<DavConnection> _conn;
 	std::string _username, _password;
@@ -34,9 +34,9 @@ class ProtocolDav : public IProtocol
 
 public:
 
-	ProtocolDav(const char *scheme, const std::string &host, unsigned int port,
+	ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const std::string &protocol_options) throw (std::runtime_error);
-	virtual ~ProtocolDav();
+	virtual ~ProtocolWebDAV();
 
 	virtual bool IsBroken();
 

@@ -107,6 +107,17 @@ $^#FILE:// protocol specific options#
 
  ~Contents~@Contents@
 
+@ProtocolOptionsWebDAV
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#DAV://  and DAVS:// protocol specific options#
+
+ This dialog allows you to modify "dav://" and "davs://" protocol specific settings: enable connect via HTTP/HTTPS proxy with optional proxy authentification.
+
+ ~Contents~@Contents@
+
 @Contact
 $^#NetRocks plugin#
 $^#Version 1.0#

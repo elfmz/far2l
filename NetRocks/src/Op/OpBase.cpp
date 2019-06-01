@@ -92,21 +92,23 @@ void OpBase::ForcefullyAbort()
 
 bool OpBase::WaitThread(unsigned int msec)
 {
-	for (unsigned int sleep_limit = 500;;) {
+	for (unsigned int sleep_limit = 200;;) {
 		unsigned int interval = (msec > sleep_limit) ? sleep_limit : msec;
 		if (Threaded::WaitThread(interval))
 			return true;
 
+		int cow_result = G.info.FSF->DispatchInterThreadCalls();
+
 		if (msec != (unsigned int)-1) {
 			msec-= interval;
-			if (msec == 0)
+			if (msec == 0) {
 				return false;
+			}
 		}
-		int cow_result = G.info.FSF->DispatchInterThreadCalls();
 		if (cow_result != 0) {
 			fprintf(stderr, "NetRocks::OpBase('%s', %d): DispatchInterThreadCalls returned %d\n", _base_dir.c_str(), _notify_title_lng, cow_result);
 			if (cow_result > 0) {
-					sleep_limit = 1;
+				sleep_limit = 1;
 			}
 		} else {
 			sleep_limit = 500;

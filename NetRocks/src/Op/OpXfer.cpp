@@ -315,7 +315,7 @@ void OpXfer::Transfer()
 			if (FileCopyLoop(e.first, path_dst, e.second)) {
 				CopyAttributes(path_dst, e.second);
 				if (_kind == XK_MOVE) {
-					WhatOnErrorWrap<WEK_RMFILE>(_wea_state, _state, _base_host.get(), e.first,
+					WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), e.first,
 						[&] () mutable
 						{
 							_base_host->FileDelete(e.first);
@@ -338,7 +338,7 @@ void OpXfer::Transfer()
 
 		if (_kind == XK_MOVE) {
 			if (S_ISDIR(rev_i->second.mode)) {
-				WhatOnErrorWrap<WEK_RMDIR>(_wea_state, _state, _base_host.get(), rev_i->first,
+				WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), rev_i->first,
 					[&] () mutable 
 					{
 						_base_host->DirectoryDelete(rev_i->first);

@@ -135,7 +135,7 @@ enum LanguageID
   MErrorMakeDirTitle,
   MErrorRenameTitle,
   MErrorRmDirTitle,
-  MErrorRmFileTitle,
+  MErrorRemoveTitle,
   MErrorSetTimes,
   MErrorChangeMode,
   MErrorSymlinkQuery,

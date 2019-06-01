@@ -133,7 +133,7 @@
 "Make directory error"
 "Rename error"
 "Remove directory error"
-"Remove file error"
+"Remove error"
 "Set file times error"
 "Change file mode error"
 "Symlink query error"

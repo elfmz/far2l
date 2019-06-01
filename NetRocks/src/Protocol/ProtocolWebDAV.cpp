@@ -56,7 +56,7 @@ static std::string RefinePath(std::string path, bool ending_slash = false)
 
 static void ParseWebDavDateTime(timespec &result, const std::string &str)
 {
-//#define RFC1123_FORMAT "%3s, %02d %3s %4d %02d:%02d:%02d GMT"
+	// parse something like str = "Sat, 01 Jun 2019 10:40:09 GMT"
 	result = timespec();
 
 	std::vector<std::string> parts;
@@ -73,9 +73,18 @@ static void ParseWebDavDateTime(timespec &result, const std::string &str)
 	if (parts_of_time.size() >= 2) tm_parts.tm_min = atoi(parts_of_time[1].c_str());
 	if (parts_of_time.size() >= 1) tm_parts.tm_hour = atoi(parts_of_time[0].c_str());
 	tm_parts.tm_year = atoi(parts[parts.size() - 3].c_str());
-	const char *mon = strstr(s_months, parts[parts.size() - 4].c_str());
+	const char *mon = strcasestr(s_months, parts[parts.size() - 4].c_str());
 	tm_parts.tm_mon = mon ? (mon - s_months) / 3 : 0;
 	tm_parts.tm_mday = atoi(parts[parts.size() - 5].c_str());
+
+/*
+	fprintf(stderr, "ParseWebDavDateTime('%s') -> %u/%u/%u %u:%u.%u\n", str.c_str(),
+		tm_parts.tm_year, tm_parts.tm_mon, tm_parts.tm_mday, tm_parts.tm_hour, tm_parts.tm_min, tm_parts.tm_sec);
+	for (const auto &part : parts) {
+		fprintf(stderr, "'%s' ", part.c_str());
+	}
+	fprintf(stderr, "\n");
+*/
 
 	result.tv_sec = mktime(&tm_parts);
 }

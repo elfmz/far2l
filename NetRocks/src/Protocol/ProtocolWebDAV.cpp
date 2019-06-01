@@ -15,6 +15,8 @@
 #include <neon/ne_auth.h>
 #include <neon/ne_basic.h>
 #include <neon/ne_props.h>
+#include <neon/ne_socket.h>
+#include <neon/ne_ssl.h>
 
 
 static const ne_propname PROP_ISCOLLECTION = { "DAV:", "iscollection" };
@@ -222,6 +224,15 @@ std::shared_ptr<IProtocol> CreateProtocolWebDAVs(const std::string &host, unsign
 
 ////////////////////////////
 
+static void EnsureInitNEON()
+{
+	static int neon_init_status = ne_sock_init();
+	if (neon_init_status != 0) {
+		neon_init_status = ne_sock_init();
+		fprintf(stderr, "EnsureInitNEON: %d\n", neon_init_status);
+	}
+}
+
 int ProtocolWebDAV::sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password)
 {
 	strncpy(username, ((ProtocolWebDAV *)userdata)->_username.c_str(), NE_ABUFSIZ - 1);
@@ -236,21 +247,45 @@ int ProtocolWebDAV::sProxyAuthCreds(void *userdata, const char *realm, int attem
 	return attempt;
 }
 
+int ProtocolWebDAV::sVerifySsl(void *userdata, int failures, const ne_ssl_certificate *cert)
+{
+	char digest[NE_SSL_DIGESTLEN + 1] = {};
+	ne_ssl_cert_digest(cert, digest);
+
+	((ProtocolWebDAV *)userdata)->_current_server_identity.clear();
+	for (const char *c = &digest[0]; *c; ++c) {
+		if (*c != ':') {
+			((ProtocolWebDAV *)userdata)->_current_server_identity+= *c;
+		}
+	}
+	if (((ProtocolWebDAV *)userdata)->_current_server_identity != ((ProtocolWebDAV *)userdata)->_known_server_identity) {
+		return -1;
+	}
+	return 0;
+}
+
 ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 	:
 	_conn(std::make_shared<DavConnection>()),
 	_username(username), _password(password)
 {
+	EnsureInitNEON();
+
+	StringConfig protocol_options(options);
+	_known_server_identity = protocol_options.GetString("ServerIdentity");
+
 	_conn->sess = ne_session_create(scheme, host.c_str(), port);
 	if (_conn->sess == nullptr) {
 		throw ProtocolError("Create session error", errno);
 	}
+
+	ne_ssl_set_verify(_conn->sess, sVerifySsl, this);
+
 	if (!username.empty() || !password.empty()) {
 		ne_set_server_auth(_conn->sess, sAuthCreds, this);
 	}
 
-	StringConfig protocol_options(options);
 	if (protocol_options.GetInt("UseProxy", 0) != 0) {
 		ne_session_proxy(_conn->sess,
 			protocol_options.GetString("ProxyHost").c_str(),
@@ -264,12 +299,18 @@ ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsi
 	}
 
 	try { // probe auth
+		fprintf(stderr, "ProtocolWebDAV: X3\n");
 		WebDavProps(_conn->sess, "/", false, &PROP_RESOURCETYPE, nullptr);
+		fprintf(stderr, "ProtocolWebDAV: X4\n");
 
 	} catch (ProtocolAuthFailedError &) {
 		throw;
 
 	} catch (std::exception &ex) {
+		if (_current_server_identity != _known_server_identity) {
+			throw ServerIdentityMismatchError(_current_server_identity);
+		}
+
 		fprintf(stderr, "Ignoring non-auth error on auth probe: %s\n", ex.what());
 	}
 }

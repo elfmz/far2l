@@ -187,3 +187,11 @@
 "&UID:"
 "&GID:"
 "G&roups:"
+
+"WebDAV Protocol options"
+"Connect via pro&xy:"
+"Proxy &host:"
+"Proxy &port:"
+"Use proxy &authentificaion:"
+"Proxy &user:"
+"Proxy pa&ssword:"

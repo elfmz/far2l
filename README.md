@@ -3,7 +3,7 @@ Linux port of FAR Manager v2 (http://farmanager.com/)
 ALPHA VERSION.
 **Currently interesting only for enthusiasts!!!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SMB/NFS), colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
+Plug-ins that are currently working: NetRocks (SFTP/SMB/NFS/WebDAV), colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
 
 [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 
@@ -27,13 +27,14 @@ Plug-ins that are currently working: NetRocks (SFTP/SMB/NFS), colorer, multiarc,
 * libssh-dev (needed for NetRocks/SFTP)
 * libsmbclient-dev (needed for NetRocks/SMB)
 * libnfs-dev (needed for NetRocks/NFS)
+* libneon27-dev (or later, needed for NetRocks/WebDAV)
 * cmake ( >= 3.2.2 )
 * g++
 * git (needed for downloading source code)
 
 #### Or simply on Ubuntu:
 ``` sh
-apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev libssh-dev libsmbclient-dev libnfs-dev cmake g++ git
+apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev libssh-dev libsmbclient-dev libnfs-dev libneon27-dev cmake g++ git
 ```
 
 #### Clone and Build
@@ -82,7 +83,7 @@ brew install yurikoles/yurikoles/far2l --HEAD
 ##### Hard way OSX install - with building from sources:
  * Install required packages:
 ```sh
-brew install cmake gawk glib ninja pkg-config wget wxmac libssh libnfs
+brew install cmake gawk glib ninja pkg-config wget wxmac libssh libnfs neon
 ```
 
  * Clone:

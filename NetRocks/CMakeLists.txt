@@ -19,6 +19,7 @@ src/UI/Settings/ConfigureProtocolFile.cpp
 src/UI/Settings/ConfigureProtocolSFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Settings/ConfigureProtocolNFS.cpp
+src/UI/Settings/ConfigureProtocolWebDAV.cpp
 src/UI/Activities/Confirm.cpp
 src/UI/Activities/ConfirmXfer.cpp
 src/UI/Activities/ConfirmOverwrite.cpp
@@ -74,7 +75,14 @@ if (LIBNFS_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
 endif (LIBNFS_FOUND)
 
-
+if (LIBNEON_FOUND)
+	set(SOURCES
+		${SOURCES}
+		src/Protocol/ProtocolWebDAV.cpp
+	)
+	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBNEON_LIBRARIES})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_WEBDAV")
+endif (LIBNEON_FOUND)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")
 

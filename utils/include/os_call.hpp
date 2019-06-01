@@ -1,4 +1,6 @@
 #pragma once
+#include <unistd.h>
+
 //todo: use this everywhere else. Likely sdc_ is better place for that.
 template<class V, V BADV, typename ... ARGS> 
 	static V os_call_v(V (*pfn)(ARGS ... args), ARGS ... args)

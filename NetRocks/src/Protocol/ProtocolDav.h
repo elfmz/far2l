@@ -27,8 +27,10 @@ class ProtocolDav : public IProtocol
 {
 	std::shared_ptr<DavConnection> _conn;
 	std::string _username, _password;
+	std::string _proxy_username, _proxy_password;
 
 	static int sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
+	static int sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
 
 public:
 

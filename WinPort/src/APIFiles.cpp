@@ -17,7 +17,7 @@
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
 #include "sudo.h"
-#include "os_call.h"
+#include <os_call.hpp>
 
 template <class CHAR_T>
 static DWORD EvaluateAttributesT(uint32_t unix_mode, const CHAR_T *name)

@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <cstdarg>
 #include <sys/types.h>
 #include "luck.h"
@@ -92,3 +93,19 @@ template <class CharT>
 	return true;
 }
 
+template <class CharT>
+	void StrExplode(std::vector<std::basic_string<CharT> > &out, const std::basic_string<CharT> &str, const CharT *divs)
+{
+	for (size_t i = 0, j = 0; i <= str.size(); ++i) {
+		const CharT *d = divs;
+		if (i != str.size()) {
+			for (; *d && *d != str[i]; ++d);
+		}
+		if (*d) {
+			if (i > j) {
+				out.emplace_back(str.substr(j, i - j));
+			}
+			j = i + 1;
+		}
+	}
+}

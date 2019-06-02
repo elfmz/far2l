@@ -4,9 +4,6 @@
 #include <string.h>
 #include <errno.h>
 #include "ProtocolNFS.h"
-//#include <nfsc/libnfs-raw.h>
-#include <nfsc/libnfs-raw-nfs.h>
-#include <nfsc/libnfs-raw-mount.h>
 #include <StringConfig.h>
 #include <utils.h>
 

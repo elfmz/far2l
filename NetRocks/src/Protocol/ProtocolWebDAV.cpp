@@ -572,6 +572,10 @@ class DavFileIO : public IFileReader, public IFileWriter, protected Threaded
 
 	ssize_t WriteCallback(char *buf, size_t buflen)
 	{
+		if (buflen == 0) {
+			return 0;
+		}
+
 		std::unique_lock<std::mutex> lock(_mtx);
 		for (;;) {
 			const size_t fetched = TryFetchFromBuffer(buf, buflen);
@@ -666,6 +670,10 @@ public:
 
 	virtual size_t Read(void *buf, size_t buflen) throw (std::runtime_error)
 	{
+		if (buflen == 0) {
+			return 0;
+		}
+
 		std::unique_lock<std::mutex> lock(_mtx);
 		for (;;) {
 			const size_t fetched = TryFetchFromBuffer(buf, buflen);
@@ -685,6 +693,10 @@ public:
 
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
+		if (len == 0) {
+			return;
+		}
+
 		std::unique_lock<std::mutex> lock(_mtx);
 		for (;;) {
 			if (_done) {

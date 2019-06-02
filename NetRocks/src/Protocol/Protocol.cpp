@@ -1,54 +1,28 @@
 #include <string.h>
 #include "Protocol.h"
 
-#ifdef HAVE_SFTP
 void ConfigureProtocolSFTP(std::string &options);
-std::shared_ptr<IProtocol> CreateProtocolSFTP(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
-#endif
-
-#ifdef HAVE_SMB
 void ConfigureProtocolSMB(std::string &options);
-std::shared_ptr<IProtocol> CreateProtocolSMB(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
-#endif
-
-#ifdef HAVE_NFS
 void ConfigureProtocolNFS(std::string &options);
-std::shared_ptr<IProtocol> CreateProtocolNFS(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
-#endif
-
-
-#ifdef HAVE_WEBDAV
 void ConfigureProtocolWebDAV(std::string &options);
 void ConfigureProtocolWebDAVs(std::string &options);
-std::shared_ptr<IProtocol> CreateProtocolWebDAV(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
-std::shared_ptr<IProtocol> CreateProtocolWebDAVs(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
-#endif
-
-
 void ConfigureProtocolFile(std::string &options);
-std::shared_ptr<IProtocol> CreateProtocolFile(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 
 static ProtocolInfo s_protocols[] = {
 #ifdef HAVE_SFTP
-	{ "sftp", 22, true, true, ConfigureProtocolSFTP, CreateProtocolSFTP},
+	{ "sftp", "NetRocks-SFTP", 22, true, true, ConfigureProtocolSFTP},
 #endif
 #ifdef HAVE_SMB
-	{ "smb", -1, false, true, ConfigureProtocolSMB, CreateProtocolSMB},
+	{ "smb", "NetRocks-SMB", -1, false, true, ConfigureProtocolSMB},
 #endif
 #ifdef HAVE_NFS
-	{ "nfs", -1, false, false, ConfigureProtocolNFS, CreateProtocolNFS},
+	{ "nfs", "NetRocks-NFS", -1, false, false, ConfigureProtocolNFS},
 #endif
 #ifdef HAVE_WEBDAV
-	{ "dav", 80, true, true, ConfigureProtocolWebDAV, CreateProtocolWebDAV},
-	{ "davs", 443, true, true, ConfigureProtocolWebDAVs, CreateProtocolWebDAVs},
+	{ "dav", "NetRocks-WebDAV", 80, true, true, ConfigureProtocolWebDAV},
+	{ "davs", "NetRocks-WebDAV", 443, true, true, ConfigureProtocolWebDAVs},
 #endif
-	{ "file", 0, false, true, ConfigureProtocolFile, CreateProtocolFile},
+	{ "file", "NetRocks-FILE", 0, false, true, ConfigureProtocolFile},
 	{ }
 };
 

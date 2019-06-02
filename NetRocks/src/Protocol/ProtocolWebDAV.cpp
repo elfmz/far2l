@@ -219,16 +219,14 @@ private:
 
 ////////////////////////////////////////////////////////
 
-std::shared_ptr<IProtocol> CreateProtocolWebDAV(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
+		const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {
-	return std::make_shared<ProtocolWebDAV>("http", host, port, username, password, options);
-}
+	if (protocol == "davs") {
+		return std::make_shared<ProtocolWebDAV>("https", host, port, username, password, options);
+	}
 
-std::shared_ptr<IProtocol> CreateProtocolWebDAVs(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
-{
-	return std::make_shared<ProtocolWebDAV>("https", host, port, username, password, options);
+	return std::make_shared<ProtocolWebDAV>("http", host, port, username, password, options);
 }
 
 ////////////////////////////

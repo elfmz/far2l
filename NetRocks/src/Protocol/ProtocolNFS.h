@@ -3,8 +3,15 @@
 #include <string>
 #include <map>
 #include <set>
-#include <nfsc/libnfs.h>
 #include "Protocol.h"
+
+extern "C" {
+#include <nfsc/libnfs.h>
+//#include <nfsc/libnfs-raw.h>
+#include <nfsc/libnfs-raw-nfs.h>
+#include <nfsc/libnfs-raw-mount.h>
+}
+
 
 struct NFSConnection
 {

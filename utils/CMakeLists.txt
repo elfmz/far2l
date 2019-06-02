@@ -9,6 +9,7 @@ set(SOURCES
   src/SharedResource.cpp
   src/KeyFileHelper.cpp
   src/utils.cpp
+  src/InstallPath.cpp
   src/StrPrintf.cpp
   src/TimeUtils.cpp
   src/StringConfig.cpp

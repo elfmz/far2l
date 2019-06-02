@@ -4,14 +4,11 @@
 #include <string.h>
 #include <errno.h>
 #include "ProtocolNFS.h"
-//#include <nfsc/libnfs-raw.h>
-#include <nfsc/libnfs-raw-nfs.h>
-#include <nfsc/libnfs-raw-mount.h>
 #include <StringConfig.h>
 #include <utils.h>
 
 
-std::shared_ptr<IProtocol> CreateProtocolNFS(const std::string &host, unsigned int port,
+std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {
 	return std::make_shared<ProtocolNFS>(host, port, username, password, options);

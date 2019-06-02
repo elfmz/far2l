@@ -597,6 +597,9 @@ class DavFileIO : public IFileReader, public IFileWriter, protected Threaded
 			if (_done) {
 				return -1;
 			}
+			if (len == 0) {
+				return 0;
+			}
 			if (TryAddToBuffer(buf, len)) {
 				_cond.notify_all();
 				return 0;

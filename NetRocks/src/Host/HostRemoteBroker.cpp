@@ -5,6 +5,9 @@
 
 static const std::string s_empty_string;
 
+std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
+		const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
+
 class HostRemoteBroker : protected IPCEndpoint
 {
 	std::shared_ptr<IProtocol> _protocol;
@@ -35,16 +38,7 @@ class HostRemoteBroker : protected IPCEndpoint
 		RecvString(password);
 		RecvString(options);
 
-		const auto *pi = ProtocolInfoLookup(protocol.c_str());
-		if (!pi) {
-			throw std::runtime_error(std::string("Wrong protocol: ").append(protocol));
-		}
-
-		if (host.empty() && pi->require_server) {
-			throw std::runtime_error("No server specified");
-		}
-
-		_protocol = pi->Create(host, port, username, password, options);
+		_protocol = CreateProtocol(protocol, host, port, username, password, options);
 
        		if (!_protocol){
 			throw std::runtime_error(std::string("Failed to create protocol: ").append(protocol));
@@ -328,13 +322,16 @@ public:
 
 };
 
-extern "C" __attribute__ ((visibility("default"))) int HostRemoteBrokerMain(int argc, char *argv[])
+extern "C" int main(int argc, char *argv[])
 {
+	if (argc != 3) {
+		fprintf(stderr, "Its a NetRocks protocol broker and must be started by NetRocks only\n");
+		return -1;
+	}
+
 	fprintf(stderr, "%d: HostRemoteBrokerMain: BEGIN\n", getpid());
 	try {
-		if (argc == 2) {
-			HostRemoteBroker(atoi(argv[0]), atoi(argv[1])).Loop();
-		}
+		HostRemoteBroker(atoi(argv[1]), atoi(argv[2])).Loop();
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "%d HostRemoteBrokerMain: %s\n", getpid(), e.what());

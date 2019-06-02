@@ -141,6 +141,15 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
 
+	const auto *pi = ProtocolInfoLookup(_protocol.c_str());
+	if (!pi) {
+		throw std::runtime_error(std::string("Wrong protocol: ").append(_protocol));
+	}
+
+	if (_host.empty() && pi->require_server) {
+		throw std::runtime_error("No server specified");
+	}
+
 	int master2broker[2] = {-1, -1};
 	int broker2master[2] = {-1, -1};
 	int r = pipe(master2broker);
@@ -155,12 +164,14 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	fcntl(master2broker[1], F_SETFD, FD_CLOEXEC);
 	fcntl(broker2master[0], F_SETFD, FD_CLOEXEC);
 
-	wchar_t lib_cmdline[0x200] = {};
-	swprintf(lib_cmdline, ARRAYSIZE(lib_cmdline) - 1, L"%d %d", master2broker[0], broker2master[1]);
 
-	fprintf(stderr, "G.plugin_path.c_str()='%ls'\n", G.plugin_path.c_str());
-	G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(),
-		L"HostRemoteBrokerMain", lib_cmdline, EF_HIDEOUT | EF_NOWAIT);
+	std::wstring cmdstr = L"\"";
+	cmdstr+= G.plugin_path;
+	CutToSlash(cmdstr, true);
+	cmdstr+= MB2Wide(pi->broker);
+	cmdstr+= StrMB2Wide(StrPrintf(".protocol\" %d %d", master2broker[0], broker2master[1]));
+	fprintf(stderr, "NetRocks: starting broker '%ls'\n", cmdstr.c_str());
+	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT);
 
 	close(master2broker[0]);
 	close(broker2master[1]);

@@ -27,7 +27,7 @@
 #define SIMULATED_WRITE_COMPLETE_FAILS_RATE 0
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<IProtocol> CreateProtocolSFTP(const std::string &host, unsigned int port,
+std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {
 	return std::make_shared<ProtocolSFTP>(host, port, username, password, options);

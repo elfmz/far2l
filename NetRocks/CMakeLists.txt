@@ -42,46 +42,90 @@ src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
 src/Protocol/SplitPathSpecification.cpp
 src/Protocol/Protocol.cpp
-src/Protocol/ProtocolFile.cpp
 )
-set (PROTOCOL_LIBS )
-set (PROTOCOL_DEFS )
+
+
+set(PROTOCOL_SOURCES
+src/Erroring.cpp
+src/Host/HostRemoteBroker.cpp
+src/Host/IPC.cpp
+)
+
+
+add_executable (NetRocks-FILE
+	${PROTOCOL_SOURCES}
+	src/Protocol/ProtocolFile.cpp
+	src/Host/HostLocal.cpp
+)
+
+target_link_libraries(NetRocks-FILE utils)
+target_include_directories(NetRocks-FILE PRIVATE src)
+set_target_properties(NetRocks-FILE
+	PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+	PREFIX ""
+	SUFFIX ".protocol")
+target_compile_options(NetRocks-FILE PUBLIC -DNETROCKS_PROTOCOL)
 
 if (LIBSSH_FOUND)
-	set(SOURCES
-		${SOURCES}
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
+	add_executable (NetRocks-SFTP
+		${PROTOCOL_SOURCES}
 		src/Protocol/ProtocolSFTP.cpp
 	)
-	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBSSH_LIBRARIES})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
+	target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
+	target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})
+	set_target_properties(NetRocks-SFTP
+		PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+		PREFIX ""
+		SUFFIX ".protocol")
 endif (LIBSSH_FOUND)
 
 if (LIBSMBCLIENT_FOUND)
-	set(SOURCES
-		${SOURCES}
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
+	add_executable (NetRocks-SMB
+		${PROTOCOL_SOURCES}
 		src/Protocol/ProtocolSMB.cpp
 		src/Protocol/NMBEnum.cpp
 	)
-	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBSMBCLIENT_LIBRARIES})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
+	target_link_libraries(NetRocks-SMB utils ${LIBSMBCLIENT_LIBRARIES})
+	target_include_directories(NetRocks-SMB PRIVATE src ${LIBSMBCLIENT_INCLUDE_DIRS})
+	set_target_properties(NetRocks-SMB
+		PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+		PREFIX ""
+		SUFFIX ".protocol")
 endif (LIBSMBCLIENT_FOUND)
 
 if (LIBNFS_FOUND)
-	set(SOURCES
-		${SOURCES}
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
+	add_executable (NetRocks-NFS
+		${PROTOCOL_SOURCES}
 		src/Protocol/ProtocolNFS.cpp
 	)
-	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBNFS_LIBRARIES})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
+	target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
+	target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
+	set_target_properties(NetRocks-NFS
+		PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+		PREFIX ""
+		SUFFIX ".protocol")
 endif (LIBNFS_FOUND)
 
 if (LIBNEON_FOUND)
-	set(SOURCES
-		${SOURCES}
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_WEBDAV")
+	add_executable (NetRocks-WebDAV
+		${PROTOCOL_SOURCES}
 		src/Protocol/ProtocolWebDAV.cpp
 	)
-	set (PROTOCOL_LIBS ${PROTOCOL_LIBS} ${LIBNEON_LIBRARIES})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_WEBDAV")
+	target_link_libraries(NetRocks-WebDAV utils ${LIBNEON_LIBRARIES})
+	target_include_directories(NetRocks-WebDAV PRIVATE src ${LIBNEON_INCLUDE_DIRS})
+	set_target_properties(NetRocks-WebDAV
+		PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+		PREFIX ""
+		SUFFIX ".protocol")
 endif (LIBNEON_FOUND)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")
@@ -92,10 +136,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
 endif()
 
-#FIND_LIBRARY(LIBSSH_LIBRARY NAMES ssh)
-#FIND_LIBRARY(LIBSMBCLIENT_LIBRARY NAMES smbclient)
-
-target_link_libraries(NetRocks utils ${PROTOCOL_LIBS})
+target_link_libraries(NetRocks utils)
 
 target_include_directories(NetRocks PRIVATE src)
 target_include_directories(NetRocks PRIVATE ../WinPort)
@@ -103,15 +144,6 @@ target_include_directories(NetRocks PRIVATE ../far2l)
 target_include_directories(NetRocks PRIVATE ../far2l/Include)
 
 target_compile_definitions(NetRocks PRIVATE)
-
-if (LIBSSH_FOUND)
-	target_include_directories(NetRocks PRIVATE ${LIBSSH_INCLUDE_DIRS})
-endif (LIBSSH_FOUND)
-
-if (LIBSMBCLIENT_FOUND)
-	target_include_directories(NetRocks PRIVATE ${LIBSMBCLIENT_INCLUDE_DIRS})
-endif (LIBSMBCLIENT_FOUND)
-
 
 set_target_properties(NetRocks
   PROPERTIES

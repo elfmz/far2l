@@ -12,7 +12,7 @@ Architecture overview:
                       V                                                    |                  |
          [IHost:HostRemote,HostLocal] <---{dedicated thread, shared_ptr}---/   [UI/Activities: Confirmations, Errors, Progress]
                  /                 \
-  {IPC to dedicated process}       |
+     {IPC to broker process}       |
               |                    V
               V                 [Local filesystem]
       [HostRemoteBroker]
@@ -25,6 +25,6 @@ Architecture overview:
 To add additional protocol:
 + Write IProtocol implementation and function that instantiates it: see Protocol/ProtocolSFTP.cpp as example
 + Write protocol-specific options configuration UI: see UI/Settings/ConfigureProtocolSFTP.cpp as example
-+ Define protocol name, default port and pointers to instantiation and configuration functions in s_protocols array in Protocol/Protocol.cpp
-* Dont forget to add new .cpp files into CMakeLists.txt
++ Define protocol name, broker name and other protocol properties in s_protocols array in Protocol/Protocol.cpp
+* Dont forget to add new protocol broker related-files into NetRocks/CMakeLists.txt
 * Keep in mind that protocol implementation hosted in separate process, so it cannot interchange any data via global variables etc

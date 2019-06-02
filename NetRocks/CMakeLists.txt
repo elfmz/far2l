@@ -64,7 +64,7 @@ set_target_properties(NetRocks-FILE
 	PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
 	PREFIX ""
-	SUFFIX ".protocol")
+	SUFFIX ".broker")
 target_compile_options(NetRocks-FILE PUBLIC -DNETROCKS_PROTOCOL)
 
 if (LIBSSH_FOUND)
@@ -79,7 +79,7 @@ if (LIBSSH_FOUND)
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
 		PREFIX ""
-		SUFFIX ".protocol")
+		SUFFIX ".broker")
 endif (LIBSSH_FOUND)
 
 if (LIBSMBCLIENT_FOUND)
@@ -95,7 +95,7 @@ if (LIBSMBCLIENT_FOUND)
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
 		PREFIX ""
-		SUFFIX ".protocol")
+		SUFFIX ".broker")
 endif (LIBSMBCLIENT_FOUND)
 
 if (LIBNFS_FOUND)
@@ -110,7 +110,7 @@ if (LIBNFS_FOUND)
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
 		PREFIX ""
-		SUFFIX ".protocol")
+		SUFFIX ".broker")
 endif (LIBNFS_FOUND)
 
 if (LIBNEON_FOUND)
@@ -125,7 +125,7 @@ if (LIBNEON_FOUND)
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
 		PREFIX ""
-		SUFFIX ".protocol")
+		SUFFIX ".broker")
 endif (LIBNEON_FOUND)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")

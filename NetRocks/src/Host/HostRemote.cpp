@@ -169,7 +169,7 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	cmdstr+= G.plugin_path;
 	CutToSlash(cmdstr, true);
 	cmdstr+= MB2Wide(pi->broker);
-	cmdstr+= StrMB2Wide(StrPrintf(".protocol\" %d %d", master2broker[0], broker2master[1]));
+	cmdstr+= StrMB2Wide(StrPrintf(".broker\" %d %d", master2broker[0], broker2master[1]));
 	fprintf(stderr, "NetRocks: starting broker '%ls'\n", cmdstr.c_str());
 	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT);
 
@@ -180,7 +180,11 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	IPCSender::SetFD(master2broker[1]);
 
 	_peer = 0;
-	RecvPOD(_peer);
+	try {
+		RecvPOD(_peer);
+	} catch (std::exception &) {
+		throw std::runtime_error(StrPrintf("Failed to start %ls", cmdstr.c_str()));
+	}
 
 	std::unique_lock<std::mutex> locker(_mutex);
 	for (unsigned int auth_failures = 0;;) {

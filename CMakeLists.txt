@@ -127,14 +127,14 @@ install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
     PATTERN "colorer/base" EXCLUDE 
     PATTERN "plug/*.far-plug-*"
-    PATTERN "plug/*.protocol")
+    PATTERN "plug/*.broker")
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
     PATTERN "far2l" EXCLUDE 
     PATTERN "far2l_askpass" EXCLUDE 
     PATTERN "far2l_sudoapp" EXCLUDE 
     PATTERN "*.far-plug-*" EXCLUDE 
-    PATTERN "*.protocol" EXCLUDE 
+    PATTERN "*.broker" EXCLUDE 
     PATTERN "*")
 
 # setup some symlinks and remove deprecated stuff from previous installation

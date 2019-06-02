@@ -17,7 +17,10 @@
 #include <neon/ne_props.h>
 #include <neon/ne_socket.h>
 #include <neon/ne_ssl.h>
+#include <neon/ne_uri.h>
 
+
+static const ne_propname PROP_DISPLAYNAME = { "DAV:", "displayname" };
 
 static const ne_propname PROP_ISCOLLECTION = { "DAV:", "iscollection" };
 static const ne_propname PROP_COLLECTION = { "DAV:", "collection" };
@@ -33,20 +36,36 @@ static const char *s_months = "janfebmaraprmayjunjulaugsepoctnovdec";
 
 static std::string RefinePath(std::string path, bool ending_slash = false)
 {
+	while (!path.empty() && path[path.size() - 1] == '/') {
+		path.resize(path.size() - 1);
+	}
+
 	if (path.empty() || path[0] != '/') {
 		path.insert(0, "/");
 	}
-	while (path.size() > 1 && path[path.size() - 1] == '.' && path[path.size() - 2] == '/') {
-		if (path.size() > 2) {
-			path.resize(path.size() - 2);
-		} else {
-			path.resize(path.size() - 1);
+
+	for (;;) {
+		size_t i = path.rfind("/./");
+		if (i == std::string::npos)
+			break;
+
+		path.erase(i, 2);
+	}
+
+	if (path.size() >= 2 && path[path.size() - 1] == '.' && path[path.size() - 2] == '/')  {
+		path.resize(path.size() - 2);
+		if (path.empty()) {
+			path = '/';
 		}
 	}
 
 	if (ending_slash && (path.empty() || path[path.size() - 1] != '/')) {
 		path+= '/';
 	}
+
+	char *xpath = ne_path_escape(path.c_str());
+	path = xpath;
+	free(xpath);
 
 	return path;
 }
@@ -181,11 +200,18 @@ struct WebDavProps : std::map<std::string, PropsList >
 			rc = ne_simple_propfind(sess, path.c_str(), children ? NE_DEPTH_ONE : NE_DEPTH_ZERO, &pn_v[0], sOnResults, this);
 		}
 
-		if (children) {
-			erase(path);
+		if (children && !empty()) {
+			auto shortest_it = begin();
+			for (auto it = shortest_it; it != end(); ++it) {
+				if (shortest_it->first.size() > it->first.size()) {
+					shortest_it = it;
+				}
+			}
+			erase(shortest_it);
 		}
 
 		if (rc != NE_OK) {
+			fprintf(stderr, "WebDavProps('%s'): %d\n", path.c_str(), rc);
 			if (rc == NE_AUTH) {
 				throw ProtocolAuthFailedError(ne_get_error(sess));
 			}
@@ -198,7 +224,9 @@ private:
 
 	static void sOnResults(void *userdata, const ne_uri *uri, const ne_prop_result_set *results)
 	{
-		((WebDavProps *)userdata)->_cur_uri_path = (uri && uri->path) ? uri->path : "";
+		char *xpath = ne_path_unescape((uri && uri->path) ? uri->path : "");
+		((WebDavProps *)userdata)->_cur_uri_path = xpath;
+		free(xpath);
 		ne_propset_iterate(results, &sOnProp, userdata);
 	}
 
@@ -216,6 +244,7 @@ private:
 #define PROPS_MODE &PROP_ISCOLLECTION, &PROP_COLLECTION, &PROP_RESOURCETYPE, &PROP_EXECUTABLE,
 #define PROPS_SIZE &PROP_GETCONTENTLENGTH,
 #define PROPS_TIMES &PROP_CREATIONDATE, &PROP_GETLASTMODIFIED,
+#define PROPS_ENUM PROPS_MODE PROPS_SIZE PROPS_TIMES //&PROP_DISPLAYNAME,
 
 ////////////////////////////////////////////////////////
 
@@ -429,7 +458,7 @@ class DavDirectoryEnumer : public IDirectoryEnumer
 	WebDavProps _wdp;
 public:
 	DavDirectoryEnumer(std::shared_ptr<DavConnection> &conn, std::string path)
-		: _wdp(conn->sess, RefinePath(path, true), true, PROPS_MODE PROPS_SIZE PROPS_TIMES nullptr)
+		: _wdp(conn->sess, RefinePath(path, true), true, PROPS_ENUM nullptr)
 //		: _wdp(conn->sess, RefinePath(path, true), true, nullptr)
 	{
 /*
@@ -460,7 +489,12 @@ public:
 
 		i->second.GetFileInfo(file_info);
 
-		name = i->first;
+/*		auto prop_i = i->second.find(PROP_DISPLAYNAME.name);
+		if (prop_i != i->second.end() && !prop_i->second.empty()) {
+			name = prop_i->second;
+		} else */
+			name = i->first;
+
 		if (!name.empty() && name[name.size() - 1] == '/') {
 			name.resize(name.size() - 1);
 		}

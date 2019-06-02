@@ -5,6 +5,7 @@
 #include <sys/statvfs.h>
 #include <utime.h>
 #include <dirent.h>
+
 #ifdef __APPLE__
   #include <sys/mount.h>
 #elif !defined(__FreeBSD__)
@@ -96,10 +97,15 @@ void HostLocal::GetInformation(FileInformation &file_info, const std::string &pa
 	if (r == -1) {
 		throw ProtocolError("stat failed", errno);
 	}
-
+#ifdef __APPLE__
+	file_info.access_time = s.st_atimespec;
+	file_info.modification_time = s.st_mtimespec;
+	file_info.status_change_time = s.st_ctimespec;
+#else
 	file_info.access_time = s.st_atim;
 	file_info.modification_time = s.st_mtim;
 	file_info.status_change_time = s.st_ctim;
+#endif
 	file_info.size = s.st_size;
 	file_info.mode = s.st_mode;
 }

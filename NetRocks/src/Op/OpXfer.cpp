@@ -422,7 +422,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 					// - remote file size reduced while copied
 					// - protocol implementation misdetected read failure
 					// so get actual file size, and if it still bigger than retrieved data size then ring-the-bell
-					const auto actual_size = _dst_host->GetSize(path_src);
+					const auto actual_size = _base_host->GetSize(path_src);
 					if (file_complete < actual_size) {
 						info.size = actual_size;
 						throw std::runtime_error("Retrieved less data than expected");

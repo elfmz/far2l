@@ -382,7 +382,6 @@ void OpXfer::EnsureProgressConsistency()
 
 bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, FileInformation &info)
 {
-	unsigned long speed_avg = 0;
 	for (IHost *indicted = nullptr;;) try {
 		unsigned long long file_complete;
 		if (indicted) { // retrying...
@@ -405,7 +404,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		if (!_io_buf.Size())
 			throw std::runtime_error("No buffer - no file");
 
-		for (;;) {
+		for (unsigned long long transfer_msec = 0, initial_complete = file_complete;;) {
 			indicted = _base_host.get();
 			size_t ask_piece = _io_buf.Size();
 			if (info.size < file_complete + ask_piece && info.size > file_complete) {
@@ -432,33 +431,36 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 						info.size = file_complete;
 					}
 				}
+
+				indicted = _dst_host.get();
+				writer->WriteComplete();
 				break;
 			}
 
 			indicted = _dst_host.get();
 			writer->Write(_io_buf.Data(), piece);
 
-			if (piece >= BUFFER_SIZE_GRANULARITY) {
-				msec = TimeMSNow() - msec;
-				unsigned long prev_bufsize = _io_buf.Size();
-				if (msec.count() > 0) {
-					unsigned long speed_piece = (1000 * piece) / msec.count();
-					if (speed_avg) {
-						speed_avg = (3 * speed_avg + speed_piece) / 4;
-						unsigned long bufsize_optimal = ((3 * speed_avg) / 4);
-						unsigned long bufsize_align = bufsize_optimal % BUFFER_SIZE_GRANULARITY;
-						if (bufsize_align) {
-							bufsize_optimal-= bufsize_align;
-						}
-                                                _io_buf.Desire(bufsize_optimal);
+			file_complete+= piece;
+			const bool fast_complete = (piece < ask_piece && file_complete == info.size);
+			if (fast_complete) {
+				// read returned less than was asked, and position is exactly at file size
+				// - pretty sure its end of file, so don't iterate to next IO to save time, space and Universe
+				// fprintf(stderr, "optimized read completion\n");
+				writer->WriteComplete();
+			}
 
-					} else {
-						speed_avg = speed_piece;
-					}
-
-				} else {
-					_io_buf.Increase(false);
+			transfer_msec+= (TimeMSNow() - msec).count();
+			if (transfer_msec > 100) {
+				unsigned long rate_avg = (unsigned long)(( (file_complete - initial_complete) * 1000 ) /  transfer_msec);
+				unsigned long bufsize_optimal = ((3 * rate_avg) / 4);
+				unsigned long bufsize_align = bufsize_optimal % BUFFER_SIZE_GRANULARITY;
+				if (bufsize_align) {
+					bufsize_optimal-= bufsize_align;
 				}
+
+				unsigned long prev_bufsize = _io_buf.Size();
+				_io_buf.Desire(bufsize_optimal);
+
 				if (g_netrocks_verbosity > 0 && _io_buf.Size() != prev_bufsize) {
 					fprintf(stderr, "NetRocks: IO buffer size changed to %lu\n", _io_buf.Size());
 				}
@@ -467,16 +469,12 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			indicted = nullptr;
 			_wea_state.ResetAutoRetryDelay();
 
-			file_complete+= piece;
 			ProgressStateUpdate psu(_state);
 			_state.stats.file_complete = file_complete;
 			_state.stats.all_complete+= piece;
 			EnsureProgressConsistency();
 
-			if (piece < ask_piece && file_complete == info.size) {
-				// read returned less than was asked, and position is exactly at file size
-				// - pretty sure its end of file, so don't iterate to next IO to save time, space and Universe
-				// fprintf(stderr, "optimized read completion\n");
+			if (fast_complete) {
 				break;
 			}
 		}

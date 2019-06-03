@@ -531,11 +531,15 @@ class DavFileIO : public IFileReader, public IFileWriter, protected Threaded
 	std::mutex _mtx;
 	std::condition_variable _cond;
 
+	enum {
+		INTERMEDIATE_BUFFER = 0x100000
+	};
+
 	bool TryAddToBuffer(const void *data, size_t len)
 	{
 		try {
 			const size_t prev_size = _buf.size();
-			if (prev_size > 0x100000) {
+			if (prev_size > INTERMEDIATE_BUFFER) {
 				return false;
 			}
 
@@ -711,6 +715,11 @@ public:
 			}
 			_cond.wait(lock);
 		}
+		// for the sake of smooth progress update: wait while buffer will be mostly uploaded
+		while (_buf.size() > len / 8)  {
+			_cond.wait(lock);
+		}
+
 	}
 
 	virtual void WriteComplete() throw (std::runtime_error)

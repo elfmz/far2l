@@ -174,9 +174,9 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	_conn->max_io_block = (size_t)std::max(protocol_options.GetInt("MaxIOBlock", _conn->max_io_block), 512);
 
 	int ssh_verbosity = SSH_LOG_NOLOG;
-	if (g_netrocks_verbosity == 1) {
+	if (g_netrocks_verbosity == 2) {
 		ssh_verbosity = SSH_LOG_WARNING;
-	} else if (g_netrocks_verbosity > 1) {
+	} else if (g_netrocks_verbosity > 2) {
 		ssh_verbosity = SSH_LOG_PROTOCOL;
 	}
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &ssh_verbosity);

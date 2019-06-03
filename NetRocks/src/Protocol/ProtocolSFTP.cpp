@@ -155,8 +155,13 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	}
 
 	_conn->max_io_block = (size_t)std::max(protocol_options.GetInt("MaxIOBlock", _conn->max_io_block), 512);
+	int verbosity = SSH_LOG_NOLOG;
 
-	int verbosity = SSH_LOG_NOLOG;//SSH_LOG_WARNING;//SSH_LOG_PROTOCOL;
+	const char *verbose_env = getenv("NETROCKS_VERBOSE");
+	if (verbose_env) switch (*verbose_env) {
+		case '1': case 'y': case 'Y': verbosity = SSH_LOG_WARNING; break;
+		case '2': verbosity = SSH_LOG_PROTOCOL; break;
+	}
 	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
 	ssh_key priv_key {};
@@ -206,8 +211,10 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 
 	if (priv_key) {
 		rc = ssh_userauth_publickey(_conn->ssh, username.empty() ? nullptr : username.c_str(), priv_key);
-  		if (rc != SSH_AUTH_SUCCESS)
+		if (rc != SSH_AUTH_SUCCESS) {
+			fprintf(stderr, "ssh_userauth_publickey: %d '%s'\n" , rc, ssh_get_error(_conn->ssh));
 			throw std::runtime_error("Key file authentification failed");
+		}
 
 	} else {
 		rc = ssh_userauth_password(_conn->ssh, username.empty() ? nullptr : username.c_str(), password.c_str());

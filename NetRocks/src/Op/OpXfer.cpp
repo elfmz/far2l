@@ -8,9 +8,9 @@
 #include "../UI/Activities/ComplexOperationProgress.h"
 #include "../lng.h"
 
-#define MIN_BUFFER_SIZE         0x1000
-#define MAX_BUFFER_SIZE         0x1000000
-#define INITIAL_BUFFER_SIZE     0x8000
+#define BUFFER_SIZE_GRANULARITY   0x8000
+#define BUFFER_SIZE_LIMIT         0x1000000
+#define BUFFER_SIZE_INITIAL       (2 * BUFFER_SIZE_GRANULARITY)
 
 #define EXTRA_NEEDED_MODE	(S_IRUSR | S_IWUSR)
 
@@ -24,7 +24,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_dst_dir(dst_dir),
 	_kind(kind),
 	_direction(direction),
-	_io_buf(INITIAL_BUFFER_SIZE, MIN_BUFFER_SIZE, MAX_BUFFER_SIZE)
+	_io_buf(BUFFER_SIZE_INITIAL, BUFFER_SIZE_GRANULARITY, BUFFER_SIZE_LIMIT)
 {
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";
@@ -382,6 +382,7 @@ void OpXfer::EnsureProgressConsistency()
 
 bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_dst, FileInformation &info)
 {
+	unsigned long speed_avg = 0;
 	for (IHost *indicted = nullptr;;) try {
 		unsigned long long file_complete;
 		if (indicted) { // retrying...
@@ -437,16 +438,29 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			indicted = _dst_host.get();
 			writer->Write(_io_buf.Data(), piece);
 
-			if (piece == _io_buf.Size()) {
+			if (piece >= BUFFER_SIZE_GRANULARITY) {
 				msec = TimeMSNow() - msec;
-				if (msec.count() < ((_io_buf.Size() <= 524288) ? 500 : 200)) {
-					if (_io_buf.Increase(false)) {
-						fprintf(stderr, "NetRocks: IO buffer size increased to %lu\n", _io_buf.Size());
+				unsigned long prev_bufsize = _io_buf.Size();
+				if (msec.count() > 0) {
+					unsigned long speed_piece = (1000 * piece) / msec.count();
+					if (speed_avg) {
+						speed_avg = (3 * speed_avg + speed_piece) / 4;
+						unsigned long bufsize_optimal = ((3 * speed_avg) / 4);
+						unsigned long bufsize_align = bufsize_optimal % BUFFER_SIZE_GRANULARITY;
+						if (bufsize_align) {
+							bufsize_optimal-= bufsize_align;
+						}
+                                                _io_buf.Desire(bufsize_optimal);
+
+					} else {
+						speed_avg = speed_piece;
 					}
-				} else if (msec.count() > ((_io_buf.Size() < 1048576) ? 1000 : 500)) {
-					if (_io_buf.Decrease()) {
-						fprintf(stderr, "NetRocks: IO buffer size decreased to %lu\n", _io_buf.Size());
-					}
+
+				} else {
+					_io_buf.Increase(false);
+				}
+				if (_io_buf.Size() != prev_bufsize) {
+					fprintf(stderr, "NetRocks: IO buffer size changed to %lu\n", _io_buf.Size());
 				}
 			}
 

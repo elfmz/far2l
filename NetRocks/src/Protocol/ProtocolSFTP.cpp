@@ -1,8 +1,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <string.h>
 #include <utils.h>
 #include <vector>
+#include <deque>
 #include <algorithm>
 #include <libssh/libssh.h>
 #include <libssh/ssh2.h>
@@ -100,6 +102,21 @@ struct SFTPConnection
 		if (ssh) {
 			SSHSessionDeleter(ssh);
 		}
+	}
+};
+
+struct SFTPFileNonblockinScope
+{
+	SFTPFile &_file;
+
+	SFTPFileNonblockinScope(SFTPFile &file) : _file(file)
+	{
+		sftp_file_set_nonblocking(_file);
+	}
+
+	~SFTPFileNonblockinScope()
+	{
+		sftp_file_set_blocking(_file);
 	}
 };
 
@@ -447,14 +464,148 @@ std::shared_ptr<IDirectoryEnumer> ProtocolSFTP::DirectoryEnum(const std::string 
 	return std::make_shared<SFTPDirectoryEnumer>(_conn, path);
 }
 
-class SFTPFileIO : public IFileReader, public IFileWriter
+
+class SFTPFileReader : public IFileReader
 {
 	std::shared_ptr<SFTPConnection> _conn;
 	SFTPFile _file;
-	bool _sync_fallback = false;
+	std::deque<uint32_t> _pipeline;
+	std::vector<char> _remainder;
 
 public:
-	SFTPFileIO(std::shared_ptr<SFTPConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
+	SFTPFileReader(std::shared_ptr<SFTPConnection> &conn, const std::string &path, unsigned long long resume_pos)
+		: _conn(conn), _file(sftp_open(conn->sftp, path.c_str(), O_RDONLY, 0640))
+	{
+#if SIMULATED_OPEN_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_OPEN_FAILS_RATE)
+			throw ProtocolError("Simulated open file error");
+#endif
+
+		if (!_file)
+			throw ProtocolError("open",  ssh_get_error(_conn->ssh));
+
+		if (resume_pos) {
+			int rc = sftp_seek64(_file, resume_pos);
+			if (rc != 0)
+				throw ProtocolError("seek",  ssh_get_error(_conn->ssh), rc);
+		}
+	}
+
+	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	{
+#if SIMULATED_READ_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
+			throw ProtocolError("Simulated read file error");
+#endif
+		const size_t pipeline_size = std::max((size_t)8, (len / _conn->max_io_block));
+
+		size_t out = _remainder.size();
+		if (out) {
+			out = std::min(len, out);
+			memcpy(buf, &_remainder[0], out);
+			if (out < _remainder.size()) {
+				_remainder.erase(_remainder.begin(), _remainder.begin() + out);
+			} else {
+				_remainder.clear();
+			}
+
+			len-= out;
+			buf = (char *)buf + out;
+			if (len < _conn->max_io_block) {
+				return out;
+			}
+		}
+
+		while (_pipeline.size() < pipeline_size) {
+			try {
+				_pipeline.emplace_back();
+				int id = sftp_async_read_begin(_file, _conn->max_io_block);
+				if (id < 0)  {
+					_pipeline.pop_back();
+					break;
+				}
+				_pipeline.back() = (uint32_t)id;
+
+			} catch (std::exception &) {
+				break;
+			}
+		}
+
+		assert(_remainder.empty());
+
+		bool failed = false;
+		if (len < _conn->max_io_block) {
+			_remainder.resize(_conn->max_io_block);
+			int r = sftp_async_read(_file, &_remainder[0], _conn->max_io_block, _pipeline.front());
+			_pipeline.pop_front();
+			if (r > 0) {
+				_remainder.resize((size_t)r);
+				size_t rfit = std::min(_remainder.size(), len);
+				memcpy(buf, &_remainder[0], rfit);
+				_remainder.erase(_remainder.begin(), _remainder.begin() + rfit);
+				out+= rfit;
+				len-= rfit;
+				buf = (char *)buf + rfit;
+			} else {
+				_remainder.clear();
+				if (r < 0) {
+					failed = true;
+				}
+			}
+
+		} else {
+			int r = sftp_async_read(_file, buf, _conn->max_io_block, _pipeline.front());
+			_pipeline.pop_front();
+			if (r < 0) {
+				failed = true;
+
+			} else if (r == 0) {
+				;
+
+			} else {
+				out+= r;
+				len-= r;
+				buf = (char *)buf + r;
+
+				if (!_pipeline.empty() && len >= _conn->max_io_block) {
+					SFTPFileNonblockinScope file_nonblock_scope(_file);
+					do {
+						r = sftp_async_read(_file, buf, _conn->max_io_block, _pipeline.front());
+						if (r <= 0) {
+							if (r != SSH_AGAIN) {
+								_pipeline.pop_front();
+								if (r < 0) {
+									failed = true;
+								}
+							}
+							break;
+						}
+						_pipeline.pop_front();
+
+						out+= r;
+						len-= r;
+						buf = (char *)buf + r;
+					} while (!_pipeline.empty() && len >= _conn->max_io_block);
+				}
+			}
+		}
+
+		if (failed && out == 0) {
+			throw ProtocolError("read error",  ssh_get_error(_conn->ssh));
+		}
+
+		return out;
+	}
+};
+
+
+class SFTPFileWriter : public IFileWriter
+{
+	std::shared_ptr<SFTPConnection> _conn;
+	SFTPFile _file;
+
+public:
+	SFTPFileWriter(std::shared_ptr<SFTPConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
 		: _conn(conn), _file(sftp_open(conn->sftp, path.c_str(), flags, mode))
 	{
 #if SIMULATED_OPEN_FAILS_RATE
@@ -472,81 +623,6 @@ public:
 		}
 	}
 
-	template <class BUF_T, class SYNC_IO_T>
-		size_t SyncIO(BUF_T buf, size_t len, SYNC_IO_T p_sync_io) throw (std::runtime_error)
-	{
-			const ssize_t rc = p_sync_io(_file, buf, len);
-			if (rc < 0)
-				throw ProtocolError("io",  ssh_get_error(_conn->ssh));
-
-			return (size_t)rc;
-	}
-
-	template <class BUF_T, class SYNC_IO_T, class ASYNC_IO_BEGIN_T, class ASYNC_IO_WAIT_T>
-		size_t AsyncIO(BUF_T buf, size_t len, SYNC_IO_T p_sync_io, ASYNC_IO_BEGIN_T p_async_io_begin, ASYNC_IO_WAIT_T p_async_io_wait)
-	{
-		if (len <= _conn->max_io_block || _sync_fallback) {
-			return SyncIO(buf, std::min(len, _conn->max_io_block), p_sync_io);
-		}
-
-		size_t pipeline_count = len / _conn->max_io_block;
-		if (pipeline_count * _conn->max_io_block < len) {
-			++pipeline_count;
-		}
-
-		int *pipeline = (int *)alloca(pipeline_count * sizeof(int));
-		for (size_t i = 0; i != pipeline_count; ++i) {
-			const size_t pipeline_piece = std::min(len - i * _conn->max_io_block, _conn->max_io_block);
-			pipeline[i] = p_async_io_begin(_file, (uint32_t)pipeline_piece);
-			if (pipeline[i] < 0) {
-				if (i == 0) {
-					size_t r = SyncIO(buf, std::min(len, _conn->max_io_block), p_sync_io);
-					_sync_fallback = true;
-					fprintf(stderr, "SFTPFileIO::IO(...0x%lx): sync fallback1\n", (unsigned long)len);
-					return r;
-				}
-				pipeline_count = i;
-				break;
-			}
-		}
-
-		size_t done_length = 0;
-		int first_failed = 0;
-
-		for (size_t i = 0; i != pipeline_count; ++i) {
-			const size_t pipeline_piece = std::min(len - i * _conn->max_io_block, _conn->max_io_block);
-			int done_piece = p_async_io_wait(_file, (char *)buf + done_length, pipeline_piece, pipeline[i]);
-			if (done_piece < 0) {
-				if (i == 0) {
-					first_failed = 1;
-				}
-			} else if (done_piece == 0) {
-				;
-			} else {
-				done_length+= (size_t)(unsigned int)done_piece;
-			}
-		}
-
-		if (done_length == 0 && first_failed) {
-			done_length = SyncIO(buf, std::min(len, _conn->max_io_block), p_sync_io);
-			_sync_fallback = true;
-			fprintf(stderr, "SFTPFileIO::IO(...0x%lx): sync fallback2\n", (unsigned long)len);
-		}
-
-		return done_length;
-	}
-
-
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
-	{
-#if SIMULATED_READ_FAILS_RATE
-		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
-			throw ProtocolError("Simulated read file error");
-#endif
-
-		return AsyncIO(buf, len, sftp_read, sftp_async_read_begin, sftp_async_read);
-	}
-
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
 #if SIMULATED_WRITE_FAILS_RATE
@@ -557,9 +633,9 @@ public:
 		if (len > 0) for (;;) {
 			size_t piece = (len >= _conn->max_io_block) ? _conn->max_io_block : len;
 
-			piece = SyncIO(buf, piece, sftp_write);
+			piece = sftp_write(_file, buf, piece);
 
-			if (piece == 0)
+			if (piece <= 0)
 				throw ProtocolError("zero write",  ssh_get_error(_conn->ssh));
 
 			if (piece >= len)
@@ -583,12 +659,12 @@ public:
 
 std::shared_ptr<IFileReader> ProtocolSFTP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::make_shared<SFTPFileIO>(_conn, path, O_RDONLY, 0, resume_pos);
+	return std::make_shared<SFTPFileReader>(_conn, path, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::make_shared<SFTPFileIO>(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
+	return std::make_shared<SFTPFileWriter>(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }
 
 

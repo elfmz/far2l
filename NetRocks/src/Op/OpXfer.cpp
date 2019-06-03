@@ -459,7 +459,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 				} else {
 					_io_buf.Increase(false);
 				}
-				if (_io_buf.Size() != prev_bufsize) {
+				if (g_netrocks_verbosity > 0 && _io_buf.Size() != prev_bufsize) {
 					fprintf(stderr, "NetRocks: IO buffer size changed to %lu\n", _io_buf.Size());
 				}
 			}

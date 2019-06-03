@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <string>
 
+
+extern unsigned char g_netrocks_verbosity;
+
 struct ProtocolError : std::runtime_error
 {
 	ProtocolError(const char *msg, const char *info, int err = 0);
@@ -36,3 +39,4 @@ struct AbortError : std::runtime_error
 {
 	AbortError() : std::runtime_error("Operation aborted") {}
 };
+

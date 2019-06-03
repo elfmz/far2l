@@ -302,8 +302,8 @@ int pipe_cloexec(int pipedes[2])
 #ifdef __APPLE__
 	int r = os_call_int(pipe, pipedes);
 	if (r==0) {
-		os_call_int(fcntl, pipedes[0], F_SETFD, FD_CLOEXEC);
-		os_call_int(fcntl, pipedes[1], F_SETFD, FD_CLOEXEC);
+		fcntl(pipedes[0], F_SETFD, FD_CLOEXEC);
+		fcntl(pipedes[1], F_SETFD, FD_CLOEXEC);
 	}
 	return r;
 #else

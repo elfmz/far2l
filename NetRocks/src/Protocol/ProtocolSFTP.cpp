@@ -471,6 +471,21 @@ class SFTPFileReader : public IFileReader
 	SFTPFile _file;
 	std::deque<uint32_t> _pipeline;
 	std::vector<char> _remainder;
+	bool _truncated_reply = false;
+
+	int AsyncReadComplete(void *data)
+	{
+		int r = sftp_async_read(_file, data, _conn->max_io_block, _pipeline.front());
+		if (r >= 0) {
+			if (r > 0 && _truncated_reply) {
+				throw ProtocolError("IO block too big");
+			}
+			if ((size_t)r < _conn->max_io_block) {
+				_truncated_reply = true;
+			}
+		}
+		return r;
+	}
 
 public:
 	SFTPFileReader(std::shared_ptr<SFTPConnection> &conn, const std::string &path, unsigned long long resume_pos)
@@ -495,6 +510,7 @@ public:
 			_pipeline.emplace_back((uint32_t)id);
 		}
 	}
+
 
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
@@ -541,7 +557,7 @@ public:
 		bool failed = false;
 		if (len < _conn->max_io_block) {
 			_remainder.resize(_conn->max_io_block);
-			int r = sftp_async_read(_file, &_remainder[0], _conn->max_io_block, _pipeline.front());
+			int r = AsyncReadComplete(&_remainder[0]);
 			_pipeline.pop_front();
 			if (r > 0) {
 				_remainder.resize((size_t)r);
@@ -559,7 +575,7 @@ public:
 			}
 
 		} else {
-			int r = sftp_async_read(_file, buf, _conn->max_io_block, _pipeline.front());
+			int r = AsyncReadComplete(buf);
 			_pipeline.pop_front();
 			if (r < 0) {
 				failed = true;
@@ -575,7 +591,7 @@ public:
 				if (!_pipeline.empty() && len >= _conn->max_io_block) {
 					SFTPFileNonblockinScope file_nonblock_scope(_file);
 					do {
-						r = sftp_async_read(_file, buf, _conn->max_io_block, _pipeline.front());
+						r = AsyncReadComplete(buf);
 						if (r <= 0) {
 							if (r != SSH_AGAIN) {
 								_pipeline.pop_front();

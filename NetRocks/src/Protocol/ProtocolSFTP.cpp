@@ -489,6 +489,11 @@ public:
 			if (rc != 0)
 				throw ProtocolError("seek",  ssh_get_error(_conn->ssh), rc);
 		}
+
+		int id = sftp_async_read_begin(_file, _conn->max_io_block);
+		if (id >= 0)  {
+			_pipeline.emplace_back((uint32_t)id);
+		}
 	}
 
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)

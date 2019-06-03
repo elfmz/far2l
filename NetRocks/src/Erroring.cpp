@@ -2,6 +2,20 @@
 #include <unistd.h>
 #include "Erroring.h"
 
+unsigned char InitNetrocksVerbosity()
+{
+	const char *verbose_env = getenv("NETROCKS_VERBOSE");
+	if (verbose_env) switch (*verbose_env) {
+		case '1': case 'y': case 'Y': case 't': case 'T': return 1;
+		case '2': g_netrocks_verbosity = 2; return 2;
+	}
+
+	return 0;
+}
+
+unsigned char g_netrocks_verbosity = InitNetrocksVerbosity();
+
+
 static std::string FormatProtocolError(const char *msg, const char *info = nullptr, int err = 0)
 {
 	std::string s = msg;

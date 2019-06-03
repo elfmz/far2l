@@ -273,6 +273,7 @@ public:
 	{
 		pid_t self_pid = getpid();
 		SendPOD(self_pid);
+		SendPOD((uint32_t)IPC_VERSION_MAGIC);
 
 		for (;;) try {
 			InitConnection();

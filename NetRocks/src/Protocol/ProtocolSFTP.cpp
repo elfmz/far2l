@@ -172,14 +172,14 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	}
 
 	_conn->max_io_block = (size_t)std::max(protocol_options.GetInt("MaxIOBlock", _conn->max_io_block), 512);
-	int verbosity = SSH_LOG_NOLOG;
 
-	const char *verbose_env = getenv("NETROCKS_VERBOSE");
-	if (verbose_env) switch (*verbose_env) {
-		case '1': case 'y': case 'Y': verbosity = SSH_LOG_WARNING; break;
-		case '2': verbosity = SSH_LOG_PROTOCOL; break;
+	int ssh_verbosity = SSH_LOG_NOLOG;
+	if (g_netrocks_verbosity == 1) {
+		ssh_verbosity = SSH_LOG_WARNING;
+	} else if (g_netrocks_verbosity > 1) {
+		ssh_verbosity = SSH_LOG_PROTOCOL;
 	}
-	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
+	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &ssh_verbosity);
 
 	ssh_key priv_key {};
 	std::string key_path_spec;

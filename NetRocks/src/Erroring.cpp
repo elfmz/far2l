@@ -5,9 +5,14 @@
 unsigned char InitNetrocksVerbosity()
 {
 	const char *verbose_env = getenv("NETROCKS_VERBOSE");
-	if (verbose_env) switch (*verbose_env) {
-		case '1': case 'y': case 'Y': case 't': case 'T': return 1;
-		case '2': g_netrocks_verbosity = 2; return 2;
+	if (verbose_env) {
+		switch (*verbose_env) {
+			case 'y': case 'Y': case 't': case 'T': return 1;
+			default:
+				if (*verbose_env >= '1' && *verbose_env <= '9') {
+					return 1 + (*verbose_env - '1');
+				}
+		}
 	}
 
 	return 0;

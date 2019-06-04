@@ -452,7 +452,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			transfer_msec+= (TimeMSNow() - msec).count();
 			if (transfer_msec > 100) {
 				unsigned long rate_avg = (unsigned long)(( (file_complete - initial_complete) * 1000 ) /  transfer_msec);
-				unsigned long bufsize_optimal = ((3 * rate_avg) / 4);
+				unsigned long bufsize_optimal = (rate_avg / 2);
 				unsigned long bufsize_align = bufsize_optimal % BUFFER_SIZE_GRANULARITY;
 				if (bufsize_align) {
 					bufsize_optimal-= bufsize_align;

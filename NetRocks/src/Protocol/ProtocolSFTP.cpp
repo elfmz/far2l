@@ -91,7 +91,8 @@ struct SFTPConnection
 {
 	ssh_session ssh = nullptr;
 	sftp_session sftp = nullptr;
-	size_t max_io_block = 32768; // default value
+	size_t max_read_block = 32768; // default value
+	size_t max_write_block = 32768; // default value
 
 	~SFTPConnection()
 	{
@@ -171,7 +172,8 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 #endif
 	}
 
-	_conn->max_io_block = (size_t)std::max(protocol_options.GetInt("MaxIOBlock", _conn->max_io_block), 512);
+	_conn->max_read_block = (size_t)std::max(protocol_options.GetInt("MaxReadBlock", _conn->max_read_block), 512);
+	_conn->max_write_block = (size_t)std::max(protocol_options.GetInt("MaxWriteBlock", _conn->max_write_block), 512);
 
 	int ssh_verbosity = SSH_LOG_NOLOG;
 	if (g_netrocks_verbosity == 2) {
@@ -475,15 +477,29 @@ class SFTPFileReader : public IFileReader
 
 	int AsyncReadComplete(void *data)
 	{
-		int r = sftp_async_read(_file, data, _conn->max_io_block, _pipeline.front());
+		int r = sftp_async_read(_file, data, _conn->max_read_block, _pipeline.front());
+		if (r != SSH_AGAIN) {
+			_pipeline.pop_front();
+		}
+
 		if (r >= 0) {
+			// Fail if on some block server returned less data than was requested
+			// and that truncated block appeared not to be last in the file
+			// if this situation will be ignored then position of file's blocks
+			// pipelined after truncated block was guessed incorrectly that will
+			// lead to data corruption
+			// It could be possile to silently recover from such situation by
+			// discarding wrong blocks, adjusting position and reducing block size
+			// however such automation would lead to performance degradation so just
+			// let user know about that he needs to reduce selected read block size.
 			if (r > 0 && _truncated_reply) {
-				throw ProtocolError("IO block too big");
+				throw ProtocolError("Read block too big");
 			}
-			if ((size_t)r < _conn->max_io_block) {
+			if ((size_t)r < _conn->max_read_block) {
 				_truncated_reply = true;
 			}
 		}
+
 		return r;
 	}
 
@@ -505,7 +521,7 @@ public:
 				throw ProtocolError("seek",  ssh_get_error(_conn->ssh), rc);
 		}
 
-		int id = sftp_async_read_begin(_file, _conn->max_io_block);
+		int id = sftp_async_read_begin(_file, _conn->max_read_block);
 		if (id >= 0)  {
 			_pipeline.emplace_back((uint32_t)id);
 		}
@@ -518,7 +534,7 @@ public:
 		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
 			throw ProtocolError("Simulated read file error");
 #endif
-		const size_t pipeline_size = std::max((size_t)8, (len / _conn->max_io_block));
+		const size_t pipeline_size = std::max((size_t)8, (len / _conn->max_read_block));
 
 		size_t out = _remainder.size();
 		if (out) {
@@ -532,7 +548,7 @@ public:
 
 			len-= out;
 			buf = (char *)buf + out;
-			if (len < _conn->max_io_block) {
+			if (len < _conn->max_read_block) {
 				return out;
 			}
 		}
@@ -540,7 +556,7 @@ public:
 		while (_pipeline.size() < pipeline_size) {
 			try {
 				_pipeline.emplace_back();
-				int id = sftp_async_read_begin(_file, _conn->max_io_block);
+				int id = sftp_async_read_begin(_file, _conn->max_read_block);
 				if (id < 0)  {
 					_pipeline.pop_back();
 					break;
@@ -555,10 +571,9 @@ public:
 		assert(_remainder.empty());
 
 		bool failed = false;
-		if (len < _conn->max_io_block) {
-			_remainder.resize(_conn->max_io_block);
+		if (len < _conn->max_read_block) {
+			_remainder.resize(_conn->max_read_block);
 			int r = AsyncReadComplete(&_remainder[0]);
-			_pipeline.pop_front();
 			if (r > 0) {
 				_remainder.resize((size_t)r);
 				size_t rfit = std::min(_remainder.size(), len);
@@ -576,7 +591,6 @@ public:
 
 		} else {
 			int r = AsyncReadComplete(buf);
-			_pipeline.pop_front();
 			if (r < 0) {
 				failed = true;
 
@@ -588,25 +602,23 @@ public:
 				len-= r;
 				buf = (char *)buf + r;
 
-				if (!_pipeline.empty() && len >= _conn->max_io_block) {
+				if (!_pipeline.empty() && len >= _conn->max_read_block) {
 					SFTPFileNonblockinScope file_nonblock_scope(_file);
 					do {
 						r = AsyncReadComplete(buf);
 						if (r <= 0) {
 							if (r != SSH_AGAIN) {
-								_pipeline.pop_front();
 								if (r < 0) {
 									failed = true;
 								}
 							}
 							break;
 						}
-						_pipeline.pop_front();
 
 						out+= r;
 						len-= r;
 						buf = (char *)buf + r;
-					} while (!_pipeline.empty() && len >= _conn->max_io_block);
+					} while (!_pipeline.empty() && len >= _conn->max_read_block);
 				}
 			}
 		}
@@ -647,12 +659,12 @@ public:
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
 	{
 #if SIMULATED_WRITE_FAILS_RATE
-		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
+		if ( (rand() % 100) + 1 <= SIMULATED_WRITE_FAILS_RATE)
 			throw ProtocolError("Simulated write file error");
 #endif
 		// somewhy libssh doesnt have async write yet
 		if (len > 0) for (;;) {
-			size_t piece = (len >= _conn->max_io_block) ? _conn->max_io_block : len;
+			size_t piece = (len >= _conn->max_write_block) ? _conn->max_write_block : len;
 
 			piece = sftp_write(_file, buf, piece);
 
@@ -670,7 +682,7 @@ public:
 	virtual void WriteComplete() throw (std::runtime_error)
 	{
 #if SIMULATED_WRITE_COMPLETE_FAILS_RATE
-		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
+		if ( (rand() % 100) + 1 <= SIMULATED_WRITE_COMPLETE_FAILS_RATE)
 			throw ProtocolError("Simulated write-complete file error");
 #endif
 		// what?

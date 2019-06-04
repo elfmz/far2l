@@ -271,9 +271,8 @@ public:
 		IPCEndpoint(fd_recv, fd_send)
 		
 	{
-		pid_t self_pid = getpid();
-		SendPOD(self_pid);
 		SendPOD((uint32_t)IPC_VERSION_MAGIC);
+		SendPOD((pid_t)getpid());
 
 		for (;;) try {
 			InitConnection();

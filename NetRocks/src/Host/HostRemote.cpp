@@ -179,11 +179,11 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	IPCRecver::SetFD(broker2master[0]);
 	IPCSender::SetFD(master2broker[1]);
 
-	_peer = 0;
 	uint32_t ipc_ver_magic = 0;
+	_peer = 0;
 	try {
-		RecvPOD(_peer);
 		RecvPOD(ipc_ver_magic);
+		RecvPOD(_peer);
 
 	} catch (std::exception &) {
 		throw std::runtime_error(StrPrintf("Failed to start %ls", cmdstr.c_str()));

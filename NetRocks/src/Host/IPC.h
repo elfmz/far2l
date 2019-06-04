@@ -100,4 +100,4 @@ class IPCEndpoint : public IPCRecver, public IPCSender
 };
 
 
-#define IPC_VERSION_MAGIC  0xbabe001
+#define IPC_VERSION_MAGIC  0xbabe0001

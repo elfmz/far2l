@@ -179,11 +179,18 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	IPCRecver::SetFD(broker2master[0]);
 	IPCSender::SetFD(master2broker[1]);
 
+	uint32_t ipc_ver_magic = 0;
 	_peer = 0;
 	try {
+		RecvPOD(ipc_ver_magic);
 		RecvPOD(_peer);
+
 	} catch (std::exception &) {
 		throw std::runtime_error(StrPrintf("Failed to start %ls", cmdstr.c_str()));
+	}
+
+	if (ipc_ver_magic != IPC_VERSION_MAGIC) {
+		throw std::runtime_error(StrPrintf("Wrong version of %ls", cmdstr.c_str()));
 	}
 
 	std::unique_lock<std::mutex> locker(_mutex);

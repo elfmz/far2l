@@ -8,9 +8,9 @@
 #include "../UI/Activities/ComplexOperationProgress.h"
 #include "../lng.h"
 
-#define MIN_BUFFER_SIZE         0x1000
-#define MAX_BUFFER_SIZE         0x1000000
-#define INITIAL_BUFFER_SIZE     0x8000
+#define BUFFER_SIZE_GRANULARITY   0x8000
+#define BUFFER_SIZE_LIMIT         0x1000000
+#define BUFFER_SIZE_INITIAL       (2 * BUFFER_SIZE_GRANULARITY)
 
 #define EXTRA_NEEDED_MODE	(S_IRUSR | S_IWUSR)
 
@@ -24,7 +24,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_dst_dir(dst_dir),
 	_kind(kind),
 	_direction(direction),
-	_io_buf(INITIAL_BUFFER_SIZE, MIN_BUFFER_SIZE, MAX_BUFFER_SIZE)
+	_io_buf(BUFFER_SIZE_INITIAL, BUFFER_SIZE_GRANULARITY, BUFFER_SIZE_LIMIT)
 {
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";
@@ -404,7 +404,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		if (!_io_buf.Size())
 			throw std::runtime_error("No buffer - no file");
 
-		for (;;) {
+		for (unsigned long long transfer_msec = 0, initial_complete = file_complete;;) {
 			indicted = _base_host.get();
 			size_t ask_piece = _io_buf.Size();
 			if (info.size < file_complete + ask_piece && info.size > file_complete) {
@@ -422,7 +422,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 					// - remote file size reduced while copied
 					// - protocol implementation misdetected read failure
 					// so get actual file size, and if it still bigger than retrieved data size then ring-the-bell
-					const auto actual_size = _dst_host->GetSize(path_src);
+					const auto actual_size = _base_host->GetSize(path_src);
 					if (file_complete < actual_size) {
 						info.size = actual_size;
 						throw std::runtime_error("Retrieved less data than expected");
@@ -431,38 +431,50 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 						info.size = file_complete;
 					}
 				}
+
+				indicted = _dst_host.get();
+				writer->WriteComplete();
 				break;
 			}
 
 			indicted = _dst_host.get();
 			writer->Write(_io_buf.Data(), piece);
 
-			if (piece == _io_buf.Size()) {
-				msec = TimeMSNow() - msec;
-				if (msec.count() < ((_io_buf.Size() <= 524288) ? 500 : 200)) {
-					if (_io_buf.Increase(false)) {
-						fprintf(stderr, "NetRocks: IO buffer size increased to %lu\n", _io_buf.Size());
-					}
-				} else if (msec.count() > ((_io_buf.Size() < 1048576) ? 1000 : 500)) {
-					if (_io_buf.Decrease()) {
-						fprintf(stderr, "NetRocks: IO buffer size decreased to %lu\n", _io_buf.Size());
-					}
+			file_complete+= piece;
+			const bool fast_complete = (piece < ask_piece && file_complete == info.size);
+			if (fast_complete) {
+				// read returned less than was asked, and position is exactly at file size
+				// - pretty sure its end of file, so don't iterate to next IO to save time, space and Universe
+				// fprintf(stderr, "optimized read completion\n");
+				writer->WriteComplete();
+			}
+
+			transfer_msec+= (TimeMSNow() - msec).count();
+			if (transfer_msec > 100) {
+				unsigned long rate_avg = (unsigned long)(( (file_complete - initial_complete) * 1000 ) /  transfer_msec);
+				unsigned long bufsize_optimal = (rate_avg / 2);
+				unsigned long bufsize_align = bufsize_optimal % BUFFER_SIZE_GRANULARITY;
+				if (bufsize_align) {
+					bufsize_optimal-= bufsize_align;
+				}
+
+				unsigned long prev_bufsize = _io_buf.Size();
+				_io_buf.Desire(bufsize_optimal);
+
+				if (g_netrocks_verbosity > 0 && _io_buf.Size() != prev_bufsize) {
+					fprintf(stderr, "NetRocks: IO buffer size changed to %lu\n", _io_buf.Size());
 				}
 			}
 
 			indicted = nullptr;
 			_wea_state.ResetAutoRetryDelay();
 
-			file_complete+= piece;
 			ProgressStateUpdate psu(_state);
 			_state.stats.file_complete = file_complete;
 			_state.stats.all_complete+= piece;
 			EnsureProgressConsistency();
 
-			if (piece < ask_piece && file_complete == info.size) {
-				// read returned less than was asked, and position is exactly at file size
-				// - pretty sure its end of file, so don't iterate to next IO to save time, space and Universe
-				// fprintf(stderr, "optimized read completion\n");
+			if (fast_complete) {
 				break;
 			}
 		}

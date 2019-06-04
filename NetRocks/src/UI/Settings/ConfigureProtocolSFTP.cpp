@@ -11,7 +11,8 @@
  ================ SFTP Protocol options =====================
 | [ ] Private key file path:                                 |
 | [EDIT....................................................] |
-| Max IO block size, bytes:                   [9999999]      |
+| Max read block size, bytes:                 [9999999]      |
+| Max write block size, bytes:                [9999999]      |
 | [ ] Enable TCP_NODELAY option (libssh >= v0.8.0)           |
 | [ ] Enable sandbox (if you dont trust server)              |
 |------------------------------------------------------------|
@@ -24,7 +25,7 @@ class ProtocolOptionsSFTP : protected BaseDialog
 {
 	int _i_ok = -1, _i_cancel = -1;
 	int _i_privkey_enable = -1, _i_privkey_path = -1;
-	int _i_max_io_block_size = -1;
+	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
 	int _i_tcp_nodelay = -1;
 	//int _i_enable_sandbox = -1;
 
@@ -77,15 +78,19 @@ class ProtocolOptionsSFTP : protected BaseDialog
 public:
 	ProtocolOptionsSFTP()
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,64,8, 0, MSFTPOptionsTitle);
+		_di.Add(DI_DOUBLEBOX, 3,1,64,9, 0, MSFTPOptionsTitle);
 		_di.SetLine(2);
 		_i_privkey_enable = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPPrivateKeyPath);
 		_di.NextLine();
 		_i_privkey_path = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
 
 		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxBlockSize);
-		_i_max_io_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
+		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxReadBlockSize);
+		_i_max_read_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxWriteBlockSize);
+		_i_max_write_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
 
 		_di.NextLine();
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPNodelay);
@@ -110,7 +115,8 @@ public:
 		StringConfig sc(options);
 		SetCheckedDialogControl( _i_privkey_enable, sc.GetInt("PrivKeyEnable", 0) != 0);
 		TextToDialogControl(_i_privkey_path, sc.GetString("PrivKeyPath"));
-		LongLongToDialogControl(_i_max_io_block_size, std::max((int)512, sc.GetInt("MaxIOBlock", 32768)));
+		LongLongToDialogControl(_i_max_read_block_size, std::max((int)512, sc.GetInt("MaxReadBlock", 32768)));
+		LongLongToDialogControl(_i_max_write_block_size, std::max((int)512, sc.GetInt("MaxWriteBlock", 32768)));
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 0) != 0);
 	//	SetCheckedDialogControl(_i_enable_sandbox, sc.GetInt("Sandbox", 0) != 0);
 		if (Show(L"ProtocolOptionsSFTP", 6, 2) == _i_ok) {
@@ -118,7 +124,8 @@ public:
 			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);
 			sc.SetString("PrivKeyPath", str);
-			sc.SetInt("MaxIOBlock", std::max((int)512, (int)LongLongFromDialogControl(_i_max_io_block_size)));
+			sc.SetInt("MaxReadBlock", std::max((int)512, (int)LongLongFromDialogControl(_i_max_read_block_size)));
+			sc.SetInt("MaxWriteBlock", std::max((int)512, (int)LongLongFromDialogControl(_i_max_write_block_size)));
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 	//		sc.SetInt("Sandbox", IsCheckedDialogControl(_i_enable_sandbox) ? 1 : 0);
 			options = sc.Serialize();

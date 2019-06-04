@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include "ConvertUTF.h"
 #include <errno.h>
+#include <os_call.hpp>
 
 #if __FreeBSD__
 # include <malloc_np.h>
@@ -269,7 +270,7 @@ void QuoteCmdArgIfNeed(std::string &str)
 void CheckedCloseFD(int &fd)
 {
        if (fd!=-1) {
-               if (close(fd) != 0) {
+               if (os_call_int(close, fd) != 0) {
                        perror("CheckedCloseFD");
                        abort();
                }
@@ -299,14 +300,14 @@ ErrnoSaver::~ErrnoSaver()
 int pipe_cloexec(int pipedes[2])
 {
 #ifdef __APPLE__
-	int r = pipe(pipedes);
+	int r = os_call_int(pipe, pipedes);
 	if (r==0) {
 		fcntl(pipedes[0], F_SETFD, FD_CLOEXEC);
 		fcntl(pipedes[1], F_SETFD, FD_CLOEXEC);
 	}
 	return r;
 #else
-	return pipe2(pipedes, O_CLOEXEC);
+	return os_call_int(pipe2, pipedes, O_CLOEXEC);
 #endif	
 }
 

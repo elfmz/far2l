@@ -13,6 +13,8 @@ class IOBuffer
 
 	IOBuffer(const IOBuffer &) = delete;
 
+	bool IncreaseTo(size_t new_size, bool preserve_data = true); //  tries to increase size of buffer (will not go above max_size)
+
 public:
 	IOBuffer(size_t initial_size, size_t min_size, size_t max_size) throw (std::runtime_error);
 	~IOBuffer();
@@ -22,4 +24,6 @@ public:
 
 	bool Increase(bool preserve_data = true); //  tries to increase size of buffer (will not go above max_size)
 	bool Decrease(); // tries to decrease size of buffer (will not go below min_size)
+
+	void Desire(size_t size, bool preserve_data = true); // tries to change size of of buffer (within [min_size..max_size] )
 };

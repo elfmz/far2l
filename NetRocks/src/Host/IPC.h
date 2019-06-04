@@ -98,3 +98,6 @@ class IPCEndpoint : public IPCRecver, public IPCSender
 	public:
 	IPCEndpoint(int fd_recv, int fd_send);
 };
+
+
+#define IPC_VERSION_MAGIC  0xbabe0001

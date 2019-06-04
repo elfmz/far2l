@@ -80,3 +80,4 @@ struct ProtocolInfo
 
 const ProtocolInfo *ProtocolInfoHead();
 const ProtocolInfo *ProtocolInfoLookup(const char *name);
+

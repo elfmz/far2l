@@ -466,11 +466,29 @@ std::shared_ptr<IDirectoryEnumer> ProtocolSFTP::DirectoryEnum(const std::string 
 	return std::make_shared<SFTPDirectoryEnumer>(_conn, path);
 }
 
-
-class SFTPFileReader : public IFileReader
+class SFTPFileIO
 {
+protected:
 	std::shared_ptr<SFTPConnection> _conn;
 	SFTPFile _file;
+
+public:
+	SFTPFileIO(std::shared_ptr<SFTPConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
+		: _conn(conn), _file(sftp_open(conn->sftp, path.c_str(), flags, mode))
+	{
+		if (!_file)
+			throw ProtocolError("open",  ssh_get_error(_conn->ssh));
+
+		if (resume_pos) {
+			int rc = sftp_seek64(_file, resume_pos);
+			if (rc != 0)
+				throw ProtocolError("seek",  ssh_get_error(_conn->ssh), rc);
+		}
+	}
+};
+
+class SFTPFileReader : protected SFTPFileIO, public IFileReader
+{
 	std::deque<uint32_t> _pipeline;
 	std::vector<char> _remainder;
 	bool _truncated_reply = false;
@@ -505,22 +523,8 @@ class SFTPFileReader : public IFileReader
 
 public:
 	SFTPFileReader(std::shared_ptr<SFTPConnection> &conn, const std::string &path, unsigned long long resume_pos)
-		: _conn(conn), _file(sftp_open(conn->sftp, path.c_str(), O_RDONLY, 0640))
+		: SFTPFileIO(conn, path, O_RDONLY, 0640, resume_pos)
 	{
-#if SIMULATED_OPEN_FAILS_RATE
-		if ( (rand() % 100) + 1 <= SIMULATED_OPEN_FAILS_RATE)
-			throw ProtocolError("Simulated open file error");
-#endif
-
-		if (!_file)
-			throw ProtocolError("open",  ssh_get_error(_conn->ssh));
-
-		if (resume_pos) {
-			int rc = sftp_seek64(_file, resume_pos);
-			if (rc != 0)
-				throw ProtocolError("seek",  ssh_get_error(_conn->ssh), rc);
-		}
-
 		int id = sftp_async_read_begin(_file, _conn->max_read_block);
 		if (id >= 0)  {
 			_pipeline.emplace_back((uint32_t)id);
@@ -632,28 +636,12 @@ public:
 };
 
 
-class SFTPFileWriter : public IFileWriter
+class SFTPFileWriter : protected SFTPFileIO, public IFileWriter
 {
-	std::shared_ptr<SFTPConnection> _conn;
-	SFTPFile _file;
-
 public:
 	SFTPFileWriter(std::shared_ptr<SFTPConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
-		: _conn(conn), _file(sftp_open(conn->sftp, path.c_str(), flags, mode))
+		: SFTPFileIO(conn, path, flags, mode, resume_pos)
 	{
-#if SIMULATED_OPEN_FAILS_RATE
-		if ( (rand() % 100) + 1 <= SIMULATED_OPEN_FAILS_RATE)
-			throw ProtocolError("Simulated open file error");
-#endif
-
-		if (!_file)
-			throw ProtocolError("open",  ssh_get_error(_conn->ssh));
-
-		if (resume_pos) {
-			int rc = sftp_seek64(_file, resume_pos);
-			if (rc != 0)
-				throw ProtocolError("seek",  ssh_get_error(_conn->ssh), rc);
-		}
 	}
 
 	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)

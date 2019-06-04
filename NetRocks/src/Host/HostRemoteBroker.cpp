@@ -279,6 +279,9 @@ public:
 			SendPOD(IPC_PI_OK);
 			break;
 
+		} catch (IPCError &) {
+			throw;
+
 		} catch (AbortError &) {
 			throw;
 

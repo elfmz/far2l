@@ -114,7 +114,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 
 	_di.NextLine();
 	_i_save = _di.AddAtLine(DI_BUTTON, 61,21, DIF_CENTERGROUP, MSave);
-	_i_connect = _di.AddAtLine(DI_BUTTON, 24,39, DIF_CENTERGROUP, MConnect);
+	_i_connect = _di.AddAtLine(DI_BUTTON, 24,39, DIF_CENTERGROUP, MSaveConnect);
 	_i_cancel = _di.AddAtLine(DI_BUTTON, 45,60, DIF_CENTERGROUP, MCancel);
 
 	SetFocusedDialogControl(_i_protocol);

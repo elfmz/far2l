@@ -12,7 +12,6 @@ src/BackgroundTasks.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp
-src/Host/HostRemoteBroker.cpp
 src/UI/DialogUtils.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp

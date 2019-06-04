@@ -34,6 +34,7 @@ enum LanguageID
   MProtocolOptions,
   MSave,
   MConnect,
+  MSaveConnect,
 
   MCreateSiteConnection,
   MEditHost,

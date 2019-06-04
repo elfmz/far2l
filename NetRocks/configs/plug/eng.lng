@@ -166,7 +166,8 @@
 
 "SFTP protocol options"
 "Private &key file path:"
-"Max IO &block size, bytes:"
+"Max &read block size, bytes:"
+"Max &write block size, bytes:"
 "Enable &TCP_NODELAY option (libssh >= v0.8.0)"
 "Enable &sandbox (if you dont trust server)"
 

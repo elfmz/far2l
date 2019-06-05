@@ -169,7 +169,7 @@
 "Private &key file path:"
 "Max &read block size, bytes:"
 "Max &write block size, bytes:"
-"Enable &TCP_NODELAY option (libssh >= v0.8.0)"
+"Enable &TCP_NODELAY option"
 "Enable &sandbox (if you dont trust server)"
 
 "File Protocol options"

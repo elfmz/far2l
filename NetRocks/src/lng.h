@@ -173,6 +173,7 @@ enum LanguageID
   MSFTPMaxReadBlockSize,
   MSFTPMaxWriteBlockSize,
   MSFTPTCPNodelay,
+  MSFTPTCPQuickAck,
   MSFTPEnableSandbox,
 
   MSFileOptionsTitle,

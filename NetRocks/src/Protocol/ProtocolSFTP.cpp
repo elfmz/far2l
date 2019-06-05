@@ -241,6 +241,17 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 			}
 		}
 #endif
+		if (protocol_options.GetInt("TcpQuickAck") ) {
+#ifdef TCP_QUICKACK
+			int quickack = 1;
+			if (setsockopt(_conn->socket_fd, IPPROTO_TCP, TCP_QUICKACK , (void *)&quickack, sizeof(quickack)) == -1) {
+				perror("ProtocolSFTP - TCP_QUICKACK ");
+			}
+#else
+			fprintf(stderr, "ProtocolSFTP: TCP_QUICKACK requested but not supported\n");
+#endif
+		}
+
 		socklen_t opt_len = sizeof(_conn->send_buffer_size);
 		if (getsockopt(_conn->socket_fd, SOL_SOCKET, SO_SNDBUF, &_conn->send_buffer_size, &opt_len) == -1
 		 || _conn->send_buffer_size <= 0) {

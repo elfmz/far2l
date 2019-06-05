@@ -13,7 +13,7 @@
 | [EDIT....................................................] |
 | Max read block size, bytes:                 [9999999]      |
 | Max write block size, bytes:                [9999999]      |
-| [ ] Enable TCP_NODELAY option (libssh >= v0.8.0)           |
+| [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable sandbox (if you dont trust server)              |
 |------------------------------------------------------------|
 |             [  OK    ]        [        Cancel       ]      |

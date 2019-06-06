@@ -1,4 +1,7 @@
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/tcp.h>
 #include <fcntl.h>
 #include <assert.h>
 #include <string.h>
@@ -93,6 +96,8 @@ struct SFTPConnection
 	sftp_session sftp = nullptr;
 	size_t max_read_block = 32768; // default value
 	size_t max_write_block = 32768; // default value
+	int socket_fd = -1;
+	int send_buffer_size = -1;
 
 	~SFTPConnection()
 	{
@@ -163,14 +168,12 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 
 	StringConfig protocol_options(options);
 
-	if (protocol_options.GetInt("TcpNoDelay") ) {
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
+	if (protocol_options.GetInt("TcpNoDelay") ) {
 		int nodelay = 1;
 		ssh_options_set(_conn->ssh, SSH_OPTIONS_NODELAY, &nodelay);
-#else
-		fprintf(stderr, "NetRocks::ProtocolSFTP: cannot set SSH_OPTIONS_NODELAY - too old libssh\n");
-#endif
 	}
+#endif
 
 	_conn->max_read_block = (size_t)std::max(protocol_options.GetInt("MaxReadBlock", _conn->max_read_block), 512);
 	_conn->max_write_block = (size_t)std::max(protocol_options.GetInt("MaxWriteBlock", _conn->max_write_block), 512);
@@ -223,6 +226,36 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	int rc = ssh_connect(_conn->ssh);
 	if (rc != SSH_OK)
 		throw ProtocolError("Connection", ssh_get_error(_conn->ssh), rc);
+
+
+	_conn->socket_fd = ssh_get_fd(_conn->ssh);
+	if (_conn->socket_fd != -1) {
+#if (LIBSSH_VERSION_INT < SSH_VERSION_INT(0, 8, 0))
+		if (protocol_options.GetInt("TcpNoDelay") ) {
+			int nodelay = 1;
+			if (setsockopt(_conn->socket_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&nodelay, sizeof(nodelay)) == -1) {
+				perror("ProtocolSFTP - TCP_NODELAY");
+			}
+		}
+#endif
+		if (protocol_options.GetInt("TcpQuickAck") ) {
+#ifdef TCP_QUICKACK
+			int quickack = 1;
+			if (setsockopt(_conn->socket_fd, IPPROTO_TCP, TCP_QUICKACK , (void *)&quickack, sizeof(quickack)) == -1) {
+				perror("ProtocolSFTP - TCP_QUICKACK ");
+			}
+#else
+			fprintf(stderr, "ProtocolSFTP: TCP_QUICKACK requested but not supported\n");
+#endif
+		}
+
+		socklen_t opt_len = sizeof(_conn->send_buffer_size);
+		if (getsockopt(_conn->socket_fd, SOL_SOCKET, SO_SNDBUF, &_conn->send_buffer_size, &opt_len) == -1
+		 || _conn->send_buffer_size <= 0) {
+			perror("ProtocolSFTP - SO_SNDBUF");
+			_conn->send_buffer_size = -1;
+		}
+	}
 
 	const std::string &pub_key_hash = GetSSHPubkeyHash(_conn->ssh);
 	if (pub_key_hash != protocol_options.GetString("ServerIdentity"))
@@ -489,8 +522,16 @@ public:
 
 class SFTPFileReader : protected SFTPFileIO, public IFileReader
 {
+	// pipeline of read requests for which async_begin had been called but not yet replied
 	std::deque<uint32_t> _pipeline;
-	std::vector<char> _remainder;
+
+	// partial bytes remained by last previous read that were not fit into caller's buffer
+	std::vector<char> _partial;
+
+	// count of blocks of size _conn->max_read_block that must be requested til reaching guessed EOF
+	unsigned long long _unrequested_count = 0;
+
+	// true if previous reply contained less bytes than requests
 	bool _truncated_reply = false;
 
 	int AsyncReadComplete(void *data)
@@ -521,13 +562,74 @@ class SFTPFileReader : protected SFTPFileIO, public IFileReader
 		return r;
 	}
 
+	void EnsurePipelinedRequestsInner(size_t pipeline_size_limit)
+	{
+		while (_pipeline.size() < pipeline_size_limit
+		 && (_unrequested_count || _pipeline.empty())) {
+			_pipeline.emplace_back();
+			int id = sftp_async_read_begin(_file, _conn->max_read_block);
+			if (id < 0)  {
+				_pipeline.pop_back();
+				throw ProtocolError("sftp_async_read_begin", ssh_get_error(_conn->ssh));
+			}
+			_pipeline.back() = (uint32_t)id;
+			if (_unrequested_count) {
+				--_unrequested_count;
+			}
+		}
+	}
+
+	// - ensures that pipeline contains at least one request
+	// - adds more requests to pipeline if its size less then limit and _unrequested_count not zero
+	// - reduces_unrequested_count by amount of requested blocks
+	void EnsurePipelinedRequests(size_t pipeline_size_limit)
+	{
+		for (;;) try {
+			if (pipeline_size_limit > 16) {
+				EnsurePipelinedRequestsInner(16);
+				SFTPFileNonblockinScope file_nonblock_scope(_file);
+				EnsurePipelinedRequestsInner(pipeline_size_limit);
+			} else {
+				EnsurePipelinedRequestsInner(pipeline_size_limit);
+			}
+			break;
+
+		} catch (std::exception &ex) {
+			fprintf(stderr, "SFTPFileReader::EnqueueReadRequests: [%ld] %s\n", (unsigned long)_pipeline.size(), ex.what());
+			if (!_pipeline.empty()) {
+				break;
+			}
+			usleep(1000);
+		}
+	}
+
 public:
 	SFTPFileReader(std::shared_ptr<SFTPConnection> &conn, const std::string &path, unsigned long long resume_pos)
 		: SFTPFileIO(conn, path, O_RDONLY, 0640, resume_pos)
 	{
-		int id = sftp_async_read_begin(_file, _conn->max_read_block);
-		if (id >= 0)  {
-			_pipeline.emplace_back((uint32_t)id);
+		SFTPAttributes  attributes(sftp_fstat(_file));
+		if (attributes && attributes->size >= resume_pos) {
+			_unrequested_count = attributes->size - resume_pos;
+			_unrequested_count = (_unrequested_count / _conn->max_read_block) + ((_unrequested_count % _conn->max_read_block) ? 1 : 0);
+		} else  {
+			_unrequested_count = std::numeric_limits<unsigned long long>::max();
+		}
+		EnsurePipelinedRequests( (_unrequested_count >= 32) ? 32 : (size_t)_unrequested_count);
+	}
+
+	~SFTPFileReader()
+	{
+		if (!_pipeline.empty()) try {
+			if (g_netrocks_verbosity > 0) {
+				fprintf(stderr, "~SFTPFileReader: still pipelined %u\n", (unsigned int)_pipeline.size());
+			}
+			_partial.resize(_conn->max_read_block);
+			do {
+				AsyncReadComplete(&_partial[0]);
+			} while (!_pipeline.empty());
+
+		} catch (std::exception &ex) {
+			fprintf(stderr, "~SFTPFileReader: %s\n", ex.what());
 		}
 	}
 
@@ -538,16 +640,17 @@ public:
 		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
 			throw ProtocolError("Simulated read file error");
 #endif
-		const size_t pipeline_size = std::max((size_t)8, (len / _conn->max_read_block));
 
-		size_t out = _remainder.size();
+		EnsurePipelinedRequests( (len / _conn->max_read_block) + ((len % _conn->max_read_block) ? 1 : 0) );
+
+		size_t out = _partial.size();
 		if (out) {
 			out = std::min(len, out);
-			memcpy(buf, &_remainder[0], out);
-			if (out < _remainder.size()) {
-				_remainder.erase(_remainder.begin(), _remainder.begin() + out);
+			memcpy(buf, &_partial[0], out);
+			if (out < _partial.size()) {
+				_partial.erase(_partial.begin(), _partial.begin() + out);
 			} else {
-				_remainder.clear();
+				_partial.clear();
 			}
 
 			len-= out;
@@ -557,37 +660,22 @@ public:
 			}
 		}
 
-		while (_pipeline.size() < pipeline_size) {
-			try {
-				_pipeline.emplace_back();
-				int id = sftp_async_read_begin(_file, _conn->max_read_block);
-				if (id < 0)  {
-					_pipeline.pop_back();
-					break;
-				}
-				_pipeline.back() = (uint32_t)id;
-
-			} catch (std::exception &) {
-				break;
-			}
-		}
-
-		assert(_remainder.empty());
+		assert(_partial.empty());
 
 		bool failed = false;
 		if (len < _conn->max_read_block) {
-			_remainder.resize(_conn->max_read_block);
-			int r = AsyncReadComplete(&_remainder[0]);
+			_partial.resize(_conn->max_read_block);
+			int r = AsyncReadComplete(&_partial[0]);
 			if (r > 0) {
-				_remainder.resize((size_t)r);
-				size_t rfit = std::min(_remainder.size(), len);
-				memcpy(buf, &_remainder[0], rfit);
-				_remainder.erase(_remainder.begin(), _remainder.begin() + rfit);
+				_partial.resize((size_t)r);
+				size_t rfit = std::min(_partial.size(), len);
+				memcpy(buf, &_partial[0], rfit);
+				_partial.erase(_partial.begin(), _partial.begin() + rfit);
 				out+= rfit;
 				len-= rfit;
 				buf = (char *)buf + rfit;
 			} else {
-				_remainder.clear();
+				_partial.clear();
 				if (r < 0) {
 					failed = true;
 				}

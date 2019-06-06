@@ -2,9 +2,6 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/tcp.h>
-#ifdef __linux__
-# include <linux/sockios.h>
-#endif
 #include <fcntl.h>
 #include <assert.h>
 #include <string.h>
@@ -565,64 +562,40 @@ class SFTPFileReader : protected SFTPFileIO, public IFileReader
 		return r;
 	}
 
-	bool EnoughBuffersForReadRequest()
+	void EnsurePipelinedRequestsInner(size_t pipeline_size_limit)
 	{
-		if (_conn->send_buffer_size == -1) {
-			return true;
+		while (_pipeline.size() < pipeline_size_limit
+		 && (_unrequested_count || _pipeline.empty())) {
+			_pipeline.emplace_back();
+			int id = sftp_async_read_begin(_file, _conn->max_read_block);
+			if (id < 0)  {
+				_pipeline.pop_back();
+				throw ProtocolError("sftp_async_read_begin", ssh_get_error(_conn->ssh));
+			}
+			_pipeline.back() = (uint32_t)id;
+			if (_unrequested_count) {
+				--_unrequested_count;
+			}
 		}
-
-		int pending = 0;
-#ifdef __linux__
-		if (ioctl(_conn->socket_fd, SIOCINQ, &pending) == -1) {
-#elif defined(__FreeBSD__)
-		if (ioctl(_conn->socket_fd, FIONWRITE, &pending) == -1) {
-#elif defined(__APPLE__)
-		socklen_t opt_len= sizeof(pending);
-		if (getsockopt(fd, SOL_SOCKET, SO_NWRITE , &pending, &opt_len) == -1)
-#else
-		{
-#endif
-			return true;
-		}
-
-
-//		fprintf(stderr, "SFTPFileReader - buffers: %d of %d\n", pending, _conn->send_buffer_size);
-		if (pending < _conn->send_buffer_size && _conn->send_buffer_size - pending > 0x400) {
-			return true;
-		}
-
-		if (g_netrocks_verbosity > 0) {
-			fprintf(stderr, "SFTPFileReader - out of buffers: %d of %d\n", pending, _conn->send_buffer_size);
-		}
-
-		return false;
 	}
 
 	// - ensures that pipeline contains at least one request
 	// - adds more requests to pipeline if its size less then limit and _unrequested_count not zero
-	// - implements flow control (kind of) by avoiding exchausting of free space in socket's send buffer
 	// - reduces_unrequested_count by amount of requested blocks
 	void EnsurePipelinedRequests(size_t pipeline_size_limit)
 	{
 		for (;;) try {
-			while (_pipeline.size() < pipeline_size_limit
-			 && (_unrequested_count || _pipeline.empty())
-			 && (_pipeline.size() < 16 || EnoughBuffersForReadRequest())) {
-				_pipeline.emplace_back();
-				int id = sftp_async_read_begin(_file, _conn->max_read_block);
-				if (id < 0)  {
-					_pipeline.pop_back();
-					throw ProtocolError("Blocking sftp_async_read_begin", ssh_get_error(_conn->ssh));
-				}
-				_pipeline.back() = (uint32_t)id;
-				if (_unrequested_count) {
-					--_unrequested_count;
-				}
+			if (pipeline_size_limit > 16) {
+				EnsurePipelinedRequestsInner(16);
+				SFTPFileNonblockinScope file_nonblock_scope(_file);
+				EnsurePipelinedRequestsInner(pipeline_size_limit);
+			} else {
+				EnsurePipelinedRequestsInner(pipeline_size_limit);
 			}
 			break;
 
 		} catch (std::exception &ex) {
-			fprintf(stderr, "SFTPFileReader::EnqueueReadRequests: %s\n", ex.what());
+			fprintf(stderr, "SFTPFileReader::EnqueueReadRequests: [%ld] %s\n", (unsigned long)_pipeline.size(), ex.what());
 			if (!_pipeline.empty()) {
 				break;
 			}

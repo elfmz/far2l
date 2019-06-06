@@ -617,6 +617,22 @@ public:
 		EnsurePipelinedRequests( (_unrequested_count >= 32) ? 32 : (size_t)_unrequested_count);
 	}
 
+	~SFTPFileReader()
+	{
+		if (!_pipeline.empty()) try {
+			if (g_netrocks_verbosity > 0) {
+				fprintf(stderr, "~SFTPFileReader: still pipelined %u\n", (unsigned int)_pipeline.size());
+			}
+			_partial.resize(_conn->max_read_block);
+			do {
+				AsyncReadComplete(&_partial[0]);
+			} while (!_pipeline.empty());
+
+		} catch (std::exception &ex) {
+			fprintf(stderr, "~SFTPFileReader: %s\n", ex.what());
+		}
+	}
+
 
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{

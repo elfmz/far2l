@@ -167,6 +167,7 @@
 
 "SFTP protocol options"
 "Private &key file path:"
+"Custom &subsystem request:"
 "Max &read block size, bytes:"
 "Max &write block size, bytes:"
 "Enable &TCP_NODELAY option"

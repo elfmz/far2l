@@ -456,22 +456,34 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	return OpRemove(OpMode, _remote, CurrentSiteDir(true), PanelItem, ItemsNumber).Do() ? TRUE : FALSE;
 }
 
-int PluginImpl::MakeDirectory(const wchar_t *Name, int OpMode)
+int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 {
-	fprintf(stderr, "NetRocks::MakeDirectory('%ls', 0x%x)\n", Name, OpMode);
+	fprintf(stderr, "NetRocks::MakeDirectory('%ls', 0x%x)\n", Name ? *Name : L"NULL", OpMode);
 	if (!_remote) {
 		return FALSE;
 	}
-	if (_cur_dir[0]) {
-		std::string tmp;
-		if (Name) {
-			Wide2MB(Name, tmp);
-		}
-		return OpMakeDirectory(OpMode, _remote, CurrentSiteDir(true), Name ? tmp.c_str() : nullptr).Do();
-	} else {
-		;//todo
+	if (!_cur_dir[0]) {
+		// todo: create virtual dir in sites list
+		return FALSE;
 	}
-	return FALSE;
+
+	std::string tmp;
+	if (Name && *Name) {
+		Wide2MB(*Name, tmp);
+	}
+	OpMakeDirectory op(OpMode, _remote, CurrentSiteDir(true), Name ? tmp.c_str() : nullptr);
+	if (!op.Do()) {
+		return FALSE;
+	}
+	if (Name && !IS_SILENT(OpMode)) {
+		tmp = op.DirName();
+		const std::wstring name_w = StrMB2Wide(tmp);
+		wcsncpy(_mk_dir, name_w.c_str(), ARRAYSIZE(_mk_dir) - 1);
+		_mk_dir[ARRAYSIZE(_mk_dir) - 1] = 0;
+		*Name = _mk_dir;
+	}
+
+	return TRUE;;
 }
 
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)

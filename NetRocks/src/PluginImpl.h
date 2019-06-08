@@ -10,7 +10,7 @@ class PluginImpl
 {
 	friend class AllNetRocks;
 
-	wchar_t _panel_title[64], _cur_dir[MAX_PATH];
+	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH];
 	bool _cur_dir_absolute = false;
 	std::vector<std::wstring> _dir_stack;
 
@@ -40,7 +40,7 @@ public:
 	int DeleteFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
 	int GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *DestPath, int OpMode);
 	int PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode);
-	int MakeDirectory(const wchar_t *Name, int OpMode);
+	int MakeDirectory(const wchar_t **Name, int OpMode);
 	int ProcessKey(int Key, unsigned int ControlState);
 	int ProcessEventCommand(const wchar_t *cmd);
 };

@@ -285,8 +285,12 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 			ssh_channel_free(channel);
 			throw ProtocolError("SFTP channel open", ssh_get_error(_conn->ssh));
 		}
+		if (subsystem.find('/') == std::string::npos) {
+			rc = ssh_channel_request_subsystem(channel, subsystem.c_str());
+		} else {
+			rc = ssh_channel_request_exec(channel, subsystem.c_str());
+		}
 
-		rc = ssh_channel_request_subsystem(channel, subsystem.c_str());
 		if (rc != SSH_OK) {
 			ssh_channel_free(channel);
 			throw ProtocolError("SFTP custom subsystem", ssh_get_error(_conn->ssh));
@@ -298,6 +302,12 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 			throw ProtocolError("SFTP channel", ssh_get_error(_conn->ssh));
 		}
 
+#if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 3))
+		if (!_conn->sftp->read_packet) {
+			_conn->sftp->read_packet = (struct sftp_packet_struct *)calloc(1, sizeof(struct sftp_packet_struct));
+			_conn->sftp->read_packet->payload = ssh_buffer_new();
+		}
+#endif
 	} else {
 		_conn->sftp = sftp_new(_conn->ssh);
 	}

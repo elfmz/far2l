@@ -134,7 +134,7 @@ SHAREDSYMBOL int WINAPI _export PutFilesW(HANDLE hPlugin,struct PluginPanelItem 
 
 SHAREDSYMBOL int WINAPI _export MakeDirectoryW(HANDLE hPlugin, const wchar_t **Name, int OpMode)
 {
-	return ((PluginImpl *)hPlugin)->MakeDirectory(Name ? *Name : nullptr, OpMode);
+	return ((PluginImpl *)hPlugin)->MakeDirectory(Name, OpMode);
 }
 
 SHAREDSYMBOL int WINAPI ProcessEventW(HANDLE hPlugin, int Event, void * Param)

@@ -274,7 +274,44 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 			throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(_conn->ssh), rc);
 	}
 
-	_conn->sftp = sftp_new(_conn->ssh);
+	const std::string &subsystem = protocol_options.GetString("CustomSubsystem");
+	if (!subsystem.empty() && protocol_options.GetInt("UseCustomSubsystem", 0) != 0) {
+		ssh_channel channel = ssh_channel_new(_conn->ssh);
+		if (channel == nullptr)
+			throw ProtocolError("SSH channel new", ssh_get_error(_conn->ssh));
+
+		int rc = ssh_channel_open_session(channel);
+		if (rc != SSH_OK) {
+			ssh_channel_free(channel);
+			throw ProtocolError("SFTP channel open", ssh_get_error(_conn->ssh));
+		}
+		if (subsystem.find('/') == std::string::npos) {
+			rc = ssh_channel_request_subsystem(channel, subsystem.c_str());
+		} else {
+			rc = ssh_channel_request_exec(channel, subsystem.c_str());
+		}
+
+		if (rc != SSH_OK) {
+			ssh_channel_free(channel);
+			throw ProtocolError("SFTP custom subsystem", ssh_get_error(_conn->ssh));
+		}
+
+		_conn->sftp = sftp_new_channel(_conn->ssh, channel);
+		if (!_conn->sftp) {
+			ssh_channel_free(channel);
+			throw ProtocolError("SFTP channel", ssh_get_error(_conn->ssh));
+		}
+
+#if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 3))
+		if (!_conn->sftp->read_packet) {
+			_conn->sftp->read_packet = (struct sftp_packet_struct *)calloc(1, sizeof(struct sftp_packet_struct));
+			_conn->sftp->read_packet->payload = ssh_buffer_new();
+		}
+#endif
+	} else {
+		_conn->sftp = sftp_new(_conn->ssh);
+	}
+
 	if (_conn->sftp == nullptr)
 		throw ProtocolError("SFTP session", ssh_get_error(_conn->ssh));
 

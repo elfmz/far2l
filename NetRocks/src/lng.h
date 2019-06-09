@@ -170,6 +170,7 @@ enum LanguageID
 
   MSFTPOptionsTitle,
   MSFTPPrivateKeyPath,
+  MSFTPCustomSubsystem,
   MSFTPMaxReadBlockSize,
   MSFTPMaxWriteBlockSize,
   MSFTPTCPNodelay,

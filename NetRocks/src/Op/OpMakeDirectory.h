@@ -10,4 +10,5 @@ class OpMakeDirectory : protected OpBase
 public:
 	OpMakeDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, const std::string &dir_name);
 	bool Do();
+	const std::string &DirName() const { return _dir_name; }
 };

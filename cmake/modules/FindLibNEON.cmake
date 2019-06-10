@@ -4,9 +4,9 @@
 
 find_path(LIBNEON_INCLUDE_DIR
     NAMES
-      ne_basic.h
-      ne_session.h
-      ne_props.h
+      neon/ne_basic.h
+      neon/ne_session.h
+      neon/ne_props.h
     PATHS
       /usr/include
       /usr/local/include

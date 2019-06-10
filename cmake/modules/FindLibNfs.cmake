@@ -4,7 +4,7 @@
 
 find_path(LIBNFS_INCLUDE_DIR
     NAMES
-      libnfs.h
+      nfsc/libnfs.h
     PATHS
       /usr/include
       /usr/local/include

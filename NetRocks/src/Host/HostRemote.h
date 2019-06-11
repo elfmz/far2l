@@ -30,7 +30,6 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 	bool _cloning = false;
 	pid_t _peer = 0;
 
-
 	void RecvReply(IPCCommand cmd);
 
 	bool OnServerIdentityChanged(const std::string &new_identity);
@@ -77,4 +76,6 @@ public:
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos = 0) throw (std::runtime_error);
+
+	virtual void ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error);
 };

@@ -41,3 +41,4 @@ const ProtocolInfo *ProtocolInfoLookup(const char *name)
 
 	return nullptr;
 }
+

@@ -6,9 +6,6 @@
 #include "Protocol/Protocol.h"
 #include <fcntl.h>
 #include <set>
-#ifndef __APPLE__
-# include <elf.h>
-#endif
 #include <sudo.h>
 
 //LPCSTR      DiskMenuStrings[ 1+FTP_MAXBACKUPS ];

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <ScopeHelpers.h>
+#include <Threaded.h>
 #include <StringConfig.h>
 #include <CheckedCast.hpp>
 
@@ -20,6 +21,8 @@
 
 #include "UI/Activities/InteractiveLogin.h"
 #include "UI/Activities/ConfirmNewServerIdentity.h"
+
+////////////////////////////////////////////
 
 HostRemote::HostRemote(const std::string &site)
 	: _site(site)
@@ -136,7 +139,6 @@ void HostRemote::CheckReady()
 	}
 }
 
-
 void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
@@ -171,10 +173,10 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	cmdstr+= MB2Wide(pi->broker);
 	cmdstr+= StrMB2Wide(StrPrintf(".broker\" %d %d", master2broker[0], broker2master[1]));
 	fprintf(stderr, "NetRocks: starting broker '%ls'\n", cmdstr.c_str());
-	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT);
 
-	close(master2broker[0]);
-	close(broker2master[1]);
+	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT); //_interactive
+	CheckedCloseFD(master2broker[0]);
+	CheckedCloseFD(broker2master[1]);
 
 	IPCRecver::SetFD(broker2master[0]);
 	IPCSender::SetFD(master2broker[1]);
@@ -638,4 +640,16 @@ std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t
 	RecvReply(IPC_FILE_PUT);
 
 	return std::make_shared<HostRemoteFileIO>(shared_from_this(), true);
+}
+
+
+void HostRemote::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error)
+{
+	CheckReady();
+
+	SendCommand(IPC_EXECUTE_COMMAND);
+	SendString(working_dir);
+	SendString(command_line);
+	SendString(fifo);
+	RecvReply(IPC_EXECUTE_COMMAND);
 }

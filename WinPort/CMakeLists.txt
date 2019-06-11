@@ -52,7 +52,6 @@ src/Backend/TTY/TTYInput.cpp
 src/Backend/TTY/TTYInputSequenceParser.cpp
 src/Backend/TTY/TTYOutput.cpp
 src/Backend/TTY/TTYFar2lClipboardBackend.cpp
-src/Backend/TTY/TTYRawMode.cpp
 )
 
 if (${USEWX})

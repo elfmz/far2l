@@ -284,6 +284,41 @@ void CheckedCloseFDPair(int *fd)
        CheckedCloseFD(fd[1]);
 }
 
+size_t WriteAll(int fd, const void *data, size_t len, size_t chunk)
+{
+	for (size_t ofs = 0; ofs < len; ) {
+		if (chunk == (size_t)-1 || chunk >= len) {
+			chunk = len;
+		}
+		ssize_t written = write(fd, (const char *)data + ofs, chunk);
+		if (written <= 0) {
+			if (errno != EAGAIN) {
+				return ofs;
+			}
+		} else {
+			ofs+= std::min((size_t)written, chunk);
+		}
+	}
+	return len;
+}
+
+size_t ReadAll(int fd, void *data, size_t len)
+{
+	for (size_t ofs = 0; ofs < len; ) {
+		ssize_t readed = read(fd, (char *)data + ofs, len - ofs);
+		if (readed <= 0) {
+			if (readed == 0 || errno != EAGAIN) {
+				return ofs;
+			}
+
+		} else {
+			ofs+= (size_t)readed;
+		}
+	}
+	return len;
+}
+
+
 //////////////
 
 ErrnoSaver::ErrnoSaver() : v(errno) 
@@ -397,4 +432,5 @@ std::string FileSizeString(unsigned long long value)
 	snprintf(str, sizeof(str) - 1, "%lld %s", value, units);
 	return str;
 }
+
 

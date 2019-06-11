@@ -15,6 +15,7 @@
 #include "Op/OpRemove.h"
 #include "Op/OpMakeDirectory.h"
 #include "Op/OpEnumDirectory.h"
+#include "Op/OpExecute.h"
 
 
 class AllNetRocks
@@ -618,7 +619,6 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 		return TRUE;
 	}
 
-	int out = 0;
 	if (wcscmp(cmd, L"popd") == 0) {
 		if (!_dir_stack.empty()) {
 			std::wstring prev_dir = _cur_dir, new_dir = _dir_stack.back();
@@ -633,25 +633,27 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 				//SetDirectory(new_dir.c_str() + p + 1, 0);
 				SetDirectory(L"", 0);
 			}
-
-			out = TRUE;
 		}
 
 	} else if (wcsstr(cmd, L"cd ") == cmd) {
 		for (cmd+= 3; *cmd == ' '; ++cmd);
-		out = SetDirectory(cmd, 0);
+		SetDirectory(cmd, 0);
 
 	} else if (wcscmp(cmd, L"cd") == 0) {
-		out = SetDirectory(L"~", 0);
-	} else {
-		fprintf(stderr, "PluginImpl::ProcessEventCommand('%ls'): arbitrary commands not yet supported\n", cmd);
+		SetDirectory(L"~", 0);
+
+	} else if (_remote) try {
+		OpExecute(_remote, CurrentSiteDir(false), Wide2MB(cmd)).Do();
+		G.info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
+		G.info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
+
+	} catch (std::exception &ex) {
+		fprintf(stderr, "PluginImpl::ProcessEventCommand: %s\n", ex.what());
 	}
 
-	if (out) {
-		G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
-		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
-		G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
-	}
+	G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
+	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+	G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
 
-	return out;
+	return TRUE;
 }

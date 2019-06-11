@@ -453,7 +453,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				exit(errno);
 			}
 				
-			if ( ioctl( 0, TIOCSCTTY, 0 )==-1 )
+			if ( ioctl( r, TIOCSCTTY, 0 )==-1 )
 				perror( "VT: ioctl(TIOCSCTTY)" );
 					
 			dup2(r, STDIN_FILENO);

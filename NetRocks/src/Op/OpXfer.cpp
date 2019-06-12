@@ -59,7 +59,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		}
 	}
 
-	_on_site_move = (_kind == XK_MOVE && _base_host->SiteName() == _dst_host->SiteName());
+	_on_site_move = (_kind == XK_MOVE && _base_host->Identity() == _dst_host->Identity());
 
 
 	if (!StartThread()) {

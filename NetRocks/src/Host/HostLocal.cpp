@@ -50,6 +50,11 @@ std::string HostLocal::SiteName()
 #endif
 }
 
+std::string HostLocal::Identity()
+{
+	return std::string();
+}
+
 std::shared_ptr<IHost> HostLocal::Clone()
 {
 	return std::make_shared<HostLocal>();

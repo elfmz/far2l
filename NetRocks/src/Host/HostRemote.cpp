@@ -97,6 +97,19 @@ std::string HostRemote::SiteName()
 	return out;
 }
 
+std::string HostRemote::Identity()
+{
+	std::unique_lock<std::mutex> locker(_mutex);
+	std::string out = _protocol;
+	out+= ":";
+	if (!_username.empty()) {
+		out+= _username;
+		out+= "@";
+	}
+	out+= _host;
+	out+= StrPrintf(":%u", _port);
+	return out;
+}
 
 void HostRemote::BusySet()
 {

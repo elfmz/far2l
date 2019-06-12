@@ -6,6 +6,24 @@
 #include "Erroring.h"
 #include "FileInformation.h"
 
+struct ExecFIFO_CtlMsg
+{
+	enum Cmd
+	{
+		CMD_PTY_SIZE = 0,
+		CMD_SIGNAL
+	} cmd;
+
+	union {
+		struct {
+			unsigned int cols;
+			unsigned int rows;
+		} pty_size;
+
+		unsigned int signum;
+	} u;
+};
+
 // all methods of this interfaces are NOT thread-safe unless explicitely marked as MT-safe
 
 struct IFileReader

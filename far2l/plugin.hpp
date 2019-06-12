@@ -1937,7 +1937,8 @@ enum EXECUTEFLAGS
 	EF_HIDEOUT = 0x01,
 	EF_NOWAIT = 0x02,
 	EF_SUDO = 0x04,
-	EF_NOTIFY = 0x08
+	EF_NOTIFY = 0x08,
+	EF_NOCMDPRINT = 0x10
 };
 
 typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);

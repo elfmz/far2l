@@ -52,6 +52,8 @@ public:
 	virtual std::shared_ptr<IHost> Clone();
 
 	virtual std::string SiteName();
+	virtual std::string Identity();
+
 	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);
 	virtual void Abort();

@@ -14,6 +14,8 @@ public:
 	virtual ~HostLocal();
 
 	virtual std::string SiteName();
+	virtual std::string Identity();
+
 	virtual std::shared_ptr<IHost> Clone();
 
 	virtual bool IsBroken();

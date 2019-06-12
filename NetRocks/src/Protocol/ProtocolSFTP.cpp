@@ -905,29 +905,20 @@ class ExecutedCommand : protected Threaded
 
 	void OnReadFDCtl(int fd)
 	{
-		char c = 0;
-		if (ReadAll(fd, &c, 1) != 1) {
+		ExecFIFO_CtlMsg m;
+		if (ReadAll(fd, &m, sizeof(m)) != sizeof(m)) {
 			throw std::runtime_error("ctl read failed");
 		}
 
-		switch (c) {
-			case 0: {
-				unsigned int cols, rows;
-				if (ReadAll(fd, &cols, sizeof(cols)) != sizeof(cols)
-				  || ReadAll(fd, &rows, sizeof(rows)) != sizeof(rows)) {
-					throw std::runtime_error("ctl read PTY size failed");
-				}
+		switch (m.cmd) {
+			case ExecFIFO_CtlMsg::CMD_PTY_SIZE: {
 				if (_pty) {
-					ssh_channel_change_pty_size(_channel, cols, rows);
+					ssh_channel_change_pty_size(_channel, m.u.pty_size.cols, m.u.pty_size.rows);
 				}
 			} break;
 
-			case 1: {
-				int sig;
-				if (ReadAll(fd, &sig, sizeof(sig)) != sizeof(sig)) {
-					throw std::runtime_error("ctl read sig failed");
-				}
-				SendSignal(sig);
+			case ExecFIFO_CtlMsg::CMD_SIGNAL: {
+				SendSignal(m.u.signum);
 			} break;
 		}
 	}
@@ -945,80 +936,83 @@ class ExecutedCommand : protected Threaded
 		// get PTY size that is sent immediately
 		OnReadFDCtl(fd_ctl);
 
+		std::string cmd;
 		if (!_working_dir.empty() && _working_dir != "." && _working_dir != "./") {
-			int rc = ssh_channel_request_exec(_channel, StrPrintf("cd %s", _working_dir.c_str()).c_str());
-			if (rc != SSH_OK) {
-				throw ProtocolError("ssh chdir",  ssh_get_error(_conn->ssh));
-			}
+			cmd = _working_dir;
+			QuoteCmdArg(cmd);
+			cmd.insert(0, "cd ");
+			cmd+= " && ";
 		}
+		cmd+= _command_line;
 
-		int rc = ssh_channel_request_exec(_channel, _command_line.c_str());
+		int rc = ssh_channel_request_exec(_channel, cmd.c_str());
 		if (rc != SSH_OK) {
 			throw ProtocolError("ssh execute",  ssh_get_error(_conn->ssh));
 		}
 
 		fcntl(fd_in, F_SETFL, fcntl(fd_in, F_GETFL, 0) | O_NONBLOCK);
-//		fcntl(fd_ctl, F_SETFL, fcntl(fd_in, F_GETFL, 0) | O_NONBLOCK);
 
-		for (bool idle = false;;) {
+		for (unsigned int idle = 0;;) {
 			char buf[0x8000];
 			fd_set fdr, fde;
-			for (;;) {
-				FD_ZERO(&fdr);
-				FD_ZERO(&fde);
-				FD_SET(fd_ctl, &fdr);
-				FD_SET(fd_in, &fdr);
-				FD_SET(_kickass[0], &fdr);
-				FD_SET(fd_ctl, &fde);
-				FD_SET(fd_in, &fde);
-				FD_SET(_kickass[0], &fde);
-				struct timeval tv = {0, idle ? 100000 : 0};
-				int r = select(std::max(std::max((int)fd_ctl, (int)fd_in), _kickass[0]) + 1, &fdr, nullptr, &fde, &tv);
-				if ( r < 0) {
-					if (errno == EAGAIN)
-						continue;
+			FD_ZERO(&fdr);
+			FD_ZERO(&fde);
+			FD_SET(fd_ctl, &fdr);
+			FD_SET(fd_in, &fdr);
+			FD_SET(_kickass[0], &fdr);
+			FD_SET(fd_ctl, &fde);
+			FD_SET(fd_in, &fde);
+			FD_SET(_kickass[0], &fde);
+			struct timeval tv = {0, (idle > 1000) ? 100000 : ((idle > 0) ? 10000 : 0)};
+			if (idle < 100000) {
+				++idle;
+			}
+			int r = select(std::max(std::max((int)fd_ctl, (int)fd_in), _kickass[0]) + 1, &fdr, nullptr, &fde, &tv);
+			if ( r < 0) {
+				if (errno == EAGAIN)
+					continue;
 
-					throw std::runtime_error("select failed");
-				}
+				throw std::runtime_error("select failed");
+			}
 
-				if (FD_ISSET(_kickass[0], &fdr) || FD_ISSET(_kickass[0], &fde)) {
-					throw std::runtime_error("somebody kicked my ass");
-				}
-				if (FD_ISSET(fd_in, &fdr)) { // || FD_ISSET(fd_in, &fde)
-					ssize_t rlen = read(fd_in, buf, sizeof(buf));
-					if (rlen <= 0) {
-						if (errno != EAGAIN) {
-							throw std::runtime_error("fd_in read failed");
-						}
-					} else {
-						OnReadFDIn(buf, (size_t)rlen);
+			if (FD_ISSET(_kickass[0], &fdr) || FD_ISSET(_kickass[0], &fde)) {
+				throw std::runtime_error("got kickass");
+			}
+
+			if (FD_ISSET(fd_in, &fdr)) { // || FD_ISSET(fd_in, &fde)
+				ssize_t rlen = read(fd_in, buf, sizeof(buf));
+				if (rlen <= 0) {
+					if (errno != EAGAIN) {
+						throw std::runtime_error("fd_in read failed");
 					}
+				} else {
+					OnReadFDIn(buf, (size_t)rlen);
+					idle = 0;
 				}
-				if (FD_ISSET(fd_ctl, &fdr)) {// || FD_ISSET(fd_ctl, &fde)
-					OnReadFDCtl(fd_ctl);
-				}
+			}
+			if (FD_ISSET(fd_ctl, &fdr)) {// || FD_ISSET(fd_ctl, &fde)
+				OnReadFDCtl(fd_ctl);
+				idle = 0;
+			}
 
-				if (ssh_channel_is_eof(_channel)) {
-					throw std::runtime_error("channel EOF");
-				}
+			if (ssh_channel_is_eof(_channel)) {
+				throw std::runtime_error("channel EOF");
+			}
 
-				idle = true;
-	
-				int rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 0);
-				if (rlen > 0) {
-					if (WriteAll(fd_out, buf, rlen) != (size_t)rlen) {
-						throw std::runtime_error("output write failed");
-					}
-					idle = false;
+			int rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 0);
+			if (rlen > 0) {
+				if (WriteAll(fd_out, buf, rlen) != (size_t)rlen) {
+					throw std::runtime_error("output write failed");
 				}
+				idle = 0;
+			}
 
-				rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 1);
-				if (rlen > 0) {
-					if (WriteAll(fd_err, buf, rlen) != (size_t)rlen) {
-						throw std::runtime_error("error write failed");
-					}
-					idle = false;
+			rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 1);
+			if (rlen > 0) {
+				if (WriteAll(fd_err, buf, rlen) != (size_t)rlen) {
+					throw std::runtime_error("error write failed");
 				}
+				idle = 0;
 			}
 		}
 	}
@@ -1026,11 +1020,11 @@ class ExecutedCommand : protected Threaded
 	virtual void *ThreadProc()
 	{
 		try {
-			fprintf(stderr, "!!!!!!!!!!!ProtocolSFTP::ExecutedCommand: ENTERING\n");
+			fprintf(stderr, "ProtocolSFTP::ExecutedCommand: ENTERING\n");
 			IOLoop();
-			fprintf(stderr, "!!!!!!!!!!!ProtocolSFTP::ExecutedCommand: LEAVING\n");
+			fprintf(stderr, "ProtocolSFTP::ExecutedCommand: LEAVING\n");
 		} catch (std::exception &ex) {
-			fprintf(stderr, "!!!!!!!!!!ProtocolSFTP::ExecutedCommand: %s\n", ex.what());
+			fprintf(stderr, "ProtocolSFTP::ExecutedCommand: %s\n", ex.what());
 		}
 		return nullptr;
 	}
@@ -1054,6 +1048,7 @@ class ExecutedCommand : protected Threaded
 
 		rc = ssh_channel_request_pty(_channel);
 		if (rc == SSH_OK) {
+			ssh_channel_request_env(_channel, "TERM", "xterm");
 			_pty = true;
 		}
 

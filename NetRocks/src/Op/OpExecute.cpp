@@ -37,27 +37,42 @@ static bool FD2FD(int dst, int src)
 	return true;
 }
 
-static void FDCtl_VTSize()
+static bool FDCtl_VTSize()
 {
-	char c = 0;
-	if (WriteAll(g_fd_ctl, &c, 1) != 1) {
-		throw std::runtime_error("FDCtl_VTSize: header failed");
-	}
-	unsigned int cols = 80, rows = 25;
+	ExecFIFO_CtlMsg m = {};
+	m.cmd = ExecFIFO_CtlMsg::CMD_PTY_SIZE;
+	m.u.pty_size.cols = 80;
+	m.u.pty_size.rows = 25;
 	struct winsize w = {};
 	if (ioctl(1, TIOCGWINSZ, &w) == 0) {
-		cols = w.ws_col;
-		rows = w.ws_row;
+		m.u.pty_size.cols = w.ws_col;
+		m.u.pty_size.rows = w.ws_row;
 	}
-	if (WriteAll(g_fd_ctl, &cols, sizeof(cols)) != sizeof(cols)
-	 || WriteAll(g_fd_ctl, &rows, sizeof(rows)) != sizeof(rows)) {
-		throw std::runtime_error("FDCtl_VTSize: data failed");
-	}
+
+	return (WriteAll(g_fd_ctl, &m, sizeof(m)) == sizeof(m));
 }
 
-static void sigwinch_handler(int)
+
+static void OpExecute_SIGWINCH(int)
 {
 	FDCtl_VTSize();
+}
+
+static void OpExecute_SignalProxy(int signum)
+{
+	ExecFIFO_CtlMsg m = {};
+	m.cmd = ExecFIFO_CtlMsg::CMD_SIGNAL;
+	m.u.signum = signum;
+
+	WriteAll(g_fd_ctl, &m, sizeof(m));
+}
+
+static void SetSignalHandler(int sugnum, void (*handler)(int))
+{
+	struct sigaction sa = {};
+	sa.sa_handler = handler;
+	sa.sa_flags = SA_RESTART;
+	sigaction(sugnum,  &sa, nullptr);
 }
 
 SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
@@ -85,8 +100,14 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 		}
 
 		g_fd_ctl = fd_ctl;
-		FDCtl_VTSize();
-		signal(SIGWINCH,  sigwinch_handler);
+
+		if (!FDCtl_VTSize()) {
+			throw std::runtime_error("Initial FDCtl_VTSize failed");
+		}
+
+		SetSignalHandler(SIGWINCH, OpExecute_SIGWINCH);
+		SetSignalHandler(SIGINT, OpExecute_SignalProxy);
+		SetSignalHandler(SIGTSTP, OpExecute_SignalProxy);
 
 		fd_set fdr, fde;
 		for (;;) {
@@ -100,7 +121,7 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 			FD_SET(fd_stdin, &fde);
 			int r = select(std::max(fd_stdin, std::max((int)fd_out, (int)fd_err)) + 1, &fdr, nullptr, &fde, NULL);
 			if ( r < 0) {
-				if (errno == EAGAIN)
+				if (errno == EAGAIN || errno == EINTR)
 					continue;
 
 				throw std::runtime_error("select failed");
@@ -199,7 +220,7 @@ bool OpExecute::Do()
 {
 	try {
 		_host->ExecuteCommand(_dir, _command, _fifo);
-		G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo).c_str(), 0);
+		G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo).c_str(), EF_NOCMDPRINT);
 
 	} catch (std::exception &ex)
 	{

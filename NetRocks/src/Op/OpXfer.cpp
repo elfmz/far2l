@@ -59,6 +59,9 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		}
 	}
 
+	_on_site_move = (_kind == XK_MOVE && _base_host->SiteName() == _dst_host->SiteName());
+
+
 	if (!StartThread()) {
 		throw std::runtime_error("Cannot start thread");
 	}
@@ -138,6 +141,34 @@ void OpXfer::Process()
 		}
 	} else {
 		if (_enumer) {
+			if (_on_site_move)  {
+				std::string path_dst;
+				auto &items = _enumer->Items();
+				for (auto i = items.begin(); i != items.end();) {
+					try {
+						path_dst = _dst_dir;
+						path_dst+= i->substr(_base_dir.size());
+						if (IsDstPathExists(path_dst)) {
+							throw std::runtime_error("already exists");
+						}
+						_base_host->Rename(*i, path_dst);
+						i = items.erase(i);
+
+					} catch (std::exception &ex) {
+						fprintf(stderr,
+							"NetRocks: on-site move file item %s: '%s' -> '%s'\n",
+							ex.what(), i->c_str(), path_dst.c_str());
+						++i;
+					}
+
+					std::lock_guard<std::mutex> locker(_state.mtx);
+					if (_state.aborting) {
+						return;
+					}
+				}
+			}
+
+
 			_enumer->Scan();
 			_enumer.reset();
 
@@ -188,20 +219,27 @@ void OpXfer::Rename(const std::set<std::string> &items)
 	}
 }
 
-void OpXfer::EnsureDstDirExists()
+bool OpXfer::IsDstPathExists(const std::string &path)
 {
 	try {
-		_dst_host->GetMode(_dst_dir);
-		return;
-	} catch (std::exception &) { }
+		_dst_host->GetMode(path);
+		return true;
 
+	} catch (std::exception &) { }
+	return false;
+}
+
+void OpXfer::EnsureDstDirExists()
+{
+	if (IsDstPathExists(_dst_dir)) {
+		return;
+	}
 	for (size_t i = 1; i <= _dst_dir.size(); ++i) {
 		if (i == _dst_dir.size() || _dst_dir[i] == '/') {
 			const std::string &part_dir = _dst_dir.substr(0, i);
-			try {
-				_dst_host->GetMode(part_dir);
+			if (IsDstPathExists(part_dir)) {
 				continue;
-			} catch (std::exception &) { }
+			}
 
 			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), part_dir,
 				[&] () mutable 
@@ -216,8 +254,6 @@ void OpXfer::EnsureDstDirExists()
 void OpXfer::Transfer()
 {
 	EnsureDstDirExists();
-
-	const bool on_site_move = (_kind == XK_MOVE && _base_host->SiteName() == _dst_host->SiteName());
 
 	std::string path_dst;
 	for (auto &e : _entries) {
@@ -315,7 +351,7 @@ void OpXfer::Transfer()
 				}
 			}
 
-			if (on_site_move) try {
+			if (_on_site_move) try {
 				_base_host->Rename(e.first, path_dst);
 				std::unique_lock<std::mutex> lock(_state.mtx);
 				_state.stats.all_complete+= e.second.size;
@@ -325,7 +361,7 @@ void OpXfer::Transfer()
 
 			} catch(std::exception &ex) {
 				fprintf(stderr,
-					"NetRocks: on-site move error %s: '%s' -> '%s'\n",
+					"NetRocks: on-site move file error %s: '%s' -> '%s'\n",
 					ex.what(), e.first.c_str(), path_dst.c_str());
 			}
 

@@ -217,6 +217,8 @@ void OpXfer::Transfer()
 {
 	EnsureDstDirExists();
 
+	const bool on_site_move = (_kind == XK_MOVE && _base_host->SiteName() == _dst_host->SiteName());
+
 	std::string path_dst;
 	for (auto &e : _entries) {
 		const std::string &subpath = e.first.substr(_base_dir.size());
@@ -312,6 +314,21 @@ void OpXfer::Transfer()
 					continue;
 				}
 			}
+
+			if (on_site_move) try {
+				_base_host->Rename(e.first, path_dst);
+				std::unique_lock<std::mutex> lock(_state.mtx);
+				_state.stats.all_complete+= e.second.size;
+				_state.stats.file_complete+= e.second.size;
+				_state.stats.count_complete++;
+				continue;
+
+			} catch(std::exception &ex) {
+				fprintf(stderr,
+					"NetRocks: on-site move error %s: '%s' -> '%s'\n",
+					ex.what(), e.first.c_str(), path_dst.c_str());
+			}
+
 			if (FileCopyLoop(e.first, path_dst, e.second)) {
 				CopyAttributes(path_dst, e.second);
 				if (_kind == XK_MOVE) {

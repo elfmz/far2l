@@ -996,6 +996,11 @@ class ExecutedCommand : protected Threaded
 			}
 
 			if (ssh_channel_is_eof(_channel)) {
+				int status = ssh_channel_get_exit_status(_channel);
+				FDScope fd_status(open((_fifo + ".status").c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600));
+				if (fd_status.Valid()) {
+					WriteAll(fd_status, &status, sizeof(status));
+				}
 				throw std::runtime_error("channel EOF");
 			}
 
@@ -1026,6 +1031,7 @@ class ExecutedCommand : protected Threaded
 		} catch (std::exception &ex) {
 			fprintf(stderr, "ProtocolSFTP::ExecutedCommand: %s\n", ex.what());
 		}
+
 		return nullptr;
 	}
 

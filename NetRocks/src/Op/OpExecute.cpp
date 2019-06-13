@@ -77,15 +77,14 @@ static void SetSignalHandler(int sugnum, void (*handler)(int))
 
 SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 {
-//	fprintf(stderr, "OpExecute_Shell: ENTER\n");
+	if (argc < 1) {
+		fprintf(stderr, "Missing argument\n");
+		return -1;
+	}
+
+	std::string fifo = argv[0];
 
 	try {
-		if (argc < 1) {
-			throw std::runtime_error("Missing argument");
-		}
-
-		std::string fifo = argv[0];
-
 		int fd_stdin = 0, fd_stdout = 1, fd_stderr = 2;
 
 		TTYRawMode tty_raw_mode(fd_stdout);
@@ -161,7 +160,15 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 
 //	fprintf(stderr, "OpExecute_Shell: LEAVE\n");
 	g_fd_ctl = -1;
-	return 0;
+
+
+	int status = -1;
+	FDScope fd_status(open((fifo + ".status").c_str(), O_RDONLY));
+	if (fd_status.Valid()) {
+		ReadAll(fd_status, &status, sizeof(status));
+	}
+
+	return status;
 }
 
 
@@ -213,8 +220,8 @@ void OpExecute::CleanupFIFO()
 	unlink((_fifo + ".in").c_str());
 	unlink((_fifo + ".out").c_str());
 	unlink((_fifo + ".err").c_str());
+	unlink((_fifo + ".status").c_str());
 }
-
 
 void OpExecute::Do()
 {

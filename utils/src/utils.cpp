@@ -292,7 +292,7 @@ size_t WriteAll(int fd, const void *data, size_t len, size_t chunk)
 		}
 		ssize_t written = write(fd, (const char *)data + ofs, chunk);
 		if (written <= 0) {
-			if (errno != EAGAIN) {
+			if (errno != EAGAIN && errno != EINTR) {
 				return ofs;
 			}
 		} else {
@@ -307,7 +307,7 @@ size_t ReadAll(int fd, void *data, size_t len)
 	for (size_t ofs = 0; ofs < len; ) {
 		ssize_t readed = read(fd, (char *)data + ofs, len - ofs);
 		if (readed <= 0) {
-			if (readed == 0 || errno != EAGAIN) {
+			if (readed == 0 || (errno != EAGAIN && errno != EINTR)) {
 				return ofs;
 			}
 

@@ -17,11 +17,8 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 
 	std::string _site;
 
-	std::string _protocol;
-	std::string _host;
-	unsigned int _port;
+	Identity _identity;
 	unsigned int _login_mode;
-	std::string _username;
 	std::string _password;
 	std::string _options;
 
@@ -52,7 +49,7 @@ public:
 	virtual std::shared_ptr<IHost> Clone();
 
 	virtual std::string SiteName();
-	virtual std::string Identity();
+	virtual void GetIdentity(Identity &identity);
 
 	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);

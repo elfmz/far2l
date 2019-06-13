@@ -20,7 +20,7 @@ static bool FD2FD(int dst, int src)
 	char buf[32768];
 	ssize_t r = read(src, buf, sizeof(buf));
 	if (r < 0) {
-		if (errno == EAGAIN)
+		if (errno == EAGAIN || errno == EINTR)
 			return true;
 
 		throw std::runtime_error("FD2FD: read failed");
@@ -222,9 +222,16 @@ bool OpExecute::Do()
 		_host->ExecuteCommand(_dir, _command, _fifo);
 		G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo).c_str(), EF_NOCMDPRINT);
 
-	} catch (std::exception &ex)
-	{
+	} catch (ProtocolUnsupportedError &) {
+		const wchar_t *msg[] = { G.GetMsgWide(MCommandsNotSupportedTitle), G.GetMsgWide(MCommandsNotSupportedText), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+
+	} catch (std::exception &ex) {
 		fprintf(stderr, "OpExecute::Do: %s\n", ex.what());
+
+		const std::wstring &tmp_what = MB2Wide(ex.what());
+		const wchar_t *msg[] = { G.GetMsgWide(MError), tmp_what.c_str(), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
 	}
 	return true;
 }

@@ -147,6 +147,9 @@
 "Local filesystem"
 "RETRIES: %llu SKIPS: %llu"
 
+"Protocol doesnt support remote commands"
+"Only this commands allowed: cd, pushd, popd"
+
 "Confirm new server identity"
 "Site name:"
 "Site's server current identity:"

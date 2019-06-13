@@ -969,7 +969,7 @@ class ExecutedCommand : protected Threaded
 			}
 			int r = select(std::max(std::max((int)fd_ctl, (int)fd_in), _kickass[0]) + 1, &fdr, nullptr, &fde, &tv);
 			if ( r < 0) {
-				if (errno == EAGAIN)
+				if (errno == EAGAIN || errno == EINTR)
 					continue;
 
 				throw std::runtime_error("select failed");

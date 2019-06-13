@@ -2,10 +2,20 @@
 #include "../Protocol/Protocol.h"
 
 // all methods of this interface are NOT thread-safe unless explicitely marked as MT-safe
+
+
 struct IHost : IProtocol
 {
+	struct Identity
+	{
+		std::string protocol;
+		std::string host;
+		std::string username;
+		unsigned int port = 0;
+	};
+
 	virtual std::string SiteName() = 0; // MT-safe, human-readable site's name
-	virtual std::string Identity() = 0; // MT-safe, use returned string to check if two hosts refer same server/credentials
+	virtual void GetIdentity(Identity &identity) = 0; // MT-safe, returns connection host identity details
 
 	virtual std::shared_ptr<IHost> Clone() = 0; // MT-safe, creates clone of this host that will init automatically with same creds
 	virtual void ReInitialize() throw (std::runtime_error) = 0;

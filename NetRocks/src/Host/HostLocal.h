@@ -14,7 +14,8 @@ public:
 	virtual ~HostLocal();
 
 	virtual std::string SiteName();
-	virtual std::string Identity();
+	virtual void GetIdentity(Identity &identity);
+
 
 	virtual std::shared_ptr<IHost> Clone();
 

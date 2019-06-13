@@ -59,8 +59,20 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		}
 	}
 
-	_on_site_move = (_kind == XK_MOVE && _base_host->Identity() == _dst_host->Identity());
-
+	if (_kind == XK_MOVE) {
+		// Try to use on-site rename operation if destination and source are on same server
+		// and authed under same username. Note that if server host is empty then need
+		// to avoid using of on-site renaming cuz servers may actually be different
+		// except its a file protocol, that means local filesystem
+		IHost::Identity src_identity, dst_identity;
+		_base_host->GetIdentity(src_identity);
+		_dst_host->GetIdentity(dst_identity);
+		if ( (!src_identity.host.empty() || strcasecmp(src_identity.protocol.c_str(), "file") == 0)
+		 && src_identity.protocol == dst_identity.protocol && src_identity.host == dst_identity.host
+		 && src_identity.port == dst_identity.port && src_identity.username == dst_identity.username) {
+			_on_site_move = true;
+		}
+	}
 
 	if (!StartThread()) {
 		throw std::runtime_error("Cannot start thread");

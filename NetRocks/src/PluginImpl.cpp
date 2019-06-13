@@ -647,8 +647,16 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 		G.info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
 		G.info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
 
+	} catch (ProtocolUnsupportedError &) {
+		const wchar_t *msg[] = { G.GetMsgWide(MCommandsNotSupportedTitle), G.GetMsgWide(MCommandsNotSupportedText), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+
 	} catch (std::exception &ex) {
-		fprintf(stderr, "PluginImpl::ProcessEventCommand: %s\n", ex.what());
+		fprintf(stderr, "OpExecute::Do: %s\n", ex.what());
+
+		const std::wstring &tmp_what = MB2Wide(ex.what());
+		const wchar_t *msg[] = { G.GetMsgWide(MError), tmp_what.c_str(), G.GetMsgWide(MOK)};
+		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
 	}
 
 	G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");

@@ -16,5 +16,5 @@ public:
 	OpExecute(std::shared_ptr<IHost> &host, const std::string &dir, const std::string &command);
 	virtual ~OpExecute();
 
-	bool Do();
+	void Do();
 };

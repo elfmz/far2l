@@ -11,6 +11,8 @@ public:
 	FDScope(int fd = -1) : _fd(fd) {}
 	~FDScope();
 
+	void CheckedClose();
+
 	bool Valid() const
 	{
 		return _fd != -1;

@@ -237,6 +237,15 @@ class HostRemoteBroker : protected IPCEndpoint
 		SendString(_args.str2);
 	}
 
+	void OnExecuteCommand()
+	{
+		RecvString(_args.str1);
+		RecvString(_args.str2);
+		RecvString(_args.str3);
+		_protocol->ExecuteCommand(_args.str1, _args.str2, _args.str3);
+		SendCommand(IPC_EXECUTE_COMMAND);
+	}
+
 	void OnCommand(IPCCommand c)
 	{
 		switch (c) {
@@ -260,6 +269,7 @@ class HostRemoteBroker : protected IPCEndpoint
 			case IPC_DIRECTORY_ENUM: OnDirectoryEnum(); break;
 			case IPC_FILE_GET: OnFileGet(); break;	
 			case IPC_FILE_PUT: OnFilePut(); break;
+			case IPC_EXECUTE_COMMAND: OnExecuteCommand(); break;
 				
 			default:
 				throw IPCError("HostRemoteBroker: bad command", (unsigned int)c); 

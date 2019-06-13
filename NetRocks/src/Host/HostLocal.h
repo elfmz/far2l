@@ -14,6 +14,9 @@ public:
 	virtual ~HostLocal();
 
 	virtual std::string SiteName();
+	virtual void GetIdentity(Identity &identity);
+
+
 	virtual std::shared_ptr<IHost> Clone();
 
 	virtual bool IsBroken();
@@ -40,4 +43,5 @@ public:
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos = 0) throw (std::runtime_error);
+
 };

@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <termios.h> 
 #include <ScopeHelpers.h>
+#include <TTYRawMode.h>
 
 #include "Backend.h"
 #include "ConsoleOutput.h"
@@ -11,7 +12,6 @@
 #include "PathHelpers.h"
 #include "../sudo/sudo_askpass_ipc.h"
 #include "SudoAskpassImpl.h"
-#include "TTY/TTYRawMode.h"
 
 #include <memory>
 

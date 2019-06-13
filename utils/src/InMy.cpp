@@ -72,7 +72,7 @@ static void GetTempRoot(std::string &path)
 		return;
 	}
 
-	const char *temp = getenv("TEMP");
+	const char *temp = getenv("TMPDIR ");
 	if (!temp || stat(temp, &s) == -1 || (s.st_mode & S_IFMT) != S_IFDIR) {
 		temp = "/tmp";
 		if (stat(temp, &s) == -1 || (s.st_mode & S_IFMT) != S_IFDIR) {

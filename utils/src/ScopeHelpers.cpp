@@ -2,9 +2,14 @@
 #include "ScopeHelpers.h"
 #include "utils.h"
 
-FDScope::~FDScope()
+void FDScope::CheckedClose()
 {
 	CheckedCloseFD(_fd);
+}
+
+FDScope::~FDScope()
+{
+	CheckedClose();
 }
 
 UnlinkScope::~UnlinkScope()

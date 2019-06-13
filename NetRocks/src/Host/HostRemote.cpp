@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <ScopeHelpers.h>
+#include <Threaded.h>
 #include <StringConfig.h>
 #include <CheckedCast.hpp>
 
@@ -21,17 +22,19 @@
 #include "UI/Activities/InteractiveLogin.h"
 #include "UI/Activities/ConfirmNewServerIdentity.h"
 
+////////////////////////////////////////////
+
 HostRemote::HostRemote(const std::string &site)
 	: _site(site)
 {
 	SitesConfig sc;
-	_protocol = sc.GetProtocol(_site);
-	_host = sc.GetHost(_site);
-	_port = sc.GetPort(_site);
+	_identity.protocol = sc.GetProtocol(_site);
+	_identity.host = sc.GetHost(_site);
+	_identity.port = sc.GetPort(_site);
+	_identity.username = sc.GetUsername(_site);
 	_login_mode = sc.GetLoginMode(_site);
-	_username = sc.GetUsername(_site);
 	_password = sc.GetPassword(_site);
-	_options = sc.GetProtocolOptions(_site, _protocol);
+	_options = sc.GetProtocolOptions(_site, _identity.protocol);
 
 	if (_login_mode == 0) {
 		_password.clear();
@@ -40,13 +43,14 @@ HostRemote::HostRemote(const std::string &site)
 
 HostRemote::HostRemote(const std::string &protocol, const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const std::string &directory)
-	:_protocol(protocol),
-	_host(host),
-	_port(port),
+	:
 	_login_mode( ( (username.empty() || username == "anonymous") && password.empty()) ? 0 : (password.empty() ? 1 : 2)),
-	_username(username),
 	_password(password)
 {
+	_identity.protocol = protocol;
+	_identity.host = host;
+	_identity.port = port;
+	_identity.username = username;
 }
 
 HostRemote::~HostRemote()
@@ -61,11 +65,8 @@ std::shared_ptr<IHost> HostRemote::Clone()
 
 	std::unique_lock<std::mutex> locker(_mutex);
 	cloned->_site = _site;
-	cloned->_protocol = _protocol;
-	cloned->_host = _host;
-	cloned->_port = _port;
+	cloned->_identity = _identity;
 	cloned->_login_mode = _login_mode;
-	cloned->_username = _username;
 	cloned->_password = _password;
 	cloned->_options = _options;
 	cloned->_broken = false;
@@ -80,20 +81,33 @@ std::string HostRemote::SiteName()
 	if (!_site.empty())
 		return _site;
 
+
+	const auto *pi = ProtocolInfoLookup(_identity.protocol.c_str());
+
 	std::unique_lock<std::mutex> locker(_mutex);
-	std::string out = _protocol;
+	std::string out = _identity.protocol;
 	out+= ":";
-	if (!_username.empty()) {
-		out+= _username;
+	if (!_identity.username.empty()) {
+		out+= _identity.username;
 		out+= "@";
 	}
-	out+= _host;
+	out+= _identity.host;
+	if (_identity.port && pi &&
+	 pi->default_port != -1 && pi->default_port != (int)_identity.port) {
+		out+= StrPrintf(":%u", _identity.port);
+	}
+
 	for (auto &c : out) {
 		if (c == '/') c = '\\';
 	}
 	return out;
 }
 
+void HostRemote::GetIdentity(Identity &identity)
+{
+	std::unique_lock<std::mutex> locker(_mutex);
+	identity = _identity;
+}
 
 void HostRemote::BusySet()
 {
@@ -136,17 +150,16 @@ void HostRemote::CheckReady()
 	}
 }
 
-
 void HostRemote::ReInitialize() throw (std::runtime_error)
 {
 	AssertNotBusy();
 
-	const auto *pi = ProtocolInfoLookup(_protocol.c_str());
+	const auto *pi = ProtocolInfoLookup(_identity.protocol.c_str());
 	if (!pi) {
-		throw std::runtime_error(std::string("Wrong protocol: ").append(_protocol));
+		throw std::runtime_error(std::string("Wrong protocol: ").append(_identity.protocol));
 	}
 
-	if (_host.empty() && pi->require_server) {
+	if (_identity.host.empty() && pi->require_server) {
 		throw std::runtime_error("No server specified");
 	}
 
@@ -171,10 +184,10 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	cmdstr+= MB2Wide(pi->broker);
 	cmdstr+= StrMB2Wide(StrPrintf(".broker\" %d %d", master2broker[0], broker2master[1]));
 	fprintf(stderr, "NetRocks: starting broker '%ls'\n", cmdstr.c_str());
-	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT);
 
-	close(master2broker[0]);
-	close(broker2master[1]);
+	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT); //_interactive
+	CheckedCloseFD(master2broker[0]);
+	CheckedCloseFD(broker2master[1]);
 
 	IPCRecver::SetFD(broker2master[0]);
 	IPCSender::SetFD(master2broker[1]);
@@ -197,22 +210,22 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	for (unsigned int auth_failures = 0;;) {
 //		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
 		if (_login_mode == 1) {
-			std::string tmp_username = _username, tmp_password = _password;
+			std::string tmp_username = _identity.username, tmp_password = _password;
 			locker.unlock();
 			if (!InteractiveLogin(SiteName(), auth_failures, tmp_username, tmp_password)) {
 				SendString(std::string());
 				throw AbortError();
 			}
 			locker.lock();
-			_username = tmp_username;
+			_identity.username = tmp_username;
 			_password = tmp_password;
 		}
 
-		SendString(_protocol);
-		SendString(_host);
-		SendPOD(_port);
+		SendString(_identity.protocol);
+		SendString(_identity.host);
+		SendPOD(_identity.port);
 		SendPOD(_login_mode);
-		SendString(_username);
+		SendString(_identity.username);
 		SendString(_password);
 		SendString(_options);
 
@@ -291,7 +304,7 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 	_options = protocol_options.Serialize();
 
 	if (!_site.empty()) {
-		SitesConfig().PutProtocolOptions(_site, _protocol, _options);
+		SitesConfig().PutProtocolOptions(_site, _identity.protocol, _options);
 	}
 	return true;
 }
@@ -638,4 +651,16 @@ std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t
 	RecvReply(IPC_FILE_PUT);
 
 	return std::make_shared<HostRemoteFileIO>(shared_from_this(), true);
+}
+
+
+void HostRemote::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error)
+{
+	CheckReady();
+
+	SendCommand(IPC_EXECUTE_COMMAND);
+	SendString(working_dir);
+	SendString(command_line);
+	SendString(fifo);
+	RecvReply(IPC_EXECUTE_COMMAND);
 }

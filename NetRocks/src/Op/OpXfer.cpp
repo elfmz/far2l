@@ -59,6 +59,21 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		}
 	}
 
+	if (_kind == XK_MOVE) {
+		// Try to use on-site rename operation if destination and source are on same server
+		// and authed under same username. Note that if server host is empty then need
+		// to avoid using of on-site renaming cuz servers may actually be different
+		// except its a file protocol, that means local filesystem
+		IHost::Identity src_identity, dst_identity;
+		_base_host->GetIdentity(src_identity);
+		_dst_host->GetIdentity(dst_identity);
+		if ( (!src_identity.host.empty() || strcasecmp(src_identity.protocol.c_str(), "file") == 0)
+		 && src_identity.protocol == dst_identity.protocol && src_identity.host == dst_identity.host
+		 && src_identity.port == dst_identity.port && src_identity.username == dst_identity.username) {
+			_on_site_move = true;
+		}
+	}
+
 	if (!StartThread()) {
 		throw std::runtime_error("Cannot start thread");
 	}
@@ -138,6 +153,34 @@ void OpXfer::Process()
 		}
 	} else {
 		if (_enumer) {
+			if (_on_site_move)  {
+				std::string path_dst;
+				auto &items = _enumer->Items();
+				for (auto i = items.begin(); i != items.end();) {
+					try {
+						path_dst = _dst_dir;
+						path_dst+= i->substr(_base_dir.size());
+						if (IsDstPathExists(path_dst)) {
+							throw std::runtime_error("already exists");
+						}
+						_base_host->Rename(*i, path_dst);
+						i = items.erase(i);
+
+					} catch (std::exception &ex) {
+						fprintf(stderr,
+							"NetRocks: on-site move file item %s: '%s' -> '%s'\n",
+							ex.what(), i->c_str(), path_dst.c_str());
+						++i;
+					}
+
+					std::lock_guard<std::mutex> locker(_state.mtx);
+					if (_state.aborting) {
+						return;
+					}
+				}
+			}
+
+
 			_enumer->Scan();
 			_enumer.reset();
 
@@ -188,20 +231,27 @@ void OpXfer::Rename(const std::set<std::string> &items)
 	}
 }
 
-void OpXfer::EnsureDstDirExists()
+bool OpXfer::IsDstPathExists(const std::string &path)
 {
 	try {
-		_dst_host->GetMode(_dst_dir);
-		return;
-	} catch (std::exception &) { }
+		_dst_host->GetMode(path);
+		return true;
 
+	} catch (std::exception &) { }
+	return false;
+}
+
+void OpXfer::EnsureDstDirExists()
+{
+	if (IsDstPathExists(_dst_dir)) {
+		return;
+	}
 	for (size_t i = 1; i <= _dst_dir.size(); ++i) {
 		if (i == _dst_dir.size() || _dst_dir[i] == '/') {
 			const std::string &part_dir = _dst_dir.substr(0, i);
-			try {
-				_dst_host->GetMode(part_dir);
+			if (IsDstPathExists(part_dir)) {
 				continue;
-			} catch (std::exception &) { }
+			}
 
 			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), part_dir,
 				[&] () mutable 
@@ -312,6 +362,21 @@ void OpXfer::Transfer()
 					continue;
 				}
 			}
+
+			if (_on_site_move) try {
+				_base_host->Rename(e.first, path_dst);
+				std::unique_lock<std::mutex> lock(_state.mtx);
+				_state.stats.all_complete+= e.second.size;
+				_state.stats.file_complete+= e.second.size;
+				_state.stats.count_complete++;
+				continue;
+
+			} catch(std::exception &ex) {
+				fprintf(stderr,
+					"NetRocks: on-site move file error %s: '%s' -> '%s'\n",
+					ex.what(), e.first.c_str(), path_dst.c_str());
+			}
+
 			if (FileCopyLoop(e.first, path_dst, e.second)) {
 				CopyAttributes(path_dst, e.second);
 				if (_kind == XK_MOVE) {

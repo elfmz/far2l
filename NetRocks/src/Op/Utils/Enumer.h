@@ -28,6 +28,7 @@ public:
 		ProgressState &state, WhatOnErrorState &wea_state);
 
 	inline const std::set<std::string> &Items() const { return _items; }
+	inline std::set<std::string> &Items() { return _items; }
 
 	void Scan();
 };

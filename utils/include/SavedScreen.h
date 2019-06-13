@@ -12,3 +12,4 @@ public:
 	~SavedScreen();
 	void Restore();
 };
+

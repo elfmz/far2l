@@ -71,6 +71,9 @@ ProtocolFile::ProtocolFile(const std::string &host, unsigned int port,
 			struct timeval tv = {time_limit - time_now, 0};
 			int sv = select(child_stdout[0] + 1, &fdr, nullptr, &fde, &tv);
 			if (sv < 0) {
+				if (errno == EAGAIN || errno == EINTR)
+					continue;
+
 				break;
 			}
 

@@ -234,8 +234,10 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		WINPORT(GetConsoleMode)(NULL, &saved_mode);
 		WINPORT(SetConsoleMode)(NULL, saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
 			| ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE | WINDOW_BUFFER_SIZE_EVENT);//ENABLE_QUICK_EDIT_MODE
-		const std::wstring &ws = MB2Wide(CmdStr);
-		WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
+		if ((ExecFlags & EF_NOCMDPRINT) == 0) {
+			const std::wstring &ws = MB2Wide(CmdStr);
+			WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
+		}
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 		if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
 			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
@@ -254,6 +256,9 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		ProcessShowClock--;
 		SetFarConsoleMode(TRUE);
 		ScrBuf.Flush();
+		if (Opt.ShowKeyBar) {
+			CtrlObject->MainKeyBar->Show();
+		}
 	}
 	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
 	

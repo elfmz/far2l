@@ -149,6 +149,9 @@ enum LanguageID
   MHostLocalName,
   MErrorsStatus,
 
+  MCommandsNotSupportedTitle,
+  MCommandsNotSupportedText,
+
   MNewServerIdentityTitle,
   MNewServerIdentitySite,
   MNewServerIdentityText,

@@ -39,6 +39,7 @@ src/Op/OpEnumDirectory.cpp
 src/Op/OpXfer.cpp
 src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
+src/Op/OpExecute.cpp
 src/Protocol/SplitPathSpecification.cpp
 src/Protocol/Protocol.cpp
 )

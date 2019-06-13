@@ -16,10 +16,13 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	XferKind _kind;
 	XferDirection _direction;
 	IOBuffer _io_buf;
+	bool _on_site_move = false;
 
 	virtual void Process();
 
 	virtual void ForcefullyAbort();	// IAbortableOperationsHost
+
+	bool IsDstPathExists(const std::string &path);
 
 	void Rename(const std::set<std::string> &items);
 	void EnsureDstDirExists();

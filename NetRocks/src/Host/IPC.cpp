@@ -100,7 +100,7 @@ void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
 
 		int sv = select(maxfd + 1, &fds, nullptr, &fde, nullptr);
 		if (sv == -1) {
-			if (errno != EAGAIN) {
+			if (errno != EAGAIN && errno != EINTR) {
 				throw IPCError("IPCRecver: select", errno);
 			}
 			continue;

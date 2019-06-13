@@ -57,6 +57,10 @@ bool TranslateInstallPath_Share2Lib(std::string &path);
 void CheckedCloseFD(int &fd);
 void CheckedCloseFDPair(int *fd);
 
+size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1);
+size_t ReadAll(int fd, void *data, size_t len);
+
+
 struct ErrnoSaver
 {
 	int v;

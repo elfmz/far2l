@@ -7,7 +7,7 @@ template<class V, V BADV, typename ... ARGS>
 {
 	for (unsigned char i = 0;; ++i) {
 		V r = pfn(args ...);
-		if (r == BADV && errno == EAGAIN) {
+		if (r == BADV && (errno == EAGAIN || errno == EINTR)) {
 //			if (i==0)
 //				fprintf(stderr, "os_call_v(%p): EAGAIN\n", pfn);
 			usleep(10000);

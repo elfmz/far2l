@@ -17,11 +17,8 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 
 	std::string _site;
 
-	std::string _protocol;
-	std::string _host;
-	unsigned int _port;
+	Identity _identity;
 	unsigned int _login_mode;
-	std::string _username;
 	std::string _password;
 	std::string _options;
 
@@ -29,7 +26,6 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 	bool _busy = false;
 	bool _cloning = false;
 	pid_t _peer = 0;
-
 
 	void RecvReply(IPCCommand cmd);
 
@@ -53,6 +49,8 @@ public:
 	virtual std::shared_ptr<IHost> Clone();
 
 	virtual std::string SiteName();
+	virtual void GetIdentity(Identity &identity);
+
 	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);
 	virtual void Abort();
@@ -77,4 +75,6 @@ public:
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos = 0) throw (std::runtime_error);
+
+	virtual void ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error);
 };

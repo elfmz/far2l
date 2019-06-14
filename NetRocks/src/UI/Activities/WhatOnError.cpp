@@ -49,11 +49,13 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorObject);
-	_di.AddAtLine(DI_TEXT, 20,62, 0, object.c_str());
+	int ctl = _di.AddAtLine(DI_TEXT, 20,62, 0, "");
+	AbbreviableTextToDialogControl(ctl, object);
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorSite);
-	_di.AddAtLine(DI_TEXT, 20,62, 0, site.c_str());
+	ctl = _di.AddAtLine(DI_TEXT, 20,62, 0, "");
+	AbbreviableTextToDialogControl(ctl, site);
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);

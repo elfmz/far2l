@@ -88,6 +88,7 @@ protected:
 	void TextToDialogControl(int ctl, const char *str);
 	void TextToDialogControl(int ctl, const std::string &str);
 	void TextToDialogControl(int ctl, int lng_str);
+	void AbbreviableTextToDialogControl(int ctl, std::string str);
 	void LongLongToDialogControl(int ctl, long long value);
 
 	void FileSizeToDialogControl(int ctl, unsigned long long value);

@@ -383,15 +383,15 @@ size_t GetMallocSize(void *p)
 }
 
 
-void AbbreviateFilePath(std::string &path, size_t needed_length)
+void AbbreviateString(std::string &path, size_t needed_length)
 {
 	size_t len = path.size();
-	if (needed_length < 3) {
-		needed_length = 3;
+	if (needed_length < 1) {
+		needed_length = 1;
 	}
 	if (len > needed_length) {
-		size_t delta = len - (needed_length - 3);
-		path.replace((path.size() - delta) / 2, delta, "...");
+		size_t delta = len - (needed_length - 1);
+		path.replace((path.size() - delta) / 2, delta, "…");//"...");
 	}
 }
 

@@ -355,6 +355,16 @@ void BaseDialog::TextToDialogControl(int ctl, int lng_str)
 	TextToDialogControl(ctl, str ? str : "");
 }
 
+void BaseDialog::AbbreviableTextToDialogControl(int ctl, std::string str)
+{
+	if (ctl >= 0 && (size_t)ctl < _di.size() && _di[ctl].X2 > _di[ctl].X1) {
+		size_t max_width = _di[ctl].X2 + 1 - _di[ctl].X1;
+		AbbreviateString(str, max_width);
+	}
+
+	TextToDialogControl(ctl, str);
+}
+
 void BaseDialog::LongLongToDialogControl(int ctl, long long value)
 {
 	char str[0x100] = {};

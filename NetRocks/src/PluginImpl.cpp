@@ -1,3 +1,4 @@
+#include <vector>
 #include <wchar.h>
 #include "Globals.h"
 #include <utils.h>
@@ -212,125 +213,170 @@ void PluginImpl::FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber)
 	PluginPanelItems_Free(PanelItem, ItemsNumber);
 }
 
+static void TokenizePath(std::vector<std::string> &components, const char *path)
+{
+	for (const char *start = path;; ++path ) {
+		if (*path == '/' || !*path) {
+			if (path > start) {
+				components.emplace_back(start, (path - start));
+			}
+			if (!*path) {
+				break;
+			}
+			start = path + 1;
+		}
+	}
+}
+
+static void TokenizePath(std::vector<std::string> &components, const wchar_t *path)
+{
+	TokenizePath(components, Wide2MB(path).c_str());
+}
+
+static bool PreprocessPathTokens(std::vector<std::string> &components)
+{
+	for (auto i = components.begin(); i != components.end();) {
+		if (*i == ".") {
+			i = components.erase(i);
+		} else if (*i == "..") {
+			i = components.erase(i);
+			if (i == components.begin()) {
+				return false;
+			}
+			--i;
+			i = components.erase(i);
+		} else {
+			++i;
+		}
+	}
+
+	return true;
+}
+
 int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 {
-	fprintf(stderr, "NetRocks::SetDirectory('%ls', %d)\n", Dir, OpMode);
-	if (wcscmp(Dir, L".") == 0)
-		return TRUE;
-
 	if (!_remote && wcscmp(Dir, G.GetMsgWide(MCreateSiteConnection)) == 0) {
 		ByKey_EditSiteConnection(true);
 		return FALSE;
 	}
 
-	try {
-		std::string tmp;
-		Wide2MB(_cur_dir, tmp);
+	bool absolute;
+	std::vector<std::string> components, prev_components;
+	TokenizePath(prev_components, _cur_dir);
 
-		if (wcscmp(Dir, L"..") == 0) {
-			size_t p = tmp.rfind('/');
-			if (p == std::string::npos)
-				p = 0;
-			tmp.resize(p);
+	TokenizePath(components, Dir);
 
-			if (tmp.empty()) {
-				_remote.reset();
-				_cur_dir[0] = 0;
-				UpdatePanelTitle();
-				return TRUE;
+	if (!components.empty() && components[0] == "~") {
+		if (prev_components.empty()) {
+			fprintf(stderr, "NetRocks::SetDirectory - can't go home when unconnected: '%ls'\n", Dir);
+			return FALSE;
+		}
+
+		std::string default_dir = SitesConfig().GetDirectory(prev_components.front());
+		std::vector<std::string> default_components;
+		TokenizePath(default_components, default_dir.c_str());
+		components.erase(components.begin());
+		components.insert(components.begin(), default_components.begin(), default_components.end());
+		components.insert(components.begin(), prev_components.front());
+		absolute = (!default_dir.empty() && default_dir[0] == '/');
+
+	} else if (*Dir != L'/') {
+		if (components.empty()) {
+			return TRUE;
+		}
+		components.insert(components.begin(), prev_components.begin(), prev_components.end());
+		absolute = _cur_dir_absolute;
+
+	} else {
+		components.insert(components.begin(), prev_components.front());
+		absolute = true;
+	}
+
+	if (!PreprocessPathTokens(components) || components.empty()) {
+		fprintf(stderr, "NetRocks::SetDirectory - close connection due to: '%ls'\n", Dir);
+		_remote.reset();
+		_cur_dir[0] = 0;
+		UpdatePanelTitle();
+		return TRUE;
+	}
+
+	if (!_remote) {
+		if (!components.empty()) {
+			_remote = OpConnect(OpMode, components[0]).Do();
+			if (!_remote) {
+				fprintf(stderr, "NetRocks::SetDirectory - can't connect to: '%s'\n", components[0].c_str());
+				return FALSE;
 			}
 
-		} else if (*Dir == L'/') {
-			Wide2MB(Dir + 1, tmp);
-
-		} else if (*Dir == '~') {
-			if (Dir[1] == '/') {
-				return (SetDirectory(L"~", 0) && SetDirectory(Dir + 2, 0));
+			if (components.size() == 1) {
+				std::string default_dir = SitesConfig().GetDirectory(components[0]);
+				TokenizePath(components, default_dir.c_str());
+				absolute = !default_dir.empty() && default_dir[0] == '/';
 			}
+
 
 		} else {
-			if (!tmp.empty())
-				tmp+= '/';
-			tmp+= Wide2MB(Dir);
+			fprintf(stderr, "NetRocks::SetDirectory - not connected and nowhere to connect to: '%ls'\n", Dir);
+			return FALSE;
 		}
-		while (!tmp.empty() && tmp[tmp.size() - 1] == '/')
-			tmp.resize(tmp.size() - 1);
 
-		size_t p = tmp.find('/');
-		if (!_remote || wcscmp(Dir, L"~") == 0) {
-			const std::string &site = tmp.substr(0, p);
-			if (!_remote) {
-				_remote = OpConnect(OpMode, site).Do();
-				if (!_remote) {
-					return FALSE;
-				}
-			} else if (p != std::string::npos) {
-				tmp.resize(p);
+	}
+
+	std::string dir;
+	if (absolute) {
+		dir = '/';
+	}
+
+	for (const auto &component : components) {
+		if (&component != &components[0]) {
+			if (!dir.empty() && dir != "/") {
+				dir+= '/';
 			}
-
-			std::string root_dir = SitesConfig().GetDirectory(site);
-			if (!root_dir.empty()) {
-				_cur_dir_absolute = (root_dir[0] == '/');
-
-				if (root_dir[root_dir.size() - 1] != '/')
-					root_dir+= '/';
-
-				if (_cur_dir_absolute)
-					root_dir.erase(0, 1);
-
-				if (!root_dir.empty()) {
-					if (p == std::string::npos) {
-						p = tmp.size();
-						tmp+= '/';
-					}
-					while (!root_dir.empty() && root_dir[root_dir.size() - 1] == '/') {
-						root_dir.resize(root_dir.size() - 1);
-					}
-					tmp.insert(p + 1, root_dir);
-				}
-			} else {
-				 _cur_dir_absolute = false;
-			}
+			dir+= component;
+		}
+	}
+	fprintf(stderr, "NetRocks::SetDirectory - dir: '%s'\n", dir.c_str());
+	if (!dir.empty()) {
+		mode_t mode = 0;
+		if (!OpGetMode(OpMode, _remote, dir).Do(mode)) {
+			fprintf(stderr, "NetRocks::SetDirectory - can't get mode: '%s'\n", dir.c_str());
+			return FALSE; 
 		}
 
-//		fprintf(stderr, "tmp='%s'\n", tmp.c_str());
-
-		if (p < tmp.size() - 1) {
-			mode_t mode = 0;
-			std::string chk_path = tmp.substr(p + 1);
-			if (_cur_dir_absolute)
-				chk_path.insert(0, "/");
-			fprintf(stderr, "chk_path='%s'\n", chk_path.c_str());
-
-			if (!OpGetMode(OpMode, _remote, chk_path).Do(mode))
-				throw std::runtime_error("Get mode failed");
-
-			if (!S_ISDIR(mode))
-				throw std::runtime_error("Not a directory");
+		if (!S_ISDIR(mode)) {
+			fprintf(stderr, "NetRocks::SetDirectory - not dir mode=0x%x: '%s'\n", mode, dir.c_str());
+			return FALSE;
 		}
+	}
 
-		const std::wstring &tmp_ws = StrMB2Wide(tmp);
+	if (!components.empty()) {
+		if (!dir.empty() && dir[0] != '/') {
+			dir.insert(0, "/");
+		}
+		dir.insert(0, components.front());
+	}
 
-		if (tmp_ws.size() >= ARRAYSIZE(_cur_dir))
-			throw std::runtime_error("Too long path");
-
-		wcscpy(_cur_dir, tmp_ws.c_str());
-
-	} catch (std::exception &e) {
-		fprintf(stderr, "NetRocks::SetDirectory('%ls', %d) ERROR: %s\n", Dir, OpMode, e.what());
+	std::wstring tmp = StrMB2Wide(dir);
+	while (!tmp.empty() && tmp[tmp.size() - 1] == '/') {
+		tmp.resize(tmp.size() - 1);
+	}
+	if (tmp.size() >= ARRAYSIZE(_cur_dir)) {
+		fprintf(stderr, "NetRocks::SetDirectory - too long: '%s'\n", dir.c_str());
 		return FALSE;
 	}
 
+	memcpy(_cur_dir, tmp.c_str(), (tmp.size() + 1) * sizeof(_cur_dir[0]));
+	_cur_dir_absolute = absolute;
+
+	fprintf(stderr, "NetRocks::SetDirectory('%ls', %d) OK: %s'%ls'\n", Dir, OpMode, _cur_dir_absolute ? "/" : "", &_cur_dir[0]);
+
 	UpdatePanelTitle();
-
-	fprintf(stderr, "NetRocks::SetDirectory('%ls', %d) OK: '%ls'\n", Dir, OpMode, &_cur_dir[0]);
-
 	return TRUE;
 }
 
 void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 {
-	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%ls' \n", &_cur_dir[0]);
+//	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%ls' \n", &_cur_dir[0]);
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
 
@@ -606,41 +652,57 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 	return true;
 }
 
+static std::wstring GetCommandArgument(const wchar_t *cmd)
+{
+	std::wstring out;
+	const wchar_t *arg = wcschr(cmd, ' ');
+	if (arg) {
+		while (*arg == ' ') {
+			++arg;
+		}
+		out = arg;
+		while (!out.empty() && out[out.size() - 1] == ' ') {
+			out.resize(out.size() - 1);
+		}
+	}
+
+	return out;
+}
+
 int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 {
 	if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
-		std::wstring cd_cmd = L"cd";
-		cd_cmd+= cmd + 5;
-		std::wstring prev_dir = _cur_dir;
-		if (!ProcessEventCommand(cd_cmd.c_str()))
-			return FALSE;
+		StackedDir sd;
+		sd.remote = _remote;
+		sd.cur_dir = _cur_dir;
+		sd.cur_dir_absolute = _cur_dir_absolute;
 
-		_dir_stack.emplace_back(prev_dir);
-		return TRUE;
-	}
-
-	if (wcscmp(cmd, L"popd") == 0) {
-		if (!_dir_stack.empty()) {
-			std::wstring prev_dir = _cur_dir, new_dir = _dir_stack.back();
-			_dir_stack.pop_back();
-			wcsncpy(_cur_dir, new_dir.c_str(), ARRAYSIZE(_cur_dir) - 1);
-
-			size_t p = new_dir.find('/');
-			if (p != prev_dir.find('/')
-			  || (p != std::wstring::npos && new_dir.substr(0, p) != prev_dir.substr(0, p))) {
-				_remote.reset();
-				//_cur_dir[p] = 0;
-				//SetDirectory(new_dir.c_str() + p + 1, 0);
-				SetDirectory(L"", 0);
-			}
+		const std::wstring &dir = GetCommandArgument(cmd);
+		if (SetDirectory(dir.empty() ? L"~" : dir.c_str(), 0)) {
+			_dir_stack.emplace_back(sd);
 		}
 
-	} else if (wcsstr(cmd, L"cd ") == cmd) {
-		for (cmd+= 3; *cmd == ' '; ++cmd);
-		SetDirectory(cmd, 0);
+	} else if (wcscmp(cmd, L"popd") == 0) {
+		if (!_dir_stack.empty()) {
 
-	} else if (wcscmp(cmd, L"cd") == 0) {
-		SetDirectory(L"~", 0);
+			auto &sd = _dir_stack.back();
+			if (sd.remote.get() != _remote.get()) {
+				if (sd.remote && sd.remote.use_count() > 1) {
+					// original connection could be used for background download etc
+					_remote = sd.remote->Clone();
+				} else {
+					_remote = sd.remote;
+				}
+			}
+			wcsncpy(_cur_dir, sd.cur_dir.c_str(), ARRAYSIZE(_cur_dir) - 1);
+			_cur_dir_absolute = sd.cur_dir_absolute;
+			_dir_stack.pop_back();
+			UpdatePanelTitle();
+		}
+
+	} else if (wcsstr(cmd, L"cd ") == cmd || wcscmp(cmd, L"cd") == 0) {
+		const std::wstring &dir = GetCommandArgument(cmd);
+		SetDirectory(dir.empty() ? L"~" : dir.c_str(), 0);
 
 	} else if (_remote) try {
 		OpExecute(_remote, CurrentSiteDir(false), Wide2MB(cmd)).Do();

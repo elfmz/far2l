@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <deque>
 #include <map>
 #include <memory>
 #include "Host/Host.h"
@@ -12,10 +13,18 @@ class PluginImpl
 
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH];
 	bool _cur_dir_absolute = false;
-	std::vector<std::wstring> _dir_stack;
-
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
+
+	struct StackedDir
+	{
+		std::shared_ptr<IHost> remote;
+		std::wstring cur_dir;
+		bool cur_dir_absolute;
+	};
+
+	std::deque<StackedDir> _dir_stack;
+
 
 
 	void UpdatePanelTitle();

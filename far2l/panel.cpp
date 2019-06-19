@@ -1438,6 +1438,24 @@ int Panel::GetCurDir(FARString &strCurDir)
 	return (int)strCurDir.GetLength();
 }
 
+int Panel::GetCurDirPluginAware(FARString &strCurDir)
+{
+	if (PanelMode==PLUGIN_PANEL)
+	{
+		HANDLE hPlugin=GetPluginHandle();
+		PluginHandle *ph = (PluginHandle*)hPlugin;
+		OpenPluginInfo Info;
+		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
+		strCurDir = Info.CurDir;
+	}
+	else
+	{
+		strCurDir = Panel::strCurDir;
+	}
+
+	return (int)strCurDir.GetLength();
+}
+
 
 
 BOOL Panel::SetCurDir(const wchar_t *CurDir,int ClosePlugin)

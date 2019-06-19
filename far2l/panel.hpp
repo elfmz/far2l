@@ -164,6 +164,8 @@ class Panel:public ScreenObject
 
 		virtual int GetCurDir(FARString &strCurDir);
 
+		virtual int GetCurDirPluginAware(FARString &strCurDir);
+
 		virtual int GetSelCount() {return 0;};
 		virtual int GetRealSelCount() {return 0;};
 		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fd=nullptr) {return FALSE;};

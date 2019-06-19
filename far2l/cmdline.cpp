@@ -483,8 +483,17 @@ int CommandLine::ProcessKey(int Key)
 
 			ProcessOSAliases(strStr);
 
-			if (!ActivePanel->ProcessPluginEvent(FE_COMMAND,(void *)strStr.CPtr()))
+			if (ActivePanel->ProcessPluginEvent(FE_COMMAND,(void *)strStr.CPtr())) {
+				FARString strCurDirFromPanel;
+				ActivePanel->GetCurDirPluginAware(strCurDirFromPanel);
+				strCurDir = strCurDirFromPanel;
+				Show();
+				ActivePanel->SetTitle();
+
+			} else {
 				CmdExecute(strStr, false, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, false, false, false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
+			}
+
 		}
 		return TRUE;
 		case KEY_CTRLU:

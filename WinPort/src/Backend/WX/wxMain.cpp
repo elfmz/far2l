@@ -260,7 +260,8 @@ private:
 		RP_DEFER,
 		RP_INSTANT
 	} _resize_pending;
-	DWORD _mouse_state, _mouse_qedit_pending;
+	DWORD _mouse_state;
+	bool _mouse_qedit_pending, _mouse_qedit_moved;
 	COORD _mouse_qedit_start, _mouse_qedit_last;
 	
 	int _last_valid_display;
@@ -478,7 +479,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_right_control(false), _last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
-		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _last_valid_display(0),
+		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_pending(false), _mouse_qedit_moved(false), _last_valid_display(0),
 		_refresh_rects_throttle(0)
 {
 	g_winport_con_out.SetBackend(this);
@@ -994,7 +995,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
 	//fprintf(stderr, "WinPortPanel::OnPaint\n"); 
-	if (_mouse_qedit_pending) {
+	if (_mouse_qedit_pending && _mouse_qedit_moved) {
 		SMALL_RECT qedit;
 		qedit.Left = _mouse_qedit_start.X;
 		qedit.Top = _mouse_qedit_start.Y;
@@ -1136,6 +1137,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 		_mouse_qedit_start = _mouse_qedit_last = pos_char;
 		_mouse_qedit_pending = true;
+		_mouse_qedit_moved = false;
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 		
 	} else if (_mouse_qedit_pending) {
@@ -1143,27 +1145,38 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 			DamageAreaBetween(_mouse_qedit_start, pos_char);			
 			_mouse_qedit_last = pos_char;
+			_mouse_qedit_moved = true;
+
 		} else if (event.LeftUp()) {
 			_mouse_qedit_pending = _adhoc_quickedit = false;
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
-			DamageAreaBetween(_mouse_qedit_start, pos_char);			
-			_text2clip.clear();
-			USHORT y1 = _mouse_qedit_start.Y, y2 = pos_char.Y;
-			USHORT x1 = _mouse_qedit_start.X, x2 = pos_char.X;
-			if (y1 > y2) std::swap(y1, y2);
-			if (x1 > x2) std::swap(x1, x2);
+			DamageAreaBetween(_mouse_qedit_start, pos_char);
+			if (_mouse_qedit_moved) {
+				_mouse_qedit_moved = false;
+				_text2clip.clear();
+				USHORT y1 = _mouse_qedit_start.Y, y2 = pos_char.Y;
+				USHORT x1 = _mouse_qedit_start.X, x2 = pos_char.X;
+				if (y1 > y2) std::swap(y1, y2);
+				if (x1 > x2) std::swap(x1, x2);
 
-			COORD pos;
-			for (pos.Y = y1; pos.Y<=y2; ++pos.Y) {
-				if (!_text2clip.empty())
-					_text2clip+= NATIVE_EOLW;
-				for (pos.X = x1; pos.X<=x2; ++pos.X) {
-					CHAR_INFO ch;
-					if (g_winport_con_out.Read(ch, pos))
-						_text2clip+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
+				COORD pos;
+				for (pos.Y = y1; pos.Y<=y2; ++pos.Y) {
+					if (!_text2clip.empty()) {
+						_text2clip+= NATIVE_EOLW;
+					}
+					for (pos.X = x1; pos.X<=x2; ++pos.X) {
+						CHAR_INFO ch;
+						if (g_winport_con_out.Read(ch, pos))
+							_text2clip+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
+					}
+					if (y2 > y1) {
+						while (!_text2clip.empty() && _text2clip[_text2clip.size() - 1] == ' ') {
+							_text2clip.resize(_text2clip.size() - 1);
+						}
+					}
 				}
+				CheckPutText2CLip();
 			}
-			CheckPutText2CLip();
 		}
 	}
 }

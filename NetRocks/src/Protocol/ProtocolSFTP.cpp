@@ -7,7 +7,10 @@
 #include <assert.h>
 #include <string.h>
 #include <utils.h>
+#include <string>
 #include <vector>
+#include <map>
+#include <set>
 #include <deque>
 #include <algorithm>
 #include <libssh/libssh.h>
@@ -115,6 +118,8 @@ struct SFTPConnection
 	size_t max_write_block = 32768; // default value
 
 	std::shared_ptr<ExecutedCommand> executed_command;
+	std::map<std::string, std::string> env_set {{"TERM", "xterm"}};
+	std::set<std::string> env_unset;
 
 	~SFTPConnection()
 	{
@@ -865,6 +870,7 @@ class ExecutedCommand : protected Threaded
 	SFTPChannel _channel;
 	int _kickass[2] {-1, -1};
 	bool _pty = false;
+	bool _succeess = false;
 
 	void OnReadFDIn(const char *buf, size_t len)
 	{
@@ -943,6 +949,23 @@ class ExecutedCommand : protected Threaded
 			cmd.insert(0, "cd ");
 			cmd+= " && ";
 		}
+
+		for (const auto &i : _conn->env_set) {
+			cmd+= "export ";
+			cmd+= i.first;
+			cmd+= "=";
+			std::string val = i.second;
+			QuoteCmdArg(val);
+			cmd+= val;
+			cmd+= " && ";
+		}
+		for (const auto &i : _conn->env_unset) {
+			cmd+= "unset ";
+			cmd+= i;
+			cmd+= " && ";
+		}
+
+
 		cmd+= _command_line;
 
 		int rc = ssh_channel_request_exec(_channel, cmd.c_str());
@@ -997,6 +1020,9 @@ class ExecutedCommand : protected Threaded
 
 			if (ssh_channel_is_eof(_channel)) {
 				int status = ssh_channel_get_exit_status(_channel);
+				if (status == 0) {
+					_succeess = true;
+				}
 				FDScope fd_status(open((_fifo + ".status").c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600));
 				if (fd_status.Valid()) {
 					WriteAll(fd_status, &status, sizeof(status));
@@ -1054,7 +1080,6 @@ class ExecutedCommand : protected Threaded
 
 		rc = ssh_channel_request_pty(_channel);
 		if (rc == SSH_OK) {
-			ssh_channel_request_env(_channel, "TERM", "xterm");
 			_pty = true;
 		}
 
@@ -1080,6 +1105,32 @@ class ExecutedCommand : protected Threaded
 			WaitThread();
 		}
 		CheckedCloseFDPair(_kickass);
+
+		if (_succeess) {
+			std::vector<std::string> parts;
+			StrExplode(parts, _command_line, " ");
+			if (parts.size() > 1) {
+				if (parts[0] == "export") {
+					std::vector<std::string> var_parts;
+					StrExplode(var_parts, parts[1], "=");
+					if (var_parts.size() > 0) {
+						StrTrim(var_parts[0]);
+						if (var_parts.size() > 1) {
+							StrTrim(var_parts[1]);
+							_conn->env_set[var_parts[0]] = var_parts[1];
+						} else {
+							_conn->env_set[var_parts[0]].clear();
+						}
+						_conn->env_unset.erase(var_parts[0]);
+					}
+
+				} else if (parts[0] == "unset") {
+					StrTrim(parts[1]);
+					_conn->env_unset.insert(parts[1]);
+					_conn->env_set.erase(parts[1]);
+				}
+			}
+		}
 	}
 
 };

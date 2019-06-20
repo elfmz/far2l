@@ -666,7 +666,15 @@ static void FakeExec()
 
 int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 {
-	if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
+	if (wcsstr(cmd, L"exit ") == cmd || wcscmp(cmd, L"exit") == 0) {
+		if (GetCommandArgument(cmd) == L"far") {
+			return FALSE;
+		}
+		_remote.reset();
+		_cur_dir[0] = 0;
+		UpdatePanelTitle();
+
+	} else if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
 		StackedDir sd;
 		sd.remote = _remote;
 		sd.cur_dir = _cur_dir;

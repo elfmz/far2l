@@ -213,24 +213,14 @@ void PluginImpl::FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber)
 	PluginPanelItems_Free(PanelItem, ItemsNumber);
 }
 
-static void TokenizePath(std::vector<std::string> &components, const char *path)
+static void TokenizePath(std::vector<std::string> &components, const std::string &path)
 {
-	for (const char *start = path;; ++path ) {
-		if (*path == '/' || !*path) {
-			if (path > start) {
-				components.emplace_back(start, (path - start));
-			}
-			if (!*path) {
-				break;
-			}
-			start = path + 1;
-		}
-	}
+	StrExplode(components, path, "/");
 }
 
 static void TokenizePath(std::vector<std::string> &components, const wchar_t *path)
 {
-	TokenizePath(components, Wide2MB(path).c_str());
+	TokenizePath(components, Wide2MB(path));
 }
 
 static bool PreprocessPathTokens(std::vector<std::string> &components)
@@ -274,7 +264,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 		std::string default_dir = SitesConfig().GetDirectory(prev_components.front());
 		std::vector<std::string> default_components;
-		TokenizePath(default_components, default_dir.c_str());
+		TokenizePath(default_components, default_dir);
 		components.erase(components.begin());
 		components.insert(components.begin(), default_components.begin(), default_components.end());
 		components.insert(components.begin(), prev_components.front());
@@ -310,7 +300,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 			if (components.size() == 1) {
 				std::string default_dir = SitesConfig().GetDirectory(components[0]);
-				TokenizePath(components, default_dir.c_str());
+				TokenizePath(components, default_dir);
 				absolute = !default_dir.empty() && default_dir[0] == '/';
 			}
 

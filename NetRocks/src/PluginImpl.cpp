@@ -669,6 +669,11 @@ static std::wstring GetCommandArgument(const wchar_t *cmd)
 	return out;
 }
 
+static void FakeExec()
+{
+	G.info.FSF->Execute(L"true", EF_NOCMDPRINT);
+}
+
 int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 {
 	if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
@@ -680,6 +685,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 		const std::wstring &dir = GetCommandArgument(cmd);
 		if (SetDirectory(dir.empty() ? L"~" : dir.c_str(), 0)) {
 			_dir_stack.emplace_back(sd);
+			FakeExec();
 		}
 
 	} else if (wcscmp(cmd, L"popd") == 0) {
@@ -698,16 +704,17 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 			_cur_dir_absolute = sd.cur_dir_absolute;
 			_dir_stack.pop_back();
 			UpdatePanelTitle();
+			FakeExec();
 		}
 
 	} else if (wcsstr(cmd, L"cd ") == cmd || wcscmp(cmd, L"cd") == 0) {
 		const std::wstring &dir = GetCommandArgument(cmd);
-		SetDirectory(dir.empty() ? L"~" : dir.c_str(), 0);
+		if (SetDirectory(dir.empty() ? L"~" : dir.c_str(), 0)) {
+			FakeExec();
+		}
 
 	} else if (_remote) try {
 		OpExecute(_remote, CurrentSiteDir(false), Wide2MB(cmd)).Do();
-		G.info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
-		G.info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
 
 	} catch (ProtocolUnsupportedError &) {
 		const wchar_t *msg[] = { G.GetMsgWide(MCommandsNotSupportedTitle), G.GetMsgWide(MCommandsNotSupportedText), G.GetMsgWide(MOK)};
@@ -724,6 +731,8 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 	G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
 	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 	G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
+	G.info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
+	G.info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
 
 	return TRUE;
 }

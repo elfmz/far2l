@@ -113,3 +113,25 @@ template <class CharT>
 		}
 	}
 }
+
+template <class CharT>
+	void StrTrimRight(std::basic_string<CharT> &str, const CharT *spaces = " \t")
+{
+	while (!str.empty() && strchr(spaces, str[str.size() - 1]) != NULL) {
+		str.resize(str.size() - 1);
+	}
+}
+template <class CharT>
+	void StrTrimLeft(std::basic_string<CharT> &str, const CharT *spaces = " \t")
+{
+	while (!str.empty() && strchr(spaces, str[0]) != NULL) {
+		str.erase(0, 1);
+	}
+}
+
+template <class CharT>
+	void StrTrim(std::basic_string<CharT> &str, const CharT *spaces = " \t")
+{
+	StrTrimRight(str, spaces);
+	StrTrimLeft(str, spaces);
+}

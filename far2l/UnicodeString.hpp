@@ -221,6 +221,9 @@ class UnicodeString
 
 		bool Contains(wchar_t Ch, size_t nStartPos=0) const { return !wcschr(m_pData->GetData()+nStartPos,Ch) ? false : true; }
 		bool Contains(const wchar_t *lpwszFind, size_t nStartPos=0) const { return !wcsstr(m_pData->GetData()+nStartPos,lpwszFind) ? false : true; }
+
+		bool Begins(wchar_t Ch) const { return m_pData->GetLength() > 0 && *m_pData->GetData() == Ch; }
+		bool Begins(const wchar_t *lpwszFind) const { return m_pData->GetLength() > 0 && wcsncmp(m_pData->GetData(), lpwszFind, wcslen(lpwszFind)) == 0; }
 };
 
 typedef UnicodeString FARString;

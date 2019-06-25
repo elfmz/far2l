@@ -1147,13 +1147,43 @@ bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, const wcha
 	_ALGO(CleverSysLog clv(L"FindFiles::GetPluginFile()"));
 	ARCLIST ArcItem;
 	itd.GetArcListItem(ArcIndex, ArcItem);
+
 	OpenPluginInfo Info;
 	CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
-	FARString strSaveDir = NullToEmpty(Info.CurDir);
-	AddEndSlash(strSaveDir);
-	CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,L"/",OPM_SILENT);
-	//SetPluginDirectory(ArcList[ArcIndex]->strRootPath,hPlugin);
-	SetPluginDirectory(FindData.strFileName,ArcItem.hPlugin);
+
+	std::vector<std::wstring> CurDirComponents, FileComponents;
+	StrExplode(CurDirComponents, std::wstring(Info.CurDir ? Info.CurDir : L""), L"/");
+	StrExplode(FileComponents, std::wstring((const wchar_t *)FindData.strFileName), L"/");
+
+
+	size_t CommonComponents = 0;
+	for (CommonComponents = 0; (CommonComponents < CurDirComponents.size() && CommonComponents < FileComponents.size()
+				&& CurDirComponents[CommonComponents] == FileComponents[CommonComponents]);
+				++CommonComponents);
+
+	for (size_t i = CurDirComponents.size(); i > CommonComponents; --i) {
+		if (!CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"..", OPM_SILENT)) {
+			// oops, try to recover initial cur dir and bail out
+			for (;i < CurDirComponents.size(); ++i) {
+				CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, CurDirComponents[i].c_str(), OPM_SILENT);
+			}
+			return false;
+		}
+	}
+
+	for (size_t i = CommonComponents; i + 1 < FileComponents.size(); ++i) {
+		if (!CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, FileComponents[i].c_str(), OPM_SILENT)) {
+			// oops, try to recover initial cur dir and bail out
+			for (size_t j = CommonComponents; j < i; ++j) {
+				CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"..", OPM_SILENT);
+			}
+			for (size_t j = CommonComponents; j < CurDirComponents.size(); ++j) {
+				CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, CurDirComponents[j].c_str(), OPM_SILENT);
+			}
+			return false;
+		}
+	}
+
 	const wchar_t *lpFileNameToFind = PointToName(FindData.strFileName);
 	PluginPanelItem *pItems;
 	int nItemsNumber;
@@ -1176,8 +1206,14 @@ bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, const wcha
 		CtrlObject->Plugins.FreeFindData(ArcItem.hPlugin,pItems,nItemsNumber);
 	}
 
-	CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,L"/",OPM_SILENT);
-	SetPluginDirectory(strSaveDir,ArcItem.hPlugin);
+	for (size_t i = CommonComponents; i + 1 < FileComponents.size(); ++i) {
+		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"..", OPM_SILENT);
+	}
+
+	for (size_t i = CommonComponents; i < CurDirComponents.size(); ++i) {
+		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, CurDirComponents[i].c_str(), OPM_SILENT);
+	}
+
 	return nResult;
 }
 

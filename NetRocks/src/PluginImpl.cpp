@@ -84,6 +84,8 @@ PluginImpl::PluginImpl(const wchar_t *path)
 		if (!_remote) {
 			throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
 		}
+
+		_wea_state = std::make_shared<WhatOnErrorState>();
 		
 		wcsncpy(_cur_dir, StrMB2Wide(_remote->SiteName()).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 		if (!directory.empty()) {
@@ -193,7 +195,7 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 			}
 
 		} else {
-			OpEnumDirectory(OpMode, _remote, CurrentSiteDir(false), ppis).Do();
+			OpEnumDirectory(OpMode, _remote, CurrentSiteDir(false), ppis, _wea_state).Do();
 			//_remote->DirectoryEnum(CurrentSiteDir(false), il, OpMode);
 		}
 
@@ -297,6 +299,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 				fprintf(stderr, "NetRocks::SetDirectory - can't connect to: '%s'\n", components[0].c_str());
 				return FALSE;
 			}
+			_wea_state = std::make_shared<WhatOnErrorState>();
 
 			if (components.size() == 1) {
 				std::string default_dir = SitesConfig().GetDirectory(components[0]);
@@ -328,7 +331,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 	fprintf(stderr, "NetRocks::SetDirectory - dir: '%s'\n", dir.c_str());
 	if (!dir.empty()) {
 		mode_t mode = 0;
-		if (!OpGetMode(OpMode, _remote, dir).Do(mode)) {
+		if (!OpGetMode(OpMode, _remote, dir, _wea_state).Do(mode)) {
 			fprintf(stderr, "NetRocks::SetDirectory - can't get mode: '%s'\n", dir.c_str());
 			return FALSE; 
 		}

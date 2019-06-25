@@ -12,6 +12,6 @@ class OpEnumDirectory : protected OpBase
 	virtual void Process();
 
 public:
-	OpEnumDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, PluginPanelItems &result);
+	OpEnumDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, PluginPanelItems &result, std::shared_ptr<WhatOnErrorState> &wea_state);
 	bool Do();
 };

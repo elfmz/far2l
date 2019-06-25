@@ -532,7 +532,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			}
 
 			indicted = nullptr;
-			_wea_state.ResetAutoRetryDelay();
+			_wea_state->ResetAutoRetryDelay();
 
 			ProgressStateUpdate psu(_state);
 			_state.stats.file_complete = file_complete;
@@ -553,7 +553,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 			throw;
 		}
 
-		switch (_wea_state.Query(_state, (_direction == XD_UPLOAD) ? WEK_UPLOAD
+		switch (_wea_state->Query(_state, (_direction == XD_UPLOAD) ? WEK_UPLOAD
 				: ((_direction == XD_DOWNLOAD) ? WEK_DOWNLOAD : WEK_CROSSLOAD) ,
 				ex.what(), path_src, indicted->SiteName())) {
 

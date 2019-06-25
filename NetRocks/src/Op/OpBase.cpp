@@ -4,8 +4,9 @@
 #include "../Globals.h"
 #include "../lng.h"
 
-OpBase::OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir)
+OpBase::OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir, std::shared_ptr<WhatOnErrorState> wea_state)
 	:
+	_wea_state(wea_state),
 	_op_mode(op_mode),
 	_base_host(base_host),
 	_base_dir(base_dir)
@@ -123,7 +124,7 @@ bool OpBase::WaitThreadBeforeShowProgress()
 	}
 
 	// avoid annoying poping up of progress dialog while reading error dialog
-	while (_wea_state.IsShowingUIRightNow()) {
+	while (_wea_state->IsShowingUIRightNow()) {
 		if (WaitThread(100)) {
 			return true;
 		}

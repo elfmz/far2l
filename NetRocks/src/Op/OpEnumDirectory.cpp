@@ -4,9 +4,9 @@
 #include "../UI/Activities/SimpleOperationProgress.h"
 #include "../PooledStrings.h"
 
-OpEnumDirectory::OpEnumDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, PluginPanelItems &result)
+OpEnumDirectory::OpEnumDirectory(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir, PluginPanelItems &result, std::shared_ptr<WhatOnErrorState> &wea_state)
 	:
-	OpBase(op_mode, base_host, base_dir),
+	OpBase(op_mode, base_host, base_dir, wea_state),
 	_result(result)
 {
 	_initial_result_count = _result.count;

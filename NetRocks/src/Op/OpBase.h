@@ -14,13 +14,13 @@ class OpBase : protected Threaded, protected IAbortableOperationsHost
 {
 	OpBase(const OpBase &) = delete;
 protected:
+	std::shared_ptr<WhatOnErrorState> _wea_state;
 	int _notify_title_lng = -1;
 	int _op_mode;
 	std::shared_ptr<IHost> _base_host;
 	std::string _base_dir;
 
 	ProgressState _state;
-	WhatOnErrorState _wea_state;
 
 	bool WaitThread(unsigned int msec = (unsigned int)-1);
 
@@ -34,7 +34,7 @@ protected:
 
 	void SetNotifyTitle(int title_lng = -1);
 public:
-	OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir);
+	OpBase(int op_mode, std::shared_ptr<IHost> base_host, const std::string &base_dir, std::shared_ptr<WhatOnErrorState> wea_state = std::make_shared<WhatOnErrorState>());
 	~OpBase();
 
 };

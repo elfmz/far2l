@@ -6,7 +6,7 @@
 
 Enumer::Enumer(Path2FileInformation &result, std::shared_ptr<IHost> &host, const std::string &dir,
 		const struct PluginPanelItem *items, int items_count, bool no_special_files,
-		ProgressState &state, WhatOnErrorState &wea_state)
+		ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state)
 	:
 	_result(result), _host(host), _no_special_files(no_special_files), _state(state), _wea_state(wea_state)
 {

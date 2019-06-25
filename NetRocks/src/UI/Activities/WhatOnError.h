@@ -24,6 +24,7 @@ class WhatOnErrorState
 	std::map<std::string, WhatOnErrorAction> _default_weas[WEKS_COUNT];
 	unsigned int _auto_retry_delay = 0;
 	std::atomic<int> _showing_ui = {};
+	std::mutex _mtx;
 
 	public:
 	WhatOnErrorAction Query(ProgressState &progress_state, WhatOnErrorKind wek, const std::string &error, const std::string &object, const std::string &site);
@@ -36,19 +37,19 @@ void WhatOnErrorWrap_DummyOnRetry();
 
 //void (IT::*METH)(...)
 template <WhatOnErrorKind WEK, class FN, class FN_ON_RETRY = void(*)()>
-	static void WhatOnErrorWrap(WhatOnErrorState &wea_state,
+	static void WhatOnErrorWrap(std::shared_ptr<WhatOnErrorState> &wea_state,
 		ProgressState &progress_state, IHost *indicted, const std::string &object, FN fn, FN_ON_RETRY fn_on_retry = WhatOnErrorWrap_DummyOnRetry)
 {
 	for (;;) try {
 		fn();
-		wea_state.ResetAutoRetryDelay();
+		wea_state->ResetAutoRetryDelay();
 		break;
 
 	} catch (AbortError &) {
 		throw;
 
 	} catch (std::exception &ex) {
-		switch (wea_state.Query(progress_state, WEK, ex.what(), object, indicted->SiteName())) {
+		switch (wea_state->Query(progress_state, WEK, ex.what(), object, indicted->SiteName())) {
 			case WEA_SKIP: {
 				std::unique_lock<std::mutex> locker(progress_state.mtx);
 				progress_state.stats.count_skips++;

@@ -1,9 +1,9 @@
 #include "OpGetMode.h"
 #include "../UI/Activities/SimpleOperationProgress.h"
 
-OpGetMode::OpGetMode(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &path)
+OpGetMode::OpGetMode(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &path, std::shared_ptr<WhatOnErrorState> &wea_state)
 	:
-	OpBase(op_mode, base_host, path)
+	OpBase(op_mode, base_host, path, wea_state)
 {
 }
 

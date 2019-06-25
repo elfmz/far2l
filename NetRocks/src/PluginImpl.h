@@ -5,6 +5,7 @@
 #include <memory>
 #include "Host/Host.h"
 #include "UI/Defs.h"
+#include "UI/Activities/WhatOnError.h"
 #include "BackgroundTasks.h"
 
 class PluginImpl
@@ -24,6 +25,7 @@ class PluginImpl
 	};
 
 	std::deque<StackedDir> _dir_stack;
+	std::shared_ptr<WhatOnErrorState> _wea_state = std::make_shared<WhatOnErrorState>();
 
 
 

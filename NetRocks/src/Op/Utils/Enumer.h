@@ -15,7 +15,7 @@ class Enumer
 	std::set<std::string> _items;
 	bool _no_special_files;
 	ProgressState &_state;
-	WhatOnErrorState &_wea_state;
+	std::shared_ptr<WhatOnErrorState> _wea_state;
 	unsigned int _scan_depth_limit;
 
 	void GetSubitems(const std::string &path, Path2FileInformation &subitems);
@@ -25,7 +25,7 @@ class Enumer
 public:
 	Enumer(Path2FileInformation &result, std::shared_ptr<IHost> &host, const std::string &dir,
 		const struct PluginPanelItem *items, int items_count, bool no_special_files,
-		ProgressState &state, WhatOnErrorState &wea_state);
+		ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state);
 
 	inline const std::set<std::string> &Items() const { return _items; }
 	inline std::set<std::string> &Items() { return _items; }

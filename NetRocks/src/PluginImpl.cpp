@@ -252,6 +252,45 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 		return FALSE;
 	}
 
+	StackedDir sd;
+	StackedDirCapture(sd);
+
+	if (*Dir == L'/') {
+		do { ++Dir; } while (*Dir == L'/');
+
+		const wchar_t *slash = wcschr(Dir, L'/');
+		size_t site_len = slash ? slash - Dir : wcslen(Dir);
+
+		if (_remote && memcmp(_cur_dir, Dir, site_len * sizeof(wchar_t)) == 0
+			&& (_cur_dir[site_len] == '/' || _cur_dir[site_len] == 0)) {
+
+			if (!SetDirectoryInternal(L"~", OpMode)) {
+				return FALSE;
+			}
+
+		} else {
+			_remote.reset();
+			_cur_dir[0] = 0;
+
+			if (!SetDirectoryInternal(std::wstring(Dir, site_len).c_str(), OpMode)) {
+				StackedDirApply(sd);
+				return FALSE;
+			}
+		}
+
+		for (Dir+= site_len; *Dir == L'/'; ++Dir);
+	}
+
+	if (*Dir && !SetDirectoryInternal(Dir, OpMode)) {
+		StackedDirApply(sd);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
+{
 	bool absolute;
 	std::vector<std::string> components, prev_components;
 	TokenizePath(prev_components, _cur_dir);
@@ -573,7 +612,7 @@ void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 	const bool connect_now = sce.Edit();
 	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 	if (connect_now) {
-		SetDirectory(StrMB2Wide(sce.DisplayName()).c_str(), 0);
+		SetDirectoryInternal(StrMB2Wide(sce.DisplayName()).c_str(), 0);
 		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 	}
 }
@@ -667,6 +706,27 @@ static void FakeExec()
 	G.info.FSF->Execute(L"true", EF_NOCMDPRINT);
 }
 
+void PluginImpl::StackedDirCapture(StackedDir &sd)
+{
+	sd.remote = _remote;
+	sd.cur_dir = _cur_dir;
+	sd.cur_dir_absolute = _cur_dir_absolute;
+}
+
+void PluginImpl::StackedDirApply(StackedDir &sd)
+{
+	if (sd.remote.get() != _remote.get()) {
+		if (sd.remote && sd.remote.use_count() > 1) {
+			// original connection could be used for background download etc
+			_remote = sd.remote->Clone();
+		} else {
+			_remote = sd.remote;
+		}
+	}
+	wcsncpy(_cur_dir, sd.cur_dir.c_str(), ARRAYSIZE(_cur_dir) - 1);
+	_cur_dir_absolute = sd.cur_dir_absolute;
+}
+
 int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 {
 	if (wcsstr(cmd, L"exit ") == cmd || wcscmp(cmd, L"exit") == 0) {
@@ -679,30 +739,20 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 
 	} else if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
 		StackedDir sd;
+		StackedDirCapture(sd);
 		sd.remote = _remote;
 		sd.cur_dir = _cur_dir;
 		sd.cur_dir_absolute = _cur_dir_absolute;
 
 		const std::wstring &dir = GetCommandArgument(cmd);
-		if (SetDirectory(dir.empty() ? L"~" : dir.c_str(), 0)) {
+		if (SetDirectoryInternal(dir.empty() ? L"~" : dir.c_str(), 0)) {
 			_dir_stack.emplace_back(sd);
 			FakeExec();
 		}
 
 	} else if (wcscmp(cmd, L"popd") == 0) {
 		if (!_dir_stack.empty()) {
-
-			auto &sd = _dir_stack.back();
-			if (sd.remote.get() != _remote.get()) {
-				if (sd.remote && sd.remote.use_count() > 1) {
-					// original connection could be used for background download etc
-					_remote = sd.remote->Clone();
-				} else {
-					_remote = sd.remote;
-				}
-			}
-			wcsncpy(_cur_dir, sd.cur_dir.c_str(), ARRAYSIZE(_cur_dir) - 1);
-			_cur_dir_absolute = sd.cur_dir_absolute;
+			StackedDirApply(_dir_stack.back());
 			_dir_stack.pop_back();
 			UpdatePanelTitle();
 			FakeExec();
@@ -710,7 +760,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 
 	} else if (wcsstr(cmd, L"cd ") == cmd || wcscmp(cmd, L"cd") == 0) {
 		const std::wstring &dir = GetCommandArgument(cmd);
-		if (SetDirectory(dir.empty() ? L"~" : dir.c_str(), 0)) {
+		if (SetDirectoryInternal(dir.empty() ? L"~" : dir.c_str(), 0)) {
 			FakeExec();
 		}
 

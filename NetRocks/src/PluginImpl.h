@@ -27,7 +27,8 @@ class PluginImpl
 	std::deque<StackedDir> _dir_stack;
 	std::shared_ptr<WhatOnErrorState> _wea_state = std::make_shared<WhatOnErrorState>();
 
-
+	void StackedDirCapture(StackedDir &sd);
+	void StackedDirApply(StackedDir &sd);
 
 	void UpdatePanelTitle();
 	bool ValidateConnection();
@@ -39,7 +40,7 @@ class PluginImpl
 	BackgroundTaskStatus StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
 		int items_count, XferKind kind, XferDirection direction);
-
+	int SetDirectoryInternal(const wchar_t *Dir, int OpMode);
 public:
 	PluginImpl(const wchar_t *path = nullptr);
 	virtual ~PluginImpl();

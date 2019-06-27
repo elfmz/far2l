@@ -11,6 +11,7 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 #include <wx/clipbrd.h>
+#include <wx/debug.h>
 #include "ExclusiveHotkeys.h"
 #include <set>
 #include <fstream>
@@ -71,10 +72,20 @@ private:
 	int(*_appmain)(int argc, char **argv);
 } *g_winport_app_thread = NULL;
 
+static void WinPortWxAssertHandler(const wxString& file,
+		int line, const wxString& func,
+		const wxString& cond, const wxString& msg)
+{
+	fprintf(stderr, "WinPortWxAssertHandler: file='%ls' line=%d func='%ls' cond='%ls' msg='%ls'\n",
+			file.wc_str(), line, func.wc_str(), cond.wc_str(), msg.wc_str());
+}
+
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
 	if (!wxInitialize())
 		return false;
+
+	wxSetAssertHandler(WinPortWxAssertHandler);
 
 	const char *gdk_backend = getenv("GDK_BACKEND");
 	if (gdk_backend && strcmp(gdk_backend, "broadway")==0)

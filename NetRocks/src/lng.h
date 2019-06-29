@@ -83,6 +83,7 @@ enum LanguageID
   MBackground,
   MPause,
   MResume,
+  MErrorActionReset,
 
   MProceedCopyDownload,
   MProceedCopyUpload,

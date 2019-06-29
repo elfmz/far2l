@@ -110,7 +110,6 @@ WhatOnErrorAction WhatOnErrorState::Query(ProgressState &progress_state, WhatOnE
 
 	if (wea != WEA_ASK) {
 		if (wea == WEA_RETRY) {
-			locker.unlock();
 			for (unsigned int sleep_usec = _auto_retry_delay * 1000000; sleep_usec; ) {
 				unsigned int sleep_usec_portion = (sleep_usec > 100000) ? 100000 : sleep_usec;
 				usleep(sleep_usec_portion);
@@ -124,19 +123,20 @@ WhatOnErrorAction WhatOnErrorState::Query(ProgressState &progress_state, WhatOnE
 				++_auto_retry_delay;
 			}
 		}
-
 		return wea;
 	}
+
 
 
 
 	++_showing_ui;
 	auto out = WhatOnError(wek, error, object, site).Ask(wea);
 	--_showing_ui;
-
 	locker.lock();
 	_default_weas[wek][error] = wea;
-
+	if (wea != WEA_ASK) {
+		_has_any_autoaction = true;
+	}
 	return out;
 }
 
@@ -144,6 +144,21 @@ void WhatOnErrorState::ResetAutoRetryDelay()
 {
 	_auto_retry_delay = 0;
 }
+
+bool WhatOnErrorState::HasAnyAutoAction() const
+{
+	return _has_any_autoaction;
+}
+
+void WhatOnErrorState::ResetAutoActions()
+{
+	std::unique_lock<std::mutex> locker(_mtx);
+	for (auto &wea : _default_weas) {
+		wea.clear();
+	}
+	_has_any_autoaction = false;
+}
+
 
 void WhatOnErrorWrap_DummyOnRetry()
 {

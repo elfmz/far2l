@@ -195,14 +195,14 @@ void SiteConnectionEditor::UpdatePerProtocolState(bool reset_port)
 		if (reset_port && pi->default_port != -1) {
 			LongLongToDialogControl(_i_port, pi->default_port);
 		}
-		SendDlgMessage(DM_SHOWITEM, _i_port, pi->default_port != -1);
-		SendDlgMessage(DM_SHOWITEM, _i_port_text, pi->default_port != -1);
-		SendDlgMessage(DM_SHOWITEM, _i_login_mode, pi->support_creds);
-		SendDlgMessage(DM_SHOWITEM, _i_login_mode_text, pi->support_creds);
-		SendDlgMessage(DM_SHOWITEM, _i_username, pi->support_creds);
-		SendDlgMessage(DM_SHOWITEM, _i_username_text, pi->support_creds);
-		SendDlgMessage(DM_SHOWITEM, _i_password, pi->support_creds);
-		SendDlgMessage(DM_SHOWITEM, _i_password_text, pi->support_creds);
+		SetVisibleDialogControl(_i_port, pi->default_port != -1);
+		SetVisibleDialogControl(_i_port_text, pi->default_port != -1);
+		SetVisibleDialogControl(_i_login_mode, pi->support_creds);
+		SetVisibleDialogControl(_i_login_mode_text, pi->support_creds);
+		SetVisibleDialogControl(_i_username, pi->support_creds);
+		SetVisibleDialogControl(_i_username_text, pi->support_creds);
+		SetVisibleDialogControl(_i_password, pi->support_creds);
+		SetVisibleDialogControl(_i_password_text, pi->support_creds);
 	}
 	--_autogen_pending;
 }

@@ -740,9 +740,6 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 	} else if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
 		StackedDir sd;
 		StackedDirCapture(sd);
-		sd.remote = _remote;
-		sd.cur_dir = _cur_dir;
-		sd.cur_dir_absolute = _cur_dir_absolute;
 
 		const std::wstring &dir = GetCommandArgument(cmd);
 		if (SetDirectoryInternal(dir.empty() ? L"~" : dir.c_str(), 0)) {

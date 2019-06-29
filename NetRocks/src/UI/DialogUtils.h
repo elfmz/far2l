@@ -79,6 +79,7 @@ protected:
 	void SetFocusedDialogControl(int ctl = -1);
 
 	void SetEnabledDialogControl(int ctl, bool en = true);
+	void SetVisibleDialogControl(int ctl, bool vis = true);
 	void SetCheckedDialogControl(int ctl, bool checked = true);
 	bool IsCheckedDialogControl(int ctl);
 

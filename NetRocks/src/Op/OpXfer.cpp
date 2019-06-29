@@ -79,7 +79,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	}
 
 	if (!WaitThreadBeforeShowProgress()) {
-		XferProgress p(_kind, _direction, _dst_dir, _state);
+		XferProgress p(_kind, _direction, _dst_dir, _state, _wea_state);
 		p.Show(false);
 	}
 }
@@ -127,7 +127,7 @@ std::string OpXfer::GetInformation()
 
 void OpXfer::Show()
 {
-	XferProgress p(_kind, _direction, _dst_dir, _state);
+	XferProgress p(_kind, _direction, _dst_dir, _state, _wea_state);
 	p.Show(true);
 }
 

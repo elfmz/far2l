@@ -215,18 +215,18 @@ void ComplexOperationProgress::OnIdle()
 		SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, 0);
 	}
 
+	const bool has_any_auto_action = _wea_state->HasAnyAutoAction();
+	if (_has_any_auto_action != has_any_auto_action) {
+		_has_any_auto_action = has_any_auto_action;
+		SetVisibleDialogControl(_i_erraction_reset, _has_any_auto_action);
+	}
+
 	if (_finished == 1) {
 		_finished = 2;
 		Close();
 
 	} else if (!paused) {
 		UpdateTimes();
-	}
-
-	const bool has_any_auto_action = _wea_state->HasAnyAutoAction();
-	if (_has_any_auto_action != has_any_auto_action) {
-		_has_any_auto_action = has_any_auto_action;
-		SetVisibleDialogControl(_i_erraction_reset, _has_any_auto_action);
 	}
 }
 

@@ -1,12 +1,15 @@
 #pragma once
 #include <string>
+#include <memory>
 #include <windows.h>
+#include "WhatOnError.h"
 #include "../DialogUtils.h"
 #include "../Defs.h"
 
 class ComplexOperationProgress : protected BaseDialog
 {
 	ProgressState &_state;
+	std::shared_ptr<WhatOnErrorState> _wea_state;
 	ProgressStateStats _last_stats;
 	std::string _last_path;
 	int _finished = 0;
@@ -38,10 +41,12 @@ protected:
 	int _i_speed_average = -1;
 
 	int _i_errstats_separator = -1;
+	int _i_erraction_reset = -1;
 
 	int _i_background = -1, _i_pause_resume = -1, _i_cancel = -1;
 
 	bool _errstats_colored = false;
+	bool _has_any_auto_action = false;
 
 	std::string _speed_current_label;
 
@@ -56,19 +61,19 @@ protected:
 		int i_spent_ctl, int i_remain_ctl, int i_speed_lbl_ctl = -1, int i_speed_cur_ctl = -1, int i_speed_avg_ctl = -1);
 
 public:
-	ComplexOperationProgress(const std::string &path, ProgressState &state, int title_lng, bool show_file_size_progress, bool allow_background);
+	ComplexOperationProgress(const std::string &path, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state, int title_lng, bool show_file_size_progress, bool allow_background);
 	void Show();
 };
 
 class XferProgress : public ComplexOperationProgress
 {
 public:
-	XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state);
+	XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state);
 	void Show(bool escape_to_background);
 };
 
 class RemoveProgress : public ComplexOperationProgress
 {
 public:
-	RemoveProgress(const std::string &site_dir, ProgressState &state);
+	RemoveProgress(const std::string &site_dir, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state);
 };

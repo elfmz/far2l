@@ -24,6 +24,7 @@ class WhatOnErrorState
 	std::map<std::string, WhatOnErrorAction> _default_weas[WEKS_COUNT];
 	unsigned int _auto_retry_delay = 0;
 	std::atomic<int> _showing_ui = {};
+	std::atomic<bool> _has_any_autoaction = {};
 	std::mutex _mtx;
 
 	public:
@@ -31,6 +32,9 @@ class WhatOnErrorState
 	void ResetAutoRetryDelay();
 
 	bool IsShowingUIRightNow() const { return _showing_ui != 0; };
+
+	bool HasAnyAutoAction() const;
+	void ResetAutoActions();
 };
 
 void WhatOnErrorWrap_DummyOnRetry();

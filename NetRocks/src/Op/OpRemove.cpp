@@ -29,7 +29,7 @@ bool OpRemove::Do()
 	}
 
 	if (!WaitThreadBeforeShowProgress()) {
-		RemoveProgress p(_base_dir, _state);
+		RemoveProgress p(_base_dir, _state, _wea_state);
 		p.Show();
 		WaitThread();
 	}

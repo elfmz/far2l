@@ -303,6 +303,14 @@ void BaseDialog::SetEnabledDialogControl(int ctl, bool en)
 	SendDlgMessage(DM_ENABLE, ctl, en ? TRUE : FALSE);
 }
 
+void BaseDialog::SetVisibleDialogControl(int ctl, bool vis)
+{
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
+	SendDlgMessage(DM_SHOWITEM, ctl, vis ? TRUE : FALSE);
+}
+
 bool BaseDialog::IsCheckedDialogControl(int ctl)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())

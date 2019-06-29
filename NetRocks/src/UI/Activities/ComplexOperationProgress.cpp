@@ -20,13 +20,13 @@
 | Total time         SPENT:   ###:##.##  REMAIN:   ###:##.## |
 | Speed (?bps)     CURRENT:   [TEXT   ]  AVERAGE:  [TEXT   ] |
 |------------------------------------------------------------|
-| [    &Background    ]    [    &Pause    ]  [   &Cancel   ] |
+| [&Background]    [&Pause]     [&Ask on error]    [&Cancel] |
  =============================================================
   5              20   25   30             45 48            60
 */
 
-ComplexOperationProgress::ComplexOperationProgress(const std::string &path, ProgressState &state, int title_lng, bool show_file_size_progress, bool allow_background)
-	: _state(state)
+ComplexOperationProgress::ComplexOperationProgress(const std::string &path, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state, int title_lng, bool show_file_size_progress, bool allow_background)
+	: _state(state), _wea_state(wea_state)
 {
 	_di.Add(DI_DOUBLEBOX, 3, 1, 64, show_file_size_progress ? 13 : 12, 0, title_lng);
 
@@ -90,7 +90,8 @@ ComplexOperationProgress::ComplexOperationProgress(const std::string &path, Prog
 		_i_background = _di.AddAtLine(DI_BUTTON, 5,25, DIF_CENTERGROUP, MBackground);
 	}
 	_i_pause_resume = _di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, _state.paused ? MResume : MPause);
-	_i_cancel = _di.AddAtLine(DI_BUTTON, 48,60, DIF_CENTERGROUP, MCancel);
+	_i_erraction_reset = _di.AddAtLine(DI_BUTTON, 46,54, DIF_CENTERGROUP, MErrorActionReset);
+	_i_cancel = _di.AddAtLine(DI_BUTTON, 55,60, DIF_CENTERGROUP, MCancel);
 
 	//SetFocusedDialogControl();
 	SetDefaultDialogControl(_i_pause_resume);
@@ -114,6 +115,9 @@ void ComplexOperationProgress::Show()
 			}
 			TextToDialogControl(_i_pause_resume, paused ? MResume : MPause);
 
+		} else if (r == _i_erraction_reset) {
+			_wea_state->ResetAutoActions();
+
 		} else {
 //			fprintf(stderr, "r=%d\n", r);
 			AbortOperationRequest(_state);
@@ -124,9 +128,14 @@ void ComplexOperationProgress::Show()
 LONG_PTR ComplexOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 {
 	//fprintf(stderr, "%x %x\n", msg, param1);
-	if (msg == DN_ENTERIDLE) {
-		OnIdle();
-
+	switch (msg) {
+		case DN_INITDIALOG:
+			_has_any_auto_action = _wea_state->HasAnyAutoAction();
+			SetVisibleDialogControl(_i_erraction_reset, _has_any_auto_action);
+		break;
+		case DN_ENTERIDLE:
+			OnIdle();
+		break;
 	}
 	
 	return BaseDialog::DlgProc(msg, param1, param2);
@@ -213,6 +222,12 @@ void ComplexOperationProgress::OnIdle()
 	} else if (!paused) {
 		UpdateTimes();
 	}
+
+	const bool has_any_auto_action = _wea_state->HasAnyAutoAction();
+	if (_has_any_auto_action != has_any_auto_action) {
+		_has_any_auto_action = has_any_auto_action;
+		SetVisibleDialogControl(_i_erraction_reset, _has_any_auto_action);
+	}
 }
 
 void ComplexOperationProgress::UpdateTimes()
@@ -287,8 +302,8 @@ void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state)
-	: ComplexOperationProgress(destination, state,
+XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state)
+	: ComplexOperationProgress(destination, state, wea_state,
 	(xk == XK_RENAME) ? MXferRenameTitle : ((xk == XK_COPY)
 		? ((xd == XD_UPLOAD) ? MXferCopyUploadTitle : ((xd == XD_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle))
 		: ((xd == XD_UPLOAD) ? MXferMoveUploadTitle : ((xd == XD_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle))),
@@ -303,8 +318,8 @@ void XferProgress::Show(bool escape_to_background)
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RemoveProgress::RemoveProgress(const std::string &site_dir, ProgressState &state)
-	: ComplexOperationProgress(site_dir, state, MRemoveTitle, false, false)
+RemoveProgress::RemoveProgress(const std::string &site_dir, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state)
+	: ComplexOperationProgress(site_dir, state, wea_state, MRemoveTitle, false, false)
 {
 }
 

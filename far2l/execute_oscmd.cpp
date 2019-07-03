@@ -65,11 +65,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 #include <wordexp.h>
-#include <sys/wait.h>
 
 std::string resolve_alias(std::string str)
 {
-    std::string data;
+    std::string result;
     FILE* stream;
     const int max_buffer = 256;
     char buffer[max_buffer];
@@ -80,12 +79,12 @@ std::string resolve_alias(std::string str)
     stream = popen(command, "r");
     if (stream) {
 	while (fgets(buffer, max_buffer, stream) != NULL) {
-	    data.append(buffer);
+	    result.append(buffer);
 	}
 	pclose(stream);
     }
-    data.erase(data.find_last_not_of(" \n\r\t") + 1);
-    return data;
+    result.erase(result.find_last_not_of(" \n\r\t") + 1);
+    return result;
 }
 // explode cmdline to argv[] array
 //

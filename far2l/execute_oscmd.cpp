@@ -67,80 +67,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wordexp.h>
 #include <sys/wait.h>
 
-int ipopen(FILE** stdout_handle, const char* command) {
-	int out[2];
-	int pid = -1;
-	int rc;
-
-	rc = pipe(out);
-	if (rc<0) {
-		return pid;
-	}
-
-	pid = fork();
-	if (pid > 0) { /* parent */
-		close(out[1]);
-		*stdout_handle = fdopen(out[0], "r");
-		return pid;
-	} else if (pid == 0) { /* child */
-		close(out[0]);
-		if (out[1] != STDOUT_FILENO) {
-			(void)dup2(out[1], STDOUT_FILENO);
-			(void)close(out[1]);
-		}
-
-		execl( "/bin/bash", "/bin/bash", "-i", "-c", command, NULL );
-		_exit(1);
-	} else {
-		close(out[0]);
-		close(out[1]);
-	}
-
-	return pid;
-}
-
-int ipclose(int pid, FILE* stdout_handle)
-{
-	int status;
-	pid_t tmp_pid;
-	fclose(stdout_handle);
-	do
-	{
-		tmp_pid = waitpid(pid, &status, 0);
-	} while (tmp_pid == -1 && errno == EINTR);
-
-	return status;
-}
-
 std::string resolve_alias(std::string str)
 {
     std::string data;
     FILE* stream;
-    int pid;
     const int max_buffer = 256;
     char buffer[max_buffer];
     char command[max_buffer];
 
-    sprintf(command, "alias %s | grep -Po \"(?<=alias %s=\').*(?=\')\"", str.c_str(), str.c_str());
+    sprintf(command, "bash -i -c \"alias %s | grep -Po \\\"(?<=alias %s=\').*(?=\')\\\"\"", str.c_str(), str.c_str());
 
-    fprintf(stderr, "resolve_alias(%s)\n", str.c_str());
-    fprintf(stderr, "popen_cmdline = (%s)\n", command);
-
-    pid = ipopen(&stream, command);
-    if (pid > 0) {
-        fprintf(stderr, "ipopen ok, pid = %d\n", pid);
+    stream = popen(command, "r");
+    if (stream) {
 	while (fgets(buffer, max_buffer, stream) != NULL) {
-            fprintf(stderr, "ipopen buf = %s\n", buffer);
 	    data.append(buffer);
 	}
-        fprintf(stderr, "before ipclose, pid = %d\n", pid);
-	ipclose(pid, stream);
-        fprintf(stderr, "after ipclose, pid = %d\n", pid);
-    } else {
-        fprintf(stderr, "ipopen failed\n");
+	pclose(stream);
     }
     data.erase(data.find_last_not_of(" \n\r\t") + 1);
-    fprintf(stderr, "trimming finished, result = %s\n", data.c_str());
     return data;
 }
 // explode cmdline to argv[] array

@@ -818,17 +818,16 @@ public:
 		// somewhy libssh doesnt have async write yet
 		if (len > 0) for (;;) {
 			size_t piece = (len >= _conn->max_write_block) ? _conn->max_write_block : len;
+			ssize_t written = sftp_write(_file, buf, piece);
 
-			piece = sftp_write(_file, buf, piece);
+			if (written <= 0)
+				throw ProtocolError("write error",  ssh_get_error(_conn->ssh));
 
-			if (piece <= 0)
-				throw ProtocolError("zero write",  ssh_get_error(_conn->ssh));
-
-			if (piece >= len)
+			if (written >= len)
 				break;
 
-			len-= (size_t)piece;
-			buf = (const char *)buf + piece;
+			len-= (size_t)written;
+			buf = (const char *)buf + written;
 		}
 	}
 

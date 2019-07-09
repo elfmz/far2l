@@ -79,7 +79,7 @@ static void CopyGlobalSettings();
 static void show_help()
 {
 	WCHAR HelpMsg[]=
-	    L"Usage: far [switches] [apath [ppath]]\n\n"
+	    L"Usage: far [switches] [[//]apath [[//]ppath]]\n\n"
 	    L"where\n"
 	    L"  apath - path to a folder (or a file or an archive or command with prefix)\n"
 	    L"          for the active panel\n"
@@ -180,8 +180,15 @@ static int MainProcess(
 			{
 				Opt.SetupArgv++;
 				strPath = lpwszDestName1;
+
 				CutToNameUNC(strPath);
 				DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
+
+				// Should be after CutToNameUNC. Converts double slash to single at beginning
+				if (strPath.At(0) == L'/' && strPath.At(1) == L'/') {
+					strPath.Remove(0, 1);
+				}
+
 
 //				if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
 //					AddEndSlash(strPath);
@@ -204,11 +211,17 @@ static int MainProcess(
 				{
 					Opt.SetupArgv++;
 					strPath = lpwszDestName2;
+
 					CutToNameUNC(strPath);
 					DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
 
 //					if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
 //						AddEndSlash(strPath);
+
+					// Should be after CutToNameUNC. Converts double slash to single at beginning
+					if (strPath.At(0) == L'/' && strPath.At(1) == L'/') {
+						strPath.Remove(0, 1);
+					}
 
 					// а здесь с точнотью наоборот - обрабатываем пассивную панель
 					if (Opt.LeftPanel.Focus)
@@ -405,8 +418,10 @@ int FarAppMain(int argc, char **argv)
 	for (int I=1; I<argc; I++)
 	{
 		std::wstring arg_w = MB2Wide(argv[I]);
+		bool switchHandled = false;
 		if ((arg_w[0]==L'/' || arg_w[0]==L'-') && arg_w[1])
 		{
+			switchHandled = true;
 			switch (Upper(arg_w[1]))
 			{
 				case L'A':
@@ -508,9 +523,18 @@ int FarAppMain(int argc, char **argv)
 						Opt.WindowMode=TRUE;
 					}
 					break;
+				case L'/':
+					{
+						// Remove slash
+						// arg_w.erase(0, 1);
+
+						// Fallback to simple parameters
+						switchHandled = false;
+					}
+					break;
 			}
 		}
-		else // простые параметры. Их может быть max две штукА.
+		if (!switchHandled) // простые параметры. Их может быть max две штукА.
 		{
 			if (CntDestName < 2)
 			{

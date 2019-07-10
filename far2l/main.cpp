@@ -79,7 +79,7 @@ static void CopyGlobalSettings();
 static void show_help()
 {
 	WCHAR HelpMsg[]=
-	    L"Usage: far [switches] [[//]apath [[//]ppath]]\n\n"
+	    L"Usage: far [switches] [/cd apath [/cd ppath]]\n\n"
 	    L"where\n"
 	    L"  apath - path to a folder (or a file or an archive or command with prefix)\n"
 	    L"          for the active panel\n"
@@ -90,6 +90,7 @@ static void show_help()
 	    L" /a   Disable display of characters with codes 0 - 31 and 255.\n"
 	    L" /ag  Disable display of pseudographics characters.\n"
 	    L" /co  Forces FAR to load plugins from the cache only.\n"
+	    L" /cd <path> Change panel's directory to specified path.\n"
 #ifdef DIRECT_RT
 	    L" /do  Direct output.\n"
 #endif
@@ -502,6 +503,17 @@ int FarAppMain(int argc, char **argv)
 					{
 						Opt.LoadPlug.PluginsCacheOnly=TRUE;
 						Opt.LoadPlug.PluginsPersonal=FALSE;
+					} else if (Upper(arg_w[2]) == L'D' && !arg_w[3]) {
+						if (I + 1 < argc) {
+							I++;
+							arg_w = MB2Wide(argv[I]);
+							// Add slash to beginning, so path won't be broken after PointToNameUNC
+							arg_w.insert(0, 1, L'/');
+							switchHandled = false;
+						} else {
+							show_help();
+							return 0;
+						}
 					}
 
 					break;
@@ -521,15 +533,6 @@ int FarAppMain(int argc, char **argv)
 				case L'W':
 					{
 						Opt.WindowMode=TRUE;
-					}
-					break;
-				case L'/':
-					{
-						// Remove slash
-						// arg_w.erase(0, 1);
-
-						// Fallback to simple parameters
-						switchHandled = false;
 					}
 					break;
 			}

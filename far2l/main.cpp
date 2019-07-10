@@ -79,7 +79,7 @@ static void CopyGlobalSettings();
 static void show_help()
 {
 	WCHAR HelpMsg[]=
-	    L"Usage: far [switches] [apath [ppath]]\n\n"
+	    L"Usage: far [switches] [/cd apath [/cd ppath]]\n\n"
 	    L"where\n"
 	    L"  apath - path to a folder (or a file or an archive or command with prefix)\n"
 	    L"          for the active panel\n"
@@ -90,6 +90,7 @@ static void show_help()
 	    L" /a   Disable display of characters with codes 0 - 31 and 255.\n"
 	    L" /ag  Disable display of pseudographics characters.\n"
 	    L" /co  Forces FAR to load plugins from the cache only.\n"
+	    L" /cd <path> Change panel's directory to specified path.\n"
 #ifdef DIRECT_RT
 	    L" /do  Direct output.\n"
 #endif
@@ -180,8 +181,15 @@ static int MainProcess(
 			{
 				Opt.SetupArgv++;
 				strPath = lpwszDestName1;
+
 				CutToNameUNC(strPath);
 				DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
+
+				// Should be after CutToNameUNC. Converts double slash to single at beginning
+				if (strPath.At(0) == L'/' && strPath.At(1) == L'/') {
+					strPath.Remove(0, 1);
+				}
+
 
 //				if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
 //					AddEndSlash(strPath);
@@ -204,11 +212,17 @@ static int MainProcess(
 				{
 					Opt.SetupArgv++;
 					strPath = lpwszDestName2;
+
 					CutToNameUNC(strPath);
 					DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
 
 //					if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
 //						AddEndSlash(strPath);
+
+					// Should be after CutToNameUNC. Converts double slash to single at beginning
+					if (strPath.At(0) == L'/' && strPath.At(1) == L'/') {
+						strPath.Remove(0, 1);
+					}
 
 					// а здесь с точнотью наоборот - обрабатываем пассивную панель
 					if (Opt.LeftPanel.Focus)
@@ -405,8 +419,10 @@ int FarAppMain(int argc, char **argv)
 	for (int I=1; I<argc; I++)
 	{
 		std::wstring arg_w = MB2Wide(argv[I]);
+		bool switchHandled = false;
 		if ((arg_w[0]==L'/' || arg_w[0]==L'-') && arg_w[1])
 		{
+			switchHandled = true;
 			switch (Upper(arg_w[1]))
 			{
 				case L'A':
@@ -487,6 +503,17 @@ int FarAppMain(int argc, char **argv)
 					{
 						Opt.LoadPlug.PluginsCacheOnly=TRUE;
 						Opt.LoadPlug.PluginsPersonal=FALSE;
+					} else if (Upper(arg_w[2]) == L'D' && !arg_w[3]) {
+						if (I + 1 < argc) {
+							I++;
+							arg_w = MB2Wide(argv[I]);
+							// Add slash to beginning, so path won't be broken after PointToNameUNC
+							arg_w.insert(0, 1, L'/');
+							switchHandled = false;
+						} else {
+							show_help();
+							return 0;
+						}
 					}
 
 					break;
@@ -510,7 +537,7 @@ int FarAppMain(int argc, char **argv)
 					break;
 			}
 		}
-		else // простые параметры. Их может быть max две штукА.
+		if (!switchHandled) // простые параметры. Их может быть max две штукА.
 		{
 			if (CntDestName < 2)
 			{

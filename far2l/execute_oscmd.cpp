@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 #include <wordexp.h>
+#include <utils.h>
 
 std::string resolve_alias(std::string str)
 {
@@ -72,11 +73,10 @@ std::string resolve_alias(std::string str)
     FILE* stream;
     const int max_buffer = 256;
     char buffer[max_buffer];
-    char command[max_buffer];
 
-    sprintf(command, "bash -i -c \"alias %s | grep -Po \\\"(?<=alias %s=\').*(?=\')\\\"\"", str.c_str(), str.c_str());
+    std::string command = StrPrintf("bash -i -c \"alias %s | grep -Po \\\"(?<=alias %s=\').*(?=\')\\\"\"", str.c_str(), str.c_str());
 
-    stream = popen(command, "r");
+    stream = popen(command.c_str(), "r");
     if (stream) {
 	while (fgets(buffer, max_buffer, stream) != NULL) {
 	    result.append(buffer);

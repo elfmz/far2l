@@ -249,12 +249,6 @@ class HostRemoteBroker : protected IPCEndpoint
 	void OnCommand(IPCCommand c)
 	{
 		switch (c) {
-			case IPC_IS_BROKEN: {
-					const bool out = _protocol->IsBroken();
-					SendCommand(IPC_IS_BROKEN);
-					SendPOD(out);
-				} break;
-
 			case IPC_GET_MODE: OnGetModeOrSize<IPC_GET_MODE>(&IProtocol::GetMode); break;
 			case IPC_GET_SIZE: OnGetModeOrSize<IPC_GET_SIZE>(&IProtocol::GetSize); break;
 			case IPC_GET_INFORMATION: OnGetInformation(); break;

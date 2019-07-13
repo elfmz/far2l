@@ -51,7 +51,6 @@ public:
 	virtual std::string SiteName();
 	virtual void GetIdentity(Identity &identity);
 
-	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);
 	virtual void Abort();
 

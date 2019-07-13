@@ -148,11 +148,6 @@ std::string ProtocolNFS::MountedRootedPath(const std::string &path)
 	return out;
 }
 
-bool ProtocolNFS::IsBroken()
-{
-	return false;//(!_conn || !_conn->ctx || !_conn->SMB || (ssh_get_status(_conn->ssh) & (SSH_CLOSED|SSH_CLOSED_ERROR)) != 0);
-}
-
 mode_t ProtocolNFS::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	std::string xpath = RootedPath(path);

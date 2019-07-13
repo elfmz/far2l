@@ -68,11 +68,6 @@ void HostLocal::Abort()
 {
 }
 
-bool HostLocal::IsBroken()
-{
-	return false;
-}
-
 mode_t HostLocal::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	struct stat s = {};

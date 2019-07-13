@@ -65,7 +65,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 #include <wordexp.h>
+#include <utils.h>
 
+std::string resolve_alias(std::string str)
+{
+    std::string result;
+    FILE* stream;
+    const int max_buffer = 256;
+    char buffer[max_buffer];
+
+    std::string command = StrPrintf("bash -i -c \"alias %s | grep -Po \\\"(?<=alias %s=\').*(?=\')\\\"\"", str.c_str(), str.c_str());
+
+    stream = popen(command.c_str(), "r");
+    if (stream) {
+	while (fgets(buffer, max_buffer, stream) != NULL) {
+	    result.append(buffer);
+	}
+	pclose(stream);
+    }
+    result.erase(result.find_last_not_of(" \n\r\t") + 1);
+    return result;
+}
 // explode cmdline to argv[] array
 //
 // Bash cmdlines cannot be correctly parsed that way because some bash constructions are not space-separated (such as `...`, $(...), cmd>/dev/null, cmd&)
@@ -86,13 +106,26 @@ std::vector<std::string> ExplodeCmdLine(std::string cmd_line) {
 	for (;;) {
 		int r = wordexp(cmd_line.c_str(), &we, 0);
 		if (r==0) {
-			for (size_t i = 0; i < we.we_wordc; ++i) {
-				rc.push_back(we.we_wordv[i]);
-				fprintf(stderr, "'%s' ", we.we_wordv[i]);
+			if (we.we_wordc > 0) {
+				std::string resolved = resolve_alias(we.we_wordv[0]);
+				if ( resolved.empty() ) {
+					for (size_t i = 0; i < we.we_wordc; ++i) {
+						rc.push_back(we.we_wordv[i]);
+						fprintf(stderr, "'%s' ", we.we_wordv[i]);
+					}
+					fprintf(stderr, "\n");
+					wordfree(&we);
+					break;
+				} else {
+					cmd_line = resolved;
+					for (size_t i = 1; i < we.we_wordc; ++i) {
+						cmd_line += " ";
+						cmd_line += we.we_wordv[i];
+					}
+					wordfree(&we);
+					continue;
+				}
 			}
-			fprintf(stderr, "\n");
-			wordfree(&we);
-			break;
 		} else if (r==WRDE_BADCHAR) {
 			size_t p = cmd_line.find_last_of("|&;<>(){}");
 			if (p!=std::string::npos) {

@@ -284,6 +284,18 @@ void FileList::ShowFileList(int Fast)
 		}
 	}
 
+	if (!Opt.ShowHidden) {
+		if (Opt.ShowColumnTitles)
+			GotoXY(NextX1,Y1+1);
+		else
+			GotoXY(NextX1,Y1);
+
+		SetColor(COL_PANELCOLUMNTITLE);
+		OutCharacter[0]=L'h';
+		Text(OutCharacter);
+		NextX1++;
+	}
+
 	/* <режимы сортировки> */
 	if (/*GetNumericSort() || GetCaseSensitiveSort() || GetSortGroups() || */GetSelectedFirstMode())
 	{

@@ -337,27 +337,6 @@ void HostRemote::RecvReply(IPCCommand cmd)
 	}
 }
 
-bool HostRemote::IsBroken()
-{
-	if (_broken)
-		return true;
-
-	try {
-		CheckReady();
-
-		SendCommand(IPC_IS_BROKEN);
-		RecvReply(IPC_IS_BROKEN);
-		bool out;
-		RecvPOD(out);
-		return out;
-
-	} catch (std::exception &ex) {
-		fprintf(stderr, "HostRemote::IsBroken: %s\n", ex.what());
-		OnBroken();
-		return true;
-	}
-}
-
 mode_t HostRemote::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	CheckReady();

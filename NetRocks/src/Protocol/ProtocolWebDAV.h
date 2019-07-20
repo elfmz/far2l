@@ -39,8 +39,6 @@ public:
 		const std::string &username, const std::string &password, const std::string &protocol_options) throw (std::runtime_error);
 	virtual ~ProtocolWebDAV();
 
-	virtual bool IsBroken();
-
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual void GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink = true) throw (std::runtime_error);

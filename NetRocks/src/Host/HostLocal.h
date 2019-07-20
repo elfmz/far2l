@@ -19,7 +19,6 @@ public:
 
 	virtual std::shared_ptr<IHost> Clone();
 
-	virtual bool IsBroken();
 	virtual void ReInitialize() throw (std::runtime_error);
 	virtual void Abort();
 

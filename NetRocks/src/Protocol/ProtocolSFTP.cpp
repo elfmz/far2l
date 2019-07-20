@@ -342,11 +342,6 @@ ProtocolSFTP::~ProtocolSFTP()
 	_conn->executed_command.reset();
 }
 
-bool ProtocolSFTP::IsBroken()
-{
-	return (!_conn || !_conn->ssh || !_conn->sftp || (ssh_get_status(_conn->ssh) & (SSH_CLOSED|SSH_CLOSED_ERROR)) != 0);
-}
-
 static sftp_attributes SFTPGetAttributes(sftp_session sftp, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	sftp_attributes out = follow_symlink ? sftp_stat(sftp, path.c_str()) : sftp_lstat(sftp, path.c_str());

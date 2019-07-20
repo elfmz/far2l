@@ -54,8 +54,6 @@ struct IProtocol
 {
 	virtual ~IProtocol() {};
 
-	virtual bool IsBroken() = 0;
-
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error) = 0;
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error) = 0;
 	virtual void GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink = true) throw (std::runtime_error) = 0;

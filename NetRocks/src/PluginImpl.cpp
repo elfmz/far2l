@@ -127,20 +127,7 @@ void PluginImpl::UpdatePanelTitle()
 
 bool PluginImpl::ValidateConnection()
 {
-	try {
-		if (!_remote)
-			return false;
-
-		if (_remote->IsBroken()) 
-			throw std::runtime_error("Connection broken");
-
-	} catch (std::exception &e) {
-		fprintf(stderr, "NetRocks::ValidateConnection: %s\n", e.what());
-		_remote.reset();
-		return false;
-	}
-
-	return true;
+	return _remote != nullptr;
 }
 
 std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const

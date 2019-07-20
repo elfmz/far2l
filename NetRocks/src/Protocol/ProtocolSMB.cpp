@@ -116,11 +116,6 @@ static bool IsRootedPathServerOnly(const std::string &path)
 	return (slashes_count <= 2);
 }
 
-bool ProtocolSMB::IsBroken()
-{
-	return false;//(!_conn || !_conn->ctx || !_conn->SMB || (ssh_get_status(_conn->ssh) & (SSH_CLOSED|SSH_CLOSED_ERROR)) != 0);
-}
-
 mode_t ProtocolSMB::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	const std::string &rooted_path = RootedPath(path);

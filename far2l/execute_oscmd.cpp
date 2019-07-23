@@ -67,24 +67,64 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wordexp.h>
 #include <utils.h>
 
-std::string resolve_alias(std::string str)
+//
+static bool MatchCommand(const std::string &cmd_line, const char *cmd)
+{
+	const size_t cmd_len = strlen(cmd);
+
+	if (cmd_line.size() == cmd_len) {
+		return cmd_line == cmd;
+	}
+
+	if (cmd_line.size() > cmd_len) {
+		return memcmp(cmd_line.c_str(), cmd, cmd_len) == 0 && isspace(cmd_line[cmd_len]);
+	}
+
+	return false;
+}
+
+// check if given cmd_line represents any bash alias, and if it is
+// check that is resolves to command that must be handled by far2l
+// and if so - translate cmdline to aliased command
+static void PreprocessShellAliases(std::string &cmd_line)
 {
     std::string result;
-    FILE* stream;
-    const int max_buffer = 256;
-    char buffer[max_buffer];
 
-    std::string command = StrPrintf("bash -i -c \"alias %s | grep -Po \\\"(?<=alias %s=\').*(?=\')\\\"\"", str.c_str(), str.c_str());
+    std::string command = StrPrintf("bash -i -c \"alias '%s'\"", cmd_line.c_str());
 
-    stream = popen(command.c_str(), "r");
+    FILE* stream = popen(command.c_str(), "r");
     if (stream) {
-	while (fgets(buffer, max_buffer, stream) != NULL) {
-	    result.append(buffer);
+	char buffer[0x1000] = {};
+	while (!feof(stream) && fgets(buffer, sizeof(buffer) - 1, stream) != NULL) {
+		if (strncmp(buffer, "alias ", 6) != 0) {
+			continue;
+		}
+		const char *begin = strchr(buffer, '\'');
+		if (!begin) {
+			begin = buffer + 6;
+		}
+		for (++begin; *begin == ' '; ++begin);
+		const char *end = strrchr(begin, '\'');
+		if (!end) {
+			end = begin + strlen(begin);
+		}
+
+		while (end > begin && ((*(end - 1) == ' ') || *(end - 1) == '\r' || *(end - 1) == '\n')) {
+			--end;
+		}
+
+		if (end > begin) {
+			std::string aliased_command(begin, end - begin);
+			if (MatchCommand(aliased_command, "cd") || MatchCommand(aliased_command, "pushd")
+			 || MatchCommand(aliased_command, "popd") || MatchCommand(aliased_command, "exit")
+			 || MatchCommand(aliased_command, "reset") ) {
+				cmd_line.swap(aliased_command);
+			}
+			break;
+		}
 	}
 	pclose(stream);
     }
-    result.erase(result.find_last_not_of(" \n\r\t") + 1);
-    return result;
 }
 // explode cmdline to argv[] array
 //
@@ -102,30 +142,18 @@ std::string resolve_alias(std::string str)
 std::vector<std::string> ExplodeCmdLine(std::string cmd_line) {
 	std::vector<std::string> rc;
 	fprintf(stderr, "ExplodeCmdLine('%s'): ", cmd_line.c_str());
+	PreprocessShellAliases(cmd_line);
 	wordexp_t we = {};
 	for (;;) {
 		int r = wordexp(cmd_line.c_str(), &we, 0);
 		if (r==0) {
-			if (we.we_wordc > 0) {
-				std::string resolved = resolve_alias(we.we_wordv[0]);
-				if ( resolved.empty() ) {
-					for (size_t i = 0; i < we.we_wordc; ++i) {
-						rc.push_back(we.we_wordv[i]);
-						fprintf(stderr, "'%s' ", we.we_wordv[i]);
-					}
-					fprintf(stderr, "\n");
-					wordfree(&we);
-					break;
-				} else {
-					cmd_line = resolved;
-					for (size_t i = 1; i < we.we_wordc; ++i) {
-						cmd_line += " ";
-						cmd_line += we.we_wordv[i];
-					}
-					wordfree(&we);
-					continue;
-				}
+			for (size_t i = 0; i < we.we_wordc; ++i) {
+				rc.push_back(we.we_wordv[i]);
+				fprintf(stderr, "'%s' ", we.we_wordv[i]);
 			}
+			fprintf(stderr, "\n");
+			wordfree(&we);
+			break;
 		} else if (r==WRDE_BADCHAR) {
 			size_t p = cmd_line.find_last_of("|&;<>(){}");
 			if (p!=std::string::npos) {

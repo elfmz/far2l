@@ -118,17 +118,18 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 ///////////////
 
 
-static void SaveSize(unsigned int width, unsigned int height)
+static void SaveSize(unsigned int width, unsigned int height, bool isMaximized)
 {
 	std::ofstream os;
 	os.open(InMyConfig("consolesize").c_str());
 	if (os.is_open()) {
 		os << width << std::endl;
 		os << height << std::endl;
+		os << isMaximized << std::endl;
 	}
 }
 
-static void LoadSize(unsigned int &width, unsigned int &height)
+static void LoadSize(unsigned int &width, unsigned int &height, bool &isMaximized)
 {
 	std::ifstream is;
 	is.open(InMyConfig("consolesize").c_str());
@@ -141,6 +142,10 @@ static void LoadSize(unsigned int &width, unsigned int &height)
 		getline (is, str);
 		if (!str.empty()) {
 			height = atoi(str.c_str());
+		}
+		getline (is, str);
+		if (!str.empty()) {
+			isMaximized = std::stoi(str.c_str());
 		}
 	}
 }
@@ -514,8 +519,9 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	GetClientSize(&w, &h);
 	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
 	unsigned int cw, ch;
+	bool isMaximized;
 	g_winport_con_out.GetSize(cw, ch);
-	LoadSize(cw, ch);
+	LoadSize(cw, ch, isMaximized);
 	wxDisplay disp(GetDisplayIndex());
 	wxRect rc = disp.GetClientArea();
 	if ((unsigned)rc.GetWidth() >= cw * _paint_context.FontWidth() 
@@ -528,6 +534,8 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	ch*= _paint_context.FontHeight();
 	if ( w != (int)cw || h != (int)ch)
 		_frame->SetClientSize(cw, ch);
+	if (isMaximized)
+		_frame->Maximize(true);
 		
 	_initialized = true;
 
@@ -570,8 +578,12 @@ void WinPortPanel::CheckForResizePending()
 				this->SetSize(width * _paint_context.FontWidth(), height * _paint_context.FontHeight());
 #endif
 				g_winport_con_out.SetSize(width, height);
-				if (!_frame->IsFullScreen() && !_frame->IsMaximized() && _frame->IsShown()) {
-					SaveSize(width, height);
+				if (_frame->IsShown()) {
+					if (_frame->IsMaximized()) {
+						SaveSize(prev_width, prev_height, true);
+					} else {
+						SaveSize(width, height, false);
+					}
 				}
 				INPUT_RECORD ir = {0};
 				ir.EventType = WINDOW_BUFFER_SIZE_EVENT;

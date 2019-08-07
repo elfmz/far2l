@@ -114,7 +114,7 @@ class Viewer:public ScreenObject
 		FARString strFileName;
 		FARString strFullFileName;
 
-		File ViewFile;
+		FileSeekDefer ViewFile;
 		CachedRead Reader;
 
 		FAR_FIND_DATA_EX ViewFindData;

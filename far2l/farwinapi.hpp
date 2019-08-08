@@ -141,27 +141,49 @@ class File: private NonCopyable
 {
 public:
 	File();
-	~File();
-	bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
-	bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead, LPOVERLAPPED Overlapped = nullptr);
-	bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten, LPOVERLAPPED Overlapped = nullptr) const;
-	bool SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMethod);
-	bool GetPointer(INT64& Pointer){return SetPointer(0, &Pointer, FILE_CURRENT);}
-	bool SetEnd();
-	bool GetTime(LPFILETIME CreationTime, LPFILETIME LastAccessTime, LPFILETIME LastWriteTime, LPFILETIME ChangeTime);
-	bool SetTime(const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime);
-	bool GetSize(UINT64& Size);
-	bool FlushBuffers();
-	bool Chmod(DWORD dwUnixMode);
-	FemaleBool QueryFileExtendedAttributes(FileExtendedAttributes &xattr);
-	FemaleBool SetFileExtendedAttributes(const FileExtendedAttributes &xattr);
-	bool Close();
-	bool Eof();
+	virtual ~File();
+	virtual bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
+	virtual bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead, LPOVERLAPPED Overlapped = nullptr);
+	virtual bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten, LPOVERLAPPED Overlapped = nullptr) const;
+	virtual bool SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMethod);
+	virtual bool GetPointer(INT64& Pointer){return SetPointer(0, &Pointer, FILE_CURRENT);}
+	virtual bool SetEnd();
+	virtual bool GetTime(LPFILETIME CreationTime, LPFILETIME LastAccessTime, LPFILETIME LastWriteTime, LPFILETIME ChangeTime);
+	virtual bool SetTime(const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime);
+	virtual bool GetSize(UINT64& Size);
+	virtual bool FlushBuffers();
+	virtual bool Chmod(DWORD dwUnixMode);
+	virtual FemaleBool QueryFileExtendedAttributes(FileExtendedAttributes &xattr);
+	virtual FemaleBool SetFileExtendedAttributes(const FileExtendedAttributes &xattr);
+	virtual bool Close();
+	virtual bool Eof();
 	bool Opened() const {return Handle != INVALID_HANDLE_VALUE;}
 
 private:
 	HANDLE Handle;
 };
+
+class FileSeekDefer: public File
+{
+public:
+	FileSeekDefer();
+	virtual ~FileSeekDefer();
+
+	virtual bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
+	virtual bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead, LPOVERLAPPED Overlapped = nullptr);
+	virtual bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten, LPOVERLAPPED Overlapped = nullptr);
+	virtual bool SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMethod);
+	virtual bool GetPointer(INT64& Pointer);
+	virtual bool SetEnd();
+	virtual bool Eof();
+
+private:
+	bool FlushPendingSeek();
+
+	UINT64 CurrentPointer, Size;
+	bool SeekPending;
+};
+
 
 DWORD apiGetEnvironmentVariable(
     const wchar_t *lpwszName,

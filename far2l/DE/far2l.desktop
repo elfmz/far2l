@@ -2,7 +2,7 @@
 Type=Application
 Name=far2l
 GenericName=far2l
-Comment=File and archieve manager
+Comment=File and archive manager
 Exec=${CMAKE_INSTALL_PREFIX}/bin/far2l
 TryExec=${CMAKE_INSTALL_PREFIX}/bin/far2l
 Terminal=false

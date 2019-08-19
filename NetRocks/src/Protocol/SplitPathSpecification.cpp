@@ -1,5 +1,6 @@
 #include <wchar.h>
 #include <string>
+#include <stdlib.h>
 #include <sudo.h>
 #ifdef __FreeBSD__
 # include <sys/syslimits.h>

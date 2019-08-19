@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <string.h>
+#include <stdlib.h>
 #include "IOBuffer.h"
 
 #define ALIGNMENT              ((size_t)0x1000)

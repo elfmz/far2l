@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "StringConfig.h"
+#include <stdlib.h>
 
 static std::string StringEscape(const std::string &str)
 {

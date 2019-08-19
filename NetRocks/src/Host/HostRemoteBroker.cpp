@@ -1,5 +1,6 @@
 #include <vector>
 #include <unistd.h>
+#include <stdlib.h>
 #include "IPC.h"
 #include "Protocol/Protocol.h"
 

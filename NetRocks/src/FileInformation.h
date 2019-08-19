@@ -4,6 +4,7 @@
 #ifdef __FreeBSD__
 # include <sys/types.h>
 #endif
+# include <sys/stat.h>
 
 struct FileInformation
 {

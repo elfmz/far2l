@@ -32,3 +32,11 @@ target_include_directories(utils PRIVATE ${GLIB2_INCLUDE_DIRS})
 
 target_include_directories(utils PRIVATE include)
 target_include_directories(utils PRIVATE ../WinPort)
+
+find_package(Threads REQUIRED)
+if(THREADS_HAVE_PTHREAD_ARG)
+  target_compile_options(utils PUBLIC "-pthread")
+endif()
+if(CMAKE_THREAD_LIBS_INIT)
+  target_link_libraries(utils "${CMAKE_THREAD_LIBS_INIT}")
+endif()

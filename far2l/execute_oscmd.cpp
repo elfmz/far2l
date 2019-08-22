@@ -83,53 +83,9 @@ static bool MatchCommand(const std::string &cmd_line, const char *cmd)
 	return false;
 }
 
-// check if given cmd_line represents any bash alias, and if it is
-// check that is resolves to command that must be handled by far2l
-// and if so - translate cmdline to aliased command
-static void PreprocessShellAliases(std::string &cmd_line)
-{
-    std::string result;
-
-    std::string command = StrPrintf("bash -i -c \"alias '%s'\"", cmd_line.c_str());
-
-    FILE* stream = popen(command.c_str(), "r");
-    if (stream) {
-	char buffer[0x1000] = {};
-	while (!feof(stream) && fgets(buffer, sizeof(buffer) - 1, stream) != NULL) {
-		if (strncmp(buffer, "alias ", 6) != 0) {
-			continue;
-		}
-		const char *begin = strchr(buffer, '\'');
-		if (!begin) {
-			begin = buffer + 6;
-		}
-		for (++begin; *begin == ' '; ++begin);
-		const char *end = strrchr(begin, '\'');
-		if (!end) {
-			end = begin + strlen(begin);
-		}
-
-		while (end > begin && ((*(end - 1) == ' ') || *(end - 1) == '\r' || *(end - 1) == '\n')) {
-			--end;
-		}
-
-		if (end > begin) {
-			std::string aliased_command(begin, end - begin);
-			if (MatchCommand(aliased_command, "cd") || MatchCommand(aliased_command, "pushd")
-			 || MatchCommand(aliased_command, "popd") || MatchCommand(aliased_command, "exit")
-			 || MatchCommand(aliased_command, "reset") ) {
-				cmd_line.swap(aliased_command);
-			}
-			break;
-		}
-	}
-	pclose(stream);
-    }
-}
 // explode cmdline to argv[] array
 //
 // Bash cmdlines cannot be correctly parsed that way because some bash constructions are not space-separated (such as `...`, $(...), cmd>/dev/null, cmd&)
-
 // echo foo = bar       -> {'echo', 'foo', '=', 'bar'}
 // echo foo=bar         -> {'echo', 'foo=bar'}
 // echo "foo=long bar"  -> {'echo', 'foo=long bar'}
@@ -142,7 +98,6 @@ static void PreprocessShellAliases(std::string &cmd_line)
 std::vector<std::string> ExplodeCmdLine(std::string cmd_line) {
 	std::vector<std::string> rc;
 	fprintf(stderr, "ExplodeCmdLine('%s'): ", cmd_line.c_str());
-	PreprocessShellAliases(cmd_line);
 	wordexp_t we = {};
 	for (;;) {
 		int r = wordexp(cmd_line.c_str(), &we, 0);
@@ -180,45 +135,19 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 			SaveBackground();
 			VTLog::Reset();
 		}
-	} else if (ecl[0]=="cd") {
-		if (ecl.size() == 1 )
-			ecl.push_back(GetMyHome());
 
-		if (ecl.size() == 2 ) {
-			if (IntChDir(StrMB2Wide(ecl[1]).c_str(), true, false))
-				return true;
-		}
 	} else if (ecl[0]=="pushd") {
-		if (ecl.size() == 1 )
-			ecl.push_back(GetMyHome());
-		if (ecl.size() == 2 ) {
-			PushPopRecord prec;
-			prec.strName = strCurDir;
-			if (IntChDir(StrMB2Wide(ecl[1]).c_str(), true, false)) {
-				ppstack.Push(prec);
-				setenv("FARDIRSTACK", Wide2MB(prec.strName.CPtr()).c_str(), 1);
-				return true;				
-			}
-		}
-	} else if (ecl[0]=="popd") {
-		if (ecl.size() == 1 ) {
-			PushPopRecord prec;
+		++PushDirStackSize;
 
-			if (ppstack.Pop(prec)) {
-				int Ret = IntChDir(prec.strName, true, false);
-				PushPopRecord *ptrprec=ppstack.Peek();
-				if (ptrprec)
-					setenv("FARDIRSTACK", Wide2MB(ptrprec->strName.CPtr()).c_str(), 1);
-				else
-					unsetenv("FARDIRSTACK");
-				return Ret;
-			}
-		}
+	} else if (ecl[0]=="popd") {
+		--PushDirStackSize;
+
 	}else if (ecl[0]=="exit") {
 		if (ecl.size() == 2 && ecl[1]=="far") {
 			FrameManager->ExitMainLoop(FALSE);
 			return true;			
 		}
+		PushDirStackSize = 0;
 	}
 
 	return false;

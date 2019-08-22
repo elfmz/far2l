@@ -21,6 +21,7 @@
 #include <condition_variable>
 #include <base64.h> 
 #include <StackSerializer.h>
+#include <os_call.hpp>
 #include "vtansi.h"
 #include "vtlog.h"
 #include "VTFar2lExtensios.h"
@@ -961,6 +962,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		char name[128]; 
 		sprintf(name, "vtcmd/%x_%p", getpid(), this);
 		std::string cmd_script = InMyTemp(name);
+		std::string pwd_file = cmd_script + ".pwd";
 		FILE *f = fopen(cmd_script.c_str(), "wt");
 		if (!f)
 			return std::string();
@@ -994,9 +996,10 @@ static bool shown_tip_exit = false;
 			shown_tip_init = true;
 		}
 		if (need_sudo) {
-			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s\"\n", EscapeEscapes(EscapeQuotas(cd)).c_str(), EscapeEscapes(cmd).c_str());
+			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
+				EscapeEscapes(EscapeQuotas(cd)).c_str(), EscapeEscapes(cmd).c_str(), pwd_file.c_str());
 		} else {
-			fprintf(f, "cd \"%s\" && %s\n", EscapeQuotas(cd).c_str(), cmd);
+			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeQuotas(cd).c_str(), cmd, pwd_file.c_str());
 		}
 
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
@@ -1007,6 +1010,7 @@ static bool shown_tip_exit = false;
 		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[K\x1b_pop-attr\x07\"\n");
 		fprintf(f, "fi\n");
 		fclose(f);
+		unlink(pwd_file.c_str());
 		return cmd_script;
 	}
 
@@ -1038,7 +1042,7 @@ static bool shown_tip_exit = false;
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (!sdc_getcwd(cd, MAX_PATH)) {
 			perror("getcwd");
-		} 
+		}
 
 		const std::string &cmd_script = GenerateExecuteCommandScript(cd, cmd, force_sudo);
 		if (cmd_script.empty())
@@ -1069,6 +1073,20 @@ static bool shown_tip_exit = false;
 		}
 		
 		_output_reader.WaitDeactivation();
+
+		int fd = open((cmd_script + ".pwd").c_str(), O_RDONLY);
+		if (fd != -1) {
+			char buf[PATH_MAX + 1] = {};
+			ReadAll(fd, buf, sizeof(buf) - 1);
+			CheckedCloseFD(fd);
+			size_t len = strlen(buf);
+			if (len > 0 && buf[len - 1] == '\n') {
+				buf[--len] = 0;
+			}
+			if (len > 0) {
+				sdc_chdir(buf);
+			}
+		}
 
 		if (_shell_pid!=-1) {
 			int status;

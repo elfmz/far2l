@@ -378,6 +378,16 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 	} else {
 		CtrlObject->CmdLine->SetString(L"", TRUE);
 		r = Execute(CmdLine, AlwaysWaitFinish, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
+
+		char cd[MAX_PATH + 1] = {'.', 0};
+		if (sdc_getcwd(cd, MAX_PATH)) {
+			if (!IntChDir(MB2Wide(cd).c_str(), true, false)) {
+				perror("IntChDir");
+			}
+		} else {
+			perror("sdc_getcwd");
+		}
+
 	}
 
 	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL)) {

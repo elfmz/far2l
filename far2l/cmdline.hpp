@@ -60,7 +60,7 @@ class CommandLine:public ScreenObject
 		FARString strLastCmdStr;
 		int LastCmdPartLength;
 		int LastKey;
-		TStack<PushPopRecord> ppstack;
+		int PushDirStackSize;
 
 	private:
 		virtual void DisplayObject();

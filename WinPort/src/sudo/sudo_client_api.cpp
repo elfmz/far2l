@@ -653,6 +653,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 			fprintf(stderr, "sudo_client: sdc_chdir('%s') - error %s\n", path, what);
 			r2 = -1;
 		}
+
 		if (!cwd.empty())
 			ClientCurDirOverrideSet(cwd.c_str());
 		
@@ -673,6 +674,10 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 		} else {
 			fprintf(stderr, "sdc_chdir: access denied for unknown - '%s'\n", path);
 		}
+
+	} else if (r == 0 && *path == '/') {
+		//workaround for chdir(symlink-to-somedir) following getcwd returns somedir but not symlink to it
+		ClientCurDirOverrideSet(path);
 	}
 	
 	//if (r!=0)
@@ -874,7 +879,7 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, s
 {
 	if (!ClientCurDirOverrideQuery(buf, size))
 		return NULL;
-	
+
 	if (*buf)
 		return buf;
 

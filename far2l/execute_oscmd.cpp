@@ -137,10 +137,14 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 		}
 
 	} else if (ecl[0]=="pushd") {
-		++PushDirStackSize;
+		if (PushDirStackSize < 10) {
+			++PushDirStackSize;
+		}
 
 	} else if (ecl[0]=="popd") {
-		--PushDirStackSize;
+		if (PushDirStackSize > 0) {
+			--PushDirStackSize;
+		}
 
 	}else if (ecl[0]=="exit") {
 		if (ecl.size() == 2 && ecl[1]=="far") {

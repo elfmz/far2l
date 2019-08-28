@@ -377,12 +377,19 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 		r = -1; 
 	} else {
 		CtrlObject->CmdLine->SetString(L"", TRUE);
+		char cd_prev[MAX_PATH + 1] = {'.', 0};
+		if (!sdc_getcwd(cd_prev, MAX_PATH)) {
+			cd_prev[0] = 0;
+		}
+
 		r = Execute(CmdLine, AlwaysWaitFinish, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (sdc_getcwd(cd, MAX_PATH)) {
-			if (!IntChDir(MB2Wide(cd).c_str(), true, false)) {
-				perror("IntChDir");
+			if (strcmp(cd_prev, cd) != 0) {
+				if (!IntChDir(MB2Wide(cd).c_str(), true, false)) {
+					perror("IntChDir");
+				}
 			}
 		} else {
 			perror("sdc_getcwd");

@@ -87,6 +87,43 @@ std::string StrPrintfV(const char *format, va_list args);
 std::string StrPrintf(const char *format, ...);
 
 template <class CharT>
+	std::basic_string<CharT> EnsureNoSlashAtEnd(std::basic_string<CharT> str, CharT slash = '/')
+{
+	size_t p = str.size();
+	for (size_t p = str.size(); p && str[p - 1] == slash; )  {
+		str.resize(--p);
+	}
+	return str;
+}
+
+template <class CharT>
+	std::basic_string<CharT> EnsureSlashAtEnd(std::basic_string<CharT> str, CharT slash = '/')
+{
+	const size_t p = str.size();
+	if (!p || str[p - 1] != slash) {
+		str+= slash;
+	}
+	return str;
+}
+
+template <class CharT>
+	std::basic_string<CharT> ExtractFilePath(std::basic_string<CharT> str, CharT slash = '/')
+{
+	const size_t p = str.rfind(slash);
+	str.resize( (p != std::string::npos) ? p : 0);
+	return str;
+}
+
+
+template <class CharT>
+	std::basic_string<CharT> ExtractFileName(std::basic_string<CharT> str, CharT slash = '/')
+{
+	const size_t p = str.rfind(slash);
+	return (p != std::string::npos) ? str.substr( p + 1, str.size() - (p + 1) ) : str;
+}
+
+
+template <class CharT>
 	bool CutToSlash(std::basic_string<CharT> &str, bool include = false)
 {
 	size_t p = str.rfind('/');

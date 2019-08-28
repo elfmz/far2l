@@ -173,6 +173,7 @@ enum LanguageID
   MConfirmExitFARBackgroundTasks,
 
   MSFTPOptionsTitle,
+  MSCPOptionsTitle,
   MSFTPPrivateKeyPath,
   MSFTPCustomSubsystem,
   MSFTPMaxReadBlockSize,

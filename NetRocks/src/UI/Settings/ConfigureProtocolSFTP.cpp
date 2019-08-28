@@ -77,8 +77,8 @@ class ProtocolOptionsSFTP : protected BaseDialog
 			SetEnabledDialogControl(_i_privkey_path, keypath_enabled);
 		}
 
-		if (subsystem_enabled != _subsystem_enabled) {
-			_subsystem_enabled= subsystem_enabled;
+		if (_i_custom_subsystem != -1 && subsystem_enabled != _subsystem_enabled) {
+			_subsystem_enabled = subsystem_enabled;
 			SetEnabledDialogControl(_i_custom_subsystem, subsystem_enabled);
 		}
 
@@ -102,28 +102,29 @@ class ProtocolOptionsSFTP : protected BaseDialog
 	}
 
 public:
-	ProtocolOptionsSFTP()
+	ProtocolOptionsSFTP(bool scp)
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,64,12, 0, MSFTPOptionsTitle);
+		_di.Add(DI_DOUBLEBOX, 3, 1, 64, scp ? 8 : 12, 0, scp ? MSCPOptionsTitle : MSFTPOptionsTitle);
 
 		_di.SetLine(2);
 		_i_privkey_enable = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPPrivateKeyPath);
 		_di.NextLine();
 		_i_privkey_path = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
 
-		_di.NextLine();
-		_i_use_custom_subsystem = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPCustomSubsystem);
-		_di.NextLine();
-		_i_custom_subsystem = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
+		if (!scp)  {
+			_di.NextLine();
+			_i_use_custom_subsystem = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPCustomSubsystem);
+			_di.NextLine();
+			_i_custom_subsystem = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
 
+			_di.NextLine();
+			_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxReadBlockSize);
+			_i_max_read_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
 
-		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxReadBlockSize);
-		_i_max_read_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
-
-		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxWriteBlockSize);
-		_i_max_write_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
+			_di.NextLine();
+			_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxWriteBlockSize);
+			_i_max_write_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
+		}
 
 		_di.NextLine();
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPNodelay);
@@ -151,25 +152,44 @@ public:
 		StringConfig sc(options);
 		SetCheckedDialogControl( _i_privkey_enable, sc.GetInt("PrivKeyEnable", 0) != 0);
 		TextToDialogControl(_i_privkey_path, sc.GetString("PrivKeyPath"));
-		LongLongToDialogControl(_i_max_read_block_size, std::max((int)512, sc.GetInt("MaxReadBlock", 32768)));
-		LongLongToDialogControl(_i_max_write_block_size, std::max((int)512, sc.GetInt("MaxWriteBlock", 32768)));
+
+		if (_i_max_read_block_size != -1) {
+			LongLongToDialogControl(_i_max_read_block_size, std::max((int)512, sc.GetInt("MaxReadBlock", 32768)));
+		}
+		if (_i_max_write_block_size != -1) {
+			LongLongToDialogControl(_i_max_write_block_size, std::max((int)512, sc.GetInt("MaxWriteBlock", 32768)));
+		}
+
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 0) != 0);
 		SetCheckedDialogControl(_i_tcp_quickack, sc.GetInt("TcpQuickAck", 0) != 0);
-		SetCheckedDialogControl(_i_use_custom_subsystem, sc.GetInt("UseCustomSubsystem", 0) != 0);
-		TextToDialogControl(_i_custom_subsystem, sc.GetString("CustomSubsystem"));
+
+		if (_i_use_custom_subsystem != -1) {
+			SetCheckedDialogControl(_i_use_custom_subsystem, sc.GetInt("UseCustomSubsystem", 0) != 0);
+		}
+		if (_i_custom_subsystem != -1) {
+			TextToDialogControl(_i_custom_subsystem, sc.GetString("CustomSubsystem"));
+		}
 	//	SetCheckedDialogControl(_i_enable_sandbox, sc.GetInt("Sandbox", 0) != 0);
 		if (Show(L"ProtocolOptionsSFTP", 6, 2) == _i_ok) {
 			sc.SetInt("PrivKeyEnable", IsCheckedDialogControl(_i_privkey_enable) ? 1 : 0);
 			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);
 			sc.SetString("PrivKeyPath", str);
-			sc.SetInt("MaxReadBlock", std::max((int)512, (int)LongLongFromDialogControl(_i_max_read_block_size)));
-			sc.SetInt("MaxWriteBlock", std::max((int)512, (int)LongLongFromDialogControl(_i_max_write_block_size)));
+			if (_i_max_read_block_size != -1) {
+				sc.SetInt("MaxReadBlock", std::max((int)512, (int)LongLongFromDialogControl(_i_max_read_block_size)));
+			}
+			if (_i_max_write_block_size != -1) {
+				sc.SetInt("MaxWriteBlock", std::max((int)512, (int)LongLongFromDialogControl(_i_max_write_block_size)));
+			}
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 			sc.SetInt("TcpQuickAck", IsCheckedDialogControl(_i_tcp_quickack) ? 1 : 0);
-			sc.SetInt("UseCustomSubsystem", IsCheckedDialogControl(_i_use_custom_subsystem) ? 1 : 0);
-			TextFromDialogControl(_i_custom_subsystem, str);
-			sc.SetString("CustomSubsystem", str);
+			if (_i_use_custom_subsystem != -1) {
+				sc.SetInt("UseCustomSubsystem", IsCheckedDialogControl(_i_use_custom_subsystem) ? 1 : 0);
+			}
+			if (_i_custom_subsystem != -1) {
+				TextFromDialogControl(_i_custom_subsystem, str);
+				sc.SetString("CustomSubsystem", str);
+			}
 
 	//		sc.SetInt("Sandbox", IsCheckedDialogControl(_i_enable_sandbox) ? 1 : 0);
 			options = sc.Serialize();
@@ -179,5 +199,10 @@ public:
 
 void ConfigureProtocolSFTP(std::string &options)
 {
-	ProtocolOptionsSFTP().Configure(options);
+	ProtocolOptionsSFTP(false).Configure(options);
+}
+
+void ConfigureProtocolSCP(std::string &options)
+{
+	ProtocolOptionsSFTP(true).Configure(options);
 }

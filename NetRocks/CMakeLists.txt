@@ -15,7 +15,7 @@ src/Host/HostRemote.cpp
 src/UI/DialogUtils.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp
-src/UI/Settings/ConfigureProtocolSFTP.cpp
+src/UI/Settings/ConfigureProtocolSFTPSCP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Settings/ConfigureProtocolWebDAV.cpp

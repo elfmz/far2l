@@ -24,7 +24,7 @@
     6                     29       38                      60
 */
 
-class ProtocolOptionsSFTP : protected BaseDialog
+class ProtocolOptionsSFTPSCP : protected BaseDialog
 {
 	int _i_ok = -1, _i_cancel = -1;
 	int _i_privkey_enable = -1, _i_privkey_path = -1;
@@ -102,7 +102,7 @@ class ProtocolOptionsSFTP : protected BaseDialog
 	}
 
 public:
-	ProtocolOptionsSFTP(bool scp)
+	ProtocolOptionsSFTPSCP(bool scp)
 	{
 		_di.Add(DI_DOUBLEBOX, 3, 1, 64, scp ? 8 : 12, 0, scp ? MSCPOptionsTitle : MSFTPOptionsTitle);
 
@@ -170,7 +170,7 @@ public:
 			TextToDialogControl(_i_custom_subsystem, sc.GetString("CustomSubsystem"));
 		}
 	//	SetCheckedDialogControl(_i_enable_sandbox, sc.GetInt("Sandbox", 0) != 0);
-		if (Show(L"ProtocolOptionsSFTP", 6, 2) == _i_ok) {
+		if (Show(L"ProtocolOptionsSFTPSCP", 6, 2) == _i_ok) {
 			sc.SetInt("PrivKeyEnable", IsCheckedDialogControl(_i_privkey_enable) ? 1 : 0);
 			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);
@@ -199,10 +199,10 @@ public:
 
 void ConfigureProtocolSFTP(std::string &options)
 {
-	ProtocolOptionsSFTP(false).Configure(options);
+	ProtocolOptionsSFTPSCP(false).Configure(options);
 }
 
 void ConfigureProtocolSCP(std::string &options)
 {
-	ProtocolOptionsSFTP(true).Configure(options);
+	ProtocolOptionsSFTPSCP(true).Configure(options);
 }

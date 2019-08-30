@@ -619,13 +619,14 @@ std::shared_ptr<IFileReader> HostRemote::FileGet(const std::string &path, unsign
 	return std::make_shared<HostRemoteFileIO>(shared_from_this(), false);
 }
 
-std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	CheckReady();
 
 	SendCommand(IPC_FILE_PUT);
 	SendString(path);
 	SendPOD(mode);
+	SendPOD(size_hint);
 	SendPOD(resume_pos);
 	RecvReply(IPC_FILE_PUT);
 

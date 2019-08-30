@@ -26,8 +26,12 @@
 
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 7, 7))
 # define SSH_SCP_REQUEST_GET_SIZE ssh_scp_request_get_size64
+# define SSH_SCP_PUSH_FILE ssh_scp_push_file64
+
 #else
 # define SSH_SCP_REQUEST_GET_SIZE ssh_scp_request_get_size
+# define SSH_SCP_PUSH_FILE ssh_scp_push_file
+
 #endif
 
 static ssh_scp SCPNewRequest(ssh_session session, int mode, const std::string &location)
@@ -71,6 +75,103 @@ ProtocolSCP::~ProtocolSCP()
 }
 
 
+struct SCPRemoteCommand
+{
+	ExecCommandFIFO fifo;
+	FDScope fd_err;
+	FDScope fd_out;
+	FDScope fd_in;
+	FDScope fd_ctl;
+
+	std::string output, error;
+
+	void Execute()
+	{
+		fd_err = open((fifo.FileName() + ".err").c_str(), O_RDONLY);
+		fd_out = open((fifo.FileName() + ".out").c_str(), O_RDONLY);
+		fd_in = open((fifo.FileName() + ".in").c_str(), O_WRONLY);
+		fd_ctl = open((fifo.FileName() + ".ctl").c_str(), O_WRONLY);
+
+		if (!fd_ctl.Valid() || !fd_in.Valid() || !fd_out.Valid() || !fd_err.Valid()) {
+			throw std::runtime_error("Can't open FIFO");
+		}
+
+		ExecFIFO_CtlMsg m = {};
+		m.cmd = ExecFIFO_CtlMsg::CMD_PTY_SIZE;
+		m.u.pty_size.cols = 80;
+		m.u.pty_size.rows = 25;
+
+		if (WriteAll(fd_ctl, &m, sizeof(m)) != sizeof(m)) {
+			throw std::runtime_error("Can't send PTY_SIZE");
+		}
+	}
+
+	bool FetchOutput()
+	{
+		fd_set fdr, fde;
+		char buf[0x10000];
+
+		FD_ZERO(&fdr);
+		FD_ZERO(&fde);
+		FD_SET(fd_out, &fdr);
+		FD_SET(fd_err, &fdr);
+
+		FD_SET(fd_out, &fde);
+		FD_SET(fd_err, &fde);
+
+		int r = select(std::max((int)fd_out, (int)fd_err) + 1, &fdr, nullptr, &fde, NULL);
+		if ( r < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				return true;
+
+			return false;
+		}
+
+		if (FD_ISSET(fd_out, &fdr) || FD_ISSET(fd_out, &fde)) {
+			ssize_t r = read(fd_out, buf, sizeof(buf));
+			if (r == 0 || (r < 0 && errno != EAGAIN && errno != EINTR)) {
+				return false;
+			}
+
+			if (r > 0) {
+				output.append(buf, r);
+			}
+		}
+
+		if (FD_ISSET(fd_err, &fdr) || FD_ISSET(fd_err, &fde)) {
+			ssize_t r = read(fd_err, buf, sizeof(buf));
+			if (r < 0 && errno != EAGAIN && errno != EINTR) {
+				return false;
+			}
+
+			if (r > 0) {
+				error.append(buf, r);
+			}
+		}
+
+		return true;
+	}
+};
+
+
+int ProtocolSCP::ExecuteSimpleCommand(const std::string &command_line)
+{
+	SCPRemoteCommand cmd;
+	_conn->executed_command.reset();
+	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, cmd.fifo.FileName());
+
+	cmd.Execute();
+	while (cmd.FetchOutput()) {
+		cmd.output.clear();
+		cmd.error.clear();
+	}
+
+	_conn->executed_command.reset();
+
+	return 0;
+};
+
+
 mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 #if SIMULATED_GETMODE_FAILS_RATE
@@ -78,7 +179,7 @@ mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink) throw 
 		throw ProtocolError("Simulated getmode error");
 #endif
 
-	SCPRequest scp (SCPNewRequest(_conn->ssh, SSH_SCP_READ, path));// | SSH_SCP_RECURSIVE
+	SCPRequest scp (SCPNewRequest(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path));// | 
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -121,7 +222,7 @@ unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_sym
 		throw ProtocolError("Simulated getsize error");
 #endif
 
-	SCPRequest scp(SCPNewRequest(_conn->ssh, SSH_SCP_READ, path));// | SSH_SCP_RECURSIVE
+	SCPRequest scp(SCPNewRequest(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -158,7 +259,7 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 	if ( (rand() % 100) + 1 <= SIMULATED_GETINFO_FAILS_RATE)
 		throw ProtocolError("Simulated getinfo error");
 #endif
-	SCPRequest scp (SCPNewRequest(_conn->ssh, SSH_SCP_READ, path));// | SSH_SCP_RECURSIVE
+	SCPRequest scp (SCPNewRequest(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -194,16 +295,28 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 
 void ProtocolSCP::FileDelete(const std::string &path) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("SCP doesn't support delete");
+	std::string command_line = "unlink \"";
+	command_line+= EscapeQuotas(path);
+	command_line+= '\"';
+	ExecuteSimpleCommand(command_line);
+//	throw ProtocolUnsupportedError("SCP doesn't support delete");
 }
 
 void ProtocolSCP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("SCP doesn't support rmdir");
+	std::string command_line = "rmdir \"";
+	command_line+= EscapeQuotas(path);
+	command_line+= '\"';
+	ExecuteSimpleCommand(command_line);
+//	throw ProtocolUnsupportedError("SCP doesn't support rmdir");
 }
 
 void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
+	fprintf(stderr, "ProtocolSCP::DirectoryCreate mode=%o path=%s\n", mode, path.c_str());
+	if (path == "." || path == "./") //wtf
+		return;
+
 #if SIMULATED_MKDIR_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_MKDIR_FAILS_RATE)
 		throw ProtocolError("Simulated mkdir error");
@@ -215,7 +328,7 @@ void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
 	}
 
-	rc = ssh_scp_push_directory(scp, ExtractFileName(path).c_str(), mode);
+	rc = ssh_scp_push_directory(scp, ExtractFileName(path).c_str(), mode & 0777);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP push directory error",  ssh_get_error(_conn->ssh), rc);
 	}
@@ -248,15 +361,10 @@ void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_t
 class SCPDirectoryEnumer : public IDirectoryEnumer
 {
 	std::shared_ptr<SSHConnection> _conn;
-	ExecCommandFIFO _fifo;
-	FDScope _fd_err;
-	FDScope _fd_out;
-	FDScope _fd_in;
-	FDScope _fd_ctl;
-	std::string _output;
 	struct timespec _now;
 
 	bool _finished = false;
+	SCPRemoteCommand _cmd;
 
 	bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
@@ -286,16 +394,16 @@ drwxrwxr-x 2 user user  4096 Aug 28 21:41 Protocol
 drwxrwxr-x 4 user user  4096 Jun 30 00:35 UI
 */
 		for (;;) {
-			size_t p = _output.find_first_of("\r\n");
+			size_t p = _cmd.output.find_first_of("\r\n");
 			if (p == std::string::npos) {
 				return false;
 			}
 
-			std::string line = _output.substr(0, p), filename;
-			while (p < _output.size() && (_output[p] == '\r' || _output[p] == '\n')) {
+			std::string line = _cmd.output.substr(0, p), filename;
+			while (p < _cmd.output.size() && (_cmd.output[p] == '\r' || _cmd.output[p] == '\n')) {
 				++p;
 			}
-			_output.erase(0, p);
+			_cmd.output.erase(0, p);
 
 			
 			for (size_t p = line.size();;) {
@@ -378,25 +486,9 @@ public:
 		command_line+= "\"";
 
 		_conn->executed_command.reset();
-		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _fifo.FileName());
+		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName());
 
-		_fd_err = open((_fifo.FileName() + ".err").c_str(), O_RDONLY);
-		_fd_out = open((_fifo.FileName() + ".out").c_str(), O_RDONLY);
-		_fd_in = open((_fifo.FileName() + ".in").c_str(), O_WRONLY);
-		_fd_ctl = open((_fifo.FileName() + ".ctl").c_str(), O_WRONLY);
-
-		if (!_fd_ctl.Valid() || !_fd_in.Valid() || !_fd_out.Valid() || !_fd_err.Valid()) {
-			throw std::runtime_error("Can't open FIFO");
-		}
-
-		ExecFIFO_CtlMsg m = {};
-		m.cmd = ExecFIFO_CtlMsg::CMD_PTY_SIZE;
-		m.u.pty_size.cols = 80;
-		m.u.pty_size.rows = 25;
-
-		if (WriteAll(_fd_ctl, &m, sizeof(m)) != sizeof(m)) {
-			throw std::runtime_error("Can't send PTY_SIZE");
-		}
+		_cmd.Execute();
 	}
 
 	virtual ~SCPDirectoryEnumer()
@@ -421,51 +513,16 @@ public:
 			return false;
 		}
 
-		fd_set fdr, fde;
-		char buf[0x10000];
 		for (;;) {
 			if (TryParseLine(name, owner, group, file_info)) {
 				return true;
 			}
 
-			FD_ZERO(&fdr);
-			FD_ZERO(&fde);
-			FD_SET(_fd_out, &fdr);
-			FD_SET(_fd_err, &fdr);
-
-			FD_SET(_fd_out, &fde);
-			FD_SET(_fd_err, &fde);
-
-			int r = select(std::max((int)_fd_out, (int)_fd_err) + 1, &fdr, nullptr, &fde, NULL);
-			if ( r < 0) {
-				if (errno == EAGAIN || errno == EINTR)
-					continue;
-
+			if (!_cmd.FetchOutput()) {
 				_finished = true;
 				return false;
 			}
-
-			if (FD_ISSET(_fd_out, &fdr) || FD_ISSET(_fd_out, &fde)) {
-				ssize_t r = read(_fd_out, buf, sizeof(buf));
-				if (r == 0 || (r < 0 && errno != EAGAIN && errno != EINTR)) {
-					_finished = true;
-					return false;
-				}
-
-				if (r > 0) {
-					_output.append(buf, r);
-				}
-			}
-
-			if (FD_ISSET(_fd_err, &fdr) || FD_ISSET(_fd_err, &fde)) {
-				ssize_t r = read(_fd_err, buf, sizeof(buf));
-				if (r < 0 && errno != EAGAIN && errno != EINTR) {
-					_finished = true;
-					return false;
-				}
-			}
-		}
-
+        	}
   	}
 };
 
@@ -552,35 +609,34 @@ public:
 	}
 };
 
-/*
-class SFTPFileWriter : protected SCPFileIO, public IFileWriter
+class SCPFileWriter : public IFileWriter
 {
+	std::shared_ptr<SSHConnection> _conn;
+	SCPRequest _scp;
+	unsigned long long _pending_size;
+	bool _truncated = false;
+
 public:
-	SFTPFileWriter(std::shared_ptr<SSHConnection> &conn, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
-		: SCPFileIO(conn, path, flags, mode, resume_pos)
+	SCPFileWriter(std::shared_ptr<SSHConnection> &conn, const std::string &path, mode_t mode, unsigned long long size_hint)
+	:
+		_conn(conn),
+		_scp(SCPNewRequest(conn->ssh, SSH_SCP_WRITE, ExtractFilePath(path))),
+		_pending_size(size_hint)
 	{
+		fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! mode=%o %llu\n", mode, size_hint);
+		mode&= 0777;
+		int rc = ssh_scp_init(_scp);
+  		if (rc != SSH_OK){
+			throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
+		}
+		rc = SSH_SCP_PUSH_FILE(_scp, ExtractFileName(path).c_str(), size_hint, mode);
+  		if (rc != SSH_OK){
+			throw ProtocolError("SCP push error",  ssh_get_error(_conn->ssh), rc);
+		}
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual ~SCPFileWriter()
 	{
-#if SIMULATED_WRITE_FAILS_RATE
-		if ( (rand() % 100) + 1 <= SIMULATED_WRITE_FAILS_RATE)
-			throw ProtocolError("Simulated write file error");
-#endif
-		// somewhy libssh doesnt have async write yet
-		if (len > 0) for (;;) {
-			size_t piece = (len >= _conn->max_write_block) ? _conn->max_write_block : len;
-			ssize_t written = sftp_write(_file, buf, piece);
-
-			if (written <= 0)
-				throw ProtocolError("write error",  ssh_get_error(_conn->ssh));
-
-			if ((size_t)written >= len)
-				break;
-
-			len-= (size_t)written;
-			buf = (const char *)buf + written;
-		}
 	}
 
 	virtual void WriteComplete() throw (std::runtime_error)
@@ -589,10 +645,32 @@ public:
 		if ( (rand() % 100) + 1 <= SIMULATED_WRITE_COMPLETE_FAILS_RATE)
 			throw ProtocolError("Simulated write-complete file error");
 #endif
-		// what?
+		if (_truncated)
+			throw ProtocolError("Excessive data truncated");
+	}
+
+
+
+	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	{
+#if SIMULATED_WRITE_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
+			throw ProtocolError("Simulated write file error");
+#endif
+
+		if (len > _pending_size) {
+			len = _pending_size;
+			_truncated = true;
+		}
+
+		if (len) {
+			int rc = ssh_scp_write(_scp, buf, len);
+			if (rc != SSH_OK) {
+				throw ProtocolError("SCP write error",  ssh_get_error(_conn->ssh), rc);
+			}
+		}
 	}
 };
-*/
 
 std::shared_ptr<IFileReader> ProtocolSCP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
@@ -604,15 +682,14 @@ std::shared_ptr<IFileReader> ProtocolSCP::FileGet(const std::string &path, unsig
 	return std::make_shared<SCPFileReader>(_conn, path);
 }
 
-std::shared_ptr<IFileWriter> ProtocolSCP::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolSCP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	if (resume_pos) {
 		throw ProtocolUnsupportedError("SCP doesn't support upload resume");
 	}
 
 	_conn->executed_command.reset();
-	throw ProtocolUnsupportedError("TODO: ProtocolSCP::FilePut");
-//	return std::make_shared<SFTPFileWriter>(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
+	return std::make_shared<SCPFileWriter>(_conn, path, mode, size_hint);
 }
 
 

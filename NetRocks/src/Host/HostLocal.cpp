@@ -353,7 +353,7 @@ std::shared_ptr<IFileReader> HostLocal::FileGet(const std::string &path, unsigne
 	return std::make_shared<HostLocalFileIO>(path, resume_pos, O_RDONLY, 0 );
 }
 
-std::shared_ptr<IFileWriter> HostLocal::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> HostLocal::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	return std::make_shared<HostLocalFileIO>(path, resume_pos, (resume_pos == 0) ? O_CREAT | O_TRUNC | O_RDWR : O_RDWR, mode );
 }

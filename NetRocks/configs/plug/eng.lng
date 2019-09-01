@@ -170,6 +170,7 @@
 "&Background tasks"
 
 "SFTP protocol options"
+"SCP protocol options"
 "Private &key file path:"
 "Custom &subsystem request/exec:"
 "Max &read block size, bytes:"

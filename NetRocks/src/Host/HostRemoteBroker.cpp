@@ -16,7 +16,7 @@ class HostRemoteBroker : protected IPCEndpoint
 		std::string str1, str2, str3;
 		timespec ts1, ts2;
 		FileInformation file_info;
-		unsigned long long ull;
+		unsigned long long ull1, ull2;
 		mode_t mode;
 		bool b;
 	} _args;
@@ -88,8 +88,8 @@ class HostRemoteBroker : protected IPCEndpoint
 	void OnFileGet()
 	{
 		RecvString(_args.str1);
-		RecvPOD(_args.ull);
-		std::shared_ptr<IFileReader> reader = _protocol->FileGet(_args.str1, _args.ull);
+		RecvPOD(_args.ull1);
+		std::shared_ptr<IFileReader> reader = _protocol->FileGet(_args.str1, _args.ull1);
 		SendCommand(IPC_FILE_GET);
 
 		for (;;) {
@@ -123,8 +123,9 @@ class HostRemoteBroker : protected IPCEndpoint
 	{
 		RecvString(_args.str1);
 		RecvPOD(_args.mode);
-		RecvPOD(_args.ull);
-		std::shared_ptr<IFileWriter> writer = _protocol->FilePut(_args.str1, _args.mode, _args.ull);
+		RecvPOD(_args.ull1);
+		RecvPOD(_args.ull2);
+		std::shared_ptr<IFileWriter> writer = _protocol->FilePut(_args.str1, _args.mode, _args.ull1, _args.ull2);
 		SendCommand(IPC_FILE_PUT);
 		// Trick to improve IO parallelization: instead of sending status reply on operation,
 		// send preliminary OK and if error will occur - do error reply on next operation.

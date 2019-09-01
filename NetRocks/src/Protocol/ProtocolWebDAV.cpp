@@ -735,7 +735,7 @@ std::shared_ptr<IFileReader> ProtocolWebDAV::FileGet(const std::string &path, un
 	return std::make_shared<DavFileIO>(_conn, path, false, 0, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolWebDAV::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolWebDAV::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	return std::make_shared<DavFileIO>(_conn, path, true, mode, resume_pos);
 }

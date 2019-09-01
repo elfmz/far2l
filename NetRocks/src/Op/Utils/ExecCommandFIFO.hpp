@@ -56,4 +56,22 @@ public:
 	}
 
 	inline const std::string &FileName() const { return _fifo; }
+
+
+	static int sReadStatus(const std::string &fifo)
+	{
+		int status = -1;
+		FDScope fd_status(open((fifo + ".status").c_str(), O_RDONLY));
+		if (fd_status.Valid()) {
+			ReadAll(fd_status, &status, sizeof(status));
+		}
+
+		return status;
+	}
+
+	int ReadStatus()
+	{
+		return sReadStatus(_fifo);
+	}
+
 };

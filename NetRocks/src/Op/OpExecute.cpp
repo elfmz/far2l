@@ -161,14 +161,7 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 //	fprintf(stderr, "OpExecute_Shell: LEAVE\n");
 	g_fd_ctl = -1;
 
-
-	int status = -1;
-	FDScope fd_status(open((fifo + ".status").c_str(), O_RDONLY));
-	if (fd_status.Valid()) {
-		ReadAll(fd_status, &status, sizeof(status));
-	}
-
-	return status;
+	return ExecCommandFIFO::sReadStatus(fifo);
 }
 
 

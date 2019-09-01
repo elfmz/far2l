@@ -34,13 +34,16 @@
 
 #endif
 
-static ssh_scp SCPNewRequest(ssh_session session, int mode, const std::string &location)
+static std::string QuotedArg(const std::string &s)
 {
-	std::string location_quoted = "\"";
-	location_quoted+= EscapeQuotas(location);
-	location_quoted+= "\"";
+	if (s.find_first_of("\"\r\n\t' ") == std::string::npos) {
+		return s;
+	}
 
-	return ssh_scp_new(session, mode, location_quoted.c_str());
+	std::string out = "\"";
+	out+= EscapeQuotas(s);
+	out+= '\"';
+	return out;
 }
 
 static void SCPRequestDeleter(ssh_scp  res)
@@ -151,26 +154,62 @@ struct SCPRemoteCommand
 
 		return true;
 	}
+
+	int ReadStatus()
+	{
+		return fifo.ReadStatus();
+	}
 };
 
 
-int ProtocolSCP::ExecuteSimpleCommand(const std::string &command_line)
+class SimpleCommand
 {
-	SCPRemoteCommand cmd;
-	_conn->executed_command.reset();
-	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, cmd.fifo.FileName());
+	std::shared_ptr<SSHConnection> _conn;
+	std::string _output, _error;
 
-	cmd.Execute();
-	while (cmd.FetchOutput()) {
-		cmd.output.clear();
-		cmd.error.clear();
+public:
+	SimpleCommand(std::shared_ptr<SSHConnection> &conn)
+		: _conn(conn)
+	{
 	}
 
-	_conn->executed_command.reset();
+	virtual ~SimpleCommand()
+	{
+		_conn->executed_command.reset();
+	}
 
-	return 0;
+	int Execute(const std::string &command_line)
+	{
+		SCPRemoteCommand cmd;
+
+		_conn->executed_command.reset();
+		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, cmd.fifo.FileName());
+
+		cmd.Execute();
+		while (cmd.FetchOutput()) {
+			cmd.output.clear();
+			cmd.error.clear();
+		}
+
+		_output.swap(cmd.output);
+		_error.swap(cmd.error);
+
+		return cmd.ReadStatus();
+	}
+
+	int Execute(const char *cmdline_fmt, ...)
+	{
+		va_list args;
+		va_start(args, cmdline_fmt);
+		const std::string &command_line = StrPrintfV(cmdline_fmt, args);
+		va_end(args);
+
+		return Execute(command_line);
+	}
+
+	const std::string &Output() const { return _output; }
+	const std::string &Error() const { return _error; }
 };
-
 
 mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
@@ -179,7 +218,7 @@ mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink) throw 
 		throw ProtocolError("Simulated getmode error");
 #endif
 
-	SCPRequest scp (SCPNewRequest(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path));// | 
+	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, QuotedArg(path).c_str()));// | 
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -222,7 +261,7 @@ unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_sym
 		throw ProtocolError("Simulated getsize error");
 #endif
 
-	SCPRequest scp(SCPNewRequest(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path));// | SSH_SCP_RECURSIVE
+	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, QuotedArg(path).c_str()));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -259,7 +298,7 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 	if ( (rand() % 100) + 1 <= SIMULATED_GETINFO_FAILS_RATE)
 		throw ProtocolError("Simulated getinfo error");
 #endif
-	SCPRequest scp (SCPNewRequest(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path));// | SSH_SCP_RECURSIVE
+	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, QuotedArg(path).c_str()));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -295,20 +334,20 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 
 void ProtocolSCP::FileDelete(const std::string &path) throw (std::runtime_error)
 {
-	std::string command_line = "unlink \"";
-	command_line+= EscapeQuotas(path);
-	command_line+= '\"';
-	ExecuteSimpleCommand(command_line);
-//	throw ProtocolUnsupportedError("SCP doesn't support delete");
+	SimpleCommand sc(_conn);
+	int rc = sc.Execute("unlink %s", QuotedArg(path).c_str());
+	if (rc != 0) {
+		throw ProtocolError(sc.Error().c_str(), rc);
+	}
 }
 
 void ProtocolSCP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
-	std::string command_line = "rmdir \"";
-	command_line+= EscapeQuotas(path);
-	command_line+= '\"';
-	ExecuteSimpleCommand(command_line);
-//	throw ProtocolUnsupportedError("SCP doesn't support rmdir");
+	SimpleCommand sc(_conn);
+	int rc = sc.Execute("rmdir %s", QuotedArg(path).c_str());
+	if (rc != 0) {
+		throw ProtocolError(sc.Error().c_str(), rc);
+	}
 }
 
 void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
@@ -322,7 +361,7 @@ void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 		throw ProtocolError("Simulated mkdir error");
 #endif
 
-	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_WRITE, ExtractFilePath(path).c_str()));// | SSH_SCP_RECURSIVE
+	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, QuotedArg(ExtractFilePath(path)).c_str()));// 
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -336,7 +375,11 @@ void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 
 void ProtocolSCP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("SCP doesn't support rename");
+	SimpleCommand sc(_conn);
+	int rc = sc.Execute("rename %s %s", QuotedArg(path_old).c_str(), QuotedArg(path_new).c_str());
+	if (rc != 0) {
+		throw ProtocolError(sc.Error().c_str(), rc);
+	}
 }
 
 void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
@@ -345,17 +388,35 @@ void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time,
 
 void ProtocolSCP::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
+	SimpleCommand sc(_conn);
+	int rc = sc.Execute("chmod %o %s", mode, QuotedArg(path).c_str());
+	if (rc != 0) {
+		throw ProtocolError(sc.Error().c_str(), rc);
+	}
 }
 
 
 void ProtocolSCP::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("SCP doesn't support symlink");
+	SimpleCommand sc(_conn);
+	int rc = sc.Execute("ln -s %s %s", QuotedArg(link_target).c_str(), QuotedArg(link_path).c_str());
+	if (rc != 0) {
+		throw ProtocolError(sc.Error().c_str(), rc);
+	}
 }
 
 void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("SCP doesn't support symlink");
+	SimpleCommand sc(_conn);
+	int rc = sc.Execute("readlink %s", QuotedArg(link_path).c_str());
+// fprintf(stderr, "ProtocolSCP::SymlinkQuery('%s') -> '%s' %d\n", link_path.c_str(), link_target.c_str(), rc);
+	if (rc != 0) {
+		throw ProtocolError(sc.Error().c_str(), rc);
+	}
+	link_target = sc.Output();
+	while (!link_target.empty() && (link_target[link_target.size() - 1] == '\r' || link_target[link_target.size() - 1] == '\n')) {
+		link_target.resize(link_target.size() - 1);
+	}
 }
 
 class SCPDirectoryEnumer : public IDirectoryEnumer
@@ -415,13 +476,18 @@ drwxrwxr-x 4 user user  4096 Jun 30 00:35 UI
 				if (line[p - 1] != '\\') {
 					name = line.substr(p + 1);
 					line.resize(p);
+					if (line.size() > 3 && line.substr(line.size() - 3) == " ->") {
+						name.clear();
+						p = line.size() - 3;
+						line.resize(p);
+						continue;
+					}
+
 					break;
 				}
 
 				--p;
 			}
-			
-
 
 			std::vector<std::string> cols;
 			StrExplode(cols, line, " \t");
@@ -480,10 +546,8 @@ public:
 	SCPDirectoryEnumer(std::shared_ptr<SSHConnection> &conn, std::string path, const struct timespec &now)
 		: _conn(conn), _now(now)
 	{
-
-		std::string command_line = "ls -lbA \"";
-		command_line+= EscapeQuotas(path);
-		command_line+= "\"";
+		std::string command_line = "ls -lbA ";
+		command_line+= QuotedArg(path);
 
 		_conn->executed_command.reset();
 		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName());
@@ -542,7 +606,7 @@ public:
 	SCPFileReader(std::shared_ptr<SSHConnection> &conn, const std::string &path)
 	:
 		_conn(conn),
-		_scp(SCPNewRequest(conn->ssh, SSH_SCP_READ, path))
+		_scp(ssh_scp_new(conn->ssh, SSH_SCP_READ, QuotedArg(path).c_str()))
 	{
 		int rc = ssh_scp_init(_scp);
   		if (rc != SSH_OK){
@@ -620,10 +684,9 @@ public:
 	SCPFileWriter(std::shared_ptr<SSHConnection> &conn, const std::string &path, mode_t mode, unsigned long long size_hint)
 	:
 		_conn(conn),
-		_scp(SCPNewRequest(conn->ssh, SSH_SCP_WRITE, ExtractFilePath(path))),
+		_scp(ssh_scp_new(conn->ssh, SSH_SCP_WRITE, QuotedArg(ExtractFilePath(path)).c_str())),
 		_pending_size(size_hint)
 	{
-		fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! mode=%o %llu\n", mode, size_hint);
 		mode&= 0777;
 		int rc = ssh_scp_init(_scp);
   		if (rc != SSH_OK){

@@ -9,8 +9,6 @@ class ProtocolSCP : public IProtocol
 	std::shared_ptr<SSHConnection> _conn;
 	struct timespec _now{};
 
-	int ExecuteSimpleCommand(const std::string &command_line);
-
 public:
 	ProtocolSCP(const std::string &host, unsigned int port, const std::string &username,
 		const std::string &password, const std::string &options) throw (std::runtime_error);

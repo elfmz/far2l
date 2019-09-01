@@ -211,6 +211,10 @@ class UnicodeString
 		bool operator==(const wchar_t* Str) const { return Equal(0, GetLength(), Str, StrLength(Str)); }
 		bool operator==(wchar_t Ch) const { return Equal(0, GetLength(), &Ch, 1); }
 
+		bool operator!=(const UnicodeString& Str) const { return !Equal(0, GetLength(), Str.CPtr(), Str.GetLength()); }
+		bool operator!=(const wchar_t* Str) const { return !Equal(0, GetLength(), Str, StrLength(Str)); }
+		bool operator!=(wchar_t Ch) const { return !Equal(0, GetLength(), &Ch, 1); }
+
 		UnicodeString& Lower(size_t nStartPos=0, size_t nLength=(size_t)-1);
 		UnicodeString& Upper(size_t nStartPos=0, size_t nLength=(size_t)-1);
 

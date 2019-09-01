@@ -15,7 +15,7 @@ src/Host/HostRemote.cpp
 src/UI/DialogUtils.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp
-src/UI/Settings/ConfigureProtocolSFTP.cpp
+src/UI/Settings/ConfigureProtocolSFTPSCP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Settings/ConfigureProtocolWebDAV.cpp
@@ -71,7 +71,9 @@ if (LIBSSH_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
 	add_executable (NetRocks-SFTP
 		${PROTOCOL_SOURCES}
+		src/Protocol/SSHConnection.cpp
 		src/Protocol/ProtocolSFTP.cpp
+		src/Protocol/ProtocolSCP.cpp
 	)
 	target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
 	target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})

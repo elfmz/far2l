@@ -1,26 +1,18 @@
 #pragma once
 #include <memory>
-#include <string>
-#include <atomic>
-#include <list>
+#include "Protocol.h"
 
-#include "Host.h"
-#include "FileInformation.h"
+struct SSHConnection;
 
-class HostLocal : public IHost
+class ProtocolSCP : public IProtocol
 {
+	std::shared_ptr<SSHConnection> _conn;
+	struct timespec _now{};
+
 public:
-	HostLocal();
-	virtual ~HostLocal();
-
-	virtual std::string SiteName();
-	virtual void GetIdentity(Identity &identity);
-
-
-	virtual std::shared_ptr<IHost> Clone();
-
-	virtual void ReInitialize() throw (std::runtime_error);
-	virtual void Abort();
+	ProtocolSCP(const std::string &host, unsigned int port, const std::string &username,
+		const std::string &password, const std::string &options) throw (std::runtime_error);
+	virtual ~ProtocolSCP();
 
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
@@ -32,7 +24,7 @@ public:
 	virtual void DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error);
 	virtual void Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error);
 
-	virtual void SetTimes(const std::string &path, const timespec &access_timem, const timespec &modification_time) throw (std::runtime_error);
+	virtual void SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error);
 	virtual void SetMode(const std::string &path, mode_t mode) throw (std::runtime_error);
 
 	virtual void SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error);
@@ -43,4 +35,5 @@ public:
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0) throw (std::runtime_error);
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos = 0) throw (std::runtime_error);
 
+	virtual void ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error);
 };

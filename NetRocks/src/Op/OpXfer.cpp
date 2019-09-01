@@ -465,7 +465,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		indicted = _base_host.get();
 		std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, file_complete);
 		indicted = _dst_host.get();
-		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode | EXTRA_NEEDED_MODE, file_complete);
+		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode | EXTRA_NEEDED_MODE, info.size, file_complete);
 		if (!_io_buf.Size())
 			throw std::runtime_error("No buffer - no file");
 

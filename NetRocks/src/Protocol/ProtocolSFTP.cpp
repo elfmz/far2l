@@ -21,38 +21,23 @@
 #include <WordExpansion.h>
 #include <Threaded.h>
 #include "ProtocolSFTP.h"
+#include "SSHConnection.h"
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-#define SIMULATED_GETMODE_FAILS_RATE 0
-#define SIMULATED_GETSIZE_FAILS_RATE 0
-#define SIMULATED_GETINFO_FAILS_RATE 0
-#define SIMULATED_UNLINK_FAILS_RATE 0
-#define SIMULATED_RMDIR_FAILS_RATE 0
-#define SIMULATED_MKDIR_FAILS_RATE 0
-#define SIMULATED_RENAME_FAILS_RATE 0
-#define SIMULATED_ENUM_FAILS_RATE 0
-#define SIMULATED_OPEN_FAILS_RATE 0
-#define SIMULATED_READ_FAILS_RATE 0
-#define SIMULATED_WRITE_FAILS_RATE 0
-#define SIMULATED_WRITE_COMPLETE_FAILS_RATE 0
-///////////////////////////////////////////////////////////////////////////////////////////////////
+std::shared_ptr<IProtocol> CreateProtocolSCP(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {
+	if (strcasecmp(protocol.c_str(), "scp") == 0) {
+		return CreateProtocolSCP(host, port, username, password, options);
+	}
+
 	return std::make_shared<ProtocolSFTP>(host, port, username, password, options);
 }
 
 // #define MAX_SFTP_IO_BLOCK_SIZE		((size_t)32768)	// googling shows than such block size compatible with at least most of servers
-
-static void SSHSessionDeleter(ssh_session res)
-{
-	if (res) {
-		ssh_disconnect(res);
-		ssh_free(res);
-	}
-}
 
 static void SFTPSessionDeleter(sftp_session res)
 {
@@ -78,58 +63,79 @@ static void SFTPFileDeleter(sftp_file res)
 		sftp_close(res);
 }
 
-static void SFTPChannelDeleter(ssh_channel res)
-{
-	if (res) {
-		ssh_channel_close(res);
-		ssh_channel_free(res);
-	}
-}
-
-
-
-#define RESOURCE_CONTAINER(CONTAINER, RESOURCE, DELETER) 		\
-class CONTAINER {						\
-	RESOURCE _res = {};							\
-	CONTAINER(const CONTAINER &) = delete;	\
-public:									\
-	operator RESOURCE() { return _res; }				\
-	RESOURCE operator ->() { return _res; }				\
-	CONTAINER(RESOURCE res) : _res(res) {}			\
-	~CONTAINER() { DELETER(_res); }				\
-};
 
 RESOURCE_CONTAINER(SFTPDir, sftp_dir, SFTPDirDeleter);
 RESOURCE_CONTAINER(SFTPAttributes, sftp_attributes, SFTPAttributesDeleter);
 RESOURCE_CONTAINER(SFTPFile, sftp_file, SFTPFileDeleter);
-RESOURCE_CONTAINER(SFTPChannel, ssh_channel, SFTPChannelDeleter);
-
-//RESOURCE_CONTAINER(SSHSession, ssh_session, SSHSessionDeleter);
-//RESOURCE_CONTAINER(SFTPSession, sftp_session, SFTPSessionDeleter);
+RESOURCE_CONTAINER(SFTPSession, sftp_session, SFTPSessionDeleter);
 
 class ExecutedCommand;
 
 
-struct SFTPConnection
+struct SFTPConnection : SSHConnection
 {
-	ssh_session ssh = nullptr;
-	sftp_session sftp = nullptr;
+	SFTPSession sftp;
 	size_t max_read_block = 32768; // default value
 	size_t max_write_block = 32768; // default value
 
-	std::shared_ptr<ExecutedCommand> executed_command;
-	std::map<std::string, std::string> env_set {{"TERM", "xterm"}};
-	std::set<std::string> env_unset;
-
-	~SFTPConnection()
+	SFTPConnection(const std::string &host, unsigned int port, const std::string &username,
+		const std::string &password, const StringConfig &protocol_options) throw (std::runtime_error)
+	:
+		SSHConnection(host, port, username, password, protocol_options)
 	{
-		if (sftp) {
-			SFTPSessionDeleter(sftp);
+		max_read_block = (size_t)std::max(protocol_options.GetInt("MaxReadBlock", max_read_block), 512);
+		max_write_block = (size_t)std::max(protocol_options.GetInt("MaxWriteBlock", max_write_block), 512);
+
+		const std::string &subsystem = protocol_options.GetString("CustomSubsystem");
+		if (!subsystem.empty() && protocol_options.GetInt("UseCustomSubsystem", 0) != 0) {
+			ssh_channel channel = ssh_channel_new(ssh);
+			if (channel == nullptr)
+				throw ProtocolError("SSH channel new", ssh_get_error(ssh));
+
+			int rc = ssh_channel_open_session(channel);
+			if (rc != SSH_OK) {
+				ssh_channel_free(channel);
+				throw ProtocolError("SFTP channel open", ssh_get_error(ssh));
+			}
+			if (subsystem.find('/') == std::string::npos) {
+				rc = ssh_channel_request_subsystem(channel, subsystem.c_str());
+			} else {
+				rc = ssh_channel_request_exec(channel, subsystem.c_str());
+			}
+
+			if (rc != SSH_OK) {
+				ssh_channel_free(channel);
+				throw ProtocolError("SFTP custom subsystem", ssh_get_error(ssh));
+			}
+
+			sftp = sftp_new_channel(ssh, channel);
+			if (!sftp) {
+				ssh_channel_free(channel);
+				throw ProtocolError("SFTP channel", ssh_get_error(ssh));
+			}
+
+#if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 3))
+			if (!sftp->read_packet) {
+				sftp->read_packet = (struct sftp_packet_struct *)calloc(1, sizeof(struct sftp_packet_struct));
+				sftp->read_packet->payload = ssh_buffer_new();
+			}
+#endif
+		} else {
+			sftp = sftp_new(ssh);
 		}
 
-		if (ssh) {
-			SSHSessionDeleter(ssh);
-		}
+		if (sftp == nullptr)
+			throw ProtocolError("SFTP session", ssh_get_error(ssh));
+
+		int rc = sftp_init(sftp);
+		if (rc != SSH_OK)
+			throw ProtocolError("SFTP init", ssh_get_error(ssh), rc);
+
+		//_dir = directory;
+	}
+
+	virtual	~SFTPConnection()
+	{
 	}
 };
 
@@ -176,165 +182,9 @@ static std::string GetSSHPubkeyHash(ssh_session ssh)
 
 ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
-	: _conn(std::make_shared<SFTPConnection>())
 {
-	_conn->ssh = ssh_new();
-	if (!_conn->ssh)
-		throw ProtocolError("SSH session");
-
-	ssh_options_set(_conn->ssh, SSH_OPTIONS_HOST, host.c_str());
-	if (port > 0)
-		ssh_options_set(_conn->ssh, SSH_OPTIONS_PORT, &port);	
-
-	ssh_options_set(_conn->ssh, SSH_OPTIONS_USER, &port);
-
 	StringConfig protocol_options(options);
-
-#if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
-	if (protocol_options.GetInt("TcpNoDelay") ) {
-		int nodelay = 1;
-		ssh_options_set(_conn->ssh, SSH_OPTIONS_NODELAY, &nodelay);
-	}
-#endif
-
-	_conn->max_read_block = (size_t)std::max(protocol_options.GetInt("MaxReadBlock", _conn->max_read_block), 512);
-	_conn->max_write_block = (size_t)std::max(protocol_options.GetInt("MaxWriteBlock", _conn->max_write_block), 512);
-
-	int ssh_verbosity = SSH_LOG_NOLOG;
-	if (g_netrocks_verbosity == 2) {
-		ssh_verbosity = SSH_LOG_WARNING;
-	} else if (g_netrocks_verbosity > 2) {
-		ssh_verbosity = SSH_LOG_PROTOCOL;
-	}
-	ssh_options_set(_conn->ssh, SSH_OPTIONS_LOG_VERBOSITY, &ssh_verbosity);
-
-	ssh_key priv_key {};
-	std::string key_path_spec;
-	if (protocol_options.GetInt("PrivKeyEnable", 0) != 0) {
-		key_path_spec = protocol_options.GetString("PrivKeyPath");
-		WordExpansion we(key_path_spec);
-		if (we.empty()) {
-			throw std::runtime_error(StrPrintf("No key file specified: \'%s\'", key_path_spec.c_str()));
-		}
-		int key_import_result = -1;
-		for (const auto &key_path : we) {
-			key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), password.c_str(), nullptr, nullptr, &priv_key);
-			if (key_import_result == SSH_ERROR && password.empty()) {
-				key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), nullptr, nullptr, nullptr, &priv_key);
-			}
-			if (key_import_result == SSH_OK) {
-				break;
-			}
-		}
-		switch (key_import_result) {
-			case SSH_EOF:
-				throw std::runtime_error(StrPrintf("Cannot read key file \'%s\'", key_path_spec.c_str()));
-
-			case SSH_ERROR:
-				throw ProtocolAuthFailedError();
-
-			case SSH_OK:
-				break;
-
-			default:
-				throw std::runtime_error(
-					StrPrintf("Unexpected error %u while loading key from \'%s\'",
-					key_import_result, key_path_spec.c_str()));
-		}
-	}
-
-	// TODO: seccomp: if (protocol_options.GetInt("Sandbox") ) ...
-
-	int rc = ssh_connect(_conn->ssh);
-	if (rc != SSH_OK)
-		throw ProtocolError("Connection", ssh_get_error(_conn->ssh), rc);
-
-
-	int socket_fd = ssh_get_fd(_conn->ssh);
-	if (socket_fd != -1) {
-#if (LIBSSH_VERSION_INT < SSH_VERSION_INT(0, 8, 0))
-		if (protocol_options.GetInt("TcpNoDelay") ) {
-			int nodelay = 1;
-			if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&nodelay, sizeof(nodelay)) == -1) {
-				perror("ProtocolSFTP - TCP_NODELAY");
-			}
-		}
-#endif
-		if (protocol_options.GetInt("TcpQuickAck") ) {
-#ifdef TCP_QUICKACK
-			int quickack = 1;
-			if (setsockopt(socket_fd, IPPROTO_TCP, TCP_QUICKACK , (void *)&quickack, sizeof(quickack)) == -1) {
-				perror("ProtocolSFTP - TCP_QUICKACK ");
-			}
-#else
-			fprintf(stderr, "ProtocolSFTP: TCP_QUICKACK requested but not supported\n");
-#endif
-		}
-	}
-
-	const std::string &pub_key_hash = GetSSHPubkeyHash(_conn->ssh);
-	if (pub_key_hash != protocol_options.GetString("ServerIdentity"))
-		throw ServerIdentityMismatchError(pub_key_hash);
-
-	if (priv_key) {
-		rc = ssh_userauth_publickey(_conn->ssh, username.empty() ? nullptr : username.c_str(), priv_key);
-		if (rc != SSH_AUTH_SUCCESS) {
-			fprintf(stderr, "ssh_userauth_publickey: %d '%s'\n" , rc, ssh_get_error(_conn->ssh));
-			throw std::runtime_error("Key file authentification failed");
-		}
-
-	} else {
-		rc = ssh_userauth_password(_conn->ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
-  		if (rc != SSH_AUTH_SUCCESS)
-			throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(_conn->ssh), rc);
-	}
-
-	const std::string &subsystem = protocol_options.GetString("CustomSubsystem");
-	if (!subsystem.empty() && protocol_options.GetInt("UseCustomSubsystem", 0) != 0) {
-		ssh_channel channel = ssh_channel_new(_conn->ssh);
-		if (channel == nullptr)
-			throw ProtocolError("SSH channel new", ssh_get_error(_conn->ssh));
-
-		int rc = ssh_channel_open_session(channel);
-		if (rc != SSH_OK) {
-			ssh_channel_free(channel);
-			throw ProtocolError("SFTP channel open", ssh_get_error(_conn->ssh));
-		}
-		if (subsystem.find('/') == std::string::npos) {
-			rc = ssh_channel_request_subsystem(channel, subsystem.c_str());
-		} else {
-			rc = ssh_channel_request_exec(channel, subsystem.c_str());
-		}
-
-		if (rc != SSH_OK) {
-			ssh_channel_free(channel);
-			throw ProtocolError("SFTP custom subsystem", ssh_get_error(_conn->ssh));
-		}
-
-		_conn->sftp = sftp_new_channel(_conn->ssh, channel);
-		if (!_conn->sftp) {
-			ssh_channel_free(channel);
-			throw ProtocolError("SFTP channel", ssh_get_error(_conn->ssh));
-		}
-
-#if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 3))
-		if (!_conn->sftp->read_packet) {
-			_conn->sftp->read_packet = (struct sftp_packet_struct *)calloc(1, sizeof(struct sftp_packet_struct));
-			_conn->sftp->read_packet->payload = ssh_buffer_new();
-		}
-#endif
-	} else {
-		_conn->sftp = sftp_new(_conn->ssh);
-	}
-
-	if (_conn->sftp == nullptr)
-		throw ProtocolError("SFTP session", ssh_get_error(_conn->ssh));
-
-	rc = sftp_init(_conn->sftp);
-	if (rc != SSH_OK)
-		throw ProtocolError("SFTP init", ssh_get_error(_conn->ssh), rc);
-
-	//_dir = directory;
+	_conn = std::make_shared<SFTPConnection>(host, port, username, password, protocol_options);
 }
 
 ProtocolSFTP::~ProtocolSFTP()
@@ -844,293 +694,15 @@ std::shared_ptr<IFileReader> ProtocolSFTP::FileGet(const std::string &path, unsi
 	return std::make_shared<SFTPFileReader>(_conn, path, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	_conn->executed_command.reset();
 
 	return std::make_shared<SFTPFileWriter>(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-class ExecutedCommand : protected Threaded
-{
-	std::shared_ptr<SFTPConnection> _conn;
-	std::string _working_dir;
-	std::string _command_line;
-	std::string _fifo;
-	SFTPChannel _channel;
-	int _kickass[2] {-1, -1};
-	bool _pty = false;
-	bool _succeess = false;
-
-	void OnReadFDIn(const char *buf, size_t len)
-	{
-		for (size_t ofs = 0; ofs < len; ) {
-			uint32_t piece = (len - ofs >= 32768) ? 32768 : (uint32_t)len - ofs;
-			ssize_t slen = ssh_channel_write(_channel, &buf[ofs], piece);
-			if (slen <= 0) {
-				throw std::runtime_error("channel write failed");
-			}
-			ofs+= std::min((size_t)slen, (size_t)piece);
-		}
-	}
-
-	virtual void SendSignal(int sig)
-	{
-		const char *sig_name;
-		switch (sig) {
-			case SIGALRM: sig_name = "ALRM"; break;
-			case SIGFPE: sig_name = "FPE"; break;
-			case SIGHUP: sig_name = "HUP"; break;
-			case SIGILL: sig_name = "ILL"; break;
-			case SIGINT: sig_name = "INT"; break;
-			case SIGKILL: sig_name = "KILL"; break;
-			case SIGPIPE: sig_name = "PIPE"; break;
-			case SIGQUIT: sig_name = "QUIT"; break;
-			case SIGSEGV: sig_name = "SEGV"; break;
-			case SIGTERM: sig_name = "TERM"; break;
-			case SIGUSR1: sig_name = "USR1"; break;
-			case SIGUSR2: sig_name = "USR2"; break;
-			case SIGABRT: default: sig_name = "ABRT"; break;
-		}
-		int rc = ssh_channel_request_send_signal(_channel, sig_name);
-		if (rc == SSH_ERROR ) {
-			throw ProtocolError("ssh send signal",  ssh_get_error(_conn->ssh));
-		}
-	}
-
-
-	void OnReadFDCtl(int fd)
-	{
-		ExecFIFO_CtlMsg m;
-		if (ReadAll(fd, &m, sizeof(m)) != sizeof(m)) {
-			throw std::runtime_error("ctl read failed");
-		}
-
-		switch (m.cmd) {
-			case ExecFIFO_CtlMsg::CMD_PTY_SIZE: {
-				if (_pty) {
-					ssh_channel_change_pty_size(_channel, m.u.pty_size.cols, m.u.pty_size.rows);
-				}
-			} break;
-
-			case ExecFIFO_CtlMsg::CMD_SIGNAL: {
-				SendSignal(m.u.signum);
-			} break;
-		}
-	}
-
-	void IOLoop()
-	{
-		FDScope fd_err(open((_fifo + ".err").c_str(), O_WRONLY));
-		FDScope fd_out(open((_fifo + ".out").c_str(), O_WRONLY));
-		FDScope fd_in(open((_fifo + ".in").c_str(), O_RDONLY));
-		FDScope fd_ctl(open((_fifo + ".ctl").c_str(), O_RDONLY));
-
-		if (!fd_err.Valid() || !fd_out.Valid() || !fd_in.Valid() || !fd_ctl.Valid())
-			throw ProtocolError("fifo");
-
-		// get PTY size that is sent immediately
-		OnReadFDCtl(fd_ctl);
-
-		std::string cmd;
-		if (!_working_dir.empty() && _working_dir != "." && _working_dir != "./") {
-			cmd = _working_dir;
-			QuoteCmdArg(cmd);
-			cmd.insert(0, "cd ");
-			cmd+= " && ";
-		}
-
-		for (const auto &i : _conn->env_set) {
-			cmd+= "export ";
-			cmd+= i.first;
-			cmd+= "=";
-			std::string val = i.second;
-			QuoteCmdArg(val);
-			cmd+= val;
-			cmd+= " && ";
-		}
-		for (const auto &i : _conn->env_unset) {
-			cmd+= "unset ";
-			cmd+= i;
-			cmd+= " && ";
-		}
-
-
-		cmd+= _command_line;
-
-		int rc = ssh_channel_request_exec(_channel, cmd.c_str());
-		if (rc != SSH_OK) {
-			throw ProtocolError("ssh execute",  ssh_get_error(_conn->ssh));
-		}
-
-		fcntl(fd_in, F_SETFL, fcntl(fd_in, F_GETFL, 0) | O_NONBLOCK);
-
-		for (unsigned int idle = 0;;) {
-			char buf[0x8000];
-			fd_set fdr, fde;
-			FD_ZERO(&fdr);
-			FD_ZERO(&fde);
-			FD_SET(fd_ctl, &fdr);
-			FD_SET(fd_in, &fdr);
-			FD_SET(_kickass[0], &fdr);
-			FD_SET(fd_ctl, &fde);
-			FD_SET(fd_in, &fde);
-			FD_SET(_kickass[0], &fde);
-			struct timeval tv = {0, (idle > 1000) ? 100000 : ((idle > 0) ? 10000 : 0)};
-			if (idle < 100000) {
-				++idle;
-			}
-			int r = select(std::max(std::max((int)fd_ctl, (int)fd_in), _kickass[0]) + 1, &fdr, nullptr, &fde, &tv);
-			if ( r < 0) {
-				if (errno == EAGAIN || errno == EINTR)
-					continue;
-
-				throw std::runtime_error("select failed");
-			}
-
-			if (FD_ISSET(_kickass[0], &fdr) || FD_ISSET(_kickass[0], &fde)) {
-				throw std::runtime_error("got kickass");
-			}
-
-			if (FD_ISSET(fd_in, &fdr)) { // || FD_ISSET(fd_in, &fde)
-				ssize_t rlen = read(fd_in, buf, sizeof(buf));
-				if (rlen <= 0) {
-					if (errno != EAGAIN) {
-						throw std::runtime_error("fd_in read failed");
-					}
-				} else {
-					OnReadFDIn(buf, (size_t)rlen);
-					idle = 0;
-				}
-			}
-			if (FD_ISSET(fd_ctl, &fdr)) {// || FD_ISSET(fd_ctl, &fde)
-				OnReadFDCtl(fd_ctl);
-				idle = 0;
-			}
-
-			if (ssh_channel_is_eof(_channel)) {
-				int status = ssh_channel_get_exit_status(_channel);
-				if (status == 0) {
-					_succeess = true;
-				}
-				FDScope fd_status(open((_fifo + ".status").c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600));
-				if (fd_status.Valid()) {
-					WriteAll(fd_status, &status, sizeof(status));
-				}
-				throw std::runtime_error("channel EOF");
-			}
-
-			int rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 0);
-			if (rlen > 0) {
-				if (WriteAll(fd_out, buf, rlen) != (size_t)rlen) {
-					throw std::runtime_error("output write failed");
-				}
-				idle = 0;
-			}
-
-			rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 1);
-			if (rlen > 0) {
-				if (WriteAll(fd_err, buf, rlen) != (size_t)rlen) {
-					throw std::runtime_error("error write failed");
-				}
-				idle = 0;
-			}
-		}
-	}
-
-	virtual void *ThreadProc()
-	{
-		try {
-			fprintf(stderr, "ProtocolSFTP::ExecutedCommand: ENTERING\n");
-			IOLoop();
-			fprintf(stderr, "ProtocolSFTP::ExecutedCommand: LEAVING\n");
-		} catch (std::exception &ex) {
-			fprintf(stderr, "ProtocolSFTP::ExecutedCommand: %s\n", ex.what());
-		}
-
-		return nullptr;
-	}
-
-	public:
-	ExecutedCommand(std::shared_ptr<SFTPConnection> &conn, const std::string &working_dir, const std::string &command_line, const std::string &fifo)
-		:
-		_conn(conn),
-		_working_dir(working_dir),
-		_command_line(command_line),
-		_fifo(fifo),
-		_channel(ssh_channel_new(conn->ssh))
-	{
-		if (!_channel)
-			throw ProtocolError("ssh channel",  ssh_get_error(_conn->ssh));
-
-		int rc = ssh_channel_open_session(_channel);
-		if (rc != SSH_OK) {
-			throw ProtocolError("ssh channel session",  ssh_get_error(_conn->ssh));
-		}
-
-		rc = ssh_channel_request_pty(_channel);
-		if (rc == SSH_OK) {
-			_pty = true;
-		}
-
-		if (pipe_cloexec(_kickass) == -1) {
-			throw ProtocolError("pipe",  ssh_get_error(_conn->ssh));
-		}
-
-		fcntl(_kickass[1], F_SETFL, fcntl(_kickass[1], F_GETFL, 0) | O_NONBLOCK);
-
-		if (!StartThread()) {
-			CheckedCloseFDPair(_kickass);
-			throw std::runtime_error("start thread");
-		}
-	}
-
-	virtual ~ExecutedCommand()
-	{
-		if (!WaitThread(0)) {
-			char c = 1;
-			if (write (_kickass[1], &c, sizeof(c)) != 1) {
-				perror("write kickass");
-			}
-			WaitThread();
-		}
-		CheckedCloseFDPair(_kickass);
-
-		if (_succeess) {
-			std::vector<std::string> parts;
-			StrExplode(parts, _command_line, " ");
-			if (parts.size() > 1) {
-				if (parts[0] == "export") {
-					std::vector<std::string> var_parts;
-					StrExplode(var_parts, parts[1], "=");
-					if (var_parts.size() > 0) {
-						StrTrim(var_parts[0]);
-						if (var_parts.size() > 1) {
-							StrTrim(var_parts[1]);
-							_conn->env_set[var_parts[0]] = var_parts[1];
-						} else {
-							_conn->env_set[var_parts[0]].clear();
-						}
-						_conn->env_unset.erase(var_parts[0]);
-					}
-
-				} else if (parts[0] == "unset") {
-					StrTrim(parts[1]);
-					_conn->env_unset.insert(parts[1]);
-					_conn->env_set.erase(parts[1]);
-				}
-			}
-		}
-	}
-
-};
-
 void ProtocolSFTP::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error)
 {
 	_conn->executed_command.reset();
-	_conn->executed_command = std::make_shared<ExecutedCommand>(_conn, working_dir, command_line, fifo);
+	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo);
 }

@@ -542,7 +542,7 @@ std::shared_ptr<IFileReader> ProtocolNFS::FileGet(const std::string &path, unsig
 	return std::make_shared<NFSFileIO>(_nfs, MountedRootedPath(path), O_RDONLY, 0, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolNFS::FilePut(const std::string &path, mode_t mode, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolNFS::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	return std::make_shared<NFSFileIO>(_nfs, MountedRootedPath(path), O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }

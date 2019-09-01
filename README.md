@@ -3,7 +3,7 @@ Linux port of FAR Manager v2 (http://farmanager.com/)
 ALPHA VERSION.
 **Currently interesting only for enthusiasts!!!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SMB/NFS/WebDAV), colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
+Plug-ins that are currently working: NetRocks (SFTP/SCP/SMB/NFS/WebDAV), colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
 
 [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 

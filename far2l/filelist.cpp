@@ -846,6 +846,65 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
+class FileList_EditedFileUploader : public FileEditor::ISaveObserver
+{
+	HANDLE hPlugin;
+	FARString strTempName;
+
+public:
+	int PutCode = -1;
+	FileList_EditedFileUploader(HANDLE hPlugin_, FARString strTempName_)
+	:
+		hPlugin(hPlugin_), strTempName(strTempName_)
+	{
+	}
+
+	virtual void OnEditedFileSaved(const wchar_t *FileName)
+	{
+		if (strTempName != FileName)
+		{
+			fprintf(stderr, "OnEditedFileSaved: '%ls' != '%ls'\n", FileName, strTempName.CPtr());
+			return;
+		}
+
+		PluginPanelItem PanelItem;
+		FARString strSaveDir;
+		apiGetCurrentDirectory(strSaveDir);
+
+		if (apiGetFileAttributes(strTempName)==INVALID_FILE_ATTRIBUTES)
+		{
+			FARString strFindName;
+			FARString strPath;
+			strPath = strTempName;
+			CutToSlash(strPath, false);
+			strFindName = strPath+L"*";
+			FAR_FIND_DATA_EX FindData;
+			::FindFile Find(strFindName);
+			while(Find.Get(FindData))
+			{
+				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				{
+					strTempName = strPath+FindData.strFileName;
+					break;
+				}
+			}
+		}
+
+		if (FileList::FileNameToPluginItem(strTempName,&PanelItem))
+		{
+			PutCode=CtrlObject->Plugins.PutFiles(hPlugin,&PanelItem,1,FALSE,OPM_EDIT);
+
+			if (PutCode == 0)
+			{
+				Message(MSG_WARNING,1,MSG(MError),MSG(MCannotSaveFile),
+				        MSG(MTextSavedToTemp),FileName,MSG(MOk));
+			}
+		}
+
+		FarChDir(strSaveDir);
+	}
+};
+
 int FileList::ProcessKey(int Key)
 {
 
@@ -1377,12 +1436,12 @@ int FileList::ProcessKey(int Key)
 			{
 				int Edit=(Key==KEY_F4 || Key==KEY_ALTF4 || Key==KEY_SHIFTF4 || Key==KEY_CTRLSHIFTF4);
 				BOOL Modaling=FALSE; ///
-				int UploadFile=TRUE;
 				FARString strPluginData;
 				FARString strFileName;
 				FARString strHostFile=Info.HostFile;
 				FARString strInfoCurDir=Info.CurDir;
 				bool PluginMode=PanelMode==PLUGIN_PANEL && !CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARGETFILE);
+				std::unique_ptr<FileList_EditedFileUploader> efu;
 
 				if (PluginMode)
 				{
@@ -1490,7 +1549,7 @@ int FileList::ProcessKey(int Key)
 				}
 
 				FARString strTempDir, strTempName;
-				int UploadFailed=FALSE, NewFile=FALSE;
+				int NewFile=FALSE;
 
 				if (PluginMode)
 				{
@@ -1561,8 +1620,11 @@ int FileList::ProcessKey(int Key)
 								ProcessExternal(Opt.strExternalEditor,strFileName,PluginMode);
 							else if (PluginMode)
 							{
+								efu.reset(new FileList_EditedFileUploader(hPlugin, strTempName));
 								RefreshedPanel=FrameManager->GetCurrentFrame()->GetType()==MODALTYPE_EDITOR?FALSE:TRUE;
 								FileEditor ShellEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_DISABLEHISTORY,-1,-1,strPluginData);
+								ShellEditor.SetSaveObserver(efu.get());
+
 								editorExitCode=ShellEditor.GetExitCode();
 								ShellEditor.SetDynamicallyBorn(false);
 								FrameManager->EnterModalEV();
@@ -1572,7 +1634,7 @@ int FileList::ProcessKey(int Key)
 								     Если мы создали новый файл, то не важно, изменялся он
 								     или нет, все равно добавим его на панель плагина.
 								*/
-								UploadFile=ShellEditor.IsFileChanged() || NewFile;
+//								UploadFile=ShellEditor.IsFileChanged() || NewFile;
 								Modaling=TRUE;///
 							}
 							else
@@ -1608,44 +1670,6 @@ int FileList::ProcessKey(int Key)
 							}
 						}
 
-						if (PluginMode && UploadFile)
-						{
-							PluginPanelItem PanelItem;
-							FARString strSaveDir;
-							apiGetCurrentDirectory(strSaveDir);
-
-							if (apiGetFileAttributes(strTempName)==INVALID_FILE_ATTRIBUTES)
-							{
-								FARString strFindName;
-								FARString strPath;
-								strPath = strTempName;
-								CutToSlash(strPath, false);
-								strFindName = strPath+L"*";
-								FAR_FIND_DATA_EX FindData;
-								::FindFile Find(strFindName);
-								while(Find.Get(FindData))
-								{
-									if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-									{
-										strTempName = strPath+FindData.strFileName;
-										break;
-									}
-								}
-							}
-
-							if (FileNameToPluginItem(strTempName,&PanelItem))
-							{
-								int PutCode=CtrlObject->Plugins.PutFiles(hPlugin,&PanelItem,1,FALSE,OPM_EDIT);
-
-								if (PutCode==1 || PutCode==2)
-									SetPluginModified();
-
-								if (!PutCode)
-									UploadFailed=TRUE;
-							}
-
-							FarChDir(strSaveDir);
-						}
 					}
 					else
 					{
@@ -1708,15 +1732,18 @@ int FileList::ProcessKey(int Key)
 				     для файла, который открывался во внутреннем вьюере, ничего не
 				     предпринимаем, т.к. вьюер об этом позаботится сам
 				*/
-				if (PluginMode)
+				if (PluginMode && efu && efu->PutCode != 0)
 				{
-					if (UploadFailed)
-						Message(MSG_WARNING,1,MSG(MError),MSG(MCannotSaveFile),
-						        MSG(MTextSavedToTemp),strFileName,MSG(MOk));
-					else if (Edit || DeleteViewedFile)
+					if (efu->PutCode != -1)
+					{
+						SetPluginModified();
+					}
+					if (Edit || DeleteViewedFile)
+					{
 						// удаляем файл только для случая окрытия его в редакторе или во
 						// внешнем вьюере, т.к. внутренний вьюер удаляет файл сам
 						DeleteFileWithFolder(strFileName);
+					}
 				}
 
 				if (Modaling && (Edit || IsColumnDisplayed(ADATE_COLUMN)) && RefreshedPanel)

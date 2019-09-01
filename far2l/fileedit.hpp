@@ -105,6 +105,13 @@ class FileEditor : public Frame
 		virtual void Show();
 		void SetPluginTitle(const wchar_t *PluginTitle);
 
+		struct ISaveObserver
+		{
+			virtual void OnEditedFileSaved(const wchar_t *FileName) = 0;
+		};
+
+		void SetSaveObserver(ISaveObserver *observer = nullptr) { SaveObserver = observer;}
+
 		static const FileEditor *CurrentEditor;
 
 	private:
@@ -129,6 +136,7 @@ class FileEditor : public Frame
 		bool BadConversion;
 		UINT m_codepage; //BUGBUG
 		int SaveAsTextFormat;
+		ISaveObserver *SaveObserver = nullptr;
 
 		virtual void DisplayObject();
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);
@@ -175,3 +183,4 @@ class FileEditor : public Frame
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
 void ModalEditTempFile(const std::string &pathname, bool scroll_to_end);//erases file internally
+

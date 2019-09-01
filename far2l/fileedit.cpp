@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "wakeful.hpp"
 #include "DlgGuid.hpp"
+#include "filelist.hpp"
 
 enum enumOpenEditor
 {
@@ -2047,6 +2048,10 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 			apiDeleteFile(Name);
 			RetCode=SAVEFILE_ERROR;
 		}
+	}
+
+	if (SaveObserver && RetCode != SAVEFILE_ERROR) {
+		SaveObserver->OnEditedFileSaved(Name);
 	}
 
 end:

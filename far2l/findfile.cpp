@@ -96,12 +96,12 @@ struct FINDLIST
 struct ARCLIST
 {
 	FARString strArcName;
-	HANDLE hPlugin;    // Plugin handle
-	DWORD Flags;       // OpenPluginInfo.Flags
+	HANDLE hPlugin = INVALID_HANDLE_VALUE;    // Plugin handle
+	DWORD Flags = 0;       // OpenPluginInfo.Flags
 	FARString strRootPath; // Root path in plugin after opening.
 };
 
-struct InterThreadData
+static struct InterThreadData
 {
 private:
 	CriticalSection DataCS;
@@ -1546,6 +1546,91 @@ bool IsFileIncluded(PluginPanelItem* FileItem, const wchar_t *FullName, DWORD Fi
 	return FileFound;
 }
 
+class FindDlg_EditedFileUploader : public FileEditor::ISaveObserver
+{
+	size_t ArcIndex;
+	FAR_FIND_DATA_EX FindData;
+	FARString strTempName;
+
+public:
+	FindDlg_EditedFileUploader(size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_, FARString strTempName_)
+	:
+		ArcIndex(ArcIndex_), FindData(FindData_), strTempName(strTempName_)
+	{
+	}
+
+	virtual void OnEditedFileSaved(const wchar_t *FileName)
+	{
+		if (strTempName != FileName)
+		{
+			fprintf(stderr, "OnEditedFileSaved: '%ls' != '%ls'\n", FileName, strTempName.CPtr());
+			return;
+		}
+
+		PluginLocker Lock;
+		ARCLIST ArcItem;
+		itd.GetArcListItem(ArcIndex, ArcItem);
+		bool ClosePlugin = false;
+		if (ArcItem.hPlugin == INVALID_HANDLE_VALUE)
+		{
+			FARString strFindArcName = ArcItem.strArcName;
+			int SavePluginsOutput = DisablePluginsOutput;
+			DisablePluginsOutput = TRUE;
+			ArcItem.hPlugin = CtrlObject->Plugins.OpenFilePlugin(strFindArcName, OPM_FIND, OFP_SEARCH);
+			DisablePluginsOutput = SavePluginsOutput;
+			if (ArcItem.hPlugin == (HANDLE)-2 || ArcItem.hPlugin == INVALID_HANDLE_VALUE)
+			{
+				ArcItem.hPlugin = INVALID_HANDLE_VALUE;
+				fprintf(stderr, "OnEditedFileSaved: can't open plugins '%ls'\n", strFindArcName.CPtr());
+				return;
+			}
+			ClosePlugin = true;
+		}
+
+		OpenPluginInfo Info;
+		CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
+
+		FARString strSaveDir = NullToEmpty(Info.CurDir);
+		AddEndSlash(strSaveDir);
+		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,L"/",OPM_SILENT);
+		//SetPluginDirectory(ArcList[ArcIndex]->strRootPath,hPlugin);
+		SetPluginDirectory(FindData.strFileName,ArcItem.hPlugin);
+//		const wchar_t *lpFileNameToFind = PointToName(FindData.strFileName);
+//		PluginPanelItem *pItems;
+//		int nItemsNumber;
+//		bool nResult=false;
+		PluginPanelItem PanelItem;
+//		FARString strSaveCurDir;
+//		apiGetCurrentDirectory(strSaveCurDir);
+
+		FARString strTempName = FileName;
+
+		if (FileList::FileNameToPluginItem(strTempName,&PanelItem))
+		{
+			int PutCode=CtrlObject->Plugins.PutFiles(ArcItem.hPlugin,&PanelItem,1,FALSE,OPM_EDIT);
+
+			if (PutCode == 0)
+			{
+				Message(MSG_WARNING,1,MSG(MError),MSG(MCannotSaveFile),
+				        MSG(MTextSavedToTemp),FileName,MSG(MOk));
+			}
+		}
+
+//		FarChDir(strSaveCurDir);
+
+		if (ClosePlugin)
+		{
+			CtrlObject->Plugins.ClosePlugin(ArcItem.hPlugin);
+		}
+		else
+		{
+			CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,L"/",OPM_SILENT);
+			SetPluginDirectory(strSaveDir,ArcItem.hPlugin);
+		}
+	}
+};
+
+
 LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	Vars* v = reinterpret_cast<Vars*>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
@@ -1966,6 +2051,7 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 															else
 								*/
 								{
+									std::unique_ptr<FindDlg_EditedFileUploader> efu;
 									FileEditor ShellEditor(strSearchFileName,CP_AUTODETECT,0);
 									ShellEditor.SetDynamicallyBorn(FALSE);
 									ShellEditor.SetEnableF6(TRUE);
@@ -1974,12 +2060,9 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									// Он может быть уже другой.
 									if(FindItem.ArcIndex != LIST_INDEX_NONE)
 									{
-										ARCLIST ArcItem;
-										itd.GetArcListItem(FindItem.ArcIndex, ArcItem);
-										if(!(ArcItem.Flags & OPIF_REALNAMES))
-										{
-											ShellEditor.SetSaveToSaveAs(TRUE);
-										}
+										efu.reset(new FindDlg_EditedFileUploader(
+											FindItem.ArcIndex, FindItem.FindData, strSearchFileName));
+										ShellEditor.SetSaveObserver(efu.get());
 									}
 									FrameManager->EnterModalEV();
 									FrameManager->ExecuteModal();

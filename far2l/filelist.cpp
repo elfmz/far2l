@@ -846,64 +846,60 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
-class FileList_EditedFileUploader : public FileEditor::ISaveObserver
+class FileList_EditedFileUploader : public BaseEditedFileUploader
 {
 	HANDLE hPlugin;
-	FARString strTempName;
 
-public:
-	int PutCode = -1;
-	FileList_EditedFileUploader(HANDLE hPlugin_, FARString strTempName_)
-	:
-		hPlugin(hPlugin_), strTempName(strTempName_)
+	virtual void UploadTempFile()
 	{
-	}
-
-	virtual void OnEditedFileSaved(const wchar_t *FileName)
-	{
-		if (strTempName != FileName)
-		{
-			fprintf(stderr, "OnEditedFileSaved: '%ls' != '%ls'\n", FileName, strTempName.CPtr());
-			return;
-		}
-
-		PluginPanelItem PanelItem;
 		FARString strSaveDir;
 		apiGetCurrentDirectory(strSaveDir);
 
-		if (apiGetFileAttributes(strTempName)==INVALID_FILE_ATTRIBUTES)
+		FARString strPath = strTempFileName;
+
+		if (apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES)
 		{
 			FARString strFindName;
-			FARString strPath;
-			strPath = strTempName;
 			CutToSlash(strPath, false);
-			strFindName = strPath+L"*";
+			strFindName = strPath + L"*";
 			FAR_FIND_DATA_EX FindData;
 			::FindFile Find(strFindName);
-			while(Find.Get(FindData))
+			while (Find.Get(FindData))
 			{
 				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				{
-					strTempName = strPath+FindData.strFileName;
+					strPath+= FindData.strFileName;
 					break;
 				}
 			}
 		}
 
-		if (FileList::FileNameToPluginItem(strTempName,&PanelItem))
+		PluginPanelItem PanelItem;
+		if (FileList::FileNameToPluginItem(strPath, &PanelItem))
 		{
-			PutCode=CtrlObject->Plugins.PutFiles(hPlugin,&PanelItem,1,FALSE,OPM_EDIT);
+			PutCode = CtrlObject->Plugins.PutFiles(hPlugin, &PanelItem, 1, FALSE, OPM_EDIT);
 
 			if (PutCode == 0)
 			{
-				Message(MSG_WARNING,1,MSG(MError),MSG(MCannotSaveFile),
-				        MSG(MTextSavedToTemp),FileName,MSG(MOk));
+				Message(MSG_WARNING, 1, MSG(MError), MSG(MCannotSaveFile),
+				        MSG(MTextSavedToTemp), strPath.CPtr(), MSG(MOk));
 			}
 		}
 
 		FarChDir(strSaveDir);
 	}
+
+public:
+	int PutCode = -1;
+
+	FileList_EditedFileUploader(const FARString &strTempFileName_, HANDLE hPlugin_)
+	:
+		BaseEditedFileUploader(strTempFileName_),
+		hPlugin(hPlugin_)
+	{
+	}
 };
+
 
 int FileList::ProcessKey(int Key)
 {
@@ -1605,6 +1601,11 @@ int FileList::ProcessKey(int Key)
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f4 */
 						BOOL Processed=FALSE;
 
+						if (PluginMode)
+						{
+							efu.reset(new FileList_EditedFileUploader(strTempName, hPlugin));
+						}
+
 						if (Key==KEY_ALTF4 &&
 						        ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT,
 						                              PluginMode))
@@ -1617,10 +1618,11 @@ int FileList::ProcessKey(int Key)
 						if (!Processed || Key==KEY_CTRLSHIFTF4)
 						{
 							if (EnableExternal)
+							{
 								ProcessExternal(Opt.strExternalEditor,strFileName,PluginMode);
+							}
 							else if (PluginMode)
 							{
-								efu.reset(new FileList_EditedFileUploader(hPlugin, strTempName));
 								RefreshedPanel=FrameManager->GetCurrentFrame()->GetType()==MODALTYPE_EDITOR?FALSE:TRUE;
 								FileEditor ShellEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_DISABLEHISTORY,-1,-1,strPluginData);
 								ShellEditor.SetSaveObserver(efu.get());
@@ -1732,13 +1734,18 @@ int FileList::ProcessKey(int Key)
 				     для файла, который открывался во внутреннем вьюере, ничего не
 				     предпринимаем, т.к. вьюер об этом позаботится сам
 				*/
-				if (PluginMode && efu && efu->PutCode != 0)
+
+				if (PluginMode)
 				{
-					if (efu->PutCode != -1)
+					if (efu)
 					{
-						SetPluginModified();
+						efu->UploadIfTimestampChanged();
+						if (efu->PutCode != -1)
+						{
+							SetPluginModified();
+						}
 					}
-					if (Edit || DeleteViewedFile)
+					if ((Edit || DeleteViewedFile) && (!efu || efu->PutCode != 0))
 					{
 						// удаляем файл только для случая окрытия его в редакторе или во
 						// внешнем вьюере, т.к. внутренний вьюер удаляет файл сам

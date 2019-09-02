@@ -1546,31 +1546,20 @@ bool IsFileIncluded(PluginPanelItem* FileItem, const wchar_t *FullName, DWORD Fi
 	return FileFound;
 }
 
-class FindDlg_EditedFileUploader : public FileEditor::ISaveObserver
+class FindDlg_EditedFileUploader : public BaseEditedFileUploader
 {
 	size_t ArcIndex;
 	FAR_FIND_DATA_EX FindData;
-	FARString strTempName;
 
-public:
-	FindDlg_EditedFileUploader(size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_, FARString strTempName_)
-	:
-		ArcIndex(ArcIndex_), FindData(FindData_), strTempName(strTempName_)
+	virtual void UploadTempFile()
 	{
-	}
-
-	virtual void OnEditedFileSaved(const wchar_t *FileName)
-	{
-		if (strTempName != FileName)
-		{
-			fprintf(stderr, "OnEditedFileSaved: '%ls' != '%ls'\n", FileName, strTempName.CPtr());
-			return;
-		}
-
 		PluginLocker Lock;
 		ARCLIST ArcItem;
 		itd.GetArcListItem(ArcIndex, ArcItem);
 		bool ClosePlugin = false;
+
+		FARString strSaveDir;
+
 		if (ArcItem.hPlugin == INVALID_HANDLE_VALUE)
 		{
 			FARString strFindArcName = ArcItem.strArcName;
@@ -1586,12 +1575,14 @@ public:
 			}
 			ClosePlugin = true;
 		}
+		else
+		{
+			OpenPluginInfo Info;
+			CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
 
-		OpenPluginInfo Info;
-		CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
-
-		FARString strSaveDir = NullToEmpty(Info.CurDir);
-		AddEndSlash(strSaveDir);
+			strSaveDir = NullToEmpty(Info.CurDir);
+			AddEndSlash(strSaveDir);
+		}
 		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,L"/",OPM_SILENT);
 		//SetPluginDirectory(ArcList[ArcIndex]->strRootPath,hPlugin);
 		SetPluginDirectory(FindData.strFileName,ArcItem.hPlugin);
@@ -1603,16 +1594,16 @@ public:
 //		FARString strSaveCurDir;
 //		apiGetCurrentDirectory(strSaveCurDir);
 
-		FARString strTempName = FileName;
+//		FARString strTempName = FileName;
 
-		if (FileList::FileNameToPluginItem(strTempName,&PanelItem))
+		if (FileList::FileNameToPluginItem(strTempFileName, &PanelItem))
 		{
-			int PutCode=CtrlObject->Plugins.PutFiles(ArcItem.hPlugin,&PanelItem,1,FALSE,OPM_EDIT);
+			int PutCode = CtrlObject->Plugins.PutFiles(ArcItem.hPlugin, &PanelItem, 1, FALSE, OPM_EDIT);
 
 			if (PutCode == 0)
 			{
-				Message(MSG_WARNING,1,MSG(MError),MSG(MCannotSaveFile),
-				        MSG(MTextSavedToTemp),FileName,MSG(MOk));
+				Message(MSG_WARNING, 1, MSG(MError), MSG(MCannotSaveFile),
+				        MSG(MTextSavedToTemp), strTempFileName, MSG(MOk));
 			}
 		}
 
@@ -1628,6 +1619,14 @@ public:
 			SetPluginDirectory(strSaveDir,ArcItem.hPlugin);
 		}
 	}
+
+public:
+	FindDlg_EditedFileUploader(FARString strTempName_, size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_)
+	:
+		BaseEditedFileUploader(strTempName_), ArcIndex(ArcIndex_), FindData(FindData_)
+	{
+	}
+
 };
 
 
@@ -2058,15 +2057,19 @@ LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 									// FindFileArcIndex нельзя здесь использовать
 									// Он может быть уже другой.
-									if(FindItem.ArcIndex != LIST_INDEX_NONE)
+									if (FindItem.ArcIndex != LIST_INDEX_NONE)
 									{
 										efu.reset(new FindDlg_EditedFileUploader(
-											FindItem.ArcIndex, FindItem.FindData, strSearchFileName));
+											strSearchFileName, FindItem.ArcIndex, FindItem.FindData));
 										ShellEditor.SetSaveObserver(efu.get());
 									}
 									FrameManager->EnterModalEV();
 									FrameManager->ExecuteModal();
 									FrameManager->ExitModalEV();
+									if (efu)
+									{
+										efu->UploadIfTimestampChanged();
+									}
 									// заставляем рефрешится экран
 									FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 								}
@@ -2480,11 +2483,15 @@ void ArchiveSearch(HANDLE hDlg, const wchar_t *ArcName)
 	_ALGO(CleverSysLog clv(L"FindFiles::ArchiveSearch()"));
 	_ALGO(SysLog(L"ArcName='%ls'",(ArcName?ArcName:L"nullptr")));
 
-	int SavePluginsOutput=DisablePluginsOutput;
-	DisablePluginsOutput=TRUE;
 	FARString strArcName = ArcName;
-	HANDLE hArc=CtrlObject->Plugins.OpenFilePlugin(strArcName, OPM_FIND, OFP_SEARCH);
-	DisablePluginsOutput=SavePluginsOutput;
+	HANDLE hArc;
+	{
+		PluginLocker Lock;
+		int SavePluginsOutput=DisablePluginsOutput;
+		DisablePluginsOutput=TRUE;
+		hArc = CtrlObject->Plugins.OpenFilePlugin(strArcName, OPM_FIND, OFP_SEARCH);
+		DisablePluginsOutput=SavePluginsOutput;
+	}
 
 	if (hArc==(HANDLE)-2)
 	{
@@ -2502,13 +2509,17 @@ void ArchiveSearch(HANDLE hDlg, const wchar_t *ArcName)
 	int SaveSearchMode=SearchMode;
 	size_t SaveArcIndex = itd.GetFindFileArcIndex();
 	{
-		int SavePluginsOutput=DisablePluginsOutput;
-		DisablePluginsOutput=TRUE;
-
 		SearchMode=FINDAREA_FROM_CURRENT;
 		OpenPluginInfo Info;
-		CtrlObject->Plugins.GetOpenPluginInfo(hArc,&Info);
-		itd.SetFindFileArcIndex(itd.AddArcListItem(ArcName, hArc, Info.Flags, Info.CurDir));
+		{
+			PluginLocker Lock;
+			int SavePluginsOutput=DisablePluginsOutput;
+			DisablePluginsOutput=TRUE;
+			CtrlObject->Plugins.GetOpenPluginInfo(hArc,&Info);
+			itd.SetFindFileArcIndex(itd.AddArcListItem(ArcName, hArc, Info.Flags, Info.CurDir));
+			DisablePluginsOutput=SavePluginsOutput;
+		}
+
 		// Запомним каталог перед поиском в архиве. И если ничего не нашли - не рисуем его снова.
 		{
 			FARString strSaveDirName, strSaveSearchPath;
@@ -2532,7 +2543,7 @@ void ArchiveSearch(HANDLE hDlg, const wchar_t *ArcName)
 				strLastDirName = strSaveDirName;
 		}
 
-		DisablePluginsOutput=SavePluginsOutput;
+//		DisablePluginsOutput=SavePluginsOutput;
 	}
 	itd.SetFindFileArcIndex(SaveArcIndex);
 	SearchMode=SaveSearchMode;
@@ -2740,7 +2751,10 @@ void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& RecurseLevel)
 		}
 	}
 
-	CtrlObject->Plugins.FreeFindData(hPlugin,PanelData,ItemCount);
+	{
+		PluginLocker Lock;
+		CtrlObject->Plugins.FreeFindData(hPlugin,PanelData,ItemCount);
+	}
 	RecurseLevel--;
 }
 
@@ -2910,8 +2924,11 @@ bool FindFilesProcess(Vars& v)
 		Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 		HANDLE hPlugin=ActivePanel->GetPluginHandle();
 		OpenPluginInfo Info;
-		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
-		itd.SetFindFileArcIndex(itd.AddArcListItem(Info.HostFile, hPlugin, Info.Flags, Info.CurDir));
+		{
+			PluginLocker Lock;
+			CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
+			itd.SetFindFileArcIndex(itd.AddArcListItem(Info.HostFile, hPlugin, Info.Flags, Info.CurDir));
+		}
 
 		if (itd.GetFindFileArcIndex() == LIST_INDEX_NONE)
 			return false;
@@ -2924,12 +2941,15 @@ bool FindFilesProcess(Vars& v)
 	}
 
 	AnySetFindList = false;
-	for (int i=0; i<CtrlObject->Plugins.GetPluginsCount(); i++)
 	{
-		if (CtrlObject->Plugins.GetPlugin(i)->HasSetFindList())
+		PluginLocker Lock;
+		for (int i=0; i<CtrlObject->Plugins.GetPluginsCount(); i++)
 		{
-			AnySetFindList=true;
-			break;
+			if (CtrlObject->Plugins.GetPlugin(i)->HasSetFindList())
+			{
+				AnySetFindList=true;
+				break;
+			}
 		}
 	}
 
@@ -3024,7 +3044,7 @@ bool FindFilesProcess(Vars& v)
 					}
 				}
 
-				HANDLE hNewPlugin=CtrlObject->Plugins.OpenFindListPlugin(PanelItems,ItemsNumber);
+				HANDLE hNewPlugin = CtrlObject->Plugins.OpenFindListPlugin(PanelItems,ItemsNumber);
 
 				if (hNewPlugin!=INVALID_HANDLE_VALUE)
 				{
@@ -3077,9 +3097,9 @@ bool FindFilesProcess(Vars& v)
 
 					if (ArcItem.hPlugin != INVALID_HANDLE_VALUE)
 					{
+						PluginLocker Lock;
 						OpenPluginInfo Info;
 						CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
-
 						if (SearchMode==FINDAREA_ROOT ||
 							    SearchMode==FINDAREA_ALL ||
 							    SearchMode==FINDAREA_ALL_BUTNETWORK ||
@@ -3232,6 +3252,7 @@ FindFiles::FindFiles()
 
 		if (v.PluginMode)
 		{
+			PluginLocker Lock;
 			OpenPluginInfo Info;
 			CtrlObject->Plugins.GetOpenPluginInfo(ActivePanel->GetPluginHandle(),&Info);
 

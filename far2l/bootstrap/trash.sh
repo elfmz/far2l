@@ -10,6 +10,6 @@ set -e
 
 if [ -x ~/.config/far2l/trash.sh ]; then
 . ~/.config/far2l/trash.sh
+else
+  gvfs-trash -f "$1" || gio trash -f "$1"
 fi
-
-gvfs-trash -f "$1"

@@ -111,29 +111,21 @@ private:
 	int FileCount;
 	int DirCount;
 
-	FINDLIST **FindList;
-	size_t FindListCapacity;
-	size_t FindListCount;
-	ARCLIST **ArcList;
-	size_t ArcListCapacity;
-	size_t ArcListCount;
+	std::vector<FINDLIST> FindList;
+	std::vector<ARCLIST> ArcList;
 	FARString strFindMessage;
 
 public:
 	void Init()
 	{
 		CriticalSectionLock Lock(DataCS);
-		FindFileArcIndex=LIST_INDEX_NONE;
-		Percent=0;
-		LastFoundNumber=0;
-		FileCount=0;
-		DirCount=0;
-		FindList=nullptr;
-		FindListCapacity=0;
-		FindListCount=0;
-		ArcList=nullptr;
-		ArcListCapacity=0;
-		ArcListCount=0;
+		FindFileArcIndex = LIST_INDEX_NONE;
+		Percent = 0;
+		LastFoundNumber = 0;
+		FileCount = 0;
+		DirCount = 0;
+		FindList.clear();
+		ArcList.clear();
 		strFindMessage.Clear();
 	}
 
@@ -152,7 +144,7 @@ public:
 	int GetDirCount(){CriticalSectionLock Lock(DataCS); return DirCount;}
 	void SetDirCount(int Value){CriticalSectionLock Lock(DataCS); DirCount=Value;}
 
-	size_t GetFindListCount(){CriticalSectionLock Lock(DataCS); return FindListCount;}
+	size_t GetFindListCount(){CriticalSectionLock Lock(DataCS); return FindList.size();}
 
 	void GetFindMessage(FARString& To)
 	{
@@ -169,35 +161,25 @@ public:
 	void GetFindListItem(size_t index, FINDLIST& Item)
 	{
 		CriticalSectionLock Lock(DataCS);
-		Item.FindData=FindList[index]->FindData;
-		Item.ArcIndex=FindList[index]->ArcIndex;
-		Item.Used=FindList[index]->Used;
+		Item = FindList[index];
 	}
 
 	void SetFindListItem(size_t index, const FINDLIST& Item)
 	{
 		CriticalSectionLock Lock(DataCS);
-		FindList[index]->FindData=Item.FindData;
-		FindList[index]->ArcIndex=Item.ArcIndex;
-		FindList[index]->Used=Item.Used;
+		FindList[index] = Item;
 	}
 
 	void GetArcListItem(size_t index, ARCLIST& Item)
 	{
 		CriticalSectionLock Lock(DataCS);
-		Item.strArcName=ArcList[index]->strArcName;
-		Item.hPlugin=ArcList[index]->hPlugin;
-		Item.Flags=ArcList[index]->Flags;
-		Item.strRootPath=ArcList[index]->strRootPath;
+		Item=ArcList[index];
 	}
 
 	void SetArcListItem(size_t index, const ARCLIST& Item)
 	{
 		CriticalSectionLock Lock(DataCS);
-		ArcList[index]->strArcName=Item.strArcName;
-		ArcList[index]->hPlugin=Item.hPlugin;
-		ArcList[index]->Flags=Item.Flags;
-		ArcList[index]->strRootPath=Item.strRootPath;
+		ArcList[index]=Item;
 	}
 
 	void ClearAllLists()
@@ -205,85 +187,48 @@ public:
 		CriticalSectionLock Lock(DataCS);
 		FindFileArcIndex=LIST_INDEX_NONE;
 
-		if (FindList)
-		{
-			for (size_t i = 0; i < FindListCount; i++)
-			{
-				delete FindList[i];
-			}
-			xf_free(FindList);
-		}
-		FindList = nullptr;
-		FindListCapacity = FindListCount = 0;
-
-		if (ArcList)
-		{
-			for (size_t i = 0; i < ArcListCount; i++)
-			{
-				delete ArcList[i];
-			}
-			xf_free(ArcList);
-		}
-		ArcList = nullptr;
-		ArcListCapacity = ArcListCount = 0;
-	}
-
-	bool FindListGrow()
-	{
-		CriticalSectionLock Lock(DataCS);
-		bool Result=false;
-		size_t Delta=(FindListCapacity<256)?LIST_DELTA:FindListCapacity/2;
-		FINDLIST** NewList = reinterpret_cast<FINDLIST**>(xf_realloc(FindList,(FindListCapacity+Delta)*sizeof(*FindList)));
-		if (NewList)
-		{
-			FindList=NewList;
-			FindListCapacity+=Delta;
-			Result=true;
-		}
-		return Result;
-	}
-
-	bool ArcListGrow()
-	{
-		CriticalSectionLock Lock(DataCS);
-		bool Result=false;
-		size_t Delta=(ArcListCapacity<256)?LIST_DELTA:ArcListCapacity/2;
-		ARCLIST** NewList=reinterpret_cast<ARCLIST**>(xf_realloc(ArcList,(ArcListCapacity+Delta)*sizeof(*ArcList)));
-
-		if (NewList)
-		{
-			ArcList = NewList;
-			ArcListCapacity+= Delta;
-			Result=true;
-		}
-		return Result;
+		FindList.clear();
+		ArcList.clear();
 	}
 
 	size_t AddArcListItem(const wchar_t *ArcName,HANDLE hPlugin,DWORD dwFlags,const wchar_t *RootPath)
 	{
 		CriticalSectionLock Lock(DataCS);
-		if ((ArcListCount == ArcListCapacity) && (!ArcListGrow()))
-			return LIST_INDEX_NONE;
+		try {
+			ArcList.emplace_back();
+			auto &back = ArcList.back();
+			back.strArcName = ArcName;
+			back.hPlugin = hPlugin;
+			back.Flags = dwFlags;
+			back.strRootPath = RootPath;
+			AddEndSlash(back.strRootPath);
 
-		ArcList[ArcListCount] = new ARCLIST;
-		ArcList[ArcListCount]->strArcName = ArcName;
-		ArcList[ArcListCount]->hPlugin = hPlugin;
-		ArcList[ArcListCount]->Flags = dwFlags;
-		ArcList[ArcListCount]->strRootPath = RootPath;
-		AddEndSlash(ArcList[ArcListCount]->strRootPath);
-		return ArcListCount++;
+		} catch (std::exception &ex)
+		{
+			fprintf(stderr, "AddArcListItem[%lu]: %s\n", (unsigned long)ArcList.size(), ex.what());
+			return LIST_INDEX_NONE;
+		}
+
+		return ArcList.size() - 1;
 	}
 
 	size_t AddFindListItem(const FAR_FIND_DATA_EX& FindData)
 	{
 		CriticalSectionLock Lock(DataCS);
-		if ((FindListCount == FindListCapacity)&&(!FindListGrow()))
-			return LIST_INDEX_NONE;
+		try {
+			FindList.emplace_back();
+			auto &back = FindList.back();
+			back.FindData = FindData;
+			back.ArcIndex = LIST_INDEX_NONE;
+			back.Used = 0;
 
-		FindList[FindListCount] = new FINDLIST;
-		FindList[FindListCount]->FindData = FindData;
-		FindList[FindListCount]->ArcIndex = LIST_INDEX_NONE;
-		return FindListCount++;
+		} catch (std::exception &ex)
+		{
+			fprintf(stderr, "AddFindListItem[%lu]: %s\n", (unsigned long)FindList.size(), ex.what());
+			return LIST_INDEX_NONE;
+		}
+
+		return FindList.size() - 1;
 	}
 
 }

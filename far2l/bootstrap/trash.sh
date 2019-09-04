@@ -12,4 +12,8 @@ if [ -x ~/.config/far2l/trash.sh ]; then
 . ~/.config/far2l/trash.sh
 fi
 
-gvfs-trash -f "$1"
+if command -v gvfs-trash >/dev/null 2>&1; then
+	gvfs-trash -f "$1"
+elif command -v gio >/dev/null 2>&1; then
+	gio trash -f "$1"
+fi

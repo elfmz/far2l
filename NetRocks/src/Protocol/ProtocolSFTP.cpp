@@ -668,7 +668,7 @@ public:
 			if (written <= 0)
 				throw ProtocolError("write error",  ssh_get_error(_conn->ssh));
 
-			if (written >= len)
+			if ((size_t)written >= len)
 				break;
 
 			len-= (size_t)written;

@@ -311,9 +311,6 @@ ConversionResult CalcSpaceUTF16toUTF8 (int *out,
     while (source < sourceEnd) {
         UTF32 ch;
         unsigned short bytesToWrite = 0;
-        const UTF32 byteMask = 0xBF;
-        const UTF32 byteMark = 0x80; 
-        const UTF16* oldSource = source; /* In case we have to back up because of target overflow. */
         ch = *source++;
         /* If we have a surrogate pair, convert to UTF32 first. */
         if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_HIGH_END) {

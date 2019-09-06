@@ -182,9 +182,13 @@ set_target_properties(far2l
     ENABLE_EXPORTS TRUE)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    target_link_libraries(far2l ${WINPORT} c)
+    target_link_libraries(far2l
+	PRIVATE ${WINPORT}
+	PRIVATE c)
 else()
-    target_link_libraries(far2l ${WINPORT} dl)
+    target_link_libraries(far2l
+	PRIVATE ${WINPORT}
+	PRIVATE dl)
 endif()
 
 add_custom_command(TARGET far2l POST_BUILD

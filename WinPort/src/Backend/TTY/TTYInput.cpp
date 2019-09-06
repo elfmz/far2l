@@ -31,6 +31,8 @@ void TTYInput::PostCharEvent(wchar_t ch)
 size_t TTYInput::BufTryDecodeUTF8()
 {
 	const UTF8* utf8_start = (const UTF8*) &_buf[0];
+
+#if (__WCHAR_MAX__ > 0xffff)
 	UTF32 utf32[2] = {}, *utf32_start = &utf32[0];
 	ConvertUTF8toUTF32 ( &utf8_start, utf8_start + _buf.size(),
 		&utf32_start, utf32_start + 1, lenientConversion);
@@ -39,6 +41,16 @@ size_t TTYInput::BufTryDecodeUTF8()
 		return (utf8_start - (const UTF8*)&_buf[0]);
 
 	}
+#else
+	UTF16 utf16[2] = {}, *utf16_start = &utf16[0];
+	ConvertUTF8toUTF16 ( &utf8_start, utf8_start + _buf.size(),
+		&utf16_start, utf16_start + 1, lenientConversion);
+	if (utf16_start != &utf16[0]) {
+		PostCharEvent(utf16[0]);
+		return (utf8_start - (const UTF8*)&_buf[0]);
+
+	}
+#endif
 	_buf.erase(_buf.begin(), _buf.begin() + (utf8_start - (const UTF8*)&_buf[0]) );
 
 	return 0;

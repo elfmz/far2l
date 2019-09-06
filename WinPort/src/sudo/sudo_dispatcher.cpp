@@ -11,7 +11,9 @@
 #else
   #include <sys/statfs.h>
   #include <sys/ioctl.h>
-  #include <linux/fs.h>
+#  if !defined(__CYGWIN__)
+#   include <linux/fs.h>
+#  endif
 #endif
 #include <sys/statvfs.h>
 #include <sys/time.h>
@@ -466,7 +468,7 @@ namespace Sudo
 	
 	static void OnSudoDispatch_FSFlagsGet(BaseTransaction &bt)
 	{
-#if !defined(__APPLE__) && !defined(__FreeBSD__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__CYGWIN__)
 		std::string path;
 		bt.RecvStr(path);
 		int r = -1;
@@ -488,7 +490,7 @@ namespace Sudo
 	
 	static void OnSudoDispatch_FSFlagsSet(BaseTransaction &bt)
 	{
-#if !defined(__APPLE__) && !defined(__FreeBSD__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__CYGWIN__)
 		std::string path;
 		bt.RecvStr(path);
 		int flags = bt.RecvInt();

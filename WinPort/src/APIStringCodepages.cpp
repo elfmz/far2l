@@ -6,6 +6,8 @@
 #include <fstream>
 #include <mutex>
 
+#include <alloca.h>
+
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "wineguts.h"

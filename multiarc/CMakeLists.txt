@@ -135,7 +135,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
 endif()
 
-target_link_libraries(multiarc utils)
+target_link_libraries(multiarc utils far2l)
 
 target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
 target_include_directories(multiarc PRIVATE src)

@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <mutex>
 #include <condition_variable>
 

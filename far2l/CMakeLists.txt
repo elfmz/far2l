@@ -191,7 +191,10 @@ else()
 	PRIVATE dl)
 endif()
 
-add_dependencies(far2l WinPort wineguts utils)
+target_link_libraries(far2l
+    PRIVATE WinPort)
+
+# add_dependencies(far2l WinPort wineguts utils)
 
 add_custom_command(TARGET far2l POST_BUILD
    COMMAND rm ${INSTALL_DIR}/far2l_askpass || echo ""

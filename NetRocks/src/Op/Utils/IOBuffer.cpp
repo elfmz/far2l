@@ -81,6 +81,7 @@ bool IOBuffer::Increase(bool preserve_data)
 	const size_t new_size = std::min(ALIGN_SIZE(_size * 3 / 2), _max_size);
 
 	IncreaseTo(new_size, preserve_data);
+	return true;
 }
 
 bool IOBuffer::Decrease()

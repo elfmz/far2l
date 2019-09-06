@@ -17,7 +17,7 @@
 #include "sudo_private.h"
 #include "sudo.h"
 
-#if !defined(__APPLE__) and !defined(__FreeBSD__)
+#if !defined(__APPLE__) and !defined(__FreeBSD__) && !defined(__CYGWIN__)
 # include <sys/ioctl.h>
 # include <linux/fs.h>
 #endif
@@ -382,7 +382,7 @@ template <class STAT_STRUCT>
 		return -1;
 	}
 }
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__CYGWIN__)
 extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf)
 {
 	int saved_errno = errno;
@@ -889,7 +889,7 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, s
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd, char *namebuf, size_t size)
 {
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)  || defined(__CYGWIN__)
 	return -1;
 #else
 	int remote_fd = s_c2s_fd.Lookup(fd);
@@ -925,7 +925,7 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd, const char *name,void *value, size_t size)
 {
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)  || defined(__CYGWIN__)
     return -1;
 #else
 	int remote_fd = s_c2s_fd.Lookup(fd);
@@ -962,7 +962,7 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd,
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, const char *name, const void *value, size_t size, int flags)
 {
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)  || defined(__CYGWIN__)
     return -1;
 #else
 	int remote_fd = s_c2s_fd.Lookup(fd);
@@ -997,7 +997,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 
  extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_get(const char *path, int *flags)
  {
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
 	//TODO
 	*flags = 0;
 	return 0;
@@ -1031,7 +1031,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
  
  extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, int flags)
  {
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
 	//TODO
 	return 0;
 #else

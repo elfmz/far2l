@@ -5,6 +5,7 @@
 #include <vector>
 #include <deque>
 #include <fcntl.h>
+#include <alloca.h>
 
 #include "vtlog.h"
 

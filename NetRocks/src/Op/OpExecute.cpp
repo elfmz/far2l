@@ -93,7 +93,7 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 		FDScope fd_out(open((fifo + ".out").c_str(), O_RDONLY));
 		FDScope fd_in(open((fifo + ".in").c_str(), O_WRONLY));
 		FDScope fd_ctl(open((fifo + ".ctl").c_str(), O_WRONLY));
-		
+
 		if (!fd_ctl.Valid() || !fd_in.Valid() || !fd_out.Valid() || !fd_err.Valid()) {
 			throw std::runtime_error("Can't open FIFO");
 		}

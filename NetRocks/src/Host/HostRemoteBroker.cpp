@@ -346,5 +346,7 @@ extern "C" int main(int argc, char *argv[])
 		fprintf(stderr, "%d HostRemoteBrokerMain: %s\n", getpid(), e.what());
 	}
 	fprintf(stderr, "%d: HostRemoteBrokerMain: END\n", getpid());
+	fflush(stdout);
+	fflush(stderr);
 	return 0;
 }

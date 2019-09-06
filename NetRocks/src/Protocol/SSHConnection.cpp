@@ -387,16 +387,19 @@ SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, cons
 		_pty = true;
 	}
 
+	fprintf(stderr, "SSHExecutedCommand: XXX4\n");
 	if (pipe_cloexec(_kickass) == -1) {
 		throw ProtocolError("pipe",  ssh_get_error(_conn->ssh));
 	}
 
+	fprintf(stderr, "SSHExecutedCommand: XXX5\n");
 	fcntl(_kickass[1], F_SETFL, fcntl(_kickass[1], F_GETFL, 0) | O_NONBLOCK);
 
 	if (!StartThread()) {
 		CheckedCloseFDPair(_kickass);
 		throw std::runtime_error("start thread");
 	}
+	fprintf(stderr, "SSHExecutedCommand: XXX6\n");
 }
 
 SSHExecutedCommand::~SSHExecutedCommand()

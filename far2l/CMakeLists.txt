@@ -172,7 +172,7 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(wxWidgets REQUIRED net core base)
-    SET (WINPORT "-force_load ../WinPort/libWinPort.a -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL" wineguts utils glib-2.0 -L/usr/local/lib ${wxWidgets_LIBRARIES} ${wxWidgets_CXX_FLAGS})
+    SET (WINPORT "-force_load \"${CMAKE_BINARY_DIR}/WinPort/libWinPort.a\" -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL" wineguts utils glib-2.0 -L/usr/local/lib ${wxWidgets_LIBRARIES} ${wxWidgets_CXX_FLAGS})
 else()
     SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)
 endif()

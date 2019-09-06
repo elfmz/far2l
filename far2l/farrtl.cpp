@@ -5,7 +5,7 @@ farrtl.cpp
 */
 
 #include "headers.hpp"
-
+#include <alloca.h>
 
 #include "savefpos.hpp"
 #include "console.hpp"
@@ -181,7 +181,7 @@ extern "C"
 
 int64_t ftell64(FILE *fp)
 {
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
 	return ftello(fp);
 #elif defined(__GNUC__)
 	return ftello64(fp);
@@ -192,7 +192,7 @@ int64_t ftell64(FILE *fp)
 
 int fseek64(FILE *fp, int64_t offset, int whence)
 {
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
 	return fseeko(fp,offset,whence);
 #elif defined(__GNUC__)
 	return fseeko64(fp,offset,whence);

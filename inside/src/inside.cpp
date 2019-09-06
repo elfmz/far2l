@@ -30,7 +30,7 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
 
 static bool HasElvenEars(const unsigned char *Data, int DataSize)
 {
-#ifndef __APPLE__
+#ifdef __APPLE__
 	//FAR reads at least 0x1000 bytes if possible, so may assume full ELF header available if its there
 	if (DataSize < MINIMAL_LEN || Data[0] != 0x7F || Data[1] != 'E'|| Data[2] != 'L'|| Data[3] != 'F')
 		return false;

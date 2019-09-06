@@ -334,7 +334,7 @@ ErrnoSaver::~ErrnoSaver()
 //////////
 int pipe_cloexec(int pipedes[2])
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__CYGWIN__)
 	int r = os_call_int(pipe, pipedes);
 	if (r==0) {
 		fcntl(pipedes[0], F_SETFD, FD_CLOEXEC);
@@ -433,4 +433,19 @@ std::string FileSizeString(unsigned long long value)
 	return str;
 }
 
+
+
+#ifdef __CYGWIN__
+extern "C"
+{
+char * itoa(int i, char *a, int radix)
+{
+	switch (radix) {
+		case 10: sprintf(a, "%d", i); break;
+		case 16: sprintf(a, "%x", i); break;
+	}
+	return a;
+}
+}
+#endif
 

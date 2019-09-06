@@ -89,7 +89,6 @@ std::string StrPrintf(const char *format, ...);
 template <class CharT>
 	std::basic_string<CharT> EnsureNoSlashAtEnd(std::basic_string<CharT> str, CharT slash = '/')
 {
-	size_t p = str.size();
 	for (size_t p = str.size(); p && str[p - 1] == slash; )  {
 		str.resize(--p);
 	}

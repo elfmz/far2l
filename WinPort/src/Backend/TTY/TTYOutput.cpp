@@ -156,8 +156,10 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 
 		} else {
 			UTF8 buf[16] = {};
-			const UTF32* sourceStart = (const UTF32*)&ci->Char.UnicodeChar;
 			UTF8 *targetStart = &buf[0];
+
+#if (__WCHAR_MAX__ > 0xffff)
+			const UTF32* sourceStart = (const UTF32*)&ci->Char.UnicodeChar;
 
 			if (ConvertUTF32toUTF8 (&sourceStart, sourceStart + 1, &targetStart,
 				targetStart + sizeof(buf), lenientConversion) == conversionOK) {
@@ -165,6 +167,17 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			} else {
 				Write("?", 1);
 			}
+
+#else
+			const UTF16* sourceStart = (const UTF16*)&ci->Char.UnicodeChar;
+
+			if (ConvertUTF16toUTF8 (&sourceStart, sourceStart + 1, &targetStart,
+				targetStart + sizeof(buf), lenientConversion) == conversionOK) {
+				Write((const char *)&buf[0], targetStart - &buf[0]);
+			} else {
+				Write("?", 1);
+			}
+#endif
 		}
 		++_cursor.x;
 	}

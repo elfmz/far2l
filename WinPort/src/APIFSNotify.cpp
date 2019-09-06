@@ -8,7 +8,7 @@
 #if defined(__APPLE__) || defined(__FreeBSD__)
 # include <sys/event.h>
 # include <sys/time.h>
-#else
+#elif !defined(__CYGWIN__)
 # include <sys/inotify.h>
 #endif
 #include <pthread.h>
@@ -23,7 +23,7 @@
 #include "WinPortSynch.h"
 #include <utils.h>
 
-
+#if !defined(__CYGWIN__)
 class WinPortFSNotify : public WinPortEvent
 {
 #if defined(__APPLE__) || defined(__FreeBSD__)
@@ -265,6 +265,26 @@ WINPORT_DECL(FindCloseChangeNotification, BOOL, (HANDLE hChangeHandle))
 	
 	return TRUE;
 }
+
+#else
+
+WINPORT_DECL(FindFirstChangeNotification, HANDLE, (LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter))
+{
+	return INVALID_HANDLE_VALUE;
+}
+
+WINPORT_DECL(FindNextChangeNotification, BOOL, (HANDLE hChangeHandle))
+{
+	return FALSE;
+}
+
+
+WINPORT_DECL(FindCloseChangeNotification, BOOL, (HANDLE hChangeHandle))
+{
+	return TRUE;
+}
+
+#endif
 
 ////01-04
 

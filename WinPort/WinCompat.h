@@ -83,7 +83,7 @@ typedef unsigned __int64 uint64_t;
 # include <sys/syslimits.h>
 #elif __FreeBSD__
 # include <sys/syslimits.h>
-#else
+#elif defined(__linux__)
 # include <linux/limits.h>
 #endif
 
@@ -101,7 +101,8 @@ static int64_t _wtoi64(const wchar_t *w)
 	wchar_t *endptr = 0;
 	return wcstoll(w, &endptr, 10);
 }
-	
+
+#ifndef __CYGWIN__	
 static char * itoa(int i, char *a, int radix)
 {
 	switch (radix) {
@@ -110,6 +111,7 @@ static char * itoa(int i, char *a, int radix)
 	}
 	return a;
 }
+#endif
 
 static char * _i64toa(int64_t i, char *a, int radix)
 {

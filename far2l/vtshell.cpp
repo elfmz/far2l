@@ -963,7 +963,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		sprintf(name, "vtcmd/%x_%p", getpid(), this);
 		std::string cmd_script = InMyTemp(name);
 		std::string pwd_file = cmd_script + ".pwd";
-		FILE *f = fopen(cmd_script.c_str(), "wt");
+		FILE *f = fopen(cmd_script.c_str(), "wb");
 		if (!f)
 			return std::string();
 
@@ -973,7 +973,6 @@ static bool shown_tip_exit = false;
 		if (!need_sudo) {
 			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
 		}
-
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
 		//fprintf(f, "stty echo\n");

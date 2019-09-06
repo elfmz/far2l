@@ -69,7 +69,9 @@ static void SetupStdHandles(bool ignore_hup)
 		if (!freopen(DEVNULL, "r", stdin)) {
 			perror("freopen stdin");
 		}
+#if !defined(__CYGWIN__) //TODO
 		ioctl(0, TIOCNOTTY, NULL);
+#endif
 		if (ignore_hup)
 			signal(SIGHUP, SIG_IGN);
 	}

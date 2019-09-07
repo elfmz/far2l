@@ -36,6 +36,7 @@ class PluginImpl
 	std::string CurrentSiteDir(bool with_ending_slash) const;
 	void ByKey_EditSiteConnection(bool create_new);
 	bool ByKey_TryCrossload(bool mv);
+	bool ByKey_TryExecuteSelected();
 
 	BackgroundTaskStatus StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,

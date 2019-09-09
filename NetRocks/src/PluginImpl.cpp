@@ -689,7 +689,10 @@ bool PluginImpl::ByKey_TryExecuteSelected()
 	cmd+= ppi->FindData.lpwszFileName;
 	QuoteCmdArgIfNeed(cmd);
 
+	G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)cmd.c_str());
+
 	if (!ProcessEventCommand(cmd.c_str())) {
+		G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
 		return false;
 	}
 

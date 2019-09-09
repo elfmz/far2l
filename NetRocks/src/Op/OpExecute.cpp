@@ -15,28 +15,6 @@
 
 static int g_fd_ctl = -1;
 
-static bool FD2FD(int dst, int src)
-{
-	char buf[32768];
-	ssize_t r = read(src, buf, sizeof(buf));
-	if (r < 0) {
-		if (errno == EAGAIN || errno == EINTR)
-			return true;
-
-		throw std::runtime_error("FD2FD: read failed");
-	}
-
-	if (r == 0) {
-		return false;
-	}
-
-	if (WriteAll(dst, buf, (size_t)r) != (size_t)r) {
-		throw std::runtime_error("FD2FD: write failed");
-	}
-
-	return true;
-}
-
 static bool FDCtl_VTSize()
 {
 	ExecFIFO_CtlMsg m = {};
@@ -127,25 +105,30 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 			}
 
 			if (FD_ISSET(fd_stdin, &fdr) || FD_ISSET(fd_stdin, &fde)) {
-				if (!FD2FD(fd_in, fd_stdin))
-					throw std::runtime_error("read input failed");
+				if (ReadWritePiece(fd_stdin, fd_in) <= 0)
+					throw std::runtime_error("stdin failed");
 			}
 
-			int out_fails = 0;
+			unsigned int out_fails = 0;
 			if (FD_ISSET(fd_out, &fdr) || FD_ISSET(fd_out, &fde)) {
-				if (!FD2FD(fd_stdout, fd_out))
-					out_fails|= 1;
+				switch (ReadWritePiece(fd_out, fd_stdout)) {
+					case 0: out_fails|= 1; break;
+					case -1: throw std::runtime_error("stdout failed");
+				}
 			}
 
 			if (FD_ISSET(fd_err, &fdr) || FD_ISSET(fd_err, &fde)) {
-				if (!FD2FD(fd_stderr, fd_err))
-					out_fails|= 2;
+				switch (ReadWritePiece(fd_err, fd_stderr)) {
+					case 0: out_fails|= 2; break;
+					case -1: throw std::runtime_error("stderr failed");
+				}
 			}
 
-			if (out_fails == 3) {
-				break;
-
-			} else if (out_fails) {
+			
+			if (out_fails) {
+				if (out_fails == 3) {
+					break;
+				}
 				usleep(10000);
 			}
 		}

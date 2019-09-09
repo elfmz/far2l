@@ -556,7 +556,7 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
 	if (Key == VK_RETURN && _remote && G.global_config
-	 && G.global_config->GetInt("Options", "EnterExecsRemotely", 0) != 0) {
+	 && G.global_config->GetInt("Options", "EnterExecRemotely", 0) != 0) {
 		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
 	}
 
@@ -675,7 +675,25 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 bool PluginImpl::ByKey_TryExecuteSelected()
 {
-	return false;
+	intptr_t size = G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, 0);
+	if (size < (intptr_t)sizeof(PluginPanelItem)) {
+		return false;
+	}
+	TailedStruct<PluginPanelItem> ppi(size + 0x20 - sizeof(PluginPanelItem));
+	G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
+	if ( S_ISDIR(ppi->FindData.dwUnixMode) || (ppi->FindData.dwUnixMode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
+		return false;
+	}
+
+	std::wstring cmd = L"./";
+	cmd+= ppi->FindData.lpwszFileName;
+	QuoteCmdArgIfNeed(cmd);
+
+	if (!ProcessEventCommand(cmd.c_str())) {
+		return false;
+	}
+
+	return true;
 }
 
 static std::wstring GetCommandArgument(const wchar_t *cmd)

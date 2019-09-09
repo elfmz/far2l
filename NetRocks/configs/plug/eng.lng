@@ -8,6 +8,12 @@
 "&Skip"
 "Error"
 
+"NetRocks options"
+"Enable desktop &notifications"
+"<&ENTER> to execute files remotely when possible"
+"Connect using &proxy (requires tsocks library)"
+"Edit &tsocks configuration file"
+
 "Re&member my choice for current operation"
 "Operation failed"
 

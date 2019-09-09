@@ -192,7 +192,7 @@ static std::wstring CombineAllProtocolPrefixes()
 SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 {
 //	fprintf(stderr, "NetRocks: GetPluginInfoW\n");
-	static const wchar_t *s_cfg_strings[] = {G.GetMsgWide(MBackgroundTasksTitle)};
+	static const wchar_t *s_cfg_strings[] = {G.GetMsgWide(MPluginOptionsTitle), G.GetMsgWide(MBackgroundTasksTitle)};
 	static const wchar_t *s_menu_strings[] = {G.GetMsgWide(MTitle), G.GetMsgWide(MBackgroundTasksTitle)};
 	static const wchar_t *s_disk_menu_strings[] = {L"NetRocks\0"};
 	static std::wstring s_command_prefixes = CombineAllProtocolPrefixes();
@@ -200,7 +200,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 	Info->StructSize = sizeof(*Info);
 	Info->Flags = PF_FULLCMDLINE;
 	Info->PluginConfigStrings = s_cfg_strings;
-	Info->PluginConfigStringsNumber = ARRAYSIZE(s_cfg_strings);
+	Info->PluginConfigStringsNumber = (CountOfAllBackgroundTasks() != 0) ? ARRAYSIZE(s_cfg_strings) : 1;
 	Info->PluginMenuStrings = s_menu_strings;
 	Info->PluginMenuStringsNumber = (CountOfAllBackgroundTasks() != 0) ? ARRAYSIZE(s_menu_strings) : 1;
 	Info->CommandPrefix = s_command_prefixes.c_str();
@@ -219,25 +219,25 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin,int Key,unsigned int 
 	return ((PluginImpl *)hPlugin)->ProcessKey(Key, ControlState);
 }
 
+void ConfigurePluginGlobalOptions();
+
 SHAREDSYMBOL int WINAPI _export ConfigureW(int ItemNumber)
 {
 	if (!G.IsStarted())
 		return 0;
 
-	BackgroundTasksList();
-	return 1;
-/*
-	struct FarDialogItem fdi[] = {
-            {DI_DOUBLEBOX,  3,  1,  70, 5,  0,{},0,0, {}},
-            {DI_TEXT,      -1,  2,  0,  2,  0,{},0,0, {}},
-            {DI_BUTTON,     34, 4,  0,  4,  0,{},0,0, {}}
-	};
+	switch (ItemNumber) {
+		case 0: {
+			ConfigurePluginGlobalOptions();
+		} break;
 
-	wcsncpy(fdi[0].Data, G.GetMsgWide(MTitle), ARRAYSIZE(fdi[0].Data));
-	wcsncpy(fdi[1].Data, G.GetMsgWide(MDescription), ARRAYSIZE(fdi[1].Data));
-	wcsncpy(fdi[2].Data, G.GetMsgWide(MOK), ARRAYSIZE(fdi[2].Data));
+		case 1: {
+			BackgroundTasksList();
+		} break;
 
-	G.info.Dialog(G.info.ModuleNumber, -1, -1, 74, 7, NULL, fdi, ARRAYSIZE(fdi));
+		default: {
+			fprintf(stderr, "NetRocks::ConfigureW(%d) - bad item\n", ItemNumber);
+		}
+	}
 	return 1;
-*/
 }

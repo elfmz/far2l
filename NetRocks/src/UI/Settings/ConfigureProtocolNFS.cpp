@@ -33,7 +33,7 @@ class ProtocolOptionsNFS : protected BaseDialog
 		SetEnabledDialogControl(_i_groups, en);
 	}
 
-	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
+	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
 		if (msg == DN_INITDIALOG 
 		 || (msg == DN_BTNCLICK && param1 == _i_override)) {

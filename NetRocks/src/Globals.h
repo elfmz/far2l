@@ -18,6 +18,7 @@ extern struct Globals
 	FarStandardFunctions fsf = {};
 
 	std::unique_ptr<KeyFileHelper> global_config;
+	std::string tsocks_config;
 
 	void Startup(const struct PluginStartupInfo *Info);
 

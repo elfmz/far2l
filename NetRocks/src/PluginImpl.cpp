@@ -555,15 +555,17 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
+	if (Key == VK_RETURN && _remote && G.global_config
+	 && G.global_config->GetInt("Options", "EnterExecRemotely", 1) != 0) {
+		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
+	}
 
-	if ((Key == VK_F5 || Key == VK_F6) && _remote)
-	{
+	if ((Key == VK_F5 || Key == VK_F6) && _remote) {
 		return ByKey_TryCrossload(Key==VK_F6) ? TRUE : FALSE;
 	}
 
 	if (Key == VK_F4 && !_cur_dir[0]
-	&& (ControlState == 0 || ControlState == PKF_SHIFT))
-	{
+	&& (ControlState == 0 || ControlState == PKF_SHIFT)) {
 		ByKey_EditSiteConnection(ControlState == PKF_SHIFT);
 		return TRUE;
 	}
@@ -666,6 +668,32 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 	for (auto &pi : items_to_free) {
 		free(pi);
+	}
+
+	return true;
+}
+
+bool PluginImpl::ByKey_TryExecuteSelected()
+{
+	intptr_t size = G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, 0);
+	if (size < (intptr_t)sizeof(PluginPanelItem)) {
+		return false;
+	}
+	TailedStruct<PluginPanelItem> ppi(size + 0x20 - sizeof(PluginPanelItem));
+	G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
+	if ( S_ISDIR(ppi->FindData.dwUnixMode) || (ppi->FindData.dwUnixMode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
+		return false;
+	}
+
+	std::wstring cmd = L"./";
+	cmd+= ppi->FindData.lpwszFileName;
+	QuoteCmdArgIfNeed(cmd);
+
+	G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)cmd.c_str());
+
+	if (!ProcessEventCommand(cmd.c_str())) {
+		G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
+		return false;
 	}
 
 	return true;

@@ -5,14 +5,20 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <memory>
+#include <KeyFileHelper.h>
 #include <plugin.hpp>
 #include "lng.h"
+
 
 extern struct Globals
 {
 	std::wstring plugin_path;
 	PluginStartupInfo info = {};
 	FarStandardFunctions fsf = {};
+
+	std::unique_ptr<KeyFileHelper> global_config;
+	std::string tsocks_config;
 
 	void Startup(const struct PluginStartupInfo *Info);
 

@@ -247,6 +247,7 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 		pi->FindData.nFileSize=fi->UnpSize;
 		pi->FindData.nPackSize=fi->PackSize;
 		pi->FindData.dwFileAttributes=fi->FileAttr;
+		pi->FindData.dwUnixMode=fi->FileMode;
 		pi->FindData.ftLastWriteTime=fi->WriteTime;
 		pi->FindData.ftCreationTime=fi->CreationTime;
 		pi->FindData.ftLastAccessTime=fi->AccessTime;

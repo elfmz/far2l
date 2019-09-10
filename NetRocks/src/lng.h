@@ -10,6 +10,12 @@ enum LanguageID
   MSkip,
   MError,
 
+  MPluginOptionsTitle,
+  MEnableDesktopNotifications,
+  MEnterExecRemotely,
+  MConnectUsingProxy,
+  MEditTSocksConfig,
+
   MRememberChoice,
   MOperationFailed,
   MCouldNotConnect,

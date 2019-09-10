@@ -229,7 +229,8 @@ size_t StrStartsFrom(const std::string &haystack, const char *needle)
 	return memcmp(haystack.c_str(), needle, l) ? 0 : l;
 }
 
-std::string EscapeQuotas(std::string str)
+template <class STRING_T>
+	static STRING_T EscapeQuotasT(STRING_T str)
 {
 	for(size_t p = str.find('\"'); p!=std::string::npos; p = str.find('\"', p)) {
 		str.insert(p, 1, '\\');
@@ -237,6 +238,10 @@ std::string EscapeQuotas(std::string str)
 	}
 	return str;
 }
+
+std::string EscapeQuotas(const std::string &str) {return EscapeQuotasT(str); }
+std::wstring EscapeQuotas(const std::wstring &str) {return EscapeQuotasT(str); }
+
 
 std::string EscapeEscapes(std::string str)
 {
@@ -250,17 +255,28 @@ std::string EscapeEscapes(std::string str)
 	return str;
 }
 
-void QuoteCmdArg(std::string &str)
+template <class STRING_T>
+	static void QuoteCmdArgT(STRING_T &str)
 {
-	std::string tmp(1, '\"');
+	STRING_T tmp(1, '\"');
 	tmp+= EscapeQuotas(str);
 	tmp+= '\"';
 	str.swap(tmp);
 }
 
+void QuoteCmdArg(std::string &str) { QuoteCmdArgT(str); }
+void QuoteCmdArg(std::wstring &str) { QuoteCmdArgT(str); }
+
 void QuoteCmdArgIfNeed(std::string &str)
 {
 	if (str.find_first_of(" \"\'\r\n\t&|;,()") != std::string::npos) {
+		QuoteCmdArg(str);
+	}
+}
+
+void QuoteCmdArgIfNeed(std::wstring &str)
+{
+	if (str.find_first_of(L" \"\'\r\n\t&|;,()") != std::wstring::npos) {
 		QuoteCmdArg(str);
 	}
 }
@@ -318,6 +334,28 @@ size_t ReadAll(int fd, void *data, size_t len)
 	return len;
 }
 
+ssize_t ReadWritePiece(int fd_src, int fd_dst)
+{
+	char buf[32768];
+	for (;;) {
+		ssize_t r = read(fd_src, buf, sizeof(buf));
+		if (r < 0) {
+			if (errno == EAGAIN || errno == EINTR) {
+				continue;
+			}
+
+			return -1;
+		}
+
+		if (r > 0) {
+			if (WriteAll(fd_dst, buf, (size_t)r) != (size_t)r) {
+				return -1;
+			}
+		}
+
+		return r;
+	}
+}
 
 //////////////
 

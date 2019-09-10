@@ -28,14 +28,21 @@ KeyFileHelper::KeyFileHelper(const char *filename, bool load)
 KeyFileHelper::~KeyFileHelper()
 {
 	if (_dirty) {
-		GError *err = NULL;
-		g_key_file_helper_mutex.lock();
-		if (!g_key_file_save_to_file(_kf, _filename.c_str(), &err)) {
-			//fprintf(stderr, "~KeyFileHelper(%s) err=%p\n", _filename.c_str(),  err);
-		}
-		g_key_file_helper_mutex.unlock();
+		Save();
 	}
 	g_key_file_free(_kf);
+}
+
+bool KeyFileHelper::Save()
+{
+	GError *err = NULL;
+	g_key_file_helper_mutex.lock();
+	bool out = !!g_key_file_save_to_file(_kf, _filename.c_str(), &err);
+	g_key_file_helper_mutex.unlock();
+	if (out) {
+		_dirty = false;
+	}
+	return out;
 }
 
 std::vector<std::string> KeyFileHelper::EnumSections()

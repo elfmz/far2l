@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <wchar.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <assert.h>
 #include <signal.h>
@@ -178,14 +180,35 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	fcntl(broker2master[0], F_SETFD, FD_CLOEXEC);
 
 
-	std::wstring cmdstr = L"\"";
-	cmdstr+= G.plugin_path;
-	CutToSlash(cmdstr, true);
-	cmdstr+= MB2Wide(pi->broker);
-	cmdstr+= StrMB2Wide(StrPrintf(".broker\" %d %d", master2broker[0], broker2master[1]));
-	fprintf(stderr, "NetRocks: starting broker '%ls'\n", cmdstr.c_str());
+	std::string broker_path = StrWide2MB(G.plugin_path);
+	CutToSlash(broker_path, true);
+	broker_path+= pi->broker;
+	broker_path+= ".broker";
+	char arg1[32], arg2[32];
+	itoa(master2broker[0], arg1, 10);
+	itoa(broker2master[1], arg2, 10);
 
-	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT); //_interactive
+	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n", broker_path.c_str(), arg1, arg2);
+	const bool use_tsocks = G.global_config->GetInt("Options", "UseProxy", 0) != 0;
+	pid_t pid = fork();
+	if (pid == 0) {
+		if (use_tsocks) {
+			setenv("LD_PRELOAD", "libtsocks.so", 1);
+			setenv("TSOCKS_CONFFILE", G.tsocks_config.c_str(), 1);
+		}
+		if (fork() == 0) {
+			execl(broker_path.c_str(), broker_path.c_str(), arg1, arg2, NULL);
+			_exit(-1);
+			exit(-2);
+		}
+		_exit(0);
+		exit(0);
+
+	} else if (pid > 0) {
+		waitpid(pid, 0, 0);
+	}
+//	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT); //_interactive
+
 	CheckedCloseFD(master2broker[0]);
 	CheckedCloseFD(broker2master[1]);
 
@@ -199,11 +222,11 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 		RecvPOD(_peer);
 
 	} catch (std::exception &) {
-		throw std::runtime_error(StrPrintf("Failed to start %ls", cmdstr.c_str()));
+		throw std::runtime_error(StrPrintf("Failed to start '%s' '%s' '%s'", broker_path.c_str(), arg1, arg2));
 	}
 
 	if (ipc_ver_magic != IPC_VERSION_MAGIC) {
-		throw std::runtime_error(StrPrintf("Wrong version of %ls", cmdstr.c_str()));
+		throw std::runtime_error(StrPrintf("Wrong version of '%s' '%s' '%s'", broker_path.c_str(), arg1, arg2));
 	}
 
 	std::unique_lock<std::mutex> locker(_mutex);

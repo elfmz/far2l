@@ -117,7 +117,7 @@ public:
 	void Configure()
 	{
 		SetCheckedDialogControl( _i_enable_desktop_notifications, G.global_config->GetInt("Options", "EnableDesktopNotifications", 1) != 0);
-		SetCheckedDialogControl( _i_enter_exec_remotely, G.global_config->GetInt("Options", "EnterExecRemotely", 0) != 0);
+		SetCheckedDialogControl( _i_enter_exec_remotely, G.global_config->GetInt("Options", "EnterExecRemotely", 1) != 0);
 		SetCheckedDialogControl( _i_use_proxy, G.global_config->GetInt("Options", "UseProxy", 0) != 0);
 
 		if (Show(L"PluginOptions", 6, 2) == _i_ok) {

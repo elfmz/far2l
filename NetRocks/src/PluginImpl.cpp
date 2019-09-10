@@ -556,7 +556,7 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
 	if (Key == VK_RETURN && _remote && G.global_config
-	 && G.global_config->GetInt("Options", "EnterExecRemotely", 0) != 0) {
+	 && G.global_config->GetInt("Options", "EnterExecRemotely", 1) != 0) {
 		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
 	}
 

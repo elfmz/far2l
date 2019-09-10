@@ -156,30 +156,6 @@ struct SFTPFileNonblockinScope
 
 ////////////////////////////
 
-static std::string GetSSHPubkeyHash(ssh_session ssh)
-{
-	ssh_key pub_key = {};
-	int rc = ssh_get_publickey(ssh, &pub_key);
-	if (rc != SSH_OK)
-		throw ProtocolError("Pubkey", ssh_get_error(ssh), rc);
-
-	unsigned char *hash = nullptr;
-	size_t hlen = 0;
-	rc = ssh_get_publickey_hash(pub_key, SSH_PUBLICKEY_HASH_SHA1, &hash, &hlen);
-	ssh_key_free(pub_key);
-
-	if (rc != SSH_OK)
-		throw ProtocolError("Pubkey hash", ssh_get_error(ssh), rc);
-
-	std::string out;
-	for (size_t i = 0; i < hlen; ++i) {
-		out+= StrPrintf("%02x", (unsigned int)hash[i]);
-	}
-	ssh_clean_pubkey_hash(&hash);
-
-	return out;
-}
-
 ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
 {

@@ -74,8 +74,9 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 	SetFocusedDialogControl(_i_retry);
 	SetDefaultDialogControl(_i_retry);
 
-	G.info.FSF->DisplayNotification(L"far2l - NetRocks", G.GetMsgWide(title_lng));
-
+	if (G.global_config->GetInt("Options", "EnableDesktopNotifications", 1) != 0) {
+		G.info.FSF->DisplayNotification(L"far2l - NetRocks", G.GetMsgWide(title_lng));
+	}
 }
 
 

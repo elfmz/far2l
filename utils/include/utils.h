@@ -34,10 +34,13 @@ unsigned char Hex2Byte(const char *hex);
 size_t StrStartsFrom(const std::string &haystack, const char *needle);
 
 std::string EscapeEscapes(std::string str);
-std::string EscapeQuotas(std::string str);
+std::string EscapeQuotas(const std::string &str);
+std::wstring EscapeQuotas(const std::wstring &str);
 
 void QuoteCmdArg(std::string &str);
+void QuoteCmdArg(std::wstring &str);
 void QuoteCmdArgIfNeed(std::string &str);
+void QuoteCmdArgIfNeed(std::wstring &str);
 
 std::string GetMyHome();
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
@@ -59,6 +62,7 @@ void CheckedCloseFDPair(int *fd);
 
 size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1);
 size_t ReadAll(int fd, void *data, size_t len);
+ssize_t ReadWritePiece(int fd_src, int fd_dst);
 
 
 struct ErrnoSaver

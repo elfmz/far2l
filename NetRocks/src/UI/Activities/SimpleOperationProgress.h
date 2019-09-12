@@ -11,6 +11,7 @@ public:
 	{
 		K_CONNECT,
 		K_GETMODE,
+		K_CHANGEMODE,
 		K_ENUMDIR,
 		K_CREATEDIR
 	};

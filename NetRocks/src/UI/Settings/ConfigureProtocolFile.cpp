@@ -29,7 +29,7 @@ class ProtocolOptionsFile : protected BaseDialog
 public:
 	ProtocolOptionsFile()
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, MSFileOptionsTitle);
+		_di.SetBoxTitleItem(MSFileOptionsTitle);
 
 		_di.SetLine(2);
 		_di.AddAtLine(DI_TEXT, 5,62, 0, MSFileCommand);

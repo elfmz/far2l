@@ -68,7 +68,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 		_port = DefaultPortForProtocol(_di_protocols.GetSelection());
 	}
 
-	_di.Add(DI_DOUBLEBOX, 3,1,64,13, 0, MEditHost);
+	_di.SetBoxTitleItem(MEditHost);
 
 	_di.SetLine(2);
 	_di.AddAtLine(DI_TEXT, 5,27, 0, MDisplayName);

@@ -9,6 +9,11 @@
 
 struct FarDialogItems : std::vector<struct FarDialogItem>
 {
+	FarDialogItems();
+
+	int SetBoxTitleItem(const char *title);
+	int SetBoxTitleItem(int title_lng);
+
 	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr);
 	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history = nullptr);
 

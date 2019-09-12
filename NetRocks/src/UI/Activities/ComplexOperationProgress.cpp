@@ -28,7 +28,7 @@
 ComplexOperationProgress::ComplexOperationProgress(const std::string &path, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state, int title_lng, bool show_file_size_progress, bool allow_background)
 	: _state(state), _wea_state(wea_state)
 {
-	_di.Add(DI_DOUBLEBOX, 3, 1, 64, show_file_size_progress ? 13 : 12, 0, title_lng);
+	_di.SetBoxTitleItem(title_lng);
 
 	_di.SetLine(2);
 	_di.AddAtLine(DI_TEXT, 5,62, 0, MXferCurrentFile);

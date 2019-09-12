@@ -35,7 +35,43 @@ int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsign
 
 //	strncpy(item.Data, data ? data : "", sizeof(item.Data) );
 
+	if (index > 0) {
+		auto &box = operator[](0);
+		if (box.Y2 < y2 + 1) {
+			box.Y2 = y2 + 1;
+		}
+		if (box.X2 < x2 + 2) {
+			box.X2 = x2 + 2;
+		}
+	}
+
 	return index;
+}
+
+
+FarDialogItems::FarDialogItems()
+{
+	AddInternal(DI_DOUBLEBOX, 3, 1, 5, 3, 0, L"", nullptr);
+}
+
+int FarDialogItems::SetBoxTitleItem(const char *title)
+{
+	if (empty()) {
+		return -1;
+	}
+
+	operator[](0).PtrData = MB2WidePooled(title);
+	return 0;
+}
+
+int FarDialogItems::SetBoxTitleItem(int title_lng)
+{
+	if (empty()) {
+		return -1;
+	}
+
+	operator[](0).PtrData = G.GetMsgWide(title_lng);
+	return 0;
 }
 
 int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history)

@@ -33,7 +33,7 @@ class AbortConfirm : protected BaseDialog
 public:
 	AbortConfirm()
 	{
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,50,5, 0, MAbortTitle);
+		_i_dblbox = _di.SetBoxTitleItem(MAbortTitle);
 		_di.Add(DI_TEXT, 5,2,48,2, DIF_CENTERGROUP, MAbortText);
 		_di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 
@@ -91,7 +91,7 @@ public:
 	AbortOperationProgress(ProgressState &state)
 		: _state(state), _ts(time(NULL))
 	{
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3, 1, 50, 3, 0, MAbortingOperationTitle);
+		_i_dblbox = _di.SetBoxTitleItem(MAbortingOperationTitle);
 		_di.Add(DI_BUTTON, 5,2,48,2, DIF_CENTERGROUP, MBreakConnection);
 		TextFromDialogControl(_i_dblbox, _title);
 	}

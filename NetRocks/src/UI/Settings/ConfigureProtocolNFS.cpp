@@ -45,7 +45,7 @@ class ProtocolOptionsNFS : protected BaseDialog
 public:
 	ProtocolOptionsNFS()
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,50,9, 0, MNFSOptionsTitle);
+		_di.SetBoxTitleItem(MNFSOptionsTitle);
 
 		_di.SetLine(2);
 		_i_override = _di.AddAtLine(DI_CHECKBOX, 5,48, 0, MNFSOverride);

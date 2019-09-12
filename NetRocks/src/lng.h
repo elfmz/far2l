@@ -117,6 +117,7 @@ enum LanguageID
 
   MConnectProgressTitle,
   MGetModeProgressTitle,
+  MChangeModeProgressTitle,
   MEnumDirProgressTitle,
   MCreateDirProgressTitle,
 
@@ -213,5 +214,18 @@ enum LanguageID
   MWebDAVAuthProxy,
   MWebDAVProxyUsername,
   MWebDAVProxyPassword,
+
+  MConfirmChangeModeTitle,
+  MConfirmChangeModeText,
+  MRecurseSubdirs,
+  MModeUser,
+  MModeGroup,
+  MModeOther,
+  MModeRead,
+  MModeWrite,
+  MModeExecute,
+  MModeSetUID,
+  MModeSetGID,
+  MModeSticky
 
 };

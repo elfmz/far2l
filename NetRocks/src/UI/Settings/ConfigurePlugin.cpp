@@ -88,7 +88,7 @@ class ConfigurePlugin : protected BaseDialog
 public:
 	ConfigurePlugin()
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,64,8, 0, MPluginOptionsTitle);
+		_di.SetBoxTitleItem(MPluginOptionsTitle);
 
 		_di.SetLine(2);
 		_i_enable_desktop_notifications = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MEnableDesktopNotifications);

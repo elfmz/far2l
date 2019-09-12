@@ -115,6 +115,7 @@
 
 "Connecting to site"
 "Querying path"
+"Applying mode"
 "Enumerating directory"
 "Creating directory"
 
@@ -210,3 +211,16 @@
 "Use proxy &authentificaion:"
 "Proxy &user:"
 "Proxy pa&ssword:"
+
+"Confirm change mode"
+"Edit mode of files and directories in:"
+"&Recurse into subdirectories"
+"&User's access"
+"&Group's access"
+"&Other's access"
+"Read"
+"Write"
+"Execute"
+"Set UID"
+"Set GID"
+"Sticky"

@@ -42,7 +42,7 @@ class ProtocolOptionsSMB : protected BaseDialog
 public:
 	ProtocolOptionsSMB()
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,64,5, 0, MSMBOptionsTitle);
+		_di.SetBoxTitleItem(MSMBOptionsTitle);
 
 		_di.SetLine(2);
 		_di.AddAtLine(DI_TEXT, 5,34, 0, MSMBWorkgroup);

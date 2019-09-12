@@ -18,7 +18,7 @@
 
 ConfirmNewServerIdentity::ConfirmNewServerIdentity(const std::string &site, const std::string &identity, bool may_remember)
 {
-	_di.Add(DI_DOUBLEBOX, 3,1,50,7, 0, MNewServerIdentityTitle);
+	_di.SetBoxTitleItem(MNewServerIdentityTitle);
 
 	_di.SetLine(2);
 	_di.AddAtLine(DI_TEXT, 5,19, 0, MNewServerIdentitySite);

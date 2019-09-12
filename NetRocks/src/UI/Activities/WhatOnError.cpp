@@ -41,7 +41,7 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 		}
 	}
 
-	_di.Add(DI_DOUBLEBOX, 3,1,64,9, 0, title_lng);
+	_di.SetBoxTitleItem(title_lng);
 
 	_di.SetLine(2);
 //	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorError);

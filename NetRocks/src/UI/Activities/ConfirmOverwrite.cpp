@@ -24,11 +24,11 @@ ConfirmOverwrite::ConfirmOverwrite(XferKind xk, XferDirection xd, const std::str
 	unsigned long long src_size, const timespec &dst_ts, unsigned long long dst_size)
 {
 	if (xk == XK_COPY) {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XD_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
+		_di.SetBoxTitleItem((xd == XD_DOWNLOAD) ? MXferCopyDownloadTitle : MXferCopyUploadTitle);
 	} else if (xk == XK_MOVE) {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (xd == XD_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
+		_di.SetBoxTitleItem((xd == XD_DOWNLOAD) ? MXferMoveDownloadTitle : MXferMoveUploadTitle);
 	} else {
-		_di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, MXferRenameTitle);
+		_di.SetBoxTitleItem(MXferRenameTitle);
 	}
 
 	_di.SetLine(2);

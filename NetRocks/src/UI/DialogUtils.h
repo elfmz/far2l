@@ -85,7 +85,11 @@ protected:
 
 	void SetEnabledDialogControl(int ctl, bool en = true);
 	void SetVisibleDialogControl(int ctl, bool vis = true);
+
+	void Set3StateDialogControl(int ctl, int state);
 	void SetCheckedDialogControl(int ctl, bool checked = true);
+
+	int Get3StateDialogControl(int ctl);
 	bool IsCheckedDialogControl(int ctl);
 
 	void TextFromDialogControl(int ctl, std::string &str);

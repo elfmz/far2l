@@ -15,7 +15,7 @@ class OpChangeMode : protected OpBase
 
 public:
 	OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string &base_dir,
-		std::shared_ptr<WhatOnErrorState> &wea_state, struct PluginPanelItem *items, int items_count);
+		struct PluginPanelItem *items, int items_count);
 
 	void Do();
 };

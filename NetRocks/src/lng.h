@@ -98,6 +98,7 @@ enum LanguageID
   MProceedMoveUpload,
   MProceedMoveCrossload,
   MProceedRename,
+  MProceedChangeMode,
 
   MDestinationExists,
   MSourceInfo,

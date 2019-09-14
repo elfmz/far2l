@@ -119,7 +119,7 @@ ConfirmChangeMode::ConfirmChangeMode(const std::string &site_dir, bool may_recur
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
-	_i_proceed = _di.AddAtLine(DI_BUTTON, 7,29, DIF_CENTERGROUP, MProceedRemoval);
+	_i_proceed = _di.AddAtLine(DI_BUTTON, 7,29, DIF_CENTERGROUP, MProceedChangeMode);
 	_i_cancel = _di.AddAtLine(DI_BUTTON, 38,58, DIF_CENTERGROUP, MCancel);
 
 	SetFocusedDialogControl(_i_proceed);

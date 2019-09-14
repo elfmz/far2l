@@ -8,6 +8,7 @@ src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
+src/GetSelectedItems.cpp
 src/BackgroundTasks.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp

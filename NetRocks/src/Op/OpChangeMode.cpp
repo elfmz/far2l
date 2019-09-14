@@ -3,9 +3,9 @@
 #include "../UI/Activities/SimpleOperationProgress.h"
 
 OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string &base_dir,
-		std::shared_ptr<WhatOnErrorState> &wea_state, struct PluginPanelItem *items, int items_count)
+		struct PluginPanelItem *items, int items_count)
 	:
-	OpBase(0, base_host, base_dir, wea_state),
+	OpBase(0, base_host, base_dir),
 	_recurse(false),
 	_mode_set(0),
 	_mode_clear(0)

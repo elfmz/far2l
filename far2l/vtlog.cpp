@@ -5,7 +5,10 @@
 #include <vector>
 #include <deque>
 #include <fcntl.h>
-#include <alloca.h>
+
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
+# include <alloca.h>
+#endif
 
 #include "vtlog.h"
 

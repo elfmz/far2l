@@ -5,7 +5,10 @@ farrtl.cpp
 */
 
 #include "headers.hpp"
-#include <alloca.h>
+
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
+# include <alloca.h>
+#endif
 
 #include "savefpos.hpp"
 #include "console.hpp"

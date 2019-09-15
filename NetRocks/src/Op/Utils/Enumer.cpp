@@ -100,7 +100,7 @@ bool Enumer::OnScanningPath(const std::string &path, const FileInformation *file
 		return false;
 
 	ProgressStateUpdate psu(_state);
-
+//	_state.path = path;
 	_state.stats.count_total++;
 	if (!S_ISDIR(info.mode)) {
 		_state.stats.all_total+= info.size;

@@ -62,6 +62,7 @@ ConfirmChangeMode::ConfirmChangeMode(const std::string &site_dir, bool may_recur
 	if (may_recurse) {
 		_di.NextLine();
 		_i_recurse_subdirs = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MRecurseSubdirs);
+		SetCheckedDialogControl(_i_recurse_subdirs);
 	}
 
 	_di.NextLine();
@@ -132,7 +133,9 @@ bool ConfirmChangeMode::Ask(bool &recurse, mode_t &mode_set, mode_t &mode_clear)
 		return false;
 	}
 
-	recurse = Get3StateDialogControl(_i_recurse_subdirs);
+	if (_i_recurse_subdirs != -1) {
+		recurse = IsCheckedDialogControl(_i_recurse_subdirs);
+	}
 
 	mode_set = 0;
 	mode_clear = 0;

@@ -11,16 +11,16 @@ OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string 
 	_mode_clear(0)
 {
 	bool has_dirs = false;
-	mode_t mode_all = 06777, mode_any = 0;
+	mode_t mode_all = 07777, mode_any = 0;
 	for (int i = 0; i < items_count; ++i) {
 		if (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			has_dirs = true;
 			mode_all = 0;
-			mode_any = 06777;
+			mode_any = 07777;
 			break;
 		}
 		mode_all&= items[i].FindData.dwUnixMode;
-		mode_any|= (items[i].FindData.dwUnixMode & 06777);
+		mode_any|= (items[i].FindData.dwUnixMode & 07777);
 	}
 
 	if (!ConfirmChangeMode(base_dir, has_dirs, mode_all, mode_any).Ask(_recurse, _mode_set, _mode_clear)) {
@@ -49,26 +49,40 @@ void OpChangeMode::Do()
 void OpChangeMode::Process()
 {
 	_enumer->Scan(_recurse);
-	const auto &items = _enumer->Items();
-	for (const auto &path : items) {
-		ChangeModeOfPath(path);
+	for (const auto &entry : _entries) {
+		ChangeModeOfPath(entry.first, entry.second.mode);
 		ProgressStateUpdate psu(_state);
+//		_state.path = path;
 		_state.stats.count_complete++;
 	}
 }
 
-void OpChangeMode::ChangeModeOfPath(const std::string &path)
+void OpChangeMode::ChangeModeOfPath(const std::string &path, mode_t prev_mode)
 {
 	WhatOnErrorWrap<WEK_CHMODE>(_wea_state, _state, _base_host.get(), path,
 		[&] () mutable
 		{
-			mode_t prev_mode = _base_host->GetMode(path);
 			mode_t new_mode = prev_mode;
 			new_mode&= (~_mode_clear);
 			new_mode|= (_mode_set);
+			if (S_ISDIR(prev_mode)) {
+				// hacky workaround:
+				// for directories  'x' means cd-ability, so treat it allowed if if 'r' allowed
+				if (prev_mode & S_IRUSR) {
+					new_mode|= (prev_mode & S_IXUSR);
+				}
+				if (prev_mode & S_IRGRP) {
+					new_mode|= (prev_mode & S_IXGRP);
+				}
+				if (prev_mode & S_IROTH) {
+					new_mode|= (prev_mode & S_IXOTH);
+				}
+			}
 			if (new_mode != prev_mode) {
 				_base_host->SetMode(path.c_str(), new_mode);
 			}
+
+//			fprintf(stderr, "%o -> %o '%s'\n", prev_mode, new_mode, path.c_str());
 		}
 	);
 }

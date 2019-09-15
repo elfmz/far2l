@@ -11,7 +11,7 @@ class OpChangeMode : protected OpBase
 	Path2FileInformation _entries;
 	std::shared_ptr<Enumer> _enumer;
 
-	void ChangeModeOfPath(const std::string &path);
+	void ChangeModeOfPath(const std::string &path, mode_t prev_mode);
 
 public:
 	OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string &base_dir,

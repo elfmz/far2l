@@ -576,8 +576,10 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 		return TRUE;
 	}
 
-	if (Key == 'A' && ControlState == PKF_CONTROL && _remote) {
-		ByKey_EditAttributesSelected();
+	if (Key == 'A' && ControlState == PKF_CONTROL) {
+		if (_remote) {
+			ByKey_EditAttributesSelected();
+		}
 		return TRUE;
 	}
 

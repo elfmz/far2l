@@ -21,13 +21,15 @@ Enumer::Enumer(Path2FileInformation &result, std::shared_ptr<IHost> &host, const
 	}
 }
 
-void Enumer::Scan()
+void Enumer::Scan(bool recurse)
 {
 	for (auto path : _items) {
 		if (OnScanningPath(path)) {
-			path+= '/';
-			_scan_depth_limit = 255;
-			ScanItem(path);
+			if (recurse) {
+				path+= '/';
+				_scan_depth_limit = 255;
+				ScanItem(path);
+			}
 		}
 	}
 }
@@ -98,7 +100,7 @@ bool Enumer::OnScanningPath(const std::string &path, const FileInformation *file
 		return false;
 
 	ProgressStateUpdate psu(_state);
-
+//	_state.path = path;
 	_state.stats.count_total++;
 	if (!S_ISDIR(info.mode)) {
 		_state.stats.all_total+= info.size;

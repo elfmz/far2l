@@ -9,6 +9,11 @@
 
 struct FarDialogItems : std::vector<struct FarDialogItem>
 {
+	FarDialogItems();
+
+	int SetBoxTitleItem(const char *title);
+	int SetBoxTitleItem(int title_lng);
+
 	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr);
 	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history = nullptr);
 
@@ -80,7 +85,11 @@ protected:
 
 	void SetEnabledDialogControl(int ctl, bool en = true);
 	void SetVisibleDialogControl(int ctl, bool vis = true);
+
+	void Set3StateDialogControl(int ctl, int state);
 	void SetCheckedDialogControl(int ctl, bool checked = true);
+
+	int Get3StateDialogControl(int ctl);
 	bool IsCheckedDialogControl(int ctl);
 
 	void TextFromDialogControl(int ctl, std::string &str);

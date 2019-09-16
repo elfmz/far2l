@@ -50,7 +50,7 @@ class ProtocolOptionsWebDAV : protected BaseDialog
 public:
 	ProtocolOptionsWebDAV()
 	{
-		_di.Add(DI_DOUBLEBOX, 3,1,50,10, 0, MWebDAVOptionsTitle);
+		_di.SetBoxTitleItem(MWebDAVOptionsTitle);
 
 		_di.SetLine(2);
 		_i_use_proxy = _di.AddAtLine(DI_CHECKBOX, 5,48, 0, MWebDAVUseProxy);

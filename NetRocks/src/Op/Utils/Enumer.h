@@ -30,5 +30,5 @@ public:
 	inline const std::set<std::string> &Items() const { return _items; }
 	inline std::set<std::string> &Items() { return _items; }
 
-	void Scan();
+	void Scan(bool recurse = true);
 };

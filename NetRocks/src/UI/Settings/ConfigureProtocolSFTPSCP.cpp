@@ -104,7 +104,7 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 public:
 	ProtocolOptionsSFTPSCP(bool scp)
 	{
-		_di.Add(DI_DOUBLEBOX, 3, 1, 64, scp ? 8 : 12, 0, scp ? MSCPOptionsTitle : MSFTPOptionsTitle);
+		_di.SetBoxTitleItem(scp ? MSCPOptionsTitle : MSFTPOptionsTitle);
 
 		_di.SetLine(2);
 		_i_privkey_enable = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPPrivateKeyPath);

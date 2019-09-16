@@ -74,7 +74,7 @@ void BackgroundTasksList()
 
 ConfirmExitFAR::ConfirmExitFAR(size_t background_ops_count)
 {
-	_di.Add(DI_DOUBLEBOX, 3,1,64,6, 0, MConfirmExitFARTitle);
+	_di.SetBoxTitleItem(MConfirmExitFARTitle);
 
 	_di.SetLine(2);
 	_di.AddAtLine(DI_TEXT, 5,62, 0, StrPrintf(G.GetMsgMB(MConfirmExitFARText), background_ops_count).c_str());

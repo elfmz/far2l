@@ -23,7 +23,7 @@ class InteractiveLoginDialog : BaseDialog
 public:
 	InteractiveLoginDialog(const std::string &display_name, unsigned int retry)
 	{
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,50,7, 0, retry ? MLoginAuthRetryTitle : MLoginAuthTitle);
+		_i_dblbox = _di.SetBoxTitleItem(retry ? MLoginAuthRetryTitle : MLoginAuthTitle);
 		_di.SetLine(2);
 		_di.AddAtLine(DI_TEXT, 5,24, 0, retry ? MLoginAuthRetryTo : MLoginAuthTo);
 		_di.AddAtLine(DI_TEXT, 25,48, 0, display_name.c_str());

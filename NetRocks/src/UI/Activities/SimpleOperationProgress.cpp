@@ -23,12 +23,13 @@ SimpleOperationProgress::SimpleOperationProgress(Kind kind, const std::string &o
 	switch (kind) {
 		case K_CONNECT: title_lng = MConnectProgressTitle; break;
 		case K_GETMODE: title_lng = MGetModeProgressTitle; break;
+		case K_CHANGEMODE: title_lng = MChangeModeProgressTitle; break;
 		case K_ENUMDIR: title_lng = MEnumDirProgressTitle; break;
 		case K_CREATEDIR: title_lng = MCreateDirProgressTitle; break;
 		default:
 			throw std::runtime_error("Unexpected kind");
 	}
-	_i_dblbox = _di.Add(DI_DOUBLEBOX, 3, 1, 50, 5, 0, title_lng);
+	_i_dblbox = _di.SetBoxTitleItem(title_lng);
 	_di.Add(DI_TEXT, 5,2,48,2, 0, object.c_str());
 	// this separator used to display retries/skips count
 	_i_errstats_separator = _di.Add(DI_TEXT, 4,3,49,3, DIF_BOXCOLOR | DIF_SEPARATOR);

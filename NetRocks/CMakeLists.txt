@@ -8,6 +8,7 @@ src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
+src/GetSelectedItems.cpp
 src/BackgroundTasks.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
@@ -23,6 +24,7 @@ src/UI/Settings/ConfigureProtocolWebDAV.cpp
 src/UI/Activities/Confirm.cpp
 src/UI/Activities/ConfirmXfer.cpp
 src/UI/Activities/ConfirmOverwrite.cpp
+src/UI/Activities/ConfirmChangeMode.cpp
 src/UI/Activities/SimpleOperationProgress.cpp
 src/UI/Activities/ComplexOperationProgress.cpp
 src/UI/Activities/AbortOperationRequest.cpp
@@ -36,6 +38,7 @@ src/Op/Utils/IOBuffer.cpp
 src/Op/OpBase.cpp
 src/Op/OpConnect.cpp
 src/Op/OpGetMode.cpp
+src/Op/OpChangeMode.cpp
 src/Op/OpEnumDirectory.cpp
 src/Op/OpXfer.cpp
 src/Op/OpRemove.cpp

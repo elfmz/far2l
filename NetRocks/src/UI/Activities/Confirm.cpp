@@ -16,7 +16,7 @@
 
 ConfirmRemove::ConfirmRemove(const std::string &site_dir)
 {
-	_di.Add(DI_DOUBLEBOX, 3,1,64,6, 0, MRemoveTitle);
+	_di.SetBoxTitleItem(MRemoveTitle);
 	_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveText);
 
 	_di.Add(DI_TEXT, 5,3,62,3, 0, site_dir.c_str());
@@ -50,7 +50,7 @@ bool ConfirmRemove::Ask()
 
 ConfirmRemoveSites::ConfirmRemoveSites()
 {
-	_di.Add(DI_DOUBLEBOX, 3,1,64,5, 0, MRemoveSitesTitle);
+	_di.SetBoxTitleItem(MRemoveSitesTitle);
 	_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveSitesText);
 
 	_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -83,7 +83,7 @@ bool ConfirmRemoveSites::Ask()
 
 ConfirmMakeDir::ConfirmMakeDir(const std::string &default_name)
 {
-	_di.Add(DI_DOUBLEBOX, 3,1,50,6, 0, MMakeDirTitle);
+	_di.SetBoxTitleItem(MMakeDirTitle);
 	_di.Add(DI_TEXT, 5,2,48,2, 0, MMakeDirText);
 
 	_i_dir_name = _di.Add(DI_EDIT, 5,3,48,3, DIF_HISTORY, default_name.c_str(), "NetRocks_History_MakeDir");

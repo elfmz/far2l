@@ -35,7 +35,43 @@ int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsign
 
 //	strncpy(item.Data, data ? data : "", sizeof(item.Data) );
 
+	if (index > 0) {
+		auto &box = operator[](0);
+		if (box.Y2 < y2 + 1) {
+			box.Y2 = y2 + 1;
+		}
+		if (box.X2 < x2 + 2) {
+			box.X2 = x2 + 2;
+		}
+	}
+
 	return index;
+}
+
+
+FarDialogItems::FarDialogItems()
+{
+	AddInternal(DI_DOUBLEBOX, 3, 1, 5, 3, 0, L"", nullptr);
+}
+
+int FarDialogItems::SetBoxTitleItem(const char *title)
+{
+	if (empty()) {
+		return -1;
+	}
+
+	operator[](0).PtrData = MB2WidePooled(title);
+	return 0;
+}
+
+int FarDialogItems::SetBoxTitleItem(int title_lng)
+{
+	if (empty()) {
+		return -1;
+	}
+
+	operator[](0).PtrData = G.GetMsgWide(title_lng);
+	return 0;
 }
 
 int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history)
@@ -311,29 +347,38 @@ void BaseDialog::SetVisibleDialogControl(int ctl, bool vis)
 	SendDlgMessage(DM_SHOWITEM, ctl, vis ? TRUE : FALSE);
 }
 
-bool BaseDialog::IsCheckedDialogControl(int ctl)
+int BaseDialog::Get3StateDialogControl(int ctl)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
-		return false;
+		return BSTATE_UNCHECKED;
+
+	if (_dlg == INVALID_HANDLE_VALUE)
+		return _di[ctl].Selected;
+
+	return SendDlgMessage(DM_GETCHECK, ctl, 0);
+}
+
+bool BaseDialog::IsCheckedDialogControl(int ctl)
+{
+	return (Get3StateDialogControl(ctl) == BSTATE_CHECKED);
+}
+
+void BaseDialog::Set3StateDialogControl(int ctl, int state)
+{
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
 
 	if (_dlg == INVALID_HANDLE_VALUE) {
-		return (_di[ctl].Selected != 0);
+		_di[ctl].Selected = state;
+		return;
 	}
 
-	return (SendDlgMessage(DM_GETCHECK, ctl, 0) == BSTATE_CHECKED);
+	SendDlgMessage(DM_SETCHECK, ctl, state);
 }
 
 void BaseDialog::SetCheckedDialogControl(int ctl, bool checked)
 {
-	if (ctl < 0 || (size_t)ctl >= _di.size())
-		return;
-
-	if (_dlg == INVALID_HANDLE_VALUE) {
-		_di[ctl].Selected = checked ? 1 : 0;
-		return;
-	}
-
-	SendDlgMessage(DM_SETCHECK, ctl, checked ? BSTATE_CHECKED : BSTATE_UNCHECKED);
+	Set3StateDialogControl(ctl, checked ? BSTATE_CHECKED : BSTATE_UNCHECKED);
 }
 
 void BaseDialog::TextToDialogControl(int ctl, const char *str)

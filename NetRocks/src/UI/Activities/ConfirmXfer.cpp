@@ -25,19 +25,19 @@ ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd)
 	: _xk(xk), _xd(xd)
 {
 	if (_xk == XK_COPY) {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (_xd == XD_UPLOAD) ? MXferCopyUploadTitle
+		_i_dblbox = _di.SetBoxTitleItem((_xd == XD_UPLOAD) ? MXferCopyUploadTitle
 				: ((_xd == XD_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle));
 		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, (_xd == XD_UPLOAD) ? MXferCopyUploadText
 				: ((_xd == XD_CROSSLOAD) ? MXferCopyCrossloadText : MXferCopyDownloadText));
 	} else if (_xk == XK_MOVE) {
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, (_xd == XD_UPLOAD) ? MXferMoveUploadTitle
+		_i_dblbox = _di.SetBoxTitleItem((_xd == XD_UPLOAD) ? MXferMoveUploadTitle
 				: ((_xd == XD_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle));
 		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, (_xd == XD_UPLOAD) ? MXferMoveUploadText
 				: ((_xd == XD_CROSSLOAD) ? MXferMoveCrossloadText : MXferMoveDownloadText));
 	} else {
 		assert(_xk == XK_RENAME);
 		assert(_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD);
-		_i_dblbox = _di.Add(DI_DOUBLEBOX, 3,1,64,11, 0, MXferRenameTitle);
+		_i_dblbox = _di.SetBoxTitleItem(MXferRenameTitle);
 		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, MXferRenameText);
 	}
 

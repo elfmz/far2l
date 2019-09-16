@@ -7,6 +7,7 @@
 #include "PluginImpl.h"
 #include "PluginPanelItems.h"
 #include "PooledStrings.h"
+#include "GetSelectedItems.h"
 #include "Host/HostLocal.h"
 #include "UI/Settings/SiteConnectionEditor.h"
 #include "UI/Activities/Confirm.h"
@@ -17,6 +18,7 @@
 #include "Op/OpMakeDirectory.h"
 #include "Op/OpEnumDirectory.h"
 #include "Op/OpExecute.h"
+#include "Op/OpChangeMode.h"
 
 
 class AllNetRocks
@@ -573,6 +575,14 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 	if (Key == VK_F3 && !_cur_dir[0]) {
 		return TRUE;
 	}
+
+	if (Key == 'A' && ControlState == PKF_CONTROL) {
+		if (_remote) {
+			ByKey_EditAttributesSelected();
+		}
+		return TRUE;
+	}
+
 /*
 	if (Key == VK_F7) {
 		MakeDirectory();
@@ -581,6 +591,7 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 */
 	return FALSE;
 }
+
 
 void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 {
@@ -607,7 +618,6 @@ void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 }
 
 
-
 bool PluginImpl::ByKey_TryCrossload(bool mv)
 {
 	HANDLE plugin = INVALID_HANDLE_VALUE;
@@ -631,32 +641,11 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 	}
 
 
-	PanelInfo pi = {};
-	G.info.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)(void *)&pi);
-	if (pi.SelectedItemsNumber == 0) {
-		fprintf(stderr, "TryCrossSiteCrossload: no files selected\n");
-		return true;
-	}
+	GetSelectedItems gsi;
 
-	std::vector<PluginPanelItem> items_vector;
-	std::vector<PluginPanelItem *> items_to_free;
-	for (int i = 0; i < pi.SelectedItemsNumber; ++i) {
-		size_t len = G.info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
-		if (len >= sizeof(PluginPanelItem)) {
-			PluginPanelItem *pi = (PluginPanelItem *)calloc(1, len + 0x20);
-			if (pi == nullptr)
-				break;
-
-			G.info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(void *)pi);
-			items_to_free.push_back(pi);
-			if (pi->FindData.lpwszFileName)
-				items_vector.push_back(*pi);
-		}
-	}
-
-	if (!items_vector.empty()) {
+	if (!gsi.empty()) {
 		auto state = StartXfer(0, _remote, CurrentSiteDir(true), dst_remote, dst_site_dir,
-			&items_vector[0], (int)items_vector.size(), mv ? XK_MOVE : XK_COPY, XD_CROSSLOAD);
+			&gsi[0], (int)gsi.size(), mv ? XK_MOVE : XK_COPY, XD_CROSSLOAD);
 		if (state == BTS_ACTIVE || state == BTS_PAUSED) {
 			_remote = _remote->Clone();
 			g_all_netrocks.CloneRemoteOf(plugin);
@@ -664,10 +653,6 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 		G.info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
-	}
-
-	for (auto &pi : items_to_free) {
-		free(pi);
 	}
 
 	return true;
@@ -697,6 +682,19 @@ bool PluginImpl::ByKey_TryExecuteSelected()
 	}
 
 	return true;
+}
+
+void PluginImpl::ByKey_EditAttributesSelected()
+{
+	GetSelectedItems gsi;
+
+	if (!gsi.empty())  try {
+		OpChangeMode(_remote, CurrentSiteDir(true), &gsi[0], (int)gsi.size()).Do();
+		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+
+	} catch (std::exception &ex) {
+		fprintf(stderr, "ByKey_EditAttributesSelected: %s\n", ex.what());
+	}
 }
 
 static std::wstring GetCommandArgument(const wchar_t *cmd)

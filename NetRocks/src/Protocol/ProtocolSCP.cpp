@@ -419,6 +419,20 @@ void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_t
 	}
 }
 
+static std::string ExtractStringTail(std::string &line)
+{
+	std::string out;
+	size_t p = line.rfind(' ');
+	if (p != std::string::npos) {
+		out = line.substr(p + 1);
+		line.resize(p);
+	} else {
+		out.swap(line);
+	}
+
+	return out;
+}
+
 class SCPDirectoryEnumer : public IDirectoryEnumer
 {
 	std::shared_ptr<SSHConnection> _conn;
@@ -429,31 +443,13 @@ class SCPDirectoryEnumer : public IDirectoryEnumer
 
 	bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
-/*
-$ ls -lbA
-total 104
--rw-rw-r-- 1 user user  1694 May 20 12:13 BackgroundTasks.cpp
--rw-rw-r-- 1 user user   811 May 20 12:13 BackgroundTasks.h
--rw-rw-r-- 1 user user  1953 Jun  4 12:28 Erroring.cpp
--rw-rw-r-- 1 user user   915 Jun  4 12:28 Erroring.h
--rw-rw-r-- 1 user user   341 Aug 21 23:55 FileInformation.h
--rw-rw-r-- 1 user user   629 May 20 12:13 Globals.cpp
--rw-rw-r-- 1 user user   549 May 20 12:13 Globals.h
-drwxrwxr-x 2 user user  4096 Aug 21 23:55 Host
--rw-rw-r-- 1 user user  3497 Jun 30 00:35 lng.h
--rw-rw-r-- 1 user user  6862 Jun 14 14:49 NetRocks.cpp
-drwxrwxr-x 3 user user  4096 Jul  8 23:36 Op
--rw-rw-r-- 1 user user 20225 Aug 21 23:55 PluginImpl.cpp
--rw-rw-r-- 1 user user  2030 Jun 26 11:20 PluginImpl.h
--rw-rw-r-- 1 user user  2144 May 20 12:13 PluginPanelItems.cpp
--rw-rw-r-- 1 user user   499 May 20 12:13 PluginPanelItems.h
--rw-rw-r-- 1 user user  1440 May 20 12:13 PooledStrings.cpp
--rw-rw-r-- 1 user user   280 May 20 12:13 PooledStrings.h
-drwxrwxr-x 2 user user  4096 Aug 28 21:41 Protocol
--rw-rw-r-- 1 user user  4044 May 20 12:13 SitesConfig.cpp
--rw-rw-r-- 1 user user  1337 May 20 12:13 SitesConfig.h
-drwxrwxr-x 4 user user  4096 Jun 30 00:35 UI
-*/
+// PATH/NAME MODE SIZE ACCESS MODIFY CHANGE USER GROUP
+// /bin/bash 81ed 1037528 1568672221 1494938995 1523911947 root root
+// /bin/bunzip2 81ed 31352 1568065896 1562243762 1562383716 root root
+// /bin/busybox 81ed 1984584 1558035456 1551971578 1554350429 root root
+// /bin/bzcat 81ed 31352 1568065896 1562243762 1562383716 root root
+// /bin/bzcmp a1ff 6 1568754149 1562243761 1562383716 root root
+
 		for (;;) {
 			size_t p = _cmd.output.find_first_of("\r\n");
 			if (p == std::string::npos) {
@@ -466,78 +462,34 @@ drwxrwxr-x 4 user user  4096 Jun 30 00:35 UI
 			}
 			_cmd.output.erase(0, p);
 
-			
-			for (size_t p = line.size();;) {
-				p = line.rfind(' ', p);
-				if (p == std::string::npos || p == 0) {
-					break;
-				}
+			const std::string &str_group = ExtractStringTail(line);
+			const std::string &str_owner = ExtractStringTail(line);
+			const std::string &str_change = ExtractStringTail(line);
+			const std::string &str_modify = ExtractStringTail(line);
+			const std::string &str_access = ExtractStringTail(line);
+			const std::string &str_size = ExtractStringTail(line);
+			const std::string &str_mode = ExtractStringTail(line);
 
-				if (line[p - 1] != '\\') {
-					name = line.substr(p + 1);
-					line.resize(p);
-					if (line.size() > 3 && line.substr(line.size() - 3) == " ->") {
-						name.clear();
-						p = line.size() - 3;
-						line.resize(p);
-						continue;
-					}
-
-					break;
-				}
-
-				--p;
+			p = line.rfind('/');
+			if (p != std::string::npos) {
+				line.erase(0, p + 1);
 			}
-
-			std::vector<std::string> cols;
-			StrExplode(cols, line, " \t");
-
-			if (cols.size() < 6 || name.empty() || !FILENAME_ENUMERABLE(name)) {
-				name.clear();
+			if (line.empty() || !FILENAME_ENUMERABLE(line)) {
 				continue;
 			}
 
-			while (cols[0].size() < 10) {
-				cols[0]+= '-';
-			}
+			name.swap(line);
 
-			owner = cols[2];
-			group = cols[3];
-			file_info.size = atol(cols[4].c_str());
+			file_info.access_time.tv_sec = atol(str_access.c_str());
+			file_info.modification_time.tv_sec = atol(str_modify.c_str());
+			file_info.status_change_time.tv_sec = atol(str_change.c_str());
+			file_info.mode = htoul(str_mode.c_str());
+			file_info.size = atol(str_size.c_str());
 
-			switch (cols[0][0]) {
-				case 'l': file_info.mode|= S_IFLNK; break;
-				case 'd': file_info.mode|= S_IFDIR; break;
-				case '-': file_info.mode|= S_IFREG; break;
-				default: ; //...
-			}
-			if (cols[0][1] == 'r') file_info.mode|= 0200;
-			if (cols[0][2] == 'w') file_info.mode|= 0400;
-			if (cols[0][3] == 'x' || cols[0][3] == 's') file_info.mode|= 0100;
-			if (cols[0][4] == 'r') file_info.mode|= 0020;
-			if (cols[0][5] == 'w') file_info.mode|= 0040;
-			if (cols[0][6] == 'x' || cols[0][6] == 's') file_info.mode|= 0010;
-			if (cols[0][7] == 'r') file_info.mode|= 0002;
-			if (cols[0][8] == 'w') file_info.mode|= 0004;
-			if (cols[0][9] == 'x' || cols[0][9] == 's') file_info.mode|= 0001;
+			owner = str_owner;
+			group = str_group;
 
-			file_info.access_time = file_info.modification_time = file_info.status_change_time = _now;
 
-			for (size_t i = name.size(); i > 0;) {
-				--i;
-				if (name[i] == '\\' && i + 1 < name.size()) {
-					switch (name[i + 1]) {
-						case ' ': name.replace(i, 2, " "); break;
-						case '\\': name.replace(i, 2, "\\"); break;
-						case 't': name.replace(i, 2, "\t"); break;
-						case 'r': name.replace(i, 2, "\r"); break;
-						case 'n': name.replace(i, 2, "\n"); break;
-					}
-					if (i > 0) {
-						--i;
-					}
-				}
-			}
 			return true;
 		}
 	}
@@ -546,8 +498,9 @@ public:
 	SCPDirectoryEnumer(std::shared_ptr<SSHConnection> &conn, std::string path, const struct timespec &now)
 		: _conn(conn), _now(now)
 	{
-		std::string command_line = "ls -lbA ";
+		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\" ";
 		command_line+= QuotedArg(path);
+		command_line+= "/*";
 
 		_conn->executed_command.reset();
 		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName());

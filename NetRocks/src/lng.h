@@ -160,6 +160,7 @@ enum LanguageID
 
   MCommandsNotSupportedTitle,
   MCommandsNotSupportedText,
+  MCommandNotificationTitle,
 
   MNewServerIdentityTitle,
   MNewServerIdentitySite,

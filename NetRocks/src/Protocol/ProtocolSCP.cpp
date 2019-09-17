@@ -472,13 +472,15 @@ class SCPDirectoryEnumer : public IDirectoryEnumer
 
 			p = line.rfind('/');
 			if (p != std::string::npos) {
-				line.erase(0, p + 1);
-			}
-			if (line.empty() || !FILENAME_ENUMERABLE(line)) {
-				continue;
+				name = line.substr(p + 1);
+			} else {
+				name.swap(line);
 			}
 
-			name.swap(line);
+			if (name.empty() || !FILENAME_ENUMERABLE(name)) {
+				name.clear();
+				continue;
+			}
 
 			file_info.access_time.tv_sec = atol(str_access.c_str());
 			file_info.modification_time.tv_sec = atol(str_modify.c_str());
@@ -488,8 +490,6 @@ class SCPDirectoryEnumer : public IDirectoryEnumer
 
 			owner = str_owner;
 			group = str_group;
-
-
 			return true;
 		}
 	}

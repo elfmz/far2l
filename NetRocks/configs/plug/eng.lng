@@ -158,6 +158,7 @@
 
 "Protocol doesnt support remote commands"
 "Only this commands allowed: cd, pushd, popd"
+"command execution"
 
 "Confirm new server identity"
 "Site name:"

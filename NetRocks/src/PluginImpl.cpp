@@ -666,7 +666,9 @@ bool PluginImpl::ByKey_TryExecuteSelected()
 	}
 	TailedStruct<PluginPanelItem> ppi(size + 0x20 - sizeof(PluginPanelItem));
 	G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
-	if ( S_ISDIR(ppi->FindData.dwUnixMode) || (ppi->FindData.dwUnixMode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
+	if ( (ppi->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+	 || (ppi->FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
+//		fprintf(stderr, "!!!!dwUnixMode = 0%o\n", ppi->FindData.dwUnixMode );
 		return false;
 	}
 

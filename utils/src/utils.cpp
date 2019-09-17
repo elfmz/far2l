@@ -487,3 +487,24 @@ char * itoa(int i, char *a, int radix)
 }
 #endif
 
+
+unsigned long htoul(const char *str)
+{
+	unsigned long out = 0;
+	for (;;++str) {
+		if (*str >= '0' && *str <= '9') {
+			out<<= 4;
+			out+= *str - '0';
+
+		} else if (*str >= 'a' && *str <= 'f') {
+			out<<= 4;
+			out+= 10 + (*str - 'a');
+
+		} else if (*str >= 'A' && *str <= 'F') {
+			out<<= 4;
+			out+= 10 + (*str - 'A');
+
+		} else
+			return out;
+	}
+}

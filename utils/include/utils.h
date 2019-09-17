@@ -14,6 +14,7 @@ template <class C> static size_t tzlen(const C *ptz)
 }
 
 
+unsigned long htoul(const char *str);
 
 void Wide2MB(const wchar_t *src, std::string &dst);
 void MB2Wide(const char *src, size_t src_len, std::wstring &dst);

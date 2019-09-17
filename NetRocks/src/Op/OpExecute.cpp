@@ -165,19 +165,17 @@ void OpExecute::Do()
 	_host->ExecuteCommand(_dir, _command, _fifo.FileName());
 	int r = G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo.FileName()).c_str(), EF_NOCMDPRINT);
 
-	// calling DisplayNotification from here cuz calling it from thread causes deadlock due to
-	// InterThreadCall waits for main thread while main thread waits for thread's completion
 	if (G.global_config->GetInt("Options", "EnableDesktopNotifications", 1) != 0) {
 		std::wstring display_action = G.GetMsgWide((r == 0) ? MNotificationSuccess : MNotificationFailed);
 		size_t p = display_action.find(L"()");
 		if (p != std::wstring::npos)
 			display_action.replace(p, 2, G.GetMsgWide(MCommandNotificationTitle));
 
+		// display only first argument of command to avoid leakage of secret information, like passwords etc
 		p = _command.find(' ');
 		std::string first_arg = (p != std::string::npos) ? _command.substr(0, p) : _command;
 
 		G.info.FSF->DisplayNotification(display_action.c_str(), StrMB2Wide(first_arg).c_str());
 	}
-
 }
 

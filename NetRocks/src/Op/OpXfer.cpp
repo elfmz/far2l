@@ -6,6 +6,7 @@
 #include "../UI/Activities/ConfirmOverwrite.h"
 #include "../UI/Activities/WhatOnError.h"
 #include "../UI/Activities/ComplexOperationProgress.h"
+#include "../Globals.h"
 #include "../lng.h"
 
 #define BUFFER_SIZE_GRANULARITY   0x8000
@@ -26,6 +27,8 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_direction(direction),
 	_io_buf(BUFFER_SIZE_INITIAL, BUFFER_SIZE_GRANULARITY, BUFFER_SIZE_LIMIT)
 {
+	_umask_override = G.global_config->GetInt("Options", "UMaskOverride", 0) != 0;
+
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";
 	_diffname_suffix+= TimeString(TSF_FOR_FILENAME);
@@ -423,7 +426,7 @@ void OpXfer::CopyAttributes(const std::string &path_dst, const FileInformation &
 		}
 	);
 
-	if (( (info.mode | EXTRA_NEEDED_MODE) == info.mode)) {
+	if (!_umask_override && ( (info.mode | EXTRA_NEEDED_MODE) == info.mode)) {
 		return;
 	}
 

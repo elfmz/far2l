@@ -11,7 +11,8 @@
 345                      28         39                   60  64
  =============== NetRocks global options ====================
 | [x] Enable desktop notifications                           |
-| [ ] <ENTER> to execute files remotely when possible        |
+| [x] <ENTER> to execute files remotely when possible        |
+| [ ] Copy attributes that overrides umask                   |
 | [ ] Connect using proxy (requires tsocks library)          |
 |     [ Edit tsocks configuration file ]                     |
 |------------------------------------------------------------|
@@ -53,6 +54,7 @@ class ConfigurePlugin : protected BaseDialog
 {
 	int _i_enable_desktop_notifications = -1;
 	int _i_enter_exec_remotely = -1;
+	int _i_umask_override = -1;
 	int _i_use_proxy = -1, _i_edit_tsocks_config = -1;
 
 	int _i_ok = -1, _i_cancel = -1;
@@ -97,6 +99,9 @@ public:
 		_i_enter_exec_remotely = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MEnterExecRemotely);
 
 		_di.NextLine();
+		_i_umask_override = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MUMaskOverride);
+
+		_di.NextLine();
 		_i_use_proxy = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MConnectUsingProxy);
 		_di.NextLine();
 		_i_edit_tsocks_config = _di.AddAtLine(DI_BUTTON, 9,60, 0, MEditTSocksConfig);
@@ -118,11 +123,13 @@ public:
 	{
 		SetCheckedDialogControl( _i_enable_desktop_notifications, G.global_config->GetInt("Options", "EnableDesktopNotifications", 1) != 0);
 		SetCheckedDialogControl( _i_enter_exec_remotely, G.global_config->GetInt("Options", "EnterExecRemotely", 1) != 0);
+		SetCheckedDialogControl( _i_umask_override, G.global_config->GetInt("Options", "UMaskOverride", 0) != 0);
 		SetCheckedDialogControl( _i_use_proxy, G.global_config->GetInt("Options", "UseProxy", 0) != 0);
 
 		if (Show(L"PluginOptions", 6, 2) == _i_ok) {
 			G.global_config->PutInt("Options", "EnableDesktopNotifications", IsCheckedDialogControl(_i_enable_desktop_notifications) ? 1 : 0);
 			G.global_config->PutInt("Options", "EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) ? 1 : 0);
+			G.global_config->PutInt("Options", "UMaskOverride", IsCheckedDialogControl(_i_umask_override) ? 1 : 0);
 			G.global_config->PutInt("Options", "UseProxy", IsCheckedDialogControl(_i_use_proxy) ? 1 : 0);
 			G.global_config->Save();
 		}

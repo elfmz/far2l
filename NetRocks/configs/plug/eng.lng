@@ -11,6 +11,7 @@
 "NetRocks options"
 "Enable desktop &notifications"
 "<&ENTER> to execute files remotely when possible"
+"Copy attributes that override umask"
 "Connect using &proxy (requires tsocks library)"
 "Edit &tsocks configuration file"
 

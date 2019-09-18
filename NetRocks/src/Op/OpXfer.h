@@ -17,6 +17,7 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	XferDirection _direction;
 	IOBuffer _io_buf;
 	bool _on_site_move = false;
+	bool _umask_override = false;
 
 	virtual void Process();
 

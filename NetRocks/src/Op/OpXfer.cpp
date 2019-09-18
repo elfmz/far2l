@@ -433,7 +433,15 @@ void OpXfer::CopyAttributes(const std::string &path_dst, const FileInformation &
 	WhatOnErrorWrap<WEK_CHMODE>(_wea_state, _state, _dst_host.get(), path_dst,
 		[&] () mutable
 		{
-			_dst_host->SetMode(path_dst.c_str(), info.mode);
+			const mode_t mode = info.mode & 07777;
+			try {
+				_dst_host->SetMode(path_dst.c_str(), mode);
+			} catch (...) {
+				if ((mode & 07000) == 0) {
+					throw;
+				}
+				_dst_host->SetMode(path_dst.c_str(), mode & 00777);
+			}
 		}
 	);
 
@@ -468,7 +476,8 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 		indicted = _base_host.get();
 		std::shared_ptr<IFileReader> reader = _base_host->FileGet(path_src, file_complete);
 		indicted = _dst_host.get();
-		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst, info.mode | EXTRA_NEEDED_MODE, info.size, file_complete);
+		std::shared_ptr<IFileWriter> writer = _dst_host->FilePut(path_dst,
+			(info.mode | EXTRA_NEEDED_MODE) & 07777, info.size, file_complete);
 		if (!_io_buf.Size())
 			throw std::runtime_error("No buffer - no file");
 

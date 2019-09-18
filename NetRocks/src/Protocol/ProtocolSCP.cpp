@@ -503,6 +503,7 @@ public:
 		command_line+= "/.* ";
 		command_line+= QuotedArg(path);
 		command_line+= "/*";
+		command_line+= " 2>/dev/null";
 
 		_conn->executed_command.reset();
 		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName());

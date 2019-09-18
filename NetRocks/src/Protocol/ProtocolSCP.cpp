@@ -500,6 +500,8 @@ public:
 	{
 		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\" ";
 		command_line+= QuotedArg(path);
+		command_line+= "/.* ";
+		command_line+= QuotedArg(path);
 		command_line+= "/*";
 
 		_conn->executed_command.reset();

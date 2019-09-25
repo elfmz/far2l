@@ -242,6 +242,7 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 	if (pi)
 	{
 		char* data=(char*)(pi+1);
+
 		pi->FindData.lpwszFileName=wcscpy((wchar_t*)data,fi->strName);
 		data+=sizeof(wchar_t)*(fi->strName.GetLength()+1);
 		pi->FindData.nFileSize=fi->UnpSize;
@@ -283,16 +284,6 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 			data+=sizeof(wchar_t)*(wcslen(fi->DizText)+1);
 		}
 
-		if (fi->UserData&&(fi->UserFlags&PPIF_USERDATA))
-		{
-			DWORD Size=*(DWORD *)fi->UserData;
-			pi->UserData=(DWORD_PTR)data;
-			memcpy((void *)pi->UserData,(const void *)fi->UserData,Size);
-			data+=Size;
-		}
-		else
-			pi->UserData=fi->UserData;
-
 		pi->CRC32=fi->CRC32;
 		pi->Reserved[0]=pi->Reserved[1]=0;
 
@@ -303,7 +294,7 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 		else
 		{
 			pi->Owner=wcscpy((wchar_t*)data,fi->strOwner);
-			data+= wcslen(fi->strOwner) + 1;
+			data+= sizeof(wchar_t) * (wcslen(fi->strOwner) + 1);
 		}
 
 		if (fi->strGroup.IsEmpty())
@@ -313,8 +304,20 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 		else
 		{
 			pi->Group=wcscpy((wchar_t*)data,fi->strGroup);
-			//data+= wcslen(fi->strGroup) + 1;
+			data+= sizeof(wchar_t) * (wcslen(fi->strGroup) + 1);
 		}
+
+		// copy user data at the end to avoid alignment troubles(hooting)
+		if (fi->UserData&&(fi->UserFlags&PPIF_USERDATA))
+		{
+			DWORD Size=*(DWORD *)fi->UserData;
+			pi->UserData=(DWORD_PTR)data;
+			memcpy((void *)pi->UserData,(const void *)fi->UserData,Size);
+			//data+=Size;
+		}
+		else
+			pi->UserData=fi->UserData;
+
 	}
 
 	return size;

@@ -571,7 +571,6 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 {
 	_KEYMACRO(CleverSysLog Clev(L"GetInputRecord()"));
 	static int LastEventIdle=FALSE;
-	DWORD ReadCount;
 	DWORD LoopCount=0,CalcKey;
 	DWORD ReadKey=0;
 	int NotMacros=FALSE;
@@ -711,18 +710,15 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			ReloadEnvironment();
 		}*/
 
-		Console.PeekInput(*rec, 1, ReadCount);
-
 		/* $ 26.04.2001 VVM
 		   ! Убрал подмену колесика */
-		if (ReadCount)
+		if (Console.PeekInput(*rec))
 		{
 			//cheat for flock
 			if (rec->EventType==KEY_EVENT && !rec->Event.KeyEvent.wVirtualScanCode && (rec->Event.KeyEvent.wVirtualKeyCode==VK_NUMLOCK||rec->Event.KeyEvent.wVirtualKeyCode==VK_CAPITAL||rec->Event.KeyEvent.wVirtualKeyCode==VK_SCROLL))
 			{
 				INPUT_RECORD pinp;
-				DWORD nread;
-				Console.ReadInput(pinp, 1, nread);
+				Console.ReadInput(pinp);
 				continue;
 			}
 
@@ -883,7 +879,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 	} // while (1)
 
 	if (rec->EventType==NOOP_EVENT) {
-		Console.ReadInput(*rec, 1, ReadCount);
+		Console.ReadInput(*rec);
 		memset(rec,0,sizeof(*rec));
 		rec->EventType=KEY_EVENT;
 		return KEY_NONE;
@@ -901,7 +897,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		MouseButtonState=0;
 		ShiftState=FALSE;
 		PressedLastTime=0;
-		Console.ReadInput(*rec, 1, ReadCount);
+		Console.ReadInput(*rec);
 		CalcKey=rec->Event.FocusEvent.bSetFocus?KEY_GOTFOCUS:KEY_KILLFOCUS;
 		memset(rec,0,sizeof(*rec));
 		rec->EventType=KEY_EVENT;
@@ -935,8 +931,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		        else // Здесь удалим из очереди... этот самый кривой шифт
 		        {
 		          INPUT_RECORD pinp;
-		          DWORD nread;
-		          Console.ReadInput((Console.GetInputHandle(), &pinp, 1, &nread);
+		          Console.ReadInput(&pinp);
 		          return KEY_NONE;
 		        }
 		      }
@@ -969,9 +964,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 				if (PrevVKKeyCode2 != VK_SHIFT)
 				{
 					INPUT_RECORD pinp;
-					DWORD nread;
 					// Удалим из очереди...
-					Console.ReadInput(pinp, 1, nread);
+					Console.ReadInput(pinp);
 					return KEY_NONE;
 				}
 			}
@@ -1033,7 +1027,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		return(CalcKey);
 	}
 
-	Console.ReadInput(*rec, 1, ReadCount);
+	Console.ReadInput(*rec);
 
 	if (EnableShowTime)
 		ShowTime(1);
@@ -1435,27 +1429,26 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 DWORD PeekInputRecord(INPUT_RECORD *rec,bool ExcludeMacro)
 {
-	DWORD ReadCount;
 	DWORD Key;
 	ScrBuf.Flush();
 
 	if (KeyQueue && (Key=KeyQueue->Peek()) )
 	{
 		int VirtKey,ControlState;
-		ReadCount=TranslateKeyToVK(Key,VirtKey,ControlState,rec)?1:0;
+		if (!TranslateKeyToVK(Key,VirtKey,ControlState,rec))
+			return 0;
 	}
 	else if ((!ExcludeMacro) && (Key=CtrlObject->Macro.PeekKey()) )
 	{
 		int VirtKey,ControlState;
-		ReadCount=TranslateKeyToVK(Key,VirtKey,ControlState,rec)?1:0;
+		if (!TranslateKeyToVK(Key,VirtKey,ControlState,rec))
+			return 0;
 	}
 	else
 	{
-		Console.PeekInput(*rec, 1, ReadCount);
+		if (!Console.PeekInput(*rec))
+			return 0;
 	}
-
-	if (!ReadCount)
-		return 0;
 
 	return(CalcKeyCode(rec,TRUE));
 }
@@ -2069,8 +2062,7 @@ DWORD CalcKeyCode(INPUT_RECORD *rec,int RealKey,int *NotMacros)
 		{
 			//FlushInputBuffer();//???
 			INPUT_RECORD TempRec;
-			DWORD ReadCount;
-			Console.ReadInput(TempRec, 1, ReadCount);
+			Console.ReadInput(TempRec);
 			ReturnAltValue=TRUE;
 			//_SVS(SysLog(L"0 AltNumPad -> AltValue=0x%0X CtrlState=%X",AltValue,CtrlState));
 			AltValue&=0xFFFF;

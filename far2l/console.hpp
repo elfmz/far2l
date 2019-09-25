@@ -34,6 +34,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class console
 {
+	DWORD _StickyControlKeyState = 0;
+	bool _StickySkipKeyUp = 0;
+
+	bool InspectStickyKeyEvent(INPUT_RECORD& ir);
+
 public:
 	bool Allocate();
 	bool Free();
@@ -69,8 +74,8 @@ public:
 	bool GetMode(HANDLE ConsoleHandle, DWORD& Mode);
 	bool SetMode(HANDLE ConsoleHandle, DWORD Mode);
 
-	bool PeekInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsRead);
-	bool ReadInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsRead);
+	bool PeekInput(INPUT_RECORD& Buffer);
+	bool ReadInput(INPUT_RECORD& Buffer);
 	bool WriteInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsWritten);
 	bool ReadOutput(CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT& ReadRegion);
 	bool WriteOutput(const CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT& WriteRegion);

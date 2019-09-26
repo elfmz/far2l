@@ -227,22 +227,58 @@ bool console::SetMode(HANDLE ConsoleHandle, DWORD Mode)
 	return WINPORT(SetConsoleMode)(ConsoleHandle, Mode)!=FALSE;
 }
 
-bool console::PeekInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsRead)
+bool console::InspectStickyKeyEvent(INPUT_RECORD& ir)
 {
-	bool Result=WINPORT(PeekConsoleInput)(GetInputHandle(), &Buffer, Length, &NumberOfEventsRead)!=FALSE;
-	if(Opt.WindowMode && Buffer.EventType==MOUSE_EVENT)
+	if (ir.EventType != KEY_EVENT)
+		return false;
+
+ 	if (ir.Event.KeyEvent.uChar.UnicodeChar == ' ' && ir.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
 	{
-		Buffer.Event.MouseEvent.dwMousePosition.Y=Max(0, Buffer.Event.MouseEvent.dwMousePosition.Y-GetDelta());
-		COORD Size;
-		GetSize(Size);
-		Buffer.Event.MouseEvent.dwMousePosition.X=Min(Buffer.Event.MouseEvent.dwMousePosition.X, static_cast<SHORT>(Size.X-1));
+		if (ir.Event.KeyEvent.bKeyDown)
+		{
+			if ((ir.Event.KeyEvent.dwControlKeyState
+			 & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED | SHIFT_PRESSED)) != 0)
+			{
+				_StickyControlKeyState|= ir.Event.KeyEvent.dwControlKeyState;
+				_StickySkipKeyUp = true;
+				return true;
+			}
+		}
 	}
-	return Result;
+
+	if (_StickySkipKeyUp)
+	{
+		if (!ir.Event.KeyEvent.bKeyDown)
+			return true;
+
+		_StickySkipKeyUp = false;
+	}
+
+	if (_StickyControlKeyState)
+	{
+		ir.Event.KeyEvent.dwControlKeyState|= _StickyControlKeyState;
+		if (!ir.Event.KeyEvent.bKeyDown)
+			_StickyControlKeyState = 0;
+	}
+
+	return false;
 }
 
-bool console::ReadInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsRead)
+bool console::PeekInput(INPUT_RECORD& Buffer)
 {
-	bool Result=WINPORT(ReadConsoleInput)(GetInputHandle(), &Buffer, Length, &NumberOfEventsRead)!=FALSE;
+	for (;;)
+	{
+		DWORD NumberOfEventsRead = 0;
+		if (!WINPORT(PeekConsoleInput)(GetInputHandle(), &Buffer, 1, &NumberOfEventsRead) || !NumberOfEventsRead)
+			return false;
+
+		if (!InspectStickyKeyEvent(Buffer))
+			break;
+
+		if (!WINPORT(ReadConsoleInput)(GetInputHandle(), &Buffer, 1, &NumberOfEventsRead) || !NumberOfEventsRead)
+			WINPORT(Sleep)(100);
+	}
+
 	if(Opt.WindowMode && Buffer.EventType==MOUSE_EVENT)
 	{
 		Buffer.Event.MouseEvent.dwMousePosition.Y=Max(0, Buffer.Event.MouseEvent.dwMousePosition.Y-GetDelta());
@@ -250,7 +286,27 @@ bool console::ReadInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEvent
 		GetSize(Size);
 		Buffer.Event.MouseEvent.dwMousePosition.X=Min(Buffer.Event.MouseEvent.dwMousePosition.X, static_cast<SHORT>(Size.X-1));
 	}
-	return Result;
+
+	return true;
+}
+
+bool console::ReadInput(INPUT_RECORD& Buffer)
+{
+	DWORD NumberOfEventsRead = 0;
+	do {
+		if (!WINPORT(ReadConsoleInput)(GetInputHandle(), &Buffer, 1, &NumberOfEventsRead) || !NumberOfEventsRead)
+			return false;
+
+	} while (InspectStickyKeyEvent(Buffer));
+
+	if(Opt.WindowMode && Buffer.EventType==MOUSE_EVENT)
+	{
+		Buffer.Event.MouseEvent.dwMousePosition.Y=Max(0, Buffer.Event.MouseEvent.dwMousePosition.Y-GetDelta());
+		COORD Size;
+		GetSize(Size);
+		Buffer.Event.MouseEvent.dwMousePosition.X=Min(Buffer.Event.MouseEvent.dwMousePosition.X, static_cast<SHORT>(Size.X-1));
+	}
+	return true;
 }
 
 bool console::WriteInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsWritten)

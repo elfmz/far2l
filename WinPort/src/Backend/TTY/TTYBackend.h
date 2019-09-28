@@ -26,14 +26,16 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	int _ts_r = -1;
 	long _terminal_size_change_id;
 
-	pthread_t _reader_trd = 0, _writer_trd = 0;
+	pthread_t _reader_trd = 0;
 	volatile bool _exiting = false;
+	volatile bool _deadio = false;
 
-	static void *sWriterThread(void *p) { ((TTYBackend *)p)->WriterThread(); return nullptr; }
 	static void *sReaderThread(void *p) { ((TTYBackend *)p)->ReaderThread(); return nullptr; }
+	static void *sWriterThread(void *p) { ((TTYBackend *)p)->WriterThread(); return nullptr; }
 
-	void WriterThread();
 	void ReaderThread();
+	void ReaderLoop();
+	void WriterThread();
 
 
 	std::condition_variable _async_cond;
@@ -60,6 +62,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	{
 		struct {
 			bool term_resized : 1;
+			bool term_resized_force : 1;
 			bool output : 1;
 			bool title_changed : 1;
 			bool far2l_interract : 1;
@@ -67,7 +70,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		uint32_t all;
 	} _ae;
 
-	void DispatchTermResized(TTYOutput &tty_out);
+	void DispatchTermResized(TTYOutput &tty_out, bool force);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
 
@@ -75,6 +78,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void OnFar2lMouse(StackSerializer &stk_ser);
 
 	std::shared_ptr<IClipboardBackend> _clipboard_backend;
+
+	void SetTerminalMode();
 
 protected:
 	// IFar2lInterractor
@@ -106,4 +111,5 @@ public:
 	void KickAss();
 	bool Startup();
 };
+
 

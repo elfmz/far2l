@@ -15,6 +15,7 @@
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "TTYBackend.h"
+#include "TTYRevive.h"
 #include "TTYFar2lClipboardBackend.h"
 #include "../FSClipboardBackend.h"
 
@@ -34,8 +35,56 @@ TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty) :
 	memset(&_ts, 0 , sizeof(_ts));
 	if (pipe_cloexec(_kickass) == -1) {
 		_kickass[0] = _kickass[1] = -1;
+	} else {
+		fcntl(_kickass[1], F_SETFL,
+			fcntl(_kickass[1], F_GETFL, 0) | O_NONBLOCK);
 	}
 
+	g_vtb = this;
+}
+
+TTYBackend::~TTYBackend()
+{
+	if (g_vtb == this)
+		g_vtb =  nullptr;
+
+	OnConsoleExit();
+
+	_exiting = 1;
+
+	if (_reader_trd) {
+		if (write(_kickass[1], &_kickass, 1) == -1) {
+			perror("~TTYBackend: write kickass");
+		}
+		pthread_join(_reader_trd, nullptr);
+		_reader_trd = 0;
+	}
+
+	if (_ts_r == 0) {
+		if (tcsetattr( _stdout, TCSADRAIN, &_ts ) != 0) {
+			perror("~TTYBackend: tcsetattr");
+		}
+	}
+	CheckedCloseFDPair(_kickass);
+}
+
+bool TTYBackend::Startup()
+{
+	assert(!_reader_trd);
+
+	_cur_width =_cur_height = 64;
+	g_winport_con_out.GetSize(_cur_width, _cur_height);
+	g_winport_con_out.SetBackend(this);
+
+	if (pthread_create(&_reader_trd, nullptr, sReaderThread, this) != 0) {
+		return false;
+	}
+
+	return true;
+}
+
+void TTYBackend::SetTerminalMode()
+{
 	_ts_r = tcgetattr(_stdout, &_ts);
 	if (_ts_r == 0) {
 		struct termios ts_ne = _ts;
@@ -47,57 +96,9 @@ TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty) :
 	} else {
 		perror("TTYBackend: tcgetattr");
 	}
-	g_vtb = this;
 }
 
-TTYBackend::~TTYBackend()
-{
-	if (g_vtb == this)
-		g_vtb =  nullptr;
-
-	OnConsoleExit();
-
-	if (_reader_trd) {
-		pthread_join(_reader_trd, nullptr);
-		_reader_trd = 0;
-	}
-	if (_writer_trd) {
-		pthread_join(_writer_trd, nullptr);
-		_writer_trd = 0;
-	}
-	if (_ts_r == 0) {
-		if (tcsetattr( _stdout, TCSADRAIN, &_ts ) != 0) {
-			perror("~TTYBackend: tcsetattr");
-		}
-	}
-	CheckedCloseFDPair(_kickass);
-}
-
-bool TTYBackend::Startup()
-{
-	assert(!_writer_trd);
-	assert(!_reader_trd);
-
-	if (pthread_create(&_writer_trd, nullptr, sWriterThread, this) != 0) {
-		return false;
-	}
-
-	if (pthread_create(&_reader_trd, nullptr, sReaderThread, this) != 0) {
-		_exiting = true;
-		return false;
-	}
-	_cur_width =_cur_height = 64;
-	g_winport_con_out.GetSize(_cur_width, _cur_height);
-	g_winport_con_out.SetBackend(this);
-
-	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.flags.term_resized = true;
-	_async_cond.notify_all();
-	return true;
-}
-
-
-void TTYBackend::WriterThread()
+void TTYBackend::ReaderThread()
 {
 	if (_far2l_tty) {
 		IFar2lInterractor *interractor = this;
@@ -106,6 +107,102 @@ void TTYBackend::WriterThread()
 		_clipboard_backend = std::make_shared<FSClipboardBackend>();
 	}
 
+	int notify_pipe = -1;
+	while (!_exiting) {
+		SetTerminalMode();
+
+		{
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_deadio = false;
+			_ae.flags.term_resized_force = true;
+		}
+
+		pthread_t writer_trd = 0;
+		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) == -1) {
+			break;
+		}
+
+		try {
+			ReaderLoop();
+
+		} catch (const std::exception &e) {
+			fprintf(stderr, "ReaderLoop: %s <%d>\n", e.what(), errno);
+		}
+
+		OnInputBroken();
+
+		{
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_deadio = true;
+			_async_cond.notify_all();
+		}
+
+		pthread_join(writer_trd, nullptr);
+
+		CheckedCloseFD(notify_pipe);
+
+		while (!_exiting) {
+			const std::string &info = StrWide2MB(g_winport_con_out.GetTitle());
+			notify_pipe = TTYReviveMe(_stdin, _stdout, _far2l_tty, _kickass[0], info);
+			if (notify_pipe != -1) {
+				break;
+			}
+		}
+	}
+}
+
+void TTYBackend::ReaderLoop()
+{
+	TTYInput tty_in(this);
+
+	fd_set fds, fde;
+	while (!_exiting && !_deadio) {
+		int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
+
+		FD_ZERO(&fds);
+		FD_ZERO(&fde);
+		FD_SET(_kickass[0], &fds);
+		FD_SET(_stdin, &fds);
+		FD_SET(_stdin, &fde);
+
+		if (select(maxfd + 1, &fds, nullptr, &fde, nullptr) == -1) {
+			throw std::runtime_error("select failed");
+		}
+
+		if (FD_ISSET(_stdin, &fds)) {
+			char buf[0x1000];
+			ssize_t rd = read(_stdin, buf, sizeof(buf));
+			if (rd <= 0) {
+				throw std::runtime_error("stdin read failed");
+			}
+			//fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
+			tty_in.OnInput(buf, (size_t)rd);
+		}
+
+		if (FD_ISSET(_stdin, &fde)) {
+			throw std::runtime_error("stdin exception");
+		}
+
+		if (FD_ISSET(_kickass[0], &fds)) {
+			char cmd = 0;
+			if (read(_kickass[0], &cmd, 1) <= 0) {
+				throw std::runtime_error("kickass read failed");
+			}
+
+			long terminal_size_change_id =
+				__sync_val_compare_and_swap(&s_terminal_size_change_id, 0, 0);
+			if (_terminal_size_change_id != terminal_size_change_id) {
+				_terminal_size_change_id = terminal_size_change_id;
+				std::unique_lock<std::mutex> lock(_async_mutex);
+				_ae.flags.term_resized = true;
+				_async_cond.notify_all();
+			}
+		}
+	}
+}
+
+void TTYBackend::WriterThread()
+{
 	try {
 		TTYOutput tty_out(_stdout);
 		tty_out.SetScreenBuffer(true);
@@ -113,7 +210,7 @@ void TTYBackend::WriterThread()
 		tty_out.ChangeMouse(true);
 		tty_out.Flush();
 
-		while (!_exiting) {
+		while (!_exiting && !_deadio) {
 			AsyncEvent ae;
 			ae.all = 0;
 			do {
@@ -125,18 +222,19 @@ void TTYBackend::WriterThread()
 					std::swap(ae, _ae);
 					break;
 				}
-			} while (!_exiting);
+			} while (!_exiting && !_deadio);
 
-			if (ae.flags.term_resized) {
-				DispatchTermResized(tty_out);
+			if (ae.flags.term_resized || ae.flags.term_resized_force) {
+				DispatchTermResized(tty_out, ae.flags.term_resized_force);
 				ae.flags.output = true;
 			}
 
 			if (ae.flags.output)
 				DispatchOutput(tty_out);
 
-			if (ae.flags.title_changed)
+			if (ae.flags.title_changed) {
 				tty_out.ChangeTitle(StrWide2MB(g_winport_con_out.GetTitle()));
+			}
 
 			if (ae.flags.far2l_interract)
 				DispatchFar2lInterract(tty_out);
@@ -153,73 +251,17 @@ void TTYBackend::WriterThread()
 	} catch (const std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
 	}
-	_exiting = true;
+	_deadio = true;
 }
 
-void TTYBackend::ReaderThread()
-{
-	try {
-		TTYInput tty_in(this);
-
-		fd_set fds, fde;
-		while (!_exiting) {
-			int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
-
-			FD_ZERO(&fds);
-			FD_ZERO(&fde);
-			FD_SET(_kickass[0], &fds); 
-			FD_SET(_stdin, &fds); 
-			FD_SET(_stdin, &fde); 
-
-			if (select(maxfd + 1, &fds, nullptr, &fde, nullptr) == -1) {
-				throw std::runtime_error("select failed");
-			}
-
-			if (FD_ISSET(_stdin, &fds)) {
-				char buf[0x1000];
-				ssize_t rd = read(_stdin, buf, sizeof(buf));
-				if (rd <= 0) {
-					throw std::runtime_error("stdin read failed");
-				}
-				//fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
-				tty_in.OnInput(buf, (size_t)rd);
-			}
-
-			if (FD_ISSET(_stdin, &fde)) {
-				throw std::runtime_error("stdin exception");
-			}
-
-			if (FD_ISSET(_kickass[0], &fds)) {
-				char cmd = 0;
-				if (read(_kickass[0], &cmd, 1) <= 0) {
-					throw std::runtime_error("kickass read failed");
-				}
-
-				long terminal_size_change_id =
-					__sync_val_compare_and_swap(&s_terminal_size_change_id, 0, 0);
-				if (_terminal_size_change_id != terminal_size_change_id) {
-					_terminal_size_change_id = terminal_size_change_id;
-					std::unique_lock<std::mutex> lock(_async_mutex);
-					_ae.flags.term_resized = true;
-					_async_cond.notify_all();
-				}
-			}
-		}
-
-	} catch (const std::exception &e) {
-		fprintf(stderr, "ReaderThread: %s <%d>\n", e.what(), errno);
-	}
-	_exiting = true;
-	OnInputBroken();
-}
 
 /////////////////////////////////////////////////////////////////////////
 
-void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
+void TTYBackend::DispatchTermResized(TTYOutput &tty_out, bool force)
 {
 	struct winsize w = {};
 	if (ioctl(_stdout, TIOCGWINSZ, &w) == 0 &&
-	(_cur_width != w.ws_col || _cur_height != w.ws_row)) {
+	(_cur_width != w.ws_col || _cur_height != w.ws_row || force)) {
 		_cur_width = w.ws_col;
 		_cur_height = w.ws_row;
 		g_winport_con_out.SetSize(_cur_width, _cur_height);
@@ -614,15 +656,18 @@ static void sigwinch_handler(int)
 		g_vtb->KickAss();
 }
 
-
 bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend  vtb(std_in, std_out, far2l_tty);
+	TTYBackend vtb(std_in, std_out, far2l_tty);
+
 	signal(SIGWINCH,  sigwinch_handler);
+
 	if (!vtb.Startup()) {
 		return false;
 	}
 
 	*result = AppMain(argc, argv);
+
 	return true;
 }
+

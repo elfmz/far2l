@@ -4,6 +4,7 @@
 #include <termios.h> 
 #include <ScopeHelpers.h>
 #include <TTYRawMode.h>
+#include "TTY/TTYRevive.h"
 
 #include "Backend.h"
 #include "ConsoleOutput.h"
@@ -149,6 +150,98 @@ static bool NegotiateFar2lTTY(int fdin, int fdout, bool enable)
 	return (s.find("\x1b_far2lok\x07") != std::string::npos);
 }
 
+class FScope
+{
+	FILE *_f;
+public:
+	FScope(const FScope &) = delete;
+	inline FScope &operator = (const FScope &) = delete;
+
+	FScope(FILE *f) : _f(f) {}
+	~FScope()
+	{
+		if (_f)
+			fclose(_f);
+	}
+
+	operator FILE *() const
+	{
+		return _f;
+	}
+};
+
+
+static pid_t g_revided_pid = 0;
+
+static void revived_proxy(int sig)
+{
+	if (g_revided_pid) {
+		kill(g_revided_pid, sig);
+	}
+}
+
+bool TryReviveSome(int std_in, int std_out, bool far2l_tty)
+{
+	for (;;) {
+		std::vector<TTYRevivableInstance> instances;
+		TTYRevivableEnum(instances);
+		if (instances.empty())
+			return false;
+
+		FScope f_out(fdopen(dup(std_out), "w"));
+
+		fprintf(f_out, "\nThere're some far2l-s lost in space-time nearby:\n");
+		bool have_compats = false;
+		for (size_t i = 0; i < instances.size(); ++i) if (far2l_tty || !instances[i].far2l_tty) {
+			fprintf(f_out, " %lu: %s\n", i, instances[i].info.c_str());
+			have_compats = true;
+		} else {
+			fprintf(f_out, " <NEED_FARL_TTY>: %s\n", instances[i].info.c_str());
+		}
+
+		if (!have_compats)
+			return false;
+
+		fprintf(f_out, "Input instance index to revive or empty string to skip revival and spawn new far2l\n");
+
+		char buf[32] = {};
+		{
+			FScope f_in(fdopen(dup(std_in), "r"));
+			if (!fgets(buf, 31, f_in)) {
+				return false;
+			}
+		}
+		if (buf[0] == 0 || buf[0] == '\r' || buf[0] == '\n') {
+			return false;
+		}
+
+		size_t index = atoi(buf);
+		if (buf[0] < '0' || buf[0] > '9' || index >= instances.size()) {
+			fprintf(f_out, "Wrong input\n");
+
+		} else if (instances[index].far2l_tty && far2l_tty) {
+			fprintf(f_out, "Selected instance requires current terminal tu support far2l extensions but it doesnt\n");
+
+		} else {
+			FDScope notify_pipe(TTYReviveIt(instances[index], std_in, std_out));
+			if (notify_pipe.Valid()) {
+				g_revided_pid = instances[index].pid;
+				signal(SIGWINCH,  revived_proxy);
+				for (;;) {
+					char c;
+					ssize_t r = read(notify_pipe, &c, 1);
+					if (r == 0 || (r < 0 && (errno != EAGAIN && errno != EINTR))) {
+						break;
+					}
+				}
+				g_revided_pid = 0;
+				return true;
+			}
+			fprintf(f_out, "Revival failed\n");
+		}
+	}
+}
+
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
 	bool tty = false, far2l_tty = false, nodetect = false, help = false, notty = false;
@@ -213,6 +306,9 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 #endif
 
 	if (tty) {
+		if (TryReviveSome(std_in, std_out, far2l_tty)) {
+			return 0;
+		}
 		if (!WinPortMainTTY(std_in, std_out, far2l_tty, argc, argv, AppMain, &result)) {
 			fprintf(stderr, "Cannot use TTY backend\n");
 		}

@@ -48,6 +48,7 @@ src/Backend/WinPortMain.cpp
 src/Backend/SudoAskpassImpl.cpp
 src/Backend/FSClipboardBackend.cpp
 src/Backend/TTY/TTYBackend.cpp
+src/Backend/TTY/TTYRevive.cpp
 src/Backend/TTY/TTYInput.cpp
 src/Backend/TTY/TTYInputSequenceParser.cpp
 src/Backend/TTY/TTYOutput.cpp

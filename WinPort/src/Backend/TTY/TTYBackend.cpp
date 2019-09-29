@@ -100,15 +100,19 @@ void TTYBackend::SetTerminalMode()
 
 void TTYBackend::ReaderThread()
 {
-	if (_far2l_tty) {
-		IFar2lInterractor *interractor = this;
-		_clipboard_backend = std::make_shared<TTYFar2lClipboardBackend>(interractor);
-	} else {
-		_clipboard_backend = std::make_shared<FSClipboardBackend>();
-	}
-
+	bool prev_far2l_tty = false;
 	int notify_pipe = -1;
 	while (!_exiting) {
+		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend) {
+			if (_far2l_tty) {
+				IFar2lInterractor *interractor = this;
+				_clipboard_backend = std::make_shared<TTYFar2lClipboardBackend>(interractor);
+			} else {
+				_clipboard_backend = std::make_shared<FSClipboardBackend>();
+			}
+			prev_far2l_tty = _far2l_tty;
+		}
+
 		SetTerminalMode();
 
 		{

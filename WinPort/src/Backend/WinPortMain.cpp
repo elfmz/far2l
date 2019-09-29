@@ -226,12 +226,12 @@ static bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::uniqu
 		NormalizeTerminalState nts(std_in, std_out, far2l_tty, tty_raw_mode);
 		FScope f_out(fdopen(dup(std_out), "w"));
 
-		fprintf(f_out, "\nSome far2l-s lost in space-time nearby:\n");
+		fprintf(f_out, "\n\x1b[1;31mSome far2l-s lost in space-time nearby:\x1b[39;22m\n");
 		for (size_t i = 0; i < instances.size(); ++i) {
-			fprintf(f_out, " %lu: %s\n", i, instances[i].info.c_str());
+			fprintf(f_out, " \x1b[1;31m%lu\x1b[39;22m: %s\n", i + 1, instances[i].info.c_str());
 		}
 
-		fprintf(f_out, "Input instance index to revive or empty string to spawn new far2l\n");
+		fprintf(f_out, "\x1b[1;31mInput instance index to revive or empty string to spawn new far2l\x1b[39;22m\n");
 
 		char buf[32] = {};
 		{
@@ -245,13 +245,13 @@ static bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::uniqu
 		}
 
 		size_t index = atoi(buf);
-		if (buf[0] < '0' || buf[0] > '9' || index >= instances.size()) {
-			fprintf(f_out, "Wrong input\n");
+		if (buf[0] < '0' || buf[0] > '9' || index == 0 || index > instances.size()) {
+			fprintf(f_out, "\x1b[1;31mWrong input\x1b[39;22m\n");
 			continue;
 		}
 
 		nts.Revert();
-		bool r = TTYReviveIt(instances[index], std_in, std_out, far2l_tty);
+		bool r = TTYReviveIt(instances[index - 1], std_in, std_out, far2l_tty);
 
 		if (r) {
 			return true;
@@ -259,7 +259,7 @@ static bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::uniqu
 
 		nts.Apply();
 
-		fprintf(f_out, "Revival failed\n");
+		fprintf(f_out, "\x1b[1;31mRevival failed\x1b[39;22m\n");
 		sleep(1);
 	}
 }

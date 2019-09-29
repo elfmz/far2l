@@ -13,53 +13,22 @@
 #include <ScopeHelpers.h>
 
 
-static int unixdomain_send_fd(int sock, int fd)
+static bool unixdomain_send_fd(int sock, int fd)
 {
-    struct msghdr msg;
-    struct iovec iov[1];
-    ssize_t nbytes;
-    int *p;
-    char buf[CMSG_SPACE(sizeof(int))], c;
- 
-    c = '*';
-    iov[0].iov_base = &c;
-    iov[0].iov_len = sizeof(c);
-    memset(buf, 0x0b, sizeof(buf));
-    struct cmsghdr *cmsghdr = (struct cmsghdr *)buf;
-    cmsghdr->cmsg_len = CMSG_LEN(sizeof(int));
-    cmsghdr->cmsg_level = SOL_SOCKET;
-    cmsghdr->cmsg_type = SCM_RIGHTS;
-    msg.msg_name = NULL;
-    msg.msg_namelen = 0;
-    msg.msg_iov = iov;
-    msg.msg_iovlen = sizeof(iov) / sizeof(iov[0]);
-    msg.msg_control = cmsghdr;
-    msg.msg_controllen = CMSG_LEN(sizeof(int));
-    msg.msg_flags = 0;
-    p = (int *)CMSG_DATA(buf);
-    *p = fd;
-//    printf("sendmsg: %d\n", fd);
- 
-    nbytes = sendmsg(sock, &msg, 0);
-    if (nbytes == -1)
-        return (1);
- 
-    return (0);
-}
+	std::vector<char> buf(CMSG_SPACE(sizeof(int)));
+	std::fill(buf.begin(), buf.end(), 0x0b);
 
-static int unixdomain_recv_fd(int sock)
-{
-	struct msghdr msg = {};
-	struct iovec iov[1] = {};
-	char buf[CMSG_SPACE(sizeof(int))] = {}, c;
-
-	iov[0].iov_base = &c;
-	iov[0].iov_len = sizeof(c);
-	memset(buf, 0x0d, sizeof(buf));
-	struct cmsghdr *cmsghdr = (struct cmsghdr *)buf;
+	struct cmsghdr *cmsghdr = (struct cmsghdr *)&buf[0];
 	cmsghdr->cmsg_len = CMSG_LEN(sizeof(int));
 	cmsghdr->cmsg_level = SOL_SOCKET;
 	cmsghdr->cmsg_type = SCM_RIGHTS;
+ 
+	struct iovec iov[1] {};
+	char c = '*';
+	iov[0].iov_base = &c;
+	iov[0].iov_len = sizeof(c);
+
+	struct msghdr msg {};
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 	msg.msg_iov = iov;
@@ -68,11 +37,43 @@ static int unixdomain_recv_fd(int sock)
 	msg.msg_controllen = CMSG_LEN(sizeof(int));
 	msg.msg_flags = 0;
 
-	ssize_t nbytes = recvmsg(sock, &msg, 0);
-	if (nbytes == -1)
+	*(int *)CMSG_DATA(&buf[0]) = fd;
+ 
+	if (sendmsg(sock, &msg, 0) == -1)
+		return false;
+ 
+	return true;
+}
+
+static int unixdomain_recv_fd(int sock)
+{
+	std::vector<char> buf(CMSG_SPACE(sizeof(int)));
+	std::fill(buf.begin(), buf.end(), 0x0d);
+
+	struct cmsghdr *cmsghdr = (struct cmsghdr *)&buf[0];
+	cmsghdr->cmsg_len = CMSG_LEN(sizeof(int));
+	cmsghdr->cmsg_level = SOL_SOCKET;
+	cmsghdr->cmsg_type = SCM_RIGHTS;
+
+	struct iovec iov[1] {};
+	char c;
+	iov[0].iov_base = &c;
+	iov[0].iov_len = sizeof(c);
+
+
+	struct msghdr msg {};
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_iov = iov;
+	msg.msg_iovlen = sizeof(iov) / sizeof(iov[0]);
+	msg.msg_control = cmsghdr;
+	msg.msg_controllen = CMSG_LEN(sizeof(int));
+	msg.msg_flags = 0;
+
+	if (recvmsg(sock, &msg, 0) == -1)
 		return -1;
 
-	return *(int *)CMSG_DATA(buf);
+	return *(int *)CMSG_DATA(&buf[0]);
 }
 
 
@@ -163,6 +164,14 @@ int TTYReviveMe(int std_in, int std_out, bool far2l_tty, int kickass, const std:
 
 ///////////////////////////////////////////////////////////////
 
+
+struct TTYRevivableInstance
+{
+	std::string info;
+	pid_t pid;
+	bool far2l_tty;
+};
+
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 {
 	std::string ipc_path = InMyTemp("TTY/");
@@ -251,3 +260,98 @@ int TTYReviveIt(const TTYRevivableInstance &instance, int std_in, int std_out)
 	CheckedCloseFD(notify_pipe[1]);
 	return notify_pipe[0];
 }
+
+
+class FScope
+{
+	FILE *_f;
+public:
+	FScope(const FScope &) = delete;
+	inline FScope &operator = (const FScope &) = delete;
+
+	FScope(FILE *f) : _f(f) {}
+	~FScope()
+	{
+		if (_f)
+			fclose(_f);
+	}
+
+	operator FILE *() const
+	{
+		return _f;
+	}
+};
+
+
+static pid_t g_revided_pid = 0;
+
+static void revived_proxy(int sig)
+{
+	if (g_revided_pid) {
+		kill(g_revided_pid, sig);
+	}
+}
+
+bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty)
+{
+	for (;;) {
+		std::vector<TTYRevivableInstance> instances;
+		TTYRevivableEnum(instances);
+		if (instances.empty())
+			return false;
+
+		FScope f_out(fdopen(dup(std_out), "w"));
+
+		fprintf(f_out, "\nThere're some far2l-s lost in space-time nearby:\n");
+		bool have_compats = false;
+		for (size_t i = 0; i < instances.size(); ++i) if (far2l_tty || !instances[i].far2l_tty) {
+			fprintf(f_out, " %lu: %s\n", i, instances[i].info.c_str());
+			have_compats = true;
+		} else {
+			fprintf(f_out, " <NEED_FARL_TTY>: %s\n", instances[i].info.c_str());
+		}
+
+		if (!have_compats)
+			return false;
+
+		fprintf(f_out, "Input instance index to revive or empty string to skip revival and spawn new far2l\n");
+
+		char buf[32] = {};
+		{
+			FScope f_in(fdopen(dup(std_in), "r"));
+			if (!fgets(buf, 31, f_in)) {
+				return false;
+			}
+		}
+		if (buf[0] == 0 || buf[0] == '\r' || buf[0] == '\n') {
+			return false;
+		}
+
+		size_t index = atoi(buf);
+		if (buf[0] < '0' || buf[0] > '9' || index >= instances.size()) {
+			fprintf(f_out, "Wrong input\n");
+
+		} else if (instances[index].far2l_tty && far2l_tty) {
+			fprintf(f_out, "Selected instance requires current terminal tu support far2l extensions but it doesnt\n");
+
+		} else {
+			FDScope notify_pipe(TTYReviveIt(instances[index], std_in, std_out));
+			if (notify_pipe.Valid()) {
+				g_revided_pid = instances[index].pid;
+				auto prev_sigwinch = signal(SIGWINCH,  revived_proxy);
+				for (;;) {
+					char c;
+					ssize_t r = read(notify_pipe, &c, 1);
+					if (r == 0 || (r < 0 && (errno != EAGAIN && errno != EINTR))) {
+						break;
+					}
+				}
+				signal(SIGWINCH,  prev_sigwinch);
+				g_revided_pid = 0;
+				return true;
+			}
+			fprintf(f_out, "Revival failed\n");
+		}
+	}
+}
+

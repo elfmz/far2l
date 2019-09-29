@@ -78,10 +78,10 @@ static int unixdomain_recv_fd(int sock)
 }
 
 
-int TTYReviveMe(int std_in, int std_out, bool far2l_tty, int kickass, const std::string &info)
+int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std::string &info)
 {
 	char sz[64] = {};
-	snprintf(sz, sizeof(sz) - 1, "TTY/%u-%lu.", far2l_tty ? 1 : 0, (unsigned long)getpid());
+	snprintf(sz, sizeof(sz) - 1, "TTY/srv-%lu.", (unsigned long)getpid());
 	std::string ipc_path = InMyTemp(sz);
 	std::string info_path = ipc_path;
 	ipc_path+= "ipc";
@@ -147,6 +147,10 @@ int TTYReviveMe(int std_in, int std_out, bool far2l_tty, int kickass, const std:
 		}
 	}
 
+	char x_far2l_tty  = 0;
+	if (recv(sock, &x_far2l_tty, 1, 0) != 1 || (x_far2l_tty != 0 && x_far2l_tty != 1))
+		return -1;
+
 	FDScope new_in(unixdomain_recv_fd(sock));
 	if (!new_in.Valid())
 		return -1;
@@ -160,18 +164,12 @@ int TTYReviveMe(int std_in, int std_out, bool far2l_tty, int kickass, const std:
 	dup2(new_in, std_in);
 	dup2(new_out, std_out);
 
+	far2l_tty = x_far2l_tty != 0;
 	return notify_pipe;
 }
 
 ///////////////////////////////////////////////////////////////
 
-
-struct TTYRevivableInstance
-{
-	std::string info;
-	pid_t pid;
-	bool far2l_tty;
-};
 
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 {
@@ -188,11 +186,10 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 	for (;;) {
 		dirent *de = readdir(d);
 		if (!de) break;
-		if (MatchWildcard(de->d_name, "*-*.info")) {
-			unsigned int far2l_tty = 0;
+		if (MatchWildcard(de->d_name, "srv-*.info")) {
 			unsigned long pid = 0;
-			sscanf(de->d_name, "%u-%lu.info", &far2l_tty, &pid);
-			if (far2l_tty <= 1 && pid > 1) {
+			sscanf(de->d_name, "srv-%lu.info", &pid);
+			if (pid > 1) {
 				std::string info_file = tty_dir;
 				info_file+= '/';
 				info_file+= de->d_name;
@@ -203,7 +200,7 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 					ReadAll(info_fd, info, sizeof(info) - 1);
 				}
 
-				instances.emplace_back(TTYRevivableInstance{info, (pid_t)pid, far2l_tty != 0});
+				instances.emplace_back(TTYRevivableInstance{info, (pid_t)pid});
 			}
 		}
 	}
@@ -211,10 +208,10 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 	closedir(d);
 }
 
-int TTYReviveIt(const TTYRevivableInstance &instance, int std_in, int std_out)
+static int TTYReviveItInternal(pid_t pid, int std_in, int std_out, bool far2l_tty)
 {
 	char sz[64] = {};
-	snprintf(sz, sizeof(sz) - 1, "TTY/%u-%lu.ipc", instance.far2l_tty ? 1 : 0, (unsigned long)instance.pid);
+	snprintf(sz, sizeof(sz) - 1, "TTY/srv-%lu.ipc", (unsigned long)pid);
 	const std::string &ipc_path = InMyTemp(sz);
 
 	snprintf(sz, sizeof(sz) - 1, "TTY/clnt-%lu.ipc", (unsigned long)getpid());
@@ -244,7 +241,7 @@ int TTYReviveIt(const TTYRevivableInstance &instance, int std_in, int std_out)
 	if (connect(sock, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
 		perror("TTYRevive: connect");
 		unlink(ipc_path.c_str());
-		snprintf(sz, sizeof(sz) - 1, "TTY/%u-%lu.info", instance.far2l_tty ? 1 : 0, (unsigned long)instance.pid);
+		snprintf(sz, sizeof(sz) - 1, "TTY/srv-%lu.info", (unsigned long)pid);
 		unlink(InMyTemp(sz).c_str());
 		return -1;
 	}
@@ -255,34 +252,17 @@ int TTYReviveIt(const TTYRevivableInstance &instance, int std_in, int std_out)
 		return -1;
 	}
 
+	char x_far2l_tty = far2l_tty ? 1 : 0;
+	if (send(sock, &x_far2l_tty, 1, 0) != 1) {
+		perror("TTYRevive: send");
+		return -1;
+	}
 	unixdomain_send_fd(sock, std_in);
 	unixdomain_send_fd(sock, std_out);
 	unixdomain_send_fd(sock, notify_pipe[1]);
 	CheckedCloseFD(notify_pipe[1]);
 	return notify_pipe[0];
 }
-
-
-class FScope
-{
-	FILE *_f;
-public:
-	FScope(const FScope &) = delete;
-	inline FScope &operator = (const FScope &) = delete;
-
-	FScope(FILE *f) : _f(f) {}
-	~FScope()
-	{
-		if (_f)
-			fclose(_f);
-	}
-
-	operator FILE *() const
-	{
-		return _f;
-	}
-};
-
 
 static pid_t g_revided_pid = 0;
 
@@ -293,66 +273,23 @@ static void revived_proxy(int sig)
 	}
 }
 
-bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty)
+bool TTYReviveIt(const TTYRevivableInstance &instance, int std_in, int std_out, bool far2l_tty)
 {
+	FDScope notify_pipe(TTYReviveItInternal(instance.pid, std_in, std_out, far2l_tty));
+	if (!notify_pipe.Valid()) {
+		return false;
+	}
+
+	g_revided_pid = instance.pid;
+	auto prev_sigwinch = signal(SIGWINCH,  revived_proxy);
 	for (;;) {
-		std::vector<TTYRevivableInstance> instances;
-		TTYRevivableEnum(instances);
-		if (instances.empty())
-			return false;
-
-		FScope f_out(fdopen(dup(std_out), "w"));
-
-		fprintf(f_out, "\nThere're some far2l-s lost in space-time nearby:\n");
-		bool have_compats = false;
-		for (size_t i = 0; i < instances.size(); ++i) if (far2l_tty || !instances[i].far2l_tty) {
-			fprintf(f_out, " %lu: %s\n", i, instances[i].info.c_str());
-			have_compats = true;
-		} else {
-			fprintf(f_out, " <NEED_FARL_TTY>: %s\n", instances[i].info.c_str());
-		}
-
-		if (!have_compats)
-			return false;
-
-		fprintf(f_out, "Input instance index to revive or empty string to skip revival and spawn new far2l\n");
-
-		char buf[32] = {};
-		{
-			FScope f_in(fdopen(dup(std_in), "r"));
-			if (!fgets(buf, 31, f_in)) {
-				return false;
-			}
-		}
-		if (buf[0] == 0 || buf[0] == '\r' || buf[0] == '\n') {
-			return false;
-		}
-
-		size_t index = atoi(buf);
-		if (buf[0] < '0' || buf[0] > '9' || index >= instances.size()) {
-			fprintf(f_out, "Wrong input\n");
-
-		} else if (instances[index].far2l_tty && far2l_tty) {
-			fprintf(f_out, "Selected instance requires current terminal tu support far2l extensions but it doesnt\n");
-
-		} else {
-			FDScope notify_pipe(TTYReviveIt(instances[index], std_in, std_out));
-			if (notify_pipe.Valid()) {
-				g_revided_pid = instances[index].pid;
-				auto prev_sigwinch = signal(SIGWINCH,  revived_proxy);
-				for (;;) {
-					char c;
-					ssize_t r = read(notify_pipe, &c, 1);
-					if (r == 0 || (r < 0 && (errno != EAGAIN && errno != EINTR))) {
-						break;
-					}
-				}
-				signal(SIGWINCH,  prev_sigwinch);
-				g_revided_pid = 0;
-				return true;
-			}
-			fprintf(f_out, "Revival failed\n");
+		char c;
+		ssize_t r = read(notify_pipe, &c, 1);
+		if (r == 0 || (r < 0 && (errno != EAGAIN && errno != EINTR))) {
+			break;
 		}
 	}
+	signal(SIGWINCH,  prev_sigwinch);
+	g_revided_pid = 0;
+	return true;
 }
-

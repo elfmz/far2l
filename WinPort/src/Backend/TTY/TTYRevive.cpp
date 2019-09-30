@@ -38,7 +38,7 @@ static bool unixdomain_send_fd(int sock, int fd)
 	msg.msg_controllen = CMSG_LEN(sizeof(int));
 	msg.msg_flags = 0;
 
-	*(int *)CMSG_DATA(&buf[0]) = fd;
+	*(int *)CMSG_DATA(cmsghdr) = fd;
  
 	if (sendmsg(sock, &msg, 0) == -1)
 		return false;
@@ -74,7 +74,7 @@ static int unixdomain_recv_fd(int sock)
 	if (recvmsg(sock, &msg, 0) == -1)
 		return -1;
 
-	return *(int *)CMSG_DATA(&buf[0]);
+	return *(int *)CMSG_DATA(cmsghdr);
 }
 
 

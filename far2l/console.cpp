@@ -237,7 +237,7 @@ bool console::InspectStickyKeyEvent(INPUT_RECORD& ir)
 		if (ir.Event.KeyEvent.bKeyDown)
 		{
 			if ((ir.Event.KeyEvent.dwControlKeyState
-			 & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED | SHIFT_PRESSED)) != 0)
+			 & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED)) != 0)
 			{
 				_StickyControlKeyState|= ir.Event.KeyEvent.dwControlKeyState;
 				_StickySkipKeyUp = true;

@@ -13,6 +13,7 @@
 #include <set>
 #include <deque>
 #include <algorithm>
+#include <os_call.hpp>
 #include <ScopeHelpers.h>
 #include <WordExpansion.h>
 #include <Threaded.h>
@@ -403,7 +404,7 @@ SSHExecutedCommand::~SSHExecutedCommand()
 {
 	if (!WaitThread(0)) {
 		char c = 1;
-		if (write (_kickass[1], &c, sizeof(c)) != 1) {
+		if (os_call_ssize(write, _kickass[1], (const void*)&c, sizeof(c)) != 1) {
 			perror("write kickass");
 		}
 		WaitThread();

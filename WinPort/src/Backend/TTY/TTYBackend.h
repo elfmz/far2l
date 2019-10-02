@@ -42,7 +42,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _async_mutex;
 
 	COORD _largest_window_size;
-	std::atomic<bool> _largest_window_size_ready;
+	std::atomic<bool> _largest_window_size_ready {};
+	std::atomic<bool> _flush_input_queue {};
 
 
 	struct Far2lInterractData
@@ -62,7 +63,6 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	{
 		struct {
 			bool term_resized : 1;
-			bool term_resized_force : 1;
 			bool output : 1;
 			bool title_changed : 1;
 			bool far2l_interract : 1;
@@ -70,7 +70,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		uint32_t all;
 	} _ae;
 
-	void DispatchTermResized(TTYOutput &tty_out, bool force);
+	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
 
@@ -108,8 +108,7 @@ protected:
 public:
 	TTYBackend(int std_in, int std_out, bool far2l_tty);
 	~TTYBackend();
-	void KickAss();
+	void KickAss(bool flush_input_queue = false);
 	bool Startup();
 };
-
 

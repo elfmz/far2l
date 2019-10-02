@@ -9,6 +9,8 @@
 # include <linux/kd.h>
 # include <linux/keyboard.h>
 #endif
+#include <os_call.hpp>
+#include <ScopeHelpers.h>
 #include "utils.h"
 #include "CheckedCast.hpp"
 #include "WinPortHandle.h"
@@ -17,6 +19,7 @@
 #include "TTYBackend.h"
 #include "TTYRevive.h"
 #include "TTYFar2lClipboardBackend.h"
+#include "TTYNegotiateFar2l.h"
 #include "../FSClipboardBackend.h"
 
 extern ConsoleOutput g_winport_con_out;
@@ -53,7 +56,7 @@ TTYBackend::~TTYBackend()
 	_exiting = 1;
 
 	if (_reader_trd) {
-		if (write(_kickass[1], &_kickass, 1) == -1) {
+		if (os_call_ssize(write, _kickass[1], (const void*)&_kickass, (size_t)1) == -1) {
 			perror("~TTYBackend: write kickass");
 		}
 		pthread_join(_reader_trd, nullptr);
@@ -118,7 +121,7 @@ void TTYBackend::ReaderThread()
 		{
 			std::unique_lock<std::mutex> lock(_async_mutex);
 			_deadio = false;
-			_ae.flags.term_resized_force = true;
+			_ae.flags.term_resized = true;
 		}
 
 		pthread_t writer_trd = 0;
@@ -157,7 +160,7 @@ void TTYBackend::ReaderThread()
 
 void TTYBackend::ReaderLoop()
 {
-	TTYInput tty_in(this);
+	std::unique_ptr<TTYInput> tty_in(new TTYInput(this));
 
 	fd_set fds, fde;
 	while (!_exiting && !_deadio) {
@@ -170,7 +173,16 @@ void TTYBackend::ReaderLoop()
 		FD_SET(_stdin, &fde);
 
 		if (select(maxfd + 1, &fds, nullptr, &fde, nullptr) == -1) {
+			if (errno == EAGAIN || errno == EINTR) {
+				continue;
+			}
 			throw std::runtime_error("select failed");
+		}
+
+		if (_flush_input_queue) {
+			tty_in.reset();
+			tty_in.reset(new TTYInput(this));
+			OnInputBroken();
 		}
 
 		if (FD_ISSET(_stdin, &fds)) {
@@ -180,7 +192,7 @@ void TTYBackend::ReaderLoop()
 				throw std::runtime_error("stdin read failed");
 			}
 			//fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
-			tty_in.OnInput(buf, (size_t)rd);
+			tty_in->OnInput(buf, (size_t)rd);
 		}
 
 		if (FD_ISSET(_stdin, &fde)) {
@@ -228,8 +240,8 @@ void TTYBackend::WriterThread()
 				}
 			} while (!_exiting && !_deadio);
 
-			if (ae.flags.term_resized || ae.flags.term_resized_force) {
-				DispatchTermResized(tty_out, ae.flags.term_resized_force);
+			if (ae.flags.term_resized) {
+				DispatchTermResized(tty_out);
 				ae.flags.output = true;
 			}
 
@@ -261,20 +273,21 @@ void TTYBackend::WriterThread()
 
 /////////////////////////////////////////////////////////////////////////
 
-void TTYBackend::DispatchTermResized(TTYOutput &tty_out, bool force)
+void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 {
 	struct winsize w = {};
-	if (ioctl(_stdout, TIOCGWINSZ, &w) == 0 &&
-	(_cur_width != w.ws_col || _cur_height != w.ws_row || force)) {
-		_cur_width = w.ws_col;
-		_cur_height = w.ws_row;
-		g_winport_con_out.SetSize(_cur_width, _cur_height);
-		g_winport_con_out.GetSize(_cur_width, _cur_height);
-		INPUT_RECORD ir = {};
-		ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
-		ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
-		ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
-		g_winport_con_in.Enqueue(&ir, 1);
+	if (ioctl(_stdout, TIOCGWINSZ, &w) == 0) {
+		if (_cur_width != w.ws_col || _cur_height != w.ws_row) {
+			_cur_width = w.ws_col;
+			_cur_height = w.ws_row;
+			g_winport_con_out.SetSize(_cur_width, _cur_height);
+			g_winport_con_out.GetSize(_cur_width, _cur_height);
+			INPUT_RECORD ir = {};
+			ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+			ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
+			ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
+			g_winport_con_in.Enqueue(&ir, 1);
+		}
 		std::vector<CHAR_INFO> tmp;
 		std::lock_guard<std::mutex> lock(_output_mutex);
 		tty_out.MoveCursor(1, 1, true);
@@ -376,10 +389,13 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 
 /////////////////////////////////////////////////////////////////////////
 
-void TTYBackend::KickAss()
+void TTYBackend::KickAss(bool flush_input_queue)
 {
+	if (flush_input_queue)
+		_flush_input_queue = true;
+
 	unsigned char c = 0;
-	if (write(_kickass[1], &c, 1) != 1)
+	if (os_call_ssize(write, _kickass[1], (const void*)&c, (size_t)1) != 1)
 		perror("write(_kickass[1]");
 }
 
@@ -651,26 +667,80 @@ DWORD TTYBackend::OnQueryControlKeys()
 	return out;
 }
 
-
-
-static void sigwinch_handler(int)
+void TTYBackend_OnTerminalDamaged(bool flush_input_queue)
 {
 	__sync_add_and_fetch ( &s_terminal_size_change_id, 1);
-	if (g_vtb)
-		g_vtb->KickAss();
+	if (g_vtb) {
+		g_vtb->KickAss(flush_input_queue);
+	}
+
+}
+
+static void OnSigWinch(int)
+{
+	TTYBackend_OnTerminalDamaged(false);
+}
+
+
+static int g_std_in = -1, g_std_out = -1;
+static bool g_far2l_tty = false;
+static struct termios g_ts_cont {};
+static volatile bool g_unkillable = false;
+
+
+static void OnSigTstp(int signo)
+{
+	if (g_far2l_tty)
+		TTYNegotiateFar2l(g_std_in, g_std_out, false);
+
+	tcgetattr(g_std_out, &g_ts_cont);
+	g_unkillable = true;
+	raise(SIGSTOP);
+}
+
+
+static void OnSigCont(int signo)
+{
+	tcsetattr(g_std_out, TCSADRAIN, &g_ts_cont );
+	if (g_far2l_tty)
+		TTYNegotiateFar2l(g_std_in, g_std_out, true);
+
+	TTYBackend_OnTerminalDamaged(true);
+}
+
+static void OnSigTerm(int signo)
+{
+	if (g_unkillable) {
+		g_unkillable = false;
+
+	} else {
+		_exit(signo);
+	}
 }
 
 bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
 	TTYBackend vtb(std_in, std_out, far2l_tty);
 
-	signal(SIGWINCH,  sigwinch_handler);
-
 	if (!vtb.Startup()) {
 		return false;
 	}
 
+	g_std_in = std_in;
+	g_std_out = std_out;
+	g_far2l_tty = far2l_tty;
+
+	auto orig_tstp = signal(SIGTSTP, OnSigTstp);
+	auto orig_cont = signal(SIGCONT, OnSigCont);
+	auto orig_winch = signal(SIGWINCH,  OnSigWinch);
+	auto orig_term = signal(SIGTERM, OnSigTerm);
+
 	*result = AppMain(argc, argv);
+
+	signal(SIGTERM, orig_term);
+	signal(SIGCONT, orig_tstp);
+	signal(SIGTSTP, orig_cont);
+	signal(SIGWINCH, orig_winch);
 
 	return true;
 }

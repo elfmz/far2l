@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <utils.h>
+#include <os_call.hpp>
 #include <ScopeHelpers.h>
 
 #include "sudo_askpass_ipc.h"
@@ -92,7 +93,7 @@ SudoAskpassServer::~SudoAskpassServer()
 		unsetenv("sdc_askpass_ipc");
 
 		if (_kickass[1] != -1) {
-			if (write(_kickass[1], &_kickass[1], 1) != 1) {
+			if (os_call_ssize(write, _kickass[1], (const void*)&_kickass[1], (size_t)1) != 1) {
 				perror("~SudoAskpassServer - write");
 			}
 		}

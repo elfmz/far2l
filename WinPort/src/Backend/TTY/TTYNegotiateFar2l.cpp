@@ -2,7 +2,7 @@
 #include <termios.h> 
 #include <string.h>
 #include <unistd.h>
-
+#include <os_call.hpp>
 #include "TTYNegotiateFar2l.h"
 
 
@@ -48,7 +48,7 @@ bool TTYNegotiateFar2l(int fdin, int fdout, bool enable)
 			break;
 		}
 
-		if (select(fdin + 1, &fds, nullptr, &fde, &tv) <= 0) {
+		if (os_call_int(select, fdin + 1, &fds, (fd_set*)nullptr, &fde, &tv) <= 0) {
 			break;
 		}
 

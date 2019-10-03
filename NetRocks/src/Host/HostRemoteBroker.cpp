@@ -339,6 +339,7 @@ extern "C" int main(int argc, char *argv[])
 		return -1;
 	}
 
+	setsid();
 	//survive terminal death
 	signal(SIGHUP, SIG_IGN);
 	//signal(SIGTERM, SIG_IGN);

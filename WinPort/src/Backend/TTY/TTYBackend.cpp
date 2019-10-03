@@ -172,10 +172,7 @@ void TTYBackend::ReaderLoop()
 		FD_SET(_stdin, &fds);
 		FD_SET(_stdin, &fde);
 
-		if (select(maxfd + 1, &fds, nullptr, &fde, nullptr) == -1) {
-			if (errno == EAGAIN || errno == EINTR) {
-				continue;
-			}
+		if (os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, (timeval*)nullptr) == -1) {
 			throw std::runtime_error("select failed");
 		}
 

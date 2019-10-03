@@ -122,7 +122,7 @@ void SudoAskpassServer::Thread()
 		FD_SET(_kickass[0], &fde); 
 		FD_SET(_srv_fd, &fds); 
 
-		if (select(maxfd + 1, &fds, NULL, &fde, NULL) == -1) {
+		if (os_call_int(select, maxfd + 1, &fds, (fd_set *)nullptr, &fde, (timeval *)nullptr) == -1) {
 			break;
 		}
 

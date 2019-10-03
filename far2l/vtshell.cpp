@@ -22,6 +22,7 @@
 #include <base64.h> 
 #include <StackSerializer.h>
 #include <os_call.hpp>
+#include <ScopeHelpers.h>
 #include "vtansi.h"
 #include "vtlog.h"
 #include "VTFar2lExtensios.h"
@@ -82,7 +83,7 @@ public:
 	}
 
 protected:
-	bool  _started;
+	volatile bool  _started;
 
 	bool Start()
 	{
@@ -95,7 +96,8 @@ protected:
 		}		
 		return true;
 	}
-	
+
+	virtual void OnJoin() {}
 	void Join()
 	{
 		if (_started) {
@@ -160,10 +162,6 @@ public:
 	void Stop()
 	{
 		if (_started) {
-			char c = 0;
-			if (write(_pipe[1], &c, sizeof(c)) != sizeof(c))
-				perror("VTOutputReader::Stop - write");
-				
 			Join();
 			CheckedCloseFDPair(_pipe);
 		}
@@ -173,8 +171,21 @@ public:
 	{
 		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(_deactivated);
 	}
-	
-	
+
+	void KickAss()
+	{
+		char c = 0;
+		if (os_call_ssize(write, _pipe[1], (const void *)&c, sizeof(c)) != sizeof(c))
+			perror("VTOutputReader::Stop - write");
+	}
+
+protected:
+	virtual void OnJoin()
+	{
+		WithThread::OnJoin();
+		KickAss();
+	}
+
 private:
 	IProcessor *_processor;
 	int _fd_out, _pipe[2];
@@ -191,13 +202,13 @@ private:
 			FD_SET(_fd_out, &rfds);
 			FD_SET(_pipe[0], &rfds);
 			
-			int r = select(std::max(_fd_out, _pipe[0]) + 1, &rfds, NULL, NULL, NULL);
+			int r = os_call_int(select, std::max(_fd_out, _pipe[0]) + 1, &rfds, (fd_set *)nullptr, (fd_set *)nullptr, (timeval *)nullptr);
 			if (r <= 0) {
 				perror("VTOutputReader select");
 				break;
 			}
 			if (FD_ISSET(_fd_out, &rfds)) {
-				r = read(_fd_out, buf, sizeof(buf));
+				r = os_call_ssize(read, _fd_out, (void *)buf, sizeof(buf));
 				if (r <= 0) break;
 #if 1 //set to 0 to test extremely fragmented output processing 
 				if (!_processor->OnProcessOutput(buf, r)) break;
@@ -213,7 +224,7 @@ private:
 #endif
 			}
 			if (FD_ISSET(_pipe[0], &rfds)) {
-				r = read(_pipe[0], buf, sizeof(buf));
+				r = os_call_ssize(read, _pipe[0], (void *)buf, sizeof(buf));
 				if (r < 0) {
 					perror("VTOutputReader read pipe[0]");
 					break;
@@ -239,6 +250,7 @@ public:
 		virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) = 0;
 		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
 		virtual void OnInputInjected(const std::string &str) = 0;
+		virtual void OnRequestShutdown() = 0;
 	};
 
 	VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
@@ -311,7 +323,13 @@ private:
 			for(const auto &pri : pending_injected_inputs) {
 				_processor->OnInputInjected(pri);
 			}
+
 			pending_injected_inputs.clear();
+
+			if (CloseFAR) {
+				_processor->OnRequestShutdown();
+				break;
+			}
 		}
 
 		return nullptr;
@@ -694,7 +712,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		std::lock_guard<std::mutex> lock(_write_term_mutex);
 		while (len) {
-			ssize_t written = write(_fd_in, str, len);
+			ssize_t written = os_call_ssize(write, _fd_in, (const void *)str, len);
 			if (written <= 0) {
 				perror("WriteTerm - write");
 				return false;
@@ -927,18 +945,37 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		pid_t grp = getpgid(_shell_pid);
 
-		if (grp!=-1 && grp != getpgid(getpid())) {
+		if (grp != -1 && grp != getpgid(getpid())) {
 			killpg(grp, sig);
-			//kill(_shell_pid, sig);
+			// kill(_shell_pid, sig);
 		} else
 			kill(_shell_pid, sig);
 	}
 	
+	virtual void OnRequestShutdown()
+	{
+		FDScope dev_null(open("/dev/null", O_RDWR));
+		if (dev_null.Valid()) {
+			if (_fd_in != -1)
+				dup2(dev_null, _fd_in);
+			if (_fd_out != -1)
+				dup2(dev_null, _fd_out);
 
-	void Shutdown() {
-		CheckedCloseFD(_fd_in);
-		CheckedCloseFD(_fd_out);
-		
+		} else {
+			perror("OnRequestShutdown - open /dev/null");
+			CheckedCloseFD(_fd_in);
+			CheckedCloseFD(_fd_out);
+		}
+
+		_output_reader.KickAss();
+	}
+
+
+
+	void Shutdown()
+	{
+		OnRequestShutdown();
+
 		if (_shell_pid!=-1) {
 			//kill(_shell_pid, SIGKILL);
 			int status;
@@ -946,7 +983,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			_shell_pid = -1;
 		}
 	}
-	
+
 	void DeliverPendingWindowInfo()
 	{
 		if (_last_window_info_ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
@@ -1121,6 +1158,7 @@ static bool shown_tip_exit = false;
 	{
 		return _shell_pid!=-1;
 	}
+
 };
 
 static std::unique_ptr<VTShell> g_vts;

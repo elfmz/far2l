@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <utils.h>
+#include <os_call.hpp>
 #include <ScopeHelpers.h>
 
 
@@ -123,7 +124,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 		FD_SET(kickass, &fde); 
 		FD_SET(sock, &fde); 
 
-		if (select(maxfd + 1, &fdr, NULL, &fde, NULL) == -1) {
+		if (os_call_int(select, maxfd + 1, &fdr, (fd_set*)nullptr, &fde, (timeval*)nullptr) == -1) {
 			perror("TTYReviveMe: select");
 			return -1;
 		}

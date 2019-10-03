@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "strmix.hpp"
 #include "console.hpp"
+#include "vtshell.h"
 
 BOOL WINAPI CtrlHandler(DWORD CtrlType);
 
@@ -357,6 +358,7 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType)
 
 	CloseFAR=TRUE;
 
+
 	/* $ 30.08.2001 IS
 	   При закрытии окна "по кресту" всегда возвращаем TRUE, в противном случае
 	   Фар будет закрыт системой и не будут выполнены обычные при закрытии
@@ -371,6 +373,12 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType)
 
 		return FALSE;
 	}
+
+	// write some dummy console input to kick any pending ReadConsoleInput
+	INPUT_RECORD ir = {};
+	ir.EventType = NOOP_EVENT;
+	DWORD dw = 0;
+	WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
 
 	return TRUE;
 }

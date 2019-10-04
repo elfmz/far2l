@@ -15,15 +15,15 @@
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor
 {
 	std::mutex _output_mutex;
-	int _stdin = 0, _stdout = 1, _kickass[2] = {-1, -1};
+	int _stdin = 0, _stdout = 1;
 	bool _far2l_tty = false;
+	int _notify_pipe = -1;
+	int _kickass[2] = {-1, -1};
 	int _far2l_cursor_height = -1;
 	unsigned int _cur_width = 0, _cur_height = 0;
 	unsigned int _prev_width = 0, _prev_height = 0;
 	std::vector<CHAR_INFO> _cur_output, _prev_output;
 
-	struct termios _ts;
-	int _ts_r = -1;
 	long _terminal_size_change_id;
 
 	pthread_t _reader_trd = 0;
@@ -79,8 +79,6 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	std::shared_ptr<IClipboardBackend> _clipboard_backend;
 
-	void SetTerminalMode();
-
 protected:
 	// IFar2lInterractor
 	virtual bool Far2lInterract(StackSerializer &stk_ser, bool wait);
@@ -106,7 +104,7 @@ protected:
 
 
 public:
-	TTYBackend(int std_in, int std_out, bool far2l_tty);
+	TTYBackend(int std_in, int std_out, bool far2l_tty, int notify_pipe);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

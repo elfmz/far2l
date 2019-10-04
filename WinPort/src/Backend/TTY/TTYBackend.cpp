@@ -28,14 +28,14 @@ extern ConsoleInput g_winport_con_in;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
-TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty) :
+TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, int notify_pipe) :
 	_stdin(std_in),
 	_stdout(std_out),
 	_far2l_tty(far2l_tty),
+	_notify_pipe(notify_pipe),
 	_largest_window_size_ready(false)
 
 {
-	memset(&_ts, 0 , sizeof(_ts));
 	if (pipe_cloexec(_kickass) == -1) {
 		_kickass[0] = _kickass[1] = -1;
 	} else {
@@ -63,12 +63,8 @@ TTYBackend::~TTYBackend()
 		_reader_trd = 0;
 	}
 
-	if (_ts_r == 0) {
-		if (tcsetattr( _stdout, TCSADRAIN, &_ts ) != 0) {
-			perror("~TTYBackend: tcsetattr");
-		}
-	}
 	CheckedCloseFDPair(_kickass);
+	CheckedCloseFD(_notify_pipe);
 }
 
 bool TTYBackend::Startup()
@@ -86,25 +82,9 @@ bool TTYBackend::Startup()
 	return true;
 }
 
-void TTYBackend::SetTerminalMode()
-{
-	_ts_r = tcgetattr(_stdout, &_ts);
-	if (_ts_r == 0) {
-		struct termios ts_ne = _ts;
-		//ts_ne.c_lflag &= ~(ECHO | ECHONL);
-		cfmakeraw(&ts_ne);
-		if (tcsetattr( _stdout, TCSADRAIN, &ts_ne ) != 0) {
-			perror("TTYBackend: tcsetattr");
-		}
-	} else {
-		perror("TTYBackend: tcgetattr");
-	}
-}
-
 void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
-	int notify_pipe = -1;
 	while (!_exiting) {
 		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend) {
 			if (_far2l_tty) {
@@ -115,8 +95,6 @@ void TTYBackend::ReaderThread()
 			}
 			prev_far2l_tty = _far2l_tty;
 		}
-
-		SetTerminalMode();
 
 		{
 			std::unique_lock<std::mutex> lock(_async_mutex);
@@ -146,12 +124,12 @@ void TTYBackend::ReaderThread()
 
 		pthread_join(writer_trd, nullptr);
 
-		CheckedCloseFD(notify_pipe);
+		CheckedCloseFD(_notify_pipe);
 
 		while (!_exiting) {
 			const std::string &info = StrWide2MB(g_winport_con_out.GetTitle());
-			notify_pipe = TTYReviveMe(_stdin, _stdout, _far2l_tty, _kickass[0], info);
-			if (notify_pipe != -1) {
+			_notify_pipe = TTYReviveMe(_stdin, _stdout, _far2l_tty, _kickass[0], info);
+			if (_notify_pipe != -1) {
 				break;
 			}
 		}
@@ -670,7 +648,6 @@ void TTYBackend_OnTerminalDamaged(bool flush_input_queue)
 	if (g_vtb) {
 		g_vtb->KickAss(flush_input_queue);
 	}
-
 }
 
 static void OnSigWinch(int)
@@ -682,7 +659,6 @@ static void OnSigWinch(int)
 static int g_std_in = -1, g_std_out = -1;
 static bool g_far2l_tty = false;
 static struct termios g_ts_cont {};
-static volatile bool g_unkillable = false;
 
 
 static void OnSigTstp(int signo)
@@ -691,7 +667,6 @@ static void OnSigTstp(int signo)
 		TTYNegotiateFar2l(g_std_in, g_std_out, false);
 
 	tcgetattr(g_std_out, &g_ts_cont);
-	g_unkillable = true;
 	raise(SIGSTOP);
 }
 
@@ -705,19 +680,27 @@ static void OnSigCont(int signo)
 	TTYBackend_OnTerminalDamaged(true);
 }
 
-static void OnSigTerm(int signo)
+static void OnSigHup(int signo)
 {
-	if (g_unkillable) {
-		g_unkillable = false;
-
-	} else {
-		_exit(signo);
+	FDScope dev_null(open("/dev/null", O_RDWR));
+	if (dev_null.Valid()) {
+		dup2(dev_null, 0);
+		dup2(dev_null, 1);
+		dup2(dev_null, 2);
+		if (g_std_in != 0 && g_std_in != -1)
+			dup2(dev_null, g_std_in);
+		if (g_std_out != 1 && g_std_out != -1)
+			dup2(dev_null, g_std_out);
+	}
+	if (g_vtb) {
+		g_vtb->KickAss(true);
 	}
 }
 
-bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(std_in, std_out, far2l_tty);
+	TTYBackend vtb(std_in, std_out, far2l_tty, notify_pipe);
 
 	if (!vtb.Startup()) {
 		return false;
@@ -727,14 +710,14 @@ bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **ar
 	g_std_out = std_out;
 	g_far2l_tty = far2l_tty;
 
+	auto orig_winch = signal(SIGWINCH,  OnSigWinch);
 	auto orig_tstp = signal(SIGTSTP, OnSigTstp);
 	auto orig_cont = signal(SIGCONT, OnSigCont);
-	auto orig_winch = signal(SIGWINCH,  OnSigWinch);
-	auto orig_term = signal(SIGTERM, OnSigTerm);
+	auto orig_hup = signal(SIGHUP, (notify_pipe != -1) ? OnSigHup : SIG_DFL); // notify_pipe == -1 means --mortal specified
 
 	*result = AppMain(argc, argv);
 
-	signal(SIGTERM, orig_term);
+	signal(SIGHUP, orig_hup);
 	signal(SIGCONT, orig_tstp);
 	signal(SIGTSTP, orig_cont);
 	signal(SIGWINCH, orig_winch);

@@ -209,7 +209,7 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 	closedir(d);
 }
 
-static int TTYReviveItInternal(pid_t pid, int std_in, int std_out, bool far2l_tty)
+int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 {
 	char sz[64] = {};
 	snprintf(sz, sizeof(sz) - 1, "TTY/srv-%lu.ipc", (unsigned long)pid);
@@ -263,34 +263,4 @@ static int TTYReviveItInternal(pid_t pid, int std_in, int std_out, bool far2l_tt
 	unixdomain_send_fd(sock, notify_pipe[1]);
 	CheckedCloseFD(notify_pipe[1]);
 	return notify_pipe[0];
-}
-
-static pid_t g_revided_pid = 0;
-
-static void revived_proxy(int sig)
-{
-	if (g_revided_pid) {
-		kill(g_revided_pid, sig);
-	}
-}
-
-bool TTYReviveIt(const TTYRevivableInstance &instance, int std_in, int std_out, bool far2l_tty)
-{
-	FDScope notify_pipe(TTYReviveItInternal(instance.pid, std_in, std_out, far2l_tty));
-	if (!notify_pipe.Valid()) {
-		return false;
-	}
-
-	g_revided_pid = instance.pid;
-	auto prev_sigwinch = signal(SIGWINCH,  revived_proxy);
-	for (;;) {
-		char c;
-		ssize_t r = read(notify_pipe, &c, 1);
-		if (r == 0 || (r < 0 && (errno != EAGAIN && errno != EINTR))) {
-			break;
-		}
-	}
-	signal(SIGWINCH,  prev_sigwinch);
-	g_revided_pid = 0;
-	return true;
 }

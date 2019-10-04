@@ -14,5 +14,4 @@ struct TTYRevivableInstance
 
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances);
 
-bool TTYReviveIt(const TTYRevivableInstance &instance, int std_in, int std_out, bool far2l_tty);
-
+int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty);

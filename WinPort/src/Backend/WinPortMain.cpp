@@ -7,6 +7,8 @@
 #include "TTY/TTYRevive.h"
 #include "TTY/TTYNegotiateFar2l.h"
 
+#include <os_call.hpp>
+
 #include "Backend.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
@@ -24,7 +26,7 @@ ConsoleInput g_winport_con_in;
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 #endif
 
-bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 
 extern "C" void WinPortInitRegistry();
 
@@ -144,13 +146,13 @@ public:
 	}
 };
 
-static bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::unique_ptr<TTYRawMode> &tty_raw_mode)
+static int TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::unique_ptr<TTYRawMode> &tty_raw_mode, pid_t &pid)
 {
 	for (;;) {
 		std::vector<TTYRevivableInstance> instances;
 		TTYRevivableEnum(instances);
 		if (instances.empty()) {
-			return false;
+			return -1;
 		}
 
 		NormalizeTerminalState nts(std_in, std_out, far2l_tty, tty_raw_mode);
@@ -167,11 +169,11 @@ static bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::uniqu
 		{
 			FScope f_in(fdopen(dup(std_in), "r"));
 			if (!fgets(buf, sizeof(buf) - 1, f_in)) {
-				return false;
+				return -1;
 			}
 		}
 		if (buf[0] == 0 || buf[0] == '\r' || buf[0] == '\n') {
-			return false;
+			return -1;
 		}
 
 		size_t index = atoi(buf);
@@ -181,10 +183,11 @@ static bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::uniqu
 		}
 
 		nts.Revert();
-		bool r = TTYReviveIt(instances[index - 1], std_in, std_out, far2l_tty);
+		int notify_pipe = TTYReviveIt(instances[index - 1].pid, std_in, std_out, far2l_tty);
 
-		if (r) {
-			return true;
+		if (notify_pipe != -1) {
+			pid = instances[index - 1].pid;
+			return notify_pipe;
 		}
 
 		nts.Apply();
@@ -194,15 +197,25 @@ static bool TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::uniqu
 	}
 }
 
+
+static pid_t g_sigwinch_pid = 0;
+
+static void ShimSigWinch(int sig)
+{
+	if (g_sigwinch_pid != 0) {
+		kill(g_sigwinch_pid, sig);
+	}
+}
+
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
 	bool tty = false, far2l_tty = false, nodetect = false, help = false, notty = false;
-	bool nohup = true;
+	bool mortal = false;
 
 	for (int i = 0; i < argc; ++i) {
 
 		if (strstr(argv[i], "--mortal") == argv[i]) {
-			nohup = false;
+			mortal = true;
 
 		} else if (strstr(argv[i], "--notty") == argv[i]) {
 			notty = true;
@@ -226,37 +239,37 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 //	tcgetattr(std_out, &g_ts_tstp);
 
-	std::unique_ptr<TTYRawMode> tty_raw_mode;
+	std::unique_ptr<TTYRawMode> tty_raw_mode(new TTYRawMode(std_out));
 	if (!nodetect) {
-		tty_raw_mode.reset(new TTYRawMode(std_out));
+//		tty_raw_mode.reset(new TTYRawMode(std_out));
 		if (tty_raw_mode->Applied()) {
 			far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
-			if (!far2l_tty)
-				tty_raw_mode.reset();
+			if (far2l_tty) {
+				tty = true;
+			}
+
+		} else {
+			notty = true;
 		}
-	}
-		
-	if (far2l_tty) {
-		tty = true;
 	}
 
 	if (!help) {
 		SetupStdHandles();
-		if (nohup) {
+		if (!mortal) {
 			signal(SIGHUP, SIG_IGN);
 		}
 	}
 
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
-//      g_winport_con_out.WriteString(L"Hello", 5);
-
-	SudoAskpassImpl askass_impl;
-	SudoAskpassServer askpass_srv(&askass_impl);
+//  g_winport_con_out.WriteString(L"Hello", 5);
 
 	int result = -1;
 #ifndef NOWX
 	if (!tty) {
+		tty_raw_mode.reset();
+		SudoAskpassImpl askass_impl;
+		SudoAskpassServer askpass_srv(&askass_impl);
 		if (!WinPortMainWX(argc, argv, AppMain, &result) ) {
 			fprintf(stderr, "Cannot use WX backend\n");
 			tty = !notty;
@@ -267,11 +280,56 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 #endif
 
 	if (tty) {
-		if (!TTYTryReviveSome(std_in, std_out, far2l_tty, tty_raw_mode)) {
-			if (!WinPortMainTTY(std_in, std_out, far2l_tty, argc, argv, AppMain, &result)) {
+		if (!tty_raw_mode) {
+			tty_raw_mode.reset(new TTYRawMode(std_out));
+		}
+		if (mortal) {
+			SudoAskpassImpl askass_impl;
+			SudoAskpassServer askpass_srv(&askass_impl);
+			if (!WinPortMainTTY(std_in, std_out, far2l_tty, -1, argc, argv, AppMain, &result)) {
 				fprintf(stderr, "Cannot use TTY backend\n");
 			}
+
+		} else {
+			int notify_pipe = TTYTryReviveSome(std_in, std_out, far2l_tty, tty_raw_mode, g_sigwinch_pid);
+			if (notify_pipe == -1) {
+				int new_notify_pipe[2] {-1, -1};
+				if (pipe(new_notify_pipe) == -1) {
+					perror("notify_pipe");
+					return -1;
+				}
+				fcntl(new_notify_pipe[0], F_SETFD, FD_CLOEXEC);
+				fcntl(std_in, F_SETFD, 0);
+				fcntl(std_out, F_SETFD, 0);
+				g_sigwinch_pid = fork();
+				fcntl(std_in, F_SETFD, FD_CLOEXEC);
+				fcntl(std_out, F_SETFD, FD_CLOEXEC);
+				fcntl(new_notify_pipe[1], F_SETFD, FD_CLOEXEC);
+				if (g_sigwinch_pid == 0) {
+					{
+						setsid();
+						SudoAskpassImpl askass_impl;
+						SudoAskpassServer askpass_srv(&askass_impl);
+						if (!WinPortMainTTY(std_in, std_out, far2l_tty, new_notify_pipe[1], argc, argv, AppMain, &result)) {
+							fprintf(stderr, "Cannot use TTY backend\n");
+						}
+					}
+					WinPortHandle_FinalizeApp();
+					_exit(0);
+				}
+				close(new_notify_pipe[1]);
+				notify_pipe = new_notify_pipe[0];
+			}
+
+			strncpy(argv[0], "shim.far2l", strlen(argv[0]));
+			auto prev_sigwinch = signal(SIGWINCH, ShimSigWinch);
+			char c;
+			os_call_ssize(read, notify_pipe, (void *)&c, sizeof(c));
+			signal(SIGWINCH, prev_sigwinch);
+			g_sigwinch_pid = 0;
+			CheckedCloseFD(notify_pipe);
 		}
+
 		if (far2l_tty) {
 			TTYNegotiateFar2l(std_in, std_out, false);
 		}

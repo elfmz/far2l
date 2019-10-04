@@ -1,3 +1,5 @@
+#include <sys/time.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <termios.h> 
 #include <string.h>

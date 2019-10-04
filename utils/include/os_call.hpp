@@ -1,5 +1,6 @@
 #pragma once
 #include <unistd.h>
+#include <errno.h>
 
 //todo: use this everywhere else. Likely sdc_ is better place for that.
 template<class V, V BADV, typename ... ARGS>

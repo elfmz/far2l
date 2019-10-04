@@ -285,12 +285,13 @@ void QuoteCmdArgIfNeed(std::wstring &str)
 
 void CheckedCloseFD(int &fd)
 {
-       if (fd!=-1) {
-               if (os_call_int(close, fd) != 0) {
+	int tmp = fd;
+	if (tmp != -1) {
+               fd = -1;
+               if (os_call_int(close, tmp) != 0) {
                        perror("CheckedCloseFD");
                        abort();
                }
-               fd = -1;
        }
 }
 

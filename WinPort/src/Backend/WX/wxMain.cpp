@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "wxWinTranslations.h"
@@ -12,6 +16,9 @@
 #include <wx/display.h>
 #include <wx/clipbrd.h>
 #include <wx/debug.h>
+#include <wx/filename.h>
+#include <wx/stdpaths.h>
+
 #include "ExclusiveHotkeys.h"
 #include <set>
 #include <fstream>
@@ -79,6 +86,7 @@ static void WinPortWxAssertHandler(const wxString& file,
 	fprintf(stderr, "WinPortWxAssertHandler: file='%ls' line=%d func='%ls' cond='%ls' msg='%ls'\n",
 			file.wc_str(), line, func.wc_str(), cond.wc_str(), msg.wc_str());
 }
+
 
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
@@ -214,6 +222,7 @@ protected:
 	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
+	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
 
 private:
 	void CheckForResizePending();
@@ -1273,6 +1282,54 @@ DWORD WinPortPanel::OnConsoleSetTweaks(DWORD tweaks)
 bool WinPortPanel::OnConsoleIsActive()
 {
 	return _has_focus;
+}
+
+static std::string GetNotifySH()
+{
+	wxFileName f(wxStandardPaths::Get().GetExecutablePath());
+	std::string out(f.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR).mb_str());
+
+	if (TranslateInstallPath_Bin2Share(out)) {
+		out+= "far2l/";
+	}
+
+	out+= "notify.sh";
+
+	struct stat s;
+	if (stat(out.c_str(), &s) == 0) {
+		return out;
+	}
+
+	if (TranslateInstallPath_Share2Lib(out) && stat(out.c_str(), &s) == 0) {
+		return out;
+	}
+
+	return std::string();
+}
+
+void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
+{
+	static std::string s_notify_sh = GetNotifySH();
+	if (s_notify_sh.empty()) {
+		fprintf(stderr, "OnConsoleDisplayNotification: notify.sh not found\n");
+		return;
+	}
+
+	const std::string &str_title = Wide2MB(title);
+	const std::string &str_text = Wide2MB(text);
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		if (fork() == 0) {
+			execl(s_notify_sh.c_str(), s_notify_sh.c_str(), str_title.c_str(), str_text.c_str(), NULL);
+			perror("DisplayNotification - execl");
+		}
+		_exit(0);
+		exit(0);
+
+	} else if (pid != -1) {
+		waitpid(pid, 0, 0);
+	}
 }
 
 void WinPortPanel::OnConsoleChangeFontSync(wxCommandEvent& event)

@@ -487,7 +487,7 @@ void TTYBackend::OnConsoleExit()
 
 bool TTYBackend::OnConsoleIsActive()
 {
-	return true;
+	return false;//true;
 }
 
 void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
@@ -640,6 +640,17 @@ DWORD TTYBackend::OnQueryControlKeys()
 	}
 #endif
 	return out;
+}
+
+void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
+{
+	try {
+		StackSerializer stk_ser;
+		stk_ser.PushStr(Wide2MB(text));
+		stk_ser.PushStr(Wide2MB(title));
+		stk_ser.PushPOD('n');
+		Far2lInterract(stk_ser, false);
+	} catch (std::exception &) {}
 }
 
 void TTYBackend_OnTerminalDamaged(bool flush_input_queue)

@@ -96,6 +96,7 @@ public:
 	DWORD SetConsoleTweaks(DWORD tweaks);
 	void ConsoleChangeFont();
 	bool IsActive();
+	void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
 };
 
 

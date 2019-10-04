@@ -15,32 +15,35 @@
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor
 {
 	std::mutex _output_mutex;
-	int _stdin = 0, _stdout = 1, _kickass[2] = {-1, -1};
+	int _stdin = 0, _stdout = 1;
 	bool _far2l_tty = false;
+	int _notify_pipe = -1;
+	int _kickass[2] = {-1, -1};
 	int _far2l_cursor_height = -1;
 	unsigned int _cur_width = 0, _cur_height = 0;
 	unsigned int _prev_width = 0, _prev_height = 0;
 	std::vector<CHAR_INFO> _cur_output, _prev_output;
 
-	struct termios _ts;
-	int _ts_r = -1;
 	long _terminal_size_change_id;
 
-	pthread_t _reader_trd = 0, _writer_trd = 0;
+	pthread_t _reader_trd = 0;
 	volatile bool _exiting = false;
+	volatile bool _deadio = false;
 
-	static void *sWriterThread(void *p) { ((TTYBackend *)p)->WriterThread(); return nullptr; }
 	static void *sReaderThread(void *p) { ((TTYBackend *)p)->ReaderThread(); return nullptr; }
+	static void *sWriterThread(void *p) { ((TTYBackend *)p)->WriterThread(); return nullptr; }
 
-	void WriterThread();
 	void ReaderThread();
+	void ReaderLoop();
+	void WriterThread();
 
 
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
 
 	COORD _largest_window_size;
-	std::atomic<bool> _largest_window_size_ready;
+	std::atomic<bool> _largest_window_size_ready {};
+	std::atomic<bool> _flush_input_queue {};
 
 
 	struct Far2lInterractData
@@ -101,9 +104,9 @@ protected:
 
 
 public:
-	TTYBackend(int std_in, int std_out, bool far2l_tty);
+	TTYBackend(int std_in, int std_out, bool far2l_tty, int notify_pipe);
 	~TTYBackend();
-	void KickAss();
+	void KickAss(bool flush_input_queue = false);
 	bool Startup();
 };
 

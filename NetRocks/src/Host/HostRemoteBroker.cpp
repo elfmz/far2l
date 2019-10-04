@@ -1,6 +1,7 @@
 #include <vector>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "IPC.h"
 #include "Protocol/Protocol.h"
 
@@ -337,6 +338,11 @@ extern "C" int main(int argc, char *argv[])
 		fprintf(stderr, "Its a NetRocks protocol broker and must be started by NetRocks only\n");
 		return -1;
 	}
+
+	setsid();
+	//survive terminal death
+	signal(SIGHUP, SIG_IGN);
+	//signal(SIGTERM, SIG_IGN);
 
 	fprintf(stderr, "%d: HostRemoteBrokerMain: BEGIN\n", getpid());
 	try {

@@ -15,6 +15,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <os_call.hpp>
 #include <fcntl.h>
 
 #include "WinPortHandle.h"
@@ -34,7 +35,7 @@ class WinPortFSNotify : public WinPortEvent
 	pthread_t _watcher;
 	int _fd;
 	DWORD _filter;
-	bool _watching;
+	volatile bool _watching;
 	int _pipe[2];
 
 
@@ -165,12 +166,12 @@ class WinPortFSNotify : public WinPortEvent
 	{
 		if (_watching) {
 			_watching = false;
-			if (write(_pipe[1], &_watching, sizeof(_watching))!=sizeof(_watching))
+			if (os_call_ssize(write, _pipe[1], (const void*)&_pipe[1], (size_t)1) != 1)
 				fprintf(stderr, "~WinPortFSNotify - pipe write error %u\n", errno);
 
+			CheckedCloseFD(_pipe[1]);
 			pthread_join(_watcher, nullptr);
-			close(_pipe[0]);
-			close(_pipe[1]);
+			CheckedCloseFD(_pipe[0]);
 		}
 
 #if defined(__APPLE__) || defined(__FreeBSD__)

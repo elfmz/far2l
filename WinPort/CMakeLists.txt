@@ -48,10 +48,12 @@ src/Backend/WinPortMain.cpp
 src/Backend/SudoAskpassImpl.cpp
 src/Backend/FSClipboardBackend.cpp
 src/Backend/TTY/TTYBackend.cpp
+src/Backend/TTY/TTYRevive.cpp
 src/Backend/TTY/TTYInput.cpp
 src/Backend/TTY/TTYInputSequenceParser.cpp
 src/Backend/TTY/TTYOutput.cpp
 src/Backend/TTY/TTYFar2lClipboardBackend.cpp
+src/Backend/TTY/TTYNegotiateFar2l.cpp
 )
 
 if (${USEWX})

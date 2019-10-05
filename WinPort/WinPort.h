@@ -302,4 +302,3 @@ struct RegWipeScope
 	}
 };
 #endif
-

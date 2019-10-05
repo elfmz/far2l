@@ -407,7 +407,7 @@ int FarAppMain(int argc, char **argv)
 	CutToSlash(g_strFarPath, true);
 	if (translated) {
 		// /usr/bin/something -> /usr/share/far2l
-		g_strFarPath+= L"/" FAR_BASENAME;
+		g_strFarPath.Append("/" APP_BASENAME);
 	}
 		
 	WINPORT(SetEnvironmentVariable)(L"FARHOME", g_strFarPath);

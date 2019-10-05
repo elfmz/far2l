@@ -1290,7 +1290,7 @@ static std::string GetNotifySH()
 	std::string out(f.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR).mb_str());
 
 	if (TranslateInstallPath_Bin2Share(out)) {
-		out+= "far2l/";
+		out+= APP_BASENAME "/";
 	}
 
 	out+= "notify.sh";

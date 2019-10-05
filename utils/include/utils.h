@@ -176,3 +176,6 @@ template <class CharT>
 	StrTrimRight(str, spaces);
 	StrTrimLeft(str, spaces);
 }
+
+
+#define APP_BASENAME "far2l"

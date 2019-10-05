@@ -15,6 +15,7 @@ public:
 	virtual void OnConsoleSetMaximized(bool maximized) = 0;
 	virtual void OnConsoleExit() = 0;
 	virtual bool OnConsoleIsActive() = 0;
+	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text) = 0;
 };
 
 class IClipboardBackend

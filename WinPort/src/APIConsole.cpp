@@ -332,4 +332,9 @@ extern "C" {
 	{
 		return g_winport_con_out.IsActive() ? TRUE : FALSE;
 	}
+
+	WINPORT_DECL(ConsoleDisplayNotification, VOID, (const WCHAR *title, const WCHAR *text))
+	{
+		g_winport_con_out.ConsoleDisplayNotification(title, text);
+	}
 }

@@ -578,3 +578,9 @@ bool ConsoleOutput::IsActive()
 {
 	return _backend ? _backend->OnConsoleIsActive() : false;
 }
+
+void ConsoleOutput::ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text)
+{
+	if (_backend)
+		_backend->OnConsoleDisplayNotification(title, text);
+}

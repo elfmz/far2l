@@ -36,6 +36,8 @@ class VTFar2lExtensios
 
 	void OnInterract_ChangeCursorHeigth(StackSerializer &stk_ser);
 
+	void OnInterract_DisplayNotification(StackSerializer &stk_ser);
+
 	void WriteInputEvent(const StackSerializer &stk_ser);
 public:
 	VTFar2lExtensios(IVTShell *vt_shell);

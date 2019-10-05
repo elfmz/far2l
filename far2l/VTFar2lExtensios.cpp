@@ -10,6 +10,7 @@
 #include "language.hpp"
 #include "dialog.hpp"
 #include "message.hpp"
+#include "mix.hpp"
 
 
 // Potential security issue workaround: do not allow remote to read clipboard unless user
@@ -357,6 +358,14 @@ void VTFar2lExtensios::OnInterract_GetLargestWindowSize(StackSerializer &stk_ser
 	stk_ser.PushPOD(sz);
 }
 
+void VTFar2lExtensios::OnInterract_DisplayNotification(StackSerializer &stk_ser)
+{
+	const std::string &title = stk_ser.PopStr();
+	const std::string &text = stk_ser.PopStr();
+	DisplayNotification(title.c_str(), text.c_str());
+	stk_ser.Clear();
+}
+
 void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 {
 	const char code = stk_ser.PopChar();
@@ -387,6 +396,10 @@ void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 
 		case 'w':
 			OnInterract_GetLargestWindowSize(stk_ser);
+		break;
+
+		case 'n':
+			OnInterract_DisplayNotification(stk_ser);
 		break;
 
 		default:

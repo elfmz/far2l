@@ -103,5 +103,3 @@ extern DWORD RedrawTimeout;
 extern FormatScreen FS;
 
 extern DWORD ErrorMode;
-
-#define FAR_BASENAME L"far2l"

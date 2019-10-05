@@ -95,6 +95,7 @@ protected:
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
+	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);

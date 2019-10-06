@@ -865,6 +865,12 @@ HANDLE PluginManager::GetRealPluginHandle(HANDLE hPlugin)
 	return ph->hPlugin;
 }
 
+FARString PluginManager::GetPluginModuleName(HANDLE hPlugin)
+{
+	PluginHandle *ph = (PluginHandle*)hPlugin;
+	return ph->pPlugin->GetModuleName();
+}
+
 
 int PluginManager::ProcessEditorInput(INPUT_RECORD *Rec)
 {

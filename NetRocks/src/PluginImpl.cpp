@@ -68,25 +68,45 @@ public:
 
 } g_all_netrocks;
 
+static std::shared_ptr<IHost> ConnectToRemoteHost(int op_mode, const std::string &str, std::string &directory) throw (std::runtime_error)
+{
+	std::shared_ptr<IHost> out;
+	if (str[0] == L'<') {
+		size_t p = str.find('>');
+		const std::string &site_name = str.substr(1, (p == std::string::npos) ? str.size() - 1 : p - 1);
+		out = OpConnect(op_mode, site_name).Do();
+		if ( p != std::string::npos && p + 1 < str.size()) {
+			directory = str.substr(p + 1);
+		} else {
+			directory = SitesConfig().GetDirectory(site_name);
+		}
+
+	} else  {
+		std::string protocol, host, username, password;
+		unsigned int port = 0;
+
+		if (!SplitPathSpecification(str.c_str(), protocol, host, port, username, password, directory)) {
+			throw std::runtime_error(G.GetMsgMB(MWrongPath));
+		}
+
+		out = OpConnect(0, protocol, host, port, username, password, directory).Do();
+	}
+
+	if (!out) {
+		throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
+	}
+
+	return out;
+}
+
 PluginImpl::PluginImpl(const wchar_t *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
 	_local = std::make_shared<HostLocal>();
-	if (path && *path) {
-		std::wstring protocol, host, username, password, directory;
-		unsigned int port = 0;
 
-		if (!SplitPathSpecification(path, protocol, host, port, username, password, directory)) {
-			throw std::runtime_error(G.GetMsgMB(MWrongPath));
-		}
-
-		_remote = OpConnect(0, StrWide2MB(protocol), StrWide2MB(host), port,
-			StrWide2MB(username), StrWide2MB(password), StrWide2MB(directory)).Do();
-
-		if (!_remote) {
-			throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
-		}
-
+	if (path && path) {
+		std::string directory;
+		_remote = ConnectToRemoteHost(0, Wide2MB(path), directory);
 		_wea_state = std::make_shared<WhatOnErrorState>();
 		
 		wcsncpy(_cur_dir, StrMB2Wide(_remote->SiteName()).c_str(), ARRAYSIZE(_cur_dir) - 1 );
@@ -95,7 +115,7 @@ PluginImpl::PluginImpl(const wchar_t *path)
 			while (!directory.empty() && directory[directory.size() - 1] == '/') {
 				directory.resize(directory.size() - 1);
 			}
-			wcsncat(_cur_dir, directory.c_str(), ARRAYSIZE(_cur_dir) - 1 );
+			wcsncat(_cur_dir, StrMB2Wide(directory).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 		}
 	}
 
@@ -321,16 +341,22 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 	}
 
 	if (!_remote) {
-		if (!components.empty()) {
-			_remote = OpConnect(OpMode, components[0]).Do();
-			if (!_remote) {
-				fprintf(stderr, "NetRocks::SetDirectory - can't connect to: '%s'\n", components[0].c_str());
+		if (!components.empty() && !components[0].empty()) {
+			std::string default_dir;
+			try {
+				if (components.size() == 1) {
+					components[0].insert(0, "<");
+					components[0]+= '>';
+				}
+				_remote = ConnectToRemoteHost(OpMode, components[0], default_dir);
+
+			} catch (std::exception &ex) {
+				fprintf(stderr, "NetRocks::SetDirectory - can't connect to: '%s' - %s\n", components[0].c_str(), ex.what());
 				return FALSE;
 			}
 			_wea_state = std::make_shared<WhatOnErrorState>();
 
 			if (components.size() == 1) {
-				std::string default_dir = SitesConfig().GetDirectory(components[0]);
 				TokenizePath(components, default_dir);
 				absolute = !default_dir.empty() && default_dir[0] == '/';
 			}

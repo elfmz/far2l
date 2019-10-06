@@ -75,10 +75,14 @@ static std::shared_ptr<IHost> ConnectToRemoteHost(int op_mode, const std::string
 		size_t p = str.find('>');
 		const std::string &site_name = str.substr(1, (p == std::string::npos) ? str.size() - 1 : p - 1);
 		out = OpConnect(op_mode, site_name).Do();
+		std::string def_directory = SitesConfig().GetDirectory(site_name);
 		if ( p != std::string::npos && p + 1 < str.size()) {
 			directory = str.substr(p + 1);
+			if (def_directory.empty() || def_directory[0] != '/') {
+				directory.erase(0, 1);
+			}
 		} else {
-			directory = SitesConfig().GetDirectory(site_name);
+			directory = def_directory;
 		}
 
 	} else  {
@@ -114,6 +118,9 @@ PluginImpl::PluginImpl(const wchar_t *path)
 			_cur_dir_absolute = (directory[0] == '/');
 			while (!directory.empty() && directory[directory.size() - 1] == '/') {
 				directory.resize(directory.size() - 1);
+			}
+			if (!_cur_dir_absolute) {
+				wcsncat(_cur_dir, L"/", ARRAYSIZE(_cur_dir) - 1 );
 			}
 			wcsncat(_cur_dir, StrMB2Wide(directory).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 		}
@@ -344,7 +351,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		if (!components.empty() && !components[0].empty()) {
 			std::string default_dir;
 			try {
-				if (components.size() == 1) {
+				if (components.size() == 1 && components[0][0] != '<') {
 					components[0].insert(0, "<");
 					components[0]+= '>';
 				}

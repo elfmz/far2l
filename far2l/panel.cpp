@@ -527,7 +527,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 							{
 								item.bIsPlugin = true;
 								memmove(&item.root[0], &item.root[1], (l - 2) * sizeof(wchar_t));
-								item.root[l - 3] = 0;
+								item.root[l - 2] = 0;
 								item.nItem = (LONG_PTR)-1;
 							}
 						}

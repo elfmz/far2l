@@ -80,9 +80,13 @@ std::shared_ptr<IHost> HostRemote::Clone()
 
 std::string HostRemote::SiteName()
 {
-	if (!_site.empty())
-		return _site;
-
+	if (!_site.empty()) {
+		std::string out;
+		out+= '<';
+		out+= _site;
+		out+= '>';
+		return out;
+	}
 
 	const auto *pi = ProtocolInfoLookup(_identity.protocol.c_str());
 

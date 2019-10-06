@@ -175,10 +175,10 @@ struct PanelMenuItem
 	struct
 	{
 		Plugin *pPlugin;
-		int nItem;
+		INT_PTR nItem;
 	};
 
-	wchar_t root[0x100];
+	wchar_t root[0x1000];
 };
 
 struct TypeMessage
@@ -458,7 +458,15 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 	FARString curdir, another_curdir;
 	GetCurDir(curdir);
-	CtrlObject->Cp()->GetAnotherPanel(this)->GetCurDir(another_curdir);
+
+	auto another_panel = CtrlObject->Cp()->GetAnotherPanel(this);
+	another_panel->GetCurDirPluginAware(another_curdir);
+	if (another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
+	{
+		another_curdir.Insert(0, L"{");
+		another_curdir.Append(L"}");
+	}
+
 	RootEntries roots;
 	EnumRoots(roots, curdir, another_curdir);
 
@@ -503,8 +511,28 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				ChDiskItem.Flags&= ~LIF_SEPARATOR;
 			} else {
 				PanelMenuItem item;
+				wcsncpy(item.root, f.root.CPtr(), (sizeof(item.root)/sizeof(item.root[0])) - 1);
 				item.bIsPlugin = false;
-				wcsncpy(item.root, f.root.CPtr(), sizeof(item.root)/sizeof(item.root[0]));
+				if (item.root[0] == L'{' && another_curdir == item.root
+				 && another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
+				{
+					size_t l = wcslen(item.root);
+					if (item.root[l - 1] == L'}')
+					{
+						auto plugin_name = CtrlObject->Plugins.GetPluginModuleName(another_panel->GetPluginHandle());
+						if (!plugin_name.IsEmpty())
+						{
+							item.pPlugin = CtrlObject->Plugins.GetPlugin(plugin_name);
+							if (item.pPlugin)
+							{
+								item.bIsPlugin = true;
+								memmove(&item.root[0], &item.root[1], (l - 2) * sizeof(wchar_t));
+								item.root[l - 3] = 0;
+								item.nItem = (LONG_PTR)-1;
+							}
+						}
+					}
+				}
 				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
 			}
 			MenuLine++;
@@ -849,11 +877,11 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	}
 	else //эта плагин, да
 	{
-		HANDLE hPlugin = CtrlObject->Plugins.OpenPlugin(
-		                     mitem->pPlugin,
-		                     OPEN_DISKMENU,
-		                     mitem->nItem
-		                 );
+//		fprintf(stderr, "pPlugin=%p nItem=0x%lx\n", mitem->pPlugin, (unsigned long)mitem->nItem);
+		LONG_PTR nItem = mitem->nItem;
+		if (nItem == (LONG_PTR)-1)
+			nItem = (LONG_PTR)mitem->root;
+		HANDLE hPlugin = CtrlObject->Plugins.OpenPlugin( mitem->pPlugin, OPEN_DISKMENU, nItem );
 
 		if (hPlugin != INVALID_HANDLE_VALUE)
 		{

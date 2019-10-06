@@ -2,6 +2,9 @@
 #include "Editor.h"
 #include "Editors.h"
 
+#define BAD_MODIFIERS (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED | RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED | SHIFT_PRESSED)
+
+
 using namespace std;
 
 Editors *editors = nullptr;
@@ -126,7 +129,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param) {
 }
 
 SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
-    if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.dwControlKeyState == 0
+    if (ir->EventType == KEY_EVENT && (ir->Event.KeyEvent.dwControlKeyState & BAD_MODIFIERS) == 0
         && ir->Event.KeyEvent.wVirtualScanCode == 0
         && !ir->Event.KeyEvent.bKeyDown
         && ir->Event.KeyEvent.wVirtualKeyCode == 0)
@@ -137,11 +140,11 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
         return 0;
 
     // Is regular key event?
-    if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.dwControlKeyState == 0
+    if (ir->EventType == KEY_EVENT && (ir->Event.KeyEvent.dwControlKeyState & BAD_MODIFIERS) == 0
         && ir->Event.KeyEvent.wVirtualScanCode == 0 && ir->Event.KeyEvent.bKeyDown) {
 
         // Tab ?
-        if (editor->getState() == DO_ACTION && ir->Event.KeyEvent.wVirtualKeyCode == 9) {
+        if (editor->getState() == DO_ACTION && ir->Event.KeyEvent.wVirtualKeyCode == VK_TAB) {
             editor->confirmSuggestion();
             return 1;
         }
@@ -167,7 +170,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
         editor->declineSuggestion();
 
     // Is regular key event?
-    if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.dwControlKeyState == 0
+    if (ir->EventType == KEY_EVENT && (ir->Event.KeyEvent.dwControlKeyState & BAD_MODIFIERS) == 0
         && ir->Event.KeyEvent.wVirtualScanCode == 0 && !ir->Event.KeyEvent.bKeyDown
         && ir->Event.KeyEvent.wVirtualKeyCode != 9 && ir->Event.KeyEvent.wVirtualKeyCode != 8
         && ir->Event.KeyEvent.wVirtualKeyCode != 27 && ir->Event.KeyEvent.wVirtualKeyCode != 46)

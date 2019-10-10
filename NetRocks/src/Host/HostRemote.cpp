@@ -43,8 +43,8 @@ HostRemote::HostRemote(const std::string &site)
 	}
 }
 
-HostRemote::HostRemote(const std::string &protocol, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &directory)
+HostRemote::HostRemote(const std::string &protocol, const std::string &host,
+	unsigned int port, const std::string &username, const std::string &password)
 	:
 	_login_mode( ( (username.empty() || username == "anonymous") && password.empty()) ? 0 : (password.empty() ? 1 : 2)),
 	_password(password)

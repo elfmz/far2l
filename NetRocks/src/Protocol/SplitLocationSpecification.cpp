@@ -8,7 +8,7 @@
 #include <utils.h>
 #include "Protocol.h"
 
-bool SplitPathSpecification(const char *specification, std::string &protocol, std::string &host, unsigned int &port,
+bool SplitLocationSpecification(const char *specification, std::string &protocol, std::string &host, unsigned int &port,
 				std::string &username, std::string &password, std::string &directory)
 {
 	/// protocol://username:password@host:port/dir
@@ -22,7 +22,7 @@ bool SplitPathSpecification(const char *specification, std::string &protocol, st
 	if (!proto_end) {
 		return false;
 	}
-	
+
 	protocol.assign(specification, proto_end - specification);
 	do { ++proto_end; } while (*proto_end == '/');
 	if (strcasecmp(protocol.c_str(), "file") == 0) {
@@ -63,7 +63,7 @@ bool SplitPathSpecification(const char *specification, std::string &protocol, st
 	host = at;
 	size_t spd_div = host.find('/');
 	if (spd_div != std::string::npos) {
-		directory = host.substr(spd_div);
+		directory = host.substr(spd_div + 1);
 		host.resize(spd_div);
 	}
 
@@ -73,9 +73,9 @@ bool SplitPathSpecification(const char *specification, std::string &protocol, st
 		host.resize(sp_div);
 	}
 
-	fprintf(stderr, "SplitPathSpecification('%s') -> '%s' '%s' '%s' '%s' %u '%s'\n", specification,
-		protocol.c_str(), username.c_str(), password.c_str(), host.c_str(), port, directory.c_str());
-		
-	return true;	
+	//fprintf(stderr, "SplitLocationSpecification('%s') -> '%s' '%s' '%s' '%s' %u '%s'\n", specification,
+	//	protocol.c_str(), username.c_str(), password.c_str(), host.c_str(), port, directory.c_str());
+
+	return true;
 }
 

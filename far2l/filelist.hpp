@@ -158,6 +158,7 @@ struct PluginsListItem
 	HANDLE hPlugin;
 	FARString strHostFile;
 	FARString strPrevOriginalCurDir;
+	std::map<FARString, FARString> Dir2CursorFile;
 	int Modified;
 	int PrevViewMode;
 	int PrevSortMode;

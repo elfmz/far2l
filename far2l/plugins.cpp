@@ -566,7 +566,8 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, const unsigned char *D
 HANDLE PluginManager::OpenFilePlugin(
     const wchar_t *Name,
     int OpMode,
-    OPENFILEPLUGINTYPE Type
+    OPENFILEPLUGINTYPE Type,
+    Plugin *pDesiredPlugin
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -596,6 +597,8 @@ HANDLE PluginManager::OpenFilePlugin(
 	for (int i = 0; i < PluginsCount; i++)
 	{
 		pPlugin = PluginsData[i];
+		if (pDesiredPlugin != nullptr && pDesiredPlugin != pPlugin)
+			continue;
 
 		if (!pPlugin->HasOpenFilePlugin() && !(pPlugin->HasAnalyse() && pPlugin->HasOpenPlugin()))
 			continue;

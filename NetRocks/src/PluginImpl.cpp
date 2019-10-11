@@ -207,6 +207,10 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 	if (*Dir == L'/') {
 		do { ++Dir; } while (*Dir == L'/');
+		if (*Dir == 0) {
+			_remote.reset();
+			return TRUE;
+		}
 
 		const wchar_t *slash = wcschr(Dir, L'/');
 		std::wstring server_name(Dir, slash ? slash - Dir : wcslen(Dir));
@@ -247,18 +251,28 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 			return FALSE;
 		}
 
-		dir_mb.insert(0, 1, '<');
-		size_t p = dir_mb.find('/');
-		if (p != std::string::npos) {
-			dir_mb.insert(p, 1, '>');
-		} else {
-			dir_mb+= '>';
+		if (dir_mb[0] != '<') {
+			dir_mb.insert(0, 1, '<');
+			size_t p = dir_mb.find('/');
+			if (p != std::string::npos) {
+				dir_mb.insert(p, 1, '>');
+			} else {
+				dir_mb+= '>';
+			}
 		}
 
-		if (!_location.FromString(dir_mb)) {
+		Location new_location;
+		if (!new_location.FromString(dir_mb)) {
 			fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): parse path failed\n", Dir, OpMode);
 			return FALSE;
 		}
+
+		if (new_location.server_kind == Location::SK_URL && new_location.url.password.empty()
+		 && new_location.server_kind == _location.server_kind && new_location.server == _location.server) {
+			new_location.url.password = _location.url.password;
+		}
+		_location = new_location;
+
 		if (!PreprocessPathTokens(_location.path.components)) {
 			fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): inconstistent path\n", Dir, OpMode);
 			return FALSE;
@@ -296,29 +310,29 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 	}
 
 	if (!PreprocessPathTokens(_location.path.components)) {
-		fprintf(stderr, "NetRocks::SetDirectory - close connection due to: '%ls'\n", Dir);
+		fprintf(stderr, "NetRocks::SetDirectoryInternal - close connection due to: '%ls'\n", Dir);
 		_remote.reset();
 		return TRUE;
 	}
 
 	const std::string &dir = _location.ToString(false);
-	fprintf(stderr, "NetRocks::SetDirectory - dir: '%s'\n", dir.c_str());
+	fprintf(stderr, "NetRocks::SetDirectoryInternal - dir: '%s'\n", dir.c_str());
 	if (!dir.empty()) {
 		mode_t mode = 0;
 		if (!OpGetMode(OpMode, _remote, dir, _wea_state).Do(mode)) {
-			fprintf(stderr, "NetRocks::SetDirectory - can't get mode: '%s'\n", dir.c_str());
+			fprintf(stderr, "NetRocks::SetDirectoryInternal - can't get mode: '%s'\n", dir.c_str());
 			_location.path = saved_path;
 			return FALSE; 
 		}
 
 		if (!S_ISDIR(mode)) {
-			fprintf(stderr, "NetRocks::SetDirectory - not dir mode=0x%x: '%s'\n", mode, dir.c_str());
+			fprintf(stderr, "NetRocks::SetDirectoryInternal - not dir mode=0x%x: '%s'\n", mode, dir.c_str());
 			_location.path = saved_path;
 			return FALSE;
 		}
 	}
 
-	fprintf(stderr, "NetRocks::SetDirectory('%ls', %d) OK: '%s'\n", Dir, OpMode, dir.c_str());
+	fprintf(stderr, "NetRocks::SetDirectoryInternal('%ls', %d) OK: '%s'\n", Dir, OpMode, dir.c_str());
 	return TRUE;
 }
 

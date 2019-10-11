@@ -898,7 +898,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		if (hostFile.empty()) {
 			hPlugin = CtrlObject->Plugins.OpenPlugin( pPlugin, OPEN_DISKMENU, (nItem == (LONG_PTR)-1) ? 0 : nItem); //nItem
 		} else {
-			hPlugin = CtrlObject->Plugins.OpenFilePlugin(hostFile.c_str(), 0, OFP_NORMAL, pPlugin);
+			hPlugin = CtrlObject->Plugins.OpenFilePlugin(hostFile.c_str(), 0, OFP_ALTERNATIVE, pPlugin);//OFP_NORMAL
 		}
 
 		//fprintf(stderr, "???? hPlugin=%p nItem=%ld\n", hPlugin, nItem);

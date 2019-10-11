@@ -9,10 +9,10 @@ bool SplitLocationSpecification(const char *specification,
 
 /*
 Examples:
-<StoredConnection>/etc/dir/file
-<StoredConnection>dir/in/home/file
-sftp://server//etc/dir/file
+<StoredConnection>//etc/dir/file
 <StoredConnection>/dir/in/home/file
+sftp://server//etc/dir/file
+sftp://user@server:port/dir/in/home/file
 */
 
 bool Location::FromString(const std::string &str)

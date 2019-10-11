@@ -513,25 +513,13 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				PanelMenuItem item;
 				wcsncpy(item.root, f.root.CPtr(), (sizeof(item.root)/sizeof(item.root[0])) - 1);
 				item.bIsPlugin = false;
-				if (item.root[0] == L'{' && another_curdir == item.root
+				if (item.root[0] == L'{' && item.root[wcslen(item.root) - 1] == L'}'
+				 && another_curdir == item.root
 				 && another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
 				{
-					size_t l = wcslen(item.root);
-					if (item.root[l - 1] == L'}')
-					{
-						auto plugin_name = CtrlObject->Plugins.GetPluginModuleName(another_panel->GetPluginHandle());
-						if (!plugin_name.IsEmpty())
-						{
-							item.pPlugin = CtrlObject->Plugins.GetPlugin(plugin_name);
-							if (item.pPlugin)
-							{
-								item.bIsPlugin = true;
-								memmove(&item.root[0], &item.root[1], (l - 2) * sizeof(wchar_t));
-								item.root[l - 2] = 0;
-								item.nItem = (LONG_PTR)-1;
-							}
-						}
-					}
+					item.bIsPlugin = true;
+					item.pPlugin = nullptr;
+					item.nItem = -1;
 				}
 				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
 			}
@@ -879,15 +867,54 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	{
 //		fprintf(stderr, "pPlugin=%p nItem=0x%lx\n", mitem->pPlugin, (unsigned long)mitem->nItem);
 		LONG_PTR nItem = mitem->nItem;
-		if (nItem == (LONG_PTR)-1)
-			nItem = (LONG_PTR)mitem->root;
-		HANDLE hPlugin = CtrlObject->Plugins.OpenPlugin( mitem->pPlugin, OPEN_DISKMENU, nItem );
+		//if (nItem == (LONG_PTR)-1)
+		//	nItem = (LONG_PTR)mitem->root;
 
+		std::wstring hostFile, curDir;
+		auto pPlugin = mitem->pPlugin;
+		if (pPlugin == nullptr) {
+			HANDLE hAnother = another_panel->GetPluginHandle();
+			if (hAnother == INVALID_HANDLE_VALUE)
+				return -1;
+
+			auto plugin_name = CtrlObject->Plugins.GetPluginModuleName(another_panel->GetPluginHandle());
+			if (plugin_name.IsEmpty())
+				return -1;
+
+			pPlugin = CtrlObject->Plugins.GetPlugin(plugin_name);
+			if (!pPlugin)
+				return -1;
+
+			OpenPluginInfo opi = {sizeof(OpenPluginInfo), 0};
+			CtrlObject->Plugins.GetOpenPluginInfo(hAnother, &opi);
+			if (opi.CurDir)
+				curDir = opi.CurDir;
+			if (opi.HostFile)
+				hostFile = opi.HostFile;
+		}
+
+		HANDLE hPlugin;
+
+		if (hostFile.empty()) {
+			hPlugin = CtrlObject->Plugins.OpenPlugin( pPlugin, OPEN_DISKMENU, (nItem == (LONG_PTR)-1) ? 0 : nItem); //nItem
+		} else {
+			hPlugin = CtrlObject->Plugins.OpenFilePlugin(hostFile.c_str(), 0, OFP_NORMAL, pPlugin);
+		}
+
+		//fprintf(stderr, "???? hPlugin=%p nItem=%ld\n", hPlugin, nItem);
 		if (hPlugin != INVALID_HANDLE_VALUE)
 		{
 			Focus=GetFocus();
 			Panel *NewPanel = CtrlObject->Cp()->ChangePanel(this,FILE_PANEL,TRUE,TRUE);
 			NewPanel->SetPluginMode(hPlugin,L"",Focus || !CtrlObject->Cp()->GetAnotherPanel(NewPanel)->IsVisible());
+
+			if (nItem == (LONG_PTR)-1) {
+				NewPanel->Update(0);
+				NewPanel->Show();
+				curDir.insert(0, 1, '/');
+				int r = CtrlObject->Plugins.SetDirectory(hPlugin, curDir.c_str(), 0);
+			}
+
 			NewPanel->Update(0);
 			NewPanel->Show();
 

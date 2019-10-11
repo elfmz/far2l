@@ -134,6 +134,7 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 	}
 	else
 	{
+		hPlugin = INVALID_HANDLE_VALUE;
 		PanelMode=NORMAL_PANEL;
 
 		if (EnableRestoreViewMode)

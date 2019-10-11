@@ -2527,6 +2527,15 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		}
 		else
 		{
+			if (!dot2Present && CurFile<FileCount && !PluginsList.Empty())
+			{
+				PluginsListItem *Last=*PluginsList.Last();
+				if (Last)
+				{
+					Last->Dir2CursorFile[strInfoCurDir] = ListData[CurFile]->strName;
+				}
+			}
+
 			strFindDir = strInfoCurDir;
 			SetDirectorySuccess=CtrlObject->Plugins.SetDirectory(hPlugin,strSetDir,0);
 		}
@@ -2534,8 +2543,9 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		ProcessPluginCommand();
 
 		if (SetDirectorySuccess)
+		{
 			Update(0);
-		else
+		} else
 			Update(UPDATE_KEEP_SELECTION);
 
 		if (PluginClosed && !PrevDataList.Empty())
@@ -2563,6 +2573,18 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		if (dot2Present)
 		{
 			long Pos=FindFile(PointToName(strFindDir));
+			if (Pos==-1 && !PluginClosed && !PluginsList.Empty())
+			{
+				PluginsListItem *Last=*PluginsList.Last();
+				if (Last)
+				{
+					OpenPluginInfo InfoNew;
+					CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&InfoNew);
+					auto it = Last->Dir2CursorFile.find(FARString(Info.CurDir));
+					if (it != Last->Dir2CursorFile.end())
+						Pos=FindFile(it->second);
+				}
+			}
 
 			if (Pos!=-1)
 				CurFile=Pos;

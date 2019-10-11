@@ -43,8 +43,8 @@ HostRemote::HostRemote(const std::string &site)
 	}
 }
 
-HostRemote::HostRemote(const std::string &protocol, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &directory)
+HostRemote::HostRemote(const std::string &protocol, const std::string &host,
+	unsigned int port, const std::string &username, const std::string &password)
 	:
 	_login_mode( ( (username.empty() || username == "anonymous") && password.empty()) ? 0 : (password.empty() ? 1 : 2)),
 	_password(password)
@@ -80,9 +80,13 @@ std::shared_ptr<IHost> HostRemote::Clone()
 
 std::string HostRemote::SiteName()
 {
-	if (!_site.empty())
-		return _site;
-
+	if (!_site.empty()) {
+		std::string out;
+		out+= '<';
+		out+= _site;
+		out+= '>';
+		return out;
+	}
 
 	const auto *pi = ProtocolInfoLookup(_identity.protocol.c_str());
 

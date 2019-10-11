@@ -81,11 +81,6 @@ struct IProtocol
 
 #define FILENAME_ENUMERABLE(PSZ) ((PSZ)[0] != 0 && ((PSZ)[0] != '.' || ((PSZ)[1] != 0 && ((PSZ)[1] != '.' || (PSZ)[2] != 0)) ))
 
-bool SplitPathSpecification(const wchar_t *specification,
-	std::wstring &protocol, std::wstring &host, unsigned int &port,
-	std::wstring &username, std::wstring &password, std::wstring &directory);
-
-
 struct ProtocolInfo
 {
 	const char *name;

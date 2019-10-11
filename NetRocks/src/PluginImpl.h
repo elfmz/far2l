@@ -7,21 +7,22 @@
 #include "UI/Defs.h"
 #include "UI/Activities/WhatOnError.h"
 #include "BackgroundTasks.h"
+#include "Location.h"
 
 class PluginImpl
 {
 	friend class AllNetRocks;
 
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH];
-	bool _cur_dir_absolute = false;
+	Location _location;
+
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
 
 	struct StackedDir
 	{
 		std::shared_ptr<IHost> remote;
-		std::wstring cur_dir;
-		bool cur_dir_absolute;
+		Location location;
 	};
 
 	std::deque<StackedDir> _dir_stack;
@@ -30,8 +31,7 @@ class PluginImpl
 	void StackedDirCapture(StackedDir &sd);
 	void StackedDirApply(StackedDir &sd);
 
-	void UpdatePanelTitle();
-	bool ValidateConnection();
+	void UpdatePathInfo();
 
 	std::string CurrentSiteDir(bool with_ending_slash) const;
 	void ByKey_EditSiteConnection(bool create_new);

@@ -10,6 +10,7 @@ src/PluginPanelItems.cpp
 src/PooledStrings.cpp
 src/GetSelectedItems.cpp
 src/BackgroundTasks.cpp
+src/Location.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp
@@ -44,7 +45,7 @@ src/Op/OpXfer.cpp
 src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
 src/Op/OpExecute.cpp
-src/Protocol/SplitPathSpecification.cpp
+src/Protocol/SplitLocationSpecification.cpp
 src/Protocol/Protocol.cpp
 )
 

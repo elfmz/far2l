@@ -185,7 +185,6 @@ class PluginW: public Plugin
 		bool HasAnalyse() { return pAnalyseW!=nullptr; }
 		bool HasGetCustomData()  { return pGetCustomDataW!=nullptr; }
 		bool HasFreeCustomData() { return pFreeCustomDataW!=nullptr; }
-
 		const FARString &GetModuleName() { return m_strModuleName; }
 		const wchar_t *GetCacheName() { return m_strCacheName; }
 		DWORD GetSysID() { return SysID; }

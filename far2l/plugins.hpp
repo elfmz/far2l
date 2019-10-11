@@ -243,9 +243,10 @@ class PluginManager
 		Plugin *Analyse(const AnalyseData *pData);
 
 		HANDLE OpenPlugin(Plugin *pPlugin,int OpenFrom,INT_PTR Item);
-		HANDLE OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPLUGINTYPE Type);
+		HANDLE OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPLUGINTYPE Type, Plugin *pDesiredPlugin = nullptr);
 		HANDLE OpenFindListPlugin(const PluginPanelItem *PanelItem,int ItemsNumber);
 		HANDLE GetRealPluginHandle(HANDLE hPlugin);
+		FARString GetPluginModuleName(HANDLE hPlugin);
 		void ClosePlugin(HANDLE hPlugin);
 		void GetOpenPluginInfo(HANDLE hPlugin, OpenPluginInfo *Info);
 		int GetFindData(HANDLE hPlugin,PluginPanelItem **pPanelItem,int *pItemsNumber,int Silent);

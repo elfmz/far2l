@@ -2,14 +2,24 @@
 #include "Host/HostRemote.h"
 #include "../UI/Activities/SimpleOperationProgress.h"
 
-OpConnect::OpConnect(int op_mode, const std::string &display_name)
-	: OpBase(op_mode, std::make_shared<HostRemote>(display_name), display_name)
+static std::shared_ptr<IHost> CreateRemoteHost(const Location &location)
 {
+	switch (location.server_kind) {
+		case Location::SK_CONNECTION:
+			return std::make_shared<HostRemote>(location.server);
+
+		case Location::SK_URL:
+			return std::make_shared<HostRemote>(location.url.protocol, location.url.host,
+				location.url.port, location.url.username, location.url.password);
+
+		default:
+			abort();
+	}
 }
 
-OpConnect::OpConnect(int op_mode, const std::string &protocol, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &directory)
-	: OpBase(op_mode, std::make_shared<HostRemote>(protocol, host, port, username, password, directory), "")
+
+OpConnect::OpConnect(int op_mode, const Location &location)
+	: OpBase(op_mode, CreateRemoteHost(location), location.server)
 {
 }
 

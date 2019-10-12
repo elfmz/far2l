@@ -9,7 +9,7 @@ void ConnectionsPool::PurgeTimedOutEntries(std::vector<std::shared_ptr<IHost> > 
 		? G.global_config->GetInt("Options", "ConnectionsPoolTimeout", 30) : 30;
 
 	for (auto it = _server_2_pooled_host.begin(); it != _server_2_pooled_host.end(); ) {
-		if (it->second.ts - now >= timeout) {
+		if (now - it->second.ts >= timeout) {
 			purgeds.emplace_back(it->second.host);
 			it = _server_2_pooled_host.erase(it);
 		} else

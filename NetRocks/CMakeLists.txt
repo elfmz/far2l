@@ -11,6 +11,7 @@ src/PooledStrings.cpp
 src/GetSelectedItems.cpp
 src/BackgroundTasks.cpp
 src/Location.cpp
+src/ConnectionsPool.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp

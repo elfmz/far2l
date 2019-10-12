@@ -14,6 +14,7 @@ enum LanguageID
   MEnableDesktopNotifications,
   MEnterExecRemotely,
   MUMaskOverride,
+  MConnPoolExpiration,
   MConnectUsingProxy,
   MEditTSocksConfig,
 

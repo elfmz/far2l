@@ -1,4 +1,5 @@
 #include <vector>
+#include <mutex>
 #include <wchar.h>
 #include "Globals.h"
 #include <utils.h>
@@ -7,6 +8,7 @@
 #include "PluginImpl.h"
 #include "PluginPanelItems.h"
 #include "PooledStrings.h"
+#include "ConnectionsPool.h"
 #include "GetSelectedItems.h"
 #include "Host/HostLocal.h"
 #include "UI/Settings/SiteConnectionEditor.h"
@@ -19,6 +21,8 @@
 #include "Op/OpEnumDirectory.h"
 #include "Op/OpExecute.h"
 #include "Op/OpChangeMode.h"
+
+static ConnectionsPool g_conn_pool;
 
 
 class AllNetRocks
@@ -92,6 +96,7 @@ PluginImpl::PluginImpl(const wchar_t *path)
 
 PluginImpl::~PluginImpl()
 {
+	DismissRemoteHost();
 	g_all_netrocks.Remove(this);
 }
 
@@ -208,7 +213,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 	if (*Dir == L'/') {
 		do { ++Dir; } while (*Dir == L'/');
 		if (*Dir == 0) {
-			_remote.reset();
+			DismissRemoteHost();
 			return TRUE;
 		}
 
@@ -222,7 +227,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 			}
 
 		} else {
-			_remote.reset();
+			DismissRemoteHost();
 			if (!SetDirectoryInternal(server_name.c_str(), OpMode)) {
 				StackedDirApply(sd);
 				return FALSE;
@@ -278,10 +283,12 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 			return FALSE;
 		}
 
-		_remote = OpConnect(0, _location).Do();
-		if (!_remote) {
-			fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): connect failed\n", Dir, OpMode);
-			return FALSE;
+		if (!g_conn_pool.Get(_location.server, _remote)) {
+			_remote = OpConnect(0, _location).Do();
+			if (!_remote) {
+				fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): connect failed\n", Dir, OpMode);
+				return FALSE;
+			}
 		}
 
 		_wea_state = std::make_shared<WhatOnErrorState>();
@@ -311,7 +318,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 
 	if (!PreprocessPathTokens(_location.path.components)) {
 		fprintf(stderr, "NetRocks::SetDirectoryInternal - close connection due to: '%ls'\n", Dir);
-		_remote.reset();
+		DismissRemoteHost();
 		return TRUE;
 	}
 
@@ -532,6 +539,8 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 
 void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 {
+	g_conn_pool.Purge();
+
 	std::string site;
 
 	if (!create_new) {
@@ -685,7 +694,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 		if (GetCommandArgument(cmd) == L"far") {
 			return FALSE;
 		}
-		_remote.reset();
+		DismissRemoteHost();
 		UpdatePathInfo();
 
 	} else if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
@@ -739,4 +748,10 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 	G.info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
 
 	return TRUE;
+}
+
+void PluginImpl::DismissRemoteHost()
+{
+	g_conn_pool.Put(_location.server, _remote);
+	_remote.reset();
 }

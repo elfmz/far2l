@@ -71,7 +71,7 @@ std::shared_ptr<IHost> HostRemote::Clone()
 	cloned->_login_mode = _login_mode;
 	cloned->_password = _password;
 	cloned->_options = _options;
-	cloned->_broken = false;
+	cloned->_peer = 0;
 	cloned->_busy = false;
 	cloned->_cloning = true;
 
@@ -137,11 +137,6 @@ void HostRemote::AssertNotBusy()
 	}
 }
 
-void HostRemote::OnBroken()
-{
-	_broken = true;
-}
-
 void HostRemote::CheckReady()
 {
 	AssertNotBusy();
@@ -151,13 +146,22 @@ void HostRemote::CheckReady()
 		ReInitialize();
 	}
 
-	if (_broken) {
+	if (_peer == 0) {
 		throw std::runtime_error("IPC broken");
 	}
 }
 
+void HostRemote::OnBroken()
+{
+	IPCRecver::SetFD(-1);
+	IPCSender::SetFD(-1);
+	_peer = 0;
+}
+
 void HostRemote::ReInitialize() throw (std::runtime_error)
 {
+	OnBroken();
+
 	AssertNotBusy();
 
 	const auto *pi = ProtocolInfoLookup(_identity.protocol.c_str());
@@ -220,16 +224,18 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	IPCSender::SetFD(master2broker[1]);
 
 	uint32_t ipc_ver_magic = 0;
-	_peer = 0;
+
 	try {
 		RecvPOD(ipc_ver_magic);
 		RecvPOD(_peer);
 
 	} catch (std::exception &) {
+		OnBroken();
 		throw std::runtime_error(StrPrintf("Failed to start '%s' '%s' '%s'", broker_path.c_str(), arg1, arg2));
 	}
 
 	if (ipc_ver_magic != IPC_VERSION_MAGIC) {
+		OnBroken();
 		throw std::runtime_error(StrPrintf("Wrong version of '%s' '%s' '%s'", broker_path.c_str(), arg1, arg2));
 	}
 
@@ -241,6 +247,7 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 			locker.unlock();
 			if (!InteractiveLogin(SiteName(), auth_failures, tmp_username, tmp_password)) {
 				SendString(std::string());
+				OnBroken();
 				throw AbortError();
 			}
 			locker.lock();
@@ -277,8 +284,10 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 
 		switch (status) {
 			case IPC_PI_SERVER_IDENTITY_CHANGED:
-				if (!OnServerIdentityChanged(info)) 
+				if (!OnServerIdentityChanged(info))  {
+					OnBroken();
 					throw ProtocolError("Server identity mismatch", info.c_str());
+				}
 				if (_login_mode == 1) {
 					// on next reinitialization try to autouse same password that was already entered
 					_login_mode = 2;
@@ -287,24 +296,28 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 				break;
 
 			case IPC_PI_AUTHORIZATION_FAILED:
-				if (auth_failures >= 3)
+				if (auth_failures >= 3) {
+					OnBroken();
 					throw ProtocolError("Authorization failed", info.c_str());
+				}
 
 				++auth_failures;
 				_login_mode = 1;
 				break;
 
 			case IPC_PI_PROTOCOL_ERROR:
+				OnBroken();
 				throw ProtocolError(info);
 
 			case IPC_PI_GENERIC_ERROR:
+				OnBroken();
 				throw std::runtime_error(info);
 
 			default:
+				OnBroken();
 				throw IPCError("Unexpected protocol init status", status);
 		}
 	}
-	_broken = false;
 }
 
 bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
@@ -670,4 +683,9 @@ void HostRemote::ExecuteCommand(const std::string &working_dir, const std::strin
 	SendString(command_line);
 	SendString(fifo);
 	RecvReply(IPC_EXECUTE_COMMAND);
+}
+
+bool HostRemote::Alive()
+{
+	return _peer != 0;
 }

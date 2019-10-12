@@ -752,6 +752,8 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 
 void PluginImpl::DismissRemoteHost()
 {
-	g_conn_pool.Put(_location.server, _remote);
+	if (_remote && _remote->Alive()) {
+		g_conn_pool.Put(_location.server, _remote);
+	}
 	_remote.reset();
 }

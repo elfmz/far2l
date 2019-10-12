@@ -43,6 +43,8 @@ class PluginImpl
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
 		int items_count, XferKind kind, XferDirection direction);
 	int SetDirectoryInternal(const wchar_t *Dir, int OpMode);
+
+	void DismissRemoteHost();
 public:
 	PluginImpl(const wchar_t *path = nullptr);
 	virtual ~PluginImpl();

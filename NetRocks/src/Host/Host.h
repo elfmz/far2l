@@ -20,4 +20,6 @@ struct IHost : IProtocol
 	virtual std::shared_ptr<IHost> Clone() = 0; // MT-safe, creates clone of this host that will init automatically with same creds
 	virtual void ReInitialize() throw (std::runtime_error) = 0;
 	virtual void Abort() = 0; // MT-safe, forcefully aborts connection and any outstanding operation
+
+	virtual bool Alive() = 0; // MT-safe, returns true if connection looks alive
 };

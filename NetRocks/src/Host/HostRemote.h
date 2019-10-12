@@ -22,7 +22,6 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 	std::string _password;
 	std::string _options;
 
-	bool _broken = true;
 	bool _busy = false;
 	bool _cloning = false;
 	pid_t _peer = 0;
@@ -35,8 +34,8 @@ protected:
 	void BusySet();
 	void BusyReset();
 	void AssertNotBusy();
-	void OnBroken();
 	void CheckReady();
+	void OnBroken();
 
 public:
 	inline HostRemote() {}
@@ -76,4 +75,6 @@ public:
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos = 0) throw (std::runtime_error);
 
 	virtual void ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error);
+
+	virtual bool Alive();
 };

@@ -358,3 +358,7 @@ std::shared_ptr<IFileWriter> HostLocal::FilePut(const std::string &path, mode_t 
 	return std::make_shared<HostLocalFileIO>(path, resume_pos, (resume_pos == 0) ? O_CREAT | O_TRUNC | O_RDWR : O_RDWR, mode );
 }
 
+bool HostLocal::Alive()
+{
+	return true;
+}

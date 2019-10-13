@@ -7,7 +7,7 @@ void ConnectionsPool::Put(const std::string &server, std::shared_ptr<IHost> &hos
 	std::vector<std::shared_ptr<IHost> > purgeds; // destroy hosts out of lock
 	std::lock_guard<std::mutex> locker(_mutex);
 
-	if (!server.empty() && host) {
+	if (!server.empty() && host && host->Alive()) {
 		auto &pp = _server_2_pooled_host[server];
 		if (pp.host) {
 			purgeds.emplace_back(pp.host);

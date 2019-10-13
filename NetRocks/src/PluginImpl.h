@@ -49,6 +49,8 @@ public:
 	PluginImpl(const wchar_t *path = nullptr);
 	virtual ~PluginImpl();
 
+	static void sPurgeConnectionsPool();
+
 	int GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode);
 	void FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber);
 	int SetDirectory(const wchar_t *Dir, int OpMode);

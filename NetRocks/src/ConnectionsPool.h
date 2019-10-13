@@ -17,12 +17,13 @@ class ConnectionsPool
 	std::map<std::string, PooledHost> _server_2_pooled_host;
 	std::mutex _mutex;
 
-	void PurgeTimedOutEntries(std::vector<std::shared_ptr<IHost> > &purgeds);
+	void PurgeExpiredInternal(std::vector<std::shared_ptr<IHost> > &purgeds);
 
 public:
 
 	void Put(const std::string &server, std::shared_ptr<IHost> &host);
 	bool Get(const std::string &server, std::shared_ptr<IHost> &host);
 
-	void Purge();
+	void PurgeExpired();
+	void PurgeAll();
 };

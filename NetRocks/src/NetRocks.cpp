@@ -167,6 +167,8 @@ SHAREDSYMBOL void WINAPI _export ExitFARW()
 			usleep(100000);
 		}
 	}
+
+	PluginImpl::sPurgeConnectionsPool();
 }
 
 SHAREDSYMBOL int WINAPI _export MayExitFARW()

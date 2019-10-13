@@ -77,6 +77,8 @@ PluginImpl::PluginImpl(const wchar_t *path)
 	_cur_dir[0] = _panel_title[0] = 0;
 	_local = std::make_shared<HostLocal>();
 
+	g_conn_pool.PurgeExpired();
+
 	if (path && *path) {
 		if (!_location.FromString(Wide2MB(path))) {
 			throw std::runtime_error(G.GetMsgMB(MWrongPath));
@@ -98,6 +100,7 @@ PluginImpl::~PluginImpl()
 {
 	DismissRemoteHost();
 	g_all_netrocks.Remove(this);
+	g_conn_pool.PurgeExpired();
 }
 
 void PluginImpl::UpdatePathInfo()
@@ -527,6 +530,10 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 		return TRUE;
 	}
 
+	if (Key == 'R' && ControlState == PKF_CONTROL && !_remote) {
+		g_conn_pool.PurgeAll();
+	}
+
 /*
 	if (Key == VK_F7) {
 		MakeDirectory();
@@ -539,7 +546,7 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 
 void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 {
-	g_conn_pool.Purge();
+	g_conn_pool.PurgeAll();
 
 	std::string site;
 

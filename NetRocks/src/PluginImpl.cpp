@@ -204,6 +204,7 @@ static bool PreprocessPathTokens(std::vector<std::string> &components)
 
 int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 {
+	fprintf(stderr, "PluginImpl::SetDirectory('%ls', %d)\n", Dir, OpMode);
 	if (!_remote && wcscmp(Dir, G.GetMsgWide(MCreateSiteConnection)) == 0) {
 		ByKey_EditSiteConnection(true);
 		UpdatePathInfo();
@@ -212,32 +213,16 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 	StackedDir sd;
 	StackedDirCapture(sd);
+	bool dismiss_captured_host = false;
 
 	if (*Dir == L'/') {
+		_remote.reset();
+		dismiss_captured_host = true;
+
 		do { ++Dir; } while (*Dir == L'/');
 		if (*Dir == 0) {
-			DismissRemoteHost();
 			return TRUE;
 		}
-
-		const wchar_t *slash = wcschr(Dir, L'/');
-		std::wstring server_name(Dir, slash ? slash - Dir : wcslen(Dir));
-
-		if (_remote && _location.server == StrWide2MB(server_name)) {
-			if (!SetDirectoryInternal(L"~", OpMode)) {
-				StackedDirApply(sd);
-				return FALSE;
-			}
-
-		} else {
-			DismissRemoteHost();
-			if (!SetDirectoryInternal(server_name.c_str(), OpMode)) {
-				StackedDirApply(sd);
-				return FALSE;
-			}
-		}
-
-		for (Dir+= server_name.size(); *Dir == L'/'; ++Dir);
 	}
 
 	if (*Dir && !SetDirectoryInternal(Dir, OpMode)) {
@@ -245,6 +230,9 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 		return FALSE;
 	}
 
+	if (dismiss_captured_host) {
+		DismissRemoteHost(sd.location.server, sd.remote);
+	}
 	UpdatePathInfo();
 	return TRUE;
 }
@@ -757,10 +745,15 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 	return TRUE;
 }
 
+void PluginImpl::DismissRemoteHost(const std::string &server, std::shared_ptr<IHost> &host)
+{
+	g_conn_pool.Put(server, host);
+	host.reset();
+}
+
 void PluginImpl::DismissRemoteHost()
 {
-	g_conn_pool.Put(_location.server, _remote);
-	_remote.reset();
+	DismissRemoteHost(_location.server, _remote);
 }
 
 void PluginImpl::sPurgeConnectionsPool()

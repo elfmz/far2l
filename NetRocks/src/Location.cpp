@@ -69,12 +69,19 @@ bool Location::FromString(const std::string &str)
 	}
 
 	if (directory.empty()) {
-		path.absolute = false;
+		path.absolute = !str.empty() && str[str.size() - 1] == '/';
 
 	} else {
 		path.absolute = directory[0] == '/';
 		StrExplode(path.components, directory, "/");
 	}
+
+#if 0
+	fprintf(stderr,
+		"Location::FromString('%s'): server_kind=%d server='%s' directory='%s', result='%s'\n",
+		str.c_str(), server_kind, server.c_str(), directory.c_str(), ToString(true).c_str());
+#endif
+
 	return true;
 }
 

@@ -44,6 +44,7 @@ class PluginImpl
 		int items_count, XferKind kind, XferDirection direction);
 	int SetDirectoryInternal(const wchar_t *Dir, int OpMode);
 
+	void DismissRemoteHost(const std::string &server, std::shared_ptr<IHost> &host);
 	void DismissRemoteHost();
 public:
 	PluginImpl(const wchar_t *path = nullptr);

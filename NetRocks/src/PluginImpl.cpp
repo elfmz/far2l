@@ -213,11 +213,13 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 	StackedDir sd;
 	StackedDirCapture(sd);
-	bool dismiss_captured_host = false;
+	bool sd_apply_host_clone = false;
 
 	if (*Dir == L'/') {
-		_remote.reset();
-		dismiss_captured_host = true;
+		DismissRemoteHost();
+		// host is owned by pool now and may be re-owned by other instance from parallel thread,
+		// so in case will need to return to it - use its clone
+		sd_apply_host_clone = true;
 
 		do { ++Dir; } while (*Dir == L'/');
 		if (*Dir == 0) {
@@ -226,13 +228,10 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 	}
 
 	if (*Dir && !SetDirectoryInternal(Dir, OpMode)) {
-		StackedDirApply(sd);
+		StackedDirApply(sd, sd_apply_host_clone);
 		return FALSE;
 	}
 
-	if (dismiss_captured_host) {
-		DismissRemoteHost(sd.location.server, sd.remote);
-	}
 	UpdatePathInfo();
 	return TRUE;
 }
@@ -669,10 +668,10 @@ void PluginImpl::StackedDirCapture(StackedDir &sd)
 	sd.location = _location;
 }
 
-void PluginImpl::StackedDirApply(StackedDir &sd)
+void PluginImpl::StackedDirApply(StackedDir &sd, bool force_host_clone)
 {
-	if (sd.remote.get() != _remote.get()) {
-		if (sd.remote && sd.remote.use_count() > 1) {
+	if (sd.remote.get() != _remote.get() || force_host_clone) {
+		if (sd.remote && (sd.remote.use_count() > 1 || force_host_clone)) {
 			// original connection could be used for background download etc
 			_remote = sd.remote->Clone();
 		} else {
@@ -745,15 +744,10 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 	return TRUE;
 }
 
-void PluginImpl::DismissRemoteHost(const std::string &server, std::shared_ptr<IHost> &host)
-{
-	g_conn_pool.Put(server, host);
-	host.reset();
-}
-
 void PluginImpl::DismissRemoteHost()
 {
-	DismissRemoteHost(_location.server, _remote);
+	g_conn_pool.Put(_location.server, _remote);
+	_remote.reset();
 }
 
 void PluginImpl::sPurgeConnectionsPool()

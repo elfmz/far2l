@@ -3,10 +3,13 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <condition_variable>
 #include <mutex>
 #include "Host/Host.h"
 
-class ConnectionsPool
+#include <Threaded.h>
+
+class ConnectionsPool : Threaded
 {
 	struct PooledHost
 	{
@@ -16,14 +19,21 @@ class ConnectionsPool
 
 	std::map<std::string, PooledHost> _server_2_pooled_host;
 	std::mutex _mutex;
+	std::condition_variable _cond;
 
-	void PurgeExpiredInternal(std::vector<std::shared_ptr<IHost> > &purgeds);
+	void UpdateThreadState();
+	void PurgeExpired(std::vector<std::shared_ptr<IHost> > &purgeds);
+	time_t EstimateTimeToSleep();
+
+protected:
+	virtual void *ThreadProc();
 
 public:
+	~ConnectionsPool();
 
 	void Put(const std::string &server, std::shared_ptr<IHost> &host);
-	bool Get(const std::string &server, std::shared_ptr<IHost> &host);
+	std::shared_ptr<IHost> Get(const std::string &server);
 
-	void PurgeExpired();
 	void PurgeAll();
+	void OnGlobalSettingsChanged();
 };

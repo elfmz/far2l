@@ -22,7 +22,7 @@
 #include "Op/OpExecute.h"
 #include "Op/OpChangeMode.h"
 
-static ConnectionsPool g_conn_pool;
+static std::unique_ptr<ConnectionsPool> g_conn_pool;
 
 
 class AllNetRocks
@@ -77,8 +77,6 @@ PluginImpl::PluginImpl(const wchar_t *path)
 	_cur_dir[0] = _panel_title[0] = 0;
 	_local = std::make_shared<HostLocal>();
 
-	g_conn_pool.PurgeExpired();
-
 	if (path && *path) {
 		if (!_location.FromString(Wide2MB(path))) {
 			throw std::runtime_error(G.GetMsgMB(MWrongPath));
@@ -100,7 +98,6 @@ PluginImpl::~PluginImpl()
 {
 	DismissRemoteHost();
 	g_all_netrocks.Remove(this);
-	g_conn_pool.PurgeExpired();
 }
 
 void PluginImpl::UpdatePathInfo()
@@ -213,13 +210,9 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 	StackedDir sd;
 	StackedDirCapture(sd);
-	bool sd_apply_host_clone = false;
 
 	if (*Dir == L'/') {
 		DismissRemoteHost();
-		// host is owned by pool now and may be re-owned by other instance from parallel thread,
-		// so in case will need to return to it - use its clone
-		sd_apply_host_clone = true;
 
 		do { ++Dir; } while (*Dir == L'/');
 		if (*Dir == 0) {
@@ -228,7 +221,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 	}
 
 	if (*Dir && !SetDirectoryInternal(Dir, OpMode)) {
-		StackedDirApply(sd, sd_apply_host_clone);
+		StackedDirApply(sd);
 		return FALSE;
 	}
 
@@ -273,7 +266,11 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 			return FALSE;
 		}
 
-		if (!g_conn_pool.Get(_location.server, _remote)) {
+		if (g_conn_pool) {
+			_remote = g_conn_pool->Get(_location.server);
+		}
+
+		if (!_remote) {
 			_remote = OpConnect(0, _location).Do();
 			if (!_remote) {
 				fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): connect failed\n", Dir, OpMode);
@@ -491,8 +488,8 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
-	if (Key == VK_RETURN && _remote && G.global_config
-	 && G.global_config->GetInt("Options", "EnterExecRemotely", 1) != 0) {
+	if (Key == VK_RETURN && _remote
+	 && G.GetGlobalConfigBool("EnterExecRemotely", true)) {
 		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
 	}
 
@@ -517,8 +514,8 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 		return TRUE;
 	}
 
-	if (Key == 'R' && ControlState == PKF_CONTROL && !_remote) {
-		g_conn_pool.PurgeAll();
+	if (Key == 'R' && ControlState == PKF_CONTROL && !_remote && g_conn_pool) {
+		g_conn_pool->PurgeAll();
 	}
 
 /*
@@ -533,7 +530,9 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 
 void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 {
-	g_conn_pool.PurgeAll();
+	if (g_conn_pool) {
+		g_conn_pool->PurgeAll();
+	}
 
 	std::string site;
 
@@ -668,10 +667,10 @@ void PluginImpl::StackedDirCapture(StackedDir &sd)
 	sd.location = _location;
 }
 
-void PluginImpl::StackedDirApply(StackedDir &sd, bool force_host_clone)
+void PluginImpl::StackedDirApply(StackedDir &sd)
 {
-	if (sd.remote.get() != _remote.get() || force_host_clone) {
-		if (sd.remote && (sd.remote.use_count() > 1 || force_host_clone)) {
+	if (sd.remote.get() != _remote.get()) {
+		if (sd.remote && sd.remote.use_count() > 1) {
 			// original connection could be used for background download etc
 			_remote = sd.remote->Clone();
 		} else {
@@ -746,11 +745,20 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 
 void PluginImpl::DismissRemoteHost()
 {
-	g_conn_pool.Put(_location.server, _remote);
+	if (!g_conn_pool)
+		g_conn_pool.reset(new ConnectionsPool);
+
+	g_conn_pool->Put(_location.server, _remote);
 	_remote.reset();
 }
 
-void PluginImpl::sPurgeConnectionsPool()
+void PluginImpl::sOnExiting()
 {
-	g_conn_pool.PurgeAll();
+	g_conn_pool.reset();
+}
+
+void PluginImpl::sOnGlobalSettingsChanged()
+{
+	if (g_conn_pool)
+		g_conn_pool->OnGlobalSettingsChanged();
 }

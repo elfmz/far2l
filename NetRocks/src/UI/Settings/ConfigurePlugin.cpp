@@ -127,19 +127,19 @@ public:
 
 	void Configure()
 	{
-		SetCheckedDialogControl( _i_enable_desktop_notifications, G.global_config->GetInt("Options", "EnableDesktopNotifications", 1) != 0);
-		SetCheckedDialogControl( _i_enter_exec_remotely, G.global_config->GetInt("Options", "EnterExecRemotely", 1) != 0);
-		SetCheckedDialogControl( _i_umask_override, G.global_config->GetInt("Options", "UMaskOverride", 0) != 0);
-		LongLongToDialogControl( _i_conn_pool_expiration, G.global_config->GetInt("Options", "ConnectionsPoolExpiration", 30));
-		SetCheckedDialogControl( _i_use_proxy, G.global_config->GetInt("Options", "UseProxy", 0) != 0);
+		SetCheckedDialogControl( _i_enable_desktop_notifications, G.GetGlobalConfigBool("EnableDesktopNotifications", true) );
+		SetCheckedDialogControl( _i_enter_exec_remotely, G.GetGlobalConfigBool("EnterExecRemotely", true) );
+		SetCheckedDialogControl( _i_umask_override, G.GetGlobalConfigBool("UMaskOverride", false) );
+		LongLongToDialogControl( _i_conn_pool_expiration, G.GetGlobalConfigInt("ConnectionsPoolExpiration", 30) );
+		SetCheckedDialogControl( _i_use_proxy, G.GetGlobalConfigBool("UseProxy", false) );
 
 		if (Show(L"PluginOptions", 6, 2) == _i_ok) {
-			G.global_config->PutInt("Options", "EnableDesktopNotifications", IsCheckedDialogControl(_i_enable_desktop_notifications) ? 1 : 0);
-			G.global_config->PutInt("Options", "EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) ? 1 : 0);
-			G.global_config->PutInt("Options", "UMaskOverride", IsCheckedDialogControl(_i_umask_override) ? 1 : 0);
-			G.global_config->PutInt("Options", "ConnectionsPoolExpiration", LongLongFromDialogControl( _i_conn_pool_expiration));
-			G.global_config->PutInt("Options", "UseProxy", IsCheckedDialogControl(_i_use_proxy) ? 1 : 0);
-			G.global_config->Save();
+			auto gcw = G.GetGlobalConfigWriter();
+			gcw.PutBool("EnableDesktopNotifications", IsCheckedDialogControl(_i_enable_desktop_notifications) );
+			gcw.PutBool("EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) );
+			gcw.PutBool("UMaskOverride", IsCheckedDialogControl(_i_umask_override) );
+			gcw.PutInt("ConnectionsPoolExpiration", LongLongFromDialogControl( _i_conn_pool_expiration) );
+			gcw.PutBool("UseProxy", IsCheckedDialogControl(_i_use_proxy) );
 		}
 	}
 };

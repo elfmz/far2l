@@ -168,7 +168,7 @@ SHAREDSYMBOL void WINAPI _export ExitFARW()
 		}
 	}
 
-	PluginImpl::sPurgeConnectionsPool();
+	PluginImpl::sOnExiting();
 }
 
 SHAREDSYMBOL int WINAPI _export MayExitFARW()
@@ -231,6 +231,7 @@ SHAREDSYMBOL int WINAPI _export ConfigureW(int ItemNumber)
 	switch (ItemNumber) {
 		case 0: {
 			ConfigurePluginGlobalOptions();
+			PluginImpl::sOnGlobalSettingsChanged();
 		} break;
 
 		case 1: {

@@ -29,7 +29,7 @@ class PluginImpl
 	std::shared_ptr<WhatOnErrorState> _wea_state = std::make_shared<WhatOnErrorState>();
 
 	void StackedDirCapture(StackedDir &sd);
-	void StackedDirApply(StackedDir &sd, bool force_host_clone = false);
+	void StackedDirApply(StackedDir &sd);
 
 	void UpdatePathInfo();
 
@@ -49,7 +49,8 @@ public:
 	PluginImpl(const wchar_t *path = nullptr);
 	virtual ~PluginImpl();
 
-	static void sPurgeConnectionsPool();
+	static void sOnExiting();
+	static void sOnGlobalSettingsChanged();
 
 	int GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode);
 	void FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber);

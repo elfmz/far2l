@@ -197,7 +197,7 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	itoa(broker2master[1], arg2, 10);
 
 	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n", broker_path.c_str(), arg1, arg2);
-	const bool use_tsocks = G.global_config->GetInt("Options", "UseProxy", 0) != 0;
+	const bool use_tsocks = G.GetGlobalConfigBool("UseProxy", false);
 	pid_t pid = fork();
 	if (pid == 0) {
 		if (use_tsocks) {

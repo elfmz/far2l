@@ -6,7 +6,7 @@
 
 Threaded::~Threaded()
 {
-	std::unique_lock<std::mutex> lock(_trd_mtx);
+	std::lock_guard<std::mutex> lock(_trd_mtx);
 	if (!_trd_exited || !_trd_joined) {
 		fprintf(stderr, "~Threaded: still busy\n");
 		abort();
@@ -18,7 +18,7 @@ void *Threaded::sThreadProc(void *p)
 	Threaded *it = (Threaded *)p;
 	void *result = it->ThreadProc();
 
-	std::unique_lock<std::mutex> lock(it->_trd_mtx);
+	std::lock_guard<std::mutex> lock(it->_trd_mtx);
 	it->_trd_exited = true;
 	it->_trd_cond.notify_all();
 
@@ -27,6 +27,16 @@ void *Threaded::sThreadProc(void *p)
 
 bool Threaded::StartThread()
 {
+	std::lock_guard<std::mutex> lock(_trd_mtx);
+	if (!_trd_joined) {
+		if (!_trd_exited) {
+			return false;
+		}
+
+		pthread_join(_trd, &_trd_result);
+		_trd = 0;
+	}
+
 	_trd_joined = _trd_exited = false;
 	if (pthread_create(&_trd, NULL, &sThreadProc, this) != 0) {
 		_trd_joined = _trd_exited = true;
@@ -45,6 +55,7 @@ bool Threaded::WaitThread(unsigned int msec)
 			if (!_trd_joined) {
 				_trd_joined = true;
 				pthread_join(_trd, &_trd_result);
+				_trd = 0;
 			}
 			return true;
 		}

@@ -1,8 +1,45 @@
+#include <utility>
 #include "Globals.h"
 #include "PooledStrings.h"
 #include <utils.h>
 
 struct Globals G;
+
+//
+
+GlobalConfigWriter::GlobalConfigWriter(std::unique_ptr<KeyFileHelper> &config, std::mutex &mutex)
+	:
+	_config(config),
+	_lock(mutex)
+{
+}
+
+GlobalConfigWriter::GlobalConfigWriter(GlobalConfigWriter&& src) noexcept
+	:
+	_config(src._config),
+	_lock(std::move(src._lock))
+{
+}
+
+GlobalConfigWriter::~GlobalConfigWriter()
+{
+	if (_config)
+		_config->Save();
+}
+
+void GlobalConfigWriter::PutInt(const char *name, int value)
+{
+	if (_config)
+		_config->PutInt("Options", name, value);
+}
+
+void GlobalConfigWriter::PutBool(const char *name, bool value)
+{
+	PutInt(name, value ? 1 : 0);
+}
+
+
+//
 
 void Globals::Startup(const struct PluginStartupInfo *Info)
 {
@@ -10,7 +47,7 @@ void Globals::Startup(const struct PluginStartupInfo *Info)
 		info = *Info;
 		fsf = *(Info->FSF);
 		info.FSF = &fsf;
-		global_config.reset(new KeyFileHelper(InMyConfig("NetRocks/options.cfg").c_str()));
+		_global_config.reset(new KeyFileHelper(InMyConfig("NetRocks/options.cfg").c_str()));
 		tsocks_config = InMyConfig("NetRocks/tsocks.cfg");
 		_started = true;
 	}
@@ -30,4 +67,26 @@ const char *Globals::GetMsgMB(int id)
 
 	auto ir = _msg_mb.emplace(id, Wide2MB(info.GetMsg(info.ModuleNumber, id)));
 	return ir.first->second.c_str();
+}
+
+//
+
+GlobalConfigWriter Globals::GetGlobalConfigWriter()
+{
+	return GlobalConfigWriter(_global_config, _global_config_mtx);
+}
+
+int Globals::GetGlobalConfigInt(const char *name, int def)
+{
+	std::lock_guard<std::mutex> locker(_global_config_mtx);
+
+	if (!_global_config)
+		return def;
+
+	return _global_config->GetInt("Options", name, def);
+}
+
+bool Globals::GetGlobalConfigBool(const char *name, bool def)
+{
+	return GetGlobalConfigInt(name, def ? 1 : 0) != 0;
 }

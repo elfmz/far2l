@@ -165,7 +165,7 @@ void OpExecute::Do()
 	_host->ExecuteCommand(_dir, _command, _fifo.FileName());
 	int r = G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo.FileName()).c_str(), EF_NOCMDPRINT);
 
-	if (G.global_config->GetInt("Options", "EnableDesktopNotifications", 1) != 0) {
+	if (G.GetGlobalConfigBool("EnableDesktopNotifications", true)) {
 		std::wstring display_action = G.GetMsgWide((r == 0) ? MNotificationSuccess : MNotificationFailed);
 		size_t p = display_action.find(L"()");
 		if (p != std::wstring::npos)

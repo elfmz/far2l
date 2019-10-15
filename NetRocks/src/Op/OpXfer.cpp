@@ -27,7 +27,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_direction(direction),
 	_io_buf(BUFFER_SIZE_INITIAL, BUFFER_SIZE_GRANULARITY, BUFFER_SIZE_LIMIT)
 {
-	_umask_override = G.global_config->GetInt("Options", "UMaskOverride", 0) != 0;
+	_umask_override = G.GetGlobalConfigBool("UMaskOverride", false);
 
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";

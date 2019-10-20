@@ -41,7 +41,7 @@ class CallBackStack;
 
 #define HelpBeginLink L'<'
 #define HelpEndLink L'>'
-#define HelpFormatLink L"<%s\\>%s"
+#define HelpFormatLink L"<%ls/>%ls"
 
 #define HELPMODE_CLICKOUTSIDE  0x20000000 // было нажатие мыши вне хелпа?
 

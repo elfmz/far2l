@@ -6,7 +6,7 @@ $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
- This plugin adds SFTP connectivity to far2l with possibility to add other protocols.
+ This plugin adds SFTP/SCP/NFS/SMB/WebDAV connectivity to far2l with possibility to add other protocols.
 
  To access this module open plugins menu (F11) or use disks (Alt+F1/Alt+F2) menu. Then choose the "NetRocks". See further topics for more detail.
 
@@ -14,7 +14,7 @@ $^#Contents
 
    ~Plugin menu~@DisksMenu@
 
-   ~Plugin configuration~@CfgMenu@
+   ~Plugin configuration~@PluginOptions@
 
    ~Site connection editor~@SiteConnectionEditor@
 
@@ -31,14 +31,19 @@ $^#Plugin menu#
  
  ~Contents~@Contents@
 
-@CfgMenu
+@PluginOptions
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
 $^#Configuration menu#
 
- Currently there're no plugin-wide configurations available and configiration menu opens background tasks list.
+ Here you can change some plugin-wide options:
+ #Enable desktop notifications# this options controls if NetRocks will use desktop environment notifications on operation completions or errors. Note that behaviour of this notifications partially controlled by FAR.
+ #<ENTER> to execute files remotely when possible# if enabled then pressing <ENTER> on remote executable file will execute it remotely instead of download and run locally. Note that this option only works for protocols that support it (like SFTP/SCP) and doesnt affect non-executable files, like documents, - they will be still downloaded and opened locally.
+ #Copy attributes that override umask# enable this options if want to have copied files modes to be exactly same as on source files, even in target system umask prevents some mode bits from being set.
+ #Connections pool expiration# when exiting from some remote FS navigation NetRocks will keep actuall connection active for specified amount of time and if same server connection will be established before expiration - it will use preserved connection instead of establishing new.
+ #Connect using proxy# enable this option to enable protocol-invariant proxy server tunneling. This options uses tsocks library and thus can be enabled only if it installed. Also you will need to edit its configuration file to adjust it to your needs.
  
  ~Contents~@Contents@
 
@@ -50,7 +55,7 @@ $^#Contents
 $^#Site connection editor#
 
  This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like hostname and port to connect to, login mode and username and password if needed. Also by clicking on Protocol options button you can modify some protocol-specific settings.
- ~SFTP:// protocol specific options~@ProtocolOptionsSFTP@
+ ~SFTP:// and SCP:// protocols specific options~@ProtocolOptionsSFTPSCP@
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~NFS:// protocol specific options~@ProtocolOptionsNFS@
  ~FILE:// protocol specific options~@ProtocolOptionsFile@
@@ -71,17 +76,19 @@ $^#SMB:// protocol specific options#
 
  ~Contents~@Contents@
 
-@ProtocolOptionsSFTP
+@ProtocolOptionsSFTPSCP
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
-$^#SFTP:// protocol specific options#
+$^#SFTP:// SCP:// protocols specific options#
 
- This dialog allows you to modify "sftp://" protocol specific settings. Here you can enable authentification by key file, change maximum IO block size or enable TCP_NODELAY socket option.
+ This dialog allows you to modify "sftp://" and "scp://" protocols specific settings. Here you can enable authentification by key file, change maximum IO block size or enable TCP_NODELAY socket option.
  #Private key file:# can be used for SSH server instead of 'usual' username:password authentification. Note that in such case password field in the main connection settings is actually 'passphrase' used to access private key file.
  #IO block size:# increasing this value usualy gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
  #TCP_NODELAY socket option:# also can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
+ #TCP_QUICKACK socket option:# if enabled, TCP ack packets are sent immediately, rather than delayed that may improve receive performance.
+ #Custom subsystem request/exec# here you can replace default SFTP subsystem handler with specific command, usually its used to get superuser access from sudo'er acctount by using command line like [sudo /usr/lib/openssh/sftp-server]
 
  ~Contents~@Contents@
 

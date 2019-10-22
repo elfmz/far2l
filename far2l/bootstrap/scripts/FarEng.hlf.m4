@@ -33,6 +33,8 @@ $^#Copyright (C) 2000-2016 FAR Group
             ~Commands menu~@CmdMenu@
             ~Options menu~@OptMenu@
 
+   ~Terminal~@Terminal@
+
    ~Find file~@FindFile@
    ~History~@History@
    ~Find folder~@FindFolder@
@@ -480,6 +482,8 @@ the block in the command line also when the panels are on.
 
   5. ^<wrap>For local drives, the commands to insert the network (UNC) name of a file object
 insert the local name of the file with ~symbolic links~@HardSymLink@ expanded.
+
+  6. ^<wrap>About hotkeys and other tricks of built-in terminal emulator: ~read here~@Terminal@
 
 
 @FuncCmd
@@ -1305,6 +1309,28 @@ $ #Menus: options menu#
    #Save setup#            Save current configuration, colors and
                          screen layout.
 
+
+@Terminal
+$ #Terminal
+    FAR2L contains built-in pseudoterminal emulator, allowing to execute command line applications see their output and control functionality.
+    In order to keep usual shell experience far2l first launches default supported user's shell in interactive mode and sends it commands typed
+    in its own command line.
+    #exit command behaviour:# typing 'exit' command will cause back shell to exit but will not close whole far2l application to close and next
+    command execution request will spawn new back shell instance. This allows to 'reset' shell environment from exported variables and other settings.
+    In case you want to exit far2l by typing command: type 'exit far' pseudo-command - it will be recognized by far2l as whole app close request.
+    #Hotkeys and scrolling during running command:# you can use Ctrl+Shift+F3 to open history of output in built-in viewer or
+    Ctrl+Shift+F4 to open it in built-in editor. This allows efficient commands output investigation, including scrolling possibility, using
+    built-in viewer and editor capabilities. You can also open history viewer by scrolling mouse wheel up, following scroll til bottom of output
+    - will hide that viewer. Ctrl+C, Ctrl+Z hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
+    it and everything in shell by pressing Ctrl+Alt+C. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
+    or lost of unsaved data in killed applications.
+    #Hotkeys and scrolling when NOT running command:# while Ctrl+Shift+F3/F4 still functioning in such mode you can also use simple F3/F4 to get history
+    opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen.
+    #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in GUI or TTY backends modes. While TTY backend may function in usual
+    terminal like xterm or SSH session but it may also run inside of another far2l terminal gaining capabilities inachievable under 'usual' terminals,
+    like live full keyboard keys recognition with with keydown/up reaction. Also 'host' far2l may provide shared clipboard access and desktop notifications.
+    You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
+    like NetRocks SFTP/SCP protocols to execute remote commands.
 
 @ConfirmDlg
 $ #Confirmations#

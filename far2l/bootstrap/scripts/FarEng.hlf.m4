@@ -145,6 +145,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 $ # FAR: command line switches#
   The following switches may be used in the command line:
 
+  #--tty#
+  Runs far2l with TTY backend instead of autodetecting GUI/TTY mode. While GUI
+backed is preferred from user experience point of view, sometimes it may be neccessary
+to avoid attempt to use GUI mode.
+
+  #--notty#
+  Don't fallback to TTY backend if GUI backend was failed to initialize.
+
+  #--nodetect#
+  By default far2l tries to detect if it runs inside of terminal of another far2l and in such case
+it uses TTY backend with far2l extensions. This switch disables this functionality, preventing
+far2l terminal detection.
+
+  #--mortal#
+  This argument applies only to far2l that runs with TTY backend. By default when terminal closed
+TTY-based far2l continues to work 'in background' and next start of another TTY-backend far2l will
+suggest to activate such 'backgrounded' far2l instance instead of spawning new. This command line
+switch completely disables this functionality, so closing terminal will close TTY-backed far2 that
+runs inside.
+
   #/a#
   Disable display of characters with codes 0 - 31 and 255. May be useful when
 executing FAR under telnet.
@@ -156,9 +176,6 @@ executing FAR under telnet.
   Edit the specified file. After /e you may optionally specify editor start line
 and line position.
   For example: far /e70:2 readme.
-
-  #/i#
-  Set icon for FAR console window.
 
   #/p[<path>]#
   Search for "main" plugins in the folder given in <path>.
@@ -1327,7 +1344,7 @@ $ #Terminal
     #Hotkeys and scrolling when NOT running command:# while Ctrl+Shift+F3/F4 still functioning in such mode you can also use simple F3/F4 to get history
     opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen.
     #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in GUI or TTY backends modes. While TTY backend may function in usual
-    terminal like xterm or SSH session but it may also run inside of another far2l terminal gaining capabilities inachievable under 'usual' terminals,
+    terminal like xterm or SSH session but it may also run inside of terminal of GUI-mode far2l gaining capabilities inachievable under 'usual' terminals,
     like live full keyboard keys recognition with with keydown/up reaction. Also 'host' far2l may provide shared clipboard access and desktop notifications.
     You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
     like NetRocks SFTP/SCP protocols to execute remote commands.

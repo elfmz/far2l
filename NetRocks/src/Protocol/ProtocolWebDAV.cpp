@@ -358,7 +358,7 @@ mode_t ProtocolWebDAV::GetMode(const std::string &path, bool follow_symlink) thr
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE nullptr);
 	if (wdp.empty())
-		return S_IFREG;
+		return S_IFREG | 0644;
 
 	return wdp.begin()->second.GetMode();
 }

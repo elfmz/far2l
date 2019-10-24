@@ -152,7 +152,7 @@ mode_t ProtocolNFS::GetMode(const std::string &path, bool follow_symlink) throw 
 {
 	std::string xpath = RootedPath(path);
 	if (RootedPathLevel(xpath) <= 1) {
-		return S_IFDIR;
+		return S_IFDIR | 0755;
 	}
 	fprintf(stderr, "ProtocolNFS::GetMode rooted_path='%s'\n", xpath.c_str());
 	RootedPathToMounted(xpath);
@@ -205,7 +205,7 @@ void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &
 	std::string xpath = RootedPath(path);
 	if (RootedPathLevel(xpath) <= 1) {
 		file_info = FileInformation();
-		file_info.mode = S_IFDIR;
+		file_info.mode = S_IFDIR | 0755;
 		return;
 	}
 	fprintf(stderr, "ProtocolNFS::GetInformation rooted_path='%s'\n", xpath.c_str());
@@ -388,7 +388,7 @@ protected:
 		owner.clear();
 		group.clear();
 		file_info = FileInformation();
-		file_info.mode|= S_IFDIR;
+		file_info.mode|= S_IFDIR | 0755;
 		_names.erase(_names.begin());
 		return true;
 	}

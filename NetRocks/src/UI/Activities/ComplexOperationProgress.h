@@ -51,6 +51,7 @@ protected:
 	std::string _speed_current_label;
 
 	unsigned long long _prev_complete = 0, _speed_current = 0, _speed_average = 0;
+	unsigned long long _speed_rollavg = 0, _speed_rollavg_n = 0;
 	std::chrono::milliseconds _prev_ts {};
 
 	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2);

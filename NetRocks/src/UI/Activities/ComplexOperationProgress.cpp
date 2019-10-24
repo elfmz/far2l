@@ -266,6 +266,15 @@ void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned 
 			_speed_average =  (complete * 1000ll / delta.count());
 			_speed_current =  (complete > _prev_complete) ? complete - _prev_complete : 0;
 			_speed_current = (_speed_current * 1000ll / speed_delta_time);
+			if (_speed_rollavg != 0) {
+				if (_speed_rollavg_n < 16 && _speed_current != 0) {
+					++_speed_rollavg_n;
+				}
+				_speed_rollavg = (_speed_current + (_speed_rollavg_n - 1) * _speed_rollavg) / _speed_rollavg_n;
+			} else {
+				_speed_rollavg_n = 1;
+				_speed_rollavg = _speed_current;
+			}
 			_prev_complete = complete;
 			_prev_ts = now;
 
@@ -291,8 +300,8 @@ void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned 
 		_prev_ts = now;
 	}
 
-	if (_speed_current != 0 && complete < total) {
-		TimePeriodToDialogControl(i_remain_ctl, (total - complete) * 1000ll / _speed_current);
+	if (_speed_rollavg != 0 && complete < total) {
+		TimePeriodToDialogControl(i_remain_ctl, (total - complete) * 1000ll / _speed_rollavg);
 
 	} else {
 		TextToDialogControl(i_remain_ctl, "??:??.??");

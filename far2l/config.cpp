@@ -180,9 +180,6 @@ void SystemSettings()
 	Builder.AddCheckbox(MConfigSaveHistory, &Opt.SaveHistory);
 	Builder.AddCheckbox(MConfigSaveFoldersHistory, &Opt.SaveFoldersHistory);
 	Builder.AddCheckbox(MConfigSaveViewHistory, &Opt.SaveViewHistory);
-	Builder.AddCheckbox(MConfigRegisteredTypes, &Opt.UseRegisteredTypes);
-	Builder.AddCheckbox(MConfigCloseCDGate, &Opt.CloseCDGate);
-	Builder.AddCheckbox(MConfigUpdateEnvironment, &Opt.UpdateEnvironment);
 
 	Builder.AddCheckbox(MConfigAutoSave, &Opt.AutoSaveSetup);
 	Builder.AddOKCancel();
@@ -736,7 +733,6 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem,L"SaveFoldersHistory",&Opt.SaveFoldersHistory,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"SavePluginFoldersHistory",&Opt.SavePluginFoldersHistory,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"SaveViewHistory",&Opt.SaveViewHistory,1, 0},
-	{1, REG_DWORD,  NKeySystem,L"UseRegisteredTypes",&Opt.UseRegisteredTypes,1, 0},
 	{1, REG_DWORD,  NKeySystem,L"AutoSaveSetup",&Opt.AutoSaveSetup,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"DeleteToRecycleBin",&Opt.DeleteToRecycleBin,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"DeleteToRecycleBinKillLink",&Opt.DeleteToRecycleBinKillLink,1, 0},
@@ -790,8 +786,6 @@ static struct FARConfig
 	//{0, REG_DWORD,  NKeySystem,L"CPAJHefuayor",&Opt.strCPAJHefuayor,0, 0},
 	{0, REG_DWORD,  NKeySystem,L"CloseConsoleRule",&Opt.CloseConsoleRule,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"PluginMaxReadData",&Opt.PluginMaxReadData,0x20000, 0},
-	{1, REG_DWORD,  NKeySystem,L"CloseCDGate",&Opt.CloseCDGate,1, 0},
-	{1, REG_DWORD,  NKeySystem,L"UpdateEnvironment",&Opt.UpdateEnvironment,0,0},
 	{0, REG_DWORD,  NKeySystem,L"UseNumPad",&Opt.UseNumPad,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"CASRule",&Opt.CASRule,0xFFFFFFFFU, 0},
 	{0, REG_DWORD,  NKeySystem,L"AllCtrlAltShiftRule",&Opt.AllCtrlAltShiftRule,0x0000FFFF, 0},

@@ -674,7 +674,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				{&Opt.SaveHistory,FSS_SAVECOMMANDSHISTORY},
 				{&Opt.SaveFoldersHistory,FSS_SAVEFOLDERSHISTORY},
 				{&Opt.SaveViewHistory,FSS_SAVEVIEWANDEDITHISTORY},
-				{&Opt.UseRegisteredTypes,FSS_USEWINDOWSREGISTEREDTYPES},
+//				{&Opt.UseRegisteredTypes,FSS_USEWINDOWSREGISTEREDTYPES},
 				{&Opt.AutoSaveSetup,FSS_AUTOSAVESETUP},
 			};
 

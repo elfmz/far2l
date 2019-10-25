@@ -11,7 +11,7 @@
 345               21      29    35      43   48    54  58  62  64
  ====================== Download =============================
 | Current file:                                              |
-| [EDITBOX                                                 ] |
+| [TEXTLABEL                                               ] |
 |------------------------------------------------------------|
 | File size:      #########  of ######### [================] |
 | Total size:     #########  of ######### [================] |
@@ -34,7 +34,7 @@ ComplexOperationProgress::ComplexOperationProgress(const std::string &path, Prog
 	_di.AddAtLine(DI_TEXT, 5,62, 0, MXferCurrentFile);
 
 	_di.NextLine();
-	_i_cur_file = _di.AddAtLine(DI_EDIT, 5,62, DIF_READONLY, "...");
+	_i_cur_file = _di.AddAtLine(DI_TEXT, 5,62, 0, "...");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -173,7 +173,7 @@ void ComplexOperationProgress::OnIdle()
 	}
 
 	if (changed.path) {
-		TextToDialogControl(_i_cur_file, _last_path);
+		AbbreviableTextToDialogControl(_i_cur_file, _last_path);
 	}
 
 	if (changed.file) {

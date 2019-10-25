@@ -22,6 +22,7 @@ struct FarDialogItems : std::vector<struct FarDialogItem>
 
 	// use local strings pool to do not pollute global one
 	const wchar_t *MB2WidePooled(const char *sz);
+	const wchar_t *WidePooled(const std::wstring &str);
 
 private:
 
@@ -65,6 +66,7 @@ private:
 class BaseDialog
 {
 	HANDLE _dlg = INVALID_HANDLE_VALUE;
+	wchar_t _progress_bg = 0, _progress_fg = 0;
 
 protected:
 	FarDialogItemsLineGrouped _di;
@@ -95,6 +97,7 @@ protected:
 	void TextFromDialogControl(int ctl, std::string &str);
 	long long LongLongFromDialogControl(int ctl);
 
+	void TextToDialogControl(int ctl, const std::wstring &str);
 	void TextToDialogControl(int ctl, const char *str);
 	void TextToDialogControl(int ctl, const std::string &str);
 	void TextToDialogControl(int ctl, int lng_str);

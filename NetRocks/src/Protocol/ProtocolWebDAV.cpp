@@ -113,17 +113,17 @@ struct PropsList : std::map<std::string, std::string>
 {
 	mode_t GetMode()
 	{
-		mode_t mode = (S_IRUSR | S_IRGRP | S_IROTH  |  S_IWUSR | S_IWGRP);
+		mode_t mode;
 
 		auto it = find(PROP_RESOURCETYPE.name);
 		if (it != end() && it->second.find("<DAV:collection") != std::string::npos) {
-			mode|= S_IFDIR;
+			mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 		} else {
 			it = find(PROP_ISCOLLECTION.name);
 			if (it != end() && it->second == "1") {
-				mode|= S_IFDIR;
+				mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 			} else {
-				mode|= S_IFREG;
+				mode = S_IFREG | DEFAULT_ACCESS_MODE_FILE;
 			}
 		}
 
@@ -358,7 +358,7 @@ mode_t ProtocolWebDAV::GetMode(const std::string &path, bool follow_symlink) thr
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE nullptr);
 	if (wdp.empty())
-		return S_IFREG | 0644;
+		return S_IFREG | DEFAULT_ACCESS_MODE_FILE;
 
 	return wdp.begin()->second.GetMode();
 }

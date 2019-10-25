@@ -16,6 +16,11 @@ const wchar_t *FarDialogItems::MB2WidePooled(const char *sz)
 	return _str_pool.insert(_str_pool_tmp).first->c_str();
 }
 
+const wchar_t *FarDialogItems::WidePooled(const std::wstring &str)
+{
+	return _str_pool.insert(str).first->c_str();
+}
+
 int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history)
 {
 	int index = (int)size();
@@ -381,6 +386,20 @@ void BaseDialog::SetCheckedDialogControl(int ctl, bool checked)
 	Set3StateDialogControl(ctl, checked ? BSTATE_CHECKED : BSTATE_UNCHECKED);
 }
 
+void BaseDialog::TextToDialogControl(int ctl, const std::wstring &str)
+{
+	if (ctl < 0 || (size_t)ctl >= _di.size())
+		return;
+
+	if (_dlg == INVALID_HANDLE_VALUE) {
+		_di[ctl].PtrData = _di.WidePooled(str);
+		return;
+	}
+
+	FarDialogItemData dd = { str.size(), (wchar_t*)str.c_str() };
+	SendDlgMessage(DM_SETTEXT, ctl, (LONG_PTR)&dd);
+}
+
 void BaseDialog::TextToDialogControl(int ctl, const char *str)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
@@ -453,16 +472,34 @@ void BaseDialog::ProgressBarToDialogControl(int ctl, int percents)
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
-	std::string str;
+	if (_progress_bg == 0) {
+		if (G.fsf.BoxSymbols) {
+			_progress_bg = G.fsf.BoxSymbols[BS_X_B0];
+		}
+		if (_progress_bg == 0) {
+			_progress_bg = '=';
+		}
+	}
+	if (_progress_fg == 0) {
+		if (G.fsf.BoxSymbols) {
+			_progress_fg = G.fsf.BoxSymbols[BS_X_DB];
+		}
+		if (_progress_fg == 0) {
+			_progress_fg = '#';
+		}
+	}
+
+
+	std::wstring str;
 	int width = _di[ctl].X2 + 1 - _di[ctl].X1;
 	str.resize(width);
 	if (percents >= 0) {
 		int filled = (percents * width) / 100;
 		for (int i = 0; i < filled; ++i) {
-			str[i] = '#';
+			str[i] = _progress_fg;
 		}
 		for (int i = filled; i < width; ++i) {
-			str[i] = '=';
+			str[i] = _progress_bg;
 		}
 	} else {
 		for (auto &c : str) {

@@ -388,7 +388,7 @@ protected:
 		owner.clear();
 		group.clear();
 		file_info = FileInformation();
-		file_info.mode|= S_IFDIR | 0755;
+		file_info.mode|= S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 		_names.erase(_names.begin());
 		return true;
 	}

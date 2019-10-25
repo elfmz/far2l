@@ -6,6 +6,9 @@
 #endif
 # include <sys/stat.h>
 
+#define DEFAULT_ACCESS_MODE_FILE 		(S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH)
+#define DEFAULT_ACCESS_MODE_DIRECTORY 		(S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH | S_IXUSR | S_IXGRP | S_IXOTH)
+
 struct FileInformation
 {
 	timespec access_time;

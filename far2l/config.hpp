@@ -459,8 +459,6 @@ struct Options
 
 	int MultiMakeDir; // Опция создания нескольких каталогов за один сеанс
 
-	int UseRegisteredTypes;
-
 	int ViewerEditorClock;
 	int OnlyEditorViewerUsed; // =1, если старт был /e или /v
 	int SaveViewHistory;
@@ -600,8 +598,6 @@ struct Options
 	int PgUpChangeDisk;
 	int ShowCheckingFile;
 	int CloseConsoleRule;
-	int CloseCDGate;       // автомонтирование CD
-	int UpdateEnvironment;
 
 	DWORD LCIDSort;
 	int RestoreCPAfterExecute;

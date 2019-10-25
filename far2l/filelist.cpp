@@ -2395,7 +2395,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			        hOpen==(HANDLE)-2)
 			{
 				if (EnableExec && hOpen!=(HANDLE)-2)
-					if (SeparateWindow || Opt.UseRegisteredTypes)
+//					if (SeparateWindow || Opt.UseRegisteredTypes)
 					{
 						SetCurPath(); // OpenFilePlugin can change current path
 						ProcessGlobalFileTypes(strFileName, PluginMode, RunAs);

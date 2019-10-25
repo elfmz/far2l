@@ -61,6 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "processname.hpp"
 #include "mix.hpp"
+#include "interf.hpp"
 #include "lasterror.hpp"
 #include "execute.hpp"
 #include "flink.hpp"
@@ -470,6 +471,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 	{
 		StandardFunctions.StructSize=sizeof(StandardFunctions);
 		StandardFunctions.snprintf=swprintf;
+		StandardFunctions.BoxSymbols=BoxSymbols;
 		StandardFunctions.sscanf=swscanf;
 		StandardFunctions.qsort=FarQsort;
 		StandardFunctions.qsortex=FarQsortEx;

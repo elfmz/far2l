@@ -120,7 +120,7 @@ mode_t ProtocolSMB::GetMode(const std::string &path, bool follow_symlink) throw 
 {
 	const std::string &rooted_path = RootedPath(path);
 	if (IsRootedPathServerOnly(rooted_path)) {
-		return S_IFDIR | 0755;
+		return S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 	}
 	struct stat s = {};
 	int rc = smbc_stat(rooted_path.c_str(), &s);
@@ -164,7 +164,7 @@ void ProtocolSMB::GetInformation(FileInformation &file_info, const std::string &
 	const std::string &rooted_path = RootedPath(path);
 	if (IsRootedPathServerOnly(rooted_path)) {
 		file_info = FileInformation();
-		file_info.mode = S_IFDIR | 0755;
+		file_info.mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 		return;
 	}
 	int rc = ProtocolSMB_GetInformationInternal(file_info, rooted_path);
@@ -288,12 +288,12 @@ public:
 						case SMBC_FILE_SHARE: case SMBC_PRINTER_SHARE:
 						case SMBC_DIR: case SMBC_LINK:
 							ProtocolSMB_GetInformationInternal(file_info, subpath);
-							file_info.mode = S_IFDIR | 0755;
+							file_info.mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 							return true;
 
 						case SMBC_FILE:
 							ProtocolSMB_GetInformationInternal(file_info, subpath);
-							file_info.mode = S_IFREG | 0644;
+							file_info.mode = S_IFREG | DEFAULT_ACCESS_MODE_FILE;
 							return true;
 					}
 				}
@@ -350,7 +350,7 @@ public:
 
 		if (nmb_enum) {
 			FileInformation file_info;
-			file_info.mode = S_IFDIR | 0755;
+			file_info.mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 			for (const auto &i : nmb_enum->WaitResults()) {
 				_net.emplace(i.first, file_info);
 			}

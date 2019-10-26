@@ -12,7 +12,7 @@ $^#Copyright (C) 2000-2016 FAR Group
    ~Help file index~@Index@
    ~How to use help~@Help@
 
-   ~About FAR~@About@
+   ~About FAR2L~@About@
    ~License~@License@
 
    ~Command line switches~@CmdLine@
@@ -72,7 +72,7 @@ $^#Copyright (C) 2000-2016 FAR Group
 
 
 @Help
-$ # FAR: how to use help#
+$ # FAR2L: how to use help#
     Help screens may have reference items on them that lead to another help
 screen. Also, the main page has the "~Help Index~@Index@", which lists all the
 topics available in the help file and in some cases helps to find the needed
@@ -97,52 +97,33 @@ previous size.
 
 
 @About
-$ # FAR: about#
-    #FAR# is a text mode file and archive manager. It supports #long file names#
+$ # FAR2L: about#
+    #FAR2L# is a text mode file and archive manager. It supports #long file names#
 and provides a wide set of file and folder operations.
 
-    #FAR# is #freeware# and #open source# software distributed under the
-revised BSD ~license~@License@.
+    #FAR2L# is #freeware# and #open source# software distributed under the
+GNU GPL v2 ~license~@License@.
 
-    #FAR# does transparent #archive# processing. Files in the archive are
-handled similarly as in a folder: when you operate with the archive, FAR
+    #FAR2L# does transparent #archive# processing. Files in the archive are
+handled similarly as in a folder: when you operate with the archive, FAR2L
 transforms your commands into the corresponding external archiver calls.
 
-    #FAR# offers a number of service functions as well.
+    #FAR2L# offers a number of service functions as well.
+
+  - FAR2L official site
+    ~http://github.com/elfmz/far2l~@http://github.com/elfmz/far2l@
+  - Original FAR Manager official site
+    ~http://www.farmanager.com~@http://www.farmanager.com@
+
 
 
 @License
-$ # FAR: License#
-
- Copyright (c) 1996 Eugene Roshal
- Copyright (c) 2000 Far Group
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
- 1. ^<wrap>Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
- 2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
- 3. The name of the authors may not be used to endorse or promote products
-derived from this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+$ # FAR2L: License#
+GNU GPL v2 and some source files originally licened under 3-clause BSD license
+See LICENSE.txt and LICENSE.Far2.txt in sources tree for details
 
 @CmdLine
-$ # FAR: command line switches#
+$ # FAR2L: command line switches#
   The following switches may be used in the command line:
 
   #--tty#
@@ -167,7 +148,7 @@ runs inside.
 
   #/a#
   Disable display of characters with codes 0 - 31 and 255. May be useful when
-executing FAR under telnet.
+executing FAR2L under telnet.
 
   #/ag#
   Disable display of pseudo-graphic characters.
@@ -181,17 +162,15 @@ and line position.
   Search for "main" plugins in the folder given in <path>.
   Several search paths may be given separated by ';'.
 
-  Example: far /p%SystemRoot%\\Profiles\\%USERNAME%\\FAR
-
   #/co#
-  Forces FAR to load plugins from cache only. Plugins are loaded faster this way,
+  Forces FAR2L to load plugins from cache only. Plugins are loaded faster this way,
 but new or changed plugins are not discovered. Should be used ONLY with a stable
-list of plugins. After adding, replacing or deleting a plugin FAR should be loaded
+list of plugins. After adding, replacing or deleting a plugin FAR2L should be loaded
 without this switch. If the cache is empty, no plugins will be loaded.
 
   Remarks about switches /p and /co:
 
-  - ^<wrap>if /p is empty, then FAR will be loaded with no plugins;
+  - ^<wrap>if /p is empty, then FAR2L will be loaded with no plugins;
   - ^<wrap>if /p is given with a <path>, then only plugins from <path> will be loaded;
   - ^<wrap>if only the /co switch is given and plugins cache is not empty, then plugins
 will be loaded from cache;
@@ -200,16 +179,16 @@ will be loaded from cache;
 and from the path given at the "~Path for personal plugins~@PluginsManagerSettings@" parameter.
 
   #/m#
-  FAR will not load macros from the registry when started.
+  FAR2L will not load macros from the registry when started.
 
   #/ma#
-  Macros with the "Run after FAR start" option set will not be run when FAR is started.
+  Macros with the "Run after FAR2L start" option set will not be run when FAR2L is started.
 
   #/u <username>#
   Allows to have separate settings for different users.
   For example: far /u guest
 
-  FAR Manager will set the ~environment variable~@FAREnv@ "FARUSER" to the value <username>.
+  FAR2L will set the ~environment variable~@FAREnv@ "FARUSER" to the value <username>.
 
   #/v <filename>#
   View the specified file. If <filename> is `#-#', data is read from the stdin.
@@ -217,8 +196,8 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   For example, "dir|far /v -" will view dir command output.
 
   If the input stream is empty when using '-' (for example, you have not specified
-the "dir" command in the provided example), FAR will wait forever for the end of data
-in the input stream. This will probably be fixed in a later version of FAR.
+the "dir" command in the provided example), FAR2L will wait forever for the end of data
+in the input stream. This will probably be fixed in a later version of FAR2L.
 
   #/w#
   Stretch to console window instead of console buffer.
@@ -231,12 +210,12 @@ and it is not recommended to specify it during normal operation.
   It is possible to specify at most two paths (to folders, files or archives) or
 two commands with plugin prefix in the command line. The first path applies to the
 active panel, the second path - to the passive one:
-  - ^<wrap>if a folder or archive is specified, FAR will show its contents;
-  - ^<wrap>if a file is specified, FAR will change to the folder where it
+  - ^<wrap>if a folder or archive is specified, FAR2L will show its contents;
+  - ^<wrap>if a file is specified, FAR2L will change to the folder where it
 resides and place the cursor on the file, if it exists;
   - ^<wrap>when profixes specified (simultaneous use with common paths allowed)
 passive command executes first (passive panel activates temporary). Односимвольные префиксы игнорируются.
-  Example: far ma:c:\\Far20.7z "macro:post MsgBox(\\"FAR Manager\\",\\"Successfully started\\")"
+  Example: far ma:c:\\Far20.7z "macro:post MsgBox(\\"FAR2L\\",\\"Successfully started\\")"
 
 
 @KeyRef
@@ -396,7 +375,7 @@ active panel. The following sort modes are available:
   #Remarks on the numeric sort#
 
     The sorting algorithm which is used by the operating system to sort file
-lists was changed in Windows XP. A numeric, not a string sort is used. FAR also
+lists was changed in Windows XP. A numeric, not a string sort is used. FAR2L also
 allows to use a numeric sort as in Windows XP - leading zeros in a file name
 are ignored. The following example shows how the files are sorted:
 
@@ -543,7 +522,7 @@ folder before moving, terminate the name with a backslash.
 
   Show ~menus~@Menus@ bar                                                  #F9#
 
-  Quit FAR                                                       #F10#
+  Quit FAR2L                                                       #F10#
 
   Show ~plugin~@Plugins@ commands                                           #F11#
 
@@ -580,7 +559,7 @@ to the same data.
 
   Display ~commands history~@History@                                    #Alt-F8#
 
-  Toggles the size of the FAR console window                  #Alt-F9#
+  Toggles the size of the FAR2L console window                  #Alt-F9#
 
     In the windowed mode, toggles between the current size and the maximum
 possible size of a console window. In the fullscreen mode, #Alt-F9# toggles the
@@ -600,7 +579,7 @@ screen height between 25 and 50 lines. See TechInfo##38 for details.
   Edit ~new file~@FileOpenCreate@                                             #Shift-F4#
 
     When a new file is opened, the same code page is used as in the last opened
-editor. If the editor is opened for the first time in the current FAR session,
+editor. If the editor is opened for the first time in the current FAR2L session,
 the default code page is used.
 
   Copy file under cursor                                    #Shift-F5#
@@ -686,7 +665,7 @@ $ #Error: Cannot execute#
     The program you tries to execute is not recognized as an internal or
 external command, operable program or batch file.
 
-    When executing the contents of the command line, FAR searches for the
+    When executing the contents of the command line, FAR2L searches for the
 executable in the following sequence (sequentially substituting all extensions
 listed in the environment variable %PATHEXT%):
 
@@ -750,7 +729,7 @@ effect as pressing the #Enter# key with the same modifiers (#Ctrl#, #Alt#,
 #Shift#). If the ~command line~@CmdLineCmd@ is not empty, its contents will be
 executed.
 
-    FAR Manager also supports the ~mouse wheel~@MsWheel@.
+    FAR2L also supports the ~mouse wheel~@MsWheel@.
 
     You can move a dialog (window) by dragging it with mouse or by pressing
 #Ctrl-F5# and using #arrow# keys.
@@ -788,12 +767,12 @@ editor and viewer (see TechInfo##33).
 
 @Plugins
 $ #Plugins support#
-    External DLL modules (plugins) may be used to implement new FAR commands
+    External DLL modules (plugins) may be used to implement new FAR2L commands
 and emulate file systems. For example, archives support, FTP client, temporary
 panel and network browser are plugins that emulate file systems.
 
     All plugins are stored in separate folders within the 'Plugins' folder,
-which is in the same folder as FAR.EXE. When detecting a new plugin FAR saves
+which is in the same folder as FAR.EXE. When detecting a new plugin FAR2L saves
 information about it and later loads the plugin only when necessary, so unused
 plugins do not require additional memory. But if you are sure that some plugins
 are useless for you, you may remove them to save disk space.
@@ -818,7 +797,7 @@ use it if search from the root folder does not work correctly.
     The modules have their own message and help files. You can get a list of
 available help on the modules by pressing
 
-    #Shift-F2# - anywhere in the FAR help system
+    #Shift-F2# - anywhere in the FAR2L help system
 
     #Shift-F1# - in the list of plugins (context-dependent help).
 
@@ -877,7 +856,7 @@ $ #Plugins configuration#
 context-sensitive help on plugin configuration. If the plugin doesn't have a
 help file, the context-sensitive help will not be shown.
 
-    When the context-sensitive help is invoked, FAR will try to show the topic
+    When the context-sensitive help is invoked, FAR2L will try to show the topic
 #Config#. If such a topic does not exist in the plugin help file, the main help
 topic for the selected plugin will be shown.
 
@@ -891,66 +870,13 @@ in filenames and in editor).
 
 @PluginsReviews
 $ #Overview of plugin capabilities#
-    The FAR manager is so tightly integrated with its plugins that it is simply
-meaningless to talk about FAR and not to mention the plugins. Plugins present
-an almost limitless expansion of the features of FAR.
-
-    Without going into details, some of the capabilities can be noted:
-
-  * Syntax highlighting in program source texts.
-  * Working with FTP-servers (including access through proxy).
-  * Search and replace in many files at the same time, using regular
-    expressions.
-  * Renaming groups of files with support for complex compound masks
-    consisting of substitution symbols and templates.
-  * NNTP/SMTP/POP3/IMAP4 clients and sending messages to a pager.
-  * Working with non-standard text screen resolutions.
-  * Conversion of texts from one national code page to another.
-  * Manipulating the contents of the Recycle Bin.
-  * Process priority control on local or network PC.
-  * Words autocomplete in editor and working with templates.
-  * Windows system registry editing.
-  * Creating and modifying Windows shortcuts.
-  * File and text operations making it more comfortable to use FidoNet.
-  * Files UU-encode and UU-decode.
-  * WinAmp control and MP3-tags modifying.
-  * Quake PAK-files processing.
-  * Printers control, both connected to PC and network.
-  * Connection and debugging of queries to ODBC-compatible
-    databases.
-  * RAS service control.
-  * External programs executing (compilers, converters etc.) while
-    editing text in FAR editor.
-  * Windows help files contents displaying (.hlp and .chm)
-  * Calculators with different possibilities.
-  * Several games :-)
-  * Spell checker functions while editing text in FAR editor.
-  * Removable drives catalog preparation and much more...
-
-    As an information source, which can be used to search for specific plugins,
-one can recommend:
-
-  - FAR Manager official site
-    ~http://www.farmanager.com~@http://www.farmanager.com@
-  - Online forum
-    ~http://forum.farmanager.com~@http://forum.farmanager.com@
-  - Registration and handling of problems
-    ~http://bugs.farmanager.com~@http://bugs.farmanager.com@
-  - PlugRinG site
-    ~http://plugring.farmanager.com~@http://plugring.farmanager.com@
-  - Free email group service
-    ~http://groups.google.com/group/fardeven/~@http://groups.google.com/group/fardeven@
-  - USENET echo conference
-    ~news:fido7.far.support~@news:fido7.far.support@
-    ~news:fido7.far.development~@news:fido7.far.development@
-  - FidoNet echo conference
-    far.support
-    far.development
-
+    The FAR2L manager is so tightly integrated with its plugins that it is simply
+meaningless to talk about FAR2L and not to mention the plugins. Plugins present
+an almost limitless expansion of the features of FAR2L.
 
 @Panels
 $ #Panels #
-    Normally FAR shows two panels (left and right windows), with different
+    Normally FAR2L shows two panels (left and right windows), with different
 information. If you want to change the type of information displayed in the
 panel, use the ~panel menu~@LeftRightMenu@ or corresponding ~keyboard commands~@KeyRef@.
 
@@ -1018,13 +944,13 @@ $ #Panels: tree panel#
 Within tree mode you may change to a folder quickly and perform folder
 operations.
 
-    FAR stores folder tree information in the file named #Tree.Far# at root
+    FAR2L stores folder tree information in the file named #Tree.Far# at root
 folder of each drive. For read-only drives this information is stored in the
-hidden folder Tree.Cache within the folder containing FAR.EXE. The Tree.FAR
+hidden folder Tree.Cache within the folder containing FAR2L.EXE. The Tree.FAR
 file doesn't exist by default. It will be automatically created after the first
-use of the #Tree Panel# or the #Find Folder# command. If that file exists, FAR
+use of the #Tree Panel# or the #Find Folder# command. If that file exists, FAR2L
 updates it with the changes to the tree structure it is aware of. If such
-changes were made outside of FAR and Tree.far is no longer current, it can be
+changes were made outside of FAR2L and Tree.far is no longer current, it can be
 refreshed by pressing #Ctrl-R#.
 
     You can find a folder quickly with the help of #speed search# action. Hold
@@ -1060,7 +986,7 @@ for viewing the folder description file.
     A list of possible folder description file names may be defined using
 "Folder description files" command in the ~Options menu~@OptMenu@.
 
-    FAR will attempt to determine the type of each of the CD drives available
+    FAR2L will attempt to determine the type of each of the CD drives available
 in the system. Known types are as follows: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM,
 DVD-RW and DVD-RAM. This function is available only for users either with
 administrative privileges or all local users, when it's stated explicitly in
@@ -1316,7 +1242,7 @@ $ #Menus: options menu#
    #Editor settings#       External and internal ~editor settings~@EditorSettings@.
 
    #Colors#                Allows to select colors for different
-                         interface items, to change the entire FAR
+                         interface items, to change the entire FAR2L
                          colors palette to black and white or to set
                          the colors to default.
 
@@ -1378,14 +1304,14 @@ following operations:
 
     - clearing the view/edit, folder and command history lists;
 
-    - exit from FAR.
+    - exit from FAR2L.
 
 
 @PluginsManagerSettings
 $ #Plugins manager#
 
   #Path for personal plugins#
-  Enter here the full path, where FAR will search for "personal" plugins in addition to the "main"
+  Enter here the full path, where FAR2L will search for "personal" plugins in addition to the "main"
 plugins. Several search paths may be given separated by ';'. Environment variables can be entered in the
 search path. Personal plugins will not be loaded, if the switches /p or /co are given in the
 ~command line~@CmdLine@.
@@ -1433,7 +1359,7 @@ options are disabled and their values doesn't affect the search process.
 
     Выпадающий список #Используя кодовую страницу# позволяет выбрать конкретную
 кодовую страницу, применяемую для поиска текста. Если в выпадающем списке выбрать
-пункт #Все кодовые страницы#, то FAR будет использовать для поиска все стандартные
+пункт #Все кодовые страницы#, то FAR2L будет использовать для поиска все стандартные
 и #Любимые# кодовые страницы (список #Любимых# кодовых страниц можно настроить в
 меню выбора кодовой страницы редактора или программы просмотра). Если перечень
 кодовых страниц, поиск по которым производится при выборе пункта #Все кодовые#
@@ -1441,9 +1367,9 @@ options are disabled and their values doesn't affect the search process.
 #Space#, выбрать из списка стандартных и #Любимых# кодовых страниц только те кодовые
 страницы, по которым вам необходимо осуществлять поиск.
 
-    If the option #Search in archives# is set, FAR also performs the search in
+    If the option #Search in archives# is set, FAR2L also performs the search in
 archives with known formats. However, using this option significantly decreases
-the performance of the search. FAR cannot search in nested archives.
+the performance of the search. FAR2L cannot search in nested archives.
 
     The #Search for folders# option includes in search list those folders, that
 match the wildcards. Also the counter of found files takes account of found
@@ -1467,7 +1393,7 @@ folders.
     - from the current folder;
 
     - in the current folder only or in selected folders
-      (the current version of FAR does not search in
+      (the current version of FAR2L does not search in
       directories that are ~symbolic links~@HardSymLink@).
 
     The search parameters is saved in the configuration.
@@ -1773,7 +1699,7 @@ can press #Ctrl-E# or #Ctrl-X# respectively.
     For choosing a command, besides the cursor control keys and #Enter#, you can
 use the highlighted shortcut letters.
 
-    If you want to save the commands history after exiting FAR, use the
+    If you want to save the commands history after exiting FAR2L, use the
 respective option in the ~system settings dialog~@SystemSettings@.
 
     Locked history items will not be deleted when the history is cleared.
@@ -1811,7 +1737,7 @@ you can use the highlighted shortcut letters.
 they are selected. You can use #Shift-Enter# to select an item without changing
 its position.
 
-    If you want to save the view and edit history after exiting FAR, use the
+    If you want to save the view and edit history after exiting FAR2L, use the
 respective option in the ~system settings dialog~@SystemSettings@.
 
   Remarks:
@@ -1851,7 +1777,7 @@ you can use the highlighted shortcut letters.
 are selected. You can use #Shift-Enter# to select an item without changing its
 position.
 
-    If you want to save the folders history after exiting FAR, use the
+    If you want to save the folders history after exiting FAR2L, use the
 respective option in the ~system settings dialog~@SystemSettings@.
 
   Remarks:
@@ -1941,7 +1867,7 @@ item title only.
 
     Local user menus are stored in the text files #FarMenu.Ini#. The main menu,
 by default, is stored in the registry, but it is possible to store it in a
-file. If you create a local menu in the FAR folder, it will be used instead of
+file. If you create a local menu in the FAR2L folder, it will be used instead of
 the main menu saved in the registry.
 
     To close the menu even if submenus are open use #Shift-F10#.
@@ -1950,7 +1876,7 @@ the main menu saved in the registry.
 
 @FileAssoc
 $ #File associations #
-    FAR Manager supports file associations, that allow to associate various
+    FAR2L supports file associations, that allow to associate various
 actions to running, viewing and editing files with a specified
 ~mask~@FileMasks@.
 
@@ -1974,12 +1900,12 @@ desired association from the menu.
 
     If no execute command is associated with file and
 #Use Windows registered types# option in ~System settings~@SystemSettings@
-is on, FAR tries to use Windows association to execute this file type;
+is on, FAR2L tries to use Windows association to execute this file type;
 
 
 @FileAssocModify
 $ #File associations: editing#
-    FAR allows to specify six commands associated with each file type specified
+    FAR2L allows to specify six commands associated with each file type specified
 as a ~mask~@FileMasks@:
 
    #Execute command#               Performed if #Enter# is pressed
@@ -2013,7 +1939,7 @@ command.
 
   1. ^<wrap>If no execute command is associated with file and
 #Use Windows registered types# option in ~System settings~@SystemSettings@
-is on, FAR tries to use Windows association to execute this file type;
+is on, FAR2L tries to use Windows association to execute this file type;
 
   2. ^<wrap>Operating system ~commands~@OSCommands@ "IF EXIST" and "IF DEFINED"
 allow to configure "smarter" associations - if you have specified several
@@ -2034,7 +1960,7 @@ $ #Special symbols#
     #!.!#      Long file name with extension
     #!-!#      Short file name with extension
     #!+!#      Similar to !-! but if a long file name was lost
-             after performing the command, FAR will restore it
+             after performing the command, FAR2L will restore it
     #!@@!#      Name of file with selected file names list
     #!$!#      Name of file with selected short file names list
     #!&#       List of selected files
@@ -2088,7 +2014,7 @@ $ #Special symbols#
 
   Notes:
 
-    1. ^<wrap>When handling special characters, FAR substitutes only the string
+    1. ^<wrap>When handling special characters, FAR2L substitutes only the string
 corresponding to the special character. No additional characters (for example,
 quotes) are added, and you should add them yourself if it is needed. For
 example, if a program used in the associations requires a file name to be
@@ -2160,32 +2086,32 @@ determining the total file size in the sub-folders.
   If the name of a new folder contains only lowercase letters and this option is on, the folder will be created in uppercase.
 
   #Inactivity time#
-  Terminate FAR after a specified interval without keyboard or mouse activity. This works only if FAR waits for command line
+  Terminate FAR2L after a specified interval without keyboard or mouse activity. This works only if FAR2L waits for command line
 input without viewer or editor screens in the background.
 
   #Save commands history#
-  Forces saving ~commands history~@History@ before exit and restoring after starting FAR.
+  Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
 
   #Save folders history#
-  Forces saving ~folders history~@HistoryFolders@ before exit and restoring after starting FAR.
+  Forces saving ~folders history~@HistoryFolders@ before exit and restoring after starting FAR2L.
 Folders history list may be activated by #Alt-F12#.
 
   #Save view and edit history#
   Forces saving ~history of viewed and edited~@HistoryViews@ files before exit and restoring it after
-starting FAR. View and edit history list may be activated by #Alt-F11#.
+starting FAR2L. View and edit history list may be activated by #Alt-F11#.
 
   #Use Windows registered types#
   When this option is on and #Enter# is pressed on a file, the type of which is known to
-Windows and absent in the list of FAR ~file associations~@FileAssoc@, the Windows program
+Windows and absent in the list of FAR2L ~file associations~@FileAssoc@, the Windows program
 registered to process this file type will be executed.
 
   #CD drive auto mount#
-  When a CD-ROM drive is selected from the ~drive menu~@DriveDlg@, FAR will close the open
+  When a CD-ROM drive is selected from the ~drive menu~@DriveDlg@, FAR2L will close the open
 tray of a CD drive. Turn off this option if automatic CD-ROM mounting does not work
 correctly (this can happen because of bugs in the drivers of some CD-ROM drives).
 
   #Auto save setup#
-  If checked, FAR will save setup automatically. The current folders for both panels will be also saved.
+  If checked, FAR2L will save setup automatically. The current folders for both panels will be also saved.
 
 
 @PanelSettings
@@ -2210,7 +2136,7 @@ $ #Settings dialog: panel#
   #by extension#            to files, but also to folders.
                           When the option is turned on, sorting
                           by extension works the same as it did
-                          in FAR 1.65. If the option is turned
+                          in FAR2L 1.65. If the option is turned
                           off, in the extension sort mode the
                           folders will be sorted by name, as
                           they are in the name sort mode.
@@ -2276,7 +2202,7 @@ This option also may be switched by #Ctrl-B#.
   #Screen saver#
   Run screen saver after the inactivity interval in minutes. When this option
 is enabled, screen saver will also activate when mouse pointer is brought
-to the upper right corner of FAR window.
+to the upper right corner of FAR2L window.
 
   #Show total copy indicator#
   Show total progress bar, when performing a file copy operation.
@@ -2305,17 +2231,17 @@ or the drive selection menu (if the Network plugin is not available).
   #Far window title addons#
   Дополнительная информация, выводимая в заголовке окна консоли.
 Может содержать любой текст, включая следующие переменные:
-  #%Ver# - version of FAR;
-  #%Build# - build number of FAR;
-  #%Platform# - FAR platform architecture;
-  #%Host# - host name of the machine where FAR is running;
-  #%User# - user name under wich FAR is running;
-  #%Admin# - name "Root", if FAR runs under root priviledges, otherwise - empty string.
+  #%Ver# - version of FAR2L;
+  #%Build# - build number of FAR2L;
+  #%Platform# - FAR2L platform architecture;
+  #%Host# - host name of the machine where FAR2L is running;
+  #%User# - user name under wich FAR2L is running;
+  #%Admin# - name "Root", if FAR2L runs under root priviledges, otherwise - empty string.
 
 @DialogSettings
 $ #Settings dialog: dialogs#
   #History in dialog#       Keep history in edit controls of some
-  #edit controls#           FAR dialogs. The previous strings history
+  #edit controls#           FAR2L dialogs. The previous strings history
                           list may be activated by mouse or using
                           #Ctrl-Up# and #Ctrl-Down#. If you do not wish
                           to track such history, for example due to
@@ -2370,7 +2296,7 @@ disabled, you may use the #Ctrl-Shift-End# key to autocomplete a line. The autoc
 feature is disabled while a macro is being recorded or executed.
 
   #Set command line prompt format#
-  This option allows to set the default FAR command ~line prompt~@CommandPrompt@.
+  This option allows to set the default FAR2L command ~line prompt~@CommandPrompt@.
 
 @AutoCompleteSettings
 $ #Settings dialog: AutoComplete#
@@ -2438,7 +2364,7 @@ $ #Настройка информационной панели#
 
 @CommandPrompt
 $ #Command line prompt format#
-   FAR allows to change the command line prompt format.
+   FAR2L allows to change the command line prompt format.
 To change it you have to enter the needed sequence of variables and
 special code words in the #Set command line prompt format# input field
 of the ~Command line settings~@CmdlineSettings@ dialog, this will allow showing
@@ -2463,7 +2389,7 @@ code words:
      $$ - the $ character
      $+ - глубина стека каталогов
 
-     $@@xx - ^<wrap>"Администратор", если FAR Manager запущен от имени администратора.
+     $@@xx - ^<wrap>"Администратор", если FAR2L запущен от имени администратора.
 Вместо 'xx' необходимо указать два символа, которые будут обрамлять слово "Администратор".
 Например, #$@@{}$s$p$### будет представлен как "{Администратор} C:\>"
 
@@ -2515,7 +2441,7 @@ $ #Viewer: control keys#
     #F8#                 Toggle OEM/ANSI code page
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
-    #Alt-F9#             Toggles the size of the FAR console window
+    #Alt-F9#             Toggles the size of the FAR2L console window
     #Alt-Shift-F9#       Call ~Viewer settings~@EditorSettings@ dialog
     #Numpad5,F3,F10,Esc# Quit
     #Ctrl-F10#           Position to the current file.
@@ -2552,13 +2478,13 @@ $ #Viewer: control keys#
        the viewer is closed, but any operations on the deleted
        file fail - this is a Windows feature.
 
-    3. The current version of FAR has a limitation on the maximum
+    3. The current version of FAR2L has a limitation on the maximum
        number of columns in the internal viewer - the number
        cannot exceed 2048. If a file contains a line that does not
        fit in this number of columns, it will be split into several
        lines, even if the word wrap mode is turned off.
 
-    4. FAR ~searches~@ViewerSearch@ the first occurrence of the string (#F7#) from
+    4. FAR2L ~searches~@ViewerSearch@ the first occurrence of the string (#F7#) from
        the beginning of the area currently displayed.
 
     5. For automatic scrolling of a dynamically updating file,
@@ -2706,7 +2632,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F8#                      Toggle OEM/ANSI code page
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
-   #Alt-F9#                  Toggles the size of the FAR console window
+   #Alt-F9#                  Toggles the size of the FAR2L console window
    #Alt-Shift-F9#            Call ~Editor settings~@EditorSettings@ dialog
    #F10, F4, Esc#            Quit
    #Shift-F10#               Save and quit
@@ -2818,11 +2744,11 @@ jump to the middle of the text.
 
 @EditorReload
 $ #Editor: reloading a file#
-    FAR Manager tracks all attempts to repeatedly open for editing a file that
+    FAR2L tracks all attempts to repeatedly open for editing a file that
 is already being edited. The rules for reloading files are as follows:
 
     1. If the file was not changed and the option "Reload edited file" in the
-~confirmations~@ConfirmDlg@ dialog is not enabled, FAR switches to the open
+~confirmations~@ConfirmDlg@ dialog is not enabled, FAR2L switches to the open
 editor instance without further prompts.
 
     2. If the file was changed or the option "Reload edited file" is enabled,
@@ -2844,7 +2770,7 @@ there are three possible options:
 @WarnEditorPath
 $ #Warning: Path to the file to edit does not exist#
     When opening a new file for ~editing~@Editor@, you have entered the name of
-a folder that does not exist. Before saving the file, FAR will create the
+a folder that does not exist. Before saving the file, FAR2L will create the
 folder, provided that the path is correct (for example, a path starting with a
 non-existing drive letter would not be correct) and that you have enough rights
 to create the folder.
@@ -2857,7 +2783,7 @@ file name.
 @WarnEditorSavedEx
 $ #Warning: The file was changed by an external program#
     The write date and time of the file on the disk are not the same as
-those saved by FAR when the file was last accessed. This means that another
+those saved by FAR2L when the file was last accessed. This means that another
 program, another user (or even yourself in a different editor instance) changed
 the contents of the file on the disk.
 
@@ -2944,7 +2870,7 @@ card-reader itself will be stopped.
     Ctrl-8 - display of CD parameters;
     Ctrl-9 - display of network parameters.
 
-    #Change drive# menu settings are saved in the FAR configuration.
+    #Change drive# menu settings are saved in the FAR2L configuration.
 
     #F9# shows a dialog for configuring the display of that
 information.
@@ -2959,7 +2885,7 @@ plugins).
 
     #Ctrl-R# allows to refresh the disk selection menu.
 
-    If "#CD drive type#" mode is enabled (#Ctrl-8#), FAR will attempt to
+    If "#CD drive type#" mode is enabled (#Ctrl-8#), FAR2L will attempt to
 determine the type of each of the CD drives available in the system. Known
 types are as follows: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM, DVD-RW and DVD-RAM.
 This function is available only for users either with administrative privileges
@@ -2998,7 +2924,7 @@ connected network drives.
 @Highlight
 $ #Files highlighting and sort groups#
     For more convenient and obvious display of files and directories in the
-panels, FAR Manager has the possibility of color highlighting for file objects.
+panels, FAR2L has the possibility of color highlighting for file objects.
 You can group file objects by different criteria (~file masks~@FileMasks@, file
 attributes) and assign colors to those groups.
 
@@ -3231,7 +3157,7 @@ will affect only the current session.
 
 @CodePage
 $ #Auto detect code pages#
-    FAR will try to choose the correct code page for viewing/editing a file.
+    FAR2L will try to choose the correct code page for viewing/editing a file.
 Note that correct detection is not guaranteed, especially for small or
 non-typical text files.
 
@@ -3365,7 +3291,7 @@ masks) the following commands are available:
    #Shift-Backspace#     Clear selection from all items.
 
 
-    Filters selection is stored in the FAR configuration.
+    Filters selection is stored in the FAR2L configuration.
 
     When a filter is used in a panel, it is indicated by '*' after the sort
 mode letter in the upper left corner of the panel.
@@ -3393,18 +3319,18 @@ to describe selected files.
     Description list names may be changed using #File descriptions# dialog from
 the ~Options menu~@OptMenu@. In this dialog you can also set local descriptions
 update mode. Updating may be disabled, enabled only if panel current view mode
-displays descriptions or always enabled. By default FAR sets "Hidden" attribute
+displays descriptions or always enabled. By default FAR2L sets "Hidden" attribute
 to created description lists, but you may disable it by switching off the
 option "Set "Hidden" attribute to new description lists" in this dialog. Also
 here you may specify the position to align new file descriptions in a
 description list.
 
-    If a description file has the "read-only" attribute set, FAR does not
+    If a description file has the "read-only" attribute set, FAR2L does not
 attempt to update descriptions, and after moving or deleting file objects, an
 error message is shown. If the option "#Update read only description file#" is
-enabled, FAR will attempt to update the descriptions correctly.
+enabled, FAR2L will attempt to update the descriptions correctly.
 
-    If it is enabled in the configuration, FAR updates file descriptions when
+    If it is enabled in the configuration, FAR2L updates file descriptions when
 copying, moving and deleting files. But if a command processes files from
 subfolders, descriptions in the subfolders are not updated.
 
@@ -3531,7 +3457,7 @@ ignoring the original case.
 file names in lower case. By default this option is on, but if you wish
 to always see the real files case, switch it, "Show folders in uppercase"
 and "Show files in lowercase" options off. All these settings only change
-the method of displaying files, when processing files FAR always uses the
+the method of displaying files, when processing files FAR2L always uses the
 real case.
 
 
@@ -3558,7 +3484,7 @@ files will be placed lower than those not included.
 
 @FileMasks
 $ #File masks#
-    File masks are frequently used in FAR commands to select single files and
+    File masks are frequently used in FAR2L commands to select single files and
 folders or groups of them. Masks may contain common valid file name symbols,
 wildcards ('*' and '?') and special expressions:
 
@@ -3574,7 +3500,7 @@ wildcards ('*' and '?') and special expressions:
 f*.ex?, mask *co* will select both color.ini and edit.com, mask [c-f,t]*.txt
 can select config.txt, demo.txt, faq.txt and tips.txt.
 
-    In many FAR commands you may enter several file masks separated with commas
+    In many FAR2L commands you may enter several file masks separated with commas
 or semicolons. For example, to select all the documents, you can enter
 #*.doc,*.txt,*.wri# in the "Select" command.
 
@@ -3702,7 +3628,7 @@ folders. If the "Inherit" action is selected then after copying/moving the
 inheritable access rights of the destination parent folder will be applied to
 the copied/moved files and folders.
 
-    The "Already existing files" option controls FAR behavior if a target file
+    The "Already existing files" option controls FAR2L behavior if a target file
 of the same name already exists.
     Possible values:
     #Ask# - a ~confirmation dialog~@CopyAskOverwrite@ will be shown;
@@ -3723,14 +3649,14 @@ The system copy routine is not used when the file is encrypted and you are
 copying it outside of the current disk.
 
     The "Copy contents of symbolic links" option allows to control the
-~logic~@CopyRule@ of FAR processing of ~symbolic links~@HardSymLink@ when
+~logic~@CopyRule@ of FAR2L processing of ~symbolic links~@HardSymLink@ when
 copying/moving.
 
     When moving files, to determine whether the operation should be performed
 as a copy with subsequent deletion or as a direct move (within one physical
-drive), FAR takes into account ~symbolic links~@HardSymLink@.
+drive), FAR2L takes into account ~symbolic links~@HardSymLink@.
 
-    FAR handles copying to #con# in the same way as copying to #nul# or
+    FAR2L handles copying to #con# in the same way as copying to #nul# or
 #\\\\.\\nul# - that is, the file is read from the disk but not written
 anywhere.
 
@@ -3828,7 +3754,7 @@ physically until all the hard links pointing at it will be deleted. The
 deletion order doesn't matter. When a hard link is deleted into the recycle
 bin, the number of links of a file does not change.
 
-    FAR can create hard links and can show the number of the file's hard links
+    FAR2L can create hard links and can show the number of the file's hard links
 in a separate column (by default, it's the last column in the 9th panel mode)
 and sort the files by hard link number.
 
@@ -3911,7 +3837,7 @@ $ #Error: plugin not loaded#
 
 @ScrSwitch
 $ #Screens switching#
-    FAR allows to open several instances of the internal viewer and editor at
+    FAR2L allows to open several instances of the internal viewer and editor at
 the same time. Use #Ctrl-Tab#, #Ctrl-Shift-Tab# or #F12# to switch between
 panels and screens with these instances. #Ctrl-Tab# switches to the next
 screen, #Ctrl-Shift-Tab# to the previous, #F12# shows a list of all available
@@ -3938,7 +3864,7 @@ start the Windows Explorer and set the cursor to the current file or directory.
 
 @OSCommands
 $ #Operating system commands#
-    FAR Manager by itself processes the following operating system commands:
+    FAR2L by itself processes the following operating system commands:
 
     #CLS#
 
@@ -3967,7 +3893,7 @@ page number.
 
     Set environment variable "variable" to the value "string". If "string" is
 not specified, the environment variable "variable" will be removed. On startup,
-FAR Manager sets several ~environment variables~@FAREnv@ by itself.
+FAR2L sets several ~environment variables~@FAREnv@ by itself.
 
     #IF [NOT] EXIST filename command#
 
@@ -4015,10 +3941,10 @@ system command processor.
 
 @FAREnv
 $ #Environment variables#
-    On startup, FAR Manager sets the following environment variables available
+    On startup, FAR2L sets the following environment variables available
 to child processes:
 
-    #FARHOME#            path to the folder from which FAR was started.
+    #FARHOME#            path to the folder from which FAR2L was started.
 
     #FARLANG#            the name of the current interface language.
 
@@ -4026,7 +3952,7 @@ to child processes:
 
     #FARDIRSTACK#        ^<wrap>the contents of directories stack top (the stack is managed with #pushd# and #popd# commands)
 
-    #FARADMINMODE#       ^<wrap>equals "1" if FAR Manager was run by an administrator
+    #FARADMINMODE#       ^<wrap>equals "1" if FAR2L was run by an administrator
 
 
 @RegExp
@@ -4224,11 +4150,11 @@ constructions.
        pressing a single hotkey.
     2. Execution of special functions, which are represented by
        special commands in the text of the macro command.
-    3. Redefine standard hotkeys, which are used by FAR for
+    3. Redefine standard hotkeys, which are used by FAR2L for
        execution of internal commands.
 
     The main usage of macro commands is assignment of hotkeys for calling
-external plugins and for overloading FAR actions.
+external plugins and for overloading FAR2L actions.
 
     See also:
 
@@ -4242,7 +4168,7 @@ external plugins and for overloading FAR actions.
 
 @KeyMacroArea
 $ #Macro command: areas of execution#
-    FAR allows the creation of independent ~macro commands~@KeyMacro@ (commands with
+    FAR2L allows the creation of independent ~macro commands~@KeyMacro@ (commands with
 identical hotkeys) for different areas of execution.
 
     Attention: The area of execution, to which the macro command will
@@ -4281,7 +4207,7 @@ $ #Macro command: hotkeys#
     1. any key;
     2. any key combination with #Ctrl#, #Alt# and #Shift# modifiers;
     3. any key combination with two modifiers.
-       FAR allows to use the following double modifiers:
+       FAR2L allows to use the following double modifiers:
        #Ctrl-Shift-<key>#, #Ctrl-Alt-<key># and #Alt-Shift-<key>#
 
     A macro command #can't# be assigned to the following key combinations:
@@ -4328,7 +4254,7 @@ usually does as a reaction to this combination.
        All keys pressed during the recording will be saved with the
        following exceptions:
 
-       - only keys processed by FAR will be saved. Meaning that if
+       - only keys processed by FAR2L will be saved. Meaning that if
          during the macro recording process an external program is
          run inside the current console then only the keys pressed
          before the execution and after completion of that program
@@ -4373,7 +4299,7 @@ needs to be deleted.
     Attention: after deleting a macro command, the key combination
                (hotkey) that was used for its execution will begin
                to function as it was meant to, originally. That is
-               if that key combination was somehow processed by FAR
+               if that key combination was somehow processed by FAR2L
                or some plugin then after deleting the macro command
                the key combination would be processed by them as in
                the past.
@@ -4391,13 +4317,13 @@ desired options in the dialog:
 
    #Allow screen output while executing macro#
 
-    If this option is not set during the macro command execution FAR Manager
+    If this option is not set during the macro command execution FAR2L
 does not redraw the screen. All the updates will be displayed when the macro
 command playback is finished.
 
-   #Execute after FAR start#
+   #Execute after FAR2L start#
 
-    Allows to execute the macro command immediately after the FAR Manager is
+    Allows to execute the macro command immediately after the FAR2L is
 started.
 
     The following execution conditions can be applied for the active and
@@ -4448,10 +4374,10 @@ to one of those key combinations, select it from the drop-down list.
 
 @KeyMacroLang
 $ #Macro command: macro language#
-    A primitive macro language is implemented in FAR Manager. It allows to
+    A primitive macro language is implemented in FAR2L. It allows to
 insert logical commands into a simple keystrokes sequence, making macros (along
 with ~plugins~@Plugins@) a powerful facility assisting in the everyday use of
-FAR Manager.
+FAR2L.
 
     Several of the available commands are listed below:
     #$Exit#         - stop macro playback

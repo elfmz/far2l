@@ -1,5 +1,6 @@
 # far2l
 Linux port of FAR Manager v2 (http://farmanager.com/)
+Works also on OSX and BSD (but later not tested on regular manner)
 ALPHA VERSION.
 **Currently interesting only for enthusiasts!!!**
 

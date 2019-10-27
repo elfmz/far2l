@@ -119,7 +119,7 @@ transforms your commands into the corresponding external archiver calls.
 
 @License
 $ # FAR2L: License#
-GNU GPL v2 and some source files originally licened under 3-clause BSD license
+GNU GPL v2 and some source files originally licensed under 3-clause BSD license
 See LICENSE.txt and LICENSE.Far2.txt in sources tree for details
 
 @CmdLine
@@ -734,6 +734,19 @@ executed.
     You can move a dialog (window) by dragging it with mouse or by pressing
 #Ctrl-F5# and using #arrow# keys.
 
+    #Sticky controls# if your environment doesnt allow you to use some hotkeys
+due to TTY backend limitations or same hotkey used by other app you can following
+trick to achieve 'sticky' control keys behaviour. That means control key kept
+virtually pressed until next non-control key press:
+    Ctrl+SPACE gives sticky CONTROL key
+    Alt+SPACE gives sticky ALT key
+    RCtrl+SPACE gives sticky RCONTROL key
+    RAlt+SPACE gives sticky RALT key
+Another way to achieve working hotkeys may be changing settings of external applications
+(in order to release needed hotkey combinations) or using exclusive handle hotkeys option
+in the ~interface settings~@InterfSettings@.
+
+
 
 @MsWheel
 $ #Mouse: wheel support#
@@ -1255,25 +1268,28 @@ $ #Menus: options menu#
 
 @Terminal
 $ #Terminal
-    FAR2L contains built-in pseudoterminal emulator, allowing to execute command line applications see their output and control functionality.
-    In order to keep usual shell experience far2l first launches default supported user's shell in interactive mode and sends it commands typed
-    in its own command line.
-    #exit command behaviour:# typing 'exit' command will cause back shell to exit but will not close whole far2l application to close and next
-    command execution request will spawn new back shell instance. This allows to 'reset' shell environment from exported variables and other settings.
-    In case you want to exit far2l by typing command: type 'exit far' pseudo-command - it will be recognized by far2l as whole app close request.
+    #FAR2L# contains built-in terminal emulator, allowing to execute command line applications see their output and control functionality.
+In order to keep usual shell experience far2l first launches default supported user's shell in interactive mode and sends it commands typed
+in its own command line.
+    #Autocomplete# FAR2L has two independent command line autocompletion mechanisms. First is original FAR's driven-based autocomplete and works
+by default by giving options while you're typing command. Second is driven by bash autocompletion and can be activated by pressing
+SHIFT+double-TAB (quickly press TAB twice while keeping SHIFT pressed).
+    #'exit' command behaviour:# typing 'exit' command will cause back shell to exit but will not close whole far2l application to close and next
+command execution request will spawn new back shell instance. This allows to 'reset' shell environment from exported variables and other settings.
+In case you want to exit far2l by typing command: type 'exit far' pseudo-command - it will be recognized by far2l as whole app close request.
     #Hotkeys and scrolling during running command:# you can use Ctrl+Shift+F3 to open history of output in built-in viewer or
-    Ctrl+Shift+F4 to open it in built-in editor. This allows efficient commands output investigation, including scrolling possibility, using
-    built-in viewer and editor capabilities. You can also open history viewer by scrolling mouse wheel up, following scroll til bottom of output
-    - will hide that viewer. Ctrl+C, Ctrl+Z hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
-    it and everything in shell by pressing Ctrl+Alt+C. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
-    or lost of unsaved data in killed applications.
+Ctrl+Shift+F4 to open it in built-in editor. This allows efficient commands output investigation, including scrolling possibility, using
+built-in viewer and editor capabilities. You can also open history viewer by scrolling mouse wheel up, following scroll til bottom of output
+- will hide that viewer. Ctrl+C, Ctrl+Z hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
+it and everything in shell by pressing Ctrl+Alt+C. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
+or lost of unsaved data in killed applications.
     #Hotkeys and scrolling when NOT running command:# while Ctrl+Shift+F3/F4 still functioning in such mode you can also use simple F3/F4 to get history
-    opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen.
+opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen.
     #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in GUI or TTY backends modes. While TTY backend may function in usual
-    terminal like xterm or SSH session but it may also run inside of terminal of GUI-mode far2l gaining capabilities inachievable under 'usual' terminals,
-    like live full keyboard keys recognition with with keydown/up reaction. Also 'host' far2l may provide shared clipboard access and desktop notifications.
-    You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
-    like NetRocks SFTP/SCP protocols to execute remote commands.
+terminal like xterm or SSH session but it may also run inside of terminal of GUI-mode far2l gaining capabilities inachievable under 'usual' terminals,
+like live full keyboard keys recognition with with keydown/up reaction. Also 'host' far2l may provide shared clipboard access and desktop notifications.
+You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
+like NetRocks SFTP/SCP protocols to execute remote commands.
 
 @ConfirmDlg
 $ #Confirmations#
@@ -2228,6 +2244,12 @@ to calculate the total files count.
   - for network drives - activates the Network plugin (if it is available)
 or the drive selection menu (if the Network plugin is not available).
 
+  #Exclusively handle hotkeys that include#
+  This options allows to choose control keys using which in hotkey combination
+will cause FAR2L to capture keyboard input exclusively, thus preventins other
+application from interfering with FAR2L hotkeys that contains such control key.
+Note that this options works only in GUI backend mode.
+
   #Far window title addons#
   Дополнительная информация, выводимая в заголовке окна консоли.
 Может содержать любой текст, включая следующие переменные:
@@ -2237,6 +2259,7 @@ or the drive selection menu (if the Network plugin is not available).
   #%Host# - host name of the machine where FAR2L is running;
   #%User# - user name under wich FAR2L is running;
   #%Admin# - name "Root", if FAR2L runs under root priviledges, otherwise - empty string.
+
 
 @DialogSettings
 $ #Settings dialog: dialogs#

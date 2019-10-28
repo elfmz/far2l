@@ -145,6 +145,9 @@ class Panel:public ScreenObject
 		void FastFindShow(int FindX,int FindY);
 		void FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName, FARString &strName);
 		void DragMessage(int X,int Y,int Move);
+		bool SetLocation_Directory(const wchar_t *path);
+		bool SetLocation_Plugin(bool file_plugin, class Plugin *plugin, const wchar_t *path, const wchar_t *host_file, LONG_PTR item);
+		int OnFCtlSetLocation(const FarPanelLocation *location);
 
 	protected:
 		void FastFind(int FirstKey);

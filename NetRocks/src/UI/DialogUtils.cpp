@@ -13,12 +13,19 @@ const wchar_t *FarDialogItems::MB2WidePooled(const char *sz)
 		return L"";
 
 	MB2Wide(sz, _str_pool_tmp);
-	return _str_pool.insert(_str_pool_tmp).first->c_str();
+	return _str_pool.emplace(_str_pool_tmp).first->c_str();
 }
 
-const wchar_t *FarDialogItems::WidePooled(const std::wstring &str)
+const wchar_t *FarDialogItems::WidePooled(const wchar_t *wz)
 {
-	return _str_pool.insert(str).first->c_str();
+	if (!wz)
+		return nullptr;
+
+	if (!*wz)
+		return L"";
+
+
+	return _str_pool.emplace(wz).first->c_str();
 }
 
 int FarDialogItems::AddInternal(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const wchar_t *history)
@@ -77,6 +84,11 @@ int FarDialogItems::SetBoxTitleItem(int title_lng)
 
 	operator[](0).PtrData = G.GetMsgWide(title_lng);
 	return 0;
+}
+
+int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const char *history)
+{
+	return AddInternal(type, x1, y1, x2, y2, flags, WidePooled(data), MB2WidePooled(history));
 }
 
 int FarDialogItems::Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const char *data, const char *history)
@@ -143,6 +155,11 @@ int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int 
 int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history)
 {
 	return Add(type, x1, _y, x2, _y, flags, data_lng, history);
+}
+
+int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int flags, const wchar_t *data, const char *history)
+{
+	return Add(type, x1, _y, x2, _y, flags, data, history);
 }
 
 /////////////////
@@ -310,23 +327,36 @@ void BaseDialog::SetFocusedDialogControl(int ctl)
 	}
 }
 
-void BaseDialog::TextFromDialogControl(int ctl, std::string &str)
+void BaseDialog::TextFromDialogControl(int ctl, std::wstring &wstr)
 {
 	if (ctl < 0 || (size_t)ctl >= _di.size())
 		return;
 
 	if (_dlg == INVALID_HANDLE_VALUE) {
-		str = Wide2MB(_di[ctl].PtrData ? _di[ctl].PtrData : L"");
+		if (_di[ctl].PtrData) {
+			wstr = _di[ctl].PtrData;
+		} else {
+			wstr.clear();
+		}
 		return;
 	}
 
-	static wchar_t buf[ 0x1000 ] = {};
-	FarDialogItemData dd = { ARRAYSIZE(buf) - 1, buf };
+	wstr.resize(0x1000);
+	FarDialogItemData dd = { wstr.size() - 1, &wstr[0] };
 	LONG_PTR rv = SendDlgMessage(DM_GETTEXT, ctl, (LONG_PTR)&dd);
-	if (rv > 0 && rv < (LONG_PTR)sizeof(buf))
-		buf[rv] = 0;
+	if (rv <= 0) {
+		wstr.clear();
 
-	Wide2MB(buf, str);
+	} else if ((size_t)rv < wstr.size()) {
+		wstr.resize((size_t)rv);
+	}
+}
+
+void BaseDialog::TextFromDialogControl(int ctl, std::string &str)
+{
+	std::wstring wstr;
+	TextFromDialogControl(ctl, wstr);
+	StrWide2MB(wstr, str);
 }
 
 long long BaseDialog::LongLongFromDialogControl(int ctl)
@@ -392,7 +422,7 @@ void BaseDialog::TextToDialogControl(int ctl, const std::wstring &str)
 		return;
 
 	if (_dlg == INVALID_HANDLE_VALUE) {
-		_di[ctl].PtrData = _di.WidePooled(str);
+		_di[ctl].PtrData = _di.WidePooled(str.c_str());
 		return;
 	}
 
@@ -442,6 +472,11 @@ void BaseDialog::LongLongToDialogControl(int ctl, long long value)
 	char str[0x100] = {};
 	snprintf(str, sizeof(str) - 1, "%lld", value);
 	TextToDialogControl(ctl, str);
+}
+
+void BaseDialog::LongLongToDialogControlThSeparated(int ctl, long long value)
+{
+	TextToDialogControl(ctl, ThousandSeparatedString(value));
 }
 
 void BaseDialog::FileSizeToDialogControl(int ctl, unsigned long long value)

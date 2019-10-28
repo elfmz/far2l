@@ -191,8 +191,8 @@ void ComplexOperationProgress::OnIdle()
 	}
 
 	if (changed.count) {
-		LongLongToDialogControl(_i_count_complete, _last_stats.count_complete);
-		LongLongToDialogControl(_i_count_total, _last_stats.count_total);
+		LongLongToDialogControlThSeparated(_i_count_complete, _last_stats.count_complete);
+		LongLongToDialogControlThSeparated(_i_count_total, _last_stats.count_total);
 		ProgressBarToDialogControl(_i_count_progress_bar, _last_stats.count_total
 			? _last_stats.count_complete * 100 / _last_stats.count_total : -1);
 	}
@@ -279,21 +279,19 @@ void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned 
 			_prev_ts = now;
 
 			unsigned long long fraction;
-			size_t p = _speed_current_label.find("()");
+			size_t p = _speed_current_label.find(L"()");
 			if (p != std::string::npos) {
 				fraction = _speed_current;
-				const char *units = FileSizeToFractionAndUnits(fraction);
-				char str[0x100] = {};
-				snprintf(str, sizeof(str) - 1, "%sps", units);
-
-				std::string speed_current_label = _speed_current_label;
+				std::wstring str = FileSizeToFractionAndUnits(fraction);
+				str+= L"ps";
+				std::wstring speed_current_label = _speed_current_label;
 				speed_current_label.insert(p + 1, str);
 				TextToDialogControl(i_speed_lbl_ctl, speed_current_label);
 			} else
 				fraction = 1;
 
-			LongLongToDialogControl(i_speed_cur_ctl, _speed_current / fraction);
-			LongLongToDialogControl(i_speed_avg_ctl, _speed_average / fraction);
+			LongLongToDialogControlThSeparated(i_speed_cur_ctl, _speed_current / fraction);
+			LongLongToDialogControlThSeparated(i_speed_avg_ctl, _speed_average / fraction);
 		}
 	} else {
 		_prev_complete = complete;

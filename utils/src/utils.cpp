@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <os_call.hpp>
 
+#include <algorithm>
+
 #if __FreeBSD__
 # include <malloc_np.h>
 #elif __APPLE__
@@ -434,41 +436,65 @@ void AbbreviateString(std::string &path, size_t needed_length)
 	}
 }
 
-const char *FileSizeToFractionAndUnits(unsigned long long &value)
+const wchar_t *FileSizeToFractionAndUnits(unsigned long long &value)
 {
 	if (value > 100ll * 1024ll * 1024ll * 1024ll * 1024ll) {
 		value = (1024ll * 1024ll * 1024ll * 1024ll);
-		return "TB";
+		return L"TB";
 	}
 
 	if (value > 100ll * 1024ll * 1024ll * 1024ll) {
 		value = (1024ll * 1024ll * 1024ll);
-		return "GB";
+		return L"GB";
 	}
 
 	if (value > 100ll * 1024ll * 1024ll ) {
 		value = (1024ll * 1024ll);
-		return "MB";
+		return L"MB";
 
 	}
 
 	if (value > 100ll * 1024ll ) {
 		value = (1024ll);
-		return "KB";
+		return L"KB";
 	}
 
 	value = 1;
-	return "B";
+	return L"B";
 }
 
-std::string FileSizeString(unsigned long long value)
+std::wstring ThousandSeparatedString(unsigned long long value)
+{
+	std::wstring str;
+	for (size_t th_sep = 0; value != 0;) {
+		wchar_t digit = L'0' + (value % 10);
+		value/= 10;
+		if (th_sep == 3) {
+			str+= L'`';
+			th_sep = 0;
+		} else {
+			++th_sep;
+		}
+		str+= digit;
+	}
+
+	if (str.empty()) {
+		str = L"0";
+	} else {
+		std::reverse(str.begin(), str.end());
+	}
+	return str;
+}
+
+std::wstring FileSizeString(unsigned long long value)
 {
 	unsigned long long fraction = value;
-	const char *units = FileSizeToFractionAndUnits(fraction);
+	const wchar_t *units = FileSizeToFractionAndUnits(fraction);
 	value/= fraction;
 
-	char str[0x100] = {};
-	snprintf(str, sizeof(str) - 1, "%lld %s", value, units);
+	std::wstring str = ThousandSeparatedString(value);
+	str+= L' ';
+	str+= units;
 	return str;
 }
 

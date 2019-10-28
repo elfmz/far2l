@@ -16,13 +16,14 @@ struct FarDialogItems : std::vector<struct FarDialogItem>
 
 	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr);
 	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, int data_lng, const char *history = nullptr);
+	int Add(int type, int x1, int y1, int x2, int y2, unsigned int flags, const wchar_t *data, const char *history = nullptr);
 
 	int EstimateWidth() const;
 	int EstimateHeight() const;
 
 	// use local strings pool to do not pollute global one
 	const wchar_t *MB2WidePooled(const char *sz);
-	const wchar_t *WidePooled(const std::wstring &str);
+	const wchar_t *WidePooled(const wchar_t *wz);
 
 private:
 
@@ -39,6 +40,7 @@ struct FarDialogItemsLineGrouped : FarDialogItems
 
 	int AddAtLine(int type, int x1, int x2, unsigned int flags = 0, const char *data = nullptr, const char *history = nullptr);
 	int AddAtLine(int type, int x1, int x2, unsigned int flags, int data_lng, const char *history = nullptr);
+	int AddAtLine(int type, int x1, int x2, unsigned int flags, const wchar_t *data, const char *history = nullptr);
 
 private:
 	int _y = 1;
@@ -94,6 +96,7 @@ protected:
 	int Get3StateDialogControl(int ctl);
 	bool IsCheckedDialogControl(int ctl);
 
+	void TextFromDialogControl(int ctl, std::wstring &wstr);
 	void TextFromDialogControl(int ctl, std::string &str);
 	long long LongLongFromDialogControl(int ctl);
 
@@ -103,6 +106,7 @@ protected:
 	void TextToDialogControl(int ctl, int lng_str);
 	void AbbreviableTextToDialogControl(int ctl, std::string str);
 	void LongLongToDialogControl(int ctl, long long value);
+	void LongLongToDialogControlThSeparated(int ctl, long long value);
 
 	void FileSizeToDialogControl(int ctl, unsigned long long value);
 

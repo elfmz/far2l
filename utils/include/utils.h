@@ -85,8 +85,9 @@ size_t GetMallocSize(void *p);
 
 void AbbreviateString(std::string &path, size_t needed_length);
 
-const char *FileSizeToFractionAndUnits(unsigned long long &value);
-std::string FileSizeString(unsigned long long value);
+const wchar_t *FileSizeToFractionAndUnits(unsigned long long &value);
+std::wstring FileSizeString(unsigned long long value);
+std::wstring ThousandSeparatedString(unsigned long long value);
 
 std::string StrPrintfV(const char *format, va_list args);
 std::string StrPrintf(const char *format, ...);

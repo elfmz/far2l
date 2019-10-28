@@ -128,6 +128,20 @@ std::string OpXfer::GetInformation()
 	return out;
 }
 
+std::string OpXfer::GetDestination(bool &directory)
+{
+	std::string out = _dst_host->SiteName();
+	if (out == G.GetMsgMB(MHostLocalName)) {
+		directory = true;
+		return _dst_dir;
+	}
+
+	directory = false;
+	out+= '/';
+	out+= _dst_dir;
+	return out;
+}
+
 void OpXfer::Show()
 {
 	XferProgress p(_kind, _direction, _dst_dir, _state, _wea_state);

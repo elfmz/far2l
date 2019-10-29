@@ -451,7 +451,6 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	MenuItemEx ChDiskItem;
 	FARString strDiskType, strRootDir, strDiskLetter;
 //	DWORD Mask = 4,DiskMask;
-	int Focus;//DiskCount = 1
 	//WCHAR I;
 	bool SetSelected=false;
 	//DWORD NetworkMask = 0;
@@ -775,93 +774,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 	if (!mitem->bIsPlugin)
 	{
-		for (;;)
-		{
-			fprintf(stderr, "chdisk: %ls\n", mitem->root);
-			if (FarChDir(mitem->root))
-			{
-				break;
-			}
-			return  -1;
-			/*else
-			{
-				//NewDir[2]=GOOD_SLASH;
-
-				if (FarChDir(NewDir))
-				{
-					break;
-				}
-			}
-			
-			
-			enum
-			{
-				CHDISKERROR_DOUBLEBOX,
-				CHDISKERROR_TEXT0,
-				CHDISKERROR_TEXT1,
-				CHDISKERROR_FIXEDIT,
-				CHDISKERROR_TEXT2,
-				CHDISKERROR_SEPARATOR,
-				CHDISKERROR_BUTTON_OK,
-				CHDISKERROR_BUTTON_CANCEL,
-			};
-			//const wchar_t Drive[]={mitem->cDrive,L'\0'};
-			FARString strError;
-			GetErrorString(strError);
-			int Len1=static_cast<int>(strError.GetLength());
-			int Len2=StrLength(MSG(MChangeDriveCannotReadDisk));
-			int MaxMsg=Min(Max(Len1,Len2), static_cast<int>(MAX_WIDTH_MESSAGE));
-			const int DX=Max(MaxMsg+13,40),DY=8;
-			const DialogDataEx ChDiskData[]=
-			{
-				DI_DOUBLEBOX,3,1,DX-4,DY-2,0,0,MSG(MError),
-				DI_EDIT,5,2,DX-6,2,0,DIF_READONLY,strError.CPtr(),
-				DI_TEXT,5,3,DX-9,3,0,0,MSG(MChangeDriveCannotReadDisk),
-				DI_FIXEDIT,5+Len2+1,3,5+Len2+1,3,0,DIF_FOCUS,mitem->root.c_str(),
-				DI_TEXT,5+Len2+2,3,5+Len2+2,3,0,0,L":",
-				DI_TEXT,3,DY-4,0,DY-4,0,DIF_SEPARATOR,L"",
-				DI_BUTTON,0,DY-3,0,DY-3,0,DIF_DEFAULT|DIF_CENTERGROUP,MSG(MRetry),
-				DI_BUTTON,0,DY-3,0,DY-3,0,DIF_CENTERGROUP,MSG(MCancel),
-			};
-			MakeDialogItemsEx(ChDiskData,ChDiskDlg);
-			Dialog Dlg(ChDiskDlg, ARRAYSIZE(ChDiskData), ChDiskDlgProc, 0);
-			Dlg.SetPosition(-1,-1,DX,DY);
-			Dlg.SetDialogMode(DMODE_WARNINGSTYLE);
-			Dlg.Process();
-			if(Dlg.GetExitCode()==CHDISKERROR_BUTTON_OK)
-			{
-				mitem->cDrive=ChDiskDlg[CHDISKERROR_FIXEDIT].strData.At(0);
-			}
-			else
-			{
-				return -1;
-			}*/
-		}
-
-		FARString strNewCurDir;
-		apiGetCurrentDirectory(strNewCurDir);
-
-		if ((PanelMode == NORMAL_PANEL) &&
-		        (GetType() == FILE_PANEL) &&
-		        !StrCmpI(strCurDir,strNewCurDir) &&
-		        IsVisible())
-		{
-			// А нужно ли делать здесь Update????
-			Update(UPDATE_KEEP_SELECTION);
-		}
-		else
-		{
-			Focus=GetFocus();
-			Panel *NewPanel=CtrlObject->Cp()->ChangePanel(this, FILE_PANEL, TRUE, FALSE);
-			NewPanel->SetCurDir(strNewCurDir,TRUE);
-			NewPanel->Show();
-
-			if (Focus || !CtrlObject->Cp()->GetAnotherPanel(this)->IsVisible())
-				NewPanel->SetFocus();
-
-			if (!Focus && CtrlObject->Cp()->GetAnotherPanel(this)->GetType() == INFO_PANEL)
-				CtrlObject->Cp()->GetAnotherPanel(this)->UpdateKeyBar();
-		}
+		SetLocation_Directory(mitem->root);
 	}
 	else //эта плагин, да
 	{
@@ -893,37 +806,122 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				hostFile = opi.HostFile;
 		}
 
-		HANDLE hPlugin;
-
-		if (hostFile.empty()) {
-			hPlugin = CtrlObject->Plugins.OpenPlugin( pPlugin, OPEN_DISKMENU, (nItem == (LONG_PTR)-1) ? 0 : nItem); //nItem
-		} else {
-			hPlugin = CtrlObject->Plugins.OpenFilePlugin(hostFile.c_str(), 0, OFP_ALTERNATIVE, pPlugin);//OFP_NORMAL
-		}
-
-		//fprintf(stderr, "???? hPlugin=%p nItem=%ld\n", hPlugin, nItem);
-		if (hPlugin != INVALID_HANDLE_VALUE)
-		{
-			Focus=GetFocus();
-			Panel *NewPanel = CtrlObject->Cp()->ChangePanel(this,FILE_PANEL,TRUE,TRUE);
-			NewPanel->SetPluginMode(hPlugin,L"",Focus || !CtrlObject->Cp()->GetAnotherPanel(NewPanel)->IsVisible());
-
-			if (nItem == (LONG_PTR)-1) {
-				NewPanel->Update(0);
-				NewPanel->Show();
-				curDir.insert(0, 1, '/');
-				int r = CtrlObject->Plugins.SetDirectory(hPlugin, curDir.c_str(), 0);
-			}
-
-			NewPanel->Update(0);
-			NewPanel->Show();
-
-			if (!Focus && CtrlObject->Cp()->GetAnotherPanel(this)->GetType() == INFO_PANEL)
-				CtrlObject->Cp()->GetAnotherPanel(this)->UpdateKeyBar();
-		}
+		SetLocation_Plugin(!hostFile.empty(), pPlugin,
+			(nItem == (LONG_PTR)-1) ? curDir.c_str() : nullptr,
+			hostFile.empty() ? nullptr : hostFile.c_str(),
+			(nItem == (LONG_PTR)-1) ? 0 : nItem);
 	}
 
 	return -1;
+}
+
+bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *path, const wchar_t *host_file, LONG_PTR item)
+{
+	HANDLE hPlugin;
+
+	if (file_plugin)
+	{
+		hPlugin = CtrlObject->Plugins.OpenFilePlugin(host_file, 0, OFP_ALTERNATIVE, plugin);//OFP_NORMAL
+	}
+	else
+	{
+		hPlugin = CtrlObject->Plugins.OpenPlugin( plugin, OPEN_DISKMENU, item); //nItem
+	}
+
+	if (hPlugin == INVALID_HANDLE_VALUE)
+	{
+		fprintf(stderr,
+			"SetLocation_Plugin(%d, %p, '%ls', '%ls', %ld) FAILED plugin open\n",
+				file_plugin, plugin, path, host_file, item);
+		return false;
+	}
+
+	int Focus = GetFocus();
+	Panel *NewPanel = CtrlObject->Cp()->ChangePanel(this,FILE_PANEL,TRUE,TRUE);
+	NewPanel->SetPluginMode(hPlugin,L"",Focus || !CtrlObject->Cp()->GetAnotherPanel(NewPanel)->IsVisible());
+
+	if (path)
+	{
+		NewPanel->Update(0);
+		NewPanel->Show();
+		CtrlObject->Plugins.SetDirectory(hPlugin, L"/", 0);
+		if (!CtrlObject->Plugins.SetDirectory(hPlugin, path, 0))
+		{
+			fprintf(stderr,
+				"SetLocation_Plugin(%d, %p, '%ls', '%ls', %ld) FAILED set directory\n",
+					file_plugin, plugin, path, host_file, item);
+		}
+	}
+
+	NewPanel->Update(0);
+	NewPanel->Show();
+
+	if (!Focus && CtrlObject->Cp()->GetAnotherPanel(this)->GetType() == INFO_PANEL)
+	{
+		CtrlObject->Cp()->GetAnotherPanel(this)->UpdateKeyBar();
+	}
+
+	return true;
+}
+
+bool Panel::SetLocation_Directory(const wchar_t *path)
+{
+	if (!FarChDir(path))
+	{
+		fprintf(stderr, "SetLocation_Directory('%ls') FAILED\n", path);
+		return false;
+	}
+
+	fprintf(stderr, "SetLocation_Directory('%ls') OK\n", path);
+
+	FARString strNewCurDir;
+	apiGetCurrentDirectory(strNewCurDir);
+
+	if ((PanelMode == NORMAL_PANEL) &&
+	        (GetType() == FILE_PANEL) &&
+	        !StrCmpI(strCurDir,strNewCurDir) &&
+	        IsVisible())
+	{
+		// А нужно ли делать здесь Update????
+		Update(UPDATE_KEEP_SELECTION);
+	}
+	else
+	{
+		int Focus=GetFocus();
+		Panel *NewPanel=CtrlObject->Cp()->ChangePanel(this, FILE_PANEL, TRUE, FALSE);
+		NewPanel->SetCurDir(strNewCurDir,TRUE);
+		NewPanel->Show();
+
+		if (Focus || !CtrlObject->Cp()->GetAnotherPanel(this)->IsVisible())
+			NewPanel->SetFocus();
+
+		if (!Focus && CtrlObject->Cp()->GetAnotherPanel(this)->GetType() == INFO_PANEL)
+			CtrlObject->Cp()->GetAnotherPanel(this)->UpdateKeyBar();
+	}
+
+	return true;
+}
+
+int Panel::OnFCtlSetLocation(const FarPanelLocation *location)
+{
+	if (!location->PluginName)
+	{
+		return SetLocation_Directory(location->Path);
+	}
+
+	auto pPlugin = CtrlObject->Plugins.GetPlugin(location->PluginName);
+	if (!pPlugin)
+	{
+		fprintf(stderr, "OnFCtlSetLocation: wrong plugin='%ls'", location->PluginName);
+		return 0;
+	}
+
+	if (location->HostFile)
+	{
+		return SetLocation_Plugin(true, pPlugin, location->Path, location->HostFile, 0);
+	}
+
+	return SetLocation_Plugin(false, pPlugin, location->Path, nullptr, location->Item);
 }
 
 int Panel::DisconnectDrive(PanelMenuItem *item, VMenu &ChDisk)
@@ -1498,7 +1496,7 @@ int Panel::GetCurDirPluginAware(FARString &strCurDir)
 	if (PanelMode==PLUGIN_PANEL)
 	{
 		HANDLE hPlugin=GetPluginHandle();
-		PluginHandle *ph = (PluginHandle*)hPlugin;
+//		PluginHandle *ph = (PluginHandle*)hPlugin;
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
 		strCurDir = Info.CurDir;
@@ -1854,6 +1852,12 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 		{
 			*(HANDLE *)Param2 = (GetPluginHandle() != INVALID_HANDLE_VALUE) ? CtrlObject->Plugins.GetRealPluginHandle(GetPluginHandle()) : INVALID_HANDLE_VALUE;
 			Result=TRUE;
+			break;
+		}
+
+		case FCTL_SETPANELLOCATION:
+		{
+			Result = OnFCtlSetLocation((const FarPanelLocation *)Param2);
 			break;
 		}
 

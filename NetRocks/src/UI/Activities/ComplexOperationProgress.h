@@ -69,8 +69,14 @@ public:
 class XferProgress : public ComplexOperationProgress
 {
 public:
-	XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state);
-	void Show(bool escape_to_background);
+	enum BackgroundMode
+	{
+		BM_DISALLOW_BACKGROUND,
+		BM_ALLOW_BACKGROUND,
+		BM_ALREADY_BACKGROUND
+	};
+
+	XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state, BackgroundMode bg_mode);
 };
 
 class RemoveProgress : public ComplexOperationProgress

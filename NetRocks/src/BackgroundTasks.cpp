@@ -1,6 +1,8 @@
 #include <map>
 #include <mutex>
+#include <utils.h>
 #include "BackgroundTasks.h"
+#include "Globals.h"
 
 static std::map<unsigned long, std::shared_ptr<IBackgroundTask> > g_background_tasks;
 static std::mutex g_background_tasks_mutex;
@@ -47,7 +49,19 @@ void ShowBackgroundTask(unsigned long id)
 	if ( it != g_background_tasks.end()) {
 		it->second->Show();
 		if (it->second->GetStatus() != BTS_ACTIVE && it->second->GetStatus() != BTS_PAUSED) {
+			bool destination_directory;
+			std::wstring destination_path = StrMB2Wide(it->second->GetDestination(destination_directory));
 			g_background_tasks.erase(it);
+
+			FarPanelLocation pl = {};
+			pl.PluginName = destination_directory ? nullptr : G.info.ModuleName;
+			pl.Path = destination_path.c_str();
+
+			fprintf(stderr, "ShowBackgroundTask: opening %ls '%ls'\n",
+				destination_directory ? L"directory" : pl.PluginName,
+				destination_path.c_str());
+
+			G.info.Control(PANEL_ACTIVE, FCTL_SETPANELLOCATION, 0, (LONG_PTR)(void *)&pl);
 		}
 	}
 }

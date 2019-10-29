@@ -17,6 +17,7 @@ struct IBackgroundTask
 
 	virtual BackgroundTaskStatus GetStatus() = 0;
 	virtual std::string GetInformation() = 0;
+	virtual std::string GetDestination(bool &directory) = 0;
 	virtual void Show() = 0;
 	virtual void Abort() = 0;
 };

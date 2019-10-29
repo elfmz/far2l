@@ -43,6 +43,7 @@ public:
 
 	virtual BackgroundTaskStatus GetStatus();
 	virtual std::string GetInformation();
+	virtual std::string GetDestination(bool &directory);
 	virtual void Show();
 	virtual void Abort();
 };

@@ -93,7 +93,7 @@ ComplexOperationProgress::ComplexOperationProgress(const std::string &path, Prog
 	_i_erraction_reset = _di.AddAtLine(DI_BUTTON, 46,54, DIF_CENTERGROUP, MErrorActionReset);
 	_i_cancel = _di.AddAtLine(DI_BUTTON, 55,60, DIF_CENTERGROUP, MCancel);
 
-	//SetFocusedDialogControl();
+	SetFocusedDialogControl(_i_pause_resume);
 	SetDefaultDialogControl(_i_pause_resume);
 
 	TextFromDialogControl(_i_speed_current_label, _speed_current_label);
@@ -309,20 +309,19 @@ void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state)
+XferProgress::XferProgress(XferKind xk, XferDirection xd, const std::string &destination, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state, BackgroundMode bg_mode)
 	: ComplexOperationProgress(destination, state, wea_state,
 	(xk == XK_RENAME) ? MXferRenameTitle : ((xk == XK_COPY)
 		? ((xd == XD_UPLOAD) ? MXferCopyUploadTitle : ((xd == XD_CROSSLOAD) ? MXferCopyCrossloadTitle : MXferCopyDownloadTitle))
 		: ((xd == XD_UPLOAD) ? MXferMoveUploadTitle : ((xd == XD_CROSSLOAD) ? MXferMoveCrossloadTitle : MXferMoveDownloadTitle))),
-	true, true)
+	true, bg_mode != BM_DISALLOW_BACKGROUND)
 {
+	_escape_to_background = (bg_mode == BM_ALREADY_BACKGROUND);
+	if (_escape_to_background && _i_background != -1) {
+		SetFocusedDialogControl(_i_background);
+	}
 }
 
-void XferProgress::Show(bool escape_to_background)
-{
-	_escape_to_background = escape_to_background;
-	ComplexOperationProgress::Show();
-}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RemoveProgress::RemoveProgress(const std::string &site_dir, ProgressState &state, std::shared_ptr<WhatOnErrorState> &wea_state)

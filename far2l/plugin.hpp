@@ -823,6 +823,14 @@ struct CmdLineSelect
 	int SelEnd;
 };
 
+struct FarPanelLocation
+{
+	const wchar_t *PluginName; // set to -1 if its plain directory navigation
+	const wchar_t *HostFile; // if set the OpenFilePlugin is used and Item is ignored, otherwise its normal plugin
+	LONG_PTR Item; // ignored if HostFile is not NULL
+	const wchar_t *Path;
+};
+
 #define PANEL_NONE		((HANDLE)(-1))
 #define PANEL_ACTIVE	((HANDLE)(-1))
 #define PANEL_PASSIVE	((HANDLE)(-2))
@@ -865,6 +873,7 @@ enum FILE_CONTROL_COMMANDS
 	FCTL_GETPANELHOSTFILE,
 	FCTL_SETCASESENSITIVESORT,
 	FCTL_GETPANELPLUGINHANDLE, // Param2 points to value of type HANDLE, sets that value to handle of plugin that renders that panel or INVALID_HANDLE_VALUE
+	FCTL_SETPANELLOCATION, // Param2 points to FarPanelLocation
 };
 
 typedef int (WINAPI *FARAPICONTROL)(
@@ -2416,3 +2425,4 @@ extern "C"
 #endif /* RC_INVOKED */
 
 #endif /* __PLUGIN_HPP__ */
+

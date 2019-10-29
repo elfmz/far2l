@@ -2,7 +2,7 @@
 #include <base64.h>
 #include <utils.h>
 #include <fcntl.h>
-#include <SavedScreen.h>
+#include "../WinPort/src/SavedScreen.h"
 
 #include "VTFar2lExtensios.h"
 #include "headers.hpp"

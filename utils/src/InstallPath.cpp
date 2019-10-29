@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 #include "ConvertUTF.h"
 #include <errno.h>
 
@@ -40,14 +41,23 @@ template <class C>
 	return true;
 }
 
+typedef const char *(*tGetPathTranslationPrefixA)();
+typedef const wchar_t *(*tGetPathTranslationPrefix)();
+
 static bool TranslateInstallPath(std::wstring &path, const wchar_t *dir_from, const wchar_t *dir_to)
 {
-	return TranslateInstallPathT(path, dir_from, dir_to,GetPathTranslationPrefix());
+	static tGetPathTranslationPrefix pGetPathTranslationPrefix =
+		(tGetPathTranslationPrefix)dlsym(RTLD_DEFAULT, "GetPathTranslationPrefix");
+
+	return TranslateInstallPathT(path, dir_from, dir_to, pGetPathTranslationPrefix());
 }
 
 static bool TranslateInstallPath(std::string &path, const char *dir_from, const char *dir_to)
 {
-	return TranslateInstallPathT(path, dir_from, dir_to, GetPathTranslationPrefixA());
+	static tGetPathTranslationPrefixA pGetPathTranslationPrefixA =
+		(tGetPathTranslationPrefixA)dlsym(RTLD_DEFAULT, "GetPathTranslationPrefixA");
+
+	return TranslateInstallPathT(path, dir_from, dir_to, pGetPathTranslationPrefixA());
 }
 
 bool TranslateInstallPath_Bin2Share(std::wstring &path)
@@ -79,3 +89,4 @@ bool TranslateInstallPath_Share2Lib(std::string &path)
 {
 	return TranslateInstallPath(path, "share", "lib");
 }
+

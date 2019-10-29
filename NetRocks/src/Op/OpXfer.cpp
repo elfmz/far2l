@@ -82,8 +82,9 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	}
 
 	if (!WaitThreadBeforeShowProgress()) {
-		XferProgress p(_kind, _direction, _dst_dir, _state, _wea_state);
-		p.Show(false);
+		XferProgress p(_kind, _direction, _dst_dir, _state, _wea_state,
+			(_op_mode == 0) ? XferProgress::BM_ALLOW_BACKGROUND : XferProgress::BM_DISALLOW_BACKGROUND);
+		p.Show();
 	}
 }
 
@@ -144,8 +145,8 @@ std::string OpXfer::GetDestination(bool &directory)
 
 void OpXfer::Show()
 {
-	XferProgress p(_kind, _direction, _dst_dir, _state, _wea_state);
-	p.Show(true);
+	XferProgress p(_kind, _direction, _dst_dir, _state, _wea_state, XferProgress::BM_ALREADY_BACKGROUND);
+	p.Show();
 }
 
 void OpXfer::Abort()

@@ -1,14 +1,14 @@
 # far2l
-Linux port of FAR Manager v2 (http://farmanager.com/)
-Works also on OSX and BSD (but later not tested on regular manner)
-ALPHA VERSION.
+Linux port of FAR Manager v2 (http://farmanager.com/)   
+Works also on OSX and BSD (but later not tested on regular manner)   
+ALPHA VERSION.   
 **Currently interesting only for enthusiasts!!!**
 
 Plug-ins that are currently working: NetRocks (SFTP/SCP/SMB/NFS/WebDAV), colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
 
 [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 
-#### License: GNU/GPLv2<br>
+#### License: GNU/GPLv2
 
 ### Used code from projects
 

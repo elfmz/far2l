@@ -18,6 +18,8 @@ $^#Contents
 
    ~Site connection editor~@SiteConnectionEditor@
 
+   ~Command line and remote FAR2L~@CommandLine@
+
    ~Contact information~@Contact@
 
 @DisksMenu
@@ -59,6 +61,17 @@ $^#Site connection editor#
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~NFS:// protocol specific options~@ProtocolOptionsNFS@
  ~FILE:// protocol specific options~@ProtocolOptionsFile@
+
+ ~Contents~@Contents@
+
+@CommandLine
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#Command line and remote FAR2L#
+
+ When entering commands in command line when panel displays active NetRocks connection of SFTP and SCP protocols - NetRocks will execute them directly on remote host, opening full-featured pseudoterminal for controlling remotely-executed commands. This essentially allows using NetRocks as SSH client with FAR2L-extended pseudoterminal. So if you're working in GUI-based FAR2L you can run remote terminal-based FAR2L directly in NetRocks SFTP/SCP connected panel and work in that remote FAR2L with user experience of local GUI-based version (full keyboard support, clipboard sharing, desktop notifications) as well as being sure that if connection suddenly drops - remote work will not be killed instantly, since remote terminal-based FAR2L will remain alive and active in background and next time you will reconnect and re-launch far2l - it will prompt to activate that backgrounded FAR2L instance.
 
  ~Contents~@Contents@
 

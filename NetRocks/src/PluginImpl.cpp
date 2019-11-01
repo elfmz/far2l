@@ -488,7 +488,7 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
-	if (Key == VK_RETURN && _remote
+	if (Key == VK_RETURN && ControlState == 0 && _remote
 	 && G.GetGlobalConfigBool("EnterExecRemotely", true)) {
 		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
 	}

@@ -10,9 +10,9 @@ $^#Contents
 
  To access this module open plugins menu (F11) or use disks (Alt+F1/Alt+F2) menu. Then choose the "NetRocks". See further topics for more detail.
 
-   ~Disks menu~@DisksMenu@
+   ~Disks/Plugin menu~@DisksMenu@
 
-   ~Plugin menu~@DisksMenu@
+   ~Background tasks menu~@BackgroundTasksMenu@
 
    ~Plugin configuration~@PluginOptions@
 
@@ -27,9 +27,20 @@ $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
-$^#Plugin menu#
+$^#Disks/Plugin menu#
  
- After choosing the plugin from disks menu (Alt+F1/Alt+F2) or from Plugin meu (F11) you will see connection sites list. Initially there're no sites defined, but you can add site using <Create site connection> entry or pressing Shift+F4. After being added any site connection can be edited by pressing F4 or removed by pressing F8.
+ After choosing the plugin from disks menu (Alt+F1/Alt+F2) or from Plugin menu (F11) you will see connection sites list. Initially there're no sites defined, but you can add site using <Create site connection> entry or pressing Shift+F4. After being added any site connection can be edited by pressing F4 or removed by pressing F8.
+ 
+ ~Contents~@Contents@
+
+@BackgroundTasksMenu
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#Background tasks menu#
+ 
+ This NetRocks-related menu item available in F11 or Pluguns configuration but appears only if there're any background tasks spawned. Here you can examine state of each background task and switch to working (usually destination) directory of completed task by selecting them in opened submenu. Note that selection of completed tasks items automatically removes them from this list.
  
  ~Contents~@Contents@
 
@@ -71,7 +82,8 @@ $^#Copyright (C) 2019 elfmz#
 $^#Contents
 $^#Command line and remote FAR2L#
 
- When entering commands in command line when panel displays active NetRocks connection of SFTP and SCP protocols - NetRocks will execute them directly on remote host, opening full-featured pseudoterminal for controlling remotely-executed commands. This essentially allows using NetRocks as SSH client with FAR2L-extended pseudoterminal. So if you're working in GUI-based FAR2L you can run remote terminal-based FAR2L directly in NetRocks SFTP/SCP connected panel and work in that remote FAR2L with user experience of local GUI-based version (full keyboard support, clipboard sharing, desktop notifications) as well as being sure that if connection suddenly drops - remote work will not be killed instantly, since remote terminal-based FAR2L will remain alive and active in background and next time you will reconnect and re-launch far2l - it will prompt to activate that backgrounded FAR2L instance.
+ When entering commands in command line when panel displays active NetRocks connection of SFTP and SCP protocols - NetRocks will execute them directly on remote host, opening full-featured pseudoterminal for controlling remotely-executed commands. This essentially #allows using NetRocks as SSH client# with FAR2L-extended pseudoterminal.
+ If you're working in GUI-based FAR2L you can run #remote TTY-mode FAR2L# directly in NetRocks SFTP/SCP connected panel and work in that remote FAR2L with user experience of local GUI-based version (full keyboard support, clipboard sharing, desktop notifications) as well as being sure that if connection suddenly drops - remote work will not be killed instantly, since remote terminal-based FAR2L will remain alive and active in background and next time you will reconnect and re-launch far2l - it will prompt to activate that backgrounded FAR2L instance.
 
  ~Contents~@Contents@
 

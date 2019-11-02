@@ -130,7 +130,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 }
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
-	_window(window), _font_width(12), _font_height(16), 
+	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
 	_buffered_paint(false), _cursor_state(false), _sharp(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
@@ -208,8 +208,24 @@ void ConsolePaintContext::SetFont(wxFont font)
 	_font_height = fsi.GetMaxHeight();
 	//font_height+= _font_height/4;
 
+	_font_thickness = (_font_width > 4) ? _font_width / 4 : 1;
+	switch (font.GetWeight()) {
+		case wxFONTWEIGHT_LIGHT:
+			if (_font_thickness > 1) {
+				--_font_thickness;
+			}
+			break;
+
+		case wxFONTWEIGHT_BOLD:
+			++_font_thickness;
+			break;
+
+		case wxFONTWEIGHT_NORMAL:
+		default:
+			;
+	}
 	
-	fprintf(stderr, "Font %u x %u: '%ls' - %s\n", _font_width, _font_height, static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
+	fprintf(stderr, "Font %u x %u . %u: '%ls' - %s\n", _font_width, _font_height, _font_thickness, static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
 		font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
 		
 	if (font.IsFixedWidth() && !is_unstable) {
@@ -492,12 +508,8 @@ void ConsolePainter::FlushText()
 
 void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text)
 {
-//	_dc.SetTextForeground(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
 	const unsigned int fw = _context->FontWidth(), fh = _context->FontHeight();
-
-        const unsigned int thickness = (fw > 4) ? fw / 4 : 1;
-
-//fprintf(stderr, "thickness=%d\n", thickness);
+        const unsigned int thickness = _context->FontThickness();
 
 	wxPen *&pen = _custom_draw_pens[clr_text];
 	if (!pen) {
@@ -505,9 +517,7 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 		pen->SetJoin(wxJOIN_BEVEL);
 	}
 	_dc.SetPen(*pen);
-//	_dc.SetPen(*wxThePenList->FindOrCreatePen( wxColour(clr_text.r, clr_text.g, clr_text.b), 1, wxPENSTYLE_SOLID ));
 
-//        const unsigned int thickness = 1;
         const unsigned int top = _start_y;
         const unsigned int bottom = top + fh;
         const unsigned int middle_y = top + (fh - thickness) / 2;
@@ -519,7 +529,6 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 	const unsigned int middle1_x = left + (fw - thickness)/2 - thickness;
 	const unsigned int middle2_x = left + (fw - thickness)/2 + thickness;
 
-#if 1
 	switch (c) {
 		case 0x2500: /* ─ */
 			_dc.DrawLine(left, middle_y, right, middle_y);
@@ -605,94 +614,6 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 			break;
 	}
 
-#else
-	for ( size_t m = 0; m < thickness; m++ ) {
-		switch (c) {
-			case 0x2500: /* ─ */
-				_dc.DrawLine(left, middle_y + m, right, middle_y + m);
-				break;
-			case 0x2502: /* │ */
-				_dc.DrawLine(middle_x + m, top, middle_x + m, bottom);
-				break;
-			case 0x250C: /* ┌ */
-				_dc.DrawLine(middle_x, middle_y + m, right, middle_y + m);
-				_dc.DrawLine(middle_x + m, middle_y, middle_x + m, bottom);
-				break;
-			case 0x2510: /* ┐ */
-				_dc.DrawLine(left, middle_y + m, middle_x, middle_y + m);
-				_dc.DrawLine(middle_x + m, middle_y, middle_x + m, bottom);
-				break;
-			case 0x2514: /* └ */
-				_dc.DrawLine(middle_x, middle_y + m, right, middle_y + m);
-				_dc.DrawLine(middle_x + m, top, middle_x + m, middle_y);
-				break;
-			case 0x2518: /* ┘ */
-				// not sure why do we need " + thickness" here
-				_dc.DrawLine(left, middle_y + m, middle_x + thickness, middle_y + m);
-				_dc.DrawLine(middle_x + m, top, middle_x + m, middle_y);
-				break;
-			case 0x251C: /* ├ */
-				_dc.DrawLine(middle_x, middle_y + m, right, middle_y + m);
-				_dc.DrawLine(middle_x + m, top, middle_x + m, bottom);
-				break;
-			case 0x2524: /* ┤ */
-				_dc.DrawLine(left, middle_y + m, middle_x, middle_y + m);
-				_dc.DrawLine(middle_x + m, top, middle_x + m, bottom);
-				break;
-			case 0x252C: /* ┬ */
-				_dc.DrawLine(left, middle_y + m, right, middle_y + m);
-				_dc.DrawLine(middle_x + m, middle_y, middle_x + m, bottom);
-				break;
-			case 0x2534: /* ┴ */
-				_dc.DrawLine(left, middle_y + m, right, middle_y + m);
-				_dc.DrawLine(middle_x + m, top, middle_x + m, middle_y);
-				break;
-			case 0x2550: /* ═ */
-				_dc.DrawLine(left, middle1_y + m, right, middle1_y + m);
-				_dc.DrawLine(left, middle2_y + m, right, middle2_y + m);
-				break;
-			case 0x2551: /* ║ */
-				_dc.DrawLine(middle1_x + m, top, middle1_x + m, bottom);
-				_dc.DrawLine(middle2_x + m, top, middle2_x + m, bottom);
-				break;
-			case 0x2554: /* ╔  */
-				_dc.DrawLine(middle1_x, middle1_y + m, right, middle1_y + m);
-				_dc.DrawLine(middle2_x, middle2_y + m, right, middle2_y + m);
-				_dc.DrawLine(middle1_x + m, middle1_y, middle1_x + m, bottom);
-				_dc.DrawLine(middle2_x + m, middle2_y, middle2_x + m, bottom);
-				break;
-			case 0x2557: /* ╗  */
-				_dc.DrawLine(left, middle1_y + m, middle2_x, middle1_y + m);
-				_dc.DrawLine(left, middle2_y + m, middle1_x, middle2_y + m);
-				_dc.DrawLine(middle1_x + m, middle2_y, middle1_x + m, bottom);
-				_dc.DrawLine(middle2_x + m, middle1_y, middle2_x + m, bottom);
-				break;
-			case 0x255A: /* ╚  */
-				_dc.DrawLine(middle2_x, middle1_y + m, right, middle1_y + m);
-				_dc.DrawLine(middle1_x, middle2_y + m, right, middle2_y + m);
-				_dc.DrawLine(middle1_x + m, top, middle1_x + m, middle2_y);
-				_dc.DrawLine(middle2_x + m, top, middle2_x + m, middle1_y);
-				break;
-			case 0x255D: /* ╝  */
-				// not sure why do we need " + thickness" here
-				_dc.DrawLine(left, middle1_y + m, middle1_x + thickness, middle1_y + m);
-				_dc.DrawLine(left, middle2_y + m, middle2_x + thickness, middle2_y + m);
-				_dc.DrawLine(middle1_x + m, top, middle1_x + m, middle1_y);
-				_dc.DrawLine(middle2_x + m, top, middle2_x + m, middle2_y);
-				break;
-			case 0x255F: /* ╟  */
-				_dc.DrawLine(middle2_x, middle_y + m, right, middle_y + m);
-				_dc.DrawLine(middle1_x + m, top, middle1_x + m, bottom);
-				_dc.DrawLine(middle2_x + m, top, middle2_x + m, bottom);
-				break;
-			case 0x2562: /* ╢  */
-				_dc.DrawLine(left, middle_y + m, middle1_x, middle_y + m);
-				_dc.DrawLine(middle1_x + m, top, middle1_x + m, bottom);
-				_dc.DrawLine(middle2_x + m, top, middle2_x + m, bottom);
-				break;
-		}
-	}
-#endif
 	_dc.SetPen(*_trans_pen);
 }
 

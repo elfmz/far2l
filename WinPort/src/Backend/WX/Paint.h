@@ -5,7 +5,7 @@ class ConsolePaintContext
 {
 	std::vector<wxFont> _fonts;
 	wxWindow *_window;
-	unsigned int _font_width, _font_height;
+	unsigned int _font_width, _font_height, _font_thickness;
 	bool _buffered_paint, _cursor_state, _sharp;
 	struct {
 		std::vector<bool> checked;
@@ -33,6 +33,7 @@ public:
 	inline bool GetCursorState() const { return _cursor_state; }
 	inline unsigned int FontWidth() const { return _font_width; }
 	inline unsigned int FontHeight() const { return _font_height; }
+	inline unsigned int FontThickness() const { return _font_thickness; }
 };
 
 ///////////////////////////////

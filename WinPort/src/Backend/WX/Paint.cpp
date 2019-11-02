@@ -407,10 +407,11 @@ CursorProps::CursorProps(bool state) : visible(false), height(1)
 
 ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer) : 
 	_context(context), _dc(dc), _buffer(buffer), _cursor_props(context->GetCursorState()),
-	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0)
+	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0),
+	_trans_pen(wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT))
 {
-	wxPen *trans_pen = wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT);
-	_dc.SetPen(*trans_pen);
+
+	_dc.SetPen(*_trans_pen);
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 	_buffer.Empty();
 }
@@ -484,9 +485,223 @@ void ConsolePainter::FlushText()
 
 #define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
+#define IS_CUSTOMDRAW_WCHAR(c) ((c) == 0x2500 || (c) == 0x2502 || (c) == 0x250c || (c) == 0x2510 || (c) == 0x2514 || (c) == 0x2518 \
+			|| (c) == 0x251c || (c) == 0x2524 || (c) == 0x252c || (c) == 0x2534 || (c) == 0x2550 || (c) == 0x2551 \
+			|| (c) == 0x2554 || (c) == 0x2557 || (c) == 0x255a || (c) == 0x255d || (c) == 0x255f || (c) == 0x2562)
+
+
+void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text)
+{
+//	_dc.SetTextForeground(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
+	const unsigned int fw = _context->FontWidth(), fh = _context->FontHeight();
+
+        const unsigned int thickness = (fw > 4) ? fw / 4 : 1;
+
+//fprintf(stderr, "thickness=%d\n", thickness);
+
+	wxPen *&pen = _custom_draw_pens[clr_text];
+	if (!pen) {
+		pen = wxThePenList->FindOrCreatePen( wxColour(clr_text.r, clr_text.g, clr_text.b), thickness, wxPENSTYLE_SOLID );
+		pen->SetJoin(wxJOIN_BEVEL);
+	}
+	_dc.SetPen(*pen);
+//	_dc.SetPen(*wxThePenList->FindOrCreatePen( wxColour(clr_text.r, clr_text.g, clr_text.b), 1, wxPENSTYLE_SOLID ));
+
+//        const unsigned int thickness = 1;
+        const unsigned int top = _start_y;
+        const unsigned int bottom = top + fh;
+        const unsigned int middle_y = top + (fh - thickness) / 2;
+        const unsigned int middle1_y = top + (fh - thickness) / 2 - thickness;
+        const unsigned int middle2_y = top + (fh - thickness) / 2 + thickness;
+	const unsigned int left = cx * fw;
+	const unsigned int right = left + fw;
+	const unsigned int middle_x = left + (fw - thickness)/2;
+	const unsigned int middle1_x = left + (fw - thickness)/2 - thickness;
+	const unsigned int middle2_x = left + (fw - thickness)/2 + thickness;
+
+#if 1
+	switch (c) {
+		case 0x2500: /* ─ */
+			_dc.DrawLine(left, middle_y, right, middle_y);
+			break;
+		case 0x2502: /* │ */
+			_dc.DrawLine(middle_x, top, middle_x, bottom);
+			break;
+		case 0x250C: /* ┌ */
+			_dc.DrawLine(middle_x, middle_y, right, middle_y);
+			_dc.DrawLine(middle_x, middle_y, middle_x, bottom);
+			break;
+		case 0x2510: /* ┐ */
+			_dc.DrawLine(left, middle_y, middle_x, middle_y);
+			_dc.DrawLine(middle_x, middle_y, middle_x, bottom);
+			break;
+		case 0x2514: /* └ */
+			_dc.DrawLine(middle_x, middle_y, right, middle_y);
+			_dc.DrawLine(middle_x, top, middle_x, middle_y);
+			break;
+		case 0x2518: /* ┘ */
+			// not sure why do we need " + thickness" here
+			_dc.DrawLine(left, middle_y, middle_x, middle_y);// + thickness
+			_dc.DrawLine(middle_x, top, middle_x, middle_y);
+			break;
+		case 0x251C: /* ├ */
+			_dc.DrawLine(middle_x, middle_y, right, middle_y);
+			_dc.DrawLine(middle_x, top, middle_x, bottom);
+			break;
+		case 0x2524: /* ┤ */
+			_dc.DrawLine(left, middle_y, middle_x, middle_y);
+			_dc.DrawLine(middle_x, top, middle_x, bottom);
+			break;
+		case 0x252C: /* ┬ */
+			_dc.DrawLine(left, middle_y, right, middle_y);
+			_dc.DrawLine(middle_x, middle_y, middle_x, bottom);
+			break;
+		case 0x2534: /* ┴ */
+			_dc.DrawLine(left, middle_y, right, middle_y);
+			_dc.DrawLine(middle_x, top, middle_x, middle_y);
+			break;
+		case 0x2550: /* ═ */
+			_dc.DrawLine(left, middle1_y, right, middle1_y);
+			_dc.DrawLine(left, middle2_y, right, middle2_y);
+			break;
+		case 0x2551: /* ║ */
+			_dc.DrawLine(middle1_x, top, middle1_x, bottom);
+			_dc.DrawLine(middle2_x, top, middle2_x, bottom);
+			break;
+		case 0x2554: /* ╔  */
+			_dc.DrawLine(middle1_x, middle1_y, right, middle1_y);
+			_dc.DrawLine(middle2_x, middle2_y, right, middle2_y);
+			_dc.DrawLine(middle1_x, middle1_y, middle1_x, bottom);
+			_dc.DrawLine(middle2_x, middle2_y, middle2_x, bottom);
+			break;
+		case 0x2557: /* ╗  */
+			_dc.DrawLine(left, middle1_y, middle2_x, middle1_y);
+			_dc.DrawLine(left, middle2_y, middle1_x, middle2_y);
+			_dc.DrawLine(middle1_x, middle2_y, middle1_x, bottom);
+			_dc.DrawLine(middle2_x, middle1_y, middle2_x, bottom);
+			break;
+		case 0x255A: /* ╚  */
+			_dc.DrawLine(middle2_x, middle1_y, right, middle1_y);
+			_dc.DrawLine(middle1_x, middle2_y, right, middle2_y);
+			_dc.DrawLine(middle1_x, top, middle1_x, middle2_y);
+			_dc.DrawLine(middle2_x, top, middle2_x, middle1_y);
+			break;
+		case 0x255D: /* ╝  */
+			// not sure why do we need " + thickness" here
+			_dc.DrawLine(left, middle1_y, middle1_x, middle1_y);
+			_dc.DrawLine(left, middle2_y, middle2_x, middle2_y);
+			_dc.DrawLine(middle1_x, top, middle1_x, middle1_y);
+			_dc.DrawLine(middle2_x, top, middle2_x, middle2_y);
+			break;
+		case 0x255F: /* ╟  */
+			_dc.DrawLine(middle2_x, middle_y, right, middle_y);
+			_dc.DrawLine(middle1_x, top, middle1_x, bottom);
+			_dc.DrawLine(middle2_x, top, middle2_x, bottom);
+			break;
+		case 0x2562: /* ╢  */
+			_dc.DrawLine(left, middle_y, middle1_x, middle_y);
+			_dc.DrawLine(middle1_x, top, middle1_x, bottom);
+			_dc.DrawLine(middle2_x, top, middle2_x, bottom);
+			break;
+	}
+
+#else
+	for ( size_t m = 0; m < thickness; m++ ) {
+		switch (c) {
+			case 0x2500: /* ─ */
+				_dc.DrawLine(left, middle_y + m, right, middle_y + m);
+				break;
+			case 0x2502: /* │ */
+				_dc.DrawLine(middle_x + m, top, middle_x + m, bottom);
+				break;
+			case 0x250C: /* ┌ */
+				_dc.DrawLine(middle_x, middle_y + m, right, middle_y + m);
+				_dc.DrawLine(middle_x + m, middle_y, middle_x + m, bottom);
+				break;
+			case 0x2510: /* ┐ */
+				_dc.DrawLine(left, middle_y + m, middle_x, middle_y + m);
+				_dc.DrawLine(middle_x + m, middle_y, middle_x + m, bottom);
+				break;
+			case 0x2514: /* └ */
+				_dc.DrawLine(middle_x, middle_y + m, right, middle_y + m);
+				_dc.DrawLine(middle_x + m, top, middle_x + m, middle_y);
+				break;
+			case 0x2518: /* ┘ */
+				// not sure why do we need " + thickness" here
+				_dc.DrawLine(left, middle_y + m, middle_x + thickness, middle_y + m);
+				_dc.DrawLine(middle_x + m, top, middle_x + m, middle_y);
+				break;
+			case 0x251C: /* ├ */
+				_dc.DrawLine(middle_x, middle_y + m, right, middle_y + m);
+				_dc.DrawLine(middle_x + m, top, middle_x + m, bottom);
+				break;
+			case 0x2524: /* ┤ */
+				_dc.DrawLine(left, middle_y + m, middle_x, middle_y + m);
+				_dc.DrawLine(middle_x + m, top, middle_x + m, bottom);
+				break;
+			case 0x252C: /* ┬ */
+				_dc.DrawLine(left, middle_y + m, right, middle_y + m);
+				_dc.DrawLine(middle_x + m, middle_y, middle_x + m, bottom);
+				break;
+			case 0x2534: /* ┴ */
+				_dc.DrawLine(left, middle_y + m, right, middle_y + m);
+				_dc.DrawLine(middle_x + m, top, middle_x + m, middle_y);
+				break;
+			case 0x2550: /* ═ */
+				_dc.DrawLine(left, middle1_y + m, right, middle1_y + m);
+				_dc.DrawLine(left, middle2_y + m, right, middle2_y + m);
+				break;
+			case 0x2551: /* ║ */
+				_dc.DrawLine(middle1_x + m, top, middle1_x + m, bottom);
+				_dc.DrawLine(middle2_x + m, top, middle2_x + m, bottom);
+				break;
+			case 0x2554: /* ╔  */
+				_dc.DrawLine(middle1_x, middle1_y + m, right, middle1_y + m);
+				_dc.DrawLine(middle2_x, middle2_y + m, right, middle2_y + m);
+				_dc.DrawLine(middle1_x + m, middle1_y, middle1_x + m, bottom);
+				_dc.DrawLine(middle2_x + m, middle2_y, middle2_x + m, bottom);
+				break;
+			case 0x2557: /* ╗  */
+				_dc.DrawLine(left, middle1_y + m, middle2_x, middle1_y + m);
+				_dc.DrawLine(left, middle2_y + m, middle1_x, middle2_y + m);
+				_dc.DrawLine(middle1_x + m, middle2_y, middle1_x + m, bottom);
+				_dc.DrawLine(middle2_x + m, middle1_y, middle2_x + m, bottom);
+				break;
+			case 0x255A: /* ╚  */
+				_dc.DrawLine(middle2_x, middle1_y + m, right, middle1_y + m);
+				_dc.DrawLine(middle1_x, middle2_y + m, right, middle2_y + m);
+				_dc.DrawLine(middle1_x + m, top, middle1_x + m, middle2_y);
+				_dc.DrawLine(middle2_x + m, top, middle2_x + m, middle1_y);
+				break;
+			case 0x255D: /* ╝  */
+				// not sure why do we need " + thickness" here
+				_dc.DrawLine(left, middle1_y + m, middle1_x + thickness, middle1_y + m);
+				_dc.DrawLine(left, middle2_y + m, middle2_x + thickness, middle2_y + m);
+				_dc.DrawLine(middle1_x + m, top, middle1_x + m, middle1_y);
+				_dc.DrawLine(middle2_x + m, top, middle2_x + m, middle2_y);
+				break;
+			case 0x255F: /* ╟  */
+				_dc.DrawLine(middle2_x, middle_y + m, right, middle_y + m);
+				_dc.DrawLine(middle1_x + m, top, middle1_x + m, bottom);
+				_dc.DrawLine(middle2_x + m, top, middle2_x + m, bottom);
+				break;
+			case 0x2562: /* ╢  */
+				_dc.DrawLine(left, middle_y + m, middle1_x, middle_y + m);
+				_dc.DrawLine(middle1_x + m, top, middle1_x + m, bottom);
+				_dc.DrawLine(middle2_x + m, top, middle2_x + m, bottom);
+				break;
+		}
+	}
+#endif
+	_dc.SetPen(*_trans_pen);
+}
+
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {
-	if (!c || c == L' ' || !IS_VALID_WCHAR(c)) {
+	bool custom_draw = false;
+
+	if (!c || c == L' ' || !IS_VALID_WCHAR(c)
+	 || (custom_draw = IS_CUSTOMDRAW_WCHAR(c)) != false) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
 		FlushText();
@@ -499,25 +714,34 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
 
-	uint8_t fit_font_index = isCombinedUTF32(c) ? // workaround for 
-		_prev_fit_font_index : _context->CharFitTest(_dc, c);
+	if (custom_draw) {
+		FlushBackground(cx + 1);
+		CustomDrawChar(cx, c, clr_text);
+		_start_cx = (unsigned int)-1;
+		_prev_fit_font_index = 0;
+
+	} else {
+		uint8_t fit_font_index = isCombinedUTF32(c) ? // workaround for 
+			_prev_fit_font_index : _context->CharFitTest(_dc, c);
 	
-	if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
-		&& _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
-		_buffer+= c;
-		return;
-	}
+		if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
+			&& _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
+			_buffer+= c;
+			return;
+		}
 
-	_prev_fit_font_index = fit_font_index;
+		_prev_fit_font_index = fit_font_index;
 
-	FlushBackground(cx + 1);
-	FlushText();
-	_start_cx = cx;
-	_buffer = c;
-	_clr_text = clr_text;
-	if (fit_font_index!=0 && fit_font_index!=0xff) {
-		_context->ApplyFont(_dc, fit_font_index);
+		FlushBackground(cx + 1);
 		FlushText();
-		_context->ApplyFont(_dc);
+		_start_cx = cx;
+		_buffer = c;
+		_clr_text = clr_text;
+
+		if (fit_font_index != 0 && fit_font_index != 0xff) {
+			_context->ApplyFont(_dc, fit_font_index);
+			FlushText();
+			_context->ApplyFont(_dc);
+		}
 	}
 }

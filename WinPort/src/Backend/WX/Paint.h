@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 
 class ConsolePaintContext
 {
@@ -74,7 +75,11 @@ class ConsolePainter
 	unsigned int _start_cx, _start_cy, _start_back_cx;
 	unsigned int _start_y;
 	uint8_t _prev_fit_font_index;
+	wxPen *_trans_pen;
+	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
 	
+	void CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text);
+
 	void SetBackgroundColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr);
 	void FlushBackground(unsigned int cx);

@@ -79,6 +79,8 @@ class ConsolePainter
 	wxPen *_trans_pen;
 	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
 	
+	void DrawLineH(wxCoord thickness, wxCoord y, wxCoord left, wxCoord right);
+	void DrawLineV(wxCoord thickness, wxCoord x, wxCoord top, wxCoord bottom);
 	void CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text);
 
 	void SetBackgroundColor(const WinPortRGB &clr);

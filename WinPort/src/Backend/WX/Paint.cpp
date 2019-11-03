@@ -509,7 +509,7 @@ void ConsolePainter::FlushText()
 void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text)
 {
 	const unsigned int fw = _context->FontWidth(), fh = _context->FontHeight();
-        const unsigned int thickness = _context->FontThickness();
+	const unsigned int thickness = _context->FontThickness();
 
 	wxPen *&pen = _custom_draw_pens[clr_text];
 	if (!pen) {
@@ -521,10 +521,10 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 
 	const unsigned int left = cx * fw;
 	const unsigned int right = left + fw;
-        const unsigned int top = _start_y;
-        const unsigned int bottom = top + fh;
+	const unsigned int top = _start_y;
+	const unsigned int bottom = top + fh;
 
-        unsigned int middle_y = top + (fh - thickness) / 2;
+	unsigned int middle_y = top + (fh - thickness) / 2;
 	unsigned int middle_x = left + (fw - thickness) / 2;
 
 	if ((thickness & 1) == 0) {
@@ -532,8 +532,8 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 		++middle_y;
 	}
 
-        const unsigned int middle1_y = middle_y - thickness;
-        const unsigned int middle2_y = middle_y + thickness;
+	const unsigned int middle1_y = middle_y - thickness;
+	const unsigned int middle2_y = middle_y + thickness;
 
 	const unsigned int middle1_x = middle_x - thickness;
 	const unsigned int middle2_x = middle_x + thickness;

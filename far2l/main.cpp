@@ -182,17 +182,9 @@ static int MainProcess(
 				Opt.SetupArgv++;
 				strPath = lpwszDestName1;
 
-				CutToNameUNC(strPath);
-				DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
-
-				// Should be after CutToNameUNC. Converts double slash to single at beginning
-				if (strPath.At(0) == L'/' && strPath.At(1) == L'/') {
-					strPath.Remove(0, 1);
+				if (strPath != "/") {
+					DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
 				}
-
-
-//				if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
-//					AddEndSlash(strPath);
 
 				// Та панель, которая имеет фокус - активна (начнем по традиции с Левой Панели ;-)
 				if (Opt.LeftPanel.Focus)
@@ -213,15 +205,8 @@ static int MainProcess(
 					Opt.SetupArgv++;
 					strPath = lpwszDestName2;
 
-					CutToNameUNC(strPath);
-					DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
-
-//					if ((strPath.At(1)==L':' && !strPath.At(2)) || (HasPathPrefix(strPath) && strPath.At(5)==L':' && !strPath.At(6)))
-//						AddEndSlash(strPath);
-
-					// Should be after CutToNameUNC. Converts double slash to single at beginning
-					if (strPath.At(0) == L'/' && strPath.At(1) == L'/') {
-						strPath.Remove(0, 1);
+					if (strPath != "/") {
+						DeleteEndSlash(strPath); //BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
 					}
 
 					// а здесь с точнотью наоборот - обрабатываем пассивную панель
@@ -263,7 +248,7 @@ static int MainProcess(
 					}
 					else
 					{
-						strPath = PointToNameUNC(lpwszDestName2);
+						strPath = lpwszDestName2;
 
 						if (!strPath.IsEmpty())
 						{
@@ -282,7 +267,7 @@ static int MainProcess(
 				}
 				else
 				{
-					strPath = PointToNameUNC(lpwszDestName1);
+					strPath = lpwszDestName1;
 
 					if (!strPath.IsEmpty())
 					{
@@ -508,12 +493,11 @@ int FarAppMain(int argc, char **argv)
 					{
 						Opt.LoadPlug.PluginsCacheOnly=TRUE;
 						Opt.LoadPlug.PluginsPersonal=FALSE;
+
 					} else if (Upper(arg_w[2]) == L'D' && !arg_w[3]) {
 						if (I + 1 < argc) {
 							I++;
 							arg_w = MB2Wide(argv[I]);
-							// Add slash to beginning, so path won't be broken after PointToNameUNC
-							arg_w.insert(0, 1, L'/');
 							switchHandled = false;
 						} else {
 							show_help();
@@ -556,8 +540,11 @@ int FarAppMain(int argc, char **argv)
 					Unquote(DestNames[CntDestName]);
 					ConvertNameToFull(DestNames[CntDestName],DestNames[CntDestName]);
 
+
 					if (apiGetFileAttributes(DestNames[CntDestName]) != INVALID_FILE_ATTRIBUTES)
+					{
 						CntDestName++; //???
+					}
 				}
 			}
 		}

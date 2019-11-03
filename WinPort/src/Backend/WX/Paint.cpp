@@ -502,7 +502,7 @@ void ConsolePainter::FlushText()
 #define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
 #define IS_CUSTOMDRAW_WCHAR(c) ((c) == 0x2500 || (c) == 0x2502 || (c) == 0x250c || (c) == 0x2510 || (c) == 0x2514 || (c) == 0x2518 \
-			|| (c) == 0x251c || (c) == 0x2524 || (c) == 0x252c || (c) == 0x2534 || (c) == 0x2550 || (c) == 0x2551 \
+			|| (c) == 0x251c || (c) == 0x2524 || (c) == 0x252c || (c) == 0x2534 || (c) == 0x253C || (c) == 0x2550 || (c) == 0x2551 \
 			|| (c) == 0x2554 || (c) == 0x2557 || (c) == 0x255a || (c) == 0x255d || (c) == 0x255f || (c) == 0x2562)
 
 
@@ -584,6 +584,11 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 		case 0x2534: /* ┴ */
 			DrawLineH(thickness, middle_y, left, right);
 			DrawLineV(thickness, middle_x, top, middle_y);
+			break;
+
+		case 0x253C: /* ┼  */
+			DrawLineH(thickness, middle_y, left, right);
+			DrawLineV(thickness, middle_x, top, bottom);
 			break;
 
 		case 0x2550: /* ═ */

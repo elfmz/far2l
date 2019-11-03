@@ -509,7 +509,7 @@ void ConsolePainter::FlushText()
 void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text)
 {
 	const unsigned int fw = _context->FontWidth(), fh = _context->FontHeight();
-        const unsigned int thickness = 2;//_context->FontThickness();
+        const unsigned int thickness = _context->FontThickness();
 
 	wxPen *&pen = _custom_draw_pens[clr_text];
 	if (!pen) {

@@ -70,9 +70,7 @@ bool PathCanHoldRegularFile(const wchar_t *Path);
 bool IsPluginPrefixPath(const wchar_t *Path);
 
 bool CutToSlash(FARString &strStr, bool bInclude = false);
-FARString &CutToNameUNC(FARString &strPath);
 FARString &CutToFolderNameIfFolder(FARString &strPath);
-const wchar_t *PointToNameUNC(const wchar_t *lpwszPath);
 const wchar_t* WINAPI PointToName(const wchar_t *lpwszPath);
 const wchar_t* PointToName(FARString &strPath);
 const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr);

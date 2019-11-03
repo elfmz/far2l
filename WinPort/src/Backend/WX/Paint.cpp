@@ -506,20 +506,15 @@ void ConsolePainter::FlushText()
 			|| (c) == 0x2554 || (c) == 0x2557 || (c) == 0x255a || (c) == 0x255d || (c) == 0x255f || (c) == 0x2562)
 
 
-void ConsolePainter::DrawLineH(wxCoord thickness, wxCoord y, wxCoord left, wxCoord right)
+void ConsolePainter::FillRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom)
 {
-	_dc.DrawRectangle(left, y - thickness / 2, right + 1 - left , thickness);
-}
-
-void ConsolePainter::DrawLineV(wxCoord thickness, wxCoord x, wxCoord top, wxCoord bottom)
-{
-	_dc.DrawRectangle(x - thickness / 2, top, thickness, bottom + 1 - top);
+	_dc.DrawRectangle(left, top, right + 1 - left , bottom + 1 - top);
 }
 
 void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text)
 {
 	const wxCoord fw = _context->FontWidth(), fh = _context->FontHeight();
-	const wxCoord thickness = _context->FontThickness();
+	wxCoord thickness = _context->FontThickness();
 
 	SetBackgroundColor(clr_text);
 
@@ -528,8 +523,8 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 	const wxCoord top = _start_y;
 	const wxCoord bottom = top + fh - 1;
 
-	const wxCoord middle_y = top + fh / 2;
-	const wxCoord middle_x = left + fw / 2;
+	const wxCoord middle_y = top + fh / 2 - thickness / 2;
+	const wxCoord middle_x = left + fw / 2 - thickness / 2;
 
 	const wxCoord middle1_y = middle_y - thickness;
 	const wxCoord middle2_y = middle_y + thickness;
@@ -537,110 +532,115 @@ void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB
 	const wxCoord middle1_x = middle_x - thickness;
 	const wxCoord middle2_x = middle_x + thickness;
 
+	--thickness;
+
 	switch (c) {
 		case 0x2500: /* ─ */
-			DrawLineH(thickness, middle_y, left, right);
+			FillRectangle(left, middle_y, right, middle_y + thickness);
 			break;
 
 		case 0x2502: /* │ */
-			DrawLineV(thickness, middle_x, top, bottom);
+			FillRectangle(middle_x, top, middle_x + thickness, bottom);
 			break;
 
 		case 0x250C: /* ┌ */
-			DrawLineH(thickness, middle_y, middle_x - thickness / 2, right);
-			DrawLineV(thickness, middle_x, middle_y, bottom);
+			FillRectangle(middle_x, middle_y, right, middle_y + thickness);
+			FillRectangle(middle_x, middle_y, middle_x + thickness, bottom);
 			break;
 
 		case 0x2510: /* ┐ */
-			DrawLineH(thickness, middle_y, left, middle_x);
-			DrawLineV(thickness, middle_x, middle_y, bottom);
+			FillRectangle(left, middle_y, middle_x, middle_y + thickness);
+			FillRectangle(middle_x, middle_y, middle_x + thickness, bottom);
 			break;
 
 		case 0x2514: /* └ */
-			DrawLineH(thickness, middle_y, middle_x - thickness / 2, right);
-			DrawLineV(thickness, middle_x, top, middle_y);
+			FillRectangle(middle_x, middle_y, right, middle_y + thickness);
+			FillRectangle(middle_x, top, middle_x + thickness, middle_y);
 			break;
 
-		case 0x2518: /* ┘ */
-			DrawLineH(thickness, middle_y, left, middle_x);
-			DrawLineV(thickness, middle_x, top, middle_y);
+		case 0x2518: /* ┘ */ // + thickness
+			FillRectangle(left, middle_y, middle_x + thickness, middle_y + thickness);
+			FillRectangle(middle_x, top, middle_x + thickness, middle_y);
 			break;
 
 		case 0x251C: /* ├ */
-			DrawLineH(thickness, middle_y, middle_x, right);
-			DrawLineV(thickness, middle_x, top, bottom);
+			FillRectangle(middle_x, middle_y, right, middle_y + thickness);
+			FillRectangle(middle_x, top, middle_x + thickness, bottom);
 			break;
 
 		case 0x2524: /* ┤ */
-			DrawLineH(thickness, middle_y, left, middle_x);
-			DrawLineV(thickness, middle_x, top, bottom);
+			FillRectangle(left, middle_y, middle_x, middle_y + thickness);
+			FillRectangle(middle_x, top, middle_x + thickness, bottom);
 			break;
 
 		case 0x252C: /* ┬ */
-			DrawLineH(thickness, middle_y, left, right);
-			DrawLineV(thickness, middle_x, middle_y, bottom);
+			FillRectangle(left, middle_y, right, middle_y + thickness);
+			FillRectangle(middle_x, middle_y, middle_x + thickness, bottom);
 			break;
 
 		case 0x2534: /* ┴ */
-			DrawLineH(thickness, middle_y, left, right);
-			DrawLineV(thickness, middle_x, top, middle_y);
+			FillRectangle(left, middle_y, right, middle_y + thickness);
+			FillRectangle(middle_x, top, middle_x + thickness, middle_y);
 			break;
 
 		case 0x253C: /* ┼  */
-			DrawLineH(thickness, middle_y, left, right);
-			DrawLineV(thickness, middle_x, top, bottom);
+			FillRectangle(left, middle_y, right, middle_y + thickness);
+			FillRectangle(middle_x, top, middle_x + thickness, bottom);
 			break;
 
 		case 0x2550: /* ═ */
-			DrawLineH(thickness, middle1_y, left, right);
-			DrawLineH(thickness, middle2_y, left, right);
+			FillRectangle(left, middle1_y, right, middle1_y + thickness);
+			FillRectangle(left, middle2_y, right, middle2_y + thickness);
 			break;
 
 		case 0x2551: /* ║ */
-			DrawLineV(thickness, middle1_x, top, bottom);
-			DrawLineV(thickness, middle2_x, top, bottom);
+			FillRectangle(middle1_x, top, middle1_x + thickness, bottom);
+			FillRectangle(middle2_x, top, middle2_x + thickness, bottom);
 			break;
 
 		case 0x2554: /* ╔  */
-			DrawLineH(thickness, middle1_y, middle1_x - thickness / 2, right);
-			DrawLineV(thickness, middle1_x, middle1_y, bottom);
-			DrawLineH(thickness, middle2_y, middle2_x - thickness / 2, right);
-			DrawLineV(thickness, middle2_x, middle2_y, bottom);
+			FillRectangle(middle1_x, middle1_y, right, middle1_y + thickness);
+			FillRectangle(middle2_x, middle2_y, right, middle2_y + thickness);
+
+			FillRectangle(middle1_x, middle1_y, middle1_x + thickness, bottom);
+			FillRectangle(middle2_x, middle2_y, middle2_x + thickness, bottom);
 			break;
 
 		case 0x2557: /* ╗  */
-			DrawLineH(thickness, middle1_y, left, middle2_x);
-			DrawLineV(thickness, middle2_x, middle1_y, bottom);
-			DrawLineH(thickness, middle2_y, left, middle1_x);
-			DrawLineV(thickness, middle1_x, middle2_y, bottom);
+			FillRectangle(left, middle1_y, middle2_x, middle1_y + thickness);
+			FillRectangle(left, middle2_y, middle1_x, middle2_y + thickness);
+
+			FillRectangle(middle2_x, middle1_y, middle2_x + thickness, bottom);
+			FillRectangle(middle1_x, middle2_y, middle1_x + thickness, bottom);
 			break;
 
 		case 0x255A: /* ╚  */
-			DrawLineH(thickness, middle2_y, middle1_x - thickness / 2, right);
-			DrawLineV(thickness, middle1_x, top, middle2_y);
-			DrawLineH(thickness, middle1_y, middle2_x - thickness / 2, right);
-			DrawLineV(thickness, middle2_x, top, middle1_y);
+			FillRectangle(middle2_x, middle1_y, right, middle1_y + thickness);
+			FillRectangle(middle1_x, middle2_y, right, middle2_y + thickness);
+
+			FillRectangle(middle1_x, top, middle1_x + thickness, middle2_y);
+			FillRectangle(middle2_x, top, middle2_x + thickness, middle1_y);
 			break;
 
-		case 0x255D: /* ╝  */
-			DrawLineH(thickness, middle1_y, left, middle1_x);
-			DrawLineV(thickness, middle1_x, top, middle1_y);
-			DrawLineH(thickness, middle2_y, left, middle2_x);
-			DrawLineV(thickness, middle2_x, top, middle2_y);
+		case 0x255D: /* ╝  */ // + thickness
+			FillRectangle(left, middle1_y, middle1_x + thickness, middle1_y + thickness);
+			FillRectangle(left, middle2_y, middle2_x + thickness, middle2_y + thickness);
+
+			FillRectangle(middle1_x, top, middle1_x + thickness, middle1_y);
+			FillRectangle(middle2_x, top, middle2_x + thickness, middle2_y);
 			break;
 
 		case 0x255F: /* ╟  */
-			DrawLineV(thickness, middle1_x, top, bottom);
-			DrawLineV(thickness, middle2_x, top, bottom);
-			DrawLineH(thickness, middle_y, middle2_x, right);
+			FillRectangle(middle2_x, middle_y, right, middle_y + thickness);
+			FillRectangle(middle1_x, top, middle1_x + thickness, bottom);
+			FillRectangle(middle2_x, top, middle2_x + thickness, bottom);
 			break;
 
 		case 0x2562: /* ╢  */
-			DrawLineV(thickness, middle1_x, top, bottom);
-			DrawLineV(thickness, middle2_x, top, bottom);
-			DrawLineH(thickness, middle_y, left, middle1_x);
+			FillRectangle(left, middle_y, middle1_x, middle_y + thickness);
+			FillRectangle(middle1_x, top, middle1_x + thickness, bottom);
+			FillRectangle(middle2_x, top, middle2_x + thickness, bottom);
 			break;
-
 	}
 }
 

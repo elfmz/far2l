@@ -509,25 +509,34 @@ void ConsolePainter::FlushText()
 void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text)
 {
 	const unsigned int fw = _context->FontWidth(), fh = _context->FontHeight();
-        const unsigned int thickness = _context->FontThickness();
+        const unsigned int thickness = 2;//_context->FontThickness();
 
 	wxPen *&pen = _custom_draw_pens[clr_text];
 	if (!pen) {
 		pen = wxThePenList->FindOrCreatePen( wxColour(clr_text.r, clr_text.g, clr_text.b), thickness, wxPENSTYLE_SOLID );
 		pen->SetJoin(wxJOIN_BEVEL);
+		pen->SetCap(wxCAP_PROJECTING);
 	}
 	_dc.SetPen(*pen);
 
-        const unsigned int top = _start_y;
-        const unsigned int bottom = top + fh;
-        const unsigned int middle_y = top + (fh - thickness) / 2;
-        const unsigned int middle1_y = top + (fh - thickness) / 2 - thickness;
-        const unsigned int middle2_y = top + (fh - thickness) / 2 + thickness;
 	const unsigned int left = cx * fw;
 	const unsigned int right = left + fw;
-	const unsigned int middle_x = left + (fw - thickness)/2;
-	const unsigned int middle1_x = left + (fw - thickness)/2 - thickness;
-	const unsigned int middle2_x = left + (fw - thickness)/2 + thickness;
+        const unsigned int top = _start_y;
+        const unsigned int bottom = top + fh;
+
+        unsigned int middle_y = top + (fh - thickness) / 2;
+	unsigned int middle_x = left + (fw - thickness) / 2;
+
+	if ((thickness & 1) == 0) {
+		++middle_x;
+		++middle_y;
+	}
+
+        const unsigned int middle1_y = middle_y - thickness;
+        const unsigned int middle2_y = middle_y + thickness;
+
+	const unsigned int middle1_x = middle_x - thickness;
+	const unsigned int middle2_x = middle_x + thickness;
 
 	switch (c) {
 		case 0x2500: /* ─ */

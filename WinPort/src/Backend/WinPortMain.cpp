@@ -207,11 +207,21 @@ static void ShimSigWinch(int sig)
 	}
 }
 
+extern "C" void WinPortHelp()
+{
+	printf("FAR2L backend-specific options:\n");
+	printf("\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n");
+	printf("\t--notty - don't fallback to TTY backend if GUI backend failed\n");
+	printf("\t--nodetect - don't detect if TTY backend supports FAR2L extensions\n");
+	printf("\t--mortal - terminate instead of going to background on getting SIGHUP\n");
+}
+
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
-	bool tty = false, far2l_tty = false, nodetect = false, help = false, notty = false;
+	bool tty = false, far2l_tty = false, nodetect = false, notty = false;
 	bool mortal = false;
 
+	std::vector<char *> filtered_argv;
 	for (int i = 0; i < argc; ++i) {
 
 		if (strstr(argv[i], "--mortal") == argv[i]) {
@@ -226,10 +236,15 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		} else if (strstr(argv[i], "--nodetect") == argv[i]) {
 			nodetect = true;
 
-		} else if (strcmp(argv[i], "/?") == 0 || strcmp(argv[i], "--help") == 0){
-			help = true;
+		} else {
+			filtered_argv.push_back(argv[i]);
 		}
 	}
+
+	if (!filtered_argv.empty()) {
+		argv = &filtered_argv[0];
+	}
+	argc = (int)filtered_argv.size();
 
 	FDScope std_in(dup(0));
 	FDScope std_out(dup(1));
@@ -253,11 +268,9 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		}
 	}
 
-	if (!help) {
-		SetupStdHandles();
-		if (!mortal) {
-			signal(SIGHUP, SIG_IGN);
-		}
+	SetupStdHandles();
+	if (!mortal) {
+		signal(SIGHUP, SIG_IGN);
 	}
 
 	WinPortInitRegistry();

@@ -84,17 +84,7 @@ static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
 		apiExpandEnvironmentStrings(strSrc, strSrc);
 	}
 
-	if (!StrCmp(strSrc,L"/"))
-	{
-		strSrc = g_strFarPath;
-
-		if (IsLocalPath_FarPath)
-		{
-			strSrc.SetLength(2);
-			strSrc += L"/";
-		}
-	}
-	else
+	if (strSrc != L"/")
 	{
 		CheckShortcutFolder(&strSrc,FALSE,TRUE);
 	}

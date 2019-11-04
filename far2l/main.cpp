@@ -76,42 +76,35 @@ int DirectRT=0;
 
 static void CopyGlobalSettings();
 
-static void show_help()
+static void print_help(const char *self)
 {
-	WCHAR HelpMsg[]=
-	    L"Usage: far [switches] [/cd apath [/cd ppath]]\n\n"
-	    L"where\n"
-	    L"  apath - path to a folder (or a file or an archive or command with prefix)\n"
-	    L"          for the active panel\n"
-	    L"  ppath - path to a folder (or a file or an archive or command with prefix)\n"
-	    L"          for the passive panel\n\n"
-	    L"The following switches may be used in the command line:\n\n"
-	    L" /?   This help.\n"
-	    L" /a   Disable display of characters with codes 0 - 31 and 255.\n"
-	    L" /ag  Disable display of pseudographics characters.\n"
-	    L" /co  Forces FAR to load plugins from the cache only.\n"
-	    L" /cd <path> Change panel's directory to specified path.\n"
-#ifdef DIRECT_RT
-	    L" /do  Direct output.\n"
-#endif
-	    L" /e[<line>[:<pos>]] <filename>\n"
-	    L"      Edit the specified file.\n"
-	    L" /i   Set icon for FAR console window.\n"
-	    L" /m   Do not load macros.\n"
-	    L" /ma  Do not execute auto run macros.\n"
-	    L" /p[<path>]\n"
-	    L"      Search for \"common\" plugins in the directory, specified by <path>.\n"
-	    L" /u <username>\n"
-	    L"      Allows to have separate settings for different users.\n"
-	    L" /v <filename>\n"
-	    L"      View the specified file. If <filename> is -, data is read from the stdin.\n"
-	    L" /w   Stretch to console window instead of console buffer.\n"
-	    L" /x   Disable exception handling.\n"
-#ifdef _DEBUGEXC
-	    L" /xd  Enable exception handling.\n"
-#endif
-		;
-	printf("%ls\n", HelpMsg);
+	printf( "FAR2L - oldschool file manager, with built-in terminal and other usefullness'es\n"
+		"Usage: %s [switches] [-cd apath [-cd ppath]]\n\n"
+		"where\n"
+		"  apath - path to a folder (or a file or an archive or command with prefix)\n"
+		"          for the active panel\n"
+		"  ppath - path to a folder (or a file or an archive or command with prefix)\n"
+		"          for the passive panel\n\n"
+		"The following switches may be used in the command line:\n\n"
+		" -h   This help.\n"
+		" -a   Disable display of characters with codes 0 - 31 and 255.\n"
+		" -ag  Disable display of pseudographics characters.\n"
+		" -co  Forces FAR to load plugins from the cache only.\n"
+		" -cd <path> Change panel's directory to specified path.\n"
+		" -e[<line>[:<pos>]] <filename>\n"
+		"      Edit the specified file.\n"
+		" -m   Do not load macros.\n"
+		" -ma  Do not execute auto run macros.\n"
+		" -p[<path>]\n"
+		"      Search for \"common\" plugins in the directory, specified by <path>.\n"
+		" -u <username>\n"
+		"      Allows to have separate settings for different users.\n"
+		" -v <filename>\n"
+		"      View the specified file. If <filename> is -, data is read from the stdin.\n"
+		" -w   Stretch to console window instead of console buffer.\n"
+		"\n",
+		self);
+	WinPortHelp();
 	//Console.Write(HelpMsg, ARRAYSIZE(HelpMsg)-1);
 }
 
@@ -409,6 +402,9 @@ int FarAppMain(int argc, char **argv)
 	for (int I=1; I<argc; I++)
 	{
 		std::wstring arg_w = MB2Wide(argv[I]);
+		if (arg_w.find(L"--") == 0) {
+			arg_w.erase(0, 1);
+		}
 		bool switchHandled = false;
 		if ((arg_w[0]==L'/' || arg_w[0]==L'-') && arg_w[1])
 		{
@@ -499,26 +495,11 @@ int FarAppMain(int argc, char **argv)
 							I++;
 							arg_w = MB2Wide(argv[I]);
 							switchHandled = false;
-						} else {
-							show_help();
-							return 0;
 						}
 					}
 
 					break;
-				case L'?':
-				case L'H':
-					ControlObject::ShowCopyright(1);
-					show_help();
-					return 0;
-#ifdef DIRECT_RT
-				case L'D':
 
-					if (Upper(arg_w[2])==L'O' && !arg_w[3])
-						DirectRT=1;
-
-					break;
-#endif
 				case L'W':
 					{
 						Opt.WindowMode=TRUE;
@@ -540,11 +521,8 @@ int FarAppMain(int argc, char **argv)
 					Unquote(DestNames[CntDestName]);
 					ConvertNameToFull(DestNames[CntDestName],DestNames[CntDestName]);
 
-
 					if (apiGetFileAttributes(DestNames[CntDestName]) != INVALID_FILE_ATTRIBUTES)
-					{
 						CntDestName++; //???
-					}
 				}
 			}
 		}
@@ -710,6 +688,15 @@ int _cdecl main(int argc, char *argv[])
 		if (argc >= 4) {
 			if (strcmp(argv[1], "--libexec")==0)
 				return libexec(argv[2], argv[3], argc - 4, argv + 4);
+		}
+		if (argc > 1 &&
+		(strncasecmp(argv[1], "--h", 3) == 0
+		 || strncasecmp(argv[1], "-h", 2) == 0
+		 || strcasecmp(argv[1], "/h") == 0
+		 || strcasecmp(argv[1], "/?") == 0)) {
+
+			print_help(name);
+			return 0;
 		}
 	}
 

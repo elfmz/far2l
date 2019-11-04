@@ -1,5 +1,9 @@
 #pragma once
 #include <map>
+#include <vector>
+#include <wx/graphics.h>
+#include "WinCompat.h"
+#include "wxWinTranslations.h"
 
 class ConsolePaintContext
 {
@@ -79,9 +83,6 @@ class ConsolePainter
 	wxPen *_trans_pen;
 	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
 	
-	void FillRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom);
-	void CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text);
-
 	void SetBackgroundColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr);
 	void FlushBackground(unsigned int cx);

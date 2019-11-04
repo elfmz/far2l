@@ -61,6 +61,7 @@ if (${USEWX})
 	set(SOURCES
 		${SOURCES}
 		src/Backend/WX/Paint.cpp
+		src/Backend/WX/CustomDrawChar.cpp
 		src/Backend/WX/wxMain.cpp
 		src/Backend/WX/wxClipboardBackend.cpp
 		src/Backend/WX/ExclusiveHotkeys.cpp

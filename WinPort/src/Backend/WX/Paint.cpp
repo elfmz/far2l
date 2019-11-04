@@ -8,7 +8,7 @@
 #include "Paint.h"
 #include "PathHelpers.h"
 #include "utils.h"
-
+#include "CustomDrawChar.h"
 
 #define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
 					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
@@ -501,155 +501,12 @@ void ConsolePainter::FlushText()
 
 #define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
-#define IS_CUSTOMDRAW_WCHAR(c) ((c) == 0x2500 || (c) == 0x2502 || (c) == 0x250c || (c) == 0x2510 || (c) == 0x2514 || (c) == 0x2518 \
-			|| (c) == 0x251c || (c) == 0x2524 || (c) == 0x252c || (c) == 0x2534 || (c) == 0x253C || (c) == 0x2550 || (c) == 0x2551 \
-			|| (c) == 0x2554 || (c) == 0x2557 || (c) == 0x255a || (c) == 0x255d || (c) == 0x255f || (c) == 0x2562)
-
-
-void ConsolePainter::FillRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom)
-{
-	_dc.DrawRectangle(left, top, right + 1 - left , bottom + 1 - top);
-}
-
-void ConsolePainter::CustomDrawChar(unsigned int cx, wchar_t c, const WinPortRGB &clr_text)
-{
-	const wxCoord fw = _context->FontWidth(), fh = _context->FontHeight();
-	wxCoord thickness = _context->FontThickness();
-
-	SetBackgroundColor(clr_text);
-
-	const wxCoord left = cx * fw;
-	const wxCoord right = left + fw - 1;
-	const wxCoord top = _start_y;
-	const wxCoord bottom = top + fh - 1;
-
-	const wxCoord middle_y = top + fh / 2 - thickness / 2;
-	const wxCoord middle_x = left + fw / 2 - thickness / 2;
-
-	const wxCoord middle1_y = middle_y - thickness;
-	const wxCoord middle2_y = middle_y + thickness;
-
-	const wxCoord middle1_x = middle_x - thickness;
-	const wxCoord middle2_x = middle_x + thickness;
-
-	--thickness;
-
-	switch (c) {
-		case 0x2500: /* ─ */
-			FillRectangle(left, middle_y, right, middle_y + thickness);
-			break;
-
-		case 0x2502: /* │ */
-			FillRectangle(middle_x, top, middle_x + thickness, bottom);
-			break;
-
-		case 0x250C: /* ┌ */
-			FillRectangle(middle_x, middle_y, right, middle_y + thickness);
-			FillRectangle(middle_x, middle_y, middle_x + thickness, bottom);
-			break;
-
-		case 0x2510: /* ┐ */
-			FillRectangle(left, middle_y, middle_x, middle_y + thickness);
-			FillRectangle(middle_x, middle_y, middle_x + thickness, bottom);
-			break;
-
-		case 0x2514: /* └ */
-			FillRectangle(middle_x, middle_y, right, middle_y + thickness);
-			FillRectangle(middle_x, top, middle_x + thickness, middle_y);
-			break;
-
-		case 0x2518: /* ┘ */ // + thickness
-			FillRectangle(left, middle_y, middle_x + thickness, middle_y + thickness);
-			FillRectangle(middle_x, top, middle_x + thickness, middle_y);
-			break;
-
-		case 0x251C: /* ├ */
-			FillRectangle(middle_x, middle_y, right, middle_y + thickness);
-			FillRectangle(middle_x, top, middle_x + thickness, bottom);
-			break;
-
-		case 0x2524: /* ┤ */
-			FillRectangle(left, middle_y, middle_x, middle_y + thickness);
-			FillRectangle(middle_x, top, middle_x + thickness, bottom);
-			break;
-
-		case 0x252C: /* ┬ */
-			FillRectangle(left, middle_y, right, middle_y + thickness);
-			FillRectangle(middle_x, middle_y, middle_x + thickness, bottom);
-			break;
-
-		case 0x2534: /* ┴ */
-			FillRectangle(left, middle_y, right, middle_y + thickness);
-			FillRectangle(middle_x, top, middle_x + thickness, middle_y);
-			break;
-
-		case 0x253C: /* ┼  */
-			FillRectangle(left, middle_y, right, middle_y + thickness);
-			FillRectangle(middle_x, top, middle_x + thickness, bottom);
-			break;
-
-		case 0x2550: /* ═ */
-			FillRectangle(left, middle1_y, right, middle1_y + thickness);
-			FillRectangle(left, middle2_y, right, middle2_y + thickness);
-			break;
-
-		case 0x2551: /* ║ */
-			FillRectangle(middle1_x, top, middle1_x + thickness, bottom);
-			FillRectangle(middle2_x, top, middle2_x + thickness, bottom);
-			break;
-
-		case 0x2554: /* ╔  */
-			FillRectangle(middle1_x, middle1_y, right, middle1_y + thickness);
-			FillRectangle(middle2_x, middle2_y, right, middle2_y + thickness);
-
-			FillRectangle(middle1_x, middle1_y, middle1_x + thickness, bottom);
-			FillRectangle(middle2_x, middle2_y, middle2_x + thickness, bottom);
-			break;
-
-		case 0x2557: /* ╗  */
-			FillRectangle(left, middle1_y, middle2_x, middle1_y + thickness);
-			FillRectangle(left, middle2_y, middle1_x, middle2_y + thickness);
-
-			FillRectangle(middle2_x, middle1_y, middle2_x + thickness, bottom);
-			FillRectangle(middle1_x, middle2_y, middle1_x + thickness, bottom);
-			break;
-
-		case 0x255A: /* ╚  */
-			FillRectangle(middle2_x, middle1_y, right, middle1_y + thickness);
-			FillRectangle(middle1_x, middle2_y, right, middle2_y + thickness);
-
-			FillRectangle(middle1_x, top, middle1_x + thickness, middle2_y);
-			FillRectangle(middle2_x, top, middle2_x + thickness, middle1_y);
-			break;
-
-		case 0x255D: /* ╝  */ // + thickness
-			FillRectangle(left, middle1_y, middle1_x + thickness, middle1_y + thickness);
-			FillRectangle(left, middle2_y, middle2_x + thickness, middle2_y + thickness);
-
-			FillRectangle(middle1_x, top, middle1_x + thickness, middle1_y);
-			FillRectangle(middle2_x, top, middle2_x + thickness, middle2_y);
-			break;
-
-		case 0x255F: /* ╟  */
-			FillRectangle(middle2_x, middle_y, right, middle_y + thickness);
-			FillRectangle(middle1_x, top, middle1_x + thickness, bottom);
-			FillRectangle(middle2_x, top, middle2_x + thickness, bottom);
-			break;
-
-		case 0x2562: /* ╢  */
-			FillRectangle(left, middle_y, middle1_x, middle_y + thickness);
-			FillRectangle(middle1_x, top, middle1_x + thickness, bottom);
-			FillRectangle(middle2_x, top, middle2_x + thickness, bottom);
-			break;
-	}
-}
-
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {
-	bool custom_draw = false;
+	WXCustomDrawChar::Draw_T custom_draw = nullptr;
 
 	if (!c || c == L' ' || !IS_VALID_WCHAR(c)
-	 || (custom_draw = IS_CUSTOMDRAW_WCHAR(c)) != false) {
+	 || (custom_draw = WXCustomDrawChar::Get(c)) != nullptr) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
 		FlushText();
@@ -662,9 +519,10 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
 
-	if (custom_draw) {
+	if (custom_draw != nullptr) {
 		FlushBackground(cx + 1);
-		CustomDrawChar(cx, c, clr_text);
+		SetBackgroundColor(clr_text);
+		custom_draw(_context, _dc, _start_y, cx);
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
 

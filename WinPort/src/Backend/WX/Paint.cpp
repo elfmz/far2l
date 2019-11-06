@@ -531,20 +531,25 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 	if (custom_draw != nullptr) {
 		FlushBackground(cx + 1);
-#if 1
-		WinPortRGB clr_fade(CalcFadeColor(clr_back.r, clr_text.r),
-			CalcFadeColor(clr_back.g, clr_text.g), CalcFadeColor(clr_back.b, clr_text.b));
-#else
-		WinPortRGB clr_fade(0xff, 0, 0);
-#endif
-		SetBackgroundColor(clr_fade);
 
 		WXCustomDrawChar::FontMetrics fm = {(wxCoord)_context->FontWidth(),
-			(wxCoord)_context->FontHeight(), (wxCoord)_context->FontThickness() + 2};
-		custom_draw(_dc, fm, _start_y, cx);
+			(wxCoord)_context->FontHeight(), (wxCoord)_context->FontThickness()};
+
+		if (!_context->IsSharp()) {
+#if 1
+			WinPortRGB clr_fade(CalcFadeColor(clr_back.r, clr_text.r),
+				CalcFadeColor(clr_back.g, clr_text.g), CalcFadeColor(clr_back.b, clr_text.b));
+#else
+			WinPortRGB clr_fade(0xff, 0, 0);
+#endif
+			SetBackgroundColor(clr_fade);
+
+			fm.thickness+= 2;
+			custom_draw(_dc, fm, _start_y, cx);
+			fm.thickness-= 2;
+		}
 
 		SetBackgroundColor(clr_text);
-		fm.thickness-= 2;
 		custom_draw(_dc, fm, _start_y, cx);
 
 		_start_cx = (unsigned int)-1;

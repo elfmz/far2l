@@ -208,7 +208,7 @@ void ConsolePaintContext::SetFont(wxFont font)
 	_font_height = fsi.GetMaxHeight();
 	//font_height+= _font_height/4;
 
-	_font_thickness = (_font_width > 5) ? _font_width / 5 : 1;
+	_font_thickness = (_font_width > 8) ? _font_width / 8 : 1;
 	switch (font.GetWeight()) {
 		case wxFONTWEIGHT_LIGHT:
 			if (_font_thickness > 1) {
@@ -501,6 +501,15 @@ void ConsolePainter::FlushText()
 
 #define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
+static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
+{
+	unsigned short out = bg;
+	out*= 2;
+	out+= fg;
+	out/= 3;
+	return (out > 0xff) ? 0xff : (unsigned char)out;
+}
+
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {
 	WXCustomDrawChar::Draw_T custom_draw = nullptr;
@@ -512,7 +521,8 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		FlushText();
 	}
 
-	PrepareBackground(cx, ConsoleBackground2RGB(attributes));
+	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
+	PrepareBackground(cx, clr_back);
 
 	if (!c || c == L' ' || !IS_VALID_WCHAR(c))
 		return;
@@ -521,8 +531,22 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 	if (custom_draw != nullptr) {
 		FlushBackground(cx + 1);
+#if 1
+		WinPortRGB clr_fade(CalcFadeColor(clr_back.r, clr_text.r),
+			CalcFadeColor(clr_back.g, clr_text.g), CalcFadeColor(clr_back.b, clr_text.b));
+#else
+		WinPortRGB clr_fade(0xff, 0, 0);
+#endif
+		SetBackgroundColor(clr_fade);
+
+		WXCustomDrawChar::FontMetrics fm = {(wxCoord)_context->FontWidth(),
+			(wxCoord)_context->FontHeight(), (wxCoord)_context->FontThickness() + 2};
+		custom_draw(_dc, fm, _start_y, cx);
+
 		SetBackgroundColor(clr_text);
-		custom_draw(_context, _dc, _start_y, cx);
+		fm.thickness-= 2;
+		custom_draw(_dc, fm, _start_y, cx);
+
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
 

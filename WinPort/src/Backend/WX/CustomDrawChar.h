@@ -1,10 +1,16 @@
 #pragma once
-#include <wx/graphics.h>
-#include "Paint.h"
+#include <wx/dcclient.h>
 
 namespace WXCustomDrawChar
 {
-	typedef void (*Draw_T)(ConsolePaintContext *context, wxPaintDC &dc, unsigned int start_y, unsigned int cx);
+	struct FontMetrics
+	{
+		wxCoord fw;
+		wxCoord fh;
+		wxCoord thickness;
+	};
+
+	typedef void (*Draw_T)(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx);
 
 	Draw_T Get(const wchar_t c);
 }

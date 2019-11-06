@@ -32,7 +32,8 @@ public:
 	void ToggleCursor();
 	void SetSharp(bool sharp);
 	bool IsSharpSupported();
-	
+
+	inline bool IsSharp() const { return _sharp; }
 	inline bool IsPaintBuffered() const { return _buffered_paint; }
 	inline bool GetCursorState() const { return _cursor_state; }
 	inline unsigned int FontWidth() const { return _font_width; }

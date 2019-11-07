@@ -10,7 +10,7 @@ class ConsolePaintContext
 	std::vector<wxFont> _fonts;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height, _font_thickness;
-	bool _buffered_paint, _cursor_state, _sharp;
+	bool _custom_draw_enabled, _buffered_paint, _cursor_state, _sharp;
 	struct {
 		std::vector<bool> checked;
 		std::vector<uint8_t> result;
@@ -33,6 +33,7 @@ public:
 	void SetSharp(bool sharp);
 	bool IsSharpSupported();
 
+	inline bool IsCustomDrawEnabled() const { return _custom_draw_enabled; }
 	inline bool IsSharp() const { return _sharp; }
 	inline bool IsPaintBuffered() const { return _buffered_paint; }
 	inline bool GetCursorState() const { return _cursor_state; }

@@ -85,6 +85,11 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
+	static void Draw_250F(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┏ */
+	{
+		Draw_250C(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
+	}
+
 	static void Draw_2510(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┐ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
@@ -629,6 +634,7 @@ namespace WXCustomDrawChar
 			case 0x2502: antialiasible = true; return Draw_2502;
 			case 0x2503: antialiasible = true; return Draw_2503;
 			case 0x250c: antialiasible = true; return Draw_250C;
+			case 0x250f: antialiasible = true; return Draw_250F;
 			case 0x2510: antialiasible = true; return Draw_2510;
 			case 0x2513: antialiasible = true; return Draw_2513;
 			case 0x2514: antialiasible = true; return Draw_2514;

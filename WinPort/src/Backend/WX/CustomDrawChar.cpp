@@ -402,37 +402,37 @@ namespace WXCustomDrawChar
 	static void Draw_2582(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▂ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.bottom - 2 * (fm.fh / 8), m.right, m.bottom);
+		FillRectangle(dc, m.left, m.bottom - (2 * fm.fh / 8), m.right, m.bottom);
 	}
 
 	static void Draw_2583(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▂ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.bottom - 3 * (fm.fh / 8), m.right, m.bottom);
+		FillRectangle(dc, m.left, m.bottom - (3 * fm.fh / 8), m.right, m.bottom);
 	}
 
 	static void Draw_2584(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▄ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.bottom - 4 * (fm.fh / 8), m.right, m.bottom);
+		FillRectangle(dc, m.left, m.bottom - (4 * fm.fh / 8), m.right, m.bottom);
 	}
 
 	static void Draw_2585(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▅ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.bottom - 5 * (fm.fh / 8), m.right, m.bottom);
+		FillRectangle(dc, m.left, m.bottom - (5 * fm.fh / 8), m.right, m.bottom);
 	}
 
 	static void Draw_2586(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▆ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.bottom - 6 * (fm.fh / 8), m.right, m.bottom);
+		FillRectangle(dc, m.left, m.bottom - (6 * fm.fh / 8), m.right, m.bottom);
 	}
 
 	static void Draw_2587(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▇ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.bottom - 7 * (fm.fh / 8), m.right, m.bottom);
+		FillRectangle(dc, m.left, m.bottom - (7 * fm.fh / 8), m.right, m.bottom);
 	}
 
 	static void Draw_2588(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* █ */
@@ -445,43 +445,43 @@ namespace WXCustomDrawChar
 	static void Draw_2589(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▉ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right - (fm.fw / 8), m.bottom);
+		FillRectangle(dc, m.left, m.top, m.right - (fm.fw / 8) - 1, m.bottom);
 	}
 
 	static void Draw_258a(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▊ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right - 2 * (fm.fw / 8), m.bottom);
+		FillRectangle(dc, m.left, m.top, m.right - (2 * fm.fw / 8) - 1, m.bottom);
 	}
 
 	static void Draw_258b(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▋ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right - 3 * (fm.fw / 8), m.bottom);
+		FillRectangle(dc, m.left, m.top, m.right - (3 * fm.fw / 8) - 1, m.bottom);
 	}
 
 	static void Draw_258c(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▌ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right - 4 * (fm.fw / 8), m.bottom);
+		FillRectangle(dc, m.left, m.top, m.right - (4 * fm.fw / 8) - 1, m.bottom);
 	}
 
 	static void Draw_258d(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▍ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right - 5 * (fm.fw / 8), m.bottom);
+		FillRectangle(dc, m.left, m.top, m.right - (5 * fm.fw / 8) - 1, m.bottom);
 	}
 
 	static void Draw_258e(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▎ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right - 6 * (fm.fw / 8), m.bottom);
+		FillRectangle(dc, m.left, m.top, m.right - (6 * fm.fw / 8) - 1, m.bottom);
 	}
 
 	static void Draw_258f(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▏ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right - 7 * (fm.fw / 8), m.bottom);
+		FillRectangle(dc, m.left, m.top, m.right - (7 * fm.fw / 8) - 1, m.bottom);
 	}
 
 	static void Draw_2590(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▐ */
@@ -626,14 +626,14 @@ namespace WXCustomDrawChar
 			case 0x2586: antialiasible = false; return Draw_2586; /* ▆▁ */
 			case 0x2587: antialiasible = false; return Draw_2587; /* ▇▁ */
 			case 0x2588: antialiasible = false; return Draw_2588; /* █ */
-			case 0x2589: antialiasible = false; return Draw_2589;
-			case 0x258a: antialiasible = false; return Draw_258a;
-			case 0x258b: antialiasible = false; return Draw_258b;
-			case 0x258c: antialiasible = false; return Draw_258c;
-			case 0x258d: antialiasible = false; return Draw_258d;
-			case 0x258e: antialiasible = false; return Draw_258e;
-			case 0x258f: antialiasible = false; return Draw_258f;
-			case 0x2590: antialiasible = false; return Draw_2590;
+			case 0x2589: antialiasible = false; return Draw_2589; /* ▉ */
+			case 0x258a: antialiasible = false; return Draw_258a; /* ▊ */
+			case 0x258b: antialiasible = false; return Draw_258b; /* ▋ */
+			case 0x258c: antialiasible = false; return Draw_258c; /* ▌ */
+			case 0x258d: antialiasible = false; return Draw_258d; /* ▍ */
+			case 0x258e: antialiasible = false; return Draw_258e; /* ▎ */
+			case 0x258f: antialiasible = false; return Draw_258f; /* ▏ */
+			case 0x2590: antialiasible = false; return Draw_2590; /* ▐ */
 #if 0
 			case 0x2591: antialiasible = false; return Draw_2591; /* ░ */
 			case 0x2592: antialiasible = false; return Draw_2592; /* ▒ */

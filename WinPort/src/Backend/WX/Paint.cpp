@@ -8,7 +8,7 @@
 #include "Paint.h"
 #include "PathHelpers.h"
 #include "utils.h"
-
+#include "CustomDrawChar.h"
 
 #define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
 					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
@@ -130,7 +130,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 }
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
-	_window(window), _font_width(12), _font_height(16), 
+	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
 	_buffered_paint(false), _cursor_state(false), _sharp(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
@@ -208,15 +208,35 @@ void ConsolePaintContext::SetFont(wxFont font)
 	_font_height = fsi.GetMaxHeight();
 	//font_height+= _font_height/4;
 
+	_font_thickness = (_font_width > 8) ? _font_width / 8 : 1;
+	switch (font.GetWeight()) {
+		case wxFONTWEIGHT_LIGHT:
+			if (_font_thickness > 1) {
+				--_font_thickness;
+			}
+			break;
+
+		case wxFONTWEIGHT_BOLD:
+			++_font_thickness;
+			break;
+
+		case wxFONTWEIGHT_NORMAL:
+		default:
+			;
+	}
 	
-	fprintf(stderr, "Font %u x %u: '%ls' - %s\n", _font_width, _font_height, static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
+	fprintf(stderr, "Font %u x %u . %u: '%ls' - %s\n", _font_width, _font_height, _font_thickness, static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
 		font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
 		
+	struct stat s{};
+
+	_custom_draw_enabled = stat(InMyConfig("nocustomdraw").c_str(), &s) != 0;
+
 	if (font.IsFixedWidth() && !is_unstable) {
-		struct stat s{};
 		if (stat(InMyConfig("nobuffering").c_str(), &s) != 0)
 			_buffered_paint = true;
 	}
+
 	_fonts.clear();
 	_fonts.push_back(font);
 }
@@ -407,10 +427,11 @@ CursorProps::CursorProps(bool state) : visible(false), height(1)
 
 ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer) : 
 	_context(context), _dc(dc), _buffer(buffer), _cursor_props(context->GetCursorState()),
-	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0)
+	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0),
+	_trans_pen(wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT))
 {
-	wxPen *trans_pen = wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT);
-	_dc.SetPen(*trans_pen);
+
+	_dc.SetPen(*_trans_pen);
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 	_buffer.Empty();
 }
@@ -484,40 +505,83 @@ void ConsolePainter::FlushText()
 
 #define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
+static inline unsigned char CalcEdgeColor(unsigned char bg, unsigned char fg)
+{
+	unsigned short out = fg;
+	out*= 2;
+	out+= bg;
+	out/= 3;
+	return (out > 0xff) ? 0xff : (unsigned char)out;
+}
+
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {
-	if (!c || c == L' ' || !IS_VALID_WCHAR(c)) {
+	bool custom_draw_antialiasible;
+	WXCustomDrawChar::Draw_T custom_draw = nullptr;
+
+	if (!c || c == L' ' || !IS_VALID_WCHAR(c) || (_context->IsCustomDrawEnabled()
+	 && (custom_draw = WXCustomDrawChar::Get(c, custom_draw_antialiasible)) != nullptr)) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
 		FlushText();
 	}
 
-	PrepareBackground(cx, ConsoleBackground2RGB(attributes));
+	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
+	PrepareBackground(cx, clr_back);
 
 	if (!c || c == L' ' || !IS_VALID_WCHAR(c))
 		return;
 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
 
-	uint8_t fit_font_index = isCombinedUTF32(c) ? // workaround for 
-		_prev_fit_font_index : _context->CharFitTest(_dc, c);
+	if (custom_draw != nullptr) {
+		FlushBackground(cx + 1);
+
+		WXCustomDrawChar::FontMetrics fm = {(wxCoord)_context->FontWidth(),
+			(wxCoord)_context->FontHeight(), (wxCoord)_context->FontThickness()};
+
+		if (custom_draw_antialiasible && fm.fw > 7 && fm.fh > 7 && !_context->IsSharp()) {
+#if 1
+			WinPortRGB clr_fade(CalcEdgeColor(clr_back.r, clr_text.r),
+				CalcEdgeColor(clr_back.g, clr_text.g), CalcEdgeColor(clr_back.b, clr_text.b));
+#else
+			WinPortRGB clr_fade(0xff, 0, 0);
+#endif
+			SetBackgroundColor(clr_fade);
+
+			fm.thickness++;
+			custom_draw(_dc, fm, _start_y, cx);
+			fm.thickness--;
+		}
+
+		SetBackgroundColor(clr_text);
+		custom_draw(_dc, fm, _start_y, cx);
+
+		_start_cx = (unsigned int)-1;
+		_prev_fit_font_index = 0;
+
+	} else {
+		uint8_t fit_font_index = isCombinedUTF32(c) ? // workaround for 
+			_prev_fit_font_index : _context->CharFitTest(_dc, c);
 	
-	if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
-		&& _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
-		_buffer+= c;
-		return;
-	}
+		if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
+			&& _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
+			_buffer+= c;
+			return;
+		}
 
-	_prev_fit_font_index = fit_font_index;
+		_prev_fit_font_index = fit_font_index;
 
-	FlushBackground(cx + 1);
-	FlushText();
-	_start_cx = cx;
-	_buffer = c;
-	_clr_text = clr_text;
-	if (fit_font_index!=0 && fit_font_index!=0xff) {
-		_context->ApplyFont(_dc, fit_font_index);
+		FlushBackground(cx + 1);
 		FlushText();
-		_context->ApplyFont(_dc);
+		_start_cx = cx;
+		_buffer = c;
+		_clr_text = clr_text;
+
+		if (fit_font_index != 0 && fit_font_index != 0xff) {
+			_context->ApplyFont(_dc, fit_font_index);
+			FlushText();
+			_context->ApplyFont(_dc);
+		}
 	}
 }

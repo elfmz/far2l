@@ -29,6 +29,17 @@ struct WinPortRGB
 	{
 		return r != rgb.r || g != rgb.g || b != rgb.b;
 	}
+
+	inline bool operator < (const WinPortRGB &rgb) const
+	{
+		if (r < rgb.r) return true;
+		if (r > rgb.r) return false;
+		if (g < rgb.g) return true;
+		if (g > rgb.g) return false;
+		if (b < rgb.b) return true;
+
+		return false;
+	}
 };
 
 WinPortRGB ConsoleForeground2RGB(USHORT attributes);

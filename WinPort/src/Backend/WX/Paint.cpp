@@ -505,11 +505,11 @@ void ConsolePainter::FlushText()
 
 #define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
-static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
+static inline unsigned char CalcEdgeColor(unsigned char bg, unsigned char fg)
 {
-	unsigned short out = bg;
+	unsigned short out = fg;
 	out*= 2;
-	out+= fg;
+	out+= bg;
 	out/= 3;
 	return (out > 0xff) ? 0xff : (unsigned char)out;
 }
@@ -542,16 +542,16 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 		if (custom_draw_antialiasible && fm.fw > 7 && fm.fh > 7 && !_context->IsSharp()) {
 #if 1
-			WinPortRGB clr_fade(CalcFadeColor(clr_back.r, clr_text.r),
-				CalcFadeColor(clr_back.g, clr_text.g), CalcFadeColor(clr_back.b, clr_text.b));
+			WinPortRGB clr_fade(CalcEdgeColor(clr_back.r, clr_text.r),
+				CalcEdgeColor(clr_back.g, clr_text.g), CalcEdgeColor(clr_back.b, clr_text.b));
 #else
 			WinPortRGB clr_fade(0xff, 0, 0);
 #endif
 			SetBackgroundColor(clr_fade);
 
-			fm.thickness+= 2;
+			fm.thickness++;
 			custom_draw(_dc, fm, _start_y, cx);
-			fm.thickness-= 2;
+			fm.thickness--;
 		}
 
 		SetBackgroundColor(clr_text);

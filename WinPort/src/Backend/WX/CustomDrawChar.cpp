@@ -62,10 +62,20 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
 	}
 
+	static void Draw_2501(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ━ */
+	{
+		Draw_2500(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
+	}
+
 	static void Draw_2502(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* │ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+	static void Draw_2503(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┃ */
+	{
+		Draw_2502(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
 	}
 
 	static void Draw_250C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┌ */
@@ -82,11 +92,21 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
+	static void Draw_2513(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┓ */
+	{
+		Draw_2510(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
+	}
+
 	static void Draw_2514(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* └ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
 		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle_y);
+	}
+
+	static void Draw_2517(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┗ */
+	{
+		Draw_2514(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
 	}
 
 	static void Draw_2518(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┘ */
@@ -96,11 +116,21 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle_y);
 	}
 
+	static void Draw_251B(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┛ */
+	{
+		Draw_2518(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
+	}
+
 	static void Draw_251C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ├ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
 		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+	static void Draw_2523(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┣ */
+	{
+		Draw_251C(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
 	}
 
 	static void Draw_2524(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┤ */
@@ -110,11 +140,21 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
+	static void Draw_252B(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┫ */
+	{
+		Draw_2524(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
+	}
+
 	static void Draw_252C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┬ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
 		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
 		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+	static void Draw_2533(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┳ */
+	{
+		Draw_252C(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
 	}
 
 	static void Draw_2534(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┴ */
@@ -124,11 +164,21 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle_y);
 	}
 
+	static void Draw_253B(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┻ */
+	{
+		Draw_2534(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
+	}
+
 	static void Draw_253C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┼  */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
 		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+	static void Draw_254B(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╋ */
+	{
+		Draw_253C(dc, FontMetrics{fm.fw, fm.fh, 1 + (fm.thickness * 3) / 2}, start_y, cx);
 	}
 
 	static void Draw_2550(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ═ */
@@ -499,7 +549,7 @@ namespace WXCustomDrawChar
 	static void Draw_2595(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▕ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.right - (fm.fh / 8), m.top, m.right, m.bottom);
+		FillRectangle(dc, m.left + (7 * fm.fw / 8), m.top, m.right, m.bottom);
 	}
 
 
@@ -573,49 +623,57 @@ namespace WXCustomDrawChar
 
 	Draw_T Get(const wchar_t c, bool &antialiasible)
 	{
-		antialiasible = true;
 		switch (c) {
-			case 0x2500: return Draw_2500;
-			case 0x2502: return Draw_2502;
-			case 0x250c: return Draw_250C;
-			case 0x2510: return Draw_2510;
-			case 0x2514: return Draw_2514;
-			case 0x2518: return Draw_2518;
-			case 0x251c: return Draw_251C;
-			case 0x2524: return Draw_2524;
-			case 0x252c: return Draw_252C;
-			case 0x2534: return Draw_2534;
-			case 0x253c: return Draw_253C;
-			case 0x2550: return Draw_2550;
-			case 0x2551: return Draw_2551;
-			case 0x2552: return Draw_2552; /* ╒ */
-			case 0x2553: return Draw_2553; /* ╓ */
-			case 0x2554: return Draw_2554;
-			case 0x2555: return Draw_2555; /* ╕ */
-			case 0x2556: return Draw_2556; /* ╖ */
-			case 0x2557: return Draw_2557;
-			case 0x2558: return Draw_2558; /* ╘ */
-			case 0x2559: return Draw_2559; /* ╙ */
-			case 0x255a: return Draw_255A;
-			case 0x255B: return Draw_255B; /* ╛*/ // + thickness
-			case 0x255C: return Draw_255C; /* ╜ */ // + thickness
-			case 0x255d: return Draw_255D;
-			case 0x255E: return Draw_255E; /* ╞ */
-			case 0x255f: return Draw_255F;
-			case 0x2560: return Draw_2560; /* ╠ */
-			case 0x2561: return Draw_2561; /* ╡ */ // + fm.thickness - 1
-			case 0x2562: return Draw_2562;
-			case 0x2563: return Draw_2563; /* ╣ */ // + thickness
-			case 0x2564: return Draw_2564; /* ╤ */
-			case 0x2565: return Draw_2565; /* ╥ */
-			case 0x2566: return Draw_2566; /* ╦ */
-			case 0x2567: return Draw_2567; /* ╧ */
-			case 0x2568: return Draw_2568; /* ╨ */
-			case 0x2569: return Draw_2569; /* ╩  */ // + thickness
-			case 0x256A: return Draw_256A; /* ╪ */
-			case 0x256B: return Draw_256B; /* ╫ */
-			case 0x256C: return Draw_256C; /* ╬ */ // + thickness
-
+			case 0x2500: antialiasible = true; return Draw_2500;
+			case 0x2501: antialiasible = true; return Draw_2501;
+			case 0x2502: antialiasible = true; return Draw_2502;
+			case 0x2503: antialiasible = true; return Draw_2503;
+			case 0x250c: antialiasible = true; return Draw_250C;
+			case 0x2510: antialiasible = true; return Draw_2510;
+			case 0x2513: antialiasible = true; return Draw_2513;
+			case 0x2514: antialiasible = true; return Draw_2514;
+			case 0x2517: antialiasible = true; return Draw_2517;
+			case 0x2518: antialiasible = true; return Draw_2518;
+			case 0x251b: antialiasible = true; return Draw_251B;
+			case 0x251c: antialiasible = true; return Draw_251C;
+			case 0x2523: antialiasible = true; return Draw_2523;
+			case 0x2524: antialiasible = true; return Draw_2524;
+			case 0x252b: antialiasible = true; return Draw_252B;
+			case 0x252c: antialiasible = true; return Draw_252C;
+			case 0x2533: antialiasible = true; return Draw_2533;
+			case 0x2534: antialiasible = true; return Draw_2534;
+			case 0x253b: antialiasible = true; return Draw_253B;
+			case 0x253c: antialiasible = true; return Draw_253C;
+			case 0x254b: antialiasible = true; return Draw_254B;
+			case 0x2550: antialiasible = true; return Draw_2550;
+			case 0x2551: antialiasible = true; return Draw_2551;
+			case 0x2552: antialiasible = true; return Draw_2552; /* ╒ */
+			case 0x2553: antialiasible = true; return Draw_2553; /* ╓ */
+			case 0x2554: antialiasible = true; return Draw_2554;
+			case 0x2555: antialiasible = true; return Draw_2555; /* ╕ */
+			case 0x2556: antialiasible = true; return Draw_2556; /* ╖ */
+			case 0x2557: antialiasible = true; return Draw_2557;
+			case 0x2558: antialiasible = true; return Draw_2558; /* ╘ */
+			case 0x2559: antialiasible = true; return Draw_2559; /* ╙ */
+			case 0x255a: antialiasible = true; return Draw_255A;
+			case 0x255B: antialiasible = true; return Draw_255B; /* ╛*/ // + thickness
+			case 0x255C: antialiasible = true; return Draw_255C; /* ╜ */ // + thickness
+			case 0x255d: antialiasible = true; return Draw_255D;
+			case 0x255E: antialiasible = true; return Draw_255E; /* ╞ */
+			case 0x255f: antialiasible = true; return Draw_255F;
+			case 0x2560: antialiasible = true; return Draw_2560; /* ╠ */
+			case 0x2561: antialiasible = true; return Draw_2561; /* ╡ */ // + fm.thickness - 1
+			case 0x2562: antialiasible = true; return Draw_2562;
+			case 0x2563: antialiasible = true; return Draw_2563; /* ╣ */ // + thickness
+			case 0x2564: antialiasible = true; return Draw_2564; /* ╤ */
+			case 0x2565: antialiasible = true; return Draw_2565; /* ╥ */
+			case 0x2566: antialiasible = true; return Draw_2566; /* ╦ */
+			case 0x2567: antialiasible = true; return Draw_2567; /* ╧ */
+			case 0x2568: antialiasible = true; return Draw_2568; /* ╨ */
+			case 0x2569: antialiasible = true; return Draw_2569; /* ╩  */ // + thickness
+			case 0x256A: antialiasible = true; return Draw_256A; /* ╪ */
+			case 0x256B: antialiasible = true; return Draw_256B; /* ╫ */
+			case 0x256C: antialiasible = true; return Draw_256C; /* ╬ */ // + thickness
 
 			case 0x2580: antialiasible = false; return Draw_2580; /* ▀ */
 			case 0x2581: antialiasible = false; return Draw_2581; /* ▁ */

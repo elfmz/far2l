@@ -228,11 +228,15 @@ void ConsolePaintContext::SetFont(wxFont font)
 	fprintf(stderr, "Font %u x %u . %u: '%ls' - %s\n", _font_width, _font_height, _font_thickness, static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
 		font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
 		
+	struct stat s{};
+
+	_custom_draw_enabled = stat(InMyConfig("nocustomdraw").c_str(), &s) != 0;
+
 	if (font.IsFixedWidth() && !is_unstable) {
-		struct stat s{};
 		if (stat(InMyConfig("nobuffering").c_str(), &s) != 0)
 			_buffered_paint = true;
 	}
+
 	_fonts.clear();
 	_fonts.push_back(font);
 }
@@ -512,10 +516,11 @@ static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
 
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {
+	bool custom_draw_antialiasible;
 	WXCustomDrawChar::Draw_T custom_draw = nullptr;
 
-	if (!c || c == L' ' || !IS_VALID_WCHAR(c)
-	 || (custom_draw = WXCustomDrawChar::Get(c)) != nullptr) {
+	if (!c || c == L' ' || !IS_VALID_WCHAR(c) || (_context->IsCustomDrawEnabled()
+	 && (custom_draw = WXCustomDrawChar::Get(c, custom_draw_antialiasible)) != nullptr)) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
 		FlushText();
@@ -535,7 +540,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		WXCustomDrawChar::FontMetrics fm = {(wxCoord)_context->FontWidth(),
 			(wxCoord)_context->FontHeight(), (wxCoord)_context->FontThickness()};
 
-		if (!_context->IsSharp()) {
+		if (custom_draw_antialiasible && fm.fw > 7  && fm.fh > 7 && !_context->IsSharp()) {
 #if 1
 			WinPortRGB clr_fade(CalcFadeColor(clr_back.r, clr_text.r),
 				CalcFadeColor(clr_back.g, clr_text.g), CalcFadeColor(clr_back.b, clr_text.b));

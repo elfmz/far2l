@@ -12,5 +12,5 @@ namespace WXCustomDrawChar
 
 	typedef void (*Draw_T)(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx);
 
-	Draw_T Get(const wchar_t c);
+	Draw_T Get(const wchar_t c, bool &antialiasible);
 }

@@ -3,16 +3,14 @@
 namespace WXCustomDrawChar
 {
 
-	struct CharMetrics : FontMetrics
+	struct CharMetrics
 	{
 		CharMetrics(const FontMetrics &fm, unsigned int start_y, unsigned int cx)
-		:
-			FontMetrics(fm)
 		{
-			left = cx * fw;
-			right = left + fw - 1;
+			left = cx * fm.fw;
+			right = left + fm.fw - 1;
 			top = start_y;
-			bottom = top + fh - 1;
+			bottom = top + fm.fh - 1;
 		}
 
 		wxCoord left;
@@ -26,8 +24,8 @@ namespace WXCustomDrawChar
 		SingleLineBoxMetrics(const FontMetrics &fm, unsigned int start_y, unsigned int cx)
 			: CharMetrics(fm, start_y, cx)
 		{
-			middle_y = top + fh / 2 - thickness / 2;
-			middle_x = left + fw / 2 - thickness / 2;
+			middle_y = top + fm.fh / 2 - fm.thickness / 2;
+			middle_x = left + fm.fw / 2 - fm.thickness / 2;
 		}
 
 		wxCoord middle_y;
@@ -39,7 +37,7 @@ namespace WXCustomDrawChar
 		DoubleLineBoxMetrics(const FontMetrics &fm, unsigned int start_y, unsigned int cx)
 			: SingleLineBoxMetrics(fm, start_y, cx)
 		{
-			wxCoord ofs = std::min(fh, fw) / 4;
+			wxCoord ofs = std::min(fm.fh, fm.fw) / 4;
 
 			middle1_y = middle_y - ofs;
 			middle1_x = middle_x - ofs;
@@ -61,153 +59,339 @@ namespace WXCustomDrawChar
 	void Draw_2500(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ─ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + m.thickness - 1);
+		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
 	}
 
 	void Draw_2502(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* │ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_250C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┌ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2510(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┐ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle_x, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.left, m.middle_y, m.middle_x, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2514(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* └ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + m.thickness - 1, m.middle_y);
+		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle_y);
 	}
 
 	void Draw_2518(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┘ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle_x + m.thickness - 1, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + m.thickness - 1, m.middle_y);
+		FillRectangle(dc, m.left, m.middle_y, m.middle_x + fm.thickness - 1, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle_y);
 	}
 
 	void Draw_251C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ├ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2524(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┤ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle_x, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.left, m.middle_y, m.middle_x, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_252C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┬ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2534(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┴ */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + m.thickness - 1, m.middle_y);
+		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle_y);
 	}
 
 	void Draw_253C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ┼  */
 	{
 		SingleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2550(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ═ */
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + m.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + m.thickness - 1);
+		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
 	}
 
 	void Draw_2551(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ║ */
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + m.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2554(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╔  */
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle1_x, m.middle1_y, m.right, m.middle1_y + m.thickness - 1);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + m.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
 
-		FillRectangle(dc, m.middle1_x, m.middle1_y, m.middle1_x + m.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle1_x, m.middle1_y, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2557(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╗  */
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle2_x, m.middle1_y + m.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + m.thickness - 1);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle2_x, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + fm.thickness - 1);
 
-		FillRectangle(dc, m.middle2_x, m.middle1_y, m.middle2_x + m.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.middle1_y, m.middle2_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_255A(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╚  */
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + m.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.middle2_y, m.right, m.middle2_y + m.thickness - 1);
+		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
 
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + m.thickness - 1, m.middle2_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + m.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle2_y);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle1_y);
 	}
 
 	void Draw_255D(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╝  */ // + thickness
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + m.thickness - 1, m.middle1_y + m.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle2_x + m.thickness - 1, m.middle2_y + m.thickness - 1);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + fm.thickness - 1, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle2_x + fm.thickness - 1, m.middle2_y + fm.thickness - 1);
 
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + m.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + m.thickness - 1, m.middle2_y);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle2_y);
 	}
 
 	void Draw_255F(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╟  */
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.middle2_x, m.middle_y, m.right, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + m.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.bottom);
 	}
 
 	void Draw_2562(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╢  */
 	{
 		DoubleLineBoxMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle1_x, m.middle_y + m.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + m.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + m.thickness - 1, m.bottom);
+		FillRectangle(dc, m.left, m.middle_y, m.middle1_x, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.bottom);
 	}
 
 
+	///
+	void Draw_2560(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╠ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + fm.thickness - 1, m.bottom);
+        }
+
+	void Draw_2563(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╣ */ // + thickness
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + fm.thickness - 1, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.bottom);
+	}
+	
+
+	void Draw_2566(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╦ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + fm.thickness - 1, m.bottom);
+	}
+
+	void Draw_2569(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╩  */ // + thickness
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + fm.thickness - 1, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle1_y);
+	}
+
+        void Draw_256C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╬ */ // + thickness
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + fm.thickness - 1, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_2564(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╤ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle2_y, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_2567(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╧ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle1_y);
+	}
+///
+        void Draw_2565(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╥ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.middle_y, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.middle_y, m.middle2_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_256A(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╪ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_256B(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╫ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_2561(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╡ */ // + fm.thickness - 1
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle_x + fm.thickness - 1, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle_x, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle_x, m.middle2_y, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_255E(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╞ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.middle_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle1_y);
+		FillRectangle(dc, m.middle_x, m.middle2_y, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_2556(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╖ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle_y, m.middle2_x, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.middle_y, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.middle_y, m.middle2_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_2555(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╕ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle_x + fm.thickness - 1, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle_x, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle1_y, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_2568(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╨ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle_y);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle_y);
+	}
+
+        void Draw_255C(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╜ */ // + thickness
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle_y, m.middle2_x + fm.thickness - 1, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle_y);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle_y);
+	}
+
+        void Draw_2559(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╙ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.middle1_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + fm.thickness - 1, m.middle_y);
+		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + fm.thickness - 1, m.middle_y);
+	}
+
+        void Draw_2558(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╘ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.middle_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle2_y);
+	}
+
+        void Draw_2552(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╒ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.middle_x, m.middle1_y, m.right, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle2_y, m.right, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.middle1_y, m.middle_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_2553(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╓ */
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.middle1_x, m.middle_y, m.right, m.middle_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle1_x, m.middle_y, m.middle1_x + fm.thickness - 1, m.bottom);
+		FillRectangle(dc, m.middle2_x, m.middle_y, m.middle2_x + fm.thickness - 1, m.bottom);
+	}
+
+        void Draw_255B(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ╛*/ // + thickness
+	{
+		DoubleLineBoxMetrics m(fm, start_y, cx);
+		FillRectangle(dc, m.left, m.middle1_y, m.middle_x, m.middle1_y + fm.thickness - 1);
+		FillRectangle(dc, m.left, m.middle2_y, m.middle_x, m.middle2_y + fm.thickness - 1);
+		FillRectangle(dc, m.middle_x, m.top, m.middle_x + fm.thickness - 1, m.middle2_y + fm.thickness - 1);
+	}
+
 	////////////////////////////////////////////////////////////////
 
-	Draw_T Get(const wchar_t c)
+	Draw_T Get(const wchar_t c, bool &antialiasible)
 	{
+		antialiasible = true;
 		switch (c) {
 			case 0x2500: return Draw_2500;
 			case 0x2502: return Draw_2502;
@@ -228,6 +412,28 @@ namespace WXCustomDrawChar
 			case 0x255d: return Draw_255D;
 			case 0x255f: return Draw_255F;
 			case 0x2562: return Draw_2562;
+
+			case 0x2560: return Draw_2560; /* ╠ */
+			case 0x2563: return Draw_2563; /* ╣ */ // + thickness
+			case 0x2566: return Draw_2566; /* ╦ */
+			case 0x2569: return Draw_2569; /* ╩  */ // + thickness
+			case 0x256C: return Draw_256C; /* ╬ */ // + thickness
+			case 0x2564: return Draw_2564; /* ╤ */
+			case 0x2567: return Draw_2567; /* ╧ */
+			case 0x2565: return Draw_2565; /* ╥ */
+			case 0x256A: return Draw_256A; /* ╪ */
+			case 0x256B: return Draw_256B; /* ╫ */
+			case 0x2561: return Draw_2561; /* ╡ */ // + fm.thickness - 1
+			case 0x255E: return Draw_255E; /* ╞ */
+			case 0x2556: return Draw_2556; /* ╖ */
+			case 0x2555: return Draw_2555; /* ╕ */
+			case 0x2568: return Draw_2568; /* ╨ */
+			case 0x255C: return Draw_255C; /* ╜ */ // + thickness
+			case 0x2559: return Draw_2559; /* ╙ */
+			case 0x2558: return Draw_2558; /* ╘ */
+			case 0x2552: return Draw_2552; /* ╒ */
+			case 0x2553: return Draw_2553; /* ╓ */
+			case 0x255B: return Draw_255B; /* ╛*/ // + thickness
 		}
 		return nullptr;
 	}

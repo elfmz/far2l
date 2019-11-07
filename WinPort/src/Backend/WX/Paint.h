@@ -1,11 +1,16 @@
 #pragma once
+#include <map>
+#include <vector>
+#include <wx/graphics.h>
+#include "WinCompat.h"
+#include "wxWinTranslations.h"
 
 class ConsolePaintContext
 {
 	std::vector<wxFont> _fonts;
 	wxWindow *_window;
-	unsigned int _font_width, _font_height;
-	bool _buffered_paint, _cursor_state, _sharp;
+	unsigned int _font_width, _font_height, _font_thickness;
+	bool _custom_draw_enabled, _buffered_paint, _cursor_state, _sharp;
 	struct {
 		std::vector<bool> checked;
 		std::vector<uint8_t> result;
@@ -27,11 +32,14 @@ public:
 	void ToggleCursor();
 	void SetSharp(bool sharp);
 	bool IsSharpSupported();
-	
+
+	inline bool IsCustomDrawEnabled() const { return _custom_draw_enabled; }
+	inline bool IsSharp() const { return _sharp; }
 	inline bool IsPaintBuffered() const { return _buffered_paint; }
 	inline bool GetCursorState() const { return _cursor_state; }
 	inline unsigned int FontWidth() const { return _font_width; }
 	inline unsigned int FontHeight() const { return _font_height; }
+	inline unsigned int FontThickness() const { return _font_thickness; }
 };
 
 ///////////////////////////////
@@ -74,6 +82,8 @@ class ConsolePainter
 	unsigned int _start_cx, _start_cy, _start_back_cx;
 	unsigned int _start_y;
 	uint8_t _prev_fit_font_index;
+	wxPen *_trans_pen;
+	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
 	
 	void SetBackgroundColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr);

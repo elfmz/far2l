@@ -540,7 +540,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		WXCustomDrawChar::FontMetrics fm = {(wxCoord)_context->FontWidth(),
 			(wxCoord)_context->FontHeight(), (wxCoord)_context->FontThickness()};
 
-		if (custom_draw_antialiasible && fm.fw > 7  && fm.fh > 7 && !_context->IsSharp()) {
+		if (custom_draw_antialiasible && fm.fw > 7 && fm.fh > 7 && !_context->IsSharp()) {
 #if 1
 			WinPortRGB clr_fade(CalcFadeColor(clr_back.r, clr_text.r),
 				CalcFadeColor(clr_back.g, clr_text.g), CalcFadeColor(clr_back.b, clr_text.b));

@@ -390,7 +390,7 @@ namespace WXCustomDrawChar
 	static void Draw_2580(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▀ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right, (m.top + m.bottom) / 2);
+		FillRectangle(dc, m.left, m.top, m.right, m.top + (fm.fh / 2) - 1);
 	}
 
 	static void Draw_2581(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /*  */

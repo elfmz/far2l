@@ -561,13 +561,13 @@ namespace WXCustomDrawChar
 	static void Draw_2596(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▖ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (fm.fh / 2) - 1, m.left + (fm.fw / 2) - 1, m.bottom);
+		FillRectangle(dc, m.left, m.top + (fm.fh / 2), m.left + (fm.fw / 2) - 1, m.bottom);
 	}
 
 	static void Draw_2597(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▗ */
 	{
 		CharMetrics m(fm, start_y, cx);
-		FillRectangle(dc, m.left + (fm.fw / 2), m.top + (fm.fh / 2) - 1, m.right, m.bottom);
+		FillRectangle(dc, m.left + (fm.fw / 2), m.top + (fm.fh / 2), m.right, m.bottom);
 	}
 
 	static void Draw_2598(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx) /* ▘ */
@@ -684,11 +684,11 @@ namespace WXCustomDrawChar
 			case 0x2580: antialiasible = false; return Draw_2580; /* ▀ */
 			case 0x2581: antialiasible = false; return Draw_2581; /* ▁ */
 			case 0x2582: antialiasible = false; return Draw_2582; /* ▂ */
-			case 0x2583: antialiasible = false; return Draw_2583; /* ▃▁ */
-			case 0x2584: antialiasible = false; return Draw_2584; /* ▄▁ */
-			case 0x2585: antialiasible = false; return Draw_2585; /* ▅▁ */
-			case 0x2586: antialiasible = false; return Draw_2586; /* ▆▁ */
-			case 0x2587: antialiasible = false; return Draw_2587; /* ▇▁ */
+			case 0x2583: antialiasible = false; return Draw_2583; /* ▃ */
+			case 0x2584: antialiasible = false; return Draw_2584; /* ▄ */
+			case 0x2585: antialiasible = false; return Draw_2585; /* ▅ */
+			case 0x2586: antialiasible = false; return Draw_2586; /* ▆ */
+			case 0x2587: antialiasible = false; return Draw_2587; /* ▇ */
 			case 0x2588: antialiasible = false; return Draw_2588; /* █ */
 			case 0x2589: antialiasible = false; return Draw_2589; /* ▉ */
 			case 0x258a: antialiasible = false; return Draw_258a; /* ▊ */

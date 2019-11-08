@@ -84,7 +84,9 @@ class ConsolePainter
 	uint8_t _prev_fit_font_index;
 	wxPen *_trans_pen;
 	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
-	
+
+	friend struct CustomCharPaintContext;
+
 	void SetBackgroundColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr);
 	void FlushBackground(unsigned int cx);

@@ -505,7 +505,7 @@ void ConsolePainter::FlushText()
 
 #define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
-static inline unsigned char CalcEdgeColor(unsigned char bg, unsigned char fg)
+static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
 {
 	unsigned short out = fg;
 	out*= 2;
@@ -514,13 +514,67 @@ static inline unsigned char CalcEdgeColor(unsigned char bg, unsigned char fg)
 	return (out > 0xff) ? 0xff : (unsigned char)out;
 }
 
+static inline unsigned char CalcExtraFadeColor(unsigned char bg, unsigned char fg)
+{
+	unsigned short out = bg;
+	out*= 2;
+	out+= fg;
+	out/= 3;
+	return (out > 0xff) ? 0xff : (unsigned char)out;
+}
+
+struct CustomCharPaintContext : WXCustomDrawChar::ICharPaintContext
+{
+	ConsolePainter *_painter;
+	const WinPortRGB &_clr_back;
+	const WinPortRGB &_clr_text;
+
+	CustomCharPaintContext(ConsolePainter *painter, const WinPortRGB &clr_back, const WinPortRGB &clr_text)
+		: _painter(painter), _clr_back(clr_back), _clr_text(clr_text)
+	{
+		fw = (wxCoord)_painter->_context->FontWidth();
+		fh = (wxCoord)_painter->_context->FontHeight();
+		thickness = (wxCoord)_painter->_context->FontThickness();
+	}
+
+	virtual bool SetColorFaded()
+	{
+		if (fw <= 7 || fh <= 7 || _painter->_context->IsSharp()) {
+			return false;
+		}
+#if 0
+		WinPortRGB clr_fade(CalcFadeColor(_clr_back.r, _clr_text.r),
+			CalcFadeColor(_clr_back.g, _clr_text.g), CalcFadeColor(_clr_back.b, _clr_text.b));
+#else
+		WinPortRGB clr_fade(0xff, 0, 0);
+#endif
+		_painter->SetBackgroundColor(clr_fade);
+		return true;
+	}
+
+	virtual bool SetColorExtraFaded()
+	{
+		if (fw <= 7 || fh <= 7 || _painter->_context->IsSharp()) {
+			return false;
+		}
+#if 0
+		WinPortRGB clr_fade(CalcExtraFadeColor(_clr_back.r, _clr_text.r),
+			CalcExtraFadeColor(_clr_back.g, _clr_text.g), CalcExtraFadeColor(_clr_back.b, _clr_text.b));
+#else
+		WinPortRGB clr_fade(0xff, 0, 0);
+#endif
+		_painter->SetBackgroundColor(clr_fade);
+		return true;
+	}
+};
+
+
 void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
 {
-	bool custom_draw_antialiasible;
-	WXCustomDrawChar::Draw_T custom_draw = nullptr;
+	WXCustomDrawChar::DrawT custom_draw = nullptr;
 
 	if (!c || c == L' ' || !IS_VALID_WCHAR(c) || (_context->IsCustomDrawEnabled()
-	 && (custom_draw = WXCustomDrawChar::Get(c, custom_draw_antialiasible)) != nullptr)) {
+	 && (custom_draw = WXCustomDrawChar::Get(c)) != nullptr)) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
 		FlushText();
@@ -534,29 +588,11 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
 
-	if (custom_draw != nullptr) {
+	if (custom_draw) {
 		FlushBackground(cx + 1);
-
-		WXCustomDrawChar::FontMetrics fm = {(wxCoord)_context->FontWidth(),
-			(wxCoord)_context->FontHeight(), (wxCoord)_context->FontThickness()};
-
-		if (custom_draw_antialiasible && fm.fw > 7 && fm.fh > 7 && !_context->IsSharp()) {
-#if 1
-			WinPortRGB clr_fade(CalcEdgeColor(clr_back.r, clr_text.r),
-				CalcEdgeColor(clr_back.g, clr_text.g), CalcEdgeColor(clr_back.b, clr_text.b));
-#else
-			WinPortRGB clr_fade(0xff, 0, 0);
-#endif
-			SetBackgroundColor(clr_fade);
-
-			fm.thickness++;
-			custom_draw(_dc, fm, _start_y, cx);
-			fm.thickness--;
-		}
-
+		CustomCharPaintContext ccpc(this, clr_text, clr_back);
 		SetBackgroundColor(clr_text);
-		custom_draw(_dc, fm, _start_y, cx);
-
+		custom_draw(_dc, ccpc, _start_y, cx);
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
 

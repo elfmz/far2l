@@ -356,7 +356,7 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
     else
     {
       // TODO: GNUTYPE_LONGLINK
-      DWORD dwAddFileAttr = 0, dwUnixMode = 0;
+      DWORD dwUnixMode = 0;
       SkipItem=FALSE;
       char *EndPos;
       if (LongName != NULL)
@@ -380,20 +380,38 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
       strncpy(Item->FindData.cFileName, EndPos, sizeof(Item->FindData.cFileName));
       Item->FindData.nFileSizeHigh=0;
       dwUnixMode = (DWORD)GetOctal(TAR_hdr.header.mode);
-      if((dwUnixMode & 0x4000) || ((TAR_hdr.header.typeflag-'0') & 4))
-         dwAddFileAttr|=FILE_ATTRIBUTE_DIRECTORY;
+      switch (TAR_hdr.header.typeflag) {
+        case REGTYPE: case AREGTYPE:
+          dwUnixMode|= S_IFREG;
+          break;
 
-      if(TAR_hdr.header.typeflag == SYMTYPE || TAR_hdr.header.typeflag == LNKTYPE)
-      {
-        if(TAR_hdr.header.typeflag == SYMTYPE)
-        {
-          #ifndef IO_REPARSE_TAG_SYMLINK
-            #define IO_REPARSE_TAG_SYMLINK 0xA000000C
-          #endif
-          dwAddFileAttr|=FILE_ATTRIBUTE_REPARSE_POINT;
+        case SYMTYPE:
           Item->FindData.dwReserved0=IO_REPARSE_TAG_SYMLINK;
-        }
+          //fallthrough
 
+        case LNKTYPE:
+          dwUnixMode|= S_IFLNK;
+          break;
+
+        case CHRTYPE:
+          dwUnixMode|= S_IFCHR;
+          break;
+
+        case BLKTYPE:
+          dwUnixMode|= S_IFBLK;
+          break;
+
+        case FIFOTYPE:
+          dwUnixMode|= S_IFIFO;
+          break;
+
+        case DIRTYPE:
+          dwUnixMode|= S_IFDIR;
+          break;
+      }
+
+      if ((dwUnixMode & S_IFMT) == S_IFLNK) //TAR_hdr.header.typeflag == SYMTYPE || TAR_hdr.header.typeflag == LNKTYPE
+      {
         if((Item->UserData=(DWORD_PTR)MA_malloc(strlen(TAR_hdr.header.linkname)+2)) != 0)
         {
           EndPos = AdjustTARFileName (TAR_hdr.header.linkname);
@@ -403,7 +421,7 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
         }
       }
 
-      Item->FindData.dwFileAttributes=WINPORT(EvaluateAttributesA)(dwUnixMode, Item->FindData.cFileName) | dwAddFileAttr;
+      Item->FindData.dwFileAttributes=WINPORT(EvaluateAttributesA)(dwUnixMode, Item->FindData.cFileName);
       Item->FindData.dwUnixMode=dwUnixMode;
 
       UnixTimeToFileTime((DWORD)GetOctal(TAR_hdr.header.mtime),&Item->FindData.ftLastWriteTime);

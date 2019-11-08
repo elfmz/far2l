@@ -187,6 +187,12 @@ namespace WXCustomDrawChar
 		SingleLineBoxMetrics m(ctx, start_y, cx);
 		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
 		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.bottom);
+		if (ctx.SetColorFaded()) {
+			FillRectangle(dc, m.left, m.middle_y + ctx.thickness, m.middle_x - 1, m.middle_y + ctx.thickness);
+			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y + ctx.thickness, m.right, m.middle_y + ctx.thickness);
+			FillRectangle(dc, m.middle_x + ctx.thickness, m.top, m.middle_x + ctx.thickness, m.middle_y - 1);
+			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y + ctx.thickness, m.middle_x + ctx.thickness, m.bottom);
+		}
 	}
 
 
@@ -195,6 +201,10 @@ namespace WXCustomDrawChar
 		DoubleLineBoxMetrics m(ctx, start_y, cx);
 		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
 		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
+		if (ctx.SetColorFaded()) {
+			FillRectangle(dc, m.left, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			FillRectangle(dc, m.left, m.middle2_y + ctx.thickness, m.right, m.middle2_y + ctx.thickness);
+		}
 	}
 
 
@@ -203,6 +213,10 @@ namespace WXCustomDrawChar
 		DoubleLineBoxMetrics m(ctx, start_y, cx);
 		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.bottom);
 		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.bottom);
+		if (ctx.SetColorFaded()) {
+			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.bottom);
+			FillRectangle(dc, m.middle2_x + ctx.thickness, m.top, m.middle2_x + ctx.thickness, m.bottom);
+		}
 	}
 
 
@@ -214,6 +228,14 @@ namespace WXCustomDrawChar
 
 		FillRectangle(dc, m.middle1_x, m.middle1_y, m.middle1_x + ctx.thickness - 1, m.bottom);
 		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.bottom);
+
+		if (ctx.SetColorFaded()) {
+			FillRectangle(dc, m.middle1_x - ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle2_y + ctx.thickness, m.right, m.middle2_y + ctx.thickness);
+
+			FillRectangle(dc, m.middle1_x - 1, m.middle1_y, m.middle1_x - 1, m.bottom);
+			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle2_y + ctx.thickness, m.middle2_x + ctx.thickness, m.bottom);
+		}
 	}
 
 

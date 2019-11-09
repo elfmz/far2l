@@ -525,9 +525,8 @@ static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
 static inline unsigned char CalcExtraFadeColor(unsigned char bg, unsigned char fg)
 {
 	unsigned short out = bg;
-	out*= 2;
 	out+= fg;
-	out/= 3;
+	out/= 2;
 	return (out > 0xff) ? 0xff : (unsigned char)out;
 }
 
@@ -546,11 +545,13 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 		_painter.SetBackgroundColor(clr_text);
 	}
 
-	inline bool SetColorFadedImpl()
+	inline bool MayDrawFadedEdgesImpl()
 	{
-		if (fw <= 7 || fh <= 7 || _painter._context->IsSharp()) {
-			return false;
-		}
+		return (fw > 7 && fh > 7 && !_painter._context->IsSharp());
+	}
+
+	inline void SetColorFadedImpl()
+	{
 #if 1
 		WinPortRGB clr_fade(CalcFadeColor(_clr_back.r, _clr_text.r),
 			CalcFadeColor(_clr_back.g, _clr_text.g), CalcFadeColor(_clr_back.b, _clr_text.b));
@@ -558,7 +559,6 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 		WinPortRGB clr_fade(0xff, 0, 0);
 #endif
 		_painter.SetBackgroundColor(clr_fade);
-		return true;
 	}
 
 	inline void SetColorExtraFadedImpl()
@@ -580,9 +580,14 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 };
 
 // this code little bit wacky just to avoid virtual methods overhead
-bool WXCustomDrawChar::Painter::SetColorFaded()
+bool WXCustomDrawChar::Painter::MayDrawFadedEdges()
 {
-	return ((WXCustomDrawCharPainter *)this)->SetColorFadedImpl();
+	return ((WXCustomDrawCharPainter *)this)->MayDrawFadedEdgesImpl();
+}
+
+void WXCustomDrawChar::Painter::SetColorFaded()
+{
+	((WXCustomDrawCharPainter *)this)->SetColorFadedImpl();
 }
 
 void WXCustomDrawChar::Painter::SetColorExtraFaded()

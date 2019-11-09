@@ -332,8 +332,8 @@ namespace WXCustomDrawChar
 		p.FillRectangle(m.middle1_x, m.middle2_y, m.middle1_x + p.thickness - 1, m.bottom);
 		if (p.MayDrawFadedEdges()) {
 			p.SetColorFaded();
-			p.FillRectangle(m.left, m.middle1_y - 1, m.middle2_x, m.middle1_y - 1);
-			p.FillRectangle(m.left, m.middle2_y - 1, m.middle1_x, m.middle2_y - 1);
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle2_x + p.thickness - 1, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle1_x + p.thickness - 1, m.middle2_y - 1);
 
 			p.FillRectangle(m.middle2_x - 1, m.middle1_y + p.thickness, m.middle2_x - 1, m.bottom);
 			p.FillRectangle(m.middle1_x - 1, m.middle2_y + p.thickness, m.middle1_x - 1, m.bottom);
@@ -355,8 +355,8 @@ namespace WXCustomDrawChar
 			p.FillRectangle(m.middle2_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
 			p.FillRectangle(m.middle1_x + p.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
 
-			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle2_y);
-			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle2_y + p.thickness - 1);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + p.thickness - 1);
 		}
 	}
 

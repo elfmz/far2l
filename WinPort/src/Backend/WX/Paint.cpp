@@ -542,7 +542,7 @@ struct CustomCharPaintContext : WXCustomDrawChar::ICharPaintContext
 		if (fw <= 7 || fh <= 7 || _painter->_context->IsSharp()) {
 			return false;
 		}
-#if 0
+#if 1
 		WinPortRGB clr_fade(CalcFadeColor(_clr_back.r, _clr_text.r),
 			CalcFadeColor(_clr_back.g, _clr_text.g), CalcFadeColor(_clr_back.b, _clr_text.b));
 #else
@@ -557,7 +557,7 @@ struct CustomCharPaintContext : WXCustomDrawChar::ICharPaintContext
 		if (fw <= 7 || fh <= 7 || _painter->_context->IsSharp()) {
 			return false;
 		}
-#if 0
+#if 1
 		WinPortRGB clr_fade(CalcExtraFadeColor(_clr_back.r, _clr_text.r),
 			CalcExtraFadeColor(_clr_back.g, _clr_text.g), CalcExtraFadeColor(_clr_back.b, _clr_text.b));
 #else

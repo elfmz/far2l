@@ -50,6 +50,29 @@ namespace WXCustomDrawChar
 		wxCoord middle1_x, middle2_x;
 	};
 
+	template <wxCoord COUNT>
+		struct Dashes
+	{
+		Dashes(wxCoord total_len)
+		{
+			period = total_len / COUNT;
+			len = period * 2 / 3;
+			if (len == 0) len = 1;
+
+			auto underflow = total_len - period * COUNT;
+			if (underflow > 1) {
+				auto xperiod = period + 1;
+				auto overflow = xperiod * COUNT - total_len;
+				if (overflow < underflow && xperiod * (COUNT - 1) + len < total_len) {
+					period = xperiod;
+				}
+			}
+		}
+
+		wxCoord period; // distance between begins of each visible dash parts
+		wxCoord len; // visible dash part len
+	};
+
 	template <DrawT DRAW>
 		static void Draw_Thicker(Painter &p, unsigned int start_y, unsigned int cx) /* ─ */
 	{
@@ -57,6 +80,43 @@ namespace WXCustomDrawChar
 		p.thickness = 1 + (p.thickness * 3) / 2;
 		DRAW(p, start_y, cx);
 		p.thickness = saved_thickness;
+	}
+
+
+	template <wxCoord COUNT>
+		static void Draw_DashesH(Painter &p, unsigned int start_y, unsigned int cx) /* ┄ */
+	{
+		SingleLineBoxMetrics m(p, start_y, cx);
+		Dashes<COUNT> d(p.fw);
+
+		for (wxCoord i = 0; i < COUNT; ++i) {
+			p.FillRectangle(m.left + i * d.period, m.middle_y, m.left + i * d.period + d.len - 1, m.middle_y + p.thickness - 1);
+		}
+
+		if (p.MayDrawFadedEdges()) {
+			p.SetColorFaded();
+			for (wxCoord i = 0; i < COUNT; ++i) {
+				p.FillRectangle(m.left + i * d.period, m.middle_y - 1, m.left + i * d.period + d.len - 1, m.middle_y - 1);
+			}
+		}
+	}
+
+	template <wxCoord COUNT>
+		static void Draw_DashesV(Painter &p, unsigned int start_y, unsigned int cx) /* ┄ */
+	{
+		SingleLineBoxMetrics m(p, start_y, cx);
+		Dashes<COUNT> d(p.fh);
+
+		for (wxCoord i = 0; i < COUNT; ++i) {
+			p.FillRectangle(m.middle_x, m.top + i * d.period, m.middle_x + p.thickness - 1, m.top + i * d.period + d.len - 1);
+		}
+
+		if (p.MayDrawFadedEdges()) {
+			p.SetColorFaded();
+			for (wxCoord i = 0; i < COUNT; ++i) {
+				p.FillRectangle(m.middle_x - 1, m.top + i * d.period, m.middle_x - 1, m.top + i * d.period + d.len - 1);
+			}
+		}
 	}
 
 	static void Draw_2500(Painter &p, unsigned int start_y, unsigned int cx) /* ─ */
@@ -78,7 +138,6 @@ namespace WXCustomDrawChar
 			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.bottom);
 		}
 	}
-
 
 	static void Draw_250C(Painter &p, unsigned int start_y, unsigned int cx) /* ┌ */
 	{
@@ -959,6 +1018,18 @@ namespace WXCustomDrawChar
 			case 0x2501: return Draw_Thicker<Draw_2500>;	/* ━ */
 			case 0x2502: return Draw_2502; 			/* │ */
 			case 0x2503: return Draw_Thicker<Draw_2502>;	/* ┃ */
+			case 0x2504: return Draw_DashesH<3>;			/* ┄ */
+			case 0x2505: return Draw_Thicker<Draw_DashesH<3>>;	/* ┅ */
+			case 0x2506: return Draw_DashesV<3>;			/* ┆ */
+			case 0x2507: return Draw_Thicker<Draw_DashesV<3>>;	/* ┇ */
+			case 0x2508: return Draw_DashesH<4>;			/* ┈ */
+			case 0x2509: return Draw_Thicker<Draw_DashesH<4>>;	/* ┉ */
+			case 0x250a: return Draw_DashesV<4>;			/* ┊ */
+			case 0x250b: return Draw_Thicker<Draw_DashesV<4>>;	/* ┋ */
+			case 0x254c: return Draw_DashesH<2>;			/* ╌ */
+			case 0x254d: return Draw_Thicker<Draw_DashesH<2>>;	/* ╍ */
+			case 0x254e: return Draw_DashesV<2>;			/* ╎ */
+			case 0x254f: return Draw_Thicker<Draw_DashesV<2>>;	/* ╏ */
 			case 0x250c: return Draw_250C;			/* ┌ */
 			case 0x250f: return Draw_Thicker<Draw_250C>;	/* ┏ */
 			case 0x2510: return Draw_2510;			/* ┐ */

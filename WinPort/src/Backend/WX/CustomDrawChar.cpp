@@ -165,7 +165,7 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x - 1, m.middle_y + ctx.thickness, m.middle_x - 1, m.bottom);
 			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle_x - 1, m.middle_y + ctx.thickness - 2); // WTF?
+				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
 			}
 		}
 	}
@@ -193,7 +193,7 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
 			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle_x + ctx.thickness - 2, m.middle_y - 1);// wtf
+				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
 			}
 		}
 	}
@@ -314,8 +314,8 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle2_y - 1);
 
 			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle1_x + ctx.thickness - 2, m.middle1_y + ctx.thickness - 2);
-				FillPixel(dc, m.middle2_x + ctx.thickness - 2, m.middle2_y + ctx.thickness - 2);
+				FillPixel(dc, m.middle1_x - 1, m.middle1_y - 1);
+				FillPixel(dc, m.middle2_x - 1, m.middle2_y - 1);
 			}
 		}
 	}
@@ -348,7 +348,7 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
 
 			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle1_x - 1, m.middle_y + ctx.thickness - 2);
+				FillPixel(dc, m.middle1_x - 1, m.middle_y - 1);
 			}
 		}
 	}
@@ -441,15 +441,15 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle1_y);
 		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.bottom);
 
-		FillPixel(dc, m.middle1_x + ctx.thickness - 2, m.middle1_y + ctx.thickness - 2);
+		FillPixel(dc, m.middle1_x - 1, m.middle1_y - 1);
 
 		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
+			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle1_x - 2, m.middle1_y - 1); // don't overlap compensation pixel
 			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
 			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle1_x + ctx.thickness - 1, m.middle2_y - 1);
 			FillRectangle(dc, m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
 
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
+			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 2); // don't overlap compensation pixel
 			FillRectangle(dc, m.middle1_x - 1, m.middle2_y + ctx.thickness, m.middle1_x - 1, m.bottom);
 			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + ctx.thickness - 1);
 			FillRectangle(dc, m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);

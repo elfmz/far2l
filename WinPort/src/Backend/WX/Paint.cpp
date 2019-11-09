@@ -530,6 +530,8 @@ static inline unsigned char CalcExtraFadeColor(unsigned char bg, unsigned char f
 	return (out > 0xff) ? 0xff : (unsigned char)out;
 }
 
+// #define DEBUG_FADED_EDGES
+
 struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 {
 	ConsolePainter &_painter;
@@ -552,7 +554,7 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 
 	inline void SetColorFadedImpl()
 	{
-#if 1
+#ifndef DEBUG_FADED_EDGES
 		WinPortRGB clr_fade(CalcFadeColor(_clr_back.r, _clr_text.r),
 			CalcFadeColor(_clr_back.g, _clr_text.g), CalcFadeColor(_clr_back.b, _clr_text.b));
 #else
@@ -563,11 +565,11 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 
 	inline void SetColorExtraFadedImpl()
 	{
-#if 1
+#ifndef DEBUG_FADED_EDGES
 		WinPortRGB clr_fade(CalcExtraFadeColor(_clr_back.r, _clr_text.r),
 			CalcExtraFadeColor(_clr_back.g, _clr_text.g), CalcExtraFadeColor(_clr_back.b, _clr_text.b));
 #else
-		WinPortRGB clr_fade(0xff, 0, 0);
+		WinPortRGB clr_fade(0, 0xff, 0);
 #endif
 		_painter.SetBackgroundColor(clr_fade);
 	}

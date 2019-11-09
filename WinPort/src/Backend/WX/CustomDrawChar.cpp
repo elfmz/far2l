@@ -5,12 +5,12 @@ namespace WXCustomDrawChar
 
 	struct CharMetrics
 	{
-		inline CharMetrics(ICharPaintContext &ctx, unsigned int start_y, unsigned int cx)
+		inline CharMetrics(Painter &p, unsigned int start_y, unsigned int cx)
 		{
-			left = cx * ctx.fw;
-			right = left + ctx.fw - 1;
+			left = cx * p.fw;
+			right = left + p.fw - 1;
 			top = start_y;
-			bottom = top + ctx.fh - 1;
+			bottom = top + p.fh - 1;
 		}
 
 		wxCoord left;
@@ -21,11 +21,11 @@ namespace WXCustomDrawChar
 
 	struct SingleLineBoxMetrics : CharMetrics
 	{
-		inline SingleLineBoxMetrics(ICharPaintContext &ctx, unsigned int start_y, unsigned int cx)
-			: CharMetrics(ctx, start_y, cx)
+		inline SingleLineBoxMetrics(Painter &p, unsigned int start_y, unsigned int cx)
+			: CharMetrics(p, start_y, cx)
 		{
-			middle_y = top + ctx.fh / 2 - ctx.thickness / 2;
-			middle_x = left + ctx.fw / 2 - ctx.thickness / 2;
+			middle_y = top + p.fh / 2 - p.thickness / 2;
+			middle_x = left + p.fw / 2 - p.thickness / 2;
 		}
 
 		wxCoord middle_y;
@@ -34,10 +34,10 @@ namespace WXCustomDrawChar
 
 	struct DoubleLineBoxMetrics : SingleLineBoxMetrics
 	{
-		inline DoubleLineBoxMetrics(ICharPaintContext &ctx, unsigned int start_y, unsigned int cx)
-			: SingleLineBoxMetrics(ctx, start_y, cx)
+		inline DoubleLineBoxMetrics(Painter &p, unsigned int start_y, unsigned int cx)
+			: SingleLineBoxMetrics(p, start_y, cx)
 		{
-			wxCoord ofs = std::min(ctx.fh, ctx.fw) / 4;
+			wxCoord ofs = std::min(p.fh, p.fw) / 4;
 
 			middle1_y = middle_y - ofs;
 			middle1_x = middle_x - ofs;
@@ -51,839 +51,824 @@ namespace WXCustomDrawChar
 	};
 
 	template <DrawT DRAW>
-		static void Draw_Thicker(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ─ */
+		static void Draw_Thicker(Painter &p, unsigned int start_y, unsigned int cx) /* ─ */
 	{
-		auto saved_thickness = ctx.thickness;
-		ctx.thickness = 1 + (ctx.thickness * 3) / 2;
-		DRAW(dc, ctx, start_y, cx);
-		ctx.thickness = saved_thickness;
+		auto saved_thickness = p.thickness;
+		p.thickness = 1 + (p.thickness * 3) / 2;
+		DRAW(p, start_y, cx);
+		p.thickness = saved_thickness;
 	}
 
-
-	static inline void FillRectangle(wxPaintDC &dc, wxCoord left, wxCoord top, wxCoord right, wxCoord bottom)
+	static void Draw_2500(Painter &p, unsigned int start_y, unsigned int cx) /* ─ */
 	{
-		dc.DrawRectangle(left, top, right + 1 - left , bottom + 1 - top);
-	}
-
-	static inline void FillPixel(wxPaintDC &dc, wxCoord left, wxCoord top)
-	{
-		dc.DrawRectangle(left, top, 1, 1);
-	}
-
-	static void Draw_2500(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ─ */
-	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.right, m.middle_y - 1);
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.right, m.middle_y - 1);
 		}
 	}
 
-	static void Draw_2502(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* │ */
+	static void Draw_2502(Painter &p, unsigned int start_y, unsigned int cx) /* │ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.bottom);
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_250C(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ┌ */
+	static void Draw_250C(Painter &p, unsigned int start_y, unsigned int cx) /* ┌ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle_x, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle_y, m.middle_x - 1, m.bottom);
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
-			}
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle_x, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle_x, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle_y, m.middle_x - 1, m.bottom);
+
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle_x - 1, m.middle_y - 1);
 		}
 	}
 
 
-	static void Draw_2510(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ┐ */
+	static void Draw_2510(Painter &p, unsigned int start_y, unsigned int cx) /* ┐ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle_x, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x + ctx.thickness - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle_y + ctx.thickness, m.middle_x - 1, m.bottom);
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.middle_x, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle_x + p.thickness - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle_y + p.thickness, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2514(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* └ */
+	static void Draw_2514(Painter &p, unsigned int start_y, unsigned int cx) /* └ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y + ctx.thickness - 1);
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle_x, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y + p.thickness - 1);
 		}
 	}
 
 
-	static void Draw_2518(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ┘ */
+	static void Draw_2518(Painter &p, unsigned int start_y, unsigned int cx) /* ┘ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle_x + ctx.thickness - 1, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
-			}
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.middle_x + p.thickness - 1, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
+
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle_x - 1, m.middle_y - 1);
 		}
 	}
 
 
-	static void Draw_251C(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ├ */
+	static void Draw_251C(Painter &p, unsigned int start_y, unsigned int cx) /* ├ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.bottom);
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle_x, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2524(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ┤ */
+	static void Draw_2524(Painter &p, unsigned int start_y, unsigned int cx) /* ┤ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle_x, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle_y + ctx.thickness, m.middle_x - 1, m.bottom);
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
-			}
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.middle_x, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle_y + p.thickness, m.middle_x - 1, m.bottom);
+
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle_x - 1, m.middle_y - 1);
 		}
 	}
 
 
-	static void Draw_252C(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ┬ */
+	static void Draw_252C(Painter &p, unsigned int start_y, unsigned int cx) /* ┬ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle_y + ctx.thickness, m.middle_x - 1, m.bottom);
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle_y + p.thickness, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2534(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ┴ */
+	static void Draw_2534(Painter &p, unsigned int start_y, unsigned int cx) /* ┴ */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
-			}
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
+
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle_x - 1, m.middle_y - 1);
 		}
 	}
 
 
-	static void Draw_253C(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ┼  */
+	static void Draw_253C(Painter &p, unsigned int start_y, unsigned int cx) /* ┼  */
 	{
-		SingleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle_y + ctx.thickness, m.middle_x - 1, m.bottom);
+		SingleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle_y + p.thickness, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2550(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ═ */
+	static void Draw_2550(Painter &p, unsigned int start_y, unsigned int cx) /* ═ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
 		}
 	}
 
 
-	static void Draw_2551(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ║ */
+	static void Draw_2551(Painter &p, unsigned int start_y, unsigned int cx) /* ║ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2554(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╔  */
+	static void Draw_2554(Painter &p, unsigned int start_y, unsigned int cx) /* ╔  */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle1_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle1_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
 
-		FillRectangle(dc, m.middle1_x, m.middle1_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle1_x, m.middle1_y, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.middle2_x + p.thickness - 1, m.bottom);
 
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle1_x, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle1_x, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
 
-			FillRectangle(dc, m.middle1_x - 1, m.middle1_y, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle1_x - 1, m.middle1_y - 1);
-				FillPixel(dc, m.middle2_x - 1, m.middle2_y - 1);
-			}
+			p.FillRectangle(m.middle1_x - 1, m.middle1_y, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
+
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle1_x - 1, m.middle1_y - 1);
+			p.FillPixel(m.middle2_x - 1, m.middle2_y - 1);
 		}
 	}
 
 
-	static void Draw_2557(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╗  */
+	static void Draw_2557(Painter &p, unsigned int start_y, unsigned int cx) /* ╗  */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle2_x, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + ctx.thickness - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle2_x, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle1_x, m.middle2_y + p.thickness - 1);
 
-		FillRectangle(dc, m.middle2_x, m.middle1_y, m.middle2_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle2_x, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle1_x, m.middle2_y - 1);
+		p.FillRectangle(m.middle2_x, m.middle1_y, m.middle2_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle1_x, m.middle2_y, m.middle1_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle2_x, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle1_x, m.middle2_y - 1);
 
-			FillRectangle(dc, m.middle2_x - 1, m.middle1_y + ctx.thickness, m.middle2_x - 1, m.bottom);
-			FillRectangle(dc, m.middle1_x - 1, m.middle2_y + ctx.thickness, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.middle1_y + p.thickness, m.middle2_x - 1, m.bottom);
+			p.FillRectangle(m.middle1_x - 1, m.middle2_y + p.thickness, m.middle1_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_255A(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╚  */
+	static void Draw_255A(Painter &p, unsigned int start_y, unsigned int cx) /* ╚  */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle2_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
 
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle2_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle2_y);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle1_y);
 
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.middle1_x + ctx.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.middle1_x + p.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
 
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle2_y);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle2_y);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y);
 		}
 	}
 
 
-	static void Draw_255D(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╝  */ // + thickness
+	static void Draw_255D(Painter &p, unsigned int start_y, unsigned int cx) /* ╝  */ // + thickness
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + ctx.thickness - 1, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.middle2_y + ctx.thickness - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle1_x + p.thickness - 1, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle2_x + p.thickness - 1, m.middle2_y + p.thickness - 1);
 
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle2_y);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle2_y);
 
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle2_x - 1, m.middle2_y - 1);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle2_x - 1, m.middle2_y - 1);
 
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle2_y - 1);
 
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle1_x - 1, m.middle1_y - 1);
-				FillPixel(dc, m.middle2_x - 1, m.middle2_y - 1);
-			}
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle1_x - 1, m.middle1_y - 1);
+			p.FillPixel(m.middle2_x - 1, m.middle2_y - 1);
 		}
 	}
 
 
-	static void Draw_255F(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╟  */
+	static void Draw_255F(Painter &p, unsigned int start_y, unsigned int cx) /* ╟  */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle2_x, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle2_x, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2562(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╢  */
+	static void Draw_2562(Painter &p, unsigned int start_y, unsigned int cx) /* ╢  */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle1_x, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.middle_y + ctx.thickness, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.middle1_x, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.middle_y + p.thickness, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
 
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle1_x - 1, m.middle_y - 1);
-			}
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle1_x - 1, m.middle_y - 1);
 		}
 	}
 
 
 	///
 
-	static void Draw_2560(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╠ */
+	static void Draw_2560(Painter &p, unsigned int start_y, unsigned int cx) /* ╠ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + ctx.thickness - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle2_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + p.thickness - 1);
+			p.FillRectangle(m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
 		}
         }
 
 
-	static void Draw_2563(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╣ */ // + thickness
+	static void Draw_2563(Painter &p, unsigned int start_y, unsigned int cx) /* ╣ */ // + thickness
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + ctx.thickness - 1, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle1_x + ctx.thickness - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.middle2_y + ctx.thickness, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle1_x + p.thickness - 1, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle1_x, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle1_x, m.middle2_y, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle1_x + p.thickness - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.middle2_y + p.thickness, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
 		}
 	}
 	
 
 
-	static void Draw_2566(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╦ */
+	static void Draw_2566(Painter &p, unsigned int start_y, unsigned int cx) /* ╦ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle1_x + ctx.thickness - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.middle2_y + ctx.thickness, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle1_x, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.middle2_y, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle1_x + p.thickness - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.middle2_y + p.thickness, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2569(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╩  */ // + thickness
+	static void Draw_2569(Painter &p, unsigned int start_y, unsigned int cx) /* ╩  */ // + thickness
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + ctx.thickness - 1, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle1_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + ctx.thickness - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle1_x + p.thickness - 1, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle2_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle1_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + p.thickness - 1);
 		}
 	}
 
 
-	static void Draw_256C(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╬ */ // + thickness
+	static void Draw_256C(Painter &p, unsigned int start_y, unsigned int cx) /* ╬ */ // + thickness
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle1_x + ctx.thickness - 1, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle2_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle1_x, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle1_x + p.thickness - 1, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle2_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle1_x, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle1_x, m.middle2_y, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle2_x, m.middle2_y, m.middle2_x + p.thickness - 1, m.bottom);
 
-		FillPixel(dc, m.middle1_x - 1, m.middle1_y - 1);
+		p.FillPixel(m.middle1_x - 1, m.middle1_y - 1);
 
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle1_x - 2, m.middle1_y - 1); // don't overlap compensation pixel
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle1_x + ctx.thickness - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle1_x - 2, m.middle1_y - 1); // don't overlap compensation pixel
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle1_x + p.thickness - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle2_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
 
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 2); // don't overlap compensation pixel
-			FillRectangle(dc, m.middle1_x - 1, m.middle2_y + ctx.thickness, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + ctx.thickness - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 2); // don't overlap compensation pixel
+			p.FillRectangle(m.middle1_x - 1, m.middle2_y + p.thickness, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + p.thickness - 1);
+			p.FillRectangle(m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
 
-
-			if (ctx.SetColorExtraFaded()) {
-				FillPixel(dc, m.middle2_x - 1, m.middle2_y - 1);
-			}
+			p.SetColorExtraFaded();
+			p.FillPixel(m.middle2_x - 1, m.middle2_y - 1);
 		}
 	}
 
 
-	static void Draw_2564(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╤ */
+	static void Draw_2564(Painter &p, unsigned int start_y, unsigned int cx) /* ╤ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle2_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle2_y + ctx.thickness, m.middle_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle2_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle2_y + p.thickness, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2567(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╧ */
+	static void Draw_2567(Painter &p, unsigned int start_y, unsigned int cx) /* ╧ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle1_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle1_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
 		}
 	}
 
-	static void Draw_2565(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╥ */
+	static void Draw_2565(Painter &p, unsigned int start_y, unsigned int cx) /* ╥ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.middle_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.middle_y, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.middle_y + ctx.thickness, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.middle_y + ctx.thickness, m.middle2_x - 1, m.bottom);
-		}
-	}
-
-
-	static void Draw_256A(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╪ */
-	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle_x - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle1_y + ctx.thickness, m.middle_x - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle2_y + ctx.thickness, m.middle_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.middle_y, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.middle_y, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.middle_y + p.thickness, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.middle_y + p.thickness, m.middle2_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_256B(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╫ */
+	static void Draw_256A(Painter &p, unsigned int start_y, unsigned int cx) /* ╪ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x + ctx.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
-
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.middle_y + ctx.thickness, m.middle1_x - 1, m.bottom);
-
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.middle_y + ctx.thickness, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle_x - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x + p.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle1_y + p.thickness, m.middle_x - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle2_y + p.thickness, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2561(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╡ */ // + ctx.thickness - 1
+	static void Draw_256B(Painter &p, unsigned int start_y, unsigned int cx) /* ╫ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle_x + ctx.thickness - 1, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle_x, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle_x, m.middle2_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle_x + ctx.thickness - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle2_y + ctx.thickness, m.middle_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x + p.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.middle_y + p.thickness, m.middle1_x - 1, m.bottom);
+
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle2_x - 1, m.middle_y + p.thickness, m.middle2_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_255E(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╞ */
+	static void Draw_2561(Painter &p, unsigned int start_y, unsigned int cx) /* ╡ */ // + p.thickness - 1
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle1_y);
-		FillRectangle(dc, m.middle_x, m.middle2_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y + ctx.thickness - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle2_y, m.middle_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle_x + p.thickness - 1, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle_x, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle_x, m.middle2_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle_x + p.thickness - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle2_y + p.thickness, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2556(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╖ */
+	static void Draw_255E(Painter &p, unsigned int start_y, unsigned int cx) /* ╞ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle2_x, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.middle_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.middle_y, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle2_x + ctx.thickness, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.middle_y + ctx.thickness, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.middle_y + ctx.thickness, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle1_y);
+		p.FillRectangle(m.middle_x, m.middle2_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y + p.thickness - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle2_y, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2555(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╕ */
+	static void Draw_2556(Painter &p, unsigned int start_y, unsigned int cx) /* ╖ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle_x + ctx.thickness - 1, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle_x, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle1_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle_x + ctx.thickness - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle_x - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle1_y + ctx.thickness, m.middle_x - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle2_y + ctx.thickness, m.middle_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.middle2_x, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.middle_y, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.middle_y, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle2_x + p.thickness, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.middle_y + p.thickness, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.middle_y + p.thickness, m.middle2_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_2568(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╨ */
+	static void Draw_2555(Painter &p, unsigned int start_y, unsigned int cx) /* ╕ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x + ctx.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle_x + p.thickness - 1, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle_x, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle1_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle_x + p.thickness - 1, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle_x - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle1_y + p.thickness, m.middle_x - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle2_y + p.thickness, m.middle_x - 1, m.bottom);
 		}
 	}
 
 
-	static void Draw_255C(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╜ */ // + thickness
+	static void Draw_2568(Painter &p, unsigned int start_y, unsigned int cx) /* ╨ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle_y, m.middle2_x + ctx.thickness - 1, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x + ctx.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle_y);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x + p.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
 		}
 	}
 
 
-	static void Draw_2559(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╙ */
+	static void Draw_255C(Painter &p, unsigned int start_y, unsigned int cx) /* ╜ */ // + thickness
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle1_x, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.top, m.middle1_x + ctx.thickness - 1, m.middle_y);
-		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle1_x + ctx.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
-			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle_y, m.middle2_x + p.thickness - 1, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle_y);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle_y - 1, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x + p.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
 		}
 	}
 
 
-	static void Draw_2558(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╘ */
+	static void Draw_2559(Painter &p, unsigned int start_y, unsigned int cx) /* ╙ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle2_y);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle2_y + ctx.thickness - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle1_x, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.top, m.middle1_x + p.thickness - 1, m.middle_y);
+		p.FillRectangle(m.middle2_x, m.top, m.middle2_x + p.thickness - 1, m.middle_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle1_x + p.thickness, m.middle_y - 1, m.middle2_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle_y - 1);
+			p.FillRectangle(m.middle2_x + p.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
 		}
 	}
 
 
-	static void Draw_2552(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╒ */
+	static void Draw_2558(Painter &p, unsigned int start_y, unsigned int cx) /* ╘ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle_x, m.middle1_y, m.right, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle2_y, m.right, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.middle1_y, m.middle_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle_x, m.middle1_y - 1, m.right, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle1_y, m.middle_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle2_y);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle_x + p.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x + p.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle2_y + p.thickness - 1);
 		}
 	}
 
 
-	static void Draw_2553(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╓ */
+	static void Draw_2552(Painter &p, unsigned int start_y, unsigned int cx) /* ╒ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.middle1_x, m.middle_y, m.right, m.middle_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle1_x, m.middle_y, m.middle1_x + ctx.thickness - 1, m.bottom);
-		FillRectangle(dc, m.middle2_x, m.middle_y, m.middle2_x + ctx.thickness - 1, m.bottom);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.middle1_x, m.middle_y - 1, m.right, m.middle_y - 1);
-			FillRectangle(dc, m.middle1_x - 1, m.middle_y, m.middle1_x - 1, m.bottom);
-			FillRectangle(dc, m.middle2_x - 1, m.middle_y + ctx.thickness, m.middle2_x - 1, m.bottom);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle_x, m.middle1_y, m.right, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle2_y, m.right, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.middle1_y, m.middle_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle_x, m.middle1_y - 1, m.right, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x + p.thickness, m.middle2_y - 1, m.right, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle1_y, m.middle_x - 1, m.bottom);
 		}
 	}
 
-	static void Draw_255B(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ╛*/ // + thickness
+
+	static void Draw_2553(Painter &p, unsigned int start_y, unsigned int cx) /* ╓ */
 	{
-		DoubleLineBoxMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.middle1_y, m.middle_x, m.middle1_y + ctx.thickness - 1);
-		FillRectangle(dc, m.left, m.middle2_y, m.middle_x, m.middle2_y + ctx.thickness - 1);
-		FillRectangle(dc, m.middle_x, m.top, m.middle_x + ctx.thickness - 1, m.middle2_y + ctx.thickness - 1);
-		if (ctx.SetColorFaded()) {
-			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.left, m.middle2_y - 1, m.middle_x - 1, m.middle2_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
-			FillRectangle(dc, m.middle_x - 1, m.middle1_y  + ctx.thickness, m.middle_x - 1, m.middle2_y - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.middle1_x, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		p.FillRectangle(m.middle1_x, m.middle_y, m.middle1_x + p.thickness - 1, m.bottom);
+		p.FillRectangle(m.middle2_x, m.middle_y, m.middle2_x + p.thickness - 1, m.bottom);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.middle1_x, m.middle_y - 1, m.right, m.middle_y - 1);
+			p.FillRectangle(m.middle1_x - 1, m.middle_y, m.middle1_x - 1, m.bottom);
+			p.FillRectangle(m.middle2_x - 1, m.middle_y + p.thickness, m.middle2_x - 1, m.bottom);
 		}
 	}
 
-	static void Draw_2580(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▀ */
+	static void Draw_255B(Painter &p, unsigned int start_y, unsigned int cx) /* ╛*/ // + thickness
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right, m.top + (ctx.fh / 2) - 1);
+		DoubleLineBoxMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.middle1_y, m.middle_x, m.middle1_y + p.thickness - 1);
+		p.FillRectangle(m.left, m.middle2_y, m.middle_x, m.middle2_y + p.thickness - 1);
+		p.FillRectangle(m.middle_x, m.top, m.middle_x + p.thickness - 1, m.middle2_y + p.thickness - 1);
+		if (p.SetColorFaded()) {
+			p.FillRectangle(m.left, m.middle1_y - 1, m.middle_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.left, m.middle2_y - 1, m.middle_x - 1, m.middle2_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.top, m.middle_x - 1, m.middle1_y - 1);
+			p.FillRectangle(m.middle_x - 1, m.middle1_y  + p.thickness, m.middle_x - 1, m.middle2_y - 1);
+		}
 	}
 
-	static void Draw_2581(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▁ */
+	static void Draw_2580(Painter &p, unsigned int start_y, unsigned int cx) /* ▀ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (7 * ctx.fh / 8), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.right, m.top + (p.fh / 2) - 1);
 	}
 
-	static void Draw_2582(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▂ */
+	static void Draw_2581(Painter &p, unsigned int start_y, unsigned int cx) /* ▁ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (6 * ctx.fh / 8), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (7 * p.fh / 8), m.right, m.bottom);
 	}
 
-	static void Draw_2583(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▂ */
+	static void Draw_2582(Painter &p, unsigned int start_y, unsigned int cx) /* ▂ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (5 * ctx.fh / 8), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (6 * p.fh / 8), m.right, m.bottom);
 	}
 
-	static void Draw_2584(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▄ */
+	static void Draw_2583(Painter &p, unsigned int start_y, unsigned int cx) /* ▂ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (4 * ctx.fh / 8), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (5 * p.fh / 8), m.right, m.bottom);
 	}
 
-	static void Draw_2585(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▅ */
+	static void Draw_2584(Painter &p, unsigned int start_y, unsigned int cx) /* ▄ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (3 * ctx.fh / 8), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (4 * p.fh / 8), m.right, m.bottom);
 	}
 
-	static void Draw_2586(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▆ */
+	static void Draw_2585(Painter &p, unsigned int start_y, unsigned int cx) /* ▅ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (2 * ctx.fh / 8), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (3 * p.fh / 8), m.right, m.bottom);
 	}
 
-	static void Draw_2587(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▇ */
+	static void Draw_2586(Painter &p, unsigned int start_y, unsigned int cx) /* ▆ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (1 * ctx.fh / 8), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (2 * p.fh / 8), m.right, m.bottom);
 	}
 
-	static void Draw_2588(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* █ */
+	static void Draw_2587(Painter &p, unsigned int start_y, unsigned int cx) /* ▇ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (1 * p.fh / 8), m.right, m.bottom);
 	}
 
-
-	static void Draw_2589(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▉ */
+	static void Draw_2588(Painter &p, unsigned int start_y, unsigned int cx) /* █ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (7 * ctx.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258a(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▊ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (6 * ctx.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258b(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▋ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (5 * ctx.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258c(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▌ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (4 * ctx.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258d(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▍ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (3 * ctx.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258e(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▎ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (2 * ctx.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258f(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▏ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (1 * ctx.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_2590(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▐ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top, m.right, m.bottom);
-	}
-
-	static void Draw_2594(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▔ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right, m.top + (ctx.fh / 8));
-	}
-
-	static void Draw_2595(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▕ */
-	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left + (7 * ctx.fw / 8), m.top, m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.right, m.bottom);
 	}
 
 
-	static void Draw_2596(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▖ */
+	static void Draw_2589(Painter &p, unsigned int start_y, unsigned int cx) /* ▉ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top + (ctx.fh / 2), m.left + (ctx.fw / 2) - 1, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (7 * p.fw / 8) - 1, m.bottom);
 	}
 
-	static void Draw_2597(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▗ */
+	static void Draw_258a(Painter &p, unsigned int start_y, unsigned int cx) /* ▊ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top + (ctx.fh / 2), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (6 * p.fw / 8) - 1, m.bottom);
 	}
 
-	static void Draw_2598(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▘ */
+	static void Draw_258b(Painter &p, unsigned int start_y, unsigned int cx) /* ▋ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (ctx.fw / 2) - 1, m.top + (ctx.fh / 2) - 1);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (5 * p.fw / 8) - 1, m.bottom);
 	}
 
-	static void Draw_2599(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▙ */
+	static void Draw_258c(Painter &p, unsigned int start_y, unsigned int cx) /* ▌ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (ctx.fw / 2) - 1, m.bottom);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top + (ctx.fh) / 2, m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (4 * p.fw / 8) - 1, m.bottom);
 	}
 
-	static void Draw_259a(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▚ */
+	static void Draw_258d(Painter &p, unsigned int start_y, unsigned int cx) /* ▍ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.left + (ctx.fw / 2) - 1, m.top + (ctx.fh) / 2 - 1);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top + (ctx.fh) / 2, m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (3 * p.fw / 8) - 1, m.bottom);
 	}
 
-	static void Draw_259b(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▛ */
+	static void Draw_258e(Painter &p, unsigned int start_y, unsigned int cx) /* ▎ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right, m.top + (ctx.fh) / 2 - 1);
-		FillRectangle(dc, m.left, m.top, m.left + (ctx.fw / 2) - 1, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (2 * p.fw / 8) - 1, m.bottom);
 	}
 
-	static void Draw_259c(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▜ */
+	static void Draw_258f(Painter &p, unsigned int start_y, unsigned int cx) /* ▏ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left, m.top, m.right, m.top + (ctx.fh / 2) - 1);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top + (ctx.fh / 2), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (1 * p.fw / 8) - 1, m.bottom);
 	}
 
-	static void Draw_259d(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▝ */
+	static void Draw_2590(Painter &p, unsigned int start_y, unsigned int cx) /* ▐ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top, m.right, m.top + (ctx.fh / 2) - 1);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left + (p.fw / 2), m.top, m.right, m.bottom);
 	}
 
-	static void Draw_259e(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▞ */
+	static void Draw_2594(Painter &p, unsigned int start_y, unsigned int cx) /* ▔ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top, m.right, m.top + (ctx.fh / 2) - 1);
-		FillRectangle(dc, m.left, m.top + (ctx.fh / 2), m.left + (ctx.fw / 2) - 1, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.right, m.top + (p.fh / 8));
 	}
 
-	static void Draw_259f(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ▟ */
+	static void Draw_2595(Painter &p, unsigned int start_y, unsigned int cx) /* ▕ */
 	{
-		CharMetrics m(ctx, start_y, cx);
-		FillRectangle(dc, m.left + (ctx.fw / 2), m.top, m.right, m.top + (ctx.fh / 2) - 1);
-		FillRectangle(dc, m.left, m.top + (ctx.fh / 2), m.right, m.bottom);
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left + (7 * p.fw / 8), m.top, m.right, m.bottom);
+	}
+
+
+	static void Draw_2596(Painter &p, unsigned int start_y, unsigned int cx) /* ▖ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top + (p.fh / 2), m.left + (p.fw / 2) - 1, m.bottom);
+	}
+
+	static void Draw_2597(Painter &p, unsigned int start_y, unsigned int cx) /* ▗ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left + (p.fw / 2), m.top + (p.fh / 2), m.right, m.bottom);
+	}
+
+	static void Draw_2598(Painter &p, unsigned int start_y, unsigned int cx) /* ▘ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (p.fw / 2) - 1, m.top + (p.fh / 2) - 1);
+	}
+
+	static void Draw_2599(Painter &p, unsigned int start_y, unsigned int cx) /* ▙ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (p.fw / 2) - 1, m.bottom);
+		p.FillRectangle(m.left + (p.fw / 2), m.top + (p.fh) / 2, m.right, m.bottom);
+	}
+
+	static void Draw_259a(Painter &p, unsigned int start_y, unsigned int cx) /* ▚ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.left + (p.fw / 2) - 1, m.top + (p.fh) / 2 - 1);
+		p.FillRectangle(m.left + (p.fw / 2), m.top + (p.fh) / 2, m.right, m.bottom);
+	}
+
+	static void Draw_259b(Painter &p, unsigned int start_y, unsigned int cx) /* ▛ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.right, m.top + (p.fh) / 2 - 1);
+		p.FillRectangle(m.left, m.top, m.left + (p.fw / 2) - 1, m.bottom);
+	}
+
+	static void Draw_259c(Painter &p, unsigned int start_y, unsigned int cx) /* ▜ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left, m.top, m.right, m.top + (p.fh / 2) - 1);
+		p.FillRectangle(m.left + (p.fw / 2), m.top + (p.fh / 2), m.right, m.bottom);
+	}
+
+	static void Draw_259d(Painter &p, unsigned int start_y, unsigned int cx) /* ▝ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left + (p.fw / 2), m.top, m.right, m.top + (p.fh / 2) - 1);
+	}
+
+	static void Draw_259e(Painter &p, unsigned int start_y, unsigned int cx) /* ▞ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left + (p.fw / 2), m.top, m.right, m.top + (p.fh / 2) - 1);
+		p.FillRectangle(m.left, m.top + (p.fh / 2), m.left + (p.fw / 2) - 1, m.bottom);
+	}
+
+	static void Draw_259f(Painter &p, unsigned int start_y, unsigned int cx) /* ▟ */
+	{
+		CharMetrics m(p, start_y, cx);
+		p.FillRectangle(m.left + (p.fw / 2), m.top, m.right, m.top + (p.fh / 2) - 1);
+		p.FillRectangle(m.left, m.top + (p.fh / 2), m.right, m.bottom);
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -930,7 +915,7 @@ namespace WXCustomDrawChar
 			case 0x255E: return Draw_255E; /* ╞ */
 			case 0x255f: return Draw_255F;
 			case 0x2560: return Draw_2560; /* ╠ */
-			case 0x2561: return Draw_2561; /* ╡ */ // + ctx.thickness - 1
+			case 0x2561: return Draw_2561; /* ╡ */ // + p.thickness - 1
 			case 0x2562: return Draw_2562;
 			case 0x2563: return Draw_2563; /* ╣ */ // + thickness
 			case 0x2564: return Draw_2564; /* ╤ */

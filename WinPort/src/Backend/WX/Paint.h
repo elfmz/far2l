@@ -4,6 +4,7 @@
 #include <wx/graphics.h>
 #include "WinCompat.h"
 #include "wxWinTranslations.h"
+#include "CustomDrawChar.h"
 
 class ConsolePaintContext
 {
@@ -90,7 +91,7 @@ class ConsolePainter
 	uint8_t _prev_fit_font_index;
 	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
 
-	friend struct CustomCharPaintContext;
+	friend struct WXCustomDrawCharPainter;
 
 	void SetBackgroundColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr);

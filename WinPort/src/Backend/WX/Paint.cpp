@@ -445,7 +445,7 @@ ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxSt
 }
 	
 	
-void ConsolePainter::SetBackgroundColor(const WinPortRGB &clr)
+void ConsolePainter::SetFillColor(const WinPortRGB &clr)
 {
 	if (_brush_clr.Change(clr)) {
 		wxBrush &brush = _context->GetBrush(clr);
@@ -477,11 +477,11 @@ void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
 	unsigned int fill_height = _context->FontHeight() - h;
 	if (fill_height > _context->FontHeight()) fill_height = _context->FontHeight();
 	WinPortRGB clr_xored(clr.r ^ 0xff, clr.g ^ 0xff, clr.b ^ 0xff);
-	SetBackgroundColor(clr_xored);
+	SetFillColor(clr_xored);
 	_dc.DrawRectangle(x, _start_y + fill_height, _context->FontWidth(), h);				
 
 	if (fill_height) {
-		SetBackgroundColor(clr);
+		SetFillColor(clr);
 		_dc.DrawRectangle(x, _start_y, _context->FontWidth(), fill_height);							
 	}
 }
@@ -490,7 +490,7 @@ void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
 void ConsolePainter::FlushBackground(unsigned int cx)
 {
 	if (_start_back_cx!= ((unsigned int)-1)) {
-		SetBackgroundColor(_clr_back);
+		SetFillColor(_clr_back);
 		_dc.DrawRectangle(_start_back_cx * _context->FontWidth(), _start_y, 
 			(cx - _start_back_cx) * _context->FontWidth(), _context->FontHeight());			
 		_start_back_cx = ((unsigned int)-1);
@@ -544,7 +544,7 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 		fw = (wxCoord)_painter._context->FontWidth();
 		fh = (wxCoord)_painter._context->FontHeight(),
 		thickness = (wxCoord)_painter._context->FontThickness();
-		_painter.SetBackgroundColor(clr_text);
+		_painter.SetFillColor(clr_text);
 	}
 
 	inline bool MayDrawFadedEdgesImpl()
@@ -560,7 +560,7 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 #else
 		WinPortRGB clr_fade(0xff, 0, 0);
 #endif
-		_painter.SetBackgroundColor(clr_fade);
+		_painter.SetFillColor(clr_fade);
 	}
 
 	inline void SetColorExtraFadedImpl()
@@ -571,7 +571,7 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 #else
 		WinPortRGB clr_fade(0, 0xff, 0);
 #endif
-		_painter.SetBackgroundColor(clr_fade);
+		_painter.SetFillColor(clr_fade);
 	}
 
 

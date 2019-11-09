@@ -599,7 +599,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 
 	if (custom_draw) {
 		FlushBackground(cx + 1);
-		CustomCharPaintContext ccpc(this, clr_text, clr_back);
+		CustomCharPaintContext ccpc(this, clr_back, clr_text);
 		SetBackgroundColor(clr_text);
 		custom_draw(_dc, ccpc, _start_y, cx);
 		_start_cx = (unsigned int)-1;

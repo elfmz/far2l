@@ -65,6 +65,11 @@ namespace WXCustomDrawChar
 		dc.DrawRectangle(left, top, right + 1 - left , bottom + 1 - top);
 	}
 
+	static inline void FillPixel(wxPaintDC &dc, wxCoord left, wxCoord top)
+	{
+		dc.DrawRectangle(left, top, 1, 1);
+	}
+
 	static void Draw_2500(wxPaintDC &dc, ICharPaintContext &ctx, unsigned int start_y, unsigned int cx) /* ─ */
 	{
 		SingleLineBoxMetrics m(ctx, start_y, cx);
@@ -92,6 +97,9 @@ namespace WXCustomDrawChar
 		if (ctx.SetColorFaded()) {
 			FillRectangle(dc, m.middle_x, m.middle_y - 1, m.right, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x - 1, m.middle_y, m.middle_x - 1, m.bottom);
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
+			}
 		}
 	}
 
@@ -128,6 +136,9 @@ namespace WXCustomDrawChar
 		if (ctx.SetColorFaded()) {
 			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle_x - 1, m.middle_y - 1);
+			}
 		}
 	}
 
@@ -153,6 +164,9 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x - 1, m.middle_y + ctx.thickness, m.middle_x - 1, m.bottom);
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle_x - 1, m.middle_y + ctx.thickness - 2); // WTF?
+			}
 		}
 	}
 
@@ -178,6 +192,9 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.left, m.middle_y - 1, m.middle_x - 1, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x + ctx.thickness, m.middle_y - 1, m.right, m.middle_y - 1);
 			FillRectangle(dc, m.middle_x - 1, m.top, m.middle_x - 1, m.middle_y - 1);
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle_x + ctx.thickness - 2, m.middle_y - 1);// wtf
+			}
 		}
 	}
 
@@ -235,6 +252,10 @@ namespace WXCustomDrawChar
 
 			FillRectangle(dc, m.middle1_x - 1, m.middle1_y, m.middle1_x - 1, m.bottom);
 			FillRectangle(dc, m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle1_x - 1, m.middle1_y - 1);
+				FillPixel(dc, m.middle2_x - 1, m.middle2_y - 1);
+			}
 		}
 	}
 
@@ -291,6 +312,11 @@ namespace WXCustomDrawChar
 
 			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle1_y - 1);
 			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle2_y - 1);
+
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle1_x + ctx.thickness - 2, m.middle1_y + ctx.thickness - 2);
+				FillPixel(dc, m.middle2_x + ctx.thickness - 2, m.middle2_y + ctx.thickness - 2);
+			}
 		}
 	}
 
@@ -320,6 +346,10 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.middle1_x - 1, m.top, m.middle1_x - 1, m.middle_y - 1);
 			FillRectangle(dc, m.middle1_x - 1, m.middle_y + ctx.thickness, m.middle1_x - 1, m.bottom);
 			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.bottom);
+
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle1_x - 1, m.middle_y + ctx.thickness - 2);
+			}
 		}
 	}
 
@@ -410,6 +440,9 @@ namespace WXCustomDrawChar
 		FillRectangle(dc, m.middle1_x, m.middle2_y, m.middle1_x + ctx.thickness - 1, m.bottom);
 		FillRectangle(dc, m.middle2_x, m.top, m.middle2_x + ctx.thickness - 1, m.middle1_y);
 		FillRectangle(dc, m.middle2_x, m.middle2_y, m.middle2_x + ctx.thickness - 1, m.bottom);
+
+		FillPixel(dc, m.middle1_x + ctx.thickness - 2, m.middle1_y + ctx.thickness - 2);
+
 		if (ctx.SetColorFaded()) {
 			FillRectangle(dc, m.left, m.middle1_y - 1, m.middle1_x - 1, m.middle1_y - 1);
 			FillRectangle(dc, m.middle2_x + ctx.thickness, m.middle1_y - 1, m.right, m.middle1_y - 1);
@@ -420,6 +453,11 @@ namespace WXCustomDrawChar
 			FillRectangle(dc, m.middle1_x - 1, m.middle2_y + ctx.thickness, m.middle1_x - 1, m.bottom);
 			FillRectangle(dc, m.middle2_x - 1, m.top, m.middle2_x - 1, m.middle1_y + ctx.thickness - 1);
 			FillRectangle(dc, m.middle2_x - 1, m.middle2_y, m.middle2_x - 1, m.bottom);
+
+
+			if (ctx.SetColorExtraFaded()) {
+				FillPixel(dc, m.middle2_x - 1, m.middle2_y - 1);
+			}
 		}
 	}
 

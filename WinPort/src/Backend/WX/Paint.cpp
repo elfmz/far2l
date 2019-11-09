@@ -412,6 +412,16 @@ bool ConsolePaintContext::IsSharpSupported()
 #endif
 }
 
+wxBrush &ConsolePaintContext::GetBrush(const WinPortRGB &clr)
+{
+	auto it = _color2brush.find(clr);
+	if (it != _color2brush.end()) {
+		return it->second;
+	}
+
+	return _color2brush.emplace(clr, wxColour(clr.r, clr.g, clr.b)).first->second;
+}
+
 /////////////////////////////
 
 CursorProps::CursorProps(bool state) : visible(false), height(1)
@@ -427,11 +437,10 @@ CursorProps::CursorProps(bool state) : visible(false), height(1)
 
 ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer) : 
 	_context(context), _dc(dc), _buffer(buffer), _cursor_props(context->GetCursorState()),
-	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0),
-	_trans_pen(wxThePenList->FindOrCreatePen(wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT))
+	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0)
 {
 
-	_dc.SetPen(*_trans_pen);
+	_dc.SetPen(context->GetTransparentPen());
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 	_buffer.Empty();
 }
@@ -440,9 +449,9 @@ ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxSt
 void ConsolePainter::SetBackgroundColor(const WinPortRGB &clr)
 {
 	if (_brush_clr.Change(clr)) {
-		wxBrush* brush = wxTheBrushList->FindOrCreateBrush(wxColour(clr.r, clr.g, clr.b));
-		_dc.SetBrush(*brush);
-		_dc.SetBackground(*brush);
+		wxBrush &brush = _context->GetBrush(clr);
+		_dc.SetBrush(brush);
+		_dc.SetBackground(brush);
 	}		
 }
 	

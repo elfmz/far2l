@@ -4,6 +4,7 @@
 #include <wx/graphics.h>
 #include "WinCompat.h"
 #include "wxWinTranslations.h"
+#include "CustomDrawChar.h"
 
 class ConsolePaintContext
 {
@@ -19,6 +20,9 @@ class ConsolePaintContext
 	std::vector<CHAR_INFO> _line;
 	wxString _buffer;
 	wxString _cft_tmp;
+
+	std::map<WinPortRGB, wxBrush> _color2brush;
+	wxPen _transparent_pen{wxColour(), 1, wxPENSTYLE_TRANSPARENT};
 	
 	void SetFont(wxFont font);
 public:
@@ -32,6 +36,9 @@ public:
 	void ToggleCursor();
 	void SetSharp(bool sharp);
 	bool IsSharpSupported();
+
+	wxBrush &GetBrush(const WinPortRGB &clr);
+	inline wxPen &GetTransparentPen() {return _transparent_pen; }
 
 	inline bool IsCustomDrawEnabled() const { return _custom_draw_enabled; }
 	inline bool IsSharp() const { return _sharp; }
@@ -82,10 +89,11 @@ class ConsolePainter
 	unsigned int _start_cx, _start_cy, _start_back_cx;
 	unsigned int _start_y;
 	uint8_t _prev_fit_font_index;
-	wxPen *_trans_pen;
 	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
-	
-	void SetBackgroundColor(const WinPortRGB &clr);
+
+	friend struct WXCustomDrawCharPainter;
+
+	void SetFillColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr);
 	void FlushBackground(unsigned int cx);
 	void FlushText();

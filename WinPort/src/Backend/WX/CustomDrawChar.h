@@ -3,14 +3,22 @@
 
 namespace WXCustomDrawChar
 {
-	struct FontMetrics
+	struct Painter
 	{
 		wxCoord fw;
 		wxCoord fh;
 		wxCoord thickness;
+
+		bool MayDrawFadedEdges();
+
+		void SetColorFaded();
+		void SetColorExtraFaded();
+
+		void FillRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom);
+		void FillPixel(wxCoord left, wxCoord top);
 	};
 
-	typedef void (*Draw_T)(wxPaintDC &dc, const FontMetrics &fm, unsigned int start_y, unsigned int cx);
+	typedef void (*DrawT)(Painter &p, unsigned int start_y, unsigned int cx);
 
-	Draw_T Get(const wchar_t c, bool &antialiasible);
+	DrawT Get(const wchar_t c);
 }

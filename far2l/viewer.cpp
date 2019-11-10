@@ -893,7 +893,10 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 		// Alter-1: ::vread accepts number of displayable bytes for 8/16 bit charsets
 		// and number of w_char's for 32 bit charsets
 		// But we always display 16 bytes
-		if (IsFullWideCodePage(VM.CodePage)) len/= sizeof(wchar_t); // TODO: ??? 
+		switch (VM.CodePage) {
+			case CP_UTF32LE: case CP_UTF32BE: len/= 4; break;
+			case CP_UTF16LE: case CP_UTF16BE: len/= 2; break;
+		} // TODO: ???
 
 		OutPtr=vread(pString->lpData, len);
 		pString->lpData[len] = 0;
@@ -1187,7 +1190,12 @@ int Viewer::ProcessKey(int Key)
 			if (SelectSize && ViewFile.Opened())
 			{
 				wchar_t *SelData;
-				size_t DataSize = (size_t)SelectSize + (IsFullWideCodePage(VM.CodePage) ? sizeof(wchar_t) : 1);
+				size_t DataSize = (size_t)SelectSize;// + (IsFullWideCodePage(VM.CodePage) ? sizeof(wchar_t) : 1);
+				switch (VM.CodePage) {
+					case CP_UTF32LE: case CP_UTF32BE: DataSize+= 4; break;
+					case CP_UTF16LE: case CP_UTF16BE: DataSize+= 2; break;
+					default: DataSize++;
+				}
 				int64_t CurFilePos=vtell();
 
 				if ((SelData=(wchar_t*)xf_malloc(DataSize*sizeof(wchar_t))) )
@@ -1384,12 +1392,19 @@ int Viewer::ProcessKey(int Key)
 		}
 		case KEY_F8:
 		{
-			if (IsFullWideCodePage(VM.CodePage))
-			{
-				FilePos*= sizeof(wchar_t);
-				SetFileSize();
-				SelectPos = 0;
-				SelectSize = 0;
+			switch (VM.CodePage) {
+				case CP_UTF32LE: case CP_UTF32BE:
+					FilePos*= 4;
+					SetFileSize();
+					SelectPos = 0;
+					SelectSize = 0;
+					break;
+				case CP_UTF16LE: case CP_UTF16BE:
+					FilePos*= 2;
+					SetFileSize();
+					SelectPos = 0;
+					SelectSize = 0;
+					break;
 			}
 
 			VM.CodePage = VM.CodePage==WINPORT(GetOEMCP)() ? WINPORT(GetACP)() : WINPORT(GetOEMCP)();
@@ -1502,7 +1517,10 @@ int Viewer::ProcessKey(int Key)
 				if (VM.Hex)
 				{
 					size_t len = 0x8;
-					if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t); 
+					switch (VM.CodePage) {
+						case CP_UTF32LE: case CP_UTF32BE: len*= 4; break;
+						case CP_UTF16LE: case CP_UTF16BE: len*= 2; break;
+					}
 					FilePos&=~ (len - 1);
 					Show();
 				}
@@ -1772,7 +1790,10 @@ int Viewer::ProcessKey(int Key)
 				*/
 				if (VM.Hex) {
 					size_t len = 0x8;
-					if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t); 
+					switch (VM.CodePage) {
+						case CP_UTF32LE: case CP_UTF32BE: len*= 4; break;
+						case CP_UTF16LE: case CP_UTF16BE: len*= 2; break;
+					}
 					FilePos&= ~(len - 1);
 				}
 
@@ -1953,9 +1974,9 @@ void Viewer::Up()
 		return;
 
 	wchar_t Buf[MAX_VIEWLINE];
-	int BufSize,StrPos,Skipped,I,J;
+	int BufSize,I;
 
-    if (FilePos > (int64_t)(sizeof(Buf)/sizeof(wchar_t)))
+	if (FilePos > (int64_t)(sizeof(Buf)/sizeof(wchar_t)))
 		BufSize=sizeof(Buf)/sizeof(wchar_t);
 	else
 		BufSize=(int)FilePos;
@@ -1981,80 +2002,42 @@ void Viewer::Up()
 	}
 
 	vseek(FilePos-(int64_t)BufSize,SEEK_SET);
-	BufSize = vread(Buf,BufSize);
+	I = BufSize = vread(Buf, BufSize, true);
+//		VM.CodePage != CP_UTF32BE && VM.CodePage != CP_UTF32LE);//
+//		&& VM.CodePage != CP_UTF16BE && VM.CodePage != CP_UTF16BE);
 
-	Skipped=0;
-
-    if (BufSize>0 && Buf[BufSize-1]==(wchar_t)CRSym)
+	if (I == -1)
 	{
-		BufSize--;
-		Skipped++;
+		return;
 	}
 
-	if (BufSize>0 && CRSym==L'\n' && Buf[BufSize-1]==L'\r')
+	wchar_t CRSymEncoded = (unsigned int)CRSym;
+	wchar_t CRRSymEncoded = (unsigned int)'\r';
+	switch (VM.CodePage)
 	{
-		BufSize--;
-		Skipped++;
-	}
-
-	for (I=BufSize-1; I>=-1; I--)
-	{
-		/* $ 29.11.2001 DJ
-		   не обращаемся за границу массива (а надо было всего лишь поменять местами условия...)
-		*/
-        if (I==-1 || Buf[I]==(wchar_t)CRSym)
-		{
-			if (!VM.Wrap)
-			{
-				FilePosShiftLeft(GetStrBytesNum(Buf + (I+1), BufSize-(I+1)) + Skipped);
-				return;
-			}
-			else
-			{
-				if (!Skipped && I==-1)
-					break;
-
-				for (StrPos=0,J=I+1; J<=BufSize; J++)
-				{
-					if (!StrPos || StrPos >= Width)
-					{
-						if (J==BufSize)
-						{
-							if (!Skipped)
-								FilePos--;
-							else
-								FilePosShiftLeft(Skipped);
-
-							return;
-						}
-
-						if (CalcStrSize(&Buf[J],BufSize-J) <= Width)
-						{
-							FilePosShiftLeft(GetStrBytesNum(Buf + J, BufSize-J) + Skipped);
-							return;
-						}
-						else
-							StrPos=0;
-					}
-
-					if (J<BufSize)
-					{
-						if (Buf[J]==L'\t')
-							StrPos+=ViOpt.TabSize-(StrPos % ViOpt.TabSize);
-						else if (Buf[J]!=L'\r')
-							StrPos++;
-					}
-				}
-			}
-		}
-	}
-
-	for (I=Min(Width,BufSize); I>0; I-=5)
-		if (CalcStrSize(&Buf[BufSize-I],I) <= Width)
-		{
-			FilePosShiftLeft(GetStrBytesNum(&Buf[BufSize-I], I)+Skipped);
+		case CP_UTF32BE:
+			CRSymEncoded<<= 24;
+			CRRSymEncoded<<= 24;
 			break;
-		}
+		case CP_UTF16BE:
+			CRSymEncoded<<= 8;
+			CRRSymEncoded<<= 8;
+			break;
+	}
+
+	if (I > 0 && Buf[I-1]==(wchar_t)CRSymEncoded)
+	{
+		--I;
+	}
+
+	if (I > 0 && CRSym == L'\n' && Buf[I-1]==CRSymEncoded)
+	{
+		--I;
+	}
+
+	for (; I > 0 && Buf[I-1] != CRSymEncoded; --I);
+
+	FilePosShiftLeft(BufSize - I);
 }
 
 
@@ -2081,10 +2064,13 @@ int Viewer::CalcStrSize(const wchar_t *Str,int Length)
 
 int Viewer::GetStrBytesNum(const wchar_t *Str, int Length)
 {
-	if (IsFullWideCodePage(VM.CodePage))
+	if (VM.CodePage == CP_UTF32LE || VM.CodePage == CP_UTF32BE)
 		return Length;
-	else
-		return WINPORT(WideCharToMultiByte)(VM.CodePage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
+
+	int cnt = WINPORT(WideCharToMultiByte)(VM.CodePage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
+
+	return (VM.CodePage == CP_UTF16LE || VM.CodePage == CP_UTF16BE) ? cnt * 2 : cnt;
+
 }
 
 void Viewer::SetViewKeyBar(KeyBar *ViewKeyBar)
@@ -2244,10 +2230,11 @@ int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* end)
 {
 	int distance = -1;
 	if (begin > end) return distance;
-	if (IsFullWideCodePage(CodePage))
-		distance = (end - begin) * sizeof(wchar_t);
+
+	if ((CodePage == CP_UTF32LE) || (CodePage == CP_UTF32BE))
+		distance = (end - begin) * 4;
 	else if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE))
-		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
+		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion) * 2;
 	else if (CodePage == CP_UTF8)
 		CalcSpaceUTF32toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
 	else // one-byte code page?
@@ -2769,36 +2756,23 @@ void Viewer::SetNamesList(NamesList *List)
 
 int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
-	if (IsFullWideCodePage(VM.CodePage))
+	if (VM.CodePage == CP_WIDE_LE || VM.CodePage == CP_WIDE_BE)
 	{
-		// выделяем столько, сколько нужно!
-		char *TmpBuf=(char *)xf_malloc(Count * sizeof(wchar_t) + 32);
-
-		if (!TmpBuf)
-			return -1;
-
 		DWORD ReadSize=0;
-		Reader.Read(TmpBuf, Count * sizeof(wchar_t), &ReadSize);
-		TmpBuf[ReadSize]=0;
-		/* $ 20.10.2000 tran
-		   обратный порядок байтов */
-		TmpBuf[ReadSize+1]=0;
-
-		if (!Raw && VM.CodePage == CP_WIDE_BE) {
-			WideReverse((const wchar_t *)TmpBuf, (wchar_t *)TmpBuf, ReadSize/sizeof(wchar_t));
+		Reader.Read((char *)Buf, Count * sizeof(wchar_t), &ReadSize);
+		DWORD ResultedCount = ReadSize / sizeof(wchar_t);
+		if ((ReadSize % sizeof(wchar_t)) != 0 && (int)ResultedCount < Count) {
+			memset(((char *)Buf) + ReadSize, 0, sizeof(wchar_t) - (ReadSize % sizeof(wchar_t)));
+			++ResultedCount;
 		}
 
-		ReadSize+=(ReadSize & (sizeof(wchar_t)-1));
-		Count = ReadSize / sizeof(wchar_t);
-		for (int i = 0; i<Count; ++i) {
-			Buf[i] = (wchar_t)*(unsigned short *)&TmpBuf[i * 2];
+		if (VM.CodePage == CP_WIDE_BE && !Raw) {
+			WideReverse((const wchar_t *)Buf, (wchar_t *)Buf, ResultedCount);
 		}
-		//memcpy(Buf, TmpBuf, Count*2);
-		
-		xf_free(TmpBuf);
-		return Count;
+
+		return ResultedCount;
 	}
-	else if (VM.CodePage == CP_UTF8)
+	else if (VM.CodePage == CP_UTF8 && !Raw)
 	{
 		UTF8 src[6] = {};
 		UTF32 dst[6] = {};
@@ -2834,42 +2808,50 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 	}
 	else
 	{
-		char *TmpBuf=(char*)xf_malloc(Count+16);
+		int ToReadSize = Count;
+		if (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) {
+			ToReadSize*= 2;
+		}
+
+		char *TmpBuf=(char*)xf_malloc(ToReadSize+32);
 
 		if (!TmpBuf)
 			return -1;
 
 		DWORD ReadSize=0;
-		Reader.Read(TmpBuf, Count, &ReadSize);
-		int ConvertSize=ReadSize;
+		Reader.Read(TmpBuf, ToReadSize, &ReadSize);
 
-		if (Count == 1)
+		if (Count == 1 && ReadSize == 2 && (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ))
 		{
 			//Если UTF16 то простой ли это символ или нет?
-			if ( (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) && ReadSize ) {
-				DWORD CurRead=0;
-				Reader.Read(TmpBuf + 1, 1, &CurRead);
-				ReadSize += CurRead;
-				ConvertSize = Min((DWORD)2, ReadSize);
-				if (CurRead > 0 && *(PDWORD)TmpBuf>=0xd800 && *(PDWORD)TmpBuf<=0xdfff) {
-					CurRead = 0;
-					Reader.Read(TmpBuf+2, 2, &CurRead);
-					ReadSize += CurRead;
-					ConvertSize = Min((DWORD)4, ReadSize);
-				}
+			if (*(uint16_t *)TmpBuf>=0xd800 && *(uint16_t *)TmpBuf<=0xdfff) {
+				DWORD ExtraRead = 0;
+				Reader.Read(TmpBuf+2, 2, &ExtraRead);
+				ReadSize+= ExtraRead;
 			}
 		}
 
 		if (Raw)
 		{
-			for (int i=0; i<ConvertSize; i++)
-			{
-				Buf[i]=(wchar_t)(unsigned char)TmpBuf[i];
+			if (VM.CodePage == CP_UTF16LE || VM.CodePage == CP_UTF16BE) {
+				ReadSize/= 2;
+				for (int i=0; i<ReadSize; ++i)
+				{
+					Buf[i]=(unsigned char)TmpBuf[i * 2 + 1];
+					Buf[i]<<= 8;
+					Buf[i]|=(unsigned char)TmpBuf[i * 2];
+				}
+
+			} else {
+				for (int i=0; i<ReadSize; i++)
+				{
+					Buf[i]=(wchar_t)(unsigned char)TmpBuf[i];
+				}
 			}
 		}
 		else
 		{
-			ReadSize = WINPORT(MultiByteToWideChar)(VM.CodePage, 0, TmpBuf, ConvertSize, Buf, Count);
+			ReadSize = WINPORT(MultiByteToWideChar)(VM.CodePage, 0, TmpBuf, ReadSize, Buf, Count);
 		}
 
 		xf_free(TmpBuf);
@@ -2880,7 +2862,12 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 
 int Viewer::vseek(int64_t Offset,int Whence)
 {
-	return ViewFile.SetPointer(Offset * ( IsFullWideCodePage(VM.CodePage) ? sizeof(wchar_t) : 1), nullptr, Whence);
+	switch (VM.CodePage)
+	{
+		case CP_UTF32BE: case CP_UTF32LE: Offset*= 4; break;
+		case CP_UTF16BE: case CP_UTF16LE: Offset*= 2; break;
+	}
+	return ViewFile.SetPointer(Offset, nullptr, Whence);
 }
 
 
@@ -2888,9 +2875,10 @@ int64_t Viewer::vtell()
 {
 	INT64 Ptr=0;
 	ViewFile.GetPointer(Ptr);
-	if (IsFullWideCodePage(VM.CodePage))
+	switch (VM.CodePage)
 	{
-		Ptr=(Ptr+(Ptr&3))/4;
+		case CP_UTF32BE: case CP_UTF32LE: Ptr=(Ptr+(Ptr&3))/4; break;
+		case CP_UTF16BE: case CP_UTF16LE: Ptr=(Ptr+(Ptr&1))/2; break;
 	}
 	return Ptr;
 }
@@ -2990,8 +2978,10 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 				//  Percent=0;
 				Offset=FileSize/100*Percent;
 
-				if (IsFullWideCodePage(VM.CodePage))
-					Offset*= sizeof(wchar_t);
+				switch (VM.CodePage) {
+					case CP_UTF32LE: case CP_UTF32BE: Offset*= 4; break;
+					case CP_UTF16LE: case CP_UTF16BE: Offset*= 2; break;
+				}
 
 				while (ToPercent64(Offset,FileSize)<Percent)
 					Offset++;
@@ -3024,8 +3014,10 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 				//  Percent=0;
 				Offset=FileSize/100*Percent;
 
-				if (IsFullWideCodePage(VM.CodePage))
-					Offset*= sizeof(wchar_t);
+				switch (VM.CodePage) {
+					case CP_UTF32LE: case CP_UTF32BE: Offset*= 4; break;
+					case CP_UTF16LE: case CP_UTF16BE: Offset*= 2; break;
+				}
 
 				while (ToPercent64(Offset,FileSize)<Percent)
 					Offset++;
@@ -3036,11 +3028,33 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 		{
 			if (Relative==-1 && Offset>FilePos)   // меньше нуля, if (FilePos<0) не пройдет - FilePos у нас uint32_t
 				FilePos=0;
-			else
-				FilePos=IsFullWideCodePage(VM.CodePage)? FilePos+Offset*Relative/sizeof(wchar_t) : FilePos+Offset*Relative;
+			else switch (VM.CodePage) {
+					case CP_UTF32LE: case CP_UTF32BE: 
+						FilePos = FilePos+Offset*Relative / 4;
+						break;
+
+					case CP_UTF16LE: case CP_UTF16BE:
+						FilePos = FilePos+Offset*Relative / 2;
+						break;
+
+					default:
+						FilePos = FilePos+Offset*Relative;
+
+				}
+
 		}
-		else
-			FilePos=IsFullWideCodePage(VM.CodePage) ? Offset/sizeof(wchar_t):Offset;
+		else switch (VM.CodePage) {
+			case CP_UTF32LE: case CP_UTF32BE: 
+				FilePos = Offset / 4;
+				break;
+
+			case CP_UTF16LE: case CP_UTF16BE:
+				FilePos = Offset / 2;
+				break;
+
+			default:
+				FilePos = Offset;
+		}
 
 		if (FilePos>FileSize || FilePos<0)     // и куда его несет?
 			FilePos=FileSize;     // там все равно ничего нету
@@ -3079,7 +3093,16 @@ void Viewer::AdjustFilePos()
 
 		if (VM.Hex) {
 			size_t len = 8;
-			if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t);
+			switch (VM.CodePage) {
+				case CP_UTF32LE: case CP_UTF32BE: 
+					len*= 4;
+				break;
+
+				case CP_UTF16LE: case CP_UTF16BE:
+					len*= 2;
+				break;
+			}
+
 			FilePos&= ~(len - 1);
 		}
 		else
@@ -3103,8 +3126,15 @@ void Viewer::SetFileSize()
 	   Везде сравниваем FilePos с FileSize, FilePos для юникодных файлов
 	   уменьшается в два раза, поэтому FileSize тоже надо уменьшать
 	*/
-	if (IsFullWideCodePage(VM.CodePage))
-		FileSize=(FileSize+(FileSize&3)) / 4;
+	switch (VM.CodePage) {
+		case CP_UTF32LE: case CP_UTF32BE: 
+			FileSize=(FileSize+(FileSize&3)) / 4;
+		break;
+
+		case CP_UTF16LE: case CP_UTF16BE:
+			FileSize=(FileSize+(FileSize&1)) / 2;
+		break;
+	}
 }
 
 
@@ -3153,7 +3183,15 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 	if (VM.Hex)
 	{
 		size_t len = 8;
-		if (IsFullWideCodePage(VM.CodePage)) len*= sizeof(wchar_t);
+		switch (VM.CodePage) {
+			case CP_UTF32LE: case CP_UTF32BE: 
+				len*= 4;
+			break;
+
+			case CP_UTF16LE: case CP_UTF16BE:
+				len*= 2;
+			break;
+		}
 		FilePos&= ~(len - 1);
 	}
 	else
@@ -3250,7 +3288,20 @@ int Viewer::ViewerControl(int Command,void *Param)
 				     2 раза. Поэтому увеличим StartPos в 2 раза, т.к. функция
 				     GoTo принимает смещения в _байтах_.
 				*/
-				GoTo(FALSE, vsp->StartPos*(IsFullWideCodePage(VM.CodePage)?sizeof(wchar_t):1), vsp->Flags);
+
+				int64_t NewPos = vsp->StartPos;
+
+				switch (VM.CodePage) {
+					case CP_UTF32LE: case CP_UTF32BE: 
+						NewPos*= 4;
+					break;
+
+					case CP_UTF16LE: case CP_UTF16BE:
+						NewPos*= 2;
+					break;
+				}
+
+				GoTo(FALSE, NewPos, vsp->Flags);
 
 				if (isReShow && !(vsp->Flags&VSP_NOREDRAW))
 					ScrBuf.Flush();

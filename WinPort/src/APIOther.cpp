@@ -270,6 +270,7 @@ extern "C" {
 		DWORD gle;
 		switch (errno) {
 			case 0: gle = 0; break;
+			case ENOSPC: gle = ERROR_DISK_FULL; break;
 			case EEXIST: gle = ERROR_ALREADY_EXISTS; break;
 			case ENOENT: gle = ERROR_FILE_NOT_FOUND; break;
 			case EACCES: case EPERM: gle = ERROR_ACCESS_DENIED; break;
@@ -278,7 +279,7 @@ extern "C" {
 			//case EROFS: gle = ; break;
 			default:
 				gle = 20000 + errno;
-				fprintf(stderr, "TODO: TranslateErrno - %d\n", errno );
+//				fprintf(stderr, "TODO: TranslateErrno - %d\n", errno );
 		}
 		
 		WINPORT(SetLastError)(gle);

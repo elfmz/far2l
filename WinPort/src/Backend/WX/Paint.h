@@ -22,7 +22,7 @@ class ConsolePaintContext
 	wxString _cft_tmp;
 
 	std::map<WinPortRGB, wxBrush> _color2brush;
-	wxPen _transparent_pen{wxColour(), 1, wxPENSTYLE_TRANSPARENT};
+	wxPen _transparent_pen{wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT};
 	
 	void SetFont(wxFont font);
 public:

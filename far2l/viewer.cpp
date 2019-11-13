@@ -73,6 +73,43 @@ static int InitHex=FALSE,SearchHex=FALSE;
 
 static int NextViewerID=0;
 
+
+static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* end)
+{
+	if (begin > end)
+		return -1;
+
+	if ((CodePage == CP_UTF32LE) || (CodePage == CP_UTF32BE)) {
+		return (end - begin);
+	}
+
+	int distance;
+
+	if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE)) {
+		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
+		distance*= 2;
+
+	} else if (CodePage == CP_UTF8) {
+		CalcSpaceUTF32toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
+
+	} else {// one-byte code page?
+		distance = end - begin;
+	}
+
+	return distance;
+}
+
+static int CalcCodeUnitsDistance(UINT CodePage, const wchar_t* begin, const wchar_t* end)
+{
+	int distance = CalcByteDistance(CodePage, begin, end);
+	switch (CodePage) {
+		case CP_UTF32LE: case CP_UTF32BE: distance/= 4; break;
+		case CP_UTF16LE: case CP_UTF16BE: distance/= 2; break;
+	}
+	return distance;
+}
+
+
 Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	ViOpt(Opt.ViOpt),
 	Reader(ViewFile),
@@ -2003,9 +2040,6 @@ void Viewer::Up()
 
 	vseek(FilePos-(int64_t)BufSize,SEEK_SET);
 	I = BufSize = vread(Buf, BufSize, true);
-//		VM.CodePage != CP_UTF32BE && VM.CodePage != CP_UTF32LE);//
-//		&& VM.CodePage != CP_UTF16BE && VM.CodePage != CP_UTF16BE);
-
 	if (I == -1)
 	{
 		return;
@@ -2025,19 +2059,147 @@ void Viewer::Up()
 			break;
 	}
 
-	if (I > 0 && Buf[I-1]==(wchar_t)CRSymEncoded)
+#if 1
+	if (I > 0 && Buf[I-1] == CRSymEncoded)
 	{
 		--I;
 	}
 
-	if (I > 0 && CRSym == L'\n' && Buf[I-1]==CRSymEncoded)
+	if (I > 0 && CRSym == L'\n' && Buf[I - 1] == CRRSymEncoded)
 	{
 		--I;
 	}
 
-	for (; I > 0 && Buf[I-1] != CRSymEncoded; --I);
+	for (; I > 0 && Buf[I - 1] != CRSymEncoded; --I) {;}
 
-	FilePosShiftLeft(BufSize - I);
+	int64_t WholeLineLength = (BufSize - I); // in code units
+	if (VM.Wrap)
+	{
+		vseek(FilePos - WholeLineLength, SEEK_SET);
+		int WrapBufSize = vread(Buf, WholeLineLength, false);
+
+		// we might read more code units and could actually overflow current position
+		// so try to find out exact substring that matches into line start and current position
+		Buf[WrapBufSize] = 0;
+//		fprintf(stderr, "LINE1: '%ls'\n", &Buf[0]);
+		for (;;) {
+			if (CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize]) <= WholeLineLength) {
+				break;
+			}
+			--WrapBufSize;
+		}
+		Buf[WrapBufSize] = 0;
+//		fprintf(stderr, "LINE2: '%ls'\n", &Buf[0]);
+
+		for (I = 0; I < WrapBufSize; ++I) {
+			if (CalcStrSize(&Buf[I], WrapBufSize - I) <= Width) {
+				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[I], &Buf[WrapBufSize]);
+				if (distance <= 0) {
+					fprintf(stderr, "!!!OOPS!!! %d\n", distance);
+					break;
+				}
+				FilePosShiftLeft(distance);
+				return;
+			}
+		}
+	}
+
+	FilePosShiftLeft(WholeLineLength);
+	
+#else
+	int StrPos,Skipped,J;
+
+	Skipped=0;
+
+    if (BufSize>0 && Buf[BufSize-1]==CRSymEncoded)
+	{
+		BufSize--;
+		Skipped++;
+	}
+
+	if (BufSize>0 && CRSymEncoded==L'\n' && Buf[BufSize-1]==CRRSymEncoded)
+	{
+		BufSize--;
+		Skipped++;
+	}
+
+	for (I=BufSize-1; (I>=0 && Buf[I]!=(wchar_t)CRSymEncoded); I--) {;}
+
+	if (!VM.Wrap)
+	{
+		FilePosShiftLeft((BufSize-(I+1)) + Skipped);
+		return;
+	}
+
+	if (I != -1) {
+		BufSize-= I + Skipped;
+		int64_t LineStartFilePos = FilePos - BufSize;
+		vseek(LineStartFilePos, SEEK_SET);
+		BufSize = vread(Buf, BufSize, false);
+	}
+	
+
+
+	for (I=BufSize-1; I>=-1; I--)
+	{
+		/* $ 29.11.2001 DJ
+		   не обращаемся за границу массива (а надо было всего лишь поменять местами условия...)
+		*/
+        if (I==-1 || Buf[I]==(wchar_t)CRSymEncoded)
+		{
+			/*if (!VM.Wrap)
+			{
+				FilePosShiftLeft((BufSize-(I+1)) + Skipped);
+				return;
+			}
+			else */
+			{
+				if (!Skipped && I==-1)
+					break;
+
+				for (StrPos=0,J=I+1; J<=BufSize;++J)
+				{
+					if (!StrPos || StrPos >= Width)
+					{
+						if (J==BufSize)
+						{
+							if (!Skipped)
+								FilePos--;
+							else
+								FilePosShiftLeft(Skipped);
+
+							return;
+						}
+
+						if (CalcStrSize(&Buf[J],BufSize-J) <= Width)
+						{
+							FilePosShiftLeft((BufSize-J) + Skipped);
+							return;
+						}
+						else
+							StrPos=0;
+					}
+
+					if (J<BufSize)
+					{
+						if (Buf[J]==L'\t')
+							StrPos+=ViOpt.TabSize-(StrPos % ViOpt.TabSize);
+						else if (Buf[J]!=L'\r')
+							StrPos++;
+					}
+				}
+			}
+		}
+	}
+
+	for (I=Min(Width,BufSize); I>0; I-=5)
+		if (CalcStrSize(&Buf[BufSize-I],I) <= Width)
+		{
+			FilePosShiftLeft(I+Skipped);
+			break;
+		}
+#endif
+
 }
 
 
@@ -2224,22 +2386,6 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 	preRedrawItem.Param.Param1=(void*)MsgStr;
 	preRedrawItem.Param.Param2=(LPVOID)(INT_PTR)Percent;
 	PreRedraw.SetParam(preRedrawItem.Param);
-}
-
-int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* end)
-{
-	int distance = -1;
-	if (begin > end) return distance;
-
-	if ((CodePage == CP_UTF32LE) || (CodePage == CP_UTF32BE))
-		distance = (end - begin) * 4;
-	else if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE))
-		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion) * 2;
-	else if (CodePage == CP_UTF8)
-		CalcSpaceUTF32toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
-	else // one-byte code page?
-		distance = end - begin;
-	return distance;
 }
 
 /* $ 27.01.2003 VVM

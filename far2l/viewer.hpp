@@ -192,8 +192,6 @@ class Viewer:public ScreenObject
 		int vread(wchar_t *Buf,int Count, bool Raw=false);
 		int vseek(int64_t Offset,int Whence);
 
-		int vread_at(int64_t Offset,int Whence, wchar_t *Buf,int Count, bool Raw=false);
-
 		int64_t vtell();
 		bool vgetc(WCHAR& C);
 		void SetFileSize();

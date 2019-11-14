@@ -927,8 +927,8 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 	if (VM.Hex)
 	{
 		size_t len = 16;
-		// Alter-1: ::vread accepts number of displayable bytes for 8/16 bit charsets
-		// and number of w_char's for 32 bit charsets
+		// Alter-1: ::vread accepts number of codepoint units:
+		// 4-bytes for UTF32, 2-bytes for UTF16 and 1-bytes for everything else
 		// But we always display 16 bytes
 		switch (VM.CodePage) {
 			case CP_UTF32LE: case CP_UTF32BE: len/= 4; break;
@@ -2058,7 +2058,6 @@ void Viewer::Up()
 			break;
 	}
 
-#if 1
 	if (I > 0 && Buf[I - 1] == CRSymEncoded)
 	{
 		--I;
@@ -2118,101 +2117,6 @@ void Viewer::Up()
 		WholeLineLength = 1;
 	}
 	FilePosShiftLeft(WholeLineLength);
-	
-#else
-	int StrPos,Skipped,J;
-
-	Skipped=0;
-
-    if (BufSize>0 && Buf[BufSize-1]==CRSymEncoded)
-	{
-		BufSize--;
-		Skipped++;
-	}
-
-	if (BufSize>0 && CRSymEncoded==L'\n' && Buf[BufSize-1]==CRRSymEncoded)
-	{
-		BufSize--;
-		Skipped++;
-	}
-
-	for (I=BufSize-1; (I>=0 && Buf[I]!=(wchar_t)CRSymEncoded); I--) {;}
-
-	if (!VM.Wrap)
-	{
-		FilePosShiftLeft((BufSize-(I+1)) + Skipped);
-		return;
-	}
-
-	if (I != -1) {
-		BufSize-= I + Skipped;
-		int64_t LineStartFilePos = FilePos - BufSize;
-		vseek(LineStartFilePos, SEEK_SET);
-		BufSize = vread(Buf, BufSize, false);
-	}
-	
-
-
-	for (I=BufSize-1; I>=-1; I--)
-	{
-		/* $ 29.11.2001 DJ
-		   не обращаемся за границу массива (а надо было всего лишь поменять местами условия...)
-		*/
-        if (I==-1 || Buf[I]==(wchar_t)CRSymEncoded)
-		{
-			/*if (!VM.Wrap)
-			{
-				FilePosShiftLeft((BufSize-(I+1)) + Skipped);
-				return;
-			}
-			else */
-			{
-				if (!Skipped && I==-1)
-					break;
-
-				for (StrPos=0,J=I+1; J<=BufSize;++J)
-				{
-					if (!StrPos || StrPos >= Width)
-					{
-						if (J==BufSize)
-						{
-							if (!Skipped)
-								FilePos--;
-							else
-								FilePosShiftLeft(Skipped);
-
-							return;
-						}
-
-						if (CalcStrSize(&Buf[J],BufSize-J) <= Width)
-						{
-							FilePosShiftLeft((BufSize-J) + Skipped);
-							return;
-						}
-						else
-							StrPos=0;
-					}
-
-					if (J<BufSize)
-					{
-						if (Buf[J]==L'\t')
-							StrPos+=ViOpt.TabSize-(StrPos % ViOpt.TabSize);
-						else if (Buf[J]!=L'\r')
-							StrPos++;
-					}
-				}
-			}
-		}
-	}
-
-	for (I=Min(Width,BufSize); I>0; I-=5)
-		if (CalcStrSize(&Buf[BufSize-I],I) <= Width)
-		{
-			FilePosShiftLeft(I+Skipped);
-			break;
-		}
-#endif
-
 }
 
 

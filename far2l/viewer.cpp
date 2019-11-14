@@ -80,7 +80,7 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 		return -1;
 
 	if ((CodePage == CP_UTF32LE) || (CodePage == CP_UTF32BE)) {
-		return (end - begin);
+		return (end - begin) * 4;
 	}
 
 	int distance;
@@ -102,7 +102,7 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 static int CalcCodeUnitsDistance(UINT CodePage, const wchar_t* begin, const wchar_t* end)
 {
 	int distance = CalcByteDistance(CodePage, begin, end);
-	switch (CodePage) {
+	if (distance > 0) switch (CodePage) {
 		case CP_UTF32LE: case CP_UTF32BE: distance/= 4; break;
 		case CP_UTF16LE: case CP_UTF16BE: distance/= 2; break;
 	}
@@ -2010,15 +2010,14 @@ void Viewer::Up()
 	if (!ViewFile.Opened())
 		return;
 
-	wchar_t Buf[MAX_VIEWLINE];
+	wchar_t Buf[MAX_VIEWLINE + 1];
 	int BufSize,I;
 
-	if (FilePos > (int64_t)(sizeof(Buf)/sizeof(wchar_t)))
-		BufSize=sizeof(Buf)/sizeof(wchar_t);
+	if (FilePos > ((int64_t)(sizeof(Buf)/sizeof(wchar_t))) - 1)
+		BufSize = (sizeof(Buf)/sizeof(wchar_t)) - 1;
+	else if (FilePos != 0)
+		BufSize = (int)FilePos;
 	else
-		BufSize=(int)FilePos;
-
-	if (!BufSize)
 		return;
 
 	LastPage=0;
@@ -2060,7 +2059,7 @@ void Viewer::Up()
 	}
 
 #if 1
-	if (I > 0 && Buf[I-1] == CRSymEncoded)
+	if (I > 0 && Buf[I - 1] == CRSymEncoded)
 	{
 		--I;
 	}
@@ -2081,29 +2080,43 @@ void Viewer::Up()
 		// we might read more code units and could actually overflow current position
 		// so try to find out exact substring that matches into line start and current position
 		Buf[WrapBufSize] = 0;
+//		fprintf(stderr, "WrapBufSize=%d WholeLineLength=%d LINE='%ls'\n", WrapBufSize, WholeLineLength, &Buf[0]);
 //		fprintf(stderr, "LINE1: '%ls'\n", &Buf[0]);
-		for (;;) {
-			if (CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize]) <= WholeLineLength) {
+		while (WrapBufSize) {
+			int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize]);
+			if (distance <= WholeLineLength) {
+				while (WrapBufSize && distance == CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize - 1])) {
+					--WrapBufSize;
+				}
 				break;
 			}
 			--WrapBufSize;
 		}
 		Buf[WrapBufSize] = 0;
-//		fprintf(stderr, "LINE2: '%ls'\n", &Buf[0]);
+//		fprintf(stderr, "Matching LINE: '%ls'\n", &Buf[0]);
 
 		for (I = 0; I < WrapBufSize; ++I) {
-			if (CalcStrSize(&Buf[I], WrapBufSize - I) <= Width) {
-				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[I], &Buf[WrapBufSize]);
-				if (distance <= 0) {
-					fprintf(stderr, "!!!OOPS!!! %d\n", distance);
-					break;
+			int SubLineSize = CalcStrSize(&Buf[I], WrapBufSize - I);
+			if ( SubLineSize <= Width) {
+				int PreSubLineSize = CalcStrSize(&Buf[0], I);
+				if (PreSubLineSize % Width == 0 || PreSubLineSize / Width == (PreSubLineSize + SubLineSize) / Width) {
+					int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[I], &Buf[WrapBufSize]);
+					if (distance <= 0) {
+//						fprintf(stderr, "!!!!!!!!!!!!OOPS!!!!!!!!!!!! %d..%d -> %d\n", I, WrapBufSize, distance);
+						break;
+					}
+					FilePosShiftLeft(distance);
+//					fprintf(stderr, "distance=%d SubLineSize=%d <= Width=%d LINE='%ls'\n", distance, SubLineSize, Width, &Buf[I]);
+					return;
 				}
-				FilePosShiftLeft(distance);
-				return;
 			}
 		}
 	}
 
+//	fprintf(stderr, "!!!!!!!!!!!!NOWRAP!!!!!!!!!!!!\n");
+	if (WholeLineLength == 0) {
+		WholeLineLength = 1;
+	}
 	FilePosShiftLeft(WholeLineLength);
 	
 #else

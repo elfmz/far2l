@@ -276,8 +276,10 @@ extern "C"
 			if (!remain) break;
 			ssize_t r = os_call_v<ssize_t, -1>(sdc_read, wph->fd, lpBuffer, (size_t)remain);
 			if (r < 0) {
-				if (done==0)
+				if (done==0) {
+					WINPORT(TranslateErrno)();
 					return FALSE;
+				}
 				break;
 			}
 			if (!r) break;
@@ -307,8 +309,10 @@ extern "C"
 		}
 
 		ssize_t r = os_call_v<ssize_t, -1>(sdc_write, wph->fd, lpBuffer, (size_t)nNumberOfBytesToWrite);
-		if (r < 0)
+		if (r < 0) {
+			WINPORT(TranslateErrno)();
 			return FALSE;
+		}
 
 		if (lpNumberOfBytesWritten) 
 			*lpNumberOfBytesWritten = r;

@@ -102,6 +102,7 @@ protected:
 	{
 		if (_started) {
 			_started = false;
+			OnJoin();
 			pthread_join(_thread, NULL);
 			_thread = 0;
 		}
@@ -182,8 +183,8 @@ public:
 protected:
 	virtual void OnJoin()
 	{
-		WithThread::OnJoin();
 		KickAss();
+		WithThread::OnJoin();
 	}
 
 private:
@@ -269,7 +270,6 @@ public:
 	{
 		if (_started) {
 			_stop = true;
-			KickInputThread();
 			Join();
 		}
 	}
@@ -281,6 +281,13 @@ public:
 			_pending_injected_inputs.emplace_back(str, len);
 		}
 		KickInputThread();
+	}
+
+protected:
+	virtual void OnJoin()
+	{
+		KickInputThread();
+		WithThread::OnJoin();
 	}
 
 private:

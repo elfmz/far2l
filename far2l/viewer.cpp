@@ -2817,12 +2817,15 @@ void Viewer::SetNamesList(NamesList *List)
 		List->MoveData(ViewNamesList);
 }
 
+#define IS_UTF8_LEADING_BYTE(b)  (((b) & 0b11000000) == 0b11000000)
+
+#define REPRESENT_UTF8_WRONG_BYTE(b) ((wchar_t)((b) & 0x7f))
+
 int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
 	if (VM.CodePage == CP_WIDE_LE || VM.CodePage == CP_WIDE_BE)
 	{
-		DWORD ReadSize=0;
-		Reader.Read((char *)Buf, Count * sizeof(wchar_t), &ReadSize);
+		DWORD ReadSize = Reader.Read((char *)Buf, Count * sizeof(wchar_t));
 		DWORD ResultedCount = ReadSize / sizeof(wchar_t);
 		if ((ReadSize % sizeof(wchar_t)) != 0 && (int)ResultedCount < Count) {
 			memset(((char *)Buf) + ReadSize, 0, sizeof(wchar_t) - (ReadSize % sizeof(wchar_t)));
@@ -2842,9 +2845,14 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		size_t src_len = 0;
 		wchar_t *BufPos = Buf;
 		while (Count) {
-			DWORD rd = 0;
-			Reader.Read(&src[src_len], 1, &rd);
-			if (rd == 0) break;
+			if (!Reader.ReadByte(&src[src_len])) {
+				break;
+			}
+			if (src_len == 0 && !IS_UTF8_LEADING_BYTE(src[0])) {
+				*(BufPos++) = REPRESENT_UTF8_WRONG_BYTE(src[0]);
+				--Count;
+				continue;
+			}
 			++src_len;
 
 			const UTF8 *src_pos = src;
@@ -2853,16 +2861,21 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 				&src[src_len], &dst_pos, dst_pos + ARRAYSIZE(dst), strictConversion);
 			if (cr == conversionOK) {
 				for (UTF32 *tmp = dst; (tmp != dst_pos && Count); ++tmp, ++BufPos, --Count) {
-					*BufPos = *tmp ? *tmp : ' ';
+					*BufPos = *tmp;
 				}
 				src_len = 0;
 
 			} else if (cr != sourceExhausted || src_len == ARRAYSIZE(src)) {
-				*(BufPos++) = ' ';
-				--Count;
-				--src_len;
-				for (size_t i = 0; i < src_len; ++i) {
-					src[i] = src[i + 1];
+				for (;;) {
+					*(BufPos++) = REPRESENT_UTF8_WRONG_BYTE(src[0]);
+					--Count;
+					--src_len;
+					for (size_t i = 0; i < src_len; ++i) {
+						src[i] = src[i + 1];
+					}
+					if (src_len == 0 || IS_UTF8_LEADING_BYTE(src[0]) || Count == 0) {
+						break;
+					}
 				}
 			}
 		}
@@ -2881,16 +2894,13 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		if (!TmpBuf)
 			return -1;
 
-		DWORD ReadSize=0;
-		Reader.Read(TmpBuf, ToReadSize, &ReadSize);
+		DWORD ReadSize = Reader.Read(TmpBuf, ToReadSize);
 
 		if (Count == 1 && ReadSize == 2 && (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ))
 		{
 			//Если UTF16 то простой ли это символ или нет?
 			if (*(uint16_t *)TmpBuf>=0xd800 && *(uint16_t *)TmpBuf<=0xdfff) {
-				DWORD ExtraRead = 0;
-				Reader.Read(TmpBuf+2, 2, &ExtraRead);
-				ReadSize+= ExtraRead;
+				ReadSize+= Reader.Read(TmpBuf+2, 2);
 			}
 		}
 

@@ -2819,7 +2819,7 @@ void Viewer::SetNamesList(NamesList *List)
 
 #define IS_UTF8_LEADING_BYTE(b)  (((b) & 0b11000000) == 0b11000000)
 
-#define REPRESENT_UTF8_WRONG_BYTE(b) ((wchar_t)((b) & 0x7f))
+#define UTF8_SINGLE_BYTE(b) ((wchar_t)((b) & 0x7f))
 
 int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
@@ -2841,46 +2841,48 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 	else if (VM.CodePage == CP_UTF8 && !Raw)
 	{
 		UTF8 src[6] = {};
-		UTF32 dst[6] = {};
 		size_t src_len = 0;
-		wchar_t *BufPos = Buf;
-		while (Count) {
+		UTF32 *BufPos = (UTF32 *)Buf;
+		UTF32 * const BufEnd = BufPos + Count;
+		while (BufPos != BufEnd) {
 			if (!Reader.ReadByte(&src[src_len])) {
+				for (size_t i = 0; (i != src_len && BufPos != BufEnd); ++i) {
+					*(BufPos++) = UTF8_SINGLE_BYTE(src[i]);
+				}
 				break;
 			}
 			if (src_len == 0 && !IS_UTF8_LEADING_BYTE(src[0])) {
-				*(BufPos++) = REPRESENT_UTF8_WRONG_BYTE(src[0]);
-				--Count;
+				*(BufPos++) = UTF8_SINGLE_BYTE(src[0]);
 				continue;
 			}
 			++src_len;
 
 			const UTF8 *src_pos = src;
-			UTF32 *dst_pos = dst;
-			ConversionResult cr = ConvertUTF8toUTF32(&src_pos,
-				&src[src_len], &dst_pos, dst_pos + ARRAYSIZE(dst), strictConversion);
+			UTF32 *const SavedPufPos = BufPos;
+			ConversionResult cr = ConvertUTF8toUTF32(&src_pos, &src[src_len], &BufPos, BufEnd, strictConversion);
 			if (cr == conversionOK) {
-				for (UTF32 *tmp = dst; (tmp != dst_pos && Count); ++tmp, ++BufPos, --Count) {
-					*BufPos = *tmp;
-				}
 				src_len = 0;
 
+			} else if (cr == targetExhausted) {
+				ViewFile.SetPointer(-(&src[src_len] - src_pos), nullptr, FILE_CURRENT);
+				break;
+
 			} else if (cr != sourceExhausted || src_len == ARRAYSIZE(src)) {
+				BufPos = SavedPufPos;
+				size_t skip_len = 1;
 				for (;;) {
-					*(BufPos++) = REPRESENT_UTF8_WRONG_BYTE(src[0]);
-					--Count;
-					--src_len;
-					for (size_t i = 0; i < src_len; ++i) {
-						src[i] = src[i + 1];
-					}
-					if (src_len == 0 || IS_UTF8_LEADING_BYTE(src[0]) || Count == 0) {
-						break;
-					}
+					*(BufPos++) = UTF8_SINGLE_BYTE(src[skip_len - 1]);
+					if (skip_len == src_len || BufPos == BufEnd || IS_UTF8_LEADING_BYTE(src[skip_len])) break;
+					++skip_len;
+				}
+				src_len-= skip_len;
+				for (size_t i = 0; i < src_len; ++i) {
+					src[i] = src[i + skip_len];
 				}
 			}
 		}
 
-		return (BufPos - Buf);
+		return (BufPos - (UTF32 *)Buf);
 	}
 	else
 	{

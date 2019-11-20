@@ -498,12 +498,6 @@ bool FileSeekDefer::SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWOR
 	return true;
 }
 
-bool FileSeekDefer::GetPointer(INT64& Pointer)
-{
-	Pointer = CurrentPointer;
-	return true;
-}
-
 bool FileSeekDefer::SetEnd()
 {
 	if (!FlushPendingSeek())

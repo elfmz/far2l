@@ -35,19 +35,40 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CachedRead
 {
 public:
-	CachedRead(File& file);
+	CachedRead(FileSeekDefer& file);
 	~CachedRead();
-	bool Read(LPVOID Data, DWORD DataSize, LPDWORD BytesRead);
-	bool FillBuffer();
+
+	bool ReadByte(LPBYTE Data);
+	DWORD Read(LPVOID Data, DWORD DataSize);
 	void Clear();
 
 private:
+	FileSeekDefer &file;
+
+	enum
+	{
+		AlignSize = 0x1000, // must be power of 2
+		BufferSize = 0x10000 // must be multiple of AlignSize
+	};
+
+	enum BufferDirection
+	{
+		BufferForward,
+		BufferBackward
+	};
+
 	LPBYTE Buffer;
-	File& file;
-	enum {BufferSize=0x10000};
-	DWORD ReadSize;
-	DWORD BytesLeft;
-	INT64 LastPtr;
+	INT64 BufferPtr;
+	INT64 BufferEnd;
+
+	INT64 LastReadPtr;
+
+	DWORD ReadAt(INT64 Ptr, LPVOID Data, DWORD DataSize);
+	DWORD RefreshReadAt(INT64 Ptr, LPVOID Data, DWORD DataSize, BufferDirection Direction);
+
+	bool DirectTell(INT64 &Ptr);
+	bool DirectSeek(INT64 Ptr);
+	DWORD DirectReadAt(INT64 Ptr, LPVOID Data, DWORD DataSize);
 };
 
 

@@ -2421,7 +2421,7 @@ void Viewer::Search(int Next,int FirstChar)
 
 	if (!(SearchLength=(int)strSearchStr.GetLength()))
 		return;
-	SearchDistance = CalcByteDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
+	SearchDistance = CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
 
 	{
 		TPreRedrawFuncGuard preRedrawFuncGuard(PR_ViewerSearchMsg);
@@ -2438,7 +2438,7 @@ void Viewer::Search(int Next,int FirstChar)
 		{
 			Transform(strSearchStr,strSearchStr,L'S');
 			SearchLength=(int)strSearchStr.GetLength();
-			SearchDistance = CalcByteDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
+			SearchDistance = CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
 			WholeWords=0;
 		}
 
@@ -2610,7 +2610,7 @@ void Viewer::Search(int Next,int FirstChar)
 #if 0
 						MatchPos=CurPos+I;
 #endif
-						MatchPos = CurPos + CalcByteDistance(VM.CodePage, Buf, Buf + I);
+						MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf, Buf + I);
 						break;
 					}
 				}
@@ -2659,6 +2659,7 @@ void Viewer::Search(int Next,int FirstChar)
 		SelectText(MatchPos,SearchLength,ReverseSearch?0x2:0);
 #endif
 		SelectText(MatchPos,SearchDistance,ReverseSearch?0x2:0);
+
 		// Покажем найденное на расстоянии трети экрана от верха.
 		int FromTop=(ScrY-(Opt.ViOpt.ShowKeyBar?2:1))/4;
 

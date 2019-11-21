@@ -86,11 +86,11 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	int distance;
 
 	if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE)) {
-		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
+		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, lenientConversion);
 		distance*= 2;
 
 	} else if (CodePage == CP_UTF8) {
-		CalcSpaceUTF32toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, strictConversion);
+		CalcSpaceUTF32toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, lenientConversion);
 
 	} else {// one-byte code page?
 		distance = end - begin;
@@ -112,7 +112,6 @@ static int CalcCodeUnitsDistance(UINT CodePage, const wchar_t* begin, const wcha
 
 Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	ViOpt(Opt.ViOpt),
-	Reader(ViewFile),
 	m_bQuickView(bQuickView)
 {
 	_OT(SysLog(L"[%p] Viewer::Viewer()", this));
@@ -253,7 +252,6 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	OpenFailed=false;
 
 	ViewFile.Close();
-	Reader.Clear();
 
 	SelectSize = 0; // Сбросим выделение
 	strFileName = Name;
@@ -263,6 +261,8 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		OpenFailed=TRUE;
 		return FALSE;
 	}
+
+	FARString OpenedFileName;
 
 	if (Opt.OnlyEditorViewerUsed && !StrCmp(strFileName, L"-"))
 	{
@@ -274,20 +274,21 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 			return FALSE;
 		}
 
-		if (!ViewFile.Open(strTempName,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_TEMPORARY|FILE_FLAG_DELETE_ON_CLOSE))
+		if (!ViewFile.Open(strTempName.GetMB(), true))
 		{
 			OpenFailed=true;
 			return FALSE;
 		}
+		OpenedFileName = strTempName;
 
 		char ReadBuf[8192];
-		DWORD ReadSize,WrittenSize;
+		DWORD ReadSize;
 
 		while (WINPORT(ReadFile)(Console.GetInputHandle(),ReadBuf,sizeof(ReadBuf),&ReadSize,nullptr))
 		{
-			ViewFile.Write(ReadBuf,ReadSize,&WrittenSize);
+			ViewFile.Write(ReadBuf,ReadSize);
 		}
-		ViewFile.SetPointer(0, nullptr, FILE_BEGIN);
+		ViewFile.SetPointer(0);
 
 		//after reading from the pipe, redirect stdin to the real console stdin
 		//CONIN$ must be opened with the exact flags and name as below so apiCreateFile() is not good
@@ -296,7 +297,8 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	}
 	else
 	{
-		ViewFile.Open(strFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING);
+		ViewFile.Open(strFileName.GetMB());
+		OpenedFileName = strFileName;
 	}
 
 	if (!ViewFile.Opened())
@@ -363,7 +365,9 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 
 		if (VM.CodePage == CP_AUTODETECT || IsUnicodeOrUtfCodePage(VM.CodePage))
 		{
-			Detect=GetFileFormat(ViewFile,CodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0);
+			File f;
+			f.Open(OpenedFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL);
+			Detect=GetFileFormat(f,CodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0);
 
 			// Проверяем поддерживается или нет задетектированная кодовая страница
 			if (Detect)
@@ -400,7 +404,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 
 		if (!IsUnicodeOrUtfCodePage(VM.CodePage))
 		{
-			ViewFile.SetPointer(0, nullptr, FILE_BEGIN);
+			ViewFile.SetPointer(0);
 		}
 	}
 	SetFileSize();
@@ -1275,7 +1279,7 @@ int Viewer::ProcessKey(int Key)
 					if (!apiGetFindDataEx(strFullFileName, NewViewFindData))
 						return TRUE;
 
-					ViewFile.FlushBuffers();
+					ViewFile.ActualizeFileSize();
 					vseek(0,SEEK_END);
 					int64_t CurFileSize=vtell();
 
@@ -2817,15 +2821,11 @@ void Viewer::SetNamesList(NamesList *List)
 		List->MoveData(ViewNamesList);
 }
 
-#define IS_UTF8_LEADING_BYTE(b)  (((b) & 0b11000000) == 0b11000000)
-
-#define UTF8_SINGLE_BYTE(b) ((wchar_t)((b) & 0x7f))
-
 int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 {
 	if (VM.CodePage == CP_WIDE_LE || VM.CodePage == CP_WIDE_BE)
 	{
-		DWORD ReadSize = Reader.Read((char *)Buf, Count * sizeof(wchar_t));
+		DWORD ReadSize = ViewFile.Read((char *)Buf, Count * sizeof(wchar_t));
 		DWORD ResultedCount = ReadSize / sizeof(wchar_t);
 		if ((ReadSize % sizeof(wchar_t)) != 0 && (int)ResultedCount < Count) {
 			memset(((char *)Buf) + ReadSize, 0, sizeof(wchar_t) - (ReadSize % sizeof(wchar_t)));
@@ -2840,109 +2840,96 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 	}
 	else if (VM.CodePage == CP_UTF8 && !Raw)
 	{
-		UTF8 src[6] = {};
-		size_t src_len = 0;
-		UTF32 *BufPos = (UTF32 *)Buf;
-		UTF32 * const BufEnd = BufPos + Count;
-		while (BufPos != BufEnd) {
-			if (!Reader.ReadByte(&src[src_len])) {
-				for (size_t i = 0; (i != src_len && BufPos != BufEnd); ++i) {
-					*(BufPos++) = UTF8_SINGLE_BYTE(src[i]);
-				}
+		INT64 Ptr;
+		ViewFile.GetPointer(Ptr);
+		int ResultedCount = 0;
+		for (DWORD WantViewSize = Count; ResultedCount < Count;) {
+			DWORD ViewSize = WantViewSize;
+			UTF8 *SrcView = (UTF8 *)ViewFile.ViewBytesAt(Ptr, ViewSize);
+			if (!ViewSize) {
 				break;
 			}
-			if (src_len == 0 && !IS_UTF8_LEADING_BYTE(src[0])) {
-				*(BufPos++) = UTF8_SINGLE_BYTE(src[0]);
-				continue;
-			}
-			++src_len;
 
-			const UTF8 *src_pos = src;
-			UTF32 *const SavedPufPos = BufPos;
-			ConversionResult cr = ConvertUTF8toUTF32(&src_pos, &src[src_len], &BufPos, BufEnd, strictConversion);
-			if (cr == conversionOK) {
-				src_len = 0;
+			const UTF8 *src = SrcView;
+			UTF32 *dst = (UTF32 *)&Buf[ResultedCount];
+			ConversionResult cr = ConvertUTF8toUTF32(&src, src + ViewSize,
+				&dst, dst + (Count - ResultedCount), lenientConversion);
 
-			} else if (cr == targetExhausted) {
-				ViewFile.SetPointer(-(&src[src_len] - src_pos), nullptr, FILE_CURRENT);
+			Ptr+= (src - SrcView);
+			ResultedCount = dst - (UTF32 *)Buf;
+
+			if (cr == sourceExhausted && src == SrcView) {
+				WantViewSize+= (4 + WantViewSize / 4);
+
+			} else if (cr == targetExhausted || cr == conversionOK) {
 				break;
-
-			} else if (cr != sourceExhausted || src_len == ARRAYSIZE(src)) {
-				BufPos = SavedPufPos;
-				size_t skip_len = 1;
-				for (;;) {
-					*(BufPos++) = UTF8_SINGLE_BYTE(src[skip_len - 1]);
-					if (skip_len == src_len || BufPos == BufEnd || IS_UTF8_LEADING_BYTE(src[skip_len])) break;
-					++skip_len;
-				}
-				src_len-= skip_len;
-				for (size_t i = 0; i < src_len; ++i) {
-					src[i] = src[i + skip_len];
-				}
 			}
 		}
 
-		return (BufPos - (UTF32 *)Buf);
+		ViewFile.SetPointer(Ptr);
+		return ResultedCount;
 	}
 	else
 	{
-		int ToReadSize = Count;
-		if (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ) {
-			ToReadSize*= 2;
+		INT64 Ptr;
+		ViewFile.GetPointer(Ptr);
+
+		DWORD ReadSize = Count;
+		if (VM.CodePage == CP_UTF16LE || VM.CodePage == CP_UTF16BE ) {
+			ReadSize*= 2;
 		}
 
-		char *TmpBuf=(char*)xf_malloc(ToReadSize+32);
+		LPBYTE View = ViewFile.ViewBytesAt(Ptr, ReadSize);
 
-		if (!TmpBuf)
-			return -1;
-
-		DWORD ReadSize = Reader.Read(TmpBuf, ToReadSize);
-
-		if (Count == 1 && ReadSize == 2 && (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ))
+		if (Count == 1 && ReadSize == 2 && !Raw && (VM.CodePage==CP_UTF16LE || VM.CodePage==CP_UTF16BE ))
 		{
 			//Если UTF16 то простой ли это символ или нет?
-			if (*(uint16_t *)TmpBuf>=0xd800 && *(uint16_t *)TmpBuf<=0xdfff) {
-				ReadSize+= Reader.Read(TmpBuf+2, 2);
+			if (*(uint16_t *)View >= 0xd800 && *(uint16_t *)View <= 0xdfff) {
+				ReadSize+= 2;
+				View = ViewFile.ViewBytesAt(Ptr, ReadSize);
 			}
 		}
+
+		ViewFile.SetPointer(Ptr + ReadSize);
+
+		if (!View || !ReadSize)
+			return 0;
 
 		if (Raw)
 		{
 			if (VM.CodePage == CP_UTF16LE || VM.CodePage == CP_UTF16BE) {
 				ReadSize/= 2;
-				for (int i=0; i<ReadSize; ++i)
+				for (int i = 0; i < ReadSize; ++i)
 				{
-					Buf[i]=(unsigned char)TmpBuf[i * 2 + 1];
+					Buf[i] = (unsigned char)View[i * 2 + 1];
 					Buf[i]<<= 8;
-					Buf[i]|=(unsigned char)TmpBuf[i * 2];
+					Buf[i]|= (unsigned char)View[i * 2];
 				}
-
 			} else {
-				for (int i=0; i<ReadSize; i++)
+				for (int i = 0; i < ReadSize; i++)
 				{
-					Buf[i]=(wchar_t)(unsigned char)TmpBuf[i];
+					Buf[i] = (wchar_t)(unsigned char)View[i];
 				}
 			}
 		}
 		else
 		{
-			ReadSize = WINPORT(MultiByteToWideChar)(VM.CodePage, 0, TmpBuf, ReadSize, Buf, Count);
+			ReadSize = WINPORT(MultiByteToWideChar)(VM.CodePage, 0, (const char *)View, ReadSize, Buf, Count);
 		}
 
-		xf_free(TmpBuf);
 		return ReadSize;
 	}
 }
 
 
-int Viewer::vseek(int64_t Offset,int Whence)
+void Viewer::vseek(int64_t Offset,int Whence)
 {
 	switch (VM.CodePage)
 	{
 		case CP_UTF32BE: case CP_UTF32LE: Offset*= 4; break;
 		case CP_UTF16BE: case CP_UTF16LE: Offset*= 2; break;
 	}
-	return ViewFile.SetPointer(Offset, nullptr, Whence);
+	ViewFile.SetPointer(Offset, Whence);
 }
 
 

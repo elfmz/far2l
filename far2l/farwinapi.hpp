@@ -141,7 +141,7 @@ class File: private NonCopyable
 {
 public:
 	File();
-	virtual ~File();
+	~File();
 	bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
 	bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead, LPOVERLAPPED Overlapped = nullptr);
 	bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten, LPOVERLAPPED Overlapped = nullptr);
@@ -162,32 +162,6 @@ public:
 private:
 	HANDLE Handle;
 };
-
-class FileSeekDefer: public File
-{
-public:
-	FileSeekDefer();
-	virtual ~FileSeekDefer();
-
-	bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
-	bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead, LPOVERLAPPED Overlapped = nullptr);
-	bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten, LPOVERLAPPED Overlapped = nullptr);
-	bool SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMethod);
-	bool inline GetPointer(INT64& Pointer) const
-	{
-		Pointer = CurrentPointer;
-		return true;
-	}
-	bool SetEnd();
-	bool Eof();
-
-private:
-	bool FlushPendingSeek();
-
-	UINT64 CurrentPointer, Size;
-	bool SeekPending;
-};
-
 
 DWORD apiGetEnvironmentVariable(
     const wchar_t *lpwszName,

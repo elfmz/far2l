@@ -29,234 +29,246 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include "headers.hpp"
 
 #include "cache.hpp"
+#include <CheckedCast.hpp>
 
-CachedRead::CachedRead(FileSeekDefer& file):
-	file(file),
-	Buffer(nullptr),
-	BufferPtr(-1),
-	BufferEnd(-1),
-	LastReadPtr(-1)
+#include <fcntl.h>
+
+
+BufferedFileView::BufferedFileView()
 {
-	if (BufferSize) {
-		if (posix_memalign((void **)&Buffer, AlignSize, BufferSize) != 0) {
-			Buffer = (LPBYTE)malloc(BufferSize);
-		}
-	}
 }
 
-CachedRead::~CachedRead()
+BufferedFileView::~BufferedFileView()
 {
+	Close();
 	free(Buffer);
 }
 
-void CachedRead::Clear()
+bool BufferedFileView::Open(const std::string &PathName, bool TemporaryWritable)
 {
-	BufferPtr = -1;
-	BufferEnd = -1;
-}
+	Close();
 
-DWORD CachedRead::Read(LPVOID Data, DWORD DataSize)
-{
-	INT64 Ptr = 0;
-	if (!DirectTell(Ptr)) {
-		return 0;
+	if (TemporaryWritable) {
+		FD = sdc_open(PathName.c_str(), O_RDWR | O_TRUNC | O_CREAT, 0660);
+	} else {
+		FD = sdc_open(PathName.c_str(), O_RDONLY);
 	}
 
-	DWORD BytesRead = ReadAt(Ptr, Data, DataSize);
-
-	if (!DirectSeek(Ptr + BytesRead)) {
-		fprintf(stderr,
-			"CachedRead::Read: failed to seek at %ld + %ld\n",
-			(unsigned long)Ptr, (unsigned long)BytesRead);
-	}
-
-	return BytesRead;
-}
-
-bool CachedRead::ReadByte(LPBYTE Data)
-{
-	INT64 Ptr = 0;
-	if (!DirectTell(Ptr)) {
+	if (FD == -1) {
 		return false;
 	}
 
-	if (Ptr >= BufferPtr && Ptr < BufferEnd) {
-		LastReadPtr = Ptr;
-		*Data = Buffer[(size_t)(Ptr - BufferPtr)];
-		DirectSeek(Ptr + 1);
-		return true;
+	posix_fadvise(FD, 0, 0, POSIX_FADV_SEQUENTIAL); // todo: sdc_posix_fadvise
+
+	if (TemporaryWritable) {
+		PathToDeleteOnClose = PathName;
+	} else {
+		PathToDeleteOnClose.clear();
 	}
 
-	BufferDirection Direction = (Ptr >= LastReadPtr) ? BufferForward : BufferBackward;
-	LastReadPtr = Ptr;
-
-	DWORD ReadSize = RefreshReadAt(Ptr, Data, 1, Direction);
-
-	DirectSeek(Ptr + ReadSize);
-
-	return ReadSize > 0;
+	FileSize = 0;
+	ActualizeFileSize();
+	return true;
 }
 
-DWORD CachedRead::ReadAt(INT64 Ptr, LPVOID Data, DWORD DataSize)
+void BufferedFileView::SetPointer(INT64 Ptr, int Whence)
 {
-//	return DirectReadAt(Ptr, Data, DataSize);//debug
+	switch (Whence) {
+		case SEEK_SET:
+			CurPtr = (Ptr > 0) ? Ptr : 0;
+			break;
 
-	BufferDirection Direction = (Ptr >= LastReadPtr) ? BufferForward : BufferBackward;
+		case SEEK_CUR:
+			Ptr+= CurPtr;
+			CurPtr = (Ptr > 0) ? Ptr : 0;
+		break;
 
-	LastReadPtr = Ptr;
+		case SEEK_END:
+			Ptr+= FileSize;
+			CurPtr = (Ptr > 0) ? Ptr : 0;
+		break;
+	}
+}
 
-	INT64 End = Ptr + DataSize;
-	DWORD BytesRead = 0;
-#if 1
-	if (BufferPtr != BufferEnd) {
-		INT64 IntersectPtr = std::max(Ptr, BufferPtr);
-		INT64 IntersectEnd = std::min(End, BufferEnd);
-		if (IntersectPtr < IntersectEnd) {
-			DWORD CpyLen = (DWORD)(IntersectEnd - IntersectPtr);
-			memcpy((char *)Data + (size_t)(IntersectPtr - Ptr), &Buffer[(size_t)(IntersectPtr - BufferPtr)], CpyLen);
-			BytesRead+= CpyLen;
+DWORD BufferedFileView::Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite)
+{
+	if (FD == -1)
+		return 0;
 
-			if (Direction == BufferForward) { // forward buffering:
-				if (Ptr < IntersectPtr) { // directly read prior-buffered fragment
-					DWORD BytesReadDirectly = DirectReadAt(Ptr, Data, (DWORD)(IntersectPtr - Ptr));
-					if (BytesReadDirectly != (DWORD)(IntersectPtr - Ptr)) {
-						// discard data fetched from buffer since prior fragment is truncated
-						return BytesReadDirectly;
-					}
-					BytesRead+= BytesReadDirectly;
-				}
-				Data = (char *)Data + BytesRead;
-				Ptr = IntersectEnd;
+	ssize_t r = sdc_pwrite(FD, Buffer, NumberOfBytesToWrite, CheckedCast<off_t>(CurPtr));
+	if (r <= 0)
+		return 0;
 
-			} else { // backward buffering: 
-				if (End > IntersectEnd) { // try to directly read post-buffered fragment
-					DWORD BytesReadDirectly = DirectReadAt(IntersectEnd,
-						(char *)Data + (size_t)(IntersectEnd - Ptr), (DWORD)(End - IntersectEnd));
-					// dont care if this operation returned less or even 0
-					BytesRead+= BytesReadDirectly;
-				}
-				End = IntersectPtr;
+	CurPtr+= r;
+
+	ActualizeFileSize();
+
+	return CheckedCast<DWORD>(r);
+}
+
+void BufferedFileView::ActualizeFileSize()
+{
+	struct stat s = {};
+	if (FD != -1 && sdc_fstat(FD, &s) == 0 && FileSize != (UINT64)s.st_size) {
+		Clear();
+		FileSize = s.st_size;
+	}
+}
+
+void BufferedFileView::Close()
+{
+	Clear();
+	if (FD != -1) {
+		sdc_close(FD);
+		FD = -1;
+	}
+	if (!PathToDeleteOnClose.empty()) {
+		sdc_unlink(PathToDeleteOnClose.c_str());
+		PathToDeleteOnClose.clear();
+	}
+}
+
+void BufferedFileView::Clear()
+{
+	BufferBounds.Ptr = -1;
+	BufferBounds.End = -1;
+}
+
+LPBYTE BufferedFileView::AllocBuffer(size_t Size)
+{
+	void *ptr;
+	if (posix_memalign(&ptr, AlignSize, Size) != 0) {
+		ptr = (LPBYTE)malloc(Size);
+		if (ptr == nullptr) {
+			return nullptr;
+		}
+	}
+
+	return (LPBYTE)ptr;
+}
+
+LPBYTE BufferedFileView::ViewBytesSlide(DWORD &Size)
+{
+	LPBYTE View = ViewBytesAt(CurPtr, Size);
+	CurPtr+= Size;
+	return View;
+}
+
+DWORD BufferedFileView::Read(void *Buf, DWORD Size)
+{
+	LPBYTE View = ViewBytesSlide(Size);
+	if (Size)
+		memcpy(Buf, View, Size);
+	return Size;
+}
+
+void BufferedFileView::CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter, DWORD CountRighter)
+{
+	bi.Ptr = AlignDown(Ptr);
+	if (bi.Ptr > AheadCount * AlignSize) {
+		bi.Ptr-= CountLefter * AlignSize;
+	} else {
+		bi.Ptr= 0;
+	}
+
+	bi.End = AlignUp(Ptr + DataSize + CountRighter * AlignSize);
+}
+
+LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
+{
+	if (Ptr >= BufferBounds.Ptr && Ptr + Size <= BufferBounds.End) {
+		return &Buffer[CheckedCast<size_t>(Ptr - BufferBounds.Ptr)];
+	}
+
+	Bounds NewBufferBounds;
+	if (Ptr < LastPtr) { // backward buffering
+		CalcBufferBounds(NewBufferBounds, Ptr, Size, AheadCount, BehindCount);
+	} else { // forward buffering
+		CalcBufferBounds(NewBufferBounds, Ptr, Size, BehindCount, AheadCount);
+	}
+
+	LastPtr = Ptr;
+
+	DWORD NewBufferSize = CheckedCast<DWORD>(NewBufferBounds.End - NewBufferBounds.Ptr);
+
+	LPBYTE NewBuffer;
+	if (NewBufferSize > BufferSize) {
+		NewBuffer = AllocBuffer(NewBufferSize + CapacityStock * AlignSize);
+		if (NewBuffer == nullptr) {
+			NewBuffer = AllocBuffer(NewBufferSize);
+			if (NewBuffer == nullptr) {
+				Size = 0;
+				return nullptr;
 			}
-
-			DataSize-= BytesRead;
-		}
-	}
-#endif
-	if (DataSize == 0) {
-		return BytesRead;
-	}
-
-	DWORD RefreshRead = RefreshReadAt(Ptr, Data, DataSize, Direction);
-
-	if (RefreshRead != DataSize && Direction == BufferBackward) {
-		// if failed to directly read full fragment prior buffered fetch
-		// then results of buffered fetch must be discared
-		return RefreshRead;
-	}
-
-	return BytesRead + RefreshRead;
-}
-
-DWORD CachedRead::RefreshReadAt(INT64 Ptr, LPVOID Data, DWORD DataSize, BufferDirection Direction)
-{
-	if (DataSize >= BufferSize - AlignSize) {
-		return DirectReadAt(Ptr, Data, DataSize);
-	}
-
-	INT64 End = Ptr + DataSize;
-
-	if (Direction == BufferForward) { // forward buffering:
-		// Buffer layout: [1..AlignSize|DataSize|BufferSize - AlignSize - DataSize]
-
-		INT64 NewBufferPtr = Ptr & ~(INT64)(AlignSize - 1);
-		if (NewBufferPtr == Ptr && NewBufferPtr != 0) {
-			NewBufferPtr-= AlignSize;
-		}
-
-		DWORD BytesReadDirectly;
-
-		if (NewBufferPtr >= BufferPtr && NewBufferPtr + AlignSize <= BufferEnd) {
-			memmove(Buffer, &Buffer[NewBufferPtr - BufferPtr], AlignSize);
-			BytesReadDirectly = AlignSize;
-			BytesReadDirectly+= DirectReadAt(NewBufferPtr + AlignSize, &Buffer[AlignSize], BufferSize - AlignSize);
 		} else {
-			BytesReadDirectly = DirectReadAt(NewBufferPtr, Buffer, BufferSize);
+			NewBufferSize+= CapacityStock * AlignSize;
 		}
-
-		BufferPtr = NewBufferPtr;
-		BufferEnd = BufferPtr + BytesReadDirectly;
-		if (BufferEnd <= Ptr) {
-			return 0;
-		}
-
-		DWORD BytesReadBuffered = (DWORD)(std::min(End, BufferEnd) - Ptr);
-		memcpy(Data, &Buffer[(DWORD)(Ptr - BufferPtr)], BytesReadBuffered);
-		return BytesReadBuffered;
-	}
-
-	// backward buffering:
-	INT64 NewBufferPtr;
-	if (Ptr + DataSize >= BufferSize) {
-		// Buffer layout: [BufferSize - AlignSize - DataSize|DataSize|1..AlignSize]
-		NewBufferPtr = Ptr + DataSize - BufferSize + AlignSize;
-		NewBufferPtr&= ~(INT64)(AlignSize - 1);
 	} else {
-		NewBufferPtr = 0;
+		NewBuffer = Buffer;
 	}
 
-	DWORD BytesReadDirectly;
+	UINT64 IntersectPtr = std::max(NewBufferBounds.Ptr, BufferBounds.Ptr);
+	UINT64 IntersectEnd = std::min(NewBufferBounds.End, BufferBounds.End);
 
-	if (NewBufferPtr + BufferSize - AlignSize >= BufferPtr && NewBufferPtr + BufferSize <= BufferEnd) {
-		memmove(&Buffer[BufferSize - AlignSize], &Buffer[NewBufferPtr + BufferSize - AlignSize - BufferPtr], AlignSize);
+	if (IntersectPtr < IntersectEnd) {
+		memmove(&NewBuffer[IntersectPtr - NewBufferBounds.Ptr],
+			&Buffer[IntersectPtr - BufferBounds.Ptr],
+			CheckedCast<size_t>(IntersectEnd - IntersectPtr));
+		if (IntersectPtr > NewBufferBounds.Ptr) {
+			DWORD NeedDirectReadSize = CheckedCast<DWORD>(IntersectPtr - NewBufferBounds.Ptr);
+			DWORD DirectReadSize = DirectReadAt(NewBufferBounds.Ptr, NewBuffer, NeedDirectReadSize);
+			if (NeedDirectReadSize != DirectReadSize) {
+				NewBufferBounds.End = NewBufferBounds.Ptr + DirectReadSize;
+			}
+		}
 
-		BytesReadDirectly = DirectReadAt(NewBufferPtr, Buffer, BufferSize - AlignSize);
-		if (BytesReadDirectly == BufferSize - AlignSize) {
-			BytesReadDirectly+= AlignSize;
+		if (NewBufferBounds.End > IntersectEnd) {
+			DWORD NeedDirectReadSize = CheckedCast<DWORD>(NewBufferBounds.End - IntersectEnd);
+			DWORD DirectReadSize = DirectReadAt(IntersectEnd,
+				&NewBuffer[IntersectEnd - NewBufferBounds.Ptr], NeedDirectReadSize);
+			NewBufferBounds.End = IntersectEnd + DirectReadSize;
 		}
 
 	} else {
-		BytesReadDirectly = DirectReadAt(NewBufferPtr, Buffer, BufferSize);
-	}
-	BufferPtr = NewBufferPtr;
-	BufferEnd = BufferPtr + BytesReadDirectly;
-
-	if (Ptr >= BufferEnd) {
-		return 0;
+		DWORD NeedDirectReadSize = CheckedCast<DWORD>(NewBufferBounds.End - NewBufferBounds.Ptr);
+		DWORD DirectReadSize = DirectReadAt(NewBufferBounds.Ptr, &NewBuffer[0], NeedDirectReadSize);
+		NewBufferBounds.End = NewBufferBounds.Ptr + DirectReadSize;
 	}
 
-	DWORD BytesReadBuffered = std::min(End, BufferEnd) - Ptr;
-	memcpy(Data, &Buffer[Ptr - BufferPtr], BytesReadBuffered);
+	if (NewBuffer != Buffer) {
+		free(Buffer);
+		Buffer = NewBuffer;
+		BufferSize = NewBufferSize;
+	}
 
-	return BytesReadBuffered;
+	BufferBounds = NewBufferBounds;
+
+	if (Ptr < BufferBounds.Ptr || Ptr >= BufferBounds.End) {
+		Size = 0;
+		return nullptr;
+	}
+
+	DWORD AvailableSize = CheckedCast<DWORD>(BufferBounds.End - Ptr);
+	if (Size > AvailableSize) {
+		Size = AvailableSize;
+	}
+
+	return &Buffer[CheckedCast<size_t>(Ptr - BufferBounds.Ptr)];
 }
 
-bool CachedRead::DirectTell(INT64 &Ptr)
+DWORD BufferedFileView::DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize)
 {
-	return file.GetPointer(Ptr);
-}
-
-bool CachedRead::DirectSeek(INT64 Ptr)
-{
-	return file.SetPointer(Ptr, NULL, FILE_BEGIN);
-}
-
-DWORD CachedRead::DirectReadAt(INT64 Ptr, LPVOID Data, DWORD DataSize)
-{
-	if (!DirectSeek(Ptr)) {
+	if (FD == -1)
 		return 0;
-	}
 
-	DWORD BytesRead = 0;
-	if (!file.Read(Data, DataSize, &BytesRead)) {
+	ssize_t r = sdc_pread(FD, Data, DataSize, CheckedCast<off_t>(Ptr));
+	if (r <= 0)
 		return 0;
-	}
 
-	//	fprintf(stderr, "DirectReadAt: [0x%lx 0x%lx)\n", (unsigned long)Ptr, (unsigned long)Ptr + BytesRead);
-	return BytesRead;
+	return CheckedCast<DWORD>(r);
 }
 
 /////////////

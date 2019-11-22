@@ -139,26 +139,6 @@ void BufferedFileView::Clear()
 	BufferBounds.End = -1;
 }
 
-LPBYTE BufferedFileView::AllocBuffer(size_t Size)
-{
-	void *ptr;
-	if (posix_memalign(&ptr, AlignSize, Size) != 0) {
-		ptr = (LPBYTE)malloc(Size);
-		if (ptr == nullptr) {
-			return nullptr;
-		}
-	}
-
-	return (LPBYTE)ptr;
-}
-
-LPBYTE BufferedFileView::ViewBytesSlide(DWORD &Size)
-{
-	LPBYTE View = ViewBytesAt(CurPtr, Size);
-	CurPtr+= Size;
-	return View;
-}
-
 DWORD BufferedFileView::Read(void *Buf, DWORD Size)
 {
 	LPBYTE View = ViewBytesSlide(Size);
@@ -167,16 +147,11 @@ DWORD BufferedFileView::Read(void *Buf, DWORD Size)
 	return Size;
 }
 
-void BufferedFileView::CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter, DWORD CountRighter)
+LPBYTE BufferedFileView::ViewBytesSlide(DWORD &Size)
 {
-	bi.Ptr = AlignDown(Ptr);
-	if (bi.Ptr > AheadCount * AlignSize) {
-		bi.Ptr-= CountLefter * AlignSize;
-	} else {
-		bi.Ptr= 0;
-	}
-
-	bi.End = AlignUp(Ptr + DataSize + CountRighter * AlignSize);
+	LPBYTE View = ViewBytesAt(CurPtr, Size);
+	CurPtr+= Size;
+	return View;
 }
 
 LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
@@ -260,6 +235,29 @@ LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
 
 	return &Buffer[CheckedCast<size_t>(Ptr - BufferBounds.Ptr)];
 }
+
+LPBYTE BufferedFileView::AllocBuffer(size_t Size)
+{
+	void *ptr;
+	if (posix_memalign(&ptr, AlignSize, Size) != 0) {
+		ptr = (LPBYTE)malloc(Size);
+	}
+
+	return (LPBYTE)ptr;
+}
+
+void BufferedFileView::CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter, DWORD CountRighter)
+{
+	bi.Ptr = AlignDown(Ptr);
+	if (bi.Ptr > AheadCount * AlignSize) {
+		bi.Ptr-= CountLefter * AlignSize;
+	} else {
+		bi.Ptr= 0;
+	}
+
+	bi.End = AlignUp(Ptr + DataSize + CountRighter * AlignSize);
+}
+
 
 DWORD BufferedFileView::DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize)
 {

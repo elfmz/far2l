@@ -2316,6 +2316,27 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
    2 - Продолжить поиск с начала файла
 */
 
+
+static inline bool CheckBufMatchesCaseInsensitive(size_t MatchLen, const wchar_t *Buf, const wchar_t *MatchUpperCase, const wchar_t *MatchLowerCase)
+{
+	for (size_t i = 0; i < MatchLen; ++i) {
+		if (Buf[i] != MatchUpperCase[i] && Buf[i] != MatchLowerCase[i])
+			return false;
+	}
+
+	return true;
+}
+
+static inline bool CheckBufMatchesCaseSensitive(size_t MatchLen, const wchar_t *Buf, const wchar_t *Match)
+{
+	for (size_t i = 0; i < MatchLen; ++i) {
+		if (Buf[i] != Match[i])
+			return false;
+	}
+
+	return true;
+}
+
 void Viewer::Search(int Next,int FirstChar)
 {
 	const wchar_t *TextHistoryName=L"SearchText";
@@ -2341,7 +2362,7 @@ void Viewer::Search(int Next,int FirstChar)
 	FARString strSearchStr;
 	FARString strMsgStr;
 	int64_t MatchPos=0;
-	int SearchLength,Case,WholeWords,ReverseSearch,Match,SearchRegexp,SearchDistance;
+	int Case,WholeWords,ReverseSearch,SearchRegexp;
 
 	if (!ViewFile.Opened() || (Next && strLastSearchStr.IsEmpty()))
 		return;
@@ -2419,10 +2440,8 @@ void Viewer::Search(int Next,int FirstChar)
 
 	LastSearchRegexp=SearchRegexp;
 
-	if (!(SearchLength=(int)strSearchStr.GetLength()))
-		return;
-	SearchDistance = CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
-
+	int SearchWChars, SearchCodeUnits;
+	bool Match = false;
 	{
 		TPreRedrawFuncGuard preRedrawFuncGuard(PR_ViewerSearchMsg);
 		//SaveScreen SaveScr;
@@ -2436,14 +2455,26 @@ void Viewer::Search(int Next,int FirstChar)
 
 		if (SearchHex)
 		{
+			if (!strSearchStr.GetLength())
+				return;
+
 			Transform(strSearchStr,strSearchStr,L'S');
-			SearchLength=(int)strSearchStr.GetLength();
-			SearchDistance = CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchLength);
 			WholeWords=0;
 		}
 
+		SearchWChars = (int)strSearchStr.GetLength();
+		if (!SearchWChars)
+			return;
+
+		SearchCodeUnits = CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchWChars);
+		FARString strSearchStrLowerCase;
+
 		if (!Case && !SearchHex)
+		{
+			strSearchStrLowerCase = strSearchStr;
 			strSearchStr.Upper();
+			strSearchStrLowerCase.Lower();
+		}
 
 		SelectSize = 0;
 
@@ -2473,30 +2504,11 @@ void Viewer::Search(int Next,int FirstChar)
 		}
 
 		vseek(LastSelPos,SEEK_SET);
-		Match=0;
+		Match = false;
 
-		if (SearchLength>0 && (!ReverseSearch || LastSelPos>=0))
+		if (SearchWChars>0 && (!ReverseSearch || LastSelPos>=0))
 		{
-			wchar_t Buf[8192];
-			int64_t CurPos=LastSelPos;
-			int BufSize=ARRAYSIZE(Buf);
-
-			if (ReverseSearch)
-			{
-				/* $ 01.08.2000 KM
-				   Изменёно вычисление CurPos с учётом Whole words
-				*/
-#if 0
-				if (WholeWords)
-					CurPos-=ARRAYSIZE(Buf)-SearchLength+1;
-				else
-					CurPos-=ARRAYSIZE(Buf)-SearchLength;
-#endif
-				CurPos -= ARRAYSIZE(Buf) - SearchLength + !!WholeWords;
-
-				if (CurPos<0)
-					BufSize+=(int)CurPos;
-			}
+			wchar_t Buf[16384];
 
 			int ReadSize;
 			wakeful W;
@@ -2510,10 +2522,23 @@ void Viewer::Search(int Next,int FirstChar)
 				   так как при обычном прямом и LastSelPos=0xFFFFFFFF, поиск
 				   заканчивался так и не начавшись.
 				*/
-				if (CurPos<0)
-					CurPos=0;
-
-				vseek(CurPos,SEEK_SET);
+				//if (CurPos<0)
+				//	CurPos=0;
+				//vseek(CurPos,SEEK_SET);
+				int BufSize = ARRAYSIZE(Buf);
+				int64_t CurPos = vtell();
+				if (ReverseSearch)
+				{
+					/* $ 01.08.2000 KM
+					   Изменёно вычисление CurPos с учётом Whole words
+					*/
+					CurPos-= ARRAYSIZE(Buf) - SearchCodeUnits - !!WholeWords;
+					if (CurPos < 0) {
+						BufSize+= (int)CurPos;
+						CurPos = 0;
+					}
+					vseek(CurPos, SEEK_SET);
+				}
 
 				if ((ReadSize=vread(Buf,BufSize,SearchHex!=0))<=0)
 					break;
@@ -2552,19 +2577,11 @@ void Viewer::Search(int Next,int FirstChar)
 				}
 
 				/* $ 01.08.2000 KM
-				   Сделана сразу проверка на Case sensitive и Hex
-				   и если нет, тогда Buf приводится к верхнему регистру
-				*/
-				if (!Case && !SearchHex) {
-					WINPORT(CharUpperBuff)(Buf,ReadSize);
-				}
-
-				/* $ 01.08.2000 KM
 				   Убран кусок текста после приведения поисковой строки
 				   и Buf к единому регистру, если поиск не регистрозависимый
 				   или не ищется Hex-строка и в связи с этим переработан код поиска
 				*/
-				int MaxSize=ReadSize-SearchLength+1;
+				int MaxSize=ReadSize-SearchWChars+1;
 				int Increment=ReverseSearch ? -1:+1;
 
 				for (int I=ReverseSearch ? MaxSize-1:0; I<MaxSize && I>=0; I+=Increment)
@@ -2572,8 +2589,8 @@ void Viewer::Search(int Next,int FirstChar)
 					/* $ 01.08.2000 KM
 					   Обработка поиска "Whole words"
 					*/
-					int locResultLeft=FALSE;
-					int locResultRight=FALSE;
+					bool locResultLeft = false;
+					bool locResultRight = false;
 
 					if (WholeWords)
 					{
@@ -2581,69 +2598,54 @@ void Viewer::Search(int Next,int FirstChar)
 						{
 							if (IsSpace(Buf[I-1]) || IsEol(Buf[I-1]) ||
 							        (wcschr(Opt.strWordDiv,Buf[I-1])))
-								locResultLeft=TRUE;
+								locResultLeft = true;
 						}
 						else
 						{
-							locResultLeft=TRUE;
+							locResultLeft = true;
 						}
 
-						if (ReadSize!=BufSize && I+SearchLength>=ReadSize)
-							locResultRight=TRUE;
-						else if (I+SearchLength<ReadSize &&
-						         (IsSpace(Buf[I+SearchLength]) || IsEol(Buf[I+SearchLength]) ||
-						          (wcschr(Opt.strWordDiv,Buf[I+SearchLength]))))
-							locResultRight=TRUE;
+						if (ReadSize!=BufSize && I+SearchWChars>=ReadSize)
+							locResultRight = true;
+						else if (I+SearchWChars<ReadSize &&
+						         (IsSpace(Buf[I+SearchWChars]) || IsEol(Buf[I+SearchWChars]) ||
+						          (wcschr(Opt.strWordDiv,Buf[I+SearchWChars]))))
+							locResultRight = true;
 					}
 					else
 					{
-						locResultLeft=TRUE;
-						locResultRight=TRUE;
+						locResultLeft = true;
+						locResultRight = true;
 					}
 
-					Match=locResultLeft && locResultRight && strSearchStr.At(0)==Buf[I] &&
-					      (SearchLength==1 || (strSearchStr.At(1)==Buf[I+1] &&
-					                           (SearchLength==2 || !memcmp(strSearchStr.CPtr()+2,&Buf[I+2],(SearchLength-2)*sizeof(wchar_t)))));
-
-					if (Match)
+					if (locResultLeft && locResultRight)
 					{
-#if 0
-						MatchPos=CurPos+I;
-#endif
-						MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf, Buf + I);
-						break;
+						if (!Case && !SearchHex) {
+							Match = CheckBufMatchesCaseInsensitive(SearchWChars, &Buf[I], strSearchStr.CPtr(), strSearchStrLowerCase.CPtr());
+						} else {
+							Match = CheckBufMatchesCaseSensitive(SearchWChars, &Buf[I], strSearchStr.CPtr());
+						}
+						if (Match)
+						{
+							MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf, Buf + I);
+							break;
+						}
 					}
 				}
-
-				ReadSize = CalcCodeUnitsDistance(VM.CodePage, Buf, Buf + ReadSize);
-#if 0
-				if ((ReverseSearch && CurPos <= 0) || (!ReverseSearch && ReadSize < BufSize))
-#endif
-				if ((ReverseSearch && CurPos <= 0) || (!ReverseSearch && CurPos + ReadSize >= FileSize))
-					break;
 
 				if (ReverseSearch)
 				{
-					/* $ 01.08.2000 KM
-					   Изменёно вычисление CurPos с учётом Whole words
-					*/
-#if 0
-					if (WholeWords)
-						CurPos-=ARRAYSIZE(Buf)-SearchLength+1;
-					else
-						CurPos-=ARRAYSIZE(Buf)-SearchLength;
-#endif
-					CurPos -= ReadSize - SearchDistance + !!WholeWords;
+					if (CurPos <= 0)
+						break;
+
+					vseek(CurPos, SEEK_SET);
 				}
 				else
 				{
-#if 0
-					if (WholeWords)
-						CurPos+=ARRAYSIZE(Buf)-SearchLength+1;
-					else
-						CurPos+=ARRAYSIZE(Buf)-SearchLength;
-#endif
-					CurPos += ReadSize - SearchDistance + !!WholeWords;
+					if (vtell() >= FileSize)
+						break;
+
+					vseek(-(SearchCodeUnits + !!WholeWords), SEEK_CUR);
 				}
 			}
 		}
@@ -2655,10 +2657,7 @@ void Viewer::Search(int Next,int FirstChar)
 		   ! По окончании поиска отступим от верха экрана на
 		     треть отображаемой высоты.
 		*/
-#if 0
-		SelectText(MatchPos,SearchLength,ReverseSearch?0x2:0);
-#endif
-		SelectText(MatchPos,SearchDistance,ReverseSearch?0x2:0);
+		SelectText(MatchPos, SearchCodeUnits, ReverseSearch ? 0x2 : 0);
 
 		// Покажем найденное на расстоянии трети экрана от верха.
 		int FromTop=(ScrY-(Opt.ViOpt.ShowKeyBar?2:1))/4;

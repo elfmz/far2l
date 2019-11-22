@@ -64,7 +64,7 @@ private:
 	enum
 	{
 		AlignSize = 0x1000, // must be power of 2
-		AheadCount = 0xf,
+		AheadCount = 0x10,
 		BehindCount = 0x1,
 		CapacityStock = 0x4
 	};

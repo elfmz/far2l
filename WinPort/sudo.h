@@ -40,6 +40,8 @@ extern "C" {
  __attribute__ ((visibility("default"))) off_t sdc_lseek(int fd, off_t offset, int whence);
  __attribute__ ((visibility("default"))) ssize_t sdc_write(int fd, const void *buf, size_t count);
  __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void *buf, size_t count);
+ __attribute__ ((visibility("default"))) ssize_t sdc_pwrite(int fd, const void *buf, size_t count, off_t offset);
+ __attribute__ ((visibility("default"))) ssize_t sdc_pread(int fd, void *buf, size_t count, off_t offset);
 #ifndef __FreeBSD__
  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf);
 #endif

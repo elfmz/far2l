@@ -2859,6 +2859,9 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 			ResultedCount = dst - (UTF32 *)Buf;
 
 			if (cr == sourceExhausted && src == SrcView) {
+				if (ViewSize < WantViewSize) {
+					break;
+				}
 				WantViewSize+= (4 + WantViewSize / 4);
 
 			} else if (cr == targetExhausted || cr == conversionOK) {

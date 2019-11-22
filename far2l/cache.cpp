@@ -95,6 +95,34 @@ void BufferedFileView::SetPointer(INT64 Ptr, int Whence)
 	}
 }
 
+void BufferedFileView::Close()
+{
+	Clear();
+	if (FD != -1) {
+		sdc_close(FD);
+		FD = -1;
+	}
+	if (!PathToDeleteOnClose.empty()) {
+		sdc_unlink(PathToDeleteOnClose.c_str());
+		PathToDeleteOnClose.clear();
+	}
+}
+
+void BufferedFileView::ActualizeFileSize()
+{
+	struct stat s = {};
+	if (FD != -1 && sdc_fstat(FD, &s) == 0 && FileSize != (UINT64)s.st_size) {
+		Clear();
+		FileSize = s.st_size;
+	}
+}
+
+void BufferedFileView::Clear()
+{
+	BufferBounds.Ptr = 0;
+	BufferBounds.End = 0;
+}
+
 DWORD BufferedFileView::Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite)
 {
 	if (FD == -1)
@@ -109,34 +137,6 @@ DWORD BufferedFileView::Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite)
 	ActualizeFileSize();
 
 	return CheckedCast<DWORD>(r);
-}
-
-void BufferedFileView::ActualizeFileSize()
-{
-	struct stat s = {};
-	if (FD != -1 && sdc_fstat(FD, &s) == 0 && FileSize != (UINT64)s.st_size) {
-		Clear();
-		FileSize = s.st_size;
-	}
-}
-
-void BufferedFileView::Close()
-{
-	Clear();
-	if (FD != -1) {
-		sdc_close(FD);
-		FD = -1;
-	}
-	if (!PathToDeleteOnClose.empty()) {
-		sdc_unlink(PathToDeleteOnClose.c_str());
-		PathToDeleteOnClose.clear();
-	}
-}
-
-void BufferedFileView::Clear()
-{
-	BufferBounds.Ptr = -1;
-	BufferBounds.End = -1;
 }
 
 DWORD BufferedFileView::Read(void *Buf, DWORD Size)

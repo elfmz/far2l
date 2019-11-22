@@ -557,7 +557,7 @@ static inline Boolean isLegalUTF8(const UTF8 *source, int length) {
  * Exported function to return whether a UTF-8 sequence is legal or not.
  * This is not used here; it's just exported.
  */
-Boolean inline isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
+Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
     int length = trailingBytesForUTF8[*source]+1;
     if (length > sourceEnd - source) {
         return false;
@@ -571,7 +571,7 @@ Boolean inline isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
  * Exported function to return the total number of bytes in a codepoint
  * represented in UTF-8, given the value of the first byte.
  */
-unsigned inline getNumBytesForUTF8(UTF8 first) {
+static inline unsigned getNumBytesForUTF8(UTF8 first) {
   return trailingBytesForUTF8[first] + 1;
 }
 
@@ -581,7 +581,7 @@ unsigned inline getNumBytesForUTF8(UTF8 first) {
  * Exported function to return whether a UTF-8 string is legal or not.
  * This is not used here; it's just exported.
  */
-Boolean inline isLegalUTF8String(const UTF8 **source, const UTF8 *sourceEnd) {
+static inline Boolean isLegalUTF8String(const UTF8 **source, const UTF8 *sourceEnd) {
     while (*source != sourceEnd) {
         int length = trailingBytesForUTF8[**source] + 1;
         if (length > sourceEnd - *source || !isLegalUTF8(*source, length))

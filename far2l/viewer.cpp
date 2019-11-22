@@ -2615,7 +2615,7 @@ void Viewer::Search(int Next,int FirstChar)
 					}
 				}
 
-				ReadSize = CalcByteDistance(VM.CodePage, Buf, Buf + ReadSize);
+				ReadSize = CalcCodeUnitsDistance(VM.CodePage, Buf, Buf + ReadSize);
 #if 0
 				if ((ReverseSearch && CurPos <= 0) || (!ReverseSearch && ReadSize < BufSize))
 #endif

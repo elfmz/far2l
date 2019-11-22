@@ -268,6 +268,8 @@ DWORD BufferedFileView::DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize)
 	if (r <= 0)
 		return 0;
 
+	fprintf(stderr, "BufferedFileView::DirectReadAt: [%lx ... %lx)\n", (unsigned long)Ptr, (unsigned long)(Ptr + DataSize));
+
 	return CheckedCast<DWORD>(r);
 }
 

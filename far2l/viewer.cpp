@@ -78,7 +78,7 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 {
 	if (begin > end)
 		return -1;
-
+#if (__WCHAR_MAX__ > 0xffff)
 	if ((CodePage == CP_UTF32LE) || (CodePage == CP_UTF32BE)) {
 		return (end - begin) * 4;
 	}
@@ -95,6 +95,22 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	} else {// one-byte code page?
 		distance = end - begin;
 	}
+
+#else
+	if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE)) {
+		return (end - begin) * 2;
+	}
+
+	int distance;
+
+	if (CodePage == CP_UTF8) {
+		CalcSpaceUTF16toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, lenientConversion);
+
+	} else {// one-byte code page?
+		distance = end - begin;
+	}
+
+#endif
 
 	return distance;
 }
@@ -644,7 +660,7 @@ void Viewer::ShowHex()
 {
 	wchar_t OutStr[MAX_VIEWLINE],TextStr[20];
 	int EndFile;
-	int64_t SelSize;
+//	int64_t SelSize;
 	WCHAR Ch;
 	int X,Y,TextPos;
 	int SelStart, SelEnd;
@@ -655,7 +671,7 @@ void Viewer::ShowHex()
 	{
 		bSelStartFound = false;
 		bSelEndFound = false;
-		SelSize=0;
+//		SelSize=0;
 		SetColor(COL_VIEWERTEXT);
 		GotoXY(X1,Y);
 
@@ -698,7 +714,7 @@ void Viewer::ShowHex()
 				{
 					bSelStartFound = true;
 					SelStart = (int)wcslen(OutStr);
-					SelSize=SelectSize;
+//					SelSize=SelectSize;
 					/* $ 22.01.2001 IS
 					    Внимание! Возможно, это не совсем верное решение проблемы
 					    выделения из плагинов, но мне пока другого в голову не пришло.
@@ -711,7 +727,7 @@ void Viewer::ShowHex()
 				{
 					bSelEndFound = true;
 					SelEnd = (int)wcslen(OutStr)+3;
-					SelSize=SelectSize;
+//					SelSize=SelectSize;
 				}
 
 				if (!vgetc(Ch))
@@ -766,7 +782,7 @@ void Viewer::ShowHex()
 				{
 					bSelStartFound = true;
 					SelStart = (int)wcslen(OutStr);
-					SelSize=SelectSize;
+//					SelSize=SelectSize;
 					/* $ 22.01.2001 IS
 					    Внимание! Возможно, это не совсем верное решение проблемы
 					    выделения из плагинов, но мне пока другого в голову не пришло.
@@ -779,7 +795,7 @@ void Viewer::ShowHex()
 				{
 					bSelEndFound = true;
 					SelEnd = (int)wcslen(OutStr)+1;
-					SelSize=SelectSize;
+//					SelSize=SelectSize;
 				}
 
 				if (!vgetc(Ch))
@@ -850,7 +866,7 @@ void Viewer::ShowHex()
 			SetColor(COL_VIEWERSELECTEDTEXT);
 			GotoXY((int)((int64_t)X1+SelStart-HexLeftPos),Y);
 			FS<<fmt::Precision(SelEnd-SelStart+1)<<OutStr+static_cast<size_t>(SelStart);
-			SelSize = 0;
+//			SelSize = 0;
 		}
 	}
 }
@@ -876,7 +892,7 @@ void Viewer::DrawScrollbar()
 		{
 			UINT64 Total=FileSize/16+(FileSize%16?1:0);
 			UINT64 Top=FilePos/16+(FilePos%16?1:0);
-ScrollBarEx(X2+(m_bQuickView?1:0),Y1,Y2-Y1+1,LastPage?Top?Total:0:Top,Total);
+			ScrollBarEx(X2+(m_bQuickView?1:0),Y1,Y2-Y1+1,LastPage?Top?Total:0:Top,Total);
 		}
 	}
 }
@@ -2851,9 +2867,15 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 			}
 
 			const UTF8 *src = SrcView;
+#if (__WCHAR_MAX__ > 0xffff)
 			UTF32 *dst = (UTF32 *)&Buf[ResultedCount];
 			ConversionResult cr = ConvertUTF8toUTF32(&src, src + ViewSize,
 				&dst, dst + (Count - ResultedCount), lenientConversion);
+#else
+			UTF16 *dst = (UTF16 *)&Buf[ResultedCount];
+			ConversionResult cr = ConvertUTF8toUTF16(&src, src + ViewSize,
+				&dst, dst + (Count - ResultedCount), lenientConversion);
+#endif
 
 			Ptr+= (src - SrcView);
 			ResultedCount = dst - (UTF32 *)Buf;
@@ -2902,14 +2924,14 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		{
 			if (VM.CodePage == CP_UTF16LE || VM.CodePage == CP_UTF16BE) {
 				ReadSize/= 2;
-				for (int i = 0; i < ReadSize; ++i)
+				for (DWORD i = 0; i < ReadSize; ++i)
 				{
 					Buf[i] = (unsigned char)View[i * 2 + 1];
 					Buf[i]<<= 8;
 					Buf[i]|= (unsigned char)View[i * 2];
 				}
 			} else {
-				for (int i = 0; i < ReadSize; i++)
+				for (DWORD i = 0; i < ReadSize; i++)
 				{
 					Buf[i] = (wchar_t)(unsigned char)View[i];
 				}

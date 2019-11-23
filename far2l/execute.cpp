@@ -226,8 +226,10 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 
 	} else {
 		ProcessShowClock++;
-		CtrlObject->CmdLine->ShowBackground();
-		CtrlObject->CmdLine->Redraw();
+		if (CtrlObject && CtrlObject->CmdLine) {
+			CtrlObject->CmdLine->ShowBackground();
+			CtrlObject->CmdLine->Redraw();
+		}
 //		CtrlObject->CmdLine->SetString(L"", TRUE);
 		ScrBuf.Flush();
 		DWORD saved_mode = 0, dw;
@@ -252,11 +254,13 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
 		WINPORT(SetConsoleMode)(NULL, saved_mode);
 		ScrBuf.FillBuf();
-		CtrlObject->CmdLine->SaveBackground();
+		if (CtrlObject && CtrlObject->CmdLine) {
+			CtrlObject->CmdLine->SaveBackground();
+		}
 		ProcessShowClock--;
 		SetFarConsoleMode(TRUE);
 		ScrBuf.Flush();
-		if (Opt.ShowKeyBar) {
+		if (CtrlObject && CtrlObject->MainKeyBar && Opt.ShowKeyBar) {
 			CtrlObject->MainKeyBar->Show();
 		}
 	}

@@ -365,6 +365,62 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void
 	}
 }
 
+
+extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_pwrite(int fd, const void *buf, size_t count, off_t offset)
+{
+	int remote_fd = s_c2s_fd.Lookup(fd);
+	if (remote_fd==-1)
+		return pwrite(fd, buf, count, offset);
+
+	try {
+		ClientTransaction ct(SUDO_CMD_PWRITE);
+		ct.SendPOD(remote_fd);
+		ct.SendPOD(offset);
+		ct.SendPOD(count);
+		if (count) ct.SendBuf(buf, count);
+
+		ssize_t r;
+		ct.RecvPOD(r);
+		if (r == -1)
+			ct.RecvErrno();
+
+		return r;
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: pwrite(0x%x) - error %s\n", fd, what);
+		return -1;
+	}
+}
+
+extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_pread(int fd, void *buf, size_t count, off_t offset)
+{
+	int remote_fd = s_c2s_fd.Lookup(fd);
+	if (remote_fd==-1)
+		return pread(fd, buf, count, offset);
+
+	try {
+		ClientTransaction ct(SUDO_CMD_PREAD);
+		ct.SendPOD(remote_fd);
+		ct.SendPOD(offset);
+		ct.SendPOD(count);
+
+		ssize_t r;
+		ct.RecvPOD(r);
+		if (r ==-1) {
+			ct.RecvErrno();
+		} else if ( r > 0) {
+			if (r > (ssize_t)count)
+				throw "too many bytes";
+
+			ct.RecvBuf(buf, r);
+		}
+
+		return r;
+	} catch(const char *what) {
+		fprintf(stderr, "sudo_client: pread(0x%x) - error %s\n", fd, what);
+		return -1;
+	}
+}
+
 template <class STAT_STRUCT>
 	static int common_stat(SudoCommand cmd, const char *path, STAT_STRUCT *buf)
 {

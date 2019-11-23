@@ -39,7 +39,7 @@ public:
 	BufferedFileView();
 	~BufferedFileView();
 
-	bool Open(const std::string &PathName, bool TemporaryWritable = false);
+	bool Open(const std::string &PathName, bool DeletOnClose = false);
 	void Close();
 
 	bool Opened() const { return FD != -1; }
@@ -54,7 +54,6 @@ public:
 	void Clear();
 
 	DWORD Read(void *Buf, DWORD Size);
-	DWORD Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite);
 
 	LPBYTE ViewBytesSlide(DWORD &Size);
 	LPBYTE ViewBytesAt(UINT64 Ptr, DWORD &Size);

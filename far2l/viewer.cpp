@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "console.hpp"
+#include "execute.hpp"
 #include "wakeful.hpp"
 #include "../utils/include/ConvertUTF.h"
 
@@ -161,7 +162,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	HideCursor=TRUE;
 	DeleteFolder=TRUE;
 	CodePageChangedByUser=FALSE;
-	ReadStdin=FALSE;
+	ReadCmdout=false;
 	memset(&BMSavePos,0xff,sizeof(BMSavePos));
 	memset(UndoData,0xff,sizeof(UndoData));
 	LastKeyUndo=FALSE;
@@ -184,7 +185,7 @@ Viewer::~Viewer()
 	{
 		ViewFile.Close();
 
-		if (Opt.ViOpt.SavePos)
+		if (Opt.ViOpt.SavePos && !ReadCmdout)
 		{
 			FARString strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFileName);
 			UINT CodePage=0;
@@ -279,8 +280,8 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	}
 
 	FARString OpenedFileName;
-
-	if (Opt.OnlyEditorViewerUsed && !StrCmp(strFileName, L"-"))
+#if 1
+	if (Opt.OnlyEditorViewerUsed && strFileName.At(0) == L'-')
 	{
 		FARString strTempName;
 
@@ -290,28 +291,25 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 			return FALSE;
 		}
 
+		std::string cmd = "echo Viewer waits command to complete...; echo You can use Ctrl+C to stop it, or Ctrl+Alt+C - to hardly terminate.;";
+		cmd+= strFileName.GetMB().substr(1);
+		cmd+= " >";
+		cmd+= strTempName.GetMB();
+		cmd+= " 2>&1";
+
+		int r = farExecuteA(cmd.c_str(), EF_NOCMDPRINT);
+
 		if (!ViewFile.Open(strTempName.GetMB(), true))
 		{
 			OpenFailed=true;
 			return FALSE;
 		}
+
 		OpenedFileName = strTempName;
-
-		char ReadBuf[8192];
-		DWORD ReadSize;
-
-		while (WINPORT(ReadFile)(Console.GetInputHandle(),ReadBuf,sizeof(ReadBuf),&ReadSize,nullptr))
-		{
-			ViewFile.Write(ReadBuf,ReadSize);
-		}
-		ViewFile.SetPointer(0);
-
-		//after reading from the pipe, redirect stdin to the real console stdin
-		//CONIN$ must be opened with the exact flags and name as below so apiCreateFile() is not good
-		//todo? SetStdHandle(STD_INPUT_HANDLE,CreateFile(L"CONIN$",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,nullptr,OPEN_EXISTING,0,nullptr));
-		ReadStdin=TRUE;
+		ReadCmdout = true;
 	}
 	else
+#endif
 	{
 		ViewFile.Open(strFileName.GetMB());
 		OpenedFileName = strFileName;
@@ -336,7 +334,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	apiGetFindDataEx(strFileName, ViewFindData);
 	UINT CachedCodePage=0;
 
-	if (Opt.ViOpt.SavePos && !ReadStdin)
+	if (Opt.ViOpt.SavePos)
 	{
 		int64_t NewLeftPos,NewFilePos;
 		FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);

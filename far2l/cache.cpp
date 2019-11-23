@@ -47,16 +47,11 @@ BufferedFileView::~BufferedFileView()
 	free(Buffer);
 }
 
-bool BufferedFileView::Open(const std::string &PathName, bool TemporaryWritable)
+bool BufferedFileView::Open(const std::string &PathName, bool DeletOnClose)
 {
 	Close();
 
-	if (TemporaryWritable) {
-		FD = sdc_open(PathName.c_str(), O_RDWR | O_TRUNC | O_CREAT, 0660);
-	} else {
-		FD = sdc_open(PathName.c_str(), O_RDONLY);
-	}
-
+	FD = sdc_open(PathName.c_str(), O_RDONLY);
 	if (FD == -1) {
 		return false;
 	}
@@ -65,7 +60,7 @@ bool BufferedFileView::Open(const std::string &PathName, bool TemporaryWritable)
 	posix_fadvise(FD, 0, 0, POSIX_FADV_SEQUENTIAL); // todo: sdc_posix_fadvise
 #endif
 
-	if (TemporaryWritable) {
+	if (DeletOnClose) {
 		PathToDeleteOnClose = PathName;
 	} else {
 		PathToDeleteOnClose.clear();
@@ -121,22 +116,6 @@ void BufferedFileView::Clear()
 {
 	BufferBounds.Ptr = 0;
 	BufferBounds.End = 0;
-}
-
-DWORD BufferedFileView::Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite)
-{
-	if (FD == -1)
-		return 0;
-
-	ssize_t r = sdc_pwrite(FD, Buffer, NumberOfBytesToWrite, CheckedCast<off_t>(CurPtr));
-	if (r <= 0)
-		return 0;
-
-	CurPtr+= r;
-
-	ActualizeFileSize();
-
-	return CheckedCast<DWORD>(r);
 }
 
 DWORD BufferedFileView::Read(void *Buf, DWORD Size)

@@ -100,7 +100,9 @@ static void print_help(const char *self)
 		" -u <username>\n"
 		"      Allows to have separate settings for different users.\n"
 		" -v <filename>\n"
-		"      View the specified file. If <filename> is -, data is read from the stdin.\n"
+		"      View the specified file. If <filename> is prefixe-, data is read from the stdin.\n"
+		" -v -\"command line\"\n"
+		"      Executes given command line and opens viewer with its output.\n"
 		" -w   Stretch to console window instead of console buffer.\n"
 		"\n",
 		self);

@@ -104,7 +104,7 @@ typedef uint8_t   UTF8;   /* typically 8 bits */
 typedef unsigned char   Boolean; /* 0 or 1 */
 
 /* Some fundamental constants */
-#define UNI_REPLACEMENT_CHAR (UTF32)0x0000FFFD
+#define UNI_REPLACEMENT_CHAR (UTF32)0x07 //0x0000FFFD
 #define UNI_MAX_BMP (UTF32)0x0000FFFF
 #define UNI_MAX_UTF16 (UTF32)0x0010FFFF
 #define UNI_MAX_UTF32 (UTF32)0x7FFFFFFF

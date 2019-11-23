@@ -114,8 +114,7 @@ class Viewer:public ScreenObject
 		FARString strFileName;
 		FARString strFullFileName;
 
-		FileSeekDefer ViewFile;
-		CachedRead Reader;
+		BufferedFileView ViewFile;
 
 		FAR_FIND_DATA_EX ViewFindData;
 
@@ -190,7 +189,7 @@ class Viewer:public ScreenObject
 		int HexToNum(int Hex);
 
 		int vread(wchar_t *Buf,int Count, bool Raw=false);
-		int vseek(int64_t Offset,int Whence);
+		void vseek(int64_t Offset,int Whence);
 
 		int64_t vtell();
 		bool vgetc(WCHAR& C);

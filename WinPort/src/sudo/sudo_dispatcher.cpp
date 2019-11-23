@@ -160,6 +160,47 @@ namespace Sudo
 		}
 	}
 	
+	static void OnSudoDispatch_PWrite(BaseTransaction &bt)
+	{		
+		int fd;
+		off_t offset;
+		size_t count;
+
+		bt.RecvPOD(fd);
+		bt.RecvPOD(offset);
+		bt.RecvPOD(count);
+		
+		std::vector<char> buf(count + 1);
+		if (count)
+			bt.RecvBuf(&buf[0], count);
+		
+		ssize_t r = g_fds.Check(fd) ? pwrite(fd, &buf[0], count, offset) : -1;
+		bt.SendPOD(r);
+		if (r==-1)
+			bt.SendErrno();
+	}
+	
+	static void OnSudoDispatch_PRead(BaseTransaction &bt)
+	{
+		int fd;
+		off_t offset;
+		size_t count;
+
+		bt.RecvPOD(fd);
+		bt.RecvPOD(offset);
+		bt.RecvPOD(count);
+		
+		std::vector<char> buf(count + 1);
+		
+		ssize_t r = g_fds.Check(fd) ? pread(fd, &buf[0], count, offset) : -1;
+		bt.SendPOD(r);
+		if (r==-1) {
+			bt.SendErrno();
+		} else if (r > 0) {
+			bt.SendBuf(&buf[0], r);
+		}
+	}
+	
 	
 	template <class STAT_STRUCT>
 		static void OnSudoDispatch_StatCommon(int (*pfn)(const char *path, STAT_STRUCT *buf), BaseTransaction &bt)
@@ -539,6 +580,14 @@ namespace Sudo
 			
 			case SUDO_CMD_READ:
 				OnSudoDispatch_Read(bt);
+				break;
+
+			case SUDO_CMD_PWRITE:
+				OnSudoDispatch_PWrite(bt);
+				break;
+			
+			case SUDO_CMD_PREAD:
+				OnSudoDispatch_PRead(bt);
 				break;
 				
 			case SUDO_CMD_STATFS:

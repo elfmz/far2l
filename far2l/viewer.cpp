@@ -291,13 +291,18 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 			return FALSE;
 		}
 
+
 		std::string cmd = "echo Viewer waits command to complete...; echo You can use Ctrl+C to stop it, or Ctrl+Alt+C - to hardly terminate.;";
-		cmd+= strFileName.GetMB().substr(1);
+		if (strFileName.GetLength() == 1) {
+			cmd+= "far2l -h";
+		} else {
+			cmd+= strFileName.GetMB().substr(1);
+		}
 		cmd+= " >";
 		cmd+= strTempName.GetMB();
 		cmd+= " 2>&1";
 
-		int r = farExecuteA(cmd.c_str(), EF_NOCMDPRINT);
+		farExecuteA(cmd.c_str(), EF_NOCMDPRINT);
 
 		if (!ViewFile.Open(strTempName.GetMB(), true))
 		{

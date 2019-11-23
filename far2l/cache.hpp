@@ -32,22 +32,77 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-class CachedRead
+class BufferedFileView
 {
+	BufferedFileView(const BufferedFileView&) = delete;
 public:
-	CachedRead(File& file);
-	~CachedRead();
-	bool Read(LPVOID Data, DWORD DataSize, LPDWORD BytesRead);
-	bool FillBuffer();
+	BufferedFileView();
+	~BufferedFileView();
+
+	bool Open(const std::string &PathName, bool TemporaryWritable = false);
+	void Close();
+
+	bool Opened() const { return FD != -1; }
+
+	void ActualizeFileSize();
+
+	void SetPointer(INT64 Ptr, int Whence = SEEK_SET);
+	inline void GetPointer(INT64 &Ptr) const { Ptr = CurPtr; }
+	inline bool GetSize(UINT64& Size) const { Size = FileSize; return Opened(); };
+	inline bool Eof() const { return CurPtr >= FileSize; }
+
 	void Clear();
 
+	DWORD Read(void *Buf, DWORD Size);
+	DWORD Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite);
+
+	LPBYTE ViewBytesSlide(DWORD &Size);
+	LPBYTE ViewBytesAt(UINT64 Ptr, DWORD &Size);
+
+
 private:
-	LPBYTE Buffer;
-	File& file;
-	enum {BufferSize=0x10000};
-	DWORD ReadSize;
-	DWORD BytesLeft;
-	INT64 LastPtr;
+	enum
+	{
+		AlignSize = 0x1000, // must be power of 2
+		AheadCount = 0x10,
+		BehindCount = 0x1,
+		CapacityStock = 0x4
+	};
+
+	struct Bounds
+	{
+		UINT64 Ptr = 0;  // must be multiple of AlignSize
+		UINT64 End = 0;
+	} BufferBounds;
+
+	int FD = -1;
+	std::string PathToDeleteOnClose;
+
+	LPBYTE Buffer = nullptr;
+	DWORD BufferSize = 0;
+	UINT64 CurPtr = 0, LastPtr = 0;
+	UINT64 FileSize = 0;
+
+
+	template <class T>
+		inline T AlignUp(T v)
+	{
+		T a = v & (T)(AlignSize - 1);
+		return a ? v + (AlignSize - a) : v;
+	}
+
+	template <class T>
+		inline T AlignDown(T v)
+	{
+		return v & (~(T)(AlignSize - 1));
+	}
+
+	DWORD DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize);
+	LPBYTE AllocBuffer(size_t Size);
+
+	void CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter, DWORD CountRighter);
+
+
 };
 
 

@@ -145,7 +145,6 @@ class Viewer:public ScreenObject
 
 		FARString strPluginData;
 		int CodePageChangedByUser;
-		bool ReadCmdout;
 		int InternalKey;
 
 		struct InternalViewerBookMark BMSavePos;

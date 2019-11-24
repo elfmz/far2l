@@ -63,7 +63,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "console.hpp"
-#include "execute.hpp"
 #include "wakeful.hpp"
 #include "../utils/include/ConvertUTF.h"
 
@@ -162,7 +161,6 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	HideCursor=TRUE;
 	DeleteFolder=TRUE;
 	CodePageChangedByUser=FALSE;
-	ReadCmdout=false;
 	memset(&BMSavePos,0xff,sizeof(BMSavePos));
 	memset(UndoData,0xff,sizeof(UndoData));
 	LastKeyUndo=FALSE;
@@ -185,7 +183,7 @@ Viewer::~Viewer()
 	{
 		ViewFile.Close();
 
-		if (Opt.ViOpt.SavePos && !ReadCmdout)
+		if (Opt.ViOpt.SavePos && Opt.OnlyEditorViewerUsed != Options::ONLY_VIEWER_ON_CMDOUT)
 		{
 			FARString strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFileName);
 			UINT CodePage=0;
@@ -279,46 +277,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		return FALSE;
 	}
 
-	FARString OpenedFileName;
-#if 1
-	if (Opt.OnlyEditorViewerUsed && strFileName.At(0) == L'-')
-	{
-		FARString strTempName;
-
-		if (!FarMkTempEx(strTempName))
-		{
-			OpenFailed=TRUE;
-			return FALSE;
-		}
-
-
-		std::string cmd = "echo Viewer waits command to complete...; echo You can use Ctrl+C to stop it, or Ctrl+Alt+C - to hardly terminate.;";
-		if (strFileName.GetLength() == 1) {
-			cmd+= "far2l -h";
-		} else {
-			cmd+= strFileName.GetMB().substr(1);
-		}
-		cmd+= " >";
-		cmd+= strTempName.GetMB();
-		cmd+= " 2>&1";
-
-		farExecuteA(cmd.c_str(), EF_NOCMDPRINT);
-
-		if (!ViewFile.Open(strTempName.GetMB(), true))
-		{
-			OpenFailed=true;
-			return FALSE;
-		}
-
-		OpenedFileName = strTempName;
-		ReadCmdout = true;
-	}
-	else
-#endif
-	{
-		ViewFile.Open(strFileName.GetMB());
-		OpenedFileName = strFileName;
-	}
+	ViewFile.Open(strFileName.GetMB());
 
 	if (!ViewFile.Opened())
 	{
@@ -385,7 +344,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		if (VM.CodePage == CP_AUTODETECT || IsUnicodeOrUtfCodePage(VM.CodePage))
 		{
 			File f;
-			f.Open(OpenedFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL);
+			f.Open(strFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL);
 			Detect=GetFileFormat(f,CodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0);
 
 			// Проверяем поддерживается или нет задетектированная кодовая страница

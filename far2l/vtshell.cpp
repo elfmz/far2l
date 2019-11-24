@@ -791,6 +791,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	static int sShowConsoleLog(ConsoleLogKind kind, const std::string &histfile)
 	{
+		if (!CtrlObject || !CtrlObject->CmdLine)
+			return 0;
+
 		ScrBuf.FillBuf();
 		CtrlObject->CmdLine->SaveBackground();
 

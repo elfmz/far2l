@@ -39,7 +39,7 @@ public:
 	BufferedFileView();
 	~BufferedFileView();
 
-	bool Open(const std::string &PathName, bool DeletOnClose = false);
+	bool Open(const std::string &PathName);
 	void Close();
 
 	bool Opened() const { return FD != -1; }
@@ -75,7 +75,6 @@ private:
 	} BufferBounds;
 
 	int FD = -1;
-	std::string PathToDeleteOnClose;
 
 	LPBYTE Buffer = nullptr;
 	DWORD BufferSize = 0;

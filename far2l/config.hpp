@@ -460,7 +460,16 @@ struct Options
 	int MultiMakeDir; // Опция создания нескольких каталогов за один сеанс
 
 	int ViewerEditorClock;
-	int OnlyEditorViewerUsed; // =1, если старт был /e или /v
+
+	enum OnlyEditorViewerUsedT
+	{
+		NOT_ONLY_EDITOR_VIEWER = 0,
+		ONLY_EDITOR,
+		ONLY_VIEWER,
+		ONLY_EDITOR_ON_CMDOUT,
+		ONLY_VIEWER_ON_CMDOUT
+	} OnlyEditorViewerUsed;
+
 	int SaveViewHistory;
 	int ViewHistoryCount;
 

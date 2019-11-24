@@ -47,7 +47,7 @@ BufferedFileView::~BufferedFileView()
 	free(Buffer);
 }
 
-bool BufferedFileView::Open(const std::string &PathName, bool DeletOnClose)
+bool BufferedFileView::Open(const std::string &PathName)
 {
 	Close();
 
@@ -59,12 +59,6 @@ bool BufferedFileView::Open(const std::string &PathName, bool DeletOnClose)
 #ifndef __APPLE__
 	posix_fadvise(FD, 0, 0, POSIX_FADV_SEQUENTIAL); // todo: sdc_posix_fadvise
 #endif
-
-	if (DeletOnClose) {
-		PathToDeleteOnClose = PathName;
-	} else {
-		PathToDeleteOnClose.clear();
-	}
 
 	FileSize = 0;
 	ActualizeFileSize();
@@ -96,10 +90,6 @@ void BufferedFileView::Close()
 	if (FD != -1) {
 		sdc_close(FD);
 		FD = -1;
-	}
-	if (!PathToDeleteOnClose.empty()) {
-		sdc_unlink(PathToDeleteOnClose.c_str());
-		PathToDeleteOnClose.clear();
 	}
 }
 

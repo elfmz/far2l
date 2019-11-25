@@ -2844,9 +2844,17 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 
 			if (cr == sourceExhausted && src == SrcView) {
 				if (ViewSize < WantViewSize) {
-					break;
+					if (ResultedCount < Count) {
+						Buf[ResultedCount] = UNI_REPLACEMENT_CHAR;
+						++ResultedCount;
+						++Ptr;
+					} else {
+						break;
+					}
+
+				} else {
+					WantViewSize+= (4 + WantViewSize / 4);
 				}
-				WantViewSize+= (4 + WantViewSize / 4);
 
 			} else if (cr == targetExhausted || cr == conversionOK) {
 				break;

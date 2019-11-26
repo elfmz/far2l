@@ -2,6 +2,7 @@
 #include "../Defs.h"
 #include "../DialogUtils.h"
 #include "../../lng.h"
+#include "../../Globals.h"
 
 
 /*                                               

@@ -975,28 +975,29 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 								while (IsSpace(pString->lpData[(int)OutPtr]) && OutPtr<=SavePtr)
 									OutPtr++;
 
-							if (OutPtr)
+							if (OutPtr < SavePtr && OutPtr)
 							{
-								vseek(OutPtr-SavePtr,SEEK_CUR);
+								vseek(-CalcCodeUnitsDistance(VM.CodePage,
+										&pString->lpData[(size_t)OutPtr],
+										&pString->lpData[(size_t)SavePtr]),
+									SEEK_CUR);
 							}
 							else
-								OutPtr=SavePtr;
+								OutPtr = SavePtr;
 						}
 
 						/* $ 13.09.2000 tran
 						   remove space at WWrap */
-						int64_t savepos=vtell();
 
-						while (IsSpace(Ch))
-						{
-							if (!vgetc(Ch))
-							{
-								break;
+						if (IsSpace(Ch)) {
+							int64_t lastpos;
+							for (;;) {
+								lastpos = vtell();
+								if (!vgetc(Ch) || !IsSpace(Ch)) break;
 							}
+							vseek(lastpos, SEEK_SET);
 						}
 
-						if (vtell()!=savepos)
-							vseek(-1,SEEK_CUR);
 					}// wwrap
 				}
 

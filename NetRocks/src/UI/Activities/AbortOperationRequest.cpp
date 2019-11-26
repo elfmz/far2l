@@ -101,7 +101,12 @@ public:
 		_finished = false;
 		while (!_state.finished) {
 			if (BaseDialog::Show(L"AbortOperationProgress", 6, 2, FDLG_REGULARIDLE) == -2) {
-				usleep(1000);// seems far2l goes down, dont use all CPU in this loop
+				// seems far2l goes down, dont use all CPU in this loop
+				// and dispatch interlocked thread calls toa void deadlock
+				// if this is main thread and other threads try to perform
+				// interlocked operations
+				usleep(1000);
+				G.info.FSF->DispatchInterThreadCalls();
 			}
 			if (_state.finished) break;
 			if (_state.ao_host) {

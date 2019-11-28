@@ -2077,11 +2077,42 @@ void Viewer::Up()
 		Buf[WrapBufSize] = 0;
 //		fprintf(stderr, "Matching LINE: '%ls'\n", &Buf[0]);
 
+		if (VM.WordWrap) {
+			//	khffgkjkfdg dfkghd jgfhklf |
+			//	sdflksj lfjghf fglh lf     |
+			//	dfdffgljh ldgfhj           |
+
+			for (I = 0; I < WrapBufSize;) {
+				if (!IsSpace(Buf[I])) {
+					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I) {
+						if (I == WrapBufSize) {
+//							fprintf(stderr, "LASTLINE: '%ls'\n", std::wstring(&Buf[CurLineStart], WrapBufSize - CurLineStart).c_str());
+							int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
+							FilePosShiftLeft(distance);
+							return;
+						}
+
+						if (!IsSpace(Buf[I]) && (I + 1 == WrapBufSize || IsSpace(Buf[I + 1]))) {
+							if (CalcStrSize(&Buf[CurLineStart], I + 1 - CurLineStart) > Width) {
+//								fprintf(stderr, "SUBLINE: '%ls'\n", std::wstring(&Buf[CurLineStart], LastFitEnd - CurLineStart).c_str());
+								I = LastFitEnd;
+								break;
+							}
+							LastFitEnd = I + 1;
+						}
+					}
+
+				} else {
+					++I;
+				}
+			}
+			//fprintf(stderr, "XXXXXXXXXXXXXX\n");
+		}
 		for (I = 0; I < WrapBufSize; ++I) {
 			int SubLineSize = CalcStrSize(&Buf[I], WrapBufSize - I);
 			if ( SubLineSize <= Width) {
 				int PreSubLineSize = CalcStrSize(&Buf[0], I);
-				if (PreSubLineSize % Width == 0 || PreSubLineSize / Width == (PreSubLineSize + SubLineSize) / Width) {
+				if (Width == 0 || PreSubLineSize % Width == 0 || PreSubLineSize / Width == (PreSubLineSize + SubLineSize) / Width) {
 					int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[I], &Buf[WrapBufSize]);
 					if (distance <= 0) {
 //						fprintf(stderr, "!!!!!!!!!!!!OOPS!!!!!!!!!!!! %d..%d -> %d\n", I, WrapBufSize, distance);

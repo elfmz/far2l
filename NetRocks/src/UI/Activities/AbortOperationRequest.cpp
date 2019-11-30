@@ -103,7 +103,7 @@ public:
 		while (!_state.finished) {
 			if (BaseDialog::Show(L"AbortOperationProgress", 6, 2, FDLG_REGULARIDLE) == -2) {
 				// seems far2l goes down, dont use all CPU in this loop
-				// and dispatch interlocked thread calls toa void deadlock
+				// and dispatch interlocked thread calls to avoid deadlock
 				// if this is main thread and other threads try to perform
 				// interlocked operations
 				usleep(1000);

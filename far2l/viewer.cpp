@@ -104,7 +104,7 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	int distance;
 
 	if (CodePage == CP_UTF8) {
-		CalcSpaceUTF16toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, lenientConversion);
+		CalcSpaceUTF16toUTF8(&distance, (const UTF16**)&begin, (const UTF16*)end, lenientConversion);
 
 	} else {// one-byte code page?
 		distance = end - begin;
@@ -2865,14 +2865,15 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 			UTF32 *dst = (UTF32 *)&Buf[ResultedCount];
 			ConversionResult cr = ConvertUTF8toUTF32(&src, src + ViewSize,
 				&dst, dst + (Count - ResultedCount), lenientConversion);
+			ResultedCount = dst - (UTF32 *)Buf;
 #else
 			UTF16 *dst = (UTF16 *)&Buf[ResultedCount];
 			ConversionResult cr = ConvertUTF8toUTF16(&src, src + ViewSize,
 				&dst, dst + (Count - ResultedCount), lenientConversion);
+			ResultedCount = dst - (UTF16 *)Buf;
 #endif
 
 			Ptr+= (src - SrcView);
-			ResultedCount = dst - (UTF32 *)Buf;
 
 			if (cr == sourceExhausted && src == SrcView) {
 				if (ViewSize < WantViewSize) {

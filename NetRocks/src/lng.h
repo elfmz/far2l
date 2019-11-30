@@ -212,6 +212,7 @@ enum LanguageID
   MNFSGroups,
 
   MWebDAVOptionsTitle,
+  MWebDAVUserAgent,
   MWebDAVUseProxy,
   MWebDAVProxyHost,
   MWebDAVProxyPort,

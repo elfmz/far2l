@@ -226,8 +226,10 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 	uint32_t ipc_ver_magic = 0;
 
 	try {
+		pid_t peer = 0;
 		RecvPOD(ipc_ver_magic);
-		RecvPOD(_peer);
+		RecvPOD(peer);
+		_peer = peer;
 
 	} catch (std::exception &) {
 		OnBroken();
@@ -351,10 +353,10 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 
 void HostRemote::Abort()
 {
+	pid_t peer = _peer.exchange(0);
 	AbortReceiving();
-	if (_peer != 0) {
-		kill(_peer, SIGQUIT);
-		_peer = 0;
+	if (peer != 0) {
+		kill(peer, SIGQUIT);
 	}
 }
 

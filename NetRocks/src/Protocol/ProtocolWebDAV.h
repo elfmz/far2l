@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <neon/ne_session.h>
+#include <neon/ne_request.h>
 #include "Protocol.h"
 
 struct DavConnection
@@ -26,6 +27,7 @@ private:
 class ProtocolWebDAV : public IProtocol
 {
 	std::shared_ptr<DavConnection> _conn;
+	std::string _useragent;
 	std::string _username, _password;
 	std::string _proxy_username, _proxy_password;
 	std::string _known_server_identity, _current_server_identity;
@@ -33,6 +35,7 @@ class ProtocolWebDAV : public IProtocol
 	static int sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
 	static int sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
 	static int sVerifySsl(void *userdata, int failures, const ne_ssl_certificate *cert);
+	static void sCreateRequestHook(ne_request *req, void *userdata, const char *method, const char *requri);
 public:
 
 	ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,

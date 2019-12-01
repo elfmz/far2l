@@ -3,6 +3,7 @@
 #include <string>
 #include <mutex>
 #include <list>
+#include <atomic>
 
 #include "Host.h"
 #include "IPC.h"
@@ -24,7 +25,7 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 
 	bool _busy = false;
 	bool _cloning = false;
-	pid_t _peer = 0;
+	std::atomic<pid_t> _peer = {};
 
 	void RecvReply(IPCCommand cmd);
 

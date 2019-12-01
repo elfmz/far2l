@@ -309,11 +309,17 @@ ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsi
 	EnsureInitNEON();
 
 	StringConfig protocol_options(options);
+
+	_useragent = protocol_options.GetString("UserAgent");
 	_known_server_identity = protocol_options.GetString("ServerIdentity");
 
 	_conn->sess = ne_session_create(scheme, host.c_str(), port);
 	if (_conn->sess == nullptr) {
 		throw ProtocolError("Create session error", errno);
+	}
+
+	if (!_useragent.empty()) {
+		ne_hook_create_request(_conn->sess, &sCreateRequestHook, this);
 	}
 
 	ne_ssl_set_verify(_conn->sess, sVerifySsl, this);
@@ -351,6 +357,15 @@ ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsi
 
 ProtocolWebDAV::~ProtocolWebDAV()
 {
+}
+
+void ProtocolWebDAV::sCreateRequestHook(ne_request *req, void *userdata, const char *method, const char *requri)
+{
+	ProtocolWebDAV *it = (ProtocolWebDAV *)userdata;
+	if (!it->_useragent.empty()) {
+		ne_add_request_header(req, "User-Agent", it->_useragent.c_str());
+//		fprintf(stderr, "USERAGENT '%s' for '%s' '%s'\n", it->_useragent.c_str(), method, requri);
+	}
 }
 
 

@@ -8,12 +8,13 @@
 /*                                                         62
 345                    26           39       48            60  64
  ===== WebDAV Protocol options ================
+| User agent:          [                     ] |
 | [x] Connect via proxy:                       |
-|  Proxy host:         [9999999              ] |
+|  Proxy host:         [                     ] |
 |  Proxy port          [9999999              ] |
 |  [x] Use proxy authentificaion:              |
-|   Proxy user:         [9999999             ] |
-|   Proxy password:     [9999999             ] |
+|   Proxy user:         [                    ] |
+|   Proxy password:     [                    ] |
 |----------------------------------------------|
 | [  OK    ]    [ Cancel ]                     |
  ==============================================
@@ -23,6 +24,7 @@
 class ProtocolOptionsWebDAV : protected BaseDialog
 {
 	int _i_ok = -1, _i_cancel = -1;
+	int _i_user_agent = -1;
 	int _i_use_proxy = -1, _i_proxy_host = -1, _i_proxy_port = -1;
 	int _i_auth_proxy = -1, _i_proxy_username = -1, _i_proxy_password = -1;
 
@@ -53,6 +55,10 @@ public:
 		_di.SetBoxTitleItem(MWebDAVOptionsTitle);
 
 		_di.SetLine(2);
+		_di.AddAtLine(DI_TEXT, 6,25, 0, MWebDAVUserAgent);
+		_i_user_agent = _di.AddAtLine(DI_EDIT, 26,48, 0, "0", "0");
+
+		_di.NextLine();
 		_i_use_proxy = _di.AddAtLine(DI_CHECKBOX, 5,48, 0, MWebDAVUseProxy);
 
 		_di.NextLine();
@@ -89,6 +95,8 @@ public:
 	void Configure(std::string &options)
 	{
 		StringConfig sc(options);
+
+		TextToDialogControl(_i_user_agent, sc.GetString("UserAgent"));
 		SetCheckedDialogControl( _i_use_proxy, sc.GetInt("UseProxy", 0) != 0);
 		TextToDialogControl(_i_proxy_host, sc.GetString("ProxyHost"));
 		LongLongToDialogControl(_i_proxy_port, sc.GetInt("ProxyPort", 8080));
@@ -97,9 +105,12 @@ public:
 		TextToDialogControl(_i_proxy_password, sc.GetString("ProxyPassword"));
 
 		if (Show(L"ProtocolOptionsWebDAV", 6, 2) == _i_ok) {
+			std::string str;
+
+			TextFromDialogControl(_i_user_agent, str);
+			sc.SetString("UserAgent", str);
 
 			sc.SetInt("UseProxy", IsCheckedDialogControl(_i_use_proxy) ? 1 : 0);
-			std::string str;
 			TextFromDialogControl(_i_proxy_host, str);
 			sc.SetString("ProxyHost", str);
 			TextFromDialogControl(_i_proxy_port, str);

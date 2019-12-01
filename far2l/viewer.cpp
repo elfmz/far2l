@@ -2054,7 +2054,7 @@ void Viewer::Up()
 	for (; I > 0 && Buf[I - 1] != CRSymEncoded; --I) {;}
 
 	int64_t WholeLineLength = (BufSize - I); // in code units
-	if (VM.Wrap)
+	if (VM.Wrap && Width > 0)
 	{
 		vseek(FilePos - WholeLineLength, SEEK_SET);
 		int WrapBufSize = vread(Buf, WholeLineLength, false);
@@ -2086,15 +2086,13 @@ void Viewer::Up()
 				if (!IsSpace(Buf[I])) {
 					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I) {
 						if (I == WrapBufSize) {
-//							fprintf(stderr, "LASTLINE: '%ls'\n", std::wstring(&Buf[CurLineStart], WrapBufSize - CurLineStart).c_str());
 							int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
-							FilePosShiftLeft(distance);
+							FilePosShiftLeft((distance > 0) ? distance : 1);
 							return;
 						}
 
 						if (!IsSpace(Buf[I]) && (I + 1 == WrapBufSize || IsSpace(Buf[I + 1]))) {
 							if (CalcStrSize(&Buf[CurLineStart], I + 1 - CurLineStart) > Width) {
-//								fprintf(stderr, "SUBLINE: '%ls'\n", std::wstring(&Buf[CurLineStart], LastFitEnd - CurLineStart).c_str());
 								I = LastFitEnd;
 								break;
 							}
@@ -2106,22 +2104,22 @@ void Viewer::Up()
 					++I;
 				}
 			}
-			//fprintf(stderr, "XXXXXXXXXXXXXX\n");
 		}
-		for (I = 0; I < WrapBufSize; ++I) {
-			int SubLineSize = CalcStrSize(&Buf[I], WrapBufSize - I);
-			if ( SubLineSize <= Width) {
-				int PreSubLineSize = CalcStrSize(&Buf[0], I);
-				if (Width == 0 || PreSubLineSize % Width == 0 || PreSubLineSize / Width == (PreSubLineSize + SubLineSize) / Width) {
-					int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[I], &Buf[WrapBufSize]);
-					if (distance <= 0) {
-//						fprintf(stderr, "!!!!!!!!!!!!OOPS!!!!!!!!!!!! %d..%d -> %d\n", I, WrapBufSize, distance);
-						break;
-					}
-					FilePosShiftLeft(distance);
-//					fprintf(stderr, "distance=%d SubLineSize=%d <= Width=%d LINE='%ls'\n", distance, SubLineSize, Width, &Buf[I]);
-					return;
-				}
+
+		for (int PrevSublineLength = 0, CurLineStart = I = 0;; ++I) {
+			if (I == WrapBufSize) {
+				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
+				FilePosShiftLeft((distance > 0) ? distance : 1);
+				return;
+			}
+
+			int SublineLength = CalcStrSize(&Buf[CurLineStart], I - CurLineStart);
+			if (SublineLength > PrevSublineLength) {
+				if (SublineLength >= Width) {
+					CurLineStart = I;
+					PrevSublineLength = 0;
+				} else
+					PrevSublineLength = SublineLength;
 			}
 		}
 	}

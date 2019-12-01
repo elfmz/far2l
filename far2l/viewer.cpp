@@ -2020,7 +2020,7 @@ void Viewer::Up()
 		return;
 	}
 
-	vseek(FilePos-(int64_t)BufSize,SEEK_SET);
+	vseek(FilePos - (int64_t)BufSize, SEEK_SET);
 	I = BufSize = vread(Buf, BufSize, true);
 	if (I == -1)
 	{
@@ -2051,9 +2051,13 @@ void Viewer::Up()
 		--I;
 	}
 
-	for (; I > 0 && Buf[I - 1] != CRSymEncoded; --I) {;}
+	while (I > 0 && Buf[I - 1] != CRSymEncoded)
+	{
+		--I;
+	}
 
 	int64_t WholeLineLength = (BufSize - I); // in code units
+
 	if (VM.Wrap && Width > 0)
 	{
 		vseek(FilePos - WholeLineLength, SEEK_SET);
@@ -2064,10 +2068,13 @@ void Viewer::Up()
 		Buf[WrapBufSize] = 0;
 //		fprintf(stderr, "WrapBufSize=%d WholeLineLength=%d LINE='%ls'\n", WrapBufSize, WholeLineLength, &Buf[0]);
 //		fprintf(stderr, "LINE1: '%ls'\n", &Buf[0]);
-		while (WrapBufSize) {
+		while (WrapBufSize)
+		{
 			int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize]);
-			if (distance <= WholeLineLength) {
-				while (WrapBufSize && distance == CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize - 1])) {
+			if (distance <= WholeLineLength)
+			{
+				while (WrapBufSize && distance == CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize - 1]))
+				{
 					--WrapBufSize;
 				}
 				break;
@@ -2077,22 +2084,29 @@ void Viewer::Up()
 		Buf[WrapBufSize] = 0;
 //		fprintf(stderr, "Matching LINE: '%ls'\n", &Buf[0]);
 
-		if (VM.WordWrap) {
+		if (VM.WordWrap)
+		{
 			//	khffgkjkfdg dfkghd jgfhklf |
 			//	sdflksj lfjghf fglh lf     |
 			//	dfdffgljh ldgfhj           |
 
-			for (I = 0; I < WrapBufSize;) {
-				if (!IsSpace(Buf[I])) {
-					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I) {
-						if (I == WrapBufSize) {
+			for (I = 0; I < WrapBufSize;)
+			{
+				if (!IsSpace(Buf[I]))
+				{
+					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I)
+					{
+						if (I == WrapBufSize)
+						{
 							int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
 							FilePosShiftLeft((distance > 0) ? distance : 1);
 							return;
 						}
 
-						if (!IsSpace(Buf[I]) && (I + 1 == WrapBufSize || IsSpace(Buf[I + 1]))) {
-							if (CalcStrSize(&Buf[CurLineStart], I + 1 - CurLineStart) > Width) {
+						if (!IsSpace(Buf[I]) && (I + 1 == WrapBufSize || IsSpace(Buf[I + 1])))
+						{
+							if (CalcStrSize(&Buf[CurLineStart], I + 1 - CurLineStart) > Width)
+							{
 								I = LastFitEnd;
 								break;
 							}
@@ -2100,35 +2114,39 @@ void Viewer::Up()
 						}
 					}
 
-				} else {
+				} else
+				{
 					++I;
 				}
 			}
 		}
 
-		for (int PrevSublineLength = 0, CurLineStart = I = 0;; ++I) {
-			if (I == WrapBufSize) {
+		for (int PrevSublineLength = 0, CurLineStart = I = 0;; ++I)
+		{
+			if (I == WrapBufSize)
+			{
 				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
 				FilePosShiftLeft((distance > 0) ? distance : 1);
 				return;
 			}
 
 			int SublineLength = CalcStrSize(&Buf[CurLineStart], I - CurLineStart);
-			if (SublineLength > PrevSublineLength) {
-				if (SublineLength >= Width) {
+			if (SublineLength > PrevSublineLength)
+			{
+				if (SublineLength >= Width)
+				{
 					CurLineStart = I;
 					PrevSublineLength = 0;
 				} else
+				{
 					PrevSublineLength = SublineLength;
+				}
 			}
 		}
 	}
 
 //	fprintf(stderr, "!!!!!!!!!!!!NOWRAP!!!!!!!!!!!!\n");
-	if (WholeLineLength == 0) {
-		WholeLineLength = 1;
-	}
-	FilePosShiftLeft(WholeLineLength);
+	FilePosShiftLeft( (WholeLineLength > 0) ? WholeLineLength : 1 );
 }
 
 

@@ -116,19 +116,19 @@ extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list vali
 
 WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
-    return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
+    return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[((USHORT)ch)]);
 }
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
     extern const WCHAR wine_casemap_lower[];
-    return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
+    return ch + wine_casemap_lower[wine_casemap_lower[((USHORT)ch) >> 8] + (ch & 0xff)];
 }
 
 WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 {
     extern const WCHAR wine_casemap_upper[];
-    return ch + wine_casemap_upper[wine_casemap_upper[ch >> 8] + (ch & 0xff)];
+    return ch + wine_casemap_upper[wine_casemap_upper[((USHORT)ch) >> 8] + (ch & 0xff)];
 }
 
 /* the character type contains the C1_* flags in the low 12 bits */
@@ -136,7 +136,7 @@ WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 WINE_UNICODE_INLINE unsigned short get_char_typeW( WCHAR ch )
 {
     extern const unsigned short wine_wctype_table[];
-    return wine_wctype_table[wine_wctype_table[ch >> 8] + (ch & 0xff)];
+    return wine_wctype_table[wine_wctype_table[((USHORT)ch) >> 8] + (ch & 0xff)];
 }
 
 WINE_UNICODE_INLINE int iscntrlW( WCHAR wc )

@@ -35,7 +35,7 @@ static inline int is_valid_sbcs_mapping( const struct sbcs_table *table, int fla
                                          WCHAR wch, unsigned char ch )
 {
     if ((flags & WC_NO_BEST_FIT_CHARS) || ch == (unsigned char)table->info.def_char)
-        return (table->cp2uni[ch] == wch);
+        return (table->cp2uni[((USHORT)ch)] == wch);
     return 1;
 }
 
@@ -232,7 +232,7 @@ static inline int is_valid_dbcs_mapping( const struct dbcs_table *table, int fla
         /* check if char maps back to the same Unicode value */
         if (ch & 0xff00)
         {
-            unsigned char off = table->cp2uni_leadbytes[ch >> 8];
+            unsigned char off = table->cp2uni_leadbytes[((USHORT)ch) >> 8];
             return (table->cp2uni[(off << 8) + (ch & 0xff)] == wch);
         }
         return (table->cp2uni[ch & 0xff] == wch);

@@ -2202,7 +2202,7 @@ static const WCHAR compatmap_table[8154] =
 
 static const WCHAR *get_compatmap_entry( WCHAR ch, unsigned int *len )
 {
-    unsigned short offset_offs = compatmap_table[compatmap_table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short offset_offs = compatmap_table[compatmap_table[((USHORT)ch) >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
     unsigned short start = compatmap_table[offset_offs];
     unsigned short end = compatmap_table[offset_offs + 1];
 
@@ -2227,7 +2227,7 @@ unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, un
 
     if (!ptr)
     {
-        ptr = table + table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
+        ptr = table + table[table[((USHORT)ch) >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
         len = ptr[1] ? 2 : 1;
     }
 

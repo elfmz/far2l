@@ -900,8 +900,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 
 #if wxCHECK_VERSION(3, 1, 3)
-	const bool alt_nonlatin_workaround = (event.AltDown() && event.GetUnicodeKey() != 0
-		&& ir.Event.KeyEvent.wVirtualKeyCode == 0);
+	const bool alt_nonlatin_workaround = (event.AltDown() && !event.ControlDown()
+		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
 	if (alt_nonlatin_workaround) {
@@ -981,8 +981,8 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		wx2INPUT_RECORD ir(event, FALSE);
 
 #if wxCHECK_VERSION(3, 1, 3)
-		const bool alt_nonlatin_workaround = (event.AltDown() && event.GetUnicodeKey() != 0
-			&& ir.Event.KeyEvent.wVirtualKeyCode == 0);
+		const bool alt_nonlatin_workaround = (event.AltDown() && !event.ControlDown()
+			&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 		// for non-latin unicode keycode pressed with Alt key together
 		// simulate some dummy key code for far2l to "see" keypress
 		if (alt_nonlatin_workaround) {

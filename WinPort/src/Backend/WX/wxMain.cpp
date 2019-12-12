@@ -366,12 +366,14 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 
+#if !wxCHECK_VERSION(3, 1, 3)
 		menu = new wxMenu;
 		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Alt + %c\tAlt+%c", c, c);
 			menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
 		}
 		_menu_bar->Append(menu, _T("Alt + ?"));
+#endif
 		SetMenuBar(_menu_bar);
 		
 		//now hide menu bar just like it gets hidden during fullscreen transition
@@ -890,12 +892,22 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		_last_keydown_enqueued = true;
 		return;
 	}
-	
+
 	wx2INPUT_RECORD ir(event, TRUE);
 	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
 		_right_control = true;
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
 	}
+
+#if wxCHECK_VERSION(3, 1, 3)
+	const bool alt_nonlatin_workaround = (event.AltDown() && event.GetUnicodeKey() != 0
+		&& ir.Event.KeyEvent.wVirtualKeyCode == 0);
+	// for non-latin unicode keycode pressed with Alt key together
+	// simulate some dummy key code for far2l to "see" keypress
+	if (alt_nonlatin_workaround) {
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
+	}
+#endif
 
 	if ( (event.HasModifiers() && event.GetUnicodeKey() < 32) || _right_control || 
 		_pressed_keys.simulate_alt() || event.GetKeyCode() == WXK_DELETE ||
@@ -912,6 +924,13 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		g_winport_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
+
+#if wxCHECK_VERSION(3, 1, 3)
+	if (alt_nonlatin_workaround) {
+		OnChar(event);
+	}
+#endif
+
 	event.Skip();
 }
 
@@ -946,6 +965,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyCode(), 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyUp(event);
+
 	if (event.GetSkipped())
 		return;
 
@@ -959,6 +979,17 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 #endif
 	{
 		wx2INPUT_RECORD ir(event, FALSE);
+
+#if wxCHECK_VERSION(3, 1, 3)
+		const bool alt_nonlatin_workaround = (event.AltDown() && event.GetUnicodeKey() != 0
+			&& ir.Event.KeyEvent.wVirtualKeyCode == 0);
+		// for non-latin unicode keycode pressed with Alt key together
+		// simulate some dummy key code for far2l to "see" keypress
+		if (alt_nonlatin_workaround) {
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
+		}
+#endif
+
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	
 			
@@ -969,7 +1000,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
 		}
-	
+
 		g_winport_con_in.Enqueue(&ir, 1);
 	}
 	CheckForSuddenKeyUp(WXK_CONTROL);

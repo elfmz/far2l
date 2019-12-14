@@ -3,13 +3,13 @@
 
 //See: 
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm:
-    
-const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad)
+
+const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad, WCHAR uc)
 {
 	if (key==VK_CONTROL || key==VK_MENU || key==VK_SHIFT)
 		return ""; //modifiers should not be sent as keys
 
-	if ( ( (int)ctrl + (int)alt + (int)shift ) > 1) {
+	if ( ( (int)ctrl + (int)alt + (int)shift ) > 2) {
 		fprintf(stderr, "VT_TranslateSpecialKey: too many modifiers: %u %u %u\n", ctrl, alt, shift);
 		return ""; 
 	}
@@ -33,6 +33,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F1       Shift     \x1bO2P
         F1       Alt       \x1bO3P
         F1       Ctrl      \x1bO5P */
+			if (ctrl && shift) return "\x1bO6P";
 			if (shift) return "\x1bO2P";
 			if (alt) return "\x1bO3P";
 			if (ctrl) return "\x1bO5P";
@@ -47,6 +48,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F2       Shift     \x1bO2Q
         F2       Alt       \x1bO3Q
         F2       Ctrl      \x1bO5Q */
+			if (ctrl && shift) return "\x1bO6Q";
 			if (shift) return "\x1bO2Q";
 			if (alt) return "\x1bO3Q";
 			if (ctrl) return "\x1bO5Q";
@@ -62,6 +64,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F3       Shift     \x1bO2R
         F3       Alt       \x1bO3R
         F3       Ctrl      \x1bO5R */
+			if (ctrl && shift) return "\x1bO6R";
 			if (shift) return "\x1bO2R";
 			if (alt) return "\x1bO3R";
 			if (ctrl) return "\x1bO5R";
@@ -77,6 +80,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F4       Shift     \x1bO2S
         F4       Alt       \x1bO3S
         F4       Ctrl      \x1bO5S */
+			if (ctrl && shift) return "\x1bO6S";
 			if (shift) return "\x1bO2S";
 			if (alt) return "\x1bO3S";
 			if (ctrl) return "\x1bO5S";
@@ -90,6 +94,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F5       Shift     \x1b[15;2~
         F5       Alt       \x1b[15;3~
         F5       Ctrl      \x1b[15;5~ */
+			if (ctrl && shift) return "\x1b[15;6~";
 			if (shift) return "\x1b[15;2~";
 			if (alt) return "\x1b[15;3~";
 			if (ctrl) return "\x1b[15;5~";
@@ -102,6 +107,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F6       Shift     \x1b[17;2~
         F6       Alt       \x1b[17;3~
         F6       Ctrl      \x1b[17;5~ */
+			if (ctrl && shift) return "\x1b[17;6~";
 			if (shift) return "\x1b[17;2~";
 			if (alt) return "\x1b[17;3~";
 			if (ctrl) return "\x1b[17;5~";
@@ -112,6 +118,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F7       Shift     \x1b[18;2~
         F7       Alt       \x1b[18;3~
         F7       Ctrl      \x1b[18;5~ */
+			if (ctrl && shift) return "\x1b[18;6~";
 			if (shift) return "\x1b[18;2~";
 			if (alt) return "\x1b[18;3~";
 			if (ctrl) return "\x1b[18;5~";
@@ -122,6 +129,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F8       Shift     \x1b[19;2~
         F8       Alt       \x1b[19;3~
         F8       Ctrl      \x1b[19;5~*/
+			if (ctrl && shift) return "\x1b[19;6~";
 			if (shift) return "\x1b[19;2~";
 			if (alt) return "\x1b[19;3~";
 			if (ctrl) return "\x1b[19;5~";
@@ -132,6 +140,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F9       Shift     \x1b[20;2~
         F9       Alt       \x1b[20;3~
         F9       Ctrl      \x1b[20;5~ */
+			if (ctrl && shift) return "\x1b[20;6~";
 			if (shift) return "\x1b[20;2~";
 			if (alt) return "\x1b[20;3~";
 			if (ctrl) return "\x1b[20;5~";
@@ -142,6 +151,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F10      Shift     \x1b[21;2~
         F10      Alt       \x1b[21;3~
         F10      Ctrl      \x1b[21;5~ */
+			if (ctrl && shift) return "\x1b[21;6~";
 			if (shift) return "\x1b[21;2~";
 			if (alt) return "\x1b[21;3~";
 			if (ctrl) return "\x1b[21;5~";
@@ -152,6 +162,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F11      Shift     \x1b[23;2~
         F11      Alt       \x1b[23;3~
         F11      Ctrl      \x1b[23;5~ */
+			if (ctrl && shift) return "\x1b[23;6~";
 			if (shift) return "\x1b[23;2~";
 			if (alt) return "\x1b[23;3~";
 			if (ctrl) return "\x1b[23;5~";
@@ -162,6 +173,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         F12      Shift     \x1b[24;2~
         F12      Alt       \x1b[24;3~
         F12      Ctrl      \x1b[24;5~ */
+			if (ctrl && shift) return "\x1b[24;6~";
 			if (shift) return "\x1b[24;2~";
 			if (alt) return "\x1b[24;3~";
 			if (ctrl) return "\x1b[24;5~";
@@ -172,6 +184,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Insert   Shift     \x1b[2;2~
         Insert   Alt       \x1b[2;3~
         Insert   Ctrl      \x1b[2;5~ */
+			if (ctrl && shift) return "\x1b[2;6~";
 			if (shift) return "\x1b[2;2~";
 			if (alt) return "\x1b[2;3~";
 			if (ctrl) return "\x1b[2;5~";
@@ -182,6 +195,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Delete   Shift     \x1b[3;2~
         Delete   Alt       \x1b[3;3~
         Delete   Ctrl      \x1b[3;5~ */
+			if (ctrl && shift) return "\x1b[3;6~";
 			if (shift) return "\x1b[3;2~";
 			if (alt) return "\x1b[3;3~";
 			if (ctrl) return "\x1b[3;5~";
@@ -197,11 +211,13 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Home     Ctrl      \x1b[5H
         Home     Ctrl      \x1b[1;5H */
 			if (keypad == 0) {
+				if (ctrl && shift) return "\x1b[1;6H";
 				if (shift) return "\x1b[1;2H";
 				if (alt) return "\x1b[1;3H";
 				if (ctrl) return "\x1b[1;5H";
 				return "\x1b[H";
 			}
+			if (ctrl && shift) return "\x1b[6H";
 			if (shift) return "\x1b[2H";
 			if (alt) return "\x1b[3H";
 			if (ctrl) return "\x1b[5H";
@@ -218,11 +234,13 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         End      Ctrl      \x1b[5F
         End      Ctrl      \x1b[1;5F */
 			if (keypad==0) {
+				if (ctrl && shift) return "\x1b[1;6F";
 				if (shift) return "\x1b[1;2F";
 				if (alt) return "\x1b[1;3F";
 				if (ctrl) return "\x1b[1;5F";
 				return "\x1b[F";
 			}
+			if (ctrl && shift) return "\x1b[6F";
 			if (shift) return "\x1b[2F";
 			if (alt) return "\x1b[3F";
 			if (ctrl) return "\x1b[5F";
@@ -234,6 +252,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         PgUp     Shift     \x1b[5;2~
         PgUp     Alt       \x1b[5;3~
         PgUp     Ctrl      \x1b[5;5~ */
+			if (ctrl && shift) return "\x1b[5;6~";
 			if (shift) return "\x1b[5;2~";
 			if (alt) return "\x1b[5;3~";
 			if (ctrl) return "\x1b[5;5~";
@@ -244,6 +263,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         PgDn     Shift     \x1b[6;2~
         PgDn     Alt       \x1b[6;3~
         PgDn     Ctrl      \x1b[6;5~ */
+			if (ctrl && shift) return "\x1b[6;6~";
 			if (shift) return "\x1b[6;2~";
 			if (alt) return "\x1b[6;3~";
 			if (ctrl) return "\x1b[6;5~";
@@ -259,11 +279,13 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Up       Ctrl      \x1b[5A
         Up       Ctrl      \x1b[1;5A */
 			if (keypad == 1) {
+				if (ctrl && shift) return "\x1b[1;6A";
 				if (shift) return "\x1b[1;2A";
 				if (alt) return "\x1b[1;3A";
 				if (ctrl) return "\x1b[1;5A";
 				return "\x1bOA";
 			}
+			if (ctrl && shift) return "\x1b[6A";
 			if (shift) return "\x1b[2A";
 			if (alt) return "\x1b[3A";
 			if (ctrl) return "\x1b[5A";
@@ -279,11 +301,13 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Down     Ctrl      \x1b[5B
         Down     Ctrl      \x1b[1;5B */
 			if (keypad == 1) {
+				if (ctrl && shift) return "\x1b[1;6B";
 				if (shift) return "\x1b[1;2B";
 				if (alt) return "\x1b[1;3B";
 				if (ctrl) return "\x1b[1;5B";
 				return "\x1bOB";
 			}
+			if (ctrl && shift) return "\x1b[6B";
 			if (shift) return "\x1b[2B";
 			if (alt) return "\x1b[3B";
 			if (ctrl) return "\x1b[5B";
@@ -299,11 +323,13 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Left     Ctrl      \x1b[5D
         Left     Ctrl      \x1b[1;5D */
 			if (keypad == 1) {
+				if (ctrl && shift) return "\x1b[1;6D";
 				if (shift) return "\x1b[1;2D";
 				if (alt) return "\x1b[1;3D";
 				if (ctrl) return "\x1b[1;5D";
 				return "\x1bOD";
 			}
+			if (ctrl && shift) return "\x1b[6D";
 			if (shift) return "\x1b[2D";
 			if (alt) return "\x1b[3D";
 			if (ctrl) return "\x1b[5D";
@@ -319,11 +345,13 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Right    Ctrl      \x1b[5C
         Right    Ctrl      \x1b[1;5C */
 			if (keypad == 1) {
+				if (ctrl && shift) return "\x1b[1;6C";
 				if (shift) return "\x1b[1;2C";
 				if (alt) return "\x1b[1;3C";
 				if (ctrl) return "\x1b[1;5C";
 				return "\x1bOC";
 			}
+			if (ctrl && shift) return "\x1b[6C";
 			if (shift) return "\x1b[2C";
 			if (alt) return "\x1b[3C";
 			if (ctrl) return "\x1b[5C";
@@ -362,6 +390,35 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		case VK_OEM_5: return "\x1c";//'\\'
 		case VK_OEM_6: return "\x1d";//']'
 		}
+	}
+
+	if (alt && !ctrl && !shift) {
+		// Fix for cases like Alt+"e" in mc running in far2l VT.
+		// Latin only currently.
+		// We check both key and unicodechar
+		// as key is untrustable under wx>=3.1.3,
+		// and unicodechar is untrustable under wx<3.1.3.
+		// Out wx menu hack emulates uppercase key events,
+		// so let us translate back to lowercase
+		// as alt+shift+letter combinations are much less likely to be used by any app.
+		char translate_key_out_buffer[] = {'\x1b', 0, 0 };
+
+		if ( (uc >= 'A') &&  (uc <= 'Z')) {
+			translate_key_out_buffer[1] = uc + 32;
+
+		} else if ( (uc >= 'a') &&  (uc <= 'z')) {
+			translate_key_out_buffer[1] = uc;
+
+		} else if ((key >= 'A') && (key <= 'Z')) {
+			translate_key_out_buffer[1] = key + 32;
+
+		} else if ((key >= 'a') && (key <= 'z')) {
+			translate_key_out_buffer[1] = key;
+
+		} else {
+			return NULL;
+		}
+		return translate_key_out_buffer;
 	}
 	
 	return NULL;

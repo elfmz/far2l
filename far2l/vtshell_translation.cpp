@@ -4,6 +4,8 @@
 //See: 
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm:
 
+static __thread char s_translate_key_out_buffer[] = {'\x1b', 0, 0 };
+
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad, WCHAR uc)
 {
 	if (key==VK_CONTROL || key==VK_MENU || key==VK_SHIFT)
@@ -401,24 +403,23 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		// Out wx menu hack emulates uppercase key events,
 		// so let us translate back to lowercase
 		// as alt+shift+letter combinations are much less likely to be used by any app.
-		char translate_key_out_buffer[] = {'\x1b', 0, 0 };
 
 		if ( (uc >= 'A') &&  (uc <= 'Z')) {
-			translate_key_out_buffer[1] = uc + 32;
+			s_translate_key_out_buffer[1] = uc + 32;
 
 		} else if ( (uc >= 'a') &&  (uc <= 'z')) {
-			translate_key_out_buffer[1] = uc;
+			s_translate_key_out_buffer[1] = uc;
 
 		} else if ((key >= 'A') && (key <= 'Z')) {
-			translate_key_out_buffer[1] = key + 32;
+			s_translate_key_out_buffer[1] = key + 32;
 
 		} else if ((key >= 'a') && (key <= 'z')) {
-			translate_key_out_buffer[1] = key;
+			s_translate_key_out_buffer[1] = key;
 
 		} else {
 			return NULL;
 		}
-		return translate_key_out_buffer;
+		return s_translate_key_out_buffer;
 	}
 	
 	return NULL;

@@ -185,6 +185,10 @@ enum LanguageID
 
   MSFTPOptionsTitle,
   MSCPOptionsTitle,
+  MSFTPAuthMode,
+  MSFTPAuthModeUserPassword,
+  MSFTPAuthModeKeyFile,
+  MSFTPAuthModeSSHAgent,
   MSFTPPrivateKeyPath,
   MSFTPCustomSubsystem,
   MSFTPMaxReadBlockSize,

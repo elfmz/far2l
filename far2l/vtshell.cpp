@@ -30,7 +30,8 @@
 #define __USE_BSD 
 #include <termios.h> 
 
-const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0);
+const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
+    WCHAR uc = 0);
 void VT_OnFar2lInterract(StackSerializer &stk_ser);
 
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
@@ -939,7 +940,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				OnConsoleLog(CLK_VIEW);
 			} 
 
-			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad);
+			const char *spec = VT_TranslateSpecialKey(
+				KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad, KeyEvent.uChar.UnicodeChar);
 			if (spec)
 				return spec;
 		}

@@ -4,7 +4,7 @@
 //See: 
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm:
 
-static __thread char s_translate_key_out_buffer[] = {'\x1b', 0, 0 };
+static __thread char s_translate_key_out_buffer[8] = {'\x1b', 0 };
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad, WCHAR uc)
 {
@@ -394,32 +394,38 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		}
 	}
 
-	if (alt && !ctrl && !shift) {
-		// Fix for cases like Alt+"e" in mc running in far2l VT.
-		// Latin only currently.
+	if (alt && !ctrl) {
+		// Alt+letter, try do process as many cases as possible.
+		// Non-latin support not guaranteed on wx<3.1.3.
 		// We check both key and unicodechar
-		// as key is untrustable under wx>=3.1.3,
-		// and unicodechar is untrustable under wx<3.1.3.
-		// Out wx menu hack emulates uppercase key events,
-		// so let us translate back to lowercase
-		// as alt+shift+letter combinations are much less likely to be used by any app.
+		// as key is untrustable under wx>=3.1.3 for non-latin,
+		// and unicodechar is untrustable under wx<3.1.3
+		// (menu hack does not fill it by default).
+		// Our wx Alt+letter hack[s] emulate[s] uppercase key events,
+		// so let us translate to needed case depending on shift state (todo: check caps)
 
-		if ( (uc >= 'A') &&  (uc <= 'Z')) {
-			s_translate_key_out_buffer[1] = uc + 32;
+		if (uc) {
 
-		} else if ( (uc >= 'a') &&  (uc <= 'z')) {
-			s_translate_key_out_buffer[1] = uc;
+			// Unicode character can be absent (zero), but is not expected to be wrong.
+			// And the key value can sometimes be '-' (even if other key is pressed),
+			// this is caused by wx workaround. Not a big problem, as unicodechar should
+			// be present in all such cases. So unicodechar should be checked first.
+
+			wchar_t uc_right_case[] = {wchar_t(shift ? towupper(uc) : towlower(uc)), 0};
+			wcstombs(&s_translate_key_out_buffer[1], &uc_right_case[2],
+				sizeof(s_translate_key_out_buffer) - 1);
 
 		} else if ((key >= 'A') && (key <= 'Z')) {
-			s_translate_key_out_buffer[1] = key + 32;
+			s_translate_key_out_buffer[1] = shift ? key : key + 32;
 
 		} else if ((key >= 'a') && (key <= 'z')) {
-			s_translate_key_out_buffer[1] = key;
+			s_translate_key_out_buffer[1] = shift ? key - 32 : key;
 
 		} else {
 			return NULL;
 		}
-		return s_translate_key_out_buffer;
+
+		return &s_translate_key_out_buffer[0];
 	}
 	
 	return NULL;

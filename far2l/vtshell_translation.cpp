@@ -418,9 +418,6 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		} else if ((key >= 'A') && (key <= 'Z')) {
 			s_translate_key_out_buffer[1] = shift ? key : key + 32;
 
-		} else if ((key >= 'a') && (key <= 'z')) {
-			s_translate_key_out_buffer[1] = shift ? key - 32 : key;
-
 		} else {
 			return NULL;
 		}

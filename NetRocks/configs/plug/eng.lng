@@ -182,6 +182,10 @@
 
 "SFTP protocol options"
 "SCP protocol options"
+"&Authentification:"
+"&Username and password"
+"&Private key file path:"
+"&SSH-agent (by ${SSH_AUTH_SOCK})"
 "Private &key file path:"
 "Custom &subsystem request/exec:"
 "Max &read block size, bytes:"

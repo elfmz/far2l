@@ -73,9 +73,9 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 
 	ssh_options_set(ssh, SSH_OPTIONS_HOST, host.c_str());
 	if (port > 0)
-		ssh_options_set(ssh, SSH_OPTIONS_PORT, &port);	
+		ssh_options_set(ssh, SSH_OPTIONS_PORT, &port);
 
-	ssh_options_set(ssh, SSH_OPTIONS_USER, &port);
+	ssh_options_set(ssh, SSH_OPTIONS_USER, username.c_str());
 
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
 	if (protocol_options.GetInt("TcpNoDelay") ) {
@@ -168,6 +168,19 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		}
 
 	} else {
+		if (protocol_options.GetInt("SSHAgentEnable", 0) != 0) {
+			const char *ssh_agent_sock = getenv("SSH_AUTH_SOCK");
+			if (ssh_agent_sock && *ssh_agent_sock) {
+				fprintf(stderr, "Using ssh-agent cuz SSH_AUTH_SOCK='%s'\n", ssh_agent_sock);
+				rc = ssh_userauth_agent(ssh, NULL);
+				if (rc == SSH_AUTH_SUCCESS) {
+					return;
+				}
+				throw std::runtime_error("SSH-agent authentification failed");
+//				throw ProtocolAuthFailedError("SSH-agent");//"Authentification failed", ssh_get_error(ssh), rc);
+			}
+		}
+
 		rc = ssh_userauth_password(ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
   		if (rc != SSH_AUTH_SUCCESS)
 			throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(ssh), rc);

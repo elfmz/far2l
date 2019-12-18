@@ -412,7 +412,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			// be present in all such cases. So unicodechar should be checked first.
 
 			wchar_t uc_right_case[] = {wchar_t(shift ? towupper(uc) : towlower(uc)), 0};
-			wcstombs(&s_translate_key_out_buffer[1], &uc_right_case[2],
+			wcstombs(&s_translate_key_out_buffer[1], &uc_right_case[0],
 				sizeof(s_translate_key_out_buffer) - 1);
 
 		} else if ((key >= 'A') && (key <= 'Z')) {

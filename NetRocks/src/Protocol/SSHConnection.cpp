@@ -168,7 +168,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		}
 
 	} else {
-		if (password.empty()) {
+		if (protocol_options.GetInt("SSHAgentEnable", 0) != 0) {
 			const char *ssh_agent_sock = getenv("SSH_AUTH_SOCK");
 			if (ssh_agent_sock && *ssh_agent_sock) {
 				fprintf(stderr, "Using ssh-agent cuz SSH_AUTH_SOCK='%s'\n", ssh_agent_sock);
@@ -176,7 +176,8 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 				if (rc == SSH_AUTH_SUCCESS) {
 					return;
 				}
-				fprintf(stderr, "ssh-agent auth error %d\n", rc);
+				throw std::runtime_error("SSH-agent authentification failed");
+//				throw ProtocolAuthFailedError("SSH-agent");//"Authentification failed", ssh_get_error(ssh), rc);
 			}
 		}
 

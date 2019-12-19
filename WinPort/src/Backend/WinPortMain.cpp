@@ -213,18 +213,30 @@ extern "C" void WinPortHelp()
 	printf("\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n");
 	printf("\t--notty - don't fallback to TTY backend if GUI backend failed\n");
 	printf("\t--nodetect - don't detect if TTY backend supports FAR2L extensions\n");
-	printf("\t--mortal - terminate instead of going to background on getting SIGHUP\n");
+	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
+	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
 }
 
 extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
 	bool tty = false, far2l_tty = false, nodetect = false, notty = false;
 	bool mortal = false;
-
+#ifdef __linux__
+	unsigned char state = 6;
+	if (ioctl(0, TIOCLINUX, &state) == 0) {
+		// running under linux 'real' TTY, such kind of terminal cannot be dropped due to lost connection etc
+		// also detachable session makes impossible using of ioctl(_stdin, TIOCLINUX, &state) in child (#653),
+		// so lets default to mortal mode in Linux TTY
+		mortal = true;
+	}
+#endif
 	std::vector<char *> filtered_argv;
 	for (int i = 0; i < argc; ++i) {
 
-		if (strstr(argv[i], "--mortal") == argv[i]) {
+		if (strstr(argv[i], "--immortal") == argv[i]) {
+			mortal = false;
+
+		} else if (strstr(argv[i], "--mortal") == argv[i]) {
 			mortal = true;
 
 		} else if (strstr(argv[i], "--notty") == argv[i]) {

@@ -244,11 +244,31 @@ template <class STRING_T>
 std::string EscapeQuotas(const std::string &str) {return EscapeQuotasT(str); }
 std::wstring EscapeQuotas(const std::wstring &str) {return EscapeQuotasT(str); }
 
+template <class STRING_T>
+	static STRING_T EscapeCmdStrT(STRING_T str)
+{
+	for(size_t p = str.find('\"'); p!=std::string::npos; p = str.find('\"', p)) {
+		str.insert(p, 1, '\\');
+		p+= 2;
+	}
+	for(size_t p = str.find('$'); p!=std::string::npos; p = str.find('$', p)) {
+		str.insert(p, 1, '\\');
+		p+= 2;
+	}
+	for(size_t p = str.find('`'); p!=std::string::npos; p = str.find('`', p)) {
+		str.insert(p, 1, '\\');
+		p+= 2;
+	}
+	return str;
+}
+
+std::string EscapeCmdStr(const std::string &str) {return EscapeCmdStrT(str); }
+std::wstring EscapeCmdStr(const std::wstring &str) {return EscapeCmdStrT(str); }
 
 std::string EscapeEscapes(std::string str)
 {
 	for (size_t p = 0; (p + 1) < str.size(); ) {
-		if (str[p] == '\\' && (str[p + 1] == '\"' || str[p + 1] == '\\' || str[ p + 1] == '\t') ) {
+		if (str[p] == '\\' && (str[p + 1] == '\"' || str[p + 1] == '\\' || str[ p + 1] == '\t'|| str[ p + 1] == '`'|| str[ p + 1] == '$') ) {
 			str.insert(p, 2, '\\');
 			p+= 4;
 		} else
@@ -261,7 +281,7 @@ template <class STRING_T>
 	static void QuoteCmdArgT(STRING_T &str)
 {
 	STRING_T tmp(1, '\"');
-	tmp+= EscapeQuotas(str);
+	tmp+= EscapeCmdStr(str);
 	tmp+= '\"';
 	str.swap(tmp);
 }
@@ -271,14 +291,14 @@ void QuoteCmdArg(std::wstring &str) { QuoteCmdArgT(str); }
 
 void QuoteCmdArgIfNeed(std::string &str)
 {
-	if (str.find_first_of(" \"\'\r\n\t&|;,()") != std::string::npos) {
+	if (str.find_first_of(" \"\'\r\n\t&|;,()`$") != std::string::npos) {
 		QuoteCmdArg(str);
 	}
 }
 
 void QuoteCmdArgIfNeed(std::wstring &str)
 {
-	if (str.find_first_of(L" \"\'\r\n\t&|;,()") != std::wstring::npos) {
+	if (str.find_first_of(L" \"\'\r\n\t&|;,()`$") != std::wstring::npos) {
 		QuoteCmdArg(str);
 	}
 }

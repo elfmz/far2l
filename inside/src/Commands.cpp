@@ -34,7 +34,7 @@ namespace Commands
 		size_t p = expanded_cmd.find("$F");
 		if (p != std::string::npos) {
 			std::string quoted("\"");
-			quoted+= EscapeQuotas(name);
+			quoted+= EscapeCmdStr(name);
 			quoted+= "\"";
 			expanded_cmd.replace(p, 2, quoted);
 		}
@@ -42,7 +42,7 @@ namespace Commands
 		p = expanded_cmd.find("$T");
 		if (p != std::string::npos) {
 			std::string quoted("\"");
-			quoted+= EscapeQuotas(result_file);
+			quoted+= EscapeCmdStr(result_file);
 			quoted+= "\"";
 			expanded_cmd.replace(p, 2, quoted);
 

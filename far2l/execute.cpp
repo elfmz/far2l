@@ -277,9 +277,9 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags)
 {
 	std::string actual_cmd = "\"";
-	actual_cmd+= EscapeQuotas(g_strFarModuleName.GetMB());
+	actual_cmd+= EscapeCmdStr(g_strFarModuleName.GetMB());
 	actual_cmd+= "\" --libexec \"";
-	actual_cmd+= EscapeQuotas(Library);
+	actual_cmd+= EscapeCmdStr(Library);
 	actual_cmd+= "\" ";
 	actual_cmd+= Symbol;
 	actual_cmd+= " ";

@@ -618,7 +618,7 @@ void InfoList::ShowDirDescription(int YPos)
 				fprintf(stderr, "GIT: %ls\n", strGit.CPtr());
 				std::vector<std::wstring> lines;
 				std::string cmd = "git -C \"";
-				cmd+= EscapeQuotas(Wide2MB(strDir.CPtr()));
+				cmd+= EscapeCmdStr(Wide2MB(strDir.CPtr()));
 				cmd+= "\" status";
 
 				if (POpen(lines, cmd.c_str()))

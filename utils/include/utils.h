@@ -37,6 +37,8 @@ size_t StrStartsFrom(const std::string &haystack, const char *needle);
 std::string EscapeEscapes(std::string str);
 std::string EscapeQuotas(const std::string &str);
 std::wstring EscapeQuotas(const std::wstring &str);
+std::string EscapeCmdStr(const std::string &str);
+std::wstring EscapeCmdStr(const std::wstring &str);
 
 void QuoteCmdArg(std::string &str);
 void QuoteCmdArg(std::wstring &str);

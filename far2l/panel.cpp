@@ -394,9 +394,9 @@ static void EnumRoots(RootEntries &out, const FARString &curdir, const FARString
 	out.clear();
 	std::string roots_script = GetMyScriptQuoted("roots.sh");
 	roots_script+= " \"";
-	roots_script+= EscapeQuotas(Wide2MB(curdir));
+	roots_script+= EscapeCmdStr(Wide2MB(curdir));
 	roots_script+= "\" \"";
-	roots_script+= EscapeQuotas(Wide2MB(another_curdir));
+	roots_script+= EscapeCmdStr(Wide2MB(another_curdir));
 	roots_script+= '\"';
 
 	FILE *f = popen(roots_script.c_str(), "r");

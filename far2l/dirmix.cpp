@@ -270,7 +270,7 @@ std::string GetHelperPathName(const char *name)
 std::string GetMyScriptQuoted(const char *name)
 {
 	std::string out = "\"";
-	out+= EscapeQuotas(GetHelperPathName(name));
+	out+= EscapeCmdStr(GetHelperPathName(name));
 	out+= "\"";
 	return out;
 }

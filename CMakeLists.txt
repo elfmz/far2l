@@ -127,6 +127,7 @@ add_subdirectory (editorcomp)
 add_subdirectory (inside)
 add_subdirectory (incsrch)
 add_subdirectory (NetRocks)
+add_subdirectory (python)
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

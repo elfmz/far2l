@@ -1047,9 +1047,9 @@ static bool shown_tip_exit = false;
 		}
 		if (need_sudo) {
 			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
-				EscapeEscapes(EscapeQuotas(cd)).c_str(), EscapeEscapes(cmd).c_str(), pwd_file.c_str());
+				EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeEscapes(cmd).c_str(), pwd_file.c_str());
 		} else {
-			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeQuotas(cd).c_str(), cmd, pwd_file.c_str());
+			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeCmdStr(cd).c_str(), cmd, pwd_file.c_str());
 		}
 
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
@@ -1104,7 +1104,7 @@ static bool shown_tip_exit = false;
 			UpdateTerminalSize(_fd_out);
 		
 		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
-		cmd_str+= EscapeQuotas(cmd_script);
+		cmd_str+= EscapeCmdStr(cmd_script);
 		cmd_str+= ';';
 		cmd_str+= _completion_marker.EchoCommand();
 		cmd_str+= '\n';

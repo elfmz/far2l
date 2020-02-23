@@ -27,6 +27,11 @@ if (NOT DEFINED USEWX)
 	set(USEWX "YES")
 endif()
 
+if (NOT DEFINED PYTHON)
+	set(PYTHON "NO")
+endif()
+
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
     set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
@@ -127,7 +132,24 @@ add_subdirectory (editorcomp)
 add_subdirectory (inside)
 add_subdirectory (incsrch)
 add_subdirectory (NetRocks)
-add_subdirectory (python)
+
+if(PYTHON)
+	find_package(PythonLibs 3.0)
+
+	if(PYTHONLIBS_FOUND)
+		find_program (VIRTUALENV NAMES virtualenv)
+		if(VIRTUALENV)
+			message(STATUS "Python plugin enabled")
+			add_subdirectory (python)
+		else()
+			message(WARNING "${Esc}[1;31mvirtualenv not found, python plugin will not be built${Esc}[39;22m")
+		endif ()
+	else()
+		message(WARNING "${Esc}[1;31mPython libraries not found, python plugin will not be built${Esc}[39;22m")
+	endif ()
+else()
+	message(WARNING "${Esc}[1;31mPython plugin not enabled by default${Esc}[39;22m")
+endif ()
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 

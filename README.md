@@ -107,6 +107,7 @@ ninja -j4
 
 To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no
 
+To build with Python plugin: add argument -DPYTHON=yes
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.

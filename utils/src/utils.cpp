@@ -244,26 +244,21 @@ template <class STRING_T>
 std::string EscapeQuotas(const std::string &str) {return EscapeQuotasT(str); }
 std::wstring EscapeQuotas(const std::wstring &str) {return EscapeQuotasT(str); }
 
-template <class STRING_T>
-	static STRING_T EscapeCmdStrT(STRING_T str)
+template <class CHAR_T>
+	static std::basic_string<CHAR_T> EscapeCmdStrT(std::basic_string<CHAR_T> str, const CHAR_T *escaped_chars)
 {
-	for(size_t p = str.find('\"'); p!=std::string::npos; p = str.find('\"', p)) {
-		str.insert(p, 1, '\\');
-		p+= 2;
-	}
-	for(size_t p = str.find('$'); p!=std::string::npos; p = str.find('$', p)) {
-		str.insert(p, 1, '\\');
-		p+= 2;
-	}
-	for(size_t p = str.find('`'); p!=std::string::npos; p = str.find('`', p)) {
+	for(size_t p = str.find_first_of(escaped_chars);
+			p != std::basic_string<CHAR_T>::npos;
+			p = str.find_first_of(escaped_chars, p)) {
+
 		str.insert(p, 1, '\\');
 		p+= 2;
 	}
 	return str;
 }
 
-std::string EscapeCmdStr(const std::string &str) {return EscapeCmdStrT(str); }
-std::wstring EscapeCmdStr(const std::wstring &str) {return EscapeCmdStrT(str); }
+std::string EscapeCmdStr(const std::string &str) {return EscapeCmdStrT<char>(str, "\"$'"); }
+std::wstring EscapeCmdStr(const std::wstring &str) {return EscapeCmdStrT<wchar_t>(str, L"\"$'"); }
 
 std::string EscapeEscapes(std::string str)
 {

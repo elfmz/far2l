@@ -1,0 +1,7 @@
+﻿.Language=English,English (English)
+.PluginContents=Python
+
+@Contents
+$ #Python#
+  This plugin for FAR Manager is intended for those programmers,
+who just do the first step in plugin programming.

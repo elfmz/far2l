@@ -5,7 +5,7 @@ set(SOURCES
 src/python.cpp 
 )
 
-include (pyconfig.cmake)
+find_package(PythonLibs 3.0)
 
 add_library (python MODULE ${SOURCES})
 

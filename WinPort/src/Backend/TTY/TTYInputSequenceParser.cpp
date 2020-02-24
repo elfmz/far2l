@@ -5,6 +5,8 @@
 #include "ConsoleInput.h"
 #include "WinPort.h"
 
+#include "ConvertUTF.h"
+
 
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
@@ -258,6 +260,30 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 		case 2: if (_nch2key2.Lookup(s, k)) {
 				PostKeyEvent(k);
 				return 2;
+
+			} else if ( (s[0] & 0b11000000) == 0b11000000) {
+				// looks like alt + multibyte UTF8 sequence
+				const UTF8 *src = (const UTF8 *)&s[0];
+#if (__WCHAR_MAX__ > 0xffff)
+				UTF32 wc_buf[2] = {}, *wc = &wc_buf[0];
+				ConvertUTF8toUTF32(&src, src + l, &wc, wc + 1, lenientConversion);
+#else
+				UTF16 wc_buf[2] = {}, *wc = &wc_buf[0];
+				ConvertUTF8toUTF16(&src, src + l, &wc, wc + 1, lenientConversion);
+#endif
+				if (wc != &wc_buf[0]) {
+					INPUT_RECORD ir = {};
+					ir.EventType = KEY_EVENT;
+					ir.Event.KeyEvent.wRepeatCount = 1;
+					ir.Event.KeyEvent.uChar.UnicodeChar = wc_buf[0];
+					ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
+					ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+					ir.Event.KeyEvent.bKeyDown = TRUE;
+					g_winport_con_in.Enqueue(&ir, 1);
+					ir.Event.KeyEvent.bKeyDown = FALSE;
+					g_winport_con_in.Enqueue(&ir, 1);
+					return src - (const UTF8*) &s[0];
+				}
 			}
 
 		case 1: if (_nch2key1.Lookup(s, k)) {

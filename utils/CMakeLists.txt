@@ -28,10 +28,11 @@ set(SOURCES
 add_library (utils ${SOURCES})
 
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries(utils glib-2.0 -L/usr/local/lib)
+target_link_libraries(utils ${GLIB2_LIBRARIES})
+if(${CMAKE_VERSION} VERSION_LESS "3.13.5")
+  target_link_libraries(utils ${GLIB2_LDFLAGS})
 else()
-    target_link_libraries(utils ${GLIB2_LIBRARIES})
+  target_link_options(utils PUBLIC ${GLIB2_LDFLAGS})
 endif()
 
 target_include_directories(utils PRIVATE ${GLIB2_INCLUDE_DIRS})

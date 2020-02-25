@@ -94,9 +94,9 @@ if(CMAKE_THREAD_LIBS_INIT)
   target_link_libraries(WinPort "${CMAKE_THREAD_LIBS_INIT}")
 endif()
 
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries(WinPort glib-2.0 -L/usr/local/lib)
+target_link_libraries(WinPort ${GLIB2_LIBRARIES})
+if(${CMAKE_VERSION} VERSION_LESS "3.13.5")
+	target_link_libraries(WinPort ${GLIB2_LDFLAGS})
 else()
-    target_link_libraries(WinPort ${GLIB2_LIBRARIES})
+	target_link_options(WinPort PUBLIC ${GLIB2_LDFLAGS})
 endif()

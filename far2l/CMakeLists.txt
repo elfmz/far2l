@@ -161,6 +161,9 @@ UCD/prmem.c
 add_executable (far2l ${SOURCES})
 
 target_compile_definitions(far2l PRIVATE -DUNICODE)
+if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    target_compile_definitions(far2l PRIVATE -D_DEBUG -DSYSLOG_OT)
+endif ()
 target_include_directories(far2l PRIVATE Include)
 target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 

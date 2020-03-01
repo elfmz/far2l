@@ -103,7 +103,7 @@ static wchar_t *PrintTime(wchar_t *timebuf,size_t size)
 	WINPORT(GetLocalTime)(&st);
 //  sprintf(timebuf,"%02d.%02d.%04d %2d:%02d:%02d.%03d",
 //      st.wDay,st.wMonth,st.wYear,st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
-	_snwprintf(timebuf,size,L"%02d:%02d:%02d.%03d",st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
+//	_snwprintf(timebuf,size,L"%02d:%02d:%02d.%03d",st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
 	return timebuf;
 }
 
@@ -122,20 +122,21 @@ static FILE* PrintBaner(FILE *fp,const wchar_t *Category,const wchar_t *Title)
 
 #endif
 
-FILE * OpenLogStream(const wchar_t *file)
+static FILE * OpenLogStream(const wchar_t *file)
 {
 #if defined(SYSLOG)
 	FARString strRealLogName;
 	SYSTEMTIME st;
 	WINPORT(GetLocalTime)(&st);
 	strRealLogName.Format(L"%ls/Far.%04d%02d%02d.%05d.log",file,st.wYear,st.wMonth,st.wDay,HIWORD(FAR_VERSION));
-	return _wfsopen(strRealLogName,L"a+t",SH_DENYWR);
+	//return _wfsopen(strRealLogName,L"a+t",SH_DENYWR);
+	return nullptr;
 #else
 	return nullptr;
 #endif
 }
 
-void OpenSysLog()
+static void OpenSysLog()
 {
 #if defined(SYSLOG)
 
@@ -161,7 +162,7 @@ void OpenSysLog()
 #endif
 }
 
-void CloseSysLog()
+static void CloseSysLog()
 {
 #if defined(SYSLOG)
 	fclose(LogStream);
@@ -365,7 +366,7 @@ static FARString _XXX_ToName(int Val,const wchar_t *Pref,__XXX_Name *arrDef,size
 FARString __ECTL_ToName(int Command)
 {
 #if defined(SYSLOG_KEYMACRO) || defined(SYSLOG_ECTL)
-#define DEF_ECTL_(m) { ECTL_##m , L#m }
+#define DEF_ECTL_(m) { ECTL_##m , L"" #m }
 	__XXX_Name ECTL[]=
 	{
 		DEF_ECTL_(GETSTRING),      DEF_ECTL_(SETSTRING),
@@ -392,7 +393,7 @@ FARString __ECTL_ToName(int Command)
 FARString __EE_ToName(int Command)
 {
 #if defined(SYSLOG)
-#define DEF_EE_(m) { EE_##m , L#m }
+#define DEF_EE_(m) { EE_##m , L"" #m }
 	__XXX_Name EE[]=
 	{
 		DEF_EE_(READ),     DEF_EE_(SAVE),     DEF_EE_(REDRAW),     DEF_EE_(CLOSE),
@@ -407,7 +408,7 @@ FARString __EE_ToName(int Command)
 FARString __EEREDRAW_ToName(int Command)
 {
 #if defined(SYSLOG)
-#define DEF_EEREDRAW_(m) { (int)(INT_PTR)EEREDRAW_##m , L#m }
+#define DEF_EEREDRAW_(m) { (int)(INT_PTR)EEREDRAW_##m , L"" #m }
 	__XXX_Name EEREDRAW[]=
 	{
 		DEF_EEREDRAW_(ALL),  DEF_EEREDRAW_(CHANGE),  DEF_EEREDRAW_(LINE),
@@ -421,7 +422,7 @@ FARString __EEREDRAW_ToName(int Command)
 FARString __ESPT_ToName(int Command)
 {
 #if defined(SYSLOG_KEYMACRO) || defined(SYSLOG_ECTL)
-#define DEF_ESPT_(m) { ESPT_##m , L#m }
+#define DEF_ESPT_(m) { ESPT_##m , L"" #m }
 	__XXX_Name ESPT[]=
 	{
 		DEF_ESPT_(TABSIZE),
@@ -443,7 +444,7 @@ FARString __ESPT_ToName(int Command)
 FARString __VE_ToName(int Command)
 {
 #if defined(SYSLOG)
-#define DEF_VE_(m) { VE_##m , L#m }
+#define DEF_VE_(m) { VE_##m , L"" #m }
 	__XXX_Name VE[]=
 	{
 		DEF_VE_(READ),     DEF_VE_(CLOSE),
@@ -458,7 +459,7 @@ FARString __VE_ToName(int Command)
 FARString __FCTL_ToName(int Command)
 {
 #if defined(SYSLOG)
-#define DEF_FCTL_(m) { FCTL_##m , L#m }
+#define DEF_FCTL_(m) { FCTL_##m , L"" #m }
 	__XXX_Name FCTL[]=
 	{
 		DEF_FCTL_(CLOSEPLUGIN),
@@ -507,7 +508,7 @@ FARString __FCTL_ToName(int Command)
 FARString __ACTL_ToName(int Command)
 {
 #if defined(SYSLOG_ACTL)
-#define DEF_ACTL_(m) { ACTL_##m , L#m }
+#define DEF_ACTL_(m) { ACTL_##m , L"" #m }
 	__XXX_Name ACTL[]=
 	{
 		DEF_ACTL_(GETFARVERSION),          DEF_ACTL_(CONSOLEMODE),
@@ -535,7 +536,7 @@ FARString __ACTL_ToName(int Command)
 FARString __VCTL_ToName(int Command)
 {
 #if defined(SYSLOG_VCTL)
-#define DEF_VCTL_(m) { VCTL_##m , L#m }
+#define DEF_VCTL_(m) { VCTL_##m , L"" #m }
 	__XXX_Name VCTL[]=
 	{
 		DEF_VCTL_(GETINFO),
@@ -556,7 +557,7 @@ FARString __VCTL_ToName(int Command)
 FARString __MCODE_ToName(int OpCode)
 {
 #if defined(SYSLOG)
-#define DEF_MCODE_(m) { MCODE_##m , L#m }
+#define DEF_MCODE_(m) { MCODE_##m , L"" #m }
 	__XXX_Name MCODE[]=
 	{
 		DEF_MCODE_(C_APANEL_BOF),
@@ -838,7 +839,7 @@ FARString __FARKEY_ToName(int Key)
 FARString __DLGMSG_ToName(int Msg)
 {
 #if defined(SYSLOG)
-#define DEF_MESSAGE(m) { m , L#m }
+#define DEF_MESSAGE(m) { m , L"" #m }
 	__XXX_Name Message[]=
 	{
 		DEF_MESSAGE(DM_FIRST),              DEF_MESSAGE(DM_CLOSE),
@@ -904,7 +905,7 @@ FARString __DLGMSG_ToName(int Msg)
 FARString __VK_KEY_ToName(int VkKey)
 {
 #if defined(SYSLOG)
-#define DEF_VK(k) { VK_##k , L#k }
+#define DEF_VK(k) { VK_##k , L"" #k }
 	__XXX_Name VK[]=
 	{
 		DEF_VK(ACCEPT),                           DEF_VK(ADD),
@@ -1124,7 +1125,7 @@ FARString __INPUT_RECORD_Dump(INPUT_RECORD *rec)
 void INPUT_RECORD_DumpBuffer(FILE *fp)
 {
 #if defined(SYSLOG)
-
+#if 0
 	if (!IsLogON())
 		return;
 
@@ -1174,7 +1175,7 @@ void INPUT_RECORD_DumpBuffer(FILE *fp)
 
 	if (InternalLog)
 		CloseSysLog();
-
+#endif
 #endif
 }
 
@@ -1453,4 +1454,8 @@ void PanelViewSettings_Dump(const wchar_t *Title,const PanelViewSettings &ViewSe
 		CloseSysLog();
 
 #endif
+}
+
+void ViewConsoleInfo()
+{
 }

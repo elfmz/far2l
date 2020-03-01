@@ -86,6 +86,9 @@ void GetVolumeInformation_Dump(const wchar_t *Title,LPCWSTR lpRootPathName,LPCWS
 
 void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &fd,FILE *fp=nullptr);
 
+// for SYSLOG_OT
+void ViewConsoleInfo();
+
 #if defined(SYSLOG_FARSYSLOG)
 #ifdef __cplusplus
 extern "C"
@@ -256,9 +259,6 @@ extern "C"
 #define _YJH(x)
 #endif
 
-void OpenSysLog();
-void CloseSysLog();
-
 struct TUserLog
 {
 	FILE *Stream;
@@ -266,8 +266,6 @@ struct TUserLog
 };
 
 void SysLogDump(const wchar_t *Title,DWORD StartAddress,LPBYTE Buf,int SizeBuf,FILE *fp=nullptr);
-
-FILE *OpenLogStream(const wchar_t *file);
 
 #define L_ERR      1
 #define L_WARNING  2

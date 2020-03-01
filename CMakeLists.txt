@@ -83,6 +83,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -O2")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -O2")
 set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 

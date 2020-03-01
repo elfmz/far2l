@@ -5820,7 +5820,8 @@ int Editor::EditorControl(int Command,void *Param)
 		// должно выполняется в FileEditor::EditorControl()
 		case ECTL_PROCESSKEY:
 		{
-			_ECTLLOG(SysLog(L"Key = %ls",_FARKEY_ToName((DWORD)Param)));
+			std::uintptr_t key = reinterpret_cast<std::uintptr_t>(Param);
+			_ECTLLOG(SysLog(L"Key = %ls",_FARKEY_ToName((DWORD)key)));
 			ProcessKey((int)(INT_PTR)Param);
 			return TRUE;
 		}

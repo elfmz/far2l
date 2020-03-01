@@ -162,7 +162,30 @@ add_executable (far2l ${SOURCES})
 
 target_compile_definitions(far2l PRIVATE -DUNICODE)
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-    target_compile_definitions(far2l PRIVATE -D_DEBUG -DSYSLOG_OT)
+    set(SYSLOG
+        SYSLOG_FARSYSLOG
+        SYSLOG_OT
+        SYSLOG_SVS
+        SYSLOG_DJ
+        SYSLOG_WARP
+        SYSLOG_VVM
+        SYSLOG_AT
+        SYSLOG_IS
+        SYSLOG_tran
+        SYSLOG_SKV
+        SYSLOG_NWZ
+        SYSLOG_KM
+        SYSLOG_KEYMACRO
+        SYSLOG_ECTL
+        SYSLOG_COPYR
+        SYSLOG_EE_REDRAW
+        SYSLOG_TREX
+        SYSLOG_KEYMACRO_PARSE
+        SYSLOG_YJH
+        SYSLOG_MANAGER
+    )
+    target_compile_definitions(far2l PRIVATE -D_DEBUG)
+    target_compile_definitions(far2l PRIVATE ${SYSLOG})
 endif ()
 target_include_directories(far2l PRIVATE Include)
 target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

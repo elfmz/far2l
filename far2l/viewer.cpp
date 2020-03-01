@@ -212,7 +212,7 @@ Viewer::~Viewer()
 		}
 	}
 
-	_tran(SysLog(L"[%p] Viewer::~Viewer, TempViewName=[%ls]",this,TempViewName));
+	_tran(SysLog(L"[%p] Viewer::~Viewer, TempViewName=[%ls]",this,strTempViewName));
 	/* $ 11.10.2001 IS
 	   Удаляем файл только, если нет открытых фреймов с таким именем.
 	*/

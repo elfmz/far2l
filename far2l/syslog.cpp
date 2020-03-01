@@ -51,7 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
      defined(SYSLOG_SVS)            || \
      defined(SYSLOG_DJ)             || \
      defined(SYSLOG_WARP)           || \
-     defined(VVM)                   || \
+     defined(SYSLOG_VVM)            || \
      defined(SYSLOG_AT)             || \
      defined(SYSLOG_IS)             || \
      defined(SYSLOG_tran)           || \
@@ -82,7 +82,7 @@ static wchar_t *PrintTime(wchar_t *timebuf,size_t size);
 
 static BOOL IsLogON()
 {
-	return FALSE;//GetKeyState(VK_SCROLL)?TRUE:FALSE;
+	return TRUE;//GetKeyState(VK_SCROLL)?TRUE:FALSE;
 }
 
 static const wchar_t *MakeSpace()
@@ -103,7 +103,7 @@ static wchar_t *PrintTime(wchar_t *timebuf,size_t size)
 	WINPORT(GetLocalTime)(&st);
 //  sprintf(timebuf,"%02d.%02d.%04d %2d:%02d:%02d.%03d",
 //      st.wDay,st.wMonth,st.wYear,st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
-//	_snwprintf(timebuf,size,L"%02d:%02d:%02d.%03d",st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
+	swprintf(timebuf,size,L"%02d:%02d:%02d.%03d",st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
 	return timebuf;
 }
 
@@ -128,9 +128,12 @@ static FILE * OpenLogStream(const wchar_t *file)
 	FARString strRealLogName;
 	SYSTEMTIME st;
 	WINPORT(GetLocalTime)(&st);
-	strRealLogName.Format(L"%ls/Far.%04d%02d%02d.%05d.log",file,st.wYear,st.wMonth,st.wDay,HIWORD(FAR_VERSION));
+	(void)file;
+	strRealLogName.Format(L"%ls.%04d%02d%02d.%05d.log",L"",st.wYear,st.wMonth,st.wDay,HIWORD(FAR_VERSION));
+	char name[PATH_MAX];
+	strRealLogName.GetCharString(name, PATH_MAX);
 	//return _wfsopen(strRealLogName,L"a+t",SH_DENYWR);
-	return nullptr;
+	return fopen(name, "w");
 #else
 	return nullptr;
 #endif
@@ -141,7 +144,7 @@ static void OpenSysLog()
 #if defined(SYSLOG)
 
 	if (LogStream)
-		fclose(LogStream);
+		return;
 
 	FARString strLogFileName=g_strFarPath+L"$Log";
 	DWORD Attr=apiGetFileAttributes(strLogFileName);
@@ -165,8 +168,7 @@ static void OpenSysLog()
 static void CloseSysLog()
 {
 #if defined(SYSLOG)
-	fclose(LogStream);
-	LogStream=0;
+	fflush(LogStream);
 #endif
 }
 
@@ -244,6 +246,24 @@ void SysLog(int i)
 
 void SysLog(const wchar_t *fmt,...)
 {
+#if defined(SYSLOG)
+	if (!IsLogON())
+		return;
+
+	OpenSysLog();
+
+	if (LogStream)
+	{
+		wchar_t timebuf[64];
+		fwprintf(LogStream,L"%ls %ls",PrintTime(timebuf,ARRAYSIZE(timebuf)),MakeSpace());
+		va_list args;
+		va_start(args, fmt);
+		vfwprintf(LogStream,fmt,args);
+		fwprintf(LogStream,L"\n");
+	}
+
+	CloseSysLog();
+#endif
 }
 
 void SysLogLastError()
@@ -253,6 +273,26 @@ void SysLogLastError()
 ///
 void SysLog(int l,const wchar_t *fmt,...)
 {
+#if defined(SYSLOG)
+	if (!IsLogON())
+		return;
+
+	SysLog(l);
+
+	OpenSysLog();
+
+	if (LogStream)
+	{
+		wchar_t timebuf[64];
+		fwprintf(LogStream,L"%ls %ls",PrintTime(timebuf,ARRAYSIZE(timebuf)),MakeSpace());
+		va_list args;
+		va_start(args, fmt);
+		vfwprintf(LogStream,fmt,args);
+		fwprintf(LogStream,L"\n");
+	}
+
+	CloseSysLog();
+#endif
 }
 
 

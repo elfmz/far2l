@@ -146,6 +146,10 @@ suggest to activate such 'backgrounded' far2l instance instead of spawning new. 
 switch completely disables this functionality, so closing terminal will close TTY-backed far2 that
 runs inside.
 
+  #--primary-selection#
+  Use PRIMARY selection instead of CLIPBOARD X11 selection. This argument applies only to far2l
+that runs with WX backend.
+
   #/a#
   Disable display of characters with codes 0 - 31 and 255. May be useful when
 executing FAR2L under telnet.

@@ -1,8 +1,8 @@
 from .plugin import PluginBase
 
 class Plugin(PluginBase):
-    menu = "Character Map"
-    area = "Shell Editor Dialog"
+    label = "Python Character Map"
+    area  = "Shell Editor Viewer Plugins"
 
     def Rebuild(self, hDlg):
         self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)

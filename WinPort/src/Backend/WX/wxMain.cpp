@@ -108,6 +108,17 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 		g_winport_con_out.WriteString(msg, wcslen(msg));
 	}
 
+	bool primary_selection = false;
+	for (int i = 0; i < argc; ++i) {
+		if (strstr(argv[i], "--primary-selection") == argv[i]) {
+			primary_selection = true;
+			break;
+		}
+	}
+	if (primary_selection) {
+		wxTheClipboard->UsePrimarySelection(true);
+	}
+
 	wxClipboardBackend clip_backend;
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new(std::nothrow) WinPortAppThread(argc, argv, AppMain);

@@ -109,6 +109,14 @@ To build without WX backend (console version only): change -DUSEWX=yes to -DUSEW
 
 To build with Python plugin: add argument -DPYTHON=yes
 
+Building with MacPorts (when wxWidgets.framework is not installed system-wide):
+
+``` sh
+cmake .. \
+  -DwxWidgets_CONFIG_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config \
+  -DwxWidgets_wxrc_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc
+```
+
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
 

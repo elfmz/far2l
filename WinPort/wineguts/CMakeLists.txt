@@ -20,6 +20,7 @@ codepages/c_863.c
 codepages/c_864.c
 codepages/c_865.c
 codepages/c_866.c
+codepages/c_866.uk.c
 codepages/c_869.c
 codepages/c_874.c
 codepages/c_875.c

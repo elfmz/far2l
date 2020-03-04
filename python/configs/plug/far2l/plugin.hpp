@@ -587,6 +587,7 @@ struct FAR_FIND_DATA
 	FILETIME ftLastWriteTime;
 	uint64_t nFileSize;
 	uint64_t nPackSize;
+	DWORD dwUnixMode;
 	wchar_t *lpwszFileName;
 };
 
@@ -597,6 +598,7 @@ struct PluginPanelItem
 	DWORD         NumberOfLinks;
 	const wchar_t *Description;
 	const wchar_t *Owner;
+	const wchar_t *Group;
 	const wchar_t * const *CustomColumnData;
 	int           CustomColumnNumber;
 	DWORD_PTR     UserData;

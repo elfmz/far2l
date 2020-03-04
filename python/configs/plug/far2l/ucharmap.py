@@ -1,8 +1,8 @@
 from .plugin import PluginBase
 
 class Plugin(PluginBase):
-    menu = "Character Map"
-    area = "Shell Editor Dialog"
+    label = "Python Character Map"
+    area  = "Shell Editor Viewer Plugins"
 
     def Rebuild(self, hDlg):
         self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
@@ -33,14 +33,15 @@ class Plugin(PluginBase):
             (self.ffic.DI_DOUBLEBOX,   3,  1, 38, 18, 0, {'Selected':0}, 0, 0, self.s2f("Character Map"), 0),
             (self.ffic.DI_BUTTON,      7, 17, 12, 18, 0, {'Selected':0}, 1, self.ffic.DIF_DEFAULT + self.ffic.DIF_CENTERGROUP, self.s2f("OK"), 0),
             (self.ffic.DI_BUTTON,     13, 17, 38, 18, 0, {'Selected':0}, 0, self.ffic.DIF_CENTERGROUP, self.s2f("Cancel"), 0),
-            (self.ffic.DI_USERCONTROL, 3, 13, 38, 17, 0, {'Selected':0}, 0, self.ffic.DIF_FOCUS, self.ffi.NULL, 0),
+            (self.ffic.DI_USERCONTROL, 3,  2, 38, 16, 0, {'Selected':0}, 0, self.ffic.DIF_FOCUS, self.ffi.NULL, 0),
         ]
         self.cur_row = 0
         self.cur_col = 0
         self.max_col = 32
         self.max_row = len(symbols) // self.max_col
-        self.first_text_item = 4
+        self.first_text_item = len(Items)
         self.symbols = symbols
+        self.text = None
 
         for i in range(len(symbols)):
             row = i // self.max_col
@@ -51,7 +52,11 @@ class Plugin(PluginBase):
         def DialogProc(hDlg, Msg, Param1, Param2):
             if Msg == self.ffic.DN_INITDIALOG:
                 self.Rebuild(hDlg)
-            elif Msg == self.ffic.DN_KEY:
+                return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+            elif Msg == self.ffic.DN_BTNCLICK:
+                return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+            elif Msg == self.ffic.DN_KEY and Param1 == self.first_text_item-1:
+                #print('key DialogProc(', hDlg, ', DN_KEY,', Param1, ',', Param2, ')')
                 if Param2 == self.ffic.KEY_LEFT:
                     self.cur_col -= 1
                 elif Param2 == self.ffic.KEY_UP:
@@ -61,16 +66,14 @@ class Plugin(PluginBase):
                 elif Param2 == self.ffic.KEY_DOWN:
                     self.cur_row += 1
                 elif Param2 == self.ffic.KEY_ENTER:
-                    print('DialogProc(', hDlg, ', DN_KEY,', Param1, ',', Param2, ')')
                     offset = self.cur_row*self.max_col+self.cur_col
-                    ch = self.symbols[offset]
-                    print('enter row:', self.cur_row, 'col:', self.cur_col, 'ch=', ch)
+                    self.text = self.symbols[offset]
+                    #print('enter:', offset, 'row:', self.cur_row, 'col:', self.cur_col, 'ch:', self.text)
                     return 0
                 elif Param2 == self.ffic.KEY_ESC:
                     return 0
                 else:
-                    print('key DialogProc(', hDlg, ', DN_KEY,', Param1, ',', Param2, ')')
-                    return 1
+                    return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
                 if self.cur_col == self.max_col:
                     self.cur_col = 0
                 elif self.cur_col == -1:
@@ -82,23 +85,27 @@ class Plugin(PluginBase):
                 self.Rebuild(hDlg)
                 return 1
             elif Msg == self.ffic.DN_MOUSECLICK:
-                print('DialogProc(', hDlg, ', DN_MOUSECLICK,', Param1, ',', Param2, ')')
+                #print('mou DialogProc(', hDlg, ', DN_MOUSECLICK,', Param1, ',', Param2, ')')
                 ch = Param1 - self.first_text_item
                 if ch >= 0:
+                    focus = self.info.SendDlgMessage(hDlg, self.ffic.DM_GETFOCUS, 0, 0)
+                    #print('ch=', ch, 'focus:', focus)
+                    if focus != self.first_text_item-1:
+                        self.info.SendDlgMessage(hDlg, self.ffic.DM_SETFOCUS, self.first_text_item-1, 0)
                     self.cur_row = ch // self.max_col
                     self.cur_col = ch % self.max_col
                     self.cur_col = min(max(0, self.cur_col), self.max_col-1)
                     self.cur_row = min(max(0, self.cur_row), self.max_row-1)
+                    offset = self.cur_row*self.max_col+self.cur_col
+                    self.text = self.symbols[offset]
                     self.Rebuild(hDlg)
-                    return 1
-                else:
-                    print('click')
                     return 0
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
         fdi = self.ffi.new("struct FarDialogItem []", Items)
         hDlg = self.info.DialogInit(self.info.ModuleNumber, -1, -1, 42, 20, self.s2f("Character Map"), fdi, len(fdi), 0, 0, DialogProc, 0)
         res = self.info.DialogRun(hDlg)
-        if res != -1:
+        if res == 1:
+            print('dialog text:', self.text)
             pass
         self.info.DialogFree(hDlg)

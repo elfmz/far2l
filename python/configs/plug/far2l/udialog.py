@@ -1,8 +1,8 @@
 from .plugin import PluginBase
 
 class Plugin(PluginBase):
-    menu = "Python Command"
-    area = "Shell"
+    label = "Python Command"
+    area  = "Plugins"
 
     def HandleCommandLine(self, line):
         if line == 'dialog':

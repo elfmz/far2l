@@ -50,6 +50,13 @@ else()
 	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
 endif()
 
+find_package(OpenSSL)
+if (OPENSSL_FOUND)
+	message(STATUS "OpenSSL found -> enjoy FTPS support in NetRocks")
+else()
+	message(WARNING "${Esc}[1;31mOpenSSL not found, NetRocks will not have FTPS protocol support. Install libssl-dev if you want FTPS protocol available in NetRocks.${Esc}[39;22m")
+endif (OPENSSL_FOUND)
+
 find_package(LibSSH 0.5.0)
 if(LIBSSH_FOUND)
 	message(STATUS "libssh found -> enjoy SFTP support in NetRocks")

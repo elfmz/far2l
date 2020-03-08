@@ -233,3 +233,13 @@
 "Set &UID"
 "Set &GID"
 "S&ticky"
+
+"FTP Protocol Options"
+"FTPS Protocol Options"
+"E&xplicit encryption"
+"Minimal &encryption protocol"
+"Server &codepage"
+"&Passive mode"
+"&ASCII mode"
+"Enable &TCP_NODELAY option"
+"Enable TCP_&QUICKACK option"

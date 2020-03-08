@@ -550,3 +550,48 @@ unsigned long htoul(const char *str)
 			return out;
 	}
 }
+
+
+static inline bool CaseIgnoreEngChrMatch(const char c1, const char c2)
+{
+	if (c1 != c2) {
+		if (c1 >= 'A' && c1 <= 'Z') { 
+			if (c1 + ('a' - 'A') != c2) {
+				return false;
+			}
+
+		} else if (c1 >= 'a' && c1 <= 'z') {
+			if (c1 - ('a' - 'A') != c2) {
+				return false;
+			}
+
+		} else {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len)
+{
+	for (size_t i = 0; i != len; ++i) {
+		if (!CaseIgnoreEngChrMatch(str1[i], str2[i])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len)
+{
+	for (size_t i = 0; i != len; ++i) {
+		if (CaseIgnoreEngChrMatch(c, str[i])) {
+			return &str[i];
+		}
+	}
+
+	return nullptr;
+}
+

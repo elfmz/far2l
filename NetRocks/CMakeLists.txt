@@ -20,6 +20,7 @@ src/UI/Settings/ConfigurePlugin.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp
 src/UI/Settings/ConfigureProtocolSFTPSCP.cpp
+src/UI/Settings/ConfigureProtocolFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Settings/ConfigureProtocolWebDAV.cpp
@@ -135,6 +136,24 @@ if (LIBNEON_FOUND)
 		PREFIX ""
 		SUFFIX ".broker")
 endif (LIBNEON_FOUND)
+
+if (OPENSSL_FOUND)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OPENSSL")
+endif (OPENSSL_FOUND)
+
+	add_executable (NetRocks-FTP
+		${PROTOCOL_SOURCES}
+		src/Protocol/ProtocolFTP.cpp
+		src/Protocol/ftpparse.c
+	)
+	target_link_libraries(NetRocks-FTP utils ${OPENSSL_LIBRARIES})
+	target_include_directories(NetRocks-FTP PRIVATE src ${OPENSSL_INCLUDE_DIRS})
+	set_target_properties(NetRocks-FTP
+		PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+		PREFIX ""
+		SUFFIX ".broker")
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")
 

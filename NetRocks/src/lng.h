@@ -235,6 +235,16 @@ enum LanguageID
   MModeExecute,
   MModeSetUID,
   MModeSetGID,
-  MModeSticky
+  MModeSticky,
+
+  MFTPOptionsTitle,
+  MFTPSOptionsTitle,
+  MFTPExplicitEncryption, 
+  MSFTPEncryptionProtocol,
+  MSFTPServerCodepage,
+  MFTPPassiveMode,
+  MFTPASCIIMode,
+  MFTPTCPNoDelay,
+  MFTPQuickAck
 
 };

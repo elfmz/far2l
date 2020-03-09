@@ -137,17 +137,19 @@ if (LIBNEON_FOUND)
 		SUFFIX ".broker")
 endif (LIBNEON_FOUND)
 
-if (OPENSSL_FOUND)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OPENSSL")
-endif (OPENSSL_FOUND)
-
 	add_executable (NetRocks-FTP
 		${PROTOCOL_SOURCES}
 		src/Protocol/ProtocolFTP.cpp
+		src/Protocol/FTPConnection.cpp
 		src/Protocol/ftpparse.c
 	)
-	target_link_libraries(NetRocks-FTP utils ${OPENSSL_LIBRARIES})
-	target_include_directories(NetRocks-FTP PRIVATE src ${OPENSSL_INCLUDE_DIRS})
+	target_link_libraries(NetRocks-FTP utils)
+	target_include_directories(NetRocks-FTP PRIVATE src)
+if (OPENSSL_FOUND)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OPENSSL")
+	target_link_libraries(NetRocks-FTP ${OPENSSL_LIBRARIES})
+	target_include_directories(NetRocks-FTP PRIVATE ${OPENSSL_INCLUDE_DIRS})
+endif (OPENSSL_FOUND)
 	set_target_properties(NetRocks-FTP
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"

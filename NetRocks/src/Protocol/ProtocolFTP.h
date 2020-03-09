@@ -4,15 +4,19 @@
 #include <map>
 #include <StringConfig.h>
 #include "Protocol.h"
-
-struct FTPConnection;
+#include "FTPConnection.h"
 
 class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<ProtocolFTP>
 {
 	std::shared_ptr<FTPConnection> _conn;
 
+	std::vector<std::string> _cwd;
+
 	bool _feat_mlst = false, _feat_mlsd = false, _feat_rest = false, _feat_size = false;
+	std::string Navigate(const std::string &path_name);
+
 	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr);
+
 
 public:
 	ProtocolFTP(const std::string &protocol, const std::string &host, unsigned int port,

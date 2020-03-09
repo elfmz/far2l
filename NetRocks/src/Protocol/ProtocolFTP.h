@@ -11,13 +11,8 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 {
 	std::shared_ptr<FTPConnection> _conn;
 
-	enum CommandAvailability {
-		CA_UNKNOWN,
-		CA_AVAILABLE,
-		CA_UNAVAILABLE
-	} _ca_mlst = CA_UNKNOWN;
-
-	CommandAvailability MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr);
+	bool _feat_mlst = false, _feat_mlsd = false, _feat_rest = false, _feat_size = false;
+	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr);
 
 public:
 	ProtocolFTP(const std::string &protocol, const std::string &host, unsigned int port,

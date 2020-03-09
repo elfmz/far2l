@@ -333,7 +333,7 @@ public:
 			std::string str = StrPrintf("REST %lld\r\n", rest);
 			unsigned int reply_code = SendRecvResponce(str);
 			if (reply_code < 300 || reply_code >= 400) {
-				throw std::runtime_error(StrPrintf(
+				throw ProtocolError(StrPrintf(
 					"REST %lld rejected: %u '%s'",
 					rest, reply_code, str.c_str()));
 			}
@@ -348,15 +348,15 @@ public:
 			std::string str = "PASV\r\n";
 			unsigned int reply_code = SendRecvResponce(str);
 			if (reply_code < 200 || reply_code >= 300) {
-				throw std::runtime_error(StrPrintf("PASV rejected: %u '%s'", reply_code, str.c_str()));
+				throw ProtocolError(StrPrintf("PASV rejected: %u '%s'", reply_code, str.c_str()));
 			}
 			size_t p = str.find('(');
 			if (p == std::string::npos) {
-				throw std::runtime_error(StrPrintf("PASV bad reply: %u '%s'", reply_code, str.c_str()));
+				throw ProtocolError(StrPrintf("PASV bad reply: %u '%s'", reply_code, str.c_str()));
 			}
 
 			unsigned int v[6];
-			sscanf(str.c_str() + p + 1,"%u,%u,%u,%u,%u,%u", &v[2], &v[3], &v[4], &v[5], &v[0], &v[1]);
+			sscanf(str.c_str() + p + 1,"%u,%u,%u,%u,%u,%u", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
 
 			SendRestIfNeeded(rest);
 
@@ -365,14 +365,14 @@ public:
 			sockaddr_in sin = {0};
 			//_transport->GetPeerAddress(sin);
 			sin.sin_family = AF_INET;
-			sin.sin_port = (uint16_t)((v[5] << 8) + v[4]);
-			sin.sin_addr.s_addr = (uint32_t)((v[0] << 24) + (v[1] << 16) + (v[2] << 8) + (v[3]));
-
+			sin.sin_port = (uint16_t)((v[5] << 8) | v[4]);
+			sin.sin_addr.s_addr = (uint32_t)((v[3] << 24) | (v[2] << 16) | (v[1] << 8) | (v[0]));
 			data_transport = std::make_shared<SocketTransport>(sin, _protocol_options);
 
 			reply_code = RecvResponce(str);
+//fprintf(stderr, "PASV responce: %s\n", str.c_str());
 			if (reply_code < 100 || reply_code >= 200) {
-				throw std::runtime_error(StrPrintf("'%s' rejected: %u '%s'", cmd.c_str(), reply_code, str.c_str()));
+				throw ProtocolError(StrPrintf("'%s' rejected: %u '%s'", cmd.c_str(), reply_code, str.c_str()));
 			}
 
 		} else {
@@ -404,7 +404,7 @@ public:
 				(unsigned int)sa.sa_data[0], (unsigned int)sa.sa_data[1]);
 			unsigned int reply_code = SendRecvResponce(str);
 			if (reply_code < 200 || reply_code >= 300) {
-				throw std::runtime_error(StrPrintf("PORT rejected: %u '%s'", reply_code, str.c_str()));
+				throw ProtocolError(StrPrintf("PORT rejected: %u '%s'", reply_code, str.c_str()));
 			}
 
 			SendRestIfNeeded(rest);
@@ -412,7 +412,7 @@ public:
 			str = cmd;
 			reply_code = SendRecvResponce(str);
 			if (reply_code < 100 || reply_code >= 200) {
-				throw std::runtime_error(StrPrintf("'%s' rejected: %u '%s'", cmd.c_str(), reply_code, str.c_str()));
+				throw ProtocolError(StrPrintf("'%s' rejected: %u '%s'", cmd.c_str(), reply_code, str.c_str()));
 			}
 
 			for (;;) {
@@ -469,6 +469,15 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 	if (reply_code < 200 || reply_code >= 300) {
 		throw ProtocolAuthFailedError(str);
 	}
+
+	str = "FEAT\r\n";
+	reply_code = _conn->SendRecvResponce(str);
+	if (reply_code >= 200 && reply_code < 300) {
+		if (str.find("MLST") != std::string::npos) _feat_mlst = true;
+		if (str.find("MLSD") != std::string::npos) _feat_mlsd = true;
+		if (str.find("REST") != std::string::npos) _feat_rest = true;
+		if (str.find("SIZE") != std::string::npos) _feat_size = true;		
+	}
 }
 
 ProtocolFTP::~ProtocolFTP()
@@ -491,7 +500,7 @@ static const char match__pdir[] = "pdir";
 
 #define MATCH_SUBSTR(str, len, match) (sizeof(match) == (len) + 1 && CaseIgnoreEngStrMatch(str, match, sizeof(match) - 1))
 
-static bool ParseXLSTLine(const char *line, const char *end, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr, std::string *name = nullptr)
+static bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr, std::string *name = nullptr)
 {
 	file_info = FileInformation();
 
@@ -510,7 +519,7 @@ static bool ParseXLSTLine(const char *line, const char *end, FileInformation &fi
 			const size_t value_len = line - (eq + 1);
 
 			if (MATCH_SUBSTR(fact, name_len, match__unix_mode)) {
-				file_info.mode = strtol(eq + 1, nullptr, (*(eq + 1) == '0') ? 8 : 10);
+				file_info.mode|= strtol(eq + 1, nullptr, (*(eq + 1) == '0') ? 8 : 10);
 				has_any_known = has_mode = true;
 
 			} else if (MATCH_SUBSTR(fact, name_len, match__unix_uid)) {
@@ -535,7 +544,7 @@ static bool ParseXLSTLine(const char *line, const char *end, FileInformation &fi
 					has_any_known = true;
 
 				} else if (g_netrocks_verbosity > 0) {
-					fprintf(stderr, "ParseMNLSTLine: unknown type='%s'\n",
+					fprintf(stderr, "ParseMLsxLine: unknown type='%s'\n",
 						std::string(eq + 1, value_len).c_str());
 				}
 
@@ -555,11 +564,11 @@ static bool ParseXLSTLine(const char *line, const char *end, FileInformation &fi
 	}
 
 	if (name) {
-		if (line != end && *line == ' ') {
-			++line;
+		if (fact != end && *fact == ' ') {
+			++fact;
 		}
-		if (line != end) {
-			name->assign(line, end - line);
+		if (fact != end) {
+			name->assign(fact, end - fact);
 		} else {
 			name->clear();
 		}
@@ -579,6 +588,8 @@ static bool ParseXLSTLine(const char *line, const char *end, FileInformation &fi
 			file_info.mode|= S_IFREG; // last resort
 		}
 	}
+//	fprintf(stderr, "type:%s\n", ((file_info.mode & S_IFMT) == S_IFDIR) ? "DIR" : "FILE");
+
 
 	if (!has_mode)  {
 		if (perm) {
@@ -611,21 +622,14 @@ static bool ParseXLSTLine(const char *line, const char *end, FileInformation &fi
 	return has_any_known;
 }
 
-ProtocolFTP::CommandAvailability ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_t *uid, gid_t *gid)
+void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_t *uid, gid_t *gid)
 {
-	if (_ca_mlst == CA_UNAVAILABLE) {
-		return _ca_mlst;
-	}
-
-	std::string str = "MLst ";
+	std::string str = "MLST ";
 	str+= path;
 	str+= "\r\n";
 	unsigned int reply_code = _conn->SendRecvResponce(str);
 	if (reply_code >= 500 && reply_code <= 504) {
-		if (_ca_mlst == CA_UNKNOWN) {
-			_ca_mlst = CA_UNAVAILABLE;
-		}
-		return CA_UNAVAILABLE;
+		throw ProtocolError("MLst not supported", reply_code);
 	}
 
 	std::vector<std::string> lines;
@@ -635,30 +639,34 @@ ProtocolFTP::CommandAvailability ProtocolFTP::MLst(const std::string &path, File
 	}
 
 	const std::string &line = lines[ (lines.size() > 1) ? 1 : 0 ];
-	if (!ParseXLSTLine(line.c_str(), line.c_str() + line.size(), file_info, uid, gid)) {
-		return CA_UNAVAILABLE;
+	if (!ParseMLsxLine(line.c_str(), line.c_str() + line.size(), file_info, uid, gid)) {
+		throw ProtocolError("MLst responce uninformative");
 	}
-
-	return _ca_mlst;
 }
 
 mode_t ProtocolFTP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	FileInformation file_info;
-	MLst(path, file_info);
+	if (_feat_mlst) {
+		MLst(path, file_info);
+	}
 	return file_info.mode;
 }
 
 unsigned long long ProtocolFTP::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	FileInformation file_info;
-	MLst(path, file_info);
+	if (_feat_mlst) {
+		MLst(path, file_info);
+	}
 	return file_info.size;
 }
 
 void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	MLst(path, file_info);
+	if (_feat_mlst) {
+		MLst(path, file_info);
+	}
 }
 
 void ProtocolFTP::FileDelete(const std::string &path) throw (std::runtime_error)
@@ -696,44 +704,102 @@ void ProtocolFTP::SymlinkQuery(const std::string &link_path, std::string &link_t
 	throw ProtocolUnsupportedError("Symlink querying unsupported");
 }
 
-class FTPDirectoryEnumer : public IDirectoryEnumer
+class FTPDirectoryEnumerMLSD : public IDirectoryEnumer
 {
-	std::shared_ptr<ProtocolFTP> _protocol;
-	std::string _rooted_path;
+	std::shared_ptr<FTPConnection> _conn;
+	std::shared_ptr<BaseTransport> _data_transport;
+	std::string _read_buffer;
 
 public:
-	FTPDirectoryEnumer(std::shared_ptr<ProtocolFTP> protocol, const std::string &rooted_path)
-		: _protocol(protocol),
-		_rooted_path(rooted_path)
+	FTPDirectoryEnumerMLSD(std::shared_ptr<FTPConnection> &conn, std::shared_ptr<BaseTransport> &data_transport)
+		: _conn(conn),
+		_data_transport(data_transport)
 	{
-		fprintf(stderr, "FTPDirectoryEnumer: '%s'\n", _rooted_path.c_str());
 	}
 
-	virtual ~FTPDirectoryEnumer()
+	virtual ~FTPDirectoryEnumerMLSD()
 	{
+		try {
+			_data_transport.reset();
+			std::string str;
+			_conn->RecvResponce(str);
+		} catch (std::exception &e) {
+			fprintf(stderr, "~FTPDirectoryEnumerMLSD: %s\n", e.what());
+		}
 	}
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
-		return false;
+		for (;;) {
+			for (;;) {
+				size_t p = _read_buffer.find('\n');
+				if (p == std::string::npos) {
+					break;
+				}
+				if (p > 0 && _read_buffer[p - 1] == '\r') {
+					--p;
+				}
+
+				uid_t uid = 0;
+				gid_t gid = 0;
+
+				bool found = (ParseMLsxLine(_read_buffer.c_str(), _read_buffer.c_str() + p,
+					file_info, &uid, &gid, &name) && FILENAME_ENUMERABLE(name.c_str()));
+
+//			fprintf(stderr, "MLSD line: '%s' - '%s' %d\n",_read_buffer.substr(0, p).c_str(), name.c_str(), found);
+
+				do {
+					++p;
+				} while ( p < _read_buffer.size() && (_read_buffer[p] == '\r' || _read_buffer[p] == '\n'));
+
+				_read_buffer.erase(0, p);
+
+				if (found) {
+					owner = StrPrintf("uid:%lu", (unsigned long)uid);
+					group = StrPrintf("uid:%lu", (unsigned long)gid);
+					return true;
+				}
+			}
+
+			if (_read_buffer.size() > 0x100000) {
+				throw ProtocolError("Too long line in MLSD response");
+			}
+			char buf[0x1000];
+			ssize_t r = _data_transport->Recv(buf, sizeof(buf));
+			if (r <= 0) {
+				return false;
+			}
+			_read_buffer.append(buf, r);
+		}
 	}
 };
 
 
 std::shared_ptr<IDirectoryEnumer> ProtocolFTP::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
-	return std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumer(shared_from_this(), path));
+	if (_feat_mlsd) {
+		std::string cmd = "MLSD ";
+		cmd+= path;
+		cmd+= "\r\n";
+		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(cmd);
+		return std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerMLSD(_conn, data_transport));
+	}
+
+	throw ProtocolError("TODO");
+//	return std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumer(shared_from_this(), path));
 }
 
 
 std::shared_ptr<IFileReader> ProtocolFTP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::shared_ptr<IFileReader>();
+	throw ProtocolError("TODO");
+//	return std::shared_ptr<IFileReader>();
 //	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_RDONLY, 0, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolFTP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
 {
-	return std::shared_ptr<IFileWriter>();
+	throw ProtocolError("TODO");
+//	return std::shared_ptr<IFileWriter>();
 //	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }

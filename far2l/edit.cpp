@@ -2187,19 +2187,20 @@ int Edit::Search(const FARString& Str,FARString& ReplaceStr,int Position,int Cas
 
 				if (WholeWords)
 				{
-					wchar_t ChLeft,ChRight;
 					int locResultLeft=FALSE;
 					int locResultRight=FALSE;
-					ChLeft=this->Str[I-1];
 
 					if (I>0)
+					{
+						wchar_t ChLeft=this->Str[I-1];
 						locResultLeft=(IsSpace(ChLeft) || wcschr(WordDiv(),ChLeft));
+					}
 					else
 						locResultLeft=TRUE;
 
 					if (I+Length<StrSize)
 					{
-						ChRight=this->Str[I+Length];
+						wchar_t ChRight=this->Str[I+Length];
 						locResultRight=(IsSpace(ChRight) || wcschr(WordDiv(),ChRight));
 					}
 					else

@@ -141,7 +141,8 @@ endif (LIBNEON_FOUND)
 		${PROTOCOL_SOURCES}
 		src/Protocol/ProtocolFTP.cpp
 		src/Protocol/FTPConnection.cpp
-		src/Protocol/ftpparse.c
+		src/Protocol/FTPParseMLST.cpp
+		src/Protocol/FTPParseLIST.cpp
 	)
 	target_link_libraries(NetRocks-FTP utils)
 	target_include_directories(NetRocks-FTP PRIVATE src)
@@ -183,3 +184,4 @@ set_target_properties(NetRocks
 add_custom_command(TARGET NetRocks POST_BUILD
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/NetRocks")
+

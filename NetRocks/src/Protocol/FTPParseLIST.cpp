@@ -21,8 +21,11 @@ Long VMS filenames, with information split across two lines.
 NCSA Telnet FTP server. Has LIST = NLST (and bad NLST for directories).
 */
 
+#include <sys/types.h>
 #include <time.h>
-#include "ftpparse.h"
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "FTPParseLIST.h"
 
 static long totai(long year,long month,long mday)
 {
@@ -113,7 +116,7 @@ static long guesstai(long month,long mday)
   return 0;
 }
 
-static int check(char *buf,char *monthname)
+static int check(const char *buf, const char *monthname)
 {
   if ((buf[0] != monthname[0]) && (buf[0] != monthname[0] - 32)) return 0;
   if ((buf[1] != monthname[1]) && (buf[1] != monthname[1] - 32)) return 0;
@@ -121,11 +124,11 @@ static int check(char *buf,char *monthname)
   return 1;
 }
 
-static char *months[12] = {
+static const char *months[12] = {
   "jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"
 } ;
 
-static int getmonth(char *buf,int len)
+static int getmonth(const char *buf, int len)
 {
   int i;
   if (len == 3)
@@ -134,7 +137,7 @@ static int getmonth(char *buf,int len)
   return -1;
 }
 
-static long getlong(char *buf,int len)
+static long getlong(const char *buf, int len)
 {
   long u = 0;
   while (len-- > 0)
@@ -142,10 +145,11 @@ static long getlong(char *buf,int len)
   return u;
 }
 
-int ftpparse(struct ftpparse *fp,char *buf,int len)
+int ftpparse(struct ftpparse *fp, const char *buf, int len)
 {
   int i;
   int j;
+  int k;
   int state = 0;
   long size = 0;
   long year = 0;
@@ -179,15 +183,18 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
         if (buf[j] == 9) {
           fp->name = buf + j + 1;
           fp->namelen = len - j - 1;
+          fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR  |  S_IRGRP | S_IWGRP | S_IXGRP  |  S_IROTH | S_IWOTH | S_IXOTH;
           return 1;
         }
         if (buf[j] == ',') {
           switch(buf[i]) {
             case '/':
               fp->flagtrycwd = 1;
+              fp->mode|= S_IFDIR; 
               break;
             case 'r':
               fp->flagtryretr = 1;
+              fp->mode|= S_IFREG; 
               break;
             case 's':
               fp->sizetype = FTPPARSE_SIZE_BINARY;
@@ -232,16 +239,25 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
     case 's':
     case '-':
 
-      if (*buf == 'd') fp->flagtrycwd = 1;
-      if (*buf == '-') fp->flagtryretr = 1;
-      if (*buf == 'l') fp->flagtrycwd = fp->flagtryretr = 1;
+      if (*buf == 'd') { fp->flagtrycwd = 1; fp->mode|= S_IFDIR; }
+      if (*buf == '-') { fp->flagtryretr = 1; fp->mode|= S_IFREG; }
+      if (*buf == 'l') { fp->flagtrycwd = fp->flagtryretr = 1; fp->mode|= S_IFLNK; }
 
       state = 1;
       i = 0;
       for (j = 1;j < len;++j)
         if ((buf[j] == ' ') && (buf[j - 1] != ' ')) {
           switch(state) {
-            case 1: /* skipping perm */
+            case 1: /* hadling perm */
+              if (len > 1 && buf[1] != '-') fp->mode|= S_IRUSR;
+              if (len > 2 && buf[2] != '-') fp->mode|= S_IWUSR;
+              if (len > 3 && buf[3] != '-') fp->mode|= S_IXUSR;
+              if (len > 4 && buf[4] != '-') fp->mode|= S_IRGRP;
+              if (len > 5 && buf[5] != '-') fp->mode|= S_IWGRP;
+              if (len > 6 && buf[6] != '-') fp->mode|= S_IXGRP;
+              if (len > 7 && buf[7] != '-') fp->mode|= S_IROTH;
+              if (len > 8 && buf[8] != '-') fp->mode|= S_IWOTH;
+              if (len > 9 && buf[9] != '-') fp->mode|= S_IXOTH;
               state = 2;
               break;
             case 2: /* skipping nlink */
@@ -249,18 +265,25 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
               if ((j - i == 6) && (buf[i] == 'f')) /* for NetPresenz */
                 state = 4;
               break;
-            case 3: /* skipping uid */
+            case 3: /* getting owner */
+              for (k = i; k < len && k - i != sizeof(fp->owner) - 1 && buf[k] != ' '; ++k) {
+                fp->owner[k - i] = buf[k];
+              }
               state = 4;
               break;
-            case 4: /* getting tentative size */
+            case 4: /* getting tentative size or group */
+              for (k = i; k < len && k - i != sizeof(fp->group) - 1 && buf[k] != ' '; ++k) {
+                fp->group[k - i] = buf[k];
+              }
               size = getlong(buf + i,j - i);
               state = 5;
               break;
             case 5: /* searching for month, otherwise getting tentative size */
               month = getmonth(buf + i,j - i);
-              if (month >= 0)
+              if (month >= 0) {
+                fp->group[0] = 0;
                 state = 6;
-              else
+              } else
                 size = getlong(buf + i,j - i);
               break;
             case 6: /* have size and month */
@@ -325,7 +348,6 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
                 fp->name += 3;
                 fp->namelen -= 3;
               }
-
       return 1;
   }
 
@@ -347,9 +369,12 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
             if (buf[i - 1] == 'R') {
               fp->namelen -= 4;
               fp->flagtrycwd = 1;
+              fp->mode|= S_IFDIR; 
             }
-    if (!fp->flagtrycwd)
+    if (!fp->flagtrycwd) {
       fp->flagtryretr = 1;
+      fp->mode|= S_IFREG; 
+    }
     while (buf[i] != ' ') if (++i == len) return 0;
     while (buf[i] == ' ') if (++i == len) return 0;
     while (buf[i] != ' ') if (++i == len) return 0;
@@ -379,6 +404,7 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
     initbase();
     fp->mtime = base + totai(year,month,mday) + hour * 3600 + minute * 60;
 
+    fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR  |  S_IRGRP | S_IWGRP | S_IXGRP  |  S_IROTH | S_IWOTH | S_IXOTH;
     return 1;
   }
 
@@ -417,6 +443,7 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
     while (buf[j] == ' ') if (++j == len) return 0;
     if (buf[j] == '<') {
       fp->flagtrycwd = 1;
+      fp->mode|= S_IFDIR; 
       while (buf[j] != ' ') if (++j == len) return 0;
     }
     else {
@@ -425,6 +452,7 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
       fp->size = getlong(buf + i,j - i);
       fp->sizetype = FTPPARSE_SIZE_BINARY;
       fp->flagtryretr = 1;
+      fp->mode|= S_IFREG; 
     }
     while (buf[j] == ' ') if (++j == len) return 0;
 
@@ -435,6 +463,7 @@ int ftpparse(struct ftpparse *fp,char *buf,int len)
     initbase();
     fp->mtime = base + totai(year,month,mday) + hour * 3600 + minute * 60;
 
+    fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR  |  S_IRGRP | S_IWGRP | S_IXGRP  |  S_IROTH | S_IWOTH | S_IXOTH;
     return 1;
   }
 

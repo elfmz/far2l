@@ -7,6 +7,8 @@
 #include <string>
 
 #include "ProtocolFTP.h"
+#include "FTPParseMLST.h"
+#include "FTPParseLIST.h"
 
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
@@ -46,6 +48,9 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 		if (str.find("REST") != std::string::npos) _feat_rest = true;
 		if (str.find("SIZE") != std::string::npos) _feat_size = true;		
 	}
+
+	str = "TYPE I\r\n";
+	_conn->SendRecvResponce(str);
 }
 
 ProtocolFTP::~ProtocolFTP()
@@ -102,147 +107,11 @@ std::string ProtocolFTP::Navigate(const std::string &path_name)
 	return name_part;
 }
 
-static const char match__unix_mode[] = "UNIX.mode";
-static const char match__unix_uid[] = "UNIX.uid";
-static const char match__unix_gid[] = "UNIX.gid";
-
-static const char match__type[] = "type";
-static const char match__perm[] = "perm";
-static const char match__size[] = "size";
-static const char match__sizd[] = "sizd";
-
-static const char match__file[] = "file";
-static const char match__dir[] = "dir";
-static const char match__cdir[] = "cdir";
-static const char match__pdir[] = "pdir";
-
-#define MATCH_SUBSTR(str, len, match) (sizeof(match) == (len) + 1 && CaseIgnoreEngStrMatch(str, match, sizeof(match) - 1))
-
-static bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr, std::string *name = nullptr)
-{
-	file_info = FileInformation();
-
-	bool has_mode = false, has_type = false, has_any_known = false;
-	const char *perm = nullptr, *perm_end = nullptr;
-
-	for (; line != end && *line == ' '; ++line) {;}
-
-	const char *fact, *eq;
-	for (fact = eq = line; line != end; ++line) if (*line == '=') {
-		eq = line;
-
-	} else if (*line ==';') {
-		if (eq > fact) {
-			const size_t name_len = eq - fact;
-			const size_t value_len = line - (eq + 1);
-
-			if (MATCH_SUBSTR(fact, name_len, match__unix_mode)) {
-				file_info.mode|= strtol(eq + 1, nullptr, (*(eq + 1) == '0') ? 8 : 10);
-				has_any_known = has_mode = true;
-
-			} else if (MATCH_SUBSTR(fact, name_len, match__unix_uid)) {
-				if (uid) *uid = strtol(eq + 1, nullptr, 10);
-				has_any_known = true;
-
-			} else if (MATCH_SUBSTR(fact, name_len, match__unix_gid)) {
-				if (gid) *gid = strtol(eq + 1, nullptr, 10);
-				has_any_known = true;
-
-			} else if (MATCH_SUBSTR(fact, name_len, match__type)) {
-				if (MATCH_SUBSTR(eq + 1, value_len, match__file)) {
-					file_info.mode|= S_IFREG;
-					has_type = true;
-					has_any_known = true;
-
-				} else if (MATCH_SUBSTR(eq + 1, value_len, match__dir)
-				  || MATCH_SUBSTR(eq + 1, value_len, match__cdir)
-				  || MATCH_SUBSTR(eq + 1, value_len, match__pdir)) {
-					file_info.mode|= S_IFDIR;
-					has_type = true;
-					has_any_known = true;
-
-				} else if (g_netrocks_verbosity > 0) {
-					fprintf(stderr, "ParseMLsxLine: unknown type='%s'\n",
-						std::string(eq + 1, value_len).c_str());
-				}
-
-			} else if (MATCH_SUBSTR(fact, name_len, match__perm)) {
-				perm = eq + 1;
-				perm_end = line;
-				has_any_known = true;
-
-			} else if (MATCH_SUBSTR(fact, name_len, match__size)
-			  || MATCH_SUBSTR(fact, name_len, match__sizd)) {
-				file_info.size = strtol(eq + 1, nullptr, 10);
-				has_any_known = true;
-			}
-		}
-
-		fact = line + 1;
-	}
-
-	if (name) {
-		if (fact != end && *fact == ' ') {
-			++fact;
-		}
-		if (fact != end) {
-			name->assign(fact, end - fact);
-		} else {
-			name->clear();
-		}
-	}
-
-	if (!has_type)  {
-		if (perm) {
-			if (CaseIgnoreEngStrChr('c', perm, perm_end - perm) != nullptr
-			  || CaseIgnoreEngStrChr('l', perm, perm_end - perm) != nullptr) {
-				file_info.mode|= S_IFDIR;
-
-			} else {
-				file_info.mode|= S_IFREG;
-			}
-
-		} else {
-			file_info.mode|= S_IFREG; // last resort
-		}
-	}
-//	fprintf(stderr, "type:%s\n", ((file_info.mode & S_IFMT) == S_IFDIR) ? "DIR" : "FILE");
-
-
-	if (!has_mode)  {
-		if (perm) {
-			if (CaseIgnoreEngStrChr('r', perm, perm_end - perm) != nullptr
-			  || CaseIgnoreEngStrChr('l', perm, perm_end - perm) != nullptr
-			  || CaseIgnoreEngStrChr('e', perm, perm_end - perm) != nullptr) {
-				file_info.mode|= 0444;
-				if ((file_info.mode & S_IFMT) == S_IFDIR) {
-					file_info.mode|= 0111;
-				}
-			}
-			if (CaseIgnoreEngStrChr('w', perm, perm_end - perm) != nullptr
-			  || CaseIgnoreEngStrChr('a', perm, perm_end - perm) != nullptr
-			  || CaseIgnoreEngStrChr('c', perm, perm_end - perm) != nullptr) {
-				file_info.mode|= 0220;
-			}
-			if (CaseIgnoreEngStrChr('x', perm, perm_end - perm) != nullptr
-			  || CaseIgnoreEngStrChr('e', perm, perm_end - perm) != nullptr) {
-				file_info.mode|= 0111;
-			}
-
-		} else if ((file_info.mode & S_IFMT) == S_IFDIR) {
-			file_info.mode|= DEFAULT_ACCESS_MODE_DIRECTORY; // last resort
-
-		} else {
-			file_info.mode|= DEFAULT_ACCESS_MODE_FILE; // last resort
-		}
-	}
-
-	return has_any_known;
-}
 
 void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_t *uid, gid_t *gid)
 {
-	std::string str = "MLST ";
+//	const std::string &name_part = Navigate(path + "/.");
+	std::string str = "MLST";
 	str+= path;
 	str+= "\r\n";
 	unsigned int reply_code = _conn->SendRecvResponce(str);
@@ -359,9 +228,12 @@ public:
 	}
 };
 
-class FTPDirectoryEnumerMLSD : protected FTPDataCommand, public IDirectoryEnumer
+class FTPBaseDirectoryEnumer : protected FTPDataCommand, public IDirectoryEnumer
 {
 	std::string _read_buffer;
+
+protected:
+	virtual bool OnParseLine(const char *buf, size_t len, std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error) = 0;
 
 public:
 	using FTPDataCommand::FTPDataCommand;
@@ -378,13 +250,7 @@ public:
 					--p;
 				}
 
-				uid_t uid = 0;
-				gid_t gid = 0;
-
-				bool found = (ParseMLsxLine(_read_buffer.c_str(), _read_buffer.c_str() + p,
-					file_info, &uid, &gid, &name) && FILENAME_ENUMERABLE(name.c_str()));
-
-//			fprintf(stderr, "MLSD line: '%s' - '%s' %d\n",_read_buffer.substr(0, p).c_str(), name.c_str(), found);
+				bool line_parsed = OnParseLine(_read_buffer.c_str(), p, name, owner, group, file_info);
 
 				do {
 					++p;
@@ -392,9 +258,7 @@ public:
 
 				_read_buffer.erase(0, p);
 
-				if (found) {
-					owner = StrPrintf("uid:%lu", (unsigned long)uid);
-					group = StrPrintf("gid:%lu", (unsigned long)gid);
+				if (line_parsed) {
 					return true;
 				}
 			}
@@ -414,8 +278,69 @@ public:
 };
 
 
+class FTPDirectoryEnumerMLSD : public FTPBaseDirectoryEnumer
+{
+
+protected:
+
+	virtual bool OnParseLine(const char *buf, size_t len, std::string &name,
+		std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	{
+		uid_t uid = 0;
+		gid_t gid = 0;
+
+		if (!ParseMLsxLine(buf, buf + len, file_info, &uid, &gid, &name)) {
+			return false;
+		}
+
+		if (!FILENAME_ENUMERABLE(name.c_str())) {
+			return false;
+		}
+
+		owner = StrPrintf("uid:%lu", (unsigned long)uid);
+		group = StrPrintf("gid:%lu", (unsigned long)gid);
+		return true;
+	}
+
+public:
+	using FTPBaseDirectoryEnumer::FTPBaseDirectoryEnumer;
+};
+
+class FTPDirectoryEnumerLIST : public FTPBaseDirectoryEnumer
+{
+
+protected:
+
+	virtual bool OnParseLine(const char *buf, size_t len, std::string &name,
+		std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	{
+		struct ftpparse fp{};
+
+		if (ftpparse(&fp, buf, (int)len) != 1 || !fp.name || !fp.namelen) {
+			return false;
+		}
+
+		name.assign(fp.name, fp.namelen);
+		file_info.mode = fp.mode;
+		file_info.size = fp.size;
+		if (fp.flagtryretr) {
+			file_info.mode|= S_IXUSR | S_IXGRP | S_IXOTH;
+		}
+		owner = fp.owner;
+		group = fp.group;
+		file_info.access_time.tv_sec
+			= file_info.status_change_time.tv_sec
+				= file_info.modification_time.tv_sec = fp.mtime;
+		return true;
+	}
+
+public:
+	using FTPBaseDirectoryEnumer::FTPBaseDirectoryEnumer;
+};
+
 std::shared_ptr<IDirectoryEnumer> ProtocolFTP::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
+/*
 	const std::string &name_part = Navigate(path);
 	if (_feat_mlsd) {
 		std::string cmd = "MLSD ";
@@ -424,9 +349,11 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFTP::DirectoryEnum(const std::string &
 		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(cmd);
 		return std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerMLSD(_conn, data_transport));
 	}
-
-	throw ProtocolError("TODO");
-//	return std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumer(shared_from_this(), path));
+*/
+	Navigate(path + "/.");
+	std::string cmd = "LIST\r\n";
+	std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(cmd);
+	return std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerLIST(_conn, data_transport));
 }
 
 

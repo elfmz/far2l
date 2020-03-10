@@ -9,7 +9,6 @@
 #include <os_call.hpp>
 
 #include "FTPConnection.h"
-#include "../Erroring.h"
 
 BaseTransport::~BaseTransport()
 {
@@ -288,6 +287,18 @@ unsigned int FTPConnection::SendRecvResponce(std::string &str)
 	return RecvResponce(str);
 }
 
+void FTPConnection::RecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max)
+{
+	unsigned int reply_code = RecvResponce(str);
+	FTPThrowIfBadResponce(str, reply_code, reply_ok_min, reply_ok_max);
+}
+
+void FTPConnection::SendRecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max)
+{
+	unsigned int reply_code = SendRecvResponce(str);
+	FTPThrowIfBadResponce(str, reply_code, reply_ok_min, reply_ok_max);
+}
+
 void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 {
 	if (rest != 0) {
@@ -304,14 +315,11 @@ void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
 {
 	std::string str = "PASV\r\n";
-	unsigned int reply_code = SendRecvResponce(str);
-	if (reply_code < 200 || reply_code >= 300) {
-		throw ProtocolError(StrPrintf("PASV rejected: %u '%s'", reply_code, str.c_str()));
-	}
+	SendRecvResponce(str, 200, 299);
 
 	size_t p = str.find('(');
 	if (p == std::string::npos) {
-		throw ProtocolError(StrPrintf("PASV bad reply: %u '%s'", reply_code, str.c_str()));
+		throw ProtocolError(str);
 	}
 
 	unsigned int v[6];
@@ -322,17 +330,12 @@ void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transp
 	_transport->Send(cmd.c_str(), cmd.size());
 
 	sockaddr_in sin = {0};
-	//_transport->GetPeerAddress(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_port = (uint16_t)((v[5] << 8) | v[4]);
 	sin.sin_addr.s_addr = (uint32_t)((v[3] << 24) | (v[2] << 16) | (v[1] << 8) | (v[0]));
 	data_transport = std::make_shared<SocketTransport>(sin, _protocol_options);
 
-	reply_code = RecvResponce(str);
-//fprintf(stderr, "PASV responce: %s\n", str.c_str());
-	if (reply_code < 100 || reply_code >= 200) {
-		throw ProtocolError(StrPrintf("'%s' rejected: %u '%s'", cmd.c_str(), reply_code, str.c_str()));
-	}
+	RecvResponce(str, 100, 199);
 }
 
 void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
@@ -360,21 +363,17 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 		throw std::runtime_error(StrPrintf("getsockname() errno=%d", errno));
 	}
 
-	std::string str = StrPrintf("PORT %u,%u,%u,%u,%u,%u\r\n", (unsigned int)sa.sa_data[2],
-		(unsigned int)sa.sa_data[3], (unsigned int)sa.sa_data[4], (unsigned int)sa.sa_data[5],
-		(unsigned int)sa.sa_data[0], (unsigned int)sa.sa_data[1]);
-	unsigned int reply_code = SendRecvResponce(str);
-	if (reply_code < 200 || reply_code >= 300) {
-		throw ProtocolError(StrPrintf("PORT rejected: %u '%s'", reply_code, str.c_str()));
-	}
+	std::string str = StrPrintf("PORT %u,%u,%u,%u,%u,%u\r\n",
+		(unsigned int)(unsigned char)sa.sa_data[2], (unsigned int)(unsigned char)sa.sa_data[3],
+		(unsigned int)(unsigned char)sa.sa_data[4], (unsigned int)(unsigned char)sa.sa_data[5],
+		(unsigned int)(unsigned char)sa.sa_data[0], (unsigned int)(unsigned char)sa.sa_data[1]);
+
+	SendRecvResponce(str, 200, 299);
 
 	SendRestIfNeeded(rest);
 
 	str = cmd;
-	reply_code = SendRecvResponce(str);
-	if (reply_code < 100 || reply_code >= 200) {
-		throw ProtocolError(StrPrintf("'%s' rejected: %u '%s'", cmd.c_str(), reply_code, str.c_str()));
-	}
+	SendRecvResponce(str, 100, 199);
 
 	for (;;) {
 		l = sizeof(sin);
@@ -390,7 +389,7 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd, unsigned long long rest)
 {
 	std::shared_ptr<BaseTransport> data_transport;
-	if (_protocol_options.GetInt("Passive") == 1) {
+	if (_protocol_options.GetInt("Passive", 1) == 1) {
 		DataCommand_PASV(data_transport, cmd, rest);
 
 	} else {

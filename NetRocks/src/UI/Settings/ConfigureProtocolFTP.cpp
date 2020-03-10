@@ -155,7 +155,7 @@ public:
 			SetCheckedDialogControl(_i_explicit_encryption, sc.GetInt("ExplicitEncryption", 0) != 0);
 		}
 
-		SetCheckedDialogControl(_i_passive_mode, sc.GetInt("Passive", 0) != 0);
+		SetCheckedDialogControl(_i_passive_mode, sc.GetInt("Passive", 1) != 0);
 		SetCheckedDialogControl(_i_ascii_mode, sc.GetInt("ASCII", 0) != 0);
 
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);

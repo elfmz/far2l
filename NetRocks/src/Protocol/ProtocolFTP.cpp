@@ -22,30 +22,25 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 	_conn(std::make_shared<FTPConnection>( (strcasecmp(protocol.c_str(), "ftps") == 0), host, port, options))
 {
 	std::string str;
-	unsigned int reply_code = _conn->RecvResponce(str);
-	if (reply_code < 200 || reply_code >= 300) {
-		throw ProtocolError(str);
-	}
+	_conn->RecvResponce(str, 200, 299);
 
 	str = "USER ";
 	str+= username;
 	str+= "\r\n";
 
-	reply_code = _conn->SendRecvResponce(str);
-	if (reply_code >= 300 && reply_code < 400) {
+	unsigned int reply_code = _conn->SendRecvResponce(str);
+	if (reply_code >= 300 && reply_code <= 399) {
 		str = "PASS ";
 		str+= password;
 		str+= "\r\n";
 		reply_code = _conn->SendRecvResponce(str);
 	}
 
-	if (reply_code < 200 || reply_code >= 300) {
-		throw ProtocolAuthFailedError(str);
-	}
+	FTPThrowIfBadResponce<ProtocolAuthFailedError>(str, reply_code, 200, 299);
 
 	str = "FEAT\r\n";
 	reply_code = _conn->SendRecvResponce(str);
-	if (reply_code >= 200 && reply_code < 300) {
+	if (reply_code >= 200 && reply_code < 299) {
 		if (str.find("MLST") != std::string::npos) _feat_mlst = true;
 		if (str.find("MLSD") != std::string::npos) _feat_mlsd = true;
 		if (str.find("REST") != std::string::npos) _feat_rest = true;
@@ -87,9 +82,7 @@ std::string ProtocolFTP::Navigate(const std::string &path_name)
 				if (reply_code < 200 || reply_code > 299) {
 					str = "CWD ..\r\n";
 					reply_code = _conn->SendRecvResponce(str);
-					if (reply_code < 200 || reply_code > 299) {
-						throw std::runtime_error("Can't reset cwd");
-					}
+					FTPThrowIfBadResponce(str, reply_code, 200, 299);
 				}
 			}
 
@@ -101,10 +94,7 @@ std::string ProtocolFTP::Navigate(const std::string &path_name)
 			str = "CWD ";
 			str+= part;
 			str+= "\r\n";
-			reply_code = _conn->SendRecvResponce(str);
-			if (reply_code < 200 || reply_code > 299) {
-				throw ProtocolError(StrPrintf("CWD '%s' error %u", part.c_str(), reply_code));
-			}
+			_conn->SendRecvResponce(str, 200, 299);
 			_cwd.emplace_back(part);
 		}
 	}

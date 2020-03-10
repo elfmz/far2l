@@ -9,6 +9,7 @@
 #include <ScopeHelpers.h>
 #include <StringConfig.h>
 
+#include "../Erroring.h"
 
 struct BaseTransport : public std::enable_shared_from_this<BaseTransport>
 {
@@ -58,6 +59,19 @@ public:
 };
 #endif
 
+template <class E = ProtocolError>
+	static void FTPThrowIfBadResponce(const std::string &str, unsigned int reply_code, unsigned int reply_ok_min, unsigned int reply_ok_max)
+{
+	if (reply_code < reply_ok_min || reply_code > reply_ok_max) {
+		size_t n = str.size();
+		while (n > 0 && (str[n - 1] == '\r' || str[n - 1] == '\n')) {
+			--n;
+		}
+		throw E(str.substr(0, n));
+	}
+}
+
+
 struct FTPConnection : public std::enable_shared_from_this<FTPConnection>
 {
 	std::shared_ptr<BaseTransport> _transport;
@@ -70,8 +84,14 @@ struct FTPConnection : public std::enable_shared_from_this<FTPConnection>
 public:
 	FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options);
 	virtual ~FTPConnection();
+
 	unsigned int RecvResponce(std::string &str);
 	unsigned int SendRecvResponce(std::string &str);
+
+	void RecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
+	void SendRecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
+
 	void SendRestIfNeeded(unsigned long long rest);
+
 	std::shared_ptr<BaseTransport> DataCommand(const std::string &cmd, unsigned long long rest = 0);
 };

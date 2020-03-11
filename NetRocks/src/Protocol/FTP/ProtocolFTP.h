@@ -2,13 +2,16 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <list>
 #include <StringConfig.h>
 #include "../Protocol.h"
+#include "../DirectoryEnumCache.h"
 #include "FTPConnection.h"
 
 class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<ProtocolFTP>
 {
 	std::shared_ptr<FTPConnection> _conn;
+	DirectoryEnumCache _dir_enum_cache;
 
 	std::vector<std::string> _cwd;
 

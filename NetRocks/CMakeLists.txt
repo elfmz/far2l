@@ -143,6 +143,7 @@ endif (LIBNEON_FOUND)
 		src/Protocol/FTP/FTPConnection.cpp
 		src/Protocol/FTP/FTPParseMLST.cpp
 		src/Protocol/FTP/FTPParseLIST.cpp
+		src/Protocol/DirectoryEnumCache.cpp
 	)
 	target_link_libraries(NetRocks-FTP utils)
 	target_include_directories(NetRocks-FTP PRIVATE src)

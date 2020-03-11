@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 #include <StringConfig.h>
-#include "Protocol.h"
+#include "../Protocol.h"
 #include "FTPConnection.h"
 
 class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<ProtocolFTP>

@@ -85,7 +85,6 @@ bool Enumer::OnScanningPath(const std::string &path, const FileInformation *file
 		info = *file_info;
 	} else {
 		_host->GetInformation(info, path, false);
-		//info.mode = _host->GetMode(path, true);
 	}
 
 	if (!S_ISREG(info.mode)) {

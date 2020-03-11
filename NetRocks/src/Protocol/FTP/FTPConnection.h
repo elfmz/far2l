@@ -9,7 +9,7 @@
 #include <ScopeHelpers.h>
 #include <StringConfig.h>
 
-#include "../Erroring.h"
+#include "../../Erroring.h"
 
 struct BaseTransport : public std::enable_shared_from_this<BaseTransport>
 {

@@ -3,51 +3,44 @@
 #include <string>
 #include <map>
 #include <set>
-#include "Protocol.h"
+#include <neon/ne_session.h>
+#include <neon/ne_request.h>
+#include "../Protocol.h"
 
-extern "C" {
-#include <nfsc/libnfs.h>
-//#include <nfsc/libnfs-raw.h>
-#include <nfsc/libnfs-raw-nfs.h>
-#include <nfsc/libnfs-raw-mount.h>
-}
-
-
-struct NFSConnection
+struct DavConnection
 {
-	std::map<std::string, std::set<std::string> > srv2exports;
-	struct nfs_context *ctx = nullptr;
-	std::string mounted_path;
+	ne_session *sess = nullptr;
 
-	NFSConnection() = default;
+	DavConnection() = default;
 
-	~NFSConnection()
+	~DavConnection()
 	{
-		if (ctx != nullptr) {
-			nfs_destroy_context(ctx);
+		if (sess != nullptr) {
+			ne_session_destroy(sess);
 		}
 	}
 
 private:
-	NFSConnection(const NFSConnection &) = delete;
+	DavConnection(const DavConnection &) = delete;
 };
 
-class ProtocolNFS : public IProtocol
+class ProtocolWebDAV : public IProtocol
 {
-	std::shared_ptr<NFSConnection> _nfs;
-	std::string _host, _mount;
+	std::shared_ptr<DavConnection> _conn;
+	std::string _useragent;
+	std::string _username, _password;
+	std::string _proxy_username, _proxy_password;
+	std::string _known_server_identity, _current_server_identity;
 
-	std::string RootedPath(const std::string &path);
-	void RootedPathToMounted(std::string &path);
-
-	std::string MountedRootedPath(const std::string &path);
-
-
+	static int sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
+	static int sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
+	static int sVerifySsl(void *userdata, int failures, const ne_ssl_certificate *cert);
+	static void sCreateRequestHook(ne_request *req, void *userdata, const char *method, const char *requri);
 public:
 
-	ProtocolNFS(const std::string &host, unsigned int port,
+	ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const std::string &protocol_options) throw (std::runtime_error);
-	virtual ~ProtocolNFS();
+	virtual ~ProtocolWebDAV();
 
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);

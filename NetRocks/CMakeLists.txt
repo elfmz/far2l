@@ -61,7 +61,7 @@ src/Host/IPC.cpp
 
 add_executable (NetRocks-FILE
 	${PROTOCOL_SOURCES}
-	src/Protocol/ProtocolFile.cpp
+	src/Protocol/File/ProtocolFile.cpp
 	src/Host/HostLocal.cpp
 )
 
@@ -78,9 +78,9 @@ if (LIBSSH_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
 	add_executable (NetRocks-SFTP
 		${PROTOCOL_SOURCES}
-		src/Protocol/SSHConnection.cpp
-		src/Protocol/ProtocolSFTP.cpp
-		src/Protocol/ProtocolSCP.cpp
+		src/Protocol/SSH/SSHConnection.cpp
+		src/Protocol/SSH/ProtocolSFTP.cpp
+		src/Protocol/SSH/ProtocolSCP.cpp
 	)
 	target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
 	target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})
@@ -95,8 +95,8 @@ if (LIBSMBCLIENT_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
 	add_executable (NetRocks-SMB
 		${PROTOCOL_SOURCES}
-		src/Protocol/ProtocolSMB.cpp
-		src/Protocol/NMBEnum.cpp
+		src/Protocol/SMB/ProtocolSMB.cpp
+		src/Protocol/SMB/NMBEnum.cpp
 	)
 	target_link_libraries(NetRocks-SMB utils ${LIBSMBCLIENT_LIBRARIES})
 	target_include_directories(NetRocks-SMB PRIVATE src ${LIBSMBCLIENT_INCLUDE_DIRS})
@@ -111,7 +111,7 @@ if (LIBNFS_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
 	add_executable (NetRocks-NFS
 		${PROTOCOL_SOURCES}
-		src/Protocol/ProtocolNFS.cpp
+		src/Protocol/NFS/ProtocolNFS.cpp
 	)
 	target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
 	target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
@@ -126,7 +126,7 @@ if (LIBNEON_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_WEBDAV")
 	add_executable (NetRocks-WebDAV
 		${PROTOCOL_SOURCES}
-		src/Protocol/ProtocolWebDAV.cpp
+		src/Protocol/WebDAV/ProtocolWebDAV.cpp
 	)
 	target_link_libraries(NetRocks-WebDAV utils ${LIBNEON_LIBRARIES})
 	target_include_directories(NetRocks-WebDAV PRIVATE src ${LIBNEON_INCLUDE_DIRS})
@@ -139,10 +139,10 @@ endif (LIBNEON_FOUND)
 
 	add_executable (NetRocks-FTP
 		${PROTOCOL_SOURCES}
-		src/Protocol/ProtocolFTP.cpp
-		src/Protocol/FTPConnection.cpp
-		src/Protocol/FTPParseMLST.cpp
-		src/Protocol/FTPParseLIST.cpp
+		src/Protocol/FTP/ProtocolFTP.cpp
+		src/Protocol/FTP/FTPConnection.cpp
+		src/Protocol/FTP/FTPParseMLST.cpp
+		src/Protocol/FTP/FTPParseLIST.cpp
 	)
 	target_link_libraries(NetRocks-FTP utils)
 	target_include_directories(NetRocks-FTP PRIVATE src)

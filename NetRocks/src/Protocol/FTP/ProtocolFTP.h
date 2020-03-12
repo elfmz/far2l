@@ -19,7 +19,7 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 	std::string Navigate(const std::string &path_name);
 
 	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr);
-
+	std::shared_ptr<IDirectoryEnumer> NavigatedDirectoryEnum();
 
 public:
 	ProtocolFTP(const std::string &protocol, const std::string &host, unsigned int port,

@@ -64,7 +64,7 @@ std::string ProtocolFTP::Navigate(const std::string &path_name)
 	StrExplode(parts, path_name, "/");
 
 	for (auto it = parts.begin(); it != parts.end();) {
-		if (it->empty()) {
+		if (it->empty() || *it == ".") {
 			it = parts.erase(it);
 		} else {
 			++it;
@@ -132,32 +132,43 @@ void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_
 	}
 }
 
-mode_t ProtocolFTP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	const std::string &name_part = Navigate(path);
-	FileInformation file_info;
+	std::string name_part = Navigate(path);
+#if 0
 	if (_feat_mlst) {
 		MLst(name_part, file_info);
 	}
+#endif
+
+	if (name_part.empty()) {
+		file_info = FileInformation();
+		file_info.mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
+		return;
+	}
+
+	std::shared_ptr<IDirectoryEnumer> enumer = NavigatedDirectoryEnum();
+	std::string enum_name, enum_owner, enum_group;
+	do {
+		if (!enumer->Enum(enum_name, enum_owner, enum_group, file_info)) {
+			throw ProtocolError("File not found");
+		}
+	} while (name_part != enum_name);
+}
+
+
+mode_t ProtocolFTP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+{
+	FileInformation file_info;
+	GetInformation(file_info, path, follow_symlink);
 	return file_info.mode;
 }
 
 unsigned long long ProtocolFTP::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	const std::string &name_part = Navigate(path);
 	FileInformation file_info;
-	if (_feat_mlst) {
-		MLst(name_part, file_info);
-	}
+	GetInformation(file_info, path, follow_symlink);
 	return file_info.size;
-}
-
-void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
-{
-	const std::string &name_part = Navigate(path);
-	if (_feat_mlst) {
-		MLst(name_part, file_info);
-	}
 }
 
 void ProtocolFTP::FileDelete(const std::string &path) throw (std::runtime_error)
@@ -347,8 +358,12 @@ public:
 
 std::shared_ptr<IDirectoryEnumer> ProtocolFTP::DirectoryEnum(const std::string &path) throw (std::runtime_error)
 {
-	Navigate(path + "/.");
+	Navigate(path + "/*");
+	return NavigatedDirectoryEnum();
+}
 
+std::shared_ptr<IDirectoryEnumer> ProtocolFTP::NavigatedDirectoryEnum()
+{
 	std::string str = "PWD\r\n", pwd;
 	unsigned int reply = _conn->SendRecvResponce(str);
 	if (reply == 257) {

@@ -85,6 +85,8 @@ public:
 	FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options);
 	virtual ~FTPConnection();
 
+	const StringConfig &ProtocolOptions() const { return _protocol_options; }
+
 	unsigned int RecvResponce(std::string &str);
 	unsigned int SendRecvResponce(std::string &str);
 
@@ -94,4 +96,5 @@ public:
 	void SendRestIfNeeded(unsigned long long rest);
 
 	std::shared_ptr<BaseTransport> DataCommand(const std::string &cmd, unsigned long long rest = 0);
+
 };

@@ -243,7 +243,7 @@ enum LanguageID
   MSFTPEncryptionProtocol,
   MSFTPServerCodepage,
   MFTPPassiveMode,
-  MFTPASCIIMode,
+  MFTPUseMLSDMLST,
   MFTPTCPNoDelay,
   MFTPQuickAck
 

@@ -14,7 +14,7 @@
 | Minimal encryption protocol:           [COMBOBOX         ] |
 | Server codepage:                       [COMBOBOX         ] |
 | [ ] Use passive mode for transfers                         |
-| [ ] Use ASCII mode for transfers                           |
+| [ ] Use MLSD/MLST if possible                              |
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
 |------------------------------------------------------------|
@@ -44,7 +44,7 @@ class ProtocolOptionsFTP : protected BaseDialog
 	int _i_explicit_encryption = -1;
 	int _i_encryption_protocol = -1;
 	int _i_server_codepage = -1;
-	int _i_passive_mode = -1, _i_ascii_mode = -1;
+	int _i_passive_mode = -1, _i_use_mlsd_mlst = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	//int _i_enable_sandbox = -1;
 
@@ -118,7 +118,7 @@ public:
 		_i_passive_mode = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPPassiveMode);
 		_di.NextLine();
 
-		_i_ascii_mode = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPASCIIMode);
+		_i_use_mlsd_mlst = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPUseMLSDMLST);
 		_di.NextLine();
 
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPTCPNoDelay);
@@ -156,7 +156,7 @@ public:
 		}
 
 		SetCheckedDialogControl(_i_passive_mode, sc.GetInt("Passive", 1) != 0);
-		SetCheckedDialogControl(_i_ascii_mode, sc.GetInt("ASCII", 0) != 0);
+		SetCheckedDialogControl(_i_use_mlsd_mlst, sc.GetInt("MLSDMLST", 0) != 0);
 
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		if (_i_tcp_quickack != -1) {
@@ -172,7 +172,7 @@ public:
 			TextFromDialogControl(_i_server_codepage, str);
 			sc.SetString("ServerCodepage", str);
 			sc.SetInt("Passive", IsCheckedDialogControl(_i_passive_mode) ? 1 : 0);
-			sc.SetInt("ASCII", IsCheckedDialogControl(_i_ascii_mode) ? 1 : 0);
+			sc.SetInt("MLSDMLST", IsCheckedDialogControl(_i_use_mlsd_mlst) ? 1 : 0);
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 			if (_i_tcp_quickack != -1) {
 				sc.SetInt("TcpQuickAck", IsCheckedDialogControl(_i_tcp_quickack) ? 1 : 0);

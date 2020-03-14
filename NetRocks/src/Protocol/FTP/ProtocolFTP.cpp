@@ -41,13 +41,13 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 
 	FTPThrowIfBadResponce<ProtocolAuthFailedError>(str, reply_code, 200, 299);
 
-	str = "FEAT\r\n";
-	reply_code = _conn->SendRecvResponce(str);
-	if (reply_code >= 200 && reply_code < 299) {
-		if (str.find("MLST") != std::string::npos) _feat_mlst = true;
-		if (str.find("MLSD") != std::string::npos) _feat_mlsd = true;
-		if (str.find("REST") != std::string::npos) _feat_rest = true;
-		if (str.find("SIZE") != std::string::npos) _feat_size = true;		
+	if (_conn->ProtocolOptions().GetInt("MLSDMLST") != 0) {
+		str = "FEAT\r\n";
+		reply_code = _conn->SendRecvResponce(str);
+		if (reply_code >= 200 && reply_code < 299) {
+			if (str.find("MLST") != std::string::npos) _feat_mlst = true;
+			if (str.find("MLSD") != std::string::npos) _feat_mlsd = true;
+		}
 	}
 
 	str = "TYPE I\r\n";
@@ -58,10 +58,9 @@ ProtocolFTP::~ProtocolFTP()
 {
 }
 
-std::string ProtocolFTP::Navigate(const std::string &path_name)
+static void PathExplode(std::vector<std::string> &parts, const std::string &path)
 {
-	std::vector<std::string> parts;
-	StrExplode(parts, path_name, "/");
+	StrExplode(parts, path, "/");
 
 	for (auto it = parts.begin(); it != parts.end();) {
 		if (it->empty() || *it == ".") {
@@ -70,9 +69,17 @@ std::string ProtocolFTP::Navigate(const std::string &path_name)
 			++it;
 		}
 	}
+}
+
+std::string ProtocolFTP::Navigate(const std::string &path_name)
+{
+	std::vector<std::string> parts;
+	PathExplode(parts, path_name);
 	if (parts.empty()) {
-		fprintf(stderr, "ProtocolFTP::Navigate('%s') - empty path_name\n", path_name.c_str());
-		return std::string();
+		throw ProtocolError( StrPrintf(
+			"ProtocolFTP::Navigate('%s') - empty path_name\n", path_name.c_str()));
+//		fprintf(stderr, "ProtocolFTP::Navigate('%s') - empty path_name\n", path_name.c_str());
+//		return std::string();
 	}
 
 	std::string name_part = parts.back();
@@ -108,6 +115,35 @@ std::string ProtocolFTP::Navigate(const std::string &path_name)
 	return name_part;
 }
 
+std::string ProtocolFTP::PathAsRelative(const std::string &path)
+{
+	std::vector<std::string> parts;
+	PathExplode(parts, path);
+
+	size_t i;
+	for (i = 0; (i < parts.size() && i < _cwd.size() && parts[i] == _cwd[i]); ++i) {
+		;
+	}
+
+	std::string out;
+
+	for (size_t j = i; j < _cwd.size(); ++j) {
+		if (out.empty()) {
+			out+= "..";
+		} else {
+			out+= "/..";
+		}
+	}
+
+	for (size_t j = i; j < parts.size(); ++j) {
+		if (!out.empty()) {
+			out+= '/';
+		}
+		out+= parts[j];
+	}
+
+	return out;
+}
 
 void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_t *uid, gid_t *gid)
 {
@@ -135,11 +171,9 @@ void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_
 void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
 	std::string name_part = Navigate(path);
-#if 0
 	if (_feat_mlst) {
 		MLst(name_part, file_info);
 	}
-#endif
 
 	if (name_part.empty()) {
 		file_info = FileInformation();
@@ -171,29 +205,84 @@ unsigned long long ProtocolFTP::GetSize(const std::string &path, bool follow_sym
 	return file_info.size;
 }
 
+
+void ProtocolFTP::SimpleCommand(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	std::string str = StrPrintfV(fmt, args);
+	va_end(args);
+
+	unsigned int reply_code = _conn->SendRecvResponce(str);
+
+	if (reply_code < 200 || reply_code > 299) {
+		throw ProtocolError(str);
+	}
+}
+
 void ProtocolFTP::FileDelete(const std::string &path) throw (std::runtime_error)
 {
+	SimpleCommand("DELE %s\r\n", Navigate(path).c_str());
 }
 
 void ProtocolFTP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
 {
+	SimpleCommand("RMD %s\r\n", Navigate(path).c_str());
 }
 
 void ProtocolFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
+	SimpleCommand("MKD %s\r\n", Navigate(path).c_str());
+	SetMode(path, mode);
 }
 
 void ProtocolFTP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
+	const std::string &name_old = Navigate(path_old);
+	const std::string &path_new_relative = PathAsRelative(path_new);
+
+	std::string str = "RNFR ";
+	str+= name_old;
+	str+= "\r\n";
+	unsigned int reply_code = _conn->SendRecvResponce(str);
+	if (reply_code != 350) {
+		FTPThrowIfBadResponce(str, reply_code, 200, 299);
+	}
+
+	str = "RNTO ";
+	str+= path_new_relative;
+	str+= "\r\n";
+	reply_code = _conn->SendRecvResponce(str);
+	FTPThrowIfBadResponce(str, reply_code, 200, 299);
 }
 
 
 void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
 {
+//MFCT 	The 'MFMT', 'MFCT', and 'MFF' Command Extensions for FTP 	Modify the creation time of a file.
+//MFF 	The 'MFMT', 'MFCT', and 'MFF' Command Extensions for FTP 	Modify fact (the last modification time, creation time, UNIX group/owner/mode of a file).
+//MFMT 
 }
 
 void ProtocolFTP::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
 {
+	if (!_feat_chmod) {
+		return;
+	}
+
+	const std::string &name_part = Navigate(path);
+
+	std::string str = StrPrintf("CHMOD %03o %s\r\n", (unsigned int)mode, name_part.c_str());
+	unsigned int reply_code = _conn->SendRecvResponce(str);
+
+	if (reply_code < 200 || reply_code > 299) {
+		if (reply_code >= 501 || reply_code <= 504) {
+			_feat_chmod = false;
+
+		} else {
+			throw ProtocolError(str);
+		}
+	}
 }
 
 void ProtocolFTP::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
@@ -384,18 +473,18 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFTP::NavigatedDirectoryEnum()
 	}
 
 	std::shared_ptr<IDirectoryEnumer> enumer;
-/*
-	const std::string &name_part = Navigate(path);
+
+//	const std::string &name_part = Navigate(path);
 	if (_feat_mlsd) {
 		str = "MLSD\r\n";
 		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(str);
-		enumer std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerMLSD(_conn, data_transport));
-	}
-*/
-	str = "LIST\r\n";
-	std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(str);
+		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerMLSD(_conn, data_transport));
 
-	enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerLIST(_conn, data_transport));
+	} else {
+		str = "LIST\r\n";
+		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(str);
+		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerLIST(_conn, data_transport));
+	}
 
 	if (!pwd.empty()) {
 		fprintf(stderr, "Caching enum '%s'\n", pwd.c_str());

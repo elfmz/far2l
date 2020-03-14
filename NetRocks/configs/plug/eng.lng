@@ -240,6 +240,6 @@
 "Minimal &encryption protocol"
 "Server &codepage"
 "&Passive mode"
-"&ASCII mode"
+"Use &MLSD/MLST if possible"
 "Enable &TCP_NODELAY option"
 "Enable TCP_&QUICKACK option"

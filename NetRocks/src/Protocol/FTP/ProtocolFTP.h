@@ -15,11 +15,16 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 
 	std::vector<std::string> _cwd;
 
-	bool _feat_mlst = false, _feat_mlsd = false, _feat_rest = false, _feat_size = false;
+	bool _feat_mlst = false, _feat_mlsd = false;
+	bool _feat_chmod = true;
+
 	std::string Navigate(const std::string &path_name);
+	std::string PathAsRelative(const std::string &path);
 
 	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr);
 	std::shared_ptr<IDirectoryEnumer> NavigatedDirectoryEnum();
+
+	void SimpleCommand(const char *fmt, ...);
 
 public:
 	ProtocolFTP(const std::string &protocol, const std::string &host, unsigned int port,

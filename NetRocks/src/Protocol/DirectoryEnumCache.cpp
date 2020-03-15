@@ -5,6 +5,21 @@ DirectoryEnumCache::DirectoryEnumCache(unsigned int expiration)
 {
 }
 
+bool DirectoryEnumCache::HasValidEntries()
+{
+	time_t ts = time(NULL);
+	for (auto it = _dir_enum_cache.begin(); it != _dir_enum_cache.end(); ) {
+		if (it->second->ts > ts || it->second->ts + _expiration < ts) {
+			it = _dir_enum_cache.erase(it);
+
+		} else {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void DirectoryEnumCache::Clear()
 {
 	_dir_enum_cache.clear();
@@ -34,7 +49,14 @@ void DirectoryEnumCache::Remove(const std::string &path, const std::string &name
 		it->second->erase(index_it->second);
 		it->second->index.erase(index_it);
 	}
+}
 
+void DirectoryEnumCache::Remove(const std::string &path)
+{
+	auto it = _dir_enum_cache.find(path);
+	if (it != _dir_enum_cache.end()) {
+		_dir_enum_cache.erase(it);
+	}
 }
 
 class CachedDirectoryEnumer : public IDirectoryEnumer
@@ -86,6 +108,7 @@ class CachingWrapperDirectoryEnumer : public IDirectoryEnumer
 {
 	std::shared_ptr<DirectoryEnumCache::DirCacheEntry> _dce_sp;
 	std::shared_ptr<IDirectoryEnumer> _enumer;
+	bool _enumed_til_the_end = false;
 
 public:
 	CachingWrapperDirectoryEnumer(std::shared_ptr<DirectoryEnumCache::DirCacheEntry> &dce_sp, std::shared_ptr<IDirectoryEnumer> &enumer)
@@ -95,12 +118,24 @@ public:
 
 	virtual ~CachingWrapperDirectoryEnumer()
 	{
-		_dce_sp->ts = time(NULL);
+		try {
+			if (!_enumed_til_the_end) {
+				std::string name, owner, group;
+				FileInformation file_info;
+				while (_enumer->Enum(name, owner, group, file_info));
+			}
+
+			_dce_sp->ts = time(NULL);
+
+		} catch (std::exception &) {
+			_dce_sp->ts = 0;
+		}
 	}
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
 		if (!_enumer->Enum(name, owner, group, file_info)) {
+			_enumed_til_the_end = true;
 			return false;
 		}
 

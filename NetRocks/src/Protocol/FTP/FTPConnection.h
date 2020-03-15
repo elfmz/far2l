@@ -87,6 +87,7 @@ public:
 
 	const StringConfig &ProtocolOptions() const { return _protocol_options; }
 
+	void Send(const std::string &str);
 	unsigned int RecvResponce(std::string &str);
 	unsigned int SendRecvResponce(std::string &str);
 

@@ -36,8 +36,12 @@ class DirectoryEnumCache
 
 public:
 	DirectoryEnumCache(unsigned int expiration);
+
+	bool HasValidEntries();
+
 	void Clear();
 	void Remove(const std::string &path, const std::string &name);
+	void Remove(const std::string &path);
 
 	std::shared_ptr<IDirectoryEnumer> GetCachedDirectoryEnumer(const std::string &path);
 	std::shared_ptr<IDirectoryEnumer> GetCachingWrapperDirectoryEnumer(const std::string &path, std::shared_ptr<IDirectoryEnumer> &enumer);

@@ -23,6 +23,7 @@ NCSA Telnet FTP server. Has LIST = NLST (and bad NLST for directories).
 
 #include <sys/types.h>
 #include <time.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "FTPParseLIST.h"
@@ -47,54 +48,48 @@ static long totai(long year,long month,long mday)
   return result * 86400;
 }
 
-static int flagneedbase = 1;
 static time_t base; /* time() value on this OS at the beginning of 1970 TAI */
 static long now; /* current time */
-static int flagneedcurrentyear = 1;
+static int flagnowready = 0;
 static long currentyear; /* approximation to current year */
 
-static void initbase(void)
+static void initnow(void)
 {
+  long day;
+  long year;
   struct tm *t;
-  if (!flagneedbase) return;
+
+  if (flagnowready) {
+    return;
+  }
 
   base = 0;
   t = gmtime(&base);
   base = -(totai(t->tm_year + 1900,t->tm_mon,t->tm_mday) + t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec);
   /* assumes the right time_t, counting seconds. */
   /* base may be slightly off if time_t counts non-leap seconds. */
-  flagneedbase = 0;
-}
 
-static void initnow(void)
-{
-  long day;
-  long year;
-
-  initbase();
   now = time((time_t *) 0) - base;
 
-  if (flagneedcurrentyear) {
-    day = now / 86400;
-    if ((now % 86400) < 0) --day;
-    day -= 11017;
-    year = 5 + day / 146097;
-    day = day % 146097;
-    if (day < 0) { day += 146097; --year; }
-    year *= 4;
-    if (day == 146096) { year += 3; day = 36524; }
-    else { year += day / 36524; day %= 36524; }
-    year *= 25;
-    year += day / 1461;
-    day %= 1461;
-    year *= 4;
-    if (day == 1460) { year += 3; day = 365; }
-    else { year += day / 365; day %= 365; }
-    day *= 10;
-    if ((day + 5) / 306 >= 10) ++year;
-    currentyear = year;
-    flagneedcurrentyear = 0;
-  }
+  day = now / 86400;
+  if ((now % 86400) < 0) --day;
+  day -= 11017;
+  year = 5 + day / 146097;
+  day = day % 146097;
+  if (day < 0) { day += 146097; --year; }
+  year *= 4;
+  if (day == 146096) { year += 3; day = 36524; }
+  else { year += day / 36524; day %= 36524; }
+  year *= 25;
+  year += day / 1461;
+  day %= 1461;
+  year *= 4;
+  if (day == 1460) { year += 3; day = 365; }
+  else { year += day / 365; day %= 365; }
+  day *= 10;
+  if ((day + 5) / 306 >= 10) ++year;
+  currentyear = year;
+  flagnowready = 1;
 }
 
 /* UNIX ls does not show the year for dates in the last six months. */
@@ -202,7 +197,7 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
               break;
             case 'm':
               fp->mtimetype = FTPPARSE_MTIME_LOCAL;
-              initbase();
+              initnow();
               fp->mtime = base + getlong(buf + i + 1,j - i - 1);
               break;
             case 'i':
@@ -295,19 +290,20 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
                 hour = getlong(buf + i,1);
                 minute = getlong(buf + i + 2,2);
                 fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
-                initbase();
+                initnow();
                 fp->mtime = base + guesstai(month,mday) + hour * 3600 + minute * 60;
+
               } else if ((j - i == 5) && (buf[i + 2] == ':')) {
                 hour = getlong(buf + i,2);
                 minute = getlong(buf + i + 3,2);
                 fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
-                initbase();
-                fp->mtime = base + guesstai(month,mday) + hour * 3600 + minute * 60;
+                initnow();
+       	        fp->mtime = base + guesstai(month,mday) + hour * 3600 + minute * 60;
               }
               else if (j - i >= 4) {
                 year = getlong(buf + i,j - i);
                 fp->mtimetype = FTPPARSE_MTIME_REMOTEDAY;
-                initbase();
+                initnow();
                 fp->mtime = base + totai(year,month,mday);
               }
               else
@@ -401,7 +397,7 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
     minute = getlong(buf + i,j - i);
 
     fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
-    initbase();
+    initnow();
     fp->mtime = base + totai(year,month,mday) + hour * 3600 + minute * 60;
 
     fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR  |  S_IRGRP | S_IWGRP | S_IXGRP  |  S_IROTH | S_IWOTH | S_IXOTH;
@@ -460,7 +456,7 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
     fp->namelen = len - j;
 
     fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
-    initbase();
+    initnow();
     fp->mtime = base + totai(year,month,mday) + hour * 3600 + minute * 60;
 
     fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR  |  S_IRGRP | S_IWGRP | S_IXGRP  |  S_IROTH | S_IWOTH | S_IXOTH;

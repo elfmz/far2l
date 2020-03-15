@@ -247,43 +247,49 @@ FTPConnection::~FTPConnection()
 {
 }
 
+void FTPConnection::Send(const std::string &str)
+{
+	_transport->Send(str.c_str(), str.size());
+}
+
 unsigned int FTPConnection::RecvResponce(std::string &str)
 {
 	char match[4];
 	str.clear();
 	for (size_t cnt = 0, ofs = 0;;) {
-		char buf[0x1000];
-		if (str.size() > 0x100000) {
-			throw std::runtime_error("too long responce");
-		}
-		ssize_t r = _transport->Recv(buf, sizeof(buf));
-		if (r <= 0) {
-			throw std::runtime_error(StrPrintf("read responce error %d", errno));
-		}
-		str.append(buf, r);
-		size_t p;
-		while ( (p = str.find('\n', ofs)) != std::string::npos) {
-			++cnt;
-			if (cnt == 1 && p - ofs > 3 && str[ofs + 3] == '-') {
-				memcpy(match, str.c_str() + ofs, 3);
-				match[3] = ' ';
-
-			} else if (cnt == 1 || (p >= 4 && memcmp(str.c_str() + ofs, match, 4) == 0)) {
-				unsigned int out = atoi(str.c_str() + ofs);
-				if (out == 0) {
-					out = atoi(str.c_str());
-				}
-				return out;
+		char ch;
+		do {
+			if (str.size() > 0x100000) {
+				throw std::runtime_error("too long responce");
 			}
+			ssize_t r = _transport->Recv(&ch, sizeof(ch));
+			if (r <= 0) {
+				throw std::runtime_error(StrPrintf("read responce error %d", errno));
+			}
+			str+= ch;
+		} while (ch != '\n');
 
-			ofs = p + 1;
+		size_t p = str.size() - 1;
+		++cnt;
+		if (cnt == 1 && p - ofs > 3 && str[ofs + 3] == '-') {
+			memcpy(match, str.c_str() + ofs, 3);
+			match[3] = ' ';
+
+		} else if (cnt == 1 || (p >= 4 && memcmp(str.c_str() + ofs, match, 4) == 0)) {
+			unsigned int out = atoi(str.c_str() + ofs);
+			if (out == 0) {
+				out = atoi(str.c_str());
+			}
+			return out;
 		}
+
+		ofs = p + 1;
 	}
 }
 
 unsigned int FTPConnection::SendRecvResponce(std::string &str)
 {
-	_transport->Send(str.c_str(), str.size());
+	Send(str);
 	return RecvResponce(str);
 }
 

@@ -13,18 +13,28 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 	std::shared_ptr<FTPConnection> _conn;
 	DirectoryEnumCache _dir_enum_cache;
 
-	std::vector<std::string> _cwd;
+	struct {
+		bool mlst = false;
+		bool mlsd = false;
+		bool chmod = true;
+	} _feat;
 
-	bool _feat_mlst = false, _feat_mlsd = false;
-	bool _feat_chmod = true;
+	struct {
+		std::vector<std::string> parts;
+		std::string path;
+		std::string home;
+	} _cwd;
 
-	std::string Navigate(const std::string &path_name);
+	bool RecvPwdResponce();
+//	bool RecvPwdAndRememberAsCwd();
+	std::string SplitPathAndNavigate(const std::string &path_name, bool allow_empty_name_part = false);
 	std::string PathAsRelative(const std::string &path);
 
 	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr);
+
 	std::shared_ptr<IDirectoryEnumer> NavigatedDirectoryEnum();
 
-	void SimpleCommand(const char *fmt, ...);
+	void SimpleDispositionCommand(const char *cmd, const std::string &path);
 
 public:
 	ProtocolFTP(const std::string &protocol, const std::string &host, unsigned int port,

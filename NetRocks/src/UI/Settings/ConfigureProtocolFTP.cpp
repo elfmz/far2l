@@ -165,7 +165,7 @@ public:
 
 		if (Show(L"ProtocolOptionsFTP", 6, 2) == _i_ok) {
 			if (_i_explicit_encryption != -1) {
-				sc.SetInt("ExplicitEncryption", GetDialogListPosition(_i_explicit_encryption));
+				sc.SetInt("ExplicitEncryption", IsCheckedDialogControl(_i_explicit_encryption));
 			}
 			sc.SetInt("EncryptionProtocol", GetDialogListPosition(_i_encryption_protocol));
 			std::string str;

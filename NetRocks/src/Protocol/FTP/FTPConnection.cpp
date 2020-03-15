@@ -145,9 +145,23 @@ void TLSTransport::Shutdown()
 	}
 }
 
+
+static int SSLStartup()
+{
+	int out = OpenSSL_add_ssl_algorithms();
+	SSL_load_error_strings();
+	return out;
+}
+
+
 TLSTransport::TLSTransport(int sock, StringConfig &protocol_options)
 {
 	_sock = sock;
+
+	static int s_ssl_startup = SSLStartup();
+	if (!s_ssl_startup) {
+		fprintf(stderr, "TLSTransport: SSLStartup failed\n");
+	}
 
 	_ctx = SSL_CTX_new(SSLv23_client_method());
 
@@ -229,10 +243,31 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 
 	_transport = std::make_shared<SocketTransport>(host, port, _protocol_options);
 
+	std::string str;
+	RecvResponce(str, 200, 299);
+
 	if (!_encryption && _protocol_options.GetInt("ExplicitEncryption", 0)) {
-		// TODO
-		_encryption = true;
+		str = "AUTH TLS\r\n";
+		unsigned int reply_code = SendRecvResponce(str);
+		if (reply_code != 234) {
+			if (_protocol_options.GetInt("EncryptionProtocol", 3) < 3) {
+				str = "AUTH SSL\r\n";
+				reply_code = SendRecvResponce(str);
+				if (reply_code == 234) {
+					fprintf(stderr, "FTPConnection: AUTH SSL\n");
+				}
+			}
+
+			if (reply_code != 234) {
+				throw ProtocolError(str);
+			}
+
+		} else {
+			fprintf(stderr, "FTPConnection: AUTH TLS\n");
 		}
+
+		_encryption = true;
+	}
 
 	if (_encryption) {
 #ifdef HAVE_OPENSSL
@@ -245,6 +280,26 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 
 FTPConnection::~FTPConnection()
 {
+}
+
+bool FTPConnection::EnableDataConnectionProtection()
+{
+	std::string str = "PBSZ 0\r\n";
+	unsigned int reply_code = SendRecvResponce(str);
+	if ( reply_code != 200) {
+		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PBSZ 0> - '%s'\n", str.c_str());
+		return false;
+	}
+
+	str = "PROT P\r\n";
+	reply_code = SendRecvResponce(str);
+	if ( reply_code != 200) {
+		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PROT P> - '%s'\n", str.c_str());
+		return false;
+	}
+
+	fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: OK\n");
+	return true;
 }
 
 void FTPConnection::Send(const std::string &str)
@@ -394,6 +449,11 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 
 std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd, unsigned long long rest)
 {
+#ifdef HAVE_OPENSSL
+	if (_encryption && !_data_encryption_enabled) {
+		_data_encryption_enabled = EnableDataConnectionProtection();
+	}
+#endif
 	std::shared_ptr<BaseTransport> data_transport;
 	if (_protocol_options.GetInt("Passive", 1) == 1) {
 		DataCommand_PASV(data_transport, cmd, rest);
@@ -403,7 +463,7 @@ std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd
 	}
 
 #ifdef HAVE_OPENSSL
-	if (_encryption) {
+	if (_data_encryption_enabled) {
 		data_transport = std::make_shared<TLSTransport>(data_transport->DetachSocket(), _protocol_options);
 	}
 #endif

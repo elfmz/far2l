@@ -77,10 +77,12 @@ struct FTPConnection : public std::enable_shared_from_this<FTPConnection>
 	std::shared_ptr<BaseTransport> _transport;
 	StringConfig _protocol_options;
 	bool _encryption;
+	bool _data_encryption_enabled = false;
 
 	void DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest = 0);
 	void DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest = 0);
 
+	bool EnableDataConnectionProtection();
 public:
 	FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options);
 	virtual ~FTPConnection();

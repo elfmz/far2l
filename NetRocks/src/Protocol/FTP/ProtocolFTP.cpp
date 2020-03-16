@@ -311,6 +311,26 @@ void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &
 			throw ProtocolError("File not found");
 		}
 	} while (name_part != enum_name);
+
+	if (follow_symlink && S_ISLNK(file_info.mode)) {
+		std::string str = "SIZE ";
+		str+= name_part;
+		str+= "\r\n";
+		unsigned int reply_code = _conn->SendRecvResponce(str);
+		file_info.mode&= ~S_IFMT;
+		file_info.mode|= S_IFDIR;
+		if (reply_code == 213) {
+			size_t p = str.find(' ');
+			if (p != std::string::npos) {
+				while (p < str.size() && str[p] == ' ') {
+					++p;
+				}
+				file_info.size = atol(str.c_str() + p);
+				file_info.mode&= ~S_IFMT;
+				file_info.mode|= S_IFREG;
+			}
+		}
+	}
 }
 
 

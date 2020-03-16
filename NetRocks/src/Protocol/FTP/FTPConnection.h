@@ -68,6 +68,8 @@ public:
 	virtual ssize_t SendImpl(const void *data, size_t len);
 	virtual ssize_t RecvImpl(void *data, size_t len);
 	virtual int DetachSocket();
+
+	std::string GetPeerFingerprint();
 };
 #endif
 

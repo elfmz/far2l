@@ -257,6 +257,31 @@ int TLSTransport::DetachSocket()
 	Shutdown();
 	return BaseTransport::DetachSocket();
 }
+
+std::string TLSTransport::GetPeerFingerprint()
+{
+	std::string out;
+	X509 *cert = SSL_get_peer_certificate(_ssl);
+	if (cert) {
+		unsigned char digest[EVP_MAX_MD_SIZE];
+		unsigned int digest_size = sizeof(digest);
+
+#ifndef OPENSSL_NO_SHA256
+		if (X509_digest(cert, EVP_sha224(), digest, &digest_size))
+#else
+		if (X509_digest(cert, EVP_md5(), digest, &digest_size))
+#endif
+		{
+			for (unsigned int i = 0; i != digest_size; ++i) {
+				out+= StrPrintf("%02x", (unsigned int)digest[i]);
+			}
+		}
+		X509_free(cert);
+	}
+
+	return out;
+}
+
 #endif
 
 FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options)
@@ -299,16 +324,25 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 	}
 
 	if (_openssl_ctx) {
-		_transport = std::make_shared<TLSTransport>(_openssl_ctx, _transport->DetachSocket());
-		if (implicit_encryption) {
-			RecvResponce(str, 200, 299);
-		}
+		auto tls_transport = std::make_shared<TLSTransport>(_openssl_ctx, _transport->DetachSocket());
+		const std::string &fingerprint = tls_transport->GetPeerFingerprint();
+		if (fingerprint != _protocol_options.GetString("ServerIdentity"))
+			throw ServerIdentityMismatchError(fingerprint);
+
+		_transport = tls_transport;
+
+	}
+
+	if (!_openssl_ctx || implicit_encryption) {
+		RecvResponce(str, 200, 299);
 	}
 
 #else
 	if (implicit_encryption || _protocol_options.GetInt("ExplicitEncryption", 0)) {
 		throw ProtocolError("Encrypted FTP requires OpenSSL support");
 	}
+
+	RecvResponce(str, 200, 299);
 #endif
 
 }

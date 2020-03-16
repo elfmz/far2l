@@ -129,22 +129,6 @@ ssize_t SocketTransport::RecvImpl(void *data, size_t len)
 }
 
 #ifdef HAVE_OPENSSL
-void TLSTransport::Shutdown()
-{
-	if (_ssl != nullptr)
-	{
-		SSL_shutdown(_ssl);
-		SSL_free(_ssl);
-		_ssl = nullptr;
-	}
-
-	if (_ctx != nullptr)
-	{
-		SSL_CTX_free(_ctx);
-		_ctx = nullptr;
-	}
-}
-
 
 static int SSLStartup()
 {
@@ -153,17 +137,21 @@ static int SSLStartup()
 	return out;
 }
 
-
-TLSTransport::TLSTransport(int sock, StringConfig &protocol_options)
+OpenSSLContext::OpenSSLContext(const StringConfig &protocol_options)
 {
-	_sock = sock;
-
 	static int s_ssl_startup = SSLStartup();
 	if (!s_ssl_startup) {
-		fprintf(stderr, "TLSTransport: SSLStartup failed\n");
+		s_ssl_startup = SSLStartup();
+		if (!s_ssl_startup) {
+			fprintf(stderr, "TLSTransport: SSLStartup failed\n");
+		}
 	}
 
 	_ctx = SSL_CTX_new(SSLv23_client_method());
+
+	if (!_ctx) {
+		throw std::runtime_error(StrPrintf("SSL_CTX_new() errno=%d", errno));
+	}
 
 	switch (protocol_options.GetInt("EncryptionProtocol", 3)) {
 		case 4:
@@ -183,31 +171,68 @@ TLSTransport::TLSTransport(int sock, StringConfig &protocol_options)
 			;
 	}
 
-	if (!_ctx) {
-		throw std::runtime_error(StrPrintf("SSL_CTX_new() errno=%d", errno));
-	}
+	SSL_CTX_set_session_cache_mode(_ctx, SSL_SESS_CACHE_CLIENT);
+}
 
-	_ssl = SSL_new(_ctx);
-	if (!_ssl) {
-		Shutdown();
+OpenSSLContext::~OpenSSLContext()
+{
+	SSL_SESSION_free(_session);
+	SSL_CTX_free(_ctx);
+}
+
+SSL *OpenSSLContext::NewSSL(int sock)
+{
+	SSL *ssl = SSL_new(_ctx);
+	if (!ssl) {
 		throw std::runtime_error(StrPrintf("SSL_new() errno=%d", errno));
 	}
+	if (_session) {
+		SSL_set_session(ssl, _session);
+	}
 
-	if (SSL_set_fd(_ssl, _sock) != 1) {
-		Shutdown();
+	if (SSL_set_fd(ssl, sock) != 1) {
+		SSL_free(ssl);
 		throw std::runtime_error(StrPrintf("SSL_set_fd() errno=%d", errno));
 	}
 
-	if (SSL_connect(_ssl) != 1) {
-		Shutdown();
+	if (SSL_connect(ssl) != 1) {
+		SSL_shutdown(ssl);
+		SSL_free(ssl);
 		throw std::runtime_error(StrPrintf("SSL_connect() errno=%d", errno));
 	}
+
+	if (!_session) {
+		_session = SSL_get1_session(ssl);
+	}
+
+	return ssl;
+}
+
+///
+
+TLSTransport::TLSTransport(std::shared_ptr<OpenSSLContext> &ctx, int sock)
+	: _ctx(ctx)
+{
+	_sock = sock;
+
+	_ssl = _ctx->NewSSL(sock);
 }
 
 TLSTransport::~TLSTransport()
 {
 	Shutdown();
 }
+
+void TLSTransport::Shutdown()
+{
+	if (_ssl != nullptr)
+	{
+		SSL_shutdown(_ssl);
+		SSL_free(_ssl);
+		_ssl = nullptr;
+	}
+}
+
 
 ssize_t TLSTransport::SendImpl(const void *data, size_t len)
 {
@@ -235,7 +260,7 @@ int TLSTransport::DetachSocket()
 #endif
 
 FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options)
-	: _protocol_options(options), _encryption(implicit_encryption)
+	: _protocol_options(options)
 {
 	if (!port) {
 		port = implicit_encryption ? 990 : 21;
@@ -244,9 +269,13 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 	_transport = std::make_shared<SocketTransport>(host, port, _protocol_options);
 
 	std::string str;
-	RecvResponce(str, 200, 299);
 
-	if (!_encryption && _protocol_options.GetInt("ExplicitEncryption", 0)) {
+#ifdef HAVE_OPENSSL
+	if (implicit_encryption) {
+		_openssl_ctx = std::make_shared<OpenSSLContext>(_protocol_options);
+
+	} else if (_protocol_options.GetInt("ExplicitEncryption", 0)) {
+		RecvResponce(str, 200, 299);
 		str = "AUTH TLS\r\n";
 		unsigned int reply_code = SendRecvResponce(str);
 		if (reply_code != 234) {
@@ -266,16 +295,22 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 			fprintf(stderr, "FTPConnection: AUTH TLS\n");
 		}
 
-		_encryption = true;
+		_openssl_ctx = std::make_shared<OpenSSLContext>(_protocol_options);
 	}
 
-	if (_encryption) {
-#ifdef HAVE_OPENSSL
-		_transport = std::make_shared<TLSTransport>(_transport->DetachSocket(), _protocol_options);
-#else
-		throw std::runtime_error("OpenSSL was not enabled in build");
-#endif
+	if (_openssl_ctx) {
+		_transport = std::make_shared<TLSTransport>(_openssl_ctx, _transport->DetachSocket());
+		if (implicit_encryption) {
+			RecvResponce(str, 200, 299);
+		}
 	}
+
+#else
+	if (implicit_encryption || _protocol_options.GetInt("ExplicitEncryption", 0)) {
+		throw ProtocolError("Encrypted FTP requires OpenSSL support");
+	}
+#endif
+
 }
 
 FTPConnection::~FTPConnection()
@@ -450,7 +485,7 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd, unsigned long long rest)
 {
 #ifdef HAVE_OPENSSL
-	if (_encryption && !_data_encryption_enabled) {
+	if (_openssl_ctx && !_data_encryption_enabled) {
 		_data_encryption_enabled = EnableDataConnectionProtection();
 	}
 #endif
@@ -464,7 +499,7 @@ std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd
 
 #ifdef HAVE_OPENSSL
 	if (_data_encryption_enabled) {
-		data_transport = std::make_shared<TLSTransport>(data_transport->DetachSocket(), _protocol_options);
+		data_transport = std::make_shared<TLSTransport>(_openssl_ctx, data_transport->DetachSocket());
 	}
 #endif
 

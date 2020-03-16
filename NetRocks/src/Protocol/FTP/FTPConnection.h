@@ -43,15 +43,27 @@ protected:
 };
 
 #ifdef HAVE_OPENSSL
+struct OpenSSLContext
+{
+	OpenSSLContext(const StringConfig &protocol_options);
+	virtual ~OpenSSLContext();
+
+	SSL *NewSSL(int sock);
+
+private:
+	SSL_CTX *_ctx;
+	SSL_SESSION *_session = nullptr;
+};
+
 struct TLSTransport : public BaseTransport
 {
-	SSL_CTX *_ctx = nullptr;
+	std::shared_ptr<OpenSSLContext> _ctx;
 	SSL *_ssl = nullptr;
 
 	void Shutdown();
 
 public:
-	TLSTransport(int sock, StringConfig &protocol_options);
+	TLSTransport(std::shared_ptr<OpenSSLContext> &ctx, int sock);
 	virtual ~TLSTransport();
 	virtual ssize_t SendImpl(const void *data, size_t len);
 	virtual ssize_t RecvImpl(void *data, size_t len);
@@ -76,8 +88,11 @@ struct FTPConnection : public std::enable_shared_from_this<FTPConnection>
 {
 	std::shared_ptr<BaseTransport> _transport;
 	StringConfig _protocol_options;
-	bool _encryption;
+
+#ifdef HAVE_OPENSSL
+	std::shared_ptr<OpenSSLContext> _openssl_ctx;
 	bool _data_encryption_enabled = false;
+#endif
 
 	void DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest = 0);
 	void DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest = 0);

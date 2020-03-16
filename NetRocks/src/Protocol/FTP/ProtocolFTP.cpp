@@ -398,6 +398,44 @@ void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time,
 //MFCT 	The 'MFMT', 'MFCT', and 'MFF' Command Extensions for FTP 	Modify the creation time of a file.
 //MFF 	The 'MFMT', 'MFCT', and 'MFF' Command Extensions for FTP 	Modify fact (the last modification time, creation time, UNIX group/owner/mode of a file).
 //MFMT 
+	if (!_feat.mfmt) {
+		return;
+	}
+
+	const std::string &name_part = SplitPathAndNavigate(path);
+
+	struct tm t {};
+	if (gmtime_r(&modification_time.tv_sec, &t) == NULL) {
+		return;
+	}
+	//MFMT YYYYMMDDHHMMSS path, where:
+	//YYYY - the 4-digit year
+	//MM - the 2-digit month
+	//DD - the 2-digit day of the month
+	//HH - the hour in 24-hour format
+	//MM - the minute
+	//SS - the seconds
+	std::string str = StrPrintf("MFMT %04u%02u%02u%02u%02u%02u %s\r\n",
+		(unsigned int)t.tm_year + 1900, (unsigned int)t.tm_mon,
+		(unsigned int)t.tm_mday, (unsigned int)t.tm_hour,
+		(unsigned int)t.tm_min, (unsigned int)t.tm_sec,
+		name_part.c_str());
+
+	unsigned int reply_code = _conn->SendRecvResponce(str);
+
+	if (reply_code < 200 || reply_code > 299) {
+		if (reply_code >= 501 || reply_code <= 504) {
+			fprintf(stderr, "ProtocolFTP::SetTimes('%s'): '%s' - assume unsupported\n",
+				path.c_str(), str.c_str());
+			_feat.mfmt = false;
+
+		} else {
+			throw ProtocolError(str);
+		}
+
+	} else if (_dir_enum_cache.HasValidEntries()) {
+		_dir_enum_cache.Remove(_cwd.path);
+	}
 }
 
 void ProtocolFTP::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
@@ -433,7 +471,8 @@ void ProtocolFTP::SymlinkCreate(const std::string &link_path, const std::string 
 
 void ProtocolFTP::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
 {
-	throw ProtocolUnsupportedError("Symlink querying unsupported");
+	link_target.clear();
+//	throw ProtocolUnsupportedError("Symlink querying unsupported");
 }
 
 class FTPDataCommand

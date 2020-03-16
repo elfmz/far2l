@@ -17,6 +17,7 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 		bool mlst = false;
 		bool mlsd = false;
 		bool chmod = true;
+		bool mfmt = true;
 	} _feat;
 
 	struct {

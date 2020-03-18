@@ -113,6 +113,10 @@ enum LanguageID
 
   MRemoveSitesTitle,
   MRemoveSitesText,
+  MCopySitesTitle,
+  MCopySitesText,
+  MMoveSitesTitle,
+  MMoveSitesText,
 
   MMakeDirTitle,
   MMakeDirText,

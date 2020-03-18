@@ -31,7 +31,7 @@ bool Location::FromString(const std::string &str)
 	std::string directory;
 
 	if (str.size() > 2 && str[0] == '<') {
-		server_kind = SK_CONNECTION;
+		server_kind = SK_SITE;
 
 		size_t p = str.find('>', 1);
 		if (p == std::string::npos) {
@@ -92,11 +92,11 @@ std::string Location::ToString(bool with_server) const
 	std::string out;
 
 	if (with_server) {
-		if (server_kind == SK_CONNECTION) {
+		if (server_kind == SK_SITE) {
 			out+= '<';
 		}
 		out+= server;
-		if (server_kind == SK_CONNECTION) {
+		if (server_kind == SK_SITE) {
 			out+= '>';
 		}
 	}

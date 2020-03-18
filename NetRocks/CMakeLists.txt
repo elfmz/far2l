@@ -8,7 +8,7 @@ src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
-src/GetSelectedItems.cpp
+src/GetItems.cpp
 src/BackgroundTasks.cpp
 src/Location.cpp
 src/ConnectionsPool.cpp

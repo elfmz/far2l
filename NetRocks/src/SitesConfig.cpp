@@ -178,15 +178,17 @@ void SitesConfigLocation::Enum(std::vector<std::string> &children) const
 	}
 }
 
-std::string SitesConfigLocation::TranslateToPath() const
+std::string SitesConfigLocation::TranslateToPath(bool ending_slash) const
 {
 	std::string out;
 
 	for (const auto &part : _parts) {
-		if (!out.empty()) {
-			out+= '/';
-		}
 		out+= part;
+		out+= '/';
+	}
+
+	if (!ending_slash && !out.empty()) {
+		out.resize(out.size() - 1);
 	}
 
 	return out;
@@ -197,6 +199,30 @@ std::string SitesConfigLocation::TranslateToSitesConfigPath() const
 	std::string out = SitesConfig_TranslateToDir(_parts);
 	out+= "sites.cfg";
 	return out;
+}
+
+bool SitesConfigLocation::Transfer(SitesConfigLocation &dst, const std::string &sub, bool mv)
+{
+	std::vector<std::string> parts = _parts;
+	if (!SitesConfig_AppendSubParts(parts, sub) || parts.empty()) {
+		return false;
+	}
+	std::string src_arg = SitesConfig_TranslateToDir(parts);
+	src_arg.resize(src_arg.size() - 1); // remove slash
+	src_arg = EscapeCmdStr(src_arg);
+	const std::string &dst_arg = EscapeCmdStr(SitesConfig_TranslateToDir(dst._parts));
+
+	std::string cmd;
+	if (mv) {
+		cmd = StrPrintf("mv -f \"%s\" \"%s\" >/dev/null 2>&1", src_arg.c_str(), dst_arg.c_str());
+	} else {
+		cmd = StrPrintf("cp -R -f \"%s\" \"%s\" >/dev/null 2>&1", src_arg.c_str(), dst_arg.c_str());
+	}
+
+	fprintf(stderr, "SitesConfigLocation::Transfer: %s\n", cmd.c_str());
+
+
+	return system(cmd.c_str()) == 0;
 }
 
 ///
@@ -223,7 +249,7 @@ std::string SiteSpecification::ToString() const
 		return std::string();
 	}
 
-	std::string out = sites_cfg_location.TranslateToPath();
+	std::string out = sites_cfg_location.TranslateToPath(true);
 	out+= site;
 	return out;
 }
@@ -325,3 +351,17 @@ void SitesConfig::PutProtocolOptions(const std::string &site, const std::string 
 	PutString(site.c_str(), std::string("Options_").append(protocol).c_str(), options.c_str());
 }
 
+bool SitesConfig::Transfer(SitesConfig &dst, const std::string &site, bool mv)
+{
+	const auto keys = KeyFileHelper::EnumKeys(site.c_str());
+	dst.RemoveSection(site.c_str());
+	for (const auto &key : keys) {
+		const std::string &value = GetString(site.c_str(), key.c_str());
+		dst.PutString(site.c_str(), key.c_str(), value.c_str());
+	}
+
+	if (mv) {
+		RemoveSection(site.c_str());
+	}
+	return true;
+}

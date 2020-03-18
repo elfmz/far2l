@@ -14,8 +14,10 @@ public:
 
 	void Enum(std::vector<std::string> &children) const;
 
-	std::string TranslateToPath() const;
+	std::string TranslateToPath(bool ending_slash) const;
 	std::string TranslateToSitesConfigPath() const;
+
+	bool Transfer(SitesConfigLocation &dst, const std::string &sub, bool mv);
 };
 
 
@@ -63,4 +65,6 @@ public:
 
 	std::string GetProtocolOptions(const std::string &site, const std::string &protocol);
 	void PutProtocolOptions(const std::string &site, const std::string &protocol, const std::string &options);
+
+	bool Transfer(SitesConfig &dst, const std::string &site, bool mv);
 };

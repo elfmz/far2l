@@ -1,27 +1,30 @@
-#include "GetSelectedItems.h"
+#include "GetItems.h"
 
-
-GetSelectedItems::GetSelectedItems()
+GetItems::GetItems(bool only_selected)
 {
 	PanelInfo pi = {};
 	G.info.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)(void *)&pi);
-	if (pi.SelectedItemsNumber == 0) {
-		fprintf(stderr, "GetSelectedItems: no files selected\n");
+	int n = only_selected ? pi.SelectedItemsNumber : pi.ItemsNumber;
+
+	if (n <= 0) {
+		fprintf(stderr, "GetItems(%d): empty\n", only_selected);
 		return;
 	}
 
-	_items_to_free.reserve(pi.SelectedItemsNumber);
-	reserve(pi.SelectedItemsNumber);
-	for (int i = 0; i < pi.SelectedItemsNumber; ++i) {
-		size_t len = G.info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
+	_items_to_free.reserve(n);
+	reserve(n);
+
+	int getitem_cmd = only_selected ? FCTL_GETSELECTEDPANELITEM : FCTL_GETPANELITEM;
+	for (int i = 0; i < n; ++i) {
+		size_t len = G.info.Control(PANEL_ACTIVE, getitem_cmd, i, 0);
 		if (len >= sizeof(PluginPanelItem)) {
 			PluginPanelItem *pi = (PluginPanelItem *)calloc(1, len + 0x20);
 			if (pi == nullptr) {
-				fprintf(stderr, "GetSelectedItems: no memory\n");
+				fprintf(stderr, "GetItems: no memory\n");
 				break;
 			}
 
-			G.info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(void *)pi);
+			G.info.Control(PANEL_ACTIVE, getitem_cmd, i, (LONG_PTR)(void *)pi);
 			_items_to_free.push_back(pi);
 			if (pi->FindData.lpwszFileName) {
 				push_back(*pi);
@@ -30,15 +33,14 @@ GetSelectedItems::GetSelectedItems()
 	}
 }
 
-
-GetSelectedItems::~GetSelectedItems()
+GetItems::~GetItems()
 {
 	for (auto &pi : _items_to_free) {
 		free(pi);
 	}
 }
 
-////
+///
 
 GetFocusedItem::GetFocusedItem(HANDLE plug)
 {

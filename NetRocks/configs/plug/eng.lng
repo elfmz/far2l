@@ -111,6 +111,10 @@
 
 "Remove connection site(s)"
 "Remove selected connection site(s) settings?"
+"Copy connection site(s)"
+"Copy selected connection site(s) settings?"
+"Move connection site(s)"
+"Move selected connection site(s) settings?"
 
 "Create directory"
 "Enter name of directory to create:"

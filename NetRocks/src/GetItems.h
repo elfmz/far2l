@@ -2,15 +2,15 @@
 #include <vector>
 #include "Globals.h"
 
-
-struct GetSelectedItems : std::vector<PluginPanelItem>
+struct GetItems : std::vector<PluginPanelItem>
 {
-	GetSelectedItems();
-	~GetSelectedItems();
+	GetItems(bool only_selected);
+	~GetItems();
 
-private:
+protected:
 	std::vector<PluginPanelItem *> _items_to_free;
 };
+
 
 class GetFocusedItem
 {

@@ -31,6 +31,9 @@ if (NOT DEFINED PYTHON)
 	set(PYTHON "NO")
 endif()
 
+if (NOT DEFINED FARFTP)
+	set(FARFTP "NO")
+endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
@@ -124,7 +127,10 @@ set_target_properties(farlng
     RUNTIME_OUTPUT_DIRECTORY "${TOOLS_DIR}"
 )
 
-add_subdirectory (farftp)
+if(FARFTP)
+	add_subdirectory (farftp)
+endif ()
+
 add_subdirectory (colorer)
 add_subdirectory (multiarc)
 add_subdirectory (tmppanel)
@@ -155,7 +161,7 @@ if(PYTHON)
 		message(WARNING "${Esc}[1;31mPython libraries not found, python plugin will not be built${Esc}[39;22m")
 	endif ()
 else()
-	message(WARNING "${Esc}[1;31mPython plugin not enabled by default${Esc}[39;22m")
+	message(WARNING "${Esc}[1;31mPython plugin not enabled by default, use -DPYTHON=yes if you really want it${Esc}[39;22m")
 endif ()
 
 install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
@@ -180,3 +186,18 @@ install(CODE "
       execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb)
       "
     )
+
+if (NOT FARFTP)
+install(CODE "
+      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/farftp/plug/farftp.far-plug-mb && echo "Removed existing farftp plugin")
+      "
+    )
+endif()
+
+
+if (NOT PYTHON)
+install(CODE "
+      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide && echo "Removed existing python plugin")
+      "
+    )
+endif()

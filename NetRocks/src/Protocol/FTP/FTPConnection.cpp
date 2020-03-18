@@ -533,7 +533,11 @@ std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd
 
 #ifdef HAVE_OPENSSL
 	if (_data_encryption_enabled) {
-		data_transport = std::make_shared<TLSTransport>(_openssl_ctx, data_transport->DetachSocket());
+		auto tls_transport = std::make_shared<TLSTransport>(_openssl_ctx, data_transport->DetachSocket());
+		const std::string &fingerprint = tls_transport->GetPeerFingerprint();
+		if (fingerprint != _protocol_options.GetString("ServerIdentity"))
+			throw ProtocolError("Unmatched data and command connection certificates");
+		data_transport = tls_transport;
 	}
 #endif
 

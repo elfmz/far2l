@@ -110,9 +110,9 @@ public:
 		_di[_i_encryption_protocol].ListItems = _di_encryption_protocol.Get();
 		_di.NextLine();
 
-		_di.AddAtLine(DI_TEXT, 5,44, 0, MSFTPServerCodepage);
-		_i_server_codepage = _di.AddAtLine(DI_COMBOBOX, 45,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
-		_di[_i_server_codepage].ListItems = _di_server_codepage.Get();
+		//_di.AddAtLine(DI_TEXT, 5,44, 0, MSFTPServerCodepage);
+		//_i_server_codepage = _di.AddAtLine(DI_COMBOBOX, 45,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+		//_di[_i_server_codepage].ListItems = _di_server_codepage.Get();
 		_di.NextLine();
 
 		_i_passive_mode = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPPassiveMode);
@@ -147,9 +147,9 @@ public:
 		//GetDialogListPosition(_i_auth_mode)
 
 		_di_encryption_protocol.SelectIndex(sc.GetInt("EncryptionProtocol", 3)); // default: TLS1.1
-		if (!_di_server_codepage.Select(sc.GetString("ServerCodepage", "").c_str())) {
-			_di_server_codepage.SelectIndex(0);
-		}
+		//if (!_di_server_codepage.Select(sc.GetString("ServerCodepage", "").c_str())) {
+		//	_di_server_codepage.SelectIndex(0);
+		//}
 
 		if (_i_explicit_encryption != -1) {
 			SetCheckedDialogControl(_i_explicit_encryption, sc.GetInt("ExplicitEncryption", 0) != 0);
@@ -168,9 +168,8 @@ public:
 				sc.SetInt("ExplicitEncryption", IsCheckedDialogControl(_i_explicit_encryption));
 			}
 			sc.SetInt("EncryptionProtocol", GetDialogListPosition(_i_encryption_protocol));
-			std::string str;
-			TextFromDialogControl(_i_server_codepage, str);
-			sc.SetString("ServerCodepage", str);
+			//std::string str;
+			//TextFromDialogControl(_i_server_codepage, str); sc.SetString("ServerCodepage", str);
 			sc.SetInt("Passive", IsCheckedDialogControl(_i_passive_mode) ? 1 : 0);
 			sc.SetInt("MLSDMLST", IsCheckedDialogControl(_i_use_mlsd_mlst) ? 1 : 0);
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);

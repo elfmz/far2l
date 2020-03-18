@@ -1,9 +1,41 @@
+#pragma once
+
 #include "KeyFileHelper.h"
+
+class SitesConfigLocation
+{
+	std::vector<std::string> _parts;
+
+public:
+	void Reset();
+	bool Change(const std::string &sub);
+	bool Make(const std::string &sub);
+	bool Remove(const std::string &sub);
+
+	void Enum(std::vector<std::string> &children) const;
+
+	std::string TranslateToPath() const;
+	std::string TranslateToSitesConfigPath() const;
+};
+
+
+struct SiteSpecification
+{
+	SitesConfigLocation sites_cfg_location;
+	std::string site;
+
+	SiteSpecification() = default;
+	SiteSpecification(const std::string &s);
+
+	bool IsValid() const {return  !site.empty(); }
+
+	std::string ToString() const;
+};
 
 class SitesConfig : protected KeyFileHelper
 {
 public:
-	SitesConfig();
+	SitesConfig(const SitesConfigLocation &sites_cfg_location);
 
 	inline std::vector<std::string> EnumSites() { return EnumSections(); } 
 	inline void RemoveSite(const std::string &site) { return RemoveSection(site.c_str()); } 

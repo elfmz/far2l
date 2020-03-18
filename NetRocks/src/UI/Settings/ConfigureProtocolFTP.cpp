@@ -156,7 +156,7 @@ public:
 		}
 
 		SetCheckedDialogControl(_i_passive_mode, sc.GetInt("Passive", 1) != 0);
-		SetCheckedDialogControl(_i_use_mlsd_mlst, sc.GetInt("MLSDMLST", 0) != 0);
+		SetCheckedDialogControl(_i_use_mlsd_mlst, sc.GetInt("MLSDMLST", 1) != 0);
 
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		if (_i_tcp_quickack != -1) {

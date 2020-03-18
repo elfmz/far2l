@@ -3,7 +3,6 @@
 #include <wchar.h>
 #include "Globals.h"
 #include <utils.h>
-#include <TailedStruct.hpp>
 #include "SitesConfig.h"
 #include "PluginImpl.h"
 #include "PluginPanelItems.h"
@@ -108,16 +107,21 @@ void PluginImpl::UpdatePathInfo()
 //		tmp = _remote->SiteInfo();
 //		tmp+= '/';
 		tmp+= _cur_dir;
+
 	} else {
-		_cur_dir[0] = 0;
-		tmp = L"NetRocks connections list";
+		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath());
+		wcsncpy(_cur_dir, tmp.c_str(), ARRAYSIZE(_cur_dir) - 1);
+		if (!tmp.empty()) {
+			tmp.insert(0, L": ");
+		}
+		tmp.insert(0, L"NetRocks sites");
 	}
 
 	if (tmp.size() >= ARRAYSIZE(_panel_title)) {
 		size_t rmlen = 4 + (tmp.size() - ARRAYSIZE(_panel_title));
 		tmp.replace((tmp.size() - rmlen) / 2 , rmlen, L"...");
 	}
-	
+
 	wcscpy(_panel_title, tmp.c_str());
 }
 
@@ -148,14 +152,21 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 		ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
 		if (_remote == nullptr) {
-			SitesConfig sc;
-			auto *ppi = ppis.Add(G.GetMsgWide(MCreateSiteConnection));
-			ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+			std::vector<std::string> children;
+			_sites_cfg_location.Enum(children);
+			for (const auto &child : children) {
+				ppi = ppis.Add(child.c_str());
+				ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+			}
 
+			ppi = ppis.Add(G.GetMsgWide(MCreateSiteConnection));
+			ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+
+			SitesConfig sc(_sites_cfg_location);
 			const std::vector<std::string> &sites = sc.EnumSites();
 			for (const std::string &site : sites) {
 				ppi = ppis.Add(site.c_str());
-				ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+				ppi->FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_EXECUTABLE;
 			}
 
 		} else {
@@ -202,10 +213,11 @@ static bool PreprocessPathTokens(std::vector<std::string> &components)
 int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 {
 	fprintf(stderr, "PluginImpl::SetDirectory('%ls', %d)\n", Dir, OpMode);
-	if (!_remote && wcscmp(Dir, G.GetMsgWide(MCreateSiteConnection)) == 0) {
-		ByKey_EditSiteConnection(true);
-		UpdatePathInfo();
-		return FALSE;
+	if (!_remote) {
+		if (_sites_cfg_location.Change(Wide2MB(Dir))) {
+			UpdatePathInfo();
+			return TRUE;
+		}
 	}
 
 	StackedDir sd;
@@ -447,11 +459,17 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 		if (!ConfirmRemoveSites().Ask())
 			return FALSE;
 
-		SitesConfig sc;
+		SitesConfig sc(_sites_cfg_location);
 		for (int i = 0; i < ItemsNumber; ++i) {
 			const std::string &display_name = Wide2MB(PanelItem[i].FindData.lpwszFileName);
-			fprintf(stderr, "removing %s\n", display_name.c_str());
-			sc.RemoveSite(display_name);
+
+			if (PanelItem[i].FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) {
+				fprintf(stderr, "Removing sites directory: %s\n", display_name.c_str());
+				_sites_cfg_location.Remove(display_name);
+			} else {
+				fprintf(stderr, "Removing site: %s\n", display_name.c_str());
+				sc.RemoveSite(display_name);
+			}
 		}
 		return TRUE;
 	}
@@ -462,22 +480,37 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 {
 	fprintf(stderr, "NetRocks::MakeDirectory('%ls', 0x%x)\n", Name ? *Name : L"NULL", OpMode);
-	if (!_remote) {
+
+	std::string dir_name;
+	if (Name && *Name) {
+		Wide2MB(*Name, dir_name);
+	}
+
+	if (!IS_SILENT(OpMode)) {
+		dir_name = ConfirmMakeDir(dir_name.c_str()).Ask();
+	}
+
+	if (dir_name.empty()) {
+		fprintf(stderr, "NetRocks::MakeDirectory: cancel\n");
 		return FALSE;
 	}
 
-	std::string tmp;
-	if (Name && *Name) {
-		Wide2MB(*Name, tmp);
+	if (!_remote) {
+		if (!_sites_cfg_location.Make(dir_name)) {
+			return FALSE;
+		}
+
+	} else {
+		OpMakeDirectory op(OpMode, _remote, CurrentSiteDir(true), dir_name);
+		if (!op.Do()) {
+			return FALSE;
+		}
+
+		dir_name = op.DirName();
 	}
-	OpMakeDirectory op(OpMode, _remote, CurrentSiteDir(true), Name ? tmp.c_str() : nullptr);
-	if (!op.Do()) {
-		return FALSE;
-	}
+
 	if (Name && !IS_SILENT(OpMode)) {
-		tmp = op.DirName();
-		const std::wstring name_w = StrMB2Wide(tmp);
-		wcsncpy(_mk_dir, name_w.c_str(), ARRAYSIZE(_mk_dir) - 1);
+		wcsncpy(_mk_dir, StrMB2Wide(dir_name).c_str(), ARRAYSIZE(_mk_dir) - 1);
 		_mk_dir[ARRAYSIZE(_mk_dir) - 1] = 0;
 		*Name = _mk_dir;
 	}
@@ -488,9 +521,15 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
-	if (Key == VK_RETURN && ControlState == 0 && _remote
-	 && G.GetGlobalConfigBool("EnterExecRemotely", true)) {
-		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
+	if (Key == VK_RETURN) {
+		if (_remote) {
+			if (ControlState == 0 && G.GetGlobalConfigBool("EnterExecRemotely", true)) {
+				return ByKey_TryExecuteSelected() ? TRUE : FALSE;
+			}
+
+		} else {
+			return ByKey_TryEnterSelectedSite() ? TRUE : FALSE;
+		}
 	}
 
 	if ((Key == VK_F5 || Key == VK_F6) && _remote) {
@@ -537,17 +576,13 @@ void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 	std::string site;
 
 	if (!create_new) {
-		intptr_t size = G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, 0);
-		if (size >= (intptr_t)sizeof(PluginPanelItem)) {
-			TailedStruct<PluginPanelItem> ppi(size + 0x20 - sizeof(PluginPanelItem));
-			G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
-			if (wcscmp(ppi->FindData.lpwszFileName, G.GetMsgWide(MCreateSiteConnection)) != 0) {
-				Wide2MB(ppi->FindData.lpwszFileName, site);
-			}
+		GetFocusedItem gfi(this);
+		if (gfi.IsValid()) {
+			Wide2MB(gfi->FindData.lpwszFileName, site);
 		}
 	}
 
-	SiteConnectionEditor sce(site);
+	SiteConnectionEditor sce(_sites_cfg_location, site);
 	const bool connect_now = sce.Edit();
 	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 	if (connect_now) {
@@ -600,20 +635,14 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 bool PluginImpl::ByKey_TryExecuteSelected()
 {
-	intptr_t size = G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, 0);
-	if (size < (intptr_t)sizeof(PluginPanelItem)) {
-		return false;
-	}
-	TailedStruct<PluginPanelItem> ppi(size + 0x20 - sizeof(PluginPanelItem));
-	G.info.Control(this, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)ppi.ptr());
-	if ( (ppi->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
-	 || (ppi->FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
-//		fprintf(stderr, "!!!!dwUnixMode = 0%o\n", ppi->FindData.dwUnixMode );
+	GetFocusedItem gfi(this);
+	if ( (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+	 || (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
 		return false;
 	}
 
 	std::wstring cmd = L"./";
-	cmd+= ppi->FindData.lpwszFileName;
+	cmd+= gfi->FindData.lpwszFileName;
 	QuoteCmdArgIfNeed(cmd);
 
 	G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)cmd.c_str());
@@ -622,6 +651,29 @@ bool PluginImpl::ByKey_TryExecuteSelected()
 		G.info.Control(this, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
 		return false;
 	}
+
+	return true;
+}
+
+bool PluginImpl::ByKey_TryEnterSelectedSite()
+{
+	GetFocusedItem gfi(this);
+	if ( (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+		return false;
+	}
+
+	if (wcscmp(gfi->FindData.lpwszFileName, G.GetMsgWide(MCreateSiteConnection)) == 0) {
+		ByKey_EditSiteConnection(true);
+		UpdatePathInfo();
+
+	} else  if (!SetDirectoryInternal(gfi->FindData.lpwszFileName, 0)) {
+		return false;
+	}
+
+	UpdatePathInfo();
+	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+	G.info.Control(PANEL_ACTIVE, FCTL_CLEARSELECTION, 0, 0);
+	G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
 
 	return true;
 }
@@ -638,6 +690,7 @@ void PluginImpl::ByKey_EditAttributesSelected()
 		fprintf(stderr, "ByKey_EditAttributesSelected: %s\n", ex.what());
 	}
 }
+
 
 static std::wstring GetCommandArgument(const wchar_t *cmd)
 {

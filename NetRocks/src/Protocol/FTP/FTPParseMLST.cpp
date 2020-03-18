@@ -14,6 +14,9 @@ static const char match__perm[] = "perm";
 static const char match__size[] = "size";
 static const char match__sizd[] = "sizd";
 
+static const char match__modify[] = "modify";
+static const char match__create[] = "create";
+
 static const char match__file[] = "file";
 static const char match__dir[] = "dir";
 static const char match__cdir[] = "cdir";
@@ -21,11 +24,73 @@ static const char match__pdir[] = "pdir";
 
 #define MATCH_SUBSTR(str, len, match) (sizeof(match) == (len) + 1 && CaseIgnoreEngStrMatch(str, match, sizeof(match) - 1))
 
-bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info, uid_t *uid, gid_t *gid, std::string *name)
+static time_t GetDefaultTime()
+{
+	static time_t s_out = time(NULL);
+	return s_out;
+}
+
+static void ParseTime(timespec &ts, const char *str, size_t len)
+{
+/*
+    time-val       = 14DIGIT [ "." 1*DIGIT ]
+   The leading, mandatory, fourteen digits are to be interpreted as, in
+   order from the leftmost, four digits giving the year, with a range of
+   1000--9999, two digits giving the month of the year, with a range of
+   01--12, two digits giving the day of the month, with a range of
+   01--31, two digits giving the hour of the day, with a range of
+   00--23, two digits giving minutes past the hour, with a range of
+   00--59, and finally, two digits giving seconds past the minute, with
+   a range of 00--60 (with 60 being used only at a leap second).  Years
+    The optional digits, which are preceded by a period, give decimal
+   fractions of a second.  These may be given to whatever precision is
+   appropriate to the circumstance, however implementations MUST NOT add
+   precision to time-vals where that precision does not exist in the
+   underlying value being transmitted.
+
+   Symbolically, a time-val may be viewed as: YYYYMMDDHHMMSS.sss
+*/
+
+	struct tm t{};
+
+	if (len >= 4) {
+		t.tm_year = atoul(str, 4) - 1900;
+		if (len >= 6) {
+			t.tm_mon = atoul(str + 4, 2) - 1;
+			if (len >= 8) {
+				t.tm_mday = atoul(str + 6, 2);
+				if (len >= 10) {
+					t.tm_hour = atoul(str + 8, 2);
+					if (len >= 12) {
+						t.tm_min = atoul(str + 10, 2);
+						if (len >= 14) {
+							t.tm_sec = atoul(str + 12, 2);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ts.tv_sec = mktime(&t);
+
+	if (len > 15 && str[14] == '.') {
+		size_t deci_len = std::min(len - 15, (size_t)9);
+		ts.tv_nsec = atoul(str + 15, deci_len);
+		for (size_t i = deci_len; i < 9; ++i) {
+			ts.tv_nsec*= 10;
+		}
+
+	} else {
+		ts.tv_nsec = 0;
+	}
+}
+
+bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info, uid_t *uid, gid_t *gid, std::string *name, std::string *lnkto)
 {
 	file_info = FileInformation();
 
-	bool has_mode = false, has_type = false, has_any_known = false;
+	bool has_mode = false, has_type = false, has_any_known = false, has_modify = false, has_create = false;
 	const char *perm = nullptr, *perm_end = nullptr;
 
 	for (; line != end && *line == ' '; ++line) {;}
@@ -50,6 +115,14 @@ bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info
 			} else if (MATCH_SUBSTR(fact, name_len, match__unix_gid)) {
 				if (gid) *gid = strtol(eq + 1, nullptr, 10);
 				has_any_known = true;
+
+			} else if (MATCH_SUBSTR(fact, name_len, match__create)) {
+				ParseTime(file_info.status_change_time, eq + 1, value_len);
+				has_any_known = has_create = true;
+
+			} else if (MATCH_SUBSTR(fact, name_len, match__modify)) {
+				ParseTime(file_info.modification_time, eq + 1, value_len);
+				has_any_known = has_modify = true;
 
 			} else if (MATCH_SUBSTR(fact, name_len, match__type)) {
 				if (MATCH_SUBSTR(eq + 1, value_len, match__file)) {
@@ -84,6 +157,9 @@ bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info
 					file_info.mode|= S_IFLNK;
 					has_type = true;
 					has_any_known = true;
+					if (lnkto) {
+						lnkto->assign(eq + 1 + 6, value_len - 6);
+					}
 				}
 			}
 		}
@@ -145,6 +221,24 @@ bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info
 		} else {
 			file_info.mode|= DEFAULT_ACCESS_MODE_FILE; // last resort
 		}
+	}
+
+	if (has_modify) {
+		file_info.access_time.tv_sec = file_info.modification_time.tv_sec;
+		if (!has_create) {
+			file_info.status_change_time.tv_sec = file_info.modification_time.tv_sec;
+		}
+
+	} else if (has_create) {
+		file_info.access_time.tv_sec = file_info.status_change_time.tv_sec;
+		if (!has_modify) {
+			file_info.modification_time.tv_sec = file_info.status_change_time.tv_sec;
+		}
+
+	} else {
+		file_info.status_change_time.tv_sec =
+			file_info.modification_time.tv_sec =
+				file_info.access_time.tv_sec = GetDefaultTime();
 	}
 
 	return has_any_known;

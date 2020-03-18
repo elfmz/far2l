@@ -31,7 +31,7 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 	std::string SplitPathAndNavigate(const std::string &path_name, bool allow_empty_name_part = false);
 	std::string PathAsRelative(const std::string &path);
 
-	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr);
+	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr, std::string *lnkto = nullptr);
 
 	std::shared_ptr<IDirectoryEnumer> NavigatedDirectoryEnum();
 

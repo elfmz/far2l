@@ -530,25 +530,44 @@ char * itoa(int i, char *a, int radix)
 #endif
 
 
-unsigned long htoul(const char *str)
+unsigned long htoul(const char *str, size_t maxlen)
 {
 	unsigned long out = 0;
-	for (;;++str) {
-		if (*str >= '0' && *str <= '9') {
-			out<<= 4;
-			out+= *str - '0';
 
-		} else if (*str >= 'a' && *str <= 'f') {
+	for (size_t i = 0; i != maxlen; ++i) {
+		if (str[i] >= '0' && str[i] <= '9') {
 			out<<= 4;
-			out+= 10 + (*str - 'a');
+			out+= str[i] - '0';
 
-		} else if (*str >= 'A' && *str <= 'F') {
+		} else if (str[i] >= 'a' && str[i] <= 'f') {
 			out<<= 4;
-			out+= 10 + (*str - 'A');
+			out+= 10 + (str[i] - 'a');
+
+		} else if (str[i] >= 'A' && str[i] <= 'F') {
+			out<<= 4;
+			out+= 10 + (str[i] - 'A');
 
 		} else
-			return out;
+			break;
 	}
+
+	return out;
+}
+
+unsigned long atoul(const char *str, size_t maxlen)
+{
+	unsigned long out = 0;
+
+	for (size_t i = 0; i != maxlen; ++i) {
+		if (str[i] >= '0' && str[i] <= '9') {
+			out*= 10;
+			out+= str[i] - '0';
+
+		} else
+			break;
+	}
+
+	return out;
 }
 
 

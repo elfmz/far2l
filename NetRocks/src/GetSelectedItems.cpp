@@ -37,3 +37,21 @@ GetSelectedItems::~GetSelectedItems()
 		free(pi);
 	}
 }
+
+////
+
+GetFocusedItem::GetFocusedItem(HANDLE plug)
+{
+	intptr_t size = G.info.Control(plug, FCTL_GETSELECTEDPANELITEM, 0, 0);
+	if (size < (intptr_t)sizeof(PluginPanelItem)) {
+		return;
+	}
+
+	_ptr = (PluginPanelItem *) malloc(size + 0x100);
+	G.info.Control(plug, FCTL_GETSELECTEDPANELITEM, 0, (LONG_PTR)(void *)_ptr);
+}
+
+GetFocusedItem::~GetFocusedItem()
+{
+	free(_ptr);
+}

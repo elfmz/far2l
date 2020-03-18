@@ -38,13 +38,14 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 
 	FTPThrowIfBadResponce<ProtocolAuthFailedError>(str, reply_code, 200, 299);
 
-	if (_conn->ProtocolOptions().GetInt("MLSDMLST") != 0) {
+	if (_conn->ProtocolOptions().GetInt("MLSDMLST", 1) != 0) {
 		str = "FEAT\r\n";
 		reply_code = _conn->SendRecvResponce(str);
 		if (reply_code >= 200 && reply_code < 299) {
 			if (str.find("MLST") != std::string::npos) _feat.mlst = true;
 			if (str.find("MLSD") != std::string::npos) _feat.mlsd = true;
 		}
+		fprintf(stderr, "ProtocolFTP: mlst=%d mlsd=%d\n", _feat.mlst, _feat.mlsd);
 	}
 
 	str = "TYPE I\r\nPWD\r\n";
@@ -267,10 +268,10 @@ std::string ProtocolFTP::PathAsRelative(const std::string &path)
 	return out;
 }
 
-void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_t *uid, gid_t *gid)
+void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_t *uid, gid_t *gid, std::string *lnkto)
 {
 	std::string str = "MLST ";
-	str+= PathAsRelative(path);
+	str+= path;
 	str+= "\r\n";
 
 	unsigned int reply_code = _conn->SendRecvResponce(str);
@@ -285,32 +286,32 @@ void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_
 	}
 
 	const std::string &line = lines[ (lines.size() > 1) ? 1 : 0 ];
-	if (!ParseMLsxLine(line.c_str(), line.c_str() + line.size(), file_info, uid, gid)) {
+	if (!ParseMLsxLine(line.c_str(), line.c_str() + line.size(), file_info, uid, gid, nullptr, lnkto)) {
 		throw ProtocolError("MLst responce uninformative");
 	}
 }
 
 void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
 {
-	if (_feat.mlst) {
-		MLst(path, file_info);
-		return;
-	}
-
-	std::string name_part = SplitPathAndNavigate(path, true);
+	const std::string &name_part = SplitPathAndNavigate(path, true);
 	if (name_part.empty()) {
 		file_info = FileInformation();
 		file_info.mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 		return;
 	}
 
-	std::shared_ptr<IDirectoryEnumer> enumer = NavigatedDirectoryEnum();
-	std::string enum_name, enum_owner, enum_group;
-	do {
-		if (!enumer->Enum(enum_name, enum_owner, enum_group, file_info)) {
-			throw ProtocolError("File not found");
-		}
-	} while (name_part != enum_name);
+	if (_feat.mlst) {
+		MLst(name_part, file_info);
+
+	} else {
+		std::shared_ptr<IDirectoryEnumer> enumer = NavigatedDirectoryEnum();
+		std::string enum_name, enum_owner, enum_group;
+		do {
+			if (!enumer->Enum(enum_name, enum_owner, enum_group, file_info)) {
+				throw ProtocolError("File not found");
+			}
+		} while (name_part != enum_name);
+	}
 
 	if (follow_symlink && S_ISLNK(file_info.mode)) {
 		std::string str = "SIZE ";
@@ -415,9 +416,6 @@ void ProtocolFTP::Rename(const std::string &path_old, const std::string &path_ne
 
 void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
 {
-//MFCT 	The 'MFMT', 'MFCT', and 'MFF' Command Extensions for FTP 	Modify the creation time of a file.
-//MFF 	The 'MFMT', 'MFCT', and 'MFF' Command Extensions for FTP 	Modify fact (the last modification time, creation time, UNIX group/owner/mode of a file).
-//MFMT 
 	if (!_feat.mfmt) {
 		return;
 	}
@@ -491,8 +489,16 @@ void ProtocolFTP::SymlinkCreate(const std::string &link_path, const std::string 
 
 void ProtocolFTP::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
 {
+	if (_feat.mlst) {
+		const std::string &name_part = SplitPathAndNavigate(link_path, true);
+		if (!name_part.empty()) {
+			FileInformation file_info;
+			MLst(name_part, file_info, nullptr, nullptr, &link_target);
+			return;
+		}
+	}
+
 	link_target.clear();
-//	throw ProtocolUnsupportedError("Symlink querying unsupported");
 }
 
 class FTPDataCommand
@@ -590,7 +596,7 @@ protected:
 		uid_t uid = 0;
 		gid_t gid = 0;
 
-		if (!ParseMLsxLine(buf, buf + len, file_info, &uid, &gid, &name)) {
+		if (!ParseMLsxLine(buf, buf + len, file_info, &uid, &gid, &name, nullptr)) {
 			return false;
 		}
 

@@ -267,7 +267,7 @@ std::string TLSTransport::GetPeerFingerprint()
 		unsigned int digest_size = sizeof(digest);
 
 #ifndef OPENSSL_NO_SHA256
-		if (X509_digest(cert, EVP_sha224(), digest, &digest_size))
+		if (X509_digest(cert, EVP_sha256(), digest, &digest_size))
 #else
 		if (X509_digest(cert, EVP_md5(), digest, &digest_size))
 #endif
@@ -454,6 +454,7 @@ void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transp
 
 	unsigned int v[6];
 	sscanf(str.c_str() + p + 1,"%u,%u,%u,%u,%u,%u", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
+	// doesn't make sense if (_protocol_options.GetInt("RestrictDataPeer", 1) != 0)
 
 	SendRestIfNeeded(rest);
 
@@ -510,6 +511,16 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 		int sc = accept(srv_sock, (struct sockaddr *)&sin, &l);
 		if (sc != -1) {
 			data_transport = std::make_shared<SocketTransport>(sc, _protocol_options);
+			if (_protocol_options.GetInt("RestrictDataPeer", 1) != 0) {
+				struct sockaddr_in cmd_sin {}, data_sin {};
+				_transport->GetPeerAddress(cmd_sin);
+				data_transport->GetPeerAddress(data_sin);
+				if (cmd_sin.sin_addr.s_addr != data_sin.sin_addr.s_addr) {
+					fprintf(stderr, "Address mismatch: 0x%x != 0x%x\n",
+						cmd_sin.sin_addr.s_addr, data_sin.sin_addr.s_addr);
+					throw ProtocolError("Unmatched data and command connection address");
+				}
+			}
 			break;
 		}
 	}
@@ -534,9 +545,12 @@ std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd
 #ifdef HAVE_OPENSSL
 	if (_data_encryption_enabled) {
 		auto tls_transport = std::make_shared<TLSTransport>(_openssl_ctx, data_transport->DetachSocket());
-		const std::string &fingerprint = tls_transport->GetPeerFingerprint();
-		if (fingerprint != _protocol_options.GetString("ServerIdentity"))
-			throw ProtocolError("Unmatched data and command connection certificates");
+		if (_protocol_options.GetInt("RestrictDataPeer", 1) != 0) {
+			const std::string &fingerprint = tls_transport->GetPeerFingerprint();
+			if (fingerprint != _protocol_options.GetString("ServerIdentity")) {
+				throw ProtocolError("Unmatched data and command connection certificates");
+			}
+		}
 		data_transport = tls_transport;
 	}
 #endif

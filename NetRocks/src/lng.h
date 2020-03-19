@@ -248,6 +248,7 @@ enum LanguageID
   MSFTPServerCodepage,
   MFTPPassiveMode,
   MFTPUseMLSDMLST,
+  MFTPRestrictDataPeer,
   MFTPTCPNoDelay,
   MFTPQuickAck
 

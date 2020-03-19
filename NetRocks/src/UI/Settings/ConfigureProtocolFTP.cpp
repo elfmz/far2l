@@ -78,8 +78,6 @@ public:
 		_di_encryption_protocol.Add("TLS1.1");
 		_di_encryption_protocol.Add("TLS1.2");
 
-		_di_encryption_protocol.Add(MSFTPAuthModeKeyFile);
-
 		_di.SetBoxTitleItem(implicit_encryption ? MFTPSOptionsTitle : MFTPOptionsTitle);
 
 		_di.SetLine(2);
@@ -106,7 +104,7 @@ public:
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPTCPNoDelay);
 		_di.NextLine();
 
-#ifndef __linux__
+#ifdef __linux__
 		_i_tcp_quickack = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPQuickAck);
 		_di.NextLine();
 #endif

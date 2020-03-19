@@ -608,6 +608,10 @@ void PluginImpl::ByKey_EditSiteConnection(bool create_new)
 	if (!create_new) {
 		GetFocusedItem gfi(this);
 		if (gfi.IsValid()) {
+			if ( (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
+				// dont allow editing of directories and <Create site connection>
+				return;
+			}
 			Wide2MB(gfi->FindData.lpwszFileName, site);
 		}
 	}

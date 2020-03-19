@@ -69,6 +69,7 @@ $^#Site connection editor#
 
  This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like hostname and port to connect to, login mode and username and password if needed. Also by clicking on Protocol options button you can modify some protocol-specific settings.
  ~SFTP:// and SCP:// protocols specific options~@ProtocolOptionsSFTPSCP@
+ ~FTP:// and FTPS:// protocols specific options~@ProtocolOptionsFTP@
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~NFS:// protocol specific options~@ProtocolOptionsNFS@
  ~FILE:// protocol specific options~@ProtocolOptionsFile@
@@ -114,6 +115,24 @@ $^#SFTP:// SCP:// protocols specific options#
  #TCP_NODELAY socket option:# also can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
  #TCP_QUICKACK socket option:# if enabled, TCP ack packets are sent immediately, rather than delayed that may improve receive performance.
  #Custom subsystem request/exec# here you can replace default SFTP subsystem handler with specific command, usually its used to get superuser access from sudo'er acctount by using command line like [sudo /usr/lib/openssh/sftp-server]
+
+ ~Contents~@Contents@
+
+@ProtocolOptionsFTP
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#FTP:// FTPS:// protocols specific options#
+
+ This dialog allows you to modify "ftp://" and "ftps://" protocols specific settings. Here you can setup encryption and adjust various options of protocol and networking.
+ #Explicit encryption:# can be used to enable encryption through AUTH command if FTP server supports it. Note that this option not enabled for FTPS cuz it always uses encryption.
+ #Minimal encryption protocol:# here you can adjust which protocols can be used for encryption. Note that currently SSL and TLSv1.0 not considered as secure so its not recommended to use them.
+ #Passive mode:# selecting this makes NetRocks to use PASV command for data transmission that is most compatible setting. Unchecking it will make NetRocks to use PORT command instead, that uses reversed connection schema and may be incompatible with some firewalls and NAT'ed networks.
+ #Use MLSD/MLST if possible:# use MLSD and MLST commands to retrieve directory listing or information about particular file. If unchecked only LIST command can be used, that is potentially less reliable and slower.
+ #Ensure data connection peer matches server:# if checked NetRocks will check that data connection peer IP address of accepted PORT connection matches to actual IP server address. Also if encryption used this will requre data connection's certificate to match with command connection's.
+ #TCP_NODELAY socket option:# can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
+ #TCP_QUICKACK socket option:# if enabled, TCP ack packets are sent immediately, rather than delayed that may improve receive performance.
 
  ~Contents~@Contents@
 

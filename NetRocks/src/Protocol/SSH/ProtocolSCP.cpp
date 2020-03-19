@@ -21,7 +21,7 @@
 #include <Threaded.h>
 #include "ProtocolSCP.h"
 #include "SSHConnection.h"
-#include "../Op/Utils/ExecCommandFIFO.hpp"
+#include "../../Op/Utils/ExecCommandFIFO.hpp"
 
 
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 7, 7))

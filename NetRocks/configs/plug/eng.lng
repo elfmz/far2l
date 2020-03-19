@@ -111,6 +111,10 @@
 
 "Remove connection site(s)"
 "Remove selected connection site(s) settings?"
+"Copy connection site(s)"
+"Copy selected connection site(s) settings?"
+"Move connection site(s)"
+"Move selected connection site(s) settings?"
 
 "Create directory"
 "Enter name of directory to create:"
@@ -233,3 +237,14 @@
 "Set &UID"
 "Set &GID"
 "S&ticky"
+
+"FTP Protocol Options"
+"FTPS Protocol Options"
+"E&xplicit encryption"
+"Minimal &encryption protocol"
+"Server &codepage"
+"&Passive mode"
+"Use &MLSD/MLST if possible"
+"En&sure data connection peer matches server"
+"Enable &TCP_NODELAY option"
+"Enable TCP_&QUICKACK option"

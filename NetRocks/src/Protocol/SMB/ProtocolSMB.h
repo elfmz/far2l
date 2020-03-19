@@ -2,45 +2,24 @@
 #include <memory>
 #include <string>
 #include <map>
-#include <set>
-#include <neon/ne_session.h>
-#include <neon/ne_request.h>
-#include "Protocol.h"
+#include <StringConfig.h>
+#include "../Protocol.h"
 
-struct DavConnection
+class ProtocolSMB : public IProtocol, public std::enable_shared_from_this<ProtocolSMB>
 {
-	ne_session *sess = nullptr;
+	std::string _host;
 
-	DavConnection() = default;
-
-	~DavConnection()
-	{
-		if (sess != nullptr) {
-			ne_session_destroy(sess);
-		}
-	}
-
-private:
-	DavConnection(const DavConnection &) = delete;
-};
-
-class ProtocolWebDAV : public IProtocol
-{
-	std::shared_ptr<DavConnection> _conn;
-	std::string _useragent;
-	std::string _username, _password;
-	std::string _proxy_username, _proxy_password;
-	std::string _known_server_identity, _current_server_identity;
-
-	static int sAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
-	static int sProxyAuthCreds(void *userdata, const char *realm, int attempt, char *username, char *password);
-	static int sVerifySsl(void *userdata, int failures, const ne_ssl_certificate *cert);
-	static void sCreateRequestHook(ne_request *req, void *userdata, const char *method, const char *requri);
 public:
+	StringConfig _protocol_options;
+	std::map<std::string, FileInformation> _cached_net;
 
-	ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,
+	ProtocolSMB(const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const std::string &protocol_options) throw (std::runtime_error);
-	virtual ~ProtocolWebDAV();
+	virtual ~ProtocolSMB();
+
+	const std::vector<std::string> &EnumHosts();
+
+	std::string RootedPath(const std::string &path);
 
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);

@@ -12,6 +12,13 @@ public:
 	FDScope(int fd = -1) : _fd(fd) {}
 	~FDScope();
 
+	inline int Detach()
+	{
+		int out = _fd;
+		_fd = -1;
+		return out;
+	}
+
 	inline FDScope &operator = (int fd)
 	{
 		CheckedClose();

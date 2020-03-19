@@ -41,6 +41,8 @@ void GlobalConfigWriter::PutBool(const char *name, bool value)
 
 //
 
+bool ImportFarFtpSites();
+
 void Globals::Startup(const struct PluginStartupInfo *Info)
 {
 	if (!_started) {
@@ -49,6 +51,12 @@ void Globals::Startup(const struct PluginStartupInfo *Info)
 		info.FSF = &fsf;
 		_global_config.reset(new KeyFileHelper(InMyConfig("NetRocks/options.cfg").c_str()));
 		tsocks_config = InMyConfig("NetRocks/tsocks.cfg");
+		if (!GetGlobalConfigBool("ImportFarFtpSitesDone", false)) {
+			if (ImportFarFtpSites()) {
+				GlobalConfigWriter w = GetGlobalConfigWriter();
+				w.PutBool("ImportFarFtpSitesDone", true);
+			}
+		}
 		_started = true;
 	}
 }

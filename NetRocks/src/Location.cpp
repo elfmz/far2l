@@ -31,7 +31,7 @@ bool Location::FromString(const std::string &str)
 	std::string directory;
 
 	if (str.size() > 2 && str[0] == '<') {
-		server_kind = SK_CONNECTION;
+		server_kind = SK_SITE;
 
 		size_t p = str.find('>', 1);
 		if (p == std::string::npos) {
@@ -41,8 +41,10 @@ bool Location::FromString(const std::string &str)
 		if (server.empty()) {
 			return false;
 		}
+
 		if (p == str.size() - 1) {
-			directory = SitesConfig().GetDirectory(server);
+			SiteSpecification ss(server);
+			directory = SitesConfig(ss.sites_cfg_location).GetDirectory(ss.site);
 
 		} else if (p < str.size() + 2) {
 			directory = str.substr(p + 2);
@@ -90,11 +92,11 @@ std::string Location::ToString(bool with_server) const
 	std::string out;
 
 	if (with_server) {
-		if (server_kind == SK_CONNECTION) {
+		if (server_kind == SK_SITE) {
 			out+= '<';
 		}
 		out+= server;
-		if (server_kind == SK_CONNECTION) {
+		if (server_kind == SK_SITE) {
 			out+= '>';
 		}
 	}

@@ -7,7 +7,7 @@ struct Location
 	enum ServerKind
 	{
 		SK_URL,
-		SK_CONNECTION,
+		SK_SITE,
 	} server_kind;
 
 	struct URL {
@@ -15,7 +15,7 @@ struct Location
 		unsigned int port;
 	} url;
 
-	std::string server; // connection name or url in form of protocol:username@host:port
+	std::string server; // site name or url in form of protocol:username@host:port
 
 	struct Path {
 		std::vector<std::string> components;

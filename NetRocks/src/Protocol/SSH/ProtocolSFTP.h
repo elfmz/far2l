@@ -1,18 +1,17 @@
 #pragma once
 #include <memory>
-#include "Protocol.h"
+#include "../Protocol.h"
 
-struct SSHConnection;
+struct SFTPConnection;
 
-class ProtocolSCP : public IProtocol
+class ProtocolSFTP : public IProtocol
 {
-	std::shared_ptr<SSHConnection> _conn;
-	struct timespec _now{};
+	std::shared_ptr<SFTPConnection> _conn;
 
 public:
-	ProtocolSCP(const std::string &host, unsigned int port, const std::string &username,
+	ProtocolSFTP(const std::string &host, unsigned int port, const std::string &username,
 		const std::string &password, const std::string &options) throw (std::runtime_error);
-	virtual ~ProtocolSCP();
+	virtual ~ProtocolSFTP();
 
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) throw (std::runtime_error);

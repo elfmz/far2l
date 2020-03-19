@@ -17,7 +17,7 @@
 #include <ScopeHelpers.h>
 #include <WordExpansion.h>
 #include <Threaded.h>
-#include "Protocol.h"
+#include "../Protocol.h"
 #include "SSHConnection.h"
 
 

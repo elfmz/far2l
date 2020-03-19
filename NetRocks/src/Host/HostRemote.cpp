@@ -13,8 +13,6 @@
 #include <StringConfig.h>
 #include <CheckedCast.hpp>
 
-#include "../SitesConfig.h"
-
 #include "HostRemote.h"
 #include "Protocol/Protocol.h"
 #include "IPC.h"
@@ -26,17 +24,17 @@
 
 ////////////////////////////////////////////
 
-HostRemote::HostRemote(const std::string &site)
-	: _site(site)
+HostRemote::HostRemote(const std::string &site_specification)
+	: _site_specification(site_specification)
 {
-	SitesConfig sc;
-	_identity.protocol = sc.GetProtocol(_site);
-	_identity.host = sc.GetHost(_site);
-	_identity.port = sc.GetPort(_site);
-	_identity.username = sc.GetUsername(_site);
-	_login_mode = sc.GetLoginMode(_site);
-	_password = sc.GetPassword(_site);
-	_options = sc.GetProtocolOptions(_site, _identity.protocol);
+	SitesConfig sc(_site_specification.sites_cfg_location);
+	_identity.protocol = sc.GetProtocol(_site_specification.site);
+	_identity.host = sc.GetHost(_site_specification.site);
+	_identity.port = sc.GetPort(_site_specification.site);
+	_identity.username = sc.GetUsername(_site_specification.site);
+	_login_mode = sc.GetLoginMode(_site_specification.site);
+	_password = sc.GetPassword(_site_specification.site);
+	_options = sc.GetProtocolOptions(_site_specification.site, _identity.protocol);
 
 	if (_login_mode == 0) {
 		_password.clear();
@@ -66,7 +64,7 @@ std::shared_ptr<IHost> HostRemote::Clone()
 	auto cloned = std::make_shared<HostRemote>();
 
 	std::unique_lock<std::mutex> locker(_mutex);
-	cloned->_site = _site;
+	cloned->_site_specification = _site_specification;
 	cloned->_identity = _identity;
 	cloned->_login_mode = _login_mode;
 	cloned->_password = _password;
@@ -80,10 +78,10 @@ std::shared_ptr<IHost> HostRemote::Clone()
 
 std::string HostRemote::SiteName()
 {
-	if (!_site.empty()) {
+	if (_site_specification.IsValid()) {
 		std::string out;
 		out+= '<';
-		out+= _site;
+		out+= _site_specification.ToString();
 		out+= '>';
 		return out;
 	}
@@ -329,7 +327,7 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 	protocol_options.SetString("ServerIdentity", new_identity);
 
 	if (!prev_identity.empty()) {
-		switch (ConfirmNewServerIdentity(_site, new_identity, !_site.empty()).Ask()) {
+		switch (ConfirmNewServerIdentity(_site_specification.ToString(), new_identity, _site_specification.IsValid()).Ask()) {
 			case ConfirmNewServerIdentity::R_ALLOW_ONCE: {
 				_options = protocol_options.Serialize();
 				return true;
@@ -345,9 +343,10 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 
 	_options = protocol_options.Serialize();
 
-	if (!_site.empty()) {
-		SitesConfig().PutProtocolOptions(_site, _identity.protocol, _options);
+	if (_site_specification.IsValid()) {
+		SitesConfig(_site_specification.sites_cfg_location).PutProtocolOptions(_site_specification.site, _identity.protocol, _options);
 	}
+
 	return true;
 }
 

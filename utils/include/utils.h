@@ -14,7 +14,8 @@ template <class C> static size_t tzlen(const C *ptz)
 }
 
 
-unsigned long htoul(const char *str);
+unsigned long htoul(const char *str, size_t maxlen = (size_t)-1);
+unsigned long atoul(const char *str, size_t maxlen = (size_t)-1);
 
 void Wide2MB(const wchar_t *src, std::string &dst);
 void MB2Wide(const char *src, size_t src_len, std::wstring &dst);
@@ -179,6 +180,9 @@ template <class CharT>
 	StrTrimRight(str, spaces);
 	StrTrimLeft(str, spaces);
 }
+
+bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
+const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 
 
 #define APP_BASENAME "far2l"

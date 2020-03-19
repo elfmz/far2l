@@ -2,20 +2,45 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <list>
 #include <StringConfig.h>
-#include "Protocol.h"
+#include "../Protocol.h"
+#include "../DirectoryEnumCache.h"
+#include "FTPConnection.h"
 
-class ProtocolSMB : public IProtocol, public std::enable_shared_from_this<ProtocolSMB>
+class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<ProtocolFTP>
 {
-	std::string _host;
+	std::shared_ptr<FTPConnection> _conn;
+	DirectoryEnumCache _dir_enum_cache;
+
+	struct {
+		bool mlst = false;
+		bool mlsd = false;
+		bool chmod = true;
+		bool mfmt = true;
+	} _feat;
+
+	struct {
+		std::vector<std::string> parts;
+		std::string path;
+		std::string home;
+	} _cwd;
+
+	bool RecvPwdResponce();
+//	bool RecvPwdAndRememberAsCwd();
+	std::string SplitPathAndNavigate(const std::string &path_name, bool allow_empty_name_part = false);
+	std::string PathAsRelative(const std::string &path);
+
+	void MLst(const std::string &path, FileInformation &file_info, uid_t *uid = nullptr, gid_t *gid = nullptr, std::string *lnkto = nullptr);
+
+	std::shared_ptr<IDirectoryEnumer> NavigatedDirectoryEnum();
+
+	void SimpleDispositionCommand(const char *cmd, const std::string &path);
 
 public:
-	StringConfig _protocol_options;
-	std::map<std::string, FileInformation> _cached_net;
-
-	ProtocolSMB(const std::string &host, unsigned int port,
+	ProtocolFTP(const std::string &protocol, const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const std::string &protocol_options) throw (std::runtime_error);
-	virtual ~ProtocolSMB();
+	virtual ~ProtocolFTP();
 
 	const std::vector<std::string> &EnumHosts();
 

@@ -113,6 +113,10 @@ enum LanguageID
 
   MRemoveSitesTitle,
   MRemoveSitesText,
+  MCopySitesTitle,
+  MCopySitesText,
+  MMoveSitesTitle,
+  MMoveSitesText,
 
   MMakeDirTitle,
   MMakeDirText,
@@ -235,6 +239,17 @@ enum LanguageID
   MModeExecute,
   MModeSetUID,
   MModeSetGID,
-  MModeSticky
+  MModeSticky,
+
+  MFTPOptionsTitle,
+  MFTPSOptionsTitle,
+  MFTPExplicitEncryption, 
+  MSFTPEncryptionProtocol,
+  MSFTPServerCodepage,
+  MFTPPassiveMode,
+  MFTPUseMLSDMLST,
+  MFTPRestrictDataPeer,
+  MFTPTCPNoDelay,
+  MFTPQuickAck
 
 };

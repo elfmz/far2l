@@ -2,7 +2,6 @@
 #include <utils.h>
 #include "SiteConnectionEditor.h"
 #include "../../Globals.h"
-#include "../../SitesConfig.h"
 #include "../../Protocol/Protocol.h"
 
 /*                                                         62
@@ -36,8 +35,8 @@ static int DefaultPortForProtocol(const char *protocol)
 }
 
 
-SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
-	: _initial_display_name(display_name), _display_name(display_name)
+SiteConnectionEditor::SiteConnectionEditor(const SitesConfigLocation &sites_cfg_location, const std::string &display_name)
+	: _sites_cfg_location(sites_cfg_location), _initial_display_name(display_name), _display_name(display_name)
 {
 	if (!_display_name.empty()) {
 		Load();
@@ -123,7 +122,7 @@ SiteConnectionEditor::SiteConnectionEditor(const std::string &display_name)
 
 void SiteConnectionEditor::Load()
 {
-	SitesConfig sc;
+	SitesConfig sc(_sites_cfg_location);
 	_initial_protocol = _protocol = sc.GetProtocol(_display_name);
 	_host = sc.GetHost(_display_name);
 	_initial_port = _port = sc.GetPort(_display_name);
@@ -142,7 +141,7 @@ bool SiteConnectionEditor::Save()
 			return false;
 	}
 
-	SitesConfig sc;
+	SitesConfig sc(_sites_cfg_location);
 	sc.PutProtocol(_display_name, _protocol);
 	sc.PutHost(_display_name, _host);
 	sc.PutPort(_display_name, _port);
@@ -328,7 +327,7 @@ void SiteConnectionEditor::DisplayNameAutogenerateAndApply()
 
 std::string SiteConnectionEditor::DisplayNameAutogenerate()
 {
-	auto existing = SitesConfig().EnumSites();
+	auto existing = SitesConfig(_sites_cfg_location).EnumSites();
 	existing.emplace_back(Wide2MB(G.GetMsgWide(MCreateSiteConnection)));
 
 	const int def_port = DefaultPortForProtocol(_protocol.c_str());

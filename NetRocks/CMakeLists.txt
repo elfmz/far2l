@@ -8,10 +8,11 @@ src/NetRocks.cpp
 src/PluginImpl.cpp
 src/PluginPanelItems.cpp
 src/PooledStrings.cpp
-src/GetSelectedItems.cpp
+src/GetItems.cpp
 src/BackgroundTasks.cpp
 src/Location.cpp
 src/ConnectionsPool.cpp
+src/ImportFarFtpSites.cpp
 src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp
@@ -20,6 +21,7 @@ src/UI/Settings/ConfigurePlugin.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ConfigureProtocolFile.cpp
 src/UI/Settings/ConfigureProtocolSFTPSCP.cpp
+src/UI/Settings/ConfigureProtocolFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Settings/ConfigureProtocolWebDAV.cpp
@@ -60,7 +62,7 @@ src/Host/IPC.cpp
 
 add_executable (NetRocks-FILE
 	${PROTOCOL_SOURCES}
-	src/Protocol/ProtocolFile.cpp
+	src/Protocol/File/ProtocolFile.cpp
 	src/Host/HostLocal.cpp
 )
 
@@ -77,9 +79,9 @@ if (LIBSSH_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
 	add_executable (NetRocks-SFTP
 		${PROTOCOL_SOURCES}
-		src/Protocol/SSHConnection.cpp
-		src/Protocol/ProtocolSFTP.cpp
-		src/Protocol/ProtocolSCP.cpp
+		src/Protocol/SSH/SSHConnection.cpp
+		src/Protocol/SSH/ProtocolSFTP.cpp
+		src/Protocol/SSH/ProtocolSCP.cpp
 	)
 	target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
 	target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})
@@ -94,8 +96,8 @@ if (LIBSMBCLIENT_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
 	add_executable (NetRocks-SMB
 		${PROTOCOL_SOURCES}
-		src/Protocol/ProtocolSMB.cpp
-		src/Protocol/NMBEnum.cpp
+		src/Protocol/SMB/ProtocolSMB.cpp
+		src/Protocol/SMB/NMBEnum.cpp
 	)
 	target_link_libraries(NetRocks-SMB utils ${LIBSMBCLIENT_LIBRARIES})
 	target_include_directories(NetRocks-SMB PRIVATE src ${LIBSMBCLIENT_INCLUDE_DIRS})
@@ -110,7 +112,7 @@ if (LIBNFS_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
 	add_executable (NetRocks-NFS
 		${PROTOCOL_SOURCES}
-		src/Protocol/ProtocolNFS.cpp
+		src/Protocol/NFS/ProtocolNFS.cpp
 	)
 	target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
 	target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
@@ -125,7 +127,7 @@ if (LIBNEON_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_WEBDAV")
 	add_executable (NetRocks-WebDAV
 		${PROTOCOL_SOURCES}
-		src/Protocol/ProtocolWebDAV.cpp
+		src/Protocol/WebDAV/ProtocolWebDAV.cpp
 	)
 	target_link_libraries(NetRocks-WebDAV utils ${LIBNEON_LIBRARIES})
 	target_include_directories(NetRocks-WebDAV PRIVATE src ${LIBNEON_INCLUDE_DIRS})
@@ -135,6 +137,28 @@ if (LIBNEON_FOUND)
 		PREFIX ""
 		SUFFIX ".broker")
 endif (LIBNEON_FOUND)
+
+	add_executable (NetRocks-FTP
+		${PROTOCOL_SOURCES}
+		src/Protocol/FTP/ProtocolFTP.cpp
+		src/Protocol/FTP/FTPConnection.cpp
+		src/Protocol/FTP/FTPParseMLST.cpp
+		src/Protocol/FTP/FTPParseLIST.cpp
+		src/Protocol/DirectoryEnumCache.cpp
+	)
+	target_link_libraries(NetRocks-FTP utils)
+	target_include_directories(NetRocks-FTP PRIVATE src)
+if (OPENSSL_FOUND)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OPENSSL")
+	target_link_libraries(NetRocks-FTP ${OPENSSL_LIBRARIES})
+	target_include_directories(NetRocks-FTP PRIVATE ${OPENSSL_INCLUDE_DIRS})
+endif (OPENSSL_FOUND)
+	set_target_properties(NetRocks-FTP
+		PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+		PREFIX ""
+		SUFFIX ".broker")
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")
 
@@ -162,3 +186,4 @@ set_target_properties(NetRocks
 add_custom_command(TARGET NetRocks POST_BUILD
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/NetRocks")
+

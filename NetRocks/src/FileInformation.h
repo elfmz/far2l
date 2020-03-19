@@ -1,9 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
-#ifdef __FreeBSD__
 # include <sys/types.h>
-#endif
 # include <sys/stat.h>
 
 #define DEFAULT_ACCESS_MODE_FILE 		(S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH)

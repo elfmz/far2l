@@ -14,12 +14,18 @@ public:
 	bool Ask();
 };
 
-class ConfirmRemoveSites : protected BaseDialog
+class ConfirmSitesDisposition : protected BaseDialog
 {
 	int _i_proceed = -1, _i_cancel = -1;
 
 public:
-	ConfirmRemoveSites();
+	enum What {
+		W_REMOVE,
+		W_COPY,
+		W_MOVE
+	};
+
+	ConfirmSitesDisposition(What w);
 
 	bool Ask();
 };

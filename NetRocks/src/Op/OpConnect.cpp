@@ -5,7 +5,7 @@
 static std::shared_ptr<IHost> CreateRemoteHost(const Location &location)
 {
 	switch (location.server_kind) {
-		case Location::SK_CONNECTION:
+		case Location::SK_SITE:
 			return std::make_shared<HostRemote>(location.server);
 
 		case Location::SK_URL:

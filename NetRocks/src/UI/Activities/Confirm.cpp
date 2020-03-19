@@ -48,24 +48,41 @@ bool ConfirmRemove::Ask()
     6                     29       38                      60
 */
 
-ConfirmRemoveSites::ConfirmRemoveSites()
+ConfirmSitesDisposition::ConfirmSitesDisposition(What w)
 {
-	_di.SetBoxTitleItem(MRemoveSitesTitle);
-	_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveSitesText);
+	switch (w) {
+		case W_REMOVE:
+			_di.SetBoxTitleItem(MRemoveSitesTitle);
+			_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveSitesText);
+			_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
+			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MProceedRemoval);
+			break;
 
-	_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
+		case W_COPY:
+			_di.SetBoxTitleItem(MCopySitesTitle);
+			_di.Add(DI_TEXT, 5,2,62,2, 0, MCopySitesText);
+			_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
+			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MOK);
+			break;
 
-	_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MProceedRemoval);
+		case W_MOVE:
+			_di.SetBoxTitleItem(MMoveSitesTitle);
+			_di.Add(DI_TEXT, 5,2,62,2, 0, MMoveSitesText);
+			_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
+			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MOK);
+			break;
+	}
+
 	_i_cancel = _di.Add(DI_BUTTON, 38,4,58,4, DIF_CENTERGROUP, MCancel);
 
-	SetFocusedDialogControl();
-	SetDefaultDialogControl();
+	SetFocusedDialogControl((w == W_REMOVE) ? _i_cancel : _i_proceed);
+	SetDefaultDialogControl((w == W_REMOVE) ? _i_cancel : _i_proceed);
 }
 
 
-bool ConfirmRemoveSites::Ask()
+bool ConfirmSitesDisposition::Ask()
 {
-	return (Show(L"ConfirmRemoveSites", 6, 2, FDLG_WARNING) == _i_proceed);
+	return (Show(L"ConfirmSitesDisposition", 6, 2, FDLG_WARNING) == _i_proceed);
 }
 
 //////////////////////////////////////////////////////////////////////////

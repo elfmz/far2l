@@ -147,8 +147,6 @@ public:
 		e.group = group;
 		e.file_info = file_info;
 
-		_dce_sp->ts = time(NULL);
-
 		return true;
 	}
 };

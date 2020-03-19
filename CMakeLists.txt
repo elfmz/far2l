@@ -189,7 +189,7 @@ install(CODE "
 
 if (NOT FARFTP)
 install(CODE "
-      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/farftp/plug/farftp.far-plug-mb && echo "Removed existing farftp plugin")
+      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/farftp/plug/farftp.far-plug-mb && echo Removed existing farftp plugin)
       "
     )
 endif()
@@ -197,7 +197,7 @@ endif()
 
 if (NOT PYTHON)
 install(CODE "
-      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide && echo "Removed existing python plugin")
+      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide && echo Removed existing python plugin)
       "
     )
 endif()

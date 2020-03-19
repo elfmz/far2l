@@ -78,7 +78,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	ssh_options_set(ssh, SSH_OPTIONS_USER, username.c_str());
 
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
-	if (protocol_options.GetInt("TcpNoDelay") ) {
+	if (protocol_options.GetInt("TcpNoDelay", 1) ) {
 		int nodelay = 1;
 		ssh_options_set(ssh, SSH_OPTIONS_NODELAY, &nodelay);
 	}
@@ -137,7 +137,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	int socket_fd = ssh_get_fd(ssh);
 	if (socket_fd != -1) {
 #if (LIBSSH_VERSION_INT < SSH_VERSION_INT(0, 8, 0))
-		if (protocol_options.GetInt("TcpNoDelay") ) {
+		if (protocol_options.GetInt("TcpNoDelay", 1) ) {
 			int nodelay = 1;
 			if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&nodelay, sizeof(nodelay)) == -1) {
 				perror("SSHConnection - TCP_NODELAY");

@@ -85,7 +85,7 @@ SocketTransport::SocketTransport(const std::string &host, unsigned int port, con
 
 void SocketTransport::ApplySocketOptions(const StringConfig &protocol_options)
 {
-	if (protocol_options.GetInt("TcpNoDelay") ) {
+	if (protocol_options.GetInt("TcpNoDelay", 1) ) {
 		int nodelay = 1;
 		if (setsockopt(_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&nodelay, sizeof(nodelay)) == -1) {
 			perror("SocketTransport - TCP_NODELAY");

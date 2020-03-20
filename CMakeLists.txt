@@ -53,6 +53,16 @@ else()
 	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
 endif()
 
+find_program (HAVE_GAWK NAMES gawk)
+if(NOT HAVE_GAWK)
+	message(FATAL_ERROR "${Esc}[1;31mgawk not found - please install it${Esc}[39;22m")
+endif ()
+find_program (HAVE_M4 NAMES m4)
+if(NOT HAVE_M4)
+	message(FATAL_ERROR "${Esc}[1;31mm4 not found - please install it${Esc}[39;22m")
+endif ()
+
+
 find_package(OpenSSL)
 if (OPENSSL_FOUND)
 	message(STATUS "OpenSSL found -> enjoy FTPS support in NetRocks")

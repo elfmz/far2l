@@ -3,6 +3,7 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #include <utils.h>
 #include <ScopeHelpers.h>

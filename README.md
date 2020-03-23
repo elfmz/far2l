@@ -1,6 +1,6 @@
 # far2l
 Linux port of FAR Manager v2 (http://farmanager.com/)   
-Works also on OSX and BSD (but later not tested on regular manner)   
+Works also on OSX/MacOS and BSD (but later not tested on regular manner)   
 ALPHA VERSION.   
 **Currently interesting only for enthusiasts!!!**
 
@@ -58,7 +58,7 @@ cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
 
-#### OSX install
+#### OSX/MacOS install
 
  * Supported compiler: ```AppleClang 8.0.0.x``` or newer. Check your version, and install/update XCode if necessary.
  ```sh
@@ -70,7 +70,7 @@ ninja -j4
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-##### One line OSX install
+##### One line OSX/MacOS install
 
  * Install stable far2l via unofficial brew tap:
 ```sh
@@ -82,7 +82,7 @@ brew install yurikoles/yurikoles/far2l
 brew install yurikoles/yurikoles/far2l --HEAD
 ```
 
-##### Hard way OSX install - with building from sources:
+##### Hard way OSX/MacOS install - with building from sources:
  * Install required packages:
 ```sh
 brew install cmake gawk glib ninja pkg-config wget wxmac libssh libnfs neon
@@ -97,12 +97,12 @@ cd build
 ```
 _with make:_
 ``` sh
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ``` 
 _or with ninja_
 ``` sh
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
 

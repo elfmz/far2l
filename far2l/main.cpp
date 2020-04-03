@@ -363,16 +363,26 @@ static void SetupFarPath(int argc, char **argv)
 	char buf[PATH_MAX + 1] = {};
 	ssize_t buf_sz = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
 	if (buf_sz <= 0 || buf_sz >= (ssize_t)sizeof(buf) - 1 || buf[0] != GOOD_SLASH) {
-		if (argv[0][0]!=GOOD_SLASH) {
-			apiGetCurrentDirectory(g_strFarModuleName);
-			if (argv[0][0]=='.') {
+		switch (argv[0][0]) {
+			case GOOD_SLASH: {
+				g_strFarModuleName = argv[0];
+			} break;
+
+			case '.': {
+				apiGetCurrentDirectory(g_strFarModuleName);
 				g_strFarModuleName+= argv[0] + 1;
-			} else {
-				g_strFarModuleName+= GOOD_SLASH;
-				g_strFarModuleName+= argv[0];
+			} break;
+
+			default: {
+				const std::string &s = LookupInEnvPath(argv[0]);
+				if (!s.empty()) {
+					g_strFarModuleName = s;
+				} else {
+					g_strFarModuleName+= GOOD_SLASH;
+					g_strFarModuleName+= argv[0];
+				}
 			}
-		} else
-			g_strFarModuleName = argv[0];			
+		}
 	} else {
 		buf[buf_sz] = 0;
 		g_strFarModuleName = buf;

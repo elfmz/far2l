@@ -298,7 +298,7 @@ typedef PRUint32 nsresult;
   */
 
   /* under Metrowerks (Mac), we don't have autoconf yet */
-#ifdef __MWERKS__
+//#ifdef __MWERKS__
   #define HAVE_CPP_PARTIAL_SPECIALIZATION
   #define HAVE_CPP_MODERN_SPECIALIZE_TEMPLATE_SYNTAX
 
@@ -309,8 +309,8 @@ typedef PRUint32 nsresult;
   #define HAVE_CPP_BOOL
   #define HAVE_CPP_NAMESPACE_STD
   #define HAVE_CPP_UNAMBIGUOUS_STD_NOTEQUAL
-  #define HAVE_CPP_2BYTE_WCHAR_T
-#endif
+//  #define HAVE_CPP_2BYTE_WCHAR_T
+//#endif
 
   /* under VC++ (Windows), we don't have autoconf yet */
 #if defined(_MSC_VER) && (_MSC_VER>=1100)

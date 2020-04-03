@@ -109,3 +109,5 @@ template < bool (*PTranslateFN)(std::wstring &s) >
 	str.Copy(tmp.c_str(), tmp.size());
 	return true;
 }
+
+std::string LookupInEnvPath(const char *file);

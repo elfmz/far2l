@@ -592,3 +592,31 @@ bool IsRootPath(const FARString &Path)
 	return false;
 }
 
+std::string LookupInEnvPath(const char *file)
+{
+	std::string out;
+
+	for (const char *s = getenv("PATH"); s && *s; ){
+		const char *p = strchr(s, ':');
+
+		if (p != NULL) {
+			out.assign(s, p - s);
+		} else {
+			out.assign(s);
+		}
+
+		if (out.empty() || out[out.size() - 1] != '/') {
+			out+= '/';
+		}
+		out+= file;
+		struct stat st{};
+		if (stat(out.c_str(), &st) == 0) {
+			break;
+		}
+		out.clear();
+		s = p + 1;
+	}
+
+	return out;
+}
+

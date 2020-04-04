@@ -592,7 +592,7 @@ bool IsRootPath(const FARString &Path)
 	return false;
 }
 
-std::string LookupInEnvPath(const char *file)
+static std::string LookupExecutableInEnvPath(const char *file)
 {
 	std::string out;
 
@@ -614,9 +614,29 @@ std::string LookupInEnvPath(const char *file)
 			break;
 		}
 		out.clear();
+		if (p == NULL) break;
 		s = p + 1;
 	}
 
 	return out;
 }
 
+FARString LookupExecutable(const char *file)
+{
+	FARString out;
+	if (file[0] == GOOD_SLASH) {
+		out = file;
+
+	} else if (file[0] == '.' && file[1] == GOOD_SLASH) {
+		apiGetCurrentDirectory(out);
+		out+= file + 1;
+
+	} else {
+		out = LookupExecutableInEnvPath(file);
+		if (out.IsEmpty()) {
+			apiGetCurrentDirectory(out);
+			out+= file;
+		}
+	}
+	return out;
+}

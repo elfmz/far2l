@@ -110,4 +110,4 @@ template < bool (*PTranslateFN)(std::wstring &s) >
 	return true;
 }
 
-std::string LookupInEnvPath(const char *file);
+FARString LookupExecutable(const char *file);

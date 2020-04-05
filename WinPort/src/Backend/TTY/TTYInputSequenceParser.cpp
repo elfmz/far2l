@@ -314,20 +314,31 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l)
 {
+	_extra_control_keys = 0;
+
 	switch (*s) {
 		case 0x1b: {
-			++s;
-			--l;
+			size_t skipped_len = 1;
+			// putty alt+F1..F12
+			// \x1b\x1b[11~ \x1b\x1b[12~ \x1b\x1b[13~ etc
+			if (l > 2 && s[1] == 0x1b) {
+				skipped_len++;
+				_extra_control_keys = LEFT_ALT_PRESSED;
+			}
+
+			s+= skipped_len;
+			l-= skipped_len;
+
 
 			if (l > 2 && s[0] == '[' && s[2] == 'n') {
-				return 4;
+				return skipped_len + 3;
 			}
 
 			if (l > 0 && s[0] == '_') {
 				for (size_t i = 1; i < l; ++i) {
 					if (s[i] == '\x07') {
 						ParseAPC(s + 1, i - 1);
-						return i + 2;
+						return skipped_len + i + 1;
 					}
 				}
 				return 0;
@@ -338,17 +349,17 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l)
 					return 0;
 
 				ParseMouse(s[2], s[3], s[4]);
-				return 6;
+				return skipped_len + 5;
 			}
 
 			size_t r = ParseNChars2Key(s, l);
 			if (r != 0)
-				return r + 1;
+				return skipped_len + r;
 
 			// be well-responsive on panic-escaping
 			for (size_t i = 0; (i + 1) < l; ++i) {
 				if (s[i] == 0x1b && s[i + 1] == 0x1b) {
-					return i + 1;
+					return skipped_len + i;
 				}
 			}
 
@@ -409,7 +420,7 @@ void TTYInputSequenceParser::PostKeyEvent(const TTYInputKey &k)
 		ir.Event.KeyEvent.uChar.UnicodeChar = L' ';
 	}
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
-	ir.Event.KeyEvent.dwControlKeyState = k.control_keys;
+	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
 	if (IsEnhancedKey(k.vk))
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;

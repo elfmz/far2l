@@ -93,6 +93,7 @@ class TTYInputSequenceParser
 
 	ITTYInputSpecialSequenceHandler *_handler;
 	StackSerializer _tmp_stk_ser;
+	DWORD _extra_control_keys = 0;
 
 	void AssertNoConflicts();
 

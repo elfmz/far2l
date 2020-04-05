@@ -11,6 +11,8 @@
 
 #include "../../Erroring.h"
 
+#define FTP_ENDLINE "\r\n"
+
 struct BaseTransport : public std::enable_shared_from_this<BaseTransport>
 {
 	virtual ~BaseTransport();

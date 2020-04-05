@@ -13,18 +13,32 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 	std::shared_ptr<FTPConnection> _conn;
 	DirectoryEnumCache _dir_enum_cache;
 
-	struct {
-		bool mlst = false;
-		bool mlsd = false;
-		bool chmod = true;
-		bool mfmt = true;
-	} _feat;
+	struct { // command codes or nullptr if assumed that command is not supported
+		const char *pwd = "PWD";
+		const char *cwd = "CWD";
+		const char *cdup = "CDUP";
+		const char *mkd = "MKD";
+		const char *rmd = "RMD";
+		const char *size = "SIZE";
+		const char *mfmt = "MFMT";
+		const char *chmod = "CHMOD";
+		const char *dele = "DELE";
+		const char *rnfr = "RNFR";
+		const char *rnto = "RNTO";
+		const char *list_ = "LIST";
+		const char *mlsd = nullptr; // set to non-NULL during connection init
+		const char *mlst = nullptr; // set to non-NULL during connection init
+		const char *retr = "RETR";
+		const char *stor = "STOR";
+	} _cmd;
 
 	struct {
 		std::vector<std::string> parts;
 		std::string path;
 		std::string home;
 	} _cwd;
+
+	std::string _str;
 
 	bool RecvPwdResponce();
 //	bool RecvPwdAndRememberAsCwd();

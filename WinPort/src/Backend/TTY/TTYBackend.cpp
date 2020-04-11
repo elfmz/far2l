@@ -28,10 +28,11 @@ extern ConsoleInput g_winport_con_in;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
-TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, int notify_pipe) :
+TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe) :
 	_stdin(std_in),
 	_stdout(std_out),
 	_far2l_tty(far2l_tty),
+	_esc_expiration(esc_expiration),
 	_notify_pipe(notify_pipe),
 	_largest_window_size_ready(false)
 
@@ -141,6 +142,7 @@ void TTYBackend::ReaderLoop()
 	std::unique_ptr<TTYInput> tty_in(new TTYInput(this));
 
 	fd_set fds, fde;
+	bool idle_expired = false;
 	while (!_exiting && !_deadio) {
 		int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
 
@@ -150,8 +152,28 @@ void TTYBackend::ReaderLoop()
 		FD_SET(_stdin, &fds);
 		FD_SET(_stdin, &fde);
 
-		if (os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, (timeval*)nullptr) == -1) {
+		int rs;
+
+		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
+			struct timeval tv;
+			tv.tv_sec = _esc_expiration / 1000;
+			tv.tv_usec = (_esc_expiration - tv.tv_sec * 1000) * 1000;
+
+			rs = os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, &tv);
+		} else {
+			rs = os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, (timeval*)nullptr);
+		}
+
+		if (rs == -1) {
 			throw std::runtime_error("select failed");
+		}
+
+		if (rs != 0) {
+			idle_expired = false;
+
+		} else if (!idle_expired) {
+			idle_expired = true;
+			tty_in->OnIdleExpired();
 		}
 
 		if (_flush_input_queue) {
@@ -162,7 +184,7 @@ void TTYBackend::ReaderLoop()
 
 		if (FD_ISSET(_stdin, &fds)) {
 			char buf[0x1000];
-			ssize_t rd = read(_stdin, buf, sizeof(buf));
+			ssize_t rd = os_call_ssize(read, _stdin, (void*)buf, sizeof(buf));
 			if (rd <= 0) {
 				throw std::runtime_error("stdin read failed");
 			}
@@ -709,9 +731,9 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(std_in, std_out, far2l_tty, notify_pipe);
+	TTYBackend vtb(std_in, std_out, far2l_tty, esc_expiration, notify_pipe);
 
 	if (!vtb.Startup()) {
 		return false;

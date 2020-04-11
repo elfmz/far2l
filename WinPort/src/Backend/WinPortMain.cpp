@@ -26,7 +26,7 @@ ConsoleInput g_winport_con_in;
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 #endif
 
-bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 
 extern "C" void WinPortInitRegistry();
 
@@ -215,6 +215,7 @@ extern "C" void WinPortHelp()
 	printf("\t--nodetect - don't detect if TTY backend supports FAR2L extensions\n");
 	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
 	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
+	printf("\t--ee or --ee=N - ESC expiration in msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode wihout FAR2L extensions)\n");
 #ifndef NOWX
 	printf("\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection\n");
 #endif
@@ -224,6 +225,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 {
 	bool tty = false, far2l_tty = false, nodetect = false, notty = false;
 	bool mortal = false;
+	unsigned int esc_expiration = 0;
 #ifdef __linux__
 	unsigned char state = 6;
 	if (ioctl(0, TIOCLINUX, &state) == 0) {
@@ -251,9 +253,13 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		} else if (strstr(argv[i], "--nodetect") == argv[i]) {
 			nodetect = true;
 
+		} else if (strstr(argv[i], "--ee") == argv[i]) {
+			esc_expiration = (argv[i][4] == '=') ? atoi(&argv[i][5]) : 100;
+
 		} else {
 			filtered_argv.push_back(argv[i]);
 		}
+
 	}
 
 	if (!filtered_argv.empty()) {
@@ -314,7 +320,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		if (mortal) {
 			SudoAskpassImpl askass_impl;
 			SudoAskpassServer askpass_srv(&askass_impl);
-			if (!WinPortMainTTY(std_in, std_out, far2l_tty, -1, argc, argv, AppMain, &result)) {
+			if (!WinPortMainTTY(std_in, std_out, far2l_tty, esc_expiration, -1, argc, argv, AppMain, &result)) {
 				fprintf(stderr, "Cannot use TTY backend\n");
 			}
 
@@ -338,7 +344,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 						setsid();
 						SudoAskpassImpl askass_impl;
 						SudoAskpassServer askpass_srv(&askass_impl);
-						if (!WinPortMainTTY(std_in, std_out, far2l_tty, new_notify_pipe[1], argc, argv, AppMain, &result)) {
+						if (!WinPortMainTTY(std_in, std_out, far2l_tty, esc_expiration, new_notify_pipe[1], argc, argv, AppMain, &result)) {
 							fprintf(stderr, "Cannot use TTY backend\n");
 						}
 					}

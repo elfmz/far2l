@@ -17,6 +17,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _output_mutex;
 	int _stdin = 0, _stdout = 1;
 	bool _far2l_tty = false;
+	unsigned int _esc_expiration = 0;
 	int _notify_pipe = -1;
 	int _kickass[2] = {-1, -1};
 	int _far2l_cursor_height = -1;
@@ -105,7 +106,7 @@ protected:
 
 
 public:
-	TTYBackend(int std_in, int std_out, bool far2l_tty, int notify_pipe);
+	TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

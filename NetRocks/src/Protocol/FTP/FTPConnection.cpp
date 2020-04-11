@@ -302,11 +302,11 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 
 	} else if (_protocol_options.GetInt("ExplicitEncryption", 0)) {
 		RecvResponce(str, 200, 299);
-		str = "AUTH TLS\r\n";
+		str = "AUTH TLS" FTP_ENDLINE;
 		unsigned int reply_code = SendRecvResponce(str);
 		if (reply_code != 234) {
 			if (_protocol_options.GetInt("EncryptionProtocol", 3) < 3) {
-				str = "AUTH SSL\r\n";
+				str = "AUTH SSL" FTP_ENDLINE;
 				reply_code = SendRecvResponce(str);
 				if (reply_code == 234) {
 					fprintf(stderr, "FTPConnection: AUTH SSL\n");
@@ -354,14 +354,14 @@ FTPConnection::~FTPConnection()
 
 bool FTPConnection::EnableDataConnectionProtection()
 {
-	std::string str = "PBSZ 0\r\n";
+	std::string str = "PBSZ 0" FTP_ENDLINE;
 	unsigned int reply_code = SendRecvResponce(str);
 	if ( reply_code != 200) {
 		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PBSZ 0> - '%s'\n", str.c_str());
 		return false;
 	}
 
-	str = "PROT P\r\n";
+	str = "PROT P" FTP_ENDLINE;
 	reply_code = SendRecvResponce(str);
 	if ( reply_code != 200) {
 		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PROT P> - '%s'\n", str.c_str());
@@ -433,7 +433,7 @@ void FTPConnection::SendRecvResponce(std::string &str, unsigned int reply_ok_min
 void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 {
 	if (rest != 0) {
-		std::string str = StrPrintf("REST %lld\r\n", rest);
+		std::string str = StrPrintf("REST %lld" FTP_ENDLINE, rest);
 		unsigned int reply_code = SendRecvResponce(str);
 		if (reply_code < 300 || reply_code >= 400) {
 			throw ProtocolError(StrPrintf(
@@ -445,7 +445,7 @@ void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 
 void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
 {
-	std::string str = "PASV\r\n";
+	std::string str = "PASV" FTP_ENDLINE;
 	SendRecvResponce(str, 200, 299);
 
 	size_t p = str.find('(');
@@ -495,7 +495,7 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 		throw std::runtime_error(StrPrintf("getsockname() errno=%d", errno));
 	}
 
-	std::string str = StrPrintf("PORT %u,%u,%u,%u,%u,%u\r\n",
+	std::string str = StrPrintf("PORT %u,%u,%u,%u,%u,%u" FTP_ENDLINE,
 		(unsigned int)(unsigned char)sa.sa_data[2], (unsigned int)(unsigned char)sa.sa_data[3],
 		(unsigned int)(unsigned char)sa.sa_data[4], (unsigned int)(unsigned char)sa.sa_data[5],
 		(unsigned int)(unsigned char)sa.sa_data[0], (unsigned int)(unsigned char)sa.sa_data[1]);

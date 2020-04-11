@@ -228,37 +228,37 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 	TTYInputKey k;
 	switch (l >= 8 ? 8 : l) {
 		case 8: if (_nch2key8.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 8;
 			}
 
 		case 7: if (_nch2key7.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 7;
 			}
 
 		case 6: if (_nch2key6.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 6;
 			}
 
 		case 5: if (_nch2key5.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 5;
 			}
 
 		case 4: if (_nch2key4.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 4;
 			}
 
 		case 3: if (_nch2key3.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 3;
 			}
 
 		case 2: if (_nch2key2.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 2;
 
 			} else if ( (s[0] & 0b11000000) == 0b11000000) {
@@ -279,15 +279,15 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 					ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 					ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 					ir.Event.KeyEvent.bKeyDown = TRUE;
-					g_winport_con_in.Enqueue(&ir, 1);
+					_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
 					ir.Event.KeyEvent.bKeyDown = FALSE;
-					g_winport_con_in.Enqueue(&ir, 1);
+					_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
 					return src - (const UTF8*) &s[0];
 				}
 			}
 
 		case 1: if (_nch2key1.Lookup(s, k)) {
-				PostKeyEvent(k);
+				AddPendingKeyEvent(k);
 				return 1;
 			}
 
@@ -312,93 +312,143 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 	}
 }
 
-size_t TTYInputSequenceParser::Parse(const char *s, size_t l)
+size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
+	if (l > 2 && s[0] == '[' && s[2] == 'n') {
+		return 3;
+	}
+
+	if (l > 0 && s[0] == '_') {
+		for (size_t i = 1; i < l; ++i) {
+			if (s[i] == '\x07') {
+				ParseAPC(s + 1, i - 1);
+				return i + 1;
+			}
+		}
+		return 0;
+	}
+
+	if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
+		if (l < 5)
+			return 0;
+
+		ParseMouse(s[2], s[3], s[4]);
+		return 5;
+	}
+
+	size_t r = ParseNChars2Key(s, l);
+	if (r != 0)
+		return r;
+
+	// be well-responsive on panic-escaping
+	for (size_t i = 0; (i + 1) < l; ++i) {
+		if (s[i] == 0x1b && s[i + 1] == 0x1b) {
+			return i;
+		}
+	}
+
+	return (l >= 8) ? TTY_PARSED_BADSEQUENCE : TTY_PARSED_WANTMORE;
+}
+
+size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
+{
+	_extra_control_keys = 0;
+
 	switch (*s) {
 		case 0x1b: {
-			++s;
-			--l;
-
-			if (l > 2 && s[0] == '[' && s[2] == 'n') {
-				return 4;
-			}
-
-			if (l > 0 && s[0] == '_') {
-				for (size_t i = 1; i < l; ++i) {
-					if (s[i] == '\x07') {
-						ParseAPC(s + 1, i - 1);
-						return i + 2;
-					}
+			if (l > 2 && s[1] == 0x1b) {
+				_extra_control_keys = LEFT_ALT_PRESSED;
+				size_t r = ParseEscapeSequence(s + 2, l - 2);
+				_extra_control_keys = 0;
+				if (r != TTY_PARSED_WANTMORE && r != TTY_PARSED_PLAINCHARS && r != TTY_PARSED_BADSEQUENCE) {
+					return r + 2;
 				}
-				return 0;
 			}
 
-			if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
-				if (l < 5)
-					return 0;
-
-				ParseMouse(s[2], s[3], s[4]);
-				return 6;
-			}
-
-			size_t r = ParseNChars2Key(s, l);
-			if (r != 0)
+			size_t r = ParseEscapeSequence(s + 1, l - 1);
+			if (r != TTY_PARSED_WANTMORE && r != TTY_PARSED_PLAINCHARS && r != TTY_PARSED_BADSEQUENCE) {
 				return r + 1;
-
-			// be well-responsive on panic-escaping
-			for (size_t i = 0; (i + 1) < l; ++i) {
-				if (s[i] == 0x1b && s[i + 1] == 0x1b) {
-					return i + 1;
-				}
 			}
 
-			return (l >= 8) ? (size_t)-2 : 0;
+			return r;
 		}
 
 		case 0x00:
-			PostKeyEvent(TTYInputKey{VK_SPACE, LEFT_CTRL_PRESSED});
+			AddPendingKeyEvent(TTYInputKey{VK_SPACE, LEFT_CTRL_PRESSED});
 			return 1;
 
 		case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07: case 0x08:
 		case 0x0a: case 0x0b: case 0x0c: case 0x0e: case 0x0f: case 0x10: case 0x11: case 0x12:
 		case 0x13: case 0x14: case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1a:
-			PostKeyEvent(TTYInputKey{WORD('A' + (*s - 0x01)), LEFT_CTRL_PRESSED});
+			AddPendingKeyEvent(TTYInputKey{WORD('A' + (*s - 0x01)), LEFT_CTRL_PRESSED});
 			return 1;
 
 		case 0x09:
-			PostKeyEvent(TTYInputKey{VK_TAB, 0});
+			AddPendingKeyEvent(TTYInputKey{VK_TAB, 0});
 			return 1;
 
 		case 0x0d:
-			PostKeyEvent(TTYInputKey{VK_RETURN, 0});
+			AddPendingKeyEvent(TTYInputKey{VK_RETURN, 0});
 			return 1;
 
 //		case 0x1b:
-//			PostKeyEvent(VK_OEM_4, 0);
+//			AddPendingKeyEvent(VK_OEM_4, 0);
 //			return 1;
 
 		case 0x1c:
-			PostKeyEvent(TTYInputKey{VK_OEM_5, 0});
+			AddPendingKeyEvent(TTYInputKey{VK_OEM_5, 0});
 			return 1;
 
 		case 0x1d:
-			PostKeyEvent(TTYInputKey{VK_OEM_6, 0});
+			AddPendingKeyEvent(TTYInputKey{VK_OEM_6, 0});
 			return 1;
 
 
 		case 0x7f:
-			PostKeyEvent(TTYInputKey{VK_BACK, 0});
+			AddPendingKeyEvent(TTYInputKey{VK_BACK, 0});
 			return 1;
 
 		default:
-			return (size_t)-1;
+			return (size_t)TTY_PARSED_PLAINCHARS;
 	}
 
 	abort();
 }
 
+size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
+{
+	size_t r = ParseIntoPending(s, l);
 
-void TTYInputSequenceParser::PostKeyEvent(const TTYInputKey &k)
+	if ( (r == TTY_PARSED_WANTMORE || r == TTY_PARSED_BADSEQUENCE) && idle_expired && *s == 0x1b) {
+		auto saved_pending = _ir_pending;
+		auto saved_r = r;
+		_ir_pending.clear();
+		AddPendingKeyEvent(TTYInputKey{VK_ESCAPE, 0});
+		if (l > 1) {
+			r = ParseIntoPending(s + 1, l - 1);
+			if (r != TTY_PARSED_WANTMORE && r != TTY_PARSED_BADSEQUENCE) {
+				++r;
+			}
+		} else {
+			r = 1;
+		}
+
+		if (r == TTY_PARSED_WANTMORE || r == TTY_PARSED_BADSEQUENCE) {
+			_ir_pending.swap(saved_pending);
+			r = saved_r;
+		}
+	}
+
+	if (!_ir_pending.empty()) {
+		g_winport_con_in.Enqueue(&_ir_pending[0], _ir_pending.size());
+		_ir_pending.clear();
+	}
+
+	return r;
+}
+
+
+void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
@@ -409,7 +459,7 @@ void TTYInputSequenceParser::PostKeyEvent(const TTYInputKey &k)
 		ir.Event.KeyEvent.uChar.UnicodeChar = L' ';
 	}
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
-	ir.Event.KeyEvent.dwControlKeyState = k.control_keys;
+	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
 	if (IsEnhancedKey(k.vk))
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
@@ -417,9 +467,9 @@ void TTYInputSequenceParser::PostKeyEvent(const TTYInputKey &k)
 		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
 
 	ir.Event.KeyEvent.bKeyDown = TRUE;
-	g_winport_con_in.Enqueue(&ir, 1);
+	_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
-	g_winport_con_in.Enqueue(&ir, 1);
+	_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
 }
 
 void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
@@ -514,7 +564,7 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 	if (_mouse.right)
 			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_3RD_BUTTON_PRESSED;
 
-	g_winport_con_in.Enqueue(&ir, 1);
+	_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
 
 }
 

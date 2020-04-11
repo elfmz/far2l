@@ -53,26 +53,26 @@ size_t TTYInput::BufTryDecodeUTF8()
 #endif
 	_buf.erase(_buf.begin(), _buf.begin() + (utf8_start - (const UTF8*)&_buf[0]) );
 
-	return 0;
+	return TTY_PARSED_WANTMORE;
 }
 
-void TTYInput::OnBufUpdated()
+void TTYInput::OnBufUpdated(bool idle)
 {
 	while (!_buf.empty()) {
-		size_t decoded = _parser.Parse(&_buf[0], _buf.size());
+		size_t decoded = _parser.Parse(&_buf[0], _buf.size(), idle);
 		switch (decoded) {
-			case (size_t)-1:
+			case TTY_PARSED_PLAINCHARS:
 				decoded = BufTryDecodeUTF8();
 				break;
 
-			case (size_t)-2:
+			case TTY_PARSED_BADSEQUENCE:
 				decoded = 1; // discard unrecognized sequences
 				break;
 
 			default:
 				;
 		}
-		if (!decoded)
+		if (decoded == TTY_PARSED_WANTMORE)
 			break;
 
 		assert(decoded <= _buf.size());
@@ -88,12 +88,25 @@ void TTYInput::OnInput(const char *data, size_t len)
 		for (size_t i = 0; i < len; ++i)
 			_buf.emplace_back(data[i]);
 
-		OnBufUpdated();
+		OnBufUpdated(false);
 
 	} catch (std::exception &e) {
 		_buf.clear();
 		_buf.shrink_to_fit();
-		fprintf(stderr, "TTYInput: %s\n", e.what());
+		fprintf(stderr, "TTYInput::OnInput: %s\n", e.what());
+		_handler->OnInputBroken();
+	}
+}
+
+void TTYInput::OnIdleExpired()
+{
+	if (!_buf.empty()) try {
+		OnBufUpdated(true);
+
+	} catch (std::exception &e) {
+		_buf.clear();
+		_buf.shrink_to_fit();
+		fprintf(stderr, "TTYInput::OnIdleExpired: %s\n", e.what());
 		_handler->OnInputBroken();
 	}
 }

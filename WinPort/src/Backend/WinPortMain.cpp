@@ -349,7 +349,9 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 						}
 					}
 					WinPortHandle_FinalizeApp();
-					_exit(0);
+					_exit(result);
+				} else {
+					result = 0;
 				}
 				close(new_notify_pipe[1]);
 				notify_pipe = new_notify_pipe[0];

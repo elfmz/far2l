@@ -218,10 +218,6 @@ void TTYBackend::WriterThread()
 {
 	try {
 		TTYOutput tty_out(_stdout);
-		tty_out.SetScreenBuffer(true);
-		tty_out.ChangeKeypad(true);
-		tty_out.ChangeMouse(true);
-		tty_out.Flush();
 
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;
@@ -254,12 +250,6 @@ void TTYBackend::WriterThread()
 
 			tty_out.Flush();
 		}
-
-		tty_out.ChangeCursor(true, 13);
-		tty_out.ChangeMouse(false);
-		tty_out.ChangeKeypad(false);
-		tty_out.SetScreenBuffer(false);
-		tty_out.Flush();
 
 	} catch (const std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);

@@ -37,9 +37,9 @@ class TTYOutput
 	void Format(const char *fmt, ...);
 public:
 	TTYOutput(int out);
+	~TTYOutput();
 
 	void Flush();
-	void SetScreenBuffer(bool alternate);
 
 	void ChangeCursor(bool visible, bool force = false);
 	void MoveCursor(unsigned int y, unsigned int x, bool force = false);

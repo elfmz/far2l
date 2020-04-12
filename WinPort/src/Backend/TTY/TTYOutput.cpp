@@ -2,8 +2,11 @@
 #include <assert.h>
 #include <base64.h>
 #include <string>
+#include <os_call.hpp>
 #include "TTYOutput.h"
 #include "ConvertUTF.h"
+
+#define ESC "\x1b"
 
 TTYOutput::Attributes::Attributes(WORD attributes) :
 	foreground_intensive( (attributes & FOREGROUND_INTENSITY) != 0),
@@ -17,6 +20,7 @@ TTYOutput::Attributes::Attributes(WORD attributes) :
 	if (attributes&BACKGROUND_RED) background|= 1;
 	if (attributes&BACKGROUND_GREEN) background|= 2;
 	if (attributes&BACKGROUND_BLUE) background|= 4;
+
 }
 
 bool TTYOutput::Attributes::operator ==(const Attributes &attr) const
@@ -30,12 +34,32 @@ bool TTYOutput::Attributes::operator ==(const Attributes &attr) const
 
 TTYOutput::TTYOutput(int out) : _out(out)
 {
+	Format(ESC "7" ESC "[?47h" ESC "[?1049h");
+	ChangeKeypad(true);
+	ChangeMouse(true);
+	Flush();
 }
+
+TTYOutput::~TTYOutput()
+{
+	try {
+		ChangeCursor(true, 13);
+		ChangeMouse(false);
+		ChangeKeypad(false);
+		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");
+		Flush();
+
+	} catch (std::exception &) {
+	}
+}
+
+
+
 
 void TTYOutput::WriteReally(const char *str, int len)
 {
 	while (len > 0) {
-		ssize_t wr = write(_out, str, len);
+		ssize_t wr = os_call_ssize(write, _out, (const void*)str, (size_t)len);
 		if (wr <= 0) {
 			throw std::runtime_error("TTYOutput::WriteReally: write");
 		}
@@ -93,15 +117,10 @@ void TTYOutput::Flush()
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-void TTYOutput::SetScreenBuffer(bool alternate)
-{
-	Format("\x1b[?1049%c", alternate ? 'h' : 'l');
-}
-
 void TTYOutput::ChangeCursor(bool visible, bool force)
 {
 	if (force || _cursor.visible != visible) {
-		Format("\x1b[?25%c", visible ? 'h' : 'l');
+		Format(ESC "[?25%c", visible ? 'h' : 'l');
 		_cursor.visible = visible;
 	}
 }
@@ -110,7 +129,7 @@ void TTYOutput::MoveCursor(unsigned int y, unsigned int x, bool force)
 {
 	if (force || x != _cursor.x || y != _cursor.y) {
 // ESC[#;#H Moves cursor to line #, column #
-		Format("\x1b[%d;%dH", y, x);
+		Format(ESC "[%d;%dH", y, x);
 		_cursor.x = x;
 		_cursor.y = y;
 	}
@@ -122,7 +141,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 	for (;cnt; ++ci,--cnt) {
 		Attributes attr(ci->Attributes);
 		if (_attr != attr) {
-			tmp = "\x1b[";
+			tmp = ESC "[";
 			if (_attr.foreground_intensive != attr.foreground_intensive)
 				tmp+= attr.foreground_intensive ? "1;" : "22;";
 
@@ -185,14 +204,14 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 
 void TTYOutput::ChangeKeypad(bool app)
 {
-	Format("\x1b[?1%c", app ? 'h' : 'l');
+	Format(ESC "[?1%c", app ? 'h' : 'l');
 }
 
 void TTYOutput::ChangeMouse(bool enable)
 {
-	Format("\x1b[?1000%c", enable ? 'h' : 'l');
-	Format("\x1b[?1001%c", enable ? 'h' : 'l');
-	Format("\x1b[?1002%c", enable ? 'h' : 'l');
+	Format(ESC "[?1000%c", enable ? 'h' : 'l');
+	Format(ESC "[?1001%c", enable ? 'h' : 'l');
+	Format(ESC "[?1002%c", enable ? 'h' : 'l');
 }
 
 void TTYOutput::ChangeTitle(std::string title)
@@ -200,12 +219,12 @@ void TTYOutput::ChangeTitle(std::string title)
 	for (auto &c : title) {
 		if (c == '\x07') c = '_';
 	}
-	Format("\x1b]2;%s\x07", title.c_str());
+	Format(ESC "]2;%s\x07", title.c_str());
 }
 
 void TTYOutput::SendFar2lInterract(const StackSerializer &stk_ser)
 {
-	std::string request = "\x1b_far2l:";
+	std::string request = ESC "_far2l:";
 	request+= stk_ser.ToBase64();
 	request+= '\x07';
 

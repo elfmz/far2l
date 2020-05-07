@@ -24,7 +24,7 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)
 * gawk
 * m4
 * libglib2.0-dev
-* libwxgtk3.0-dev
+* libwxgtk3.0-dev (or in Ubuntu 19.04+ - libwxgtk3.0-gtk3-dev)
 * libssh-dev (needed for NetRocks/SFTP)
 * libssl-dev (needed for NetRocks/FTPS)
 * libsmbclient-dev (needed for NetRocks/SMB)
@@ -38,6 +38,7 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)
 ``` sh
 apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev cmake g++ git
 ```
+(if in Ubuntu 19.04+ or other that has missing libwxgtk3.0-dev - try libwxgtk3.0-gtk3-dev)
 
 #### Clone and Build
 

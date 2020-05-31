@@ -226,6 +226,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	bool tty = false, far2l_tty = false, nodetect = false, notty = false;
 	bool mortal = false;
 	unsigned int esc_expiration = 0;
+
 #ifdef __linux__
 	unsigned char state = 6;
 	if (ioctl(0, TIOCLINUX, &state) == 0) {
@@ -233,8 +234,10 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		// also detachable session makes impossible using of ioctl(_stdin, TIOCLINUX, &state) in child (#653),
 		// so lets default to mortal mode in Linux TTY
 		mortal = true;
+		tty = true;
 	}
 #endif
+
 	std::vector<char *> filtered_argv;
 	for (int i = 0; i < argc; ++i) {
 
@@ -259,7 +262,13 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 		} else {
 			filtered_argv.push_back(argv[i]);
 		}
+	}
 
+	if (!tty && !notty) {
+		const char *xdg_st = getenv("XDG_SESSION_TYPE");
+		if (xdg_st && strcasecmp(xdg_st, "tty") == 0) {
+			tty = true;
+		}
 	}
 
 	if (!filtered_argv.empty()) {

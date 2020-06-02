@@ -11,6 +11,9 @@
 
 #include "FTPConnection.h"
 
+#define FTP_ENDLINE "\r\n"
+
+
 BaseTransport::~BaseTransport()
 {
 }
@@ -288,6 +291,13 @@ std::string TLSTransport::GetPeerFingerprint()
 FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options)
 	: _protocol_options(options)
 {
+	// sleep(30);
+	_batch.pipelining = _protocol_options.GetInt("CommandsPipelining", 0) != 0;
+	if (g_netrocks_verbosity > 1) {
+		fprintf(stderr, "FTPConnection(%d, %s, %u) _batch.pipelining=%u\n",
+			implicit_encryption, host.c_str(), port, _batch.pipelining);
+	}
+
 	if (!port) {
 		port = implicit_encryption ? 990 : 21;
 	}
@@ -301,12 +311,14 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 		_openssl_ctx = std::make_shared<OpenSSLContext>(_protocol_options);
 
 	} else if (_protocol_options.GetInt("ExplicitEncryption", 0)) {
-		RecvResponce(str, 200, 299);
-		str = "AUTH TLS" FTP_ENDLINE;
+		unsigned int banner_code = RecvResponceFromTransport(str);
+		FTPThrowIfBadResponce(str, banner_code, 200, 299);
+
+		str = "AUTH TLS";
 		unsigned int reply_code = SendRecvResponce(str);
 		if (reply_code != 234) {
 			if (_protocol_options.GetInt("EncryptionProtocol", 3) < 3) {
-				str = "AUTH SSL" FTP_ENDLINE;
+				str = "AUTH SSL";
 				reply_code = SendRecvResponce(str);
 				if (reply_code == 234) {
 					fprintf(stderr, "FTPConnection: AUTH SSL\n");
@@ -335,7 +347,8 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 	}
 
 	if (!_openssl_ctx || implicit_encryption) {
-		RecvResponce(str, 200, 299);
+		unsigned int banner_code = RecvResponceFromTransport(str);
+		FTPThrowIfBadResponce(str, banner_code, 200, 299);
 	}
 
 #else
@@ -354,17 +367,21 @@ FTPConnection::~FTPConnection()
 
 bool FTPConnection::EnableDataConnectionProtection()
 {
-	std::string str = "PBSZ 0" FTP_ENDLINE;
-	unsigned int reply_code = SendRecvResponce(str);
-	if ( reply_code != 200) {
-		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PBSZ 0> - '%s'\n", str.c_str());
+	SendRequest("PBSZ 0");
+	SendRequest("PROT P");
+
+	std::string str_pbsz, str_prot;
+
+	unsigned int code_pbsz = RecvResponce(str_pbsz);
+	unsigned int code_prot = RecvResponce(str_prot);
+
+	if (code_pbsz != 200) {
+		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PBSZ 0> - '%s'\n", str_pbsz.c_str());
 		return false;
 	}
 
-	str = "PROT P" FTP_ENDLINE;
-	reply_code = SendRecvResponce(str);
-	if ( reply_code != 200) {
-		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PROT P> - '%s'\n", str.c_str());
+	if (code_prot != 200) {
+		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PROT P> - '%s'\n", str_prot.c_str());
 		return false;
 	}
 
@@ -372,12 +389,7 @@ bool FTPConnection::EnableDataConnectionProtection()
 	return true;
 }
 
-void FTPConnection::Send(const std::string &str)
-{
-	_transport->Send(str.c_str(), str.size());
-}
-
-unsigned int FTPConnection::RecvResponce(std::string &str)
+unsigned int FTPConnection::RecvResponceFromTransport(std::string &str)
 {
 	char match[4];
 	str.clear();
@@ -412,10 +424,90 @@ unsigned int FTPConnection::RecvResponce(std::string &str)
 	}
 }
 
+
+void FTPConnection::BatchPerform()
+{
+	if (_batch.requests.empty()) {
+		return;
+	}
+
+	if (_batch.pipelining && _batch.requests.size() > 1) {
+		//_batch.responces.reserve(_batch.responces.size() + _batch.requests.size());
+		_str.clear();
+		for (const auto &r : _batch.requests) {
+			_str+= r;
+		}
+		_transport->Send(_str.c_str(), _str.size());
+		for (size_t i = _batch.requests.size(); i != 0; --i) {
+			_batch.responces.emplace_back();
+			_batch.responces.back().code = RecvResponceFromTransport(_batch.responces.back().str);
+		}
+
+	} else {
+		for (const auto &r : _batch.requests) {
+			_transport->Send(r.c_str(), r.size());
+			_batch.responces.emplace_back();
+			_batch.responces.back().code = RecvResponceFromTransport(_batch.responces.back().str);
+		}
+	}
+
+	_batch.requests.clear();
+}
+
 unsigned int FTPConnection::SendRecvResponce(std::string &str)
 {
-	Send(str);
-	return RecvResponce(str);
+	if (g_netrocks_verbosity > 1) {
+		fprintf(stderr, "FTPConnection::SendRecvResponce('%s')\n", str.c_str());
+		for (const auto &r : _batch.requests) {
+			fprintf(stderr, "FTPConnection::SendRecvResponce: pending request '%s'\n", r.c_str());
+		}
+		for (const auto &r : _batch.responces) {
+			fprintf(stderr, "FTPConnection::SendRecvResponce: pending responce '%s'\n", r.str.c_str());
+		}
+	}
+
+	if (!_batch.requests.empty() || !_batch.responces.empty()) {
+		throw std::runtime_error("FTPConnection::SendRecvResponce while batch not empty");
+	}
+
+	str+= FTP_ENDLINE;
+	_transport->Send(str.c_str(), str.size());
+
+	unsigned int reply_code = RecvResponceFromTransport(str);
+
+	if (g_netrocks_verbosity > 1) {
+		fprintf(stderr, "FTPConnection::SendRecvResponce: responce '%s'\n", str.c_str());
+	}
+
+	return reply_code;
+}
+
+void FTPConnection::SendRequest(const std::string &str)
+{
+	_batch.requests.emplace_back(str);
+	_batch.requests.back().append(FTP_ENDLINE);
+
+	if (g_netrocks_verbosity > 1) {
+		fprintf(stderr, "FTPConnection::SendRequest('%s')\n", str.c_str());
+	}
+}
+
+unsigned int FTPConnection::RecvResponce(std::string &str)
+{
+	BatchPerform();
+	if (_batch.responces.empty()) {
+		throw std::runtime_error("FTPConnection::RecvResponce: batch is empty");
+	}
+
+	str.swap(_batch.responces.front().str);
+	unsigned int reply_code = _batch.responces.front().code;
+	_batch.responces.pop_front();
+
+	if (g_netrocks_verbosity > 1) {
+		fprintf(stderr, "FTPConnection::RecvResponce: %s\n", str.c_str());
+	}
+
+	return reply_code;
 }
 
 void FTPConnection::RecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max)
@@ -433,7 +525,7 @@ void FTPConnection::SendRecvResponce(std::string &str, unsigned int reply_ok_min
 void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 {
 	if (rest != 0) {
-		std::string str = StrPrintf("REST %lld" FTP_ENDLINE, rest);
+		std::string str = StrPrintf("REST %lld", rest);
 		unsigned int reply_code = SendRecvResponce(str);
 		if (reply_code < 300 || reply_code >= 400) {
 			throw ProtocolError(StrPrintf(
@@ -445,7 +537,7 @@ void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 
 void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
 {
-	std::string str = "PASV" FTP_ENDLINE;
+	std::string str = "PASV";
 	SendRecvResponce(str, 200, 299);
 
 	size_t p = str.find('(');
@@ -459,7 +551,9 @@ void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transp
 
 	SendRestIfNeeded(rest);
 
-	_transport->Send(cmd.c_str(), cmd.size());
+//	str = cmd;
+//	str+= FTP_ENDLINE;
+//	 _transport->Send(str.c_str(), str.size());
 
 	sockaddr_in sin = {0};
 	sin.sin_family = AF_INET;
@@ -467,7 +561,10 @@ void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transp
 	sin.sin_addr.s_addr = (uint32_t)((v[3] << 24) | (v[2] << 16) | (v[1] << 8) | (v[0]));
 	data_transport = std::make_shared<SocketTransport>(sin, _protocol_options);
 
-	RecvResponce(str, 100, 199);
+	str = cmd;
+	SendRecvResponce(str, 100, 199);
+//	unsigned int reply_code = RecvResponceFromTransport(str);
+//	FTPThrowIfBadResponce(str, reply_code, 100, 199);
 }
 
 void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
@@ -495,7 +592,7 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 		throw std::runtime_error(StrPrintf("getsockname() errno=%d", errno));
 	}
 
-	std::string str = StrPrintf("PORT %u,%u,%u,%u,%u,%u" FTP_ENDLINE,
+	std::string str = StrPrintf("PORT %u,%u,%u,%u,%u,%u",
 		(unsigned int)(unsigned char)sa.sa_data[2], (unsigned int)(unsigned char)sa.sa_data[3],
 		(unsigned int)(unsigned char)sa.sa_data[4], (unsigned int)(unsigned char)sa.sa_data[5],
 		(unsigned int)(unsigned char)sa.sa_data[0], (unsigned int)(unsigned char)sa.sa_data[1]);
@@ -558,4 +655,3 @@ std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd
 
 	return data_transport;
 }
-

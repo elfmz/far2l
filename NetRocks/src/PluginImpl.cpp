@@ -440,7 +440,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode)
 {
 	const std::string &site_dir = CurrentSiteDir(true);
-	fprintf(stderr, "NetRocks::GetFiles: _dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d OpMode=%d\n", _cur_dir, SrcPath, site_dir.c_str(), ItemsNumber, OpMode);
+	fprintf(stderr, "NetRocks::PutFiles: _dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d OpMode=%d\n", _cur_dir, SrcPath, site_dir.c_str(), ItemsNumber, OpMode);
 	if (ItemsNumber <= 0)
 		return FALSE;
 

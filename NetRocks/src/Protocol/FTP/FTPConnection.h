@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <deque>
 #include <sys/socket.h>
 
 #ifdef HAVE_OPENSSL
@@ -10,8 +11,6 @@
 #include <StringConfig.h>
 
 #include "../../Erroring.h"
-
-#define FTP_ENDLINE "\r\n"
 
 struct BaseTransport : public std::enable_shared_from_this<BaseTransport>
 {
@@ -92,31 +91,48 @@ struct FTPConnection : public std::enable_shared_from_this<FTPConnection>
 {
 	std::shared_ptr<BaseTransport> _transport;
 	StringConfig _protocol_options;
+	std::string _str;
+
+	struct {
+		struct Responce
+		{
+			unsigned int code;
+			std::string str;
+		};
+
+		std::deque<std::string> requests;
+		std::deque<Responce> responces;
+		bool pipelining = false;
+	} _batch;
 
 #ifdef HAVE_OPENSSL
 	std::shared_ptr<OpenSSLContext> _openssl_ctx;
 	bool _data_encryption_enabled = false;
 #endif
 
+	void BatchPerform();
+
 	void DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest = 0);
 	void DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest = 0);
 
 	bool EnableDataConnectionProtection();
+
+
 public:
 	FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options);
 	virtual ~FTPConnection();
 
 	const StringConfig &ProtocolOptions() const { return _protocol_options; }
 
-	void Send(const std::string &str);
+	void SendRequest(const std::string &str);
 	unsigned int RecvResponce(std::string &str);
 	unsigned int SendRecvResponce(std::string &str);
 
+	unsigned int RecvResponceFromTransport(std::string &str);
+
 	void RecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
 	void SendRecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
-
 	void SendRestIfNeeded(unsigned long long rest);
 
 	std::shared_ptr<BaseTransport> DataCommand(const std::string &cmd, unsigned long long rest = 0);
-
 };

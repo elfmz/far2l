@@ -13,6 +13,7 @@
 | Minimal encryption protocol:           [COMBOBOX         ] |
 | [ ] Use passive mode for transfers                         |
 | [ ] Use MLSD/MLST if possible                              |
+| [ ] Enable commands pipelining                             |
 | [ ] Ensure data connection peer matches server             |
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
@@ -33,7 +34,9 @@ class ProtocolOptionsFTP : protected BaseDialog
 	int _i_explicit_encryption = -1;
 	int _i_encryption_protocol = -1;
 	int _i_restrict_data_peer = -1;
-	int _i_passive_mode = -1, _i_use_mlsd_mlst = -1;
+	int _i_passive_mode = -1;
+	int _i_use_mlsd_mlst = -1;
+	int _i_commands_pipelining = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 
 	FarListWrapper _di_encryption_protocol;
@@ -98,6 +101,9 @@ public:
 		_i_use_mlsd_mlst = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPUseMLSDMLST);
 		_di.NextLine();
 
+		_i_commands_pipelining = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPCommandsPipelining);
+		_di.NextLine();
+
 		_i_restrict_data_peer = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPRestrictDataPeer);
 		_di.NextLine();
 
@@ -134,6 +140,7 @@ public:
 
 		SetCheckedDialogControl(_i_passive_mode, sc.GetInt("Passive", 1) != 0);
 		SetCheckedDialogControl(_i_use_mlsd_mlst, sc.GetInt("MLSDMLST", 1) != 0);
+		SetCheckedDialogControl(_i_commands_pipelining, sc.GetInt("CommandsPipelining", 0) != 0);
 		SetCheckedDialogControl(_i_restrict_data_peer, sc.GetInt("RestrictDataPeer", 1) != 0);
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		if (_i_tcp_quickack != -1) {
@@ -147,6 +154,7 @@ public:
 			sc.SetInt("EncryptionProtocol", GetDialogListPosition(_i_encryption_protocol));
 			sc.SetInt("Passive", IsCheckedDialogControl(_i_passive_mode) ? 1 : 0);
 			sc.SetInt("MLSDMLST", IsCheckedDialogControl(_i_use_mlsd_mlst) ? 1 : 0);
+			sc.SetInt("CommandsPipelining", IsCheckedDialogControl(_i_commands_pipelining) ? 1 : 0);
 			sc.SetInt("RestrictDataPeer", IsCheckedDialogControl(_i_restrict_data_peer) ? 1 : 0);
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 			if (_i_tcp_quickack != -1) {

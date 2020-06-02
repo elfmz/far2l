@@ -23,18 +23,18 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 	_conn(std::make_shared<FTPConnection>( (strcasecmp(protocol.c_str(), "ftps") == 0), host, port, options)),
 	_dir_enum_cache(10)
 {
-	_str.assign("USER ").append(username).append(FTP_ENDLINE);
+	_str.assign("USER ").append(username);
 
 	unsigned int reply_code = _conn->SendRecvResponce(_str);
 	if (reply_code >= 300 && reply_code <= 399) {
-		_str.assign("PASS ").append(password).append(FTP_ENDLINE);
+		_str.assign("PASS ").append(password);
 		reply_code = _conn->SendRecvResponce(_str);
 	}
 
 	FTPThrowIfBadResponce<ProtocolAuthFailedError>(_str, reply_code, 200, 299);
 
 	if (_conn->ProtocolOptions().GetInt("MLSDMLST", 1) != 0) {
-		_str.assign("FEAT" FTP_ENDLINE);
+		_str.assign("FEAT");
 		reply_code = _conn->SendRecvResponce(_str);
 		if (reply_code >= 200 && reply_code < 299) {
 			if (_str.find("MLST") != std::string::npos) _cmd.mlst = "MLST";
@@ -42,13 +42,12 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 		}
 	}
 
-	_str.assign("TYPE I" FTP_ENDLINE "PWD" FTP_ENDLINE);
-	_conn->Send(_str);
+	_conn->SendRequest("TYPE I");
+	_conn->SendRequest("PWD");
 	_conn->RecvResponce(_str);
 
 	if (!RecvPwdResponce()) {
-		_str.assign("XPWD" FTP_ENDLINE);
-		_conn->Send(_str);
+		_conn->SendRequest("XPWD");
 		if (RecvPwdResponce()) {
 			_cmd.pwd = "XPWD";
 			_cmd.cwd = "XCWD";
@@ -154,23 +153,23 @@ std::string ProtocolFTP::SplitPathAndNavigate(const std::string &path_name, bool
 			;
 		}
 
-		bool ok = true;
-		_str.clear();
+		if (g_netrocks_verbosity > 1) {
+			fprintf(stderr, "ProtocolFTP::SplitPathAndNavigate: i=%lu _cwd.parts.size()=%lu parts.size()=%lu\n",
+				i, _cwd.parts.size(), parts.size());
+		}
+
 		for (size_t j = i; j != _cwd.parts.size(); ++j) {
-			_str.append(_cmd.cdup).append(FTP_ENDLINE);
+			_conn->SendRequest(_cmd.cdup);
 		}
 		for (size_t j = i; j != parts.size(); ++j) {
-			_str.append(_cmd.cwd).append(" ").append(parts[j]).append(FTP_ENDLINE);
+			_str.assign(_cmd.cwd).append(" ").append(parts[j]);
+			_conn->SendRequest(_str);
 		}
+		_conn->SendRequest(_cmd.pwd);
 
-		_str.append(_cmd.pwd).append(FTP_ENDLINE);
+		bool ok = true;
 
-		if (g_netrocks_verbosity > 1) {
-			fprintf(stderr, "ProtocolFTP::SplitPathAndNavigate: i=%lu _cwd.parts.size()=%lu parts.size()=%lu\n", i, _cwd.parts.size(), parts.size());
-		}
-
-		_conn->Send(_str);
-
+		 // fetch all responces except PWD
 		for (size_t j = 0, jj = (_cwd.parts.size() - i) + (parts.size() - i); j != jj; ++j) {
 			try {
 				_conn->RecvResponce(_str, 200, 299);
@@ -178,8 +177,8 @@ std::string ProtocolFTP::SplitPathAndNavigate(const std::string &path_name, bool
 					fprintf(stderr, "ProtocolFTP::SplitPathAndNavigate: reply='%s'\n", _str.c_str());
 				}
 			} catch (std::exception &e) {
-				fprintf(stderr, "ProtocolFTP::SplitPathAndNavigate('%s') entry %lu of %lu - %s\n",
-					path_name.c_str(), j, jj, e.what());
+				fprintf(stderr, "ProtocolFTP::SplitPathAndNavigate('%s') - %s, part %lu of %lu\n",
+					path_name.c_str(), e.what(), (unsigned long)j, (unsigned long)jj);
 				ok = false;
 			}
 		}
@@ -191,12 +190,13 @@ std::string ProtocolFTP::SplitPathAndNavigate(const std::string &path_name, bool
 
 			ok = true;
 			// try other way: reset to home and apply full path
-			_str.assign(_cmd.cwd).append(FTP_ENDLINE).append(_cmd.cwd).append(" ");
+			_conn->SendRequest(_cmd.cwd);
+			_str.assign(_cmd.cwd).append(" ");
 			for (const auto &part : parts) {
 				_str.append(part).append(1, '/');
 			}
-			_str.append(FTP_ENDLINE).append(_cmd.pwd).append(FTP_ENDLINE);
-			_conn->Send(_str);
+			_conn->SendRequest(_str);
+			_conn->SendRequest(_cmd.pwd);
 			try {
 				_conn->RecvResponce(_str, 200, 299);
 				if (g_netrocks_verbosity > 1) {
@@ -272,7 +272,7 @@ std::string ProtocolFTP::PathAsRelative(const std::string &path)
 
 void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_t *uid, gid_t *gid, std::string *lnkto)
 {
-	_str.assign(_cmd.mlst).append(" ").append(path).append(FTP_ENDLINE);
+	_str.assign(_cmd.mlst).append(" ").append(path);
 
 	unsigned int reply_code = _conn->SendRecvResponce(_str);
 	if (reply_code >= 500 && reply_code <= 504) {
@@ -314,7 +314,7 @@ void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &
 	}
 
 	if (follow_symlink && S_ISLNK(file_info.mode)) {
-		_str.assign(_cmd.size).append(" ").append(name_part).append(FTP_ENDLINE);
+		_str.assign(_cmd.size).append(" ").append(name_part);
 		unsigned int reply_code = _conn->SendRecvResponce(_str);
 		file_info.mode&= ~S_IFMT;
 		file_info.mode|= S_IFDIR;
@@ -351,7 +351,7 @@ unsigned long long ProtocolFTP::GetSize(const std::string &path, bool follow_sym
 void ProtocolFTP::SimpleDispositionCommand(const char *cmd, const std::string &path)
 {
 	const std::string &name_part = SplitPathAndNavigate(path);
-	_str.assign(cmd).append(" ").append(name_part).append(FTP_ENDLINE);
+	_str.assign(cmd).append(" ").append(name_part);
 
 	unsigned int reply_code = _conn->SendRecvResponce(_str);
 
@@ -385,13 +385,13 @@ void ProtocolFTP::Rename(const std::string &path_old, const std::string &path_ne
 	const std::string &name_old = SplitPathAndNavigate(path_old);
 	const std::string &path_new_relative = PathAsRelative(path_new);
 
-	_str.assign(_cmd.rnfr).append(" ").append(name_old).append(FTP_ENDLINE);
+	_str.assign(_cmd.rnfr).append(" ").append(name_old);
 	unsigned int reply_code = _conn->SendRecvResponce(_str);
 	if (reply_code != 350) {
 		FTPThrowIfBadResponce(_str, reply_code, 200, 299);
 	}
 
-	_str.assign(_cmd.rnto).append(" ").append(path_new_relative).append(FTP_ENDLINE);
+	_str.assign(_cmd.rnto).append(" ").append(path_new_relative);
 
 	reply_code = _conn->SendRecvResponce(_str);
 	FTPThrowIfBadResponce(_str, reply_code, 200, 299);
@@ -425,7 +425,7 @@ void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time,
 	//HH - the hour in 24-hour format
 	//MM - the minute
 	//SS - the seconds
-	_str = StrPrintf("%s %04u%02u%02u%02u%02u%02u %s" FTP_ENDLINE, _cmd.mfmt,
+	_str = StrPrintf("%s %04u%02u%02u%02u%02u%02u %s", _cmd.mfmt,
 		(unsigned int)t.tm_year + 1900, (unsigned int)t.tm_mon,
 		(unsigned int)t.tm_mday, (unsigned int)t.tm_hour,
 		(unsigned int)t.tm_min, (unsigned int)t.tm_sec,
@@ -456,7 +456,7 @@ void ProtocolFTP::SetMode(const std::string &path, mode_t mode) throw (std::runt
 
 	const std::string &name_part = SplitPathAndNavigate(path);
 
-	_str = StrPrintf("%s %03o %s" FTP_ENDLINE, _cmd.chmod, (unsigned int)mode, name_part.c_str());
+	_str = StrPrintf("%s %03o %s", _cmd.chmod, (unsigned int)mode, name_part.c_str());
 	unsigned int reply_code = _conn->SendRecvResponce(_str);
 
 	if (reply_code < 200 || reply_code > 299) {
@@ -506,7 +506,10 @@ protected:
 			std::shared_ptr<FTPConnection> conn = _conn;
 			_conn.reset();
 			std::string str;
-			conn->RecvResponce(str);
+			conn->RecvResponceFromTransport(str);
+			if (g_netrocks_verbosity > 1) {
+				fprintf(stderr, "FTPDataCommand::EnsureFinalized: responce '%s'\n", str.c_str());
+			}
 		}
 	}
 
@@ -539,6 +542,10 @@ public:
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
 	{
+		if (!_data_transport) {
+			return false;
+		}
+
 		for (;;) {
 			for (;;) {
 				size_t p = _read_buffer.find('\n');
@@ -665,11 +672,11 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFTP::NavigatedDirectoryEnum()
 
 //	const std::string &name_part = SplitPathAndNavigate(path);
 	if (_cmd.mlsd != nullptr) {
-		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(std::string(_cmd.mlsd).append(FTP_ENDLINE));
+		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(std::string(_cmd.mlsd));
 		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerMLSD(_conn, data_transport));
 
 	} else {
-		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(std::string(_cmd.list_).append(FTP_ENDLINE));
+		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(std::string(_cmd.list_));
 		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerLIST(_conn, data_transport));
 	}
 
@@ -706,7 +713,7 @@ public:
 std::shared_ptr<IFileReader> ProtocolFTP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
 {
 	const std::string &name_part = SplitPathAndNavigate(path);
-	_str.assign(_cmd.retr).append(" ").append(name_part).append(FTP_ENDLINE);
+	_str.assign(_cmd.retr).append(" ").append(name_part);
 	std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(_str, resume_pos);
 	return std::make_shared<FTPFileIO>(_conn, data_transport);
 }
@@ -719,7 +726,7 @@ std::shared_ptr<IFileWriter> ProtocolFTP::FilePut(const std::string &path, mode_
 		_dir_enum_cache.Remove(_cwd.path);
 	}
 
-	_str.assign(_cmd.stor).append(" ").append(name_part).append(FTP_ENDLINE);
+	_str.assign(_cmd.stor).append(" ").append(name_part);
 	std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(_str, resume_pos);
 	return std::make_shared<FTPFileIO>(_conn, data_transport);
 }

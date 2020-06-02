@@ -33,7 +33,7 @@
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
-bool g_broadway = false;
+bool g_broadway = false, g_wayland = false;
 static int g_exit_code = 0;
 enum
 {
@@ -96,8 +96,14 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 	wxSetAssertHandler(WinPortWxAssertHandler);
 
 	const char *gdk_backend = getenv("GDK_BACKEND");
-	if (gdk_backend && strcmp(gdk_backend, "broadway")==0)
+	if (gdk_backend && strcasecmp(gdk_backend, "broadway")==0) {
 		g_broadway = true;
+	}
+
+	const char *xdg_st = getenv("XDG_SESSION_TYPE");
+	if (xdg_st && strcasecmp(xdg_st, "wayland")==0) {
+		g_wayland = true;
+	}
 
 
 	if (!InitPalettes()) {
@@ -882,7 +888,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
-	if (event.GetSkipped() || (event.GetTimestamp() && 
+	if (event.GetSkipped() || (!g_wayland && event.GetTimestamp() &&
 		_last_keydown.GetKeyCode()==event.GetKeyCode() &&
 		_last_keydown.GetTimestamp()==event.GetTimestamp())) {
 		event.Skip();

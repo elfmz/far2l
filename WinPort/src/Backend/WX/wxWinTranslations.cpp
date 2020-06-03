@@ -8,6 +8,7 @@
 
 extern bool g_broadway;
 extern bool g_wayland;
+extern bool g_remote;
 
 /*
     Foreground/Background color palettes are 16 (r,g,b) values.
@@ -328,7 +329,9 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	if (IsEnhancedKey(event.GetKeyCode()))
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	
-	if (!g_broadway && !g_wayland) {
+	// Getting LED modifiers not supported on broadway and wayland, also it requires
+	// 3 server roundtrips that is too time-expensive for remotely forwarded connections.
+	if (!g_broadway && !g_wayland && !g_remote) {
 		if (wxGetKeyState(WXK_NUMLOCK))
 			Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
 		

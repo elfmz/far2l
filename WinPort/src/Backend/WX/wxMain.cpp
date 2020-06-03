@@ -33,7 +33,7 @@
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
-bool g_broadway = false, g_wayland = false;
+bool g_broadway = false, g_wayland = false, g_remote = false;
 static int g_exit_code = 0;
 enum
 {
@@ -87,14 +87,8 @@ static void WinPortWxAssertHandler(const wxString& file,
 			file.wc_str(), line, func.wc_str(), cond.wc_str(), msg.wc_str());
 }
 
-
-bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+static void DetectHostAbilities()
 {
-	if (!wxInitialize())
-		return false;
-
-	wxSetAssertHandler(WinPortWxAssertHandler);
-
 	const char *gdk_backend = getenv("GDK_BACKEND");
 	if (gdk_backend && strcasecmp(gdk_backend, "broadway")==0) {
 		g_broadway = true;
@@ -105,6 +99,23 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 		g_wayland = true;
 	}
 
+	const char *ssh_conn = getenv("SSH_CONNECTION");
+	if (ssh_conn && *ssh_conn
+		&& strstr(ssh_conn, "127.0.0.") == NULL
+		&& strstr(ssh_conn, "localhost") == NULL) {
+
+		g_remote = true;
+	}
+}
+
+bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+{
+	if (!wxInitialize())
+		return false;
+
+	wxSetAssertHandler(WinPortWxAssertHandler);
+
+	DetectHostAbilities();
 
 	if (!InitPalettes()) {
 		uint xc,yc;
@@ -953,11 +964,14 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::CheckForSuddenKeyUp( wxKeyCode keycode)
 { // workaround for layout switch hotkey conflict with enabled exclusive mode, see #281
+	auto it = _pressed_keys.find(keycode);
+	if (it == _pressed_keys.end())
+		return;
+
 	if (wxGetKeyState(keycode))
 		return;
 
-	if (!_pressed_keys.erase(keycode))
-		return;
+	_pressed_keys.erase(it);
 
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;

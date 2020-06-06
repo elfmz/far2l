@@ -13,6 +13,7 @@ enum LanguageID
   MPluginOptionsTitle,
   MEnableDesktopNotifications,
   MEnterExecRemotely,
+  MSmartSymlinksCopy,
   MUMaskOverride,
   MConnPoolExpiration,
   MConnectUsingProxy,

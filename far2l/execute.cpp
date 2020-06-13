@@ -241,6 +241,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 			WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 		}
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
+		
 		if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
 			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 		} else {

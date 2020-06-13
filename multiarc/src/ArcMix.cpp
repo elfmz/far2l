@@ -105,6 +105,10 @@ const char *GetMsg(int MsgId)
 int rar_main(int argc, char *argv[]);
 extern "C" int sevenz_main(int argc, char *argv[]);
 
+#ifdef HAVE_LIBARCHIVE
+extern "C" int libarch_main(int numargs, char *args[]);
+#endif
+
 SHAREDSYMBOL int BuiltinMain(int argc, char * argv[])
 {
 	if (!argc)
@@ -115,6 +119,10 @@ SHAREDSYMBOL int BuiltinMain(int argc, char * argv[])
 		r = rar_main(argc, &argv[0]);
 	} else if (strcmp(argv[0], "7z")==0) {
 		r = sevenz_main(argc, &argv[0]);
+#ifdef HAVE_LIBARCHIVE
+	} else if (strcmp(argv[0], "libarch")==0) {
+		r = libarch_main(argc, &argv[0]);
+#endif
 	} else		
 		fprintf(stderr, "BuiltinMain: bad target '%s'\n", argv[0]);	
 	return r;

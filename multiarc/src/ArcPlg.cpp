@@ -85,27 +85,28 @@ ArcPlugins::ArcPlugins(const char *ModuleName) : PluginsData(NULL), PluginsCount
 
 	AddPluginItem("CAB", CAB_IsArchive, CAB_OpenArchive, CAB_GetArcItem, NULL, 
 		CAB_CloseArchive, CAB_GetFormatName, CAB_GetDefaultCommands, NULL, CAB_GetSFXPos);
-	
+
+#ifndef HAVE_LIBARCHIVE
 	AddPluginItem("TARGZ", TARGZ_IsArchive, TARGZ_OpenArchive, TARGZ_GetArcItem, NULL, 
 		TARGZ_CloseArchive, TARGZ_GetFormatName, TARGZ_GetDefaultCommands, TARGZ_SetFarInfo, TARGZ_GetSFXPos);
+#endif
 		
 	AddPluginItem("7z", SEVENZ_IsArchive, SEVENZ_OpenArchive, SEVENZ_GetArcItem, NULL, 
 		SEVENZ_CloseArchive, SEVENZ_GetFormatName, SEVENZ_GetDefaultCommands, NULL, NULL);
 		
 	FSF.qsort(PluginsData,PluginsCount,sizeof(struct PluginItem),(FCMP)CompareFmtModules);
+
+#ifdef HAVE_LIBARCHIVE
+	// must be last cuz recognizes essentially most of above formats, but not handles them full-featurable
+	AddPluginItem("LIBARCH", LIBARCH_IsArchive, LIBARCH_OpenArchive, LIBARCH_GetArcItem, NULL, 
+		LIBARCH_CloseArchive, LIBARCH_GetFormatName, LIBARCH_GetDefaultCommands, NULL, NULL);
+#endif
 }
 
 int __cdecl ArcPlugins::CompareFmtModules(const void *elem1, const void *elem2)
 {
   char *left = (((struct PluginItem *)elem1)->ModuleName);
   char *right = (((struct PluginItem *)elem2)->ModuleName);
-  DWORD try_left=(((struct PluginItem *)elem1)->TryIfNoOther);
-  DWORD try_right=(((struct PluginItem *)elem2)->TryIfNoOther);
-
-  if (try_left && !try_right)
-    return 1;
-  if (!try_left && try_right)
-    return -1;
 
   return strcmp(left,right);
 }
@@ -118,25 +119,24 @@ ArcPlugins::~ArcPlugins()
 
 int ArcPlugins::IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
-  DWORD MinSFXSize=0xFFFFFFFF;
-  DWORD CurSFXSize;
-  int TrueArc=-1;
-  int I;
+  DWORD MinSFXSize = 0xffffffff;
+  int MinSFXSizeI = -1;
 
-  for (I=0; I < PluginsCount; I++)
+  for (int I=0; I < PluginsCount; I++)
   {
-    if (TrueArc>-1 && PluginsData[I].TryIfNoOther)
-      break;
+    DWORD CurSFXSize = 0;
     if (IsArchive(I, Name, Data, DataSize, &CurSFXSize))
     {
-      if(CurSFXSize <= MinSFXSize)
+      if (MinSFXSize > CurSFXSize || MinSFXSizeI == -1)
       {
-        MinSFXSize=CurSFXSize;
-        TrueArc=I;
+        MinSFXSize = CurSFXSize;
+        MinSFXSizeI = I;
+        if (CurSFXSize == 0)
+          break;
       }
     }
   }
-  return TrueArc;
+  return MinSFXSizeI;
 }
 
 BOOL ArcPlugins::IsArchive(int ArcPluginNumber, const char *Name,const unsigned char *Data,int DataSize, DWORD* SFXSize)

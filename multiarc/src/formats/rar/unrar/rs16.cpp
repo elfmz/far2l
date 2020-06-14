@@ -27,7 +27,7 @@ RSCoder16::~RSCoder16()
   delete[] MX;
   delete[] ValidFlags;
 }
-    
+
 
 // Initialize logarithms and exponents Galois field tables.
 void RSCoder16::gfInit()
@@ -41,7 +41,7 @@ void RSCoder16::gfInit()
     gfExp[L]=E;
     gfExp[L+gfSize]=E;  // Duplicate the table to avoid gfExp overflow check.
     E<<=1;
-    if (E>gfSize) 
+    if (E>gfSize)
       E^=0x1100B; // Irreducible field-generator polynomial.
   }
 
@@ -59,7 +59,7 @@ uint RSCoder16::gfAdd(uint a,uint b) // Addition in Galois field.
 }
 
 
-uint RSCoder16::gfMul(uint a,uint b) // Multiplication in Galois field. 
+uint RSCoder16::gfMul(uint a,uint b) // Multiplication in Galois field.
 {
   return gfExp[gfLog[a]+gfLog[b]];
 }
@@ -156,7 +156,7 @@ void RSCoder16::InvertDecoderMatrix()
   for (uint Kr = 0, Kf = 0; Kr < NE; Kr++, Kf++)
   {
     while (ValidFlags[Kf]) // Skip trivial rows.
-      Kf++;                 
+      Kf++;
     MI[Kr * ND + Kf] = 1;  // Set diagonal 1.
   }
 
@@ -174,7 +174,7 @@ void RSCoder16::InvertDecoderMatrix()
       // after MI[..]^=, but we do not need it for matrix inversion.
       for (uint I = 0; I < NE; I++)
         MI[I * ND + Kf] ^= MX[I * ND + Kf];
-      Kf++;                 
+      Kf++;
     }
 
     if (Kf == ND)
@@ -186,14 +186,14 @@ void RSCoder16::InvertDecoderMatrix()
     uint PInv = gfInv( MXk[Kf] ); // Pivot inverse.
     // Divide the pivot row by pivot, so pivot cell contains 1.
     for (uint I = 0; I < ND; I++)
-    { 
+    {
       MXk[I] = gfMul( MXk[I], PInv );
       MIk[I] = gfMul( MIk[I], PInv );
     }
 
     for (uint I = 0; I < NE; I++)
       if (I != Kr) // For all rows except containing the pivot cell.
-      { 
+      {
         // Apply Gaussian elimination Mij -= Mkj * Mik / pivot.
         // Since pivot is already 1, it is reduced to Mij -= Mkj * Mik.
         uint *MXi = MX + I * ND; // i-th row of main matrix.
@@ -215,6 +215,7 @@ void RSCoder16::InvertDecoderMatrix()
 }
 
 
+#if 0
 // Multiply matrix to data vector. When encoding, it contains data in Data
 // and stores error correction codes in Out. When decoding it contains
 // broken data followed by ECC in Data and stores recovered data to Out.
@@ -252,6 +253,7 @@ void RSCoder16::Process(const uint *Data, uint *Out)
     Out[I] = R;
   }
 }
+#endif
 
 
 // We update ECC in blocks by applying every data block to all ECC blocks.
@@ -311,6 +313,7 @@ void RSCoder16::UpdateECC(uint DataNum, uint ECCNum, const byte *Data, byte *ECC
 
 #ifdef USE_SSE
 // Data and ECC addresses must be properly aligned for SSE.
+// AVX2 did not provide a noticeable speed gain on i7-6700K here.
 bool RSCoder16::SSE_UpdateECC(uint DataNum, uint ECCNum, const byte *Data, byte *ECC, size_t BlockSize)
 {
   // Check data alignment and SSSE3 support.
@@ -358,7 +361,7 @@ bool RSCoder16::SSE_UpdateECC(uint DataNum, uint ECCNum, const byte *Data, byte 
     __m128i LowBytes1=_mm_and_si128(D[1],LowByteMask);
     __m128i HighBytes=_mm_packus_epi16(HighBytes0,HighBytes1);
     __m128i LowBytes=_mm_packus_epi16(LowBytes0,LowBytes1);
-    
+
     // Multiply bits 0..3 of low bytes. Store low and high product bytes
     // separately in cumulative sum variables.
     __m128i LowBytesLow4=_mm_and_si128(LowBytes,Low4Mask);
@@ -374,7 +377,7 @@ bool RSCoder16::SSE_UpdateECC(uint DataNum, uint ECCNum, const byte *Data, byte 
     // Add new product to existing sum, low and high bytes separately.
     LowBytesMultSum=_mm_xor_si128(LowBytesMultSum,LowBytesHigh4MultLow);
     HighBytesMultSum=_mm_xor_si128(HighBytesMultSum,LowBytesHigh4MultHigh);
-    
+
     // Multiply bits 0..3 of high bytes. Store low and high product bytes separately.
     __m128i HighBytesLow4=_mm_and_si128(HighBytes,Low4Mask);
     __m128i HighBytesLow4MultLow=_mm_shuffle_epi8(T2L,HighBytesLow4);
@@ -410,7 +413,7 @@ bool RSCoder16::SSE_UpdateECC(uint DataNum, uint ECCNum, const byte *Data, byte 
   // because Data and ECC can have different alignment offsets.
   for (; Pos<BlockSize; Pos+=2)
     *(ushort*)(ECC+Pos) ^= gfMul( M, *(ushort*)(Data+Pos) );
-  
+
   return true;
 }
 #endif

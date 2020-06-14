@@ -41,9 +41,12 @@ void ErrorHandler::CloseError(const wchar *FileName)
     uiMsg(UIERROR_FILECLOSE,FileName);
     SysErrMsg();
   }
-#if !defined(SILENT) || defined(RARDLL)
-  Exit(RARX_FATAL);
-#endif
+  // We must not call Exit and throw an exception here, because this function
+  // is called from File object destructor and can be invoked when stack
+  // unwinding while handling another exception. Throwing a new exception
+  // when stack unwinding is prohibited and terminates a program.
+  // If necessary, we can check std::uncaught_exception() before throw.
+  SetErrorCode(RARX_FATAL);
 }
 
 
@@ -102,11 +105,9 @@ bool ErrorHandler::AskRepeatWrite(const wchar *FileName,bool DiskFull)
 #ifndef SILENT
   if (!Silent)
   {
-#ifndef _ANDROID
     // We do not display "repeat write" prompt in Android, so we do not
     // need the matching system error message.
     SysErrMsg();
-#endif
     bool Repeat=uiAskRepeatWrite(FileName,DiskFull);
     if (!Repeat) // Disable shutdown if user pressed Cancel in error dialog.
       DisableShutdown=true;
@@ -135,16 +136,7 @@ void ErrorHandler::GeneralErrMsg(const wchar *fmt,...)
   va_list arglist;
   va_start(arglist,fmt);
   wchar Msg[1024];
-#ifdef _ANDROID
-  // vswprintf does not work in Android NDK. Conversion below should be ok
-  // as long as we do not pass Unicode strings in arguments.
-  char fmtA[NM],MsgA[ASIZE(Msg)];
-  WideToChar(fmt,fmtA,ASIZE(fmtA));
-  vsnprintf(MsgA,ASIZE(MsgA),fmtA,arglist);
-  CharToWide(MsgA,Msg,ASIZE(Msg));
-#else
   vswprintf(Msg,ASIZE(Msg),fmt,arglist);
-#endif
   uiMsg(UIERROR_GENERALERRMSG,Msg);
   SysErrMsg();
   va_end(arglist);
@@ -166,6 +158,7 @@ void ErrorHandler::OpenErrorMsg(const wchar *FileName)
 
 void ErrorHandler::OpenErrorMsg(const wchar *ArcName,const wchar *FileName)
 {
+  Wait(); // Keep GUI responsive if many files cannot be opened when archiving.
   uiMsg(UIERROR_FILEOPEN,ArcName,FileName);
   SysErrMsg();
   SetErrorCode(RARX_OPEN);
@@ -231,9 +224,7 @@ void ErrorHandler::UnknownMethodMsg(const wchar *ArcName,const wchar *FileName)
 
 void ErrorHandler::Exit(RAR_EXIT ExitCode)
 {
-#ifndef GUI
   uiAlarm(UIALARM_ERROR);
-#endif
   Throw(ExitCode);
 }
 
@@ -263,7 +254,6 @@ void ErrorHandler::SetErrorCode(RAR_EXIT Code)
 }
 
 
-#ifndef GUI
 #ifdef _WIN_ALL
 BOOL __stdcall ProcessSignal(DWORD SigType)
 #else
@@ -281,6 +271,7 @@ void _stdfunction ProcessSignal(int SigType)
 #endif
 
   ErrHandler.UserBreak=true;
+  ErrHandler.SetDisableShutdown();
   mprintf(St(MBreak));
 
 #ifdef _WIN_ALL
@@ -304,23 +295,20 @@ void _stdfunction ProcessSignal(int SigType)
 #endif
 
 #if defined(_WIN_ALL) && !defined(_MSC_VER)
-  // never reached, just to avoid a compiler warning
+  // Never reached, just to avoid a compiler warning
   return TRUE;
 #endif
 }
-#endif
 
 
 void ErrorHandler::SetSignalHandlers(bool Enable)
 {
   EnableBreak=Enable;
-#ifndef GUI
 #ifdef _WIN_ALL
   SetConsoleCtrlHandler(Enable ? ProcessSignal:NULL,TRUE);
 #else
   signal(SIGINT,Enable ? ProcessSignal:SIG_IGN);
   signal(SIGTERM,Enable ? ProcessSignal:SIG_IGN);
-#endif
 #endif
 }
 
@@ -329,7 +317,7 @@ void ErrorHandler::Throw(RAR_EXIT Code)
 {
   if (Code==RARX_USERBREAK && !EnableBreak)
     return;
-#if !defined(GUI) && !defined(SILENT)
+#if !defined(SILENT)
   // Do not write "aborted" when just displaying online help.
   if (Code!=RARX_SUCCESS && Code!=RARX_USERERROR)
     mprintf(L"\n%s\n",St(MProgAborted));
@@ -339,55 +327,62 @@ void ErrorHandler::Throw(RAR_EXIT Code)
 }
 
 
-void ErrorHandler::SysErrMsg()
+bool ErrorHandler::GetSysErrMsg(wchar *Msg,size_t Size)
 {
-#if !defined(SFX_MODULE) && !defined(SILENT)
+#ifndef SILENT
 #ifdef _WIN_ALL
-  wchar *lpMsgBuf=NULL;
   int ErrType=GetLastError();
-  if (ErrType!=0 && FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
-              NULL,ErrType,MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-              (LPTSTR)&lpMsgBuf,0,NULL))
-  {
-    wchar *CurMsg=lpMsgBuf;
-    while (CurMsg!=NULL)
-    {
-      while (*CurMsg=='\r' || *CurMsg=='\n')
-        CurMsg++;
-      if (*CurMsg==0)
-        break;
-      wchar *EndMsg=wcschr(CurMsg,'\r');
-      if (EndMsg==NULL)
-        EndMsg=wcschr(CurMsg,'\n');
-      if (EndMsg!=NULL)
-      {
-        *EndMsg=0;
-        EndMsg++;
-      }
-      uiMsg(UIERROR_SYSERRMSG,CurMsg);
-      CurMsg=EndMsg;
-    }
-  }
-  LocalFree( lpMsgBuf );
+  if (ErrType!=0)
+    return FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
+                         NULL,ErrType,MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),
+                         Msg,(DWORD)Size,NULL)!=0;
 #endif
 
 #if defined(_UNIX) || defined(_EMX)
   if (errno!=0)
   {
-#ifdef _ANDROID
-    // Android NDK sets errno to confusing "not a typewriter" ENOTTY code
-    // after write error reported by write().
-    if (errno == ENOTTY)
-      return;
-#endif
     char *err=strerror(errno);
     if (err!=NULL)
     {
-      wchar Msg[1024];
-      CharToWide(err,Msg,ASIZE(Msg));
-      uiMsg(UIERROR_SYSERRMSG,Msg);
+      CharToWide(err,Msg,Size);
+      return true;
     }
   }
+#endif
+#endif
+  return false;
+}
+
+
+void ErrorHandler::SysErrMsg()
+{
+#if !defined(SFX_MODULE) && !defined(SILENT)
+  wchar Msg[1024];
+  if (!GetSysErrMsg(Msg,ASIZE(Msg)))
+    return;
+#ifdef _WIN_ALL
+  wchar *CurMsg=Msg;
+  while (CurMsg!=NULL) // Print string with \r\n as several strings to multiple lines.
+  {
+    while (*CurMsg=='\r' || *CurMsg=='\n')
+      CurMsg++;
+    if (*CurMsg==0)
+      break;
+    wchar *EndMsg=wcschr(CurMsg,'\r');
+    if (EndMsg==NULL)
+      EndMsg=wcschr(CurMsg,'\n');
+    if (EndMsg!=NULL)
+    {
+      *EndMsg=0;
+      EndMsg++;
+    }
+    uiMsg(UIERROR_SYSERRMSG,CurMsg);
+    CurMsg=EndMsg;
+  }
+#endif
+
+#if defined(_UNIX) || defined(_EMX)
+  uiMsg(UIERROR_SYSERRMSG,Msg);
 #endif
 
 #endif

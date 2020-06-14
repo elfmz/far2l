@@ -13,9 +13,19 @@
 // from two data blocks.
 #define MAX3_UNPACK_FILTERS      8192
 
+// Limit maximum number of channels in RAR3 delta filter to some reasonable
+// value to prevent too slow processing of corrupt archives with invalid
+// channels number. Must be equal or larger than v3_MAX_FILTER_CHANNELS.
+// No need to provide it for RAR5, which uses only 5 bits to store channels.
+#define MAX3_UNPACK_CHANNELS      1024
+
+// Maximum size of single filter block. We restrict it to limit memory
+// allocation. Must be equal or larger than MAX_ANALYZE_SIZE.
+#define MAX_FILTER_BLOCK_SIZE 0x400000
+
 // Write data in 4 MB or smaller blocks. Must not exceed PACK_MAX_WRITE,
-// so we keep number of buffered filter in unpacker reasonable.
-#define UNPACK_MAX_WRITE     0x400000
+// so we keep a number of buffered filters in unpacker reasonable.
+#define UNPACK_MAX_WRITE      0x400000
 
 // Decode compressed bit fields to alphabet numbers.
 struct DecodeTable:PackDef
@@ -147,7 +157,6 @@ struct UnpackFilter30
 {
   unsigned int BlockStart;
   unsigned int BlockLength;
-  unsigned int ExecCount;
   bool NextWindow;
 
   // Position of parent filter in Filters array used as prototype for filter
@@ -202,6 +211,7 @@ class Unpack:PackDef
     void UnpWriteArea(size_t StartPtr,size_t EndPtr);
     void UnpWriteData(byte *Data,size_t Size);
     _forceinline uint SlotToLength(BitInput &Inp,uint Slot);
+    void UnpInitData50(bool Solid);
     bool ReadBlockHeader(BitInput &Inp,UnpackBlockHeader &Header);
     bool ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTables &Tables);
     void MakeDecodeTables(byte *LengthTable,DecodeTable *Dec,uint Size);
@@ -298,7 +308,9 @@ class Unpack:PackDef
     DecodeTable MD[4]; // Decode multimedia data, up to 4 channels.
 
     unsigned char UnpOldTable20[MC20*4];
-    int UnpAudioBlock,UnpChannels,UnpCurChannel,UnpChannelDelta;
+    bool UnpAudioBlock;
+    uint UnpChannels,UnpCurChannel;
+    int UnpChannelDelta;
     void CopyString20(uint Length,uint Distance);
     bool ReadTables20();
     void UnpWriteBuf20();
@@ -317,7 +329,7 @@ class Unpack:PackDef
     bool ReadEndOfBlock();
     bool ReadVMCode();
     bool ReadVMCodePPM();
-    bool AddVMCode(uint FirstByte,byte *Code,int CodeSize);
+    bool AddVMCode(uint FirstByte,byte *Code,uint CodeSize);
     int SafePPMDecodeChar();
     bool ReadTables30();
     bool UnpReadBuf30();
@@ -332,7 +344,12 @@ class Unpack:PackDef
     byte UnpOldTable[HUFF_TABLE_SIZE30];
     int UnpBlockType;
 
-    bool TablesRead;
+    // If we already read decoding tables for Unpack v2,v3,v5.
+    // We should not use a single variable for all algorithm versions,
+    // because we can have a corrupt archive with one algorithm file
+    // followed by another algorithm file with "solid" flag and we do not
+    // want to reuse tables from one algorithm in another.
+    bool TablesRead2,TablesRead3,TablesRead5;
 
     // Virtual machine to execute filters code.
     RarVM VM;
@@ -359,16 +376,13 @@ class Unpack:PackDef
     Unpack(ComprDataIO *DataIO);
     ~Unpack();
     void Init(size_t WinSize,bool Solid);
-    void DoUnpack(int Method,bool Solid);
+    void DoUnpack(uint Method,bool Solid);
     bool IsFileExtracted() {return(FileExtracted);}
     void SetDestSize(int64 DestSize) {DestUnpSize=DestSize;FileExtracted=false;}
     void SetSuspended(bool Suspended) {Unpack::Suspended=Suspended;}
 
 #ifdef RAR_SMP
-    // More than 8 threads are unlikely to provide a noticeable gain
-    // for unpacking, but would use the additional memory.
-    void SetThreads(uint Threads) {MaxUserThreads=Min(Threads,8);}
-
+    void SetThreads(uint Threads);
     void UnpackDecode(UnpackThreadData &D);
 #endif
 
@@ -378,8 +392,12 @@ class Unpack:PackDef
     uint GetChar()
     {
       if (Inp.InAddr>BitInput::MAX_SIZE-30)
+      {
         UnpReadBuf();
-      return(Inp.InBuf[Inp.InAddr++]);
+        if (Inp.InAddr>=BitInput::MAX_SIZE) // If nothing was read.
+          return 0;
+      }
+      return Inp.InBuf[Inp.InAddr++];
     }
 };
 

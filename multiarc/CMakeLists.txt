@@ -15,7 +15,6 @@ set(SOURCES
     src/arccmd.cpp
     src/formats/rar/rar.cpp
     src/formats/ha/ha.cpp
-    src/formats/custom/custom.cpp
     src/formats/arj/arj.cpp
     src/formats/ace/ace.cpp
     src/formats/arc/arc.cpp
@@ -120,13 +119,14 @@ set(SOURCES
     src/formats/7z/C/7zArcIn.c
     src/formats/7z/C/Bra.c
     src/formats/7z/C/Blake2s.c
-
-    src/libpcre/get.c
-    src/libpcre/pcre.c
-    src/libpcre/chartables.c
-    src/libpcre/study.c
-
 )
+
+if(PCRE_FOUND)
+    set(SOURCES
+        ${SOURCES}
+        src/formats/custom/custom.cpp
+    )
+endif()
 
 if(LibArchive_FOUND)
     set(SOURCES
@@ -156,10 +156,16 @@ target_include_directories(multiarc PRIVATE ../WinPort)
 target_include_directories(multiarc PRIVATE ../far2l)
 target_include_directories(multiarc PRIVATE ../far2l/Include)
 
+if(PCRE_FOUND)
+    target_compile_definitions(multiarc PRIVATE -DHAVE_PCRE)
+    target_link_libraries(multiarc ${PCRE_LIBRARIES})
+    target_include_directories(multiarc PRIVATE ${PCRE_INCLUDE_DIRS})
+endif()
+
 if(LibArchive_FOUND)
     target_compile_definitions(multiarc PRIVATE -DHAVE_LIBARCHIVE)
     target_link_libraries(multiarc ${LibArchive_LIBRARIES})
-    target_include_directories(multiarc PRIVATE ${LibArchiveINCLUDE_DIRS})
+    target_include_directories(multiarc PRIVATE ${LibArchive_INCLUDE_DIRS})
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

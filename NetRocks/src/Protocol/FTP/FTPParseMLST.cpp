@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "FTPParseMLST.h"
 #include "../../Erroring.h"

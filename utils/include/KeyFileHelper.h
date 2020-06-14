@@ -1,4 +1,5 @@
 #pragma once
+#include <sys/stat.h>
 #include <string>
 #include <unordered_map>
 #include <vector>

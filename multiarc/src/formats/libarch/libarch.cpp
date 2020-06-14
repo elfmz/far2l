@@ -31,7 +31,7 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 	archive_read_support_format_all(a);
 	archive_read_support_format_raw(a);
 
-	int r = LibArchCall(archive_read_open_memory, a, (void *)Data, (size_t)DataSize);
+	int r = archive_read_open_memory(a, (void *)Data, DataSize);
 	if (r == ARCHIVE_OK) {
 		archive_entry *ae = nullptr;
 		LibArchCall(archive_read_next_header, a, &ae);

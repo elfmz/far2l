@@ -65,6 +65,14 @@ if(NOT HAVE_M4)
 endif ()
 
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# workaround for brew vs system openssl conflicts
+	if(IS_DIRECTORY "/usr/local/opt/openssl@1.1/include" AND IS_DIRECTORY "/usr/local/opt/openssl@1.1/lib")
+		set(OPENSSL_LIBRARIES "/usr/local/opt/openssl@1.1/lib/libcrypto.dylib;/usr/local/opt/openssl@1.1/lib/libssl.dylib")
+		set(OPENSSL_INCLUDE_DIRS "/usr/local/opt/openssl@1.1/include")
+	endif()
+endif()
+
 find_package(OpenSSL)
 if (OPENSSL_FOUND)
 	message(STATUS "OpenSSL found -> enjoy FTPS support in NetRocks")

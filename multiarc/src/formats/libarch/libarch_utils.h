@@ -8,7 +8,7 @@
 template <typename ... ARGS>
 	static int LibArchCall(int (*pfn)(ARGS ... args), ARGS ... args)
 {
-	for (unsigned char i = 0;; ++i) {
+	for (unsigned int i = 0;; ++i) {
 		int r = pfn(args ...);
 		if (r != ARCHIVE_RETRY || i == 1000) {
 			return r;

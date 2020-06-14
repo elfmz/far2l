@@ -105,9 +105,17 @@ if(NOT PCRE_FOUND)
 	message(WARNING "${Esc}[1;31mlibpcre not found, multiarc will have no custom archives support. Install libpcre and reconfigure far2l if you need that functionality.${Esc}[39;22m")
 endif()
 
+
 find_package(LibArchive)
 if(NOT LibArchive_FOUND)
-	message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")
+	# workaround for brew's libarchive
+	if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
+		set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
+	endif()
+	find_package(LibArchive)
+	if(NOT LibArchive_FOUND)
+		message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")
+	endif()
 endif()
 
 

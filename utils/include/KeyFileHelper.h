@@ -1,12 +1,16 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class KeyFileHelper
 {
-	struct _GKeyFile *_kf;
+	typedef std::unordered_map<std::string, std::string>  Values;
+	struct Sections : std::unordered_map<std::string, Values> {} _kf;
 	std::string _filename;
+	mode_t _filemode = 0640;
 	bool _dirty, _loaded;
+
 public:
 	KeyFileHelper(const char *filename, bool load = true) ;
 	~KeyFileHelper();

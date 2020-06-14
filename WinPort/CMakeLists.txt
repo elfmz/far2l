@@ -13,9 +13,6 @@ if (${USEWX})
 	include(${wxWidgets_USE_FILE})
 endif()
 
-pkg_check_modules(GLIB2 glib-2.0)
-
-
 add_subdirectory(wineguts)
 
 set(SOURCES
@@ -77,7 +74,6 @@ if (NOT ${USEWX})
 endif()
 
 
-target_include_directories(WinPort PRIVATE ${GLIB2_INCLUDE_DIRS})
 target_include_directories(WinPort PRIVATE ${USEWX_INCS})
 
 target_include_directories(WinPort PRIVATE .)
@@ -92,11 +88,4 @@ if(THREADS_HAVE_PTHREAD_ARG)
 endif()
 if(CMAKE_THREAD_LIBS_INIT)
   target_link_libraries(WinPort "${CMAKE_THREAD_LIBS_INIT}")
-endif()
-
-target_link_libraries(WinPort ${GLIB2_LIBRARIES})
-if(${CMAKE_VERSION} VERSION_LESS "3.13.5")
-	target_link_libraries(WinPort ${GLIB2_LDFLAGS})
-else()
-	target_link_options(WinPort PUBLIC ${GLIB2_LDFLAGS})
 endif()

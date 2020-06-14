@@ -100,6 +100,11 @@ else()
 	message(WARNING "${Esc}[1;31mlibneon not found, NetRocks will not have WebDav protocol support. Install libneon*-dev if you want WebDav protocol available in NetRocks.${Esc}[39;22m")
 endif (LIBNEON_FOUND)
 
+find_package(PCRE)
+if(NOT PCRE_FOUND)
+	message(WARNING "${Esc}[1;31mlibpcre not found, multiarc will have no custom archives support. Install libpcre and reconfigure far2l if you need that functionality.${Esc}[39;22m")
+endif()
+
 find_package(LibArchive)
 if(NOT LibArchive_FOUND)
 	message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")

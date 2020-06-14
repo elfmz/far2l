@@ -42,8 +42,6 @@ src/fstd_ClpS.cpp
 
 add_library (FARStdlib ${SOURCES})
 
-target_include_directories(FARStdlib PRIVATE ${GLIB2_INCLUDE_DIRS})
-
 target_include_directories(FARStdlib PRIVATE include)
 target_include_directories(FARStdlib PRIVATE ../WinPort)
 target_include_directories(FARStdlib PRIVATE ../far2l)

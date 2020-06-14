@@ -134,7 +134,6 @@ if(LibArchive_FOUND)
         src/formats/libarch/libarch_utils.cpp
         src/formats/libarch/libarch_cmd_read.cpp
         src/formats/libarch/libarch_cmd_write.cpp
-        src/formats/libarch/libarch_cmd_delete.cpp
         src/formats/libarch/libarch.cpp
     )
 else()

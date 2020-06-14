@@ -11,6 +11,7 @@
 #include <ScopeHelpers.h>
 
 #include "libarch_utils.h"
+#include "libarch_cmd.h"
 
 struct AddFileCtx {
 	AddFileCtx(LibArchOpenWrite &arc_) : arc(arc_) {}
@@ -19,6 +20,7 @@ struct AddFileCtx {
 	bool with_path = true;
 	bool out = false;
 	std::unique_ptr<std::set<std::string>> rm_set;
+	std::string arc_root_path;
 };
 
 static std::unique_ptr<AddFileCtx> s_addfile_ctx;
@@ -39,12 +41,18 @@ static bool LIBARCH_CommandAddFile(const char *fpath)
 	}
 
 	bool out = true;
+	std::string entry_fpath = s_addfile_ctx->arc_root_path;
+	if (!entry_fpath.empty() && entry_fpath.back() != '/') {
+		entry_fpath+= '/';
+	}
 	if (!s_addfile_ctx->with_path) {
 		const char *slash = strrchr(fpath, '/');
-		archive_entry_set_pathname(entry, slash ? slash + 1 : fpath);
+		entry_fpath+= slash ? slash + 1 : fpath;
 	} else {
-		archive_entry_set_pathname(entry, fpath);
+		entry_fpath+= fpath;
 	}
+
+	archive_entry_set_pathname(entry, entry_fpath.c_str());
 	archive_entry_set_size(entry, s.st_size);
 	archive_entry_set_perm(entry, s.st_mode & 07777);
 
@@ -147,7 +155,7 @@ static int LIBARCH_CommandHandlerFTW(const char *fpath, const struct stat *sb, i
 	return 0;
 }
 
-static bool LIBARCH_CommandHandlerOnFixedPath(LibArchOpenWrite &arc, const char *cmd, const char *wanted_path)
+static bool LIBARCH_CommandInsertFileFixedPath(const char *cmd, LibArchOpenWrite &arc, const char *arc_root_path, const char *wanted_path)
 {
 	std::lock_guard<std::mutex> locker(s_addfile_mtx);
 	s_addfile_ctx.reset(new AddFileCtx(arc) ) ;
@@ -158,6 +166,7 @@ static bool LIBARCH_CommandHandlerOnFixedPath(LibArchOpenWrite &arc, const char 
 	}
 
 	s_addfile_ctx->with_path = (*cmd == 'A' || *cmd == 'M');
+	s_addfile_ctx->arc_root_path = arc_root_path;
 
 	s_addfile_ctx->out = LIBARCH_CommandAddFile(wanted_path);
 
@@ -177,7 +186,7 @@ static bool LIBARCH_CommandHandlerOnFixedPath(LibArchOpenWrite &arc, const char 
 	return s_addfile_ctx->out;
 }
 
-bool LIBARCH_CommandHandler(LibArchOpenWrite &arc, const char *cmd, const char *wanted_path = nullptr)
+static bool LIBARCH_CommandInsertFile(const char *cmd, LibArchOpenWrite &arc, const char *arc_root_path, const char *wanted_path)
 {
 	if (!wanted_path || !*wanted_path) {
 		throw std::runtime_error("no files to add specified");
@@ -188,5 +197,126 @@ bool LIBARCH_CommandHandler(LibArchOpenWrite &arc, const char *cmd, const char *
 		wanted_path_fixed.resize(wanted_path_fixed.size() - 2);
 	}
 
-	return LIBARCH_CommandHandlerOnFixedPath(arc, cmd, wanted_path_fixed.c_str());
+	return LIBARCH_CommandInsertFileFixedPath(cmd, arc, arc_root_path ? arc_root_path : "", wanted_path_fixed.c_str());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path, const char *arc_root_path, int files_cnt, char *files[])
+{
+	std::string tmp_path = arc_path;
+	tmp_path+= ".tmp";
+
+	std::string str;
+	std::vector<std::vector<std::string> > files_parts;
+	for (int i = 0; i < files_cnt; ++i) if (files[i]) {
+		files_parts.emplace_back();
+		if (arc_root_path && *arc_root_path) {
+			str = arc_root_path;
+			StrExplode(files_parts.back(), str, "/\\");
+		}
+		str = files[i];
+		StrExplode(files_parts.back(), str, "/\\");
+	}
+
+	std::vector<std::string> parts;
+
+	try {
+		LibArchOpenRead arc_src(arc_path);
+		LibArchOpenWrite arc_dst(tmp_path.c_str(), arc_src.Get());
+		for (;;) {
+			struct archive_entry *entry = arc_src.NextHeader();
+			if (!entry) {
+				break;
+			}
+			const char *pathname = archive_entry_pathname(entry);
+			if (pathname) {
+				parts.clear();
+				str = pathname;
+				StrExplode(parts, str, "/\\");
+				bool matches = false;
+				for (const auto &fp : files_parts) {
+					size_t i = 0;
+					while (i != fp.size() && i != parts.size() && (fp[i] == parts[i] || fp[i] == "*")) {
+						++i;
+					}
+					if (i == fp.size()) {
+						matches = true;
+						break;
+					}
+				}
+				if (matches) {
+					arc_src.SkipData();
+					printf("Deleted: %s\n", pathname);
+					continue;
+				}
+			}
+
+			int r = LibArchCall(archive_write_header, arc_dst.Get(), entry);
+			if (r != ARCHIVE_OK) {
+				throw std::runtime_error(StrPrintf(
+					"Error %d writing header: %s", r, pathname));
+			}
+
+			if (archive_entry_filetype(entry) != AE_IFREG || archive_entry_size(entry) == 0) {
+				continue;
+			}
+
+			for (__LA_INT64_T offset = 0, sz = archive_entry_size(entry); offset < sz;) {
+				const void *buf = nullptr;
+				size_t size = 0;
+				int r = LibArchCall(archive_read_data_block, arc_src.Get(), &buf, &size, &offset);
+				if (r != ARCHIVE_OK || size == 0) {
+					throw std::runtime_error(StrPrintf("Error %d reading at 0x%llx : %s",
+						r, (unsigned long long)offset, archive_entry_pathname(entry)));
+				}
+				if (!arc_dst.WriteData(buf, size)) {
+					throw std::runtime_error("write data failed");
+				}
+				offset+= size;
+			}
+		}
+
+		if (*cmd != 'd' && *cmd != 'D') for (int i = 0; i < files_cnt; ++i) if (files[i]) {
+			if (!LIBARCH_CommandInsertFile(cmd, arc_dst, arc_root_path, files[i])) {
+				throw std::runtime_error(StrPrintf("Failed to add: %s", files[i]));
+			}
+		}
+
+	} catch (std::exception &e) {
+		remove(tmp_path.c_str());
+		fprintf(stderr, "Exception: %s\n", e.what());
+		return false;
+	}
+
+	if (rename(tmp_path.c_str(), arc_path) == -1) {
+		fprintf(stderr, "Rename error %u: %s -> %s\n", errno, tmp_path.c_str(), arc_path);
+		remove(tmp_path.c_str());
+		return false;
+	}
+
+	return true;
+}
+
+bool LIBARCH_CommandDelete(const char *cmd, const char *arc_path, const char *arc_root_path, int files_cnt, char *files[])
+{
+	return LIBARCH_CommandRemoveOrReplace(cmd, arc_path, arc_root_path, files_cnt, files);
+}
+
+bool LIBARCH_CommandAdd(const char *cmd, const char *arc_path, const char *arc_root_path, int files_cnt, char *files[])
+{
+	struct stat s{};
+	if (lstat(arc_path, &s) == 0) {
+		return LIBARCH_CommandRemoveOrReplace(cmd, arc_path, arc_root_path, files_cnt, files);
+	}
+
+	LibArchOpenWrite arc(arc_path, cmd);
+	bool out = true;
+	for (int i = 0; i < files_cnt; ++i) {
+		if (!LIBARCH_CommandInsertFile(cmd, arc, arc_root_path, files[i])) {
+			out = false;
+		}
+	}
+
+	return out;
 }

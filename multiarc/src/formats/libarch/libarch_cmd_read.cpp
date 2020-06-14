@@ -11,12 +11,16 @@
 #include <ScopeHelpers.h>
 
 #include "libarch_utils.h"
+#include "libarch_cmd.h"
 
-bool LIBARCH_CommandHandler(LibArchOpenRead &arc, const char *cmd, const char *wanted_path = nullptr)
+static bool LIBARCH_CommandReadPath(const char *cmd, LibArchOpenRead &arc, const char *arc_root_path, const char *wanted_path)
 {
 	std::string src_path, extract_path;
 	std::vector<std::string> parts, wanted;
-	
+
+	if (arc_root_path && *arc_root_path) {
+		StrExplode(wanted, std::string(arc_root_path), "/\\");
+	}
 	if (wanted_path && *wanted_path) {
 		StrExplode(wanted, std::string(wanted_path), "/\\");
 	}
@@ -45,7 +49,7 @@ bool LIBARCH_CommandHandler(LibArchOpenRead &arc, const char *cmd, const char *w
 		}
 
 		if (i != wanted.size()) {
-			printf("Skip: '%s'\n", pathname);
+			//printf("Skip: '%s'\n", pathname);
 			continue;
 		}
 
@@ -83,5 +87,17 @@ bool LIBARCH_CommandHandler(LibArchOpenRead &arc, const char *cmd, const char *w
 		}
 	}
 
+	return out;
+}
+
+bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const char *arc_root_path, int files_cnt, char *files[])
+{
+	bool out = true;
+	LibArchOpenRead arc(arc_path, cmd);
+	for (int i = 0; i < files_cnt; ++i) {
+		if (!LIBARCH_CommandReadPath(cmd, arc, arc_root_path, files[i]) ) {
+			out = false;
+		}
+	}
 	return out;
 }

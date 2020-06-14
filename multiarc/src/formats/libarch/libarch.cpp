@@ -7,7 +7,10 @@
 
 #include <pluginold.hpp>
 using namespace oldfar;
+
 #include "fmt.hpp"
+
+#include "libarch_cmd.h"
 
 enum MenuFormats
 {
@@ -193,10 +196,10 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 	/*Lock archive          */"",
 	/*Protect archive       */"",
 	/*Recover archive       */"",
-	/*Add files             */"^libarch a:<<fmt>> %%A %%FMq*4096",
-	/*Move files            */"^libarch m:<<fmt>> %%A %%FMq*4096",
-	/*Add files and folders */"^libarch A:<<fmt>> %%A %%FMq*4096",
-	/*Move files and folders*/"^libarch M:<<fmt>> %%A %%FMq*4096",
+	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R %%FMq*4096",
+	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R %%FMq*4096",
+	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R %%FMq*4096",
+	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R %%FMq*4096",
 	/*"All files" mask      */"*"
 	};
 
@@ -220,35 +223,10 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-bool LIBARCH_CommandHandler(LibArchOpenRead &arc, const char *cmd, const char *wanted_path = nullptr);
-bool LIBARCH_CommandHandler(LibArchOpenWrite &arc, const char *cmd, const char *wanted_path = nullptr);
-bool LIBARCH_CommandDelete(const char *arc_path, int files_cnt, char *files[]);
-
-template <class OPEN_T>
-	static bool LIBARCH_Command( int numargs, char *args[])
-{
-	bool out = true;
-
-	OPEN_T arc(args[2], args[1]);
-
-	if (numargs == 3) {
-		if (!LIBARCH_CommandHandler(arc, args[1])) {
-			out = false;
-		}
-
-	} else for (int i = 3; i < numargs; ++i) {
-		if (!LIBARCH_CommandHandler(arc, args[1], args[i])) {
-			out = false;
-		}
-	}
-
-	return out;
-}
-
 extern "C" int libarch_main(int numargs, char *args[])
 {
 	if (numargs < 3) {
-		printf("Usage: ^arch <command> <archive_name> [OPTIONAL LIST OF FILES]\n\n"
+		printf("Usage: ^arch <command> <archive_name> [-@OPTIONAL ARCHIVE ROOT] [OPTIONAL LIST OF FILES]\n\n"
 			"<Commands>\n"
 			"  t: Test integrity of archive\n"
 			"  x: Extract files from archive (without using directory names)\n"
@@ -261,35 +239,39 @@ extern "C" int libarch_main(int numargs, char *args[])
 		return 1;
 	}
 
-	int out = 0;
 	try {
+		bool ok;
+
+		int files_cnt = numargs - 3;
+		char **files = &args[3];
+		const char *arc_root_path = nullptr;
+		if (files_cnt > 0 && files[0][0] == '-' && files[0][1] == '@') {
+			arc_root_path = files[0] + 2;
+			++files;
+			--files_cnt;
+		}
+
 		switch (*(args[1])) {
-			case 'd':
-				if (!LIBARCH_CommandDelete(args[2], numargs - 3, &args[3])) {
-					out = 1;
-				}
+			case 't': case 'x': case 'X':
+				ok = LIBARCH_CommandRead(args[1], args[2], arc_root_path, files_cnt, files);
 				break;
 
-			case 't': case 'x': case 'X':
-				if (!LIBARCH_Command<LibArchOpenRead>(numargs, args)) {
-					out = 1;
-				}
+			case 'd':
+				ok = LIBARCH_CommandDelete(args[1], args[2], arc_root_path, files_cnt, files);
 				break;
 
 			case 'a': case 'A': case 'm': case 'M':
-				if (!LIBARCH_Command<LibArchOpenWrite>(numargs, args)) {
-					out = 1;
-				}
+				ok = LIBARCH_CommandAdd(args[1], args[2], arc_root_path, files_cnt, files);
 				break;
 
 			default:
 				throw std::runtime_error(std::string("bad command: ").append(args[1]));
 		}
 
+		return ok ? 0 : 1;
+
 	} catch( std::exception &e) {
 		fprintf(stderr, "Exception: %s\n", e.what());
 		return -1;
 	}
-
-	return out;
 }

@@ -6,10 +6,7 @@ static RAR_CHARSET RedirectCharset=RCH_DEFAULT;
 
 const int MaxMsgSize=2*NM+2048;
 
-#ifdef _WIN_ALL
 static bool StdoutRedirected=false,StderrRedirected=false,StdinRedirected=false;
-#endif
-
 
 #ifdef _WIN_ALL
 static bool IsRedirected(DWORD nStdHandle)
@@ -44,13 +41,22 @@ void InitConsole()
   if (!StderrRedirected)
     _setmode(_fileno(stderr), _O_U16TEXT);
 #endif
+#elif defined(_UNIX)
+  StdoutRedirected=!isatty(fileno(stdout));
+  StderrRedirected=!isatty(fileno(stderr));
+  StdinRedirected=!isatty(fileno(stdin));
 #endif
 }
 
 
-void InitConsoleOptions(MESSAGE_TYPE MsgStream,RAR_CHARSET RedirectCharset)
+void SetConsoleMsgStream(MESSAGE_TYPE MsgStream)
 {
   ::MsgStream=MsgStream;
+}
+
+
+void SetConsoleRedirectCharset(RAR_CHARSET RedirectCharset)
+{
   ::RedirectCharset=RedirectCharset;
 }
 
@@ -75,8 +81,11 @@ static void cvt_wprintf(FILE *dest,const wchar *fmt,va_list arglist)
     {
       // Avoid Unicode for redirect in Windows, it does not work with pipes.
       safebuf char MsgA[MaxMsgSize];
-      WideToChar(Msg,MsgA,ASIZE(MsgA));
-      if (RedirectCharset!=RCH_ANSI)
+      if (RedirectCharset==RCH_UTF8)
+        WideToUtf(Msg,MsgA,ASIZE(MsgA));
+      else
+        WideToChar(Msg,MsgA,ASIZE(MsgA));
+      if (RedirectCharset==RCH_DEFAULT || RedirectCharset==RCH_OEM)
         CharToOemA(MsgA,MsgA); // Console tools like 'more' expect OEM encoding.
 
       // We already converted \n to \r\n above, so we use WriteFile instead
@@ -136,32 +145,37 @@ static void GetPasswordText(wchar *Str,uint MaxLength)
 {
   if (MaxLength==0)
     return;
+  if (StdinRedirected)
+    getwstr(Str,MaxLength); // Read from pipe or redirected file.
+  else
+  {
 #ifdef _WIN_ALL
-  HANDLE hConIn=GetStdHandle(STD_INPUT_HANDLE);
-  HANDLE hConOut=GetStdHandle(STD_OUTPUT_HANDLE);
-  DWORD ConInMode,ConOutMode;
-  DWORD Read=0;
-  GetConsoleMode(hConIn,&ConInMode);
-  GetConsoleMode(hConOut,&ConOutMode);
-  SetConsoleMode(hConIn,ENABLE_LINE_INPUT);
-  SetConsoleMode(hConOut,ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
+    HANDLE hConIn=GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hConOut=GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD ConInMode,ConOutMode;
+    DWORD Read=0;
+    GetConsoleMode(hConIn,&ConInMode);
+    GetConsoleMode(hConOut,&ConOutMode);
+    SetConsoleMode(hConIn,ENABLE_LINE_INPUT);
+    SetConsoleMode(hConOut,ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
 
-  ReadConsole(hConIn,Str,MaxLength-1,&Read,NULL);
-  Str[Read]=0;
-  SetConsoleMode(hConIn,ConInMode);
-  SetConsoleMode(hConOut,ConOutMode);
+    ReadConsole(hConIn,Str,MaxLength-1,&Read,NULL);
+    Str[Read]=0;
+    SetConsoleMode(hConIn,ConInMode);
+    SetConsoleMode(hConOut,ConOutMode);
 #else
-  char StrA[MAXPASSWORD];
+    char StrA[MAXPASSWORD];
 #if defined(_EMX) || defined (__VMS)
-  fgets(StrA,ASIZE(StrA)-1,stdin);
+    fgets(StrA,ASIZE(StrA)-1,stdin);
 #elif defined(__sun)
-  strncpyz(StrA,getpassphrase(""),ASIZE(StrA));
+    strncpyz(StrA,getpassphrase(""),ASIZE(StrA));
 #else
-  strncpyz(StrA,getpass(""),ASIZE(StrA));
+    strncpyz(StrA,getpass(""),ASIZE(StrA));
 #endif
-  CharToWide(StrA,Str,MaxLength);
-  cleandata(StrA,sizeof(StrA));
+    CharToWide(StrA,Str,MaxLength);
+    cleandata(StrA,sizeof(StrA));
 #endif
+  }
   Str[MaxLength-1]=0;
   RemoveLF(Str);
 }
@@ -171,20 +185,22 @@ static void GetPasswordText(wchar *Str,uint MaxLength)
 #ifndef SILENT
 bool GetConsolePassword(UIPASSWORD_TYPE Type,const wchar *FileName,SecPassword *Password)
 {
-  uiAlarm(UIALARM_QUESTION);
+  if (!StdinRedirected)
+    uiAlarm(UIALARM_QUESTION);
   
   while (true)
   {
-    if (Type==UIPASSWORD_GLOBAL)
-      eprintf(L"\n%s: ",St(MAskPsw));
-    else
-      eprintf(St(MAskPswFor),FileName);
+    if (!StdinRedirected)
+      if (Type==UIPASSWORD_GLOBAL)
+        eprintf(L"\n%s: ",St(MAskPsw));
+      else
+        eprintf(St(MAskPswFor),FileName);
 
     wchar PlainPsw[MAXPASSWORD];
     GetPasswordText(PlainPsw,ASIZE(PlainPsw));
     if (*PlainPsw==0 && Type==UIPASSWORD_GLOBAL)
       return false;
-    if (Type==UIPASSWORD_GLOBAL)
+    if (!StdinRedirected && Type==UIPASSWORD_GLOBAL)
     {
       eprintf(St(MReAskPsw));
       wchar CmpStr[MAXPASSWORD];
@@ -231,8 +247,9 @@ bool getwstr(wchar *str,size_t n)
       // calling Ask(), so let's better exit.
       ErrHandler.Exit(RARX_USERBREAK);
     }
-    StrA[ReadSize-1]=0;
+    StrA[ReadSize]=0;
     CharToWide(&StrA[0],str,n);
+    cleandata(&StrA[0],StrA.Size()); // We can use this function to enter passwords.
   }
   else
   {

@@ -47,6 +47,10 @@ class ScanTree
     // Store a filter string for folder wildcard in recursive mode.
     StringList FilterList;
 
+    // Save the list of unreadable dirs here.
+    StringList *ErrDirList;
+    Array<uint> *ErrDirSpecPathLength;
+
     // Set if processing a folder wildcard mask.
     bool FolderWildcards;
 
@@ -60,10 +64,15 @@ class ScanTree
     ScanTree(StringList *FileMasks,RECURSE_MODE Recurse,bool GetLinks,SCAN_DIRS GetDirs);
     ~ScanTree();
     SCAN_CODE GetNext(FindData *FindData);
-    size_t GetSpecPathLength() {return SpecPathLength;};
+    size_t GetSpecPathLength() {return SpecPathLength;}
     int GetErrors() {return Errors;};
     void SetErrArcName(const wchar *Name) {wcsncpyz(ErrArcName,Name,ASIZE(ErrArcName));}
     void SetCommandData(CommandData *Cmd) {ScanTree::Cmd=Cmd;}
+    void SetErrDirList(StringList *List,Array<uint> *Lengths)
+    {
+      ErrDirList=List;
+      ErrDirSpecPathLength=Lengths;
+    }
 };
 
 #endif

@@ -22,15 +22,17 @@ void SetPriority(int Priority);
 clock_t MonoClock();
 void Wait();
 bool EmailFile(const wchar *FileName,const wchar *MailToW);
-void Shutdown();
+void Shutdown(POWER_MODE Mode);
+bool ShutdownCheckAnother(bool Open);
 
 #ifdef _WIN_ALL
 HMODULE WINAPI LoadSysLibrary(const wchar *Name);
+bool IsUserAdmin();
 #endif
 
 
 #ifdef USE_SSE
-enum SSE_VERSION {SSE_NONE,SSE_SSE,SSE_SSE2,SSE_SSSE3,SSE_SSE41};
+enum SSE_VERSION {SSE_NONE,SSE_SSE,SSE_SSE2,SSE_SSSE3,SSE_SSE41,SSE_AVX2};
 SSE_VERSION GetSSEVersion();
 extern SSE_VERSION _SSE_Version;
 #endif

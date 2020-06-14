@@ -49,6 +49,7 @@ else (OPENSSL_LIBRARIES AND OPENSSL_INCLUDE_DIRS)
         "$ENV{PROGRAMFILES}/OpenSSL"
         "$ENV{PROGRAMFILES}/OpenSSL-Win32"
         "$ENV{PROGRAMFILES}/OpenSSL-Win64"
+	"/usr/local/opt/openssl/"
     )
 
     find_path(OPENSSL_ROOT_DIR

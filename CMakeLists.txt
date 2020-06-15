@@ -65,6 +65,14 @@ if(NOT HAVE_M4)
 endif ()
 
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# workaround for brew vs system openssl conflicts
+	if(IS_DIRECTORY "/usr/local/opt/openssl@1.1/include" AND IS_DIRECTORY "/usr/local/opt/openssl@1.1/lib")
+		set(OPENSSL_LIBRARIES "/usr/local/opt/openssl@1.1/lib/libcrypto.dylib;/usr/local/opt/openssl@1.1/lib/libssl.dylib")
+		set(OPENSSL_INCLUDE_DIRS "/usr/local/opt/openssl@1.1/include")
+	endif()
+endif()
+
 find_package(OpenSSL)
 if (OPENSSL_FOUND)
 	message(STATUS "OpenSSL found -> enjoy FTPS support in NetRocks")
@@ -99,6 +107,24 @@ if (LIBNEON_FOUND)
 else()
 	message(WARNING "${Esc}[1;31mlibneon not found, NetRocks will not have WebDav protocol support. Install libneon*-dev if you want WebDav protocol available in NetRocks.${Esc}[39;22m")
 endif (LIBNEON_FOUND)
+
+find_package(PCRE)
+if(NOT PCRE_FOUND)
+	message(WARNING "${Esc}[1;31mlibpcre not found, multiarc will have no custom archives support. Install libpcre and reconfigure far2l if you need that functionality.${Esc}[39;22m")
+endif()
+
+
+find_package(LibArchive)
+if(NOT LibArchive_FOUND)
+	# workaround for brew's libarchive
+	if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
+		set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
+	endif()
+	find_package(LibArchive)
+	if(NOT LibArchive_FOUND)
+		message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")
+	endif()
+endif()
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address

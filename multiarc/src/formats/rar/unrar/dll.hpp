@@ -1,7 +1,7 @@
 #ifndef _UNRAR_DLL_
 #define _UNRAR_DLL_
 
-#pragma pack(1)
+#pragma pack(push, 1)
 
 #define ERAR_SUCCESS             0
 #define ERAR_END_ARCHIVE        10
@@ -31,7 +31,7 @@
 #define RAR_VOL_ASK           0
 #define RAR_VOL_NOTIFY        1
 
-#define RAR_DLL_VERSION       7
+#define RAR_DLL_VERSION       8
 
 #define RAR_HASH_NONE         0
 #define RAR_HASH_CRC32        1
@@ -102,7 +102,13 @@ struct RARHeaderDataEx
   wchar_t      *RedirName;
   unsigned int RedirNameSize;
   unsigned int DirTarget;
-  unsigned int Reserved[994];
+  unsigned int MtimeLow;
+  unsigned int MtimeHigh;
+  unsigned int CtimeLow;
+  unsigned int CtimeHigh;
+  unsigned int AtimeLow;
+  unsigned int AtimeHigh;
+  unsigned int Reserved[988];
 };
 
 
@@ -119,6 +125,18 @@ struct RAROpenArchiveData
 
 typedef int (CALLBACK *UNRARCALLBACK)(UINT msg,LPARAM UserData,LPARAM P1,LPARAM P2);
 
+#define ROADF_VOLUME       0x0001
+#define ROADF_COMMENT      0x0002
+#define ROADF_LOCK         0x0004
+#define ROADF_SOLID        0x0008
+#define ROADF_NEWNUMBERING 0x0010
+#define ROADF_SIGNED       0x0020
+#define ROADF_RECOVERY     0x0040
+#define ROADF_ENCHEADERS   0x0080
+#define ROADF_FIRSTVOLUME  0x0100
+
+#define ROADOF_KEEPBROKEN  0x0001
+
 struct RAROpenArchiveDataEx
 {
   char         *ArcName;
@@ -132,7 +150,9 @@ struct RAROpenArchiveDataEx
   unsigned int  Flags;
   UNRARCALLBACK Callback;
   LPARAM        UserData;
-  unsigned int  Reserved[28];
+  unsigned int  OpFlags;
+  wchar_t      *CmtBufW;
+  unsigned int  Reserved[25];
 };
 
 enum UNRARCALLBACK_MESSAGES {
@@ -164,6 +184,6 @@ int    PASCAL RARGetDllVersion();
 }
 #endif
 
-#pragma pack()
+#pragma pack(pop)
 
 #endif

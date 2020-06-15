@@ -19,16 +19,14 @@ void RawRead::Reset()
   Data.SoftReset();
   ReadPos=0;
   DataSize=0;
-#ifndef SHELL_EXT
   Crypt=NULL;
-#endif
 }
 
 
 size_t RawRead::Read(size_t Size)
 {
   size_t ReadSize=0;
-#if !defined(SHELL_EXT) && !defined(RAR_NOCRYPT)
+#if !defined(RAR_NOCRYPT)
   if (Crypt!=NULL)
   {
     // Full size of buffer with already read data including data read 
@@ -117,7 +115,9 @@ uint64 RawRead::Get8()
 uint64 RawRead::GetV()
 {
   uint64 Result=0;
-  for (uint Shift=0;ReadPos<DataSize;Shift+=7)
+  // Need to check Shift<64, because for shift greater than or equal to
+  // the width of the promoted left operand, the behavior is undefined.
+  for (uint Shift=0;ReadPos<DataSize && Shift<64;Shift+=7)
   {
     byte CurByte=Data[ReadPos++];
     Result+=uint64(CurByte & 0x7f)<<Shift;

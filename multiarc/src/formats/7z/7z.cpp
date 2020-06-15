@@ -58,7 +58,7 @@ class Traverser
 {
 	CSzArEx _db;
 	CFileInStream _file_stream;
-	CLookToRead _look_stream;
+	CLookToRead2 _look_stream;
 	std::wstring _tmp_str;
 	
 	ISzAlloc _alloc_imp, _alloc_temp_imp;
@@ -81,16 +81,22 @@ public:
 		_alloc_temp_imp.Free = SzFreeTemp;
 
 		FileInStream_CreateVTable(&_file_stream);
-		LookToRead_CreateVTable(&_look_stream, False);
-		
-		_look_stream.realStream = &_file_stream.s;
-		LookToRead_Init(&_look_stream);
+		LookToRead2_CreateVTable(&_look_stream, False);
+
+		const size_t inbuf_len = 0x2000;
+		_look_stream.buf = (Byte *)ISzAlloc_Alloc(&_alloc_imp, inbuf_len);
+		if (!_look_stream.buf)
+			return;
+
+		_look_stream.bufSize = inbuf_len;
+		_look_stream.realStream = &_file_stream.vt;
+		LookToRead2_Init(&_look_stream);
 		
 		static volatile int i = (CrcGenerateTable(), 0);
 		
 		SzArEx_Init(&_db);
 			
-		if (SzArEx_Open(&_db, &_look_stream.s, &_alloc_imp, &_alloc_temp_imp)==SZ_OK) 
+		if (SzArEx_Open(&_db, &_look_stream.vt, &_alloc_imp, &_alloc_temp_imp)==SZ_OK) 
 			_valid = true;
 	}
 	
@@ -99,6 +105,7 @@ public:
 		if (_opened) {
 			SzArEx_Free(&_db, &g_alloc_imp);
 			SzFree(NULL, _temp);
+			ISzAlloc_Free(&_alloc_imp, _look_stream.buf);
 			File_Close(&_file_stream.file);
 		}
 	}

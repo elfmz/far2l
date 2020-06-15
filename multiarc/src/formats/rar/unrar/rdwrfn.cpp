@@ -2,6 +2,10 @@
 
 ComprDataIO::ComprDataIO()
 {
+#ifndef RAR_NOCRYPT
+  Crypt=new CryptData;
+  Decrypt=new CryptData;
+#endif
 
   Init();
 }
@@ -15,11 +19,13 @@ void ComprDataIO::Init()
   ShowProgress=true;
   TestMode=false;
   SkipUnpCRC=false;
+  NoFileHeader=false;
   PackVolume=false;
   UnpVolume=false;
   NextVolumeMissing=false;
   SrcFile=NULL;
   DestFile=NULL;
+  UnpWrAddr=NULL;
   UnpWrSize=0;
   Command=NULL;
   Encryption=false;
@@ -33,6 +39,13 @@ void ComprDataIO::Init()
 }
 
 
+ComprDataIO::~ComprDataIO()
+{
+#ifndef RAR_NOCRYPT
+  delete Crypt;
+  delete Decrypt;
+#endif
+}
 
 
 
@@ -84,7 +97,7 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
           return -1;
         ReadSize=SrcFile->Read(ReadAddr,SizeToRead);
         FileHeader *hd=SubHead!=NULL ? SubHead:&SrcArc->FileHead;
-        if (hd->SplitAfter)
+        if (!NoFileHeader && hd->SplitAfter)
           PackedDataHash.Update(ReadAddr,ReadSize);
       }
     }
@@ -127,7 +140,7 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
     ReadSize=TotalRead;
 #ifndef RAR_NOCRYPT
     if (Decryption)
-      Decrypt.DecryptBlock(Addr,ReadSize);
+      Decrypt->DecryptBlock(Addr,ReadSize);
 #endif
   }
   Wait();
@@ -273,9 +286,9 @@ void ComprDataIO::SetEncryption(bool Encrypt,CRYPT_METHOD Method,
 {
 #ifndef RAR_NOCRYPT
   if (Encrypt)
-    Encryption=Crypt.SetCryptKeys(true,Method,Password,Salt,InitV,Lg2Cnt,HashKey,PswCheck);
+    Encryption=Crypt->SetCryptKeys(true,Method,Password,Salt,InitV,Lg2Cnt,HashKey,PswCheck);
   else
-    Decryption=Decrypt.SetCryptKeys(false,Method,Password,Salt,InitV,Lg2Cnt,HashKey,PswCheck);
+    Decryption=Decrypt->SetCryptKeys(false,Method,Password,Salt,InitV,Lg2Cnt,HashKey,PswCheck);
 #endif
 }
 
@@ -284,7 +297,7 @@ void ComprDataIO::SetEncryption(bool Encrypt,CRYPT_METHOD Method,
 void ComprDataIO::SetAV15Encryption()
 {
   Decryption=true;
-  Decrypt.SetAV15Encryption();
+  Decrypt->SetAV15Encryption();
 }
 #endif
 
@@ -293,7 +306,7 @@ void ComprDataIO::SetAV15Encryption()
 void ComprDataIO::SetCmt13Encryption()
 {
   Decryption=true;
-  Decrypt.SetCmt13Encryption();
+  Decrypt->SetCmt13Encryption();
 }
 #endif
 

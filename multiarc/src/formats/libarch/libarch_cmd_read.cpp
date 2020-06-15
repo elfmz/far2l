@@ -13,17 +13,31 @@
 #include "libarch_utils.h"
 #include "libarch_cmd.h"
 
-static bool LIBARCH_CommandReadPath(const char *cmd, LibArchOpenRead &arc, const char *arc_root_path, const char *wanted_path)
+static bool PartsMatchesWanted(const std::vector<std::string> &wanted, const std::vector<std::string> &parts)
+{
+	size_t i = 0;
+	while (i != wanted.size() && i != parts.size() && (wanted[i] == parts[i] || wanted[i] == "*")) {
+		++i;
+	}
+
+	return (i == wanted.size());
+}
+
+static bool PartsMatchesAnyOfWanteds(const std::vector<std::vector<std::string> > &wanteds, const std::vector<std::string> &parts)
+{
+	for (const auto &w : wanteds) {
+		if (PartsMatchesWanted(w, parts)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, const std::vector<std::vector<std::string> > &wanteds)
 {
 	std::string src_path, extract_path;
-	std::vector<std::string> parts, wanted;
-
-	if (arc_root_path && *arc_root_path) {
-		StrExplode(wanted, std::string(arc_root_path), "/\\");
-	}
-	if (wanted_path && *wanted_path) {
-		StrExplode(wanted, std::string(wanted_path), "/\\");
-	}
+	std::vector<std::string> parts;
 
 	bool out = true;
 	for (;;) {
@@ -40,16 +54,12 @@ static bool LIBARCH_CommandReadPath(const char *cmd, LibArchOpenRead &arc, const
 
 		if (parts.empty()) {
 			fprintf(stderr, "Empty path: '%s'\n", pathname);
+			arc.SkipData();
 			continue;
 		}
 
-		size_t i = 0;
-		while (i != wanted.size() && i != parts.size() && (wanted[i] == parts[i] || wanted[i] == "*")) {
-			++i;
-		}
-
-		if (i != wanted.size()) {
-			//printf("Skip: '%s'\n", pathname);
+		if (!wanteds.empty() && !PartsMatchesAnyOfWanteds(wanteds, parts)) {
+			arc.SkipData();
 			continue;
 		}
 
@@ -92,12 +102,27 @@ static bool LIBARCH_CommandReadPath(const char *cmd, LibArchOpenRead &arc, const
 
 bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const char *arc_root_path, int files_cnt, char *files[])
 {
-	bool out = true;
-	LibArchOpenRead arc(arc_path, cmd);
+	std::vector<std::vector<std::string> > wanteds;
+	wanteds.reserve(files_cnt);
+
 	for (int i = 0; i < files_cnt; ++i) {
-		if (!LIBARCH_CommandReadPath(cmd, arc, arc_root_path, files[i]) ) {
-			out = false;
+		wanteds.emplace_back();
+		if (arc_root_path && *arc_root_path) {
+			StrExplode(wanteds.back(), std::string(arc_root_path), "/\\");
+		}
+		if (files[i] && *files[i]) {
+			StrExplode(wanteds.back(), std::string(files[i]), "/\\");
+		}
+		if (wanteds.back().empty()) {
+			fprintf(stderr, "Skipping empty path: '%s'\n", files[i]);
+			wanteds.pop_back();
 		}
 	}
-	return out;
+
+	if (wanteds.empty() && files_cnt > 0) {
+		return false;
+	}
+
+	LibArchOpenRead arc(arc_path, cmd);
+	return LIBARCH_CommandReadWanteds(cmd, arc, wanteds);
 }

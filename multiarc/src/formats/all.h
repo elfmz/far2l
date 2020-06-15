@@ -80,3 +80,10 @@ int WINAPI _export SEVENZ_GetArcItem(struct PluginPanelItem *Item, struct ArcIte
 BOOL WINAPI _export SEVENZ_CloseArchive(struct ArcInfo *Info);
 BOOL WINAPI _export SEVENZ_GetFormatName(int Type,char *FormatName,char *DefaultExt);
 BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest);
+BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Data, int DataSize);
+BOOL WINAPI _export LIBARCH_OpenArchive(const char *Name, int *Type);
+DWORD WINAPI _export LIBARCH_GetSFXPos(void);
+int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info);
+BOOL WINAPI _export LIBARCH_CloseArchive(struct ArcInfo *Info);
+BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *DefaultExt);
+BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest);

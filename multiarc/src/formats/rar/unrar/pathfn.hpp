@@ -3,7 +3,7 @@
 
 wchar* PointToName(const wchar *Path);
 wchar* PointToLastChar(const wchar *Path);
-wchar* ConvertPath(const wchar *SrcPath,wchar *DestPath);
+wchar* ConvertPath(const wchar *SrcPath,wchar *DestPath,size_t DestSize);
 void SetName(wchar *FullName,const wchar *Name,size_t MaxSize);
 void SetExt(wchar *Name,const wchar *NewExt,size_t MaxSize);
 void SetSFXExt(wchar *SFXName,size_t MaxSize);
@@ -70,6 +70,7 @@ void GenerateArchiveName(wchar *ArcName,size_t MaxSize,const wchar *GenerateMask
 #ifdef _WIN_ALL
 bool GetWinLongPath(const wchar *Src,wchar *Dest,size_t MaxSize);
 void ConvertToPrecomposed(wchar *Name,size_t NameSize);
+void MakeNameCompatible(wchar *Name);
 #endif
 
 #endif

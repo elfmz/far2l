@@ -71,7 +71,6 @@ struct PluginItem
 {
   char ModuleName[NM];
   DWORD Flags;
-  DWORD TryIfNoOther;
   struct PluginStartupInfo Info;
   struct FarStandardFunctions FSF;
 
@@ -129,7 +128,7 @@ class PluginClass
     char CurDir[NM];
     struct PluginPanelItem *ArcData;
     int ArcDataCount;
-    WIN32_FIND_DATA ArcFindData;
+    struct stat ArcStat {};
     int ArcPluginNumber;
     int ArcPluginType;
     int LastTestState,LastWithoutPathsState;
@@ -158,6 +157,7 @@ class PluginClass
     void GetCommandFormat(int Command,char *Format,int FormatSize);
     void FreeArcData();
     bool FarLangChanged();
+    bool EnsureFindDataUpToDate();
 
   public:
     PluginClass(int ArcPluginNumber);

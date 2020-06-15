@@ -22,6 +22,7 @@ matrix:
             - libsmbclient-dev
             - libnfs-dev
             - libneon27-dev
+            - libarchive-dev
             - gawk
             - m4
             - ninja-build
@@ -45,6 +46,7 @@ matrix:
             - libsmbclient-dev
             - libnfs-dev
             - libneon27-dev
+            - libarchive-dev
             - gawk
             - m4
             - ninja-build
@@ -69,6 +71,7 @@ matrix:
             - libsmbclient-dev
             - libnfs-dev
             - libneon27-dev
+            - libarchive-dev
             - gawk
             - m4
             - ninja-build
@@ -93,6 +96,7 @@ matrix:
             - libsmbclient-dev
             - libnfs-dev
             - libneon27-dev
+            - libarchive-dev
             - gawk
             - m4
             - libpcre3-dev

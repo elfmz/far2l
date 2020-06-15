@@ -1047,7 +1047,7 @@ static bool shown_tip_exit = false;
 		}
 		if (need_sudo) {
 			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
-				EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeEscapes(cmd).c_str(), pwd_file.c_str());
+				EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_file.c_str());
 		} else {
 			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeCmdStr(cd).c_str(), cmd, pwd_file.c_str());
 		}
@@ -1183,7 +1183,7 @@ int VTShell_Execute(const char *cmd, bool need_sudo)
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	if (!g_vts)
 		g_vts.reset(new VTShell);
-		
+
 	int r = g_vts->ExecuteCommand(cmd, need_sudo);
 
 	if (!g_vts->IsOK()) {

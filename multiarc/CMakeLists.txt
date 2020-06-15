@@ -15,14 +15,12 @@ set(SOURCES
     src/arccmd.cpp
     src/formats/rar/rar.cpp
     src/formats/ha/ha.cpp
-    src/formats/custom/custom.cpp
     src/formats/arj/arj.cpp
     src/formats/ace/ace.cpp
     src/formats/arc/arc.cpp
     src/formats/zip/zip.cpp
     src/formats/lzh/lzh.cpp
     src/formats/cab/cab.cpp
-    src/formats/targz/targz.cpp
     src/formats/7z/7z.cpp
     src/formats/7z/7zMain.c
     src/formats/rar/unrar/scantree.cpp
@@ -121,19 +119,33 @@ set(SOURCES
     src/formats/7z/C/7zArcIn.c
     src/formats/7z/C/Bra.c
     src/formats/7z/C/Blake2s.c
-
-    src/libpcre/get.c
-    src/libpcre/pcre.c
-    src/libpcre/chartables.c
-    src/libpcre/study.c
-
 )
+
+if(PCRE_FOUND)
+    set(SOURCES
+        ${SOURCES}
+        src/formats/custom/custom.cpp
+    )
+endif()
+
+if(LibArchive_FOUND)
+    set(SOURCES
+        ${SOURCES}
+        src/formats/libarch/libarch_utils.cpp
+        src/formats/libarch/libarch_cmd_read.cpp
+        src/formats/libarch/libarch_cmd_write.cpp
+        src/formats/libarch/libarch.cpp
+    )
+else()
+    set(SOURCES
+        ${SOURCES}
+        src/formats/targz/targz.cpp
+    )
+endif()
 
 add_library (multiarc MODULE ${SOURCES})
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
-endif()
+target_compile_definitions(multiarc PRIVATE -DRARDLL -D_7ZIP_ST)
 
 target_link_libraries(multiarc utils far2l)
 
@@ -144,7 +156,21 @@ target_include_directories(multiarc PRIVATE ../WinPort)
 target_include_directories(multiarc PRIVATE ../far2l)
 target_include_directories(multiarc PRIVATE ../far2l/Include)
 
-target_compile_definitions(multiarc PRIVATE -DRARDLL -D_7ZIP_ST)
+if(PCRE_FOUND)
+    target_compile_definitions(multiarc PRIVATE -DHAVE_PCRE)
+    target_link_libraries(multiarc ${PCRE_LIBRARIES})
+    target_include_directories(multiarc PRIVATE ${PCRE_INCLUDE_DIRS})
+endif()
+
+if(LibArchive_FOUND)
+    target_compile_definitions(multiarc PRIVATE -DHAVE_LIBARCHIVE)
+    target_link_libraries(multiarc ${LibArchive_LIBRARIES})
+    target_include_directories(multiarc PRIVATE ${LibArchive_INCLUDE_DIRS})
+endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
+endif()
 
 set_target_properties(multiarc
   PROPERTIES

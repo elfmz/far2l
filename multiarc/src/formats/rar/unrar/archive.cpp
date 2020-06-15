@@ -1,8 +1,6 @@
 #include "rar.hpp"
 
-#ifndef SHELL_EXT
 #include "arccmt.cpp"
-#endif
 
 
 Archive::Archive(RAROptions *InitCmd)
@@ -32,8 +30,6 @@ Archive::Archive(RAROptions *InitCmd)
   CurBlockPos=0;
   NextBlockPos=0;
 
-  RecoverySize=-1;
-  RecoveryPercent=-1;
 
   memset(&MainHead,0,sizeof(MainHead));
   memset(&CryptHead,0,sizeof(CryptHead));
@@ -50,6 +46,10 @@ Archive::Archive(RAROptions *InitCmd)
 
   SilentOpen=false;
 
+#ifdef USE_QOPEN
+  ProhibitQOpen=false;
+#endif
+
 }
 
 
@@ -60,7 +60,6 @@ Archive::~Archive()
 }
 
 
-#ifndef SHELL_EXT
 void Archive::CheckArc(bool EnableBroken)
 {
   if (!IsArchive(EnableBroken))
@@ -72,10 +71,9 @@ void Archive::CheckArc(bool EnableBroken)
     ErrHandler.Exit(RARX_FATAL);
   }
 }
-#endif
 
 
-#if !defined(SHELL_EXT) && !defined(SFX_MODULE)
+#if !defined(SFX_MODULE)
 void Archive::CheckOpen(const wchar *Name)
 {
   TOpen(Name);
@@ -118,7 +116,7 @@ RARFORMAT Archive::IsSignature(const byte *D,size_t Size)
           if (D[6]==1)
             Type=RARFMT50;
           else
-            if (D[6]==2)
+            if (D[6]>1 && D[6]<5)
               Type=RARFMT_FUTURE;
       }
   return Type;
@@ -179,8 +177,7 @@ bool Archive::IsArchive(bool EnableBroken)
   }
   if (Format==RARFMT50) // RAR 5.0 signature is by one byte longer.
   {
-    Read(MarkHead.Mark+SIZEOF_MARKHEAD3,1);
-    if (MarkHead.Mark[SIZEOF_MARKHEAD3]!=0)
+    if (Read(MarkHead.Mark+SIZEOF_MARKHEAD3,1)!=1 || MarkHead.Mark[SIZEOF_MARKHEAD3]!=0)
       return false;
     MarkHead.HeadSize=SIZEOF_MARKHEAD5;
   }
@@ -196,27 +193,31 @@ bool Archive::IsArchive(bool EnableBroken)
     SilentOpen=true;
 #endif
 
+  bool HeadersLeft; // Any headers left to read.
+  bool StartFound=false; // Main or encryption headers found.
   // Skip the archive encryption header if any and read the main header.
-  while (ReadHeader()!=0)
+  while ((HeadersLeft=(ReadHeader()!=0))==true) // Additional parentheses to silence Clang.
   {
+    SeekToNext();
+
     HEADER_TYPE Type=GetHeaderType();
     // In RAR 5.0 we need to quit after reading HEAD_CRYPT if we wish to
     // avoid the password prompt.
-    if (Type==HEAD_MAIN || SilentOpen && Type==HEAD_CRYPT)
+    StartFound=Type==HEAD_MAIN || SilentOpen && Type==HEAD_CRYPT;
+    if (StartFound)
       break;
-    SeekToNext();
   }
 
-  // This check allows to make RS based recovery even if password is incorrect.
-  // But we should not do it for EnableBroken or we'll get 'not RAR archive'
+  
+  // We should not do it for EnableBroken or we'll get 'not RAR archive'
   // messages when extracting encrypted archives with wrong password.
   if (FailedHeaderDecryption && !EnableBroken)
     return false;
 
-  SeekToNext();
-  if (BrokenHeader) // Main archive header is corrupt.
+  if (BrokenHeader || !StartFound) // Main archive header is corrupt or missing.
   {
-    uiMsg(UIERROR_MHEADERBROKEN,FileName);
+    if (!FailedHeaderDecryption) // If not reported a wrong password already.
+      uiMsg(UIERROR_MHEADERBROKEN,FileName);
     if (!EnableBroken)
       return false;
   }
@@ -230,9 +231,9 @@ bool Archive::IsArchive(bool EnableBroken)
   // first file header to set "comment" flag when reading service header.
   // Unless we are in silent mode, we need to know about presence of comment
   // immediately after IsArchive call.
-  if (!SilentOpen || !Encrypted)
+  if (HeadersLeft && (!SilentOpen || !Encrypted))
   {
-    SaveFilePos SavePos(*this);
+    int64 SavePos=Tell();
     int64 SaveCurBlockPos=CurBlockPos,SaveNextBlockPos=NextBlockPos;
     HEADER_TYPE SaveCurHeaderType=CurHeaderType;
 
@@ -261,9 +262,10 @@ bool Archive::IsArchive(bool EnableBroken)
     CurBlockPos=SaveCurBlockPos;
     NextBlockPos=SaveNextBlockPos;
     CurHeaderType=SaveCurHeaderType;
+    Seek(SavePos,SEEK_SET);
   }
   if (!Volume || FirstVolume)
-    wcscpy(FirstVolumeName,FileName);
+    wcsncpyz(FirstVolumeName,FileName,ASIZE(FirstVolumeName));
 
   return true;
 }

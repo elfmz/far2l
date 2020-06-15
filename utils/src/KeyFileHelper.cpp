@@ -1,50 +1,96 @@
 #include "KeyFileHelper.h"
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+#include <atomic>
 
-//# define GLIB_VERSION_MIN_REQUIRED      (GLIB_VERSION_2_26)
-//# define GLIB_VERSION_MAX_ALLOWED	(G_ENCODE_VERSION (2, 99))
 #include <WinCompat.h>
-#include <glib.h>
 #include <string.h>
 #include <mutex>
 #include <stdlib.h>
 
-#if !GLIB_CHECK_VERSION(2,40,0)
-static gboolean g_key_file_save_to_file_xxx(GKeyFile     *key_file, const gchar  *filename, GError      **error)
-{
-  gchar *contents;
-  gboolean success;
-  gsize length;
+#include "ScopeHelpers.h"
+#include "utils.h"
 
-  g_return_val_if_fail (key_file != NULL, FALSE);
-  g_return_val_if_fail (filename != NULL, FALSE);
-  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-  contents = g_key_file_to_data (key_file, &length, NULL);
-  g_assert (contents != NULL);
-
-  success = g_file_set_contents (filename, contents, length, error);
-  g_free (contents);
-
-  return success;
-}
-# define g_key_file_save_to_file g_key_file_save_to_file_xxx
-#endif
-
-static std::mutex g_key_file_helper_mutex;
 
 KeyFileHelper::KeyFileHelper(const char *filename, bool load)
-	: _kf(g_key_file_new()),  _filename(filename), _dirty(!load), _loaded(false)
+	: _filename(filename), _dirty(!load), _loaded(false)
 {
-	GError *err = NULL;
-	if (load) {
-		g_key_file_helper_mutex.lock();
-		if (!g_key_file_load_from_file(_kf, _filename.c_str(), G_KEY_FILE_NONE, &err)) {
-			//fprintf(stderr, "KeyFileHelper(%s, %d) err=%p\n", _filename.c_str(), load, err);
-		} else {
-			_loaded = true;
+	std::string content;
+
+	for (size_t load_attempts = 0;; ++load_attempts) {
+		struct stat s {};
+		if (stat(_filename.c_str(), &s) == -1) {
+			return;
 		}
-		g_key_file_helper_mutex.unlock();
+
+		_filemode = (s.st_mode | 0600) & 0777;
+
+		if (!load) {
+			return;
+		}
+
+		FDScope fd(open(_filename.c_str(), O_RDONLY, _filemode));
+		if (!fd.Valid()) {
+			fprintf(stderr, "KeyFileHelper: error=%d opening '%s'\n", errno , _filename.c_str());
+			return;
+		}
+
+		if (s.st_size == 0) {
+			_loaded = true;
+			return;
+		}
+
+		content.resize(s.st_size);
+		ssize_t r = ReadAll(fd, &content[0], content.size());
+		if (r == (ssize_t)s.st_size) {
+			struct stat s2 {};
+			if (stat(_filename.c_str(), &s2) == -1 || s.st_mtime == s2.st_mtime) {
+				break;
+			}
+		}
+
+		if (load_attempts > 1000) {
+			fprintf(stderr, "KeyFileHelper: to many attempts to load '%s'\n", _filename.c_str());
+			content.resize((r <= 0) ? 0 : (size_t)r);
+			break;
+		}
+
+		// seems tryed to read at the moment when smbd else modifies file
+		// sleep random time to effectively avoid long waits on mutual conflicts
+		sleep(10000 + 1000 * (rand() % 100));
 	}
+	
+	std::string line, value;
+	Values *values = nullptr;
+	for (size_t line_start = 0; line_start < content.size();) {
+		size_t line_end = content.find('\n', line_start);
+		if (line_end == std::string::npos) {
+			line_end = content.size();
+		}
+
+		line = content.substr(line_start, line_end - line_start);
+		StrTrim(line, " \t\r");
+		if (!line.empty() && line[0] != ';' && line[0] != '#') {
+			if (line[0] == '[' && line[line.size() - 1] == ']') {
+				values = &_kf[line.substr(1, line.size() - 2)];
+
+			} else if (values != nullptr) {
+				size_t p = line.find('=');
+				if (p != std::string::npos) {
+					value = line.substr(p + 1);
+					StrTrimLeft(value);
+					line.resize(p);
+					StrTrimRight(line);
+					(*values)[line] = value;
+				}
+			}
+		}
+
+		line_start = line_end + 1;
+	}
+
+	_loaded = true;
 }
 
 KeyFileHelper::~KeyFileHelper()
@@ -52,107 +98,152 @@ KeyFileHelper::~KeyFileHelper()
 	if (_dirty) {
 		Save();
 	}
-	g_key_file_free(_kf);
 }
 
+static std::atomic<unsigned int> s_tmp_uniq;
 bool KeyFileHelper::Save()
 {
-	GError *err = NULL;
-	g_key_file_helper_mutex.lock();
-	bool out = !!g_key_file_save_to_file(_kf, _filename.c_str(), &err);
-	g_key_file_helper_mutex.unlock();
-	if (out) {
-		_dirty = false;
+	std::string tmp = _filename;
+	unsigned int  tmp_uniq = ++s_tmp_uniq;
+	tmp+= StrPrintf(".%u-%u", getpid(), tmp_uniq);
+	try {
+		std::string content;
+		for (const auto &s : _kf) {
+			content.append("[").append(s.first).append("]\n");
+			for (const auto &e : s.second) {
+				content.append(e.first).append("=").append(e.second).append("\n");
+			}
+			content.append("\n");
+		}
+
+		FDScope fd(creat(tmp.c_str(), _filemode));
+		if (!fd.Valid()) {
+			throw std::runtime_error("create file failed");
+		}
+		if (WriteAll(fd, content.c_str(), content.size()) != content.size()) {
+			throw std::runtime_error("write file failed");
+		}
+
+	} catch (std::exception &e) {
+		fprintf(stderr,
+			"KeyFileHelper::Save: exception '%s' errno=%u while saving '%s'\n",
+				e.what(), errno, tmp.c_str());
+
+		remove(tmp.c_str());
+		return false;
 	}
-	return out;
+
+	if (rename(tmp.c_str(), _filename.c_str()) == -1) {
+		fprintf(stderr,
+			"KeyFileHelper::Save: errno=%u while renaming '%s' -> '%s'\n",
+				errno, tmp.c_str(), _filename.c_str());
+		remove(tmp.c_str());
+		return false;
+	}
+
+	_dirty  = false;
+	return true;
 }
 
 std::vector<std::string> KeyFileHelper::EnumSections()
 {
 	std::vector<std::string> out;
-	
-	gchar **r = g_key_file_get_groups (_kf, NULL);
-	if (r) {
-		for (gchar **p = r; *p; ++p) 
-			out.push_back(*p);
-		g_strfreev(r);
+	out.reserve(_kf.size());
+	for (const auto &s : _kf) {
+		out.push_back(s.first);
 	}
-	
 	return out;
 }
 
 void KeyFileHelper::RemoveSection(const char *section)
 {
-	_dirty = true;
-	g_key_file_remove_group(_kf, section, NULL);
+	if (_kf.erase(section) != 0) {
+		_dirty = true;
+	}
 }
 
 void KeyFileHelper::RemoveKey(const char *section, const char *name)
 {
-	_dirty = true;
-	g_key_file_remove_key(_kf, section, name, NULL);
+	auto it = _kf.find(section);
+	if (it != _kf.end() && it->second.erase(name) != 0) {
+		_dirty = true;
+//		if (it->second.empty()) {
+//			_kf.erase(it);
+//		}
+	}
 }
 
 std::vector<std::string> KeyFileHelper::EnumKeys(const char *section)
 {
 	std::vector<std::string> out;
-	
-	gchar **r = g_key_file_get_keys(_kf, section, NULL, NULL);
-	if (r) {
-		for (gchar **p = r; *p; ++p) 
-			out.push_back(*p);
-		g_strfreev(r);
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		out.reserve(it->second.size());
+		for (const auto &e : it->second) {
+			out.emplace_back(e.first);
+		}
 	}
-	
 	return out;
 }
 
 std::string KeyFileHelper::GetString(const char *section, const char *name, const char *def)
 {
-	std::string rv;
-	char *v = g_key_file_get_string(_kf, section, name, NULL);
-	if (v) {
-		rv.assign(v);
-		free(v);
-	} else
-		rv.assign(def);
-	return rv;
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		auto s = it->second.find(name);
+		if (s != it->second.end()) {
+			return s->second;
+		}
+	}
+
+	return def ? def : "";
 }
 
 void KeyFileHelper::GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def)
 {
-	std::string rv;
-	char *v = g_key_file_get_string(_kf, section, name, NULL);
-	if (v) {
-		strncpy(buffer, v, buf_size);
-		free(v);
-	} else if (def && def!=buffer)
-		strncpy(buffer, def, buf_size);
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		auto s = it->second.find(name);
+		if (s != it->second.end()) {
+			strncpy(buffer, s->second.c_str(), buf_size);
+			buffer[buf_size - 1] = 0;
+			return;
+		}
+	}
 
-	buffer[buf_size - 1] = 0;
+	if (def && def != buffer) {
+		strncpy(buffer, def, buf_size);
+		buffer[buf_size - 1] = 0;
+	} else {
+		buffer[0] = 0;
+	}
 }
 
 int KeyFileHelper::GetInt(const char *section, const char *name, int def)
 {
-	GError *err = NULL;
-	int rv = g_key_file_get_integer(_kf, section, name, &err);
-	if (rv==0 && err!=NULL) {
-		rv = def;
-		//TODO? Should I do free(err);  ?
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		auto s = it->second.find(name);
+		if (s != it->second.end()) {
+			return atoi(s->second.c_str());
+		}
 	}
-	return rv;
+
+	return def;
 }
 
 ///////////////////////////////////////////////
 void KeyFileHelper::PutString(const char *section, const char *name, const char *value)
 {
 	_dirty = true;
-	g_key_file_set_string(_kf, section, name, value);
+	_kf[section][name] = value;
 }
 
 void KeyFileHelper::PutInt(const char *section, const char *name, int value)
 {
 	_dirty = true;
-	g_key_file_set_integer(_kf, section, name, value);
+	char tmp[32];
+	sprintf(tmp, "%d", value);
+	PutString(section, name, tmp);
 }
 

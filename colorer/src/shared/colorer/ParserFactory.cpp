@@ -428,11 +428,8 @@ StyledHRDMapper *ParserFactory::createStyledMapper(const String *classID, const 
     if (hrdLocV->elementAt(idx) != null){
       InputSource *dfis = nullptr;
       try{
-			fprintf(stderr, "zz1\n");
         dfis = InputSource::newInstance(hrdLocV->elementAt(idx), catalogFIS);
-			fprintf(stderr, "zz2\n");
         mapper->loadRegionMappings(dfis);
-			fprintf(stderr, "zz3\n");
         delete dfis;
       }catch(Exception &e){
         if (fileErrorHandler != null){

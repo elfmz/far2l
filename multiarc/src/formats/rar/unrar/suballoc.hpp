@@ -57,7 +57,6 @@ class SubAllocator
     inline void* RemoveNode(int indx);
     inline uint U2B(int NU);
     inline void SplitBlock(void* pv,int OldIndx,int NewIndx);
-    uint GetUsedMemory();
     inline void GlueFreeBlocks();
     void* AllocUnitsRare(int indx);
     inline RARPPM_MEM_BLK* MBPtr(RARPPM_MEM_BLK *BasePtr,int Items);
@@ -78,7 +77,7 @@ class SubAllocator
     inline void* ExpandUnits(void* ptr,int OldNU);
     inline void* ShrinkUnits(void* ptr,int OldNU,int NewNU);
     inline void  FreeUnits(void* ptr,int OldNU);
-    long GetAllocatedMemory() {return(SubAllocatorSize);};
+    long GetAllocatedMemory() {return(SubAllocatorSize);}
 
     byte *pText, *UnitsStart,*HeapEnd,*FakeUnitsStart;
 };

@@ -17,6 +17,8 @@ ScanTree::ScanTree(StringList *FileMasks,RECURSE_MODE Recurse,bool GetLinks,SCAN
   Errors=0;
   *ErrArcName=0;
   Cmd=NULL;
+  ErrDirList=NULL;
+  ErrDirSpecPathLength=NULL;
 }
 
 
@@ -140,7 +142,12 @@ bool ScanTree::GetFilteredMask()
   bool WildcardFound=false;
   uint FolderWildcardCount=0;
   uint SlashPos=0;
-  for (int I=0;CurMask[I]!=0;I++)
+  uint StartPos=0;
+#ifdef _WIN_ALL // Not treat the special NTFS \\?\d: path prefix as a wildcard.
+  if (CurMask[0]=='\\' && CurMask[1]=='\\' && CurMask[2]=='?' && CurMask[3]=='\\')
+    StartPos=4;
+#endif
+  for (uint I=StartPos;CurMask[I]!=0;I++)
   {
     if (CurMask[I]=='?' || CurMask[I]=='*')
       WildcardFound=true;
@@ -169,7 +176,7 @@ bool ScanTree::GetFilteredMask()
 
   wchar Filter[NM];
   // Convert path\dir*\ to *\dir filter to search for 'dir' in all 'path' subfolders.
-  wcscpy(Filter,L"*");
+  wcsncpyz(Filter,L"*",ASIZE(Filter));
   AddEndSlash(Filter,ASIZE(Filter));
   // SlashPos might point or not point to path separator for masks like 'dir*', '\dir*' or 'd:dir*'
   wchar *WildName=IsPathDiv(CurMask[SlashPos]) || IsDriveDiv(CurMask[SlashPos]) ? CurMask+SlashPos+1 : CurMask+SlashPos;
@@ -224,7 +231,7 @@ bool ScanTree::GetNextMask()
   SpecPathLength=Name-CurMask;
   Depth=0;
 
-  wcscpy(OrigCurMask,CurMask);
+  wcsncpyz(OrigCurMask,CurMask,ASIZE(OrigCurMask));
 
   return true;
 }
@@ -293,7 +300,11 @@ SCAN_CODE ScanTree::FindProc(FindData *FD)
           if (Cmd!=NULL && Cmd->ExclCheck(CurMask,false,true,true))
             RetCode=SCAN_NEXT;
           else
+          {
             ErrHandler.OpenErrorMsg(ErrArcName,CurMask);
+            // User asked to return RARX_NOFILES and not RARX_OPEN here.
+            ErrHandler.SetErrorCode(RARX_NOFILES);
+          }
         }
 
         // If we searched only for one file or directory in "fast find" 
@@ -344,16 +355,19 @@ SCAN_CODE ScanTree::FindProc(FindData *FD)
     if (Slash!=NULL)
     {
       wchar Mask[NM];
-      wcscpy(Mask,Slash);
+      wcsncpyz(Mask,Slash,ASIZE(Mask));
       if (Depth<SetAllMaskDepth)
-        wcscpy(Mask+1,PointToName(OrigCurMask));
+        wcsncpyz(Mask+1,PointToName(OrigCurMask),ASIZE(Mask)-1);
       *Slash=0;
-      wcscpy(DirName,CurMask);
+      wcsncpyz(DirName,CurMask,ASIZE(DirName));
       wchar *PrevSlash=wcsrchr(CurMask,CPATHDIVIDER);
       if (PrevSlash==NULL)
-        wcscpy(CurMask,Mask+1);
+        wcsncpyz(CurMask,Mask+1,ASIZE(CurMask));
       else
-        wcscpy(PrevSlash,Mask);
+      {
+        *PrevSlash=0;
+        wcsncatz(CurMask,Mask,ASIZE(CurMask));
+      }
     }
     if (GetDirs==SCAN_GETDIRSTWICE &&
         FindFile::FastFind(DirName,FD,GetLinks) && FD->IsDir)
@@ -391,8 +405,8 @@ SCAN_CODE ScanTree::FindProc(FindData *FD)
     
     wchar Mask[NM];
 
-    wcscpy(Mask,FastFindFile ? MASKALL:PointToName(CurMask));
-    wcscpy(CurMask,FD->Name);
+    wcsncpyz(Mask,FastFindFile ? MASKALL:PointToName(CurMask),ASIZE(Mask));
+    wcsncpyz(CurMask,FD->Name,ASIZE(CurMask));
 
     if (wcslen(CurMask)+wcslen(Mask)+1>=NM || Depth>=MAXSCANDEPTH-1)
     {
@@ -467,6 +481,10 @@ void ScanTree::ScanError(bool &Error)
 
   if (Error)
   {
+    if (ErrDirList!=NULL)
+      ErrDirList->AddString(CurMask);
+    if (ErrDirSpecPathLength!=NULL)
+      ErrDirSpecPathLength->Push((uint)SpecPathLength);
     wchar FullName[NM];
     // This conversion works for wildcard masks too.
     ConvertNameToFull(CurMask,FullName,ASIZE(FullName));

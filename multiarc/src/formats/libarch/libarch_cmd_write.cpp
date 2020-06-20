@@ -87,7 +87,7 @@ static bool LIBARCH_CommandAddFile(const char *fpath)
 	}
 
 	int r = LibArchCall(archive_write_header, s_addfile_ctx->arc.Get(), entry);
-	if (r != ARCHIVE_OK) {
+	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		fprintf(stderr, "Error %d writing header: %s", r, fpath);
 		archive_entry_free(entry);
 		return false;
@@ -253,7 +253,7 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 			}
 
 			int r = LibArchCall(archive_write_header, arc_dst.Get(), entry);
-			if (r != ARCHIVE_OK) {
+			if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 				throw std::runtime_error(StrPrintf(
 					"Error %d writing header: %s", r, pathname));
 			}
@@ -266,7 +266,7 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 				const void *buf = nullptr;
 				size_t size = 0;
 				int r = LibArchCall(archive_read_data_block, arc_src.Get(), &buf, &size, &offset);
-				if (r != ARCHIVE_OK || size == 0) {
+				if ((r != ARCHIVE_OK  && r != ARCHIVE_WARN) || size == 0) {
 					throw std::runtime_error(StrPrintf("Error %d reading at 0x%llx : %s",
 						r, (unsigned long long)offset, archive_entry_pathname(entry)));
 				}

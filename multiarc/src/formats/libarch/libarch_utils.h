@@ -29,16 +29,17 @@ struct LibArchOpenRead
 	void SkipData();
 
 protected:
-	struct archive *_arc;
+	struct archive *_arc = nullptr;
 
 private:
-	int _fd;
+	int _fd = -1;
 	off_t _pos = 0;
 	struct archive_entry *_ae = nullptr;
 	unsigned int _fmt = 0;
 	char _buf[0x2000];
 
 	LibArchOpenRead(const LibArchOpenRead&) = delete;
+	void Open(const char *name);
 	void EnsureClosed();
 	void EnsureClosedFD();
 

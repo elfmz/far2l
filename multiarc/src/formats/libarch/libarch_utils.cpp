@@ -9,18 +9,8 @@
 #include "libarch_utils.h"
 
 LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
-	:
-	_arc(archive_read_new()),
-	_fd(sdc_open(name, O_RDONLY))
 {
-	if (!_arc || _fd == -1) {
-		EnsureClosed();
-		throw std::runtime_error(StrPrintf("open archive error %d", errno));
-	}
-
-	LibArchCall(archive_read_support_filter_all, _arc);
-	LibArchCall(archive_read_support_format_all, _arc);
-	LibArchCall(archive_read_support_format_raw, _arc);
+	Open(name);
 
 	LibArchCall(archive_read_set_callback_data, _arc, (void *)this);
 	LibArchCall(archive_read_set_read_callback, _arc, sReadCallback);
@@ -28,8 +18,29 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 	LibArchCall(archive_read_set_skip_callback, _arc, sSkipCallback);
 	LibArchCall(archive_read_set_close_callback, _arc, sCloseCallback);
 
+	LibArchCall(archive_read_support_filter_all, _arc);
+
+	/// Workaround for #710:
+	// if request supporting all formats then librchive somewhy detects archive
+	// format incorrectly, like detecting some raw gz archives as 'mtree' format,
+	// so workaround invented - first open archive while allowing only those formats
+	// that we primariliy support, and only if this will fail- try to open
+	// using full list of supported formats
+	LibArchCall(archive_read_support_format_raw, _arc);
+	LibArchCall(archive_read_support_format_tar, _arc);
+	LibArchCall(archive_read_support_format_cpio, _arc);
+
 	int r = LibArchCall(archive_read_open1, _arc);
-	if (r != ARCHIVE_OK) {
+	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
+		EnsureClosed();
+		Open(name);
+
+		LibArchCall(archive_read_support_filter_all, _arc);
+		LibArchCall(archive_read_support_format_all, _arc);
+		LibArchCall(archive_read_support_format_raw, _arc);
+		r = LibArchCall(archive_read_open1, _arc);
+	}
+	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		EnsureClosed();
 		throw std::runtime_error(StrPrintf("open archive error %d", r));
 	}
@@ -54,6 +65,16 @@ LibArchOpenRead::~LibArchOpenRead()
 	EnsureClosed();
 }
 
+void LibArchOpenRead::Open(const char *name)
+{
+	_arc = archive_read_new();
+	_fd = sdc_open(name, O_RDONLY);
+	if (!_arc || _fd == -1) {
+		EnsureClosed();
+		throw std::runtime_error(StrPrintf("open archive error %d", errno));
+	}
+}
+
 struct archive_entry *LibArchOpenRead::NextHeader()
 {
 	struct archive_entry *entry = nullptr;
@@ -68,7 +89,7 @@ struct archive_entry *LibArchOpenRead::NextHeader()
 			return nullptr;
 		}
 
-		if (r != ARCHIVE_OK) {
+		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			throw std::runtime_error(StrPrintf("archive_read_next_header - error %d\n", r));
 		}
 	}
@@ -187,7 +208,7 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd)
 	}
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
-	if (r != ARCHIVE_OK) {
+	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
 		throw std::runtime_error(StrPrintf("open archive error %d", r));
 	}
@@ -209,7 +230,7 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_templat
 	}
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
-	if (r != ARCHIVE_OK) {
+	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
 		throw std::runtime_error(StrPrintf("open archive error %d", r));
 	}

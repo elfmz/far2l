@@ -127,7 +127,7 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 
 	bool primary_selection = false;
 	for (int i = 0; i < argc; ++i) {
-		if (strstr(argv[i], "--primary-selection") == argv[i]) {
+		if (strcmp(argv[i], "--primary-selection") == 0) {
 			primary_selection = true;
 			break;
 		}

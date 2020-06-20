@@ -86,7 +86,7 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 
 		archive_entry_set_pathname(entry, extract_path.c_str() );
 		int r = archive_read_extract(arc.Get(), entry, 0);
-		if (r != ARCHIVE_OK) {
+		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			fprintf(stderr, "Error %d: '%s' -> '%s'\n",
 				r, src_path.c_str(), extract_path.c_str());
 			out = false;

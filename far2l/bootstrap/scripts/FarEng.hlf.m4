@@ -124,7 +124,7 @@ See LICENSE.txt and LICENSE.Far2.txt in sources tree for details
 
 @CmdLine
 $ # FAR2L: command line switches#
-  The following switches may be used in the command line:
+  You can specify following switches in the command line or FAR2L_ARGS environment variable:
 
   #--tty#
   Runs far2l with TTY backend instead of autodetecting GUI/TTY mode. While GUI

@@ -8,15 +8,28 @@
 
 #include "libarch_utils.h"
 
+bool LibArch_DetectedFormatHasCompression(struct archive *a)
+{
+	unsigned int fmt = archive_format(a);
+	if (fmt != ARCHIVE_FORMAT_RAW) {
+		return true;
+	}
+
+	for (int i = 0, ii = archive_filter_count(a); i < ii; ++i) {
+		auto fc = archive_filter_code(a, i);
+//		fprintf(stderr, "LibArch_DetectedFormatHasCompression: fc[%d]=0x%x\n", i, fc);
+		if (fc != 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
 LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 {
 	Open(name);
-
-	LibArchCall(archive_read_set_callback_data, _arc, (void *)this);
-	LibArchCall(archive_read_set_read_callback, _arc, sReadCallback);
-	LibArchCall(archive_read_set_seek_callback, _arc, sSeekCallback);
-	LibArchCall(archive_read_set_skip_callback, _arc, sSkipCallback);
-	LibArchCall(archive_read_set_close_callback, _arc, sCloseCallback);
 
 	LibArchCall(archive_read_support_filter_all, _arc);
 
@@ -28,24 +41,32 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 	// using full list of supported formats
 	LibArchCall(archive_read_support_format_raw, _arc);
 	LibArchCall(archive_read_support_format_tar, _arc);
+	LibArchCall(archive_read_support_format_gnutar, _arc);
 	LibArchCall(archive_read_support_format_cpio, _arc);
 
 	int r = LibArchCall(archive_read_open1, _arc);
+	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
+		_ae = NextHeader();
+		if (!LibArch_DetectedFormatHasCompression(_arc)) {
+			r = ARCHIVE_EOF;
+		}
+	}
+
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		EnsureClosed();
 		Open(name);
 
 		LibArchCall(archive_read_support_filter_all, _arc);
 		LibArchCall(archive_read_support_format_all, _arc);
-		LibArchCall(archive_read_support_format_raw, _arc);
+		// already tried this: LibArchCall(archive_read_support_format_raw, _arc);
 		r = LibArchCall(archive_read_open1, _arc);
-	}
-	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-		EnsureClosed();
-		throw std::runtime_error(StrPrintf("open archive error %d", r));
+		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
+			EnsureClosed();
+			throw std::runtime_error(StrPrintf("open archive error %d", r));
+		}
+		_ae = NextHeader();
 	}
 
-	_ae = NextHeader();
 	_fmt = archive_format(_arc);
 	if (_fmt == ARCHIVE_FORMAT_RAW && _ae != nullptr) {
 		const char *name_part = strrchr(name, '/');
@@ -73,6 +94,12 @@ void LibArchOpenRead::Open(const char *name)
 		EnsureClosed();
 		throw std::runtime_error(StrPrintf("open archive error %d", errno));
 	}
+
+	LibArchCall(archive_read_set_callback_data, _arc, (void *)this);
+	LibArchCall(archive_read_set_read_callback, _arc, sReadCallback);
+	LibArchCall(archive_read_set_seek_callback, _arc, sSeekCallback);
+	LibArchCall(archive_read_set_skip_callback, _arc, sSkipCallback);
+	LibArchCall(archive_read_set_close_callback, _arc, sCloseCallback);
 }
 
 struct archive_entry *LibArchOpenRead::NextHeader()
@@ -108,6 +135,9 @@ void LibArchOpenRead::EnsureClosed()
 		archive_read_free(_arc);
 		_arc = nullptr;
 	}
+
+	_ae = nullptr;
+
 	EnsureClosedFD();
 }
 

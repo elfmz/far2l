@@ -33,24 +33,12 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 
 	int r = archive_read_open_memory(a, (void *)Data, DataSize);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
-		r = ARCHIVE_OK;
 		archive_entry *ae = nullptr;
 		LibArchCall(archive_read_next_header, a, &ae);
-		unsigned int fmt = archive_format(a);
-//		fprintf(stderr, "PluginImplArc::sIsSupportedHeading: fmt=0x%x\n", fmt);
-		if (fmt == ARCHIVE_FORMAT_RAW) {
-			// allow only raw formats that has compressed filters,
-			// otherwise any file will be represented as archive
-			// that contains file's plain data
+		if (LibArch_DetectedFormatHasCompression(a)) {
+			r = ARCHIVE_OK;
+		} else {
 			r = ARCHIVE_EOF;
-			for (int i = 0, ii = archive_filter_count(a); i < ii; ++i) {
-				auto fc = archive_filter_code(a, i);
-//				fprintf(stderr, "PluginImplArc::sIsSupportedHeading: fc[%d]=0x%x\n", i, fc);
-				if (fc != 0) {
-					r = ARCHIVE_OK;
-					break;
-				}
-			}
 		}
 	}
 

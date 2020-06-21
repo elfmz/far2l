@@ -47,10 +47,9 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		}
 
 		const char *pathname = archive_entry_pathname(entry);
-		
 		src_path = pathname ? pathname : "";
 		parts.clear();
-		StrExplode(parts, src_path, "/\\");
+		LibArch_ParsePathToParts(parts, src_path);
 
 		if (parts.empty()) {
 			fprintf(stderr, "Empty path: '%s'\n", pathname);
@@ -108,10 +107,10 @@ bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const char *arc_
 	for (int i = 0; i < files_cnt; ++i) {
 		wanteds.emplace_back();
 		if (arc_root_path && *arc_root_path) {
-			StrExplode(wanteds.back(), std::string(arc_root_path), "/\\");
+			LibArch_ParsePathToParts(wanteds.back(), std::string(arc_root_path));
 		}
 		if (files[i] && *files[i]) {
-			StrExplode(wanteds.back(), std::string(files[i]), "/\\");
+			LibArch_ParsePathToParts(wanteds.back(), std::string(files[i]));
 		}
 		if (wanteds.back().empty()) {
 			fprintf(stderr, "Skipping empty path: '%s'\n", files[i]);

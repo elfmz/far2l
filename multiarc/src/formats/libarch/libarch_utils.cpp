@@ -27,6 +27,27 @@ bool LibArch_DetectedFormatHasCompression(struct archive *a)
 }
 
 
+void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path)
+{
+	size_t i = parts.size();
+	StrExplode(parts, path, "/");
+	while (i < parts.size()) {
+		if (parts[i] == ".") {
+			parts.erase(parts.begin() + i);
+		} else if (parts[i] == "..") {
+			parts.erase(parts.begin() + i);
+			if (i != 0) {
+				parts.erase(parts.begin() + i - 1);
+				--i;
+			} else {
+				fprintf(stderr, "LibArch_ParsePathToParts: impossible <..> in '%s'\n", path.c_str());
+			}
+		} else {
+			++i;
+		}
+	}
+}
+
 LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 {
 	Open(name);

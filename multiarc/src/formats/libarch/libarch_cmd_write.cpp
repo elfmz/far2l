@@ -213,10 +213,10 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 		files_parts.emplace_back();
 		if (arc_root_path && *arc_root_path) {
 			str = arc_root_path;
-			StrExplode(files_parts.back(), str, "/\\");
+			LibArch_ParsePathToParts(files_parts.back(), str);
 		}
 		str = files[i];
-		StrExplode(files_parts.back(), str, "/\\");
+		LibArch_ParsePathToParts(files_parts.back(), str);
 	}
 
 	std::vector<std::string> parts;
@@ -233,7 +233,7 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 			if (pathname) {
 				parts.clear();
 				str = pathname;
-				StrExplode(parts, str, "/\\");
+				LibArch_ParsePathToParts(parts, str);
 				bool matches = false;
 				for (const auto &fp : files_parts) {
 					size_t i = 0;

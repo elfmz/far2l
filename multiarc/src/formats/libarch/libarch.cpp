@@ -17,6 +17,8 @@ enum MenuFormats
 	MF_TAR,
 	MF_TARGZ,
 	MF_CPIOGZ,
+	MF_CAB,
+	MF_ISO,
 
 	MF_NOT_DISPLAYED = 0x10000
 };
@@ -80,6 +82,12 @@ BOOL WINAPI _export LIBARCH_OpenArchive(const char *Name, int *Type)
 					*Type = MF_NOT_DISPLAYED;
 				}
 			}
+
+		} else if (arc->Format() == ARCHIVE_FORMAT_ISO9660) {
+			*Type = MF_ISO;
+
+		} else if (arc->Format() == ARCHIVE_FORMAT_CAB) {
+			*Type = MF_CAB;
 		}
 
 	} catch(std::exception &e) {
@@ -101,12 +109,21 @@ int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcIte
 		if (!s_arc)
 			throw std::runtime_error("no archive opened");
 
-		struct archive_entry *entry = s_arc->NextHeader();
-		if (!entry)
-			return GETARC_EOF;
+		const char *pathname;
+		struct archive_entry *entry;
 
-		const char *pathname = archive_entry_pathname(entry);
-		strncpy(Item->FindData.cFileName, pathname ? pathname : "", sizeof(Item->FindData.cFileName) - 1);
+
+		for (;;) {
+			entry = s_arc->NextHeader();
+			if (!entry)
+				return GETARC_EOF;
+
+			pathname = archive_entry_pathname(entry);
+			if (pathname && *pathname && strcmp(pathname, ".") != 0 && strcmp(pathname, "..") != 0) {
+				break;
+			}
+		}
+		strncpy(Item->FindData.cFileName, pathname, sizeof(Item->FindData.cFileName) - 1);
 
 		uint64_t sz = archive_entry_size(entry);
 		Item->PackSize = Item->FindData.nFileSizeLow = sz&0xffffffff;
@@ -156,13 +173,17 @@ BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *Defa
 	static const char * const FmtAndExt[5][2]={
 		{"TAR","tar"},
 		{"TARGZ","tar.gz"},
-		{"CPIOGZ","cpio"}
+		{"CPIOGZ","cpio"},
+		{"CAB","cab"},
+		{"ISO","iso"}
 	};
 
 	switch (Type) {
 		case MF_TAR:
 		case MF_TARGZ:
 		case MF_CPIOGZ:
+		case MF_CAB:
+		case MF_ISO:
 			strcpy(FormatName, FmtAndExt[Type][0]);
 			strcpy(DefaultExt, FmtAndExt[Type][1]);
 			return TRUE;
@@ -179,39 +200,63 @@ BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *Defa
 BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest)
 {
 	static const char *Commands[] = {
-	/*Extract               */"^libarch X %%A %%FMq*4096",
-	/*Extract without paths */"^libarch x %%A %%FMq*4096",
+	/*Extract               */"^libarch X %%A %%FMq4096",
+	/*Extract without paths */"^libarch x %%A %%FMq4096",
 	/*Test                  */"^libarch t %%A",
-	/*Delete                */"^libarch d %%A %%FMq*4096",
+	/*Delete                */"^libarch d %%A %%FMq4096",
 	/*Comment archive       */"",
 	/*Comment files         */"",
 	/*Convert to SFX        */"",
 	/*Lock archive          */"",
 	/*Protect archive       */"",
 	/*Recover archive       */"",
-	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R %%FMq*4096",
-	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R %%FMq*4096",
-	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R %%FMq*4096",
-	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R %%FMq*4096",
-	/*"All files" mask      */"*"
+	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R %%FMq4096",
+	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R %%FMq4096",
+	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R %%FMq4096",
+	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R %%FMq4096",
+	/*"All files" mask      */""
 	};
 
-	if (Command < (int)ARRAYSIZE(Commands)) {
-		std::string cmd = Commands[Command];
-		size_t p = cmd.find(":<<fmt>>");
-		if (p != std::string::npos) {
-			switch (Type) {
-				case MF_TAR: cmd.replace(p, 8, ":tar:plain"); break;
-				case MF_TARGZ: cmd.replace(p, 8, ":tar:gz"); break;
-				case MF_CPIOGZ: cmd.replace(p, 8, ":cpio:gz"); break;
-				default: cmd.replace(p, 8, "");
-			}
-		}
-		strcpy(Dest, cmd.c_str());
+	static const char *CommandsCab[] = {
+	/*Extract               */"^libarch X %%A %%FMq4096",
+	/*Extract without paths */"^libarch x %%A %%FMq4096",
+	/*Test                  */"^libarch t %%A",
+	/*Delete                */"^libarch d %%A %%FMq4096",
+	/*Comment archive       */"",
+	/*Comment files         */"",
+	/*Convert to SFX        */"",
+	/*Lock archive          */"",
+	/*Protect archive       */"",
+	/*Recover archive       */"",
+	/*Add files             */"lcab %%FMq4096 %%A",
+	/*Move files            */"",
+	/*Add files and folders */"lcab -r %%FMq4096 %%A",
+	/*Move files and folders*/"",
+	/*"All files" mask      */"." // lcab  picky regarding ending dir with /
+	};
+
+	if (Command >= (int)ARRAYSIZE(Commands)) {
+		return FALSE;
+	}
+
+	if (Type == MF_CAB) {
+		strcpy(Dest, CommandsCab[Command]);
 		return TRUE;
 	}
 
-	return FALSE;
+	std::string cmd = Commands[Command];
+	size_t p = cmd.find(":<<fmt>>");
+	if (p != std::string::npos) {
+		switch (Type) {
+			case MF_TAR: cmd.replace(p, 8, ":tar:plain"); break;
+			case MF_TARGZ: cmd.replace(p, 8, ":tar:gz"); break;
+			case MF_CPIOGZ: cmd.replace(p, 8, ":cpio:gz"); break;
+			case MF_ISO: cmd.replace(p, 8, ":iso"); break;
+			default: cmd.replace(p, 8, "");
+		}
+	}
+	strcpy(Dest, cmd.c_str());
+	return TRUE;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -268,3 +313,4 @@ extern "C" int libarch_main(int numargs, char *args[])
 		return -1;
 	}
 }
+

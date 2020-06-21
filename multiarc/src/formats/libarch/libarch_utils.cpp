@@ -62,8 +62,10 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 	// using full list of supported formats
 	LibArchCall(archive_read_support_format_raw, _arc);
 	LibArchCall(archive_read_support_format_tar, _arc);
+	LibArchCall(archive_read_support_format_iso9660, _arc);
 	LibArchCall(archive_read_support_format_gnutar, _arc);
 	LibArchCall(archive_read_support_format_cpio, _arc);
+	LibArchCall(archive_read_support_format_cab, _arc);
 
 	int r = LibArchCall(archive_read_open1, _arc);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
@@ -228,10 +230,12 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd)
 	if (strstr(cmd, ":cpio")) { format = ARCHIVE_FORMAT_CPIO;
 	} else if (strstr(cmd, ":zip")) { format = ARCHIVE_FORMAT_ZIP;
 	} else if (strstr(cmd, ":cab")) { format = ARCHIVE_FORMAT_CAB;
+	} else if (strstr(cmd, ":iso")) { format = ARCHIVE_FORMAT_ISO9660;
 	} else if (strstr(cmd, ":rar")) { format = ARCHIVE_FORMAT_RAR;
 	} else if (strstr(ne, ".cpio")) { format = ARCHIVE_FORMAT_CPIO;
 	} else if (strstr(ne, ".zip")) { format = ARCHIVE_FORMAT_ZIP;
 	} else if (strstr(ne, ".cab")) { format = ARCHIVE_FORMAT_CAB;
+	} else if (strstr(ne, ".iso")) { format = ARCHIVE_FORMAT_ISO9660;
 	} else if (strstr(ne, ".rar")) { format = ARCHIVE_FORMAT_RAR;
 	}
 

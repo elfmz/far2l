@@ -17,6 +17,8 @@ template <typename ... ARGS>
 	}
 };
 
+bool LibArch_DetectedFormatHasCompression(struct archive *a);
+
 struct LibArchOpenRead
 {
 	LibArchOpenRead(const char *name, const char *cmd = "");

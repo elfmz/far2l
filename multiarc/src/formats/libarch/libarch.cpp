@@ -51,7 +51,7 @@ static int64_t IsArchive_Seek(struct archive *, void *data, int64_t offset, int 
 		ctx->Pos = offset;
 
 	} else if (whence == SEEK_END) {
-		ctx->Pos = ctx->FileSize + whence;
+		ctx->Pos = ctx->FileSize + offset;
 
 	} else {
 		ctx->Pos+= offset;
@@ -87,7 +87,7 @@ static ssize_t IsArchive_Read(struct archive *, void *data, const void **buff)
 	}
 
 	if (ctx->fd == -1) {
-		fprintf(stderr, "IsArchive_Read: opening %s\n", ctx->Name);
+		// fprintf(stderr, "IsArchive_Read: opening %s\n", ctx->Name);
 		ctx->fd = sdc_open(ctx->Name, O_RDONLY);
 		if (ctx->fd == -1) {
 			return ARCHIVE_FATAL;

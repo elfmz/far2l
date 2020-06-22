@@ -20,8 +20,6 @@ set(SOURCES
     src/formats/arc/arc.cpp
     src/formats/zip/zip.cpp
     src/formats/lzh/lzh.cpp
-    src/formats/7z/7z.cpp
-    src/formats/7z/7zMain.c
     src/formats/rar/unrar/scantree.cpp
     src/formats/rar/unrar/sha1.cpp
     src/formats/rar/unrar/threadpool.cpp
@@ -73,51 +71,56 @@ set(SOURCES
     src/formats/rar/unrar/arcread.cpp
     src/formats/rar/unrar/rdwrfn.cpp
     src/formats/rar/unrar/rarpch.cpp
-    src/formats/7z/C/Lzma86Dec.c
-    src/formats/7z/C/7zDec.c
-    src/formats/7z/C/Ppmd7Dec.c
-    src/formats/7z/C/Sha1.c
-    src/formats/7z/C/BraIA64.c
-    src/formats/7z/C/Xz.c
-    src/formats/7z/C/Lzma2Dec.c
-    src/formats/7z/C/AesOpt.c
-    src/formats/7z/C/BwtSort.c
-    src/formats/7z/C/Bra86.c
-    src/formats/7z/C/7zCrcOpt.c
-    src/formats/7z/C/7zAlloc.c
-    src/formats/7z/C/LzmaLib.c
-    src/formats/7z/C/HuffEnc.c
-    src/formats/7z/C/7zBuf.c
-    src/formats/7z/C/XzDec.c
-    src/formats/7z/C/7zBuf2.c
-    src/formats/7z/C/Lzma86Enc.c
-    src/formats/7z/C/Alloc.c
-    src/formats/7z/C/XzCrc64.c
-    src/formats/7z/C/XzEnc.c
-    src/formats/7z/C/Ppmd8.c
-    src/formats/7z/C/Aes.c
-    src/formats/7z/C/7zCrc.c
-    src/formats/7z/C/Bcj2.c
-    src/formats/7z/C/Delta.c
-    src/formats/7z/C/7zFile.c
-    src/formats/7z/C/Bcj2Enc.c
-    src/formats/7z/C/Ppmd8Enc.c
-    src/formats/7z/C/LzmaEnc.c
-    src/formats/7z/C/Ppmd7Enc.c
-    src/formats/7z/C/7zStream.c
-    src/formats/7z/C/Ppmd8Dec.c
-    src/formats/7z/C/XzCrc64Opt.c
-    src/formats/7z/C/LzmaDec.c
-    src/formats/7z/C/XzIn.c
-    src/formats/7z/C/CpuArch.c
-    src/formats/7z/C/LzFind.c
-    src/formats/7z/C/Ppmd7.c
-    src/formats/7z/C/Lzma2Enc.c
-    src/formats/7z/C/Sha256.c
-    src/formats/7z/C/Sort.c
-    src/formats/7z/C/7zArcIn.c
-    src/formats/7z/C/Bra.c
-    src/formats/7z/C/Blake2s.c
+
+
+
+        src/formats/7z/7z.cpp
+        src/formats/7z/7zMain.c
+        src/formats/7z/C/Lzma86Dec.c
+        src/formats/7z/C/7zDec.c
+        src/formats/7z/C/Ppmd7Dec.c
+        src/formats/7z/C/Sha1.c
+        src/formats/7z/C/BraIA64.c
+        src/formats/7z/C/Xz.c
+        src/formats/7z/C/Lzma2Dec.c
+        src/formats/7z/C/AesOpt.c
+        src/formats/7z/C/BwtSort.c
+        src/formats/7z/C/Bra86.c
+        src/formats/7z/C/7zCrcOpt.c
+        src/formats/7z/C/7zAlloc.c
+        src/formats/7z/C/LzmaLib.c
+        src/formats/7z/C/HuffEnc.c
+        src/formats/7z/C/7zBuf.c
+        src/formats/7z/C/XzDec.c
+        src/formats/7z/C/7zBuf2.c
+        src/formats/7z/C/Lzma86Enc.c
+        src/formats/7z/C/Alloc.c
+        src/formats/7z/C/XzCrc64.c
+        src/formats/7z/C/XzEnc.c
+        src/formats/7z/C/Ppmd8.c
+        src/formats/7z/C/Aes.c
+        src/formats/7z/C/7zCrc.c
+        src/formats/7z/C/Bcj2.c
+        src/formats/7z/C/Delta.c
+        src/formats/7z/C/7zFile.c
+        src/formats/7z/C/Bcj2Enc.c
+        src/formats/7z/C/Ppmd8Enc.c
+        src/formats/7z/C/LzmaEnc.c
+        src/formats/7z/C/Ppmd7Enc.c
+        src/formats/7z/C/7zStream.c
+        src/formats/7z/C/Ppmd8Dec.c
+        src/formats/7z/C/XzCrc64Opt.c
+        src/formats/7z/C/LzmaDec.c
+        src/formats/7z/C/XzIn.c
+        src/formats/7z/C/CpuArch.c
+        src/formats/7z/C/LzFind.c
+        src/formats/7z/C/Ppmd7.c
+        src/formats/7z/C/Lzma2Enc.c
+        src/formats/7z/C/Sha256.c
+        src/formats/7z/C/Sort.c
+        src/formats/7z/C/7zArcIn.c
+        src/formats/7z/C/Bra.c
+        src/formats/7z/C/Blake2s.c
 )
 
 if(PCRE_FOUND)
@@ -140,12 +143,13 @@ else()
         ${SOURCES}
         src/formats/targz/targz.cpp
         src/formats/cab/cab.cpp
+
     )
 endif()
 
 add_library (multiarc MODULE ${SOURCES})
 
-target_compile_definitions(multiarc PRIVATE -DRARDLL -D_7ZIP_ST)
+target_compile_definitions(multiarc PRIVATE -DRARDLL -D_7ZIP_ST -D_7ZIP_PPMD_SUPPPORT)
 
 target_link_libraries(multiarc utils far2l)
 

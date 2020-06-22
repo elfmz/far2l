@@ -509,17 +509,26 @@ wxEND_EVENT_TABLE()
 wxIMPLEMENT_APP_NO_MAIN(WinPortApp);
 
 
+static WinPortFrame *g_winport_frame = nullptr;
 
+wxEvtHandler *WinPort_EventHandler()
+{
+	if (!g_winport_frame) {
+		return wxTheApp->GetTopWindow()->GetEventHandler();
+	}
+
+	return g_winport_frame->GetEventHandler();
+}
 
 bool WinPortApp::OnInit()
 {
-	WinPortFrame *frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
+	g_winport_frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
 //    WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
-	frame->Show( true );
+	g_winport_frame->Show( true );
 	if (g_broadway)
-		frame->Maximize();
+		g_winport_frame->Maximize();
 		
-    return true;
+	return true;
 }
 
 

@@ -1,6 +1,8 @@
 #include <unistd.h>
 #include <memory>
 #include <utils.h>
+#include <sudo.h>
+#include <fcntl.h>
 
 #include <windows.h>
 #include "libarch_utils.h"
@@ -23,6 +25,95 @@ enum MenuFormats
 	MF_NOT_DISPLAYED = 0x10000
 };
 
+struct IsArchiveContext
+{
+	const char *Name;
+	const unsigned char *Head;
+	size_t HeadSize;
+
+	off_t FileSize;
+	off_t Pos;
+	int fd;
+
+	unsigned char Temp[0x1000];
+};
+
+static int IsArchive_Close(struct archive *a, void *data)
+{
+	((IsArchiveContext *)data)->Pos = 0;
+	return ARCHIVE_OK;
+}
+
+static int64_t IsArchive_Seek(struct archive *, void *data, int64_t offset, int whence)
+{
+	IsArchiveContext *ctx = (IsArchiveContext *)data;
+	if (whence == SEEK_SET) {
+		ctx->Pos = offset;
+
+	} else if (whence == SEEK_END) {
+		ctx->Pos = ctx->FileSize + whence;
+
+	} else {
+		ctx->Pos+= offset;
+	}
+
+	if (ctx->Pos > ctx->FileSize) {
+		ctx->Pos = ctx->FileSize;
+	}
+
+	return ctx->Pos;
+}
+
+static int64_t IsArchive_Skip(struct archive *, void *data, int64_t request)
+{
+	IsArchiveContext *ctx = (IsArchiveContext *)data;
+	int64_t avail = ctx->FileSize - ctx->Pos;
+	if (request > avail) {
+		request = (avail > 0) ? avail : 0;
+	}
+	ctx->Pos+= request;
+	return request;
+}
+
+static ssize_t IsArchive_Read(struct archive *, void *data, const void **buff)
+{
+	IsArchiveContext *ctx = (IsArchiveContext *)data;
+
+	if (ctx->Pos < (off_t)ctx->HeadSize) {
+		*buff = ctx->Head + (size_t)ctx->Pos;
+		ssize_t r = ctx->HeadSize - ctx->Pos;
+		ctx->Pos = ctx->HeadSize;
+		return r;
+	}
+
+	if (ctx->fd == -1) {
+		fprintf(stderr, "IsArchive_Read: opening %s\n", ctx->Name);
+		ctx->fd = sdc_open(ctx->Name, O_RDONLY);
+		if (ctx->fd == -1) {
+			return ARCHIVE_FATAL;
+		}
+	}
+
+	if (ctx->Pos > ctx->FileSize) {
+		ctx->Pos = ctx->FileSize;
+	}
+
+	size_t piece = (ctx->FileSize - ctx->Pos > (off_t)sizeof(ctx->Temp))
+		? sizeof(ctx->Temp) : (size_t)(ctx->FileSize - ctx->Pos);
+
+	if (ctx->fd != -1) {
+		ssize_t r = sdc_pread(ctx->fd, ctx->Temp, sizeof(ctx->Temp), ctx->Pos );
+		if (r >= 0) {
+			piece = r;
+		}
+	}
+
+	*buff = ctx->Temp;
+	ctx->Pos+= piece;
+
+	return piece;
+}
+
 BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Data, int DataSize)
 {
 	struct archive *a = archive_read_new();
@@ -33,7 +124,19 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 	archive_read_support_format_all(a);
 	archive_read_support_format_raw(a);
 
-	int r = archive_read_open_memory(a, (void *)Data, DataSize);
+	IsArchiveContext ctx = {Name, Data, (size_t)DataSize, (off_t)DataSize, 0, -1, {}};
+	struct stat s{};
+	if (Name && sdc_stat(Name, &s) == 0) {
+		ctx.FileSize = s.st_size;
+	}
+
+	archive_read_set_read_callback(a, IsArchive_Read);
+	archive_read_set_seek_callback(a, IsArchive_Seek);
+	archive_read_set_skip_callback(a, IsArchive_Skip);
+	archive_read_set_close_callback(a, IsArchive_Close);
+	archive_read_set_callback_data(a, &ctx);
+
+	int r = archive_read_open1(a);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
 		archive_entry *ae = nullptr;
 		LibArchCall(archive_read_next_header, a, &ae);
@@ -44,9 +147,14 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 		}
 	}
 
+	archive_read_close(a);
 	archive_read_free(a);
-	fprintf(stderr, "PluginImplArc::sIsSupportedHeading: r=%d\n", r);
 
+	if (ctx.fd != -1) {
+		sdc_close(ctx.fd);
+	}
+
+	fprintf(stderr, "PluginImplArc::sIsSupportedHeading: r=%d\n", r);
 
 	return (r == ARCHIVE_OK) ? TRUE : FALSE;
 }

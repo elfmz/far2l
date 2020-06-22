@@ -20,7 +20,6 @@ set(SOURCES
     src/formats/arc/arc.cpp
     src/formats/zip/zip.cpp
     src/formats/lzh/lzh.cpp
-    src/formats/cab/cab.cpp
     src/formats/7z/7z.cpp
     src/formats/7z/7zMain.c
     src/formats/rar/unrar/scantree.cpp
@@ -140,6 +139,7 @@ else()
     set(SOURCES
         ${SOURCES}
         src/formats/targz/targz.cpp
+        src/formats/cab/cab.cpp
     )
 endif()
 

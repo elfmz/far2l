@@ -1,5 +1,5 @@
 /* 7zMain.c - Test application for 7z Decoder
-2017-08-26 : Igor Pavlov : Public domain */
+2019-02-02 : Igor Pavlov : Public domain */
 
 
 #include <stdio.h>
@@ -175,7 +175,7 @@ static SRes Utf16_To_Char(CBuf *buf, const UInt16 *s
         char defaultChar = '_';
         BOOL defUsed;
         unsigned numChars = 0;
-        numChars = WideCharToMultiByte(codePage, 0, s, len, (char *)buf->data, size, &defaultChar, &defUsed);
+        numChars = WideCharToMultiByte(codePage, 0, (LPCWSTR)s, len, (char *)buf->data, size, &defaultChar, &defUsed);
         if (numChars == 0 || numChars >= size)
           return SZ_ERROR_FAIL;
         buf->data[numChars] = 0;
@@ -201,7 +201,7 @@ static WRes MyCreateDir(const UInt16 *name)
 {
   #ifdef USE_WINDOWS_FILE
   
-  return CreateDirectoryW(name, NULL) ? 0 : GetLastError();
+  return CreateDirectoryW((LPCWSTR)name, NULL) ? 0 : GetLastError();
   
   #else
 
@@ -226,7 +226,7 @@ static WRes MyCreateDir(const UInt16 *name)
 static WRes OutFile_OpenUtf16(CSzFile *p, const UInt16 *name)
 {
   #ifdef USE_WINDOWS_FILE
-  return OutFile_OpenW(p, name);
+  return OutFile_OpenW(p, (LPCWSTR)name);
   #else
   CBuf buf;
   WRes res;
@@ -380,7 +380,7 @@ static void PrintError(char *s)
   PrintLF();
 }
 
-static void GetAttribString(UInt32 wa, Bool isDir, char *s)
+static void GetAttribString(UInt32 wa, BoolInt isDir, char *s)
 {
   #ifdef USE_WINDOWS_FILE
   s[0] = (char)(((wa & FILE_ATTRIBUTE_DIRECTORY) != 0 || isDir) ? 'D' : '.');
@@ -456,7 +456,7 @@ int sevenz_main(int numargs, char *args[])
   res = SZ_OK;
 
   {
-    lookStream.buf = ISzAlloc_Alloc(&allocImp, kInputBufSize);
+    lookStream.buf = (Byte *)ISzAlloc_Alloc(&allocImp, kInputBufSize);
     if (!lookStream.buf)
       res = SZ_ERROR_MEM;
     else
@@ -542,17 +542,6 @@ int sevenz_main(int numargs, char *args[])
           UInt64 fileSize;
 
           GetAttribString(SzBitWithVals_Check(&db.Attribs, i) ? db.Attribs.Vals[i] : 0, isDir, attr);
-		if (numargs > 3) {
-			int matched = 0;
-			for (int a = 3; a < numargs; ++a) {
-				if (MatchString(temp, args[a])) {
-					matched = 1;
-					break;
-				}
-			}
-			if (!matched)
-				continue;
-		}
           fileSize = SzArEx_GetFileSize(&db, i);
           UInt64ToStr(fileSize, s, 10);
           
@@ -579,6 +568,18 @@ int sevenz_main(int numargs, char *args[])
             Print("/");
           PrintLF();
           continue;
+        }
+
+        if (numargs > 3) {
+            int matched = 0;
+            for (int a = 3; a < numargs; ++a) {
+                    if (MatchString(temp, args[a])) {
+                        matched = 1;
+                        break;
+                    }
+            }
+            if (!matched)
+                continue;
         }
 
         Print(testCommand ?
@@ -642,6 +643,31 @@ int sevenz_main(int numargs, char *args[])
             res = SZ_ERROR_FAIL;
             break;
           }
+
+          #ifdef USE_WINDOWS_FILE
+          {
+            FILETIME mtime, ctime;
+            FILETIME *mtimePtr = NULL;
+            FILETIME *ctimePtr = NULL;
+
+            if (SzBitWithVals_Check(&db.MTime, i))
+            {
+              const CNtfsFileTime *t = &db.MTime.Vals[i];
+              mtime.dwLowDateTime = (DWORD)(t->Low);
+              mtime.dwHighDateTime = (DWORD)(t->High);
+              mtimePtr = &mtime;
+            }
+            if (SzBitWithVals_Check(&db.CTime, i))
+            {
+              const CNtfsFileTime *t = &db.CTime.Vals[i];
+              ctime.dwLowDateTime = (DWORD)(t->Low);
+              ctime.dwHighDateTime = (DWORD)(t->High);
+              ctimePtr = &ctime;
+            }
+            if (mtimePtr || ctimePtr)
+              SetFileTime(outFile.handle, ctimePtr, NULL, mtimePtr);
+          }
+          #endif
           
           if (File_Close(&outFile))
           {
@@ -658,7 +684,7 @@ int sevenz_main(int numargs, char *args[])
                We remove posix bits, if we detect posix mode field */
             if ((attrib & 0xF0000000) != 0)
               attrib &= 0x7FFF;
-            SetFileAttributesW(destPath, attrib);
+            SetFileAttributesW((LPCWSTR)destPath, attrib);
           }
           #endif
         }

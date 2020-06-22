@@ -145,9 +145,9 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 		} else {
 			r = ARCHIVE_EOF;
 		}
+		archive_read_close(a);
 	}
 
-	archive_read_close(a);
 	archive_read_free(a);
 
 	if (ctx.fd != -1) {

@@ -106,6 +106,5 @@ class Plugin(PluginBase):
         hDlg = self.info.DialogInit(self.info.ModuleNumber, -1, -1, 42, 20, self.s2f("Character Map"), fdi, len(fdi), 0, 0, DialogProc, 0)
         res = self.info.DialogRun(hDlg)
         if res == 1:
-            print('dialog text:', self.text)
-            pass
+            self.info.FSF.CopyToClipboard(self.s2f(self.text))
         self.info.DialogFree(hDlg)

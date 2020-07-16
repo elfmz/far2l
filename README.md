@@ -124,7 +124,7 @@ cmake .. \
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
 
  * **QtCreator**: select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
- * **CodeLite**: use this guide to setup a project: http://codelite.org/LiteEditor/WorkingWithCMake / https://web.archive.org/web/20180522182530/http://codelite.org/LiteEditor/WorkingWithCMake (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
+ * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
 
 #### Useful add-ons
 

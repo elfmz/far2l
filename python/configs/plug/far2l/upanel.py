@@ -74,21 +74,23 @@ class Plugin(PluginVFS):
 
     def DeleteFiles(self, PanelItem, ItemsNumber, OpMode):
         item = self.ffi.cast('struct PluginPanelItem *', PanelItem)
-        sname = self.f2s(item.FindData.lpwszFileName)
-        found = None
+        snames = []
+        for i in range(ItemsNumber):
+            snames.append(self.f2s(item[i].FindData.lpwszFileName))
+        found = []
         for i in range(len(self.names)):
-            if self.f2s(self.names[i]) == sname:
-                found = i
-        if found is None:
+            if self.f2s(self.names[i]) in snames:
+                found.append(i)
+        if len(found) == 0:
             return 0
-        items = self.ffi.new("struct PluginPanelItem []", len(self.Items)-1)
+        items = self.ffi.new("struct PluginPanelItem []", len(self.Items)-len(found))
         j = 0
         for i in range(len(self.Items)):
-            if i != found:
+            if i not in found:
                 items[j] = self.Items[i]
                 j += 1
-            else:
-                del self.names[i]
+        for i in sorted(found, reverse=True):
+            del self.names[i]
         self.Items = items
         self.info.Control(self.hplugin, self.ffic.FCTL_UPDATEPANEL, 0, 0)
         self.info.Control(self.hplugin, self.ffic.FCTL_REDRAWPANEL, 0, 0)

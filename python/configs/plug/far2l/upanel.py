@@ -92,4 +92,4 @@ class Plugin(PluginVFS):
         self.Items = items
         self.info.Control(self.hplugin, self.ffic.FCTL_UPDATEPANEL, 0, 0)
         self.info.Control(self.hplugin, self.ffic.FCTL_REDRAWPANEL, 0, 0)
-        return 1
+        return 0

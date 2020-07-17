@@ -35,7 +35,7 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)
 * g++
 * git (needed for downloading source code)
 
-#### Or simply on Ubuntu:
+#### Or simply on Debian/Ubuntu:
 ``` sh
 apt-get install gawk m4 libwxgtk3.0-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
 ```
@@ -124,7 +124,7 @@ cmake .. \
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
 
  * **QtCreator**: select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
- * **CodeLite**: use this guide to setup a project: http://codelite.org/LiteEditor/WorkingWithCMake (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
+ * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
 
 #### Useful add-ons
 

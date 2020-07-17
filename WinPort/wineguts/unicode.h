@@ -103,16 +103,16 @@ extern unsigned int wine_decompose_string( int flags, const WCHAR *src, unsigned
 #define WINE_DECOMPOSE_COMPAT     1
 #define WINE_DECOMPOSE_REORDER    2
 
-extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
-extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
-extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );
-extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
-extern long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base );
-extern unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base );
-extern int sprintfW( WCHAR *str, const WCHAR *format, ... );
-extern int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ... );
-extern int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist );
-extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list valist );
+//extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
+//extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
+//extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );
+//extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
+//extern long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base );
+//extern unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base );
+//extern int sprintfW( WCHAR *str, const WCHAR *format, ... );
+//extern int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ... );
+//extern int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist );
+//extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list valist );
 
 WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
@@ -296,7 +296,9 @@ WINE_UNICODE_INLINE WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n )
 
 WINE_UNICODE_INLINE long int atolW( const WCHAR *str )
 {
-    return strtolW( str, (WCHAR **)0, 10 );
+    long out = 0;
+    swscanf(str, L"%ld", &out);
+    return out;
 }
 
 WINE_UNICODE_INLINE int atoiW( const WCHAR *str )

@@ -49,9 +49,9 @@ class Plugin(PluginVFS):
         if OpMode & self.ffic.OPM_FIND:
             return 0
         if self.f2s(Dir) == "":
-            self.info.Control(self, self.ffic.FCTL_CLOSEPLUGIN, 0, 0)
+            self.info.Control(self.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, 0)
         else:
-            self.info.Control(self, self.ffic.FCTL_CLOSEPLUGIN, 0, Dir)
+            self.info.Control(self.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, Dir)
         return 1
 
     def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
@@ -71,3 +71,25 @@ class Plugin(PluginVFS):
         i = len(self.Items)-1
         items[i].FindData = PanelItem.FindData
         items[i].FindData.lpwszFileName = self.names[i]
+
+    def DeleteFiles(self, PanelItem, ItemsNumber, OpMode):
+        item = self.ffi.cast('struct PluginPanelItem *', PanelItem)
+        sname = self.f2s(item.FindData.lpwszFileName)
+        found = None
+        for i in range(len(self.names)):
+            if self.f2s(self.names[i]) == sname:
+                found = i
+        if found is None:
+            return 0
+        items = self.ffi.new("struct PluginPanelItem []", len(self.Items)-1)
+        j = 0
+        for i in range(len(self.Items)):
+            if i != found:
+                items[j] = self.Items[i]
+                j += 1
+            else:
+                del self.names[i]
+        self.Items = items
+        self.info.Control(self.hplugin, self.ffic.FCTL_UPDATEPANEL, 0, 0)
+        self.info.Control(self.hplugin, self.ffic.FCTL_REDRAWPANEL, 0, 0)
+        return 1

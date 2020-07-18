@@ -8,6 +8,7 @@ class PluginBase:
         self.info = info
         self.ffi = ffi
         self.ffic = ffic
+        self.hplugin = self.ffi.cast('void *', id(self))
 
     def s2f(self, s):
         return self.ffi.new("wchar_t []", s)

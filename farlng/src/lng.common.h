@@ -1,21 +1,26 @@
 #pragma once
-#include <windows.h>
-#include <utils.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
-extern unsigned long CRC32 (
+#include <utils.h>
+#include <ScopeHelpers.h>
+
+unsigned long CRC32 (
 		unsigned long crc,
 		const char *buf,
 		unsigned int len
 		);
 
-extern "C" int __cdecl sprintf (char *pBuffer, const char * format, ...);
-extern "C" int __cdecl printf (const char * format, ...);
-
 #define _tchartodigit(c)    ((c) >= '0' && (c) <= '9' ? (c) - '0' : -1)
-
-long __cdecl atol (const char *nptr);
 
 void TrimEnd (char *lpStr);
 void TrimStart (char *lpStr);
 void Trim (char *lpStr);
 void strmove(char *dst, const char *src);
+
+int OpenInputFile(const char *path);
+int CreateOutputFile(const char *path);
+size_t QueryFileSize(int fd);

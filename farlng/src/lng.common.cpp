@@ -1,5 +1,6 @@
 #include "lng.common.h"
 #include <stdarg.h>
+#include <sys/stat.h>
 
 void TrimEnd (char *lpStr)
 {
@@ -60,3 +61,23 @@ void strmove(char *dst, const char *src)
 {
 	memmove(dst, src, strlen(src) + 1);
 }
+
+int OpenInputFile(const char *path)
+{
+	return open(path, O_RDONLY, 0644);
+}
+
+int CreateOutputFile(const char *path)
+{
+	return open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+}
+
+size_t QueryFileSize(int fd)
+{
+	struct stat s{};
+	if (fstat(fd, &s) == -1)
+		return 0;
+
+	return (size_t)s.st_size;
+}
+

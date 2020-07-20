@@ -84,7 +84,10 @@ static void WinPortWxAssertHandler(const wxString& file,
 		const wxString& cond, const wxString& msg)
 {
 	fprintf(stderr, "WinPortWxAssertHandler: file='%ls' line=%d func='%ls' cond='%ls' msg='%ls'\n",
-			file.wc_str(), line, func.wc_str(), cond.wc_str(), msg.wc_str());
+			static_cast<const wchar_t*>(file.wc_str()), line,
+			static_cast<const wchar_t*>(func.wc_str()),
+			static_cast<const wchar_t*>(cond.wc_str()),
+			static_cast<const wchar_t*>(msg.wc_str()));
 }
 
 static void DetectHostAbilities()

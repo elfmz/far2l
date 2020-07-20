@@ -53,9 +53,9 @@ class FixedFontLookup : wxFontEnumerator
 		wxFont f(wxFontInfo(DEFAULT_FONT_SIZE).Underlined().FaceName(face_name));
 		if (f.IsOk()) {
 			fprintf(stderr, "FONT family %u encoding %u face_name='%ls' \n", 
-				(unsigned int)f.GetFamily(), (unsigned int)f.GetEncoding(), face_name.wc_str());
+				(unsigned int)f.GetFamily(), (unsigned int)f.GetEncoding(), static_cast<const wchar_t*>(face_name.wc_str()));
 		} else {
-			fprintf(stderr, "BAD FONT: face_name='%ls'\n", face_name.wc_str());
+			fprintf(stderr, "BAD FONT: face_name='%ls'\n", static_cast<const wchar_t*>(face_name.wc_str()));
 		} */
 		return true;
 	}
@@ -66,7 +66,9 @@ public:
 		_any.Empty();
 		_known_good.Empty();
 		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
-		fprintf(stderr, "FixedFontLookup: _any='%ls' _known_good='%ls'\n", static_cast<const wchar_t*>(_any.wc_str()), static_cast<const wchar_t*>(_known_good.wc_str()));
+		fprintf(stderr, "FixedFontLookup: _any='%ls' _known_good='%ls'\n",
+			static_cast<const wchar_t*>(_any.wc_str()),
+			static_cast<const wchar_t*>(_known_good.wc_str()));
 		return _known_good.IsEmpty() ? _any : _known_good;
 	}	
 };
@@ -79,7 +81,8 @@ static bool LoadFontFromSettings(wxFont& font)
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
 			font.SetNativeFontInfo(str);
 			if (font.IsOk()) {
-				printf("LoadFontFromSettings: used %ls\n", static_cast<const wchar_t*>(str.wc_str()));
+				printf("LoadFontFromSettings: used %ls\n",
+					static_cast<const wchar_t*>(str.wc_str()));
 				return true;				
 			}
 		}
@@ -224,7 +227,8 @@ void ConsolePaintContext::SetFont(wxFont font)
 			;
 	}
 	
-	fprintf(stderr, "Font %u x %u . %u: '%ls' - %s\n", _font_width, _font_height, _font_thickness, static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
+	fprintf(stderr, "Font %u x %u . %u: '%ls' - %s\n", _font_width, _font_height, _font_thickness,
+		static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
 		font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
 		
 	struct stat s{};

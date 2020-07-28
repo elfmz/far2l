@@ -2622,20 +2622,31 @@ int RegExp::InnerMatch(const prechar str,const prechar strend,PMatch match,int& 
 				}
 				case opWordBound:
 				{
-					if ((str==start && ISWORD(*str))||
-					        (!(ISWORD(str[-1])) && ISWORD(*str)) ||
-					        (!(ISWORD(*str)) && ISWORD(str[-1])) ||
-					        (str==strend && ISWORD(str[-1])))continue;
-
+					if (str==start)
+					{
+						if (ISWORD(*str)) continue;
+					}
+					else if ((!(ISWORD(str[-1])) && ISWORD(*str)) ||
+					         (!(ISWORD(*str)) && ISWORD(str[-1])) ||
+					         (str==strend && ISWORD(str[-1])))
+					{
+						continue;
+					}
 					break;
 				}
 				case opNotWordBound:
 				{
-					if (!((str==start && ISWORD(*str))||
-					        (!(ISWORD(str[-1])) && ISWORD(*str)) ||
+					if (str==start)
+					{
+						if (!(ISWORD(*str))) continue;
+					}
+					else if (!(
+					  (!(ISWORD(str[-1])) && ISWORD(*str)) ||
 					        (!(ISWORD(*str)) && ISWORD(str[-1])) ||
-					        (str==strend && ISWORD(str[-1]))))continue;
-
+					        (str==strend && ISWORD(str[-1]))))
+					{
+					  continue;
+					}
 					break;
 				}
 				case opType:

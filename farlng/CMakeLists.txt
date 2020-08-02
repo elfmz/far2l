@@ -12,8 +12,6 @@ set(SOURCES
 set(CMAKE_CXX_VISIBILITY_PRESET default)
 set(CMAKE_C_VISIBILITY_PRESET default)
 
-find_package(PkgConfig REQUIRED)
-
 add_executable (farlng ${SOURCES})
 
 target_link_libraries(farlng utils)

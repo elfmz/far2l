@@ -6,6 +6,7 @@
 #include <thread>
 #include <condition_variable>
 #if defined(__APPLE__) || defined(__FreeBSD__)
+# include <sys/types.h>
 # include <sys/event.h>
 # include <sys/time.h>
 #elif !defined(__CYGWIN__)

@@ -37,11 +37,6 @@ if (NOT DEFINED FARFTP)
 	set(FARFTP "NO")
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
-    set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
-endif()
-
 if (NOT ${USEWX})
 	set(USEWX_INCS "")
 	set(USEWX_LIBS "")

@@ -46,24 +46,16 @@ if (NOT ${USEWX})
 	set(USEWX_INCS "")
 	set(USEWX_LIBS "")
 	set(USEWX_CXX_FLAGS "")
+	set(USEWX_USEFILE "")
 else()
 	find_package(wxWidgets REQUIRED net core base)
 	include(${wxWidgets_USE_FILE})
 
+	set(USEWX_USEFILE ${wxWidgets_USE_FILE})
 	set(USEWX_INCS ${wxWidgets_INCLUDE_DIRS})
 	set(USEWX_LIBS ${wxWidgets_LIBRARIES})
 	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
 endif()
-
-find_program (HAVE_GAWK NAMES gawk)
-if(NOT HAVE_GAWK)
-	message(FATAL_ERROR "${Esc}[1;31mgawk not found - please install it${Esc}[39;22m")
-endif ()
-find_program (HAVE_M4 NAMES m4)
-if(NOT HAVE_M4)
-	message(FATAL_ERROR "${Esc}[1;31mm4 not found - please install it${Esc}[39;22m")
-endif ()
-
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 # workaround for brew vs system openssl conflicts

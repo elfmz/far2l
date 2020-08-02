@@ -198,12 +198,10 @@ void SmartWrite (
 	*pCRC32 = CRC32(*pCRC32, lpStr, dwWritten);
 }
 
-static int temp_id = 0;
-char *GetTempName ()
+static char *GetTempName(const char *base_name)
 {
-	++temp_id;
-	char *out = (char *)malloc(0x80);
-	sprintf(out, "/tmp/farlng-%u-%u.lngg", getpid(), temp_id);
+	char *out = (char *)malloc(strlen(base_name) + 8);
+	sprintf(out, "%s.tmp", base_name);
 	return out;
 }
 
@@ -323,7 +321,7 @@ int main_generator (int argc, char** argv)
 	uint32_t dwHeaderOldCRC32;
 
 	char *lpHPPFileName = NULL;
-	char *lpHPPFileNameTemp = GetTempName ();
+	char *lpHPPFileNameTemp = NULL;
 
 	char *lpFullName = (char*)malloc(0x10000);
 
@@ -349,6 +347,8 @@ int main_generator (int argc, char** argv)
 
 		dwHeaderCRC32 = 0;
 		dwHeaderOldCRC32 = (CheckExists(lpFullName) && key_file) ? key_file->GetInt( lpFullName, "CRC32")  : 0;
+
+		lpHPPFileNameTemp = GetTempName(lpFullName);
 
 		FDScope hHFile(CreateOutputFile(lpHPPFileNameTemp));
 		if ( hHFile.Valid() )
@@ -383,7 +383,7 @@ int main_generator (int argc, char** argv)
 				pLangEntries[i].dwCRC32 = 0;
 				pLangEntries[i].dwOldCRC32 = (CheckExists(lpFullName) && key_file)  ? key_file->GetInt ( lpFullName, "CRC32") : 0;
 
-				pLangEntries[i].lpLNGFileNameTemp = GetTempName ();
+				pLangEntries[i].lpLNGFileNameTemp = GetTempName(lpFullName);
 
 				pLangEntries[i].hLNGFile = CreateOutputFile(pLangEntries[i].lpLNGFileNameTemp);
 				if ( pLangEntries[i].hLNGFile == -1)

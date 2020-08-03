@@ -43,6 +43,25 @@ if (NOT ${USEWX})
 	set(USEWX_CXX_FLAGS "")
 	set(USEWX_USEFILE "")
 else()
+	if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+		if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
+			message(STATUS "Using pre-defined wx config: ${wxWidgets_CONFIG_EXECUTABLE}")
+
+		elseif(EXISTS "/usr/local/bin/wxgtk3u-3.1-config")
+			set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.1-config")
+			set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.1")
+			message(STATUS "Using known location of wx-config 3.1")
+
+		elseif (EXISTS "/usr/local/bin/wxgtk3u-3.0-config")
+			set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
+			set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
+			message(STATUS "Using known location of wx-config 3.0")
+
+		else()
+			message(STATUS "No wxgtk3u-3.*-config in expected locations")
+		endif()
+endif()
+
 	find_package(wxWidgets REQUIRED net core base)
 	include(${wxWidgets_USE_FILE})
 

@@ -190,8 +190,8 @@ endif()
 add_custom_command(TARGET far2l POST_BUILD
    COMMAND rm ${INSTALL_DIR}/far2l_askpass || echo ""
    COMMAND rm ${INSTALL_DIR}/far2l_sudoapp || echo ""
-   COMMAND ln -s ../../bin/far2l ${INSTALL_DIR}/far2l_askpass
-   COMMAND ln -s ../../bin/far2l ${INSTALL_DIR}/far2l_sudoapp)
+   COMMAND ln -s far2l ${INSTALL_DIR}/far2l_askpass
+   COMMAND ln -s far2l ${INSTALL_DIR}/far2l_sudoapp)
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

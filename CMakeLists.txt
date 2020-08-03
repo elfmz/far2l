@@ -213,9 +213,7 @@ install(PROGRAMS "${INSTALL_DIR}/far2l" DESTINATION "bin" )
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
     PATTERN "colorer/base" EXCLUDE 
     PATTERN "plug/*.far-plug-*"
-    PATTERN "plug/*.broker"
-    PATTERN "far2l_askpass"
-    PATTERN "far2l_sudoapp")
+    PATTERN "plug/*.broker")
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISSIONS FILES_MATCHING 
     PATTERN "far2l" EXCLUDE 
@@ -227,7 +225,9 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
 
 # setup some symlinks and remove deprecated stuff from previous installation
 install(CODE "
-      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb && echo Removed existing objinfo plugin)
+      execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_askpass)
+      execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_sudoapp)
+      execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb)
       "
     )
 

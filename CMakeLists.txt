@@ -37,33 +37,39 @@ if (NOT DEFINED FARFTP)
 	set(FARFTP "NO")
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
-    set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
-endif()
-
 if (NOT ${USEWX})
 	set(USEWX_INCS "")
 	set(USEWX_LIBS "")
 	set(USEWX_CXX_FLAGS "")
+	set(USEWX_USEFILE "")
 else()
+	if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+		if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
+			message(STATUS "Using pre-defined wx config: ${wxWidgets_CONFIG_EXECUTABLE}")
+
+		elseif(EXISTS "/usr/local/bin/wxgtk3u-3.1-config")
+			set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.1-config")
+			set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.1")
+			message(STATUS "Using known location of wx-config 3.1")
+
+		elseif (EXISTS "/usr/local/bin/wxgtk3u-3.0-config")
+			set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
+			set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
+			message(STATUS "Using known location of wx-config 3.0")
+
+		else()
+			message(STATUS "No wxgtk3u-3.*-config in expected locations")
+		endif()
+endif()
+
 	find_package(wxWidgets REQUIRED net core base)
 	include(${wxWidgets_USE_FILE})
 
+	set(USEWX_USEFILE ${wxWidgets_USE_FILE})
 	set(USEWX_INCS ${wxWidgets_INCLUDE_DIRS})
 	set(USEWX_LIBS ${wxWidgets_LIBRARIES})
 	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
 endif()
-
-find_program (HAVE_GAWK NAMES gawk)
-if(NOT HAVE_GAWK)
-	message(FATAL_ERROR "${Esc}[1;31mgawk not found - please install it${Esc}[39;22m")
-endif ()
-find_program (HAVE_M4 NAMES m4)
-if(NOT HAVE_M4)
-	message(FATAL_ERROR "${Esc}[1;31mm4 not found - please install it${Esc}[39;22m")
-endif ()
-
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 # workaround for brew vs system openssl conflicts
@@ -219,8 +225,8 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
 
 # setup some symlinks and remove deprecated stuff from previous installation
 install(CODE "
-      execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_askpass)
-      execute_process(COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_sudoapp)
+      execute_process(COMMAND ln -s ../../bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_askpass)
+      execute_process(COMMAND ln -s ../../bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_sudoapp)
       execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb)
       "
     )

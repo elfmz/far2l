@@ -1,15 +1,7 @@
 
 project(WinPort)
 
-find_package(PkgConfig REQUIRED)
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
-    set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
-endif()
-
 if (${USEWX})
-	find_package(wxWidgets REQUIRED net core base)
 	include(${wxWidgets_USE_FILE})
 endif()
 

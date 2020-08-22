@@ -55,10 +55,10 @@ struct LanguageEntry {
 	char *lpLanguageName;
 	char *lpLanguageDescription;
 
-	HANDLE hLNGFile;
+	int hLNGFile;
 
-	DWORD dwCRC32;
-	DWORD dwOldCRC32;
+	uint32_t dwCRC32;
+	uint32_t dwOldCRC32;
 
 	int cNeedUpdate;
 
@@ -189,57 +189,20 @@ bool ReadComments (
 }
 
 void SmartWrite (
-		HANDLE hFile,
+		int hFile,
 		const char *lpStr,
-		DWORD *pCRC32,
-		int nOutCP
+		uint32_t *pCRC32
 		)
 {
-	DWORD dwWritten;
-
-	if ( nOutCP == CP_UTF8 )
-	{
-		WINPORT(WriteFile) (hFile, lpStr, strlen(lpStr), &dwWritten, NULL);
-		*pCRC32 = CRC32(*pCRC32, lpStr, dwWritten);
-	}
-	else
-	{
-		DWORD dwSize = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, lpStr, -1, NULL, 0);
-
-		wchar_t* pBuffer = new wchar_t[dwSize+1];
-
-		WINPORT(MultiByteToWideChar)(CP_UTF8, 0, lpStr, -1, pBuffer, dwSize);
-
-		if ( nOutCP == 1200/*CP_UNICODE*/ )
-		{
-			WINPORT(WriteFile) (hFile, pBuffer, (dwSize-1)*sizeof(wchar_t), &dwWritten, NULL);
-			*pCRC32 = CRC32(*pCRC32, (const char*)pBuffer, dwWritten);
-		}
-		else
-		{
-			DWORD dwSizeAnsi = WINPORT(WideCharToMultiByte)(nOutCP, 0, pBuffer, -1, NULL, 0, NULL, NULL);
-
-			char* pAnsiBuffer = new char[dwSizeAnsi+1];
-
-			WINPORT(WideCharToMultiByte)(nOutCP, 0, pBuffer, -1, pAnsiBuffer, dwSize, NULL, NULL);
-
-			WINPORT(WriteFile) (hFile, pAnsiBuffer, dwSizeAnsi-1, &dwWritten, NULL);
-			*pCRC32 = CRC32(*pCRC32, pAnsiBuffer, dwWritten);
-
-			delete [] pAnsiBuffer;
-		}
-
-		delete [] pBuffer;
-	}
+	size_t dwWritten = WriteAll(hFile, lpStr, strlen(lpStr));
+	*pCRC32 = CRC32(*pCRC32, lpStr, dwWritten);
 }
 
-char *GetTempName ()
+static char *GetTempName(const char *base_name)
 {
-	std::vector<WCHAR> tmp(MAX_PATH);
-	WINPORT(GetTempFileName) (L".", L"lngg", 0, &tmp[0]);
-	return strdup(Wide2MB(&tmp[0]).c_str());
-	//char *lpTempName = (char*)malloc (MAX_PATH);
-	//return lpTempName;
+	char *out = (char *)malloc(strlen(base_name) + 8);
+	sprintf(out, "%s.tmp", base_name);
+	return out;
 }
 
 
@@ -255,23 +218,10 @@ int ReadInteger(char*& lpStart)
 	return nResult;
 }
 
-void WriteSignatureIfNeeded(HANDLE hFile, int nEncoding)
+void WriteSignatureIfNeeded(int hFile)
 {
-	DWORD dwID;
-	DWORD dwWritten;
-
-	if ( nEncoding == CP_UTF8 )
-	{
-		dwID = 0xBFBBEF;
-		WINPORT(WriteFile)(hFile, &dwID, 3, &dwWritten, NULL);
-	}
-	else
-
-	if ( nEncoding == 1200/*CP_UNICODE*/ )
-	{
-		dwID = 0xFEFF;
-		WINPORT(WriteFile)(hFile, &dwID, 2, &dwWritten, NULL);
-	}
+	uint32_t dwID = 0xBFBBEF;
+	WriteAll(hFile, &dwID, 3);
 }
 
 bool CheckExists(const char *path)
@@ -282,19 +232,18 @@ bool CheckExists(const char *path)
 
 int main_generator (int argc, char** argv)
 {
-	printf (".LNG Generator " VERSION "\n\r");
-	printf ("Copyright (C) 2003-2009 WARP ItSelf\n\r");
-	printf ("Copyright (C) 2005 WARP ItSelf & Alex Yaroslavsky\n\n\r");
+	printf (".LNG Generator " VERSION "\n");
+	printf ("Copyright (C) 2003-2009 WARP ItSelf\n");
+	printf ("Copyright (C) 2005 WARP ItSelf & Alex Yaroslavsky\n\n");
 
 	if ( argc < 2 )
 	{
-		printf ("Usage: generator [options] feed_file\n\r");
+		printf ("Usage: generator [options] feed_file\n");
 		printf ("\nOptions:\n");
-		printf ("\t-i filename - optional ini file with update status.\n\r");
-		printf ("\t-ol output_path - language files output path.\n\r");
-		printf ("\t-oh output_path - header file output path.\n\r");
-		printf ("\t-nc - don't write copyright info to generated files.\n\r");
-		printf ("\t-e - output encoding set in feed file for each output file (UTF8 otherwise).\n\r");
+		printf ("\t-i filename - optional ini file with update status.\n");
+		printf ("\t-ol output_path - language files output path.\n");
+		printf ("\t-oh output_path - header file output path.\n");
+		printf ("\t-nc - don't write copyright info to generated files.\n");
 		return 0;
 	}
 
@@ -305,18 +254,12 @@ int main_generator (int argc, char** argv)
 
 	bool bWriteCopyright = true;
 
-	bool bOutputInUTF8 = true;
-
 	if ( argc > 2 )
 	{
 		for (int i = 1; i < argc-1; i++)
 		{
 			if ( strcmp (argv[i],"-nc") == 0 )
 				bWriteCopyright = false;
-			else
-
-			if ( strcmp (argv[i],"-e") == 0 )
-				bOutputInUTF8 = false;
 			else
 
 			if ( strcmp (argv[i],"-i") == 0 && ++i < argc-1 )
@@ -340,60 +283,53 @@ int main_generator (int argc, char** argv)
 
 				UnquoteIfNeeded (lpHOutputPath);
 			}
+
+			else
+			{
+				fprintf(stderr, "Bad argument: %s\n", argv[i]);
+				return -1;
+			}
 		}
 	}
 
-				fprintf(stderr, "lpLNGOutputPath=%s\n", lpLNGOutputPath);
+	fprintf(stderr, "lpLNGOutputPath=%s\n", lpLNGOutputPath);
 
-	HANDLE hFeedFile = WINPORT(CreateFile) (
-			MB2Wide(argv[argc-1]).c_str(),
-			GENERIC_READ,
-			FILE_SHARE_READ,
-			NULL,
-			OPEN_EXISTING,
-			0,
-			NULL
-			);
-
-	if ( hFeedFile == INVALID_HANDLE_VALUE )
+	FDScope hFeedFile(OpenInputFile(argv[argc-1]));
+	if (!hFeedFile.Valid())
 	{
-		printf ("ERROR: Can't open the feed file, exiting.\n\r");
+		printf ("ERROR: Can't open the feed file, exiting.\n");
 		return 0;
 	}
 
-	DWORD dwRead;
-//	DWORD dwWritten;
-	DWORD dwID;
+	size_t dwSize = QueryFileSize(hFeedFile);
 
-	bool bUTF8 = false;
-
-	WINPORT(ReadFile) (hFeedFile, &dwID, 3, &dwRead, NULL);
-
-	bUTF8 = ((dwID & 0x00FFFFFF) == 0xBFBBEF);
-
-	if ( !bUTF8 )
-		WINPORT(SetFilePointer) (hFeedFile, 0, NULL, FILE_BEGIN);
+	if (dwSize >= 3)
+	{
+		uint32_t dwID = 0;
+		ReadAll(hFeedFile, &dwID, 3);
+		if ( ((dwID & 0x00FFFFFF) == 0xBFBBEF) )
+			dwSize-= 3;
+		else
+			lseek(hFeedFile, 0, SEEK_SET);
+	}
 
 	bool bUpdate;
 
 	LanguageEntry *pLangEntries;
 
-	DWORD dwHeaderCRC32;
-	DWORD dwHeaderOldCRC32;
+	uint32_t dwHeaderCRC32;
+	uint32_t dwHeaderOldCRC32;
 
 	char *lpHPPFileName = NULL;
-	char *lpHPPFileNameTemp = GetTempName ();
+	char *lpHPPFileNameTemp = NULL;
 
-	char *lpFullName = (char*)malloc (MAX_PATH);
+	char *lpFullName = (char*)malloc(0x10000);
 
 	char *lpString = (char*)malloc (1024);
 
-	DWORD dwSize = WINPORT(GetFileSize) (hFeedFile, NULL);
+	char *pFeedBuffer = (char*)calloc(1, dwSize+1);
 
-	char *pFeedBuffer = (char*)malloc (dwSize+1);
-	memset (pFeedBuffer, 0, dwSize+1);
-
-	WINPORT(ReadFile) (hFeedFile, pFeedBuffer, dwSize, &dwRead, NULL);
+	ReadAll(hFeedFile, pFeedBuffer, dwSize);
 
 	char *lpStart = pFeedBuffer;
 
@@ -401,9 +337,6 @@ int main_generator (int argc, char** argv)
 
 	ReadFromBufferEx (lpStart, &lpHPPFileName);
 	UnquoteIfNeeded (lpHPPFileName);
-
-	// read h encoding
-	int nHPPEncoding = bOutputInUTF8 ? CP_UTF8 : ReadInteger(lpStart);
 
 	// read language count
 	int dwLangs = ReadInteger(lpStart);
@@ -415,76 +348,58 @@ int main_generator (int argc, char** argv)
 		dwHeaderCRC32 = 0;
 		dwHeaderOldCRC32 = (CheckExists(lpFullName) && key_file) ? key_file->GetInt( lpFullName, "CRC32")  : 0;
 
-		HANDLE hHFile = WINPORT(CreateFile) (
-				MB2Wide(lpHPPFileNameTemp).c_str(),
-				GENERIC_WRITE,
-				FILE_SHARE_READ,
-				NULL,
-				CREATE_ALWAYS,
-				0,
-				NULL
-				);
+		lpHPPFileNameTemp = GetTempName(lpFullName);
 
-		if ( hHFile != INVALID_HANDLE_VALUE )
+		FDScope hHFile(CreateOutputFile(lpHPPFileNameTemp));
+		if ( hHFile.Valid() )
 		{
-			WriteSignatureIfNeeded(hHFile, nHPPEncoding);
+			WriteSignatureIfNeeded(hHFile);
 
-				if ( bWriteCopyright )
-				{
-					sprintf (lpString, "// This C++ include file was generated by .LNG Generator " VERSION "\r\n// Copyright (C) 2003-2005 WARP ItSelf\r\n// Copyright (C) 2005 WARP ItSelf & Alex Yaroslavsky\r\n\r\n");
-					SmartWrite (hHFile, lpString, &dwHeaderCRC32, nHPPEncoding);
-				}
+			if ( bWriteCopyright )
+			{
+				sprintf (lpString, "// This C++ include file was generated by .LNG Generator " VERSION "\r\n// Copyright (C) 2003-2005 WARP ItSelf\r\n// Copyright (C) 2005 WARP ItSelf & Alex Yaroslavsky\r\n\n");
+				SmartWrite (hHFile, lpString, &dwHeaderCRC32);
+			}
 
-				pLangEntries = (LanguageEntry*)malloc (dwLangs*sizeof (LanguageEntry));
+			pLangEntries = (LanguageEntry*)malloc (dwLangs*sizeof (LanguageEntry));
 
-				// read language names and create .lng files
+			// read language names and create .lng files
 
-				for (int i = 0; i < dwLangs; i++)
-				{
-					ReadFromBufferEx (lpStart, &pLangEntries[i].lpLNGFileName);
+			for (int i = 0; i < dwLangs; i++)
+			{
+				ReadFromBufferEx (lpStart, &pLangEntries[i].lpLNGFileName);
 
-					pLangEntries[i].nEncoding = bOutputInUTF8 ? CP_UTF8 : ReadInteger(lpStart);
+				ReadFromBufferEx (lpStart, &pLangEntries[i].lpLanguageName);
+				ReadFromBufferEx (lpStart, &pLangEntries[i].lpLanguageDescription);
 
-					ReadFromBufferEx (lpStart, &pLangEntries[i].lpLanguageName);
-					ReadFromBufferEx (lpStart, &pLangEntries[i].lpLanguageDescription);
+				UnquoteIfNeeded (pLangEntries[i].lpLanguageName);
+				UnquoteIfNeeded (pLangEntries[i].lpLanguageDescription);
+				UnquoteIfNeeded (pLangEntries[i].lpLNGFileName);
 
-					UnquoteIfNeeded (pLangEntries[i].lpLanguageName);
-					UnquoteIfNeeded (pLangEntries[i].lpLanguageDescription);
-					UnquoteIfNeeded (pLangEntries[i].lpLNGFileName);
+				sprintf (lpFullName, "%s/%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
 
-					sprintf (lpFullName, "%s/%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
+				pLangEntries[i].cNeedUpdate = 0;
 
-					pLangEntries[i].cNeedUpdate = 0;
+				pLangEntries[i].dwCRC32 = 0;
+				pLangEntries[i].dwOldCRC32 = (CheckExists(lpFullName) && key_file)  ? key_file->GetInt ( lpFullName, "CRC32") : 0;
 
-					pLangEntries[i].dwCRC32 = 0;
-					pLangEntries[i].dwOldCRC32 = (CheckExists(lpFullName) && key_file)  ? key_file->GetInt ( lpFullName, "CRC32") : 0;
+				pLangEntries[i].lpLNGFileNameTemp = GetTempName(lpFullName);
 
-					pLangEntries[i].lpLNGFileNameTemp = GetTempName ();
-
-					pLangEntries[i].hLNGFile = WINPORT(CreateFile) (
-							MB2Wide(pLangEntries[i].lpLNGFileNameTemp).c_str(),
-							GENERIC_WRITE,
-							FILE_SHARE_READ,
-							NULL,
-							CREATE_ALWAYS,
-							0,
-							NULL
-							);
-
-					if ( pLangEntries[i].hLNGFile == INVALID_HANDLE_VALUE )
-						printf ("WARNING: Can't create the language file \"%s\".\n\r", pLangEntries[i].lpLNGFileName);
-					else
+				pLangEntries[i].hLNGFile = CreateOutputFile(pLangEntries[i].lpLNGFileNameTemp);
+				if ( pLangEntries[i].hLNGFile == -1)
+					printf ("WARNING: Can't create the language file \"%s\".\n", pLangEntries[i].lpLNGFileName);
+				else
 					{
-						WriteSignatureIfNeeded(pLangEntries[i].hLNGFile, pLangEntries[i].nEncoding);
+						WriteSignatureIfNeeded(pLangEntries[i].hLNGFile);
 
 						if ( bWriteCopyright )
 						{
-							sprintf (lpString, "// This .lng file was generated by .LNG Generator " VERSION "\r\n// Copyright (C) 2003-2005 WARP ItSelf\r\n// Copyright (C) 2005 WARP ItSelf & Alex Yaroslavsky\r\n\r\n");
-							SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+							sprintf (lpString, "// This .lng file was generated by .LNG Generator " VERSION "\r\n// Copyright (C) 2003-2005 WARP ItSelf\r\n// Copyright (C) 2005 WARP ItSelf & Alex Yaroslavsky\r\n\n");
+							SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32);
 						}
 
-						sprintf (lpString, ".Language=%s,%s\r\n\r\n", pLangEntries[i].lpLanguageName, pLangEntries[i].lpLanguageDescription);
-						SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+						sprintf (lpString, ".Language=%s,%s\r\n\n", pLangEntries[i].lpLanguageName, pLangEntries[i].lpLanguageDescription);
+						SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32);
 					}
 				}
 
@@ -494,7 +409,7 @@ int main_generator (int argc, char** argv)
 
 				if ( ReadComments (lpStart, &lpHHead, "hhead:", "") )
 				{
-					SmartWrite (hHFile, lpHHead, &dwHeaderCRC32, nHPPEncoding);
+					SmartWrite (hHFile, lpHHead, &dwHeaderCRC32);
 					free(lpHHead);
 				}
 
@@ -503,7 +418,7 @@ int main_generator (int argc, char** argv)
 				ReadComments (lpStart, &lpEnum, "enum:", "");
 				sprintf (lpString, "enum %s{\r\n", lpEnum? lpEnum : "");
 				free(lpEnum);
-				SmartWrite (hHFile, lpString, &dwHeaderCRC32, nHPPEncoding);
+				SmartWrite (hHFile, lpString, &dwHeaderCRC32);
 
 				// read strings
 
@@ -517,7 +432,7 @@ int main_generator (int argc, char** argv)
 
 					if ( ReadComments(lpStart, &lpHComments, "h:", "") )
 					{
-						SmartWrite (hHFile, lpHComments, &dwHeaderCRC32, nHPPEncoding);
+						SmartWrite (hHFile, lpHComments, &dwHeaderCRC32);
 						free (lpHComments);
 					}
 
@@ -532,7 +447,7 @@ int main_generator (int argc, char** argv)
 						char *lpSpecificLngComments  = NULL;
 
 						sprintf (lpString, "\t%s,\r\n", lpMsgID);
-						SmartWrite (hHFile, lpString, &dwHeaderCRC32, nHPPEncoding);
+						SmartWrite (hHFile, lpString, &dwHeaderCRC32);
 
 						ReadComments(lpStart, &lpLngComments, "l:", "");
 						ReadComments(lpStart, &lpELngComments, "le:", "");
@@ -540,11 +455,11 @@ int main_generator (int argc, char** argv)
 						for (int i = 0; i < dwLangs; i++)
 						{
 							if ( lpLngComments )
-								SmartWrite (pLangEntries[i].hLNGFile, lpLngComments, &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+								SmartWrite (pLangEntries[i].hLNGFile, lpLngComments, &pLangEntries[i].dwCRC32);
 
 							if ( ReadComments(lpStart, &lpSpecificLngComments, "ls:", "") )
 							{
-								SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+								SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32);
 								free (lpSpecificLngComments);
 							}
 
@@ -561,29 +476,29 @@ int main_generator (int argc, char** argv)
 
 									/*
 									printf (
-											"WARNING: String %s (ID = %s) of %s language needs update!\n\r",
+											"WARNING: String %s (ID = %s) of %s language needs update!\n",
 											lpLNGString,
 											lpMsgID,
 											pLangEntries[i].lpLanguageName
 											);
 									*/
-									SmartWrite (pLangEntries[i].hLNGFile, "// need translation:\r\n", &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+									SmartWrite (pLangEntries[i].hLNGFile, "// need translation:\r\n", &pLangEntries[i].dwCRC32);
 									pLangEntries[i].cNeedUpdate++;
 								}
 
 								sprintf (lpString, "//[%s]\r\n%s\r\n", lpMsgID, lpLNGString);
-								SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+								SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32);
 								free (lpLNGString);
 							}
 
 							if ( lpSpecificLngComments )
 							{
-								SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+								SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32);
 								free (lpSpecificLngComments);
 							}
 
 							if ( lpELngComments )
-								SmartWrite (pLangEntries[i].hLNGFile, lpELngComments, &pLangEntries[i].dwCRC32, pLangEntries[i].nEncoding);
+								SmartWrite (pLangEntries[i].hLNGFile, lpELngComments, &pLangEntries[i].dwCRC32);
 						}
 
 						free (lpMsgID);
@@ -598,7 +513,7 @@ int main_generator (int argc, char** argv)
 
 					if ( lpHComments )
 					{
-						SmartWrite (hHFile, lpHComments, &dwHeaderCRC32, nHPPEncoding);
+						SmartWrite (hHFile, lpHComments, &dwHeaderCRC32);
 						free (lpHComments);
 					}
 				}
@@ -608,7 +523,7 @@ int main_generator (int argc, char** argv)
 				{
 					if (pLangEntries[i].cNeedUpdate > 0)
 					{
-						printf ("INFO: There are %d strings that require review in %s translation!\n\n\r",
+						printf ("INFO: There are %d strings that require review in %s translation!\n\n",
 								pLangEntries[i].cNeedUpdate,
 								pLangEntries[i].lpLanguageName);
 					}
@@ -616,14 +531,14 @@ int main_generator (int argc, char** argv)
 
 				// write .h file footer
 
-				WINPORT(SetFilePointer) (hHFile, -2, NULL, FILE_CURRENT);
+				lseek(hHFile, -2, SEEK_CUR);
 
 				sprintf (lpString, "\r\n};\r\n");
-				SmartWrite (hHFile, lpString, &dwHeaderCRC32, nHPPEncoding);
+				SmartWrite (hHFile, lpString, &dwHeaderCRC32);
 
 				if ( lpHTail )
 				{
-					SmartWrite (hHFile, lpHTail, &dwHeaderCRC32, nHPPEncoding);
+					SmartWrite (hHFile, lpHTail, &dwHeaderCRC32);
 					free (lpHTail);
 				}
 
@@ -631,7 +546,8 @@ int main_generator (int argc, char** argv)
 
 				for (int i = 0; i < dwLangs; i++)
 				{
-					WINPORT(CloseHandle) (pLangEntries[i].hLNGFile);
+					close(pLangEntries[i].hLNGFile);
+					pLangEntries[i].hLNGFile = -1;
 
 					sprintf (lpFullName, "%s/%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
 
@@ -652,14 +568,13 @@ int main_generator (int argc, char** argv)
 
 					if ( bUpdate )
 					{
-						WINPORT(MoveFileEx) (
-								MB2Wide(pLangEntries[i].lpLNGFileNameTemp).c_str(),
-								MB2Wide(lpFullName).c_str(),
-								MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED
-								);
+						if (rename(pLangEntries[i].lpLNGFileNameTemp, lpFullName) == -1) {
+							printf ("ERROR: Failed to rename '%s' -> '%s'.\n",
+								pLangEntries[i].lpLNGFileNameTemp, lpFullName);
+						}
 					}
 
-					WINPORT(DeleteFile) (MB2Wide(pLangEntries[i].lpLNGFileNameTemp).c_str());
+					unlink(pLangEntries[i].lpLNGFileNameTemp);
 
 					free (pLangEntries[i].lpLNGFileNameTemp);
 					free (pLangEntries[i].lpLNGFileName);
@@ -667,9 +582,7 @@ int main_generator (int argc, char** argv)
 					free (pLangEntries[i].lpLanguageDescription);
 				}
 
-                free(pLangEntries);
-
-				WINPORT(CloseHandle) (hHFile);
+				free(pLangEntries);
 
 				sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
 
@@ -690,28 +603,24 @@ int main_generator (int argc, char** argv)
 
 				if ( bUpdate )
 				{
-					WINPORT(MoveFileEx) (
-							MB2Wide(lpHPPFileNameTemp).c_str(),
-							MB2Wide(lpFullName).c_str(),
-							MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED
-							);
+					if (rename(lpHPPFileNameTemp, lpFullName) == -1) {
+						printf ("ERROR: Failed to rename '%s' -> '%s'.\n", lpHPPFileNameTemp, lpFullName);
+					}
 				}
 
 		}
 		else
-			printf ("ERROR: Can't create the header file, exiting.\n\r");
+			printf ("ERROR: Can't create the header file, exiting.\n");
 	}
 	else
-		printf ("ERROR: Zero languages to process, exiting.\n\r");
+		printf ("ERROR: Zero languages to process, exiting.\n");
 
-	WINPORT(DeleteFile) (MB2Wide(lpHPPFileNameTemp).c_str());
+	unlink(lpHPPFileNameTemp);
 
 	free (lpHPPFileNameTemp);
 	free (lpHPPFileName);
 	free (pFeedBuffer);
 	free (lpString);
-
-	WINPORT(CloseHandle) (hFeedFile);
 
 	free (lpFullName);
 	free (lpHOutputPath);

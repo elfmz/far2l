@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ##########################################################
 #This script used during FAR's Alt+F1/Alt+F2 menu building
@@ -36,7 +36,7 @@ tab=$'\t'
 #FIXME: pathes that contain repeated continuos spaces
 
 sysname=`uname`
-if [ "$sysname" == "Linux" ]; then
+if [ "$sysname" == "Linux" ] || [ "$sysname" == "FreeBSD" ]; then
 	dfout=`df -T | awk "-F " '{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; print $n "\t" $2 }'`
 else
 	dfout=`df -t | awk "-F " '{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; print $n "\t" $1 }'`

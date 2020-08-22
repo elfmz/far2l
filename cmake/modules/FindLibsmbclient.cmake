@@ -28,16 +28,15 @@ else (LIBSMBCLIENT_LIBRARIES AND LIBSMBCLIENT_INCLUDE_DIRS)
       /sw/include
     PATH_SUFFIXES
       samba-4.0
+      samba4
   )
 
   find_library(SMBCLIENT_LIBRARY
     NAMES
       smbclient
-    PATHS
-      /usr/lib
-      /usr/local/lib
-      /opt/local/lib
-      /sw/lib
+    PATH_SUFFIXES
+      samba-4.0
+      samba4
   )
 
   if (SMBCLIENT_LIBRARY)

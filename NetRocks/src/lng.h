@@ -128,6 +128,7 @@ enum LanguageID
   MChangeModeProgressTitle,
   MEnumDirProgressTitle,
   MCreateDirProgressTitle,
+  MExecuteProgressTitle,
 
   MAbortTitle,
   MAbortText,

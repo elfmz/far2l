@@ -97,6 +97,7 @@ public:
 	void ConsoleChangeFont();
 	bool IsActive();
 	void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
+	bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
 };
 
 

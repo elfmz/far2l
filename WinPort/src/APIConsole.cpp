@@ -337,4 +337,9 @@ extern "C" {
 	{
 		g_winport_con_out.ConsoleDisplayNotification(title, text);
 	}
+
+	WINPORT_DECL(ConsoleBackgroundMode, BOOL, (BOOL TryEnterBackgroundMode))
+	{
+		return g_winport_con_out.ConsoleBackgroundMode(TryEnterBackgroundMode != FALSE) ? TRUE : FALSE;
+	}
 }

@@ -721,6 +721,22 @@ void Manager::ProcessMainLoop()
 	}
 }
 
+static bool ConfirmExit()
+{
+	int r;
+	if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
+		r = Message(0,3,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo),MSG(MBackground));
+		if (r == 2) {
+			WINPORT(ConsoleBackgroundMode)(TRUE);
+		}
+
+	} else {
+		r = Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo));
+	}
+
+	return r == 0;
+}
+
 void Manager::ExitMainLoop(int Ask)
 {
 	if (CloseFAR)
@@ -729,7 +745,7 @@ void Manager::ExitMainLoop(int Ask)
 		CloseFARMenu=TRUE;
 	};
 
-	if (!Ask || ((!Opt.Confirm.Exit || !Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo))) && CtrlObject->Plugins.MayExitFar()))
+	if (!Ask || ((!Opt.Confirm.Exit || ConfirmExit()) && CtrlObject->Plugins.MayExitFar()))
 	{
 		/* $ 29.12.2000 IS
 		   + Проверяем, сохранены ли все измененные файлы. Если нет, то не выходим

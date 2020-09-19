@@ -254,6 +254,7 @@ protected:
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
+	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
 
 private:
 	void CheckForResizePending();
@@ -1404,6 +1405,11 @@ void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wcha
 	} else if (pid != -1) {
 		waitpid(pid, 0, 0);
 	}
+}
+
+bool WinPortPanel::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
+{
+	return false;
 }
 
 void WinPortPanel::OnConsoleChangeFontSync(wxCommandEvent& event)

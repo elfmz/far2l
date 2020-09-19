@@ -97,6 +97,7 @@ protected:
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
+	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);

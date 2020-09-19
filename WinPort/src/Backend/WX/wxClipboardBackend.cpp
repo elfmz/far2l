@@ -146,7 +146,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	}
 		
 	size_t len = GetMallocSize(data);
-	fprintf(stderr, "SetClipboardData: format=%u len=%u\n", format, (unsigned long)len);
+	fprintf(stderr, "SetClipboardData: format=%u len=%lu\n", format, (unsigned long)len);
 	if (!g_wx_data_to_clipboard) {
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
 	}
@@ -160,8 +160,8 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
 		if (!data_format) {
 			fprintf(stderr, 
-				"SetClipboardData(%u, %p [%u]) - unrecognized format\n", 
-				format, data, (unsigned int)len);
+				"SetClipboardData(%u, %p [%lu]) - unrecognized format\n",
+				format, data, (unsigned long)len);
 		} else {
 			wxCustomDataObject *dos = new wxCustomDataObject(*data_format);
 			dos->SetData(len, data);		

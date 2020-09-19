@@ -943,6 +943,11 @@ void ReadConfig()
 		switch (CFG[I].ValType)
 		{
 			case REG_DWORD:
+				if ((int *)CFG[I].ValPtr == &Opt.Confirm.Exit) {
+					// when background mode available then exit dialog allows also switch to background
+					// so saved settings must differ for that two modes
+					CFG[I].KeyName = WINPORT(ConsoleBackgroundMode)(FALSE) ? L"ExitOrBknd" : L"Exit";
+				}
 				GetRegKey(CFG[I].KeyName, CFG[I].ValName,*(int *)CFG[I].ValPtr,(DWORD)CFG[I].DefDWord);
 				break;
 			case REG_SZ:

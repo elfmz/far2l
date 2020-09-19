@@ -584,3 +584,9 @@ void ConsoleOutput::ConsoleDisplayNotification(const WCHAR *title, const WCHAR *
 	if (_backend)
 		_backend->OnConsoleDisplayNotification(title, text);
 }
+
+bool ConsoleOutput::ConsoleBackgroundMode(bool TryEnterBackgroundMode)
+{
+	return (_backend && _backend->OnConsoleBackgroundMode(TryEnterBackgroundMode));
+}
+

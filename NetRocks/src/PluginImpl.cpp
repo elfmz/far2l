@@ -832,7 +832,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 		}
 
 	} else if (_remote) try {
-		OpExecute(_remote, CurrentSiteDir(false), Wide2MB(cmd)).Do();
+		OpExecute(0, _remote, CurrentSiteDir(false), Wide2MB(cmd)).Do();
 
 	} catch (ProtocolUnsupportedError &) {
 		const wchar_t *msg[] = { G.GetMsgWide(MCommandsNotSupportedTitle), G.GetMsgWide(MCommandsNotSupportedText), G.GetMsgWide(MOK)};

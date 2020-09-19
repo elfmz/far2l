@@ -13,7 +13,8 @@ public:
 		K_GETMODE,
 		K_CHANGEMODE,
 		K_ENUMDIR,
-		K_CREATEDIR
+		K_CREATEDIR,
+		K_EXECUTE
 	};
 
 	SimpleOperationProgress(Kind kind, const std::string &object, ProgressState &state);

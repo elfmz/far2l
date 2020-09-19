@@ -665,6 +665,20 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 	} catch (std::exception &) {}
 }
 
+bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
+{
+	if (_notify_pipe == -1) {
+		return false;
+	}
+
+	if (TryEnterBackgroundMode) {
+		raise(SIGHUP);
+	}
+
+	return true;
+}
+
+
 void TTYBackend_OnTerminalDamaged(bool flush_input_queue)
 {
 	__sync_add_and_fetch ( &s_terminal_size_change_id, 1);

@@ -257,8 +257,8 @@ template <class CHAR_T>
 	return str;
 }
 
-std::string EscapeCmdStr(const std::string &str) {return EscapeCmdStrT<char>(str, "\"$'"); }
-std::wstring EscapeCmdStr(const std::wstring &str) {return EscapeCmdStrT<wchar_t>(str, L"\"$'"); }
+std::string EscapeCmdStr(const std::string &str) {return EscapeCmdStrT<char>(str, "\"$"); }
+std::wstring EscapeCmdStr(const std::wstring &str) {return EscapeCmdStrT<wchar_t>(str, L"\"$"); }
 
 std::string EscapeEscapes(std::string str)
 {

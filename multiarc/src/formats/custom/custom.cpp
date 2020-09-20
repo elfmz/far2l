@@ -144,8 +144,8 @@ protected:
 
 class MetaReplacer
 {
-    char *m_command;
-    char m_fileName[NM];
+    std::string m_command;
+    std::string m_fileName;
 
     class Meta
     {
@@ -235,80 +235,68 @@ class MetaReplacer
 
 
   public:
-    MetaReplacer(const char *command, const char *arcName)
-        :   m_command(strdup(command))
+    MetaReplacer(const std::string &command, const char *arcName)
+        :   m_command(command), m_fileName(arcName)
     {
-        strncpy(m_fileName, arcName, sizeof(m_fileName));
     }
 
     virtual ~MetaReplacer()
     {
-        free(m_command);
     }
 
-    void replaceTo(char *buffer)
+    void replaceTo(std::string &out)
     {
-        char *dest = buffer;
-
-        *dest = 0;
-
+        out.clear();
         bool bReplacedSomething = false;
+        std::string var;
 
-        for(const char *command = m_command; *command;)
+        for(const char *command = m_command.c_str(); *command;)
         {
             Meta m(command);
 
             if(!m.isValidMeta())
             {
-                *dest++ = *command++;
-                *dest = 0;
+                out+= *command++;
                 continue;
             }
 
-            command += m.getLength();
+            command+= m.getLength();
             bReplacedSomething = true;
 
-            char *var = m_fileName;
-            char *lastSlash = strrchr(var, '/');
-
-            if(m.getFlags() & Meta::useNameOnly)
+            size_t lastSlash = m_fileName.rfind('/');
+            if(lastSlash != std::string::npos && (m.getFlags() & Meta::useNameOnly) != 0)
             {
-                var = lastSlash ? lastSlash + 1 : var;
+                var.assign(m_fileName.c_str() + lastSlash + 1);
             }
-            else if(m.getFlags() & Meta::usePathOnly)
+            else if(lastSlash != std::string::npos && (m.getFlags() & Meta::usePathOnly) != 0)
             {
-                if(lastSlash)
-                    *lastSlash = 0;
+                var.assign(m_fileName.c_str(), lastSlash);
+            }
+            else
+            {
+                var.assign(m_fileName);
             }
 
             bool bQuote = (m.getFlags() & Meta::quoteAll)
-                || ((m.getFlags() & Meta::quoteWithSpaces) && strchr(var, ' '));
+                || ((m.getFlags() & Meta::quoteWithSpaces) && var.find(' ') != std::string::npos);
 
             if(bQuote)
-                strcat(dest, "\"");
+                out+= '\"';
 
-            strcat(dest, var);
+            out+= var;
 
             if(bQuote)
-                strcat(dest, "\"");
+                out+= '\"';
 
             if(m.getFlags() & Meta::useForwardSlashes)
             {
             }
-
-
-            if(lastSlash)
-                *lastSlash = '/';
-
-            while(*dest)
-                dest++;
-
         }
 
         if(!bReplacedSomething) // there were no meta-symbols, should use old-style method
         {
-            strcat(buffer, " ");
-            strcat(buffer, m_fileName);
+            out+= ' ';
+            out+= m_fileName;
         }
 
     }
@@ -462,15 +450,15 @@ DWORD WINAPI _export CUSTOM_GetSFXPos(void)
 
 BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
 {
-	std::string TypeName;
-    char Command[512] = {};
+    std::string TypeName;
+    std::string Command;
 
     if(!GetSectionName(CurType, TypeName))
         return (FALSE);
 
-    GetIniString(TypeName.c_str(), "List", "", Command, sizeof(Command));
+    GetIniString(TypeName.c_str(), "List", "", Command);
 
-    if(*Command == 0)
+    if(Command.size() == 0)
         return (FALSE);
 
     IgnoreErrors = GetIniInt(TypeName.c_str(), "IgnoreErrors", 0);
@@ -501,23 +489,23 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
     WCHAR SaveTitle[512];
 
     WINPORT(GetConsoleTitle)(SaveTitle, sizeof(SaveTitle));
-    WINPORT(SetConsoleTitle)(MB2Wide(Command).c_str());
+    WINPORT(SetConsoleTitle)(StrMB2Wide(Command).c_str());
 
     //char ExpandedCmd[512];
 
     //WINPORT(ExpandEnvironmentStrings)(Command, ExpandedCmd, sizeof(ExpandedCmd));
-	std::string cmd = Command;
-	cmd+= " 2>&1 >";
-	cmd+= TempName;
-	DWORD ExitCode = system(cmd.c_str());
+    std::string cmd = Command;
+    cmd+= " 2>&1 >";
+    cmd+= TempName;
+    DWORD ExitCode = system(cmd.c_str());
 	
 
     if(ExitCode)
     {
         ExitCode = (ExitCode < GetIniInt(TypeName.c_str(), "Errorlevel", 1000));
     } else {
-		ExitCode = 1;
-	}
+        ExitCode = 1;
+    }
 
     if(ExitCode)
     {
@@ -924,9 +912,9 @@ void ParseListingItemRegExp(Match match,
     SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)
 {
     if(const char *p = match["name"])
-        strcat(Item->FindData.cFileName, p);
+        strncpy(Item->FindData.cFileName, p, sizeof(Item->FindData.cFileName) );
     if(const char *p = match["description"])
-        strcat(Info->Description, p);
+        strncpy(Info->Description, p, sizeof(Info->Description) );
 
     FAR_INT64 SizeFile;
     SizeFile.i64 = StringToInt64(match["size"]);
@@ -1049,7 +1037,7 @@ void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
                     if(isspace(Item->FindData.cFileName[I]))
                         Item->FindData.cFileName[I] = 0;
                 if(*Item->FindData.cFileName)
-                    strcat(Item->FindData.cFileName, ".");
+                    strncat(Item->FindData.cFileName, ".", sizeof(Item->FindData.cFileName) );
             }
             break;
         case 'z':

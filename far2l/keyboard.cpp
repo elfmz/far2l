@@ -580,7 +580,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 	if (AllowSynchro)
 		PluginSynchroManager.Process();
 
-	if (FrameManager->RegularIdleWantersCount())
+	if (FrameManager && FrameManager->RegularIdleWantersCount())
 	{
 		clock_t now = GetProcessUptimeMSec();
 		if (now - sLastIdleDelivered >= 1000) {

@@ -74,7 +74,8 @@ do
 				root=$line
 			elif [ "$path" == ~ ]; then
 				profile=$line
-			else
+			elif [[ "$path" != /run/* ]] && [[ "$path" != /snap/* ]] \
+			  && [[ "$path" != /sys/* ]] && [[ "$path" != /dev/* ]] ; then
 				lines=( "${lines[@]}" "$line" )
 			fi
 		else

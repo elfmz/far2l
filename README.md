@@ -126,9 +126,10 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * **QtCreator**: select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
  * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
 
-#### Useful add-ons
+#### Useful 3rd-party tools
 
- * A collection of macros: https://github.com/corporateshark/far2l-macros
+ * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros
+ * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/unxed/putty4far2l
 
 ## Notes on porting
 

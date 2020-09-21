@@ -1286,7 +1286,7 @@ Ctrl+Shift+F4 to open it in built-in editor. This allows efficient commands outp
 built-in viewer and editor capabilities. You can also open history viewer by scrolling mouse wheel up, following scroll til bottom of output
 - will hide that viewer. Ctrl+C, Ctrl+Z hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
 it and everything in shell by pressing Ctrl+Alt+C. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
-or lost of unsaved data in killed applications.
+or lost of unsaved data in killed applications. If far2l works in TTY backend then you can also use Ctrl+Alt+Z to put far2l instance to background, releasing terminal but leaving active command execution.
     #Hotkeys and scrolling when NOT running command:# while Ctrl+Shift+F3/F4 still functioning in such mode you can also use simple F3/F4 to get history
 opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen.
     #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in GUI or TTY backends modes. While TTY backend may function in usual

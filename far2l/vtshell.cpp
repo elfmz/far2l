@@ -932,12 +932,19 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				OnCtrlC(alt);
 			} 
 			
+			if (ctrl && !shift && alt && KeyEvent.wVirtualKeyCode=='Z') {
+				WINPORT(ConsoleBackgroundMode)(TRUE);
+				return "";
+			}
+
 			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F4) {
 				OnConsoleLog(CLK_EDIT);
+				return "";
 			} 
 
 			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F3) {
 				OnConsoleLog(CLK_VIEW);
+				return "";
 			} 
 
 			const char *spec = VT_TranslateSpecialKey(
@@ -1038,8 +1045,11 @@ static bool shown_tip_exit = false;
 				fprintf(f, "echo \" F3, F4, F8 - viewer/editor/clear console log.\"\n");
 				fprintf(f, "echo \" Ctrl+Shift+MouseScrollUp - open autoclosing viewer with console log.\"\n");
 				fprintf(f, "echo \"While executing command:\"\n");
-				fprintf(f, "echo \" Ctrl+Alt+C - terminate everything in this shell.\"\n");
 				fprintf(f, "echo \" Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
+				fprintf(f, "echo \" Ctrl+Alt+C - terminate everything in this shell.\"\n");
+				if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
+					fprintf(f, "echo \" Ctrl+Alt+Z - detach FAR manager application to background.\"\n");
+				}
 				fprintf(f, "echo \" MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
 				fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
 				shown_tip_init = true;
@@ -1063,6 +1073,41 @@ static bool shown_tip_exit = false;
 		return cmd_script;
 	}
 
+
+	std::string ComposeExecuteCommandInitialTitle(const char *cd, const char *cmd, bool using_sudo)
+	{
+		std::string title = cmd;
+		StrTrim(title);
+		if (StrStartsFrom(title, "sudo ")) {
+			using_sudo = true;
+			title.erase(0, 5);
+			StrTrim(title);
+		}
+
+		if (title.size() > 2 && (title[0] == '\'' || title[0] == '\"')) {
+			size_t p = title.find(title[0], 1);
+			if (p != std::string::npos) {
+				title = title.substr(1, p - 1);
+			}
+
+		} else {
+			size_t p = title.find(' ');
+			if (p != std::string::npos) {
+				title.resize(p);
+			}
+		}
+
+		size_t p = title.rfind('/');
+		if (p!=std::string::npos) {
+			title.erase(0, p + 1);
+		}
+		title+= '@';
+		title+= cd;
+		if (using_sudo) {
+			title.insert(0, "sudo ");
+		}
+		return title;
+	}
 
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
@@ -1116,7 +1161,8 @@ static bool shown_tip_exit = false;
 
 		_skipping_line = true;
 
-		_vta.OnStart(cd);
+		const std::string &title = ComposeExecuteCommandInitialTitle(cd, cmd, force_sudo);
+		_vta.OnStart(title.c_str());
 
 		{
 			std::lock_guard<std::mutex> lock(_inout_control_mutex);

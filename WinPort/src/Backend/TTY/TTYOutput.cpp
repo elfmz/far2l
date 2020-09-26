@@ -125,14 +125,12 @@ void TTYOutput::ChangeCursor(bool visible, bool force)
 	}
 }
 
-void TTYOutput::MoveCursor(unsigned int y, unsigned int x, bool force)
+void TTYOutput::MoveCursor(unsigned int y, unsigned int x)
 {
-	if (force || x != _cursor.x || y != _cursor.y) {
 // ESC[#;#H Moves cursor to line #, column #
-		Format(ESC "[%d;%dH", y, x);
-		_cursor.x = x;
-		_cursor.y = y;
-	}
+	Format(ESC "[%d;%dH", y, x);
+	_cursor.x = x;
+	_cursor.y = y;
 }
 
 void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)

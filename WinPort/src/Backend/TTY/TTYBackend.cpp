@@ -277,7 +277,7 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 		}
 		std::vector<CHAR_INFO> tmp;
 		std::lock_guard<std::mutex> lock(_output_mutex);
-		tty_out.MoveCursor(1, 1, true);
+		tty_out.MoveCursor(1, 1);
 		_prev_height = _prev_width = 0;
 		_prev_output.swap(tmp);// ensure memory released
 	}
@@ -303,11 +303,41 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 		} else {
 			const CHAR_INFO *last_line = &_prev_output[y * _prev_width];
 			for (unsigned int x = 0; x < _cur_width; ++x) {
+				// print current character:
+				//  if it doesnt match to its previos version
+				// OR
+				//  if some of next 2 characters dont match to their previous versions and
+				//  printing current character doesnt require cursor pos update with
+				//  tty_out.MoveCursor, cuz tty_out.MoveCursor generates 5 bytes and thus its
+				//  more efficient to print 1..2 matching characters moving cursor by one than
+				//  skip them and update cursor position later by sending 5-bytes ESC sequence
 				if (x >= _prev_width
-				 || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
-				 || cur_line[x].Attributes != last_line[x].Attributes) {
-					tty_out.MoveCursor(y + 1, x + 1);
+					  || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
+					  || cur_line[x].Attributes != last_line[x].Attributes) {
+					if (tty_out.ShouldMoveCursor(y + 1, x + 1)) {
+						tty_out.MoveCursor(y + 1, x + 1);
+					}
 					tty_out.WriteLine(&cur_line[x], 1);
+
+				} else if (tty_out.ShouldMoveCursor(y + 1, x + 1)) {
+					// matching character located at position that already requires update
+					;
+
+				} else if (x + 2 < _cur_width && ( x + 2 >= _prev_width
+					 || cur_line[x + 2].Char.UnicodeChar != last_line[x + 2].Char.UnicodeChar
+					 || cur_line[x + 2].Attributes != last_line[x + 2].Attributes) ) {
+					// character x + 2 requires print, so avoid cursor pos update by
+					// printing all 3 chars from current pos
+					tty_out.WriteLine(&cur_line[x], 3);
+					x+= 2;
+
+				} else if (x + 1 < _cur_width && ( x + 1 >= _prev_width
+					 || cur_line[x + 1].Char.UnicodeChar != last_line[x + 1].Char.UnicodeChar
+					 || cur_line[x + 1].Attributes != last_line[x + 1].Attributes) ) {
+					// character x + 1 requires print, so avoid cursor pos update by
+					// printing all 2 chars from current pos
+					tty_out.WriteLine(&cur_line[x], 2);
+					x+= 1;
 				}
 			}
 		}
@@ -316,7 +346,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 #else
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
-		tty_out.MoveCursor(y + 1, 1);
+		if (tty_out.ShouldMoveCursor(y + 1, 1)) {
+			tty_out.MoveCursor(y + 1, 1);
+		}
 		tty_out.WriteLine(cur_line, _cur_width);
 	}
 #endif
@@ -327,7 +359,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	UCHAR cursor_height = 1;
 	bool cursor_visible = false;
 	COORD cursor_pos = g_winport_con_out.GetCursor(cursor_height, cursor_visible);
-	tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
+	if (tty_out.ShouldMoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1)) {
+		tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
+	}
 	tty_out.ChangeCursor(cursor_visible);
 
 	if (_far2l_cursor_height != (int)(unsigned int)cursor_height && _far2l_tty) {

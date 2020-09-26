@@ -320,6 +320,7 @@ private:
 	
 	int _last_valid_display;
 	DWORD _refresh_rects_throttle;
+	unsigned int _pending_refreshes;
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 };
 
@@ -545,7 +546,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_right_control(false), _last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false), _last_valid_display(0),
-		_refresh_rects_throttle(0)
+		_refresh_rects_throttle(0), _pending_refreshes(0)
 {
 	g_winport_con_out.SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
@@ -712,33 +713,29 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 				}
 
 				if (area.Top == pending.Top && area.Bottom == pending.Bottom) {
-					// left/right concat?
-
-					if (area.Right > pending.Right && area.Left <= pending.Right && area.Left >= pending.Left) {
-						pending.Right = area.Right;
-						add = false;
-						break;
-					}
-
-					if (area.Left < pending.Left && area.Right <= pending.Right && area.Right >= pending.Left) {
-						pending.Left = area.Left;
+					// left/right touch/intersect?
+					if (pending.Left <= area.Right + 1 && area.Left <= pending.Right + 1) {
+						if (pending.Left > area.Left) {
+							pending.Left = area.Left;
+						}
+						if (pending.Right < area.Right) {
+							pending.Right = area.Right;
+						}
 						add = false;
 						break;
 					}
 				} else if (area.Left == pending.Left && area.Right == pending.Right) {
-					// top/bottom concat?
-					if (area.Bottom > pending.Bottom && area.Top <= pending.Bottom && area.Top >= pending.Top) {
-						pending.Bottom = area.Bottom;
+					// top/bottom touch/intersect?
+					if (pending.Top <= area.Bottom + 1 && area.Top <= pending.Bottom + 1) {
+						if (pending.Top > area.Top) {
+							pending.Top = area.Top;
+						}
+						if (pending.Bottom < area.Bottom) {
+							pending.Bottom = area.Bottom;
+						}
 						add = false;
 						break;
 					}
-
-					if (area.Top < pending.Top && area.Bottom >= pending.Top && area.Bottom <= pending.Bottom) {
-						pending.Top = area.Top;
-						add = false;
-						break;
-					}
-
 				}
 			}
 			if (add)
@@ -848,7 +845,7 @@ void WinPortPanel::OnSetMaximizedSync( wxCommandEvent& event )
 
 void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 {
-	RefreshRects refresh_rects;
+	std::vector<SMALL_RECT> refresh_rects;
 	{
 		std::lock_guard<std::mutex> lock(_refresh_rects);
 		if (_refresh_rects.empty())
@@ -856,12 +853,18 @@ void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 
 		refresh_rects.swap(_refresh_rects);	
 	}
-	
+
 	for (const auto & r : refresh_rects) {
 		_paint_context.RefreshArea( r );
+		// Seems there is some sort of limitation of how many fragments
+		// can be pending in window refresh region on GTK.
+		// Empirically found that value 400 is too high, 300 looks good,
+		// so using 200 to be sure-good
+		_pending_refreshes++;
+		if (_pending_refreshes > 200) {
+			Update();
+		}
 	}
-	//fprintf(stderr, "OnRefreshSync: count=%u\n", 
-	//	(unsigned int)refresh_rects.size());
 }
 
 void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
@@ -1095,6 +1098,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
 	//fprintf(stderr, "WinPortPanel::OnPaint\n"); 
+	_pending_refreshes = 0;
 	if (_mouse_qedit_moved && _mouse_qedit_start_ticks != 0
 	 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		SMALL_RECT qedit;

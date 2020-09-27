@@ -57,7 +57,7 @@ void ZipXmlInputSource::create(const XMLCh* path, const XMLCh* base)
   str.append(CString(jar_input_source->getInputSource()->getSystemId()));
   str.append(CString("!"));
   str.append(in_jar_location.get());
-  setSystemId(str.getWChars());
+  setSystemId(str.getW2Chars());
 }
 
 ZipXmlInputSource::~ZipXmlInputSource()

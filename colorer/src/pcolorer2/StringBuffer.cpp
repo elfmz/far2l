@@ -2,46 +2,44 @@
 #include "StringBuffer.h"
 
 StringBuffer::StringBuffer():
-  SString(),
-  wchar_t_content(nullptr)
+  SString()
 {
   setLength(10);
 }
 
 StringBuffer::StringBuffer(int _alloc):
-  SString(),
-  wchar_t_content(nullptr)
+  SString()
 {
   setLength(_alloc);
 }
 
 StringBuffer::StringBuffer(const char *string, int s, int l):
-  SString(string, s, l),
-  wchar_t_content(nullptr)
+  SString(string, s, l)
 {
 }
 
-StringBuffer::StringBuffer(const wchar *string, int s, int l):
-  SString(string, s, l),
-  wchar_t_content(nullptr)
+StringBuffer::StringBuffer(const w2char *string, int s, int l):
+  SString(string, s, l)
+{
+}
+
+StringBuffer::StringBuffer(const w4char *string, int s, int l):
+  SString(string, s, l)
 {
 }
 
 StringBuffer::StringBuffer(const String *cstring, int s, int l):
-  SString(cstring, s, l),
-  wchar_t_content(nullptr)
+  SString(cstring, s, l)
 {
 }
 
 StringBuffer::StringBuffer(const String &cstring, int s, int l):
-  SString(cstring, s, l),
-  wchar_t_content(nullptr)
+  SString(cstring, s, l)
 {
 }
 
 StringBuffer::StringBuffer(const wchar_t *wstring, int s, int l):
-  SString(),
-  wchar_t_content(nullptr)
+  SString()
 {
   int i, newLength = 0;
   if (l == -1){
@@ -59,7 +57,6 @@ StringBuffer::StringBuffer(const wchar_t *wstring, int s, int l):
 }
 
 StringBuffer::~StringBuffer(){
-  wchar_t_content.reset();
 }
 
 StringBuffer &StringBuffer::append(const String &string)
@@ -94,15 +91,6 @@ StringBuffer &StringBuffer::append(const wchar_t* wstring)
     len += newLength;
   }
   return *this;
-}
-
-const wchar_t* StringBuffer::getWWChars(){
-  std::unique_ptr<wchar_t[]> wchar_t_new(new wchar_t[len + 1]);
-  for (size_t i = 0; i < len; i++)
-    wchar_t_new[i] = wstr[i];
-  wchar_t_new[len] = 0l;
-  wchar_t_content.swap(wchar_t_new);
-  return wchar_t_content.get();
 }
 
 /* ***** BEGIN LICENSE BLOCK *****

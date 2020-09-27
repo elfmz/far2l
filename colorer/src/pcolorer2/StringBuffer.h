@@ -15,7 +15,8 @@ public:
   /** Creates string buffer with @c string */
   StringBuffer(const char *string, int s = 0, int l = -1);
   /** Creates string buffer with @c string */
-  StringBuffer(const wchar *string, int s = 0, int l = -1);
+  StringBuffer(const w2char *string, int s = 0, int l = -1);
+  StringBuffer(const w4char *string, int s = 0, int l = -1);
   /** Creates string buffer with @c string */
   StringBuffer(const String *cstring, int s = 0, int l = -1);
   /** Creates string buffer with @c string */
@@ -34,13 +35,10 @@ public:
 
   StringBuffer &append(const wchar_t* wstring);
 
-  const wchar_t* getWWChars();
-
 private:
 #if 0
   int alloc;
 #endif // if 0
-  std::unique_ptr<wchar_t[]> wchar_t_content;
 };
 
 #endif

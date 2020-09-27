@@ -2,6 +2,7 @@
 #define _COLORER_STRING_H_
 
 #include <colorer/unicode/CommonString.h>
+#include <vector>
 
 #ifdef __unix__
 extern "C" int stricmp(const char*c1, const char*c2);
@@ -11,7 +12,7 @@ extern "C" int strnicmp(const char*c1, const char*c2, unsigned int n);
 /** Abstract unicode string class.
     @ingroup unicode
 */
-class String{
+class String {
 public:
   String();
   virtual ~String();
@@ -41,14 +42,18 @@ public:
               1  if this > str;
   */
   int compareToIgnoreCase(const String &str) const;
-  /** Copies content of string into array of wchars */
-  virtual size_t getWChars(wchar **chars) const;
-  /** Copies content of string into array of bytes, using specified encoding */
-  virtual size_t getBytes(byte **bytes, int encoding = -1) const;
+
+  /** Returns string content in internally supported unicode character array */
+  virtual const w4char *getW4Chars() const;
+  virtual const w2char *getW2Chars() const;
+#if (__WCHAR_MAX__ > 0xffff)
+  inline const wchar *getWChars() const { return (const wchar *)getW4Chars(); } 
+#else
+  inline const wchar *getWChars() const { return (const wchar *)getW2Chars(); } 
+#endif
+
   /** Returns string content in internally supported character array */
   virtual const char *getChars(int encoding = -1) const;
-  /** Returns string content in internally supported unicode character array */
-  virtual const wchar *getWChars() const;
 
   /** Searches first index of char @c wc, starting from @c pos */
   virtual size_t indexOf(wchar wc, size_t pos = 0) const;
@@ -67,9 +72,9 @@ public:
   size_t hashCode() const;
 
   static const size_t npos = size_t(-1);
+
 private:
-  char *ret_char_val;
-  wchar *ret_wchar_val;
+  mutable void *ret_val = nullptr;
 };
 #endif
 

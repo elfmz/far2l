@@ -8,7 +8,7 @@ ChooseTypeMenu::ChooseTypeMenu(const wchar_t *AutoDetect,const wchar_t *Favorite
 
   StringBuffer s("&A ");
   s.append(AutoDetect);
-  AddItem(s.getWWChars(), MIF_NONE, nullptr, 0);
+  AddItem(s.getWChars(), MIF_NONE, nullptr, 0);
   AddItem(Favorites, MIF_SEPARATOR, nullptr, 1);
 }
 
@@ -73,7 +73,7 @@ int ChooseTypeMenu::AddGroup(const wchar_t *Text)
 int ChooseTypeMenu::AddItem(const FileType* fType, size_t PosAdd)
 {
   StringBuffer *s=GenerateName(fType);
-  size_t k=AddItem(s->getWWChars(), MIF_NONE, fType, PosAdd);
+  size_t k=AddItem(s->getWChars(), MIF_NONE, fType, PosAdd);
   delete s;
   return k;
 }
@@ -175,7 +175,7 @@ void ChooseTypeMenu::RefreshItemCaption(size_t index)
   }
 
   StringBuffer *s=GenerateName(GetFileType(index));
-  Item[index].Text= _wcsdup(s->getWWChars());
+  Item[index].Text= _wcsdup(s->getWChars());
   delete s;
 }
 

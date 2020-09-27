@@ -6,8 +6,9 @@
 #include <xercesc/util/XMLChar.hpp>
 
 /// default unicode char definition
-typedef XMLCh wchar;
 
+typedef wchar_t wchar;
+typedef XMLCh w2char;
 typedef char32_t w4char;
 typedef unsigned char byte;
 

@@ -77,7 +77,7 @@ StringBuffer *GetConfigPath(const SString &sub)
   StringBuffer *path=new StringBuffer(PluginPath);
   path->append(sub);
   if (stat(path->getChars(), &s) == -1) {
-          std::wstring str(path->getWWChars());
+          std::wstring str(path->getWChars());
           if (TranslateInstallPath_Lib2Share(str) ) {
             path->setLength(0);
             path->append(str.c_str());

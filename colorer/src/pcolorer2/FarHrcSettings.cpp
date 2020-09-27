@@ -25,7 +25,7 @@ void FarHrcSettings::readXML(String *file, bool userValue)
   xml_parser.setErrorHandler(&error_handler);
   xml_parser.setLoadExternalDTD(false);
   xml_parser.setSkipDTDValidation(true);
-  uXmlInputSource config = XmlInputSource::newInstance(file->getWChars(),
+  uXmlInputSource config = XmlInputSource::newInstance(file->getW2Chars(),
                                                        static_cast<XMLCh*>(nullptr));
   xml_parser.parse(*(config->getInputSource()));
   if (error_handler.getSawErrors()) {
@@ -34,12 +34,10 @@ void FarHrcSettings::readXML(String *file, bool userValue)
   DOMDocument* catalog = xml_parser.getDocument();
   DOMElement* elem = catalog->getDocumentElement();
 
-  XMLCh* tagPrototype = XMLString::transcode("prototype");
-  XMLCh* tagHrcSettings = XMLString::transcode("hrc-settings");
+  const XMLCh* tagPrototype = (const XMLCh*)u"prototype";
+  const XMLCh* tagHrcSettings = (const XMLCh*)u"hrc-settings";
 
   if (elem == nullptr || !XMLString::equals(elem->getNodeName(), tagHrcSettings)) {
-    XMLString::release(&tagPrototype);
-    XMLString::release(&tagHrcSettings);
     throw FarHrcSettingsException(SString("main '<hrc-settings>' block not found"));
   }
   for (DOMNode* node = elem->getFirstChild(); node != nullptr; node = node->getNextSibling()) {
@@ -50,8 +48,6 @@ void FarHrcSettings::readXML(String *file, bool userValue)
       }
     }
   }
-  XMLString::release(&tagPrototype);
-  XMLString::release(&tagHrcSettings);
 }
 
 //
@@ -59,29 +55,19 @@ void FarHrcSettings::readXML(String *file, bool userValue)
 //
 void FarHrcSettings::UpdatePrototype(DOMElement* elem, bool userValue)
 {
-  XMLCh* tagProtoAttrParamName = XMLString::transcode("name");
-  XMLCh* tagParam = XMLString::transcode("param");
-  XMLCh* tagParamAttrParamName = XMLString::transcode("name");
-  XMLCh* tagParamAttrParamValue = XMLString::transcode("value");
-  XMLCh* tagParamAttrParamDescription = XMLString::transcode("description");
+  const XMLCh* tagProtoAttrParamName = (const XMLCh*)u"name";
+  const XMLCh* tagParam = (const XMLCh*)u"param";
+  const XMLCh* tagParamAttrParamName = (const XMLCh*)u"name";
+  const XMLCh* tagParamAttrParamValue = (const XMLCh*)u"value";
+  const XMLCh* tagParamAttrParamDescription = (const XMLCh*)u"description";
   const XMLCh* typeName = elem->getAttribute(tagProtoAttrParamName);
   if (!XMLString::stringLen(typeName)) {
-    XMLString::release(&tagProtoAttrParamName);
-    XMLString::release(&tagParam);
-    XMLString::release(&tagParamAttrParamName);
-    XMLString::release(&tagParamAttrParamValue);
-    XMLString::release(&tagParamAttrParamDescription);
     return;
   }
   HRCParser* hrcParser = parserFactory->getHRCParser();
   SString typenamed(typeName);
   FileTypeImpl* type = static_cast<FileTypeImpl*>(hrcParser->getFileType(&typenamed));
   if (type == nullptr) {
-    XMLString::release(&tagProtoAttrParamName);
-    XMLString::release(&tagParam);
-    XMLString::release(&tagParamAttrParamName);
-    XMLString::release(&tagParamAttrParamValue);
-    XMLString::release(&tagParamAttrParamDescription);
     return;
   }
 
@@ -116,11 +102,6 @@ void FarHrcSettings::UpdatePrototype(DOMElement* elem, bool userValue)
       }
     }
   }
-  XMLString::release(&tagProtoAttrParamName);
-  XMLString::release(&tagParam);
-  XMLString::release(&tagParamAttrParamName);
-  XMLString::release(&tagParamAttrParamValue);
-  XMLString::release(&tagParamAttrParamDescription);
 }
 
 void FarHrcSettings::readUserProfile()
@@ -242,7 +223,7 @@ void FarHrcSettings::writeProfileToRegistry()
 
           if (WINPORT(RegCreateKeyEx)(HKEY_CURRENT_USER, key, 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &hkKey, nullptr) == ERROR_SUCCESS ){
             StringBuffer tmp(p);
-            WINPORT(RegSetValueEx)(hkKey, tmp.getWWChars(), 0, REG_SZ,
+            WINPORT(RegSetValueEx)(hkKey, tmp.getWChars(), 0, REG_SZ,
                     (const BYTE*)v->getWChars(),
                     sizeof(wchar_t) * (v->length() + 1));
           }

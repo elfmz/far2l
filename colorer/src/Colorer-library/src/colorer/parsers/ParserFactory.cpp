@@ -48,7 +48,7 @@ SString ParserFactory::searchCatalog() const
     try {
       logger->debug("test path '{0}'", path.getChars());
 
-      uXmlInputSource catalog = XmlInputSource::newInstance(path.getWChars(), static_cast<XMLCh*>(nullptr));
+      uXmlInputSource catalog = XmlInputSource::newInstance(path.getW2Chars(), static_cast<XMLCh*>(nullptr));
 
       std::unique_ptr<xercesc::BinInputStream> stream(catalog->makeStream());
       right_path = SString(catalog->getInputSource()->getSystemId());
@@ -179,7 +179,7 @@ void ParserFactory::loadCatalog(const String* catalog_path)
 
 void ParserFactory::loadHrc(const String* hrc_path, const String* base_path) const
 {
-  uXmlInputSource dfis = XmlInputSource::newInstance(hrc_path->getWChars(), base_path->getWChars());
+  uXmlInputSource dfis = XmlInputSource::newInstance(hrc_path->getW2Chars(), base_path->getW2Chars());
   try {
     hrc_parser->loadSource(dfis.get());
   } catch (Exception &e) {
@@ -298,7 +298,7 @@ StyledHRDMapper* ParserFactory::createStyledMapper(const String* classID, const 
     if (idx.length() != 0) {
       uXmlInputSource dfis = nullptr;
       try {
-        dfis = XmlInputSource::newInstance(idx.getWChars(), base_catalog_path.getWChars());
+        dfis = XmlInputSource::newInstance(idx.getW2Chars(), base_catalog_path.getW2Chars());
         mapper->loadRegionMappings(dfis.get());
       } catch (Exception &e) {
         logger->error("Can't load hrd:");
@@ -329,7 +329,7 @@ TextHRDMapper* ParserFactory::createTextMapper(const String* nameID)
     if (idx.length() != 0) {
       uXmlInputSource dfis = nullptr;
       try {
-        dfis = XmlInputSource::newInstance(idx.getWChars(), base_catalog_path.getWChars());
+        dfis = XmlInputSource::newInstance(idx.getW2Chars(), base_catalog_path.getW2Chars());
         mapper->loadRegionMappings(dfis.get());
       } catch (Exception &e) {
         logger->error("Can't load hrd: ");

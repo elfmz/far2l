@@ -1,6 +1,7 @@
 #include <colorer/unicode/String.h>
 #include <colorer/unicode/Character.h>
 #include <colorer/unicode/Encodings.h>
+#include <stdlib.h>
 
 #ifdef __unix__
 extern "C" int stricmp(const char* c1, const char* c2)
@@ -39,14 +40,11 @@ extern "C" int strnicmp(const char* c1, const char* c2, unsigned int len)
 
 String::String()
 {
-  ret_char_val = nullptr;
-  ret_wchar_val = nullptr;
 }
 
 String::~String()
 {
-  delete[] ret_char_val;
-  delete[] ret_wchar_val;
+  free(ret_val);
 }
 
 bool String::operator==(const String &str) const
@@ -110,24 +108,45 @@ int String::compareToIgnoreCase(const String &str) const
   return 0;
 }
 
-size_t String::getWChars(wchar** chars) const
+const w4char* String::getW4Chars() const
 {
-  *chars = new wchar[length() + 1];
+  // TODO: use real UCS16->UTF32 convertion if needed
+  w4char *ret_w4char_val = (w4char *)realloc(ret_val, (length() + 1) * sizeof(w4char));
+  if (!ret_w4char_val) return nullptr;
+  ret_val = ret_w4char_val;
+
   size_t i;
   for (i = 0; i < length(); i++) {
-    (*chars)[i] = (*this)[i];
+    ret_w4char_val[i] = w4char((*this)[i]);
   }
-  (*chars)[i] = 0;
-  return length();
+  ret_w4char_val[i] = 0;
+  return ret_w4char_val;
 }
 
-size_t String::getBytes(byte** bytes, int encoding) const
+const w2char* String::getW2Chars() const
+{
+  // TODO: use real UCS32->UTF16 convertion if needed
+  w2char *ret_w2char_val = (w2char *)realloc(ret_val, (length() + 1) * sizeof(w2char));
+  if (!ret_w2char_val) return nullptr;
+  ret_val = ret_w2char_val;
+
+  size_t i;
+  for (i = 0; i < length(); i++) {
+    ret_w2char_val[i] = w2char((*this)[i]);
+  }
+  ret_w2char_val[i] = 0;
+  return ret_w2char_val;
+}
+
+const char* String::getChars(int encoding) const
 {
   if (encoding == -1) encoding = Encodings::getDefaultEncodingIndex();
   size_t len = length();
   if (encoding == Encodings::ENC_UTF16 || encoding == Encodings::ENC_UTF16BE) len = len * 2;
   if (encoding == Encodings::ENC_UTF32 || encoding == Encodings::ENC_UTF32BE) len = len * 4;
-  *bytes = new byte[len + 1];
+  char *ret_char_val = (char *)realloc(ret_val, len + 1);
+  if (!ret_char_val) { return "[NO MEMORY]"; }
+  ret_val = ret_char_val;
   byte buf[8];
   size_t cpos = 0;
   for (size_t i = 0; i < length(); i++) {
@@ -136,32 +155,16 @@ size_t String::getBytes(byte** bytes, int encoding) const
     if (cpos + retLen > len) {
       if (i == 0) len = 8;
       else len = (len * length()) / i + 8;
-      byte* copy_buf = new byte[len + 1];
-      for (size_t cp = 0; cp < cpos; cp++) {
-        copy_buf[cp] = (*bytes)[cp];
-      }
-      delete[] *bytes;
-      *bytes = copy_buf;
+      ret_char_val = (char *)realloc(ret_char_val, len + 1);
+      if (!ret_char_val) { return "[NO MEMORY]"; }
+      ret_val = ret_char_val;
     }
     for (size_t cpidx = 0; cpidx < retLen; cpidx++)
-      (*bytes)[cpos++] = buf[cpidx];
+      ret_char_val[cpos++] = buf[cpidx];
   }
-  (*bytes)[cpos] = 0;
-  return cpos;
-}
+  ret_char_val[cpos] = 0;
 
-const char* String::getChars(int encoding) const
-{
-  delete[] ret_char_val;
-  getBytes((byte**)&ret_char_val, encoding);
   return ret_char_val;
-}
-
-const wchar* String::getWChars() const
-{
-  delete[] ret_wchar_val;
-  getWChars((wchar**)&ret_wchar_val);
-  return ret_wchar_val;
 }
 
 size_t String::indexOf(wchar wc, size_t pos) const

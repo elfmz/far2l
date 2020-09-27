@@ -1169,7 +1169,7 @@ const Region* HRCParserImpl::getNCRegion(const String* name, bool logErrors)
 
 const Region* HRCParserImpl::getNCRegion(const xercesc::DOMElement* el, const String &tag)
 {
-  const XMLCh* par = el->getAttribute(tag.getWChars());
+  const XMLCh* par = el->getAttribute(tag.getW2Chars());
   if (*par == '\0') {
     return nullptr;
   }

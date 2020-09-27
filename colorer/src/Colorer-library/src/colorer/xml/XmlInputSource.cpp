@@ -78,7 +78,7 @@ UString XmlInputSource::getClearPath(const String* basePath, const String* relPa
 {
   UString clear_path(new SString(relPath));
   if (relPath->indexOf(CString("%")) != String::npos) {
-    XMLCh* e_path = ExpandEnvironment(clear_path.get()->getWChars());
+    XMLCh* e_path = ExpandEnvironment(clear_path.get()->getW2Chars());
     clear_path.reset(new SString(CString(e_path)));
     delete[] e_path;
   }

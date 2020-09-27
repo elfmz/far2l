@@ -47,16 +47,6 @@ int _snwprintf_s (wchar_t *string, size_t sizeInWords, size_t count, const wchar
   return result;
 }
 
-/** New string must be free by caller. */
-wchar_t* CloneWcharToWchar_t(const wchar* str)
-{
-  StringBuffer tmp(str);
-  int buff_size = tmp.length() + 1;
-  wchar_t* wchar_t_buffer = new wchar_t[buff_size];
-  memcpy(wchar_t_buffer, tmp.getWWChars(), buff_size * sizeof(wchar_t));
-  return wchar_t_buffer;
-}
-
 FarEditorSet::FarEditorSet():
   sTempHrdName(nullptr),
   sTempHrdNameTm(nullptr),
@@ -203,7 +193,7 @@ void FarEditorSet::openMenu()
     exceptionMessage[3] = GetMsg(mDie);
     StringBuffer msg("openMenu: ");
     msg += e.what();
-    exceptionMessage[2] = msg.getWWChars();
+    exceptionMessage[2] = msg.getWChars();
 #if 0
     exceptionMessage[2] = (msg+e.getMessage()).getWChars();
 
@@ -271,7 +261,7 @@ void FarEditorSet::viewFile(const String &path)
     exceptionMessage[2] = e.getMessage()->getWChars();
 #endif // if 0
     StringBuffer msg(e.what());
-    exceptionMessage[2] = msg.getWWChars();
+    exceptionMessage[2] = msg.getWChars();
     Info.Message(Info.ModuleNumber, FMSG_WARNING, L"exception", &exceptionMessage[0], count_lines, 1);
   };
 }
@@ -334,7 +324,7 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu *Menu, FileType *CurFileType)
 
     if (group && !group->equals(type->getGroup())){
       StringBuffer tmp(type->getGroup()->getWChars());
-      Menu->AddGroup(tmp.getWWChars());
+      Menu->AddGroup(tmp.getWChars());
       group = type->getGroup();
     };
 
@@ -434,7 +424,7 @@ void FarEditorSet::chooseType()
           v=((FileTypeImpl*)menu.GetFileType(i))->getParamValue(DHotkey);
           if (v && v->length())
           {
-            KeyAssignDlgData[2].PtrData = CloneWcharToWchar_t(v->getWChars());
+            KeyAssignDlgData[2].PtrData = v->getWChars();
           }
 
           HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 34, 6, L"keyassign", KeyAssignDlgData, KeyAssignDlgDataCount, 0, 0, KeyDialogProc, (LONG_PTR)this);
@@ -443,7 +433,7 @@ void FarEditorSet::chooseType()
           if (res!=-1) 
           {
             KeyAssignDlgData[2].PtrData =
-              trim(CloneWcharToWchar_t((wchar*)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,2,0)));
+              trim((wchar_t*)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,2,0));
             if (menu.GetFileType(i)->getParamValue(DHotkey)==nullptr){
               ((FileTypeImpl*)menu.GetFileType(i))->addParam(&DHotkey);
             }
@@ -604,9 +594,6 @@ void FarEditorSet::configure(bool fromEditor)
       { DI_BUTTON,45,21,0,0,FALSE,{},0,0,L"",0}                                //IDX_CANCEL,
     };// type, x1, y1, x2, y2, focus, sel, fl, def, data, maxlen
     
-    std::unique_ptr<wchar_t[]> catalog_buff, userHrc_buff, userHrd_buff,
-                               hrdSelect_buff, hrdSelectTm_buff;
-
     fdi[IDX_BOX].PtrData = GetMsg(mSetup);
     fdi[IDX_ENABLED].PtrData = GetMsg(mTurnOff);
     fdi[IDX_ENABLED].Param.Selected = rEnabled;
@@ -621,32 +608,11 @@ void FarEditorSet::configure(bool fromEditor)
     fdi[IDX_OLDOUTLINE].PtrData = GetMsg(mOldOutline);
     fdi[IDX_OLDOUTLINE].Param.Selected = oldOutline;
     fdi[IDX_CATALOG].PtrData = GetMsg(mCatalogFile);
-    {
-      std::unique_ptr<wchar_t[]> ptr(CloneWcharToWchar_t(sCatalogPath->getWChars()));
-      catalog_buff.swap(ptr);
-    }
-#if 0
     fdi[IDX_CATALOG_EDIT].PtrData = (wchar_t*)sCatalogPath->getWChars();
-#endif // if 0
-    fdi[IDX_CATALOG_EDIT].PtrData = catalog_buff.get();
     fdi[IDX_USERHRC].PtrData = GetMsg(mUserHrcFile);
-    {
-      std::unique_ptr<wchar_t[]> ptr(CloneWcharToWchar_t(sUserHrcPath->getWChars()));
-      userHrc_buff.swap(ptr);
-    }
-#if 0
     fdi[IDX_USERHRC_EDIT].PtrData = (wchar_t*)sUserHrcPath->getWChars();
-#endif // if 0
-    fdi[IDX_USERHRC_EDIT].PtrData = userHrc_buff.get();
     fdi[IDX_USERHRD].PtrData = GetMsg(mUserHrdFile);
-    {
-      std::unique_ptr<wchar_t[]> ptr(CloneWcharToWchar_t(sUserHrdPath->getWChars()));
-      userHrd_buff.swap(ptr);
-    }
-#if 0
     fdi[IDX_USERHRD_EDIT].PtrData = (wchar_t*)sUserHrdPath->getWChars();
-#endif // if 0
-    fdi[IDX_USERHRD_EDIT].PtrData = userHrd_buff.get();
     fdi[IDX_HRD].PtrData = GetMsg(mHRDName);
 
     const String *descr = nullptr;
@@ -656,14 +622,7 @@ void FarEditorSet::configure(bool fromEditor)
 #endif // if 0
     descr=getHRDescription(*sTempHrdName,SString("console"));
 
-    {
-      std::unique_ptr<wchar_t[]> ptr(CloneWcharToWchar_t(descr->getWChars()));
-      hrdSelect_buff.swap(ptr);
-    }
-#if 0
     fdi[IDX_HRD_SELECT].PtrData = (wchar_t*)descr->getWChars();
-#endif // if 0
-    fdi[IDX_HRD_SELECT].PtrData = hrdSelect_buff.get();
 
     const String *descr2 = nullptr;
     sTempHrdNameTm = new SString(sHrdNameTm); 
@@ -673,14 +632,7 @@ void FarEditorSet::configure(bool fromEditor)
     descr2=getHRDescription(*sTempHrdNameTm,SString("rgb"));
 
     fdi[IDX_HRD_TM].PtrData = GetMsg(mHRDNameTrueMod);
-    {
-      std::unique_ptr<wchar_t[]> ptr(CloneWcharToWchar_t(descr2->getWChars()));
-      hrdSelectTm_buff.swap(ptr);
-    }
-#if 0
     fdi[IDX_HRD_SELECT_TM].PtrData = (wchar_t*)descr2->getWChars();
-#endif // if 0
-    fdi[IDX_HRD_SELECT_TM].PtrData = hrdSelectTm_buff.get();
     fdi[IDX_CHANGE_BG].PtrData = GetMsg(mChangeBackgroundEditor);
     fdi[IDX_CHANGE_BG].Param.Selected = ChangeBgEditor;
     fdi[IDX_RELOAD_ALL].PtrData = GetMsg(mReloadAll);
@@ -787,7 +739,7 @@ void FarEditorSet::configure(bool fromEditor)
     exceptionMessage[3] = GetMsg(mDie);
     StringBuffer msg("configure: ");
     msg += e.what();
-    exceptionMessage[2] = msg.getWWChars();
+    exceptionMessage[2] = msg.getWChars();
 #if 0
     exceptionMessage[2] = (msg+e.getMessage()).getWChars();
 
@@ -833,10 +785,7 @@ const String *FarEditorSet::chooseHRDName(const String *current, SString _hrdCla
     }
     names.push_back(name);
   
-#if 0
     menuElements[i].Text = (wchar_t*)descr->getWChars();
-#endif // if 0
-    menuElements[i].Text = CloneWcharToWchar_t(descr->getWChars());
 
     if (current->equals(name)){
       menuElements[i].Selected = 1;
@@ -847,8 +796,6 @@ const String *FarEditorSet::chooseHRDName(const String *current, SString _hrdCla
   int result = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE|FMENU_AUTOHIGHLIGHT,
                          GetMsg(mSelectHRD), 0, L"hrd", nullptr, nullptr, menuElements,
                          count);
-  for (i = 0; i < count; i++)
-    delete[] menuElements[i].Text;
   delete[] menuElements;
 
   if (result == -1){
@@ -937,7 +884,7 @@ int FarEditorSet::editorEvent(int Event, void *Param)
     exceptionMessage[3] = GetMsg(mDie);
     StringBuffer msg("editorEvent: ");
     msg += e.what();
-    exceptionMessage[2] = msg.getWWChars();
+    exceptionMessage[2] = msg.getWChars();
 #if 0
     exceptionMessage[2] = (msg+e.getMessage()).getWChars();
 
@@ -1035,7 +982,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
         }
 
         tname.append(type->getDescription());
-        marr[1] = tname.getWWChars();
+        marr[1] = tname.getWChars();
         scr = Info.SaveScreen(0, 0, -1, -1);
         Info.Message(Info.ModuleNumber, 0, nullptr, &marr[0], 2, 0);
         type->getBaseScheme();
@@ -1055,7 +1002,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
 #endif // if 0
 
     StringBuffer msg(e.what());
-    errload[2] = msg.getWWChars();
+    errload[2] = msg.getWChars();
 
     Info.Message(Info.ModuleNumber, FMSG_WARNING, nullptr, &errload[0], 5, 1);
     Info.RestoreScreen(scr);
@@ -1142,7 +1089,7 @@ LOG(DEBUG) << "Parse catalog: " << sCatalogPathExp->getChars();
     }
 #endif // if 0
     StringBuffer msg(e.what());
-    errload[2] = msg.getWWChars();
+    errload[2] = msg.getWChars();
 
     Info.Message(Info.ModuleNumber, FMSG_WARNING, nullptr, &errload[0], 5, 1);
 
@@ -1477,8 +1424,8 @@ void FarEditorSet::LoadUserHrc(const String *filename, ParserFactory *pf)
 #if 0
     InputSource *dfis = InputSource::newInstance(filename, NULL);
 #endif // if 0
-    uXmlInputSource dfis = XmlInputSource::newInstance(filename->getWChars(),
-                                                       static_cast<const wchar*>(nullptr));
+    uXmlInputSource dfis = XmlInputSource::newInstance(filename->getW2Chars(),
+                                                       static_cast<const XMLCh*>(nullptr));
     try{
       hr->loadSource(dfis.get());
 #if 0
@@ -1498,6 +1445,10 @@ const String *FarEditorSet::getParamDefValue(FileTypeImpl *type, SString param)
   const String *value;
   value = type->getParamDefaultValue(param);
   if (value == nullptr) value = defaultType->getParamValue(param);
+  if (value == nullptr) {
+    fprintf(stderr, "FarEditorSet::getParamDefValue: NULL for '%ls'\n", param.getWChars());
+    abort();
+  }
   StringBuffer *p=new StringBuffer("<default-");
   p->append(SString(value));
   p->append(SString(">"));
@@ -1533,19 +1484,15 @@ FarList *FarEditorSet::buildHrcList()
 
     if (group){
       tmp.append(SString(group->getWChars()));
-      groupChars = tmp.getWWChars();
+      groupChars = tmp.getWChars();
     }
     else{
       groupChars = L"<no group>";
     }
 
-    hrcList[i].Text = new wchar_t[255];
-#if 0
+    hrcList[i].Text = new wchar_t[256];
     swprintf((wchar_t*)hrcList[i].Text, 255, L"%ls: %ls", groupChars,
              type->getDescription()->getWChars());
-#endif
-    swprintf((wchar_t*)hrcList[i].Text, 255, L"%ls: %s", groupChars,
-             StringBuffer(type->getDescription()->getWChars()).getWWChars());
   };
 
   hrcList[0].Flags=LIF_SELECTED;
@@ -1569,7 +1516,7 @@ FarList *FarEditorSet::buildParamsList(FileTypeImpl *type)
 #if 0
     fparam[count++].Text=(wchar_t*)paramname.getWChars();
 #endif // if 0
-    fparam[count++].Text = CloneWcharToWchar_t(paramname.getWChars());
+    fparam[count++].Text = wcsdup(paramname.getWChars());
   }
   params = type->enumParams();
   for (const auto& paramname: params){
@@ -1577,7 +1524,7 @@ FarList *FarEditorSet::buildParamsList(FileTypeImpl *type)
 #if 0
       fparam[count++].Text=(wchar_t*)paramname.getWChars();
 #endif // if 0
-      fparam[count++].Text = CloneWcharToWchar_t(paramname.getWChars());
+      fparam[count++].Text = wcsdup(paramname.getWChars());
     }
   }
 
@@ -1612,11 +1559,11 @@ void FarEditorSet::setCrossValueListToCombobox(FileTypeImpl *type, HANDLE hDlg)
   int count = 5;
   FarListItem *fcross = new FarListItem[count];
   memset(fcross, 0, sizeof(FarListItem)*(count));
-  fcross[0].Text = CloneWcharToWchar_t(DNone.getWChars());
-  fcross[1].Text = CloneWcharToWchar_t(DVertical.getWChars());
-  fcross[2].Text = CloneWcharToWchar_t(DHorizontal.getWChars());
-  fcross[3].Text = CloneWcharToWchar_t(DBoth.getWChars());
-  fcross[4].Text = CloneWcharToWchar_t(def_value->getWChars());
+  fcross[0].Text = DNone.getWChars();
+  fcross[1].Text = DVertical.getWChars();
+  fcross[2].Text = DHorizontal.getWChars();
+  fcross[3].Text = DBoth.getWChars();
+  fcross[4].Text = def_value->getWChars();
   FarList *lcross = new FarList;
   lcross->Items=fcross;
   lcross->ItemsNumber=count;
@@ -1642,9 +1589,6 @@ void FarEditorSet::setCrossValueListToCombobox(FileTypeImpl *type, HANDLE hDlg)
   ChangeParamValueListType(hDlg,true);
   Info.SendDlgMessage(hDlg,DM_LISTSET,IDX_CH_PARAM_VALUE_LIST,(LONG_PTR)lcross);
   delete def_value;
-  for (int i = 0; i < count; i++){
-    delete[] fcross[i].Text;
-  }
   delete[] fcross;
   delete lcross;
 }
@@ -1657,9 +1601,9 @@ void FarEditorSet::setCrossPosValueListToCombobox(FileTypeImpl *type, HANDLE hDl
   int count = 3;
   FarListItem *fcross = new FarListItem[count];
   memset(fcross, 0, sizeof(FarListItem)*(count));
-  fcross[0].Text = CloneWcharToWchar_t(DBottom.getWChars());
-  fcross[1].Text = CloneWcharToWchar_t(DTop.getWChars());
-  fcross[2].Text = CloneWcharToWchar_t(def_value->getWChars());
+  fcross[0].Text = DBottom.getWChars();
+  fcross[1].Text = DTop.getWChars();
+  fcross[2].Text = def_value->getWChars();
   FarList *lcross = new FarList;
   lcross->Items=fcross;
   lcross->ItemsNumber=count;
@@ -1679,9 +1623,6 @@ void FarEditorSet::setCrossPosValueListToCombobox(FileTypeImpl *type, HANDLE hDl
   ChangeParamValueListType(hDlg,true);
   Info.SendDlgMessage(hDlg,DM_LISTSET,IDX_CH_PARAM_VALUE_LIST,(LONG_PTR)lcross);
   delete def_value;
-  for (int i = 0; i < count; i++){
-    delete[] fcross[i].Text;
-  }
   delete[] fcross;
   delete lcross;
 }
@@ -1694,9 +1635,9 @@ void FarEditorSet::setYNListValueToCombobox(FileTypeImpl *type, HANDLE hDlg, SSt
   int count = 3;
   FarListItem *fcross = new FarListItem[count];
   memset(fcross, 0, sizeof(FarListItem)*(count));
-  fcross[0].Text = CloneWcharToWchar_t(DNo.getWChars());
-  fcross[1].Text = CloneWcharToWchar_t(DYes.getWChars());
-  fcross[2].Text = CloneWcharToWchar_t(def_value->getWChars());
+  fcross[0].Text = DNo.getWChars();
+  fcross[1].Text = DYes.getWChars();
+  fcross[2].Text = def_value->getWChars();
   FarList *lcross = new FarList;
   lcross->Items=fcross;
   lcross->ItemsNumber=count;
@@ -1716,9 +1657,6 @@ void FarEditorSet::setYNListValueToCombobox(FileTypeImpl *type, HANDLE hDlg, SSt
   ChangeParamValueListType(hDlg,true);
   Info.SendDlgMessage(hDlg,DM_LISTSET,IDX_CH_PARAM_VALUE_LIST,(LONG_PTR)lcross);
   delete def_value;
-  for (int i = 0; i < count; i++){
-    delete[] fcross[i].Text;
-  }
   delete[] fcross;
   delete lcross;
 }
@@ -1731,9 +1669,9 @@ void FarEditorSet::setTFListValueToCombobox(FileTypeImpl *type, HANDLE hDlg, SSt
   int count = 3;
   FarListItem *fcross = new FarListItem[count];
   memset(fcross, 0, sizeof(FarListItem)*(count));
-  fcross[0].Text = CloneWcharToWchar_t(DFalse.getWChars());
-  fcross[1].Text = CloneWcharToWchar_t(DTrue.getWChars());
-  fcross[2].Text = CloneWcharToWchar_t(def_value->getWChars());
+  fcross[0].Text = DFalse.getWChars();
+  fcross[1].Text = DTrue.getWChars();
+  fcross[2].Text = def_value->getWChars();
   FarList *lcross = new FarList;
   lcross->Items=fcross;
   lcross->ItemsNumber=count;
@@ -1753,9 +1691,6 @@ void FarEditorSet::setTFListValueToCombobox(FileTypeImpl *type, HANDLE hDlg, SSt
   ChangeParamValueListType(hDlg,true);
   Info.SendDlgMessage(hDlg,DM_LISTSET,IDX_CH_PARAM_VALUE_LIST,(LONG_PTR)lcross);
   delete def_value;
-  for (int i = 0; i < count; i++){
-    delete[] fcross[i].Text;
-  }
   delete[] fcross;
   delete lcross;
 }
@@ -1768,7 +1703,7 @@ void FarEditorSet::setCustomListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, 
   int count = 1;
   FarListItem *fcross = new FarListItem[count];
   memset(fcross, 0, sizeof(FarListItem)*(count));
-  fcross[0].Text = CloneWcharToWchar_t(def_value->getWChars());
+  fcross[0].Text = def_value->getWChars();
   FarList *lcross = new FarList;
   lcross->Items=fcross;
   lcross->ItemsNumber=count;
@@ -1781,9 +1716,6 @@ void FarEditorSet::setCustomListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, 
     Info.SendDlgMessage(hDlg,DM_SETTEXTPTR ,IDX_CH_PARAM_VALUE_LIST,(LONG_PTR)value->getWChars());
   }
   delete def_value;
-  for (int i = 0; i < count; i++){
-    delete[] fcross[i].Text;
-  }
   delete[] fcross;
   delete lcross;
 }
@@ -1801,7 +1733,6 @@ void  FarEditorSet::OnChangeHrc(HANDLE hDlg)
   }
   FileTypeImpl *type = getCurrentTypeInDialog(hDlg);
   FarList *List=buildParamsList(type);
-
   Info.SendDlgMessage(hDlg,DM_LISTSET,IDX_CH_PARAM_LIST,(LONG_PTR)List);
   for (int i = 0; i < List->ItemsNumber; i++){
     delete[] List->Items[i].Text;
@@ -1854,7 +1785,7 @@ void  FarEditorSet::OnChangeParam(HANDLE hDlg, int idx)
     SaveChangedValueParam(hDlg);
   }
   FileTypeImpl *type = getCurrentTypeInDialog(hDlg);
-  FarListGetItem List;
+  FarListGetItem List{};
   List.ItemIndex=idx;
   Info.SendDlgMessage(hDlg,DM_LISTGETITEM,IDX_CH_PARAM_LIST,(LONG_PTR)&List);
 

@@ -1,12 +1,18 @@
 #ifndef _FAREDITORSET_H_
 #define _FAREDITORSET_H_
 
+#include <unordered_map>
+#if 0
+// new colorer don't have a public error handlers
 #include<colorer/handlers/FileErrorHandler.h>
+#endif // if 0
 #include<colorer/handlers/LineRegionsSupport.h>
 #include<colorer/handlers/StyledHRDMapper.h>
 #include<colorer/viewer/TextConsoleViewer.h>
+#if 0
 #include<common/Logging.h>
-#include<unicode/Encodings.h>
+#endif // if 0
+#include<colorer/unicode/Encodings.h>
 
 #include "pcolorer.h"
 #include "tools.h"
@@ -15,37 +21,37 @@
 #include "ChooseTypeMenu.h"
 
 //registry keys
-const wchar_t cRegEnabled[] = L"Enabled";
-const wchar_t cRegHrdName[] = L"HrdName";
-const wchar_t cRegHrdNameTm[] = L"HrdNameTm";
-const wchar_t cRegCatalog[] = L"Catalog";
-const wchar_t cRegCrossDraw[] = L"CrossDraw";
-const wchar_t cRegPairsDraw[] = L"PairsDraw";
-const wchar_t cRegSyntaxDraw[] = L"SyntaxDraw";
-const wchar_t cRegOldOutLine[] = L"OldOutlineView";
-const wchar_t cRegTrueMod[] = L"TrueMod";
-const wchar_t cRegChangeBgEditor[] = L"ChangeBgEditor";
-const wchar_t cRegUserHrdPath[] = L"UserHrdPath";
-const wchar_t cRegUserHrcPath[] = L"UserHrcPath";
+extern const wchar_t cRegEnabled[];
+extern const wchar_t cRegHrdName[];
+extern const wchar_t cRegHrdNameTm[];
+extern const wchar_t cRegCatalog[];
+extern const wchar_t cRegCrossDraw[];
+extern const wchar_t cRegPairsDraw[];
+extern const wchar_t cRegSyntaxDraw[];
+extern const wchar_t cRegOldOutLine[];
+extern const wchar_t cRegTrueMod[];
+extern const wchar_t cRegChangeBgEditor[];
+extern const wchar_t cRegUserHrdPath[];
+extern const wchar_t cRegUserHrcPath[];
 
 //values of registry keys by default
-const bool cEnabledDefault = true;
-const wchar_t cHrdNameDefault[] = L"default";
-const wchar_t cHrdNameTmDefault[] = L"default";
-const wchar_t cCatalogDefault[] = L"";
-const int cCrossDrawDefault = 2;
-const bool cPairsDrawDefault = true;
-const bool cSyntaxDrawDefault = true;
-const bool cOldOutLineDefault = true;
-const bool cTrueMod = true;
-const bool cChangeBgEditor = false;
-const wchar_t cUserHrdPathDefault[] = L"";
-const wchar_t cUserHrcPathDefault[] = L"";
+extern const bool cEnabledDefault;
+extern const wchar_t cHrdNameDefault[];
+extern const wchar_t cHrdNameTmDefault[];
+extern const wchar_t cCatalogDefault[];
+extern const int cCrossDrawDefault;
+extern const bool cPairsDrawDefault;
+extern const bool cSyntaxDrawDefault;
+extern const bool cOldOutLineDefault;
+extern const bool cTrueMod;
+extern const bool cChangeBgEditor;
+extern const wchar_t cUserHrdPathDefault[];
+extern const wchar_t cUserHrcPathDefault[];
 
-const DString DConsole=DString("console");
-const DString DRgb=DString("rgb");
-const DString Ddefault=DString("<default>");
-const DString DAutodetect=DString("autodetect");
+extern const SString DConsole;
+extern const SString DRgb;
+extern const SString Ddefault;
+extern const SString DAutodetect;
 
 enum
 { IDX_BOX, IDX_ENABLED, IDX_CROSS, IDX_PAIRS, IDX_SYNTAX, IDX_OLDOUTLINE,IDX_CHANGE_BG,
@@ -86,9 +92,9 @@ public:
   int  editorInput(const INPUT_RECORD *ir);
 
   /** Get the description of HRD, or parameter name if description=null */
-  const String *getHRDescription(const String &name, DString _hrdClass);
+  const String *getHRDescription(const String &name, SString _hrdClass);
   /** Shows dialog with HRD scheme selection */
-  const String *chooseHRDName(const String *current, DString _hrdClass );
+  const String *chooseHRDName(const String *current, SString _hrdClass );
 
   /** Reads all registry settings into variables */
   void ReadSettings();
@@ -102,6 +108,9 @@ public:
   bool GetPluginStatus() {return rEnabled;}
 
   bool SetBgEditor();
+  /**
+    Stub method, because Colorer API changed.
+  */
   void LoadUserHrd(const String *filename, ParserFactory *pf);
   void LoadUserHrc(const String *filename, ParserFactory *pf);
 
@@ -118,8 +127,10 @@ public:
 
   bool checkConsoleAnnotationAvailable();
 private:
+#if 0
   /** Returns current global error handler. */
   ErrorHandler *getErrorHandler();
+#endif // if 0
   /** add current active editor and return him. */
   FarEditor *addCurrentEditor();
   /** Returns currently active editor. */
@@ -170,9 +181,9 @@ private:
   //set list of values to combobox
   void setCrossValueListToCombobox(FileTypeImpl *type,HANDLE hDlg);
   void setCrossPosValueListToCombobox(FileTypeImpl *type,HANDLE hDlg);
-  void setYNListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, DString param);
-  void setTFListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, DString param);
-  void setCustomListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, DString param);
+  void setYNListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, SString param);
+  void setTFListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, SString param);
+  void setCustomListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, SString param);
 
   FileTypeImpl *getCurrentTypeInDialog(HANDLE hDlg);
 
@@ -180,15 +191,18 @@ private:
 
   void SaveChangedValueParam(HANDLE hDlg);
 
+#if 0
   Hashtable<FarEditor*> farEditorInstances;
+#endif // if 0
+  std::unordered_map<intptr_t, FarEditor*> farEditorInstances;
   ParserFactory *parserFactory;
   RegionMapper *regionMapper;
   HRCParser *hrcParser;
 
   HKEY hPluginRegistry;
   /**current value*/
-  DString hrdClass;
-  DString hrdName;
+  SString hrdClass;
+  SString hrdName;
 
   /** registry settings */
   bool rEnabled; // status plugin

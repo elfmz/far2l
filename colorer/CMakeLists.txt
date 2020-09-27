@@ -94,3 +94,5 @@ add_custom_command(TARGET colorer POST_BUILD
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
 )
+
+add_definitions(-DSPDLOG_DISABLE_TID_CACHING)

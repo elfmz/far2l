@@ -73,7 +73,7 @@ FarEditor::~FarEditor()
   delete errorOutliner;
 }
 
-void FarEditor::endJob(int lno)
+void FarEditor::endJob(size_t lno)
 {
   delete ret_str;
   ret_str = nullptr;

@@ -65,7 +65,7 @@ public:
   /** Drops this editor */
   ~FarEditor();
 
-  void endJob(int lno);
+  void endJob(size_t lno);
   /**
   Returns line number "lno" from FAR interface. Line is only valid until next call of this function,
   it also should not be disposed, this function takes care of this.

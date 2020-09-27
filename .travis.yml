@@ -17,6 +17,9 @@ matrix:
             - g++-4.9
             - cmake
             - libwxgtk3.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
             - libglib2.0-dev
             - libssh-dev
             - libsmbclient-dev
@@ -41,7 +44,9 @@ matrix:
             - g++-5
             - cmake
             - libwxgtk3.0-dev
-            - libglib2.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev
@@ -66,7 +71,9 @@ matrix:
             - clang-3.6
             - cmake
             - libwxgtk3.0-dev
-            - libglib2.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev
@@ -91,7 +98,9 @@ matrix:
             - clang-3.7
             - cmake
             - libwxgtk3.0-dev
-            - libglib2.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev

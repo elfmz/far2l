@@ -169,15 +169,33 @@ endif ()
 
 add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_MALLOC})
 
+FIND_PACKAGE(Minizip REQUIRED)
+FIND_PACKAGE(Spdlog REQUIRED)
+FIND_PACKAGE(XercesC REQUIRED)
+
+
 target_include_directories(colorer_lib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+	PUBLIC ${SPDLOG_INCLUDE_DIR}
+	PUBLIC ${MINIZIP_INCLUDE_DIRS}
+	PUBLIC ${XERCESC_INCLUDE_DIR}
     )
 
 target_link_libraries(colorer_lib
     ${THREAD_LIBS}
     )
 
-target_compile_definitions(colorer_lib PUBLIC ${COLORER_DEF})
+target_compile_definitions(colorer_lib PRIVATE
+    _UNICODE
+    UNICODE
+    __unix__
+    ${COLORER_DEF}
+    SPDLOG_DISABLE_TID_CACHING
+    SPDLOG_NO_THREAD_ID
+    SPDLOG_NO_TLS
+)
+
+
 #set_target_properties(colorer_lib PROPERTIES
 #    CXX_STANDARD 17
 #    CXX_STANDARD_REQUIRED YES
@@ -221,3 +239,4 @@ if (COLORER_PVS_STUDIO_CHECK)
       OUTPUT FORMAT errorfile
       LOG ${PROJECT_NAME}.err)
 endif ()
+

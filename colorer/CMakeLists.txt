@@ -1,13 +1,8 @@
 project(colorer)
 
-set(LIBCOLORER_TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library")
+set(LIBCOLORER_TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src")
 
-add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library")
-
-list(APPEND CMAKE_MODULE_PATH "${LIBCOLORER_TREE}/libs/xercesc/cmake")
-#include(XercesICU)
-#include(XercesMsgLoaderSelection)
-#include(XercesTranscoderSelection)
+add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
 
 set(SOURCES
     src/pcolorer2/ChooseTypeMenu.h
@@ -40,8 +35,8 @@ FIND_PACKAGE(Minizip REQUIRED)
 FIND_PACKAGE(Spdlog REQUIRED)
 FIND_PACKAGE(XercesC REQUIRED)
 
-
 target_include_directories(colorer
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src
 	PUBLIC ${SPDLOG_INCLUDE_DIR}
 	PUBLIC ${MINIZIP_INCLUDE_DIRS}
 	PUBLIC ${XERCESC_INCLUDE_DIR}
@@ -51,30 +46,26 @@ target_link_libraries(colorer
 	PUBLIC ${MINIZIP_LIBRARIES}
     PUBLIC ${XERCESC_LIBRARIES}
     utils
-    libcolorer
+    colorer_lib
     )
 
-add_library(libcolorer STATIC IMPORTED)
-set_target_properties(libcolorer
-  PROPERTIES
-    IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/bin/libcolorer.a"
-)
-add_dependencies(libcolorer colorer_lib)
-#add_library(libxerces STATIC IMPORTED)
-#set_target_properties(libxerces
-#  PROPERTIES
-#    IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/bin/libxerces-c-3.2.a"
-#)
+# sometimes libstd requires linking to libfmt, sometimes not
+# so, if libfmt there - lets link to it, if not - then dont care
+FIND_PACKAGE(fmt)
 
-#if(XERCES_USE_TRANSCODER_ICU OR XERCES_USE_MSGLOADER_ICU)
-  # libxerces depends from ICU
-#  target_link_libraries(colorer ICU::uc ICU::data)
-#endif(XERCES_USE_TRANSCODER_ICU OR XERCES_USE_MSGLOADER_ICU)
+if (fmt_FOUND)
+    target_link_libraries(colorer
+	    PUBLIC ${fmt_LIBRARY}
+        )
+endif()
 
 target_compile_definitions(colorer PRIVATE
     _UNICODE
     UNICODE
     __unix__
+    SPDLOG_DISABLE_TID_CACHING
+    SPDLOG_NO_THREAD_ID
+    SPDLOG_NO_TLS
 )
 
 target_include_directories(colorer PRIVATE ${LIBCOLORER_TREE}/src)
@@ -94,5 +85,3 @@ add_custom_command(TARGET colorer POST_BUILD
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
 )
-
-add_definitions(-DSPDLOG_DISABLE_TID_CACHING -DSPDLOG_NO_THREAD_ID)

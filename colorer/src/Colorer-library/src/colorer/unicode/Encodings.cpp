@@ -55,7 +55,7 @@ int Encodings::getEncodingIndex(const char* enc)
 {
   if (!enc) return -1;
   for (int i = 0; i < encAliasesNum; i++)
-    if (!stricmp(arr_idxEncodings[i].name, enc)) {
+    if (!strcasecmp(arr_idxEncodings[i].name, enc)) {
       return arr_idxEncodings[i].pos;
     }
   return -1;

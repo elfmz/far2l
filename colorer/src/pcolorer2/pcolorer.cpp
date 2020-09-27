@@ -9,6 +9,7 @@
 #include"FarEditorSet.h"
 #include <utils.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_sinks.h>
 
 std::shared_ptr<spdlog::logger> logger;
 

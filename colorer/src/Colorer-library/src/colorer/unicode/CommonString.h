@@ -2,15 +2,11 @@
 #define _COLORER_COMMONSTRING_H_
 
 #include <wchar.h>
+#include <stdint.h>
+#include <xercesc/util/XMLChar.hpp>
 
 /// default unicode char definition
-#ifndef WCHAR_MAX
-#error wchar misconfig
-#elif WCHAR_MAX == 0xFFFFFFFE/2
-typedef unsigned short wchar;
-#else
-typedef wchar_t wchar;
-#endif
+typedef XMLCh wchar;
 
 typedef char32_t w4char;
 typedef unsigned char byte;

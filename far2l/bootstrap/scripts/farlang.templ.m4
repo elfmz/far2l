@@ -1999,6 +1999,15 @@ upd:"AutoComplete"
 upd:"AutoComplete"
 "&AutoCompletar"
 
+MConfigCmdlineUseShell
+"Использовать &шелл"
+"Use &shell"
+upd:"Use shell"
+upd:"Use shell"
+upd:"Use shell"
+upd:"Use shell"
+upd:"Use shell"
+
 MConfigCmdlineUsePromptFormat
 "Установить &формат командной строки"
 "Set command line &prompt format"

@@ -578,7 +578,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void RunShell()
 	{
 		//CheckedCloseFD(fd_term);
-			
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/sh";
@@ -591,6 +590,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		//shell = "/usr/bin/zsh";
 		//shell = "/bin/bash";
 		//shell = "/bin/sh";
+
+		std::string forceShell = Wide2MB(Opt.CmdLine.strShell);
+		if (Opt.CmdLine.UseShell)
+			shell = forceShell.c_str();
+
 		std::vector<const char *> args;
 		args.push_back(shell);
 #if 0		

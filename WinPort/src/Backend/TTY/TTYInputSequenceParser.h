@@ -106,6 +106,7 @@ class TTYInputSequenceParser
 	void AddStr_ControlsThenCode(WORD vk, const char *fmt, const char *code);
 	void AddStr_CodeThenControls(WORD vk, const char *fmt, const char *code);
 	void AddStrTilde(WORD vk, int code);
+	void AddStrTilde_Controls(WORD vk, int code);
 	void AddStrF1F5(WORD vk, const char *code);
 	void AddStrCursors(WORD vk, const char *code);
 

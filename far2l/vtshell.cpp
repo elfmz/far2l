@@ -344,94 +344,170 @@ private:
 	}
 };
 
-class CompletionMarker 
+class Marker
 {
-	std::string _marker;
-	std::string _backlog;
-	size_t _marker_start;
-	int _exit_code;
 	bool _active;
+
+protected:
+	std::string _marker;
+	size_t _marker_start;
+	std::string _backlog;
 
 	void ScanReset()
 	{
 		_active = false;
-		_marker_start = (size_t)-1;
+		_marker_start = (size_t) -1;
 		_backlog.clear();
 	}
 
+	std::string GetMarker()
+	{
+		if (_marker.empty())
+			Reset();
+		return _marker;
+	}
+
 public:
-	CompletionMarker() : _exit_code(-1)
+	Marker() : _active(false), _marker_start((size_t) -1)
 	{
 		srand(time(NULL));
-		Reset();
 	}
 
-	std::string EchoCommand() const
+	std::string EscapedOutput()
 	{
-		std::string out = "echo -ne \"=$FARVTRESULT:\"$\'";
+		std::string out;
 		char escaped[16];
-		for (const auto c : _marker) {
+		for (const auto c : GetMarker()) {
 			sprintf(escaped, "\\x%02x",
-				(unsigned int)(unsigned char)c);
-			out+= escaped;
+					(unsigned int) (unsigned char) c);
+			out += escaped;
 		}
-		out+= '\'';
 		return out;
 	}
-	
-	int LastExitCode() const
-	{
-		return _exit_code;
-	}
 
-	void Reset()
+	virtual std::string EchoCommand() = 0;
+
+	virtual void Reset()
 	{
 		_marker.clear();
-		for (size_t l = 8 + (rand()%9); l; --l) {
+		for (size_t l = 8 + (rand() % 9); l; --l) {
 			char c;
 			switch (rand() % 3) {
-				case 0: c = 'A' + (rand() % ('Z' + 1 - 'A')); break;
-				case 1: c = 'a' + (rand() % ('z' + 1 - 'a')); break;
-				case 2: c = '0' + (rand() % ('9' + 1 - '0')); break;
+				case 0:
+					c = 'A' + (rand() % ('Z' + 1 - 'A'));
+					break;
+				case 1:
+					c = 'a' + (rand() % ('z' + 1 - 'a'));
+					break;
+				case 2:
+					c = '0' + (rand() % ('9' + 1 - '0'));
+					break;
 			}
-			_marker+= c;
+			_marker += c;
 		}
-		_marker+= "\x1b[1K";
-		//setenv("FARVTMARKER", _marker.c_str(), 1);
-		//fprintf(stderr, "CompletionMarker: '%s'\n", _marker.c_str());
-
 		ScanReset();
 	}
 
-	bool Scan(const char *buf, int len)
+	virtual void OnScanStart()
+	{};
+
+	virtual void OnCharScan(const char)
+	{};
+
+	virtual void OnMarkerFound()
+	{};
+
+	virtual void OnMarkerScanStart()
+	{
+		_marker_start = _backlog.size();
+	}
+
+	int Scan(const char *buf, int len)
 	{
 		for (int i = 0; i < len; ++i) {
-			if (buf[i]=='=') {
+			if (buf[i] == '=') {
 				ScanReset();
 				_active = true;
+				OnScanStart();
 			} else if (_active) {
-				_backlog+= buf[i];
-				if (_marker_start==(size_t)-1) {
-					//check for reasonable length limit
-					if (_backlog.size() > 12 + _marker.size()) { 
+				_backlog += buf[i];
+				OnCharScan(buf[i]);
+				if (_marker_start == (size_t) -1) {
+					// check for reasonable length limit
+					if (_backlog.size() > 12 + _marker.size()) {
 						ScanReset();
-					} else if (buf[i]==':')
-						_marker_start = _backlog.size();
-
-				} else if (buf[i]==':') {//second splitter??
-					ScanReset();
-				} else if (_backlog.size() - _marker_start >= _marker.size())  {
-					if (memcmp(_backlog.c_str() + _marker_start, _marker.c_str(), _marker.size())==0) {
+					}
+				} else if (_backlog.size() - _marker_start >= _marker.size()) {
+					std::string marker = GetMarker();
+					if (memcmp(_backlog.c_str() + _marker_start, marker.c_str(), marker.size()) == 0) {
 						_backlog[_marker_start - 1] = 0;
-						_exit_code = atoi(&_backlog[0]);
+						OnMarkerFound();
 						ScanReset();
-						return true;
+						return i + 1;
 					}
 					ScanReset();
 				}
 			}
 		}
-		return false;
+		return -1;
+	}
+};
+
+class StartingMarker : public Marker
+{
+public:
+	std::string EchoCommand() override
+	{
+		std::string out = "echo -ne \"=\"$\'";
+		out += EscapedOutput();
+		out += '\'';
+		return out;
+	}
+
+	void OnScanStart() override
+	{
+		OnMarkerScanStart();
+	}
+};
+
+class CompletionMarker : public Marker
+{
+	int _exit_code = -1;
+
+public:
+	std::string EchoCommand() override
+	{
+		std::string out = "echo -ne \"=$FARVTRESULT:\"$\'";
+		out += EscapedOutput();
+		out += '\'';
+		return out;
+	}
+
+	int LastExitCode() const
+	{
+		return _exit_code;
+	}
+
+	void Reset() override
+	{
+		Marker::Reset();
+		_marker += "\x1b[1K\x0d";
+	}
+
+	void OnCharScan(const char c) override
+	{
+		if (c == ':') {
+			if (_marker_start == (size_t) -1)
+				OnMarkerScanStart();
+			else
+				// second splitter??
+				ScanReset();
+		}
+	}
+
+	void OnMarkerFound() override
+	{
+		_exit_code = atoi(&_backlog[0]);
 	}
 };
 	
@@ -446,7 +522,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	pid_t _shell_pid, _forked_proc_pid;
 	std::string _slavename;
 	CompletionMarker _completion_marker;
-	bool _skipping_line;
+	StartingMarker _starting_marker;
+	bool _seeking_start;
+	bool _seeking_end;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
 	VTFar2lExtensios *_far2l_exts = nullptr;
@@ -657,28 +735,29 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		DbgPrintEscaped("OUTPUT", buf, len);
 
-		//_completion_marker is not thread safe generically,
-		//but while OnProcessOutput called from single thread .
-		//and can't overlap with ScanReset() - its ok.
-		//But if it will be called from several threads - this 
-		//calls must be guarded by mutex.
-		bool out = !_completion_marker.Scan(buf, len);
-		
-		if (_skipping_line) {
-			for (; len > 0; ++buf, --len) {
-				if (*buf == '\n') {
-					_skipping_line = false;
-					++buf;
-					--len;
-					break;
-				}
-			}
+		if (_seeking_start) {
+		    int pos = _starting_marker.Scan(buf, len);
+		    if (pos >= 0) {
+		        buf += pos;
+		        len -= pos;
+		        _vta.Write(buf, len);
+		        _seeking_start = false;
+		        _seeking_end = true;
+		    }
 		}
-		
-		if (len > 0)
-			_vta.Write(buf, len);
-	
-		return out;
+
+		if (_seeking_end) {
+            //_completion_marker is not thread safe generically,
+            //but while OnProcessOutput called from single thread .
+            //and can't overlap with ScanReset() - its ok.
+            //But if it will be called from several threads - this
+            //calls must be guarded by mutex.
+            bool out = _completion_marker.Scan(buf, len) < 0;
+            _vta.Write(buf, len);
+            return out;
+        }
+
+		return true;
 	}
 	
 	virtual void OnTerminalResized()
@@ -1029,6 +1108,7 @@ static bool shown_tip_exit = false;
 		if (!need_sudo) {
 			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
 		}
+		fprintf(f, "%s\n", _starting_marker.EchoCommand().c_str());
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
 		//fprintf(f, "stty echo\n");
@@ -1111,8 +1191,8 @@ static bool shown_tip_exit = false;
 
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
-		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1), 
-		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false), _keypad(0)
+        _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
+        _shell_pid(-1), _forked_proc_pid(-1), _seeking_start(false), _seeking_end(false), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())
@@ -1159,7 +1239,8 @@ static bool shown_tip_exit = false;
 			return -1;
 		}
 
-		_skipping_line = true;
+        _seeking_start = true;
+		_seeking_end = false;
 
 		const std::string &title = ComposeExecuteCommandInitialTitle(cd, cmd, force_sudo);
 		_vta.OnStart(title.c_str());

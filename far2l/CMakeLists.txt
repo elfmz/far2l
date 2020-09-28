@@ -164,7 +164,7 @@ target_compile_definitions(far2l PRIVATE -DUNICODE)
 target_include_directories(far2l PRIVATE Include)
 target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_dependencies(far2l bootstrap)
+add_dependencies(far2l bootstrap WinPort)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(wxWidgets REQUIRED net core base)
@@ -172,6 +172,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 else()
     SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)
 endif()
+
+set_source_files_properties(
+    main.cpp PROPERTIES OBJECT_DEPENDS
+    ${CMAKE_BINARY_DIR}/WinPort/libWinPort.a
+)
 
 set_target_properties(far2l
     PROPERTIES

@@ -49,12 +49,10 @@ static wxDataObjectComposite *g_wx_data_to_clipboard = nullptr;
 
 wxClipboardBackend::wxClipboardBackend()
 {
-	_default_backend = WinPortClipboard_SetBackend(this);
 }
 
 wxClipboardBackend::~wxClipboardBackend()
 {
-	WinPortClipboard_SetBackend(_default_backend);
 }
 
 bool wxClipboardBackend::OnClipboardOpen()

@@ -11,7 +11,6 @@ class FSClipboardBackend : public IClipboardBackend
 {
 	SharedResource _shared_resource;
 	std::shared_ptr<KeyFileHelper> _kfh;
-	IClipboardBackend *_default_backend = nullptr;
 
 public:
 	FSClipboardBackend();

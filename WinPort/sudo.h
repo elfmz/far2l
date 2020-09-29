@@ -13,7 +13,6 @@ extern "C" {
 #endif
 
 
-
  typedef enum SudoClientMode_ {
 	 SCM_DISABLE,
 	 SCM_CONFIRM_MODIFY,

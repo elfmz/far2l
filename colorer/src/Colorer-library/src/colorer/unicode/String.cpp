@@ -4,37 +4,16 @@
 #include <stdlib.h>
 
 #ifdef __unix__
+#include <strings.h>
+
 extern "C" int stricmp(const char* c1, const char* c2)
 {
-  unsigned int i1, i2;
-  while (*c1 || *c2) {
-    i1 = Character::toLowerCase(*c1);
-    i2 = Character::toLowerCase(*c2);
-    if (i1 < i2) return -1;
-    if (i1 > i2) return 1;
-    if (!i1) return -1;
-    if (!i2) return 1;
-    c1++;
-    c2++;
-  }
-  return 0;
+  return strcasecmp(c1, c2);
 }
 
 extern "C" int strnicmp(const char* c1, const char* c2, unsigned int len)
 {
-  unsigned int i1, i2;
-  while ((*c1 || *c2) && len) {
-    i1 = Character::toLowerCase(*c1);
-    i2 = Character::toLowerCase(*c2);
-    if (i1 < i2) return -1;
-    if (i1 > i2) return 1;
-    if (!i1) return -1;
-    if (!i2) return 1;
-    c1++;
-    c2++;
-    len--;
-  }
-  return 0;
+  return strncasecmp(c1, c2, len);
 }
 #endif
 

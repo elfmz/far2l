@@ -71,14 +71,14 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		uint32_t all;
 	} _ae;
 
+	ClipboardBackendSetter _clipboard_backend_setter;
+
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
 
 	void OnFar2lKey(bool down, StackSerializer &stk_ser);
 	void OnFar2lMouse(StackSerializer &stk_ser);
-
-	std::shared_ptr<IClipboardBackend> _clipboard_backend;
 
 protected:
 	// IFar2lInterractor

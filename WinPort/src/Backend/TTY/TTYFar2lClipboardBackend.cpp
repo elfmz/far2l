@@ -77,12 +77,14 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 				return true;
 
 			case -1:
+				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: fallback\n");
 				if (!_fallback_backend)
 					_fallback_backend = new FSClipboardBackend;
 
 				return _fallback_backend->OnClipboardOpen();
 
-			default: ;
+			default:
+				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: denied\n");
 		}
 
 	} catch (std::exception &e) {
@@ -141,7 +143,7 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 			return true;
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardEmpty: %s\n", e.what());
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable: %s\n", e.what());
 	}
 	return false;
 }
@@ -187,7 +189,7 @@ void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			return data;
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardEmpty: %s\n", e.what());
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardSetData: %s\n", e.what());
 	}
 	return nullptr;
 }
@@ -232,7 +234,7 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardEmpty: %s\n", e.what());
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData: %s\n", e.what());
 		free(data);
 	}
 	return nullptr;
@@ -252,7 +254,7 @@ UINT TTYFar2lClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszForm
 		return stk_ser.PopU32();
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardEmpty: %s\n", e.what());
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardRegisterFormat: %s\n", e.what());
 	}
 	return 0;
 }

@@ -139,7 +139,8 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 		wxTheClipboard->UsePrimarySelection(true);
 	}
 
-	wxClipboardBackend clip_backend;
+	ClipboardBackendSetter clipboard_backend_setter;
+	clipboard_backend_setter.Set<wxClipboardBackend>();
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new(std::nothrow) WinPortAppThread(argc, argv, AppMain);
 		if (!g_winport_app_thread) {

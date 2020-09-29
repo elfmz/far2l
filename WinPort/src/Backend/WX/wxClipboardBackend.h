@@ -1,9 +1,8 @@
 #pragma once
 #include "Backend.h"
 
-class wxClipboardBackend : IClipboardBackend
+class wxClipboardBackend : public IClipboardBackend
 {
-	IClipboardBackend *_default_backend;
 public:
 	wxClipboardBackend();
 	~wxClipboardBackend();

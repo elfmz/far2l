@@ -5,13 +5,11 @@
 FSClipboardBackend::FSClipboardBackend() :
 	_shared_resource("fsclip", 0)
 {
-	_default_backend = WinPortClipboard_SetBackend(this);
 }
 
 
 FSClipboardBackend::~FSClipboardBackend()
 {
-	WinPortClipboard_SetBackend(_default_backend);
 }
 
 bool FSClipboardBackend::OnClipboardOpen()

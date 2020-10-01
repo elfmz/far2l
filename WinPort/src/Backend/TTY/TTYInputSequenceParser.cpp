@@ -86,16 +86,16 @@ void TTYInputSequenceParser::AddStr(WORD vk, DWORD control_keys, const char *fmt
 	}
 }
 
+void TTYInputSequenceParser::AddStrTilde_Controls(WORD vk, int code)
+{
+	char tmp[32];
+	AddStr_CodeThenControls(vk, "[%s;%d~", itoa(code, tmp, 10));
+}
+
 void TTYInputSequenceParser::AddStrTilde(WORD vk, int code)
 {
 	AddStr(vk, 0, "[%d~", code);
-	for (int i = 0; i <= 7; ++i) {
-		DWORD control_keys = 0;
-		if (i & 1) control_keys|= SHIFT_PRESSED;
-		if (i & 2) control_keys|= LEFT_ALT_PRESSED;
-		if (i & 4) control_keys|= LEFT_CTRL_PRESSED;
-		AddStr(vk, control_keys, "[%d;%d~", code, 1 + i);
-	}
+	AddStrTilde_Controls(vk, code);
 }
 
 void TTYInputSequenceParser::AddStr_ControlsThenCode(WORD vk, const char *fmt, const char *code)
@@ -214,6 +214,17 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	AddStrTilde(VK_F10, 21);
 	AddStrTilde(VK_F11, 23);
 	AddStrTilde(VK_F12, 24);
+
+	AddStrTilde_Controls('0', 50);
+	AddStrTilde_Controls('1', 51);
+	AddStrTilde_Controls('2', 52);
+	AddStrTilde_Controls('3', 53);
+	AddStrTilde_Controls('4', 54);
+	AddStrTilde_Controls('5', 55);
+	AddStrTilde_Controls('6', 56);
+	AddStrTilde_Controls('7', 57);
+	AddStrTilde_Controls('8', 58);
+	AddStrTilde_Controls('9', 59);
 
 	AddStr(VK_ESCAPE, 0, "\x1b");
 

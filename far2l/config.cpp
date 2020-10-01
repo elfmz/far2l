@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "datetime.hpp"
 #include "FarDlgBuilder.hpp"
+#include "vtshell.h"
 
 Options Opt={0};
 
@@ -389,13 +390,23 @@ void CmdlineSettings()
 	DialogItemEx *PromptFormat = Builder.AddEditField(&Opt.CmdLine.strPromptFormat, 19);
 	PromptFormat->Indent(4);
 	Builder.LinkFlags(UsePromptFormat, PromptFormat, DIF_DISABLE);
+    DialogItemEx *UseShell = Builder.AddCheckbox(MConfigCmdlineUseShell, &Opt.CmdLine.UseShell);
+    DialogItemEx *Shell =Builder.AddEditField(&Opt.CmdLine.strShell, 19);
+    Shell->Indent(4);
+    Builder.LinkFlags(UseShell, Shell, DIF_DISABLE);
 	Builder.AddOKCancel();
+
+	int oldUseShell = Opt.CmdLine.UseShell;
+	FARString oldShell = FARString(Opt.CmdLine.strShell);
 
 	if (Builder.ShowDialog())
 	{
 		CtrlObject->CmdLine->SetPersistentBlocks(Opt.CmdLine.EditBlock);
 		CtrlObject->CmdLine->SetDelRemovesBlocks(Opt.CmdLine.DelRemovesBlocks);
 		CtrlObject->CmdLine->SetAutoComplete(Opt.CmdLine.AutoComplete);
+
+		if (Opt.CmdLine.UseShell != oldUseShell || Opt.CmdLine.strShell != oldShell)
+		    VTShell_Shutdown();
 	}
 }
 
@@ -620,6 +631,8 @@ static struct FARConfig
 
 	{1, REG_DWORD,  NKeyCmdline, L"UsePromptFormat", &Opt.CmdLine.UsePromptFormat,0, 0},
 	{1, REG_SZ,     NKeyCmdline, L"PromptFormat",&Opt.CmdLine.strPromptFormat, 0, L"$p$# "},
+	{1, REG_DWORD,  NKeyCmdline, L"UseShell",&Opt.CmdLine.UseShell, 0, 0},
+	{1, REG_SZ,     NKeyCmdline, L"Shell",&Opt.CmdLine.strShell, 0, L"/bin/bash"},
 	{1, REG_DWORD,  NKeyCmdline, L"DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks,1, 0},
 	{1, REG_DWORD,  NKeyCmdline, L"EditBlock", &Opt.CmdLine.EditBlock,0, 0},
 	{1, REG_DWORD,  NKeyCmdline, L"AutoComplete",&Opt.CmdLine.AutoComplete,1, 0},

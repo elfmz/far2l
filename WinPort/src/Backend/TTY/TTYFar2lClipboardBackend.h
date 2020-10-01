@@ -9,7 +9,7 @@
 
 class TTYFar2lClipboardBackend : public IClipboardBackend
 {
-	IClipboardBackend *_prior_backend = nullptr, *_fallback_backend = nullptr;
+	IClipboardBackend *_fallback_backend = nullptr;
 	IFar2lInterractor *_interractor;
 	std::string _client_id;
 

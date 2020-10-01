@@ -87,12 +87,12 @@ void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
 	while (!_exiting) {
-		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend) {
+		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend_setter.IsSet()) {
 			if (_far2l_tty) {
 				IFar2lInterractor *interractor = this;
-				_clipboard_backend = std::make_shared<TTYFar2lClipboardBackend>(interractor);
+				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interractor);
 			} else {
-				_clipboard_backend = std::make_shared<FSClipboardBackend>();
+				_clipboard_backend_setter.Set<FSClipboardBackend>();
 			}
 			prev_far2l_tty = _far2l_tty;
 		}
@@ -102,6 +102,7 @@ void TTYBackend::ReaderThread()
 			_deadio = false;
 			_ae.flags.term_resized = true;
 		}
+
 
 		pthread_t writer_trd = 0;
 		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) == -1) {
@@ -177,6 +178,7 @@ void TTYBackend::ReaderLoop()
 		}
 
 		if (_flush_input_queue) {
+			_flush_input_queue = false;
 			tty_in.reset();
 			tty_in.reset(new TTYInput(this));
 			OnInputBroken();
@@ -390,6 +392,9 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 		uint8_t id = 0;
 		if (i->waited) {
 			if (_far2l_interracts_sent.size() >= 0xff) {
+				fprintf(stderr,
+					"TTYBackend::DispatchFar2lInterract: too many sent interracts - %ld\n",
+					_far2l_interracts_sent.size());
 				i->stk_ser.Clear();
 				i->evnt.Signal();
 				return;
@@ -518,6 +523,7 @@ bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 		return false;
 
 	pfi->stk_ser.Swap(stk_ser);
+
 	return true;
 }
 
@@ -699,6 +705,8 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 	} catch (std::exception &) {}
 }
 
+static void OnSigHup(int signo);
+
 bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 {
 	if (_notify_pipe == -1) {
@@ -706,7 +714,8 @@ bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 	}
 
 	if (TryEnterBackgroundMode) {
-		raise(SIGHUP);
+		OnSigHup(SIGHUP);
+//		raise(SIGHUP);
 	}
 
 	return true;
@@ -755,13 +764,13 @@ static void OnSigHup(int signo)
 {
 	FDScope dev_null(open("/dev/null", O_RDWR));
 	if (dev_null.Valid()) {
-		dup2(dev_null, 0);
-		dup2(dev_null, 1);
-		dup2(dev_null, 2);
-		if (g_std_in != 0 && g_std_in != -1)
-			dup2(dev_null, g_std_in);
-		if (g_std_out != 1 && g_std_out != -1)
+//		dup2(dev_null, 2);
+//		dup2(dev_null, 1);
+//		dup2(dev_null, 0);
+		if (g_std_out != -1)
 			dup2(dev_null, g_std_out);
+		if (g_std_in != -1)
+			dup2(dev_null, g_std_in);
 	}
 	if (g_vtb) {
 		g_vtb->KickAss(true);

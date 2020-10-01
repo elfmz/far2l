@@ -332,7 +332,9 @@ struct CommandLineOptions
 	int DelRemovesBlocks;
 	int AutoComplete;
 	int UsePromptFormat;
+	int UseShell;
 	FARString strPromptFormat;
+	FARString strShell;
 };
 
 struct NowellOptions

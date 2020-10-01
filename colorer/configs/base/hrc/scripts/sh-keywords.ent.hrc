@@ -115,9 +115,17 @@
      </keywords>
 <!-- test conditions -->
 
-<!-- builtin commands -->
+<!-- builtin and some external frequently used commands -->
     <keywords region="command.sys">
        <word name="sed"/>
+       <word name="awk"/>
+       <word name="grep"/>
+       <word name="find"/>
+       <word name="xargs"/>
+       <word name="wc"/>
+       <word name="sort"/>
+       <word name="uniq"/>
+
        <word name="alias"/>
        <word name="bg"/>
        <word name="bind"/>
@@ -161,7 +169,6 @@
        <word name="test"/>
        <word name="times"/>
        <word name="trap"/>
-       <word name="type"/>
        <word name="type"/>
        <word name="ulimit"/>
        <word name="umask"/>

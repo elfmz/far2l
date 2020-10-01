@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <annotation><documentation>
     Colorer HRC packages group for
@@ -129,8 +129,8 @@
 
 <scheme name="XML.EmbeddedExpr">
 <!-- 'virtual-region' not support, duplicate code... :-(
-Если когда-нибудь такое будет поддерживатся, 
-содержимое схемы следует заменить этим:
+Р•СЃР»Рё РєРѕРіРґР°-РЅРёР±СѓРґСЊ С‚Р°РєРѕРµ Р±СѓРґРµС‚ РїРѕРґРґРµСЂР¶РёРІР°С‚СЃСЏ, 
+СЃРѕРґРµСЂР¶РёРјРѕРµ СЃС…РµРјС‹ СЃР»РµРґСѓРµС‚ Р·Р°РјРµРЅРёС‚СЊ СЌС‚РёРј:
     
     <inherit scheme="EmbeddedExpr">
         <virtual scheme="Expr" subst-scheme="XML.Expr"/>

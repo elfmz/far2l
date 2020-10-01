@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='Windows-1251'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -160,6 +160,8 @@
         <word name="EVBROADCAST"/>
         <word name="EVKEYDOWN"/>
         <word name="AND"/>
+        <word name="BETWEEN"/>
+        <word name="IN"/>
         <word name="OR"/>
         <word name="NOT"/>
       </keywords>
@@ -181,6 +183,7 @@
         <word name="CHAR"/>
         <word name="EXTENDED"/>
         <word name="BOOLEAN"/>
+        <word name="NIL" region="AtlBool"/>
         <word name="TRUE" region="AtlBool"/>
         <word name="FALSE" region="AtlBool"/>
       </keywords>
@@ -196,6 +199,7 @@
         <word name="TBL"/>
         <word name="LNK"/>
         <word name="GO"/>
+        <word name="MOD"/>
         <word name="NORECORDS"/>
         <word name="FORWARD"/>
         <word name="BACKWARD"/>

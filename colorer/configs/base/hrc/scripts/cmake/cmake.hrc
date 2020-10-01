@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY cmake-dict SYSTEM "cmake.ent.hrc">
+<!ENTITY cmake-auto SYSTEM "cmake-auto.ent.hrc">
+]>
+
+
+<hrc version="take5"
+	xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+	<annotation>
+		<documentation>
+			CMake Files Syntax
+		</documentation>
+
+		<contributors><![CDATA[
+			Extrunder <extrunder.spb@gmail.com>
+		]]></contributors>
+
+		<appinfo>
+			<todo>
+		Add following lines into proto.hrc and correct location link, don't forget to remove comments ;)
+		<!--
+		<prototype name="cmake" group="scripts" description="CMake script">
+			<location link="types/cmake.hrc"/>
+			<filename>/(\.cmake)$/i</filename>
+			<filename weight="3">/(^CMakeLists\.txt)$/i</filename>
+			<firstline weight="2">/^cmake_minimum_required/xi</firstline>
+		</prototype>
+		-->
+			</todo>
+		</appinfo>
+	</annotation>
+
+	<package name="cmake-dict">
+		<location link="cmake.ent.hrc"/>
+	</package>
+	<package name="cmake-auto">
+		<location link="cmake-auto.ent.hrc"/>
+	</package>
+
+	<type name="cmake">
+		<region name="cmake_function_names" parent="def:Function"/>
+		<region name="cmake_parameters" parent="def:Parameter"/>
+		<region name="cmake_variables" parent="def:VarStrong"/>
+		<region name="cmake_operators" parent="def:Operator"/>
+		<region name="cmake_string" parent="def:StringContent"/>
+		<region name="cmake_keywords" parent="def:Keyword"/>
+
+		<scheme name="cmake">
+			<inherit scheme="Expressions" />
+		</scheme>
+
+		<scheme name="RegexContent">
+			<inherit scheme="regexp:std.regexp" />
+		</scheme>
+
+		<scheme name="Strings">
+			<block start="/(?{def:StringEdge}[Ll]?&#34;)/" end="/(?{def:StringEdge}&#34;)/" scheme="StringContent" region="def:String" inner-region="yes"
+				region00="def:PairStart" region10="def:PairEnd" />
+
+			<block start="/(?{def:StringEdge}\[\[)/" end="/(?{def:StringEdge}\]\])/" scheme="RegexContent" inner-region="yes"
+				region00="def:PairStart" region10="def:PairEnd" />
+		</scheme>
+
+		<scheme name="StringContent">
+			<regexp match="/\\\\$/" region="def:Error"/>
+			<regexp match="/(\%)\w+(\%)/" region="def:Constant" region1="def:PairStart" region2="def:PairEnd"/>
+			<regexp match="/\\[^xX\d]/" region="def:StringContent"/>
+			<regexp match="/\\$/" region="def:StringContent"/>
+			<regexp match="/\\x[\da-fA-F]{1,8}/i" region="def:StringContent"/>
+			<regexp match="/\\[0-7]{1,12}/" region="def:StringContent"/>
+			<regexp match="/\%[\-\+\#0]*?[\d\*]*(\.[\d\*]+)?[Ll]?[SsCcsuidopxXnEefgG]/" region="def:StringContent"/>
+			<regexp match="/[^\\\&#34;]$/" region="def:Error"/>
+			<!-- regexp match="/\M(\$\{)([^(\})]+)(\})/" region1="def:Symbol" region3="def:Symbol" / -->
+			<!-- regexp match="/(\$\{)([^(\})]+)(\})\m/" region1="def:PairStart" region3="def:PairEnd" / -->
+			<inherit scheme="Variables"/>
+			<inherit scheme="TabsAsErrors"/>
+		</scheme>
+
+		<scheme name="TabsAsErrors" if="tabs-as-errors">
+			<regexp match="/\t+/" region='def:Error'/>
+		</scheme>
+
+		<entity name="Sep" value="(?:(?:[\s]|\n|\r)*)" />
+		<entity name="Args" value="(?:%Sep;\(&Sep;(?{All}(?{First}[^\)\s]*)[^\)]*)\))" />
+		<entity name="ArgsMatch1" value="(?:%Sep;\(%Sep;(?:\y{First}||(?{def:Error}.+))%Sep;\))" />
+		<entity name="ArgsMatch0" value="(?:%Sep;\(%Sep;(?:\y{All}||(?{def:Error}.+))%Sep;\))" />
+
+		<!-- CMakeKeywords, CMakeVariables, CMakeCommands, etc... -->
+		&cmake-dict;
+		&cmake-auto;
+
+		<scheme name="If">
+			<block start="/(?:if)?#2(\()/" end="/(\))/" scheme="Keywords_if"
+				 region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd" inner-region="yes"/>
+			<inherit scheme="Expressions" />
+		</scheme>
+
+		<scheme name="While">
+			<block start="/(?:while)?#5(\()/" end="/(\))/" scheme="Keywords_if"
+				 region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd" inner-region="yes"/>
+			<inherit scheme="Expressions" />
+		</scheme>
+
+		<scheme name="Command">
+			<inherit scheme="FunctionArguments" />
+			<inherit scheme="CompositeExpression" />
+		</scheme>
+
+		<scheme name="Comments">
+			<block start="/#\[(?{id}.*?)\[/" end="/\](\y{id})\]/" scheme="def:Comment" region="def:CommentContent"
+				region00="def:PairStart" region10="def:PairEnd"/>
+			<regexp match="/\m\#.*$/" region="def:CommentContent" />
+		</scheme>
+
+		<scheme name="Variables">
+			<block start="/(\$(?:ENV)?\{)/" end="/(\})/" scheme="CompositeExpression"
+				region="def:String" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+
+			<block start="/(\$&lt;)\M([^\:]+)(\:)/" end="/(&gt;)/" scheme="CompositeExpression"
+				region="def:String" region00="def:Symbol" region01="def:PairStart" region02="def:String" region03="def:Symbol" region10="def:Symbol" region11="def:PairEnd"/>
+
+			<inherit scheme="CMakeVariables" />
+		</scheme>
+
+		<scheme name="Arguments">
+			<inherit scheme="CompositeExpression" />
+		</scheme>
+
+		<scheme name="CompositeExpression">
+			<inherit scheme="Comments" />
+			<inherit scheme="Strings" />
+			<inherit scheme="Variables" />
+			<inherit scheme="CMakeKeywords" />
+		</scheme>
+
+		<scheme name="Expressions">
+			<inherit scheme="CompositeExpression" />
+
+			<inherit scheme="CMakeCommands" />
+
+			<block start="/\b(%CMakeCommands;\b%Sep;\()/ix" end="/(\))/" scheme="Command"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd" priority="low"/>
+			<block start="/(\()/" end="/(\))/" scheme="Expressions"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd"/>
+
+			<block start="/\b(if)\b\M%Args;/i" end="/\b(endif)\b%ArgsMatch0;/i" scheme="If"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd"/>
+			<block start="/\b(while)\b\M%Args;/i" end="/\b(endwhile)\b%ArgsMatch0;/i" scheme="While"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd"/>
+
+			<block start="/\b(foreach)\b\M%Args;/i" end="/\b(endforeach)\b%ArgsMatch1;/i" scheme="Expressions"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd"/>
+			<block start="/\b(function)\b\M%Args;/i" end="/\b(endfunction)\b%ArgsMatch1;/i" scheme="Expressions"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd"/>
+			<block start="/\b(macro)\b\M%Args;/i" end="/\b(endmacro)\b%ArgsMatch1;/i" scheme="Expressions"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd"/>
+		</scheme>
+	</type>
+</hrc>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='Windows-1251'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -9,9 +9,9 @@
        <documentation>
         FoxPro Extended v1.1 Syntax
         <contributors>
-          Alexander Polosow/Александр Полозов (2:5025/54.32aka2:5025/23.82)
+          Alexander Polosow/РђР»РµРєСЃР°РЅРґСЂ РџРѕР»РѕР·РѕРІ (2:5025/54.32aka2:5025/23.82)
           build with 'FoxPro Syntax' by
-          Cyrill Panov/Кирилл Панов Cyrill.Panov@usu.ru
+          Cyrill Panov/РљРёСЂРёР»Р» РџР°РЅРѕРІ Cyrill.Panov@usu.ru
           Vadim Zaharenko (Vadim.Zaharenko@GMail.com)
         </contributors>
        </documentation>

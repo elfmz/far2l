@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -89,9 +89,9 @@
          </keywords>
 <!--
   VADIM:
-  внутри скобок МОГУТ встерачаться бинарные операторы, а также
-  преобразование типов и список параметров (как внутри круглых
-  так и внутри квадратных)
+  РІРЅСѓС‚СЂРё СЃРєРѕР±РѕРє РњРћР“РЈРў РІСЃС‚РµСЂР°С‡Р°С‚СЊСЃСЏ Р±РёРЅР°СЂРЅС‹Рµ РѕРїРµСЂР°С‚РѕСЂС‹, Р° С‚Р°РєР¶Рµ
+  РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ С‚РёРїРѕРІ Рё СЃРїРёСЃРѕРє РїР°СЂР°РјРµС‚СЂРѕРІ (РєР°Рє РІРЅСѓС‚СЂРё РєСЂСѓРіР»С‹С…
+  С‚Р°Рє Рё РІРЅСѓС‚СЂРё РєРІР°РґСЂР°С‚РЅС‹С…)
 -->
          <keywords ignorecase="yes" region="pWord">
             <word name="and"/>
@@ -240,8 +240,8 @@
          <block start="/\b(begin|package|library|implementation|object)\b/i" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region01="PairStart" region10="pWord2" region11="PairEnd"/>
 <!--
   VADIM:
-  a COM-интерфейсы, значит, в паскале никогда не сущесвовали.
-  не согласен.
+  a COM-РёРЅС‚РµСЂС„РµР№СЃС‹, Р·РЅР°С‡РёС‚, РІ РїР°СЃРєР°Р»Рµ РЅРёРєРѕРіРґР° РЅРµ СЃСѓС‰РµСЃРІРѕРІР°Р»Рё.
+  РЅРµ СЃРѕРіР»Р°СЃРµРЅ.
 -->
          <block start="/\=\s*(interface|dispinterface) \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
          <block start="/\b(class) \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pasClass" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>

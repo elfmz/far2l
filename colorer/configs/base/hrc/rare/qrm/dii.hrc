@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='Windows-1251'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -38,10 +38,10 @@
 <!-- parencies -->
       <block start="/(\()/" end="/(\))/" scheme="dii" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
       <regexp match="/\b(str\d+)\b/i" region0="tdiiWord"/>
-<!--ќв® Їа®б¬®ва ­ § ¤: "ORC FLAT" ¤®«¦­® Ї®¤бўҐзЁў вмбп-->
+<!--Р­С‚Рѕ РїСЂРѕСЃРјРѕС‚СЂ РЅР°Р·Р°Рґ: "ORC FLAT" РґРѕР»Р¶РЅРѕ РїРѕРґСЃРІРµС‡РёРІР°С‚СЊСЃСЏ-->
       <regexp match="/(\bORC\b)?#3(\s+\bFLAT\b)/i" region2="diiWord"/>
-<!--ќв® Їа®б¬®ва ўЇҐаҐ¤: "ORC RS" ¤®«¦­® Ї®¤бўҐзЁў вмбп-->
-      <regexp match="/(\bORC\b\s+\bRS\b)?=/i" region1="diiWord"/>
+<!--Р­С‚Рѕ РїСЂРѕСЃРјРѕС‚СЂ РІРїРµСЂРµРґ: "ORC RS" РґРѕР»Р¶РЅРѕ РїРѕРґСЃРІРµС‡РёРІР°С‚СЊСЃСЏ-->
+      <regexp match="/(\bORC\b\s+(\d+\s+)?\bRS\b)?=/i" region1="diiWord"/>
       <regexp match="/(\bARRAY\b)\s*\[\s*(\d+)\.{2}(\d+)\s*\]\s*(\bOF\b)/i" region1="diiWord" region2="diiNumb" region3="diiNumb" region4="diiWord"/>
       <keywords ignorecase="yes" region="diiWord">
         <word name="create"/>
@@ -65,6 +65,7 @@
         <word name="upcase"/>
         <word name="noupcase"/>
         <word name="seg"/>
+        <word name="skip"/>
         <word name="null"/>
         <word name="autoinc"/>
         <word name="asc"/>

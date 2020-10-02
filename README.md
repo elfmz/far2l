@@ -120,6 +120,20 @@ cmake .. \
   -DwxWidgets_wxrc_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc
 ```
 
+#### Building DMG, DEB and TGZ packages
+
+Pleas follow CMake related instructions from previous step to build the project, then run:
+``` sh
+cpack
+```
+
+to generate the following packages (depending on architecture):
+- far2l-2.X.X.dmg
+- far2l_2.X.X_ARCH.deb 
+- far2l-2.X.X.tar.gz
+
+All packages can be found in `build` folder.
+
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
 

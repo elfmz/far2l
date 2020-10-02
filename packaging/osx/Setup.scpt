@@ -1,6 +1,6 @@
 on run argv
 	set diskImage to item 1 of argv
-
+    delay 3
 	tell application "Finder"
 		tell disk diskImage
 			open

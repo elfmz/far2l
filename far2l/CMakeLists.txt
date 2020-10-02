@@ -168,7 +168,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_executable(far2l MACOSX_BUNDLE ${SOURCES} Far.icns)
     set_target_properties(far2l PROPERTIES
         OUTPUT_NAME ${APP_NAME}
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+        RUNTIME_OUTPUT_DIRECTORY ${APP_DIR})
     set_source_files_properties(Far.icns PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources)
 else()

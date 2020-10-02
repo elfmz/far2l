@@ -14,7 +14,7 @@ on run argv
 				set statusbar visible to false
 				set toolbar visible to false
 				set the bounds to {400, 100, 912, 450}
-				set position of item "Far.app" to {171, 195}
+				set position of item "${APP_NAME}.app" to {171, 195}
 				set position of item "Applications" to {341, 195}
 			end tell
 			update without registering applications

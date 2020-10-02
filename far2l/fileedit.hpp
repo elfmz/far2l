@@ -222,6 +222,10 @@ public:
 		GetCurrentTimestamp();
 	}
 
+	virtual ~BaseEditedFileUploader()
+	{
+	}
+
 	void UploadIfTimestampChanged()
 	{
 		struct stat s{};

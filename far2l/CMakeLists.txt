@@ -158,13 +158,30 @@ UCD/nsUTF8Prober.cpp
 UCD/prmem.c
 )
 
-add_executable (far2l ${SOURCES})
+# Set target names for the executables
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX_BUNDLE_LONG_VERSION_STRING ${VERSION})
+    set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${VERSION})
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER ${APP_IDENTIFIER})
+    set(MACOSX_BUNDLE_ICON_FILE "Far.icns")
+    set(MACOSX_BUNDLE_BUNDLE_NAME ${APP_NAME})
+    add_executable(far2l MACOSX_BUNDLE ${SOURCES} Far.icns)
+    set_target_properties(far2l PROPERTIES
+        OUTPUT_NAME ${APP_NAME}
+        RUNTIME_OUTPUT_DIRECTORY ${APP_DIR})
+    set_source_files_properties(Far.icns PROPERTIES
+        MACOSX_PACKAGE_LOCATION Resources)
+else()
+    add_executable(far2l ${SOURCES})
+    set_target_properties(far2l PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}")
+endif()
 
 target_compile_definitions(far2l PRIVATE -DUNICODE)
 target_include_directories(far2l PRIVATE Include)
 target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_dependencies(far2l bootstrap)
+add_dependencies(far2l bootstrap WinPort)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(wxWidgets REQUIRED net core base)
@@ -172,6 +189,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 else()
     SET (WINPORT -Wl,--whole-archive WinPort -Wl,--no-whole-archive)
 endif()
+
+set_source_files_properties(
+    main.cpp PROPERTIES OBJECT_DEPENDS
+    ${CMAKE_BINARY_DIR}/WinPort/libWinPort.a
+)
 
 set_target_properties(far2l
     PROPERTIES
@@ -188,11 +210,8 @@ else()
 endif()
 
 add_custom_command(TARGET far2l POST_BUILD
-   COMMAND rm ${INSTALL_DIR}/far2l_askpass || echo ""
-   COMMAND rm ${INSTALL_DIR}/far2l_sudoapp || echo ""
-   COMMAND ln -s far2l ${INSTALL_DIR}/far2l_askpass
-   COMMAND ln -s far2l ${INSTALL_DIR}/far2l_sudoapp)
-
+    COMMAND ln -sf ${EXECUTABLE_NAME} ${INSTALL_DIR}/far2l_askpass
+    COMMAND ln -sf ${EXECUTABLE_NAME} ${INSTALL_DIR}/far2l_sudoapp)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 #TODO

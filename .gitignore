@@ -13,3 +13,8 @@ tools/
 *.a
 far2l/bootstrap
 build/
+.idea
+CPackConfig.cmake
+CPackSourceConfig.cmake
+*.cbp
+cmake-build-*

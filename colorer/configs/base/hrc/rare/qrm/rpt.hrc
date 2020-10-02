@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='Windows-1251'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -79,27 +79,99 @@
       <regexp match="/(call)\s+([A-Za-z_]\w*\b)/i" region1="RptWord" region2="RptLabel"/>
       <regexp match="/(call)\s+([\w\S]*\b)/i" region1="RptWord" region2="def:ErrorText"/>
       <keywords ignorecase="yes" region="RptWord">
+        <word name="ABS"/>
+        <word name="ADDDATE"/>
+        <word name="ADDDAY"/>
+        <word name="ADDMONTHS"/>
+        <word name="ADDTIME"/>
+        <word name="AND"/>
+        <word name="ARCTAN"/>
+        <word name="ASCII"/>
+        <word name="AVER"/>
+        <word name="BETWEEN"/>
+        <word name="BIN"/>
+        <word name="BREAK"/>
+        <word name="CASE"/>
+        <word name="CEIL"/>
+        <word name="CFORMAT"/>
+        <word name="CHR"/>
+        <word name="COMPARE"/>
+        <word name="COMPTOEXT"/>
+        <word name="CONTINUE"/>
+        <word name="COS"/>
+        <word name="CURDATE"/>
+        <word name="CURTIME"/>
+        <word name="DAY"/>
+        <word name="DAYOFWEEK"/>
+        <word name="DIVDAY"/>
+        <word name="DIVSEC100"/>
+        <word name="DO"/>
+        <word name="ELSE"/>
+        <word name="EXIT"/>
+        <word name="EXP"/>
+        <word name="FLOOR"/>
+        <word name="FLUSH"/>
+        <word name="FORMATSTRING"/>
+        <word name="FRAC"/>
+        <word name="FROMDAYS"/>
+        <word name="FROMSEC100"/>
+        <word name="GREATEST"/>
+        <word name="HALT"/>
+        <word name="HEX"/>
+        <word name="HOUR"/>
         <word name="IF"/>
         <word name="IN"/>
+        <word name="INITCAP"/>
+        <word name="INSTR"/>
+        <word name="INT"/>
+        <word name="LASTDAY"/>
+        <word name="LEAST"/>
+        <word name="LENGTH"/>
+        <word name="LIKE"/>
+        <word name="LN"/>
+        <word name="LOWER"/>
+        <word name="LPAD"/>
+        <word name="LTRIM"/>
+        <word name="MAXINT64"/>
+        <word name="MININT64"/>
+        <word name="MINUTE"/>
+        <word name="MODULE"/>
+        <word name="MONTH"/>
+        <word name="MONTHSBETWEEN"/>
         <word name="NOT"/>
-        <word name="AND"/>
-        <word name="XOR"/>
         <word name="OR"/>
-        <word name="ELSE"/>
-        <word name="DO"/>
-        <word name="WHILE"/>
-        <word name="BREAK"/>
-        <word name="CONTINUE"/>
-        <word name="RESULT"/>
-        <word name="EXIT"/>
-        <word name="HALT"/>
-        <word name="WRITE"/>
+        <word name="POW"/>
         <word name="PUTEVENT"/>
-        <word name="FLUSH"/>
+        <word name="RANDOM"/>
+        <word name="REPLACE"/>
+        <word name="RESULT"/>
+        <word name="ROUND"/>
+        <word name="RPAD"/>
+        <word name="RTRIM"/>
+        <word name="SEC100"/>
+        <word name="SECOND"/>
+        <word name="SIGN"/>
+        <word name="SIN"/>
+        <word name="SQRT"/>
+        <word name="SUBDATE"/>
+        <word name="SUBDAY"/>
+        <word name="SUBSTR"/>
+        <word name="SUBTIME"/>
+        <word name="TAN"/>
+        <word name="TODAYS"/>
+        <word name="TOSEC100"/>
+        <word name="TRIM"/>
+        <word name="TRUNC"/>
+        <word name="UPPER"/>
+        <word name="WHILE"/>
+        <word name="WRITE"/>
+        <word name="XOR"/>
+        <word name="YEAR"/>
       </keywords>
       <keywords ignorecase="yes" region="RptTypeWord">
         <word name="TRUE" region="RptBool"/>
         <word name="FALSE" region="RptBool"/>
+        <word name="NIL" region="RptBool"/>
       </keywords>
       <inherit scheme="RptAny"/>
     </scheme>

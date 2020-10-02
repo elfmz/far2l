@@ -30,10 +30,10 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
 {
   size_t len=wcslen(path);
   if (!len){
-    return NULL;
+    return nullptr;
   }
 
-  wchar_t *new_path = NULL;
+  wchar_t *new_path = nullptr;
   // we remove quotes, if they are present, focusing on the first character
   // if he quote it away and the first and last character.
   // If the first character quote, but the latter does not - well, it's not our 
@@ -51,7 +51,7 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   }
 
   // replace the environment variables to their values
-  size_t i=WINPORT(ExpandEnvironmentStrings)(new_path,NULL,0);
+  size_t i=WINPORT(ExpandEnvironmentStrings)(new_path, nullptr, 0);
   if (i>len){
     len = i;
   }
@@ -61,7 +61,7 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   new_path = temp;
 
   // take the full path to the file, converting all kinds of ../ ./ etc
-  size_t p=FSF.ConvertPath(CPM_FULL, new_path, NULL, 0);
+  size_t p=FSF.ConvertPath(CPM_FULL, new_path, nullptr, 0);
   if (p>len){
     len = p;
     wchar_t *temp = new wchar_t[len];
@@ -89,10 +89,10 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
 
 SString *PathToFullS(const wchar_t *path, bool unc)
 {
-  SString *spath=NULL;
+  SString *spath=nullptr;
   wchar_t *t=PathToFull(path,unc);
   if (t){
-    spath=new SString(t);
+    spath=new StringBuffer(t);
   }
   delete[] t;
   return spath;

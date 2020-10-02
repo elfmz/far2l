@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="Windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <region xmlns="http://colorer.sf.net/2003/hrc" name="php.function"
         parent="def:FunctionKeyword"/>
 <region xmlns="http://colorer.sf.net/2003/hrc" name="php.const" parent="def:Constant"/>
@@ -62,7 +62,6 @@
       <word name="var"/>
       <word name="while"/>
       <word name="yield"/>
-      <word name="null"/>
       <word name="interface"/>
       <word name="public"/>
       <word name="private"/>
@@ -248,6 +247,7 @@
 <scheme xmlns="http://colorer.sf.net/2003/hrc" name="keywords.const"
         if="include-base-consts">
    <keywords region="php.const">
+      <word name="null"/>
       <word name="PHP_VERSION"/>
       <word name="PHP_MAJOR_VERSION"/>
       <word name="PHP_MINOR_VERSION"/>
@@ -1864,7 +1864,7 @@
    <keywords region="php.function" ignorecase="yes">
       <word name="debug_backtrace"/>
       <word name="debug_print_backtrace"/>
-      <word name="◾error_get_last"/>
+      <word name="error_get_last"/>
       <word name="error_log"/>
       <word name="error_reporting"/>
       <word name="restore_error_handler"/>

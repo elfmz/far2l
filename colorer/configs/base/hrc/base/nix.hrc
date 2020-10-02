@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -30,7 +30,7 @@
     <scheme name="SpacesAsErrors" if="spaces-as-errors">
       <regexp match="/\x20+$/" region='def:Error'/>
     </scheme>
-    
+
     <scheme name="NotNestedComment">
       <inherit scheme="TabsAsErrors"/>
       <inherit scheme="SpacesAsErrors"/>
@@ -50,6 +50,8 @@
       <inherit scheme="SpacesAsErrors"/>
 
       <regexp match="/&apos;&apos;\$/"                                          region0="StringEscape"/>
+      <regexp match="/&apos;&apos;\\./"                                         region0="StringEscape"/>
+      <regexp match="/&apos;&apos;\\$/"                                         region0="StringEscape"/>
       <regexp match="/&apos;&apos;&apos;/"                                      region0="StringEscape"/>
       <block start="/(\$\{)/" end="/(\})/" scheme="NixExpression" region="Code" region00="Interpolation" region01="PairStart" region10="Interpolation" region11="PairEnd"/>
     </scheme>
@@ -71,13 +73,15 @@
       <block start="/(\()/"   end="/(\))/" scheme="NixExpression" region00="Symbol"        region01="PairStart" region10="Symbol"        region11="PairEnd"/>
       <block start="/(\[)/"   end="/(\])/" scheme="NixExpression" region00="Symbol"        region01="PairStart" region10="Symbol"        region11="PairEnd"/>
 
-      <regexp match="/(\.\.|\.|\~|)\/[\w\d.+=?-]+(\/[\w\d.+=?-]+)*/"            region0="Path"/>
-      <regexp match="/&lt;[\w\d\/.-]+&gt;/"                                     region0="Path"/>
-      <regexp match="/(ftp|mirror|http|https|git):\/\/[\w\d\/:?=&amp;.~-]+/"    region0="URL"/>
+      <regexp match=    "/[\w\d._+-]*(\/[\w\d._+-]+)+/"                           region0="Path"/>
+      <regexp match=              "/~(\/[\w\d._+-]+)+/"                           region0="Path"/>
+      <regexp match="/&lt;[\w\d._+-]+(\/[\w\d._+-]+)*&gt;/"                       region0="Path"/>
+      <regexp match="/[A-Za-z][A-Za-z0-9+.-]*:[A-Za-z0-9%/?:@&amp;=+$,_.!~*'-]+/" region0="URL"/>
       <block start="/(&quot;)/"       end="/(&quot;)/"       scheme="String"      region="String" region00="def:StringEdge" region01="def:PairStart" region10="def:StringEdge" region11="def:PairEnd"/>
       <block start="/(&apos;&apos;)/" end="/(&apos;&apos;)/" scheme="BlockString" region="String" region00="def:StringEdge" region01="def:PairStart" region10="def:StringEdge" region11="def:PairEnd"/>
 
       <keywords region="Keyword">
+        <word name="abort"/>
         <word name="assert"/>
         <word name="else"/>
         <word name="if"/>
@@ -85,6 +89,7 @@
         <word name="inherit"/>
         <word name="import"/>
         <word name="let"/>
+        <word name="or"/>
         <word name="rec"/>
         <word name="then"/>
         <word name="throw"/>
@@ -100,10 +105,8 @@
         <symb name=":"/>
         <symb name=","/>
         <symb name=";"/>
-
         <symb name="*"/>
         <symb name="/"/>
-        <symb name="%"/>
         <symb name="+"/>
         <symb name="-"/>
         <symb name="!"/>
@@ -111,8 +114,8 @@
         <symb name="@"/>
         <symb name="&lt;"/>
         <symb name="&gt;"/>
-        <symb name="&amp;"/>
-        <symb name="|"/>
+        <symb name="&amp;&amp;"/>
+        <symb name="||"/>
         <symb name="="/>
         <symb name="..."/>
       </keywords>

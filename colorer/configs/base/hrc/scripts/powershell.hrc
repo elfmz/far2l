@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="us-ascii"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <hrc version="take5"
 xmlns="http://colorer.sf.net/2003/hrc"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -7,7 +7,7 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="powershell">
 <annotation><documentation><![CDATA[
 
-powershell.hrc by Roman Kuzmin, aka nightroman, 2016-10-05
+powershell.hrc by Roman Kuzmin, aka nightroman, 2019-11-17
 visual.hrd is recommended as optimized for powershell.hrc
 
 Regex syntax in strings after regex operators, [regex], and <#regex#>
@@ -1035,7 +1035,7 @@ SQL syntax in here-strings after <#sql#>
     start="/(?{Keyword}break|continue)%token;?!/i" end="/%end;/"/>
 
     <block scheme="pipeline"
-    start="/(?{Keyword}throw|return|exit)%token;?!/i" end="/%end;/"/>
+    start="/(?{Keyword}throw|return|exit|using(?:\s+\w+)?)%token;?!/i" end="/%end;/"/>
 
     <keywords region="Operator">
         <symb name=";"/>

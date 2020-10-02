@@ -1,22 +1,77 @@
-#include "pcolorer.h"
-#include "tools.h"
-#include "FarEditorSet.h"
+#if 0
+#include <g3log/g3log.hpp>
+#endif // #if 0
+#include <iostream>
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XMLString.hpp>
+#include"pcolorer.h"
+#include"tools.h"
+#include"FarEditorSet.h"
 #include <utils.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_sinks.h>
 
-FarEditorSet *editorSet = NULL;
+std::shared_ptr<spdlog::logger> logger;
+
+XERCES_CPP_NAMESPACE_USE
+
+FarEditorSet *editorSet = nullptr;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
-StringBuffer *PluginPath =NULL;
+StringBuffer *PluginPath = nullptr;
+#if 0
+std::unique_ptr<g3::LogWorker> logworker;
+#endif // #if 0
+
+// ---------------------------------------------------------------------------
+// This is a simple class that lets us do easy (though not terribly efficient)
+// trancoding of XMLCh data to local code page for display.
+// ---------------------------------------------------------------------------
+class StrX
+{
+  public:
+    // -----------------------------------------------------------------------
+    // Constructors and Destructor
+    // -----------------------------------------------------------------------
+    StrX(const XMLCh* const origin): fLocalForm(nullptr)
+    {
+      // Call the private transcoding method
+      if (origin) fLocalForm = XMLString::transcode(origin);
+    }
+
+    ~StrX()
+    {
+      if (fLocalForm) XMLString::release(&fLocalForm);
+    }
+
+    // -----------------------------------------------------------------------
+    // Getter methods
+    // -----------------------------------------------------------------------
+    const char* operator()() const
+    {
+      return fLocalForm;
+    }
+
+  private:
+    // -----------------------------------------------------------------------
+    // Private data members
+    //
+    //  fLocalForm
+    //      This is the local code page form of the string.
+    // -----------------------------------------------------------------------
+    char* fLocalForm;
+};
 
 SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
 {
-      DString module(path, 0);
+      SString module(path, 0);
       int pos = module.lastIndexOf('/');
       pos = module.lastIndexOf('/',pos);
-      PluginPath=new StringBuffer(DString(module, 0, pos));	
+      PluginPath=new StringBuffer(SString(module, 0, pos));
+      logger = spdlog::stderr_logger_mt("far2l-colorer");
 }
 
-StringBuffer *GetConfigPath(const DString &sub)
+StringBuffer *GetConfigPath(const SString &sub)
 {
   struct stat s;
   StringBuffer *path=new StringBuffer(PluginPath);
@@ -25,7 +80,7 @@ StringBuffer *GetConfigPath(const DString &sub)
           std::wstring str(path->getWChars());
           if (TranslateInstallPath_Lib2Share(str) ) {
             path->setLength(0);
-            path->append(DString(str.c_str()));
+            path->append(str.c_str());
           }
   }
   return path;
@@ -49,6 +104,28 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
   Info = *fei;
   FSF = *fei->FSF;
   Info.FSF = &FSF;
+#if 0
+  logworker = g3::LogWorker::createLogWorker();
+  g3::initializeLogging(logworker.get());
+#ifndef NDEBUG
+  g3::only_change_at_initialization::setLogLevel(DEBUG, false);
+  g3::only_change_at_initialization::setLogLevel(INFO, false);
+#endif
+#endif // #if 0
+  try
+  {
+    XMLPlatformUtils::Initialize();
+  }
+  catch(const XMLException &toCatch)
+  {
+    StrX str(toCatch.getMessage());
+#if 0
+    LOG(ERROR) << "Error during Xerces-c Initialization.\n"
+               << "  Exception message:" << str();
+#endif // #if 0
+    std::cerr << "Error during Xerces-c Initialization.\n"
+              << "  Exception message:" << str();
+  }
 };
 
 /**
@@ -76,6 +153,10 @@ SHAREDSYMBOL void WINAPI ExitFARW()
   if (editorSet){
     delete editorSet;
   }
+  XMLPlatformUtils::Terminate();
+#if 0
+  g3::internal::shutDownLogging();
+#endif // #if 0
 };
 
 /**
@@ -96,7 +177,7 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
         if (!editorSet){
           editorSet = new FarEditorSet();
         }
-        editorSet->viewFile(DString(nfile));
+        editorSet->viewFile(StringBuffer(nfile));
       }
 
       delete[] nfile;

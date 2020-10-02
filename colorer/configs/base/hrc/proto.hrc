@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='Windows-1251'?>
+<?xml version="1.0" encoding='UTF-8'?>
 <!DOCTYPE hrc PUBLIC
   "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd"
@@ -87,7 +87,7 @@
   </prototype>
   <prototype name="perl" group="main" description="Perl">
     <location link="base/perl.hrc"/>
-    <filename>/\.(pl[sx]?|pm|pod|t|ph)$/i</filename>
+    <filename weight="3">/\.(pl[sx]?|pm|pod|t|ph)$/i</filename>
     <firstline weight='2'>/^\#!\s*.+perl\b/</firstline>
     <firstline>/perl/i</firstline>
     <parameters>
@@ -200,6 +200,19 @@
     <location link="base/kotlin.hrc"/>
     <filename>/\.kt$/i</filename>
   </prototype>
+  <prototype name="groovy" group="main" description="Groovy">
+    <location link="base/groovy.hrc"/>
+    <filename>/\.groovy$/i</filename>
+    <filename>/\.gdsl$/i</filename>
+    <filename>/Jenkinsfile/i</filename>
+    <firstline>/^import/</firstline>
+    <firstline>/^#!groovy/</firstline>
+    <parameters>
+      <param name="j2se-classes" value="true" description="Use some common used J2SE class names"/>
+      <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
+      <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error"/>
+    </parameters>
+  </prototype>
 
   <prototype name="rust" group="main" description="Rust">
     <location link="base/rust.hrc"/>
@@ -274,6 +287,10 @@
     <location link="inet/jsp.hrc"/>
     <filename>/\.(jspf?|tag)$/i</filename>
   </prototype>
+  <prototype name="gsp" group="inet" description="gsp">
+   <location link="inet/gsp.hrc"/>
+   <filename>/\.gsp$/i</filename>
+  </prototype>
 
   <prototype name="php" group="inet" description="php">
     <location link="inet/php.hrc"/>
@@ -337,7 +354,7 @@
   </prototype>
   <prototype name="svg" group="inet" description="SVG 1.0" targetNamespace="http://www.w3.org/2000/svg">
     <location link="inet/gen/svg.hrc"/>
-    <filename>/\.svg/ix</filename>
+    <filename>/\.svg$/ix</filename>
   </prototype>
   <prototype name="coldfusion" group="inet" description="ColdFusion">
     <location link="inet/coldfusion.hrc"/>
@@ -345,7 +362,7 @@
   </prototype>
   <prototype name="jScript" group="inet" description="JavaScript">
     <location link="inet/jscript.hrc"/>
-    <filename>/\.(js|mocha)$/i</filename>
+    <filename>/\.(js|mocha|ts)$/i</filename>
   </prototype>
   <prototype name="actionscript" group="inet" description="ActionScript">
     <location link="inet/actionscript.hrc"/>
@@ -605,6 +622,12 @@
   <prototype name="qmake" group="scripts" description="Qt qmake">
     <location link="scripts/qmake.hrc"/>
     <filename>/\.pr[oif]$/i</filename>
+  </prototype>
+  <prototype name="cmake" group="scripts" description="CMake script">
+    <location link="scripts/cmake/cmake.hrc"/>
+    <filename>/(\.cmake)$/i</filename>
+    <filename weight="3">/(^CMakeLists\.txt)$/i</filename>
+    <firstline weight="2">/^cmake_minimum_required/xi</firstline>
   </prototype>
   <prototype name="solution" group="scripts" description="Microsoft Visual Studio Solution File">
     <location link="scripts/solution.hrc"/>

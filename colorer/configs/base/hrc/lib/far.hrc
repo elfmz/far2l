@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
 	"http://colorer.sf.net/2003/hrc.dtd"[
 <!ENTITY far-macro-string SYSTEM "far-macro-string.ent.hrc">
@@ -1382,7 +1382,7 @@
 
 
 
-<!-- заглушка для создания типа -->
+<!-- Р·Р°РіР»СѓС€РєР° РґР»СЏ СЃРѕР·РґР°РЅРёСЏ С‚РёРїР° -->
 
 <scheme name="far">
 	<annotation>

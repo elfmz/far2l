@@ -6,10 +6,10 @@ ChooseTypeMenu::ChooseTypeMenu(const wchar_t *AutoDetect,const wchar_t *Favorite
   Item = nullptr;
   ItemSelected = 0;
 
-  StringBuffer s;
-  s.append(DString("&A ")).append(DString(AutoDetect));
-  AddItem(s.getWChars(), MIF_NONE, NULL,0);
-  AddItem(Favorites, MIF_SEPARATOR, NULL, 1);
+  StringBuffer s("&A ");
+  s.append(AutoDetect);
+  AddItem(s.getWChars(), MIF_NONE, nullptr, 0);
+  AddItem(Favorites, MIF_SEPARATOR, nullptr, 1);
 }
 
 ChooseTypeMenu::~ChooseTypeMenu()
@@ -67,7 +67,7 @@ int ChooseTypeMenu::AddItem(const wchar_t *Text, const MENUITEMFLAGS Flags, cons
 
 int ChooseTypeMenu::AddGroup(const wchar_t *Text)
 {
-  return AddItem(Text, MIF_SEPARATOR, NULL);
+  return AddItem(Text, MIF_SEPARATOR, nullptr);
 }
 
 int ChooseTypeMenu::AddItem(const FileType* fType, size_t PosAdd)
@@ -113,10 +113,10 @@ void ChooseTypeMenu::MoveToFavorites(size_t index)
   size_t k=AddFavorite(f);
   SetSelected(k);
   HideEmptyGroup();
-  if (f->getParamValue(DFavorite)==null){
+  if (f->getParamValue(DFavorite)==nullptr){
     f->addParam(&DFavorite);
   }
-  delete f->getParamNotDefaultValue(DFavorite);
+  delete f->getParamUserValue(DFavorite);
   f->setParamValue(DFavorite,&DTrue);
 }
 
@@ -143,7 +143,7 @@ void ChooseTypeMenu::DelFromFavorites(size_t index)
   AddItemInGroup(f);
   if (Item[index].Flags&MIF_SEPARATOR)  SetSelected(GetNext(index));
   else  SetSelected(index);
-  delete f->getParamNotDefaultValue(DFavorite);
+  delete f->getParamUserValue(DFavorite);
   f->setParamValue(DFavorite,&DFalse);
 }
 
@@ -151,10 +151,11 @@ int ChooseTypeMenu::AddItemInGroup(FileType* fType)
 {
   size_t i;
   const String* group =fType->getGroup();
-  for (i=favorite_idx;i<ItemCount && !((Item[i].Flags&MIF_SEPARATOR) && (group->compareTo(DString(Item[i].Text))==0) );i++);
-  if (Item[i].Flags&MIF_HIDDEN) Item[i].Flags &= ~MIF_HIDDEN;
-  size_t k=AddItem(fType,i+1);
-  if (ItemSelected>=k) ItemSelected++;
+  for (i = favorite_idx; i < ItemCount && !((Item[i].Flags & MIF_SEPARATOR) &&
+       (group->compareTo(SString((wchar*)Item[i].Text)) == 0)); i++);
+  if (Item[i].Flags & MIF_HIDDEN) Item[i].Flags &= ~MIF_HIDDEN;
+  size_t k = AddItem(fType, i + 1);
+  if (ItemSelected >= k) ItemSelected++;
   return k;
 }
 
@@ -181,14 +182,14 @@ void ChooseTypeMenu::RefreshItemCaption(size_t index)
 StringBuffer* ChooseTypeMenu::GenerateName(const FileType* fType)
 {
   const String *v;
-  v=((FileTypeImpl*)fType)->getParamValue(DHotkey);
+  v=fType->getParamValue(DHotkey);
   StringBuffer *s=new StringBuffer;
-  if (v!=NULL && v->length()){
-    s->append(DString("&")).append(v);
+  if (v && v->length()){
+    s->append(SString("&")).append(v);
   }else{
-    s->append(DString(" "));
+    s->append(SString(" "));
   }
-  s->append(DString(" ")).append(((FileType*)fType)->getDescription());
+  s->append(SString(" ")).append(fType->getDescription());
 
   return s;
 }

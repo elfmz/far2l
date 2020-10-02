@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -170,8 +170,8 @@
         </keywords>
 
         <keywords ignorecase="yes" region="ahdlMacrofunction">
-          <!-- A.Б. сюда можно было бы запихнуть всю 74-ю серию, -->
-          <!-- но не думаю, что ее использование есть good style -->
+          <!-- A.Р‘. СЃСЋРґР° РјРѕР¶РЅРѕ Р±С‹Р»Рѕ Р±С‹ Р·Р°РїРёС…РЅСѓС‚СЊ РІСЃСЋ 74-СЋ СЃРµСЂРёСЋ, -->
+          <!-- РЅРѕ РЅРµ РґСѓРјР°СЋ, С‡С‚Рѕ РµРµ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РµСЃС‚СЊ good style -->
           <word name="enadff"/>
           <word name="expdff"/>
           <word name="explatch"/>
@@ -182,12 +182,12 @@
         </keywords>
 
       <!-- Paired items-->
-        <!-- to Cail: не знаю, как настроить выделение парной скобки -->
-        <!-- (к той, что над курсором) -->
+        <!-- to Cail: РЅРµ Р·РЅР°СЋ, РєР°Рє РЅР°СЃС‚СЂРѕРёС‚СЊ РІС‹РґРµР»РµРЅРёРµ РїР°СЂРЅРѕР№ СЃРєРѕР±РєРё -->
+        <!-- (Рє С‚РѕР№, С‡С‚Рѕ РЅР°Рґ РєСѓСЂСЃРѕСЂРѕРј) -->
         <block start="/(\()/" end="/(\))/" scheme="ahdl" region00="ahdlSymbol" region01="PairStart" region10="ahdlSymbol" region11="PairEnd"/>
         <block start="/(\[)/" end="/(\])/" scheme="ahdl" region00="ahdlSymbol" region01="PairStart" region10="ahdlSymbol" region11="PairEnd"/>
 
-        <!-- to Cail: тоже самое, хотелось бы выделять парный элемент -->
+        <!-- to Cail: С‚РѕР¶Рµ СЃР°РјРѕРµ, С…РѕС‚РµР»РѕСЃСЊ Р±С‹ РІС‹РґРµР»СЏС‚СЊ РїР°СЂРЅС‹Р№ СЌР»РµРјРµРЅС‚ -->
         <block start="/^\s*(if)/i" end="/^\s*(end\s+if)/" scheme="ahdl" region00="ahdlKeyword" region01="PairStart" region10="ahdlKeyword" region11="PairEnd"/>
         <block start="/^\s*(case)/i" end="/^\s*(end\s+case)/" scheme="ahdl" region00="ahdlKeyword" region01="PairStart" region10="ahdlKeyword" region11="PairEnd"/>
         <block start="/^\s*(defaults)/i" end="/^\s*(end\s+defaults)/" scheme="ahdl" region00="ahdlKeyword" region01="PairStart" region10="ahdlKeyword" region11="PairEnd"/>

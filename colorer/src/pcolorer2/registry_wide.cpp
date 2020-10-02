@@ -3,8 +3,8 @@
 DWORD rOpenKey(HKEY hReg, const wchar_t *Name, HKEY &hKey)
 {
   DWORD dwDisposition;
-  if (WINPORT(RegCreateKeyEx)(hReg, Name, 0, NULL, 0, KEY_ALL_ACCESS,
-    NULL, &hKey, &dwDisposition)==ERROR_SUCCESS){
+  if (WINPORT(RegCreateKeyEx)(hReg, Name, 0, nullptr, 0, KEY_ALL_ACCESS,
+                              nullptr, &hKey, &dwDisposition) == ERROR_SUCCESS){
       return dwDisposition;
   }
   return 0;
@@ -25,11 +25,11 @@ wchar_t *rGetValueSz(HKEY hReg, const wchar_t *name, const wchar_t *DefaultValue
 {
   wchar_t *Data;
   DWORD i, Len=0;
-  i=WINPORT(RegQueryValueEx)(hReg, name, 0, NULL, NULL, &Len);
+  i=WINPORT(RegQueryValueEx)(hReg, name, 0, nullptr, nullptr, &Len);
   if (i==ERROR_SUCCESS){
     int l=Len / sizeof(wchar_t);
     Data=new wchar_t[l];
-    i=WINPORT(RegQueryValueEx)(hReg, name, 0, NULL, (PBYTE)Data, &Len);
+    i=WINPORT(RegQueryValueEx)(hReg, name, 0, nullptr, (PBYTE)Data, &Len);
     if (i==ERROR_SUCCESS){
       return Data;
     }
@@ -43,14 +43,14 @@ wchar_t *rGetValueSz(HKEY hReg, const wchar_t *name, const wchar_t *DefaultValue
     wcscpy(Data,DefaultValue);
     return Data;
   }
-  return NULL;
+  return nullptr;
 };
 
 DWORD rGetValueDw(HKEY hReg, const wchar_t *name, DWORD DefaultValue)
 {
   DWORD data = 0;
   DWORD i = sizeof(DWORD);
-  if (WINPORT(RegQueryValueEx)(hReg, name, 0, NULL, (PBYTE)&data, &i) == ERROR_SUCCESS){
+  if (WINPORT(RegQueryValueEx)(hReg, name, 0, nullptr, (PBYTE)&data, &i) == ERROR_SUCCESS){
     return data;
   }
   else{

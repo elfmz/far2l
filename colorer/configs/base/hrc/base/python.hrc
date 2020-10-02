@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -435,20 +435,20 @@
 
    <!-- python floats and imaginary numbers : http://docs.python.org/ref/floating.html -->
    <!-- placed before integers to avoid confusion with octals, where exponent will get an error -->
-   <regexp match="/\B\.\d+([Ee][-+]?\d+)?([jJ])?(\w*)\b/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
-   <regexp match="/\b\d+\.\d*([Ee][-+]?\d+)?([jJ])?(\w*)/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
-   <regexp match="/\b\d+([jJ])(\w*)\b/" region0="pyNumber" region1="pyNumberSuffix" region2="def:Error" />
+   <regexp match="/\B\.\d[\d_]*([Ee][-+]?\d+)?([jJ])?(\w*)\b/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b\d[\d_]*\.[\d_]*([Ee][-+]?\d+)?([jJ])?(\w*)/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b\d+([Ee][-+]?\d+)?([jJ])?(\w*)\b/" region0="pyNumber" region1="pyNumberSuffix" region2="def:Error" />
 
 
    <!-- python integers : https://docs.python.org/2/reference/lexical_analysis.html#integer-and-long-integer-literals -->
    <!-- hex -->
-   <regexp match="/\b(0[xX][0-9a-fA-F]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b(0[xX][0-9a-fA-F_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
    <!-- binary -->
-   <regexp match="/\b(0b[01]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b(0b[01_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
    <!-- octal -->
-   <regexp match="/\b(0o?[0-7]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b(0o?[0-7_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
    <!-- decimal -->
-   <regexp match="/\b([1-9]\d*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b([1-9][\d_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
 
 
    <!-- python delimiters : http://docs.python.org/ref/delimiters.html -->

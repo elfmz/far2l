@@ -142,7 +142,15 @@
       <word name="unpack"/>
       <word name="use"/>
       <word name="while"/>
-      
+
+      <!-- new fatures since Perl v5.10 -->
+      <word name="say" />
+      <word name="state" />
+      <word name="fc" />
+      <word name="given" />
+      <word name="when" />
+      <word name="default" />
+
       <word name="UNIVERSAL" region='packages'/>
       <word name="AUTOLOAD"/>
       <word name="BEGIN"/>

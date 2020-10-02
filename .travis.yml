@@ -6,31 +6,7 @@ matrix:
     - os: osx
       osx_image: xcode10
     - os: linux
-      dist: trusty
-      sudo: required
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9
-            - cmake
-            - libwxgtk3.0-dev
-            - libglib2.0-dev
-            - libssh-dev
-            - libsmbclient-dev
-            - libnfs-dev
-            - libneon27-dev
-            - libarchive-dev
-            - gawk
-            - m4
-            - ninja-build
-      env: CXX=g++-4.9
-      install:
-            - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
-    - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       compiler: gcc
       addons:
@@ -41,6 +17,9 @@ matrix:
             - g++-5
             - cmake
             - libwxgtk3.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
             - libglib2.0-dev
             - libssh-dev
             - libsmbclient-dev
@@ -54,7 +33,33 @@ matrix:
       install:
             - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
     - os: linux
-      dist: trusty
+      dist: xenial
+      sudo: required
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            - cmake
+            - libwxgtk3.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
+            - libssh-dev
+            - libsmbclient-dev
+            - libnfs-dev
+            - libneon27-dev
+            - libarchive-dev
+            - gawk
+            - m4
+            - ninja-build
+      env: CXX=g++-6
+      install:
+            - if [ "$CXX" = "g++" ]; then export CXX="g++-6" CC="gcc-6"; fi
+    - os: linux
+      dist: xenial
       sudo: required
       compiler: clang
       addons:
@@ -66,7 +71,9 @@ matrix:
             - clang-3.6
             - cmake
             - libwxgtk3.0-dev
-            - libglib2.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev
@@ -79,7 +86,7 @@ matrix:
       install:
             - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.6" CC="clang-3.6"; fi
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       compiler: clang
       addons:
@@ -91,7 +98,9 @@ matrix:
             - clang-3.7
             - cmake
             - libwxgtk3.0-dev
-            - libglib2.0-dev
+            - libxerces-c-dev
+            - libminizip-dev
+            - libspdlog-dev
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev

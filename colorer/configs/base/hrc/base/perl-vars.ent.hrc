@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <annotation><documentation>
- На выходе юзаются две схемы:
- Vars - для всего.
- VarsEx - для строк.
- Остальное - internal.
+ РќР° РІС‹С…РѕРґРµ СЋР·Р°СЋС‚СЃСЏ РґРІРµ СЃС…РµРјС‹:
+ Vars - РґР»СЏ РІСЃРµРіРѕ.
+ VarsEx - РґР»СЏ СЃС‚СЂРѕРє.
+ РћСЃС‚Р°Р»СЊРЅРѕРµ - internal.
  
- SubProt - отдельная песня: прототип ф-ций
+ SubProt - РѕС‚РґРµР»СЊРЅР°СЏ РїРµСЃРЅСЏ: РїСЂРѕС‚РѕС‚РёРї С„-С†РёР№
 </documentation></annotation>
 
 <scheme name="SubProt">

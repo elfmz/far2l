@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <scheme name="perl-hd">
  <regexp match="/(&lt;&lt;)([&quot;&apos;`]?)([a-zA-Z_][\w_]*)(\2)/"

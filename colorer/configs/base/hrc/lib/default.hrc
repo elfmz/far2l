@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='Windows-1251'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -209,6 +209,9 @@
       <regexp region="Directive"><![CDATA[
         /\$(Archive|Author|Date|Header|Id|Locker|Log|RCSfile|Revision|Source|State)(: .*?)?\$/]]>
       </regexp>
+      <regexp region="Directive"><![CDATA[
+        /\$(HeadURL|LastChangedBy|LastChangedDate|LastChangedRevision|Rev|URL)(: .*?)?\$/
+      ]]></regexp>
       <regexp match="/^&lt;{7,}.*$/" region="TODO"/>
       <regexp match="/^={7,}$/" region="TODO"/>
       <regexp match="/^&gt;{7,}.*$/" region="TODO"/>

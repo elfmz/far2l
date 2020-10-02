@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -18,7 +18,7 @@
 
       <scheme name="filesbbs">
 <!-- strings -->
-<!-- Имя файла - стоит первым в строке, может быть задано в кавычках (тогда способно содержать пробелы) -->
+<!-- РРјСЏ С„Р°Р№Р»Р° - СЃС‚РѕРёС‚ РїРµСЂРІС‹Рј РІ СЃС‚СЂРѕРєРµ, РјРѕР¶РµС‚ Р±С‹С‚СЊ Р·Р°РґР°РЅРѕ РІ РєР°РІС‹С‡РєР°С… (С‚РѕРіРґР° СЃРїРѕСЃРѕР±РЅРѕ СЃРѕРґРµСЂР¶Р°С‚СЊ РїСЂРѕР±РµР»С‹) -->
          <regexp match="/^(\&#34;.*?\&#34;+)/i" region0="Path"/>
          <regexp match="/^([^\s]+)/i" region0="Path"/>
          <regexp match="/(-)/" region0="String"/>

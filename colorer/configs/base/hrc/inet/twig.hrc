@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
     "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -119,7 +119,7 @@
 				region1="def:Keyword"
 			/>
 			<inherit scheme="Expressions" />
-			<regexp match="/%TwigOpenTag; (endautoescape|else|elseif|endblock|endif|endfilter|endfor|endif|endmacro|endspaceless) /x" region2="def:Error" priority="low" />
+			<regexp match="/%TwigOpenTag; (endautoescape|else|elseif|endblock|endif|endfilter|endfor|endif|endmacro|endspaceless) /x" region1="def:Error" priority="low" />
 		</scheme>
 
 

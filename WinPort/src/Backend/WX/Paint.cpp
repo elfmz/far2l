@@ -173,8 +173,15 @@ class FontSizeInspector
 			if (_prev_height!=-1) _unstable_size = true;
 			_prev_height = height;
 		}		
-	}	
-	
+	}
+
+	void DetectFractionalSize(const wchar_t *chars)
+	{
+		// If font is non-monospaced there is no sense to detect if widths are fractional
+		if (_unstable_size) return;
+		_fractional_size = _dc.GetTextExtent(chars).GetWidth() != _max_width * wcslen(chars);
+	}
+
 	public:
 	FontSizeInspector(wxFont& font) 
 		: _bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH),
@@ -190,9 +197,13 @@ class FontSizeInspector
 	{
 		for(const wchar_t *s = chars; *s; ++s)
 			InspectChar(*s);
-		if (!_unstable_size) {
-			_fractional_size = _dc.GetTextExtent(chars).GetWidth() != _max_width * wcslen(chars);
-		}
+#if defined(__WXOSX__)
+		// There are font rendering artifacts on MacOS if buffering is enabled and font size differs from 10, 15, 20;
+		// E.g. if font size = 13, one char in a string has width 9px (GetTextExtent returns 9), but total string width
+		// is less than N*9px, because internally one char could have fractional width.
+		// We need to disable buffering for certain font sizes as done for non-monospaced ("unstable size") fonts.
+		DetectFractionalSize(chars);
+#endif
 	}
 	
 	bool IsUnstableSize() const { return _unstable_size; }

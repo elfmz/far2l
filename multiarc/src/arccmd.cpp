@@ -109,19 +109,6 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     Hide = 0;
 
   ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-
-  // charset workaround for unzip
-  if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
-    if (ExecCode == 1) {
-      // "1" exit code for unzip is warning only, no need to bother user
-      ExecCode = 0;
-    } else if (ExecCode == 11) {
-      // "11" means file was not found in archive. Maybe unzip guessed charset wrong, retry as utf8
-      Command.replace(0, 6, "unzip -I utf8 -O utf8 ", 0, 22);
-      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-    }
-  }
-
   if (ExecCode==RETEXEC_ARCNOTFOUND)
     return false;
 

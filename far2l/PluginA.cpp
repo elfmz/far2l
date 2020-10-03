@@ -303,7 +303,7 @@ bool PluginA::Load()
 		return true;
 
 	if (!m_hModule)
-	{/*
+	{
 		FARString strCurPath, strCurPlugDiskPath;
 		wchar_t Drive[]={0,L' ',L':',0}; // ставим 0, как признак того, что вертать обратно ненадо!
 		apiGetCurrentDirectory(strCurPath);
@@ -314,14 +314,14 @@ bool PluginA::Load()
 			Drive[1] = m_strModuleName.At(0);
 			apiGetEnvironmentVariable(Drive,strCurPlugDiskPath);
 		}
-*/
+
 		PrepareModulePath(m_strModuleName);
 		m_hModule = WINPORT(LoadLibraryEx)(m_strModuleName,nullptr,LOAD_WITH_ALTERED_SEARCH_PATH);
 		GuardLastError Err;
-		//FarChDir(strCurPath);
+		FarChDir(strCurPath);
 
-	//	if (Drive[0]) // вернем ее (переменную окружения) обратно
-		//	WINPORT(SetEnvironmentVariable)(Drive,strCurPlugDiskPath);
+		if (Drive[0]) // вернем ее (переменную окружения) обратно
+			WINPORT(SetEnvironmentVariable)(Drive,strCurPlugDiskPath);
 	}
 
 	if (!m_hModule)

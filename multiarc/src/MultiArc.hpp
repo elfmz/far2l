@@ -368,4 +368,3 @@ void WINAPI UnixTimeToFileTime(DWORD UnixTime,FILETIME *FileTime);
 
 #endif // __MULTIARC_HPP__
 
-void detect_oem_cp();

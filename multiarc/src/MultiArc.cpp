@@ -2,6 +2,7 @@
 #include "marclng.hpp"
 #include <string>
 #include <unistd.h>
+#include <locale.h>
 
 #if defined(__GNUC__)
 #ifdef __cplusplus

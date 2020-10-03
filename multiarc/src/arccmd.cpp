@@ -4,6 +4,8 @@
 #include <farkeys.hpp>
 #include <fcntl.h>
 
+extern int oem_cp;
+
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
                        const char *FormatString,const char *ArcName,const char *ArcDir,
                        const char *Password,const char *AllFilesMask,int IgnoreErrors,
@@ -108,18 +110,26 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   if ((Hide == 1 && CommandType == 0) || CommandType == 2)
     Hide = 0;
 
-  ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-
   // charset workaround for unzip
   if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
+    // trying as utf8
+    Command.replace(0, 6, "unzip -I utf8 -O utf8 ", 0, 22);
+    ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+    if (ExecCode == 11) {
+      // "11" means file was not found in archive. retrying as oem
+      char oem_cp_str[5];
+      itoa(oem_cp, oem_cp_str, 10);
+      Command.replace(0, 22, "unzip -I CP     -O CP     ", 0, 22);
+      Command.replace(11, strlen(oem_cp_str), oem_cp_str, 0, strlen(oem_cp_str));
+      Command.replace(21, strlen(oem_cp_str), oem_cp_str, 0, strlen(oem_cp_str));
+      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+    }
     if (ExecCode == 1) {
       // "1" exit code for unzip is warning only, no need to bother user
       ExecCode = 0;
-    } else if (ExecCode == 11) {
-      // "11" means file was not found in archive. Maybe unzip guessed charset wrong, retry as utf8
-      Command.replace(0, 6, "unzip -I utf8 -O utf8 ", 0, 22);
-      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
     }
+  } else {
+      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
   }
 
   if (ExecCode==RETEXEC_ARCNOTFOUND)

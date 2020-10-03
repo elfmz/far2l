@@ -64,6 +64,8 @@ static ULARGE_INTEGER SFXSize,NextPosition,FileSize;
 static int ArcComment,FirstRecord;
 static bool bTruncated;
 
+extern int oem_cp;
+
 struct ZipHeader
 {
   DWORD Signature;
@@ -315,7 +317,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
     CPToUTF8(CP_ACP, Item->FindData.cFileName,Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
   else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0)
-    CPToUTF8(CP_OEMCP, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
+    CPToUTF8(oem_cp, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
 
   Info->UnpVer=(ZipHeader.UnpVer/10)*256+(ZipHeader.UnpVer%10);
   Info->DictSize=32;

@@ -312,7 +312,7 @@ void detect_oem_cp() {
 
   oem_cp = 437; // default
 
-  char *lc = setlocale(LC_CTYPE, "");
+  char *lc = setlocale(LC_CTYPE, NULL);
   if (!lc) { return; }
   int lc_len;
   for (lc_len = 0; lc[lc_len] != '.' && lc[lc_len] != '\0'; ++lc_len)

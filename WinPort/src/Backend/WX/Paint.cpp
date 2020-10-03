@@ -53,9 +53,9 @@ class FixedFontLookup : wxFontEnumerator
 		wxFont f(wxFontInfo(DEFAULT_FONT_SIZE).Underlined().FaceName(face_name));
 		if (f.IsOk()) {
 			fprintf(stderr, "FONT family %u encoding %u face_name='%ls' \n", 
-				(unsigned int)f.GetFamily(), (unsigned int)f.GetEncoding(), face_name.wc_str());
+				(unsigned int)f.GetFamily(), (unsigned int)f.GetEncoding(), static_cast<const wchar_t*>(face_name.wc_str()));
 		} else {
-			fprintf(stderr, "BAD FONT: face_name='%ls'\n", face_name.wc_str());
+			fprintf(stderr, "BAD FONT: face_name='%ls'\n", static_cast<const wchar_t*>(face_name.wc_str()));
 		} */
 		return true;
 	}
@@ -66,7 +66,9 @@ public:
 		_any.Empty();
 		_known_good.Empty();
 		EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
-		fprintf(stderr, "FixedFontLookup: _any='%ls' _known_good='%ls'\n", static_cast<const wchar_t*>(_any.wc_str()), static_cast<const wchar_t*>(_known_good.wc_str()));
+		fprintf(stderr, "FixedFontLookup: _any='%ls' _known_good='%ls'\n",
+			static_cast<const wchar_t*>(_any.wc_str()),
+			static_cast<const wchar_t*>(_known_good.wc_str()));
 		return _known_good.IsEmpty() ? _any : _known_good;
 	}	
 };
@@ -79,7 +81,8 @@ static bool LoadFontFromSettings(wxFont& font)
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
 			font.SetNativeFontInfo(str);
 			if (font.IsOk()) {
-				printf("LoadFontFromSettings: used %ls\n", static_cast<const wchar_t*>(str.wc_str()));
+				printf("LoadFontFromSettings: used %ls\n",
+					static_cast<const wchar_t*>(str.wc_str()));
 				return true;				
 			}
 		}
@@ -150,7 +153,7 @@ class FontSizeInspector
 	
 	int _max_width, _prev_width;
 	int _max_height, _prev_height;	
-	bool _unstable_size;
+	bool _unstable_size, _fractional_size;
 	
 	void InspectChar(const wchar_t c)
 	{
@@ -170,26 +173,41 @@ class FontSizeInspector
 			if (_prev_height!=-1) _unstable_size = true;
 			_prev_height = height;
 		}		
-	}	
-	
+	}
+
+	void DetectFractionalSize(const wchar_t *chars)
+	{
+		// If font is non-monospaced there is no sense to detect if widths are fractional
+		if (_unstable_size) return;
+		_fractional_size = _dc.GetTextExtent(chars).GetWidth() != _max_width * wcslen(chars);
+	}
+
 	public:
 	FontSizeInspector(wxFont& font) 
 		: _bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH),
 		_max_width(4), _prev_width(-1), 
 		_max_height(6), _prev_height(-1), 
-		_unstable_size(false)
+		_unstable_size(false), _fractional_size(false)
 	{
 		_dc.SelectObject(_bitmap);
 		_dc.SetFont(font);
 	}
 
-	void InspectChars(const wchar_t *s)
+	void InspectChars(const wchar_t *chars)
 	{
-		for(; *s; ++s)
+		for(const wchar_t *s = chars; *s; ++s)
 			InspectChar(*s);
+#if defined(__WXOSX__)
+		// There are font rendering artifacts on MacOS if buffering is enabled and font size differs from 10, 15, 20;
+		// E.g. if font size = 13, one char in a string has width 9px (GetTextExtent returns 9), but total string width
+		// is less than N*9px, because internally one char could have fractional width.
+		// We need to disable buffering for certain font sizes as done for non-monospaced ("unstable size") fonts.
+		DetectFractionalSize(chars);
+#endif
 	}
 	
 	bool IsUnstableSize() const { return _unstable_size; }
+	bool IsFractionalSize() const { return _fractional_size; }
 	int GetMaxWidth() const { return _max_width; }
 	int GetMaxHeight() const { return _max_height; }
 };
@@ -203,6 +221,7 @@ void ConsolePaintContext::SetFont(wxFont font)
 	//fsi.InspectChars(L"QWERTYUIOPASDFGHJKL");
 	
 	bool is_unstable = fsi.IsUnstableSize();
+	bool is_fractional = fsi.IsFractionalSize();
 	_font_width = fsi.GetMaxWidth();
 	_font_height = fsi.GetMaxHeight();
 	//font_height+= _font_height/4;
@@ -223,15 +242,23 @@ void ConsolePaintContext::SetFont(wxFont font)
 		default:
 			;
 	}
-	
-	fprintf(stderr, "Font %u x %u . %u: '%ls' - %s\n", _font_width, _font_height, _font_thickness, static_cast<const wchar_t*>(font.GetFaceName().wc_str()), 
-		font.IsFixedWidth() ? ( is_unstable ? "monospaced unstable" : "monospaced stable" ) : "not monospaced");
-		
+
+	fprintf(stderr, "Font %u x %u . %u: '%ls' - %s\n", _font_width, _font_height, _font_thickness,
+		static_cast<const wchar_t*>(font.GetFaceName().wc_str()),
+		font.IsFixedWidth() ?
+			(is_unstable ?
+				"monospaced unstable" :
+				(is_fractional ?
+					"monospaced stable (fractional)" :
+					"monospaced stable (integer)")) :
+			"not monospaced");
+
 	struct stat s{};
 
 	_custom_draw_enabled = stat(InMyConfig("nocustomdraw").c_str(), &s) != 0;
+	_buffered_paint = false;
 
-	if (font.IsFixedWidth() && !is_unstable) {
+	if (font.IsFixedWidth() && !is_unstable && !is_fractional) {
 		if (stat(InMyConfig("nobuffering").c_str(), &s) != 0)
 			_buffered_paint = true;
 	}

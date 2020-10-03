@@ -528,7 +528,7 @@ static void SystemProperties(const FARString &strSelName)
 	std::vector<std::wstring> lines;
 
 	std::string cmd = "file \"";
-	cmd+= EscapeQuotas(Wide2MB(strSelName.CPtr()));
+	cmd+= EscapeCmdStr(Wide2MB(strSelName.CPtr()));
 	cmd+= '\"';
 
 	if (!POpen(lines, cmd.c_str()))

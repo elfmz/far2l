@@ -3,18 +3,20 @@
 #include <memory>
 #include "../Host/Host.h"
 #include "Utils/ExecCommandFIFO.hpp"
+#include "OpBase.h"
 
-class OpExecute
+class OpExecute : protected OpBase
 {
-	std::shared_ptr<IHost> _host;
-	std::string  _dir;
 	std::string _command;
 	ExecCommandFIFO _fifo;
+	volatile int _status = 0;
 
 	void CleanupFIFO();
 
+	virtual void Process();
+
 public:
-	OpExecute(std::shared_ptr<IHost> &host, const std::string &dir, const std::string &command);
+	OpExecute(int op_mode, std::shared_ptr<IHost> &host, const std::string &dir, const std::string &command);
 	virtual ~OpExecute();
 
 	void Do();

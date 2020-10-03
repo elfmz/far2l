@@ -49,12 +49,15 @@ void ExtractACL20(Archive &Arc,const wchar *FileName)
     si|=SACL_SECURITY_INFORMATION;
   SECURITY_DESCRIPTOR *sd=(SECURITY_DESCRIPTOR *)&UnpData[0];
 
-  int SetCode=SetFileSecurityW(FileName,si,sd);
+  int SetCode=SetFileSecurity(FileName,si,sd);
 
   if (!SetCode)
   {
     uiMsg(UIERROR_ACLSET,Arc.FileName,FileName);
+    DWORD LastError=GetLastError();
     ErrHandler.SysErrMsg();
+    if (LastError==ERROR_ACCESS_DENIED && !IsUserAdmin())
+      uiMsg(UIERROR_NEEDADMIN);
     ErrHandler.SetErrorCode(RARX_WARNING);
   }
 }
@@ -64,7 +67,7 @@ void ExtractACL20(Archive &Arc,const wchar *FileName)
 void ExtractACL(Archive &Arc,const wchar *FileName)
 {
   Array<byte> SubData;
-  if (!Arc.ReadSubData(&SubData,NULL))
+  if (!Arc.ReadSubData(&SubData,NULL,false))
     return;
 
   SetACLPrivileges();
@@ -86,7 +89,10 @@ void ExtractACL(Archive &Arc,const wchar *FileName)
   if (!SetCode)
   {
     uiMsg(UIERROR_ACLSET,Arc.FileName,FileName);
+    DWORD LastError=GetLastError();
     ErrHandler.SysErrMsg();
+    if (LastError==ERROR_ACCESS_DENIED && !IsUserAdmin())
+      uiMsg(UIERROR_NEEDADMIN);
     ErrHandler.SetErrorCode(RARX_WARNING);
   }
 }

@@ -37,12 +37,13 @@ class TTYOutput
 	void Format(const char *fmt, ...);
 public:
 	TTYOutput(int out);
+	~TTYOutput();
 
 	void Flush();
-	void SetScreenBuffer(bool alternate);
 
 	void ChangeCursor(bool visible, bool force = false);
-	void MoveCursor(unsigned int y, unsigned int x, bool force = false);
+	inline bool ShouldMoveCursor(unsigned int y, unsigned int x) const { return x != _cursor.x || y != _cursor.y; }
+	void MoveCursor(unsigned int y, unsigned int x);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
 	void ChangeKeypad(bool app);
 	void ChangeMouse(bool enable);

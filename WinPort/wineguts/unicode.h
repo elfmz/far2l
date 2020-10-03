@@ -21,24 +21,27 @@
 #ifndef __WINE_WINE_UNICODE_H
 #define __WINE_WINE_UNICODE_H
 
-#include <stdarg.h>
 #include "../WinCompat.h"
 //#include <windef.h>
 //#include <winbase.h>
 //#include <winnls.h>
 
+#include <stdarg.h>
+
 #ifdef __WINE_WINE_TEST_H
 #error This file should not be used in Wine tests
+#endif
+
+#ifdef __WINE_USE_MSVCRT
+#error This file should not be used with msvcrt headers
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define WINE_UNICODE_API
-
 #ifndef WINE_UNICODE_INLINE
-#define WINE_UNICODE_INLINE static
+#define WINE_UNICODE_INLINE static inline
 #endif
 
 /* code page info common to SBCS and DBCS */
@@ -95,40 +98,45 @@ extern int wine_compare_string( int flags, const WCHAR *str1, int len1, const WC
 extern int wine_get_sortkey( int flags, const WCHAR *src, int srclen, char *dst, int dstlen );
 extern int wine_fold_string( int flags, const WCHAR *src, int srclen , WCHAR *dst, int dstlen );
 
-extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
-extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
-extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );
-extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
-extern long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base );
-extern unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base );
-extern int sprintfW( WCHAR *str, const WCHAR *format, ... );
-extern int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ... );
-extern int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist );
-extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list valist );
+extern unsigned int wine_compose_string( WCHAR *str, unsigned int len );
+extern unsigned int wine_decompose_string( int flags, const WCHAR *src, unsigned int srclen, WCHAR *dst, unsigned int dstlen );
+#define WINE_DECOMPOSE_COMPAT     1
+#define WINE_DECOMPOSE_REORDER    2
+
+//extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
+//extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
+//extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );
+//extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
+//extern long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base );
+//extern unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base );
+//extern int sprintfW( WCHAR *str, const WCHAR *format, ... );
+//extern int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ... );
+//extern int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist );
+//extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list valist );
 
 WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
-    return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
+    return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[((USHORT)ch)]);
 }
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const WCHAR wine_casemap_lower[];
-    return (USHORT)((USHORT)ch + (USHORT)wine_casemap_lower[wine_casemap_lower[((USHORT)ch) >> 8] + (((USHORT)ch) & 0xff)]);
+    extern const WCHAR wine_casemap_lower[];
+    return ch + wine_casemap_lower[wine_casemap_lower[((USHORT)ch) >> 8] + (ch & 0xff)];
 }
 
 WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const WCHAR wine_casemap_upper[];
-    return (USHORT)((USHORT)ch + (USHORT)wine_casemap_upper[wine_casemap_upper[((USHORT)ch) >> 8] + (((USHORT)ch) & 0xff)]);
+    extern const WCHAR wine_casemap_upper[];
+    return ch + wine_casemap_upper[wine_casemap_upper[((USHORT)ch) >> 8] + (ch & 0xff)];
 }
 
 /* the character type contains the C1_* flags in the low 12 bits */
 /* and the C2_* type in the high 4 bits */
 WINE_UNICODE_INLINE unsigned short get_char_typeW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const unsigned short wine_wctype_table[];
-    return wine_wctype_table[wine_wctype_table[((USHORT)ch) >> 8] + (((USHORT)ch) & 0xff)];
+    extern const unsigned short wine_wctype_table[];
+    return wine_wctype_table[wine_wctype_table[((USHORT)ch) >> 8] + (ch & 0xff)];
 }
 
 WINE_UNICODE_INLINE int iscntrlW( WCHAR wc )
@@ -204,7 +212,7 @@ WINE_UNICODE_INLINE WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
 
 /* strncpy doesn't do what you think, don't use it */
 #define strncpyW(d,s,n) error do_not_use_strncpyW_use_lstrcpynW_or_memcpy_instead
-/*
+
 WINE_UNICODE_INLINE int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -288,13 +296,15 @@ WINE_UNICODE_INLINE WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n )
 
 WINE_UNICODE_INLINE long int atolW( const WCHAR *str )
 {
-    return strtolW( str, (WCHAR **)0, 10 );
+    long out = 0;
+    swscanf(str, L"%ld", &out);
+    return out;
 }
 
 WINE_UNICODE_INLINE int atoiW( const WCHAR *str )
 {
     return (int)atolW( str );
-}*/
+}
 
 #undef WINE_UNICODE_INLINE
 

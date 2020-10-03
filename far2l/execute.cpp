@@ -241,6 +241,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 			WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 		}
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
+		
 		if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
 			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 		} else {
@@ -277,9 +278,9 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags)
 {
 	std::string actual_cmd = "\"";
-	actual_cmd+= EscapeQuotas(g_strFarModuleName.GetMB());
+	actual_cmd+= EscapeCmdStr(g_strFarModuleName.GetMB());
 	actual_cmd+= "\" --libexec \"";
-	actual_cmd+= EscapeQuotas(Library);
+	actual_cmd+= EscapeCmdStr(Library);
 	actual_cmd+= "\" ";
 	actual_cmd+= Symbol;
 	actual_cmd+= " ";

@@ -3,6 +3,8 @@
 
 void ConfigureProtocolSFTP(std::string &options);
 void ConfigureProtocolSCP(std::string &options);
+void ConfigureProtocolFTP(std::string &options);
+void ConfigureProtocolFTPS(std::string &options);
 void ConfigureProtocolSMB(std::string &options);
 void ConfigureProtocolNFS(std::string &options);
 void ConfigureProtocolWebDAV(std::string &options);
@@ -13,6 +15,10 @@ static ProtocolInfo s_protocols[] = {
 #ifdef HAVE_SFTP
 	{ "sftp", "NetRocks-SFTP", 22, true, true, ConfigureProtocolSFTP},
 	{ "scp", "NetRocks-SFTP", 22, true, true, ConfigureProtocolSCP},
+#endif
+	{ "ftp", "NetRocks-FTP", 21, true, true, ConfigureProtocolFTP},
+#ifdef HAVE_OPENSSL
+	{ "ftps", "NetRocks-FTP", 990, true, true, ConfigureProtocolFTPS},
 #endif
 #ifdef HAVE_SMB
 	{ "smb", "NetRocks-SMB", -1, false, true, ConfigureProtocolSMB},

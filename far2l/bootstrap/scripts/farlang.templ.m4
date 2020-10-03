@@ -303,6 +303,15 @@ MAskQuit
 "Czy chcesz zakończyć pracę z FARem?"
 "Desea salir de FAR?"
 
+MBackground
+"&В фон"
+"&Background"
+"&Background"
+"&Background"
+"&Background"
+"&Background"
+"&Background"
+
 MF1
 l:
 l://functional keys - 6 characters max
@@ -1989,6 +1998,15 @@ upd:"AutoComplete"
 upd:"AutoComplete"
 upd:"AutoComplete"
 "&AutoCompletar"
+
+MConfigCmdlineUseShell
+"Использовать &шелл"
+"Use &shell"
+upd:"Use shell"
+upd:"Use shell"
+upd:"Use shell"
+upd:"Use shell"
+upd:"Use shell"
 
 MConfigCmdlineUsePromptFormat
 "Установить &формат командной строки"
@@ -4920,13 +4938,13 @@ MEditAltF9
 "Video"
 
 MEditAltF10
-""
-""
-""
-""
-""
-""
-""
+"Закр.Far"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
 
 MEditAltF11
 "ИстПр"
@@ -7441,13 +7459,13 @@ MViewAltF9
 "Video"
 
 MViewAltF10
-""
-""
-""
-""
-""
-""
-""
+"Закр.Far"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
 
 MViewAltF11
 "ИстПр"
@@ -8351,13 +8369,13 @@ MSingleViewAltF9
 "Video"
 
 MSingleViewAltF10
-""
-""
-""
-""
-""
-""
-""
+"Закр.Far"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
+"ExitFar"
 
 MSingleViewAltF11
 "ИстПр"

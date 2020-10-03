@@ -4,7 +4,11 @@
 #include<colorer/editor/BaseEditor.h>
 #include<colorer/handlers/StyledRegion.h>
 #include<colorer/editor/Outliner.h>
+#if 0
 #include<common/Logging.h>
+#endif // if 0
+#include <colorer/unicode/SString.h>
+#include <colorer/unicode/Character.h>
 
 #include"pcolorer.h"
 
@@ -25,25 +29,27 @@ struct color{
   color() {concolor=0; fg = 0; bk = 0; style = 0; };
 };
 
-const DString DShowCross=DString("show-cross");
-const DString DNone=DString("none");
-const DString DVertical=DString("vertical");
-const DString DHorizontal=DString("horizontal");
-const DString DBoth=DString("both");
-const DString DCrossZorder=DString("cross-zorder");
-const DString DBottom=DString("bottom");
-const DString DTop=DString("top");
-const DString DYes=DString("yes");
-const DString DNo=DString("no");
-const DString DTrue=DString("true");
-const DString DFalse=DString("false");
-const DString DBackparse=DString("backparse");
-const DString DMaxLen=DString("maxlinelength");
-const DString DDefFore=DString("default-fore");
-const DString DDefBack=DString("default-back");
-const DString DFullback=DString("fullback");
-const DString DHotkey=DString("hotkey");
-const DString DFavorite=DString("favorite");
+extern const SString DShowCross;
+extern const SString DNone;
+extern const SString DVertical;
+extern const SString DHorizontal;
+extern const SString DBoth;
+extern const SString DCrossZorder;
+extern const SString DBottom;
+extern const SString DTop;
+extern const SString DYes;
+extern const SString DNo;
+extern const SString DTrue;
+extern const SString DFalse;
+extern const SString DBackparse;
+extern const SString DMaxLen;
+extern const SString DDefFore;
+extern const SString DDefBack;
+extern const SString DFullback;
+extern const SString DHotkey;
+extern const SString DFavorite;
+extern const SString DFirstLines;
+extern const SString DFirstLineBytes;
 
 /** FAR Editor internal plugin structures.
     Implements text parsing and different
@@ -55,16 +61,19 @@ class FarEditor : public LineSource
 public:
   /** Creates FAR editor instance.
   */
-  FarEditor(PluginStartupInfo *info, ParserFactory *pf);
+  FarEditor(PluginStartupInfo *inf, ParserFactory *pf);
   /** Drops this editor */
   ~FarEditor();
 
-  void endJob(int lno);
+  void endJob(size_t lno);
   /**
   Returns line number "lno" from FAR interface. Line is only valid until next call of this function,
   it also should not be disposed, this function takes care of this.
   */
+#if 0
   String *getLine(int lno);
+#endif // if 0
+  SString *getLine(size_t lno);
 
   /** Changes current assigned file type.
   */
@@ -153,7 +162,10 @@ private:
 
   int prevLinePosition, blockTopPosition;
 
+#if 0
   String *ret_str;
+#endif // if 0
+  SString *ret_str;
   int ret_strNumber;
 
   int newfore, newback;

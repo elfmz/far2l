@@ -30,7 +30,8 @@
 #define __USE_BSD 
 #include <termios.h> 
 
-const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0);
+const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
+    WCHAR uc = 0);
 void VT_OnFar2lInterract(StackSerializer &stk_ser);
 
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
@@ -343,94 +344,170 @@ private:
 	}
 };
 
-class CompletionMarker 
+class Marker
 {
-	std::string _marker;
-	std::string _backlog;
-	size_t _marker_start;
-	int _exit_code;
 	bool _active;
+
+protected:
+	std::string _marker;
+	size_t _marker_start;
+	std::string _backlog;
 
 	void ScanReset()
 	{
 		_active = false;
-		_marker_start = (size_t)-1;
+		_marker_start = (size_t) -1;
 		_backlog.clear();
 	}
 
+	std::string GetMarker()
+	{
+		if (_marker.empty())
+			Reset();
+		return _marker;
+	}
+
 public:
-	CompletionMarker() : _exit_code(-1)
+	Marker() : _active(false), _marker_start((size_t) -1)
 	{
 		srand(time(NULL));
-		Reset();
 	}
 
-	std::string EchoCommand() const
+	std::string EscapedOutput()
 	{
-		std::string out = "echo -ne \"=$FARVTRESULT:\"$\'";
+		std::string out;
 		char escaped[16];
-		for (const auto c : _marker) {
+		for (const auto c : GetMarker()) {
 			sprintf(escaped, "\\x%02x",
-				(unsigned int)(unsigned char)c);
-			out+= escaped;
+					(unsigned int) (unsigned char) c);
+			out += escaped;
 		}
-		out+= '\'';
 		return out;
 	}
-	
-	int LastExitCode() const
-	{
-		return _exit_code;
-	}
 
-	void Reset()
+	virtual std::string EchoCommand() = 0;
+
+	virtual void Reset()
 	{
 		_marker.clear();
-		for (size_t l = 8 + (rand()%9); l; --l) {
+		for (size_t l = 8 + (rand() % 9); l; --l) {
 			char c;
 			switch (rand() % 3) {
-				case 0: c = 'A' + (rand() % ('Z' + 1 - 'A')); break;
-				case 1: c = 'a' + (rand() % ('z' + 1 - 'a')); break;
-				case 2: c = '0' + (rand() % ('9' + 1 - '0')); break;
+				case 0:
+					c = 'A' + (rand() % ('Z' + 1 - 'A'));
+					break;
+				case 1:
+					c = 'a' + (rand() % ('z' + 1 - 'a'));
+					break;
+				case 2:
+					c = '0' + (rand() % ('9' + 1 - '0'));
+					break;
 			}
-			_marker+= c;
+			_marker += c;
 		}
-		_marker+= "\x1b[1K";
-		//setenv("FARVTMARKER", _marker.c_str(), 1);
-		//fprintf(stderr, "CompletionMarker: '%s'\n", _marker.c_str());
-
 		ScanReset();
 	}
 
-	bool Scan(const char *buf, int len)
+	virtual void OnScanStart()
+	{};
+
+	virtual void OnCharScan(const char)
+	{};
+
+	virtual void OnMarkerFound()
+	{};
+
+	virtual void OnMarkerScanStart()
+	{
+		_marker_start = _backlog.size();
+	}
+
+	int Scan(const char *buf, int len)
 	{
 		for (int i = 0; i < len; ++i) {
-			if (buf[i]=='=') {
+			if (buf[i] == '=') {
 				ScanReset();
 				_active = true;
+				OnScanStart();
 			} else if (_active) {
-				_backlog+= buf[i];
-				if (_marker_start==(size_t)-1) {
-					//check for reasonable length limit
-					if (_backlog.size() > 12 + _marker.size()) { 
+				_backlog += buf[i];
+				OnCharScan(buf[i]);
+				if (_marker_start == (size_t) -1) {
+					// check for reasonable length limit
+					if (_backlog.size() > 12 + _marker.size()) {
 						ScanReset();
-					} else if (buf[i]==':')
-						_marker_start = _backlog.size();
-
-				} else if (buf[i]==':') {//second splitter??
-					ScanReset();
-				} else if (_backlog.size() - _marker_start >= _marker.size())  {
-					if (memcmp(_backlog.c_str() + _marker_start, _marker.c_str(), _marker.size())==0) {
+					}
+				} else if (_backlog.size() - _marker_start >= _marker.size()) {
+					std::string marker = GetMarker();
+					if (memcmp(_backlog.c_str() + _marker_start, marker.c_str(), marker.size()) == 0) {
 						_backlog[_marker_start - 1] = 0;
-						_exit_code = atoi(&_backlog[0]);
+						OnMarkerFound();
 						ScanReset();
-						return true;
+						return i + 1;
 					}
 					ScanReset();
 				}
 			}
 		}
-		return false;
+		return -1;
+	}
+};
+
+class StartingMarker : public Marker
+{
+public:
+	std::string EchoCommand() override
+	{
+		std::string out = "echo -ne \"=\"$\'";
+		out += EscapedOutput();
+		out += '\'';
+		return out;
+	}
+
+	void OnScanStart() override
+	{
+		OnMarkerScanStart();
+	}
+};
+
+class CompletionMarker : public Marker
+{
+	int _exit_code = -1;
+
+public:
+	std::string EchoCommand() override
+	{
+		std::string out = "echo -ne \"=$FARVTRESULT:\"$\'";
+		out += EscapedOutput();
+		out += '\'';
+		return out;
+	}
+
+	int LastExitCode() const
+	{
+		return _exit_code;
+	}
+
+	void Reset() override
+	{
+		Marker::Reset();
+		_marker += "\x1b[1K\x0d";
+	}
+
+	void OnCharScan(const char c) override
+	{
+		if (c == ':') {
+			if (_marker_start == (size_t) -1)
+				OnMarkerScanStart();
+			else
+				// second splitter??
+				ScanReset();
+		}
+	}
+
+	void OnMarkerFound() override
+	{
+		_exit_code = atoi(&_backlog[0]);
 	}
 };
 	
@@ -445,7 +522,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	pid_t _shell_pid, _forked_proc_pid;
 	std::string _slavename;
 	CompletionMarker _completion_marker;
-	bool _skipping_line;
+	StartingMarker _starting_marker;
+	bool _seeking_start;
+	bool _seeking_end;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
 	VTFar2lExtensios *_far2l_exts = nullptr;
@@ -577,7 +656,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void RunShell()
 	{
 		//CheckedCloseFD(fd_term);
-			
 		const char *shell = getenv("SHELL");
 		if (!shell)
 			shell = "/bin/sh";
@@ -590,6 +668,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		//shell = "/usr/bin/zsh";
 		//shell = "/bin/bash";
 		//shell = "/bin/sh";
+
+		std::string forceShell = Wide2MB(Opt.CmdLine.strShell);
+		if (Opt.CmdLine.UseShell)
+			shell = forceShell.c_str();
+
 		std::vector<const char *> args;
 		args.push_back(shell);
 #if 0		
@@ -656,28 +739,29 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		DbgPrintEscaped("OUTPUT", buf, len);
 
-		//_completion_marker is not thread safe generically,
-		//but while OnProcessOutput called from single thread .
-		//and can't overlap with ScanReset() - its ok.
-		//But if it will be called from several threads - this 
-		//calls must be guarded by mutex.
-		bool out = !_completion_marker.Scan(buf, len);
-		
-		if (_skipping_line) {
-			for (; len > 0; ++buf, --len) {
-				if (*buf == '\n') {
-					_skipping_line = false;
-					++buf;
-					--len;
-					break;
-				}
-			}
+		if (_seeking_start) {
+		    int pos = _starting_marker.Scan(buf, len);
+		    if (pos >= 0) {
+		        buf += pos;
+		        len -= pos;
+		        _vta.Write(buf, len);
+		        _seeking_start = false;
+		        _seeking_end = true;
+		    }
 		}
-		
-		if (len > 0)
-			_vta.Write(buf, len);
-	
-		return out;
+
+		if (_seeking_end) {
+            //_completion_marker is not thread safe generically,
+            //but while OnProcessOutput called from single thread .
+            //and can't overlap with ScanReset() - its ok.
+            //But if it will be called from several threads - this
+            //calls must be guarded by mutex.
+            bool out = _completion_marker.Scan(buf, len) < 0;
+            _vta.Write(buf, len);
+            return out;
+        }
+
+		return true;
 	}
 	
 	virtual void OnTerminalResized()
@@ -931,15 +1015,23 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				OnCtrlC(alt);
 			} 
 			
+			if (ctrl && !shift && alt && KeyEvent.wVirtualKeyCode=='Z') {
+				WINPORT(ConsoleBackgroundMode)(TRUE);
+				return "";
+			}
+
 			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F4) {
 				OnConsoleLog(CLK_EDIT);
+				return "";
 			} 
 
 			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F3) {
 				OnConsoleLog(CLK_VIEW);
+				return "";
 			} 
 
-			const char *spec = VT_TranslateSpecialKey(KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad);
+			const char *spec = VT_TranslateSpecialKey(
+				KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad, KeyEvent.uChar.UnicodeChar);
 			if (spec)
 				return spec;
 		}
@@ -1020,6 +1112,7 @@ static bool shown_tip_exit = false;
 		if (!need_sudo) {
 			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
 		}
+		fprintf(f, "%s\n", _starting_marker.EchoCommand().c_str());
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
 		//fprintf(f, "stty echo\n");
@@ -1036,8 +1129,11 @@ static bool shown_tip_exit = false;
 				fprintf(f, "echo \" F3, F4, F8 - viewer/editor/clear console log.\"\n");
 				fprintf(f, "echo \" Ctrl+Shift+MouseScrollUp - open autoclosing viewer with console log.\"\n");
 				fprintf(f, "echo \"While executing command:\"\n");
-				fprintf(f, "echo \" Ctrl+Alt+C - terminate everything in this shell.\"\n");
 				fprintf(f, "echo \" Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
+				fprintf(f, "echo \" Ctrl+Alt+C - terminate everything in this shell.\"\n");
+				if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
+					fprintf(f, "echo \" Ctrl+Alt+Z - detach FAR manager application to background.\"\n");
+				}
 				fprintf(f, "echo \" MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
 				fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
 				shown_tip_init = true;
@@ -1045,9 +1141,9 @@ static bool shown_tip_exit = false;
 		}
 		if (need_sudo) {
 			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
-				EscapeEscapes(EscapeQuotas(cd)).c_str(), EscapeEscapes(cmd).c_str(), pwd_file.c_str());
+				EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_file.c_str());
 		} else {
-			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeQuotas(cd).c_str(), cmd, pwd_file.c_str());
+			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeCmdStr(cd).c_str(), cmd, pwd_file.c_str());
 		}
 
 		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
@@ -1062,10 +1158,45 @@ static bool shown_tip_exit = false;
 	}
 
 
+	std::string ComposeExecuteCommandInitialTitle(const char *cd, const char *cmd, bool using_sudo)
+	{
+		std::string title = cmd;
+		StrTrim(title);
+		if (StrStartsFrom(title, "sudo ")) {
+			using_sudo = true;
+			title.erase(0, 5);
+			StrTrim(title);
+		}
+
+		if (title.size() > 2 && (title[0] == '\'' || title[0] == '\"')) {
+			size_t p = title.find(title[0], 1);
+			if (p != std::string::npos) {
+				title = title.substr(1, p - 1);
+			}
+
+		} else {
+			size_t p = title.find(' ');
+			if (p != std::string::npos) {
+				title.resize(p);
+			}
+		}
+
+		size_t p = title.rfind('/');
+		if (p!=std::string::npos) {
+			title.erase(0, p + 1);
+		}
+		title+= '@';
+		title+= cd;
+		if (using_sudo) {
+			title.insert(0, "sudo ");
+		}
+		return title;
+	}
+
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
-		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1), 
-		_shell_pid(-1), _forked_proc_pid(-1), _skipping_line(false), _keypad(0)
+        _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
+        _shell_pid(-1), _forked_proc_pid(-1), _seeking_start(false), _seeking_end(false), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())
@@ -1102,7 +1233,7 @@ static bool shown_tip_exit = false;
 			UpdateTerminalSize(_fd_out);
 		
 		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
-		cmd_str+= EscapeQuotas(cmd_script);
+		cmd_str+= EscapeCmdStr(cmd_script);
 		cmd_str+= ';';
 		cmd_str+= _completion_marker.EchoCommand();
 		cmd_str+= '\n';
@@ -1112,9 +1243,11 @@ static bool shown_tip_exit = false;
 			return -1;
 		}
 
-		_skipping_line = true;
+        _seeking_start = true;
+		_seeking_end = false;
 
-		_vta.OnStart(cd);
+		const std::string &title = ComposeExecuteCommandInitialTitle(cd, cmd, force_sudo);
+		_vta.OnStart(title.c_str());
 
 		{
 			std::lock_guard<std::mutex> lock(_inout_control_mutex);
@@ -1181,7 +1314,7 @@ int VTShell_Execute(const char *cmd, bool need_sudo)
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	if (!g_vts)
 		g_vts.reset(new VTShell);
-		
+
 	int r = g_vts->ExecuteCommand(cmd, need_sudo);
 
 	if (!g_vts->IsOK()) {

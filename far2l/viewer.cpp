@@ -104,7 +104,7 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	int distance;
 
 	if (CodePage == CP_UTF8) {
-		CalcSpaceUTF16toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, lenientConversion);
+		CalcSpaceUTF16toUTF8(&distance, (const UTF16**)&begin, (const UTF16*)end, lenientConversion);
 
 	} else {// one-byte code page?
 		distance = end - begin;
@@ -2020,7 +2020,7 @@ void Viewer::Up()
 		return;
 	}
 
-	vseek(FilePos-(int64_t)BufSize,SEEK_SET);
+	vseek(FilePos - (int64_t)BufSize, SEEK_SET);
 	I = BufSize = vread(Buf, BufSize, true);
 	if (I == -1)
 	{
@@ -2051,10 +2051,14 @@ void Viewer::Up()
 		--I;
 	}
 
-	for (; I > 0 && Buf[I - 1] != CRSymEncoded; --I) {;}
+	while (I > 0 && Buf[I - 1] != CRSymEncoded)
+	{
+		--I;
+	}
 
 	int64_t WholeLineLength = (BufSize - I); // in code units
-	if (VM.Wrap)
+
+	if (VM.Wrap && Width > 0)
 	{
 		vseek(FilePos - WholeLineLength, SEEK_SET);
 		int WrapBufSize = vread(Buf, WholeLineLength, false);
@@ -2064,10 +2068,13 @@ void Viewer::Up()
 		Buf[WrapBufSize] = 0;
 //		fprintf(stderr, "WrapBufSize=%d WholeLineLength=%d LINE='%ls'\n", WrapBufSize, WholeLineLength, &Buf[0]);
 //		fprintf(stderr, "LINE1: '%ls'\n", &Buf[0]);
-		while (WrapBufSize) {
+		while (WrapBufSize)
+		{
 			int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize]);
-			if (distance <= WholeLineLength) {
-				while (WrapBufSize && distance == CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize - 1])) {
+			if (distance <= WholeLineLength)
+			{
+				while (WrapBufSize && distance == CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize - 1]))
+				{
 					--WrapBufSize;
 				}
 				break;
@@ -2077,24 +2084,29 @@ void Viewer::Up()
 		Buf[WrapBufSize] = 0;
 //		fprintf(stderr, "Matching LINE: '%ls'\n", &Buf[0]);
 
-		if (VM.WordWrap) {
+		if (VM.WordWrap)
+		{
 			//	khffgkjkfdg dfkghd jgfhklf |
 			//	sdflksj lfjghf fglh lf     |
 			//	dfdffgljh ldgfhj           |
 
-			for (I = 0; I < WrapBufSize;) {
-				if (!IsSpace(Buf[I])) {
-					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I) {
-						if (I == WrapBufSize) {
-//							fprintf(stderr, "LASTLINE: '%ls'\n", std::wstring(&Buf[CurLineStart], WrapBufSize - CurLineStart).c_str());
+			for (I = 0; I < WrapBufSize;)
+			{
+				if (!IsSpace(Buf[I]))
+				{
+					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I)
+					{
+						if (I == WrapBufSize)
+						{
 							int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
-							FilePosShiftLeft(distance);
+							FilePosShiftLeft((distance > 0) ? distance : 1);
 							return;
 						}
 
-						if (!IsSpace(Buf[I]) && (I + 1 == WrapBufSize || IsSpace(Buf[I + 1]))) {
-							if (CalcStrSize(&Buf[CurLineStart], I + 1 - CurLineStart) > Width) {
-//								fprintf(stderr, "SUBLINE: '%ls'\n", std::wstring(&Buf[CurLineStart], LastFitEnd - CurLineStart).c_str());
+						if (!IsSpace(Buf[I]) && (I + 1 == WrapBufSize || IsSpace(Buf[I + 1])))
+						{
+							if (CalcStrSize(&Buf[CurLineStart], I + 1 - CurLineStart) > Width)
+							{
 								I = LastFitEnd;
 								break;
 							}
@@ -2102,35 +2114,39 @@ void Viewer::Up()
 						}
 					}
 
-				} else {
+				} else
+				{
 					++I;
 				}
 			}
-			//fprintf(stderr, "XXXXXXXXXXXXXX\n");
 		}
-		for (I = 0; I < WrapBufSize; ++I) {
-			int SubLineSize = CalcStrSize(&Buf[I], WrapBufSize - I);
-			if ( SubLineSize <= Width) {
-				int PreSubLineSize = CalcStrSize(&Buf[0], I);
-				if (Width == 0 || PreSubLineSize % Width == 0 || PreSubLineSize / Width == (PreSubLineSize + SubLineSize) / Width) {
-					int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[I], &Buf[WrapBufSize]);
-					if (distance <= 0) {
-//						fprintf(stderr, "!!!!!!!!!!!!OOPS!!!!!!!!!!!! %d..%d -> %d\n", I, WrapBufSize, distance);
-						break;
-					}
-					FilePosShiftLeft(distance);
-//					fprintf(stderr, "distance=%d SubLineSize=%d <= Width=%d LINE='%ls'\n", distance, SubLineSize, Width, &Buf[I]);
-					return;
+
+		for (int PrevSublineLength = 0, CurLineStart = I = 0;; ++I)
+		{
+			if (I == WrapBufSize)
+			{
+				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
+				FilePosShiftLeft((distance > 0) ? distance : 1);
+				return;
+			}
+
+			int SublineLength = CalcStrSize(&Buf[CurLineStart], I - CurLineStart);
+			if (SublineLength > PrevSublineLength)
+			{
+				if (SublineLength >= Width)
+				{
+					CurLineStart = I;
+					PrevSublineLength = 0;
+				} else
+				{
+					PrevSublineLength = SublineLength;
 				}
 			}
 		}
 	}
 
 //	fprintf(stderr, "!!!!!!!!!!!!NOWRAP!!!!!!!!!!!!\n");
-	if (WholeLineLength == 0) {
-		WholeLineLength = 1;
-	}
-	FilePosShiftLeft(WholeLineLength);
+	FilePosShiftLeft( (WholeLineLength > 0) ? WholeLineLength : 1 );
 }
 
 
@@ -2865,14 +2881,15 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 			UTF32 *dst = (UTF32 *)&Buf[ResultedCount];
 			ConversionResult cr = ConvertUTF8toUTF32(&src, src + ViewSize,
 				&dst, dst + (Count - ResultedCount), lenientConversion);
+			ResultedCount = dst - (UTF32 *)Buf;
 #else
 			UTF16 *dst = (UTF16 *)&Buf[ResultedCount];
 			ConversionResult cr = ConvertUTF8toUTF16(&src, src + ViewSize,
 				&dst, dst + (Count - ResultedCount), lenientConversion);
+			ResultedCount = dst - (UTF16 *)Buf;
 #endif
 
 			Ptr+= (src - SrcView);
-			ResultedCount = dst - (UTF32 *)Buf;
 
 			if (cr == sourceExhausted && src == SrcView) {
 				if (ViewSize < WantViewSize) {

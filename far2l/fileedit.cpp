@@ -1205,6 +1205,11 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 				return (TRUE);
 			}
+			case KEY_ALTF10:
+			{
+				FrameManager->ExitMainLoop(1);
+				return (TRUE);
+			}
 			case KEY_CTRLB:
 			{
 				Opt.EdOpt.ShowKeyBar=!Opt.EdOpt.ShowKeyBar;

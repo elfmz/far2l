@@ -359,6 +359,9 @@ int FileViewer::ProcessKey(int Key)
 
 			View.Show();
 			return TRUE;
+		case KEY_ALTF10:
+			FrameManager->ExitMainLoop(TRUE);
+			return TRUE;
 		case KEY_ALTF11:
 
 			if (GetCanLoseFocus())

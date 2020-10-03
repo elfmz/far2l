@@ -192,57 +192,31 @@ int main_convertor (int argc, char** argv)
 		return 0;
 	}
 
-	HANDLE hFeedFile = WINPORT(CreateFile) (
-			MB2Wide(argv[1]).c_str(),
-			GENERIC_WRITE,
-			FILE_SHARE_READ,
-			NULL,
-			CREATE_ALWAYS,
-			0,
-			NULL
-			);
-
-	if ( hFeedFile == INVALID_HANDLE_VALUE )
+	FDScope hFeedFile(CreateOutputFile(argv[1]));
+	if (!hFeedFile.Valid())
 	{
-		printf ("ERROR: Can't create the feed file, exiting.\n\r");
+		printf ("ERROR: Can't create the feed file, exiting.\n");
 		return 0;
 	}
 
-
-	HANDLE hHFile = WINPORT(CreateFile) (
-			MB2Wide(argv[2]).c_str(),
-			GENERIC_READ,
-			FILE_SHARE_READ,
-			NULL,
-			OPEN_EXISTING,
-			0,
-			NULL
-			);
-
-	if ( hHFile == INVALID_HANDLE_VALUE )
+	FDScope hHFile(OpenInputFile(argv[2]));
+	if ( !hHFile.Valid() )
 	{
-		printf ("ERROR: Can't open the header file, exiting.\n\r");
-		return 0;
+	        printf ("ERROR: Can't open the header file, exiting.\n");
+	        return 0;
 	}
 
 	int dwLangs = atol(argv[3]);
-
 	if ( dwLangs<=0 )
 	{
-		printf ("ERROR: Zero language files to process, exiting.\n\r");
+		printf ("ERROR: Zero language files to process, exiting.\n");
 		return 0;
 	}
 
-	DWORD dwRead;
-	DWORD dwSize = WINPORT(GetFileSize) (hHFile, NULL);
+	size_t dwSize = QueryFileSize(hHFile);
+	char *pHBuffer = (char*)calloc(1, dwSize+1);
 
-	char *pHBuffer = (char*)malloc (dwSize+1);
-
-	memset (pHBuffer, 0, dwSize+1);
-
-	WINPORT(ReadFile) (hHFile, pHBuffer, dwSize, &dwRead, NULL);
-
-	WINPORT(CloseHandle) (hHFile);
+	ReadAll(hHFile, pHBuffer, dwSize);
 
 	char *lpStart = pHBuffer;
 
@@ -250,43 +224,30 @@ int main_convertor (int argc, char** argv)
 
 	memset (pLangEntries, 0, dwLangs*sizeof (LanguageEntry));
 
-	HANDLE hFile;
-
 	for (int i = 0; i < dwLangs; i++)
 	{
-		hFile = WINPORT(CreateFile) (
-				MB2Wide(argv[4+i]).c_str(),
-				GENERIC_READ,
-				FILE_SHARE_READ,
-				NULL,
-				OPEN_EXISTING,
-				0,
-				NULL
-				);
-
-		if ( hFile != INVALID_HANDLE_VALUE )
+		FDScope hFile(OpenInputFile(argv[4+i]));
+		if (hFile.Valid())
 		{
-			dwSize = WINPORT(GetFileSize) (hFile, NULL);
+			dwSize = QueryFileSize(hFile);
 
-			pLangEntries[i].lpBuffer = (char*)malloc (dwSize+1);
+			pLangEntries[i].lpBuffer = (char*)calloc(1, dwSize+1);
 			pLangEntries[i].lpStart = pLangEntries[i].lpBuffer;
 
 			memset (pLangEntries[i].lpBuffer, 0, dwSize+1);
 
-			WINPORT(ReadFile) (hFile, pLangEntries[i].lpBuffer, dwSize, &dwRead, NULL);
-
-			WINPORT(CloseHandle) (hFile);
+			ReadAll(hFile, pLangEntries[i].lpBuffer, dwSize);
 		}
 		else
 			printf ("WARNING: Can't open the language file \"%s\", skiping\n\r", argv[4+i]);
 	}
 
-	char *lpTmp = (char*)malloc (2048);
+	char *lpTmp = (char*)malloc(0x10000);
 	char *lpString;
 
 	sprintf (lpTmp, "#hpp file name\r\n%s\r\n#number of languages\r\n%s\r\n", argv[2], argv[3]);
 
-	WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+	WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 	for (int i = 0; i < dwLangs; i++)
 	{
@@ -296,12 +257,12 @@ int main_convertor (int argc, char** argv)
 
 			sprintf (lpTmp, "#id:%d language file name, language name, language description\r\n%s", i, argv[4+i]);
 
-			WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+			WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 			ReadLanguage (pLangEntries[i].lpStart, &lpLngName, &lpLngDesc);
 
 			sprintf (lpTmp," %s %s\r\n", lpLngName, lpLngDesc);
-			WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+			WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 			free (lpLngName);
 			free (lpLngDesc);
@@ -310,7 +271,7 @@ int main_convertor (int argc, char** argv)
 
 	sprintf(lpTmp,"\r\n#head of the hpp file\r\n");
 
-	WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+	WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 	while ( ReadFromBufferEx (lpStart, &lpString) )
 	{
@@ -346,13 +307,13 @@ int main_convertor (int argc, char** argv)
 
 			sprintf (lpTmp, "\r\n#tail of the hpp file\r\n");
 
-			WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+			WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 			while ( ReadFromBufferEx (lpStart, &lpString) )
 			{
 				sprintf (lpTmp, "htail:%s\r\n", lpString);
 
-				WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+				WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 				free(lpString);
 			}
@@ -364,7 +325,7 @@ int main_convertor (int argc, char** argv)
 		else
 		{
 			sprintf(lpTmp, "hhead:%s\r\n", lpString);
-			WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+			WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 		}
 
 		free(lpString);
@@ -374,7 +335,7 @@ int main_convertor (int argc, char** argv)
 
 	while ( true )
 	{
-		WINPORT(WriteFile) (hFeedFile, "\r\n", 2, &dwRead, NULL);
+		WriteAll(hFeedFile, "\r\n", 2);
 
 		lpOldStart = lpStart;
 
@@ -393,7 +354,7 @@ int main_convertor (int argc, char** argv)
 			else
 			{
 				sprintf (lpTmp, "h:%s\r\n", lpString);
-				WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+				WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 			}
 
 			free(lpString);
@@ -420,7 +381,7 @@ int main_convertor (int argc, char** argv)
 
 			sprintf (lpTmp, "%s\r\n", lpString);
 
-			WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+			WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 			free(lpString);
 
@@ -464,7 +425,7 @@ int main_convertor (int argc, char** argv)
 				if ( *pLangEntries[0].lpString )
 				{
 					sprintf (lpTmp, "l:%s\r\n", pLangEntries[0].lpString);
-					WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+					WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 				}
 
 				for (int i = 0; i < dwLangs; i++)
@@ -482,7 +443,7 @@ int main_convertor (int argc, char** argv)
 					{
 						sprintf(lpTmp,"ls:%s\r\n",pLangEntries[i].lpString);
 
-						WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+						WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 						free(pLangEntries[i].lpString);
 					}
@@ -493,7 +454,7 @@ int main_convertor (int argc, char** argv)
 
 					strcat(lpTmp,"\r\n");
 
-					WINPORT(WriteFile) (hFeedFile, lpTmp, strlen (lpTmp), &dwRead, NULL);
+					WriteAll(hFeedFile, lpTmp, strlen (lpTmp));
 
 					free(pLangEntries[i].lpString);
 				}
@@ -502,8 +463,6 @@ int main_convertor (int argc, char** argv)
 		else
 			break;
 	}
-
-	WINPORT(CloseHandle)(hFeedFile);
 
 	free(pHBuffer);
 

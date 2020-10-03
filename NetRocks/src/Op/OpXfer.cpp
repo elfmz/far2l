@@ -25,9 +25,10 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_dst_dir(dst_dir),
 	_kind(kind),
 	_direction(direction),
-	_io_buf(BUFFER_SIZE_INITIAL, BUFFER_SIZE_GRANULARITY, BUFFER_SIZE_LIMIT)
+	_io_buf(BUFFER_SIZE_INITIAL, BUFFER_SIZE_GRANULARITY, BUFFER_SIZE_LIMIT),
+	_smart_symlinks_copy(G.GetGlobalConfigBool("SmartSymlinksCopy", true)),
+	_umask_override(G.GetGlobalConfigBool("UMaskOverride", false))
 {
-	_umask_override = G.GetGlobalConfigBool("UMaskOverride", false);
 
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
 	_diffname_suffix = ".NetRocks@";
@@ -629,7 +630,10 @@ bool OpXfer::SymlinkCopy(const std::string &path_src, const std::string &path_ds
 
 	std::string orig_symlink_target = symlink_target;
 
-	if (symlink_target[0] == '/') {
+	if (!_smart_symlinks_copy) {
+		;
+
+	} else if (symlink_target[0] == '/') {
 		if (_entries.find(symlink_target) ==  _entries.end()) {
 			fprintf(stderr, "NetRocks: SymlinkCopy dismiss '%s' [%s]\n",
 				path_src.c_str(), orig_symlink_target.c_str());

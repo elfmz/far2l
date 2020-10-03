@@ -7,6 +7,8 @@
 #include <wx/display.h>
 
 extern bool g_broadway;
+extern bool g_wayland;
+extern bool g_remote;
 
 /*
     Foreground/Background color palettes are 16 (r,g,b) values.
@@ -269,14 +271,23 @@ int wxKeyCode2WinKeyCode(int code)
 	case WXK_WINDOWS_MENU: return VK_MENU;
 	case L'.': return VK_OEM_PERIOD;
 	case L',': return VK_OEM_COMMA;
-	case L'-': return VK_OEM_MINUS;
+	case L'_': case L'-': return VK_OEM_MINUS;
 	case L'+': return VK_OEM_PLUS;
-	case L';': return VK_OEM_1;
-	case L'`': return VK_OEM_3;
-	case L'[': return VK_OEM_4;
-	case L'\\': return VK_OEM_5;
-	case L']': return VK_OEM_6;
-	case L'\'': return VK_OEM_7;
+	case L';': case L':': return VK_OEM_1;
+	case L'/': case L'?': return VK_OEM_2;
+	case L'~': case L'`': return VK_OEM_3;
+	case L'[': case L'{': return VK_OEM_4;
+	case L'\\': case L'|': return VK_OEM_5;
+	case L']': case '}': return VK_OEM_6;
+	case L'\'': case '\"': return VK_OEM_7;
+	case L'!': return '1';
+	case L'@': return '2';
+	case L'#': return '3';
+	case L'$': return '4';
+	case L'%': return '5';
+	case L'^': return '6';
+	case L'&': return '7';
+	case L'*': return '8';
 	case L'(': return '9';
 	case L')': return '0';
 	}
@@ -318,7 +329,9 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	if (IsEnhancedKey(event.GetKeyCode()))
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	
-	if (!g_broadway) {
+	// Getting LED modifiers not supported on broadway and wayland, also it requires
+	// 3 server roundtrips that is too time-expensive for remotely forwarded connections.
+	if (!g_broadway && !g_wayland && !g_remote) {
 		if (wxGetKeyState(WXK_NUMLOCK))
 			Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
 		

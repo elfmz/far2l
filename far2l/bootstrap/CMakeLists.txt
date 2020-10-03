@@ -18,12 +18,21 @@ set(DIRBIT 64)
 
 
 # set(RM rm) actually not needed: use $(CMAKE_COMMAND) -E remove
-set(GAWK gawk)
+find_program (GAWK NAMES gawk)
+if(NOT GAWK)
+  message(FATAL_ERROR "${Esc}[1;31mgawk not found - please install it${Esc}[39;22m")
+endif ()
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  set(M4 gm4 -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
+  find_program (M4_PROG NAMES gm4)
 else()
-  set(M4 m4 -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
+  find_program (M4_PROG NAMES m4)
 endif()
+if(NOT M4_PROG)
+  message(FATAL_ERROR "${Esc}[1;31mgawk not found - please install it${Esc}[39;22m")
+endif ()
+
+set(M4 ${M4_PROG} -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}" "-DMAJOR=${VERSION_MAJOR}" "-DMINOR=${VERSION_MINOR}" "-DPATCH=${VERSION_PATCH}")
 
 set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")

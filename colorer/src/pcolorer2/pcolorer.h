@@ -19,12 +19,19 @@
 #include<wctype.h>
 #include<wchar.h>
 #include<windows.h>
+#if 0
+#include <g3log/logworker.hpp>
+#endif
 #include "registry_wide.h"
-#include<unicode/StringBuffer.h>
+// new colorer don't have class StringBuffer
+#include "StringBuffer.h"
 
 extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
 extern StringBuffer *PluginPath;
+#if 0
+extern std::unique_ptr<g3::LogWorker> logworker;
+#endif
 
 /** FAR .lng file identifiers. */
 enum
@@ -32,10 +39,10 @@ enum
   mName, mSetup, mTurnOff, mTrueMod,
   mCross, mPairs, mSyntax, mOldOutline,
   mOk, mReloadAll, mCancel,
-  mCatalogFile, mHRDName,mHRDNameTrueMod,
+  mCatalogFile, mHRDName, mHRDNameTrueMod,
   mListTypes, mMatchPair, mSelectBlock, mSelectPair,
-  mListFunctions, mFindErrors, mSelectRegion, mLocateFunction,
-  mUpdateHighlight, mReloadBase, mConfigure,
+  mListFunctions, mFindErrors, mSelectRegion, mRegionInfo,
+  mLocateFunction, mUpdateHighlight, mReloadBase, mConfigure,
   mTotalTypes, mSelectSyntax, mOutliner, mNothingFound,
   mGotcha, mChoose,
   mReloading, mCantLoad, mCantOpenFile, mDie, mTry,
@@ -45,7 +52,7 @@ enum
   mKeyAssignDialogTitle, mKeyAssignTextTitle
 };
 
-StringBuffer *GetConfigPath(const DString &sub);
+StringBuffer *GetConfigPath(const SString &sub);
 
 #endif
 /* ***** BEGIN LICENSE BLOCK *****
@@ -83,5 +90,3 @@ StringBuffer *GetConfigPath(const DString &sub);
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
-

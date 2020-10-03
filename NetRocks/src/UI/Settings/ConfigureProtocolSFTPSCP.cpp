@@ -9,7 +9,7 @@
 /*                                                         62
 345                      28         39                   60  64
  ================ SFTP Protocol options =====================
-| [ ] Private key file path:                                 |
+| Authentification:     [COMBOBOX Private key file path:   ] |
 | [EDIT....................................................] |
 | [ ] Custom subsystem request:                              |
 | [EDIT....................................................] |
@@ -27,23 +27,25 @@
 class ProtocolOptionsSFTPSCP : protected BaseDialog
 {
 	int _i_ok = -1, _i_cancel = -1;
-	int _i_privkey_enable = -1, _i_privkey_path = -1;
+	int _i_auth_mode = -1, _i_privkey_path = -1;
 	int _i_use_custom_subsystem = -1, _i_custom_subsystem = -1;
 	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	//int _i_enable_sandbox = -1;
 
+	FarListWrapper _di_authmode;
+
 	bool _keypath_enabled = true, _subsystem_enabled = true, _ok_enabled = true;
 
-	void UpdateEnableds(bool due_privkey_enable_clicked)
+	void UpdateEnableds(bool due_authmode_changed)
 	{
 		bool ok_enabled = true, keypath_enabled = false, subsystem_enabled = false;
-		if (IsCheckedDialogControl(_i_privkey_enable)) {
+		if (GetDialogListPosition(_i_auth_mode) == 1) { // keyfile
 			ok_enabled = false;
 			keypath_enabled = true;
 			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);
-			if (str.empty() && due_privkey_enable_clicked) {
+			if (str.empty() && due_authmode_changed) {
 				str = "~/.ssh/id_rsa";
 				TextToDialogControl(_i_privkey_path, str);
 			}
@@ -93,9 +95,9 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 #endif
 
 		if ( msg == DN_INITDIALOG
-		|| (msg == DN_BTNCLICK && (param1 == _i_privkey_enable || param1 == _i_use_custom_subsystem))
-		|| (msg == DN_EDITCHANGE && (param1 == _i_privkey_path || param1 == _i_custom_subsystem)) ) {
-			UpdateEnableds(msg == DN_BTNCLICK && param1 == _i_privkey_enable);
+		|| (msg == DN_BTNCLICK && (param1 == _i_use_custom_subsystem))
+		|| (msg == DN_EDITCHANGE && (param1 == _i_auth_mode || param1 == _i_privkey_path || param1 == _i_custom_subsystem)) ) {
+			UpdateEnableds(msg == DN_EDITCHANGE && param1 == _i_auth_mode);
 		}
 
 		return BaseDialog::DlgProc(msg, param1, param2);
@@ -104,10 +106,17 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 public:
 	ProtocolOptionsSFTPSCP(bool scp)
 	{
+		_di_authmode.Add(MSFTPAuthModeUserPassword);
+		_di_authmode.Add(MSFTPAuthModeKeyFile);
+		_di_authmode.Add(MSFTPAuthModeSSHAgent);
+
 		_di.SetBoxTitleItem(scp ? MSCPOptionsTitle : MSFTPOptionsTitle);
 
 		_di.SetLine(2);
-		_i_privkey_enable = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPPrivateKeyPath);
+		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPAuthMode);
+		_i_auth_mode = _di.AddAtLine(DI_COMBOBOX, 27,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+		_di[_i_auth_mode].ListItems = _di_authmode.Get();
+
 		_di.NextLine();
 		_i_privkey_path = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
 
@@ -150,7 +159,17 @@ public:
 	void Configure(std::string &options)
 	{
 		StringConfig sc(options);
-		SetCheckedDialogControl( _i_privkey_enable, sc.GetInt("PrivKeyEnable", 0) != 0);
+		//GetDialogListPosition(_i_auth_mode)
+		if (sc.GetInt("SSHAgentEnable", 0) != 0) {
+			SetDialogListPosition(_i_auth_mode, 2);
+
+		} else if (sc.GetInt("PrivKeyEnable", 0) != 0) {
+			SetDialogListPosition(_i_auth_mode, 1);
+
+		} else {
+			SetDialogListPosition(_i_auth_mode, 0);
+		}
+
 		TextToDialogControl(_i_privkey_path, sc.GetString("PrivKeyPath"));
 
 		if (_i_max_read_block_size != -1) {
@@ -160,7 +179,7 @@ public:
 			LongLongToDialogControl(_i_max_write_block_size, std::max((int)512, sc.GetInt("MaxWriteBlock", 32768)));
 		}
 
-		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 0) != 0);
+		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		SetCheckedDialogControl(_i_tcp_quickack, sc.GetInt("TcpQuickAck", 0) != 0);
 
 		if (_i_use_custom_subsystem != -1) {
@@ -171,7 +190,13 @@ public:
 		}
 	//	SetCheckedDialogControl(_i_enable_sandbox, sc.GetInt("Sandbox", 0) != 0);
 		if (Show(L"ProtocolOptionsSFTPSCP", 6, 2) == _i_ok) {
-			sc.SetInt("PrivKeyEnable", IsCheckedDialogControl(_i_privkey_enable) ? 1 : 0);
+			sc.Delete("SSHAgentEnable");
+			sc.Delete("PrivKeyEnable");
+			switch (GetDialogListPosition(_i_auth_mode)) {
+				case 1: sc.SetInt("PrivKeyEnable", 1); break;
+				case 2: sc.SetInt("SSHAgentEnable", 1); break;
+			}
+
 			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);
 			sc.SetString("PrivKeyPath", str);

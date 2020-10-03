@@ -75,6 +75,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigne
 {
   if (ArcPlugin==NULL)
     return INVALID_HANDLE_VALUE;
+
   int ArcPluginNumber=-1;
   if (Name==NULL)
   {
@@ -87,16 +88,19 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigne
     if (ArcPluginNumber==-1)
       return INVALID_HANDLE_VALUE;
   }
-  HANDLE hPlugin=new PluginClass(ArcPluginNumber);
-  if (hPlugin==NULL)
-    return INVALID_HANDLE_VALUE;
-  if (Name!=NULL)
-  {
-    PluginClass *Plugin=(PluginClass *)hPlugin;
-    if (!Plugin->PreReadArchive(Name))
-      return INVALID_HANDLE_VALUE;
+
+  try {
+    PluginClass *pPlugin = new PluginClass(ArcPluginNumber);
+    if (Name!=NULL && !pPlugin->PreReadArchive(Name)) {
+        delete pPlugin;
+        return INVALID_HANDLE_VALUE;
+    }
+    return (HANDLE)pPlugin;
+
+  } catch (std::exception &e) {
+        fprintf(stderr, "OpenFilePlugin: %s\n", e.what());
+        return INVALID_HANDLE_VALUE;
   }
-  return hPlugin;
 }
 
 std::string MakeFullName(const char *name)

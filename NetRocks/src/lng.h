@@ -13,6 +13,7 @@ enum LanguageID
   MPluginOptionsTitle,
   MEnableDesktopNotifications,
   MEnterExecRemotely,
+  MSmartSymlinksCopy,
   MUMaskOverride,
   MConnPoolExpiration,
   MConnectUsingProxy,
@@ -113,6 +114,10 @@ enum LanguageID
 
   MRemoveSitesTitle,
   MRemoveSitesText,
+  MCopySitesTitle,
+  MCopySitesText,
+  MMoveSitesTitle,
+  MMoveSitesText,
 
   MMakeDirTitle,
   MMakeDirText,
@@ -123,6 +128,7 @@ enum LanguageID
   MChangeModeProgressTitle,
   MEnumDirProgressTitle,
   MCreateDirProgressTitle,
+  MExecuteProgressTitle,
 
   MAbortTitle,
   MAbortText,
@@ -185,6 +191,10 @@ enum LanguageID
 
   MSFTPOptionsTitle,
   MSCPOptionsTitle,
+  MSFTPAuthMode,
+  MSFTPAuthModeUserPassword,
+  MSFTPAuthModeKeyFile,
+  MSFTPAuthModeSSHAgent,
   MSFTPPrivateKeyPath,
   MSFTPCustomSubsystem,
   MSFTPMaxReadBlockSize,
@@ -212,6 +222,7 @@ enum LanguageID
   MNFSGroups,
 
   MWebDAVOptionsTitle,
+  MWebDAVUserAgent,
   MWebDAVUseProxy,
   MWebDAVProxyHost,
   MWebDAVProxyPort,
@@ -230,6 +241,18 @@ enum LanguageID
   MModeExecute,
   MModeSetUID,
   MModeSetGID,
-  MModeSticky
+  MModeSticky,
+
+  MFTPOptionsTitle,
+  MFTPSOptionsTitle,
+  MFTPExplicitEncryption, 
+  MSFTPEncryptionProtocol,
+  MSFTPServerCodepage,
+  MFTPPassiveMode,
+  MFTPUseMLSDMLST,
+  MFTPCommandsPipelining,
+  MFTPRestrictDataPeer,
+  MFTPTCPNoDelay,
+  MFTPQuickAck
 
 };

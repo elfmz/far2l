@@ -12,14 +12,6 @@ OpMakeDirectory::OpMakeDirectory(int op_mode,std::shared_ptr<IHost> &base_host,
 
 bool OpMakeDirectory::Do()
 {
-	if (!IS_SILENT(_op_mode)) {
-		_dir_name = ConfirmMakeDir(_dir_name.c_str()).Ask();
-		if (_dir_name.empty()) {
-			fprintf(stderr, "NetRocks::MakeDirectory: cancel\n");
-			return false;
-		}
-	}
-
 	if (_base_dir.empty()) {
 		_base_dir = "./";
 

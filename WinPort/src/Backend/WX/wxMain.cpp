@@ -33,7 +33,7 @@
 
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
-bool g_broadway = false;
+bool g_broadway = false, g_wayland = false, g_remote = false;
 static int g_exit_code = 0;
 enum
 {
@@ -84,9 +84,32 @@ static void WinPortWxAssertHandler(const wxString& file,
 		const wxString& cond, const wxString& msg)
 {
 	fprintf(stderr, "WinPortWxAssertHandler: file='%ls' line=%d func='%ls' cond='%ls' msg='%ls'\n",
-			file.wc_str(), line, func.wc_str(), cond.wc_str(), msg.wc_str());
+			static_cast<const wchar_t*>(file.wc_str()), line,
+			static_cast<const wchar_t*>(func.wc_str()),
+			static_cast<const wchar_t*>(cond.wc_str()),
+			static_cast<const wchar_t*>(msg.wc_str()));
 }
 
+static void DetectHostAbilities()
+{
+	const char *gdk_backend = getenv("GDK_BACKEND");
+	if (gdk_backend && strcasecmp(gdk_backend, "broadway")==0) {
+		g_broadway = true;
+	}
+
+	const char *xdg_st = getenv("XDG_SESSION_TYPE");
+	if (xdg_st && strcasecmp(xdg_st, "wayland")==0) {
+		g_wayland = true;
+	}
+
+	const char *ssh_conn = getenv("SSH_CONNECTION");
+	if (ssh_conn && *ssh_conn
+		&& strstr(ssh_conn, "127.0.0.") == NULL
+		&& strstr(ssh_conn, "localhost") == NULL) {
+
+		g_remote = true;
+	}
+}
 
 bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
@@ -95,10 +118,7 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 
 	wxSetAssertHandler(WinPortWxAssertHandler);
 
-	const char *gdk_backend = getenv("GDK_BACKEND");
-	if (gdk_backend && strcmp(gdk_backend, "broadway")==0)
-		g_broadway = true;
-
+	DetectHostAbilities();
 
 	if (!InitPalettes()) {
 		uint xc,yc;
@@ -108,7 +128,19 @@ bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), 
 		g_winport_con_out.WriteString(msg, wcslen(msg));
 	}
 
-	wxClipboardBackend clip_backend;
+	bool primary_selection = false;
+	for (int i = 0; i < argc; ++i) {
+		if (strcmp(argv[i], "--primary-selection") == 0) {
+			primary_selection = true;
+			break;
+		}
+	}
+	if (primary_selection) {
+		wxTheClipboard->UsePrimarySelection(true);
+	}
+
+	ClipboardBackendSetter clipboard_backend_setter;
+	clipboard_backend_setter.Set<wxClipboardBackend>();
 	if (AppMain && !g_winport_app_thread) {
 		g_winport_app_thread = new(std::nothrow) WinPortAppThread(argc, argv, AppMain);
 		if (!g_winport_app_thread) {
@@ -223,6 +255,7 @@ protected:
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
+	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
 
 private:
 	void CheckForResizePending();
@@ -288,6 +321,7 @@ private:
 	
 	int _last_valid_display;
 	DWORD _refresh_rects_throttle;
+	unsigned int _pending_refreshes;
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 };
 
@@ -366,12 +400,14 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 
+#if !wxCHECK_VERSION(3, 1, 3)
 		menu = new wxMenu;
 		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Alt + %c\tAlt+%c", c, c);
 			menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
 		}
 		_menu_bar->Append(menu, _T("Alt + ?"));
+#endif
 		SetMenuBar(_menu_bar);
 		
 		//now hide menu bar just like it gets hidden during fullscreen transition
@@ -479,17 +515,26 @@ wxEND_EVENT_TABLE()
 wxIMPLEMENT_APP_NO_MAIN(WinPortApp);
 
 
+static WinPortFrame *g_winport_frame = nullptr;
 
+wxEvtHandler *WinPort_EventHandler()
+{
+	if (!g_winport_frame) {
+		return wxTheApp->GetTopWindow()->GetEventHandler();
+	}
+
+	return g_winport_frame->GetEventHandler();
+}
 
 bool WinPortApp::OnInit()
 {
-	WinPortFrame *frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
+	g_winport_frame = new WinPortFrame("WinPortApp", wxDefaultPosition, wxDefaultSize );
 //    WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
-	frame->Show( true );
+	g_winport_frame->Show( true );
 	if (g_broadway)
-		frame->Maximize();
+		g_winport_frame->Maximize();
 		
-    return true;
+	return true;
 }
 
 
@@ -502,7 +547,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_right_control(false), _last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false), _last_valid_display(0),
-		_refresh_rects_throttle(0)
+		_refresh_rects_throttle(0), _pending_refreshes(0)
 {
 	g_winport_con_out.SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
@@ -669,33 +714,29 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 				}
 
 				if (area.Top == pending.Top && area.Bottom == pending.Bottom) {
-					// left/right concat?
-
-					if (area.Right > pending.Right && area.Left <= pending.Right && area.Left >= pending.Left) {
-						pending.Right = area.Right;
-						add = false;
-						break;
-					}
-
-					if (area.Left < pending.Left && area.Right <= pending.Right && area.Right >= pending.Left) {
-						pending.Left = area.Left;
+					// left/right touch/intersect?
+					if (pending.Left <= area.Right + 1 && area.Left <= pending.Right + 1) {
+						if (pending.Left > area.Left) {
+							pending.Left = area.Left;
+						}
+						if (pending.Right < area.Right) {
+							pending.Right = area.Right;
+						}
 						add = false;
 						break;
 					}
 				} else if (area.Left == pending.Left && area.Right == pending.Right) {
-					// top/bottom concat?
-					if (area.Bottom > pending.Bottom && area.Top <= pending.Bottom && area.Top >= pending.Top) {
-						pending.Bottom = area.Bottom;
+					// top/bottom touch/intersect?
+					if (pending.Top <= area.Bottom + 1 && area.Top <= pending.Bottom + 1) {
+						if (pending.Top > area.Top) {
+							pending.Top = area.Top;
+						}
+						if (pending.Bottom < area.Bottom) {
+							pending.Bottom = area.Bottom;
+						}
 						add = false;
 						break;
 					}
-
-					if (area.Top < pending.Top && area.Bottom >= pending.Top && area.Bottom <= pending.Bottom) {
-						pending.Top = area.Top;
-						add = false;
-						break;
-					}
-
 				}
 			}
 			if (add)
@@ -805,7 +846,7 @@ void WinPortPanel::OnSetMaximizedSync( wxCommandEvent& event )
 
 void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 {
-	RefreshRects refresh_rects;
+	std::vector<SMALL_RECT> refresh_rects;
 	{
 		std::lock_guard<std::mutex> lock(_refresh_rects);
 		if (_refresh_rects.empty())
@@ -813,12 +854,18 @@ void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 
 		refresh_rects.swap(_refresh_rects);	
 	}
-	
+
 	for (const auto & r : refresh_rects) {
 		_paint_context.RefreshArea( r );
+		// Seems there is some sort of limitation of how many fragments
+		// can be pending in window refresh region on GTK.
+		// Empirically found that value 400 is too high, 300 looks good,
+		// so using 200 to be sure-good
+		_pending_refreshes++;
+		if (_pending_refreshes > 200) {
+			Update();
+		}
 	}
-	//fprintf(stderr, "OnRefreshSync: count=%u\n", 
-	//	(unsigned int)refresh_rects.size());
 }
 
 void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
@@ -869,7 +916,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
-	if (event.GetSkipped() || (event.GetTimestamp() && 
+	if (event.GetSkipped() || (!g_wayland && event.GetTimestamp() &&
 		_last_keydown.GetKeyCode()==event.GetKeyCode() &&
 		_last_keydown.GetTimestamp()==event.GetTimestamp())) {
 		event.Skip();
@@ -890,12 +937,22 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		_last_keydown_enqueued = true;
 		return;
 	}
-	
+
 	wx2INPUT_RECORD ir(event, TRUE);
 	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
 		_right_control = true;
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
 	}
+
+#if wxCHECK_VERSION(3, 1, 3)
+	const bool alt_nonlatin_workaround = (event.AltDown() && !event.ControlDown()
+		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
+	// for non-latin unicode keycode pressed with Alt key together
+	// simulate some dummy key code for far2l to "see" keypress
+	if (alt_nonlatin_workaround) {
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
+	}
+#endif
 
 	if ( (event.HasModifiers() && event.GetUnicodeKey() < 32) || _right_control || 
 		_pressed_keys.simulate_alt() || event.GetKeyCode() == WXK_DELETE ||
@@ -912,16 +969,26 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		g_winport_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
+
+#if wxCHECK_VERSION(3, 1, 3)
+	if (alt_nonlatin_workaround) {
+		OnChar(event);
+	}
+#endif
+
 	event.Skip();
 }
 
 void WinPortPanel::CheckForSuddenKeyUp( wxKeyCode keycode)
 { // workaround for layout switch hotkey conflict with enabled exclusive mode, see #281
+	auto it = _pressed_keys.find(keycode);
+	if (it == _pressed_keys.end())
+		return;
+
 	if (wxGetKeyState(keycode))
 		return;
 
-	if (!_pressed_keys.erase(keycode))
-		return;
+	_pressed_keys.erase(it);
 
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
@@ -946,6 +1013,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyCode(), 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyUp(event);
+
 	if (event.GetSkipped())
 		return;
 
@@ -959,6 +1027,17 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 #endif
 	{
 		wx2INPUT_RECORD ir(event, FALSE);
+
+#if wxCHECK_VERSION(3, 1, 3)
+		const bool alt_nonlatin_workaround = (event.AltDown() && !event.ControlDown()
+			&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
+		// for non-latin unicode keycode pressed with Alt key together
+		// simulate some dummy key code for far2l to "see" keypress
+		if (alt_nonlatin_workaround) {
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
+		}
+#endif
+
 		if (_pressed_keys.simulate_alt())
 			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	
 			
@@ -969,7 +1048,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
 		}
-	
+
 		g_winport_con_in.Enqueue(&ir, 1);
 	}
 	CheckForSuddenKeyUp(WXK_CONTROL);
@@ -1020,6 +1099,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
 	//fprintf(stderr, "WinPortPanel::OnPaint\n"); 
+	_pending_refreshes = 0;
 	if (_mouse_qedit_moved && _mouse_qedit_start_ticks != 0
 	 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		SMALL_RECT qedit;
@@ -1330,6 +1410,11 @@ void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wcha
 	} else if (pid != -1) {
 		waitpid(pid, 0, 0);
 	}
+}
+
+bool WinPortPanel::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
+{
+	return false;
 }
 
 void WinPortPanel::OnConsoleChangeFontSync(wxCommandEvent& event)

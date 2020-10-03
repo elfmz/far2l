@@ -16,9 +16,10 @@ class TTYInput
 
 	size_t BufTryDecodeUTF8();
 
-	void OnBufUpdated();
+	void OnBufUpdated(bool idle);
 
 public:
 	TTYInput(ITTYInputSpecialSequenceHandler *handler);
 	void OnInput(const char *data, size_t len);
+	void OnIdleExpired();
 };

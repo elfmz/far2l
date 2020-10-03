@@ -3,10 +3,13 @@
 #include <string>
 #include <mutex>
 #include <list>
+#include <atomic>
 
 #include "Host.h"
 #include "IPC.h"
 #include "FileInformation.h"
+
+#include "../SitesConfig.h"
 
 class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_shared_from_this<HostRemote>, public IHost
 {
@@ -15,7 +18,7 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 
 	std::mutex _mutex; // to protect internal fields
 
-	std::string _site;
+	SiteSpecification _site_specification;
 
 	Identity _identity;
 	unsigned int _login_mode;
@@ -24,7 +27,7 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 
 	bool _busy = false;
 	bool _cloning = false;
-	pid_t _peer = 0;
+	std::atomic<pid_t> _peer = {};
 
 	void RecvReply(IPCCommand cmd);
 
@@ -40,7 +43,7 @@ protected:
 public:
 	inline HostRemote() {}
 
-	HostRemote(const std::string &site);
+	HostRemote(const std::string &site_specification);
 	HostRemote(const std::string &protocol, const std::string &host,
 		unsigned int port, const std::string &username, const std::string &password);
 	virtual ~HostRemote();

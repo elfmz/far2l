@@ -2,10 +2,11 @@
 #include <string>
 #include <windows.h>
 #include "../DialogUtils.h"
-
+#include "../../SitesConfig.h"
 
 class SiteConnectionEditor : protected BaseDialog
 {
+	SitesConfigLocation _sites_cfg_location;
 	std::string _initial_display_name, _display_name;
 	std::string _initial_protocol, _protocol, _host, _username, _password, _directory, _protocol_options;
 	unsigned int _login_mode = 0;
@@ -40,7 +41,7 @@ class SiteConnectionEditor : protected BaseDialog
 	bool Save();
 
 public:
-	SiteConnectionEditor(const std::string &display_name);
+	SiteConnectionEditor(const SitesConfigLocation &sites_cfg_location, const std::string &display_name);
 
 
 	bool Edit();

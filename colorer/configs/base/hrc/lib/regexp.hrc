@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='Windows-1251'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -26,8 +26,8 @@
 
  <appinfo><todo>
   <![CDATA[
-   1.Символы \b\B выделяются в posix. Это надо будет убрать.
-   2.Планируется добавить распознавание unicode (пока там заглушка).
+   1.РЎРёРјРІРѕР»С‹ \b\B РІС‹РґРµР»СЏСЋС‚СЃСЏ РІ posix. Р­С‚Рѕ РЅР°РґРѕ Р±СѓРґРµС‚ СѓР±СЂР°С‚СЊ.
+   2.РџР»Р°РЅРёСЂСѓРµС‚СЃСЏ РґРѕР±Р°РІРёС‚СЊ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёРµ unicode (РїРѕРєР° С‚Р°Рј Р·Р°РіР»СѓС€РєР°).
   ]]>
  </todo></appinfo>
 
@@ -48,29 +48,29 @@
 <entity name='hex' value="[0-9a-fA-F]"/>
 
 
-<scheme name="string"/>	<!-- Заглушка, на ее место подставлять строку языка -->
+<scheme name="string"/>	<!-- Р—Р°РіР»СѓС€РєР°, РЅР° РµРµ РјРµСЃС‚Рѕ РїРѕРґСЃС‚Р°РІР»СЏС‚СЊ СЃС‚СЂРѕРєСѓ СЏР·С‹РєР° -->
 
-<scheme name="code"> <!-- Заглушка, на ее место подставлять код языка -->
+<scheme name="code"> <!-- Р—Р°РіР»СѓС€РєР°, РЅР° РµРµ РјРµСЃС‚Рѕ РїРѕРґСЃС‚Р°РІР»СЏС‚СЊ РєРѕРґ СЏР·С‹РєР° -->
  <regexp match="/./" region0="def:Error" priority="low"/>
 </scheme>
 
-<!-- Базовый модуль -->
+<!-- Р‘Р°Р·РѕРІС‹Р№ РјРѕРґСѓР»СЊ -->
 
 <scheme name="std.base.core">
  <inherit scheme="string"/>
- <regexp match="/\\[dsw]/" region0="SymbClass"/>   <!-- Классы символов -->
- <regexp match="/\\[^a-z1-9]/" region0="Symbol"/> <!-- Квотирование -->
- <regexp match="/\\[nrt]/" region0="Symbol"/> <!-- спецсимволы  -->
+ <regexp match="/\\[dsw]/" region0="SymbClass"/>   <!-- РљР»Р°СЃСЃС‹ СЃРёРјРІРѕР»РѕРІ -->
+ <regexp match="/\\[^a-z1-9]/" region0="Symbol"/> <!-- РљРІРѕС‚РёСЂРѕРІР°РЅРёРµ -->
+ <regexp match="/\\[nrt]/" region0="Symbol"/> <!-- СЃРїРµС†СЃРёРјРІРѕР»С‹  -->
 </scheme>
 
-<scheme name="std.base"> <!-- Общее для всех частей регэкспа -->
+<scheme name="std.base"> <!-- РћР±С‰РµРµ РґР»СЏ РІСЃРµС… С‡Р°СЃС‚РµР№ СЂРµРіСЌРєСЃРїР° -->
  <inherit scheme="string"/>
- <regexp match="/[\^]/" region0="MetaSymb" priority="low"/><!-- Спецсимвол ^ -->
- <regexp match="/\\x%hex;{2}/" region0="Symbol"/> <!-- hex число  -->
- <regexp match="/\\[DSW]/" region0="SymbClass"/>   <!-- Классы символов -->
+ <regexp match="/[\^]/" region0="MetaSymb" priority="low"/><!-- РЎРїРµС†СЃРёРјРІРѕР» ^ -->
+ <regexp match="/\\x%hex;{2}/" region0="Symbol"/> <!-- hex С‡РёСЃР»Рѕ  -->
+ <regexp match="/\\[DSW]/" region0="SymbClass"/>   <!-- РљР»Р°СЃСЃС‹ СЃРёРјРІРѕР»РѕРІ -->
  <inherit scheme="std.base.core"/>
- <regexp match="/\\[0-9a-fA-F]/" region0="SpecOperator"/>	   <!-- Классы символов -->
- <regexp match="/\\./" region0="def:Error"/>       <!-- таких символов нет  -->
+ <regexp match="/\\[0-9a-fA-F]/" region0="SpecOperator"/>	   <!-- РљР»Р°СЃСЃС‹ СЃРёРјРІРѕР»РѕРІ -->
+ <regexp match="/\\./" region0="def:Error"/>       <!-- С‚Р°РєРёС… СЃРёРјРІРѕР»РѕРІ РЅРµС‚  -->
 </scheme>
 
 <scheme name="std.class"> <!-- class [] -->
@@ -81,9 +81,9 @@
 
 <scheme name="std.symbs">
  <inherit scheme="string"/>
- <regexp match="/[\.\*\+\$\?]/" region0="MetaSymb" priority="low"/> <!-- спецсимволы -->
- <regexp match="/\|/" region0="MetaSymbStrong" priority="low"/> <!-- спецсимвол | -->
- <regexp match="/\\[Bb]/i" region0="Operator"/> <!-- претензии (без \A\Z\z) -->
+ <regexp match="/[\.\*\+\$\?]/" region0="MetaSymb" priority="low"/> <!-- СЃРїРµС†СЃРёРјРІРѕР»С‹ -->
+ <regexp match="/\|/" region0="MetaSymbStrong" priority="low"/> <!-- СЃРїРµС†СЃРёРјРІРѕР» | -->
+ <regexp match="/\\[Bb]/i" region0="Operator"/> <!-- РїСЂРµС‚РµРЅР·РёРё (Р±РµР· \A\Z\z) -->
 </scheme>
 
 <scheme name="std.number">
@@ -140,16 +140,16 @@
 
 <scheme name="pcre.base">
  <inherit scheme="string"/>
- <regexp match="/\\o[0-7]{3}/" region0="Symbol"/> <!-- oct число  -->
- <regexp match="/\\[aenrtfv]/" region0="Symbol"/> <!-- спецсимволы  -->
- <regexp match="/\\c./" region0="Symbol"/>       <!-- спецсимволы  -->
- <regexp match="/\\[0-9a-fA-F]{2}/" region0="SpecOperator"/>	   <!-- Классы символов -->
+ <regexp match="/\\o[0-7]{3}/" region0="Symbol"/> <!-- oct С‡РёСЃР»Рѕ  -->
+ <regexp match="/\\[aenrtfv]/" region0="Symbol"/> <!-- СЃРїРµС†СЃРёРјРІРѕР»С‹  -->
+ <regexp match="/\\c./" region0="Symbol"/>       <!-- СЃРїРµС†СЃРёРјРІРѕР»С‹  -->
+ <regexp match="/\\[0-9a-fA-F]{2}/" region0="SpecOperator"/>	   <!-- РљР»Р°СЃСЃС‹ СЃРёРјРІРѕР»РѕРІ -->
  <inherit scheme="std.base"/>
 </scheme>
 
 <scheme name="pcre.symbs">
  <inherit scheme="std.symbs"/>
- <regexp match="/\\[BbZAa]/i" region0="Operator"/> <!-- претензии (\A\Z\z - в т.ч) -->
+ <regexp match="/\\[BbZAa]/i" region0="Operator"/> <!-- РїСЂРµС‚РµРЅР·РёРё (\A\Z\z - РІ С‚.С‡) -->
 </scheme>
 
 <scheme name="pcre.choise">
@@ -173,7 +173,7 @@
 </scheme>
 
 
-<!-- Регексп в общем виде -->
+<!-- Р РµРіРµРєСЃРї РІ РѕР±С‰РµРј РІРёРґРµ -->
 <scheme name="pcre.regexp">
  <inherit scheme="string"/>
  <block start="/(\()(\?&lt;?[\=\!])/" end="/(\))/" scheme="pcre.regexp"
@@ -327,14 +327,14 @@
 </scheme>
 
 <scheme name="perl.string">
- <!-- Сведено вместе то, что есть в строках  перла и убрано то, чего там нет -->
+ <!-- РЎРІРµРґРµРЅРѕ РІРјРµСЃС‚Рµ С‚Рѕ, С‡С‚Рѕ РµСЃС‚СЊ РІ СЃС‚СЂРѕРєР°С…  РїРµСЂР»Р° Рё СѓР±СЂР°РЅРѕ С‚Рѕ, С‡РµРіРѕ С‚Р°Рј РЅРµС‚ -->
  <inherit scheme="string"/>
- <regexp match="/\\[nrtfbae]/" region0="Symbol"/> <!-- спецсимволы  -->
+ <regexp match="/\\[nrtfbae]/" region0="Symbol"/> <!-- СЃРїРµС†СЃРёРјРІРѕР»С‹  -->
  <inherit scheme="perl.unicode.liter.bracket"/>
- <regexp match="/\\c./" region0="Symbol"/>       <!-- спецсимволы  -->
- <regexp match="/\\x%hex;{2}/" region0="Symbol"/> <!-- hex число  -->
- <regexp match="/\\o[0-7]*/" region0="def:Error"/> <!-- HЕ oct число  -->
- <regexp match="/\\[0-7]{3}/" region0="Symbol"/> <!-- oct число  -->
+ <regexp match="/\\c./" region0="Symbol"/>       <!-- СЃРїРµС†СЃРёРјРІРѕР»С‹  -->
+ <regexp match="/\\x%hex;{2}/" region0="Symbol"/> <!-- hex С‡РёСЃР»Рѕ  -->
+ <regexp match="/\\o[0-7]*/" region0="def:Error"/> <!-- HР• oct С‡РёСЃР»Рѕ  -->
+ <regexp match="/\\[0-7]{3}/" region0="Symbol"/> <!-- oct С‡РёСЃР»Рѕ  -->
 </scheme>
 
 <scheme name="perl.base">
@@ -381,7 +381,7 @@
  <inherit scheme="perl.posix.liter.bracket">
   <virtual scheme="perl.posix.liter.class" subst-scheme="unicode.charter"/>
  </inherit>
- <regexp match="/\\[CISDWcisdw]/" region0="SymbClass"/>   <!-- Классы символов -->
+ <regexp match="/\\[CISDWcisdw]/" region0="SymbClass"/>   <!-- РљР»Р°СЃСЃС‹ СЃРёРјРІРѕР»РѕРІ -->
  <regexp match="/&amp;\#(x?%hex;+|\d+)\;/" region="def:Number"/>
  <regexp match="/\$/" region="def:String"/>
  <regexp match="/\[?~1\^/" region="def:String"/>
@@ -418,11 +418,11 @@
  <inherit scheme="string"/>
  <regexp match="/\\x(\{)(%hex;+)(\})/" region0="Symbol"
   region1="def:PairStart" region2="def:NumberHex" region3="def:PairEnd"
- /> <!-- hex число  -->
+ /> <!-- hex С‡РёСЃР»Рѕ  -->
  <regexp match="/\\u%hex;{4}/" region0="Symbol"/>
  <!--regexp match="/&amp;((lt)|(gt)|(amp)|(quot));/" region0="dParam2"/>
  <regexp match="/&lt;|&amp;/" region0="def:Error"/-->
- <regexp match="/\\[ul]/" region0="SymbClass"/>   <!-- Классы символов -->
+ <regexp match="/\\[ul]/" region0="SymbClass"/>   <!-- РљР»Р°СЃСЃС‹ СЃРёРјРІРѕР»РѕРІ -->
  <inherit scheme="std.base"/>
 </scheme>
 
@@ -431,14 +431,14 @@
  <inherit scheme="string"/>
  <inherit scheme="hrc.region.bracket"/>
  <regexp match="/\\[ypYP]%hex;/i" region0="SpecOperator"/>  <!-- colorer operators -->
- <regexp match="/\?[\#\~]\d+/" region0="Operator"/>  <!-- операторы просмотра -->
- <regexp match="/\?[\!\=]/" region0="Operator"/>  <!-- операторы просмотра -->
- <regexp match="/\~/" region0="SpecOperator"/>			 <!-- спецсимволы -->
- <regexp match="/\\C/i" region0="SymbClass"/>	   <!-- Классы символов -->
+ <regexp match="/\?[\#\~]\d+/" region0="Operator"/>  <!-- РѕРїРµСЂР°С‚РѕСЂС‹ РїСЂРѕСЃРјРѕС‚СЂР° -->
+ <regexp match="/\?[\!\=]/" region0="Operator"/>  <!-- РѕРїРµСЂР°С‚РѕСЂС‹ РїСЂРѕСЃРјРѕС‚СЂР° -->
+ <regexp match="/\~/" region0="SpecOperator"/>			 <!-- СЃРїРµС†СЃРёРјРІРѕР»С‹ -->
+ <regexp match="/\\C/i" region0="SymbClass"/>	   <!-- РљР»Р°СЃСЃС‹ СЃРёРјРІРѕР»РѕРІ -->
  <regexp match="/\\[mM]/i" region0="SpecOperator"/>  <!-- colorer operators -->
 
  <!-- xml entities
-  ...к регекспам никакого отношения не имеют
+  ...Рє СЂРµРіРµРєСЃРїР°Рј РЅРёРєР°РєРѕРіРѕ РѕС‚РЅРѕС€РµРЅРёСЏ РЅРµ РёРјРµСЋС‚
  <regexp match="/\\&amp;\#(x?%hex;+|\d+)\;/" region="def:Number"/>
  <regexp match="/\\&amp;(%xml:NCName;)\;/" region="def:Number"/>
 

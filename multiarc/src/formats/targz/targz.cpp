@@ -142,7 +142,6 @@ char *AdjustTARFileName(char *FileName);
 static int64_t Oct2Size (const char *where0, size_t digs0);
 
 HANDLE ArcHandle;
-DWORD SFXSize;
 FAR_INT64 NextPosition,FileSize;
 int ArcType;
 enum archive_format TarArchiveFormat;
@@ -166,7 +165,6 @@ void WINAPI UnixTimeToFileTime( DWORD time, FILETIME * ft );
 
 BOOL WINAPI _export TARGZ_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
-  SFXSize=0;
   if (IsTarHeader(Data,DataSize))
   {
     ArcType=TAR_FORMAT;
@@ -177,9 +175,7 @@ BOOL WINAPI _export TARGZ_IsArchive(const char *Name,const unsigned char *Data,i
     return(FALSE);
 
   if (Data[0]==0x1f && Data[1]==0x8b)
-  {
     ArcType=GZ_FORMAT;
-  }
   else if (Data[0]==0x1f && Data[1]==0x9d)
     ArcType=Z_FORMAT;
   else if (Data[0]=='B' && Data[1]=='Z')
@@ -223,7 +219,7 @@ BOOL WINAPI _export TARGZ_OpenArchive(const char *Name,int *Type)
 
 DWORD WINAPI _export TARGZ_GetSFXPos(void)
 {
-  return SFXSize;
+  return 0;
 }
 
 int WINAPI _export TARGZ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)

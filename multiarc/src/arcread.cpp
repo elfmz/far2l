@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include "MultiArc.hpp"
 #include "marclng.hpp"
 
@@ -47,12 +48,9 @@ void PluginClass::FreeArcData()
 
 int PluginClass::PreReadArchive(const char *Name)
 {
-  HANDLE ArcFindHandle;
-  ArcFindHandle=WINPORT(FindFirstFile)(MB2Wide(Name).c_str(), &ArcFindData);
-  WINPORT(FindClose)(ArcFindHandle);
-
-  if (ArcFindHandle==INVALID_HANDLE_VALUE)
+  if (sdc_stat(Name, &ArcStat) == -1) {
     return FALSE;
+  }
 
   strcpy(ArcName,Name);
 
@@ -68,11 +66,7 @@ int PluginClass::ReadArchive(const char *Name)
   FreeArcData();
   DizPresent=FALSE;
 
-  HANDLE ArcFindHandle;
-  ArcFindHandle=WINPORT(FindFirstFile)(MB2Wide(Name).c_str(),&ArcFindData);
-  WINPORT(FindClose)(ArcFindHandle);
-
-  if (ArcFindHandle==INVALID_HANDLE_VALUE)
+  if (sdc_stat(Name, &ArcStat) == -1)
     return FALSE;
 
   if (!ArcPlugin->OpenArchive(ArcPluginNumber,Name,&ArcPluginType))
@@ -258,42 +252,46 @@ int PluginClass::ReadArchive(const char *Name)
   return TRUE;
 }
 
+bool PluginClass::EnsureFindDataUpToDate()
+{
+  if (ArcData != NULL)
+  {
+    struct stat NewArcStat{};
+    if (sdc_stat(ArcName, &NewArcStat) == -1)
+      return false;
+
+    if (ArcStat.st_mtime == NewArcStat.st_mtime && ArcStat.st_size == NewArcStat.st_size)
+      return true;
+  }
+
+  DWORD size = (DWORD)Info.AdvControl(Info.ModuleNumber,ACTL_GETPLUGINMAXREADDATA,(void *)0);
+  int fd = sdc_open(ArcName, O_RDONLY);
+  if (fd == -1)
+      return false;
+
+  unsigned char *Data = (unsigned char *)malloc(size);
+  ssize_t read_size = Data ? sdc_read(fd, Data, size) : -1;
+  sdc_close(fd);
+
+  if (read_size <= 0)
+      return false;
+
+  DWORD SFXSize = 0;
+
+  bool ReadArcOK = (ArcPlugin->IsArchive(ArcPluginNumber, ArcName, Data, read_size, &SFXSize)
+              && ReadArchive(ArcName));
+
+  free(Data);
+
+  return ReadArcOK;
+}
 
 int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode)
 {
-  HANDLE ArcFindHandle;
-  WIN32_FIND_DATA NewArcFindData;
-  ArcFindHandle=WINPORT(FindFirstFile)(MB2Wide(ArcName).c_str(),&NewArcFindData);
-  WINPORT(FindClose)(ArcFindHandle);
-
-  if (ArcFindHandle==INVALID_HANDLE_VALUE)
+  if (!EnsureFindDataUpToDate())
     return FALSE;
 
-  if (WINPORT(CompareFileTime)(&NewArcFindData.ftLastWriteTime,&ArcFindData.ftLastWriteTime)!=0 ||
-      NewArcFindData.nFileSizeLow!=ArcFindData.nFileSizeLow || ArcData==NULL)
-  {
-    BOOL ReadArcOK=FALSE;
-    DWORD size = (DWORD)Info.AdvControl(Info.ModuleNumber,ACTL_GETPLUGINMAXREADDATA,(void *)0);
-    HANDLE h=WINPORT(CreateFile)(MB2Wide(ArcName).c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-    if (h!=INVALID_HANDLE_VALUE)
-    {
-      unsigned char *Data=new unsigned char[size];
-      DWORD read;
-      int ret = WINPORT(ReadFile)(h, Data, size, &read, 0);
-      WINPORT(CloseHandle)(h);
-      if (Data && ret)
-      {
-        DWORD SFXSize;
-        if (ArcPlugin->IsArchive(ArcPluginNumber, ArcName, Data, read, &SFXSize))
-        {
-          ReadArcOK=ReadArchive(ArcName);
-        }
-      }
-      delete[] Data;
-    }
-    if (!ReadArcOK) return FALSE;
-  }
-  int CurDirLength=strlen(CurDir);
+  size_t CurDirLength = strlen(CurDir);
   *pPanelItem=NULL;
   *pItemsNumber=0;
   int AlocatedItemsNumber=0;
@@ -302,7 +300,7 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
     char Name[NM];
     PluginPanelItem CurItem=ArcData[I];
     BOOL Append=FALSE;
-    strcpy(Name,CurItem.FindData.cFileName);
+    strncpy(Name,CurItem.FindData.cFileName, sizeof(Name) - 1);
 
     if (Name[0]==GOOD_SLASH)
       Append=TRUE;
@@ -310,7 +308,7 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
     if (Name[0]=='.' && (Name[1]==GOOD_SLASH || (Name[1]=='.' && Name[2]==GOOD_SLASH)))
       Append=TRUE;
 
-    if (!Append && strlen(Name)>CurDirLength && 
+    if (!Append && strlen(Name) > CurDirLength && 
 		strncmp(Name,CurDir,CurDirLength)==0 && (CurDirLength==0 || Name[CurDirLength]==GOOD_SLASH))
     {
       char *StartName,*EndName;

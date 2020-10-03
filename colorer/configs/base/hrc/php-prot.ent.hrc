@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="Windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <param xmlns="http://colorer.sf.net/2003/hrc" name="Include-Apache-specific"
        description="I. Apache-specific Functions"
        value="true"/>

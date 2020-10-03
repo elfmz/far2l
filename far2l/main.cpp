@@ -360,25 +360,16 @@ int MainProcessWithInterThreadCallsDispatching(FARString& strEditViewArg,FARStri
 static void SetupFarPath(int argc, char **argv)
 {
 	InitCurrentDirectory();
+
 	char buf[PATH_MAX + 1] = {};
 	ssize_t buf_sz = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-	if (buf_sz <= 0 || buf_sz >= (ssize_t)sizeof(buf) - 1 || buf[0] != GOOD_SLASH) {
-		if (argv[0][0]!=GOOD_SLASH) {
-			apiGetCurrentDirectory(g_strFarModuleName);
-			if (argv[0][0]=='.') {
-				g_strFarModuleName+= argv[0] + 1;
-			} else {
-				g_strFarModuleName+= GOOD_SLASH;
-				g_strFarModuleName+= argv[0];
-			}
-		} else
-			g_strFarModuleName = argv[0];			
-	} else {
+	if (buf_sz > 0 && buf_sz < (ssize_t)sizeof(buf) - 1 && buf[0] == GOOD_SLASH) {
 		buf[buf_sz] = 0;
 		g_strFarModuleName = buf;
+
+	} else {
+		g_strFarModuleName = LookupExecutable(argv[0]);
 	}
-			
-	
 
 	FARString dir = g_strFarModuleName;
 	CutToSlash(dir, true);
@@ -634,15 +625,15 @@ int FarAppMain(int argc, char **argv)
 		switch(Lang.GetLastError())
 		{
 		case LERROR_BAD_FILE:
-			LngMsg = L"\nError: language data is incorrect or damaged.\n\nPress any key to exit...";
+			LngMsg = L"\nError: language data is incorrect or damaged. Press any key to exit...";
 			break;
 		case LERROR_FILE_NOT_FOUND:
-			LngMsg = L"\nError: cannot find language data.\n\nPress any key to exit...";
+			LngMsg = L"\nError: cannot find language data. Press any key to exit...";
 			break;
 		default:
-			LngMsg = L"\nError: cannot load language data.\n\nPress any key to exit...";
-			break;
+			LngMsg = L"\nError: cannot load language data. Press any key to exit...";
 		}
+		Console.SetCursorPosition(COORD{0, 1});
 		Console.Write(LngMsg,StrLength(LngMsg));
 		Console.FlushInputBuffer();
 		WaitKey(); // А стоит ли ожидать клавишу??? Стоит

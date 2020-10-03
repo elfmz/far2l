@@ -11,6 +11,7 @@
 "NetRocks options"
 "Enable desktop &notifications"
 "<&ENTER> to execute files remotely when possible"
+"Smart &symlinks copying"
 "Copy attributes that override &umask"
 "Connections pool e&xpiration (seconds):"
 "Connect using &proxy (requires tsocks library)"
@@ -111,6 +112,10 @@
 
 "Remove connection site(s)"
 "Remove selected connection site(s) settings?"
+"Copy connection site(s)"
+"Copy selected connection site(s) settings?"
+"Move connection site(s)"
+"Move selected connection site(s) settings?"
 
 "Create directory"
 "Enter name of directory to create:"
@@ -121,6 +126,7 @@
 "Applying mode"
 "Enumerating directory"
 "Creating directory"
+"Executing command"
 
 "Aborting operation"
 "Confirm abort current operation"
@@ -182,6 +188,10 @@
 
 "SFTP protocol options"
 "SCP protocol options"
+"&Authentification:"
+"&Username and password"
+"&Private key file path:"
+"&SSH-agent (by ${SSH_AUTH_SOCK})"
 "Private &key file path:"
 "Custom &subsystem request/exec:"
 "Max &read block size, bytes:"
@@ -209,6 +219,7 @@
 "G&roups:"
 
 "WebDAV Protocol options"
+"User a&gent:"
 "Connect via pro&xy:"
 "Proxy &host:"
 "Proxy &port:"
@@ -228,3 +239,15 @@
 "Set &UID"
 "Set &GID"
 "S&ticky"
+
+"FTP Protocol Options"
+"FTPS Protocol Options"
+"E&xplicit encryption"
+"Minimal &encryption protocol"
+"Server &codepage"
+"&Passive mode"
+"Use &MLSD/MLST if possible"
+"Enable commands pipe&lining"
+"En&sure data connection peer matches server"
+"Enable &TCP_NODELAY option"
+"Enable TCP_&QUICKACK option"

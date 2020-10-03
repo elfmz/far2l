@@ -4,6 +4,8 @@
 #include <functional>
 
 
+wxEvtHandler *WinPort_EventHandler();
+
 template <class FN>
 	class InMainCallerBase
 {
@@ -30,7 +32,7 @@ public:
 	void Do()
 	{
 		_done = false;
-		wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter(std::bind(&InMainCallerBase::Callback, this));
+		WinPort_EventHandler()->CallAfter(std::bind(&InMainCallerBase::Callback, this));
 		for (;;) {
 			std::unique_lock<std::mutex> locker(_mutex);
 			if (_done) break;

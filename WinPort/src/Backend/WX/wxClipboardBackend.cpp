@@ -49,27 +49,32 @@ static wxDataObjectComposite *g_wx_data_to_clipboard = nullptr;
 
 wxClipboardBackend::wxClipboardBackend()
 {
-	_default_backend = WinPortClipboard_SetBackend(this);
 }
 
 wxClipboardBackend::~wxClipboardBackend()
 {
-	WinPortClipboard_SetBackend(_default_backend);
 }
 
 bool wxClipboardBackend::OnClipboardOpen()
 {
 	if (!wxIsMainThread()) {
-		auto fn = std::bind(&wxClipboardBackend::OnClipboardOpen, this);
-		return CallInMain<bool>(fn);
+		for (int attempt = 1; attempt <= 5; ++attempt) {
+			auto fn = std::bind(&wxClipboardBackend::OnClipboardOpen, this);
+			if (CallInMain<bool>(fn)) {
+				return true;
+			}
+			usleep(20000 * attempt);
+		}
+		return false;
 	}
 		
 	if (!wxTheClipboard->Open()) {
 		fprintf(stderr, "OpenClipboard - FAILED\n");
-		return FALSE;
+		return false;
 	}
+
 	fprintf(stderr, "OpenClipboard\n");
-	return TRUE;
+	return true;
 }
 
 void wxClipboardBackend::OnClipboardClose()
@@ -79,11 +84,18 @@ void wxClipboardBackend::OnClipboardClose()
 		CallInMainNoRet(fn);
 		return;
 	}
-	fprintf(stderr, "CloseClipboard\n");
 
 	if (g_wx_data_to_clipboard) {
-		wxTheClipboard->SetData( g_wx_data_to_clipboard);
+		if (wxTheClipboard->SetData( g_wx_data_to_clipboard) ) {
+			fprintf(stderr, "wxTheClipboard->SetData - OK\n");
+
+		} else {
+			fprintf(stderr, "wxTheClipboard->SetData - FAILED\n");
+		}
 		g_wx_data_to_clipboard = nullptr;
+
+	} else {
+		fprintf(stderr, "CloseClipboard without data\n");
 	}
 	wxTheClipboard->Flush();
 	wxTheClipboard->Close();
@@ -112,6 +124,7 @@ bool wxClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 		
 	if (format==CF_UNICODETEXT || format==CF_TEXT) {
 		return wxTheClipboard->IsSupported( wxDF_TEXT ) ? TRUE : FALSE;
+
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
 		if (!data_format) {
@@ -131,20 +144,22 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	}
 		
 	size_t len = GetMallocSize(data);
-	fprintf(stderr, "SetClipboardData: %u\n", format);
+	fprintf(stderr, "SetClipboardData: format=%u len=%lu\n", format, (unsigned long)len);
 	if (!g_wx_data_to_clipboard) {
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
 	}
 	if (format==CF_UNICODETEXT) {
-		g_wx_data_to_clipboard->Add(new wxTextDataObject((const wchar_t *)data), true);
+		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString((const wchar_t *)data)));
+
 	} else if (format==CF_TEXT) {
-		g_wx_data_to_clipboard->Add(new wxTextDataObject((const char *)data));
+		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString((const char *)data)));
+
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
 		if (!data_format) {
 			fprintf(stderr, 
-				"SetClipboardData(%u, %p [%u]) - unrecognized format\n", 
-				format, data, (unsigned int)len);
+				"SetClipboardData(%u, %p [%lu]) - unrecognized format\n",
+				format, data, (unsigned long)len);
 		} else {
 			wxCustomDataObject *dos = new wxCustomDataObject(*data_format);
 			dos->SetData(len, data);		

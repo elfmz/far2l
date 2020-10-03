@@ -16,8 +16,9 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	XferKind _kind;
 	XferDirection _direction;
 	IOBuffer _io_buf;
+	bool _smart_symlinks_copy;
+	bool _umask_override;
 	bool _on_site_move = false;
-	bool _umask_override = false;
 
 	virtual void Process();
 

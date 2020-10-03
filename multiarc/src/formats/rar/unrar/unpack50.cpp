@@ -7,7 +7,12 @@ void Unpack::Unpack5(bool Solid)
     UnpInitData(Solid);
     if (!UnpReadBuf())
       return;
-    if (!ReadBlockHeader(Inp,BlockHeader) || !ReadTables(Inp,BlockHeader,BlockTables))
+
+    // Check TablesRead5 to be sure that we read tables at least once
+    // regardless of current block header TablePresent flag.
+    // So we can safefly use these tables below.
+    if (!ReadBlockHeader(Inp,BlockHeader) ||
+        !ReadTables(Inp,BlockHeader,BlockTables) || !TablesRead5)
       return;
   }
 
@@ -37,7 +42,7 @@ void Unpack::Unpack5(bool Solid)
         break;
     }
 
-    if (((WriteBorder-UnpPtr) & MaxWinMask)<MAX_LZ_MATCH+3 && WriteBorder!=UnpPtr)
+    if (((WriteBorder-UnpPtr) & MaxWinMask)<MAX_INC_LZ_MATCH && WriteBorder!=UnpPtr)
     {
       UnpWriteBuf();
       if (WrittenFileSize>DestUnpSize)
@@ -173,6 +178,8 @@ bool Unpack::ReadFilter(BitInput &Inp,UnpackFilter &Filter)
 
   Filter.BlockStart=ReadFilterData(Inp);
   Filter.BlockLength=ReadFilterData(Inp);
+  if (Filter.BlockLength>MAX_FILTER_BLOCK_SIZE)
+    Filter.BlockLength=0;
 
   Filter.Type=Inp.fgetbits()>>13;
   Inp.faddbits(3);
@@ -292,7 +299,7 @@ void Unpack::UnpWriteBuf()
       }
       if (BlockLength<=WriteSizeLeft)
       {
-        if (BlockLength>0)
+        if (BlockLength>0) // We set it to 0 also for invalid filters.
         {
           uint BlockEnd=(BlockStart+BlockLength)&MaxWinMask;
 
@@ -398,9 +405,11 @@ byte* Unpack::ApplyFilter(byte *Data,uint DataSize,UnpackFilter *Flt)
       {
         uint FileOffset=(uint)WrittenFileSize;
 
-        const int FileSize=0x1000000;
+        const uint FileSize=0x1000000;
         byte CmpByte2=Flt->Type==FILTER_E8E9 ? 0xe9:0xe8;
-        for (uint CurPos=0;(int)CurPos<(int)DataSize-4;)
+        // DataSize is unsigned, so we use "CurPos+4" and not "DataSize-4"
+        // to avoid overflow for DataSize<4.
+        for (uint CurPos=0;CurPos+4<DataSize;)
         {
           byte CurByte=*(Data++);
           CurPos++;
@@ -427,9 +436,15 @@ byte* Unpack::ApplyFilter(byte *Data,uint DataSize,UnpackFilter *Flt)
       }
       return SrcData;
     case FILTER_ARM:
+      // 2019-11-15: we turned off ARM filter by default when compressing,
+      // mostly because it is inefficient for modern 64 bit ARM binaries.
+      // It was turned on by default in 5.0 - 5.80b3 , so we still need it
+      // here for compatibility with some of previously created archives.
       {
         uint FileOffset=(uint)WrittenFileSize;
-        for (uint CurPos=0;(int)CurPos<(int)DataSize-3;CurPos+=4)
+        // DataSize is unsigned, so we use "CurPos+3" and not "DataSize-3"
+        // to avoid overflow for DataSize<3.
+        for (uint CurPos=0;CurPos+3<DataSize;CurPos+=4)
         {
           byte *D=Data+CurPos;
           if (D[3]==0xeb) // BL command with '1110' (Always) condition.
@@ -445,6 +460,8 @@ byte* Unpack::ApplyFilter(byte *Data,uint DataSize,UnpackFilter *Flt)
       return SrcData;
     case FILTER_DELTA:
       {
+        // Unlike RAR3, we do not need to reject excessive channel
+        // values here, since RAR5 uses only 5 bits to store channel.
         uint Channels=Flt->Channels,SrcPos=0;
 
         FilterDstMemory.Alloc(DataSize);
@@ -508,6 +525,13 @@ void Unpack::UnpWriteData(byte *Data,size_t Size)
 }
 
 
+void Unpack::UnpInitData50(bool Solid)
+{
+  if (!Solid)
+    TablesRead5=false;
+}
+
+
 bool Unpack::ReadBlockHeader(BitInput &Inp,UnpackBlockHeader &Header)
 {
   Header.HeaderSize=0;
@@ -516,11 +540,11 @@ bool Unpack::ReadBlockHeader(BitInput &Inp,UnpackBlockHeader &Header)
     if (!UnpReadBuf())
       return false;
   Inp.faddbits((8-Inp.InBit)&7);
-  
+
   byte BlockFlags=Inp.fgetbits()>>8;
   Inp.faddbits(8);
   uint ByteCount=((BlockFlags>>3)&3)+1; // Block size byte count.
-  
+
   if (ByteCount==4)
     return false;
 
@@ -562,13 +586,13 @@ bool Unpack::ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTable
       return false;
 
   byte BitLength[BC];
-  for (int I=0;I<BC;I++)
+  for (uint I=0;I<BC;I++)
   {
-    int Length=(byte)(Inp.fgetbits() >> 12);
+    uint Length=(byte)(Inp.fgetbits() >> 12);
     Inp.faddbits(4);
     if (Length==15)
     {
-      int ZeroCount=(byte)(Inp.fgetbits() >> 12);
+      uint ZeroCount=(byte)(Inp.fgetbits() >> 12);
       Inp.faddbits(4);
       if (ZeroCount==0)
         BitLength[I]=15;
@@ -587,13 +611,13 @@ bool Unpack::ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTable
   MakeDecodeTables(BitLength,&Tables.BD,BC);
 
   byte Table[HUFF_TABLE_SIZE];
-  const int TableSize=HUFF_TABLE_SIZE;
-  for (int I=0;I<TableSize;)
+  const uint TableSize=HUFF_TABLE_SIZE;
+  for (uint I=0;I<TableSize;)
   {
     if (!Inp.ExternalBuffer && Inp.InAddr>ReadTop-5)
       if (!UnpReadBuf())
         return false;
-    int Number=DecodeNumber(Inp,&Tables.BD);
+    uint Number=DecodeNumber(Inp,&Tables.BD);
     if (Number<16)
     {
       Table[I]=Number;
@@ -602,7 +626,7 @@ bool Unpack::ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTable
     else
       if (Number<18)
       {
-        int N;
+        uint N;
         if (Number==16)
         {
           N=(Inp.fgetbits() >> 13)+3;
@@ -613,7 +637,16 @@ bool Unpack::ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTable
           N=(Inp.fgetbits() >> 9)+11;
           Inp.faddbits(7);
         }
-        if (I>0)
+        if (I==0)
+        {
+          // We cannot have "repeat previous" code at the first position.
+          // Multiple such codes would shift Inp position without changing I,
+          // which can lead to reading beyond of Inp boundary in mutithreading
+          // mode, where Inp.ExternalBuffer disables bounds check and we just
+          // reserve a lot of buffer space to not need such check normally.
+          return false;
+        }
+        else
           while (N-- > 0 && I<TableSize)
           {
             Table[I]=Table[I-1];
@@ -622,7 +655,7 @@ bool Unpack::ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTable
       }
       else
       {
-        int N;
+        uint N;
         if (Number==18)
         {
           N=(Inp.fgetbits() >> 13)+3;
@@ -637,6 +670,7 @@ bool Unpack::ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTable
           Table[I++]=0;
       }
   }
+  TablesRead5=true;
   if (!Inp.ExternalBuffer && Inp.InAddr>ReadTop)
     return false;
   MakeDecodeTables(&Table[0],&Tables.LD,NC);

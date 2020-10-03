@@ -1,10 +1,10 @@
 # far2l
 Linux port of FAR Manager v2 (http://farmanager.com/)   
-Works also on OSX and BSD (but later not tested on regular manner)   
+Works also on OSX/MacOS and BSD (but later not tested on regular manner)   
 ALPHA VERSION.   
 **Currently interesting only for enthusiasts!!!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SCP/SMB/NFS/WebDAV), colorer, multiarc, farftp, tmppanel, align, autowrap, drawline, editcase, SimpleIndent
+Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, align, autowrap, drawline, editcase, SimpleIndent, Python (optional scripting support)
 
 [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 
@@ -23,20 +23,27 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/SMB/NFS/WebDAV), colorer
 
 * gawk
 * m4
-* libglib2.0-dev
-* libwxgtk3.0-dev
+* libwxgtk3.0-dev (or in Ubuntu 19.04+ - libwxgtk3.0-gtk3-dev)
+* libxerces-c-dev
+* libminizip-dev
+* libspdlog-dev
 * libssh-dev (needed for NetRocks/SFTP)
+* libssl-dev (needed for NetRocks/FTPS)
 * libsmbclient-dev (needed for NetRocks/SMB)
 * libnfs-dev (needed for NetRocks/NFS)
 * libneon27-dev (or later, needed for NetRocks/WebDAV)
+* libarchive-dev (needed for better archives support in multiarc)
+* libpcre2-dev (needed for custom archives support in multiarc)
 * cmake ( >= 3.2.2 )
 * g++
 * git (needed for downloading source code)
 
-#### Or simply on Ubuntu:
+#### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install gawk m4 libglib2.0-dev libwxgtk3.0-dev libssh-dev libsmbclient-dev libnfs-dev libneon27-dev cmake g++ git
+apt-get install gawk m4 libwxgtk3.0-dev libxerces-c-dev libminizip-dev libspdlog-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+
 ```
+(if in Ubuntu 19.04+ or other that has missing libwxgtk3.0-dev - try libwxgtk3.0-gtk3-dev)
 
 #### Clone and Build
 
@@ -57,7 +64,7 @@ cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
 
-#### OSX install
+#### OSX/MacOS install
 
  * Supported compiler: ```AppleClang 8.0.0.x``` or newer. Check your version, and install/update XCode if necessary.
  ```sh
@@ -69,7 +76,7 @@ ninja -j4
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-##### One line OSX install
+##### One line OSX/MacOS install
 
  * Install stable far2l via unofficial brew tap:
 ```sh
@@ -81,10 +88,10 @@ brew install yurikoles/yurikoles/far2l
 brew install yurikoles/yurikoles/far2l --HEAD
 ```
 
-##### Hard way OSX install - with building from sources:
+##### Hard way OSX/MacOS install - with building from sources:
  * Install required packages:
 ```sh
-brew install cmake gawk glib ninja pkg-config wget wxmac libssh libnfs neon
+brew install cmake gawk ninja pkg-config wget wxmac xerces-c minizip spdlog libssh libnfs neon libarchive pcre
 ```
 
  * Clone:
@@ -96,27 +103,51 @@ cd build
 ```
 _with make:_
 ``` sh
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 ``` 
 _or with ninja_
 ``` sh
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j4
 ```
 
 To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no
 
+To build with Python plugin: add argument -DPYTHON=yes
+
+Building with MacPorts (when wxWidgets.framework is not installed system-wide):
+
+``` sh
+cmake .. \
+  -DwxWidgets_CONFIG_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config \
+  -DwxWidgets_wxrc_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc
+```
+
+#### Building DMG, DEB and TGZ packages
+
+Pleas follow CMake related instructions from previous step to build the project, then run:
+``` sh
+cpack
+```
+
+to generate the following packages (depending on architecture):
+- far2l-2.X.X.dmg
+- far2l_2.X.X_ARCH.deb 
+- far2l-2.X.X.tar.gz
+
+All packages can be found in `build` folder.
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
 
  * **QtCreator**: select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
- * **CodeLite**: use this guide to setup a project: http://codelite.org/LiteEditor/WorkingWithCMake (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
+ * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
 
-#### Useful add-ons
+#### Useful 3rd-party tools
 
- * A collection of macros: https://github.com/corporateshark/far2l-macros
+ * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros
+ * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/unxed/putty4far2l
 
 ## Notes on porting
 

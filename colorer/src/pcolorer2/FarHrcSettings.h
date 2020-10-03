@@ -1,25 +1,24 @@
 #ifndef _FARHRCSETTINGS_H_
 #define _FARHRCSETTINGS_H_
 
-#include<xml/xmldom.h>
-#include<colorer/parsers/helpers/FileTypeImpl.h>
-#include<colorer/HRCParser.h>
-#include<colorer/ParserFactory.h>
+#include <colorer/parsers/FileTypeImpl.h>
+#include <colorer/HRCParser.h>
+#include <colorer/parsers/ParserFactory.h>
+#include <colorer/unicode/SString.h>
 
 #include"pcolorer.h"
 
 #define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 50 // in msdn 16383 , but we have enough 50
 
-const wchar_t FarCatalogXml[]=L"/base/catalog.xml";
-const wchar_t FarProfileXml[]=L"/plug/hrcsettings.xml";
-
+extern const char* FarCatalogXml;
+extern const char* FarProfileXml;
 
 class FarHrcSettingsException : public Exception{
 public:
   FarHrcSettingsException(){};
   FarHrcSettingsException(const String& msg){
-    message->append(DString("FarHrcSettingsException: ")).append(msg);
+    what_str.append(SString("FarHrcSettingsException: ")).append(msg);
   };
 };
 
@@ -34,7 +33,7 @@ public:
   void writeUserProfile();
 
 private:
-  void UpdatePrototype(Element *elem, bool userValue);
+  void UpdatePrototype(xercesc::DOMElement* elem, bool userValue);
   void readProfileFromRegistry(HKEY dwKey);
   void writeProfileToRegistry();
 

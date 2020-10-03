@@ -1,20 +1,9 @@
 
 project(WinPort)
 
-find_package(PkgConfig REQUIRED)
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
-    set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
-endif()
-
 if (${USEWX})
-	find_package(wxWidgets REQUIRED net core base)
 	include(${wxWidgets_USE_FILE})
 endif()
-
-pkg_check_modules(GLIB2 glib-2.0)
-
 
 add_subdirectory(wineguts)
 
@@ -77,7 +66,6 @@ if (NOT ${USEWX})
 endif()
 
 
-target_include_directories(WinPort PRIVATE ${GLIB2_INCLUDE_DIRS})
 target_include_directories(WinPort PRIVATE ${USEWX_INCS})
 
 target_include_directories(WinPort PRIVATE .)
@@ -92,11 +80,4 @@ if(THREADS_HAVE_PTHREAD_ARG)
 endif()
 if(CMAKE_THREAD_LIBS_INIT)
   target_link_libraries(WinPort "${CMAKE_THREAD_LIBS_INIT}")
-endif()
-
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries(WinPort glib-2.0 -L/usr/local/lib)
-else()
-    target_link_libraries(WinPort ${GLIB2_LIBRARIES})
 endif()

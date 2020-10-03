@@ -13,6 +13,8 @@
 #include "../Globals.h"
 #include "OpExecute.h"
 
+#include "../UI/Activities/SimpleOperationProgress.h"
+
 static int g_fd_ctl = -1;
 
 static bool FDCtl_VTSize()
@@ -148,10 +150,9 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 }
 
 
-OpExecute::OpExecute(std::shared_ptr<IHost> &host, const std::string &dir, const std::string &command)
+OpExecute::OpExecute(int op_mode, std::shared_ptr<IHost> &host, const std::string &dir, const std::string &command)
 	:
-	_host(host),
-	_dir(dir),
+	OpBase(op_mode, host, dir),
 	_command(command)
 {
 }
@@ -160,13 +161,34 @@ OpExecute::~OpExecute()
 {
 }
 
+void OpExecute::Process()
+{
+	_base_host->ExecuteCommand(_base_dir, _command, _fifo.FileName());
+	_status = 0;
+}
+
 void OpExecute::Do()
 {
-	_host->ExecuteCommand(_dir, _command, _fifo.FileName());
-	int r = G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo.FileName()).c_str(), EF_NOCMDPRINT);
+	_status = -1;
+
+	if (!StartThread()) {
+		;
+
+	} else if (IS_SILENT(_op_mode)) {
+		WaitThread();
+
+	} else if (!WaitThread(1000)) {
+		SimpleOperationProgress p(SimpleOperationProgress::K_EXECUTE, _base_host->SiteName(), _state);//_base_dir
+		p.Show();
+		WaitThread();
+	}
+
+	if (_status == 0) {
+		_status = G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo.FileName()).c_str(), EF_NOCMDPRINT);
+	}
 
 	if (G.GetGlobalConfigBool("EnableDesktopNotifications", true)) {
-		std::wstring display_action = G.GetMsgWide((r == 0) ? MNotificationSuccess : MNotificationFailed);
+		std::wstring display_action = G.GetMsgWide((_status == 0) ? MNotificationSuccess : MNotificationFailed);
 		size_t p = display_action.find(L"()");
 		if (p != std::wstring::npos)
 			display_action.replace(p, 2, G.GetMsgWide(MCommandNotificationTitle));

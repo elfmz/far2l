@@ -1,7 +1,7 @@
 #ifndef _RAR_UNICODE_
 #define _RAR_UNICODE_
 
-#ifdef _WIN_ALL
+#if defined( _WIN_ALL)
 #define DBCS_SUPPORTED
 #endif
 
@@ -12,6 +12,8 @@ wchar* RawToWide(const byte *Src,wchar *Dest,size_t DestSize);
 void WideToUtf(const wchar *Src,char *Dest,size_t DestSize);
 size_t WideToUtfSize(const wchar *Src);
 bool UtfToWide(const char *Src,wchar *Dest,size_t DestSize);
+bool IsTextUtf8(const byte *Src);
+bool IsTextUtf8(const byte *Src,size_t SrcSize);
 
 int wcsicomp(const wchar *s1,const wchar *s2);
 int wcsnicomp(const wchar *s1,const wchar *s2,size_t n);
@@ -60,5 +62,6 @@ inline void InitDBCS() {gdbcs.Init();}
 #define IsDBCSMode() (true)
 inline void copychrd(char *dest,const char *src) {*dest=*src;}
 #endif
+
 
 #endif

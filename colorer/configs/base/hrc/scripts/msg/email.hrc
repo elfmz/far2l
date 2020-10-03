@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -59,9 +59,9 @@
          <block start="/^(X\-[\w\-]+\:)/i" end="/%mesTE;/" 
           scheme="msg:uri" region01="head.word2" region="head.content2"/>
          <!-- (C) by Honeyman ends-->
-         <!-- artem: oбходитесь в Fido без From: и Subject:, обойдетесь и без To:
+         <!-- artem: oР±С…РѕРґРёС‚РµСЃСЊ РІ Fido Р±РµР· From: Рё Subject:, РѕР±РѕР№РґРµС‚РµСЃСЊ Рё Р±РµР· To:
          <regexp match="/\b(To\s*:)(.*)$/i" region0="Keyword" region2="String"/> -->
-         <!-- EE: FTN вынесен в отдельный тип, так что вопрос отпадает. -->
+         <!-- EE: FTN РІС‹РЅРµСЃРµРЅ РІ РѕС‚РґРµР»СЊРЅС‹Р№ С‚РёРї, С‚Р°Рє С‡С‚Рѕ РІРѕРїСЂРѕСЃ РѕС‚РїР°РґР°РµС‚. -->
          <block start="/^(To\:)/i" end="/%mesTE;/" 
           scheme="msg:uri" region="head.name" region01="head.word"/>
          <block start="/^(B?CC\:)/i" end="/%mesTE;/" 

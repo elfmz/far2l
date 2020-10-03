@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd"[
 <!ENTITY sh-keywords SYSTEM "sh-keywords.ent.hrc">
@@ -185,12 +185,12 @@
   scheme="str.cont" region="string"
   region00="def:PairStart" region10="def:PairEnd"
   />
- <block start="/(grep) (\-\w+)?\s*(&apos;)/" end="/(&apos;)/"
+ <!--block start="/(\b[efz]?grep) (\-\w+)?\s*(&apos;)/" end="/(&apos;)/"
   scheme="regexp:pcre.regexp" region="string"
   region00="def:PairStart" region10="def:PairEnd"
   region01="command.sys" region02="op"
   region03="def:StringEdge" region11="def:StringEdge"
- />
+ /-->
  <!--block start="/(echo) (\-\w+)?\s*\M[^&quot;&apos;`;\)\}]+/"
   end="/$/" priority="low" content-priority="low"
   scheme="var" region="string"

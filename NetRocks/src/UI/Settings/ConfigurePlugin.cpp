@@ -12,6 +12,7 @@
  =============== NetRocks global options ====================
 | [x] Enable desktop notifications                           |
 | [x] <ENTER> to execute files remotely when possible        |
+| [x] Smart symlinks copying                                 |
 | [ ] Copy attributes that overrides umask                   |
 | Connections pool expiration (seconds):               [   ] |
 | [ ] Connect using proxy (requires tsocks library)          |
@@ -55,6 +56,7 @@ class ConfigurePlugin : protected BaseDialog
 {
 	int _i_enable_desktop_notifications = -1;
 	int _i_enter_exec_remotely = -1;
+	int _i_smart_symlinks_copy = -1;
 	int _i_umask_override = -1;
 	int _i_conn_pool_expiration = -1;
 	int _i_use_proxy = -1, _i_edit_tsocks_config = -1;
@@ -101,6 +103,9 @@ public:
 		_i_enter_exec_remotely = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MEnterExecRemotely);
 
 		_di.NextLine();
+		_i_smart_symlinks_copy = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSmartSymlinksCopy);
+
+		_di.NextLine();
 		_i_umask_override = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MUMaskOverride);
 
 		_di.NextLine();
@@ -129,6 +134,7 @@ public:
 	{
 		SetCheckedDialogControl( _i_enable_desktop_notifications, G.GetGlobalConfigBool("EnableDesktopNotifications", true) );
 		SetCheckedDialogControl( _i_enter_exec_remotely, G.GetGlobalConfigBool("EnterExecRemotely", true) );
+		SetCheckedDialogControl( _i_smart_symlinks_copy, G.GetGlobalConfigBool("SmartSymlinksCopy", true) );
 		SetCheckedDialogControl( _i_umask_override, G.GetGlobalConfigBool("UMaskOverride", false) );
 		LongLongToDialogControl( _i_conn_pool_expiration, G.GetGlobalConfigInt("ConnectionsPoolExpiration", 30) );
 		SetCheckedDialogControl( _i_use_proxy, G.GetGlobalConfigBool("UseProxy", false) );
@@ -137,6 +143,7 @@ public:
 			auto gcw = G.GetGlobalConfigWriter();
 			gcw.PutBool("EnableDesktopNotifications", IsCheckedDialogControl(_i_enable_desktop_notifications) );
 			gcw.PutBool("EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) );
+			gcw.PutBool("SmartSymlinksCopy", IsCheckedDialogControl(_i_smart_symlinks_copy) );
 			gcw.PutBool("UMaskOverride", IsCheckedDialogControl(_i_umask_override) );
 			gcw.PutInt("ConnectionsPoolExpiration", LongLongFromDialogControl( _i_conn_pool_expiration) );
 			gcw.PutBool("UseProxy", IsCheckedDialogControl(_i_use_proxy) );

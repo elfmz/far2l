@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "datetime.hpp"
 #include "FarDlgBuilder.hpp"
+#include "vtshell.h"
 
 Options Opt={0};
 
@@ -389,13 +390,23 @@ void CmdlineSettings()
 	DialogItemEx *PromptFormat = Builder.AddEditField(&Opt.CmdLine.strPromptFormat, 19);
 	PromptFormat->Indent(4);
 	Builder.LinkFlags(UsePromptFormat, PromptFormat, DIF_DISABLE);
+    DialogItemEx *UseShell = Builder.AddCheckbox(MConfigCmdlineUseShell, &Opt.CmdLine.UseShell);
+    DialogItemEx *Shell =Builder.AddEditField(&Opt.CmdLine.strShell, 19);
+    Shell->Indent(4);
+    Builder.LinkFlags(UseShell, Shell, DIF_DISABLE);
 	Builder.AddOKCancel();
+
+	int oldUseShell = Opt.CmdLine.UseShell;
+	FARString oldShell = FARString(Opt.CmdLine.strShell);
 
 	if (Builder.ShowDialog())
 	{
 		CtrlObject->CmdLine->SetPersistentBlocks(Opt.CmdLine.EditBlock);
 		CtrlObject->CmdLine->SetDelRemovesBlocks(Opt.CmdLine.DelRemovesBlocks);
 		CtrlObject->CmdLine->SetAutoComplete(Opt.CmdLine.AutoComplete);
+
+		if (Opt.CmdLine.UseShell != oldUseShell || Opt.CmdLine.strShell != oldShell)
+		    VTShell_Shutdown();
 	}
 }
 
@@ -620,6 +631,8 @@ static struct FARConfig
 
 	{1, REG_DWORD,  NKeyCmdline, L"UsePromptFormat", &Opt.CmdLine.UsePromptFormat,0, 0},
 	{1, REG_SZ,     NKeyCmdline, L"PromptFormat",&Opt.CmdLine.strPromptFormat, 0, L"$p$# "},
+	{1, REG_DWORD,  NKeyCmdline, L"UseShell",&Opt.CmdLine.UseShell, 0, 0},
+	{1, REG_SZ,     NKeyCmdline, L"Shell",&Opt.CmdLine.strShell, 0, L"/bin/bash"},
 	{1, REG_DWORD,  NKeyCmdline, L"DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks,1, 0},
 	{1, REG_DWORD,  NKeyCmdline, L"EditBlock", &Opt.CmdLine.EditBlock,0, 0},
 	{1, REG_DWORD,  NKeyCmdline, L"AutoComplete",&Opt.CmdLine.AutoComplete,1, 0},
@@ -857,7 +870,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyPanelLeft,L"SortOrder",&Opt.LeftPanel.SortOrder,1, 0},
 	{1, REG_DWORD,  NKeyPanelLeft,L"SortGroups",&Opt.LeftPanel.SortGroups,0, 0},
 	{1, REG_DWORD,  NKeyPanelLeft,L"NumericSort",&Opt.LeftPanel.NumericSort,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft,L"CaseSensitiveSort",&Opt.LeftPanel.CaseSensitiveSort,0, 0},
+	{1, REG_DWORD,  NKeyPanelLeft,L"CaseSensitiveSortNix",&Opt.LeftPanel.CaseSensitiveSort,1, 0},
 	{1, REG_SZ,     NKeyPanelLeft,L"Folder",&Opt.strLeftFolder, 0, L""},
 	{1, REG_SZ,     NKeyPanelLeft,L"CurFile",&Opt.strLeftCurFile, 0, L""},
 	{1, REG_DWORD,  NKeyPanelLeft,L"SelectedFirst",&Opt.LeftSelectedFirst,0,0},
@@ -871,7 +884,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyPanelRight,L"SortOrder",&Opt.RightPanel.SortOrder,1, 0},
 	{1, REG_DWORD,  NKeyPanelRight,L"SortGroups",&Opt.RightPanel.SortGroups,0, 0},
 	{1, REG_DWORD,  NKeyPanelRight,L"NumericSort",&Opt.RightPanel.NumericSort,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight,L"CaseSensitiveSort",&Opt.RightPanel.CaseSensitiveSort,0, 0},
+	{1, REG_DWORD,  NKeyPanelRight,L"CaseSensitiveSortNix",&Opt.RightPanel.CaseSensitiveSort,1, 0},
 	{1, REG_SZ,     NKeyPanelRight,L"Folder",&Opt.strRightFolder, 0,L""},
 	{1, REG_SZ,     NKeyPanelRight,L"CurFile",&Opt.strRightCurFile, 0,L""},
 	{1, REG_DWORD,  NKeyPanelRight,L"SelectedFirst",&Opt.RightSelectedFirst,0, 0},
@@ -943,6 +956,11 @@ void ReadConfig()
 		switch (CFG[I].ValType)
 		{
 			case REG_DWORD:
+				if ((int *)CFG[I].ValPtr == &Opt.Confirm.Exit) {
+					// when background mode available then exit dialog allows also switch to background
+					// so saved settings must differ for that two modes
+					CFG[I].KeyName = WINPORT(ConsoleBackgroundMode)(FALSE) ? L"ExitOrBknd" : L"Exit";
+				}
 				GetRegKey(CFG[I].KeyName, CFG[I].ValName,*(int *)CFG[I].ValPtr,(DWORD)CFG[I].DefDWord);
 				break;
 			case REG_SZ:

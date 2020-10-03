@@ -17,6 +17,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _output_mutex;
 	int _stdin = 0, _stdout = 1;
 	bool _far2l_tty = false;
+	unsigned int _esc_expiration = 0;
 	int _notify_pipe = -1;
 	int _kickass[2] = {-1, -1};
 	int _far2l_cursor_height = -1;
@@ -70,14 +71,14 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		uint32_t all;
 	} _ae;
 
+	ClipboardBackendSetter _clipboard_backend_setter;
+
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
 
 	void OnFar2lKey(bool down, StackSerializer &stk_ser);
 	void OnFar2lMouse(StackSerializer &stk_ser);
-
-	std::shared_ptr<IClipboardBackend> _clipboard_backend;
 
 protected:
 	// IFar2lInterractor
@@ -96,6 +97,7 @@ protected:
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
+	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
@@ -105,7 +107,7 @@ protected:
 
 
 public:
-	TTYBackend(int std_in, int std_out, bool far2l_tty, int notify_pipe);
+	TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

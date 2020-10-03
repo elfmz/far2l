@@ -1290,6 +1290,7 @@ static void InterpretControlString()
 		} else if (os_cmd_arg == "pop-attr")  {
 			if (!g_attr_stack.empty()) {
 				blank_character = g_attr_stack.back().blank_character;
+				SetAnsiStateFromAttributes(g_attr_stack.back().attributes);
 				WINPORT(SetConsoleTextAttribute)( hConOut, g_attr_stack.back().attributes );
 				g_attr_stack.pop_back();
 			}

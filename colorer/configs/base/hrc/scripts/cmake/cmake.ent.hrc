@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<scheme name="FunctionArguments">
+	<keywords region="cmake_parameters" ignorecase="no">
+		<word name="FILES"/>
+		<word name="QUIET"/>
+		<word name="REQUIRED"/>
+		<word name="PROPERTIES"/>
+		<word name="PRIVATE"/>
+		<word name="INTERFACE"/>
+		<word name="PUBLIC"/>
+		<word name="PROPERTY"/>
+		<!-- SET -->
+		<word name="CACHE"/>
+		<word name="PATH"/>
+		<word name="FORCE"/>
+		<!-- FIND_PACKAGE -->
+		<word name="CONFIG"/>
+		<word name="PATHS"/>
+		<word name="NO_DEFAULT_PATH"/>
+		<!-- ADD_LIBRARY -->
+		<word name="ALIAS"/>
+		<!-- EXPORT -->
+		<word name="FILE"/>
+		<word name="NAMESPACE"/>
+	</keywords>
+</scheme>
+
+<scheme name="CMakeKeywords">
+	<keywords region="cmake_keywords" ignorecase="no">
+	</keywords>
+</scheme>
+
+<scheme name="Keywords_if">
+	<keywords region="cmake_operators" ignorecase="yes">
+		<word name="NOT"/>
+		<word name="AND"/>
+		<word name="OR"/>
+		<word name="COMMAND"/>
+		<word name="POLICY"/>
+		<word name="TARGET"/>
+		<word name="TEST"/>
+		<word name="EXISTS"/>
+		<word name="IS_NEWER_THAN"/>
+		<word name="IS_DIRECTORY"/>
+		<word name="IS_SYMLINK"/>
+		<word name="IS_ABSOLUTE"/>
+		<word name="MATCHES"/>
+		<word name="LESS"/>
+		<word name="GREATER"/>
+		<word name="EQUAL"/>
+		<word name="LESS_EQUAL"/>
+		<word name="GREATER_EQUAL"/>
+		<word name="STRLESS"/>
+		<word name="STRGREATER"/>
+		<word name="STREQUAL"/>
+		<word name="STRLESS_EQUAL"/>
+		<word name="STRGREATER_EQUAL"/>
+		<word name="VERSION_LESS"/>
+		<word name="VERSION_GREATER"/>
+		<word name="VERSION_EQUAL"/>
+		<word name="VERSION_LESS_EQUAL"/>
+		<word name="VERSION_GREATER_EQUAL "/>
+		<word name="IN_LIST"/>
+		<word name="DEFINED"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>
+
+<scheme name="_HASH_">
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<!-- Hashing -->
+		<word name="MD5"/>
+		<word name="SHA1"/>
+		<word name="SHA224"/>
+		<word name="SHA256"/>
+		<word name="SHA384"/>
+		<word name="SHA512"/>
+		<word name="SHA3_224"/>
+		<word name="SHA3_256"/>
+		<word name="SHA3_384"/>
+		<word name="SHA3_512"/>
+	</keywords>
+</scheme>
+
+<scheme name="Keywords_file">
+	<inherit scheme="_HASH_" />
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<!-- Reading -->
+		<word name="READ"/>
+		<word name="STRINGS"/>
+		<!-- <HASH> -->
+		<word name="TIMESTAMP"/>
+		<!-- Writing -->
+		<word name="WRITE"/>
+		<word name="APPEND"/>
+		<word name="TOUCH"/>
+		<word name="TOUCH_NOCREATE"/>
+		<word name="GENERATE"/>
+		<word name="OUTPUT"/>
+		<!-- Filesystem -->
+		<word name="GLOB"/>
+		<word name="GLOB_RECURSE"/>
+		<word name="RENAME"/>
+		<word name="REMOVE"/>
+		<word name="REMOVE_RECURSE"/>
+		<word name="MAKE_DIRECTORY"/>
+		<word name="COPY"/>
+		<word name="INSTALL"/>
+		<word name="DESTINATION"/>
+		<!-- Path Conversion -->
+		<word name="RELATIVE_PATH"/>
+		<word name="TO_CMAKE_PATH"/>
+		<word name="TO_NATIVE_PATH"/>
+		<!-- Transfer -->
+		<word name="DOWNLOAD"/>
+		<word name="UPLOAD"/>
+		<!-- Locking -->
+		<word name="LOCK"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>
+
+<scheme name="Keywords_string">
+	<inherit scheme="_HASH_" />
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<!-- Search and Replace -->
+		<word name="FIND"/>
+		<word name="REPLACE"/>
+		<!-- Regular Expressions -->
+		<word name="REGEX MATCH"/>
+		<word name="REGEX MATCHALL"/>
+		<word name="REGEX REPLACE"/>
+		<!-- Manipulation -->
+		<word name="APPEND"/>
+		<word name="PREPEND"/>
+		<word name="CONCAT"/>
+		<word name="JOIN"/>
+		<word name="TOLOWER"/>
+		<word name="TOUPPER"/>
+		<word name="LENGTH"/>
+		<word name="SUBSTRING"/>
+		<word name="STRIP"/>
+		<word name="GENEX_STRIP"/>
+		<!-- Comparison -->
+		<word name="COMPARE"/>
+		<!-- Hashing -->
+		<!-- <HASH> -->
+		<!-- Generation -->
+		<word name="ASCII"/>
+		<word name="CONFIGURE"/>
+		<word name="MAKE_C_IDENTIFIER"/>
+		<word name="RANDOM"/>
+		<word name="TIMESTAMP"/>
+		<word name="UTC"/>
+		<word name="UUID"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>
+
+<scheme name="Keywords_list">
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<!-- Reading -->
+		<word name="LENGTH"/>
+		<word name="GET"/>
+		<word name="JOIN"/>
+		<word name="SUBLIST"/>
+		<!-- Search -->
+		<word name="FIND"/>
+		<!-- Modification -->
+		<word name="APPEND"/>
+		<word name="FILTER"/> <word name="INCLUDE REGEX"/> <word name="EXCLUDE REGEX"/>
+		<word name="INSERT"/>
+		<word name="REMOVE_ITEM"/>
+		<word name="REMOVE_AT"/>
+		<word name="REMOVE_DUPLICATES"/>
+		<word name="TRANSFORM"/> <word name="ACTION"/>
+		<!-- Ordering -->
+		<word name="REVERSE"/>
+		<word name="SORT"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>
+
+<scheme name="Keywords_set_property">
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<word name="GLOBAL"/>
+		<word name="DIRECTORY"/>
+		<word name="TARGET"/>
+		<word name="SOURCE"/>
+		<word name="INSTALL"/>
+		<word name="TEST"/>
+		<word name="CACHE"/>
+		<word name="APPEND"/> <word name="APPEND_STRING"/>
+		<word name="PROPERTY"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>
+
+<scheme name="Keywords_message">
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<word name="STATUS"/>
+		<word name="WARNING"/>
+		<word name="AUTO_WARNING"/>
+		<word name="SEND_ERROR"/>
+		<word name="FATAL_ERROR"/>
+		<word name="DEPRECATION"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>
+
+<scheme name="Keywords_install">
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<word name="TARGETS"/>
+		<word name="FILES"/> <word name="PROGRAMS"/> <word name="DESTINATION"/>
+		<word name="DIRECTORY"/> <word name="DESTINATION"/>
+		<word name="SCRIPT"/>
+		<word name="CODE"/>
+		<word name="EXPORT"/> <word name="DESTINATION"/>
+		<word name="EXPORT_ANDROID_MK"/>
+		<!-- Common -->
+		<word name="DESTINATION"/>
+		<word name="PERMISSIONS"/>
+			<word name="OWNER_EXECUTE"/>
+			<word name="OWNER_WRITE"/>
+			<word name="OWNER_READ"/>
+			<word name="GROUP_EXECUTE"/>
+			<word name="GROUP_WRITE"/>
+			<word name="GROUP_READ"/>
+			<word name="WORLD_EXECUTE"/>
+			<word name="WORLD_WRITE"/>
+			<word name="WORLD_READ"/>
+		<word name="CONFIGURATIONS"/>
+		<word name="COMPONENT"/>
+		<word name="EXCLUDE_FROM_ALL"/>
+		<word name="RENAME"/>
+		<word name="OPTIONAL"/>
+		<!-- Installing Targets -->
+		<word name="ARCHIVE"/>
+		<word name="LIBRARY"/>
+		<word name="RUNTIME"/>
+		<word name="OBJECTS"/>
+		<word name="FRAMEWORK"/>
+		<word name="BUNDLE"/>
+		<word name="PUBLIC_HEADER"/>
+		<word name="PRIVATE_HEADER"/>
+		<word name="RESOURCE"/>
+		<word name="NAMELINK_COMPONENT"/>
+		<word name="NAMELINK_ONLY"/>
+		<word name="NAMELINK_SKIP"/>
+		<word name="INCLUDES DESTINATION"/>
+		<!-- Installing Exports -->
+		<word name="NAMESPACE"/>
+		<word name="FILE"/>
+		<word name="COMPONENT"/>
+		<word name="EXPORT_LINK_INTERFACE_LIBRARIES"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>
+
+<scheme name="Keywords_execute_process">
+	<keywords region="cmake_parameters" ignorecase="yes">
+		<word name="COMMAND"/>
+		<word name="WORKING_DIRECTORY"/>
+		<word name="TIMEOUT"/>
+		<word name="RESULT_VARIABLE"/>
+		<word name="RESULTS_VARIABLE"/>
+		<word name="OUTPUT_VARIABLE"/>
+		<word name="ERROR_VARIABLE"/>
+		<word name="INPUT_FILE"/>
+		<word name="OUTPUT_FILE"/>
+		<word name="ERROR_FILE"/>
+		<word name="OUTPUT_QUIET"/>
+		<word name="ERROR_QUIET"/>
+		<word name="OUTPUT_STRIP_TRAILING_WHITESPACE"/>
+		<word name="ERROR_STRIP_TRAILING_WHITESPACE"/>
+		<word name="ENCODING"/>
+	</keywords>
+	<inherit scheme="Arguments" />
+</scheme>

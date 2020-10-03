@@ -28,10 +28,11 @@ extern ConsoleInput g_winport_con_in;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
-TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, int notify_pipe) :
+TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe) :
 	_stdin(std_in),
 	_stdout(std_out),
 	_far2l_tty(far2l_tty),
+	_esc_expiration(esc_expiration),
 	_notify_pipe(notify_pipe),
 	_largest_window_size_ready(false)
 
@@ -86,12 +87,12 @@ void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
 	while (!_exiting) {
-		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend) {
+		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend_setter.IsSet()) {
 			if (_far2l_tty) {
 				IFar2lInterractor *interractor = this;
-				_clipboard_backend = std::make_shared<TTYFar2lClipboardBackend>(interractor);
+				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interractor);
 			} else {
-				_clipboard_backend = std::make_shared<FSClipboardBackend>();
+				_clipboard_backend_setter.Set<FSClipboardBackend>();
 			}
 			prev_far2l_tty = _far2l_tty;
 		}
@@ -101,6 +102,7 @@ void TTYBackend::ReaderThread()
 			_deadio = false;
 			_ae.flags.term_resized = true;
 		}
+
 
 		pthread_t writer_trd = 0;
 		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) == -1) {
@@ -141,6 +143,7 @@ void TTYBackend::ReaderLoop()
 	std::unique_ptr<TTYInput> tty_in(new TTYInput(this));
 
 	fd_set fds, fde;
+	bool idle_expired = false;
 	while (!_exiting && !_deadio) {
 		int maxfd = (_kickass[0] > _stdin) ? _kickass[0] : _stdin;
 
@@ -150,11 +153,32 @@ void TTYBackend::ReaderLoop()
 		FD_SET(_stdin, &fds);
 		FD_SET(_stdin, &fde);
 
-		if (os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, (timeval*)nullptr) == -1) {
+		int rs;
+
+		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
+			struct timeval tv;
+			tv.tv_sec = _esc_expiration / 1000;
+			tv.tv_usec = (_esc_expiration - tv.tv_sec * 1000) * 1000;
+
+			rs = os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, &tv);
+		} else {
+			rs = os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, (timeval*)nullptr);
+		}
+
+		if (rs == -1) {
 			throw std::runtime_error("select failed");
 		}
 
+		if (rs != 0) {
+			idle_expired = false;
+
+		} else if (!idle_expired) {
+			idle_expired = true;
+			tty_in->OnIdleExpired();
+		}
+
 		if (_flush_input_queue) {
+			_flush_input_queue = false;
 			tty_in.reset();
 			tty_in.reset(new TTYInput(this));
 			OnInputBroken();
@@ -162,7 +186,7 @@ void TTYBackend::ReaderLoop()
 
 		if (FD_ISSET(_stdin, &fds)) {
 			char buf[0x1000];
-			ssize_t rd = read(_stdin, buf, sizeof(buf));
+			ssize_t rd = os_call_ssize(read, _stdin, (void*)buf, sizeof(buf));
 			if (rd <= 0) {
 				throw std::runtime_error("stdin read failed");
 			}
@@ -196,10 +220,6 @@ void TTYBackend::WriterThread()
 {
 	try {
 		TTYOutput tty_out(_stdout);
-		tty_out.SetScreenBuffer(true);
-		tty_out.ChangeKeypad(true);
-		tty_out.ChangeMouse(true);
-		tty_out.Flush();
 
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;
@@ -233,12 +253,6 @@ void TTYBackend::WriterThread()
 			tty_out.Flush();
 		}
 
-		tty_out.ChangeCursor(true, 13);
-		tty_out.ChangeMouse(false);
-		tty_out.ChangeKeypad(false);
-		tty_out.SetScreenBuffer(false);
-		tty_out.Flush();
-
 	} catch (const std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
 	}
@@ -265,7 +279,7 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 		}
 		std::vector<CHAR_INFO> tmp;
 		std::lock_guard<std::mutex> lock(_output_mutex);
-		tty_out.MoveCursor(1, 1, true);
+		tty_out.MoveCursor(1, 1);
 		_prev_height = _prev_width = 0;
 		_prev_output.swap(tmp);// ensure memory released
 	}
@@ -291,11 +305,41 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 		} else {
 			const CHAR_INFO *last_line = &_prev_output[y * _prev_width];
 			for (unsigned int x = 0; x < _cur_width; ++x) {
+				// print current character:
+				//  if it doesnt match to its previos version
+				// OR
+				//  if some of next 2 characters dont match to their previous versions and
+				//  printing current character doesnt require cursor pos update with
+				//  tty_out.MoveCursor, cuz tty_out.MoveCursor generates 5 bytes and thus its
+				//  more efficient to print 1..2 matching characters moving cursor by one than
+				//  skip them and update cursor position later by sending 5-bytes ESC sequence
 				if (x >= _prev_width
-				 || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
-				 || cur_line[x].Attributes != last_line[x].Attributes) {
-					tty_out.MoveCursor(y + 1, x + 1);
+					  || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
+					  || cur_line[x].Attributes != last_line[x].Attributes) {
+					if (tty_out.ShouldMoveCursor(y + 1, x + 1)) {
+						tty_out.MoveCursor(y + 1, x + 1);
+					}
 					tty_out.WriteLine(&cur_line[x], 1);
+
+				} else if (tty_out.ShouldMoveCursor(y + 1, x + 1)) {
+					// matching character located at position that already requires update
+					;
+
+				} else if (x + 2 < _cur_width && ( x + 2 >= _prev_width
+					 || cur_line[x + 2].Char.UnicodeChar != last_line[x + 2].Char.UnicodeChar
+					 || cur_line[x + 2].Attributes != last_line[x + 2].Attributes) ) {
+					// character x + 2 requires print, so avoid cursor pos update by
+					// printing all 3 chars from current pos
+					tty_out.WriteLine(&cur_line[x], 3);
+					x+= 2;
+
+				} else if (x + 1 < _cur_width && ( x + 1 >= _prev_width
+					 || cur_line[x + 1].Char.UnicodeChar != last_line[x + 1].Char.UnicodeChar
+					 || cur_line[x + 1].Attributes != last_line[x + 1].Attributes) ) {
+					// character x + 1 requires print, so avoid cursor pos update by
+					// printing all 2 chars from current pos
+					tty_out.WriteLine(&cur_line[x], 2);
+					x+= 1;
 				}
 			}
 		}
@@ -304,7 +348,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 #else
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
-		tty_out.MoveCursor(y + 1, 1);
+		if (tty_out.ShouldMoveCursor(y + 1, 1)) {
+			tty_out.MoveCursor(y + 1, 1);
+		}
 		tty_out.WriteLine(cur_line, _cur_width);
 	}
 #endif
@@ -315,7 +361,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	UCHAR cursor_height = 1;
 	bool cursor_visible = false;
 	COORD cursor_pos = g_winport_con_out.GetCursor(cursor_height, cursor_visible);
-	tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
+	if (tty_out.ShouldMoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1)) {
+		tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
+	}
 	tty_out.ChangeCursor(cursor_visible);
 
 	if (_far2l_cursor_height != (int)(unsigned int)cursor_height && _far2l_tty) {
@@ -344,6 +392,9 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 		uint8_t id = 0;
 		if (i->waited) {
 			if (_far2l_interracts_sent.size() >= 0xff) {
+				fprintf(stderr,
+					"TTYBackend::DispatchFar2lInterract: too many sent interracts - %ld\n",
+					_far2l_interracts_sent.size());
 				i->stk_ser.Clear();
 				i->evnt.Signal();
 				return;
@@ -472,6 +523,7 @@ bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 		return false;
 
 	pfi->stk_ser.Swap(stk_ser);
+
 	return true;
 }
 
@@ -653,6 +705,23 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 	} catch (std::exception &) {}
 }
 
+static void OnSigHup(int signo);
+
+bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
+{
+	if (_notify_pipe == -1) {
+		return false;
+	}
+
+	if (TryEnterBackgroundMode) {
+		OnSigHup(SIGHUP);
+//		raise(SIGHUP);
+	}
+
+	return true;
+}
+
+
 void TTYBackend_OnTerminalDamaged(bool flush_input_queue)
 {
 	__sync_add_and_fetch ( &s_terminal_size_change_id, 1);
@@ -695,13 +764,13 @@ static void OnSigHup(int signo)
 {
 	FDScope dev_null(open("/dev/null", O_RDWR));
 	if (dev_null.Valid()) {
-		dup2(dev_null, 0);
-		dup2(dev_null, 1);
-		dup2(dev_null, 2);
-		if (g_std_in != 0 && g_std_in != -1)
-			dup2(dev_null, g_std_in);
-		if (g_std_out != 1 && g_std_out != -1)
+//		dup2(dev_null, 2);
+//		dup2(dev_null, 1);
+//		dup2(dev_null, 0);
+		if (g_std_out != -1)
 			dup2(dev_null, g_std_out);
+		if (g_std_in != -1)
+			dup2(dev_null, g_std_in);
 	}
 	if (g_vtb) {
 		g_vtb->KickAss(true);
@@ -709,9 +778,9 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(std_in, std_out, far2l_tty, notify_pipe);
+	TTYBackend vtb(std_in, std_out, far2l_tty, esc_expiration, notify_pipe);
 
 	if (!vtb.Startup()) {
 		return false;

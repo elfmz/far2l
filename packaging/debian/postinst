@@ -1,0 +1,2 @@
+ln -sf /usr/bin/far2l /usr/lib/far2l/far2l_askpass
+ln -sf /usr/bin/far2l /usr/lib/far2l/far2l_sudoapp

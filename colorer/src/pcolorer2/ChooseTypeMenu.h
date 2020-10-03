@@ -1,8 +1,8 @@
 #pragma once
 
 #include "pcolorer.h"
-#include"FarEditor.h"
-#include<colorer/parsers/helpers/FileTypeImpl.h>
+#include "FarEditor.h"
+#include <colorer/parsers/FileTypeImpl.h>
 
 class ChooseTypeMenu
 {
@@ -34,7 +34,7 @@ private:
 
   size_t ItemSelected; // Index of selected item 
 
-  int AddItem(const wchar_t *Text, const MENUITEMFLAGS Flags, const FileType* UserData = NULL, size_t PosAdd=0x7FFFFFFF);
+  int AddItem(const wchar_t *Text, const MENUITEMFLAGS Flags, const FileType* UserData = nullptr, size_t PosAdd=0x7FFFFFFF);
 
   static const size_t favorite_idx=2;
 };

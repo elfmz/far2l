@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="us-ascii"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <hrc version="take5"
 xmlns="http://colorer.sf.net/2003/hrc"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -7,7 +7,7 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="fsharp">
 <annotation><documentation><![CDATA[
 
-fsharp.hrc by Roman Kuzmin, aka nightroman, 2017-09-14
+fsharp.hrc by Roman Kuzmin, aka nightroman, 2019-02-01
 
 ]]></documentation></annotation>
 
@@ -99,6 +99,9 @@ fsharp.hrc by Roman Kuzmin, aka nightroman, 2017-09-14
 
 <!-- Attribute -->
 <block start="/(\[&lt;)/" end="/(&gt;\])/" scheme="FSAttribute" region00="AttrBlock" region01="PairStart" region10="AttrBlock" region11="PairEnd"/>
+
+<!-- Anonymous record -->
+<block start="/(\{\|)/" end="/(\|\})/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
 
 <!-- Code Quotation -->
 <block start="/(&lt;@@)/" end="/(@@&gt;)/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>

@@ -70,6 +70,10 @@ struct ITTYInputSpecialSequenceHandler
 	virtual DWORD OnQueryControlKeys() = 0;
 };
 
+#define TTY_PARSED_WANTMORE         ((size_t)0)
+#define TTY_PARSED_PLAINCHARS       ((size_t)-1)
+#define TTY_PARSED_BADSEQUENCE      ((size_t)-2)
+
 class TTYInputSequenceParser
 {
 	NChars2Key<1> _nch2key1;
@@ -93,6 +97,8 @@ class TTYInputSequenceParser
 
 	ITTYInputSpecialSequenceHandler *_handler;
 	StackSerializer _tmp_stk_ser;
+	DWORD _extra_control_keys = 0;
+	std::vector<INPUT_RECORD> _ir_pending;
 
 	void AssertNoConflicts();
 
@@ -100,18 +106,21 @@ class TTYInputSequenceParser
 	void AddStr_ControlsThenCode(WORD vk, const char *fmt, const char *code);
 	void AddStr_CodeThenControls(WORD vk, const char *fmt, const char *code);
 	void AddStrTilde(WORD vk, int code);
+	void AddStrTilde_Controls(WORD vk, int code);
 	void AddStrF1F5(WORD vk, const char *code);
 	void AddStrCursors(WORD vk, const char *code);
 
 	size_t ParseNChars2Key(const char *s, size_t l);
 	void ParseMouse(char action, char col, char raw);
 	void ParseAPC(const char *s, size_t l);
+	size_t ParseEscapeSequence(const char *s, size_t l);
 
-	void PostKeyEvent(const TTYInputKey &k);
+	void AddPendingKeyEvent(const TTYInputKey &k);
+	size_t ParseIntoPending(const char *s, size_t l);
 
 
 public:
 	TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler);
 
-	size_t Parse(const char *s, size_t l); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
+	size_t Parse(const char *s, size_t l, bool idle_expired); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
 };

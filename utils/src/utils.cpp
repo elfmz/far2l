@@ -244,11 +244,26 @@ template <class STRING_T>
 std::string EscapeQuotas(const std::string &str) {return EscapeQuotasT(str); }
 std::wstring EscapeQuotas(const std::wstring &str) {return EscapeQuotasT(str); }
 
+template <class CHAR_T>
+	static std::basic_string<CHAR_T> EscapeCmdStrT(std::basic_string<CHAR_T> str, const CHAR_T *escaped_chars)
+{
+	for(size_t p = str.find_first_of(escaped_chars);
+			p != std::basic_string<CHAR_T>::npos;
+			p = str.find_first_of(escaped_chars, p)) {
+
+		str.insert(p, 1, '\\');
+		p+= 2;
+	}
+	return str;
+}
+
+std::string EscapeCmdStr(const std::string &str) {return EscapeCmdStrT<char>(str, "\"$"); }
+std::wstring EscapeCmdStr(const std::wstring &str) {return EscapeCmdStrT<wchar_t>(str, L"\"$"); }
 
 std::string EscapeEscapes(std::string str)
 {
 	for (size_t p = 0; (p + 1) < str.size(); ) {
-		if (str[p] == '\\' && (str[p + 1] == '\"' || str[p + 1] == '\\' || str[ p + 1] == '\t') ) {
+		if (str[p] == '\\' && (str[p + 1] == '\"' || str[p + 1] == '\\' || str[ p + 1] == '\t'|| str[ p + 1] == '`'|| str[ p + 1] == '$') ) {
 			str.insert(p, 2, '\\');
 			p+= 4;
 		} else
@@ -261,7 +276,7 @@ template <class STRING_T>
 	static void QuoteCmdArgT(STRING_T &str)
 {
 	STRING_T tmp(1, '\"');
-	tmp+= EscapeQuotas(str);
+	tmp+= EscapeCmdStr(str);
 	tmp+= '\"';
 	str.swap(tmp);
 }
@@ -271,14 +286,14 @@ void QuoteCmdArg(std::wstring &str) { QuoteCmdArgT(str); }
 
 void QuoteCmdArgIfNeed(std::string &str)
 {
-	if (str.find_first_of(" \"\'\r\n\t&|;,()") != std::string::npos) {
+	if (str.find_first_of(" \"\'\r\n\t&|;,()`$") != std::string::npos) {
 		QuoteCmdArg(str);
 	}
 }
 
 void QuoteCmdArgIfNeed(std::wstring &str)
 {
-	if (str.find_first_of(L" \"\'\r\n\t&|;,()") != std::wstring::npos) {
+	if (str.find_first_of(L" \"\'\r\n\t&|;,()`$") != std::wstring::npos) {
 		QuoteCmdArg(str);
 	}
 }
@@ -515,23 +530,87 @@ char * itoa(int i, char *a, int radix)
 #endif
 
 
-unsigned long htoul(const char *str)
+unsigned long htoul(const char *str, size_t maxlen)
 {
 	unsigned long out = 0;
-	for (;;++str) {
-		if (*str >= '0' && *str <= '9') {
-			out<<= 4;
-			out+= *str - '0';
 
-		} else if (*str >= 'a' && *str <= 'f') {
+	for (size_t i = 0; i != maxlen; ++i) {
+		if (str[i] >= '0' && str[i] <= '9') {
 			out<<= 4;
-			out+= 10 + (*str - 'a');
+			out+= str[i] - '0';
 
-		} else if (*str >= 'A' && *str <= 'F') {
+		} else if (str[i] >= 'a' && str[i] <= 'f') {
 			out<<= 4;
-			out+= 10 + (*str - 'A');
+			out+= 10 + (str[i] - 'a');
+
+		} else if (str[i] >= 'A' && str[i] <= 'F') {
+			out<<= 4;
+			out+= 10 + (str[i] - 'A');
 
 		} else
-			return out;
+			break;
 	}
+
+	return out;
 }
+
+unsigned long atoul(const char *str, size_t maxlen)
+{
+	unsigned long out = 0;
+
+	for (size_t i = 0; i != maxlen; ++i) {
+		if (str[i] >= '0' && str[i] <= '9') {
+			out*= 10;
+			out+= str[i] - '0';
+
+		} else
+			break;
+	}
+
+	return out;
+}
+
+
+static inline bool CaseIgnoreEngChrMatch(const char c1, const char c2)
+{
+	if (c1 != c2) {
+		if (c1 >= 'A' && c1 <= 'Z') { 
+			if (c1 + ('a' - 'A') != c2) {
+				return false;
+			}
+
+		} else if (c1 >= 'a' && c1 <= 'z') {
+			if (c1 - ('a' - 'A') != c2) {
+				return false;
+			}
+
+		} else {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len)
+{
+	for (size_t i = 0; i != len; ++i) {
+		if (!CaseIgnoreEngChrMatch(str1[i], str2[i])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len)
+{
+	for (size_t i = 0; i != len; ++i) {
+		if (CaseIgnoreEngChrMatch(c, str[i])) {
+			return &str[i];
+		}
+	}
+
+	return nullptr;
+}
+

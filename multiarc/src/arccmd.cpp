@@ -4,8 +4,6 @@
 #include <farkeys.hpp>
 #include <fcntl.h>
 
-extern int oem_cp;
-
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
                        const char *FormatString,const char *ArcName,const char *ArcDir,
                        const char *Password,const char *AllFilesMask,int IgnoreErrors,
@@ -113,16 +111,15 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   // charset workaround for unzip
   if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
     // trying as utf8
-    Command.replace(0, 6, "unzip -I utf8 -O utf8 ", 0, 22);
-    ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+    std::string CommandRetry = Command;
+    CommandRetry.insert(6, "-I utf8 -O utf8 ");
+    ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
     if (ExecCode == 11) {
       // "11" means file was not found in archive. retrying as oem
-      char oem_cp_str[5];
-      itoa(oem_cp, oem_cp_str, 10);
-      Command.replace(0, 22, "unzip -I CP     -O CP     ", 0, 22);
-      Command.replace(11, strlen(oem_cp_str), oem_cp_str, 0, strlen(oem_cp_str));
-      Command.replace(21, strlen(oem_cp_str), oem_cp_str, 0, strlen(oem_cp_str));
-      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+      CommandRetry = Command;
+      unsigned int actual_oemcp = WINPORT(GetOEMCP)();
+      CommandRetry.insert(6, StrPrintf("-I CP%u -O CP%u ", actual_oemcp, actual_oemcp));
+      ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
     }
     if (ExecCode == 1) {
       // "1" exit code for unzip is warning only, no need to bother user

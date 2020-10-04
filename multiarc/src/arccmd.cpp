@@ -109,7 +109,22 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     Hide = 0;
 
   // charset workaround for unzip
-  if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
+  if (strncmp(Command.c_str(), "zip -d ", 7) == 0) {
+      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+      if (ExecCode == 12) {
+        // file not found. maybe charset problem? retrying with 7z
+        std::string CommandRetry = Command;
+        // zip -d {-P %%P} %%A %%Fq4096
+        // ->
+        // 7z d {-p%%P} %%A %%Fq4096
+        if (strncmp(Command.c_str(), "zip -d -P ", 10) == 0) {
+            CommandRetry.replace(0, 10, "7z d -p", 0, 7);
+        } else {
+            CommandRetry.replace(0, 7, "7z d ", 0, 5);
+        }
+        ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+      }
+  } else if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
     // trying as utf8
     std::string CommandRetry = Command;
     CommandRetry.insert(6, "-I utf8 -O utf8 ");

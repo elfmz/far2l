@@ -108,7 +108,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   if ((Hide == 1 && CommandType == 0) || CommandType == 2)
     Hide = 0;
 
-  // charset workaround for unzip
+  // charset workarounds for unzip
   if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
     // trying as utf8
     std::string CommandRetry = Command;
@@ -126,7 +126,27 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
       ExecCode = 0;
     }
   } else {
-      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+    ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+    fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
+    if (ExecCode == 12 && strncmp(Command.c_str(), "zip -d", 6) == 0) {
+
+      for(size_t i_entries = 6; i_entries + 1 < Command.size(); ++i_entries) {
+        if (Command[i_entries] == ' ' && Command[i_entries + 1] != ' ' && Command[i_entries + 1] != '-' ) {
+          i_entries = Command.find(' ', i_entries + 1);
+          if (i_entries != std::string::npos) {
+            std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
+            std::vector<char> oemstr(wstr.size() * 6 + 2);
+            WINPORT(WideCharToMultiByte)(CP_OEMCP, 0, wstr.c_str(),
+                wstr.size() + 1, &oemstr[0], oemstr.size() - 1, 0, 0);
+            std::string CommandRetry = Command.substr(0, i_entries);
+            CommandRetry.append(&oemstr[0]);
+            ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+            fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+          }
+          break;
+        }
+      }
+    }
   }
 
   if (ExecCode==RETEXEC_ARCNOTFOUND)

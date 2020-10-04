@@ -532,7 +532,7 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
     /*Extract               */"unzip -o {-P %%P} %%A %%FMq4096",
     /*Extract without paths */"unzip -j -o {-P %%P} %%A %%FMq4096",
     /*Test                  */"unzip -t {-P %%P} %%A",
-    /*Delete                */"zip -d {-P %%P} %%A %%Fq4096",
+    /*Delete                */"zip -d {-P %%P} %%A %%FMq4096",
     /*Comment archive       */"",
     /*Comment files         */"",
     /*Convert to SFX        */"",

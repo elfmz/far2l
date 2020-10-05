@@ -167,6 +167,7 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	AddStr(VK_DIVIDE, LEFT_ALT_PRESSED, "/");
 	AddStr(VK_OEM_PERIOD, LEFT_ALT_PRESSED, ".");
 	AddStr(VK_OEM_COMMA, LEFT_ALT_PRESSED, ",");
+	AddStr(VK_RETURN, LEFT_ALT_PRESSED, "\x0d");
 
 	AddStr(VK_OEM_1, LEFT_ALT_PRESSED, ";");
 	AddStr(VK_OEM_3, LEFT_ALT_PRESSED, "`");
@@ -215,6 +216,8 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	AddStrTilde(VK_F11, 23);
 	AddStrTilde(VK_F12, 24);
 
+	// Custom ANSI codes to support Ctrl/Alt/Shift+0..9 combinations
+	// for iTerm2 see https://gist.github.com/anteo/864c72f64c2e7863353d909bf076aed7
 	AddStrTilde_Controls('0', 50);
 	AddStrTilde_Controls('1', 51);
 	AddStrTilde_Controls('2', 52);
@@ -225,6 +228,8 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	AddStrTilde_Controls('7', 57);
 	AddStrTilde_Controls('8', 58);
 	AddStrTilde_Controls('9', 59);
+	// Custom ANSI code to support Ctrl/Alt/Shift+Enter
+	AddStrTilde_Controls(VK_RETURN, 60);
 
 	AddStr(VK_ESCAPE, 0, "\x1b");
 

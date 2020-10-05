@@ -133,14 +133,13 @@ endif()
 # workaround for brew's libarchive
 if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
 	set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
-	set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.a")
-else()
-	find_package(LibArchive)
-	if(NOT LibArchive_FOUND)
-		message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")
-	endif()
+	set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.dylib")
 endif()
 
+find_package(LibArchive)
+if(NOT LibArchive_FOUND)
+	message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address

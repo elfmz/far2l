@@ -41,6 +41,18 @@ FIND_PACKAGE(Minizip REQUIRED)
 FIND_PACKAGE(Spdlog REQUIRED)
 FIND_PACKAGE(XercesC REQUIRED)
 
+# sometimes libstd requires linking to libfmt, sometimes not
+# so, if libfmt there - lets link to it, if not - then dont care
+FIND_PACKAGE(fmt)
+
+# using fmt_LIBRARY directrly target_link_libraries fails build
+# so have to copy it into intermediate var but only if fmt_FOUND
+if (fmt_FOUND)
+    set(fmt_LIBRARY_OPTIONAL "${fmt_LIBRARY}")
+else()
+    set(fmt_LIBRARY_OPTIONAL "")
+endif()
+
 target_include_directories(colorer
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src
     PUBLIC ${SPDLOG_INCLUDE_DIR}
@@ -51,14 +63,10 @@ target_include_directories(colorer
 target_link_libraries(colorer
     ${MINIZIP_LIBRARIES}
     ${XERCESC_LIBRARIES}
-    ${fmt_LIBRARY}
+    ${fmt_LIBRARY_OPTIONAL}
     utils
     colorer_lib
     )
-
-# sometimes libstd requires linking to libfmt, sometimes not
-# so, if libfmt there - lets link to it, if not - then dont care
-FIND_PACKAGE(fmt)
 
 target_compile_definitions(colorer PRIVATE
     _UNICODE

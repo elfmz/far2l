@@ -43,10 +43,10 @@ target_include_directories(colorer
     PUBLIC ${XERCESC_INCLUDE_DIR}
     )
 
-#${MINIZIP_LIBRARIES}
 target_link_libraries(colorer
     ${MINIZIP_LIBRARIES}
     ${XERCESC_LIBRARIES}
+    ${fmt_LIBRARY}
     utils
     colorer_lib
     )
@@ -54,12 +54,6 @@ target_link_libraries(colorer
 # sometimes libstd requires linking to libfmt, sometimes not
 # so, if libfmt there - lets link to it, if not - then dont care
 FIND_PACKAGE(fmt)
-
-if (fmt_FOUND)
-    target_link_libraries(colorer
-	    PUBLIC ${fmt_LIBRARY}
-        )
-endif()
 
 target_compile_definitions(colorer PRIVATE
     _UNICODE

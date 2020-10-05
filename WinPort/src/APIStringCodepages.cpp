@@ -330,10 +330,161 @@ extern "C" {
 		return oem_cp;
 	}
 
+    static int DetectAnsiCP()
+	{
+		// detect ansi cp from system locale
+		int ansi_cp = 1251; // default
+
+		const char *lc = setlocale(LC_CTYPE, NULL);
+		if (!lc) { fprintf(stderr, "DetectAnsiCP: setlocale returned NULL\n"); }
+        else if (IsLocaleMatches(lc, "af_ZA")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "ar_SA")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_LB")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_EG")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_DZ")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_BH")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_IQ")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_JO")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_KW")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_LY")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_MA")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_OM")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_QA")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_SY")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_TN")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_AE")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ar_YE")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "ast_ES")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "az_AZ")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "az_AZ")) { ansi_cp = 1254; }
+        else if (IsLocaleMatches(lc, "be_BY")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "bg_BG")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "br_FR")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "ca_ES")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "zh_CN")) { ansi_cp = 936; }
+        else if (IsLocaleMatches(lc, "zh_TW")) { ansi_cp = 950; }
+        else if (IsLocaleMatches(lc, "kw_GB")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "cs_CZ")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "cy_GB")) { ansi_cp = 28604; }
+        else if (IsLocaleMatches(lc, "da_DK")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "de_AT")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "de_LI")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "de_LU")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "de_CH")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "de_DE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "el_GR")) { ansi_cp = 1253; }
+        else if (IsLocaleMatches(lc, "en_AU")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_CA")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_GB")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_IE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_JM")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_BZ")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_PH")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_ZA")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_TT")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_US")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_ZW")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "en_NZ")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_PA")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_BO")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_CR")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_DO")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_SV")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_EC")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_GT")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_HN")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_NI")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_CL")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_MX")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_ES")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_CO")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_ES")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_PE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_AR")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_PR")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_VE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_UY")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "es_PY")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "et_EE")) { ansi_cp = 1257; }
+        else if (IsLocaleMatches(lc, "eu_ES")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fa_IR")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "fi_FI")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fo_FO")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fr_FR")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fr_BE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fr_CA")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fr_LU")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fr_MC")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "fr_CH")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "ga_IE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "gd_GB")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "gv_IM")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "gl_ES")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "he_IL")) { ansi_cp = 1255; }
+        else if (IsLocaleMatches(lc, "hr_HR")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "hu_HU")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "id_ID")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "is_IS")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "it_IT")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "it_CH")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "iv_IV")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "ja_JP")) { ansi_cp = 932; }
+        else if (IsLocaleMatches(lc, "kk_KZ")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "ko_KR")) { ansi_cp = 949; }
+        else if (IsLocaleMatches(lc, "ky_KG")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "lt_LT")) { ansi_cp = 1257; }
+        else if (IsLocaleMatches(lc, "lv_LV")) { ansi_cp = 1257; }
+        else if (IsLocaleMatches(lc, "mk_MK")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "mn_MN")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "ms_BN")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "ms_MY")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "nl_BE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "nl_NL")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "nl_SR")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "nn_NO")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "nb_NO")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "pl_PL")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "pt_BR")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "pt_PT")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "rm_CH")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "ro_RO")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "ru_RU")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "sk_SK")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "sl_SI")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "sq_AL")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "sr_RS")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "sr_RS")) { ansi_cp = 1250; }
+        else if (IsLocaleMatches(lc, "sv_SE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "sv_FI")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "sw_KE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "th_TH")) { ansi_cp = 874; }
+        else if (IsLocaleMatches(lc, "tr_TR")) { ansi_cp = 1254; }
+        else if (IsLocaleMatches(lc, "tt_RU")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "uk_UA")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "ur_PK")) { ansi_cp = 1256; }
+        else if (IsLocaleMatches(lc, "uz_UZ")) { ansi_cp = 1251; }
+        else if (IsLocaleMatches(lc, "uz_UZ")) { ansi_cp = 1254; }
+        else if (IsLocaleMatches(lc, "vi_VN")) { ansi_cp = 1258; }
+        else if (IsLocaleMatches(lc, "wa_BE")) { ansi_cp = 1252; }
+        else if (IsLocaleMatches(lc, "zh_HK")) { ansi_cp = 950; }
+        else if (IsLocaleMatches(lc, "zh_SG")) { ansi_cp = 936; }
+        else if (IsLocaleMatches(lc, "zh_MO")) { ansi_cp = 950; }
+		else {
+			fprintf(stderr, "DetectAnsiCP: setlocale returned unexpected '%s'\n", lc);
+		}
+
+		fprintf(stderr, "DetectAnsiCP: returning %u\n", ansi_cp);
+
+		return ansi_cp;
+	}
+
 	static UINT TranslateCodepage(UINT codepage)
 	{
 		switch (codepage) {
-			case CP_ACP: return 1251; // TODO: detect system locale specific ACP in same way as OEMCP
+    		case CP_ACP: {
+				static int s_ansicp = DetectAnsiCP();
+				return s_ansicp;
+			}
 			case CP_OEMCP: {
 				static int s_oemcp = DetectOemCP();
 				return s_oemcp;

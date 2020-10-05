@@ -121,6 +121,13 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
       CommandRetry.insert(6, StrPrintf("-I CP%u -O CP%u ", actual_oemcp, actual_oemcp));
       ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
     }
+    if (ExecCode == 11) {
+      // "11" means file was not found in archive. retrying as ansi
+      CommandRetry = Command;
+      unsigned int actual_ansicp = WINPORT(GetACP)();
+      CommandRetry.insert(6, StrPrintf("-I CP%u -O CP%u ", actual_ansicp, actual_ansicp));
+      ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+    }
     if (ExecCode == 1) {
       // "1" exit code for unzip is warning only, no need to bother user
       ExecCode = 0;
@@ -140,8 +147,31 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
                 wstr.size() + 1, &oemstr[0], oemstr.size() - 1, 0, 0);
             std::string CommandRetry = Command.substr(0, i_entries);
             CommandRetry.append(&oemstr[0]);
-            ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-            fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+            if (CommandRetry.find("?") == std::string::npos) {
+              ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+              fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+            }
+          }
+          break;
+        }
+      }
+    }
+    if (ExecCode == 12 && strncmp(Command.c_str(), "zip -d", 6) == 0) {
+
+      for(size_t i_entries = 6; i_entries + 1 < Command.size(); ++i_entries) {
+        if (Command[i_entries] == ' ' && Command[i_entries + 1] != ' ' && Command[i_entries + 1] != '-' ) {
+          i_entries = Command.find(' ', i_entries + 1);
+          if (i_entries != std::string::npos) {
+            std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
+            std::vector<char> ansistr(wstr.size() * 6 + 2);
+            WINPORT(WideCharToMultiByte)(CP_ACP, 0, wstr.c_str(),
+                wstr.size() + 1, &ansistr[0], ansistr.size() - 1, 0, 0);
+            std::string CommandRetry = Command.substr(0, i_entries);
+            CommandRetry.append(&ansistr[0]);
+            if (CommandRetry.find("?") == std::string::npos) {
+              ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+              fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+            }
           }
           break;
         }
@@ -161,7 +191,12 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     {
       char ErrMsg[200];
       char NameMsg[NM];
-      FSF.sprintf(ErrMsg,(char *)GetMsg(MArcNonZero),ExecCode);
+      if (ExecCode == 12 && strncmp(Command.c_str(), "zip -d", 6) == 0) {
+        FSF.sprintf(ErrMsg,(char *)GetMsg(MArcNonZeroZip12));
+      } else {
+        FSF.sprintf(ErrMsg,(char *)GetMsg(MArcNonZero),ExecCode);
+      }
+      
       const char *MsgItems[]={GetMsg(MError),NameMsg,ErrMsg,GetMsg(MOk)};
 
       FSF.TruncPathStr(strncpy(NameMsg,ArcName.c_str(),sizeof(NameMsg)),MAX_WIDTH_MESSAGE);

@@ -61,6 +61,7 @@
 "&Disable archive modifications"
 
 "Archiver reported exit code %d"
+"Check your system locale setting to mach this archive!"
 "Required archiver command is not available"
 "Cannot create list file"
 "Cannot find executable file '%s'"

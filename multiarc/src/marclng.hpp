@@ -64,6 +64,7 @@ enum LanguageID
   MArcCmdLock,
 
   MArcNonZero,
+  MArcNonZeroZip12,
   MArcCommandNotFound,
   MCannotCreateListFile,
   MCannotFindArchivator,

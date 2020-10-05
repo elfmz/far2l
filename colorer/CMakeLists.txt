@@ -3,6 +3,11 @@ project(colorer)
 
 set(LIBCOLORER_TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src")
 
+include(src/Colorer-library/cmake/utils.cmake)
+
+colorer_extract_version()
+message(STATUS "Build Colorer: ${COLORER_VERSION}")
+
 add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
 
 set(SOURCES

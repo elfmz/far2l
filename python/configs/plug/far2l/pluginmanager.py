@@ -1,5 +1,6 @@
 import os
 import cffi
+from sys import platform
 from . import rpdb
 
 def installffi(ffi):
@@ -11,13 +12,13 @@ def installffi(ffi):
         'farkeys.hpp',
         'plugin.hpp'
     ):
-        data = open(os.path.join(dname, fname), 'rt').read()
+        data = open(os.path.join(dname, fname), 'rt', encoding='utf-8').read()
         ffi.cdef(data, packed=True)
 
 ffi = cffi.FFI()
 installffi(ffi)
 #ffi.cdef(open(__file__+'.h', 'rt').read(), packed=True)
-ffic = ffi.dlopen('c')
+ffic = ffi.dlopen('c' if platform != 'darwin' else 'libSystem.dylib')
 
 from . import (
     udialog,

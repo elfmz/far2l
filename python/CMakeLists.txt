@@ -37,7 +37,6 @@ add_custom_command(TARGET python POST_BUILD
 
 add_custom_command(TARGET python PRE_BUILD
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND virtualenv -p /usr/bin/python3 --system-site-packages ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python
-    COMMAND virtualenv -p /usr/bin/python3 --system-site-packages --relocatable ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python
+    COMMAND virtualenv -p ${PYTHON3} --system-site-packages ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python/bin/python -m pip install cffi
 )

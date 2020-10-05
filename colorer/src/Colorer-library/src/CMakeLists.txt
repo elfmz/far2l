@@ -1,4 +1,4 @@
-project(colorer_lib VERSION ${COLORER_VERSION} LANGUAGES CXX C)
+project(colorer_lib)
 
 #====================================================
 # colorer
@@ -182,6 +182,8 @@ target_include_directories(colorer_lib
     )
 
 target_link_libraries(colorer_lib
+    PUBLIC ${MINIZIP_LIBRARIES}
+    PUBLIC ${XERCESC_LIBRARIES}
     ${THREAD_LIBS}
     )
 

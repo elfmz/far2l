@@ -24,6 +24,8 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       set(CMAKE_INSTALL_PREFIX "/usr/local")

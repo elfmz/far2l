@@ -226,7 +226,7 @@ int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcIte
 			if (!entry)
 				return GETARC_EOF;
 
-			pathname = archive_entry_pathname(entry);
+			pathname = archive_entry_pathname_utf8(entry);
 			if (pathname && *pathname && strcmp(pathname, ".") != 0 && strcmp(pathname, "..") != 0) {
 				break;
 			}

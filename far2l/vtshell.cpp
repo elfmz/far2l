@@ -370,9 +370,10 @@ static std::string GenerateRandomString()
 
 static std::string Far2lMarkerCommand(const std::string &marker)
 {
-	std::string out = "echo -ne $'\\x1b''_far2l_";
+	// marker contains $FARVTRESULT and thus must be in double quotes
+	std::string out = "echo -ne $'\\x1b'\"_far2l_";
 	out+= marker;
-	out+= "'$'\\x07'";
+	out+= "\"$'\\x07'";
 	return out;
 }
 	
@@ -824,6 +825,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					  && strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0) {
 						_exit_code = atoi(&str[6 + _exit_marker.size()]);
 						_exit_marker.clear();
+//						fprintf(stderr, "_exit_marker=%s _exit_code=%d\n", &str[6], _exit_code);
 					} else {
 						fprintf(stderr,
 							"OnApplicationProtocolCommand - bad marker: '%s' while _start_marker='%s' _exit_marker='%s'\n",

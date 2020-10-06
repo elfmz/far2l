@@ -108,6 +108,12 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   if ((Hide == 1 && CommandType == 0) || CommandType == 2)
     Hide = 0;
 
+// Unzip in MacOS doesn't have -I and -O options thus it fails when extracting any file,
+// Would need another workaround, but let's just skip it for now
+#ifdef __WXOSX__
+  ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+  fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
+#else
   // charset workarounds for unzip
   if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
     // trying as utf8
@@ -148,6 +154,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
       }
     }
   }
+#endif
 
   if (ExecCode==RETEXEC_ARCNOTFOUND)
     return false;

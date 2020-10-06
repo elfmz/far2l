@@ -16,6 +16,9 @@ class VTAnsi
 	public:
 	VTAnsi(IVTShell *vt_shell);
 	~VTAnsi();
+
+	void DisableOutput();
+	void EnableOutput();
 	
 	void Write(const char *str, size_t len);
 	

@@ -8,6 +8,18 @@
 
 #include "libarch_utils.h"
 
+
+const char *LibArch_EntryPathname(struct archive_entry *e)
+{
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
+	const char *utf8 = archive_entry_pathname_utf8(e);
+	if (utf8) {
+		return utf8;
+	}
+#endif
+	return archive_entry_pathname(e);
+}
+
 bool LibArch_DetectedFormatHasCompression(struct archive *a)
 {
 	unsigned int fmt = archive_format(a);

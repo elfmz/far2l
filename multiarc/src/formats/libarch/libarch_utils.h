@@ -69,3 +69,6 @@ private:
 	LibArchOpenWrite(const LibArchOpenWrite&) = delete;
 };
 
+#if (ARCHIVE_VERSION_NUMBER < 3002000)
+# define archive_entry_pathname_utf8 archive_entry_pathname
+#endif

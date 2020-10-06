@@ -229,7 +229,7 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 			if (!entry) {
 				break;
 			}
-			const char *pathname = archive_entry_pathname(entry);
+			const char *pathname = archive_entry_pathname_utf8(entry);
 			if (pathname) {
 				parts.clear();
 				str = pathname;
@@ -268,7 +268,7 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 				int r = LibArchCall(archive_read_data_block, arc_src.Get(), &buf, &size, &offset);
 				if ((r != ARCHIVE_OK  && r != ARCHIVE_WARN) || size == 0) {
 					throw std::runtime_error(StrPrintf("Error %d reading at 0x%llx : %s",
-						r, (unsigned long long)offset, archive_entry_pathname(entry)));
+						r, (unsigned long long)offset, archive_entry_pathname_utf8(entry)));
 				}
 				if (!arc_dst.WriteData(buf, size)) {
 					throw std::runtime_error("write data failed");

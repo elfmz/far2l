@@ -46,7 +46,7 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 			break;
 		}
 
-		const char *pathname = archive_entry_pathname_utf8(entry);
+		const char *pathname = LibArch_EntryPathname(entry);
 		src_path = pathname ? pathname : "";
 		parts.clear();
 		LibArch_ParsePathToParts(parts, src_path);

@@ -106,6 +106,15 @@ BOOL WINAPI _export RAR_IsArchive(const char *Name,const unsigned char *Data,int
   for (int I=0;I<DataSize-7;I++)
   {
     const unsigned char *D=Data+I;
+
+    // check for RAR5.0 signature
+    if (D[0]==0x52 && D[1]==0x61 && D[2]==0x72 && D[3]==0x21 &&
+        D[4]==0x1a && D[5]==0x07 && D[6]==0x01 && D[7]==0x00)
+    {
+      SFXSize=I;
+      return(TRUE);
+    }
+
     if (D[0]==0x52 && D[1]==0x45 && D[2]==0x7e && D[3]==0x5e &&
         (I==0 || (DataSize>31 && Data[28]==0x52 && Data[29]==0x53 &&
         Data[30]==0x46 && Data[31]==0x58)))
@@ -114,6 +123,7 @@ BOOL WINAPI _export RAR_IsArchive(const char *Name,const unsigned char *Data,int
       SFXSize=I;
       return(TRUE);
     }
+
     // check marker block
     // The marker block is actually considered as a fixed byte sequence: 0x52 0x61 0x72 0x21 0x1a 0x07 0x00
     if (D[0]==0x52 && D[1]==0x61 && D[2]==0x72 && D[3]==0x21 &&

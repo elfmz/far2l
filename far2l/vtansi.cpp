@@ -167,6 +167,7 @@ jadoxa@yahoo.com.au
 #include "headers.hpp"
 
 #include <mutex>
+#include <atomic>
 #include "vtansi.h"
 
 
@@ -227,6 +228,7 @@ static VTAnsiState g_saved_state;
 static std::mutex g_vt_ansi_mutex;
 IVTShell *g_vt_shell = nullptr;
 static std::string g_title;
+static std::atomic<bool> g_output_disabled;
 
 static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 
@@ -380,12 +382,25 @@ static void ApplyConsoleTitle()
 // Writes the buffer to the console and empties it.
 //-----------------------------------------------------------------------------
 
+static void WriteConsoleIfEnabled(const WCHAR *str, DWORD len)
+{
+	DWORD written;
+	if (!g_output_disabled) {
+		WINPORT(WriteConsole)( hConOut, str, len, &written, NULL );
+	}
+}
+
 static void FlushBuffer( void )
 {
 	DWORD nWritten;
 
+	if (g_output_disabled) {
+		nCharInBuffer = 0;
+	}
+
 //fprintf(stderr, "FlushBuffer: %u\n", nCharInBuffer);
-	if (nCharInBuffer <= 0) return;
+	if (nCharInBuffer <= 0)
+		return;
 
 	if (ansiState.crm) {
 		DWORD mode = 0;
@@ -460,7 +475,6 @@ static void FlushBuffer( void )
 void PushBuffer( WCHAR c )
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	DWORD nWritten;
 	ChPrev = c;
 
 	if (c == '\n') {
@@ -473,7 +487,7 @@ void PushBuffer( WCHAR c )
 			// If we're displaying controls, then the only way we can be on the left
 			// margin is if wrap occurred.
 			if (csbi.dwCursorPosition.X != 0)
-				WINPORT(WriteConsole)( hConOut, L"\n", 1, &nWritten, NULL );
+				WriteConsoleIfEnabled( L"\n", 1);
 		} else {
 			LPCWSTR nl = L"\n";
 			if (fWrapped) {
@@ -507,7 +521,7 @@ void PushBuffer( WCHAR c )
 				fWrapped = FALSE;
 			}
 			if (nl)
-				WINPORT(WriteConsole)( hConOut, nl, 1, &nWritten, NULL );
+				WriteConsoleIfEnabled( nl, 1);
 		}
 	} else {
 		if (shifted && c >= FIRST_G1 && c <= LAST_G1)
@@ -1598,6 +1612,18 @@ VTAnsi::~VTAnsi()
 	g_vt_ansi_mutex.unlock();
 }
 
+void VTAnsi::DisableOutput()
+{
+	g_output_disabled = true;
+}
+
+void VTAnsi::EnableOutput()
+{
+	if (g_output_disabled) {
+		nCharInBuffer = 0;
+		g_output_disabled = false;
+	}
+}
 
 struct VTAnsiState *VTAnsi::Suspend()
 {

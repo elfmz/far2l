@@ -46,7 +46,7 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 			break;
 		}
 
-		const char *pathname = archive_entry_pathname(entry);
+		const char *pathname = LibArch_EntryPathname(entry);
 		src_path = pathname ? pathname : "";
 		parts.clear();
 		LibArch_ParsePathToParts(parts, src_path);
@@ -58,6 +58,7 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		}
 
 		if (!wanteds.empty() && !PartsMatchesAnyOfWanteds(wanteds, parts)) {
+//			fprintf(stderr, "Not matching: '%s'\n", pathname);
 			arc.SkipData();
 			continue;
 		}

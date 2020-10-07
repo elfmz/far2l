@@ -344,172 +344,38 @@ private:
 	}
 };
 
-class Marker
+static std::string GenerateRandomString()
 {
-	bool _active;
+	std::string out;
 
-protected:
-	std::string _marker;
-	size_t _marker_start;
-	std::string _backlog;
-
-	void ScanReset()
-	{
-		_active = false;
-		_marker_start = (size_t) -1;
-		_backlog.clear();
-	}
-
-	std::string GetMarker()
-	{
-		if (_marker.empty())
-			Reset();
-		return _marker;
-	}
-
-public:
-	Marker() : _active(false), _marker_start((size_t) -1)
-	{
-		srand(time(NULL));
-	}
-
-	std::string EscapedOutput()
-	{
-		std::string out;
-		char escaped[16];
-		for (const auto c : GetMarker()) {
-			sprintf(escaped, "\\x%02x",
-					(unsigned int) (unsigned char) c);
-			out += escaped;
+	for (size_t l = 8 + (rand() % 9); l; --l) {
+		char c;
+		switch (rand() % 3) {
+			case 0:
+				c = 'A' + (rand() % ('Z' + 1 - 'A'));
+				break;
+			case 1:
+				c = 'a' + (rand() % ('z' + 1 - 'a'));
+				break;
+			case 2:
+				c = '0' + (rand() % ('9' + 1 - '0'));
+				break;
 		}
-		return out;
+		out+= c;
 	}
 
-	virtual std::string EchoCommand() = 0;
+	return out;
+}
 
-	virtual void Reset()
-	{
-		_marker.clear();
-		for (size_t l = 8 + (rand() % 9); l; --l) {
-			char c;
-			switch (rand() % 3) {
-				case 0:
-					c = 'A' + (rand() % ('Z' + 1 - 'A'));
-					break;
-				case 1:
-					c = 'a' + (rand() % ('z' + 1 - 'a'));
-					break;
-				case 2:
-					c = '0' + (rand() % ('9' + 1 - '0'));
-					break;
-			}
-			_marker += c;
-		}
-		ScanReset();
-	}
 
-	virtual void OnScanStart()
-	{};
-
-	virtual void OnCharScan(const char)
-	{};
-
-	virtual void OnMarkerFound()
-	{};
-
-	virtual void OnMarkerScanStart()
-	{
-		_marker_start = _backlog.size();
-	}
-
-	int Scan(const char *buf, int len)
-	{
-		for (int i = 0; i < len; ++i) {
-			if (buf[i] == '=') {
-				ScanReset();
-				_active = true;
-				OnScanStart();
-			} else if (_active) {
-				_backlog += buf[i];
-				OnCharScan(buf[i]);
-				if (_marker_start == (size_t) -1) {
-					// check for reasonable length limit
-					if (_backlog.size() > 12 + _marker.size()) {
-						ScanReset();
-					}
-				} else if (_backlog.size() - _marker_start >= _marker.size()) {
-					std::string marker = GetMarker();
-					if (memcmp(_backlog.c_str() + _marker_start, marker.c_str(), marker.size()) == 0) {
-						_backlog[_marker_start - 1] = 0;
-						OnMarkerFound();
-						ScanReset();
-						return i + 1;
-					}
-					ScanReset();
-				}
-			}
-		}
-		return -1;
-	}
-};
-
-class StartingMarker : public Marker
+static std::string Far2lMarkerCommand(const std::string &marker)
 {
-public:
-	std::string EchoCommand() override
-	{
-		std::string out = "echo -ne \"=\"$\'";
-		out += EscapedOutput();
-		out += '\'';
-		return out;
-	}
-
-	void OnScanStart() override
-	{
-		OnMarkerScanStart();
-	}
-};
-
-class CompletionMarker : public Marker
-{
-	int _exit_code = -1;
-
-public:
-	std::string EchoCommand() override
-	{
-		std::string out = "echo -ne \"=$FARVTRESULT:\"$\'";
-		out += EscapedOutput();
-		out += '\'';
-		return out;
-	}
-
-	int LastExitCode() const
-	{
-		return _exit_code;
-	}
-
-	void Reset() override
-	{
-		Marker::Reset();
-		_marker += "\x1b[1K\x0d";
-	}
-
-	void OnCharScan(const char c) override
-	{
-		if (c == ':') {
-			if (_marker_start == (size_t) -1)
-				OnMarkerScanStart();
-			else
-				// second splitter??
-				ScanReset();
-		}
-	}
-
-	void OnMarkerFound() override
-	{
-		_exit_code = atoi(&_backlog[0]);
-	}
-};
+	// marker contains $FARVTRESULT and thus must be in double quotes
+	std::string out = "echo -ne $'\\x1b'\"_far2l_";
+	out+= marker;
+	out+= "\"$'\\x07'";
+	return out;
+}
 	
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
@@ -521,14 +387,15 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _shell_pid, _forked_proc_pid;
 	std::string _slavename;
-	CompletionMarker _completion_marker;
-	StartingMarker _starting_marker;
 	bool _seeking_start;
 	bool _seeking_end;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
 	VTFar2lExtensios *_far2l_exts = nullptr;
 	std::mutex _far2l_exts_mutex, _write_term_mutex;
+
+	std::string _start_marker, _exit_marker;
+	unsigned int _exit_code;
 	
 	
 	int ForkAndAttachToSlave(bool shell)
@@ -738,30 +605,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
 		DbgPrintEscaped("OUTPUT", buf, len);
-
-		if (_seeking_start) {
-		    int pos = _starting_marker.Scan(buf, len);
-		    if (pos >= 0) {
-		        buf += pos;
-		        len -= pos;
-		        _vta.Write(buf, len);
-		        _seeking_start = false;
-		        _seeking_end = true;
-		    }
-		}
-
-		if (_seeking_end) {
-            //_completion_marker is not thread safe generically,
-            //but while OnProcessOutput called from single thread .
-            //and can't overlap with ScanReset() - its ok.
-            //But if it will be called from several threads - this
-            //calls must be guarded by mutex.
-            bool out = _completion_marker.Scan(buf, len) < 0;
-            _vta.Write(buf, len);
-            return out;
-        }
-
-		return true;
+		_vta.Write(buf, len);
+		return !_exit_marker.empty();
 	}
 	
 	virtual void OnTerminalResized()
@@ -970,6 +815,24 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					}
 
 				} break;
+
+				case '_': { // internal markers control
+					if (!_start_marker.empty() && _start_marker == &str[6]) {
+						_start_marker.clear();
+						_vta.EnableOutput();
+					}
+					else if (!_exit_marker.empty()
+					  && strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0) {
+						_exit_code = atoi(&str[6 + _exit_marker.size()]);
+						_exit_marker.clear();
+//						fprintf(stderr, "_exit_marker=%s _exit_code=%d\n", &str[6], _exit_code);
+					} else {
+						fprintf(stderr,
+							"OnApplicationProtocolCommand - bad marker: '%s' while _start_marker='%s' _exit_marker='%s'\n",
+							&str[6], _start_marker.c_str(), _exit_marker.c_str());
+					}
+				} break;
+
 			}
 			if (!reply.empty())
 				_input_reader.InjectInput(reply.c_str(), reply.size());
@@ -1112,9 +975,9 @@ static bool shown_tip_exit = false;
 		if (!need_sudo) {
 			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
 		}
-		fprintf(f, "%s\n", _starting_marker.EchoCommand().c_str());
 		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
 		fprintf(f, "PS1=''\n");//reduce risk of glitches
+		fprintf(f, "%s\n", Far2lMarkerCommand(_start_marker).c_str());
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
 			fprintf(f, "echo \"Closing back shell.%s\"\n", 
@@ -1222,6 +1085,11 @@ static bool shown_tip_exit = false;
 			perror("getcwd");
 		}
 
+		_start_marker = GenerateRandomString();
+		_exit_marker = GenerateRandomString();
+		_exit_marker+= ':';
+		_exit_code = -1;
+
 		const std::string &cmd_script = GenerateExecuteCommandScript(cd, cmd, force_sudo);
 		if (cmd_script.empty())
 			return -1;
@@ -1235,7 +1103,7 @@ static bool shown_tip_exit = false;
 		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
 		cmd_str+= EscapeCmdStr(cmd_script);
 		cmd_str+= ';';
-		cmd_str+= _completion_marker.EchoCommand();
+		cmd_str+= Far2lMarkerCommand(_exit_marker + "$FARVTRESULT").c_str();
 		cmd_str+= '\n';
 
 		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
@@ -1243,11 +1111,9 @@ static bool shown_tip_exit = false;
 			return -1;
 		}
 
-        _seeking_start = true;
-		_seeking_end = false;
-
 		const std::string &title = ComposeExecuteCommandInitialTitle(cd, cmd, force_sudo);
 		_vta.OnStart(title.c_str());
+		_vta.DisableOutput(); // will enable on start marker arrival
 
 		{
 			std::lock_guard<std::mutex> lock(_inout_control_mutex);
@@ -1288,7 +1154,6 @@ static bool shown_tip_exit = false;
 		remove(cmd_script.c_str());
 
 		OnKeypadChange(0);
-		_completion_marker.Reset();
 		_vta.OnStop();
 		DeliverPendingWindowInfo();
 
@@ -1296,7 +1161,7 @@ static bool shown_tip_exit = false;
 		delete _far2l_exts;
 		_far2l_exts = nullptr;
 
-		return _completion_marker.LastExitCode();
+		return _exit_code;
 	}	
 
 	bool IsOK()

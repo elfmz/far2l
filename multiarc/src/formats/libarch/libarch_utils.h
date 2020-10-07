@@ -17,6 +17,7 @@ template <typename ... ARGS>
 	}
 };
 
+const char *LibArch_EntryPathname(struct archive_entry *e);
 bool LibArch_DetectedFormatHasCompression(struct archive *a);
 void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path);
 
@@ -68,4 +69,3 @@ protected:
 private:
 	LibArchOpenWrite(const LibArchOpenWrite&) = delete;
 };
-

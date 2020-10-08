@@ -135,7 +135,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     }
   } else {
     // It is intended that UTF-8 is tried first for "unzip", but ANSI/OEM are tried first for "zip -d".
-    // Its due to differen charset processing logic in zip and unzip.
+    // Its due to different charset processing logic in zip and unzip.
     // "unzip" always tries to use "0x7075 UTF-8 name" header if any and uses -I/-O options only if it is absent.
     // but "zip -d" seems to be unable to handle 0x7075 at all, so if archive has OEM/ANSI filenames versions,
     // "zip -d" will not be able to access them using UTF-8 synonims.

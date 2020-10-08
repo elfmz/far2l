@@ -52,13 +52,14 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		LibArch_ParsePathToParts(parts, src_path);
 
 		if (parts.empty()) {
-			fprintf(stderr, "Empty path: '%s'\n", pathname);
+			fprintf(stderr, "Empty path: '%s' '%ls' '%s'\n",
+				pathname, archive_entry_pathname_w(entry), archive_entry_hardlink(entry));
 			arc.SkipData();
 			continue;
 		}
 
 		if (!wanteds.empty() && !PartsMatchesAnyOfWanteds(wanteds, parts)) {
-//			fprintf(stderr, "Not matching: '%s'\n", pathname);
+			fprintf(stderr, "Not matching: '%s' '%ls'\n", pathname, archive_entry_pathname_w(entry));
 			arc.SkipData();
 			continue;
 		}

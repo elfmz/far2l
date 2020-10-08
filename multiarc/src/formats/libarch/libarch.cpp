@@ -371,6 +371,8 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 
 extern "C" int libarch_main(int numargs, char *args[])
 {
+	setlocale(LC_ALL, "");
+
 	if (numargs < 3) {
 		printf("Usage: ^arch <command> <archive_name> [-@OPTIONAL ARCHIVE ROOT] [OPTIONAL LIST OF FILES]\n\n"
 			"<Commands>\n"

@@ -2,12 +2,22 @@
 
 #include <string>
 #include <fcntl.h>
+#include <unistd.h>
 #include <errno.h>
 #include <sudo.h>
 #include <utils.h>
+#include <Codepages.h>
 
 #include "libarch_utils.h"
 
+
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
+static std::string s_passprhase;
+static const char *LibArch_PassprhaseCallback(struct archive *, void *_client_data)
+{
+	return getpass("Password please:");
+}
+#endif
 
 const char *LibArch_EntryPathname(struct archive_entry *e)
 {
@@ -63,6 +73,8 @@ void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string
 LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 {
 	Open(name);
+	char opt_hdrcharset[0x100] = {0};
+	snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=CP%u", Codepages::DetectOemCP());
 
 	LibArchCall(archive_read_support_filter_all, _arc);
 
@@ -78,6 +90,8 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 	LibArchCall(archive_read_support_format_gnutar, _arc);
 	LibArchCall(archive_read_support_format_cpio, _arc);
 	LibArchCall(archive_read_support_format_cab, _arc);
+//	int r = archive_read_set_format_option(_arc, NULL, "hdrcharset", "CP1251");
+	LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
 
 	int r = LibArchCall(archive_read_open1, _arc);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
@@ -93,12 +107,15 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 
 		LibArchCall(archive_read_support_filter_all, _arc);
 		LibArchCall(archive_read_support_format_all, _arc);
+		LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
+
 		// already tried this: LibArchCall(archive_read_support_format_raw, _arc);
 		r = LibArchCall(archive_read_open1, _arc);
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			EnsureClosed();
 			throw std::runtime_error(StrPrintf("open archive error %d", r));
 		}
+
 		_ae = NextHeader();
 	}
 
@@ -135,6 +152,10 @@ void LibArchOpenRead::Open(const char *name)
 	LibArchCall(archive_read_set_seek_callback, _arc, sSeekCallback);
 	LibArchCall(archive_read_set_skip_callback, _arc, sSkipCallback);
 	LibArchCall(archive_read_set_close_callback, _arc, sCloseCallback);
+
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
+	LibArchCall(archive_read_set_passphrase_callback, _arc, nullptr, LibArch_PassprhaseCallback);
+#endif
 }
 
 struct archive_entry *LibArchOpenRead::NextHeader()

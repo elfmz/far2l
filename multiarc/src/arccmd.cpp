@@ -155,12 +155,12 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
               std::vector<char> legacystr(wstr.size() * 6 + 2);
               WINPORT(WideCharToMultiByte)(legacy_cp, 0, wstr.c_str(),
                   wstr.size() + 1, &legacystr[0], legacystr.size() - 1, 0, 0);
-              std::string CommandRetry = Command.substr(0, i_entries);
-              CommandRetry.append(&legacystr[0]);
-              if (CommandRetry.find("?") == std::string::npos) {
-                ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-                fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n",
-                    ExecCode, CommandRetry.c_str());
+              std::string CommandTranscoded = Command.substr(0, i_entries);
+              CommandTranscoded.append(&legacystr[0]);
+              if (CommandTranscoded.find("?") == std::string::npos) {
+                ExecCode = Execute(this, CommandTranscoded.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+                fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n",
+                    ExecCode, CommandTranscoded.c_str());
               } else { ExecCode = 0; wrong_locale = true; }
             }
             break;

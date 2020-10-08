@@ -154,7 +154,7 @@ void LibArchOpenRead::Open(const char *name)
 	LibArchCall(archive_read_set_close_callback, _arc, sCloseCallback);
 
 #if (ARCHIVE_VERSION_NUMBER >= 3002000)
-	LibArchCall(archive_read_set_passphrase_callback, _arc, nullptr, LibArch_PassprhaseCallback);
+	archive_read_set_passphrase_callback(_arc, nullptr, LibArch_PassprhaseCallback);
 #endif
 }
 

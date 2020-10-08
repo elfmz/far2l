@@ -143,39 +143,24 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     // and an archive contains OEM or ANSI filenames versions, utf-8 can not be used for "zip -d" (it will fail),
     // and charset conversion will fail also, so no way to run "zip -d". Sorry :(
     if (strncmp(Command.c_str(), "zip -d", 6) == 0) {
-      if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) {
+      if ((ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) ||
+          (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_ANSI))
+      {
+        int legacy_cp = (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) ? CP_OEMCP : CP_ACP;
         for(size_t i_entries = 6; i_entries + 1 < Command.size(); ++i_entries) {
           if (Command[i_entries] == ' ' && Command[i_entries + 1] != ' ' && Command[i_entries + 1] != '-' ) {
             i_entries = Command.find(' ', i_entries + 1);
             if (i_entries != std::string::npos) {
               std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
-              std::vector<char> oemstr(wstr.size() * 6 + 2);
-              WINPORT(WideCharToMultiByte)(CP_OEMCP, 0, wstr.c_str(),
-                  wstr.size() + 1, &oemstr[0], oemstr.size() - 1, 0, 0);
+              std::vector<char> legacystr(wstr.size() * 6 + 2);
+              WINPORT(WideCharToMultiByte)(legacy_cp, 0, wstr.c_str(),
+                  wstr.size() + 1, &legacystr[0], legacystr.size() - 1, 0, 0);
               std::string CommandRetry = Command.substr(0, i_entries);
-              CommandRetry.append(&oemstr[0]);
+              CommandRetry.append(&legacystr[0]);
               if (CommandRetry.find("?") == std::string::npos) {
                 ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-                fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
-              } else { ExecCode = 0; wrong_locale = true; }
-            }
-            break;
-          }
-        }
-      } else if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_ANSI) {
-        for(size_t i_entries = 6; i_entries + 1 < Command.size(); ++i_entries) {
-          if (Command[i_entries] == ' ' && Command[i_entries + 1] != ' ' && Command[i_entries + 1] != '-' ) {
-            i_entries = Command.find(' ', i_entries + 1);
-            if (i_entries != std::string::npos) {
-              std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
-              std::vector<char> ansistr(wstr.size() * 6 + 2);
-              WINPORT(WideCharToMultiByte)(CP_ACP, 0, wstr.c_str(),
-                  wstr.size() + 1, &ansistr[0], ansistr.size() - 1, 0, 0);
-              std::string CommandRetry = Command.substr(0, i_entries);
-              CommandRetry.append(&ansistr[0]);
-              if (CommandRetry.find("?") == std::string::npos) {
-                ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-                fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+                fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n",
+                    ExecCode, CommandRetry.c_str());
               } else { ExecCode = 0; wrong_locale = true; }
             }
             break;

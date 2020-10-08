@@ -116,8 +116,17 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
   fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
 #else
-  // charset workarounds for unzip
+  // Charset workarounds for zip & unzip
+  // It is intended that UTF-8 is tried first for "unzip", but ANSI/OEM are tried first for "zip -d".
+  // Its due to different charset processing logic in zip and unzip.
+  // "unzip" always tries to use "0x7075 UTF-8 name" header if any and uses -I/-O options only if it is absent.
+  // but "zip -d" seems to be unable to handle 0x7075 at all, so if archive has OEM/ANSI filenames versions,
+  // "zip -d" will not be able to access them using UTF-8 synonims.
+  // That's why specific error case exists for "zip -d": if system locale do not matches archive's one,
+  // and an archive contains OEM or ANSI filenames versions, utf-8 can not be used for "zip -d" (it will fail),
+  // and charset conversion will fail also, so no way to run "zip -d". Sorry :(
   if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
+    // alter Command for unzip
     if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_UTF8) {
       Command.insert(6, "-I utf8 -O utf8 ");
     } else if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) {
@@ -127,53 +136,51 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
       unsigned int actual_ansicp = WINPORT(GetACP)();
       Command.insert(6, StrPrintf("-I CP%u -O CP%u ", actual_ansicp, actual_ansicp));
     }
-    ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-    fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
-    if (ExecCode == 1) {
-      // "1" exit code for unzip is warning only, no need to bother user
-      ExecCode = 0;
-    }
-  } else {
-    // It is intended that UTF-8 is tried first for "unzip", but ANSI/OEM are tried first for "zip -d".
-    // Its due to different charset processing logic in zip and unzip.
-    // "unzip" always tries to use "0x7075 UTF-8 name" header if any and uses -I/-O options only if it is absent.
-    // but "zip -d" seems to be unable to handle 0x7075 at all, so if archive has OEM/ANSI filenames versions,
-    // "zip -d" will not be able to access them using UTF-8 synonims.
-    // That's why specific error case exists for "zip -d": if system locale do not matches archive's one,
-    // and an archive contains OEM or ANSI filenames versions, utf-8 can not be used for "zip -d" (it will fail),
-    // and charset conversion will fail also, so no way to run "zip -d". Sorry :(
-    if (strncmp(Command.c_str(), "zip -d", 6) == 0) {
-      if ((ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) ||
-          (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_ANSI))
-      {
-        int legacy_cp = (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) ? CP_OEMCP : CP_ACP;
-        for(size_t i_entries = 6; i_entries + 1 < Command.size(); ++i_entries) {
-          if (Command[i_entries] == ' ' && Command[i_entries + 1] != ' ' && Command[i_entries + 1] != '-' ) {
-            i_entries = Command.find(' ', i_entries + 1);
-            if (i_entries != std::string::npos) {
-              std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
-              std::vector<char> legacystr(wstr.size() * 6 + 2);
-              WINPORT(WideCharToMultiByte)(legacy_cp, 0, wstr.c_str(),
-                  wstr.size() + 1, &legacystr[0], legacystr.size() - 1, 0, 0);
-              std::string CommandTranscoded = Command.substr(0, i_entries);
-              CommandTranscoded.append(&legacystr[0]);
-              if (CommandTranscoded.find("?") == std::string::npos) {
-                ExecCode = Execute(this, CommandTranscoded.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-                fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n",
-                    ExecCode, CommandTranscoded.c_str());
-              } else { ExecCode = 0; wrong_locale = true; }
+  } else if (strncmp(Command.c_str(), "zip -d", 6) == 0) {
+    // alter Command for zip (if possible)
+    if ((ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) ||
+        (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_ANSI))
+    {
+      int legacy_cp = (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) ? CP_OEMCP : CP_ACP;
+      for(size_t i_entries = 6; i_entries + 1 < Command.size(); ++i_entries) {
+        if (Command[i_entries] == ' ' && Command[i_entries + 1] != ' ' && Command[i_entries + 1] != '-' ) {
+          i_entries = Command.find(' ', i_entries + 1);
+          if (i_entries != std::string::npos) {
+            std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
+            std::vector<char> legacystr(wstr.size() * 6 + 2);
+            WINPORT(WideCharToMultiByte)(legacy_cp, 0, wstr.c_str(),
+                wstr.size() + 1, &legacystr[0], legacystr.size() - 1, 0, 0);
+            std::string CommandTranscoded = Command.substr(0, i_entries);
+            CommandTranscoded.append(&legacystr[0]);
+            if (CommandTranscoded.find("?") == std::string::npos) {
+              Command = CommandTranscoded;
+            } else {
+              wrong_locale = true;
             }
-            break;
           }
+          break;
         }
-      } else if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_UTF8) {
-        ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-        fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
       }
-    } else {
-      ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-      fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
     }
+  } else if (strncmp(Command.c_str(), "unar ", 5) == 0) {
+    // todo: code pages names conversion for some code pages, like "CP932" -> "windows-31j", see elfmz/far2l#775
+    if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_UTF8) {
+      Command.insert(5, "-e UTF-8 ");
+    } else if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) {
+      unsigned int actual_oemcp = WINPORT(GetOEMCP)();
+      Command.insert(5, StrPrintf("-e CP%u ", actual_oemcp, actual_oemcp));
+    } else if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_ANSI) {
+      unsigned int actual_ansicp = WINPORT(GetACP)();
+      Command.insert(5, StrPrintf("-e CP%u ", actual_ansicp, actual_ansicp));
+    }
+  }
+  // acutally we may skip ExecCode if wrong_locale is true, but let's do it anyway
+  // to inform user it's a zip's problem, not ours
+  ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+  fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
+  if ((ExecCode == 1) && (strncmp(Command.c_str(), "unzip ", 6) == 0)) {
+    // "1" exit code for unzip is warning only, no need to bother user
+    ExecCode = 0;
   }
 #endif
 
@@ -189,7 +196,8 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     {
       char ErrMsg[200];
       char NameMsg[NM];
-      if (wrong_locale) {
+      if ((ExecCode == 12) && wrong_locale) {
+        // 12 is "file not found in archive" for zip
         FSF.sprintf(ErrMsg,(char *)GetMsg(MArcWrongLocale));
       } else {
         FSF.sprintf(ErrMsg,(char *)GetMsg(MArcNonZero),ExecCode);

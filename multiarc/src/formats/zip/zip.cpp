@@ -15,6 +15,10 @@
 using namespace oldfar;
 #include "fmt.hpp"
 
+#define PFLAGS_SRC_CODE_PAGE_UTF8 0x01000000
+#define PFLAGS_SRC_CODE_PAGE_ANSI 0x02000000
+#define PFLAGS_SRC_CODE_PAGE_OEM  0x04000000
+
 static BOOL CPToUTF8( UINT cp, LPCSTR s, LPSTR d, int dlen )
 {
 	if (!s || !d || dlen<=1 )
@@ -310,12 +314,20 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (ZipHeader.PackOS<ARRAYSIZE(ZipOS))
     strncpy(Info->HostOS,ZipOS[ZipHeader.PackOS],ARRAYSIZE(Info->HostOS)-1);
 
-//  if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
-  if (ZipHeader.Flags&0x800) { // Bit 11 - language encoding flag (EFS) - means filename&comment fields are UTF8
-  } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
+  Item->Flags |= PFLAGS_SRC_CODE_PAGE_UTF8; // UTF-8 source charset custom flag
+  Item->Flags &= ~PFLAGS_SRC_CODE_PAGE_OEM;
+  Item->Flags &= ~PFLAGS_SRC_CODE_PAGE_ANSI;
+
+  if (ZipHeader.Flags & 0x800) { // Bit 11 - language encoding flag (EFS) - means filename&comment fields are UTF8
+  } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>=20 && ZipHeader.PackVer<25) {
+    Item->Flags |= PFLAGS_SRC_CODE_PAGE_ANSI; // ANSI source charset flag
+    Item->Flags &= ~PFLAGS_SRC_CODE_PAGE_UTF8;
     CPToUTF8(CP_ACP, Item->FindData.cFileName,Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
-  else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0)
+  } else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0) {
+    Item->Flags |= PFLAGS_SRC_CODE_PAGE_OEM; // OEM source charset flag
+    Item->Flags &= ~PFLAGS_SRC_CODE_PAGE_UTF8;
     CPToUTF8(CP_OEMCP, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
+  }
 
   Info->UnpVer=(ZipHeader.UnpVer/10)*256+(ZipHeader.UnpVer%10);
   Info->DictSize=32;
@@ -435,6 +447,9 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 		
 		if (0x7075==BlockHead.Type) {
 			strncpy(Item->FindData.cFileName, &strbuf[0], ARRAYSIZE(Item->FindData.cFileName) - 1);
+            Item->Flags |= PFLAGS_SRC_CODE_PAGE_UTF8; // UTF-8 source charset custom flag
+            // We do not reset other charset flags here as flags indicate
+            // that filename in corresponding charset EXISTS in archive, but not it is the ONLY one
 		} else {
 			strncpy(Info->Description, &strbuf[0], ARRAYSIZE(Info->Description) - 1);
 		}

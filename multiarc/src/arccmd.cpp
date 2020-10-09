@@ -110,12 +110,6 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 
   bool wrong_locale = false;
 
-// Unzip in MacOS doesn't have -I and -O options thus it fails when extracting any file,
-// Would need another workaround, but let's just skip it for now
-#ifdef __WXOSX__
-  ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-  fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
-#else
   // Charset workarounds for zip & unzip
   // It is intended that UTF-8 is tried first for "unzip", but ANSI/OEM are tried first for "zip -d".
   // Its due to different charset processing logic in zip and unzip.
@@ -127,6 +121,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   // and charset conversion will fail also, so no way to run "zip -d". Sorry :(
   if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
     // alter Command for unzip
+    std::string CommandUnmodified = Command;
     if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_UTF8) {
       Command.insert(6, "-I utf8 -O utf8 ");
     } else if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) {
@@ -182,7 +177,12 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     // "1" exit code for unzip is warning only, no need to bother user
     ExecCode = 0;
   }
-#endif
+
+  if ((ExecCode == 10) && (strncmp(Command.c_str(), "unzip ", 6) == 0)) {
+    // Retry for operating systems with no -I/-O support in unzip
+    ExecCode = Execute(this, CommandUnmodified, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+    fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, CommandUnmodified.c_str());
+  }
 
   if (ExecCode==RETEXEC_ARCNOTFOUND)
     return false;

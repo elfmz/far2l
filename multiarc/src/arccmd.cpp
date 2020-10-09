@@ -119,9 +119,9 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
   // That's why specific error case exists for "zip -d": if system locale do not matches archive's one,
   // and an archive contains OEM or ANSI filenames versions, utf-8 can not be used for "zip -d" (it will fail),
   // and charset conversion will fail also, so no way to run "zip -d". Sorry :(
+  std::string CommandUnmodified = Command;
   if (strncmp(Command.c_str(), "unzip ", 6) == 0) {
     // alter Command for unzip
-    std::string CommandUnmodified = Command;
     if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_UTF8) {
       Command.insert(6, "-I utf8 -O utf8 ");
     } else if (ArcCommand::PanelItem->Flags & PFLAGS_SRC_CODE_PAGE_OEM) {

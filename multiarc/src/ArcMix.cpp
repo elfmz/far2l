@@ -164,7 +164,7 @@ DWORD WINAPI ThreadWhatWaitingForKillListFile(LPVOID par)
 }
 /* tran 13.09.2000 $ */
 
-int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo, int ShowTitle, char *ListFileName)
+int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo, int ShowCommand, char *ListFileName)
 {
   if (!CmdStr.empty() && (CmdStr[0]==' ' || CmdStr[0]=='\t')) { //FSF.LTrim(ExpandedCmd); //$ AA 12.11.2001
     std::string CmdStrTrimmed = CmdStr;
@@ -172,7 +172,7 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
       CmdStrTrimmed.erase(0, 1);
     } while (!CmdStrTrimmed.empty() && (CmdStrTrimmed[0]==' ' || CmdStrTrimmed[0]=='\t'));
 
-    return Execute(hPlugin, CmdStrTrimmed, HideOutput, Silent, NeedSudo, ShowTitle, ListFileName);
+    return Execute(hPlugin, CmdStrTrimmed, HideOutput, Silent, NeedSudo, ShowCommand, ListFileName);
   }
   
  // STARTUPINFO si;
@@ -236,7 +236,7 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 
   WCHAR SaveTitle[512];
   WINPORT(GetConsoleTitle)(SaveTitle,sizeof(SaveTitle));
-  if (ShowTitle)
+  if (ShowCommand)
     WINPORT(SetConsoleTitle)(StrMB2Wide(CmdStr).c_str());
 
   /* $ 14.02.2001 raVen
@@ -247,16 +247,18 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
     si.wShowWindow=SW_MINIMIZE;
   }*/
   /* raVen $ */
-	DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
-	if (NeedSudo)
-		flags|= EF_SUDO;
+  DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
+  if (NeedSudo)
+    flags|= EF_SUDO;
+  if (!ShowCommand)
+    flags|= EF_NOCMDPRINT;
 
-	if (*CmdStr.c_str()=='^') {
-		LastError = ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), 
+  if (*CmdStr.c_str()=='^') {
+    LastError = ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), 
 						"BuiltinMain", CmdStr.c_str() + 1, flags);
-	} else {
-		LastError = ExitCode = FSF.Execute(CmdStr.c_str(), flags);
-	}
+  } else {
+    LastError = ExitCode = FSF.Execute(CmdStr.c_str(), flags);
+  }
 	
   /*if (HideOutput)
   {

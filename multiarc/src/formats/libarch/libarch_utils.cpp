@@ -185,10 +185,15 @@ void LibArchOpenRead::Open(const char *name)
 #if (ARCHIVE_VERSION_NUMBER >= 3002000)
 	archive_read_set_passphrase_callback(_arc, nullptr, LibArch_PassprhaseCallback);
 #endif
+	_eof = false;
 }
 
 struct archive_entry *LibArchOpenRead::NextHeader()
 {
+	if (_eof) {
+		return nullptr;
+	}
+
 	struct archive_entry *entry = nullptr;
 	if (_ae != nullptr) {
 		entry = _ae;
@@ -198,6 +203,7 @@ struct archive_entry *LibArchOpenRead::NextHeader()
 		int r = LibArchCall(archive_read_next_header, _arc, &entry);
 
 		if (r == ARCHIVE_EOF) {
+			_eof = true;
 			return nullptr;
 		}
 

@@ -698,7 +698,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     NewArchive=!FileExists(DialogItems[PDI_ARCNAMEEDT].Data);
     ArcCommand ArcCmd(PanelItem,ItemsNumber,Command,
                       DialogItems[PDI_ARCNAMEEDT].Data,"",pdd.Password1,
-                      AllFilesMask,IgnoreErrors,0,0,CurDir);
+                      AllFilesMask,IgnoreErrors,0,0,CurDir,ItemsInfo.Codepage);
 
     //последующие операции (тестирование и тд) не должны быть фоновыми
     Opt.Background=0; // $ 06.02.2002 AA

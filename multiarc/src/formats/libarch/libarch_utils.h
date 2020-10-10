@@ -20,12 +20,13 @@ template <typename ... ARGS>
 void LibArch_SetPassprhase(const char *passprhase);
 
 const char *LibArch_EntryPathname(struct archive_entry *e);
+
 bool LibArch_DetectedFormatHasCompression(struct archive *a);
 void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path);
 
 struct LibArchOpenRead
 {
-	LibArchOpenRead(const char *name, const char *cmd = "", const char *charset = "");
+	LibArchOpenRead(const char *name, const char *cmd, const char *charset);
 	~LibArchOpenRead();
 
 	inline unsigned int Format() const { return _fmt; }
@@ -58,8 +59,8 @@ private:
 
 struct LibArchOpenWrite
 {
-	LibArchOpenWrite(const char *name, const char *cmd = "", const char *charset = "");
-	LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset = "");
+	LibArchOpenWrite(const char *name, const char *cmd, const char *charset);
+	LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset);
 
 	~LibArchOpenWrite();
 

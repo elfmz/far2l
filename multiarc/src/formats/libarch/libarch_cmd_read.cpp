@@ -52,8 +52,8 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		LibArch_ParsePathToParts(parts, src_path);
 
 		if (parts.empty()) {
-			fprintf(stderr, "Empty path: '%s' '%ls' '%s'\n",
-				pathname, archive_entry_pathname_w(entry), archive_entry_hardlink(entry));
+			fprintf(stderr, "Empty path: '%s' '%ls'\n",
+				pathname, archive_entry_pathname_w(entry));
 			arc.SkipData();
 			continue;
 		}
@@ -88,8 +88,9 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		archive_entry_set_pathname(entry, extract_path.c_str() );
 		int r = archive_read_extract(arc.Get(), entry, 0);
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-			fprintf(stderr, "Error %d: '%s' -> '%s'\n",
-				r, src_path.c_str(), extract_path.c_str());
+			fprintf(stderr, "Error %d (%s): '%s' -> '%s'\n",
+				r, archive_error_string(arc.Get()),
+				src_path.c_str(), extract_path.c_str());
 			out = false;
 
 		} else {

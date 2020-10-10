@@ -129,7 +129,9 @@ int PluginClass::ReadArchive(const char *Name)
     if (strcmp(ItemsInfo.HostOS,CurItemInfo.HostOS)!=0)
       strcpy(ItemsInfo.HostOS,(*ItemsInfo.HostOS?GetMsg(MSeveralOS):CurItemInfo.HostOS));
 
-    ItemsInfo.Codepage=CurItemInfo.Codepage;
+    if (ItemsInfo.Codepage <= 0)
+      ItemsInfo.Codepage=CurItemInfo.Codepage;
+
     ItemsInfo.Solid|=CurItemInfo.Solid;
     ItemsInfo.Comment|=CurItemInfo.Comment;
     ItemsInfo.Encrypted|=CurItemInfo.Encrypted;

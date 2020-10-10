@@ -44,6 +44,7 @@ private:
 	struct archive_entry *_ae = nullptr;
 	unsigned int _fmt = 0;
 	char _buf[0x2000];
+	bool _eof = false;
 
 	LibArchOpenRead(const LibArchOpenRead&) = delete;
 	void Open(const char *name);

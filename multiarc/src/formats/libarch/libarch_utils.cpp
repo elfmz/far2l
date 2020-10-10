@@ -149,14 +149,14 @@ void LibArchOpenRead::ApplyCharset(const char *charset)
 		if (r != 0) {
 			fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') error %d (%s)\n",
 				charset, r, archive_error_string(_arc));
-		} else {
+		}/* else {
 			fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') OK\n",
 				charset);
-		}
-	} else {
+		}*/
+	}/* else {
 		fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') NOPE\n",
 			charset);
-	}
+	} */
 }
 
 void LibArchOpenRead::Open(const char *name)

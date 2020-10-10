@@ -15,6 +15,17 @@
 using namespace oldfar;
 #include "fmt.hpp"
 
+#if !defined(ZIP_LIBARCHIVE) && defined(HAVE_LIBARCHIVE)
+# include <archive.h>
+# if (ARCHIVE_VERSION_NUMBER >= 3002000)  // earlier libarchive has weak charsets support and doesnt support passwords at all
+#   define ZIP_LIBARCHIVE 1
+# endif
+#endif
+
+#ifndef ZIP_LIBARCHIVE
+# define ZIP_LIBARCHIVE 0
+#endif
+
 static BOOL CPToUTF8( UINT cp, LPCSTR s, LPSTR d, int dlen )
 {
 	if (!s || !d || dlen<=1 )
@@ -517,7 +528,7 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
 {
   if (Type==0)
   {
-#ifdef HAVE_LIBARCHIVE
+#if ZIP_LIBARCHIVE
     // Console PKZIP 4.0/Win32 commands
     static const char *Commands[]={
 	/*Extract               */"^libarch X %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",

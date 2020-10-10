@@ -221,6 +221,9 @@ press the Reset button.
        of command. If it is absent, only errorlevel 0 is considered
        as successful.
 
+ #%%T# - Charset as detected by multiarc, if relevant and supported
+       for particular archive format
+
  #%%S# - Place in the command line to insert additional switches,
        specified in the second string of "Add" dialog. If this
        variable is absent, switches are added to end of command

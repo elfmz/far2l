@@ -6,16 +6,21 @@
 #include <errno.h>
 #include <sudo.h>
 #include <utils.h>
-#include <Codepages.h>
 
 #include "libarch_utils.h"
 
 
-#if (ARCHIVE_VERSION_NUMBER >= 3002000)
 static std::string s_passprhase;
+
+void LibArch_SetPassprhase(const char *passprhase)
+{
+	s_passprhase = passprhase;
+}
+
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
 static const char *LibArch_PassprhaseCallback(struct archive *, void *_client_data)
 {
-	return getpass("Password please:");
+	return s_passprhase.empty() ? getpass("Password please:") : s_passprhase.c_str();
 }
 #endif
 
@@ -70,12 +75,9 @@ void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string
 	}
 }
 
-LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
+LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *charset)
 {
 	Open(name);
-	char opt_hdrcharset[0x100] = {0};
-	snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=CP%u", Codepages::DetectOemCP());
-
 	LibArchCall(archive_read_support_filter_all, _arc);
 
 	/// Workaround for #710:
@@ -90,8 +92,7 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 	LibArchCall(archive_read_support_format_gnutar, _arc);
 	LibArchCall(archive_read_support_format_cpio, _arc);
 	LibArchCall(archive_read_support_format_cab, _arc);
-//	int r = archive_read_set_format_option(_arc, NULL, "hdrcharset", "CP1251");
-	LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
+	ApplyCharset(charset);
 
 	int r = LibArchCall(archive_read_open1, _arc);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
@@ -107,13 +108,13 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 
 		LibArchCall(archive_read_support_filter_all, _arc);
 		LibArchCall(archive_read_support_format_all, _arc);
-		LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
+		ApplyCharset(charset);
 
 		// already tried this: LibArchCall(archive_read_support_format_raw, _arc);
 		r = LibArchCall(archive_read_open1, _arc);
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			EnsureClosed();
-			throw std::runtime_error(StrPrintf("open archive error %d", r));
+			throw std::runtime_error(StrPrintf("error %d opening archive '%s'", r, name));
 		}
 
 		_ae = NextHeader();
@@ -138,13 +139,26 @@ LibArchOpenRead::~LibArchOpenRead()
 	EnsureClosed();
 }
 
+void LibArchOpenRead::ApplyCharset(const char *charset)
+{
+	if (charset && *charset)  {
+		char opt_hdrcharset[0x100] = {0};
+		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
+		int r = LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
+		if (r != 0) {
+			fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') error %d (%s)\n",
+				charset, r, archive_error_string(_arc));
+		}
+	}
+}
+
 void LibArchOpenRead::Open(const char *name)
 {
 	_arc = archive_read_new();
 	_fd = sdc_open(name, O_RDONLY);
 	if (!_arc || _fd == -1) {
 		EnsureClosed();
-		throw std::runtime_error(StrPrintf("open archive error %d", errno));
+		throw std::runtime_error(StrPrintf("error %d opening archive '%s'", errno, name));
 	}
 
 	LibArchCall(archive_read_set_callback_data, _arc, (void *)this);
@@ -254,7 +268,7 @@ static const char *NameExt(const char *name)
 	return ext ? ext : (slash ? slash + 1 : name);
 }
 
-LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd)
+LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char *charset)
 {
 	const char *ne = NameExt(name);
 
@@ -294,15 +308,16 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd)
 	if (filter) {
 		archive_write_add_filter(_arc, filter);
 	}
+	ApplyCharset(charset);
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
-		throw std::runtime_error(StrPrintf("open archive error %d", r));
+		throw std::runtime_error(StrPrintf("error %d opening archive", r, name));
 	}
 }
 
-LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_template)
+LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset)
 {
 	_arc = archive_write_new();
 	if (!_arc) {
@@ -317,10 +332,12 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_templat
 		}
 	}
 
+	ApplyCharset(charset);
+
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
-		throw std::runtime_error(StrPrintf("open archive error %d", r));
+		throw std::runtime_error(StrPrintf("error %d opening archive", r, name));
 	}
 }
 
@@ -328,6 +345,19 @@ LibArchOpenWrite::~LibArchOpenWrite()
 {
 	archive_write_close(_arc);
 	archive_write_free(_arc);
+}
+
+void LibArchOpenWrite::ApplyCharset(const char *charset)
+{
+	if (charset && *charset) {
+		char opt_hdrcharset[0x100] = {0};
+		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
+		int r = LibArchCall(archive_write_set_options, _arc, (const char *)opt_hdrcharset);
+		if (r != 0) {
+			fprintf(stderr, "LibArchOpenWrite::ApplyCharset('%s') error %d (%s)\n",
+				charset, r, archive_error_string(_arc));
+		}
+	}
 }
 
 

@@ -297,6 +297,22 @@ int ArcCommand::ReplaceVar(std::string &Command)
 /////////////////////////////////
   switch (Command[2])
   {
+    case 'S': /* charset codepage number, if known for any of items */
+      Command.clear();
+      for (int N = 0; N < ItemsNumber; ++N)
+      {
+        if(PanelItem[N].UserData && (PanelItem[N].Flags & PPIF_USERDATA))
+        {
+          struct ArcItemUserData *aud=(struct ArcItemUserData*)PanelItem[N].UserData;
+          if(aud->SizeStruct == sizeof(struct ArcItemUserData) && aud->Codepage > 0)
+          {
+            Command = StrPrintf("CP%u", aud->Codepage);
+            break;
+          }
+        }
+      }
+      break;
+
     case 'A': case 'a': /* deprecated: short name - works same as normal name */
       Command = ArcName;
       if (PathOnly)

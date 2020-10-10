@@ -59,7 +59,7 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		}
 
 		if (!wanteds.empty() && !PartsMatchesAnyOfWanteds(wanteds, parts)) {
-			fprintf(stderr, "Not matching: '%s' '%ls'\n", pathname, archive_entry_pathname_w(entry));
+//			fprintf(stderr, "Not matching: '%s' '%ls'\n", pathname, archive_entry_pathname_w(entry));
 			arc.SkipData();
 			continue;
 		}

@@ -309,28 +309,28 @@ BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *Defa
 BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest)
 {
 	static const char *Commands[] = {
-	/*Extract               */"^libarch X %%A %%FMq4096",
-	/*Extract without paths */"^libarch x %%A %%FMq4096",
+	/*Extract               */"^libarch X %%A -- %%FMq4096",
+	/*Extract without paths */"^libarch x %%A -- %%FMq4096",
 	/*Test                  */"^libarch t %%A",
-	/*Delete                */"^libarch d %%A %%FMq4096",
+	/*Delete                */"^libarch d %%A -- %%FMq4096",
 	/*Comment archive       */"",
 	/*Comment files         */"",
 	/*Convert to SFX        */"",
 	/*Lock archive          */"",
 	/*Protect archive       */"",
 	/*Recover archive       */"",
-	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R %%FMq4096",
-	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R %%FMq4096",
-	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R %%FMq4096",
-	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R %%FMq4096",
+	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R -- %%FMq4096",
+	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R -- %%FMq4096",
+	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R -- %%FMq4096",
+	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R -- %%FMq4096",
 	/*"All files" mask      */""
 	};
 
 	static const char *CommandsCab[] = {
-	/*Extract               */"^libarch X %%A %%FMq4096",
-	/*Extract without paths */"^libarch x %%A %%FMq4096",
+	/*Extract               */"^libarch X %%A -- %%FMq4096",
+	/*Extract without paths */"^libarch x %%A -- %%FMq4096",
 	/*Test                  */"^libarch t %%A",
-	/*Delete                */"^libarch d %%A %%FMq4096",
+	/*Delete                */"^libarch d %%A -- %%FMq4096",
 	/*Comment archive       */"",
 	/*Comment files         */"",
 	/*Convert to SFX        */"",

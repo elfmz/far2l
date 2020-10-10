@@ -88,7 +88,8 @@ static bool LIBARCH_CommandAddFile(const char *fpath)
 
 	int r = LibArchCall(archive_write_header, s_addfile_ctx->arc.Get(), entry);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-		fprintf(stderr, "Error %d writing header: %s", r, fpath);
+		fprintf(stderr, "Error %d (%s) writing header: %s",
+			r, archive_error_string(s_addfile_ctx->arc.Get()), fpath);
 		archive_entry_free(entry);
 		return false;
 	}
@@ -221,8 +222,8 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 	std::vector<std::string> parts;
 
 	try {
-		LibArchOpenRead arc_src(arc_path, arc_opts.charset.c_str());
-		LibArchOpenWrite arc_dst(tmp_path.c_str(), arc_src.Get(), arc_opts.charset.c_str());
+		LibArchOpenRead arc_src(arc_path, "", arc_opts.charset.c_str());
+		LibArchOpenWrite arc_dst(tmp_path.c_str(), arc_src.Get(), "");//arc_opts.charset.c_str());
 		for (;;) {
 			struct archive_entry *entry = arc_src.NextHeader();
 			if (!entry) {
@@ -249,12 +250,14 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 					printf("Deleted: %s\n", pathname);
 					continue;
 				}
+				archive_entry_set_pathname(entry, str.c_str());
 			}
 
 			int r = LibArchCall(archive_write_header, arc_dst.Get(), entry);
 			if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 				throw std::runtime_error(StrPrintf(
-					"Error %d writing header: %s", r, pathname));
+					"Error %d (%s) writing header: %s",
+						r, archive_error_string(arc_dst.Get()), pathname));
 			}
 
 			if (archive_entry_filetype(entry) != AE_IFREG || archive_entry_size(entry) == 0) {
@@ -266,8 +269,9 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 				size_t size = 0;
 				int r = LibArchCall(archive_read_data_block, arc_src.Get(), &buf, &size, &offset);
 				if ((r != ARCHIVE_OK  && r != ARCHIVE_WARN) || size == 0) {
-					throw std::runtime_error(StrPrintf("Error %d reading at 0x%llx : %s",
-						r, (unsigned long long)offset, LibArch_EntryPathname(entry)));
+					throw std::runtime_error(StrPrintf("Error %d (%s) reading at 0x%llx : %s",
+						r, archive_error_string(arc_src.Get()),
+						(unsigned long long)offset, LibArch_EntryPathname(entry)));
 				}
 				if (!arc_dst.WriteData(buf, size)) {
 					throw std::runtime_error("write data failed");
@@ -309,7 +313,7 @@ bool LIBARCH_CommandAdd(const char *cmd, const char *arc_path, const LibarchComm
 		return LIBARCH_CommandRemoveOrReplace(cmd, arc_path, arc_opts, files_cnt, files);
 	}
 
-	LibArchOpenWrite arc(arc_path, cmd, arc_opts.charset.c_str());
+	LibArchOpenWrite arc(arc_path, cmd, "");//arc_opts.charset.c_str());
 	bool out = true;
 	for (int i = 0; i < files_cnt; ++i) {
 		if (!LIBARCH_CommandInsertFile(cmd, arc, arc_opts, files[i])) {

@@ -175,7 +175,7 @@ static std::unique_ptr<LibArchOpenRead> s_arc;
 BOOL WINAPI _export LIBARCH_OpenArchive(const char *Name, int *Type)
 {
 	try {
-		LibArchOpenRead *arc = new LibArchOpenRead(Name);
+		LibArchOpenRead *arc = new LibArchOpenRead(Name, "", "");
 		s_arc.reset(arc);
 		*Type = (arc->Format() == ARCHIVE_FORMAT_TAR) ? MF_TAR : MF_NOT_DISPLAYED;
 		if (arc->Format() == ARCHIVE_FORMAT_RAW) {
@@ -373,6 +373,7 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 extern "C" int libarch_main(int numargs, char *args[])
 {
 	setlocale(LC_ALL, "");
+	setlocale(LC_CTYPE, "UTF-8");
 
 	if (numargs < 3) {
 		printf("Usage: ^arch <command> <archive_name> [-pwd=OPTIONAL PASSWORD] [-cs=OPTIONAL CHARSET] [-@OPTIONAL ARCHIVE ROOT] [--] [OPTIONAL LIST OF FILES]\n\n"

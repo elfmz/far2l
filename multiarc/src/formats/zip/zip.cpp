@@ -520,20 +520,20 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
 #ifdef HAVE_LIBARCHIVE
     // Console PKZIP 4.0/Win32 commands
     static const char *Commands[]={
-	/*Extract               */"^libarch X %%A {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
-	/*Extract without paths */"^libarch x %%A {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
-	/*Test                  */"^libarch t %%A",
-	/*Delete                */"^libarch d %%A {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Extract               */"^libarch X %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+	/*Extract without paths */"^libarch x %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+	/*Test                  */"^libarch t %%A {-cs=%%T}",
+	/*Delete                */"^libarch d %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
 	/*Comment archive       */"",
 	/*Comment files         */"",
 	/*Convert to SFX        */"",
 	/*Lock archive          */"",
 	/*Protect archive       */"",
 	/*Recover archive       */"",
-	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
-	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
-	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
-	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Add files             */"^libarch a:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+	/*Move files            */"^libarch m:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+	/*Add files and folders */"^libarch A:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+	/*Move files and folders*/"^libarch M:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
 	/*"All files" mask      */""
     };
 #else

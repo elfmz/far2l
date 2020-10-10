@@ -189,7 +189,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
 
   ArcCommand ArcCmd(PanelItem,ItemsNumber,Command,ArcName,CurDir,
              DialogItems[5].Data,AllFilesMask,IgnoreErrors,
-             (OpMode & OPM_VIEW)!=0,(OpMode & OPM_FIND),CurDir);
+             (OpMode & OPM_VIEW)!=0,(OpMode & OPM_FIND),CurDir,ItemsInfo.Codepage);
 
   //последующие операции (тестирование и тд) не должны быть фоновыми
   Opt.Background=0; // $ 06.02.2002 AA

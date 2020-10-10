@@ -7,7 +7,7 @@
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
                        const char *FormatString,const char *ArcName,const char *ArcDir,
                        const char *Password,const char *AllFilesMask,int IgnoreErrors,
-                       int CommandType,int ASilent,const char *RealArcDir)
+                       int CommandType,int ASilent,const char *RealArcDir,int DefaultCodepage)
 {
   NeedSudo = false;
   Silent=ASilent;
@@ -18,6 +18,9 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
 */
   ExecCode=(DWORD)-1;
 
+  ArcCommand::DefaultCodepage = DefaultCodepage;
+
+//  fprintf(stderr, "ArcCommand::ArcCommand = %d, FormatString=%s\n", ArcCommand::DefaultCodepage, FormatString);
   if (*FormatString==0)
     return;
 
@@ -191,7 +194,7 @@ void ArcCommand::DeleteBraces(std::string &Command)
       return;
 
     left = Command.rfind('{', right - 1);
-    if (right == std::string::npos)
+    if (left == std::string::npos)
       return;
 
     bool NonEmptyVar = false;
@@ -297,7 +300,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
 /////////////////////////////////
   switch (Command[2])
   {
-    case 'S': /* charset codepage number, if known for any of items */
+    case 'T': /* charset, if known */
       Command.clear();
       for (int N = 0; N < ItemsNumber; ++N)
       {
@@ -311,6 +314,9 @@ int ArcCommand::ReplaceVar(std::string &Command)
           }
         }
       }
+      if (Command.empty() && DefaultCodepage > 0)
+            Command = StrPrintf("CP%u", DefaultCodepage);
+
       break;
 
     case 'A': case 'a': /* deprecated: short name - works same as normal name */

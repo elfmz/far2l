@@ -114,7 +114,8 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *
 		r = LibArchCall(archive_read_open1, _arc);
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			EnsureClosed();
-			throw std::runtime_error(StrPrintf("error %d opening archive '%s'", r, name));
+			throw std::runtime_error(StrPrintf("error %d (%s) opening archive '%s'",
+				r, archive_error_string(_arc), name));
 		}
 
 		_ae = NextHeader();
@@ -148,7 +149,13 @@ void LibArchOpenRead::ApplyCharset(const char *charset)
 		if (r != 0) {
 			fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') error %d (%s)\n",
 				charset, r, archive_error_string(_arc));
+		} else {
+			fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') OK\n",
+				charset);
 		}
+	} else {
+		fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') NOPE\n",
+			charset);
 	}
 }
 
@@ -158,7 +165,8 @@ void LibArchOpenRead::Open(const char *name)
 	_fd = sdc_open(name, O_RDONLY);
 	if (!_arc || _fd == -1) {
 		EnsureClosed();
-		throw std::runtime_error(StrPrintf("error %d opening archive '%s'", errno, name));
+		throw std::runtime_error(StrPrintf("error %d opening archive '%s'",
+			errno, name));
 	}
 
 	LibArchCall(archive_read_set_callback_data, _arc, (void *)this);
@@ -187,7 +195,8 @@ struct archive_entry *LibArchOpenRead::NextHeader()
 		}
 
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-			throw std::runtime_error(StrPrintf("archive_read_next_header - error %d\n", r));
+			throw std::runtime_error(StrPrintf("archive_read_next_header - error %d (%s)\n",
+				r, archive_error_string(_arc)));
 		}
 	}
 
@@ -300,6 +309,10 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char
 	} else if (strstr(ne, ".lz")) { filter = ARCHIVE_FILTER_LZMA;
 	}
 
+	if (format == ARCHIVE_FORMAT_ZIP && (!charset || !*charset)) {
+		charset = "UTF-8";
+	}
+
 	_arc = archive_write_new();
 	if (!_arc) {
 		throw std::runtime_error("failed to init archiver");
@@ -313,7 +326,8 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
-		throw std::runtime_error(StrPrintf("error %d opening archive", r, name));
+		throw std::runtime_error(StrPrintf("error %d (%s) opening archive %s",
+			r, archive_error_string(_arc), name));
 	}
 }
 
@@ -324,7 +338,13 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_templat
 		throw std::runtime_error("failed to init archiver");
 	}
 
-	archive_write_set_format(_arc, archive_format(arc_template));
+	auto format = archive_format(arc_template);
+
+	if (format == ARCHIVE_FORMAT_ZIP && (!charset || !*charset)) {
+		charset = "UTF-8";
+	}
+
+	archive_write_set_format(_arc, format);
 	for (int i = 0, ii = archive_filter_count(arc_template); i < ii; ++i) {
 		int fc = archive_filter_code(arc_template, i);
 		if (fc != 0) {
@@ -337,7 +357,8 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_templat
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
-		throw std::runtime_error(StrPrintf("error %d opening archive", r, name));
+		throw std::runtime_error(StrPrintf("error %d (%s) opening archive %s",
+			r, archive_error_string(_arc), name));
 	}
 }
 

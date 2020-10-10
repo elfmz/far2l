@@ -53,6 +53,7 @@ enum {
 // TODO: add to Archive API (?)
 struct ArcItemUserData{
    DWORD SizeStruct;
+   int Codepage;
    char *Prefix;
    char *LinkName;
 };

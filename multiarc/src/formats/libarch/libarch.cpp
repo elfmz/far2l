@@ -3,6 +3,7 @@
 #include <utils.h>
 #include <sudo.h>
 #include <fcntl.h>
+#include <locale.h>
 
 #include <windows.h>
 #include "libarch_utils.h"
@@ -374,7 +375,7 @@ extern "C" int libarch_main(int numargs, char *args[])
 	setlocale(LC_ALL, "");
 
 	if (numargs < 3) {
-		printf("Usage: ^arch <command> <archive_name> [-@OPTIONAL ARCHIVE ROOT] [OPTIONAL LIST OF FILES]\n\n"
+		printf("Usage: ^arch <command> <archive_name> [-pwd=OPTIONAL PASSWORD] [-cs=OPTIONAL CHARSET] [-@OPTIONAL ARCHIVE ROOT] [--] [OPTIONAL LIST OF FILES]\n\n"
 			"<Commands>\n"
 			"  t: Test integrity of archive\n"
 			"  x: Extract files from archive (without using directory names)\n"
@@ -392,24 +393,41 @@ extern "C" int libarch_main(int numargs, char *args[])
 
 		int files_cnt = numargs - 3;
 		char **files = &args[3];
-		const char *arc_root_path = nullptr;
-		if (files_cnt > 0 && files[0][0] == '-' && files[0][1] == '@') {
-			arc_root_path = files[0] + 2;
+		LibarchCommandOptions arc_opts;
+		while (files_cnt > 0 && files[0][0] == '-') {
+			if (files[0][1] == '@') {
+				arc_opts.root_path = files[0] + 2;
+
+			} else if (strncmp(files[0], "-cs=", 4) == 0) {
+				arc_opts.charset = files[0] + 4;
+
+			} else if (strncmp(files[0], "-pwd=", 5) == 0) {
+				LibArch_SetPassprhase(files[0] + 5);
+
+			} else {
+				if (files[0][1] == '-') {
+					++files;
+					--files_cnt;
+				} else
+					fprintf(stderr, "Unknown option: %s - treating as file\n", files[0]);
+
+				break;
+			}
 			++files;
 			--files_cnt;
 		}
 
 		switch (*(args[1])) {
 			case 't': case 'x': case 'X':
-				ok = LIBARCH_CommandRead(args[1], args[2], arc_root_path, files_cnt, files);
+				ok = LIBARCH_CommandRead(args[1], args[2], arc_opts, files_cnt, files);
 				break;
 
 			case 'd':
-				ok = LIBARCH_CommandDelete(args[1], args[2], arc_root_path, files_cnt, files);
+				ok = LIBARCH_CommandDelete(args[1], args[2], arc_opts, files_cnt, files);
 				break;
 
 			case 'a': case 'A': case 'm': case 'M':
-				ok = LIBARCH_CommandAdd(args[1], args[2], arc_root_path, files_cnt, files);
+				ok = LIBARCH_CommandAdd(args[1], args[2], arc_opts, files_cnt, files);
 				break;
 
 			default:

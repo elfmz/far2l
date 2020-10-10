@@ -17,13 +17,15 @@ template <typename ... ARGS>
 	}
 };
 
+void LibArch_SetPassprhase(const char *passprhase);
+
 const char *LibArch_EntryPathname(struct archive_entry *e);
 bool LibArch_DetectedFormatHasCompression(struct archive *a);
 void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path);
 
 struct LibArchOpenRead
 {
-	LibArchOpenRead(const char *name, const char *cmd = "");
+	LibArchOpenRead(const char *name, const char *cmd = "", const char *charset = "");
 	~LibArchOpenRead();
 
 	inline unsigned int Format() const { return _fmt; }
@@ -46,6 +48,7 @@ private:
 	void Open(const char *name);
 	void EnsureClosed();
 	void EnsureClosedFD();
+	void ApplyCharset(const char *charset);
 
 	static __LA_SSIZE_T sReadCallback(struct archive *, void *it, const void **_buffer);
 	static __LA_INT64_T sSkipCallback(struct archive *a, void *it, __LA_INT64_T request);
@@ -55,8 +58,8 @@ private:
 
 struct LibArchOpenWrite
 {
-	LibArchOpenWrite(const char *name, const char *cmd = "");
-	LibArchOpenWrite(const char *name, struct archive *arc_template);
+	LibArchOpenWrite(const char *name, const char *cmd = "", const char *charset = "");
+	LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset = "");
 
 	~LibArchOpenWrite();
 
@@ -68,4 +71,5 @@ protected:
 
 private:
 	LibArchOpenWrite(const LibArchOpenWrite&) = delete;
+	void ApplyCharset(const char *charset);
 };

@@ -101,15 +101,15 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 	return out;
 }
 
-bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const char *arc_root_path, int files_cnt, char *files[])
+bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
 {
 	std::vector<std::vector<std::string> > wanteds;
 	wanteds.reserve(files_cnt);
 
 	for (int i = 0; i < files_cnt; ++i) {
 		wanteds.emplace_back();
-		if (arc_root_path && *arc_root_path) {
-			LibArch_ParsePathToParts(wanteds.back(), std::string(arc_root_path));
+		if (!arc_opts.root_path.empty()) {
+			LibArch_ParsePathToParts(wanteds.back(), arc_opts.root_path);
 		}
 		if (files[i] && *files[i]) {
 			LibArch_ParsePathToParts(wanteds.back(), std::string(files[i]));
@@ -124,6 +124,6 @@ bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const char *arc_
 		return false;
 	}
 
-	LibArchOpenRead arc(arc_path, cmd);
+	LibArchOpenRead arc(arc_path, cmd, arc_opts.charset.c_str());
 	return LIBARCH_CommandReadWanteds(cmd, arc, wanteds);
 }

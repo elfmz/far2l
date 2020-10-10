@@ -310,12 +310,21 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (ZipHeader.PackOS<ARRAYSIZE(ZipOS))
     strncpy(Info->HostOS,ZipOS[ZipHeader.PackOS],ARRAYSIZE(Info->HostOS)-1);
 
+  Info->Codepage = 0;
+
 //  if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
   if (ZipHeader.Flags&0x800) { // Bit 11 - language encoding flag (EFS) - means filename&comment fields are UTF8
-  } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
+    ;
+
+  } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20) { // && ZipHeader.PackVer<25
     CPToUTF8(CP_ACP, Item->FindData.cFileName,Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
-  else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0)
+    Info->Codepage = WINPORT(GetACP)();
+
+  } else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0) {
     CPToUTF8(CP_OEMCP, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
+    Info->Codepage = WINPORT(GetOEMCP)();
+
+  }
 
   Info->UnpVer=(ZipHeader.UnpVer/10)*256+(ZipHeader.UnpVer%10);
   Info->DictSize=32;
@@ -425,16 +434,17 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 		uint32_t strcrc = 0;
 		std::vector<char> strbuf(BlockHead.Length - sizeof(uint32_t));
 		if (!WINPORT(ReadFile)(ArcHandle, &version, sizeof(version), &ReadSize, NULL) || ReadSize != sizeof(version) )
-            return(GETARC_READERROR);
+			return(GETARC_READERROR);
 		if (!WINPORT(ReadFile)(ArcHandle, &strcrc, sizeof(strcrc), &ReadSize, NULL) || ReadSize != sizeof(strcrc) )
-            return(GETARC_READERROR);
+			return(GETARC_READERROR);
 		if (!WINPORT(ReadFile)(ArcHandle, &strbuf[0], strbuf.size()-1, &ReadSize, NULL) || ReadSize != strbuf.size()-1 )
-            return(GETARC_READERROR);
+			return(GETARC_READERROR);
 		if (version!=1)
 			fprintf(stderr, "ZIP: Unicode Extra Field 0x%x unknown version %u\n", BlockHead.Type, version);
 		
 		if (0x7075==BlockHead.Type) {
 			strncpy(Item->FindData.cFileName, &strbuf[0], ARRAYSIZE(Item->FindData.cFileName) - 1);
+			Info->Codepage = 0;
 		} else {
 			strncpy(Info->Description, &strbuf[0], ARRAYSIZE(Info->Description) - 1);
 		}
@@ -507,24 +517,24 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
 {
   if (Type==0)
   {
-#if 0
+#ifdef HAVE_LIBARCHIVE
     // Console PKZIP 4.0/Win32 commands
     static const char *Commands[]={
-    /*Extract               */"pkzipc -ext -dir -over=all -nozip -mask=none -times=mod {-pass=%%P} %%A @%%LNMA",
-    /*Extract without paths */"pkzipc -ext -over=all -nozip -mask=none -times=mod {-pass=%%P} %%A @%%LNMA",
-    /*Test                  */"pkzipc -test=all -nozip {-pass=%%P} %%A",
-    /*Delete                */"pkzipc -delete -nozip {-temp=%%W} %%A @%%LNMA",
-    /*Comment archive       */"pkzipc -hea -nozip {-temp=%%W} %%A",
-    /*Comment files         */"pkzipc -com=all -nozip {-temp=%%W} %%A",
-    /*Convert to SFX        */"pkzipc -sfx -nozip %%A",
-    /*Lock archive          */"",
-    /*Protect archive       */"",
-    /*Recover archive       */"%comspec% /c echo.|pkzipc -fix -nozip %%A",
-    /*Add files             */"pkzipc -add -attr=all -nozip {-pass=%%P} {-temp=%%W} %%A @%%LNMA",
-    /*Move files            */"pkzipc -add -move -attr=all -nozip {-pass=%%P} {-temp=%%W} %%A @%%LNMA",
-    /*Add files and folders */"pkzipc -add -attr=all -dir -nozip {-pass=%%P} {-temp=%%W} %%A @%%LNMA",
-    /*Move files and folders*/"pkzipc -add -move -attr=all -dir -nozip {-pass=%%P} {-temp=%%W} %%A @%%LNMA",
-    /*"All files" mask      */"*.*"
+	/*Extract               */"^libarch X %%A {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Extract without paths */"^libarch x %%A {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Test                  */"^libarch t %%A",
+	/*Delete                */"^libarch d %%A {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Comment archive       */"",
+	/*Comment files         */"",
+	/*Convert to SFX        */"",
+	/*Lock archive          */"",
+	/*Protect archive       */"",
+	/*Recover archive       */"",
+	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R {-cs=%%S} {-pwd=%%P} -- %%FMq4096",
+	/*"All files" mask      */""
     };
 #else
     // Linux zip/unzip 

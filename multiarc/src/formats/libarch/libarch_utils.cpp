@@ -291,15 +291,15 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char
 	int format = ARCHIVE_FORMAT_TAR, filter = ARCHIVE_FILTER_GZIP; // defaults
 
 	if (strstr(cmd, ":cpio")) { format = ARCHIVE_FORMAT_CPIO;
-	} else if (strstr(cmd, ":zip")) { format = ARCHIVE_FORMAT_ZIP;
-	} else if (strstr(cmd, ":cab")) { format = ARCHIVE_FORMAT_CAB;
+	} else if (strstr(cmd, ":zip")) { format = ARCHIVE_FORMAT_ZIP; filter = 0;
+	} else if (strstr(cmd, ":cab")) { format = ARCHIVE_FORMAT_CAB; filter = 0;
 	} else if (strstr(cmd, ":iso")) { format = ARCHIVE_FORMAT_ISO9660;
-	} else if (strstr(cmd, ":rar")) { format = ARCHIVE_FORMAT_RAR;
+	} else if (strstr(cmd, ":rar")) { format = ARCHIVE_FORMAT_RAR; filter = 0;
 	} else if (strstr(ne, ".cpio")) { format = ARCHIVE_FORMAT_CPIO;
-	} else if (strstr(ne, ".zip")) { format = ARCHIVE_FORMAT_ZIP;
-	} else if (strstr(ne, ".cab")) { format = ARCHIVE_FORMAT_CAB;
+	} else if (strstr(ne, ".zip")) { format = ARCHIVE_FORMAT_ZIP; filter = 0;
+	} else if (strstr(ne, ".cab")) { format = ARCHIVE_FORMAT_CAB; filter = 0;
 	} else if (strstr(ne, ".iso")) { format = ARCHIVE_FORMAT_ISO9660;
-	} else if (strstr(ne, ".rar")) { format = ARCHIVE_FORMAT_RAR;
+	} else if (strstr(ne, ".rar")) { format = ARCHIVE_FORMAT_RAR; filter = 0;
 	}
 
 	if (strstr(cmd, ":plain")) { filter = 0;

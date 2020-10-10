@@ -10,6 +10,7 @@
 #include "libarch_utils.h"
 
 
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
 static std::string s_passprhase;
 
 void LibArch_SetPassprhase(const char *passprhase)
@@ -17,11 +18,17 @@ void LibArch_SetPassprhase(const char *passprhase)
 	s_passprhase = passprhase;
 }
 
-#if (ARCHIVE_VERSION_NUMBER >= 3002000)
 static const char *LibArch_PassprhaseCallback(struct archive *, void *_client_data)
 {
 	return s_passprhase.empty() ? getpass("Password please:") : s_passprhase.c_str();
 }
+#else
+
+void LibArch_SetPassprhase(const char *passprhase)
+{
+	fprintf(stderr, "Used libarchive doesn't support passworded archives, please rebuild with libarchive version 3.2.0 or higher.\n");
+}
+
 #endif
 
 const char *LibArch_EntryPathname(struct archive_entry *e)

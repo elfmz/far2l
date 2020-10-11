@@ -8,8 +8,6 @@ include(src/Colorer-library/cmake/utils.cmake)
 colorer_extract_version()
 message(STATUS "Build Colorer: ${COLORER_VERSION}")
 
-add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
-
 set(SOURCES
     src/pcolorer2/ChooseTypeMenu.h
     src/pcolorer2/ConsoleAnnotation.h
@@ -68,13 +66,29 @@ target_link_libraries(colorer
     colorer_lib
     )
 
-target_compile_definitions(colorer PRIVATE
-    _UNICODE
-    UNICODE
-    __unix__
+set (SPDLOG_DEFINES
     SPDLOG_DISABLE_TID_CACHING
     SPDLOG_NO_THREAD_ID
     SPDLOG_NO_TLS
+)
+
+if (NOT EXISTS "${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled")
+  if (fmt_FOUND)
+    set (SPDLOG_DEFINES
+        ${SPDLOG_DEFINES}
+        SPDLOG_FMT_EXTERNAL=ON
+    )
+    message("Forcing SPDLOG_FMT_EXTERNAL cuz FMT installed and missing ${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled")
+  else()
+    message("NOT forcing SPDLOG_FMT_EXTERNAL cuz FMT NOT installed")
+  endif()
+endif()
+
+target_compile_definitions(colorer PUBLIC
+    _UNICODE
+    UNICODE
+    __unix__
+    ${SPDLOG_DEFINES}
 )
 
 target_include_directories(colorer PRIVATE ${LIBCOLORER_TREE}/src)
@@ -94,3 +108,6 @@ add_custom_command(TARGET colorer POST_BUILD
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
 )
+
+add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
+

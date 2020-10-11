@@ -188,15 +188,9 @@ target_link_libraries(colorer_lib
     )
 
 target_compile_definitions(colorer_lib PRIVATE
-    _UNICODE
-    UNICODE
-    __unix__
+    ${SPDLOG_DEFINES}
     ${COLORER_DEF}
-    SPDLOG_DISABLE_TID_CACHING
-    SPDLOG_NO_THREAD_ID
-    SPDLOG_NO_TLS
 )
-
 
 #set_target_properties(colorer_lib PROPERTIES
 #    CXX_STANDARD 17

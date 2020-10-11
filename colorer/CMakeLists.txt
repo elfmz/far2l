@@ -35,7 +35,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
 endif()
 
-FIND_PACKAGE(Minizip REQUIRED)
 FIND_PACKAGE(Spdlog REQUIRED)
 FIND_PACKAGE(XercesC REQUIRED)
 
@@ -54,12 +53,10 @@ endif()
 target_include_directories(colorer
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src
     PUBLIC ${SPDLOG_INCLUDE_DIR}
-    PUBLIC ${MINIZIP_INCLUDE_DIRS}
     PUBLIC ${XERCESC_INCLUDE_DIR}
     )
 
 target_link_libraries(colorer
-    ${MINIZIP_LIBRARIES}
     ${XERCESC_LIBRARIES}
     ${fmt_LIBRARY_OPTIONAL}
     utils

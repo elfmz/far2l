@@ -151,7 +151,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
              ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
              fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
            } else {
-             fprintf(stderr, "ArcCommand::ProcessCommand: can't translate to CP%u: '%s'\n", Command.c_str(), retry_cp);
+             fprintf(stderr, "ArcCommand::ProcessCommand: can't translate to CP%u: '%s'\n", retry_cp, Command.c_str());
            }
          }
          break;

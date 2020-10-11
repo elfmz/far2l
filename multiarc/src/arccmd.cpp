@@ -145,12 +145,19 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
           if (i_entries != std::string::npos) {
             std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
             std::vector<char> oemstr(wstr.size() * 6 + 2);
+            char def_char = '\x01';
+            BOOL def_char_used = FALSE;
             WINPORT(WideCharToMultiByte)(CP_OEMCP, 0, wstr.c_str(),
-                wstr.size() + 1, &oemstr[0], oemstr.size() - 1, 0, 0);
-            std::string CommandRetry = Command.substr(0, i_entries);
-            CommandRetry.append(&oemstr[0]);
-            ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-            fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+                wstr.size() + 1, &oemstr[0], oemstr.size() - 1, &def_char, &def_char_used);
+            if (!def_char_used) {
+              std::string CommandRetry = Command.substr(0, i_entries);
+              CommandRetry.append(&oemstr[0]);
+              ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+              fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+
+            } else {
+              fprintf(stderr, "ArcCommand::ProcessCommand: can't translate to OEM: '%s'\n", Command.c_str());
+            }
           }
           break;
         }

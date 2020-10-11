@@ -491,7 +491,11 @@ BOOL WINAPI _export LZH_GetDefaultCommands(int Type,int Command,char *Dest)
     /*Move files            */"lha m -a -m {-w%%W} %%a @%%lM",
     /*Add files and folders */"lha a -a -r -x -p -m {-w%%W} {%%S} %%a @%%lM",
     /*Move files and folders*/"lha a -a -r -x -p -m {-w%%W} {%%S} %%a @%%lM",
+#ifdef HAVE_LIBARCHIVE
+    /*"All files" mask      */""
+#else
     /*"All files" mask      */"*.*"
+#endif
     };
     if (Command < (int)(ARRAYSIZE(Commands)))
     {

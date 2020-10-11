@@ -392,20 +392,20 @@ BOOL WINAPI _export ARJ_GetDefaultCommands(int Type,int Command,char *Dest)
   {
     // Correct Arj/Win32 commands
     static const char *Commands[]={
-    /*Extract               */"arj32 x -+ {-g%%P} -v -y -p1 -- %%A !%%LM",
-    /*Extract without paths */"arj32 e -+ {-g%%P} -v -y -p1 -- %%A !%%LM",
-    /*Test                  */"arj32 t -+ -y {-g%%P} -v -p1 -- %%A",
-    /*Delete                */"arj32 d -+ -y {-w%%W} -p1 -- %%A !%%LNM",
-    /*Comment archive       */"arj32 c -+ -y {-w%%W} -z -- %%A",
-    /*Comment files         */"arj32 c -+ -y {-w%%W} -p1 -- %%A !%%LM",
-    /*Convert to SFX        */"arj32 y -+ -je -y -p %%A",
+    /*Extract               */"arj x -+ {-g%%P} -v -y -p1 -- %%A !%%LM",
+    /*Extract without paths */"arj e -+ {-g%%P} -v -y -p1 -- %%A !%%LM",
+    /*Test                  */"arj t -+ -y {-g%%P} -v -p1 -- %%A",
+    /*Delete                */"arj d -+ -y {-w%%W} -p1 -- %%A !%%LNM",
+    /*Comment archive       */"arj c -+ -y {-w%%W} -z -- %%A",
+    /*Comment files         */"arj c -+ -y {-w%%W} -p1 -- %%A !%%LM",
+    /*Convert to SFX        */"arj y -+ -je -y -p %%A",
     /*Lock archive          */"",
-    /*Protect archive       */"arj32 t -hk -y %%A",
-    /*Recover archive       */"arj32 q -y %%A",
-    /*Add files             */"arj32 a -+ -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
-    /*Move files            */"arj32 m -+ -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
-    /*Add files and folders */"arj32 a -+ -r -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
-    /*Move files and folders*/"arj32 m -+ -r -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
+    /*Protect archive       */"arj t -hk -y %%A",
+    /*Recover archive       */"arj q -y %%A",
+    /*Add files             */"arj a -+ -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
+    /*Move files            */"arj m -+ -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
+    /*Add files and folders */"arj a -+ -r -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
+    /*Move files and folders*/"arj m -+ -r -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
     /*"All files" mask      */"*.*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))

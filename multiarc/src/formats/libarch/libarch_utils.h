@@ -50,7 +50,7 @@ private:
 	void Open(const char *name);
 	void EnsureClosed();
 	void EnsureClosedFD();
-	void ApplyCharset(const char *charset);
+	void PrepareForOpen(const char *charset);
 
 	static __LA_SSIZE_T sReadCallback(struct archive *, void *it, const void **_buffer);
 	static __LA_INT64_T sSkipCallback(struct archive *a, void *it, __LA_INT64_T request);
@@ -73,5 +73,5 @@ protected:
 
 private:
 	LibArchOpenWrite(const LibArchOpenWrite&) = delete;
-	void ApplyCharset(const char *charset);
+	void PrepareForOpen(const char *charset, unsigned int format);
 };

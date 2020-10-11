@@ -327,7 +327,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (ZipHeader.Flags&0x800) { // Bit 11 - language encoding flag (EFS) - means filename&comment fields are UTF8
     ;
 
-  } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20) { // && ZipHeader.PackVer<25
+  } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>=20) { // && ZipHeader.PackVer<25
     CPToUTF8(CP_ACP, Item->FindData.cFileName,Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
     Info->Codepage = WINPORT(GetACP)();
 

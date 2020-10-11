@@ -47,6 +47,7 @@ struct ArcItemInfo
   int DictSize;
   int UnpVer;
   int Chapter;
+  int Codepage;
 };
 
 enum ARCINFO_FLAGS

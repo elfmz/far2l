@@ -53,6 +53,7 @@ enum {
 // TODO: add to Archive API (?)
 struct ArcItemUserData{
    DWORD SizeStruct;
+   int Codepage;
    char *Prefix;
    char *LinkName;
 };
@@ -203,6 +204,7 @@ class ArcCommand
     unsigned int ExecCode;
     unsigned int MaxAllowedExitCode;
     int Silent; // $ 07.02.2002 AA
+    int DefaultCodepage;
 
     char CommentFileName[MAX_PATH]; //$ AA 25.11.2001
     //HANDLE CommentFile; //$ AA 25.11.2001
@@ -218,8 +220,8 @@ class ArcCommand
   public:
     ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
                const char *FormatString,const char *ArcName,const char *ArcDir,const char *Password,
-               const char *AllFilesMask,int IgnoreErrors,int CommandType=0,
-               int Silent=0,const char *RealArcDir=NULL);
+               const char *AllFilesMask,int IgnoreErrors,int CommandType,
+               int Silent,const char *RealArcDir,int DefaultCodepage);
     ~ArcCommand(); //$ AA 25.11.2001
 
   public:

@@ -7,7 +7,7 @@
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
                        const char *FormatString,const char *ArcName,const char *ArcDir,
                        const char *Password,const char *AllFilesMask,int IgnoreErrors,
-                       int CommandType,int ASilent,const char *RealArcDir)
+                       int CommandType,int ASilent,const char *RealArcDir,int DefaultCodepage)
 {
   NeedSudo = false;
   Silent=ASilent;
@@ -18,6 +18,9 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
 */
   ExecCode=(DWORD)-1;
 
+  ArcCommand::DefaultCodepage = DefaultCodepage;
+
+//  fprintf(stderr, "ArcCommand::ArcCommand = %d, FormatString=%s\n", ArcCommand::DefaultCodepage, FormatString);
   if (*FormatString==0)
     return;
 
@@ -137,12 +140,18 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
          if (i_entries != std::string::npos) {
            std::wstring wstr = StrMB2Wide(Command.substr(i_entries));
            std::vector<char> oemstr(wstr.size() * 6 + 2);
+           char def_char = '\x01';
+           BOOL def_char_used = FALSE;
            WINPORT(WideCharToMultiByte)(CP_OEMCP, 0, wstr.c_str(),
-               wstr.size() + 1, &oemstr[0], oemstr.size() - 1, 0, 0);
-           std::string CommandRetry = Command.substr(0, i_entries);
-           CommandRetry.append(&oemstr[0]);
-           ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
-           fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+               wstr.size() + 1, &oemstr[0], oemstr.size() - 1, &def_char, &def_char_used);
+           if (!def_char_used) {
+             std::string CommandRetry = Command.substr(0, i_entries);
+             CommandRetry.append(&oemstr[0]);
+             ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+             fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
+           } else {
+             fprintf(stderr, "ArcCommand::ProcessCommand: can't translate to OEM: '%s'\n", Command.c_str());
+           }
          }
          break;
        }
@@ -184,7 +193,7 @@ void ArcCommand::DeleteBraces(std::string &Command)
       return;
 
     left = Command.rfind('{', right - 1);
-    if (right == std::string::npos)
+    if (left == std::string::npos)
       return;
 
     bool NonEmptyVar = false;
@@ -290,6 +299,25 @@ int ArcCommand::ReplaceVar(std::string &Command)
 /////////////////////////////////
   switch (Command[2])
   {
+    case 'T': /* charset, if known */
+      Command.clear();
+      for (int N = 0; N < ItemsNumber; ++N)
+      {
+        if(PanelItem[N].UserData && (PanelItem[N].Flags & PPIF_USERDATA))
+        {
+          struct ArcItemUserData *aud=(struct ArcItemUserData*)PanelItem[N].UserData;
+          if(aud->SizeStruct == sizeof(struct ArcItemUserData) && aud->Codepage > 0)
+          {
+            Command = StrPrintf("CP%u", aud->Codepage);
+            break;
+          }
+        }
+      }
+      if (Command.empty() && DefaultCodepage > 0)
+            Command = StrPrintf("CP%u", DefaultCodepage);
+
+      break;
+
     case 'A': case 'a': /* deprecated: short name - works same as normal name */
       Command = ArcName;
       if (PathOnly)

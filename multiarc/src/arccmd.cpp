@@ -124,8 +124,8 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
     if (ExecCode == 11) {
       // "11" means file was not found in archive. retrying as oem
       CommandRetry = Command;
-      unsigned int actual_oemcp = WINPORT(GetOEMCP)();
-      CommandRetry.insert(6, StrPrintf("-I CP%u -O CP%u ", actual_oemcp, actual_oemcp));
+      unsigned int retry_cp = (DefaultCodepage > 0) ? DefaultCodepage : WINPORT(GetOEMCP)();
+      CommandRetry.insert(6, StrPrintf("-I CP%u -O CP%u ", retry_cp, retry_cp));
       ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
     }
     if (ExecCode == 1) {
@@ -142,7 +142,8 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
            std::vector<char> oemstr(wstr.size() * 6 + 2);
            char def_char = '\x01';
            BOOL def_char_used = FALSE;
-           WINPORT(WideCharToMultiByte)(CP_OEMCP, 0, wstr.c_str(),
+           unsigned int retry_cp = (DefaultCodepage > 0) ? DefaultCodepage : WINPORT(GetOEMCP)();
+           WINPORT(WideCharToMultiByte)(retry_cp, 0, wstr.c_str(),
                wstr.size() + 1, &oemstr[0], oemstr.size() - 1, &def_char, &def_char_used);
            if (!def_char_used) {
              std::string CommandRetry = Command.substr(0, i_entries);
@@ -150,7 +151,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
              ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo, Password.empty(), ListFileName);
              fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode, CommandRetry.c_str());
            } else {
-             fprintf(stderr, "ArcCommand::ProcessCommand: can't translate to OEM: '%s'\n", Command.c_str());
+             fprintf(stderr, "ArcCommand::ProcessCommand: can't translate to CP%u: '%s'\n", Command.c_str(), retry_cp);
            }
          }
          break;

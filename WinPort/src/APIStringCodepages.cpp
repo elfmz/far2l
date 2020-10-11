@@ -176,172 +176,176 @@ static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 	return ret;
 }
 
-	
+#define IsLocaleMatches(current, wanted_literal) \
+	( strncmp((current), wanted_literal, sizeof(wanted_literal) - 1) == 0 && \
+	( (current)[sizeof(wanted_literal) - 1] == 0 || (current)[sizeof(wanted_literal) - 1] == '.') )
+
+struct Codepages
+{
+	int oem;
+	int ansi;
+};
+
+static Codepages DeduceCodepages()
+{
+	// deduce oem/ansi cp from system locale
+	const char *lc = setlocale(LC_CTYPE, NULL);
+	if (!lc) {
+		fprintf(stderr, "DeduceCodepages: setlocale returned NULL\n");
+		return Codepages{866, 1251};
+	}
+
+	if (IsLocaleMatches(lc, "af_ZA")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "ar_SA")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_LB")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_EG")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_DZ")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_BH")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_IQ")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_JO")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_KW")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_LY")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_MA")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_OM")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_QA")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_SY")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_TN")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_AE")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ar_YE")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "ast_ES")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "az_AZ")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "az_AZ")) { return Codepages{857, 1254}; }
+	if (IsLocaleMatches(lc, "be_BY")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "bg_BG")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "br_FR")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "ca_ES")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "zh_CN")) { return Codepages{936, 936}; }
+	if (IsLocaleMatches(lc, "zh_TW")) { return Codepages{950, 950}; }
+	if (IsLocaleMatches(lc, "kw_GB")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "cs_CZ")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "cy_GB")) { return Codepages{850, 28604}; }
+	if (IsLocaleMatches(lc, "da_DK")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "de_AT")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "de_LI")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "de_LU")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "de_CH")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "de_DE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "el_GR")) { return Codepages{737, 1253}; }
+	if (IsLocaleMatches(lc, "en_AU")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "en_CA")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "en_GB")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "en_IE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "en_JM")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "en_BZ")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "en_PH")) { return Codepages{437, 1252}; }
+	if (IsLocaleMatches(lc, "en_ZA")) { return Codepages{437, 1252}; }
+	if (IsLocaleMatches(lc, "en_TT")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "en_US")) { return Codepages{437, 1252}; }
+	if (IsLocaleMatches(lc, "en_ZW")) { return Codepages{437, 1252}; }
+	if (IsLocaleMatches(lc, "en_NZ")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_PA")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_BO")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_CR")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_DO")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_SV")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_EC")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_GT")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_HN")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_NI")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_CL")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_MX")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_ES")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_CO")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_ES")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_PE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_AR")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_PR")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_VE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_UY")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "es_PY")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "et_EE")) { return Codepages{775, 1257}; }
+	if (IsLocaleMatches(lc, "eu_ES")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fa_IR")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "fi_FI")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fo_FO")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fr_FR")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fr_BE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fr_CA")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fr_LU")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fr_MC")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "fr_CH")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "ga_IE")) { return Codepages{437, 1252}; }
+	if (IsLocaleMatches(lc, "gd_GB")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "gv_IM")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "gl_ES")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "he_IL")) { return Codepages{862, 1255}; }
+	if (IsLocaleMatches(lc, "hr_HR")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "hu_HU")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "id_ID")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "is_IS")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "it_IT")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "it_CH")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "iv_IV")) { return Codepages{437, 1252}; }
+	if (IsLocaleMatches(lc, "ja_JP")) { return Codepages{932, 932}; }
+	if (IsLocaleMatches(lc, "kk_KZ")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "ko_KR")) { return Codepages{949, 949}; }
+	if (IsLocaleMatches(lc, "ky_KG")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "lt_LT")) { return Codepages{775, 1251}; }
+	if (IsLocaleMatches(lc, "lv_LV")) { return Codepages{775, 1257}; }
+	if (IsLocaleMatches(lc, "mk_MK")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "mn_MN")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "ms_BN")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "ms_MY")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "nl_BE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "nl_NL")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "nl_SR")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "nn_NO")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "nb_NO")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "pl_PL")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "pt_BR")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "pt_PT")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "rm_CH")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "ro_RO")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "ru_RU")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "sk_SK")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "sl_SI")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "sq_AL")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "sr_RS")) { return Codepages{855, 1251}; }
+	if (IsLocaleMatches(lc, "sr_RS")) { return Codepages{852, 1250}; }
+	if (IsLocaleMatches(lc, "sv_SE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "sv_FI")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "sw_KE")) { return Codepages{437, 1252}; }
+	if (IsLocaleMatches(lc, "th_TH")) { return Codepages{874, 874}; }
+	if (IsLocaleMatches(lc, "tr_TR")) { return Codepages{857, 1254}; }
+	if (IsLocaleMatches(lc, "tt_RU")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "uk_UA")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "ur_PK")) { return Codepages{720, 1256}; }
+	if (IsLocaleMatches(lc, "uz_UZ")) { return Codepages{866, 1251}; }
+	if (IsLocaleMatches(lc, "uz_UZ")) { return Codepages{857, 1254}; }
+	if (IsLocaleMatches(lc, "vi_VN")) { return Codepages{1258, 1258}; }
+	if (IsLocaleMatches(lc, "wa_BE")) { return Codepages{850, 1252}; }
+	if (IsLocaleMatches(lc, "zh_HK")) { return Codepages{950, 950}; }
+	if (IsLocaleMatches(lc, "zh_SG")) { return Codepages{936, 936}; }
+	if (IsLocaleMatches(lc, "zh_MO")) { return Codepages{950, 1252}; }
+
+	fprintf(stderr, "DeduceCodepages: unknown locale '%s'\n", lc);
+
+	return Codepages{866, 1251};
+}
+
+static UINT TranslateCodepage(UINT codepage)
+{
+	static Codepages s_cp = DeduceCodepages();
+	switch (codepage) {
+		case CP_ACP: return s_cp.ansi;
+		case CP_OEMCP: return s_cp.oem;
+		default:
+			return codepage;
+	}
+}
+
+
 extern "C" {
-	#define IsLocaleMatches(current, wanted_literal) \
-		( strncmp((current), wanted_literal, sizeof(wanted_literal) - 1) == 0 && \
-		( (current)[sizeof(wanted_literal) - 1] == 0 || (current)[sizeof(wanted_literal) - 1] == '.') )
-
-	static int DetectOemCP()
-	{
-		// detect oem cp from system locale
-		int oem_cp = 866; // default
-
-		const char *lc = setlocale(LC_CTYPE, NULL);
-		if (!lc) { fprintf(stderr, "DetectOemCP: setlocale returned NULL\n"); }
-		else if (IsLocaleMatches(lc, "af_ZA")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "ar_SA")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_LB")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_EG")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_DZ")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_BH")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_IQ")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_JO")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_KW")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_LY")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_MA")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_OM")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_QA")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_SY")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_TN")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_AE")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ar_YE")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "ast_ES")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "az_AZ")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "az_AZ")) { oem_cp = 857; }
-		else if (IsLocaleMatches(lc, "be_BY")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "bg_BG")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "br_FR")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "ca_ES")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "zh_CN")) { oem_cp = 936; }
-		else if (IsLocaleMatches(lc, "zh_TW")) { oem_cp = 950; }
-		else if (IsLocaleMatches(lc, "kw_GB")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "cs_CZ")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "cy_GB")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "da_DK")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "de_AT")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "de_LI")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "de_LU")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "de_CH")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "de_DE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "el_GR")) { oem_cp = 737; }
-		else if (IsLocaleMatches(lc, "en_AU")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "en_CA")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "en_GB")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "en_IE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "en_JM")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "en_BZ")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "en_PH")) { oem_cp = 437; }
-		else if (IsLocaleMatches(lc, "en_ZA")) { oem_cp = 437; }
-		else if (IsLocaleMatches(lc, "en_TT")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "en_US")) { oem_cp = 437; }
-		else if (IsLocaleMatches(lc, "en_ZW")) { oem_cp = 437; }
-		else if (IsLocaleMatches(lc, "en_NZ")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_PA")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_BO")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_CR")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_DO")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_SV")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_EC")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_GT")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_HN")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_NI")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_CL")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_MX")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_ES")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_CO")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_ES")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_PE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_AR")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_PR")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_VE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_UY")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "es_PY")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "et_EE")) { oem_cp = 775; }
-		else if (IsLocaleMatches(lc, "eu_ES")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fa_IR")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "fi_FI")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fo_FO")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fr_FR")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fr_BE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fr_CA")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fr_LU")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fr_MC")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "fr_CH")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "ga_IE")) { oem_cp = 437; }
-		else if (IsLocaleMatches(lc, "gd_GB")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "gv_IM")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "gl_ES")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "he_IL")) { oem_cp = 862; }
-		else if (IsLocaleMatches(lc, "hr_HR")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "hu_HU")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "id_ID")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "is_IS")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "it_IT")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "it_CH")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "iv_IV")) { oem_cp = 437; }
-		else if (IsLocaleMatches(lc, "ja_JP")) { oem_cp = 932; }
-		else if (IsLocaleMatches(lc, "kk_KZ")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "ko_KR")) { oem_cp = 949; }
-		else if (IsLocaleMatches(lc, "ky_KG")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "lt_LT")) { oem_cp = 775; }
-		else if (IsLocaleMatches(lc, "lv_LV")) { oem_cp = 775; }
-		else if (IsLocaleMatches(lc, "mk_MK")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "mn_MN")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "ms_BN")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "ms_MY")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "nl_BE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "nl_NL")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "nl_SR")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "nn_NO")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "nb_NO")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "pl_PL")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "pt_BR")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "pt_PT")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "rm_CH")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "ro_RO")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "ru_RU")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "sk_SK")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "sl_SI")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "sq_AL")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "sr_RS")) { oem_cp = 855; }
-		else if (IsLocaleMatches(lc, "sr_RS")) { oem_cp = 852; }
-		else if (IsLocaleMatches(lc, "sv_SE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "sv_FI")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "sw_KE")) { oem_cp = 437; }
-		else if (IsLocaleMatches(lc, "th_TH")) { oem_cp = 874; }
-		else if (IsLocaleMatches(lc, "tr_TR")) { oem_cp = 857; }
-		else if (IsLocaleMatches(lc, "tt_RU")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "uk_UA")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "ur_PK")) { oem_cp = 720; }
-		else if (IsLocaleMatches(lc, "uz_UZ")) { oem_cp = 866; }
-		else if (IsLocaleMatches(lc, "uz_UZ")) { oem_cp = 857; }
-		else if (IsLocaleMatches(lc, "vi_VN")) { oem_cp = 1258; }
-		else if (IsLocaleMatches(lc, "wa_BE")) { oem_cp = 850; }
-		else if (IsLocaleMatches(lc, "zh_HK")) { oem_cp = 950; }
-		else if (IsLocaleMatches(lc, "zh_SG")) { oem_cp = 936; }
-		else if (IsLocaleMatches(lc, "zh_MO")) { oem_cp = 950; }
-		else {
-			fprintf(stderr, "DetectOemCP: setlocale returned unexpected '%s'\n", lc);
-		}
-
-		fprintf(stderr, "DetectOemCP: returning %u\n", oem_cp);
-
-		return oem_cp;
-	}
-
-	static UINT TranslateCodepage(UINT codepage)
-	{
-		switch (codepage) {
-			case CP_ACP: return 1251; // TODO: detect system locale specific ACP in same way as OEMCP
-			case CP_OEMCP: {
-				static int s_oemcp = DetectOemCP();
-				return s_oemcp;
-			}
-		}
-		return codepage;
-	}
-
 	WINPORT_DECL(IsTextUnicode, BOOL, (CONST VOID* buf, int len, LPINT pf))
 	{//borrowed from wine
 		static const WCHAR std_control_chars[] = {'\r','\n','\t',' ',0x3000,0};

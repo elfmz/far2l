@@ -48,8 +48,6 @@ set(SRC_COLORER
     colorer/io/FileWriter.h
     colorer/io/InputSource.cpp
     colorer/io/InputSource.h
-    colorer/io/MemoryFile.cpp
-    colorer/io/MemoryFile.h
     colorer/io/SharedInputSource.cpp
     colorer/io/SharedInputSource.h
     colorer/io/StreamWriter.cpp
@@ -125,6 +123,8 @@ set(SRC_COLORER
 #    colorer/xml/ZipXmlInputSource.h
 #    colorer/io/JARInputSource.cpp
 #    colorer/io/JARInputSource.h
+#    colorer/io/MemoryFile.cpp
+#    colorer/io/MemoryFile.h
 
 # Disabled by COLORER_FEATURE_HTTPINPUTSOURCE=FALSE
 #    colorer/io/HTTPInputSource.cpp

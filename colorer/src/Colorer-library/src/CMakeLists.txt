@@ -46,12 +46,8 @@ set(SRC_COLORER
     colorer/io/FileInputSource.h
     colorer/io/FileWriter.cpp
     colorer/io/FileWriter.h
-    colorer/io/HTTPInputSource.cpp
-    colorer/io/HTTPInputSource.h
     colorer/io/InputSource.cpp
     colorer/io/InputSource.h
-    colorer/io/JARInputSource.cpp
-    colorer/io/JARInputSource.h
     colorer/io/MemoryFile.cpp
     colorer/io/MemoryFile.h
     colorer/io/SharedInputSource.cpp
@@ -122,14 +118,22 @@ set(SRC_COLORER
     colorer/xml/XmlParserErrorHandler.cpp
     colorer/xml/XmlParserErrorHandler.h
     colorer/xml/XmlTagDefs.h
-    colorer/xml/ZipXmlInputSource.cpp
-    colorer/xml/ZipXmlInputSource.h
     )
+
+# Disabled by DCOLORER_FEATURE_JARINPUTSOURCE=FALSE
+#    colorer/xml/ZipXmlInputSource.cpp
+#    colorer/xml/ZipXmlInputSource.h
+#    colorer/io/JARInputSource.cpp
+#    colorer/io/JARInputSource.h
+
+# Disabled by COLORER_FEATURE_HTTPINPUTSOURCE=FALSE
+#    colorer/io/HTTPInputSource.cpp
+#    colorer/io/HTTPInputSource.h
 
 #====================================================
 # common flags
 #====================================================
-set(COLORER_DEF -DNOGDI -DCOLORER_FEATURE_HTTPINPUTSOURCE=FALSE)
+set(COLORER_DEF -DNOGDI -DCOLORER_FEATURE_HTTPINPUTSOURCE=FALSE -DCOLORER_FEATURE_JARINPUTSOURCE=FALSE)
 if (MSVC)
   set(COLORER_DEF ${COLORER_DEF} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
 endif ()
@@ -169,7 +173,6 @@ endif ()
 
 add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_MALLOC})
 
-FIND_PACKAGE(Minizip REQUIRED)
 FIND_PACKAGE(Spdlog REQUIRED)
 FIND_PACKAGE(XercesC REQUIRED)
 
@@ -177,12 +180,10 @@ FIND_PACKAGE(XercesC REQUIRED)
 target_include_directories(colorer_lib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 	PUBLIC ${SPDLOG_INCLUDE_DIR}
-	PUBLIC ${MINIZIP_INCLUDE_DIRS}
 	PUBLIC ${XERCESC_INCLUDE_DIR}
     )
 
 target_link_libraries(colorer_lib
-    PUBLIC ${MINIZIP_LIBRARIES}
     PUBLIC ${XERCESC_LIBRARIES}
     ${THREAD_LIBS}
     )

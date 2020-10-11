@@ -25,7 +25,6 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)
 * m4
 * libwxgtk3.0-dev (or in Ubuntu 19.04+ - libwxgtk3.0-gtk3-dev)
 * libxerces-c-dev
-* libminizip-dev
 * libspdlog-dev
 * libssh-dev (needed for NetRocks/SFTP)
 * libssl-dev (needed for NetRocks/FTPS)
@@ -40,7 +39,7 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install gawk m4 libwxgtk3.0-dev libxerces-c-dev libminizip-dev libspdlog-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+apt-get install gawk m4 libwxgtk3.0-dev libxerces-c-dev libspdlog-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
 
 ```
 (if in Ubuntu 19.04+ or other that has missing libwxgtk3.0-dev - try libwxgtk3.0-gtk3-dev)
@@ -91,7 +90,7 @@ brew install yurikoles/yurikoles/far2l --HEAD
 ##### Hard way OSX/MacOS install - with building from sources:
  * Install required packages:
 ```sh
-brew install cmake gawk ninja pkg-config wget wxmac xerces-c minizip spdlog libssh libnfs neon libarchive pcre
+brew install cmake gawk ninja pkg-config wget wxmac xerces-c spdlog libssh libnfs neon libarchive pcre
 ```
 
  * Clone:

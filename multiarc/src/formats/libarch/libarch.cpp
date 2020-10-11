@@ -3,6 +3,7 @@
 #include <utils.h>
 #include <sudo.h>
 #include <fcntl.h>
+#include <locale.h>
 
 #include <windows.h>
 #include "libarch_utils.h"
@@ -174,7 +175,7 @@ static std::unique_ptr<LibArchOpenRead> s_arc;
 BOOL WINAPI _export LIBARCH_OpenArchive(const char *Name, int *Type)
 {
 	try {
-		LibArchOpenRead *arc = new LibArchOpenRead(Name);
+		LibArchOpenRead *arc = new LibArchOpenRead(Name, "", "");
 		s_arc.reset(arc);
 		*Type = (arc->Format() == ARCHIVE_FORMAT_TAR) ? MF_TAR : MF_NOT_DISPLAYED;
 		if (arc->Format() == ARCHIVE_FORMAT_RAW) {
@@ -308,28 +309,28 @@ BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *Defa
 BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest)
 {
 	static const char *Commands[] = {
-	/*Extract               */"^libarch X %%A %%FMq4096",
-	/*Extract without paths */"^libarch x %%A %%FMq4096",
+	/*Extract               */"^libarch X %%A -- %%FMq4096",
+	/*Extract without paths */"^libarch x %%A -- %%FMq4096",
 	/*Test                  */"^libarch t %%A",
-	/*Delete                */"^libarch d %%A %%FMq4096",
+	/*Delete                */"^libarch d %%A -- %%FMq4096",
 	/*Comment archive       */"",
 	/*Comment files         */"",
 	/*Convert to SFX        */"",
 	/*Lock archive          */"",
 	/*Protect archive       */"",
 	/*Recover archive       */"",
-	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R %%FMq4096",
-	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R %%FMq4096",
-	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R %%FMq4096",
-	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R %%FMq4096",
+	/*Add files             */"^libarch a:<<fmt>> %%A -@%%R -- %%FMq4096",
+	/*Move files            */"^libarch m:<<fmt>> %%A -@%%R -- %%FMq4096",
+	/*Add files and folders */"^libarch A:<<fmt>> %%A -@%%R -- %%FMq4096",
+	/*Move files and folders*/"^libarch M:<<fmt>> %%A -@%%R -- %%FMq4096",
 	/*"All files" mask      */""
 	};
 
 	static const char *CommandsCab[] = {
-	/*Extract               */"^libarch X %%A %%FMq4096",
-	/*Extract without paths */"^libarch x %%A %%FMq4096",
+	/*Extract               */"^libarch X %%A -- %%FMq4096",
+	/*Extract without paths */"^libarch x %%A -- %%FMq4096",
 	/*Test                  */"^libarch t %%A",
-	/*Delete                */"^libarch d %%A %%FMq4096",
+	/*Delete                */"^libarch d %%A -- %%FMq4096",
 	/*Comment archive       */"",
 	/*Comment files         */"",
 	/*Convert to SFX        */"",
@@ -371,8 +372,11 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 
 extern "C" int libarch_main(int numargs, char *args[])
 {
+	setlocale(LC_ALL, "");
+	setlocale(LC_CTYPE, "UTF-8");
+
 	if (numargs < 3) {
-		printf("Usage: ^arch <command> <archive_name> [-@OPTIONAL ARCHIVE ROOT] [OPTIONAL LIST OF FILES]\n\n"
+		printf("Usage: ^arch <command> <archive_name> [-pwd=OPTIONAL PASSWORD] [-cs=OPTIONAL CHARSET] [-@OPTIONAL ARCHIVE ROOT] [--] [OPTIONAL LIST OF FILES]\n\n"
 			"<Commands>\n"
 			"  t: Test integrity of archive\n"
 			"  x: Extract files from archive (without using directory names)\n"
@@ -390,24 +394,41 @@ extern "C" int libarch_main(int numargs, char *args[])
 
 		int files_cnt = numargs - 3;
 		char **files = &args[3];
-		const char *arc_root_path = nullptr;
-		if (files_cnt > 0 && files[0][0] == '-' && files[0][1] == '@') {
-			arc_root_path = files[0] + 2;
+		LibarchCommandOptions arc_opts;
+		while (files_cnt > 0 && files[0][0] == '-') {
+			if (files[0][1] == '@') {
+				arc_opts.root_path = files[0] + 2;
+
+			} else if (strncmp(files[0], "-cs=", 4) == 0) {
+				arc_opts.charset = files[0] + 4;
+
+			} else if (strncmp(files[0], "-pwd=", 5) == 0) {
+				LibArch_SetPassprhase(files[0] + 5);
+
+			} else {
+				if (files[0][1] == '-') {
+					++files;
+					--files_cnt;
+				} else
+					fprintf(stderr, "Unknown option: %s - treating as file\n", files[0]);
+
+				break;
+			}
 			++files;
 			--files_cnt;
 		}
 
 		switch (*(args[1])) {
 			case 't': case 'x': case 'X':
-				ok = LIBARCH_CommandRead(args[1], args[2], arc_root_path, files_cnt, files);
+				ok = LIBARCH_CommandRead(args[1], args[2], arc_opts, files_cnt, files);
 				break;
 
 			case 'd':
-				ok = LIBARCH_CommandDelete(args[1], args[2], arc_root_path, files_cnt, files);
+				ok = LIBARCH_CommandDelete(args[1], args[2], arc_opts, files_cnt, files);
 				break;
 
 			case 'a': case 'A': case 'm': case 'M':
-				ok = LIBARCH_CommandAdd(args[1], args[2], arc_root_path, files_cnt, files);
+				ok = LIBARCH_CommandAdd(args[1], args[2], arc_opts, files_cnt, files);
 				break;
 
 			default:

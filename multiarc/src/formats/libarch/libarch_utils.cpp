@@ -2,12 +2,36 @@
 
 #include <string>
 #include <fcntl.h>
+#include <unistd.h>
 #include <errno.h>
 #include <sudo.h>
 #include <utils.h>
 
 #include "libarch_utils.h"
 
+
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
+static std::string s_passprhase;
+static bool s_passprhase_is_set = false;
+
+void LibArch_SetPassprhase(const char *passprhase)
+{
+	s_passprhase = passprhase;
+	s_passprhase_is_set = true;
+}
+
+static const char *LibArch_PassprhaseCallback(struct archive *, void *_client_data)
+{
+	return s_passprhase_is_set ? s_passprhase.c_str() : getpass("Password please:");
+}
+#else
+
+void LibArch_SetPassprhase(const char *passprhase)
+{
+	fprintf(stderr, "Used libarchive doesn't support passworded archives, please rebuild with libarchive version 3.2.0 or higher.\n");
+}
+
+#endif
 
 const char *LibArch_EntryPathname(struct archive_entry *e)
 {
@@ -60,10 +84,9 @@ void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string
 	}
 }
 
-LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
+LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *charset)
 {
 	Open(name);
-
 	LibArchCall(archive_read_support_filter_all, _arc);
 
 	/// Workaround for #710:
@@ -78,6 +101,7 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 	LibArchCall(archive_read_support_format_gnutar, _arc);
 	LibArchCall(archive_read_support_format_cpio, _arc);
 	LibArchCall(archive_read_support_format_cab, _arc);
+	PrepareForOpen(charset);
 
 	int r = LibArchCall(archive_read_open1, _arc);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
@@ -93,12 +117,16 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd)
 
 		LibArchCall(archive_read_support_filter_all, _arc);
 		LibArchCall(archive_read_support_format_all, _arc);
+		PrepareForOpen(charset);
+
 		// already tried this: LibArchCall(archive_read_support_format_raw, _arc);
 		r = LibArchCall(archive_read_open1, _arc);
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			EnsureClosed();
-			throw std::runtime_error(StrPrintf("open archive error %d", r));
+			throw std::runtime_error(StrPrintf("error %d (%s) opening archive '%s'",
+				r, archive_error_string(_arc), name));
 		}
+
 		_ae = NextHeader();
 	}
 
@@ -121,13 +149,33 @@ LibArchOpenRead::~LibArchOpenRead()
 	EnsureClosed();
 }
 
+void LibArchOpenRead::PrepareForOpen(const char *charset)
+{
+	if (charset && *charset)  {
+		char opt_hdrcharset[0x100] = {0};
+		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
+		int r = LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
+		if (r != 0) {
+			fprintf(stderr, "LibArchOpenRead::PrepareForOpen('%s') hdrcharset error %d (%s)\n",
+				charset, r, archive_error_string(_arc));
+		}/* else {
+			fprintf(stderr, "LibArchOpenRead::PrepareForOpen('%s') hdrcharset OK\n",
+				charset);
+		}*/
+	}/* else {
+		fprintf(stderr, "LibArchOpenRead::PrepareForOpen('%s') hdrcharset NOPE\n",
+			charset);
+	} */
+}
+
 void LibArchOpenRead::Open(const char *name)
 {
 	_arc = archive_read_new();
 	_fd = sdc_open(name, O_RDONLY);
 	if (!_arc || _fd == -1) {
 		EnsureClosed();
-		throw std::runtime_error(StrPrintf("open archive error %d", errno));
+		throw std::runtime_error(StrPrintf("error %d opening archive '%s'",
+			errno, name));
 	}
 
 	LibArchCall(archive_read_set_callback_data, _arc, (void *)this);
@@ -135,10 +183,19 @@ void LibArchOpenRead::Open(const char *name)
 	LibArchCall(archive_read_set_seek_callback, _arc, sSeekCallback);
 	LibArchCall(archive_read_set_skip_callback, _arc, sSkipCallback);
 	LibArchCall(archive_read_set_close_callback, _arc, sCloseCallback);
+
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
+	archive_read_set_passphrase_callback(_arc, nullptr, LibArch_PassprhaseCallback);
+#endif
+	_eof = false;
 }
 
 struct archive_entry *LibArchOpenRead::NextHeader()
 {
+	if (_eof) {
+		return nullptr;
+	}
+
 	struct archive_entry *entry = nullptr;
 	if (_ae != nullptr) {
 		entry = _ae;
@@ -148,11 +205,13 @@ struct archive_entry *LibArchOpenRead::NextHeader()
 		int r = LibArchCall(archive_read_next_header, _arc, &entry);
 
 		if (r == ARCHIVE_EOF) {
+			_eof = true;
 			return nullptr;
 		}
 
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-			throw std::runtime_error(StrPrintf("archive_read_next_header - error %d\n", r));
+			throw std::runtime_error(StrPrintf("archive_read_next_header - error %d (%s)\n",
+				r, archive_error_string(_arc)));
 		}
 	}
 
@@ -233,22 +292,22 @@ static const char *NameExt(const char *name)
 	return ext ? ext : (slash ? slash + 1 : name);
 }
 
-LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd)
+LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char *charset)
 {
 	const char *ne = NameExt(name);
 
 	int format = ARCHIVE_FORMAT_TAR, filter = ARCHIVE_FILTER_GZIP; // defaults
 
 	if (strstr(cmd, ":cpio")) { format = ARCHIVE_FORMAT_CPIO;
-	} else if (strstr(cmd, ":zip")) { format = ARCHIVE_FORMAT_ZIP;
-	} else if (strstr(cmd, ":cab")) { format = ARCHIVE_FORMAT_CAB;
+	} else if (strstr(cmd, ":zip")) { format = ARCHIVE_FORMAT_ZIP; filter = 0;
+	} else if (strstr(cmd, ":cab")) { format = ARCHIVE_FORMAT_CAB; filter = 0;
 	} else if (strstr(cmd, ":iso")) { format = ARCHIVE_FORMAT_ISO9660;
-	} else if (strstr(cmd, ":rar")) { format = ARCHIVE_FORMAT_RAR;
+	} else if (strstr(cmd, ":rar")) { format = ARCHIVE_FORMAT_RAR; filter = 0;
 	} else if (strstr(ne, ".cpio")) { format = ARCHIVE_FORMAT_CPIO;
-	} else if (strstr(ne, ".zip")) { format = ARCHIVE_FORMAT_ZIP;
-	} else if (strstr(ne, ".cab")) { format = ARCHIVE_FORMAT_CAB;
+	} else if (strstr(ne, ".zip")) { format = ARCHIVE_FORMAT_ZIP; filter = 0;
+	} else if (strstr(ne, ".cab")) { format = ARCHIVE_FORMAT_CAB; filter = 0;
 	} else if (strstr(ne, ".iso")) { format = ARCHIVE_FORMAT_ISO9660;
-	} else if (strstr(ne, ".rar")) { format = ARCHIVE_FORMAT_RAR;
+	} else if (strstr(ne, ".rar")) { format = ARCHIVE_FORMAT_RAR; filter = 0;
 	}
 
 	if (strstr(cmd, ":plain")) { filter = 0;
@@ -265,6 +324,10 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd)
 	} else if (strstr(ne, ".lz")) { filter = ARCHIVE_FILTER_LZMA;
 	}
 
+	if (format == ARCHIVE_FORMAT_ZIP && (!charset || !*charset)) {
+		charset = "UTF-8";
+	}
+
 	_arc = archive_write_new();
 	if (!_arc) {
 		throw std::runtime_error("failed to init archiver");
@@ -273,22 +336,30 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd)
 	if (filter) {
 		archive_write_add_filter(_arc, filter);
 	}
+	PrepareForOpen(charset, format);
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
-		throw std::runtime_error(StrPrintf("open archive error %d", r));
+		throw std::runtime_error(StrPrintf("error %d (%s) opening archive %s",
+			r, archive_error_string(_arc), name));
 	}
 }
 
-LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_template)
+LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset)
 {
 	_arc = archive_write_new();
 	if (!_arc) {
 		throw std::runtime_error("failed to init archiver");
 	}
 
-	archive_write_set_format(_arc, archive_format(arc_template));
+	auto format = archive_format(arc_template);
+
+	if (format == ARCHIVE_FORMAT_ZIP && (!charset || !*charset)) {
+		charset = "UTF-8";
+	}
+
+	archive_write_set_format(_arc, format);
 	for (int i = 0, ii = archive_filter_count(arc_template); i < ii; ++i) {
 		int fc = archive_filter_code(arc_template, i);
 		if (fc != 0) {
@@ -296,10 +367,13 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_templat
 		}
 	}
 
+	PrepareForOpen(charset, format);
+
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 		archive_write_free(_arc);
-		throw std::runtime_error(StrPrintf("open archive error %d", r));
+		throw std::runtime_error(StrPrintf("error %d (%s) opening archive %s",
+			r, archive_error_string(_arc), name));
 	}
 }
 
@@ -307,6 +381,47 @@ LibArchOpenWrite::~LibArchOpenWrite()
 {
 	archive_write_close(_arc);
 	archive_write_free(_arc);
+}
+
+void LibArchOpenWrite::PrepareForOpen(const char *charset, unsigned int format)
+{
+	if (charset && *charset) {
+		char opt_hdrcharset[0x100] = {0};
+		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
+		int r = LibArchCall(archive_write_set_options, _arc, (const char *)opt_hdrcharset);
+		if (r != 0) {
+			fprintf(stderr, "LibArchOpenWrite::PrepareForOpen('%s') hdrcharset error %d (%s)\n",
+				charset, r, archive_error_string(_arc));
+		}
+	}
+
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
+	if (s_passprhase_is_set) {
+		if (format == ARCHIVE_FORMAT_ZIP) {
+			int r = archive_write_set_options(_arc, "zip:encryption=aes256");
+			if (r != ARCHIVE_OK) {
+				r = archive_write_set_options(_arc, "zip:encryption=zipcrypt");
+				if (r != ARCHIVE_OK) {
+					fprintf(stderr, "Cannot use any encryption, error %d (%s)\n",
+						r, archive_error_string(_arc));
+				} else {
+					fprintf(stderr, "Using ZipCrypto encryption\n");
+				}
+			} else {
+				fprintf(stderr, "Using AES encryption\n");
+			}
+
+		} else {
+			fprintf(stderr, "Encryption not supported for archive format %u\n", format);
+		}
+
+		int r = archive_write_set_passphrase(_arc, s_passprhase.c_str());
+		if (r != ARCHIVE_OK) {
+			fprintf(stderr, "LibArchOpenWrite::PrepareForOpen('%s') setting password error %d (%s)\n",
+				charset, r, archive_error_string(_arc));
+		}
+	}
+#endif
 }
 
 

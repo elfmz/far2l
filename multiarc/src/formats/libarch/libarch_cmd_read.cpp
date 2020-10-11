@@ -52,13 +52,14 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		LibArch_ParsePathToParts(parts, src_path);
 
 		if (parts.empty()) {
-			fprintf(stderr, "Empty path: '%s'\n", pathname);
+			fprintf(stderr, "Empty path: '%s' '%ls'\n",
+				pathname, archive_entry_pathname_w(entry));
 			arc.SkipData();
 			continue;
 		}
 
 		if (!wanteds.empty() && !PartsMatchesAnyOfWanteds(wanteds, parts)) {
-//			fprintf(stderr, "Not matching: '%s'\n", pathname);
+//			fprintf(stderr, "Not matching: '%s' '%ls'\n", pathname, archive_entry_pathname_w(entry));
 			arc.SkipData();
 			continue;
 		}
@@ -87,8 +88,9 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		archive_entry_set_pathname(entry, extract_path.c_str() );
 		int r = archive_read_extract(arc.Get(), entry, 0);
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-			fprintf(stderr, "Error %d: '%s' -> '%s'\n",
-				r, src_path.c_str(), extract_path.c_str());
+			fprintf(stderr, "Error %d (%s): '%s' -> '%s'\n",
+				r, archive_error_string(arc.Get()),
+				src_path.c_str(), extract_path.c_str());
 			out = false;
 
 		} else {
@@ -100,15 +102,15 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 	return out;
 }
 
-bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const char *arc_root_path, int files_cnt, char *files[])
+bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
 {
 	std::vector<std::vector<std::string> > wanteds;
 	wanteds.reserve(files_cnt);
 
 	for (int i = 0; i < files_cnt; ++i) {
 		wanteds.emplace_back();
-		if (arc_root_path && *arc_root_path) {
-			LibArch_ParsePathToParts(wanteds.back(), std::string(arc_root_path));
+		if (!arc_opts.root_path.empty()) {
+			LibArch_ParsePathToParts(wanteds.back(), arc_opts.root_path);
 		}
 		if (files[i] && *files[i]) {
 			LibArch_ParsePathToParts(wanteds.back(), std::string(files[i]));
@@ -123,6 +125,6 @@ bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const char *arc_
 		return false;
 	}
 
-	LibArchOpenRead arc(arc_path, cmd);
+	LibArchOpenRead arc(arc_path, cmd, arc_opts.charset.c_str());
 	return LIBARCH_CommandReadWanteds(cmd, arc, wanteds);
 }

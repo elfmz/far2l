@@ -129,6 +129,9 @@ int PluginClass::ReadArchive(const char *Name)
     if (strcmp(ItemsInfo.HostOS,CurItemInfo.HostOS)!=0)
       strcpy(ItemsInfo.HostOS,(*ItemsInfo.HostOS?GetMsg(MSeveralOS):CurItemInfo.HostOS));
 
+    if (ItemsInfo.Codepage <= 0)
+      ItemsInfo.Codepage=CurItemInfo.Codepage;
+
     ItemsInfo.Solid|=CurItemInfo.Solid;
     ItemsInfo.Comment|=CurItemInfo.Comment;
     ItemsInfo.Encrypted|=CurItemInfo.Encrypted;
@@ -167,7 +170,7 @@ int PluginClass::ReadArchive(const char *Name)
       }
     }
 
-    if(CurArcData.UserData || Pref)
+    if(CurArcData.UserData || Pref || CurItemInfo.Codepage > 0)
     {
        if((aud=(struct ArcItemUserData*)malloc(sizeof(struct ArcItemUserData))) != NULL)
        {
@@ -175,6 +178,7 @@ int PluginClass::ReadArchive(const char *Name)
          aud->SizeStruct=sizeof(struct ArcItemUserData);
          aud->Prefix=Pref;
          aud->LinkName=CurArcData.UserData?(char *)CurArcData.UserData:NULL;
+         aud->Codepage=CurItemInfo.Codepage;
          CurArcData.UserData=(DWORD_PTR)aud;
        }
        else

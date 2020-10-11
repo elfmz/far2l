@@ -455,7 +455,9 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 		
 		if (0x7075==BlockHead.Type) {
 			strncpy(Item->FindData.cFileName, &strbuf[0], ARRAYSIZE(Item->FindData.cFileName) - 1);
+#if ZIP_LIBARCHIVE	// if libarchive not used need to pass non-UTF8 codepage to zip/unzip workarounds
 			Info->Codepage = 0;
+#endif
 		} else {
 			strncpy(Info->Description, &strbuf[0], ARRAYSIZE(Info->Description) - 1);
 		}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<!DOCTYPE hrc PUBLIC 
+	"-//Cail Lomecb//DTD Colorer HRC take5//EN" 
+	"http://colorer.sf.net/2003/hrc.dtd" 
+>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+<prototype name="smarty_fixed" group="inet" description="Smarty PHP Templates Fixed">
+	<location link="custom/smarty_fixed.hrc"/>
+	<filename weight="10">/\.(tpl)$/</filename>
+</prototype>
+
+</hrc>

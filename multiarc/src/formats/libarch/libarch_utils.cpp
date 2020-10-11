@@ -12,15 +12,17 @@
 
 #if (ARCHIVE_VERSION_NUMBER >= 3002000)
 static std::string s_passprhase;
+static bool s_passprhase_is_set = false;
 
 void LibArch_SetPassprhase(const char *passprhase)
 {
 	s_passprhase = passprhase;
+	s_passprhase_is_set = true;
 }
 
 static const char *LibArch_PassprhaseCallback(struct archive *, void *_client_data)
 {
-	return s_passprhase.empty() ? getpass("Password please:") : s_passprhase.c_str();
+	return s_passprhase_is_set ? s_passprhase.c_str() : getpass("Password please:");
 }
 #else
 
@@ -99,7 +101,7 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *
 	LibArchCall(archive_read_support_format_gnutar, _arc);
 	LibArchCall(archive_read_support_format_cpio, _arc);
 	LibArchCall(archive_read_support_format_cab, _arc);
-	ApplyCharset(charset);
+	PrepareForOpen(charset);
 
 	int r = LibArchCall(archive_read_open1, _arc);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
@@ -115,7 +117,7 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *
 
 		LibArchCall(archive_read_support_filter_all, _arc);
 		LibArchCall(archive_read_support_format_all, _arc);
-		ApplyCharset(charset);
+		PrepareForOpen(charset);
 
 		// already tried this: LibArchCall(archive_read_support_format_raw, _arc);
 		r = LibArchCall(archive_read_open1, _arc);
@@ -147,21 +149,21 @@ LibArchOpenRead::~LibArchOpenRead()
 	EnsureClosed();
 }
 
-void LibArchOpenRead::ApplyCharset(const char *charset)
+void LibArchOpenRead::PrepareForOpen(const char *charset)
 {
 	if (charset && *charset)  {
 		char opt_hdrcharset[0x100] = {0};
 		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
 		int r = LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
 		if (r != 0) {
-			fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') error %d (%s)\n",
+			fprintf(stderr, "LibArchOpenRead::PrepareForOpen('%s') hdrcharset error %d (%s)\n",
 				charset, r, archive_error_string(_arc));
 		}/* else {
-			fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') OK\n",
+			fprintf(stderr, "LibArchOpenRead::PrepareForOpen('%s') hdrcharset OK\n",
 				charset);
 		}*/
 	}/* else {
-		fprintf(stderr, "LibArchOpenRead::ApplyCharset('%s') NOPE\n",
+		fprintf(stderr, "LibArchOpenRead::PrepareForOpen('%s') hdrcharset NOPE\n",
 			charset);
 	} */
 }
@@ -334,7 +336,7 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char
 	if (filter) {
 		archive_write_add_filter(_arc, filter);
 	}
-	ApplyCharset(charset);
+	PrepareForOpen(charset, format);
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
@@ -365,7 +367,7 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_templat
 		}
 	}
 
-	ApplyCharset(charset);
+	PrepareForOpen(charset, format);
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
@@ -381,17 +383,45 @@ LibArchOpenWrite::~LibArchOpenWrite()
 	archive_write_free(_arc);
 }
 
-void LibArchOpenWrite::ApplyCharset(const char *charset)
+void LibArchOpenWrite::PrepareForOpen(const char *charset, unsigned int format)
 {
 	if (charset && *charset) {
 		char opt_hdrcharset[0x100] = {0};
 		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
 		int r = LibArchCall(archive_write_set_options, _arc, (const char *)opt_hdrcharset);
 		if (r != 0) {
-			fprintf(stderr, "LibArchOpenWrite::ApplyCharset('%s') error %d (%s)\n",
+			fprintf(stderr, "LibArchOpenWrite::PrepareForOpen('%s') hdrcharset error %d (%s)\n",
 				charset, r, archive_error_string(_arc));
 		}
 	}
+
+#if (ARCHIVE_VERSION_NUMBER >= 3002000)
+	if (s_passprhase_is_set) {
+		if (format == ARCHIVE_FORMAT_ZIP) {
+			int r = archive_write_set_options(_arc, "zip:encryption=aes256");
+			if (r != ARCHIVE_OK) {
+				r = archive_write_set_options(_arc, "zip:encryption=zipcrypt");
+				if (r != ARCHIVE_OK) {
+					fprintf(stderr, "Cannot use any encryption, error %d (%s)\n",
+						r, archive_error_string(_arc));
+				} else {
+					fprintf(stderr, "Using ZipCrypto encryption\n");
+				}
+			} else {
+				fprintf(stderr, "Using AES encryption\n");
+			}
+
+		} else {
+			fprintf(stderr, "Encryption not supported for archive format %u\n", format);
+		}
+
+		int r = archive_write_set_passphrase(_arc, s_passprhase.c_str());
+		if (r != ARCHIVE_OK) {
+			fprintf(stderr, "LibArchOpenWrite::PrepareForOpen('%s') setting password error %d (%s)\n",
+				charset, r, archive_error_string(_arc));
+		}
+	}
+#endif
 }
 
 

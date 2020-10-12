@@ -845,17 +845,19 @@ DWORD SHErrorToWinError(DWORD SHError)
 
 int RemoveToRecycleBin(const wchar_t *Name)
 {
-	const std::string &name_mb = Wide2MB(Name);
-	std::string script = GetMyScriptQuoted("trash.sh");
-	script+= " \"";
-	script+= name_mb;
-	script+= '\"';
+	std::string name_mb = Wide2MB(Name);
 
 	unsigned int flags = EF_HIDEOUT;
 	if (sudo_client_is_required_for(name_mb.c_str(), true))
 		flags|= EF_SUDO;
 
-	int r = farExecuteA(script.c_str(), flags);
+	QuoteCmdArgIfNeed(name_mb);
+
+	std::string cmd = GetMyScriptQuoted("trash.sh");
+	cmd+= ' ';
+	cmd+= name_mb;
+
+	int r = farExecuteA(cmd.c_str(), flags);
 	if (r==0)
 		return TRUE;
 

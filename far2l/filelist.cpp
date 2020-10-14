@@ -3177,10 +3177,10 @@ int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeS
         wchar_t *out = (wchar_t*)malloc((wcslen(Name) + 1)*sizeof(wchar_t));
         bzero(out, (wcslen(Name) + 1)*sizeof(wchar_t));
 
-        wchar_t *TrOutBuf = (wchar_t*)malloc(strlen(KbLayoutsTrOut.c_str())*4);
+        wchar_t *TrOutBuf = (wchar_t*)malloc(strlen(KbLayoutsTrOut.c_str())*sizeof(wchar_t));
         int converted = WINPORT(MultiByteToWideChar)(CP_UTF8, 0,
             KbLayoutsTrOut.c_str(), -1,
-            TrOutBuf, strlen(KbLayoutsTrOut.c_str())*4);
+            TrOutBuf, strlen(KbLayoutsTrOut.c_str())*sizeof(wchar_t));
 
         if (converted > 0) {
             for (int i = 0; i<wcslen(Name); i++) {

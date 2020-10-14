@@ -42,6 +42,9 @@ extern int WaitInFastFind;
 extern FARString g_strFarModuleName;
 extern FARString g_strFarPath;
 
+extern std::string KbLayoutsTrIn;
+extern std::string KbLayoutsTrOut;
+
 extern FARString strGlobalSearchString;
 extern int GlobalSearchCase;
 extern int GlobalSearchWholeWords; // значение "Whole words" для поиска

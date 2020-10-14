@@ -3169,103 +3169,45 @@ bool FileList::FileInFilter(long idxItem)
 // Just as FindPartName(), but with retry support through keyboard layout translation, specially for FastFind
 int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {
-    //fprintf(stderr, "\npart name: %ls\n\n", Name);
-
     bool res = FindPartName(Name, Next, Direct, ExcludeSets);
     if (!res) {
 
-        //fprintf(stderr, "\nwct: %d\n\n", Name[0]);
+        // FastFind retry keyboard layout translation
 
         wchar_t *out = (wchar_t*)malloc((wcslen(Name) + 1)*sizeof(wchar_t));
         bzero(out, (wcslen(Name) + 1)*sizeof(wchar_t));
 
-        for (int i = 0; i<wcslen(Name); i++) {
+        wchar_t *TrOutBuf = (wchar_t*)malloc(strlen(KbLayoutsTrOut.c_str())*4);
+        int converted = WINPORT(MultiByteToWideChar)(CP_UTF8, 0,
+            KbLayoutsTrOut.c_str(), -1,
+            TrOutBuf, strlen(KbLayoutsTrOut.c_str())*4);
 
-            out[i] = Name[i];
+        if (converted > 0) {
+            for (int i = 0; i<wcslen(Name); i++) {
 
-            // FastFind retry keyboard layout translation table
-            // TODO: make it configurable via .ini file
+                out[i] = Name[i];
 
-            // en to ru
-            if (Name[i] == L'q') { out[i] = L'й'; }
-            if (Name[i] == L'w') { out[i] = L'ц'; }
-            if (Name[i] == L'e') { out[i] = L'у'; }
-            if (Name[i] == L'r') { out[i] = L'к'; }
-            if (Name[i] == L't') { out[i] = L'е'; }
-            if (Name[i] == L'y') { out[i] = L'н'; }
-            if (Name[i] == L'u') { out[i] = L'г'; }
-            if (Name[i] == L'i') { out[i] = L'ш'; }
-            if (Name[i] == L'o') { out[i] = L'щ'; }
-            if (Name[i] == L'p') { out[i] = L'з'; }
-            if (Name[i] == L'[') { out[i] = L'х'; }
-            if (Name[i] == L']') { out[i] = L'ъ'; }
 
-            if (Name[i] == L'a')  { out[i] = L'ф'; }
-            if (Name[i] == L's')  { out[i] = L'ы'; }
-            if (Name[i] == L'd')  { out[i] = L'в'; }
-            if (Name[i] == L'f')  { out[i] = L'а'; }
-            if (Name[i] == L'g')  { out[i] = L'п'; }
-            if (Name[i] == L'h')  { out[i] = L'р'; }
-            if (Name[i] == L'j')  { out[i] = L'о'; }
-            if (Name[i] == L'k')  { out[i] = L'л'; }
-            if (Name[i] == L'l')  { out[i] = L'д'; }
-            if (Name[i] == L';')  { out[i] = L'ж'; }
-            if (Name[i] == L'\'') { out[i] = L'э'; }
-            
-            if (Name[i] == L'z') { out[i] = L'я'; }
-            if (Name[i] == L'x') { out[i] = L'ч'; }
-            if (Name[i] == L'c') { out[i] = L'с'; }
-            if (Name[i] == L'v') { out[i] = L'м'; }
-            if (Name[i] == L'b') { out[i] = L'и'; }
-            if (Name[i] == L'n') { out[i] = L'т'; }
-            if (Name[i] == L'm') { out[i] = L'ь'; }
-            if (Name[i] == L',') { out[i] = L'б'; }
-            if (Name[i] == L'.') { out[i] = L'ю'; }
-            
-            if (Name[i] == L'`') { out[i] = L'ё'; }
+                for (int j = 0; j < strlen(KbLayoutsTrIn.c_str()); j+=2) {
+                    if (TrOutBuf[j] && KbLayoutsTrIn.at(j)) {
+                        // forward translation
+                        if (Name[i] == KbLayoutsTrIn.at(j)) {
+                            out[i] = TrOutBuf[j];
+                        }
 
-            // ru to en
-            if (Name[i] == L'й') { out[i] = L'q'; }
-            if (Name[i] == L'ц') { out[i] = L'w'; }
-            if (Name[i] == L'у') { out[i] = L'e'; }
-            if (Name[i] == L'к') { out[i] = L'r'; }
-            if (Name[i] == L'е') { out[i] = L't'; }
-            if (Name[i] == L'н') { out[i] = L'y'; }
-            if (Name[i] == L'г') { out[i] = L'u'; }
-            if (Name[i] == L'ш') { out[i] = L'i'; }
-            if (Name[i] == L'щ') { out[i] = L'o'; }
-            if (Name[i] == L'з') { out[i] = L'p'; }
-            if (Name[i] == L'х') { out[i] = L'['; }
-            if (Name[i] == L'ъ') { out[i] = L']'; }
-            
-            if (Name[i] == L'ф') { out[i] = L'a'; }
-            if (Name[i] == L'ы') { out[i] = L's'; }
-            if (Name[i] == L'в') { out[i] = L'd'; }
-            if (Name[i] == L'а') { out[i] = L'f'; }
-            if (Name[i] == L'п') { out[i] = L'g'; }
-            if (Name[i] == L'р') { out[i] = L'h'; }
-            if (Name[i] == L'о') { out[i] = L'j'; }
-            if (Name[i] == L'л') { out[i] = L'k'; }
-            if (Name[i] == L'д') { out[i] = L'l'; }
-            if (Name[i] == L'ж') { out[i] = L';'; }
-            if (Name[i] == L'э') { out[i] = L'\''; }
-            
-            if (Name[i] == L'я') { out[i] = L'z'; }
-            if (Name[i] == L'ч') { out[i] = L'x'; }
-            if (Name[i] == L'с') { out[i] = L'c'; }
-            if (Name[i] == L'м') { out[i] = L'v'; }
-            if (Name[i] == L'и') { out[i] = L'b'; }
-            if (Name[i] == L'т') { out[i] = L'n'; }
-            if (Name[i] == L'ь') { out[i] = L'm'; }
-            if (Name[i] == L'б') { out[i] = L','; }
-            if (Name[i] == L'ю') { out[i] = L'.'; }
-            
-            if (Name[i] == L'ё') { out[i] = L'`'; }
+                        // reverse translation
+                        if (Name[i] == TrOutBuf[j]) {
+                            out[i] = KbLayoutsTrIn.at(j);
+                        }
+                    }
+                }
+            }
         }
-        
-        //fprintf(stderr, "\ntranslated: %ls\n\n", out);
+
 
         res = FindPartName(out, Next, Direct, ExcludeSets);
+
+        free(TrOutBuf);
         free(out);
     }
 

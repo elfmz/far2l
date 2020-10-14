@@ -72,6 +72,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include "InterThreadCall.hpp"
 
+#include <KeyFileHelper.h>
+
 #ifdef DIRECT_RT
 int DirectRT=0;
 #endif
@@ -596,6 +598,17 @@ int FarAppMain(int argc, char **argv)
 			}
 		}
 	}
+
+    std::unique_ptr<KeyFileHelper> KeyboardLayouts;
+    wchar_t *far2l_path = (wchar_t*)g_strFarPath.CPtr();
+    std::string kblo_path = StrPrintf("%lskblayouts.ini", far2l_path);
+    KeyboardLayouts.reset(new KeyFileHelper(kblo_path.c_str()));
+
+    const char *lc = setlocale(LC_CTYPE, NULL);
+    char LangCode[3]; LangCode[0] = lc[0]; LangCode[1] = lc[1]; LangCode[2] = 0;
+    
+    KbLayoutsTrIn = KeyboardLayouts->GetString(LangCode, "Latin", FALSE);
+    KbLayoutsTrOut = KeyboardLayouts->GetString(LangCode, "Local", FALSE);
 
 	//Настройка OEM сортировки. Должна быть после CopyGlobalSettings и перед InitKeysArray!
 	//LocalUpperInit();

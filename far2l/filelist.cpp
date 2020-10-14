@@ -3181,8 +3181,8 @@ int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeS
         if ( //((Name[0] >= L'A') && (Name[0] <= L'Z')) ||
             ((Name[0] >= L'a') && (Name[0] <= L'z')) ||
              (Name[0] == L'[')  || (Name[0] == L']')   ||
-             (Name[0] == L';')  || (Name[0] == L'\'')   ||
-             (Name[0] == L'<')  || (Name[0] == L'>')   ||
+             (Name[0] == L';')  || (Name[0] == L'\'')  ||
+             (Name[0] == L',')  || (Name[0] == L'.')   ||
              (Name[0] == L'ё')
            )
         {
@@ -3201,16 +3201,16 @@ int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeS
             if (Name[0] == L'[') { *out = L'х'; }
             if (Name[0] == L']') { *out = L'ъ'; }
 
-            if (Name[0] == L'a') { *out = L'ф'; }
-            if (Name[0] == L's') { *out = L'ы'; }
-            if (Name[0] == L'd') { *out = L'в'; }
-            if (Name[0] == L'f') { *out = L'а'; }
-            if (Name[0] == L'g') { *out = L'п'; }
-            if (Name[0] == L'h') { *out = L'р'; }
-            if (Name[0] == L'j') { *out = L'о'; }
-            if (Name[0] == L'k') { *out = L'л'; }
-            if (Name[0] == L'l') { *out = L'д'; }
-            if (Name[0] == L';') { *out = L'ж'; }
+            if (Name[0] == L'a')  { *out = L'ф'; }
+            if (Name[0] == L's')  { *out = L'ы'; }
+            if (Name[0] == L'd')  { *out = L'в'; }
+            if (Name[0] == L'f')  { *out = L'а'; }
+            if (Name[0] == L'g')  { *out = L'п'; }
+            if (Name[0] == L'h')  { *out = L'р'; }
+            if (Name[0] == L'j')  { *out = L'о'; }
+            if (Name[0] == L'k')  { *out = L'л'; }
+            if (Name[0] == L'l')  { *out = L'д'; }
+            if (Name[0] == L';')  { *out = L'ж'; }
             if (Name[0] == L'\'') { *out = L'э'; }
             
             if (Name[0] == L'z') { *out = L'я'; }

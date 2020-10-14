@@ -3166,6 +3166,117 @@ bool FileList::FileInFilter(long idxItem)
 	return false;
 }
 
+int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
+{
+    //fprintf(stderr, "\npart name: %ls\n\n", Name);
+
+    bool res = FindPartName(Name, Next, Direct, ExcludeSets);
+    if (!res) {
+
+        //fprintf(stderr, "\nwct: %d\n\n", Name[0]);
+
+        wchar_t *out = (wchar_t*)malloc(4);
+        bzero(out, 4);
+
+        if ( //((Name[0] >= L'A') && (Name[0] <= L'Z')) ||
+            ((Name[0] >= L'a') && (Name[0] <= L'z')) ||
+             (Name[0] == L'[')  || (Name[0] == L']')   ||
+             (Name[0] == L';')  || (Name[0] == L'\'')   ||
+             (Name[0] == L'<')  || (Name[0] == L'>')   ||
+             (Name[0] == L'ё')
+           )
+        {
+            // en to ru
+            if (Name[0] == L'q') { *out = L'й'; }
+            if (Name[0] == L'q') { *out = L'й'; }
+            if (Name[0] == L'w') { *out = L'ц'; }
+            if (Name[0] == L'e') { *out = L'у'; }
+            if (Name[0] == L'r') { *out = L'к'; }
+            if (Name[0] == L't') { *out = L'е'; }
+            if (Name[0] == L'y') { *out = L'н'; }
+            if (Name[0] == L'u') { *out = L'г'; }
+            if (Name[0] == L'i') { *out = L'ш'; }
+            if (Name[0] == L'o') { *out = L'щ'; }
+            if (Name[0] == L'p') { *out = L'з'; }
+            if (Name[0] == L'[') { *out = L'х'; }
+            if (Name[0] == L']') { *out = L'ъ'; }
+
+            if (Name[0] == L'a') { *out = L'ф'; }
+            if (Name[0] == L's') { *out = L'ы'; }
+            if (Name[0] == L'd') { *out = L'в'; }
+            if (Name[0] == L'f') { *out = L'а'; }
+            if (Name[0] == L'g') { *out = L'п'; }
+            if (Name[0] == L'h') { *out = L'р'; }
+            if (Name[0] == L'j') { *out = L'о'; }
+            if (Name[0] == L'k') { *out = L'л'; }
+            if (Name[0] == L'l') { *out = L'д'; }
+            if (Name[0] == L';') { *out = L'ж'; }
+            if (Name[0] == L'\'') { *out = L'э'; }
+            
+            if (Name[0] == L'z') { *out = L'я'; }
+            if (Name[0] == L'x') { *out = L'ч'; }
+            if (Name[0] == L'c') { *out = L'с'; }
+            if (Name[0] == L'v') { *out = L'м'; }
+            if (Name[0] == L'b') { *out = L'и'; }
+            if (Name[0] == L'n') { *out = L'т'; }
+            if (Name[0] == L'm') { *out = L'ь'; }
+            if (Name[0] == L',') { *out = L'б'; }
+            if (Name[0] == L'.') { *out = L'ю'; }
+            
+            if (Name[0] == L'`') { *out = L'ё'; }
+            
+        } else {
+            // ru to en
+            if (Name[0] == L'й') { *out = L'q'; }
+            if (Name[0] == L'ц') { *out = L'w'; }
+            if (Name[0] == L'у') { *out = L'e'; }
+            if (Name[0] == L'к') { *out = L'r'; }
+            if (Name[0] == L'е') { *out = L't'; }
+            if (Name[0] == L'н') { *out = L'y'; }
+            if (Name[0] == L'г') { *out = L'u'; }
+            if (Name[0] == L'ш') { *out = L'i'; }
+            if (Name[0] == L'щ') { *out = L'o'; }
+            if (Name[0] == L'з') { *out = L'p'; }
+            if (Name[0] == L'х') { *out = L'['; }
+            if (Name[0] == L'ъ') { *out = L']'; }
+            
+            if (Name[0] == L'ф') { *out = L'a'; }
+            if (Name[0] == L'ы') { *out = L's'; }
+            if (Name[0] == L'в') { *out = L'd'; }
+            if (Name[0] == L'а') { *out = L'f'; }
+            if (Name[0] == L'п') { *out = L'g'; }
+            if (Name[0] == L'р') { *out = L'h'; }
+            if (Name[0] == L'о') { *out = L'j'; }
+            if (Name[0] == L'л') { *out = L'k'; }
+            if (Name[0] == L'д') { *out = L'l'; }
+            if (Name[0] == L'ж') { *out = L';'; }
+            if (Name[0] == L'э') { *out = L'\''; }
+            
+            if (Name[0] == L'я') { *out = L'z'; }
+            if (Name[0] == L'ч') { *out = L'x'; }
+            if (Name[0] == L'с') { *out = L'c'; }
+            if (Name[0] == L'м') { *out = L'v'; }
+            if (Name[0] == L'и') { *out = L'b'; }
+            if (Name[0] == L'т') { *out = L'n'; }
+            if (Name[0] == L'ь') { *out = L'm'; }
+            if (Name[0] == L'б') { *out = L','; }
+            if (Name[0] == L'ю') { *out = L'.'; }
+            
+            if (Name[0] == L'ё') { *out = L'`'; }
+        }
+        
+        //fprintf(stderr, "\ntranslated: %ls\n\n", out);
+
+        if (*out) {
+            res = FindPartName(out, Next, Direct, ExcludeSets);
+        }
+        free(out);
+    }
+
+    return res;
+}
+
+
 // $ 02.08.2000 IG  Wish.Mix #21 - при нажатии '/' или '\' в QuickSerach переходим на директорию
 int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {

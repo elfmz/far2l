@@ -212,6 +212,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Home     Alt       \x1b[1;3H
         Home     Ctrl      \x1b[5H
         Home     Ctrl      \x1b[1;5H */
+            keypad = 0; // required by mc and tilde editor to function properly
 			if (keypad == 0) {
 				if (ctrl && shift) return "\x1b[1;6H";
 				if (shift) return "\x1b[1;2H";
@@ -235,6 +236,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         End      Alt       \x1b[1;3F
         End      Ctrl      \x1b[5F
         End      Ctrl      \x1b[1;5F */
+            keypad = 0; // required by mc and tilde editor to function properly
 			if (keypad==0) {
 				if (ctrl && shift) return "\x1b[1;6F";
 				if (shift) return "\x1b[1;2F";

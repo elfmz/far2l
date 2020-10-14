@@ -3166,6 +3166,7 @@ bool FileList::FileInFilter(long idxItem)
 	return false;
 }
 
+// Just as FindPartName(), but with retry support through keyboard layout translation, specially for FastFind
 int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {
     //fprintf(stderr, "\npart name: %ls\n\n", Name);
@@ -3175,101 +3176,96 @@ int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeS
 
         //fprintf(stderr, "\nwct: %d\n\n", Name[0]);
 
-        wchar_t *out = (wchar_t*)malloc(4);
-        bzero(out, 4);
+        wchar_t *out = (wchar_t*)malloc((wcslen(Name) + 1)*sizeof(wchar_t));
+        bzero(out, (wcslen(Name) + 1)*sizeof(wchar_t));
 
-        if ( //((Name[0] >= L'A') && (Name[0] <= L'Z')) ||
-            ((Name[0] >= L'a') && (Name[0] <= L'z')) ||
-             (Name[0] == L'[')  || (Name[0] == L']')   ||
-             (Name[0] == L';')  || (Name[0] == L'\'')  ||
-             (Name[0] == L',')  || (Name[0] == L'.')   ||
-             (Name[0] == L'ё')
-           )
-        {
+        for (int i = 0; i<wcslen(Name); i++) {
+
+            out[i] = Name[i];
+
+            // FastFind retry keyboard layout translation table
+            // TODO: make it configurable via .ini file
+
             // en to ru
-            if (Name[0] == L'q') { *out = L'й'; }
-            if (Name[0] == L'q') { *out = L'й'; }
-            if (Name[0] == L'w') { *out = L'ц'; }
-            if (Name[0] == L'e') { *out = L'у'; }
-            if (Name[0] == L'r') { *out = L'к'; }
-            if (Name[0] == L't') { *out = L'е'; }
-            if (Name[0] == L'y') { *out = L'н'; }
-            if (Name[0] == L'u') { *out = L'г'; }
-            if (Name[0] == L'i') { *out = L'ш'; }
-            if (Name[0] == L'o') { *out = L'щ'; }
-            if (Name[0] == L'p') { *out = L'з'; }
-            if (Name[0] == L'[') { *out = L'х'; }
-            if (Name[0] == L']') { *out = L'ъ'; }
+            if (Name[i] == L'q') { out[i] = L'й'; }
+            if (Name[i] == L'w') { out[i] = L'ц'; }
+            if (Name[i] == L'e') { out[i] = L'у'; }
+            if (Name[i] == L'r') { out[i] = L'к'; }
+            if (Name[i] == L't') { out[i] = L'е'; }
+            if (Name[i] == L'y') { out[i] = L'н'; }
+            if (Name[i] == L'u') { out[i] = L'г'; }
+            if (Name[i] == L'i') { out[i] = L'ш'; }
+            if (Name[i] == L'o') { out[i] = L'щ'; }
+            if (Name[i] == L'p') { out[i] = L'з'; }
+            if (Name[i] == L'[') { out[i] = L'х'; }
+            if (Name[i] == L']') { out[i] = L'ъ'; }
 
-            if (Name[0] == L'a')  { *out = L'ф'; }
-            if (Name[0] == L's')  { *out = L'ы'; }
-            if (Name[0] == L'd')  { *out = L'в'; }
-            if (Name[0] == L'f')  { *out = L'а'; }
-            if (Name[0] == L'g')  { *out = L'п'; }
-            if (Name[0] == L'h')  { *out = L'р'; }
-            if (Name[0] == L'j')  { *out = L'о'; }
-            if (Name[0] == L'k')  { *out = L'л'; }
-            if (Name[0] == L'l')  { *out = L'д'; }
-            if (Name[0] == L';')  { *out = L'ж'; }
-            if (Name[0] == L'\'') { *out = L'э'; }
+            if (Name[i] == L'a')  { out[i] = L'ф'; }
+            if (Name[i] == L's')  { out[i] = L'ы'; }
+            if (Name[i] == L'd')  { out[i] = L'в'; }
+            if (Name[i] == L'f')  { out[i] = L'а'; }
+            if (Name[i] == L'g')  { out[i] = L'п'; }
+            if (Name[i] == L'h')  { out[i] = L'р'; }
+            if (Name[i] == L'j')  { out[i] = L'о'; }
+            if (Name[i] == L'k')  { out[i] = L'л'; }
+            if (Name[i] == L'l')  { out[i] = L'д'; }
+            if (Name[i] == L';')  { out[i] = L'ж'; }
+            if (Name[i] == L'\'') { out[i] = L'э'; }
             
-            if (Name[0] == L'z') { *out = L'я'; }
-            if (Name[0] == L'x') { *out = L'ч'; }
-            if (Name[0] == L'c') { *out = L'с'; }
-            if (Name[0] == L'v') { *out = L'м'; }
-            if (Name[0] == L'b') { *out = L'и'; }
-            if (Name[0] == L'n') { *out = L'т'; }
-            if (Name[0] == L'm') { *out = L'ь'; }
-            if (Name[0] == L',') { *out = L'б'; }
-            if (Name[0] == L'.') { *out = L'ю'; }
+            if (Name[i] == L'z') { out[i] = L'я'; }
+            if (Name[i] == L'x') { out[i] = L'ч'; }
+            if (Name[i] == L'c') { out[i] = L'с'; }
+            if (Name[i] == L'v') { out[i] = L'м'; }
+            if (Name[i] == L'b') { out[i] = L'и'; }
+            if (Name[i] == L'n') { out[i] = L'т'; }
+            if (Name[i] == L'm') { out[i] = L'ь'; }
+            if (Name[i] == L',') { out[i] = L'б'; }
+            if (Name[i] == L'.') { out[i] = L'ю'; }
             
-            if (Name[0] == L'`') { *out = L'ё'; }
-            
-        } else {
+            if (Name[i] == L'`') { out[i] = L'ё'; }
+
             // ru to en
-            if (Name[0] == L'й') { *out = L'q'; }
-            if (Name[0] == L'ц') { *out = L'w'; }
-            if (Name[0] == L'у') { *out = L'e'; }
-            if (Name[0] == L'к') { *out = L'r'; }
-            if (Name[0] == L'е') { *out = L't'; }
-            if (Name[0] == L'н') { *out = L'y'; }
-            if (Name[0] == L'г') { *out = L'u'; }
-            if (Name[0] == L'ш') { *out = L'i'; }
-            if (Name[0] == L'щ') { *out = L'o'; }
-            if (Name[0] == L'з') { *out = L'p'; }
-            if (Name[0] == L'х') { *out = L'['; }
-            if (Name[0] == L'ъ') { *out = L']'; }
+            if (Name[i] == L'й') { out[i] = L'q'; }
+            if (Name[i] == L'ц') { out[i] = L'w'; }
+            if (Name[i] == L'у') { out[i] = L'e'; }
+            if (Name[i] == L'к') { out[i] = L'r'; }
+            if (Name[i] == L'е') { out[i] = L't'; }
+            if (Name[i] == L'н') { out[i] = L'y'; }
+            if (Name[i] == L'г') { out[i] = L'u'; }
+            if (Name[i] == L'ш') { out[i] = L'i'; }
+            if (Name[i] == L'щ') { out[i] = L'o'; }
+            if (Name[i] == L'з') { out[i] = L'p'; }
+            if (Name[i] == L'х') { out[i] = L'['; }
+            if (Name[i] == L'ъ') { out[i] = L']'; }
             
-            if (Name[0] == L'ф') { *out = L'a'; }
-            if (Name[0] == L'ы') { *out = L's'; }
-            if (Name[0] == L'в') { *out = L'd'; }
-            if (Name[0] == L'а') { *out = L'f'; }
-            if (Name[0] == L'п') { *out = L'g'; }
-            if (Name[0] == L'р') { *out = L'h'; }
-            if (Name[0] == L'о') { *out = L'j'; }
-            if (Name[0] == L'л') { *out = L'k'; }
-            if (Name[0] == L'д') { *out = L'l'; }
-            if (Name[0] == L'ж') { *out = L';'; }
-            if (Name[0] == L'э') { *out = L'\''; }
+            if (Name[i] == L'ф') { out[i] = L'a'; }
+            if (Name[i] == L'ы') { out[i] = L's'; }
+            if (Name[i] == L'в') { out[i] = L'd'; }
+            if (Name[i] == L'а') { out[i] = L'f'; }
+            if (Name[i] == L'п') { out[i] = L'g'; }
+            if (Name[i] == L'р') { out[i] = L'h'; }
+            if (Name[i] == L'о') { out[i] = L'j'; }
+            if (Name[i] == L'л') { out[i] = L'k'; }
+            if (Name[i] == L'д') { out[i] = L'l'; }
+            if (Name[i] == L'ж') { out[i] = L';'; }
+            if (Name[i] == L'э') { out[i] = L'\''; }
             
-            if (Name[0] == L'я') { *out = L'z'; }
-            if (Name[0] == L'ч') { *out = L'x'; }
-            if (Name[0] == L'с') { *out = L'c'; }
-            if (Name[0] == L'м') { *out = L'v'; }
-            if (Name[0] == L'и') { *out = L'b'; }
-            if (Name[0] == L'т') { *out = L'n'; }
-            if (Name[0] == L'ь') { *out = L'm'; }
-            if (Name[0] == L'б') { *out = L','; }
-            if (Name[0] == L'ю') { *out = L'.'; }
+            if (Name[i] == L'я') { out[i] = L'z'; }
+            if (Name[i] == L'ч') { out[i] = L'x'; }
+            if (Name[i] == L'с') { out[i] = L'c'; }
+            if (Name[i] == L'м') { out[i] = L'v'; }
+            if (Name[i] == L'и') { out[i] = L'b'; }
+            if (Name[i] == L'т') { out[i] = L'n'; }
+            if (Name[i] == L'ь') { out[i] = L'm'; }
+            if (Name[i] == L'б') { out[i] = L','; }
+            if (Name[i] == L'ю') { out[i] = L'.'; }
             
-            if (Name[0] == L'ё') { *out = L'`'; }
+            if (Name[i] == L'ё') { out[i] = L'`'; }
         }
         
         //fprintf(stderr, "\ntranslated: %ls\n\n", out);
 
-        if (*out) {
-            res = FindPartName(out, Next, Direct, ExcludeSets);
-        }
+        res = FindPartName(out, Next, Direct, ExcludeSets);
         free(out);
     }
 

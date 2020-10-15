@@ -100,28 +100,30 @@ void SString::setLength(size_t newLength)
   len = newLength;
 }
 
-SString &SString::append(const String* string)
+SString &SString::append(const String* string, size_t maxlen)
 {
   if (string == nullptr)
     return append(CString("null"));
-  return append(*string);
+  return append(*string, maxlen);
 }
 
-SString &SString::append(const String &string)
+SString &SString::append(const String &string, size_t maxlen)
 {
-  size_t len_new = len + string.length();
-  if (alloc > len_new) {
-    for (size_t i = len; i < len_new; i++)
-      wstr[i] = string[i - len];
-  } else {
+  const size_t len_new = len + std::min(maxlen, string.length());
+
+  if (alloc < len_new) {
     std::unique_ptr<wchar[]> wstr_new(new wchar[len_new * 2]);
     alloc = len_new * 2;
-    for (size_t i = 0; i < len_new; i++) {
-      if (i < len) wstr_new[i] = wstr[i];
-      else wstr_new[i] = string[i - len];
+    for (size_t i = 0; i < len; i++) {
+      wstr_new[i] = wstr[i];
     }
     wstr = std::move(wstr_new);
   }
+
+  for (size_t i = len; i < len_new; i++) {
+    wstr[i] = string[i - len];
+  }
+
   len = len_new;
   return *this;
 }

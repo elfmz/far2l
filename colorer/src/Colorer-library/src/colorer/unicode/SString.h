@@ -54,9 +54,9 @@ public:
   size_t length() const override;
 
   /** Appends to this string buffer @c string */
-  SString &append(const String &string);
+  SString &append(const String &string, size_t maxlen = (size_t)-1);
   /** Appends to this string buffer @c string */
-  SString &append(const String* string);
+  SString &append(const String* string, size_t maxlen = (size_t)-1);
 
   /** Appends to this string buffer @c string */
   SString &append(wchar c);

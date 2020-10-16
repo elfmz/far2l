@@ -25,7 +25,7 @@ Exception &Exception::operator=(const Exception &e) noexcept
   return *this;
 }
 
-Exception::~Exception()
+Exception::~Exception() noexcept
 {
 }
 

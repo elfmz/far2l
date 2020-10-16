@@ -5,7 +5,7 @@
 #endif
 #include <colorer/Exception.h>
 #include <xercesc/util/XMLString.hpp>
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 #include <dirent.h>
 #include <sys/stat.h>
 #endif
@@ -93,7 +93,7 @@ UString XmlInputSource::getClearPath(const String* basePath, const String* relPa
     delete[] e_path;
   }
   if (isRelative(clear_path.get())) {
-    clear_path = std::move(getAbsolutePath(basePath, clear_path.get()));
+    clear_path = getAbsolutePath(basePath, clear_path.get());
     if (clear_path->startsWith(CString("file://"))) {
       clear_path.reset(new SString(clear_path.get(), 7, -1));
     }
@@ -148,7 +148,7 @@ void XmlInputSource::getFileFromDir(const String* relPath, std::vector<SString> 
 }
 #endif
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 void XmlInputSource::getFileFromDir(const String* relPath, std::vector<SString> &files)
 {
   DIR* dir = opendir(relPath->getChars());

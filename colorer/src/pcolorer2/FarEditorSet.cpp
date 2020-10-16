@@ -783,7 +783,7 @@ const String *FarEditorSet::chooseHRDName(const String *current, SString _hrdCla
     if (!descr->length()){
       descr = name;
     }
-    names.push_back(name);
+    //names.push_back(name);
   
     menuElements[i].Text = (wchar_t*)descr->getWChars();
 

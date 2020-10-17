@@ -259,6 +259,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   {
     if (!WINPORT(ReadFile)(ArcHandle,&ZipHeader,sizeof(ZipHeader),&ReadSize,NULL))
       return(GETARC_READERROR);
+    if (ZipHeader.Mark==0x06064b50) { return 0; }
     if (ZipHeader.Mark!=0x02014b50 && ZipHeader.Mark!=0x06054b50)
     {
       if (FirstRecord)

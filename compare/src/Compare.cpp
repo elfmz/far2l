@@ -20,7 +20,7 @@
 #define CheckDisabled(i) (DialogItems[i].Flags&DIF_DISABLE)
 #else
 #define GetCheck(i) (int)Info.SendDlgMessage(hDlg,DM_GETCHECK,i,0)
-#define GetDataPtr(i) ((const TCHAR *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
+#define GetDataPtr(i) ((const WCHAR *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 #define CheckDisabled(i) (!((int)Info.SendDlgMessage(hDlg,DM_ENABLE,i,-1)))
 #endif
 
@@ -96,7 +96,7 @@ struct Options {
  ****************************************************************************/
 static struct PluginStartupInfo Info;
 static struct FarStandardFunctions FSF;
-static TCHAR  *PluginRootKey = NULL;
+static WCHAR  *PluginRootKey = NULL;
 
 static void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
 {
@@ -135,7 +135,7 @@ struct OwnPanelInfo
 /****************************************************************************
  * 
  ****************************************************************************/
-static const TCHAR *GetMsg(int CompareLng)
+static const WCHAR *GetMsg(int CompareLng)
 {
   return Info.GetMsg(Info.ModuleNumber, CompareLng);
 }
@@ -147,7 +147,7 @@ static int iTruncLen;
  * 
  * 
  ****************************************************************************/
-static void TrunCopy(TCHAR *cpDest, const TCHAR *cpSrc)
+static void TrunCopy(WCHAR *cpDest, const WCHAR *cpSrc)
 {
   int iLen = (int)lstrlen(FSF.TruncStr(lstrcpy(cpDest, cpSrc), iTruncLen));
 
@@ -164,7 +164,7 @@ static bool bOpenFail;
 /****************************************************************************
  * 
  ****************************************************************************/
-static void ShowMessage(const TCHAR *Name1, const TCHAR *Name2)
+static void ShowMessage(const WCHAR *Name1, const WCHAR *Name2)
 {
   static DWORD dwTicks;
   DWORD dwNewTicks = GetTickCount();
@@ -172,11 +172,11 @@ static void ShowMessage(const TCHAR *Name1, const TCHAR *Name2)
     return;
   dwTicks = dwNewTicks;
 
-  TCHAR TruncName1[MAX_PATH], TruncName2[MAX_PATH];
+  WCHAR TruncName1[MAX_PATH], TruncName2[MAX_PATH];
   TrunCopy(TruncName1, Name1);
   TrunCopy(TruncName2, Name2);
 
-  const TCHAR *MsgItems[] = {
+  const WCHAR *MsgItems[] = {
     GetMsg(MCmpTitle),
     GetMsg(MComparing),
     TruncName1,
@@ -248,7 +248,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
     unsigned char X1, Y1, X2, Y2;
     int           Data;
     int           DefaultRegValue;
-    const TCHAR   *SelectedRegValue;
+    const WCHAR   *SelectedRegValue;
     unsigned int  Flags;
     int          *StoreTo;
   } InitItems[] = {
@@ -275,7 +275,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
     /*20*/ { DI_BUTTON,       0, 19,  0,  0, MCancel,                  0, NULL,                      DIF_CENTERGROUP, NULL }
   };
   struct FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
-  TCHAR Mask[] = _T("99999");
+  WCHAR Mask[] = _T("99999");
 #ifdef UNICODE
   wchar_t tmpnum[ARRAYSIZE(InitItems)][32];
 #endif
@@ -321,7 +321,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 #else
       DialogItems[i].PtrData = tmpnum[i];
 #endif
-      FSF.itoa(dwRegValue, (TCHAR *)DialogItems[i].PtrData, 10);
+      FSF.itoa(dwRegValue, (WCHAR *)DialogItems[i].PtrData, 10);
       DialogItems[i].Param.Mask = Mask;
       DialogItems[i].X1 = DialogItems[i-1].X1 + lstrlen(DialogItems[i-1].PtrData)
                           - (_tcschr(DialogItems[i-1].PtrData, _T('&'))?1:0) + 5;
@@ -514,7 +514,7 @@ static bool CheckForEsc(void)
     {
       if ( Info.AdvControl(Info.ModuleNumber, ACTL_GETCONFIRMATIONS, NULL) & FCS_INTERRUPTOPERATION )
       {
-        const TCHAR *MsgItems[] = {
+        const WCHAR *MsgItems[] = {
           GetMsg(MEscTitle),
           GetMsg(MEscBody),
           GetMsg(MOK),
@@ -535,9 +535,9 @@ static bool CheckForEsc(void)
 /****************************************************************************
  * 
  ****************************************************************************/
-static TCHAR *BuildFullFilename(const TCHAR *cpDir, const TCHAR *cpFileName)
+static WCHAR *BuildFullFilename(const WCHAR *cpDir, const WCHAR *cpFileName)
 {
-  static TCHAR cName[MAX_PATH];
+  static WCHAR cName[MAX_PATH];
   FSF.AddEndSlash(lstrcpy(cName, cpDir));
 
   return lstrcat(cName, cpFileName);
@@ -628,9 +628,9 @@ static void FreePanelIndex(struct FileIndex *pIndex)
  * 
  * 
  ****************************************************************************/
-static int GetDirList(OwnPanelInfo *PInfo, const TCHAR *Dir)
+static int GetDirList(OwnPanelInfo *PInfo, const WCHAR *Dir)
 {
-  TCHAR cPathMask[MAX_PATH];
+  WCHAR cPathMask[MAX_PATH];
   WIN32_FIND_DATA wfdFindData;
   HANDLE hFind;
   struct PluginPanelItem **pPanelItem = &PInfo->PanelItems;
@@ -714,7 +714,7 @@ bool isnewline(int c)
  * 
  ****************************************************************************/
 static bool CompareFiles( const FAR_FIND_DATA *AData, const FAR_FIND_DATA *PData,
-                          const TCHAR *ACurDir, const TCHAR *PCurDir, int ScanDepth )
+                          const WCHAR *ACurDir, const WCHAR *PCurDir, int ScanDepth )
 {
   if (AData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
   {
@@ -824,7 +824,7 @@ static bool CompareFiles( const FAR_FIND_DATA *AData, const FAR_FIND_DATA *PData
     if (Opt.CompareContents)
     {
       HANDLE hFileA, hFileP;
-      TCHAR cpFileA[MAX_PATH], cpFileP[MAX_PATH];
+      WCHAR cpFileA[MAX_PATH], cpFileP[MAX_PATH];
       ShowMessage(lstrcpy(cpFileA, BuildFullFilename(ACurDir, AData->_cFileName)),
                   lstrcpy(cpFileP, BuildFullFilename(PCurDir, PData->_cFileName)));
       if ((hFileA = CreateFile(cpFileA, GENERIC_READ, FILE_SHARE_READ , NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL)) == INVALID_HANDLE_VALUE)
@@ -1001,7 +1001,7 @@ static bool CompareDirs(const OwnPanelInfo *AInfo, const OwnPanelInfo *PInfo, bo
 #endif
   // 
   struct FileIndex sfiA, sfiP;
-  TCHAR DirA[MAX_PATH], DirP[MAX_PATH];
+  WCHAR DirA[MAX_PATH], DirP[MAX_PATH];
   ShowMessage(lstrcpy(DirA, BuildFullFilename(AInfo->_CurDir, _T("*"))),
               lstrcpy(DirP, BuildFullFilename(PInfo->_CurDir, _T("*"))));
 #ifndef UNICODE
@@ -1010,7 +1010,7 @@ static bool CompareDirs(const OwnPanelInfo *AInfo, const OwnPanelInfo *PInfo, bo
   if (!BuildPanelIndex(AInfo, &sfiA, AFilter) || !BuildPanelIndex(PInfo, &sfiP, PFilter))
 #endif
   {
-    const TCHAR *MsgItems[] = {
+    const WCHAR *MsgItems[] = {
       GetMsg(MNoMemTitle),
       GetMsg(MNoMemBody),
       GetMsg(MOK)
@@ -1097,7 +1097,7 @@ SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()
  ****************************************************************************/
 SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo *Info)
 {
-  const TCHAR *cpPlugRegKey = _T("/AdvCompare");
+  const WCHAR *cpPlugRegKey = _T("/AdvCompare");
   ::Info = *Info;
 
   FSF = *Info->FSF;
@@ -1108,14 +1108,14 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
     PluginRootKey = NULL;
   }
 
-  if ((PluginRootKey = (TCHAR*)malloc(sizeof(TCHAR)*(lstrlen(Info->RootKey) + lstrlen(cpPlugRegKey) + 1))) != NULL)
+  if ((PluginRootKey = (WCHAR*)malloc(sizeof(WCHAR)*(lstrlen(Info->RootKey) + lstrlen(cpPlugRegKey) + 1))) != NULL)
   {
     lstrcpy(PluginRootKey, Info->RootKey);
     lstrcat(PluginRootKey, cpPlugRegKey);
   }
   else
   {
-    const TCHAR *MsgItems[] = {
+    const WCHAR *MsgItems[] = {
       GetMsg(MNoMemTitle),
       GetMsg(MNoMemBody),
       GetMsg(MOK)
@@ -1130,7 +1130,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
  ****************************************************************************/
 SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
-  static const TCHAR *PluginMenuStrings[1];
+  static const WCHAR *PluginMenuStrings[1];
 
   Info->StructSize              = (int)sizeof(*Info);
   Info->Flags                   = 0;
@@ -1270,7 +1270,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
   // 
   if (AInfo.PanelType != PTYPE_FILEPANEL || PInfo.PanelType != PTYPE_FILEPANEL)
   {
-    const TCHAR *MsgItems[] = {
+    const WCHAR *MsgItems[] = {
       GetMsg(MCmpTitle),
       GetMsg(MFilePanelsRequired),
       GetMsg(MOK)
@@ -1309,7 +1309,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
   CloseHandle(hConOut);
 
   // 
-  TCHAR cConsoleTitle[MAX_PATH], cBuffer[MAX_PATH];
+  WCHAR cConsoleTitle[MAX_PATH], cBuffer[MAX_PATH];
   DWORD dwTitleSaved = GetConsoleTitle(cConsoleTitle, sizeof(cConsoleTitle));
 #ifndef UNICODE
   OSVERSIONINFO ovi;
@@ -1399,7 +1399,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 #endif
     if(bOpenFail)
     {
-      const TCHAR *MsgItems[] = {
+      const WCHAR *MsgItems[] = {
         GetMsg(MOpenErrorTitle),
         GetMsg(MOpenErrorBody),
         GetMsg(MOK),
@@ -1408,7 +1408,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
     }
     if (bDifferenceNotFound && Opt.MessageWhenNoDiff)
     {
-      const TCHAR *MsgItems[] = {
+      const WCHAR *MsgItems[] = {
         GetMsg(MNoDiffTitle),
         GetMsg(MNoDiffBody),
         GetMsg(MOK)

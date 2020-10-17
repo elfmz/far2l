@@ -494,8 +494,44 @@ void InitRecodeOutTable()
 {
 	for (size_t i=0; i<ARRAYSIZE(Oem2Unicode); i++)
 	{
-		char c = static_cast<char>(i);
-		WINPORT(MultiByteToWideChar)(CP_OEMCP, MB_USEGLYPHCHARS, &c, 1, &Oem2Unicode[i], 1);
+		switch (i) {
+		case 0x01: Oem2Unicode[i] = 0x263a; break; // ☺ (WHITE SMILING FACE)
+		case 0x02: Oem2Unicode[i] = 0x263b; break; //  ☻ (BLACK SMILING FACE)
+		case 0x03: Oem2Unicode[i] = 0x2665; break; //  ♥ (BLACK HEART SUIT)
+		case 0x04: Oem2Unicode[i] = 0x2666; break; //  ♦ (BLACK DIAMOND SUIT)
+		case 0x05: Oem2Unicode[i] = 0x2663; break; //  ♣ (BLACK CLUB SUIT)
+		case 0x06: Oem2Unicode[i] = 0x2660; break; //  ♠ (BLACK SPADE SUIT)
+		case 0x07: Oem2Unicode[i] = 0x2022; break; //  • (BULLET)
+		case 0x08: Oem2Unicode[i] = 0x25d8; break; //  ◘ (INVERSE BULLET)
+		case 0x09: Oem2Unicode[i] = 0x25cb; break; //  ○ (WHITE CIRCLE)
+		case 0x0a: Oem2Unicode[i] = 0x25d9; break; //  ◙ (INVERSE WHITE CIRCLE)
+		case 0x0b: Oem2Unicode[i] = 0x2642; break; //  ♂ (MALE SIGN)
+		case 0x0c: Oem2Unicode[i] = 0x2640; break; //  ♀ (FEMALE SIGN)
+		case 0x0d: Oem2Unicode[i] = 0x266a; break; //  ♪ (EIGHTH NOTE)
+		case 0x0e: Oem2Unicode[i] = 0x266b; break; //  ♫ (BEAMED EIGHTH NOTES)
+		case 0x0f: Oem2Unicode[i] = 0x263c; break; //  ☼ (WHITE SUN WITH RAYS)
+		case 0x10: Oem2Unicode[i] = 0x25ba; break; //  ► (BLACK RIGHT-POINTING POINTER)
+		case 0x11: Oem2Unicode[i] = 0x25c4; break; //  ◄ (BLACK LEFT-POINTING POINTER)
+		case 0x12: Oem2Unicode[i] = 0x2195; break; //  ↕ (UP DOWN ARROW)
+		case 0x13: Oem2Unicode[i] = 0x203c; break; //  ‼ (DOUBLE EXCLAMATION MARK)
+		case 0x14: Oem2Unicode[i] = 0x00b6; break; //  ¶ (PILCROW SIGN)
+		case 0x15: Oem2Unicode[i] = 0x00a7; break; //  § (SECTION SIGN)
+		case 0x16: Oem2Unicode[i] = 0x25ac; break; //  ▬ (BLACK RECTANGLE)
+		case 0x17: Oem2Unicode[i] = 0x21a8; break; //  ↨ (UP DOWN ARROW WITH BASE)
+		case 0x18: Oem2Unicode[i] = 0x2191; break; //  ↑ (UPWARDS ARROW)
+		case 0x19: Oem2Unicode[i] = 0x2193; break; //  ↓ (DOWNWARDS ARROW)
+		case 0x1a: Oem2Unicode[i] = 0x2192; break; //  → (RIGHTWARDS ARROW)
+		case 0x1b: Oem2Unicode[i] = 0x2190; break; //  ← (LEFTWARDS ARROW)
+		case 0x1c: Oem2Unicode[i] = 0x221f; break; //  ∟ (RIGHT ANGLE)
+		case 0x1d: Oem2Unicode[i] = 0x2194; break; //  ↔ (LEFT RIGHT ARROW)
+		case 0x1e: Oem2Unicode[i] = 0x25b2; break; //  ▲ (BLACK UP-POINTING TRIANGLE)
+		case 0x1f: Oem2Unicode[i] = 0x25bc; break; //  ▼ (BLACK DOWN-POINTING TRIANGLE)
+		case 0x7f: Oem2Unicode[i] = 0x2302; break; //  ⌂ (HOUSE)
+		default: {
+				char c = static_cast<char>(i);
+				WINPORT(MultiByteToWideChar)(CP_OEMCP, 0, &c, 1, &Oem2Unicode[i], 1);
+			}
+		}
 	}
 
 	if (Opt.CleanAscii)

@@ -10,7 +10,7 @@ int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int 
 int wine_cp_mbstowcs( const union cptable *table, int flags,
                       const char *s, int srclen,
                       WCHAR *dst, int dstlen );
-const union cptable *get_codepage_table( unsigned int codepage );
+//const union cptable *get_codepage_table( unsigned int codepage );
 
 #ifdef __cplusplus
 }

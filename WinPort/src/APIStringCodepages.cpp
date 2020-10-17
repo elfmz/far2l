@@ -18,10 +18,12 @@
 #include "PathHelpers.h"
 #include "ConvertUTF.h"
 
+#include <iconv.h>
 
+#define UTF8_INTERNAL_IMPLEMENTATION
 
 template <class SRC_T, class DST_T>
-	int utf_translation( 
+	int utf_translation(
 			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
 			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flags),
 			int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
@@ -37,13 +39,13 @@ template <class SRC_T, class DST_T>
 
 	if (dstlen==0) {
 		if (fnCalcSpace (&ret, &source, source_end, cf)!=conversionOK) {
-			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 		}
-		
+
 	} else {
 		DST_T *target = (DST_T *)dst;
 		DST_T *target_end = target + dstlen;
-		
+
 		ConversionResult cr = fnConvert(&source, source_end, &target, target_end, cf);
 		if (cr==targetExhausted) {
 			ret = 0;
@@ -55,7 +57,7 @@ template <class SRC_T, class DST_T>
 			}
 		}
 	}
-	return ret;		
+	return ret;
 }
 
 static int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
@@ -63,22 +65,22 @@ static int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *d
 	return utf_translation<UTF32, UTF8>( CalcSpaceUTF32toUTF8, ConvertUTF32toUTF8,
 		flags, (const UTF32 *)src, srclen, (UTF8 *)dst, dstlen);
 }
-	
+
 static int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
 {
 	return utf_translation<UTF8, UTF32>( CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32,
 		flags, (const UTF8 *)src, srclen, (UTF32 *)dst, dstlen);
 }
-	
+
 static int wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
 {
 	if (srclen==-1)
 		srclen = wcslen(src) + 1;
-		
+
 	if (dstlen != 0) {
 		if (dstlen < srclen)
 			return -1;
-			
+
 		memcpy(dst, src, srclen * sizeof(WCHAR));
 	}
 	return srclen;
@@ -175,6 +177,132 @@ static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 	free(tmp);
 	return ret;
 }
+
+template <class CODEUNIT_SRC, class CODEUNIT_DST>
+	static int iconv_do(iconv_t cd, unsigned int flags,
+		const CODEUNIT_SRC *src_cu, size_t srclen, CODEUNIT_DST *dst_cu, size_t dstlen,
+		CODEUNIT_DST replacement_char = (CODEUNIT_DST)UNI_REPLACEMENT_CHAR, LPBOOL replacement_used = nullptr)
+{
+	char *src = (char *)src_cu;
+	char *dst = (char *)dst_cu;
+
+	std::unique_ptr<char[]> tmp_dst;
+	if (!dst && srclen) {
+		dstlen = srclen;
+		if (sizeof(CODEUNIT_DST) < sizeof(CODEUNIT_SRC)) {
+			dstlen*= 6;
+		}
+		tmp_dst.reset( new char[dstlen * sizeof(CODEUNIT_DST)]);
+		dst = tmp_dst.get();
+	}
+
+	srclen*= sizeof(CODEUNIT_SRC);
+	dstlen*= sizeof(CODEUNIT_DST);
+
+	char *dst_orig = dst;
+	int res = iconv(cd, &src, &srclen, &dst, &dstlen);
+	if (res >= 0) {
+		return (dst - dst_orig) / sizeof(CODEUNIT_DST);
+	}
+
+	if (errno == E2BIG) {
+		return (srclen == 0) ? 0 : -1;
+	}
+
+	if (flags & MB_ERR_INVALID_CHARS) {
+		return -2;
+	}
+
+	if (replacement_used) {
+		*replacement_used = TRUE;
+	}
+
+	do {
+		if (srclen < sizeof(CODEUNIT_SRC)) {
+			break;
+		}
+		if (dstlen < sizeof(CODEUNIT_DST)) {
+			return -1;
+		}
+
+		memcpy(dst, &replacement_char, sizeof(CODEUNIT_DST));
+		src++;
+		dst+= sizeof(CODEUNIT_DST);
+
+		if (srclen < sizeof(CODEUNIT_SRC)) {
+			break;
+		}
+		if (dstlen < sizeof(CODEUNIT_DST)) {
+			return -1;
+		}
+
+		res = iconv(cd, &src, &srclen, &dst, &dstlen);
+	} while (res < 0);
+		
+	return (dst - dst_orig) / sizeof(CODEUNIT_DST);
+}
+
+
+#if (__WCHAR_MAX__ > 0xffff)
+# define CP_ICONV_WCHAR "UTF-32LE" // //IGNORE
+#else
+# define CP_ICONV_WCHAR "UTF-15LE" // //IGNORE
+#endif
+
+thread_local char g_iconv_codepage_name[20];
+
+static const char *iconv_codepage_name(unsigned int page)
+{
+	switch (page) {
+       		case CP_KOI8R: return "CP_KOI8R-7";
+       		case CP_UTF8:  return "UTF-8";
+       		case CP_UTF7:  return "UTF-7";
+		default: {
+			sprintf(g_iconv_codepage_name, "CP%d", page);
+			return g_iconv_codepage_name;
+		}
+	}
+}
+
+static int iconv_cp_mbstowcs(unsigned int page, unsigned int flags,
+	const char *src, size_t srclen, wchar_t *dst, size_t dstlen )
+{
+	// iconv init
+	iconv_t cd = iconv_open(CP_ICONV_WCHAR, iconv_codepage_name(page));
+
+	if (cd < 0) {
+		fprintf(stderr, "iconv_cp_mbstowcs(%u): error %d\n", page, errno);
+		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
+		return 0;
+	}
+
+	int ir = iconv_do<char, wchar_t>(cd, flags, src, srclen, dst, dstlen);
+
+	iconv_close(cd);
+
+	return ir;
+}
+
+static int iconv_cp_wcstombs(unsigned int page, unsigned int flags,
+	const wchar_t *src, size_t srclen,  char *dst, size_t dstlen,
+	char replacement_char, LPBOOL replacement_used)
+{
+	iconv_t cd = iconv_open(iconv_codepage_name(page), CP_ICONV_WCHAR);
+
+	if (cd < 0) {
+		fprintf(stderr, "iconv_cp_wcstombs(%u): error %d\n", page, errno);
+		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
+		return 0;
+	}
+
+	int ir = iconv_do<wchar_t, char>(cd, flags, src, srclen, dst, dstlen, replacement_char, replacement_used);
+
+	iconv_close(cd);
+
+	return ir;
+}
+
+///////////////////////////////////
 
 #define IsLocaleMatches(current, wanted_literal) \
 	( strncmp((current), wanted_literal, sizeof(wanted_literal) - 1) == 0 && \
@@ -337,7 +465,7 @@ static UINT TranslateCodepage(UINT codepage)
 {
 	static Codepages s_cp = DeduceCodepages();
 	switch (codepage) {
-		case CP_ACP: return s_cp.ansi;
+		case CP_ACP: case CP_THREAD_ACP: return s_cp.ansi;
 		case CP_OEMCP: return s_cp.oem;
 		default:
 			return codepage;
@@ -448,137 +576,8 @@ extern "C" {
 		return FALSE;
 	}
 
-
-
-
-	/***********************************************************************
-	*              utf7_write_w
-	*
-	* Helper for utf7_mbstowcs
-	*
-	* RETURNS
-	*   TRUE on success, FALSE on error
-	*/
-	static inline BOOL utf7_write_w(WCHAR *dst, int dstlen, int *index, WCHAR character)
-	{
-		if (dstlen > 0)
-		{
-			if (*index >= dstlen)
-				return FALSE;
-
-			dst[*index] = character;
-		}
-
-		(*index)++;
-
-		return TRUE;
-	}
-
-	/***********************************************************************
-	*              utf7_mbstowcs
-	*
-	* UTF-7 to UTF-16 string conversion, helper for MultiByteToWideChar
-	*
-	* RETURNS
-	*   On success, the number of characters written
-	*   On dst buffer overflow, -1
-	*/
-	static int utf7_mbstowcs(const char *src, int srclen, WCHAR *dst, int dstlen)
-	{
-		static const signed char base64_decoding_table[] =
-		{
-			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x00-0x0F */
-			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x10-0x1F */
-			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, /* 0x20-0x2F */
-			52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, /* 0x30-0x3F */
-			-1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, /* 0x40-0x4F */
-			15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, /* 0x50-0x5F */
-			-1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, /* 0x60-0x6F */
-			41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1  /* 0x70-0x7F */
-		};
-
-		const char *source_end = src + srclen;
-		int dest_index = 0;
-
-		DWORD byte_pair = 0;
-		short offset = 0;
-
-		while (src < source_end)
-		{
-			if (*src == '+')
-			{
-				src++;
-				if (src >= source_end)
-					break;
-
-				if (*src == '-')
-				{
-					/* just a plus sign escaped as +- */
-					if (!utf7_write_w(dst, dstlen, &dest_index, '+'))
-						return -1;
-					src++;
-					continue;
-				}
-
-				do
-				{
-					signed char sextet = *src;
-					if (sextet == '-')
-					{
-						/* skip over the dash and end base64 decoding
-						* the current, unfinished byte pair is discarded */
-						src++;
-						offset = 0;
-						break;
-					}
-					if (sextet < 0)
-					{
-						/* the next character of src is < 0 and therefore not part of a base64 sequence
-						* the current, unfinished byte pair is NOT discarded in this case
-						* this is probably a bug in Windows */
-						break;
-					}
-
-					sextet = base64_decoding_table[sextet];
-					if (sextet == -1)
-					{
-						/* -1 means that the next character of src is not part of a base64 sequence
-						* in other words, all sextets in this base64 sequence have been processed
-						* the current, unfinished byte pair is discarded */
-						offset = 0;
-						break;
-					}
-
-					byte_pair = (byte_pair << 6) | sextet;
-					offset += 6;
-
-					if (offset >= 16)
-					{
-						/* this byte pair is done */
-						if (!utf7_write_w(dst, dstlen, &dest_index, (byte_pair >> (offset - 16)) & 0xFFFF))
-							return -1;
-						offset -= 16;
-					}
-
-					src++;
-				}
-				while (src < source_end);
-			}
-			else
-			{
-				/* we have to convert to unsigned char in case *src < 0 */
-				if (!utf7_write_w(dst, dstlen, &dest_index, (unsigned char)*src))
-					return -1;
-				src++;
-			}
-		}
-
-		return dest_index;
-	}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	
 	/***********************************************************************
 	*              MultiByteToWideChar   (KERNEL32.@)
 	*
@@ -605,9 +604,6 @@ extern "C" {
 	WINPORT_DECL(MultiByteToWideChar, int, ( UINT page, DWORD flags, 
 		LPCSTR src, int srclen, LPWSTR dst, int dstlen))
 	{
-		//return ::MultiByteToWideChar(page, flags, src, srclen, dst, dstlen);
-		//fprintf(stderr, "MultiByteToWideChar\n");
-		const union cptable *table;
 		int ret;
 		page = TranslateCodepage(page);
 
@@ -617,27 +613,15 @@ extern "C" {
 			return 0;
 		}
 
-		if (srclen < 0) srclen = strlen(src) + 1;
+		if (srclen < 0)
+			srclen = strlen(src) + 1;
 
 		WINPORT(SetLastError)( ERROR_SUCCESS );
 		switch(page)
 		{
-		case CP_SYMBOL:
-			if (flags)
-			{
-				WINPORT(SetLastError)( ERROR_INVALID_FLAGS );
-				return 0;
-			}
-			ret = wine_cpsymbol_mbstowcs( src, srclen, dst, dstlen );
-			break;
-		case CP_UTF7:
-			if (flags)
-			{
-				WINPORT(SetLastError)( ERROR_INVALID_FLAGS );
-				return 0;
-			}
-			ret = utf7_mbstowcs( src, srclen, dst, dstlen );
-			break;
+		case CP_SYMBOL: case CP_MACCP:
+			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
+			return 0;
 
 		case CP_UTF16LE:
 			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, false );
@@ -655,158 +639,31 @@ extern "C" {
 			ret = wide_utf32_mbstowcs( flags, src, srclen, dst, dstlen, true );
 			break;
 
+#if defined(UTF8_INTERNAL_IMPLEMENTATION) && (__WCHAR_MAX__ > 0xffff)
 		case CP_UTF8:
-			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen);
-			} else {
-				ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
-			}
+			ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen);
 			break;
-
+#endif
 		default:
-			if (!(table = get_codepage_table( page )))
-			{
-				fprintf(stderr, "MultiByteToWideChar: bad codepage %x\n", page);
-				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
-				return 0;
-			}
-			ret = wine_cp_mbstowcs( table, flags, src, srclen, dst, dstlen );
-			break;
+			ret = iconv_cp_mbstowcs( page, flags, src, srclen, dst, dstlen );
 		}
 
 		if (ret <= 0)
 		{
 			switch(ret)
 			{
-			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
-			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
+				case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
+				case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
 			}
 			ret = 0;
 		}
 		return ret;
+
+    	//fprintf(stderr, "MultiByteToWideChar, %d --> wchar_t\n", trcp);
+
+        // calculating source length
 	}
 
-
-	/***********************************************************************
-	*              utf7_can_directly_encode
-	*
-	* Helper for utf7_wcstombs
-	*/
-	static inline BOOL utf7_can_directly_encode(WCHAR codepoint)
-	{
-		static const BOOL directly_encodable_table[] =
-		{
-			1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, /* 0x00 - 0x0F */
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 - 0x1F */
-			1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, /* 0x20 - 0x2F */
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, /* 0x30 - 0x3F */
-			0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x40 - 0x4F */
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, /* 0x50 - 0x5F */
-			0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x60 - 0x6F */
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1                 /* 0x70 - 0x7A */
-		};
-
-		return codepoint <= 0x7A ? directly_encodable_table[codepoint] : FALSE;
-	}
-
-	/***********************************************************************
-	*              utf7_write_c
-	*
-	* Helper for utf7_wcstombs
-	*
-	* RETURNS
-	*   TRUE on success, FALSE on error
-	*/
-	static inline BOOL utf7_write_c(char *dst, int dstlen, int *index, char character)
-	{
-		if (dstlen > 0)
-		{
-			if (*index >= dstlen)
-				return FALSE;
-
-			dst[*index] = character;
-		}
-
-		(*index)++;
-
-		return TRUE;
-	}
-
-	/***********************************************************************
-	*              utf7_wcstombs
-	*
-	* UTF-16 to UTF-7 string conversion, helper for WideCharToMultiByte
-	*
-	* RETURNS
-	*   On success, the number of characters written
-	*   On dst buffer overflow, -1
-	*/
-	static int utf7_wcstombs(const WCHAR *src, int srclen, char *dst, int dstlen)
-	{
-		static const char base64_encoding_table[] =
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-		const WCHAR *source_end = src + srclen;
-		int dest_index = 0;
-
-		while (src < source_end)
-		{
-			if (*src == '+')
-			{
-				if (!utf7_write_c(dst, dstlen, &dest_index, '+'))
-					return -1;
-				if (!utf7_write_c(dst, dstlen, &dest_index, '-'))
-					return -1;
-				src++;
-			}
-			else if (utf7_can_directly_encode(*src))
-			{
-				if (!utf7_write_c(dst, dstlen, &dest_index, *src))
-					return -1;
-				src++;
-			}
-			else
-			{
-				unsigned int offset = 0;
-				DWORD byte_pair = 0;
-
-				if (!utf7_write_c(dst, dstlen, &dest_index, '+'))
-					return -1;
-
-				while (src < source_end && !utf7_can_directly_encode(*src))
-				{
-					byte_pair = (byte_pair << 16) | *src;
-					offset += 16;
-					while (offset >= 6)
-					{
-						if (!utf7_write_c(dst, dstlen, &dest_index, base64_encoding_table[(byte_pair >> (offset - 6)) & 0x3F]))
-							return -1;
-						offset -= 6;
-					}
-					src++;
-				}
-
-				if (offset)
-				{
-					/* Windows won't create a padded base64 character if there's no room for the - sign
-					* as well ; this is probably a bug in Windows */
-					if (dstlen > 0 && dest_index + 1 >= dstlen)
-						return -1;
-
-					byte_pair <<= (6 - offset);
-					if (!utf7_write_c(dst, dstlen, &dest_index, base64_encoding_table[byte_pair & 0x3F]))
-						return -1;
-				}
-
-				/* Windows always explicitly terminates the base64 sequence
-				even though RFC 2152 (page 3, rule 2) does not require this */
-				if (!utf7_write_c(dst, dstlen, &dest_index, '-'))
-					return -1;
-			}
-		}
-
-		return dest_index;
-	}
 
 	/***********************************************************************
 	*              WideCharToMultiByte   (KERNEL32.@)
@@ -836,10 +693,7 @@ extern "C" {
 	WINPORT_DECL(WideCharToMultiByte, int, ( UINT page, DWORD flags, LPCWSTR src, 
 		int srclen, LPSTR dst, int dstlen, LPCSTR defchar, LPBOOL used))
 	{
-		//return ::WideCharToMultiByte(page, flags, src, srclen, dst, dstlen, defchar, used);
-		//fprintf(stderr, "WideCharToMultiByte\n");
-		const union cptable *table;
-		int ret, used_tmp;
+		int ret;
 		page = TranslateCodepage(page);
 
 		if (!src || !srclen || (!dst && dstlen) || dstlen < 0)
@@ -848,40 +702,11 @@ extern "C" {
 			return 0;
 		}
 		
-		if (srclen < 0) srclen = strlenW(src) + 1;
+		if (srclen < 0) srclen = wcslen(src) + 1;
 
 		WINPORT(SetLastError)( ERROR_SUCCESS );
 		switch(page)
 		{
-		case CP_SYMBOL:
-			/* when using CP_SYMBOL, ERROR_INVALID_FLAGS takes precedence */
-			if (flags)
-			{
-				WINPORT(SetLastError)( ERROR_INVALID_FLAGS );
-				return 0;
-			}
-			if (defchar || used)
-			{
-				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
-				return 0;
-			}
-			ret = wine_cpsymbol_wcstombs( src, srclen, dst, dstlen );
-			break;
-		case CP_UTF7:
-			/* when using CP_UTF7, ERROR_INVALID_PARAMETER takes precedence */
-			if (defchar || used)
-			{
-				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
-				return 0;
-			}
-			if (flags)
-			{
-				WINPORT(SetLastError)( ERROR_INVALID_FLAGS );
-				return 0;
-			}
-			ret = utf7_wcstombs( src, srclen, dst, dstlen );
-			break;
-		
 		case CP_UTF16LE:
 			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, false );
 			break;
@@ -898,6 +723,7 @@ extern "C" {
 			ret = wide_utf32_wcstombs( flags, src, srclen, dst, dstlen, true );
 			break;
 
+#if defined(UTF8_INTERNAL_IMPLEMENTATION) && (__WCHAR_MAX__ > 0xffff)
 		case CP_UTF8:
 			if (defchar || used)
 			{
@@ -906,25 +732,13 @@ extern "C" {
 				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 				return 0;
 			}
-			
-			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen );
-			} else {
-				ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
-			}
-			break;
 
-		default:
-			if (!(table = get_codepage_table( page )))
-			{
-				fprintf(stderr, "WideCharToMultiByte: bad codepage %x\n", page);
-				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
-				return 0;
-			}
-			ret = wine_cp_wcstombs( table, flags, src, srclen, dst, dstlen,
-				defchar, used ? &used_tmp : NULL );
-			if (used) *used = used_tmp;
+			ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen );
 			break;
+#endif
+		default:
+			ret = iconv_cp_wcstombs( page, flags, src, srclen,
+				dst, dstlen, defchar ? *defchar : UNI_REPLACEMENT_CHAR, used);
 		}
 
 		if (ret <= 0)
@@ -951,8 +765,6 @@ extern "C" {
 
 	WINPORT_DECL(GetCPInfo, BOOL, (UINT codepage, LPCPINFO cpinfo))
 	{
-		const union cptable *table;
-
 		if (!cpinfo)
 		{
 			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
@@ -962,54 +774,36 @@ extern "C" {
 
 		codepage = TranslateCodepage(codepage);
 
-		if (!(table = get_codepage_table( codepage )))
-		{
-			switch(codepage) {
+		switch(codepage) {
 			case CP_UTF7:
 			case CP_UTF8:
-				cpinfo->DefaultChar[0] = 0x3f;
+				cpinfo->DefaultChar[0] = UNI_REPLACEMENT_CHAR;
 				cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
 				return TRUE;
 
 			case CP_UTF16LE: 
-				cpinfo->DefaultChar[0] = 0x3f;
+				cpinfo->DefaultChar[0] = UNI_REPLACEMENT_CHAR;
 				cpinfo->MaxCharSize = 2;
 				return TRUE;
 
 			case CP_UTF16BE:
-				cpinfo->DefaultChar[1] = 0x3f;
+				cpinfo->DefaultChar[1] = UNI_REPLACEMENT_CHAR;
 				cpinfo->MaxCharSize = 2;
 				return TRUE;
 				
 			case CP_UTF32LE: 
-				cpinfo->DefaultChar[0] = 0x3f;
+				cpinfo->DefaultChar[0] = UNI_REPLACEMENT_CHAR;
 				cpinfo->MaxCharSize = 4;
 				return TRUE;
 
 			case CP_UTF32BE:
-				cpinfo->DefaultChar[3] = 0x3f;
+				cpinfo->DefaultChar[3] = UNI_REPLACEMENT_CHAR;
 				cpinfo->MaxCharSize = 4;
 				return TRUE;
-			}
-			fprintf(stderr, "GetCPInfo: bad codepage %u\n", codepage);
-			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
-			return FALSE;
 		}
-		if (table->info.def_char & 0xff00)
-		{
-			cpinfo->DefaultChar[0] = (table->info.def_char & 0xff00) >> 8;
-			cpinfo->DefaultChar[1] = table->info.def_char & 0x00ff;
-		}
-		else
-		{
-			cpinfo->DefaultChar[0] = table->info.def_char & 0xff;
-			cpinfo->DefaultChar[1] = 0;
-		}
-		if ((cpinfo->MaxCharSize = table->info.char_size) == 2)
-			memcpy( cpinfo->LeadByte, table->dbcs.lead_bytes, sizeof(cpinfo->LeadByte) );
-		else
-			cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
 
+		cpinfo->DefaultChar[0] = UNI_REPLACEMENT_CHAR;
+		cpinfo->MaxCharSize = 1;
 		return TRUE;
 	}
 	
@@ -1024,7 +818,7 @@ extern "C" {
 				static const WCHAR utf7[] = {'U','n','i','c','o','d','e',' ','(','U','T','F','-','7',')',0};
 
 				cpinfo->CodePage = CP_UTF7;
-				cpinfo->UnicodeDefaultChar = 0x3f;
+				cpinfo->UnicodeDefaultChar = UNI_REPLACEMENT_CHAR;
 				strcpyW(cpinfo->CodePageName, utf7);
 				break;
 			}
@@ -1034,7 +828,7 @@ extern "C" {
 				static const WCHAR utf8[] = {'U','n','i','c','o','d','e',' ','(','U','T','F','-','8',')',0};
 
 				cpinfo->CodePage = CP_UTF8;
-				cpinfo->UnicodeDefaultChar = 0x3f;
+				cpinfo->UnicodeDefaultChar = UNI_REPLACEMENT_CHAR;
 				strcpyW(cpinfo->CodePageName, utf8);
 				break;
 			}
@@ -1042,7 +836,7 @@ extern "C" {
 			case CP_UTF16LE:
 			{
 				cpinfo->CodePage = CP_UTF16LE;
-				cpinfo->UnicodeDefaultChar = 0x3f;
+				cpinfo->UnicodeDefaultChar = UNI_REPLACEMENT_CHAR;
 				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-16 LE)");
 				break;
 			}
@@ -1050,7 +844,7 @@ extern "C" {
 			case CP_UTF16BE:
 			{
 				cpinfo->CodePage = CP_UTF16BE;
-				cpinfo->UnicodeDefaultChar = 0x003f;
+				cpinfo->UnicodeDefaultChar = UNI_REPLACEMENT_CHAR;
 				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-16 BE)");
 				break;
 			}
@@ -1058,7 +852,7 @@ extern "C" {
 			case CP_UTF32LE:
 			{
 				cpinfo->CodePage = CP_UTF32LE;
-				cpinfo->UnicodeDefaultChar = 0x3f;
+				cpinfo->UnicodeDefaultChar = UNI_REPLACEMENT_CHAR;
 				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-32 LE)");
 				break;
 			}
@@ -1066,14 +860,16 @@ extern "C" {
 			case CP_UTF32BE:
 			{
 				cpinfo->CodePage = CP_UTF32BE;
-				cpinfo->UnicodeDefaultChar = 0x0000003f;
+				cpinfo->UnicodeDefaultChar = UNI_REPLACEMENT_CHAR;
 				wcscpy(cpinfo->CodePageName, L"Unicode (UTF-32 BE)");
 				break;
 			}
 
 			default:
 			{
-				const union cptable *table = get_codepage_table( codepage );
+                return TRUE;
+				/*
+                const union cptable *table = get_codepage_table( codepage );
 				if (!table)
 					return FALSE;
 
@@ -1081,6 +877,7 @@ extern "C" {
 				cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
 				WINPORT(MultiByteToWideChar)( CP_ACP, 0, table->info.name, -1, cpinfo->CodePageName,
                                  sizeof(cpinfo->CodePageName)/sizeof(WCHAR));
+                */
 				break;
 			}
 		}
@@ -1089,12 +886,14 @@ extern "C" {
 
 	WINPORT_DECL(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags))
 	{
+        return TRUE; //FIXME
+
 	    const union cptable *table;
 	    WCHAR buffer[10], *p;
 	    int page, index = 0;
 	    for (;;)
 	    {
-        	if (!(table = wine_cp_enum_table( index++ ))) break;
+        	//if (!(table = wine_cp_enum_table( index++ ))) break;
 	        p = buffer + sizeof(buffer)/sizeof(WCHAR);
 	        *--p = 0;
 	        page = table->info.codepage;

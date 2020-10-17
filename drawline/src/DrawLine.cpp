@@ -5,7 +5,7 @@
 #include "DrawLng.hpp"
 #include "DrawLine.hpp"
 
-static TCHAR BoxChar[]  =
+static WCHAR BoxChar[]  =
 #ifndef UNICODE
                           { // OEM
                                                    0xB3,  0xB4,  0xB5,  0xB6,  0xB7,  0xB8,  0xB9,  0xBA,  0xBB,  0xBC,  0xBD,  0xBE,  0xBF,
@@ -174,17 +174,17 @@ void SetTitle(int LineWidth,int IDTitle)
   struct KeyBarTitles Kbt;
   for(I=0; I < 12; ++I)
   {
-    Kbt.Titles[I]=(TCHAR*)TEXT("");
-    Kbt.CtrlTitles[I]=(TCHAR*)TEXT("");
-    Kbt.AltTitles[I]=(TCHAR*)TEXT("");
-    Kbt.ShiftTitles[I]=(TCHAR*)TEXT("");
-    Kbt.CtrlShiftTitles[I]=(TCHAR*)TEXT("");
-    Kbt.AltShiftTitles[I]=(TCHAR*)TEXT("");
-    Kbt.CtrlAltTitles[I]=(TCHAR*)TEXT("");
+    Kbt.Titles[I]=(WCHAR*)TEXT("");
+    Kbt.CtrlTitles[I]=(WCHAR*)TEXT("");
+    Kbt.AltTitles[I]=(WCHAR*)TEXT("");
+    Kbt.ShiftTitles[I]=(WCHAR*)TEXT("");
+    Kbt.CtrlShiftTitles[I]=(WCHAR*)TEXT("");
+    Kbt.AltShiftTitles[I]=(WCHAR*)TEXT("");
+    Kbt.CtrlAltTitles[I]=(WCHAR*)TEXT("");
   }
-  Kbt.Titles[1-1]=(TCHAR *)GetMsg(MHelp);
-  Kbt.Titles[2-1]=(TCHAR *)GetMsg((LineWidth==1)?MDouble:MSingle);
-  Kbt.Titles[10-1]=(TCHAR *)GetMsg(MQuit);
+  Kbt.Titles[1-1]=(WCHAR *)GetMsg(MHelp);
+  Kbt.Titles[2-1]=(WCHAR *)GetMsg((LineWidth==1)?MDouble:MSingle);
+  Kbt.Titles[10-1]=(WCHAR *)GetMsg(MQuit);
   Info.EditorControl(ECTL_SETKEYBAR,&Kbt);
   Info.EditorControl(ECTL_SETTITLE,(void *)GetMsg(IDTitle));
 }
@@ -239,7 +239,7 @@ void ProcessShiftKey(int KeyCode,int LineWidth)
   Info.EditorControl(ECTL_GETSTRING,&egs);
 
   int StringLength=egs.StringLength>ei.CurPos ? egs.StringLength:ei.CurPos+1;
-  TCHAR *NewString=(TCHAR *)malloc(StringLength*sizeof(TCHAR));
+  WCHAR *NewString=(WCHAR *)malloc(StringLength*sizeof(WCHAR));
   if (StringLength>egs.StringLength)
     _tmemset(NewString+egs.StringLength,L' ',StringLength-egs.StringLength);
   _tmemcpy(NewString,egs.StringText,egs.StringLength);
@@ -287,7 +287,7 @@ void ProcessShiftKey(int KeyCode,int LineWidth)
   if (UpLine!=0 && DownLine!=0 && UpLine!=DownLine)
     UpLine=DownLine=LineWidth;
 
-  for (size_t I=0;I<sizeof(BoxChar)/sizeof(TCHAR);I++)
+  for (size_t I=0;I<sizeof(BoxChar)/sizeof(WCHAR);I++)
     if (LeftLine==BoxLeft[I] && UpLine==BoxUp[I] &&
         RightLine==BoxRight[I] && DownLine==BoxDown[I])
     {
@@ -303,7 +303,7 @@ void ProcessShiftKey(int KeyCode,int LineWidth)
       struct EditorSetString ess;
       ess.StringNumber=egs.StringNumber;
       ess.StringText=NewString;
-      ess.StringEOL=(TCHAR*)egs.StringEOL;
+      ess.StringEOL=(WCHAR*)egs.StringEOL;
       ess.StringLength=StringLength;
 
       Info.EditorControl(ECTL_SETSTRING,&ess);
@@ -315,10 +315,10 @@ void ProcessShiftKey(int KeyCode,int LineWidth)
 }
 
 
-void GetEnvType(TCHAR *NewString,int StringLength,struct EditorInfo *ei,
+void GetEnvType(WCHAR *NewString,int StringLength,struct EditorInfo *ei,
                 int &LeftLine,int &UpLine,int &RightLine,int &DownLine)
 {
-  TCHAR OldChar[3];
+  WCHAR OldChar[3];
 
   OldChar[0]=ei->CurPos>0 ? NewString[ei->CurPos-1]:L' ';
   OldChar[1]=NewString[ei->CurPos];
@@ -327,14 +327,14 @@ void GetEnvType(TCHAR *NewString,int StringLength,struct EditorInfo *ei,
 #ifndef UNICODE
   struct EditorConvertText ect;
   ect.Text=OldChar;
-  ect.TextLength=sizeof(OldChar)/sizeof(TCHAR);
+  ect.TextLength=sizeof(OldChar)/sizeof(WCHAR);
   Info.EditorControl(ECTL_EDITORTOOEM,&ect);
 #endif
 
-  TCHAR LeftChar=OldChar[0];
-  TCHAR RightChar=OldChar[2];
-  TCHAR UpChar=L' ';
-  TCHAR DownChar=L' ';
+  WCHAR LeftChar=OldChar[0];
+  WCHAR RightChar=OldChar[2];
+  WCHAR UpChar=L' ';
+  WCHAR DownChar=L' ';
 
   if (ei->CurLine>0)
   {
@@ -365,7 +365,7 @@ void GetEnvType(TCHAR *NewString,int StringLength,struct EditorInfo *ei,
 #endif
   }
   LeftLine=UpLine=RightLine=DownLine=0;
-  for (size_t I=0;I<sizeof(BoxChar)/sizeof(TCHAR);I++)
+  for (size_t I=0;I<sizeof(BoxChar)/sizeof(WCHAR);I++)
   {
     if (LeftChar==BoxChar[I])
       LeftLine=BoxRight[I];
@@ -384,14 +384,14 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
   Info->StructSize=sizeof(*Info);
   Info->Flags=PF_EDITOR|PF_DISABLEPANELS;
   Info->DiskMenuStringsNumber=0;
-  static const TCHAR *PluginMenuStrings[1];
+  static const WCHAR *PluginMenuStrings[1];
   PluginMenuStrings[0]=GetMsg(MDrawLines);
   Info->PluginMenuStrings=PluginMenuStrings;
   Info->PluginMenuStringsNumber=sizeof(PluginMenuStrings)/sizeof(PluginMenuStrings[0]);
   Info->PluginConfigStringsNumber=0;
 }
 
-const TCHAR *GetMsg(int MsgId)
+const WCHAR *GetMsg(int MsgId)
 {
   return(Info.GetMsg(Info.ModuleNumber,MsgId));
 }

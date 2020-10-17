@@ -1,9 +1,9 @@
-const TCHAR *GetMsg(int MsgId)
+const WCHAR *GetMsg(int MsgId)
 {
   return(Info.GetMsg(Info.ModuleNumber,MsgId));
 }
 
-TCHAR *GetCommaWord(const TCHAR *Src,TCHAR *Word)
+WCHAR *GetCommaWord(const WCHAR *Src,WCHAR *Word)
 {
   int WordPos,SkipBrackets;
   if (*Src==_T('\0'))
@@ -21,11 +21,11 @@ TCHAR *GetCommaWord(const TCHAR *Src,TCHAR *Word)
       Src++;
       while (_istspace(*Src))
         Src++;
-      return((TCHAR*)Src);
+      return((WCHAR*)Src);
     }
     else
       Word[WordPos]=*Src;
   }
   Word[WordPos]=0;
-  return((TCHAR*)Src);
+  return((WCHAR*)Src);
 }

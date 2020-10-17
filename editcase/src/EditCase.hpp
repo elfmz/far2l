@@ -12,18 +12,18 @@ static FARSTANDARDFUNCTIONS FSF;
 #define CCCyclic    4
 
 // Plugin Registry root
-static TCHAR PluginRootKey[80];
+static WCHAR PluginRootKey[80];
 // This chars aren't letters
-static TCHAR WordDiv[80];
+static WCHAR WordDiv[80];
 static int WordDivLen;
 
-const TCHAR *GetMsg(int MsgId);
+const WCHAR *GetMsg(int MsgId);
 
-BOOL FindBounds(TCHAR *Str, int Len, int Pos, int &Start, int &End);
-int FindEnd(TCHAR *Str, int Len, int Pos);
-int FindStart(TCHAR *Str, int Len, int Pos);
+BOOL FindBounds(WCHAR *Str, int Len, int Pos, int &Start, int &End);
+int FindEnd(WCHAR *Str, int Len, int Pos);
+int FindStart(WCHAR *Str, int Len, int Pos);
 BOOL MyIsAlpha(int c);
-int GetNextCCType(TCHAR *Str, int StrLen, int Start, int End);
-int ChangeCase(TCHAR *NewString, int Start, int End, int CCType);
+int GetNextCCType(WCHAR *Str, int StrLen, int Start, int End);
+int ChangeCase(WCHAR *NewString, int Start, int End, int CCType);
 
 #endif

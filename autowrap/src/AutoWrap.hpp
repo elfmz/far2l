@@ -1,20 +1,20 @@
 struct Options
 {
-  TCHAR FileMasks[512];
-  TCHAR ExcludeFileMasks[512];
+  WCHAR FileMasks[512];
+  WCHAR ExcludeFileMasks[512];
   int RightMargin;
   int Wrap;
 } Opt;
 
-void SetRegKey(HKEY hRoot,const TCHAR *Key,const TCHAR *ValueName,DWORD ValueData);
-void SetRegKey(HKEY hRoot,const TCHAR *Key,const TCHAR *ValueName,TCHAR *ValueData);
-int GetRegKey(HKEY hRoot,const TCHAR *Key,const TCHAR *ValueName,int &ValueData,DWORD Default);
-int GetRegKey(HKEY hRoot,const TCHAR *Key,const TCHAR *ValueName,DWORD Default);
-int GetRegKey(HKEY hRoot,const TCHAR *Key,const TCHAR *ValueName,TCHAR *ValueData,const TCHAR *Default,DWORD DataSize);
-const TCHAR *GetMsg(int MsgId);
-TCHAR *GetCommaWord(const TCHAR *Src,TCHAR *Word);
+void SetRegKey(HKEY hRoot,const WCHAR *Key,const WCHAR *ValueName,DWORD ValueData);
+void SetRegKey(HKEY hRoot,const WCHAR *Key,const WCHAR *ValueName,WCHAR *ValueData);
+int GetRegKey(HKEY hRoot,const WCHAR *Key,const WCHAR *ValueName,int &ValueData,DWORD Default);
+int GetRegKey(HKEY hRoot,const WCHAR *Key,const WCHAR *ValueName,DWORD Default);
+int GetRegKey(HKEY hRoot,const WCHAR *Key,const WCHAR *ValueName,WCHAR *ValueData,const WCHAR *Default,DWORD DataSize);
+const WCHAR *GetMsg(int MsgId);
+WCHAR *GetCommaWord(const WCHAR *Src,WCHAR *Word);
 
 
 static struct PluginStartupInfo Info;
 static FARSTANDARDFUNCTIONS FSF;
-TCHAR PluginRootKey[80];
+WCHAR PluginRootKey[80];

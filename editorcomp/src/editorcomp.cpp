@@ -53,14 +53,14 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
 
     unsigned int size = sizeof(fdi) / sizeof(fdi[0]);
     fdi[2].Param.Selected = editors->getAutoEnabling();
-    fdi[3].PtrData = (const WCHAR*)editors->getFileMasks().c_str();
+    fdi[3].PtrData = (const TCHAR*)editors->getFileMasks().c_str();
 
     HANDLE hDlg = info.DialogInit(info.ModuleNumber, -1, -1, w, h, L"config", fdi, size, 0, 0, nullptr, 0);
 
     int runResult = info.DialogRun(hDlg);
     if (runResult == int(size) - 2) {
         editors->setAutoEnabling(info.SendDlgMessage(hDlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
-        editors->setFileMasks(((const WCHAR *)info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR, 3, 0)));
+        editors->setFileMasks(((const TCHAR *)info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR, 3, 0)));
     }
 
     info.DialogFree(hDlg);

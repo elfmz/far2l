@@ -11,7 +11,7 @@
 #define GetDataPtr(i) DialogItems[i].Data
 #else
 #define GetCheck(i) (int)Info.SendDlgMessage(hDlg,DM_GETCHECK,i,0)
-#define GetDataPtr(i) ((const WCHAR *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
+#define GetDataPtr(i) ((const TCHAR *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 #endif
 
 
@@ -38,15 +38,15 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
 SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
 {
   struct InitDialogItem InitItems[]={
-    {DI_DOUBLEBOX,3,1,72,8,0,0,0,0,(WCHAR *)MAlign},
+    {DI_DOUBLEBOX,3,1,72,8,0,0,0,0,(TCHAR *)MAlign},
     {DI_FIXEDIT,5,2,7,3,1,0,0,0,_T("")},
-    {DI_TEXT,9,2,0,0,0,0,0,0,(WCHAR *)MRightMargin},
-    {DI_CHECKBOX,5,3,0,0,0,0,0,0,(WCHAR *)MReformat},
-    {DI_CHECKBOX,5,4,0,0,0,0,0,0,(WCHAR *)MSmartMode},
-    {DI_CHECKBOX,5,5,0,0,0,0,0,0,(WCHAR *)MJustify},
+    {DI_TEXT,9,2,0,0,0,0,0,0,(TCHAR *)MRightMargin},
+    {DI_CHECKBOX,5,3,0,0,0,0,0,0,(TCHAR *)MReformat},
+    {DI_CHECKBOX,5,4,0,0,0,0,0,0,(TCHAR *)MSmartMode},
+    {DI_CHECKBOX,5,5,0,0,0,0,0,0,(TCHAR *)MJustify},
     {DI_TEXT,5,6,0,0,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,_T("")},
-    {DI_BUTTON,0,7,0,0,0,0,DIF_CENTERGROUP,1,(WCHAR *)MOk},
-    {DI_BUTTON,0,7,0,0,0,0,DIF_CENTERGROUP,0,(WCHAR *)MCancel}
+    {DI_BUTTON,0,7,0,0,0,0,DIF_CENTERGROUP,1,(TCHAR *)MOk},
+    {DI_BUTTON,0,7,0,0,0,0,DIF_CENTERGROUP,0,(TCHAR *)MCancel}
   };
 
   struct FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
@@ -114,7 +114,7 @@ void ReformatBlock(int RightMargin,int SmartMode,int Justify)
   esp.CurPos=0;
   Info.EditorControl(ECTL_SETPOSITION,&esp);
 
-  WCHAR *TotalString=NULL;
+  TCHAR *TotalString=NULL;
   int TotalLength=0,IndentSize=0x7fffffff;
 
   while (1)
@@ -144,7 +144,7 @@ void ReformatBlock(int RightMargin,int SmartMode,int Justify)
       if (SpaceLength<IndentSize)
         IndentSize=SpaceLength;
 
-      TotalString=(WCHAR *)realloc(TotalString,(TotalLength+egs.StringLength+2)*sizeof(WCHAR));
+      TotalString=(TCHAR *)realloc(TotalString,(TotalLength+egs.StringLength+2)*sizeof(TCHAR));
       if (TotalLength!=0 && TotalString[TotalLength-1]!=_T(' '))
         TotalString[TotalLength++]=_T(' ');
 
@@ -167,7 +167,7 @@ void ReformatBlock(int RightMargin,int SmartMode,int Justify)
   if (IndentSize>=MaxIndent)
     IndentSize=MaxIndent-1;
 
-  WCHAR IndentBuf[MaxIndent];
+  TCHAR IndentBuf[MaxIndent];
   if (IndentSize>0)
   {
     _tmemset(IndentBuf,_T(' '),IndentSize);
@@ -313,8 +313,8 @@ void JustifyBlock(int RightMargin)
     struct EditorSetString ess;
     ess.StringNumber=egs.StringNumber;
 
-    ess.StringText=(WCHAR*)egs.StringText;
-    ess.StringEOL=(WCHAR*)egs.StringEOL;
+    ess.StringText=(TCHAR*)egs.StringText;
+    ess.StringEOL=(TCHAR*)egs.StringEOL;
     ess.StringLength=egs.StringLength;
 
     if (ess.StringLength<RightMargin)
@@ -342,7 +342,7 @@ int JustifyString(int RightMargin,struct EditorSetString &ess)
   int AddSize=TotalAddSize/WordCount;
   int Reminder=TotalAddSize%WordCount;
 
-  WCHAR *NewString=(WCHAR *)malloc(RightMargin*sizeof(WCHAR));
+  TCHAR *NewString=(TCHAR *)malloc(RightMargin*sizeof(TCHAR));
   _tmemset(NewString,_T(' '),RightMargin);
   _tmemcpy(NewString,ess.StringText,ess.StringLength);
 
@@ -357,7 +357,7 @@ int JustifyString(int RightMargin,struct EditorSetString &ess)
       }
       if (MoveSize==0)
         break;
-      memmove(NewString+I+1+MoveSize,NewString+I+1,(RightMargin-(I+1+MoveSize))*sizeof(WCHAR));
+      memmove(NewString+I+1+MoveSize,NewString+I+1,(RightMargin-(I+1+MoveSize))*sizeof(TCHAR));
       while (MoveSize--)
         NewString[I+1+MoveSize]=_T(' ');
     }
@@ -375,7 +375,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
   Info->StructSize=sizeof(*Info);
   Info->Flags=PF_EDITOR|PF_DISABLEPANELS;
   Info->DiskMenuStringsNumber=0;
-  static const WCHAR *PluginMenuStrings[1];
+  static const TCHAR *PluginMenuStrings[1];
   PluginMenuStrings[0]=GetMsg(MAlign);
   Info->PluginMenuStrings=PluginMenuStrings;
   Info->PluginMenuStringsNumber=ARRAYSIZE(PluginMenuStrings);

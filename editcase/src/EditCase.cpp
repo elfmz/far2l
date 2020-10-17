@@ -30,7 +30,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   ::Info.FSF=&::FSF;
   FSF.snprintf(PluginRootKey, ARRAYSIZE(PluginRootKey), _T("%s/EditCase"),Info->RootKey);
   WordDivLen=(int)::Info.AdvControl(::Info.ModuleNumber, ACTL_GETSYSWORDDIV, WordDiv);
-  WCHAR AddWordDiv[sizeof(WordDiv)];
+  TCHAR AddWordDiv[sizeof(WordDiv)];
   GetRegKey(HKEY_CURRENT_USER,_T(""),_T("AddWordDiv"),AddWordDiv,_T("#"),sizeof(AddWordDiv));
   WordDivLen += lstrlen(AddWordDiv);
   lstrcat(WordDiv, AddWordDiv);
@@ -88,7 +88,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
        int CCType=MenuCode;
 
        // Temporary string
-       WCHAR *NewString=0;
+       TCHAR *NewString=0;
 
        // Forever :-) (Line processing loop)
        for(;;)
@@ -127,7 +127,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
          }
 
          // Memory allocation
-         NewString=(WCHAR *)malloc((egs.StringLength+1)*sizeof(WCHAR));
+         NewString=(TCHAR *)malloc((egs.StringLength+1)*sizeof(TCHAR));
          // If memory couldn't be allocated
          if(!NewString)
             break;
@@ -188,7 +188,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
              struct EditorSetString ess;
              ess.StringNumber=-1;
              ess.StringText=NewString;
-             ess.StringEOL=(WCHAR*)egs.StringEOL;
+             ess.StringEOL=(TCHAR*)egs.StringEOL;
              ess.StringLength=egs.StringLength;
              Info.EditorControl(ECTL_SETSTRING,&ess);
          };
@@ -227,14 +227,14 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
   Info->StructSize=sizeof(*Info);
   Info->Flags=PF_EDITOR|PF_DISABLEPANELS;
-  static const WCHAR *PluginMenuStrings[1];
+  static const TCHAR *PluginMenuStrings[1];
   // Text in Plugins menu
   PluginMenuStrings[0]=GetMsg(MCaseConversion);
   Info->PluginMenuStrings=PluginMenuStrings;
   Info->PluginMenuStringsNumber=ARRAYSIZE(PluginMenuStrings);
 };
 
-const WCHAR *GetMsg(int MsgId)
+const TCHAR *GetMsg(int MsgId)
 {
   return(Info.GetMsg(Info.ModuleNumber,MsgId));
 }
@@ -246,7 +246,7 @@ BOOL MyIsAlpha(int c)
 }
 
 // Finding word bounds (what'll be converted) (Str is in OEM)
-BOOL FindBounds(WCHAR *Str, int Len, int Pos, int &Start, int &End)
+BOOL FindBounds(TCHAR *Str, int Len, int Pos, int &Start, int &End)
 {
     int i=1;
     BOOL ret = FALSE;
@@ -316,7 +316,7 @@ BOOL FindBounds(WCHAR *Str, int Len, int Pos, int &Start, int &End)
     return ret;
 };
 
-int FindStart(WCHAR *Str, int Start, int End)
+int FindStart(TCHAR *Str, int Start, int End)
 {
     // Current pos in Str
     int CurPos=End-1;
@@ -328,7 +328,7 @@ int FindStart(WCHAR *Str, int Start, int End)
     return CurPos+1;
 };
 
-int FindEnd(WCHAR *Str, int Start, int End)
+int FindEnd(TCHAR *Str, int Start, int End)
 {
     // Current pos in Str
     int CurPos=Start;
@@ -342,7 +342,7 @@ int FindEnd(WCHAR *Str, int Start, int End)
 
 // Changes Case of NewString from position Start till End
 // to CCType and returns amount of changes
-int ChangeCase(WCHAR *NewString, int Start, int End, int CCType)
+int ChangeCase(TCHAR *NewString, int Start, int End, int CCType)
 {
     // If previous symbol is letter, then IsPrevSymbAlpha!=0
     BOOL IsPrevSymbAlpha=FALSE;
@@ -357,25 +357,25 @@ int ChangeCase(WCHAR *NewString, int Start, int End, int CCType)
         switch(CCType)
         {
           case CCLower:
-              NewString[i]=(WCHAR)FSF.LLower(NewString[i]);
+              NewString[i]=(TCHAR)FSF.LLower(NewString[i]);
               break;
 
           case CCTitle:
               if(IsPrevSymbAlpha)
-                  NewString[i]=(WCHAR)FSF.LLower(NewString[i]);
+                  NewString[i]=(TCHAR)FSF.LLower(NewString[i]);
               else
-                  NewString[i]=(WCHAR)FSF.LUpper(NewString[i]);
+                  NewString[i]=(TCHAR)FSF.LUpper(NewString[i]);
               break;
 
           case CCUpper:
-              NewString[i]=(WCHAR)FSF.LUpper(NewString[i]);
+              NewString[i]=(TCHAR)FSF.LUpper(NewString[i]);
               break;
 
           case CCToggle:
               if(FSF.LIsLower(NewString[i]))
-                  NewString[i]=(WCHAR)FSF.LUpper(NewString[i]);
+                  NewString[i]=(TCHAR)FSF.LUpper(NewString[i]);
               else
-                  NewString[i]=(WCHAR)FSF.LLower(NewString[i]);
+                  NewString[i]=(TCHAR)FSF.LLower(NewString[i]);
               break;
 
         };
@@ -392,7 +392,7 @@ int ChangeCase(WCHAR *NewString, int Start, int End, int CCType)
 
 // Return CCType by rule: lower->Title->UPPER
 // If Str contains no letters, then return CCCyclic
-int GetNextCCType(WCHAR *Str, int StrLen, int Start, int End)
+int GetNextCCType(TCHAR *Str, int StrLen, int Start, int End)
 {
     int SignalWordStart=Start,
         SignalWordEnd=End;
@@ -413,11 +413,11 @@ int GetNextCCType(WCHAR *Str, int StrLen, int Start, int End)
 
     SignalWordLen=SignalWordEnd-SignalWordStart;
 
-    WCHAR *SignalWord=(WCHAR *)malloc((SignalWordLen+1)*sizeof(WCHAR));
+    TCHAR *SignalWord=(TCHAR *)malloc((SignalWordLen+1)*sizeof(TCHAR));
 
     if( SignalWord != NULL )
     {
-        WCHAR *WrappedWord=(WCHAR *)malloc((SignalWordLen+1)*sizeof(WCHAR));
+        TCHAR *WrappedWord=(TCHAR *)malloc((SignalWordLen+1)*sizeof(TCHAR));
 
         if( WrappedWord != NULL )
         {

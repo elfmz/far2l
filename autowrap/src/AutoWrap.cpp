@@ -100,7 +100,7 @@ SHAREDSYMBOL int WINAPI EXP_NAME(ProcessEditorInput)(const INPUT_RECORD *Rec)
         return TRUE;
       }
       int Found=FALSE;
-      WCHAR FileMask[MAX_PATH],*MaskPtr=Opt.FileMasks;
+      TCHAR FileMask[MAX_PATH],*MaskPtr=Opt.FileMasks;
       while ((MaskPtr=GetCommaWord(MaskPtr,FileMask))!=NULL)
         if (Info.CmpName(FileMask,
 #ifndef UNICODE
@@ -236,7 +236,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
   Info->StructSize=sizeof(*Info);
   Info->Flags=PF_EDITOR|PF_DISABLEPANELS;
   Info->DiskMenuStringsNumber=0;
-  static const WCHAR *PluginMenuStrings[1];
+  static const TCHAR *PluginMenuStrings[1];
   PluginMenuStrings[0]=GetMsg(MAutoWrap);
   Info->PluginMenuStrings=PluginMenuStrings;
   Info->PluginMenuStringsNumber=ARRAYSIZE(PluginMenuStrings);

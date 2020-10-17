@@ -1,4 +1,4 @@
-const WCHAR *GetMsg(int MsgId)
+const TCHAR *GetMsg(int MsgId)
 {
   return(Info.GetMsg(Info.ModuleNumber,MsgId));
 }
@@ -16,7 +16,7 @@ void InitDialogItems(const struct InitDialogItem *Init,struct FarDialogItem *Ite
     PItem->X2=PInit->X2;
     PItem->Y2=PInit->Y2;
     PItem->Focus=PInit->Focus;
-    PItem->History=(const WCHAR *)PInit->Selected;
+    PItem->History=(const TCHAR *)PInit->Selected;
     PItem->Flags=PInit->Flags;
     PItem->DefaultButton=PInit->DefaultButton;
 #ifdef UNICODE

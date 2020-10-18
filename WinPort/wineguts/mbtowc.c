@@ -39,7 +39,7 @@ static inline int is_private_use_area_char(WCHAR code)
 static inline int check_invalid_chars_sbcs( const struct sbcs_table *table, int flags,
                                             const unsigned char *src, unsigned int srclen )
 {
-    const WCHAR * const cp2uni = (flags & MB_USEGLYPHCHARS) ? table->cp2uni_glyphs : table->cp2uni;
+    const CUCHAR * const cp2uni = (flags & MB_USEGLYPHCHARS) ? table->cp2uni_glyphs : table->cp2uni;
     const WCHAR def_unicode_char = table->info.def_unicode_char;
     const unsigned char def_char = table->uni2cp_low[table->uni2cp_high[def_unicode_char >> 8]
                                                      + (def_unicode_char & 0xff)];
@@ -59,7 +59,7 @@ static inline int mbstowcs_sbcs( const struct sbcs_table *table, int flags,
                                  const unsigned char *src, unsigned int srclen,
                                  WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR * const cp2uni = (flags & MB_USEGLYPHCHARS) ? table->cp2uni_glyphs : table->cp2uni;
+    const CUCHAR * const cp2uni = (flags & MB_USEGLYPHCHARS) ? table->cp2uni_glyphs : table->cp2uni;
     int ret = srclen;
 
     if (dstlen < srclen)
@@ -122,7 +122,7 @@ static int mbstowcs_sbcs_decompose( const struct sbcs_table *table, int flags,
                                     const unsigned char *src, unsigned int srclen,
                                     WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR * const cp2uni = (flags & MB_USEGLYPHCHARS) ? table->cp2uni_glyphs : table->cp2uni;
+    const CUCHAR * const cp2uni = (flags & MB_USEGLYPHCHARS) ? table->cp2uni_glyphs : table->cp2uni;
     unsigned int len;
 
     if (!dstlen)  /* compute length */
@@ -166,7 +166,7 @@ static inline int get_length_dbcs( const struct dbcs_table *table,
 static inline int check_invalid_chars_dbcs( const struct dbcs_table *table,
                                             const unsigned char *src, unsigned int srclen )
 {
-    const WCHAR * const cp2uni = table->cp2uni;
+    const CUCHAR * const cp2uni = table->cp2uni;
     const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
     const WCHAR def_unicode_char = table->info.def_unicode_char;
     const unsigned short def_char = table->uni2cp_low[table->uni2cp_high[def_unicode_char >> 8]
@@ -196,7 +196,7 @@ static inline int mbstowcs_dbcs( const struct dbcs_table *table,
                                  const unsigned char *src, unsigned int srclen,
                                  WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR * const cp2uni = table->cp2uni;
+    const CUCHAR * const cp2uni = table->cp2uni;
     const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
     unsigned int len;
 
@@ -223,7 +223,7 @@ static int mbstowcs_dbcs_decompose( const struct dbcs_table *table,
                                     const unsigned char *src, unsigned int srclen,
                                     WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR * const cp2uni = table->cp2uni;
+    const CUCHAR * const cp2uni = table->cp2uni;
     const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
     unsigned int len, res;
     WCHAR ch;

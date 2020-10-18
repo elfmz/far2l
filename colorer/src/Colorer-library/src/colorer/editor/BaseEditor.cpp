@@ -140,10 +140,18 @@ FileType* BaseEditor::chooseFileTypeCh(const String* fileName, int chooseStr, in
     if (iLine == nullptr) {
       break;
     }
-    textStart.append(iLine);
+
+    int appendLength = iLine->length();
+    if (totalLength + appendLength > chooseLen) {
+      appendLength = chooseLen - totalLength;
+    }
+
+    textStart.append(iLine, (size_t)appendLength);
     textStart.append(CString("\n"));
-    totalLength += iLine->length();
-    if (totalLength > chooseLen) {
+
+    totalLength+= appendLength;
+
+    if (totalLength >= chooseLen) {
       break;
     }
   }

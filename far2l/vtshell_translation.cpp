@@ -212,17 +212,18 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Home     Alt       \x1b[1;3H
         Home     Ctrl      \x1b[5H
         Home     Ctrl      \x1b[1;5H */
-			if (keypad == 0) {
 				if (ctrl && shift) return "\x1b[1;6H";
 				if (shift) return "\x1b[1;2H";
 				if (alt) return "\x1b[1;3H";
 				if (ctrl) return "\x1b[1;5H";
+			if (keypad == 0) {
 				return "\x1b[H";
 			}
-			if (ctrl && shift) return "\x1b[6H";
-			if (shift) return "\x1b[2H";
-			if (alt) return "\x1b[3H";
-			if (ctrl) return "\x1b[5H";
+// breaks mc editor [Ctrl+]Shift+Home
+//			if (ctrl && shift) return "\x1b[6H";
+//			if (shift) return "\x1b[2H";
+//			if (alt) return "\x1b[3H";
+//			if (ctrl) return "\x1b[5H";
 			return "\x1bOH";
 			//return "\x1b[1~";
 		
@@ -235,17 +236,18 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         End      Alt       \x1b[1;3F
         End      Ctrl      \x1b[5F
         End      Ctrl      \x1b[1;5F */
-			if (keypad==0) {
 				if (ctrl && shift) return "\x1b[1;6F";
 				if (shift) return "\x1b[1;2F";
 				if (alt) return "\x1b[1;3F";
 				if (ctrl) return "\x1b[1;5F";
+			if (keypad==0) {
 				return "\x1b[F";
 			}
-			if (ctrl && shift) return "\x1b[6F";
-			if (shift) return "\x1b[2F";
-			if (alt) return "\x1b[3F";
-			if (ctrl) return "\x1b[5F";
+// breaks mc editor [Ctrl+]Shift+End
+//			if (ctrl && shift) return "\x1b[6F";
+//			if (shift) return "\x1b[2F";
+//			if (alt) return "\x1b[3F";
+//			if (ctrl) return "\x1b[5F";
 			return "\x1bOF";
 			//return "\x1b[4~";
 		

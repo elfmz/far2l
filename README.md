@@ -112,6 +112,7 @@ ninja -j4
 ```
 
 To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no
+To save space by exluding support of East Asian codepages set: add -DEACP=no
 
 To build with Python plugin: add argument -DPYTHON=yes
 
@@ -143,10 +144,11 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * **QtCreator**: select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
  * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
 
-#### Useful 3rd-party tools
+### Useful 3rd-party extras
 
  * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros
  * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/unxed/putty4far2l
+ * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2l-deb/blob/master/far2l_import.pl
 
 ## Notes on porting
 

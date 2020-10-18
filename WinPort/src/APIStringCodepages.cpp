@@ -272,7 +272,7 @@ static int iconv_cp_mbstowcs(unsigned int page, unsigned int flags,
 	// iconv init
 	iconv_t cd = iconv_open(CP_ICONV_WCHAR, iconv_codepage_name(page));
 
-	if (cd < 0) {
+	if (cd == (iconv_t)-1) {
 		fprintf(stderr, "iconv_cp_mbstowcs(%u): error %d\n", page, errno);
 		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 		return 0;
@@ -291,7 +291,7 @@ static int iconv_cp_wcstombs(unsigned int page, unsigned int flags,
 {
 	iconv_t cd = iconv_open(iconv_codepage_name(page), CP_ICONV_WCHAR);
 
-	if (cd < 0) {
+	if (cd == (iconv_t)-1) {
 		fprintf(stderr, "iconv_cp_wcstombs(%u): error %d\n", page, errno);
 		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 		return 0;

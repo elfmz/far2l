@@ -51,10 +51,12 @@ extern union cptable cptable_869;
 extern union cptable cptable_874;
 extern union cptable cptable_875;
 extern union cptable cptable_878;
+#ifndef NO_EACP
 extern union cptable cptable_932;
 extern union cptable cptable_936;
 extern union cptable cptable_949;
 extern union cptable cptable_950;
+#endif
 extern union cptable cptable_1006;
 extern union cptable cptable_1026;
 extern union cptable cptable_1250;
@@ -66,16 +68,22 @@ extern union cptable cptable_1255;
 extern union cptable cptable_1256;
 extern union cptable cptable_1257;
 extern union cptable cptable_1258;
+#ifndef NO_EACP
 extern union cptable cptable_1361;
+#endif
 extern union cptable cptable_10000;
+#ifndef NO_EACP
 extern union cptable cptable_10001;
 extern union cptable cptable_10002;
 extern union cptable cptable_10003;
+#endif
 extern union cptable cptable_10004;
 extern union cptable cptable_10005;
 extern union cptable cptable_10006;
 extern union cptable cptable_10007;
+#ifndef NO_EACP
 extern union cptable cptable_10008;
+#endif
 extern union cptable cptable_10010;
 extern union cptable cptable_10017;
 extern union cptable cptable_10021;
@@ -85,7 +93,9 @@ extern union cptable cptable_10081;
 extern union cptable cptable_10082;
 extern union cptable cptable_20127;
 extern union cptable cptable_20866;
+#ifndef NO_EACP
 extern union cptable cptable_20932;
+#endif
 extern union cptable cptable_21866;
 extern union cptable cptable_28591;
 extern union cptable cptable_28592;
@@ -127,10 +137,12 @@ static const union cptable * const cptables[73] =
     &cptable_874,
     &cptable_875,
     &cptable_878,
+#ifndef NO_EACP
     &cptable_932,
     &cptable_936,
     &cptable_949,
     &cptable_950,
+#endif
     &cptable_1006,
     &cptable_1026,
     &cptable_1250,
@@ -142,16 +154,22 @@ static const union cptable * const cptables[73] =
     &cptable_1256,
     &cptable_1257,
     &cptable_1258,
+#ifndef NO_EACP
     &cptable_1361,
+#endif
     &cptable_10000,
+#ifndef NO_EACP
     &cptable_10001,
     &cptable_10002,
     &cptable_10003,
+#endif
     &cptable_10004,
     &cptable_10005,
     &cptable_10006,
     &cptable_10007,
+#ifndef NO_EACP
     &cptable_10008,
+#endif
     &cptable_10010,
     &cptable_10017,
     &cptable_10021,
@@ -161,7 +179,9 @@ static const union cptable * const cptables[73] =
     &cptable_10082,
     &cptable_20127,
     &cptable_20866,
+#ifndef NO_EACP
     &cptable_20932,
+#endif
     &cptable_21866,
     &cptable_28591,
     &cptable_28592,
@@ -184,20 +204,28 @@ static const union cptable * const cptables[73] =
 #define NB_CODEPAGES  (sizeof(cptables)/sizeof(cptables[0]))
 
 
-static int cmp_codepage( const void *codepage, const void *entry )
-{
-    return *(const unsigned int *)codepage - (*(const union cptable *const *)entry)->info.codepage;
-}
-
-
 /* get the table of a given code page */
 const union cptable *wine_cp_get_table( unsigned int codepage )
 {
-    const union cptable **res;
+    const union cptable * const *base = cptables;
+    size_t cnt = NB_CODEPAGES;
 
-    if (!(res = (const union cptable **)bsearch( &codepage, cptables, NB_CODEPAGES,
-                         sizeof(cptables[0]), cmp_codepage ))) return NULL;
-    return *res;
+    while (cnt) {
+        const union cptable * const *mid = base + (cnt >> 1);
+
+        if (codepage == (*mid)->info.codepage) {
+            return *mid;
+	}
+
+        if (codepage > (*mid)->info.codepage) {	/* key > p: move right */
+            base = mid + 1;
+            cnt--;
+        }		/* else move left */
+
+	cnt>>= 1;
+    }
+
+    return (NULL);
 }
 
 

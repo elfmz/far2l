@@ -228,6 +228,8 @@ template <class CODEUNIT_SRC, class CODEUNIT_DST>
 		memcpy(dst, &replacement_char, sizeof(CODEUNIT_DST));
 		src++;
 		dst+= sizeof(CODEUNIT_DST);
+		srclen-= sizeof(CODEUNIT_SRC);
+		dstlen-= sizeof(CODEUNIT_DST);
 
 		if (srclen < sizeof(CODEUNIT_SRC)) {
 			break;

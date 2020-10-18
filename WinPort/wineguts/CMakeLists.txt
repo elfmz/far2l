@@ -2,6 +2,19 @@
 add_subdirectory(codepages)
 
 set(SOURCES
+casemap.c
+collation.c
+compose.c
+cpsymbol.c
+cptable.c
+decompose.c
+locale.c
+mbtowc.c
+sortkey.c
+utf8.c
+wctomb.c
+wctype.c
+
 codepages/c_037.c
 codepages/c_424.c
 codepages/c_437.c
@@ -25,10 +38,6 @@ codepages/c_869.c
 codepages/c_874.c
 codepages/c_875.c
 codepages/c_878.c
-codepages/c_932.c
-codepages/c_936.c
-codepages/c_949.c
-codepages/c_950.c
 codepages/c_1006.c
 codepages/c_1026.c
 codepages/c_1250.c
@@ -40,16 +49,11 @@ codepages/c_1255.c
 codepages/c_1256.c
 codepages/c_1257.c
 codepages/c_1258.c
-codepages/c_1361.c
 codepages/c_10000.c
-codepages/c_10001.c
-codepages/c_10002.c
-codepages/c_10003.c
 codepages/c_10004.c
 codepages/c_10005.c
 codepages/c_10006.c
 codepages/c_10007.c
-codepages/c_10008.c
 codepages/c_10010.c
 codepages/c_10017.c
 codepages/c_10021.c
@@ -59,7 +63,6 @@ codepages/c_10081.c
 codepages/c_10082.c
 codepages/c_20127.c
 codepages/c_20866.c
-codepages/c_20932.c
 codepages/c_21866.c
 codepages/c_28591.c
 codepages/c_28592.c
@@ -75,20 +78,27 @@ codepages/c_28603.c
 codepages/c_28604.c
 codepages/c_28605.c
 codepages/c_28606.c
-
-casemap.c
-collation.c
-compose.c
-cpsymbol.c
-cptable.c
-decompose.c
-locale.c
-mbtowc.c
-sortkey.c
-utf8.c
-wctomb.c
-wctype.c
 )
+
+if (${EACP})
+	set(SOURCES
+		${SOURCES}
+		codepages/c_932.c
+		codepages/c_936.c
+		codepages/c_949.c
+		codepages/c_950.c
+		codepages/c_1361.c
+		codepages/c_10001.c
+		codepages/c_10002.c
+		codepages/c_10003.c
+		codepages/c_10008.c
+		codepages/c_20932.c
+	)
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_EACP")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNO_EACP")
+endif()
+
 
 add_library (wineguts ${SOURCES})
 

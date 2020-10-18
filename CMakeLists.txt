@@ -40,12 +40,20 @@ if (NOT DEFINED USEWX)
 	set(USEWX "YES")
 endif()
 
+if (NOT DEFINED EACP)
+	set(EACP "YES")
+endif()
+
 if (NOT DEFINED PYTHON)
 	set(PYTHON "NO")
 endif()
 
 if (NOT DEFINED FARFTP)
 	set(FARFTP "NO")
+endif()
+
+if (NOT ${EACP})
+	message(STATUS "${Esc}[1;31mBuilding without East Asian codepages support due to EACP=${EACP}${Esc}[39;22m")
 endif()
 
 if (NOT ${USEWX})

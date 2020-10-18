@@ -795,7 +795,7 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeySystem,L"ShowCheckingFile", &Opt.ShowCheckingFile, 0, 0},
 	{0, REG_DWORD,  NKeySystem,L"DelThreadPriority", &Opt.DelThreadPriority, 0, 0},
 	{0, REG_SZ,     NKeySystem,L"QuotedSymbols",&Opt.strQuotedSymbols, 0, L" $&()[]{};|*?!'`\"\\\xA0"}, //xA0 => 160 =>oem(0xFF)
-	{0, REG_DWORD,  NKeySystem,L"QuotedName",&Opt.QuotedName,0xFFFFFFFFU, 0},
+	{0, REG_DWORD,  NKeySystem,L"QuotedName",&Opt.QuotedName,QUOTEDNAME_INSERT, 0},
 	//{0, REG_DWORD,  NKeySystem,L"CPAJHefuayor",&Opt.strCPAJHefuayor,0, 0},
 	{0, REG_DWORD,  NKeySystem,L"CloseConsoleRule",&Opt.CloseConsoleRule,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"PluginMaxReadData",&Opt.PluginMaxReadData,0x40000, 0},

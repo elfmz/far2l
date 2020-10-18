@@ -204,20 +204,28 @@ static const union cptable * const cptables[73] =
 #define NB_CODEPAGES  (sizeof(cptables)/sizeof(cptables[0]))
 
 
-static int cmp_codepage( const void *codepage, const void *entry )
-{
-    return *(const unsigned int *)codepage - (*(const union cptable *const *)entry)->info.codepage;
-}
-
-
 /* get the table of a given code page */
 const union cptable *wine_cp_get_table( unsigned int codepage )
 {
-    const union cptable **res;
+    const union cptable * const *base = cptables;
+    size_t cnt = NB_CODEPAGES;
 
-    if (!(res = (const union cptable **)bsearch( &codepage, cptables, NB_CODEPAGES,
-                         sizeof(cptables[0]), cmp_codepage ))) return NULL;
-    return *res;
+    while (cnt) {
+        const union cptable * const *mid = base + (cnt >> 1);
+
+        if (codepage == (*mid)->info.codepage) {
+            return *mid;
+	}
+
+        if (codepage > (*mid)->info.codepage) {	/* key > p: move right */
+            base = mid + 1;
+            cnt--;
+        }		/* else move left */
+
+	cnt>>= 1;
+    }
+
+    return (NULL);
 }
 
 

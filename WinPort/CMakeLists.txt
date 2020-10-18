@@ -21,6 +21,7 @@ src/APIStringCodepages.cpp
 src/APIStringMap.cpp
 src/APISynch.cpp
 src/APITime.cpp
+src/CachedIConv.cpp
 src/ConsoleBuffer.cpp
 src/ConsoleInput.cpp
 src/ConsoleOutput.cpp

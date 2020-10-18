@@ -18,7 +18,7 @@
 #include "PathHelpers.h"
 #include "ConvertUTF.h"
 
-#include <iconv.h>
+#include "CachedIConv.h"
 
 #define UTF8_INTERNAL_IMPLEMENTATION
 
@@ -245,63 +245,31 @@ template <class CODEUNIT_SRC, class CODEUNIT_DST>
 }
 
 
-#if (__WCHAR_MAX__ > 0xffff)
-# define CP_ICONV_WCHAR "UTF-32LE" // //IGNORE
-#else
-# define CP_ICONV_WCHAR "UTF-15LE" // //IGNORE
-#endif
-
-thread_local char g_iconv_codepage_name[20];
-
-static const char *iconv_codepage_name(unsigned int page)
-{
-	switch (page) {
-       		case CP_KOI8R: return "CP_KOI8R-7";
-       		case CP_UTF8:  return "UTF-8";
-       		case CP_UTF7:  return "UTF-7";
-		default: {
-			sprintf(g_iconv_codepage_name, "CP%d", page);
-			return g_iconv_codepage_name;
-		}
-	}
-}
-
 static int iconv_cp_mbstowcs(unsigned int page, unsigned int flags,
 	const char *src, size_t srclen, wchar_t *dst, size_t dstlen )
 {
-	// iconv init
-	iconv_t cd = iconv_open(CP_ICONV_WCHAR, iconv_codepage_name(page));
+	try {
+		CachedIConv cic(false, page);
+		return iconv_do<char, wchar_t>(cic, flags, src, srclen, dst, dstlen);
 
-	if (cd == (iconv_t)-1) {
-		fprintf(stderr, "iconv_cp_mbstowcs(%u): error %d\n", page, errno);
-		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
+	} catch (std::exception &e) {
+		fprintf(stderr, "iconv_cp_mbstowcs(%u): %s\n", page, e.what());
 		return 0;
 	}
-
-	int ir = iconv_do<char, wchar_t>(cd, flags, src, srclen, dst, dstlen);
-
-	iconv_close(cd);
-
-	return ir;
 }
 
 static int iconv_cp_wcstombs(unsigned int page, unsigned int flags,
 	const wchar_t *src, size_t srclen,  char *dst, size_t dstlen,
 	char replacement_char, LPBOOL replacement_used)
 {
-	iconv_t cd = iconv_open(iconv_codepage_name(page), CP_ICONV_WCHAR);
+	try {
+		CachedIConv cic(true, page);
+		return iconv_do<wchar_t, char>(cic, flags, src, srclen, dst, dstlen, replacement_char, replacement_used);
 
-	if (cd == (iconv_t)-1) {
-		fprintf(stderr, "iconv_cp_wcstombs(%u): error %d\n", page, errno);
-		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
+	} catch (std::exception &e) {
+		fprintf(stderr, "iconv_cp_mbstowcs(%u): %s\n", page, e.what());
 		return 0;
 	}
-
-	int ir = iconv_do<wchar_t, char>(cd, flags, src, srclen, dst, dstlen, replacement_char, replacement_used);
-
-	iconv_close(cd);
-
-	return ir;
 }
 
 ///////////////////////////////////

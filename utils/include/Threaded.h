@@ -23,3 +23,4 @@ protected:
 	bool WaitThread(unsigned int msec = (unsigned int)-1);
 	void *GetThreadResult();
 };
+

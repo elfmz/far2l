@@ -19,7 +19,7 @@ matrix:
             - libwxgtk3.0-dev
             - libxerces-c-dev
             - libspdlog-dev
-            - libglib2.0-dev
+            - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev
@@ -45,6 +45,7 @@ matrix:
             - libwxgtk3.0-dev
             - libxerces-c-dev
             - libspdlog-dev
+            - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev
@@ -71,6 +72,7 @@ matrix:
             - libwxgtk3.0-dev
             - libxerces-c-dev
             - libspdlog-dev
+            - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev
@@ -97,6 +99,7 @@ matrix:
             - libwxgtk3.0-dev
             - libxerces-c-dev
             - libspdlog-dev
+            - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
             - libnfs-dev

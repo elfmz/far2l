@@ -1433,7 +1433,7 @@ int Viewer::ProcessKey(int Key)
 			UINT nCodePage = SelectCodePage(VM.CodePage, true, true, false, true);
 			if (nCodePage == CP_AUTODETECT)
 			{
-				if (!GetFileFormat2(strFileName,nCodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0,true))
+				if (!GetFileFormat2(strFileName,nCodePage,&Signature,true,true))
 					return TRUE;
 			}
 

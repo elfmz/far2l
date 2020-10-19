@@ -1436,7 +1436,19 @@ int Viewer::ProcessKey(int Key)
 		}
 		case KEY_SHIFTF8:
 		{
-			UINT nCodePage = SelectCodePage(VM.CodePage, true, true);
+			UINT nCodePage = SelectCodePage(VM.CodePage, true, true, false, ViOpt.AutoDetectCodePage!=0);
+			if (nCodePage == CP_AUTODETECT)
+			{
+				File f;
+				f.Open(strFileName,GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL);
+				bool Detect=GetFileFormat(f,nCodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0);
+
+				// Проверяем поддерживается или нет задетектированная кодовая страница
+				if (Detect)
+					Detect = IsCodePageSupported(nCodePage);
+				if (!Detect)
+					return TRUE;
+			}
 
 			// BUGBUG
 			// пока что запретим переключать hex в UTF8/UTF32, ибо не работает.

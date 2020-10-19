@@ -1,13 +1,3 @@
-# Copyright (C) 2007-2009 LuaDist.
-# Created by Peter Kapec <kapecp@gmail.com>
-# Redistribution and use of this file is allowed according to the terms of the MIT license.
-# For details see the COPYRIGHT file distributed with LuaDist.
-#	Note:
-#		Searching headers and libraries is very simple and is NOT as powerful as scripts
-#		distributed with CMake, because LuaDist defines directories to search for.
-#		Everyone is encouraged to contact the author with improvements. Maybe this file
-#		becomes part of CMake distribution sometimes.
-
 # - Find uchardet
 # Find the native uchardet headers and libraries.
 #

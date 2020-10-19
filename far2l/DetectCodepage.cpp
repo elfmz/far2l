@@ -98,7 +98,7 @@ int DetectCodePage(const char *data, size_t len)
 	uchardet_data_end(ud);
 	const char *cs = uchardet_get_charset(ud);
 	int out = cs ? TranslateUDCharset(cs) : -1;
-	fprintf(stderr, "DetectCodePage: '%s' -> %d\n", cs, out);
+//	fprintf(stderr, "DetectCodePage: '%s' -> %d\n", cs, out);
 	uchardet_delete(ud);
 	return out;
 }

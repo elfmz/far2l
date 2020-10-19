@@ -343,13 +343,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 
 		if (VM.CodePage == CP_AUTODETECT || IsUnicodeOrUtfCodePage(VM.CodePage))
 		{
-			File f;
-			f.Open(strFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL);
-			Detect=GetFileFormat(f,CodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0);
-
-			// Проверяем поддерживается или нет задетектированная кодовая страница
-			if (Detect)
-				Detect = IsCodePageSupported(CodePage);
+			Detect = GetFileFormat2(strFileName,CodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0,true);
 		}
 
 		if (VM.CodePage==CP_AUTODETECT)
@@ -1436,17 +1430,10 @@ int Viewer::ProcessKey(int Key)
 		}
 		case KEY_SHIFTF8:
 		{
-			UINT nCodePage = SelectCodePage(VM.CodePage, true, true, false, ViOpt.AutoDetectCodePage!=0);
+			UINT nCodePage = SelectCodePage(VM.CodePage, true, true, false, true);
 			if (nCodePage == CP_AUTODETECT)
 			{
-				File f;
-				f.Open(strFileName,GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL);
-				bool Detect=GetFileFormat(f,nCodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0);
-
-				// Проверяем поддерживается или нет задетектированная кодовая страница
-				if (Detect)
-					Detect = IsCodePageSupported(nCodePage);
-				if (!Detect)
+				if (!GetFileFormat2(strFileName,nCodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0,true))
 					return TRUE;
 			}
 

@@ -949,3 +949,21 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 	}
 	return bDetect;
 }
+
+bool GetFileFormat2(FARString strFileName, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics, bool bCheckIfSupported)
+{
+	File f;
+	if (!f.Open(strFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL))
+		return false;
+
+	UINT detectedCodePage = nCodePage;
+	if (!GetFileFormat(f,detectedCodePage,pSignatureFound,bUseHeuristics))
+		return false;
+
+	// Проверяем поддерживается или нет задетектированная кодовая страница
+	if (bCheckIfSupported && !IsCodePageSupported(detectedCodePage))
+		return false;
+
+	nCodePage = detectedCodePage;
+	return true;
+}

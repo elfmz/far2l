@@ -1304,7 +1304,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				} else {
 					codepage = SelectCodePage(m_codepage, false, true, false, true);
 					if (codepage == CP_AUTODETECT) {
-						if (!GetFileFormat2(strFileName,codepage,nullptr,Opt.EdOpt.AutoDetectCodePage!=0,true)) {
+						if (!GetFileFormat2(strFileName,codepage,nullptr,true,true)) {
 							codepage = (UINT)-1;
 						}
 					}

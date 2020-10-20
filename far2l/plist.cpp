@@ -48,6 +48,9 @@ static BOOL KillProcess(DWORD dwPID);
 
 void ShowProcessList()
 {
+    // Currently unsupported on linux
+    return;
+	
 	VMenu ProcList(MSG(MProcessListTitle),nullptr,0,ScrY-4);
 	ProcList.SetFlags(VMENU_WRAPMODE);
 	ProcList.SetPosition(-1,-1,0,0);

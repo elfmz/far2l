@@ -127,7 +127,7 @@ cmake .. \
 
 #### Building DMG, DEB and TGZ packages
 
-Pleas follow CMake related instructions from previous step to build the project, then run:
+Please follow CMake related instructions from previous step to build the project, then run:
 ``` sh
 cpack
 ```

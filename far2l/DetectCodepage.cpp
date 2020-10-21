@@ -1,5 +1,5 @@
 #include <strings.h>
-#include <uchardet/uchardet.h>
+#include <uchardet.h>
 
 #include "../WinPort/WinCompat.h"
 #include "../WinPort/WinPort.h"

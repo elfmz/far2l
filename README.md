@@ -33,7 +33,7 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)
 * libnfs-dev (needed for NetRocks/NFS)
 * libneon27-dev (or later, needed for NetRocks/WebDAV)
 * libarchive-dev (needed for better archives support in multiarc)
-* libpcre2-dev (needed for custom archives support in multiarc)
+* libpcre2-dev (or in recent distributives - libpcre3-dev) (needed for custom archives support in multiarc)
 * cmake ( >= 3.2.2 )
 * g++
 * git (needed for downloading source code)

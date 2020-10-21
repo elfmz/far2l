@@ -123,3 +123,4 @@ public:
 };
 
 bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound = nullptr, bool bUseHeuristics = true);
+bool GetFileFormat2(FARString strFileName, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics, bool bCheckIfSupported);

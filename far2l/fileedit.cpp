@@ -1298,12 +1298,18 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			case KEY_F8:
 			case KEY_SHIFTF8:
 			{
-				int codepage;
+				UINT codepage;
 				if (Key==KEY_F8) {
 					codepage = (m_codepage==WINPORT(GetACP)()?WINPORT(GetOEMCP)():WINPORT(GetACP)());
-				} else
-					codepage = SelectCodePage(m_codepage, false, true);
-				if (codepage != -1 && codepage != (int)m_codepage) {
+				} else {
+					codepage = SelectCodePage(m_codepage, false, true, false, true);
+					if (codepage == CP_AUTODETECT) {
+						if (!GetFileFormat2(strFileName,codepage,nullptr,true,true)) {
+							codepage = (UINT)-1;
+						}
+					}
+				}
+				if (codepage != (UINT)-1 && codepage != m_codepage) {
 					const bool need_reload = 0
 //								|| IsFixedSingleCharCodePage(m_codepage) != IsFixedSingleCharCodePage(codepage)
 								|| IsUTF8(m_codepage) != IsUTF8(codepage)

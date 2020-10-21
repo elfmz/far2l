@@ -130,32 +130,7 @@ VTFar2lExtensios.cpp
 vtlog.cpp
 vtcompletor.cpp
 InterThreadCall.cpp
-UCD/CharDistribution.cpp
-UCD/JpCntx.cpp
-UCD/LangBulgarianModel.cpp
-UCD/LangCyrillicModel.cpp
-UCD/LangGreekModel.cpp
-UCD/LangHebrewModel.cpp
-UCD/LangHungarianModel.cpp
-UCD/LangThaiModel.cpp
-UCD/nsBig5Prober.cpp
-UCD/nsCharSetProber.cpp
-UCD/nsEscCharsetProber.cpp
-UCD/nsEscSM.cpp
-UCD/nsEUCJPProber.cpp
-UCD/nsEUCKRProber.cpp
-UCD/nsEUCTWProber.cpp
-UCD/nsGB2312Prober.cpp
-UCD/nsHebrewProber.cpp
-UCD/nsLatin1Prober.cpp
-UCD/nsMBCSGroupProber.cpp
-UCD/nsMBCSSM.cpp
-UCD/nsSBCharSetProber.cpp
-UCD/nsSBCSGroupProber.cpp
-UCD/nsSJISProber.cpp
-UCD/nsUniversalDetector.cpp
-UCD/nsUTF8Prober.cpp
-UCD/prmem.c
+DetectCodepage.cpp
 )
 
 # Set target names for the executables
@@ -177,9 +152,14 @@ else()
         RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}")
 endif()
 
+find_package(Uchardet REQUIRED)
+
 target_compile_definitions(far2l PRIVATE -DUNICODE)
-target_include_directories(far2l PRIVATE Include)
-target_include_directories(far2l PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+target_include_directories(far2l PRIVATE
+	Include
+	${CMAKE_CURRENT_BINARY_DIR}
+	${UCHARDET_INCLUDE_DIRS})
 
 add_dependencies(far2l bootstrap WinPort)
 
@@ -202,11 +182,13 @@ set_target_properties(far2l
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     target_link_libraries(far2l
 	PRIVATE ${WINPORT}
-	PRIVATE c)
+	PRIVATE c
+	PRIVATE ${UCHARDET_LIBRARIES})
 else()
     target_link_libraries(far2l
 	PRIVATE ${WINPORT}
-	PRIVATE dl)
+	PRIVATE dl
+	PRIVATE ${UCHARDET_LIBRARIES})
 endif()
 
 add_custom_command(TARGET far2l POST_BUILD

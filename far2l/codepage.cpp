@@ -576,7 +576,7 @@ void ProcessSelected(bool select)
 }
 
 // Заполняем меню выбора таблиц символов
-void FillCodePagesVMenu(bool bShowUnicode, bool bShowUTF, bool bShowUTF7)
+void FillCodePagesVMenu(bool bShowUnicode, bool bShowUTF, bool bShowUTF7, bool bShowAuto)
 {
 	UINT codePage = currentCodePage;
 
@@ -594,7 +594,11 @@ void FillCodePagesVMenu(bool bShowUnicode, bool bShowUTF, bool bShowUTF7)
 
 	// Добавляем таблицы символов
 	// BUBUG: Когда добавится поддержка UTF7 параметр bShowUTF7 нужно убрать отовсюду
-	AddCodePages(::DOS | ::ANSI | ::KOI8 | (bShowUTF ? ::UTF8 : 0) | (bShowUTF7 ? ::UTF7 : 0) | (bShowUnicode ? AllUtfBiggerThan8 : 0));
+	AddCodePages(::DOS | ::ANSI | ::KOI8
+		|  (bShowUTF ? ::UTF8 : 0)
+		| (bShowUTF7 ? ::UTF7 : 0)
+		| (bShowUnicode ? AllUtfBiggerThan8 : 0)
+		| (bShowAuto ? ::Auto : 0) );
 	// Восстанавливаем оригинальню таблицу символов
 	currentCodePage = codePage;
 	// Позиционируем меню
@@ -735,7 +739,7 @@ void EditCodePageName()
 	Dlg.Process();
 }
 
-UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7)
+UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7, bool bShowAuto)
 {
 	CallbackCallSource = CodePageSelect;
 	currentCodePage = nCurrent;
@@ -745,7 +749,7 @@ UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowU
 	CodePages->SetFlags(VMENU_WRAPMODE|VMENU_AUTOHIGHLIGHT);
 	CodePages->SetHelp(L"CodePagesMenu");
 	// Добавляем таблицы символов
-	FillCodePagesVMenu(bShowUnicode, bShowUTF, bShowUTF7);
+	FillCodePagesVMenu(bShowUnicode, bShowUTF, bShowUTF7, bShowAuto);
 	// Показываем меню
 	CodePages->Show();
 
@@ -758,7 +762,7 @@ UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowU
 			case KEY_CTRLH:
 				Opt.CPMenuMode = !Opt.CPMenuMode;
 				CodePages->SetBottomTitle(MSG(!Opt.CPMenuMode?MGetCodePageBottomTitle:MGetCodePageBottomShortTitle));
-				FillCodePagesVMenu(bShowUnicode, bShowUTF, bShowUTF7);
+				FillCodePagesVMenu(bShowUnicode, bShowUTF, bShowUTF7, bShowAuto);
 				break;
 			// Обработка удаления таблицы символов из списка выбранных
 			case KEY_DEL:

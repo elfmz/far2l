@@ -418,7 +418,7 @@ BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 		// Увеличиваем счётчик выбранных таблиц символов
 		favoriteCodePages++;
 	}
-	else if (CallbackCallSource == CodePagesFill || Opt.CPMenuMode)
+	else if (CallbackCallSource == CodePagesFill || !Opt.CPMenuMode)
 	{
 		// добавляем разделитель между стандартными и системными таблицами символов
 		if (!favoriteCodePages && !normalCodePages)
@@ -646,7 +646,7 @@ wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length,
 		}
 		if (IsCodePageNameCustom)
 		{
-			if (strCodePageName==Name)
+			if (Name && strCodePageName==Name)
 			{
 				DeleteRegValue(NamesOfCodePagesKey, strCodePage);
 				IsCodePageNameCustom = false;

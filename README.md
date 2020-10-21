@@ -124,6 +124,24 @@ cmake .. \
   -DwxWidgets_CONFIG_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config \
   -DwxWidgets_wxrc_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc
 ```
+#### Building on Gentoo (and derivatives)
+For absolute minimum you need:
+```
+emerge -avn dev-libs/xerces-c app-i18n/uchardet dev-util/cmake dev-libs/spdlog
+```
+If you want to build far2l with wxGTK support also install it:
+```
+emerge -avn x11-libs/wxGTK
+```
+And if you also want Python plugin, consider installing virtualenv:
+```
+emerge -avn dev-python/virtualenv
+```
+Additionally, for NetRocks you will need:
+```
+emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
+```
+After installing, follow Clone and Build section above.
 
 #### Building DMG, DEB and TGZ packages
 

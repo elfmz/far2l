@@ -43,14 +43,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "config.hpp"
 #include "interf.hpp"
-
-static BOOL KillProcess(DWORD dwPID);
+#include "execute.hpp"
+#include "dirmix.hpp"
+#include "manager.hpp"
 
 void ShowProcessList()
 {
-    // Currently unsupported on linux
-    return;
-	
+	farExecuteA(GetMyScriptQuoted("ps.sh").c_str(), 0);
+	if (FrameManager) {
+		auto *current_frame = FrameManager->GetCurrentFrame();
+		if (current_frame) {
+			FrameManager->RefreshFrame(current_frame);
+		}
+	}
+/*
+	for (int i = FrameManager->GetFrameCount(); i > 0; --i) {
+		FrameManager->RefreshFrame(i - 1);
+	}
+*/
+#if 0
 	VMenu ProcList(MSG(MProcessListTitle),nullptr,0,ScrY-4);
 	ProcList.SetFlags(VMENU_WRAPMODE);
 	ProcList.SetPosition(-1,-1,0,0);
@@ -102,10 +113,7 @@ void ShowProcessList()
 	if (ProcList.Modal::GetExitCode()>=0)
 	{
 	}
+#endif
 }
 
 
-BOOL KillProcess(DWORD dwPID)
-{
-	return FALSE;
-}

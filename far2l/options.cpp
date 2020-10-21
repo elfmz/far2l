@@ -270,9 +270,8 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		{MSG(MMenuFilter),0,KEY_CTRLI},
 		{L"",LIF_SEPARATOR,0},
 		{MSG(MMenuPluginCommands),0,KEY_F11},
-		{MSG(MMenuWindowsList),0,KEY_F12}
-		//,
-		//{MSG(MMenuProcessList),0,KEY_CTRLW}
+		{MSG(MMenuWindowsList),0,KEY_F12},
+		{MSG(MMenuProcessList),0,KEY_CTRLW}
 		//,
 		//{MSG(MMenuHotPlugList),0,0}
 	};

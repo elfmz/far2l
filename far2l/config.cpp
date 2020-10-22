@@ -923,7 +923,7 @@ static struct FARConfig
 
 	{0, REG_DWORD,  NKeySystem,L"ExcludeCmdHistory",&Opt.ExcludeCmdHistory,0, 0}, //AN
 
-	{1, REG_DWORD,  NKeyCodePages,L"CPMenuMode",&Opt.CPMenuMode,0,0},
+	{1, REG_DWORD,  NKeyCodePages,L"CPMenuMode2",&Opt.CPMenuMode,1,0},
 
 	{1, REG_SZ,     NKeySystem,L"FolderInfo",&Opt.InfoPanel.strFolderInfoFiles, 0, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
 

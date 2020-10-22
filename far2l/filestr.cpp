@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 #include "filestr.hpp"
-#include "nsUniversalDetectorEx.h"
+#include "DetectCodepage.h"
 #include "codepage.hpp"
 
 #define DELTA 1024
@@ -477,18 +477,13 @@ bool OldGetFileFormat(FILE *file, UINT &nCodePage, bool *pSignatureFound, bool b
 			}
 			else
 			{
-				nsUniversalDetectorEx *ns = new nsUniversalDetectorEx();
-				ns->HandleData((const char*)Buffer,(PRUint32)sz);
-				ns->DataEnd();
-				int cp = ns->getCodePage();
+				int cp = DetectCodePage((const char*)Buffer, sz);
 
 				if (cp != -1)
 				{
 					nCodePage = cp;
 					bDetect = true;
 				}
-
-				delete ns;
 			}
 		}
 
@@ -935,18 +930,13 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 			}
 			else
 			{
-				nsUniversalDetectorEx *ns = new nsUniversalDetectorEx();
-				ns->HandleData(reinterpret_cast<LPCSTR>(Buffer), ReadSize);
-				ns->DataEnd();
-				int cp = ns->getCodePage();
+				int cp = DetectCodePage(reinterpret_cast<LPCSTR>(Buffer), ReadSize);
 
 				if (cp != -1)
 				{
 					nCodePage = cp;
 					bDetect = true;
 				}
-
-				delete ns;
 			}
 		}
 
@@ -958,4 +948,22 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 		*pSignatureFound = bSignatureFound;
 	}
 	return bDetect;
+}
+
+bool GetFileFormat2(FARString strFileName, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics, bool bCheckIfSupported)
+{
+	File f;
+	if (!f.Open(strFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL))
+		return false;
+
+	UINT detectedCodePage = nCodePage;
+	if (!GetFileFormat(f,detectedCodePage,pSignatureFound,bUseHeuristics))
+		return false;
+
+	// Проверяем поддерживается или нет задетектированная кодовая страница
+	if (bCheckIfSupported && !IsCodePageSupported(detectedCodePage))
+		return false;
+
+	nCodePage = detectedCodePage;
+	return true;
 }

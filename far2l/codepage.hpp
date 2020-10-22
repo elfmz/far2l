@@ -93,7 +93,7 @@ inline static void WideReverse(const wchar_t *src, wchar_t *dst, size_t l) {
 
 bool IsCodePageSupported(UINT CodePage);
 
-UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7 = false);
+UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7 = false, bool bShowAuto = false);
 
 UINT FillCodePagesList(HANDLE dialogHandle, UINT controlId, UINT codePage, bool allowAuto, bool allowAll);
 

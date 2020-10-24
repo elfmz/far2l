@@ -112,9 +112,15 @@ ULONGLONG GetFilePosition(HANDLE Handle)
   return ul.QuadPart;
 }
 
+static inline bool IsZIPFileMagic(const unsigned char *Data,int DataSize)
+{
+  return (DataSize>=4 && Data[0]=='P' && Data[1]=='K' &&
+    ( (Data[2]==3 && Data[3]==4) || (Data[2]==5 && Data[3]==6) ) );
+}
+
 BOOL WINAPI _export ZIP_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
-  if (DataSize>=4 && Data[0]=='P' && Data[1]=='K' && Data[2]==5 && Data[3]==6)
+  if (IsZIPFileMagic(Data, DataSize))
   {
     SFXSize.QuadPart=0;
     return(TRUE);
@@ -147,7 +153,7 @@ BOOL WINAPI _export ZIP_OpenArchive(const char *Name,int *Type)
 
   FileSize.u.LowPart=WINPORT(GetFileSize)(ArcHandle,&FileSize.u.HighPart);
 
-  char ReadBuf[1024];
+  unsigned char ReadBuf[1024];
   DWORD ReadSize;
   int Buf;
   bool bFound=false, bLast=false;
@@ -160,19 +166,37 @@ BOOL WINAPI _export ZIP_OpenArchive(const char *Name,int *Type)
   else
     WINPORT(SetFilePointer)(ArcHandle,-((signed)(sizeof(ReadBuf)-18)),NULL,FILE_END);
 
+  BYTE EOCD_Magic2 = 0x05;
   for (Buf=0; Buf<64 && !bFound; Buf++)
   {
-    WINPORT(ReadFile)(ArcHandle,ReadBuf,sizeof(ReadBuf),&ReadSize,NULL);
-    for (int I=ReadSize-4; I>=0; I--)
-    {
-      if (ReadBuf[I]==0x50 && ReadBuf[I+1]==0x4b && ReadBuf[I+2]==0x05 &&
-          ReadBuf[I+3]==0x06)
-      {
-        WINPORT(SetFilePointer)(ArcHandle,I+16-ReadSize,NULL,FILE_CURRENT);
-        WINPORT(ReadFile)(ArcHandle,&NextPosition.u.LowPart,sizeof(NextPosition.u.LowPart),&ReadSize,NULL);
-        NextPosition.u.HighPart=0;
-        bFound=true;
+    if (!WINPORT(ReadFile)(ArcHandle,ReadBuf,sizeof(ReadBuf),&ReadSize,NULL))
         break;
+    for (int I=((int)ReadSize)-4; I>=0; I--)
+    {
+      if (ReadBuf[I] == 0x50 && ReadBuf[I + 1] == 0x4B && ReadBuf[I + 3] == 0x06 && ReadBuf[I + 2] == EOCD_Magic2)
+      {
+        DWORD ReadSizeO = 0;
+        if (EOCD_Magic2 == 0x06)
+        {
+          WINPORT(SetFilePointer)(ArcHandle,I+48-ReadSize,NULL,FILE_CURRENT);
+          WINPORT(ReadFile)(ArcHandle,&NextPosition.QuadPart,sizeof(NextPosition.QuadPart),&ReadSizeO,NULL);
+          bFound=true;
+          break;
+        }
+        else
+        {
+          WINPORT(SetFilePointer)(ArcHandle,I+16-ReadSize,NULL,FILE_CURRENT);
+          WINPORT(ReadFile)(ArcHandle,&NextPosition.u.LowPart,sizeof(NextPosition.u.LowPart),&ReadSizeO,NULL);
+          if (NextPosition.u.LowPart != 0xffffffff)
+          {
+            NextPosition.u.HighPart=0;
+            bFound=true;
+            break;
+          }
+          WINPORT(SetFilePointer)(ArcHandle,-(LONG)(ReadSizeO+I+16-ReadSize),NULL,FILE_CURRENT);
+          // continue searching, but for EOCD64
+          EOCD_Magic2 = 0x06;
+        }
       }
     }
     if (bFound || bLast)
@@ -238,7 +262,12 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (NextPosition.u.LowPart == INVALID_SET_FILE_POINTER && WINPORT(GetLastError)() != NO_ERROR)
     return(GETARC_READERROR);
   if (NextPosition.QuadPart>FileSize.QuadPart)
+  {
+    fprintf(stderr,
+        "ZIP_GetArcItem: NextPosition=0x%llx > FileSize=0x%llx\n",
+        (unsigned long long)NextPosition.QuadPart, (unsigned long long)FileSize.QuadPart);
     return(GETARC_UNEXPEOF);
+  }
   if (bTruncated)
   {
     if (!WINPORT(ReadFile)(ArcHandle,&ZipHd1,sizeof(ZipHd1),&ReadSize,NULL))
@@ -259,7 +288,8 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   {
     if (!WINPORT(ReadFile)(ArcHandle,&ZipHeader,sizeof(ZipHeader),&ReadSize,NULL))
       return(GETARC_READERROR);
-    if (ZipHeader.Mark!=0x02014b50 && ZipHeader.Mark!=0x06054b50)
+    if (ZipHeader.Mark!=0x02014b50 && ZipHeader.Mark!=0x06054b50
+      && ZipHeader.Mark!=0x06064b50 && ZipHeader.Mark!=0x07064b50)
     {
       if (FirstRecord)
       {
@@ -278,7 +308,11 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
         }
       }
       else
+      {
+        fprintf(stderr,
+            "ZIP_GetArcItem: unexpected ZipHeader.Mark=0x%x\n", ZipHeader.Mark);
         return(GETARC_UNEXPEOF);
+      }
     }
   }
 
@@ -290,6 +324,15 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     if (!bTruncated && *(WORD *)((char *)&ZipHeader+20)!=0)
       ArcComment=TRUE;
     return(GETARC_EOF);
+  }
+  if (ZipHeader.Mark==0x06064b50) // EOCD64
+  {
+    return(GETARC_EOF);
+  }
+  if (ZipHeader.Mark==0x07064b50) //EOCD64Locator
+  {
+    NextPosition.QuadPart+= 20;
+    return ZIP_GetArcItem(Item,Info);
   }
   
   DWORD SizeToRead=(ZipHeader.NameLen<ARRAYSIZE(Item->FindData.cFileName)-1) ? ZipHeader.NameLen : ARRAYSIZE(Item->FindData.cFileName)-1;
@@ -494,7 +537,6 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     SeekLen.QuadPart=0;
   WINPORT(SetFilePointer)(ArcHandle,SeekLen.u.LowPart,(PLONG)&SeekLen.u.HighPart,FILE_CURRENT);
   NextPosition.QuadPart=GetFilePosition(ArcHandle);
-
   return(GETARC_SUCCESS);
 }
 

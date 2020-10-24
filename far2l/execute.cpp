@@ -399,8 +399,13 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 		} else {
 			perror("sdc_getcwd");
 		}
-		if (Opt.CmdLine.WaitKeypress > 1 || (Opt.CmdLine.WaitKeypress == 1 && r != 0)) {
-			WaitKey();
+
+		if (CtrlObject && (Opt.CmdLine.WaitKeypress > 1 || (Opt.CmdLine.WaitKeypress == 1 && r != 0))) {
+			auto *cp = CtrlObject->Cp();
+			if (cp && cp->LeftPanel && cp->RightPanel
+			  && (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
+				WaitKey();
+			}
 		}
 	}
 

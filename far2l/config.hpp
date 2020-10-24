@@ -333,6 +333,7 @@ struct CommandLineOptions
 	int AutoComplete;
 	int UsePromptFormat;
 	int UseShell;
+	int WaitKeypress;
 	FARString strPromptFormat;
 	FARString strShell;
 };

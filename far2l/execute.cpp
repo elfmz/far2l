@@ -399,7 +399,9 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 		} else {
 			perror("sdc_getcwd");
 		}
-
+		if (Opt.CmdLine.WaitKeypress) {
+			WaitKey();
+		}
 	}
 
 	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL)) {

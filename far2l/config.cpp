@@ -381,12 +381,24 @@ void VMenuSettings()
 
 void CmdlineSettings()
 {
+	DialogBuilderListItem CMWListItems[]=
+	{
+		{ MConfigCmdlineWaitKeypress_Never, 0 },
+		{ MConfigCmdlineWaitKeypress_OnError,  1 },
+		{ MConfigCmdlineWaitKeypress_Always, 2 },
+	};
+
 	DialogBuilder Builder(MConfigCmdlineTitle, L"CmdlineSettings");
 
 	Builder.AddCheckbox(MConfigCmdlineEditBlock, &Opt.CmdLine.EditBlock);
 	Builder.AddCheckbox(MConfigCmdlineDelRemovesBlocks, &Opt.CmdLine.DelRemovesBlocks);
 	Builder.AddCheckbox(MConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);
-	Builder.AddCheckbox(MConfigCmdlineWaitKeypress, &Opt.CmdLine.WaitKeypress);
+
+	Builder.AddText(MConfigCmdlineWaitKeypress);
+	Builder.AddComboBox((int *) &Opt.CmdLine.WaitKeypress, 40,
+		CMWListItems, ARRAYSIZE(CMWListItems), DIF_DROPDOWNLIST|DIF_LISTAUTOHIGHLIGHT|DIF_LISTWRAPMODE);
+
+
 	DialogItemEx *UsePromptFormat = Builder.AddCheckbox(MConfigCmdlineUsePromptFormat, &Opt.CmdLine.UsePromptFormat);
 	DialogItemEx *PromptFormat = Builder.AddEditField(&Opt.CmdLine.strPromptFormat, 19);
 	PromptFormat->Indent(4);
@@ -637,8 +649,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyCmdline, L"DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks,1, 0},
 	{1, REG_DWORD,  NKeyCmdline, L"EditBlock", &Opt.CmdLine.EditBlock,0, 0},
 	{1, REG_DWORD,  NKeyCmdline, L"AutoComplete",&Opt.CmdLine.AutoComplete,1, 0},
-	{1, REG_DWORD,  NKeyCmdline, L"WaitKeypress",&Opt.CmdLine.WaitKeypress,0, 0},
-
+	{1, REG_DWORD,  NKeyCmdline, L"WaitKeypress",&Opt.CmdLine.WaitKeypress,1, 0},
 
 	{1, REG_DWORD,  NKeyInterface, L"Mouse",&Opt.Mouse,1, 0},
 	{0, REG_DWORD,  NKeyInterface, L"UseVk_oem_x",&Opt.UseVk_oem_x,1, 0},

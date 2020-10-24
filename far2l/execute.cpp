@@ -399,7 +399,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 		} else {
 			perror("sdc_getcwd");
 		}
-		if (Opt.CmdLine.WaitKeypress) {
+		if (Opt.CmdLine.WaitKeypress > 1 || (Opt.CmdLine.WaitKeypress == 1 && r != 0)) {
 			WaitKey();
 		}
 	}

@@ -101,6 +101,7 @@ class CommandLine:public ScreenObject
 		void SetPersistentBlocks(int Mode);
 		void SetDelRemovesBlocks(int Mode);
 		void SetAutoComplete(int Mode);
+		void SetWaitKeypress(int Mode);
 
 		void GetSelString(FARString &strStr) { CmdStr.GetSelString(strStr); };
 		void GetSelection(int &Start,int &End) { CmdStr.GetSelection(Start,End); };

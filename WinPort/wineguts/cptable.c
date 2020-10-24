@@ -112,7 +112,7 @@ extern union cptable cptable_28604;
 extern union cptable cptable_28605;
 extern union cptable cptable_28606;
 
-static const union cptable * const cptables[73] =
+static const union cptable * const cptables[] =
 {
     &cptable_037,
     &cptable_424,
@@ -215,14 +215,14 @@ const union cptable *wine_cp_get_table( unsigned int codepage )
 
         if (codepage == (*mid)->info.codepage) {
             return *mid;
-	}
+        }
 
         if (codepage > (*mid)->info.codepage) {	/* key > p: move right */
             base = mid + 1;
             cnt--;
         }		/* else move left */
 
-	cnt>>= 1;
+        cnt>>= 1;
     }
 
     return (NULL);

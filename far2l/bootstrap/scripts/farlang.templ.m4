@@ -1999,14 +1999,42 @@ upd:"AutoComplete"
 upd:"AutoComplete"
 "&AutoCompletar"
 
+
 MConfigCmdlineWaitKeypress
 "&Ожидать нажатие перед закрытием"
 "&Wait keypress before close"
-upd:"Wait keypress before close"
-upd:"Wait keypress before close"
-upd:"Wait keypress before close"
-upd:"Wait keypress before close"
-upd:"Wait keypress before close"
+upd:"&Wait keypress before close"
+upd:"&Wait keypress before close"
+upd:"&Wait keypress before close"
+upd:"&Wait keypress before close"
+upd:"&Wait keypress before close"
+
+MConfigCmdlineWaitKeypress_Never
+"Никогда"
+"Never"
+upd:"Never"
+upd:"Never"
+upd:"Never"
+upd:"Never"
+"Never"
+
+MConfigCmdlineWaitKeypress_OnError
+"При ошибке"
+"On error"
+upd:"On error"
+upd:"On error"
+upd:"On error"
+upd:"On error"
+"On error"
+
+MConfigCmdlineWaitKeypress_Always
+"Всегда"
+"Always"
+upd:"Always"
+upd:"Always"
+upd:"Always"
+upd:"Always"
+"Always"
 
 MConfigCmdlineUseShell
 "Использовать &шелл"

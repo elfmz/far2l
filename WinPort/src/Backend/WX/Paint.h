@@ -13,6 +13,7 @@ class ConsolePaintContext
 	wxWindow *_window;
 	unsigned int _font_width, _font_height, _font_thickness;
 	bool _custom_draw_enabled, _buffered_paint, _cursor_state, _sharp;
+	bool _noticed_diacritics;
 	struct {
 		std::vector<bool> checked;
 		std::vector<uint8_t> result;

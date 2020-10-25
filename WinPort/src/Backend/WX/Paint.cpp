@@ -134,7 +134,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
-	_buffered_paint(false), _cursor_state(false), _sharp(false)
+	_buffered_paint(false), _cursor_state(false), _sharp(false), _noticed_diacritics(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
@@ -180,7 +180,7 @@ class FontSizeInspector
 	{
 		// If font is non-monospaced there is no sense to detect if widths are fractional
 		if (_unstable_size) return;
-		_fractional_size = _dc.GetTextExtent(chars).GetWidth() != _max_width * wcslen(chars);
+		_fractional_size = _dc.GetTextExtent(chars).GetWidth() != (int)(_max_width * wcslen(chars));
 	}
 
 	public:
@@ -394,16 +394,21 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 			for (unsigned int char_index = 0, edge = std::min(cw, dla.Width()); char_index != edge; ++char_index) {
 				const auto c = line[char_index].Char.UnicodeChar;
 
-				if (c == '|' || UNI_IS_PSEUDOGRAPHIC(c)) {
+				if (UNI_IS_DIACRITICAL(c)) {
+					++affecting_diacritics;
+					// Bit dirty optimization - activate diacritics area update
+					// correction only if during rendering diacritics characters
+					// were encountered. So by design there can be single one
+					// glitch per whole process life time ..
+					_noticed_diacritics = true;
+				}
+				else if (affecting_diacritics && (c == '|' || UNI_IS_PSEUDOGRAPHIC(c))) {
 					// reached panel's edge - space-fill gap caused by diacritics
 					for (int i = affecting_diacritics; i >= 0; --i) {
 						painter.NextChar(char_index - i, attributes, ' ');
 					}
 					painter.LineFlush(char_index);
 					affecting_diacritics = 0;
-
-				} else if (UNI_IS_DIACRITICAL(c)) {
-					++affecting_diacritics;
 				}
 
 
@@ -452,9 +457,9 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 	rc.SetTop(((int)area.Top) * _font_height);
 	rc.SetBottom(((int)area.Bottom + 1) * _font_height);
 
-	if (area.Left != 0) {
-		if (_line_diacritics_inspected.size() <= area.Bottom) {
-			_line_diacritics_inspected.resize(area.Bottom + 1);
+	if (area.Left != 0 && _noticed_diacritics) {
+		if (_line_diacritics_inspected.size() <= (size_t)area.Bottom) {
+			_line_diacritics_inspected.resize(((size_t)area.Bottom) + 1);
 		}
 
 		for (SHORT cy = area.Top; cy <= area.Bottom; ++cy) {

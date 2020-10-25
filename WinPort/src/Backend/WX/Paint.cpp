@@ -7,7 +7,8 @@
 #include <wx/graphics.h>
 #include "Paint.h"
 #include "PathHelpers.h"
-#include "utils.h"
+#include <utils.h>
+#include <ConvertUTF.h>
 
 #define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
 					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
@@ -133,7 +134,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
-	_buffered_paint(false), _cursor_state(false), _sharp(false)
+	_buffered_paint(false), _cursor_state(false), _sharp(false), _noticed_diacritics(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
@@ -179,7 +180,7 @@ class FontSizeInspector
 	{
 		// If font is non-monospaced there is no sense to detect if widths are fractional
 		if (_unstable_size) return;
-		_fractional_size = _dc.GetTextExtent(chars).GetWidth() != _max_width * wcslen(chars);
+		_fractional_size = _dc.GetTextExtent(chars).GetWidth() != (int)(_max_width * wcslen(chars));
 	}
 
 	public:
@@ -335,6 +336,8 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
+	_line_diacritics_inspected.clear();
+
 	wxPaintDC dc(_window);
 #if wxUSE_GRAPHICS_CONTEXT
 	wxGraphicsContext* gctx = dc.GetGraphicsContext();
@@ -364,39 +367,83 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 	if (area.Right < area.Left || area.Bottom < area.Top) return;
 
 	wxString tmp;
-	_line.resize(cw);
 	ApplyFont(dc);
 
-	ConsolePainter painter(this, dc, _buffer);
-	for (unsigned int cy = (unsigned)area.Top; cy <= (unsigned)area.Bottom; ++cy) {
-		COORD data_size = {(SHORT)cw, 1};
-		COORD data_pos = {0, 0};
-		SMALL_RECT screen_rect = {area.Left, (SHORT)cy, area.Right, (SHORT)cy};
+	CursorProps cursor_props(_cursor_state);
 
+	ConsolePainter painter(this, dc, _buffer, cursor_props);
+	for (unsigned int cy = (unsigned)area.Top; cy <= (unsigned)area.Bottom; ++cy) {
 		wxRegionContain lc = rgn.Contains(0, cy * _font_height, cw * _font_width, _font_height);
 
 		if (lc == wxOutRegion) {
 			continue;
 		}
-		g_winport_con_out.Read(&_line[area.Left], data_size, data_pos, screen_rect);
-//		if (lc == wxPartRegion) abort();
-		painter.LineBegin(cy);
-		for (unsigned int cx = (unsigned)area.Left; cx <= (unsigned)area.Right; ++cx) {
-			if (lc == wxPartRegion &&
-			  rgn.Contains(cx * _font_width, cy * _font_height, _font_width, _font_height) == wxOutRegion) {
-				painter.LineFlush(cx);
-				continue;
-			}
 
-			unsigned short attributes = _line[cx].Attributes;			
-			
-			if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right 
-				&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
-				attributes^= ALL_ATTRIBUTES;				
+		painter.LineBegin(cy);
+
+		ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
+		const CHAR_INFO *line = dla.Line();
+		if (line) {
+			// HACK: diacritics characters are kind of characters that combined with prceeding character
+			// FAR internally doesn't know about them, treating them as separate characters
+			// so here is workaround: when renedring line check each character to be diacritics and if so
+			// left-adjust positions of all subsequent characters until pseudographic, that typically end of
+			// panel
+			unsigned int affecting_diacritics = 0;
+			unsigned short attributes = line->Attributes;
+			for (unsigned int char_index = 0, edge = std::min(cw, dla.Width()); char_index != edge; ++char_index) {
+				const auto c = line[char_index].Char.UnicodeChar;
+
+				if (UNI_IS_DIACRITICAL(c)) {
+					++affecting_diacritics;
+					// Bit dirty optimization - activate diacritics area update
+					// correction only if during rendering diacritics characters
+					// were encountered. So by design there can be single one
+					// glitch per whole process life time ..
+					_noticed_diacritics = true;
+				}
+				else if (affecting_diacritics && (c == '|' || UNI_IS_PSEUDOGRAPHIC(c))) {
+					// reached panel's edge - space-fill gap caused by diacritics
+					for (int i = affecting_diacritics; i >= 0; --i) {
+						painter.NextChar(char_index - i, attributes, ' ');
+					}
+					painter.LineFlush(char_index);
+					affecting_diacritics = 0;
+				}
+
+
+				const unsigned int cx = char_index - affecting_diacritics;
+				if (cy == cursor_props.y && char_index == cursor_props.x) {
+					cursor_props.x = cx;
+				}
+
+				if (cx > (unsigned)area.Right) {
+					break;
+				}
+
+				if (cx >= (unsigned)area.Left) {
+					attributes = line[char_index].Attributes;
+					if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
+						&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
+						attributes^= ALL_ATTRIBUTES;
+					}
+
+					painter.NextChar(cx, attributes, c);
+
+				}
 			}
-						
-			painter.NextChar(cx, attributes, _line[cx].Char.UnicodeChar);
+			// space-fill gap caused by diacritics if any at the end of line
+//			for (int i = affecting_diacritics; i >= 0; --i) {
+//				painter.NextChar(area.Right + 1 - i, attributes, ' ');
+//			}
+
+		} else {
+			// screen resized while painted? empty fill extra space for a while
+			for (unsigned int cx = 0; cx <= (unsigned)area.Right; ++cx) {
+				painter.NextChar(cx, 0, ' ');
+			}
 		}
+
 		painter.LineFlush(area.Right + 1);
 	}		
 }
@@ -409,6 +456,29 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 	rc.SetRight(((int)area.Right + 1) * _font_width);
 	rc.SetTop(((int)area.Top) * _font_height);
 	rc.SetBottom(((int)area.Bottom + 1) * _font_height);
+
+	if (area.Left != 0 && _noticed_diacritics) {
+		if (_line_diacritics_inspected.size() <= (size_t)area.Bottom) {
+			_line_diacritics_inspected.resize(((size_t)area.Bottom) + 1);
+		}
+
+		for (SHORT cy = area.Top; cy <= area.Bottom; ++cy) {
+			if (!_line_diacritics_inspected[cy]) {
+				_line_diacritics_inspected[cy] = true;
+				ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
+				const CHAR_INFO *line = dla.Line();
+				for (unsigned int cx = 0; cx < dla.Width(); ++cx) {
+					if (UNI_IS_DIACRITICAL(line[cx].Char.UnicodeChar)) {
+						rc.SetLeft(0);
+						rc.SetRight(dla.Width() * _font_width);
+						break;
+					}
+				}
+			}
+		}
+
+	}
+
 	_window->Refresh(false, &rc);
 }
 
@@ -461,11 +531,10 @@ CursorProps::CursorProps(bool state) : visible(false), height(1)
 
 //////////////////////
 
-ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer) : 
-	_context(context), _dc(dc), _buffer(buffer), _cursor_props(context->GetCursorState()),
-	 _start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0)
+ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer, CursorProps &cursor_props) :
+	_context(context), _dc(dc), _buffer(buffer), _cursor_props(cursor_props),
+	_start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0)
 {
-
 	_dc.SetPen(context->GetTransparentPen());
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 	_buffer.Empty();
@@ -534,11 +603,6 @@ void ConsolePainter::FlushText()
 	_start_cx = (unsigned int)-1;
 	_prev_fit_font_index = 0;
 }
-
-
-// U+0000..U+D7FF, U+E000..U+10FFFF
-
-#define IS_VALID_WCHAR(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
 
 static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
 {
@@ -639,7 +703,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 {
 	WXCustomDrawChar::DrawT custom_draw = nullptr;
 
-	if (!c || c == L' ' || !IS_VALID_WCHAR(c) || (_context->IsCustomDrawEnabled()
+	if (!c || c == L' ' || !UNI_IS_VALID(c) || (_context->IsCustomDrawEnabled()
 	 && (custom_draw = WXCustomDrawChar::Get(c)) != nullptr)) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
@@ -649,8 +713,12 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
 	PrepareBackground(cx, clr_back);
 
-	if (!c || c == L' ' || !IS_VALID_WCHAR(c))
+	// NB: diacritical characters must be printed over previous ones,
+	// simulate this by shifting characters left until 1st space found (#826, #213)
+
+	if (!c || c == L' ' || !UNI_IS_VALID(c)) {
 		return;
+	}
 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
 
@@ -667,7 +735,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 			_prev_fit_font_index : _context->CharFitTest(_dc, c);
 	
 		if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
-			&& _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
+		  && _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
 			_buffer+= c;
 			return;
 		}

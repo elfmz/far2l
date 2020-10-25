@@ -8,6 +8,8 @@
 
 class ConsoleOutput
 {
+	friend class DirectLineAccess;
+
 	std::mutex _mutex;
 	ConsoleBuffer _buf;
 	std::vector<CHAR_INFO> _temp_chars;
@@ -50,7 +52,11 @@ class ConsoleOutput
 	bool ModifySequenceEntityAt(SequenceModifier &sm, COORD pos);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
-	
+
+protected:
+	void DirectAccessStart();
+	void DirectAccessFinish();
+
 public:
 	ConsoleOutput();
 	void SetBackend(IConsoleOutputBackend *listener);
@@ -98,6 +104,23 @@ public:
 	bool IsActive();
 	void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
 	bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
-};
 
+	class DirectLineAccess
+	{
+		std::lock_guard<std::mutex> _lock;
+		CHAR_INFO *_line;
+		unsigned int _width;
+
+	public:
+		inline DirectLineAccess(ConsoleOutput &co, size_t line_index)
+			: _lock(co._mutex)
+		{
+			_line = co._buf.DirectLineAccess(line_index);
+			_width = co._buf.GetWidth();
+		}
+
+		inline CHAR_INFO *Line() { return _line; }
+		inline unsigned int Width() const { return _width; }
+	};
+};
 

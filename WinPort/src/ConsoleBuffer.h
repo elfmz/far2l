@@ -20,9 +20,12 @@ public:
 
 	void SetSize(unsigned int width, unsigned int height, unsigned short attributes);
 	void GetSize(unsigned int &width, unsigned int &height);
+	inline unsigned int GetWidth() const { return _width; }
 
 	void Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
 	void Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
 	bool Read(CHAR_INFO &data, COORD screen_pos);
 	WriteResult Write(const CHAR_INFO &data, COORD screen_pos);
+
+	CHAR_INFO *DirectLineAccess(size_t line_index);
 };

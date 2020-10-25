@@ -136,3 +136,13 @@ ConsoleBuffer::WriteResult ConsoleBuffer::Write(const CHAR_INFO &ch, COORD scree
 	dch = ch;
 	return WR_MODIFIED;
 }
+
+CHAR_INFO *ConsoleBuffer::DirectLineAccess(size_t line_index)
+{
+	size_t offset = line_index * _width;
+	if (offset >= _console_chars.size()) {
+		return nullptr;
+	}
+
+	return &_console_chars[offset];
+}

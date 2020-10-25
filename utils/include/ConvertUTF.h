@@ -103,6 +103,26 @@ typedef uint16_t  UTF16;  /* at least 16 bits */
 typedef uint8_t   UTF8;   /* typically 8 bits */
 typedef unsigned char   Boolean; /* 0 or 1 */
 
+// U+0000..U+D7FF, U+E000..U+10FFFF
+#define UNI_IS_VALID(c)    ( (((unsigned int)c) <= 0xd7ff) || (((unsigned int)c) >=0xe000 && ((unsigned int)c) <= 0x10ffff ) )
+
+
+/*
+The following blocks are dedicated specifically to combining characters:
+Combining Diacritical Marks (0300 - 036F), since version 1.0, with modifications in subsequent versions down to 4.1
+Combining Diacritical Marks Extended (1AB0 - 1AFF), version 7.0
+Combining Diacritical Marks Supplement (1DC0 - 1DFF), versions 4.1 to 5.2
+Combining Diacritical Marks for Symbols (20D0 - 20FF), since version 1.0, with modifications in subsequent versions down to 5.1
+*/
+#define UNI_IS_DIACRITICAL(c)  ( (((unsigned int)c) >= 0x0300 && ((unsigned int)c) <= 0x036f) || \
+				(((unsigned int)c) >= 0x1ab0 && ((unsigned int)c) <= 0x1aff) || \
+				(((unsigned int)c) >= 0x1dc0 && ((unsigned int)c) <= 0x1dff) || \
+				(((unsigned int)c) >= 0x20d0 && ((unsigned int)c) <= 0x20ff) )
+
+#define UNI_IS_PSEUDOGRAPHIC(c)  ( (((unsigned int)c) >= 0x2500 && ((unsigned int)c) <= 0x259f))
+
+
+
 /* Some fundamental constants */
 #define UNI_REPLACEMENT_CHAR (UTF32)0x07 //0x0000FFFD
 #define UNI_MAX_BMP (UTF32)0x0000FFFF

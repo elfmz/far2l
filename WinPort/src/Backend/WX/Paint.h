@@ -9,6 +9,7 @@
 class ConsolePaintContext
 {
 	std::vector<wxFont> _fonts;
+	std::vector<bool> _line_diacritics_inspected;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height, _font_thickness;
 	bool _custom_draw_enabled, _buffered_paint, _cursor_state, _sharp;
@@ -17,7 +18,6 @@ class ConsolePaintContext
 		std::vector<uint8_t> result;
 	} _char_fit_cache;
 
-	std::vector<CHAR_INFO> _line;
 	wxString _buffer;
 	wxString _cft_tmp;
 
@@ -43,7 +43,6 @@ public:
 	inline bool IsCustomDrawEnabled() const { return _custom_draw_enabled; }
 	inline bool IsSharp() const { return _sharp; }
 	inline bool IsPaintBuffered() const { return _buffered_paint; }
-	inline bool GetCursorState() const { return _cursor_state; }
 	inline unsigned int FontWidth() const { return _font_width; }
 	inline unsigned int FontHeight() const { return _font_height; }
 	inline unsigned int FontThickness() const { return _font_thickness; }
@@ -84,7 +83,8 @@ class ConsolePainter
 	ConsolePaintContext *_context;
 	wxPaintDC &_dc;
 	wxString &_buffer;
-	CursorProps _cursor_props;
+	CursorProps &_cursor_props;
+
 	WinPortRGB _clr_text, _clr_back;
 	unsigned int _start_cx, _start_cy, _start_back_cx;
 	unsigned int _start_y;
@@ -99,7 +99,7 @@ class ConsolePainter
 	void FlushText();
 		
 public:
-	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer);
+	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer, CursorProps &cursor_props);
 	
 
 	void NextChar(unsigned int cx, unsigned short attributes, wchar_t c);

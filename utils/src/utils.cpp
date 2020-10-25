@@ -422,11 +422,6 @@ bool IsPathIn(const wchar_t *path, const wchar_t *root)
 	return true;
 }
 
-bool isCombinedUTF32(wchar_t c)
-{
-	return c >= 0x0300 && c <= 0x036F;
-}
-
 size_t GetMallocSize(void *p)
 {
 #ifdef _WIN32

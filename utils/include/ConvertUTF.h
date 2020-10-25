@@ -114,10 +114,11 @@ Combining Diacritical Marks Extended (1AB0 - 1AFF), version 7.0
 Combining Diacritical Marks Supplement (1DC0 - 1DFF), versions 4.1 to 5.2
 Combining Diacritical Marks for Symbols (20D0 - 20FF), since version 1.0, with modifications in subsequent versions down to 5.1
 */
-#define UNI_IS_DIACRITICAL(c)  ( (((unsigned int)c) >= 0x0300 && ((unsigned int)c) <= 0x036f) || \
+#define UNI_IS_COMBINING(c)  ( (((unsigned int)c) >= 0x0300 && ((unsigned int)c) <= 0x036f) || \
 				(((unsigned int)c) >= 0x1ab0 && ((unsigned int)c) <= 0x1aff) || \
 				(((unsigned int)c) >= 0x1dc0 && ((unsigned int)c) <= 0x1dff) || \
-				(((unsigned int)c) >= 0x20d0 && ((unsigned int)c) <= 0x20ff) )
+				(((unsigned int)c) >= 0x20d0 && ((unsigned int)c) <= 0x20ff) || \
+				(((unsigned int)c) >= 0xFE20 && ((unsigned int)c) <= 0xFE2F) )
 
 #define UNI_IS_PSEUDOGRAPHIC(c)  ( (((unsigned int)c) >= 0x2500 && ((unsigned int)c) <= 0x259f))
 

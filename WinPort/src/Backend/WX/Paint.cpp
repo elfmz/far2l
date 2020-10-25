@@ -134,7 +134,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
-	_buffered_paint(false), _cursor_state(false), _sharp(false), _noticed_diacritics(false)
+	_buffered_paint(false), _cursor_state(false), _sharp(false), _noticed_combinings(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
@@ -336,7 +336,7 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
-	_line_diacritics_inspected.clear();
+	_line_combinings_inspected.clear();
 
 	wxPaintDC dc(_window);
 #if wxUSE_GRAPHICS_CONTEXT
@@ -384,35 +384,35 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
 		const CHAR_INFO *line = dla.Line();
 		if (line) {
-			// HACK: diacritics characters are kind of characters that combined with prceeding character
+			// HACK: combinings characters are kind of characters that combined with prceeding character
 			// FAR internally doesn't know about them, treating them as separate characters
-			// so here is workaround: when renedring line check each character to be diacritics and if so
+			// so here is workaround: when renedring line check each character to be combinings and if so
 			// left-adjust positions of all subsequent characters until pseudographic, that typically end of
 			// panel
-			unsigned int affecting_diacritics = 0;
+			unsigned int affecting_combinings = 0;
 			unsigned short attributes = line->Attributes;
 			for (unsigned int char_index = 0, edge = std::min(cw, dla.Width()); char_index != edge; ++char_index) {
 				const auto c = line[char_index].Char.UnicodeChar;
 
-				if (UNI_IS_DIACRITICAL(c)) {
-					++affecting_diacritics;
-					// Bit dirty optimization - activate diacritics area update
-					// correction only if during rendering diacritics characters
+				if (UNI_IS_COMBINING(c)) {
+					++affecting_combinings;
+					// Bit dirty optimization - activate combinings area update
+					// correction only if during rendering combinings characters
 					// were encountered. So by design there can be single one
 					// glitch per whole process life time ..
-					_noticed_diacritics = true;
+					_noticed_combinings = true;
 				}
-				else if (affecting_diacritics && (c == '|' || UNI_IS_PSEUDOGRAPHIC(c))) {
-					// reached panel's edge - space-fill gap caused by diacritics
-					for (int i = affecting_diacritics; i >= 0; --i) {
+				else if (affecting_combinings && (c == '|' || UNI_IS_PSEUDOGRAPHIC(c))) {
+					// reached panel's edge - space-fill gap caused by combinings
+					for (int i = affecting_combinings; i >= 0; --i) {
 						painter.NextChar(char_index - i, attributes, ' ');
 					}
 					painter.LineFlush(char_index);
-					affecting_diacritics = 0;
+					affecting_combinings = 0;
 				}
 
 
-				const unsigned int cx = char_index - affecting_diacritics;
+				const unsigned int cx = char_index - affecting_combinings;
 				if (cy == cursor_props.y && char_index == cursor_props.x) {
 					cursor_props.x = cx;
 				}
@@ -432,8 +432,8 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 
 				}
 			}
-			// space-fill gap caused by diacritics if any at the end of line
-//			for (int i = affecting_diacritics; i >= 0; --i) {
+			// space-fill gap caused by combinings if any at the end of line
+//			for (int i = affecting_combinings; i >= 0; --i) {
 //				painter.NextChar(area.Right + 1 - i, attributes, ' ');
 //			}
 
@@ -457,18 +457,18 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 	rc.SetTop(((int)area.Top) * _font_height);
 	rc.SetBottom(((int)area.Bottom + 1) * _font_height);
 
-	if (area.Left != 0 && _noticed_diacritics) {
-		if (_line_diacritics_inspected.size() <= (size_t)area.Bottom) {
-			_line_diacritics_inspected.resize(((size_t)area.Bottom) + 1);
+	if (area.Left != 0 && _noticed_combinings) {
+		if (_line_combinings_inspected.size() <= (size_t)area.Bottom) {
+			_line_combinings_inspected.resize(((size_t)area.Bottom) + 1);
 		}
 
 		for (SHORT cy = area.Top; cy <= area.Bottom; ++cy) {
-			if (!_line_diacritics_inspected[cy]) {
-				_line_diacritics_inspected[cy] = true;
+			if (!_line_combinings_inspected[cy]) {
+				_line_combinings_inspected[cy] = true;
 				ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
 				const CHAR_INFO *line = dla.Line();
 				for (unsigned int cx = 0; cx < dla.Width(); ++cx) {
-					if (UNI_IS_DIACRITICAL(line[cx].Char.UnicodeChar)) {
+					if (UNI_IS_COMBINING(line[cx].Char.UnicodeChar)) {
 						rc.SetLeft(0);
 						rc.SetRight(dla.Width() * _font_width);
 						break;
@@ -713,7 +713,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
 	PrepareBackground(cx, clr_back);
 
-	// NB: diacritical characters must be printed over previous ones,
+	// NB: combining characters must be printed over previous ones,
 	// simulate this by shifting characters left until 1st space found (#826, #213)
 
 	if (!c || c == L' ' || !UNI_IS_VALID(c)) {
@@ -731,7 +731,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		_prev_fit_font_index = 0;
 
 	} else {
-		uint8_t fit_font_index = isCombinedUTF32(c) ? // workaround for 
+		uint8_t fit_font_index = UNI_IS_COMBINING(c) ? // workaround for 
 			_prev_fit_font_index : _context->CharFitTest(_dc, c);
 	
 		if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()

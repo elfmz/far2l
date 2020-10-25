@@ -81,8 +81,6 @@ int pipe_cloexec(int pipedes[2]);
 
 void PutZombieUnderControl(pid_t pid);
 
-bool isCombinedUTF32(wchar_t c);
-
 size_t GetMallocSize(void *p);
 
 

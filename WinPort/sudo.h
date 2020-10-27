@@ -24,7 +24,7 @@ extern "C" {
 	const char *sudo_title, const char *sudo_prompt, const char *sudo_confirm);
 	
  int sudo_main_askpass();
- int sudo_main_dispatcher();
+ int sudo_main_dispatcher(int argc, char *argv[]);
 
  int sudo_client_execute(const char *cmd, bool modify, bool no_wait);
  __attribute__ ((visibility("default"))) int sudo_client_is_required_for(const char *pathname, bool modify);

@@ -190,6 +190,8 @@ static int ArcComment;
 BOOL WINAPI _export ARC_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
   int I=0;
+  if (!CanBeExecutableFileHeader(Data, DataSize) && DataSize > 0x1000)
+    DataSize = 0x1000;
 
 /*
   if(Data[0] == 'M' && Data[1] == 'Z') // SFX

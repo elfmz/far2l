@@ -103,6 +103,9 @@ int CALLBACK CallbackProc(UINT msg,LPARAM UserData,LPARAM P1,LPARAM P2)
 
 BOOL WINAPI _export RAR_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
+  if (!CanBeExecutableFileHeader(Data, DataSize) && DataSize > 0x1000)
+    DataSize = 0x1000;
+
   for (int I=0;I<DataSize-7;I++)
   {
     const unsigned char *D=Data+I;

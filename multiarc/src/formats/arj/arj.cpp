@@ -114,6 +114,9 @@ static void crc_buf(const char *str, int len)
 
 BOOL WINAPI _export ARJ_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
+  if (!CanBeExecutableFileHeader(Data, DataSize) && DataSize > 0x1000)
+    DataSize = 0x1000;
+
   if(!CRCInit)
   {
     make_crctable();

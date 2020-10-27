@@ -170,6 +170,9 @@ BOOL CheckLZHHeader(struct LZH_Level0 *lzh)
 
 BOOL WINAPI _export LZH_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
+  if (!CanBeExecutableFileHeader(Data, DataSize) && DataSize > 0x1000)
+    DataSize = 0x1000;
+
   for (int I=0;I<DataSize-5;I++)
   {
     struct LZH_Level0 *lzh=(struct LZH_Level0*)(Data+I);

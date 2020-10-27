@@ -72,6 +72,8 @@ static DWORD UnpVer;
 BOOL WINAPI _export CAB_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
   int I;
+  if (!CanBeExecutableFileHeader(Data, DataSize) && DataSize > 0x1000)
+    DataSize = 0x1000;
 
   for( I=0; I <= (int)(DataSize-sizeof(struct CFHEADER)); I++ )
   {

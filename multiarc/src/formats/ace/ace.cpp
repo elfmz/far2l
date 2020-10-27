@@ -109,6 +109,9 @@ static DWORD getcrc(DWORD crc,BYTE *addr,int len)
 
 BOOL WINAPI _export ACE_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
+  if (!CanBeExecutableFileHeader(Data, DataSize) && DataSize > 0x1000)
+    DataSize = 0x1000;
+
   for (int I=0;I<(int)(DataSize-sizeof(struct ACEHEADER));I++)
   {
     const unsigned char *D=Data+I;

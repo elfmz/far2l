@@ -101,4 +101,7 @@ BOOL  WINAPI _export GetDefaultCommands(int TypeArc,int Command,char *Dest);
 #endif
 #endif
 
+bool CanBeExecutableFileHeader(const unsigned char *Data, int DataSize);
+
 #endif /* __FARFMT_HPP__ */
+

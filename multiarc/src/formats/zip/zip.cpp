@@ -125,7 +125,12 @@ BOOL WINAPI _export ZIP_IsArchive(const char *Name,const unsigned char *Data,int
     SFXSize.QuadPart=0;
     return(TRUE);
   }
-  if (DataSize<(int)MIN_HEADER_LEN) return FALSE;
+  if (DataSize<(int)MIN_HEADER_LEN)
+    return FALSE;
+
+  if (!CanBeExecutableFileHeader(Data, DataSize) && DataSize > 0x1000)
+    DataSize = 0x1000;
+
   const unsigned char *MaxData=Data+DataSize-MIN_HEADER_LEN;
   const unsigned char *DataEnd=Data+DataSize;
   for (const unsigned char *CurData=Data; CurData<MaxData; CurData++)

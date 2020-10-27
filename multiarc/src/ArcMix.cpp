@@ -185,7 +185,7 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
   //HANDLE hChildStdoutRd,hChildStdoutWr;
   HANDLE StdInput=NULL;//GetStdHandle(STD_INPUT_HANDLE);
   HANDLE StdOutput=NULL;//GetStdHandle(STD_OUTPUT_HANDLE);
-  HANDLE StdError=NULL;//GetStdHandle(STD_ERROR_HANDLE);
+//  HANDLE StdError=NULL;//GetStdHandle(STD_ERROR_HANDLE);
   HANDLE hScreen=NULL;
   CONSOLE_SCREEN_BUFFER_INFO csbi;
 
@@ -675,3 +675,31 @@ std::string &ExpandEnv(std::string &str)
   Wide2MB(&ExpandedCmd[0], str);
   return str;
 }
+
+bool CanBeExecutableFileHeader(const unsigned char *Data, int DataSize)
+{
+	if (DataSize < 16)
+		return false;
+
+	if (Data[0] == 0x7f && Data[1] == 'E' && Data[2] == 'L' && Data[3] == 'F')
+		return true;
+
+
+	if (Data[0] == 'M' && Data[1] == 'Z')
+		return true;
+
+
+	if (Data[0] == 0xca && Data[1] == 0xfe && Data[2] == 0xba && Data[3] == 0xbe)
+		return true;
+
+
+	if (Data[0] == 0xfe && Data[1] == 0xed && Data[2] == 0xfa && (Data[3] == 0xce || Data[3] == 0xcf))
+		return true;
+
+
+	if (Data[3] == 0xfe && Data[2] == 0xed && Data[1] == 0xfa && (Data[0] == 0xce || Data[0] == 0xcf))
+		return true;
+
+	return false;
+}
+

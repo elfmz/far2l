@@ -132,7 +132,7 @@ UnixDomainServer::UnixDomainServer(unsigned int sock_type, const std::string &se
 	if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		throw UnixDomainBindError();
 
-	if (sock_type == SOCK_DGRAM) {
+	if (sock_type == SOCK_STREAM) {
 		listen(sock, backlog);
 	}
 }

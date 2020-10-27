@@ -65,41 +65,6 @@ public:
 };
 
 
-static class Client2ServerFD : protected Client2Server<int, int>
-{
-	public:
-
-	int Register(int remote)
-	{
-		int local = open("/dev/null", O_RDWR, 0);
-		if (local != -1)
-			Client2ServerBase::Register(local, remote);
-		return local;
-	}
-
-	int Deregister(int local)
-	{
-		int remote;
-		if (!Client2ServerBase::Deregister(local, remote)) 
-			return -1;
-
-		close(local);
-		return remote;
-
-	}
-
-	int Lookup(int local)
-	{
-		int remote;
-		if (!Client2ServerBase::Lookup(local, remote))
-			return -1;
-
-		return remote;
-	}
-
-} s_c2s_fd;
-
-
 static class Client2ServerDIR : protected Client2Server<DIR *, void *>
 {
 	public:
@@ -137,16 +102,6 @@ static class Client2ServerDIR : protected Client2Server<DIR *, void *>
 ////////////////////////////////////////////
 
 
-static int send_remote_fd_close(int fd)
-{
-	ClientTransaction ct(SUDO_CMD_CLOSE);
-	ct.SendPOD(fd);
-	ct.RecvPOD(fd);
-	return fd;
-}
-
-
-
 inline bool IsAccessDeniedErrno()
 {
 	return (errno==EACCES || errno==EPERM);
@@ -169,8 +124,8 @@ extern "C" int sudo_client_execute(const char *cmd, bool modify, bool no_wait)
 		if (r==-1) {
 			ct.RecvErrno();
 		}
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: sudo_client_execute('%s', %u) - error %s\n", cmd, modify, what);
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: sudo_client_execute('%s', %u) - error %s\n", cmd, modify, e.what());
 		r = -3;
 	}
 	return r;
@@ -246,179 +201,54 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_open(const char* path
 		ct.SendPOD(flags);
 		ct.SendPOD(mode);
 
-		int remote_fd;
-		ct.RecvPOD(remote_fd);
-
-		if (remote_fd!=-1) {
-			r = s_c2s_fd.Register(remote_fd);
-
-			if (r==-1) {
-				ct.NewTransaction(SUDO_CMD_CLOSE);
-				ct.SendPOD(remote_fd);
-				ct.RecvPOD(r);
-				throw "register";
-			}
+		int remote_errno = -1;
+		ct.RecvPOD(remote_errno);
+		if (remote_errno == 0) {
+			r = ct.RecvFD();
 			errno = saved_errno;
+
 		} else {
-			ct.RecvErrno();
+//			r = -1;
+			errno = remote_errno;
 		}
-		
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: open(%s, 0x%x, 0x%x) - error %s\n", pathname, flags, mode, what);
-		return -1;
+
+	} catch(std::exception &e) {
+		r = -1;
+		fprintf(stderr, "sudo_client: open(%s, 0x%x, 0x%x) - error %s\n", pathname, flags, mode, e.what());
 	}
+	return r;
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_close(int fd)
 {
-	int remote_fd = s_c2s_fd.Deregister(fd);
-	if (remote_fd==-1) {
-		return close(fd);
-	}
-
-	try {
-		ClientTransaction ct(SUDO_CMD_CLOSE);
-		ct.SendPOD(remote_fd);
-		return ct.RecvInt();
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: close(0x%x -> 0x%x) - error %s\n", fd, remote_fd, what);
-		return 0;
-	}
+	return close(fd);
 }
 
 
 extern "C" __attribute__ ((visibility("default"))) off_t sdc_lseek(int fd, off_t offset, int whence)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1) {
-		return lseek(fd, offset, whence);
-	}
-
-	try {
-		ClientTransaction ct(SUDO_CMD_LSEEK);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(offset);
-		ct.SendPOD(whence);
-
-		off_t r;
-		ct.RecvPOD(r);
-		if (r==-1)
-			ct.RecvErrno();
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: close(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return lseek(fd, offset, whence);
 }
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_write(int fd, const void *buf, size_t count)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return write(fd, buf, count);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_WRITE);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(count);
-		if (count) ct.SendBuf(buf, count);
-
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r == -1)
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: write(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return write(fd, buf, count);
 }
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void *buf, size_t count)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return read(fd, buf, count);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_READ);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(count);
-
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r ==-1) {
-			ct.RecvErrno();
-		} else if ( r > 0) {
-			if (r > (ssize_t)count)
-				throw "too many bytes";
-
-			ct.RecvBuf(buf, r);
-		}
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: read(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return read(fd, buf, count);
 }
 
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_pwrite(int fd, const void *buf, size_t count, off_t offset)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return pwrite(fd, buf, count, offset);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_PWRITE);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(offset);
-		ct.SendPOD(count);
-		if (count) ct.SendBuf(buf, count);
-
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r == -1)
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: pwrite(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return pwrite(fd, buf, count, offset);
 }
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_pread(int fd, void *buf, size_t count, off_t offset)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return pread(fd, buf, count, offset);
-
-	try {
-		ClientTransaction ct(SUDO_CMD_PREAD);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(offset);
-		ct.SendPOD(count);
-
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r ==-1) {
-			ct.RecvErrno();
-		} else if ( r > 0) {
-			if (r > (ssize_t)count)
-				throw "too many bytes";
-
-			ct.RecvBuf(buf, r);
-		}
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: pread(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return pread(fd, buf, count, offset);
 }
 
 template <class STAT_STRUCT>
@@ -433,8 +263,8 @@ template <class STAT_STRUCT>
 			ct.RecvPOD(*buf);
 
 		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: common_stat(%u, '%s') - error %s\n", cmd, path, what);
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: common_stat(%u, '%s') - error %s\n", cmd, path, e.what());
 		return -1;
 	}
 }
@@ -496,66 +326,17 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_lstat(const char *pat
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_fstat(int fd, struct stat *buf)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return fstat(fd, buf);
-
-
-	try {
-		ClientTransaction ct(SUDO_CMD_FSTAT);
-		ct.SendPOD(remote_fd);
-
-		int r = ct.RecvInt();
-		if (r == 0)
-			ct.RecvPOD(*buf);
-		else
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: fstat(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return fstat(fd, buf);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_ftruncate(int fd, off_t length)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return ftruncate(fd, length);
-	
-	try {
-		ClientTransaction ct(SUDO_CMD_FTRUNCATE);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(length);
-		int r = ct.RecvInt();
-		if (r != 0)
-			ct.RecvErrno();
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sdc_ftruncate(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return ftruncate(fd, length);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_fchmod(int fd, mode_t mode)
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return fchmod(fd, mode);
-	
-	try {
-		ClientTransaction ct(SUDO_CMD_FCHMOD);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(mode);
-		int r = ct.RecvInt();
-		if (r != 0)
-			ct.RecvErrno();
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sdc_fchmod(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return fchmod(fd, mode);
 }
 
 extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *path)
@@ -581,8 +362,8 @@ extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *
 			} else
 				ct.RecvErrno();
 
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: opendir('%s') - error %s\n", path, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: opendir('%s') - error %s\n", path, e.what());
 			return nullptr;
 		}
 	}
@@ -600,8 +381,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_closedir(DIR *dir)
 		ClientTransaction ct(SUDO_CMD_CLOSEDIR);
 		ct.SendPOD(remote_dir);
 		return ct.RecvInt();
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: closedir(%p -> %p) - error %s\n", dir, remote_dir, what);
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: closedir(%p -> %p) - error %s\n", dir, remote_dir, e.what());
 		return 0;
 	}
 }
@@ -625,8 +406,8 @@ extern "C" __attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DI
 			return &sudo_client_dirent;
 		} else
 			errno = err;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: readdir(%p -> %p) - error %s\n", dir, remote_dir, what);
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: readdir(%p -> %p) - error %s\n", dir, remote_dir, e.what());
 	}
 	return nullptr;
 }
@@ -647,8 +428,8 @@ static int common_path_and_mode(SudoCommand cmd, int (*pfn)(const char *, mode_t
 				ct.RecvErrno();
 			else
 				errno = saved_errno;
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: common_path_and_mode(%u, '%s', 0x%x) - error %s\n", cmd, path, mode, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: common_path_and_mode(%u, '%s', 0x%x) - error %s\n", cmd, path, mode, e.what());
 			r = -1;
 		}
 	}
@@ -670,8 +451,8 @@ static int common_one_path(SudoCommand cmd, int (*pfn)(const char *), const char
 				ct.RecvErrno();
 			else
 				errno = saved_errno;
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: common_one_path(%u, '%s') - error %s\n", cmd, path, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: common_one_path(%u, '%s') - error %s\n", cmd, path, e.what());
 			r = -1;
 		}
 	}
@@ -705,8 +486,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 			else
 				ct.RecvStr(cwd);
 
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: sdc_chdir('%s') - error %s\n", path, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_chdir('%s') - error %s\n", path, e.what());
 			r2 = -1;
 		}
 
@@ -778,8 +559,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *pat
 				ct.RecvErrno();
 			else
 				errno = saved_errno;
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: sdc_chown('%s') - error %s\n", path, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_chown('%s') - error %s\n", path, e.what());
 			r = -1;
 		}
 	}
@@ -802,8 +583,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_utimes(const char *fi
 				ct.RecvErrno();
 			else
 				errno = saved_errno;
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: sdc_utimes('%s') - error %s\n", filename, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_utimes('%s') - error %s\n", filename, e.what());
 			r = -1;
 		}
 	}
@@ -812,26 +593,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_utimes(const char *fi
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_futimes(int fd, const struct timeval tv[2])
 {
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd==-1)
-		return futimes(fd, tv);
-
-
-	try {
-		ClientTransaction ct(SUDO_CMD_FUTIMES);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(tv[0]);
-		ct.SendPOD(tv[1]);
-
-		int r = ct.RecvInt();
-		if (r == -1)
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: futimes(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return futimes(fd, tv);
 }
 
 static int common_two_pathes(SudoCommand cmd, 
@@ -849,8 +611,8 @@ static int common_two_pathes(SudoCommand cmd,
 				ct.RecvErrno();
 			else
 				errno = saved_errno;
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: common_two_pathes(%u, '%s', '%s') - error %s\n", cmd, path1, path2, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: common_two_pathes(%u, '%s', '%s') - error %s\n", cmd, path1, path2, e.what());
 			r = -1;
 		}
 	}
@@ -898,8 +660,8 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_realpath(const char
 				errno = saved_errno;
 			} else
 				errno = err;
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: sdc_realpath('%s') - error %s\n", path, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_realpath('%s') - error %s\n", path, e.what());
 			r = nullptr;
 		}
 	}
@@ -922,8 +684,8 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_readlink(const ch
 				errno = saved_errno;
 			} else
 				ct.RecvErrno();
-		} catch(const char *what) {
-			fprintf(stderr, "sudo_client: sdc_readlink('%s') - error %s\n", path, what);
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_readlink('%s') - error %s\n", path, e.what());
 			r = -1;
 		}
 	}
@@ -946,36 +708,11 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, s
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd, char *namebuf, size_t size)
 {
 #if defined(__FreeBSD__)  || defined(__CYGWIN__)
-	return -1;
-#else
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd == -1) {
-#ifdef __APPLE__
+		return -1;
+#elif defined(__APPLE__)
 		return flistxattr(fd, namebuf, size, 0);
 #else
 		return flistxattr(fd, namebuf, size);
-#endif
-	}
-
-	try {
-		ClientTransaction ct(SUDO_CMD_FLISTXATTR);
-		ct.SendPOD(remote_fd);
-		ct.SendPOD(size);
-		
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r > 0) {
-			if ((size_t)r > size)
-				throw "too big r";
-			ct.RecvBuf(namebuf, r);
-		} else if (r < 0)
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: flistxattr(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
 #endif
 }
 
@@ -983,36 +720,10 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd,
 {
 #if defined(__FreeBSD__)  || defined(__CYGWIN__)
     return -1;
+#elif defined(__APPLE__)
+	return fgetxattr(fd, name, value, size, 0, 0);
 #else
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd == -1) {
-#ifdef __APPLE__
-		return fgetxattr(fd, name, value, size, 0, 0);
-#else
-		return fgetxattr(fd, name, value, size);
-#endif
-	}
-
-	try {
-		ClientTransaction ct(SUDO_CMD_FGETXATTR);
-		ct.SendPOD(remote_fd);
-		ct.SendStr(name);
-		ct.SendPOD(size);
-		
-		ssize_t r;
-		ct.RecvPOD(r);
-		if (r > 0) {
-			if ((size_t)r > size)
-				throw "too big r";
-			ct.RecvBuf(value, r);
-		} else if (r < 0)
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: fgetxattr(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return fgetxattr(fd, name, value, size);
 #endif
 }
 
@@ -1020,33 +731,10 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 {
 #if defined(__FreeBSD__)  || defined(__CYGWIN__)
     return -1;
+#elif defined(__APPLE__)
+	return fsetxattr(fd, name, value, size, 0, flags);
 #else
-	int remote_fd = s_c2s_fd.Lookup(fd);
-	if (remote_fd == -1) {
-#ifdef __APPLE__
-		return fsetxattr(fd, name, value, size, 0, flags);
-#else
-		return fsetxattr(fd, name, value, size, flags);
-#endif
-	}
-
-	try {
-		ClientTransaction ct(SUDO_CMD_FSETXATTR);
-		ct.SendPOD(remote_fd);
-		ct.SendStr(name);
-		ct.SendPOD(size);
-		ct.SendBuf(value, size);
-		ct.SendPOD(flags);
-
-		int r = ct.RecvInt();
-		if (r == -1) 
-			ct.RecvErrno();
-
-		return r;
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: fsetxattr(0x%x) - error %s\n", fd, what);
-		return -1;
-	}
+	return fsetxattr(fd, name, value, size, flags);
 #endif
 }
 
@@ -1077,8 +765,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 		else
 			ct.RecvErrno();
 
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: sdc_fs_flags_get('%s') - error %s\n", path, what);
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: sdc_fs_flags_get('%s') - error %s\n", path, e.what());
 		r = -1;
 	}
 	return r;
@@ -1110,8 +798,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 			ct.RecvErrno();
 			
 
-	} catch(const char *what) {
-		fprintf(stderr, "sudo_client: sdc_fs_flags_set('%s', 0x%x) - error %s\n", path, flags, what);
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: sdc_fs_flags_set('%s', 0x%x) - error %s\n", path, flags, e.what());
 		r = -1;
 	}
 	 

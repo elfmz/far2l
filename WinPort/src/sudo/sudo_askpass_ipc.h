@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
-#include <UnixDomain.h>
+#include <LocalSocket.h>
 
 class ISudoAskpass
 {
@@ -22,7 +22,7 @@ class SudoAskpassServer
 {
 	ISudoAskpass *_isa;
 	int _kickass[2];
-	std::unique_ptr<UnixDomainServer> _sock;
+	std::unique_ptr<LocalSocketServer> _sock;
 
 	std::string _srv;
 	struct Buffer

@@ -477,7 +477,6 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 		int r2;
 		std::string cwd;
 		try {
-			
 			ClientTransaction ct(SUDO_CMD_CHDIR);
 			ct.SendStr(path);
 			r2 = ct.RecvInt();

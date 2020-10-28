@@ -62,7 +62,7 @@ SudoAskpassServer::SudoAskpassServer(ISudoAskpass *isa)
 
 	try {
 		_srv = AskpassIpcFile(ipc_srv, "srv");
-		_sock.reset(new UnixDomainServer(SOCK_DGRAM, _srv));
+		_sock.reset(new LocalSocketServer(LocalSocket::DATAGRAM, _srv));
 
 		if (pthread_create(&_trd, NULL, sThread, this) != 0) {
 			throw std::runtime_error("pthread_create");
@@ -112,7 +112,7 @@ void SudoAskpassServer::Thread()
 				_sock->SendTo(&buf, slen, sa);
 			}
 		}
-	} catch (UnixDomainCancelled &) {
+	} catch (LocalSocketCancelled &) {
 		fprintf(stderr, "SudoAskpassServer::Thread finished\n");
 		break;
 
@@ -174,7 +174,7 @@ SudoAskpassResult SudoAskpassServer::sRequestToServer(unsigned char code, std::s
 		const std::string &clnt = AskpassIpcFile(getpid(), "clnt");
 
 		UnlinkScope us(clnt);
-		UnixDomainClient sock(SOCK_DGRAM, srv, clnt);
+		LocalSocketClient sock(LocalSocket::DATAGRAM, srv, clnt);
 
 		Buffer buf = {};
 		size_t slen = sFillBuffer(buf, code, str);

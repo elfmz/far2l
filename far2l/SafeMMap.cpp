@@ -130,7 +130,7 @@ SafeMMap::SafeMMap(const char *path, enum Mode m, size_t len_limit)
 
 	_view = mmap(NULL, _len, _prot, (m == M_WRITE) ? MAP_SHARED : MAP_PRIVATE, fd, 0);
 	if (!_view)
-		throw std::runtime_error(StrPrintf("Alloc error %u", errno));
+		throw std::runtime_error(StrPrintf("Map error %u", errno));
 
 	SMM_Lock sl;
 	s_safe_mmaps.insert(this);

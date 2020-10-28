@@ -2,7 +2,7 @@
 #include <string>
 #include <mutex>
 #include <utils.h>
-#include <UnixDomain.h>
+#include <LocalSocket.h>
 
 namespace Sudo
 {
@@ -40,11 +40,11 @@ namespace Sudo
 
 	class BaseTransaction
 	{
-		UnixDomain &_sock;
+		LocalSocket &_sock;
 		bool _failed;
 		
 	public:
-		BaseTransaction(UnixDomain &sock);
+		BaseTransaction(LocalSocket &sock);
 		void SendBuf(const void *buf, size_t len);
 		void SendStr(const char *sz);
 		template <class POD> void SendPOD(const POD &v) { SendBuf(&v, sizeof(v)); }

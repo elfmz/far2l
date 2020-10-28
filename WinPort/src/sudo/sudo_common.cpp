@@ -12,7 +12,7 @@ namespace Sudo
 
 /////////////////////
 
-	BaseTransaction::BaseTransaction(UnixDomain &sock)
+	BaseTransaction::BaseTransaction(LocalSocket &sock)
 		: _sock(sock), _failed(false)
 	{
 	}
@@ -45,9 +45,6 @@ namespace Sudo
 		try {
 			while (len) {
 				size_t r = _sock.Recv(buf, len);
-				if (r == 0) {
-					throw std::runtime_error("Connection closed");
-				}
 				len-= r;
 				buf = (char *)buf + r;
 			}

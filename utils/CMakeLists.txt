@@ -23,7 +23,7 @@ set(SOURCES
   src/crc64.c
   src/ini.c
   src/TTYRawMode.cpp
-  src/UnixDomain.cpp
+  src/LocalSocket.cpp
 )
 
 add_library (utils ${SOURCES})

@@ -25,8 +25,7 @@
 #include <vector>
 #include <mutex>
 #include <locale.h>
-#include <sys/socket.h>
-#include <UnixDomain.h>
+#include <LocalSocket.h>
 #include "sudo_private.h"
 
 namespace Sudo 
@@ -427,7 +426,7 @@ namespace Sudo
 		}
 	}
 	
-	static void sudo_dispatcher_with_socket(UnixDomain &sock)
+	static void sudo_dispatcher_with_socket(LocalSocket &sock)
 	{
 		fprintf(stderr, "sudo_dispatcher\n");
 		
@@ -449,16 +448,25 @@ namespace Sudo
 	extern "C" __attribute__ ((visibility("default"))) int sudo_main_dispatcher(int argc, char *argv[])
 	{
 		setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
+		if (argc != 1) {
+			fprintf(stderr, "sudo_main_dispatcher: bad args\n");
+			return -1;
+		}
+
+		std::string ipc_client = InMyTemp(StrPrintf("sudo/%u", getpid()).c_str());
 
 		try {
-			std::string ipc_client = InMyTemp(StrPrintf("sudo/%u", getpid()).c_str());
-			UnixDomainClient udc(SOCK_STREAM, argv[0], ipc_client);
+			LocalSocketClient udc(LocalSocket::STREAM, argv[0], ipc_client);
 			fprintf(stderr, "sudo_main_dispatcher: CONNECTED on '%s'\n", argv[0]);
 			sudo_dispatcher_with_socket(udc);
 
 		} catch (std::exception &e) {
 			fprintf(stderr, "sudo_main_dispatcher: %s on '%s'\n", e.what(), argv[0]);
 		}
+
+		unlink(ipc_client.c_str());
+		unlink(argv[0]);
+
 		return 0;	
 	}
 }

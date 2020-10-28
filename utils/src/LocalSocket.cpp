@@ -4,31 +4,53 @@
 #include <unistd.h>
 
 #include "os_call.hpp"
-#include "UnixDomain.h"
+#include "LocalSocket.h"
 
-size_t UnixDomain::Send(const void *data, size_t len) throw(std::exception)
+static size_t CheckIOResult(ssize_t r)
 {
-	return os_call_ssize(send, (int)_sock, data, len, 0);
+	if (r < 0) {
+		throw LocalSocketIOError();
+	}
+	if (r == 0) {
+		throw LocalSocketDisconnected();
+	}
+
+	return (size_t)r;
 }
 
-size_t UnixDomain::Recv(void *data, size_t len) throw(std::exception)
+size_t LocalSocket::Send(const void *data, size_t len) throw(std::exception)
 {
-	return os_call_ssize(recv, (int)_sock, data, len, 0);
+	if (!len) return 0;
+
+	return CheckIOResult(os_call_ssize(send, (int)_sock, data, len, 0));
+}
+
+size_t LocalSocket::Recv(void *data, size_t len) throw(std::exception)
+{
+	if (!len) return 0;
+
+	return CheckIOResult(os_call_ssize(recv, (int)_sock, data, len, 0));
 }
 
 
-size_t UnixDomain::SendTo(const void *data, size_t len, const struct sockaddr_un &sa) throw(std::exception)
+size_t LocalSocket::SendTo(const void *data, size_t len, const struct sockaddr_un &sa) throw(std::exception)
 {
-	return os_call_ssize(sendto, (int)_sock, data, len, 0, (const struct sockaddr *)&sa, (socklen_t)sizeof(sa));
+	if (!len) return 0;
+
+	return CheckIOResult(os_call_ssize(sendto,
+		(int)_sock, data, len, 0, (const struct sockaddr *)&sa, (socklen_t)sizeof(sa)));
 }
 
-size_t UnixDomain::RecvFrom(void *data, size_t len, struct sockaddr_un &sa) throw(std::exception)
+size_t LocalSocket::RecvFrom(void *data, size_t len, struct sockaddr_un &sa) throw(std::exception)
 {
+	if (!len) return 0;
+
 	socklen_t sal = sizeof(sa);
-	return os_call_ssize(recvfrom, (int)_sock, data, len, 0, (struct sockaddr *)&sa, &sal);
+	return CheckIOResult(os_call_ssize(recvfrom,
+		(int)_sock, data, len, 0, (struct sockaddr *)&sa, &sal));
 }
 
-void UnixDomain::SendFD(int fd) throw(std::exception)
+void LocalSocket::SendFD(int fd) throw(std::exception)
 {
 	std::vector<char> buf(CMSG_SPACE(sizeof(int)));
 	std::fill(buf.begin(), buf.end(), 0x0b);
@@ -54,11 +76,11 @@ void UnixDomain::SendFD(int fd) throw(std::exception)
 
 	memcpy(CMSG_DATA(cmsghdr), &fd, sizeof(int));
  
-	if (sendmsg(_sock, &msg, 0) == -1)
-		throw UnixDomainIOError();
+	if (os_call_ssize(sendmsg, (int)_sock, (const struct msghdr *)&msg, 0) == -1)
+		throw LocalSocketIOError();
 }
 
-int UnixDomain::RecvFD() throw(std::exception)
+int LocalSocket::RecvFD() throw(std::exception)
 {
 	std::vector<char> buf(CMSG_SPACE(sizeof(int)));
 	std::fill(buf.begin(), buf.end(), 0x0d);
@@ -82,8 +104,8 @@ int UnixDomain::RecvFD() throw(std::exception)
 	msg.msg_controllen = CMSG_LEN(sizeof(int));
 	msg.msg_flags = 0;
 
-	if (recvmsg(_sock, &msg, 0) == -1)
-		throw UnixDomainIOError();
+	if (os_call_ssize(recvmsg, (int)_sock, &msg, 0) == -1)
+		throw LocalSocketIOError();
 
 	int out;
 	memcpy(&out, CMSG_DATA(cmsghdr), sizeof(int));
@@ -92,36 +114,36 @@ int UnixDomain::RecvFD() throw(std::exception)
 
 ////////////////
 
-UnixDomainClient::UnixDomainClient(unsigned int sock_type, const std::string &path_server, const std::string &path_client)
+LocalSocketClient::LocalSocketClient(Kind sock_kind, const std::string &path_server, const std::string &path_client)
 {
-	_sock = socket(PF_UNIX, sock_type, 0);
+	_sock = socket(PF_UNIX, (sock_kind == DATAGRAM) ? SOCK_DGRAM : SOCK_STREAM, 0);
 	if (!_sock.Valid())
-		throw UnixDomainSocketError();
+		throw LocalSocketSocketError();
 
 	struct sockaddr_un sa = {};
 	sa.sun_family = AF_UNIX;
 	strncpy(sa.sun_path, path_client.c_str(), sizeof(sa.sun_path));
 	unlink(sa.sun_path);
 	if (bind(_sock, (struct sockaddr *)&sa, sizeof(sa)) < 0)
-		throw UnixDomainBindError();
+		throw LocalSocketBindError();
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sun_family = AF_UNIX;
 	strncpy(sa.sun_path, path_server.c_str(), sizeof(sa.sun_path));
 
 	if (connect(_sock, (struct sockaddr *)&sa, sizeof(sa)) == -1)
-		throw UnixDomainConnectError();
+		throw LocalSocketConnectError();
 }
 
 ////////////////
 
-UnixDomainServer::UnixDomainServer(unsigned int sock_type, const std::string &server, int backlog)
+LocalSocketServer::LocalSocketServer(Kind sock_kind, const std::string &server, int backlog)
 {
-	FDScope &sock = (sock_type == SOCK_DGRAM) ? _sock : _accept_sock;
+	FDScope &sock = (sock_kind == DATAGRAM) ? _sock : _accept_sock;
 
-	sock = socket(PF_UNIX, sock_type, 0);
+	sock = socket(PF_UNIX, (sock_kind == DATAGRAM) ? SOCK_DGRAM : SOCK_STREAM, 0);
 	if (!sock.Valid())
-		throw UnixDomainSocketError();
+		throw LocalSocketSocketError();
 
 	struct sockaddr_un sa = {};
 	sa.sun_family = AF_UNIX;
@@ -130,14 +152,14 @@ UnixDomainServer::UnixDomainServer(unsigned int sock_type, const std::string &se
 	unlink(sa.sun_path);
 
 	if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0)
-		throw UnixDomainBindError();
+		throw LocalSocketBindError();
 
-	if (sock_type == SOCK_STREAM) {
+	if (sock_kind == STREAM) {
 		listen(sock, backlog);
 	}
 }
 
-void UnixDomainServer::WaitForClient(int fd_cancel)
+void LocalSocketServer::WaitForClient(int fd_cancel)
 {
 	FDScope &sock = _accept_sock.Valid() ? _accept_sock : _sock;
 
@@ -160,12 +182,12 @@ void UnixDomainServer::WaitForClient(int fd_cancel)
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
 
-			throw UnixDomainIOError();
+			throw LocalSocketIOError();
 		}
 
 		if (fd_cancel != -1) {
 			if (FD_ISSET(fd_cancel, &fde) || FD_ISSET(fd_cancel, &fdr)) {
-				throw UnixDomainCancelled();
+				throw LocalSocketCancelled();
 			}
 		}
 

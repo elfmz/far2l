@@ -13,7 +13,7 @@
 #include <utils.h>
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
-#include <UnixDomain.h>
+#include <LocalSocket.h>
 
 
 int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std::string &info)
@@ -35,7 +35,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 				WriteAll(info_fd, info.c_str(), info.size());
 			}
 		}
-		UnixDomainServer sock(SOCK_DGRAM, ipc_path);
+		LocalSocketServer sock(LocalSocket::DATAGRAM, ipc_path);
 		sock.WaitForClient(kickass);
 
 		char x_far2l_tty = -1;
@@ -54,7 +54,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 		far2l_tty = x_far2l_tty != 0;
 		return notify_pipe;
 
-	} catch (UnixDomainCancelled &e) {
+	} catch (LocalSocketCancelled &e) {
 		fprintf(stderr, "TTYReviveMe: kickass signalled\n");
 		char c;
 		if (read(kickass, &c, 1) < 0) {
@@ -126,7 +126,7 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 	}
 
 	try {
-		UnixDomainClient sock(SOCK_DGRAM, ipc_path, ipc_path_clnt);
+		LocalSocketClient sock(LocalSocket::DATAGRAM, ipc_path, ipc_path_clnt);
 
 		char x_far2l_tty = far2l_tty ? 1 : 0;
 		sock.Send(&x_far2l_tty, 1);
@@ -136,7 +136,7 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 		CheckedCloseFD(notify_pipe[1]);
 		return notify_pipe[0];
 
-	} catch (UnixDomainConnectError &e) {
+	} catch (LocalSocketConnectError &e) {
 		fprintf(stderr, "TTYRevive: %s - discarding %lu\n", e.what(), (unsigned long)pid);
 		unlink(ipc_path.c_str());
 		snprintf(sz, sizeof(sz) - 1, "TTY/srv-%lu.info", (unsigned long)pid);

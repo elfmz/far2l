@@ -688,6 +688,9 @@ bool CanBeExecutableFileHeader(const unsigned char *Data, int DataSize)
 	if (Data[0] == 'M' && Data[1] == 'Z')
 		return true;
 
+	if (Data[0] == 'Z' && Data[1] == 'M')
+		return true;
+
 
 	if (Data[0] == 0xca && Data[1] == 0xfe && Data[2] == 0xba && Data[3] == 0xbe)
 		return true;

@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <dlfcn.h>
 #include <unistd.h>
 #include "InterThreadCall.hpp"
+#include "SafeMMap.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -753,7 +754,7 @@ int _cdecl main(int argc, char *argv[])
 		if (strcmp(name, "far2l_askpass")==0)
 			return sudo_main_askpass();
 		if (strcmp(name, "far2l_sudoapp")==0)
-			return sudo_main_dispatcher();
+			return sudo_main_dispatcher(argc - 1, argv + 1);
 		if (argc >= 4) {
 			if (strcmp(argv[1], "--libexec")==0)
 				return libexec(argv[2], argv[3], argc - 4, argv + 4);
@@ -773,6 +774,7 @@ int _cdecl main(int argc, char *argv[])
 
 	SetupFarPath(argc, argv);
 
+	SafeMMap::SignalHandlerRegistrar smm_shr;
 	apiEnableLowFragmentationHeap();
 	return WinPortMain(argc, argv, FarAppMain);
 }

@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "filelist.hpp"
 #include "message.hpp"
+#include "SafeMMap.hpp"
 
 const wchar_t *FmtPluginsCache_PluginS=L"PluginsCache/%ls";
 const wchar_t *FmtDiskMenuStringD=L"DiskMenuString%d";
@@ -588,12 +589,8 @@ HANDLE PluginManager::OpenFilePlugin(
 	if (Type==OFP_COMMANDS) OpMode|= OPM_COMMANDS;
 
 	Plugin *pPlugin = nullptr;
+	std::unique_ptr<SafeMMap> smm;
 
-	File file;
-	LPBYTE Data = nullptr;
-	DWORD DataSize = 0;
-
-	bool DataRead = false;
 	for (int i = 0; i < PluginsCount; i++)
 	{
 		pPlugin = PluginsData[i];
@@ -603,38 +600,33 @@ HANDLE PluginManager::OpenFilePlugin(
 		if (!pPlugin->HasOpenFilePlugin() && !(pPlugin->HasAnalyse() && pPlugin->HasOpenPlugin()))
 			continue;
 
-		if(Name && !DataRead)
+		if(Name && !smm)
 		{
-			if (file.Open(Name, FILE_READ_DATA, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
+			try
 			{
-				Data = new(std::nothrow) BYTE[Opt.PluginMaxReadData];
-				if (Data)
-				{
-					if (file.Read(Data, Opt.PluginMaxReadData, &DataSize))
-					{
-						DataRead = true;
-					}
-				}
-				file.Close();
+				smm.reset(new SafeMMap(Wide2MB(Name).c_str(), SafeMMap::M_READ, Opt.PluginMaxReadData));
 			}
-			if(!DataRead)
+			catch (std::exception &e)
 			{
+				fprintf(stderr, "PluginManager::OpenFilePlugin: %s\n", e.what());
+
 				if(!OpMode)
 				{
-					Message(MSG_WARNING|MSG_ERRORTYPE, 1, L"", MSG(MOpenPluginCannotOpenFile), Name, MSG(MOk));
+					Message(MSG_WARNING|MSG_ERRORTYPE, 1, MB2Wide(e.what()).c_str(),
+						MSG(MOpenPluginCannotOpenFile), Name, MSG(MOk));
 				}
 				break;
 			}
 		}
-
-		HANDLE hPlugin;
 
 		if (pPlugin->HasOpenFilePlugin())
 		{
 			if (Opt.ShowCheckingFile)
 				ct.Set(L"%ls - [%ls]...",MSG(MCheckingFileInPlugin),PointToName(pPlugin->GetModuleName()));
 
-			hPlugin = pPlugin->OpenFilePlugin(Name, Data, DataSize, OpMode);
+			HANDLE hPlugin = pPlugin->OpenFilePlugin(Name,
+				smm ? (const unsigned char *)smm->View() : nullptr,
+				smm ? (DWORD)smm->Length() : 0, OpMode);
 
 			if (hPlugin == (HANDLE)-2)   //сразу на выход, плагин решил нагло обработать все сам (Autorun/PictureView)!!!
 			{
@@ -653,8 +645,8 @@ HANDLE PluginManager::OpenFilePlugin(
 		{
 			AnalyseData AData;
 			AData.lpwszFileName = Name;
-			AData.pBuffer = Data;
-			AData.dwBufferSize = DataSize;
+			AData.pBuffer = smm ? (const unsigned char *)smm->View() : nullptr;
+			AData.dwBufferSize = smm ? (DWORD)smm->Length() : 0;
 			AData.OpMode = OpMode;
 
 			if (pPlugin->Analyse(&AData))
@@ -667,11 +659,6 @@ HANDLE PluginManager::OpenFilePlugin(
 
 		if (items.getCount() && !ShowMenu)
 			break;
-	}
-
-	if(Data)
-	{
-		delete[] Data;
 	}
 
 	if (items.getCount() && (hResult != (HANDLE)-2))

@@ -1426,9 +1426,12 @@ void ParseAndPrintString( HANDLE hDev,
 		} else if (state == 2) {
 			if (*s == ESC) ;		// \e\e...\e == \e
 			else if (*s == '(' || *s == ')' || *s == '*' || *s == '+') {
+                /*
+                // this code breaks free pascal's tui ide interface
 				FlushBuffer();
 				prefix = *s;
 				state = 10;
+                */
 			}
 			else if (*s >= '\x20' && *s <= '\x2f')
 				suffix2 = *s;

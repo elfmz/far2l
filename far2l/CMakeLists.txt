@@ -131,6 +131,7 @@ vtlog.cpp
 vtcompletor.cpp
 InterThreadCall.cpp
 DetectCodepage.cpp
+SafeMMap.cpp
 )
 
 # Set target names for the executables

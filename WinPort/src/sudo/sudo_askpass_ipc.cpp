@@ -60,31 +60,20 @@ SudoAskpassServer::SudoAskpassServer(ISudoAskpass *isa)
 	char ipc_srv[32];
 	snprintf(ipc_srv, sizeof(ipc_srv) - 1, "%lx", (unsigned long)getpid());
 
-	_srv = AskpassIpcFile(ipc_srv, "srv");
+	try {
+		_srv = AskpassIpcFile(ipc_srv, "srv");
+		_sock.reset(new LocalSocketServer(LocalSocket::DATAGRAM, _srv));
 
-	_srv_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
-	if (_srv_fd < 0) {
-		perror("SudoAskpassServer: socket");
-		return;
+		if (pthread_create(&_trd, NULL, sThread, this) != 0) {
+			throw std::runtime_error("pthread_create");
+		}
+
+		_active = true;
+		setenv("sdc_askpass_ipc", ipc_srv, 1);
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "SudoAskpassServer: %s\n", e.what());
 	}
-
-	struct sockaddr_un sa = {};
-	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, _srv.c_str(), sizeof(sa.sun_path));
-	unlink(sa.sun_path);
-	if (bind(_srv_fd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		perror("SudoAskpassServer: bind");
-		return;
-	}
-
-	if (pthread_create(&_trd, NULL, sThread, this) != 0) {
-		perror("SudoAskpassServer: pthread_create");
-		return;
-	}
-
-	_active = true;
-
-	setenv("sdc_askpass_ipc", ipc_srv, 1);
 }
 
 SudoAskpassServer::~SudoAskpassServer()
@@ -101,7 +90,7 @@ SudoAskpassServer::~SudoAskpassServer()
 	}
 
 	CheckedCloseFDPair(_kickass);
-	CheckedCloseFD(_srv_fd);
+	_sock.reset();
 
 	if (!_srv.empty())
 		unlink(_srv.c_str());
@@ -111,51 +100,25 @@ SudoAskpassServer::~SudoAskpassServer()
 
 void SudoAskpassServer::Thread()
 {
-	set_nonblock(_srv_fd);
-	for (;;) {
-		fd_set fds, fde;
-		int maxfd = (_kickass[0] > _srv_fd) ? _kickass[0] : _srv_fd;
-
-		FD_ZERO(&fds);
-		FD_ZERO(&fde);
-		FD_SET(_kickass[0], &fds); 
-		FD_SET(_kickass[0], &fde); 
-		FD_SET(_srv_fd, &fds); 
-
-		if (os_call_int(select, maxfd + 1, &fds, (fd_set *)nullptr, &fde, (timeval *)nullptr) == -1) {
-			break;
-		}
-
-		if (_srv_fd != -1 && FD_ISSET(_srv_fd, &fds)) {
-			struct sockaddr_un sa = {};
-			socklen_t  sa_len = sizeof(sa);
-			Buffer buf = {};
-			ssize_t rlen = recvfrom(_srv_fd, &buf, sizeof(buf), 0, (sockaddr *)&sa, &sa_len);
-			if (rlen > 0) {
-				size_t slen = OnRequest(buf, (size_t)rlen);
-				if (slen > 0) {
-					if (sendto(_srv_fd, &buf, slen, 0, (sockaddr *)&sa, sa_len) != (ssize_t)slen) {
-						perror("SudoAskpassServer::Thread: write reply");
-					}
-				}
+//	set_nonblock(_srv_fd);
+	for (;;) try {
+		_sock->WaitForClient(_kickass[0]);
+		Buffer buf;
+		struct sockaddr_un sa;
+		ssize_t rlen = _sock->RecvFrom(&buf, sizeof(buf), sa);
+		if (rlen > 0) {
+			size_t slen = OnRequest(buf, (size_t)rlen);
+			if (slen > 0) {
+				_sock->SendTo(&buf, slen, sa);
 			}
 		}
+	} catch (LocalSocketCancelled &) {
+		fprintf(stderr, "SudoAskpassServer::Thread finished\n");
+		break;
 
-		if (FD_ISSET(_kickass[0], &fde)) {
-			break;
-		}
-
-		if (FD_ISSET(_kickass[0], &fds)) {
-			char cmd = 0;
-			if (read(_kickass[0], &cmd, 1) != 1) {
-				perror("SudoAskpassServer::Thread: read kickass");
-			}
-			break;
-		}
-
+	} catch (std::exception &e) {
+		fprintf(stderr, "SudoAskpassServer::Thread: %s", e.what());
 	}
-
-	fprintf(stderr, "SudoAskpassServer::Thread exiting\n");
 }
 
 size_t SudoAskpassServer::OnRequest(Buffer &buf, size_t len)
@@ -205,51 +168,26 @@ SudoAskpassResult SudoAskpassServer::sRequestToServer(unsigned char code, std::s
 	}
 	fprintf(stderr, "sRequestToServer: ipc_srv='%s'\n", ipc_srv);
 
-	const std::string &srv = AskpassIpcFile(ipc_srv, "srv");
-	const std::string &clnt = AskpassIpcFile(getpid(), "clnt");
+	SudoAskpassResult out = SAR_FAILED;
+	try {
+		const std::string &srv = AskpassIpcFile(ipc_srv, "srv");
+		const std::string &clnt = AskpassIpcFile(getpid(), "clnt");
 
-	FDScope fd(socket(PF_UNIX, SOCK_DGRAM, 0));
-	if (!fd.Valid()) {
-		perror("sRequestToServer: socket");
-		return SAR_FAILED;
+		UnlinkScope us(clnt);
+		LocalSocketClient sock(LocalSocket::DATAGRAM, srv, clnt);
+
+		Buffer buf = {};
+		size_t slen = sFillBuffer(buf, code, str);
+		sock.Send(&buf, slen);
+		int rlen = sock.Recv(&buf, sizeof(buf));
+		if (rlen > 0) {
+			out = (SudoAskpassResult)buf.code;
+			if (out == SAR_OK && rlen >= 1)
+				str.assign(buf.str, rlen - 1);
+		}
+	} catch (std::exception &e) {
+		fprintf(stderr, "sRequestToServer: %s\n", e.what());
 	}
-
-	struct sockaddr_un sa = {};
-	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, clnt.c_str(), sizeof(sa.sun_path));
-	unlink(sa.sun_path);
-
-	UnlinkScope us(sa.sun_path);
-
-	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		perror("sRequestToServer: bind");
-		return SAR_FAILED;
-	}
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, srv.c_str(), sizeof(sa.sun_path));
-	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
-		perror("sRequestToServer: connect");
-		return SAR_FAILED;
-	}
-
-	Buffer buf = {};
-	size_t slen = sFillBuffer(buf, code, str);
-	if (send(fd, &buf, slen, 0) != (ssize_t)slen) {
-		perror("sRequestToServer: send");
-		return SAR_FAILED;
-	}
-
-	int rlen = recv(fd, &buf, sizeof(buf), 0);
-	if (rlen <= 0) {
-		perror("sRequestToServer: recv");
-		return SAR_FAILED;
-	}
-
-	SudoAskpassResult out = (SudoAskpassResult)buf.code;
-	if (out == SAR_OK)
-		str.assign(buf.str, rlen - 1);
 
 	return out;
 }

@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 #include <algorithm>
+#include <LocalSocket.h>
 #include "sudo_private.h"
 #include "sudo.h"
 #include "sudo_askpass_ipc.h"
@@ -19,9 +20,8 @@ namespace Sudo
 	std::string g_sudo_prompt = "Enter password";
 	std::string g_sudo_confirm = "Confirm priviledged operation";
 
-	static std::mutex s_client_mutex;
-	static int s_client_pipe_send = -1;
-	static int s_client_pipe_recv = -1;
+	static std::mutex s_uds_mutex;
+	static std::unique_ptr<LocalSocketServer> s_uds;
 	static std::string g_curdir_override;
 	static struct ListOfStrings : std::list<std::string> {} g_recent_curdirs;
 	
@@ -46,6 +46,7 @@ namespace Sudo
 	static SudoClientMode client_mode = SCM_DISABLE;
 	static time_t client_password_expiration = 0;
 	static time_t client_password_timestamp = 0;
+	static bool client_drop_pending = false;
 
 	
 	enum {
@@ -54,15 +55,14 @@ namespace Sudo
 
 	static void CloseClientConnection()
 	{
-		CheckedCloseFD(s_client_pipe_send);
-		CheckedCloseFD(s_client_pipe_recv);
+		s_uds.reset();
 	}
 	
 	static bool ClientInitSequence()
 	{
 		try {
 			SudoCommand cmd = SUDO_CMD_PING;
-			BaseTransaction bt(s_client_pipe_send, s_client_pipe_recv);
+			BaseTransaction bt(*s_uds);
 			bt.SendPOD(cmd);
 			bt.RecvPOD(cmd);
 
@@ -111,66 +111,76 @@ namespace Sudo
 		return SudoAskpassRequestConfirmation() == SAR_OK;
 	}
 
-	static bool LaunchDispatcher(int pipe_request, int pipe_reply)
+	static int LaunchDispatcher(const std::string &ipc)
 	{
 		struct stat s = {0};
 		
-		if (g_sudo_app.empty() || stat(g_sudo_app.c_str(), &s)==-1)
-			return false;
+		if (g_sudo_app.empty() || stat(g_sudo_app.c_str(), &s)==-1) {
+			throw std::runtime_error("g_sudo_app not configured");
+		}
 
 		char *askpass = getenv("SUDO_ASKPASS");
 		if (!askpass || !*askpass || stat(askpass, &s)==-1) {
-			if (g_askpass_app.empty() || stat(g_askpass_app.c_str(), &s)==-1)
-				return false;
+			if (g_askpass_app.empty() || stat(g_askpass_app.c_str(), &s)==-1) {
+				throw std::runtime_error("g_askpass_app not configured");
+			}
 			setenv("SUDO_ASKPASS", g_askpass_app.c_str(), 1);
 		}
-	
+
+		int leash[2] = {-1, -1};
+		if (pipe(leash)==-1) {
+			throw std::runtime_error("pipe-leash");
+		}
+
+		fcntl(leash[0], F_SETFD, FD_CLOEXEC);
+
 		int r = fork();
-		if (r==0) {
-			//sudo closes all descriptors except std, so use them
-			dup2(pipe_reply, STDOUT_FILENO);
-			close(pipe_reply);
-			dup2(pipe_request, STDIN_FILENO);
-			close(pipe_request);
+		if (r == 0) {
+			// sudo closes all descriptors except std, so put leash[1] into stdin to make it survive
+			dup2(leash[1], STDIN_FILENO);
+
+			// override stdout handle otherise TTY detach doesnt work while sudo client runs
+			int fd = open("/dev/null", O_RDWR);
+			if (fd != -1) {
+				dup2(fd, STDOUT_FILENO);
+				close(fd);
+			}
+
 			if (chdir("/bin") == -1)  //avoid locking arbitrary current dir
 				perror("chdir");
 			//if process doesn't have terminal then sudo caches password per parent pid
 			//so don't use intermediate shell for running it!
-			r = execlp("sudo", "-n", "-A", "-k", g_sudo_app.c_str(), NULL);
+			r = execlp("sudo", "-n", "-A", "-k", g_sudo_app.c_str(), ipc.c_str(), NULL);
+//			r = execlp(g_sudo_app.c_str(), g_sudo_app.c_str(), ipc.c_str(), NULL);
 			perror("execl");
 			_exit(r);
 			exit(r);
 		}
-		if ( r == -1)
-			return false;
-			
+		close(leash[1]);
+		if ( r == -1) {
+			close(leash[0]);
+			throw std::runtime_error("fork failed");
+		}
+
 		PutZombieUnderControl(r);
-		return true;
+		return leash[0];
 	}
 	
 	static bool OpenClientConnection()
 	{
-		int req[2] = {-1, -1}, rep[2] = {-1, -1};
-		if (pipe(req)==-1)
-			return false;
-		if (pipe(rep)==-1) {
-			CheckedCloseFDPair(req);
-			return false;
-		}
-				
-		fcntl(req[1], F_SETFD, FD_CLOEXEC);
-		fcntl(rep[0], F_SETFD, FD_CLOEXEC);
-				
-		if (!LaunchDispatcher(req[0], rep[1])) {//likely missing askpass
-			perror("g_sudo_launcher\n");
-			CheckedCloseFDPair(req);
-			CheckedCloseFDPair(rep);
+		std::string ipc = InMyTemp(StrPrintf("sudo/%u", getpid()).c_str());
+		try {
+			s_uds.reset(new LocalSocketServer(LocalSocket::STREAM, ipc));
+			FDScope dispatcher_leash(LaunchDispatcher(ipc));
+			s_uds->WaitForClient(dispatcher_leash);
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "OpenClientConnection: %s\n", e.what());
+			s_uds.reset();
+			unlink(ipc.c_str());
 			return false;
 		}
-		CheckedCloseFD(req[0]);
-		CheckedCloseFD(rep[1]);
-		s_client_pipe_send = req[1];
-		s_client_pipe_recv = rep[0];
+
 		return true;
 	}
 
@@ -179,13 +189,14 @@ namespace Sudo
 	{
 		if (global_client_region_counter != 0)
 			return;
-			
-		if (client_mode != SCM_DISABLE) {
+
+		if (client_mode != SCM_DISABLE && !client_drop_pending) {
 			if (time(nullptr) - client_password_timestamp < client_password_expiration) {
 				return;
 			}
 		}
-			
+
+		client_drop_pending = false;
 		CloseClientConnection();
 	}
 	
@@ -193,14 +204,14 @@ namespace Sudo
 	
 	void ClientCurDirOverrideReset()
 	{
-		std::lock_guard<std::mutex> lock(s_client_mutex);
+		std::lock_guard<std::mutex> lock(s_uds_mutex);
 		g_curdir_override.clear();
 	}
 	
 	void ClientCurDirOverrideSet(const char *path)
 	{
 		//fprintf(stderr, "ClientCurDirOverride: %s\n", path);
-		std::lock_guard<std::mutex> lock(s_client_mutex);
+		std::lock_guard<std::mutex> lock(s_uds_mutex);
 		g_curdir_override = path;
 		if (!g_curdir_override.empty()) {
 			g_recent_curdirs.push_back(g_curdir_override);
@@ -212,7 +223,7 @@ namespace Sudo
 	bool ClientCurDirOverrideSetIfRecent(const char *path)
 	{
 		std::string str = path;
-		std::lock_guard<std::mutex> lock(s_client_mutex);
+		std::lock_guard<std::mutex> lock(s_uds_mutex);
 		if (client_mode == SCM_DISABLE)
 			return false;
 
@@ -229,7 +240,7 @@ namespace Sudo
 	
 	bool ClientCurDirOverrideQuery(char *path, size_t size)
 	{
-		std::lock_guard<std::mutex> lock(s_client_mutex);
+		std::lock_guard<std::mutex> lock(s_uds_mutex);
 		if (g_curdir_override.size() >= size ) {
 			errno = ERANGE;
 			return false;
@@ -243,7 +254,7 @@ namespace Sudo
 		: _free_ptr(nullptr), _initial_path(path), _path(path)
 	{
 		if (path[0] != '/' && path[0]) {
-			std::lock_guard<std::mutex> lock(s_client_mutex);
+			std::lock_guard<std::mutex> lock(s_uds_mutex);
 			if (!g_curdir_override.empty()) {
 				std::string  str = g_curdir_override;
 				if (strcmp(path, ".")==0 || strcmp(path, "./")==0) {
@@ -283,25 +294,36 @@ namespace Sudo
 			if (sudo_prompt && *sudo_prompt) g_sudo_prompt = sudo_prompt;
 			if (sudo_confirm && *sudo_confirm) g_sudo_confirm = sudo_confirm;
 
-			std::lock_guard<std::mutex> lock(s_client_mutex);
+			std::lock_guard<std::mutex> lock(s_uds_mutex);
 			g_sudo_app = sudo_app;
 			g_askpass_app = askpass_app ? askpass_app : "";
 			client_mode = mode;
 			client_password_expiration = password_expiration;
 			CheckForCloseClientConnection();
 		}
+
+		__attribute__ ((visibility("default"))) void sudo_client_drop()
+		{
+			std::lock_guard<std::mutex> lock(s_uds_mutex);
+			if (global_client_region_counter) {
+				client_drop_pending = true;
+
+			} else {
+				CloseClientConnection();
+			}
+		}
 		
 		
 		__attribute__ ((visibility("default"))) void sudo_client_region_enter()
 		{
-			std::lock_guard<std::mutex> lock(s_client_mutex);
+			std::lock_guard<std::mutex> lock(s_uds_mutex);
 			global_client_region_counter++;
 			thread_client_region_counter.count++;
 		}
 		
 		__attribute__ ((visibility("default"))) void sudo_client_region_leave()
 		{
-			std::lock_guard<std::mutex> lock(s_client_mutex);
+			std::lock_guard<std::mutex> lock(s_uds_mutex);
 			assert(global_client_region_counter > 0);
 			assert(thread_client_region_counter.count > 0);
 
@@ -331,8 +353,8 @@ namespace Sudo
 
 	bool IsSudoRegionActive()
 	{
-		std::lock_guard<std::mutex> lock(s_client_mutex);
-		return (s_client_pipe_send!=-1 && s_client_pipe_recv!=-1 && thread_client_region_counter.count);
+		std::lock_guard<std::mutex> lock(s_uds_mutex);
+		return (s_uds && thread_client_region_counter.count);
 	}
 	
 	bool TouchClientConnection(bool want_modify)
@@ -342,23 +364,23 @@ namespace Sudo
 		}
 
 		ErrnoSaver es;
-		std::lock_guard<std::mutex> lock(s_client_mutex);
+		std::lock_guard<std::mutex> lock(s_uds_mutex);
 		if (client_mode == SCM_DISABLE)
 			return false;
 
-		if (s_client_pipe_send==-1 || s_client_pipe_recv==-1) {
+		if (!s_uds) {
 			if (thread_client_region_counter.silent_query > 0 && !want_modify)
 				return false;
 
 			CloseClientConnection();
 			if (!OpenClientConnection())
 				return false;
-				
+
 			if (!ClientInitSequence()) {//likely bad password or Cancel
 				thread_client_region_counter.cancelled = true;
 				return false; 
 			}
-			
+
 			//assume user confirmed also modify operation with this password
 			if (want_modify && client_mode == SCM_CONFIRM_MODIFY )
 				thread_client_region_counter.modify = MODIFY_ALLOWED;
@@ -378,13 +400,13 @@ namespace Sudo
 
 
 	ClientTransaction::ClientTransaction(SudoCommand cmd) : 
-		std::lock_guard<std::mutex>(s_client_mutex),
-		BaseTransaction(s_client_pipe_send, s_client_pipe_recv), 
+		std::lock_guard<std::mutex>(s_uds_mutex),
+		BaseTransaction(*s_uds), 
 		_cmd(cmd)
 	{
 		try {
 			SendPOD(_cmd);
-		} catch (const char *) {
+		} catch (...) {
 			CloseClientConnection();
 			throw;
 		}
@@ -392,12 +414,13 @@ namespace Sudo
 	
 	ClientTransaction::~ClientTransaction()
 	{
-		try {//should catch cuz used from d-tor
+		try {//should catch all cuz in d-tor
 			Finalize();
 			if (IsFailed())
 				CloseClientConnection();
-		} catch (const char * what) {
-			fprintf(stderr, "ClientTransaction(%u)::Finalize - %s\n", _cmd, what);
+
+		} catch (...) {
+			fprintf(stderr, "ClientTransaction(%u)::Finalize - exception\n", _cmd);
 			CloseClientConnection();
 		}
 	}

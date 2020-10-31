@@ -11,6 +11,7 @@
 #endif
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
+#include <sudo.h>
 #include "utils.h"
 #include "CheckedCast.hpp"
 #include "WinPortHandle.h"
@@ -762,6 +763,10 @@ static void OnSigCont(int signo)
 
 static void OnSigHup(int signo)
 {
+	// drop sudo priviledges once pending sudo operation completes
+	// leaving them is similar to leaving root console unattended
+	sudo_client_drop();
+
 	FDScope dev_null(open("/dev/null", O_RDWR));
 	if (dev_null.Valid()) {
 //		dup2(dev_null, 2);

@@ -1460,6 +1460,7 @@ DWORD PeekInputRecord(INPUT_RECORD *rec,bool ExcludeMacro)
 DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 {
 	bool Visible=false;
+	bool AdHocQuickEdit= ((KeyWait&(~KEY_CTRLMASK)) != KEY_MSLCLICK);
 	DWORD Size=0;
 
 	if (KeyWait == KEY_CTRLALTSHIFTRELEASE || KeyWait == KEY_RCTRLALTSHIFTRELEASE)
@@ -1479,6 +1480,11 @@ DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 		if (PeekInputRecord(&rec,ExcludeMacro))
 		{
 			Key=GetInputRecord(&rec,ExcludeMacro,true);
+		}
+
+		if (AdHocQuickEdit && (Key&(~KEY_CTRLMASK)) == KEY_MSLCLICK) {
+			WINPORT(BeginConsoleAdhocQuickEdit)();
+			continue;
 		}
 
 		if (KeyWait == KEY_INVALID)

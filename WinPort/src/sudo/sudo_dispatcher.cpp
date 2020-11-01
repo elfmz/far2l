@@ -21,6 +21,7 @@
 #ifndef __FreeBSD__
 # include <sys/xattr.h>
 #endif
+#include <stdexcept>
 #include <set>
 #include <vector>
 #include <mutex>

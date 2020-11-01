@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <atomic>
+#include <stdexcept>
 
 #include <WinCompat.h>
 #include <string.h>

@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 #include <algorithm>
+#include <stdexcept>
 #include <LocalSocket.h>
 #include "sudo_private.h"
 #include "sudo.h"

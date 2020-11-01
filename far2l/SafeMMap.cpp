@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 
 #include <exception>
+#include <stdexcept>
 #include <functional>
 #include <set>
 #include <atomic>

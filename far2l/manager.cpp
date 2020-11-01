@@ -1125,7 +1125,6 @@ int Manager::ProcessKey(DWORD Key)
 										CtrlObject->Cp()->MainKeyBar.Show();
 										break;
 								}
-
 								WaitKey(Key==KEY_CTRLALTSHIFTPRESS?KEY_CTRLALTSHIFTRELEASE:KEY_RCTRLALTSHIFTRELEASE);
 
 								if (LeftVisible)      CtrlObject->Cp()->LeftPanel->Show();

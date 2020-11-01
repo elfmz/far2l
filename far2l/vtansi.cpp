@@ -247,15 +247,15 @@ static char  suffix2;			// escape sequence secondary suffix
 static int   es_argc;			// escape sequence args count
 static int   es_argv[MAX_ARG]; 	// escape sequence args
 static std::string os_cmd_arg;	// text parameter for Operating System Command
-static bool  shifted = false;
 static int   screen_top = -1;		// initial window top when cleared
 static TCHAR blank_character = L' ';
+
 
 // DEC Special Graphics Character Set from
 // http://vt100.net/docs/vt220-rm/table2-4.html
 // Some of these may not look right, depending on the font and code page (in
 // particular, the Control Pictures probably won't work at all).
-const WCHAR G1[] = {
+const WCHAR DECSpecialGraphicsCharset[] = {
 	L'\x00a0',    // _ - No-Break Space
 	L'\x2666',    // ` - Black Diamond Suit
 	L'\x2592',    // a - Medium Shade
@@ -290,8 +290,15 @@ const WCHAR G1[] = {
 	L'\x00b7',    // ~ - Middle Dot
 };
 
-#define FIRST_G1 '_'
-#define LAST_G1  '~'
+static bool  charset_shifted = false;
+static WCHAR charset_selection[2] = {L'B', L'B'};
+static WCHAR &CurrentCharsetSelection()
+{
+	return charset_selection[charset_shifted ? 1 : 0];
+}
+
+#define FIRST_SG '_'
+#define LAST_SG  '~'
 
 
 // color constants
@@ -524,8 +531,17 @@ void PushBuffer( WCHAR c )
 				WriteConsoleIfEnabled( nl, 1);
 		}
 	} else {
-		if (shifted && c >= FIRST_G1 && c <= LAST_G1)
-			c = G1[c-FIRST_G1];
+		switch (CurrentCharsetSelection()) {
+			case '2':// TODO or not TODO???
+
+			case '0':
+				if (c >= FIRST_SG && c <= LAST_SG)
+					c = DECSpecialGraphicsCharset[c - FIRST_SG];
+			break;
+
+			case '1': // TODO or not TODO???
+			default: ;
+		}
 		ChBuffer[nCharInBuffer] = c;
 		if (++nCharInBuffer == BUFFER_SIZE)
 			FlushBuffer();
@@ -1376,9 +1392,26 @@ static void ResetTerminal()
 {
 	fprintf(stderr, "ANSI: ResetTerminal\n");
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
+
+	nCharInBuffer = 0;
+	memset(ChBuffer, 0, sizeof(ChBuffer));
+	memset(&ansiState, 0, sizeof(ansiState));
+	ChPrev = 0;
+	fWrapped = 0;
+
+	state = 1;
+	prefix = 0;
+	prefix2 = 0;
+	suffix = 0;
+	suffix2 = 0;
+	es_argc = 0;
+	memset(es_argv, 0, sizeof(es_argv));
+	os_cmd_arg.clear();
+	//memset(Pt_arg, 0, sizeof(Pt_arg)); Pt_len = 0;
+	charset_selection[0] = charset_selection[1] = L'B';
+	charset_shifted = false;
+	screen_top = -1;
 }
-
-
 
 
 static void SaveCursor()
@@ -1409,19 +1442,14 @@ void ParseAndPrintString( HANDLE hDev,
 	DWORD   i;
 	LPCWSTR s;
 
-	if (hDev != hConOut) {	// reinit if device has changed
-		hConOut = hDev;
-		state = 1;
-		shifted = false;
-	}
 	for (i = nNumberOfBytesToWrite, s = (LPCWSTR)lpBuffer; i > 0; i--, s++) {
 		if (state == 1) {
 			if (*s == ESC) {
 				suffix2 = 0;
 				//get_state();
 				state = (ansiState.crm) ? 7 : 2;
-			} else if (*s == SO) shifted = true;
-			else if (*s == SI) shifted = false;
+			} else if (*s == SO) charset_shifted = true;
+			else if (*s == SI) charset_shifted = false;
 			else PushBuffer( *s );
 		} else if (state == 2) {
 			if (*s == ESC) ;		// \e\e...\e == \e
@@ -1456,8 +1484,8 @@ void ParseAndPrintString( HANDLE hDev,
 					case 'L': PartialLineUp(); break;
 					case 'D': ForwardIndex(); break;
 					case 'M': ReverseIndex(); break;
-					case 'N': shifted = true; break;
-					case 'O': shifted = false; break;
+					case 'N': charset_shifted = true; break;
+					case 'O': charset_shifted = false; break;
 					case 'C': ResetTerminal(); break;
 					case '7': SaveCursor(); break;
 					case '8': RestoreCursor(); break;
@@ -1563,7 +1591,10 @@ void ParseAndPrintString( HANDLE hDev,
 			state = 1;
 
 		} else if (state == 10) {
-			shifted = (*s == '0');
+			switch (prefix) {
+				case '(': case '*': charset_selection[0] = *s; break;
+				case ')': case '+': charset_selection[1] = *s; break;
+			}
 			state = 1;
 		}
 	}
@@ -1572,33 +1603,11 @@ void ParseAndPrintString( HANDLE hDev,
 }
 
 
-static void ResetState()
-{
-	nCharInBuffer = 0;
-	memset(ChBuffer, 0, sizeof(ChBuffer));
-	memset(&ansiState, 0, sizeof(ansiState));
-	ChPrev = 0;
-	fWrapped = 0;
-	
-	state = 1;
-	prefix = 0;
-	prefix2 = 0;
-	suffix = 0;
-	suffix2 = 0;
-	es_argc = 0;
-	memset(es_argv, 0, sizeof(es_argv));
-	os_cmd_arg.clear();
-	//memset(Pt_arg, 0, sizeof(Pt_arg)); Pt_len = 0;
-	shifted = false;
-	screen_top = -1;	
-}
-
-
 VTAnsi::VTAnsi(IVTShell *vt_shell)
 {
 	g_vt_ansi_mutex.lock();	
 	g_vt_shell = vt_shell;
-	ResetState();
+	ResetTerminal();
 	g_saved_state.InitFromConsole(NULL);
 	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
 	
@@ -1660,7 +1669,7 @@ void VTAnsi::OnStop()
 {
 	g_alternative_screen_buffer.Reset();
 	g_saved_state.ApplyToConsole(NULL, false);
-	ResetState();
+	ResetTerminal();
 	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
 	_buf.clear();

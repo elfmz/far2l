@@ -264,19 +264,29 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 				continue;
 			}
 
-			for (__LA_INT64_T offset = 0, sz = archive_entry_size(entry); offset < sz;) {
+			for (__LA_INT64_T offset = 0, size = archive_entry_size(entry), zeroreads = 0; offset < size;) {
 				const void *buf = nullptr;
-				size_t size = 0;
-				int r = LibArchCall(archive_read_data_block, arc_src.Get(), &buf, &size, &offset);
-				if ((r != ARCHIVE_OK  && r != ARCHIVE_WARN) || size == 0) {
-					throw std::runtime_error(StrPrintf("Error %d (%s) reading at 0x%llx : %s",
+				size_t size_cur = 0;
+				__LA_INT64_T offset_cur = offset;
+				int r = LibArchCall(archive_read_data_block, arc_src.Get(), &buf, &size_cur, &offset_cur);
+				if ((r != ARCHIVE_OK  && r != ARCHIVE_WARN) || (size_cur == 0 && zeroreads > 1000)) {
+					throw std::runtime_error(StrPrintf("Error %d (%s) reading at 0x%llx of 0x%llx: %s",
 						r, archive_error_string(arc_src.Get()),
-						(unsigned long long)offset, LibArch_EntryPathname(entry)));
+						(unsigned long long)offset, (unsigned long long)size,
+						LibArch_EntryPathname(entry)));
 				}
-				if (!arc_dst.WriteData(buf, size)) {
+				if (size_cur == 0) {
+					// sometimes libarchive returns zero length blocks, but next time it return non-zero
+					// not sure how to handle that right, so roughly giving it 1000 attempts..
+					++zeroreads;
+
+				} else if (!arc_dst.WriteData(buf, size_cur)) {
 					throw std::runtime_error("write data failed");
+
+				} else {
+					zeroreads = 0;
 				}
-				offset+= size;
+				offset+= size_cur;
 			}
 		}
 

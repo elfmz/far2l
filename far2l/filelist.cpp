@@ -4281,7 +4281,7 @@ void FileList::SelectSortMode()
 								NumericSort=1;
 								break;
 							case BY_CUSTOMDATA+3:
-								NumericSort=1;
+								CaseSensitiveSort=1;
 								break;
 							case BY_CUSTOMDATA+4:
 								SortGroups=1;

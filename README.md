@@ -94,6 +94,14 @@ brew install yurikoles/yurikoles/far2l --HEAD
 brew install cmake gawk ninja pkg-config wget wxmac xerces-c spdlog uchardet libssh libnfs neon libarchive pcre
 ```
 
+or
+
+``` sh
+sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt spdlog  
+```
+Libarchive in MacPorts may conflict with system version, when far2l is built with MacPorts' 
+headers but links with system dylib. You may want to avoid installing it.
+
  * Clone:
 ``` sh
 git clone https://github.com/elfmz/far2l
@@ -117,13 +125,6 @@ To save space by exluding support of East Asian codepages set: add -DEACP=no
 
 To build with Python plugin: add argument -DPYTHON=yes
 
-Building with MacPorts (when wxWidgets.framework is not installed system-wide):
-
-``` sh
-cmake .. \
-  -DwxWidgets_CONFIG_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config \
-  -DwxWidgets_wxrc_EXECUTABLE=/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc
-```
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:
 ```

@@ -32,7 +32,7 @@ bool TTYNegotiateFar2l(int fdin, int fdout, bool enable)
 		return false;
 
 	if (enable) {
-		if (!WriteStr2TC(fdout, "Press <ENTER> if tired watching this message"))
+		if (!WriteStr2TC(fdout, "Press <ENTER> if tired of watching this message"))
 			return false;
 	}
 

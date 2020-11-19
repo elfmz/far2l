@@ -56,12 +56,12 @@ cd build
 _with make:_
 ``` sh
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j4
+make -j$(nproc --all)
 ``` 
 _or with ninja (you need **ninja-build** package installed)_
 ``` sh
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja -j4
+ninja -j$(nproc --all)
 ```
 
 #### OSX/MacOS install
@@ -71,28 +71,19 @@ ninja -j4
  clang++ -v
  ```
 
- * Install Homebrew if you don't have it:
-```sh
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
+ * If you don't have Homebrew stop by <https://brew.sh/> for installation instructions.
 
 ##### One line OSX/MacOS install
 
- * Install stable far2l via unofficial brew tap:
+ * Install latest far2l git master via unofficial brew tap:
 ```sh
-brew install yurikoles/yurikoles/far2l
+brew install --HEAD yurikoles/yurikoles/far2l
 ```
-
- * Latest git master can be installed via:
-```sh
-brew install yurikoles/yurikoles/far2l --HEAD
-```
+ * Available options:
+   * `--with-python@3.9`: build with python support
+   * `--with-wxmac`:  build with wxmac support
 
 ##### Hard way OSX/MacOS install - with building from sources:
- * Install required packages:
-```sh
-brew install cmake gawk ninja pkg-config wget wxmac xerces-c spdlog uchardet libssh libnfs neon libarchive pcre
-```
 
 or
 
@@ -103,21 +94,27 @@ Libarchive in MacPorts may conflict with system version, when far2l is built wit
 headers but links with system dylib. You may want to avoid installing it.
 
  * Clone:
-``` sh
+```sh
 git clone https://github.com/elfmz/far2l
 cd far2l
-mkdir build
-cd build
+```
+ * Install required packages:
+```sh
+brew bundle
 ```
 _with make:_
-``` sh
+```sh
+mkdir build
+cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j4
+make -j$(nproc --all)
 ``` 
 _or with ninja_
-``` sh
+```sh
+mkdir build
+cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja -j4
+ninja -j$(nproc --all)
 ```
 
 To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no

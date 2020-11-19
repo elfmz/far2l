@@ -434,7 +434,7 @@ void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time,
 	unsigned int reply_code = _conn->SendRecvResponce(_str);
 
 	if (reply_code < 200 || reply_code > 299) {
-		if (reply_code >= 501 || reply_code <= 504) {
+		if (reply_code >= 501 && reply_code <= 504) {
 			fprintf(stderr, "ProtocolFTP::SetTimes('%s'): '%s' - assume unsupported\n",
 				path.c_str(), _str.c_str());
 			_cmd.mfmt = nullptr;
@@ -460,7 +460,7 @@ void ProtocolFTP::SetMode(const std::string &path, mode_t mode) throw (std::runt
 	unsigned int reply_code = _conn->SendRecvResponce(_str);
 
 	if (reply_code < 200 || reply_code > 299) {
-		if (reply_code >= 501 || reply_code <= 504) {
+		if (reply_code >= 501 && reply_code <= 504) {
 			fprintf(stderr, "ProtocolFTP::SetMode('%s', %03o): '%s' - assume unsupported\n",
 				path.c_str(), mode, _str.c_str());
 			_cmd.chmod = nullptr;

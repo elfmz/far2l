@@ -107,14 +107,14 @@ _with make:_
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc --all)
+make -j$(sysctl -n hw.logicalcpu)
 ``` 
 _or with ninja_
 ```sh
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja -j$(nproc --all)
+ninja -j$(sysctl -n hw.logicalcpu)
 ```
 
 To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no

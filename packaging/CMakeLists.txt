@@ -1,11 +1,36 @@
+string(TOLOWER ${PROJECT_NAME} CPACK_PACKAGE_NAME)
+IF (NOT ${USEWX})
+        STRING(APPEND CPACK_PACKAGE_NAME "-nowx")
+ENDIF()
 set(CPACK_PACKAGE_VENDOR "elfmz")
 set(CPACK_PACKAGE_CONTACT "https://github.com/elfmz")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Multi-platform port of FAR v2")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY ${CPACK_PACKAGE_NAME})
 set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${VERSION})
 
+SET(PACKAGE_DEPENDENCIES
+    "libc6, libglib2.0-0, libstdc++6, libgcc-s1 | libgcc | libgcc1, libminizip1, libpcre3")
+IF (${USEWX})
+        STRING(APPEND PACKAGE_DEPENDENCIES ", libwxgtk3.0-gtk3-0v5")
+ENDIF()
+
+FIND_PROGRAM(DPKG_CMD dpkg)
+IF(DPKG_CMD)
+        LIST(APPEND CPACK_GENERATOR DEB)
+ELSE(DPKG_CMD)
+        MESSAGE( STATUS "dpkg binary not found, not building debian package" )
+ENDIF(DPKG_CMD)
+
+# CPack components:
+# -- app, base, system (CMakeLists.txt);
+# -- desktop (far2l/CMakeLists.txt).
+#
+SET(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CPACK_COMPONENTS_ALL app)
     set(CPACK_GENERATOR DragNDrop)
@@ -16,18 +41,32 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     configure_file(${PROJECT_SOURCE_DIR}/packaging/osx/Setup.scpt ${CMAKE_BINARY_DIR}/packaging/osx/Setup.scpt)
 else ()
-    set(CPACK_COMPONENTS_ALL base)
-    set(CPACK_GENERATOR DEB TGZ)
+    set(CPACK_COMPONENTS_ALL base desktop system)
+    SET(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
-    set(CPACK_DEB_COMPONENT_INSTALL ON)
-    set(CPACK_DEBIAN_BASE_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
-    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${PROJECT_SOURCE_DIR}/packaging/debian/postinst;${PROJECT_SOURCE_DIR}/packaging/debian/postrm")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libpcre3-dev, libssl-dev, libssh-dev, libnfs-dev, libneon27-dev, libsmbclient-dev, libnfs-dev, libarchive-dev, libxerces-c-dev, libspdlog-dev, libuchardet-dev")
-    if (${USEWX} EQUAL "YES")
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS} libwxgtk3.0-dev)
-    endif ()
+    LIST(FIND CPACK_GENERATOR DEB DEB_GENERATOR_PRESENCE)
+    IF(DEB_GENERATOR_PRESENCE GREATER -1) # linux (deb)
+        set(CPACK_DEB_COMPONENT_INSTALL ON)
+        # export build options
+        set(BUILD_OPTS_FILE ${PROJECT_BINARY_DIR}/packaging/debian/build.conf.m4)
+        # egg or chicken trouble
+        FILE(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/packaging/debian")
+        FILE(WRITE "${BUILD_OPTS_FILE}" "m4_define(INSTALLBINDIR, ${CMAKE_INSTALL_PREFIX}/bin)m4_dnl\n")
+        FILE(APPEND "${BUILD_OPTS_FILE}" "m4_define(INSTALLLIBDIR, ${CMAKE_INSTALL_PREFIX}/lib/far2l)m4_dnl\n")
+        # add DEB-package controls to build process
+        ADD_SUBDIRECTORY(debian)
+        set(CPACK_DEBIAN_BASE_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
+        set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+        SET(CPACK_DEBIAN_PACKAGE_MAINTAINER ${CPACK_PACKAGE_VENDOR})
+        SET(CPACK_DEBIAN_PACKAGE_SECTION contrib/utils)
+        SET(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
+        # useful to add custom package scripts
+        SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+            "${PROJECT_BINARY_DIR}/debian/postinst;${PROJECT_BINARY_DIR}/debian/prerm")
+        SET(CPACK_DEBIAN_PACKAGE_DEPENDS ${PACKAGE_DEPENDENCIES})
+    ENDIF(DEB_GENERATOR_PRESENCE GREATER -1)
 
+    LIST(APPEND CPACK_GENERATOR TGZ)
     set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
     set(CPACK_ARCHIVE_BASE_FILE_NAME ${CPACK_PACKAGE_FILE_NAME})
 endif ()

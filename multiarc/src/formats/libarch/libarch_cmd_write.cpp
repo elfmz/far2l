@@ -144,6 +144,7 @@ static bool LIBARCH_CommandAddFile(const char *fpath)
 static int LIBARCH_CommandHandlerFTW(const char *fpath, const struct stat *sb, int typeflag)
 {
 	try {
+//		fprintf(stderr, "LIBARCH_CommandHandlerFTW('%s')...\n", fpath);
 		if (!LIBARCH_CommandAddFile(fpath)) {
 			s_addfile_ctx->out = false;
 		}
@@ -194,8 +195,15 @@ static bool LIBARCH_CommandInsertFile(const char *cmd, LibArchOpenWrite &arc, co
 	}
 
 	std::string wanted_path_fixed = wanted_path;
+	// remove ending /* that means all files in dir, that is dir itself
 	while (wanted_path_fixed.size() >= 2 && wanted_path_fixed.rfind("/*") == wanted_path_fixed.size() - 2) {
 		wanted_path_fixed.resize(wanted_path_fixed.size() - 2);
+	}
+
+	// remove ending directoty path with slash, otherwise macos ftw report pathes with double slashes that
+	// consequently causes resulted zip archive entries not enumed correctly
+	while (wanted_path_fixed.size() > 1 && wanted_path_fixed.back() == '/') {
+		wanted_path_fixed.resize(wanted_path_fixed.size() - 1);
 	}
 
 	return LIBARCH_CommandInsertFileFixedPath(cmd, arc, arc_opts, wanted_path_fixed.c_str());

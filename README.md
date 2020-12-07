@@ -6,7 +6,10 @@ ALPHA VERSION.
 
 Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, align, autowrap, drawline, editcase, SimpleIndent, Python (optional scripting support)
 
-[![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
+Linux/MacOS (Travis CI): [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
+
+FreeBSD (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
+
 
 #### License: GNU/GPLv2
 
@@ -107,14 +110,14 @@ _with make:_
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc --all)
+make -j$(sysctl -n hw.logicalcpu)
 ``` 
 _or with ninja_
 ```sh
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja -j$(nproc --all)
+ninja -j$(sysctl -n hw.logicalcpu)
 ```
 
 To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no

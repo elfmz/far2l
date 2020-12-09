@@ -10,6 +10,7 @@ PluginClass::PluginClass(int ArcPluginNumber)
   ArcDataCount=0;
   PluginClass::ArcPluginNumber=ArcPluginNumber;
   memset(&CurArcInfo,0,sizeof(struct ArcInfo));
+  memset(&ItemsInfo,0,sizeof(ItemsInfo));
   DizPresent=FALSE;
   bGOPIFirstCall=true;
   *farlang=0;

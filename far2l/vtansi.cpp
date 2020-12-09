@@ -798,29 +798,18 @@ void InterpretEscSeq( void )
 					case 0:
 					case 39:
 					case 49: {
-						TCHAR def[4];
-						int   a;
-						*def = '7';
-						def[1] = '\0';
-						//todo GetEnvironmentVariable( L"ANSICON_DEF", def, lenof(def) );
-						a = wcstol( def, NULL, 16 );
+						const BYTE a = 7;
 						ansiState.reverse = FALSE;
-						if (a < 0) {
-							ansiState.reverse = TRUE;
-							a = -a;
-						}
-						if (es_argv[i] != 49)
+						if (es_argv[i] != 49) {
 							ansiState.foreground = attr2ansi[a & 7];
-						if (es_argv[i] != 39)
+							ansiState.bold = (es_argc == 1) ? a & FOREGROUND_INTENSITY : 0;
+						}
+						if (es_argv[i] != 39) {
 							ansiState.background = attr2ansi[(a >> 4) & 7];
+							ansiState.underline = (es_argc == 1) ? a & BACKGROUND_INTENSITY : 0;
+						}
+
 						if (es_argv[i] == 0) {
-							if (es_argc == 1) {
-								ansiState.bold	    = a & FOREGROUND_INTENSITY;
-								ansiState.underline = a & BACKGROUND_INTENSITY;
-							} else {
-								ansiState.bold	    = 0;
-								ansiState.underline = 0;
-							}
 							ansiState.rvideo    = 0;
 							ansiState.concealed = 0;
 						}

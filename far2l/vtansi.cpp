@@ -768,19 +768,19 @@ void InterpretEscSeq( void )
 		case 'm':
 			if (es_argc == 0) es_argv[es_argc++] = 0;
 			for (i = 0; i < es_argc; i++) {
-                if (30 <= es_argv[i] && es_argv[i] <= 37) {
-                    ansiState.foreground = es_argv[i] - 30;
-                    ansiState.bold      &= ~FOREGROUND_INTENSITY;
-                } else if (90 <= es_argv[i] && es_argv[i] <= 97) {
-                    ansiState.foreground = es_argv[i] - 90;
-                    ansiState.bold      |= FOREGROUND_INTENSITY;
+				if (30 <= es_argv[i] && es_argv[i] <= 37) {
+					ansiState.foreground = es_argv[i] - 30;
+					ansiState.bold      &= ~FOREGROUND_INTENSITY;
+				} else if (90 <= es_argv[i] && es_argv[i] <= 97) {
+					ansiState.foreground = es_argv[i] - 90;
+					ansiState.bold      |= FOREGROUND_INTENSITY;
 
-                } else if (40 <= es_argv[i] && es_argv[i] <= 47) {
-                    ansiState.background = es_argv[i] - 40;
-                    ansiState.underline &= ~BACKGROUND_INTENSITY;
-                } else if (100 <= es_argv[i] && es_argv[i] <= 107) {
-                    ansiState.background = es_argv[i] - 100;
-                    ansiState.underline |= BACKGROUND_INTENSITY;
+				} else if (40 <= es_argv[i] && es_argv[i] <= 47) {
+					ansiState.background = es_argv[i] - 40;
+					ansiState.underline &= ~BACKGROUND_INTENSITY;
+				} else if (100 <= es_argv[i] && es_argv[i] <= 107) {
+					ansiState.background = es_argv[i] - 100;
+					ansiState.underline |= BACKGROUND_INTENSITY;
 
  				} else if (es_argv[i] == 38 || es_argv[i] == 48) {
 					// This is technically incorrect, but it's what xterm does, so

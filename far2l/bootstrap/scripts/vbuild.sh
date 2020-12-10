@@ -1,10 +1,8 @@
 #!/bin/sh
 
-set +e
+#set +e
 
-git status >/dev/null 2>/dev/null
-res=$?
-if [ $res -eq 0 ] ; then
+if git status >/dev/null 2>/dev/null ; then
 	git log -1 --date=format:'%y/%m/%d' --format=%cd-%h
 else
 	while :

@@ -172,9 +172,9 @@ if(LibArchive_FOUND)
     target_include_directories(multiarc PRIVATE ${LibArchive_INCLUDE_DIRS})
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
-endif()
+#if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
+#endif()
 
 set_target_properties(multiarc
   PROPERTIES

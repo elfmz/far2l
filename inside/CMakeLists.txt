@@ -24,10 +24,6 @@ endif()
 
 add_library (inside MODULE ${SOURCES})
 
-#if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
-#endif()
-
 target_link_libraries(inside utils FARStdlib far2l)
 
 target_include_directories(inside PRIVATE src)

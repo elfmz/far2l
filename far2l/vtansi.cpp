@@ -309,7 +309,7 @@ static WCHAR &CurrentCharsetSelection()
 #define BACKGROUND_BLACK 0
 #define BACKGROUND_WHITE BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE
 
-const BYTE foregroundcolor[8] = {
+const BYTE foregroundcolor[16] = {
 	FOREGROUND_BLACK,			// black foreground
 	FOREGROUND_RED,			// red foreground
 	FOREGROUND_GREEN,			// green foreground
@@ -317,10 +317,20 @@ const BYTE foregroundcolor[8] = {
 	FOREGROUND_BLUE,			// blue foreground
 	FOREGROUND_BLUE | FOREGROUND_RED,	// magenta foreground
 	FOREGROUND_BLUE | FOREGROUND_GREEN,	// cyan foreground
-	FOREGROUND_WHITE			// white foreground
+	FOREGROUND_WHITE,			// white foreground
+
+	FOREGROUND_INTENSITY | FOREGROUND_BLACK,			// black foreground
+	FOREGROUND_INTENSITY | FOREGROUND_RED,			// red foreground
+	FOREGROUND_INTENSITY | FOREGROUND_GREEN,			// green foreground
+	FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,	// yellow foreground
+	FOREGROUND_INTENSITY | FOREGROUND_BLUE,			// blue foreground
+	FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_RED,	// magenta foreground
+	FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_GREEN,	// cyan foreground
+	FOREGROUND_INTENSITY | FOREGROUND_WHITE,			// white foreground
+
 };
 
-const BYTE backgroundcolor[8] = {
+const BYTE backgroundcolor[16] = {
 	BACKGROUND_BLACK,			// black background
 	BACKGROUND_RED,			// red background
 	BACKGROUND_GREEN,			// green background
@@ -329,6 +339,15 @@ const BYTE backgroundcolor[8] = {
 	BACKGROUND_BLUE | BACKGROUND_RED,	// magenta background
 	BACKGROUND_BLUE | BACKGROUND_GREEN,	// cyan background
 	BACKGROUND_WHITE,			// white background
+
+	BACKGROUND_INTENSITY | BACKGROUND_BLACK,			// black background
+	BACKGROUND_INTENSITY | BACKGROUND_RED,			// red background
+	BACKGROUND_INTENSITY | BACKGROUND_GREEN,			// green background
+	BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN,	// yellow background
+	BACKGROUND_INTENSITY | BACKGROUND_BLUE,			// blue background
+	BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_RED,	// magenta background
+	BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN,	// cyan background
+	BACKGROUND_INTENSITY | BACKGROUND_WHITE,			// white background
 };
 
 const BYTE attr2ansi[8] = {	// map console attribute to ANSI number
@@ -768,19 +787,17 @@ void InterpretEscSeq( void )
 		case 'm':
 			if (es_argc == 0) es_argv[es_argc++] = 0;
 			for (i = 0; i < es_argc; i++) {
-                if (30 <= es_argv[i] && es_argv[i] <= 37) {
-                    ansiState.foreground = es_argv[i] - 30;
-                    ansiState.bold      &= ~FOREGROUND_INTENSITY;
-                } else if (90 <= es_argv[i] && es_argv[i] <= 97) {
-                    ansiState.foreground = es_argv[i] - 90;
-                    ansiState.bold      |= FOREGROUND_INTENSITY;
+				if (30 <= es_argv[i] && es_argv[i] <= 37) {
+					ansiState.foreground = es_argv[i] - 30;
 
-                } else if (40 <= es_argv[i] && es_argv[i] <= 47) {
-                    ansiState.background = es_argv[i] - 40;
-                    ansiState.underline &= ~BACKGROUND_INTENSITY;
-                } else if (100 <= es_argv[i] && es_argv[i] <= 107) {
-                    ansiState.background = es_argv[i] - 100;
-                    ansiState.underline |= BACKGROUND_INTENSITY;
+				} else if (90 <= es_argv[i] && es_argv[i] <= 97) {
+					ansiState.foreground = (es_argv[i] - 90) + 8;
+
+				} else if (40 <= es_argv[i] && es_argv[i] <= 47) {
+					ansiState.background = es_argv[i] - 40;
+
+				} else if (100 <= es_argv[i] && es_argv[i] <= 107) {
+					ansiState.background = (es_argv[i] - 100) + 8;
 
  				} else if (es_argv[i] == 38 || es_argv[i] == 48) {
 					// This is technically incorrect, but it's what xterm does, so
@@ -796,33 +813,20 @@ void InterpretEscSeq( void )
 					}
 				} else switch (es_argv[i]) {
 					case 0:
+						ansiState.rvideo    = 0;
+						ansiState.concealed = 0;
+						ansiState.bold = 0;
+						ansiState.underline = 0;
+
 					case 39:
 					case 49: {
-						TCHAR def[4];
-						int   a;
-						*def = '7';
-						def[1] = '\0';
-						//todo GetEnvironmentVariable( L"ANSICON_DEF", def, lenof(def) );
-						a = wcstol( def, NULL, 16 );
+						const BYTE a = 7;
 						ansiState.reverse = FALSE;
-						if (a < 0) {
-							ansiState.reverse = TRUE;
-							a = -a;
+						if (es_argv[i] != 49) {
+							ansiState.foreground = attr2ansi[a & 15];
 						}
-						if (es_argv[i] != 49)
-							ansiState.foreground = attr2ansi[a & 7];
-						if (es_argv[i] != 39)
-							ansiState.background = attr2ansi[(a >> 4) & 7];
-						if (es_argv[i] == 0) {
-							if (es_argc == 1) {
-								ansiState.bold	    = a & FOREGROUND_INTENSITY;
-								ansiState.underline = a & BACKGROUND_INTENSITY;
-							} else {
-								ansiState.bold	    = 0;
-								ansiState.underline = 0;
-							}
-							ansiState.rvideo    = 0;
-							ansiState.concealed = 0;
+						if (es_argv[i] != 39) {
+							ansiState.background = attr2ansi[(a >> 4) & 15];
 						}
 					}
 					break;

@@ -31,9 +31,9 @@ set(SOURCES
 
 add_library(colorer MODULE ${SOURCES})
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
-endif()
+#if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#    set(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -flat_namespace -undefined suppress")
+#endif()
 
 FIND_PACKAGE(Spdlog REQUIRED)
 FIND_PACKAGE(XercesC REQUIRED)
@@ -61,6 +61,7 @@ target_link_libraries(colorer
     ${fmt_LIBRARY_OPTIONAL}
     utils
     colorer_lib
+    far2l
     )
 
 set (SPDLOG_DEFINES

@@ -191,6 +191,7 @@ target_link_libraries(colorer_lib
 target_compile_definitions(colorer_lib PRIVATE
     ${SPDLOG_DEFINES}
     ${COLORER_DEF}
+    __unix__
 )
 
 #set_target_properties(colorer_lib PROPERTIES

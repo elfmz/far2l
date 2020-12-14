@@ -880,9 +880,9 @@ void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
 	prev_height/= _paint_context.FontHeight();
 	
 	if ((int)width != prev_width || (int)height != prev_height) {
-		if ((int)width > prev_width || (int)height > prev_height) {
-			_frame->SetPosition(wxPoint(0,0 ));
-		}
+//		if ((int)width > prev_width || (int)height > prev_height) {
+//			_frame->SetPosition(wxPoint(0,0 ));
+//		}
 		
 		width*= _paint_context.FontWidth();
 		height*= _paint_context.FontHeight();

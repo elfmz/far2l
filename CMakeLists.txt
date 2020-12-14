@@ -166,10 +166,12 @@ if(NOT PCRE_FOUND)
 	message(WARNING "${Esc}[1;31mlibpcre not found, multiarc will have no custom archives support. Install libpcre and reconfigure far2l if you need that functionality.${Esc}[39;22m")
 endif()
 
-# workaround for brew's libarchive
+# workaround for brew's/macports' libarchive
 if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
 	set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
 	set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.dylib")
+elseif(EXISTS "/opt/local/lib/libarchive.dylib")
+	set(LibArchive_LIBRARY "/opt/local/lib/libarchive.dylib")
 endif()
 
 find_package(LibArchive)

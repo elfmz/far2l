@@ -1,7 +1,11 @@
 
 #import <Cocoa/Cocoa.h>
 
-static NSTouchBarItemIdentifier TBTestLabelIdentifier = @"com.Far2l.Touchbar.Label";
+static NSTouchBarItemIdentifier TBFKeyIdentifiers[12] = {
+	@"com.Far2l.Touchbar.F1", @"com.Far2l.Touchbar.F2", @"com.Far2l.Touchbar.F3", @"com.Far2l.Touchbar.F4",
+	@"com.Far2l.Touchbar.F5", @"com.Far2l.Touchbar.F6", @"com.Far2l.Touchbar.F7", @"com.Far2l.Touchbar.F8",
+	@"com.Far2l.Touchbar.F9", @"com.Far2l.Touchbar.F10", @"com.Far2l.Touchbar.F11", @"com.Far2l.Touchbar.F12"};
+
 static NSTouchBarItemIdentifier TBCustomizationIdentifier = @"com.Far2l.Touchbar.Customization";
 
 @interface Far2lTouchbarDelegate : NSResponder <NSTouchBarDelegate>
@@ -14,7 +18,9 @@ static NSTouchBarItemIdentifier TBCustomizationIdentifier = @"com.Far2l.Touchbar
 	NSTouchBar *bar = [[NSTouchBar alloc] init];
 	bar.delegate = self;
 	// Set the default ordering of items.
-	bar.defaultItemIdentifiers = @[TBTestLabelIdentifier];
+	bar.defaultItemIdentifiers = @[TBFKeyIdentifiers[0], TBFKeyIdentifiers[1], TBFKeyIdentifiers[2], TBFKeyIdentifiers[3],
+		TBFKeyIdentifiers[4], TBFKeyIdentifiers[5], TBFKeyIdentifiers[6], TBFKeyIdentifiers[7],
+		TBFKeyIdentifiers[8], TBFKeyIdentifiers[9], TBFKeyIdentifiers[10], TBFKeyIdentifiers[11]  ];
 	bar.customizationIdentifier = TBCustomizationIdentifier;
     
 	return bar;
@@ -22,20 +28,20 @@ static NSTouchBarItemIdentifier TBCustomizationIdentifier = @"com.Far2l.Touchbar
 
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier
 {
+	for (int i = 0; i < 12; ++i) if ([identifier isEqualToString:TBFKeyIdentifiers[i] ])
+	{
+		NSButton *btn_fkey = [[NSButton alloc] init];
+		[btn_fkey setTitle: [NSString stringWithFormat:@"F%u", i + 1] ];
 
-    if ([identifier isEqualToString:TBTestLabelIdentifier])
-    {
-        NSTextField *theLabel = [NSTextField labelWithString:@"test"];
+	        NSCustomTouchBarItem *customItem =
+        	    [[NSCustomTouchBarItem alloc] initWithIdentifier:TBFKeyIdentifiers[i]];
+	        customItem.view = btn_fkey;
         
-        NSCustomTouchBarItem *customItemForLabel =
-            [[NSCustomTouchBarItem alloc] initWithIdentifier:TBTestLabelIdentifier];
-        customItemForLabel.view = theLabel;
+        	// We want this label to always be visible no matter how many items are in the NSTouchBar instance.
+	        customItem.visibilityPriority = NSTouchBarItemPriorityHigh;
         
-        // We want this label to always be visible no matter how many items are in the NSTouchBar instance.
-        customItemForLabel.visibilityPriority = NSTouchBarItemPriorityHigh;
-        
-        return customItemForLabel;
-    }
+        	return customItem;
+	    }
     
     return nil;
 }

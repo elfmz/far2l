@@ -31,6 +31,8 @@
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
 #define QEDIT_COPY_MINIMAL_DELAY 150
 
+void StartupTouchbar();
+
 extern ConsoleOutput g_winport_con_out;
 extern ConsoleInput g_winport_con_in;
 bool g_broadway = false, g_wayland = false, g_remote = false;
@@ -422,7 +424,9 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		_shown = true;
 		wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_INITIALIZED);
 		if (event)
-			wxQueueEvent(_panel, event);		
+			wxQueueEvent(_panel, event);
+
+		StartupTouchbar();
 	}
 }	
 

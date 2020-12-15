@@ -55,7 +55,15 @@ if (${USEWX})
 		src/Backend/WX/wxClipboardBackend.cpp
 		src/Backend/WX/ExclusiveHotkeys.cpp
 		src/Backend/WX/wxWinTranslations.cpp
+	)
+
+	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		set(SOURCES
+			${SOURCES}
+			src/Backend/WX/Mac/touchbar.mm
 		)
+	endif()
+
 endif()
 
 

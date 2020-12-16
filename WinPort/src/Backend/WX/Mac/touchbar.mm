@@ -52,6 +52,12 @@ static NSButton *TBButtons[12];
 		[btn_fkey setAction:@selector(actionFKey:)];
 		[btn_fkey setTarget:self];
 
+		NSColor *color = [[NSColor colorWithCalibratedRed:0.0f green:1.0f blue:1.0f alpha:1.0f] autorelease];
+		NSMutableAttributedString *colorTitle = [[[NSMutableAttributedString alloc] initWithAttributedString:[btn_fkey attributedTitle]] autorelease];
+		NSRange titleRange = NSMakeRange(0, [colorTitle length]);
+		[colorTitle addAttribute:NSForegroundColorAttributeName value:color range:titleRange];
+		[btn_fkey setAttributedTitle:colorTitle];
+
 	        NSCustomTouchBarItem *customItem =
 			[[[NSCustomTouchBarItem alloc] initWithIdentifier:TBFKeyIdentifiers[i]] autorelease];
 		customItem.view = btn_fkey;

@@ -90,7 +90,7 @@ void KeyBar::DisplayObject()
 			{
 				CtrlState=CtrlPressed;
 
-				if (!AltPressed) // Ctrl-Alt-Shift - это особый случай :-)
+				if (!AltPressed) // Ctrl-Alt-Shift - 
 				{
 					if (i<KeyCounts [KBL_CTRLSHIFT])
 						Label=KeyTitles [KBL_CTRLSHIFT][i];
@@ -174,7 +174,7 @@ void KeyBar::DisplayObject()
 		{
 			if (i < FKeyTitles.size()) {
 				StrWide2MB(FKeyTitles[i], str_titles[i]);
-				titles[i] = str_titles[i].empty() ? NULL : str_titles[i].c_str();
+				titles[i] = str_titles[i].c_str();
 			} else {
 				titles[i] = NULL;
 			}
@@ -285,7 +285,7 @@ void KeyBar::ClearGroup(int Group)
 	KeyCounts [Group] = 0;
 }
 
-// Изменение любого Label
+// 
 void KeyBar::Change(int Group,const wchar_t *NewStr,int Pos)
 {
 	if (NewStr)
@@ -293,7 +293,7 @@ void KeyBar::Change(int Group,const wchar_t *NewStr,int Pos)
 }
 
 
-// Групповая установка идущих подряд строк LNG для указанной группы
+// 
 void KeyBar::SetAllGroup(int Group, int StartIndex, int Count)
 {
 	if (Count > KEY_COUNT)

@@ -16,6 +16,8 @@ static NSButton *TBButtons[12];
 
 @implementation Far2lTouchbarDelegate
 
+NSColor *color;
+
 - (NSTouchBar *) makeTouchBar
 {
 	NSTouchBar *bar = [[[NSTouchBar alloc] init] autorelease];
@@ -25,6 +27,8 @@ static NSButton *TBButtons[12];
 		TBFKeyIdentifiers[4], TBFKeyIdentifiers[5], TBFKeyIdentifiers[6], TBFKeyIdentifiers[7],
 		TBFKeyIdentifiers[8], TBFKeyIdentifiers[9], TBFKeyIdentifiers[10], TBFKeyIdentifiers[11]  ];
 	bar.customizationIdentifier = TBCustomizationIdentifier;
+
+	color = [[NSColor colorWithCalibratedRed:0.0f green:1.0f blue:1.0f alpha:1.0f] autorelease];
     
 	return bar;
 }
@@ -52,7 +56,6 @@ static NSButton *TBButtons[12];
 		[btn_fkey setAction:@selector(actionKey:)];
 		[btn_fkey setTarget:self];
 
-		NSColor *color = [[NSColor colorWithCalibratedRed:0.0f green:1.0f blue:1.0f alpha:1.0f] autorelease];
 		NSMutableAttributedString *colorTitle = [[[NSMutableAttributedString alloc] initWithAttributedString:[btn_fkey attributedTitle]] autorelease];
 		NSRange titleRange = NSMakeRange(0, [colorTitle length]);
 		[colorTitle addAttribute:NSForegroundColorAttributeName value:color range:titleRange];
@@ -105,12 +108,22 @@ bool Touchbar_SetTitles(const char **titles)
 		return false;
 
 	for (int i = 0; i < 12; ++i) {
-	{
 		if (titles && titles[i]) {
-			[btn_fkey setTitle:[[NSString stringWithFormat:@"F%u", i + 1] autorelease] ];
+			[TBButtons[i] setTitle:[[NSString stringWithFormat:@"%s", titles[i] ] autorelease] ];
+			if (titles[i][0]) {
+				[TBButtons[i] setHidden:NO];
+			} else {
+				[TBButtons[i] setHidden:YES];
+			}
 		} else {
-			[btn_fkey setTitle:[[NSString stringWithFormat:@"%s", titles[i] ] autorelease] ];
+			[TBButtons[i] setTitle:[[NSString stringWithFormat:@"F%u", i + 1] autorelease] ];
 		}
+
+		NSMutableAttributedString *colorTitle = [[[NSMutableAttributedString alloc] initWithAttributedString:[TBButtons[i] attributedTitle]] autorelease];
+		NSRange titleRange = NSMakeRange(0, [colorTitle length]);
+		[colorTitle addAttribute:NSForegroundColorAttributeName value:color range:titleRange];
+		[TBButtons[i] setAttributedTitle:colorTitle];
+
 	}
 
 	return true;

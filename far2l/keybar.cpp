@@ -65,10 +65,37 @@ void KeyBar::SetOwner(ScreenObject *Owner)
 	KeyBar::Owner=Owner;
 }
 
+static std::vector<std::wstring> PrevFKeyTitles;
+
+void KeyBar::Refresh(bool show, bool force_refresh_fkeys)
+{
+	if (force_refresh_fkeys)
+		PrevFKeyTitles.clear();
+
+	if (show)
+	{
+		Show();
+	}
+	else
+	{
+		if (IsVisible())
+		{
+			Hide();
+		}
+		RefreshObject(false);
+	}
+}
 
 void KeyBar::DisplayObject()
 {
-	GotoXY(X1,Y1);
+	RefreshObject(true);
+}
+
+void KeyBar::RefreshObject(bool Render)
+{
+	if (Render)
+		GotoXY(X1,Y1);
+
 	AltState=CtrlState=ShiftState=0;
 	int KeyWidth=(X2-X1-1)/12;
 
@@ -77,7 +104,7 @@ void KeyBar::DisplayObject()
 
 	int LabelWidth=KeyWidth-2;
 
-	std::vector<std::wstring> FKeyTitles(KEY_COUNT);
+	bool FKeyTitlesChanged = false;
 	for (int i=0; i<KEY_COUNT; i++)
 	{
 		const wchar_t *Label=L"";
@@ -141,9 +168,16 @@ void KeyBar::DisplayObject()
 		else if (i<KeyCounts [KBL_MAIN] && !(DisableMask & (1<<i)))
 			Label=KeyTitles [KBL_MAIN][i];
 
-		FKeyTitles[i] = Label;
+		if (i >= PrevFKeyTitles.size() || PrevFKeyTitles[i] != Label)
+		{
+			FKeyTitlesChanged = true;
+			if (i >= PrevFKeyTitles.size()) {
+				PrevFKeyTitles.emplace_back(Label);
+			} else
+				PrevFKeyTitles[i] = Label;
+		}
 
-		if (WhereX()+LabelWidth<X2)
+		if (Render && WhereX()+LabelWidth<X2)
 		{
 			SetColor(COL_KEYBARNUM);
 			FS<<i+1;
@@ -158,36 +192,33 @@ void KeyBar::DisplayObject()
 		}
 	}
 
-	int Width=X2-WhereX()+1;
-
-	if (Width>0)
+	if (Render)
 	{
-		SetColor(COL_KEYBARTEXT);
-		FS<<fmt::Width(Width)<<L"";
+		int Width=X2-WhereX()+1;
+
+		if (Width>0)
+		{
+			SetColor(COL_KEYBARTEXT);
+			FS<<fmt::Width(Width)<<L"";
+		}
 	}
 
-	if (FKeyTitles != PrevFKeyTitles)
+	if (FKeyTitlesChanged)
 	{
 		std::string str_titles[12];
 		const char *titles[ARRAYSIZE(str_titles)];
 		for (int i = 0; i < ARRAYSIZE(str_titles); ++i)
 		{
-			if (i < FKeyTitles.size()) {
-				StrWide2MB(FKeyTitles[i], str_titles[i]);
+			if (i < PrevFKeyTitles.size()) {
+				StrWide2MB(PrevFKeyTitles[i], str_titles[i]);
 				titles[i] = str_titles[i].c_str();
 			} else {
 				titles[i] = NULL;
 			}
 		}
-		FKeyTitles.swap(PrevFKeyTitles);
 
 		WINPORT(SetConsoleFKeyTitles)(titles);
 	}
-}
-
-void KeyBar::InvalidateFKeyTitles()
-{
-	PrevFKeyTitles.clear();
 }
 
 void KeyBar::ReadRegGroup(const wchar_t *RegGroup, const wchar_t *Language)

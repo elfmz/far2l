@@ -56,8 +56,8 @@ RedrawDesktop::RedrawDesktop(BOOL IsHidden):
 		CtrlObject->Cp()->LeftPanel->CloseFile();
 		CtrlObject->Cp()->RightPanel->CloseFile();
 
-		// ВНИМАНИЕ! КОСТЫЛЬ!
-		// соблюдем очередность, в зависимости от!
+		// 
+		// 
 		if (CtrlObject->Cp()->ActivePanel == CtrlObject->Cp()->LeftPanel)
 		{
 			CtrlObject->Cp()->LeftPanel->Hide();
@@ -80,8 +80,7 @@ RedrawDesktop::~RedrawDesktop()
 	CtrlObject->CmdLine->SaveBackground();
 	CtrlObject->CmdLine->Show();
 
-	if (Opt.ShowKeyBar)
-		CtrlObject->MainKeyBar->Show();
+	CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 
 	Opt.Clock=ClockVisible;
 
@@ -102,7 +101,7 @@ RedrawDesktop::~RedrawDesktop()
 		// CtrlObject->Cp()->RightPanel->Show();
 		CtrlObject->Cp()->RightPanel->SetVisible(TRUE);
 
-	// Временное решение!
-	// Иначе траблы при пересчете...
+	// 
+	// 
 	FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 }

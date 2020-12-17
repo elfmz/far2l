@@ -263,10 +263,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		SetFarConsoleMode(TRUE);
 		ScrBuf.Flush();
 		if (CtrlObject && CtrlObject->MainKeyBar) {
-			CtrlObject->MainKeyBar->InvalidateFKeyTitles();
-			if (Opt.ShowKeyBar) {
-				CtrlObject->MainKeyBar->Show();
-			}
+			CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar, true);
 		}
 	}
 	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
@@ -416,8 +413,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 
 	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL)) {
 		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
-		if (Opt.ShowKeyBar)
-			CtrlObject->MainKeyBar->Show();
+		CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 		
 	}
 	

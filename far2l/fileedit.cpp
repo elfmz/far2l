@@ -739,7 +739,7 @@ void FileEditor::InitKeyBar()
 
 	EditKeyBar.ReadRegGroup(L"Editor",Opt.strLanguage);
 	EditKeyBar.SetAllRegGroup();
-	EditKeyBar.Show();
+	EditKeyBar.Refresh(true);
 	m_editor->SetPosition(X1,Y1+(Opt.EdOpt.ShowTitleBar?1:0),X2,Y2-(Opt.EdOpt.ShowKeyBar?1:0));
 	SetKeyBar(&EditKeyBar);
 }
@@ -1214,11 +1214,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			{
 				Opt.EdOpt.ShowKeyBar=!Opt.EdOpt.ShowKeyBar;
 
-				if (Opt.EdOpt.ShowKeyBar)
-					EditKeyBar.Show();
-				else
+				if (!Opt.EdOpt.ShowKeyBar)
 					EditKeyBar.Hide0(); // 0 mean - Don't purge saved screen
 
+				EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
 				Show();
 				KeyBarVisible = Opt.EdOpt.ShowKeyBar;
 				return (TRUE);
@@ -1336,11 +1335,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				EditorOptions EdOpt;
 				GetEditorOptions(EdOpt);
 				EditorConfig(EdOpt,true); // $ 27.11.2001 DJ - Local в EditorConfig
-				EditKeyBar.Show(); //???? Нужно ли????
+				EditKeyBar.Refresh(true); //???? Нужно ли????
 				SetEditorOptions(EdOpt);
 
-				if (Opt.EdOpt.ShowKeyBar)
-					EditKeyBar.Show();
+				EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
 
 				m_editor->Show();
 				return TRUE;
@@ -1348,8 +1346,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			default:
 			{
 				if (Flags.Check(FFILEEDIT_FULLSCREEN) && CtrlObject->Macro.IsExecuting() == MACROMODE_NOMACRO)
-					if (Opt.EdOpt.ShowKeyBar)
-						EditKeyBar.Show();
+					EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
 
 				if (!EditKeyBar.ProcessKey(Key))
 					return(m_editor->ProcessKey(Key));
@@ -2590,7 +2587,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 					}
 				}
 
-				EditKeyBar.Show();
+				EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
 			}
 
 			return TRUE;

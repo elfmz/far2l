@@ -1,130 +1,162 @@
 #import <Cocoa/Cocoa.h>
 #include "touchbar.h"
 
-static bool g_tb_created = false;
-static ITouchbarListener *g_tb_listener = nullptr;
-static NSTouchBarItemIdentifier TBFKeyIdentifiers[12] = {
-	@"com.Far2l.Touchbar.F1", @"com.Far2l.Touchbar.F2", @"com.Far2l.Touchbar.F3", @"com.Far2l.Touchbar.F4",
-	@"com.Far2l.Touchbar.F5", @"com.Far2l.Touchbar.F6", @"com.Far2l.Touchbar.F7", @"com.Far2l.Touchbar.F8",
-	@"com.Far2l.Touchbar.F9", @"com.Far2l.Touchbar.F10", @"com.Far2l.Touchbar.F11", @"com.Far2l.Touchbar.F12"};
+#ifndef CONSOLE_FKEYS_COUNT
+# define CONSOLE_FKEYS_COUNT 12
+#endif
 
-static NSTouchBarItemIdentifier TBCustomizationIdentifier = @"com.Far2l.Touchbar.Customization";
-static NSButton *TBButtons[12];
+static ITouchbarListener *s_tb_listener = nullptr;
+
+static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touchbar.Customization";
 
 @interface Far2lTouchbarDelegate : NSResponder <NSTouchBarDelegate>
 @end
 
 @implementation Far2lTouchbarDelegate
-
+NSMutableArray<NSTouchBarItemIdentifier> *key_identifiers;
 NSColor *color;
+NSButton *buttons[CONSOLE_FKEYS_COUNT];
+
+
+- (instancetype)init
+{
+	if (self = [super init]) {
+		key_identifiers = [NSMutableArray array];
+		color = [NSColor colorWithCalibratedRed:0.0f green:1.0f blue:1.0f alpha:1.0f];
+		for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
+		{
+			[key_identifiers addObject:[NSString stringWithFormat:@"com.Far2l.Touchbar.F%d", i + 1] ];
+
+			buttons[i] = [[NSButton alloc] init];
+			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
+			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationHorizontal];
+			[buttons[i] setAction:@selector(actionKey:)];
+			[buttons[i] setTarget:self];
+
+			[self setButton:i Title:nullptr];
+		}
+	}
+	return self;
+}
+
+-(void)dealloc
+{
+	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
+	{
+		[buttons[i] release];
+		[key_identifiers[i] release];
+	}
+	[key_identifiers release];
+	[color release];
+	[super dealloc];
+}
 
 - (NSTouchBar *) makeTouchBar
 {
-	NSTouchBar *bar = [[[NSTouchBar alloc] init] autorelease];
-	bar.delegate = self;
-	// Set the default ordering of items.
-	bar.defaultItemIdentifiers = @[TBFKeyIdentifiers[0], TBFKeyIdentifiers[1], TBFKeyIdentifiers[2], TBFKeyIdentifiers[3],
-		TBFKeyIdentifiers[4], TBFKeyIdentifiers[5], TBFKeyIdentifiers[6], TBFKeyIdentifiers[7],
-		TBFKeyIdentifiers[8], TBFKeyIdentifiers[9], TBFKeyIdentifiers[10], TBFKeyIdentifiers[11]  ];
-	bar.customizationIdentifier = TBCustomizationIdentifier;
+	NSTouchBar *bar = [[NSTouchBar alloc] init];
 
-	color = [[NSColor colorWithCalibratedRed:0.0f green:1.0f blue:1.0f alpha:1.0f] autorelease];
-    
+	bar.delegate = self;
+	bar.defaultItemIdentifiers = key_identifiers;
+	bar.customizationIdentifier = s_tb_customization_identifier;
+
 	return bar;
 }
 
 - (IBAction) actionKey : (id) sender  {
-
-	for (int i = 0; i < 12; ++i) if ([sender isEqual:TBButtons[i]]) {
+	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if ([sender isEqual:buttons[i]]) {
 		fprintf(stderr, "actionKey %d\n", i);
-		g_tb_listener->OnTouchbarKey(i);
+		if (s_tb_listener)
+		{
+			s_tb_listener->OnTouchbarKey(i);
+		}
 		return;
 	}
-
 	fprintf(stderr, "actionKey UNKNOWN\n");
 }
 
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier
 {
-	for (int i = 0; i < 12; ++i) if ([identifier isEqualToString:TBFKeyIdentifiers[i] ])
+	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if ([identifier isEqualToString:key_identifiers[i] ])
 	{
-		NSButton *btn_fkey = [[[NSButton alloc] init] autorelease];
-		[btn_fkey setTitle: [[NSString stringWithFormat:@"F%u", i + 1] autorelease] ];
-		TBButtons[i] = btn_fkey;
-		[btn_fkey setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
-		[btn_fkey setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationHorizontal];
-		[btn_fkey setAction:@selector(actionKey:)];
-		[btn_fkey setTarget:self];
-
-		NSMutableAttributedString *colorTitle = [[[NSMutableAttributedString alloc] initWithAttributedString:[btn_fkey attributedTitle]] autorelease];
-		NSRange titleRange = NSMakeRange(0, [colorTitle length]);
-		[colorTitle addAttribute:NSForegroundColorAttributeName value:color range:titleRange];
-		[btn_fkey setAttributedTitle:colorTitle];
-
 	        NSCustomTouchBarItem *customItem =
-			[[[NSCustomTouchBarItem alloc] initWithIdentifier:TBFKeyIdentifiers[i]] autorelease];
-		customItem.view = btn_fkey;
+			[[NSCustomTouchBarItem alloc] initWithIdentifier:key_identifiers[i]];
+		customItem.view = buttons[i];
+		customItem.visibilityPriority = NSTouchBarItemPriorityHigh;
+		return customItem;
+	}
 
-        	// We want this label to always be visible no matter how many items are in the NSTouchBar instance.
-	        customItem.visibilityPriority = NSTouchBarItemPriorityHigh;
-        
-        	return customItem;
-	    }
-    
-    return nil;
+	return nil;
 }
+
+- (void)setButton:(int)index Title:(const char *)title
+{
+	NSString *ns_title = nullptr;
+	if (title) {
+		ns_title = [NSString stringWithUTF8String:title];
+		if (*title) {
+			[buttons[index] setHidden:NO];
+		} else {
+			[buttons[index] setHidden:YES];
+		}
+
+	} else {
+		ns_title = [NSString stringWithFormat:@"F%d", index + 1];
+		[buttons[index] setHidden:NO];
+	}
+
+	NSMutableAttributedString *att_title = [[NSMutableAttributedString alloc] initWithString:ns_title];
+	NSRange titleRange = NSMakeRange(0, [att_title length]);
+	[att_title addAttribute:NSForegroundColorAttributeName value:color range:titleRange];
+
+	[buttons[index] setAttributedTitle:att_title];
+
+	[att_title release];
+	[ns_title release];
+}
+
 
 @end
 
+static Far2lTouchbarDelegate *g_tb_delegate = nullptr;
 
 void Touchbar_Register(ITouchbarListener *listener)
 {
-	g_tb_listener = listener;
-	if (g_tb_created)
+	s_tb_listener = listener;
+	if (g_tb_delegate)
 		return;
 
 	if ([[NSApplication sharedApplication] respondsToSelector:@selector(isAutomaticCustomizeTouchBarMenuItemEnabled)])
 	{
-		g_tb_created = true;
-
 		[NSApplication sharedApplication].automaticCustomizeTouchBarMenuItemEnabled = YES;
 
 		NSApplication *app = [NSApplication sharedApplication];
-		Far2lTouchbarDelegate *a = [[Far2lTouchbarDelegate alloc] init];
-		a.nextResponder = app.nextResponder;
-		app.nextResponder = a;
+		if (app)
+		{
+			g_tb_delegate = [[Far2lTouchbarDelegate alloc] init];
+			if (g_tb_delegate)
+			{
+				g_tb_delegate.nextResponder = app.nextResponder;
+				app.nextResponder = g_tb_delegate;
+			}
+		}
 	}
-
 }
 
 void Touchbar_Deregister()
 {
-	g_tb_listener = nullptr;
+	s_tb_listener = nullptr;
 }
 
 bool Touchbar_SetTitles(const char **titles)
 {
-	if (!g_tb_created)
+	if (!g_tb_delegate)
 		return false;
 
-	for (int i = 0; i < 12; ++i) {
-		if (titles && titles[i]) {
-			[TBButtons[i] setTitle:[[NSString stringWithFormat:@"%s", titles[i] ] autorelease] ];
-			if (titles[i][0]) {
-				[TBButtons[i] setHidden:NO];
-			} else {
-				[TBButtons[i] setHidden:YES];
-			}
-		} else {
-			[TBButtons[i] setTitle:[[NSString stringWithFormat:@"F%u", i + 1] autorelease] ];
-		}
-
-		NSMutableAttributedString *colorTitle = [[[NSMutableAttributedString alloc] initWithAttributedString:[TBButtons[i] attributedTitle]] autorelease];
-		NSRange titleRange = NSMakeRange(0, [colorTitle length]);
-		[colorTitle addAttribute:NSForegroundColorAttributeName value:color range:titleRange];
-		[TBButtons[i] setAttributedTitle:colorTitle];
-
+	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
+	{
+		[g_tb_delegate setButton:i Title:(titles ? titles[i] : nullptr)];
 	}
 
 	return true;
 }
+

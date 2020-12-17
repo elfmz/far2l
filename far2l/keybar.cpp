@@ -205,7 +205,7 @@ void KeyBar::RefreshObject(bool Render)
 
 	if (FKeyTitlesChanged)
 	{
-		std::string str_titles[12];
+		std::string str_titles[CONSOLE_FKEYS_COUNT];
 		const char *titles[ARRAYSIZE(str_titles)];
 		for (int i = 0; i < ARRAYSIZE(str_titles); ++i)
 		{

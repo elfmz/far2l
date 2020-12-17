@@ -482,7 +482,7 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 	try {
 		bool detect_support = (_fkeys_support == FKS_UNKNOWN);
 		StackSerializer stk_ser;
-		for (int i = 11; i >= 0; --i) {
+		for (int i = CONSOLE_FKEYS_COUNT - 1; i >= 0; --i) {
 			bool specified = titles != NULL && titles[i] != NULL;
 			if (specified) {
 				stk_ser.PushStr(titles[i]);

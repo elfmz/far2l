@@ -415,7 +415,7 @@ void VTFar2lExtensios::OnInterract_DisplayNotification(StackSerializer &stk_ser)
 
 void VTFar2lExtensios::OnInterract_SetFKeyTitles(StackSerializer &stk_ser)
 {
-	std::string titles_str[12];
+	std::string titles_str[CONSOLE_FKEYS_COUNT];
 	const char *titles[ARRAYSIZE(titles_str)];
 
 	for (unsigned int i = 0; i < ARRAYSIZE(titles_str); ++i) {

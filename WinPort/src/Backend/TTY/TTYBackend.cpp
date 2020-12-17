@@ -88,6 +88,8 @@ void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
 	while (!_exiting) {
+		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
+
 		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend_setter.IsSet()) {
 			if (_far2l_tty) {
 				IFar2lInterractor *interractor = this;
@@ -469,6 +471,44 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 	}
 
 	return out;
+}
+
+bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
+{
+	if (_fkeys_support == FKS_NOT_SUPPORTED) {
+		return false;
+	}
+
+	try {
+		bool detect_support = (_fkeys_support == FKS_UNKNOWN);
+		StackSerializer stk_ser;
+		for (int i = 11; i >= 0; --i) {
+			bool specified = titles != NULL && titles[i] != NULL;
+			if (specified) {
+				stk_ser.PushStr(titles[i]);
+			}
+			stk_ser.PushPOD(specified);
+		}
+		stk_ser.PushPOD('f');
+
+		if (Far2lInterract(stk_ser, detect_support)) {
+			if (detect_support) {
+				bool supported = false;
+				stk_ser.PopPOD(supported);
+				fprintf(stderr, "%s: %ssupported\n",
+					__FUNCTION__, supported ? "" : "not ");
+				_fkeys_support = supported
+					? FKS_SUPPORTED : FKS_NOT_SUPPORTED;
+			}
+		}
+
+	} catch(std::exception &e) {
+
+		fprintf(stderr, "%s: exception - %s\n", __FUNCTION__, e.what());
+		_fkeys_support = FKS_NOT_SUPPORTED;
+	}
+
+	return (_fkeys_support == FKS_SUPPORTED);
 }
 
 void TTYBackend::OnConsoleAdhocQuickEdit()

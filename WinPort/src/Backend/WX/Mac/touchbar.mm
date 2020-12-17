@@ -29,15 +29,15 @@ static NSButton *TBButtons[12];
 	return bar;
 }
 
-- (IBAction) actionFKey : (id) sender  {
+- (IBAction) actionKey : (id) sender  {
 
 	for (int i = 0; i < 12; ++i) if ([sender isEqual:TBButtons[i]]) {
-		fprintf(stderr, "actionFKey %d\n", i);
-		g_tb_listener->OnTouchbarFKey(i);
+		fprintf(stderr, "actionKey %d\n", i);
+		g_tb_listener->OnTouchbarKey(i);
 		return;
 	}
 
-	fprintf(stderr, "actionFKey UNKNOWN\n");
+	fprintf(stderr, "actionKey UNKNOWN\n");
 }
 
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier
@@ -49,7 +49,7 @@ static NSButton *TBButtons[12];
 		TBButtons[i] = btn_fkey;
 		[btn_fkey setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
 		[btn_fkey setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationHorizontal];
-		[btn_fkey setAction:@selector(actionFKey:)];
+		[btn_fkey setAction:@selector(actionKey:)];
 		[btn_fkey setTarget:self];
 
 		NSColor *color = [[NSColor colorWithCalibratedRed:0.0f green:1.0f blue:1.0f alpha:1.0f] autorelease];
@@ -80,20 +80,38 @@ void Touchbar_Register(ITouchbarListener *listener)
 	if (g_tb_created)
 		return;
 
-	g_tb_created = true;
-
 	if ([[NSApplication sharedApplication] respondsToSelector:@selector(isAutomaticCustomizeTouchBarMenuItemEnabled)])
 	{
+		g_tb_created = true;
+
 		[NSApplication sharedApplication].automaticCustomizeTouchBarMenuItemEnabled = YES;
+
+		NSApplication *app = [NSApplication sharedApplication];
+		Far2lTouchbarDelegate *a = [[Far2lTouchbarDelegate alloc] init];
+		a.nextResponder = app.nextResponder;
+		app.nextResponder = a;
 	}
 
-	NSApplication *app = [NSApplication sharedApplication];
-	Far2lTouchbarDelegate *a = [[Far2lTouchbarDelegate alloc] init];
-	a.nextResponder = app.nextResponder;
-	app.nextResponder = a;
 }
 
 void Touchbar_Deregister()
 {
 	g_tb_listener = nullptr;
+}
+
+bool Touchbar_SetTitles(const char **titles)
+{
+	if (!g_tb_created)
+		return false;
+
+	for (int i = 0; i < 12; ++i) {
+	{
+		if (titles && titles[i]) {
+			[btn_fkey setTitle:[[NSString stringWithFormat:@"F%u", i + 1] autorelease] ];
+		} else {
+			[btn_fkey setTitle:[[NSString stringWithFormat:@"%s", titles[i] ] autorelease] ];
+		}
+	}
+
+	return true;
 }

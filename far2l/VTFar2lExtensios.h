@@ -33,10 +33,9 @@ class VTFar2lExtensios
 	void OnInterract_ClipboardRegisterFormat(StackSerializer &stk_ser);
 	void OnInterract_Clipboard(StackSerializer &stk_ser);
 	void OnInterract_GetLargestWindowSize(StackSerializer &stk_ser);
-
 	void OnInterract_ChangeCursorHeigth(StackSerializer &stk_ser);
-
 	void OnInterract_DisplayNotification(StackSerializer &stk_ser);
+	void OnInterract_SetFKeyTitles(StackSerializer &stk_ser);
 
 	void WriteInputEvent(const StackSerializer &stk_ser);
 public:

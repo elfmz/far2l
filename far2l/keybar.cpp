@@ -77,14 +77,9 @@ void KeyBar::DisplayObject()
 
 	int LabelWidth=KeyWidth-2;
 
+	std::vector<std::wstring> FKeyTitles(KEY_COUNT);
 	for (int i=0; i<KEY_COUNT; i++)
 	{
-		if (WhereX()+LabelWidth>=X2)
-			break;
-
-		SetColor(COL_KEYBARNUM);
-		FS<<i+1;
-		SetColor(COL_KEYBARTEXT);
 		const wchar_t *Label=L"";
 
 		if (ShiftPressed)
@@ -146,12 +141,20 @@ void KeyBar::DisplayObject()
 		else if (i<KeyCounts [KBL_MAIN] && !(DisableMask & (1<<i)))
 			Label=KeyTitles [KBL_MAIN][i];
 
-		FS<<fmt::LeftAlign()<<fmt::Width(LabelWidth)<<fmt::Precision(LabelWidth)<<Label;
+		FKeyTitles[i] = Label;
 
-		if (i<KEY_COUNT-1)
+		if (WhereX()+LabelWidth<X2)
 		{
-			SetColor(COL_KEYBARBACKGROUND);
-			Text(L" ");
+			SetColor(COL_KEYBARNUM);
+			FS<<i+1;
+			SetColor(COL_KEYBARTEXT);
+			FS<<fmt::LeftAlign()<<fmt::Width(LabelWidth)<<fmt::Precision(LabelWidth)<<Label;
+
+			if (i<KEY_COUNT-1)
+			{
+				SetColor(COL_KEYBARBACKGROUND);
+				Text(L" ");
+			}
 		}
 	}
 
@@ -162,6 +165,29 @@ void KeyBar::DisplayObject()
 		SetColor(COL_KEYBARTEXT);
 		FS<<fmt::Width(Width)<<L"";
 	}
+
+	if (FKeyTitles != PrevFKeyTitles)
+	{
+		std::string str_titles[12];
+		const char *titles[ARRAYSIZE(str_titles)];
+		for (int i = 0; i < ARRAYSIZE(str_titles); ++i)
+		{
+			if (i < FKeyTitles.size()) {
+				StrWide2MB(FKeyTitles[i], str_titles[i]);
+				titles[i] = str_titles[i].empty() ? NULL : str_titles[i].c_str();
+			} else {
+				titles[i] = NULL;
+			}
+		}
+		FKeyTitles.swap(PrevFKeyTitles);
+
+		WINPORT(SetConsoleFKeyTitles)(titles);
+	}
+}
+
+void KeyBar::InvalidateFKeyTitles()
+{
+	PrevFKeyTitles.clear();
 }
 
 void KeyBar::ReadRegGroup(const wchar_t *RegGroup, const wchar_t *Language)

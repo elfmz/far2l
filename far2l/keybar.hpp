@@ -59,8 +59,8 @@ typedef KeyBarTitle KeyBarTitleGroup [KEY_COUNT];
 class KeyBar: public ScreenObject
 {
 	private:
+		std::vector<std::wstring> PrevFKeyTitles;
 		ScreenObject *Owner;
-
 		KeyBarTitleGroup KeyTitles [KBL_GROUP_COUNT];
 		int KeyCounts [KBL_GROUP_COUNT];
 
@@ -81,6 +81,8 @@ class KeyBar: public ScreenObject
 		virtual  ~KeyBar() {}
 
 	public:
+		void InvalidateFKeyTitles();
+
 		virtual int ProcessKey(int Key);
 		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 

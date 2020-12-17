@@ -80,6 +80,7 @@ extern "C" {
 	WINPORT_DECL(IsConsoleActive, BOOL, ());
 	WINPORT_DECL(ConsoleDisplayNotification, VOID, (const WCHAR *title, const WCHAR *text));
 	WINPORT_DECL(ConsoleBackgroundMode, BOOL, (BOOL TryEnterBackgroundMode));
+	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (const CHAR **titles));
 
 	///Registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));

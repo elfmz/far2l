@@ -250,6 +250,7 @@ public:
 	virtual ~WinPortPanel();
 	void CompleteInitialization();
 	void OnChar( wxKeyEvent& event );
+	virtual void OnTouchbarKey(int index);
 
 protected: 
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
@@ -265,7 +266,7 @@ protected:
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
-	virtual void OnTouchbarFKey(int index);
+	virtual bool OnConsoleSetFKeyTitles(const char **titles);
 
 private:
 	void CheckForResizePending();
@@ -610,7 +611,22 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 #endif
 }
 
-void WinPortPanel::OnTouchbarFKey(int index)
+bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&WinPortPanel::OnConsoleSetFKeyTitles, this, titles);
+		return CallInMain<bool>(fn);
+
+	} else {
+#ifdef __APPLE__
+		return Touchbar_SetTitles(titles);
+#else
+		return false;
+#endif
+	}
+}
+
+void WinPortPanel::OnTouchbarKey(int index)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
@@ -624,7 +640,7 @@ void WinPortPanel::OnTouchbarFKey(int index)
 	if (wxGetKeyState(WXK_CONTROL)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 	if (wxGetKeyState(WXK_ALT)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 
-	fprintf(stderr, "WinPortPanel::OnTouchbarFKey: F%d dwControlKeyState=0x%x\n",
+	fprintf(stderr, "%s: F%d dwControlKeyState=0x%x\n", __FUNCTION__,
 		index + 1, ir.Event.KeyEvent.dwControlKeyState);
 
 	ir.Event.KeyEvent.bKeyDown = TRUE;

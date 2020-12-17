@@ -44,6 +44,7 @@ public:
 
 	///
 
+	void PushStr(const char *str);
 	void PushStr(const std::string &str);
 	void PopStr(std::string &str);
 	std::string PopStr();

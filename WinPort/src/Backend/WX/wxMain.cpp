@@ -600,15 +600,14 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	_initialized = true;
 
 	if (g_winport_app_thread) {
+#ifdef __APPLE__
+		Touchbar_Register(this);
+#endif
 		WinPortAppThread *tmp = g_winport_app_thread;
 		g_winport_app_thread = NULL;
 		if (tmp->Start(this) != wxTHREAD_NO_ERROR)
 			delete tmp;
 	}
-
-#ifdef __APPLE__
-	Touchbar_Register(this);
-#endif
 }
 
 bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)

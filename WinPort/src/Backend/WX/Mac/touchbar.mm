@@ -9,6 +9,41 @@ static ITouchbarListener *s_tb_listener = nullptr;
 
 static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touchbar.Customization";
 
+
+//////////
+
+@interface TBButton : NSButton
+{
+}
+
+
+@property () NSSize intrinsicContentSize; //readonly
+
+- (id)init;
+
+@end
+
+
+//Implementation file (.m)
+@implementation TBButton
+@synthesize intrinsicContentSize;
+
+
+- (id)init
+{
+    self = [super init];
+    if (self)
+    {
+        self.intrinsicContentSize = NSMakeSize(0, 0);
+    }
+
+    return self;
+}
+
+@end
+
+//////////
+
 @interface Far2lTouchbarDelegate : NSResponder <NSTouchBarDelegate>
 @end
 
@@ -18,28 +53,25 @@ NSColor *font_color;
 NSColor *back_color;
 NSButton *buttons[CONSOLE_FKEYS_COUNT];
 
-
 - (instancetype)init
 {
 	if (self = [super init]) {
 		key_identifiers = [NSMutableArray array];
 		font_color = [NSColor blackColor];
 		back_color = [NSColor colorWithCalibratedRed:0 green:0.8 blue:0.8 alpha:1.0f];
-		//[NSColor cyanColor];
 		for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
 		{
 			[key_identifiers addObject:[NSString stringWithFormat:@"com.Far2l.Touchbar.F%d", i + 1] ];
 
-			buttons[i] = [[NSButton alloc] init];
+			buttons[i] = [[TBButton alloc] init];//[[NSButton alloc] init];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationHorizontal];
+			[buttons[i] setBordered:NO];
+			[[buttons[i] cell] setBackgroundColor:back_color];
 			[buttons[i] setAction:@selector(actionKey:)];
 			[buttons[i] setTarget:self];
 
-			[buttons[i] setBordered:NO];
-			[[buttons[i] cell] setBackgroundColor:back_color];
-
-			[self setButton:i Title:nullptr];
+//			[self setButton:i Title:nullptr];
 		}
 	}
 	return self;
@@ -55,6 +87,7 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 	[key_identifiers release];
 	[font_color release];
 	[back_color release];
+
 	[super dealloc];
 }
 
@@ -89,6 +122,7 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 			[[NSCustomTouchBarItem alloc] initWithIdentifier:key_identifiers[i]];
 		customItem.view = buttons[i];
 		customItem.visibilityPriority = NSTouchBarItemPriorityHigh;
+//		[buttons[i] invalidateIntrinsicContentSize];
 		return customItem;
 	}
 
@@ -116,6 +150,7 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 	[att_title addAttribute:NSForegroundColorAttributeName value:font_color range:titleRange];
 
 	[buttons[index] setAttributedTitle:att_title];
+	[buttons[index] invalidateIntrinsicContentSize];
 
 	[att_title release];
 	[ns_title release];
@@ -144,6 +179,9 @@ void Touchbar_Register(ITouchbarListener *listener)
 			{
 				g_tb_delegate.nextResponder = app.nextResponder;
 				app.nextResponder = g_tb_delegate;
+
+				// set initial buttons titles
+				Touchbar_SetTitles(nullptr);
 			}
 		}
 	}

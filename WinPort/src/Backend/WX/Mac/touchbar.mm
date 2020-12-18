@@ -14,7 +14,8 @@ static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touc
 
 @implementation Far2lTouchbarDelegate
 NSMutableArray<NSTouchBarItemIdentifier> *key_identifiers;
-NSColor *color;
+NSColor *font_color;
+NSColor *back_color;
 NSButton *buttons[CONSOLE_FKEYS_COUNT];
 
 
@@ -22,7 +23,9 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 {
 	if (self = [super init]) {
 		key_identifiers = [NSMutableArray array];
-		color = [NSColor colorWithCalibratedRed:0.0f green:1.0f blue:1.0f alpha:1.0f];
+		font_color = [NSColor blackColor];
+		back_color = [NSColor colorWithCalibratedRed:0 green:0.8 blue:0.8 alpha:1.0f];
+		//[NSColor cyanColor];
 		for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
 		{
 			[key_identifiers addObject:[NSString stringWithFormat:@"com.Far2l.Touchbar.F%d", i + 1] ];
@@ -32,6 +35,9 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationHorizontal];
 			[buttons[i] setAction:@selector(actionKey:)];
 			[buttons[i] setTarget:self];
+
+			[buttons[i] setBordered:NO];
+			[[buttons[i] cell] setBackgroundColor:back_color];
 
 			[self setButton:i Title:nullptr];
 		}
@@ -47,7 +53,8 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 		[key_identifiers[i] release];
 	}
 	[key_identifiers release];
-	[color release];
+	[font_color release];
+	[back_color release];
 	[super dealloc];
 }
 
@@ -106,7 +113,7 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 
 	NSMutableAttributedString *att_title = [[NSMutableAttributedString alloc] initWithString:ns_title];
 	NSRange titleRange = NSMakeRange(0, [att_title length]);
-	[att_title addAttribute:NSForegroundColorAttributeName value:color range:titleRange];
+	[att_title addAttribute:NSForegroundColorAttributeName value:font_color range:titleRange];
 
 	[buttons[index] setAttributedTitle:att_title];
 

@@ -17,16 +17,15 @@ static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touc
 }
 
 
-@property () NSSize intrinsicContentSize; //readonly
+@property (readonly) NSSize intrinsicContentSize;
 
 - (id)init;
 
 @end
 
 
-//Implementation file (.m)
 @implementation TBButton
-@synthesize intrinsicContentSize;
+@synthesize intrinsicContentSize = _intrinsicContentSize;
 
 
 - (id)init
@@ -34,7 +33,7 @@ static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touc
     self = [super init];
     if (self)
     {
-        self.intrinsicContentSize = NSMakeSize(0, 0);
+        self->_intrinsicContentSize = NSMakeSize(0, 0);
     }
 
     return self;
@@ -51,7 +50,7 @@ static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touc
 NSMutableArray<NSTouchBarItemIdentifier> *key_identifiers;
 NSColor *font_color;
 NSColor *back_color;
-NSButton *buttons[CONSOLE_FKEYS_COUNT];
+TBButton *buttons[CONSOLE_FKEYS_COUNT];
 
 - (instancetype)init
 {
@@ -63,7 +62,7 @@ NSButton *buttons[CONSOLE_FKEYS_COUNT];
 		{
 			[key_identifiers addObject:[NSString stringWithFormat:@"com.Far2l.Touchbar.F%d", i + 1] ];
 
-			buttons[i] = [[TBButton alloc] init];//[[NSButton alloc] init];
+			buttons[i] = [[TBButton alloc] init];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationHorizontal];
 			[buttons[i] setBordered:NO];

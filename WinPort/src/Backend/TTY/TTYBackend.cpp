@@ -483,11 +483,11 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 		bool detect_support = (_fkeys_support == FKS_UNKNOWN);
 		StackSerializer stk_ser;
 		for (int i = CONSOLE_FKEYS_COUNT - 1; i >= 0; --i) {
-			bool specified = titles != NULL && titles[i] != NULL;
-			if (specified) {
+			unsigned char state = (titles != NULL && titles[i] != NULL) ? 1 : 0;
+			if (state != 0) {
 				stk_ser.PushStr(titles[i]);
 			}
-			stk_ser.PushPOD(specified);
+			stk_ser.PushPOD(state);
 		}
 		stk_ser.PushPOD('f');
 

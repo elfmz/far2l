@@ -49,6 +49,12 @@ void StackSerializer::Swap(StackSerializer &other)
 {
 	_data.swap(other._data);
 }
+
+bool StackSerializer::IsEmpty() const
+{
+	return _data.empty();
+}
+
 ///////////////
 
 void StackSerializer::Push(const void *ptr, size_t len)

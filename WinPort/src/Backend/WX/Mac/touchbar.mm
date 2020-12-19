@@ -97,12 +97,18 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 	bar.delegate = self;
 	bar.defaultItemIdentifiers = key_identifiers;
 	bar.customizationIdentifier = s_tb_customization_identifier;
+	[key_identifiers retain];
+	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
+	{
+		[key_identifiers[i] retain];
+	}
 
 	return bar;
 }
 
 - (IBAction) actionKey : (id) sender  {
-	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if ([sender isEqual:buttons[i]]) {
+	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if ([sender isEqual:buttons[i]])
+	{
 		fprintf(stderr, "actionKey %d\n", i);
 		if (s_tb_listener)
 		{
@@ -122,6 +128,7 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 		customItem.view = buttons[i];
 		customItem.visibilityPriority = NSTouchBarItemPriorityHigh;
 //		[buttons[i] invalidateIntrinsicContentSize];
+		[buttons[i] retain];
 		return customItem;
 	}
 
@@ -176,6 +183,7 @@ void Touchbar_Register(ITouchbarListener *listener)
 			g_tb_delegate = [[Far2lTouchbarDelegate alloc] init];
 			if (g_tb_delegate)
 			{
+				[g_tb_delegate retain];
 				g_tb_delegate.nextResponder = app.nextResponder;
 				app.nextResponder = g_tb_delegate;
 

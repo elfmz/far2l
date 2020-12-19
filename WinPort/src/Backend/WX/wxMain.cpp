@@ -27,7 +27,7 @@
 #include <atomic>
 
 #ifdef __APPLE__
-# include "wx/taskbar.h"
+# include "Mac/dockicon.h"
 # include "Mac/touchbar.h"
 #endif
 
@@ -231,72 +231,13 @@ wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
 //////////////////////////////////////////
 
-#if defined(__WXOSX__) && wxOSX_USE_COCOA
-enum
-{
-    PU_NEW_INSTANCE = 10001,
-};
-
-class MacDockIcon : public wxTaskBarIcon
-{
-public:
-	MacDockIcon()
-	:   wxTaskBarIcon(wxTBI_DOCK)
-	{}
-
-	virtual wxMenu *CreatePopupMenu()
-	{
-		wxMenu *menu = new wxMenu;
-		menu->Append(PU_NEW_INSTANCE, wxT("&New instance"));
-		return menu;
-	}
-
-	wxDECLARE_EVENT_TABLE();
-	void OnMenuNewInstance(wxCommandEvent& )
-	{
-		wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
-		wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
-		fn_str+= fn.GetName();
-		const char *fn_psz = fn_str.mb_str();
-
-		pid_t pid = fork();
-		if (pid == 0) {
-			pid = fork();
-			if (pid == 0) {
-				fprintf(stderr, "EXECUTING: %s\n", fn_psz);
-				execl(fn_psz, fn_psz, nullptr);
-				exit(-1);
-			}
-			exit(0);
-
-		} else if (pid != -1) {
-			waitpid(pid, nullptr, 0);
-		}
-	}
-};
-
-wxBEGIN_EVENT_TABLE(MacDockIcon, wxTaskBarIcon)
-    EVT_MENU(PU_NEW_INSTANCE, MacDockIcon::OnMenuNewInstance)
-wxEND_EVENT_TABLE()
-
-
-#endif
-
-
-//////////////////////////////////////////
-
-
 class WinPortApp: public wxApp
 {
-public:
-#if defined(__WXOSX__) && wxOSX_USE_COCOA
-	std::shared_ptr<MacDockIcon>   _dockIcon;
-	WinPortApp()
-	{
-		_dockIcon = std::make_shared<MacDockIcon>();
-	}
+#ifdef __APPLE__
+	std::shared_ptr<MacDockIcon> _mac_dock_icon = std::make_shared<MacDockIcon>();
 #endif
 
+public:
 	virtual bool OnInit();
 };
 
@@ -306,7 +247,6 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 #ifdef __APPLE__
 	, protected ITouchbarListener
 #endif
-
 {
 public:
     WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);

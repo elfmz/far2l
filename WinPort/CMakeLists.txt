@@ -61,6 +61,7 @@ if (${USEWX})
 		set(SOURCES
 			${SOURCES}
 			src/Backend/WX/Mac/touchbar.mm
+			src/Backend/WX/Mac/dockicon.cpp
 		)
 	endif()
 

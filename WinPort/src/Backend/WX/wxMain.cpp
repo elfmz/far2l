@@ -27,6 +27,7 @@
 #include <atomic>
 
 #ifdef __APPLE__
+# include "wx/taskbar.h"
 # include "Mac/touchbar.h"
 #endif
 
@@ -228,13 +229,75 @@ wxDEFINE_EVENT(WX_CONSOLE_CHANGE_FONT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
 
+//////////////////////////////////////////
+
+#if defined(__WXOSX__) && wxOSX_USE_COCOA
+enum
+{
+    PU_NEW_INSTANCE = 10001,
+};
+
+class MacDockIcon : public wxTaskBarIcon
+{
+public:
+	MacDockIcon()
+	:   wxTaskBarIcon(wxTBI_DOCK)
+	{}
+
+	virtual wxMenu *CreatePopupMenu()
+	{
+		wxMenu *menu = new wxMenu;
+		menu->Append(PU_NEW_INSTANCE, wxT("&New instance"));
+		return menu;
+	}
+
+	wxDECLARE_EVENT_TABLE();
+	void OnMenuNewInstance(wxCommandEvent& )
+	{
+		wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
+		wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+		fn_str+= fn.GetName();
+		const char *fn_psz = fn_str.mb_str();
+
+		pid_t pid = fork();
+		if (pid == 0) {
+			pid = fork();
+			if (pid == 0) {
+				fprintf(stderr, "EXECUTING: %s\n", fn_psz);
+				execl(fn_psz, fn_psz, nullptr);
+				exit(-1);
+			}
+			exit(0);
+
+		} else if (pid != -1) {
+			waitpid(pid, nullptr, 0);
+		}
+	}
+};
+
+wxBEGIN_EVENT_TABLE(MacDockIcon, wxTaskBarIcon)
+    EVT_MENU(PU_NEW_INSTANCE, MacDockIcon::OnMenuNewInstance)
+wxEND_EVENT_TABLE()
+
+
+#endif
+
 
 //////////////////////////////////////////
+
 
 class WinPortApp: public wxApp
 {
 public:
-    virtual bool OnInit();
+#if defined(__WXOSX__) && wxOSX_USE_COCOA
+	std::shared_ptr<MacDockIcon>   _dockIcon;
+	WinPortApp()
+	{
+		_dockIcon = std::make_shared<MacDockIcon>();
+	}
+#endif
+
+	virtual bool OnInit();
 };
 
 class WinPortFrame;
@@ -1420,8 +1483,9 @@ bool WinPortPanel::OnConsoleIsActive()
 
 static std::string GetNotifySH()
 {
-	wxFileName f(wxStandardPaths::Get().GetExecutablePath());
-	std::string out(f.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR).mb_str());
+	wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
+	wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+	std::string out(fn_str.mb_str());
 
 	if (TranslateInstallPath_Bin2Share(out)) {
 		out+= APP_BASENAME "/";

@@ -97,6 +97,8 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 	bar.delegate = self;
 	bar.defaultItemIdentifiers = key_identifiers;
 	bar.customizationIdentifier = s_tb_customization_identifier;
+	[self retain];
+	[s_tb_customization_identifier retain];
 	[key_identifiers retain];
 	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
 	{

@@ -64,11 +64,15 @@ if (${USEWX})
 			src/Backend/WX/Mac/dockicon.cpp
 		)
 	endif()
-
 endif()
 
 
 add_library (WinPort ${SOURCES})
+
+if (${USEWX} AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+set_property (TARGET WinPort APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
+endif()
+
 
 if (NOT ${USEWX})
 	target_compile_options(WinPort PUBLIC "-DNOWX")

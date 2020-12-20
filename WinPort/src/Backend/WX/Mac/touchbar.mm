@@ -76,20 +76,6 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 	return self;
 }
 
--(void)dealloc
-{
-	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
-	{
-		[buttons[i] release];
-		[key_identifiers[i] release];
-	}
-	[key_identifiers release];
-	[font_color release];
-	[back_color release];
-
-	[super dealloc];
-}
-
 - (NSTouchBar *) makeTouchBar
 {
 	NSTouchBar *bar = [[NSTouchBar alloc] init];
@@ -97,13 +83,6 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 	bar.delegate = self;
 	bar.defaultItemIdentifiers = key_identifiers;
 	bar.customizationIdentifier = s_tb_customization_identifier;
-	[self retain];
-	[s_tb_customization_identifier retain];
-	[key_identifiers retain];
-	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
-	{
-		[key_identifiers[i] retain];
-	}
 
 	return bar;
 }
@@ -130,7 +109,6 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 		customItem.view = buttons[i];
 		customItem.visibilityPriority = NSTouchBarItemPriorityHigh;
 //		[buttons[i] invalidateIntrinsicContentSize];
-		[buttons[i] retain];
 		return customItem;
 	}
 
@@ -159,9 +137,6 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 
 	[buttons[index] setAttributedTitle:att_title];
 	[buttons[index] invalidateIntrinsicContentSize];
-
-	[att_title release];
-	[ns_title release];
 }
 
 
@@ -185,7 +160,6 @@ void Touchbar_Register(ITouchbarListener *listener)
 			g_tb_delegate = [[Far2lTouchbarDelegate alloc] init];
 			if (g_tb_delegate)
 			{
-				[g_tb_delegate retain];
 				g_tb_delegate.nextResponder = app.nextResponder;
 				app.nextResponder = g_tb_delegate;
 

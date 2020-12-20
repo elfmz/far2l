@@ -48,6 +48,7 @@ static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touc
 
 @implementation Far2lTouchbarDelegate
 NSMutableArray<NSTouchBarItemIdentifier> *key_identifiers;
+NSMutableArray<NSTouchBarItemIdentifier> *all_identifiers;
 NSColor *font_color;
 NSColor *back_color;
 TBButton *buttons[CONSOLE_FKEYS_COUNT];
@@ -56,11 +57,17 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 {
 	if (self = [super init]) {
 		key_identifiers = [NSMutableArray array];
+		all_identifiers = [NSMutableArray array];
 		font_color = [NSColor blackColor];
 		back_color = [NSColor colorWithCalibratedRed:0 green:0.8 blue:0.8 alpha:1.0f];
 		for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
 		{
-			[key_identifiers addObject:[NSString stringWithFormat:@"com.Far2l.Touchbar.F%d", i + 1] ];
+			NSString *key_id = [NSString stringWithFormat:@"com.Far2l.Touchbar.F%d", i + 1];
+			[key_identifiers addObject:key_id ];
+			[all_identifiers addObject:key_id ];
+			if (i == 3 || i == 7) {
+				[all_identifiers addObject:NSTouchBarItemIdentifierFixedSpaceSmall ];
+			}
 
 			buttons[i] = [[TBButton alloc] init];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
@@ -81,7 +88,7 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 	NSTouchBar *bar = [[NSTouchBar alloc] init];
 
 	bar.delegate = self;
-	bar.defaultItemIdentifiers = key_identifiers;
+	bar.defaultItemIdentifiers = all_identifiers;
 	bar.customizationIdentifier = s_tb_customization_identifier;
 
 	return bar;

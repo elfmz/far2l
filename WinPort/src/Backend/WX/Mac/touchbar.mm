@@ -127,15 +127,9 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 	NSString *ns_title = nullptr;
 	if (title) {
 		ns_title = [NSString stringWithUTF8String:title];
-		if (*title) {
-			[buttons[index] setHidden:NO];
-		} else {
-			[buttons[index] setHidden:YES];
-		}
 
 	} else {
 		ns_title = [NSString stringWithFormat:@"F%d", index + 1];
-		[buttons[index] setHidden:NO];
 	}
 
 	NSMutableAttributedString *att_title = [[NSMutableAttributedString alloc] initWithString:ns_title];

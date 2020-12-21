@@ -72,6 +72,7 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 			buttons[i] = [[TBButton alloc] init];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
 			[buttons[i] setContentHuggingPriority:1.0 forOrientation:NSLayoutConstraintOrientationHorizontal];
+			[buttons[i] setContentCompressionResistancePriority:1.0 forOrientation:NSLayoutConstraintOrientationVertical];
 			[buttons[i] setBordered:NO];
 			[[buttons[i] cell] setBackgroundColor:back_color];
 			[buttons[i] setAction:@selector(actionKey:)];

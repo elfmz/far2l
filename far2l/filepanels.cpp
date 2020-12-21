@@ -1030,10 +1030,7 @@ void FilePanels::DisplayObject()
 
 	CtrlObject->CmdLine->Show();
 
-	if (Opt.ShowKeyBar)
-		MainKeyBar.Show();
-	else if (MainKeyBar.IsVisible())
-		MainKeyBar.Hide();
+	MainKeyBar.Refresh(Opt.ShowKeyBar);
 
 	KeyBarVisible=Opt.ShowKeyBar;
 #if 1

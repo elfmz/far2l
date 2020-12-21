@@ -590,3 +590,7 @@ bool ConsoleOutput::ConsoleBackgroundMode(bool TryEnterBackgroundMode)
 	return (_backend && _backend->OnConsoleBackgroundMode(TryEnterBackgroundMode));
 }
 
+bool ConsoleOutput::SetFKeyTitles(const CHAR **titles)
+{
+	return (_backend && _backend->OnConsoleSetFKeyTitles(titles));
+}

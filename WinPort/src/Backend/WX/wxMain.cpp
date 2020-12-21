@@ -26,6 +26,12 @@
 #include <algorithm>
 #include <atomic>
 
+#ifdef __APPLE__
+# include "Mac/dockicon.h"
+# include "Mac/touchbar.h"
+#endif
+
+
 #define AREAS_REDUCTION
 
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
@@ -223,24 +229,31 @@ wxDEFINE_EVENT(WX_CONSOLE_CHANGE_FONT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
 
-
 //////////////////////////////////////////
 
 class WinPortApp: public wxApp
 {
+#ifdef __APPLE__
+	std::shared_ptr<MacDockIcon> _mac_dock_icon = std::make_shared<MacDockIcon>();
+#endif
+
 public:
-    virtual bool OnInit();
+	virtual bool OnInit();
 };
 
 class WinPortFrame;
 
 class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
+#ifdef __APPLE__
+	, protected ITouchbarListener
+#endif
 {
 public:
     WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);
 	virtual ~WinPortPanel();
 	void CompleteInitialization();
 	void OnChar( wxKeyEvent& event );
+	virtual void OnTouchbarKey(int index);
 
 protected: 
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
@@ -256,6 +269,7 @@ protected:
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
+	virtual bool OnConsoleSetFKeyTitles(const char **titles);
 
 private:
 	void CheckForResizePending();
@@ -422,7 +436,7 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		_shown = true;
 		wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_INITIALIZED);
 		if (event)
-			wxQueueEvent(_panel, event);		
+			wxQueueEvent(_panel, event);
 	}
 }	
 
@@ -557,6 +571,9 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 
 WinPortPanel::~WinPortPanel()
 {
+#ifdef __APPLE__
+	Touchbar_Deregister();
+#endif
 	delete _periodic_timer;
 	g_winport_con_out.SetBackend(NULL);
 }
@@ -586,6 +603,9 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	_initialized = true;
 
 	if (g_winport_app_thread) {
+#ifdef __APPLE__
+		Touchbar_Register(this);
+#endif
 		WinPortAppThread *tmp = g_winport_app_thread;
 		g_winport_app_thread = NULL;
 		if (tmp->Start(this) != wxTHREAD_NO_ERROR)
@@ -593,6 +613,44 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	}
 }
 
+bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&WinPortPanel::OnConsoleSetFKeyTitles, this, titles);
+		return CallInMain<bool>(fn);
+
+	} else {
+#ifdef __APPLE__
+		return Touchbar_SetTitles(titles);
+#else
+		return false;
+#endif
+	}
+}
+
+void WinPortPanel::OnTouchbarKey(int index)
+{
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.wRepeatCount = 1;
+
+	ir.Event.KeyEvent.wVirtualKeyCode = VK_F1 + index;
+	if (wxGetKeyState(WXK_NUMLOCK)) ir.Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
+	if (wxGetKeyState(WXK_SCROLL)) ir.Event.KeyEvent.dwControlKeyState|= SCROLLLOCK_ON;
+	if (wxGetKeyState(WXK_CAPITAL)) ir.Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;
+	if (wxGetKeyState(WXK_SHIFT)) ir.Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
+	if (wxGetKeyState(WXK_CONTROL)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+	if (wxGetKeyState(WXK_ALT)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+
+	fprintf(stderr, "%s: F%d dwControlKeyState=0x%x\n", __FUNCTION__,
+		index + 1, ir.Event.KeyEvent.dwControlKeyState);
+
+	ir.Event.KeyEvent.bKeyDown = TRUE;
+	g_winport_con_in.Enqueue(&ir, 1);
+	ir.Event.KeyEvent.bKeyDown = FALSE;
+	g_winport_con_in.Enqueue(&ir, 1);
+
+}
 
 void WinPortPanel::CheckForResizePending()
 {
@@ -1172,7 +1230,6 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 		if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
 		if (wxGetKeyState(WXK_CONTROL)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 		if (wxGetKeyState(WXK_ALT)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
-		if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
 	}
 	if (event.LeftDown()) _mouse_state|= FROM_LEFT_1ST_BUTTON_PRESSED;
 	else if (event.MiddleDown()) _mouse_state|= FROM_LEFT_2ND_BUTTON_PRESSED;
@@ -1366,8 +1423,9 @@ bool WinPortPanel::OnConsoleIsActive()
 
 static std::string GetNotifySH()
 {
-	wxFileName f(wxStandardPaths::Get().GetExecutablePath());
-	std::string out(f.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR).mb_str());
+	wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
+	wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+	std::string out(fn_str.mb_str());
 
 	if (TranslateInstallPath_Bin2Share(out)) {
 		out+= APP_BASENAME "/";

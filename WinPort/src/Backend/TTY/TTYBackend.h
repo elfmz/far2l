@@ -17,6 +17,12 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _output_mutex;
 	int _stdin = 0, _stdout = 1;
 	bool _far2l_tty = false;
+	enum {
+		FKS_UNKNOWN,
+		FKS_SUPPORTED,
+		FKS_NOT_SUPPORTED
+	} _fkeys_support = FKS_UNKNOWN;
+
 	unsigned int _esc_expiration = 0;
 	int _notify_pipe = -1;
 	int _kickass[2] = {-1, -1};
@@ -98,6 +104,7 @@ protected:
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
+	virtual bool OnConsoleSetFKeyTitles(const char **titles);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);

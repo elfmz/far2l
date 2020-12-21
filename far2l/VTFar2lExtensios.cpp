@@ -76,6 +76,7 @@ VTFar2lExtensios::~VTFar2lExtensios()
 	for (;_clipboard_opens > 0; --_clipboard_opens) {
 		WINPORT(CloseClipboard)();
 	}
+	WINPORT(SetConsoleFKeyTitles)(NULL);
 }
 
 void VTFar2lExtensios::WriteInputEvent(const StackSerializer &stk_ser)
@@ -413,6 +414,26 @@ void VTFar2lExtensios::OnInterract_DisplayNotification(StackSerializer &stk_ser)
 	stk_ser.Clear();
 }
 
+void VTFar2lExtensios::OnInterract_SetFKeyTitles(StackSerializer &stk_ser)
+{
+	std::string titles_str[CONSOLE_FKEYS_COUNT];
+	const char *titles[ARRAYSIZE(titles_str)] {};
+
+	for (unsigned int i = 0; i < ARRAYSIZE(titles_str) && !stk_ser.IsEmpty(); ++i) {
+		unsigned char state = 0;
+		stk_ser.PopPOD(state);
+		if (state != 0) {
+			stk_ser.PopStr(titles_str[i]);
+			titles[i] = titles_str[i].c_str();
+		}
+	}
+
+	bool out = WINPORT(SetConsoleFKeyTitles)(titles) != FALSE;
+
+	stk_ser.Clear();
+	stk_ser.PushPOD(out);
+}
+
 void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 {
 	const char code = stk_ser.PopChar();
@@ -447,6 +468,10 @@ void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 
 		case 'n':
 			OnInterract_DisplayNotification(stk_ser);
+		break;
+
+		case 'f':
+			OnInterract_SetFKeyTitles(stk_ser);
 		break;
 
 		default:

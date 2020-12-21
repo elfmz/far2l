@@ -3494,7 +3494,7 @@ int Viewer::ViewerControl(int Command,void *Param)
 					}
 				}
 
-				ViewKeyBar->Show();
+				ViewKeyBar->Refresh(true);
 				ScrBuf.Flush(); //?????
 			}
 

@@ -1119,10 +1119,10 @@ int Manager::ProcessKey(DWORD Key)
 								{
 									case 0:
 										CtrlObject->CmdLine->Show();
-										CtrlObject->Cp()->MainKeyBar.Show();
+										CtrlObject->Cp()->MainKeyBar.Refresh(true);
 										break;
 									case 1:
-										CtrlObject->Cp()->MainKeyBar.Show();
+										CtrlObject->Cp()->MainKeyBar.Refresh(true);
 										break;
 								}
 								WaitKey(Key==KEY_CTRLALTSHIFTPRESS?KEY_CTRLALTSHIFTRELEASE:KEY_RCTRLALTSHIFTRELEASE);
@@ -1133,7 +1133,7 @@ int Manager::ProcessKey(DWORD Key)
 
 								if (CmdLineVisible)   CtrlObject->CmdLine->Show();
 
-								if (KeyBarVisible)    CtrlObject->Cp()->MainKeyBar.Show();
+								CtrlObject->Cp()->MainKeyBar.Refresh(KeyBarVisible);
 							}
 							else
 							{

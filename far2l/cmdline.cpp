@@ -253,8 +253,7 @@ int CommandLine::ProcessKey(int Key)
 		ShowBackground();
 		Redraw();
 //		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
-		if (Opt.ShowKeyBar)
-			CtrlObject->MainKeyBar->Show();
+		CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 
 //		CmdExecute(L"reset", true, false, true, false, false, false);
 		return TRUE;

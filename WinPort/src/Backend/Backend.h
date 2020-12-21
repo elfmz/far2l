@@ -18,6 +18,7 @@ public:
 	virtual bool OnConsoleIsActive() = 0;
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text) = 0;
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode) = 0;
+	virtual bool OnConsoleSetFKeyTitles(const char **titles) = 0;
 };
 
 class IClipboardBackend

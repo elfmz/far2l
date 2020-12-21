@@ -132,10 +132,10 @@ void FolderTree::DisplayObject()
 	if (!IsFullScreen)
 	{
 		TreeKeyBar.SetPosition(0,ScrY,ScrX,ScrY);
-		TreeKeyBar.Show();
+		TreeKeyBar.Refresh(true);
 	}
 	else
-		TreeKeyBar.Hide();
+		TreeKeyBar.Refresh(false);
 }
 
 

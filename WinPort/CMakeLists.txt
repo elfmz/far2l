@@ -55,11 +55,24 @@ if (${USEWX})
 		src/Backend/WX/wxClipboardBackend.cpp
 		src/Backend/WX/ExclusiveHotkeys.cpp
 		src/Backend/WX/wxWinTranslations.cpp
+	)
+
+	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		set(SOURCES
+			${SOURCES}
+			src/Backend/WX/Mac/touchbar.mm
+			src/Backend/WX/Mac/dockicon.cpp
 		)
+	endif()
 endif()
 
 
 add_library (WinPort ${SOURCES})
+
+if (${USEWX} AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+set_property (TARGET WinPort APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
+endif()
+
 
 if (NOT ${USEWX})
 	target_compile_options(WinPort PUBLIC "-DNOWX")

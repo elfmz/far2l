@@ -342,4 +342,9 @@ extern "C" {
 	{
 		return g_winport_con_out.ConsoleBackgroundMode(TryEnterBackgroundMode != FALSE) ? TRUE : FALSE;
 	}
+
+	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (const CHAR **titles))
+	{
+		return g_winport_con_out.SetFKeyTitles(titles) ? TRUE : FALSE;
+	}
 }

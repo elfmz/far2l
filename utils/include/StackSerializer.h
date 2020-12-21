@@ -19,6 +19,7 @@ public:
 	void ToBase64(std::string &str) const;
 	std::string ToBase64() const;
 
+	bool IsEmpty() const;
 	void Clear();
 
 	void Swap(StackSerializer &other);
@@ -44,6 +45,7 @@ public:
 
 	///
 
+	void PushStr(const char *str);
 	void PushStr(const std::string &str);
 	void PopStr(std::string &str);
 	std::string PopStr();
@@ -51,5 +53,7 @@ public:
 	uint8_t PopU8();
 	uint16_t PopU16();
 	uint32_t PopU32();
+
+
 
 };

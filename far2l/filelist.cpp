@@ -4499,10 +4499,7 @@ bool FileList::ApplyCommand()
 
 	CtrlObject->CmdLine->LockUpdatePanel(false);
 	CtrlObject->CmdLine->Show();
-	if (Opt.ShowKeyBar)
-	{
-		CtrlObject->MainKeyBar->Show();
-	}
+	CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 	if (GetSelPosition >= FileCount)
 		ClearSelection();
 

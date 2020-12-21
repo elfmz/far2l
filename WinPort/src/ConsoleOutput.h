@@ -104,6 +104,7 @@ public:
 	bool IsActive();
 	void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
 	bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
+	bool SetFKeyTitles(const CHAR **titles);
 
 	class DirectLineAccess
 	{

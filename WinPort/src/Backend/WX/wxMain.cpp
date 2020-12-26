@@ -974,9 +974,16 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
-	if (event.GetSkipped() || (!g_wayland && event.GetTimestamp() &&
-		_last_keydown.GetKeyCode()==event.GetKeyCode() &&
-		_last_keydown.GetTimestamp()==event.GetTimestamp())) {
+#ifndef __APPLE__
+	bool x11_keystroke_doubled =
+		!g_wayland
+		&& event.GetTimestamp()
+		&& _last_keydown.GetKeyCode() == event.GetKeyCode()
+		&& _last_keydown.GetTimestamp() == event.GetTimestamp();
+#else
+	bool x11_keystroke_doubled = false;
+#endif
+	if (event.GetSkipped() || x11_keystroke_doubled) {
 		event.Skip();
 		return;
 	}

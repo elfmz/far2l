@@ -90,7 +90,7 @@ else ()
         SET(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
         # useful to add custom package scripts
         SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
-            "${PROJECT_BINARY_DIR}/debian/postinst;${PROJECT_BINARY_DIR}/debian/prerm")
+            "${PROJECT_BINARY_DIR}/packaging/debian/postinst;${PROJECT_BINARY_DIR}/packaging/debian/prerm")
         SET(CPACK_DEBIAN_PACKAGE_DEPENDS ${PACKAGE_DEPENDENCIES})
     ENDIF(DEB_GENERATOR_PRESENCE GREATER -1)
 

@@ -1020,7 +1020,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #endif
 
 	if ( (event.HasModifiers() && event.GetUnicodeKey() < 32) || _right_control || 
-		_pressed_keys.simulate_alt() || event.GetKeyCode() == WXK_DELETE ||
+		_pressed_keys.simulate_alt() || event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN ||
 		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
 
 		_pressed_keys.insert(event.GetKeyCode());

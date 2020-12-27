@@ -70,10 +70,39 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
 
 }
 
+static const char *KnownDocumentTypes[] = {
+	"docx", "docm", "dotx", "dotm",
+
+	"xlsx", "xlsm", "xltx", "xltm", "xlsb", "xlam",
+	"pptx", "pptm", "potx", "potm", "ppam", "ppsx",
+
+	"ppsm", "sldx", "sldm", "thmx",
+
+	"odt", "ods", "odp"
+};
+
+static bool IsKnownDocumentType(const char *Name)
+{
+	const char *ext = strrchr(Name, '.');
+	if (ext[0] && ext[1]) {
+		++ext;
+		for (const char *known_type : KnownDocumentTypes) {
+			if (strcasecmp(ext, known_type) == 0) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigned char *Data,int DataSize,int OpMode)
 {
   if (ArcPlugin==NULL)
+    return INVALID_HANDLE_VALUE;
+
+  // if its a docx&etc then Enter should open document by default instead of sinking into it
+  // as archive (even while its really archive)
+  if (OpMode == 0 && IsKnownDocumentType(Name))
     return INVALID_HANDLE_VALUE;
 
   int ArcPluginNumber=-1;

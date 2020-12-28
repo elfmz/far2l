@@ -84,7 +84,7 @@ static const char *KnownDocumentTypes[] = {
 static bool IsKnownDocumentType(const char *Name)
 {
 	const char *ext = strrchr(Name, '.');
-	if (ext[0] && ext[1]) {
+	if (ext && ext[1]) {
 		++ext;
 		for (const char *known_type : KnownDocumentTypes) {
 			if (strcasecmp(ext, known_type) == 0) {

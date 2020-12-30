@@ -102,7 +102,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigne
 
   // if its a docx&etc then Enter should open document by default instead of sinking into it
   // as archive (even while its really archive)
-  if (OpMode == 0 && IsKnownDocumentType(Name))
+  if (OpMode == 0 && Name && IsKnownDocumentType(Name))
     return INVALID_HANDLE_VALUE;
 
   int ArcPluginNumber=-1;

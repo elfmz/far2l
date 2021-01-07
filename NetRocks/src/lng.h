@@ -15,6 +15,7 @@ enum LanguageID
   MEnterExecRemotely,
   MSmartSymlinksCopy,
   MUMaskOverride,
+  MRememberDirectory,
   MConnPoolExpiration,
   MConnectUsingProxy,
   MEditTSocksConfig,

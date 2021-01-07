@@ -866,6 +866,18 @@ void PluginImpl::DismissRemoteHost()
 		g_conn_pool.reset(new ConnectionsPool);
 
 	g_conn_pool->Put(_location.server, _remote);
+
+	if (_location.server_kind == Location::SK_SITE
+	  && G.GetGlobalConfigBool("RememberDirectory", false) ) {
+		SitesConfig sc(_sites_cfg_location);
+		size_t p = _location.server.rfind('/');
+		if (p != std::string::npos) {
+			++p;
+		} else {
+			p = 0;
+		}
+		sc.PutDirectory(_location.server.substr(p).c_str(), _location.ToString(false).c_str());
+	}
 	_remote.reset();
 }
 

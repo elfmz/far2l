@@ -18,6 +18,9 @@ public:
 	std::string TranslateToSitesConfigPath() const;
 
 	bool Transfer(SitesConfigLocation &dst, const std::string &sub, bool mv);
+
+	bool Import(const std::string &src_dir, const std::string &item_name, bool is_dir);
+	bool Export(const std::string &dst_dir, const std::string &item_name, bool is_dir);
 };
 
 
@@ -38,6 +41,9 @@ class SitesConfig : protected KeyFileHelper
 {
 public:
 	SitesConfig(const SitesConfigLocation &sites_cfg_location);
+
+	bool Import(const std::string &fs_path);
+	bool Export(const std::string &fs_path, const std::string &site);
 
 	inline std::vector<std::string> EnumSites() { return EnumSections(); } 
 	inline void RemoveSite(const std::string &site) { return RemoveSection(site.c_str()); } 

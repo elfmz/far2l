@@ -330,6 +330,14 @@ void SitesConfig::PutUsername(const std::string &site, const std::string &value)
 std::string SitesConfig::GetPassword(const std::string &site)
 {
 	std::string s = GetString(site.c_str(), "Password");
+	if (s.empty()) {
+		s = GetString(site.c_str(), "PasswordPlain");
+		if (!s.empty()) {
+			StringObfuscate(s);
+			PutString(site.c_str(), "Password", s.c_str());
+			RemoveKey(site.c_str(), "PasswordPlain");
+		}
+	}
 	StringDeobfuscate(s);
 	return s;
 }

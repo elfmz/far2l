@@ -76,6 +76,12 @@ PluginImpl::PluginImpl(const wchar_t *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
 	_local = std::make_shared<HostLocal>();
+	if (path && wcsncmp(path, L"net:", 4) == 0) {
+		path+= 4;
+		while (*path == L'/') {
+			++path;
+		}
+	}
 
 	if (path && *path) {
 		if (!_location.FromString(Wide2MB(path))) {

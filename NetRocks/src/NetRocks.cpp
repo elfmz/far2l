@@ -183,7 +183,7 @@ SHAREDSYMBOL int WINAPI _export MayExitFARW()
 
 static std::wstring CombineAllProtocolPrefixes()
 {
-	std::wstring out;
+	std::wstring out = L"net:";
 	for (auto pi = ProtocolInfoHead(); pi->name; ++pi) {
 		out+= MB2Wide(pi->name);
 		out+= L':';

@@ -16,6 +16,7 @@ class PluginImpl
 
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH];
 	Location _location;
+	bool _allow_remember_location_dir = false;
 
 	SitesConfigLocation  _sites_cfg_location;
 

@@ -224,6 +224,8 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 		}
 	}
 
+	_allow_remember_location_dir = (OpMode == 0);
+
 	SiteSpecification site_specification;
 	if (_location.server_kind == Location::SK_SITE) {
 		site_specification = SiteSpecification(_location.server);
@@ -867,7 +869,8 @@ void PluginImpl::DismissRemoteHost()
 
 	g_conn_pool->Put(_location.server, _remote);
 
-	if (_location.server_kind == Location::SK_SITE
+	if (_allow_remember_location_dir &&
+	  _location.server_kind == Location::SK_SITE
 	  && G.GetGlobalConfigBool("RememberDirectory", false) ) {
 		SitesConfig sc(_sites_cfg_location);
 		size_t p = _location.server.rfind('/');

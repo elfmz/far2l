@@ -29,7 +29,7 @@ $^#Copyright (C) 2019 elfmz#
 $^#Contents
 $^#Disks/Plugin menu#
  
- After choosing the plugin from disks menu (Alt+F1/Alt+F2) or from Plugin menu (F11) you will see connection sites list. Initially there're no sites defined, but you can add site using <Create site connection> entry or pressing Shift+F4. After being added any site connection can be edited by pressing F4 or removed by pressing F8.
+ After choosing the plugin from disks menu (Alt+F1/Alt+F2) or from Plugin menu (F11) you will see connection sites list. Initially there're no sites defined, but you can add site using <Create site connection> entry or pressing Shift+F4. After being added any site connection can be edited by pressing F4 or removed by pressing F8. You can export/import selected sites settings to/from filesystem by opening disk directory in another panel and using F5/F6 keys.
  
  ~Contents~@Contents@
 

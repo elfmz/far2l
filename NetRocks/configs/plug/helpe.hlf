@@ -84,6 +84,7 @@ $^#Copyright (C) 2019 elfmz#
 $^#Contents
 $^#Command line and remote FAR2L#
 
+ When entering commands in command line when panel displays usual files list you can open connection by typing NetRocks-supported protocol URL, like #sftp://192.168.1.15# or alternatively you can open preconfigured site by invoking its name between triangle brackets and prefixed with net: prefix, like: #net:<SITE>#
  When entering commands in command line when panel displays active NetRocks connection of SFTP and SCP protocols - NetRocks will execute them directly on remote host, opening full-featured pseudoterminal for controlling remotely-executed commands. This essentially #allows using NetRocks as SSH client# with FAR2L-extended pseudoterminal.
  If you're working in GUI-based FAR2L you can run #remote TTY-mode FAR2L# directly in NetRocks SFTP/SCP connected panel and work in that remote FAR2L with user experience of local GUI-based version (full keyboard support, clipboard sharing, desktop notifications) as well as being sure that if connection suddenly drops - remote work will not be killed instantly, since remote terminal-based FAR2L will remain alive and active in background and next time you will reconnect and re-launch far2l - it will prompt to activate that backgrounded FAR2L instance.
 

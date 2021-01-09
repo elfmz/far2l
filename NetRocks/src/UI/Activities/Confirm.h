@@ -17,6 +17,7 @@ public:
 class ConfirmSitesDisposition : protected BaseDialog
 {
 	int _i_proceed = -1, _i_cancel = -1;
+	bool _warning;
 
 public:
 	enum What {

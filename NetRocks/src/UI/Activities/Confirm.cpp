@@ -49,6 +49,7 @@ bool ConfirmRemove::Ask()
 */
 
 ConfirmSitesDisposition::ConfirmSitesDisposition(What w, bool mv)
+	: _warning(mv)
 {
 	switch (w) {
 		case W_REMOVE:
@@ -56,6 +57,7 @@ ConfirmSitesDisposition::ConfirmSitesDisposition(What w, bool mv)
 			_di.Add(DI_TEXT, 5,2,62,2, 0, MRemoveSitesText);
 			_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MProceedRemoval);
+			_warning = true;
 			break;
 
 		case W_RELOCATE:
@@ -89,7 +91,7 @@ ConfirmSitesDisposition::ConfirmSitesDisposition(What w, bool mv)
 
 bool ConfirmSitesDisposition::Ask()
 {
-	return (Show(L"ConfirmSitesDisposition", 6, 2, FDLG_WARNING) == _i_proceed);
+	return (Show(L"ConfirmSitesDisposition", 6, 2, _warning ? FDLG_WARNING : 0) == _i_proceed);
 }
 
 //////////////////////////////////////////////////////////////////////////

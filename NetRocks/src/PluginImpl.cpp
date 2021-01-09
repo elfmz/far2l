@@ -428,17 +428,13 @@ BOOL PluginImpl::SitesXfer(const char *dir, struct PluginPanelItem *items, int i
 
 		bool its_dir = ((items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0);
 
-		if ( !its_dir && (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
-			continue;
-		}
-
 		std::string item_name = Wide2MB(items[i].FindData.lpwszFileName);
 		if (imp) {
 			if (!_sites_cfg_location.Import(dir, item_name, its_dir, mv)) {
 				return FALSE;
 			}
 
-		} else {
+		} else if ( its_dir || (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) != 0) {
 			if (!_sites_cfg_location.Export(dir, item_name, its_dir, mv)) {
 				return FALSE;
 			}

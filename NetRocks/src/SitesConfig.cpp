@@ -231,6 +231,10 @@ bool SitesConfigLocation::Transfer(SitesConfigLocation &dst, const std::string &
 
 bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &item_name, bool is_dir, bool mv)
 {
+	fprintf(stderr,
+		"SitesConfigLocation::Import('%s', '%s', %d\n",
+			src_dir.c_str(), item_name.c_str(), is_dir);
+
 	std::string item_fs_path = src_dir;
 	if (!item_fs_path.empty() && item_fs_path.back() != '/') {
 		item_fs_path+= '/';
@@ -238,9 +242,6 @@ bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &
 	item_fs_path+= item_name;
 
 	if (!is_dir) {
-		fprintf(stderr,
-			"SitesConfigLocation::Import('%s', '%s', %d\n",
-				src_dir.c_str(), item_name.c_str(), is_dir);
 		SitesConfig sc(*this);
 		if (!sc.Import(item_fs_path)) {
 			return false;

@@ -229,7 +229,7 @@ bool SitesConfigLocation::Transfer(SitesConfigLocation &dst, const std::string &
 	return system(cmd.c_str()) == 0;
 }
 
-bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &item_name, bool is_dir)
+bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &item_name, bool is_dir, bool mv)
 {
 	std::string item_fs_path = src_dir;
 	if (!item_fs_path.empty() && item_fs_path.back() != '/') {
@@ -241,7 +241,14 @@ bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &
 		fprintf(stderr,
 			"SitesConfigLocation::Import('%s', '%s', %d\n",
 				src_dir.c_str(), item_name.c_str(), is_dir);
-		return SitesConfig(*this).Import(item_fs_path);
+		SitesConfig sc(*this);
+		if (!sc.Import(item_fs_path)) {
+			return false;
+		}
+		if (mv) {
+			unlink(item_fs_path.c_str());
+		}
+		return true;
 	}
 
 
@@ -274,12 +281,12 @@ bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &
 		de_name = de->d_name;
 		if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
 			if (StrEndsBy(de_name, NETROCKS_EXPORT_DIR_EXTENSION)) {
-				if (!Import(item_fs_path, de_name, true)) {
+				if (!Import(item_fs_path, de_name, true, mv)) {
 					out = false;
 				}
 
 			} else if (StrEndsBy(de_name, NETROCKS_EXPORT_SITE_EXTENSION)) {
-				if (!Import(item_fs_path, de_name, false)) {
+				if (!Import(item_fs_path, de_name, false, mv)) {
 					out = false;
 				}
 			}
@@ -287,10 +294,14 @@ bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &
 	}
 	closedir(d);
 	_parts = saved_parts;
+	if (out && mv) {
+		rmdir(item_fs_path.c_str());
+	}
+
 	return out;
 }
 
-bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &item_name, bool is_dir)
+bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &item_name, bool is_dir, bool mv)
 {
 	std::string item_fs_path = dst_dir;
 	if (!item_fs_path.empty() && item_fs_path.back() != '/') {
@@ -300,7 +311,14 @@ bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &
 
 	if (!is_dir) {
 		item_fs_path+= NETROCKS_EXPORT_SITE_EXTENSION;
-		return SitesConfig(*this).Export(item_fs_path, item_name);
+		SitesConfig sc(*this);
+		if (!sc.Export(item_fs_path, item_name)) {
+			return false;
+		}
+		if (mv) {
+			sc.RemoveSite(item_name);
+		}
+		return true;
 	}
 
 	item_fs_path+= NETROCKS_EXPORT_DIR_EXTENSION;
@@ -313,7 +331,7 @@ bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &
 		{
 			std::vector<std::string> sites = SitesConfig(*this).EnumSites();
 			for (const auto &site : sites) {
-				if (!Export(item_fs_path, site, false)) {
+				if (!Export(item_fs_path, site, false, mv)) {
 					out = false;
 				}
 			}
@@ -321,12 +339,16 @@ bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &
 
 		std::vector<std::string> children;
 		for (const auto &child : children) {
-			if (!Export(item_fs_path, child, true)) {
+			if (!Export(item_fs_path, child, true, mv)) {
 				out = false;
+
 			}
 		}
 	}
 	_parts = saved_parts;
+	if (out && mv) {
+		Remove(item_name);
+	}
 	return out;
 }
 

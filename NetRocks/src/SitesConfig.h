@@ -19,8 +19,8 @@ public:
 
 	bool Transfer(SitesConfigLocation &dst, const std::string &sub, bool mv);
 
-	bool Import(const std::string &src_dir, const std::string &item_name, bool is_dir);
-	bool Export(const std::string &dst_dir, const std::string &item_name, bool is_dir);
+	bool Import(const std::string &src_dir, const std::string &item_name, bool is_dir, bool mv);
+	bool Export(const std::string &dst_dir, const std::string &item_name, bool is_dir, bool mv);
 };
 
 

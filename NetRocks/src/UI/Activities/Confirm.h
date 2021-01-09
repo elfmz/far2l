@@ -21,11 +21,12 @@ class ConfirmSitesDisposition : protected BaseDialog
 public:
 	enum What {
 		W_REMOVE,
-		W_COPY,
-		W_MOVE
+		W_RELOCATE,
+		W_EXPORT,
+		W_IMPORT,
 	};
 
-	ConfirmSitesDisposition(What w);
+	ConfirmSitesDisposition(What w, bool mv);
 
 	bool Ask();
 };

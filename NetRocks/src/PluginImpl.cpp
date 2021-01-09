@@ -416,6 +416,11 @@ BackgroundTaskStatus PluginImpl::StartXfer(int op_mode, std::shared_ptr<IHost> &
 
 BOOL PluginImpl::SitesXfer(const char *dir, struct PluginPanelItem *items, int items_count, bool mv, bool imp)
 {
+	if (!ConfirmSitesDisposition(imp ? ConfirmSitesDisposition::W_IMPORT
+				: ConfirmSitesDisposition::W_EXPORT, mv).Ask()) {
+		return TRUE;
+	}
+
 	for (int i = 0; i < items_count; ++i) {
 		if (!FILENAME_ENUMERABLE(items[i].FindData.lpwszFileName)) {
 			continue;
@@ -429,12 +434,12 @@ BOOL PluginImpl::SitesXfer(const char *dir, struct PluginPanelItem *items, int i
 
 		std::string item_name = Wide2MB(items[i].FindData.lpwszFileName);
 		if (imp) {
-			if (!_sites_cfg_location.Import(dir, item_name, its_dir)) {
+			if (!_sites_cfg_location.Import(dir, item_name, its_dir, mv)) {
 				return FALSE;
 			}
 
 		} else {
-			if (!_sites_cfg_location.Export(dir, item_name, its_dir)) {
+			if (!_sites_cfg_location.Export(dir, item_name, its_dir, mv)) {
 				return FALSE;
 			}
 		}
@@ -524,7 +529,7 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 		return FALSE;
 
 	if (!_remote) {
-		if (!ConfirmSitesDisposition(ConfirmSitesDisposition::W_REMOVE).Ask())
+		if (!ConfirmSitesDisposition(ConfirmSitesDisposition::W_REMOVE, false).Ask())
 			return FALSE;
 
 		SitesConfig sc(_sites_cfg_location);
@@ -707,7 +712,7 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 		}
 
 		if (_sites_cfg_location.TranslateToPath(false) != sites_cfg_location.TranslateToPath(false)) {
-			if (!ConfirmSitesDisposition(mv ? ConfirmSitesDisposition::W_MOVE : ConfirmSitesDisposition::W_COPY).Ask()) {
+			if (!ConfirmSitesDisposition(ConfirmSitesDisposition::W_RELOCATE, mv).Ask()) {
 				return true;
 			}
 

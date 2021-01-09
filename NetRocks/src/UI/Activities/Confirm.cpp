@@ -48,7 +48,7 @@ bool ConfirmRemove::Ask()
     6                     29       38                      60
 */
 
-ConfirmSitesDisposition::ConfirmSitesDisposition(What w)
+ConfirmSitesDisposition::ConfirmSitesDisposition(What w, bool mv)
 {
 	switch (w) {
 		case W_REMOVE:
@@ -58,16 +58,23 @@ ConfirmSitesDisposition::ConfirmSitesDisposition(What w)
 			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MProceedRemoval);
 			break;
 
-		case W_COPY:
-			_di.SetBoxTitleItem(MCopySitesTitle);
-			_di.Add(DI_TEXT, 5,2,62,2, 0, MCopySitesText);
+		case W_RELOCATE:
+			_di.SetBoxTitleItem(mv ? MMoveSitesTitle : MCopySitesTitle);
+			_di.Add(DI_TEXT, 5,2,62,2, 0, mv ? MMoveSitesText : MCopySitesText);
 			_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MOK);
 			break;
 
-		case W_MOVE:
-			_di.SetBoxTitleItem(MMoveSitesTitle);
-			_di.Add(DI_TEXT, 5,2,62,2, 0, MMoveSitesText);
+		case W_IMPORT:
+			_di.SetBoxTitleItem(mv ? MImportMoveSitesTitle : MImportCopySitesTitle);
+			_di.Add(DI_TEXT, 5,2,62,2, 0, mv ? MImportMoveSitesText : MImportCopySitesText);
+			_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
+			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MOK);
+			break;
+
+		case W_EXPORT:
+			_di.SetBoxTitleItem(mv ? MExportMoveSitesTitle : MExportCopySitesTitle);
+			_di.Add(DI_TEXT, 5,2,62,2, 0, mv ? MExportMoveSitesText : MExportCopySitesText);
 			_di.Add(DI_TEXT, 4,3,63,3, DIF_BOXCOLOR | DIF_SEPARATOR);
 			_i_proceed = _di.Add(DI_BUTTON, 7,4,29,4, DIF_CENTERGROUP, MOK);
 			break;

@@ -76,6 +76,12 @@ PluginImpl::PluginImpl(const wchar_t *path)
 {
 	_cur_dir[0] = _panel_title[0] = 0;
 	_local = std::make_shared<HostLocal>();
+	if (path && wcsncmp(path, L"net:", 4) == 0) {
+		path+= 4;
+		while (*path == L'/') {
+			++path;
+		}
+	}
 
 	if (path && *path) {
 		if (!_location.FromString(Wide2MB(path))) {
@@ -408,19 +414,54 @@ BackgroundTaskStatus PluginImpl::StartXfer(int op_mode, std::shared_ptr<IHost> &
 	return out;
 }
 
+BOOL PluginImpl::SitesXfer(const char *dir, struct PluginPanelItem *items, int items_count, bool mv, bool imp)
+{
+	if (!ConfirmSitesDisposition(imp ? ConfirmSitesDisposition::W_IMPORT
+				: ConfirmSitesDisposition::W_EXPORT, mv).Ask()) {
+		return TRUE;
+	}
+
+	for (int i = 0; i < items_count; ++i) {
+		if (!FILENAME_ENUMERABLE(items[i].FindData.lpwszFileName)) {
+			continue;
+		}
+
+		bool its_dir = ((items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0);
+
+		if ( !its_dir && (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
+			continue;
+		}
+
+		std::string item_name = Wide2MB(items[i].FindData.lpwszFileName);
+		if (imp) {
+			if (!_sites_cfg_location.Import(dir, item_name, its_dir, mv)) {
+				return FALSE;
+			}
+
+		} else {
+			if (!_sites_cfg_location.Export(dir, item_name, its_dir, mv)) {
+				return FALSE;
+			}
+		}
+	}
+
+	return TRUE;
+}
+
 int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *DestPath, int OpMode)
 {
 	fprintf(stderr, "NetRocks::GetFiles: _dir='%ls' DestPath='%ls' ItemsNumber=%d OpMode=%d\n", _cur_dir, DestPath, ItemsNumber, OpMode);
-	if (ItemsNumber <= 0)
-		return FALSE;
-
-	if (!_remote) {
+	if (ItemsNumber <= 0) {
 		return FALSE;
 	}
 
 	std::string dst_dir;
 	if (DestPath)
 		Wide2MB(DestPath, dst_dir);
+
+	if (!_remote) {
+		return SitesXfer(dst_dir.c_str(), PanelItem, ItemsNumber, Move != 0, false);
+	}
 
 	switch (StartXfer(OpMode, _remote, CurrentSiteDir(true), _local,
 		dst_dir, PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XD_DOWNLOAD)) {
@@ -446,10 +487,6 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	if (ItemsNumber <= 0)
 		return FALSE;
 
-	if (!_remote) {
-		return FALSE;
-	}
-
 //	std::string src_dir;
 //	if (SrcPath) {
 //		Wide2MB(SrcPath, src_dir);
@@ -463,6 +500,10 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	} else if (dst_dir[l - 1] != '/') {
 		dst_dir[l] = '/';
 		dst_dir[l + 1] = 0;
+	}
+
+	if (!_remote) {
+		return SitesXfer(dst_dir, PanelItem, ItemsNumber, Move != 0, true);
 	}
 
 	switch (StartXfer(OpMode, _local, dst_dir, _remote, CurrentSiteDir(true),
@@ -488,7 +529,7 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 		return FALSE;
 
 	if (!_remote) {
-		if (!ConfirmSitesDisposition(ConfirmSitesDisposition::W_REMOVE).Ask())
+		if (!ConfirmSitesDisposition(ConfirmSitesDisposition::W_REMOVE, false).Ask())
 			return FALSE;
 
 		SitesConfig sc(_sites_cfg_location);
@@ -671,7 +712,7 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 		}
 
 		if (_sites_cfg_location.TranslateToPath(false) != sites_cfg_location.TranslateToPath(false)) {
-			if (!ConfirmSitesDisposition(mv ? ConfirmSitesDisposition::W_MOVE : ConfirmSitesDisposition::W_COPY).Ask()) {
+			if (!ConfirmSitesDisposition(ConfirmSitesDisposition::W_RELOCATE, mv).Ask()) {
 				return true;
 			}
 

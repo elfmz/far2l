@@ -12,6 +12,10 @@
 
 #include "SitesConfig.h"
 
+#define NETROCKS_EXPORT_SITE_EXTENSION	".Site.NetRocks"
+#define NETROCKS_EXPORT_DIR_EXTENSION	".Dir.NetRocks"
+
+
 static std::string ObtainObfuscationKey()
 {
 	std::string out;
@@ -225,6 +229,129 @@ bool SitesConfigLocation::Transfer(SitesConfigLocation &dst, const std::string &
 	return system(cmd.c_str()) == 0;
 }
 
+bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &item_name, bool is_dir, bool mv)
+{
+	std::string item_fs_path = src_dir;
+	if (!item_fs_path.empty() && item_fs_path.back() != '/') {
+		item_fs_path+= '/';
+	}
+	item_fs_path+= item_name;
+
+	if (!is_dir) {
+		fprintf(stderr,
+			"SitesConfigLocation::Import('%s', '%s', %d\n",
+				src_dir.c_str(), item_name.c_str(), is_dir);
+		SitesConfig sc(*this);
+		if (!sc.Import(item_fs_path)) {
+			return false;
+		}
+		if (mv) {
+			unlink(item_fs_path.c_str());
+		}
+		return true;
+	}
+
+
+	DIR *d = opendir(item_fs_path.c_str());
+	if (!d) {
+		return false;
+	}
+
+	std::string actual_name = item_name;
+	if (StrEndsBy(actual_name, NETROCKS_EXPORT_DIR_EXTENSION)) {
+		actual_name.resize(actual_name.size() - (sizeof(NETROCKS_EXPORT_DIR_EXTENSION) - 1));
+	}
+
+	std::vector<std::string> saved_parts = _parts;	
+
+	if (!Change(actual_name)) {
+		Make(actual_name);
+		if (!Change(actual_name)) {
+			closedir(d);
+			_parts = saved_parts;
+			return false;
+		}
+	}
+
+	std::string de_name;
+	bool out = true;
+	for (;;) {
+		struct dirent *de = readdir(d);
+		if (!de) break;
+		de_name = de->d_name;
+		if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
+			if (StrEndsBy(de_name, NETROCKS_EXPORT_DIR_EXTENSION)) {
+				if (!Import(item_fs_path, de_name, true, mv)) {
+					out = false;
+				}
+
+			} else if (StrEndsBy(de_name, NETROCKS_EXPORT_SITE_EXTENSION)) {
+				if (!Import(item_fs_path, de_name, false, mv)) {
+					out = false;
+				}
+			}
+		}
+	}
+	closedir(d);
+	_parts = saved_parts;
+	if (out && mv) {
+		rmdir(item_fs_path.c_str());
+	}
+
+	return out;
+}
+
+bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &item_name, bool is_dir, bool mv)
+{
+	std::string item_fs_path = dst_dir;
+	if (!item_fs_path.empty() && item_fs_path.back() != '/') {
+		item_fs_path+= '/';
+	}
+	item_fs_path+= item_name;
+
+	if (!is_dir) {
+		item_fs_path+= NETROCKS_EXPORT_SITE_EXTENSION;
+		SitesConfig sc(*this);
+		if (!sc.Export(item_fs_path, item_name)) {
+			return false;
+		}
+		if (mv) {
+			sc.RemoveSite(item_name);
+		}
+		return true;
+	}
+
+	item_fs_path+= NETROCKS_EXPORT_DIR_EXTENSION;
+
+	mkdir(item_fs_path.c_str(), 0700);
+
+	std::vector<std::string> saved_parts = _parts;
+	bool out = Change(item_name);
+	if (out) {
+		{
+			std::vector<std::string> sites = SitesConfig(*this).EnumSites();
+			for (const auto &site : sites) {
+				if (!Export(item_fs_path, site, false, mv)) {
+					out = false;
+				}
+			}
+		}
+
+		std::vector<std::string> children;
+		for (const auto &child : children) {
+			if (!Export(item_fs_path, child, true, mv)) {
+				out = false;
+
+			}
+		}
+	}
+	_parts = saved_parts;
+	if (out && mv) {
+		Remove(item_name);
+	}
+	return out;
+}
+
 ///
 
 SiteSpecification::SiteSpecification(const std::string &s)
@@ -259,6 +386,51 @@ std::string SiteSpecification::ToString() const
 SitesConfig::SitesConfig(const SitesConfigLocation &sites_cfg_location)
 	: KeyFileHelper(sites_cfg_location.TranslateToSitesConfigPath().c_str())
 {
+}
+
+bool SitesConfig::Export(const std::string &fs_path, const std::string &site)
+{
+	KeyFileHelper kfh(fs_path.c_str(), false);
+	const std::vector<std::string> &keys = EnumKeys(site.c_str());
+	for (const auto &key : keys) {
+		std::string s = GetString(site.c_str(), key.c_str());
+		if (key == "Password") {
+			StringDeobfuscate(s);
+			kfh.PutString(site.c_str(), "PasswordPlain", s.c_str());
+		} else {
+			kfh.PutString(site.c_str(), key.c_str(), s.c_str());
+		}
+	}
+
+	return kfh.Save();
+}
+
+bool SitesConfig::Import(const std::string &fs_path)
+{
+	KeyFileHelper kfh(fs_path.c_str(), true);
+	if (!kfh.IsLoaded()) {
+		return false;
+	}
+
+	const std::vector<std::string> &sites = kfh.EnumSections();
+	if (sites.empty()) {
+		return false;
+	}
+
+	for (const auto &site : sites) {
+		const std::vector<std::string> &keys = kfh.EnumKeys(site.c_str());
+		for (const auto &key : keys) {
+			std::string s = kfh.GetString(site.c_str(), key.c_str());
+			if (key == "PasswordPlain") {
+				StringObfuscate(s);
+				PutString(site.c_str(), "Password", s.c_str());
+			} else {
+				PutString(site.c_str(), key.c_str(), s.c_str());
+			}
+		}
+	}
+
+	return true;
 }
 
 

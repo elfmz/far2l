@@ -47,6 +47,9 @@ class PluginImpl
 	BackgroundTaskStatus StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
 		int items_count, XferKind kind, XferDirection direction);
+
+	BOOL SitesXfer(const char *dir, struct PluginPanelItem *PanelItem, int ItemsNumber, bool mv, bool imp);
+
 	int SetDirectoryInternal(const wchar_t *Dir, int OpMode);
 
 	void DismissRemoteHost();

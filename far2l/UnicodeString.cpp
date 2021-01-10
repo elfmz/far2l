@@ -203,6 +203,11 @@ bool UnicodeString::Equal(size_t Pos, size_t Len, const wchar_t* Data, size_t Da
 	return !wmemcmp(m_pData->GetData() + Pos, Data, Len);
 }
 
+bool UnicodeString::operator<(const UnicodeString& Str) const
+{
+	return wmemcmp(CPtr(), Str.CPtr(), std::min(GetLength(), Str.GetLength()) + 1 ) < 0;
+}
+
 const UnicodeString operator+(const UnicodeString &strSrc1, const UnicodeString &strSrc2)
 {
 	return UnicodeString(strSrc1).Append(strSrc2);

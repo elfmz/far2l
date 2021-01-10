@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "history.hpp"
 #include "message.hpp"
-#include "hotplug.hpp"
+#include "Locations.hpp"
 #include "config.hpp"
 #include "usermenu.hpp"
 #include "datetime.hpp"
@@ -563,7 +563,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 					ShowProcessList();
 					break;
 				case MENU_COMMANDS_HOTPLUGLIST: // HotPlug list
-					ShowHotplugDevice();
+//					ShowHotplugDevice();
 					break;
 			}
 

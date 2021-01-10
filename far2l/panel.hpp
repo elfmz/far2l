@@ -140,8 +140,6 @@ class Panel:public ScreenObject
 	private:
 		int ChangeDiskMenu(int Pos,int FirstCall);
 		int DisconnectDrive(PanelMenuItem *item, VMenu &ChDisk);
-		void RemoveHotplugDevice(PanelMenuItem *item, VMenu &ChDisk);
-		int ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu);
 		void FastFindShow(int FindX,int FindY);
 		void FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName, FARString &strName);
 		void DragMessage(int X,int Y,int Move);

@@ -4193,6 +4193,42 @@ l:
 "Edytor"
 "Editor"
 
+MLocationsEditFavoriteTitle
+"Редактирование избранного"
+"Edit favorite location"
+upd:"Edit favorite location"
+upd:"Edit favorite location"
+upd:"Edit favorite location"
+upd:"Edit favorite location"
+upd:"Edit favorite location"
+
+MLocationsAddFavoriteTitle
+"Добавление избранного"
+"Add favorite location"
+upd:"Add favorite location"
+upd:"Add favorite location"
+upd:"Add favorite location"
+upd:"Add favorite location"
+upd:"Add favorite location"
+
+MLocationsFavoritePath
+"&Путь"
+"&Path"
+upd:"&Path"
+upd:"&Path"
+upd:"&Path"
+upd:"&Path"
+upd:"&Path"
+
+MLocationsFavoriteText
+"&Текст"
+"&Text"
+upd:"&Text"
+upd:"&Text"
+upd:"&Text"
+upd:"&Text"
+upd:"&Text"
+
 MAskReload
 "уже загружен. Как открыть этот файл?"
 "already loaded. How to open this file?"
@@ -11436,8 +11472,8 @@ MMenuSortUseCaseSensitive
 
 MChangeDriveTitle
 l:
-"Диск"
-"Drive"
+"Перейти
+"Location"
 "Jednotka"
 "Laufwerke"
 "Meghajtók"
@@ -11945,13 +11981,13 @@ upd:"Show ne&twork drive parameters"
 "Mostrar parámetros unidades de red"
 
 MChangeDriveMenuFooter
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
 
 MSearchFileTitle
 l:

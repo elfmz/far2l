@@ -27,7 +27,7 @@ flmodes.cpp flplugin.cpp flshow.cpp flupdate.cpp fnparce.cpp fnparce.hpp
 foldtree.cpp foldtree.hpp format.cpp format.hpp frame.cpp frame.hpp global.cpp 
 global.hpp grabber.cpp grabber.hpp headers.cpp headers.hpp headers.m4 help.cpp 
 help.hpp hilight.cpp hilight.hpp history.cpp history.hpp hmenu.cpp hmenu.hpp 
-hotplug.cpp hotplug.hpp imports.cpp imports.hpp Include/farcolor.hpp 
+imports.cpp imports.hpp Include/farcolor.hpp 
 Include/farkeys.hpp Include/plugin.hpp infolist.cpp infolist.hpp interf.cpp 
 interf.hpp keybar.cpp keybar.hpp keyboard.cpp keyboard.hpp keys.hpp lang.hpp 
 language.cpp language.hpp lasterror.hpp local.cpp local.hpp localOEM.cpp 

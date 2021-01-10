@@ -65,7 +65,7 @@ help.cpp
 hilight.cpp
 history.cpp
 hmenu.cpp
-hotplug.cpp
+Locations.cpp
 infolist.cpp
 interf.cpp
 keybar.cpp

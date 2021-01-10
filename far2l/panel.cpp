@@ -805,6 +805,12 @@ bool Panel::SetLocation_Directory(const wchar_t *path)
 {
 	if (!FarChDir(path))
 	{
+		if (CtrlObject->Plugins.ProcessCommandLine(path))
+		{
+			fprintf(stderr, "SetLocation_Directory('%ls') PLUGIN\n", path);
+			return true;
+		}
+
 		fprintf(stderr, "SetLocation_Directory('%ls') FAILED\n", path);
 		return false;
 	}

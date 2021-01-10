@@ -456,7 +456,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		Wide2MB(DestPath, dst_dir);
 
 	if (!_remote) {
-		return SitesXfer(dst_dir.c_str(), PanelItem, ItemsNumber, Move != 0, false);
+		return (OpMode == 0) ? SitesXfer(dst_dir.c_str(), PanelItem, ItemsNumber, Move != 0, false) : FALSE;
 	}
 
 	switch (StartXfer(OpMode, _remote, CurrentSiteDir(true), _local,
@@ -499,7 +499,7 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	}
 
 	if (!_remote) {
-		return SitesXfer(dst_dir, PanelItem, ItemsNumber, Move != 0, true);
+		return (OpMode == 0) ? SitesXfer(dst_dir, PanelItem, ItemsNumber, Move != 0, true) : FALSE;
 	}
 
 	switch (StartXfer(OpMode, _local, dst_dir, _remote, CurrentSiteDir(true),

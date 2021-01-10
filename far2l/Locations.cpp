@@ -90,10 +90,13 @@ namespace Locations
 	bool Unmount(FARString &path, bool force)
 	{
 		std::string cmd = GetMyScriptQuoted("locations.sh");
-		cmd+= " unmount \"";
+		cmd+= " umount \"";
 		cmd+= EscapeCmdStr(Wide2MB(path));
 		cmd+= "\"";
-		int r = farExecuteA(cmd.c_str(), EF_HIDEOUT | EF_NOWAIT);
+		if (force) {
+			cmd+= " force";
+		}
+		int r = farExecuteA(cmd.c_str(), 0);
 		return r == 0;
 	}
 

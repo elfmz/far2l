@@ -23,7 +23,7 @@ namespace Locations
 
 	bool Unmount(FARString &path, bool force);
 
-	bool AddFavorite();
+	bool AddFavorite(FARString &path);
 	bool EditFavorite(FARString &path);
 	bool RemoveFavorite(FARString &path);
 	

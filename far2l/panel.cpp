@@ -527,7 +527,9 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				case KEY_INS:
 				case KEY_NUMPAD0:
 				{
-					if (Locations::AddFavorite())
+					FARString curdir;
+					GetCurDirPluginAware(curdir);
+					if (Locations::AddFavorite(curdir))
 						return SelPos;
 				}
 				break;
@@ -1368,7 +1370,11 @@ int Panel::GetCurDirPluginAware(FARString &strCurDir)
 //		PluginHandle *ph = (PluginHandle*)hPlugin;
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
-		strCurDir = Info.CurDir;
+		if (Info.Format && *Info.Format) {
+			strCurDir = Info.Format;
+		} else {
+			strCurDir = Info.CurDir;
+		}
 	}
 	else
 	{

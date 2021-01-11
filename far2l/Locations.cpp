@@ -100,18 +100,23 @@ namespace Locations
 		return r == 0;
 	}
 
-	static bool SetFavorite(const wchar_t *path)
+	static bool SetFavorite(const wchar_t *path, bool add)
 	{
 		const wchar_t *HistoryNamePath = L"LocationsPath";
 		const wchar_t *HistoryNameText = L"LocationsText";
+
+		if (!path || !*path) {
+			add = true;
+		}
+
 		DialogDataEx DlgData[]=
 		{
-			{DI_DOUBLEBOX,3,1,72,8,{},0,path ? MSG(MLocationsEditFavoriteTitle) : MSG(MLocationsAddFavoriteTitle)},
+			{DI_DOUBLEBOX,3,1,72,8,{},0, add ? MSG(MLocationsAddFavoriteTitle) : MSG(MLocationsEditFavoriteTitle)},
 			{DI_TEXT,     5,2, 0,2,{},0,MSG(MLocationsFavoritePath)},
 			{DI_EDIT,     5,3,70,3,{(DWORD_PTR)HistoryNamePath},
-				(path ? DIF_READONLY : DIF_FOCUS) | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
+				(add ? DIF_FOCUS : DIF_READONLY) | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
 			{DI_TEXT,     5,4, 0,4,{},0,MSG(MLocationsFavoriteText)},
-			{DI_EDIT,     5,5,70,5,{(DWORD_PTR)HistoryNameText}, (path ? DIF_FOCUS : 0) | DIF_HISTORY, L""},
+			{DI_EDIT,     5,5,70,5,{(DWORD_PTR)HistoryNameText}, (add ? 0 : DIF_FOCUS) | DIF_HISTORY, L""},
 			{DI_TEXT,     3,6, 0,6,{},DIF_SEPARATOR,L""},
 			{DI_BUTTON,   0,7, 0,7,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
 			{DI_BUTTON,   0,7, 0,7,{},DIF_CENTERGROUP,MSG(MCancel)}
@@ -156,14 +161,14 @@ namespace Locations
 		return r == 0;
 	}
 
-	bool AddFavorite()
+	bool AddFavorite(FARString &path)
 	{
-		return SetFavorite(nullptr);
+		return SetFavorite(path.CPtr(), true);
 	}
 
 	bool EditFavorite(FARString &path)
 	{
-		return SetFavorite(path.CPtr());
+		return SetFavorite(path.CPtr(), false);
 	}
 
 	bool RemoveFavorite(FARString &path)

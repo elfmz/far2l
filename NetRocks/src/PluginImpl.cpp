@@ -386,9 +386,21 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
 
+	wcscpy(_format, L"net:");
+	if (_remote) {
+		std::wstring loc_str = StrMB2Wide(_location.ToString(true));
+		if (_location.server_kind == Location::SK_URL) {
+			// URL path already has protocol prefix, don't need net: at beginning
+			wcsncpy(_format, loc_str.c_str(), ARRAYSIZE(_format) - 1 );
+		} else {
+			// Keep net: prefix as site pathes dont include protocol
+			wcsncat(_format, loc_str.c_str(), ARRAYSIZE(_format) - 1);
+		}
+	}
 	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 	Info->HostFile = NULL;
 	Info->CurDir = _cur_dir;
+	Info->Format = _format;
 	Info->PanelTitle = _panel_title;
 }
 

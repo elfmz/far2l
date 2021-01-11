@@ -78,7 +78,7 @@ else
 		dfout+=('' "$another" '&-')
 	fi
 	dfout+=('' ~ '&~')
-
+	rootfs=
 	while IFS=$'\n' read -r line 
 	do
 		if [[ "$line" == "/"* ]] \
@@ -86,9 +86,17 @@ else
 		  && [[ "$line" != /sys/* ]] && [[ "$line" != /dev/* ]] ; then
 			IFS=$'\t'
 			dfout+=("M^" $line)
+			if [ "${dfout[${#dfout[@]} - 2]}" == "/" ]; then
+				dfout[${#dfout[@]} - 1]="${dfout[${#dfout[@]} - 1]} &/"
+				rootfs=1
+			fi
 			IFS=$'\n'
 		fi
 	done < <(eval "$dfcmd")
+
+	if [ "$rootfs" == "" ]; then
+		dfout+=('' / '&/')
+	fi
 
 	if [ -s $FAVORITES ]; then
 		dfout+=('' '-' 'Favorites')

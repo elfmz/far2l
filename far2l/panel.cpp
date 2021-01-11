@@ -1372,6 +1372,8 @@ int Panel::GetCurDirPluginAware(FARString &strCurDir)
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
 		if (Info.Format && *Info.Format) {
 			strCurDir = Info.Format;
+			strCurDir+= L":";
+			strCurDir+= Info.CurDir;
 		} else {
 			strCurDir = Info.CurDir;
 		}

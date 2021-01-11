@@ -1,7 +1,7 @@
 #include "headers.hpp"
 
 
-#include "Locations.hpp"
+#include "Mounts.hpp"
 #include "lang.hpp"
 #include "language.hpp"
 #include "keys.hpp"
@@ -12,23 +12,17 @@
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "dirmix.hpp"
-#include "interf.hpp"
 #include "execute.hpp"
-#include "dialog.hpp"
-#include "DlgGuid.hpp"
 
 
-namespace Locations
+namespace Mounts
 {
-	void Enum(Entries &out, const FARString &curdir, const FARString &another_curdir)
+	Enum::Enum(FARString &another_curdir)
 	{
-		out.clear();
-		std::string cmd = GetMyScriptQuoted("locations.sh");
-		cmd+= " enum \"";
-		cmd+= EscapeCmdStr(Wide2MB(curdir));
-		cmd+= "\" \"";
-		cmd+= EscapeCmdStr(Wide2MB(another_curdir));
-		cmd+= '\"';
+		std::string cmd = GetMyScriptQuoted("mounts.sh");
+		cmd+= " enum";
+
+		bool has_rootfs = false;
 
 		FILE *f = popen(cmd.c_str(), "r");
 		if (f) {
@@ -41,20 +35,20 @@ namespace Locations
 					if (buf[l-1]!='\r' && buf[l-1]!='\n') break;
 					buf[l-1] = 0;
 				}
-			
-				out.emplace_back();
-				auto &e = out.back();
-				e.text.Copy(&buf[0]);
-
-				for (bool first = true;;) {
+				if (buf[0]) {
+					emplace_back();
+					auto &e = back();
+					e.path.Copy(&buf[0]);
 					size_t t;
-					if (!e.text.Pos(t, L'\t')) break;
-					if (first) {
-						first = false;
-						e.path = e.text.SubStr(0, t);
-						e.text.Remove(0, t + 1);
+					if (e.path.Pos(t, L'\t')) {
+						e.info = e.path.SubStr(t + 1);
+						e.path.SetLength(t);
+					}
+					if (e.path == L"/") {
+						has_rootfs = true;
+						e.info+= " &/";
 					} else {
-						e.text.Replace(t, 1, BoxSymbols[BS_V1]);
+						e.unmountable = true;
 					}
 				}
 			}
@@ -65,11 +59,25 @@ namespace Locations
 		} else {
 			fprintf(stderr, "Error %u executing '%s'\n", errno, cmd.c_str());
 		}
+
+		if (!has_rootfs) {
+			emplace(begin(), Entry{ L"/", L"&/"});
+		}
+
+		emplace(begin(), Entry(GetMyHome(), L"&~"));
+		emplace(begin(), Entry(another_curdir, L"&-"));
+
+		for (const auto &m : *this) {
+			if (max_path < m.path.GetLength())
+				max_path = m.path.GetLength();
+			if (max_info < m.info.GetLength())
+				max_info = m.info.GetLength();
+		}
 	}
 
 	bool Unmount(FARString &path, bool force)
 	{
-		std::string cmd = GetMyScriptQuoted("locations.sh");
+		std::string cmd = GetMyScriptQuoted("mounts.sh");
 		cmd+= " umount \"";
 		cmd+= EscapeCmdStr(Wide2MB(path));
 		cmd+= "\"";

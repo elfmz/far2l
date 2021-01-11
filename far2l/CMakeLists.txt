@@ -65,7 +65,7 @@ help.cpp
 hilight.cpp
 history.cpp
 hmenu.cpp
-Locations.cpp
+Mounts.cpp
 infolist.cpp
 interf.cpp
 keybar.cpp

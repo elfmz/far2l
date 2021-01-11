@@ -4193,42 +4193,6 @@ l:
 "Edytor"
 "Editor"
 
-MLocationsEditFavoriteTitle
-"Редактирование избранного"
-"Edit favorite location"
-upd:"Edit favorite location"
-upd:"Edit favorite location"
-upd:"Edit favorite location"
-upd:"Edit favorite location"
-upd:"Edit favorite location"
-
-MLocationsAddFavoriteTitle
-"Добавление избранного"
-"Add favorite location"
-upd:"Add favorite location"
-upd:"Add favorite location"
-upd:"Add favorite location"
-upd:"Add favorite location"
-upd:"Add favorite location"
-
-MLocationsFavoritePath
-"&Путь"
-"&Path"
-upd:"&Path"
-upd:"&Path"
-upd:"&Path"
-upd:"&Path"
-upd:"&Path"
-
-MLocationsFavoriteText
-"&Текст"
-"&Text"
-upd:"&Text"
-upd:"&Text"
-upd:"&Text"
-upd:"&Text"
-upd:"&Text"
-
 MAskReload
 "уже загружен. Как открыть этот файл?"
 "already loaded. How to open this file?"
@@ -11472,7 +11436,7 @@ MMenuSortUseCaseSensitive
 
 MChangeDriveTitle
 l:
-"Перейти
+"Перейти"
 "Location"
 "Jednotka"
 "Laufwerke"

@@ -1370,13 +1370,20 @@ int Panel::GetCurDirPluginAware(FARString &strCurDir)
 //		PluginHandle *ph = (PluginHandle*)hPlugin;
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
-		if (Info.Format && *Info.Format) {
-			strCurDir = Info.Format;
-			strCurDir+= L":";
-			strCurDir+= Info.CurDir;
-		} else {
-			strCurDir = Info.CurDir;
+
+		strCurDir.Clear();
+
+		if (Info.HostFile && *Info.HostFile)
+		{
+			strCurDir += Info.HostFile;
+			strCurDir += L"/";
 		}
+		else if (Info.Format && *Info.Format)
+		{
+			strCurDir += Info.Format;
+			strCurDir += L":";
+		}
+		strCurDir += Info.CurDir;
 	}
 	else
 	{

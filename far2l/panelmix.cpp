@@ -212,6 +212,11 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 							strPathName += Info.HostFile;
 							strPathName += L"/";
 						}
+						else if (strPathName.IsEmpty() && Info.Format && *Info.Format)
+						{
+							strPathName += Info.Format;
+							strPathName += L":";
+						}
 						strPathName += Info.CurDir;
 					}
 

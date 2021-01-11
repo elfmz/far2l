@@ -10,46 +10,32 @@
 #   $3 - path selected in another panel
 #   Outputs multiple lines with format:
 #     Path1\tFormatted\tInfo1\n
-#     M^Path2\tFormatted\tInfo2\n
-#     F^Path3\tFormatted\tInfo3\n
+#     Path2\tFormatted\tInfo2\n
 #   FAR extracts path, replaces \t with vertical lines and 
-#   adds resulting string to menu. Optional M^ prefix means
-#   its a mountpoint and F^ prefix means its a favorite.
-#
-# $1 == 'favorite' - adds or changes existing location
-#   $2 - path of favorite to add or change
-#   $3 - text of favorite to set
-#
-# $1 == 'favorite-remove' - removes existing location
-#   $2 - path of favorite to remove
-#
+#   adds resulting string to menu
+#---------------------------------------------------------
 # $1 == 'umount' - unmounts mounted location
 #   $2 - path to unmount
 #   $3 - optional 'force' flag
-#---------------------------------------------------------
-#  Favorites are stored in ~/.config/far2l/favorites text file:
-#
-#path1<TAB>text1
-#path2<TAB>text2
+##########################################################
+
+##########################################################
+# This optional file may contain per-user extra values added to df output,
+# its content must be looking like:
+#path1<TAB>label1
+#path2<TAB>label2
 #-<TAB>separator_label
-#path3<TAB>text3
-##########################################################
-
-FAVORITES=~/.config/far2l/favorites
+#path3<TAB>label3
+USEREXTRA=~/.config/far2l/locations
 
 ##########################################################
-if [ "$1" == 'favorite' ]; then
-	grep -v "$2"$'\t' $FAVORITES > $FAVORITES.tmp
-	echo "$2"$'\t'"$3" >> $FAVORITES.tmp
-	mv -f $FAVORITES.tmp $FAVORITES
+# Limit on length of visual representation of path,
+# longer pathes will be shortened by ... in the middle
+MAXFORMATTEDPATH=48
+
 
 ##########################################################
-elif [ "$1" == 'favorite-remove' ]; then
-	grep -v "$2"$'\t' $FAVORITES > $FAVORITES.tmp
-	mv -f $FAVORITES.tmp $FAVORITES
-
-##########################################################
-elif [ "$1" == 'umount' ]; then
+if [ "$1" == 'umount' ]; then
 	if [ "$3" == 'force' ]; then
 		sudo umount -f "$2"
 	else
@@ -75,9 +61,9 @@ else
 
 	dfout=()
 	if [ "$another" != "" ]; then
-		dfout+=('' "$another" '&-')
+		dfout+=("$another" '&-')
 	fi
-	dfout+=('' ~ '&~')
+	dfout+=(~ '&~')
 	rootfs=
 	while IFS=$'\n' read -r line 
 	do
@@ -85,7 +71,7 @@ else
 		  && [[ "$line" != /run/* ]] && [[ "$line" != /snap/* ]] \
 		  && [[ "$line" != /sys/* ]] && [[ "$line" != /dev/* ]] ; then
 			IFS=$'\t'
-			dfout+=("M^" $line)
+			dfout+=($line)
 			if [ "${dfout[${#dfout[@]} - 2]}" == "/" ]; then
 				dfout[${#dfout[@]} - 1]="${dfout[${#dfout[@]} - 1]} &/"
 				rootfs=1
@@ -95,43 +81,41 @@ else
 	done < <(eval "$dfcmd")
 
 	if [ "$rootfs" == "" ]; then
-		dfout+=('' / '&/')
+		dfout+=(/ '&/')
 	fi
 
-	if [ -s $FAVORITES ]; then
-		dfout+=('' '-' 'Favorites')
-
+	if [ -s $USEREXTRA ]; then
 		while IFS=$'\n' read -r line
 		do
 			if [[ $line != "#"* ]] && [[ $line != "" ]]; then
 				IFS=$'\t'
-				dfout+=("F^" $line)
+				dfout+=($line)
 				IFS=$'\n'
 			fi
-		done < $FAVORITES
+		done < $USEREXTRA
 	fi
 
 	max_len_path=4
-	max_len_text=4
+	max_len_label=4
 
-	for ((i=0; i < ${#dfout[@]}; i+=3)); do
-#		echo "$i:" ${dfout[$i]} ${dfout[$i+1]} ${dfout[$i+2]}
-		if [ ${#dfout[$i+1]} -gt $max_len_path ]; then
-			max_len_path=${#dfout[$i+1]}
+	for ((i=0; i < ${#dfout[@]}; i+=2)); do
+#		echo "$i:" ${dfout[$i]} ${dfout[$i+1]}
+		if [ ${#dfout[$i]} -gt $max_len_path ]; then
+			max_len_path=${#dfout[$i]}
 		fi
-		if [ ${#dfout[$i+2]} -gt $max_len_text ]; then
-			max_len_text=${#dfout[$i+2]}
+		if [ ${#dfout[$i+1]} -gt $max_len_label ]; then
+			max_len_label=${#dfout[$i+1]}
 		fi
 	done
 
-#	echo "max_len_path=$max_len_path max_len_text=$max_len_text"
-	if [ $max_len_path -gt 48 ]; then
-		max_len_path=48
+#echo "max_len_path=$max_len_path max_len_label=$max_len_label"
+	if [ $max_len_path -gt $MAXFORMATTEDPATH ]; then
+		max_len_path=$MAXFORMATTEDPATH
 	fi
 
-	for ((i=0; i < ${#dfout[@]}; i+=3)); do
-		path=${dfout[$i+1]}
-		text=${dfout[$i+2]}
+	for ((i=0; i < ${#dfout[@]}; i+=2)); do
+		path=${dfout[$i]}
+		label=${dfout[$i+1]}
 		if [ "$path" != '-' ]; then
 			if [ ${#path} -gt $max_len_path ]; then
 				#truncate too long path with ... in the middle
@@ -142,13 +126,13 @@ else
 			while [ ${#path} -lt $max_len_path ]; do
 				path=" $path"
 			done
-			while [ ${#text} -lt $max_len_text ]; do
-				text=" $text"
+			while [ ${#label} -lt $max_len_label ]; do
+				label=" $label"
 			done
-			echo "${dfout[$i]}${dfout[$i+1]}$tab$path$tab$text"
+			echo "${dfout[$i]}$tab$path$tab$label"
 
 		else
-			echo "-$tab$text"
+			echo "-$tab$label"
 		fi
 	done
 fi

@@ -4635,7 +4635,7 @@ l:
 
 MFolderShortcutsTitle
 l:
-"Ссылки на папки"
+"Закладки на папки"
 "Folder shortcuts"
 "Adresářové zkratky"
 "Ordnerschnellzugriff"
@@ -11961,6 +11961,15 @@ upd:"Show &plugins"
 upd:"Show &plugins"
 upd:"Show &plugins"
 "Mostrar &plugins"
+
+MChangeDriveShowShortcuts
+"Показывать &закладки"
+"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Mostrar &shortcuts"
 
 MChangeDriveShowCD
 "Показывать параметры &компакт-дисков"

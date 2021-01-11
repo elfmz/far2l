@@ -170,39 +170,19 @@ void Panel::ChangeDisk()
 
 struct PanelMenuItem
 {
+	enum Kind
+	{
+		UNSPECIFIED = 0,
+		LOCATION,
+		SHORTCUT,
+		PLUGIN,
+	} kind = UNSPECIFIED;
+
 	Plugin *pPlugin = nullptr;
-	INT_PTR nItem = -1;
 
-	Locations::Kind kind = Locations::UNSPECIFIED;
-	wchar_t path[0x1000];
-};
+	INT_PTR nItem = -1; // plugin item or shortcut index
 
-struct TypeMessage
-{
-	int DrvType;
-	int FarMsg;
-};
-
-const TypeMessage DrTMsg[]=
-{
-	{DRIVE_REMOVABLE,MChangeDriveRemovable},
-	{DRIVE_FIXED,MChangeDriveFixed},
-	{DRIVE_REMOTE,MChangeDriveNetwork},
-	{DRIVE_REMOTE_NOT_CONNECTED,MChangeDriveDisconnectedNetwork},
-	{DRIVE_CDROM,MChangeDriveCDROM},
-	{DRIVE_CD_RW,MChangeDriveCD_RW},
-	{DRIVE_CD_RWDVD,MChangeDriveCD_RWDVD},
-	{DRIVE_DVD_ROM,MChangeDriveDVD_ROM},
-	{DRIVE_DVD_RW,MChangeDriveDVD_RW},
-	{DRIVE_DVD_RAM,MChangeDriveDVD_RAM},
-	{DRIVE_BD_ROM,MChangeDriveBD_ROM},
-	{DRIVE_BD_RW,MChangeDriveBD_RW},
-	{DRIVE_HDDVD_ROM,MChangeDriveHDDVD_ROM},
-	{DRIVE_HDDVD_RW,MChangeDriveHDDVD_RW},
-	{DRIVE_RAMDISK,MChangeDriveRAM},
-	{DRIVE_SUBSTITUTE,MChangeDriveSUBST},
-	{DRIVE_VIRTUAL,MChangeDriveVirtual},
-	{DRIVE_USBDRIVE,MChangeDriveRemovable},
+	wchar_t path[0x1000]; // location path
 };
 
 static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSelected)
@@ -250,6 +230,7 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 			{
 				OneItem.Clear();
 				PanelMenuItem *item = new PanelMenuItem;
+				item->kind = PanelMenuItem::PLUGIN;
 				item->pPlugin = pPlugin;
 				item->nItem = PluginItem;
 
@@ -329,7 +310,7 @@ static void ConfigureChangeDriveMode()
 //	ShowSizeFloat->Indent(3);
 //	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
 
-//	Builder.AddCheckbox(MChangeDriveShowRemovableDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOVABLE);
+	Builder.AddCheckbox(MChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_SHORTCUTS);
 	Builder.AddCheckbox(MChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
 //	Builder.AddCheckbox(MChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
 //	Builder.AddCheckbox(MChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
@@ -425,23 +406,12 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		Pos = 0;
 		for (const auto &l : locations) {
 			ChDiskItem.Clear();
-/*
-			if (FirstCall)
+			if (Pos < (int)locations.size())
 			{
-				ChDiskItem.SetSelect(I==Pos);
+				ChDiskItem.SetSelect(MenuLine==Pos);
 
 				if (!SetSelected)
-					SetSelected=(I==Pos);
-			}
-			else*/
-			{
-				if (Pos < (int)locations.size())
-				{
-					ChDiskItem.SetSelect(MenuLine==Pos);
-
-					if (!SetSelected)
-						SetSelected=(MenuLine==Pos);
-				}
+					SetSelected=(MenuLine==Pos);
 			}
 
 			ChDiskItem.strName = l.text;
@@ -453,15 +423,57 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			} else {
 				PanelMenuItem item;
 				wcsncpy(item.path, l.path.CPtr(), ARRAYSIZE(item.path) - 1);
-				item.kind = l.kind;
 				if (item.path[0] == L'{' && another_curdir == item.path
 				 && another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
 				{
-					item.nItem = -2;
+					item.kind = PanelMenuItem::PLUGIN;
+					item.pPlugin = nullptr;
 				}
+				else
+					item.kind = PanelMenuItem::LOCATION;
+
 				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
 			}
 			MenuLine++;
+		}
+
+		if (Opt.ChangeDriveMode & DRIVE_SHOW_SHORTCUTS) for (int SCPos = 0, AddedCount = 0;; ++SCPos)
+		{
+			FARString DestFolder, PluginFile;
+			if (GetShortcutFolder(SCPos, &DestFolder, nullptr, &PluginFile, nullptr))
+			{
+				if (!AddedCount++)
+				{
+					ChDiskItem.Clear();
+					ChDiskItem.strName = MSG(MFolderShortcutsTitle);
+					ChDiskItem.Flags|= LIF_SEPARATOR;
+					ChDisk.AddItem(&ChDiskItem);
+					ChDiskItem.Flags&= ~LIF_SEPARATOR;
+				}
+
+				ChDiskItem.Clear();
+				if (SCPos <= 9)
+					ChDiskItem.strName.Format(L"&%d  ", SCPos);
+				else
+					ChDiskItem.strName = L"   ";
+
+				if (!PluginFile.IsEmpty())
+				{
+					ChDiskItem.strName+= PluginFile;
+					ChDiskItem.strName+= L"/";
+				}
+				ChDiskItem.strName+= DestFolder;
+
+				PanelMenuItem item;
+				item.kind = PanelMenuItem::SHORTCUT;
+				item.nItem = SCPos;
+				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
+				MenuLine++;
+			}
+			else if (SCPos > 10)
+			{
+				break;
+			}
 		}
 
 		size_t PluginMenuItemsCount=0;
@@ -527,10 +539,15 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				case KEY_INS:
 				case KEY_NUMPAD0:
 				{
-					FARString curdir;
-					GetCurDirPluginAware(curdir);
-					if (Locations::AddFavorite(curdir))
-						return SelPos;
+//					if (item && item->kind == PanelMenuItem::SHORTCUT)
+//					{
+//						SaveShortcutFolder(item->nItem);
+//					}
+//					else
+					{
+						ShowFolderShortcut();
+					}
+					return SelPos;
 				}
 				break;
 				case KEY_CTRLA:
@@ -538,29 +555,30 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				{
 					if (item)
 					{
-						if (item->pPlugin)
+						if (item->kind == PanelMenuItem::PLUGIN)
 						{
-							FARString strRegKey;
-							CtrlObject->Plugins.GetHotKeyRegKey(item->pPlugin, item->nItem,strRegKey);
-							FARString strName = ChDisk.GetItemPtr(SelPos)->strName + 3;
-							RemoveExternalSpaces(strName);
-							if(CtrlObject->Plugins.SetHotKeyDialog(strName, strRegKey, L"DriveMenuHotkey"))
+							if (item->pPlugin)
 							{
-								return SelPos;
+								FARString strRegKey;
+								CtrlObject->Plugins.GetHotKeyRegKey(item->pPlugin, item->nItem,strRegKey);
+								FARString strName = ChDisk.GetItemPtr(SelPos)->strName + 3;
+								RemoveExternalSpaces(strName);
+								if(CtrlObject->Plugins.SetHotKeyDialog(strName, strRegKey, L"DriveMenuHotkey"))
+								{
+									return SelPos;
+								}
 							}
 						}
-						else if (item->kind == Locations::FAVORITE)
+						else if (item->kind == PanelMenuItem::SHORTCUT)
 						{
-							FARString path(item->path);
-							if (Locations::EditFavorite(path))
-								return SelPos;
+							ShowFolderShortcut(item->nItem);
+							return SelPos;
 						}
 						else
 						{
 							ShellSetFileAttributes(nullptr, item->path);
 							ChDisk.Redraw();
 						}
-
 					}
 					break;
 				}
@@ -573,16 +591,15 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				{
 					if (item) switch (item->kind)
 					{
-						case Locations::MOUNTPOINT: {
+						case PanelMenuItem::LOCATION: {
 							FARString path(item->path);
 							Locations::Unmount(path,
 								Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL || Key == KEY_SHIFTDEL);
 							return SelPos;
 						}
 						
-						case Locations::FAVORITE: {
-							FARString path(item->path);
-							Locations::RemoveFavorite(path);
+						case PanelMenuItem::SHORTCUT: {
+							ClearFolderShortcut(item->nItem);
 							return SelPos;
 						}
 
@@ -634,7 +651,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					return SelPos;
 				case KEY_CTRL8:
 				case KEY_RCTRL8:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_CDROM;
+					Opt.ChangeDriveMode ^= DRIVE_SHOW_SHORTCUTS;
 					return SelPos;
 				case KEY_CTRL9:
 				case KEY_RCTRL9:
@@ -715,18 +732,15 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	if (!mitem)
 		return -1; //???
 
-	if (!mitem->pPlugin && mitem->nItem != -2)
-	{
-		SetLocation_Directory(mitem->path);
-	}
-	else //эта плагин, да
+	if (mitem->kind == PanelMenuItem::PLUGIN)
 	{
 //		fprintf(stderr, "pPlugin=%p nItem=0x%lx\n", mitem->pPlugin, (unsigned long)mitem->nItem);
 		LONG_PTR nItem = mitem->nItem;
 		//if (nItem == (LONG_PTR)-1)
 		//	nItem = (LONG_PTR)mitem->root;
 
-		if (nItem == -2) {
+		if (mitem->pPlugin == nullptr) {
+			// duplicate plugin instance of passive panel
 			auto plugin_name = CtrlObject->Plugins.GetPluginModuleName(another_panel->GetPluginHandle());
 			if (!plugin_name.IsEmpty()) {
 				auto pPlugin = CtrlObject->Plugins.GetPlugin(plugin_name);
@@ -746,9 +760,17 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				}
 			}
 
-		} else if (mitem->pPlugin != nullptr) {
+		} else {
 			SetLocation_Plugin(false, mitem->pPlugin, nullptr, nullptr, nItem);
 		}
+	}
+	else if (mitem->kind == PanelMenuItem::SHORTCUT)
+	{
+		ExecShortcutFolder(mitem->nItem);
+	}
+	else if (mitem->kind == PanelMenuItem::LOCATION)
+	{
+		SetLocation_Directory(mitem->path);
 	}
 
 	return -1;

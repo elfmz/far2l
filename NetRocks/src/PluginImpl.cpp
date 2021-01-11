@@ -84,13 +84,14 @@ PluginImpl::PluginImpl(const wchar_t *path)
 	}
 
 	if (path && *path) {
-		if (!_location.FromString(Wide2MB(path))) {
-			throw std::runtime_error(G.GetMsgMB(MWrongPath));
-		}
+		if (_location.FromString(Wide2MB(path))) {
+			_remote = OpConnect(0, _location).Do();
+			if (!_remote) {
+				throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
+			}
 
-		_remote = OpConnect(0, _location).Do();
-		if (!_remote) {
-			throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
+		} else if (!_sites_cfg_location.Change(Wide2MB(path))) {
+			throw std::runtime_error(G.GetMsgMB(MWrongPath));
 		}
 
 		_wea_state = std::make_shared<WhatOnErrorState>();

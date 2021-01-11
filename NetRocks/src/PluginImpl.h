@@ -14,7 +14,7 @@ class PluginImpl
 {
 	friend class AllNetRocks;
 
-	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH], _format[32];
+	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH], _format[256];
 	Location _location;
 	bool _allow_remember_location_dir = false;
 

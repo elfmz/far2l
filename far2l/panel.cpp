@@ -1400,11 +1400,7 @@ int Panel::GetCurDirPluginAware(FARString &strCurDir)
 			strCurDir += Info.HostFile;
 			strCurDir += L"/";
 		}
-		else if (Info.Format && *Info.Format)
-		{
-			strCurDir += Info.Format;
-			strCurDir += L":";
-		}
+
 		strCurDir += Info.CurDir;
 	}
 	else

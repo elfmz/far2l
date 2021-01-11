@@ -74,8 +74,7 @@ public:
 
 PluginImpl::PluginImpl(const wchar_t *path)
 {
-	_cur_dir[0] = _panel_title[0] = 0;
-	wcsncpy(_format, L"net", ARRAYSIZE(_format) - 1);
+	_cur_dir[0] = _panel_title[0] = _format[0] = 0;
 
 	_local = std::make_shared<HostLocal>();
 	if (path && wcsncmp(path, L"net:", 4) == 0) {
@@ -113,6 +112,7 @@ void PluginImpl::UpdatePathInfo()
 {
 	std::wstring tmp;
 	if (_remote) {
+		wcsncpy(_format, StrMB2Wide(_location.server).c_str(), ARRAYSIZE(_format) - 1);
 		wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 //		tmp = _remote->SiteInfo();
 //		tmp+= '/';
@@ -121,6 +121,7 @@ void PluginImpl::UpdatePathInfo()
 	} else {
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));
 		wcsncpy(_cur_dir, tmp.c_str(), ARRAYSIZE(_cur_dir) - 1);
+		wcsncpy(_format, L"NetRocks sites", ARRAYSIZE(_format) - 1);
 		if (!tmp.empty()) {
 			if (tmp[tmp.size() - 1] == '/') {
 				tmp.resize(tmp.size() - 1);
@@ -388,15 +389,6 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 //	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%ls' \n", &_cur_dir[0]);
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
-#if 0
-	if (_remote && _location.server_kind == Location::SK_URL) {
-		// URL path already has protocol prefix, don't need net: at beginning
-		_format[0] = 0;
-	} else {
-		// Put net: prefix as site pathes don't include protocol
-		wcsncpy(_format, L"net", ARRAYSIZE(_format) - 1);
-	}
-#endif
 	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 	Info->HostFile = NULL;
 	Info->CurDir = _cur_dir;

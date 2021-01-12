@@ -112,6 +112,7 @@ BOOL IsCaseMixed(const FARString &strStr);
 BOOL IsCaseLower(const FARString &strStr);
 
 FARString& CenterStr(const wchar_t *Src, FARString &strDest,int Length);
+FARString FixedSizeStr(FARString str, size_t Length, bool RAlign);
 
 void Transform(FARString &strBuffer,const wchar_t *ConvStr,wchar_t TransformType);
 

@@ -35,4 +35,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int GetShortcutFolder(int Pos,FARString *pDestFolder, FARString *pPluginModule=nullptr, FARString *pPluginFile=nullptr,FARString *pPluginData=nullptr);
 int SaveFolderShortcut(int Pos,FARString *pSrcFolder,FARString *pPluginModule=nullptr, FARString *pPluginFile=nullptr,FARString *pPluginData=nullptr);
-void ShowFolderShortcut();
+int ClearFolderShortcut(int Pos);
+void ShowFolderShortcut(int Pos = 0);

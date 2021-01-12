@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cddrv.hpp"
 #include "interf.hpp"
 #include "message.hpp"
-#include "hotplug.hpp"
+#include "Mounts.hpp"
 #include "clipboard.hpp"
 #include "config.hpp"
 #include "scrsaver.hpp"
@@ -170,46 +170,23 @@ void Panel::ChangeDisk()
 
 struct PanelMenuItem
 {
-	bool bIsPlugin;
-
-	struct
+	enum Kind
 	{
-		Plugin *pPlugin;
-		INT_PTR nItem;
-	};
+		UNSPECIFIED = 0,
+		MOUNTPOINT,
+		DIRECTORY,
+		SHORTCUT,
+		PLUGIN,
+	} kind = UNSPECIFIED;
 
-	wchar_t root[0x1000];
+	Plugin *pPlugin = nullptr;
+
+	INT_PTR nItem = -1; // plugin item or shortcut index
+
+	wchar_t path[0x1000]; // location path
 };
 
-struct TypeMessage
-{
-	int DrvType;
-	int FarMsg;
-};
-
-const TypeMessage DrTMsg[]=
-{
-	{DRIVE_REMOVABLE,MChangeDriveRemovable},
-	{DRIVE_FIXED,MChangeDriveFixed},
-	{DRIVE_REMOTE,MChangeDriveNetwork},
-	{DRIVE_REMOTE_NOT_CONNECTED,MChangeDriveDisconnectedNetwork},
-	{DRIVE_CDROM,MChangeDriveCDROM},
-	{DRIVE_CD_RW,MChangeDriveCD_RW},
-	{DRIVE_CD_RWDVD,MChangeDriveCD_RWDVD},
-	{DRIVE_DVD_ROM,MChangeDriveDVD_ROM},
-	{DRIVE_DVD_RW,MChangeDriveDVD_RW},
-	{DRIVE_DVD_RAM,MChangeDriveDVD_RAM},
-	{DRIVE_BD_ROM,MChangeDriveBD_ROM},
-	{DRIVE_BD_RW,MChangeDriveBD_RW},
-	{DRIVE_HDDVD_ROM,MChangeDriveHDDVD_ROM},
-	{DRIVE_HDDVD_RW,MChangeDriveHDDVD_RW},
-	{DRIVE_RAMDISK,MChangeDriveRAM},
-	{DRIVE_SUBSTITUTE,MChangeDriveSUBST},
-	{DRIVE_VIRTUAL,MChangeDriveVirtual},
-	{DRIVE_USBDRIVE,MChangeDriveRemovable},
-};
-
-static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSelected)
+static void AddPluginItems(VMenu &ChDisk, int Pos)
 {
 	TArray<ChDiskPluginItem> MPItems;
 	ChDiskPluginItem OneItem;
@@ -218,7 +195,6 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 	bool ItemPresent,Done=false;
 	FARString strMenuText;
 	FARString strPluginText;
-	size_t PluginMenuItemsCount = 0;
 
 	while (!Done)
 	{
@@ -254,7 +230,7 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 			{
 				OneItem.Clear();
 				PanelMenuItem *item = new PanelMenuItem;
-				item->bIsPlugin = true;
+				item->kind = PanelMenuItem::PLUGIN;
 				item->pPlugin = pPlugin;
 				item->nItem = PluginItem;
 
@@ -288,7 +264,7 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 
 	MPItems.Sort();
 	MPItems.Pack(); // выкинем дубли
-	PluginMenuItemsCount=MPItems.getSize();
+	size_t PluginMenuItemsCount=MPItems.getSize();
 
 	if (PluginMenuItemsCount)
 	{
@@ -302,13 +278,7 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 
 		for (size_t I=0; I < PluginMenuItemsCount; ++I)
 		{
-			if (Pos > DiskCount && !SetSelected)
-			{
-				MPItems.getItem(I)->Item.SetSelect(DiskCount+static_cast<int>(I)+1==Pos);
-
-				if (!SetSelected)
-					SetSelected=DiskCount+static_cast<int>(I)+1==Pos;
-			}
+			MPItems.getItem(I)->Item.SetSelect(ChDisk.GetItemCount() == Pos);
 			const wchar_t HotKeyStr[]={MPItems.getItem(I)->HotKey?L'&':L' ',MPItems.getItem(I)->HotKey?MPItems.getItem(I)->HotKey:L' ',L' ',MPItems.getItem(I)->HotKey?L' ':L'\0',L'\0'};
 			MPItems.getItem(I)->Item.strName = FARString(HotKeyStr) + MPItems.getItem(I)->Item.strName;
 			ChDisk.AddItem(&MPItems.getItem(I)->Item);
@@ -316,42 +286,41 @@ static size_t AddPluginItems(VMenu &ChDisk, int Pos, int DiskCount, bool SetSele
 			delete(PanelMenuItem*)MPItems.getItem(I)->Item.UserData;  //ммда...
 		}
 	}
-	return PluginMenuItemsCount;
 }
 
 static void ConfigureChangeDriveMode()
 {
 	DialogBuilder Builder(MChangeDriveConfigure, L"");
-	Builder.AddCheckbox(MChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
-	Builder.AddCheckbox(MChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
-	Builder.AddCheckbox(MChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
-	Builder.AddCheckbox(MChangeDriveShowFileSystem, &Opt.ChangeDriveMode, DRIVE_SHOW_FILESYSTEM);
+//	Builder.AddCheckbox(MChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
+//	Builder.AddCheckbox(MChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
+//	Builder.AddCheckbox(MChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
+//	Builder.AddCheckbox(MChangeDriveShowFileSystem, &Opt.ChangeDriveMode, DRIVE_SHOW_FILESYSTEM);
 
-	BOOL ShowSizeAny = Opt.ChangeDriveMode & (DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
+//	BOOL ShowSizeAny = Opt.ChangeDriveMode & (DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
 
-	DialogItemEx *ShowSize = Builder.AddCheckbox(MChangeDriveShowSize, &ShowSizeAny);
-	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(MChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
-	ShowSizeFloat->Indent(3);
-	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
+//	DialogItemEx *ShowSize = Builder.AddCheckbox(MChangeDriveShowSize, &ShowSizeAny);
+//	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(MChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
+//	ShowSizeFloat->Indent(3);
+//	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
 
-	Builder.AddCheckbox(MChangeDriveShowRemovableDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOVABLE);
+	Builder.AddCheckbox(MChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_SHORTCUTS);
 	Builder.AddCheckbox(MChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
-	Builder.AddCheckbox(MChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
-	Builder.AddCheckbox(MChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
+//	Builder.AddCheckbox(MChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
+//	Builder.AddCheckbox(MChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
 
 	Builder.AddOKCancel();
 	if (Builder.ShowDialog())
 	{
-		if (ShowSizeAny)
-		{
-			bool ShowSizeFloat = (Opt.ChangeDriveMode & DRIVE_SHOW_SIZE_FLOAT) ? true : false;
-			if (ShowSizeFloat)
-				Opt.ChangeDriveMode &= ~DRIVE_SHOW_SIZE;
-			else
-				Opt.ChangeDriveMode |= DRIVE_SHOW_SIZE;
-		}
-		else
-			Opt.ChangeDriveMode &= ~(DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
+//		if (ShowSizeAny)
+//		{
+//			bool ShowSizeFloat = (Opt.ChangeDriveMode & DRIVE_SHOW_SIZE_FLOAT) ? true : false;
+//			if (ShowSizeFloat)
+//				Opt.ChangeDriveMode &= ~DRIVE_SHOW_SIZE;
+//			else
+//				Opt.ChangeDriveMode |= DRIVE_SHOW_SIZE;
+//		}
+//		else
+//			Opt.ChangeDriveMode &= ~(DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
 	}
 }
 
@@ -378,62 +347,6 @@ bool IsCharTrimmable(wchar_t c)
 	return (c==L' ' || c==L'\t' || c==L'\r' || c==L'\n');
 }
 
-
-struct RootEntry
-{
-	FARString text;
-	FARString root;
-};
-
-typedef std::vector<RootEntry> RootEntries;
-
-static void EnumRoots(RootEntries &out, const FARString &curdir, const FARString &another_curdir)
-{
-	RootEntry re;
-	
-	out.clear();
-	std::string roots_script = GetMyScriptQuoted("roots.sh");
-	roots_script+= " \"";
-	roots_script+= EscapeCmdStr(Wide2MB(curdir));
-	roots_script+= "\" \"";
-	roots_script+= EscapeCmdStr(Wide2MB(another_curdir));
-	roots_script+= '\"';
-
-	FILE *f = popen(roots_script.c_str(), "r");
-	if (f) {
-		char buf[0x400] = { };
-		std::wstring s, tmp;
-		while (fgets(buf, sizeof(buf)-1, f)!=NULL) {
-			for (;;) {
-				size_t l = strlen(buf);
-				if (!l) break;
-				if (buf[l-1]!='\r' && buf[l-1]!='\n') break;
-				buf[l-1] = 0;
-			}
-			
-			re.text.Copy(buf);
-			re.root.Clear();
-			
-			for (bool first = true;;) {
-				size_t t;
-				if (!re.text.Pos(t, L'\t')) break;
-				if (first) {
-					first = false;
-					re.root = re.text.SubStr(0, t);
-					re.text.Remove(0, t + 1);
-				}else
-					re.text.Replace(t, 1, BoxSymbols[BS_V1]);
-			}
-			
-			out.emplace_back(re);
-		}
-		pclose(f);
-	} else {
-		fprintf(stderr, "Error %u executing '%s'\n", errno, roots_script.c_str());
-	}
-}
-
-
 int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 {
 	/*Events.DeviceArivalEvent.Reset();
@@ -450,10 +363,6 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	Guard_Macro_DskShowPosType _guard_Macro_DskShowPosType(this);
 	MenuItemEx ChDiskItem;
 	FARString strDiskType, strRootDir, strDiskLetter;
-//	DWORD Mask = 4,DiskMask;
-	//WCHAR I;
-	bool SetSelected=false;
-	//DWORD NetworkMask = 0;
 
 	FARString curdir, another_curdir;
 	GetCurDir(curdir);
@@ -465,9 +374,6 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		another_curdir.Insert(0, L"{");
 		another_curdir.Append(L"}");
 	}
-
-	RootEntries roots;
-	EnumRoots(roots, curdir, another_curdir);
 
 	PanelMenuItem Item, *mitem=0;
 	{ // эта скобка надо, см. M#605
@@ -482,54 +388,86 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		ChDisk.SetFlags(VMENU_WRAPMODE);
 		int MenuLine = 0;
 		Pos = 0;
-		for (const auto &f : roots) {
+		Mounts::Enum mounts(another_curdir);
+		for (const auto &m : mounts) {
 			ChDiskItem.Clear();
-/*
-			if (FirstCall)
-			{
-				ChDiskItem.SetSelect(I==Pos);
 
-				if (!SetSelected)
-					SetSelected=(I==Pos);
-			}
-			else*/
-			{
-				if (Pos < (int)roots.size())
-				{
-					ChDiskItem.SetSelect(MenuLine==Pos);
-
-					if (!SetSelected)
-						SetSelected=(MenuLine==Pos);
-				}
-			}
-
-			ChDiskItem.strName = f.text;
-			if (f.root == L"-" ) {
+			if (m.path == L"-" ) {
+				ChDiskItem.strName = m.info;
 				ChDiskItem.Flags|= LIF_SEPARATOR;
 				ChDisk.AddItem(&ChDiskItem);
 				ChDiskItem.Flags&= ~LIF_SEPARATOR;
+
 			} else {
+				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
+		
+				ChDiskItem.strName = FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
+				ChDiskItem.strName+= BoxSymbols[BS_V1];
+				ChDiskItem.strName+= FixedSizeStr(m.info, std::min(mounts.max_info, (size_t)24), true);
+
 				PanelMenuItem item;
-				wcsncpy(item.root, f.root.CPtr(), (sizeof(item.root)/sizeof(item.root[0])) - 1);
-				item.bIsPlugin = false;
-				if (item.root[0] == L'{' && item.root[wcslen(item.root) - 1] == L'}'
-				 && another_curdir == item.root
+				wcsncpy(item.path, m.path.CPtr(), ARRAYSIZE(item.path) - 1);
+				if (item.path[0] == L'{' && another_curdir == item.path
 				 && another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
 				{
-					item.bIsPlugin = true;
+					item.kind = PanelMenuItem::PLUGIN;
 					item.pPlugin = nullptr;
-					item.nItem = -1;
 				}
+				else
+					item.kind = m.unmountable ? PanelMenuItem::MOUNTPOINT : PanelMenuItem::DIRECTORY;
+
 				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
 			}
 			MenuLine++;
 		}
 
-		size_t PluginMenuItemsCount=0;
+		if (Opt.ChangeDriveMode & DRIVE_SHOW_SHORTCUTS) for (int SCPos = 0, AddedCount = 0;; ++SCPos)
+		{
+			FARString DestFolder, PluginFile;
+			if (GetShortcutFolder(SCPos, &DestFolder, nullptr, &PluginFile, nullptr))
+			{
+				if (!AddedCount++)
+				{
+					ChDiskItem.Clear();
+					ChDiskItem.strName = MSG(MFolderShortcutsTitle);
+					ChDiskItem.Flags|= LIF_SEPARATOR;
+					ChDisk.AddItem(&ChDiskItem);
+					ChDiskItem.Flags&= ~LIF_SEPARATOR;
+				}
+
+				ChDiskItem.Clear();
+				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
+
+				FARString ShortcutPath;
+				if (!PluginFile.IsEmpty())
+				{
+					ShortcutPath+= PluginFile;
+					ShortcutPath+= L"/";
+				}
+				ShortcutPath+= DestFolder;
+
+				if (SCPos <= 9)
+					ChDiskItem.strName.Format(L"&%d  ", SCPos);
+				else
+					ChDiskItem.strName = L"   ";
+
+				ChDiskItem.strName+= TruncPathStr(ShortcutPath, 64);
+
+				PanelMenuItem item;
+				item.kind = PanelMenuItem::SHORTCUT;
+				item.nItem = SCPos;
+				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
+				MenuLine++;
+			}
+			else if (SCPos > 10)
+			{
+				break;
+			}
+		}
 
 		if (Opt.ChangeDriveMode & DRIVE_SHOW_PLUGINS)
 		{
-			PluginMenuItemsCount = AddPluginItems(ChDisk, Pos, roots.size(), SetSelected);
+			AddPluginItems(ChDisk, Pos);
 		}
 
 		int X=X1+5;
@@ -537,7 +475,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		if ((this == CtrlObject->Cp()->RightPanel) && IsFullScreen() && (X2-X1 > 40))
 			X = (X2-X1+1)/2+5;
 
-		int Y = (ScrY+1-(roots.size()+static_cast<int>(PluginMenuItemsCount)+5))/2;
+		int Y = (ScrY + 1 - (ChDisk.GetItemCount() + 5)) / 2;
 
 		if (Y < 1)
 			Y=1;
@@ -572,9 +510,9 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				case KEY_SHIFTNUMENTER:
 				case KEY_SHIFTENTER:
 				{
-					if (item && !item->bIsPlugin)
+					if (item && !item->pPlugin)
 					{
-						Execute(item->root,FALSE,TRUE,TRUE);
+						Execute(item->path,FALSE,TRUE,TRUE);
 					}
 				}
 				break;
@@ -585,31 +523,18 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						return -1;
 				}
 				break;
-				// Т.к. нет способа получить состояние "открытости" устройства,
-				// то добавим обработку Ins для CD - "закрыть диск"
 				case KEY_INS:
 				case KEY_NUMPAD0:
 				{
-					if (item && !item->bIsPlugin)
+//					if (item && item->kind == PanelMenuItem::SHORTCUT)
+//					{
+//						SaveShortcutFolder(item->nItem);
+//					}
+//					else
 					{
+						ShowFolderShortcut();
 					}
-				}
-				break;
-				case KEY_NUMDEL:
-				case KEY_DEL:
-				{
-					if (item && !item->bIsPlugin)
-					{
-						int Code = DisconnectDrive(item, ChDisk);
-						if (Code != DRIVE_DEL_FAIL && Code != DRIVE_DEL_NONE)
-						{
-							ScrBuf.Lock(); // отменяем всякую прорисовку
-							FrameManager->ResizeAllFrame();
-							FrameManager->PluginCommit(); // коммитим.
-							ScrBuf.Unlock(); // разрешаем прорисовку
-							return (((roots.size()-SelPos)==1) && (SelPos > 0) && (Code != DRIVE_DEL_EJECT))?SelPos-1:SelPos;
-						}
-					}
+					return SelPos;
 				}
 				break;
 				case KEY_CTRLA:
@@ -617,33 +542,55 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				{
 					if (item)
 					{
-						if (!item->bIsPlugin)
+						if (item->kind == PanelMenuItem::PLUGIN)
 						{
-							ShellSetFileAttributes(nullptr, item->root);
-							ChDisk.Redraw();
+							if (item->pPlugin)
+							{
+								FARString strRegKey;
+								CtrlObject->Plugins.GetHotKeyRegKey(item->pPlugin, item->nItem,strRegKey);
+								FARString strName = ChDisk.GetItemPtr(SelPos)->strName + 3;
+								RemoveExternalSpaces(strName);
+								if(CtrlObject->Plugins.SetHotKeyDialog(strName, strRegKey, L"DriveMenuHotkey"))
+								{
+									return SelPos;
+								}
+							}
+						}
+						else if (item->kind == PanelMenuItem::SHORTCUT)
+						{
+							ShowFolderShortcut(item->nItem);
+							return SelPos;
 						}
 						else
 						{
-							FARString strRegKey;
-							CtrlObject->Plugins.GetHotKeyRegKey(item->pPlugin, item->nItem,strRegKey);
-							FARString strName = ChDisk.GetItemPtr(SelPos)->strName + 3;
-							RemoveExternalSpaces(strName);
-							if(CtrlObject->Plugins.SetHotKeyDialog(strName, strRegKey, L"DriveMenuHotkey"))
-							{
-								return SelPos;
-							}
+							ShellSetFileAttributes(nullptr, item->path);
+							ChDisk.Redraw();
 						}
 					}
 					break;
 				}
+				case KEY_NUMDEL:
+				case KEY_DEL:
+
 				case KEY_SHIFTNUMDEL:
 				case KEY_SHIFTDECIMAL:
 				case KEY_SHIFTDEL:
 				{
-					if (item && !item->bIsPlugin)
+					if (item) switch (item->kind)
 					{
-						RemoveHotplugDevice(item, ChDisk);
-						return SelPos;
+						case PanelMenuItem::MOUNTPOINT: {
+							FARString path(item->path);
+							Mounts::Unmount(path,
+								Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL || Key == KEY_SHIFTDEL);
+							return SelPos;
+						}
+						
+						case PanelMenuItem::SHORTCUT: {
+							ClearFolderShortcut(item->nItem);
+							return SelPos;
+						}
+
+						default: ;
 					}
 				}
 				break;
@@ -691,7 +638,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					return SelPos;
 				case KEY_CTRL8:
 				case KEY_RCTRL8:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_CDROM;
+					Opt.ChangeDriveMode ^= DRIVE_SHOW_SHORTCUTS;
 					return SelPos;
 				case KEY_CTRL9:
 				case KEY_RCTRL9:
@@ -702,7 +649,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					return SelPos;
 				case KEY_SHIFTF1:
 				{
-					if (item && item->bIsPlugin)
+					if (item && item->pPlugin)
 					{
 						// Вызываем нужный топик, который передали в CommandsMenu()
 						FarShowHelp(
@@ -725,7 +672,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					return SelPos;
 				case KEY_SHIFTF9:
 
-					if (item && item->bIsPlugin && item->pPlugin->HasConfigure())
+					if (item && item->pPlugin && item->pPlugin->HasConfigure())
 						CtrlObject->Plugins.ConfigureCurrent(item->pPlugin, item->nItem);
 
 					return SelPos;
@@ -772,44 +719,45 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	if (!mitem)
 		return -1; //???
 
-	if (!mitem->bIsPlugin)
-	{
-		SetLocation_Directory(mitem->root);
-	}
-	else //эта плагин, да
+	if (mitem->kind == PanelMenuItem::PLUGIN)
 	{
 //		fprintf(stderr, "pPlugin=%p nItem=0x%lx\n", mitem->pPlugin, (unsigned long)mitem->nItem);
 		LONG_PTR nItem = mitem->nItem;
 		//if (nItem == (LONG_PTR)-1)
 		//	nItem = (LONG_PTR)mitem->root;
 
-		std::wstring hostFile, curDir;
-		auto pPlugin = mitem->pPlugin;
-		if (pPlugin == nullptr) {
-			HANDLE hAnother = another_panel->GetPluginHandle();
-			if (hAnother == INVALID_HANDLE_VALUE)
-				return -1;
-
+		if (mitem->pPlugin == nullptr) {
+			// duplicate plugin instance of passive panel
 			auto plugin_name = CtrlObject->Plugins.GetPluginModuleName(another_panel->GetPluginHandle());
-			if (plugin_name.IsEmpty())
-				return -1;
+			if (!plugin_name.IsEmpty()) {
+				auto pPlugin = CtrlObject->Plugins.GetPlugin(plugin_name);
+				if (pPlugin) {
+					OpenPluginInfo opi = {sizeof(OpenPluginInfo), 0};
+					CtrlObject->Plugins.GetOpenPluginInfo(another_panel->GetPluginHandle(), &opi);
 
-			pPlugin = CtrlObject->Plugins.GetPlugin(plugin_name);
-			if (!pPlugin)
-				return -1;
+					std::wstring hostFile, curDir;
 
-			OpenPluginInfo opi = {sizeof(OpenPluginInfo), 0};
-			CtrlObject->Plugins.GetOpenPluginInfo(hAnother, &opi);
-			if (opi.CurDir)
-				curDir = opi.CurDir;
-			if (opi.HostFile)
-				hostFile = opi.HostFile;
+					if (opi.CurDir)
+						curDir = opi.CurDir;
+					if (opi.HostFile)
+						hostFile = opi.HostFile;
+
+					SetLocation_Plugin(!hostFile.empty(), pPlugin, curDir.c_str(),
+						hostFile.empty() ? nullptr : hostFile.c_str(), 0);
+				}
+			}
+
+		} else {
+			SetLocation_Plugin(false, mitem->pPlugin, nullptr, nullptr, nItem);
 		}
-
-		SetLocation_Plugin(!hostFile.empty(), pPlugin,
-			(nItem == (LONG_PTR)-1) ? curDir.c_str() : nullptr,
-			hostFile.empty() ? nullptr : hostFile.c_str(),
-			(nItem == (LONG_PTR)-1) ? 0 : nItem);
+	}
+	else if (mitem->kind == PanelMenuItem::SHORTCUT)
+	{
+		ExecShortcutFolder(mitem->nItem);
+	}
+	else if (mitem->kind == PanelMenuItem::MOUNTPOINT || mitem->kind == PanelMenuItem::DIRECTORY)
+	{
+		SetLocation_Directory(mitem->path);
 	}
 
 	return -1;
@@ -868,6 +816,12 @@ bool Panel::SetLocation_Directory(const wchar_t *path)
 {
 	if (!FarChDir(path))
 	{
+		if (CtrlObject->Plugins.ProcessCommandLine(path))
+		{
+			fprintf(stderr, "SetLocation_Directory('%ls') PLUGIN\n", path);
+			return true;
+		}
+
 		fprintf(stderr, "SetLocation_Directory('%ls') FAILED\n", path);
 		return false;
 	}
@@ -924,89 +878,6 @@ int Panel::OnFCtlSetLocation(const FarPanelLocation *location)
 	return SetLocation_Plugin(false, pPlugin, location->Path, nullptr, location->Item);
 }
 
-int Panel::DisconnectDrive(PanelMenuItem *item, VMenu &ChDisk)
-{
-	return -1;
-}
-
-void Panel::RemoveHotplugDevice(PanelMenuItem *item, VMenu &ChDisk)
-{
-}
-
-/* $ 28.12.2001 DJ
-   обработка Del в меню дисков
-*/
-
-int Panel::ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu)
-{
-	FARString strMsgText;
-	wchar_t DiskLetter[]={Drive,L':',0};
-
-	switch(DriveType)
-	{
-	case DRIVE_SUBSTITUTE:
-		{
-			if (Opt.Confirm.RemoveSUBST)
-			{
-				strMsgText.Format(MSG(MChangeSUBSTDisconnectDriveQuestion),Drive);
-				if (Message(MSG_WARNING,2,MSG(MChangeSUBSTDisconnectDriveTitle),strMsgText,MSG(MYes),MSG(MNo)))
-				{
-					return DRIVE_DEL_FAIL;
-				}
-			}
-			/*if (DelSubstDrive(DiskLetter))
-			{
-				return DRIVE_DEL_SUCCESS;
-			}
-			else*/
-			{
-				int LastError=WINPORT(GetLastError)();
-				strMsgText.Format(MSG(MChangeDriveCannotDelSubst),DiskLetter);
-				if (LastError==ERROR_OPEN_FILES || LastError==ERROR_DEVICE_IN_USE)
-				{
-					if (!Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MError),strMsgText,
-								L"\x1",MSG(MChangeDriveOpenFiles),
-								MSG(MChangeDriveAskDisconnect),MSG(MOk),MSG(MCancel)))
-					{
-						/*if (DelSubstDrive(DiskLetter))
-						{
-							return DRIVE_DEL_SUCCESS;
-						}*/
-					}
-					else
-					{
-						return DRIVE_DEL_FAIL;
-					}
-				}
-				Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),strMsgText,MSG(MOk));
-			}
-			return DRIVE_DEL_FAIL; // блин. в прошлый раз забыл про это дело...
-		}
-		break;
-
-	case DRIVE_REMOTE:
-		{
-		}
-		break;
-
-	case DRIVE_VIRTUAL:
-		{
-			if (Opt.Confirm.DetachVHD)
-			{
-				strMsgText.Format(MSG(MChangeVHDDisconnectDriveQuestion),Drive);
-				if (Message(MSG_WARNING,2,MSG(MChangeVHDDisconnectDriveTitle),strMsgText,MSG(MYes),MSG(MNo)))
-				{
-					return DRIVE_DEL_FAIL;
-				}
-			}
-		}
-		break;
-
-	}
-	return DRIVE_DEL_FAIL;
-}
-
-
 void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName,FARString &strName)
 {
 	wchar_t *Ptr=(wchar_t *)xf_malloc((StrLength(Src)+StrLength(FindEdit->GetStringAddr())+32)*sizeof(wchar_t));
@@ -1018,19 +889,19 @@ void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &str
 		wcscat(Ptr,Src);
 		Unquote(EndPtr);
 		EndPtr=Ptr+StrLength(Ptr);
-		DWORD Key;
+//		DWORD Key;
 
 		for (;;)
 		{
 			if (EndPtr == Ptr)
 			{
-				Key=KEY_NONE;
+//				Key=KEY_NONE;
 				break;
 			}
 
 			if (FindPartName(Ptr,FALSE,1,1))
 			{
-				Key=*(EndPtr-1);
+//				Key=*(EndPtr-1);
 				*EndPtr=0;
 				FindEdit->SetString(Ptr);
 				strLastName = Ptr;
@@ -1066,7 +937,7 @@ static DWORD _CorrectFastFindKbdLayout(INPUT_RECORD *rec,DWORD Key)
 					return Key;
 		}
 		// // _SVS(SysLog(L"_CorrectFastFindKbdLayout>>> %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
-		if (rec->Event.KeyEvent.uChar.UnicodeChar && (Key&KEY_MASKF) != rec->Event.KeyEvent.uChar.UnicodeChar) //???
+		if (rec->Event.KeyEvent.uChar.UnicodeChar && WCHAR(Key&KEY_MASKF) != rec->Event.KeyEvent.uChar.UnicodeChar) //???
 			Key=(Key&0xFFF10000)|rec->Event.KeyEvent.uChar.UnicodeChar;   //???
 
 		// // _SVS(SysLog(L"_CorrectFastFindKbdLayout<<< %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
@@ -1508,7 +1379,16 @@ int Panel::GetCurDirPluginAware(FARString &strCurDir)
 //		PluginHandle *ph = (PluginHandle*)hPlugin;
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
-		strCurDir = Info.CurDir;
+
+		strCurDir.Clear();
+
+		if (Info.HostFile && *Info.HostFile)
+		{
+			strCurDir += Info.HostFile;
+			strCurDir += L"/";
+		}
+
+		strCurDir += Info.CurDir;
 	}
 	else
 	{

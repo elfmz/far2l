@@ -4599,7 +4599,7 @@ l:
 
 MFolderShortcutsTitle
 l:
-"Ссылки на папки"
+"Закладки на папки"
 "Folder shortcuts"
 "Adresářové zkratky"
 "Ordnerschnellzugriff"
@@ -4635,8 +4635,8 @@ MShortcutPlugin
 "<plugin>"
 
 MFSShortcut
-"Введите новую ссылку:"
-"Enter new shortcut:"
+"Введите новую закладку:"
+"Enter shortcut path:"
 "Zadejte novou zkratku:"
 "Neue Verknüpfung:"
 "A gyorsbillentyűhöz rendelt mappa:"
@@ -11436,8 +11436,8 @@ MMenuSortUseCaseSensitive
 
 MChangeDriveTitle
 l:
-"Диск"
-"Drive"
+"Перейти"
+"Location"
 "Jednotka"
 "Laufwerke"
 "Meghajtók"
@@ -11926,6 +11926,15 @@ upd:"Show &plugins"
 upd:"Show &plugins"
 "Mostrar &plugins"
 
+MChangeDriveShowShortcuts
+"Показывать &закладки"
+"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Show &shortcuts"
+upd:"Mostrar &shortcuts"
+
 MChangeDriveShowCD
 "Показывать параметры &компакт-дисков"
 "Show &CD drive parameters"
@@ -11945,13 +11954,13 @@ upd:"Show ne&twork drive parameters"
 "Mostrar parámetros unidades de red"
 
 MChangeDriveMenuFooter
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
 
 MSearchFileTitle
 l:

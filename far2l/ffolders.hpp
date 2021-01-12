@@ -33,6 +33,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+void CheckForImportLegacyShortcuts();
+
 bool GetShortcutFolder(int Pos,FARString *pDestFolder, FARString *pPluginModule=nullptr, FARString *pPluginFile=nullptr,FARString *pPluginData=nullptr);
 bool SaveFolderShortcut(int Pos,FARString *pSrcFolder,FARString *pPluginModule=nullptr, FARString *pPluginFile=nullptr,FARString *pPluginData=nullptr);
 bool ClearFolderShortcut(int Pos);

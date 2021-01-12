@@ -56,7 +56,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static const wchar_t FolderShortcuts[] = L"FolderShortcuts";
 
-
 class Bookmarks
 {
 	KeyFileHelper _kfh;
@@ -314,3 +313,4 @@ void ShowFolderShortcut(int Pos)
 		Pos = ShowFolderShortcutMenu(Pos);
 	}
 }
+

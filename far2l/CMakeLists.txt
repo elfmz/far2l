@@ -36,6 +36,7 @@ farqueue.cpp
 farrtl.cpp
 farwinapi.cpp
 ffolders.cpp
+ffolders_legacy.cpp
 fileattr.cpp
 fileedit.cpp
 filefilter.cpp

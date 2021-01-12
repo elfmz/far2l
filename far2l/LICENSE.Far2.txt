@@ -16,8 +16,8 @@ edit.hpp editor.cpp editor.hpp eject.cpp eject.hpp elevation.cpp elevation.hpp
 event.hpp execute.cpp execute.hpp exitcode.hpp Far.exe.manifest.m4 far.rc.m4 
 FarDlgBuilder.hpp FarEng.hlf.m4 farexcpt.cpp farexcpt.hpp FarHun.hlf.m4 
 farlang.templ.m4 farqueue.cpp farqueue.hpp farrtl.cpp farrtl.hpp FarRus.hlf.m4 
-farversion.inc.m4 farversion.m4 farwinapi.cpp farwinapi.hpp ffolders.cpp 
-ffolders.hpp File_id.diz.m4 fileattr.cpp fileattr.hpp fileedit.cpp fileedit.hpp 
+farversion.inc.m4 farversion.m4 farwinapi.cpp farwinapi.hpp BookmarksLegacy.cpp 
+BookmarksMenu.cpp File_id.diz.m4 fileattr.cpp fileattr.hpp fileedit.cpp fileedit.hpp 
 filefilter.cpp filefilter.hpp filefilterparams.cpp filefilterparams.hpp 
 filelist.cpp filelist.hpp FileMasksProcessor.cpp FileMasksProcessor.hpp 
 FileMasksWithExclude.cpp FileMasksWithExclude.hpp fileowner.cpp fileowner.hpp 

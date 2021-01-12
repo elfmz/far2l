@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "setcolor.hpp"
 #include "plist.hpp"
 #include "filetype.hpp"
-#include "ffolders.hpp"
+#include "Bookmarks.hpp"
 #include "strmix.hpp"
 #include "interf.hpp"
 #include "codepage.hpp"
@@ -547,7 +547,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 					EditFileTypes();
 					break;
 				case MENU_COMMANDS_FOLDERSHORTCUTS: // Folder shortcuts
-					ShowFolderShortcut();
+					ShowBookmarksMenu();
 					break;
 				case MENU_COMMANDS_FILTER: // File panel filter
 					CtrlObject->Cp()->ActivePanel->EditFilter();

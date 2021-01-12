@@ -65,7 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "scrsaver.hpp"
 #include "execute.hpp"
-#include "ffolders.hpp"
+#include "Bookmarks.hpp"
 #include "options.hpp"
 #include "pathmix.hpp"
 #include "dirmix.hpp"
@@ -421,47 +421,55 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			MenuLine++;
 		}
 
-		if (Opt.ChangeDriveMode & DRIVE_SHOW_SHORTCUTS) for (int SCPos = 0, AddedCount = 0;; ++SCPos)
+		if (Opt.ChangeDriveMode & DRIVE_SHOW_SHORTCUTS)
 		{
-			FARString DestFolder, PluginFile;
-			if (GetShortcutFolder(SCPos, &DestFolder, nullptr, &PluginFile, nullptr))
+			Bookmarks b;
+			for (int SCPos = 0, AddedCount = 0;; ++SCPos)
 			{
-				if (!AddedCount++)
+				FARString Folder, Plugin, PluginFile, ShortcutPath;
+				if (b.Get(SCPos, &Folder, &Plugin, &PluginFile, nullptr))
 				{
+					if (!AddedCount++)
+					{
+						ChDiskItem.Clear();
+						ChDiskItem.strName = MSG(MFolderShortcutsTitle);
+						ChDiskItem.Flags|= LIF_SEPARATOR;
+						ChDisk.AddItem(&ChDiskItem);
+						ChDiskItem.Flags&= ~LIF_SEPARATOR;
+					}
+
 					ChDiskItem.Clear();
-					ChDiskItem.strName = MSG(MFolderShortcutsTitle);
-					ChDiskItem.Flags|= LIF_SEPARATOR;
-					ChDisk.AddItem(&ChDiskItem);
-					ChDiskItem.Flags&= ~LIF_SEPARATOR;
+					ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
+
+					if (!PluginFile.IsEmpty())
+					{
+						ShortcutPath+= PluginFile;
+						ShortcutPath+= L"/";
+					}
+					ShortcutPath+= Folder;
+					if (ShortcutPath.IsEmpty())
+					{
+						ShortcutPath = L"@";
+						ShortcutPath+= Plugin;
+					}
+
+					if (SCPos <= 9)
+						ChDiskItem.strName.Format(L"&%d  ", SCPos);
+					else
+						ChDiskItem.strName = L"   ";
+
+					ChDiskItem.strName+= TruncPathStr(ShortcutPath, 64);
+
+					PanelMenuItem item;
+					item.kind = PanelMenuItem::SHORTCUT;
+					item.nItem = SCPos;
+					ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
+					MenuLine++;
 				}
-
-				ChDiskItem.Clear();
-				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
-
-				FARString ShortcutPath;
-				if (!PluginFile.IsEmpty())
+				else if (SCPos > 10)
 				{
-					ShortcutPath+= PluginFile;
-					ShortcutPath+= L"/";
+					break;
 				}
-				ShortcutPath+= DestFolder;
-
-				if (SCPos <= 9)
-					ChDiskItem.strName.Format(L"&%d  ", SCPos);
-				else
-					ChDiskItem.strName = L"   ";
-
-				ChDiskItem.strName+= TruncPathStr(ShortcutPath, 64);
-
-				PanelMenuItem item;
-				item.kind = PanelMenuItem::SHORTCUT;
-				item.nItem = SCPos;
-				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
-				MenuLine++;
-			}
-			else if (SCPos > 10)
-			{
-				break;
 			}
 		}
 
@@ -532,7 +540,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 //					}
 //					else
 					{
-						ShowFolderShortcut();
+						ShowBookmarksMenu();
 					}
 					return SelPos;
 				}
@@ -558,7 +566,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						}
 						else if (item->kind == PanelMenuItem::SHORTCUT)
 						{
-							ShowFolderShortcut(item->nItem);
+							ShowBookmarksMenu(item->nItem);
 							return SelPos;
 						}
 						else
@@ -586,7 +594,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						}
 						
 						case PanelMenuItem::SHORTCUT: {
-							ClearFolderShortcut(item->nItem);
+							Bookmarks().Clear(item->nItem);
 							return SelPos;
 						}
 
@@ -2096,7 +2104,7 @@ bool Panel::SaveShortcutFolder(int Pos)
 		strShortcutFolder = strCurDir;
 	}
 
-	if (SaveFolderShortcut(Pos,&strShortcutFolder,&strPluginModule,&strPluginFile,&strPluginData))
+	if (Bookmarks().Set(Pos, &strShortcutFolder, &strPluginModule, &strPluginFile, &strPluginData))
 		return true;
 
 	return true;
@@ -2144,7 +2152,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 {
 	FARString strShortcutFolder,strPluginModule,strPluginFile,strPluginData;
 
-	if (GetShortcutFolder(Pos,&strShortcutFolder,&strPluginModule,&strPluginFile,&strPluginData))
+	if (Bookmarks().Get(Pos,&strShortcutFolder,&strPluginModule,&strPluginFile,&strPluginData))
 	{
 		Panel *SrcPanel=this;
 		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);

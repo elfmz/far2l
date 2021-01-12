@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 
-#include "ffolders.hpp"
+#include "Bookmarks.hpp"
 #include "keys.hpp"
 #include "lang.hpp"
 #include "vmenu.hpp"
@@ -54,124 +54,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "plugin.hpp"
 #include "plugins.hpp"
 
-static const wchar_t FolderShortcuts[] = L"FolderShortcuts";
+static const wchar_t HelpFolderShortcuts[] = L"FolderShortcuts";
 
-class Bookmarks
-{
-	KeyFileHelper _kfh;
-
-public:
-	Bookmarks()
-		: _kfh(InMyConfig("bookmarks.ini").c_str(), true)
-	{
-	}
-
-	void Set(int index, const FARString *path,
-		const FARString *plugin = nullptr,
-		const FARString *plugin_file = nullptr,
-		const FARString *plugin_data = nullptr)
-	{
-		if ( (!path || path->IsEmpty()) && (!plugin || plugin->IsEmpty()))
-		{
-			Clear(index);
-			return;
-		}
-
-		char sec[32]; sprintf(sec, "%u", index);
-		_kfh.RemoveSection(sec);
-
-		_kfh.PutString(sec, "Path", path ? path->GetMB().c_str() : "");
-		_kfh.PutString(sec, "Plugin", plugin ? plugin->GetMB().c_str() : "");
-		_kfh.PutString(sec, "PluginFile", plugin_file ? plugin_file->GetMB().c_str() : "");
-		_kfh.PutString(sec, "PluginData", plugin_data ? plugin_data->GetMB().c_str() : "");
-	}
-
-	bool Get(int index, FARString *path,
-		FARString *plugin = nullptr,
-		FARString *plugin_file = nullptr,
-		FARString *plugin_data = nullptr)
-	{
-		char sec[32]; sprintf(sec, "%u", index);
-		FARString strFolder(_kfh.GetString(sec, "Path"));
-
-		if (!strFolder.IsEmpty())
-			apiExpandEnvironmentStrings(strFolder, *path);
-		else
-			path->Clear();
-
-		if (plugin)
-			*plugin = _kfh.GetString(sec, "Plugin");
-
-		if (plugin_file)
-			*plugin_file = _kfh.GetString(sec, "PluginFile");
-
-		if (plugin_data)
-			*plugin_data = _kfh.GetString(sec, "PluginData");
-
-		return (!path->IsEmpty() || (plugin && !plugin->IsEmpty()));
-	}
-
-	void Clear(int index)
-	{
-		char sec[32]; sprintf(sec, "%u", index);
-		_kfh.RemoveSection(sec);
-		if (index < 10)
-			return;
-
-		for (int dst_index = index, miss_counter = 0;;)
-		{
-			FARString path, plugin, plugin_file, plugin_data;
-			if (Get(index, &path, &plugin, &plugin_file, &plugin_data))
-			{
-				if (dst_index != index)
-				{
-					Set(dst_index, &path, &plugin, &plugin_file, &plugin_data);
-				}
-				++dst_index;
-				miss_counter = 0;
-			}
-			else if (++miss_counter >= 10)
-			{
-				for (; dst_index <= index; ++dst_index)
-				{
-					 sprintf(sec, "%u", dst_index);
-					_kfh.RemoveSection(sec);
-				}
-				break;
-			}
-
-			++index;
-		}
-	}
-};
-
-bool GetShortcutFolder(int Pos,
-		FARString *pDestFolder,
-		FARString *pPluginModule,
-		FARString *pPluginFile,
-		FARString *pPluginData)
-{
-	return Bookmarks().Get(Pos, pDestFolder, pPluginModule, pPluginFile, pPluginData);
-}
-
-bool SaveFolderShortcut(int Pos,
-		FARString *pSrcFolder,
-		FARString *pPluginModule,
-		FARString *pPluginFile,
-		FARString *pPluginData)
-{
-	Bookmarks().Set(Pos, pSrcFolder, pPluginModule, pPluginFile, pPluginData);
-	return true;
-}
-
-bool ClearFolderShortcut(int Pos)
-{
-	Bookmarks().Clear(Pos);
-	return true;
-}
-
-
-static int ShowFolderShortcutMenu(int Pos)
+static int ShowBookmarksMenuIteration(int Pos)
 {
 	int ExitCode=-1;
 	Bookmarks b;
@@ -180,7 +65,7 @@ static int ShowFolderShortcutMenu(int Pos)
 		MenuItemEx ListItem;
 		VMenu FolderList(MSG(MFolderShortcutsTitle),nullptr,0,ScrY-4);
 		FolderList.SetFlags(VMENU_WRAPMODE); // VMENU_SHOWAMPERSAND|
-		FolderList.SetHelp(FolderShortcuts);
+		FolderList.SetHelp(HelpFolderShortcuts);
 		FolderList.SetPosition(-1,-1,0,0);
 		FolderList.SetBottomTitle(MSG(MFolderShortcutBottom));
 
@@ -257,7 +142,7 @@ static int ShowFolderShortcutMenu(int Pos)
 					b.Get(SelPos, &strNewDir);
 					FARString strTemp = strNewDir;
 
-					DialogBuilder Builder(MFolderShortcutsTitle, FolderShortcuts);
+					DialogBuilder Builder(MFolderShortcutsTitle, HelpFolderShortcuts);
 					Builder.AddText(MFSShortcut);
 					Builder.AddEditField(&strNewDir, 50, L"FS_Path", DIF_EDITPATH);
 					//...
@@ -306,11 +191,11 @@ static int ShowFolderShortcutMenu(int Pos)
 	return -1;
 }
 
-void ShowFolderShortcut(int Pos)
+void ShowBookmarksMenu(int Pos)
 {
 	while (Pos != -1)
 	{
-		Pos = ShowFolderShortcutMenu(Pos);
+		Pos = ShowBookmarksMenuIteration(Pos);
 	}
 }
 

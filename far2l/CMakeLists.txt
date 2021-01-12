@@ -35,8 +35,9 @@ execute.cpp
 farqueue.cpp
 farrtl.cpp
 farwinapi.cpp
-ffolders.cpp
-ffolders_legacy.cpp
+Bookmarks.cpp
+BookmarksMenu.cpp
+BookmarksLegacy.cpp
 fileattr.cpp
 fileedit.cpp
 filefilter.cpp

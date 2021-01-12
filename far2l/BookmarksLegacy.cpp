@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-#include "ffolders.hpp"
+#include "Bookmarks.hpp"
 #include "registry.hpp"
 #include <fcntl.h>
 
@@ -76,12 +76,14 @@ void CheckForImportLegacyShortcuts()
 
 	close(open(new_path.c_str(), O_RDWR, 0600));
 
+	Bookmarks b;
+
 	for (int i = 0; ; ++i)
 	{
 		FARString Folder, PluginModule, PluginFile, PluginData;
 		if (LegacyShortcut_Get(i, &Folder, &PluginModule, &PluginFile, &PluginData))
 		{
-			SaveFolderShortcut(i, &Folder, &PluginModule, &PluginFile, &PluginData);
+			b.Set(i, &Folder, &PluginModule, &PluginFile, &PluginData);
 		}
 		else if (i >= 10)
 		{

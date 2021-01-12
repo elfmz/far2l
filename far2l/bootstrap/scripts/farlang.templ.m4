@@ -4635,8 +4635,8 @@ MShortcutPlugin
 "<plugin>"
 
 MFSShortcut
-"Введите новую ссылку:"
-"Enter new shortcut:"
+"Введите новую закладку:"
+"Enter shortcut path:"
 "Zadejte novou zkratku:"
 "Neue Verknüpfung:"
 "A gyorsbillentyűhöz rendelt mappa:"

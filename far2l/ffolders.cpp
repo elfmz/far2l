@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filepanels.hpp"
 #include "panel.hpp"
 #include "filelist.hpp"
-#include "registry.hpp"
+#include "KeyFileHelper.h"
 #include "message.hpp"
 #include "stddlg.hpp"
 #include "pathmix.hpp"
@@ -54,157 +54,149 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "plugin.hpp"
 #include "plugins.hpp"
 
-static const wchar_t HelpFolderShortcuts[]=L"FolderShortcuts";
+static const wchar_t FolderShortcuts[] = L"FolderShortcuts";
 
-enum PSCR_CMD
-{
-	PSCR_CMDGET,
-	PSCR_CMDSET,
-	PSCR_CMDDELALL,
-};
 
-enum PSCR_RECTYPE
+class Bookmarks
 {
-	PSCR_RT_SHORTCUT,
-	PSCR_RT_PLUGINMODULE,
-	PSCR_RT_PLUGINFILE,
-	PSCR_RT_PLUGINDATA,
-};
+	KeyFileHelper _kfh;
 
-static int ProcessShortcutRecord(int Command,int ValType,int RecNumber, FARString *pValue)
-{
-	static const wchar_t FolderShortcuts[]=L"FolderShortcuts";
-	static const wchar_t *RecTypeName[]=
+public:
+	Bookmarks()
+		: _kfh(InMyConfig("bookmarks.ini").c_str(), true)
 	{
-		L"Shortcut%d",
-		L"PluginModule%d",
-		L"PluginFile%d",
-		L"PluginData%d",
-	};
-	FARString strValueName;
-
-	if (Command != PSCR_CMDDELALL)
-		strValueName.Format(RecTypeName[ValType], RecNumber);
-
-	switch(Command)
-	{
-		case PSCR_CMDGET:
-			return GetRegKey(FolderShortcuts,strValueName,*pValue,L"");
-		case PSCR_CMDSET:
-			return SetRegKey(FolderShortcuts,strValueName,NullToEmpty(*pValue));
-		case PSCR_CMDDELALL:
-			for (size_t I=0; I < ARRAYSIZE(RecTypeName); ++I)
-			{
-				strValueName.Format(RecTypeName[I],RecNumber);
-				SetRegKey(FolderShortcuts,strValueName,L"");
-			}
-			return TRUE;
 	}
 
-	return FALSE;
-}
-
-int GetShortcutFolder(int Pos,FARString *pDestFolder,
-                      FARString *pPluginModule,
-                      FARString *pPluginFile,
-                      FARString *pPluginData)
-{
-	FARString strFolder;
-	ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_SHORTCUT,Pos,&strFolder);
-	apiExpandEnvironmentStrings(strFolder, *pDestFolder);
-
-	if (pPluginModule)
-		ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_PLUGINMODULE,Pos,pPluginModule);
-
-	if (pPluginFile)
-		ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_PLUGINFILE,Pos,pPluginFile);
-
-	if (pPluginData)
-		ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_PLUGINDATA,Pos,pPluginData);
-
-	return (!pDestFolder->IsEmpty() || (pPluginModule && !pPluginModule->IsEmpty()));
-}
-
-
-
-static void FixupShortcutFolders()
-{
-	int SrcPos = 10, DstPos = 10;
-	for (int MissCount = 0;;)
+	void Set(int index, const FARString *path,
+		const FARString *plugin = nullptr,
+		const FARString *plugin_file = nullptr,
+		const FARString *plugin_data = nullptr)
 	{
-		FARString Folder, PluginModule, PluginFile, PluginData;
-		if (GetShortcutFolder(SrcPos, &Folder, &PluginModule, &PluginFile, &PluginData))
+		if ( (!path || path->IsEmpty()) && (!plugin || plugin->IsEmpty()))
 		{
-			if (SrcPos != DstPos)
-			{
-				SaveFolderShortcut(DstPos, &Folder, &PluginModule, &PluginFile, &PluginData);
-			}
-			++DstPos;
-			MissCount = 0;
+			Clear(index);
+			return;
 		}
-		else 
+
+		char sec[32]; sprintf(sec, "%u", index);
+		_kfh.RemoveSection(sec);
+
+		_kfh.PutString(sec, "Path", path ? path->GetMB().c_str() : "");
+		_kfh.PutString(sec, "Plugin", plugin ? plugin->GetMB().c_str() : "");
+		_kfh.PutString(sec, "PluginFile", plugin_file ? plugin_file->GetMB().c_str() : "");
+		_kfh.PutString(sec, "PluginData", plugin_data ? plugin_data->GetMB().c_str() : "");
+	}
+
+	bool Get(int index, FARString *path,
+		FARString *plugin = nullptr,
+		FARString *plugin_file = nullptr,
+		FARString *plugin_data = nullptr)
+	{
+		char sec[32]; sprintf(sec, "%u", index);
+		FARString strFolder(_kfh.GetString(sec, "Path"));
+
+		if (!strFolder.IsEmpty())
+			apiExpandEnvironmentStrings(strFolder, *path);
+		else
+			path->Clear();
+
+		if (plugin)
+			*plugin = _kfh.GetString(sec, "Plugin");
+
+		if (plugin_file)
+			*plugin_file = _kfh.GetString(sec, "PluginFile");
+
+		if (plugin_data)
+			*plugin_data = _kfh.GetString(sec, "PluginData");
+
+		return (!path->IsEmpty() || (plugin && !plugin->IsEmpty()));
+	}
+
+	void Clear(int index)
+	{
+		char sec[32]; sprintf(sec, "%u", index);
+		_kfh.RemoveSection(sec);
+		if (index < 10)
+			return;
+
+		for (int dst_index = index, miss_counter = 0;;)
 		{
-			++MissCount;
-			if (MissCount > 10)
+			FARString path, plugin, plugin_file, plugin_data;
+			if (Get(index, &path, &plugin, &plugin_file, &plugin_data))
+			{
+				if (dst_index != index)
+				{
+					Set(dst_index, &path, &plugin, &plugin_file, &plugin_data);
+				}
+				++dst_index;
+				miss_counter = 0;
+			}
+			else if (++miss_counter >= 10)
+			{
+				for (; dst_index <= index; ++dst_index)
+				{
+					 sprintf(sec, "%u", dst_index);
+					_kfh.RemoveSection(sec);
+				}
 				break;
+			}
+
+			++index;
 		}
-		++SrcPos;
 	}
+};
 
-	for (;DstPos < SrcPos; ++DstPos)
-	{
-		ProcessShortcutRecord(PSCR_CMDDELALL, 0, DstPos, nullptr);
-	}
+bool GetShortcutFolder(int Pos,
+		FARString *pDestFolder,
+		FARString *pPluginModule,
+		FARString *pPluginFile,
+		FARString *pPluginData)
+{
+	return Bookmarks().Get(Pos, pDestFolder, pPluginModule, pPluginFile, pPluginData);
 }
 
-int SaveFolderShortcut(int Pos,FARString *pSrcFolder,
-                       FARString *pPluginModule,
-                       FARString *pPluginFile,
-                       FARString *pPluginData)
+bool SaveFolderShortcut(int Pos,
+		FARString *pSrcFolder,
+		FARString *pPluginModule,
+		FARString *pPluginFile,
+		FARString *pPluginData)
 {
-	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_SHORTCUT,Pos,pSrcFolder);
-	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINMODULE,Pos,pPluginModule);
-	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINFILE,Pos,pPluginFile);
-	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINDATA,Pos,pPluginData);
-	FixupShortcutFolders();
-	return TRUE;
+	Bookmarks().Set(Pos, pSrcFolder, pPluginModule, pPluginFile, pPluginData);
+	return true;
 }
 
-int ClearFolderShortcut(int Pos)
+bool ClearFolderShortcut(int Pos)
 {
-	ProcessShortcutRecord(PSCR_CMDDELALL, 0, Pos, nullptr);
-	FixupShortcutFolders();
+	Bookmarks().Clear(Pos);
+	return true;
 }
 
 
 static int ShowFolderShortcutMenu(int Pos)
 {
 	int ExitCode=-1;
+	Bookmarks b;
 	{
 		int I;
 		MenuItemEx ListItem;
 		VMenu FolderList(MSG(MFolderShortcutsTitle),nullptr,0,ScrY-4);
 		FolderList.SetFlags(VMENU_WRAPMODE); // VMENU_SHOWAMPERSAND|
-		FolderList.SetHelp(HelpFolderShortcuts);
+		FolderList.SetHelp(FolderShortcuts);
 		FolderList.SetPosition(-1,-1,0,0);
 		FolderList.SetBottomTitle(MSG(MFolderShortcutBottom));
 
 		for (I=0; ; I++)
 		{
-			FARString strFolderName;
+			FARString strFolderName, strPlugin;
 			FARString strValueName;
 			ListItem.Clear();
-			ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_SHORTCUT,I,&strFolderName);
+			b.Get(I, &strFolderName, &strPlugin);
 			//TruncStr(strFolderName,60);
 
 			if (strFolderName.IsEmpty())
 			{
-				ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_PLUGINMODULE,I,&strFolderName);
-
-				if (strFolderName.IsEmpty())
-					strFolderName = MSG(MShortcutNone);
-				else
-					strFolderName = MSG(MShortcutPlugin);
+				strFolderName = strPlugin.IsEmpty()
+					? MSG(MShortcutNone) : MSG(MShortcutPlugin);
 			}
 
 //wxWidgets doesn't distinguish right/left modifiers
@@ -237,46 +229,36 @@ static int ShowFolderShortcutMenu(int Pos)
 			{
 				case KEY_NUMDEL:
 				case KEY_DEL:
+					b.Clear(SelPos);
+					return(SelPos);
+
 				case KEY_NUMPAD0:
 				case KEY_INS:
 				{
-					ProcessShortcutRecord(PSCR_CMDDELALL,0,SelPos,nullptr);
+					Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
+					FARString strNewDir, strNewPluginModule, strNewPluginFile, strNewPluginData;
+					CtrlObject->CmdLine->GetCurDir(strNewDir);
 
-					if (Key == KEY_INS || Key == KEY_NUMPAD0)
+					if (ActivePanel->GetMode() == PLUGIN_PANEL)
 					{
-						Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
-						FARString strNewDir;
-						CtrlObject->CmdLine->GetCurDir(strNewDir);
-						ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_SHORTCUT,SelPos,&strNewDir);
-
-						if (ActivePanel->GetMode() == PLUGIN_PANEL)
-						{
-							OpenPluginInfo Info;
-							ActivePanel->GetOpenPluginInfo(&Info);
-							FARString strTemp;
-							PluginHandle *ph = (PluginHandle*)ActivePanel->GetPluginHandle();
-							strTemp = ph->pPlugin->GetModuleName();
-							ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINMODULE,SelPos,&strTemp);
-							strTemp = Info.HostFile;
-							ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINFILE,SelPos,&strTemp);
-							strTemp = Info.ShortcutData;
-							ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINDATA,SelPos,&strTemp);
-						}
+						OpenPluginInfo Info;
+						ActivePanel->GetOpenPluginInfo(&Info);
+						PluginHandle *ph = (PluginHandle*)ActivePanel->GetPluginHandle();
+						strNewPluginModule = ph->pPlugin->GetModuleName();
+						strNewPluginFile = Info.HostFile;
+						strNewPluginData = Info.ShortcutData;
 					}
 
-					FixupShortcutFolders();
-
+					b.Set(SelPos, &strNewDir, &strNewPluginModule, &strNewPluginFile, &strNewPluginData);
 					return(SelPos);
 				}
 				case KEY_F4:
 				{
 					FARString strNewDir;
-					FARString strTemp;
+					b.Get(SelPos, &strNewDir);
+					FARString strTemp = strNewDir;
 
-					ProcessShortcutRecord(PSCR_CMDGET,PSCR_RT_SHORTCUT,SelPos,&strNewDir);
-					strTemp = strNewDir;
-
-					DialogBuilder Builder(MFolderShortcutsTitle, HelpFolderShortcuts);
+					DialogBuilder Builder(MFolderShortcutsTitle, FolderShortcuts);
 					Builder.AddText(MFSShortcut);
 					Builder.AddEditField(&strNewDir, 50, L"FS_Path", DIF_EDITPATH);
 					//...
@@ -300,8 +282,7 @@ static int ShowFolderShortcutMenu(int Pos)
 
 						if (Saved)
 						{
-							ProcessShortcutRecord(PSCR_CMDDELALL,0,SelPos,nullptr);
-							ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_SHORTCUT,SelPos,&strNewDir);
+							b.Set(SelPos, &strNewDir);
 							return(SelPos);
 						}
 					}

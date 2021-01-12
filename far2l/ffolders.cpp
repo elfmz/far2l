@@ -54,7 +54,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "plugin.hpp"
 #include "plugins.hpp"
 
-static int ShowFolderShortcutMenu(int Pos);
 static const wchar_t HelpFolderShortcuts[]=L"FolderShortcuts";
 
 enum PSCR_CMD
@@ -127,6 +126,37 @@ int GetShortcutFolder(int Pos,FARString *pDestFolder,
 }
 
 
+
+static void FixupShortcutFolders()
+{
+	int SrcPos = 10, DstPos = 10;
+	for (int MissCount = 0;;)
+	{
+		FARString Folder, PluginModule, PluginFile, PluginData;
+		if (GetShortcutFolder(SrcPos, &Folder, &PluginModule, &PluginFile, &PluginData))
+		{
+			if (SrcPos != DstPos)
+			{
+				SaveFolderShortcut(DstPos, &Folder, &PluginModule, &PluginFile, &PluginData);
+			}
+			++DstPos;
+			MissCount = 0;
+		}
+		else 
+		{
+			++MissCount;
+			if (MissCount > 10)
+				break;
+		}
+		++SrcPos;
+	}
+
+	for (;DstPos < SrcPos; ++DstPos)
+	{
+		ProcessShortcutRecord(PSCR_CMDDELALL, 0, DstPos, nullptr);
+	}
+}
+
 int SaveFolderShortcut(int Pos,FARString *pSrcFolder,
                        FARString *pPluginModule,
                        FARString *pPluginFile,
@@ -136,16 +166,14 @@ int SaveFolderShortcut(int Pos,FARString *pSrcFolder,
 	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINMODULE,Pos,pPluginModule);
 	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINFILE,Pos,pPluginFile);
 	ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINDATA,Pos,pPluginData);
+	FixupShortcutFolders();
 	return TRUE;
 }
 
-
-void ShowFolderShortcut()
+int ClearFolderShortcut(int Pos)
 {
-	int Pos=0;
-
-	while (Pos!=-1)
-		Pos=ShowFolderShortcutMenu(Pos);
+	ProcessShortcutRecord(PSCR_CMDDELALL, 0, Pos, nullptr);
+	FixupShortcutFolders();
 }
 
 
@@ -161,7 +189,7 @@ static int ShowFolderShortcutMenu(int Pos)
 		FolderList.SetPosition(-1,-1,0,0);
 		FolderList.SetBottomTitle(MSG(MFolderShortcutBottom));
 
-		for (I=0; I<10; I++)
+		for (I=0; ; I++)
 		{
 			FARString strFolderName;
 			FARString strValueName;
@@ -181,9 +209,21 @@ static int ShowFolderShortcutMenu(int Pos)
 
 //wxWidgets doesn't distinguish right/left modifiers
 //			ListItem.strName.Format(L"%ls+&%d   %ls", MSG(MRightCtrl),I,strFolderName.CPtr());
-			ListItem.strName.Format(L"[%ls | Ctrl+Alt] + &%d   %ls", MSG(MRightCtrl), I,strFolderName.CPtr());
+			if (I < 10)
+			{
+				ListItem.strName.Format(L"[%ls | Ctrl+Alt] + &%d   %ls", MSG(MRightCtrl), I,strFolderName.CPtr());
+			}
+			else
+			{
+				ListItem.strName.Format(L"%ls", strFolderName.CPtr());
+			}
 			ListItem.SetSelect(I == Pos);
 			FolderList.AddItem(&ListItem);
+
+			if (I >= 10 && strFolderName == MSG(MShortcutNone))
+			{
+				break;
+			}
 		}
 
 		FolderList.Show();
@@ -223,6 +263,8 @@ static int ShowFolderShortcutMenu(int Pos)
 							ProcessShortcutRecord(PSCR_CMDSET,PSCR_RT_PLUGINDATA,SelPos,&strTemp);
 						}
 					}
+
+					FixupShortcutFolders();
 
 					return(SelPos);
 				}
@@ -282,4 +324,12 @@ static int ShowFolderShortcutMenu(int Pos)
 	}
 
 	return -1;
+}
+
+void ShowFolderShortcut(int Pos)
+{
+	while (Pos != -1)
+	{
+		Pos = ShowFolderShortcutMenu(Pos);
+	}
 }

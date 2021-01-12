@@ -74,7 +74,8 @@ public:
 
 PluginImpl::PluginImpl(const wchar_t *path)
 {
-	_cur_dir[0] = _panel_title[0] = 0;
+	_cur_dir[0] = _panel_title[0] = _format[0] = 0;
+
 	_local = std::make_shared<HostLocal>();
 	if (path && wcsncmp(path, L"net:", 4) == 0) {
 		path+= 4;
@@ -84,13 +85,14 @@ PluginImpl::PluginImpl(const wchar_t *path)
 	}
 
 	if (path && *path) {
-		if (!_location.FromString(Wide2MB(path))) {
-			throw std::runtime_error(G.GetMsgMB(MWrongPath));
-		}
+		if (_location.FromString(Wide2MB(path))) {
+			_remote = OpConnect(0, _location).Do();
+			if (!_remote) {
+				throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
+			}
 
-		_remote = OpConnect(0, _location).Do();
-		if (!_remote) {
-			throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
+		} else if (!_sites_cfg_location.Change(Wide2MB(path))) {
+			throw std::runtime_error(G.GetMsgMB(MWrongPath));
 		}
 
 		_wea_state = std::make_shared<WhatOnErrorState>();
@@ -110,6 +112,7 @@ void PluginImpl::UpdatePathInfo()
 {
 	std::wstring tmp;
 	if (_remote) {
+		wcsncpy(_format, StrMB2Wide(_location.server).c_str(), ARRAYSIZE(_format) - 1);
 		wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 //		tmp = _remote->SiteInfo();
 //		tmp+= '/';
@@ -118,6 +121,7 @@ void PluginImpl::UpdatePathInfo()
 	} else {
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));
 		wcsncpy(_cur_dir, tmp.c_str(), ARRAYSIZE(_cur_dir) - 1);
+		wcsncpy(_format, L"NetRocks sites", ARRAYSIZE(_format) - 1);
 		if (!tmp.empty()) {
 			if (tmp[tmp.size() - 1] == '/') {
 				tmp.resize(tmp.size() - 1);
@@ -385,10 +389,10 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 //	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%ls' \n", &_cur_dir[0]);
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
-
 	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 	Info->HostFile = NULL;
 	Info->CurDir = _cur_dir;
+	Info->Format = _format;
 	Info->PanelTitle = _panel_title;
 }
 

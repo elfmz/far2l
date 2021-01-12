@@ -220,7 +220,7 @@ int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
 void CreatePath(FARString &strPath)
 {
 	wchar_t *ChPtr = strPath.GetBuffer();
-	wchar_t *DirPart = ChPtr;
+//	wchar_t *DirPart = ChPtr;
 	BOOL bEnd = FALSE;
 
 	for (;;)
@@ -239,7 +239,7 @@ void CreatePath(FARString &strPath)
 				break;
 
 			*ChPtr = GOOD_SLASH;
-			DirPart = ChPtr+1;
+//			DirPart = ChPtr+1;
 		}
 
 		ChPtr++;

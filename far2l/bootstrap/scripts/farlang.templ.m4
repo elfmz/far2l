@@ -4597,17 +4597,17 @@ l:
 "Idź do linii"
 "Ir a posición"
 
-MFolderShortcutsTitle
+MBookmarksTitle
 l:
-"Закладки на папки"
-"Folder bookmarks"
+"Закладки"
+"Bookmarks"
 "Adresářové zkratky"
 "Ordnerschnellzugriff"
 "Mappa gyorsbillentyűk"
 "Skróty katalogów"
 "Accesos a directorio"
 
-MFolderShortcutBottom
+MBookmarkBottom
 "Редактирование: Del,Ins,F4"
 "Edit: Del,Ins,F4"
 "Edit: Del,Ins,F4"
@@ -10918,7 +10918,7 @@ MMenuFileAssociations
 "Prz&ypisania plików"
 "&Asociar archivos"
 
-MMenuFolderShortcuts
+MMenuBookmarks
 "Зак&ладки на папки"
 "Fol&der bookmarks"
 "A&dresářové zkratky"

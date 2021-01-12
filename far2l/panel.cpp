@@ -432,7 +432,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					if (!AddedCount++)
 					{
 						ChDiskItem.Clear();
-						ChDiskItem.strName = MSG(MFolderShortcutsTitle);
+						ChDiskItem.strName = MSG(MBookmarksTitle);
 						ChDiskItem.Flags|= LIF_SEPARATOR;
 						ChDisk.AddItem(&ChDiskItem);
 						ChDiskItem.Flags&= ~LIF_SEPARATOR;

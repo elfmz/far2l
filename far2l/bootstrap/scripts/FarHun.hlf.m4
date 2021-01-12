@@ -43,7 +43,7 @@ $^(help file last translated for build 882)
 
    ~Fájltársítások~@FileAssoc@
    ~Operációs rendszer parancsok~@OSCommands@
-   ~Mappa gyorsbillentyűk~@FolderShortcuts@
+   ~Mappa gyorsbillentyűk~@Bookmarks@
    ~Szűrők menü~@FiltersMenu@
    ~Képernyők váltása~@ScrSwitch@
    ~Futó programok~@TaskList@
@@ -318,7 +318,7 @@ $ #Panelvezérlő parancsok#
   Rendezési csoportok szerint rendez                       #Shift-F11#
   A kijelölt fájlokat előre helyezi                        #Shift-F12#
 
-  ~Mappa gyorsbillentyűt~@FolderShortcuts@ készít                      #Ctrl-Shift-0...9#
+  ~Mappa gyorsbillentyűt~@Bookmarks@ készít                      #Ctrl-Shift-0...9#
   Gyorsbillentyűvel mappára ugrik                     #JobbCtrl-0...9#
 
     Ha az aktív panel ~gyorsnézet panel~@QViewPanel@, ~fastruktúra panel~@TreePanel@ vagy
@@ -1240,7 +1240,7 @@ témakör részletezi a funkciót.
 Az #Ins# billentyűvel beszúrhatjuk, a #Del#-lel törölhetjük, az #F4#-gyel
 pedig szerkeszthetjük a fájlok társításait.
 
-   #Mappa#                A ~mappa gyorsbillentyűk~@FolderShortcuts@ aktuális
+   #Mappa#                A ~mappa gyorsbillentyűk~@Bookmarks@ aktuális
    #gyorsbillentyűk#      összerendeléseit jeleníti meg.
 
    #Fájlpanel szűrő#      A fájlpanelek tartalmát szűrhetjük.
@@ -3043,7 +3043,7 @@ csoportra nem.
     ~Szimbolikus linkek~@HardSymLink@ dátuma és ideje nem állítható.
 
 
-@FolderShortcuts
+@Bookmarks
 $ #Mappa gyorsbillentyűk#
     A mappa gyorsbillentyűkkel a sűrűn használt mappákat egyszerűbben érhetjük
 el, ha a #Ctrl-Shift-0...9# kombináció lenyomásával gyorsbillentyűt rendelünk

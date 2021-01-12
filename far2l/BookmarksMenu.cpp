@@ -54,7 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "plugin.hpp"
 #include "plugins.hpp"
 
-static const wchar_t HelpFolderShortcuts[] = L"FolderShortcuts";
+static const wchar_t HelpBookmarks[] = L"Bookmarks";
 
 static int ShowBookmarksMenuIteration(int Pos)
 {
@@ -63,11 +63,11 @@ static int ShowBookmarksMenuIteration(int Pos)
 	{
 		int I;
 		MenuItemEx ListItem;
-		VMenu FolderList(MSG(MFolderShortcutsTitle),nullptr,0,ScrY-4);
+		VMenu FolderList(MSG(MBookmarksTitle),nullptr,0,ScrY-4);
 		FolderList.SetFlags(VMENU_WRAPMODE); // VMENU_SHOWAMPERSAND|
-		FolderList.SetHelp(HelpFolderShortcuts);
+		FolderList.SetHelp(HelpBookmarks);
 		FolderList.SetPosition(-1,-1,0,0);
-		FolderList.SetBottomTitle(MSG(MFolderShortcutBottom));
+		FolderList.SetBottomTitle(MSG(MBookmarkBottom));
 
 		for (I=0; ; I++)
 		{
@@ -142,7 +142,7 @@ static int ShowBookmarksMenuIteration(int Pos)
 					b.Get(SelPos, &strNewDir);
 					FARString strTemp = strNewDir;
 
-					DialogBuilder Builder(MFolderShortcutsTitle, HelpFolderShortcuts);
+					DialogBuilder Builder(MBookmarksTitle, HelpBookmarks);
 					Builder.AddText(MFSShortcut);
 					Builder.AddEditField(&strNewDir, 50, L"FS_Path", DIF_EDITPATH);
 					//...

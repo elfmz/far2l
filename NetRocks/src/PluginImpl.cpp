@@ -249,6 +249,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 		do { ++Dir; } while (*Dir == L'/');
 		if (*Dir == 0) {
+			UpdatePathInfo();
 			return TRUE;
 		}
 	}

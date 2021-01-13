@@ -4,7 +4,7 @@
 StringBuffer::StringBuffer():
   SString()
 {
-  setLength(10);
+  setLength(0);
 }
 
 StringBuffer::StringBuffer(int _alloc):

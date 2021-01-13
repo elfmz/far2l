@@ -57,9 +57,9 @@ KeyFileHelper::KeyFileHelper(const char *filename, bool load)
 			break;
 		}
 
-		// seems tryed to read at the moment when smbd else modifies file
-		// sleep random time to effectively avoid long waits on mutual conflicts
-		sleep(10000 + 1000 * (rand() % 100));
+		// seems tried to read at the moment when smbd else modifies file
+		// usleep random time to effectively avoid long waits on mutual conflicts
+		usleep(10000 + 1000 * (rand() % 100));
 	}
 	
 	std::string line, value;

@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "dirmix.hpp"
+#include "Bookmarks.hpp"
 #include "cmdline.hpp"
 #include "console.hpp"
 #include "vtshell.h"
@@ -652,6 +653,8 @@ int FarAppMain(int argc, char **argv)
 
 	//ErrorMode=SEM_FAILCRITICALERRORS|SEM_NOOPENFILEERRORBOX|(Opt.ExceptRules?SEM_NOGPFAULTERRORBOX:0)|(GetRegKey(L"System/Exception", L"IgnoreDataAlignmentFaults", 0)?SEM_NOALIGNMENTFAULTEXCEPT:0);
 	//SetErrorMode(ErrorMode);
+
+	CheckForImportLegacyShortcuts();
 
 	int Result = MainProcessWithInterThreadCallsDispatching(strEditViewArg,DestNames[0],DestNames[1],StartLine,StartChar);
 

@@ -4597,17 +4597,17 @@ l:
 "Idź do linii"
 "Ir a posición"
 
-MFolderShortcutsTitle
+MBookmarksTitle
 l:
-"Закладки на папки"
-"Folder shortcuts"
+"Закладки"
+"Bookmarks"
 "Adresářové zkratky"
 "Ordnerschnellzugriff"
 "Mappa gyorsbillentyűk"
 "Skróty katalogów"
 "Accesos a directorio"
 
-MFolderShortcutBottom
+MBookmarkBottom
 "Редактирование: Del,Ins,F4"
 "Edit: Del,Ins,F4"
 "Edit: Del,Ins,F4"
@@ -4636,7 +4636,7 @@ MShortcutPlugin
 
 MFSShortcut
 "Введите новую закладку:"
-"Enter shortcut path:"
+"Enter bookmark path:"
 "Zadejte novou zkratku:"
 "Neue Verknüpfung:"
 "A gyorsbillentyűhöz rendelt mappa:"
@@ -4653,8 +4653,8 @@ MNeedNearPath
 "Saltar al próximo directorio existente"
 
 MSaveThisShortcut
-"Запомнить эту ссылку?"
-"Save this shortcuts?"
+"Запомнить эту закладку?"
+"Save this bookmark?"
 "Uložit tyto zkratky?"
 "Verknüpfung speichern?"
 "Mentsem a gyorsbillentyűket?"
@@ -10918,9 +10918,9 @@ MMenuFileAssociations
 "Prz&ypisania plików"
 "&Asociar archivos"
 
-MMenuFolderShortcuts
-"Ссы&лки на папки"
-"Fol&der shortcuts"
+MMenuBookmarks
+"Зак&ладки на папки"
+"Fol&der bookmarks"
 "A&dresářové zkratky"
 "Or&dnerschnellzugriff"
 "Mappa gyorsbillent&yűk"
@@ -11928,12 +11928,12 @@ upd:"Show &plugins"
 
 MChangeDriveShowShortcuts
 "Показывать &закладки"
-"Show &shortcuts"
-upd:"Show &shortcuts"
-upd:"Show &shortcuts"
-upd:"Show &shortcuts"
-upd:"Show &shortcuts"
-upd:"Mostrar &shortcuts"
+"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Mostrar &bookmarks"
 
 MChangeDriveShowCD
 "Показывать параметры &компакт-дисков"

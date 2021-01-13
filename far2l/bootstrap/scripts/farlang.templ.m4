@@ -4608,13 +4608,13 @@ l:
 "Accesos a directorio"
 
 MBookmarkBottom
-"Редактирование: Del,Ins,F4"
-"Edit: Del,Ins,F4"
-"Edit: Del,Ins,F4"
-"Bearb.: Entf,Einf,F4"
-"Szerk.: Del,Ins,F4"
-"Edycja: Del,Ins,F4"
-"Editar: Del,Ins,F4"
+"Редактирование: Del,Ins,F4,Shift+Вверх,Shift+Вниз"
+"Edit: Del,Ins,F4,Shift+Up,Shift+Down"
+"Edit: Del,Ins,F4,Shift+Up,Shift+Down"
+"Bearb.: Entf,Einf,F4,Shift+Up,Shift+Down"
+"Szerk.: Del,Ins,F4,Shift+Up,Shift+Down"
+"Edycja: Del,Ins,F4,Shift+Up,Shift+Down"
+"Editar: Del,Ins,F4,Shift+Up,Shift+Down"
 
 MShortcutNone
 "<отсутствует>"

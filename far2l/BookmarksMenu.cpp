@@ -111,6 +111,26 @@ static int ShowBookmarksMenuIteration(int Pos)
 
 			switch (Key)
 			{
+				case KEY_SHIFTUP:
+					if (SelPos == 0)
+						return SelPos;
+
+				case KEY_SHIFTDOWN:
+				{
+					FARString strDir, strPluginModule, strPluginFile, strPluginData;
+					if (!b.Get(SelPos, &strDir, &strPluginModule, &strPluginFile, &strPluginData) )
+						return(SelPos);
+
+					const int OtherPos = (Key == KEY_SHIFTUP) ? SelPos - 1 : SelPos + 1;
+					FARString strOtherDir, strOtherPluginModule, strOtherPluginFile, strOtherPluginData;
+					b.Get(OtherPos, &strOtherDir, &strOtherPluginModule, &strOtherPluginFile, &strOtherPluginData);
+					b.Set(OtherPos, &strDir, &strPluginModule, &strPluginFile, &strPluginData);
+					b.Set(SelPos, &strOtherDir, &strOtherPluginModule, &strOtherPluginFile, &strOtherPluginData);
+
+					return(OtherPos);
+				}
+
+
 				case KEY_NUMDEL:
 				case KEY_DEL:
 					b.Clear(SelPos);

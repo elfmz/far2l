@@ -72,30 +72,37 @@ public:
 
 } g_all_netrocks;
 
-PluginImpl::PluginImpl(const wchar_t *path)
+PluginImpl::PluginImpl(const wchar_t *path, bool path_is_standalone_config)
 {
 	_cur_dir[0] = _panel_title[0] = _format[0] = 0;
 
 	_local = std::make_shared<HostLocal>();
-	if (path && wcsncmp(path, L"net:", 4) == 0) {
-		path+= 4;
-		while (*path == L'/') {
-			++path;
-		}
-	}
+	if (path_is_standalone_config) {
+		_standalone_config = path;
+		_sites_cfg_location = SitesConfigLocation(StrWide2MB(_standalone_config));
 
-	if (path && *path) {
-		if (_location.FromString(Wide2MB(path))) {
-			_remote = OpConnect(0, _location).Do();
-			if (!_remote) {
-				throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
+	} else {
+		if (path && wcsncmp(path, L"net:", 4) == 0) {
+			path+= 4;
+			while (*path == L'/') {
+				++path;
+			}
+		}
+
+		if (path && *path) {
+			const std::string &standalone_config = StrWide2MB(_standalone_config);
+			if (_location.FromString(standalone_config, Wide2MB(path))) {
+				_remote = OpConnect(0, standalone_config, _location).Do();
+				if (!_remote) {
+					throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
+				}
+
+			} else if (!_sites_cfg_location.Change(Wide2MB(path))) {
+				throw std::runtime_error(G.GetMsgMB(MWrongPath));
 			}
 
-		} else if (!_sites_cfg_location.Change(Wide2MB(path))) {
-			throw std::runtime_error(G.GetMsgMB(MWrongPath));
+			_wea_state = std::make_shared<WhatOnErrorState>();
 		}
-
-		_wea_state = std::make_shared<WhatOnErrorState>();
 	}
 
 	g_all_netrocks.Add(this);
@@ -121,14 +128,19 @@ void PluginImpl::UpdatePathInfo()
 	} else {
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));
 		wcsncpy(_cur_dir, tmp.c_str(), ARRAYSIZE(_cur_dir) - 1);
-		wcsncpy(_format, L"NetRocks sites", ARRAYSIZE(_format) - 1);
-		if (!tmp.empty()) {
-			if (tmp[tmp.size() - 1] == '/') {
-				tmp.resize(tmp.size() - 1);
+		if (!_standalone_config.empty()) {
+			tmp = ExtractFileName(_standalone_config);
+
+		} else {
+			wcsncpy(_format, L"NetRocks sites", ARRAYSIZE(_format) - 1);
+			if (!tmp.empty()) {
+				if (tmp[tmp.size() - 1] == '/') {
+					tmp.resize(tmp.size() - 1);
+				}
+				tmp.insert(0, L": ");
 			}
-			tmp.insert(0, L": ");
+			tmp.insert(0, L"NetRocks sites");
 		}
-		tmp.insert(0, L"NetRocks sites");
 	}
 
 	if (tmp.size() >= ARRAYSIZE(_panel_title)) {
@@ -238,7 +250,7 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 
 	SiteSpecification site_specification;
 	if (_location.server_kind == Location::SK_SITE) {
-		site_specification = SiteSpecification(_location.server);
+		site_specification = SiteSpecification(StrWide2MB(_standalone_config), _location.server);
 	}
 
 	StackedDir sd;
@@ -305,7 +317,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		}
 
 		Location new_location;
-		if (!new_location.FromString(dir_mb)) {
+		if (!new_location.FromString(StrWide2MB(_standalone_config), dir_mb)) {
 			fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): parse path failed\n", Dir, OpMode);
 			return FALSE;
 		}
@@ -326,7 +338,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		}
 
 		if (!_remote) {
-			_remote = OpConnect(0, _location).Do();
+			_remote = OpConnect(0, StrWide2MB(_standalone_config), _location).Do();
 			if (!_remote) {
 				fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): connect failed\n", Dir, OpMode);
 				return FALSE;
@@ -391,7 +403,7 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
 	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
-	Info->HostFile = NULL;
+	Info->HostFile = _standalone_config.empty() ? NULL : _standalone_config.c_str();
 	Info->CurDir = _cur_dir;
 	Info->Format = _format;
 	Info->PanelTitle = _panel_title;
@@ -595,15 +607,13 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
-	if (Key == VK_RETURN) {
-		if (_remote) {
-			if (ControlState == 0 && G.GetGlobalConfigBool("EnterExecRemotely", true)) {
-				return ByKey_TryExecuteSelected() ? TRUE : FALSE;
-			}
+	if (Key == VK_RETURN && ControlState == 0 && _remote
+			&& G.GetGlobalConfigBool("EnterExecRemotely", true)) {
+		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
+	}
 
-		} else {
-			return ByKey_TryEnterSelectedSite() ? TRUE : FALSE;
-		}
+	if ((Key == VK_RETURN || (Key == VK_NEXT && ControlState == PKF_CONTROL)) && !_remote) {
+		return ByKey_TryEnterSelectedSite() ? TRUE : FALSE;
 	}
 
 	if (Key == VK_F5 || Key == VK_F6) {
@@ -712,7 +722,7 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 			return true;
 		}
 
-		if (_sites_cfg_location.TranslateToPath(false) != sites_cfg_location.TranslateToPath(false)) {
+		if (_sites_cfg_location != sites_cfg_location) {
 			if (!ConfirmSitesDisposition(ConfirmSitesDisposition::W_RELOCATE, mv).Ask()) {
 				return true;
 			}
@@ -914,14 +924,9 @@ void PluginImpl::DismissRemoteHost()
 	if (_allow_remember_location_dir &&
 	  _location.server_kind == Location::SK_SITE
 	  && G.GetGlobalConfigBool("RememberDirectory", false) ) {
-		SitesConfig sc(_sites_cfg_location);
-		size_t p = _location.server.rfind('/');
-		if (p != std::string::npos) {
-			++p;
-		} else {
-			p = 0;
-		}
-		sc.PutDirectory(_location.server.substr(p).c_str(), _location.ToString(false).c_str());
+		SiteSpecification site_specification(StrWide2MB(_standalone_config), _location.server);
+		SitesConfig sc(site_specification.sites_cfg_location);
+		sc.PutDirectory(site_specification.site.c_str(), _location.ToString(false).c_str());
 	}
 	_remote.reset();
 }

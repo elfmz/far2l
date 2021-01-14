@@ -15,7 +15,7 @@ sftp://server//etc/dir/file
 sftp://user@server:port/dir/in/home/file
 */
 
-bool Location::FromString(const std::string &str)
+bool Location::FromString(const std::string standalone_config, const std::string &str)
 {
 	server.clear();
 
@@ -43,7 +43,7 @@ bool Location::FromString(const std::string &str)
 		}
 
 		if (p == str.size() - 1) {
-			SiteSpecification ss(server);
+			SiteSpecification ss(standalone_config, server);
 			directory = SitesConfig(ss.sites_cfg_location).GetDirectory(ss.site);
 
 		} else if (p < str.size() + 2) {

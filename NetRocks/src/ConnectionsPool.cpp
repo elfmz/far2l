@@ -15,16 +15,16 @@ ConnectionsPool::~ConnectionsPool()
 	WaitThread();
 }
 
-void ConnectionsPool::Put(const std::string &server, std::shared_ptr<IHost> &host)
+void ConnectionsPool::Put(const std::string &id, std::shared_ptr<IHost> &host)
 {
-	if (server.empty() || !host || !host->Alive()) {
+	if (id.empty() || !host || !host->Alive()) {
 		return;
 	}
 
 	std::vector<std::shared_ptr<IHost> > purgeds; // destroy hosts out of lock
 	std::lock_guard<std::mutex> locker(_mutex);
 
-	auto &pp = _server_2_pooled_host[server];
+	auto &pp = _id_2_pooled_host[id];
 	if (pp.host) {
 		purgeds.emplace_back(pp.host);
 	}
@@ -35,17 +35,17 @@ void ConnectionsPool::Put(const std::string &server, std::shared_ptr<IHost> &hos
 	UpdateThreadState();
 }
 
-std::shared_ptr<IHost> ConnectionsPool::Get(const std::string &server)
+std::shared_ptr<IHost> ConnectionsPool::Get(const std::string &id)
 {
 	std::shared_ptr<IHost> out;
 
 	std::vector<std::shared_ptr<IHost> > purgeds; // destroy hosts out of lock
 	std::lock_guard<std::mutex> locker(_mutex);
 
-	auto it = _server_2_pooled_host.find(server);
-	if (it != _server_2_pooled_host.end()) {
+	auto it = _id_2_pooled_host.find(id);
+	if (it != _id_2_pooled_host.end()) {
 		out = it->second.host;
-		_server_2_pooled_host.erase(it);
+		_id_2_pooled_host.erase(it);
 		UpdateThreadState();
 	}
 
@@ -57,10 +57,10 @@ void ConnectionsPool::PurgeAll()
 	std::vector<std::shared_ptr<IHost> > purgeds; // destroy hosts out of lock
 	std::lock_guard<std::mutex> locker(_mutex);
 
-	for (auto &it : _server_2_pooled_host) {
+	for (auto &it : _id_2_pooled_host) {
 		purgeds.emplace_back(it.second.host);
 	}
-	_server_2_pooled_host.clear();
+	_id_2_pooled_host.clear();
 	_cond.notify_all();
 }
 
@@ -69,10 +69,10 @@ void ConnectionsPool::PurgeExpired(std::vector<std::shared_ptr<IHost> > &purgeds
 	const time_t now = time(NULL);
 	const time_t expiration = GetGlobalConfigExpiration();
 
-	for (auto it = _server_2_pooled_host.begin(); it != _server_2_pooled_host.end(); ) {
+	for (auto it = _id_2_pooled_host.begin(); it != _id_2_pooled_host.end(); ) {
 		if (now - it->second.ts >= expiration) {
 			purgeds.emplace_back(it->second.host);
-			it = _server_2_pooled_host.erase(it);
+			it = _id_2_pooled_host.erase(it);
 		} else
 			++it;
 	}
@@ -84,7 +84,7 @@ time_t ConnectionsPool::EstimateTimeToSleep()
 	const time_t expiration = GetGlobalConfigExpiration();
 	time_t out = expiration / 2;
 
-	for (const auto &it : _server_2_pooled_host) {
+	for (const auto &it : _id_2_pooled_host) {
 		time_t t = (now - it.second.ts);
 		if (t >= expiration) {
 			out = 0;
@@ -103,7 +103,7 @@ void *ConnectionsPool::ThreadProc()
 {
 	std::vector<std::shared_ptr<IHost> > purgeds;
 	std::unique_lock<std::mutex> lock(_mutex);
-	while (!_server_2_pooled_host.empty()) {
+	while (!_id_2_pooled_host.empty()) {
 		time_t sleep_time = EstimateTimeToSleep();
 
 		_cond.wait_for(lock, std::chrono::seconds(sleep_time));
@@ -120,7 +120,7 @@ void *ConnectionsPool::ThreadProc()
 
 void ConnectionsPool::UpdateThreadState()
 {
-	if (!_server_2_pooled_host.empty()) {
+	if (!_id_2_pooled_host.empty()) {
 		if (StartThread()) {
 			return;
 		}

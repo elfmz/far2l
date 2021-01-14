@@ -3258,7 +3258,10 @@ To change to the folder recorded in the shortcut, press #RightCtrl-0..9#. If
 line. Bookmarks are also available from Location menu.
 
     The #Show bookmarks# item in the ~Commands menu~@CmdMenu@ may be
-used to view, set, edit and delete bookmurks on different shortcuts.
+used to view, set, edit and delete bookmarks on different shortcuts.
+
+    You can move selected bookmark to upper/lower position by pressing
+#Shift+Up# and #Shift+Down# keys.
 
     When you are editing a bookmark (#F4#), you cannot create a bookmark to a
 plugin panel.

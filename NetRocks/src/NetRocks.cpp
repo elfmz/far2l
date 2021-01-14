@@ -37,6 +37,12 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name, const un
 		return INVALID_HANDLE_VALUE;
 	}
 
+	// Only user can start config files browsing, avoid doing that during file search etc
+	if ( (OpMode & (~(OPM_PGDN))) != 0) {
+		return INVALID_HANDLE_VALUE;
+	}
+
+
 	// Filter out files that has name not suffixed by NETROCKS_EXPORT_SITE_EXTENSION
 	size_t l = wcslen(Name);
 	if (l <= ARRAYSIZE(NETROCKS_EXPORT_SITE_EXTENSION)) {

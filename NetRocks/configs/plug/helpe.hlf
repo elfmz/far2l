@@ -10,7 +10,7 @@ $^#Contents
 
  To access this module open plugins menu (F11) or use disks (Alt+F1/Alt+F2) menu. Then choose the "NetRocks". See further topics for more detail.
 
-   ~Disks/Plugin menu~@DisksMenu@
+   ~Disks/Plugin menu and sites list~@DisksMenu@
 
    ~Background tasks menu~@BackgroundTasksMenu@
 
@@ -29,7 +29,12 @@ $^#Copyright (C) 2019 elfmz#
 $^#Contents
 $^#Disks/Plugin menu#
  
- After choosing the plugin from disks menu (Alt+F1/Alt+F2) or from Plugin menu (F11) you will see connection sites list. Initially there're no sites defined, but you can add site using <Create site connection> entry or pressing Shift+F4. After being added any site connection can be edited by pressing F4 or removed by pressing F8. You can export/import selected sites settings to/from filesystem by opening disk directory in another panel and using F5/F6 keys.
+ After choosing the plugin from disks menu (#Alt+F1#/#Alt+F2#) or from Plugin menu (#F11#) you will see connection sites list. 
+ Initially there're no sites defined, but you can add site using #<Create site connection># entry or pressing #Shift+F4#. 
+ After being added any site connection can be edited by pressing #F4# or removed by pressing #F8#. 
+ You can #export# selected sites settings to filesystem by opening disk directory in another panel and using #F5#/#F6# keys. 
+ After site being exported you can #import# it into NetRocks sites list or enter into it as an archive to browse site(s) that 
+present in that config.
  
  ~Contents~@Contents@
 

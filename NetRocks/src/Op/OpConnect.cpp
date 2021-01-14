@@ -2,11 +2,11 @@
 #include "Host/HostRemote.h"
 #include "../UI/Activities/SimpleOperationProgress.h"
 
-static std::shared_ptr<IHost> CreateRemoteHost(const Location &location)
+static std::shared_ptr<IHost> CreateRemoteHost(const std::string &standalone_config, const Location &location)
 {
 	switch (location.server_kind) {
-		case Location::SK_SITE:
-			return std::make_shared<HostRemote>(location.server);
+		case Location::SK_SITE: 
+			return std::make_shared<HostRemote>(SiteSpecification(standalone_config, location.server));
 
 		case Location::SK_URL:
 			return std::make_shared<HostRemote>(location.url.protocol, location.url.host,
@@ -18,8 +18,8 @@ static std::shared_ptr<IHost> CreateRemoteHost(const Location &location)
 }
 
 
-OpConnect::OpConnect(int op_mode, const Location &location)
-	: OpBase(op_mode, CreateRemoteHost(location), location.server)
+OpConnect::OpConnect(int op_mode, const std::string &standalone_config, const Location &location)
+	: OpBase(op_mode, CreateRemoteHost(standalone_config,location), location.server)
 {
 }
 

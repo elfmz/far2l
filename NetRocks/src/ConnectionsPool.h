@@ -17,7 +17,7 @@ class ConnectionsPool : Threaded
 		std::shared_ptr<IHost> host;
 	};
 
-	std::map<std::string, PooledHost> _server_2_pooled_host;
+	std::map<std::string, PooledHost> _id_2_pooled_host;
 	std::mutex _mutex;
 	std::condition_variable _cond;
 
@@ -31,8 +31,8 @@ protected:
 public:
 	~ConnectionsPool();
 
-	void Put(const std::string &server, std::shared_ptr<IHost> &host);
-	std::shared_ptr<IHost> Get(const std::string &server);
+	void Put(const std::string &id, std::shared_ptr<IHost> &host);
+	std::shared_ptr<IHost> Get(const std::string &id);
 
 	void PurgeAll();
 	void OnGlobalSettingsChanged();

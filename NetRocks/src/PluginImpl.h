@@ -54,6 +54,8 @@ class PluginImpl
 	int SetDirectoryInternal(const wchar_t *Dir, int OpMode);
 
 	void DismissRemoteHost();
+	std::string CurrentConnectionPoolId();
+
 public:
 	PluginImpl(const wchar_t *path = nullptr, bool path_is_standalone_config = false);
 	virtual ~PluginImpl();

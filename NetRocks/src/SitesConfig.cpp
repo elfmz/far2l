@@ -12,10 +12,6 @@
 
 #include "SitesConfig.h"
 
-#define NETROCKS_EXPORT_SITE_EXTENSION	".Site.NetRocks"
-#define NETROCKS_EXPORT_DIR_EXTENSION	".Dir.NetRocks"
-
-
 static std::string ObtainObfuscationKey()
 {
 	std::string out;
@@ -108,6 +104,18 @@ static std::string SitesConfig_TranslateToDir(const std::vector<std::string> &pa
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool SitesConfigLocation::operator == (const SitesConfigLocation &other) const
+{
+	return _sites_config_file == other._sites_config_file && _parts == other._parts;
+}
+
+SitesConfigLocation::SitesConfigLocation(const std::string &sites_config_file)
+	: _sites_config_file(sites_config_file)
+{
+}
+
 void SitesConfigLocation::Reset()
 {
 	_parts.clear();
@@ -115,6 +123,10 @@ void SitesConfigLocation::Reset()
 
 bool SitesConfigLocation::Change(const std::string &sub)
 {
+	if (!_sites_config_file.empty()) {
+		return false;
+	}
+
 	std::vector<std::string> parts = _parts;
 	if (!SitesConfig_AppendSubParts(parts, sub)) {
 		return false;
@@ -131,6 +143,10 @@ bool SitesConfigLocation::Change(const std::string &sub)
 
 bool SitesConfigLocation::Make(const std::string &sub)
 {
+	if (!_sites_config_file.empty()) {
+		return false;
+	}
+
 	std::vector<std::string> parts = _parts;
 	if (!SitesConfig_AppendSubParts(parts, sub)) {
 		return false;
@@ -150,6 +166,10 @@ bool SitesConfigLocation::Make(const std::string &sub)
 
 bool SitesConfigLocation::Remove(const std::string &sub)
 {
+	if (!_sites_config_file.empty()) {
+		return false;
+	}
+
 	SitesConfigLocation tmp = *this;
 	if (!SitesConfig_AppendSubParts(tmp._parts, sub) || tmp._parts.empty()) {
 		return false;
@@ -168,6 +188,10 @@ bool SitesConfigLocation::Remove(const std::string &sub)
 
 void SitesConfigLocation::Enum(std::vector<std::string> &children) const
 {
+	if (!_sites_config_file.empty()) {
+		return;
+	}
+
 	DIR *d = opendir(SitesConfig_TranslateToDir(_parts).c_str());
 	if (d) {
 		for (;;) {
@@ -180,6 +204,20 @@ void SitesConfigLocation::Enum(std::vector<std::string> &children) const
 		}
 		closedir(d);
 	}
+}
+
+std::string SitesConfigLocation::DisplayName() const
+{
+	if (!_sites_config_file.empty()) {
+		std::string out = "@";
+		out+= ExtractFileName(_sites_config_file);
+		if (StrEndsBy(out, NETROCKS_EXPORT_SITE_EXTENSION)) {
+			out.resize(out.size() - sizeof(NETROCKS_EXPORT_SITE_EXTENSION) + 1);
+		}
+		return out;
+	}
+
+	return TranslateToPath(false);
 }
 
 std::string SitesConfigLocation::TranslateToPath(bool ending_slash) const
@@ -200,6 +238,10 @@ std::string SitesConfigLocation::TranslateToPath(bool ending_slash) const
 
 std::string SitesConfigLocation::TranslateToSitesConfigPath() const
 {
+	if (!_sites_config_file.empty()) {
+		return _sites_config_file;
+	}
+
 	std::string out = SitesConfig_TranslateToDir(_parts);
 	out+= "sites.cfg";
 	return out;
@@ -207,6 +249,10 @@ std::string SitesConfigLocation::TranslateToSitesConfigPath() const
 
 bool SitesConfigLocation::Transfer(SitesConfigLocation &dst, const std::string &sub, bool mv)
 {
+	if (!_sites_config_file.empty()) {
+		return false;
+	}
+
 	std::vector<std::string> parts = _parts;
 	if (!SitesConfig_AppendSubParts(parts, sub) || parts.empty()) {
 		return false;
@@ -252,6 +298,10 @@ bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &
 		return true;
 	}
 
+	if (!_sites_config_file.empty()) {
+		// cant import dir into single file
+		return false;
+	}
 
 	DIR *d = opendir(item_fs_path.c_str());
 	if (!d) {
@@ -355,7 +405,8 @@ bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &
 
 ///
 
-SiteSpecification::SiteSpecification(const std::string &s)
+SiteSpecification::SiteSpecification(const std::string &standalone_config, const std::string &s)
+	: sites_cfg_location(standalone_config)
 {
 	size_t p = s.rfind('/');
 	if (p == std::string::npos) {
@@ -385,7 +436,9 @@ std::string SiteSpecification::ToString() const
 ///
 
 SitesConfig::SitesConfig(const SitesConfigLocation &sites_cfg_location)
-	: KeyFileHelper(sites_cfg_location.TranslateToSitesConfigPath().c_str())
+	:
+	KeyFileHelper(sites_cfg_location.TranslateToSitesConfigPath().c_str()),
+	_encrypt_passwords(!sites_cfg_location.IsStandaloneConfig())
 {
 }
 
@@ -422,7 +475,7 @@ bool SitesConfig::Import(const std::string &fs_path)
 		const std::vector<std::string> &keys = kfh.EnumKeys(site.c_str());
 		for (const auto &key : keys) {
 			std::string s = kfh.GetString(site.c_str(), key.c_str());
-			if (key == "PasswordPlain") {
+			if (_encrypt_passwords && key == "PasswordPlain") {
 				StringObfuscate(s);
 				PutString(site.c_str(), "Password", s.c_str());
 			} else {
@@ -505,21 +558,23 @@ std::string SitesConfig::GetPassword(const std::string &site)
 	std::string s = GetString(site.c_str(), "Password");
 	if (s.empty()) {
 		s = GetString(site.c_str(), "PasswordPlain");
-		if (!s.empty()) {
-			StringObfuscate(s);
-			PutString(site.c_str(), "Password", s.c_str());
-			RemoveKey(site.c_str(), "PasswordPlain");
-		}
+	} else {
+		StringDeobfuscate(s);
 	}
-	StringDeobfuscate(s);
 	return s;
 }
 
 void SitesConfig::PutPassword(const std::string &site, const std::string &value)
 {
-	std::string s(value);
-	StringObfuscate(s);
-	PutString(site.c_str(), "Password", s.c_str());
+	if (_encrypt_passwords) {
+		std::string s(value);
+		StringObfuscate(s);
+		PutString(site.c_str(), "Password", s.c_str());
+		RemoveKey(site.c_str(), "PasswordPlain");
+	} else {
+		PutString(site.c_str(), "PasswordPlain", value.c_str());
+		RemoveKey(site.c_str(), "Password");
+	}
 }
 
 std::string SitesConfig::GetProtocolOptions(const std::string &site, const std::string &protocol)

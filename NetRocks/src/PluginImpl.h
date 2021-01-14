@@ -19,6 +19,7 @@ class PluginImpl
 	bool _allow_remember_location_dir = false;
 
 	SitesConfigLocation  _sites_cfg_location;
+	std::wstring _standalone_config;
 
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
@@ -54,7 +55,7 @@ class PluginImpl
 
 	void DismissRemoteHost();
 public:
-	PluginImpl(const wchar_t *path = nullptr);
+	PluginImpl(const wchar_t *path = nullptr, bool path_is_standalone_config = false);
 	virtual ~PluginImpl();
 
 	static void sOnExiting();

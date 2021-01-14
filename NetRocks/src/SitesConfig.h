@@ -2,11 +2,28 @@
 
 #include "KeyFileHelper.h"
 
+#define NETROCKS_EXPORT_SITE_EXTENSION	".Site.NetRocks"
+#define NETROCKS_EXPORT_DIR_EXTENSION	".Dir.NetRocks"
+
+
 class SitesConfigLocation
 {
+	// if nonempty then its a fixed-sites config file, but not in-profile settings,
+	// so can't create/traverse to subdirectories ets
+	std::string _sites_config_file;
+
+	// subdirectory path parts, used only if _sites_config_file is empty()
 	std::vector<std::string> _parts;
 
 public:
+	bool operator == (const SitesConfigLocation &other) const;
+
+	inline bool operator != (const SitesConfigLocation &other) const { return !operator ==(other); }
+
+	SitesConfigLocation(const std::string &sites_config_file = std::string());
+
+	bool IsStandaloneConfig() const { return _sites_config_file.empty(); }
+
 	void Reset();
 	bool Change(const std::string &sub);
 	bool Make(const std::string &sub);
@@ -14,6 +31,7 @@ public:
 
 	void Enum(std::vector<std::string> &children) const;
 
+	std::string DisplayName() const;
 	std::string TranslateToPath(bool ending_slash) const;
 	std::string TranslateToSitesConfigPath() const;
 
@@ -30,7 +48,7 @@ struct SiteSpecification
 	std::string site;
 
 	SiteSpecification() = default;
-	SiteSpecification(const std::string &s);
+	SiteSpecification(const std::string &standalone_config, const std::string &s);
 
 	bool IsValid() const {return  !site.empty(); }
 
@@ -39,6 +57,8 @@ struct SiteSpecification
 
 class SitesConfig : protected KeyFileHelper
 {
+	bool _encrypt_passwords;
+
 public:
 	SitesConfig(const SitesConfigLocation &sites_cfg_location);
 

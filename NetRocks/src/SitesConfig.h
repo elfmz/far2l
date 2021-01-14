@@ -31,7 +31,6 @@ public:
 
 	void Enum(std::vector<std::string> &children) const;
 
-	std::string DisplayName() const;
 	std::string TranslateToPath(bool ending_slash) const;
 	std::string TranslateToSitesConfigPath() const;
 

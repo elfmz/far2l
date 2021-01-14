@@ -128,16 +128,19 @@ void PluginImpl::UpdatePathInfo()
 	} else {
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));
 		wcsncpy(_cur_dir, tmp.c_str(), ARRAYSIZE(_cur_dir) - 1);
+		if (!_standalone_config.empty()) {
+			tmp = ExtractFileName(_standalone_config);
 
-		tmp = StrMB2Wide(_sites_cfg_location.DisplayName());
-		wcsncpy(_format, L"NetRocks sites", ARRAYSIZE(_format) - 1);
-		if (!tmp.empty()) {
-			if (tmp[tmp.size() - 1] == '/') {
-				tmp.resize(tmp.size() - 1);
+		} else {
+			wcsncpy(_format, L"NetRocks sites", ARRAYSIZE(_format) - 1);
+			if (!tmp.empty()) {
+				if (tmp[tmp.size() - 1] == '/') {
+					tmp.resize(tmp.size() - 1);
+				}
+				tmp.insert(0, L": ");
 			}
-			tmp.insert(0, L": ");
+			tmp.insert(0, L"NetRocks sites");
 		}
-		tmp.insert(0, L"NetRocks sites");
 	}
 
 	if (tmp.size() >= ARRAYSIZE(_panel_title)) {
@@ -604,7 +607,8 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
-	if (Key == VK_RETURN && _remote && G.GetGlobalConfigBool("EnterExecRemotely", true)) {
+	if (Key == VK_RETURN && ControlState == 0 && _remote
+			&& G.GetGlobalConfigBool("EnterExecRemotely", true)) {
 		return ByKey_TryExecuteSelected() ? TRUE : FALSE;
 	}
 

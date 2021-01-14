@@ -206,20 +206,6 @@ void SitesConfigLocation::Enum(std::vector<std::string> &children) const
 	}
 }
 
-std::string SitesConfigLocation::DisplayName() const
-{
-	if (!_sites_config_file.empty()) {
-		std::string out = "@";
-		out+= ExtractFileName(_sites_config_file);
-		if (StrEndsBy(out, NETROCKS_EXPORT_SITE_EXTENSION)) {
-			out.resize(out.size() - sizeof(NETROCKS_EXPORT_SITE_EXTENSION) + 1);
-		}
-		return out;
-	}
-
-	return TranslateToPath(false);
-}
-
 std::string SitesConfigLocation::TranslateToPath(bool ending_slash) const
 {
 	std::string out;

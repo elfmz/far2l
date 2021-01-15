@@ -334,7 +334,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		}
 
 		if (g_conn_pool) {
-			_remote = g_conn_pool->Get(_location.server);
+			_remote = g_conn_pool->Get(CurrentConnectionPoolId());
 		}
 
 		if (!_remote) {
@@ -919,7 +919,7 @@ void PluginImpl::DismissRemoteHost()
 	if (!g_conn_pool)
 		g_conn_pool.reset(new ConnectionsPool);
 
-	g_conn_pool->Put(_location.server, _remote);
+	g_conn_pool->Put(CurrentConnectionPoolId(), _remote);
 
 	if (_allow_remember_location_dir &&
 	  _location.server_kind == Location::SK_SITE
@@ -929,6 +929,16 @@ void PluginImpl::DismissRemoteHost()
 		sc.PutDirectory(site_specification.site.c_str(), _location.ToString(false).c_str());
 	}
 	_remote.reset();
+}
+
+std::string PluginImpl::CurrentConnectionPoolId()
+{
+	std::string out = _location.server;
+	if (!_standalone_config.empty()) {
+		out+= '@';
+		out+= StrWide2MB(_standalone_config);
+	}
+	return out;
 }
 
 void PluginImpl::sOnExiting()

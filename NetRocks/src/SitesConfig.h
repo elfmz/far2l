@@ -22,7 +22,7 @@ public:
 
 	SitesConfigLocation(const std::string &sites_config_file = std::string());
 
-	bool IsStandaloneConfig() const { return _sites_config_file.empty(); }
+	bool IsStandaloneConfig() const { return !_sites_config_file.empty(); }
 
 	void Reset();
 	bool Change(const std::string &sub);

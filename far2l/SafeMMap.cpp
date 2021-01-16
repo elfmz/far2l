@@ -114,7 +114,7 @@ SafeMMap::SafeMMap(const char *path, enum Mode m, size_t len_limit)
 #ifdef PRINT_FAULTS
 	getrusage(RUSAGE_SELF, &s_usg);
 #endif
-	FDScope fd(sdc_open(path, O_RDONLY));
+	FDScope fd(sdc_open(path, (m == M_WRITE) ? O_RDWR : O_RDONLY));
 	if (fd == -1) {
 		throw std::runtime_error(StrPrintf("Open error %u", errno));
 	}

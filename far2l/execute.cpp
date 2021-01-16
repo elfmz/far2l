@@ -406,7 +406,14 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 			auto *cp = CtrlObject->Cp();
 			if (cp && cp->LeftPanel && cp->RightPanel
 			  && (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
-				WaitKey();
+				int Key = WaitKey();
+				// allow user to open console log etc directly from pause-on-error state
+				if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT)
+						|| Key == KEY_CTRLSHIFTF3 || Key == KEY_F3
+						|| Key == KEY_CTRLSHIFTF4 || Key == KEY_F4
+						|| Key == KEY_F8) {
+					ProcessKey(Key);
+				}
 			}
 		}
 	}

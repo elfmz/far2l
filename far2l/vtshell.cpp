@@ -26,6 +26,7 @@
 #include "vtansi.h"
 #include "vtlog.h"
 #include "VTFar2lExtensios.h"
+#include "lang.hpp"
 #include "InterThreadCall.hpp"
 #define __USE_BSD 
 #include <termios.h> 
@@ -980,24 +981,25 @@ static bool shown_tip_exit = false;
 		fprintf(f, "%s\n", Far2lMarkerCommand(_start_marker).c_str());
 		//fprintf(f, "stty echo\n");
 		if (strcmp(cmd, "exit")==0) {
-			fprintf(f, "echo \"Closing back shell.%s\"\n", 
-				shown_tip_exit ? "" : " TIP: To close FAR - type 'exit far'.");
+			fprintf(f, "echo \"%ls%ls%ls\"\n",  MSG(MVTStop),
+				shown_tip_exit ? L"" : L" ",
+				shown_tip_exit ? L"" : MSG(MVTStopTip));
 			shown_tip_exit = true;
 
 		} else if (!shown_tip_init) {
 			if (!Opt.OnlyEditorViewerUsed) {
 				fprintf(f, "echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
-				fprintf(f, "echo \"While typing command with panels off:\"\n");
-				fprintf(f, "echo \" Double Shift+TAB - bash-guided autocomplete.\"\n");
-				fprintf(f, "echo \" F3, F4, F8 - viewer/editor/clear console log.\"\n");
-				fprintf(f, "echo \" Ctrl+Shift+MouseScrollUp - open autoclosing viewer with console log.\"\n");
-				fprintf(f, "echo \"While executing command:\"\n");
-				fprintf(f, "echo \" Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log.\"\n");
-				fprintf(f, "echo \" Ctrl+Alt+C - terminate everything in this shell.\"\n");
+				fprintf(f, "echo \"%ls\"\n", MSG(MVTStartTipNoCmdTitle));
+				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdShiftTAB));
+				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdFn));
+				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdMouse));
+				fprintf(f, "echo \"%ls\"\n", MSG(MVTStartTipPendCmdTitle));
+				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdFn));
+				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltC));
 				if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-					fprintf(f, "echo \" Ctrl+Alt+Z - detach FAR manager application to background.\"\n");
+					fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltZ));
 				}
-				fprintf(f, "echo \" MouseScrollUp - pause and open autoclosing viewer with console log.\"\n");
+				fprintf(f, " echo \" %ls\"\n", MSG(MVTStartTipPendCmdMouse));
 				fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
 				shown_tip_init = true;
 			}

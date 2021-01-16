@@ -13,7 +13,7 @@
 #include "strmix.hpp"
 #include "dirmix.hpp"
 #include "execute.hpp"
-
+#include "manager.hpp"
 
 namespace Mounts
 {
@@ -85,6 +85,12 @@ namespace Mounts
 			cmd+= " force";
 		}
 		int r = farExecuteA(cmd.c_str(), 0);
+		if (FrameManager) {
+			auto *current_frame = FrameManager->GetCurrentFrame();
+			if (current_frame) {
+				FrameManager->RefreshFrame(current_frame);
+			}
+		}
 		return r == 0;
 	}
 }

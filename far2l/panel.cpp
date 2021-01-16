@@ -271,6 +271,7 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 		MenuItemEx ChDiskItem;
 
 		ChDiskItem.Clear();
+		ChDiskItem.strName = MSG(MPluginsTitle);
 		ChDiskItem.Flags|=LIF_SEPARATOR;
 		ChDiskItem.UserDataSize=0;
 		ChDisk.AddItem(&ChDiskItem);
@@ -303,7 +304,7 @@ static void ConfigureChangeDriveMode()
 //	ShowSizeFloat->Indent(3);
 //	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
 
-	Builder.AddCheckbox(MChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_SHORTCUTS);
+	Builder.AddCheckbox(MChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_BOOKMARKS);
 	Builder.AddCheckbox(MChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
 //	Builder.AddCheckbox(MChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
 //	Builder.AddCheckbox(MChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
@@ -342,9 +343,58 @@ LONG_PTR WINAPI ChDiskDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	return DefDlgProc(hDlg,Msg,Param1,Param2);
 }
 
-bool IsCharTrimmable(wchar_t c)
+static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 {
-	return (c==L' ' || c==L'\t' || c==L'\r' || c==L'\n');
+	Bookmarks b;
+	for (int SCPos = 0, AddedCount = 0;; ++SCPos)
+	{
+		FARString Folder, Plugin, PluginFile, ShortcutPath;
+		if (b.Get(SCPos, &Folder, &Plugin, &PluginFile, nullptr))
+		{
+			MenuItemEx ChDiskItem;
+
+			if (!AddedCount++)
+			{
+				ChDiskItem.Clear();
+				ChDiskItem.strName = MSG(MBookmarksTitle);
+				ChDiskItem.Flags|= LIF_SEPARATOR;
+				ChDiskItem.UserDataSize=0;
+				ChDisk.AddItem(&ChDiskItem);
+				ChDiskItem.Flags&= ~LIF_SEPARATOR;
+			}
+
+			ChDiskItem.Clear();
+			ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
+
+			if (!PluginFile.IsEmpty())
+			{
+				ShortcutPath+= PluginFile;
+				ShortcutPath+= L"/";
+			}
+			ShortcutPath+= Folder;
+			if (ShortcutPath.IsEmpty())
+			{
+				ShortcutPath = L"@";
+				ShortcutPath+= Plugin;
+			}
+
+			if (SCPos <= 9)
+				ChDiskItem.strName.Format(L"&%d  ", SCPos);
+			else
+				ChDiskItem.strName = L"   ";
+
+			ChDiskItem.strName+= TruncPathStr(ShortcutPath, 64);
+
+			PanelMenuItem item;
+			item.kind = PanelMenuItem::SHORTCUT;
+			item.nItem = SCPos;
+			ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
+		}
+		else if (SCPos > 10)
+		{
+			break;
+		}
+	}
 }
 
 int Panel::ChangeDiskMenu(int Pos,int FirstCall)
@@ -386,7 +436,6 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 		ChDisk.SetHelp(L"DriveDlg");
 		ChDisk.SetFlags(VMENU_WRAPMODE);
-		int MenuLine = 0;
 		Pos = 0;
 		Mounts::Enum mounts(another_curdir);
 		for (const auto &m : mounts) {
@@ -418,59 +467,12 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
 			}
-			MenuLine++;
 		}
 
-		if (Opt.ChangeDriveMode & DRIVE_SHOW_SHORTCUTS)
+
+		if (Opt.ChangeDriveMode & DRIVE_SHOW_BOOKMARKS)
 		{
-			Bookmarks b;
-			for (int SCPos = 0, AddedCount = 0;; ++SCPos)
-			{
-				FARString Folder, Plugin, PluginFile, ShortcutPath;
-				if (b.Get(SCPos, &Folder, &Plugin, &PluginFile, nullptr))
-				{
-					if (!AddedCount++)
-					{
-						ChDiskItem.Clear();
-						ChDiskItem.strName = MSG(MBookmarksTitle);
-						ChDiskItem.Flags|= LIF_SEPARATOR;
-						ChDisk.AddItem(&ChDiskItem);
-						ChDiskItem.Flags&= ~LIF_SEPARATOR;
-					}
-
-					ChDiskItem.Clear();
-					ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
-
-					if (!PluginFile.IsEmpty())
-					{
-						ShortcutPath+= PluginFile;
-						ShortcutPath+= L"/";
-					}
-					ShortcutPath+= Folder;
-					if (ShortcutPath.IsEmpty())
-					{
-						ShortcutPath = L"@";
-						ShortcutPath+= Plugin;
-					}
-
-					if (SCPos <= 9)
-						ChDiskItem.strName.Format(L"&%d  ", SCPos);
-					else
-						ChDiskItem.strName = L"   ";
-
-					ChDiskItem.strName+= TruncPathStr(ShortcutPath, 64);
-
-					PanelMenuItem item;
-					item.kind = PanelMenuItem::SHORTCUT;
-					item.nItem = SCPos;
-					ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
-					MenuLine++;
-				}
-				else if (SCPos > 10)
-				{
-					break;
-				}
-			}
+			AddBookmarkItems(ChDisk, Pos);
 		}
 
 		if (Opt.ChangeDriveMode & DRIVE_SHOW_PLUGINS)
@@ -646,7 +648,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					return SelPos;
 				case KEY_CTRL8:
 				case KEY_RCTRL8:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_SHORTCUTS;
+					Opt.ChangeDriveMode ^= DRIVE_SHOW_BOOKMARKS;
 					return SelPos;
 				case KEY_CTRL9:
 				case KEY_RCTRL9:

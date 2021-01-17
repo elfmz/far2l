@@ -2817,6 +2817,7 @@ int Dialog::ProcessKey(int Key)
 				for (I=0; I<ItemCount; I++)
 				{
 					if (I!=FocusPos &&
+						(!(Item[I]->Flags&(DIF_NOFOCUS|DIF_DISABLE|DIF_HIDDEN))) &&
 					        (IsEdit(Item[I]->Type) ||
 					         Item[I]->Type==DI_CHECKBOX ||
 					         Item[I]->Type==DI_RADIOBUTTON) &&

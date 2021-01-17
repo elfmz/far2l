@@ -289,6 +289,31 @@ int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const cha
 	return farExecuteA(actual_cmd.c_str(), ExecFlags);
 }
 
+
+void WaitForClose(const wchar_t *Name)
+{
+	fprintf(stderr, "%s: Name='%ls'\n", __FUNCTION__, Name);
+
+	std::string cmd = Wide2MB(Name);
+	QuoteCmdArgIfNeed(cmd);
+	cmd.insert(0, " ");
+	cmd.insert(0, GetMyScriptQuoted("closewait.sh"));
+
+	farExecuteA(cmd.c_str(), EF_HIDEOUT);
+}
+
+void QueueDeleteOnClose(const wchar_t *Name)
+{
+	fprintf(stderr, "%s: Name='%ls'\n", __FUNCTION__, Name);
+
+	std::string cmd = Wide2MB(Name);
+	QuoteCmdArgIfNeed(cmd);
+	cmd.insert(0, " --delete ");
+	cmd.insert(0, GetMyScriptQuoted("closewait.sh"));
+
+	farExecuteA(cmd.c_str(), EF_NOWAIT | EF_HIDEOUT);
+}
+
 static std::string GetOpenShVerb(const char *verb)
 {
 	std::string out = GetMyScriptQuoted("open.sh");
@@ -298,7 +323,7 @@ static std::string GetOpenShVerb(const char *verb)
 	return out;
 }
 
-static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
 	int r = -1;
 	ExecClassifier ec(CmdStr);
@@ -337,12 +362,12 @@ static int ExecuteA(const char *CmdStr, bool AlwaysWaitFinish, bool SeparateWind
 }
 
 
-int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+int Execute(const wchar_t *CmdStr, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
-	return ExecuteA(Wide2MB(CmdStr).c_str(), AlwaysWaitFinish, SeparateWindow, DirectRun, FolderRun , WaitForIdle , Silent , RunAs);
+	return ExecuteA(Wide2MB(CmdStr).c_str(), SeparateWindow, DirectRun, FolderRun , WaitForIdle , Silent , RunAs);
 }
 
-int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
+int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
 {
 	if (!SeparateWindow && CtrlObject->Plugins.ProcessCommandLine(CmdLine))
 	{
@@ -388,7 +413,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 			cd_prev[0] = 0;
 		}
 
-		r = Execute(CmdLine, AlwaysWaitFinish, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
+		r = Execute(CmdLine, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (sdc_getcwd(cd, MAX_PATH)) {

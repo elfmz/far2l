@@ -880,18 +880,20 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								SaveScreen SaveScr;
 								CtrlObject->Cp()->LeftPanel->CloseFile();
 								CtrlObject->Cp()->RightPanel->CloseFile();
-								Execute(strCommand,TRUE, 0, 0, 0, ListFileUsed, true);
+								Execute(strCommand, 0, 0, 0, ListFileUsed, true);
 							}
+
+							WaitForClose(strName);
 						}
 					}
 				}
 			} // strCommand != "REM"
 
 			if (!strListName.IsEmpty())
-				apiDeleteFile(strListName);
+				QueueDeleteOnClose(strListName);
 
 			if (!strAnotherListName.IsEmpty())
-				apiDeleteFile(strAnotherListName);
+				QueueDeleteOnClose(strAnotherListName);
 
 			CurLine++;
 		} // while (1)

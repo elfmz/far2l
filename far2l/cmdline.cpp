@@ -491,7 +491,7 @@ int CommandLine::ProcessKey(int Key)
 				ActivePanel->SetTitle();
 
 			} else {
-				CmdExecute(strStr, false, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, false, false, false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
+				CmdExecute(strStr, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, false, false, false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
 			}
 
 		}
@@ -601,13 +601,13 @@ void CommandLine::SetString(const wchar_t *Str,BOOL Redraw)
 }
 
 
-void CommandLine::ExecString(const wchar_t *Str, bool AlwaysWaitFinish,bool SeparateWindow,
+void CommandLine::ExecString(const wchar_t *Str, bool SeparateWindow,
                              bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
 {
 	CmdStr.DisableAC();
 	SetString(Str);
 	CmdStr.RevertAC();
-	CmdExecute(Str,AlwaysWaitFinish,SeparateWindow,DirectRun, WaitForIdle, Silent, RunAs);
+	CmdExecute(Str,SeparateWindow,DirectRun, WaitForIdle, Silent, RunAs);
 }
 
 
@@ -791,14 +791,22 @@ void CommandLine::ShowViewEditHistory()
 			{
 				if (strStr.At(0) !=L'@')
 				{
-					ExecString(strStr,Type>2);
+					ExecString(strStr);
+					if (Type>2)
+					{
+						WaitForClose(strStr.CPtr());
+					}
 				}
 				else
 				{
 					SaveScreen SaveScr;
 					CtrlObject->Cp()->LeftPanel->CloseFile();
 					CtrlObject->Cp()->RightPanel->CloseFile();
-					Execute(strStr.CPtr()+1,Type>2);
+					Execute(strStr.CPtr()+1);
+					if (Type>2)
+					{
+						WaitForClose(strStr.CPtr()+1);
+					}
 				}
 
 				break;

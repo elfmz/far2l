@@ -775,7 +775,7 @@ static struct FARConfig
 
 	{1, REG_DWORD,  NKeySystem,L"InactivityExit",&Opt.InactivityExit,0, 0},
 	{1, REG_DWORD,  NKeySystem,L"InactivityExitTime",&Opt.InactivityExitTime,15, 0},
-	{1, REG_DWORD,  NKeySystem,L"DriveMenuMode",&Opt.ChangeDriveMode,DRIVE_SHOW_TYPE|DRIVE_SHOW_PLUGINS|DRIVE_SHOW_SIZE_FLOAT|DRIVE_SHOW_CDROM, 0},
+	{1, REG_DWORD,  NKeySystem,L"DriveMenuMode",&Opt.ChangeDriveMode,DRIVE_SHOW_TYPE|DRIVE_SHOW_PLUGINS|DRIVE_SHOW_SIZE_FLOAT|DRIVE_SHOW_BOOKMARKS, 0},
 	{1, REG_DWORD,  NKeySystem,L"DriveDisconnetMode",&Opt.ChangeDriveDisconnetMode,1, 0},
 	{1, REG_DWORD,  NKeySystem,L"AutoUpdateRemoteDrive",&Opt.AutoUpdateRemoteDrive,1, 0},
 	{1, REG_DWORD,  NKeySystem,L"FileSearchMode",&Opt.FindOpt.FileSearchMode,FINDAREA_FROM_CURRENT, 0},
@@ -788,7 +788,6 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem,L"FindSymLinks",&Opt.FindOpt.FindSymLinks, 1, 0},
 	{1, REG_DWORD,  NKeySystem,L"UseFilterInSearch",&Opt.FindOpt.UseFilter,0,0},
 	{1, REG_DWORD,  NKeySystem,L"FindCodePage",&Opt.FindCodePage, CP_AUTODETECT, 0},
-	{0, REG_DWORD,  NKeySystem,L"SubstPluginPrefix",&Opt.SubstPluginPrefix, 0, 0},
 	{0, REG_DWORD,  NKeySystem,L"CmdHistoryRule",&Opt.CmdHistoryRule,0, 0},
 	{0, REG_DWORD,  NKeySystem,L"SetAttrFolderRules",&Opt.SetAttrFolderRules,1, 0},
 	{0, REG_DWORD,  NKeySystem,L"MaxPositionCache",&Opt.MaxPositionCache,MAX_POSITIONS, 0},

@@ -96,6 +96,8 @@ namespace Sudo
 		if (r != -1) {
 			bt.SendInt(0);
 			bt.SendFD(r);
+			close(r);
+
 		} else {
 			r = errno;
 			bt.SendInt(r ? r : -1);
@@ -318,6 +320,19 @@ namespace Sudo
 		bt.SendErrno();
 #endif
 	}
+
+	static void OnSudoDispatch_FChMod(BaseTransaction &bt)
+	{
+		int r = -1;
+		int fd = bt.RecvFD();
+		mode_t mode;
+		bt.RecvPOD(mode);
+		if (fd != -1) {
+			r = fchmod(fd, mode);
+			close(fd);
+		}
+		bt.SendInt(r);
+	}
 	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt)
 	{
@@ -420,6 +435,10 @@ namespace Sudo
 				
 			case SUDO_CMD_FSFLAGSSET:
 				OnSudoDispatch_FSFlagsSet(bt);
+				break;
+
+			case SUDO_CMD_FCHMOD:
+				OnSudoDispatch_FChMod(bt);
 				break;
 				
 			default:

@@ -560,7 +560,6 @@ struct Options
 	int CmdHistoryRule;
 
 	DWORD ExcludeCmdHistory;
-	int SubstPluginPrefix; // 1 = подстанавливать префикс плагина (для Ctrl-[ и ему подобные)
 	int MaxPositionCache; // количество позиций в кэше сохранения
 	int SetAttrFolderRules; // Правило на счет установки атрибутов на каталоги
 	int ExceptRules; // Правило на счет вызова исключений

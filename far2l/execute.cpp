@@ -241,6 +241,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 			WINPORT(WriteConsole)( NULL, ws.c_str(), ws.size(), &dw, NULL );
 		}
 		WINPORT(WriteConsole)( NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL );
+		WINPORT(SetConsoleFKeyTitles)(NULL);
 		
 		if (ExecFlags & (EF_NOWAIT|EF_HIDEOUT) ) {
 			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
@@ -261,8 +262,8 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		ProcessShowClock--;
 		SetFarConsoleMode(TRUE);
 		ScrBuf.Flush();
-		if (CtrlObject && CtrlObject->MainKeyBar && Opt.ShowKeyBar) {
-			CtrlObject->MainKeyBar->Show();
+		if (CtrlObject && CtrlObject->MainKeyBar) {
+			CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar, true);
 		}
 	}
 	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
@@ -405,15 +406,21 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool AlwaysWaitFinish, bool 
 			auto *cp = CtrlObject->Cp();
 			if (cp && cp->LeftPanel && cp->RightPanel
 			  && (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
-				WaitKey();
+				int Key = WaitKey();
+				// allow user to open console log etc directly from pause-on-error state
+				if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT)
+						|| Key == KEY_CTRLSHIFTF3 || Key == KEY_F3
+						|| Key == KEY_CTRLSHIFTF4 || Key == KEY_F4
+						|| Key == KEY_F8) {
+					ProcessKey(Key);
+				}
 			}
 		}
 	}
 
 	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL)) {
 		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
-		if (Opt.ShowKeyBar)
-			CtrlObject->MainKeyBar->Show();
+		CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 		
 	}
 	

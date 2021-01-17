@@ -63,7 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mkdir.hpp"
 #include "setattr.hpp"
 #include "execute.hpp"
-#include "ffolders.hpp"
+#include "Bookmarks.hpp"
 #include "dirmix.hpp"
 #include "pathmix.hpp"
 #include "processname.hpp"
@@ -850,7 +850,6 @@ int TreeList::ProcessKey(int Key)
 
 	if (Key>=KEY_CTRLSHIFT0 && Key<=KEY_CTRLSHIFT9)
 	{
-		//SaveFolderShortcut(Key-KEY_CTRLSHIFT0,&strCurDir,&strTemp,&strTemp,&strTemp);
 		SaveShortcutFolder(Key-KEY_CTRLSHIFT0);
 		return TRUE;
 	}

@@ -203,6 +203,11 @@ bool UnicodeString::Equal(size_t Pos, size_t Len, const wchar_t* Data, size_t Da
 	return !wmemcmp(m_pData->GetData() + Pos, Data, Len);
 }
 
+bool UnicodeString::operator<(const UnicodeString& Str) const
+{
+	return wmemcmp(CPtr(), Str.CPtr(), std::min(GetLength(), Str.GetLength()) + 1 ) < 0;
+}
+
 const UnicodeString operator+(const UnicodeString &strSrc1, const UnicodeString &strSrc2)
 {
 	return UnicodeString(strSrc1).Append(strSrc2);
@@ -272,34 +277,43 @@ UnicodeString& UnicodeString::Clear()
 int __cdecl UnicodeString::Format(const wchar_t * format, ...)
 {
 	wchar_t *buffer = nullptr;
-	size_t Size = MAX_PATH;
-	int retValue = -1;
+	size_t Size = 0x80;
+	int retValue;
+
 	va_list argptr;
 	va_start(argptr, format);
 
 	do
 	{
 		Size <<= 1;
-		wchar_t *tmpbuffer = (wchar_t*)xf_realloc_nomove(buffer, Size*sizeof(wchar_t));
+		wchar_t *newbuffer = (wchar_t *)( Size ?
+			xf_realloc_nomove(buffer, Size * sizeof(wchar_t))
+			: nullptr );
 
-		if (!tmpbuffer)
+		if (!newbuffer)
 		{
-			va_end(argptr);
-			xf_free(buffer);
-			return retValue;
+			retValue = -1;
+			break;
 		}
 
-		buffer = tmpbuffer;
-		//_vsnwprintf не всегда ставит '\0' вконце.
-		//Поэтому надо обнулить и передать в _vsnwprintf размер-1.
-		buffer[Size-1] = 0;
-		retValue = vswprintf(buffer, Size-1, format, argptr);
+		buffer = newbuffer;
+
+		va_list argptr_copy;
+		va_copy(argptr_copy, argptr);
+		retValue = vswprintf(buffer, Size, format, argptr_copy);
+		va_end(argptr_copy);
 	}
-	while (retValue == -1);
+	while (retValue < 0);
 
 	va_end(argptr);
-	Copy(buffer);
+
+	if (retValue >= 0)
+	{
+		Copy(buffer, retValue);
+	}
+
 	xf_free(buffer);
+
 	return retValue;
 }
 

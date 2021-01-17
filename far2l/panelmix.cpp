@@ -190,29 +190,11 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 					if (!(SrcPanel->GetType()==FILE_PANEL || SrcPanel->GetType()==TREE_PANEL))
 						return FALSE;
 
-					SrcPanel->GetCurDir(strPathName);
-
-					if (SrcPanel->GetMode()!=PLUGIN_PANEL)
+					SrcPanel->GetCurDirPluginAware(strPathName);
+					if (NeedRealName && SrcPanel->GetType()==FILE_PANEL && SrcPanel->GetMode() != PLUGIN_PANEL)
 					{
-						FileList *SrcFilePanel=(FileList *)SrcPanel;
-						SrcFilePanel->GetCurDir(strPathName);
-						{
-							if (NeedRealName)
-								SrcFilePanel->CreateFullPathName(strPathName, FILE_ATTRIBUTE_DIRECTORY, strPathName,TRUE);
-						}
-					}
-					else
-					{
-						FileList *SrcFilePanel=(FileList *)SrcPanel;
-						OpenPluginInfo Info;
-						CtrlObject->Plugins.GetOpenPluginInfo(SrcFilePanel->GetPluginHandle(),&Info);
-						FileList::AddPluginPrefix(SrcFilePanel,strPathName);
-						if (Info.HostFile && *Info.HostFile)
-						{
-							strPathName += Info.HostFile;
-							strPathName += L"/";
-						}
-						strPathName += Info.CurDir;
+						FileList *SrcFilePanel = (FileList *)SrcPanel;
+						SrcFilePanel->CreateFullPathName(strPathName, FILE_ATTRIBUTE_DIRECTORY, strPathName,TRUE);
 					}
 
 					AddEndSlash(strPathName);

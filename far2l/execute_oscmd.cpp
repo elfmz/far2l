@@ -128,8 +128,8 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 	std::vector<std::string> ecl = ExplodeCmdLine(Wide2MB(CmdLine));
 	if (ecl.empty())
 		return false;
-		
-	if (ecl[0] == "reset") {
+
+        if (ecl[0] == "reset") {
 		if (ecl.size() == 1) {
 			ClearScreen(COL_COMMANDLINEUSERSCREEN);
 			SaveBackground();

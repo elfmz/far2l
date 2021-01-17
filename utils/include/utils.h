@@ -34,6 +34,7 @@ unsigned char Hex2Digit(const char hex);
 unsigned char Hex2Byte(const char *hex);
 
 size_t StrStartsFrom(const std::string &haystack, const char *needle);
+size_t StrEndsBy(const std::string &haystack, const char *needle);
 
 std::string EscapeEscapes(std::string str);
 std::string EscapeQuotas(const std::string &str);
@@ -181,6 +182,5 @@ template <class CharT>
 
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
-
 
 #define APP_BASENAME "far2l"

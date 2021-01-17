@@ -1583,3 +1583,5 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 
 #define DEVNULL		"/dev/null"
 #define DEVNULLW	L"/dev/null"
+
+#define CONSOLE_FKEYS_COUNT	12	// array count for SetConsoleFKeyTitles

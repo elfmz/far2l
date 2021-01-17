@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <atomic>
 #include <stdexcept>
+#include <algorithm>
 
 #include <WinCompat.h>
 #include <string.h>
@@ -57,9 +58,9 @@ KeyFileHelper::KeyFileHelper(const char *filename, bool load)
 			break;
 		}
 
-		// seems tryed to read at the moment when smbd else modifies file
-		// sleep random time to effectively avoid long waits on mutual conflicts
-		sleep(10000 + 1000 * (rand() % 100));
+		// seems tried to read at the moment when smbd else modifies file
+		// usleep random time to effectively avoid long waits on mutual conflicts
+		usleep(10000 + 1000 * (rand() % 100));
 	}
 	
 	std::string line, value;
@@ -108,19 +109,37 @@ bool KeyFileHelper::Save()
 	unsigned int  tmp_uniq = ++s_tmp_uniq;
 	tmp+= StrPrintf(".%u-%u", getpid(), tmp_uniq);
 	try {
-		std::string content;
-		for (const auto &s : _kf) {
-			content.append("[").append(s.first).append("]\n");
-			for (const auto &e : s.second) {
-				content.append(e.first).append("=").append(e.second).append("\n");
-			}
-			content.append("\n");
-		}
-
 		FDScope fd(creat(tmp.c_str(), _filemode));
 		if (!fd.Valid()) {
 			throw std::runtime_error("create file failed");
 		}
+
+		std::string content;
+		std::vector<std::string> keys, sections;
+		for (const auto &i_kf : _kf) {
+			sections.emplace_back(i_kf.first);
+		}
+		std::sort(sections.begin(), sections.end());
+		for (const auto &s : sections) {
+			auto &kmap = _kf[s];
+			keys.clear();
+			for (const auto &i_kmap : kmap) {
+				keys.emplace_back(i_kmap.first);
+			}
+			std::sort(keys.begin(), keys.end());
+			content.append("[").append(s).append("]\n");
+			for (const auto &k : keys) {
+				content.append(k).append("=").append(kmap[k]).append("\n");
+			}
+			content.append("\n");
+			if (content.size() >= 0x10000) {
+				if (WriteAll(fd, content.c_str(), content.size()) != content.size()) {
+					throw std::runtime_error("write file failed");
+				}
+				content.clear();
+			}
+		}
+
 		if (WriteAll(fd, content.c_str(), content.size()) != content.size()) {
 			throw std::runtime_error("write file failed");
 		}
@@ -156,10 +175,54 @@ std::vector<std::string> KeyFileHelper::EnumSections()
 	return out;
 }
 
+std::vector<std::string> KeyFileHelper::EnumSectionsAt(const char *parent_section, bool recursed)
+{
+	std::string prefix = parent_section;
+	if (prefix == "/") {
+		prefix.clear();
+
+	} else if (!prefix.empty() && prefix.back() != '/') {
+		prefix+= '/';
+	}
+
+	std::vector<std::string> out;
+	for (const auto &s : _kf) {
+		if (s.first.size() > prefix.size()
+				&& memcmp(s.first.c_str(), prefix.c_str(), prefix.size()) == 0
+				&& (recursed || strchr(s.first.c_str() + prefix.size(), '/') == nullptr))  {
+
+			out.push_back(s.first);
+		}
+	}
+	return out;
+}
+
 void KeyFileHelper::RemoveSection(const char *section)
 {
 	if (_kf.erase(section) != 0) {
 		_dirty = true;
+	}
+}
+
+void KeyFileHelper::RemoveSectionsAt(const char *parent_section)
+{
+	std::string prefix = parent_section;
+	if (prefix == "/") {
+		prefix.clear();
+
+	} else if (!prefix.empty() && prefix.back() != '/') {
+		prefix+= '/';
+	}
+
+	for (auto it = _kf.begin(); it != _kf.end();) {
+		if (it->first.size() > prefix.size()
+				&& memcmp(it->first.c_str(), prefix.c_str(), prefix.size()) == 0) {
+			it = _kf.erase(it);
+			_dirty = true;
+
+		} else {
+			++it;
+		}
 	}
 }
 

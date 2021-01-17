@@ -43,7 +43,7 @@ protected:
 public:
 	inline HostRemote() {}
 
-	HostRemote(const std::string &site_specification);
+	HostRemote(const SiteSpecification &site_specification);
 	HostRemote(const std::string &protocol, const std::string &host,
 		unsigned int port, const std::string &username, const std::string &password);
 	virtual ~HostRemote();

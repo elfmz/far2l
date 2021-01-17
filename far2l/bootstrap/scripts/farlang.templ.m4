@@ -4597,24 +4597,144 @@ l:
 "Idź do linii"
 "Ir a posición"
 
-MFolderShortcutsTitle
+MBookmarksTitle
 l:
-"Ссылки на папки"
-"Folder shortcuts"
+"Закладки"
+"Bookmarks"
 "Adresářové zkratky"
 "Ordnerschnellzugriff"
 "Mappa gyorsbillentyűk"
 "Skróty katalogów"
 "Accesos a directorio"
 
-MFolderShortcutBottom
-"Редактирование: Del,Ins,F4"
-"Edit: Del,Ins,F4"
-"Edit: Del,Ins,F4"
-"Bearb.: Entf,Einf,F4"
-"Szerk.: Del,Ins,F4"
-"Edycja: Del,Ins,F4"
-"Editar: Del,Ins,F4"
+MPluginsTitle
+l:
+"Плагины"
+"Plugins"
+upd:"Plugins"
+upd:"Plugins"
+upd:"Plugins"
+upd:"Plugins"
+upd:"Plugins"
+
+MVTStop
+l:
+"Завершение фоновой оболочки."
+"Closing back shell."
+upd:"Closing back shell."
+upd:"Closing back shell."
+upd:"Closing back shell."
+upd:"Closing back shell."
+upd:"Closing back shell."
+
+MVTStopTip
+l:
+"Подсказка: чтобы закрыть far2l - введите 'exit far'."
+"TIP: To close far2l - type 'exit far'."
+upd:"TIP: To close far2l - type 'exit far'."
+upd:"TIP: To close far2l - type 'exit far'."
+upd:"TIP: To close far2l - type 'exit far'."
+upd:"TIP: To close far2l - type 'exit far'."
+upd:"TIP: To close far2l - type 'exit far'."
+
+MVTStartTipNoCmdTitle
+l:
+"При наборе команды с отключенными панелями:"
+"While typing command with panels off:"
+upd:"While typing command with panels off:"
+upd:"While typing command with panels off:"
+upd:"While typing command with panels off:"
+upd:"While typing command with panels off:"
+upd:"While typing command with panels off:"
+
+MVTStartTipNoCmdShiftTAB
+l:
+"Двойной Shift+TAB - автодополнение от bash."
+"Double Shift+TAB - bash-guided autocomplete."
+upd:"Double Shift+TAB - bash-guided autocomplete."
+upd:"Double Shift+TAB - bash-guided autocomplete."
+upd:"Double Shift+TAB - bash-guided autocomplete."
+upd:"Double Shift+TAB - bash-guided autocomplete."
+upd:"Double Shift+TAB - bash-guided autocomplete."
+
+MVTStartTipNoCmdFn
+l:
+"F3, F4, F8 - просмотр/редактирование/очистка лога терминала."
+"F3, F4, F8 - viewer/editor/clear terminal log."
+upd:"F3, F4, F8 - viewer/editor/clear terminal log."
+upd:"F3, F4, F8 - viewer/editor/clear terminal log."
+upd:"F3, F4, F8 - viewer/editor/clear terminal log."
+upd:"F3, F4, F8 - viewer/editor/clear terminal log."
+upd:"F3, F4, F8 - viewer/editor/clear terminal log."
+
+MVTStartTipNoCmdMouse
+l:
+"Ctrl+Shift+MouseScrollUp - автозавершающийся просмотр лога терминала."
+"Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log."
+upd:"Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log."
+upd:"Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log."
+upd:"Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log."
+upd:"Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log."
+upd:"Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log."
+
+MVTStartTipPendCmdTitle
+l:
+"В процессе исполнения команды:"
+upd:"While executing command:"
+upd:"While executing command:"
+upd:"While executing command:"
+upd:"While executing command:"
+upd:"While executing command:"
+upd:"While executing command:"
+
+MVTStartTipPendCmdFn
+l:
+"Ctrl+Shift+F3/+F4 - пауза и открытие просмотра/редактора лога терминала."
+"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log."
+upd:"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log."
+upd:"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log."
+upd:"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log."
+upd:"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log."
+upd:"Ctrl+Shift+F3/+F4 - pause and open viewer/editor with console log."
+
+MVTStartTipPendCmdCtrlAltC
+l:
+"Ctrl+Alt+C - завершить все процессы в этой оболочке."
+"Ctrl+Alt+C - terminate everything in this shell."
+upd:"Ctrl+Alt+C - terminate everything in this shell."
+upd:"Ctrl+Alt+C - terminate everything in this shell."
+upd:"Ctrl+Alt+C - terminate everything in this shell."
+upd:"Ctrl+Alt+C - terminate everything in this shell."
+upd:"Ctrl+Alt+C - terminate everything in this shell."
+
+MVTStartTipPendCmdCtrlAltZ
+l:
+"Ctrl+Alt+Z - отправить процесс far2l в фон, освободив терминал."
+"Ctrl+Alt+Z - detach far2l application to background releasing terminal."
+upd:"Ctrl+Alt+Z - detach far2l application to background releasing terminal.v
+upd:"Ctrl+Alt+Z - detach far2l application to background releasing terminal."
+upd:"Ctrl+Alt+Z - detach far2l application to background releasing terminal."
+upd:"Ctrl+Alt+Z - detach far2l application to background releasing terminal."
+upd:"Ctrl+Alt+Z - detach far2l application to background releasing terminal."
+
+MVTStartTipPendCmdMouse
+l:
+"MouseScrollUp - автозавершающийся просмотр лога терминала."
+"MouseScrollUp - pause and open autoclosing viewer with console log."
+upd:"MouseScrollUp - pause and open autoclosing viewer with console log."
+upd:"MouseScrollUp - pause and open autoclosing viewer with console log."
+upd:"MouseScrollUp - pause and open autoclosing viewer with console log."
+upd:"MouseScrollUp - pause and open autoclosing viewer with console log."
+upd:"MouseScrollUp - pause and open autoclosing viewer with console log."
+
+MBookmarkBottom
+"Редактирование: Del,Ins,F4,Shift+Вверх,Shift+Вниз"
+"Edit: Del,Ins,F4,Shift+Up,Shift+Down"
+"Edit: Del,Ins,F4,Shift+Up,Shift+Down"
+"Bearb.: Entf,Einf,F4,Shift+Up,Shift+Down"
+"Szerk.: Del,Ins,F4,Shift+Up,Shift+Down"
+"Edycja: Del,Ins,F4,Shift+Up,Shift+Down"
+"Editar: Del,Ins,F4,Shift+Up,Shift+Down"
 
 MShortcutNone
 "<отсутствует>"
@@ -4635,8 +4755,8 @@ MShortcutPlugin
 "<plugin>"
 
 MFSShortcut
-"Введите новую ссылку:"
-"Enter new shortcut:"
+"Введите новую закладку:"
+"Enter bookmark path:"
 "Zadejte novou zkratku:"
 "Neue Verknüpfung:"
 "A gyorsbillentyűhöz rendelt mappa:"
@@ -4653,8 +4773,8 @@ MNeedNearPath
 "Saltar al próximo directorio existente"
 
 MSaveThisShortcut
-"Запомнить эту ссылку?"
-"Save this shortcuts?"
+"Запомнить эту закладку?"
+"Save this bookmark?"
 "Uložit tyto zkratky?"
 "Verknüpfung speichern?"
 "Mentsem a gyorsbillentyűket?"
@@ -10918,9 +11038,9 @@ MMenuFileAssociations
 "Prz&ypisania plików"
 "&Asociar archivos"
 
-MMenuFolderShortcuts
-"Ссы&лки на папки"
-"Fol&der shortcuts"
+MMenuBookmarks
+"Зак&ладки на папки"
+"Fol&der bookmarks"
 "A&dresářové zkratky"
 "Or&dnerschnellzugriff"
 "Mappa gyorsbillent&yűk"
@@ -11436,8 +11556,8 @@ MMenuSortUseCaseSensitive
 
 MChangeDriveTitle
 l:
-"Диск"
-"Drive"
+"Перейти"
+"Location"
 "Jednotka"
 "Laufwerke"
 "Meghajtók"
@@ -11926,6 +12046,15 @@ upd:"Show &plugins"
 upd:"Show &plugins"
 "Mostrar &plugins"
 
+MChangeDriveShowShortcuts
+"Показывать &закладки"
+"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Show &bookmarks"
+upd:"Mostrar &bookmarks"
+
 MChangeDriveShowCD
 "Показывать параметры &компакт-дисков"
 "Show &CD drive parameters"
@@ -11945,13 +12074,13 @@ upd:"Show ne&twork drive parameters"
 "Mostrar parámetros unidades de red"
 
 MChangeDriveMenuFooter
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
-"Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9"
 
 MSearchFileTitle
 l:

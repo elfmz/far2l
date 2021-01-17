@@ -14,10 +14,12 @@ class PluginImpl
 {
 	friend class AllNetRocks;
 
-	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH];
+	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH], _format[256];
 	Location _location;
+	bool _allow_remember_location_dir = false;
 
 	SitesConfigLocation  _sites_cfg_location;
+	std::wstring _standalone_config;
 
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
@@ -46,11 +48,16 @@ class PluginImpl
 	BackgroundTaskStatus StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,
 		int items_count, XferKind kind, XferDirection direction);
+
+	BOOL SitesXfer(const char *dir, struct PluginPanelItem *PanelItem, int ItemsNumber, bool mv, bool imp);
+
 	int SetDirectoryInternal(const wchar_t *Dir, int OpMode);
 
 	void DismissRemoteHost();
+	std::string CurrentConnectionPoolId();
+
 public:
-	PluginImpl(const wchar_t *path = nullptr);
+	PluginImpl(const wchar_t *path = nullptr, bool path_is_standalone_config = false);
 	virtual ~PluginImpl();
 
 	static void sOnExiting();

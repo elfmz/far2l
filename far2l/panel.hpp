@@ -95,7 +95,7 @@ enum
 	DRIVE_SHOW_SIZE       = 0x00000010,
 	DRIVE_SHOW_REMOVABLE  = 0x00000020,
 	DRIVE_SHOW_PLUGINS    = 0x00000040,
-	DRIVE_SHOW_CDROM      = 0x00000080,
+	DRIVE_SHOW_BOOKMARKS  = 0x00000080,
 	DRIVE_SHOW_SIZE_FLOAT = 0x00000100,
 	DRIVE_SHOW_REMOTE     = 0x00000200,
 };
@@ -140,8 +140,6 @@ class Panel:public ScreenObject
 	private:
 		int ChangeDiskMenu(int Pos,int FirstCall);
 		int DisconnectDrive(PanelMenuItem *item, VMenu &ChDisk);
-		void RemoveHotplugDevice(PanelMenuItem *item, VMenu &ChDisk);
-		int ProcessDelDisk(wchar_t Drive, int DriveType,VMenu *ChDiskMenu);
 		void FastFindShow(int FindX,int FindY);
 		void FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName, FARString &strName);
 		void DragMessage(int X,int Y,int Move);

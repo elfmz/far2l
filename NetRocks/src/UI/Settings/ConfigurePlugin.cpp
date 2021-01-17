@@ -14,6 +14,7 @@
 | [x] <ENTER> to execute files remotely when possible        |
 | [x] Smart symlinks copying                                 |
 | [ ] Copy attributes that overrides umask                   |
+| [ ] Remember working directory in site settings            |
 | Connections pool expiration (seconds):               [   ] |
 | [ ] Connect using proxy (requires tsocks library)          |
 |     [ Edit tsocks configuration file ]                     |
@@ -58,6 +59,7 @@ class ConfigurePlugin : protected BaseDialog
 	int _i_enter_exec_remotely = -1;
 	int _i_smart_symlinks_copy = -1;
 	int _i_umask_override = -1;
+	int _i_remember_directory = -1;
 	int _i_conn_pool_expiration = -1;
 	int _i_use_proxy = -1, _i_edit_tsocks_config = -1;
 
@@ -109,6 +111,9 @@ public:
 		_i_umask_override = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MUMaskOverride);
 
 		_di.NextLine();
+		_i_remember_directory = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MRememberDirectory);
+
+		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,58, 0, MConnPoolExpiration);
 		_i_conn_pool_expiration = _di.AddAtLine(DI_FIXEDIT, 59,62, DIF_MASKEDIT, "30", "9999");
 
@@ -136,6 +141,7 @@ public:
 		SetCheckedDialogControl( _i_enter_exec_remotely, G.GetGlobalConfigBool("EnterExecRemotely", true) );
 		SetCheckedDialogControl( _i_smart_symlinks_copy, G.GetGlobalConfigBool("SmartSymlinksCopy", true) );
 		SetCheckedDialogControl( _i_umask_override, G.GetGlobalConfigBool("UMaskOverride", false) );
+		SetCheckedDialogControl( _i_remember_directory, G.GetGlobalConfigBool("RememberDirectory", false) );
 		LongLongToDialogControl( _i_conn_pool_expiration, G.GetGlobalConfigInt("ConnectionsPoolExpiration", 30) );
 		SetCheckedDialogControl( _i_use_proxy, G.GetGlobalConfigBool("UseProxy", false) );
 
@@ -145,6 +151,7 @@ public:
 			gcw.PutBool("EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) );
 			gcw.PutBool("SmartSymlinksCopy", IsCheckedDialogControl(_i_smart_symlinks_copy) );
 			gcw.PutBool("UMaskOverride", IsCheckedDialogControl(_i_umask_override) );
+			gcw.PutBool("RememberDirectory", IsCheckedDialogControl(_i_remember_directory) );
 			gcw.PutInt("ConnectionsPoolExpiration", LongLongFromDialogControl( _i_conn_pool_expiration) );
 			gcw.PutBool("UseProxy", IsCheckedDialogControl(_i_use_proxy) );
 		}

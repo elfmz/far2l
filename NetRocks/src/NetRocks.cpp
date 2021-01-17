@@ -30,29 +30,45 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfoW(const struct PluginStartupInfo 
 //	fprintf(stderr, "FSF=%p ExecuteLibrary=%p\n", G.info.FSF, G.info.FSF ? G.info.FSF->ExecuteLibrary : nullptr);
 
 }
-/*
-SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginw(const wchar_t *Name, const unsigned wchar_t *Data, int DataSize, int OpMode)
+
+SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode)
 {
-	if (!G.IsStarted())
+	if (!G.IsStarted() || !Name) {
 		return INVALID_HANDLE_VALUE;
+	}
+
+	// Only user can start config files browsing, avoid doing that during file search etc
+	if ( (OpMode & (~(OPM_PGDN))) != 0) {
+		return INVALID_HANDLE_VALUE;
+	}
 
 
-	PluginImpl *out = nullptr;
-#ifndef __APPLE__
-	if (elf) {
-		out = new PluginImplELF(Name, Data[4], Data[5]);
+	// Filter out files that has name not suffixed by NETROCKS_EXPORT_SITE_EXTENSION
+	size_t l = wcslen(Name);
+	if (l <= ARRAYSIZE(NETROCKS_EXPORT_SITE_EXTENSION)) {
+		return INVALID_HANDLE_VALUE;
+	}
 
-	} else 
-#endif
-	if (plain) {
-		out = new PluginImplPlain(Name, plain);
+	if (wmemcmp(Name + (l + 1 - ARRAYSIZE(NETROCKS_EXPORT_SITE_EXTENSION)),
+			L"" NETROCKS_EXPORT_SITE_EXTENSION, ARRAYSIZE(NETROCKS_EXPORT_SITE_EXTENSION) - 1) != 0) {
+		return INVALID_HANDLE_VALUE;
+	}
 
-	} else
-		abort();
+	// Bit deeper check - expecting first line to be section name,
+	// so expecting first non-empty character to be '['.
+	// This BTW throws away any comments.. But NetRocks doesn't write comments.
+	for (int i = 0; i < DataSize; ++i) {
+		if (Data[i] != ' ' && Data[i] != '\t' && Data[i] != '\r' && Data[i] != '\n') {
+			if (Data[i] == '[') {
+				break;
+			}
+			return INVALID_HANDLE_VALUE;
+		}
+	}
 
-	return out ? (HANDLE)out : INVALID_HANDLE_VALUE;
+	return new PluginImpl(Name, true);
 }
-*/
+
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenPluginW(int OpenFrom, INT_PTR Item)
 {
@@ -183,7 +199,7 @@ SHAREDSYMBOL int WINAPI _export MayExitFARW()
 
 static std::wstring CombineAllProtocolPrefixes()
 {
-	std::wstring out;
+	std::wstring out = L"net:";
 	for (auto pi = ProtocolInfoHead(); pi->name; ++pi) {
 		out+= MB2Wide(pi->name);
 		out+= L':';

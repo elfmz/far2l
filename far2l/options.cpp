@@ -49,14 +49,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "history.hpp"
 #include "message.hpp"
-#include "hotplug.hpp"
 #include "config.hpp"
 #include "usermenu.hpp"
 #include "datetime.hpp"
 #include "setcolor.hpp"
 #include "plist.hpp"
 #include "filetype.hpp"
-#include "ffolders.hpp"
+#include "Bookmarks.hpp"
 #include "strmix.hpp"
 #include "interf.hpp"
 #include "codepage.hpp"
@@ -266,7 +265,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		{L"",LIF_SEPARATOR,0},
 		{MSG(MMenuUserMenu),0,0},
 		{MSG(MMenuFileAssociations),0,0},
-		{MSG(MMenuFolderShortcuts),0,0},
+		{MSG(MMenuBookmarks),0,0},
 		{MSG(MMenuFilter),0,KEY_CTRLI},
 		{L"",LIF_SEPARATOR,0},
 		{MSG(MMenuPluginCommands),0,KEY_F11},
@@ -548,7 +547,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 					EditFileTypes();
 					break;
 				case MENU_COMMANDS_FOLDERSHORTCUTS: // Folder shortcuts
-					ShowFolderShortcut();
+					ShowBookmarksMenu();
 					break;
 				case MENU_COMMANDS_FILTER: // File panel filter
 					CtrlObject->Cp()->ActivePanel->EditFilter();
@@ -563,7 +562,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 					ShowProcessList();
 					break;
 				case MENU_COMMANDS_HOTPLUGLIST: // HotPlug list
-					ShowHotplugDevice();
+//					ShowHotplugDevice();
 					break;
 			}
 

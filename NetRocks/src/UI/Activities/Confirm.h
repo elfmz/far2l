@@ -17,15 +17,17 @@ public:
 class ConfirmSitesDisposition : protected BaseDialog
 {
 	int _i_proceed = -1, _i_cancel = -1;
+	bool _warning;
 
 public:
 	enum What {
 		W_REMOVE,
-		W_COPY,
-		W_MOVE
+		W_RELOCATE,
+		W_EXPORT,
+		W_IMPORT,
 	};
 
-	ConfirmSitesDisposition(What w);
+	ConfirmSitesDisposition(What w, bool mv);
 
 	bool Ask();
 };

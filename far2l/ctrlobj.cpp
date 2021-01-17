@@ -96,8 +96,7 @@ void ControlObject::Init()
 //  FPanels->Redraw();
 	CmdLine->Show();
 
-	if (Opt.ShowKeyBar)
-		this->MainKeyBar->Show();
+	this->MainKeyBar->Refresh(Opt.ShowKeyBar);
 
 	Cp()->LeftPanel->Update(0);
 	Cp()->RightPanel->Update(0);

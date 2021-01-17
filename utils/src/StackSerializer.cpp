@@ -49,6 +49,12 @@ void StackSerializer::Swap(StackSerializer &other)
 {
 	_data.swap(other._data);
 }
+
+bool StackSerializer::IsEmpty() const
+{
+	return _data.empty();
+}
+
 ///////////////
 
 void StackSerializer::Push(const void *ptr, size_t len)
@@ -69,6 +75,14 @@ void StackSerializer::Pop(void *ptr, size_t len)
 }
 
 ///
+
+void StackSerializer::PushStr(const char *str)
+{
+	uint32_t str_sz = (uint32_t)strlen(str);
+	if (str_sz)
+		Push(str, str_sz);
+	PushPOD(str_sz);
+}
 
 void StackSerializer::PushStr(const std::string &str)
 {

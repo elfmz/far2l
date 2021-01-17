@@ -139,7 +139,7 @@ void FileViewer::Init(const wchar_t *name,int EnableSwitch,int disableHistory, /
 		View.SetNamesList(ViewNamesList);
 
 	ExitCode=TRUE;
-	ViewKeyBar.Show();
+	ViewKeyBar.Refresh(true);
 
 	if (!Opt.ViOpt.ShowKeyBar)
 		ViewKeyBar.Hide0();
@@ -261,11 +261,10 @@ int FileViewer::ProcessKey(int Key)
 		case KEY_CTRLB:
 			Opt.ViOpt.ShowKeyBar=!Opt.ViOpt.ShowKeyBar;
 
-			if (Opt.ViOpt.ShowKeyBar)
-				ViewKeyBar.Show();
-			else
+			if (!Opt.ViOpt.ShowKeyBar)
 				ViewKeyBar.Hide0(); // 0 mean - Don't purge saved screen
 
+			ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);
 			Show();
 			KeyBarVisible = Opt.ViOpt.ShowKeyBar;
 			return (TRUE);
@@ -354,8 +353,7 @@ int FileViewer::ProcessKey(int Key)
 			View.SetShowArrows(ViOpt.ShowArrows);
 			View.SetPersistentBlocks(ViOpt.PersistentBlocks);
 
-			if (Opt.ViOpt.ShowKeyBar)
-				ViewKeyBar.Show();
+			ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);
 
 			View.Show();
 			return TRUE;
@@ -376,8 +374,7 @@ int FileViewer::ProcessKey(int Key)
 			   Это помогло от залипания :-)
 			*/
 			if (!CtrlObject->Macro.IsExecuting())
-				if (Opt.ViOpt.ShowKeyBar)
-					ViewKeyBar.Show();
+				ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);
 			
 				
 			if (!ViewKeyBar.ProcessKey(Key)) {

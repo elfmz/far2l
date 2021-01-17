@@ -69,7 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "setattr.hpp"
 #include "filetype.hpp"
 #include "execute.hpp"
-#include "ffolders.hpp"
+#include "Bookmarks.hpp"
 #include "fnparce.hpp"
 #include "datetime.hpp"
 #include "dirinfo.hpp"
@@ -1199,19 +1199,6 @@ int FileList::ProcessKey(int Key)
 
 					if (CurrentPath)
 						AddEndSlash(strFileName);
-
-					// добавим первый префикс!
-					if (PanelMode==PLUGIN_PANEL && Opt.SubstPluginPrefix && !(Key == KEY_CTRLENTER || Key == KEY_CTRLNUMENTER || Key == KEY_CTRLJ))
-					{
-						FARString strPrefix;
-
-						/* $ 19.11.2001 IS оптимизация по скорости :) */
-						if (*AddPluginPrefix((FileList *)CtrlObject->Cp()->ActivePanel,strPrefix))
-						{
-							strPrefix += strFileName;
-							strFileName = strPrefix;
-						}
-					}
 
 					if (Opt.QuotedName&QUOTEDNAME_INSERT)
 						EscapeSpace(strFileName);
@@ -3921,19 +3908,6 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 
 				strFullName += strQuotedName;
 				strQuotedName = strFullName;
-
-				// добавим первый префикс!
-				if (PanelMode==PLUGIN_PANEL && Opt.SubstPluginPrefix)
-				{
-					FARString strPrefix;
-
-					/* $ 19.11.2001 IS оптимизация по скорости :) */
-					if (*AddPluginPrefix((FileList *)CtrlObject->Cp()->ActivePanel,strPrefix))
-					{
-						strPrefix += strQuotedName;
-						strQuotedName = strPrefix;
-					}
-				}
 			}
 		}
 		else
@@ -4499,10 +4473,7 @@ bool FileList::ApplyCommand()
 
 	CtrlObject->CmdLine->LockUpdatePanel(false);
 	CtrlObject->CmdLine->Show();
-	if (Opt.ShowKeyBar)
-	{
-		CtrlObject->MainKeyBar->Show();
-	}
+	CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 	if (GetSelPosition >= FileCount)
 		ClearSelection();
 
@@ -4856,41 +4827,6 @@ int FileList::PluginPanelHelp(HANDLE hPlugin)
 	Help PanelHelp(strStartTopic);
 	return TRUE;
 }
-
-/* $ 19.11.2001 IS
-     для файловых панелей с реальными файлами никакого префикса не добавляем
-*/
-FARString &FileList::AddPluginPrefix(FileList *SrcPanel,FARString &strPrefix)
-{
-	strPrefix.Clear();
-
-	if (Opt.SubstPluginPrefix && SrcPanel->GetMode()==PLUGIN_PANEL)
-	{
-		OpenPluginInfo Info;
-		PluginHandle *ph = (PluginHandle*)SrcPanel->hPlugin;
-		CtrlObject->Plugins.GetOpenPluginInfo(ph,&Info);
-
-		if (!(Info.Flags & OPIF_REALNAMES))
-		{
-			PluginInfo PInfo;
-			ph->pPlugin->GetPluginInfo(&PInfo);
-
-			if (PInfo.CommandPrefix && *PInfo.CommandPrefix)
-			{
-				strPrefix = PInfo.CommandPrefix;
-				size_t pos;
-
-				if (strPrefix.Pos(pos,L':'))
-					strPrefix.SetLength(pos+1);
-				else
-					strPrefix += L":";
-			}
-		}
-	}
-
-	return strPrefix;
-}
-
 
 void FileList::IfGoHome(wchar_t Drive)
 {

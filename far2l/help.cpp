@@ -718,13 +718,11 @@ void Help::DisplayObject()
 	if (!Opt.FullScreenHelp)
 	{
 		HelpKeyBar.SetPosition(0,ScrY,ScrX,ScrY);
-
-		if (Opt.ShowKeyBar)
-			HelpKeyBar.Show();
+		HelpKeyBar.Refresh(Opt.ShowKeyBar);
 	}
 	else
 	{
-		HelpKeyBar.Hide();
+		HelpKeyBar.Refresh(false);
 	}
 }
 

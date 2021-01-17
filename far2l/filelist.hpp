@@ -416,5 +416,4 @@ class FileList:public Panel
 		size_t FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi);
 		static void PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi);
 		static int IsModeFullScreen(int Mode);
-		static FARString &AddPluginPrefix(FileList *SrcPanel,FARString &strPrefix);
 };

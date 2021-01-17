@@ -56,8 +56,8 @@ RedrawDesktop::RedrawDesktop(BOOL IsHidden):
 		CtrlObject->Cp()->LeftPanel->CloseFile();
 		CtrlObject->Cp()->RightPanel->CloseFile();
 
-		// ÂÍÈÌÀÍÈÅ! ÊÎÑÒÛËÜ!
-		// ñîáëþäåì î÷åðåäíîñòü, â çàâèñèìîñòè îò!
+		// Ð’ÐÐ˜ÐœÐÐÐ˜Ð•! ÐšÐžÐ¡Ð¢Ð«Ð›Ð¬!
+		// ÑÐ¾Ð±Ð»ÑŽÐ´ÐµÐ¼ Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð½Ð¾ÑÑ‚ÑŒ, Ð² Ð·Ð°Ð²Ð¸ÑÐ¸Ð¼Ð¾ÑÑ‚Ð¸ Ð¾Ñ‚!
 		if (CtrlObject->Cp()->ActivePanel == CtrlObject->Cp()->LeftPanel)
 		{
 			CtrlObject->Cp()->LeftPanel->Hide();
@@ -80,8 +80,7 @@ RedrawDesktop::~RedrawDesktop()
 	CtrlObject->CmdLine->SaveBackground();
 	CtrlObject->CmdLine->Show();
 
-	if (Opt.ShowKeyBar)
-		CtrlObject->MainKeyBar->Show();
+	CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 
 	Opt.Clock=ClockVisible;
 
@@ -102,7 +101,7 @@ RedrawDesktop::~RedrawDesktop()
 		// CtrlObject->Cp()->RightPanel->Show();
 		CtrlObject->Cp()->RightPanel->SetVisible(TRUE);
 
-	// Âðåìåííîå ðåøåíèå!
-	// Èíà÷å òðàáëû ïðè ïåðåñ÷åòå...
+	// Ð’Ñ€ÐµÐ¼ÐµÐ½Ð½Ð¾Ðµ Ñ€ÐµÑˆÐµÐ½Ð¸Ðµ!
+	// Ð˜Ð½Ð°Ñ‡Ðµ Ñ‚Ñ€Ð°Ð±Ð»Ñ‹ Ð¿Ñ€Ð¸ Ð¿ÐµÑ€ÐµÑÑ‡ÐµÑ‚Ðµ...
 	FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 }

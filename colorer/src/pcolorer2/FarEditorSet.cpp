@@ -323,8 +323,7 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu *Menu, FileType *CurFileType)
     }
 
     if (group && !group->equals(type->getGroup())){
-      StringBuffer tmp(type->getGroup()->getWChars());
-      Menu->AddGroup(tmp.getWChars());
+      Menu->AddGroup(type->getGroup()->getWChars());
       group = type->getGroup();
     };
 

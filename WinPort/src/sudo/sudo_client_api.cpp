@@ -336,7 +336,23 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_ftruncate(int fd, off
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_fchmod(int fd, mode_t mode)
 {
-	return fchmod(fd, mode);
+	int saved_errno = errno;
+	int r = fchmod(fd, mode);
+	if (r == -1 && IsAccessDeniedErrno()) {
+		// this fails even if fd opened for write, but process has no access to its path
+		try {
+			ClientTransaction ct(SUDO_CMD_FCHMOD);
+			ct.SendFD(fd);
+			ct.SendPOD(mode);
+			r = ct.RecvInt();
+			if (r == 0) {
+				errno = saved_errno;
+			}
+		} catch(std::exception &e) {
+			fprintf(stderr, "sdc_fchmod(%u, %o) - error %s\n", fd, mode, e.what());
+		}
+	}
+	return r;
 }
 
 extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *path)

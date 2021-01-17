@@ -11,7 +11,7 @@ class OpConnect : protected OpBase
 	virtual void Process();
 
 public:
-	OpConnect(int op_mode, const Location &location);
+	OpConnect(int op_mode, const std::string &standalone_config, const Location &location);
 
 	std::shared_ptr<IHost> Do();
 };

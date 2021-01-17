@@ -40,11 +40,11 @@ $^#Copyright (C) 2000-2016 FAR Group
    ~Find folder~@FindFolder@
    ~Compare folders~@CompFolders@
    ~User menu~@UserMenu@
-   ~Change drive menu~@DriveDlg@
+   ~Location menu~@DriveDlg@
 
    ~File associations~@FileAssoc@
    ~Operating system commands~@OSCommands@
-   ~Folder shortcuts~@FolderShortcuts@
+   ~Bookmarks~@Bookmarks@
    ~Filters menu~@FiltersMenu@
    ~Screens switching~@ScrSwitch@
    ~Task list~@TaskList@
@@ -312,7 +312,7 @@ $ #Panel control commands  #
   Use group sorting                                        #Shift-F11#
   Show selected files first                                #Shift-F12#
 
-  Create a ~folder shortcut~@FolderShortcuts@              #Ctrl-Shift-0# to #Ctrl-Shift-9#
+  Create a ~folder shortcut~@Bookmarks@              #Ctrl-Shift-0# to #Ctrl-Shift-9#
   Jump to a folder shortcut               #RightCtrl-0# to #RightCtrl-9#
 
       If the active panel is a ~quick view panel~@QViewPanel@, a ~tree panel~@TreePanel@ or
@@ -627,9 +627,9 @@ command configuration.
 pressing #Ctrl-PgUp# in the root directory switches to the network plugin or
 shows the ~drive selection menu~@DriveDlg@.
 
-  Create shortcut to the current folder              #Ctrl-Shift-0..9#
+  Create bookmark to the current folder              #Ctrl-Shift-0..9#
 
-  Use folder shortcut                                 #RightCtrl-0..9#
+  Use folder bookmark                                #RightCtrl-0..9#
 
   Set ~file attributes~@FileAttrDlg@                                         #Ctrl-A#
   ~Apply command~@ApplyCmd@ to selected files                             #Ctrl-G#
@@ -794,7 +794,7 @@ information about it and later loads the plugin only when necessary, so unused
 plugins do not require additional memory. But if you are sure that some plugins
 are useless for you, you may remove them to save disk space.
 
-    Plugins may be called either from ~Change drive menu~@DriveDlg@ or from
+    Plugins may be called either from ~Location menu~@DriveDlg@ or from
 #Plugin commands# menu, activated by #F11# or by corresponding item of
 ~Commands menu~@CmdMenu@. #F4# in ~"Plugin commands"~@PluginCommands@ menu allows to assign hot
 keys to menu items (this makes easier to call them from ~keyboard macros~@KeyMacro@).
@@ -1122,7 +1122,7 @@ respectively. These menus include the following items:
 
    #Re-read#              Re-read panel.
 
-   #Change drive#         Change current drive.
+   #Location#             Change current location.
 
 
 @FilesMenu
@@ -1208,7 +1208,7 @@ $ #Menus: commands menu#
                         You may press #Ins# to insert, #Del# to delete
                         and #F4# to edit file associations.
 
-   #Folder shortcuts#     Displays current ~folder shortcuts~@FolderShortcuts@.
+   #Bookmarks#     Displays current ~Bookmarks~@Bookmarks@.
 
    #File panel filter#    Allows to control file panel contents.
                         See ~filters menu~@FiltersMenu@ for the detailed
@@ -1314,11 +1314,11 @@ following operations:
 
     - interrupt operation;
 
-    - ~disconnect network drives~@DisconnectDrive@ from the Disks menu;
+    - ~unmounting~@DisconnectDrive@ from the Location menu;
 
-    - disconnect SUBST-disks from the Disks menu;
+    - disconnect SUBST-disks from the Location menu;
 
-    - removal of USB storage devices from the Disks menu;
+    - removal of USB storage devices from the Location menu;
 
     - ~reloading~@EditorReload@ a file in the editor;
 
@@ -2857,9 +2857,9 @@ $ #Изменение имени кодовой страницы#
 после нажатия кнопки #Сбросить#.
 
 @DriveDlg
-$ #Change drive#
-    This menu allows to change the current drive of a panel, disconnect from a
-network drive or open a new ~plugin~@Plugins@ panel.
+$ #Location#
+    This menu allows to change the current location of a panel, unmount mountpoint 
+or open a new ~plugin~@Plugins@ panel.
 
     Select the item with the corresponding drive letter to change the drive or
 the item with the plugin name to create a new plugin panel. If the panel type
@@ -2871,18 +2871,11 @@ is not a ~file panel~@FilePanel@, it will be changed to the file panel.
 
     #Del# key can be used:
 
-     - to ~disconnect~@DisconnectDrive@ from network drives.
+     - to ~unmount~@DisconnectDrive@ filesystem at given path.
 
-     - to delete a substituted (virtual) disk.
+     - to delete a bookmark.
 
-     - to eject disks from CD-ROM and removable drives.
-       Ejecting a disk from a ZIP-drive requires administrative privileges.
-       A CD-ROM can be closed by pressing #Ins#.
-
-    The #Shift-Del# hotkey is used to prepare a USB storage device for safe
-removal. If the disk, for which the removal function is used, is a flash-card
-inserted into a card-reader that supports several flash-cards then the
-card-reader itself will be stopped.
+    The #Shift-Del# hotkey can be used to force-unmount filesystem that requires root priviledges.
 
     #Ctrl-1# - #Ctrl-9# switch the display of different information:
 
@@ -2897,7 +2890,7 @@ card-reader itself will be stopped.
     Ctrl-8 - display of CD parameters;
     Ctrl-9 - display of network parameters.
 
-    #Change drive# menu settings are saved in the FAR2L configuration.
+    #Location# menu settings are saved in the FAR2L configuration.
 
     #F9# shows a dialog for configuring the display of that
 information.
@@ -2939,8 +2932,8 @@ Far 2 (these are, in particular, Unicode characters in filenames and in editor).
 
 @DisconnectDrive
 $ #Disconnect network drive#
-    You can disconnect a network drive by pressing #Del# in the
-~Change Drive menu~@DriveDlg@.
+    You can unmount mountpoint by pressing #Del# in the
+~Location menu~@DriveDlg@.
 
     The option #[x] Reconnect at logon# is enabled only for permanently
 connected network drives.
@@ -3256,18 +3249,21 @@ selected objects.
 
 
 
-@FolderShortcuts
-$ #Folder shortcuts#
-    Folder shortcuts are designed to provide fast access to frequently used
+@Bookmarks
+$ #Bookmarks#
+    Bookmarks are designed to provide fast access to frequently used
 folders. Press #Ctrl-Shift-0..9#, to create a shortcut to the current folder.
 To change to the folder recorded in the shortcut, press #RightCtrl-0..9#. If
 #RightCtrl-0..9# pressed in edit line, it inserts the shortcut path into the
-line.
+line. Bookmarks are also available from Location menu.
 
-    The #Show folder shortcuts# item in the ~Commands menu~@CmdMenu@ may be
-used to view, set, edit and delete folder shortcuts.
+    The #Show bookmarks# item in the ~Commands menu~@CmdMenu@ may be
+used to view, set, edit and delete bookmarks on different shortcuts.
 
-    When you are editing a shortcut (#F4#), you cannot create a shortcut to a
+    You can move selected bookmark to upper/lower position by pressing
+#Shift+Up# and #Shift+Down# keys.
+
+    When you are editing a bookmark (#F4#), you cannot create a bookmark to a
 plugin panel.
 
 @FiltersMenu

@@ -16,8 +16,8 @@ edit.hpp editor.cpp editor.hpp eject.cpp eject.hpp elevation.cpp elevation.hpp
 event.hpp execute.cpp execute.hpp exitcode.hpp Far.exe.manifest.m4 far.rc.m4 
 FarDlgBuilder.hpp FarEng.hlf.m4 farexcpt.cpp farexcpt.hpp FarHun.hlf.m4 
 farlang.templ.m4 farqueue.cpp farqueue.hpp farrtl.cpp farrtl.hpp FarRus.hlf.m4 
-farversion.inc.m4 farversion.m4 farwinapi.cpp farwinapi.hpp ffolders.cpp 
-ffolders.hpp File_id.diz.m4 fileattr.cpp fileattr.hpp fileedit.cpp fileedit.hpp 
+farversion.inc.m4 farversion.m4 farwinapi.cpp farwinapi.hpp BookmarksLegacy.cpp 
+BookmarksMenu.cpp File_id.diz.m4 fileattr.cpp fileattr.hpp fileedit.cpp fileedit.hpp 
 filefilter.cpp filefilter.hpp filefilterparams.cpp filefilterparams.hpp 
 filelist.cpp filelist.hpp FileMasksProcessor.cpp FileMasksProcessor.hpp 
 FileMasksWithExclude.cpp FileMasksWithExclude.hpp fileowner.cpp fileowner.hpp 
@@ -27,7 +27,7 @@ flmodes.cpp flplugin.cpp flshow.cpp flupdate.cpp fnparce.cpp fnparce.hpp
 foldtree.cpp foldtree.hpp format.cpp format.hpp frame.cpp frame.hpp global.cpp 
 global.hpp grabber.cpp grabber.hpp headers.cpp headers.hpp headers.m4 help.cpp 
 help.hpp hilight.cpp hilight.hpp history.cpp history.hpp hmenu.cpp hmenu.hpp 
-hotplug.cpp hotplug.hpp imports.cpp imports.hpp Include/farcolor.hpp 
+imports.cpp imports.hpp Include/farcolor.hpp 
 Include/farkeys.hpp Include/plugin.hpp infolist.cpp infolist.hpp interf.cpp 
 interf.hpp keybar.cpp keybar.hpp keyboard.cpp keyboard.hpp keys.hpp lang.hpp 
 language.cpp language.hpp lasterror.hpp local.cpp local.hpp localOEM.cpp 

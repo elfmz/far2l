@@ -24,7 +24,7 @@
 
 ////////////////////////////////////////////
 
-HostRemote::HostRemote(const std::string &site_specification)
+HostRemote::HostRemote(const SiteSpecification &site_specification)
 	: _site_specification(site_specification)
 {
 	SitesConfig sc(_site_specification.sites_cfg_location);

@@ -44,7 +44,7 @@ enum
 	FILETYPE_ALTEDIT     // Alt-F4
 };
 
-void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool RunAs);
-bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish);
-void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool AlwaysWaitFinish);
+void ProcessGlobalFileTypes(const wchar_t *Name, bool RunAs, bool CanAddHistory);
+bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory);
+void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHistory);
 void EditFileTypes();

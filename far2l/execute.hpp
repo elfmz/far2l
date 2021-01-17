@@ -33,9 +33,12 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+void WaitForClose(const wchar_t *Name);
+void QueueDeleteOnClose(const wchar_t *Name);
+
 int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags);
 int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags);
-int Execute(const wchar_t *CmdStr, bool AlwaysWaitFinish, bool SeparateWindow = false, bool DirectRun = false, bool FolderRun = false, bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
+int Execute(const wchar_t *CmdStr, bool SeparateWindow = false, bool DirectRun = false, bool FolderRun = false, bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
 
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 

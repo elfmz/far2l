@@ -1580,33 +1580,32 @@ int FileList::ProcessKey(int Key)
 
 				if (!strFileName.IsEmpty())
 				{
+					BOOL Processed=FALSE;
+
 					if (Edit)
 					{
 						int editorExitCode;
 						int EnableExternal=(((Key==KEY_F4 || Key==KEY_SHIFTF4) && Opt.EdOpt.UseExternalEditor) ||
 						                    (Key==KEY_ALTF4 && !Opt.EdOpt.UseExternalEditor)) && !Opt.strExternalEditor.IsEmpty();
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f4 */
-						BOOL Processed=FALSE;
 
 						if (PluginMode)
 						{
 							efu.reset(new FileList_EditedFileUploader(strTempName, hPlugin));
 						}
 
-						if (Key==KEY_ALTF4 &&
-						        ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT,
-						                              PluginMode))
+						if (Key==KEY_ALTF4 && ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT, !PluginMode))
 							Processed=TRUE;
-						else if (Key==KEY_F4 &&
-						         ProcessLocalFileTypes(strFileName,FILETYPE_EDIT,
-						                               PluginMode))
+
+						else if (Key==KEY_F4 && ProcessLocalFileTypes(strFileName,FILETYPE_EDIT, !PluginMode))
 							Processed=TRUE;
 
 						if (!Processed || Key==KEY_CTRLSHIFTF4)
 						{
 							if (EnableExternal)
 							{
-								ProcessExternal(Opt.strExternalEditor,strFileName,PluginMode);
+								ProcessExternal(Opt.strExternalEditor, strFileName, !PluginMode);
+								Processed=TRUE;
 							}
 							else if (PluginMode)
 							{
@@ -1658,7 +1657,6 @@ int FileList::ProcessKey(int Key)
 								}
 							}
 						}
-
 					}
 					else
 					{
@@ -1666,19 +1664,20 @@ int FileList::ProcessKey(int Key)
 						                    (Key==KEY_ALTF3 && !Opt.ViOpt.UseExternalViewer)) &&
 						                   !Opt.strExternalViewer.IsEmpty();
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f3 */
-						BOOL Processed=FALSE;
 
-						if (Key==KEY_ALTF3 &&
-						        ProcessLocalFileTypes(strFileName,FILETYPE_ALTVIEW,PluginMode))
+						if (Key==KEY_ALTF3 && ProcessLocalFileTypes(strFileName, FILETYPE_ALTVIEW, !PluginMode))
 							Processed=TRUE;
-						else if (Key==KEY_F3 &&
-						         ProcessLocalFileTypes(strFileName,FILETYPE_VIEW,PluginMode))
+
+						else if (Key==KEY_F3 && ProcessLocalFileTypes(strFileName, FILETYPE_VIEW, !PluginMode))
 							Processed=TRUE;
 
 						if (!Processed || Key==KEY_CTRLSHIFTF3)
 						{
 							if (EnableExternal)
-								ProcessExternal(Opt.strExternalViewer,strFileName,PluginMode);
+							{
+								ProcessExternal(Opt.strExternalViewer, strFileName, !PluginMode);
+								Processed = TRUE;
+							}
 							else
 							{
 								NamesList ViewList;
@@ -1714,6 +1713,10 @@ int FileList::ProcessKey(int Key)
 								Modaling=FALSE;
 							}
 						}
+					}
+					if (Processed && PluginMode)
+					{
+						WaitForClose(strFileName);
 					}
 				}
 
@@ -2338,10 +2341,10 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 		}
 
 		if (EnableExec && SetCurPath() && !SeparateWindow &&
-		        ProcessLocalFileTypes(strFileName,FILETYPE_EXEC,PluginMode)) //?? is was var!
+		        ProcessLocalFileTypes(strFileName, FILETYPE_EXEC, !PluginMode)) //?? is was var!
 		{
 			if (PluginMode)
-				DeleteFileWithFolder(strFileName);
+				QueueDeleteOnClose(strFileName);
 
 			return;
 		}
@@ -2355,11 +2358,12 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTPANEL) && !PluginMode) //AN
 				CtrlObject->CmdHistory->AddToHistory(strFileName);
 
-			CtrlObject->CmdLine->ExecString(strFileName, PluginMode, SeparateWindow, true, false, false, RunAs);
+			CtrlObject->CmdLine->ExecString(strFileName,
+				SeparateWindow, true, false, false, RunAs);
 
 			if (PluginMode)
-				apiDeleteFile(strFileName);
-//				DeleteFileWithFolder(strFileName);
+				QueueDeleteOnClose(strFileName);
+
 		}
 		else if (SetCurPath())
 		{
@@ -2368,12 +2372,10 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			if (EnableAssoc &&
 			        !EnableExec &&     // не запускаем и не в отдельном окне,
 			        !SeparateWindow && // следовательно это Ctrl-PgDn
-			        ProcessLocalFileTypes(strFileName,FILETYPE_ALTEXEC, PluginMode)
-			   )
+			        ProcessLocalFileTypes(strFileName, FILETYPE_ALTEXEC, !PluginMode) )
 			{
 				if (PluginMode)
-					apiDeleteFile(strFileName);
-//					DeleteFileWithFolder(strFileName);
+					QueueDeleteOnClose(strFileName);
 
 				return;
 			}
@@ -2385,11 +2387,12 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 //					if (SeparateWindow || Opt.UseRegisteredTypes)
 					{
 						SetCurPath(); // OpenFilePlugin can change current path
-						ProcessGlobalFileTypes(strFileName, PluginMode, RunAs);
+						ProcessGlobalFileTypes(strFileName, RunAs, !PluginMode);
 					}
 
-//				if (PluginMode)
-//					DeleteFileWithFolder(strFileName);
+				if (PluginMode)
+					QueueDeleteOnClose(strFileName);
+
 			}
 
 			return;

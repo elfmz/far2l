@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "execute.hpp"
 #include "fnparce.hpp"
 #include "strmix.hpp"
+#include "dirmix.hpp"
 
 struct FileTypeStrings
 {
@@ -120,6 +121,7 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr)
 	return(Width);
 }
 
+
 /* $ 14.01.2001 SVS
    Добавим интелектуальности.
    Если встречается "IF" и оно выполняется, то команда
@@ -134,7 +136,7 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr)
    - Убрал непонятный мне запрет на использование маски файлов типа "*.*"
      (был когда-то, вроде, такой баг-репорт)
 */
-bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
+bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 {
 	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
 	MenuItemEx TypesMenuItem;
@@ -280,9 +282,8 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 
 			if (!isSilent)
 			{
-				CtrlObject->CmdLine->ExecString(strCommand,AlwaysWaitFinish, false, false, ListFileUsed);
-
-				if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTFARASS) && !AlwaysWaitFinish) //AN
+				CtrlObject->CmdLine->ExecString(strCommand, false, false, ListFileUsed);
+				if (CanAddHistory && !(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTFARASS)) //AN
 					CtrlObject->CmdHistory->AddToHistory(strCommand);
 			}
 			else
@@ -291,14 +292,14 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 				SaveScreen SaveScr;
 				CtrlObject->Cp()->LeftPanel->CloseFile();
 				CtrlObject->Cp()->RightPanel->CloseFile();
-				Execute(strCommand,AlwaysWaitFinish, 0, 0, 0, ListFileUsed, true);
+				Execute(strCommand, 0, 0, 0, ListFileUsed, true);
 #else
 				// здесь была бага с прорисовкой (и... вывод данных
 				// на команду "@type !@!" пропадал с экрана)
 				// сделаем по аналогии с CommandLine::CmdExecute()
 				{
 					RedrawDesktop RdrwDesktop(TRUE);
-					Execute(strCommand,AlwaysWaitFinish, 0, 0, 0, ListFileUsed);
+					Execute(strCommand, 0, 0, 0, ListFileUsed);
 					ScrollScreen(1); // обязательно, иначе деструктор RedrawDesktop
 					// проредравив экран забьет последнюю строку вывода.
 				}
@@ -315,22 +316,22 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool AlwaysWaitFinish)
 	}
 
 	if (!strListName.IsEmpty())
-		apiDeleteFile(strListName);
+		QueueDeleteOnClose(strListName);
 
 	if (!strAnotherListName.IsEmpty())
-		apiDeleteFile(strAnotherListName);
+		QueueDeleteOnClose(strAnotherListName);
 
 	return true;
 }
 
 
-void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool RunAs)
+void ProcessGlobalFileTypes(const wchar_t *Name, bool RunAs, bool CanAddHistory)
 {
 	FARString strName(Name);
 	EscapeSpace(strName);
-	CtrlObject->CmdLine->ExecString(strName, AlwaysWaitFinish, true, true, false, false, RunAs);
+	CtrlObject->CmdLine->ExecString(strName, true, true, false, false, RunAs);
 
-	if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTWINASS) && !AlwaysWaitFinish)
+	if (CanAddHistory && !(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTWINASS))
 	{
 		CtrlObject->CmdHistory->AddToHistory(strName);
 	}
@@ -339,7 +340,7 @@ void ProcessGlobalFileTypes(const wchar_t *Name, bool AlwaysWaitFinish, bool Run
 /*
   Используется для запуска внешнего редактора и вьювера
 */
-void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool AlwaysWaitFinish)
+void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHistory)
 {
 	FARString strListName, strAnotherListName;
 	FARString strFullName;
@@ -354,24 +355,28 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool AlwaysWai
 		//BUGBUGBUGBUGBUGBUG !!! Same ListNames!!!
 		SubstFileName(strFullExecStr,strFullName,&strListName,&strAnotherListName);
 
-		CtrlObject->ViewHistory->AddToHistory(strFullExecStr,(AlwaysWaitFinish&1)+2);
+		if (CanAddHistory) {
+			CtrlObject->ViewHistory->AddToHistory(strFullExecStr, 1 | 2);
+		}
 
 		if (strExecStr.At(0) != L'@')
-			CtrlObject->CmdLine->ExecString(strExecStr,AlwaysWaitFinish, 0, 0, ListFileUsed, true);
+		{
+			CtrlObject->CmdLine->ExecString(strExecStr, 0, 0, ListFileUsed, true);
+		}
 		else
 		{
 			SaveScreen SaveScr;
 			CtrlObject->Cp()->LeftPanel->CloseFile();
 			CtrlObject->Cp()->RightPanel->CloseFile();
-			Execute(strExecStr.CPtr()+1,AlwaysWaitFinish, 0, 0, 0, ListFileUsed);
+			Execute(strExecStr.CPtr()+1, 0, 0, 0, ListFileUsed);
 		}
 	}
 
 	if (!strListName.IsEmpty())
-		apiDeleteFile(strListName);
+		QueueDeleteOnClose(strListName);
 
 	if (!strAnotherListName.IsEmpty())
-		apiDeleteFile(strAnotherListName);
+		QueueDeleteOnClose(strAnotherListName);
 
 }
 

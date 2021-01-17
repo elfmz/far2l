@@ -387,8 +387,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _shell_pid, _forked_proc_pid;
 	std::string _slavename;
-	bool _seeking_start;
-	bool _seeking_end;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
 	VTFar2lExtensios *_far2l_exts = nullptr;
@@ -400,9 +398,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	
 	int ForkAndAttachToSlave(bool shell)
 	{
+		// avoid locking current directory
+		std::string home = GetMyHome();
+
 		int r = fork();
 		if (r != 0)
 			return r;
+
+		if (chdir(home.c_str()) != 0) {
+			chdir("/");
+		}
 
 		signal(SIGHUP, SIG_DFL);
 		signal(SIGINT, SIG_DFL);
@@ -1059,14 +1064,14 @@ static bool shown_tip_exit = false;
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
         _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
-        _shell_pid(-1), _forked_proc_pid(-1), _seeking_start(false), _seeking_end(false), _keypad(0)
+        _shell_pid(-1), _forked_proc_pid(-1), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())
 			return;
 	}
 	
-	~VTShell()
+	virtual ~VTShell()
 	{
 		fprintf(stderr, "~VTShell\n");
 		Shutdown();

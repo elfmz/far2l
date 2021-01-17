@@ -44,7 +44,7 @@ class WinPortFSNotify : public WinPortEvent
 	{
 		int w = -1;
 #if defined(__APPLE__) || defined(__FreeBSD__)
-		w = open(path, O_RDONLY);
+		w = open(path, O_RDONLY | O_CLOEXEC);
 		if (w != -1) {
 			_events.emplace_back();
 			EV_SET(&_events.back(), w, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_ONESHOT,

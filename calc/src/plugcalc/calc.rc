@@ -1,0 +1,37 @@
+#pragma code_page(65001)
+#include <windows.h>
+#include "version.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+VS_VERSION_INFO VERSIONINFO
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS 0
+
+#ifdef _DEBUG
+| VS_FF_PRERELEASE | VS_FF_DEBUG
+#endif
+
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+
+FILEVERSION PLUGIN_VER_MAJOR,PLUGIN_VER_MINOR,PLUGIN_VER_PATCH,0
+PRODUCTVERSION PLUGIN_VER_MAJOR,PLUGIN_VER_MINOR,PLUGIN_VER_PATCH,0
+
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription", PLUGIN_DESC
+            VALUE "FileVersion", PLUGIN_VERSION
+            VALUE "LegalCopyright", PLUGIN_COPYRIGHT
+            VALUE "OriginalFilename", PLUGIN_FILENAME
+            VALUE "ProductName", PLUGIN_NAME
+            VALUE "ProductVersion", PLUGIN_VERSION
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END

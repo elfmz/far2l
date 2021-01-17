@@ -1,0 +1,249 @@
+                              PlugIn Calculator
+                          -----===============-----
+    *** This is not a new version of Calculator, just some modifications made
+    *** by another author. All copyrights of the code, except the new modifications
+    *** belong to the original author (Cail Lomecb).
+
+--== Ver 3.25 ==--
+      * Support Windows 2000 and WindowsXP added
+
+
+--== Ver 3.24 ==--
+      * Remove Far2 support
+      * Fixed: slow redraw in dialogs
+      * Fixed: settings didn`t save
+      * Now plugin on https://github.com/FarPlugins/Calculator
+	  
+	  
+--== Ver 3.23 ==--
+      * Fixed: version
+
+
+--== Ver 3.22 ==--
+    - General:
+      * Update to current Far3 version (stable build 2927+) 
+      * Update of ttmath library with some fixes
+      * Fixed: cursor moved in file panel after the Calculator was closed by pressing ESC
+
+
+--== Ver 3.21 ==--
+    - General:
+      * Update to current Far3 version (dev.build 2728+) 
+      * Fixed work with large console buffer (far /W)
+      * Fixed: cursor dissapeared after pressing Enter
+      * Fixed: error text "expression error" is now cleared correctly after pressing Enter
+      * Fixed: plugin crashed on _numer(NaN) or _denom(NaN)
+      * Fixed: arith. precision problems in some cases ("30000-6649.23-23350.77")
+      * Fixed command line and editor expression insertion for Far3
+      * Fixed: minor fixes for English names and translations
+      + If all conversion units removed, the starting menu doesn't appear any more
+
+
+--== Ver 3.20 ==--
+    !ATTENTION! 
+      File calcset.csr is heavily modified in this version! 
+      Please save all your changes from this file before updating plugin version!
+      Now all user changes are recommended to place in user.csr file (one should be created)
+    - General:
+      * Fixed: minimal required Far version is corrected; some users of early versions had problems.
+      * Fixed: empty or erroneous functions (<func syntax="f"/>) are no longer cause faults and are simply not used.
+      * Fixed: for Russian language, menu title "Dialogs" is translated.
+      * Fixed: units conversion dialog wasn't shown correctly for certain console window size.
+      * Fixed: the last digit of exponent part wasn't visible in some cases.
+      * Fixed: unary operators didn't work sometimes.
+      * Fixed: call of a binary operator from the same unary one (<op syntax="/" mean="1 / op1"/>).
+      * Fixed: symbol _char(38) wasn't displayed.
+      * Fixed: integer calculation overflow ("factor(1e145)").
+      * Fixed: non-argument functions behavior ("rnd()").
+      * Fixed: plugin crashed when an addon was added in between the plugin calls.
+      * All results are cleared now when the edit box is empty.
+      * Symbol "=" at the end of expression for calculation in editor is now processed correctly.
+      * Calculator language is now taken from FAR settings (but it can be overridden by <lang id=""/> in user.csr); 
+        also other languages are supported by creating language files (.lng) with 2-letter language codes inside.
+      * User modifiers Kb,Mb,Gb,Tb are now case-insensitive.
+      * Functions kelv() and sec() corrected, user functions lb(), gtg(), gctg(), gsec(), gcosec() added.
+      * Functions arcsin() and arccos() corrected, built-in function _cos() added.
+      * Function _rnd() corrected, now it returns the real pseudo-random number.
+      + Function curt() added for cubic root (with sign).
+      + Added date/time functions (jd, jdf, jdg, jdgf, utc, ansid, ratadie).
+      + Added built-in functions for float/double conversion to binary IEEE-754 format and vice-versa, 
+        and also for 'Inf' and 'NaN' numbers: _f2b(), _d2b(), _b2f(), _b2d(), _finf(), _fnan().
+      + Basic arithmetic operations for float and double types is now supported and Inf/NaN is displayed.
+      * Overflow errors are displayed when converting too large(small) numbers to float/double.
+      * For numerals, 'format' parameter is now used instead of 'radix', with unified syntax for numerals and addons.
+      + "Lazy" arguments can be used in regular expressions for numerals ("/([0-9])([0-9])?/").
+      * Big numbers library (ttmath) version updated with some bugfixes, assembler optimization enabled (for x86)
+      * Code refactoring caused by Far API (compatible with both FAR 2.0 and FAR 3.0).
+      + Added file user-examples.csr with examples of some additional addons, operators, numerals etc.
+    - Settings dialog:
+      + Calculator settings dialog added.
+      + Option "Show results during the input" which can be turned off.
+      + Case-sensitive input option.
+      + Pad zeroes for fixed-size numbers option (_char,_short,_int, etc.).
+      + Autocomplete input option (turned off by default).
+      + Delimiter symbols definition:
+        + decimal point (dot/comma);
+        + function arguments delimiter (comma, semicolon);
+        + digit group delimiter (for main calculator mode only);
+        + regional settings usage option for point/comma/digit groups (turned off by default).
+    - Addons:
+      + Built-in addons (dec/hex/oct/bin/exp) moved to calcset.csr, and can be managed (disable, change order).
+      + New parameter 'format' is added to addons, to set conversion base (radix) and addon format
+        (see examples in calcset.csr and user-examples.csr).
+      + Addon math errors are now displayed in their output fields.
+    - Units converter and CSR files structure:
+      + Other CSR-files inclusion support added to calcset.csr (format: <xi:include href="file.scr"/>).
+      + All unit conversion dialogs removed from calcset.csr and moved to separate files in 'bin/units/' folder.
+      + All conversion units revised and supplemented according to suggestions from users.
+      + New conversion dialogs added for temperature, dates and information measure
+        (units/temperature.csr, units/date.csr and units/info.csr).
+      + Conversion dialogs/sets redefinition is now possible (for standard sets correction from the user files).
+      + Constant math expression can be now specified as a multiplier ('scale').
+      + Complex math expressions can be used instead of multipliers (using output="" and input=""), 
+        see examples in the files units/temper.csr and units/date.csr.
+      + Addon formatting rules are used for expressions in the output="" (curly brackets).
+      + Column width selection method improved for conversion dialogs.
+    - Fractions support: (EXPERIMENTAL! rational numbers approximations used; see examples in user-examples.csr)
+      + Repeating decimals with ellipsis (new format="rep" for addon and numeral).
+      + Finite continued fractions in canonical form of [a,b,c,d] (new format="con" for addon and numeral).
+      + New built-in functions _numer(op0),_denom(op0) added for vulgar mixed fractions.
+      + Built-in function _gcd(op0,op1) added for the greatest common divisor.
+      + User functions added: 'gcd' (greatest common divisor) and 'lcm' (least common multiple).
+
+
+--== Ver 3.10 ==--
+    - Numbers and expressions:
+      + New expression parser implemented - no more bugs like "0x1e+0x2e",
+        but the calc is more slow on extra-large expressions.
+      + New numbers parser with regular expressions (regexps) and numeral systems implemented - numbers format is now set
+        with <numeral> tag in the file calcset.csr (see examples there). Considering that, postfix operators
+        aren't supported no more.
+      + 'Priority' parameter added for operators.
+      + New unified operator list in the file calcset.csr
+      + Basic bit operations shifted to BigNumbers (to do like this: 1<<100)
+      * Rotation bit shift operator (_ror, _rol) are now used only with fixed-length types (_byte,_ushort,_uint,...)
+      * Fixed-length numbers (_byte,_ushort,_uint,...) in bin/oct/hex format are displayed padded with zeroes by default
+        (can be disabled in the calculator properties in the registry: padZeroes).
+      * Fixed large _int64 numbers
+    - Addons:
+      + A spesial tag <addon> is now used for addons in the file calcset.csr
+      + Addon output formatting added - all calculations are done only for braces {} contents,
+        the rest is shown in dialog's field. Examples are in calcset.csr (including format 'hh:mm:ss').
+      * Fixed: if erroneous message entered, the addon field names were erased.
+    - Units converter dialog:
+      + Units conversion precision increased (not not less then Converber utility has).
+      + When switching input fields, the corresponding numbers are selected (highlighted) for easy input of new numbers.
+      * Light of speed multiplier value corrected; precision of some multipliers and constants increased.
+    - Miscellaneous:
+      + Window size changes on-the-fly when console size changes (the larger the window, the more digits shown).
+      + When Enter is pressed on an error, the resulting string is now selected for easy input of new expression.
+      + When Enter is pressed on the large expressions, the result is shown from the first digit, if possible.
+      + Expression limit is now set explicitly - 1024 characters (was 512 chars implicitly).
+      + "Gray Enter" on numerical keypad now works the same as an ordinary Enter.
+      + Default type name "double" replaced by "big number", and '_double' can be used again for type conversion.
+      + For '_char' type the corresponding character symbol is now displayed
+      + Factorial has become a _factor() function, not operator.
+      + Hyperbolic sine and cosine functions renamed to 'sinh' and 'cosh' (instead of 'sh' and 'ch') 
+        in order to avoid collisions with hex number 'ch'
+      * Fixed: current selected radio-button was not shown when dialog was called in sequence.
+	  + Added VERSION_INFO.
+
+
+--== Ver 3.01b ==--
+    *** This is not a new version of Calculator, just some modifications made
+    *** by another author. All copyrights of the code, except the new modifications
+    *** belong to the original author (Cail Lomecb).
+    Compatibility with FAR 2.0 and higher only (UNICODE version).
+    Big numbers support added (192 bits for mantissa and 32 bits for exponent)
+      for all math operations and numeral conversions.
+    Addons supported - user-defined expressions are now added to the list -
+      See 'Addons' section in calcset.csr (now in UNICODE format).
+
+
+
+
+--== Ver 3.0 ==--
+
+   Compatibility with FAR 1.70b3 and higher only.
+     In b1 and b2 works with bugs.
+   All dialogs support codes are removed - now far
+     draw all dialogs himself.
+   Convertation dialogs now support multilanguage settings.
+     Pressing Ctrl-Enter in convertation dialog moves current value
+     from editline into calculator's editline. Pressing it in
+     calculator moves result into command line in far shell.
+   Calcset.csr fixed with XML standard, has DTD now.
+   Some constants names changed:
+     exp   - exponent
+     light - light speed
+     grav  - gravitation
+     New combinatorial function CNK.
+
+
+--== Ver 2.9 ==--
+
+   Now you can use dialogs for convertations of values (in
+   russian language). You can call them from main menu or
+   directry from calculator with F2 key.
+   New parser. now you can use different number types,
+   formats and etc.
+   Functions Integral and Derived were removed.
+   Some bugs in codes and defines are fixed.
+
+
+--== Ver 2.8 ==--
+
+   Changed Parser Structure. Now you can define, redefine syntax
+     and meaning of any operator, constant or function in
+     CalcSet.Csr file.
+   Moving Calc's window.
+   Added mouse support.
+   Increased calculations precision.
+
+
+--== Ver 2.65 ==--
+
+   With yours requests was changed work in Far's Editor.
+     Now it works alittle diffent: You must use
+     macroses Alt=, AltH, AltO, AltB - of course, you can
+     reassign them.
+   Also shortcut keys was added.
+
+
+--== Ver 2.6 ==--
+
+   Added work with user Functions/Constants.
+   Changed Expression Parser.
+
+
+--== Ver 2.05 ==--
+
+   History is avaiable now - Ctrl-Down.
+   Sign function.
+   Suffix output while pressing Enter.
+   Syffixes Kb Mb Gb Tb - Translation to Kilo, Mega,
+     Giga and Tera bytes.
+   Added Far 1.6 support. You can use Calc in Editor window.
+   Cels and Fahr functions.
+
+
+--== Ver 2.01 ==--
+
+Functions with multiple arguments.
+   Some new functions.
+   Now 19 operators "||","&&","|","^","&","!=","==",">>","<<",
+                    ">","<","+","-","*","/","%","pow","~","!"
+       18 functions "Sin","Cos","Tg","Ctg","ArcTg","ArcSin",
+                    "ArcCos","Sqrt","Sqr","Ln","Lg","Log","Rad",
+                    "Grad","Sum","Avr","Integral","Derived"
+
+   Parser Changes.
+   Nice-looking Error messages.
+
+
+--== Ver 1.0b ==--
+
+  Now Calc uses Far's colors.
+  Added Calc Config.
+  Normal Screen Saving.
+  Tested in Far 1.51 и 1.52.

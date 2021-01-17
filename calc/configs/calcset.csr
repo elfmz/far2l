@@ -1,0 +1,375 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+<!--
+    Calculator's Syntax Resource Description
+    Coding, Entering - Cail Lomecb (c) 1998-2000, uncle-vunkis (c) 2009-2012.
+-->
+<!--
+    // Operators (in order of precedence)
+    _lor, _land, _or, _xor, _and, _neq, _eq, _gt, _lt, _shr, _shl, _ror, _rol,
+    _minus, _plus, _mod, _div, _mul, _pow, _not, _lnot
+
+    // Functions
+    _factor, _frac, _floor, _ceil, _sin, _cos, _tan, _arctan, _ln, _rnd,
+    _numer, _denom, _gcd, _f2b, _d2b, _b2f, _b2d, _finf, _fnan, _if
+
+    // Functional operators
+    _int64, _uint64, _int, _uint, _short, _ushort,
+    _char, _byte, _double, _float
+-->
+
+<!--
+    NOTICE! Starting from Calc version 3.20, all user settings should be done in a separate file user.csr!
+    ВНИМАНИЕ! Начиная с Calc версии 3.20, все пользовательские настройки должны делаться в файле user.csr!
+-->
+
+<calc version="3.20">
+<!-- 
+    This is a Use-Set list. You can add your own sets in the file user.csr (you should create it).
+    Это список используемых наборов. Вы можете добавлять ваши собственные наборы в файле user.csr (вам нужно его создать).
+-->
+    <use set="DefaultConsts"/>
+    <use set="DefaultNumerals"/>
+    <use set="DefaultAddons"/>
+    <use set="DefaultOperators"/>
+    <use set="DefaultFuncs"/>
+    
+    <use set="FractionFuncs"/>
+    
+    <use set="DateFuncs"/>
+    <use set="DateNumerals"/>
+    
+    <use set="DefaultDialogs"/>
+
+<!-- This is default language to use with extended dialogs
+     Здесь может быть указан идентификатор языка по умолчанию, который
+     будет использоваться с расширенными диалогами -->
+   <!--<lang id="ru"/>-->
+   <!--<lang id="en"/>-->
+
+<!-- Constants
+     Константы -->
+    <set name="DefaultConsts">
+        <const syntax="pi"    mean="3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881097566593344612847564823378678316527120190914564856692"/>
+        <const syntax="exp"   mean="2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427427466391932"/>
+        <const syntax="light" mean="2.99792458e8"/>
+        <const syntax="grav"  mean="9.80665"/>
+        <const syntax="NaN"   mean="_fnan()"/>
+        <const syntax="Inf"   mean="_finf()"/>
+    </set>
+
+<!-- Numerals (syntax='regexp match pattern', format=(see addon) mean=expression where ops are match results)
+     Представления чисел -->
+    <set name="DefaultNumerals">
+        <numeral syntax="/0[xX]([0-9A-Fa-f\ ]+)/" format="16" mean="op0"/>
+        <numeral syntax="/([0-9A-Fa-f\ ]+)[hH$]/" format="16" mean="op0"/>
+        <numeral syntax="/([0-1\ ]+)[bB]/" format="2" mean="op0"/>
+        <numeral syntax="/([0-7\ ]+)[oO]/" format="8" mean="op0"/>
+        <numeral syntax="/([0-9\ ]+)[dD]/" format="10" mean="op0"/>
+        <numeral syntax="/([0-9\ ]*\.?[0-9]*?[eE][\+\-]?[0-9]+)/" format="10" mean="op0"/>
+        <numeral syntax="/([0-9\ ]*\.[0-9]*)/" format="10" mean="op0"/>
+        <numeral syntax="/([1-9][0-9\ ]*)/" format="10" mean="op0"/>
+        <numeral syntax="/(0[0-7\ ]+)/" format="8" mean="op0"/> <!-- you may remove this one if you want -->
+
+        <numeral syntax="/([0-9\ ]+\.?[0-9]*)kb/" format="10" mean="op0*1024"/>
+        <numeral syntax="/([0-9\ ]+\.?[0-9]*)Mb/" format="10" mean="op0*1048576"/>
+        <numeral syntax="/([0-9\ ]+\.?[0-9]*)Gb/" format="10" mean="op0*1073741824"/>
+        <numeral syntax="/([0-9\ ]+\.?[0-9]*)Tb/" format="10" mean="op0*1099511627776"/>
+
+    </set>
+
+    <!-- These are calc outputs.
+         Addon Usage:
+           syntax = displayed addon name
+           mean   = "regular text {math.expressions} regular text"
+           format = radix value (2,8,10,16) or 
+                    "exp" = exponential format (for addons only)
+                    "rep" = repeating decimal format
+                    "con" = continued fraction format
+                    Default format is "10".
+                    Also additional flags are available (comma separated):
+                    - for output:
+                      "delim" = use current digit delimiter (depends on settings)
+    -->
+    <set name="DefaultAddons">
+        <addon syntax="&amp;dec" mean="{op0}" format="10,delim"/>
+        <addon syntax="&amp;hex" mean="{op0}" format="16,delim"/>
+        <addon syntax="&amp;oct" mean="{op0}" format="8,delim"/>
+        <addon syntax="&amp;bin" mean="{op0}" format="2,delim"/>
+        <addon syntax="e&amp;xp" mean="{op0}" format="exp,delim"/>
+    </set>
+
+
+<!-- Operators - C-style and Math-style
+     Операторы - C-стилизованные и Математические -->
+    <set name="DefaultOperators">
+        <!-- Bitwise or, and, xor
+             Побитовые или, и, Исключающее или -->
+        <op syntax="|"          priority="2" mean="op0 _or op1"/>
+        <!--<op syntax="or"         priority="2" mean="op0 _or op1"/>-->
+
+        <op syntax="^"          priority="3" mean="op0 _xor op1"/>
+        <op syntax="xor"        priority="3" mean="op0 _xor op1"/>
+
+        <op syntax="&amp;"      priority="4" mean="op0 _and op1"/>
+        <op syntax="and"        priority="4" mean="op0 _and op1"/>
+
+        <!-- Logical or, and
+            Логические или, и -->
+        <op syntax="||"         priority="1" mean="op0 _lor op1"/>
+        <op syntax="lor"        priority="1" mean="op0 _lor op1"/>
+     
+        <op syntax="&amp;&amp;" priority="1"  mean="op0 _land op1"/>
+        <op syntax="land"       priority="1"  mean="op0 _land op1"/>
+
+        <!-- Comparsion
+             Сравнение -->
+        <op syntax="=="         priority="5" mean="op0 _eq op1"/>
+        <op syntax="!="         priority="5" mean="op0 _neq op1"/>
+        <op syntax="&lt;>"      priority="5" mean="op0 _neq op1"/>
+
+        <op syntax=">="         priority="6" mean="(op0 _gt op1) _lor (op0 _eq op1)"/>
+        <op syntax="&lt;="      priority="6" mean="(op0 _lt op1) _lor (op0 _eq op1)"/>
+        <op syntax=">"          priority="6" mean="op0 _gt op1"/>
+        <op syntax="&lt;"       priority="6" mean="op0 _lt op1"/>
+        
+        <!-- Shift, Cycle shift
+             Сдвиг, циклический сдвиг -->
+        <op syntax=">>"         priority="7" mean="op0 _shr op1"/>
+        <op syntax="shr"        priority="7" mean="op0 _shr op1"/>
+
+        <op syntax="&lt;&lt;"   priority="7" mean="op0 _shl op1"/>
+        <op syntax="shl"        priority="7" mean="op0 _shl op1"/>
+
+        <op syntax="ror"        priority="7" mean="op0 _ror op1"/>
+        <op syntax="rol"        priority="7" mean="op0 _rol op1"/>
+
+        <!-- Additive
+             Аддитивные -->
+        <op syntax="+"          priority="8" mean="op0 _plus op1"/>
+        <op syntax="-"          priority="8" mean="op0 _minus op1"/>
+
+        <!-- Multiplicative
+             Мультипликативные -->
+        <op syntax="*"          priority="9" mean="op0 _mul op1"/>
+        <op syntax="/"          priority="9" mean="op0 _div op1"/>
+        <op syntax="\"          priority="9" mean="_floor(op0 _div op1)"/>
+        <op syntax="%"          priority="9" mean="op0 _mod op1"/>
+        <op syntax="mod"        priority="9" mean="op0 _mod op1"/>
+
+        <!-- Power
+             Возведение в степень -->
+        <op syntax="pow"        priority="10" mean="op0 _pow op1"/>
+        <op syntax="^^"         priority="10" mean="op0 _pow op1"/>
+        <op syntax="**"         priority="10" mean="op0 _pow op1"/>
+
+        <!-- Unary   - logical, bitwise not
+             Унарные - логическое, побитовое не -->
+        <op syntax="!"    mean="_lnot op1"/>
+        <op syntax="~"    mean="_not  op1"/>
+        <op syntax="not"  mean="_lnot op1"/>
+
+    </set>
+
+<!-- Functions
+     Функции   -->
+    <set name="DefaultFuncs">
+        <!-- Fraction, Floor, Ceil and Round of Float number
+             Дробная часть, округление сверху, снизу, обычное -->
+        <func syntax="frac"   mean="_frac(op0)"/>
+        <func syntax="floor"  mean="_floor(op0)"/>
+        <func syntax="ceil"   mean="_ceil(op0)"/>
+        <func syntax="round"  mean="_if( frac(op0) >= 0.5, _if(op0>0, ceil(op0), floor(op0)), _if(op0>0, floor(op0), ceil(op0)) )"/>
+
+        <!-- Sign Function
+            Функция знака -->
+        <func syntax="sign"   mean="_if( op0 > 0, 1, _if(op0 == 0, 0, -1) )"/>
+
+        <!-- SquareRoot, CubicRoot, Square and Absolute Value
+             Корень квадратный, Корень кубический, квадрат и абсолютное значение -->
+        <func syntax="sqrt"   mean="op0 _pow _float(0.5)"/>
+        <func syntax="curt"   mean="abs(op0) _pow (1/3) * sign(op0)"/>  
+        <func syntax="sqr"    mean="op0 * op0"/>
+        <func syntax="abs"    mean="_if(op0 >= 0, op0, -op0)"/>
+
+        <!-- Natural Logarithm, Logarithm by 10, and simple logarithm
+            Натуральный, десятичный и простой логарифм -->
+        <func syntax="ln"     mean="_ln(op0)"/>
+        <func syntax="lg"     mean="_ln(op0) / _ln(10)"/>
+        <func syntax="lb"     mean="_ln(op0) / _ln(2)"/>
+        <func syntax="log"    mean="_ln(op0) / _ln(op1)"/>
+
+        <!-- Exponent and Factorial
+            Экспонента и Факториал -->
+        <func syntax="exp"    mean="exp _pow op0"/>
+        <func syntax="factor" mean="_factor(op0)"/>
+
+        <!-- Random Number   (0..1)
+            Случайное число (0..1) -->
+        <func syntax="rnd"    mean="_rnd()"/>
+
+        <!-- Trigonometric functions
+             Тригонометрические функции -->
+        <func syntax="sin"    mean="_sin(op0)"/>
+        <func syntax="cos"    mean="_cos(op0)"/>
+        <func syntax="tg"     mean="_tan(op0)"/>
+        <func syntax="tan"    mean="_tan(op0)"/>
+        <func syntax="ctg"    mean="1/_tan(op0)"/>
+        <func syntax="sec"    mean="1/_cos(op0)"/>
+        <func syntax="cosec"  mean="1/_sin(op0)"/>
+
+        <!-- Inversed Trigonometric functions
+             Обратные тригонометрические функции -->
+        <func syntax="arctg"  mean="_arctan(op0)"/>
+        <func syntax="arcctg" mean="pi/2 - _arctan(op0)"/>
+        <func syntax="arcsin" mean="_if(abs(op0)==1, op0*0.5*pi, _arctan(op0 / sqrt(_if(abs(op0)==1, 1, 1-op0*op0))))"/>
+        <func syntax="arccos" mean="_if(op0==-1, pi, 2*_arctan(sqrt((1-op0) / _if(op0==-1, 1, 1+op0))))"/>
+
+        <!-- Hyperbolic functions
+             Гиперболические функции -->
+        <func syntax="sinh"   mean="(exp _pow op0  _minus  exp  _pow (-op0))/2"/>
+        <func syntax="cosh"   mean="(exp _pow op0  _plus   exp  _pow (-op0))/2"/>
+        <func syntax="tanh"   mean="sinh(op0) / cosh(op0)"/>
+        <func syntax="cth"    mean="cosh(op0) / sinh(op0)"/>
+
+        <!-- Inversed Hyperbolic functions
+             Обратные Гиперболические функции -->
+        <func syntax="arsh"   mean="_ln(op0 + sqrt(1 _plus op0 _pow 2))"/>
+        <func syntax="arch"   mean="_ln(op0 + sqrt(op0 _pow 2 _minus 1))"/>
+        <func syntax="arth"   mean="0.5 * _ln((1+op0)/(1-op0))"/>
+        <func syntax="arcth"  mean="0.5 * _ln((1+op0)/(op0-1))"/>
+
+        <!-- Condition
+             Условие -->
+        <func syntax="if"    mean="_if(op0, op1, op2)"/>
+
+        <!-- From Radians to Degrees, From Degrees to Radians
+            Из Радиан в Градусы, Из Градусов в Радианы -->
+        <func syntax="deg"    mean="(op0 * 180) / pi"/>
+        <func syntax="rad"    mean="(op0 * pi) / 180"/>
+
+        <!-- From Fahrenheit to Celsius, From Celsius to Fahrenheit
+            Из Шкалы Фаренгейта в Цельсия, и наоборот -->
+        <func syntax="cels"   mean="(op0 - 32)*5/9"/>
+        <func syntax="fahr"   mean="32 + op0*9/5"/>
+        <func syntax="kelv"   mean="273.15 + op0"/>
+
+        <!-- Degrees sine and cosine
+            Синус и косинус в градусах -->
+        <func syntax="gsin"   mean="sin(rad(op0))"/>
+        <func syntax="gcos"   mean="cos(rad(op0))"/>
+        <func syntax="gtg"    mean="_tan(rad(op0))"/>
+        <func syntax="gctg"   mean="1/_tan(rad(op0))"/>
+        <func syntax="gsec"   mean="1/_sin(rad(pi/2 - op0))"/>
+        <func syntax="gcosec" mean="1/_sin(rad(op0))"/>
+
+
+        <!-- Combinatoric
+            Комбинаторика -->
+        <func syntax="CNK"    mean="_factor(op1) _div (_factor(op0) _mul (_factor(op1 _minus op0)))"/>
+    </set>
+
+<!-- Fractions
+     Дроби -->
+    <set name="FractionFuncs">
+        <!-- Greatest common divisor (GCD)
+             Наибольший общий делитель (НОД) -->
+        <func syntax="gcd"    mean="_gcd(op0, op1)"/>
+
+        <!-- Least common multiple (LCM)
+             Наименьшее общее кратное (НОК) -->
+        <func syntax="lcm"    mean="abs(_floor(op0)*_floor(op1))/_if(op0==0 _lor op1==0,1,_gcd(op0, op1))"/>
+    </set>
+
+<!-- Date/Time functions
+     Функции даты/времени -->
+    <set name="DateFuncs">
+        <func syntax="jdny"    mean="op0+4800-(14-op1)\12"/>
+
+        <!-- Julian Day Number (Julian calendar)
+             Номер юлианского дня (Юлианский календарь) -->
+        <func syntax="jd"      mean="op2+(153*(op1+12*((14-op1)\12)-3)+2)\5+365*jdny(op0,op1)+jdny(op0,op1)\4-32083"/>
+
+        <!-- Julian Date with fractional time (Julian calendar), not counting leap seconds
+             Номер юлианского дня c дробным временем (Юлианский календарь), без секунд координации -->
+        <func syntax="jdf"     mean="jd(op0,op1,op2)+(op3-12)/24+op4/1440+op5/86400"/>
+
+        <!-- Julian Day Number (Gregorian calendar)
+             Номер юлианского дня (Григорианский календарь) -->
+        <func syntax="jdg"     mean="jd(op0,op1,op2)-jdny(op0,op1)\100+jdny(op0,op1)\400+38"/>
+
+        <!-- Julian Date with fractional time (Gregorian calendar), not counting leap seconds
+             Номер юлианского дня c дробным временем (Григорианский календарь), без секунд координации -->
+        <func syntax="jdgf"    mean="jdg(op0,op1,op2)+(op3-12)/24+op4/1440+op5/86400"/>
+
+        <!-- Unix (POSIX) time
+             Unix-время -->
+        <func syntax="utc"     mean="(jdgf(op0,op1,op2,op3,op4,op5)-jdg(1970,1,1))*24*3600"/>
+
+        <!-- ANSI date
+             ANSI-дата -->
+        <func syntax="ansid"   mean="op0-jdg(1601,1,1)+0.5"/>
+
+        <!-- Rata die - The count of days of the Common Era (Gregorian)
+             Число дней с начала Нашей Эры по Григорианскому календарю (продлённому в прошлое) -->
+        <func syntax="ratadie" mean="op0-jdg(1,1,1)+0.5"/>
+
+        <!-- Aux. Date/Time functions
+             Вспомог. функции даты/времени -->
+        <func syntax="jdg_b"     mean="(4*(op0+32044)+3)\146097"/>
+        <func syntax="jdg_c"     mean="(op0+32044)-146097*jdg_b(op0)\4"/>
+        <func syntax="jdg_d"     mean="(4*jdg_c(op0)+3)\1461"/>
+        <func syntax="jdg_e"     mean="jdg_c(op0)-1461*jdg_d(op0)\4"/>
+        <func syntax="jdg_m"     mean="(5*jdg_e(op0)+2)\153"/>
+        
+        <func syntax="jdg_year"  mean="100*jdg_b(op0)+jdg_d(op0)-4800+jdg_m(op0)\10"/>
+        <func syntax="jdg_month" mean="jdg_m(op0)+3-12*(jdg_m(op0)\10)"/>
+        <func syntax="jdg_day"   mean="_floor(jdg_e(op0)-(153*jdg_m(op0)+2)\5+1)"/>
+
+        <func syntax="jd_d"      mean="(4*(op0+32082)+3)\1461"/>
+        <func syntax="jd_e"      mean="op0+32082-1461*jd_d(op0)\4"/>
+        <func syntax="jd_m"      mean="(5*jd_e(op0)+2)\153"/>
+        
+        <func syntax="jd_year"   mean="jd_d(op0)-4800+jd_m(op0)\10"/>
+        <func syntax="jd_month"  mean="jd_m(op0)+3-12*(jd_m(op0)\10)"/>
+        <func syntax="jd_day"    mean="_floor(jd_e(op0)-(153*jd_m(op0)+2)\5+1)"/>
+
+        <func syntax="jd_hour"   mean="_floor(_frac(op0)*24)"/>
+        <func syntax="jd_min"    mean="_floor(_frac(op0*24)*60)"/>
+        <func syntax="jd_sec"    mean="_floor(_frac(op0*1440)*60+0.5)"/>
+    </set>
+
+<!-- Date/Time numerals
+     Представления даты/времени -->
+    <set name="DateNumerals">
+
+        <!-- Julian date/time, ISO 8601
+             Юлианская дата/время, ISO 8601 -->
+        <numeral syntax="/JD([0-9]{4})-?([0-9]{1,2})-?([0-9]{1,2})[T ]?([0-9]{1,2})?:?([0-9]{1,2})?:?([0-9]{1,2})?Z?/" 
+                 format="10" mean="jdf(op0,op1,op2,op3,op4,op5)"/>
+
+        <!-- Gregorian date/time, ISO 8601
+             Грегорианская дата/время, ISO 8601 -->
+        <numeral syntax="/D([0-9]{4})-?([0-9]{1,2})-?([0-9]{1,2})[T ]?([0-9]{1,2})?:?([0-9]{1,2})?:?([0-9]{1,2})?Z?/" 
+                 format="10" mean="jdgf(op0,op1,op2,op3,op4,op5)"/>
+    </set>
+
+<!-- Here are defines for extended dialogs
+     Здесь описаны определения для расширенных диалогов -->
+    <set name="DefaultDialogs">
+        <xi:include href="units/length.csr"/>
+        <xi:include href="units/angle.csr"/>
+        <xi:include href="units/speed.csr"/>
+        <xi:include href="units/date.csr"/>
+        <xi:include href="units/time.csr"/>
+        <xi:include href="units/mass.csr"/>
+        <xi:include href="units/area.csr"/>
+        <xi:include href="units/volume.csr"/>
+        <xi:include href="units/pressure.csr"/>
+        <xi:include href="units/temperature.csr"/>
+        <xi:include href="units/info.csr"/>
+   </set>
+
+   <xi:include href="user.csr"/>
+
+</calc>

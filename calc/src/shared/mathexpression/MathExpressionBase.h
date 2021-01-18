@@ -303,7 +303,7 @@ protected:
     T eval( const T _args[] )
       { 
 		// XXX: sorry... needed for dynamic ops
-		if (!_args) return 0;
+//		if (!&_args) return 0;
 		P1 a1 = args[0]->eval(_args);
 		P1 a2 = args[1]->eval(_args);
 		MathOpNameCallback(fn_name);

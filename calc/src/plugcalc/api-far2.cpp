@@ -338,17 +338,20 @@ protected:
 
 CalcApi *CreateApiFar2(const struct PluginStartupInfo *psi)
 {
-	if (psi == NULL || psi->StructSize < sizeof(PluginStartupInfo) ||			// far container is too old
-						psi->AdvControl == NULL)
+	if (psi == NULL
+		|| (size_t)psi->StructSize < sizeof(PluginStartupInfo) // far container is too old
+		|| psi->AdvControl == NULL)
+	{
 		return NULL;
+	}
 
-	CalcApiFar2 *api = new CalcApiFar2();
+	CalcApiFar2 *api = new(std::nothrow) CalcApiFar2();
 
 	if (api == NULL)
 		return NULL;
 
 	memset(&api->Info, 0, sizeof(api->Info));
-	memmove(&api->Info, psi, (psi->StructSize > sizeof(api->Info)) ? sizeof(api->Info) : psi->StructSize);
+	memmove(&api->Info, psi, std::min((size_t)psi->StructSize, sizeof(api->Info)));
 
 	return api;
 }

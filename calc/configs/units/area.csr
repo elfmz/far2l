@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Площадь" en:name="Area units">
+  <text ru:name="Метрическая система" en:name="Metric system"/>
+    <field ru:name="Кв.миллиметр" en:name="Sq.millimeter" scale="0.000001"/>
+    <field ru:name="Кв.сантиметр [система СГС]" en:name="Sq.centimeter [SGS-system]" scale="0.0001"/>
+    <field ru:name="Кв.дециметр" en:name="Sq.decitimeter" scale="0.01"/>
+    <field ru:name="Кв.метр [СИ, система МТС]" en:name="Sq.meter [SI, MTS-system]" scale="1"/>
+    <field ru:name="Ар (сотка)" en:name="Ar" scale="100"/>
+    <field ru:name="Гектар" en:name="Hectare" scale="10000"/>
+    <field ru:name="Кв.километр" en:name="Sq.kilometer" scale="1000000"/>
+  <text ru:name="Британские и американские единицы" en:name="Britain and american units"/>
+    <field ru:name="Кв.миля" en:name="Sq.mile" scale="2589979.13715662"/>
+    <field ru:name="Акр" en:name="Acre" scale="4046.84240180722"/>
+    <field ru:name="Руд" en:name="Rud" scale="1011.7106004518"/>
+    <field ru:name="Кв.род" en:name="Sq.rud" scale="25.2927650112951"/>
+    <field ru:name="Кв.ярд" en:name="Sq.yard" scale="0.836"/>
+    <field ru:name="Кв.фут" en:name="Sq.foot" scale="0.0929027181314788"/>
+    <field ru:name="Кв.дюйм" en:name="Sq.inch" scale="0.000645157764801936"/>
+  <text ru:name="Русские единицы" en:name="Russian units"/>
+    <field ru:name="Кв.верста" en:name="Sq.versta" scale="1138062.24"/>
+    <field ru:name="Десятина" en:name="Dessiatina" scale="10925.397504"/>
+    <field ru:name="Четь" en:name="Chet" scale="5462.698752"/>
+    <field ru:name="Осьминник" en:name="Osminnik" scale="1365.674688"/>
+    <field ru:name="Кв.сажень" en:name="Sq.sazhen" scale="4.55224896"/>
+    <field ru:name="Кв.аршин" en:name="Sq.arshin" scale="0.50580544"/>
+    <field ru:name="Кв.фут" en:name="Sq.foot" scale="0.09290304"/>
+    <field ru:name="Кв.вершок" en:name="Sq.vershok" scale="0.0019758025"/>
+    <field ru:name="Кв.дюйм" en:name="Sq.inch" scale="0.00064516"/>
+    <field ru:name="Кв.линия" en:name="Sq.line" scale="0.0000064516"/>
+</dialog> 

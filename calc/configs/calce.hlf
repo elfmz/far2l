@@ -1,0 +1,203 @@
+.Language=English,English
+.PluginContents=Calculator
+
+@Contents
+$^#Calculator for FAR Manager. Version #
+$^#Copyright (c) 1998-2001 Igor Russkih#.
+$^#Copyright (c) 2009-2012 uncle-vunkis#.
+$^#Copyright (c) 2020 FarPlugins Team#.
+
+  PlugIn #Calculator# for #Far# Manager.
+
+
+  ~how you can use it?~@howuse@
+
+  ~technical information.~@techinfo@
+
+  ~advanced features~@addon@
+
+  ~about this program.~@prog@
+
+  ~about author.~@author@
+
+@howuse
+$^#How you can use it?#
+
+    So, if you didn't understand yet, I'll describe it for you:
+
+    In the #Input Line# you can enter any combination of digits,
+words and points, using rules, you know from school(#I hope#).
+Calculator will analyze this expression, and show you the result.
+    If you know little more, you can use extended features.
+They are listed in ~Technical Info~@TechInfo@. Pressing #Ctrl-Down# you
+will see history, where are saved recently used expressions.
+
+    The Left from the results you can choose shown number system
+with #RadioButtons#. You can press F2 in calculator or select item
+in calculator's main menu - you'll see contertation dialogs.
+There you can convert different values.
+
+
+@unders
+$#Wherefrom it Appears?#
+
+    A-a, I don't know really. So, if we can make a little decision
+that my Brains architecture is more complexes, than the Windows 95
+architecture, the ideas of those programs was created in parallel
+threads of my own brains.
+
+  Ou, where you can get #Windows Version#?
+  Visit ~http://www.uic.nnov.ru/~~ruiv/files/calc.zip~@http://www.uic.nnov.ru/~~ruiv/files/calc.zip@
+
+@techinfo
+$^#Technical Information#
+
+    The Calculator lets you compute in all popular systems:
+    #Decimal#, #Hexadecimal#, #Binary#, #Octal#.
+
+    The number showing is like all standard (#C#, #Pascal#, #Assembler#):
+
+    #0x#12EF = #$#12EF = 12EF#h#             - #Hexadecimal.#
+    1289 = 1289#D#                       - #Decimal.#
+    123#.#001 = 1#.#23001#e2# = 1#.#23001#e+2#   - #Decimal, Exponential.#
+    #0#1267 = 1267#O#                      - #Octal.#
+    0111#b#                              - #Binary.#
+    'b', 'bb', 'bbbb'                  - #Symbolic#.
+
+    And now about operators, functions and constants. They are fully configurable
+in file #CalcSet.Csr#. How you can do it? Easy. It has the next syntax:
+
+ #<calc# version="3.20"#>#
+    #<use# set="test"#/>#
+    <!--#<lang# id="en"#/>#-->
+    #<set# Name="test"#>#
+       #<const# syntax="pi" mean="3.14159"#/>#
+       #<op# syntax="+" priority="8" mean="op0 _plus op1"#/>#
+       #<func# syntax="sqrt" mean="op0 _pow 0.5"#/>#
+       #<numeral# syntax="/([0-9]+)/" format="10" mean="op0"#/>#
+       #<addon# syntax="rad" mean="{(op0 * pi) / 180}" format="10"#/>#
+       
+       #<dialog ru:name="test">#
+         #<text# ru:name="один" langid:name="one"#/>#
+         #<field# ru:name="номер1" langid:name="number1" scale="1"#/>#
+         #<field# ru:name="номер2" langid:name="number2" scale="2/pi"#/>#
+         #<field# ru:name="номер3" langid:name="number3" output="{op0+10}" input="op0-10"#/>#
+       #</dialog>#
+
+    #</set>#
+ #</calc>#
+
+    This is an exemplary scheme - you can add blocks #Set# and #Use# as much,
+as you want. 'Set' Block defines constants, functions, and operators.
+Parameter Syntax sets symbolic name, and Mean parameter - calculating expression.
+Expression can use variables #op0#, #op1#, #op2#... Operators use only first two -
+left and right operators. Functions can have up to ten parameters.
+
+    #Mean# Expression can use buildin and previously user-defined elements.
+
+    #Format# is a radix value (2,8,10,16) or 
+        "exp" = exponential format (for addons only)
+        "rep" = repeating decimal format
+        "con" = continued fraction format
+    Default format is "10".
+    Also additional flags are available (comma separated):
+    - for output:
+        "delim" = use current digit delimiter (depends on settings)
+
+
+    Build-in operators (in order of precedence):
+        #_lor#                Logical OR
+        #_land#               Logical AND
+        #_or#                 Binary OR
+        #_xor#                Binary XOR
+        #_and#                Binary AND
+        #_neq, _eq#           Not Equal, Equal
+        #_gt ,_lt#            More, Less
+        #_shr _shl _ror _rol# Shift right, left, rotate shift
+        #_minus, _plus#       Plus, minus
+        #_mod _div _mul#      Mod, Divide, Multiply
+        #_pow#                Power
+        #_not#                Bitwise Not
+        #_lnot#               Logical Not
+
+
+Base functions - #Func(Par)#:
+
+    Functions with no arguments
+        #_rnd#           Random number
+        #_finf#          Float +Infinity number
+        #_fnan#          Float NaN number
+
+    Functions with one argument
+        #_frac#          Fraction
+        #_floor#         Floor of number
+        #_ceil#          Ceil of number
+        #_sin#           Sine
+        #_cos#           Cosine
+        #_tan#           Tanget
+        #_arctan#        ArcTangent
+        #_ln#            Natural Logarithm
+        #_factor#        Factorial
+        #_f2b#           Float to binary (IEEE-754)
+        #_d2b#           Double to binary (IEEE-754)
+        #_b2f#           Binary to float (IEEE-754)
+        #_b2d#           Binary to double (IEEE-754)
+        #_numer#         Numerator of a common fraction
+        #_denom#         Denominator of a common fraction
+
+    Functions with multiple arguments:
+        #_if#            _if(val,a,b). Return a, if val, else return b.
+        #_gcd#           _gcd(num,denom). Greatest common divisor
+
+    Functional operators
+        #_int64#  #_uint64#
+        #_int#    #_uint#
+        #_short#  #_ushort#
+        #_char#   #_byte#
+        #_double# #_float#
+
+    All #Spaces# in entered expression mean nothing,
+so you can use it anywhere. #Symbols register# mean nothing too.
+
+
+@addon
+$^#Advanced Features.#
+    In #Far v1.6# and higher the Calc can work in FAR Editor.
+You can call it with #F11-Calculator#.
+
+    Also, there is an #advanced feature# of background working.
+With this mode Calc try to calculate any expression in plain text,
+with #Alt=#, #AltH#, #AltO#, #AltB# macroses.
+
+
+@prog
+$^#About this program and so...#
+    The Idea of this PlugIn was born from DN's Calculator. So, there
+r some visual aspects.... Also you can find Windows version of this
+#calc# with the same functionality. I don't know, ~which~@Unders@ of
+the ideas came first in my head.
+
+    So, doing nothing, I desided to incarnate this Idea. With BG Music
+under the Star Adelaide it was created.
+
+                                 Thanks for using Calc,
+                                 I hope it needs somebody.
+                                                #Igor Russkih#
+                          ...and a tiny bit by #uncle-vunkis#
+
+@DN
+
+  #Hmmmm...#
+
+@author
+$^#Calculator for FAR Manager. Version 
+  #Igor Russkih#.  Copyright (c) 1998-2001. All rights reserved.
+  #uncle-vunkis#. Copyright (c) 2009-2012. #.
+  #FarPlugins Team#. Copyright (c) 2020. #.
+  This program is a #FreeWare#. It Means, that you can do anything with
+it copies, if this actions are not breaks #Author Rights#.
+
+                       Spinning tales about silence
+                       About radio silence
+                       About some kind of asylum
+                       In the middle of an empty field full of danger

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Масса" en:name="Mass units">
+  <text ru:name="Метрическая система" en:name="Metric system"/>
+    <field ru:name="Микрограмм" en:name="Microgram" scale="0.000000001"/>
+    <field ru:name="Миллиграмм" en:name="Milligram" scale="0.000001"/>
+    <field ru:name="Карат" en:name="Carat" scale="0.0002"/>
+    <field ru:name="Грамм [система СГС]" en:name="Gram [SGS-system]" scale="0.001"/>
+    <field ru:name="Килограмм [СИ, система МТС]" en:name="Kilogram [SI, MTS-system]" scale="1"/>
+    <field ru:name="Центнер" en:name="Centner" scale="100"/>
+    <field ru:name="Тонна" en:name="Ton" scale="1000"/>
+    <field ru:name="Килотонна" en:name="Kiloton" scale="1000000"/>
+  <text ru:name="Авердюпойз (американская система)" en:name="Avoirdupois (american system)"/>
+    <field ru:name="Длинная тонна" en:name="Long ton" scale="1016.0469088"/>
+    <field ru:name="Длинный центнер (квинтал)" en:name="Long hundredweight (quintal)" scale="50.80234544"/>
+    <field ru:name="Короткая тонна" en:name="Short ton" scale="907.18474"/>
+    <field ru:name="Короткий центнер (центал)" en:name="Short hundredweight (cental)" scale="45.359237"/>
+    <field ru:name="Камень" en:name="Stone" scale="6.35029318"/>
+    <field ru:name="Фунт (тороговый)" en:name="Pound" scale="0.45359237"/>
+    <field ru:name="Унция (тороговая)" en:name="Ounce" scale="0.028349523125"/>
+    <field ru:name="Драхма" en:name="Drachma" scale="0.0017718451953125"/>
+  <text ru:name="Тройская и аптекарская системы" en:name="Troy and apothecaries system"/>
+    <field ru:name="Фунт" en:name="Pound" scale="0.3732417216"/>
+    <field ru:name="Унция" en:name="Ounce" scale="0.0311034768"/>
+    <field ru:name="Драхма" en:name="Drachma" scale="0.0038879346"/>
+    <field ru:name="Пеннивейт" en:name="Pennyweight" scale="0.00155517384"/>
+    <field ru:name="Скрупл" en:name="Scruple" scale="0.0012959782"/>
+    <field ru:name="Гран" en:name="Grain" scale="0.00006479891"/>
+    <field ru:name="Майт" en:name="Mite" scale="0.0000032399455"/>
+    <field ru:name="Дойт" en:name="Doit" scale="1.34997729166666E-06"/>
+    <field ru:name="Периот" en:name="Periot" scale="6.7498864583333E-08"/>
+    <field ru:name="Блэнк" en:name="Blank" scale="2.81245269097221E-09"/>
+  <text ru:name="Русская система" en:name="Russian system"/>
+    <field ru:name="Берковец" en:name="Berkovets" scale="163.80496"/>
+    <field ru:name="Пуд" en:name="Pood" scale="16.380496"/>
+    <field ru:name="Фунт" en:name="Pound" scale="0.4095124"/>
+    <field ru:name="Лот" en:name="Lot" scale="0.0127972625"/>
+    <field ru:name="Золотник" en:name="Zolotnik" scale="0.00426575416666667"/>
+    <field ru:name="Доля" en:name="Dolia" scale="4.44349392361111E-05"/>
+  <text ru:name="Астрономические единицы" en:name="Astronomic units"/>
+    <field ru:name="Гравитационное поле, км^3/с^2" en:name="Gravitational field, km^3/s^2" scale="14982889540145200000"/>
+    <field ru:name="Масса Луны" en:name="Moon mass" scale="7.3477E+22"/>
+    <field ru:name="Масса Земли" en:name="Earth mass" scale="5.9736E+24"/>
+    <field ru:name="Масса Солнца" en:name="Solar mass" scale="1.9891E+30"/>
+  <text ru:name="Атомная система единиц" en:name="Atomic units"/>
+    <field ru:name="Атомная единица массы" en:name="Atomic mass unit" scale="1.660538782E-27"/>
+    <field ru:name="Масса покоя электрона" en:name="Electron rest mass" scale="9.1093826E-31"/>
+  <text ru:name="Другие единицы" en:name="Other units"/>
+    <field ru:name="Инерта [система МГКСС]" en:name="Slug [gravitational metric system]" scale="9.80665"/>
+</dialog> 

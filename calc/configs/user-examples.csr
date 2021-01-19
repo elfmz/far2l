@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<!-- This file contains examples of user-defined sets 
+     (numerals, operators, addons, functions etc.) 
+     Add <use set=".."/> lines to use your custom sets.
+     To exclude a default set from the list, redefine it as empty:
+     <set name="Default..."></set>
+     
+     Этот файл содержит примеры пользовательских наборов 
+     (представлений чисел, операторов, аддонов, функций и т.п.)
+     Добавьте строчки <use set=".."/> чтобы использовать ваши наборы.
+     Чтобы исключить из списка набор по умолчанию, переобъявите его пустым:
+     <set name="Default..."></set>
+-->
+
+<use set="Fractions"/>
+<use set="DateTime"/>
+
+<use set="PercentageAndPowerOperators"/>
+<use set="AddonAndNumeralExamples"/>
+
+<!-- ===================================================================== -->
+
+
+<!-- Fractions: simple and mixed, repeating decimals, continued fractions
+
+     Примеры дробей: обыкновенные и смешанные, периодические, непрерывные
+--> 
+<set name="Fractions">
+    <numeral syntax="/([0-9\ ]*\.[0-9]*\([0-9]+\))/" format="rep" mean="op0"/>
+    <numeral syntax="/(\[[0-9\ ,;]+\])/" format="cont" mean="op0"/>
+
+    <addon syntax="&amp;rep" mean="{op0}" format="rep"/>
+    <addon syntax="&amp;cont" mean="{op0}" format="cont"/>
+    <addon syntax="&amp;frac" mean="{_numer(op0)\_denom(op0)}+{_numer(op0)%_denom(op0)}/{_denom(op0)}" format="10"/>
+</set>
+
+
+<!-- Date/Time numerals & addons. 
+     Internal numeric date format is JDF (Julian Date with fractional time).
+     See also units/date.csr
+   
+     Представления и аддоны даты/времени.
+     Внутреннее числовое представление даты - Номер юлианского дня c дробным временем 
+     См. также units/date.csr 
+-->
+<set name="DateTime">
+    <!-- Unix (POSIX) datetime conversion to JDF
+         Преобразование Unix-даты/времени в юлианский день -->
+    <numeral syntax="/UTC([0-9\.]+)/" format="10" mean="op0/86400+jdg(1970,1,1)-0.5"/>
+
+    <!-- General time (seconds) in T00:00:00 format 
+         Обычное время (секунды) в формате T00:00:00
+    -->
+    <numeral syntax="/T([0-9][0-9]?):([0-9]{2}):([0-9]{2})/" format="10" mean="op0*3600+op1*60+op2"/>
+
+
+    <!-- General time (seconds) conversion to HH:MM:SS format
+         Преобразование обычного времени (секунды) в формат HH:MM:SS
+    -->
+    <addon syntax="time" mean="T{op0\3600}:{(op0 % 3600)\600}{((op0 % 3600)\60)%10}:{(op0%60)\10}{_floor(op0%10)}"/>
+
+    <!-- Output of Julian Date with fractional time as Gregorian date in ISO 8601 format
+         Печать юлианского дня c дробным временем как Григорианскую дату в формате ISO 8601 
+    -->
+    <addon syntax="date" mean="D{jdg_year(op0+0.5)}-{jdg_month(op0+0.5)}-{jdg_day(op0+0.5)}T{jd_hour(op0+0.5)}:{jd_min(op0+0.5)}:{jd_sec(op0+0.5)}"/>
+    <!-- Output of Unix-time (UTC) from Julian Date with fractional time
+         Печать Юникс-времени (UTC) из юлианского дня c дробным временем
+    -->
+    <addon syntax="UTC"  mean="UTC{(op0-jdg(1970,1,1)+0.5)*86400}"/>
+</set>
+
+
+<!-- Addon & Numeral Examples:
+     Примеры аддонов и представлений чисел:
+--> 
+<set name="AddonAndNumeralExamples">
+    <!-- Decibel 
+         Децибелы
+    -->
+    <numeral syntax="/([0-9]+\.?[0-9]*)d[bB]/" format="10" mean="10 _pow ((op0)/20)"/>
+
+    <!-- Decibel of amplitude, referenced to 1(V): 
+         Децибелы амплитуды, по отношению к 1(В):
+    -->
+    <addon syntax="dBV"   mean="{20*lg(op0)}"/>
+    
+    <!-- Degree/radians conversion: 
+         Преобразование градусы/радианы:
+    -->
+    <addon syntax="rad"   mean="{(op0 * pi) / 180}"/>
+    <addon syntax="deg"   mean="{(op0 * 180) / pi}"/>
+    
+    <!-- Floating point (IEEE 754) to binary and vice-versa conversion: 
+         Преобразование плавающей точки (IEEE 754) в бинарный вид и наоборот:
+    -->
+    <addon syntax="float32" mean="{_b2f(op0)}"/>
+    <addon syntax="from_float32" mean="0x{_f2b(op0)}" format="16"/>
+
+</set>
+
+
+<set name="PercentageAndPowerOperators">
+    <!-- Percentage multiplicative
+         Процентные мультипликативные 
+    -->
+        <!--  СНачислениями = БезНачислений +% Процент = БезНачислений * (1+Процент/100)  -->
+    <op syntax="+%" priority="9" mean="op0 * (1+op1/100)"/>
+        <!--  Чистыми = Грязными -% Процент = Грязными * (1-Процент/100)  -->
+    <op syntax="-%" priority="9" mean="op0 * (1-op1/100)"/>
+        <!--  Грязными = Чистыми %+ Процент = Чистыми / (1-Процент/100)  -->
+    <op syntax="%+" priority="9" mean="op0 / (1-op1/100)"/>
+        <!--  БезНачислений = СНачислениями %- Процент = СНачислениями / (1+Процент/100)  -->
+    <op syntax="%-" priority="9" mean="op0 / (1+op1/100)"/>
+        <!--  Часть = Целое *% Процент = Целое * (Процент/100)  -->
+    <op syntax="*%" priority="9" mean="op0 * (op1/100)"/>
+        <!--  Целое = Часть /% Процент = Часть / (Процент/100)  -->
+    <op syntax="/%" priority="9" mean="op0 / (op1/100)"/>
+        <!--  Процент = Целое \% Часть = (Часть/Целое) * 100  -->
+    <op syntax="\%" priority="9" mean="(op1/op0) * 100"/>
+
+    <!-- Percentage power
+         Процентные возведение в степень 
+    -->
+        <!-- СложныйПроцент = ПростойПроцент %* Периодов = ((1+ПростойПроцент/100) ** Периодов - 1) * 100  --> 
+    <op syntax="%*" priority="10" mean="((1+op0/100) ** op1 - 1) * 100"/>
+        <!-- ПростойПроцент = СложныйПроцент %/ Периодов = ((1+СложныйПроцент/100) // Периодов - 1) * 100  --> 
+    <op syntax="%/" priority="10" mean="((1+op0/100) // op1 - 1) * 100"/>
+        <!-- Периодов = СложныйПроцент %\ ПростойПроцент = (1+СложныйПроцент/100) \\ (1+ПростойПроцент/100)  --> 
+    <op syntax="%\" priority="10" mean=" (1+op0/100) \\ (1+op1/100)"/>
+
+    <!-- Power
+         Возведение в степень 
+    -->
+    <op syntax="//" priority="10" mean="op0 _pow (1/op1)"/>
+    <op syntax="\\" priority="10" mean="_ln(op0) / _ln(op1)"/>
+
+    <!-- Power addition
+         Сложение степеней 
+    -->
+    <op syntax="+*" priority="10" mean="(op0*op0 + op1*op1) ** 0.5"/>
+    <op syntax="-*" priority="10" mean="(op0*op0 - op1*op1) ** 0.5"/>
+    <op syntax="+/" priority="10" mean="1 / (1/op0 + 1/op1)"/>
+    <op syntax="-/" priority="10" mean="1 / (1/op0 - 1/op1)"/>
+</set>

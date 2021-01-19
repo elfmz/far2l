@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Длина" en:name="Length units">
+  <text ru:name="Метрические единицы" en:name="Metric units"/>
+    <field ru:name="Фемтометр (Ферми)" en:name="Femtometre" scale="0.000000000000001"/>
+    <field ru:name="Ангстрем" en:name="Angström" scale="0.0000000001"/>
+    <field ru:name="Нанометр" en:name="Nanometer" scale="0.000000001"/>
+    <field ru:name="Микрометр" en:name="Micrometer" scale="0.000001"/>
+    <field ru:name="Миллиметр" en:name="Millimeter" scale="0.001"/>
+    <field ru:name="Сантиметр [система СГС]" en:name="Centimeter [SGS-system]" scale="0.01"/>
+    <field ru:name="Дециметр" en:name="Decimeter" scale="0.1"/>
+    <field ru:name="Метр [СИ, система МТС]" en:name="Meter [SI, MTS-system]" scale="1"/>
+    <field ru:name="Километр" en:name="Kilometer" scale="1000"/>
+  <text ru:name="Британские и американские единицы" en:name="Britain and American units"/>
+    <field ru:name="Лига" en:name="League" scale="4828.02363648"/>
+    <field ru:name="Уставная миля" en:name="Statute mile" scale="1609.34121216"/>
+    <field ru:name="Фарлонг" en:name="Furlong" scale="201.16765152"/>
+    <field ru:name="Чейн" en:name="Chain" scale="20.116765152"/>
+    <field ru:name="Род (поль, перч)" en:name="Rod (pole, perch)" scale="5.029191288"/>
+    <field ru:name="Морская сажень" en:name="Fathom" scale="1.828796832"/>
+    <field ru:name="Ярд" en:name="Yard" scale="0.914398416"/>
+    <field ru:name="Фут" en:name="Foot" scale="0.304799472"/>
+    <field ru:name="Хэнд" en:name="Hand" scale="0.101599824"/>
+    <field ru:name="Дюйм" en:name="Inch" scale="0.025399956"/>
+    <field ru:name="Мил" en:name="Mil" scale="0.0025399956"/>
+    <field ru:name="Линия" en:name="Line" scale="0.002116663"/>
+    <field ru:name="Точка" en:name="Point" scale="0.000352777166666667"/>
+  <text ru:name="Русские единицы" en:name="Russian units"/>
+    <field ru:name="Миля" en:name="Mile" scale="7467.6"/>
+    <field ru:name="Верста" en:name="Versta" scale="1066.8"/>
+    <field ru:name="Сажень" en:name="Sazhen" scale="2.1336"/>
+    <field ru:name="Маховая сажень" en:name="Mahovaya sazhen" scale="1.778"/>
+    <field ru:name="Аршин" en:name="Arshin" scale="0.7112"/>
+    <field ru:name="Локоть" en:name="Elbow" scale="0.5334"/>
+    <field ru:name="Фут" en:name="Foot" scale="0.3048"/>
+    <field ru:name="Четверть (пядь)" en:name="Quarter (span)" scale="0.1778"/>
+    <field ru:name="Вершок" en:name="Vershok" scale="0.04445"/>
+    <field ru:name="Дюйм" en:name="Inch" scale="0.0254"/>
+    <field ru:name="Сотка" en:name="Sotka" scale="0.021336"/>
+    <field ru:name="Линия" en:name="Line" scale="0.00254"/>
+    <field ru:name="Точка" en:name="Point" scale="0.000254"/>
+    <field ru:name="Косая сажень" en:name="Kosaya sazhen" scale="2.479999978176"/>
+  <text ru:name="Морские единицы" en:name="Sea units"/>
+    <field ru:name="Окружность" en:name="Circle" scale="40003200"/>
+    <field ru:name="Градус" en:name="Degree" scale="111120"/>
+    <field ru:name="Моская лига" en:name="Nautical league" scale="5556"/>
+    <field ru:name="Морская миля" en:name="Nautical mile" scale="1852"/>
+    <field ru:name="Кабельтов" en:name="Cable" scale="185.2"/>
+  <text ru:name="Атомная система единиц" en:name="Atomic units"/>
+    <field ru:name="Боровский радиус" en:name="Bohr radius" scale="5.29177205704523E-11"/>
+    <field ru:name="Радиус электрона" en:name="Electron radius" scale="2.81794029977696E-15"/>
+    <field ru:name="Планковская длина" en:name="Planck length" scale="1.61625249733281E-35"/>
+  <text ru:name="Астрономические единицы" en:name="Astronomic units"/>
+    <field ru:name="Астрономическая единица" en:name="Astronomic unit" scale="149597870691"/>
+    <field ru:name="Парсек" en:name="Parsec" scale="30856775812815500"/>
+    <field ru:name="Световая секунда" en:name="Light second" scale="299792458"/>
+    <field ru:name="Световая минута" en:name="Light minute" scale="17987547480"/>
+    <field ru:name="Световой год" en:name="Light year" scale="9460528410545440"/>
+</dialog> 

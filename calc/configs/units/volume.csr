@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Объем I" en:name="Volume units I">
+  <text ru:name="Метрическая система" en:name="Metric system"/>
+    <field ru:name="Кубометр" en:name="Cubic meter" scale="1e+3"/>
+    <field ru:name="Гектолитр" en:name="Hectoliter" scale="100"/>
+    <field ru:name="Декалитр" en:name="Decaliter" scale="10"/>
+    <field ru:name="Литр" en:name="Liter" scale="1"/>
+    <field ru:name="Миллилитр" en:name="Milliliter" scale="1e-3"/>
+    <field ru:name="Сантиметр кубический" en:name="Cubic centimeter" scale="1e-3"/>
+    <field ru:name="Миллиметр кубический" en:name="Cubic millimeter" scale="1e-6"/>
+  <text ru:name="Русская мера жидкости" en:name="Russian liquid units"/>
+    <field ru:name="Ведро" en:name="Pail" scale="12.3"/>
+    <field ru:name="Штоф" en:name="Shtof" scale="1.54"/>
+    <field ru:name="Кварта" en:name="Quarta" scale="1.23"/>
+    <field ru:name="Винная бутылка" en:name="Vine bottle" scale="0.77"/>
+    <field ru:name="Водочная бутылка" en:name="Vodka bottle" scale="0.624"/>
+    <field ru:name="Чарка" en:name="Glass" scale="0.123"/>
+    <field ru:name="Шкалик (косушка)" en:name="Shkalik (kosushka)" scale="0.0615"/>
+  <text ru:name="Русские Сыпучие" en:name="Friable (Russian)"/>
+    <field ru:name="Четверик (мера)" en:name="Quater" scale="26.238"/>
+    <field ru:name="Ведро" en:name="Pail" scale="12.3"/>
+    <field ru:name="Гарнец" en:name="Garnets" scale="3.2798"/>
+  <text ru:name="Кулинарные единицы" en:name="Culinary units"/>
+   <field ru:name="Кружка" en:name="Mug" scale="0.25"/>
+   <field ru:name="Столовая ложка" en:name="Table spoon" scale="0.015"/>
+   <field ru:name="Чайная ложка" en:name="Tea spoon" scale="0.005"/>
+</dialog>
+
+<dialog ru:name="Объем II" en:name="Volume units II">
+  <text ru:name="Метрическая система" en:name="Metric system"/>
+    <field ru:name="Кубометр" en:name="Cubic meter" scale="1e+3"/>
+    <field ru:name="Гектолитр" en:name="Hectoliter" scale="100"/>
+    <field ru:name="Декалитр" en:name="Deciliter" scale="10"/>
+    <field ru:name="Литр" en:name="Liter" scale="1"/>
+    <field ru:name="Миллилитр" en:name="Milliliter" scale="1e-3"/>
+    <field ru:name="Сантиметр кубический" en:name="Cubic centimeter" scale="1e-3"/>
+    <field ru:name="Миллиметр кубический" en:name="Cubic millimeter" scale="1e-6"/>
+  <text ru:name="Американские меры жидкости" en:name="Liquid units (American)"/>
+    <field ru:name="Акро-фут" en:name="Acre-foot" scale="1.23349e+6"/>
+    <field ru:name="Кубический ярд" en:name="Cubic yard" scale="0.765e+3"/>
+    <field ru:name="Кубический фут" en:name="Cubic foot" scale="28.3169"/>
+    <field ru:name="Галлон" en:name="Gallon" scale="3.785"/>
+    <field ru:name="Кварта" en:name="Quart" scale="0.946353"/>
+    <field ru:name="Пинта" en:name="Pint" scale="0.473"/>
+    <field ru:name="Гилл" en:name="Gill" scale="118.294e-3"/>
+    <field ru:name="Жидкая унция" en:name="Liquid ounce" scale="29.573e-3"/>
+    <field ru:name="Кубический дюйм" en:name="Cubic inch" scale="0.0163871"/>
+    <field ru:name="Жидкая драхма" en:name="liquid Drachma" scale="3.697e-3"/>
+    <field ru:name="Миним" en:name="Minim" scale="0.061610e-3"/>
+  <text ru:name="Американские Сыпучие" en:name="Friable (American)"/>
+    <field ru:name="Бушель" en:name="Bushel" scale="0.036e+3"/>
+    <field ru:name="Кубический фут" en:name="Cubic foot" scale="0.028e+3"/>
+    <field ru:name="Пек" en:name="Peek" scale="0.0091e+3"/>
+    <field ru:name="Галлон" en:name="Gallon" scale="4.546"/>
+    <field ru:name="Кварта" en:name="Quart" scale="1.136"/>
+    <field ru:name="Пинта" en:name="Pint" scale="568.26e-3"/>
+    <field ru:name="Гилл" en:name="Gill" scale="142.066e-3"/>
+    <field ru:name="Сухая унция" en:name="Dry ounce" scale="28.412e-3"/>
+    <field ru:name="Кубический дюйм" en:name="Cubic inch" scale="0.0163871"/>
+    <field ru:name="Сухая драхма" en:name="Dry drachma" scale="3.5516e-3"/>
+    <field ru:name="Миним" en:name="Minim" scale="0.059194e-3"/>
+  <text ru:name="Британская империальная"/>
+    <field ru:name="Бушель" en:name="Bushel" scale="0.036e+3"/>
+    <field ru:name="Кварта" en:name="Quart" scale="1.136"/>
+    <field ru:name="Пинта" en:name="Pint" scale="568.26e-3"/>
+    <field ru:name="Гилл" en:name="Gill" scale="142.066e-3"/>
+    <field ru:name="Миним" en:name="Minim" scale="0.059194e-3"/>
+</dialog>

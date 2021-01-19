@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Температура"  en:name="Temperature">
+       <text ru:name="Градус" en:name="Degree"/>
+     <field ru:name="Цельсия"    en:name="Celsius"    scale="1"/>
+     <field ru:name="Фаренгейта" en:name="Fahrenheit" output="{32+op0*9/5}" input="(op0-32)*5/9"/>
+     <field ru:name="Кельвина"   en:name="Kelvin"     output="{op0+273.15}" input="op0-273.15"/>
+     <field ru:name="Реомюра"    en:name="Réaumur"    scale="1.25"/>
+     <field ru:name="Ранкина"    en:name="Rankine"    output="{(op0+273.15)*9/5}" input="(op0-491.67)*5/9"/>
+     <field ru:name="Делиля"     en:name="Delisle"    output="{(100-op0)*3/2}" input="100-op0*2/3"/>
+     <field ru:name="Ньютона"    en:name="Newton"     scale="1/0.33"/>
+     <field ru:name="Рёмера"     en:name="Roemer"     output="{op0*21/40+7.5}" input="(op0-7.5)*40/21"/>
+</dialog>

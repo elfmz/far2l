@@ -1,0 +1,65 @@
+<!--   DTD description for colorer hrc format -->
+
+<!ELEMENT calc (set | use | lang | dialog | xi:include)*>
+<!ATTLIST calc
+  version CDATA #IMPLIED>
+
+<!ELEMENT use EMPTY>
+<!ATTLIST use
+  set CDATA #IMPLIED>
+
+<!ELEMENT xi:include EMPTY>
+<!ATTLIST xi:include
+  href CDATA #IMPLIED>
+
+<!ELEMENT set ( const | op | func | numeral | addon)*>
+<!ATTLIST set
+  name CDATA #REQUIRED>
+
+<!ELEMENT lang EMPTY>
+<!ATTLIST lang
+  id CDATA #REQUIRED>
+
+<!ELEMENT const EMPTY>
+<!ATTLIST const
+  syntax CDATA #REQUIRED
+  mean   CDATA #REQUIRED>
+
+<!ELEMENT numeral EMPTY>
+<!ATTLIST numeral
+  syntax CDATA #REQUIRED
+  mean   CDATA #REQUIRED
+  format CDATA #REQUIRED>
+
+<!ELEMENT addon EMPTY>
+<!ATTLIST addon
+  syntax CDATA #REQUIRED
+  mean   CDATA #REQUIRED
+  format CDATA #REQUIRED>
+
+<!ELEMENT op EMPTY>
+<!ATTLIST op
+  syntax CDATA #REQUIRED
+  priority CDATA #REQUIRED
+  mean CDATA #REQUIRED>
+
+<!ELEMENT func EMPTY>
+<!ATTLIST func
+  syntax CDATA #REQUIRED
+  mean CDATA #REQUIRED>
+
+<!ELEMENT dialog (text | field)*>
+<!ATTLIST dialog
+  name CDATA #REQUIRED>
+
+<!ELEMENT text EMPTY>
+<!ATTLIST text
+  name CDATA #REQUIRED>
+
+<!ELEMENT field EMPTY>
+<!ATTLIST field
+  name CDATA #REQUIRED
+  scale  CDATA
+  input  CDATA
+  output CDATA>
+

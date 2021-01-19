@@ -882,8 +882,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								CtrlObject->Cp()->RightPanel->CloseFile();
 								Execute(strCommand, 0, 0, 0, ListFileUsed, true);
 							}
-
-							WaitForClose(strName);
+//							WaitForClose(strName);
 						}
 					}
 				}

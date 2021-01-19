@@ -41,37 +41,37 @@ static const struct
 	int *ival;
 	wchar_t *sval;	// if sval != NULL then (int)ival = max strlen
 
-	const wchar_t *reg_name;
+	const char *reg_name;
 	const wchar_t *def_value;
 
 	CALC_PARAM_CHECK_TYPE check_type;
 } param_table[] =
 {
-	{ &props.auto_update, NULL, L"autoUpdate", L"1", CALC_PARAM_CHECK_BOOL },
-	{ &props.case_sensitive, NULL, L"caseSensitive", L"0", CALC_PARAM_CHECK_BOOL },
-	{ &props.pad_zeroes, NULL, L"padZeroes", L"1", CALC_PARAM_CHECK_BOOL },
+	{ &props.auto_update, NULL, "autoUpdate", L"1", CALC_PARAM_CHECK_BOOL },
+	{ &props.case_sensitive, NULL, "caseSensitive", L"0", CALC_PARAM_CHECK_BOOL },
+	{ &props.pad_zeroes, NULL, "padZeroes", L"1", CALC_PARAM_CHECK_BOOL },
 	/*{ &props.right_align, NULL, L"rightAlign", L"0", CALC_PARAM_CHECK_BOOL },*/
 
-	{ &props.history_hide, NULL, L"historyHide", L"1", CALC_PARAM_CHECK_RADIO },
-	{ &props.history_above, NULL, L"historyAbove", L"0", CALC_PARAM_CHECK_RADIO },
-	{ &props.history_below, NULL, L"historyBelow", L"0", CALC_PARAM_CHECK_RADIO },
-	{ &props.history_lines, NULL, L"historyLines", L"8", CALC_PARAM_CHECK_LINES },
-	{ &props.autocomplete, NULL, L"autoComplete", L"0", CALC_PARAM_CHECK_BOOL },
+	{ &props.history_hide, NULL, "historyHide", L"1", CALC_PARAM_CHECK_RADIO },
+	{ &props.history_above, NULL, "historyAbove", L"0", CALC_PARAM_CHECK_RADIO },
+	{ &props.history_below, NULL, "historyBelow", L"0", CALC_PARAM_CHECK_RADIO },
+	{ &props.history_lines, NULL, "historyLines", L"8", CALC_PARAM_CHECK_LINES },
+	{ &props.autocomplete, NULL, "autoComplete", L"0", CALC_PARAM_CHECK_BOOL },
 
-	{ &props.use_regional, NULL, L"useRegional", L"0", CALC_PARAM_CHECK_BOOL },
-	{ (int *)sizeof(props.decimal_point), props.decimal_point, L"decimalPoint", L".", CALC_PARAM_CHECK_DECIMAL },
-	{ (int *)sizeof(props.args), props.args, L"Args", L",", CALC_PARAM_CHECK_ARGS },
-	{ &props.use_delim, NULL, L"useDelim", L"0", CALC_PARAM_CHECK_BOOL },
-	{ (int *)sizeof(props.digit_delim), props.digit_delim, L"digitDelim", L"'", CALC_PARAM_CHECK_DELIM },
+	{ &props.use_regional, NULL, "useRegional", L"0", CALC_PARAM_CHECK_BOOL },
+	{ (int *)sizeof(props.decimal_point), props.decimal_point, "decimalPoint", L".", CALC_PARAM_CHECK_DECIMAL },
+	{ (int *)sizeof(props.args), props.args, "Args", L",", CALC_PARAM_CHECK_ARGS },
+	{ &props.use_delim, NULL, "useDelim", L"0", CALC_PARAM_CHECK_BOOL },
+	{ (int *)sizeof(props.digit_delim), props.digit_delim, "digitDelim", L"'", CALC_PARAM_CHECK_DELIM },
 
 	// registry-only
-	{ &props.max_period, NULL, L"maxPeriod", L"10", CALC_PARAM_CHECK_PERIOD },
-	{ &props.result_length, NULL, L"resultLength", L"128", CALC_PARAM_CHECK_LENGTH },
-	{ &props.rep_fraction_max_start, NULL, L"repFractionMaxStart", L"32", CALC_PARAM_CHECK_FRAC },
-	{ &props.rep_fraction_max_period, NULL, L"repFractionMaxPeriod", L"128", CALC_PARAM_CHECK_FRAC },
-	{ &props.cont_fraction_max, NULL, L"contFractionMax", L"64", CALC_PARAM_CHECK_FRAC },
+	{ &props.max_period, NULL, "maxPeriod", L"10", CALC_PARAM_CHECK_PERIOD },
+	{ &props.result_length, NULL, "resultLength", L"128", CALC_PARAM_CHECK_LENGTH },
+	{ &props.rep_fraction_max_start, NULL, "repFractionMaxStart", L"32", CALC_PARAM_CHECK_FRAC },
+	{ &props.rep_fraction_max_period, NULL, "repFractionMaxPeriod", L"128", CALC_PARAM_CHECK_FRAC },
+	{ &props.cont_fraction_max, NULL, "contFractionMax", L"64", CALC_PARAM_CHECK_FRAC },
 
-	{ NULL, NULL, L"", 0, CALC_PARAM_CHECK_BOOL },
+	{ NULL, NULL, "", 0, CALC_PARAM_CHECK_BOOL },
 };
 
 static const struct 

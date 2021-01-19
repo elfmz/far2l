@@ -25,7 +25,6 @@ static CalcDialogFuncs *dlg_funcs = nullptr;
 // FAR exports
 SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 {
-fprintf(stderr, "!!!!!SetStartupInfoW\n");
 	if (!api) {
 		api = CreateApiFar2(Info);
 		if (api)

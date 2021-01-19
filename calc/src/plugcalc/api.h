@@ -240,8 +240,8 @@ public:
 
 	virtual bool SettingsBegin() = 0;
 	virtual bool SettingsEnd() = 0;
-	virtual bool SettingsGet(const wchar_t *name, std::wstring *sval, int *lval) = 0;
-	virtual bool SettingsSet(const wchar_t *name, const std::wstring *sval, const int *ival) = 0;
+	virtual bool SettingsGet(const char *name, std::wstring *sval, int *lval) = 0;
+	virtual bool SettingsSet(const char *name, const std::wstring *sval, const int *ival) = 0;
 
 	virtual const wchar_t *GetModuleName() = 0;
 

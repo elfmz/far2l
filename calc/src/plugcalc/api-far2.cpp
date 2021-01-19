@@ -7,9 +7,14 @@
 
 #include "api.h"
 
+#include <memory>
+
 #include <plugin.hpp>
 #include <farkeys.hpp>
 #include <farcolor.hpp>
+
+#include <KeyFileHelper.h>
+#include <utils.h>
 
 
 static const wchar_t *PluginMenuStrings, *PluginConfigStrings;
@@ -159,8 +164,10 @@ static CalcDialogFuncsFar2 *dlg_funcs = NULL;
 
 class CalcApiFar2 : public CalcApi
 {
+	std::unique_ptr<KeyFileHelper> _settings_kfh;
+
 public:
-	
+
 	virtual void GetPluginInfo(void *pinfo, const wchar_t *name)
 	{
 		struct PluginInfo *pInfo = (struct PluginInfo *)pinfo;
@@ -269,57 +276,44 @@ public:
 
 	virtual bool SettingsBegin()
 	{
-		hReg = 0;
-		wchar_t Key[256];
-		swprintf(Key, 256, L"%ls\\calculator", Info.RootKey);
-		return WINPORT(RegCreateKeyEx)(HKEY_CURRENT_USER, Key, 0, NULL, 0,
-			KEY_ALL_ACCESS, NULL, &hReg, NULL) == ERROR_SUCCESS;
-	}
-	virtual bool SettingsEnd()
-	{
-		WINPORT(RegCloseKey)(hReg);
+		_settings_kfh.reset(new KeyFileHelper(InMyConfig("calc.ini").c_str()));
 		return true;
 	}
 
-	virtual bool SettingsGet(const wchar_t *name, std::wstring *sval, int *ival)
+	virtual bool SettingsEnd()
 	{
-		bool ret = false;
-		DWORD len = 0;
-		if (WINPORT(RegQueryValueEx)(hReg, name, 0, NULL, NULL, &len) == ERROR_SUCCESS && len > 0)
-		{
-			if (sval)
-			{
-				sval->clear();
-				sval->resize(len);
-				if (WINPORT(RegQueryValueEx)(hReg, name, 0, NULL, (PBYTE)sval->data(), &len) == ERROR_SUCCESS)
-					ret = true;
-			}
-			else if (ival)
-			{
-				if (WINPORT(RegQueryValueEx)(hReg, name, 0, NULL, (PBYTE)ival, &len) == ERROR_SUCCESS)
-					ret = true;
-				if (len != 4)
-					ret = false;
-			}
-		}
-		return ret;
+		if (!_settings_kfh->Save())
+			return false;
+
+		_settings_kfh.reset();
+		return true;
 	}
 
-	virtual bool SettingsSet(const wchar_t *name, const std::wstring *sval, const int *ival)
+	virtual bool SettingsGet(const char *name, std::wstring *sval, int *ival)
 	{
-		bool ret = false;
+		if (!_settings_kfh->HasKey("Settings", name))
+			return false;
 
 		if (sval)
-		{
-			if (WINPORT(RegSetValueEx)(hReg, name, 0, REG_SZ, (UCHAR*)sval->c_str(), (DWORD)(sval->size() * sizeof(wchar_t))) == ERROR_SUCCESS)
-				ret = true;
-		}
+			StrMB2Wide(_settings_kfh->GetString("Settings", name), *sval);
 		else if (ival)
-		{
-			if (WINPORT(RegSetValueEx)(hReg, name, 0, REG_DWORD, (UCHAR*)ival, sizeof(DWORD)) == ERROR_SUCCESS)
-				ret = true;
-		}
-		return ret;
+			*ival = _settings_kfh->GetInt("Settings", name);
+		else
+			return false;
+
+		return true;
+	}
+
+	virtual bool SettingsSet(const char *name, const std::wstring *sval, const int *ival)
+	{
+		if (sval)
+			_settings_kfh->PutString("Settings", name, StrWide2MB(*sval).c_str());
+		else if (ival)
+			_settings_kfh->PutInt("Settings", name, *ival);
+		else
+			return false;
+
+		return true;
 	}
 
 	virtual const wchar_t *GetModuleName()

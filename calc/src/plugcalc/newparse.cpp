@@ -85,6 +85,14 @@ CalcParser::CalcParser()
 	BinaryOpTable = allBinaryOpTable;
 
 	DELIM = delim_args;
+
+	Big tmp;
+	tmp.SetPi();
+	add_named_constant(L"PI", tmp);
+	add_named_constant(L"pi", tmp);
+	tmp.SetE();
+	add_named_constant(L"E", tmp);
+	add_named_constant(L"e", tmp);
 }
 
 CalcParser::CalcParser(const CalcParser &p)

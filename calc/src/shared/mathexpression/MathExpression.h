@@ -90,10 +90,10 @@ public:
     UnaryOpTable.ADD_OPERATOR(operator_unary_plus,"+");
     UnaryOpTable.ADD_OPERATOR(operator_logical_not,"!");
 
-    add_named_constant("PI",M_PI);
-    add_named_constant("pi",M_PI);
-    add_named_constant("E",M_E);
-    add_named_constant("e",M_E);
+//    add_named_constant("PI",M_PI);
+//    add_named_constant("pi",M_PI);
+//    add_named_constant("E",M_E);
+//    add_named_constant("e",M_E);
     add_named_constant("eps",DBL_EPSILON);
 
     ADD_FUNCTION1(sinc        ,"sinc"   ,"sinc(x)/x");

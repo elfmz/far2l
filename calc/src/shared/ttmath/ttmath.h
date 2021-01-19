@@ -371,11 +371,10 @@ namespace ttmath
 		// we're reducing the period 2*PI
 		// (for big values there'll always be zero)
 		temp.Set2Pi();
-		
+
 		if( x.Mod(temp) )
 			return 1;
 		
-
 		// we're setting 'x' as being in the range of <0, 0.5PI>
 
 		temp.SetPi();
@@ -386,7 +385,13 @@ namespace ttmath
 			x.Sub( temp );
 			change_sign = !change_sign;
 		}
-		
+
+		if( x == temp )
+		{
+			x.SetZero();
+			return 0;
+		}
+
 		temp.Set05Pi();
 
 		if( x > temp )

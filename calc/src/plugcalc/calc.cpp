@@ -14,6 +14,8 @@
 #include <time.h>
 #include <windows.h>
 
+#include <utils.h>
+
 #ifdef USE_CREGEXP
 #include <regexp/clocale.h>
 #endif
@@ -136,7 +138,19 @@ void InitDynamicData()
 	CalcParser::InitTables(props.rep_fraction_max_start, props.rep_fraction_max_period, props.cont_fraction_max);
 	
 	PSgmlEl BaseRc = new CSgmlEl;
-	BaseRc->parse(api->GetModuleName(), L"calcset.csr");
+
+	std::string calcset(StrWide2MB(api->GetModuleName()));
+	size_t p = calcset.rfind('/');
+	if (p != std::string::npos) {
+		calcset.resize(p + 1);
+	}
+	calcset+= "calcset.csr";
+	struct stat s{};
+	if (stat(calcset.c_str(), &s) == -1) {
+		TranslateInstallPath_Lib2Share(calcset);
+	}
+
+	BaseRc->parse(calcset);
 	
 	CalcParser::ProcessData(BaseRc, props.case_sensitive != 0);
 	CalcParser::AddAll();

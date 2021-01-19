@@ -55,7 +55,7 @@ public:
   CSgmlEl();
   virtual ~CSgmlEl();
   
-  bool parse(const wchar_t *modname, const wchar_t *fname);
+  bool parse(std::string &path);
 
   virtual PSgmlEl parent();
   virtual PSgmlEl next();
@@ -80,7 +80,7 @@ public:
   virtual PSgmlEl ffirst();
   virtual PSgmlEl flast();
 
-  bool readfile(const wchar_t *modname, const wchar_t *fname, std::wstring &content);
+  bool readfile(std::string &path, std::wstring &content);
 };
 
 #endif

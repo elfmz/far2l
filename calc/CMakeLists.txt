@@ -17,7 +17,6 @@ set(SOURCES
     src/plugcalc/syntax.cpp
     src/plugcalc/syntax.h
     src/plugcalc/version.h
-    src/shared/hashmap/HashMap.h
     src/shared/mathexpression/MathExpressionBase.h
     src/shared/sgml/sgml.cpp
     src/shared/trex/trex.c

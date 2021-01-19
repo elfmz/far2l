@@ -101,7 +101,6 @@ bool CSgmlEl::readfile(const wchar_t *modname, const wchar_t *fname, std::wstrin
 	if (ReadAll(fd, &buf[0], buf.size()) != buf.size())
 		return false;
 
-	content.clear();
 	if (buf.size() >= 3 && memcmp(&buf[0], "\xEF\xBB\xBF", 3) == 0) {
 		MB2Wide(&buf[3], buf.size() - 3, content);
 
@@ -305,14 +304,14 @@ void CSgmlEl::substquote(SParams par, const wchar_t *sstr, wchar_t c)
 	int len = (int)wcslen(sstr);
 	int plen = (int)wcslen(par[1]);
 
-	for (int i = 0; i <= plen-len; i++)
+	for (int i = 0; i <= plen - len; i++)
 	{
 		if (!wcsncmp(par[1]+i, sstr, len))
 		{
 			par[1][i] = c;
-			for(int j = i+1; j <= plen-len+1; j++)
+			for(int j = i+1; j <= plen - len + 1; j++)
 				par[1][j] = par[1][j+len-1];
-			plen -= len-1;
+			plen -= len - 1;
 		}
 	}
 }
@@ -323,7 +322,7 @@ bool CSgmlEl::setcontent(const wchar_t *src, int sz)
 	memmove(content, src, sz);
 	content[sz] = 0;
 	contentsz = sz;
-  return true;
+	return true;
 }
 
 void CSgmlEl::insert(PSgmlEl El)

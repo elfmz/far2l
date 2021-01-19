@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <windows.h>
 
-#include <hashmap/HashMap.h>
+#include <unordered_map>
 
 #include "api.h"
 #include "calc.h"
@@ -66,23 +66,12 @@ SHAREDSYMBOL int WINAPI GetMinFarVersionW()
 
 ////////////////////////////////////////////////////////////////////
 
-struct DlgHashFunc : public std::unary_function<DLGHANDLE, size_t> 
-{
-	size_t operator()(const DLGHANDLE & sKey ) const 
-	{
-		return (size_t)sKey;
-	}
-};
-
-
-
 // dlg_hash.insert(std::make_pair(handle, dlgobj));
-static ag::hash_map<DLGHANDLE, CalcDialog *, DlgHashFunc> dlg_hash;
-typedef ag::hash_map<DLGHANDLE, CalcDialog *, DlgHashFunc>::iterator  opiter;
+static std::unordered_map<DLGHANDLE, CalcDialog *> dlg_hash;
 
 static CALC_INT_PTR __stdcall dlgProc(DLGHANDLE hdlg, int msg, int param1, void *param2)
 {
-	opiter op = dlg_hash.find(hdlg);
+	auto op = dlg_hash.find(hdlg);
 	CALC_INT_PTR ret = -1;
 	if (op != dlg_hash.end())
 	{
@@ -111,7 +100,7 @@ CalcDialog::~CalcDialog()
 {
 	if (hdlg)
 	{
-		opiter op = dlg_hash.find(hdlg);
+		auto op = dlg_hash.find(hdlg);
 		if (op != dlg_hash.end())
 			dlg_hash.erase(op);
 		dlg_funcs->DialogFree(hdlg);

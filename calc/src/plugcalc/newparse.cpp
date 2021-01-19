@@ -43,7 +43,7 @@ std::vector<CalcAddon> CalcParser::addons;
 unsigned CalcParser::main_addons_num = 0;
 wchar_t CalcParser::delim_decimal, CalcParser::delim_args, CalcParser::delim_digit;
 
-ag::hash_map<std::wstring, CalcParser *, StrHashFunc> CalcParser::user_bin_ops, CalcParser::user_un_ops;
+std::unordered_map<std::wstring, CalcParser *> CalcParser::user_bin_ops, CalcParser::user_un_ops;
 CalcParser::UserFunctionList *CalcParser::user_funcs = NULL;
 ttmath::Conv CalcParser::from_convs[17], CalcParser::to_convs[17];
 
@@ -300,25 +300,17 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 	if (add_user_ops_and_funcs)
 	{
 		op = Ops;
-
 		// delete all parsers
-		opiter it, itend;
-		for (it = user_bin_ops.begin(), itend = user_bin_ops.end(); it != itend; ++it) 
+		for (auto &it : user_bin_ops)
 		{
-			std::pair<std::wstring, CalcParser *> & mp = *it;
-			if (&mp)
-				delete mp.second; 
+			delete it.second;
 		}
-		for (it = user_un_ops.begin(), itend = user_un_ops.end(); it != itend; ++it) 
+		for (auto &it : user_un_ops)
 		{
-			std::pair<std::wstring, CalcParser *> & mp = *it;
-			if (&mp)
-				delete mp.second; 
+			delete it.second;
 		}
 		user_bin_ops.clear();
 		user_un_ops.clear();
-		user_bin_ops.growCapacity(100);
-		user_un_ops.growCapacity(10);
 		while (op)
 		{
 			// check for num. args
@@ -1748,17 +1740,22 @@ wchar_t *convertToString(const SArg & val, int type_idx, int num_lim, bool appen
 
 int CalcParser::DelSpaces(wchar_t *str)
 {
-	int i, len = (int)wcslen(str);
-	for (i = 0; i < len; i++)
+	wchar_t *src, *dst;
+
+	for (src = dst = str; *src; ++src)
 	{
-		if (str[i] == ' ')
+		if (*src != ' ')
 		{
-			wcscpy(&str[i],&str[i+1]);
-			len--;
-			i--;
+			if (src != dst)
+			{
+				*dst = *src;
+			}
+			++dst;
 		}
 	}
-	return len;
+	*dst = 0;
+
+	return dst - str;
 }
 
 SArg CalcParser::builtin_unary_not(const SArg & op)
@@ -1813,9 +1810,8 @@ SArg CalcParser::builtin_binary_op(const SArg & op0, const SArg & op1)
 SArg CalcParser::binary_op(const SArg & op0, const SArg & op1)
 {
 	/// TODO: optimise!
-	opiter op = user_bin_ops.find(cur_op_name);
-	opiter opend = user_bin_ops.end();
-	if (op != opend)
+	auto op = user_bin_ops.find(cur_op_name);
+	if (op != user_bin_ops.end())
 	{
 		// check for num. args
 		SArg args[2];
@@ -1829,9 +1825,8 @@ SArg CalcParser::binary_op(const SArg & op0, const SArg & op1)
 
 SArg CalcParser::unary_op(const SArg & op0)
 {
-	opiter op = user_un_ops.find(cur_op_name);
-	opiter opend = user_un_ops.end();
-	if (op != opend)
+	auto op = user_un_ops.find(cur_op_name);
+	if (op != user_un_ops.end())
 	{
 		// check for num. args
 		SArg args[2];

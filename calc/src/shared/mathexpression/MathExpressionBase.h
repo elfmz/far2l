@@ -17,6 +17,7 @@
 #define __MATHEXPRESSIONBASE_H__
 
 #include <stdio.h>
+#include <wctype.h>
 #include <cctype>
 #include <cassert>
 #include <cstdarg>

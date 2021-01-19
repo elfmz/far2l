@@ -250,6 +250,21 @@ std::vector<std::string> KeyFileHelper::EnumKeys(const char *section)
 	return out;
 }
 
+bool KeyFileHelper::HasKey(const char *section, const char *name)
+{
+	auto it = _kf.find(section);
+	if (it == _kf.end()) {
+		return false;
+	}
+
+	auto s = it->second.find(name);
+	if (s == it->second.end()) {
+		return false;
+	}
+
+	return true;
+}
+
 std::string KeyFileHelper::GetString(const char *section, const char *name, const char *def)
 {
 	auto it = _kf.find(section);

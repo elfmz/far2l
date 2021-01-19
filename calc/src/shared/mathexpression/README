@@ -1,0 +1,287 @@
+
+MathExpression-0.6.6 Alpha
+
+Authors     : Andrey Myznikov <andrey.myznikov@gmail.com>
+              Sergey Prokopenko <serg.v.prokopenko@gmail.com>
+              Elizaveta Evstifeeva <e.evstifeeva@gmail.com>
+
+Last Update : June 23 2009
+
+
+MathExpression is the flexible, extensible, fast and easy to use C++ class template
+for creating your own customized math expression parsers for both built-in and
+user-defined numerical data types. User-defined functions, functional objects
+(functors), operators, named constants, parameter binding, as well as arguments
+are supported. The parser can be safely used in multi-threaded OpenMP applications.
+
+Be aware that this source still under alpha-development stage,
+and therefore it can be redesigned frequently. Lookup for
+updates at http://sourceforge.net/projects/mathexpression
+
+
+
+INSTALL
+
+To install just copy headers ./include/{*.h} into your favorite include
+directory where your compiler will able to find them.
+
+The examples were tested at these platforms:
+
+- SUSE Linux Enterprise Server 10 (ia64) on Itanium2
+	ICC 10.0, GCC 4.1.2
+
+- SUSE Linux Enterprise Server 10 (x86_64) on Intel(R) Xeon(R) CPU X5355
+	ICC 10.0, GCC 4.1.2
+
+- Red Hat Enterprise Linux Server release 5 (Tikanga) on Intel(R) Xeon(R) CPU 5160
+	ICC 10.0, GCC 4.1.1
+
+- Ubuntu 9.04 (jaunty) desktop on both ia32 and x86_64
+	ICC 11.0, GCC 4.3.3
+
+To build examples as is, the GNU make and GCC or ICC compiler are required.
+Type 'make help' for the hints on configurable parameters.
+The structure of examples is very simple, therefore I suggest that you can
+easily modify make.inc and makefiles in the ./example/ subdirs as you prefer.
+
+Notes for windows: Elizaveta Evstifeeva made some modifications to allow compile
+these sources using Visual Studio, but we still don't support this system. It may be
+that this will compilable and even will work, but this still not supported.
+
+Other note is  that the math library implementation can vary between platforms,
+therefore if you encounter that some functions referenced in MathExpression.h
+are not defined, then just comment them out them or provide correct equivalents
+for your platform. Note here that the MathExpression.h is just example file,
+used for examples, and is not mandatory part of the library itself.
+
+For GSL (http://www.gnu.org/software/gsl) examples you need to have GSL
+library properly installed. On the Ubuntu you can install it typing
+'sudo aptitude install libgsl0-dev'.
+
+For the CLN (http://www.ginac.de/CLN) example you need the CLN library installed.
+On Ubuntu install 'libcln-dev' package and dependencies.
+
+The GNU levmar example includes the sources of levmar-2.4 obtained from
+official web site http://www.ics.forth.gr/~lourakis/levmar. Most likely
+you will need to configure the makefiles in the ./examples/gnu_levmar/levmar-2.4
+directory to provide correct path to your favorite lapack implementation.
+See the gnu levmar documentation for more info.
+
+
+USE
+
+In essence the MathExpression is not a program and is not a library.
+This is just a set of C++ template classes allowing you create your own
+programs and libraries. These class templates are declared in MathExpressionBase.h.
+The MathExpression.h is not mandatory header, it just contains a few examples of
+user-defined parsers, although you can use it as is too.
+
+The basing steps to create your own customized math parser are roughly follows:
+
+1) Select the numerical data type of math expression. This type can be thought
+as the 'result type' of math expression, and it will main type used during computation.
+The examples here will suppose that you selected built-in 'double', although it can
+seems trivial, the potential applications range is wide enough.
+
+
+2) Derive your own class for MathExpression :
+
+#include "MathExpressionBase.h"
+
+class MathFunction
+  : public MathExpressionBase<double>
+  {
+  typedef MathExpressionBase<double> mybase;
+public:
+  typedef double value_type;
+  MathFunction();
+
+protected:
+  bool parse_number( double * value, const char * curpos, char ** endptr );
+  };
+
+
+
+3) Implement pure virtual routine parse_number() to convert string to the number.
+  Obviously this can't be done at base class level, therefore you need made this.
+
+bool MathFunction :: parse_number( double * value, const char * curpos, char ** endptr )
+  { * value = strtod(curpos,endptr);
+    return *endptr>curpos;
+  }
+
+
+4) Customize your parser providing your own:
+  - binary and unary operators
+  - functions
+  - bound parameters
+  - named constants
+  - named arguments
+
+You may made this at any time and at any point of code, below is an example of
+doing this in the constructor body.
+
+Note, that for most of functions there are 2 ways to add it to the MathExpression function list:
+
+1) using function overloading notation, like this:
+    add_function("sin",&sin,"the sine function");
+
+2) using template overloading notation:
+    add_function<sin>("sin","the sine function");
+
+Second way is preferable due to performance issues, it will bind the function staticaly,
+providing better performance on most machines, but this way not so flexible as first, and
+currently not all functions can be bound in this way.
+
+If you are user of MSVC++, then most likely you will have large problems;
+Try solve them providing strict function type as follows:
+    add_function<double(*)(double),sin>("sin","the sine function");
+In general, most likely we will not support the compilers which does not support for C++.
+
+
+MathFunction :: MathFunction()
+    {
+    // form the binary operations table
+    BinaryOpTable.set_num_levels(3);
+    BinaryOpTable[0]->add("+",std::plus<value_type>());
+    BinaryOpTable[0]->add("-",std::minus<value_type>());
+    BinaryOpTable[1]->add("*",std::multiplies<value_type>());
+    BinaryOpTable[1]->add("/",std::divides<value_type>());
+    BinaryOpTable[2]->add("**",&pow);
+
+    // add unary + and -
+    UnaryOpTable.add("-",&mybase::operator_unary_minus);
+    UnaryOpTable.add("+",&mybase::operator_unary_plus);
+
+    // add math functions
+
+    // 1. using function-pointer notation
+    add_function("abs",&fabs);
+    add_function("sin",&sin);
+
+    // 2. using template overloading notation
+    add_function<cos>("cos");
+    add_function<tan>("tan");
+
+    // add named constants
+    add_named_constant("pi",M_PI);
+    add_named_constant("e",M_E);
+    add_named_constant("eps",DBL_EPSILON);
+
+    // add bound parameters
+    bind("myvar",&some_global_variable);
+
+    // add arguments passed over the stack,
+    // providing the name and zero-based positional index of each
+    add_argument("x",0);
+    add_argument("y",1);
+    }
+
+Again, this customization can be done at run-time at any place of code.
+
+5) Having the MathFunction class defined, one can create as many instances as he want:
+
+  MathFunction f;
+  if( !f.parse("sin(x)*cos(y)" ) )
+    { printf("parse error: %s : %s\n",f.get_error_msg(),f.get_error_pos());
+    }
+  else
+    {
+    for( double x=xmin; x<=xmax; x+=dx )
+    for( double y=ymin; y<=ymax; y+=dy )
+      { double args[] = {x,y};
+        double z = f.eval(args);
+        printf("%g\t%g\t%g\n",x,y,z);
+      }
+    }
+
+6) For many cases it can be suitable to add operator () to the MathFunction class.
+   This will allow to pass such functor object to anywhere a function is required,
+   in particular to call one math expression from another:
+
+  double MathFunction :: operator () (double x, double y)
+    { double args[] = {x,y};
+      return mybase::eval(args);
+    }
+  ...
+  MathFunction f1;
+  f1.parse("if(x==0,1,sin(x)/x)");
+
+  MathFunction f2;
+  f2.add_functor<2>("sinc",&f1);
+  f2.parse("sinc(x)*sinc(y)");
+
+  for( double x=xmin; x<=xmax; x+=dx )
+  for( double y=ymin; y<=ymax; y+=dy )
+    {
+    z = f2(x,y);
+    ...
+    }
+
+See the ./examples/performance for example of using functors.
+
+USER-DEFINED NUMERICAL TYPES
+
+The MathExpressionBase<> can be parametrized by any data type, you just will need provide
+the functions for the math operators to process them. In particular you can create some kind
+of 'variant' data type to support run-time checks and conversions.
+The performance was one from my main goals when I created the project, therefore I avoid
+all run-time checks. If the performance is not your case, then you can use any suitable
+data type and any run-time checks and conversions.
+
+
+FURTHER DETAILS
+I have not prepared an valuable documentation now, therefore look please over the examples
+provided, as well as the MathExpressionBase.h and MathExpression.h sources itself for more
+details. I hope that it should be clear enough how it is organized.
+
+
+KNOW PROBLEMS
+There are know issues, which can lead to some difficulties using the class:
+
+1) Troubles with mixing different numerical types in the MathExpression<>. Ideally, I would
+  like to have possibility to safely mix the functions of real, complex, integer, boolean
+  and user-defined numerical arguments, but it is not possible with existing implementation.
+  Currently all nodes should return the value of the same data type.
+  Of course, this does not mean that user-defined functions should accept and return the same type,
+  but the conversions could be non-trivial.
+
+  Suppose for example that I would like to create an ComplexMathExpression class, and provide function
+  'polar' returning complex number:
+    complex polar( double r, double fi );
+  This will not compile because there is no straight conversion from 'complex' to 'double'.
+  As an example of my temporary (unsatisfactory) solution see the std_complex example.
+
+  As an better (but probably slower from performance side) solution it can be use of some
+  'variant' data type for such conversions and checks. The performance was one from main goals
+  when I created the project, therefore I have avoid all run-time checks.
+
+
+2) Some troubles could be encountered implementing the variable-argument-list user-defined functions.
+  Currently, such functions accepts the 'const NodeList & ' as argument list, but NodeList is protected
+  in MathExpresionBase<>. Therefore, you will need implement such functions in the derived class or create
+  a friend. See as an example the 'sum','product', 'min' and 'max' functions in the MathExpresionBase.h.
+
+
+3) C++ function overloading
+   You may encounter problems using overloaded functions in C++.
+
+   Assume for an example that you have defined 2 functions with the same name:
+      const cln_N conjugate ( const cl_N& x );
+      const cln_R conjugate ( const cl_R& x );
+
+   Then, the try to add the pointer to function will cause compile-time error,
+   because of compiler can't select the correct version byself:
+      add_function("conj",&conjugate); // ERROR HERE
+
+   To workaround the problem you need point compiler to which exactly function you mean:
+      add_function("conj", (const cln_N (*) ( const cl_N& )) &conjugate);
+   or:
+      add_function("conj", (const cln_R (*) ( const cl_R& )) &conjugate);
+
+   As alternative, declare pointer to the function you have in mind, and add it then:
+      const cln_N (*conj_func)( const cl_N& ) = conjugate; // That's fine
+      add_function("conj", conj_func);
+
+To reduce the number of such type castings, the MathExpressionBase::add_function() has a lots of overloads,
+but if you encounter some case which is not handled by these overloads, then direct compiler manually.

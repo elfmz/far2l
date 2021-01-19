@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<!-- http://www.startsurfing.com/encyclopedia/j/u/l/Julian_day.html -->
+
+<dialog ru:name="Дата" en:name="Date units">
+<text ru:name="Юлианский день" en:name="Julian Day"/>
+    <field ru:name="Юлианский день (ю.д.)" en:name="Julian Day (J.D.)" scale="1"/>
+    <field ru:name="Номер юлианского дня" en:name="Julian Day Number" output="{_floor(op0)}" input="_floor(op0)"/>
+    <field ru:name="Сокращённый ю.д. (RJD)" en:name="Reduced J.D." output="{op0-2400000}" input="op0+2400000"/>
+    <field ru:name="Модифицированный ю.д. (MJD)" en:name="Modified J.D." output="{op0-2400000.5}" input="op0+2400000.5"/>
+    <field ru:name="Усечённый ю.д. NASA (TJD)" en:name="Truncated J.D. (NASA)" output="{op0-2440000.5}" input="op0+2440000.5"/>
+    <field ru:name="Усечённый ю.д. NIST (TJD)" en:name="Truncated J.D. (NIST)" output="{(op0-0.5)%10000}" input="op0+2450000.5"/>
+    <field ru:name="Дублинский ю.д. (DJD)" en:name="Dublin J.D." output="{op0-2415020}" input="op0+2415020"/>
+    <field ru:name="Хронологический ю.д. UT (CJD)" en:name="Chronological J.D. UT" output="{op0+0.5}" input="op0-0.5"/>
+<text ru:name="Календари по ISO 8601" en:name="ISO 8601 calendars"/>
+    <field ru:name="Дата (Григорианская)" en:name="Date (Gregorian)" output="D{jdg_year(op0+0.5)}-{jdg_month(op0+0.5)}-{jdg_day(op0+0.5)}T{jd_hour(op0+0.5)}:{jd_min(op0+0.5)}:{jd_sec(op0+0.5)}" input="op0"/>
+    <field ru:name="Юлианская Дата" en:name="Julian Date" output="JD{jd_year(op0+0.5)}-{jd_month(op0+0.5)}-{jd_day(op0+0.5)}T{jd_hour(op0+0.5)}:{jd_min(op0+0.5)}:{jd_sec(op0+0.5)}" input="op0"/>/>
+<text ru:name="Другие значения" en:name="Misc. values"/>
+    <field ru:name="Unix-время (POSIX)" en:name="Unix-time (POSIX)" output="{(op0-jdg(1970,1,1)+0.5)*86400}" input="op0/86400+jdg(1970,1,1)-0.5"/>
+    <field ru:name="ANSI-дата" en:name="ANSI-date" output="{_floor(ansid(op0))}" input="op0+jdg(1601,1,1)-0.5"/>
+    <field ru:name="Лилианский день" en:name="Lilian Day Number" output="{_floor(op0-2299160.5)}" input="op0+2299160.5"/>
+    <field ru:name="Счёт дней н.э. (Rata-die)" en:name="Rata-die" output="{_floor(ratadie(op0))}" input="op0+jdg(1,1,1)-0.5"/>
+</dialog> 

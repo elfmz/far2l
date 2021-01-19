@@ -240,6 +240,7 @@ add_subdirectory (editorcomp)
 add_subdirectory (inside)
 add_subdirectory (incsrch)
 add_subdirectory (NetRocks)
+add_subdirectory (calc)
 add_subdirectory (packaging)
 
 if(PYTHON)

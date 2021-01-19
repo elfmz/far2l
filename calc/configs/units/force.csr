@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Сила" en:name="Force units">
+  <text ru:name="Метрические единицы" en:name="Metric units"/>
+    <field ru:name="Ньютон [СИ]" en:name="Newton [SI]" scale="1"/>
+    <field ru:name="Килоньютон" en:name="Kilonewton" scale="1000"/>
+    <field ru:name="Меганьютон" en:name="Meganewton" scale="1000000"/>
+    <field ru:name="Милиньютон" en:name="Millinewton" scale="0.001"/>
+    <field ru:name="Дина [система СГС]" en:name="Dyne [SGS-system]" scale="0.1"/>
+    <field ru:name="Стен [система МТС]" en:name="Sthène [MTS-system]" scale="1000"/>
+  <text ru:name="Британская и американская система" en:name="Britain and American system"/>
+    <field ru:name="Паундаль" en:name="Poundal" scale="0.138254954376"/>
+    <field ru:name="Фунт-сила" en:name="Pound-force" scale="4.4482216152605"/>
+  <text ru:name="Другие единицы" en:name="Other units"/>
+    <field ru:name="Килограмм-сила [система МГКСС]" en:name="Kilogram-force [gravitational metric system]" scale="9.80665"/>
+</dialog> 

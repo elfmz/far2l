@@ -4,7 +4,7 @@ Works also on OSX/MacOS and BSD (but later not tested on regular manner)
 ALPHA VERSION.   
 **Currently interesting only for enthusiasts!!!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, align, autowrap, drawline, editcase, SimpleIndent, Python (optional scripting support)
+Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, align, autowrap, drawline, editcase, SimpleIndent, Calculator, Python (optional scripting support)
 
 Linux/MacOS (Travis CI): [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.org/elfmz/far2l)
 

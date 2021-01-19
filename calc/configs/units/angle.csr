@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Угловая мера" en:name="Angle Units">
+    <field ru:name="Окружность" en:name="Circle" scale="360"/>
+    <field ru:name="Радиан" en:name="Radian" scale="180/pi"/>
+    <field ru:name="Румб" en:name="Compass point" scale="11.25"/>
+    <field ru:name="Градус" en:name="Degree" scale="1"/>
+    <field ru:name="Град" en:name="Grad" scale="0.9"/>
+</dialog>

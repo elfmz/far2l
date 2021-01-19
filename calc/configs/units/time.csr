@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Время" en:name="Time units">
+    <field ru:name="Микросекунда" en:name="Microsecond" scale="0.000001"/>
+    <field ru:name="Милисекунда" en:name="Millisecond" scale="0.001"/>
+    <field ru:name="Секунда [*]" en:name="Second [*]" scale="1"/>
+    <field ru:name="Минута" en:name="Minute" scale="60"/>
+    <field ru:name="Час" en:name="Hour" scale="3600"/>
+    <field ru:name="День" en:name="Day" scale="86400"/>
+    <field ru:name="Неделя" en:name="Week" scale="604800"/>
+    <field ru:name="Лунный месяц" en:name="Moon month" scale="2419200"/>
+    <field ru:name="Год" en:name="Year" scale="31556925.9936"/>
+    <field ru:name="Век" en:name="Century" scale="3155692599.36"/>
+    <field ru:name="Тысячелетие" en:name="Millenium" scale="31556925993.6"/>
+</dialog> 

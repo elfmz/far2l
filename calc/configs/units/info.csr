@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<!-- http://en.wikipedia.org/wiki/Binary_prefix -->
+
+<dialog ru:name="Количество информации" en:name="Information Units">
+     <field ru:name="байт (B)"                  en:name="byte (B)"                scale="1"/>                        
+     <field ru:name="ниббл (полубайт)"          en:name="nibble"                  scale="0.5"/>                      
+     <field ru:name="бит (b)"                   en:name="bit (b)"                 scale="0.125"/>                    
+  <text ru:name="Двоичные байты (ANSI/IEEE)" en:name="Binary bytes (old ANSI/IEEE)"/>
+     <field ru:name="килобайт (kbyte)"          en:name="kilobyte (kbyte)"        scale="1024"/>                     
+     <field ru:name="мегабайт (Mbyte)"          en:name="megabyte (Mbyte)"        scale="1048576"/>                  
+     <field ru:name="гигабайт (Gbyte)"          en:name="gigabyte (Gbyte)"        scale="1073741824"/>               
+     <field ru:name="терабайт (Tbyte)"          en:name="terabyte (Tbyte)"        scale="1099511627776"/>            
+     <field ru:name="петабайт (Pbyte)"          en:name="petabyte (Pbyte)"        scale="1125899906842624"/>         
+     <field ru:name="эксабайт (Ebyte)"          en:name="exabyte (Ebyte)"         scale="1152921504606846976"/>      
+     <field ru:name="зеттабайт (Zbyte)"         en:name="zettabyte (Zbyte)"       scale="1180591620717411303424"/>   
+     <field ru:name="йоттабайт (Ybyte)"         en:name="yottabyte (Ybyte)"       scale="1208925819614629174706176"/>
+  <text ru:name="Двоичные биты (ANSI/IEEE)" en:name="Binary bits (old ANSI/IEEE)"/>
+     <field ru:name="килобит (kbit)"            en:name="kilobit (kbit)"          scale="128"/>                      
+     <field ru:name="мегабит (Mbit)"            en:name="megabit (Mbit)"          scale="131072"/>                   
+     <field ru:name="гигабит (Gbit)"            en:name="gigabit (Gbit)"          scale="134217728"/>                
+     <field ru:name="терабит (Tbit)"            en:name="terabit (Tbit)"          scale="137438953472"/>             
+     <field ru:name="петабит (Pbit)"            en:name="petabit (Pbit)"          scale="140737488355328"/>          
+     <field ru:name="эксабит (Ebit)"            en:name="exabit (Ebit)"           scale="144115188075855872"/>       
+     <field ru:name="зеттабит (Zbit)"           en:name="zettabit (Zbit)"         scale="147573952589676412928"/>    
+     <field ru:name="йоттабит (Ybit)"           en:name="yottabit (Ybit)"         scale="151115727451828646838272"/> 
+  <text ru:name="Байты (МЭК/ГОСТ/ISO)" en:name="IEC/ISO bytes"/>
+     <field ru:name="кибибайт (kiB,Кбайт)"      en:name="kibibyte (kiB)"          scale="1024"/>                     
+     <field ru:name="мебибайт (MiB,Мбайт)"      en:name="mebibyte (MiB)"          scale="1048576"/>                  
+     <field ru:name="гибибайт (GiB,Гбайт)"      en:name="gibibyte (GiB)"          scale="1073741824"/>               
+     <field ru:name="тебибайт (TiB,Тбайт)"      en:name="tebibyte (TiB)"          scale="1099511627776"/>            
+     <field ru:name="пебибайт (PiB,Пбайт)"      en:name="pebibyte (PiB)"          scale="1125899906842624"/>         
+     <field ru:name="эксбибайт (EiB,Эбайт)"     en:name="exbibyte (EiB)"          scale="1152921504606846976"/>      
+     <field ru:name="зебибайт (ZiB,Збайт)"      en:name="zebibyte (ZiB)"          scale="1180591620717411303424"/>   
+     <field ru:name="йобибайт (YiB,Йбайт)"      en:name="yobibyte (YiB)"          scale="1208925819614629174706176"/>
+  <text ru:name="Биты (МЭК/ГОСТ/ISO)" en:name="IEC/ISO bits"/>     
+     <field ru:name="кибибит (kib)"             en:name="kibibit (kib)"           scale="128"/>                      
+     <field ru:name="мебибит (Mib)"             en:name="mebibit (Mib)"           scale="131072"/>                   
+     <field ru:name="гибибит (Gib)"             en:name="gibibit (Gib)"           scale="134217728"/>                
+     <field ru:name="тебибит (Tib)"             en:name="tebibit (Tib)"           scale="137438953472"/>             
+     <field ru:name="пебибит (Pib)"             en:name="pebibit (Pib)"           scale="140737488355328"/>          
+     <field ru:name="эксбибит (Eib)"            en:name="exbibit (Eib)"           scale="144115188075855872"/>       
+     <field ru:name="зебибит (Zib)"             en:name="zebibit (Zib)"           scale="147573952589676412928"/>    
+     <field ru:name="йобибит (Yib)"             en:name="yobibit (Yib)"           scale="151115727451828646838272"/> 
+  <text ru:name="Байты (СИ)" en:name="SI bytes"/>   
+     <field ru:name="килобайт (kB)"             en:name="kilobyte (kB)"           scale="1e3"/>                     
+     <field ru:name="мегабайт (MB)"             en:name="megabyte (MB)"           scale="1e6"/>                  
+     <field ru:name="гигабайт (GB)"             en:name="gigabyte (GB)"           scale="1e9"/>               
+     <field ru:name="терабайт (TB)"             en:name="terabyte (TB)"           scale="1e12"/>            
+     <field ru:name="петабайт (PB)"             en:name="petabyte (PB)"           scale="1e15"/>         
+     <field ru:name="эксабайт (EB)"             en:name="exabyte (EB)"            scale="1e18"/>      
+     <field ru:name="зеттабайт (ZB)"            en:name="zettabyte (ZB)"          scale="1e21"/>   
+     <field ru:name="йоттабайт (YB)"            en:name="yottabyte (YB)"          scale="1e24"/>
+</dialog>

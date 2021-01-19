@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Скорость" en:name="Velocity units">
+  <text ru:name="Метрическая система" en:name="Metric system"/>
+    <field ru:name="Километр в секунду" en:name="Kilometer per second" scale="1000"/>
+    <field ru:name="Метр в секунду [СИ, система МТС]" en:name="Meter per second [SI, MTS-system]" scale="1"/>
+    <field ru:name="Сантимерт в секунду [система СГС]" en:name="Centimeter per [SGS-system]" scale="0.01"/>
+    <field ru:name="Километр в час" en:name="Kilometer per hour" scale="0.277777777777777777777777777778"/>
+    <field ru:name="Метр в минуту" en:name="Meter per minute" scale="0.0166666666666666666666666666667"/>
+  <text ru:name="Британская и американская система" en:name="Britain and American system"/>
+    <field ru:name="Миля в секунду" en:name="Mile per second" scale="1609.34121216"/>
+    <field ru:name="Миля в час" en:name="Mile per hour" scale="0.4470392256"/>
+    <field ru:name="Фут в секунду" en:name="Foot per second" scale="0.304799472"/>
+  <text ru:name="Морские единицы" en:name="Sea units"/>
+    <field ru:name="Узел" en:name="Knot" scale="0.514444444444444"/>
+  <text ru:name="Астрономические единицы" en:name="Astronomic units"/>
+    <field ru:name="Скорость света" en:name="Light speed" scale="299792458"/>
+</dialog> 

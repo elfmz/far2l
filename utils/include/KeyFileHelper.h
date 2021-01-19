@@ -19,6 +19,7 @@ public:
 	bool IsLoaded() const { return _loaded; }
 	bool Save();
 	
+	bool HasKey(const char *section, const char *name);
 	std::string GetString(const char *section, const char *name, const char *def = "");
 	void GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def = "");
 	int GetInt(const char *section, const char *name, int def = 0);

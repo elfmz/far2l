@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE calc SYSTEM "csr.dtd">
+
+<dialog ru:name="Давление" en:name="Pressure units">
+  <text ru:name="Метрические единицы" en:name="Metric units"/>
+    <field ru:name="Бария [система СГС]" en:name="Barye [SGS-system]" scale="0.1"/>
+    <field ru:name="Паскаль [СИ]" en:name="Pascal [SI]" scale="1"/>
+    <field ru:name="Гектопаскаль (миллибар)" en:name="Hectopascal (millibar)" scale="100"/>
+    <field ru:name="Килопаскаль (пьеза) [система МТС]" en:name="Kilopascal (pieze) [MTS-system]" scale="1000"/>
+    <field ru:name="Бар" en:name="Bar" scale="100000"/>
+    <field ru:name="Мегапаскаль" en:name="Megapascal" scale="1000000"/>
+  <text ru:name="Единицы ртутного столба" en:name="Mercury column units"/>
+    <field ru:name="Миллиметр рт.столба (Торр)" en:name="Mercury millimeter (Torr)" scale="133.322368421"/>
+    <field ru:name="Сантиметр рт.столба" en:name="Mercury centimeter" scale="1333.22368421"/>
+    <field ru:name="Атмосфера (760 Торр)" en:name="Atmosphere (760 Torr)" scale="101324.99999996"/>
+  <text ru:name="Британская и американская система" en:name="Britain and American system"/>
+    <field ru:name="Фунт-сила на кв.фут" en:name="Pound-force on sq.foot" scale="47.8802589583333"/>
+    <field ru:name="Фунт-сила на кв.дюйм" en:name="Pound-force on sq.inch" scale="6894.75729"/>
+    <field ru:name="Паундаль на кв.фут" en:name="Poundal on sq.foot" scale="1.48816909942654"/>
+    <field ru:name="Дюйм ртутного столба" en:name="Mercury inch" scale="3386.37526"/>
+    <field ru:name="Фут водяного столба" en:name="Water foot" scale="2989.0617420888"/>
+    <field ru:name="Дюйм водяного столба" en:name="Water inch" scale="249.0884785074"/>
+  <text ru:name="Другие единицы" en:name="Other units"/>
+    <field ru:name="Килограмм-сила на кв.см" en:name="Kilogram-force on sq.cm" scale="98066.5"/>
+    <field ru:name="Метр водяного столба" en:name="Water meter" scale="9806.65"/>
+    <field ru:name="Килограмм-сила на кв.метр [система МГКСС]" en:name="Kilogram-force on sq.meter [grav. metric system]" scale="9.80665"/>
+</dialog> 

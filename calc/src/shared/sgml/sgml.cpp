@@ -80,16 +80,9 @@ bool CSgmlEl::init()
 	return true;
 }
 
-bool CSgmlEl::readfile(const wchar_t *modname, const wchar_t *fname, std::wstring &content)
+bool CSgmlEl::readfile(std::string &path, std::wstring &content)
 {
-	std::string full_fname = Wide2MB(modname);
-	size_t p = full_fname.rfind('/');
-	if (p != std::string::npos) {
-		full_fname.resize(p + 1);
-	}
-	full_fname+= Wide2MB(fname);
-
-	FDScope fd(open(full_fname.c_str(), O_RDONLY));
+	FDScope fd(open(path.c_str(), O_RDONLY));
 	if (!fd.Valid())
 		return false;
 
@@ -112,14 +105,14 @@ bool CSgmlEl::readfile(const wchar_t *modname, const wchar_t *fname, std::wstrin
 	return true;
 }
 
-bool CSgmlEl::parse(const wchar_t *modname, const wchar_t *fname)
+bool CSgmlEl::parse(std::string &path)
 {
 	PSgmlEl Child, Parent, Next = 0;
 	size_t i, j, lins, line;
 	size_t ls, le, rs, re, empty;
 
 	std::wstring src;
-	if (!readfile(modname, fname, src))
+	if (!readfile(path, src))
 		return false;
 
 	// start object - base
@@ -248,8 +241,14 @@ bool CSgmlEl::parse(const wchar_t *modname, const wchar_t *fname)
 					wchar_t *fn = Child->GetChrParam(L"href");
 					if (fn)
 					{
+						std::string inc_path = path;
+						size_t p = inc_path.rfind('/');
+						if (p != std::string::npos)
+							inc_path.resize(p + 1);
+						inc_path+= Wide2MB(fn);
+
 						std::wstring inc_content;
-						if (readfile(modname, fn, inc_content)) {
+						if (readfile(inc_path, inc_content)) {
 							src.insert(i + 1, inc_content);
 						}
 					}

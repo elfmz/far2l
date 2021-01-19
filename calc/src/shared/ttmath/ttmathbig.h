@@ -5458,10 +5458,25 @@ public:
 			// this!=0 and ss2==0
 			return false;
 
-		if( exponent==ss2.exponent && mantissa==ss2.mantissa )
-			return true;
+		if( exponent!=ss2.exponent)
+			return false;
 
-	return false;
+		// if mantissa is not fully filled (its most significant end is zero)
+		// then do trivial comparing
+		if ( (mantissa.table[mantissa.Size() - 1] >> (sizeof(uint) * 8 - 4)) == 0)
+			return ( mantissa==ss2.mantissa );
+
+		// if mantissa is fully filled then assume equality if both mantissa's
+		// matches except of their least significant ending, that allows
+		// 'floating' equality checks to be tolerant to epsilon errors
+		for (uint i = 1; i < mantissa.Size(); ++i)
+		{
+			if (mantissa.table[i] != ss2.mantissa.table[i])
+				return false;
+		}
+
+		uint least_word_xor = mantissa.table[0] ^ ss2.mantissa.table[0];
+		return (least_word_xor < 0xf);
 	}
 
 

@@ -793,12 +793,39 @@ public:
 		return -1;
 	}
 
-	virtual CALC_INT_PTR OnInput(int param1, void *param2)
+	virtual CALC_INT_PTR OnKey(int param1, void *param2)
 	{
-		INPUT_RECORD *ir = (INPUT_RECORD *)param2;
-		if (ir->EventType != KEY_EVENT || !ir->Event.KeyEvent.bKeyDown)
-			return -1;
-		if (ir->Event.KeyEvent.wVirtualKeyCode == VK_F2)
+		DWORD key = (DWORD)(DWORD_PTR)param2;
+		DWORD ctrls = (key & KEY_CTRLMASK);
+		key&= ~KEY_CTRLMASK;
+#if 0
+		if (key == 'C' && ((ctrls & KEY_CTRL) != 0))
+		{
+			std::wstring str;
+			GetText(CALC_EDIT_ID, str);
+			if (WINPORT(OpenClipboard)(NULL)
+				|| (usleep(500000), WINPORT(OpenClipboard)(NULL) )
+				|| (sleep(1), WINPORT(OpenClipboard)(NULL) ) ) {
+
+				HANDLE hData = WINPORT(GlobalAlloc)(GMEM_MOVEABLE|GMEM_DDESHARE, (str.size()+1) * sizeof(wchar_t));
+				if (hData) {
+					void *p = WINPORT(GlobalLock)(hData);
+					if (p) {
+						memcpy(p, str.c_str(), (str.size()+1) * sizeof(wchar_t));
+						WINPORT(GlobalUnlock)(hData);
+						WINPORT(EmptyClipboard)();
+						WINPORT(SetClipboardData)(CF_UNICODETEXT, (HANDLE)hData);
+					} else {
+						WINPORT(GlobalFree)(hData);
+					}
+				}
+				WINPORT(CloseClipboard)();
+			}
+			return TRUE;
+		}
+#endif
+
+		if (key == KEY_F2)
 		{
 			int i = CalcMenu(0);
 			if (i && i != -1) ShowUnitsDialog(i);
@@ -814,14 +841,14 @@ public:
 				EditChange(CALC_EDIT_ID, item);
 			}
 		}
-		if (ir->Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+
+		if (key == KEY_ENTER)
 		{
 			FarDialogItem *force_update_item = NULL;
 			std::wstring str;
 			GetText(CALC_EDIT_ID, str);
 
-			if ((ir->Event.KeyEvent.dwControlKeyState & LEFT_CTRL_PRESSED) ||
-					(ir->Event.KeyEvent.dwControlKeyState & RIGHT_CTRL_PRESSED))
+			if ((ctrls & KEY_CTRL) != 0)
 			{
 				if (coreReturn)
 					free(coreReturn);
@@ -1100,7 +1127,7 @@ void CalcShowDialog()
 		memset(&it, 0, sizeof(FarDialogItem));
 		it.Type = DI_EDIT;
 		it.PtrData = L"";
-		it.Flags = DIF_DISABLE;
+		it.Flags = DIF_READONLY;//DIF_DISABLE;
 		
 		dialog[basenum + addons_info.num_custom + i] = it;
 	}

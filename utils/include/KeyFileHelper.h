@@ -17,7 +17,7 @@ public:
 	~KeyFileHelper();
 
 	bool IsLoaded() const { return _loaded; }
-	bool Save();
+	bool Save(bool only_if_dirty = true);
 	
 	bool HasKey(const char *section, const char *name);
 	std::string GetString(const char *section, const char *name, const char *def = "");

@@ -141,14 +141,13 @@ void InitDynamicData()
 
 	std::string calcset(StrWide2MB(api->GetModuleName()));
 	size_t p = calcset.rfind('/');
-	if (p != std::string::npos) {
+	if (p != std::string::npos)
 		calcset.resize(p + 1);
-	}
+
 	calcset+= "calcset.csr";
 	struct stat s{};
-	if (stat(calcset.c_str(), &s) == -1) {
+	if (stat(calcset.c_str(), &s) == -1)
 		TranslateInstallPath_Lib2Share(calcset);
-	}
 
 	BaseRc->parse(calcset);
 	

@@ -97,14 +97,15 @@ KeyFileHelper::KeyFileHelper(const char *filename, bool load)
 
 KeyFileHelper::~KeyFileHelper()
 {
-	if (_dirty) {
-		Save();
-	}
+	Save(true);
 }
 
 static std::atomic<unsigned int> s_tmp_uniq;
-bool KeyFileHelper::Save()
+bool KeyFileHelper::Save(bool only_if_dirty)
 {
+	if (only_if_dirty && !_dirty)
+		return true;
+
 	std::string tmp = _filename;
 	unsigned int  tmp_uniq = ++s_tmp_uniq;
 	tmp+= StrPrintf(".%u-%u", getpid(), tmp_uniq);

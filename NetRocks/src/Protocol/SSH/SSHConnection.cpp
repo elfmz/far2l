@@ -1,6 +1,8 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <time.h>
+#include <unistd.h>
 #include <netinet/tcp.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -127,22 +129,31 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		}
 	}
 
-	long retries = std::max(protocol_options.GetInt("ConnectRetries", 2), 1);
+	int retries = std::max(protocol_options.GetInt("ConnectRetries", 2), 1);
 	long timeout = std::max(protocol_options.GetInt("ConnectTimeout", 10), 1);
 
 	ssh_options_set(ssh, SSH_OPTIONS_TIMEOUT, &timeout);
 
 	// TODO: seccomp: if (protocol_options.GetInt("Sandbox") ) ...
 
-	for (;;) {
+	for (int attempt = 1; ; ++attempt) {
+		time_t connect_attemp_ts = time(NULL);
 		int rc = ssh_connect(ssh);
 		if (rc == SSH_OK)
 			break;
-		if (!--retries)
+
+		if (attempt >= retries)
 			throw ProtocolError("Connection", ssh_get_error(ssh), rc);
 
 		// otherwise next connect complains that session is already connected
 		ssh_disconnect(ssh);
+
+		// retry with increasing up to 5 seconds delay
+		time_t min_delay = (attempt > 5) ? 5 : attempt;
+		time_t ts = time(NULL);
+		if (ts >= connect_attemp_ts && ts - connect_attemp_ts < min_delay) {
+			sleep(min_delay - (ts - connect_attemp_ts));
+		}
 	}
 
 

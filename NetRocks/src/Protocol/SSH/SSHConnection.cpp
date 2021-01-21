@@ -127,11 +127,20 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		}
 	}
 
+	long retries = std::max(protocol_options.GetInt("ConnectRetries", 2), 1);
+	long timeout = std::max(protocol_options.GetInt("ConnectTimeout", 10), 1);
+
+	ssh_options_set(ssh, SSH_OPTIONS_TIMEOUT, &timeout);
+
 	// TODO: seccomp: if (protocol_options.GetInt("Sandbox") ) ...
 
-	int rc = ssh_connect(ssh);
-	if (rc != SSH_OK)
-		throw ProtocolError("Connection", ssh_get_error(ssh), rc);
+	for (;;) {
+		int rc = ssh_connect(ssh);
+		if (rc == SSH_OK)
+			break;
+		if (!--retries)
+			throw ProtocolError("Connection", ssh_get_error(ssh), rc);
+	}
 
 
 	int socket_fd = ssh_get_fd(ssh);
@@ -161,7 +170,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		throw ServerIdentityMismatchError(pub_key_hash);
 
 	if (priv_key) {
-		rc = ssh_userauth_publickey(ssh, username.empty() ? nullptr : username.c_str(), priv_key);
+		int rc = ssh_userauth_publickey(ssh, username.empty() ? nullptr : username.c_str(), priv_key);
 		if (rc != SSH_AUTH_SUCCESS) {
 			fprintf(stderr, "ssh_userauth_publickey: %d '%s'\n" , rc, ssh_get_error(ssh));
 			throw std::runtime_error("Key file authentification failed");
@@ -172,7 +181,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 			const char *ssh_agent_sock = getenv("SSH_AUTH_SOCK");
 			if (ssh_agent_sock && *ssh_agent_sock) {
 				fprintf(stderr, "Using ssh-agent cuz SSH_AUTH_SOCK='%s'\n", ssh_agent_sock);
-				rc = ssh_userauth_agent(ssh, NULL);
+				int rc = ssh_userauth_agent(ssh, NULL);
 				if (rc == SSH_AUTH_SUCCESS) {
 					return;
 				}
@@ -181,7 +190,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 			}
 		}
 
-		rc = ssh_userauth_password(ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
+		int rc = ssh_userauth_password(ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
   		if (rc != SSH_AUTH_SUCCESS)
 			throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(ssh), rc);
 	}

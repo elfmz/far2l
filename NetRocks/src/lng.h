@@ -210,6 +210,8 @@ enum LanguageID
   MSFTPMaxWriteBlockSize,
   MSFTPTCPNodelay,
   MSFTPTCPQuickAck,
+  MSFTPConnectRetries,
+  MSFTPConnectTimeout,
   MSFTPEnableSandbox,
 
   MSFileOptionsTitle,

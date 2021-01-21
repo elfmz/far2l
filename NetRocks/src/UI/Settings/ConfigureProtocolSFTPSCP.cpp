@@ -15,6 +15,8 @@
 | [EDIT....................................................] |
 | Max read block size, bytes:                 [9999999]      |
 | Max write block size, bytes:                [9999999]      |
+| Automatically retry connect, times:         [##]           |
+| Connection timeout, seconds:                [###]          |
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
 | [ ] Enable sandbox (if you dont trust server)              |
@@ -30,6 +32,7 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_auth_mode = -1, _i_privkey_path = -1;
 	int _i_use_custom_subsystem = -1, _i_custom_subsystem = -1;
 	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
+	int _i_connect_retries = -1, _i_connect_timeout = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	//int _i_enable_sandbox = -1;
 
@@ -134,6 +137,13 @@ public:
 			_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxWriteBlockSize);
 			_i_max_write_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
 		}
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPConnectRetries);
+		_i_connect_retries = _di.AddAtLine(DI_FIXEDIT, 51,52, DIF_MASKEDIT, "1", "99");
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPConnectTimeout);
+		_i_connect_timeout = _di.AddAtLine(DI_FIXEDIT, 51,53, DIF_MASKEDIT, "10", "999");
 
 		_di.NextLine();
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPNodelay);
@@ -182,6 +192,9 @@ public:
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		SetCheckedDialogControl(_i_tcp_quickack, sc.GetInt("TcpQuickAck", 0) != 0);
 
+		LongLongToDialogControl(_i_connect_retries, std::max((int)1, sc.GetInt("ConnectRetries", 2)));
+		LongLongToDialogControl(_i_connect_timeout, std::max((int)1, sc.GetInt("ConnectTimeout", 10)));
+
 		if (_i_use_custom_subsystem != -1) {
 			SetCheckedDialogControl(_i_use_custom_subsystem, sc.GetInt("UseCustomSubsystem", 0) != 0);
 		}
@@ -208,6 +221,10 @@ public:
 			}
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 			sc.SetInt("TcpQuickAck", IsCheckedDialogControl(_i_tcp_quickack) ? 1 : 0);
+
+			sc.SetInt("ConnectRetries", std::max((int)1, (int)LongLongFromDialogControl(_i_connect_retries)));
+			sc.SetInt("ConnectTimeout", std::max((int)1, (int)LongLongFromDialogControl(_i_connect_timeout)));
+
 			if (_i_use_custom_subsystem != -1) {
 				sc.SetInt("UseCustomSubsystem", IsCheckedDialogControl(_i_use_custom_subsystem) ? 1 : 0);
 			}

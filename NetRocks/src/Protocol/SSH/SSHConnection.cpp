@@ -140,6 +140,9 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 			break;
 		if (!--retries)
 			throw ProtocolError("Connection", ssh_get_error(ssh), rc);
+
+		// otherwise next connect complains that session is already connected
+		ssh_disconnect(ssh);
 	}
 
 

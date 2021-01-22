@@ -19,7 +19,7 @@ if [ -x ~/.config/far2l/open.sh ]; then
 . ~/.config/far2l/open.sh
 fi
 
-if [ "$what" = "exec" ]; then
+if [ "$what" = "exec" ] && [ -f "$1" ] && [ -x "$1" ] ; then
 	if command -v xterm >/dev/null 2>/dev/null ; then
 		xterm -e "$@" >/dev/null 2>/dev/null &
 		exit 0

@@ -37,7 +37,7 @@ There you can convert different values.
 
 	You can initiate calculation also from far2l's command line,
 by typing expression with #calc:# prefix, like #calc:2+2*2# and
-hit ENTER to open Calculaton with given expression and answer.
+hit ENTER to open Calculator with given expression and answer.
 
 
 @unders
@@ -47,9 +47,6 @@ $#Wherefrom it Appears?#
 that my Brains architecture is more complexes, than the Windows 95
 architecture, the ideas of those programs was created in parallel
 threads of my own brains.
-
-  Ou, where you can get #Windows Version#?
-  Visit ~http://www.uic.nnov.ru/~~ruiv/files/calc.zip~@http://www.uic.nnov.ru/~~ruiv/files/calc.zip@
 
 @techinfo
 $^#Technical Information#

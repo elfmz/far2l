@@ -18,18 +18,19 @@ enum
 
 void CalcStartup();
 void CalcExit();
-bool CalcOpen(bool editor);
+void CalcOpenFromEditor();
+void CalcOpen(const wchar_t *expression = nullptr);
 bool CalcConfig();
 
 void InitDynamicData();
 void DeInitDynamicData();
 
 void EditorDialog();
-void ShellDialog();
+void ShellDialog(const wchar_t *expression = nullptr);
 bool ConfigDialog();
 int  CalcMenu(int c);
 void ShowDialog(int no);
-void CalcShowDialog();
+void CalcShowDialog(const wchar_t *expression = nullptr);
 
 void SetActive(int Act);
 

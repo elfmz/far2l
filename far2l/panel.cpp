@@ -522,7 +522,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				{
 					if (item && !item->pPlugin)
 					{
-						Execute(item->path,FALSE,TRUE,TRUE);
+						Execute(item->path,TRUE,TRUE);
 					}
 				}
 				break;

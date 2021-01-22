@@ -2297,7 +2297,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			}
 
 			EscapeSpace(strFullPath);
-			Execute(strFullPath, false, SeparateWindow, true, (CurPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY)!=0);
+			Execute(strFullPath, SeparateWindow, true, (CurPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY)!=0);
 		}
 		else
 		{
@@ -4460,7 +4460,7 @@ bool FileList::ApplyCommand()
 				{
 					CtrlObject->Cp()->LeftPanel->CloseFile();
 					CtrlObject->Cp()->RightPanel->CloseFile();
-					Execute(strConvertedCommand,FALSE,FALSE, 0, 0, ListFileUsed, true);
+					Execute(strConvertedCommand,FALSE, 0, 0, ListFileUsed, true);
 				}
 			}
 

@@ -3,7 +3,7 @@
 
 enum
 {
-	mName, mMenuName, mConfigName, mLang,
+	mName, mMenuName, mConfigName, mLang, mBottomHint,
 	
 	mDialogs, 
 	mOk, mSave, mCancel, mAdvanced,

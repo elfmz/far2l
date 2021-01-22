@@ -14,79 +14,8 @@
 #include <plugin.hpp>
 #include <farkeys.hpp>
 #include <farcolor.hpp>
-# if 0
-typedef uint64_t CALCCOLORFLAGS;
-static const CALCCOLORFLAGS
-CALC_FCF_FG_4BIT  = 0x0000000000000001ULL,
-CALC_FCF_BG_4BIT  = 0x0000000000000002ULL;
 
-
-struct CalcDialogItem
-{
-	CalcDialogItemTypes Type;
-
-	int       X1, Y1, X2, Y2;
-	union
-	{
-		intptr_t Reserved;
-		intptr_t Selected;
-	};
-	unsigned long long Flags;
-	const wchar_t *PtrData;
-};
-
-struct CalcMenuItem
-{
-	const wchar_t *Text = nullptr;
-	int  Selected = 0;
-	int  Checked = 0;
-	int  Separator = 0;
-};
-
-struct CalcEditorInfo
-{
-	size_t StructSize;
-	intptr_t EditorID;
-	intptr_t WindowSizeX;
-	intptr_t WindowSizeY;
-	intptr_t TotalLines;
-	intptr_t CurLine;
-	intptr_t CurPos;
-	intptr_t CurTabPos;
-	intptr_t TopScreenLine;
-	intptr_t LeftPos;
-	intptr_t Overtype;
-	intptr_t BlockType;
-	intptr_t BlockStartLine;
-	uintptr_t Options;
-	intptr_t TabSize;
-	size_t BookmarkCount;
-	size_t SessionBookmarkCount;
-	uintptr_t CurState;
-	uintptr_t CodePage;
-};
-
-struct CalcEditorSelect
-{
-	size_t StructSize;
-	intptr_t BlockType;
-	intptr_t BlockStartLine;
-	intptr_t BlockStartPos;
-	intptr_t BlockWidth;
-	intptr_t BlockHeight;
-};
-
-struct CalcEditorGetString
-{
-	size_t StructSize;
-	intptr_t StringNumber;
-	intptr_t StringLength;
-	const wchar_t *StringText;
-	const wchar_t *StringEOL;
-	intptr_t SelStart;
-	intptr_t SelEnd;
-};
-#endif
+#define CALC_PREFIX L"calc:"
 
 struct CalcCoord 
 {
@@ -129,6 +58,9 @@ typedef CALC_INT_PTR (__stdcall *CALCDLGPROC)(DLGHANDLE hdlg, int msg, int param
 
 class CalcDialog
 {
+protected:
+	BYTE editColor, selColor, highlightColor;
+
 public:
 	CalcDialog();
 	virtual ~CalcDialog();
@@ -217,7 +149,6 @@ public:
 	virtual ~CalcApi() {};
 
 	virtual void GetPluginInfo(void *pinfo, const wchar_t *name) = 0;
-	virtual bool IsOpenedFromEditor(void *oinfo, int OpenFrom) = 0;
 	virtual const wchar_t *GetMsg(int MsgId) = 0;
 	virtual CalcDialogFuncs *GetDlgFuncs() = 0;
 

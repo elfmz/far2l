@@ -43,9 +43,17 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
-	if (api) {
-		CalcOpen(api->IsOpenedFromEditor(NULL, OpenFrom));
+	if (!api) {
+		;
+
+	} else if (OpenFrom == OPEN_EDITOR) {
+		CalcOpenFromEditor();
+
+	} else {
+		const wchar_t *expression = (Item > 0xfff) ? (const wchar_t *)Item : nullptr;
+		CalcOpen(expression);
 	}
+
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -91,6 +99,8 @@ static CALC_INT_PTR __stdcall dlgProc(DLGHANDLE hdlg, int msg, int param1, void 
 
 CalcDialog::CalcDialog()
 {
+	api->GetDlgColors(&editColor, &selColor, &highlightColor);
+
 	msg_tbl = dlg_funcs->GetMessageTable();
 	hdlg = nullptr;
 }

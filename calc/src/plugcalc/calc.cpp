@@ -31,7 +31,6 @@
 
 
 int regAlign, regEdit, regCheck;
-bool badFar = true;
 
 wchar_t *coreReturn = NULL;
 
@@ -43,7 +42,6 @@ CalcCoord cur_dlg_dlg_size;
 // XXX:
 int calc_cx = 55, calc_cy = 8, calc_edit_length = calc_cx - 23;
 int cx_column_width[10] = { 0 };
-int start_from_line = 5;
 
 static struct Addons
 {
@@ -60,6 +58,8 @@ const FarDialogItem dialog_template[] =
 	{ DI_EDIT,        10,  3, 49,  0, 0, {(DWORD_PTR)L"calc_expr"}, DIF_FOCUS | DIF_HISTORY, 0, L"" },
 	{ DI_TEXT,         5,  4,  0,  0, 0, {}, 0, 0, L"" },
 }; //type,x1,y1,x2,y2,Sel,Flags,Data
+
+#define DIALOG_BASE_LINE	5
 
 static const int CALC_EDIT_ID = 2, CALC_TYPE_ID = 3;
 
@@ -80,27 +80,22 @@ static int curRadio = 4;
 // FAR exports
 void CalcStartup()
 {
-	badFar = false;
 	srand((unsigned)time(0));
 	InitConfig();
 }
 
-bool CalcOpen(bool editor)
+void CalcOpenFromEditor()
 {
-	if (badFar)
-	{
-		// XXX:
-		const wchar_t *errver[] = {L"Error", L"Bad FAR version. Need >= Far 2.00", L"die" };
-		api->Message(0, NULL, &errver[0], 3, 1);
-		return false;
-	}
 	InitDynamicData();
-	if (editor)
-		EditorDialog();
-	else
-		ShellDialog();
+	EditorDialog();
 	DeInitDynamicData();
-	return true;
+}
+
+void CalcOpen(const wchar_t *expression)
+{
+	InitDynamicData();
+	ShellDialog(expression);
+	DeInitDynamicData();
 }
 
 bool CalcConfig()
@@ -276,10 +271,10 @@ void EditorDialog()
 
 //////////////////////////////////////////////////////////////////////////
 // shell dialog
-void ShellDialog()
+void ShellDialog(const wchar_t *expression)
 {
 	int i = 0;
-	if (CalcParser::GetNumDialogs() > 0)
+	if (expression == nullptr && CalcParser::GetNumDialogs() > 0)
 	{
 		while ( (i = CalcMenu(i)) != 0)
 		{
@@ -289,7 +284,7 @@ void ShellDialog()
 		}
 	}
 	
-	CalcShowDialog();
+	CalcShowDialog(expression);
 	if (coreReturn)
 	{
 		std::wstring cmd;
@@ -629,17 +624,16 @@ public:
 
 	virtual CALC_INT_PTR OnCtrlColorDlgItem(int param1, void *param2)
 	{
+		CALC_INT_PTR result = (CALC_INT_PTR)param2;
 		FarDialogItem item;
 		GetDlgItemShort(param1, &item);
 		if (item.Flags & DIF_BOXCOLOR)
 		{
-			BYTE edit_color = 1, sel_color = 2, highlight_color = 3;
-			api->GetDlgColors(&edit_color, &sel_color, &highlight_color);
-			return MAKELONG(
-				MAKEWORD(highlight_color, 0),
-				MAKEWORD(highlight_color, 0) );
+			result&= 0xFF00FF00;
+			result|= ((CALC_INT_PTR)highlightColor) << 16;
+			result|= ((CALC_INT_PTR)highlightColor);
 		}
-		return -1;
+		return result;
 	}
 };
 
@@ -697,39 +691,49 @@ void ShowUnitsDialog(int no)
 //////////////////////////////////////////////////////////////////////////////////////
 
 
-void SetCalcDialogDims(FarDialogItem *dialog)
+static void SetCalcDialogDims(FarDialogItem *dialog)
 {
 	int sX, sY;
+
 	getConsoleWindowSize(&sX, &sY);
-	
-	int basenum = sizeof(dialog_template)/sizeof(dialog_template[0]);
-	
+
 	calc_cx = sX > 80 ? 55 * sX / 80 : 55;
 	if (calc_cx > 90)
 		calc_cx = 90;
-	
+
 	calc_edit_length = calc_cx - 20 - addons_info.max_len;
-	
+
 	calc_cy = 8 + addons_info.num_custom;
-	
+
 	dialog[0].X2 = calc_cx - 3;
 	dialog[0].Y2 = calc_cy - 2;
 	dialog[CALC_EDIT_ID].X2 = calc_cx - 6;
-	
+
 	cur_dlg_dlg_size.X = calc_cx;
 	cur_dlg_dlg_size.Y = calc_cy;
-	
+
+	int basenum = ARRAYSIZE(dialog_template);
+
 	for (int i = 0; i < cur_dlg_items_numedits; i++)
 	{
 		dialog[basenum + cur_dlg_items_numedits + i].X1 = 12 + addons_info.max_len;
 		dialog[basenum + cur_dlg_items_numedits + i].X2 = calc_cx - 6;
-		dialog[basenum + cur_dlg_items_numedits + i].Y1 = start_from_line + i;
+		dialog[basenum + cur_dlg_items_numedits + i].Y1 = basenum + 1 + i;
 	}
+
+//	dialog[cur_dlg_items_num - 2].X2 = calc_cx + 1; 		// hint separator
+	dialog[cur_dlg_items_num - 1].X2 = calc_cx - 5;		// hint
 }
 
 class DlgCalc : public CalcDialog
 {
+	const wchar_t *_initialExpression;
+
 public:
+	DlgCalc(const wchar_t *initialExpression = nullptr)
+		: _initialExpression(initialExpression)
+	{
+	}
 
 	virtual CALC_INT_PTR OnInitDialog(int param1, void *param2)
 	{
@@ -737,6 +741,11 @@ public:
 		{
 			free(coreReturn);
 			coreReturn = NULL;
+		}
+		if (_initialExpression)
+		{
+			SetText(CALC_EDIT_ID, _initialExpression);
+			UpdateEditID();
 		}
 		return FALSE;
 	}
@@ -793,37 +802,19 @@ public:
 		return -1;
 	}
 
+	void UpdateEditID()
+	{
+		// to update item2
+		FarDialogItem item{};
+		GetDlgItemShort(CALC_EDIT_ID, &item);
+		EditChange(CALC_EDIT_ID, item);
+	}
+
 	virtual CALC_INT_PTR OnKey(int param1, void *param2)
 	{
 		DWORD key = (DWORD)(DWORD_PTR)param2;
 		DWORD ctrls = (key & KEY_CTRLMASK);
 		key&= ~KEY_CTRLMASK;
-#if 0
-		if (key == 'C' && ((ctrls & KEY_CTRL) != 0))
-		{
-			std::wstring str;
-			GetText(CALC_EDIT_ID, str);
-			if (WINPORT(OpenClipboard)(NULL)
-				|| (usleep(500000), WINPORT(OpenClipboard)(NULL) )
-				|| (sleep(1), WINPORT(OpenClipboard)(NULL) ) ) {
-
-				HANDLE hData = WINPORT(GlobalAlloc)(GMEM_MOVEABLE|GMEM_DDESHARE, (str.size()+1) * sizeof(wchar_t));
-				if (hData) {
-					void *p = WINPORT(GlobalLock)(hData);
-					if (p) {
-						memcpy(p, str.c_str(), (str.size()+1) * sizeof(wchar_t));
-						WINPORT(GlobalUnlock)(hData);
-						WINPORT(EmptyClipboard)();
-						WINPORT(SetClipboardData)(CF_UNICODETEXT, (HANDLE)hData);
-					} else {
-						WINPORT(GlobalFree)(hData);
-					}
-				}
-				WINPORT(CloseClipboard)();
-			}
-			return TRUE;
-		}
-#endif
 
 		if (key == KEY_F2)
 		{
@@ -835,10 +826,7 @@ public:
 				GetText(CALC_EDIT_ID, str);
 				str += coreReturn;
 				SetText(CALC_EDIT_ID, str);
-				// to update item2
-				FarDialogItem item;
-				GetDlgItemShort(param1, &item);
-				EditChange(CALC_EDIT_ID, item);
+				UpdateEditID();
 			}
 		}
 
@@ -891,7 +879,8 @@ public:
 			wchar_t *free_text = nullptr;
 			if (loc_Radio >= 0)
 			{
-				text = free_text = convertToString(res, loc_Radio, props.result_length, true, props.pad_zeroes != 0, false, NULL);
+				text = free_text = convertToString(res, loc_Radio,
+					props.result_length, true, props.pad_zeroes != 0, false, NULL);
 				if (text == NULL)
 				{
 					loc_Radio = -1;
@@ -911,10 +900,7 @@ public:
 				OnEditChangeInternal(CALC_EDIT_ID, force_update_item, true);
 			} else
 			{
-				// to update item2
-				FarDialogItem item;
-				GetDlgItemShort(param1, &item);
-				EditChange(CALC_EDIT_ID, item);
+				UpdateEditID();
 			}
 
 			if (set_sel)
@@ -980,7 +966,7 @@ public:
 				{
 					calc_error = 0;
 
-					CalcCoord cursor;
+					CalcCoord cursor{};
 					cursor.X = 0;
 					cursor.Y = 0;
 					std::wstring tmp = types[res.gettype()];
@@ -1002,18 +988,16 @@ public:
 					{
 						CALC_ERROR error_code = ERR_OK;
 						wchar_t *text = convertToString(res, i, 0, false, props.pad_zeroes != 0, true, &error_code);
-						if (error_code != ERR_OK)
-						{
-							SetText(addons_info.edit_id1 + i, api->GetMsg(mNoError + error_code));
-							SetCursorPos(addons_info.edit_id1 + i, cursor);
-							
-						}
 						if (text)
 						{
 							SetText(addons_info.edit_id1 + i, text);
-							SetCursorPos(addons_info.edit_id1 + i, cursor);
 							free(text);
 						}
+						else if (error_code != ERR_OK)
+						{
+							SetText(addons_info.edit_id1 + i, api->GetMsg(mNoError + error_code));
+						}
+						SetCursorPos(addons_info.edit_id1 + i, cursor);
 					}
 				}
 				EnableRedraw(true);
@@ -1028,15 +1012,14 @@ public:
 	
 	virtual CALC_INT_PTR OnCtrlColorDlgItem(int param1, void *param2)
 	{
+		CALC_INT_PTR result = (CALC_INT_PTR)param2;
 		if (param1 >= addons_info.edit_id1 && param1 <= addons_info.edit_id2)
 		{
-			BYTE edit_color = 1, sel_color = 2, highlight_color = 3;
-			api->GetDlgColors(&edit_color, &sel_color, &highlight_color);
-			return MAKELONG(
-				MAKEWORD(edit_color, 0),
-				MAKEWORD(sel_color, 0) );
+			result&= 0xFF00FF00;
+			result|= ((CALC_INT_PTR)selColor) << 16;
+			result|= ((CALC_INT_PTR)editColor);
 		}
-		return -1;
+		return result;
 	}
 };
 
@@ -1058,12 +1041,12 @@ int get_visible_len(const wchar_t *str)
 }
 
 // XXX:
-void CalcShowDialog()
+void CalcShowDialog(const wchar_t *expression)
 {
-	FarDialogItem *dialog;
+//	FarDialogItem *dialog;
 
-	unsigned basenum = sizeof(dialog_template)/sizeof(dialog_template[0]);
-	unsigned totalnum = basenum;
+//	unsigned basenum = sizeof(dialog_template) / sizeof(dialog_template[0]);
+//	unsigned totalnum = basenum;
 	unsigned i;
 	
 	addons_info.num_custom = 0;
@@ -1076,17 +1059,21 @@ void CalcShowDialog()
 			addons_info.max_len = len;
 	}
 
-	totalnum = basenum + addons_info.num_custom * 2;
-	dialog = new FarDialogItem [totalnum];
+//	totalnum = basenum + addons_info.num_custom * 2;
+//	dialog = new FarDialogItem [totalnum];
+	std::vector<FarDialogItem> dialog;
 
-	for (i = 0; i < basenum; i++)
-		dialog[i] = dialog_template[i];
+	for (const auto &templated_item : dialog_template) {
+		dialog.emplace_back(templated_item);
+	}
+	//size_t basenum = dialog.size();
+		//dialog[i] = dialog_template[i];
 	dialog[0].PtrData = _wcsdup(api->GetMsg(mName));
 
 	if (!props.autocomplete)
 		dialog[2].Flags |= DIF_NOAUTOCOMPLETE;
 
-	addons_info.radio_id1 = basenum;
+	addons_info.radio_id1 = (int)dialog.size();
 	addons_info.radio_id2 = addons_info.radio_id1 + addons_info.num_custom - 1;
 	addons_info.edit_id1 = addons_info.radio_id2 + 1;
 	addons_info.edit_id2 = addons_info.edit_id1 + addons_info.num_custom - 1;
@@ -1094,11 +1081,10 @@ void CalcShowDialog()
 	// add radio-buttons
 	for (i = 0; i < addons_info.num_custom; i++)
 	{
-		FarDialogItem it;
-		memset(&it, 0, sizeof(FarDialogItem));
+		FarDialogItem it {};
 		it.Type = DI_RADIOBUTTON;
 		it.X1 = 6;
-		it.Y1 = start_from_line + i;
+		it.Y1 = DIALOG_BASE_LINE + i;
 
 		const wchar_t *from = parser->addons[i].name.c_str();
 		wchar_t *tmp = (wchar_t *)malloc((wcslen(from) + addons_info.max_len + 2) * sizeof(wchar_t));
@@ -1115,40 +1101,55 @@ void CalcShowDialog()
 		it.PtrData = tmp;
 
 		it.Flags = (i == 0) ? DIF_GROUP : 0;
-		it.Param.Selected = (curRadio == int(i + basenum)) ? 1 : 0;
+		it.Param.Selected = (curRadio == (int)dialog.size()) ? 1 : 0; //int(i + addons_info.radio_id1)
 		
-		dialog[basenum + i] = it;
+		dialog.emplace_back(it);
 	}
 
 	// add edit-boxes
 	for (i = 0; i < addons_info.num_custom; i++)
 	{
-		FarDialogItem it;
-		memset(&it, 0, sizeof(FarDialogItem));
+		FarDialogItem it {};
 		it.Type = DI_EDIT;
 		it.PtrData = L"";
 		it.Flags = DIF_READONLY;//DIF_DISABLE;
 		
-		dialog[basenum + addons_info.num_custom + i] = it;
+//		dialog[basenum + addons_info.num_custom + i] = it;
+		dialog.emplace_back(it);
 	}
 
-	cur_dlg_items = dialog;
-	cur_dlg_items_num = totalnum;
+	// add hint
+	FarDialogItem it {};
+	it.Type = DI_TEXT;
+	it.X1 = 5;
+	it.Y1 = DIALOG_BASE_LINE + addons_info.num_custom;
+//	it.PtrData = L"";
+//	it.Flags = DIF_SEPARATOR;
+//	dialog.emplace_back(it);
+//	it.Y1++;
+	it.Flags = DIF_CENTERTEXT | DIF_DISABLE;
+	it.PtrData = api->GetMsg(mBottomHint);
+	dialog.emplace_back(it);
+
+	cur_dlg_items = &dialog[0];
+	cur_dlg_items_num = (int)dialog.size();
 	cur_dlg_items_numedits = addons_info.num_custom;
-	SetCalcDialogDims(dialog);
-	
-	DlgCalc calc;
+	SetCalcDialogDims(&dialog[0]);
+
+//	if (expression)
+//	{
+//		dialog[2].PtrData = expression;
+//	}
+	DlgCalc calc(expression);
 	calc.Init(CALC_DIALOG_MAIN, -1, -1, cur_dlg_dlg_size.X, cur_dlg_dlg_size.Y, 
-				L"Contents", dialog, totalnum);
+				L"Contents", &dialog[0], (int)dialog.size());
 
 	calc.Run();
 
 	free((void *)dialog[0].PtrData);
 
 	for (i = 0; i < addons_info.num_custom; i++)
-		free((void *)dialog[basenum + i].PtrData);
-
-	delete [] dialog;
+		free((void *)dialog[addons_info.radio_id1 + i].PtrData);
 }
 
 SDialogElem::SDialogElem()

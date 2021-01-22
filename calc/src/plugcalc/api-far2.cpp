@@ -182,11 +182,8 @@ public:
 		PluginConfigStrings = name;
 		pInfo->PluginConfigStrings = &PluginConfigStrings;
 		pInfo->PluginConfigStringsNumber = 1;
-	}
 
-	virtual bool IsOpenedFromEditor(void *, int OpenFrom)
-	{
-		return (OpenFrom == OPEN_EDITOR);
+		pInfo->CommandPrefix = CALC_PREFIX;
 	}
 
 	virtual const wchar_t *GetMsg(int MsgId)

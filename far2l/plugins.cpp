@@ -150,13 +150,61 @@ DWORD ExportCRC32W[] =
 
 enum PluginType
 {
-	NOT_PLUGIN,
+	NOT_PLUGIN = 0,
 	WIDE_PLUGIN,
 	MULTIBYTE_PLUGIN
 };
 
+////
 
-PluginType IsModulePlugin(const wchar_t *lpModuleName)
+const char *PluginsIni()
+{
+	static std::string s_out(InMyConfig("plugins.ini"));
+	return s_out.c_str();
+}
+
+// Return string used as ini file key that represents given
+// plugin object file. To reduce overhead encode less meaningful
+// components like file path and extension as CRC suffix, leaded
+// by actual plugin file name.
+// If plugins resided in a path that is nested under g_strFarPath
+// then dismiss g_strFarPath from CRC to make result invariant to
+// whole package relocation.
+static std::string PluginSettingsName(const FARString &strModuleName)
+{
+	std::string pathname;
+
+	const size_t FarPathLength = g_strFarPath.GetLength();
+	if (FarPathLength < strModuleName.GetLength()
+	  && !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
+	{
+		Wide2MB(strModuleName.CPtr() + FarPathLength, pathname);
+	}
+	else
+	{
+		Wide2MB(strModuleName.CPtr(), pathname);
+	}
+
+	uint64_t suffix = 0xC001000CAC4E;
+
+	size_t p = pathname.rfind('/');
+	if (p != std::string::npos) {
+		suffix = crc64(suffix,
+			(const unsigned char *)pathname.c_str(), p);
+		pathname.erase(0, p + 1);
+	}
+
+	p = pathname.rfind('.');
+	if (p != std::string::npos) {
+		suffix = crc64(suffix,
+			(const unsigned char *)pathname.c_str() + p, pathname.size() - p);
+		pathname.resize(p);
+	}
+
+	return StrPrintf("%s@%llx", pathname.c_str(), (unsigned long long)suffix);
+}
+
+static PluginType PluginTypeByExtension(const wchar_t *lpModuleName)
 {
 	const wchar_t *ext = wcsrchr(lpModuleName, L'.');
 	if (ext) {
@@ -236,18 +284,40 @@ bool PluginManager::RemovePlugin(Plugin *pPlugin)
 
 
 bool PluginManager::LoadPlugin(
-    const wchar_t *lpwszModuleName,
-    const struct stat &st,
-    bool LoadToMem
+    const FARString &strModuleName,
+    bool UncachedLoad
 )
 {
+	const PluginType PlType = PluginTypeByExtension(strModuleName);
+
+	if (PlType == NOT_PLUGIN)
+		return false;
+
+	struct stat st{};
+	if (stat(strModuleName.GetMB().c_str(), &st) == -1)
+	{
+		fprintf(stderr, "%s: stat error %u for '%ls'\n",
+			__FUNCTION__, errno, strModuleName.CPtr());
+		return false;
+	}
+
+	const std::string &SettingsName = PluginSettingsName(strModuleName);
+	const std::string &ModuleID = StrPrintf("%llx.%llx.%llx.%llx",
+							(unsigned long long)st.st_ino, (unsigned long long)st.st_size,
+							(unsigned long long)st.st_mtime, (unsigned long long)st.st_ctime);
+
 	Plugin *pPlugin = nullptr;
 
-	switch (IsModulePlugin(lpwszModuleName))
+	switch (PlType)
 	{
-		case WIDE_PLUGIN: pPlugin = new(std::nothrow) PluginW(this, lpwszModuleName); break;
-		case MULTIBYTE_PLUGIN: pPlugin = new(std::nothrow) PluginA(this, lpwszModuleName); break;
-		default: return false;
+		case WIDE_PLUGIN:
+			pPlugin = new(std::nothrow) PluginW(this, strModuleName, SettingsName, ModuleID);
+			break;
+		case MULTIBYTE_PLUGIN:
+			pPlugin = new(std::nothrow) PluginA(this, strModuleName, SettingsName, ModuleID);
+			break;
+		default:
+			abort();
 	}
 
 	if (!pPlugin)
@@ -259,13 +329,13 @@ bool PluginManager::LoadPlugin(
 		return false;
 	}
 
-	bool bResult=false;
+	bool bResult = false;
 
-	if (!LoadToMem)
+	if (!UncachedLoad)
 	{
-		bResult = pPlugin->LoadFromCache(st);
+		bResult = pPlugin->LoadFromCache();
 		fprintf(stderr, "%s: cache %s for '%ls'\n",
-			__FUNCTION__, bResult ? "hit" : "miss", lpwszModuleName);
+			__FUNCTION__, bResult ? "hit" : "miss", strModuleName.CPtr());
 	}
 
 	if (!bResult && !Opt.LoadPlug.PluginsCacheOnly)
@@ -283,7 +353,7 @@ bool PluginManager::CacheForget(const wchar_t *lpwszModuleName)
 {
 	KeyFileHelper kfh(PluginsIni());
 	const std::string &SettingsName = PluginSettingsName(lpwszModuleName);
-	if (kfh.RemoveSection(SettingsName.c_str()) == 0)
+	if (!kfh.RemoveSection(SettingsName.c_str()))
 	{
 		fprintf(stderr, "%s: nothing to forget for '%ls'\n", __FUNCTION__, lpwszModuleName);
 		return false;
@@ -306,14 +376,10 @@ bool PluginManager::LoadPluginExternal(const wchar_t *lpwszModuleName, bool Load
 	}
 	else
 	{
-		struct stat st{};
+		if (!LoadPlugin(lpwszModuleName, LoadToMem))
+			return false;
 
-		if (stat(Wide2MB(lpwszModuleName).c_str(), &st) == 0)
-		{
-			if (!LoadPlugin(lpwszModuleName, st, LoadToMem))
-				return false;
-			far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
-		}
+		far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
 	}
 	return true;
 }
@@ -469,14 +535,10 @@ void PluginManager::LoadPlugins()
 			// ...и пройдемся по нему
 			while (ScTree.GetNextName(&FindData,strFullName))
 			{
-				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-					&& CmpName(L"*.far-plug-*",FindData.strFileName,false))
+				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				{
-					struct stat st{};
-					if (stat(strFullName.GetMB().c_str(), &st) == 0)
-					{
-						LoadPlugin(strFullName, st, false);
-					}
+					// this will check filename extension
+					LoadPlugin(strFullName, false);
 				}
 			} // end while
 		}
@@ -497,16 +559,15 @@ void PluginManager::LoadPluginsFromCache()
 {
 	KeyFileHelper kfh(PluginsIni());
 	const std::vector<std::string> &sections = kfh.EnumSections();
-	struct stat st;
 	FARString strModuleName;
 	for (const auto &s : sections)
 	{
 		if (s != SettingsSection)
 		{
 			const std::string &module = kfh.GetString(s.c_str(), "Module");
-			if (!module.empty() && stat(module.c_str(), &st) == 0) {
+			if (!module.empty()) {
 				strModuleName = module;
-				LoadPlugin(strModuleName, st, false);
+				LoadPlugin(strModuleName, false);
 			}
 		}
 	}
@@ -518,71 +579,6 @@ int _cdecl PluginsSort(const void *el1,const void *el2)
 	Plugin *Plugin2=*((Plugin**)el2);
 	return (StrCmpI(PointToName(Plugin1->GetModuleName()),PointToName(Plugin2->GetModuleName())));
 }
-
-/* OLD
-HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode)
-{
-	ChangePriority ChPriority(ChangePriority::NORMAL);
-
-	ConsoleTitle ct(Opt.ShowCheckingFile?MSG(MCheckingFileInPlugin):nullptr);
-
-	Plugin *pPlugin = nullptr;
-
-	FARString strFullName;
-
-	if (Name)
-	{
-		ConvertNameToFull(Name,strFullName);
-		Name = strFullName;
-	}
-
-	for (int i = 0; i < PluginsCount; i++)
-	{
-		pPlugin = PluginsData[i];
-
-		if ( !pPlugin->HasOpenFilePlugin() || (pPlugin->HasAnalyse() && pPlugin->HasOpenPlugin()) )
-			continue;
-
-		if ( Opt.ShowCheckingFile )
-			ct.Set(L"%ls - [%ls]...",MSG(MCheckingFileInPlugin),PointToName(pPlugin->GetModuleName()));
-
-		HANDLE hPlugin;
-
-		if ( pPlugin->HasOpenFilePlugin() )
-			hPlugin = pPlugin->OpenFilePlugin (Name, Data, DataSize, OpMode);
-		else
-		{
-			AnalyseData AData;
-
-			AData.lpwszFileName = Name;
-			AData.pBuffer = Data;
-			AData.dwBufferSize = DataSize;
-			AData.OpMode = OpMode;
-
-			if ( !pPlugin->Analyse(&AData) )
-				continue;
-
-			hPlugin = pPlugin->OpenPlugin(OPEN_ANALYSE, 0);
-		}
-
-		if (hPlugin == (HANDLE)-2)
-			return hPlugin;
-
-		if (hPlugin != INVALID_HANDLE_VALUE)
-		{
-			PluginHandle *handle = new PluginHandle;
-			handle->hPlugin = hPlugin;
-			handle->pPlugin = pPlugin;
-
-			return (HANDLE)handle;
-		}
-	}
-
-	return INVALID_HANDLE_VALUE;
-}
-
-*/
-
 
 HANDLE PluginManager::OpenFilePlugin(
     const wchar_t *Name,
@@ -2133,56 +2129,3 @@ bool PluginManager::MayExitFar()
 }
 
 ////////////////////////
-const char *PluginsIni()
-{
-	static std::string s_out(InMyConfig("plugins.ini"));
-	return s_out.c_str();
-}
-
-std::string PluginSettingsName(const FARString &strModuleName)
-{
-	// Return string used as ini file key that represents given
-	// plugin object file. To reduce overhead encode less meaningful
-	// components like file path and extension as CRC suffix, leaded
-	// by actual plugin file name.
-	// If plugins resided in a path that is nested under g_strFarPath
-	// then dismiss g_strFarPath from CRC to make result invariant to
-	// whole package relocation.
-	std::string pathname;
-
-	const size_t FarPathLength = g_strFarPath.GetLength();
-	if (FarPathLength < strModuleName.GetLength()
-	  && !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
-	{
-		Wide2MB(strModuleName.CPtr() + FarPathLength, pathname);
-	}
-	else
-	{
-		Wide2MB(strModuleName.CPtr(), pathname);
-	}
-
-	uint64_t suffix = 0xC001000CAC4E;
-
-	size_t p = pathname.rfind('/');
-	if (p != std::string::npos) {
-		suffix = crc64(suffix,
-			(const unsigned char *)pathname.c_str(), p);
-		pathname.erase(0, p + 1);
-	}
-
-	p = pathname.rfind('.');
-	if (p != std::string::npos) {
-		suffix = crc64(suffix,
-			(const unsigned char *)pathname.c_str() + p, pathname.size() - p);
-		pathname.resize(p);
-	}
-
-	return StrPrintf("%s@%llx", pathname.c_str(), (unsigned long long)suffix);
-}
-
-std::string PluginCacheID(const struct stat &st)
-{
-	return StrPrintf("%llx.%llx.%llx.%llx",
-		(unsigned long long)st.st_ino, (unsigned long long)st.st_size,
-		(unsigned long long)st.st_mtime, (unsigned long long)st.st_ctime);
-}

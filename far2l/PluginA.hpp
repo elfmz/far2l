@@ -74,6 +74,7 @@ class PluginA: public Plugin
 
 		FARString m_strModuleName;
 		std::string m_strSettingsName;
+		std::string m_strModuleID;
 
 		BitFlags WorkFlags;      // рабочие флаги текущего плагина
 		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
@@ -129,13 +130,16 @@ class PluginA: public Plugin
 
 	public:
 
-		PluginA(PluginManager *owner, const wchar_t *lpwzModuleName);
+		PluginA(PluginManager *owner,
+				const FARString &strModuleName,
+				const std::string &settingsName,
+				const std::string &moduleID);
 		~PluginA();
 
 		bool IsOemPlugin() {return true;}
 
 		bool Load();
-		bool LoadFromCache(const struct stat &st);
+		bool LoadFromCache();
 
 		bool SaveToCache();
 

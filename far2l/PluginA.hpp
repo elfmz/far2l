@@ -73,7 +73,7 @@ class PluginA: public Plugin
 		PluginManager *m_owner; //BUGBUG
 
 		FARString m_strModuleName;
-		std::string m_strCacheName;
+		std::string m_strSettingsName;
 
 		BitFlags WorkFlags;      // рабочие флаги текущего плагина
 		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
@@ -180,7 +180,7 @@ class PluginA: public Plugin
 		bool HasFreeCustomData() { return false; }
 
 		const FARString &GetModuleName() { return m_strModuleName; }
-		const char *GetCacheName() { return m_strCacheName.c_str(); }
+		const char *GetSettingsName() { return m_strSettingsName.c_str(); }
 		DWORD GetSysID() { return SysID; }
 		bool CheckWorkFlags(DWORD flags) { return WorkFlags.Check(flags)==TRUE; }
 		DWORD GetWorkFlags() { return WorkFlags.Flags; }

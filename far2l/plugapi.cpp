@@ -1096,12 +1096,6 @@ LONG_PTR WINAPI FarSendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2
 	return 0;
 }
 
-static int FarDialogExSehed(Dialog *FarDialog)
-{
-	FarDialog->Process();
-	return FarDialog->GetExitCode();
-}
-
 static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2,
                             const wchar_t *HelpTopic, FarDialogItem *Item,
                             unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
@@ -1180,16 +1174,9 @@ static int FarDialogRunSynched(HANDLE hDlg)
 	int ExitCode=-1;
 	Dialog *FarDialog = (Dialog *)hDlg;
 
-	if (Opt.ExceptRules)
-	{
-		CtrlObject->Plugins.Flags.Clear(PSIF_DIALOG);
-		ExitCode=FarDialogExSehed(FarDialog);
-	}
-	else
-	{
-		FarDialog->Process();
-		ExitCode=FarDialog->GetExitCode();
-	}
+	//CtrlObject->Plugins.Flags.Clear(PSIF_DIALOG);
+	FarDialog->Process();
+	ExitCode=FarDialog->GetExitCode();
 
 	/* $ 15.05.2002 SKV
 		Однако разлочивать нужно ровно то, что залочили.
@@ -2442,6 +2429,7 @@ static int farPluginsControlSynched(HANDLE hHandle, int Command, int Param1, LON
 {
 	switch (Command)
 	{
+		case PCTL_CACHEFORGET:
 		case PCTL_LOADPLUGIN:
 		case PCTL_UNLOADPLUGIN:
 		case PCTL_FORCEDLOADPLUGIN:
@@ -2453,9 +2441,11 @@ static int farPluginsControlSynched(HANDLE hHandle, int Command, int Param1, LON
 					FARString strPath;
 					ConvertNameToFull((const wchar_t *)Param2, strPath);
 
+					if (Command == PCTL_CACHEFORGET)
+						return CtrlObject->Plugins.CacheForget(strPath);
 					if (Command == PCTL_LOADPLUGIN)
 						return CtrlObject->Plugins.LoadPluginExternal(strPath, false);
-					else if (Command == PCTL_FORCEDLOADPLUGIN)
+					if (Command == PCTL_FORCEDLOADPLUGIN)
 						return CtrlObject->Plugins.LoadPluginExternal(strPath, true);
 					else
 						return CtrlObject->Plugins.UnloadPluginExternal(strPath);

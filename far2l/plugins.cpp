@@ -61,16 +61,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filelist.hpp"
 #include "message.hpp"
 #include "SafeMMap.hpp"
+#include <KeyFileHelper.h>
+#include <crc64.h>
 
-const wchar_t *FmtPluginsCache_PluginS=L"PluginsCache/%ls";
-const wchar_t *FmtDiskMenuStringD=L"DiskMenuString%d";
-const wchar_t *FmtDiskMenuNumberD=L"DiskMenuNumber%d";
-const wchar_t *FmtPluginMenuStringD=L"PluginMenuString%d";
-const wchar_t *FmtPluginConfigStringD=L"PluginConfigString%d";
-
-static const wchar_t *PluginsFolderName=L"Plugins";
-
-static const wchar_t *RKN_PluginsCache=L"PluginsCache";
+const char *FmtDiskMenuStringD = "DiskMenuString%d";
+const char *FmtPluginMenuStringD = "PluginMenuString%d";
+const char *FmtPluginConfigStringD = "PluginConfigString%d";
+const char *SettingsSection = "Settings";
+static const wchar_t *PluginsFolderName = L"Plugins";
 
 static int _cdecl PluginsSort(const void *el1,const void *el2);
 
@@ -152,13 +150,61 @@ DWORD ExportCRC32W[] =
 
 enum PluginType
 {
-	NOT_PLUGIN,
+	NOT_PLUGIN = 0,
 	WIDE_PLUGIN,
 	MULTIBYTE_PLUGIN
 };
 
+////
 
-PluginType IsModulePlugin(const wchar_t *lpModuleName)
+const char *PluginsIni()
+{
+	static std::string s_out(InMyConfig("plugins.ini"));
+	return s_out.c_str();
+}
+
+// Return string used as ini file key that represents given
+// plugin object file. To reduce overhead encode less meaningful
+// components like file path and extension as CRC suffix, leaded
+// by actual plugin file name.
+// If plugins resided in a path that is nested under g_strFarPath
+// then dismiss g_strFarPath from CRC to make result invariant to
+// whole package relocation.
+static std::string PluginSettingsName(const FARString &strModuleName)
+{
+	std::string pathname;
+
+	const size_t FarPathLength = g_strFarPath.GetLength();
+	if (FarPathLength < strModuleName.GetLength()
+	  && !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
+	{
+		Wide2MB(strModuleName.CPtr() + FarPathLength, pathname);
+	}
+	else
+	{
+		Wide2MB(strModuleName.CPtr(), pathname);
+	}
+
+	uint64_t suffix = 0xC001000CAC4E;
+
+	size_t p = pathname.rfind('/');
+	if (p != std::string::npos) {
+		suffix = crc64(suffix,
+			(const unsigned char *)pathname.c_str(), p);
+		pathname.erase(0, p + 1);
+	}
+
+	p = pathname.rfind('.');
+	if (p != std::string::npos) {
+		suffix = crc64(suffix,
+			(const unsigned char *)pathname.c_str() + p, pathname.size() - p);
+		pathname.resize(p);
+	}
+
+	return StrPrintf("%s@%llx", pathname.c_str(), (unsigned long long)suffix);
+}
+
+static PluginType PluginTypeByExtension(const wchar_t *lpModuleName)
 {
 	const wchar_t *ext = wcsrchr(lpModuleName, L'.');
 	if (ext) {
@@ -238,18 +284,40 @@ bool PluginManager::RemovePlugin(Plugin *pPlugin)
 
 
 bool PluginManager::LoadPlugin(
-    const wchar_t *lpwszModuleName,
-    const FAR_FIND_DATA_EX &FindData,
-    bool LoadToMem
+    const FARString &strModuleName,
+    bool UncachedLoad
 )
 {
+	const PluginType PlType = PluginTypeByExtension(strModuleName);
+
+	if (PlType == NOT_PLUGIN)
+		return false;
+
+	struct stat st{};
+	if (stat(strModuleName.GetMB().c_str(), &st) == -1)
+	{
+		fprintf(stderr, "%s: stat error %u for '%ls'\n",
+			__FUNCTION__, errno, strModuleName.CPtr());
+		return false;
+	}
+
+	const std::string &SettingsName = PluginSettingsName(strModuleName);
+	const std::string &ModuleID = StrPrintf("%llx.%llx.%llx.%llx",
+							(unsigned long long)st.st_ino, (unsigned long long)st.st_size,
+							(unsigned long long)st.st_mtime, (unsigned long long)st.st_ctime);
+
 	Plugin *pPlugin = nullptr;
 
-	switch (IsModulePlugin(lpwszModuleName))
+	switch (PlType)
 	{
-		case WIDE_PLUGIN: pPlugin = new(std::nothrow) PluginW(this, lpwszModuleName); break;
-		case MULTIBYTE_PLUGIN: pPlugin = new(std::nothrow) PluginA(this, lpwszModuleName); break;
-		default: return false;
+		case WIDE_PLUGIN:
+			pPlugin = new(std::nothrow) PluginW(this, strModuleName, SettingsName, ModuleID);
+			break;
+		case MULTIBYTE_PLUGIN:
+			pPlugin = new(std::nothrow) PluginA(this, strModuleName, SettingsName, ModuleID);
+			break;
+		default:
+			abort();
 	}
 
 	if (!pPlugin)
@@ -261,10 +329,14 @@ bool PluginManager::LoadPlugin(
 		return false;
 	}
 
-	bool bResult=false;
+	bool bResult = false;
 
-	if (!LoadToMem)
-		bResult = pPlugin->LoadFromCache(FindData);
+	if (!UncachedLoad)
+	{
+		bResult = pPlugin->LoadFromCache();
+		fprintf(stderr, "%s: cache %s for '%ls'\n",
+			__FUNCTION__, bResult ? "hit" : "miss", strModuleName.CPtr());
+	}
 
 	if (!bResult && !Opt.LoadPlug.PluginsCacheOnly)
 	{
@@ -275,6 +347,19 @@ bool PluginManager::LoadPlugin(
 	}
 
 	return bResult;
+}
+
+bool PluginManager::CacheForget(const wchar_t *lpwszModuleName)
+{
+	KeyFileHelper kfh(PluginsIni());
+	const std::string &SettingsName = PluginSettingsName(lpwszModuleName);
+	if (!kfh.RemoveSection(SettingsName.c_str()))
+	{
+		fprintf(stderr, "%s: nothing to forget for '%ls'\n", __FUNCTION__, lpwszModuleName);
+		return false;
+	}
+	fprintf(stderr, "%s: forgotten - '%ls'\n", __FUNCTION__, lpwszModuleName);
+	return true;
 }
 
 bool PluginManager::LoadPluginExternal(const wchar_t *lpwszModuleName, bool LoadToMem)
@@ -291,14 +376,10 @@ bool PluginManager::LoadPluginExternal(const wchar_t *lpwszModuleName, bool Load
 	}
 	else
 	{
-		FAR_FIND_DATA_EX FindData;
+		if (!LoadPlugin(lpwszModuleName, LoadToMem))
+			return false;
 
-		if (apiGetFindDataEx(lpwszModuleName, FindData))
-		{
-			if (!LoadPlugin(lpwszModuleName, FindData, LoadToMem))
-				return false;
-			far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
-		}
+		far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
 	}
 	return true;
 }
@@ -454,9 +535,10 @@ void PluginManager::LoadPlugins()
 			// ...и пройдемся по нему
 			while (ScTree.GetNextName(&FindData,strFullName))
 			{
-				if (CmpName(L"*.far-plug-*",FindData.strFileName,false) && !(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				{
-					LoadPlugin(strFullName, FindData, false);
+					// this will check filename extension
+					LoadPlugin(strFullName, false);
 				}
 			} // end while
 		}
@@ -475,20 +557,19 @@ void PluginManager::LoadPlugins()
    Load cache only plugins  - '/co' switch */
 void PluginManager::LoadPluginsFromCache()
 {
-	/*
-		[HKEY_CURRENT_USER\Software\Far2\PluginsCache\C:/PROGRAM FILES/FAR/Plugins/ABOOK/AddrBook.dll]
-	*/
-	size_t ShiftLen = wcslen(RKN_PluginsCache)+1;
+	KeyFileReadHelper kfh(PluginsIni());
+	const std::vector<std::string> &sections = kfh.EnumSections();
 	FARString strModuleName;
-
-	for (int i=0; EnumRegKey(RKN_PluginsCache, i, strModuleName); i++)
+	for (const auto &s : sections)
 	{
-		strModuleName.LShift(ShiftLen);
-
-		FAR_FIND_DATA_EX FindData;
-
-		if (apiGetFindDataEx(strModuleName, FindData))
-			LoadPlugin(strModuleName, FindData, false);
+		if (s != SettingsSection)
+		{
+			const std::string &module = kfh.GetString(s.c_str(), "Module");
+			if (!module.empty()) {
+				strModuleName = module;
+				LoadPlugin(strModuleName, false);
+			}
+		}
 	}
 }
 
@@ -498,71 +579,6 @@ int _cdecl PluginsSort(const void *el1,const void *el2)
 	Plugin *Plugin2=*((Plugin**)el2);
 	return (StrCmpI(PointToName(Plugin1->GetModuleName()),PointToName(Plugin2->GetModuleName())));
 }
-
-/* OLD
-HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode)
-{
-	ChangePriority ChPriority(ChangePriority::NORMAL);
-
-	ConsoleTitle ct(Opt.ShowCheckingFile?MSG(MCheckingFileInPlugin):nullptr);
-
-	Plugin *pPlugin = nullptr;
-
-	FARString strFullName;
-
-	if (Name)
-	{
-		ConvertNameToFull(Name,strFullName);
-		Name = strFullName;
-	}
-
-	for (int i = 0; i < PluginsCount; i++)
-	{
-		pPlugin = PluginsData[i];
-
-		if ( !pPlugin->HasOpenFilePlugin() || (pPlugin->HasAnalyse() && pPlugin->HasOpenPlugin()) )
-			continue;
-
-		if ( Opt.ShowCheckingFile )
-			ct.Set(L"%ls - [%ls]...",MSG(MCheckingFileInPlugin),PointToName(pPlugin->GetModuleName()));
-
-		HANDLE hPlugin;
-
-		if ( pPlugin->HasOpenFilePlugin() )
-			hPlugin = pPlugin->OpenFilePlugin (Name, Data, DataSize, OpMode);
-		else
-		{
-			AnalyseData AData;
-
-			AData.lpwszFileName = Name;
-			AData.pBuffer = Data;
-			AData.dwBufferSize = DataSize;
-			AData.OpMode = OpMode;
-
-			if ( !pPlugin->Analyse(&AData) )
-				continue;
-
-			hPlugin = pPlugin->OpenPlugin(OPEN_ANALYSE, 0);
-		}
-
-		if (hPlugin == (HANDLE)-2)
-			return hPlugin;
-
-		if (hPlugin != INVALID_HANDLE_VALUE)
-		{
-			PluginHandle *handle = new PluginHandle;
-			handle->hPlugin = hPlugin;
-			handle->pPlugin = pPlugin;
-
-			return (HANDLE)handle;
-		}
-	}
-
-	return INVALID_HANDLE_VALUE;
-}
-
-*/
-
 
 HANDLE PluginManager::OpenFilePlugin(
     const wchar_t *Name,
@@ -1265,7 +1281,7 @@ void PluginManager::Configure(int StartPos)
 				PluginList.SetPosition(-1,-1,0,0);
 				MenuItemNumber=0;
 				LoadIfCacheAbsent();
-				FARString strHotKey, strRegKey, strValue, strName;
+				FARString strHotKey, strValue, strName;
 				PluginInfo Info{};
 
 				for (int I=0; I<PluginsCount; I++)
@@ -1273,24 +1289,21 @@ void PluginManager::Configure(int StartPos)
 					Plugin *pPlugin = PluginsData[I];
 					bool bCached = pPlugin->CheckWorkFlags(PIWF_CACHED)?true:false;
 
-					if (bCached)
+					if (!bCached && !pPlugin->GetPluginInfo(&Info))
 					{
-						strRegKey.Format(FmtPluginsCache_PluginS, pPlugin->GetCacheName());
-					}
-					else
-					{
-						if (!pPlugin->GetPluginInfo(&Info))
-							continue;
+						continue;
 					}
 
 					for (int J=0; ; J++)
 					{
 						if (bCached)
 						{
-							strValue.Format(FmtPluginConfigStringD, J);
-
-							if (!GetRegKey(strRegKey, strValue, strName, L""))
+							KeyFileReadHelper kfh(PluginsIni(), pPlugin->GetSettingsName());
+							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
+							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
 								break;
+
+							strName = kfh.GetString(pPlugin->GetSettingsName(), key.c_str(), "");
 						}
 						else
 						{
@@ -1300,7 +1313,7 @@ void PluginManager::Configure(int StartPos)
 							strName = Info.PluginConfigStrings[J];
 						}
 
-						GetPluginHotKey(pPlugin,J,L"ConfHotkey",strHotKey);
+						GetPluginHotKey(pPlugin,J,"ConfHotkey",strHotKey);
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
@@ -1339,7 +1352,6 @@ void PluginManager::Configure(int StartPos)
 				DWORD Key=PluginList.ReadInput();
 				int SelPos=PluginList.GetSelectPos();
 				PluginMenuItemData *item = (PluginMenuItemData*)PluginList.GetUserData(nullptr,0,SelPos);
-				FARString strRegKey;
 
 				switch (Key)
 				{
@@ -1361,9 +1373,9 @@ void PluginManager::Configure(int StartPos)
 							int nOffset = HotKeysPresent?3:0;
 							strName00 = PluginList.GetItemPtr()->strName.CPtr()+nOffset;
 							RemoveExternalSpaces(strName00);
-							GetHotKeyRegKey(item->pPlugin, item->nItem,strRegKey);
 
-							if (SetHotKeyDialog(strName00,strRegKey,L"ConfHotkey"))
+							if (SetHotKeyDialog(strName00,
+									GetHotKeySettingName(item->pPlugin, item->nItem, "ConfHotkey")))
 							{
 								PluginList.Hide();
 								NeedUpdateItems=TRUE;
@@ -1412,7 +1424,6 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	int Editor = ModalType==MODALTYPE_EDITOR,
 	             Viewer = ModalType==MODALTYPE_VIEWER,
 	                      Dialog = ModalType==MODALTYPE_DIALOG;
-	FARString strRegKey;
 	PluginMenuItemData item;
 	{
 		VMenu PluginList(MSG(MPluginCommandsMenuTitle),nullptr,0,ScrY-4);
@@ -1432,8 +1443,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 				PluginList.DeleteItems();
 				PluginList.SetPosition(-1,-1,0,0);
 				LoadIfCacheAbsent();
-				FARString strHotKey, strRegKey, strValue, strName;
+				FARString strHotKey, strValue, strName;
 				PluginInfo Info{};
+				KeyFileReadHelper kfh(PluginsIni());
 
 				for (int I=0; I<PluginsCount; I++)
 				{
@@ -1443,8 +1455,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 					if (bCached)
 					{
-						strRegKey.Format(FmtPluginsCache_PluginS, pPlugin->GetCacheName());
-						IFlags=GetRegKey(strRegKey,L"Flags",0);
+						IFlags = kfh.GetUInt(pPlugin->GetSettingsName(), "Flags",0);
 					}
 					else
 					{
@@ -1464,10 +1475,10 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 					{
 						if (bCached)
 						{
-							strValue.Format(FmtPluginMenuStringD, J);
-
-							if (!GetRegKey(strRegKey, strValue, strName, L""))
+							const std::string &key = StrPrintf(FmtPluginMenuStringD, J);
+							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
 								break;
+							strName = kfh.GetString(pPlugin->GetSettingsName(), key.c_str(), "");
 						}
 						else
 						{
@@ -1477,7 +1488,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 							strName = Info.PluginMenuStrings[J];
 						}
 
-						GetPluginHotKey(pPlugin,J,L"Hotkey",strHotKey);
+						GetPluginHotKey(pPlugin,J,"Hotkey",strHotKey);
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
@@ -1532,9 +1543,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 							int nOffset = HotKeysPresent?3:0;
 							strName00 = PluginList.GetItemPtr()->strName.CPtr()+nOffset;
 							RemoveExternalSpaces(strName00);
-							GetHotKeyRegKey(item->pPlugin, item->nItem, strRegKey);
 
-							if (SetHotKeyDialog(strName00,strRegKey,L"Hotkey"))
+							if (SetHotKeyDialog(strName00,
+									GetHotKeySettingName(item->pPlugin, item->nItem, "Hotkey")))
 							{
 								PluginList.Hide();
 								NeedUpdateItems=TRUE;
@@ -1641,48 +1652,22 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	return TRUE;
 }
 
-void PluginManager::GetHotKeyRegKey(Plugin *pPlugin,int ItemNumber,FARString &strRegKey)
+std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, const char *HotKeyType)
 {
-	/*
-	FarPath
-	C:\Program Files\Far\
-
-	ModuleName                                             PluginName
-	---------------------------------------------------------------------------------------
-	C:\Program Files\Far\Plugins\MultiArc\MULTIARC.DLL  -> Plugins\MultiArc\MULTIARC.DLL
-	C:\MultiArc\MULTIARC.DLL                            -> C:\MultiArc\MULTIARC.DLL
-	---------------------------------------------------------------------------------------
-	*/
-	FARString strPluginName(pPlugin->GetCacheName());
-	size_t FarPathLength=g_strFarPath.GetLength();
-	strRegKey.Clear();;
-
-	if (FarPathLength < pPlugin->GetModuleName().GetLength() && !StrCmpNI(pPlugin->GetModuleName(), g_strFarPath, (int)FarPathLength))
-		strPluginName.LShift(FarPathLength);
-
-	if (ItemNumber>0)
-	{
-		strRegKey.Format(L"PluginHotkeys/%ls%%%d", strPluginName.CPtr(), ItemNumber);
-	}
-	else
-	{
-		strRegKey = L"PluginHotkeys/";
-		strRegKey += strPluginName;
-	}
+	std::string out = pPlugin->GetSettingsName();
+	out+= StrPrintf(":%s#%d", HotKeyType, ItemNumber);
+	return out;
 }
 
-void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const wchar_t *HotKeyType, FARString &strHotKey)
+void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey)
 {
-	FARString strRegKey;
-	strHotKey.Clear();
-	GetHotKeyRegKey(pPlugin, ItemNumber, strRegKey);
-	GetRegKey(strRegKey, HotKeyType, strHotKey, L"");
+	strHotKey = KeyFileReadHelper(PluginsIni(), SettingsSection).GetString(
+		SettingsSection, GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType).c_str());
 }
 
 bool PluginManager::SetHotKeyDialog(
-    const wchar_t *DlgPluginTitle,  // имя плагина
-    const wchar_t *RegKey,          // ключ, откуда берем значение
-    const wchar_t *RegValueName     // название параметра из реестра
+    const wchar_t *DlgPluginTitle,		// имя плагина
+    const std::string &SettingName		// ключ, откуда берем значение в plugins.ini/Settings
 )
 {
 	/*
@@ -1699,7 +1684,11 @@ bool PluginManager::SetHotKeyDialog(
 		{DI_TEXT,8,3,58,3,{},0,DlgPluginTitle}
 	};
 	MakeDialogItemsEx(PluginDlgData,PluginDlg);
-	GetRegKey(RegKey,RegValueName,PluginDlg[2].strData,L"");
+
+	KeyFileHelper kfh(PluginsIni());
+	PluginDlg[2].strData = kfh.GetString(
+		SettingsSection, SettingName.c_str());
+
 	int ExitCode;
 	{
 		Dialog Dlg(PluginDlg,ARRAYSIZE(PluginDlg));
@@ -1714,9 +1703,13 @@ bool PluginManager::SetHotKeyDialog(
 		RemoveLeadingSpaces(PluginDlg[2].strData);
 
 		if (PluginDlg[2].strData.IsEmpty())
-			DeleteRegValue(RegKey,RegValueName);
+		{
+			kfh.RemoveKey(SettingsSection, SettingName.c_str());
+		}
 		else
-			SetRegKey(RegKey,RegValueName,PluginDlg[2].strData);
+		{
+			kfh.PutString(SettingsSection, SettingName.c_str(), PluginDlg[2].strData.CPtr());
+		}
 
 		return true;
 	}
@@ -1735,18 +1728,15 @@ bool PluginManager::GetDiskMenuItem(
 	LoadIfCacheAbsent();
 
 	FARString strHotKey;
-	GetPluginHotKey(pPlugin,PluginItem,L"DriveMenuHotkey",strHotKey);
+	GetPluginHotKey(pPlugin,PluginItem,"DriveMenuHotkey",strHotKey);
 	PluginHotkey = strHotKey.At(0);
 
 	if (pPlugin->CheckWorkFlags(PIWF_CACHED))
 	{
-		FARString strRegKey, strValue;
-		strRegKey.Format(FmtPluginsCache_PluginS, pPlugin->GetCacheName());
-		strValue.Format(FmtDiskMenuStringD,PluginItem);
-		GetRegKey(strRegKey,strValue,strPluginText,L"");
-		strValue.Format(FmtDiskMenuNumberD,PluginItem);
-		ItemPresent=!strPluginText.IsEmpty();
-
+		KeyFileReadHelper kfh(PluginsIni(), pPlugin->GetSettingsName());
+		strPluginText = kfh.GetString(pPlugin->GetSettingsName(),
+			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
+		ItemPresent = !strPluginText.IsEmpty();
 		return true;
 	}
 
@@ -1814,13 +1804,20 @@ void PluginManager::DiscardCache()
 		pPlugin->Load();
 	}
 
-	DeleteKeyTree(RKN_PluginsCache);
+	KeyFileHelper kfh(PluginsIni());
+	const std::vector<std::string> &sections = kfh.EnumSections();
+	for (const auto &s : sections)
+	{
+		if (s != SettingsSection)
+			kfh.RemoveSection(s.c_str());
+	}
 }
 
 
 void PluginManager::LoadIfCacheAbsent()
 {
-	if (!CheckRegKey(RKN_PluginsCache))
+	struct stat st;
+	if (stat(PluginsIni(), &st) == -1)
 	{
 		for (int I=0; I<PluginsCount; I++)
 		{
@@ -1868,10 +1865,10 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam,Panel *Target)
 
 		if (PluginsData[I]->CheckWorkFlags(PIWF_CACHED))
 		{
-			FARString strRegKey;
-			strRegKey.Format(FmtPluginsCache_PluginS,PluginsData[I]->GetCacheName());
-			GetRegKey(strRegKey,L"CommandPrefix",strPluginPrefix, L"");
-			PluginFlags=GetRegKey(strRegKey,L"Flags",0);
+			const char *SettingsName = PluginsData[I]->GetSettingsName();
+			KeyFileReadHelper kfh(PluginsIni(), SettingsName);
+			strPluginPrefix = kfh.GetString(SettingsName, "CommandPrefix", "");
+			PluginFlags = kfh.GetUInt(SettingsName, "Flags", 0);
 		}
 		else
 		{
@@ -2015,7 +2012,7 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 
 	if (pPlugin)
 	{
-		if (pPlugin->HasOpenPlugin() && !ProcessException)
+		if (pPlugin->HasOpenPlugin())
 		{
 			HANDLE hNewPlugin=OpenPlugin(pPlugin,OpenFrom,(INT_PTR)Data);
 			bool process=false;
@@ -2131,3 +2128,5 @@ bool PluginManager::MayExitFar()
 
 	return out;
 }
+
+////////////////////////

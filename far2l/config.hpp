@@ -562,8 +562,6 @@ struct Options
 	DWORD ExcludeCmdHistory;
 	int MaxPositionCache; // количество позиций в кэше сохранения
 	int SetAttrFolderRules; // Правило на счет установки атрибутов на каталоги
-	int ExceptRules; // Правило на счет вызова исключений
-	int ExceptCallDebugger; // вызывать дебаггер при исключении
 	/*
 	 + Opt.ShiftsKeyRules - Правило на счет выбора механизма трансляции
 	   Alt-Буква для нелатинским буковок и символов "`-=[]\;',./" с

@@ -2015,7 +2015,7 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 
 	if (pPlugin)
 	{
-		if (pPlugin->HasOpenPlugin() && !ProcessException)
+		if (pPlugin->HasOpenPlugin())
 		{
 			HANDLE hNewPlugin=OpenPlugin(pPlugin,OpenFrom,(INT_PTR)Data);
 			bool process=false;

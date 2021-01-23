@@ -547,25 +547,7 @@ int WINAPI GetString(
 		if (HelpTopic)
 			Dlg.SetHelp(HelpTopic);
 
-#if 0
-
-		if (Opt.ExceptRules)
-		{
-			__try
-			{
-				Dlg.Process();
-			}
-			__except(xfilter(EXCEPT_FARDIALOG,
-			                 GetExceptionInformation(),nullptr,1)) // nullptr=???
-			{
-				return FALSE;
-			}
-		}
-		else
-#endif
-		{
-			Dlg.Process();
-		}
+		Dlg.Process();
 
 		ExitCode=Dlg.GetExitCode();
 	}

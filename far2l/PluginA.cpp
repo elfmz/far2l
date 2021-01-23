@@ -96,12 +96,12 @@ static const char szCache_DeleteFiles[] = "DeleteFiles";
 static const char szCache_MakeDirectory[] = "MakeDirectory";
 static const char szCache_ProcessHostFile[] = "ProcessHostFile";
 static const char szCache_Configure[] = "Configure";
-static const char szCache_MayExitFAR[] = "MayExitFAR";
-static const char szCache_ExitFAR[] = "ExitFAR";
+//static const char szCache_MayExitFAR[] = "MayExitFAR";
+//static const char szCache_ExitFAR[] = "ExitFAR";
 static const char szCache_ProcessKey[] = "ProcessKey";
 static const char szCache_ProcessEvent[] = "ProcessEvent";
 static const char szCache_Compare[] = "Compare";
-static const char szCache_GetMinFarVersion[] = "GetMinFarVersion";
+//static const char szCache_GetMinFarVersion[] = "GetMinFarVersion";
 
 
 static const char NFMP_OpenPlugin[] = "OpenPlugin";
@@ -523,7 +523,7 @@ void apiRevertFileApis()
 
 bool PluginA::SetStartupInfo(bool &bUnloaded)
 {
-	if (pSetStartupInfo && !ProcessException)
+	if (pSetStartupInfo)
 	{
 		oldfar::PluginStartupInfo _info;
 		oldfar::FarStandardFunctions _fsf;
@@ -563,7 +563,7 @@ static void ShowMessageAboutIllegalPluginVersion(const wchar_t* plg,int required
 
 bool PluginA::CheckMinFarVersion(bool &bUnloaded)
 {
-	if (pMinFarVersion && !ProcessException)
+	if (pMinFarVersion)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_MINFARVERSION;
@@ -643,7 +643,7 @@ HANDLE PluginA::OpenPlugin(int OpenFrom, INT_PTR Item)
 
 	HANDLE hResult = INVALID_HANDLE_VALUE;
 
-	if (Load() && pOpenPlugin && !ProcessException)
+	if (Load() && pOpenPlugin)
 	{
 		//CurPluginItem=this; //BUGBUG
 		ExecuteStruct es;
@@ -710,7 +710,7 @@ HANDLE PluginA::OpenFilePlugin(
 {
 	HANDLE hResult = INVALID_HANDLE_VALUE;
 
-	if (Load() && pOpenFilePlugin && !ProcessException)
+	if (Load() && pOpenFilePlugin)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_OPENFILEPLUGIN;
@@ -739,7 +739,7 @@ int PluginA::SetFindList(
 {
 	BOOL bResult = FALSE;
 
-	if (pSetFindList && !ProcessException)
+	if (pSetFindList)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_SETFINDLIST;
@@ -760,7 +760,7 @@ int PluginA::ProcessEditorInput(
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pProcessEditorInput && !ProcessException)
+	if (Load() && pProcessEditorInput)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEDITORINPUT;
@@ -790,7 +790,7 @@ int PluginA::ProcessEditorEvent(
     PVOID Param
 )
 {
-	if (Load() && pProcessEditorEvent && !ProcessException)
+	if (Load() && pProcessEditorEvent)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEDITOREVENT;
@@ -807,7 +807,7 @@ int PluginA::ProcessViewerEvent(
     void *Param
 )
 {
-	if (Load() && pProcessViewerEvent && !ProcessException)
+	if (Load() && pProcessViewerEvent)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSVIEWEREVENT;
@@ -826,7 +826,7 @@ int PluginA::ProcessDialogEvent(
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pProcessDialogEvent && !ProcessException)
+	if (Load() && pProcessDialogEvent)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSDIALOGEVENT;
@@ -847,7 +847,7 @@ int PluginA::GetVirtualFindData(
 {
 	BOOL bResult = FALSE;
 
-	if (pGetVirtualFindData && !ProcessException)
+	if (pGetVirtualFindData)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETVIRTUALFINDDATA;
@@ -878,7 +878,7 @@ void PluginA::FreeVirtualFindData(
 {
 	FreeUnicodePanelItem(PanelItem, ItemsNumber);
 
-	if (pFreeVirtualFindData && !ProcessException && pVFDPanelItemA)
+	if (pFreeVirtualFindData && pVFDPanelItemA)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEVIRTUALFINDDATA;
@@ -901,7 +901,7 @@ int PluginA::GetFiles(
 {
 	int nResult = -1;
 
-	if (pGetFiles && !ProcessException)
+	if (pGetFiles)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETFILES;
@@ -932,7 +932,7 @@ int PluginA::PutFiles(
 {
 	int nResult = -1;
 
-	if (pPutFiles && !ProcessException)
+	if (pPutFiles)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PUTFILES;
@@ -956,7 +956,7 @@ int PluginA::DeleteFiles(
 {
 	BOOL bResult = FALSE;
 
-	if (pDeleteFiles && !ProcessException)
+	if (pDeleteFiles)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_DELETEFILES;
@@ -980,7 +980,7 @@ int PluginA::MakeDirectory(
 {
 	int nResult = -1;
 
-	if (pMakeDirectory && !ProcessException)
+	if (pMakeDirectory)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_MAKEDIRECTORY;
@@ -1007,7 +1007,7 @@ int PluginA::ProcessHostFile(
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessHostFile && !ProcessException)
+	if (pProcessHostFile)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSHOSTFILE;
@@ -1031,7 +1031,7 @@ int PluginA::ProcessEvent(
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessEvent && !ProcessException)
+	if (pProcessEvent)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEVENT;
@@ -1062,7 +1062,7 @@ int PluginA::Compare(
 {
 	int nResult = -2;
 
-	if (pCompare && !ProcessException)
+	if (pCompare)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_COMPARE;
@@ -1090,7 +1090,7 @@ int PluginA::GetFindData(
 {
 	BOOL bResult = FALSE;
 
-	if (pGetFindData && !ProcessException)
+	if (pGetFindData)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETFINDDATA;
@@ -1117,7 +1117,7 @@ void PluginA::FreeFindData(
 {
 	FreeUnicodePanelItem(PanelItem, ItemsNumber);
 
-	if (pFreeFindData && !ProcessException && pFDPanelItemA)
+	if (pFreeFindData && pFDPanelItemA)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEFINDDATA;
@@ -1135,7 +1135,7 @@ int PluginA::ProcessKey(
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessKey && !ProcessException)
+	if (pProcessKey)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSKEY;
@@ -1152,7 +1152,7 @@ void PluginA::ClosePlugin(
     HANDLE hPlugin
 )
 {
-	if (pClosePlugin && !ProcessException)
+	if (pClosePlugin)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_CLOSEPLUGIN;
@@ -1173,7 +1173,7 @@ int PluginA::SetDirectory(
 {
 	BOOL bResult = FALSE;
 
-	if (pSetDirectory && !ProcessException)
+	if (pSetDirectory)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_SETDIRECTORY;
@@ -1289,7 +1289,7 @@ void PluginA::GetOpenPluginInfo(
 //	m_pManager->m_pCurrentPlugin = this;
 	pInfo->StructSize = sizeof(OpenPluginInfo);
 
-	if (pGetOpenPluginInfo && !ProcessException)
+	if (pGetOpenPluginInfo)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETOPENPLUGININFO;
@@ -1307,7 +1307,7 @@ int PluginA::Configure(
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pConfigure && !ProcessException)
+	if (Load() && pConfigure)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_CONFIGURE;
@@ -1400,7 +1400,7 @@ bool PluginA::GetPluginInfo(PluginInfo *pi)
 {
 	memset(pi, 0, sizeof(PluginInfo));
 
-	if (pGetPluginInfo && !ProcessException)
+	if (pGetPluginInfo)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETPLUGININFO;
@@ -1419,7 +1419,7 @@ bool PluginA::GetPluginInfo(PluginInfo *pi)
 
 bool PluginA::MayExitFAR()
 {
-	if (pMayExitFAR && !ProcessException)
+	if (pMayExitFAR)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_MAYEXITFAR;
@@ -1433,7 +1433,7 @@ bool PluginA::MayExitFAR()
 
 void PluginA::ExitFAR()
 {
-	if (pExitFAR && !ProcessException)
+	if (pExitFAR)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_EXITFAR;

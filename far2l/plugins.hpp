@@ -178,7 +178,7 @@ class PluginManager
 		void LoadIfCacheAbsent();
 		void ReadUserBackgound(SaveScreen *SaveScr);
 
-		void GetPluginHotKey(Plugin *pPlugin,int ItemNumber,const wchar_t *HotKeyType,FARString &strHotKey);
+		void GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey);
 
 		bool TestPluginInfo(Plugin *Item,PluginInfo *Info);
 		bool TestOpenPluginInfo(Plugin *Item,OpenPluginInfo *Info);
@@ -227,8 +227,8 @@ class PluginManager
 		void DiscardCache();
 		int ProcessCommandLine(const wchar_t *Command,Panel *Target=nullptr);
 
-		bool SetHotKeyDialog(const wchar_t *DlgPluginTitle,const wchar_t *RegKey,const wchar_t *RegValueName);
-		void GetHotKeyRegKey(Plugin *pPlugin,int ItemNumber,FARString &strRegKey);
+		bool SetHotKeyDialog(const wchar_t *DlgPluginTitle, const std::string &SettingName);
+		std::string GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, const char *HotKeyType);
 
 		// $ .09.2000 SVS - Функция CallPlugin - найти плагин по ID и запустить OpenFrom = OPEN_*
 		int CallPlugin(DWORD SysID,int OpenFrom, void *Data, int *Ret=nullptr);
@@ -278,7 +278,7 @@ const char *PluginsIni();
 
 // input: pathname of pluging object
 // result: shortened representation used to identify plugin in cache
-std::string PluginCacheSection(const FARString &strModuleName);
+std::string PluginCacheName(const FARString &strModuleName);
 
 // produces string that represents file size/modificationtime etc
 // used to detect if plugin file was changed from time it was cached

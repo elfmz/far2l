@@ -262,7 +262,11 @@ bool PluginManager::LoadPlugin(
 	bool bResult=false;
 
 	if (!LoadToMem)
+	{
 		bResult = pPlugin->LoadFromCache(st);
+		fprintf(stderr, "%s: cache %s for '%ls'\n",
+			__FUNCTION__, bResult ? "hit" : "miss", lpwszModuleName);
+	}
 
 	if (!bResult && !Opt.LoadPlug.PluginsCacheOnly)
 	{
@@ -1287,10 +1291,10 @@ void PluginManager::Configure(int StartPos)
 						{
 							KeyFileHelper kfh(PluginsIni());
 							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
-							if (!kfh.HasKey(pPlugin->GetCacheSection(), key.c_str()))
+							if (!kfh.HasKey(pPlugin->GetCacheName(), key.c_str()))
 								break;
 
-							strName = kfh.GetString(pPlugin->GetCacheSection(), key.c_str(), "");
+							strName = kfh.GetString(pPlugin->GetCacheName(), key.c_str(), "");
 						}
 						else
 						{
@@ -1300,7 +1304,7 @@ void PluginManager::Configure(int StartPos)
 							strName = Info.PluginConfigStrings[J];
 						}
 
-						GetPluginHotKey(pPlugin,J,L"ConfHotkey",strHotKey);
+						GetPluginHotKey(pPlugin,J,"ConfHotkey",strHotKey);
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
@@ -1339,7 +1343,6 @@ void PluginManager::Configure(int StartPos)
 				DWORD Key=PluginList.ReadInput();
 				int SelPos=PluginList.GetSelectPos();
 				PluginMenuItemData *item = (PluginMenuItemData*)PluginList.GetUserData(nullptr,0,SelPos);
-				FARString strRegKey;
 
 				switch (Key)
 				{
@@ -1361,9 +1364,9 @@ void PluginManager::Configure(int StartPos)
 							int nOffset = HotKeysPresent?3:0;
 							strName00 = PluginList.GetItemPtr()->strName.CPtr()+nOffset;
 							RemoveExternalSpaces(strName00);
-							GetHotKeyRegKey(item->pPlugin, item->nItem,strRegKey);
 
-							if (SetHotKeyDialog(strName00,strRegKey,L"ConfHotkey"))
+							if (SetHotKeyDialog(strName00,
+									GetHotKeySettingName(item->pPlugin, item->nItem, "ConfHotkey")))
 							{
 								PluginList.Hide();
 								NeedUpdateItems=TRUE;
@@ -1412,7 +1415,6 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	int Editor = ModalType==MODALTYPE_EDITOR,
 	             Viewer = ModalType==MODALTYPE_VIEWER,
 	                      Dialog = ModalType==MODALTYPE_DIALOG;
-	FARString strRegKey;
 	PluginMenuItemData item;
 	{
 		VMenu PluginList(MSG(MPluginCommandsMenuTitle),nullptr,0,ScrY-4);
@@ -1444,7 +1446,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 					if (bCached)
 					{
-						IFlags = kfh.GetUInt(pPlugin->GetCacheSection(), "Flags",0);
+						IFlags = kfh.GetUInt(pPlugin->GetCacheName(), "Flags",0);
 					}
 					else
 					{
@@ -1465,9 +1467,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 						if (bCached)
 						{
 							const std::string &key = StrPrintf(FmtPluginMenuStringD, J);
-							if (!kfh.HasKey(pPlugin->GetCacheSection(), key.c_str()))
+							if (!kfh.HasKey(pPlugin->GetCacheName(), key.c_str()))
 								break;
-							strName = kfh.GetString(pPlugin->GetCacheSection(), key.c_str(), "");
+							strName = kfh.GetString(pPlugin->GetCacheName(), key.c_str(), "");
 						}
 						else
 						{
@@ -1477,7 +1479,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 							strName = Info.PluginMenuStrings[J];
 						}
 
-						GetPluginHotKey(pPlugin,J,L"Hotkey",strHotKey);
+						GetPluginHotKey(pPlugin,J,"Hotkey",strHotKey);
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
@@ -1532,9 +1534,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 							int nOffset = HotKeysPresent?3:0;
 							strName00 = PluginList.GetItemPtr()->strName.CPtr()+nOffset;
 							RemoveExternalSpaces(strName00);
-							GetHotKeyRegKey(item->pPlugin, item->nItem, strRegKey);
 
-							if (SetHotKeyDialog(strName00,strRegKey,L"Hotkey"))
+							if (SetHotKeyDialog(strName00,
+									GetHotKeySettingName(item->pPlugin, item->nItem, "Hotkey")))
 							{
 								PluginList.Hide();
 								NeedUpdateItems=TRUE;
@@ -1641,49 +1643,22 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	return TRUE;
 }
 
-void PluginManager::GetHotKeyRegKey(Plugin *pPlugin,int ItemNumber,FARString &strRegKey)
+std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, const char *HotKeyType)
 {
-	/*
-	FarPath
-	C:\Program Files\Far\
-
-	ModuleName                                             PluginName
-	---------------------------------------------------------------------------------------
-	C:\Program Files\Far\Plugins\MultiArc\MULTIARC.DLL  -> Plugins\MultiArc\MULTIARC.DLL
-	C:\MultiArc\MULTIARC.DLL                            -> C:\MultiArc\MULTIARC.DLL
-	---------------------------------------------------------------------------------------
-	*/
-
-	FARString strPluginName(pPlugin->GetModuleName());
-	size_t FarPathLength=g_strFarPath.GetLength();
-	strRegKey.Clear();
-
-	if (FarPathLength < pPlugin->GetModuleName().GetLength() && !StrCmpNI(pPlugin->GetModuleName(), g_strFarPath, (int)FarPathLength))
-		strPluginName.LShift(FarPathLength);
-
-	if (ItemNumber>0)
-	{
-		strRegKey.Format(L"PluginHotkeys/%ls%%%d", strPluginName.CPtr(), ItemNumber);
-	}
-	else
-	{
-		strRegKey = L"PluginHotkeys/";
-		strRegKey += strPluginName;
-	}
+	std::string out = pPlugin->GetCacheName();
+	out+= StrPrintf(":%s#%d", HotKeyType, ItemNumber);
+	return out;
 }
 
-void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const wchar_t *HotKeyType, FARString &strHotKey)
+void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey)
 {
-	FARString strRegKey;
-	strHotKey.Clear();
-	GetHotKeyRegKey(pPlugin, ItemNumber, strRegKey);
-	GetRegKey(strRegKey, HotKeyType, strHotKey, L"");
+	strHotKey = KeyFileHelper(PluginsIni()).GetString(
+		SettingsSection, GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType).c_str());
 }
 
 bool PluginManager::SetHotKeyDialog(
-    const wchar_t *DlgPluginTitle,  // имя плагина
-    const wchar_t *RegKey,          // ключ, откуда берем значение
-    const wchar_t *RegValueName     // название параметра из реестра
+    const wchar_t *DlgPluginTitle,		// имя плагина
+    const std::string &SettingName		// ключ, откуда берем значение в plugins.ini/Settings
 )
 {
 	/*
@@ -1700,7 +1675,11 @@ bool PluginManager::SetHotKeyDialog(
 		{DI_TEXT,8,3,58,3,{},0,DlgPluginTitle}
 	};
 	MakeDialogItemsEx(PluginDlgData,PluginDlg);
-	GetRegKey(RegKey,RegValueName,PluginDlg[2].strData,L"");
+
+	KeyFileHelper kfh(PluginsIni());
+	PluginDlg[2].strData = kfh.GetString(
+		SettingsSection, SettingName.c_str());
+
 	int ExitCode;
 	{
 		Dialog Dlg(PluginDlg,ARRAYSIZE(PluginDlg));
@@ -1715,9 +1694,13 @@ bool PluginManager::SetHotKeyDialog(
 		RemoveLeadingSpaces(PluginDlg[2].strData);
 
 		if (PluginDlg[2].strData.IsEmpty())
-			DeleteRegValue(RegKey,RegValueName);
+		{
+			kfh.RemoveKey(SettingsSection, SettingName.c_str());
+		}
 		else
-			SetRegKey(RegKey,RegValueName,PluginDlg[2].strData);
+		{
+			kfh.PutString(SettingsSection, SettingName.c_str(), PluginDlg[2].strData.CPtr());
+		}
 
 		return true;
 	}
@@ -1736,13 +1719,13 @@ bool PluginManager::GetDiskMenuItem(
 	LoadIfCacheAbsent();
 
 	FARString strHotKey;
-	GetPluginHotKey(pPlugin,PluginItem,L"DriveMenuHotkey",strHotKey);
+	GetPluginHotKey(pPlugin,PluginItem,"DriveMenuHotkey",strHotKey);
 	PluginHotkey = strHotKey.At(0);
 
 	if (pPlugin->CheckWorkFlags(PIWF_CACHED))
 	{
 		KeyFileHelper kfh(PluginsIni());
-		strPluginText = kfh.GetString(pPlugin->GetCacheSection(),
+		strPluginText = kfh.GetString(pPlugin->GetCacheName(),
 			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
 		ItemPresent = !strPluginText.IsEmpty();
 		return true;
@@ -1812,7 +1795,13 @@ void PluginManager::DiscardCache()
 		pPlugin->Load();
 	}
 
-	unlink(PluginsIni());
+	KeyFileHelper kfh(PluginsIni());
+	const std::vector<std::string> &sections = kfh.EnumSections();
+	for (const auto &s : sections)
+	{
+		if (s != SettingsSection)
+			kfh.RemoveSection(s.c_str());
+	}
 }
 
 
@@ -1868,8 +1857,8 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam,Panel *Target)
 		if (PluginsData[I]->CheckWorkFlags(PIWF_CACHED))
 		{
 			KeyFileHelper kfh(PluginsIni());
-			strPluginPrefix = kfh.GetString(PluginsData[I]->GetCacheSection(), "CommandPrefix", "");
-			PluginFlags = kfh.GetUInt(PluginsData[I]->GetCacheSection(), "Flags", 0);
+			strPluginPrefix = kfh.GetString(PluginsData[I]->GetCacheName(), "CommandPrefix", "");
+			PluginFlags = kfh.GetUInt(PluginsData[I]->GetCacheName(), "Flags", 0);
 		}
 		else
 		{
@@ -2137,7 +2126,7 @@ const char *PluginsIni()
 	return s_out.c_str();
 }
 
-std::string PluginCacheSection(const FARString &strModuleName)
+std::string PluginCacheName(const FARString &strModuleName)
 {
 	std::string pathname;
 	Wide2MB(strModuleName.CPtr(), pathname);

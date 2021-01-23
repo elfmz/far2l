@@ -209,7 +209,7 @@ PluginW::~PluginW()
 
 bool PluginW::LoadFromCache()
 {
-	KeyFileHelper kfh(PluginsIni());
+	KeyFileReadHelper kfh(PluginsIni(), GetSettingsName());
 
 	if (!kfh.HasSection(GetSettingsName()))
 		return false;

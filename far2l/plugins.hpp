@@ -278,8 +278,8 @@ class PluginManager
 const char *PluginsIni();
 
 // input: pathname of pluging object
-// result: shortened representation used to identify plugin in cache
-std::string PluginCacheName(const FARString &strModuleName);
+// result: shortened representation used to identify plugin in plugins.ini
+std::string PluginSettingsName(const FARString &strModuleName);
 
 // produces string that represents file size/modificationtime etc
 // used to detect if plugin file was changed from time it was cached

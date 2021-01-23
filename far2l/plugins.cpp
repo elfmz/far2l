@@ -282,8 +282,8 @@ bool PluginManager::LoadPlugin(
 bool PluginManager::CacheForget(const wchar_t *lpwszModuleName)
 {
 	KeyFileHelper kfh(PluginsIni());
-	const std::string &CacheName = PluginCacheName(lpwszModuleName);
-	if (kfh.RemoveSection(CacheName.c_str()) == 0)
+	const std::string &SettingsName = PluginSettingsName(lpwszModuleName);
+	if (kfh.RemoveSection(SettingsName.c_str()) == 0)
 	{
 		fprintf(stderr, "%s: nothing to forget for '%ls'\n", __FUNCTION__, lpwszModuleName);
 		return false;
@@ -1304,10 +1304,10 @@ void PluginManager::Configure(int StartPos)
 						{
 							KeyFileHelper kfh(PluginsIni());
 							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
-							if (!kfh.HasKey(pPlugin->GetCacheName(), key.c_str()))
+							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
 								break;
 
-							strName = kfh.GetString(pPlugin->GetCacheName(), key.c_str(), "");
+							strName = kfh.GetString(pPlugin->GetSettingsName(), key.c_str(), "");
 						}
 						else
 						{
@@ -1459,7 +1459,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 					if (bCached)
 					{
-						IFlags = kfh.GetUInt(pPlugin->GetCacheName(), "Flags",0);
+						IFlags = kfh.GetUInt(pPlugin->GetSettingsName(), "Flags",0);
 					}
 					else
 					{
@@ -1480,9 +1480,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 						if (bCached)
 						{
 							const std::string &key = StrPrintf(FmtPluginMenuStringD, J);
-							if (!kfh.HasKey(pPlugin->GetCacheName(), key.c_str()))
+							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
 								break;
-							strName = kfh.GetString(pPlugin->GetCacheName(), key.c_str(), "");
+							strName = kfh.GetString(pPlugin->GetSettingsName(), key.c_str(), "");
 						}
 						else
 						{
@@ -1658,7 +1658,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, const char *HotKeyType)
 {
-	std::string out = pPlugin->GetCacheName();
+	std::string out = pPlugin->GetSettingsName();
 	out+= StrPrintf(":%s#%d", HotKeyType, ItemNumber);
 	return out;
 }
@@ -1738,7 +1738,7 @@ bool PluginManager::GetDiskMenuItem(
 	if (pPlugin->CheckWorkFlags(PIWF_CACHED))
 	{
 		KeyFileHelper kfh(PluginsIni());
-		strPluginText = kfh.GetString(pPlugin->GetCacheName(),
+		strPluginText = kfh.GetString(pPlugin->GetSettingsName(),
 			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
 		ItemPresent = !strPluginText.IsEmpty();
 		return true;
@@ -1870,8 +1870,8 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam,Panel *Target)
 		if (PluginsData[I]->CheckWorkFlags(PIWF_CACHED))
 		{
 			KeyFileHelper kfh(PluginsIni());
-			strPluginPrefix = kfh.GetString(PluginsData[I]->GetCacheName(), "CommandPrefix", "");
-			PluginFlags = kfh.GetUInt(PluginsData[I]->GetCacheName(), "Flags", 0);
+			strPluginPrefix = kfh.GetString(PluginsData[I]->GetSettingsName(), "CommandPrefix", "");
+			PluginFlags = kfh.GetUInt(PluginsData[I]->GetSettingsName(), "Flags", 0);
 		}
 		else
 		{
@@ -2139,7 +2139,7 @@ const char *PluginsIni()
 	return s_out.c_str();
 }
 
-std::string PluginCacheName(const FARString &strModuleName)
+std::string PluginSettingsName(const FARString &strModuleName)
 {
 	// Return string used as ini file key that represents given
 	// plugin object file. To reduce overhead encode less meaningful

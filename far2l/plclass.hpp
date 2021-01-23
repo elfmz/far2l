@@ -94,7 +94,7 @@ class Plugin
 #endif
 
 		virtual const FARString &GetModuleName() = 0;
-		virtual const char *GetCacheName() = 0;
+		virtual const char *GetSettingsName() = 0;
 		virtual DWORD GetSysID() = 0;
 		virtual bool CheckWorkFlags(DWORD flags) = 0;
 		virtual DWORD GetWorkFlags() = 0;

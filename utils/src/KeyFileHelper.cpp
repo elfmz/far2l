@@ -198,14 +198,16 @@ std::vector<std::string> KeyFileHelper::EnumSectionsAt(const char *parent_sectio
 	return out;
 }
 
-void KeyFileHelper::RemoveSection(const char *section)
+size_t KeyFileHelper::RemoveSection(const char *section)
 {
 	if (_kf.erase(section) != 0) {
 		_dirty = true;
+		return 1;
 	}
+	return 0;
 }
 
-void KeyFileHelper::RemoveSectionsAt(const char *parent_section)
+size_t KeyFileHelper::RemoveSectionsAt(const char *parent_section)
 {
 	std::string prefix = parent_section;
 	if (prefix == "/") {
@@ -214,17 +216,20 @@ void KeyFileHelper::RemoveSectionsAt(const char *parent_section)
 	} else if (!prefix.empty() && prefix.back() != '/') {
 		prefix+= '/';
 	}
+	size_t out = 0;
 
 	for (auto it = _kf.begin(); it != _kf.end();) {
 		if (it->first.size() > prefix.size()
 				&& memcmp(it->first.c_str(), prefix.c_str(), prefix.size()) == 0) {
 			it = _kf.erase(it);
 			_dirty = true;
+			++out;
 
 		} else {
 			++it;
 		}
 	}
+	return out;
 }
 
 void KeyFileHelper::RemoveKey(const char *section, const char *name)

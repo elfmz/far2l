@@ -47,11 +47,19 @@ static void ShowMenuFromList(TCHAR *Name);
 static HANDLE OpenPanelFromOutput (TCHAR *argv WITH_ANSI_PARAM);
 
 static TCHAR TmpPanelPath[] = WGOOD_SLASH _T("TmpPanel");
+static wchar_t *TmpPanelModule = nullptr;
+
+const wchar_t *GetTmpPanelModule()
+{
+	return TmpPanelModule;
+}
+
 SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo *Info)
 {
   ::Info=*Info;
   ::FSF=*Info->FSF;
   ::Info.FSF=&::FSF;
+  TmpPanelModule = wcsdup(Info->ModuleName);
 
   PluginRootKey = (TCHAR *)malloc((lstrlen(Info->RootKey) + 1) * sizeof(TCHAR) + sizeof(TmpPanelPath));
   lstrcpy(PluginRootKey,Info->RootKey);
@@ -608,7 +616,7 @@ SHAREDSYMBOL int WINAPI EXP_NAME(GetFindData)(HANDLE hPlugin,struct PluginPanelI
 SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
   Info->StructSize=sizeof(*Info);
-  Info->Flags=PF_PRELOAD;
+  Info->Flags=0;
   static const TCHAR *DiskMenuStrings[1];
   DiskMenuStrings[0]=GetMsg(MDiskMenuString);
   Info->DiskMenuStrings=DiskMenuStrings;

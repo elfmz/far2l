@@ -2442,6 +2442,7 @@ static int farPluginsControlSynched(HANDLE hHandle, int Command, int Param1, LON
 {
 	switch (Command)
 	{
+		case PCTL_CACHEFORGET:
 		case PCTL_LOADPLUGIN:
 		case PCTL_UNLOADPLUGIN:
 		case PCTL_FORCEDLOADPLUGIN:
@@ -2453,9 +2454,11 @@ static int farPluginsControlSynched(HANDLE hHandle, int Command, int Param1, LON
 					FARString strPath;
 					ConvertNameToFull((const wchar_t *)Param2, strPath);
 
+					if (Command == PCTL_CACHEFORGET)
+						return CtrlObject->Plugins.CacheForget(strPath);
 					if (Command == PCTL_LOADPLUGIN)
 						return CtrlObject->Plugins.LoadPluginExternal(strPath, false);
-					else if (Command == PCTL_FORCEDLOADPLUGIN)
+					if (Command == PCTL_FORCEDLOADPLUGIN)
 						return CtrlObject->Plugins.LoadPluginExternal(strPath, true);
 					else
 						return CtrlObject->Plugins.UnloadPluginExternal(strPath);

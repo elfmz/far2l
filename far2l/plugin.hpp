@@ -2313,6 +2313,8 @@ enum FAR_PLUGINS_CONTROL_COMMANDS
 	PCTL_LOADPLUGIN         = 0,
 	PCTL_UNLOADPLUGIN       = 1,
 	PCTL_FORCEDLOADPLUGIN   = 2,
+
+	PCTL_CACHEFORGET		= 3 // forgets cached information for specified plugin or for caller if Param2 == 0
 };
 
 enum FAR_PLUGIN_LOAD_TYPE

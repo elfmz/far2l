@@ -232,6 +232,11 @@ int Config()
     const TCHAR *MsgItems[]={GetMsg(MTempPanel),GetMsg(MConfigNewOption),GetMsg(MOk)};
     Info.Message(Info.ModuleNumber,0,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
   }
+  if (GetTmpPanelModule())
+  {
+    // plugins menus could change - purge all information cached by far2l
+    Info.PluginsControl(NULL, PCTL_CACHEFORGET, PLT_PATH, (LONG_PTR)GetTmpPanelModule());
+  }
 done:
 #ifdef UNICODE
   Info.DialogFree(hDlg);

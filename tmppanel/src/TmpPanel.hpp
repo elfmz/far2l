@@ -104,5 +104,5 @@ wchar_t* GetFullPath(const wchar_t* input, StrBuf& output);
 #endif
 TCHAR* ExpandEnvStrs(const TCHAR* input, StrBuf& output);
 bool FindListFile(const TCHAR *FileName, StrBuf &output);
-
+const wchar_t *GetTmpPanelModule();
 #endif /* __TMPPANEL_HPP__ */

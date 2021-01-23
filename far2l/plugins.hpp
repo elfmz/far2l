@@ -200,6 +200,7 @@ class PluginManager
 
 	public:
 
+		bool CacheForget(const wchar_t *lpwszModuleName);
 		bool LoadPluginExternal(const wchar_t *lpwszModuleName, bool LoadToMem);
 
 		int UnloadPlugin(Plugin *pPlugin, DWORD dwException, bool bRemove = false);

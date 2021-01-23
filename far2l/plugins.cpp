@@ -279,6 +279,19 @@ bool PluginManager::LoadPlugin(
 	return bResult;
 }
 
+bool PluginManager::CacheForget(const wchar_t *lpwszModuleName)
+{
+	KeyFileHelper kfh(PluginsIni());
+	const std::string &CacheName = PluginCacheName(lpwszModuleName);
+	if (kfh.RemoveSection(CacheName.c_str()) == 0)
+	{
+		fprintf(stderr, "%s: nothing to forget for '%ls'\n", __FUNCTION__, lpwszModuleName);
+		return false;
+	}
+	fprintf(stderr, "%s: forgotten - '%ls'\n", __FUNCTION__, lpwszModuleName);
+	return true;
+}
+
 bool PluginManager::LoadPluginExternal(const wchar_t *lpwszModuleName, bool LoadToMem)
 {
 	Plugin *pPlugin = GetPlugin(lpwszModuleName);

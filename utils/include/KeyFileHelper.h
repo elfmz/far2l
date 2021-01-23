@@ -33,8 +33,8 @@ public:
 	std::vector<std::string> EnumSections();
 	std::vector<std::string> EnumSectionsAt(const char *parent_section, bool recursed = false);
 	std::vector<std::string> EnumKeys(const char *section);
-	void RemoveSection(const char *section);
-	void RemoveSectionsAt(const char *parent_section);
+	size_t RemoveSection(const char *section);
+	size_t RemoveSectionsAt(const char *parent_section);
 	void RemoveKey(const char *section, const char *name);
 };
 

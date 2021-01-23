@@ -239,11 +239,14 @@ bool PluginA::SaveToCache()
 	GetPluginInfo(&Info);
 	SysID = Info.SysID; //LAME!!!
 
-	bool bPreload = (Info.Flags & PF_PRELOAD);
-	kfh.PutInt(GetCacheName(), szCache_Preload, bPreload ? 1 : 0);
-	WorkFlags.Change(PIWF_PRELOADED, bPreload);
-	if (bPreload)
+
+	if ((Info.Flags & PF_PRELOAD) != 0)
+	{
+		kfh.PutInt(GetCacheName(), szCache_Preload, 1);
+		WorkFlags.Change(PIWF_PRELOADED, TRUE);
 		return true;
+	}
+	WorkFlags.Change(PIWF_PRELOADED, FALSE);
 
 	kfh.PutString(GetCacheName(), "ID", PluginCacheID(st).c_str());
 

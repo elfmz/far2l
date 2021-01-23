@@ -2128,8 +2128,25 @@ const char *PluginsIni()
 
 std::string PluginCacheName(const FARString &strModuleName)
 {
+	// Return string used as ini file key that represents given
+	// plugin object file. To reduce overhead encode less meaningful
+	// components like file path and extension as CRC suffix, leaded
+	// by actual plugin file name.
+	// If plugins resided in a path that is nested under g_strFarPath
+	// then dismiss g_strFarPath from CRC to make result invariant to
+	// whole package relocation.
 	std::string pathname;
-	Wide2MB(strModuleName.CPtr(), pathname);
+
+	const size_t FarPathLength = g_strFarPath.GetLength();
+	if (FarPathLength < strModuleName.GetLength()
+	  && !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
+	{
+		Wide2MB(strModuleName.CPtr() + FarPathLength, pathname);
+	}
+	else
+	{
+		Wide2MB(strModuleName.CPtr(), pathname);
+	}
 
 	uint64_t suffix = 0xC001000CAC4E;
 

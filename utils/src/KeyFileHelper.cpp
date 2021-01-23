@@ -251,6 +251,12 @@ std::vector<std::string> KeyFileHelper::EnumKeys(const char *section)
 	return out;
 }
 
+bool KeyFileHelper::HasSection(const char *section)
+{
+	auto it = _kf.find(section);
+	return (it != _kf.end());
+}
+
 bool KeyFileHelper::HasKey(const char *section, const char *name)
 {
 	auto it = _kf.find(section);
@@ -259,11 +265,7 @@ bool KeyFileHelper::HasKey(const char *section, const char *name)
 	}
 
 	auto s = it->second.find(name);
-	if (s == it->second.end()) {
-		return false;
-	}
-
-	return true;
+	return (s != it->second.end());
 }
 
 std::string KeyFileHelper::GetString(const char *section, const char *name, const char *def)
@@ -277,6 +279,19 @@ std::string KeyFileHelper::GetString(const char *section, const char *name, cons
 	}
 
 	return def ? def : "";
+}
+
+std::wstring KeyFileHelper::GetString(const char *section, const char *name, const wchar_t *def)
+{
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		auto s = it->second.find(name);
+		if (s != it->second.end()) {
+			return StrMB2Wide(s->second);
+		}
+	}
+
+	return def ? def : L"";
 }
 
 void KeyFileHelper::GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def)
@@ -312,11 +327,36 @@ int KeyFileHelper::GetInt(const char *section, const char *name, int def)
 	return def;
 }
 
+unsigned int KeyFileHelper::GetUInt(const char *section, const char *name, unsigned int def)
+{
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		auto s = it->second.find(name);
+		if (s != it->second.end()) {
+			sscanf(s->second.c_str(), "%u", &def);
+		}
+	}
+
+	return def;
+}
+
 ///////////////////////////////////////////////
 void KeyFileHelper::PutString(const char *section, const char *name, const char *value)
 {
 	_dirty = true;
+	if (!value) {
+		value = "";
+	}
 	_kf[section][name] = value;
+}
+
+void KeyFileHelper::PutString(const char *section, const char *name, const wchar_t *value)
+{
+	_dirty = true;
+	if (!value) {
+		value = L"";
+	}
+	_kf[section][name] = Wide2MB(value);
 }
 
 void KeyFileHelper::PutInt(const char *section, const char *name, int value)
@@ -324,6 +364,14 @@ void KeyFileHelper::PutInt(const char *section, const char *name, int value)
 	_dirty = true;
 	char tmp[32];
 	sprintf(tmp, "%d", value);
+	PutString(section, name, tmp);
+}
+
+void KeyFileHelper::PutUInt(const char *section, const char *name, unsigned int value)
+{
+	_dirty = true;
+	char tmp[32];
+	sprintf(tmp, "%u", value);
 	PutString(section, name, tmp);
 }
 

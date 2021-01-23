@@ -69,68 +69,69 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "execute.hpp"
 #include "flink.hpp"
 #include "wrap.cpp"
+#include <KeyFileHelper.h>
 
-static const wchar_t *wszReg_Preload=L"Preload";
-static const wchar_t *wszReg_SysID=L"SysID";
+static const char *szCache_Preload = "Preload";
+static const char *szCache_SysID = "SysID";
 
-static const wchar_t wszReg_OpenPlugin[]=L"OpenPlugin";
-static const wchar_t wszReg_OpenFilePlugin[]=L"OpenFilePlugin";
-static const wchar_t wszReg_SetFindList[]=L"SetFindList";
-static const wchar_t wszReg_ProcessEditorInput[]=L"ProcessEditorInput";
-static const wchar_t wszReg_ProcessEditorEvent[]=L"ProcessEditorEvent";
-static const wchar_t wszReg_ProcessViewerEvent[]=L"ProcessViewerEvent";
-static const wchar_t wszReg_ProcessDialogEvent[]=L"ProcessDialogEvent";
-static const wchar_t wszReg_SetStartupInfo[]=L"SetStartupInfo";
-static const wchar_t wszReg_ClosePlugin[]=L"ClosePlugin";
-static const wchar_t wszReg_GetPluginInfo[]=L"GetPluginInfo";
-static const wchar_t wszReg_GetOpenPluginInfo[]=L"GetOpenPluginInfo";
-static const wchar_t wszReg_GetFindData[]=L"GetFindData";
-static const wchar_t wszReg_FreeFindData[]=L"FreeFindData";
-static const wchar_t wszReg_GetVirtualFindData[]=L"GetVirtualFindData";
-static const wchar_t wszReg_FreeVirtualFindData[]=L"FreeVirtualFindData";
-static const wchar_t wszReg_SetDirectory[]=L"SetDirectory";
-static const wchar_t wszReg_GetFiles[]=L"GetFiles";
-static const wchar_t wszReg_PutFiles[]=L"PutFiles";
-static const wchar_t wszReg_DeleteFiles[]=L"DeleteFiles";
-static const wchar_t wszReg_MakeDirectory[]=L"MakeDirectory";
-static const wchar_t wszReg_ProcessHostFile[]=L"ProcessHostFile";
-static const wchar_t wszReg_Configure[]=L"Configure";
-static const wchar_t wszReg_MayExitFAR[]=L"MayExitFAR";
-static const wchar_t wszReg_ExitFAR[]=L"ExitFAR";
-static const wchar_t wszReg_ProcessKey[]=L"ProcessKey";
-static const wchar_t wszReg_ProcessEvent[]=L"ProcessEvent";
-static const wchar_t wszReg_Compare[]=L"Compare";
-static const wchar_t wszReg_GetMinFarVersion[]=L"GetMinFarVersion";
+static const char szCache_OpenPlugin[] = "OpenPlugin";
+static const char szCache_OpenFilePlugin[] = "OpenFilePlugin";
+static const char szCache_SetFindList[] = "SetFindList";
+static const char szCache_ProcessEditorInput[] = "ProcessEditorInput";
+static const char szCache_ProcessEditorEvent[] = "ProcessEditorEvent";
+static const char szCache_ProcessViewerEvent[] = "ProcessViewerEvent";
+static const char szCache_ProcessDialogEvent[] = "ProcessDialogEvent";
+static const char szCache_SetStartupInfo[] = "SetStartupInfo";
+static const char szCache_ClosePlugin[] = "ClosePlugin";
+static const char szCache_GetPluginInfo[] = "GetPluginInfo";
+static const char szCache_GetOpenPluginInfo[] = "GetOpenPluginInfo";
+static const char szCache_GetFindData[] = "GetFindData";
+static const char szCache_FreeFindData[] = "FreeFindData";
+static const char szCache_GetVirtualFindData[] = "GetVirtualFindData";
+static const char szCache_FreeVirtualFindData[] = "FreeVirtualFindData";
+static const char szCache_SetDirectory[] = "SetDirectory";
+static const char szCache_GetFiles[] = "GetFiles";
+static const char szCache_PutFiles[] = "PutFiles";
+static const char szCache_DeleteFiles[] = "DeleteFiles";
+static const char szCache_MakeDirectory[] = "MakeDirectory";
+static const char szCache_ProcessHostFile[] = "ProcessHostFile";
+static const char szCache_Configure[] = "Configure";
+static const char szCache_MayExitFAR[] = "MayExitFAR";
+static const char szCache_ExitFAR[] = "ExitFAR";
+static const char szCache_ProcessKey[] = "ProcessKey";
+static const char szCache_ProcessEvent[] = "ProcessEvent";
+static const char szCache_Compare[] = "Compare";
+static const char szCache_GetMinFarVersion[] = "GetMinFarVersion";
 
 
-static const char NFMP_OpenPlugin[]="OpenPlugin";
-static const char NFMP_OpenFilePlugin[]="OpenFilePlugin";
-static const char NFMP_SetFindList[]="SetFindList";
-static const char NFMP_ProcessEditorInput[]="ProcessEditorInput";
-static const char NFMP_ProcessEditorEvent[]="ProcessEditorEvent";
-static const char NFMP_ProcessViewerEvent[]="ProcessViewerEvent";
-static const char NFMP_ProcessDialogEvent[]="ProcessDialogEvent";
-static const char NFMP_SetStartupInfo[]="SetStartupInfo";
-static const char NFMP_ClosePlugin[]="ClosePlugin";
-static const char NFMP_GetPluginInfo[]="GetPluginInfo";
-static const char NFMP_GetOpenPluginInfo[]="GetOpenPluginInfo";
-static const char NFMP_GetFindData[]="GetFindData";
-static const char NFMP_FreeFindData[]="FreeFindData";
-static const char NFMP_GetVirtualFindData[]="GetVirtualFindData";
-static const char NFMP_FreeVirtualFindData[]="FreeVirtualFindData";
-static const char NFMP_SetDirectory[]="SetDirectory";
-static const char NFMP_GetFiles[]="GetFiles";
-static const char NFMP_PutFiles[]="PutFiles";
-static const char NFMP_DeleteFiles[]="DeleteFiles";
-static const char NFMP_MakeDirectory[]="MakeDirectory";
-static const char NFMP_ProcessHostFile[]="ProcessHostFile";
-static const char NFMP_Configure[]="Configure";
-static const char NFMP_MayExitFAR[]="MayExitFAR";
-static const char NFMP_ExitFAR[]="ExitFAR";
-static const char NFMP_ProcessKey[]="ProcessKey";
-static const char NFMP_ProcessEvent[]="ProcessEvent";
-static const char NFMP_Compare[]="Compare";
-static const char NFMP_GetMinFarVersion[]="GetMinFarVersion";
+static const char NFMP_OpenPlugin[] = "OpenPlugin";
+static const char NFMP_OpenFilePlugin[] = "OpenFilePlugin";
+static const char NFMP_SetFindList[] = "SetFindList";
+static const char NFMP_ProcessEditorInput[] = "ProcessEditorInput";
+static const char NFMP_ProcessEditorEvent[] = "ProcessEditorEvent";
+static const char NFMP_ProcessViewerEvent[] = "ProcessViewerEvent";
+static const char NFMP_ProcessDialogEvent[] = "ProcessDialogEvent";
+static const char NFMP_SetStartupInfo[] = "SetStartupInfo";
+static const char NFMP_ClosePlugin[] = "ClosePlugin";
+static const char NFMP_GetPluginInfo[] = "GetPluginInfo";
+static const char NFMP_GetOpenPluginInfo[] = "GetOpenPluginInfo";
+static const char NFMP_GetFindData[] = "GetFindData";
+static const char NFMP_FreeFindData[] = "FreeFindData";
+static const char NFMP_GetVirtualFindData[] = "GetVirtualFindData";
+static const char NFMP_FreeVirtualFindData[] = "FreeVirtualFindData";
+static const char NFMP_SetDirectory[] = "SetDirectory";
+static const char NFMP_GetFiles[] = "GetFiles";
+static const char NFMP_PutFiles[] = "PutFiles";
+static const char NFMP_DeleteFiles[] = "DeleteFiles";
+static const char NFMP_MakeDirectory[] = "MakeDirectory";
+static const char NFMP_ProcessHostFile[] = "ProcessHostFile";
+static const char NFMP_Configure[] = "Configure";
+static const char NFMP_MayExitFAR[] = "MayExitFAR";
+static const char NFMP_ExitFAR[] = "ExitFAR";
+static const char NFMP_ProcessKey[] = "ProcessKey";
+static const char NFMP_ProcessEvent[] = "ProcessEvent";
+static const char NFMP_Compare[] = "Compare";
+static const char NFMP_GetMinFarVersion[] = "GetMinFarVersion";
 
 
 static BOOL PrepareModulePath(const wchar_t *ModuleName)
@@ -155,7 +156,7 @@ static void CheckScreenLock()
 PluginA::PluginA(PluginManager *owner, const wchar_t *lpwszModuleName):
 	m_owner(owner),
 	m_strModuleName(lpwszModuleName),
-	m_strCacheName(lpwszModuleName),
+	m_strCacheSection(PluginCacheSection(lpwszModuleName)),
 	m_hModule(nullptr),
 	RootKey(nullptr),
 	pFDPanelItemA(nullptr),
@@ -177,121 +178,109 @@ PluginA::~PluginA()
 }
 
 
-bool PluginA::LoadFromCache(const FAR_FIND_DATA_EX &FindData)
+bool PluginA::LoadFromCache(const struct stat &st)
 {
-	FARString strRegKey;
-	strRegKey.Format(FmtPluginsCache_PluginS, m_strCacheName.CPtr());
+	KeyFileHelper kfh(PluginsIni());
 
-	if (CheckRegKey(strRegKey))
-	{
-		if (GetRegKey(strRegKey,wszReg_Preload,0) == 1)   //PF_PRELOAD plugin, skip cache
-			return Load();
+	if (!kfh.HasSection(GetCacheSection()))
+		return false;
 
-		{
-			FARString strPluginID, strCurPluginID;
-			strCurPluginID.Format(
-			    L"%I64x%x%x",
-			    FindData.nFileSize,
-			    FindData.ftCreationTime.dwLowDateTime,
-			    FindData.ftLastWriteTime.dwLowDateTime
-			);
-			GetRegKey(strRegKey, L"ID", strPluginID, L"");
+	//PF_PRELOAD plugin, skip cache
+	if (kfh.GetInt(GetCacheSection(), szCache_Preload) != 0)
+		return Load();
 
-			if (StrCmp(strPluginID, strCurPluginID) )   //одинаковые ли бинарники?
-				return false;
-		}
-		strRegKey += L"/Exports";
-		SysID=GetRegKey(strRegKey,wszReg_SysID,0);
-		pOpenPlugin=(PLUGINOPENPLUGIN)(INT_PTR)GetRegKey(strRegKey,wszReg_OpenPlugin,0);
-		pOpenFilePlugin=(PLUGINOPENFILEPLUGIN)(INT_PTR)GetRegKey(strRegKey,wszReg_OpenFilePlugin,0);
-		pSetFindList=(PLUGINSETFINDLIST)(INT_PTR)GetRegKey(strRegKey,wszReg_SetFindList,0);
-		pProcessEditorInput=(PLUGINPROCESSEDITORINPUT)(INT_PTR)GetRegKey(strRegKey,wszReg_ProcessEditorInput,0);
-		pProcessEditorEvent=(PLUGINPROCESSEDITOREVENT)(INT_PTR)GetRegKey(strRegKey,wszReg_ProcessEditorEvent,0);
-		pProcessViewerEvent=(PLUGINPROCESSVIEWEREVENT)(INT_PTR)GetRegKey(strRegKey,wszReg_ProcessViewerEvent,0);
-		pProcessDialogEvent=(PLUGINPROCESSDIALOGEVENT)(INT_PTR)GetRegKey(strRegKey,wszReg_ProcessDialogEvent,0);
-		pConfigure=(PLUGINCONFIGURE)(INT_PTR)GetRegKey(strRegKey,wszReg_Configure,0);
-		WorkFlags.Set(PIWF_CACHED); //too much "cached" flags
-		return true;
-	}
+	//одинаковые ли бинарники?
+	if (kfh.GetString(GetCacheSection(), "ID") != PluginCacheID(st))
+		return false;
 
-	return false;
+	SysID = kfh.GetUInt(GetCacheSection(), szCache_SysID,0);
+	pOpenPlugin = (PLUGINOPENPLUGIN)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_OpenPlugin, 0);
+	pOpenFilePlugin = (PLUGINOPENFILEPLUGIN)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_OpenFilePlugin, 0);
+	pSetFindList = (PLUGINSETFINDLIST)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_SetFindList, 0);
+	pProcessEditorInput = (PLUGINPROCESSEDITORINPUT)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_ProcessEditorInput, 0);
+	pProcessEditorEvent = (PLUGINPROCESSEDITOREVENT)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_ProcessEditorEvent, 0);
+	pProcessViewerEvent = (PLUGINPROCESSVIEWEREVENT)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_ProcessViewerEvent, 0);
+	pProcessDialogEvent = (PLUGINPROCESSDIALOGEVENT)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_ProcessDialogEvent, 0);
+	pConfigure = (PLUGINCONFIGURE)(INT_PTR)kfh.GetUInt(GetCacheSection(), szCache_Configure, 0);
+	WorkFlags.Set(PIWF_CACHED); //too much "cached" flags
+	return true;
 }
 
 bool PluginA::SaveToCache()
 {
-	if (pGetPluginInfo ||
-	        pOpenPlugin ||
-	        pOpenFilePlugin ||
-	        pSetFindList ||
-	        pProcessEditorInput ||
-	        pProcessEditorEvent ||
-	        pProcessViewerEvent ||
-	        pProcessDialogEvent)
+	if (!pGetPluginInfo &&
+		!pOpenPlugin &&
+		!pOpenFilePlugin &&
+		!pSetFindList &&
+		!pProcessEditorInput &&
+		!pProcessEditorEvent &&
+		!pProcessViewerEvent &&
+		!pProcessDialogEvent)
 	{
-		PluginInfo Info;
-		GetPluginInfo(&Info);
-		SysID = Info.SysID; //LAME!!!
-		FARString strRegKey;
-		strRegKey.Format(FmtPluginsCache_PluginS, m_strCacheName.CPtr());
-		DeleteKeyTree(strRegKey);
-		{
-			bool bPreload = (Info.Flags & PF_PRELOAD);
-			SetRegKey(strRegKey, wszReg_Preload, bPreload?1:0);
-			WorkFlags.Change(PIWF_PRELOADED, bPreload);
-
-			if (bPreload)
-				return true;
-		}
-		{
-			FARString strCurPluginID;
-			FAR_FIND_DATA_EX fdata;
-			apiGetFindDataEx(m_strModuleName, fdata);
-			strCurPluginID.Format(
-			    L"%I64x%x%x",
-			    fdata.nFileSize,
-			    fdata.ftCreationTime.dwLowDateTime,
-			    fdata.ftLastWriteTime.dwLowDateTime
-			);
-			SetRegKey(strRegKey, L"ID", strCurPluginID);
-		}
-
-		for (int i = 0; i < Info.DiskMenuStringsNumber; i++)
-		{
-			FARString strValue;
-			strValue.Format(FmtDiskMenuStringD, i);
-			SetRegKey(strRegKey, strValue, Info.DiskMenuStrings[i]);
-		}
-
-		for (int i = 0; i < Info.PluginMenuStringsNumber; i++)
-		{
-			FARString strValue;
-			strValue.Format(FmtPluginMenuStringD, i);
-			SetRegKey(strRegKey, strValue, Info.PluginMenuStrings[i]);
-		}
-
-		for (int i = 0; i < Info.PluginConfigStringsNumber; i++)
-		{
-			FARString strValue;
-			strValue.Format(FmtPluginConfigStringD, i);
-			SetRegKey(strRegKey,strValue,Info.PluginConfigStrings[i]);
-		}
-
-		SetRegKey(strRegKey, L"CommandPrefix", NullToEmpty(Info.CommandPrefix));
-		SetRegKey(strRegKey, L"Flags", Info.Flags);
-		strRegKey += L"/Exports";
-		SetRegKey(strRegKey, wszReg_SysID, SysID);
-		SetRegKey(strRegKey, wszReg_OpenPlugin, pOpenPlugin!=nullptr);
-		SetRegKey(strRegKey, wszReg_OpenFilePlugin, pOpenFilePlugin!=nullptr);
-		SetRegKey(strRegKey, wszReg_SetFindList, pSetFindList!=nullptr);
-		SetRegKey(strRegKey, wszReg_ProcessEditorInput, pProcessEditorInput!=nullptr);
-		SetRegKey(strRegKey, wszReg_ProcessEditorEvent, pProcessEditorEvent!=nullptr);
-		SetRegKey(strRegKey, wszReg_ProcessViewerEvent, pProcessViewerEvent!=nullptr);
-		SetRegKey(strRegKey, wszReg_ProcessDialogEvent, pProcessDialogEvent!=nullptr);
-		SetRegKey(strRegKey, wszReg_Configure, pConfigure!=nullptr);
-		return true;
+		return false;
 	}
 
-	return false;
+	KeyFileHelper kfh(PluginsIni());
+	kfh.RemoveSection(GetCacheSection());
+
+	const std::string &module = m_strModuleName.GetMB();
+
+	struct stat st{};
+	if (stat(module.c_str(), &st) == -1)
+	{
+		fprintf(stderr, "%s: stat('%s') error %u\n",
+			__FUNCTION__, module.c_str(), errno);
+		return false;
+	}
+
+	kfh.PutString(GetCacheSection(), "Module", module.c_str());
+
+	PluginInfo Info;
+	GetPluginInfo(&Info);
+	SysID = Info.SysID; //LAME!!!
+
+	bool bPreload = (Info.Flags & PF_PRELOAD);
+	kfh.PutInt(GetCacheSection(), szCache_Preload, bPreload ? 1 : 0);
+	WorkFlags.Change(PIWF_PRELOADED, bPreload);
+	if (bPreload)
+		return true;
+
+	kfh.PutString(GetCacheSection(), "ID", PluginCacheID(st).c_str());
+
+	for (int i = 0; i < Info.DiskMenuStringsNumber; i++)
+	{
+		kfh.PutString(GetCacheSection(),
+			StrPrintf(FmtDiskMenuStringD, i).c_str(),
+				Info.DiskMenuStrings[i]);
+	}
+
+	for (int i = 0; i < Info.PluginMenuStringsNumber; i++)
+	{
+		kfh.PutString(GetCacheSection(),
+			StrPrintf(FmtPluginMenuStringD, i).c_str(),
+				Info.PluginMenuStrings[i]);
+	}
+
+	for (int i = 0; i < Info.PluginConfigStringsNumber; i++)
+	{
+		kfh.PutString(GetCacheSection(),
+			StrPrintf(FmtPluginConfigStringD, i).c_str(),
+				Info.PluginConfigStrings[i]);
+	}
+
+	kfh.PutString(GetCacheSection(), "CommandPrefix", Info.CommandPrefix);
+	kfh.PutUInt(GetCacheSection(), "Flags", Info.Flags);
+
+	kfh.PutUInt(GetCacheSection(), szCache_SysID, SysID);
+	kfh.PutUInt(GetCacheSection(), szCache_OpenPlugin, pOpenPlugin!=nullptr);
+	kfh.PutUInt(GetCacheSection(), szCache_OpenFilePlugin, pOpenFilePlugin!=nullptr);
+	kfh.PutUInt(GetCacheSection(), szCache_SetFindList, pSetFindList!=nullptr);
+	kfh.PutUInt(GetCacheSection(), szCache_ProcessEditorInput, pProcessEditorInput!=nullptr);
+	kfh.PutUInt(GetCacheSection(), szCache_ProcessEditorEvent, pProcessEditorEvent!=nullptr);
+	kfh.PutUInt(GetCacheSection(), szCache_ProcessViewerEvent, pProcessViewerEvent!=nullptr);
+	kfh.PutUInt(GetCacheSection(), szCache_ProcessDialogEvent, pProcessDialogEvent!=nullptr);
+	kfh.PutUInt(GetCacheSection(),  szCache_Configure, pConfigure!=nullptr);
+	return true;
 }
 
 bool PluginA::Load()

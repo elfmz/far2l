@@ -40,11 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginA.hpp"
 #include "PluginW.hpp"
 
-extern const wchar_t *FmtPluginsCache_PluginS;
-extern const wchar_t *FmtDiskMenuStringD;
-extern const wchar_t *FmtDiskMenuNumberD;
-extern const wchar_t *FmtPluginMenuStringD;
-extern const wchar_t *FmtPluginConfigStringD;
+extern const char *FmtDiskMenuStringD;
+extern const char *FmtPluginMenuStringD;
+extern const char *FmtPluginConfigStringD;
 
 
 class SaveScreen;
@@ -185,7 +183,7 @@ class PluginManager
 		bool TestPluginInfo(Plugin *Item,PluginInfo *Info);
 		bool TestOpenPluginInfo(Plugin *Item,OpenPluginInfo *Info);
 
-		bool LoadPlugin(const wchar_t *lpwszModuleName, const FAR_FIND_DATA_EX &FindData, bool LoadToMem);
+		bool LoadPlugin(const wchar_t *lpwszModuleName, const struct stat &st, bool LoadToMem);
 
 		bool AddPlugin(Plugin *pPlugin);
 		bool RemovePlugin(Plugin *pPlugin);
@@ -275,3 +273,13 @@ class PluginManager
 
 		friend class Plugin;
 };
+
+const char *PluginsIni();
+
+// input: pathname of pluging object
+// result: shortened representation used to identify plugin in cache
+std::string PluginCacheSection(const FARString &strModuleName);
+
+// produces string that represents file size/modificationtime etc
+// used to detect if plugin file was changed from time it was cached
+std::string PluginCacheID(const struct stat &st);

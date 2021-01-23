@@ -99,12 +99,12 @@ static const char szCache_DeleteFiles[] = "DeleteFilesW";
 static const char szCache_MakeDirectory[] = "MakeDirectoryW";
 static const char szCache_ProcessHostFile[] = "ProcessHostFileW";
 static const char szCache_Configure[] = "ConfigureW";
-static const char szCache_MayExitFAR[] = "MayExitFARW";
-static const char szCache_ExitFAR[] = "ExitFARW";
+//static const char szCache_MayExitFAR[] = "MayExitFARW";
+//static const char szCache_ExitFAR[] = "ExitFARW";
 static const char szCache_ProcessKey[] = "ProcessKeyW";
 static const char szCache_ProcessEvent[] = "ProcessEventW";
 static const char szCache_Compare[] = "CompareW";
-static const char szCache_GetMinFarVersion[] = "GetMinFarVersionW";
+//static const char szCache_GetMinFarVersion[] = "GetMinFarVersionW";
 static const char szCache_Analyse[] = "AnalyseW";
 static const char szCache_GetCustomData[] = "GetCustomDataW";
 static const char szCache_FreeCustomData[] = "FreeCustomDataW";
@@ -570,12 +570,7 @@ struct ExecuteStruct
 		es.nResult = 0; \
 		es.nDefaultResult = 0; \
 		es.bUnloaded = false; \
-		if ( Opt.ExceptRules ) \
-		{ \
-			function; \
-		} \
-		else \
-			function; \
+		function; \
 	}
 
 
@@ -583,17 +578,12 @@ struct ExecuteStruct
 	{ \
 		es.bUnloaded = false; \
 		es.nResult = 0; \
-		if ( Opt.ExceptRules ) \
-		{ \
-			es.nResult = (INT_PTR)function; \
-		} \
-		else \
 			es.nResult = (INT_PTR)function; \
 	}
 
 bool PluginW::SetStartupInfo(bool &bUnloaded)
 {
-	if (pSetStartupInfoW && !ProcessException)
+	if (pSetStartupInfoW)
 	{
 		PluginStartupInfo _info;
 		FarStandardFunctions _fsf;
@@ -630,7 +620,7 @@ static void ShowMessageAboutIllegalPluginVersion(const wchar_t* plg,int required
 
 bool PluginW::CheckMinFarVersion(bool &bUnloaded)
 {
-	if (pMinFarVersionW && !ProcessException)
+	if (pMinFarVersionW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_MINFARVERSION;
@@ -697,7 +687,7 @@ bool PluginW::IsPanelPlugin()
 
 int PluginW::Analyse(const AnalyseData *pData)
 {
-	if (Load() && pAnalyseW && !ProcessException)
+	if (Load() && pAnalyseW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_ANALYSE;
@@ -725,7 +715,7 @@ HANDLE PluginW::OpenPlugin(int OpenFrom, INT_PTR Item)
 
 	HANDLE hResult = INVALID_HANDLE_VALUE;
 
-	if (Load() && pOpenPluginW && !ProcessException)
+	if (Load() && pOpenPluginW)
 	{
 		//CurPluginItem=this; //BUGBUG
 		ExecuteStruct es;
@@ -781,7 +771,7 @@ HANDLE PluginW::OpenFilePlugin(
 {
 	HANDLE hResult = INVALID_HANDLE_VALUE;
 
-	if (Load() && pOpenFilePluginW && !ProcessException)
+	if (Load() && pOpenFilePluginW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_OPENFILEPLUGIN;
@@ -802,7 +792,7 @@ int PluginW::SetFindList(
 {
 	BOOL bResult = FALSE;
 
-	if (pSetFindListW && !ProcessException)
+	if (pSetFindListW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_SETFINDLIST;
@@ -820,7 +810,7 @@ int PluginW::ProcessEditorInput(
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pProcessEditorInputW && !ProcessException)
+	if (Load() && pProcessEditorInputW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEDITORINPUT;
@@ -837,7 +827,7 @@ int PluginW::ProcessEditorEvent(
     PVOID Param
 )
 {
-	if (Load() && pProcessEditorEventW && !ProcessException)
+	if (Load() && pProcessEditorEventW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEDITOREVENT;
@@ -854,7 +844,7 @@ int PluginW::ProcessViewerEvent(
     void *Param
 )
 {
-	if (Load() && pProcessViewerEventW && !ProcessException)
+	if (Load() && pProcessViewerEventW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSVIEWEREVENT;
@@ -873,7 +863,7 @@ int PluginW::ProcessDialogEvent(
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pProcessDialogEventW && !ProcessException)
+	if (Load() && pProcessDialogEventW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSDIALOGEVENT;
@@ -890,7 +880,7 @@ int PluginW::ProcessSynchroEvent(
     void *Param
 )
 {
-	if (Load() && pProcessSynchroEventW && !ProcessException)
+	if (Load() && pProcessSynchroEventW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSSYNCHROEVENT;
@@ -913,7 +903,7 @@ int PluginW::ProcessMacroFunc(
 {
 	int nResult = 0;
 
-	if (Load() && pProcessMacroFuncW && !ProcessException)
+	if (Load() && pProcessMacroFuncW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSMACROFUNC;
@@ -935,7 +925,7 @@ int PluginW::GetVirtualFindData(
 {
 	BOOL bResult = FALSE;
 
-	if (pGetVirtualFindDataW && !ProcessException)
+	if (pGetVirtualFindDataW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETVIRTUALFINDDATA;
@@ -954,7 +944,7 @@ void PluginW::FreeVirtualFindData(
     int ItemsNumber
 )
 {
-	if (pFreeVirtualFindDataW && !ProcessException)
+	if (pFreeVirtualFindDataW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEVIRTUALFINDDATA;
@@ -976,7 +966,7 @@ int PluginW::GetFiles(
 {
 	int nResult = -1;
 
-	if (pGetFilesW && !ProcessException)
+	if (pGetFilesW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETFILES;
@@ -999,7 +989,7 @@ int PluginW::PutFiles(
 {
 	int nResult = -1;
 
-	if (pPutFilesW && !ProcessException)
+	if (pPutFilesW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PUTFILES;
@@ -1022,7 +1012,7 @@ int PluginW::DeleteFiles(
 {
 	BOOL bResult = FALSE;
 
-	if (pDeleteFilesW && !ProcessException)
+	if (pDeleteFilesW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_DELETEFILES;
@@ -1043,7 +1033,7 @@ int PluginW::MakeDirectory(
 {
 	int nResult = -1;
 
-	if (pMakeDirectoryW && !ProcessException)
+	if (pMakeDirectoryW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_MAKEDIRECTORY;
@@ -1065,7 +1055,7 @@ int PluginW::ProcessHostFile(
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessHostFileW && !ProcessException)
+	if (pProcessHostFileW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSHOSTFILE;
@@ -1086,7 +1076,7 @@ int PluginW::ProcessEvent(
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessEventW && !ProcessException)
+	if (pProcessEventW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEVENT;
@@ -1108,7 +1098,7 @@ int PluginW::Compare(
 {
 	int nResult = -2;
 
-	if (pCompareW && !ProcessException)
+	if (pCompareW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_COMPARE;
@@ -1130,7 +1120,7 @@ int PluginW::GetFindData(
 {
 	BOOL bResult = FALSE;
 
-	if (pGetFindDataW && !ProcessException)
+	if (pGetFindDataW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETFINDDATA;
@@ -1149,7 +1139,7 @@ void PluginW::FreeFindData(
     int ItemsNumber
 )
 {
-	if (pFreeFindDataW && !ProcessException)
+	if (pFreeFindDataW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEFINDDATA;
@@ -1166,7 +1156,7 @@ int PluginW::ProcessKey(
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessKeyW && !ProcessException)
+	if (pProcessKeyW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSKEY;
@@ -1183,7 +1173,7 @@ void PluginW::ClosePlugin(
     HANDLE hPlugin
 )
 {
-	if (pClosePluginW && !ProcessException)
+	if (pClosePluginW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_CLOSEPLUGIN;
@@ -1203,7 +1193,7 @@ int PluginW::SetDirectory(
 {
 	BOOL bResult = FALSE;
 
-	if (pSetDirectoryW && !ProcessException)
+	if (pSetDirectoryW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_SETDIRECTORY;
@@ -1224,7 +1214,7 @@ void PluginW::GetOpenPluginInfo(
 //	m_pManager->m_pCurrentPlugin = this;
 	pInfo->StructSize = sizeof(OpenPluginInfo);
 
-	if (pGetOpenPluginInfoW && !ProcessException)
+	if (pGetOpenPluginInfoW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETOPENPLUGININFO;
@@ -1240,7 +1230,7 @@ int PluginW::Configure(
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pConfigureW && !ProcessException)
+	if (Load() && pConfigureW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_CONFIGURE;
@@ -1257,7 +1247,7 @@ bool PluginW::GetPluginInfo(PluginInfo *pi)
 {
 	memset(pi, 0, sizeof(PluginInfo));
 
-	if (pGetPluginInfoW && !ProcessException)
+	if (pGetPluginInfoW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETPLUGININFO;
@@ -1272,7 +1262,7 @@ bool PluginW::GetPluginInfo(PluginInfo *pi)
 
 int PluginW::GetCustomData(const wchar_t *FilePath, wchar_t **CustomData)
 {
-	if (Load() && pGetCustomDataW && !ProcessException)
+	if (Load() && pGetCustomDataW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_GETCUSTOMDATA;
@@ -1287,7 +1277,7 @@ int PluginW::GetCustomData(const wchar_t *FilePath, wchar_t **CustomData)
 
 void PluginW::FreeCustomData(wchar_t *CustomData)
 {
-	if (Load() && pFreeCustomDataW && !ProcessException)
+	if (Load() && pFreeCustomDataW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_FREECUSTOMDATA;
@@ -1299,7 +1289,7 @@ void PluginW::FreeCustomData(wchar_t *CustomData)
 bool PluginW::MayExitFAR()
 {
 
-	if (pMayExitFARW && !ProcessException)
+	if (pMayExitFARW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_MAYEXITFAR;
@@ -1313,7 +1303,7 @@ bool PluginW::MayExitFAR()
 
 void PluginW::ExitFAR()
 {
-	if (pExitFARW && !ProcessException)
+	if (pExitFARW)
 	{
 		ExecuteStruct es;
 		es.id = EXCEPT_EXITFAR;

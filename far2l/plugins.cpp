@@ -557,7 +557,7 @@ void PluginManager::LoadPlugins()
    Load cache only plugins  - '/co' switch */
 void PluginManager::LoadPluginsFromCache()
 {
-	KeyFileHelper kfh(PluginsIni());
+	KeyFileReadHelper kfh(PluginsIni());
 	const std::vector<std::string> &sections = kfh.EnumSections();
 	FARString strModuleName;
 	for (const auto &s : sections)
@@ -1298,7 +1298,7 @@ void PluginManager::Configure(int StartPos)
 					{
 						if (bCached)
 						{
-							KeyFileHelper kfh(PluginsIni());
+							KeyFileReadHelper kfh(PluginsIni(), pPlugin->GetSettingsName());
 							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
 							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
 								break;
@@ -1445,7 +1445,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 				LoadIfCacheAbsent();
 				FARString strHotKey, strValue, strName;
 				PluginInfo Info{};
-				KeyFileHelper kfh(PluginsIni());
+				KeyFileReadHelper kfh(PluginsIni());
 
 				for (int I=0; I<PluginsCount; I++)
 				{
@@ -1661,7 +1661,7 @@ std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber,
 
 void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey)
 {
-	strHotKey = KeyFileHelper(PluginsIni()).GetString(
+	strHotKey = KeyFileReadHelper(PluginsIni(), SettingsSection).GetString(
 		SettingsSection, GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType).c_str());
 }
 
@@ -1733,7 +1733,7 @@ bool PluginManager::GetDiskMenuItem(
 
 	if (pPlugin->CheckWorkFlags(PIWF_CACHED))
 	{
-		KeyFileHelper kfh(PluginsIni());
+		KeyFileReadHelper kfh(PluginsIni(), pPlugin->GetSettingsName());
 		strPluginText = kfh.GetString(pPlugin->GetSettingsName(),
 			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
 		ItemPresent = !strPluginText.IsEmpty();
@@ -1865,9 +1865,10 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam,Panel *Target)
 
 		if (PluginsData[I]->CheckWorkFlags(PIWF_CACHED))
 		{
-			KeyFileHelper kfh(PluginsIni());
-			strPluginPrefix = kfh.GetString(PluginsData[I]->GetSettingsName(), "CommandPrefix", "");
-			PluginFlags = kfh.GetUInt(PluginsData[I]->GetSettingsName(), "Flags", 0);
+			const char *SettingsName = PluginsData[I]->GetSettingsName();
+			KeyFileReadHelper kfh(PluginsIni(), SettingsName);
+			strPluginPrefix = kfh.GetString(SettingsName, "CommandPrefix", "");
+			PluginFlags = kfh.GetUInt(SettingsName, "Flags", 0);
 		}
 		else
 		{

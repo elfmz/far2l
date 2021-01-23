@@ -400,25 +400,9 @@ int FarAppMain(int argc, char **argv)
 	/*$ 18.04.2002 SKV
 	  Попользуем floating point что бы проинициализировался vc-ный fprtl.
 	*/
-#ifdef _MSC_VER
-	float x=1.1f;
-	wchar_t buf[15];
-	swprintf(buf,L"%f",x);
-#endif
 	// если под дебагером, то отключаем исключения однозначно,
 	//  иначе - смотря что указал юзвер.
-#if defined(_DEBUGEXC)
-	Opt.ExceptRules=-1;
-#else
-	Opt.ExceptRules=-1;//IsDebuggerPresent()?0:-1;
-#endif
-//  Opt.ExceptRules=-1;
 
-#ifdef __GNUC__
-	Opt.ExceptRules=0;
-#endif
-
-//_SVS(SysLog(L"Opt.ExceptRules=%d",Opt.ExceptRules));
 	SetRegRootKey(HKEY_CURRENT_USER);
 	Opt.strRegRoot = L"Software/Far2";
 	// По умолчанию - брать плагины из основного каталога
@@ -545,13 +529,7 @@ int FarAppMain(int argc, char **argv)
 					Opt.SmallIcon=TRUE;
 					break;
 				case L'X':
-					Opt.ExceptRules=0;
-#if defined(_DEBUGEXC)
-
-					if (Upper(arg_w[2])==L'D' && !arg_w[3])
-						Opt.ExceptRules=1;
-
-#endif
+					fprintf(stderr, "Unsupported in far2l\n");
 					break;
 
 				case L'C':
@@ -645,14 +623,6 @@ int FarAppMain(int argc, char **argv)
 	WINPORT(SetEnvironmentVariable)(L"FARLANG",Opt.strLanguage);
 	SetHighlighting();
 	initMacroVarTable(1);
-
-	if (Opt.ExceptRules == -1)
-	{
-		GetRegKey(L"System",L"ExceptRules",Opt.ExceptRules,1);
-	}
-
-	//ErrorMode=SEM_FAILCRITICALERRORS|SEM_NOOPENFILEERRORBOX|(Opt.ExceptRules?SEM_NOGPFAULTERRORBOX:0)|(GetRegKey(L"System/Exception", L"IgnoreDataAlignmentFaults", 0)?SEM_NOALIGNMENTFAULTEXCEPT:0);
-	//SetErrorMode(ErrorMode);
 
 	CheckForImportLegacyShortcuts();
 

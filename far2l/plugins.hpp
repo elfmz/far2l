@@ -40,11 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginA.hpp"
 #include "PluginW.hpp"
 
-extern const wchar_t *FmtPluginsCache_PluginS;
-extern const wchar_t *FmtDiskMenuStringD;
-extern const wchar_t *FmtDiskMenuNumberD;
-extern const wchar_t *FmtPluginMenuStringD;
-extern const wchar_t *FmtPluginConfigStringD;
+extern const char *FmtDiskMenuStringD;
+extern const char *FmtPluginMenuStringD;
+extern const char *FmtPluginConfigStringD;
 
 
 class SaveScreen;
@@ -180,12 +178,12 @@ class PluginManager
 		void LoadIfCacheAbsent();
 		void ReadUserBackgound(SaveScreen *SaveScr);
 
-		void GetPluginHotKey(Plugin *pPlugin,int ItemNumber,const wchar_t *HotKeyType,FARString &strHotKey);
+		void GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey);
 
 		bool TestPluginInfo(Plugin *Item,PluginInfo *Info);
 		bool TestOpenPluginInfo(Plugin *Item,OpenPluginInfo *Info);
 
-		bool LoadPlugin(const wchar_t *lpwszModuleName, const FAR_FIND_DATA_EX &FindData, bool LoadToMem);
+		bool LoadPlugin(const FARString &strModuleName, bool LoadUncached);
 
 		bool AddPlugin(Plugin *pPlugin);
 		bool RemovePlugin(Plugin *pPlugin);
@@ -202,6 +200,7 @@ class PluginManager
 
 	public:
 
+		bool CacheForget(const wchar_t *lpwszModuleName);
 		bool LoadPluginExternal(const wchar_t *lpwszModuleName, bool LoadToMem);
 
 		int UnloadPlugin(Plugin *pPlugin, DWORD dwException, bool bRemove = false);
@@ -229,8 +228,8 @@ class PluginManager
 		void DiscardCache();
 		int ProcessCommandLine(const wchar_t *Command,Panel *Target=nullptr);
 
-		bool SetHotKeyDialog(const wchar_t *DlgPluginTitle,const wchar_t *RegKey,const wchar_t *RegValueName);
-		void GetHotKeyRegKey(Plugin *pPlugin,int ItemNumber,FARString &strRegKey);
+		bool SetHotKeyDialog(const wchar_t *DlgPluginTitle, const std::string &SettingName);
+		std::string GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, const char *HotKeyType);
 
 		// $ .09.2000 SVS - Функция CallPlugin - найти плагин по ID и запустить OpenFrom = OPEN_*
 		int CallPlugin(DWORD SysID,int OpenFrom, void *Data, int *Ret=nullptr);
@@ -275,3 +274,5 @@ class PluginManager
 
 		friend class Plugin;
 };
+
+const char *PluginsIni();

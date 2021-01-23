@@ -77,7 +77,6 @@ int DisablePluginsOutput=FALSE;
 
 int WidthNameForMessage=0;
 
-BOOL ProcessException=FALSE;
 BOOL ProcessShowClock=FALSE;
 
 const wchar_t *HelpFileMask=L"*.hlf";

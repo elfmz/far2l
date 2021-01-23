@@ -73,7 +73,8 @@ class PluginA: public Plugin
 		PluginManager *m_owner; //BUGBUG
 
 		FARString m_strModuleName;
-		FARString m_strCacheName;
+		std::string m_strSettingsName;
+		std::string m_strModuleID;
 
 		BitFlags WorkFlags;      // рабочие флаги текущего плагина
 		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
@@ -129,13 +130,16 @@ class PluginA: public Plugin
 
 	public:
 
-		PluginA(PluginManager *owner, const wchar_t *lpwzModuleName);
+		PluginA(PluginManager *owner,
+				const FARString &strModuleName,
+				const std::string &settingsName,
+				const std::string &moduleID);
 		~PluginA();
 
 		bool IsOemPlugin() {return true;}
 
 		bool Load();
-		bool LoadFromCache(const FAR_FIND_DATA_EX &FindData);
+		bool LoadFromCache();
 
 		bool SaveToCache();
 
@@ -180,7 +184,7 @@ class PluginA: public Plugin
 		bool HasFreeCustomData() { return false; }
 
 		const FARString &GetModuleName() { return m_strModuleName; }
-		const wchar_t *GetCacheName() { return m_strCacheName; }
+		const char *GetSettingsName() { return m_strSettingsName.c_str(); }
 		DWORD GetSysID() { return SysID; }
 		bool CheckWorkFlags(DWORD flags) { return WorkFlags.Check(flags)==TRUE; }
 		DWORD GetWorkFlags() { return WorkFlags.Flags; }

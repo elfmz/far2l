@@ -65,8 +65,6 @@ extern const char *Copyright;
 
 extern int WidthNameForMessage;
 
-extern BOOL ProcessException;
-
 extern BOOL ProcessShowClock;
 
 extern const wchar_t *HelpFileMask;

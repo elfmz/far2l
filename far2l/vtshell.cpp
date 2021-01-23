@@ -407,7 +407,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			return r;
 
 		if (chdir(home.c_str()) != 0) {
-			chdir("/");
+			if (chdir("/") != 0) {
+				perror("chdir /");
+			}
 		}
 
 		signal(SIGHUP, SIG_DFL);

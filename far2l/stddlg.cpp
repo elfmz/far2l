@@ -76,9 +76,9 @@ int WINAPI GetSearchReplaceString(
 		00
 		01   +----------------------------- Replace ------------------------------+
 		02   | Search for                                                         |
-		03   |                                                                   |
+		03   |                                                                    |
 		04   | Replace with                                                       |
-		05   |                                                                   |
+		05   |                                                                    |
 		06   +--------------------------------------------------------------------+
 		07   | [ ] Case sensitive                 [ ] Regular expressions         |
 		08   | [ ] Whole words                                                    |
@@ -253,7 +253,7 @@ int WINAPI GetSearchReplaceString(
 		00
 		01   +------------------------------ Search ------------------------------+
 		02   | Search for                                                         |
-		03   |                                                                   |
+		03   |                                                                    |
 		04   +--------------------------------------------------------------------+
 		05   | [ ] Case sensitive                 [ ] Regular expressions         |
 		06   | [ ] Whole words                    [ ] Select found                |
@@ -547,25 +547,7 @@ int WINAPI GetString(
 		if (HelpTopic)
 			Dlg.SetHelp(HelpTopic);
 
-#if 0
-
-		if (Opt.ExceptRules)
-		{
-			__try
-			{
-				Dlg.Process();
-			}
-			__except(xfilter(EXCEPT_FARDIALOG,
-			                 GetExceptionInformation(),nullptr,1)) // nullptr=???
-			{
-				return FALSE;
-			}
-		}
-		else
-#endif
-		{
-			Dlg.Process();
-		}
+		Dlg.Process();
 
 		ExitCode=Dlg.GetExitCode();
 	}
@@ -606,7 +588,7 @@ int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARS
 	|0                                                                             |
 	|1   +------------------------------- Title -------------------------------+   |
 	|2   | User name                                                           |   |
-	|3   | *******************************************************************|   |
+	|3   | ******************************************************************* |   |
 	|4   | User password                                                       |   |
 	|5   | ******************************************************************* |   |
 	|6   +---------------------------------------------------------------------+   |

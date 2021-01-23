@@ -49,7 +49,7 @@ class Plugin
 		virtual bool IsOemPlugin() = 0;
 
 		virtual bool Load() = 0;
-		virtual bool LoadFromCache(const FAR_FIND_DATA_EX &FindData) = 0;
+		virtual bool LoadFromCache() = 0;
 
 		virtual bool SaveToCache() = 0;
 
@@ -94,7 +94,7 @@ class Plugin
 #endif
 
 		virtual const FARString &GetModuleName() = 0;
-		virtual const wchar_t *GetCacheName() = 0;
+		virtual const char *GetSettingsName() = 0;
 		virtual DWORD GetSysID() = 0;
 		virtual bool CheckWorkFlags(DWORD flags) = 0;
 		virtual DWORD GetWorkFlags() = 0;

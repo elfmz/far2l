@@ -61,16 +61,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filelist.hpp"
 #include "message.hpp"
 #include "SafeMMap.hpp"
+#include <KeyFileHelper.h>
+#include <crc64.h>
 
-const wchar_t *FmtPluginsCache_PluginS=L"PluginsCache/%ls";
-const wchar_t *FmtDiskMenuStringD=L"DiskMenuString%d";
-const wchar_t *FmtDiskMenuNumberD=L"DiskMenuNumber%d";
-const wchar_t *FmtPluginMenuStringD=L"PluginMenuString%d";
-const wchar_t *FmtPluginConfigStringD=L"PluginConfigString%d";
-
-static const wchar_t *PluginsFolderName=L"Plugins";
-
-static const wchar_t *RKN_PluginsCache=L"PluginsCache";
+const char *FmtDiskMenuStringD = "DiskMenuString%d";
+const char *FmtPluginMenuStringD = "PluginMenuString%d";
+const char *FmtPluginConfigStringD = "PluginConfigString%d";
+const char *SettingsSection = "Settings";
+static const wchar_t *PluginsFolderName = L"Plugins";
 
 static int _cdecl PluginsSort(const void *el1,const void *el2);
 
@@ -239,7 +237,7 @@ bool PluginManager::RemovePlugin(Plugin *pPlugin)
 
 bool PluginManager::LoadPlugin(
     const wchar_t *lpwszModuleName,
-    const FAR_FIND_DATA_EX &FindData,
+    const struct stat &st,
     bool LoadToMem
 )
 {
@@ -264,7 +262,7 @@ bool PluginManager::LoadPlugin(
 	bool bResult=false;
 
 	if (!LoadToMem)
-		bResult = pPlugin->LoadFromCache(FindData);
+		bResult = pPlugin->LoadFromCache(st);
 
 	if (!bResult && !Opt.LoadPlug.PluginsCacheOnly)
 	{
@@ -291,11 +289,11 @@ bool PluginManager::LoadPluginExternal(const wchar_t *lpwszModuleName, bool Load
 	}
 	else
 	{
-		FAR_FIND_DATA_EX FindData;
+		struct stat st{};
 
-		if (apiGetFindDataEx(lpwszModuleName, FindData))
+		if (stat(Wide2MB(lpwszModuleName).c_str(), &st) == 0)
 		{
-			if (!LoadPlugin(lpwszModuleName, FindData, LoadToMem))
+			if (!LoadPlugin(lpwszModuleName, st, LoadToMem))
 				return false;
 			far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
 		}
@@ -454,9 +452,14 @@ void PluginManager::LoadPlugins()
 			// ...и пройдемся по нему
 			while (ScTree.GetNextName(&FindData,strFullName))
 			{
-				if (CmpName(L"*.far-plug-*",FindData.strFileName,false) && !(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					&& CmpName(L"*.far-plug-*",FindData.strFileName,false))
 				{
-					LoadPlugin(strFullName, FindData, false);
+					struct stat st{};
+					if (stat(strFullName.GetMB().c_str(), &st) == 0)
+					{
+						LoadPlugin(strFullName, st, false);
+					}
 				}
 			} // end while
 		}
@@ -475,20 +478,20 @@ void PluginManager::LoadPlugins()
    Load cache only plugins  - '/co' switch */
 void PluginManager::LoadPluginsFromCache()
 {
-	/*
-		[HKEY_CURRENT_USER\Software\Far2\PluginsCache\C:/PROGRAM FILES/FAR/Plugins/ABOOK/AddrBook.dll]
-	*/
-	size_t ShiftLen = wcslen(RKN_PluginsCache)+1;
+	KeyFileHelper kfh(PluginsIni());
+	const std::vector<std::string> &sections = kfh.EnumSections();
+	struct stat st;
 	FARString strModuleName;
-
-	for (int i=0; EnumRegKey(RKN_PluginsCache, i, strModuleName); i++)
+	for (const auto &s : sections)
 	{
-		strModuleName.LShift(ShiftLen);
-
-		FAR_FIND_DATA_EX FindData;
-
-		if (apiGetFindDataEx(strModuleName, FindData))
-			LoadPlugin(strModuleName, FindData, false);
+		if (s != SettingsSection)
+		{
+			const std::string &module = kfh.GetString(s.c_str(), "Module");
+			if (!module.empty() && stat(module.c_str(), &st) == 0) {
+				strModuleName = module;
+				LoadPlugin(strModuleName, st, false);
+			}
+		}
 	}
 }
 
@@ -1265,7 +1268,7 @@ void PluginManager::Configure(int StartPos)
 				PluginList.SetPosition(-1,-1,0,0);
 				MenuItemNumber=0;
 				LoadIfCacheAbsent();
-				FARString strHotKey, strRegKey, strValue, strName;
+				FARString strHotKey, strValue, strName;
 				PluginInfo Info{};
 
 				for (int I=0; I<PluginsCount; I++)
@@ -1273,24 +1276,21 @@ void PluginManager::Configure(int StartPos)
 					Plugin *pPlugin = PluginsData[I];
 					bool bCached = pPlugin->CheckWorkFlags(PIWF_CACHED)?true:false;
 
-					if (bCached)
+					if (!bCached && !pPlugin->GetPluginInfo(&Info))
 					{
-						strRegKey.Format(FmtPluginsCache_PluginS, pPlugin->GetCacheName());
-					}
-					else
-					{
-						if (!pPlugin->GetPluginInfo(&Info))
-							continue;
+						continue;
 					}
 
 					for (int J=0; ; J++)
 					{
 						if (bCached)
 						{
-							strValue.Format(FmtPluginConfigStringD, J);
-
-							if (!GetRegKey(strRegKey, strValue, strName, L""))
+							KeyFileHelper kfh(PluginsIni());
+							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
+							if (!kfh.HasKey(pPlugin->GetCacheSection(), key.c_str()))
 								break;
+
+							strName = kfh.GetString(pPlugin->GetCacheSection(), key.c_str(), "");
 						}
 						else
 						{
@@ -1432,8 +1432,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 				PluginList.DeleteItems();
 				PluginList.SetPosition(-1,-1,0,0);
 				LoadIfCacheAbsent();
-				FARString strHotKey, strRegKey, strValue, strName;
+				FARString strHotKey, strValue, strName;
 				PluginInfo Info{};
+				KeyFileHelper kfh(PluginsIni());
 
 				for (int I=0; I<PluginsCount; I++)
 				{
@@ -1443,8 +1444,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 					if (bCached)
 					{
-						strRegKey.Format(FmtPluginsCache_PluginS, pPlugin->GetCacheName());
-						IFlags=GetRegKey(strRegKey,L"Flags",0);
+						IFlags = kfh.GetUInt(pPlugin->GetCacheSection(), "Flags",0);
 					}
 					else
 					{
@@ -1464,10 +1464,10 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 					{
 						if (bCached)
 						{
-							strValue.Format(FmtPluginMenuStringD, J);
-
-							if (!GetRegKey(strRegKey, strValue, strName, L""))
+							const std::string &key = StrPrintf(FmtPluginMenuStringD, J);
+							if (!kfh.HasKey(pPlugin->GetCacheSection(), key.c_str()))
 								break;
+							strName = kfh.GetString(pPlugin->GetCacheSection(), key.c_str(), "");
 						}
 						else
 						{
@@ -1653,9 +1653,10 @@ void PluginManager::GetHotKeyRegKey(Plugin *pPlugin,int ItemNumber,FARString &st
 	C:\MultiArc\MULTIARC.DLL                            -> C:\MultiArc\MULTIARC.DLL
 	---------------------------------------------------------------------------------------
 	*/
-	FARString strPluginName(pPlugin->GetCacheName());
+
+	FARString strPluginName(pPlugin->GetModuleName());
 	size_t FarPathLength=g_strFarPath.GetLength();
-	strRegKey.Clear();;
+	strRegKey.Clear();
 
 	if (FarPathLength < pPlugin->GetModuleName().GetLength() && !StrCmpNI(pPlugin->GetModuleName(), g_strFarPath, (int)FarPathLength))
 		strPluginName.LShift(FarPathLength);
@@ -1740,13 +1741,10 @@ bool PluginManager::GetDiskMenuItem(
 
 	if (pPlugin->CheckWorkFlags(PIWF_CACHED))
 	{
-		FARString strRegKey, strValue;
-		strRegKey.Format(FmtPluginsCache_PluginS, pPlugin->GetCacheName());
-		strValue.Format(FmtDiskMenuStringD,PluginItem);
-		GetRegKey(strRegKey,strValue,strPluginText,L"");
-		strValue.Format(FmtDiskMenuNumberD,PluginItem);
-		ItemPresent=!strPluginText.IsEmpty();
-
+		KeyFileHelper kfh(PluginsIni());
+		strPluginText = kfh.GetString(pPlugin->GetCacheSection(),
+			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
+		ItemPresent = !strPluginText.IsEmpty();
 		return true;
 	}
 
@@ -1814,13 +1812,14 @@ void PluginManager::DiscardCache()
 		pPlugin->Load();
 	}
 
-	DeleteKeyTree(RKN_PluginsCache);
+	unlink(PluginsIni());
 }
 
 
 void PluginManager::LoadIfCacheAbsent()
 {
-	if (!CheckRegKey(RKN_PluginsCache))
+	struct stat st;
+	if (stat(PluginsIni(), &st) == -1)
 	{
 		for (int I=0; I<PluginsCount; I++)
 		{
@@ -1868,10 +1867,9 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam,Panel *Target)
 
 		if (PluginsData[I]->CheckWorkFlags(PIWF_CACHED))
 		{
-			FARString strRegKey;
-			strRegKey.Format(FmtPluginsCache_PluginS,PluginsData[I]->GetCacheName());
-			GetRegKey(strRegKey,L"CommandPrefix",strPluginPrefix, L"");
-			PluginFlags=GetRegKey(strRegKey,L"Flags",0);
+			KeyFileHelper kfh(PluginsIni());
+			strPluginPrefix = kfh.GetString(PluginsData[I]->GetCacheSection(), "CommandPrefix", "");
+			PluginFlags = kfh.GetUInt(PluginsData[I]->GetCacheSection(), "Flags", 0);
 		}
 		else
 		{
@@ -2130,4 +2128,42 @@ bool PluginManager::MayExitFar()
 	}
 
 	return out;
+}
+
+////////////////////////
+const char *PluginsIni()
+{
+	static std::string s_out(InMyConfig("plugins.ini"));
+	return s_out.c_str();
+}
+
+std::string PluginCacheSection(const FARString &strModuleName)
+{
+	std::string pathname;
+	Wide2MB(strModuleName.CPtr(), pathname);
+
+	uint64_t suffix = 0xC001000CAC4E;
+
+	size_t p = pathname.rfind('/');
+	if (p != std::string::npos) {
+		suffix = crc64(suffix,
+			(const unsigned char *)pathname.c_str(), p);
+		pathname.erase(0, p + 1);
+	}
+
+	p = pathname.rfind('.');
+	if (p != std::string::npos) {
+		suffix = crc64(suffix,
+			(const unsigned char *)pathname.c_str() + p, pathname.size() - p);
+		pathname.resize(p);
+	}
+
+	return StrPrintf("%s@%llx", pathname.c_str(), (unsigned long long)suffix);
+}
+
+std::string PluginCacheID(const struct stat &st)
+{
+	return StrPrintf("%llx.%llx.%llx.%llx",
+		(unsigned long long)st.st_ino, (unsigned long long)st.st_size,
+		(unsigned long long)st.st_mtime, (unsigned long long)st.st_ctime);
 }

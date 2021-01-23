@@ -81,28 +81,7 @@ static const char szCache_ProcessEditorInput[] = "ProcessEditorInput";
 static const char szCache_ProcessEditorEvent[] = "ProcessEditorEvent";
 static const char szCache_ProcessViewerEvent[] = "ProcessViewerEvent";
 static const char szCache_ProcessDialogEvent[] = "ProcessDialogEvent";
-static const char szCache_SetStartupInfo[] = "SetStartupInfo";
-static const char szCache_ClosePlugin[] = "ClosePlugin";
-static const char szCache_GetPluginInfo[] = "GetPluginInfo";
-static const char szCache_GetOpenPluginInfo[] = "GetOpenPluginInfo";
-static const char szCache_GetFindData[] = "GetFindData";
-static const char szCache_FreeFindData[] = "FreeFindData";
-static const char szCache_GetVirtualFindData[] = "GetVirtualFindData";
-static const char szCache_FreeVirtualFindData[] = "FreeVirtualFindData";
-static const char szCache_SetDirectory[] = "SetDirectory";
-static const char szCache_GetFiles[] = "GetFiles";
-static const char szCache_PutFiles[] = "PutFiles";
-static const char szCache_DeleteFiles[] = "DeleteFiles";
-static const char szCache_MakeDirectory[] = "MakeDirectory";
-static const char szCache_ProcessHostFile[] = "ProcessHostFile";
 static const char szCache_Configure[] = "Configure";
-//static const char szCache_MayExitFAR[] = "MayExitFAR";
-//static const char szCache_ExitFAR[] = "ExitFAR";
-static const char szCache_ProcessKey[] = "ProcessKey";
-static const char szCache_ProcessEvent[] = "ProcessEvent";
-static const char szCache_Compare[] = "Compare";
-//static const char szCache_GetMinFarVersion[] = "GetMinFarVersion";
-
 
 static const char NFMP_OpenPlugin[] = "OpenPlugin";
 static const char NFMP_OpenFilePlugin[] = "OpenFilePlugin";
@@ -486,41 +465,20 @@ struct ExecuteStruct
 };
 
 
-static UINT64 OEMApiCnt=0;
-
-void apiSetFileApisToOEM()
-{
-	//SetFileApisToOEM();
-	OEMApiCnt++;
-}
-
-void apiRevertFileApis()
-{
-	OEMApiCnt--;
-	if(!OEMApiCnt)
-	{
-		//SetFileApisToANSI();
-	}
-}
-
 #define EXECUTE_FUNCTION(function, es) \
 	{ \
-		apiSetFileApisToOEM(); \
 		es.nResult = 0; \
 		es.nDefaultResult = 0; \
 		es.bUnloaded = false; \
 		function; \
-		apiRevertFileApis(); \
 	}
 
 
 #define EXECUTE_FUNCTION_EX(function, es) \
 	{ \
-		apiSetFileApisToOEM(); \
 		es.bUnloaded = false; \
 		es.nResult = 0; \
 		es.nResult = (INT_PTR)function; \
-		apiRevertFileApis(); \
 	}
 
 

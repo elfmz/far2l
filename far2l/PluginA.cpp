@@ -153,10 +153,13 @@ static void CheckScreenLock()
 
 
 
-PluginA::PluginA(PluginManager *owner, const wchar_t *lpwszModuleName):
+PluginA::PluginA(PluginManager *owner, const FARString &strModuleName,
+					const std::string &settingsName, const std::string &moduleID)
+	:
 	m_owner(owner),
-	m_strModuleName(lpwszModuleName),
-	m_strSettingsName(PluginSettingsName(lpwszModuleName)),
+	m_strModuleName(strModuleName),
+	m_strSettingsName(settingsName),
+	m_strModuleID(moduleID),
 	m_hModule(nullptr),
 	RootKey(nullptr),
 	pFDPanelItemA(nullptr),
@@ -178,7 +181,7 @@ PluginA::~PluginA()
 }
 
 
-bool PluginA::LoadFromCache(const struct stat &st)
+bool PluginA::LoadFromCache()
 {
 	KeyFileHelper kfh(PluginsIni());
 
@@ -190,7 +193,7 @@ bool PluginA::LoadFromCache(const struct stat &st)
 		return Load();
 
 	//одинаковые ли бинарники?
-	if (kfh.GetString(GetSettingsName(), "ID") != PluginCacheID(st))
+	if (kfh.GetString(GetSettingsName(), "ID") != m_strModuleID)
 		return false;
 
 	SysID = kfh.GetUInt(GetSettingsName(), szCache_SysID,0);
@@ -248,7 +251,7 @@ bool PluginA::SaveToCache()
 	}
 	WorkFlags.Change(PIWF_PRELOADED, FALSE);
 
-	kfh.PutString(GetSettingsName(), "ID", PluginCacheID(st).c_str());
+	kfh.PutString(GetSettingsName(), "ID", m_strModuleID.c_str());
 
 	for (int i = 0; i < Info.DiskMenuStringsNumber; i++)
 	{

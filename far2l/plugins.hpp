@@ -183,7 +183,7 @@ class PluginManager
 		bool TestPluginInfo(Plugin *Item,PluginInfo *Info);
 		bool TestOpenPluginInfo(Plugin *Item,OpenPluginInfo *Info);
 
-		bool LoadPlugin(const wchar_t *lpwszModuleName, const struct stat &st, bool LoadToMem);
+		bool LoadPlugin(const FARString &strModuleName, bool LoadUncached);
 
 		bool AddPlugin(Plugin *pPlugin);
 		bool RemovePlugin(Plugin *pPlugin);
@@ -276,11 +276,3 @@ class PluginManager
 };
 
 const char *PluginsIni();
-
-// input: pathname of pluging object
-// result: shortened representation used to identify plugin in plugins.ini
-std::string PluginSettingsName(const FARString &strModuleName);
-
-// produces string that represents file size/modificationtime etc
-// used to detect if plugin file was changed from time it was cached
-std::string PluginCacheID(const struct stat &st);

@@ -49,7 +49,7 @@ class Plugin
 		virtual bool IsOemPlugin() = 0;
 
 		virtual bool Load() = 0;
-		virtual bool LoadFromCache(const struct stat &st) = 0;
+		virtual bool LoadFromCache() = 0;
 
 		virtual bool SaveToCache() = 0;
 

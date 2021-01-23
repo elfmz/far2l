@@ -198,7 +198,7 @@ std::vector<std::string> KeyFileHelper::EnumSectionsAt(const char *parent_sectio
 	return out;
 }
 
-size_t KeyFileHelper::RemoveSection(const char *section)
+bool KeyFileHelper::RemoveSection(const char *section)
 {
 	if (_kf.erase(section) != 0) {
 		_dirty = true;

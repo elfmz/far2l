@@ -84,30 +84,9 @@ static const char szCache_ProcessSynchroEvent[] = "ProcessSynchroEventW";
 #if defined(PROCPLUGINMACROFUNC)
 static const char szCache_ProcessMacroFunc[] = "ProcessMacroFuncW";
 #endif
-static const char szCache_SetStartupInfo[] = "SetStartupInfoW";
-static const char szCache_ClosePlugin[] = "ClosePluginW";
-static const char szCache_GetPluginInfo[] = "GetPluginInfoW";
-static const char szCache_GetOpenPluginInfo[] = "GetOpenPluginInfoW";
-static const char szCache_GetFindData[] = "GetFindDataW";
-static const char szCache_FreeFindData[] = "FreeFindDataW";
-static const char szCache_GetVirtualFindData[] = "GetVirtualFindDataW";
-static const char szCache_FreeVirtualFindData[] = "FreeVirtualFindDataW";
-static const char szCache_SetDirectory[] = "SetDirectoryW";
-static const char szCache_GetFiles[] = "GetFilesW";
-static const char szCache_PutFiles[] = "PutFilesW";
-static const char szCache_DeleteFiles[] = "DeleteFilesW";
-static const char szCache_MakeDirectory[] = "MakeDirectoryW";
-static const char szCache_ProcessHostFile[] = "ProcessHostFileW";
 static const char szCache_Configure[] = "ConfigureW";
-//static const char szCache_MayExitFAR[] = "MayExitFARW";
-//static const char szCache_ExitFAR[] = "ExitFARW";
-static const char szCache_ProcessKey[] = "ProcessKeyW";
-static const char szCache_ProcessEvent[] = "ProcessEventW";
-static const char szCache_Compare[] = "CompareW";
-//static const char szCache_GetMinFarVersion[] = "GetMinFarVersionW";
 static const char szCache_Analyse[] = "AnalyseW";
 static const char szCache_GetCustomData[] = "GetCustomDataW";
-static const char szCache_FreeCustomData[] = "FreeCustomDataW";
 
 static const char NFMP_OpenPlugin[] = "OpenPluginW";
 static const char NFMP_OpenFilePlugin[] = "OpenFilePluginW";
@@ -1291,7 +1270,6 @@ void PluginW::FreeCustomData(wchar_t *CustomData)
 
 bool PluginW::MayExitFAR()
 {
-
 	if (pMayExitFARW)
 	{
 		ExecuteStruct es;

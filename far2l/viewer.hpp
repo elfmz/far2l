@@ -216,6 +216,8 @@ class Viewer:public ScreenObject
 		void SetWrapType(int TypeWrap);
 		void KeepInitParameters();
 		void GetFileName(FARString &strName);
+		void SetColoring(bool Coloring);
+		bool GetColoring() const { return VM.Coloring; }
 		virtual void ShowConsoleTitle();
 
 		void SetTempViewName(const wchar_t *Name, BOOL DeleteFolder);

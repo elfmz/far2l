@@ -4901,6 +4901,26 @@ le:// don't count this - it's a F8 another text
 "CP-1250"
 "OEM"
 
+MViewF9Color
+le:// don't count this - it's a F9 another text
+"Color"
+"Color"
+"Color"
+"Color"
+"Color"
+"Color"
+"Color"
+
+MViewF9NoColor
+le:// don't count this - it's a F9 another text
+"NoColor"
+"NoColor"
+"NoColor"
+"NoColor"
+"NoColor"
+"NoColor"
+"NoColor"
+
 MEditShiftF1
 l:
 l://Editor: Shift

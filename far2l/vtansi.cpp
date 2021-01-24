@@ -169,7 +169,7 @@ jadoxa@yahoo.com.au
 #include <mutex>
 #include <atomic>
 #include "vtansi.h"
-
+#include "AnsiEsc.hpp"
 
 #define is_digit(c) ('0' <= (c) && (c) <= '9')
 
@@ -303,87 +303,11 @@ static WCHAR &CurrentCharsetSelection()
 
 // color constants
 
-#define FOREGROUND_BLACK 0
-#define FOREGROUND_WHITE FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE
-
-#define BACKGROUND_BLACK 0
-#define BACKGROUND_WHITE BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE
-
-const BYTE foregroundcolor[16] = {
-	FOREGROUND_BLACK,			// black foreground
-	FOREGROUND_RED,			// red foreground
-	FOREGROUND_GREEN,			// green foreground
-	FOREGROUND_RED | FOREGROUND_GREEN,	// yellow foreground
-	FOREGROUND_BLUE,			// blue foreground
-	FOREGROUND_BLUE | FOREGROUND_RED,	// magenta foreground
-	FOREGROUND_BLUE | FOREGROUND_GREEN,	// cyan foreground
-	FOREGROUND_WHITE,			// white foreground
-
-	FOREGROUND_INTENSITY | FOREGROUND_BLACK,			// black foreground
-	FOREGROUND_INTENSITY | FOREGROUND_RED,			// red foreground
-	FOREGROUND_INTENSITY | FOREGROUND_GREEN,			// green foreground
-	FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,	// yellow foreground
-	FOREGROUND_INTENSITY | FOREGROUND_BLUE,			// blue foreground
-	FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_RED,	// magenta foreground
-	FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_GREEN,	// cyan foreground
-	FOREGROUND_INTENSITY | FOREGROUND_WHITE,			// white foreground
-
-};
-
-const BYTE backgroundcolor[16] = {
-	BACKGROUND_BLACK,			// black background
-	BACKGROUND_RED,			// red background
-	BACKGROUND_GREEN,			// green background
-	BACKGROUND_RED | BACKGROUND_GREEN,	// yellow background
-	BACKGROUND_BLUE,			// blue background
-	BACKGROUND_BLUE | BACKGROUND_RED,	// magenta background
-	BACKGROUND_BLUE | BACKGROUND_GREEN,	// cyan background
-	BACKGROUND_WHITE,			// white background
-
-	BACKGROUND_INTENSITY | BACKGROUND_BLACK,			// black background
-	BACKGROUND_INTENSITY | BACKGROUND_RED,			// red background
-	BACKGROUND_INTENSITY | BACKGROUND_GREEN,			// green background
-	BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN,	// yellow background
-	BACKGROUND_INTENSITY | BACKGROUND_BLUE,			// blue background
-	BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_RED,	// magenta background
-	BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN,	// cyan background
-	BACKGROUND_INTENSITY | BACKGROUND_WHITE,			// white background
-};
-
-const BYTE attr2ansi[8] = {	// map console attribute to ANSI number
-	0,					// black
-	4,					// blue
-	2,					// green
-	6,					// cyan
-	1,					// red
-	5,					// magenta
-	3,					// yellow
-	7					// white
-};
-
-typedef struct {
-	BYTE	foreground;	// ANSI base color (0 to 7; add 30)
-	BYTE	background;	// ANSI base color (0 to 7; add 40)
-	BYTE	bold;		// console FOREGROUND_INTENSITY bit
-	BYTE	underline;	// console BACKGROUND_INTENSITY bit
-	BYTE	rvideo; 	// swap foreground/bold & background/underline
-	BYTE	concealed;	// set foreground/bold to background/underline
-	BYTE	reverse;	// swap console foreground & background attributes
-	BYTE	crm;		// showing control characters?
-	COORD SavePos;	// saved cursor position
-} STATE, *PSTATE;
-
-static STATE ansiState{};
-
-static void SetAnsiStateFromAttributes(WORD wAttributes)
-{
-	ansiState.bold = g_saved_state.csbi.wAttributes & FOREGROUND_INTENSITY;
-	ansiState.underline = g_saved_state.csbi.wAttributes & BACKGROUND_INTENSITY;
-	ansiState.foreground = attr2ansi[g_saved_state.csbi.wAttributes & 7];
-	ansiState.background = attr2ansi[(g_saved_state.csbi.wAttributes >> 4) & 7];
-}
-
-
+static struct STATE {
+	COORD              saved_pos{};	// saved cursor position
+	AnsiEsc::FontState font_state{};
+	bool               crm = false;		// showing control characters?
+} ansiState;
 
 // ========== Print Buffer functions
 
@@ -662,7 +586,7 @@ class AlternativeScreenBuffer
 
 			WINPORT(SetConsoleCursorPosition)(NULL, curpos);
 			WINPORT(SetConsoleTextAttribute)(NULL, _other.info.wAttributes);
-			SetAnsiStateFromAttributes(_other.info.wAttributes);
+			ansiState.font_state.FromConsoleAttributes(_other.info.wAttributes);
 //			fprintf(stderr, "AlternativeScreenBuffer: %d {%d, %d}\n", enable, _other.info.dwCursorPosition.X, _other.info.dwCursorPosition.Y);
 		} else {
 			COORD zero_pos = {};
@@ -673,7 +597,7 @@ class AlternativeScreenBuffer
 				(DWORD)tmp.info.dwSize.Y * (DWORD)tmp.info.dwSize.X, zero_pos, &written);
 			WINPORT(SetConsoleCursorPosition)(NULL, zero_pos);
 			WINPORT(SetConsoleTextAttribute)(NULL, g_saved_state.csbi.wAttributes);
-			SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
+			ansiState.font_state.FromConsoleAttributes(g_saved_state.csbi.wAttributes);
 //			fprintf(stderr, "AlternativeScreenBuffer: %d XXX %x\n", enable, g_saved_state.DefaultAttributes());
 		}
 
@@ -785,106 +709,8 @@ void InterpretEscSeq( void )
 		//fprintf(stderr, "suffix: %c argc: %u argv: %u %u\n", suffix, es_argc, es_argv[0], es_argv[1]);
 		switch (suffix) {
 		case 'm':
-			if (es_argc == 0) es_argv[es_argc++] = 0;
-			for (i = 0; i < es_argc; i++) {
-				if (30 <= es_argv[i] && es_argv[i] <= 37) {
-					ansiState.foreground = es_argv[i] - 30;
-
-				} else if (90 <= es_argv[i] && es_argv[i] <= 97) {
-					ansiState.foreground = (es_argv[i] - 90) + 8;
-
-				} else if (40 <= es_argv[i] && es_argv[i] <= 47) {
-					ansiState.background = es_argv[i] - 40;
-
-				} else if (100 <= es_argv[i] && es_argv[i] <= 107) {
-					ansiState.background = (es_argv[i] - 100) + 8;
-
- 				} else if (es_argv[i] == 38 || es_argv[i] == 48) {
-					// This is technically incorrect, but it's what xterm does, so
-					// that's what we do.  According to T.416 (ISO 8613-6), there is
-					// only one parameter, which is divided into elements.  So where
-					// xterm does "38;2;R;G;B" it should really be "38;2:I:R:G:B" (I is
-					// a colour space identifier).
-					if (i+1 < es_argc) {
-						if (es_argv[i+1] == 2)		// rgb
-							i += 4;
-						else if (es_argv[i+1] == 5)	// index
-							i += 2;
-					}
-				} else switch (es_argv[i]) {
-					case 0:
-						ansiState.rvideo    = 0;
-						ansiState.concealed = 0;
-						ansiState.bold = 0;
-						ansiState.underline = 0;
-
-					case 39:
-					case 49: {
-						const BYTE a = 7;
-						ansiState.reverse = FALSE;
-						if (es_argv[i] != 49) {
-							ansiState.foreground = attr2ansi[a & 15];
-						}
-						if (es_argv[i] != 39) {
-							ansiState.background = attr2ansi[(a >> 4) & 15];
-						}
-					}
-					break;
-
-					case  1:
-						ansiState.bold      = FOREGROUND_INTENSITY;
-						break;
-					case  5: // blink
-					case  4:
-						ansiState.underline = BACKGROUND_INTENSITY;
-						break;
-					case  7:
-						ansiState.rvideo    = 1;
-						break;
-					case  8:
-						ansiState.concealed = 1;
-						break;
-					case 21: // oops, this actually turns on double underline
-						// but xterm turns off bold too, so that's alright
-					case 22:
-						ansiState.bold      = 0;
-						break;
-					case 25:
-					case 24:
-						ansiState.underline = 0;
-						break;
-					case 27:
-						ansiState.rvideo    = 0;
-						break;
-					case 28:
-						ansiState.concealed = 0;
-						break;
-					}
-			}
-			if (ansiState.concealed) {
-				if (ansiState.rvideo) {
-					attribut = foregroundcolor[ansiState.foreground]
-					           | backgroundcolor[ansiState.foreground];
-					if (ansiState.bold)
-						attribut |= FOREGROUND_INTENSITY | BACKGROUND_INTENSITY;
-				} else {
-					attribut = foregroundcolor[ansiState.background]
-					           | backgroundcolor[ansiState.background];
-					if (ansiState.underline)
-						attribut |= FOREGROUND_INTENSITY | BACKGROUND_INTENSITY;
-				}
-			} else if (ansiState.rvideo) {
-				attribut = foregroundcolor[ansiState.background]
-				           | backgroundcolor[ansiState.foreground];
-				if (ansiState.bold)
-					attribut |= BACKGROUND_INTENSITY;
-				if (ansiState.underline)
-					attribut |= FOREGROUND_INTENSITY;
-			} else
-				attribut = foregroundcolor[ansiState.foreground] | ansiState.bold
-				           | backgroundcolor[ansiState.background] | ansiState.underline;
-			if (ansiState.reverse)
-				attribut = ((attribut >> 4) & 15) | ((attribut & 15) << 4);
+			ansiState.font_state.ParseSuffixM(es_argv, es_argc);
+			attribut = ansiState.font_state.ToConsoleAttributes();
 			WINPORT(SetConsoleTextAttribute)( hConOut, attribut );
 			return;
 
@@ -1206,14 +1032,14 @@ void InterpretEscSeq( void )
 
 		case 's':                 // ESC[s Saves cursor position for recall later
 			if (es_argc != 0) return;
-			ansiState.SavePos.X = Info.dwCursorPosition.X;
-			ansiState.SavePos.Y = Info.dwCursorPosition.Y - Info.srWindow.Top;
+			ansiState.saved_pos.X = Info.dwCursorPosition.X;
+			ansiState.saved_pos.Y = Info.dwCursorPosition.Y - Info.srWindow.Top;
 			return;
 
 		case 'u':                 // ESC[u Return to saved cursor position
 			if (es_argc != 0) return;
-			Pos.X = ansiState.SavePos.X;
-			Pos.Y = ansiState.SavePos.Y + Info.srWindow.Top;
+			Pos.X = ansiState.saved_pos.X;
+			Pos.Y = ansiState.saved_pos.Y + Info.srWindow.Top;
 			if (Pos.X > (Info.dwSize.X - 1)) Pos.X = (Info.dwSize.X - 1);
 			if (Pos.Y > Info.srWindow.Bottom) Pos.Y = Info.srWindow.Bottom;
 			WINPORT(SetConsoleCursorPosition)( hConOut, Pos );
@@ -1328,7 +1154,7 @@ static void InterpretControlString()
 		} else if (os_cmd_arg == "pop-attr")  {
 			if (!g_attr_stack.empty()) {
 				blank_character = g_attr_stack.back().blank_character;
-				SetAnsiStateFromAttributes(g_attr_stack.back().attributes);
+				ansiState.font_state.FromConsoleAttributes(g_attr_stack.back().attributes);
 				WINPORT(SetConsoleTextAttribute)( hConOut, g_attr_stack.back().attributes );
 				g_attr_stack.pop_back();
 			}
@@ -1613,7 +1439,7 @@ VTAnsi::VTAnsi(IVTShell *vt_shell)
 	g_vt_shell = vt_shell;
 	ResetTerminal();
 	g_saved_state.InitFromConsole(NULL);
-	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
+	ansiState.font_state.FromConsoleAttributes(g_saved_state.csbi.wAttributes);
 	
 	VTLog::Start();
 	
@@ -1674,7 +1500,7 @@ void VTAnsi::OnStop()
 	g_alternative_screen_buffer.Reset();
 	g_saved_state.ApplyToConsole(NULL, false);
 	ResetTerminal();
-	SetAnsiStateFromAttributes(g_saved_state.csbi.wAttributes);
+	ansiState.font_state.FromConsoleAttributes(g_saved_state.csbi.wAttributes);
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
 	_buf.clear();
 	WINPORT(SetConsoleTitle)( _saved_title.c_str());

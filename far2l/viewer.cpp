@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "console.hpp"
+#include "AnsiEsc.hpp"
 #include "wakeful.hpp"
 #include "../utils/include/ConvertUTF.h"
 
@@ -149,6 +150,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	VM.Wrap=Opt.ViOpt.ViewerIsWrap;
 	VM.WordWrap=Opt.ViOpt.ViewerWrap;
 	VM.Hex=InitHex;
+	VM.Coloring=0;
 	ViewKeyBar=nullptr;
 	FilePos=0;
 	LeftPos=0;
@@ -265,6 +267,13 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	VM.CodePage=DefCodePage;
 	DefCodePage=CP_AUTODETECT;
 	OpenFailed=false;
+
+	const wchar_t *ext = wcsrchr(Name, L'.');
+	if (ext && (wcscasecmp(ext, L".ansi") == 0 || wcscasecmp(ext, L".ans") == 0))
+	{
+		VM.Coloring = 1;
+		VM.Wrap = 0;
+	}
 
 	ViewFile.Close();
 
@@ -530,22 +539,71 @@ void Viewer::ShowPage(int nMode)
 
 	if (nMode != SHOW_HEX)
 	{
+		std::unique_ptr<AnsiEsc::ParserEnforcer> ae_parser_enforcer;
+		if (VM.Coloring)
+		{
+			ae_parser_enforcer.reset(new AnsiEsc::ParserEnforcer);
+			ae_parser_enforcer->Set(B_BLACK | F_WHITE);
+		}
+
 		for (I=0,Y=Y1; Y<=Y2; Y++,I++)
 		{
-			int StrLen = StrLength(Strings[I]->lpData);
-			SetColor(COL_VIEWERTEXT);
+			int StrLen = 0;//StrLength(Strings[I]->lpData);
+			if (ae_parser_enforcer)
+			{
+				const auto attr = ae_parser_enforcer->Get();
+				for (const wchar_t *ch = Strings[I]->lpData; *ch;) {
+					const wchar_t *end_of_esc = ae_parser_enforcer->Parse(ch);
+					if (end_of_esc) {
+						ch = end_of_esc;
+					} else {
+						++ch;
+						++StrLen;
+					}
+				}
+				ae_parser_enforcer->Set(attr);
+			}
+			else
+			{
+				StrLen = StrLength(Strings[I]->lpData);
+				SetColor(COL_VIEWERTEXT);
+			}
 			GotoXY(X1,Y);
 
 			if (StrLen > LeftPos)
 			{
+				int WrittenLen = 0;
+				const wchar_t *data = &Strings[I]->lpData[static_cast<size_t>(LeftPos)];
 				if (IsUnicodeOrUtfCodePage(VM.CodePage) && Signature && !I && !Strings[I]->nFilePos)
 				{
-					FS<<fmt::LeftAlign()<<fmt::Width(Width)<<fmt::Precision(Width)<<&Strings[I]->lpData[static_cast<size_t>(LeftPos+1)];
+					++data;
 				}
-				else
+
+//				FS<<fmt::LeftAlign()<<fmt::Width(Width)<<fmt::Precision(Width);
+				if (ae_parser_enforcer) for (const wchar_t *ch = data; *ch && WrittenLen < Width;)
 				{
-					FS<<fmt::LeftAlign()<<fmt::Width(Width)<<fmt::Precision(Width)<<&Strings[I]->lpData[static_cast<size_t>(LeftPos)];
+					const wchar_t *end_of_esc = ae_parser_enforcer->Parse(ch);
+					if (end_of_esc)
+					{
+						Text(data, ch - data);
+						WrittenLen+= ch - data;
+						ae_parser_enforcer->Apply();
+						data = ch = end_of_esc;
+					}
+					else
+					{
+						++ch;
+					}
 				}
+				if (WrittenLen < Width)
+				{
+					Text(data);
+					for (WrittenLen = StrLen; WrittenLen < Width; ++WrittenLen)
+					{
+						Text(L" ");
+					}
+				}
+//				FS << data;
 			}
 			else
 			{
@@ -1479,6 +1537,13 @@ int Viewer::ProcessKey(int Key)
 
 			return TRUE;
 		}
+		case KEY_F9:
+		{
+			VM.Coloring = !VM.Coloring;
+			ChangeViewKeyBar();
+			Show();
+			return true;
+		}
 		case KEY_F11:
 		{
 			CtrlObject->Plugins.CommandsMenu(MODALTYPE_VIEWER,0,L"Viewer");
@@ -2214,6 +2279,11 @@ void Viewer::ChangeViewKeyBar()
 		else
 			ViewKeyBar->Change(MSG(MViewF8),7);
 
+		if (VM.Coloring)
+			ViewKeyBar->Change(MSG(MViewF9NoColor),8);
+		else
+			ViewKeyBar->Change(MSG(MViewF9Color),8);
+
 		ViewKeyBar->Redraw();
 	}
 
@@ -2772,7 +2842,6 @@ void Viewer::SetWrapMode(int Wrap)
 	Viewer::VM.Wrap=Wrap;
 }
 
-
 void Viewer::EnableHideCursor(int HideCursor)
 {
 	Viewer::HideCursor=HideCursor;
@@ -2796,6 +2865,12 @@ void Viewer::GetFileName(FARString &strName)
 	strName = strFullFileName;
 }
 
+void Viewer::SetColoring(bool Coloring)
+{
+	VM.Coloring = Coloring;
+	ChangeViewKeyBar();
+	Show();
+}
 
 void Viewer::ShowConsoleTitle()
 {

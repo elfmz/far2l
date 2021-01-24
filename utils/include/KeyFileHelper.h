@@ -4,12 +4,30 @@
 #include <unordered_map>
 #include <vector>
 
+struct KeyFileValues : std::unordered_map<std::string, std::string>
+{
+	bool HasKey(const char *name) const;
+	std::string GetString(const char *name, const char *def = "") const;
+	std::wstring GetString(const char *name, const wchar_t *def) const;
+	int GetInt(const char *name, int def = 0) const;
+	unsigned int GetUInt(const char *name, unsigned int def = 0) const;
+	std::vector<std::string> EnumKeys() const;
+};
+
+class KeyFileReadSection : public KeyFileValues
+{
+	bool _section_loaded;
+
+public:
+	KeyFileReadSection(const char *filename, const char *section);
+
+	bool SectionLoaded() const { return _section_loaded; }
+};
+
 class KeyFileReadHelper
 {
 protected:
-	typedef std::unordered_map<std::string, std::string>  Values;
-	struct Sections : std::unordered_map<std::string, Values> {} _kf;
-	std::string _filename;
+	struct Sections : std::unordered_map<std::string, KeyFileValues> {} _kf;
 	mode_t _filemode = 0640;
 	bool _loaded;
 
@@ -18,21 +36,21 @@ public:
 
 	bool IsLoaded() const { return _loaded; }
 
-	bool HasSection(const char *section);
-	bool HasKey(const char *section, const char *name);
-	std::string GetString(const char *section, const char *name, const char *def = "");
-	std::wstring GetString(const char *section, const char *name, const wchar_t *def);
-	void GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def = "");
-	int GetInt(const char *section, const char *name, int def = 0);
-	unsigned int GetUInt(const char *section, const char *name, unsigned int def = 0);
-	std::vector<std::string> EnumSections();
-	std::vector<std::string> EnumSectionsAt(const char *parent_section, bool recursed = false);
-	std::vector<std::string> EnumKeys(const char *section);
+	bool HasSection(const char *section) const;
+	bool HasKey(const char *section, const char *name) const;
+	std::string GetString(const char *section, const char *name, const char *def = "") const;
+	std::wstring GetString(const char *section, const char *name, const wchar_t *def) const;
+	void GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def = "") const;
+	int GetInt(const char *section, const char *name, int def = 0) const;
+	unsigned int GetUInt(const char *section, const char *name, unsigned int def = 0) const;
+	std::vector<std::string> EnumSections() const;
+	std::vector<std::string> EnumSectionsAt(const char *parent_section, bool recursed = false) const;
+	std::vector<std::string> EnumKeys(const char *section) const;
 };
-
 
 class KeyFileHelper : public KeyFileReadHelper
 {
+	std::string _filename;
 	bool _dirty;
 
 public:

@@ -188,34 +188,34 @@ PluginW::~PluginW()
 
 bool PluginW::LoadFromCache()
 {
-	KeyFileReadHelper kfh(PluginsIni(), GetSettingsName());
+	KeyFileReadSection kfh(PluginsIni(), GetSettingsName());
 
-	if (!kfh.HasSection(GetSettingsName()))
+	if (!kfh.SectionLoaded())
 		return false;
 
 	//PF_PRELOAD plugin, skip cache
-	if (kfh.GetInt(GetSettingsName(), szCache_Preload) != 0)
+	if (kfh.GetInt(szCache_Preload) != 0)
 		return Load();
 
 	//одинаковые ли бинарники?
-	if (kfh.GetString(GetSettingsName(), "ID") != m_strModuleID)
+	if (kfh.GetString("ID") != m_strModuleID)
 		return false;
 
-	SysID = kfh.GetUInt(GetSettingsName(), szCache_SysID, 0);
-	pOpenPluginW = (PLUGINOPENPLUGINW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_OpenPlugin, 0);
-	pOpenFilePluginW = (PLUGINOPENFILEPLUGINW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_OpenFilePlugin, 0);
-	pSetFindListW = (PLUGINSETFINDLISTW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_SetFindList, 0);
-	pProcessEditorInputW = (PLUGINPROCESSEDITORINPUTW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_ProcessEditorInput, 0);
-	pProcessEditorEventW = (PLUGINPROCESSEDITOREVENTW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_ProcessEditorEvent, 0);
-	pProcessViewerEventW = (PLUGINPROCESSVIEWEREVENTW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_ProcessViewerEvent, 0);
-	pProcessDialogEventW = (PLUGINPROCESSDIALOGEVENTW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_ProcessDialogEvent, 0);
-	pProcessSynchroEventW = (PLUGINPROCESSSYNCHROEVENTW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_ProcessSynchroEvent, 0);
+	SysID = kfh.GetUInt(szCache_SysID, 0);
+	pOpenPluginW = (PLUGINOPENPLUGINW)(INT_PTR)kfh.GetUInt(szCache_OpenPlugin, 0);
+	pOpenFilePluginW = (PLUGINOPENFILEPLUGINW)(INT_PTR)kfh.GetUInt(szCache_OpenFilePlugin, 0);
+	pSetFindListW = (PLUGINSETFINDLISTW)(INT_PTR)kfh.GetUInt(szCache_SetFindList, 0);
+	pProcessEditorInputW = (PLUGINPROCESSEDITORINPUTW)(INT_PTR)kfh.GetUInt(szCache_ProcessEditorInput, 0);
+	pProcessEditorEventW = (PLUGINPROCESSEDITOREVENTW)(INT_PTR)kfh.GetUInt(szCache_ProcessEditorEvent, 0);
+	pProcessViewerEventW = (PLUGINPROCESSVIEWEREVENTW)(INT_PTR)kfh.GetUInt(szCache_ProcessViewerEvent, 0);
+	pProcessDialogEventW = (PLUGINPROCESSDIALOGEVENTW)(INT_PTR)kfh.GetUInt(szCache_ProcessDialogEvent, 0);
+	pProcessSynchroEventW = (PLUGINPROCESSSYNCHROEVENTW)(INT_PTR)kfh.GetUInt(szCache_ProcessSynchroEvent, 0);
 #if defined(PROCPLUGINMACROFUNC)
-	pProcessMacroFuncW = (PLUGINPROCESSMACROFUNCW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_ProcessMacroFunc, 0);
+	pProcessMacroFuncW = (PLUGINPROCESSMACROFUNCW)(INT_PTR)kfh.GetUInt(szCache_ProcessMacroFunc, 0);
 #endif
-	pConfigureW = (PLUGINCONFIGUREW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_Configure, 0);
-	pAnalyseW = (PLUGINANALYSEW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_Analyse, 0);
-	pGetCustomDataW = (PLUGINGETCUSTOMDATAW)(INT_PTR)kfh.GetUInt(GetSettingsName(), szCache_GetCustomData, 0);
+	pConfigureW = (PLUGINCONFIGUREW)(INT_PTR)kfh.GetUInt(szCache_Configure, 0);
+	pAnalyseW = (PLUGINANALYSEW)(INT_PTR)kfh.GetUInt(szCache_Analyse, 0);
+	pGetCustomDataW = (PLUGINGETCUSTOMDATAW)(INT_PTR)kfh.GetUInt(szCache_GetCustomData, 0);
 	WorkFlags.Set(PIWF_CACHED); //too much "cached" flags
 	return true;
 }

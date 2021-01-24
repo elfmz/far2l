@@ -1298,12 +1298,12 @@ void PluginManager::Configure(int StartPos)
 					{
 						if (bCached)
 						{
-							KeyFileReadHelper kfh(PluginsIni(), pPlugin->GetSettingsName());
+							KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
 							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
-							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
+							if (!kfh.HasKey(key.c_str()))
 								break;
 
-							strName = kfh.GetString(pPlugin->GetSettingsName(), key.c_str(), "");
+							strName = kfh.GetString(key.c_str(), "");
 						}
 						else
 						{
@@ -1661,8 +1661,8 @@ std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber,
 
 void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey)
 {
-	strHotKey = KeyFileReadHelper(PluginsIni(), SettingsSection).GetString(
-		SettingsSection, GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType).c_str());
+	strHotKey = KeyFileReadSection(PluginsIni(), SettingsSection).GetString(
+		GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType).c_str());
 }
 
 bool PluginManager::SetHotKeyDialog(
@@ -1733,8 +1733,8 @@ bool PluginManager::GetDiskMenuItem(
 
 	if (pPlugin->CheckWorkFlags(PIWF_CACHED))
 	{
-		KeyFileReadHelper kfh(PluginsIni(), pPlugin->GetSettingsName());
-		strPluginText = kfh.GetString(pPlugin->GetSettingsName(),
+		KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
+		strPluginText = kfh.GetString(
 			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
 		ItemPresent = !strPluginText.IsEmpty();
 		return true;
@@ -1865,10 +1865,9 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam,Panel *Target)
 
 		if (PluginsData[I]->CheckWorkFlags(PIWF_CACHED))
 		{
-			const char *SettingsName = PluginsData[I]->GetSettingsName();
-			KeyFileReadHelper kfh(PluginsIni(), SettingsName);
-			strPluginPrefix = kfh.GetString(SettingsName, "CommandPrefix", "");
-			PluginFlags = kfh.GetUInt(SettingsName, "Flags", 0);
+			KeyFileReadSection kfh(PluginsIni(), PluginsData[I]->GetSettingsName());
+			strPluginPrefix = kfh.GetString("CommandPrefix", "");
+			PluginFlags = kfh.GetUInt("Flags", 0);
 		}
 		else
 		{

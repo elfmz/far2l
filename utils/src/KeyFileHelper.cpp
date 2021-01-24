@@ -18,45 +18,98 @@
 // KeyFileHelper to tell KeyFileReadHelper don't load anything
 static const char *sDontLoadSectionName = "][";
 
-KeyFileReadHelper::KeyFileReadHelper(const char *filename, const char *load_only_section)
-	: _filename(filename), _loaded(false)
+
+bool KeyFileValues::HasKey(const char *name) const
+{
+	return find(name) != end();
+}
+
+std::string KeyFileValues::GetString(const char *name, const char *def) const
+{
+	const auto &it = find(name);
+	if (it != end()) {
+		return it->second;
+	}
+
+	return def ? def : "";
+}
+
+std::wstring KeyFileValues::GetString(const char *name, const wchar_t *def) const
+{
+	const auto &it = find(name);
+	if (it != end()) {
+		return StrMB2Wide(it->second);
+	}
+
+	return def ? def : L"";
+}
+
+int KeyFileValues::GetInt(const char *name, int def) const
+{
+	const auto &it = find(name);
+	if (it != end()) {
+		sscanf(it->second.c_str(), "%d", &def);
+	}
+
+	return def;
+}
+
+unsigned int KeyFileValues::GetUInt(const char *name, unsigned int def) const
+{
+	const auto &it = find(name);
+	if (it != end()) {
+		sscanf(it->second.c_str(), "%u", &def);
+	}
+
+	return def;
+}
+
+std::vector<std::string> KeyFileValues::EnumKeys() const
+{
+	std::vector<std::string> out;
+	out.reserve(size());
+	for (const auto &it : *this) {
+		out.emplace_back(it.first);
+	}
+	return out;
+}
+
+///////////////////////////////////////////
+
+template <class ValuesProviderT>
+static bool LoadKeyFile(const char *filename, mode_t &filemode, ValuesProviderT values_provider)
 {
 	std::string content;
 
 	for (size_t load_attempts = 0;; ++load_attempts) {
 		struct stat s {};
-		if (stat(_filename.c_str(), &s) == -1) {
-			return;
+		if (stat(filename, &s) == -1) {
+			return false;
 		}
 
-		_filemode = (s.st_mode | 0600) & 0777;
+		filemode = (s.st_mode | 0600) & 0777;
 
-		if (load_only_section == sDontLoadSectionName) {
-			return;
-		}
-
-		FDScope fd(open(_filename.c_str(), O_RDONLY, _filemode));
+		FDScope fd(open(filename, O_RDONLY, filemode));
 		if (!fd.Valid()) {
-			fprintf(stderr, "KeyFileHelper: error=%d opening '%s'\n", errno , _filename.c_str());
-			return;
+			fprintf(stderr, "%s: error=%d opening '%s'\n", __FUNCTION__, errno, filename);
+			return false;
 		}
 
 		if (s.st_size == 0) {
-			_loaded = true;
-			return;
+			return true;
 		}
 
 		content.resize(s.st_size);
 		ssize_t r = ReadAll(fd, &content[0], content.size());
 		if (r == (ssize_t)s.st_size) {
 			struct stat s2 {};
-			if (stat(_filename.c_str(), &s2) == -1 || s.st_mtime == s2.st_mtime) {
+			if (stat(filename, &s2) == -1 || s.st_mtime == s2.st_mtime) {
 				break;
 			}
 		}
 
 		if (load_attempts > 1000) {
-			fprintf(stderr, "KeyFileHelper: to many attempts to load '%s'\n", _filename.c_str());
+			fprintf(stderr, "KeyFileHelper: to many attempts to load '%s'\n", filename);
 			content.resize((r <= 0) ? 0 : (size_t)r);
 			break;
 		}
@@ -67,7 +120,7 @@ KeyFileReadHelper::KeyFileReadHelper(const char *filename, const char *load_only
 	}
 	
 	std::string line, value;
-	Values *values = nullptr;
+	KeyFileValues *values = nullptr;
 	for (size_t line_start = 0; line_start < content.size();) {
 		size_t line_end = content.find('\n', line_start);
 		if (line_end == std::string::npos) {
@@ -78,19 +131,7 @@ KeyFileReadHelper::KeyFileReadHelper(const char *filename, const char *load_only
 		StrTrim(line, " \t\r");
 		if (!line.empty() && line[0] != ';' && line[0] != '#') {
 			if (line[0] == '[' && line[line.size() - 1] == ']') {
-				const std::string &section_name = line.substr(1, line.size() - 2);
-				if (load_only_section == nullptr || section_name == load_only_section) {
-					values = &_kf[section_name];
-				} else {
-					// check may be its a nested section name
-					size_t starts_len = StrStartsFrom(section_name, load_only_section);
-					if (starts_len && section_name[starts_len] == '/') {
-						// load also nested sections
-						values = &_kf[section_name];
-					} else {
-						values = nullptr;
-					}
-				}
+				values = values_provider(line.substr(1, line.size() - 2));
 
 			} else if (values != nullptr) {
 				size_t p = line.find('=');
@@ -107,10 +148,54 @@ KeyFileReadHelper::KeyFileReadHelper(const char *filename, const char *load_only
 		line_start = line_end + 1;
 	}
 
-	_loaded = true;
+	return true;
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumSections()
+///////////////////////////////////////////
+
+KeyFileReadSection::KeyFileReadSection(const char *filename, const char *section)
+	:
+	_section_loaded(false)
+{
+	mode_t filemode;
+	LoadKeyFile(filename, filemode,
+		[&] (const std::string &section_name)->KeyFileValues *
+		{
+			if (section_name == section) {
+				_section_loaded = true;
+				return this;
+			}
+
+			return nullptr;
+		}
+	);
+}
+
+///////////////////////////////////
+
+KeyFileReadHelper::KeyFileReadHelper(const char *filename, const char *load_only_section)
+	: _loaded(false)
+{
+	_loaded = LoadKeyFile(filename, _filemode,
+		[&] (const std::string &section_name)->KeyFileValues *
+		{
+			if (load_only_section == nullptr || section_name == load_only_section) {
+				return &_kf[section_name];
+			}
+
+			// check may be its a nested section name
+			size_t starts_len = StrStartsFrom(section_name, load_only_section);
+			if (starts_len && section_name[starts_len] == '/') {
+				// load also nested sections
+				return &_kf[section_name];
+			}
+
+			return nullptr;
+		}
+	);
+}
+
+std::vector<std::string> KeyFileReadHelper::EnumSections() const
 {
 	std::vector<std::string> out;
 	out.reserve(_kf.size());
@@ -120,7 +205,7 @@ std::vector<std::string> KeyFileReadHelper::EnumSections()
 	return out;
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const char *parent_section, bool recursed)
+std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const char *parent_section, bool recursed) const
 {
 	std::string prefix = parent_section;
 	if (prefix == "/") {
@@ -142,108 +227,78 @@ std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const char *parent_se
 	return out;
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumKeys(const char *section)
+std::vector<std::string> KeyFileReadHelper::EnumKeys(const char *section) const
 {
 	std::vector<std::string> out;
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		out.reserve(it->second.size());
-		for (const auto &e : it->second) {
-			out.emplace_back(e.first);
-		}
+		return it->second.EnumKeys();
 	}
-	return out;
+	return std::vector<std::string>();
 }
 
-bool KeyFileReadHelper::HasSection(const char *section)
+bool KeyFileReadHelper::HasSection(const char *section) const
 {
 	auto it = _kf.find(section);
 	return (it != _kf.end());
 }
 
-bool KeyFileReadHelper::HasKey(const char *section, const char *name)
+bool KeyFileReadHelper::HasKey(const char *section, const char *name) const
 {
 	auto it = _kf.find(section);
 	if (it == _kf.end()) {
 		return false;
 	}
 
-	auto s = it->second.find(name);
-	return (s != it->second.end());
+	return it->second.HasKey(name);
 }
 
-std::string KeyFileReadHelper::GetString(const char *section, const char *name, const char *def)
+std::string KeyFileReadHelper::GetString(const char *section, const char *name, const char *def) const
 {
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		auto s = it->second.find(name);
-		if (s != it->second.end()) {
-			return s->second;
-		}
+		return it->second.GetString(name, def);
 	}
 
 	return def ? def : "";
 }
 
-std::wstring KeyFileReadHelper::GetString(const char *section, const char *name, const wchar_t *def)
+std::wstring KeyFileReadHelper::GetString(const char *section, const char *name, const wchar_t *def) const
 {
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		auto s = it->second.find(name);
-		if (s != it->second.end()) {
-			return StrMB2Wide(s->second);
-		}
+		return it->second.GetString(name, def);
 	}
 
 	return def ? def : L"";
 }
 
-void KeyFileReadHelper::GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def)
+void KeyFileReadHelper::GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		auto s = it->second.find(name);
-		if (s != it->second.end()) {
-			strncpy(buffer, s->second.c_str(), buf_size);
-			buffer[buf_size - 1] = 0;
-			return;
-		}
-	}
-
-	if (def && def != buffer) {
-		strncpy(buffer, def, buf_size);
-		buffer[buf_size - 1] = 0;
-	} else {
-		buffer[0] = 0;
-	}
+	const std::string &out = GetString(section, name, def);
+	strncpy(buffer, out.c_str(), buf_size);
+	buffer[buf_size - 1] = 0;
 }
 
-int KeyFileReadHelper::GetInt(const char *section, const char *name, int def)
+int KeyFileReadHelper::GetInt(const char *section, const char *name, int def) const
 {
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		auto s = it->second.find(name);
-		if (s != it->second.end()) {
-			return atoi(s->second.c_str());
-		}
+		return it->second.GetInt(name, def);
 	}
 
 	return def;
 }
 
-unsigned int KeyFileReadHelper::GetUInt(const char *section, const char *name, unsigned int def)
+unsigned int KeyFileReadHelper::GetUInt(const char *section, const char *name, unsigned int def) const
 {
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		auto s = it->second.find(name);
-		if (s != it->second.end()) {
-			sscanf(s->second.c_str(), "%u", &def);
-		}
+		return it->second.GetUInt(name, def);
 	}
 
 	return def;
 }
-
 
 
 
@@ -251,6 +306,7 @@ unsigned int KeyFileReadHelper::GetUInt(const char *section, const char *name, u
 KeyFileHelper::KeyFileHelper(const char *filename, bool load)
 	:
 	KeyFileReadHelper(filename, load ? nullptr : sDontLoadSectionName),
+	_filename(filename),
 	_dirty(!load)
 {
 }

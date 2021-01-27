@@ -61,6 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "filestr.hpp"
 #include "mix.hpp"
+#include "execute.hpp"
 #include "constitle.hpp"
 #include "console.hpp"
 #include "AnsiEsc.hpp"
@@ -150,7 +151,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	VM.Wrap=Opt.ViOpt.ViewerIsWrap;
 	VM.WordWrap=Opt.ViOpt.ViewerWrap;
 	VM.Hex=InitHex;
-	VM.Coloring=0;
+	VM.Processed=0;
 	ViewKeyBar=nullptr;
 	FilePos=0;
 	LeftPos=0;
@@ -219,6 +220,17 @@ Viewer::~Viewer()
 	   Удаляем файл только, если нет открытых фреймов с таким именем.
 	*/
 
+	if (!strProcessedViewName.IsEmpty())
+	{
+		unlink(strProcessedViewName.GetMB().c_str());
+		CutToSlash(strProcessedViewName);
+		if (!strProcessedViewName.IsEmpty())
+		{
+			rmdir(strProcessedViewName.GetMB().c_str());
+			strProcessedViewName.Clear();
+		}
+	}
+
 	if (!strTempViewName.IsEmpty() && !FrameManager->CountFramesWithName(strTempViewName))
 	{
 		/* $ 14.06.2002 IS
@@ -268,17 +280,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	DefCodePage=CP_AUTODETECT;
 	OpenFailed=false;
 
-	const wchar_t *ext = wcsrchr(Name, L'.');
-	if (ext && (wcscasecmp(ext, L".ansi") == 0 || wcscasecmp(ext, L".ans") == 0))
-	{
-		VM.Coloring = 1;
-		VM.Wrap = 0;
-	}
-
 	ViewFile.Close();
-
-	SelectSize = 0; // Сбросим выделение
-	strFileName = Name;
 
 	DWORD FileAttr = apiGetFileAttributes(Name);
 	if (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr&FILE_ATTRIBUTE_DEVICE)!=0) {//avoid stuck
@@ -286,7 +288,58 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		return FALSE;
 	}
 
-	ViewFile.Open(strFileName.GetMB());
+	SelectSize = 0; // Сбросим выделение
+	strFileName = Name;
+
+	// Processed mode:
+	//  Renders ANSI ESC coloring sequences
+	//  For all files beside *.ansi/*.ans runs view.sh
+	//   that doing 'processing' of file and writes output
+	//   into temporary filename. That temporary file then
+	//   viewed instead of original one's.
+	const wchar_t *ext = wcsrchr(Name, L'.');
+	if (ext && (wcscasecmp(ext, L".ansi") == 0 || wcscasecmp(ext, L".ans") == 0))
+	{
+		VM.Processed = 1;
+		VM.Wrap = 0;
+		if (VM.CodePage == CP_AUTODETECT)
+		{
+			VM.CodePage = 437;
+		}
+	}
+	else if (VM.Processed)
+	{
+		if (strProcessedViewName.IsEmpty())
+		{
+			if (FarMkTempEx(strProcessedViewName, L"view"))
+			{
+				strProcessedViewName+= PointToName(strFileName);
+
+				std::string cmd = GetMyScriptQuoted("view.sh");
+				std::string strFile = strFileName.GetMB();
+
+				QuoteCmdArgIfNeed(strFile);
+				cmd+= ' ';
+				cmd+= strFile;
+
+				strFile = strProcessedViewName.GetMB();
+				QuoteCmdArgIfNeed(strFile);
+				cmd+= ' ';
+				cmd+= strFile;
+				int r = farExecuteA(cmd.c_str(), 0);
+				if (r == 0) {
+					Name = strProcessedViewName.CPtr();
+				} else {
+					unlink(strProcessedViewName.GetMB().c_str());
+					strProcessedViewName.Clear();
+				}
+			}
+		} else {
+			Name = strProcessedViewName.CPtr();
+		}
+	}
+
+	ViewFile.Open(Wide2MB(Name));//strFileName.GetMB()
 
 	if (!ViewFile.Opened())
 	{
@@ -539,29 +592,18 @@ void Viewer::ShowPage(int nMode)
 
 	if (nMode != SHOW_HEX)
 	{
-		std::unique_ptr<AnsiEsc::ParserEnforcer> ae_parser_enforcer;
-		if (VM.Coloring)
+		std::unique_ptr<AnsiEsc::Printer> ae_printer;
+		if (VM.Processed)
 		{
-			ae_parser_enforcer.reset(new AnsiEsc::ParserEnforcer);
-			ae_parser_enforcer->Set(B_BLACK | F_WHITE);
+			ae_printer.reset(new AnsiEsc::Printer(B_BLACK | F_WHITE));
 		}
 
 		for (I=0,Y=Y1; Y<=Y2; Y++,I++)
 		{
-			int StrLen = 0;//StrLength(Strings[I]->lpData);
-			if (ae_parser_enforcer)
+			int StrLen;
+			if (ae_printer)
 			{
-				const auto attr = ae_parser_enforcer->Get();
-				for (const wchar_t *ch = Strings[I]->lpData; *ch;) {
-					const wchar_t *end_of_esc = ae_parser_enforcer->Parse(ch);
-					if (end_of_esc) {
-						ch = end_of_esc;
-					} else {
-						++ch;
-						++StrLen;
-					}
-				}
-				ae_parser_enforcer->Set(attr);
+				StrLen = ae_printer->Length(Strings[I]->lpData);
 			}
 			else
 			{
@@ -570,40 +612,17 @@ void Viewer::ShowPage(int nMode)
 			}
 			GotoXY(X1,Y);
 
-			if (StrLen > LeftPos)
-			{
-				int WrittenLen = 0;
-				const wchar_t *data = &Strings[I]->lpData[static_cast<size_t>(LeftPos)];
-				if (IsUnicodeOrUtfCodePage(VM.CodePage) && Signature && !I && !Strings[I]->nFilePos)
-				{
+			const wchar_t *data = &Strings[I]->lpData[0];
+			if (IsUnicodeOrUtfCodePage(VM.CodePage) && Signature && !I && !Strings[I]->nFilePos)
 					++data;
-				}
 
-//				FS<<fmt::LeftAlign()<<fmt::Width(Width)<<fmt::Precision(Width);
-				if (ae_parser_enforcer) for (const wchar_t *ch = data; *ch && WrittenLen < Width;)
-				{
-					const wchar_t *end_of_esc = ae_parser_enforcer->Parse(ch);
-					if (end_of_esc)
-					{
-						Text(data, ch - data);
-						WrittenLen+= ch - data;
-						ae_parser_enforcer->Apply();
-						data = ch = end_of_esc;
-					}
-					else
-					{
-						++ch;
-					}
-				}
-				if (WrittenLen < Width)
-				{
-					Text(data);
-					for (WrittenLen = StrLen; WrittenLen < Width; ++WrittenLen)
-					{
-						Text(L" ");
-					}
-				}
-//				FS << data;
+			if (ae_printer)
+			{
+				ae_printer->Print(LeftPos, Width, data);
+			}
+			else if (StrLen > LeftPos)
+			{
+				FS<<fmt::LeftAlign()<<fmt::Width(Width)<<fmt::Precision(Width)<<&data[LeftPos];
 			}
 			else
 			{
@@ -1539,8 +1558,13 @@ int Viewer::ProcessKey(int Key)
 		}
 		case KEY_F9:
 		{
-			VM.Coloring = !VM.Coloring;
+			VM.Processed = !VM.Processed;
 			ChangeViewKeyBar();
+			FARString reopenFileName = strFileName;
+			if (VM.Processed || !strProcessedViewName.IsEmpty())
+			{
+				OpenFile(reopenFileName, TRUE);
+			}
 			Show();
 			return true;
 		}
@@ -2279,10 +2303,10 @@ void Viewer::ChangeViewKeyBar()
 		else
 			ViewKeyBar->Change(MSG(MViewF8),7);
 
-		if (VM.Coloring)
-			ViewKeyBar->Change(MSG(MViewF9NoColor),8);
+		if (VM.Processed)
+			ViewKeyBar->Change(MSG(MViewF9Raw),8);
 		else
-			ViewKeyBar->Change(MSG(MViewF9Color),8);
+			ViewKeyBar->Change(MSG(MViewF9Processed),8);
 
 		ViewKeyBar->Redraw();
 	}
@@ -2865,9 +2889,9 @@ void Viewer::GetFileName(FARString &strName)
 	strName = strFullFileName;
 }
 
-void Viewer::SetColoring(bool Coloring)
+void Viewer::SetProcessed(bool Processed)
 {
-	VM.Coloring = Coloring;
+	VM.Processed = Processed;
 	ChangeViewKeyBar();
 	Show();
 }

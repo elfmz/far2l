@@ -1139,7 +1139,7 @@ namespace oldfar
 		int Wrap;
 		int WordWrap;
 		int Hex;
-		int Coloring;
+		int Processed;
 		DWORD Reserved[3];
 	};
 

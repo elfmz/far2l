@@ -4,15 +4,7 @@
 
 namespace AnsiEsc
 {
-	struct Parser
-	{
-		std::vector<int> args;
-		wchar_t suffix = 0;
-
-		const wchar_t *Parse(const wchar_t *str);
-	};
-
-	struct FontState : Parser
+	struct FontState
 	{
 		BYTE	foreground = false;	// ANSI base color (0 to 7; add 30)
 		BYTE	background = false;	// ANSI base color (0 to 7; add 40)
@@ -27,15 +19,21 @@ namespace AnsiEsc
 		WORD ToConsoleAttributes();
 	};
 
-	struct ParserEnforcer : Parser
+	struct Parser
 	{
-		ParserEnforcer();
-		~ParserEnforcer();
+		std::vector<int> args;
+		wchar_t suffix = 0;
 
 		const wchar_t *Parse(const wchar_t *str);
-		WORD Get();
-		void Set(WORD wAttributes);
-		void Apply();
+	};
+
+	struct Printer : protected Parser
+	{
+		Printer(WORD wAttributes);
+		~Printer();
+
+		int Length(const wchar_t *str);
+		void Print(int skip_len, int print_len, const wchar_t *str);
 
 	private:
 		FontState _font_state;

@@ -64,39 +64,6 @@ static const BYTE Attr2Ansi[8] = {	// map console attribute to ANSI number
 	7					// white
 };
 
-//////////////////////////////////////////////////////////////////////////////////////////
-
-const wchar_t *Parser::Parse(const wchar_t *str)
-{
-	args.clear();
-	suffix = 0;
-
-	if (str[0] == 033 && str[1] == '[') {
-		int a = 0;
-		for (size_t i = 2; str[i]; ++i) {
-			if (str[i] == ';'
-					|| (str[i] >= L'a' && str[i] <= L'z')
-					|| (str[i] >= L'A' && str[i] <= L'Z')) {
-				args.push_back(a);
-				if (str[i] != ';') {
-					suffix = str[i];
-					return &str[i + 1];
-				}
-				a = 0;
-
-			} else if (i < 32 && str[i] >= '0' && str[i] <= '9') {
-				a*= 10;
-				a+= str[i] - '0';
-
-			} else {
-				return nullptr;
-			}
-		}
-	}
-
-	return nullptr;
-}
-
 /////////////////
 void FontState::ParseSuffixM(const int *args, int argc)
 {
@@ -231,45 +198,120 @@ WORD FontState::ToConsoleAttributes()
 	return attribut;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+
+const wchar_t *Parser::Parse(const wchar_t *str)
+{
+	args.clear();
+	suffix = 0;
+
+	if (str[0] == 033 && str[1] == '[') {
+		int a = 0;
+		for (size_t i = 2; str[i]; ++i) {
+			if (str[i] == ';'
+					|| (str[i] >= L'a' && str[i] <= L'z')
+					|| (str[i] >= L'A' && str[i] <= L'Z')) {
+				args.push_back(a);
+				if (str[i] != ';') {
+					suffix = str[i];
+					return &str[i + 1];
+				}
+				a = 0;
+
+			} else if (i < 32 && str[i] >= '0' && str[i] <= '9') {
+				a*= 10;
+				a+= str[i] - '0';
+
+			} else {
+				return nullptr;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 /////////////
 
-ParserEnforcer::ParserEnforcer()
+Printer::Printer(WORD wAttributes)
 	:
 	_initial_attr(GetRealColor())
 {
-	_font_state.FromConsoleAttributes(_initial_attr);
+	_font_state.FromConsoleAttributes(wAttributes);
 }
 
-ParserEnforcer::~ParserEnforcer()
+Printer::~Printer()
 {
 	SetRealColor(_initial_attr);
 }
 
-WORD ParserEnforcer::Get()
+int Printer::Length(const wchar_t *str)
 {
-	return _font_state.ToConsoleAttributes();
-}
-
-void ParserEnforcer::Set(WORD wAttributes)
-{
-	_font_state.FromConsoleAttributes(wAttributes);
-	SetRealColor(wAttributes);
-}
-
-void ParserEnforcer::Apply()
-{
-	SetRealColor(_font_state.ToConsoleAttributes());
-}
-
-const wchar_t *ParserEnforcer::Parse(const wchar_t *str)
-{
-	const wchar_t *out = Parser::Parse(str);
-	if (out) {
-		if (suffix == L'm') {
-			_font_state.ParseSuffixM(args.data(), args.size());
+	Parser tmp_parser;
+	int out = 0;
+	for (const wchar_t *ch = str; *ch;) {
+		const wchar_t *end_of_esc = tmp_parser.Parse(ch);
+		if (end_of_esc) {
+			ch = end_of_esc;
+			if (tmp_parser.suffix == L'C') {
+				out+= tmp_parser.args[0];
+			}
+		} else {
+			++ch;
+			++out;
 		}
 	}
 	return out;
+}
+
+void Printer::Print(int skip_len, int print_len, const wchar_t *str)
+{
+	int processed = 0;
+	SetRealColor(_font_state.ToConsoleAttributes());
+	for (const wchar_t *ch = str; ;) {
+		const wchar_t *end_of_chunk = *ch ? Parse(ch) : ch;
+		if (end_of_chunk)
+		{
+			if (skip_len >= processed) {
+				int skip_part = std::min(skip_len - processed, int(ch - str));
+				processed+= skip_part;
+				str+= skip_part;
+			}
+			if (ch != str && processed < skip_len + print_len) {
+				int print_part = int(ch - str);
+				if (processed + print_part > skip_len + print_len) {
+					print_part = skip_len + print_len - processed;
+				}
+				Text(str, print_part);
+			}
+			processed+= ch - str;
+			if (!*ch) {
+				break;
+			}
+			if (suffix == L'C') {
+				for (int i = 0; i < args[0]; ++i, ++processed ) {
+				    if (processed >= skip_len && processed < skip_len + print_len) {
+						Text(L" ", 1);
+					}
+				}
+			} else if (suffix == L'm') {
+				_font_state.ParseSuffixM(args.data(), (int)args.size());
+				SetRealColor(_font_state.ToConsoleAttributes());
+			}
+			str = ch = end_of_chunk;
+		}
+		else
+		{
+			++ch;
+		}
+	}
+    while (processed < skip_len) {
+		++processed;
+	}
+    while (processed < skip_len + print_len) {
+		Text(L" ", 1);
+		++processed;
+	}
 }
 
 }

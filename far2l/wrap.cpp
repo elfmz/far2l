@@ -3927,7 +3927,7 @@ int WINAPI FarViewerControlA(int Command,void* Param)
 			viA->CurMode.Unicode        = IsFullWideCodePage(viW.CurMode.CodePage);
 			viA->CurMode.Wrap           = viW.CurMode.Wrap;
 			viA->CurMode.WordWrap       = viW.CurMode.WordWrap;
-			viA->CurMode.Coloring           = viW.CurMode.Coloring;
+			viA->CurMode.Processed      = viW.CurMode.Processed;
 			viA->CurMode.Hex            = viW.CurMode.Hex;
 			viA->LeftPos = (int)viW.LeftPos;
 			viA->Reserved3 = 0;

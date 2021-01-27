@@ -4901,25 +4901,25 @@ le:// don't count this - it's a F8 another text
 "CP-1250"
 "OEM"
 
-MViewF9Color
+MViewF9Processed
 le:// don't count this - it's a F9 another text
-"Color"
-"Color"
-"Color"
-"Color"
-"Color"
-"Color"
-"Color"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+"Proc-d"
 
-MViewF9NoColor
+MViewF9Raw
 le:// don't count this - it's a F9 another text
-"NoColor"
-"NoColor"
-"NoColor"
-"NoColor"
-"NoColor"
-"NoColor"
-"NoColor"
+"Raw"
+"Raw"
+"Raw"
+"Raw"
+"Raw"
+"Raw"
+"Raw"
 
 MEditShiftF1
 l:

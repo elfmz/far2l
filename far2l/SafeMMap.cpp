@@ -98,7 +98,7 @@ static void InvokePrevSigaction(int num, siginfo_t *info, void *ctx, struct siga
 	if (write(fd, errmsg, strlen(errmsg)) == -1) {
 		perror("write(errmsg)");
 	}
-
+#ifndef __FreeBSD__ // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
 	void *bt[16];
 	size_t bt_count = sizeof(bt) / sizeof(bt[0]);
 	bt_count = backtrace(bt, bt_count);
@@ -106,6 +106,7 @@ static void InvokePrevSigaction(int num, siginfo_t *info, void *ctx, struct siga
 	if (fd != STDERR_FILENO) {
 		close(fd);
 	}
+#endif
 	abort();
 }
 

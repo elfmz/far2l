@@ -177,6 +177,49 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	Signature = false;
 }
 
+FARString Viewer::ComposeCacheName()
+{
+//	FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
+	FARString strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFileName);
+	if (VM.Processed)
+	{
+		strCacheName+= L":PROCESSED";
+	}
+
+	return strCacheName;
+}
+
+void Viewer::SavePosCache()
+{
+	if (Opt.ViOpt.SavePos && Opt.OnlyEditorViewerUsed != Options::ONLY_VIEWER_ON_CMDOUT)
+	{
+		FARString strCacheName=ComposeCacheName();
+
+		UINT CodePage=0;
+
+		if (CodePageChangedByUser)
+		{
+			CodePage=VM.CodePage;
+		}
+
+		PosCache poscache={};
+		poscache.Param[0]=FilePos;
+		poscache.Param[1]=LeftPos;
+		poscache.Param[2]=VM.Hex;
+		//=poscache.Param[3];
+		poscache.Param[4]=CodePage;
+
+		if (Opt.ViOpt.SaveShortPos)
+		{
+			poscache.Position[0]=BMSavePos.SavePosAddr;
+			poscache.Position[1]=BMSavePos.SavePosLeft;
+			//poscache.Position[2]=;
+			//poscache.Position[3]=;
+		}
+
+		CtrlObject->ViewerPosCache->AddPosition(strCacheName,poscache);
+	}
+}
 
 Viewer::~Viewer()
 {
@@ -185,34 +228,7 @@ Viewer::~Viewer()
 	if (ViewFile.Opened())
 	{
 		ViewFile.Close();
-
-		if (Opt.ViOpt.SavePos && Opt.OnlyEditorViewerUsed != Options::ONLY_VIEWER_ON_CMDOUT)
-		{
-			FARString strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFileName);
-			UINT CodePage=0;
-
-			if (CodePageChangedByUser)
-			{
-				CodePage=VM.CodePage;
-			}
-
-			PosCache poscache={};
-			poscache.Param[0]=FilePos;
-			poscache.Param[1]=LeftPos;
-			poscache.Param[2]=VM.Hex;
-			//=poscache.Param[3];
-			poscache.Param[4]=CodePage;
-
-			if (Opt.ViOpt.SaveShortPos)
-			{
-				poscache.Position[0]=BMSavePos.SavePosAddr;
-				poscache.Position[1]=BMSavePos.SavePosLeft;
-				//poscache.Position[2]=;
-				//poscache.Position[3]=;
-			}
-
-			CtrlObject->ViewerPosCache->AddPosition(strCacheName,poscache);
-		}
+		SavePosCache();
 	}
 
 	_tran(SysLog(L"[%p] Viewer::~Viewer, TempViewName=[%ls]",this,TempViewName));
@@ -363,7 +379,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	if (Opt.ViOpt.SavePos)
 	{
 		int64_t NewLeftPos,NewFilePos;
-		FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
+		FARString strCacheName=ComposeCacheName();
 		memset(&BMSavePos,0xff,sizeof(BMSavePos)); //заполним с -1
 		PosCache poscache={};
 
@@ -1400,7 +1416,7 @@ int Viewer::ProcessKey(int Key)
 				{
 					if (Opt.ViOpt.SavePos)
 					{
-						FARString strCacheName=strPluginData.IsEmpty()?strFileName:strPluginData+PointToName(strFileName);
+						FARString strCacheName=ComposeCacheName();
 						UINT CodePage=0;
 
 						if (CodePageChangedByUser)
@@ -1462,6 +1478,19 @@ int Viewer::ProcessKey(int Key)
 		{
 			ProcessHexMode(!VM.Hex);
 			return TRUE;
+		}
+		case KEY_F5:
+		{
+			SavePosCache();
+			VM.Processed = !VM.Processed;
+			ChangeViewKeyBar();
+			FARString reopenFileName = strFileName;
+			if (VM.Processed || !strProcessedViewName.IsEmpty())
+			{
+				OpenFile(reopenFileName, TRUE);
+			}
+			Show();
+			return true;
 		}
 		case KEY_F7:
 		{
@@ -1555,18 +1584,6 @@ int Viewer::ProcessKey(int Key)
 				GoTo();
 
 			return TRUE;
-		}
-		case KEY_F9:
-		{
-			VM.Processed = !VM.Processed;
-			ChangeViewKeyBar();
-			FARString reopenFileName = strFileName;
-			if (VM.Processed || !strProcessedViewName.IsEmpty())
-			{
-				OpenFile(reopenFileName, TRUE);
-			}
-			Show();
-			return true;
 		}
 		case KEY_F11:
 		{
@@ -2304,9 +2321,9 @@ void Viewer::ChangeViewKeyBar()
 			ViewKeyBar->Change(MSG(MViewF8),7);
 
 		if (VM.Processed)
-			ViewKeyBar->Change(MSG(MViewF9Raw),8);
+			ViewKeyBar->Change(MSG(MViewF5Raw),4);
 		else
-			ViewKeyBar->Change(MSG(MViewF9Processed),8);
+			ViewKeyBar->Change(MSG(MViewF5Processed),4);
 
 		ViewKeyBar->Redraw();
 	}

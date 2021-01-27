@@ -195,6 +195,9 @@ class Viewer:public ScreenObject
 		void SetFileSize();
 		int GetStrBytesNum(const wchar_t *Str, int Length);
 
+		FARString ComposeCacheName();
+		void SavePosCache();
+
 	public:
 		Viewer(bool bQuickView = false, UINT aCodePage = CP_AUTODETECT);
 		virtual ~Viewer();

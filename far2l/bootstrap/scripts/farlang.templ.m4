@@ -4901,8 +4901,8 @@ le:// don't count this - it's a F8 another text
 "CP-1250"
 "OEM"
 
-MViewF9Processed
-le:// don't count this - it's a F9 another text
+MViewF5Processed
+le:// don't count this - it's a F5 another text
 "Proc-d"
 "Proc-d"
 "Proc-d"
@@ -4911,8 +4911,8 @@ le:// don't count this - it's a F9 another text
 "Proc-d"
 "Proc-d"
 
-MViewF9Raw
-le:// don't count this - it's a F9 another text
+MViewF5Raw
+le:// don't count this - it's a F5 another text
 "Raw"
 "Raw"
 "Raw"

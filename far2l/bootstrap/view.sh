@@ -1,14 +1,19 @@
 #!/bin/bash
-# input: $1
-# output: $2
+# This script used by Viewer to produce F5-toggled 'Processed view' content.
+# It gets input file as 1st argument, tries to analyze what is it and should
+# write any filetype-specific information into output file, given in 2nd argument.
+# Input: $1
+# Output: $2
 
+FILE="$(file "$1")"
+
+# Optional per-user script
 if [ -x ~/.config/far2l/view.sh ]; then
 . ~/.config/far2l/view.sh
 fi
 
-FILE="$(file "$1")"
-
 echo "$FILE" > "$2"
+echo >> "$2"
 
 if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
 	if command -v readelf >/dev/null 2>&1; then
@@ -91,5 +96,22 @@ if [[ "$FILE" == *": unified diff output"* ]]; then
 	exit 0
 fi
 
-echo "Hint: use <F9> to switch to raw file viewer" >>"$2" 2>&1
+if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
+	if command -v ctags >/dev/null 2>&1; then
+		ctags --totals -x -u "$1" >>"$2" 2>&1
+	else
+		echo "Install <ctags> to see source overview" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
+if [[ "$FILE" == *": ASCII text"* ]] \
+		|| [[ "$FILE" == *": UTF-8 Unicode"* ]]; then
+	head "$1" >>"$2" 2>&1
+	echo ............  >>"$2" 2>&1
+	tail "$1" >>"$2" 2>&1
+	exit 0
+fi
+
+echo "Hint: use <F5> to switch back to raw file viewer" >>"$2" 2>&1
 #exit 1

@@ -2459,6 +2459,7 @@ $ #Viewer: control keys#
     #F2#                 Toggle line wrap/unwrap
     #Shift-F2#           Toggle wrap type (letters/words)
     #F4#                 Toggle text/hex mode
+    #F5#                 Toggle raw/processed mode
     #F6#                 Switch to ~editor~@Editor@
     #Alt-F5#             Print the file
                        ("Print manager" plugin is used).

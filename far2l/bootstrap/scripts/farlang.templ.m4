@@ -4901,6 +4901,26 @@ le:// don't count this - it's a F8 another text
 "CP-1250"
 "OEM"
 
+MViewF5Processed
+le:// don't count this - it's a F5 another text
+"Обработ"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+"Proc-d"
+
+MViewF5Raw
+le:// don't count this - it's a F5 another text
+"Сырой"
+"Raw"
+"Raw"
+"Raw"
+"Raw"
+"Raw"
+"Raw"
+
 MEditShiftF1
 l:
 l://Editor: Shift

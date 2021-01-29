@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "exitcode.hpp"
 #include "vtlog.h"
+#include "vtshell.h"
 #include "vtcompletor.h"
 #include <limits>
 #include <algorithm>
@@ -196,16 +197,23 @@ void CommandLine::ProcessCompletion(bool possibilities)
 	}	
 }
 
-std::string CommandLine::GetConsoleLog()
+std::string CommandLine::GetConsoleLog(bool colored)
 {
-	++ProcessShowClock;
-	ShowBackground();
-	Redraw();
-	ScrBuf.Flush();
-	const std::string &histfile = VTLog::GetAsFile();
-	--ProcessShowClock;
-	Redraw();
-	ScrBuf.Flush();
+	bool vtshell_busy = VTShell_Busy();
+	if (!vtshell_busy)
+	{
+		++ProcessShowClock;
+		ShowBackground();
+		Redraw();
+		ScrBuf.Flush();
+	}
+	const std::string &histfile = VTLog::GetAsFile(colored);
+	if (!vtshell_busy)
+	{
+		--ProcessShowClock;
+		Redraw();
+		ScrBuf.Flush();
+	}
 	return histfile;
 }
 
@@ -226,23 +234,17 @@ int CommandLine::ProcessKey(int Key)
 	
 	if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT))
 	{
-		const std::string &histfile = GetConsoleLog();
-		if (!histfile.empty())
-			ModalViewTempFile(histfile, true, true);
+		ModalViewConsoleHistory(true, true);
 		return TRUE;
 	}
 
 	if ( Key==KEY_CTRLSHIFTF3 || Key==KEY_F3) { 
-		const std::string &histfile = GetConsoleLog();
-		if (!histfile.empty()) 
-			ModalViewTempFile(histfile, true);
+		ModalViewConsoleHistory(true);
 		return TRUE;
 	}
 	
 	if ( Key==KEY_CTRLSHIFTF4 || Key==KEY_F4) { 
-		const std::string &histfile = GetConsoleLog();
-		if (!histfile.empty()) 
-			ModalEditTempFile(histfile, true);
+		ModalEditConsoleHistory(true);
 		return TRUE;
 	}
 	

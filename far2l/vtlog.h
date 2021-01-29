@@ -11,7 +11,6 @@ namespace VTLog
 
 	void Reset();
 
-	void GetAsString(std::string &s, bool append_screen_lines);
-	std::string GetAsFile(bool append_screen_lines = true);
+	std::string GetAsFile(bool colored, bool append_screen_lines = true);
 	
 }

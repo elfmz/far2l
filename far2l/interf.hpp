@@ -85,7 +85,7 @@ void GetRealCursorPos(SHORT& X,SHORT& Y);
 void ScrollScreen(int Count);
 
 void Text(int X, int Y, int Color, const WCHAR *Str);
-void Text(const WCHAR *Str);
+void Text(const WCHAR *Str, size_t Length = (size_t)-1);
 void Text(int MsgId);
 void VText(const WCHAR *Str);
 void HiText(const WCHAR *Str,int HiColor,int isVertText=0);
@@ -99,8 +99,9 @@ void BoxText(const wchar_t *Str,int IsVert=0);
 void SetScreen(int X1,int Y1,int X2,int Y2,wchar_t Ch,int Color);
 void MakeShadow(int X1,int Y1,int X2,int Y2);
 void ChangeBlockColor(int X1,int Y1,int X2,int Y2,int Color);
-void SetColor(int Color);
-void SetRealColor(int Color);
+void SetColor(int Color, bool ApplyToConsole = false);
+void SetRealColor(WORD wAttributes, bool ApplyToConsole = false);
+WORD GetRealColor();
 void ClearScreen(int Color);
 int GetColor();
 

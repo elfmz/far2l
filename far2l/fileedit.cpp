@@ -2885,12 +2885,16 @@ bool FileEditor::AskOverwrite(const FARString& FileName)
 	return result;
 }
 
-void ModalEditTempFile(const std::string &pathname, bool scroll_to_end)
+void ModalEditConsoleHistory(bool scroll_to_end)
 {
-	FileEditor *ShellEditor=new(std::nothrow) FileEditor(StrMB2Wide(pathname).c_str(),
+	const std::string &histfile = CtrlObject->CmdLine->GetConsoleLog(false);
+	if (histfile.empty())
+		return;
+
+	FileEditor *ShellEditor=new(std::nothrow) FileEditor(StrMB2Wide(histfile).c_str(),
 		CP_UTF8, FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW | FFILEEDIT_SAVETOSAVEAS,
 		scroll_to_end ? std::numeric_limits<int>::max() : 0 );
-	unlink(pathname.c_str());
+	unlink(histfile.c_str());
 	if (ShellEditor) {
 		DWORD editorExitCode = ShellEditor->GetExitCode();
 		if (editorExitCode != XC_LOADING_INTERRUPTED && editorExitCode != XC_OPEN_ERROR) {

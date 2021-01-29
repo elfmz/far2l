@@ -726,7 +726,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		CLK_VIEW_AUTOCLOSE
 	};
 
-	static int sShowConsoleLog(ConsoleLogKind kind, const std::string &histfile)
+	static int sShowConsoleLog(ConsoleLogKind kind)
 	{
 		if (!CtrlObject || !CtrlObject->CmdLine)
 			return 0;
@@ -736,9 +736,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		SetFarConsoleMode(TRUE);
 		if (kind == CLK_EDIT)
-			ModalEditTempFile(histfile, true);
+			ModalEditConsoleHistory(true);
 		else
-			ModalViewTempFile(histfile, true, kind == CLK_VIEW_AUTOCLOSE);
+			ModalViewConsoleHistory(true, kind == CLK_VIEW_AUTOCLOSE);
 
 		CtrlObject->CmdLine->ShowBackground();
 		ScrBuf.Flush();
@@ -760,13 +760,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		VTAnsiSuspend vta_suspend(_vta);
 		if (!vta_suspend)
 			return;
-		
-		const std::string &histfile = VTLog::GetAsFile();
-		if (histfile.empty())
-			return;
 
 		DeliverPendingWindowInfo();
-		InterThreadCall<int>(std::bind(sShowConsoleLog, kind, histfile));
+		InterThreadCall<int>(std::bind(sShowConsoleLog, kind));
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
@@ -1203,4 +1199,13 @@ void VTShell_Shutdown()
 {
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	g_vts.reset();
+}
+
+bool VTShell_Busy()
+{
+	if (!g_vts_mutex.try_lock())
+		return true;
+
+	g_vts_mutex.unlock();
+	return false;
 }
